@@ -250,9 +250,10 @@ bool PostgresProtocolHandler::HardcodedExecuteFilter(QueryType query_type) {
 ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
   std::string query;
   PacketGetString(pkt, pkt->len, query);
-  std::unique_ptr<parser::SQLStatementList> sql_stmt_list;
+  std::shared_ptr<parser::SQLStatementList> sql_stmt_list;
   try {
     auto &peloton_parser = parser::PostgresParser::GetInstance();
+//    sql_stmt_list = std::move(peloton_parser.BuildParseTree(query));
     sql_stmt_list = peloton_parser.BuildParseTree(query);
     // TODO: 1
     if (!sql_stmt_list->is_valid) {
@@ -283,13 +284,13 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
   switch (query_type_) {
     case QueryType::QUERY_PREPARE: {
       std::shared_ptr<Statement> statement(nullptr);
-      parser::PrepareStatement *prep_stmt = (parser::PrepareStatement *) sql_stmt;
+      std::shared_ptr<parser::PrepareStatement> prep_stmt = std::dynamic_pointer_cast<parser::PrepareStatement>(sql_stmt);
       std::string stmt_name = prep_stmt->name;
       //TODO: 4
-      parser::SQLStatement *prep_query = prep_stmt->query->GetStatement(0);
+      auto prep_stmt_tree = prep_stmt->query->GetStatement(0);
       std::string error_message;
       // TODO: 5
-      statement = traffic_cop_->PrepareStatement(stmt_name, query, prep_query, error_message);
+      statement = traffic_cop_->PrepareStatement(stmt_name, query, prep_stmt_tree, error_message);
       if (statement.get() == nullptr) {
         SendErrorResponse(
             {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
@@ -312,7 +313,7 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
       return ProcessResult::COMPLETE;
     };
     case QueryType::QUERY_EXECUTE: {
-      parser::ExecuteStatement *exec_stmt = (parser::ExecuteStatement *) sql_stmt;
+      std::shared_ptr<parser::ExecuteStatement> exec_stmt = std::dynamic_pointer_cast<parser::ExecuteStatement>(sql_stmt);
       std::string stmt_name = exec_stmt->name;
       auto statement_cache_itr = statement_cache_.find(stmt_name);
       if (statement_cache_itr != statement_cache_.end()) {
@@ -406,11 +407,13 @@ void PostgresProtocolHandler::ExecParseMessage(InputPacket *pkt) {
   // TODO: Why do we set skippd_stmt_ here?????
   skipped_stmt_ = false;
   std::shared_ptr<parser::SQLStatementList> sql_stmt_list;
-  parser::SQLStatement* sql_stmt;
+//  parser::SQLStatement* sql_stmt;
+  std::shared_ptr<parser::SQLStatement> sql_stmt;
   QueryType query_type = QueryType::QUERY_OTHER;
   try {
     LOG_INFO("%s, %s", statement_name.c_str(), query.c_str());
     auto &peloton_parser = parser::PostgresParser::GetInstance();
+//    sql_stmt_list = std::move(peloton_parser.BuildParseTree(query));
     sql_stmt_list = peloton_parser.BuildParseTree(query);
     if (!sql_stmt_list->is_valid) {
       LOG_INFO("Not valid");
@@ -422,7 +425,6 @@ void PostgresProtocolHandler::ExecParseMessage(InputPacket *pkt) {
     skipped_stmt_ = true;
     SendErrorResponse(
         {{NetworkMessageType::HUMAN_READABLE_ERROR, e.what()}});
-//    SendReadyForQuery(NetworkTransactionStateType::IDLE);
     return;
   }
   bool skip = (sql_stmt_list->GetNumStatements() == 0);
@@ -452,7 +454,6 @@ void PostgresProtocolHandler::ExecParseMessage(InputPacket *pkt) {
     LOG_INFO("%s", error_message.c_str());
     SendErrorResponse(
         {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
-//    SendReadyForQuery(NetworkTransactionStateType::IDLE);
     return;
   }
   LOG_INFO("PrepareStatement[%s] => %s", statement_name.c_str(),

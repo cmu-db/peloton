@@ -32,7 +32,8 @@ TEST_F(ParserTests, PrepareTest) {
   queries.push_back("prepare func1 as insert into foo values($1);");
   queries.push_back("execute func1(1)");
   for (auto query : queries) {
-    parser::SQLStatementList* stmt_list =
+//    parser::SQLStatementList* stmt_list =
+      auto stmt_list =
         parser::PostgresParser::ParseSQLString(query.c_str());
     EXPECT_TRUE(stmt_list->is_valid);
     if (stmt_list->is_valid == false) {
@@ -130,7 +131,8 @@ TEST_F(ParserTests, BasicTest) {
   // Parsing
   UNUSED_ATTRIBUTE int ii = 0;
   for (auto query : queries) {
-    parser::SQLStatementList* stmt_list =
+//    parser::SQLStatementList* stmt_list =
+    auto stmt_list =
         parser::PostgresParser::ParseSQLString(query.c_str());
     EXPECT_TRUE(stmt_list->is_valid);
     if (stmt_list->is_valid == false) {
@@ -154,7 +156,8 @@ TEST_F(ParserTests, GrammarTest) {
       "orders.customer_id ORDER BY order_value;");
 
   for (auto query : valid_queries) {
-    parser::SQLStatementList* result =
+//    parser::SQLStatementList* result =
+    auto result =
         parser::PostgresParser::ParseSQLString(query.c_str());
     EXPECT_TRUE(result->is_valid);
     if (result->is_valid == false) {
@@ -173,7 +176,8 @@ TEST_F(ParserTests, SelectParserTest) {
       "orders ON customers.id = orders.customer_id GROUP BY customer_id ORDER "
       "BY SUM(order_value) DESC LIMIT 5;";
 
-  parser::SQLStatementList* list =
+//  parser::SQLStatementList* list =
+  auto list =
       parser::PostgresParser::ParseSQLString(query.c_str());
   EXPECT_TRUE(list->is_valid);
   if (list->is_valid == false) {
@@ -183,8 +187,9 @@ TEST_F(ParserTests, SelectParserTest) {
   EXPECT_EQ(list->GetNumStatements(), 1);
   EXPECT_EQ(list->GetStatement(0)->GetType(), StatementType::SELECT);
 
-  parser::SelectStatement* stmt =
-      (parser::SelectStatement*)list->GetStatement(0);
+  auto stmt =
+      std::dynamic_pointer_cast<parser::SelectStatement>(list->GetStatement(0));
+  //(parser::SelectStatement*)list->GetStatement(0);
 
   EXPECT_NOTNULL(stmt->select_list);
   EXPECT_NOTNULL(stmt->from_table);
@@ -233,7 +238,8 @@ TEST_F(ParserTests, TransactionTest) {
   valid_queries.push_back("ROLLBACK TRANSACTION;");
 
   for (auto query : valid_queries) {
-    parser::SQLStatementList* result =
+//    parser::SQLStatementList* result =
+    auto result =
         parser::PostgresParser::ParseSQLString(query.c_str());
     EXPECT_TRUE(result->is_valid);
 
@@ -246,24 +252,28 @@ TEST_F(ParserTests, TransactionTest) {
 
   parser::SQLStatementList* list =
       parser::PostgresParser::ParseSQLString(valid_queries[0].c_str());
-  parser::TransactionStatement* stmt =
-      (parser::TransactionStatement*)list->GetStatement(0);
+  auto stmt =
+      std::dynamic_pointer_cast<parser::TransactionStatement>(list->GetStatement(0));
+  //(parser::TransactionStatement*)list->GetStatement(0);
   EXPECT_EQ(list->GetStatement(0)->GetType(), StatementType::TRANSACTION);
   EXPECT_EQ(stmt->type, parser::TransactionStatement::kBegin);
   delete list;
 
   list = parser::PostgresParser::ParseSQLString(valid_queries[1].c_str());
-  stmt = (parser::TransactionStatement*)list->GetStatement(0);
+  stmt = std::dynamic_pointer_cast<parser::TransactionStatement>(list->GetStatement(0));
+  //stmt = (parser::TransactionStatement*)list->GetStatement(0);
   EXPECT_EQ(stmt->type, parser::TransactionStatement::kBegin);
   delete list;
 
   list = parser::PostgresParser::ParseSQLString(valid_queries[2].c_str());
-  stmt = (parser::TransactionStatement*)list->GetStatement(0);
+//  stmt = (parser::TransactionStatement*)list->GetStatement(0);
+  stmt = std::dynamic_pointer_cast<parser::TransactionStatement>(list->GetStatement(0));
   EXPECT_EQ(stmt->type, parser::TransactionStatement::kCommit);
   delete list;
 
   list = parser::PostgresParser::ParseSQLString(valid_queries[3].c_str());
-  stmt = (parser::TransactionStatement*)list->GetStatement(0);
+//  stmt = (parser::TransactionStatement*)list->GetStatement(0);
+  stmt = std::dynamic_pointer_cast<parser::TransactionStatement>(list->GetStatement(0));
   EXPECT_EQ(stmt->type, parser::TransactionStatement::kRollback);
   delete list;
 }
@@ -293,7 +303,8 @@ TEST_F(ParserTests, CreateTest) {
   // Parsing
   UNUSED_ATTRIBUTE int ii = 0;
   for (auto query : queries) {
-    parser::SQLStatementList* result =
+//    parser::SQLStatementList* result =
+    auto result =
         parser::PostgresParser::ParseSQLString(query.c_str());
 
     if (result->is_valid == false) {
@@ -350,7 +361,8 @@ TEST_F(ParserTests, TM1Test) {
   // Parsing
   UNUSED_ATTRIBUTE int ii = 0;
   for (auto query : queries) {
-    parser::SQLStatementList* result =
+//    parser::SQLStatementList* result =
+    auto result =
         parser::PostgresParser::ParseSQLString(query.c_str());
 
     if (result->is_valid == false) {
@@ -383,7 +395,8 @@ TEST_F(ParserTests, IndexTest) {
   // Parsing
   UNUSED_ATTRIBUTE int ii = 0;
   for (auto query : queries) {
-    parser::SQLStatementList* result =
+//    parser::SQLStatementList* result =
+    auto result =
         parser::PostgresParser::ParseSQLString(query.c_str());
 
     if (result->is_valid == false) {
@@ -407,7 +420,8 @@ TEST_F(ParserTests, CopyTest) {
   // Parsing
   UNUSED_ATTRIBUTE int ii = 0;
   for (auto query : queries) {
-    parser::SQLStatementList* result =
+//    parser::SQLStatementList* result =
+    auto result =
         parser::PostgresParser::ParseSQLString(query.c_str());
 
     if (result->is_valid == false) {
@@ -416,8 +430,10 @@ TEST_F(ParserTests, CopyTest) {
     }
     EXPECT_EQ(result->is_valid, true);
 
-    parser::CopyStatement* copy_stmt =
-        static_cast<parser::CopyStatement*>(result->GetStatement(0));
+    auto copy_stmt =
+        //parser::CopyStatement* copy_stmt =
+        std::dynamic_pointer_cast<parser::CopyStatement>(result->GetStatement(0));
+    //static_cast<parser::CopyStatement*>(result->GetStatement(0));
 
     EXPECT_EQ(copy_stmt->delimiter, ',');
     EXPECT_STREQ(copy_stmt->file_path, "/home/user/output.csv");

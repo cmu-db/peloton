@@ -28,7 +28,8 @@ using std::move;
 namespace peloton {
 namespace optimizer {
 
-PropertySet QueryPropertyExtractor::GetProperties(parser::SQLStatement *stmt) {
+PropertySet QueryPropertyExtractor::GetProperties(std::shared_ptr<parser::SQLStatement> stmt) {
+  //PropertySet QueryPropertyExtractor::GetProperties(parser::SQLStatement *stmt) {
   stmt->Accept(this);
   return property_set_;
 }

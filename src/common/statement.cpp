@@ -23,7 +23,7 @@ namespace peloton {
 Statement::Statement(const std::string& statement_name,
                      const std::string& query_string)
     : statement_name_(statement_name), query_string_(query_string) {
-  std::unique_ptr<parser::SQLStatementList> sql_stmt_list;
+  std::shared_ptr<parser::SQLStatementList> sql_stmt_list;
   try {
     auto &peloton_parser = parser::PostgresParser::GetInstance();
     sql_stmt_list = peloton_parser.BuildParseTree(query_string);
@@ -37,12 +37,11 @@ Statement::Statement(const std::string& statement_name,
   if (sql_stmt_list->GetNumStatements() == 0) {
     LOG_ERROR("Empty statement");
   }
-  auto sql_stmt_ = sql_stmt_list->GetStatement(0);
-  query_string_ = query_string;
+  sql_stmt_ = sql_stmt_list->GetStatement(0);
   query_type_ = StatementTypeToQueryType(sql_stmt_->GetType(), sql_stmt_);
 }
 Statement::Statement(const std::string &stmt_name, QueryType query_type,
-                     std::string query_string, parser::SQLStatement *sql_stmt)
+                     std::string query_string, std::shared_ptr<parser::SQLStatement> sql_stmt)
       : statement_name_(stmt_name), query_type_(query_type),
         query_string_(query_string), sql_stmt_(sql_stmt),
         query_type_string_(QueryTypeToString(query_type)){};

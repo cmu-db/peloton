@@ -107,6 +107,7 @@ ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
   traffic_cop_.SetTcopTxnState(txn);
 
   auto parsed_stmt = peloton_parser.BuildParseTree(query);
+  LOG_INFO("Build parse tree");
   auto plan = optimizer->BuildPelotonPlanTree(parsed_stmt, txn);
   tuple_descriptor =
       traffic_cop_.GenerateTupleDescriptor(parsed_stmt->GetStatement(0));

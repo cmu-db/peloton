@@ -80,12 +80,14 @@ class TrafficCop {
   // InitBindPrepStmt - Prepare and bind a query from a query string
   std::shared_ptr<Statement> PrepareStatement(const std::string &statement_name,
                                               const std::string &query_string,
-                                              parser::SQLStatement* sql_stmt,
+                                              std::shared_ptr<parser::SQLStatement> sql_stmt,
+                                              //parser::SQLStatement* sql_stmt,
                                               std::string &error_message,
                                               const size_t thread_id = 0);
 
   std::vector<FieldInfo> GenerateTupleDescriptor(
-      parser::SQLStatement *select_stmt);
+      std::shared_ptr<parser::SQLStatement> select_stmt);
+  //parser::SQLStatement *select_stmt);
 
   FieldInfo GetColumnFieldForValueType(std::string column_name,
                                        type::TypeId column_type);

@@ -36,13 +36,15 @@ namespace optimizer {
 QueryToOperatorTransformer::QueryToOperatorTransformer(concurrency::Transaction *txn): txn_(txn){
 }
 std::shared_ptr<OperatorExpression>
-QueryToOperatorTransformer::ConvertToOpExpression(parser::SQLStatement *op) {
+QueryToOperatorTransformer::ConvertToOpExpression(std::shared_ptr<parser::SQLStatement> op) {
+  //QueryToOperatorTransformer::ConvertToOpExpression(parser::SQLStatement *op) {
   output_expr = nullptr;
   op->Accept(this);
   return output_expr;
 }
 
-void QueryToOperatorTransformer::Visit(const parser::SelectStatement *op) {
+//void QueryToOperatorTransformer::Visit(const std::shared_ptr<parser::SelectStatement> op) {
+  void QueryToOperatorTransformer::Visit(const parser::SelectStatement *op) {
   auto upper_expr = output_expr;
 
   if (op->where_clause != nullptr) {

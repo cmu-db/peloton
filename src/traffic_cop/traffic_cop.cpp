@@ -143,9 +143,9 @@ ResultType TrafficCop::ExecuteStatement(
     stats::BackendStatsContext::GetInstance()->InitQueryMetric(statement,
                                                                param_stats);
   }
-  LOG_INFO("Execute Statement of name: %s",
+  LOG_TRACE("Execute Statement of name: %s",
             statement->GetStatementName().c_str());
-  LOG_INFO("Execute Statement of query: %s",
+  LOG_TRACE("Execute Statement of query: %s",
             statement->GetQueryString().c_str());
   try {
     switch (statement->GetQueryType()) {
@@ -266,7 +266,8 @@ void TrafficCop::ExecuteStatementPlanGetResult() {
 std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     const std::string &stmt_name,
     const std::string &query_string,
-    parser::SQLStatement* sql_stmt,
+    //parser::SQLStatement* sql_stmt,
+    std::shared_ptr<parser::SQLStatement> sql_stmt,
     UNUSED_ATTRIBUTE std::string &error_message,
     const size_t thread_id UNUSED_ATTRIBUTE) {
 
@@ -310,7 +311,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
 
   LOG_TRACE("Optimizer Build Peloton Plan Tree...");
   try {
-    std::unique_ptr<parser::SQLStatementList> sql_stmt_list = std::make_unique<parser::SQLStatementList>();
+    std::shared_ptr<parser::SQLStatementList> sql_stmt_list = std::make_shared<parser::SQLStatementList>();
     sql_stmt_list->AddStatement(sql_stmt);
     auto plan = optimizer_->BuildPelotonPlanTree(sql_stmt_list, tcop_txn_state_.top().first);
     statement->SetPlanTree(plan);
@@ -378,10 +379,11 @@ void TrafficCop::GetDataTables(
 }
 
 std::vector<FieldInfo> TrafficCop::GenerateTupleDescriptor(
-    parser::SQLStatement *sql_stmt) {
+    std::shared_ptr<parser::SQLStatement> sql_stmt) {
+  //parser::SQLStatement *sql_stmt) {
   std::vector<FieldInfo> tuple_descriptor;
   if (sql_stmt->GetType() != StatementType::SELECT) return tuple_descriptor;
-  auto select_stmt = (parser::SelectStatement *)sql_stmt;
+  auto select_stmt = std::dynamic_pointer_cast<parser::SelectStatement>(sql_stmt);
 
   // TODO: this is a hack which I don't have time to fix now
   // but it replaces a worse hack that was here before

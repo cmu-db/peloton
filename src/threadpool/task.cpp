@@ -31,7 +31,7 @@ void TaskQueue::EnqueueTask(void(*task_ptr)(void*), void* task_arg, void(*task_c
 }
 
 bool TaskQueue::PollTask(std::shared_ptr<Task> &task) {
-  static int i = 0;
+//  static int i = 0;
   bool re = task_queue_.Dequeue(task);
   if (re) {
     PL_ASSERT(task.get());
@@ -41,7 +41,7 @@ bool TaskQueue::PollTask(std::shared_ptr<Task> &task) {
     PL_ASSERT(task->task_ptr_);
     struct tcop::ExecutePlanArg *exec_plan_arg = (struct tcop::ExecutePlanArg*)(task->task_arg_);
     exec_plan_arg->mycheckValid();
-    LOG_INFO("Check, TASK: %d", i++);
+    LOG_TRACE("Check, TASK: %d", i++);
   }
   return re;
 }

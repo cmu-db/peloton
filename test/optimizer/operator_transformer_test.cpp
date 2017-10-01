@@ -38,13 +38,15 @@ class OperatorTransformerTests : public PelotonTest {
         "CREATE TABLE test2(a2 INT PRIMARY KEY, b2 INT, c2 INT);");
   }
   std::shared_ptr<OperatorExpression> TransformToOpExpression(
-      std::string query, std::unique_ptr<parser::SQLStatementList>& stmt_list) {
+      std::string query, std::shared_ptr<parser::SQLStatementList>& stmt_list) {
+    //std::string query, std::unique_ptr<parser::SQLStatementList>& stmt_list) {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
     // Parse query
     auto &peloton_parser = parser::PostgresParser::GetInstance();
     stmt_list = peloton_parser.BuildParseTree(query);
-    auto stmt = reinterpret_cast<parser::SelectStatement*>(stmt_list->GetStatement(0));
+    auto stmt = std::dynamic_pointer_cast<parser::SelectStatement>(stmt_list->GetStatement(0));
+    //auto stmt = reinterpret_cast<parser::SelectStatement*>(stmt_list->GetStatement(0));
 
     // Bind query
     binder::BindNodeVisitor binder(txn);
@@ -69,7 +71,8 @@ class OperatorTransformerTests : public PelotonTest {
     auto ref_stmt = parsed_stmt->GetStatement(0);
     binder::BindNodeVisitor binder(txn);
     binder.BindNameToNode(ref_stmt);
-    auto ref_expr = ((parser::SelectStatement*)ref_stmt)->select_list->at(0);
+    auto ref_expr = (std::dynamic_pointer_cast<parser::SelectStatement>(ref_stmt))->select_list->at(0);
+    //auto ref_expr = ((parser::SelectStatement*)ref_stmt)->select_list->at(0);
     txn_manager.CommitTransaction(txn);
     LOG_INFO("Expected: %s", true_predicates.c_str());
     LOG_INFO("Actual: %s", predicate->GetInfo().c_str());
@@ -89,12 +92,14 @@ class OperatorTransformerTests : public PelotonTest {
 };
 
 TEST_F(OperatorTransformerTests, JoinTransformationTest) {
-  std::unique_ptr<parser::SQLStatementList> stmt_list;
+  std::shared_ptr<parser::SQLStatementList> stmt_list;
+  //std::unique_ptr<parser::SQLStatementList> stmt_list;
 
   // Test table list
   auto op_expr = TransformToOpExpression("SELECT * FROM test, test2 WHERE test.a = test2.a2", stmt_list);
   // Check Where
-  auto stmt = reinterpret_cast<parser::SelectStatement*>(stmt_list->GetStatement(0));
+  auto stmt = std::dynamic_pointer_cast<parser::SelectStatement>(stmt_list->GetStatement(0));
+  //auto stmt = reinterpret_cast<parser::SelectStatement*>(stmt_list->GetStatement(0));
   EXPECT_EQ(stmt->where_clause, nullptr);
   // Check Join Predicates
   auto op = op_expr->Op().As<LogicalInnerJoin>();
@@ -105,7 +110,8 @@ TEST_F(OperatorTransformerTests, JoinTransformationTest) {
   op_expr = TransformToOpExpression(
       "SELECT * FROM test join test2 ON test.b = test2.b2 WHERE test.a = test2.a2", stmt_list);
   // Check Where
-  stmt = reinterpret_cast<parser::SelectStatement*>(stmt_list->GetStatement(0));
+  stmt = std::dynamic_pointer_cast<parser::SelectStatement>(stmt_list->GetStatement(0));
+  //stmt = reinterpret_cast<parser::SelectStatement*>(stmt_list->GetStatement(0));
   EXPECT_EQ(stmt->where_clause, nullptr);
   op = op_expr->Op().As<LogicalInnerJoin>();
   // Check Join Predicates
@@ -119,7 +125,8 @@ TEST_F(OperatorTransformerTests, JoinTransformationTest) {
           "WHERE (A.a = B.b OR B.b = C.c) AND A.c = B.b AND A.b = 1 AND B.c + 1 = 10", stmt_list);
   op = op_expr->Op().As<LogicalInnerJoin>();
   // Check Where
-  stmt = reinterpret_cast<parser::SelectStatement*>(stmt_list->GetStatement(0));
+  stmt = std::dynamic_pointer_cast<parser::SelectStatement>(stmt_list->GetStatement(0));
+  //stmt = reinterpret_cast<parser::SelectStatement*>(stmt_list->GetStatement(0));
   EXPECT_NE(stmt->where_clause, nullptr);
   CheckPredicate(stmt->where_clause,
                  "test as A, test as B, test as C", "A.b = 1 AND B.c + 1 = 10");
@@ -147,7 +154,8 @@ TEST_F(OperatorTransformerTests, JoinTransformationTest) {
           "  ON A.a = C.a "
           "WHERE B.c = C.c", stmt_list);
   // Check Where
-  stmt = reinterpret_cast<parser::SelectStatement*>(stmt_list->GetStatement(0));
+  stmt = std::dynamic_pointer_cast<parser::SelectStatement>(stmt_list->GetStatement(0));
+  //stmt = reinterpret_cast<parser::SelectStatement*>(stmt_list->GetStatement(0));
   EXPECT_EQ(stmt->where_clause, nullptr);
   op = op_expr->Op().As<LogicalInnerJoin>();
   // Check Join Predicates

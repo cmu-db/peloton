@@ -43,7 +43,7 @@ class Statement : public Printable {
 
   Statement(const std::string& statement_name, const std::string& query_string);
   Statement(const std::string& statement_name, QueryType query_type,
-            std::string query_string, parser::SQLStatement *sql_stmt);
+            std::string query_string, std::shared_ptr<parser::SQLStatement> sql_stmt);
 
   ~Statement();
 
@@ -88,8 +88,8 @@ class Statement : public Printable {
 
   // Get a string representation for debugging
   const std::string GetInfo() const;
-  inline parser::SQLStatement * GetSQLStmtParseTree() {return sql_stmt_;}
-
+  std::shared_ptr<parser::SQLStatement> GetSQLStmtParseTree() {return sql_stmt_;}
+//  parser::SQLStatement* GetSQLStmtParseTree() {return sql_stmt_list_->GetStatement(ith_stmt_)};
  private:
   // logical name of statement
   std::string statement_name_;
@@ -100,8 +100,9 @@ class Statement : public Printable {
   // query string
   std::string query_string_;
 
-  parser::SQLStatement *sql_stmt_;
-
+  std::shared_ptr<parser::SQLStatement> sql_stmt_;
+//  std::shared_ptr<parser::SQLStatementList> sql_stmt_list_;
+//  int ith_stmt_;
   // first token in query
   // Keep the string token of the query_type because it is returned
   // as responses after executing commands.

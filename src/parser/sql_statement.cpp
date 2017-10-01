@@ -82,7 +82,7 @@ const std::string SQLStatementList::GetInfo() const {
   return os.str();
 }
 
-QueryType StatementTypeToQueryType(StatementType stmt_type, parser::SQLStatement *sql_stmt) {
+QueryType StatementTypeToQueryType(StatementType stmt_type, std::shared_ptr<parser::SQLStatement> sql_stmt) {
   LOG_INFO("%s", StatementTypeToString(stmt_type).c_str());
   QueryType query_type = QueryType::QUERY_OTHER;
   std::map<StatementType, QueryType> type_map {
@@ -104,7 +104,7 @@ QueryType StatementTypeToQueryType(StatementType stmt_type, parser::SQLStatement
   } else {
     switch(stmt_type) {
       case StatementType::TRANSACTION:
-        switch(((parser::TransactionStatement*) sql_stmt)->type) {
+        switch(std::dynamic_pointer_cast<parser::TransactionStatement>(sql_stmt)->type) {
           case parser::TransactionStatement::CommandType::kBegin:
             query_type = QueryType::QUERY_BEGIN;
             break;
@@ -117,7 +117,7 @@ QueryType StatementTypeToQueryType(StatementType stmt_type, parser::SQLStatement
         }
         break;
       case StatementType::CREATE:
-        switch (((parser::CreateStatement*) sql_stmt) -> type) {
+        switch (std::dynamic_pointer_cast<parser::CreateStatement>(sql_stmt) -> type) {
           case parser::CreateStatement::CreateType::kDatabase:
             query_type = QueryType::QUERY_CREATE_DB;
             break;

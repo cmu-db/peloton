@@ -36,7 +36,8 @@ AnalyzePlan::AnalyzePlan(std::string table_name,
       DEFAULT_DB_NAME, table_name, txn);
 }
 
-AnalyzePlan::AnalyzePlan(parser::AnalyzeStatement *analyze_stmt,
+AnalyzePlan::AnalyzePlan(std::shared_ptr<parser::AnalyzeStatement> analyze_stmt,
+                         //AnalyzePlan::AnalyzePlan(parser::AnalyzeStatement *analyze_stmt,
                          concurrency::Transaction *txn) {
   table_name_ = analyze_stmt->GetTableName();
   column_names_ = analyze_stmt->GetColumnNames();

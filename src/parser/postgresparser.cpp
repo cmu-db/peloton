@@ -1112,7 +1112,7 @@ parser::PrepareStatement* PostgresParser::PrepareTransform(PrepareStmt* root) {
   auto res = new PrepareStatement();
   res->name = cstrdup(root->name);
   auto stmt_list = new SQLStatementList();
-  stmt_list->statements.push_back(NodeTransform(root->query));
+  stmt_list->statements.push_back(std::shared_ptr<SQLStatement>(NodeTransform(root->query)));
   res->query = stmt_list;
   return res;
 }
@@ -1457,7 +1457,6 @@ parser::SQLStatementList* PostgresParser::ParseSQLString(const char* text) {
     pg_query_free_parse_result(result);
     throw e;
   }
-
   pg_query_parse_finish(ctx);
   pg_query_free_parse_result(result);
   return transform_result;
@@ -1473,13 +1472,14 @@ PostgresParser& PostgresParser::GetInstance() {
   return parser;
 }
 
-std::unique_ptr<parser::SQLStatementList> PostgresParser::BuildParseTree(
+//std::unique_ptr<parser::SQLStatementList> PostgresParser::BuildParseTree(
+  std::shared_ptr<parser::SQLStatementList> PostgresParser::BuildParseTree(
     const std::string& query_string) {
   auto stmt = PostgresParser::ParseSQLString(query_string);
 
-  LOG_TRACE("Number of statements: %lu", stmt->GetStatements().size());
+  LOG_INFO("Number of statements: %lu", stmt->GetStatements().size());
 
-  std::unique_ptr<parser::SQLStatementList> sql_stmt(stmt);
+  std::shared_ptr<parser::SQLStatementList> sql_stmt(stmt);
   return sql_stmt;
 }
 
