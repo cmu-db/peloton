@@ -23,7 +23,7 @@ namespace optimizer {
 class Stats {
  public:
   Stats(TupleSample *sample) : sample_(sample){};
-
+	virtual ~Stats() {}
  private:
    TupleSample *sample_;
 };

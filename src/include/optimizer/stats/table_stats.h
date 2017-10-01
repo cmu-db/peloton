@@ -16,6 +16,7 @@
 
 #include "common/macros.h"
 #include "type/types.h"
+#include "optimizer/stats.h"
 
 namespace peloton {
 namespace optimizer {
@@ -24,16 +25,16 @@ namespace optimizer {
 #define DEFAULT_HAS_INDEX false
 
 class ColumnStats;
-
+//class Stats;
 //===--------------------------------------------------------------------===//
 // TableStats
 //===--------------------------------------------------------------------===//
-class TableStats {
+class TableStats: public Stats {
  public:
   TableStats() : TableStats(0) {}
 
   TableStats(size_t num_rows)
-      : num_rows(num_rows), col_stats_list_{}, col_name_to_stats_map_{} {}
+      : Stats(nullptr), num_rows(num_rows), col_stats_list_{}, col_name_to_stats_map_{} {}
 
   TableStats(size_t num_rows,
              std::vector<std::shared_ptr<ColumnStats>> col_stats_ptrs);
