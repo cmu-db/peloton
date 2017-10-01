@@ -33,7 +33,6 @@ class QueryPropertyExtractor : public SqlNodeVisitor {
   QueryPropertyExtractor(ColumnManager &manager) : manager_(manager) {}
 
   PropertySet GetProperties(std::shared_ptr<parser::SQLStatement> tree);
-  //PropertySet GetProperties(parser::SQLStatement *tree);
 
   // We only assume the statement is selecting from one table for now
   void Visit(const parser::SelectStatement *) override;

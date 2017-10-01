@@ -37,7 +37,6 @@ class QueryToOperatorTransformer : public SqlNodeVisitor {
 
   std::shared_ptr<OperatorExpression> ConvertToOpExpression(
       std::shared_ptr<parser::SQLStatement> op);
-  //parser::SQLStatement *op);
 
   void Visit(const parser::SelectStatement *op) override;
 

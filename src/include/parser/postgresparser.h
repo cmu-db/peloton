@@ -50,7 +50,6 @@ class PostgresParser {
   static PostgresParser& GetInstance();
 
   std::shared_ptr<parser::SQLStatementList> BuildParseTree(
-//      std::unique_ptr<parser::SQLStatementList> BuildParseTree(
       const std::string& query_string);
 
  private:

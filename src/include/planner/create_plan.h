@@ -59,7 +59,6 @@ class CreatePlan : public AbstractPlan {
                       CreateType c_type);
 
   explicit CreatePlan(std::shared_ptr<parser::CreateStatement> parse_tree);
-  //explicit CreatePlan(parser::CreateStatement *parse_tree);
 
   inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::CREATE; }
 

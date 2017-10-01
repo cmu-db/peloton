@@ -1207,7 +1207,6 @@ PostgresParser::ParamListTransform(List* root) {
       new std::vector<expression::AbstractExpression*>();
 
   for (auto cell = root->head; cell != NULL; cell = cell->next) {
-    // what to do with Expr???
     result->push_back(ConstTransform((A_Const*)(cell->data.ptr_value)));
   }
 
@@ -1439,7 +1438,7 @@ parser::SQLStatementList* PostgresParser::ParseSQLString(const char* text) {
   auto result = pg_query_parse(text);
   if (result.error) {
     // Parse Error
-    LOG_INFO("%s at %d\n", result.error->message, result.error->cursorpos);
+    LOG_ERROR("%s at %d\n", result.error->message, result.error->cursorpos);
     auto new_stmt = new parser::SQLStatementList();
     new_stmt->is_valid = false;
     pg_query_parse_finish(ctx);
@@ -1472,12 +1471,11 @@ PostgresParser& PostgresParser::GetInstance() {
   return parser;
 }
 
-//std::unique_ptr<parser::SQLStatementList> PostgresParser::BuildParseTree(
   std::shared_ptr<parser::SQLStatementList> PostgresParser::BuildParseTree(
     const std::string& query_string) {
   auto stmt = PostgresParser::ParseSQLString(query_string);
 
-  LOG_INFO("Number of statements: %lu", stmt->GetStatements().size());
+  LOG_TRACE("Number of statements: %lu", stmt->GetStatements().size());
 
   std::shared_ptr<parser::SQLStatementList> sql_stmt(stmt);
   return sql_stmt;

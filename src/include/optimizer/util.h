@@ -91,7 +91,6 @@ bool ContainsJoinColumns(
 
 
 std::unique_ptr<planner::AbstractPlan> CreateCopyPlan(std::shared_ptr<parser::CopyStatement> copy_stmt);
-//std::unique_ptr<planner::AbstractPlan> CreateCopyPlan(parser::CopyStatement* copy_stmt);
 
 
 } // namespace util

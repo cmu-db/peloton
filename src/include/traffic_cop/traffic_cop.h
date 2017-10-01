@@ -30,7 +30,6 @@
 #include "event.h"
 
 namespace peloton {
-//void ExecutePlanWrapper(void *arg_ptr);
 namespace tcop {
 
 //===--------------------------------------------------------------------===//
@@ -52,13 +51,6 @@ class TrafficCop {
 
   // reset this object
   void Reset();
-
-  // PortalExec - Execute query string
-//  ResultType ExecuteStatement(const std::string &query,
-//                              std::vector<StatementResult> &result,
-//                              std::vector<FieldInfo> &tuple_descriptor,
-//                              int &rows_changed, std::string &error_message,
-//                              const size_t thread_id = 0);
 
   // ExecPrepStmt - Execute a statement from a prepared and bound statement
   ResultType ExecuteStatement(
@@ -129,8 +121,7 @@ class TrafficCop {
   // flag of single statement txn
   bool single_statement_txn_;
 
-  // flag of psql protocol
-  // executePlan arguments
+  std::shared_ptr<planner::AbstractPlan> plan_;
 
   std::vector<StatementResult> result_;
   void(* task_callback_)(void *);

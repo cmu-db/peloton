@@ -100,9 +100,7 @@ class SQLStatementList : public Printable {
   void AddStatement(std::shared_ptr<SQLStatement> stmt) { statements.push_back(stmt); }
 
   std::shared_ptr<SQLStatement> GetStatement(int id) const { return statements[id]; }
-  //SQLStatement* GetStatement(int id) const { return statements[id]; }
 
-  //const std::vector<SQLStatement*>& GetStatements() const { return statements; }
   const std::vector<std::shared_ptr<SQLStatement>>& GetStatements() const { return statements; }
 
   size_t GetNumStatements() const { return statements.size(); }
@@ -111,7 +109,6 @@ class SQLStatementList : public Printable {
   const std::string GetInfo() const;
 
   std::vector<std::shared_ptr<SQLStatement>> statements;
-  //std::vector<SQLStatement*> statements;
   bool is_valid;
   const char* parser_msg;
   int error_line;
@@ -119,6 +116,5 @@ class SQLStatementList : public Printable {
 };
 
 QueryType StatementTypeToQueryType(StatementType stmt_type, std::shared_ptr<parser::SQLStatement> sql_stmt);
-//QueryType StatementTypeToQueryType(StatementType stmt_type, parser::SQLStatement* sql_stmt);
 }  // namespace parser
 }  // namespace peloton

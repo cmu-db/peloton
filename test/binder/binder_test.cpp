@@ -162,7 +162,6 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   selectSQL = "SELECT * FROM A, B as A";
   parse_tree = parser.BuildParseTree(selectSQL);
   selectStmt = std::dynamic_pointer_cast<parser::SelectStatement>(parse_tree->GetStatements().at(0));
-  //selectStmt = (parser::SelectStatement*)(parse_tree->GetStatements().at(0));
   try {
     binder->BindNameToNode(selectStmt);
     EXPECT_TRUE(false);
@@ -178,7 +177,6 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   selectSQL = "SELECT * FROM A, A as AA where A.a1 = AA.a2";
   parse_tree = parser.BuildParseTree(selectSQL);
   selectStmt = std::dynamic_pointer_cast<parser::SelectStatement>(parse_tree->GetStatements().at(0));
-  //selectStmt = (parser::SelectStatement*)(parse_tree->GetStatements().at(0));
   binder->BindNameToNode(selectStmt);
   LOG_INFO("Checking where clause");
   tupleExpr =
@@ -197,7 +195,6 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   selectSQL = "SELECT AA.a1, b2 FROM A as AA, B WHERE AA.a1 = B.b1";
   parse_tree = parser.BuildParseTree(selectSQL);
   selectStmt = std::dynamic_pointer_cast<parser::SelectStatement>(parse_tree->GetStatements().at(0));
-  //selectStmt = (parser::SelectStatement*)(parse_tree->GetStatements().at(0));
   binder->BindNameToNode(selectStmt);
   tupleExpr =
       (expression::TupleValueExpression*)(selectStmt->select_list->at(0));
@@ -234,7 +231,6 @@ TEST_F(BinderCorrectnessTest, DeleteStatementTest) {
   auto parse_tree = parser.BuildParseTree(deleteSQL);
   auto deleteStmt =
       std::dynamic_pointer_cast<parser::DeleteStatement>(parse_tree->GetStatements().at(0));
-  //dynamic_cast<parser::DeleteStatement*>(parse_tree->GetStatements().at(0));
   binder->BindNameToNode(deleteStmt);
 
   txn_manager.CommitTransaction(txn);

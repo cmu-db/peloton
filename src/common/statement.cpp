@@ -40,6 +40,7 @@ Statement::Statement(const std::string& statement_name,
   sql_stmt_ = sql_stmt_list->GetStatement(0);
   query_type_ = StatementTypeToQueryType(sql_stmt_->GetType(), sql_stmt_);
 }
+
 Statement::Statement(const std::string &stmt_name, QueryType query_type,
                      std::string query_string, std::shared_ptr<parser::SQLStatement> sql_stmt)
       : statement_name_(stmt_name), query_type_(query_type),

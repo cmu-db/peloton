@@ -226,46 +226,20 @@ bool PostgresProtocolHandler::HardcodedExecuteFilter(QueryType query_type) {
   return true;
 }
 
-// The Simple Query Protocol
-// Fix mis-split bug: Previously, this function assumes there are multiple
-// queries in the string and split it by ';', which would cause one containing
-// ';' being split into multiple queries.
-// However, the multi-statement queries has been split by the psql client and
-// there is no need to split the query again.
-/* 1:  If the sql query is invalid, abort and send error_message
-  Not Sure: If one query is invalid, and there is a 'COMMIT' message at the end
-  Does the 'COMMIT' work? Assumes that not work right now
-  2: Let's first assume there is only one sql_stmt here...
-  3: WHY do we UPDATE query_ and query_type_
-  4: shoudl be a SQLStatementList here
-  5: Do we need query_string in statement?????? If txn has been aborted, shall we send response????
-     Do we need error_message in PrepareStatement?? already put parser() outside prepareStatement
-  6: should set query_ here
-  7: How to get Value from AbstractExpression?????
-  8: Why the result_format will not be freed after exiting?
-  9: For statement type that is not supported yet
-  10: should param_values and result_format be local variable?
-    should results_ be reset when PakcetManager.reset(), why results_ cannot be read?
- */
 ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const size_t thread_id) {
   std::string query;
   PacketGetString(pkt, pkt->len, query);
   std::shared_ptr<parser::SQLStatementList> sql_stmt_list;
   try {
     auto &peloton_parser = parser::PostgresParser::GetInstance();
-//    sql_stmt_list = std::move(peloton_parser.BuildParseTree(query));
     sql_stmt_list = peloton_parser.BuildParseTree(query);
-    // TODO: 1
     if (!sql_stmt_list->is_valid) {
-      LOG_INFO("22222");
       throw ParserException("Error Parsing SQL statement");
     }
   } // If the statement is invalid or not supported yet
   catch (Exception &e) {
-    // TODO: 9
     traffic_cop_->AbortInvalidStmt();
     std::string error_message = e.what();
-    LOG_INFO("111111%s", error_message.c_str());
     SendErrorResponse(
         {{NetworkMessageType::HUMAN_READABLE_ERROR, e.what()}});
     SendReadyForQuery(NetworkTransactionStateType::IDLE);
@@ -274,22 +248,23 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
   if (sql_stmt_list->GetNumStatements() == 0) {
     SendEmptyQueryResponse();
   }
-  // TODO: 2
+  //TODO: We only process the first query in the packet now.
+  // In most cases, it works. For example in psql, each query
+  // is sent in different packets. But when using the pipeline mode
+  // in Libpqxx, it sens multiple query in one packet.
   auto sql_stmt = sql_stmt_list->GetStatement(0);
-  // TODO: 3
+
   query_ = query;
   query_type_ = StatementTypeToQueryType(sql_stmt->GetType(), sql_stmt);
-  LOG_INFO("%s",QueryTypeToString(query_type_).c_str());
+  LOG_TRACE("%s",QueryTypeToString(query_type_).c_str());
   protocol_type_ = NetworkProtocolType::POSTGRES_PSQL;
   switch (query_type_) {
     case QueryType::QUERY_PREPARE: {
       std::shared_ptr<Statement> statement(nullptr);
       std::shared_ptr<parser::PrepareStatement> prep_stmt = std::dynamic_pointer_cast<parser::PrepareStatement>(sql_stmt);
       std::string stmt_name = prep_stmt->name;
-      //TODO: 4
       auto prep_stmt_tree = prep_stmt->query->GetStatement(0);
       std::string error_message;
-      // TODO: 5
       statement = traffic_cop_->PrepareStatement(stmt_name, query, prep_stmt_tree, error_message);
       if (statement.get() == nullptr) {
         SendErrorResponse(
@@ -319,7 +294,7 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
       if (statement_cache_itr != statement_cache_.end()) {
         statement_ = *statement_cache_itr;
       }
-        // Did not find statement with same name
+      // Did not find statement with same name
       else {
         error_message_ = "The prepared statement does not exist";
         SendErrorResponse(
@@ -327,13 +302,11 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
         SendReadyForQuery(NetworkTransactionStateType::IDLE);
         return ProcessResult::COMPLETE;
       }
-      // TODO: 6
       query_ = statement_->GetQueryString();
       query_type_ = statement_->GetQueryType();
       std::vector<int> result_format(statement_->GetTupleDescriptor().size(), 0);
       result_format_ = result_format;
-      // TODO: 7
-      // We assume it's only constant value expression
+      //TODO: We assume it's only constant value expression
       for (expression::AbstractExpression* param : *exec_stmt->parameters) {
         param_values_.push_back(((expression::ConstantValueExpression*) param)->GetValue());
       }
@@ -344,7 +317,6 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
       auto status =
           traffic_cop_->ExecuteStatement(statement_, param_values_, unnamed, nullptr, result_format_,
                                          results_, rows_affected_, error_message_, thread_id);
-
       if (traffic_cop_->is_queuing_) {
         return ProcessResult::PROCESSING;
       }
@@ -362,9 +334,7 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
       }
       param_values_ = std::vector<type::Value>();
       bool unnamed = false;
-      // TODO: 8
       result_format_ = std::vector<int>(statement_->GetTupleDescriptor().size(), 0);
-      // TODO: 10
       auto status =
           traffic_cop_->ExecuteStatement(statement_, param_values_, unnamed, nullptr, result_format_,
                                          results_, rows_affected_, error_message_, thread_id);
@@ -413,7 +383,6 @@ void PostgresProtocolHandler::ExecParseMessage(InputPacket *pkt) {
   try {
     LOG_INFO("%s, %s", statement_name.c_str(), query.c_str());
     auto &peloton_parser = parser::PostgresParser::GetInstance();
-//    sql_stmt_list = std::move(peloton_parser.BuildParseTree(query));
     sql_stmt_list = peloton_parser.BuildParseTree(query);
     if (!sql_stmt_list->is_valid) {
       LOG_INFO("Not valid");
@@ -835,7 +804,6 @@ ProcessResult PostgresProtocolHandler::ExecExecuteMessage(InputPacket *pkt,
   // EXECUTE message
   protocol_type_ = NetworkProtocolType::POSTGRES_JDBC;
   std::string error_message, portal_name;
-
   GetStringToken(pkt, portal_name);
 
   // covers weird JDBC edge case of sending double BEGIN statements. Don't

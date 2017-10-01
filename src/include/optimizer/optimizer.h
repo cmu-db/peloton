@@ -58,7 +58,6 @@ class Optimizer : public AbstractOptimizer {
 
   std::shared_ptr<planner::AbstractPlan> BuildPelotonPlanTree(
       const std::shared_ptr<parser::SQLStatementList> &parse_tree,
-      //const std::unique_ptr<parser::SQLStatementList> &parse_tree,
       concurrency::Transaction *txn) override;
 
   void Reset() override;
@@ -73,7 +72,6 @@ class Optimizer : public AbstractOptimizer {
    */
   std::unique_ptr<planner::AbstractPlan> HandleDDLStatement(
       std::shared_ptr<parser::SQLStatement> tree, bool &is_ddl_stmt, concurrency::Transaction *txn);
-  //parser::SQLStatement *tree, bool &is_ddl_stmt, concurrency::Transaction *txn);
 
   /* TransformQueryTree - create an initial operator tree for the given query
    * to be used in performing optimization.
@@ -81,7 +79,6 @@ class Optimizer : public AbstractOptimizer {
    * tree: a peloton query tree representing a select query
    * return: the root group expression for the inserted query
    */
-  //std::shared_ptr<GroupExpression> InsertQueryTree(parser::SQLStatement *tree,
   std::shared_ptr<GroupExpression> InsertQueryTree(std::shared_ptr<parser::SQLStatement> tree,
                                                    concurrency::Transaction *txn);
 
@@ -92,7 +89,6 @@ class Optimizer : public AbstractOptimizer {
    * return: the set of required physical properties for the query
    */
   PropertySet GetQueryRequiredProperties(std::shared_ptr<parser::SQLStatement> tree);
-  //PropertySet GetQueryRequiredProperties(parser::SQLStatement *tree);
 
   /* OptimizerPlanToPlannerPlan - convert a tree of physical operators to
    *     a Peloton planner plan for execution.

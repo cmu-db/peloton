@@ -23,7 +23,6 @@ BindNodeVisitor::BindNodeVisitor(concurrency::Transaction *txn) : txn_(txn) {
 }
 
 void BindNodeVisitor::BindNameToNode(std::shared_ptr<parser::SQLStatement> tree) {
-  //void BindNodeVisitor::BindNameToNode(parser::SQLStatement *tree) {
   tree->Accept(this);
 }
 

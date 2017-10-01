@@ -47,13 +47,6 @@ class Statement : public Printable {
 
   ~Statement();
 
-// TODO: later should be removed, test psql first
-//  static void ParseQueryTypeString(const std::string& query_string,
-//                             std::string& query_type_string);
-//
-//  static void MapToQueryType(const std::string& query_type_string,
-//                             QueryType& query_type);
-
   std::vector<FieldInfo> GetTupleDescriptor() const;
 
   void SetStatementName(const std::string& statement_name);
@@ -88,8 +81,9 @@ class Statement : public Printable {
 
   // Get a string representation for debugging
   const std::string GetInfo() const;
+
   std::shared_ptr<parser::SQLStatement> GetSQLStmtParseTree() {return sql_stmt_;}
-//  parser::SQLStatement* GetSQLStmtParseTree() {return sql_stmt_list_->GetStatement(ith_stmt_)};
+
  private:
   // logical name of statement
   std::string statement_name_;
@@ -100,12 +94,9 @@ class Statement : public Printable {
   // query string
   std::string query_string_;
 
+  // the parse tree
   std::shared_ptr<parser::SQLStatement> sql_stmt_;
-//  std::shared_ptr<parser::SQLStatementList> sql_stmt_list_;
-//  int ith_stmt_;
-  // first token in query
-  // Keep the string token of the query_type because it is returned
-  // as responses after executing commands.
+
   std::string query_type_string_;
 
   // format codes of the parameters
@@ -123,10 +114,5 @@ class Statement : public Printable {
 
   // If this flag is true, then somebody wants us to replan this query
   bool needs_replan_ = false;
-
-  // containing pairs of <query_type_string, query_type>
-  // use map to speed up searching
-  static std::unordered_map<std::string, QueryType> query_type_map_;
-
 };
 }  // namespace peloton
