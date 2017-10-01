@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <include/optimizer/memo.h>
 #include "optimizer/operator_to_plan_transformer.h"
 
 #include "optimizer/operator_expression.h"
@@ -46,12 +45,10 @@ OperatorToPlanTransformer::OperatorToPlanTransformer() {}
 
 unique_ptr<planner::AbstractPlan>
 OperatorToPlanTransformer::ConvertOpExpression(
-    Memo* memo,
     shared_ptr<OperatorExpression> plan, PropertySet *requirements,
     vector<PropertySet> *required_input_props,
     vector<unique_ptr<planner::AbstractPlan>> &children_plans,
     vector<ExprMap> &children_expr_map, ExprMap *output_expr_map) {
-  memo_ = memo;
   requirements_ = requirements;
   required_input_props_ = required_input_props;
   children_plans_ = move(children_plans);
@@ -69,12 +66,6 @@ void OperatorToPlanTransformer::Visit(const DummyScan *) {
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalSeqScan *op) {
-  // Update table alias set
-  table_alias_set_.insert(op->table_alias);
-
-  // Extract Predicate
-  auto extracted_predicates = util::ConstructJoinPredicate(table_alias_set_, memo_->predicates);
-
   // Generate column ids to pass into scan plan and generate output expr map
   auto column_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
                          ->As<PropertyColumns>();
@@ -82,7 +73,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalSeqScan *op) {
       GenerateColumnsForScan(column_prop, op->table_alias, op->table_);
   // Add Scan Predicates
   expression::AbstractExpression *predicate =
-      GeneratePredicateForScan(extracted_predicates, op->table_alias, op->table_);
+      GeneratePredicateForScan(op->predicate, op->table_alias, op->table_);
 
   // Create scan plan
   unique_ptr<planner::AbstractPlan> seq_scan_plan(
@@ -91,14 +82,9 @@ void OperatorToPlanTransformer::Visit(const PhysicalSeqScan *op) {
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalIndexScan *op) {
-  // Update table alias set
-  table_alias_set_.insert(op->table_alias);
-
-  // Extract Predicate
-  auto extracted_predicates = util::ConstructJoinPredicate(table_alias_set_, memo_->predicates);
 
   expression::AbstractExpression *predicate =
-      GeneratePredicateForScan(extracted_predicates, op->table_alias, op->table_);
+      GeneratePredicateForScan(op->predicate, op->table_alias, op->table_);
   vector<oid_t> key_column_ids;
   vector<ExpressionType> expr_types;
   vector<type::Value> values;
@@ -472,14 +458,16 @@ vector<oid_t> OperatorToPlanTransformer::GenerateColumnsForScan(
 
 expression::AbstractExpression *
 OperatorToPlanTransformer::GeneratePredicateForScan(
-    expression::AbstractExpression* predicate_expr, const std::string &alias,
+    const std::shared_ptr<expression::AbstractExpression> predicate_expr, const std::string &alias,
     const storage::DataTable *table) {
+  expression::AbstractExpression *predicate = nullptr;
   if (predicate_expr != nullptr) {
     ExprMap table_expr_map;
     GenerateTableExprMap(table_expr_map, alias, table);
-    expression::ExpressionUtil::EvaluateExpression({table_expr_map}, predicate_expr);
+    predicate = predicate_expr->Copy();
+    expression::ExpressionUtil::EvaluateExpression({table_expr_map}, predicate);
   }
-  return predicate_expr;
+  return predicate;
 }
 
 std::unique_ptr<planner::AggregatePlan>

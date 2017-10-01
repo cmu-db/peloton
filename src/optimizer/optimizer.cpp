@@ -224,7 +224,7 @@ shared_ptr<GroupExpression> Optimizer::InsertQueryTree(
 
 PropertySet Optimizer::GetQueryRequiredProperties(parser::SQLStatement *tree) {
   QueryPropertyExtractor converter;
-  return converter.GetProperties(tree, &memo_);
+  return converter.GetProperties(tree);
 }
 
 unique_ptr<planner::AbstractPlan> Optimizer::OptimizerPlanToPlannerPlan(
@@ -233,7 +233,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::OptimizerPlanToPlannerPlan(
     vector<unique_ptr<planner::AbstractPlan>> &children_plans,
     vector<ExprMap> &children_expr_map, ExprMap *output_expr_map) {
   OperatorToPlanTransformer transformer;
-  return transformer.ConvertOpExpression(&memo_, plan, &requirements,
+  return transformer.ConvertOpExpression(plan, &requirements,
                                          &required_input_props, children_plans,
                                          children_expr_map, output_expr_map);
 }

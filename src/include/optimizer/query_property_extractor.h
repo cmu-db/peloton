@@ -30,7 +30,7 @@ namespace optimizer {
  */
 class QueryPropertyExtractor : public SqlNodeVisitor {
  public:
-  PropertySet GetProperties(parser::SQLStatement *tree, Memo* memo);
+  PropertySet GetProperties(parser::SQLStatement *tree);
 
   // We only assume the statement is selecting from one table for now
   void Visit(parser::SelectStatement *) override;
@@ -55,7 +55,7 @@ class QueryPropertyExtractor : public SqlNodeVisitor {
  private:
   // Required properties by the visitor
   PropertySet property_set_;
-  Memo* memo_;
+  vector<AnnotatedExpression> predicates_;
 };
 
 }  // namespace optimizer
