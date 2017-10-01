@@ -220,35 +220,5 @@ std::string PropertySort::ToString() const {
   return PropertyTypeToString(Type()) + "\n";
 }
 
-/*************** PropertyPredicates *****************/
-
-PropertyPredicates::PropertyPredicates(std::vector<AnnotatedExpression> predicates) {
-  this->predicates_ = std::move(predicates);
-}
-
-PropertyType PropertyPredicates::Type() const { return PropertyType::PREDICATE; }
-
-// For now we always assume the predicate property of the child operator will
-// satisfy the parent operator, so we don't check the exact expression of the
-// predicate.
-// TODO: Check the content of the member variable predicate_ to see whether it
-// satisfies r.
-bool PropertyPredicates::operator>=(const Property &r) const {
-  return Property::operator>=(r);
-}
-
-// Same as operator>=, we directly hash the type.
-// TODO: Hash the content of the predicate expression
-hash_t PropertyPredicates::Hash() const { return Property::Hash(); }
-
-void PropertyPredicates::Accept(PropertyVisitor *v) const {
-  v->Visit((const PropertyPredicates *)this);
-}
-
-std::string PropertyPredicates::ToString() const {
-  return PropertyTypeToString(Type()) + "\n";
-}
-
-
 }  // namespace optimizer
 }  // namespace peloton

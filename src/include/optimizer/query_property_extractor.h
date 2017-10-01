@@ -55,7 +55,6 @@ class QueryPropertyExtractor : public SqlNodeVisitor {
  private:
   // Required properties by the visitor
   PropertySet property_set_;
-  vector<AnnotatedExpression> predicates_;
 };
 
 }  // namespace optimizer

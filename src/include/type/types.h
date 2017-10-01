@@ -1268,7 +1268,6 @@ enum class PropertyType {
   DISTINCT,
   SORT,
   LIMIT,
-  PREDICATE
 };
 std::string PropertyTypeToString(PropertyType type);
 PropertyType StringToPropertyType(const std::string &str);
@@ -1281,18 +1280,19 @@ class ExprEqualCmp;
 }  // namespace expression
 
 // Augment abstract expression with a table alias set
-struct MultiTableExpression {
-  MultiTableExpression(expression::AbstractExpression *i_expr,
-                       std::unordered_set<std::string> &i_set)
+truct AnnotatedExpression {
+  AnnotatedExpression(
+      expression::AbstractExpression* i_expr,
+      std::unordered_set<std::string>& i_set)
       : expr(i_expr), table_alias_set(i_set) {}
-  MultiTableExpression(const MultiTableExpression &mt_expr)
+  AnnotatedExpression(const AnnotatedExpression& mt_expr)
       : expr(mt_expr.expr), table_alias_set(mt_expr.table_alias_set) {}
-  expression::AbstractExpression *expr;
+  expression::AbstractExpression* expr;
   std::unordered_set<std::string> table_alias_set;
 };
 
-typedef std::vector<expression::AbstractExpression *> SingleTablePredicates;
-typedef std::vector<MultiTableExpression> MultiTablePredicates;
+typedef std::vector<AnnotatedExpression> MultiTablePredicates;
+typedef std::unordered_map<std::string, std::vector<expression::AbstractExpression*>> SingleTablePredicatesMap;
 
 // Mapping of Expression -> Column Offset created by operator
 typedef std::unordered_map<std::shared_ptr<expression::AbstractExpression>,
