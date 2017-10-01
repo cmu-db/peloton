@@ -25,7 +25,7 @@ namespace optimizer {
 #define DEFAULT_HAS_INDEX false
 
 class ColumnStats;
-
+//class Stats;
 //===--------------------------------------------------------------------===//
 // TableStats
 //===--------------------------------------------------------------------===//
