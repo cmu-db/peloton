@@ -156,7 +156,7 @@ void QueryToOperatorTransformer::Visit(parser::TableRef *node) {
     throw NotImplementedException("Not support joins");
     node->select->Accept(this);
   }
-  // Explicit Join.
+  // Explicit Join
   else if (node->join != nullptr) {
     node->join->Accept(this);
   }
