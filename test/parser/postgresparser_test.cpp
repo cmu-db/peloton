@@ -603,8 +603,7 @@ TEST_F(PostgresParserTests, InsertTest) {
   std::vector<std::string> queries;
 
   // Insert multiple tuples into the table
-  queries.push_back("INSERT INTO foo VALUES (1, 2, 3);");
-  //queries.push_back("INSERT INTO foo VALUES (NULL, 2, 3), (4, 5, 6);");
+  queries.push_back("INSERT INTO foo VALUES (NULL, 2, 3), (4, 5, 6);");
 
   auto parser = parser::PostgresParser::GetInstance();
   UNUSED_ATTRIBUTE int ii = 0;
@@ -623,20 +622,13 @@ TEST_F(PostgresParserTests, InsertTest) {
     EXPECT_NE(stmt_list, nullptr);
     EXPECT_EQ(1, stmt_list->GetNumStatements());
     EXPECT_TRUE(stmt_list->GetStatement(0)->GetType() == StatementType::INSERT);
-    LOG_INFO("111");
     EXPECT_NE(nullptr, stmt_list->GetStatement(0));
-    LOG_INFO("121");
     auto insert_stmt = std::dynamic_pointer_cast<parser::InsertStatement>(stmt_list->GetStatement(0));
     //auto insert_stmt = (parser::InsertStatement *)stmt_list->GetStatement(0);
-    LOG_INFO("333");
     EXPECT_NE(nullptr, insert_stmt);
-    LOG_INFO("909");
     EXPECT_NE(nullptr, insert_stmt->table_ref_);
-    LOG_INFO("000");
     EXPECT_EQ("foo", insert_stmt->GetTableName());
-    LOG_INFO("444");
     EXPECT_TRUE(insert_stmt->insert_values != nullptr);
-    LOG_INFO("555");
     EXPECT_EQ(2, insert_stmt->insert_values->size());
     // Test NULL Value parsing
     EXPECT_TRUE(((expression::ConstantValueExpression *)
