@@ -188,9 +188,12 @@ void PostgresProtocolHandler::CompleteCommand(const std::string &query, const Qu
     case QueryType::QUERY_INSERT:
       tag += " 0 " + std::to_string(rows);
       break;
-    case QueryType::QUERY_CREATE:
-      tag += " TABLE";
+    case QueryType::QUERY_CREATE: {
+      std::string create_type_string;
+      Statement::ParseCreateTypeString(query, create_type_string);
+      tag += " " + create_type_string;
       break;
+    }
     case QueryType::QUERY_PREPARE:
       break;
     default:

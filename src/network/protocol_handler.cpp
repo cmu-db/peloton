@@ -38,7 +38,7 @@ namespace network {
     responses.clear();
     request.Reset();
   }
-
+  
   void ProtocolHandler::GetResult() {}
 }  // namespace network
 }  // namespace peloton
