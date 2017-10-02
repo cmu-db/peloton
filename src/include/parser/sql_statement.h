@@ -25,7 +25,6 @@
 #include "type/types.h"
 
 namespace peloton {
-
 namespace parser {
 
 struct TableInfo {
@@ -43,7 +42,7 @@ struct TableInfo {
 // Base class for every SQLStatement
 class SQLStatement : public Printable {
  public:
-  SQLStatement(StatementType type) : stmt_type(type){};
+  SQLStatement(StatementType type) : stmt_type(type){}
 
   virtual ~SQLStatement() {}
 
@@ -95,30 +94,27 @@ class SQLStatementList : public Printable {
     AddStatement(stmt);
   };
 
-  virtual ~SQLStatementList() {
-    // clean up statements
-    for (auto stmt : statements) delete stmt;
+  virtual ~SQLStatementList() {}
 
-    delete (char*)parser_msg;
-  }
+  void AddStatement(SQLStatement* stmt) { statements.push_back(std::shared_ptr<SQLStatement>(stmt)); }
+  void AddStatement(std::shared_ptr<SQLStatement> stmt) { statements.push_back(stmt); }
 
-  void AddStatement(SQLStatement* stmt) { statements.push_back(stmt); }
+  std::shared_ptr<SQLStatement> GetStatement(int id) const { return statements[id]; }
 
-  SQLStatement* GetStatement(int id) const { return statements[id]; }
-
-  const std::vector<SQLStatement*>& GetStatements() const { return statements; }
+  const std::vector<std::shared_ptr<SQLStatement>>& GetStatements() const { return statements; }
 
   size_t GetNumStatements() const { return statements.size(); }
 
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
-  std::vector<SQLStatement*> statements;
+  std::vector<std::shared_ptr<SQLStatement>> statements;
   bool is_valid;
   const char* parser_msg;
   int error_line;
   int error_col;
 };
 
+QueryType StatementTypeToQueryType(StatementType stmt_type, std::shared_ptr<parser::SQLStatement> sql_stmt);
 }  // namespace parser
 }  // namespace peloton

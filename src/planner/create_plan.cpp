@@ -32,7 +32,7 @@ CreatePlan::CreatePlan(std::string table_name, std::string database_name,
       table_schema(schema.release()),
       create_type(c_type) {}
 
-CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
+CreatePlan::CreatePlan(std::shared_ptr<parser::CreateStatement> parse_tree) {
   switch (parse_tree->type) {
     case parser::CreateStatement::CreateType::kDatabase: {
       create_type = CreateType::DB;

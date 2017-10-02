@@ -29,7 +29,6 @@ void CreateAndLoadTable() {
   // Create a table first
   TestingSQLUtil::ExecuteSQLQuery(
       "CREATE TABLE test(a INT PRIMARY KEY, b INT, c INT);");
-
   // Insert tuples into table
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 22, 333);");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (2, 11, 000);");
@@ -68,7 +67,6 @@ TEST_F(InsertSQLTest, InsertOneValue) {
   int rows_changed;
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
       new optimizer::Optimizer());
-
   // INSERT a tuple
   std::string query("INSERT INTO test VALUES (5, 55, 555);");
 
@@ -76,6 +74,7 @@ TEST_F(InsertSQLTest, InsertOneValue) {
   auto plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn);
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(plan->GetPlanNodeType(), PlanNodeType::INSERT);
+  LOG_INFO("GeneratePlanWithOptimizer");
 
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
       optimizer, query, result, tuple_descriptor, rows_changed, error_message);

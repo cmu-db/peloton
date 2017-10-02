@@ -49,7 +49,7 @@ class PostgresParser {
 
   static PostgresParser& GetInstance();
 
-  std::unique_ptr<parser::SQLStatementList> BuildParseTree(
+  std::shared_ptr<parser::SQLStatementList> BuildParseTree(
       const std::string& query_string);
 
  private:
@@ -227,6 +227,8 @@ class PostgresParser {
 
   // transform helper for analyze statement
   static parser::AnalyzeStatement* VacuumTransform(VacuumStmt* root);
+
+  static parser::VariableSetStatement* VariableSetTransform(VariableSetStmt* root);
 };
 
 }  // namespace parser

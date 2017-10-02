@@ -79,7 +79,7 @@ Optimizer::Optimizer() {
 }
 
 shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
-    const unique_ptr<parser::SQLStatementList> &parse_tree_list,
+    const shared_ptr<parser::SQLStatementList> &parse_tree_list,
     concurrency::Transaction *txn) {
   // Base Case
   if (parse_tree_list->GetStatements().size() == 0) return nullptr;
@@ -131,7 +131,7 @@ void Optimizer::Reset() {
 }
 
 unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
-    parser::SQLStatement *tree, bool &is_ddl_stmt,
+    std::shared_ptr<parser::SQLStatement> tree, bool &is_ddl_stmt,
     concurrency::Transaction *txn) {
   unique_ptr<planner::AbstractPlan> ddl_plan = nullptr;
   is_ddl_stmt = true;
@@ -140,7 +140,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
     case StatementType::DROP: {
       LOG_TRACE("Adding Drop plan...");
       unique_ptr<planner::AbstractPlan> drop_plan(
-          new planner::DropPlan((parser::DropStatement *)tree));
+          new planner::DropPlan(std::dynamic_pointer_cast<parser::DropStatement>(tree)));
       ddl_plan = move(drop_plan);
       break;
     }
@@ -150,12 +150,12 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
 
       // This is adapted from the simple optimizer
       auto create_plan =
-          new planner::CreatePlan((parser::CreateStatement *)tree);
+          new planner::CreatePlan(std::dynamic_pointer_cast<parser::CreateStatement>(tree));
       std::unique_ptr<planner::AbstractPlan> child_CreatePlan(create_plan);
       ddl_plan = move(child_CreatePlan);
 
       if (create_plan->GetCreateType() == peloton::CreateType::INDEX) {
-        auto create_stmt = (parser::CreateStatement *)tree;
+        auto create_stmt = std::dynamic_pointer_cast<parser::CreateStatement>(tree);
         auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
             create_stmt->GetDatabaseName(), create_stmt->GetTableName(), txn);
         std::vector<oid_t> column_ids;
@@ -193,14 +193,14 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
     case StatementType::ANALYZE: {
       LOG_TRACE("Adding Analyze plan...");
       unique_ptr<planner::AbstractPlan> analyze_plan(new planner::AnalyzePlan(
-          static_cast<parser::AnalyzeStatement *>(tree), txn));
+          std::dynamic_pointer_cast<parser::AnalyzeStatement>(tree), txn));
       ddl_plan = move(analyze_plan);
       break;
     }
     case StatementType::COPY: {
       LOG_TRACE("Adding Copy plan...");
-      parser::CopyStatement *copy_parse_tree =
-          static_cast<parser::CopyStatement *>(tree);
+      std::shared_ptr<parser::CopyStatement> copy_parse_tree =
+          std::dynamic_pointer_cast<parser::CopyStatement>(tree);
       ddl_plan = util::CreateCopyPlan(copy_parse_tree);
       break;
     }
@@ -211,7 +211,8 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
 }
 
 shared_ptr<GroupExpression> Optimizer::InsertQueryTree(
-    parser::SQLStatement *tree, concurrency::Transaction *txn) {
+    std::shared_ptr<parser::SQLStatement> tree,
+    concurrency::Transaction *txn) {
   QueryToOperatorTransformer converter(txn);
   shared_ptr<OperatorExpression> initial =
       converter.ConvertToOpExpression(tree);
@@ -220,7 +221,7 @@ shared_ptr<GroupExpression> Optimizer::InsertQueryTree(
   return gexpr;
 }
 
-PropertySet Optimizer::GetQueryRequiredProperties(parser::SQLStatement *tree) {
+PropertySet Optimizer::GetQueryRequiredProperties(std::shared_ptr<parser::SQLStatement> tree) {
   QueryPropertyExtractor converter(column_manager_);
   return converter.GetProperties(tree);
 }

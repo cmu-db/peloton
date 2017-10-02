@@ -678,7 +678,8 @@ enum class StatementType {
   ALTER = 12,                 // alter statement type
   TRANSACTION = 13,           // transaction statement type,
   COPY = 14,                  // copy type
-  ANALYZE = 15                // analyze type
+  ANALYZE = 15,                // analyze type
+  VARIABLE_SET = 16,           // variable set statement type
 };
 std::string StatementTypeToString(StatementType type);
 StatementType StringToStatementType(const std::string &str);
@@ -689,17 +690,31 @@ std::ostream &operator<<(std::ostream &os, const StatementType &type);
 //===--------------------------------------------------------------------===//
 
 enum class QueryType {
-  QUERY_BEGIN,     // begin query
-  QUERY_COMMIT,    // commit query
-  QUERY_CREATE,    // create query
-  QUERY_ROLLBACK,  // rollback query
-  QUERY_INSERT,    // insert query
-  QUERY_SET,       // set query
-  QUERY_SHOW,      // show query
-  QUERY_PREPARE,   // prepare query
-  QUERY_EXECUTE,   // execute query
-  QUERY_OTHER,     // other queries
+  QUERY_BEGIN = 0,                // begin query
+  QUERY_COMMIT = 1,               // commit query
+  QUERY_ROLLBACK = 2,             // rollback query
+  QUERY_CREATE_TABLE = 3,               // create query
+  QUERY_CREATE_DB = 4,
+  QUERY_CREATE_INDEX = 5,
+  QUERY_DROP = 6,                // other queries
+  QUERY_INSERT = 7,               // insert query
+  QUERY_PREPARE = 8,	      // prepare query
+  QUERY_EXECUTE = 9, 	      // execute query
+  QUERY_UPDATE = 10,
+  QUERY_DELETE = 11,
+  QUERY_RENAME = 12,
+  QUERY_ALTER = 13,
+  QUERY_COPY = 14,
+  QUERY_ANALYZE = 15,
+  QUERY_SET = 16,                  // set query
+  QUERY_SHOW = 17,                 // show query
+  QUERY_SELECT = 18,
+  QUERY_OTHER = 19,
+  QUERY_INVALID = 20,
+  QUERY_CREATE_TRIGGER = 21,
 };
+std::string QueryTypeToString(QueryType query_type);
+QueryType StringToQueryType(std::string str);
 
 //===--------------------------------------------------------------------===//
 // Scan Direction Types

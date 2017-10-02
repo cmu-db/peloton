@@ -165,11 +165,11 @@ TEST_F(CreateTests, CreatingTrigger) {
       "FOR EACH ROW "
       "WHEN (OLD.balance <> NEW.balance) "
       "EXECUTE PROCEDURE check_account_update();";
-  auto stmt_list = parser.BuildParseTree(query).release();
+  auto stmt_list = parser.BuildParseTree(query);
   EXPECT_TRUE(stmt_list->is_valid);
   EXPECT_EQ(StatementType::CREATE, stmt_list->GetStatement(0)->GetType());
   auto create_trigger_stmt =
-      static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
+      std::static_pointer_cast<parser::CreateStatement>(stmt_list->GetStatement(0));
 
   // Create plans
   planner::CreatePlan plan(create_trigger_stmt);
@@ -252,10 +252,6 @@ TEST_F(CreateTests, CreatingTrigger) {
   if (when) {
     delete when;
   }
-
-  if (stmt_list) {
-    delete stmt_list;
-  }
 }
 
 // This test is added because there was a bug for triggers without "when". After
@@ -304,11 +300,11 @@ TEST_F(CreateTests, CreatingTriggerWithoutWhen) {
       "BEFORE UPDATE OF balance ON accounts "
       "FOR EACH ROW "
       "EXECUTE PROCEDURE check_account_update();";
-  auto stmt_list = parser.BuildParseTree(query).release();
+  auto stmt_list = parser.BuildParseTree(query);
   EXPECT_TRUE(stmt_list->is_valid);
   EXPECT_EQ(StatementType::CREATE, stmt_list->GetStatement(0)->GetType());
   auto create_trigger_stmt =
-      static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
+      std::static_pointer_cast<parser::CreateStatement>(stmt_list->GetStatement(0));
 
   // Create plans
   planner::CreatePlan plan(create_trigger_stmt);
@@ -347,10 +343,6 @@ TEST_F(CreateTests, CreatingTriggerWithoutWhen) {
 
   if (when) {
     delete when;
-  }
-
-  if (stmt_list) {
-    delete stmt_list;
   }
 }
 
@@ -400,11 +392,11 @@ TEST_F(CreateTests, CreatingTriggerInCatalog) {
       "FOR EACH ROW "
       "WHEN (OLD.balance <> NEW.balance) "
       "EXECUTE PROCEDURE check_account_update();";
-  auto stmt_list = parser.BuildParseTree(query).release();
+  auto stmt_list = parser.BuildParseTree(query);
   EXPECT_TRUE(stmt_list->is_valid);
   EXPECT_EQ(StatementType::CREATE, stmt_list->GetStatement(0)->GetType());
   auto create_trigger_stmt =
-      static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
+      std::static_pointer_cast<parser::CreateStatement>(stmt_list->GetStatement(0));
 
   // Create plans
   planner::CreatePlan plan(create_trigger_stmt);
@@ -434,9 +426,6 @@ TEST_F(CreateTests, CreatingTriggerInCatalog) {
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 
-  if (stmt_list) {
-    delete stmt_list;
-  }
 }
 
 }  // namespace test

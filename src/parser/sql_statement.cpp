@@ -25,10 +25,12 @@
 #include "parser/sql_statement.h"
 
 #include <sstream>
+#include <map>
 
 #include "parser/parser_utils.h"
 
 namespace peloton {
+
 namespace parser {
 
 //===--------------------------------------------------------------------===//
@@ -80,5 +82,61 @@ const std::string SQLStatementList::GetInfo() const {
   return os.str();
 }
 
+QueryType StatementTypeToQueryType(StatementType stmt_type, std::shared_ptr<parser::SQLStatement> sql_stmt) {
+  LOG_INFO("%s", StatementTypeToString(stmt_type).c_str());
+  QueryType query_type = QueryType::QUERY_OTHER;
+  std::map<StatementType, QueryType> type_map {
+      {StatementType::EXECUTE, QueryType::QUERY_EXECUTE},
+      {StatementType::PREPARE, QueryType::QUERY_PREPARE},
+      {StatementType::INSERT, QueryType::QUERY_INSERT},
+      {StatementType::UPDATE, QueryType::QUERY_UPDATE},
+      {StatementType::DELETE, QueryType::QUERY_DELETE},
+      {StatementType::COPY, QueryType::QUERY_COPY},
+      {StatementType::ANALYZE, QueryType::QUERY_ANALYZE},
+      {StatementType::ALTER, QueryType::QUERY_ALTER},
+      {StatementType::DROP, QueryType::QUERY_DROP},
+      {StatementType::SELECT, QueryType::QUERY_SELECT},
+      {StatementType::VARIABLE_SET, QueryType::QUERY_SET},
+  };
+  std::map<StatementType, QueryType>::iterator it  = type_map.find(stmt_type);
+  if (it != type_map.end()) {
+    query_type = it -> second;
+  } else {
+    switch(stmt_type) {
+      case StatementType::TRANSACTION:
+        switch(std::dynamic_pointer_cast<parser::TransactionStatement>(sql_stmt)->type) {
+          case parser::TransactionStatement::CommandType::kBegin:
+            query_type = QueryType::QUERY_BEGIN;
+            break;
+          case parser::TransactionStatement::CommandType::kCommit:
+            query_type = QueryType::QUERY_COMMIT;
+            break;
+          case parser::TransactionStatement::CommandType::kRollback:
+            query_type = QueryType::QUERY_ROLLBACK;
+            break;
+        }
+        break;
+      case StatementType::CREATE:
+        switch (std::dynamic_pointer_cast<parser::CreateStatement>(sql_stmt) -> type) {
+          case parser::CreateStatement::CreateType::kDatabase:
+            query_type = QueryType::QUERY_CREATE_DB;
+            break;
+          case parser::CreateStatement::CreateType::kIndex:
+            query_type = QueryType::QUERY_CREATE_INDEX;
+            break;
+          case parser::CreateStatement::CreateType::kTable:
+            query_type = QueryType::QUERY_CREATE_TABLE;
+            break;
+          case parser::CreateStatement::CreateType::kTrigger:
+            query_type = QueryType::QUERY_CREATE_TRIGGER;
+            break;
+        }
+        break;
+      default:
+        query_type = QueryType::QUERY_OTHER;
+    }
+  }
+  return query_type;
+}
 }  // namespace parser
 }  // namespace peloton

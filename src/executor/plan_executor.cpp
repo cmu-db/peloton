@@ -296,7 +296,7 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
       break;
     default:
       LOG_ERROR("Unsupported plan node type : %s",
-                PlanNodeTypeToString(plan_node_type).c_str());
+              PlanNodeTypeToString(plan_node_type).c_str());
       break;
   }
   LOG_TRACE("Adding %s Executor", PlanNodeTypeToString(plan_node_type).c_str());

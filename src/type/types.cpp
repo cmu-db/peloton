@@ -15,13 +15,15 @@
 #include <algorithm>
 #include <cstring>
 #include <sstream>
+#include <map>
 
 #include "common/exception.h"
 #include "common/logger.h"
 #include "common/macros.h"
 #include "type/value_factory.h"
 #include "util/string_util.h"
-
+#include "parser/transaction_statement.h"
+#include "parser/sql_statement.h"
 namespace peloton {
 
 FileHandle INVALID_FILE_HANDLE;
@@ -418,6 +420,9 @@ std::string StatementTypeToString(StatementType type) {
     case StatementType::ANALYZE: {
       return "ANALYZE";
     }
+    case StatementType::VARIABLE_SET: {
+      return "SET";
+    }
     default: {
       throw ConversionException(StringUtil::Format(
           "No string conversion for StatementType value '%d'",
@@ -465,7 +470,53 @@ std::ostream& operator<<(std::ostream& os, const StatementType& type) {
   os << StatementTypeToString(type);
   return os;
 }
-
+std::string QueryTypeToString(QueryType query_type) {
+  switch(query_type) {
+    case QueryType::QUERY_BEGIN:return "BEGIN";
+    case QueryType::QUERY_COMMIT:return "COMMIT";
+    case QueryType::QUERY_ROLLBACK:return "ROLLBACK";
+    case QueryType::QUERY_CREATE_DB:return "CREATE DATABASE";
+    case QueryType::QUERY_CREATE_INDEX: return "CREATE INDEX";
+    case QueryType::QUERY_CREATE_TABLE: return "CREATE TABLE";
+    case QueryType::QUERY_CREATE_TRIGGER: return "CREATE TRIGGER";
+    case QueryType::QUERY_DROP:return "DROP";
+    case QueryType::QUERY_INSERT:return "INSERT";
+    case QueryType::QUERY_SET: return "SET";
+    case QueryType::QUERY_SHOW: return "SHOW";
+    case QueryType::QUERY_UPDATE: return "UPDATE";
+    case QueryType::QUERY_ALTER: return "ALTER";
+    case QueryType::QUERY_DELETE: return "DELETE";
+    case QueryType::QUERY_COPY: return "COPY";
+    case QueryType::QUERY_ANALYZE: return "ANALYZE";
+    case QueryType::QUERY_RENAME: return "RENAME";
+    case QueryType::QUERY_PREPARE: return "PREPARE";
+    case QueryType::QUERY_EXECUTE: return "EXECUTE";
+    case QueryType::QUERY_SELECT: return "SELECT";
+    case QueryType::QUERY_OTHER: default: return "OTHER";
+  }
+}
+QueryType StringToQueryType(std::string str) {
+  std::map<std::string, QueryType> querytype_string_map {
+      {"BEGIN", QueryType::QUERY_BEGIN}, {"COMMIT", QueryType::QUERY_COMMIT},
+      {"ROLLBACK", QueryType::QUERY_ROLLBACK}, {"CREATE DATABASE", QueryType::QUERY_CREATE_DB},
+      {"CREATE INDEX", QueryType::QUERY_CREATE_INDEX}, {"CREATE TABLE", QueryType::QUERY_CREATE_TABLE},
+      {"DROP", QueryType::QUERY_DROP}, {"INSERT", QueryType::QUERY_INSERT},
+      {"SET", QueryType::QUERY_SET}, {"SHOW", QueryType::QUERY_SHOW},
+      {"SHOW", QueryType::QUERY_SHOW}, {"UPDATE", QueryType::QUERY_UPDATE},
+      {"ALTER", QueryType::QUERY_ALTER}, {"DELETE", QueryType::QUERY_DELETE},
+      {"COPY", QueryType::QUERY_COPY}, {"ANALYZE", QueryType::QUERY_ANALYZE},
+      {"RENAME", QueryType::QUERY_RENAME}, {"PREPARE", QueryType::QUERY_PREPARE},
+      {"EXECUTE", QueryType::QUERY_EXECUTE}, {"SELECT", QueryType::QUERY_SELECT},
+      {"CREATE TRIGGER", QueryType::QUERY_CREATE_TRIGGER},
+      {"OTHER", QueryType::QUERY_OTHER},
+  };
+  std::map<std::string, QueryType>::iterator it  = querytype_string_map.find(str);
+  if (it != querytype_string_map.end()) {
+    return it -> second;
+  } else {
+    return QueryType::QUERY_INVALID;
+  }
+}
 //===--------------------------------------------------------------------===//
 // Expression - String Utilities
 //===--------------------------------------------------------------------===//

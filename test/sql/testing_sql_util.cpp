@@ -58,7 +58,14 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
   LOG_INFO("Query: %s", query.c_str());
   // prepareStatement
   std::string unnamed_statement = "unnamed";
-  auto statement = traffic_cop_.PrepareStatement(unnamed_statement, query,
+
+  auto &peloton_parser = parser::PostgresParser::GetInstance();
+  auto sql_stmt_list = peloton_parser.BuildParseTree(query);
+  if (!sql_stmt_list -> is_valid) {
+    return ResultType::FAILURE;
+  }
+  auto sql_stmt = sql_stmt_list->GetStatement(0);
+  auto statement = traffic_cop_.PrepareStatement(unnamed_statement, query, sql_stmt,
                                                  error_message);
   if (statement.get() == nullptr) {
     rows_changed = 0;
@@ -100,6 +107,7 @@ ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
   traffic_cop_.SetTcopTxnState(txn);
 
   auto parsed_stmt = peloton_parser.BuildParseTree(query);
+  LOG_INFO("Build parse tree");
   auto plan = optimizer->BuildPelotonPlanTree(parsed_stmt, txn);
   tuple_descriptor =
       traffic_cop_.GenerateTupleDescriptor(parsed_stmt->GetStatement(0));
@@ -147,7 +155,13 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
 
   // prepareStatement
   std::string unnamed_statement = "unnamed";
-  auto statement = traffic_cop_.PrepareStatement(unnamed_statement, query,
+  auto &peloton_parser = parser::PostgresParser::GetInstance();
+  auto sql_stmt_list = peloton_parser.BuildParseTree(query);
+  if (!sql_stmt_list -> is_valid) {
+    return ResultType::FAILURE;
+  }
+  auto sql_stmt = sql_stmt_list->GetStatement(0);
+  auto statement = traffic_cop_.PrepareStatement(unnamed_statement, query, sql_stmt,
                                                  error_message);
   if (statement.get() == nullptr) {
     rows_changed = 0;
@@ -183,7 +197,16 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
   // execute the query using tcop
   // prepareStatement
   std::string unnamed_statement = "unnamed";
-  auto statement = traffic_cop_.PrepareStatement(unnamed_statement, query,
+  auto &peloton_parser = parser::PostgresParser::GetInstance();
+  auto sql_stmt_list = peloton_parser.BuildParseTree(query);
+  PL_ASSERT(sql_stmt_list);
+  if (!sql_stmt_list -> is_valid) {
+    return ResultType::FAILURE;
+  }
+  auto sql_stmt = sql_stmt_list->GetStatement(0);
+  PL_ASSERT(sql_stmt);
+  LOG_INFO("%s",sql_stmt->GetInfo().c_str());
+  auto statement = traffic_cop_.PrepareStatement(unnamed_statement, query, sql_stmt,
                                                  error_message);
   if (statement.get() == nullptr) {
     rows_changed = 0;

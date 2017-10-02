@@ -68,7 +68,7 @@ void ShowTable(std::string database_name, std::string table_name) {
             planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   std::vector<int> result_format;
   auto tuple_descriptor = traffic_cop.GenerateTupleDescriptor(
-      (parser::SelectStatement*)select_stmt->GetStatement(0));
+      std::dynamic_pointer_cast<parser::SelectStatement>(select_stmt->GetStatement(0)));
   result_format = std::vector<int>(tuple_descriptor.size(), 0);
   TestingSQLUtil::counter_.store(1);
   status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),

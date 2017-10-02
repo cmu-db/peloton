@@ -36,7 +36,7 @@ class QueryToOperatorTransformer : public SqlNodeVisitor {
   QueryToOperatorTransformer(concurrency::Transaction *txn);
 
   std::shared_ptr<OperatorExpression> ConvertToOpExpression(
-      parser::SQLStatement *op);
+      std::shared_ptr<parser::SQLStatement> op);
 
   void Visit(const parser::SelectStatement *op) override;
 

@@ -19,6 +19,7 @@
 
 #include "common/printable.h"
 #include "type/types.h"
+#include "parser/sql_statement.h"
 
 namespace peloton {
 namespace planner {
@@ -41,14 +42,10 @@ class Statement : public Printable {
   Statement& operator=(Statement&&) = delete;
 
   Statement(const std::string& statement_name, const std::string& query_string);
+  Statement(const std::string& statement_name, QueryType query_type,
+            std::string query_string, std::shared_ptr<parser::SQLStatement> sql_stmt);
 
   ~Statement();
-
-  static void ParseQueryTypeString(const std::string& query_string,
-                             std::string& query_type_string);
- 
-  static void MapToQueryType(const std::string& query_type_string,
-                             QueryType& query_type);
 
   std::vector<FieldInfo> GetTupleDescriptor() const;
 
@@ -85,20 +82,22 @@ class Statement : public Printable {
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
+  std::shared_ptr<parser::SQLStatement> GetSQLStmtParseTree() {return sql_stmt_;}
+
  private:
   // logical name of statement
   std::string statement_name_;
 
+  // enum value of query_type
+  QueryType query_type_;
+
   // query string
   std::string query_string_;
 
-  // first token in query
-  // Keep the string token of the query_type because it is returned 
-  // as responses after executing commands.
-  std::string query_type_string_;
+  // the parse tree
+  std::shared_ptr<parser::SQLStatement> sql_stmt_;
 
-  // enum value of query_type
-  QueryType query_type_;
+  std::string query_type_string_;
 
   // format codes of the parameters
   std::vector<int32_t> param_types_;
@@ -115,10 +114,5 @@ class Statement : public Printable {
 
   // If this flag is true, then somebody wants us to replan this query
   bool needs_replan_ = false;
-
-  // containing pairs of <query_type_string, query_type>
-  // use map to speed up searching
-  static std::unordered_map<std::string, QueryType> query_type_map_;
-
 };
 }  // namespace peloton

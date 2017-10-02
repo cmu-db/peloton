@@ -33,7 +33,7 @@ class BindNodeVisitor : public SqlNodeVisitor {
  public:
   BindNodeVisitor(concurrency::Transaction *txn);
 
-  void BindNameToNode(parser::SQLStatement *tree);
+  void BindNameToNode(std::shared_ptr<parser::SQLStatement> tree);
   void Visit(const parser::SelectStatement *) override;
 
   // Some sub query nodes inside SelectStatement

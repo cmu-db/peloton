@@ -635,3 +635,40 @@ typedef struct VacuumStmt
 	RangeVar   *relation;		/* single table to process, or NULL */
 	List	   *va_cols;		/* list of column names, or NIL for all */
 } VacuumStmt;
+
+
+/* ----------------------
+ * SET Statement (includes RESET)
+ *
+ * "SET var TO DEFAULT" and "RESET var" are semantically equivalent, but we
+ * preserve the distinction in VariableSetKind for CreateCommandTag().
+ * ----------------------
+ */
+typedef enum
+{
+    VAR_SET_VALUE,              /* SET var = value */
+    VAR_SET_DEFAULT,            /* SET var TO DEFAULT */
+    VAR_SET_CURRENT,            /* SET var FROM CURRENT */
+    VAR_SET_MULTI,              /* special case for SET TRANSACTION ... */
+    VAR_RESET,                  /* RESET var */
+    VAR_RESET_ALL               /* RESET ALL */
+} VariableSetKind;
+
+typedef struct VariableSetStmt
+{
+    NodeTag     type;
+    VariableSetKind kind;
+    char       *name;           /* variable to be set */
+    List       *args;           /* List of A_Const nodes */
+    bool        is_local;       /* SET LOCAL? */
+} VariableSetStmt;
+
+/* ----------------------
+ * Show Statement
+ * ----------------------
+ */
+typedef struct VariableShowStmt
+{
+    NodeTag     type;
+    char       *name;
+} VariableShowStmt;

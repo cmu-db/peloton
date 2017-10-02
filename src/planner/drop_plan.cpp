@@ -24,7 +24,7 @@ DropPlan::DropPlan(const std::string &name) {
   missing = false;
 }
 
-DropPlan::DropPlan(parser::DropStatement *parse_tree) {
+DropPlan::DropPlan(std::shared_ptr<parser::DropStatement> parse_tree) {
   if (parse_tree->type == parser::DropStatement::EntityType::kTable) {
     table_name = parse_tree->GetTableName();
     missing = parse_tree->missing;

@@ -126,12 +126,12 @@ class TriggerTests : public PelotonTest {
     auto parser = parser::PostgresParser::GetInstance();
     catalog::Catalog::GetInstance()->Bootstrap();
 
-    std::unique_ptr<parser::SQLStatementList> stmt_list(
-        parser.BuildParseTree(query).release());
+    std::shared_ptr<parser::SQLStatementList> stmt_list(
+        parser.BuildParseTree(query));
     EXPECT_TRUE(stmt_list->is_valid);
     EXPECT_EQ(StatementType::CREATE, stmt_list->GetStatement(0)->GetType());
     auto create_trigger_stmt =
-        static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
+        std::static_pointer_cast<parser::CreateStatement>(stmt_list->GetStatement(0));
 
     // Create plans
     planner::CreatePlan plan(create_trigger_stmt);
@@ -168,12 +168,12 @@ TEST_F(TriggerTests, BasicTest) {
       "FOR EACH ROW "
       "WHEN (OLD.balance <> NEW.balance) "
       "EXECUTE PROCEDURE check_account_update();";
-  std::unique_ptr<parser::SQLStatementList> stmt_list1(
-      parser.BuildParseTree(query1).release());
+  std::shared_ptr<parser::SQLStatementList> stmt_list1(
+      parser.BuildParseTree(query1));
   EXPECT_TRUE(stmt_list1->is_valid);
   EXPECT_EQ(StatementType::CREATE, stmt_list1->GetStatement(0)->GetType());
   auto create_trigger_stmt1 =
-      static_cast<parser::CreateStatement *>(stmt_list1->GetStatement(0));
+      std::static_pointer_cast<parser::CreateStatement>(stmt_list1->GetStatement(0));
 
   // Create plans
   const planner::CreatePlan plan1(create_trigger_stmt1);
@@ -192,11 +192,11 @@ TEST_F(TriggerTests, BasicTest) {
       "FOR EACH ROW "
       "WHEN (OLD.balance <> NEW.balance) "
       "EXECUTE PROCEDURE check_account_update();";
-  std::unique_ptr<parser::SQLStatementList> stmt_list2(
-      parser.BuildParseTree(query2).release());
+  std::shared_ptr<parser::SQLStatementList> stmt_list2(
+      parser.BuildParseTree(query2));
   EXPECT_TRUE(stmt_list2->is_valid);
   auto create_trigger_stmt2 =
-      static_cast<parser::CreateStatement *>(stmt_list2->GetStatement(0));
+      std::static_pointer_cast<parser::CreateStatement>(stmt_list2->GetStatement(0));
   const planner::CreatePlan plan2(create_trigger_stmt2);
   trigger::Trigger trigger2(plan2);
   EXPECT_EQ("check_update_and_delete", trigger2.GetTriggerName());
@@ -237,12 +237,12 @@ TEST_F(TriggerTests, BeforeAndAfterRowInsertTriggers) {
       "BEFORE INSERT ON accounts "
       "FOR EACH ROW WHEN (NEW.dept_id = 2333) "
       "EXECUTE PROCEDURE b_r_insert_trigger_func();";
-  std::unique_ptr<parser::SQLStatementList> stmt_list(
-      parser.BuildParseTree(query).release());
+  std::shared_ptr<parser::SQLStatementList> stmt_list(
+      parser.BuildParseTree(query));
   EXPECT_TRUE(stmt_list->is_valid);
   EXPECT_EQ(StatementType::CREATE, stmt_list->GetStatement(0)->GetType());
   auto create_trigger_stmt =
-      static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
+      std::static_pointer_cast<parser::CreateStatement>(stmt_list->GetStatement(0));
 
   // Create plans
   planner::CreatePlan plan(create_trigger_stmt);
@@ -322,12 +322,12 @@ TEST_F(TriggerTests, AfterStatmentInsertTriggers) {
       "AFTER INSERT ON accounts "
       "FOR EACH STATEMENT "
       "EXECUTE PROCEDURE a_s_insert_trigger_func();";
-  std::unique_ptr<parser::SQLStatementList> stmt_list(
-      parser.BuildParseTree(query).release());
+  std::shared_ptr<parser::SQLStatementList> stmt_list(
+      parser.BuildParseTree(query));
   EXPECT_TRUE(stmt_list->is_valid);
   EXPECT_EQ(StatementType::CREATE, stmt_list->GetStatement(0)->GetType());
   auto create_trigger_stmt =
-      static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
+      std::static_pointer_cast<parser::CreateStatement>(stmt_list->GetStatement(0));
 
   // Create plans
   planner::CreatePlan plan(create_trigger_stmt);

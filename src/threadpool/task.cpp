@@ -11,8 +11,9 @@
 //===----------------------------------------------------------------------===//
 
 #include <common/logger.h>
+#include <include/common/macros.h>
 #include "threadpool/task.h"
-
+#include "traffic_cop/traffic_cop.h"
 namespace peloton {
 namespace threadpool {
 
@@ -25,6 +26,7 @@ void Task::ExecuteTask() {
 // Current thread would be blocked until the call back function finishes.
 void TaskQueue::EnqueueTask(void(*task_ptr)(void*), void* task_arg, void(*task_callback_ptr)(void*), void* task_callback_arg){
   std::shared_ptr<Task> task = std::make_shared<Task>(task_ptr, task_arg, task_callback_ptr, task_callback_arg);
+  PL_ASSERT(task.get());
   task_queue_.Enqueue(task);
 }
 
