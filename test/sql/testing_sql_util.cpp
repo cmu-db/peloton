@@ -218,13 +218,10 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
   //SetTrafficCopCounter();
   counter_.store(1);
-  LOG_INFO("Finish preparing");
   auto status =
       traffic_cop_.ExecuteStatement(statement, param_values, unnamed, nullptr, result_format,
                                     result, rows_changed, error_message);
-  LOG_INFO("Adding into queue");
   if (traffic_cop_.is_queuing_) {
-    LOG_INFO("queuing");
     ContinueAfterComplete();
     traffic_cop_.ExecuteStatementPlanGetResult();
     status = traffic_cop_.ExecuteStatementGetResult(rows_changed);
@@ -233,7 +230,6 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
   if (status == ResultType::SUCCESS) {
     tuple_descriptor = statement->GetTupleDescriptor();
   }
-  LOG_INFO("Finish execution");
   return status;
 }
 

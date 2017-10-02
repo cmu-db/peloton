@@ -73,13 +73,11 @@ class TrafficCop {
   std::shared_ptr<Statement> PrepareStatement(const std::string &statement_name,
                                               const std::string &query_string,
                                               std::shared_ptr<parser::SQLStatement> sql_stmt,
-                                              //parser::SQLStatement* sql_stmt,
                                               std::string &error_message,
                                               const size_t thread_id = 0);
 
   std::vector<FieldInfo> GenerateTupleDescriptor(
       std::shared_ptr<parser::SQLStatement> select_stmt);
-  //parser::SQLStatement *select_stmt);
 
   FieldInfo GetColumnFieldForValueType(std::string column_name,
                                        type::TypeId column_type);
@@ -172,19 +170,6 @@ struct ExecutePlanArg {
   std::vector<StatementResult> &result_;
   const std::vector<int> &result_format_;
   executor::ExecuteResult &p_status_;
-
- public:
-  void mycheckValid() {
-    PL_ASSERT(plan_.get());
-    PL_ASSERT(txn_);
-    for (const type::Value value : params_) {
-      LOG_INFO("%s", value.ToString().c_str());
-    }
-    for (int result_f : result_format_) {
-      LOG_INFO("%d", result_f);
-    }
-    LOG_INFO("%d", p_status_.m_processed);
-  }
 };
 
 }  // namespace tcop

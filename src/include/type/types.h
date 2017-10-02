@@ -29,7 +29,6 @@
 #include "unistd.h"
 #include "common/logger.h"
 #include "common/macros.h"
-//#include "parser/sql_statement.h"
 namespace peloton {
 
 // For all of the enums defined in this header, we will

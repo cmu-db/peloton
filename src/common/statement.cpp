@@ -11,14 +11,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "common/statement.h"
-
 #include <cstdio>
 #include <sstream>
-#include <include/parser/sql_statement.h>
-
+#include "parser/sql_statement.h"
 #include "common/logger.h"
 #include "planner/abstract_plan.h"
 #include "parser/postgresparser.h"
+
 namespace peloton {
 Statement::Statement(const std::string& statement_name,
                      const std::string& query_string)

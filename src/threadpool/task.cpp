@@ -31,19 +31,7 @@ void TaskQueue::EnqueueTask(void(*task_ptr)(void*), void* task_arg, void(*task_c
 }
 
 bool TaskQueue::PollTask(std::shared_ptr<Task> &task) {
-//  static int i = 0;
-  bool re = task_queue_.Dequeue(task);
-  if (re) {
-    PL_ASSERT(task.get());
-    PL_ASSERT(task->task_callback_arg_);
-    PL_ASSERT(task->task_callback_ptr_);
-    PL_ASSERT(task->task_arg_);
-    PL_ASSERT(task->task_ptr_);
-    struct tcop::ExecutePlanArg *exec_plan_arg = (struct tcop::ExecutePlanArg*)(task->task_arg_);
-    exec_plan_arg->mycheckValid();
-    LOG_TRACE("Check, TASK: %d", i++);
-  }
-  return re;
+  return task_queue_.Dequeue(task);
 }
 
 bool TaskQueue::IsEmpty() {

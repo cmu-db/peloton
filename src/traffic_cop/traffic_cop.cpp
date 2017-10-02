@@ -105,7 +105,6 @@ ResultType TrafficCop::CommitQueryHelper() {
   // If this exception if caused by a query in a transaction,
   // I will block following queries in that transaction until 'COMMIT' or
   // 'ROLLBACK' After receive 'COMMIT', see if it is rollback or really commit.
-  LOG_INFO("txn stack size: %lu", tcop_txn_state_.size());
   if (curr_state.second != ResultType::ABORTED) {
     // txn committed
     return txn_manager.CommitTransaction(txn);
@@ -267,7 +266,6 @@ void TrafficCop::ExecuteStatementPlanGetResult() {
 std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     const std::string &stmt_name,
     const std::string &query_string,
-    //parser::SQLStatement* sql_stmt,
     std::shared_ptr<parser::SQLStatement> sql_stmt,
     UNUSED_ATTRIBUTE std::string &error_message,
     const size_t thread_id UNUSED_ATTRIBUTE) {
@@ -295,8 +293,10 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     // Begin new transaction when received single-statement query or "BEGIN" from multi-statement query
     if (query_type == QueryType::QUERY_BEGIN) {  // only begin a new transaction
       // note this transaction is not single-statement transaction
+      LOG_TRACE("BEGIN");
       single_statement_txn_ = false;
     } else {
+      LOG_TRACE("SINGLE TXN");
       // single statement
       single_statement_txn_ = true;
     }
