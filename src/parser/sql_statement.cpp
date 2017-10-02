@@ -127,10 +127,12 @@ QueryType StatementTypeToQueryType(StatementType stmt_type, std::shared_ptr<pars
           case parser::CreateStatement::CreateType::kTable:
             query_type = QueryType::QUERY_CREATE_TABLE;
             break;
+          case parser::CreateStatement::CreateType::kTrigger:
+            query_type = QueryType::QUERY_CREATE_TRIGGER;
+            break;
         }
         break;
       default:
-        // TODO: When to get QUERY_SET, QUERY_SHOW????
         query_type = QueryType::QUERY_OTHER;
     }
   }

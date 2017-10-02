@@ -478,6 +478,7 @@ std::string QueryTypeToString(QueryType query_type) {
     case QueryType::QUERY_CREATE_DB:return "CREATE DATABASE";
     case QueryType::QUERY_CREATE_INDEX: return "CREATE INDEX";
     case QueryType::QUERY_CREATE_TABLE: return "CREATE TABLE";
+    case QueryType::QUERY_CREATE_TRIGGER: return "CREATE TRIGGER";
     case QueryType::QUERY_DROP:return "DROP";
     case QueryType::QUERY_INSERT:return "INSERT";
     case QueryType::QUERY_SET: return "SET";
@@ -506,6 +507,7 @@ QueryType StringToQueryType(std::string str) {
       {"COPY", QueryType::QUERY_COPY}, {"ANALYZE", QueryType::QUERY_ANALYZE},
       {"RENAME", QueryType::QUERY_RENAME}, {"PREPARE", QueryType::QUERY_PREPARE},
       {"EXECUTE", QueryType::QUERY_EXECUTE}, {"SELECT", QueryType::QUERY_SELECT},
+      {"CREATE TRIGGER", QueryType::QUERY_CREATE_TRIGGER},
       {"OTHER", QueryType::QUERY_OTHER},
   };
   std::map<std::string, QueryType>::iterator it  = querytype_string_map.find(str);

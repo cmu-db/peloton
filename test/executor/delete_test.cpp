@@ -64,7 +64,7 @@ void ShowTable(std::string database_name, std::string table_name) {
   auto select_stmt =
       peloton_parser.BuildParseTree("SELECT * FROM " + table_name);
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(select_stmt, txn));
-  LOG_TRACE("Query Plan\n%s",
+  LOG_INFO("Query Plan\n%s",
             planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   std::vector<int> result_format;
   auto tuple_descriptor = tcop::TrafficCop().GenerateTupleDescriptor(

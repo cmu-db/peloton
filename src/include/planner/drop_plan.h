@@ -34,8 +34,7 @@ class DropPlan : public AbstractPlan {
 
   explicit DropPlan(const std::string &name);
 
-  explicit DropPlan(std::shared_ptr<parser::DropStatement> parse_tree,
-                    concurrency::Transaction *txn);
+  explicit DropPlan(std::shared_ptr<parser::DropStatement> parse_tree);
 
   inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::DROP; }
 

@@ -141,7 +141,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
     case StatementType::DROP: {
       LOG_TRACE("Adding Drop plan...");
       unique_ptr<planner::AbstractPlan> drop_plan(
-          new planner::DropPlan(std::dynamic_pointer_cast<parser::DropStatement>(tree));
+          new planner::DropPlan(std::dynamic_pointer_cast<parser::DropStatement>(tree)));
       ddl_plan = move(drop_plan);
       break;
     }

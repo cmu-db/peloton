@@ -114,12 +114,12 @@ TEST_F(DropTests, DroppingTrigger) {
       "CREATE TRIGGER update_dept_name "
       "BEFORE UPDATE OF dept_name ON department_table "
       "EXECUTE PROCEDURE log_update_dept_name();";
-  std::unique_ptr<parser::SQLStatementList> stmt_list(
-      parser.BuildParseTree(query).release());
+  std::shared_ptr<parser::SQLStatementList> stmt_list(
+      parser.BuildParseTree(query));
   EXPECT_TRUE(stmt_list->is_valid);
   EXPECT_EQ(StatementType::CREATE, stmt_list->GetStatement(0)->GetType());
   auto create_trigger_stmt =
-      static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
+      std::static_pointer_cast<parser::CreateStatement>(stmt_list->GetStatement(0));
   // Create plans
   planner::CreatePlan plan(create_trigger_stmt);
   // Execute the create trigger
@@ -142,16 +142,16 @@ TEST_F(DropTests, DroppingTrigger) {
   LOG_INFO("Create trigger finishes. Now drop it.");
 
   // Drop statement and drop plan
-  parser::DropStatement drop_statement(
+  std::shared_ptr<parser::DropStatement> drop_statement = std::make_shared<parser::DropStatement>(
       parser::DropStatement::EntityType::kTrigger, "department_table",
       "update_dept_name");
-  planner::DropPlan drop_plan(&drop_statement);
+  planner::DropPlan drop_plan(drop_statement);
 
   // Execute the create trigger
   txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context2(
       new executor::ExecutorContext(txn));
-  executor::DropExecutor drop_executor(&drop_plan, context2.get());
+  executor::DropExecutor drop_executor((planner::AbstractPlan*)&drop_plan, context2.get());
   drop_executor.Init();
   drop_executor.Execute();
   txn_manager.CommitTransaction(txn);

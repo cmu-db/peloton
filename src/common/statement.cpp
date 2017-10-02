@@ -37,6 +37,7 @@ Statement::Statement(const std::string& statement_name,
   if (sql_stmt_list->GetNumStatements() == 0) {
     LOG_ERROR("Empty statement");
   }
+  LOG_INFO("create statement: %s", query_string.c_str());
   sql_stmt_ = sql_stmt_list->GetStatement(0);
   query_type_ = StatementTypeToQueryType(sql_stmt_->GetType(), sql_stmt_);
 }

@@ -122,31 +122,31 @@ TEST_F(ParserUtilTests, BasicTest) {
       LOG_ERROR("Message: %s, line: %d, col: %d", stmt_list->parser_msg,
                 stmt_list->error_line, stmt_list->error_col);
     }
-    for (parser::SQLStatement* stmt : stmt_list->statements) {
+    for (auto stmt : stmt_list->statements) {
       switch (stmt->GetType()) {
         case StatementType::SELECT:
           EXPECT_TRUE(parser::ParserUtils::GetSelectStatementInfo(
-                          (parser::SelectStatement*)stmt, 0).size() > 0);
+                          std::dynamic_pointer_cast<parser::SelectStatement>(stmt).get(), 0).size() > 0);
           break;
         case StatementType::INSERT:
           EXPECT_TRUE(parser::ParserUtils::GetInsertStatementInfo(
-                          (parser::InsertStatement*)stmt, 0).size() > 0);
+                          std::dynamic_pointer_cast<parser::InsertStatement>(stmt).get(), 0).size() > 0);
           break;
         case StatementType::CREATE:
           EXPECT_TRUE(parser::ParserUtils::GetCreateStatementInfo(
-                          (parser::CreateStatement*)stmt, 0).size() > 0);
+                          std::dynamic_pointer_cast<parser::CreateStatement>(stmt).get(), 0).size() > 0);
           break;
         case StatementType::DELETE:
           EXPECT_TRUE(parser::ParserUtils::GetDeleteStatementInfo(
-                          (parser::DeleteStatement*)stmt, 0).size() > 0);
+                          std::dynamic_pointer_cast<parser::DeleteStatement>(stmt).get(), 0).size() > 0);
           break;
         case StatementType::COPY:
           EXPECT_TRUE(parser::ParserUtils::GetCopyStatementInfo(
-                          (parser::CopyStatement*)stmt, 0).size() > 0);
+                          std::dynamic_pointer_cast<parser::CopyStatement>(stmt).get(), 0).size() > 0);
           break;
         case StatementType::UPDATE:
           EXPECT_TRUE(parser::ParserUtils::GetUpdateStatementInfo(
-                          (parser::UpdateStatement*)stmt, 0).size() > 0);
+                          std::dynamic_pointer_cast<parser::UpdateStatement>(stmt).get(), 0).size() > 0);
           break;
         default:
           break;
