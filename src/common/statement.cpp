@@ -50,6 +50,17 @@ void Statement::ParseQueryTypeString(const std::string& query_string,
   boost::to_upper(query_type_string);
 }
 
+void Statement::ParseCreateTypeString(const std::string& query_string,
+                                     std::string& create_type_string) {
+  std::stringstream stream(query_string);
+  std::string query_type_string;
+  stream >> query_type_string;
+  boost::to_upper(query_type_string);
+  PL_ASSERT(query_type_string == "CREATE");
+  stream >> create_type_string;
+  boost::to_upper(create_type_string);
+}
+
 void Statement::MapToQueryType(const std::string& query_type_string,
                                QueryType& query_type) {
   std::unordered_map<std::string, QueryType>::iterator it;
