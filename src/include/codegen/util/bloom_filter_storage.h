@@ -20,12 +20,8 @@ namespace util {
 
 class BloomFilterStorage {
  public:
-  // Constants that defines number of bits in the bloom filter
-  static const uint32_t kNumBits = 256;
-
- public:
   // Initialize the underlying storage bytes
-  void Init();
+  void Init(uint64_t num_bits);
 
   // Given an array of hashes, mark the corresponding bits.
   void Add(uint64_t* hashes, uint32_t size);
@@ -39,6 +35,9 @@ class BloomFilterStorage {
  private:
   // The underlying bytes array that store all the bloom filter bits
   char* bytes_;
+
+  // The capacity of the underlying bit array
+  uint64_t num_bits_;
 };
 
 }  // namespace util

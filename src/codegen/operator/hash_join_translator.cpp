@@ -140,7 +140,8 @@ HashJoinTranslator::HashJoinTranslator(const planner::HashJoinPlan &join,
 void HashJoinTranslator::InitializeState() {
   hash_table_.Init(GetCodeGen(), LoadStatePtr(hash_table_id_));
   if (GetJoinPlan().IsBloomFilterEnabled()) {
-    bloom_filter_.Init(GetCodeGen(), LoadStatePtr(bloom_filter_id_));
+    bloom_filter_.Init(GetCodeGen(), LoadStatePtr(bloom_filter_id_),
+                       EstimateCardinalityLeft());
   }
 }
 
@@ -364,6 +365,14 @@ std::string HashJoinTranslator::GetName() const {
 uint64_t HashJoinTranslator::EstimateHashTableSize() const {
   // TODO: Implement me
   return 0;
+}
+
+// Return the estimated number of tuples produced by the left child
+uint64_t HashJoinTranslator::EstimateCardinalityLeft() const {
+  // TODO:Implement this once optimizer provide cardinality to executor.
+  // Right now, it's hard coded to a relatively large number to make sure
+  // bloom filter works correctly.
+  return 500000;
 }
 
 // Should this aggregation use prefetching

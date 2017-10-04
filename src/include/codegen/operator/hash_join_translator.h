@@ -80,6 +80,9 @@ class HashJoinTranslator : public OperatorTranslator {
   // Estimate the size of the constructed hash table
   uint64_t EstimateHashTableSize() const;
 
+  // Return the estimated number of tuples produced by the left child
+  uint64_t EstimateCardinalityLeft() const;
+
   // Should this operator employ prefetching?
   bool UsePrefetching() const;
 

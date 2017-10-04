@@ -22,11 +22,19 @@ namespace codegen {
 
 class BloomFilter {
  public:
-  // Hash functions used in bloom filters
-  static std::vector<Hash::HashMethod> kHashFunctions;
+  // BloomFilter requires k hashes. For efficiency reason, only the first two
+  // seed hashes are generated using general hash function like Murmur3. The
+  // rest of hashes will be generated using formula "hashes[i] = hashes[0]
+  // + i * hashes[1]". For more details google "Less Hashing, Same Performance:
+  // Building a Better Bloom Filter"
+
+  // Seed Hash Functions to use.
+  static const Hash::HashMethod kSeedHashFuncs[2];
+  static const double false_positive_rate;
 
  public:
-  void Init(CodeGen &codegen, llvm::Value *bloom_filter);
+  void Init(CodeGen &codegen, llvm::Value *bloom_filter,
+            uint64_t estimated_number_tuples);
 
   void Destroy(CodeGen &codegen, llvm::Value *bloom_filter);
 
@@ -39,6 +47,9 @@ class BloomFilter {
  private:
   llvm::Value *CalculateHashes(CodeGen &codegen,
                                const std::vector<codegen::Value> &key) const;
+
+ private:
+  int num_hash_funcs_;
 };
 
 }  // namespace codegen
