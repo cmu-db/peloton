@@ -74,6 +74,9 @@ class HashJoinTranslator : public OperatorTranslator {
                      const std::vector<const planner::AttributeInfo *> &ais,
                      std::vector<codegen::Value> &values) const;
 
+  void CodegenHashProbe(ConsumerContext &context, RowBatch::Row &row,
+                        std::vector<codegen::Value> &key) const;
+
   // Estimate the size of the constructed hash table
   uint64_t EstimateHashTableSize() const;
 
