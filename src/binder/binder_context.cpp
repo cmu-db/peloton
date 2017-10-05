@@ -56,7 +56,7 @@ void BinderContext::AddTable(const std::string db_name,
 }
 
 bool BinderContext::GetColumnPosTuple(
-    std::string& col_name, std::tuple<oid_t, oid_t>& table_id_tuple,
+    const std::string& col_name, const std::tuple<oid_t, oid_t>& table_id_tuple,
     std::tuple<oid_t, oid_t, oid_t>& col_pos_tuple, type::TypeId& value_type,
     concurrency::Transaction* txn) {
   try {

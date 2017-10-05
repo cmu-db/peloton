@@ -1280,7 +1280,7 @@ class ExprEqualCmp;
 }  // namespace expression
 
 // Augment abstract expression with a table alias set
-truct AnnotatedExpression {
+struct AnnotatedExpression {
   AnnotatedExpression(
       expression::AbstractExpression* i_expr,
       std::unordered_set<std::string>& i_set)
