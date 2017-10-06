@@ -33,13 +33,17 @@ class BloomFilter {
   static const double kFalsePositiveRate;
 
  public:
+  // Initialize bloom filter states
   void Init(uint64_t estimated_number_tuples);
 
+  // Destroy the bloom filter states
   void Destroy();
 
+  // Codegen the bloom filter insert
   static void Add(CodeGen &codegen, llvm::Value *bloom_filter,
                   const std::vector<codegen::Value> &key);
 
+  // Codegen the bloom filter probe
   static llvm::Value *Contains(CodeGen &codegen, llvm::Value *bloom_filter,
                                const std::vector<codegen::Value> &key);
 
