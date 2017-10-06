@@ -44,6 +44,19 @@ llvm::Value *Loop::GetLoopVar(uint32_t id) const {
   return id < phi_nodes_.size() ? phi_nodes_[id] : nullptr;
 }
 
+void Loop::Break() {
+  // Terminate the current basic block
+  cg_->CreateBr(end_bb_);
+  break_bbs_.push_back(cg_->GetInsertBlock());
+
+  // Create a new basic block right after breaked block
+  // Since no other block will be branching into this block, it will be
+  // optimized away. This is the expected behavior for code after break
+  llvm::BasicBlock *break_bb =
+      llvm::BasicBlock::Create(cg_.GetContext(), "afterBreak", fn_);
+  cg_->SetInsertPoint(break_bb);
+}
+
 // Function to mark the end of the loop. It ties up all the PHI nodes with
 // their new values.
 void Loop::LoopEnd(llvm::Value *end_condition,
@@ -67,11 +80,15 @@ void Loop::LoopEnd(llvm::Value *end_condition,
 // complete
 void Loop::CollectFinalLoopVariables(std::vector<llvm::Value *> &loop_vals) {
   PL_ASSERT(last_loop_bb_ != nullptr);
-  for (const auto *phi_node : phi_nodes_) {
+  for (auto *phi_node : phi_nodes_) {
     llvm::PHINode *end_phi =
-        cg_->CreatePHI(phi_node->getType(), 2, phi_node->getName() + "End");
+        cg_->CreatePHI(phi_node->getType(), 2 + break_bbs_.size(),
+                       phi_node->getName() + "End");
     end_phi->addIncoming(phi_node->getIncomingValue(0), pre_loop_bb_);
     end_phi->addIncoming(phi_node->getIncomingValue(1), last_loop_bb_);
+    for (auto &break_bb : break_bbs_) {
+      end_phi->addIncoming(phi_node, break_bb);
+    }
     loop_vals.push_back(end_phi);
   }
 }
