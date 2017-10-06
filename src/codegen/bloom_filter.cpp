@@ -40,8 +40,8 @@ void BloomFilter::Init(uint64_t estimated_num_tuples) {
   num_bits_ = -(double)estimated_num_tuples * log(kFalsePositiveRate) /
               (log(2) * log(2));
   num_hash_funcs_ = (double)num_bits_ * log(2) / (double)estimated_num_tuples;
-  LOG_DEBUG("BloomFilter num_bits: %llu num_hash_funcs: %llu", num_bits_,
-            num_hash_funcs_);
+//  LOG_DEBUG("BloomFilter num_bits: %llu num_hash_funcs: %llu", num_bits_,
+//            num_hash_funcs_);
 
   // Allocate memory for the underlying bytes array
   uint64_t num_bytes = (num_bits_ + 7) / 8;
