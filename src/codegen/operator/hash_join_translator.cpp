@@ -302,11 +302,7 @@ void HashJoinTranslator::ConsumeFromRight(ConsumerContext &context,
       // For each tuple that passes the bloom filter, probe the hash table
       // to eliminate the false positives.
       CodegenHashProbe(context, row, key);
-      GetCodeGen().CallPrintf("Row is not filterd\n", {});
     }
-    is_valid_row.ElseBlock();
-    { GetCodeGen().CallPrintf("Row is filtered\n", {}); }
-    is_valid_row.EndIf();
   } else {
     // Bloom filter is not enabled. Directly probe the hash table
     CodegenHashProbe(context, row, key);
