@@ -24,7 +24,8 @@ namespace codegen {
 // Static Members
 //===----------------------------------------------------------------------===//
 const Hash::HashMethod BloomFilter::kSeedHashFuncs[2] = {
-    Hash::HashMethod::Murmur3, Hash::HashMethod::Crc32};
+    Hash::HashMethod::Murmur3, Hash::HashMethod::Crc32
+};
 
 const double BloomFilter::kFalsePositiveRate = 0.1;
 
@@ -57,10 +58,10 @@ void BloomFilter::Add(CodeGen &codegen, llvm::Value *bloom_filter,
                       const std::vector<codegen::Value> &key) {
   // Index of current hash being calculated
   llvm::Value *index = codegen.Const64(0);
-  llvm::Value *num_hashes = LoadBloomFilterField(codegen, bloom_filter, 2);
+  llvm::Value *num_hashes = LoadBloomFilterField(codegen, bloom_filter, 0);
   llvm::Value *seed_hash1 = Hash::HashValues(codegen, key, kSeedHashFuncs[0]);
   llvm::Value *seed_hash2 = Hash::HashValues(codegen, key, kSeedHashFuncs[1]);
-  
+
   llvm::Value *end_cond = codegen->CreateICmpULT(index, num_hashes);
   lang::Loop add_loop{codegen, end_cond, {{"i", index}}};
   {
@@ -90,7 +91,7 @@ llvm::Value *BloomFilter::Contains(CodeGen &codegen, llvm::Value *bloom_filter,
                                    const std::vector<codegen::Value> &key) {
   // Index of current hash being calculated
   llvm::Value *index = codegen.Const64(0);
-  llvm::Value *num_hashes = LoadBloomFilterField(codegen, bloom_filter, 2);
+  llvm::Value *num_hashes = LoadBloomFilterField(codegen, bloom_filter, 0);
   llvm::Value *end_cond = codegen->CreateICmpULT(index, num_hashes);
   llvm::Value *seed_hash1 = Hash::HashValues(codegen, key, kSeedHashFuncs[0]);
   llvm::Value *seed_hash2 = Hash::HashValues(codegen, key, kSeedHashFuncs[1]);
@@ -125,11 +126,11 @@ llvm::Value *BloomFilter::Contains(CodeGen &codegen, llvm::Value *bloom_filter,
   }
   std::vector<llvm::Value *> vals;
   add_loop.CollectFinalLoopVariables(vals);
+
   // contains = (i == num_hashes ? true : false);
   llvm::Value *loop_to_end = codegen->CreateICmpEQ(vals[0], num_hashes);
-  llvm::Value *contains = codegen->CreateSelect(loop_to_end,
-                                                codegen.ConstBool(true),
-                                                codegen.ConstBool(false));
+  llvm::Value *contains = codegen->CreateSelect(
+      loop_to_end, codegen.ConstBool(true), codegen.ConstBool(false));
   return contains;
 }
 
@@ -137,25 +138,30 @@ llvm::Value *BloomFilter::CalculateHash(CodeGen &codegen, llvm::Value *index,
                                         llvm::Value *seed_hash1,
                                         llvm::Value *seed_hash2) {
   // Calculate hashes[index]
-  llvm::Value *combined_hash = codegen->CreateAdd(seed_hash1, codegen->CreateMul(index, seed_hash2));
-  
+  llvm::Value *combined_hash =
+      codegen->CreateAdd(seed_hash1, codegen->CreateMul(index, seed_hash2));
+
   // return i == 0 ? seed_hash1 : (i == 1 ? seed_hash2 : combined_hash);
   llvm::Value *is_first = codegen->CreateICmpEQ(index, codegen.Const64(0));
   llvm::Value *is_second = codegen->CreateICmpEQ(index, codegen.Const64(1));
-  llvm::Value *hash = codegen->CreateSelect(is_first, seed_hash1, codegen->CreateSelect(is_second, seed_hash2, combined_hash));
+  llvm::Value *hash = codegen->CreateSelect(
+      is_first, seed_hash1,
+      codegen->CreateSelect(is_second, seed_hash2, combined_hash));
   return hash;
 }
 
+// Given the hash, find the corresponding byte that contains the bit
 void BloomFilter::LocateBit(CodeGen &codegen, llvm::Value *bloom_filter,
                             llvm::Value *hash, llvm::Value *&bit_offset_in_byte,
                             llvm::Value *&byte_ptr) {
-  llvm::Value *byte_array = LoadBloomFilterField(codegen, bloom_filter, 3);
-  llvm::Value *num_bits = LoadBloomFilterField(codegen, bloom_filter, 4);
+  llvm::Value *byte_array = LoadBloomFilterField(codegen, bloom_filter, 1);
+  llvm::Value *num_bits = LoadBloomFilterField(codegen, bloom_filter, 2);
 
   llvm::Value *bits_per_byte = codegen.Const64(8);
   llvm::Value *bit_offset = codegen->CreateURem(hash, num_bits);
   llvm::Value *byte_offset = codegen->CreateUDiv(bit_offset, bits_per_byte);
-  bit_offset_in_byte = codegen->CreateTrunc(codegen->CreateURem(bit_offset, bits_per_byte), codegen.Int8Type());
+  bit_offset_in_byte = codegen->CreateTrunc(
+      codegen->CreateURem(bit_offset, bits_per_byte), codegen.Int8Type());
   byte_ptr =
       codegen->CreateInBoundsGEP(codegen.ByteType(), byte_array, byte_offset);
 }
@@ -167,37 +173,6 @@ llvm::Value *BloomFilter::LoadBloomFilterField(CodeGen &codegen,
   return codegen->CreateLoad(codegen->CreateConstInBoundsGEP2_32(
       bloom_filter_type, bloom_filter, 0, field_id));
 }
-
-// llvm::Value *BloomFilter::CalculateHashes(
-//    CodeGen &codegen, const std::vector<codegen::Value> &key) const {
-//  // Alloca space on stack to store the hashes
-//  llvm::Value *hashes = codegen->CreateAlloca(codegen.Int64Type(),
-//                                              codegen.Const32(num_hash_funcs_));
-//  std::vector<llvm::Value *> seed_hashes(2);
-//  for (int i = 0; i < num_hash_funcs_; i++) {
-//    llvm::Value *hash;
-//    if (i <= 1) {
-//      // The first two hashes are calculated using the seed hash functions.
-//      hash = Hash::HashValues(codegen, key, kSeedHashFuncs[i]);
-//      seed_hashes[i] = hash;
-//    } else {
-//      // For later hashes, we use double hashing to efficient generate hash.
-//      // hash[i] = hash[0] + i * hash[1];
-//      // More details can be found http://spyced.blogspot.com/2009/01/all-you-
-//      // ever-wanted-to-know-about.html
-//      hash = codegen->CreateAdd(
-//          seed_hashes[0],
-//          codegen->CreateMul(codegen.Const64(i), seed_hashes[1]));
-//    }
-//
-//    // hashes[i] = hash
-//    codegen->CreateStore(hash,
-//                         codegen->CreateInBoundsGEP(codegen.Int64Type(),
-//                         hashes,
-//                                                    codegen.Const32(i)));
-//  }
-//  return hashes;
-//}
 
 }  // namespace codegen
 }  // namespace peloton
