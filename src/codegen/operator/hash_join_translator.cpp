@@ -303,6 +303,7 @@ void HashJoinTranslator::ConsumeFromRight(ConsumerContext &context,
       // to eliminate the false positives.
       CodegenHashProbe(context, row, key);
     }
+    is_valid_row.EndIf();
   } else {
     // Bloom filter is not enabled. Directly probe the hash table
     CodegenHashProbe(context, row, key);

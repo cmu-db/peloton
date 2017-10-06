@@ -726,6 +726,7 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, JoinType join_type,
                                                 std::move(projection), schema,
                                                 left_hash_keys,
                                                 right_hash_keys);
+                                                false);
 
       // Construct the hash join executor
       executor::HashJoinExecutor hash_join_executor(&hash_join_plan_node,
