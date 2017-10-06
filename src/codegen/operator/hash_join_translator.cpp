@@ -14,7 +14,7 @@
 
 #include "codegen/expression/tuple_value_translator.h"
 #include "codegen/lang/vectorized_loop.h"
-#include "codegen/proxy/bloom_filter_storage_proxy.h"
+#include "codegen/proxy/bloom_filter_proxy.h"
 #include "codegen/proxy/oa_hash_table_proxy.h"
 #include "expression/tuple_value_expression.h"
 #include "planner/hash_join_plan.h"
@@ -57,7 +57,7 @@ HashJoinTranslator::HashJoinTranslator(const planner::HashJoinPlan &join,
       runtime_state.RegisterState("join", OAHashTableProxy::GetType(codegen));
   if (GetJoinPlan().IsBloomFilterEnabled()) {
     bloom_filter_id_ = runtime_state.RegisterState(
-        "bloomfilter", BloomFilterStorageProxy::GetType(codegen));
+        "bloomfilter", BloomFilterProxy::GetType(codegen));
   }
 
   // Prepare translators for the left and right input operators
@@ -140,8 +140,9 @@ HashJoinTranslator::HashJoinTranslator(const planner::HashJoinPlan &join,
 void HashJoinTranslator::InitializeState() {
   hash_table_.Init(GetCodeGen(), LoadStatePtr(hash_table_id_));
   if (GetJoinPlan().IsBloomFilterEnabled()) {
-    bloom_filter_.Init(GetCodeGen(), LoadStatePtr(bloom_filter_id_),
-                       EstimateCardinalityLeft());
+    GetCodeGen().Call(BloomFilterProxy::Init,
+                      {LoadStatePtr(bloom_filter_id_),
+                       GetCodeGen().Const64(EstimateCardinalityLeft())});
   }
 }
 
@@ -281,7 +282,7 @@ void HashJoinTranslator::ConsumeFromLeft(ConsumerContext &,
 
   if (GetJoinPlan().IsBloomFilterEnabled()) {
     // Insert tuples into the bloom filter if enabled
-    bloom_filter_.Add(codegen, LoadStatePtr(bloom_filter_id_), key);
+    BloomFilter::Add(codegen, LoadStatePtr(bloom_filter_id_), key);
   }
 }
 
@@ -294,7 +295,7 @@ void HashJoinTranslator::ConsumeFromRight(ConsumerContext &context,
 
   if (GetJoinPlan().IsBloomFilterEnabled()) {
     // Prefilter the tuple using Bloom Filter
-    llvm::Value *contains = bloom_filter_.Contains(
+    llvm::Value *contains = BloomFilter::Contains(
         GetCodeGen(), LoadStatePtr(bloom_filter_id_), key);
     lang::If is_valid_row{GetCodeGen(), contains};
     {
@@ -327,7 +328,8 @@ void HashJoinTranslator::CodegenHashProbe(
 void HashJoinTranslator::TearDownState() {
   hash_table_.Destroy(GetCodeGen(), LoadStatePtr(hash_table_id_));
   if (GetJoinPlan().IsBloomFilterEnabled()) {
-    bloom_filter_.Destroy(GetCodeGen(), LoadStatePtr(bloom_filter_id_));
+    GetCodeGen().Call(BloomFilterProxy::Destroy,
+                      {LoadStatePtr(bloom_filter_id_)});
   }
 }
 
