@@ -91,9 +91,11 @@ class ContainerTuple : public AbstractTuple {
    */
   bool EqualsNoSchemaCheck(const ContainerTuple<T> &other) const {
     if (column_ids_) {
-      for (auto &column_itr : *column_ids_) {
-        type::Value lhs = (GetValue(column_itr));
-        type::Value rhs = (other.GetValue(column_itr));
+      if (column_ids_->size() != other.column_ids_->size())
+        return false;
+      for (size_t idx = 0; idx<column_ids_->size(); idx++) {
+        type::Value lhs = (GetValue(column_ids_->at(idx)));
+        type::Value rhs = (other.GetValue(other.column_ids_->at(idx)));
         if (lhs.CompareNotEquals(rhs) == type::CMP_TRUE) {
           return false;
         }
