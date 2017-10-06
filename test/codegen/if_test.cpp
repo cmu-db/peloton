@@ -136,6 +136,55 @@ TEST_F(IfTest, TestIfInsideLoop) {
   ASSERT_EQ(5, f(10));
 }
 
+TEST_F(IfTest, BreakTest) {
+  const std::string func_name = "TestBreakLoop";
+  codegen::CodeContext code_context;
+  codegen::CodeGen cg{code_context};
+
+  // Genereate a funciton like so:
+  // define @TestBreakLoop(i32 a) {
+  //   for (i32 i = 0; i < a; i++) {
+  //      if (i == 5) {
+  //         break;
+  //      }
+  //   }
+  //   return i;
+  //
+  //
+  codegen::FunctionBuilder func{
+      code_context, func_name, cg.Int32Type(), {{"a", cg.Int32Type()}}};
+  {
+    llvm::Value *param_a = func.GetArgumentByName("a");
+    codegen::lang::Loop loop{
+        cg, cg->CreateICmpSLT(cg.Const32(0), param_a), {{"i", cg.Const32(0)}}};
+    {
+      llvm::Value *i = loop.GetLoopVar(0);
+
+      codegen::lang::If pred{cg, cg->CreateICmpEQ(i, cg.Const32(5))};
+      { loop.Break(); }
+      pred.EndIf();
+
+      i = cg->CreateAdd(i, cg.Const32(1));
+      loop.LoopEnd(cg->CreateICmpSLT(i, param_a), {i});
+    }
+
+    std::vector<llvm::Value *> final;
+    loop.CollectFinalLoopVariables(final);
+
+    func.ReturnAndFinish(final[0]);
+  }
+
+  ASSERT_TRUE(code_context.Compile());
+
+  typedef int (*ftype)(int);
+
+  ftype f = (ftype)code_context.GetRawFunctionPointer(func.GetFunction());
+  ASSERT_EQ(0, f(-1));
+  ASSERT_EQ(3, f(3));
+  ASSERT_EQ(5, f(6));
+  ASSERT_EQ(5, f(7));
+}
+
 TEST_F(IfTest, ComplexNestedIf) {
   const std::string func_name = "TestIfOnly";
 
