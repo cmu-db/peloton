@@ -30,26 +30,41 @@ class BloomFilter {
 
   // Seed Hash Functions to use.
   static const Hash::HashMethod kSeedHashFuncs[2];
-  static const double false_positive_rate;
+  static const double kFalsePositiveRate;
 
  public:
-  void Init(CodeGen &codegen, llvm::Value *bloom_filter,
-            uint64_t estimated_number_tuples);
+  void Init(uint64_t estimated_number_tuples);
 
-  void Destroy(CodeGen &codegen, llvm::Value *bloom_filter);
+  void Destroy();
 
-  void Add(CodeGen &codegen, llvm::Value *bloom_filter,
-           const std::vector<codegen::Value> &key) const;
+  static void Add(CodeGen &codegen, llvm::Value *bloom_filter,
+                  const std::vector<codegen::Value> &key);
 
-  llvm::Value *Contains(CodeGen &codegen, llvm::Value *bloom_filter,
-                        const std::vector<codegen::Value> &key) const;
-
- private:
-  llvm::Value *CalculateHashes(CodeGen &codegen,
-                               const std::vector<codegen::Value> &key) const;
+  static llvm::Value *Contains(CodeGen &codegen, llvm::Value *bloom_filter,
+                               const std::vector<codegen::Value> &key);
 
  private:
-  int num_hash_funcs_;
+  static llvm::Value *LoadBloomFilterField(CodeGen &codegen,
+                                           llvm::Value *bloom_filter,
+                                           uint32_t field_id);
+
+  static llvm::Value *CalculateHash(CodeGen &codegen, llvm::Value *index,
+                                    llvm::Value *seed_hash1,
+                                    llvm::Value *seed_hash2);
+
+  static void LocateBit(CodeGen &codegen, llvm::Value *bloom_filter,
+                        llvm::Value *hash, llvm::Value *&bit_offset_in_byte,
+                        llvm::Value *&byte_ptr);
+
+ private:
+  // Number of hash functions to use
+  uint64_t num_hash_funcs_;
+
+  // The underlying bytes array that store all the bloom filter bits
+  char *bytes_;
+
+  // The capacity of the underlying bit array
+  uint64_t num_bits_;
 };
 
 }  // namespace codegen
