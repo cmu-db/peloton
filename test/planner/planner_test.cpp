@@ -45,10 +45,10 @@ TEST_F(PlannerTests, CreateDatabasePlanTest) {
   auto parse_tree_list = peloton_parser.BuildParseTree("CREATE DATABASE pelotondb;");
   // There should be only one statement in the statement list
   EXPECT_EQ(1, parse_tree_list->GetNumStatements());
-  auto parse_tree = parse_tree_list->GetStatements().at(0);
+  auto &parse_tree = parse_tree_list->GetStatements().at(0);
 
   std::unique_ptr<planner::CreatePlan> create_DB_plan(
-    new planner::CreatePlan((parser::CreateStatement *)parse_tree));
+    new planner::CreatePlan((parser::CreateStatement *)parse_tree.get()));
   EXPECT_EQ(0, create_DB_plan->GetDatabaseName().compare("pelotondb"));
   EXPECT_EQ(CreateType::DB, create_DB_plan->GetCreateType());
 }

@@ -47,11 +47,11 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
 
       create_type = CreateType::TABLE;
 
-      for (auto col : *parse_tree->columns) {
+      for (auto &col : parse_tree->columns) {
         // The parser puts the Foreign Key information into an artificial
         // ColumnDefinition.
         if (col->type == parser::ColumnDefinition::DataType::FOREIGN) {
-          this->ProcessForeignKeyConstraint(table_name, col);
+          this->ProcessForeignKeyConstraint(table_name, col.get());
           // XXX: Why should we always continue here?
           continue;
         }
@@ -79,13 +79,6 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
           LOG_TRACE("Added a unique constraint on column \"%s.%s\"", table_name.c_str(), col->name);
         }
   
-        // TODO: check if foreign key just on column
-        if (col->foreign_key_source != nullptr) {
-          LOG_TRACE("FK source: %lu", col->foreign_key_source->size());
-        }
-        if (col->foreign_key_sink != nullptr) {
-          LOG_TRACE("FK sink: %lu", col->foreign_key_sink->size());
-        }
         /* **************** */
   
         // Add the default value
@@ -93,7 +86,7 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
           // Referenced from insert_plan.cpp
           if (col->default_value->GetExpressionType() != ExpressionType::VALUE_PARAMETER) {
             expression::ConstantValueExpression *const_expr_elem =
-              dynamic_cast<expression::ConstantValueExpression *>(col->default_value);
+              dynamic_cast<expression::ConstantValueExpression *>(col->default_value.get());
   
             catalog::Constraint constraint(ConstraintType::DEFAULT, "con_default");
             type::Value v = const_expr_elem->GetValue();
@@ -152,7 +145,7 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
   
       std::vector<std::string> index_attrs_holder;
   
-      for (auto attr : *parse_tree->index_attrs) {
+      for (auto &attr : parse_tree->index_attrs) {
         index_attrs_holder.push_back(attr);
       }
   
@@ -176,13 +169,13 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
       }
       trigger_type = parse_tree->trigger_type;
   
-      for (auto s : *(parse_tree->trigger_funcname)) {
+      for (auto &s : parse_tree->trigger_funcname) {
         trigger_funcname.push_back(s);
       }
-      for (auto s : *(parse_tree->trigger_args)) {
+      for (auto &s : parse_tree->trigger_args) {
         trigger_args.push_back(s);
       }
-      for (auto s : *(parse_tree->trigger_columns)) {
+      for (auto &s : parse_tree->trigger_columns) {
         trigger_columns.push_back(s);
       }
 
