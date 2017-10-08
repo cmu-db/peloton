@@ -14,14 +14,34 @@
 #include "storage/tile_group.h"
 #include "storage/tile.h"
 #include "common/logger.h"
+#include "catalog/column.h"
 
 namespace peloton {
 namespace index {
 
-void loadKey(UNUSED_ATTRIBUTE TID tid, UNUSED_ATTRIBUTE Key &key) {
+void loadKey(UNUSED_ATTRIBUTE TID tid, UNUSED_ATTRIBUTE Key &key, UNUSED_ATTRIBUTE IndexMetadata *metadata) {
   // Store the key of the tuple into the key vector
   // Implementation is database specific
   printf("enter loadKey() TID (ItemPointer) = %llu\n", tid);
+
+  size_t columnCount = metadata->GetColumnCount();
+  printf("columnCount = %ld\n", columnCount);
+
+  std::vector<oid_t> indexedColumns = metadata->GetKeySchema()->GetIndexedColumns();
+  if (indexedColumns.size() != columnCount) {
+    printf("column count is not equal to the size of indexed column vector\n");
+  } else {
+    printf("column count is equal to the size of indexed column vector\n");
+  }
+  for (size_t i = 0; i < columnCount; i++) {
+    printf("indexed column id = %u\n", indexedColumns[i]);
+  }
+
+  std::vector<catalog::Column> columns = metadata->GetKeySchema()->GetColumns();
+  for (size_t i = 0; i < columnCount; i++) {
+    printf("%d\n", columns[i].GetType());
+  }
+
 
   // TODO: recover key from tuple_pointer (recover a storage::Tuple from ItemPointer)
   auto &manager = catalog::Manager::GetInstance();
@@ -97,6 +117,7 @@ void loadKey(UNUSED_ATTRIBUTE TID tid, UNUSED_ATTRIBUTE Key &key) {
 ArtIndex::ArtIndex(IndexMetadata *metadata)
   :  // Base class
   Index{metadata}, artTree(loadKey) {
+  artTree.setIndexMetadata(metadata);
   return;
 }
 

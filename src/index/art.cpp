@@ -21,6 +21,7 @@
 #include "index/N16.h"
 #include "index/N48.h"
 #include "index/N256.h"
+#include "index/index.h"
 
 namespace peloton {
 namespace index {
@@ -37,6 +38,10 @@ Tree::~Tree() {
 
 ThreadInfo Tree::getThreadInfo() {
   return ThreadInfo(this->epoche);
+}
+
+void Tree::setIndexMetadata(IndexMetadata *metadata) {
+  this->metadata = metadata;
 }
 
 void yield(int count) {
@@ -58,7 +63,7 @@ TID Tree::lookup(const Key &k, ThreadInfo &threadEpocheInfo) const {
   N *parentNode = nullptr;
   uint64_t v;
   uint32_t level = 0;
-//  bool optimisticPrefixMatch = false;
+  bool optimisticPrefixMatch = false;
 
   node = root;
   v = node->readLockOrRestart(needRestart);
@@ -70,7 +75,7 @@ TID Tree::lookup(const Key &k, ThreadInfo &threadEpocheInfo) const {
         if (needRestart) goto restart;
         return 0;
       case CheckPrefixResult::OptimisticMatch:
-//        optimisticPrefixMatch = true;
+        optimisticPrefixMatch = true;
         // fallthrough
       case CheckPrefixResult::Match:
         if (k.getKeyLen() <= level) {
@@ -89,9 +94,9 @@ TID Tree::lookup(const Key &k, ThreadInfo &threadEpocheInfo) const {
           if (needRestart) goto restart;
 
           TID tid = N::getLeaf(node);
-//          if (level < k.getKeyLen() - 1 || optimisticPrefixMatch) {
-//            return checkKey(tid, k);
-//          }
+          if (level < k.getKeyLen() - 1 || optimisticPrefixMatch) {
+            return checkKey(tid, k);
+          }
           return tid;
         }
         level++;
@@ -153,7 +158,7 @@ bool Tree::lookupRange(const Key &start, const Key &end, Key &continueKey, TID r
       v = node->readLockOrRestart(needRestart);
       if (needRestart) goto readAgain;
 
-      prefixResult = checkPrefixCompare(node, start, 0, level, loadKey, needRestart);
+      prefixResult = checkPrefixCompare(node, start, 0, level, loadKey, needRestart, metadata);
       if (needRestart) goto readAgain;
 
       parentNode->readUnlockOrRestart(vp, needRestart);
@@ -221,7 +226,7 @@ bool Tree::lookupRange(const Key &start, const Key &end, Key &continueKey, TID r
       v = node->readLockOrRestart(needRestart);
       if (needRestart) goto readAgain;
 
-      prefixResult = checkPrefixCompare(node, end, 255, level, loadKey, needRestart);
+      prefixResult = checkPrefixCompare(node, end, 255, level, loadKey, needRestart, metadata);
       if (needRestart) goto readAgain;
 
       parentNode->readUnlockOrRestart(vp, needRestart);
@@ -297,7 +302,7 @@ bool Tree::lookupRange(const Key &start, const Key &end, Key &continueKey, TID r
     PCEqualsResults prefixResult;
     v = node->readLockOrRestart(needRestart);
     if (needRestart) goto restart;
-    prefixResult = checkPrefixEquals(node, level, start, end, loadKey, needRestart);
+    prefixResult = checkPrefixEquals(node, level, start, end, loadKey, needRestart, metadata);
     if (needRestart) goto restart;
     if (parentNode != nullptr) {
       parentNode->readUnlockOrRestart(vp, needRestart);
@@ -348,7 +353,7 @@ bool Tree::lookupRange(const Key &start, const Key &end, Key &continueKey, TID r
     break;
   }
   if (toContinue != 0) {
-    loadKey(toContinue, continueKey);
+    loadKey(toContinue, continueKey, metadata);
     return true;
   } else {
     return false;
@@ -357,10 +362,13 @@ bool Tree::lookupRange(const Key &start, const Key &end, Key &continueKey, TID r
 
 TID Tree::checkKey(const TID tid, const Key &k) const {
   Key kt;
-  this->loadKey(tid, kt);
+  printf("in checkKey()\n");
+  this->loadKey(tid, kt, metadata);
   if (k == kt) {
+    printf("recovered key is the same as the inserted key\n");
     return tid;
   }
+  printf("recovered key is not the same as the inserted key!\n");
   return 0;
 }
 
@@ -391,7 +399,7 @@ void Tree::insert(const Key &k, TID tid, ThreadInfo &epocheInfo) {
     uint8_t nonMatchingKey;
     Prefix remainingPrefix;
     auto res = checkPrefixPessimistic(node, k, nextLevel, nonMatchingKey, remainingPrefix,
-                                      this->loadKey, needRestart); // increases level
+                                      this->loadKey, needRestart, metadata); // increases level
     if (needRestart) goto restart;
     switch (res) {
       case CheckPrefixPessimisticResult::NoMatch: {
@@ -446,7 +454,7 @@ void Tree::insert(const Key &k, TID tid, ThreadInfo &epocheInfo) {
       if (needRestart) goto restart;
 
       Key key;
-      loadKey(N::getLeaf(nextNode), key);
+      loadKey(N::getLeaf(nextNode), key, metadata);
 
       if (key == k) {
         // upsert
@@ -592,7 +600,7 @@ inline typename Tree::CheckPrefixResult Tree::checkPrefix(N *n, const Key &k, ui
 typename Tree::CheckPrefixPessimisticResult Tree::checkPrefixPessimistic(N *n, const Key &k, uint32_t &level,
                                                                          uint8_t &nonMatchingKey,
                                                                          Prefix &nonMatchingPrefix,
-                                                                         LoadKeyFunction loadKey, bool &needRestart) {
+                                                                         LoadKeyFunction loadKey, bool &needRestart, IndexMetadata *metadata) {
   if (n->hasPrefix()) {
     uint32_t prevLevel = level;
     Key kt;
@@ -600,7 +608,7 @@ typename Tree::CheckPrefixPessimisticResult Tree::checkPrefixPessimistic(N *n, c
       if (i == maxStoredPrefixLength) {
         auto anyTID = N::getAnyChildTid(n, needRestart);
         if (needRestart) return CheckPrefixPessimisticResult::Match;
-        loadKey(anyTID, kt);
+        loadKey(anyTID, kt, metadata);
       }
       uint8_t curKey = i >= maxStoredPrefixLength ? kt[level] : n->getPrefix()[i];
       if (curKey != k[level]) {
@@ -609,7 +617,7 @@ typename Tree::CheckPrefixPessimisticResult Tree::checkPrefixPessimistic(N *n, c
           if (i < maxStoredPrefixLength) {
             auto anyTID = N::getAnyChildTid(n, needRestart);
             if (needRestart) return CheckPrefixPessimisticResult::Match;
-            loadKey(anyTID, kt);
+            loadKey(anyTID, kt, metadata);
           }
           memcpy(nonMatchingPrefix, &kt[0] + level + 1, std::min((n->getPrefixLength() - (level - prevLevel) - 1),
                                                                  maxStoredPrefixLength));
@@ -625,14 +633,14 @@ typename Tree::CheckPrefixPessimisticResult Tree::checkPrefixPessimistic(N *n, c
 }
 
 typename Tree::PCCompareResults Tree::checkPrefixCompare(const N *n, const Key &k, uint8_t fillKey, uint32_t &level,
-                                                         LoadKeyFunction loadKey, bool &needRestart) {
+                                                         LoadKeyFunction loadKey, bool &needRestart, IndexMetadata *metadata) {
   if (n->hasPrefix()) {
     Key kt;
     for (uint32_t i = 0; i < n->getPrefixLength(); ++i) {
       if (i == maxStoredPrefixLength) {
         auto anyTID = N::getAnyChildTid(n, needRestart);
         if (needRestart) return PCCompareResults::Equal;
-        loadKey(anyTID, kt);
+        loadKey(anyTID, kt, metadata);
       }
       uint8_t kLevel = (k.getKeyLen() > level) ? k[level] : fillKey;
 
@@ -649,14 +657,14 @@ typename Tree::PCCompareResults Tree::checkPrefixCompare(const N *n, const Key &
 }
 
 typename Tree::PCEqualsResults Tree::checkPrefixEquals(const N *n, uint32_t &level, const Key &start, const Key &end,
-                                                       LoadKeyFunction loadKey, bool &needRestart) {
+                                                       LoadKeyFunction loadKey, bool &needRestart, IndexMetadata *metadata) {
   if (n->hasPrefix()) {
     Key kt;
     for (uint32_t i = 0; i < n->getPrefixLength(); ++i) {
       if (i == maxStoredPrefixLength) {
         auto anyTID = N::getAnyChildTid(n, needRestart);
         if (needRestart) return PCEqualsResults::BothMatch;
-        loadKey(anyTID, kt);
+        loadKey(anyTID, kt, metadata);
       }
       uint8_t startLevel = (start.getKeyLen() > level) ? start[level] : 0;
       uint8_t endLevel = (end.getKeyLen() > level) ? end[level] : 255;

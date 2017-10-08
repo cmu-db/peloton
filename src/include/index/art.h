@@ -8,13 +8,14 @@
 #pragma once
 
 #include "index/N.h"
+#include "index/index.h"
 
 namespace peloton {
 namespace index {
 
 class Tree {
 public:
-  using LoadKeyFunction = void (*)(TID tid, Key &key);
+  using LoadKeyFunction = void (*)(TID tid, Key &key, IndexMetadata *metadata);
 
 private:
   N *const root;
@@ -24,6 +25,8 @@ private:
   LoadKeyFunction loadKey;
 
   Epoche epoche;
+
+  IndexMetadata *metadata;
 
 public:
   enum class CheckPrefixResult : uint8_t {
@@ -52,11 +55,11 @@ public:
   static CheckPrefixPessimisticResult checkPrefixPessimistic(N *n, const Key &k, uint32_t &level,
                                                              uint8_t &nonMatchingKey,
                                                              Prefix &nonMatchingPrefix,
-                                                             LoadKeyFunction loadKey, bool &needRestart);
+                                                             LoadKeyFunction loadKey, bool &needRestart, IndexMetadata *metadata);
 
-  static PCCompareResults checkPrefixCompare(const N* n, const Key &k, uint8_t fillKey, uint32_t &level, LoadKeyFunction loadKey, bool &needRestart);
+  static PCCompareResults checkPrefixCompare(const N* n, const Key &k, uint8_t fillKey, uint32_t &level, LoadKeyFunction loadKey, bool &needRestart, IndexMetadata *metadata);
 
-  static PCEqualsResults checkPrefixEquals(const N* n, uint32_t &level, const Key &start, const Key &end, LoadKeyFunction loadKey, bool &needRestart);
+  static PCEqualsResults checkPrefixEquals(const N* n, uint32_t &level, const Key &start, const Key &end, LoadKeyFunction loadKey, bool &needRestart, IndexMetadata *metadata);
 
 public:
 
@@ -78,6 +81,8 @@ public:
   void insert(const Key &k, TID tid, ThreadInfo &epocheInfo);
 
   void remove(const Key &k, TID tid, ThreadInfo &epocheInfo);
+
+  void setIndexMetadata(IndexMetadata *metadata);
 };
 
 
