@@ -415,12 +415,13 @@ void OperatorToPlanTransformer::GenerateTableExprMap(
     const storage::DataTable *table) {
   auto db_id = table->GetDatabaseOid();
   oid_t table_id = table->GetOid();
-  size_t num_col = table->GetSchema()->GetColumnCount();
+  auto cols = table->GetSchema()->GetColumns();
+  size_t num_col = cols.size();
   for (oid_t col_id = 0; col_id < num_col; ++col_id) {
     // Only bound_obj_id is needed for expr_map
     // TODO potential memory leak here?
     auto col_expr = shared_ptr<expression::TupleValueExpression>(
-        new expression::TupleValueExpression("", alias.c_str()));
+        new expression::TupleValueExpression(cols[col_id].column_name.c_str(), alias.c_str()));
     col_expr->SetValueType(table->GetSchema()->GetColumn(col_id).GetType());
     col_expr->SetBoundOid(db_id, table_id, col_id);
     expr_map[col_expr] = col_id;

@@ -27,10 +27,9 @@ void BindNodeVisitor::BindNameToNode(parser::SQLStatement *tree) {
 }
 
 void BindNodeVisitor::Visit(parser::SelectStatement *node) {
-  // Save the upper level context
-  auto pre_context = context_;
   context_ = std::make_shared<BinderContext>();
-  context_->SetUpperContext(pre_context);
+  // Upper context should be set outside (e.g. when where contains subquery)
+  //  context_->SetUpperContext(pre_context);
   if (node->from_table != nullptr) node->from_table->Accept(this);
   if (node->where_clause != nullptr) node->where_clause->Accept(this);
   if (node->order != nullptr) node->order->Accept(this);
@@ -40,8 +39,6 @@ void BindNodeVisitor::Visit(parser::SelectStatement *node) {
     select_element->Accept(this);
   }
 
-  // Restore the upper level context
-  context_ = context_->GetUpperContext();
 }
 
 // Some sub query nodes inside SelectStatement
@@ -55,8 +52,15 @@ void BindNodeVisitor::Visit(parser::JoinDefinition *node) {
 void BindNodeVisitor::Visit(parser::TableRef *node) {
   // Nested select. Not supported in the current executors
   if (node->select != nullptr) {
+    if (node->alias == nullptr)
+      throw Exception("Alias not found for query derived table");
+    context_->AddNestedTable(node->alias, node->select->select_list);
 
+    // Save the previous context
+    auto pre_context = context_;
     node->select->Accept(this);
+    // Restore the previous level context
+    context_ = context_->GetUpperContext();
   }
   // Join
   else if (node->join != nullptr)
@@ -67,7 +71,7 @@ void BindNodeVisitor::Visit(parser::TableRef *node) {
   }
   // Single table
   else {
-    context_->AddTable(node, txn_);
+    context_->AddRegularTable(node, txn_);
   }
 }
 
@@ -100,7 +104,7 @@ void BindNodeVisitor::Visit(parser::UpdateStatement *node) {
 void BindNodeVisitor::Visit(parser::DeleteStatement *node) {
   context_ = std::make_shared<BinderContext>();
 
-  context_->AddTable(node->GetDatabaseName(), node->GetTableName(), node->GetTableName(), txn_);
+  context_->AddRegularTable(node->GetDatabaseName(), node->GetTableName(), node->GetTableName(), txn_);
 
   if (node->expr != nullptr) node->expr->Accept(this);
 
@@ -130,7 +134,7 @@ void BindNodeVisitor::Visit(parser::AnalyzeStatement *node) {
 void BindNodeVisitor::Visit(expression::TupleValueExpression *expr) {
   if (!expr->GetIsBound()) {
     std::tuple<oid_t, oid_t, oid_t> col_pos_tuple;
-    std::shared_ptr<catalog::TableCatalogObject> table_obj;
+    std::shared_ptr<catalog::TableCatalogObject> table_obj = nullptr;
 
     std::string table_name = expr->GetTableName();
     std::string col_name = expr->GetColumnName();
@@ -153,14 +157,15 @@ void BindNodeVisitor::Visit(expression::TupleValueExpression *expr) {
     }
     // Table name is present
     else {
-      // Find the corresponding table in the context
-      if (!BinderContext::GetTableObj(context_, table_name, table_obj)) {
+      // Regular table
+      if (BinderContext::GetRegularTableObj(context_, table_name, table_obj)) {
+        if (!BinderContext::GetColumnPosTuple(col_name, table_obj, col_pos_tuple, value_type)) {
+          throw Exception("Cannot find column " + col_name);
+        }
+      }
+      // Nested table
+      else if (!BinderContext::CheckNestedTableColumn(context_, table_name, col_name, value_type))
         throw Exception("Invalid table reference " + expr->GetTableName());
-      }
-      // Find the column offset in that table
-      if (!BinderContext::GetColumnPosTuple(col_name, table_obj, col_pos_tuple, value_type)) {
-        throw Exception("Cannot find column " + col_name);
-      }
     }
     expr->SetValueType(value_type);
     expr->SetBoundOid(col_pos_tuple);
