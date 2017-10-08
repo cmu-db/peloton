@@ -255,10 +255,6 @@ TEST_F(OptimizerTests, PredicatePushDownTest) {
   auto constant = dynamic_cast<expression::ConstantValueExpression*>(test1_predicate->GetModifiableChild(1));
   EXPECT_TRUE(constant != nullptr);
   EXPECT_EQ(22, constant->GetValue().GetAs<int>());
-
-
-
-
 }
 
 }  // namespace test

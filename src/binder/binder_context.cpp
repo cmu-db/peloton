@@ -23,54 +23,36 @@ namespace binder {
 void BinderContext::AddTable(parser::TableRef* table_ref,
                              const std::string default_database_name,
                              concurrency::Transaction* txn) {
-  // using catalog object to retrieve meta-data
   table_ref->TryBindDatabaseName(default_database_name);
-  auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-    table_ref->GetDatabaseName(), table_ref->GetTableName(), txn);
-
-  auto id_tuple =
-      std::make_tuple(table_object->database_oid, table_object->table_oid);
-
-  std::string alias = table_ref->GetTableAlias();
-
-  if (table_alias_map.find(alias) != table_alias_map.end()) {
-    throw Exception("Duplicate alias " + alias);
-  }
-  table_alias_map[alias] = id_tuple;
+  auto table_alias = table_ref->GetTableAlias();
+  if (table_alias == nullptr)
+    table_alias = table_ref->GetTableName();
+  AddTable(table_ref->GetDatabaseName(), table_ref->GetTableName(), table_alias, txn);
 }
 
 void BinderContext::AddTable(const std::string db_name,
                              const std::string table_name,
+                             const std::string table_alias,
                              concurrency::Transaction* txn) {
   // using catalog object to retrieve meta-data
   auto table_object =
       catalog::Catalog::GetInstance()->GetTableObject(db_name, table_name, txn);
 
-  auto id_tuple =
-      std::make_tuple(table_object->database_oid, table_object->table_oid);
-
-  if (table_alias_map.find(table_name) != table_alias_map.end()) {
-    throw Exception("Duplicate alias " + table_name);
+  if (table_alias_map.find(table_alias) != table_alias_map.end()) {
+    throw Exception("Duplicate alias " + table_alias);
   }
-  table_alias_map[table_name] = id_tuple;
+  table_alias_map[table_alias] = table_object;
 }
 
 bool BinderContext::GetColumnPosTuple(
-    const std::string& col_name, const std::tuple<oid_t, oid_t>& table_id_tuple,
-    std::tuple<oid_t, oid_t, oid_t>& col_pos_tuple, type::TypeId& value_type,
-    concurrency::Transaction* txn) {
+    const std::string& col_name, std::shared_ptr<catalog::TableCatalogObject> table_obj,
+    std::tuple<oid_t, oid_t, oid_t>& col_pos_tuple, type::TypeId& value_type) {
   try {
-    auto db_oid = std::get<0>(table_id_tuple);
-    auto table_oid = std::get<1>(table_id_tuple);
-
-    // get table object first and use the column name to get column object
-    auto table_object =
-        catalog::Catalog::GetInstance()->GetTableObject(db_oid, table_oid, txn);
-    auto column_object = table_object->GetColumnObject(col_name);
+    auto column_object = table_obj->GetColumnObject(col_name);
     if (column_object == nullptr) return false;
 
     oid_t col_pos = column_object->column_id;
-    col_pos_tuple = std::make_tuple(db_oid, table_oid, col_pos);
+    col_pos_tuple = std::make_tuple(table_obj->database_oid, table_obj->table_oid, col_pos);
     value_type = column_object->column_type;
     return true;
   } catch (CatalogException& e) {
@@ -82,12 +64,12 @@ bool BinderContext::GetColumnPosTuple(
 bool BinderContext::GetColumnPosTuple(
     std::shared_ptr<BinderContext> current_context, const std::string& col_name,
     std::tuple<oid_t, oid_t, oid_t>& col_pos_tuple, std::string& table_alias,
-    type::TypeId& value_type, concurrency::Transaction* txn) {
+    type::TypeId& value_type) {
   bool find_matched = false;
   while (current_context != nullptr && !find_matched) {
     for (auto entry : current_context->table_alias_map) {
       bool get_matched = GetColumnPosTuple(col_name, entry.second,
-                                           col_pos_tuple, value_type, txn);
+                                           col_pos_tuple, value_type);
       if (get_matched) {
         if (!find_matched) {
           // First match
@@ -103,13 +85,13 @@ bool BinderContext::GetColumnPosTuple(
   return find_matched;
 }
 
-bool BinderContext::GetTableIdTuple(
+bool BinderContext::GetTableObj(
     std::shared_ptr<BinderContext> current_context, std::string& alias,
-    std::tuple<oid_t, oid_t>* id_tuple_ptr) {
+    std::shared_ptr<catalog::TableCatalogObject>& table_obj) {
   while (current_context != nullptr) {
     auto iter = current_context->table_alias_map.find(alias);
     if (iter != current_context->table_alias_map.end()) {
-      *id_tuple_ptr = iter->second;
+      table_obj = iter->second;
       return true;
     }
     current_context = current_context->GetUpperContext();
