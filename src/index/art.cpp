@@ -58,7 +58,7 @@ TID Tree::lookup(const Key &k, ThreadInfo &threadEpocheInfo) const {
   N *parentNode = nullptr;
   uint64_t v;
   uint32_t level = 0;
-  bool optimisticPrefixMatch = false;
+//  bool optimisticPrefixMatch = false;
 
   node = root;
   v = node->readLockOrRestart(needRestart);
@@ -70,7 +70,7 @@ TID Tree::lookup(const Key &k, ThreadInfo &threadEpocheInfo) const {
         if (needRestart) goto restart;
         return 0;
       case CheckPrefixResult::OptimisticMatch:
-        optimisticPrefixMatch = true;
+//        optimisticPrefixMatch = true;
         // fallthrough
       case CheckPrefixResult::Match:
         if (k.getKeyLen() <= level) {
