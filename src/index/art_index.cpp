@@ -21,17 +21,13 @@ namespace index {
 void loadKey(UNUSED_ATTRIBUTE TID tid, UNUSED_ATTRIBUTE Key &key) {
   // Store the key of the tuple into the key vector
   // Implementation is database specific
-  printf("enter loadKey()\n");
+  printf("enter loadKey() TID (ItemPointer) = %llu\n", tid);
 
   // TODO: recover key from tuple_pointer (recover a storage::Tuple from ItemPointer)
   auto &manager = catalog::Manager::GetInstance();
   ItemPointer *tuple_pointer = (ItemPointer *) tid;
   ItemPointer tuple_location = *tuple_pointer;
   auto tile_group = manager.GetTileGroup(tuple_location.block);
-  auto tile = tile_group->GetTile(tuple_location.offset);
-  auto tuple_number = tile->GetActiveTupleCount();
-  printf("active tuple count() = %u\n", tuple_number);
-//  auto iterator = tile->GetIterator();
   ContainerTuple<storage::TileGroup> tuple(tile_group.get(), tuple_location.offset);
 
   printf("good after constructing a tuple\n");
