@@ -61,7 +61,10 @@ void BindNodeVisitor::Visit(parser::JoinDefinition *node) {
 
 void BindNodeVisitor::Visit(parser::TableRef *node) {
   // Nested select. Not supported in the current executors
-  if (node->select != nullptr) node->select->Accept(this);
+  if (node->select != nullptr) {
+
+    node->select->Accept(this);
+  }
   // Join
   else if (node->join != nullptr)
     node->join->Accept(this);
@@ -104,7 +107,7 @@ void BindNodeVisitor::Visit(parser::UpdateStatement *node) {
 void BindNodeVisitor::Visit(parser::DeleteStatement *node) {
   context_ = std::make_shared<BinderContext>();
 
-  context_->AddTable(node->GetDatabaseName(), node->GetTableName(), txn_);
+  context_->AddTable(node->GetDatabaseName(), node->GetTableName(), node->GetTableName(), txn_);
 
   if (node->expr != nullptr) node->expr->Accept(this);
 
@@ -134,7 +137,7 @@ void BindNodeVisitor::Visit(parser::AnalyzeStatement *node) {
 void BindNodeVisitor::Visit(expression::TupleValueExpression *expr) {
   if (!expr->GetIsBound()) {
     std::tuple<oid_t, oid_t, oid_t> col_pos_tuple;
-    std::tuple<oid_t, oid_t> table_id_tuple;
+    std::shared_ptr<catalog::TableCatalogObject> table_obj;
 
     std::string table_name = expr->GetTableName();
     std::string col_name = expr->GetColumnName();
