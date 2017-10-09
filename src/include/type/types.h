@@ -1282,17 +1282,18 @@ class ExprEqualCmp;
 // Augment abstract expression with a table alias set
 struct AnnotatedExpression {
   AnnotatedExpression(
-      expression::AbstractExpression* i_expr,
+      std::shared_ptr<expression::AbstractExpression> i_expr,
       std::unordered_set<std::string>& i_set)
       : expr(i_expr), table_alias_set(i_set) {}
   AnnotatedExpression(const AnnotatedExpression& mt_expr)
       : expr(mt_expr.expr), table_alias_set(mt_expr.table_alias_set) {}
-  expression::AbstractExpression* expr;
+  std::shared_ptr<expression::AbstractExpression> expr;
   std::unordered_set<std::string> table_alias_set;
 };
 
 typedef std::vector<AnnotatedExpression> MultiTablePredicates;
-typedef std::unordered_map<std::string, std::vector<expression::AbstractExpression*>> SingleTablePredicatesMap;
+typedef std::unordered_map<std::string,
+                           std::vector<std::shared_ptr<expression::AbstractExpression>>> SingleTablePredicatesMap;
 
 // Mapping of Expression -> Column Offset created by operator
 typedef std::unordered_map<std::shared_ptr<expression::AbstractExpression>,

@@ -57,6 +57,33 @@ hash_t LogicalGet::Hash() const {
 }
 
 //===--------------------------------------------------------------------===//
+// Query derived get
+//===--------------------------------------------------------------------===//
+Operator LogicalQueryDerivedGet::make(std::string& alias,
+                                      std::unordered_map<std::string,
+                                                         std::shared_ptr<expression::AbstractExpression>>
+                                      alias_to_expr_map) {
+  LogicalQueryDerivedGet* get = new LogicalQueryDerivedGet;
+  get->table_alias = alias;
+  get->alias_to_expr_map = alias_to_expr_map;
+
+  return Operator(get);
+}
+
+bool LogicalQueryDerivedGet::operator==(const BaseOperatorNode &node) {
+  if (node.type() != OpType::LogicalQueryDerivedGet) return false;
+  const LogicalQueryDerivedGet &r = *static_cast<const LogicalQueryDerivedGet *>(&node);
+  return table_alias == r.table_alias;
+}
+
+hash_t LogicalQueryDerivedGet::Hash() const {
+  hash_t hash = BaseOperatorNode::Hash();
+  hash = HashUtil::CombineHashes(
+      hash, HashUtil::HashBytes(table_alias.c_str(), table_alias.length()));
+  return hash;
+}
+
+//===--------------------------------------------------------------------===//
 // Select
 //===--------------------------------------------------------------------===//
 Operator LogicalFilter::make() {
@@ -512,11 +539,17 @@ template <>
 void OperatorNode<LogicalUpdate>::Accept(
     UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
 
+template <>
+void OperatorNode<LogicalQueryDerivedGet>::Accept(
+    UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
+
 //===--------------------------------------------------------------------===//
 template <>
 std::string OperatorNode<LeafOperator>::name_ = "LeafOperator";
 template <>
 std::string OperatorNode<LogicalGet>::name_ = "LogicalGet";
+template <>
+std::string OperatorNode<LogicalQueryDerivedGet>::name_ = "LogicalQueryDerivedGet";
 template <>
 std::string OperatorNode<LogicalFilter>::name_ = "LogicalFilter";
 template <>
@@ -596,6 +629,8 @@ template <>
 OpType OperatorNode<LeafOperator>::type_ = OpType::Leaf;
 template <>
 OpType OperatorNode<LogicalGet>::type_ = OpType::Get;
+template <>
+OpType OperatorNode<LogicalQueryDerivedGet>::type_ = OpType::LogicalQueryDerivedGet;
 template <>
 OpType OperatorNode<LogicalFilter>::type_ = OpType::LogicalFilter;
 template <>

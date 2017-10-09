@@ -69,7 +69,7 @@ void SplitPredicates(expression::AbstractExpression* expr,
                      std::vector<expression::AbstractExpression*>& predicates);
 
 expression::AbstractExpression* CombinePredicates(
-    std::vector<expression::AbstractExpression*> predicates);
+    std::vector<std::shared_ptr<expression::AbstractExpression>> predicates);
 
 void ExtractPredicates(expression::AbstractExpression* expr,
                        SingleTablePredicatesMap& where_predicates,
@@ -85,6 +85,13 @@ bool ContainsJoinColumns(const std::unordered_set<std::string>& l_group_alias,
 
 std::unique_ptr<planner::AbstractPlan> CreateCopyPlan(
     parser::CopyStatement* copy_stmt);
+
+std::unordered_map<std::string, std::shared_ptr<expression::AbstractExpression>>
+ConstructSelectElementMap(std::vector<expression::AbstractExpression *> &select_list);
+
+expression::AbstractExpression*
+TransformQueryDerivedTablePredicates(std::unordered_map<std::string, std::shared_ptr<expression::AbstractExpression>>& alias_to_expr_map,
+                                     expression::AbstractExpression* expr);
 
 }  // namespace util
 }  // namespace optimizer

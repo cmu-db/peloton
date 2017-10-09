@@ -27,6 +27,7 @@ enum class OpType {
   Leaf,
   // Logical ops
   Get,
+  LogicalQueryDerivedGet,
   LogicalProject,
   LogicalFilter,
   InnerJoin,
