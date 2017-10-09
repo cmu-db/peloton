@@ -19,27 +19,49 @@
 namespace peloton {
 namespace index {
 
-void loadKey(UNUSED_ATTRIBUTE TID tid, UNUSED_ATTRIBUTE Key &key, UNUSED_ATTRIBUTE IndexMetadata *metadata) {
+void ArtIndex::WriteValueInBytes(type::Value value, char *c, int offset, UNUSED_ATTRIBUTE int length) {
+  switch (value.GetTypeId()) {
+    case type::TypeId::INTEGER:
+    {
+      int32_t v = value.GetAs<int32_t>();
+      printf("value insert in offset %d is %d\n", offset, v);
+      uint32_t unsigned_value = (uint32_t) v;
+      printf("unsigned value = %u\n", unsigned_value);
+      unsigned_value ^= (1u << 31);
+      printf("fliped unsigned value = %u\n", unsigned_value);
+      c[offset] = (unsigned_value >> 24) & 0xFF;
+      c[offset + 1] = (unsigned_value >> 16) & 0xFF;
+      c[offset + 2] = (unsigned_value >> 8) & 0xFF;
+      c[offset + 3] = (unsigned_value) & 0xFF;
+      break;
+    }
+    default:
+      break;
+  }
+  return;
+}
+
+void loadKey(TID tid, Key &key, IndexMetadata *metadata) {
   // Store the key of the tuple into the key vector
   // Implementation is database specific
   printf("enter loadKey() TID (ItemPointer) = %llu\n", tid);
 
-  size_t columnCount = metadata->GetColumnCount();
-  printf("columnCount = %ld\n", columnCount);
+  int columnCount = metadata->GetColumnCount();
+  printf("columnCount = %d\n", columnCount);
 
   std::vector<oid_t> indexedColumns = metadata->GetKeySchema()->GetIndexedColumns();
-  if (indexedColumns.size() != columnCount) {
-    printf("column count is not equal to the size of indexed column vector\n");
-  } else {
-    printf("column count is equal to the size of indexed column vector\n");
-  }
-  for (size_t i = 0; i < columnCount; i++) {
+//  if (indexedColumns.size() != columnCount) {
+//    printf("column count is not equal to the size of indexed column vector\n");
+//  } else {
+//    printf("column count is equal to the size of indexed column vector\n");
+//  }
+  for (int i = 0; i < columnCount; i++) {
     printf("indexed column id = %u\n", indexedColumns[i]);
   }
 
   std::vector<catalog::Column> columns = metadata->GetKeySchema()->GetColumns();
-  for (size_t i = 0; i < columnCount; i++) {
-    printf("%d\n", columns[i].GetType());
+  for (int i = 0; i < columnCount; i++) {
+    printf("typeid=%d length=%lu, offset?=%d\n", columns[i].GetType(), columns[i].GetLength(), columns[i].GetOffset());
   }
 
 
@@ -49,6 +71,33 @@ void loadKey(UNUSED_ATTRIBUTE TID tid, UNUSED_ATTRIBUTE Key &key, UNUSED_ATTRIBU
   ItemPointer tuple_location = *tuple_pointer;
   auto tile_group = manager.GetTileGroup(tuple_location.block);
   ContainerTuple<storage::TileGroup> tuple(tile_group.get(), tuple_location.offset);
+
+  std::vector<type::Value> values;
+  int total_bytes = 0;
+  for (int i = 0; i < columnCount; i++) {
+    values.push_back(tuple.GetValue(indexedColumns[i]));
+
+    // TODO: use values[i].GetLength() to save some space for varchar
+    total_bytes += columns[i].GetLength();
+  }
+
+  char* c =new char[total_bytes];
+  c[0] = 'a';
+  c[1] = '\0';
+  printf("dynamic string : %s\n", c);
+
+
+  printf("total bytes = %d\n", total_bytes);
+
+  // write values to char array
+  int offset = 0;
+  for (int i = 0; i < columnCount; i++) {
+    ArtIndex::WriteValueInBytes(values[i], c, offset, columns[i].GetLength());
+    offset += columns[i].GetLength();
+  }
+
+  key.set(c, total_bytes);
+  key.setKeyLen(total_bytes);
 
   printf("good after constructing a tuple\n");
   printf("%s\n", tuple.GetValue(0).GetInfo().c_str());
@@ -67,8 +116,8 @@ void loadKey(UNUSED_ATTRIBUTE TID tid, UNUSED_ATTRIBUTE Key &key, UNUSED_ATTRIBU
     }
     printf("\n");
 
-    key.set(array, len);
-    key.setKeyLen(len);
+//    key.set(array, len);
+//    key.setKeyLen(len);
   }
 //  unsigned int len = value.GetLength();
 //  unsigned int len = 4;
@@ -141,12 +190,52 @@ bool ArtIndex::InsertEntry(
     printf("%d ", index_key.data[i]);
   }
   printf("\n");
+  for (int i = 0; i < key->GetLength(); i++) {
+    printf("%d ", (key->GetData())[i]);
+  }
+  printf("\n");
 
   TID tid =  reinterpret_cast<TID>(value);
   printf("tid = %llu\n", tid);
 
+//  auto t = artTree.getThreadInfo();
+//  artTree.insert(index_key, reinterpret_cast<TID>(value), t);
+
+  int columnsInKey = key->GetColumnCount();
+  printf("inserted key has %d columns\n", columnsInKey);
+
+  const catalog::Schema *tuple_schema = key->GetSchema();
+  std::vector<catalog::Column> columns = tuple_schema->GetColumns();
+  int total_bytes = 0;
+  for (int i = 0; i < columnsInKey; i++) {
+    total_bytes += columns[i].GetLength();
+  }
+  char *c = new char[total_bytes];
+  int offset = 0;
+  for (int i = 0; i < columnsInKey; i++) {
+    type::Value keyColumnValue = key->GetValue(i);
+    printf("keyColumnValue type id = %d\n", keyColumnValue.GetTypeId());
+
+    WriteValueInBytes(key->GetValue(i), c, offset, columns[i].GetLength());
+    offset += columns[i].GetLength();
+
+  }
+
+  printf("below is the BINARY COMPARABLE KEY!\n");
+  index_key.set(c, total_bytes);
+  index_key.setKeyLen(total_bytes);
+  printf("[DEBUG] ART insert: \n");
+  for (unsigned int i = 0; i < index_key.getKeyLen(); i++) {
+    printf("%d ", index_key.data[i]);
+  }
+  printf("\n");
+
   auto t = artTree.getThreadInfo();
   artTree.insert(index_key, reinterpret_cast<TID>(value), t);
+
+
+
+
 
 //  Key debug_key;
 //  loadKey(reinterpret_cast<TID>(value), debug_key);

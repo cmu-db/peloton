@@ -77,6 +77,7 @@ public:
 
   std::string GetTypeName() const;
 
+  static void WriteValueInBytes(type::Value value, char *c, int offset, int length);
 
 protected:
   int KeyType;
