@@ -110,7 +110,7 @@ TID Tree::lookup(const Key &k, ThreadInfo &threadEpocheInfo) const {
   }
 }
 
-bool Tree::lookupRange(const Key &start, const Key &end, Key &continueKey, TID result[],
+bool Tree::lookupRange(const Key &start, const Key &end, Key &continueKey, std::vector<ItemPointer *> &result,
                        std::size_t resultSize, std::size_t &resultsFound, ThreadInfo &threadEpocheInfo) const {
   for (uint32_t i = 0; i < std::min(start.getKeyLen(), end.getKeyLen()); ++i) {
     if (start[i] > end[i]) {
@@ -124,11 +124,12 @@ bool Tree::lookupRange(const Key &start, const Key &end, Key &continueKey, TID r
   TID toContinue = 0;
   std::function<void(const N *)> copy = [&result, &resultSize, &resultsFound, &toContinue, &copy](const N *node) {
     if (N::isLeaf(node)) {
-      if (resultsFound == resultSize) {
-        toContinue = N::getLeaf(node);
-        return;
-      }
-      result[resultsFound] = N::getLeaf(node);
+//      if (resultsFound == resultSize) {
+//        toContinue = N::getLeaf(node);
+//        return;
+//      }
+//      result[resultsFound] = N::getLeaf(node);
+      result.push_back((ItemPointer *)(N::getLeaf(node)));
       resultsFound++;
     } else {
       std::tuple<uint8_t, N *> children[256];

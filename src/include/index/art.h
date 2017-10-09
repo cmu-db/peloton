@@ -75,7 +75,7 @@ public:
 
   TID lookup(const Key &k, ThreadInfo &threadEpocheInfo) const;
 
-  bool lookupRange(const Key &start, const Key &end, Key &continueKey, TID result[], std::size_t resultLen,
+  bool lookupRange(const Key &start, const Key &end, Key &continueKey, std::vector<ItemPointer *> &result, std::size_t resultLen,
                    std::size_t &resultCount, ThreadInfo &threadEpocheInfo) const;
 
   void insert(const Key &k, TID tid, ThreadInfo &epocheInfo);

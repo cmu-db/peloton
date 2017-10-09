@@ -261,6 +261,7 @@ ArtIndex::ArtIndex(IndexMetadata *metadata)
   :  // Base class
   Index{metadata}, artTree(loadKey) {
   artTree.setIndexMetadata(metadata);
+  printf("Congrats!! Art Index is created for %s\n", (metadata->GetName()).c_str());
   return;
 }
 
@@ -410,7 +411,7 @@ bool ArtIndex::DeleteEntry(
   }
   printf("\n");
 
-  TID tid =  reinterpret_cast<TID>(value);
+  TID tid = reinterpret_cast<TID>(value);
   printf("tid = %llu\n", tid);
 
   auto t = artTree.getThreadInfo();
@@ -479,16 +480,18 @@ void ArtIndex::Scan(
     // TODO: how do I know the result length before scanning?
     std::size_t range = 1000;
     std::size_t actual_result_length = 0;
-    TID results[range];
+//    TID results[range];
 
     auto t = artTree.getThreadInfo();
-    artTree.lookupRange(index_low_key, index_high_key, continue_key, results, range,
+    artTree.lookupRange(index_low_key, index_high_key, continue_key, result, range,
       actual_result_length, t);
 
-    for (std::size_t i = 0; i < actual_result_length; i++) {
-      ItemPointer *value_pointer = (ItemPointer *) results[i];
-      result.push_back(value_pointer);
-    }
+    printf("range scan actual_result_length = %lu\n", actual_result_length);
+
+//    for (std::size_t i = 0; i < actual_result_length; i++) {
+//      ItemPointer *value_pointer = (ItemPointer *) results[i];
+//      result.push_back(value_pointer);
+//    }
 
   }
 //  return;
