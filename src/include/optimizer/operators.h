@@ -66,6 +66,24 @@ class LogicalGet : public OperatorNode<LogicalGet> {
 };
 
 //===--------------------------------------------------------------------===//
+// Query derived get
+//===--------------------------------------------------------------------===//
+class LogicalQueryDerivedGet : public OperatorNode<LogicalQueryDerivedGet> {
+ public:
+  static Operator make(std::string& alias,
+                       std::unordered_map<std::string,
+                                          std::shared_ptr<expression::AbstractExpression>> alias_to_expr_map);
+
+  bool operator==(const BaseOperatorNode &r) override;
+
+  hash_t Hash() const override;
+
+  std::string table_alias;
+  std::unordered_map<std::string, std::shared_ptr<expression::AbstractExpression>>
+      alias_to_expr_map;
+};
+
+//===--------------------------------------------------------------------===//
 // Select
 //===--------------------------------------------------------------------===//
 class LogicalFilter : public OperatorNode<LogicalFilter> {

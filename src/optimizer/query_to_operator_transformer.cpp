@@ -113,7 +113,7 @@ void QueryToOperatorTransformer::Visit(parser::JoinDefinition *node) {
         expression::ExpressionUtil::GenerateTableAliasSet(
             node->condition.get(), join_condition_table_alias_set);
         join_predicates_.emplace_back(
-            AnnotatedExpression(node->condition->Copy(), join_condition_table_alias_set));
+            AnnotatedExpression(std::shared_ptr<expression::AbstractExpression>(node->condition->Copy()), join_condition_table_alias_set));
       }
       // Based on the set of all table alias in the subtree, extract those
       // join predicates that applies to this join.
@@ -153,8 +153,37 @@ void QueryToOperatorTransformer::Visit(parser::JoinDefinition *node) {
 void QueryToOperatorTransformer::Visit(parser::TableRef *node) {
   // Nested select. Not supported in the current executors
   if (node->select != nullptr) {
-    throw NotImplementedException("Not support joins");
+    // Store previous context
+    auto pre_join_predicates = join_predicates_;
+    auto pre_single_table_predicates_map = single_table_predicates_map;
+    auto pre_table_alias_set = table_alias_set_;
+    join_predicates_.clear();
+    single_table_predicates_map.clear();
+    table_alias_set_.clear();
+
+    // Construct query derived table predicates
+    auto table_alias = StringUtil::Lower(node->GetTableAlias());
+    auto alias_to_expr_map = util::ConstructSelectElementMap(*node->select->select_list);
+    auto predicates = pre_single_table_predicates_map[table_alias];
+    std::vector<expression::AbstractExpression*> transformed_predicates;
+    for (auto& original_predicate : predicates) {
+      util::ExtractPredicates(
+          util::TransformQueryDerivedTablePredicates(alias_to_expr_map, original_predicate.get()),
+          single_table_predicates_map, join_predicates_);
+    }
+
     node->select->Accept(this);
+
+    auto alias = StringUtil::Lower(node->GetTableAlias());
+    pre_table_alias_set.insert(alias);
+    join_predicates_ = pre_join_predicates;
+    single_table_predicates_map = pre_single_table_predicates_map;
+    table_alias_set_ = pre_table_alias_set;
+
+    auto child_expr = output_expr_;
+    output_expr_ = std::make_shared<OperatorExpression>(
+        LogicalQueryDerivedGet::make(alias, alias_to_expr_map));
+
   }
   // Explicit Join
   else if (node->join != nullptr) {

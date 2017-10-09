@@ -216,13 +216,13 @@ void ExtractPredicates(expression::AbstractExpression* expr,
     // Deep copy expression to avoid memory leak
     if (table_alias_set.size() > 1)
       join_predicates.emplace_back(
-          AnnotatedExpression(predicate->Copy(), table_alias_set));
+          AnnotatedExpression(std::shared_ptr<expression::AbstractExpression>(predicate->Copy()), table_alias_set));
     else {
       std::string table_alias = StringUtil::Lower(*(table_alias_set.begin()));
       if (single_table_predicates_map.find(table_alias) == single_table_predicates_map.end())
-        single_table_predicates_map[table_alias] = {predicate->Copy()};
+        single_table_predicates_map[table_alias] = {std::shared_ptr<expression::AbstractExpression>(predicate->Copy())};
       else
-        single_table_predicates_map[table_alias].emplace_back(predicate->Copy());
+        single_table_predicates_map[table_alias].emplace_back(std::shared_ptr<expression::AbstractExpression>(predicate->Copy()));
     }
   }
 }
@@ -235,7 +235,7 @@ void ExtractPredicates(expression::AbstractExpression* expr,
 expression::AbstractExpression* ConstructJoinPredicate(
     std::unordered_set<std::string>& table_alias_set,
     MultiTablePredicates& join_predicates) {
-  std::vector<expression::AbstractExpression*> qualified_exprs;
+  std::vector<std::shared_ptr<expression::AbstractExpression>> qualified_exprs;
   MultiTablePredicates new_join_predicates;
   for (auto predicate : join_predicates) {
     if (IsSubset(table_alias_set, predicate.table_alias_set))
@@ -267,16 +267,16 @@ void SplitPredicates(expression::AbstractExpression* expr,
  * Combine a vector of expressions with AND
  */
 expression::AbstractExpression* CombinePredicates(
-    std::vector<expression::AbstractExpression*> predicates) {
+    std::vector<std::shared_ptr<expression::AbstractExpression>> predicates) {
   if (predicates.empty()) return nullptr;
 
-  if (predicates.size() == 1) return predicates[0];
+  if (predicates.size() == 1) return predicates[0]->Copy();
 
   auto conjunction = new expression::ConjunctionExpression(
-      ExpressionType::CONJUNCTION_AND, predicates[0], predicates[1]);
+      ExpressionType::CONJUNCTION_AND, predicates[0]->Copy(), predicates[1]->Copy());
   for (size_t i = 2; i < predicates.size(); i++) {
     conjunction = new expression::ConjunctionExpression(
-        ExpressionType::CONJUNCTION_AND, conjunction, predicates[i]);
+        ExpressionType::CONJUNCTION_AND, conjunction, predicates[i]->Copy());
   }
   return conjunction;
 }
@@ -358,6 +358,42 @@ std::unique_ptr<planner::AbstractPlan> CreateCopyPlan(
   copy_plan->AddChild(std::move(select_plan));
   return copy_plan;
 }
+
+std::unordered_map<std::string, std::shared_ptr<expression::AbstractExpression>>
+ConstructSelectElementMap(std::vector<expression::AbstractExpression *> &select_list) {
+  std::unordered_map<std::string, std::shared_ptr<expression::AbstractExpression>> res;
+  for (auto& expr : select_list) {
+    std::string alias;
+    if (!expr->alias.empty()) {
+      alias = expr->alias;
+    } else if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
+      auto tv_expr = reinterpret_cast<expression::TupleValueExpression*>(expr);
+      alias = tv_expr->GetColumnName();
+    } else continue;
+    std::transform(alias.begin(), alias.end(), alias.begin(),
+                   ::tolower);
+    res[alias] = std::shared_ptr<expression::AbstractExpression>(expr->Copy());
+  }
+  return res;
+};
+
+expression::AbstractExpression*
+TransformQueryDerivedTablePredicates(std::unordered_map<std::string, std::shared_ptr<expression::AbstractExpression>>& alias_to_expr_map,
+                                     expression::AbstractExpression* expr){
+  if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
+    auto new_expr = alias_to_expr_map[reinterpret_cast<expression::TupleValueExpression*>(expr)->GetColumnName()];
+    return new_expr->Copy();
+  }
+  auto child_size = expr->GetChildrenSize();
+  for (size_t i = 0; i < child_size; i++) {
+    expr->SetChild(i, TransformQueryDerivedTablePredicates(
+        alias_to_expr_map, expr->GetModifiableChild(i)));
+  }
+  return expr;
+
+}
+
+
 
 }  // namespace util
 }  // namespace optimizer
