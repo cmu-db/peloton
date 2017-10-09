@@ -21,6 +21,28 @@ namespace index {
 
 void ArtIndex::WriteValueInBytes(type::Value value, char *c, int offset, UNUSED_ATTRIBUTE int length) {
   switch (value.GetTypeId()) {
+    case type::TypeId::BOOLEAN:
+    {
+      c[offset] = value.GetAs<int8_t>();
+      break;
+    }
+    case type::TypeId::TINYINT:
+    {
+      int8_t v = value.GetAs<int8_t>();
+      uint8_t unsigned_value = (uint8_t) v;
+      unsigned_value ^= (1u << 7);
+      c[offset] = unsigned_value & 0xFF;
+      break;
+    }
+    case type::TypeId::SMALLINT:
+    {
+      int16_t v = value.GetAs<int16_t>();
+      uint16_t unsigned_value = (uint16_t) v;
+      unsigned_value ^= (1u << 15);
+      c[offset] = (unsigned_value >> 8) & 0xFF;
+      c[offset + 1] = unsigned_value & 0xFF;
+      break;
+    }
     case type::TypeId::INTEGER:
     {
       int32_t v = value.GetAs<int32_t>();
@@ -32,9 +54,79 @@ void ArtIndex::WriteValueInBytes(type::Value value, char *c, int offset, UNUSED_
       c[offset] = (unsigned_value >> 24) & 0xFF;
       c[offset + 1] = (unsigned_value >> 16) & 0xFF;
       c[offset + 2] = (unsigned_value >> 8) & 0xFF;
-      c[offset + 3] = (unsigned_value) & 0xFF;
+      c[offset + 3] = unsigned_value & 0xFF;
       break;
     }
+    case type::TypeId::BIGINT:
+    {
+      int64_t v = value.GetAs<int64_t>();
+      uint64_t unsigned_value = (uint64_t) v;
+      unsigned_value ^= (1lu << 63);
+      c[offset] = (unsigned_value >> 56) & 0xFF;
+      c[offset + 1] = (unsigned_value >> 48) & 0xFF;
+      c[offset + 2] = (unsigned_value >> 40) & 0xFF;
+      c[offset + 3] = (unsigned_value >> 32) & 0xFF;
+      c[offset + 4] = (unsigned_value >> 24) & 0xFF;
+      c[offset + 5] = (unsigned_value >> 16) & 0xFF;
+      c[offset + 6] = (unsigned_value >> 8) & 0xFF;
+      c[offset + 7] = unsigned_value & 0xFF;
+      break;
+    }
+    case type::TypeId::DECIMAL:
+    {
+      // double
+      double v = value.GetAs<double>();
+      uint64_t bits = (uint64_t) v;
+      bits ^= (1lu << 63);
+
+      // bits distribution in double:
+      // 0: sign bit; 1-11: exponent; 12-63: fraction
+      c[offset] = (bits >> 56) & 0xFF;
+      c[offset + 1] = (bits >> 48) & 0xFF;
+      c[offset + 2] = (bits >> 40) & 0xFF;
+      c[offset + 3] = (bits >> 32) & 0xFF;
+      c[offset + 4] = (bits >> 24) & 0xFF;
+      c[offset + 5] = (bits >> 16) & 0xFF;
+      c[offset + 6] = (bits >> 8) & 0xFF;
+      c[offset + 7] = bits & 0xFF;
+      break;
+    }
+    case type::TypeId::DATE:
+    {
+      uint32_t unsigned_value = value.GetAs<uint32_t>();
+      c[offset] = (unsigned_value >> 24) & 0xFF;
+      c[offset + 1] = (unsigned_value >> 16) & 0xFF;
+      c[offset + 2] = (unsigned_value >> 8) & 0xFF;
+      c[offset + 3] = unsigned_value & 0xFF;
+      break;
+    }
+    case type::TypeId::TIMESTAMP:
+    {
+      uint64_t unsigned_value = value.GetAs<uint64_t>();
+      c[offset] = (unsigned_value >> 56) & 0xFF;
+      c[offset + 1] = (unsigned_value >> 48) & 0xFF;
+      c[offset + 2] = (unsigned_value >> 40) & 0xFF;
+      c[offset + 3] = (unsigned_value >> 32) & 0xFF;
+      c[offset + 4] = (unsigned_value >> 24) & 0xFF;
+      c[offset + 5] = (unsigned_value >> 16) & 0xFF;
+      c[offset + 6] = (unsigned_value >> 8) & 0xFF;
+      c[offset + 7] = unsigned_value & 0xFF;
+      break;
+    }
+    case type::TypeId::VARCHAR:
+    case type::TypeId::VARBINARY:
+    case type::TypeId::ARRAY:
+    {
+      int len = ((uint32_t) length < value.GetLength()) ? length : value.GetLength();
+      memcpy(c + offset, value.GetData(), len);
+      if (len < length) {
+        for (int i = len; i < length; i++) {
+          c[offset + i] = 0;
+        }
+      }
+      break;
+    }
+
     default:
       break;
   }
@@ -98,6 +190,8 @@ void loadKey(TID tid, Key &key, IndexMetadata *metadata) {
 
   key.set(c, total_bytes);
   key.setKeyLen(total_bytes);
+
+  delete[] c;
 
   printf("good after constructing a tuple\n");
   printf("%s\n", tuple.GetValue(0).GetInfo().c_str());
@@ -197,6 +291,8 @@ void ArtIndex::WriteIndexedAttributesInKey(const storage::Tuple *tuple, Key& ind
   printf("below is the BINARY COMPARABLE KEY!\n");
   index_key.set(c, total_bytes);
   index_key.setKeyLen(total_bytes);
+
+  delete[] c;
 
 }
 
