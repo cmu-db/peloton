@@ -172,6 +172,35 @@ ArtIndex::ArtIndex(IndexMetadata *metadata)
 
 ArtIndex::~ArtIndex() {}
 
+
+void ArtIndex::WriteIndexedAttributesInKey(const storage::Tuple *tuple, Key& index_key) {
+  int columnsInKey = tuple->GetColumnCount();
+  printf("inserted key has %d columns\n", columnsInKey);
+
+  const catalog::Schema *tuple_schema = tuple->GetSchema();
+  std::vector<catalog::Column> columns = tuple_schema->GetColumns();
+  int total_bytes = 0;
+  for (int i = 0; i < columnsInKey; i++) {
+    total_bytes += columns[i].GetLength();
+  }
+  char *c = new char[total_bytes];
+  int offset = 0;
+  for (int i = 0; i < columnsInKey; i++) {
+    type::Value keyColumnValue = tuple->GetValue(i);
+    printf("keyColumnValue type id = %d\n", keyColumnValue.GetTypeId());
+
+    WriteValueInBytes(tuple->GetValue(i), c, offset, columns[i].GetLength());
+    offset += columns[i].GetLength();
+
+  }
+
+  printf("below is the BINARY COMPARABLE KEY!\n");
+  index_key.set(c, total_bytes);
+  index_key.setKeyLen(total_bytes);
+
+}
+
+
 /*
  * InsertEntry() - insert a key-value pair into the map
  *
@@ -201,29 +230,7 @@ bool ArtIndex::InsertEntry(
 //  auto t = artTree.getThreadInfo();
 //  artTree.insert(index_key, reinterpret_cast<TID>(value), t);
 
-  int columnsInKey = key->GetColumnCount();
-  printf("inserted key has %d columns\n", columnsInKey);
-
-  const catalog::Schema *tuple_schema = key->GetSchema();
-  std::vector<catalog::Column> columns = tuple_schema->GetColumns();
-  int total_bytes = 0;
-  for (int i = 0; i < columnsInKey; i++) {
-    total_bytes += columns[i].GetLength();
-  }
-  char *c = new char[total_bytes];
-  int offset = 0;
-  for (int i = 0; i < columnsInKey; i++) {
-    type::Value keyColumnValue = key->GetValue(i);
-    printf("keyColumnValue type id = %d\n", keyColumnValue.GetTypeId());
-
-    WriteValueInBytes(key->GetValue(i), c, offset, columns[i].GetLength());
-    offset += columns[i].GetLength();
-
-  }
-
-  printf("below is the BINARY COMPARABLE KEY!\n");
-  index_key.set(c, total_bytes);
-  index_key.setKeyLen(total_bytes);
+  WriteIndexedAttributesInKey(key, index_key);
   printf("[DEBUG] ART insert: \n");
   for (unsigned int i = 0; i < index_key.getKeyLen(); i++) {
     printf("%d ", index_key.data[i]);
@@ -267,8 +274,10 @@ void ArtIndex::ScanKey(
   std::vector<ItemPointer *> &result) {
 
   Key index_key;
-  index_key.set(key->GetData(), key->GetLength());
-  index_key.setKeyLen(key->GetLength());
+//  index_key.set(key->GetData(), key->GetLength());
+//  index_key.setKeyLen(key->GetLength());
+  WriteIndexedAttributesInKey(key, index_key);
+
 
   printf("[DEBUG] ART scan: \n");
   for (unsigned int i = 0; i < index_key.getKeyLen(); i++) {
@@ -296,8 +305,9 @@ bool ArtIndex::DeleteEntry(
   bool ret = true;
 
   Key index_key;
-  index_key.set(key->GetData(), key->GetLength());
-  index_key.setKeyLen(key->GetLength());
+//  index_key.set(key->GetData(), key->GetLength());
+//  index_key.setKeyLen(key->GetLength());
+  WriteIndexedAttributesInKey(key, index_key);
   printf("[DEBUG] ART delete: \n");
   for (unsigned int i = 0; i < index_key.getKeyLen(); i++) {
     printf("%d ", index_key.data[i]);
@@ -353,10 +363,12 @@ void ArtIndex::Scan(
     const storage::Tuple *high_key_p = csp_p->GetHighKey();
 
     Key index_low_key, index_high_key, continue_key;
-    index_low_key.set(low_key_p->GetData(), low_key_p->GetLength());
-    index_low_key.setKeyLen(low_key_p->GetLength());
-    index_high_key.set(high_key_p->GetData(), high_key_p->GetLength());
-    index_high_key.setKeyLen(high_key_p->GetLength());
+//    index_low_key.set(low_key_p->GetData(), low_key_p->GetLength());
+//    index_low_key.setKeyLen(low_key_p->GetLength());
+//    index_high_key.set(high_key_p->GetData(), high_key_p->GetLength());
+//    index_high_key.setKeyLen(high_key_p->GetLength());
+    WriteIndexedAttributesInKey(low_key_p, index_low_key);
+    WriteIndexedAttributesInKey(high_key_p, index_high_key);
 
     for (unsigned int i = 0; i < index_low_key.getKeyLen(); i++) {
       printf("%d ", index_low_key.data[i]);
