@@ -146,8 +146,10 @@ void OperatorToPlanTransformer::Visit(const QueryDerivedScan *op) {
     }
     else {
       PL_ASSERT(expr->GetExpressionType() == ExpressionType::VALUE_TUPLE);
-      std::string col_name = reinterpret_cast<expression::TupleValueExpression*>(expr.get())->GetColumnName();
+      auto tv_expr = reinterpret_cast<expression::TupleValueExpression*>(expr.get());
+      std::string col_name = tv_expr->GetColumnName();
       auto transformed_expr = op->alias_to_expr_map.find(col_name)->second;
+      tv_expr->SetValueType(transformed_expr->GetValueType());
       (*output_expr_map_)[expr] = child_expr_map[transformed_expr];
     }
   }

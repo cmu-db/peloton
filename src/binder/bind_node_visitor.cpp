@@ -37,9 +37,12 @@ void BindNodeVisitor::Visit(parser::SelectStatement *node) {
   if (node->limit != nullptr) node->limit->Accept(this);
   if (node->group_by != nullptr) node->group_by->Accept(this);
   for (auto& select_element : node->select_list) {
+    select_element->Accept(this);
+
+    // Recursively deduce expression value type
+    expression::ExpressionUtil::EvaluateExpression({ExprMap()}, select_element);
     // Recursively deduce expression name
     select_element->DeduceExpressionName();
-    select_element->Accept(this);
   }
 
 }

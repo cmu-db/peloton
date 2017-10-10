@@ -44,8 +44,6 @@ void QueryPropertyExtractor::Visit(parser::SelectStatement *select_stmt) {
   // Generate PropertyColumns
   vector<shared_ptr<expression::AbstractExpression>> output_expressions;
   for (auto& col : select_stmt->select_list) {
-    // Recursively deduce expression value type
-    expression::ExpressionUtil::EvaluateExpression({ExprMap()}, col.get());
     output_expressions.emplace_back(col->Copy());
   }
   property_set_.AddProperty(
