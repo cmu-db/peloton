@@ -123,7 +123,8 @@ void OperatorToPlanTransformer::Visit(const PhysicalIndexScan *op) {
 }
 
 void OperatorToPlanTransformer::Visit(const QueryDerivedScan *) {
-
+  PL_ASSERT(children_plans_.size() == 1);
+  output_plan_ = std::move(children_plans_[0]);
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalProject *) {

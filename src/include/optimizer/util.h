@@ -90,7 +90,7 @@ std::unordered_map<std::string, std::shared_ptr<expression::AbstractExpression>>
 ConstructSelectElementMap(std::vector<expression::AbstractExpression *> &select_list);
 
 expression::AbstractExpression*
-TransformQueryDerivedTablePredicates(std::unordered_map<std::string, std::shared_ptr<expression::AbstractExpression>>& alias_to_expr_map,
+TransformQueryDerivedTablePredicates(const std::unordered_map<std::string, std::shared_ptr<expression::AbstractExpression>>& alias_to_expr_map,
                                      expression::AbstractExpression* expr);
 
 }  // namespace util

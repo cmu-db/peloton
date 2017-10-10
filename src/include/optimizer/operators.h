@@ -257,7 +257,7 @@ class PhysicalIndexScan : public OperatorNode<PhysicalIndexScan> {
 //===--------------------------------------------------------------------===//
 class QueryDerivedScan : public OperatorNode<QueryDerivedScan> {
  public:
-  static Operator make(std::string& alias,
+  static Operator make(std::string alias,
                        std::unordered_map<std::string,
                                           std::shared_ptr<expression::AbstractExpression>> alias_to_expr_map);
 

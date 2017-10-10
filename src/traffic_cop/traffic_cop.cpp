@@ -375,22 +375,31 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
 
 void TrafficCop::GetDataTables(
     parser::TableRef *from_table,
-    std::vector<storage::DataTable *> &target_tables) {
+    std::vector<catalog::Column> &target_tables) {
   if (from_table == nullptr) return;
 
-  if (from_table->list.empty()) {
+  // Query derived table
+  if (from_table->select != NULL) {
+    for (auto& expr : from_table->select->select_list) {
+      if (expr->GetExpressionType() == ExpressionType::STAR)
+        GetDataTables(from_table->select->from_table.get(), target_tables);
+      else
+        target_tables.push_back(catalog::Column(expr->GetValueType(), 0, expr->GetExpressionName()));
+    }
+  }
+  else if (from_table->list.empty()) {
     if (from_table->join == NULL) {
-      auto *target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-          from_table->GetDatabaseName(), from_table->GetTableName(),
-          GetCurrentTxnState().first);
-      target_tables.push_back(target_table);
+      auto columns = static_cast<storage::DataTable *>(
+          catalog::Catalog::GetInstance()->GetTableWithName(
+              from_table->GetDatabaseName(), from_table->GetTableName(),
+              GetCurrentTxnState().first))->GetSchema()->GetColumns();
+      target_tables.insert(target_tables.end(), columns.begin(), columns.end());
     } else {
       GetDataTables(from_table->join->left.get(), target_tables);
       GetDataTables(from_table->join->right.get(), target_tables);
     }
   }
-
-  // Query has multiple tables. Recursively add all tables
+    // Query has multiple tables. Recursively add all tables
   else {
     for (auto& table : from_table->list) {
       GetDataTables(table.get(), target_tables);
@@ -413,23 +422,19 @@ std::vector<FieldInfo> TrafficCop::GenerateTupleDescriptor(
   // Get the columns information and set up
   // the columns description for the returned results
   // Set up the table
-  std::vector<storage::DataTable *> target_tables;
+  std::vector<catalog::Column> all_columns;
 
   // Check if query only has one Table
   // Example : SELECT * FROM A;
-  GetDataTables(select_stmt->from_table.get(), target_tables);
+  GetDataTables(select_stmt->from_table.get(), all_columns);
 
   int count = 0;
   for (auto& expr : select_stmt->select_list) {
     count++;
     if (expr->GetExpressionType() == ExpressionType::STAR) {
-      for (auto target_table : target_tables) {
-        // Get the columns of the table
-        auto &table_columns = target_table->GetSchema()->GetColumns();
-        for (auto column : table_columns) {
-          tuple_descriptor.push_back(
-              GetColumnFieldForValueType(column.GetName(), column.GetType()));
-        }
+      for (auto column : all_columns) {
+        tuple_descriptor.push_back(
+            GetColumnFieldForValueType(column.GetName(), column.GetType()));
       }
     } else {
       std::string col_name;

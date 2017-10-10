@@ -378,10 +378,10 @@ ConstructSelectElementMap(std::vector<expression::AbstractExpression *> &select_
 };
 
 expression::AbstractExpression*
-TransformQueryDerivedTablePredicates(std::unordered_map<std::string, std::shared_ptr<expression::AbstractExpression>>& alias_to_expr_map,
+TransformQueryDerivedTablePredicates(const std::unordered_map<std::string, std::shared_ptr<expression::AbstractExpression>>& alias_to_expr_map,
                                      expression::AbstractExpression* expr){
   if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
-    auto new_expr = alias_to_expr_map[reinterpret_cast<expression::TupleValueExpression*>(expr)->GetColumnName()];
+    auto new_expr = alias_to_expr_map.find(reinterpret_cast<expression::TupleValueExpression*>(expr)->GetColumnName())->second;
     return new_expr->Copy();
   }
   auto child_size = expr->GetChildrenSize();

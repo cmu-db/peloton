@@ -77,6 +77,7 @@ Optimizer::Optimizer() {
   physical_implementation_rules_.emplace_back(new RightJoinToRightNLJoin());
   physical_implementation_rules_.emplace_back(new OuterJoinToOuterNLJoin());
   physical_implementation_rules_.emplace_back(new InnerJoinToInnerHashJoin());
+  physical_implementation_rules_.emplace_back(new LogicalQueryDerivedGetToPhysical());
 }
 
 shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(

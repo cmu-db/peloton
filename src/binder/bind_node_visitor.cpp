@@ -67,7 +67,7 @@ void BindNodeVisitor::Visit(parser::TableRef *node) {
     auto pre_context = context_;
     node->select->Accept(this);
     // Restore the previous level context
-    context_ = context_->GetUpperContext();
+    context_ = pre_context;
   }
   // Join
   else if (node->join != nullptr)
