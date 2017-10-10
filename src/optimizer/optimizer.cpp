@@ -71,13 +71,13 @@ Optimizer::Optimizer() {
   physical_implementation_rules_.emplace_back(new GetToDummyScan());
   physical_implementation_rules_.emplace_back(new GetToSeqScan());
   physical_implementation_rules_.emplace_back(new GetToIndexScan());
+  physical_implementation_rules_.emplace_back(new LogicalQueryDerivedGetToPhysical());
   physical_implementation_rules_.emplace_back(new LogicalFilterToPhysical());
   physical_implementation_rules_.emplace_back(new InnerJoinToInnerNLJoin());
   physical_implementation_rules_.emplace_back(new LeftJoinToLeftNLJoin());
   physical_implementation_rules_.emplace_back(new RightJoinToRightNLJoin());
   physical_implementation_rules_.emplace_back(new OuterJoinToOuterNLJoin());
   physical_implementation_rules_.emplace_back(new InnerJoinToInnerHashJoin());
-  physical_implementation_rules_.emplace_back(new LogicalQueryDerivedGetToPhysical());
 }
 
 shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(

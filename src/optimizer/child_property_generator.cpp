@@ -53,32 +53,42 @@ void ChildPropertyGenerator::Visit(const PhysicalIndexScan *) { ScanHelper(); };
 
 void ChildPropertyGenerator::Visit(const QueryDerivedScan *op) {
   PropertySet child_prop;
+  PropertySet provided_property;
+
   for (auto prop : requirements_.Properties()) {
     if (prop->Type() == PropertyType::COLUMNS) {
-      auto col_prop = prop->As<PropertyColumns>();
+      ExprMap columns;
+      vector<shared_ptr<expression::AbstractExpression>> output_column_exprs;
       std::vector<std::shared_ptr<expression::AbstractExpression>> new_column_exprs;
-      size_t col_len = col_prop->GetSize();
-      for (size_t col_idx = 0; col_idx < col_len; col_idx++) {
-        auto expr = col_prop->GetColumn(col_idx);
-        if (expr->GetExpressionType() == ExpressionType::STAR) {
-          // TODO: Preserve original order
-          for (auto entry : op->alias_to_expr_map) {
-            new_column_exprs.push_back(entry.second);
-          }
+      auto col_prop = prop->As<PropertyColumns>();
+      if (col_prop->HasStarExpression()) {
+        output_column_exprs.emplace_back(new expression::StarExpression());
+        // TODO: Preserve original order
+        for (auto entry : op->alias_to_expr_map) {
+          new_column_exprs.push_back(entry.second);
         }
-        else {
+      }
+      else {
+        size_t col_len = col_prop->GetSize();
+        for (size_t col_idx = 0; col_idx < col_len; col_idx++) {
+          auto expr = col_prop->GetColumn(col_idx);
+          expression::ExpressionUtil::GetTupleValueExprs(columns, expr.get());
           auto new_col = std::shared_ptr<expression::AbstractExpression>(
               util::TransformQueryDerivedTablePredicates(op->alias_to_expr_map, expr->Copy()));
           new_column_exprs.push_back(new_col);
         }
+        output_column_exprs.resize(columns.size());
+        for (auto iter : columns) output_column_exprs[iter.second] = iter.first;
       }
       child_prop.AddProperty(std::make_shared<PropertyColumns>(new_column_exprs));
+      provided_property.AddProperty(std::make_shared<PropertyColumns>(output_column_exprs));
       continue;
     }
     child_prop.AddProperty(prop);
+    provided_property.AddProperty(prop);
   }
   vector<PropertySet> child_input_properties{child_prop};
-  output_.push_back(make_pair(requirements_, move(child_input_properties)));
+  output_.push_back(make_pair(provided_property, move(child_input_properties)));
 }
 
 /**
