@@ -29,7 +29,7 @@ Operator LeafOperator::make(GroupID group) {
 //===--------------------------------------------------------------------===//
 // Get
 //===--------------------------------------------------------------------===//
-Operator LogicalGet::make(storage::DataTable *table, std::string alias,
+Operator LogicalGet::make(oid_t get_id, storage::DataTable *table, std::string alias,
                           std::shared_ptr<expression::AbstractExpression> predicate,
                           bool update) {
   LogicalGet *get = new LogicalGet;
@@ -37,6 +37,7 @@ Operator LogicalGet::make(storage::DataTable *table, std::string alias,
   get->table_alias = alias;
   get->predicate = predicate;
   get->is_for_update = update;
+  get->get_id = get_id;
   util::to_lower_string(get->table_alias);
   return Operator(get);
 }
@@ -44,7 +45,7 @@ Operator LogicalGet::make(storage::DataTable *table, std::string alias,
 bool LogicalGet::operator==(const BaseOperatorNode &node) {
   if (node.type() != OpType::Get) return false;
   const LogicalGet &r = *static_cast<const LogicalGet *>(&node);
-  return table_alias == r.table_alias && is_for_update == r.is_for_update;
+  return get_id == r.get_id;
 }
 
 hash_t LogicalGet::Hash() const {
@@ -52,20 +53,21 @@ hash_t LogicalGet::Hash() const {
   if (table == nullptr)
     return hash;
   hash = HashUtil::CombineHashes(
-      hash, HashUtil::HashBytes(table_alias.c_str(), table_alias.length()));
+      hash, HashUtil::Hash(&get_id));
   return hash;
 }
 
 //===--------------------------------------------------------------------===//
 // Query derived get
 //===--------------------------------------------------------------------===//
-Operator LogicalQueryDerivedGet::make(std::string& alias,
+Operator LogicalQueryDerivedGet::make(oid_t get_id, std::string& alias,
                                       std::unordered_map<std::string,
                                                          std::shared_ptr<expression::AbstractExpression>>
                                       alias_to_expr_map) {
   LogicalQueryDerivedGet* get = new LogicalQueryDerivedGet;
   get->table_alias = alias;
   get->alias_to_expr_map = alias_to_expr_map;
+  get->get_id = get_id;
 
   return Operator(get);
 }
@@ -73,13 +75,13 @@ Operator LogicalQueryDerivedGet::make(std::string& alias,
 bool LogicalQueryDerivedGet::operator==(const BaseOperatorNode &node) {
   if (node.type() != OpType::LogicalQueryDerivedGet) return false;
   const LogicalQueryDerivedGet &r = *static_cast<const LogicalQueryDerivedGet *>(&node);
-  return table_alias == r.table_alias;
+  return get_id == r.get_id;
 }
 
 hash_t LogicalQueryDerivedGet::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
   hash = HashUtil::CombineHashes(
-      hash, HashUtil::HashBytes(table_alias.c_str(), table_alias.length()));
+      hash, HashUtil::Hash(&get_id));
   return hash;
 }
 
@@ -214,7 +216,7 @@ Operator DummyScan::make() {
 // SeqScan
 //===--------------------------------------------------------------------===//
 Operator PhysicalSeqScan::make(
-    storage::DataTable *table, std::string alias,
+    oid_t get_id, storage::DataTable *table, std::string alias,
     std::shared_ptr<expression::AbstractExpression> predicate,
     bool update) {
   assert(table != nullptr);
@@ -223,19 +225,21 @@ Operator PhysicalSeqScan::make(
   scan->table_alias = alias;
   scan->predicate = predicate;
   scan->is_for_update = update;
+  scan->get_id = get_id;
+
   return Operator(scan);
 }
 
 bool PhysicalSeqScan::operator==(const BaseOperatorNode &node) {
   if (node.type() != OpType::SeqScan) return false;
   const PhysicalSeqScan &r = *static_cast<const PhysicalSeqScan *>(&node);
-  return table_alias == r.table_alias && is_for_update == r.is_for_update;
+  return get_id == r.get_id;
 }
 
 hash_t PhysicalSeqScan::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
   hash = HashUtil::CombineHashes(
-      hash, HashUtil::HashBytes(table_alias.c_str(), table_alias.length()));
+      hash, HashUtil::Hash(&get_id));
   return hash;
 }
 
@@ -243,7 +247,7 @@ hash_t PhysicalSeqScan::Hash() const {
 // IndexScan
 //===--------------------------------------------------------------------===//
 Operator PhysicalIndexScan::make(
-    storage::DataTable *table, std::string alias,
+    oid_t get_id, storage::DataTable *table, std::string alias,
     std::shared_ptr<expression::AbstractExpression> predicate,
     bool update) {
   assert(table != nullptr);
@@ -252,32 +256,35 @@ Operator PhysicalIndexScan::make(
   scan->is_for_update = update;
   scan->predicate = predicate;
   scan->table_alias = alias;
+  scan->get_id = get_id;
+
   return Operator(scan);
 }
 
 bool PhysicalIndexScan::operator==(const BaseOperatorNode &node) {
   if (node.type() != OpType::IndexScan) return false;
   const PhysicalIndexScan &r = *static_cast<const PhysicalIndexScan *>(&node);
-  return table_alias == r.table_alias && is_for_update == r.is_for_update;
+  return get_id == r.get_id;
 }
 
 hash_t PhysicalIndexScan::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
   hash = HashUtil::CombineHashes(
-      hash, HashUtil::HashBytes(table_alias.c_str(), table_alias.length()));
+      hash, HashUtil::Hash(&get_id));
   return hash;
 }
 
 //===--------------------------------------------------------------------===//
 // Query derived get
 //===--------------------------------------------------------------------===//
-Operator QueryDerivedScan::make(std::string alias,
+Operator QueryDerivedScan::make(oid_t get_id, std::string alias,
                                 std::unordered_map<std::string,
                                                          std::shared_ptr<expression::AbstractExpression>>
                                       alias_to_expr_map) {
   QueryDerivedScan * get = new QueryDerivedScan;
   get->table_alias = alias;
   get->alias_to_expr_map = alias_to_expr_map;
+  get->get_id = get_id;
 
   return Operator(get);
 }
@@ -285,13 +292,13 @@ Operator QueryDerivedScan::make(std::string alias,
 bool QueryDerivedScan::operator==(const BaseOperatorNode &node) {
   if (node.type() != OpType::QueryDerivedScan) return false;
   const QueryDerivedScan &r = *static_cast<const QueryDerivedScan *>(&node);
-  return table_alias == r.table_alias;
+  return get_id == r.get_id;
 }
 
 hash_t QueryDerivedScan::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
   hash = HashUtil::CombineHashes(
-      hash, HashUtil::HashBytes(table_alias.c_str(), table_alias.length()));
+      hash, HashUtil::Hash(&get_id));
   return hash;
 }
 

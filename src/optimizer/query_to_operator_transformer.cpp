@@ -32,7 +32,7 @@ namespace peloton {
 namespace optimizer {
 QueryToOperatorTransformer::QueryToOperatorTransformer(
     concurrency::Transaction *txn)
-    : txn_(txn) {}
+    : txn_(txn), get_id(0) {}
 std::shared_ptr<OperatorExpression>
 QueryToOperatorTransformer::ConvertToOpExpression(parser::SQLStatement *op) {
   output_expr_ = nullptr;
@@ -182,7 +182,7 @@ void QueryToOperatorTransformer::Visit(parser::TableRef *node) {
 
     auto child_expr = output_expr_;
     output_expr_ = std::make_shared<OperatorExpression>(
-        LogicalQueryDerivedGet::make(alias, alias_to_expr_map));
+        LogicalQueryDerivedGet::make(GetAndIncreaseGetId(), alias, alias_to_expr_map));
     output_expr_->PushChild(child_expr);
 
   }
@@ -233,11 +233,11 @@ void QueryToOperatorTransformer::Visit(parser::TableRef *node) {
     auto predicates_entry = single_table_predicates_map.find(table_alias);
     if (predicates_entry != single_table_predicates_map.end())
       output_expr_ = std::make_shared<OperatorExpression>(
-          LogicalGet::make(target_table, node->GetTableAlias(),
+          LogicalGet::make(GetAndIncreaseGetId(), target_table, node->GetTableAlias(),
                      std::shared_ptr<expression::AbstractExpression>(util::CombinePredicates(predicates_entry->second))));
     else
       output_expr_ = std::make_shared<OperatorExpression>(
-        LogicalGet::make(target_table, node->GetTableAlias()));
+        LogicalGet::make(GetAndIncreaseGetId(), target_table, node->GetTableAlias()));
   }
 }
 
@@ -270,12 +270,12 @@ void QueryToOperatorTransformer::Visit(parser::DeleteStatement *op) {
   std::shared_ptr<OperatorExpression> table_scan;
   if (op->expr != nullptr)
     table_scan = std::make_shared<OperatorExpression>(
-        LogicalGet::make(target_table,
+        LogicalGet::make(GetAndIncreaseGetId(), target_table,
                          op->GetTableName(),
                          std::shared_ptr<expression::AbstractExpression>(op->expr->Copy())));
   else
     table_scan = std::make_shared<OperatorExpression>(
-        LogicalGet::make(target_table, op->GetTableName()));
+        LogicalGet::make(GetAndIncreaseGetId(), target_table, op->GetTableName()));
   auto delete_expr =
       std::make_shared<OperatorExpression>(LogicalDelete::make(target_table));
   delete_expr->PushChild(table_scan);
@@ -300,10 +300,10 @@ void QueryToOperatorTransformer::Visit(parser::UpdateStatement *op) {
 
   if (op->where != nullptr)
   table_scan = std::make_shared<OperatorExpression>(
-      LogicalGet::make(target_table, op->table->GetTableName(), std::shared_ptr<expression::AbstractExpression>(op->where->Copy()), true));
+      LogicalGet::make(GetAndIncreaseGetId(), target_table, op->table->GetTableName(), std::shared_ptr<expression::AbstractExpression>(op->where->Copy()), true));
   else
     table_scan = std::make_shared<OperatorExpression>(
-        LogicalGet::make(target_table, op->table->GetTableName(), nullptr, true));
+        LogicalGet::make(GetAndIncreaseGetId(), target_table, op->table->GetTableName(), nullptr, true));
 
   update_expr->PushChild(table_scan);
 

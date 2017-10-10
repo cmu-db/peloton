@@ -50,7 +50,8 @@ class LeafOperator : OperatorNode<LeafOperator> {
 //===--------------------------------------------------------------------===//
 class LogicalGet : public OperatorNode<LogicalGet> {
  public:
-  static Operator make(storage::DataTable *table = nullptr,
+  static Operator make(oid_t get_id = 0,
+                       storage::DataTable *table = nullptr,
                        std::string alias = "",
                        std::shared_ptr<expression::AbstractExpression> predicate = nullptr,
                        bool update = false);
@@ -59,6 +60,8 @@ class LogicalGet : public OperatorNode<LogicalGet> {
 
   hash_t Hash() const override;
 
+  // identifier for all get operators
+  oid_t get_id;
   std::shared_ptr<expression::AbstractExpression> predicate;
   storage::DataTable *table;
   std::string table_alias;
@@ -70,7 +73,7 @@ class LogicalGet : public OperatorNode<LogicalGet> {
 //===--------------------------------------------------------------------===//
 class LogicalQueryDerivedGet : public OperatorNode<LogicalQueryDerivedGet> {
  public:
-  static Operator make(std::string& alias,
+  static Operator make(oid_t get_id, std::string& alias,
                        std::unordered_map<std::string,
                                           std::shared_ptr<expression::AbstractExpression>> alias_to_expr_map);
 
@@ -78,6 +81,8 @@ class LogicalQueryDerivedGet : public OperatorNode<LogicalQueryDerivedGet> {
 
   hash_t Hash() const override;
 
+  // identifier for all get operators
+  oid_t get_id;
   std::string table_alias;
   std::unordered_map<std::string, std::shared_ptr<expression::AbstractExpression>>
       alias_to_expr_map;
@@ -219,7 +224,7 @@ class DummyScan : public OperatorNode<DummyScan> {
 //===--------------------------------------------------------------------===//
 class PhysicalSeqScan : public OperatorNode<PhysicalSeqScan> {
  public:
-  static Operator make(storage::DataTable *table, std::string alias,
+  static Operator make(oid_t get_id, storage::DataTable *table, std::string alias,
                        std::shared_ptr<expression::AbstractExpression> predicate,
                        bool update);
 
@@ -227,6 +232,8 @@ class PhysicalSeqScan : public OperatorNode<PhysicalSeqScan> {
 
   hash_t Hash() const override;
 
+  // identifier for all get operators
+  oid_t get_id;
   std::shared_ptr<expression::AbstractExpression> predicate;
   std::string table_alias;
   bool is_for_update;
@@ -238,7 +245,7 @@ class PhysicalSeqScan : public OperatorNode<PhysicalSeqScan> {
 //===--------------------------------------------------------------------===//
 class PhysicalIndexScan : public OperatorNode<PhysicalIndexScan> {
  public:
-  static Operator make(storage::DataTable *table, std::string alias,
+  static Operator make(oid_t get_id, storage::DataTable *table, std::string alias,
                        std::shared_ptr<expression::AbstractExpression> predicate,
                        bool update);
 
@@ -246,6 +253,8 @@ class PhysicalIndexScan : public OperatorNode<PhysicalIndexScan> {
 
   hash_t Hash() const override;
 
+  // identifier for all get operators
+  oid_t get_id;
   std::shared_ptr<expression::AbstractExpression> predicate;
   std::string table_alias;
   bool is_for_update;
@@ -257,7 +266,7 @@ class PhysicalIndexScan : public OperatorNode<PhysicalIndexScan> {
 //===--------------------------------------------------------------------===//
 class QueryDerivedScan : public OperatorNode<QueryDerivedScan> {
  public:
-  static Operator make(std::string alias,
+  static Operator make(oid_t get_id, std::string alias,
                        std::unordered_map<std::string,
                                           std::shared_ptr<expression::AbstractExpression>> alias_to_expr_map);
 
@@ -265,6 +274,8 @@ class QueryDerivedScan : public OperatorNode<QueryDerivedScan> {
 
   hash_t Hash() const override;
 
+  // identifier for all get operators
+  oid_t get_id;
   std::string table_alias;
   std::unordered_map<std::string, std::shared_ptr<expression::AbstractExpression>>
       alias_to_expr_map;

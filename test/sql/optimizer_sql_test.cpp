@@ -662,6 +662,8 @@ TEST_F(OptimizerSQLTests, NestedQueriesTest) {
            {"22", "11"}, false);
   TestUtil("select * from (select b from test) as A, (select b from test as t) as B where A.b = B.b",
            {"22", "22", "11", "11", "33", "33","0", "0"}, false);
+  TestUtil("select * from (select b from test) as A, (select b from test) as B where A.b = B.b",
+           {"22", "22", "11", "11", "33", "33","0", "0"}, false);
 //  TestUtil("select * from test as B where b in (select b as a from test where a = B.a);", {"22"}, false);
 //  TestUtil("select (select b as a from test where a = B.a) from test as B;", {"22"}, false);
 //  TestUtil("select * from test where a in (select * from test)", {}, false);
