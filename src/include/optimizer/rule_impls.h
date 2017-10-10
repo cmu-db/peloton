@@ -72,6 +72,18 @@ class GetToIndexScan : public Rule {
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+/// LogicalQueryDerivedGetToPhysical
+class LogicalQueryDerivedGetToPhysical : public Rule {
+ public:
+  LogicalQueryDerivedGetToPhysical();
+
+  bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
+
+  void Transform(std::shared_ptr<OperatorExpression> input,
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed) const override;
+};
+
+///////////////////////////////////////////////////////////////////////////////
 /// LogicalFilterToPhysical
 class LogicalFilterToPhysical : public Rule {
  public:

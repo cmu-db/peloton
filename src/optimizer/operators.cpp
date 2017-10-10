@@ -271,11 +271,11 @@ hash_t PhysicalIndexScan::Hash() const {
 //===--------------------------------------------------------------------===//
 // Query derived get
 //===--------------------------------------------------------------------===//
-Operator QueryDerivedScan::make(std::string& alias,
-                                      std::unordered_map<std::string,
+Operator QueryDerivedScan::make(std::string alias,
+                                std::unordered_map<std::string,
                                                          std::shared_ptr<expression::AbstractExpression>>
                                       alias_to_expr_map) {
-  QueryDerivedScan* get = new QueryDerivedScan;
+  QueryDerivedScan * get = new QueryDerivedScan;
   get->table_alias = alias;
   get->alias_to_expr_map = alias_to_expr_map;
 

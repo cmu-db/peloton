@@ -157,7 +157,7 @@ class TrafficCop {
   // For multi-way join
   // still a HACK
   void GetDataTables(parser::TableRef *from_table,
-                     std::vector<storage::DataTable *> &target_tables);
+                     std::vector<catalog::Column> &target_tables);
 
 //  const std::shared_ptr<Statement> statement_;
 //  const std::vector<type::Value> params_;
