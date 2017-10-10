@@ -122,6 +122,10 @@ void OperatorToPlanTransformer::Visit(const PhysicalIndexScan *op) {
   output_plan_ = move(index_scan_plan);
 }
 
+void OperatorToPlanTransformer::Visit(const QueryDerivedScan *) {
+
+}
+
 void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
   auto cols_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
                        ->As<PropertyColumns>();

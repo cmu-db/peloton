@@ -28,6 +28,7 @@ class OperatorVisitor {
   virtual void Visit(const DummyScan *) = 0;
   virtual void Visit(const PhysicalSeqScan *) = 0;
   virtual void Visit(const PhysicalIndexScan *) = 0;
+  virtual void Visit(const QueryDerivedScan* ) = 0;
   virtual void Visit(const PhysicalProject *) = 0;
   virtual void Visit(const PhysicalOrderBy *) = 0;
   virtual void Visit(const PhysicalLimit *) = 0;

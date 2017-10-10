@@ -269,6 +269,33 @@ hash_t PhysicalIndexScan::Hash() const {
 }
 
 //===--------------------------------------------------------------------===//
+// Query derived get
+//===--------------------------------------------------------------------===//
+Operator QueryDerivedScan::make(std::string& alias,
+                                      std::unordered_map<std::string,
+                                                         std::shared_ptr<expression::AbstractExpression>>
+                                      alias_to_expr_map) {
+  QueryDerivedScan* get = new QueryDerivedScan;
+  get->table_alias = alias;
+  get->alias_to_expr_map = alias_to_expr_map;
+
+  return Operator(get);
+}
+
+bool QueryDerivedScan::operator==(const BaseOperatorNode &node) {
+  if (node.type() != OpType::LogicalQueryDerivedGet) return false;
+  const QueryDerivedScan &r = *static_cast<const QueryDerivedScan *>(&node);
+  return table_alias == r.table_alias;
+}
+
+hash_t QueryDerivedScan::Hash() const {
+  hash_t hash = BaseOperatorNode::Hash();
+  hash = HashUtil::CombineHashes(
+      hash, HashUtil::HashBytes(table_alias.c_str(), table_alias.length()));
+  return hash;
+}
+
+//===--------------------------------------------------------------------===//
 // Project
 //===--------------------------------------------------------------------===//
 Operator PhysicalProject::make() {
@@ -581,6 +608,8 @@ std::string OperatorNode<PhysicalSeqScan>::name_ = "PhysicalSeqScan";
 template <>
 std::string OperatorNode<PhysicalIndexScan>::name_ = "PhysicalIndexScan";
 template <>
+std::string OperatorNode<QueryDerivedScan>::name_ = "QueryDerivedScan";
+template <>
 std::string OperatorNode<PhysicalProject>::name_ = "PhysicalProject";
 template <>
 std::string OperatorNode<PhysicalOrderBy>::name_ = "PhysicalOrderBy";
@@ -661,6 +690,8 @@ template <>
 OpType OperatorNode<PhysicalSeqScan>::type_ = OpType::SeqScan;
 template <>
 OpType OperatorNode<PhysicalIndexScan>::type_ = OpType::IndexScan;
+template <>
+OpType OperatorNode<QueryDerivedScan>::type_ = OpType::QueryDerivedScan;
 template <>
 OpType OperatorNode<PhysicalProject>::type_ = OpType::Project;
 template <>
