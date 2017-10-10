@@ -253,6 +253,24 @@ class PhysicalIndexScan : public OperatorNode<PhysicalIndexScan> {
 };
 
 //===--------------------------------------------------------------------===//
+// Query derived get
+//===--------------------------------------------------------------------===//
+class QueryDerivedScan : public OperatorNode<QueryDerivedScan> {
+ public:
+  static Operator make(std::string& alias,
+                       std::unordered_map<std::string,
+                                          std::shared_ptr<expression::AbstractExpression>> alias_to_expr_map);
+
+  bool operator==(const BaseOperatorNode &r) override;
+
+  hash_t Hash() const override;
+
+  std::string table_alias;
+  std::unordered_map<std::string, std::shared_ptr<expression::AbstractExpression>>
+      alias_to_expr_map;
+};
+
+//===--------------------------------------------------------------------===//
 // PhysicalProject
 //===--------------------------------------------------------------------===//
 class PhysicalProject : public OperatorNode<PhysicalProject> {

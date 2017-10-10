@@ -49,6 +49,7 @@ enum class OpType {
   DummyScan, /* Dummy Physical Op for SELECT without FROM*/
   SeqScan,
   IndexScan,
+  QueryDerivedScan,
   Project,
   OrderBy,
   PhysicalLimit,

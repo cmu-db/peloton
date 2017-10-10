@@ -51,6 +51,8 @@ void ChildPropertyGenerator::Visit(const PhysicalSeqScan *) { ScanHelper(); };
 
 void ChildPropertyGenerator::Visit(const PhysicalIndexScan *) { ScanHelper(); };
 
+void ChildPropertyGenerator::Visit(const QueryDerivedScan *) { }
+
 /**
  * Note:
  * Fulfill the entire projection property in the aggregation. Should

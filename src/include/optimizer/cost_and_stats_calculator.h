@@ -37,6 +37,7 @@ class CostAndStatsCalculator : public OperatorVisitor {
   void Visit(const DummyScan *) override;
   void Visit(const PhysicalSeqScan *) override;
   void Visit(const PhysicalIndexScan *) override;
+  void Visit(const QueryDerivedScan *) override;
   void Visit(const PhysicalProject *) override;
   void Visit(const PhysicalOrderBy *) override;
   void Visit(const PhysicalLimit *) override;
