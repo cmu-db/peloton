@@ -283,7 +283,7 @@ Operator QueryDerivedScan::make(std::string alias,
 }
 
 bool QueryDerivedScan::operator==(const BaseOperatorNode &node) {
-  if (node.type() != OpType::LogicalQueryDerivedGet) return false;
+  if (node.type() != OpType::QueryDerivedScan) return false;
   const QueryDerivedScan &r = *static_cast<const QueryDerivedScan *>(&node);
   return table_alias == r.table_alias;
 }

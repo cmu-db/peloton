@@ -654,9 +654,17 @@ TEST_F(OptimizerSQLTests, IndexTest) {
 TEST_F(OptimizerSQLTests, NestedQueriesTest) {
   TestUtil("select A.b from (select b from test where a = 1) as A", {"22"}, false);
   TestUtil("select * from (select b from test where a = 1) as A", {"22"}, false);
-  TestUtil("select * from test as B where b in (select b as a from test where a = B.a);", {"22"}, false);
-  TestUtil("select (select b as a from test where a = B.a) from test as B;", {"22"}, false);
-  TestUtil("select * from test where a in (select * from test)", {}, false);
+  TestUtil("select A.b, B.b from (select b from test where a = 1) as A, (select b from test as t where a=2) as B",
+           {"22", "11"}, false);
+  TestUtil("select B.b from (select b from test where a = 1) as A, (select b from test as t where a=2) as B",
+           {"11"}, false);
+  TestUtil("select * from (select b from test where a = 1) as A, (select b from test as t where a=2) as B",
+           {"22", "11"}, false);
+  TestUtil("select * from (select b from test) as A, (select b from test as t) as B where A.b = B.b",
+           {"22", "22", "11", "11", "33", "33","0", "0"}, false);
+//  TestUtil("select * from test as B where b in (select b as a from test where a = B.a);", {"22"}, false);
+//  TestUtil("select (select b as a from test where a = B.a) from test as B;", {"22"}, false);
+//  TestUtil("select * from test where a in (select * from test)", {}, false);
 
 }
 

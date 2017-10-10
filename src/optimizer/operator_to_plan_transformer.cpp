@@ -122,8 +122,35 @@ void OperatorToPlanTransformer::Visit(const PhysicalIndexScan *op) {
   output_plan_ = move(index_scan_plan);
 }
 
-void OperatorToPlanTransformer::Visit(const QueryDerivedScan *) {
+void OperatorToPlanTransformer::Visit(const QueryDerivedScan *op) {
   PL_ASSERT(children_plans_.size() == 1);
+  PL_ASSERT(children_expr_map_.size() == 1);
+  auto child_expr_map = children_expr_map_[0];
+
+  auto cols_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
+      ->As<PropertyColumns>();
+  size_t col_size = cols_prop->GetSize();
+  for (size_t i = 0; i < col_size; i++) {
+    auto expr = cols_prop->GetColumn(i);
+    if (expr->GetExpressionType() == ExpressionType::STAR) {
+      for (auto entry : op->alias_to_expr_map) {
+        auto col_name = entry.first;
+        auto original_expr = entry.second;
+        auto col_id = child_expr_map[entry.second];
+        auto tv_expr = new expression::TupleValueExpression(original_expr->GetValueType(), 0, col_id);
+        tv_expr->SetTableName(op->table_alias);
+        tv_expr->SetColName(col_name);
+        tv_expr->SetBoundOid(0, 0, 0);
+        (*output_expr_map_)[std::shared_ptr<expression::AbstractExpression>(tv_expr)] = col_id;
+      }
+    }
+    else {
+      PL_ASSERT(expr->GetExpressionType() == ExpressionType::VALUE_TUPLE);
+      std::string col_name = reinterpret_cast<expression::TupleValueExpression*>(expr.get())->GetColumnName();
+      auto transformed_expr = op->alias_to_expr_map.find(col_name)->second;
+      (*output_expr_map_)[expr] = child_expr_map[transformed_expr];
+    }
+  }
   output_plan_ = std::move(children_plans_[0]);
 }
 

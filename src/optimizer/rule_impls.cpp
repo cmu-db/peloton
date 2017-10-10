@@ -397,7 +397,7 @@ InnerJoinToInnerNLJoin::InnerJoinToInnerNLJoin() {
 
   // TODO NLJoin currently only support left deep tree
   std::shared_ptr<Pattern> left_child(std::make_shared<Pattern>(OpType::Leaf));
-  std::shared_ptr<Pattern> right_child(std::make_shared<Pattern>(OpType::Get));
+  std::shared_ptr<Pattern> right_child(std::make_shared<Pattern>(OpType::Leaf));
 
   // Initialize a pattern for optimizer to match
   match_pattern = std::make_shared<Pattern>(OpType::InnerJoin);

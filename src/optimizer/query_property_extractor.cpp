@@ -46,8 +46,6 @@ void QueryPropertyExtractor::Visit(parser::SelectStatement *select_stmt) {
   for (auto& col : select_stmt->select_list) {
     // Recursively deduce expression value type
     expression::ExpressionUtil::EvaluateExpression({ExprMap()}, col.get());
-    // Recursively deduce expression name
-    col->DeduceExpressionName();
     output_expressions.emplace_back(col->Copy());
   }
   property_set_.AddProperty(

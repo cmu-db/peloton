@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <include/expression/expression_util.h>
 #include "binder/bind_node_visitor.h"
 
 #include "expression/case_expression.h"
@@ -36,6 +37,8 @@ void BindNodeVisitor::Visit(parser::SelectStatement *node) {
   if (node->limit != nullptr) node->limit->Accept(this);
   if (node->group_by != nullptr) node->group_by->Accept(this);
   for (auto& select_element : node->select_list) {
+    // Recursively deduce expression name
+    select_element->DeduceExpressionName();
     select_element->Accept(this);
   }
 
@@ -54,13 +57,14 @@ void BindNodeVisitor::Visit(parser::TableRef *node) {
   if (node->select != nullptr) {
     if (node->alias == nullptr)
       throw Exception("Alias not found for query derived table");
-    context_->AddNestedTable(node->alias, node->select->select_list);
 
     // Save the previous context
     auto pre_context = context_;
     node->select->Accept(this);
     // Restore the previous level context
     context_ = pre_context;
+    // Add the table to the current context at the end
+    context_->AddNestedTable(node->alias, node->select->select_list);
   }
   // Join
   else if (node->join != nullptr)
