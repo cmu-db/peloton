@@ -99,7 +99,7 @@ void GetToSeqScan::Transform(
 
   auto result_plan =
       std::make_shared<OperatorExpression>(
-          PhysicalSeqScan::make(get->table, get->table_alias, get->predicate, get->is_for_update));
+          PhysicalSeqScan::make(get->get_id, get->table, get->table_alias, get->predicate, get->is_for_update));
 
   UNUSED_ATTRIBUTE std::vector<std::shared_ptr<OperatorExpression>> children =
       input->Children();
@@ -135,7 +135,7 @@ void GetToIndexScan::Transform(
   const LogicalGet *get = input->Op().As<LogicalGet>();
 
   auto result_plan = std::make_shared<OperatorExpression>(
-      PhysicalIndexScan::make(get->table, get->table_alias, get->predicate, get->is_for_update));
+      PhysicalIndexScan::make(get->get_id, get->table, get->table_alias, get->predicate, get->is_for_update));
 
   UNUSED_ATTRIBUTE std::vector<std::shared_ptr<OperatorExpression>> children =
       input->Children();
@@ -165,7 +165,7 @@ void LogicalQueryDerivedGetToPhysical::Transform(std::shared_ptr<OperatorExpress
   const LogicalQueryDerivedGet *get = input->Op().As<LogicalQueryDerivedGet>();
 
   auto result_plan = std::make_shared<OperatorExpression>(
-      QueryDerivedScan::make(get->table_alias, get->alias_to_expr_map));
+      QueryDerivedScan::make(get->get_id, get->table_alias, get->alias_to_expr_map));
   result_plan->PushChild(input->Children().at(0));
 
   transformed.push_back(result_plan);

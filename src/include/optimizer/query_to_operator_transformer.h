@@ -61,6 +61,8 @@ class QueryToOperatorTransformer : public SqlNodeVisitor {
   void Visit(parser::CopyStatement *op) override;
   void Visit(parser::AnalyzeStatement *op) override;
 
+  inline oid_t GetAndIncreaseGetId() { return get_id++; }
+
  private:
   std::shared_ptr<OperatorExpression> output_expr_;
   MultiTablePredicates join_predicates_;
@@ -72,6 +74,10 @@ class QueryToOperatorTransformer : public SqlNodeVisitor {
   int output_size;
   bool output_inlined;
   concurrency::Transaction *txn_;
+
+  // identifier for get operators
+  oid_t get_id;
+
 };
 
 }  // namespace optimizer
