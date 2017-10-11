@@ -25,32 +25,16 @@ namespace parser {
 class ExecuteStatement : public SQLStatement {
  public:
   ExecuteStatement()
-      : SQLStatement(StatementType::EXECUTE), name(NULL), parameters(NULL) {}
+      : SQLStatement(StatementType::EXECUTE) {}
 
-  virtual ~ExecuteStatement() {
-    if (name != nullptr) {
-      delete[] name;
-    }
-
-    if (parameters) {
-      for (auto expr : *parameters) {
-        if (expr != nullptr) {
-          delete expr;
-        }
-      }
-    }
-
-    if (parameters != nullptr) {
-      delete parameters;
-    }
-  }
+  virtual ~ExecuteStatement() {}
 
   virtual void Accept(SqlNodeVisitor* v) const override {
     v->Visit(this);
   }
 
-  char* name;
-  std::vector<expression::AbstractExpression*>* parameters;
+  std::string name;
+  std::vector<std::unique_ptr<expression::AbstractExpression>> parameters;
 };
 
 }  // namespace parser

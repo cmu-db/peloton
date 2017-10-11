@@ -26,19 +26,9 @@ class AnalyzeStatement : public SQLStatement {
  public:
   AnalyzeStatement()
       : SQLStatement(StatementType::ANALYZE),
-        analyze_table(nullptr),
-        analyze_columns(nullptr) {};
+        analyze_table(nullptr) {};
 
-  // TODO: use smart pointer to avoid raw delete.
-  virtual ~AnalyzeStatement() {
-    if (analyze_columns != nullptr) {
-      for (auto col : *analyze_columns) delete[] col;
-      delete analyze_columns;
-    }
-    if (analyze_table != nullptr) {
-      delete analyze_table;
-    }
-  }
+  virtual ~AnalyzeStatement() {}
 
   std::string GetTableName() const {
     if (analyze_table == nullptr) {
@@ -47,11 +37,8 @@ class AnalyzeStatement : public SQLStatement {
     return analyze_table->GetTableName();
   }
 
-  std::vector<char*> GetColumnNames() const {
-    if (analyze_columns == nullptr) {
-      return {};
-    }
-    return (*analyze_columns);
+  const std::vector<std::string>& GetColumnNames() const {
+    return analyze_columns;
   }
 
   std::string GetDatabaseName() const {
@@ -65,8 +52,8 @@ class AnalyzeStatement : public SQLStatement {
     v->Visit(this);
   }
 
-  parser::TableRef* analyze_table;
-  std::vector<char*>* analyze_columns;
+  std::unique_ptr<parser::TableRef> analyze_table;
+  std::vector<std::string> analyze_columns;
 
   const std::string INVALID_NAME = "";
 };

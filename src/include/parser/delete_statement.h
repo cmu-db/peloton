@@ -31,15 +31,7 @@ class DeleteStatement : public SQLStatement {
       : SQLStatement(StatementType::DELETE),
         table_ref(nullptr), expr(nullptr) {};
 
-  virtual ~DeleteStatement() {
-    if (table_ref != nullptr) {
-      delete table_ref;
-    }
-
-    if (expr != nullptr) {
-      delete expr;
-    }
-  }
+  virtual ~DeleteStatement() {}
 
   std::string GetTableName() const {
     return table_ref->GetTableName();
@@ -53,8 +45,8 @@ class DeleteStatement : public SQLStatement {
     v->Visit(this);
   }
 
-  parser::TableRef* table_ref;
-  expression::AbstractExpression* expr;
+  std::unique_ptr<parser::TableRef> table_ref;
+  std::unique_ptr<expression::AbstractExpression> expr;
 };
 
 }  // namespace parser

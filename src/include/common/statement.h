@@ -46,6 +46,9 @@ class Statement : public Printable {
 
   static void ParseQueryTypeString(const std::string& query_string,
                              std::string& query_type_string);
+
+  static void ParseCreateTypeString(const std::string& query_string,
+                             std::string& create_type_string);
  
   static void MapToQueryType(const std::string& query_type_string,
                              QueryType& query_type);

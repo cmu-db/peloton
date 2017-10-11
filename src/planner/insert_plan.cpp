@@ -43,8 +43,8 @@ InsertPlan::InsertPlan(storage::DataTable *table,
 }
 
 InsertPlan::InsertPlan(
-    storage::DataTable *table, std::vector<char *> *columns,
-    std::vector<std::vector<peloton::expression::AbstractExpression *> *> *
+    storage::DataTable *table, const std::vector<std::string> *columns,
+    const std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>> *
         insert_values)
     : bulk_insert_count(insert_values->size()) {
 
@@ -56,16 +56,16 @@ InsertPlan::InsertPlan(
   if (target_table_) {
     const catalog::Schema *table_schema = target_table_->GetSchema();
     // INSERT INTO table_name VALUES (val2, val2, ...)
-    if (columns == NULL) {
+    if (columns->empty()) {
       for (uint32_t tuple_idx = 0; tuple_idx < insert_values->size();
            tuple_idx++) {
-        auto values = (*insert_values)[tuple_idx];
-        PL_ASSERT(values->size() <= table_schema->GetColumnCount());
+        auto& values = (*insert_values)[tuple_idx];
+        PL_ASSERT(values.size() <= table_schema->GetColumnCount());
         std::unique_ptr<storage::Tuple> tuple(
             new storage::Tuple(table_schema, true));
         int col_cntr = 0;
         int param_index = 0;
-        for (expression::AbstractExpression *elem : *values) {
+        for (auto& elem : values) {
           // Default value to be inserted
           if (elem == nullptr) {
             // No default value
@@ -83,7 +83,7 @@ InsertPlan::InsertPlan(
                 table_schema->GetColumn(col_cntr).GetType());
           } else {
             expression::ConstantValueExpression *const_expr_elem =
-                dynamic_cast<expression::ConstantValueExpression *>(elem);
+                dynamic_cast<expression::ConstantValueExpression *>(elem.get());
             type::Value const_expr_elem_val = (const_expr_elem->GetValue());
             switch (const_expr_elem->GetValueType()) {
               case type::TypeId::VARCHAR:
@@ -105,7 +105,7 @@ InsertPlan::InsertPlan(
       // columns has to be less than or equal that of schema
       for (uint32_t tuple_idx = 0; tuple_idx < insert_values->size();
            tuple_idx++) {
-        auto values = (*insert_values)[tuple_idx];
+        auto& values = (*insert_values)[tuple_idx];
         PL_ASSERT(columns->size() <= table_schema->GetColumnCount());
         std::unique_ptr<storage::Tuple> tuple(
             new storage::Tuple(table_schema, true));
@@ -135,7 +135,7 @@ InsertPlan::InsertPlan(
               ExpressionTypeToString(values->at(pos)->GetExpressionType())
                   .c_str());
 
-          if (values->at(pos)->GetExpressionType() ==
+          if (values.at(pos)->GetExpressionType() ==
               ExpressionType::VALUE_PARAMETER) {
             std::tuple<oid_t, oid_t, oid_t> pair =
                 std::make_tuple(tuple_idx, col_cntr, param_index);
@@ -146,7 +146,7 @@ InsertPlan::InsertPlan(
           } else {
             expression::ConstantValueExpression *const_expr_elem =
                 dynamic_cast<expression::ConstantValueExpression *>(
-                    values->at(pos));
+                    values.at(pos).get());
             type::Value val = (const_expr_elem->GetValue());
             tuple->SetValue(col_cntr, val, data_pool);
           }
@@ -156,7 +156,7 @@ InsertPlan::InsertPlan(
         if (query_columns_cnt < table_columns_cnt) {
           for (size_t col_cntr = 0; col_cntr < table_columns_cnt; col_cntr++) {
             auto col = table_columns[col_cntr];
-            if (std::find(query_columns->begin(), query_columns->end(), col.GetName())
+            if (std::find_if(query_columns->begin(), query_columns->end(), [&col](const std::string& x){return col.GetName() == x;})
                 == query_columns->end()) {
               tuple->SetValue(col_cntr, type::ValueFactory::GetNullValueByType(
                   col.GetType()),

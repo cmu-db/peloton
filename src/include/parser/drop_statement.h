@@ -34,58 +34,30 @@ class DropStatement : public TableRefStatement {
     kTrigger
   };
 
-  // helper for c_str copy
-  static char* cstrdup(const char* c_str) {
-    char* new_str = new char[strlen(c_str) + 1];
-    strcpy(new_str, c_str);
-    return new_str;
-  }
-
   DropStatement(EntityType type)
       : TableRefStatement(StatementType::DROP), type(type), missing(false) {}
 
   DropStatement(EntityType type, std::string table_name_of_trigger, std::string trigger_name)
       : TableRefStatement(StatementType::DROP),
         type(type),
-        table_name_of_trigger(cstrdup(table_name_of_trigger.c_str())),
-        trigger_name(cstrdup(trigger_name.c_str())) {}
+        table_name_of_trigger(table_name_of_trigger),
+        trigger_name(trigger_name) {}
 
-
-  virtual ~DropStatement() {
-    if (database_name != nullptr) {
-      delete[] database_name;
-    }
-
-    if (index_name != nullptr) {
-      delete[] index_name;
-    }
-
-    if (prep_stmt != nullptr) {
-      delete[] prep_stmt;
-    }
-
-    if (table_name_of_trigger != nullptr) {
-      delete[] table_name_of_trigger;
-    }
-
-    if (trigger_name != nullptr) {
-      delete[] trigger_name;
-    }
-  }
+  virtual ~DropStatement() {}
 
   virtual void Accept(SqlNodeVisitor* v) const override {
     v->Visit(this);
   }
 
   EntityType type;
-  char* database_name = nullptr;
-  char* index_name = nullptr;
-  char* prep_stmt = nullptr;
+  std::string database_name;
+  std::string index_name;
+  std::string prep_stmt;
   bool missing;
 
   // drop trigger
-  char* table_name_of_trigger = nullptr;
-  char* trigger_name = nullptr;
+  std::string table_name_of_trigger;
+  std::string trigger_name;
 };
 
 }  // namespace parser

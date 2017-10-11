@@ -72,10 +72,6 @@ class TriggerTests : public PelotonTest {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
 
-    char *table_name_c = cstrdup(table_name.c_str());
-    char *col_1_c = cstrdup(col_1.c_str());
-    char *col_2_c = cstrdup(col_2.c_str());
-
     auto table = catalog::Catalog::GetInstance()->GetTableWithName(
         DEFAULT_DB_NAME, std::string(table_name), txn);
 
@@ -87,29 +83,26 @@ class TriggerTests : public PelotonTest {
 
     auto table_ref = new parser::TableRef(TableReferenceType::NAME);
     parser::TableInfo *table_info = new parser::TableInfo();
-    table_info->table_name = table_name_c;
-    table_ref->table_info_ = table_info;
-    insert_node->table_ref_ = table_ref;
+    table_info->table_name = table_name;
+    table_ref->table_info_.reset(table_info);
+    insert_node->table_ref_.reset(table_ref);
 
-    insert_node->columns = new std::vector<char *>;
-    insert_node->columns->push_back(col_1_c);
-    insert_node->columns->push_back(col_2_c);
+    insert_node->columns.push_back(col_1);
+    insert_node->columns.push_back(col_2);
 
-    insert_node->insert_values =
-        new std::vector<std::vector<expression::AbstractExpression *> *>;
-    auto values_ptr = new std::vector<expression::AbstractExpression *>;
-    insert_node->insert_values->push_back(values_ptr);
+    insert_node->insert_values.push_back(std::vector<std::unique_ptr<expression::AbstractExpression>>());
+    auto& values = insert_node->insert_values.at(0);
 
-    values_ptr->push_back(new expression::ConstantValueExpression(
-        type::ValueFactory::GetIntegerValue(number)));
+    values.push_back(std::unique_ptr<expression::AbstractExpression>(new expression::ConstantValueExpression(
+      type::ValueFactory::GetIntegerValue(number))));
 
-    values_ptr->push_back(new expression::ConstantValueExpression(
-        type::ValueFactory::GetVarcharValue(text)));
+    values.push_back(std::unique_ptr<expression::AbstractExpression>(new expression::ConstantValueExpression(
+      type::ValueFactory::GetVarcharValue(text))));
 
-    insert_node->select = new parser::SelectStatement();
+    insert_node->select.reset(new parser::SelectStatement());
 
-    planner::InsertPlan node(table, insert_node->columns,
-                             insert_node->insert_values);
+    planner::InsertPlan node(table, &insert_node->columns,
+                             &insert_node->insert_values);
     executor::InsertExecutor executor(&node, context.get());
 
     EXPECT_TRUE(executor.Init());

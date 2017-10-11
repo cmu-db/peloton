@@ -28,26 +28,17 @@ namespace parser {
  */
 class UpdateClause {
  public:
-  char* column;
-  expression::AbstractExpression* value;
+  std::string column;
+  std::unique_ptr<expression::AbstractExpression> value;
 
-  ~UpdateClause() {
-    if (column != nullptr) {
-      delete[] column;
-    }
-    if (value != nullptr) {
-      delete value;
-    }
-  }
+  ~UpdateClause() {}
 
   UpdateClause* Copy() {
     UpdateClause* new_clause = new UpdateClause();
     std::string str(column);
-    char* new_cstr = new char[str.length() + 1];
-    std::strcpy(new_cstr, str.c_str());
+    new_clause->column = column;
     expression::AbstractExpression* new_expr = value->Copy();
-    new_clause->column = new_cstr;
-    new_clause->value = new_expr;
+    new_clause->value.reset(new_expr);
     return new_clause;
   }
 };
@@ -60,37 +51,19 @@ class UpdateStatement : public SQLStatement {
  public:
   UpdateStatement()
       : SQLStatement(StatementType::UPDATE),
-        table(NULL),
-        updates(NULL),
-        where(NULL) {}
+        table(nullptr),
+        where(nullptr) {}
 
-  virtual ~UpdateStatement() {
-    if (table != nullptr) {
-      delete table;
-    }
-
-    if (updates != nullptr) {
-      for (auto clause : *updates) {
-        if (clause != nullptr) {
-          delete clause;
-        }
-      }
-      delete updates;
-    }
-
-    if (where != nullptr) {
-      delete where;
-    }
-  }
+  virtual ~UpdateStatement() {}
 
   virtual void Accept(SqlNodeVisitor* v) const override {
     v->Visit(this);
   }
 
   // TODO: switch to char* instead of TableRef
-  TableRef* table;
-  std::vector<UpdateClause*>* updates;
-  expression::AbstractExpression* where = nullptr;
+  std::unique_ptr<TableRef> table;
+  std::vector<std::unique_ptr<UpdateClause>> updates;
+  std::unique_ptr<expression::AbstractExpression> where = nullptr;
 };
 
 }  // namespace parser

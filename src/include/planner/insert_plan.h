@@ -48,8 +48,8 @@ class InsertPlan : public AbstractPlan {
                       oid_t bulk_insert_count = 1);
 
   explicit InsertPlan(
-      storage::DataTable *table, std::vector<char *> *columns,
-      std::vector<std::vector<peloton::expression::AbstractExpression *> *> *
+      storage::DataTable *table, const std::vector<std::string> *columns,
+      const std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>> *
           insert_values);
 
   // Get a varlen pool (will construct the pool only if needed)

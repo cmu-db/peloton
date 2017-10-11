@@ -29,15 +29,11 @@ namespace peloton {
 namespace parser {
 
 struct TableInfo {
-  ~TableInfo() {
-    if (table_name != nullptr)
-      delete[] table_name;
-    if (database_name != nullptr)
-      delete[] database_name;
-  }
-  char* table_name = nullptr;
-  ;
-  char* database_name = nullptr;
+  ~TableInfo() {}
+
+  std::string table_name;
+
+  std::string database_name;
 };
 
 // Base class for every SQLStatement
@@ -65,23 +61,21 @@ class TableRefStatement : public SQLStatement {
  public:
   TableRefStatement(StatementType type) : SQLStatement(type) {}
 
-  virtual ~TableRefStatement() {
-    if (table_info_ != nullptr) {
-      delete table_info_;
-    }
-  }
+  virtual ~TableRefStatement() {}
 
-  virtual inline std::string GetTableName() const { return table_info_->table_name; }
+  virtual inline std::string GetTableName() const {
+    return table_info_->table_name;
+  }
 
   // Get the name of the database of this table
   virtual inline std::string GetDatabaseName() const {
-    if (table_info_->database_name == nullptr) {
+    if (table_info_->database_name.empty()) {
       return DEFAULT_DB_NAME;
     }
     return table_info_->database_name;
   }
 
-  TableInfo* table_info_ = nullptr;
+  std::unique_ptr<TableInfo> table_info_ = nullptr;
 };
 
 // Represents the result of the SQLParser.
@@ -89,31 +83,28 @@ class TableRefStatement : public SQLStatement {
 class SQLStatementList : public Printable {
  public:
   SQLStatementList()
-      : is_valid(true), parser_msg(NULL), error_line(0), error_col(0){};
+      : is_valid(true), parser_msg(nullptr), error_line(0), error_col(0){};
 
-  SQLStatementList(SQLStatement* stmt) : is_valid(true), parser_msg(NULL) {
+  SQLStatementList(SQLStatement* stmt) : is_valid(true), parser_msg(nullptr) {
     AddStatement(stmt);
   };
 
   virtual ~SQLStatementList() {
-    // clean up statements
-    for (auto stmt : statements) delete stmt;
-
     delete (char*)parser_msg;
   }
 
-  void AddStatement(SQLStatement* stmt) { statements.push_back(stmt); }
+  void AddStatement(SQLStatement* stmt) { statements.push_back(std::unique_ptr<SQLStatement>(stmt)); }
 
-  SQLStatement* GetStatement(int id) const { return statements[id]; }
+  SQLStatement* GetStatement(int id) const { return statements[id].get(); }
 
-  const std::vector<SQLStatement*>& GetStatements() const { return statements; }
+  const std::vector<std::unique_ptr<SQLStatement>>& GetStatements() const { return statements; }
 
   size_t GetNumStatements() const { return statements.size(); }
 
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
-  std::vector<SQLStatement*> statements;
+  std::vector<std::unique_ptr<SQLStatement>> statements;
   bool is_valid;
   const char* parser_msg;
   int error_line;

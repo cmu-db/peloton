@@ -63,33 +63,7 @@ struct ColumnDefinition {
       varlen = type::PELOTON_TEXT_MAX_LEN;
   }
 
-  virtual ~ColumnDefinition() {
-    if (primary_key) {
-      for (auto key : *primary_key) delete[](key);
-      delete primary_key;
-    }
-
-    if (foreign_key_source) {
-      for (auto key : *foreign_key_source) delete[](key);
-      delete foreign_key_source;
-    }
-    if (foreign_key_sink) {
-      for (auto key : *foreign_key_sink) delete[](key);
-      delete foreign_key_sink;
-    }
-    if (multi_unique_cols) {
-      for (auto key : *multi_unique_cols) delete[] (key);
-      delete multi_unique_cols;
-    }
-
-    delete[] name;
-    if (table_info_ != nullptr)
-      delete table_info_;
-    if (default_value != nullptr)
-      delete default_value;
-    if (check_expression != nullptr)
-      delete check_expression;
-  }
+  virtual ~ColumnDefinition() {}
 
   static type::TypeId GetValueType(DataType type) {
     switch (type) {
@@ -113,7 +87,6 @@ struct ColumnDefinition {
 
       // case ADDRESS:
       //  return type::Type::ADDRESS;
-      //  break;
 
       case DataType::TIMESTAMP:
         return type::TypeId::TIMESTAMP;
@@ -135,26 +108,26 @@ struct ColumnDefinition {
     }
   }
 
-  char* name = nullptr;
+  std::string name;
 
   // The name of the table and its database
-  TableInfo* table_info_ = nullptr;
+  std::unique_ptr<TableInfo> table_info_ = nullptr;
 
   DataType type;
   size_t varlen = 0;
   bool not_null = false;
   bool primary = false;
   bool unique = false;
-  expression::AbstractExpression* default_value = nullptr;
-  expression::AbstractExpression* check_expression = nullptr;
+  std::unique_ptr<expression::AbstractExpression> default_value = nullptr;
+  std::unique_ptr<expression::AbstractExpression> check_expression = nullptr;
 
-  std::vector<char*>* primary_key = nullptr;
-  std::vector<char*>* foreign_key_source = nullptr;
-  std::vector<char*>* foreign_key_sink = nullptr;
+  std::vector<std::string> primary_key;
+  std::vector<std::string> foreign_key_source;
+  std::vector<std::string> foreign_key_sink;
 
-  std::vector<char *>* multi_unique_cols = nullptr;
+  std::vector<std::string> multi_unique_cols;
 
-  char* foreign_key_table_name = nullptr;
+  std::string foreign_key_table_name;
   FKConstrActionType foreign_key_delete_action;
   FKConstrActionType foreign_key_update_action;
   FKConstrMatchType foreign_key_match_type;
@@ -172,67 +145,30 @@ class CreateStatement : public TableRefStatement {
   CreateStatement(CreateType type)
       : TableRefStatement(StatementType::CREATE),
         type(type),
-        if_not_exists(false),
-        columns(nullptr){};
+        if_not_exists(false) {};
 
-  virtual ~CreateStatement() {
-    if (columns != nullptr) {
-      for (auto col : *columns) delete col;
-      delete columns;
-    }
-
-    if (index_attrs != nullptr) {
-      for (auto attr : *index_attrs) delete[] (attr);
-      delete index_attrs;
-    }
-    if (trigger_funcname) {
-      for (auto t : *trigger_funcname) delete[](t);
-      delete trigger_funcname;
-    }
-    if (trigger_args) {
-      for (auto t : *trigger_args) delete[](t);
-      delete trigger_args;
-    }
-    if (trigger_columns) {
-      for (auto t : *trigger_columns) delete[](t);
-      delete trigger_columns;
-    }
-
-    if (index_name != nullptr) {
-      delete[] (index_name);
-    }
-    if (trigger_name) {
-      delete[](trigger_name);
-    }
-    if (database_name) {
-      delete[](database_name);
-    }
-
-    if (trigger_when) {
-      delete trigger_when;
-    }
-  }
+  virtual ~CreateStatement() {}
 
   virtual void Accept(SqlNodeVisitor* v) const override { v->Visit(this); }
 
   CreateType type;
   bool if_not_exists;
 
-  std::vector<ColumnDefinition*>* columns;
-  std::vector<char*>* index_attrs = nullptr;
+  std::vector<std::unique_ptr<ColumnDefinition>> columns;
+  std::vector<std::string> index_attrs;
 
   IndexType index_type;
 
-  char* index_name = nullptr;
-  char* trigger_name = nullptr;
-  char* database_name = nullptr;
+  std::string index_name;
+  std::string trigger_name;
+  std::string database_name;
 
   bool unique = false;
 
-  std::vector<char*>* trigger_funcname = nullptr;
-  std::vector<char*>* trigger_args = nullptr;
-  std::vector<char*>* trigger_columns = nullptr;
-  expression::AbstractExpression* trigger_when = nullptr;
+  std::vector<std::string> trigger_funcname;
+  std::vector<std::string> trigger_args;
+  std::vector<std::string> trigger_columns;
+  std::unique_ptr<expression::AbstractExpression> trigger_when;
   int16_t trigger_type;  // information about row, timing, events, access by
                          // pg_trigger
 };
