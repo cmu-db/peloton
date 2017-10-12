@@ -437,7 +437,6 @@ vector<oid_t> OperatorToPlanTransformer::GenerateColumnsForScan(
       column_ids.push_back(col_id);
     GenerateTableExprMap(*output_expr_map_, alias, table);
     auto t = *output_expr_map_;
-    LOG_INFO("%ld", t.size());
   } else {
     auto output_column_size = column_prop->GetSize();
     for (oid_t idx = 0; idx < output_column_size; ++idx) {

@@ -12,6 +12,7 @@
 
 #include <unordered_set>
 #include <vector>
+#include <cstdlib>
 
 #include "codegen/codegen.h"
 #include "codegen/function_builder.h"
@@ -19,11 +20,44 @@
 #include "codegen/lang/loop.h"
 #include "codegen/proxy/bloom_filter_proxy.h"
 #include "codegen/testing_codegen_util.h"
+#include "sql/testing_sql_util.h"
+#include "optimizer/optimizer.h"
+#include "common/timer.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "executor/plan_executor.h"
+#include "planner/hash_join_plan.h"
 
 namespace peloton {
 namespace test {
 
-class BloomFilterCodegenTest : public PelotonTest {};
+class BloomFilterCodegenTest : public PelotonTest {
+public:
+  BloomFilterCodegenTest() {
+    // Create test db
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto txn = txn_manager.BeginTransaction();
+    catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+    txn_manager.CommitTransaction(txn);
+  }
+  
+  ~BloomFilterCodegenTest() {
+    // Drop test db
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto txn = txn_manager.BeginTransaction();
+    catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+    txn_manager.CommitTransaction(txn);
+  }
+  
+  int UpDivide(int num1, int num2) {
+    return (num1 + num2 - 1) / num2;
+  }
+  
+  void InsertTuple(const std::vector<int> &vals, storage::DataTable *table,
+                   concurrency::Transaction* txn);
+  
+  void CreateTable(std::string table_name, int tuple_size,
+                   concurrency::Transaction* txn);
+};
 
 TEST_F(BloomFilterCodegenTest, FalsePositiveRateTest) {
   codegen::CodeContext code_context;
@@ -139,6 +173,147 @@ TEST_F(BloomFilterCodegenTest, FalsePositiveRateTest) {
 
   bloom_filter.Destroy();
 }
+  
+  
+// Testing whether bloom filter can improve the performance of hash join
+// when the hash table is bigger than L3 cache and selectivity is low
+TEST_F(BloomFilterCodegenTest, PerformanceTest) {
+  std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
+    new optimizer::Optimizer());
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto *catalog = catalog::Catalog::GetInstance();
+  
+  auto *txn = txn_manager.BeginTransaction();
+  
+  // Initialize tables. test1 is the inner table from which we build the
+  // hash table. test2 is the outer table will probe the hash table.
+  const std::string table1_name = "test1";
+  const std::string table2_name = "test2";
+  const int table1_tuple_size = 512;
+  const int table2_tuple_size = 8;
+  const int bigint_size = 8;
+  CreateTable(table1_name, table1_tuple_size, txn);
+  CreateTable(table2_name, table2_tuple_size, txn);
+
+  int L3_cache_size = 6291456;
+//  const int L3_cache_size = 600000;
+  const int table1_target_size = L3_cache_size * 10;
+  const double selectivity = 0.1;
+  const int outer_to_inner_ratio = 4;
+
+  // Load the test1 until its size is bigger than a certain ratio of L3 cache.
+  // For example, if the ratio is 10, every hash probe will have 90% chance
+  // to be a cache miss
+  int curr_size = 0;
+  std::vector<int> numbers;
+  std::unordered_set<int> number_set;
+  auto *table1 = catalog->GetTableWithName(DEFAULT_DB_NAME, table1_name, txn);
+  while (curr_size < table1_target_size) {
+    int random = rand();
+    numbers.push_back(random);
+    number_set.insert(random);
+    
+    std::vector<int> vals(UpDivide(table1_tuple_size, bigint_size), random);
+    InsertTuple(vals, table1, txn);
+    
+    curr_size += table1_tuple_size;
+  }
+  
+  LOG_INFO("Finish populating test1");
+  
+  // Load the inner table which contains twice tuples as the outer table
+  auto *table2 = catalog->GetTableWithName(DEFAULT_DB_NAME, table2_name, txn);
+  unsigned outer_table_cardinality = numbers.size() * outer_to_inner_ratio;
+  for (unsigned i = 0; i < outer_table_cardinality; i++) {
+    int number;
+    if (rand() % 100 < selectivity * 100) {
+      // Pick a random number from the inner table
+      number = numbers[rand() % numbers.size()];
+    } else {
+      // Pick a random number that is not in inner table
+      do {
+        number = rand();
+      } while (number_set.count(number) == 1);
+    }
+    std::vector<int> vals(UpDivide(table2_tuple_size, bigint_size), number);
+    InsertTuple(vals, table2, txn);
+  }
+  
+  LOG_INFO("Finish populating test2");
+  
+  
+  // Get a microsecond resolution timer
+  Timer<std::ratio<1, 1000000>> timer;
+  
+  // Build and execute the join plan
+  std::string query = "SELECT * FROM test1 as t1, test2 as t2 "
+                                  "WHERE t1.c0 = t2.c0";
+  int num_iter = 5;
+  // Execute plan with bloom filter disabled
+  for (int i = 0; i < num_iter; i++) {
+    auto plan1 = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn);
+    const_cast<planner::AbstractPlan*>(plan1->GetChild(0))
+      ->SetCardinality(numbers.size());
+    dynamic_cast<planner::HashJoinPlan*>(plan1.get())->SetBloomFilterFlag(false);
+    std::vector<StatementResult> result;
+    executor::ExecuteResult exe_result;
+    timer.Start();
+    executor::PlanExecutor::ExecutePlan(plan1, txn, {}, result, {}, exe_result);
+    timer.Stop();
+    double durable1 = timer.GetDuration();
+    timer.Reset();
+    LOG_INFO("Execution time without bloom filter: %f", durable1);
+  }
+  
+  // Execute plan with bloom filter enabled
+  for (int i = 0; i < num_iter; i++) {
+    auto plan2 = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn);
+    const_cast<planner::AbstractPlan*>(plan2->GetChild(0))
+      ->SetCardinality(numbers.size());
+    dynamic_cast<planner::HashJoinPlan*>(plan2.get())->SetBloomFilterFlag(true);
+    std::vector<StatementResult> result;
+    executor::ExecuteResult exe_result;
+    timer.Start();
+    executor::PlanExecutor::ExecutePlan(plan2, txn, {}, result, {}, exe_result);
+    timer.Stop();
+    double durable2 = timer.GetDuration();
+    timer.Reset();
+    LOG_INFO("Execution time with bloom filter: %f", durable2);
+  }
+  
+  txn_manager.CommitTransaction(txn);
+}
+  
+void BloomFilterCodegenTest::CreateTable(std::string table_name, int tuple_size,
+                 concurrency::Transaction* txn) {
+  int curr_size = 0;
+  size_t bigint_size = type::Type::GetTypeSize(type::TypeId::BIGINT);
+  std::vector<catalog::Column> cols;
+  while (curr_size < tuple_size) {
+    cols.push_back(catalog::Column{type::TypeId::BIGINT, bigint_size,
+      "c" + std::to_string(curr_size / bigint_size), true});
+    curr_size += bigint_size;
+  }
+  auto *catalog = catalog::Catalog::GetInstance();
+  catalog->CreateTable(DEFAULT_DB_NAME, table_name,
+      std::make_unique<catalog::Schema>(cols), txn);
+}
+
+void BloomFilterCodegenTest::InsertTuple(const std::vector<int> &vals,
+                                         storage::DataTable *table,
+                                         concurrency::Transaction* txn) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  storage::Tuple tuple{table->GetSchema(), true};
+  for (unsigned i = 0; i < vals.size(); i++) {
+    tuple.SetValue(i, type::ValueFactory::GetBigIntValue(vals[i]));
+  }
+  ItemPointer *index_entry_ptr = nullptr;
+  auto tuple_slot_id = table->InsertTuple(&tuple, txn, &index_entry_ptr);
+  PL_ASSERT(tuple_slot_id.block != INVALID_OID);
+  PL_ASSERT(tuple_slot_id.offset != INVALID_OID);
+  txn_manager.PerformInsert(txn, tuple_slot_id, index_entry_ptr);
+}
+
 
 }  // namespace test
 }  // namespace peloton
