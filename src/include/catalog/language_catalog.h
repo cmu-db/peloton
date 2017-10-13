@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 //===----------------------------------------------------------------------===//
 // pg_language
 //
@@ -36,14 +35,13 @@ class LanguageCatalog : public AbstractCatalog {
   ~LanguageCatalog();
 
   // Global Singleton
-  static LanguageCatalog *GetInstance(
-      concurrency::Transaction *txn = nullptr);
+  static LanguageCatalog *GetInstance(concurrency::Transaction *txn = nullptr);
 
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//
-  bool InsertLanguage(const std::string &lanname,
-                      type::AbstractPool *pool, concurrency::Transaction *txn);
+  bool InsertLanguage(const std::string &lanname, type::AbstractPool *pool,
+                      concurrency::Transaction *txn);
 
   bool DeleteLanguage(const std::string &lanname,
                       concurrency::Transaction *txn);
@@ -52,7 +50,7 @@ class LanguageCatalog : public AbstractCatalog {
   // Read-only Related API
   //===--------------------------------------------------------------------===//
   oid_t GetLanguageOid(const std::string &lanname,
-                  concurrency::Transaction *txn);
+                       concurrency::Transaction *txn);
 
   std::string GetLanguageName(oid_t language_oid,
                               concurrency::Transaction *txn);

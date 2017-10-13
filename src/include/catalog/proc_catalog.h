@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 //===----------------------------------------------------------------------===//
 // pg_proc
 //
@@ -41,18 +40,15 @@ class ProcCatalog : public AbstractCatalog {
   ~ProcCatalog();
 
   // Global Singleton
-  static ProcCatalog *GetInstance(
-      concurrency::Transaction *txn = nullptr);
+  static ProcCatalog *GetInstance(concurrency::Transaction *txn = nullptr);
 
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//
-  bool InsertProc(const std::string &proname,
-                  type::TypeId prorettype,
-                  const std::vector<type::TypeId> &proargtypes,
-                  oid_t prolang,
-                  const std::string &prosrc,
-                  type::AbstractPool *pool, concurrency::Transaction *txn);
+  bool InsertProc(const std::string &proname, type::TypeId prorettype,
+                  const std::vector<type::TypeId> &proargtypes, oid_t prolang,
+                  const std::string &prosrc, type::AbstractPool *pool,
+                  concurrency::Transaction *txn);
 
   //===--------------------------------------------------------------------===//
   // Read-only Related API

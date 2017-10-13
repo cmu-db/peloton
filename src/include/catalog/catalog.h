@@ -15,8 +15,6 @@
 #include <mutex>
 
 #include "catalog/catalog_defaults.h"
-#include "catalog/database_catalog.h"
-#include "catalog/table_catalog.h"
 #include "function/functions.h"
 
 namespace peloton {
@@ -25,15 +23,15 @@ namespace catalog {
 class Schema;
 class DatabaseCatalogObject;
 class TableCatalogObject;
-}
+}  // namespace catalog
 
 namespace concurrency {
 class Transaction;
-}
+}  // namespace concurrency
 
 namespace index {
 class Index;
-}
+}  // namespace index
 
 namespace storage {
 class Database;
@@ -70,10 +68,10 @@ struct FunctionData {
 class Catalog {
  public:
   // Global Singleton
-  static Catalog *GetInstance(void);
+  static Catalog *GetInstance();
 
-  // Bootstrap addtional catalogs, only used in system initialization phase
-  void Bootstrap(void);
+  // Bootstrap additional catalogs, only used in system initialization phase
+  void Bootstrap();
 
   // Deconstruct the catalog database when destroying the catalog.
   ~Catalog();
@@ -168,8 +166,9 @@ class Catalog {
       concurrency::Transaction *txn);
   std::shared_ptr<TableCatalogObject> GetTableObject(
       oid_t database_oid, oid_t table_oid, concurrency::Transaction *txn);
+
   //===--------------------------------------------------------------------===//
-  // DEPRECATED FUNCTIONs
+  // DEPRECATED FUNCTIONS
   //===--------------------------------------------------------------------===//
   /*
    * We're working right now to remove metadata from storage level and eliminate
@@ -189,14 +188,13 @@ class Catalog {
 
   void AddFunction(const std::string &name,
                    const std::vector<type::TypeId> &argument_types,
-                   const type::TypeId return_type,
-                   oid_t prolang,
+                   const type::TypeId return_type, oid_t prolang,
                    const std::string &func_name,
                    function::BuiltInFuncType func_ptr,
                    concurrency::Transaction *txn);
 
-  const FunctionData GetFunction(const std::string &name,
-                                 const std::vector<type::TypeId> &argument_types);
+  const FunctionData GetFunction(
+      const std::string &name, const std::vector<type::TypeId> &argument_types);
 
  private:
   Catalog();
@@ -206,5 +204,6 @@ class Catalog {
 
   std::mutex catalog_mutex;
 };
+
 }  // namespace catalog
 }  // namespace peloton

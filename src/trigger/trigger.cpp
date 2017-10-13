@@ -11,10 +11,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "trigger/trigger.h"
+
 #include "catalog/catalog.h"
 #include "catalog/column_catalog.h"
+#include "catalog/table_catalog.h"
 #include "concurrency/transaction.h"
+#include "expression/comparison_expression.h"
 #include "expression/constant_value_expression.h"
+#include "expression/tuple_value_expression.h"
 
 namespace peloton {
 namespace trigger {

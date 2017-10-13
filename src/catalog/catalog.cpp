@@ -12,14 +12,11 @@
 
 #include "catalog/catalog.h"
 
-#include "common/exception.h"
-#include "common/macros.h"
-
 #include "catalog/column_catalog.h"
 #include "catalog/index_catalog.h"
-#include "catalog/table_catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/database_metrics_catalog.h"
+#include "catalog/table_catalog.h"
 #include "catalog/table_metrics_catalog.h"
 #include "catalog/index_metrics_catalog.h"
 #include "catalog/query_metrics_catalog.h"
@@ -28,6 +25,9 @@
 #include "catalog/trigger_catalog.h"
 #include "catalog/proc_catalog.h"
 #include "catalog/language_catalog.h"
+#include "function/date_functions.h"
+#include "function/decimal_functions.h"
+#include "function/string_functions.h"
 #include "index/index_factory.h"
 #include "storage/storage_manager.h"
 #include "storage/table_factory.h"
@@ -37,7 +37,7 @@ namespace peloton {
 namespace catalog {
 
 // Get instance of the global catalog
-Catalog *Catalog::GetInstance(void) {
+Catalog *Catalog::GetInstance() {
   static Catalog global_catalog;
   return &global_catalog;
 }
@@ -259,7 +259,7 @@ ResultType Catalog::CreateTable(const std::string &database_name,
   pg_table->InsertTable(table_oid, table_name, database_object->database_oid,
                         pool_.get(), txn);
   oid_t column_id = 0;
-  for (auto column : table->GetSchema()->GetColumns()) {
+  for (const auto &column : table->GetSchema()->GetColumns()) {
     ColumnCatalog::GetInstance()->InsertColumn(
         table_oid, column.GetName(), column_id, column.GetOffset(),
         column.GetType(), column.IsInlined(), column.GetConstraints(),
@@ -796,45 +796,49 @@ Catalog::~Catalog() {
 // FUNCTION
 //===--------------------------------------------------------------------===//
 
-/*@brief   Add new built-in function
- * 1. add the function infomation into pg_proc
- * 2. register the function pointer in function::BuiltinFunction
+/* @brief
+ * Add a new built-in function. This proceeds in two steps:
+ *   1. Add the function information into pg_catalog.pg_proc
+ *   2. Register the function pointer in function::BuiltinFunction
  * @param   name & argument_types   function name and arg types used in SQL
  * @param   return_type   the return type
  * @param   prolang       the oid of which language the function is
- * @param   func_name     the function name in C++ source code (should be unique)
+ * @param   func_name     the function name in C++ source (should be unique)
  * @param   func_ptr      the pointer to the function
  */
 void Catalog::AddFunction(const std::string &name,
                           const std::vector<type::TypeId> &argument_types,
-                          const type::TypeId return_type,
-                          oid_t prolang,
+                          const type::TypeId return_type, oid_t prolang,
                           const std::string &func_name,
                           function::BuiltInFuncType func_ptr,
                           concurrency::Transaction *txn) {
-  if (!ProcCatalog::GetInstance()->
-      InsertProc(name, return_type, argument_types,
-                 prolang, func_name, pool_.get(), txn)) {
+  if (!ProcCatalog::GetInstance()->InsertProc(name, return_type, argument_types,
+                                              prolang, func_name, pool_.get(),
+                                              txn)) {
     throw CatalogException("Failed to add function " + func_name);
   }
   function::BuiltInFunctions::AddFunction(func_name, func_ptr);
 }
 
 const FunctionData Catalog::GetFunction(
-    const std::string &name,
-    const std::vector<type::TypeId> &argument_types) {
+    const std::string &name, const std::vector<type::TypeId> &argument_types) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   FunctionData result;
-  oid_t prolang = ProcCatalog::GetInstance()->GetProLang(name, argument_types, txn);
+  oid_t prolang =
+      ProcCatalog::GetInstance()->GetProLang(name, argument_types, txn);
 
-  // if the function is "internal", then look up the map in function::BuiltInFunctions
-  // to get the function pointer
-  if (LanguageCatalog::GetInstance()->GetLanguageName(prolang, txn) == "internal") {
+  // If the function is "internal", perform the lookup in our built-in
+  // functions map (i.e., function::BuiltInFunctions) to get the function
+  if (LanguageCatalog::GetInstance()->GetLanguageName(prolang, txn) ==
+      "internal") {
     result.argument_types_ = argument_types;
-    result.func_name_ = ProcCatalog::GetInstance()->GetProSrc(name, argument_types, txn);
-    result.return_type_ = ProcCatalog::GetInstance()->GetProRetType(name, argument_types, txn);
-    result.func_ptr_ = function::BuiltInFunctions::GetFuncByName(result.func_name_);
+    result.func_name_ =
+        ProcCatalog::GetInstance()->GetProSrc(name, argument_types, txn);
+    result.return_type_ =
+        ProcCatalog::GetInstance()->GetProRetType(name, argument_types, txn);
+    result.func_ptr_ =
+        function::BuiltInFunctions::GetFuncByName(result.func_name_);
     if (result.func_ptr_ != nullptr) {
       txn_manager.CommitTransaction(txn);
       return result;
@@ -850,8 +854,8 @@ void Catalog::InitializeLanguages() {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
     // add "internal" language
-    if (!LanguageCatalog::GetInstance()->
-        InsertLanguage("internal", pool_.get(), txn)) {
+    if (!LanguageCatalog::GetInstance()->InsertLanguage("internal", pool_.get(),
+                                                        txn)) {
       txn_manager.AbortTransaction(txn);
       throw CatalogException("Failed to add language 'internal'");
     }
@@ -866,7 +870,8 @@ void Catalog::InitializeFunctions() {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
 
-    oid_t prolang = LanguageCatalog::GetInstance()->GetLanguageOid("internal", txn);
+    oid_t prolang =
+        LanguageCatalog::GetInstance()->GetLanguageOid("internal", txn);
     if (prolang == INVALID_OID) {
       throw CatalogException("prolang 'internal' does not exist");
     }
@@ -875,39 +880,39 @@ void Catalog::InitializeFunctions() {
       /**
        * string functions
        */
-      AddFunction("ascii", {type::TypeId::VARCHAR}, type::TypeId::INTEGER, prolang,
-                  "Ascii", function::StringFunctions::Ascii, txn);
-      AddFunction("chr", {type::TypeId::INTEGER}, type::TypeId::VARCHAR, prolang,
-                  "Chr", function::StringFunctions::Chr, txn);
+      AddFunction("ascii", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
+                  prolang, "Ascii", function::StringFunctions::Ascii, txn);
+      AddFunction("chr", {type::TypeId::INTEGER}, type::TypeId::VARCHAR,
+                  prolang, "Chr", function::StringFunctions::Chr, txn);
       AddFunction("concat", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
-                  type::TypeId::VARCHAR, prolang,
-                  "Concat", function::StringFunctions::Concat, txn);
+                  type::TypeId::VARCHAR, prolang, "Concat",
+                  function::StringFunctions::Concat, txn);
       AddFunction("substr", {type::TypeId::VARCHAR, type::TypeId::INTEGER,
                              type::TypeId::INTEGER},
-                  type::TypeId::VARCHAR, prolang,
-                  "Substr", function::StringFunctions::Substr, txn);
-      AddFunction("char_length", {type::TypeId::VARCHAR},
-                  type::TypeId::INTEGER, prolang,
-                  "CharLength", function::StringFunctions::CharLength, txn);
+                  type::TypeId::VARCHAR, prolang, "Substr",
+                  function::StringFunctions::Substr, txn);
+      AddFunction("char_length", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
+                  prolang, "CharLength", function::StringFunctions::CharLength,
+                  txn);
       AddFunction("octet_length", {type::TypeId::VARCHAR},
-                  type::TypeId::INTEGER, prolang,
-                  "OctetLength", function::StringFunctions::OctetLength, txn);
+                  type::TypeId::INTEGER, prolang, "OctetLength",
+                  function::StringFunctions::OctetLength, txn);
       AddFunction("repeat", {type::TypeId::VARCHAR, type::TypeId::INTEGER},
-                  type::TypeId::VARCHAR, prolang,
-                  "Repeat", function::StringFunctions::Repeat, txn);
+                  type::TypeId::VARCHAR, prolang, "Repeat",
+                  function::StringFunctions::Repeat, txn);
       AddFunction("replace", {type::TypeId::VARCHAR, type::TypeId::VARCHAR,
                               type::TypeId::VARCHAR},
-                  type::TypeId::VARCHAR, prolang,
-                  "Replace", function::StringFunctions::Replace, txn);
+                  type::TypeId::VARCHAR, prolang, "Replace",
+                  function::StringFunctions::Replace, txn);
       AddFunction("ltrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
-                  type::TypeId::VARCHAR, prolang,
-                  "LTrim", function::StringFunctions::LTrim, txn);
+                  type::TypeId::VARCHAR, prolang, "LTrim",
+                  function::StringFunctions::LTrim, txn);
       AddFunction("rtrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
-                  type::TypeId::VARCHAR, prolang,
-                  "RTrim", function::StringFunctions::RTrim, txn);
+                  type::TypeId::VARCHAR, prolang, "RTrim",
+                  function::StringFunctions::RTrim, txn);
       AddFunction("btrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
-                  type::TypeId::VARCHAR, prolang,
-                  "btrim", function::StringFunctions::BTrim, txn);
+                  type::TypeId::VARCHAR, prolang, "btrim",
+                  function::StringFunctions::BTrim, txn);
 
       /**
        * decimal functions
@@ -919,10 +924,9 @@ void Catalog::InitializeFunctions() {
        * date functions
        */
       AddFunction("extract", {type::TypeId::INTEGER, type::TypeId::TIMESTAMP},
-                  type::TypeId::DECIMAL, prolang,
-                  "Extract", function::DateFunctions::Extract, txn);
-    }
-    catch (CatalogException e) {
+                  type::TypeId::DECIMAL, prolang, "Extract",
+                  function::DateFunctions::Extract, txn);
+    } catch (CatalogException &e) {
       txn_manager.AbortTransaction(txn);
       throw e;
     }

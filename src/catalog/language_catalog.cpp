@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "catalog/catalog.h"
 #include "catalog/language_catalog.h"
 #include "executor/logical_tile.h"
@@ -19,13 +18,12 @@
 namespace peloton {
 namespace catalog {
 
-LanguageCatalog *LanguageCatalog::GetInstance(
-    concurrency::Transaction *txn) {
+LanguageCatalog *LanguageCatalog::GetInstance(concurrency::Transaction *txn) {
   static LanguageCatalog language_catalog{txn};
   return &language_catalog;
 }
 
-LanguageCatalog::~LanguageCatalog() {};
+LanguageCatalog::~LanguageCatalog(){};
 
 LanguageCatalog::LanguageCatalog(concurrency::Transaction *txn)
     : AbstractCatalog("CREATE TABLE " CATALOG_DATABASE_NAME
@@ -35,9 +33,8 @@ LanguageCatalog::LanguageCatalog(concurrency::Transaction *txn)
                       "lanname        VARCHAR NOT NULL);",
                       txn) {
   Catalog::GetInstance()->CreateIndex(
-      CATALOG_DATABASE_NAME, LANGUAGE_CATALOG_NAME,
-      {1}, LANGUAGE_CATALOG_NAME "_skey0",
-      false, IndexType::BWTREE, txn);
+      CATALOG_DATABASE_NAME, LANGUAGE_CATALOG_NAME, {1},
+      LANGUAGE_CATALOG_NAME "_skey0", false, IndexType::BWTREE, txn);
 }
 
 // insert a new language by name
@@ -64,7 +61,8 @@ bool LanguageCatalog::DeleteLanguage(const std::string &lanname,
   oid_t index_offset = IndexId::SECONDARY_KEY_0;
 
   std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetVarcharValue(lanname, nullptr).Copy());
+  values.push_back(
+      type::ValueFactory::GetVarcharValue(lanname, nullptr).Copy());
 
   return DeleteWithIndexScan(index_offset, values, txn);
 }
@@ -107,7 +105,7 @@ std::string LanguageCatalog::GetLanguageName(oid_t language_oid,
   if (result_tiles->size() != 0) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
     if ((*result_tiles)[0]->GetTupleCount() != 0) {
-      lanname = (*result_tiles)[0]->GetValue(0, 0).GetAs<const char*>();
+      lanname = (*result_tiles)[0]->GetValue(0, 0).GetAs<const char *>();
     }
   }
   return lanname;
