@@ -94,6 +94,17 @@ class AbstractExpression : public Printable {
     children_[index].reset(expr);
   }
 
+  bool IsZoneMappable() ;
+
+  size_t GetNumberofParsedPredicates() const {
+    return parsed_predicates.size();
+  }
+
+  const std::vector<std::unique_ptr<const expression::AbstractExpression>> *GetParsedPredicates() const {
+    return &parsed_predicates;
+  }
+
+  std::vector<std::unique_ptr<const expression::AbstractExpression>> parsed_predicates;
   /** accessors */
 
   ExpressionType GetExpressionType() const { return exp_type_; }

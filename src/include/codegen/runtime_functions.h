@@ -16,15 +16,21 @@
 
 #include "type/types.h"
 
+
 namespace peloton {
 
 namespace storage {
 class DataTable;
 class TileGroup;
+class ZoneMap;
+struct PredicateInfo;
+}  // namespace storage
+
+namespace expression {
+class AbstractExpression;
 }  // namespace storage
 
 namespace codegen {
-
 //===----------------------------------------------------------------------===//
 // Various common functions that are called from compiled query plans
 //===----------------------------------------------------------------------===//
@@ -41,6 +47,13 @@ class RuntimeFunctions {
   // the version in DataTable because we need to strip off the shared_ptr
   static storage::TileGroup *GetTileGroup(storage::DataTable *table,
                                           uint64_t tile_group_index);
+
+  static storage::ZoneMap *GetZoneMap(storage::TileGroup *tile_group);
+
+  static int32_t GetMinValuefromZoneMap(storage::ZoneMap *zone_map, uint32_t col_num);
+  static int32_t GetMaxValuefromZoneMap(storage::ZoneMap *zone_map, uint32_t col_num);
+
+  static void PrintPredicate(const expression::AbstractExpression *expr, storage::PredicateInfo *predicate_array);
 
   // This struct represents the layout (or configuration) of a column in a
   // tile group. A configuration is characterized by two properties: its

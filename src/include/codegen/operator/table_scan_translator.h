@@ -17,6 +17,9 @@
 #include "codegen/operator/operator_translator.h"
 #include "codegen/scan_callback.h"
 #include "codegen/table.h"
+#include "codegen/zone_map.h"
+#include "type/value.h"
+#include "codegen/proxy/runtime_functions_proxy.h"
 
 namespace peloton {
 
@@ -154,6 +157,8 @@ class TableScanTranslator : public OperatorTranslator {
 
   // The code-generating table instance
   codegen::Table table_;
+
+
 };
 
 }  // namespace codegen

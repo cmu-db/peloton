@@ -1,5 +1,5 @@
 //===----------------------------------------------------------------------===//
-//
+//                                                                            
 //                         Peloton
 //
 // abstract_expression.cpp
@@ -120,6 +120,16 @@ hash_t AbstractExpression::Hash() const {
   }
   return hash;
 }
+
+bool AbstractExpression::IsZoneMappable() {
+  bool is_zone_mappable = ExpressionUtil::GetPredicateForZoneMap(parsed_predicates,Copy());
+  size_t num_preds = parsed_predicates.size();
+  LOG_DEBUG("Predicate is Zone Mappable : %d", (int)is_zone_mappable);
+  LOG_DEBUG("Predicate has : [%lu] predicates", num_preds);
+  return is_zone_mappable;
+}
+
+
 
 }  // namespace expression
 }  // namespace peloton

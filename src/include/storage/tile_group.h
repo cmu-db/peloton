@@ -21,6 +21,7 @@
 #include "common/item_pointer.h"
 #include "common/printable.h"
 #include "planner/project_info.h"
+#include "storage/zone_map.h"
 #include "type/abstract_pool.h"
 #include "type/types.h"
 #include "type/value.h"
@@ -138,6 +139,8 @@ class TileGroup : public Printable {
 
   // Get a reference to the tile at the given offset in the tile group
   std::shared_ptr<Tile> GetTileReference(const oid_t tile_offset) const;
+
+  storage::ZoneMap *GetZoneMap() const;
 
   oid_t GetTileId(const oid_t tile_id) const;
 

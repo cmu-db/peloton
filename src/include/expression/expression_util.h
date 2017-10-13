@@ -603,6 +603,43 @@ class ExpressionUtil {
     return expr->Copy();
   }
 
+
+  /*
+  */
+  static bool GetPredicateForZoneMap(std::vector<std::unique_ptr<const expression::AbstractExpression>> &predicate_restrictions,
+    const expression::AbstractExpression *expr) {
+    std::cout << "GetPredicateForZoneMap() : Called\n";
+    if (expr == nullptr) {
+      return false;
+    }
+    auto expr_type = expr->GetExpressionType();
+    // If its and, split children and parse again
+    if (expr_type == ExpressionType::CONJUNCTION_AND) {
+      
+      bool left_expr = GetPredicateForZoneMap(predicate_restrictions, expr->GetChild(0));
+      bool right_expr = GetPredicateForZoneMap(predicate_restrictions, expr->GetChild(1));
+      
+      if ((!left_expr) || (!right_expr)) {
+        return false;
+      }
+      return true;
+
+    } else if (expr_type == ExpressionType::COMPARE_EQUAL ||
+      expr_type == ExpressionType::COMPARE_LESSTHAN ||
+      expr_type == ExpressionType::COMPARE_LESSTHANOREQUALTO ||
+      expr_type == ExpressionType::COMPARE_GREATERTHAN ||
+      expr_type == ExpressionType::COMPARE_GREATERTHANOREQUALTO) {
+
+      predicate_restrictions.emplace_back(new expression::ComparisonExpression(
+        expr_type, expr->GetModifiableChild(0), expr->GetModifiableChild(1) ));
+      // predicate_restrictions.push_back(std::unique_ptr<const expression::AbstractExpression>(new expression::ComparisonExpression(
+      //   expr_type, expr->GetModifiableChild(0), expr->GetModifiableChild(1))));
+      return true;
+    }
+    
+    return false;
+  }
+
   /*
    * Check whether two vectors of expression equal to each other.
    * ordered flag indicate whether the comparison should consider the order.

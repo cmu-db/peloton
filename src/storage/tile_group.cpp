@@ -92,6 +92,10 @@ oid_t TileGroup::GetActiveTupleCount() const {
   return tile_group_header->GetActiveTupleCount();
 }
 
+storage::ZoneMap *TileGroup::GetZoneMap() const {
+  return tile_group_header->GetZoneMap();
+}
+
 //===--------------------------------------------------------------------===//
 // Operations
 //===--------------------------------------------------------------------===//
@@ -122,6 +126,7 @@ void TileGroup::CopyTuple(const Tuple *tuple, const oid_t &tuple_slot_id) {
          tile_column_itr++) {
       type::Value val = (tuple->GetValue(column_itr));
       tile_tuple.SetValue(tile_column_itr, val, tile->GetPool());
+      tile_group_header->UpdateZoneMap(tile_column_itr, val);
       column_itr++;
     }
   }
@@ -159,7 +164,6 @@ oid_t TileGroup::InsertTuple(const Tuple *tuple) {
             INVALID_TXN_ID);
   PL_ASSERT(tile_group_header->GetBeginCommitId(tuple_slot_id) == MAX_CID);
   PL_ASSERT(tile_group_header->GetEndCommitId(tuple_slot_id) == MAX_CID);
-
   return tuple_slot_id;
 }
 
