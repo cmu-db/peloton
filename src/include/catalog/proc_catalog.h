@@ -40,7 +40,7 @@ class ProcCatalog : public AbstractCatalog {
   ~ProcCatalog();
 
   // Global Singleton
-  static ProcCatalog *GetInstance(concurrency::Transaction *txn = nullptr);
+  static ProcCatalog &GetInstance(concurrency::Transaction *txn = nullptr);
 
   //===--------------------------------------------------------------------===//
   // write Related API

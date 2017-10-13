@@ -18,9 +18,9 @@
 namespace peloton {
 namespace catalog {
 
-LanguageCatalog *LanguageCatalog::GetInstance(concurrency::Transaction *txn) {
+LanguageCatalog &LanguageCatalog::GetInstance(concurrency::Transaction *txn) {
   static LanguageCatalog language_catalog{txn};
-  return &language_catalog;
+  return language_catalog;
 }
 
 LanguageCatalog::~LanguageCatalog(){};

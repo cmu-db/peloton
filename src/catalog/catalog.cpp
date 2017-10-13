@@ -812,9 +812,9 @@ void Catalog::AddFunction(const std::string &name,
                           const std::string &func_name,
                           function::BuiltInFuncType func_ptr,
                           concurrency::Transaction *txn) {
-  if (!ProcCatalog::GetInstance()->InsertProc(name, return_type, argument_types,
-                                              prolang, func_name, pool_.get(),
-                                              txn)) {
+  if (!ProcCatalog::GetInstance().InsertProc(name, return_type, argument_types,
+                                             prolang, func_name, pool_.get(),
+                                             txn)) {
     throw CatalogException("Failed to add function " + func_name);
   }
   function::BuiltInFunctions::AddFunction(func_name, func_ptr);
@@ -824,19 +824,19 @@ const FunctionData Catalog::GetFunction(
     const std::string &name, const std::vector<type::TypeId> &argument_types) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  FunctionData result;
-  oid_t prolang =
-      ProcCatalog::GetInstance()->GetProLang(name, argument_types, txn);
+
+  auto &proc_catalog = ProcCatalog::GetInstance();
+  oid_t prolang = proc_catalog.GetProLang(name, argument_types, txn);
 
   // If the function is "internal", perform the lookup in our built-in
   // functions map (i.e., function::BuiltInFunctions) to get the function
-  if (LanguageCatalog::GetInstance()->GetLanguageName(prolang, txn) ==
-      "internal") {
+  FunctionData result;
+
+  auto &lang_catalog = LanguageCatalog::GetInstance();
+  if (lang_catalog.GetLanguageName(prolang, txn) == "internal") {
     result.argument_types_ = argument_types;
-    result.func_name_ =
-        ProcCatalog::GetInstance()->GetProSrc(name, argument_types, txn);
-    result.return_type_ =
-        ProcCatalog::GetInstance()->GetProRetType(name, argument_types, txn);
+    result.func_name_ = proc_catalog.GetProSrc(name, argument_types, txn);
+    result.return_type_ = proc_catalog.GetProRetType(name, argument_types, txn);
     result.func_ptr_ =
         function::BuiltInFunctions::GetFuncByName(result.func_name_);
     if (result.func_ptr_ != nullptr) {
@@ -854,8 +854,8 @@ void Catalog::InitializeLanguages() {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
     // add "internal" language
-    if (!LanguageCatalog::GetInstance()->InsertLanguage("internal", pool_.get(),
-                                                        txn)) {
+    if (!LanguageCatalog::GetInstance().InsertLanguage("internal", pool_.get(),
+                                                       txn)) {
       txn_manager.AbortTransaction(txn);
       throw CatalogException("Failed to add language 'internal'");
     }
@@ -871,7 +871,7 @@ void Catalog::InitializeFunctions() {
     auto txn = txn_manager.BeginTransaction();
 
     oid_t prolang =
-        LanguageCatalog::GetInstance()->GetLanguageOid("internal", txn);
+        LanguageCatalog::GetInstance().GetLanguageOid("internal", txn);
     if (prolang == INVALID_OID) {
       throw CatalogException("prolang 'internal' does not exist");
     }

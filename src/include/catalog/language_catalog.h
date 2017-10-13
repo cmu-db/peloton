@@ -35,7 +35,7 @@ class LanguageCatalog : public AbstractCatalog {
   ~LanguageCatalog();
 
   // Global Singleton
-  static LanguageCatalog *GetInstance(concurrency::Transaction *txn = nullptr);
+  static LanguageCatalog &GetInstance(concurrency::Transaction *txn = nullptr);
 
   //===--------------------------------------------------------------------===//
   // write Related API

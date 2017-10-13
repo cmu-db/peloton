@@ -75,7 +75,7 @@ bool DropExecutor::DExecute() {
 
       auto current_txn = context_->GetTransaction();
 
-      ResultType result = catalog::TriggerCatalog::GetInstance()->DropTrigger(
+      ResultType result = catalog::TriggerCatalog::GetInstance().DropTrigger(
           DEFAULT_DB_NAME, table_name, trigger_name, current_txn);
       current_txn->SetResult(result);
 

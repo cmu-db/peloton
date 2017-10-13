@@ -19,9 +19,9 @@
 namespace peloton {
 namespace catalog {
 
-ProcCatalog *ProcCatalog::GetInstance(concurrency::Transaction *txn) {
-  static std::unique_ptr<ProcCatalog> proc_catalog(new ProcCatalog(txn));
-  return proc_catalog.get();
+ProcCatalog &ProcCatalog::GetInstance(concurrency::Transaction *txn) {
+  static ProcCatalog proc_catalog{txn};
+  return proc_catalog;
 }
 
 ProcCatalog::~ProcCatalog(){};
