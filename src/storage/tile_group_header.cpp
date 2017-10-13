@@ -24,6 +24,9 @@
 #include "logging/log_manager.h"
 #include "storage/backend_manager.h"
 #include "storage/tile_group_header.h"
+#include "storage/zone_map.h"
+#include "type/value.h"
+#include "storage/tuple.h"
 
 namespace peloton {
 namespace storage {
@@ -57,6 +60,8 @@ TileGroupHeader::TileGroupHeader(const BackendType &backend_type,
     SetNextItemPointer(tuple_slot_id, INVALID_ITEMPOINTER);
     SetPrevItemPointer(tuple_slot_id, INVALID_ITEMPOINTER);
   }
+  zone_map = std::make_unique< storage::ZoneMap>();
+  
 }
 
 TileGroupHeader::~TileGroupHeader() {
@@ -239,6 +244,10 @@ oid_t TileGroupHeader::GetActiveTupleCount() const {
   }
 
   return active_tuple_slots;
+}
+
+void TileGroupHeader::UpdateZoneMap(oid_t tile_column_itr, type::Value val)  const{
+  zone_map->UpdateZoneMap(tile_column_itr, val);
 }
 
 }  // namespace storage

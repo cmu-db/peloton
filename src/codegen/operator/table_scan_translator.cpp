@@ -15,9 +15,16 @@
 #include "codegen/lang/if.h"
 #include "codegen/proxy/catalog_proxy.h"
 #include "codegen/proxy/transaction_runtime_proxy.h"
+#include "codegen/proxy/runtime_functions_proxy.h"
 #include "codegen/type/boolean_type.h"
 #include "planner/seq_scan_plan.h"
 #include "storage/data_table.h"
+#include "expression/abstract_expression.h"
+#include "expression/constant_value_expression.h"
+#include "expression/tuple_value_expression.h"
+#include "expression/expression_util.h"
+#include "type/value.h"
+#include "codegen/proxy/zone_map_proxy.h"
 
 namespace peloton {
 namespace codegen {
@@ -47,7 +54,6 @@ TableScanTranslator::TableScanTranslator(const planner::SeqScanPlan &scan,
       pipeline.InstallBoundaryAtOutput(this);
     }
   }
-
   auto &codegen = GetCodeGen();
   auto &runtime_state = context.GetRuntimeState();
   selection_vector_id_ = runtime_state.RegisterState(
@@ -70,15 +76,28 @@ void TableScanTranslator::Produce() const {
   llvm::Value *table_oid = codegen.Const32(table.GetOid());
   llvm::Value *table_ptr = codegen.Call(StorageManagerProxy::GetTableWithOid,
                                         {catalog_ptr, db_oid, table_oid});
+  codegen.Call(RuntimeFunctionsProxy::GetTileGroup,
+                                        {table_ptr, codegen.Const64(0)});
 
   // The selection vector for the scan
   Vector sel_vec{LoadStateValue(selection_vector_id_),
                  Vector::kDefaultVectorSize, codegen.Int32Type()};
 
-  // Generate the scan
+  auto predicate = (expression::AbstractExpression *)GetScanPlan().GetPredicate();
+  bool use_zone_map = predicate->IsZoneMappable();
+  size_t num_preds = 0;
+  if (use_zone_map) {
+    LOG_DEBUG("Predicate is Zone Mappable");
+    num_preds = predicate->GetNumberofParsedPredicates();
+    LOG_DEBUG("Number of Parsed Predicates : [%lu]", num_preds);
+  }
+  llvm::Value *predicate_ptr =
+           codegen->CreateIntToPtr(codegen.Const64((int64_t)predicate),
+                                   AbstractExpressionProxy::GetType(codegen)->getPointerTo());
+  llvm::Value *predicate_array = codegen->CreateAlloca(PredicateInfoProxy::GetType(codegen), codegen.Const32(num_preds));
+  codegen.Call(RuntimeFunctionsProxy::PrintPredicate, {predicate_ptr, predicate_array});
   ScanConsumer scan_consumer{*this, sel_vec};
-  table_.GenerateScan(codegen, table_ptr, sel_vec.GetCapacity(), scan_consumer);
-
+  table_.GenerateScan(codegen, table_ptr, sel_vec.GetCapacity(), scan_consumer, predicate_array, num_preds);
   LOG_DEBUG("TableScan on [%u] finished producing tuples ...", table.GetOid());
 }
 
@@ -193,7 +212,7 @@ void TableScanTranslator::ScanConsumer::FilterRowsByPredicate(
 
   // First, check if the predicate is SIMDable
   const auto *predicate = GetPredicate();
-
+  LOG_DEBUG("Is Predicate SIMDable : %d", predicate->IsSIMDable());
   // Determine the attributes the predicate needs
   std::unordered_set<const planner::AttributeInfo *> used_attributes;
   predicate->GetUsedAttributes(used_attributes);

@@ -15,6 +15,10 @@
 #include "codegen/codegen.h"
 #include "codegen/scan_callback.h"
 #include "codegen/tile_group.h"
+#include "codegen/zone_map.h"
+#include "type/value.h"
+
+
 
 namespace peloton {
 
@@ -23,6 +27,7 @@ class DataTable;
 }  // namespace storage
 
 namespace codegen {
+
 
 //===----------------------------------------------------------------------===//
 // This class the main entry point for any code generation that requires
@@ -40,7 +45,7 @@ class Table {
   // is provided as the second argument. The scan consumer (third argument)
   // should be notified when ready to generate the scan loop body.
   void GenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
-                    uint32_t batch_size, ScanCallback &consumer) const;
+                    uint32_t batch_size, ScanCallback &consumer, llvm::Value *predicate_array, size_t num_predicates) const;
 
   // Given a table instance, return the number of tile groups in the table.
   llvm::Value *GetTileGroupCount(CodeGen &codegen,
@@ -51,12 +56,16 @@ class Table {
   llvm::Value *GetTileGroup(CodeGen &codegen, llvm::Value *table_ptr,
                             llvm::Value *tile_group_id) const;
 
+  llvm::Value *GetZoneMap(CodeGen &codegen, llvm::Value *tile_group_ptr) const;
+
  private:
   // The table associated with this generator
   storage::DataTable &table_;
 
   // The generator for a tile group
   TileGroup tile_group_;
+
+  ZoneMap zone_map_;
 };
 
 }  // namespace codegen

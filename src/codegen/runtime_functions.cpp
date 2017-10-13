@@ -19,6 +19,9 @@
 #include "storage/data_table.h"
 #include "storage/tile_group.h"
 #include "storage/tile.h"
+#include "storage/zone_map.h"
+#include "expression/abstract_expression.h"
+#include "expression/expression_util.h"
 
 namespace peloton {
 namespace codegen {
@@ -63,8 +66,51 @@ uint64_t RuntimeFunctions::HashCrc64(const char *buf, uint64_t length,
 //===----------------------------------------------------------------------===//
 storage::TileGroup *RuntimeFunctions::GetTileGroup(storage::DataTable *table,
                                                    uint64_t tile_group_index) {
+  LOG_DEBUG("Called");
   auto tile_group = table->GetTileGroup(tile_group_index);
   return tile_group.get();
+}
+
+storage::ZoneMap *RuntimeFunctions::GetZoneMap(storage::TileGroup *tile_group) {
+  return tile_group->GetZoneMap();
+}
+
+int32_t RuntimeFunctions::GetMinValuefromZoneMap(storage::ZoneMap *zone_map, uint32_t col_num) {
+  return zone_map->GetMinValue(col_num);
+}
+
+int32_t RuntimeFunctions::GetMaxValuefromZoneMap(storage::ZoneMap *zone_map, uint32_t col_num) {
+  return zone_map->GetMaxValue(col_num);
+}
+
+void RuntimeFunctions::PrintPredicate(const expression::AbstractExpression *expr, storage::PredicateInfo *predicate_array) {
+  LOG_DEBUG("Called");
+  // std::string predicate_str;
+  // predicate_str = expr->GetInfo();
+  // size_t num_preds = expr->GetNumberofParsedPredicates();
+  // LOG_DEBUG("Predicate is [%s] : ", predicate_str.c_str());
+  // LOG_DEBUG("Number of Parsed Predicates is [%lu]", num_preds);
+  const std::vector<std::unique_ptr<const expression::AbstractExpression>> *parsed_predicates;
+  parsed_predicates = expr->GetParsedPredicates();
+  size_t num_preds = parsed_predicates->size();
+  size_t i;
+  for (i = 0; i < num_preds; i++) {
+      auto temp_predicate = ((*parsed_predicates)[i]).get();
+      std::string predicate_str;
+      predicate_str = expr->GetInfo();
+      LOG_DEBUG("Predicate is [%s] : ", predicate_str.c_str());
+      auto right_exp = (const expression::ConstantValueExpression *)(temp_predicate->GetChild(1));
+      auto predicate_val = right_exp->GetValue();
+      // Get the column id for this predicate
+      auto left_exp = (const expression::TupleValueExpression *)(temp_predicate->GetChild(0));
+      int col_id = left_exp->GetColumnId();
+      // Set the values in the struct
+      predicate_array[i].col_id = col_id;
+      predicate_array[i].comparison_operator = (int)temp_predicate->GetExpressionType();
+      predicate_array[i].predicate_value = predicate_val;
+
+  }
+  LOG_DEBUG("Number of Parsed Predicates is [%lu]", num_preds);
 }
 
 //===----------------------------------------------------------------------===//
