@@ -62,57 +62,47 @@ bool ZoneMap::ComparePredicate(storage::PredicateInfo *parsed_predicates , int32
 
 	LOG_DEBUG("The number of predicates is [%d]", num_predicates);
 	for (int32_t i = 0; i < num_predicates; i++) {
-		std::cout << (parsed_predicates[i].col_id) << "\n";
-		// auto temp_predicate = parsed_predicates[i].get();
-		// auto right_exp = (const expression::ConstantValueExpression *)(temp_predicate->GetChild(1));
-		// auto left_exp = (const expression::TupleValueExpression *)(temp_predicate->GetChild(0));
-		// int colId = left_exp->GetColumnId();
-		// LOG_DEBUG("The column is : [%d]", colId);
-		// type::Value predicateVal = right_exp->GetValue();
-		// LOG_DEBUG("Called");
-		// type::Value maxVal = GetMaxValue_(colId);
-		// type::Value minVal = GetMinValue_(colId);
-		// LOG_DEBUG("Column Max : [%s]", maxVal.ToString().c_str());
-		// LOG_DEBUG("Column Min : [%s]", minVal.ToString().c_str());
-		// switch(temp_predicate->GetExpressionType()) {
-		// 	LOG_DEBUG("Called");
-		// 	case ExpressionType::COMPARE_EQUAL:
-		// 		LOG_DEBUG("Called");
-		// 		if(!checkEqual(colId, predicateVal)) {
-		// 			return false;
-		// 		}
-		// 		break;
-		//     case ExpressionType::COMPARE_LESSTHAN:
-		//     	LOG_DEBUG("Called");
-		// 		if(!checkLessThan(colId, predicateVal)) {
-		// 			return false;
-		// 		}
-		// 		break;
-		//     case ExpressionType::COMPARE_LESSTHANOREQUALTO:
-		// 		LOG_DEBUG("Called");
-		// 		if(!checkLessThanEquals(colId, predicateVal)) {
-		// 			return false;
-		// 		}
-		// 		break;
-		//     case ExpressionType::COMPARE_GREATERTHAN:
-		// 		LOG_DEBUG("Called");
-		// 		LOG_DEBUG("predicateVal : [%s]", predicateVal.ToString().c_str());
-		// 		LOG_DEBUG("Column Max : [%s]", maxVal.ToString().c_str());
-		// 		if(!checkGreaterThan(colId, predicateVal)) {
-		// 			return false;
-		// 		}
-		// 		break;
-		//     case ExpressionType::COMPARE_GREATERTHANOREQUALTO:
-		// 		LOG_DEBUG("Called");
-		// 		if(!checkGreaterThanEquals(colId, predicateVal)) {
-		// 			return false;
-		// 		}
-		// 		break;
-		//     default: {
-		//       throw Exception{"Invalid expression type for translation " +
-		//                       ExpressionTypeToString(temp_predicate->GetExpressionType())};
-		//     }
-		// }
+		// Extract the col_id, operator and predicate_value
+		int col_id = parsed_predicates[i].col_id;
+		int comparison_operator	= parsed_predicates[i].comparison_operator;
+		type::Value predicate_value = parsed_predicates[i].predicate_value;
+		// Get Min and Max value for this column
+		type::Value max_val = GetMaxValue_(col_id);
+		type::Value min_val = GetMinValue_(col_id);
+
+		switch(comparison_operator) {
+			case (int)ExpressionType::COMPARE_EQUAL:
+				if(!checkEqual(col_id, predicate_value)) {
+					return false;
+				}
+				break;
+		    case (int)ExpressionType::COMPARE_LESSTHAN:
+				if(!checkLessThan(col_id, predicate_value)) {
+					return false;
+				}
+				break;
+		    case (int)ExpressionType::COMPARE_LESSTHANOREQUALTO:
+				if(!checkLessThanEquals(col_id, predicate_value)) {
+					return false;
+				}
+				break;
+		    case (int)ExpressionType::COMPARE_GREATERTHAN:
+				LOG_DEBUG("Called");
+				LOG_DEBUG("predicateVal : [%s]", predicate_value.ToString().c_str());
+				LOG_DEBUG("Column Max : [%s]", max_val.ToString().c_str());
+				if(!checkGreaterThan(col_id, predicate_value)) {
+					return false;
+				}
+				break;
+		    case (int)ExpressionType::COMPARE_GREATERTHANOREQUALTO:
+				if(!checkGreaterThanEquals(col_id, predicate_value)) {
+					return false;
+				}
+				break;
+		    default: {
+		      throw Exception{"Invalid expression type for translation "};
+		    }
+		}
 	}
 	return true;
 }

@@ -30,7 +30,7 @@ namespace codegen {
 class ZoneMap {
  public:
   // Get the column configuration for every column in the tile group
-  bool ComparePredicateWithZoneMap(CodeGen &codegen , llvm::Value *predicate_array, size_t num_predicates, llvm::Value *zone_map) const;
+  llvm::Value *ComparePredicateWithZoneMap(CodeGen &codegen , llvm::Value *predicate_array, size_t num_predicates, llvm::Value *zone_map) const;
   llvm::Value *GetMinValue(CodeGen &codegen, llvm::Value *zone_map, uint32_t col_num) const;
   llvm::Value *GetMaxValue(CodeGen &codegen, llvm::Value *zone_map, uint32_t col_num) const;
  private:

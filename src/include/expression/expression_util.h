@@ -608,7 +608,6 @@ class ExpressionUtil {
   */
   static bool GetPredicateForZoneMap(std::vector<std::unique_ptr<const expression::AbstractExpression>> &predicate_restrictions,
     const expression::AbstractExpression *expr) {
-    std::cout << "GetPredicateForZoneMap() : Called\n";
     if (expr == nullptr) {
       return false;
     }
@@ -632,8 +631,6 @@ class ExpressionUtil {
 
       predicate_restrictions.emplace_back(new expression::ComparisonExpression(
         expr_type, expr->GetModifiableChild(0), expr->GetModifiableChild(1) ));
-      // predicate_restrictions.push_back(std::unique_ptr<const expression::AbstractExpression>(new expression::ComparisonExpression(
-      //   expr_type, expr->GetModifiableChild(0), expr->GetModifiableChild(1))));
       return true;
     }
     

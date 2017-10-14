@@ -91,11 +91,12 @@ void Table::GenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
         tile_group_.GetTileGroupId(codegen, tile_group_ptr);
     llvm::Value *zone_map_ptr = 
         GetZoneMap(codegen, tile_group_ptr);
-    bool scan_tile_group = zone_map_.ComparePredicateWithZoneMap(codegen, predicate_array, num_predicates, zone_map_ptr);
-    std::cout << " Scan Tile Group : " << scan_tile_group;
+    //llvm::Value *scan_tile_group =;
+
     // llvm::Value *new_scanned_tiles = nullptr;
-    // codegen::lang::If cond{codegen, codegen->CreateICmpSGT(maxVal,predicateVal)};
-    // {
+    codegen::lang::If cond{codegen, zone_map_.ComparePredicateWithZoneMap(codegen, predicate_array, num_predicates, zone_map_ptr)};
+    {
+      codegen.CallPrintf("Scanning Tile\n", {});
       // Invoke the consumer to let her know that we're starting to iterate over
       // the tile group now
       consumer.TileGroupStart(codegen, tile_group_id, tile_group_ptr);
@@ -105,8 +106,8 @@ void Table::GenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
       // Invoke the consumer to let her know that we're done with this tile group
       consumer.TileGroupFinish(codegen, tile_group_ptr);
     //   new_scanned_tiles = codegen->CreateAdd(scanned_tiles, codegen.Const64(1));
-    // }
-    // cond.EndIf();
+    }
+    cond.EndIf();
     // scanned_tiles = cond.BuildPHI(new_scanned_tiles, scanned_tiles);
     // // Move to next tile group in the table
     tile_group_idx = codegen->CreateAdd(tile_group_idx, codegen.Const64(1));
