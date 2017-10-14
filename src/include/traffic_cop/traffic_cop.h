@@ -119,6 +119,26 @@ class TrafficCop {
     default_database_name_ = default_database_name;
   }
 
+  //TODO: should this stay in traffic_cop?
+  std::shared_ptr<Statement> statement_;
+
+  std::string error_message_;
+
+  //TODO: shoud this stay in traffic_cop?
+  std::vector<StatementResult> results_;
+
+  //TODO: should this stay in traffic_cop?
+  int rows_affected_ = 0;
+
+  //TODO: should this stay in traffic_cop?
+  std::vector<type::Value> param_values_;
+
+  //TODO: should this stay in traffic_cop?
+  QueryType query_type_;
+
+  //TODO: should this stay in traffic_cop?
+  std::string query_;
+
 //  struct event* event_;
  private:
 
