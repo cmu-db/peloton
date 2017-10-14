@@ -54,9 +54,9 @@ struct TableRef {
   inline bool HasSchema() { return !schema.empty(); }
 
   // Get the name of the database of this table
-  inline std::string GetDatabaseName() const {
+  inline std::string GetDatabaseName(std::string default_database_name) const {
     if (table_info_ == nullptr || table_info_->database_name.empty()) {
-      return DEFAULT_DB_NAME;
+      return default_database_name;
     }
     return table_info_->database_name;
   }

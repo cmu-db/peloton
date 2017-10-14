@@ -211,7 +211,7 @@ void QueryToOperatorTransformer::Visit(const parser::TableRef *node) {
       node = node->list.at(0).get();
     storage::DataTable *target_table =
         catalog::Catalog::GetInstance()->GetTableWithName(
-            node->GetDatabaseName(), node->GetTableName(), txn_);
+            node->GetDatabaseName(default_database_name_), node->GetTableName(), txn_);
     // Update table alias map
     table_alias_set_.insert(StringUtil::Lower(std::string(node->GetTableAlias())));
     // Construct logical operator
@@ -229,7 +229,7 @@ void QueryToOperatorTransformer::Visit(
     UNUSED_ATTRIBUTE const parser::CreateStatement *op) {}
 void QueryToOperatorTransformer::Visit(const parser::InsertStatement *op) {
   storage::DataTable *target_table =
-      catalog::Catalog::GetInstance()->GetTableWithName(op->GetDatabaseName(),
+      catalog::Catalog::GetInstance()->GetTableWithName(op->GetDatabaseName(default_database_name_),
                                                         op->GetTableName(),
                                                         txn_);
   if (op->type == InsertType::SELECT) {
@@ -248,7 +248,7 @@ void QueryToOperatorTransformer::Visit(const parser::InsertStatement *op) {
 
 void QueryToOperatorTransformer::Visit(const parser::DeleteStatement *op) {
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-      op->GetDatabaseName(), op->GetTableName(), txn_);
+      op->GetDatabaseName(default_database_name_), op->GetTableName(), txn_);
   auto table_scan = std::make_shared<OperatorExpression>(
       LogicalGet::make(target_table, op->GetTableName()));
   auto delete_expr =
@@ -267,7 +267,7 @@ void QueryToOperatorTransformer::Visit(
     UNUSED_ATTRIBUTE const parser::TransactionStatement *op) {}
 void QueryToOperatorTransformer::Visit(const parser::UpdateStatement *op) {
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-      op->table->GetDatabaseName(), op->table->GetTableName(), txn_);
+      op->table->GetDatabaseName(default_database_name_), op->table->GetTableName(), txn_);
 
   auto update_expr = std::make_shared<OperatorExpression>(
       LogicalUpdate::make(target_table, &op->updates));

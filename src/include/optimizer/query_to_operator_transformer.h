@@ -66,6 +66,7 @@ class QueryToOperatorTransformer : public SqlNodeVisitor {
   type::TypeId output_type;
   int output_size;
   bool output_inlined;
+  std::string default_database_name_;
   concurrency::Transaction *txn_;
 
 };

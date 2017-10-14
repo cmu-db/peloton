@@ -96,7 +96,7 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
     return move(ddl_plan);
   }
   // Run binder
-  auto bind_node_visitor = make_shared<binder::BindNodeVisitor>(txn);
+  auto bind_node_visitor = make_shared<binder::BindNodeVisitor>(txn, default_database_name_);
   bind_node_visitor->BindNameToNode(parse_tree);
   // Generate initial operator tree from query tree
   shared_ptr<GroupExpression> gexpr = InsertQueryTree(parse_tree, txn);
@@ -195,7 +195,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
     case StatementType::ANALYZE: {
       LOG_TRACE("Adding Analyze plan...");
       unique_ptr<planner::AbstractPlan> analyze_plan(new planner::AnalyzePlan(
-          static_cast<parser::AnalyzeStatement *>(tree), txn));
+          static_cast<parser::AnalyzeStatement *>(tree), default_database_name_, txn));
       ddl_plan = move(analyze_plan);
       break;
     }
@@ -203,7 +203,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
       LOG_TRACE("Adding Copy plan...");
       parser::CopyStatement *copy_parse_tree =
           static_cast<parser::CopyStatement *>(tree);
-      ddl_plan = util::CreateCopyPlan(copy_parse_tree);
+      ddl_plan = util::CreateCopyPlan(copy_parse_tree, default_database_name_);
       break;
     }
     default:

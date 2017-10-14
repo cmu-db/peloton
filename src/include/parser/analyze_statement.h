@@ -41,11 +41,8 @@ class AnalyzeStatement : public SQLStatement {
     return analyze_columns;
   }
 
-  std::string GetDatabaseName() const {
-    if (analyze_table == nullptr) {
-      return INVALID_NAME;
-    }
-    return analyze_table->GetDatabaseName();
+  std::string GetDatabaseName(std::string default_database_name) const {
+    return analyze_table->GetDatabaseName(default_database_name);
   }
 
   virtual void Accept(SqlNodeVisitor* v) const override {

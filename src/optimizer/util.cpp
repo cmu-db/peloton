@@ -314,7 +314,8 @@ bool ContainsJoinColumns(const std::unordered_set<std::string>& l_group_alias,
 }
 
 std::unique_ptr<planner::AbstractPlan> CreateCopyPlan(
-    parser::CopyStatement* copy_stmt) {
+    parser::CopyStatement* copy_stmt,
+    std::string default_database_name) {
   std::string table_name(copy_stmt->cpy_table->GetTableName());
   bool deserialize_parameters = false;
 
@@ -331,7 +332,7 @@ std::unique_ptr<planner::AbstractPlan> CreateCopyPlan(
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-      copy_stmt->cpy_table->GetDatabaseName(),
+      copy_stmt->cpy_table->GetDatabaseName(default_database_name),
       copy_stmt->cpy_table->GetTableName(), txn);
   txn_manager.CommitTransaction(txn);
 

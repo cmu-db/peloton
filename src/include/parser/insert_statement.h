@@ -38,8 +38,8 @@ class InsertStatement : SQLStatement {
   inline std::string GetTableName() const {
     return table_ref_->GetTableName();
   }
-  inline std::string GetDatabaseName() const {
-    return table_ref_->GetDatabaseName();
+  inline std::string GetDatabaseName(std::string default_database_name) const {
+    return table_ref_->GetDatabaseName(default_database_name);
   }
 
   InsertType type;
