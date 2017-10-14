@@ -91,12 +91,15 @@ parser::JoinDefinition* PostgresParser::JoinTransform(JoinExpr* root) {
 
   // Check the type of left arg and right arg before transform
   if (root->larg->type == T_RangeVar) {
-    result->left.reset(RangeVarTransform(reinterpret_cast<RangeVar*>(root->larg)));
+    result->left.reset(
+        RangeVarTransform(reinterpret_cast<RangeVar*>(root->larg)));
   } else if (root->larg->type == T_RangeSubselect) {
-    result->left.reset(RangeSubselectTransform(reinterpret_cast<RangeSubselect*>(root->larg)));
+    result->left.reset(
+        RangeSubselectTransform(reinterpret_cast<RangeSubselect*>(root->larg)));
   } else if (root->larg->type == T_JoinExpr) {
-    TableRef *l_table_ref = new TableRef(TableReferenceType::JOIN);
-    l_table_ref->join.reset(JoinTransform(reinterpret_cast<JoinExpr*>(root->larg)));
+    TableRef* l_table_ref = new TableRef(TableReferenceType::JOIN);
+    l_table_ref->join.reset(
+        JoinTransform(reinterpret_cast<JoinExpr*>(root->larg)));
     result->left.reset(l_table_ref);
   } else {
     delete result;
@@ -104,13 +107,15 @@ parser::JoinDefinition* PostgresParser::JoinTransform(JoinExpr* root) {
         "Join arg type %d not supported yet...\n", root->larg->type));
   }
   if (root->rarg->type == T_RangeVar) {
-    result->right.reset(RangeVarTransform(reinterpret_cast<RangeVar*>(root->rarg)));
+    result->right.reset(
+        RangeVarTransform(reinterpret_cast<RangeVar*>(root->rarg)));
   } else if (root->rarg->type == T_RangeSubselect) {
-    result->right.reset(RangeSubselectTransform(reinterpret_cast<RangeSubselect*>(root->rarg)));
+    result->right.reset(
+        RangeSubselectTransform(reinterpret_cast<RangeSubselect*>(root->rarg)));
   } else if (root->rarg->type == T_JoinExpr) {
-
-    TableRef *r_table_ref = new TableRef(TableReferenceType::JOIN);
-    r_table_ref->join.reset(JoinTransform(reinterpret_cast<JoinExpr*>(root->rarg)));
+    TableRef* r_table_ref = new TableRef(TableReferenceType::JOIN);
+    r_table_ref->join.reset(
+        JoinTransform(reinterpret_cast<JoinExpr*>(root->rarg)));
     result->right.reset(r_table_ref);
   } else {
     delete result;
@@ -122,11 +127,13 @@ parser::JoinDefinition* PostgresParser::JoinTransform(JoinExpr* root) {
   // transform the quals, depends on AExprTranform and BoolExprTransform
   switch (root->quals->type) {
     case T_A_Expr: {
-      result->condition.reset(AExprTransform(reinterpret_cast<A_Expr*>(root->quals)));
+      result->condition.reset(
+          AExprTransform(reinterpret_cast<A_Expr*>(root->quals)));
       break;
     }
     case T_BoolExpr: {
-      result->condition.reset(BoolExprTransform(reinterpret_cast<BoolExpr*>(root->quals)));
+      result->condition.reset(
+          BoolExprTransform(reinterpret_cast<BoolExpr*>(root->quals)));
       break;
     }
     default: {
@@ -181,7 +188,8 @@ parser::TableRef* PostgresParser::RangeSubselectTransform(
 
 // Get in a target list and check if is with variables
 bool IsTargetListWithVariable(List* target_list) {
-  // The only valid situation of a null from list is that all targets are constant
+  // The only valid situation of a null from list is that all targets are
+  // constant
   for (auto cell = target_list->head; cell != nullptr; cell = cell->next) {
     ResTarget* target = reinterpret_cast<ResTarget*>(cell->data.ptr_value);
     LOG_TRACE("Type: %d", target->type);
@@ -209,13 +217,15 @@ parser::TableRef* PostgresParser::FromTransform(SelectStmt* select_root) {
   // now support select from only one sources
 
   List* root = select_root->fromClause;
-  /* Statement like 'SELECT *;' cannot detect by postgres parser and would lead to
+  /* Statement like 'SELECT *;' cannot detect by postgres parser and would lead
+   * to
    * a null list of from clause*/
   if (root == nullptr) {
     auto target_list = select_root->targetList;
-    // The only valid situation of a null 'from list' is that all targets are constant
+    // The only valid situation of a null 'from list' is that all targets are
+    // constant
     LOG_TRACE("size is : %d", target_list->length);
-    //print_pg_parse_tree(target_list);
+    // print_pg_parse_tree(target_list);
     if (IsTargetListWithVariable(target_list)) {
       throw ParserException("Error parsing SQL statement");
     }
@@ -235,8 +245,9 @@ parser::TableRef* PostgresParser::FromTransform(SelectStmt* select_root) {
           break;
         }
         case T_RangeSubselect: {
-          result->list.push_back(std::unique_ptr<TableRef>(
-              RangeSubselectTransform(reinterpret_cast<RangeSubselect*>(node))));
+          result->list.push_back(
+              std::unique_ptr<TableRef>(RangeSubselectTransform(
+                  reinterpret_cast<RangeSubselect*>(node))));
           break;
         }
         default: {
@@ -325,7 +336,6 @@ expression::AbstractExpression* PostgresParser::ParamRefTransform(
 // parsenode and transfers it into Peloton AbstractExpression.
 expression::AbstractExpression* PostgresParser::CaseExprTransform(
     CaseExpr* root) {
-
   if (root == nullptr) {
     return nullptr;
   }
@@ -336,11 +346,11 @@ expression::AbstractExpression* PostgresParser::CaseExprTransform(
   // Transform the WHEN conditions
   std::vector<expression::CaseExpression::WhenClause> clauses;
   for (auto cell = root->args->head; cell != nullptr; cell = cell->next) {
-
-    CaseWhen *w = reinterpret_cast<CaseWhen*>(cell->data.ptr_value);
+    CaseWhen* w = reinterpret_cast<CaseWhen*>(cell->data.ptr_value);
 
     // When condition
-    auto when_expr = ExprTransform(reinterpret_cast<Node*>(w->expr));;
+    auto when_expr = ExprTransform(reinterpret_cast<Node*>(w->expr));
+    ;
 
     // Result
     auto result_expr = ExprTransform(reinterpret_cast<Node*>(w->result));
@@ -355,12 +365,14 @@ expression::AbstractExpression* PostgresParser::CaseExprTransform(
   auto defresult_expr = ExprTransform(reinterpret_cast<Node*>(root->defresult));
 
   // Build Case Expression
-  return arg_expr != nullptr ?
-      new expression::CaseExpression(clauses.at(0).second.get()->GetValueType(),
-          expression::CaseExpression::AbsExprPtr(arg_expr),
-          clauses, expression::CaseExpression::AbsExprPtr(defresult_expr)) :
-      new expression::CaseExpression(clauses.at(0).second.get()->GetValueType(),
-          clauses, expression::CaseExpression::AbsExprPtr(defresult_expr));
+  return arg_expr != nullptr
+             ? new expression::CaseExpression(
+                   clauses.at(0).second.get()->GetValueType(),
+                   expression::CaseExpression::AbsExprPtr(arg_expr), clauses,
+                   expression::CaseExpression::AbsExprPtr(defresult_expr))
+             : new expression::CaseExpression(
+                   clauses.at(0).second.get()->GetValueType(), clauses,
+                   expression::CaseExpression::AbsExprPtr(defresult_expr));
 }
 
 // This function takes in groupClause and havingClause of a Postgres SelectStmt
@@ -375,13 +387,12 @@ parser::GroupByDescription* PostgresParser::GroupByTransform(List* group,
   for (auto cell = group->head; cell != nullptr; cell = cell->next) {
     Node* temp = reinterpret_cast<Node*>(cell->data.ptr_value);
     try {
-      result->columns.push_back(std::unique_ptr<expression::AbstractExpression>(
-          ExprTransform(temp)));
-    }
-    catch(NotImplementedException e) {
+      result->columns.push_back(
+          std::unique_ptr<expression::AbstractExpression>(ExprTransform(temp)));
+    } catch (NotImplementedException e) {
       delete result;
-      throw NotImplementedException(
-          StringUtil::Format("Exception thrown in group by expr:\n%s", e.what()));
+      throw NotImplementedException(StringUtil::Format(
+          "Exception thrown in group by expr:\n%s", e.what()));
     }
   }
 
@@ -389,8 +400,7 @@ parser::GroupByDescription* PostgresParser::GroupByTransform(List* group,
   if (having != nullptr) {
     try {
       result->having.reset(ExprTransform(having));
-    }
-    catch(NotImplementedException e) {
+    } catch (NotImplementedException e) {
       delete result;
       throw NotImplementedException(
           StringUtil::Format("Exception thrown in having expr:\n%s", e.what()));
@@ -424,10 +434,9 @@ parser::OrderDescription* PostgresParser::OrderByTransform(List* order) {
       expression::AbstractExpression* expr = nullptr;
       try {
         expr = ExprTransform(target);
-      }
-      catch(NotImplementedException e) {
-        throw NotImplementedException(
-            StringUtil::Format("Exception thrown in order by expr:\n%s", e.what()));
+      } catch (NotImplementedException e) {
+        throw NotImplementedException(StringUtil::Format(
+            "Exception thrown in order by expr:\n%s", e.what()));
       }
       exprs.push_back(std::unique_ptr<expression::AbstractExpression>(expr));
     } else {
@@ -487,14 +496,13 @@ expression::AbstractExpression* PostgresParser::FuncCallTransform(
                    ->val.str;
     std::vector<expression::AbstractExpression*> children;
     for (auto cell = root->args->head; cell != nullptr; cell = cell->next) {
-      auto expr_node = (Node*) cell->data.ptr_value;
+      auto expr_node = (Node*)cell->data.ptr_value;
       expression::AbstractExpression* child_expr = nullptr;
       try {
         child_expr = ExprTransform(expr_node);
-      }
-      catch(NotImplementedException e) {
-        throw NotImplementedException(
-            StringUtil::Format("Exception thrown in function expr:\n%s", e.what()));
+      } catch (NotImplementedException e) {
+        throw NotImplementedException(StringUtil::Format(
+            "Exception thrown in function expr:\n%s", e.what()));
       }
       children.push_back(child_expr);
     }
@@ -510,14 +518,13 @@ expression::AbstractExpression* PostgresParser::FuncCallTransform(
     } else {
       if (root->args->length < 2) {
         // auto children_expr_list = TargetTransform(root->args);
-        expression::AbstractExpression *child;
-        auto expr_node = (Node *) root->args->head->data.ptr_value;
+        expression::AbstractExpression* child;
+        auto expr_node = (Node*)root->args->head->data.ptr_value;
         try {
           child = ExprTransform(expr_node);
-        }
-        catch(NotImplementedException e) {
-          throw NotImplementedException(
-              StringUtil::Format("Exception thrown in aggregation function:\n%s", e.what()));
+        } catch (NotImplementedException e) {
+          throw NotImplementedException(StringUtil::Format(
+              "Exception thrown in aggregation function:\n%s", e.what()));
         }
         result = new expression::AggregateExpression(agg_fun_type,
                                                      root->agg_distinct, child);
@@ -538,17 +545,17 @@ PostgresParser::TargetTransform(List* root) {
   // Statement like 'SELECT;' cannot detect by postgres parser and would lead to
   // null list
   if (root == nullptr) {
-      throw ParserException("Error parsing SQL statement");
+    throw ParserException("Error parsing SQL statement");
   }
 
-  auto result = new std::vector<std::unique_ptr<expression::AbstractExpression>>();
+  auto result =
+      new std::vector<std::unique_ptr<expression::AbstractExpression>>();
   for (auto cell = root->head; cell != nullptr; cell = cell->next) {
     ResTarget* target = reinterpret_cast<ResTarget*>(cell->data.ptr_value);
     expression::AbstractExpression* expr = nullptr;
     try {
       expr = ExprTransform(target->val);
-    }
-    catch(NotImplementedException e) {
+    } catch (NotImplementedException e) {
       throw NotImplementedException(
           StringUtil::Format("Exception thrown in target val:\n%s", e.what()));
     }
@@ -568,10 +575,9 @@ expression::AbstractExpression* PostgresParser::BoolExprTransform(
     Node* node = reinterpret_cast<Node*>(cell->data.ptr_value);
     try {
       next = ExprTransform(node);
-    }
-    catch(NotImplementedException e) {
-      throw NotImplementedException(
-          StringUtil::Format("Exception thrown in boolean expr:\n%s", e.what()));
+    } catch (NotImplementedException e) {
+      throw NotImplementedException(StringUtil::Format(
+          "Exception thrown in boolean expr:\n%s", e.what()));
     }
     switch (root->boolop) {
       case AND_EXPR: {
@@ -602,7 +608,6 @@ expression::AbstractExpression* PostgresParser::BoolExprTransform(
 }
 
 expression::AbstractExpression* PostgresParser::ExprTransform(Node* node) {
-
   if (node == nullptr) {
     return nullptr;
   }
@@ -675,20 +680,17 @@ expression::AbstractExpression* PostgresParser::AExprTransform(A_Expr* root) {
 
   try {
     left_expr = ExprTransform(root->lexpr);
-  }
-  catch(NotImplementedException e) {
+  } catch (NotImplementedException e) {
     throw NotImplementedException(
         StringUtil::Format("Exception thrown in left expr:\n%s", e.what()));
   }
   try {
     right_expr = ExprTransform(root->rexpr);
-  }
-  catch(NotImplementedException e) {
+  } catch (NotImplementedException e) {
     delete left_expr;
     throw NotImplementedException(
         StringUtil::Format("Exception thrown in right expr:\n%s", e.what()));
   }
-
 
   int type_id = static_cast<int>(target_type);
   if (type_id <= 6) {
@@ -716,8 +718,7 @@ expression::AbstractExpression* PostgresParser::WhereTransform(Node* root) {
 
   try {
     result = ExprTransform(root);
-  }
-  catch(NotImplementedException e) {
+  } catch (NotImplementedException e) {
     throw NotImplementedException(
         StringUtil::Format("Exception thrown in WHERE:\n%s", e.what()));
   }
@@ -837,24 +838,21 @@ parser::ColumnDefinition* PostgresParser::ColumnDefTransform(ColumnDef* root) {
         result->foreign_key_update_action =
             CharToActionType(constraint->fk_upd_action);
         // Match type
-        result->foreign_key_match_type = CharToMatchType(constraint->fk_matchtype);
-      }
-      else if (constraint->contype == CONSTR_DEFAULT) {
+        result->foreign_key_match_type =
+            CharToMatchType(constraint->fk_matchtype);
+      } else if (constraint->contype == CONSTR_DEFAULT) {
         try {
           result->default_value.reset(ExprTransform(constraint->raw_expr));
+        } catch (NotImplementedException e) {
+          throw NotImplementedException(StringUtil::Format(
+              "Exception thrown in default expr:\n%s", e.what()));
         }
-        catch (NotImplementedException e) {
-          throw NotImplementedException(
-              StringUtil::Format("Exception thrown in default expr:\n%s", e.what()));
-        }
-      }
-      else if (constraint->contype == CONSTR_CHECK) {
+      } else if (constraint->contype == CONSTR_CHECK) {
         try {
           result->check_expression.reset(ExprTransform(constraint->raw_expr));
-        }
-        catch(NotImplementedException e) {
-          throw NotImplementedException(
-              StringUtil::Format("Exception thrown in check expr:\n%s", e.what()));
+        } catch (NotImplementedException e) {
+          throw NotImplementedException(StringUtil::Format(
+              "Exception thrown in check expr:\n%s", e.what()));
         }
       }
     }
@@ -1033,7 +1031,7 @@ parser::DropStatement* PostgresParser::DropTransform(DropStmt* root) {
       return DropTriggerTransform(root);
     default: {
       throw NotImplementedException(StringUtil::Format(
-        "Drop of ObjectType %d not supported yet...\n", root->removeType));
+          "Drop of ObjectType %d not supported yet...\n", root->removeType));
     }
   }
 }
@@ -1044,7 +1042,7 @@ parser::DropStatement* PostgresParser::DropTableTransform(DropStmt* root) {
     res->missing = root->missing_ok;
     auto table_info = new TableInfo{};
     auto table_list = reinterpret_cast<List*>(cell->data.ptr_value);
-    LOG_INFO("%d", ((Node*)(table_list->head->data.ptr_value))->type);
+    LOG_TRACE("%d", ((Node*)(table_list->head->data.ptr_value))->type);
     table_info->table_name =
         reinterpret_cast<value*>(table_list->head->data.ptr_value)->val.str;
     res->table_info_.reset(table_info);
@@ -1057,15 +1055,18 @@ parser::DropStatement* PostgresParser::DropTriggerTransform(DropStmt* root) {
   auto res = new DropStatement(DropStatement::EntityType::kTrigger);
   auto cell = root->objects->head;
   auto list = reinterpret_cast<List*>(cell->data.ptr_value);
-  res->table_name_of_trigger = reinterpret_cast<value*>(list->head->data.ptr_value)->val.str;
-  res->trigger_name = reinterpret_cast<value*>(list->head->next->data.ptr_value)->val.str;
+  res->table_name_of_trigger =
+      reinterpret_cast<value*>(list->head->data.ptr_value)->val.str;
+  res->trigger_name =
+      reinterpret_cast<value*>(list->head->next->data.ptr_value)->val.str;
   return res;
 }
 
 parser::DeleteStatement* PostgresParser::TruncateTransform(TruncateStmt* root) {
   auto result = new DeleteStatement();
   for (auto cell = root->relations->head; cell != nullptr; cell = cell->next) {
-    result->table_ref.reset(RangeVarTransform(reinterpret_cast<RangeVar*>(cell->data.ptr_value)));
+    result->table_ref.reset(
+        RangeVarTransform(reinterpret_cast<RangeVar*>(cell->data.ptr_value)));
     break;
   }
   return result;
@@ -1083,7 +1084,8 @@ parser::PrepareStatement* PostgresParser::PrepareTransform(PrepareStmt* root) {
   auto res = new PrepareStatement();
   res->name = root->name;
   auto stmt_list = new SQLStatementList();
-  stmt_list->statements.push_back(std::unique_ptr<SQLStatement>(NodeTransform(root->query)));
+  stmt_list->statements.push_back(
+      std::unique_ptr<SQLStatement>(NodeTransform(root->query)));
   res->query.reset(stmt_list);
   return res;
 }
@@ -1111,7 +1113,7 @@ parser::AnalyzeStatement* PostgresParser::VacuumTransform(VacuumStmt* root) {
     return nullptr;
   }
   auto res = new AnalyzeStatement();
-  if (root->relation != NULL) { //TOOD: check NULL vs nullptr
+  if (root->relation != NULL) {  // TOOD: check NULL vs nullptr
     res->analyze_table.reset(RangeVarTransform(root->relation));
   }
   auto analyze_columns = ColumnNameTransform(root->va_cols);
@@ -1139,20 +1141,24 @@ std::vector<std::string>* PostgresParser::ColumnNameTransform(List* root) {
 // multiple tuples.
 std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>>*
 PostgresParser::ValueListsTransform(List* root) {
-  auto result = new std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>>();
+  auto result = new std::vector<
+      std::vector<std::unique_ptr<expression::AbstractExpression>>>();
 
   for (auto value_list = root->head; value_list != NULL;
        value_list = value_list->next) {
-    auto cur_result = std::vector<std::unique_ptr<expression::AbstractExpression>>();
+    auto cur_result =
+        std::vector<std::unique_ptr<expression::AbstractExpression>>();
 
     List* target = (List*)(value_list->data.ptr_value);
     for (auto cell = target->head; cell != NULL; cell = cell->next) {
       auto expr = reinterpret_cast<Expr*>(cell->data.ptr_value);
       if (expr->type == T_ParamRef)
-        cur_result.push_back(std::unique_ptr<expression::AbstractExpression>(ParamRefTransform((ParamRef*)expr)));
+        cur_result.push_back(std::unique_ptr<expression::AbstractExpression>(
+            ParamRefTransform((ParamRef*)expr)));
       else if (expr->type == T_A_Const)
-        cur_result.push_back(std::unique_ptr<expression::AbstractExpression>(ConstTransform((A_Const*)expr)));
-      else if (expr->type == T_SetToDefault){
+        cur_result.push_back(std::unique_ptr<expression::AbstractExpression>(
+            ConstTransform((A_Const*)expr)));
+      else if (expr->type == T_SetToDefault) {
         // TODO handle default type
         // add corresponding expression for
         // default to cur_result
@@ -1173,7 +1179,8 @@ PostgresParser::ParamListTransform(List* root) {
       std::vector<std::unique_ptr<expression::AbstractExpression>>();
 
   for (auto cell = root->head; cell != NULL; cell = cell->next) {
-    result.push_back(std::unique_ptr<expression::AbstractExpression>(ConstTransform((A_Const*)(cell->data.ptr_value))));
+    result.push_back(std::unique_ptr<expression::AbstractExpression>(
+        ConstTransform((A_Const*)(cell->data.ptr_value))));
   }
 
   return result;
@@ -1232,12 +1239,13 @@ parser::SQLStatement* PostgresParser::SelectTransform(SelectStmt* root) {
         result->select_list = std::move(*select_list);
         delete select_list;
         result->from_table.reset(FromTransform(root));
-      } catch (ParserException &e) {
+      } catch (ParserException& e) {
         delete (result);
         throw e;
       }
       result->select_distinct = root->distinctClause != NULL ? true : false;
-      result->group_by.reset(GroupByTransform(root->groupClause, root->havingClause));
+      result->group_by.reset(
+          GroupByTransform(root->groupClause, root->havingClause));
       result->order.reset(OrderByTransform(root->sortClause));
       result->where_clause.reset(WhereTransform(root->whereClause));
       if (root->limitCount != nullptr) {
@@ -1362,7 +1370,7 @@ parser::SQLStatementList* PostgresParser::ListTransform(List* root) {
     for (auto cell = root->head; cell != nullptr; cell = cell->next) {
       result->AddStatement(NodeTransform((Node*)cell->data.ptr_value));
     }
-  } catch (ParserException &e) {
+  } catch (ParserException& e) {
     delete result;
     throw e;
   }
@@ -1370,8 +1378,8 @@ parser::SQLStatementList* PostgresParser::ListTransform(List* root) {
   return result;
 }
 
-std::vector<std::unique_ptr<parser::UpdateClause>>* PostgresParser::UpdateTargetTransform(
-    List* root) {
+std::vector<std::unique_ptr<parser::UpdateClause>>*
+PostgresParser::UpdateTargetTransform(List* root) {
   auto result = new std::vector<std::unique_ptr<parser::UpdateClause>>();
   for (auto cell = root->head; cell != NULL; cell = cell->next) {
     auto update_clause = new UpdateClause();
@@ -1379,8 +1387,7 @@ std::vector<std::unique_ptr<parser::UpdateClause>>* PostgresParser::UpdateTarget
     update_clause->column = target->name;
     try {
       update_clause->value.reset(ExprTransform(target->val));
-    }
-    catch(NotImplementedException e) {
+    } catch (NotImplementedException e) {
       throw NotImplementedException(
           StringUtil::Format("Exception thrown in update expr:\n%s", e.what()));
     }
@@ -1408,12 +1415,8 @@ parser::SQLStatementList* PostgresParser::ParseSQLString(const char* text) {
   auto result = pg_query_parse(text);
   if (result.error) {
     // Parse Error
-    LOG_ERROR("%s at %d\n", result.error->message, result.error->cursorpos);
-    auto new_stmt = new parser::SQLStatementList();
-    new_stmt->is_valid = false;
-    pg_query_parse_finish(ctx);
-    pg_query_free_parse_result(result);
-    return new_stmt;
+    throw ParserException(StringUtil::Format("%s at %d", result.error->message,
+                                             result.error->cursorpos));
   }
 
   // DEBUG only. Comment this out in release mode
@@ -1421,7 +1424,7 @@ parser::SQLStatementList* PostgresParser::ParseSQLString(const char* text) {
   parser::SQLStatementList* transform_result;
   try {
     transform_result = ListTransform(result.tree);
-  } catch (Exception &e) {
+  } catch (Exception& e) {
     pg_query_parse_finish(ctx);
     pg_query_free_parse_result(result);
     throw e;

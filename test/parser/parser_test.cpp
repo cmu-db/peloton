@@ -417,9 +417,13 @@ TEST_F(ParserTests, WrongQueryTest) {
   std::vector<std::string> queries;
   queries.push_back("SELECT;");
   queries.push_back("SELECT *;");
+  // Query with wrong syntax
+  queries.push_back("SECLECT *;");
+
   // Parsing
   for (auto query : queries) {
-    EXPECT_THROW(parser::PostgresParser::ParseSQLString(query.c_str()), Exception);
+    EXPECT_THROW(parser::PostgresParser::ParseSQLString(query.c_str()),
+                 Exception);
   }
 }
 }  // namespace test
