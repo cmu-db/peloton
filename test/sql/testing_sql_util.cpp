@@ -100,6 +100,7 @@ ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
   traffic_cop_.SetTcopTxnState(txn);
 
   auto parsed_stmt = peloton_parser.BuildParseTree(query);
+  optimizer->SetDefaultDatabaseName(DEFAULT_DB_NAME);
   auto plan = optimizer->BuildPelotonPlanTree(parsed_stmt, txn);
   tuple_descriptor =
       traffic_cop_.GenerateTupleDescriptor(parsed_stmt->GetStatement(0));
@@ -134,7 +135,7 @@ TestingSQLUtil::GeneratePlanWithOptimizer(
   auto &peloton_parser = parser::PostgresParser::GetInstance();
 
   auto parsed_stmt = peloton_parser.BuildParseTree(query);
-
+  optimizer->SetDefaultDatabaseName(DEFAULT_DB_NAME);
   auto return_value = optimizer->BuildPelotonPlanTree(parsed_stmt, txn);
   return return_value;
 }

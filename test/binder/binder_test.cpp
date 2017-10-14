@@ -85,7 +85,7 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
 
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  unique_ptr<binder::BindNodeVisitor> binder(new binder::BindNodeVisitor(txn));
+  unique_ptr<binder::BindNodeVisitor> binder(new binder::BindNodeVisitor(txn, DEFAULT_DB_NAME));
   string selectSQL =
       "SELECT A.a1, B.b2 FROM A INNER JOIN b ON a.a1 = b.b1 "
       "WHERE a1 < 100 GROUP BY A.a1, B.b2 HAVING a1 > 50 "
@@ -158,7 +158,7 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   LOG_INFO("Checking duplicate alias and table name.");
 
   txn = txn_manager.BeginTransaction();
-  binder.reset(new binder::BindNodeVisitor(txn));
+  binder.reset(new binder::BindNodeVisitor(txn, DEFAULT_DB_NAME));
   selectSQL = "SELECT * FROM A, B as A";
   parse_tree = parser.BuildParseTree(selectSQL);
   selectStmt = dynamic_cast<parser::SelectStatement*>(
@@ -174,7 +174,7 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  binder.reset(new binder::BindNodeVisitor(txn));
+  binder.reset(new binder::BindNodeVisitor(txn, DEFAULT_DB_NAME));
   selectSQL = "SELECT * FROM A, A as AA where A.a1 = AA.a2";
   parse_tree = parser.BuildParseTree(selectSQL);
   selectStmt = dynamic_cast<parser::SelectStatement*>(
@@ -193,7 +193,7 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  binder.reset(new binder::BindNodeVisitor(txn));
+  binder.reset(new binder::BindNodeVisitor(txn, DEFAULT_DB_NAME));
   selectSQL = "SELECT AA.a1, b2 FROM A as AA, B WHERE AA.a1 = B.b1";
   parse_tree = parser.BuildParseTree(selectSQL);
   selectStmt = dynamic_cast<parser::SelectStatement*>(
@@ -229,7 +229,7 @@ TEST_F(BinderCorrectnessTest, DeleteStatementTest) {
       catalog_ptr->GetTableWithName(DEFAULT_DB_NAME, "b", txn)->GetOid();
 
   string deleteSQL = "DELETE FROM b WHERE 1 = b1 AND b2 = 'str'";
-  unique_ptr<binder::BindNodeVisitor> binder(new binder::BindNodeVisitor(txn));
+  unique_ptr<binder::BindNodeVisitor> binder(new binder::BindNodeVisitor(txn, DEFAULT_DB_NAME));
 
   auto parse_tree = parser.BuildParseTree(deleteSQL);
   auto deleteStmt =

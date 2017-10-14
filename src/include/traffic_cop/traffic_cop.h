@@ -98,10 +98,6 @@ class TrafficCop {
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
 
-  inline void SetDefaultDataBaseName(std::string default_database_name) {
-    this->default_database_name_ = default_database_name;
-  }
-
   ResultType CommitQueryHelper();
 
   void ExecuteStatementPlanGetResult();
