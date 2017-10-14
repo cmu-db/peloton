@@ -60,10 +60,6 @@ class Optimizer : public AbstractOptimizer {
       const std::unique_ptr<parser::SQLStatementList> &parse_tree,
       concurrency::Transaction *txn) override;
 
-  inline void SetDefaultDatabaseName(std::string database_name) {
-      this->default_database_name_ = database_name;
-  }
-
   void Reset() override;
 
  private:
@@ -231,7 +227,6 @@ class Optimizer : public AbstractOptimizer {
   /// Member variables
   Memo memo_;
   ColumnManager column_manager_;
-  std::string default_database_name_ = DEFAULT_DB_NAME;
 
   // Rules to transform logical plan to equivalent logical plans
   std::vector<std::unique_ptr<Rule>> logical_transformation_rules_;

@@ -191,7 +191,7 @@ TEST_F(ParserTests, SelectParserTest) {
   EXPECT_NOTNULL(join);
   EXPECT_STREQ(join->left->GetTableName().c_str(), "customers");
   EXPECT_STREQ(join->right->GetTableName().c_str(), "orders");
-  EXPECT_STREQ(join->left->GetDatabaseName().c_str(), "order_db");
+  EXPECT_STREQ(join->left->GetDatabaseName(DEFAULT_DB_NAME).c_str(), "order_db");
 
   // Group By
   EXPECT_EQ(stmt->group_by->columns.size(), 1);
