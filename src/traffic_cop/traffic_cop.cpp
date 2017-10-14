@@ -334,6 +334,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
       throw ParserException("Error parsing SQL statement");
     }
     LOG_TRACE("Optimizer Build Peloton Plan Tree...");
+    optimizer_->SetDefaultDatabaseName(default_database_name_);
     auto plan =
         optimizer_->BuildPelotonPlanTree(sql_stmt, tcop_txn_state_.top().first);
     statement->SetPlanTree(plan);
@@ -381,7 +382,7 @@ void TrafficCop::GetDataTables(
   if (from_table->list.empty()) {
     if (from_table->join == NULL) {
       auto *target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-          from_table->GetDatabaseName(), from_table->GetTableName(),
+          from_table->GetDatabaseName(default_database_name_), from_table->GetTableName(),
           GetCurrentTxnState().first);
       target_tables.push_back(target_table);
     } else {

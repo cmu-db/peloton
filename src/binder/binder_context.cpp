@@ -21,10 +21,11 @@ namespace peloton {
 namespace binder {
 
 void BinderContext::AddTable(const parser::TableRef* table_ref,
+                             std::string default_database_name,
                              concurrency::Transaction* txn) {
   // using catalog object to retrieve meta-data
   auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-      table_ref->GetDatabaseName(), table_ref->GetTableName(), txn);
+    table_ref->GetDatabaseName(default_database_name), table_ref->GetTableName(), txn);
 
   auto id_tuple =
       std::make_tuple(table_object->database_oid, table_object->table_oid);

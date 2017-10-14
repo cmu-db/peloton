@@ -18,7 +18,11 @@
 namespace peloton {
 namespace binder {
 
-BindNodeVisitor::BindNodeVisitor(concurrency::Transaction *txn) : txn_(txn) {
+BindNodeVisitor::BindNodeVisitor(
+  concurrency::Transaction *txn, 
+  std::string default_database_name) 
+: txn_(txn),
+  default_database_name_(default_database_name) {
   context_ = nullptr;
 }
 
@@ -64,7 +68,7 @@ void BindNodeVisitor::Visit(const parser::TableRef *node) {
   }
   // Single table
   else {
-    context_->AddTable(node, txn_);
+    context_->AddTable(node, default_database_name_ ,txn_);
   }
 }
 
@@ -97,7 +101,8 @@ void BindNodeVisitor::Visit(const parser::UpdateStatement *node) {
 void BindNodeVisitor::Visit(const parser::DeleteStatement *node) {
   context_ = std::make_shared<BinderContext>();
 
-  context_->AddTable(node->GetDatabaseName(), node->GetTableName(), txn_);
+  context_->AddTable(node->GetDatabaseName(default_database_name_), 
+                     node->GetTableName(), txn_);
 
   if (node->expr != nullptr) node->expr->Accept(this);
 
