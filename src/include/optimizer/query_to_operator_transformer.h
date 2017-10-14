@@ -33,7 +33,7 @@ class ColumnManager;
 // Transform a query from parsed statement to operator expressions.
 class QueryToOperatorTransformer : public SqlNodeVisitor {
  public:
-  QueryToOperatorTransformer(concurrency::Transaction *txn);
+  QueryToOperatorTransformer(concurrency::Transaction *txn, std::string default_database_name);
 
   std::shared_ptr<OperatorExpression> ConvertToOpExpression(
       parser::SQLStatement *op);
@@ -66,9 +66,9 @@ class QueryToOperatorTransformer : public SqlNodeVisitor {
   type::TypeId output_type;
   int output_size;
   bool output_inlined;
-  std::string default_database_name_;
   concurrency::Transaction *txn_;
 
+  std::string default_database_name_;
 };
 
 } // namespace optimizer

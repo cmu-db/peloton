@@ -50,7 +50,7 @@ class OperatorTransformerTests : public PelotonTest {
     binder::BindNodeVisitor binder(txn, DEFAULT_DB_NAME);
     binder.BindNameToNode(stmt);
 
-    QueryToOperatorTransformer transformer(txn);
+    QueryToOperatorTransformer transformer(txn, DEFAULT_DB_NAME);
     auto result = transformer.ConvertToOpExpression(stmt);
     txn_manager.CommitTransaction(txn);
     return result;

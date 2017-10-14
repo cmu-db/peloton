@@ -214,7 +214,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
 
 shared_ptr<GroupExpression> Optimizer::InsertQueryTree(
     parser::SQLStatement *tree, concurrency::Transaction *txn) {
-  QueryToOperatorTransformer converter(txn);
+  QueryToOperatorTransformer converter(txn, default_database_name_);
   shared_ptr<OperatorExpression> initial =
       converter.ConvertToOpExpression(tree);
   shared_ptr<GroupExpression> gexpr;
