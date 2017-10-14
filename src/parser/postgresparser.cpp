@@ -1415,6 +1415,8 @@ parser::SQLStatementList* PostgresParser::ParseSQLString(const char* text) {
   auto result = pg_query_parse(text);
   if (result.error) {
     // Parse Error
+    pg_query_parse_finish(ctx);
+    pg_query_free_parse_result(result);
     throw ParserException(StringUtil::Format("%s at %d", result.error->message,
                                              result.error->cursorpos));
   }
