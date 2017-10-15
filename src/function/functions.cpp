@@ -15,8 +15,7 @@
 namespace peloton {
 namespace function {
 
-std::unordered_map<std::string, BuiltInFuncType>
-    BuiltInFunctions::kFuncMap;
+std::unordered_map<std::string, BuiltInFuncType> BuiltInFunctions::kFuncMap;
 
 void BuiltInFunctions::AddFunction(const std::string &func_name,
                                    BuiltInFuncType func) {
@@ -25,8 +24,9 @@ void BuiltInFunctions::AddFunction(const std::string &func_name,
 
 BuiltInFuncType BuiltInFunctions::GetFuncByName(const std::string &func_name) {
   auto func = kFuncMap.find(func_name);
-  if (func == kFuncMap.end())
-    return nullptr;
+  if (func == kFuncMap.end()) {
+    return {OperatorId::Invalid, nullptr};
+  }
   return func->second;
 }
 

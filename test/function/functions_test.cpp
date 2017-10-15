@@ -67,8 +67,9 @@ TEST_F(FunctionsTests, CatalogTest) {
   std::vector<type::TypeId> arg_types{type::TypeId::VARCHAR,
                                       type::TypeId::INTEGER};
 
-  catalog->AddFunction(func_name, arg_types, type::TypeId::INTEGER,
-                       internal_lang->GetOid(), "TestFunc", TestFunc, txn);
+  catalog->AddBuiltinFunction(
+      func_name, arg_types, type::TypeId::INTEGER, internal_lang->GetOid(),
+      "TestFunc", function::BuiltInFuncType{OperatorId::Add, TestFunc}, txn);
 
   auto inserted_proc = pg_proc.GetProcByName(func_name, arg_types, txn);
   EXPECT_NE(nullptr, inserted_proc);
@@ -82,7 +83,7 @@ TEST_F(FunctionsTests, CatalogTest) {
 
   auto func_data = catalog->GetFunction(func_name, arg_types);
   EXPECT_EQ(ret_type, func_data.return_type_);
-  EXPECT_EQ((int64_t)TestFunc, (int64_t)func_data.func_ptr_);
+  EXPECT_EQ((int64_t)TestFunc, (int64_t)func_data.func_.impl);
 }
 
 TEST_F(FunctionsTests, FuncCallTest) {

@@ -806,18 +806,16 @@ Catalog::~Catalog() {
  * @param   func_name     the function name in C++ source (should be unique)
  * @param   func_ptr      the pointer to the function
  */
-void Catalog::AddFunction(const std::string &name,
-                          const std::vector<type::TypeId> &argument_types,
-                          const type::TypeId return_type, oid_t prolang,
-                          const std::string &func_name,
-                          function::BuiltInFuncType func_ptr,
-                          concurrency::Transaction *txn) {
+void Catalog::AddBuiltinFunction(
+    const std::string &name, const std::vector<type::TypeId> &argument_types,
+    const type::TypeId return_type, oid_t prolang, const std::string &func_name,
+    function::BuiltInFuncType func, concurrency::Transaction *txn) {
   if (!ProcCatalog::GetInstance().InsertProc(name, return_type, argument_types,
                                              prolang, func_name, pool_.get(),
                                              txn)) {
     throw CatalogException("Failed to add function " + func_name);
   }
-  function::BuiltInFunctions::AddFunction(func_name, func_ptr);
+  function::BuiltInFunctions::AddFunction(func_name, func);
 }
 
 const FunctionData Catalog::GetFunction(
@@ -849,10 +847,9 @@ const FunctionData Catalog::GetFunction(
   result.argument_types_ = argument_types;
   result.func_name_ = proc_catalog_obj->GetSrc();
   result.return_type_ = proc_catalog_obj->GetRetType();
-  result.func_ptr_ =
-      function::BuiltInFunctions::GetFuncByName(result.func_name_);
+  result.func_ = function::BuiltInFunctions::GetFuncByName(result.func_name_);
 
-  if (result.func_ptr_ == nullptr) {
+  if (result.func_.impl == nullptr) {
     txn_manager.AbortTransaction(txn);
     throw CatalogException("Function " + name +
                            " is internal, but doesn't have a function address");
@@ -895,53 +892,92 @@ void Catalog::InitializeFunctions() {
       /**
        * string functions
        */
-      AddFunction("ascii", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
-                  internal_lang, "Ascii", function::StringFunctions::Ascii,
-                  txn);
-      AddFunction("chr", {type::TypeId::INTEGER}, type::TypeId::VARCHAR,
-                  internal_lang, "Chr", function::StringFunctions::Chr, txn);
-      AddFunction("concat", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
-                  type::TypeId::VARCHAR, internal_lang, "Concat",
-                  function::StringFunctions::Concat, txn);
-      AddFunction("substr", {type::TypeId::VARCHAR, type::TypeId::INTEGER,
-                             type::TypeId::INTEGER},
-                  type::TypeId::VARCHAR, internal_lang, "Substr",
-                  function::StringFunctions::Substr, txn);
-      AddFunction("char_length", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
-                  internal_lang, "CharLength",
-                  function::StringFunctions::CharLength, txn);
-      AddFunction("octet_length", {type::TypeId::VARCHAR},
-                  type::TypeId::INTEGER, internal_lang, "OctetLength",
-                  function::StringFunctions::OctetLength, txn);
-      AddFunction("repeat", {type::TypeId::VARCHAR, type::TypeId::INTEGER},
-                  type::TypeId::VARCHAR, internal_lang, "Repeat",
-                  function::StringFunctions::Repeat, txn);
-      AddFunction("replace", {type::TypeId::VARCHAR, type::TypeId::VARCHAR,
-                              type::TypeId::VARCHAR},
-                  type::TypeId::VARCHAR, internal_lang, "Replace",
-                  function::StringFunctions::Replace, txn);
-      AddFunction("ltrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
-                  type::TypeId::VARCHAR, internal_lang, "LTrim",
-                  function::StringFunctions::LTrim, txn);
-      AddFunction("rtrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
-                  type::TypeId::VARCHAR, internal_lang, "RTrim",
-                  function::StringFunctions::RTrim, txn);
-      AddFunction("btrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
-                  type::TypeId::VARCHAR, internal_lang, "btrim",
-                  function::StringFunctions::BTrim, txn);
+      AddBuiltinFunction(
+          "ascii", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
+          internal_lang, "Ascii",
+          function::BuiltInFuncType{OperatorId::Ascii,
+                                    function::StringFunctions::Ascii},
+          txn);
+      AddBuiltinFunction("chr", {type::TypeId::INTEGER}, type::TypeId::VARCHAR,
+                         internal_lang, "Chr",
+                         function::BuiltInFuncType{
+                             OperatorId::Chr, function::StringFunctions::Chr},
+                         txn);
+      AddBuiltinFunction(
+          "concat", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
+          type::TypeId::VARCHAR, internal_lang, "Concat",
+          function::BuiltInFuncType{OperatorId::Concat,
+                                    function::StringFunctions::Concat},
+          txn);
+      AddBuiltinFunction(
+          "substr",
+          {type::TypeId::VARCHAR, type::TypeId::INTEGER, type::TypeId::INTEGER},
+          type::TypeId::VARCHAR, internal_lang, "Substr",
+          function::BuiltInFuncType{OperatorId::Substr,
+                                    function::StringFunctions::Substr},
+          txn);
+      AddBuiltinFunction(
+          "char_length", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
+          internal_lang, "CharLength",
+          function::BuiltInFuncType{OperatorId::CharLength,
+                                    function::StringFunctions::CharLength},
+          txn);
+      AddBuiltinFunction(
+          "octet_length", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
+          internal_lang, "OctetLength",
+          function::BuiltInFuncType{OperatorId::OctetLength,
+                                    function::StringFunctions::OctetLength},
+          txn);
+      AddBuiltinFunction(
+          "repeat", {type::TypeId::VARCHAR, type::TypeId::INTEGER},
+          type::TypeId::VARCHAR, internal_lang, "Repeat",
+          function::BuiltInFuncType{OperatorId::Repeat,
+                                    function::StringFunctions::Repeat},
+          txn);
+      AddBuiltinFunction(
+          "replace",
+          {type::TypeId::VARCHAR, type::TypeId::VARCHAR, type::TypeId::VARCHAR},
+          type::TypeId::VARCHAR, internal_lang, "Replace",
+          function::BuiltInFuncType{OperatorId::Replace,
+                                    function::StringFunctions::Replace},
+          txn);
+      AddBuiltinFunction(
+          "ltrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
+          type::TypeId::VARCHAR, internal_lang, "LTrim",
+          function::BuiltInFuncType{OperatorId::LTrim,
+                                    function::StringFunctions::LTrim},
+          txn);
+      AddBuiltinFunction(
+          "rtrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
+          type::TypeId::VARCHAR, internal_lang, "RTrim",
+          function::BuiltInFuncType{OperatorId::RTrim,
+                                    function::StringFunctions::RTrim},
+          txn);
+      AddBuiltinFunction(
+          "btrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
+          type::TypeId::VARCHAR, internal_lang, "btrim",
+          function::BuiltInFuncType{OperatorId::BTrim,
+                                    function::StringFunctions::BTrim},
+          txn);
 
       /**
        * decimal functions
        */
-      AddFunction("sqrt", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL,
-                  internal_lang, "Sqrt", function::DecimalFunctions::Sqrt, txn);
+      AddBuiltinFunction(
+          "sqrt", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL, internal_lang,
+          "Sqrt", function::BuiltInFuncType{OperatorId::Sqrt,
+                                            function::DecimalFunctions::Sqrt},
+          txn);
 
       /**
        * date functions
        */
-      AddFunction("extract", {type::TypeId::INTEGER, type::TypeId::TIMESTAMP},
-                  type::TypeId::DECIMAL, internal_lang, "Extract",
-                  function::DateFunctions::Extract, txn);
+      AddBuiltinFunction(
+          "extract", {type::TypeId::INTEGER, type::TypeId::TIMESTAMP},
+          type::TypeId::DECIMAL, internal_lang, "Extract",
+          function::BuiltInFuncType{OperatorId::Extract,
+                                    function::DateFunctions::Extract},
+          txn);
     } catch (CatalogException &e) {
       txn_manager.AbortTransaction(txn);
       throw e;

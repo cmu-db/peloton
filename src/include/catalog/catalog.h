@@ -59,10 +59,10 @@ struct FunctionData {
   std::string func_name_;
   // type of input arguments
   std::vector<type::TypeId> argument_types_;
-  // funtion's return type
+  // function's return type
   type::TypeId return_type_;
-  // pointer to the funtion
-  function::BuiltInFuncType func_ptr_;
+  // pointer to the function
+  function::BuiltInFuncType func_;
 };
 
 class Catalog {
@@ -186,12 +186,12 @@ class Catalog {
 
   void InitializeFunctions();
 
-  void AddFunction(const std::string &name,
-                   const std::vector<type::TypeId> &argument_types,
-                   const type::TypeId return_type, oid_t prolang,
-                   const std::string &func_name,
-                   function::BuiltInFuncType func_ptr,
-                   concurrency::Transaction *txn);
+  void AddBuiltinFunction(const std::string &name,
+                          const std::vector<type::TypeId> &argument_types,
+                          const type::TypeId return_type, oid_t prolang,
+                          const std::string &func_name,
+                          function::BuiltInFuncType func,
+                          concurrency::Transaction *txn);
 
   const FunctionData GetFunction(
       const std::string &name, const std::vector<type::TypeId> &argument_types);

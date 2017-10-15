@@ -200,12 +200,14 @@ TypeSystem::TypeSystem(
     const std::vector<TypeSystem::CastInfo> &explicit_cast_table,
     const std::vector<TypeSystem::ComparisonInfo> &comparison_table,
     const std::vector<TypeSystem::UnaryOpInfo> &unary_op_table,
-    const std::vector<TypeSystem::BinaryOpInfo> &binary_op_table)
+    const std::vector<TypeSystem::BinaryOpInfo> &binary_op_table,
+    const std::vector<TypeSystem::NaryOpInfo> &nary_op_table)
     : implicit_cast_table_(implicit_cast_table),
       explicit_cast_table_(explicit_cast_table),
       comparison_table_(comparison_table),
       unary_op_table_(unary_op_table),
-      binary_op_table_(binary_op_table) {}
+      binary_op_table_(binary_op_table),
+      nary_op_table_(nary_op_table) {}
 
 bool TypeSystem::CanImplicitlyCastTo(const Type &from_type,
                                      const Type &to_type) {
@@ -356,6 +358,14 @@ const TypeSystem::BinaryOperator *TypeSystem::GetBinaryOperator(
                          TypeIdToString(left_type.type_id).c_str(),
                          TypeIdToString(right_type.type_id).c_str());
   throw Exception{msg};
+}
+
+const TypeSystem::NaryOperator *TypeSystem::GetNaryOperator(
+    OperatorId op_id, const std::vector<Type> &arg_types) {
+  // TODO(pmenon): Write me
+  (void)op_id;
+  (void)arg_types;
+  return nullptr;
 }
 
 }  // namespace type

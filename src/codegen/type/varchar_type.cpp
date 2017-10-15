@@ -162,6 +162,9 @@ static std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {};
 // Binary operations
 static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {};
 
+// Nary operations
+static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
+
 }  // anonymous namespace
 
 //===----------------------------------------------------------------------===//
@@ -173,7 +176,7 @@ Varchar::Varchar()
     : SqlType(peloton::type::TypeId::VARCHAR),
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
                    kComparisonTable, kUnaryOperatorTable,
-                   kBinaryOperatorTable) {}
+                   kBinaryOperatorTable, kNaryOperatorTable) {}
 
 Value Varchar::GetMinValue(UNUSED_ATTRIBUTE CodeGen &codegen) const {
   throw Exception{"The VARCHAR type does not have a minimum value ..."};

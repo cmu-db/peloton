@@ -30,7 +30,7 @@ class FunctionExpression : public AbstractExpression {
                      const std::vector<AbstractExpression *> &children)
       : AbstractExpression(ExpressionType::FUNCTION),
         func_name_(func_name),
-        func_ptr_(nullptr) {
+        func_(OperatorId::Invalid, nullptr) {
     for (auto &child : children) {
       children_.push_back(std::unique_ptr<AbstractExpression>(child));
     }
@@ -41,7 +41,7 @@ class FunctionExpression : public AbstractExpression {
                      const std::vector<type::TypeId> &arg_types,
                      const std::vector<AbstractExpression *> &children)
       : AbstractExpression(ExpressionType::FUNCTION, return_type),
-        func_ptr_(func_ptr),
+        func_(func_ptr),
         func_arg_types_(arg_types) {
     for (auto &child : children) {
       children_.push_back(std::unique_ptr<AbstractExpression>(child));
@@ -52,7 +52,7 @@ class FunctionExpression : public AbstractExpression {
   void SetFunctionExpressionParameters(
       function::BuiltInFuncType func_ptr, type::TypeId val_type,
       const std::vector<type::TypeId> &arg_types) {
-    func_ptr_ = func_ptr;
+    func_ = func_ptr;
     return_value_type_ = val_type;
     func_arg_types_ = arg_types;
     CheckChildrenTypes(children_, func_name_);
@@ -62,12 +62,12 @@ class FunctionExpression : public AbstractExpression {
       const AbstractTuple *tuple1, const AbstractTuple *tuple2,
       UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
     std::vector<type::Value> child_values;
-    PL_ASSERT(func_ptr_ != nullptr);
+    PL_ASSERT(func_.impl != nullptr);
     for (auto &child : children_) {
       child_values.push_back(child->Evaluate(tuple1, tuple2, context));
     }
 
-    type::Value ret = func_ptr_(child_values);
+    type::Value ret = func_.impl(child_values);
 
     // TODO: Checking this every time is not necessary, but it prevents crashing
     if (ret.GetElementType() != return_value_type_) {
@@ -83,9 +83,18 @@ class FunctionExpression : public AbstractExpression {
     return new FunctionExpression(*this);
   }
 
+  const std::string &GetFuncName() const { return func_name_; }
+
+  const function::BuiltInFuncType &GetFunc() const { return func_; }
+
+  const std::vector<type::TypeId> &GetArgTypes() const {
+    return func_arg_types_;
+  }
+
+ private:
   std::string func_name_;
 
-  function::BuiltInFuncType func_ptr_;
+  function::BuiltInFuncType func_;
 
   std::vector<type::TypeId> func_arg_types_;
 
@@ -95,7 +104,7 @@ class FunctionExpression : public AbstractExpression {
   FunctionExpression(const FunctionExpression &other)
       : AbstractExpression(other),
         func_name_(other.func_name_),
-        func_ptr_(other.func_ptr_),
+        func_(other.func_),
         func_arg_types_(other.func_arg_types_) {}
 
  private:
