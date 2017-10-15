@@ -825,28 +825,41 @@ const FunctionData Catalog::GetFunction(
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
+  // Lookup the function in pg_proc
   auto &proc_catalog = ProcCatalog::GetInstance();
-  oid_t prolang = proc_catalog.GetProLang(name, argument_types, txn);
+  auto proc_catalog_obj = proc_catalog.GetProcByName(name, argument_types, txn);
+  if (proc_catalog_obj == nullptr) {
+    txn_manager.AbortTransaction(txn);
+    throw CatalogException("Failed to find function " + name);
+  }
+
+  // If the language isn't 'internal', crap out ... for now ...
+  auto lang_catalog_obj = proc_catalog_obj->GetLanguage();
+  if (lang_catalog_obj == nullptr ||
+      lang_catalog_obj->GetName() != "internal") {
+    txn_manager.AbortTransaction(txn);
+    throw CatalogException(
+        "Peloton currently only supports internal functions. Function " + name +
+        " has language '" + lang_catalog_obj->GetName() + "'");
+  }
 
   // If the function is "internal", perform the lookup in our built-in
   // functions map (i.e., function::BuiltInFunctions) to get the function
   FunctionData result;
+  result.argument_types_ = argument_types;
+  result.func_name_ = proc_catalog_obj->GetSrc();
+  result.return_type_ = proc_catalog_obj->GetRetType();
+  result.func_ptr_ =
+      function::BuiltInFunctions::GetFuncByName(result.func_name_);
 
-  auto lang_object =
-      LanguageCatalog::GetInstance().GetLanguageByOid(prolang, txn);
-  if (lang_object != nullptr && lang_object->GetName() == "internal") {
-    result.argument_types_ = argument_types;
-    result.func_name_ = proc_catalog.GetProSrc(name, argument_types, txn);
-    result.return_type_ = proc_catalog.GetProRetType(name, argument_types, txn);
-    result.func_ptr_ =
-        function::BuiltInFunctions::GetFuncByName(result.func_name_);
-    if (result.func_ptr_ != nullptr) {
-      txn_manager.CommitTransaction(txn);
-      return result;
-    }
+  if (result.func_ptr_ == nullptr) {
+    txn_manager.AbortTransaction(txn);
+    throw CatalogException("Function " + name +
+                           " is internal, but doesn't have a function address");
   }
-  txn_manager.AbortTransaction(txn);
-  throw CatalogException("Failed to find function " + name);
+
+  txn_manager.CommitTransaction(txn);
+  return result;
 }
 
 void Catalog::InitializeLanguages() {

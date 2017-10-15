@@ -30,11 +30,51 @@
 
 #include "catalog/abstract_catalog.h"
 
-#define PROC_CATALOG_NAME "pg_proc"
-
 namespace peloton {
 namespace catalog {
 
+// Forward declare
+class LanguageCatalogObject;
+
+//===----------------------------------------------------------------------===//
+// In-memory representation of a row from the pg_proc table.
+//===----------------------------------------------------------------------===//
+class ProcCatalogObject {
+ public:
+  ProcCatalogObject(executor::LogicalTile *tile, concurrency::Transaction *txn);
+
+  // Accessors
+
+  oid_t GetOid() const { return oid_; }
+
+  const std::string &GetName() const { return name_; }
+
+  type::TypeId GetRetType() const { return ret_type_; }
+
+  const std::vector<type::TypeId> &GetArgTypes() const { return arg_types_; }
+
+  oid_t GetLangOid() const { return lang_oid_; }
+
+  std::unique_ptr<LanguageCatalogObject> GetLanguage() const;
+
+  const std::string &GetSrc() const { return src_; }
+
+ private:
+  // The fields of 'pg_proc' table
+  oid_t oid_;
+  std::string name_;
+  type::TypeId ret_type_;
+  const std::vector<type::TypeId> arg_types_;
+  oid_t lang_oid_;
+  std::string src_;
+
+  // Only valid in this transaction
+  concurrency::Transaction *txn_;
+};
+
+//===----------------------------------------------------------------------===//
+// The pg_proc catalog table.
+//===----------------------------------------------------------------------===//
 class ProcCatalog : public AbstractCatalog {
  public:
   ~ProcCatalog();
@@ -53,17 +93,14 @@ class ProcCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   // Read-only Related API
   //===--------------------------------------------------------------------===//
-  std::string GetProSrc(const std::string &proname,
-                        const std::vector<type::TypeId> &proargtypes,
-                        concurrency::Transaction *txn);
 
-  type::TypeId GetProRetType(const std::string &proname,
-                             const std::vector<type::TypeId> &proargtypes,
-                             concurrency::Transaction *txn);
+  std::unique_ptr<ProcCatalogObject> GetProcByOid(
+      oid_t proc_oid, concurrency::Transaction *txn) const;
 
-  oid_t GetProLang(const std::string &proname,
-                   const std::vector<type::TypeId> &proargtypes,
-                   concurrency::Transaction *txn);
+  std::unique_ptr<ProcCatalogObject> GetProcByName(
+      const std::string &proc_name,
+      const std::vector<type::TypeId> &proc_arg_types,
+      concurrency::Transaction *txn) const;
 
   enum ColumnId {
     OID = 0,
@@ -74,15 +111,12 @@ class ProcCatalog : public AbstractCatalog {
     PROSRC = 5,
     // Add new columns here in creation order
   };
+  std::vector<oid_t> all_column_ids = {0, 1, 2, 3, 4, 5};
 
  private:
   ProcCatalog(concurrency::Transaction *txn);
 
   oid_t GetNextOid() { return oid_++ | PROC_OID_MASK; }
-
-  static std::string TypeArrayToString(const std::vector<type::TypeId> types);
-
-  static std::vector<type::TypeId> StringToTypeArray(const std::string &types);
 
   enum IndexId {
     PRIMARY_KEY = 0,

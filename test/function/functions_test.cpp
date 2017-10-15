@@ -10,12 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "common/harness.h"
-#include "sql/testing_sql_util.h"
-#include "concurrency/transaction_manager_factory.h"
 #include "catalog/catalog.h"
 #include "catalog/proc_catalog.h"
 #include "catalog/language_catalog.h"
+#include "common/harness.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "sql/testing_sql_util.h"
 #include "type/ephemeral_pool.h"
 
 namespace peloton {
@@ -70,11 +70,12 @@ TEST_F(FunctionsTests, CatalogTest) {
   catalog->AddFunction(func_name, arg_types, type::TypeId::INTEGER,
                        internal_lang->GetOid(), "TestFunc", TestFunc, txn);
 
-  oid_t prolang = pg_proc.GetProLang(func_name, arg_types, txn);
-  EXPECT_EQ(internal_lang->GetOid(), prolang);
-  type::TypeId ret_type = pg_proc.GetProRetType(func_name, arg_types, txn);
+  auto inserted_proc = pg_proc.GetProcByName(func_name, arg_types, txn);
+  EXPECT_NE(nullptr, inserted_proc);
+  EXPECT_EQ(internal_lang->GetOid(), inserted_proc->GetLangOid());
+  type::TypeId ret_type = inserted_proc->GetRetType();
   EXPECT_EQ(type::TypeId::INTEGER, ret_type);
-  std::string func = pg_proc.GetProSrc(func_name, arg_types, txn);
+  std::string func = inserted_proc->GetSrc();
   EXPECT_EQ("TestFunc", func);
 
   txn_manager.CommitTransaction(txn);

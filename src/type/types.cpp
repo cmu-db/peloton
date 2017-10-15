@@ -285,6 +285,27 @@ type::TypeId StringToTypeId(const std::string& str) {
   return type::TypeId::INVALID;
 }
 
+std::string TypeIdArrayToString(const std::vector<type::TypeId> &types) {
+  std::string result = "";
+  for (auto type : types) {
+    if (result != "") result.append(",");
+    result.append(TypeIdToString(type));
+  }
+  return result;
+}
+
+// Get argument type vector from its string representation
+// e.g. "integer,boolean" --> vector{TypeId::INTEGER, TypeId::BOOLEAN}
+std::vector<type::TypeId> StringToTypeArray(const std::string &types) {
+  std::vector<type::TypeId> result;
+  std::istringstream stream(types);
+  std::string type;
+  while (getline(stream, type, ',')) {
+    result.push_back(StringToTypeId(type));
+  }
+  return result;
+}
+
 /** takes in 0-F, returns 0-15 */
 int32_t HexCharToInt(char c) {
   c = static_cast<char>(toupper(c));

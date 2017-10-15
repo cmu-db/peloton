@@ -1210,6 +1210,8 @@ bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString);
 
 std::string TypeIdToString(type::TypeId type);
 type::TypeId StringToTypeId(const std::string &str);
+std::string TypeIdArrayToString(const std::vector<type::TypeId> &types);
+std::vector<type::TypeId> StringToTypeArray(const std::string &types);
 
 type::TypeId PostgresValueTypeToPelotonValueType(PostgresValueType type);
 ConstraintType PostgresConstraintTypeToPelotonConstraintType(
