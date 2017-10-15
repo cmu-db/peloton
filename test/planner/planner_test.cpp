@@ -48,7 +48,7 @@ TEST_F(PlannerTests, CreateDatabasePlanTest) {
   auto &parse_tree = parse_tree_list->GetStatements().at(0);
 
   std::unique_ptr<planner::CreatePlan> create_DB_plan(
-    new planner::CreatePlan((parser::CreateStatement *)parse_tree.get()));
+    new planner::CreatePlan(DEFAULT_DB_NAME, (parser::CreateStatement *)parse_tree.get()));
   EXPECT_EQ(0, create_DB_plan->GetDatabaseName().compare("pelotondb"));
   EXPECT_EQ(CreateType::DB, create_DB_plan->GetCreateType());
 }

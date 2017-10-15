@@ -32,7 +32,8 @@ CreatePlan::CreatePlan(std::string table_name, std::string database_name,
       table_schema(schema.release()),
       create_type(c_type) {}
 
-CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
+CreatePlan::CreatePlan(std::string default_database_name, parser::CreateStatement *parse_tree)
+{
   switch (parse_tree->type) {
     case parser::CreateStatement::CreateType::kDatabase: {
       create_type = CreateType::DB;
@@ -41,7 +42,7 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
     }
     case parser::CreateStatement::CreateType::kTable: {
       table_name = std::string(parse_tree->GetTableName());
-      database_name = std::string(parse_tree->GetDatabaseName());
+      database_name = std::string(parse_tree->GetDatabaseName(default_database_name));
       std::vector<catalog::Column> columns;
       std::vector<catalog::Constraint> column_constraints;
 
@@ -136,7 +137,7 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
       create_type = CreateType::INDEX;
       index_name = std::string(parse_tree->index_name);
       table_name = std::string(parse_tree->GetTableName());
-      database_name = std::string(parse_tree->GetDatabaseName());
+      database_name = std::string(parse_tree->GetDatabaseName(default_database_name));
 
       // This holds the attribute names.
       // This is a fix for a bug where
@@ -160,7 +161,7 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
       create_type = CreateType::TRIGGER;
       trigger_name = std::string(parse_tree->trigger_name);
       table_name = std::string(parse_tree->GetTableName());
-      database_name = std::string(parse_tree->GetDatabaseName());
+      database_name = std::string(parse_tree->GetDatabaseName(default_database_name));
       
       if (parse_tree->trigger_when) {
         trigger_when.reset(parse_tree->trigger_when->Copy());
