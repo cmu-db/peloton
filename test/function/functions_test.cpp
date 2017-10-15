@@ -36,24 +36,26 @@ TEST_F(FunctionsTests, CatalogTest) {
 
   auto &pg_language = catalog::LanguageCatalog::GetInstance();
 
-  // test "internal" language
+  // Test "internal" language
   auto txn = txn_manager.BeginTransaction();
-  auto internal_oid = pg_language.GetLanguageOid("internal", txn);
-  EXPECT_NE(INVALID_OID, internal_oid);
-  auto name = pg_language.GetLanguageName(internal_oid, txn);
-  EXPECT_EQ("internal", name);
+  auto internal_lang = pg_language.GetLanguageByName("internal", txn);
+  EXPECT_NE(nullptr, internal_lang);
+  internal_lang = pg_language.GetLanguageByOid(internal_lang->GetOid(), txn);
+  EXPECT_NE(nullptr, internal_lang);
+  EXPECT_EQ("internal", internal_lang->GetName());
 
   // test add/del language
   type::EphemeralPool pool;
   std::string lanname = "foo_lang";
   pg_language.InsertLanguage(lanname, &pool, txn);
-  auto oid = pg_language.GetLanguageOid(lanname, txn);
-  EXPECT_NE(INVALID_OID, oid);
-  name = pg_language.GetLanguageName(oid, txn);
-  EXPECT_EQ(lanname, name);
+  auto inserted_lang = pg_language.GetLanguageByName(lanname, txn);
+  EXPECT_NE(nullptr, inserted_lang);
+  inserted_lang = pg_language.GetLanguageByOid(inserted_lang->GetOid(), txn);
+  EXPECT_NE(nullptr, inserted_lang);
+  EXPECT_EQ(lanname, inserted_lang->GetName());
   pg_language.DeleteLanguage(lanname, txn);
-  oid = pg_language.GetLanguageOid(lanname, txn);
-  EXPECT_EQ(INVALID_OID, oid);
+  inserted_lang = pg_language.GetLanguageByName(lanname, txn);
+  EXPECT_EQ(nullptr, inserted_lang);
 
   txn_manager.CommitTransaction(txn);
 
@@ -66,10 +68,10 @@ TEST_F(FunctionsTests, CatalogTest) {
                                       type::TypeId::INTEGER};
 
   catalog->AddFunction(func_name, arg_types, type::TypeId::INTEGER,
-                       internal_oid, "TestFunc", TestFunc, txn);
+                       internal_lang->GetOid(), "TestFunc", TestFunc, txn);
 
   oid_t prolang = pg_proc.GetProLang(func_name, arg_types, txn);
-  EXPECT_EQ(internal_oid, prolang);
+  EXPECT_EQ(internal_lang->GetOid(), prolang);
   type::TypeId ret_type = pg_proc.GetProRetType(func_name, arg_types, txn);
   EXPECT_EQ(type::TypeId::INTEGER, ret_type);
   std::string func = pg_proc.GetProSrc(func_name, arg_types, txn);

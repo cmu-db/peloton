@@ -21,6 +21,7 @@
 // 0: language_oid (unique & primary key)
 // 1: lanname (secondary key 0)
 //===----------------------------------------------------------------------===//
+
 #pragma once
 
 #include "catalog/abstract_catalog.h"
@@ -28,7 +29,25 @@
 #define LANGUAGE_CATALOG_NAME "pg_language"
 
 namespace peloton {
+
+namespace executor {
+class LogicalTile;
+}  // namespace executor
+
 namespace catalog {
+
+class LanguageCatalogObject {
+ public:
+  LanguageCatalogObject(executor::LogicalTile *tuple);
+
+  oid_t GetOid() const { return lang_oid_; }
+
+  const std::string &GetName() const { return lang_name_; }
+
+ private:
+  oid_t lang_oid_;
+  std::string lang_name_;
+};
 
 class LanguageCatalog : public AbstractCatalog {
  public:
@@ -49,17 +68,19 @@ class LanguageCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   // Read-only Related API
   //===--------------------------------------------------------------------===//
-  oid_t GetLanguageOid(const std::string &lanname,
-                       concurrency::Transaction *txn);
 
-  std::string GetLanguageName(oid_t language_oid,
-                              concurrency::Transaction *txn);
+  std::unique_ptr<LanguageCatalogObject> GetLanguageByOid(
+      oid_t lang_oid, concurrency::Transaction *txn) const;
+
+  std::unique_ptr<LanguageCatalogObject> GetLanguageByName(
+      const std::string &lang_name, concurrency::Transaction *txn) const;
 
   enum ColumnId {
     OID = 0,
     LANNAME = 1,
     // Add new columns here in creation order
   };
+  std::vector<oid_t> all_column_ids = {0, 1};
 
  private:
   LanguageCatalog(concurrency::Transaction *txn);

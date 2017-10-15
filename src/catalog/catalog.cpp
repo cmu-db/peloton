@@ -832,8 +832,9 @@ const FunctionData Catalog::GetFunction(
   // functions map (i.e., function::BuiltInFunctions) to get the function
   FunctionData result;
 
-  auto &lang_catalog = LanguageCatalog::GetInstance();
-  if (lang_catalog.GetLanguageName(prolang, txn) == "internal") {
+  auto lang_object =
+      LanguageCatalog::GetInstance().GetLanguageByOid(prolang, txn);
+  if (lang_object != nullptr && lang_object->GetName() == "internal") {
     result.argument_types_ = argument_types;
     result.func_name_ = proc_catalog.GetProSrc(name, argument_types, txn);
     result.return_type_ = proc_catalog.GetProRetType(name, argument_types, txn);
@@ -870,61 +871,63 @@ void Catalog::InitializeFunctions() {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
 
-    oid_t prolang =
-        LanguageCatalog::GetInstance().GetLanguageOid("internal", txn);
-    if (prolang == INVALID_OID) {
-      throw CatalogException("prolang 'internal' does not exist");
+    auto lang_object =
+        LanguageCatalog::GetInstance().GetLanguageByName("internal", txn);
+    if (lang_object == nullptr) {
+      throw CatalogException("Language 'internal' does not exist");
     }
+    oid_t internal_lang = lang_object->GetOid();
 
     try {
       /**
        * string functions
        */
       AddFunction("ascii", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
-                  prolang, "Ascii", function::StringFunctions::Ascii, txn);
+                  internal_lang, "Ascii", function::StringFunctions::Ascii,
+                  txn);
       AddFunction("chr", {type::TypeId::INTEGER}, type::TypeId::VARCHAR,
-                  prolang, "Chr", function::StringFunctions::Chr, txn);
+                  internal_lang, "Chr", function::StringFunctions::Chr, txn);
       AddFunction("concat", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
-                  type::TypeId::VARCHAR, prolang, "Concat",
+                  type::TypeId::VARCHAR, internal_lang, "Concat",
                   function::StringFunctions::Concat, txn);
       AddFunction("substr", {type::TypeId::VARCHAR, type::TypeId::INTEGER,
                              type::TypeId::INTEGER},
-                  type::TypeId::VARCHAR, prolang, "Substr",
+                  type::TypeId::VARCHAR, internal_lang, "Substr",
                   function::StringFunctions::Substr, txn);
       AddFunction("char_length", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
-                  prolang, "CharLength", function::StringFunctions::CharLength,
-                  txn);
+                  internal_lang, "CharLength",
+                  function::StringFunctions::CharLength, txn);
       AddFunction("octet_length", {type::TypeId::VARCHAR},
-                  type::TypeId::INTEGER, prolang, "OctetLength",
+                  type::TypeId::INTEGER, internal_lang, "OctetLength",
                   function::StringFunctions::OctetLength, txn);
       AddFunction("repeat", {type::TypeId::VARCHAR, type::TypeId::INTEGER},
-                  type::TypeId::VARCHAR, prolang, "Repeat",
+                  type::TypeId::VARCHAR, internal_lang, "Repeat",
                   function::StringFunctions::Repeat, txn);
       AddFunction("replace", {type::TypeId::VARCHAR, type::TypeId::VARCHAR,
                               type::TypeId::VARCHAR},
-                  type::TypeId::VARCHAR, prolang, "Replace",
+                  type::TypeId::VARCHAR, internal_lang, "Replace",
                   function::StringFunctions::Replace, txn);
       AddFunction("ltrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
-                  type::TypeId::VARCHAR, prolang, "LTrim",
+                  type::TypeId::VARCHAR, internal_lang, "LTrim",
                   function::StringFunctions::LTrim, txn);
       AddFunction("rtrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
-                  type::TypeId::VARCHAR, prolang, "RTrim",
+                  type::TypeId::VARCHAR, internal_lang, "RTrim",
                   function::StringFunctions::RTrim, txn);
       AddFunction("btrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
-                  type::TypeId::VARCHAR, prolang, "btrim",
+                  type::TypeId::VARCHAR, internal_lang, "btrim",
                   function::StringFunctions::BTrim, txn);
 
       /**
        * decimal functions
        */
       AddFunction("sqrt", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL,
-                  prolang, "Sqrt", function::DecimalFunctions::Sqrt, txn);
+                  internal_lang, "Sqrt", function::DecimalFunctions::Sqrt, txn);
 
       /**
        * date functions
        */
       AddFunction("extract", {type::TypeId::INTEGER, type::TypeId::TIMESTAMP},
-                  type::TypeId::DECIMAL, prolang, "Extract",
+                  type::TypeId::DECIMAL, internal_lang, "Extract",
                   function::DateFunctions::Extract, txn);
     } catch (CatalogException &e) {
       txn_manager.AbortTransaction(txn);
