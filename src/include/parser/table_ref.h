@@ -54,10 +54,17 @@ struct TableRef {
   inline bool HasSchema() { return !schema.empty(); }
 
   // Get the name of the database of this table
-  inline std::string GetDatabaseName(std::string default_database_name) const {
-    if (table_info_ == nullptr || table_info_->database_name.empty()) {
-      return default_database_name;
+  inline void TryBindDatabaseName(std::string default_database_name) {
+    if (table_info_ == nullptr) {
+      table_info_.reset(new TableInfo());
     }
+    
+    if (table_info_->database_name.empty()) {
+      table_info_->database_name = default_database_name;
+    }
+  }
+
+  inline std::string GetDatabaseName() const {
     return table_info_->database_name;
   }
 
