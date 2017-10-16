@@ -1,0 +1,2 @@
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ar qc ../lib/libpeloton-proto-d.a  CMakeFiles/peloton-proto.dir/__/include/peloton/proto/abstract_service.pb.cc.o CMakeFiles/peloton-proto.dir/__/include/peloton/proto/logging_service.pb.cc.o
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ranlib ../lib/libpeloton-proto-d.a
