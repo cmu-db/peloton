@@ -23,6 +23,7 @@
 #include "type/serializer.h"
 #include "type/types.h"
 #include "type/value.h"
+#include "util/hash_util.h"
 
 namespace peloton {
 
@@ -113,6 +114,13 @@ class AbstractPlan : public Printable {
   }
   virtual int SerializeSize() { return 0; }
 
+  virtual hash_t Hash() const;
+
+  virtual bool operator==(const AbstractPlan &rhs) const;
+  virtual bool operator!=(const AbstractPlan &rhs) const {
+    return !(*this == rhs);
+  }
+
  protected:
   // only used by its derived classes (when deserialization)
   AbstractPlan *Parent() { return parent_; }
@@ -125,6 +133,21 @@ class AbstractPlan : public Printable {
 
  private:
   DISALLOW_COPY_AND_MOVE(AbstractPlan);
+};
+
+class Equal {
+ public:
+  bool operator()(const std::shared_ptr<planner::AbstractPlan> &a,
+                  const std::shared_ptr<planner::AbstractPlan> &b) const {
+    return *a.get() == *b.get();
+  }
+};
+
+class Hash {
+ public:
+  size_t operator()(const std::shared_ptr<planner::AbstractPlan> &plan) const {
+    return static_cast<size_t>(plan->Hash());
+  }
 };
 
 }  // namespace planner

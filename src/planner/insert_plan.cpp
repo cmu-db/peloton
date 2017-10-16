@@ -1,13 +1,12 @@
-
 //===----------------------------------------------------------------------===//
 //
 //                         PelotonDB
 //
 // insert_plan.cpp
 //
-// Identification: /peloton/src/planner/insert_plan.cpp
+// Identification: src/planner/insert_plan.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -207,5 +206,53 @@ void InsertPlan::SetParameterValues(std::vector<type::Value> *values) {
     }
   }
 }
+
+hash_t InsertPlan::Hash() const {
+  auto type = GetPlanNodeType();
+  hash_t hash = HashUtil::Hash(&type);
+  hash = HashUtil::CombineHashes(hash, GetTable()->Hash());
+  if (GetProjectInfo() != nullptr)
+    hash = HashUtil::CombineHashes(hash, GetProjectInfo()->Hash());
+  auto count = GetBulkInsertCount();
+  hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&count));
+  return HashUtil::CombineHashes(hash, AbstractPlan::Hash());
 }
+
+bool InsertPlan::operator==(const AbstractPlan &rhs) const {
+  if (GetPlanNodeType() != rhs.GetPlanNodeType())
+    return false;
+
+  auto &other = static_cast<const planner::InsertPlan &>(rhs);
+  auto *table = GetTable();
+  auto *other_table = other.GetTable();
+  PL_ASSERT(table && other_table);
+  if (*table != *other_table)
+    return false;
+
+  if (GetChildren().size() == 0) {
+    if (other.GetChildren().size() != 0)
+      return false;
+
+    auto *proj_info = GetProjectInfo();
+    auto *other_proj_info = other.GetProjectInfo();
+    if ((proj_info == nullptr && other_proj_info != nullptr) ||
+        (proj_info != nullptr && other_proj_info == nullptr))
+      return false;
+    if (proj_info && *proj_info != *other_proj_info)
+      return false;
+
+    auto bulk_insert_count = GetBulkInsertCount();
+    if (bulk_insert_count != other.GetBulkInsertCount())
+      return false;
+    for (decltype(bulk_insert_count) i = 0; i < bulk_insert_count; i++) {
+      auto is_equal = GetTuple(i)->Compare(*other.GetTuple(i));
+      if (is_equal == false)
+        return false;
+    }
+  }
+
+  return AbstractPlan::operator==(rhs);
 }
+
+}  // namespace planner
+}  // namespace peloton

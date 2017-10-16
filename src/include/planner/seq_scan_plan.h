@@ -46,27 +46,36 @@ class SeqScanPlan : public AbstractScan {
 
   SeqScanPlan() : AbstractScan() {}
 
-  inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::SEQSCAN; }
+  PlanNodeType GetPlanNodeType() const override {
+    return PlanNodeType::SEQSCAN;
+  }
 
-  const std::string GetInfo() const { return "SeqScan"; }
+  const std::string GetInfo() const override { return "SeqScan"; }
 
-  void SetParameterValues(std::vector<type::Value> *values);
+  void SetParameterValues(std::vector<type::Value> *values) override;
 
   //===--------------------------------------------------------------------===//
   // Serialization/Deserialization
   //===--------------------------------------------------------------------===//
-  bool SerializeTo(SerializeOutput &output) const ;
-  bool DeserializeFrom(SerializeInput &input);
+  bool SerializeTo(SerializeOutput &output) const override;
+  bool DeserializeFrom(SerializeInput &input) override;
 
   /* For init SerializeOutput */
-  int SerializeSize();
+  int SerializeSize() override;
 
   oid_t GetColumnID(std::string col_name);
 
-  std::unique_ptr<AbstractPlan> Copy() const {
+  std::unique_ptr<AbstractPlan> Copy() const override {
     AbstractPlan *new_plan = new SeqScanPlan(
         this->GetTable(), this->GetPredicate()->Copy(), this->GetColumnIds());
     return std::unique_ptr<AbstractPlan>(new_plan);
+  }
+
+  hash_t Hash() const override;
+
+  bool operator==(const AbstractPlan &rhs) const override;
+  bool operator!=(const AbstractPlan &rhs) const override {
+    return !(*this == rhs);
   }
 
  private:

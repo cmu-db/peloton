@@ -20,6 +20,7 @@
 #include "expression/comparison_expression.h"
 #include "expression/tuple_value_expression.h"
 #include "storage/table_factory.h"
+#include "codegen/query_cache.h"
 
 namespace peloton {
 namespace test {
@@ -50,6 +51,7 @@ PelotonCodeGenTest::~PelotonCodeGenTest() {
   auto result = catalog->DropDatabaseWithName(test_db_name, txn);
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(ResultType::SUCCESS, result);
+  codegen::QueryCache::Instance().Clear();
 }
 
 // Create the test schema for all the tables
@@ -156,6 +158,36 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecute(
                           consumer_state);
 
   txn_manager.CommitTransaction(txn);
+  return stats;
+}
+
+codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecuteCache(
+    const std::shared_ptr<planner::AbstractPlan> &plan,
+    codegen::QueryResultConsumer &consumer, char *consumer_state) {
+  // Start a transaction
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto *txn = txn_manager.BeginTransaction();
+
+  // Compile
+  codegen::QueryCompiler::CompileStats stats;
+  codegen::QueryCompiler compiler;
+
+  codegen::Query* query = codegen::QueryCache::Instance().Find(plan);
+  if (query == nullptr) {
+    auto compiled_query = compiler.Compile(*plan, consumer, &stats);
+    compiled_query->Execute(*txn,
+                            std::unique_ptr<executor::ExecutorContext> (
+                                new executor::ExecutorContext{txn}).get(),
+                            consumer_state);
+    codegen::QueryCache::Instance().Add(plan, std::move(compiled_query));
+  } else {
+    query->Execute(*txn,
+                   std::unique_ptr<executor::ExecutorContext> (
+                       new executor::ExecutorContext{txn}).get(),
+                   consumer_state);
+  }
+  txn_manager.CommitTransaction(txn);
+
   return stats;
 }
 

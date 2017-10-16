@@ -27,5 +27,29 @@ void HashPlan::PerformBinding(BindingContext &binding_context) {
   }
 }
 
+hash_t HashPlan::Hash() const {
+  auto type = GetPlanNodeType();
+  hash_t hash = HashUtil::Hash(&type);
+  for (auto &hash_key : hash_keys_)
+    hash = HashUtil::CombineHashes(hash, hash_key->Hash());
+  return HashUtil::CombineHashes(hash, AbstractPlan::Hash());
+}
+
+bool HashPlan::operator==(const AbstractPlan &rhs) const {
+  if (GetPlanNodeType() != rhs.GetPlanNodeType())
+    return false;
+ 
+  auto &other = static_cast<const planner::HashPlan &>(rhs);
+  auto hash_key_size = GetHashKeys().size();
+  if (hash_key_size != other.GetHashKeys().size())
+    return false;
+  for (size_t i = 0; i < hash_key_size; i++) {
+    if (*GetHashKeys().at(i).get() != *other.GetHashKeys().at(i).get())
+      return false;
+  }
+ 
+  return AbstractPlan::operator==(rhs);
+}
+
 }  // namespace planner
 }  // namespace peloton

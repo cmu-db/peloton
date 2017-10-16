@@ -293,6 +293,22 @@ const std::string Schema::GetInfo() const {
   return os.str();
 }
 
+hash_t Schema::Hash() const {
+  auto column_count = GetColumnCount();
+  hash_t hash = HashUtil::Hash(&column_count);
+
+  auto uninlined_column_count = GetUninlinedColumnCount();
+  hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&uninlined_column_count));
+
+  auto is_inlined = IsInlined();
+  hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&is_inlined));
+
+  for (const auto &column : columns) {
+    hash = HashUtil::CombineHashes(hash, column.Hash());
+  }
+  return hash;
+}
+
 // Compare two schemas
 bool Schema::operator==(const Schema &other) const {
   if (other.GetColumnCount() != GetColumnCount() ||

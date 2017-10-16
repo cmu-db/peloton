@@ -13,6 +13,7 @@
 #include "executor/plan_executor.h"
 
 #include "codegen/buffering_consumer.h"
+#include "codegen/query_cache.h"
 #include "codegen/query_compiler.h"
 #include "codegen/query.h"
 #include "concurrency/transaction_manager_factory.h"
@@ -108,9 +109,17 @@ void PlanExecutor::ExecutePlan(
 
   // Compile & execute the query
   codegen::QueryCompiler compiler;
-  auto query = compiler.Compile(*plan, consumer);
-  query->Execute(*txn, executor_context.get(),
-                 reinterpret_cast<char *>(consumer.GetState()));
+
+  codegen::Query *query = codegen::QueryCache::Instance().Find(plan);
+  if (query == nullptr) {
+    auto compiled_query = compiler.Compile(*plan, consumer);
+    compiled_query->Execute(*txn, executor_context.get(),
+                            reinterpret_cast<char *>(consumer.GetState()));
+    codegen::QueryCache::Instance().Add(plan, std::move(compiled_query));
+  } else {
+    query->Execute(*txn, executor_context.get(),
+                   reinterpret_cast<char *>(consumer.GetState()));
+  }
 
   // Iterate over results
   const auto &results = consumer.GetOutputTuples();

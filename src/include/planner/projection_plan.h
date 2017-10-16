@@ -66,6 +66,13 @@ class ProjectionPlan : public AbstractPlan {
     return std::unique_ptr<AbstractPlan>(new_plan);
   }
 
+  hash_t Hash() const override;
+
+  bool operator==(const AbstractPlan &rhs) const override;
+  bool operator!=(const AbstractPlan &rhs) const override {
+    return !(*this == rhs);
+  }
+
  private:
   /** @brief Projection Info.            */
   std::unique_ptr<const planner::ProjectInfo> project_info_;

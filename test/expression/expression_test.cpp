@@ -82,7 +82,7 @@ TEST_F(ExpressionTests, EqualityTest) {
   std::unique_ptr<expression::OperatorExpression> root2(
       new expression::OperatorExpression(
       ExpressionType::OPERATOR_MINUS, type::TypeId::INVALID, left2, right2));
-  EXPECT_FALSE(root1->Equals(root2.get()));
+  EXPECT_TRUE(*root1.get() != *root2.get());
 
   // Third tree operator_expr(-) -> (tup_expr(a.a), const_expr(2))
   auto left3 = new expression::TupleValueExpression("a", "a");
@@ -92,7 +92,7 @@ TEST_F(ExpressionTests, EqualityTest) {
   std::unique_ptr<expression::OperatorExpression> root3(
       new expression::OperatorExpression(
       ExpressionType::OPERATOR_MINUS, type::TypeId::INVALID, left3, right3));
-  EXPECT_TRUE(root1->Equals(root3.get()));
+  EXPECT_TRUE(*root1.get() == *root3.get());
 }
 
 
