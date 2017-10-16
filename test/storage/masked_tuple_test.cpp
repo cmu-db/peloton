@@ -16,6 +16,7 @@
 
 #include "storage/masked_tuple.h"
 #include "storage/tuple.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 namespace test {

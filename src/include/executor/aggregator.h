@@ -19,6 +19,7 @@
 #include "executor/abstract_executor.h"
 #include "planner/aggregate_plan.h"
 #include "type/value_factory.h"
+#include "type/value_peeker.h"
 
 //===--------------------------------------------------------------------===//
 // Aggregate

@@ -20,8 +20,6 @@
 #include "type/serializer.h"
 #include "type/types.h"
 #include "type/value.h"
-#include "type/value_factory.h"
-#include "type/value_peeker.h"
 
 namespace peloton {
 namespace storage {
