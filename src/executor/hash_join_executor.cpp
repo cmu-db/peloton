@@ -101,7 +101,6 @@ bool HashJoinExecutor::DExecute() {
 
     // Get the hash table from the hash executor
     auto &hash_table = hash_executor_->GetHashTable();
-//    auto &hashed_col_ids = hash_executor_->GetHashKeyIds();
     std::vector<const expression::AbstractExpression *> left_hashed_cols;
     this->GetPlanNode<planner::HashJoinPlan>().GetLeftHashKeys(left_hashed_cols);
 
