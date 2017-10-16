@@ -22,7 +22,8 @@ namespace function {
 class StringFunctions {
  public:
   // ASCII code of the first character of the argument.
-  static type::Value Ascii(const std::vector<type::Value> &args);
+  static uint32_t Ascii(const char *str, uint32_t length);
+  static type::Value _Ascii(const std::vector<type::Value> &args);
 
   // Get Character from integer
   static type::Value Chr(const std::vector<type::Value> &args);

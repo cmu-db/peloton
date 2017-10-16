@@ -13,11 +13,10 @@
 #include "codegen/type/varchar_type.h"
 
 #include "codegen/value.h"
+#include "codegen/proxy/string_functions_proxy.h"
 #include "codegen/proxy/values_runtime_proxy.h"
 #include "codegen/type/boolean_type.h"
 #include "codegen/type/integer_type.h"
-#include "common/exception.h"
-#include "type/limits.h"
 
 namespace peloton {
 namespace codegen {
@@ -140,6 +139,22 @@ struct CompareVarchar : public TypeSystem::Comparison {
   }
 };
 
+struct Ascii : public TypeSystem::UnaryOperator {
+  bool SupportsType(const Type &type) const override {
+    return type.GetSqlType() == Varchar::Instance();
+  }
+
+  Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
+    return Integer::Instance();
+  }
+
+  Value DoWork(CodeGen &codegen, const Value &val) const override {
+    llvm::Value *raw_ret = codegen.Call(StringFunctionsProxy::Ascii,
+                                        {val.GetValue(), val.GetLength()});
+    return Value{Integer::Instance(), raw_ret};
+  }
+};
+
 //===----------------------------------------------------------------------===//
 // TYPE SYSTEM CONSTRUCTION
 //===----------------------------------------------------------------------===//
@@ -157,7 +172,10 @@ static std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {
     {kCompareVarchar}};
 
 // Unary operators
-static std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {};
+static Ascii kAscii;
+static std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {
+    {OperatorId::Ascii, kAscii}
+};
 
 // Binary operations
 static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {};
@@ -175,8 +193,8 @@ static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
 Varchar::Varchar()
     : SqlType(peloton::type::TypeId::VARCHAR),
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
-                   kComparisonTable, kUnaryOperatorTable,
-                   kBinaryOperatorTable, kNaryOperatorTable) {}
+                   kComparisonTable, kUnaryOperatorTable, kBinaryOperatorTable,
+                   kNaryOperatorTable) {}
 
 Value Varchar::GetMinValue(UNUSED_ATTRIBUTE CodeGen &codegen) const {
   throw Exception{"The VARCHAR type does not have a minimum value ..."};

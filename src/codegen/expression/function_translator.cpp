@@ -50,13 +50,8 @@ codegen::Value FunctionTranslator::DeriveValue(CodeGen &codegen,
   auto operator_id = func_expr.GetFunc().op_id;
 
   if (args.size() == 1) {
-    // It's a unary function
-    auto *unary_op =
-        type::TypeSystem::GetUnaryOperator(operator_id, args[0].GetType());
-    PL_ASSERT(unary_op);
-
-    // Invoke
-    return unary_op->DoWork(codegen, args[0]);
+    // Call unary operator
+    return args[0].CallUnaryOp(codegen, operator_id);
   } else if (args.size() == 2) {
     // It's a binary function
 

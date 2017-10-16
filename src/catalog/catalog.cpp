@@ -896,7 +896,7 @@ void Catalog::InitializeFunctions() {
           "ascii", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
           internal_lang, "Ascii",
           function::BuiltInFuncType{OperatorId::Ascii,
-                                    function::StringFunctions::Ascii},
+                                    function::StringFunctions::_Ascii},
           txn);
       AddBuiltinFunction("chr", {type::TypeId::INTEGER}, type::TypeId::VARCHAR,
                          internal_lang, "Chr",

@@ -140,8 +140,8 @@ Value TypeSystem::UnaryOperatorWithNullPropagation::DoWork(
   Value null_val, ret_val;
   lang::If is_null{codegen, val.IsNull(codegen)};
   {
-    // If the value is NULL, return the NULL type
-    null_val = val.GetType().GetSqlType().GetNullValue(codegen);
+    // If the value is NULL, return the NULL value for the result type
+    null_val = ResultType(val.GetType()).GetSqlType().GetNullValue(codegen);
   }
   is_null.ElseBlock();
   {
@@ -362,10 +362,33 @@ const TypeSystem::BinaryOperator *TypeSystem::GetBinaryOperator(
 
 const TypeSystem::NaryOperator *TypeSystem::GetNaryOperator(
     OperatorId op_id, const std::vector<Type> &arg_types) {
-  // TODO(pmenon): Write me
-  (void)op_id;
-  (void)arg_types;
-  return nullptr;
+  for (const auto &arg_type : arg_types) {
+    auto &type_system = arg_type.GetTypeSystem();
+
+    for (const auto &nary_op_info : type_system.nary_op_table_) {
+      // Is this the operation we want? If not, keep looking ...
+      if (nary_op_info.op_id != op_id) {
+        continue;
+      }
+
+      // Can we use the operation without any implicit casting?
+      const auto &nary_operation = nary_op_info.nary_operation;
+      if (nary_operation.SupportsTypes(arg_types)) {
+        return &nary_operation;
+      }
+    }
+  }
+
+  std::string arg_types_str;
+  for (size_t i = 0; i < arg_types.size(); i++) {
+    if (i != 0) arg_types_str.append(",");
+    arg_types_str.append(TypeIdToString(arg_types[i].type_id));
+  }
+
+  // Error
+  throw Exception{StringUtil::Format(
+      "No compatible '%s' operator for input types: %s",
+      OperatorIdToString(op_id).c_str(), arg_types_str.c_str())};
 }
 
 }  // namespace type

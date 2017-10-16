@@ -17,17 +17,19 @@
 #include "codegen/expression/comparison_translator.h"
 #include "codegen/expression/conjunction_translator.h"
 #include "codegen/expression/constant_translator.h"
+#include "codegen/expression/function_translator.h"
+#include "codegen/expression/negation_translator.h"
 #include "codegen/operator/delete_translator.h"
 #include "codegen/operator/global_group_by_translator.h"
 #include "codegen/operator/hash_group_by_translator.h"
 #include "codegen/operator/hash_join_translator.h"
-#include "codegen/expression/negation_translator.h"
 #include "codegen/operator/order_by_translator.h"
 #include "codegen/operator/projection_translator.h"
 #include "codegen/operator/table_scan_translator.h"
 #include "codegen/expression/tuple_value_translator.h"
 #include "expression/case_expression.h"
 #include "expression/conjunction_expression.h"
+#include "expression/function_expression.h"
 #include "expression/constant_value_expression.h"
 #include "expression/operator_expression.h"
 #include "expression/tuple_value_expression.h"
@@ -157,6 +159,11 @@ std::unique_ptr<ExpressionTranslator> TranslatorFactory::CreateTranslator(
     case ExpressionType::OPERATOR_CASE_EXPR: {
       auto &case_exp = static_cast<const expression::CaseExpression &>(exp);
       translator = new CaseTranslator(case_exp, context);
+      break;
+    }
+    case ExpressionType::FUNCTION: {
+      auto &func_exp = static_cast<const expression::FunctionExpression &>(exp);
+      translator = new FunctionTranslator(func_exp, context);
       break;
     }
     default: {

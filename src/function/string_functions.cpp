@@ -18,15 +18,20 @@
 namespace peloton {
 namespace function {
 
+uint32_t StringFunctions::Ascii(const char *str, uint32_t length) {
+  PL_ASSERT(str != nullptr);
+  return length <= 1 ? 0 : static_cast<uint32_t>(str[0]);
+}
+
 // ASCII code of the first character of the argument.
-type::Value StringFunctions::Ascii(const std::vector<type::Value> &args) {
+type::Value StringFunctions::_Ascii(const std::vector<type::Value> &args) {
   PL_ASSERT(args.size() == 1);
   if (args[0].IsNull()) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::INTEGER);
   }
-  std::string str = args[0].ToString();
-  int32_t val = str[0];
-  return type::ValueFactory::GetIntegerValue(val);
+
+  uint32_t ret = Ascii(args[0].GetAs<const char *>(), args[0].GetLength());
+  return type::ValueFactory::GetIntegerValue(ret);
 }
 
 // Get Character from integer
