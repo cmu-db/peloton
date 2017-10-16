@@ -136,10 +136,9 @@ class ValueFactory {
         ret_value = GetVarbinaryValue(nullptr, 0, false, nullptr);
         break;
       default: {
-        std::string msg = StringUtil::Format(
-            "Type %s does not have a NULL value (i.e., from "
-            "GetNullValueByType)",
-            TypeIdToString(type_id));
+        std::string msg =
+            StringUtil::Format("Type '%s' does not have a NULL value",
+                               TypeIdToString(type_id).c_str());
         throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, msg);
       }
     }
