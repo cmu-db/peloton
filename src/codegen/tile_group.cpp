@@ -128,11 +128,15 @@ codegen::Value TileGroup::LoadColumn(
 
   // Check if it's a string or numeric value
   if (sql_type.IsVariableLength()) {
+    auto *varlen_type = VarlenProxy::GetType(codegen);
+    auto *varlen_ptr_ptr = codegen->CreateBitCast(
+        col_address, varlen_type->getPointerTo()->getPointerTo());
     if (is_nullable) {
-      codegen::Varlen::GetPtrAndLength(codegen, col_address, val, length,
-                                       is_null);
+      codegen::Varlen::GetPtrAndLength(
+          codegen, codegen->CreateLoad(varlen_ptr_ptr), val, length, is_null);
     } else {
-      codegen::Varlen::SafeGetPtrAndLength(codegen, col_address, val, length);
+      codegen::Varlen::SafeGetPtrAndLength(
+          codegen, codegen->CreateLoad(varlen_ptr_ptr), val, length);
     }
     PL_ASSERT(val != nullptr && length != nullptr);
   } else {
@@ -141,7 +145,10 @@ codegen::Value TileGroup::LoadColumn(
     sql_type.GetTypeForMaterialization(codegen, col_type, col_len_type);
     PL_ASSERT(col_type != nullptr && col_len_type == nullptr);
 
-    val = codegen->CreateLoad(col_type, codegen->CreateBitCast(col_address, col_type->getPointerTo()));
+    // val = *(col_type*)col_address;
+    val = codegen->CreateLoad(
+        col_type,
+        codegen->CreateBitCast(col_address, col_type->getPointerTo()));
 
     if (is_nullable) {
       // To check for NULL, we need to perform a comparison between the value we

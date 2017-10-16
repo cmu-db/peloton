@@ -10,12 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "common/harness.h"
 
 #include "storage/tile.h"
 #include "storage/tile_group.h"
 #include "storage/tuple_iterator.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 namespace test {

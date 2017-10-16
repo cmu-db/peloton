@@ -14,7 +14,6 @@
 
 #include "type/numeric_type.h"
 #include "common/exception.h"
-#include "type/value_factory.h"
 
 namespace peloton {
 namespace type {

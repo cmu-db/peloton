@@ -16,6 +16,7 @@
 
 #include "common/harness.h"
 #include "storage/tuple.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 namespace test {

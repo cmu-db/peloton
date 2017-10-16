@@ -21,6 +21,7 @@
 #include "common/macros.h"
 #include "storage/tuple.h"
 #include "type/value.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 namespace storage {
