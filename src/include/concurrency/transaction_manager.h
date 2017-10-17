@@ -22,6 +22,7 @@
 #include "concurrency/transaction_context.h"
 #include "concurrency/epoch_manager_factory.h"
 #include "common/logger.h"
+#include "logging/wal_log_manager.h"
 
 namespace peloton {
 
@@ -139,7 +140,7 @@ class TransactionManager {
 
   void EndTransaction(TransactionContext *current_txn);
 
-  virtual ResultType CommitTransaction(TransactionContext *const current_txn) = 0;
+  virtual ResultType CommitTransaction(TransactionContext *const current_txn, logging::WalLogManager *log_manager=nullptr) = 0;
 
   virtual ResultType AbortTransaction(TransactionContext *const current_txn) = 0;
 

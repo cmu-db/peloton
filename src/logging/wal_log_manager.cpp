@@ -22,7 +22,7 @@
 namespace peloton {
 namespace logging {
 
-ResultType LogTransaction(std::vector<LogRecord> log_records){
+ResultType WalLogManager::LogTransaction(std::vector<LogRecord> log_records){
     ResultType status = ResultType::SUCCESS;
     LogTransactionArg* arg = new LogTransactionArg(log_records, &status);
     threadpool::LoggerQueuePool::GetInstance().SubmitTask(WalLogManager::WriteTransactionWrapper, arg, task_callback_, task_callback_arg_);
@@ -30,7 +30,19 @@ ResultType LogTransaction(std::vector<LogRecord> log_records){
     return status;
 }
 
-void SetDirectories(std::string logging_dir)
+void WalLogManager::WriteTransactionWrapper(void *arg_ptr) {
+    LogTransactionArg* arg = (LogTransactionArg*) arg_ptr;
+    WriteTransaction(arg->log_records_,arg->p_status_);
+    delete (arg);
+}
+
+void WalLogManager::WriteTransaction(std::vector<LogRecord> log_records, ResultType* status) {
+    WalLogger* wl = new WalLogger(0, "/tmp/log");
+    wl->WriteTransaction(log_records,status);
+}
+
+
+void WalLogManager::SetDirectories(std::string logging_dir)
 {
     // check the existence of logging directories.
     // if not exists, then create the directory.
@@ -43,8 +55,6 @@ void SetDirectories(std::string logging_dir)
       }
   }
 void WalLogManager::DoRecovery(){
-    logger_->StartRecovery();
-    logger_->WaitForRecovery();
  }
 
 /*void WalLogManager::StartLoggers() {

@@ -101,7 +101,6 @@ void PelotonInit::Shutdown() {
     layout_tuner.Stop();
   }
 
-  logging::DurabilityFactory::GetLoggerInstance().StopLoggers();
   // shut down GC.
   gc::GCManagerFactory::GetInstance().StopGC();
 

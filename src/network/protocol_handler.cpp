@@ -16,8 +16,9 @@
 namespace peloton {
 namespace network {
 
-  ProtocolHandler::ProtocolHandler(tcop::TrafficCop *traffic_cop) {
+  ProtocolHandler::ProtocolHandler(tcop::TrafficCop *traffic_cop, logging::WalLogManager *log_manager) {
     this->traffic_cop_ = traffic_cop;
+    this->log_manager_ = log_manager;
   }
 
   ProtocolHandler::~ProtocolHandler() {}

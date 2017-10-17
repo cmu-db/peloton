@@ -499,7 +499,7 @@ bool NetworkConnection::ProcessStartupPacket(InputPacket* pkt, int32_t proto_ver
 
   protocol_handler_ =
       ProtocolHandlerFactory::CreateProtocolHandler(
-          ProtocolHandlerType::Postgres, &traffic_cop_);
+          ProtocolHandlerType::Postgres, &traffic_cop_, &log_manager_);
 
   protocol_handler_->SendInitialResponse();
 

@@ -91,7 +91,7 @@ ResultType TrafficCop::BeginQueryHelper(size_t thread_id) {
   return ResultType::SUCCESS;
 }
 
-ResultType TrafficCop::CommitQueryHelper() {
+ResultType TrafficCop::CommitQueryHelper(logging::WalLogManager* log_manager) {
   // do nothing if we have no active txns
   if (tcop_txn_state_.empty()) return ResultType::NOOP;
   auto &curr_state = tcop_txn_state_.top();
@@ -104,7 +104,7 @@ ResultType TrafficCop::CommitQueryHelper() {
   // 'ROLLBACK' After receive 'COMMIT', see if it is rollback or really commit.
   if (curr_state.second != ResultType::ABORTED) {
     // txn committed
-    return txn_manager.CommitTransaction(txn);
+    return txn_manager.CommitTransaction(txn, log_manager);
   } else {
     // otherwise, rollback
     return txn_manager.AbortTransaction(txn);
@@ -182,7 +182,7 @@ executor::ExecutionResult TrafficCop::ExecuteHelper(
   return p_status_;
 }
 
-void TrafficCop::ExecuteStatementPlanGetResult() {
+void TrafficCop::ExecuteStatementPlanGetResult(logging::WalLogManager* log_manager) {
   bool init_failure = false;
   if (p_status_.m_result == ResultType::FAILURE) {
     // only possible if init failed
@@ -200,7 +200,7 @@ void TrafficCop::ExecuteStatementPlanGetResult() {
       case ResultType::SUCCESS:
         // Commit single statement
         LOG_TRACE("Commit Transaction");
-        p_status_.m_result = CommitQueryHelper();
+        p_status_.m_result = CommitQueryHelper(log_manager);
         break;
 
       case ResultType::FAILURE:
