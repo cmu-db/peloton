@@ -347,7 +347,7 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
         }
         param_values_ = param_values;
 
-        auto status =
+        auto status = //Added the log manager as a param to the traffic cop for passing it down
                 traffic_cop_->ExecuteStatement(statement_, param_values_, unnamed, nullptr, result_format_,
                              results_, rows_affected_, error_message_, log_manager_, thread_id);
 

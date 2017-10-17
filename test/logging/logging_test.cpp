@@ -19,7 +19,6 @@
 // #include "executor/logical_tile_factory.h"
 // #include "logging/loggers/wal_frontend_logger.h"
  #include "logging/logging_util.h"
-#include "logging/durability_factory.h"
  #include "storage/data_table.h"
  #include "storage/database.h"
  #include "storage/table_factory.h"
@@ -43,7 +42,7 @@
 class LoggingTests : public PelotonTest {};
 
  TEST_F(LoggingTests, BasicLoggingTest) {
-   std::unique_ptr<storage::DataTable> table(
+  /* std::unique_ptr<storage::DataTable> table(
        TestingExecutorUtil::CreateAndPopulateTable());
 
     logging::DurabilityFactory::Configure(LoggingType::ON,CheckpointType::CHECKPOINT_TYPE_INVALID, TimerType::TIMER_OFF);
@@ -52,7 +51,7 @@ class LoggingTests : public PelotonTest {};
     log_manager.StartLoggers();
     log_manager.LogInsert(ItemPointer(table->GetTileGroup(0)->GetTileGroupId(),0), 5,1);
     log_manager.StopLoggers();
-
+*/
 
 
 
