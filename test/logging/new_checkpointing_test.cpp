@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "logging/checkpoint_manager_factory.h"
 #include "common/harness.h"
 
 namespace peloton {

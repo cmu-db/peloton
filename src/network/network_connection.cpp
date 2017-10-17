@@ -70,6 +70,7 @@ void NetworkConnection::Init(short event_flags, NetworkThread *thread,
       PL_ASSERT(false);
     }
   }
+  //Adding log event
   if (logpool_event == nullptr) {
     logpool_event = event_new(thread->GetEventBase(), -1, EV_PERSIST,
     CallbackUtil::EventHandler, this);
@@ -92,6 +93,7 @@ void NetworkConnection::Init(short event_flags, NetworkThread *thread,
 
   //TODO:: should put the initialization else where.. check correctness first.
   traffic_cop_.SetTaskCallback(TriggerStateMachine, workpool_event);
+  //Registering the logger callback
   log_manager_.SetTaskCallback(TriggerStateMachine, logpool_event);
 }
 

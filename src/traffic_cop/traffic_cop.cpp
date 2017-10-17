@@ -91,6 +91,8 @@ ResultType TrafficCop::BeginQueryHelper(size_t thread_id) {
   return ResultType::SUCCESS;
 }
 
+
+//Pass the log manager to commit transaction
 ResultType TrafficCop::CommitQueryHelper(logging::WalLogManager* log_manager) {
   // do nothing if we have no active txns
   if (tcop_txn_state_.empty()) return ResultType::NOOP;
@@ -182,6 +184,7 @@ executor::ExecutionResult TrafficCop::ExecuteHelper(
   return p_status_;
 }
 
+//Pass log manager to CommitTransaction
 void TrafficCop::ExecuteStatementPlanGetResult(logging::WalLogManager* log_manager) {
   bool init_failure = false;
   if (p_status_.m_result == ResultType::FAILURE) {

@@ -2,11 +2,11 @@
 //
 //                         Peloton
 //
-// reordered_phylog_logger.cpp
+// wal_logger.cpp
 //
-// Identification: src/backend/logging/reordered_phylog_logger.cpp
+// Identification: src/logging/wal_logger.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 #include <sys/stat.h>
@@ -41,7 +41,7 @@
 namespace peloton {
 namespace logging {
 
-
+//Gets all the records created on the txn rw set and logs them.
 void WalLogger::WriteTransaction(std::vector<LogRecord> log_records, ResultType* status){
 LogBuffer* buf = new LogBuffer();
 for(LogRecord record : log_records){

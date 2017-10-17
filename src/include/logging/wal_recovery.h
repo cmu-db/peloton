@@ -2,11 +2,13 @@
 //
 //                         Peloton
 //
-// reordered_phylog_logger.h
+// wal_recovery.h
 //
-// Identification: src/backend/logging/reordered_phylog_logger.h
+// Identification: src/include/logging/wal_recovery.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Recovery component, called on init.
+//
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
