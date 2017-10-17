@@ -72,12 +72,14 @@ public:
 
   static void SetDirectories(std::string logging_dir);
 
-
   static void WriteTransactionWrapper(void* args);
 
+  static void WriteTransaction(std::vector<LogRecord> log_records, ResultType* result);
 
   // Logger side logic
   static void DoRecovery();
+
+  ResultType LogTransaction(std::vector<LogRecord> log_records);
 
   void SetTaskCallback(void(* task_callback)(void*), void *task_callback_arg) {
     task_callback_ = task_callback;

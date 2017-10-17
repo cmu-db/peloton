@@ -757,7 +757,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
   //////////////////////////////////////////////////////////
 
   auto &manager = catalog::Manager::GetInstance();
-  auto &log_manager = logging::WalLogManager::GetInstance();
+  //auto &log_manager = logging::WalLogManager::GetInstance();
 
   cid_t end_commit_id = current_txn->GetCommitId();
   eid_t epoch_id = current_txn->GetEpochId();
@@ -920,13 +920,14 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
       }
     }
   }
-  if(!current_txn->log_records_.empty()){
-      log_manager.LogTransaction(current_txn->log_records_);
+
+  if(log_manager != nullptr && !current_txn->log_records_.empty()){
+      log_manager->LogTransaction(current_txn->log_records_);
       EndTransaction(current_txn);
       if (settings::SettingsManager::GetInt(settings::SettingId::stats_mode) !=
           STATS_TYPE_INVALID) {
         stats::BackendStatsContext::GetInstance()->IncrementTxnCommitted(
-            database_oid);
+            database_id);
       }
 
   // If there is a log manager and something to log, queue the task.

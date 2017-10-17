@@ -537,4 +537,4 @@ void WalRecovery::RunRecovery() {
   }
 }
 }
-}
+}}
