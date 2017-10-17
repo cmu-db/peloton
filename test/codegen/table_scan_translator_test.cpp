@@ -127,8 +127,7 @@ TEST_F(TableScanTranslatorTest, AllColumnsScanWithNulls) {
   //
 
   auto &tbl = GetAllColsTable();
-  size_t ncols = tbl.GetSchema()->GetColumnCount();
-  std::vector<oid_t> all_col_ids(ncols);
+  std::vector<oid_t> all_col_ids(tbl.GetSchema()->GetColumnCount());
   std::iota(all_col_ids.begin(), all_col_ids.end(), 0);
 
   // Setup the scan plan node
@@ -148,10 +147,12 @@ TEST_F(TableScanTranslatorTest, AllColumnsScanWithNulls) {
   const auto &results = buffer.GetOutputTuples();
   EXPECT_EQ(1, results.size());
 
-  // Make sure it's all NULL
-  auto &result_tuple = buffer.GetOutputTuples()[0];
+  // Make sure all column values are NULL
+  auto &tuple = buffer.GetOutputTuples()[0];
   for (uint32_t i = 0; i < all_col_ids.size(); i++) {
-    EXPECT_TRUE(result_tuple.GetValue(i).IsNull());
+    auto col_val = tuple.GetValue(i);
+    EXPECT_TRUE(col_val.IsNull()) << "Result value: " << col_val.ToString()
+                                  << ", expected NULL";
   }
 }
 
