@@ -41,7 +41,7 @@ class WalRecovery {
 public:
   WalRecovery(const size_t &logger_id, const std::string &log_dir) :
     logger_id_(logger_id),
-    log_dir_(log_dir),
+    log_dir_(log_dir)
     {}
 
   ~WalRecovery() {}
@@ -58,7 +58,7 @@ private:
 
   void GetSortedLogFileIdList();
 
-  void RunRecoveryThread();
+  void RunRecovery();
 
   void RunSecIndexRebuildThread();
 

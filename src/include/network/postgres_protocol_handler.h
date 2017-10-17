@@ -21,6 +21,7 @@
 #include "common/cache.h"
 #include "common/portal.h"
 #include "common/statement.h"
+#include "logging/wal_log_manager.h"
 #include "traffic_cop/traffic_cop.h"
 #include "protocol_handler.h"
 #include "type/types.h"
@@ -37,7 +38,7 @@ typedef std::vector<std::unique_ptr<OutputPacket>> ResponseBuffer;
 class PostgresProtocolHandler: public ProtocolHandler {
  public:
   // TODO we need to somehow make this virtual?
-  PostgresProtocolHandler(tcop::TrafficCop *traffic_cop);
+  PostgresProtocolHandler(tcop::TrafficCop *traffic_cop, logging::WalLogManager *log_manager);
 
   ~PostgresProtocolHandler();
 

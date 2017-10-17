@@ -96,7 +96,7 @@ class TimestampOrderingTransactionManager : public TransactionManager {
   virtual void PerformDelete(Transaction *const current_txn,
                              const ItemPointer &location);
 
-  virtual ResultType CommitTransaction(Transaction *const current_txn);
+  virtual ResultType CommitTransaction(Transaction *const current_txn, logging::WalLogManager *log_manager);
 
   virtual ResultType AbortTransaction(Transaction *const current_txn);
 
@@ -123,6 +123,7 @@ private:
   void InitTupleReserved(
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t tuple_id);
+  ResultType EndTransaction2(Transaction* txn);
 };
 }
 }

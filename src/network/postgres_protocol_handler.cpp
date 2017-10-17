@@ -50,8 +50,8 @@ const std::unordered_map<std::string, std::string>
 				("TimeZone", "US/Eastern");
 // clang-format on
 
-PostgresProtocolHandler::PostgresProtocolHandler(tcop::TrafficCop *traffic_cop)
-    : ProtocolHandler(traffic_cop),
+PostgresProtocolHandler::PostgresProtocolHandler(tcop::TrafficCop *traffic_cop, logging::WalLogManager *log_manager)
+    : ProtocolHandler(traffic_cop, log_manager),
       txn_state_(NetworkTransactionStateType::IDLE) {
 }
 
@@ -349,7 +349,7 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
 
         auto status =
                 traffic_cop_->ExecuteStatement(statement_, param_values_, unnamed, nullptr, result_format_,
-                             results_, rows_affected_, error_message_, thread_id);
+                             results_, rows_affected_, error_message_, log_manager_, thread_id);
 
         if (traffic_cop_->is_queuing_) {
           return ProcessResult::PROCESSING;
@@ -381,7 +381,7 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
         // should results_ be reset when PakcetManager.reset(), why results_ cannot be read?
         auto status =
             traffic_cop_->ExecuteStatement(statement_, param_values_, unnamed, nullptr, result_format_,
-                                           results_, rows_affected_, error_message_, thread_id);
+                                           results_, rows_affected_, error_message_, log_manager_, thread_id);
         if (traffic_cop_->is_queuing_) {
           return ProcessResult::PROCESSING;
         }
@@ -899,7 +899,7 @@ ProcessResult PostgresProtocolHandler::ExecExecuteMessage(InputPacket *pkt,
 
   auto status = traffic_cop_->ExecuteStatement(
       statement_, param_values_, unnamed, param_stat, result_format_, results_,
-      rows_affected_, error_message_, thread_id);
+      rows_affected_, error_message_, log_manager_, thread_id);
   if (traffic_cop_->is_queuing_) {
     return ProcessResult::PROCESSING;
   }
@@ -935,7 +935,7 @@ void PostgresProtocolHandler::ExecExecuteMessageGetResult(ResultType status) {
 }
 
 void PostgresProtocolHandler::GetResult() {
-  traffic_cop_->ExecuteStatementPlanGetResult();
+  traffic_cop_->ExecuteStatementPlanGetResult(log_manager_);
   auto status = traffic_cop_->ExecuteStatementGetResult(rows_affected_);
   switch (protocol_type_) {
     case NetworkProtocolType::POSTGRES_JDBC:

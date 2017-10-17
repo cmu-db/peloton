@@ -25,7 +25,6 @@
 #include "concurrency/transaction_manager_factory.h"
 #include "gc/gc_manager_factory.h"
 #include "index/index.h"
-#include "logging/log_manager.h"
 #include "storage/abstract_table.h"
 #include "storage/data_table.h"
 #include "storage/database.h"

@@ -505,9 +505,9 @@ bool WalRecovery::ReplayLogFile(FileHandle &file_handle){
 
 void WalRecovery::RunRecovery(){
 
-    size_t file_eid = file_eids_.at(replay_cap - replay_file_id);
+    //size_t file_eid = file_eids_.at(replay_cap - replay_file_id);
     // Replay a single file
-    std::string filename = GetLogFileFullPath(file_eid);
+    std::string filename = GetLogFileFullPath(0);
     FileHandle file_handle;
     bool res = LoggingUtil::OpenFile(filename.c_str(), "rb", file_handle);
     if (res == false) {
@@ -535,4 +535,4 @@ void WalRecovery::RebuildSecIndexForTable(storage::DataTable *table UNUSED_ATTRI
 
 }
 
-}
+}}

@@ -15,6 +15,7 @@
 #include "include/traffic_cop/traffic_cop.h"
 #include "marshal.h"
 #include "type/types.h"
+#include "logging/wal_log_manager.h"
 // Packet content macros
 
 namespace peloton {
@@ -26,7 +27,7 @@ typedef std::vector<std::unique_ptr<OutputPacket>> ResponseBuffer;
 class ProtocolHandler {
  public:
 
-  ProtocolHandler(tcop::TrafficCop *traffic_cop);
+  ProtocolHandler(tcop::TrafficCop *traffic_cop, logging::WalLogManager* log_manager);
 
   virtual ~ProtocolHandler();
 
@@ -54,6 +55,7 @@ class ProtocolHandler {
 
   // The traffic cop used for this connection
   tcop::TrafficCop* traffic_cop_;
+  logging::WalLogManager* log_manager_;
 
 };
 

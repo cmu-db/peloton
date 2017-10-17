@@ -152,6 +152,8 @@ class Transaction : public Printable {
   // cache for table catalog objects
   catalog::CatalogCache catalog_cache;
 
+
+  std::vector<logging::LogRecord> log_records_;
  private:
   //===--------------------------------------------------------------------===//
   // Data members
@@ -186,7 +188,6 @@ class Transaction : public Printable {
   // result of the transaction
   ResultType result_ = ResultType::SUCCESS;
 
-  std::vector<logging::LogRecord> log_records_;
 
   bool is_written_;
   size_t insert_count_;

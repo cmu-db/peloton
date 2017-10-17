@@ -55,22 +55,12 @@ public:
 
   void StopLogging() {
     is_running_ = false;
-   /*/ if(!log_buffer_->Empty()){
-        PersistLogBuffer(log_buffer_);
-    }
-    delete log_buffer_;
-    logger_thread_->join();*/
-  }
 
+  }
+void WriteTransaction(std::vector<LogRecord> log_records, ResultType* status);
   void PersistLogBuffer(LogBuffer* log_buffer);
 
 
-
-  /*void PushBuffer(CopySerializeOutput* buf){
-      log_buffers_.Enqueue(buf);
-  }*/
-
-void WriteTransaction(std::vector<LogRecord> log_records);
 
 private:
  // void Run();
