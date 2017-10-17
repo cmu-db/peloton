@@ -155,13 +155,16 @@ codegen::Value TileGroup::LoadColumn(
       // just read from the table with the NULL value for the column's type. We
       // need to be careful that the runtime type of both values is not NULL to
       // bypass the type system's NULL checking logic.
-      auto val_tmp = codegen::Value{sql_type, val};
-      auto null_val =
-          codegen::Value{sql_type, sql_type.GetNullValue(codegen).GetValue()};
-      auto val_is_null = val_tmp.CompareEq(codegen, null_val);
-      PL_ASSERT(!val_is_null.IsNullable());
-      PL_ASSERT(val_is_null.GetType() == type::Boolean::Instance());
-      is_null = val_is_null.GetValue();
+      if (sql_type.TypeId() == peloton::type::TypeId::BOOLEAN) {
+        is_null = type::Boolean::Instance().CheckNull(codegen, col_address);
+      } else {
+        auto val_tmp = codegen::Value{sql_type, val};
+        auto null_val =
+            codegen::Value{sql_type, sql_type.GetNullValue(codegen).GetValue()};
+        auto val_is_null = val_tmp.CompareEq(codegen, null_val);
+        PL_ASSERT(!val_is_null.IsNullable());
+        is_null = val_is_null.GetValue();
+      }
     }
   }
 

@@ -259,6 +259,14 @@ Value Boolean::GetNullValue(CodeGen &codegen) const {
   return Value{Type{TypeId(), true}, raw_val, nullptr, codegen.ConstBool(true)};
 }
 
+llvm::Value *Boolean::CheckNull(CodeGen &codegen, llvm::Value *bool_ptr) const {
+  auto *b = codegen->CreateLoad(
+      codegen.Int8Type(),
+      codegen->CreateBitCast(bool_ptr, codegen.Int8Type()->getPointerTo()));
+  return codegen->CreateICmpEQ(
+      b, codegen.Const8(peloton::type::PELOTON_BOOLEAN_NULL));
+}
+
 void Boolean::GetTypeForMaterialization(CodeGen &codegen, llvm::Type *&val_type,
                                         llvm::Type *&len_type) const {
   val_type = codegen.BoolType();

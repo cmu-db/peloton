@@ -30,6 +30,8 @@ class Boolean : public SqlType, public Singleton<Boolean> {
 
   Value GetNullValue(CodeGen &codegen) const override;
 
+  llvm::Value *CheckNull(CodeGen &codegen, llvm::Value *bool_ptr) const;
+
   void GetTypeForMaterialization(CodeGen &codegen, llvm::Type *&val_type,
                                  llvm::Type *&len_type) const override;
 
