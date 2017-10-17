@@ -301,15 +301,21 @@ void OperatorToPlanTransformer::Visit(const PhysicalDistinct *) {
         auto &input_expr = expr_idx_pair.first;
         if (input_expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
           auto &column_idx = expr_idx_pair.second;
-          auto col_expr = new expression::TupleValueExpression("");
+
+          auto col_expr = static_cast<expression::TupleValueExpression *>(input_expr->Copy());
           col_expr->SetValueIdx(static_cast<int>(column_idx));
+
           hash_keys.emplace_back(col_expr);
         }
       }
     } else {
+      // TODO: can we do this!?
+      PL_ASSERT(expr->GetExpressionType() == ExpressionType::VALUE_TUPLE);
+
       auto column_idx = child_expr_map[expr];
-      auto col_expr = new expression::TupleValueExpression("");
+      auto col_expr = static_cast<expression::TupleValueExpression *>(expr->Copy());
       col_expr->SetValueIdx(static_cast<int>(column_idx));
+
       hash_keys.emplace_back(col_expr);
     }
   }

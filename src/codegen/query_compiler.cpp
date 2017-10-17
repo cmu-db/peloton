@@ -78,11 +78,11 @@ bool QueryCompiler::IsSupported(const planner::AbstractPlan &plan,
       }
     }
     case PlanNodeType::HASH: {
-      // Right now, only support hash's in hash-joins
-      if (parent != nullptr &&
-          parent->GetPlanNodeType() == PlanNodeType::HASHJOIN) {
-        break;
-      }
+      // TODO: are there still hashes that are not supported?
+      // TODO: remove parent not used warning/error and remove hack below
+      (void) parent;
+
+      break;
     }
     default: { return false; }
   }
