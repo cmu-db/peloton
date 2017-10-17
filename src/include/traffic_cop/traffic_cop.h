@@ -111,6 +111,8 @@ class TrafficCop {
   void ExecuteStatementPlanGetResult() {
     ExecuteStatementPlanGetResult(nullptr);
   }
+    ExecuteStatementPlanGetResult(nullptr);
+  }
 
   void SetTaskCallback(void (*task_callback)(void *), void *task_callback_arg) {
     task_callback_ = task_callback;

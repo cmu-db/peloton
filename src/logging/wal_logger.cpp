@@ -47,7 +47,6 @@ void WalLogger::WriteTransaction(std::vector<LogRecord> log_records) {
     PersistLogBuffer(buf);
   }
 }
-
 CopySerializeOutput *WalLogger::WriteRecordToBuffer(LogRecord &record) {
   // Reset the output buffer
   CopySerializeOutput *output_buffer = new CopySerializeOutput();

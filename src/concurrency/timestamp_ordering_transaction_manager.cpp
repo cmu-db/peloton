@@ -757,7 +757,6 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
   //////////////////////////////////////////////////////////
 
   auto &manager = catalog::Manager::GetInstance();
-  //auto &log_manager = logging::WalLogManager::GetInstance();
 
   cid_t end_commit_id = current_txn->GetCommitId();
   eid_t epoch_id = current_txn->GetEpochId();
@@ -921,6 +920,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
     }
   }
 
+  //If there is a log manager and something to log, queue the task.
   if(log_manager != nullptr && !current_txn->log_records_.empty()){
       log_manager->LogTransaction(current_txn->log_records_);
       EndTransaction(current_txn);
