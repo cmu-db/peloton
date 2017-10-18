@@ -55,7 +55,7 @@ HashTranslator::HashTranslator (
   }
 
   // Create the hash table
-  // TODO: value is same as key (correct?)
+  // we don't need to save any values, so value_size is zero
   hash_table_ =
       OAHashTable{codegen, key_type, 0};
 }
@@ -84,9 +84,9 @@ void HashTranslator::Consume (ConsumerContext &context,
 }
 
 // Consume the tuples from the context, adding them to the hash table
-void HashTranslator::Consume (ConsumerContext &,
+void HashTranslator::Consume (ConsumerContext &context,
                               RowBatch::Row &row) const {
-  LOG_DEBUG("Hash consuming results ...");
+  LOG_DEBUG("Hash operator consuming results ...");
 
   auto &codegen = GetCodeGen();
 
@@ -103,10 +103,9 @@ void HashTranslator::Consume (ConsumerContext &,
 
   // Perform the insertion into the hash table
   llvm::Value *hash_table = LoadStatePtr(hash_table_id_);
-  ConsumerContext consumer_context{GetCompilationContext(),
-                                   GetPipeline()};
+
   ConsumerProbe probe{};
-  ConsumerInsert insert{consumer_context, row};
+  ConsumerInsert insert{context, row};
   hash_table_.ProbeOrInsert(codegen, hash_table, hash, key, probe, insert);
 }
 

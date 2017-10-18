@@ -27,5 +27,9 @@ void HashPlan::PerformBinding(BindingContext &binding_context) {
   }
 }
 
+void HashPlan::GetOutputColumns (std::vector<oid_t> &columns) const {
+  GetChild(0)->GetOutputColumns(columns);
+}
+
 }  // namespace planner
 }  // namespace peloton
