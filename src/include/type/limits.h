@@ -35,7 +35,7 @@ static const int32_t PELOTON_INT32_MAX = INT_MAX;
 static const int64_t PELOTON_INT64_MAX = LLONG_MAX;
 static const uint64_t PELOTON_UINT64_MAX = ULLONG_MAX - 1;
 static const double PELOTON_DECIMAL_MAX = DBL_MAX;
-static const uint64_t PELOTON_TIMESTAMP_MAX = 11231999986399999999U;
+static const uint64_t PELOTON_TIMESTAMP_MAX = 11231999986399999999U; // ???
 static const int32_t PELOTON_DATE_MAX = INT_MAX;
 static const int8_t PELOTON_BOOLEAN_MAX = 1;
 
