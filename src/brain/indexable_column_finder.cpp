@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 #include "brain/indexable_column_finder.h"
-#include <cstdarg>
 namespace peloton {
   namespace brain {
 
@@ -52,18 +51,21 @@ namespace peloton {
 
     void IndexableColumnFinder::Visit(const parser::InsertStatement *node) {
       visit(node->select, this);
+      // TODO add all columns of the table
     }
+
     void IndexableColumnFinder::Visit(const parser::DeleteStatement *node) {
+      visit(node->table_ref, this);
+      visit(node->expr, this);
 
     }
-    void IndexableColumnFinder::Visit(const parser::DropStatement *node) {
 
-    }
     void IndexableColumnFinder::Visit(const parser::PrepareStatement *node) {
-
+      // TODO figure out
     }
-    void IndexableColumnFinder::Visit(const parser::ExecuteStatement *node) {
 
+    void IndexableColumnFinder::Visit(const parser::ExecuteStatement *node) {
+      // TODO figure out
     }
     void IndexableColumnFinder::Visit(const parser::TransactionStatement *node) {
 
