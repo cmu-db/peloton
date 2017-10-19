@@ -22,41 +22,41 @@ DateType::DateType() : Type(TypeId::DATE) {}
 CmpBool DateType::CompareEquals(const Value& left, const Value& right) const {
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return CMP_NULL;
-  return GetCmpBool(left.GetAs<uint32_t>() == right.GetAs<uint32_t>());
+  return GetCmpBool(left.GetAs<int32_t>() == right.GetAs<int32_t>());
 }
 
 CmpBool DateType::CompareNotEquals(const Value& left,
                                    const Value& right) const {
   PL_ASSERT(left.CheckComparable(right));
   if (right.IsNull()) return CMP_NULL;
-  return GetCmpBool(left.GetAs<uint32_t>() != right.GetAs<uint32_t>());
+  return GetCmpBool(left.GetAs<int32_t>() != right.GetAs<int32_t>());
 }
 
 CmpBool DateType::CompareLessThan(const Value& left, const Value& right) const {
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return CMP_NULL;
-  return GetCmpBool(left.GetAs<uint32_t>() < right.GetAs<uint32_t>());
+  return GetCmpBool(left.GetAs<int32_t>() < right.GetAs<int32_t>());
 }
 
 CmpBool DateType::CompareLessThanEquals(const Value& left,
                                         const Value& right) const {
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return CMP_NULL;
-  return GetCmpBool(left.GetAs<uint32_t>() <= right.GetAs<uint32_t>());
+  return GetCmpBool(left.GetAs<int32_t>() <= right.GetAs<int32_t>());
 }
 
 CmpBool DateType::CompareGreaterThan(const Value& left,
                                      const Value& right) const {
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return CMP_NULL;
-  return GetCmpBool(left.GetAs<uint32_t>() > right.GetAs<uint32_t>());
+  return GetCmpBool(left.GetAs<int32_t>() > right.GetAs<int32_t>());
 }
 
 CmpBool DateType::CompareGreaterThanEquals(const Value& left,
                                            const Value& right) const {
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return CMP_NULL;
-  return GetCmpBool(left.GetAs<uint32_t>() >= right.GetAs<uint32_t>());
+  return GetCmpBool(left.GetAs<int32_t>() >= right.GetAs<int32_t>());
 }
 
 Value DateType::Min(const Value& left, const Value& right) const {
@@ -76,7 +76,7 @@ Value DateType::Max(const Value& left, const Value& right) const {
 // Debug
 std::string DateType::ToString(const Value& val) const {
   if (val.IsNull()) return "date_null";
-  uint32_t tm = val.value_.date;
+  int32_t tm = val.value_.date;
   tm /= 1000000;
   tm /= 100000;
   uint16_t year = tm % 10000;
@@ -102,11 +102,11 @@ std::string DateType::ToString(const Value& val) const {
 
 // Compute a hash value
 size_t DateType::Hash(const Value& val) const {
-  return std::hash<uint32_t>{}(val.value_.date);
+  return std::hash<int32_t>{}(val.value_.date);
 }
 
 void DateType::HashCombine(const Value& val, size_t& seed) const {
-  val.hash_combine<uint32_t>(seed, val.value_.date);
+  val.hash_combine<int32_t>(seed, val.value_.date);
 }
 
 void DateType::SerializeTo(const Value& val, SerializeOutput& out) const {
@@ -116,7 +116,7 @@ void DateType::SerializeTo(const Value& val, SerializeOutput& out) const {
 void DateType::SerializeTo(const Value& val, char* storage,
                            bool inlined UNUSED_ATTRIBUTE,
                            AbstractPool* pool UNUSED_ATTRIBUTE) const {
-  *reinterpret_cast<uint32_t*>(storage) = val.value_.date;
+  *reinterpret_cast<int32_t*>(storage) = val.value_.date;
 }
 
 // Deserialize a value of the given type from the given storage space.
