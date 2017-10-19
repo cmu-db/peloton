@@ -73,8 +73,6 @@ void HashTranslator::Produce () const {
   comp_ctx.Produce(*hash_plan_.GetChild(0));
 
   LOG_DEBUG("Hash starting to produce results ...");
-
-  // TODO: no init code needed for hash table (correct?)
 }
 
 void HashTranslator::Consume (ConsumerContext &context,

@@ -64,8 +64,6 @@ class QueryCompiler {
   static bool IsExpressionSupported(const expression::AbstractExpression &plan);
 
  private:
-  static bool IsSupported(const planner::AbstractPlan &plan,
-                          const planner::AbstractPlan *parent);
 
   // Counter we use to ID the queries we compiled
   std::atomic<uint64_t> next_id_;

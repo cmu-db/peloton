@@ -309,7 +309,8 @@ void OperatorToPlanTransformer::Visit(const PhysicalDistinct *) {
         }
       }
     } else {
-      // TODO: can we do this!?
+      // TODO: support all kinds of Expressions
+      // This resulted of a hack to avoid INVALID types
       PL_ASSERT(expr->GetExpressionType() == ExpressionType::VALUE_TUPLE);
 
       auto column_idx = child_expr_map[expr];

@@ -41,13 +41,8 @@ std::unique_ptr<Query> QueryCompiler::Compile(
   return query;
 }
 
-bool QueryCompiler::IsSupported(const planner::AbstractPlan &plan) {
-  return QueryCompiler::IsSupported(plan, nullptr);
-}
-
 // Check if the given query can be compiled. This search is not exhaustive ...
-bool QueryCompiler::IsSupported(const planner::AbstractPlan &plan,
-                                const planner::AbstractPlan *parent) {
+bool QueryCompiler::IsSupported(const planner::AbstractPlan &plan) {
   switch (plan.GetPlanNodeType()) {
     case PlanNodeType::SEQSCAN:
     case PlanNodeType::ORDERBY:
@@ -78,10 +73,6 @@ bool QueryCompiler::IsSupported(const planner::AbstractPlan &plan,
       }
     }
     case PlanNodeType::HASH: {
-      // TODO: are there still hashes that are not supported?
-      // TODO: remove parent not used warning/error and remove hack below
-      (void) parent;
-
       break;
     }
     default: { return false; }
