@@ -123,7 +123,7 @@ void DateType::SerializeTo(const Value& val, char* storage,
 Value DateType::DeserializeFrom(const char* storage,
                                 const bool inlined UNUSED_ATTRIBUTE,
                                 AbstractPool* pool UNUSED_ATTRIBUTE) const {
-  uint32_t val = *reinterpret_cast<const uint32_t*>(storage);
+  int32_t val = *reinterpret_cast<const int32_t*>(storage);
   return Value(type_id_, static_cast<int32_t>(val));
 }
 Value DateType::DeserializeFrom(SerializeInput& in UNUSED_ATTRIBUTE,
