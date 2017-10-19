@@ -23,7 +23,7 @@
 namespace peloton {
 namespace test {
 
-class InsertSQLTest : public PelotonTest {};
+class InsertSQLTests : public PelotonTest {};
 
 void CreateAndLoadTable() {
   // Create a table first
@@ -54,7 +54,7 @@ void CreateAndLoadTable3() {
       "CREATE TABLE test3(a INT, b CHAR(4), c VARCHAR(10));");
 }
 
-TEST_F(InsertSQLTest, InsertOneValue) {
+TEST_F(InsertSQLTests, InsertOneValue) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
@@ -97,7 +97,7 @@ TEST_F(InsertSQLTest, InsertOneValue) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(InsertSQLTest, InsertMultipleValues) {
+TEST_F(InsertSQLTests, InsertMultipleValues) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
@@ -140,7 +140,7 @@ TEST_F(InsertSQLTest, InsertMultipleValues) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(InsertSQLTest, InsertSpecifyColumns) {
+TEST_F(InsertSQLTests, InsertSpecifyColumns) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
@@ -183,7 +183,7 @@ TEST_F(InsertSQLTest, InsertSpecifyColumns) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(InsertSQLTest, InsertTooLargeVarchar) {
+TEST_F(InsertSQLTests, InsertTooLargeVarchar) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
@@ -221,7 +221,7 @@ TEST_F(InsertSQLTest, InsertTooLargeVarchar) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(InsertSQLTest, InsertIntoSelectSimple) {
+TEST_F(InsertSQLTests, InsertIntoSelectSimple) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
