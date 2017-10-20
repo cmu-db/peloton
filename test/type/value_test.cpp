@@ -28,7 +28,7 @@ class ValueTests : public PelotonTest {};
 const std::vector<type::TypeId> valueTestTypes = {
     type::TypeId::BOOLEAN,   type::TypeId::TINYINT, type::TypeId::SMALLINT,
     type::TypeId::INTEGER,   type::TypeId::BIGINT,  type::TypeId::DECIMAL,
-    type::TypeId::TIMESTAMP, type::TypeId::VARCHAR};
+    type::TypeId::TIMESTAMP, type::TypeId::DATE,    type::TypeId::VARCHAR};
 
 TEST_F(ValueTests, HashTest) {
   for (auto col_type : valueTestTypes) {
@@ -57,6 +57,36 @@ TEST_F(ValueTests, HashTest) {
     EXPECT_EQ(type::CmpBool::CMP_TRUE, maxVal.CompareEquals(copyVal));
     EXPECT_EQ(maxHash, copyHash);
   }  // FOR
+}
+
+TEST_F(ValueTests, MinMaxTest) {
+  for (auto col_type : valueTestTypes) {
+    auto maxVal = type::Type::GetMaxValue(col_type);
+    auto minVal = type::Type::GetMinValue(col_type);
+
+    // Special case for VARCHAR
+    if (col_type == type::TypeId::VARCHAR) {
+      maxVal = type::ValueFactory::GetVarcharValue(std::string("A"), nullptr);
+      minVal = type::ValueFactory::GetVarcharValue(std::string("ZZZ"), nullptr);
+    }
+
+    LOG_TRACE("MinMax: %s", TypeIdToString(col_type).c_str());
+
+    // FIXME: Broken types!!!
+    if (col_type == type::TypeId::BOOLEAN) continue;
+    if (col_type == type::TypeId::VARCHAR) continue;
+    if (col_type == type::TypeId::TIMESTAMP) continue;
+
+    // Check that we always get the correct MIN value
+    EXPECT_EQ(type::CMP_TRUE, maxVal.Min(minVal).CompareEquals(minVal));
+    EXPECT_EQ(type::CMP_TRUE, minVal.Min(maxVal).CompareEquals(minVal));
+    EXPECT_EQ(type::CMP_TRUE, minVal.Min(minVal).CompareEquals(minVal));
+
+    // Check that we always get the correct MAX value
+    EXPECT_EQ(type::CMP_TRUE, maxVal.Max(minVal).CompareEquals(maxVal));
+    EXPECT_EQ(type::CMP_TRUE, minVal.Max(maxVal).CompareEquals(maxVal));
+    EXPECT_EQ(type::CMP_TRUE, maxVal.Max(minVal).CompareEquals(maxVal));
+  } // FOR
 }
 
 TEST_F(ValueTests, VarcharCopyTest) {
