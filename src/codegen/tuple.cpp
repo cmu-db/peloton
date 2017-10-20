@@ -21,16 +21,15 @@
 namespace peloton {
 namespace codegen {
 
-Tuple::Tuple(storage::DataTable &table): table_(table) {}
+Tuple::Tuple(catalog::Schema &schema): schema_(schema) {}
 
 void Tuple::Generate(CodeGen &codegen, RowBatch::Row &row,
     const std::vector<const planner::AttributeInfo *> &ais,
     llvm::Value *tuple_storage, llvm::Value *pool) const {
 
-  auto *schema = table_.GetSchema();
-  auto num_columns = schema->GetColumnCount();
+  auto num_columns = schema_.GetColumnCount();
   for (oid_t i = 0; i < num_columns; i++) {
-    auto offset = schema->GetOffset(i);
+    auto offset = schema_.GetOffset(i);
     codegen::Value v = row.DeriveValue(codegen, ais.at(i));
     const auto &sql_type = v.GetType().GetSqlType();
     llvm::Type *val_type, *len_type;

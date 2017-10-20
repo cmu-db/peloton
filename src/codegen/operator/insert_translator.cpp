@@ -28,7 +28,7 @@ InsertTranslator::InsertTranslator(const planner::InsertPlan &insert_plan,
                                    CompilationContext &context,
                                    Pipeline &pipeline)
     : OperatorTranslator(context, pipeline), insert_plan_(insert_plan),
-      tuple_(*insert_plan.GetTable()) {
+      tuple_(*insert_plan.GetTable()->GetSchema()) {
 
   // Create the translator for its child only when there is a child
   if (insert_plan.GetChildrenSize() != 0) {

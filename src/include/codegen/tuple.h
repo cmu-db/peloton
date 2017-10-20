@@ -21,8 +21,8 @@ namespace peloton {
 
 class ItemPointer;
 
-namespace storage {
-class DataTable;
+namespace catalog {
+class Schema;
 }  // namespace storage
 
 namespace type {
@@ -38,7 +38,7 @@ namespace codegen {
 class Tuple {
  public:
   // Constructor
-  Tuple(storage::DataTable &table);
+  Tuple(catalog::Schema &schema);
 
   void Generate(CodeGen &codegen, RowBatch::Row &row,
       const std::vector<const planner::AttributeInfo *> &ais,
@@ -46,7 +46,7 @@ class Tuple {
 
  private:
   // The table associated with this generator
-  storage::DataTable &table_;
+  catalog::Schema &schema_;
 };
 
 }  // namespace codegen
