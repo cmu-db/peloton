@@ -105,7 +105,7 @@ bool QueryCompiler::IsSupported(const planner::AbstractPlan &plan) {
 
   // Check all children
   for (const auto &child : plan.GetChildren()) {
-    if (!IsSupported(*child, &plan)) {
+    if (!IsSupported(*child)) {
       return false;
     }
   }
