@@ -25,9 +25,9 @@ class TypeLimitSQLTests : public PelotonTest {};
 const std::vector<type::TypeId> typeLimitSQLTestTypes = {
     type::TypeId::BOOLEAN,  type::TypeId::TINYINT,
     type::TypeId::SMALLINT, type::TypeId::INTEGER,
+    type::TypeId::TIMESTAMP,
     // FIXME type::TypeId::BIGINT,
     // FIXME type::TypeId::DECIMAL,
-    // FIXME type::TypeId::TIMESTAMP,
     // FIXME type::TypeId::DATE
 };
 
@@ -90,7 +90,7 @@ TEST_F(TypeLimitSQLTests, InsertInvalidMinValue) {
     // This should throw an error because the query
     // is trying to insert a value that is not in a valid range for the type
     auto result = TestingSQLUtil::ExecuteSQLQuery(os.str());
-    LOG_DEBUG("%s => %s", TypeIdToString(col_type).c_str(), os.str().c_str());
+    LOG_TRACE("%s => %s", TypeIdToString(col_type).c_str(), os.str().c_str());
     EXPECT_EQ(ResultType::FAILURE, result);
   }
 
