@@ -66,19 +66,18 @@ TEST_F(ValueTests, MinMaxTest) {
 
     // Special case for VARCHAR
     if (col_type == type::TypeId::VARCHAR) {
-      maxVal = type::ValueFactory::GetVarcharValue(std::string("A"), nullptr);
+      maxVal = type::ValueFactory::GetVarcharValue(std::string("AAA"), nullptr);
       minVal = type::ValueFactory::GetVarcharValue(std::string("ZZZ"), nullptr);
+      EXPECT_EQ(type::CMP_FALSE, minVal.CompareLessThan(maxVal));
+      EXPECT_EQ(type::CMP_FALSE, maxVal.CompareGreaterThan(minVal));
     }
 
-    LOG_TRACE("MinMax: %s", TypeIdToString(col_type).c_str());
-
     // FIXME: Broken types!!!
-    if (col_type == type::TypeId::BOOLEAN) continue;
     if (col_type == type::TypeId::VARCHAR) continue;
-    if (col_type == type::TypeId::TIMESTAMP) continue;
+    LOG_DEBUG("MinMax: %s", TypeIdToString(col_type).c_str());
 
     // Check that we always get the correct MIN value
-    EXPECT_EQ(type::CMP_TRUE, maxVal.Min(minVal).CompareEquals(minVal));
+    EXPECT_EQ(type::CMP_TRUE, minVal.Min(minVal).CompareEquals(minVal));
     EXPECT_EQ(type::CMP_TRUE, minVal.Min(maxVal).CompareEquals(minVal));
     EXPECT_EQ(type::CMP_TRUE, minVal.Min(minVal).CompareEquals(minVal));
 
