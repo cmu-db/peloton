@@ -15,7 +15,7 @@
 namespace peloton {
 namespace codegen {
 
-DEFINE_TYPE(Tuple, "storage::Tupele", MEMBER(opaque));
+DEFINE_TYPE(Tuple, "storage::Tuple", MEMBER(opaque));
 
 }  // namespace codegen
 }  // namespace peloton
