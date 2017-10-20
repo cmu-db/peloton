@@ -286,7 +286,8 @@ class DataTable : public AbstractTable {
   }
 
   // Claim a tuple slot in a tile group
-  ItemPointer GetEmptyTupleSlot(const storage::Tuple *tuple);
+  ItemPointer GetEmptyTupleSlot(const storage::Tuple *tuple,
+                                bool check_constraint = true);
 
  protected:
   //===--------------------------------------------------------------------===//
@@ -304,10 +305,6 @@ class DataTable : public AbstractTable {
   // bool CheckExp(const storage::Tuple *tuple, oid_t column_idx) const;
 
   bool CheckConstraints(const storage::Tuple *tuple) const;
-
-  // Claim a tuple slot in a tile group
-  ItemPointer GetEmptyTupleSlot(const storage::Tuple *tuple,
-                                bool check_constraint = true);
 
   // add a tile group to the table
   oid_t AddDefaultTileGroup();

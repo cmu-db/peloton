@@ -25,8 +25,8 @@ namespace test {
 class InsertTranslatorTest : public PelotonCodeGenTest {
  public:
   InsertTranslatorTest() : PelotonCodeGenTest() {}
-  TableId TestTableId1() { return TableId::_1; }
-  TableId TestTableId2() { return TableId::_2; }
+  oid_t TestTableId1() { return test_table_oids[0]; }
+  oid_t TestTableId2() { return test_table_oids[1]; }
 };
 
 // Insert one tuple
