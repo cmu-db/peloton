@@ -213,11 +213,9 @@ TEST_F(TypeUtilTests, CompareStringsTest) {
   std::string char1 = "a";
   std::string char2 = "z";
 
-  std::vector<bool> is_upper = { false, true };
-
   // 'a' should always be less than 'z'
   for (int i = 0; i < 10; i++) {
-    for (bool upper1 : is_upper) {
+    for (bool upper1 : {false, true}) {
       std::string str1 = StringUtil::Repeat(char1, i);
       if (upper1) {
         // FIXME
@@ -226,7 +224,7 @@ TEST_F(TypeUtilTests, CompareStringsTest) {
 
       for (int j = 1; j < 10; j++) {
         std::string str2 = StringUtil::Repeat(char2, j);
-        for (bool upper2 : is_upper) {
+        for (bool upper2 : {false, true}) {
           if (upper2) {
             // FIXME
             // str2 = StringUtil::Upper(str2);

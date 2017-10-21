@@ -111,9 +111,9 @@ TEST_F(DateValueTests, ComparisonTest) {
 }
 
 TEST_F(DateValueTests, NullToStringTest) {
-  auto valNull = type::ValueFactory::GetNullValueByType(type::TypeId::DATE);
+  auto val_null = type::ValueFactory::GetNullValueByType(type::TypeId::DATE);
 
-  EXPECT_EQ(valNull.ToString(), "date_null");
+  EXPECT_EQ(val_null.ToString(), "date_null");
 }
 
 TEST_F(DateValueTests, HashTest) {
@@ -161,24 +161,24 @@ TEST_F(DateValueTests, CopyTest) {
 TEST_F(DateValueTests, CastTest) {
   type::Value result;
 
-  auto strNull = type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
-  auto valNull = type::ValueFactory::GetNullValueByType(type::TypeId::DATE);
+  auto str_null = type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
+  auto val_null = type::ValueFactory::GetNullValueByType(type::TypeId::DATE);
 
-  result = valNull.CastAs(type::TypeId::DATE);
+  result = val_null.CastAs(type::TypeId::DATE);
   EXPECT_TRUE(result.IsNull());
-  EXPECT_EQ(result.CompareEquals(valNull) == type::CMP_NULL, true);
-  EXPECT_EQ(result.GetTypeId(), valNull.GetTypeId());
+  EXPECT_EQ(result.CompareEquals(val_null) == type::CMP_NULL, true);
+  EXPECT_EQ(result.GetTypeId(), val_null.GetTypeId());
 
-  result = valNull.CastAs(type::TypeId::VARCHAR);
+  result = val_null.CastAs(type::TypeId::VARCHAR);
   EXPECT_TRUE(result.IsNull());
-  EXPECT_EQ(result.CompareEquals(strNull) == type::CMP_NULL, true);
-  EXPECT_EQ(result.GetTypeId(), strNull.GetTypeId());
+  EXPECT_EQ(result.CompareEquals(str_null) == type::CMP_NULL, true);
+  EXPECT_EQ(result.GetTypeId(), str_null.GetTypeId());
 
-  EXPECT_THROW(valNull.CastAs(type::TypeId::BOOLEAN), peloton::Exception);
+  EXPECT_THROW(val_null.CastAs(type::TypeId::BOOLEAN), peloton::Exception);
 
-  auto valValid =
+  auto val_valid =
       type::ValueFactory::GetDateValue(static_cast<int32_t>(1481746648));
-  result = valValid.CastAs(type::TypeId::VARCHAR);
+  result = val_valid.CastAs(type::TypeId::VARCHAR);
   EXPECT_FALSE(result.IsNull());
 }
 
