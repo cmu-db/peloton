@@ -409,6 +409,9 @@ bool Value::CheckComparable(const Value &o) const {
     case TypeId::TIMESTAMP:
       if (o.GetTypeId() == TypeId::TIMESTAMP) return true;
       break;
+    case TypeId::DATE:
+      if (o.GetTypeId() == TypeId::DATE) return true;
+      break;
     default:
       break;
   } // SWITCH

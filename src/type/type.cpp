@@ -139,9 +139,10 @@ Value Type::GetMinValue(TypeId type_id) {
       return Value(type_id, (int64_t)PELOTON_INT64_MIN);
     case DECIMAL:
       return Value(type_id, PELOTON_DECIMAL_MIN);
-    case DATE:
     case TIMESTAMP:
-      return Value(type_id, 0);
+      return Value(type_id, PELOTON_TIMESTAMP_MIN);
+    case DATE:
+      return Value(type_id, PELOTON_DATE_MIN);
     case VARCHAR:
       return Value(type_id, "");
     case VARBINARY:
@@ -160,7 +161,6 @@ Value Type::GetMaxValue(TypeId type_id) {
       return Value(type_id, (int8_t)PELOTON_INT8_MAX);
     case SMALLINT:
       return Value(type_id, (int16_t)PELOTON_INT16_MAX);
-    case DATE:
     case INTEGER:
       return Value(type_id, (int32_t)PELOTON_INT32_MAX);
     case BIGINT:
@@ -169,6 +169,8 @@ Value Type::GetMaxValue(TypeId type_id) {
       return Value(type_id, PELOTON_DECIMAL_MAX);
     case TIMESTAMP:
       return Value(type_id, PELOTON_TIMESTAMP_MAX);
+    case DATE:
+      return Value(type_id, PELOTON_DATE_MAX);
     case VARCHAR:
       return Value(type_id, nullptr, 0, false);
     case VARBINARY:

@@ -297,6 +297,10 @@ void ChildPropertyGenerator::AggregateHelper(const BaseOperatorNode *op) {
         provided_property.AddProperty(prop);
         break;
       }
+      default: {
+        LOG_ERROR("Unexpected PropertyType '%s'",
+                  PropertyTypeToString(prop->Type()).c_str());
+      }
     }
   }
   // Add child PropertySort for SortGroupBy if not already do so
@@ -392,6 +396,10 @@ void ChildPropertyGenerator::JoinHelper(const BaseOperatorNode *op) {
         }
 
         break;
+      }
+      default: {
+        LOG_ERROR("Unexpected PropertyType '%s'",
+                  PropertyTypeToString(prop->Type()).c_str());
       }
     }
   }

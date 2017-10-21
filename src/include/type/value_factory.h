@@ -125,6 +125,9 @@ class ValueFactory {
       case TypeId::TIMESTAMP:
         ret_value = GetTimestampValue(PELOTON_TIMESTAMP_NULL);
         break;
+      case TypeId::DATE:
+        ret_value = GetDateValue(PELOTON_DATE_NULL);
+        break;
       case TypeId::VARCHAR:
         ret_value = GetVarcharValue(nullptr, false, nullptr);
         break;
@@ -160,6 +163,8 @@ class ValueFactory {
         return GetDecimalValue((double)0);
       case TypeId::TIMESTAMP:
         return GetTimestampValue(0);
+      case TypeId::DATE:
+        return GetDateValue(0);
       case TypeId::VARCHAR:
         return GetVarcharValue(zero_string);
       case TypeId::VARBINARY:

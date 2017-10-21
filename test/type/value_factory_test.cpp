@@ -30,6 +30,13 @@ namespace test {
 
 class ValueFactoryTests : public PelotonTest {};
 
+const std::vector<type::TypeId> valuefactory_test_types = {
+    type::TypeId::BOOLEAN,    type::TypeId::TINYINT,
+    type::TypeId::SMALLINT,   type::TypeId::INTEGER,
+    type::TypeId::BIGINT,     type::TypeId::DECIMAL,
+    type::TypeId::TIMESTAMP,  type::TypeId::DATE
+};
+
 #define RANDOM_DECIMAL() ((double)rand() / (double)rand())
 
 int8_t RANDOM8() {
@@ -53,6 +60,13 @@ int64_t RANDOM64() {
   if (ret != type::PELOTON_INT64_NULL)
     return ret;
   return 1;
+}
+
+TEST_F(ValueFactoryTests, ZeroValueTest) {
+  for (auto col_type : valuefactory_test_types) {
+    auto zero_val = type::ValueFactory::GetZeroValueByType(col_type);
+    EXPECT_FALSE(zero_val.IsNull());
+  }
 }
 
 TEST_F(ValueFactoryTests, PeekValueTest) {
@@ -134,49 +148,22 @@ TEST_F(ValueFactoryTests, CastTest) {
 
 TEST_F(ValueFactoryTests, SerializationTest) {
   peloton::CopySerializeOutput out;
-  type::Value(type::TypeId::TINYINT, (int8_t)type::PELOTON_INT8_MAX).SerializeTo(out);
-  type::Value(type::TypeId::TINYINT, (int8_t)type::PELOTON_INT8_MIN).SerializeTo(out);
-  type::Value(type::TypeId::SMALLINT, (int16_t)type::PELOTON_INT16_MAX).SerializeTo(out);
-  type::Value(type::TypeId::SMALLINT, (int16_t)type::PELOTON_INT16_MIN).SerializeTo(out);
-  type::Value(type::TypeId::INTEGER, (int32_t)type::PELOTON_INT32_MAX).SerializeTo(out);
-  type::Value(type::TypeId::INTEGER, (int32_t)type::PELOTON_INT32_MIN).SerializeTo(out);
-  type::Value(type::TypeId::BIGINT, (int64_t)type::PELOTON_INT64_MAX).SerializeTo(out);
-  type::Value(type::TypeId::BIGINT, (int64_t)type::PELOTON_INT64_MIN).SerializeTo(out);
-  type::Value(type::TypeId::DECIMAL, type::PELOTON_DECIMAL_MAX).SerializeTo(out);
-  type::Value(type::TypeId::DECIMAL, type::PELOTON_DECIMAL_MIN).SerializeTo(out);
+  for (auto col_type : valuefactory_test_types) {
+    type::Type::GetMinValue(col_type).SerializeTo(out);
+    type::Type::GetMaxValue(col_type).SerializeTo(out);
+  }
 
   peloton::CopySerializeInput in(out.Data(), out.Size());
-  type::Value v1 = (type::Value::DeserializeFrom(in, type::Type::GetInstance(type::TypeId::TINYINT)->GetTypeId(), nullptr));
-  EXPECT_EQ(v1.GetTypeId(), type::TypeId::TINYINT);
-  EXPECT_EQ(v1.GetAs<int8_t>(), type::PELOTON_INT8_MAX);
-  type::Value v2 = (type::Value::DeserializeFrom(in, type::Type::GetInstance(type::TypeId::TINYINT)->GetTypeId(), nullptr));
-  EXPECT_EQ(v2.GetTypeId(), type::TypeId::TINYINT);
-  EXPECT_EQ(v2.GetAs<int8_t>(), type::PELOTON_INT8_MIN);
-  type::Value v3 = (type::Value::DeserializeFrom(in, type::Type::GetInstance(type::TypeId::SMALLINT)->GetTypeId(), nullptr));
-  EXPECT_EQ(v3.GetTypeId(), type::TypeId::SMALLINT);
-  EXPECT_EQ(v3.GetAs<int16_t>(), type::PELOTON_INT16_MAX);
-  type::Value v4 = (type::Value::DeserializeFrom(in, type::Type::GetInstance(type::TypeId::SMALLINT)->GetTypeId(), nullptr));
-  EXPECT_EQ(v4.GetTypeId(), type::TypeId::SMALLINT);
-  EXPECT_EQ(v4.GetAs<int16_t>(), type::PELOTON_INT16_MIN);
-  type::Value v5 = (type::Value::DeserializeFrom(in, type::Type::GetInstance(type::TypeId::INTEGER)->GetTypeId(), nullptr));
-  EXPECT_EQ(v5.GetTypeId(), type::TypeId::INTEGER);
-  EXPECT_EQ(v5.GetAs<int32_t>(), type::PELOTON_INT32_MAX);
-  type::Value v6 = (type::Value::DeserializeFrom(in, type::Type::GetInstance(type::TypeId::INTEGER)->GetTypeId(), nullptr));
-  EXPECT_EQ(v6.GetTypeId(), type::TypeId::INTEGER);
-  EXPECT_EQ(v6.GetAs<int32_t>(), type::PELOTON_INT32_MIN);
-  type::Value v7 = (type::Value::DeserializeFrom(in, type::Type::GetInstance(type::TypeId::BIGINT)->GetTypeId(), nullptr));
-  EXPECT_EQ(v7.GetTypeId(), type::TypeId::BIGINT);
-  EXPECT_EQ(v7.GetAs<int64_t>(), type::PELOTON_INT64_MAX);
-  type::Value v8 = (type::Value::DeserializeFrom(in, type::Type::GetInstance(type::TypeId::BIGINT)->GetTypeId(), nullptr));
-  EXPECT_EQ(v8.GetTypeId(), type::TypeId::BIGINT);
-  EXPECT_EQ(v8.GetAs<int64_t>(), type::PELOTON_INT64_MIN);
-
-  type::Value v9 = (type::Value::DeserializeFrom(in, type::Type::GetInstance(type::TypeId::DECIMAL)->GetTypeId(), nullptr));
-  EXPECT_EQ(v9.GetTypeId(), type::TypeId::DECIMAL);
-  EXPECT_EQ(v9.GetAs<double>(), type::PELOTON_DECIMAL_MAX);
-  type::Value v10 = (type::Value::DeserializeFrom(in, type::Type::GetInstance(type::TypeId::DECIMAL)->GetTypeId(), nullptr));
-  EXPECT_EQ(v10.GetTypeId(), type::TypeId::DECIMAL);
-  EXPECT_EQ(v10.GetAs<double>(), type::PELOTON_DECIMAL_MIN);
+  for (auto col_type : valuefactory_test_types) {
+    for (auto expect_min : {true, false}) {
+      type::Value v = (type::Value::DeserializeFrom(in, type::Type::GetInstance(col_type)->GetTypeId(), nullptr));
+      EXPECT_EQ(v.GetTypeId(), col_type);
+      type::Value expected = (expect_min ?
+                                type::Type::GetMinValue(col_type) :
+                                type::Type::GetMaxValue(col_type));
+      EXPECT_EQ(type::CMP_TRUE, v.CompareEquals(expected));
+    }
+  }
 }
 
 }

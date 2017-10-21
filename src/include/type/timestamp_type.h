@@ -33,8 +33,8 @@ class TimestampType : public Type {
   CmpBool CompareGreaterThanEquals(const Value& left, const Value &right) const override;
   
   // Other mathematical functions
-  virtual Value Min(const Value& left, const Value &right) const override;
-  virtual Value Max(const Value& left, const Value &right) const override;
+  Value Min(const Value& left, const Value &right) const override;
+  Value Max(const Value& left, const Value &right) const override;
 
   bool IsInlined(const Value&) const override { return true; }
 
