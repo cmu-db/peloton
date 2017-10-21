@@ -338,6 +338,9 @@ std::string CreateTypeToString(CreateType type) {
     case CreateType::CONSTRAINT: {
       return "CONSTRAINT";
     }
+    case CreateType::TRIGGER: {
+      return "TRIGGER";
+    }
     default: {
       throw ConversionException(StringUtil::Format(
           "No string conversion for CreateType value '%d'",
@@ -359,6 +362,8 @@ CreateType StringToCreateType(const std::string& str) {
     return CreateType::INDEX;
   } else if (upper_str == "CONSTRAINT") {
     return CreateType::CONSTRAINT;
+  } else if (upper_str == "TRIGGER") {
+    return CreateType::TRIGGER;
   } else {
     throw ConversionException(StringUtil::Format(
         "No CreateType conversion from string '%s'", upper_str.c_str()));
@@ -370,50 +375,104 @@ std::ostream& operator<<(std::ostream& os, const CreateType& type) {
   return os;
 }
 
+std::string DropTypeToString(DropType type) {
+  switch (type) {
+    case DropType::INVALID: {
+      return "INVALID";
+    }
+    case DropType::DB: {
+      return "DB";
+    }
+    case DropType::TABLE: {
+      return "TABLE";
+    }
+    case DropType::INDEX: {
+      return "INDEX";
+    }
+    case DropType::CONSTRAINT: {
+      return "CONSTRAINT";
+    }
+    case DropType::TRIGGER: {
+      return "TRIGGER";
+    }
+    default: {
+      throw ConversionException(StringUtil::Format(
+          "No string conversion for DropType value '%d'",
+          static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+DropType StringToDropType(const std::string& str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return DropType::INVALID;
+  } else if (upper_str == "DB") {
+    return DropType::DB;
+  } else if (upper_str == "TABLE") {
+    return DropType::TABLE;
+  } else if (upper_str == "INDEX") {
+    return DropType::INDEX;
+  } else if (upper_str == "CONSTRAINT") {
+    return DropType::CONSTRAINT;
+  } else if (upper_str == "TRIGGER") {
+    return DropType::TRIGGER;
+  } else {
+    throw ConversionException(StringUtil::Format(
+        "No DropType conversion from string '%s'", upper_str.c_str()));
+  }
+  return DropType::INVALID;
+}
+std::ostream& operator<<(std::ostream& os, const DropType& type) {
+  os << DropTypeToString(type);
+  return os;
+}
+
 //===--------------------------------------------------------------------===//
 // Statement - String Utilities
 //===--------------------------------------------------------------------===//
 
 std::string StatementTypeToString(StatementType type) {
   switch (type) {
+    case StatementType::INVALID: {
+      return "INVALID";
+    }
     case StatementType::SELECT: {
       return "SELECT";
-    }
-    case StatementType::ALTER: {
-      return "ALTER";
-    }
-    case StatementType::CREATE: {
-      return "CREATE";
-    }
-    case StatementType::DELETE: {
-      return "DELETE";
-    }
-    case StatementType::DROP: {
-      return "DROP";
-    }
-    case StatementType::EXECUTE: {
-      return "EXECUTE";
-    }
-    case StatementType::COPY: {
-      return "COPY";
     }
     case StatementType::INSERT: {
       return "INSERT";
     }
-    case StatementType::INVALID: {
-      return "INVALID";
+    case StatementType::UPDATE: {
+      return "UPDATE";
+    }
+    case StatementType::DELETE: {
+      return "DELETE";
+    }
+    case StatementType::CREATE: {
+      return "CREATE";
+    }
+    case StatementType::DROP: {
+      return "DROP";
     }
     case StatementType::PREPARE: {
       return "PREPARE";
     }
+    case StatementType::EXECUTE: {
+      return "EXECUTE";
+    }
     case StatementType::RENAME: {
       return "RENAME";
+    }
+    case StatementType::ALTER: {
+      return "ALTER";
     }
     case StatementType::TRANSACTION: {
       return "TRANSACTION";
     }
-    case StatementType::UPDATE: {
-      return "UPDATE";
+    case StatementType::COPY: {
+      return "COPY";
     }
     case StatementType::ANALYZE: {
       return "ANALYZE";
@@ -455,6 +514,8 @@ StatementType StringToStatementType(const std::string& str) {
     return StatementType::TRANSACTION;
   } else if (upper_str == "COPY") {
     return StatementType::COPY;
+  } else if (upper_str == "ANALYZE") {
+    return StatementType::ANALYZE;
   } else {
     throw ConversionException(StringUtil::Format(
         "No StatementType conversion from string '%s'", upper_str.c_str()));
@@ -2599,23 +2660,61 @@ std::ostream& operator<<(std::ostream& os, const GCVersionType& type) {
 //===--------------------------------------------------------------------===//
 // Optimizer
 //===--------------------------------------------------------------------===//
+
 std::string PropertyTypeToString(PropertyType type) {
   switch (type) {
-    case PropertyType::SORT:
-      return "SORT";
-    case PropertyType::COLUMNS:
-      return "COLUMNS";
-    case PropertyType::PREDICATE:
+    case PropertyType::INVALID: {
+      return "INVALID";
+    }
+    case PropertyType::PREDICATE: {
       return "PREDICATE";
-    case PropertyType::DISTINCT:
+    }
+    case PropertyType::COLUMNS: {
+      return "COLUMNS";
+    }
+    case PropertyType::DISTINCT: {
       return "DISTINCT";
-    case PropertyType::LIMIT:
+    }
+    case PropertyType::SORT: {
+      return "SORT";
+    }
+    case PropertyType::LIMIT: {
       return "LIMIT";
-    default:
-      throw ConversionException(StringUtil::Format("No string conversion for PropertyType value '%d'",
-                                                   static_cast<int>(type)));
+    }
+    default: {
+      throw ConversionException(StringUtil::Format(
+          "No string conversion for PropertyType value '%d'",
+          static_cast<int>(type)));
+    }
   }
   return "INVALID";
+}
+
+PropertyType StringToPropertyType(const std::string& str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return PropertyType::INVALID;
+  } else if (upper_str == "PREDICATE") {
+    return PropertyType::PREDICATE;
+  } else if (upper_str == "COLUMNS") {
+    return PropertyType::COLUMNS;
+  } else if (upper_str == "DISTINCT") {
+    return PropertyType::DISTINCT;
+  } else if (upper_str == "SORT") {
+    return PropertyType::SORT;
+  } else if (upper_str == "LIMIT") {
+    return PropertyType::LIMIT;
+  } else {
+    throw ConversionException(
+        StringUtil::Format("No PropertyType conversion from string '%s'",
+                           upper_str.c_str()));
+  }
+  return PropertyType::INVALID;
+}
+
+std::ostream& operator<<(std::ostream& os, const PropertyType& type) {
+  os << PropertyTypeToString(type);
+  return os;
 }
 
 //===--------------------------------------------------------------------===//
