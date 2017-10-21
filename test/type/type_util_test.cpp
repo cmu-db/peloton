@@ -208,5 +208,42 @@ TEST_F(TypeUtilTests, CompareGreaterThanRawTest) {
   }    // FOR (tuples)
   delete schema;
 }
+
+TEST_F(TypeUtilTests, CompareStringsTest) {
+  std::string char1 = "a";
+  std::string char2 = "z";
+
+  std::vector<bool> is_upper = { false, true };
+
+  // 'a' should always be less than 'z'
+  for (int i = 0; i < 10; i++) {
+    for (bool upper1 : is_upper) {
+      std::string str1 = StringUtil::Repeat(char1, i);
+      if (upper1) {
+        // FIXME
+        // str1 = StringUtil::Upper(str1);
+      }
+
+      for (int j = 1; j < 10; j++) {
+        std::string str2 = StringUtil::Repeat(char2, j);
+        for (bool upper2 : is_upper) {
+          if (upper2) {
+            // FIXME
+            // str2 = StringUtil::Upper(str2);
+          }
+
+          type::CmpBool result = type::GetCmpBool(
+              type::TypeUtil::CompareStrings(str1.c_str(), i,
+                                             str2.c_str(), j) < 0);
+          if (result != type::CmpBool::CMP_TRUE) {
+            LOG_ERROR("INVALID '%s' < '%s'", str1.c_str(), str2.c_str());
+          }
+          EXPECT_EQ(type::CmpBool::CMP_TRUE, result);
+        } // FOR (upper2)
+      } // FOR (str2)
+    } // FOR (upper1)
+  } // FOR (str1)
 }
-}
+
+}  // namespace test
+}  // namespace peloton
