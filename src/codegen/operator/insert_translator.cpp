@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/tuple.h"
+#include "codegen/table_storage.h"
 #include "codegen/proxy/catalog_proxy.h"
 #include "codegen/proxy/inserter_proxy.h"
 #include "codegen/proxy/transaction_runtime_proxy.h"
@@ -28,7 +28,7 @@ InsertTranslator::InsertTranslator(const planner::InsertPlan &insert_plan,
                                    CompilationContext &context,
                                    Pipeline &pipeline)
     : OperatorTranslator(context, pipeline), insert_plan_(insert_plan),
-      tuple_(*insert_plan.GetTable()->GetSchema()) {
+      table_storage_(*insert_plan.GetTable()->GetSchema()) {
 
   // Create the translator for its child only when there is a child
   if (insert_plan.GetChildrenSize() != 0) {
@@ -86,17 +86,22 @@ void InsertTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
   auto &codegen = GetCodeGen();
   auto *inserter = LoadStatePtr(inserter_state_id_);
 
-  auto scan =
+  auto *scan =
       static_cast<const planner::AbstractScan *>(insert_plan_.GetChild(0));
   std::vector<const planner::AttributeInfo *> ais;
   scan->GetAttributes(ais);
 
-  auto *tuple_storage = codegen.Call(InserterProxy::ReserveTupleStorage,
-                                     {inserter});
+  auto *tuple_ptr = codegen.Call(InserterProxy::ReserveTupleStorage,
+                                 {inserter});
   auto *pool = codegen.Call(InserterProxy::GetPool, {inserter});
 
   // Generate/Materialize tuple data from row and attribute information
-  tuple_.Generate(codegen, row, ais, tuple_storage, pool);
+  std::vector<codegen::Value> values;
+  for (const auto *ai : ais) {
+    codegen::Value v = row.DeriveValue(codegen, ai);
+    values.push_back(v);
+  }
+  table_storage_.StoreValues(codegen, tuple_ptr, values, pool);
 
   // Call Inserter to insert the reserved tuple storage area
   codegen.Call(InserterProxy::InsertReserved, {inserter});
