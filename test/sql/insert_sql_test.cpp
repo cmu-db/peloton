@@ -50,8 +50,33 @@ void CreateAndLoadTable2() {
 }
 
 void CreateAndLoadTable3() {
+  // Create a table first
   TestingSQLUtil::ExecuteSQLQuery(
       "CREATE TABLE test3(a INT, b CHAR(4), c VARCHAR(10));");
+}
+
+void CreateAndLoadTable4() {
+  // Create a table first
+  TestingSQLUtil::ExecuteSQLQuery(
+      "CREATE TABLE test4(a INT PRIMARY KEY, b TINYINT, c SMALLINT, "
+      "d BIGINT, e DECIMAL, f DOUBLE, g TIMESTAMP, "
+      "i CHAR, j VARCHAR, k VARBINARY, l BOOLEAN);");
+
+  // Insert tuples into table
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test4 VALUES "
+      "(1, 2, 3, 4, 5.1, 6.1, '2017-10-10 00:00:00-00', "
+      "'A', 'a', '1', 'true');");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test4 VALUES "
+      "(11, 12, 13, 14, 15.1, 16.1, '2017-10-11 00:00:00-00', "
+      "'B', 'b', '2', 'false');");
+}
+
+void CreateAndLoadTable5() {
+  // Create a table first
+  TestingSQLUtil::ExecuteSQLQuery(
+      "CREATE TABLE test5(a INT PRIMARY KEY, b TINYINT, c SMALLINT, "
+      "d BIGINT, e DECIMAL, f DOUBLE, g TIMESTAMP, "
+      "i CHAR, j VARCHAR, k VARBINARY, l BOOLEAN);");
 }
 
 TEST_F(InsertSQLTests, InsertOneValue) {
@@ -289,6 +314,94 @@ TEST_F(InsertSQLTests, InsertIntoSelectSimple) {
   EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 0));
   EXPECT_EQ("2", TestingSQLUtil::GetResultValueAsString(result, 1));
   EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 2));
+
+  // free the database just created
+  txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+}
+
+TEST_F(InsertSQLTests, InsertIntoSelectSimpleAllType) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+
+  CreateAndLoadTable4();
+  CreateAndLoadTable5();
+
+  std::vector<StatementResult> result;
+  std::vector<FieldInfo> tuple_descriptor;
+  std::string error_message;
+  int rows_changed;
+  std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
+      new optimizer::Optimizer());
+
+  // TEST CASE 1
+  std::string query_1("INSERT INTO test5 SELECT * FROM test4;");
+
+  txn = txn_manager.BeginTransaction();
+  auto plan =
+      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query_1, txn);
+  txn_manager.CommitTransaction(txn);
+  EXPECT_EQ(plan->GetPlanNodeType(), PlanNodeType::INSERT);
+
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(optimizer, query_1, result,
+                                               tuple_descriptor, rows_changed,
+                                               error_message);
+
+  EXPECT_EQ(2, rows_changed);
+
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
+      optimizer, "SELECT * FROM test4 WHERE a=1", result, tuple_descriptor,
+      rows_changed, error_message);
+  EXPECT_EQ(11, result.size());
+  EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("2", TestingSQLUtil::GetResultValueAsString(result, 1));
+  EXPECT_EQ("3", TestingSQLUtil::GetResultValueAsString(result, 2));
+  EXPECT_EQ("4", TestingSQLUtil::GetResultValueAsString(result, 3));
+  EXPECT_EQ("5.1", TestingSQLUtil::GetResultValueAsString(result, 4));
+  EXPECT_EQ("6.1", TestingSQLUtil::GetResultValueAsString(result, 5));
+  EXPECT_EQ("2017-10-10 00:00:00.000000+00",
+             TestingSQLUtil::GetResultValueAsString(result, 6));
+  EXPECT_EQ("A", TestingSQLUtil::GetResultValueAsString(result, 7));
+  EXPECT_EQ("a", TestingSQLUtil::GetResultValueAsString(result, 8));
+  EXPECT_EQ('1', TestingSQLUtil::GetResultValueAsString(result, 9).at(0));
+  EXPECT_EQ("true", TestingSQLUtil::GetResultValueAsString(result, 10));
+
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
+      optimizer, "SELECT * FROM test5 WHERE a=1", result, tuple_descriptor,
+      rows_changed, error_message);
+  EXPECT_EQ(11, result.size());
+  EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("2", TestingSQLUtil::GetResultValueAsString(result, 1));
+  EXPECT_EQ("3", TestingSQLUtil::GetResultValueAsString(result, 2));
+  EXPECT_EQ("4", TestingSQLUtil::GetResultValueAsString(result, 3));
+  EXPECT_EQ("5.1", TestingSQLUtil::GetResultValueAsString(result, 4));
+  EXPECT_EQ("6.1", TestingSQLUtil::GetResultValueAsString(result, 5));
+  EXPECT_EQ("2017-10-10 00:00:00.000000+00",
+             TestingSQLUtil::GetResultValueAsString(result, 6));
+  EXPECT_EQ("A", TestingSQLUtil::GetResultValueAsString(result, 7));
+  EXPECT_EQ("a", TestingSQLUtil::GetResultValueAsString(result, 8));
+  EXPECT_EQ('1', TestingSQLUtil::GetResultValueAsString(result, 9).at(0));
+  EXPECT_EQ("true", TestingSQLUtil::GetResultValueAsString(result, 10));
+
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
+      optimizer, "SELECT * FROM test5 WHERE a=11", result, tuple_descriptor,
+      rows_changed, error_message);
+  EXPECT_EQ(11, result.size());
+  EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("12", TestingSQLUtil::GetResultValueAsString(result, 1));
+  EXPECT_EQ("13", TestingSQLUtil::GetResultValueAsString(result, 2));
+  EXPECT_EQ("14", TestingSQLUtil::GetResultValueAsString(result, 3));
+  EXPECT_EQ("15.1", TestingSQLUtil::GetResultValueAsString(result, 4));
+  EXPECT_EQ("16.1", TestingSQLUtil::GetResultValueAsString(result, 5));
+  EXPECT_EQ("2017-10-11 00:00:00.000000+00",
+             TestingSQLUtil::GetResultValueAsString(result, 6));
+  EXPECT_EQ("B", TestingSQLUtil::GetResultValueAsString(result, 7));
+  EXPECT_EQ("b", TestingSQLUtil::GetResultValueAsString(result, 8));
+  EXPECT_EQ('2', TestingSQLUtil::GetResultValueAsString(result, 9).at(0));
+  EXPECT_EQ("false", TestingSQLUtil::GetResultValueAsString(result, 10));
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
