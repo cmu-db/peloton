@@ -15,7 +15,7 @@
 #include "codegen/compilation_context.h"
 #include "codegen/consumer_context.h"
 #include "codegen/operator/operator_translator.h"
-#include "codegen/tuple.h"
+#include "codegen/table_storage.h"
 
 namespace peloton {
 
@@ -72,7 +72,7 @@ class InsertTranslator : public OperatorTranslator {
 
   RuntimeState::StateID inserter_state_id_;
 
-  codegen::Tuple tuple_;
+  codegen::TableStorage table_storage_;
 };
 
 }  // namespace codegen
