@@ -30,10 +30,11 @@ namespace test {
 
 class ValueFactoryTests : public PelotonTest {};
 
-const std::vector<type::TypeId> valueFactoryTestTypes = {
-    type::TypeId::BOOLEAN,   type::TypeId::TINYINT, type::TypeId::SMALLINT,
-    type::TypeId::INTEGER,   type::TypeId::BIGINT,  type::TypeId::DECIMAL,
-    type::TypeId::TIMESTAMP, type::TypeId::DATE
+const std::vector<type::TypeId> valuefactory_test_types = {
+    type::TypeId::BOOLEAN,    type::TypeId::TINYINT,
+    type::TypeId::SMALLINT,   type::TypeId::INTEGER,
+    type::TypeId::BIGINT,     type::TypeId::DECIMAL,
+    type::TypeId::TIMESTAMP,  type::TypeId::DATE
 };
 
 #define RANDOM_DECIMAL() ((double)rand() / (double)rand())
@@ -62,9 +63,9 @@ int64_t RANDOM64() {
 }
 
 TEST_F(ValueFactoryTests, ZeroValueTest) {
-  for (auto col_type : valueFactoryTestTypes) {
-    auto zeroVal = type::ValueFactory::GetZeroValueByType(col_type);
-    EXPECT_FALSE(zeroVal.IsNull());
+  for (auto col_type : valuefactory_test_types) {
+    auto zero_val = type::ValueFactory::GetZeroValueByType(col_type);
+    EXPECT_FALSE(zero_val.IsNull());
   }
 }
 
@@ -147,25 +148,19 @@ TEST_F(ValueFactoryTests, CastTest) {
 
 TEST_F(ValueFactoryTests, SerializationTest) {
   peloton::CopySerializeOutput out;
-  for (auto col_type : valueFactoryTestTypes) {
+  for (auto col_type : valuefactory_test_types) {
     type::Type::GetMinValue(col_type).SerializeTo(out);
     type::Type::GetMaxValue(col_type).SerializeTo(out);
   }
 
   peloton::CopySerializeInput in(out.Data(), out.Size());
-  for (auto col_type : valueFactoryTestTypes) {
-    for (int i = 0; i < 2; i++) {
+  for (auto col_type : valuefactory_test_types) {
+    for (auto expect_min : {true, false}) {
       type::Value v = (type::Value::DeserializeFrom(in, type::Type::GetInstance(col_type)->GetTypeId(), nullptr));
       EXPECT_EQ(v.GetTypeId(), col_type);
-      type::Value expected;
-      // MIN
-      if (i == 0) {
-        expected = type::Type::GetMinValue(col_type);
-      }
-        // MAX
-      else {
-        expected = type::Type::GetMaxValue(col_type);
-      }
+      type::Value expected = (expect_min ?
+                                type::Type::GetMinValue(col_type) :
+                                type::Type::GetMaxValue(col_type));
       EXPECT_EQ(type::CMP_TRUE, v.CompareEquals(expected));
     }
   }

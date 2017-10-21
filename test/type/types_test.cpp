@@ -119,6 +119,11 @@ TEST_F(TypesTests, TypeIdTest) {
 
     auto newVal = peloton::StringToTypeId(str);
     EXPECT_EQ(val, newVal);
+
+    // TODO: Need to change TypeId to enum class
+    // std::ostringstream os;
+    // os << val;
+    // EXPECT_EQ(str, os.str());
   }
 
   // Then make sure that we can't cast garbage
@@ -136,7 +141,7 @@ TEST_F(TypesTests, StatementTypeTest) {
       StatementType::DROP,    StatementType::PREPARE,
       StatementType::EXECUTE, StatementType::RENAME,
       StatementType::ALTER,   StatementType::TRANSACTION,
-      StatementType::COPY};
+      StatementType::COPY,    StatementType::ANALYZE};
 
   // Make sure that ToString and FromString work
   for (auto val : list) {
@@ -182,6 +187,7 @@ TEST_F(TypesTests, ExpressionTypeTest) {
       ExpressionType::COMPARE_LIKE,
       ExpressionType::COMPARE_NOTLIKE,
       ExpressionType::COMPARE_IN,
+      ExpressionType::COMPARE_DISTINCT_FROM,
       ExpressionType::CONJUNCTION_AND,
       ExpressionType::CONJUNCTION_OR,
       ExpressionType::VALUE_CONSTANT,
@@ -441,6 +447,10 @@ TEST_F(TypesTests, ConstraintTypeTest) {
 
     auto newVal = peloton::StringToConstraintType(str);
     EXPECT_EQ(val, newVal);
+
+    std::ostringstream os;
+    os << val;
+    EXPECT_EQ(str, os.str());
   }
 
   // Then make sure that we can't cast garbage
@@ -463,6 +473,10 @@ TEST_F(TypesTests, LoggingTypeTest) {
 
     auto newVal = peloton::StringToLoggingType(str);
     EXPECT_EQ(val, newVal);
+
+    std::ostringstream os;
+    os << val;
+    EXPECT_EQ(str, os.str());
   }
 
   // Then make sure that we can't cast garbage
@@ -484,6 +498,10 @@ TEST_F(TypesTests, CheckpointingTypeTest) {
 
     auto newVal = peloton::StringToCheckpointingType(str);
     EXPECT_EQ(val, newVal);
+
+    std::ostringstream os;
+    os << val;
+    EXPECT_EQ(str, os.str());
   }
 
   // Then make sure that we can't cast garbage
@@ -505,6 +523,10 @@ TEST_F(TypesTests, GarbageCollectionTypeTest) {
 
     auto newVal = peloton::StringToGarbageCollectionType(str);
     EXPECT_EQ(val, newVal);
+
+    std::ostringstream os;
+    os << val;
+    EXPECT_EQ(str, os.str());
   }
 
   // Then make sure that we can't cast garbage
@@ -527,6 +549,10 @@ TEST_F(TypesTests, ProtocolTypeTest) {
 
     auto newVal = peloton::StringToProtocolType(str);
     EXPECT_EQ(val, newVal);
+
+    std::ostringstream os;
+    os << val;
+    EXPECT_EQ(str, os.str());
   }
 
   // Then make sure that we can't cast garbage
@@ -549,6 +575,10 @@ TEST_F(TypesTests, EpochTypeTest) {
 
     auto newVal = peloton::StringToEpochType(str);
     EXPECT_EQ(val, newVal);
+
+    std::ostringstream os;
+    os << val;
+    EXPECT_EQ(str, os.str());
   }
 
   // Then make sure that we can't cast garbage
@@ -573,6 +603,10 @@ TEST_F(TypesTests, TimestampTypeTest) {
 
     auto newVal = peloton::StringToTimestampType(str);
     EXPECT_EQ(val, newVal);
+
+    std::ostringstream os;
+    os << val;
+    EXPECT_EQ(str, os.str());
   }
 
   // Then make sure that we can't cast garbage
@@ -597,6 +631,10 @@ TEST_F(TypesTests, VisibilityTypeTest) {
 
     auto newVal = peloton::StringToVisibilityType(str);
     EXPECT_EQ(val, newVal);
+
+    std::ostringstream os;
+    os << val;
+    EXPECT_EQ(str, os.str());
   }
 
   // Then make sure that we can't cast garbage
@@ -620,6 +658,10 @@ TEST_F(TypesTests, VisibilityIdTypeTest) {
 
     auto newVal = peloton::StringToVisibilityIdType(str);
     EXPECT_EQ(val, newVal);
+
+    std::ostringstream os;
+    os << val;
+    EXPECT_EQ(str, os.str());
   }
 
   // Then make sure that we can't cast garbage
@@ -646,6 +688,10 @@ TEST_F(TypesTests, IsolationLevelTypeTest) {
 
     auto newVal = peloton::StringToIsolationLevelType(str);
     EXPECT_EQ(val, newVal);
+
+    std::ostringstream os;
+    os << val;
+    EXPECT_EQ(str, os.str());
   }
 
   // Then make sure that we can't cast garbage
@@ -669,6 +715,10 @@ TEST_F(TypesTests, ConflictAvoidanceTypeTest) {
 
     auto newVal = peloton::StringToConflictAvoidanceType(str);
     EXPECT_EQ(val, newVal);
+
+    std::ostringstream os;
+    os << val;
+    EXPECT_EQ(str, os.str());
   }
 
   // Then make sure that we can't cast garbage
@@ -677,7 +727,6 @@ TEST_F(TypesTests, ConflictAvoidanceTypeTest) {
   EXPECT_THROW(peloton::ConflictAvoidanceTypeToString(static_cast<ConflictAvoidanceType>(-99999)),
                peloton::Exception);
 }
-
 
 TEST_F(TypesTests, RWTypeTest) {
   std::vector<RWType> list = {
@@ -697,12 +746,394 @@ TEST_F(TypesTests, RWTypeTest) {
 
     auto newVal = peloton::StringToRWType(str);
     EXPECT_EQ(val, newVal);
+
+    std::ostringstream os;
+    os << val;
+    EXPECT_EQ(str, os.str());
   }
 
   // Then make sure that we can't cast garbage
   std::string invalid("WU TANG");
   EXPECT_THROW(peloton::StringToRWType(invalid), peloton::Exception);
   EXPECT_THROW(peloton::RWTypeToString(static_cast<RWType>(-99999)),
+               peloton::Exception);
+}
+
+TEST_F(TypesTests, CreateTypeTest) {
+  std::vector<CreateType> list = {
+      CreateType::INVALID,
+      CreateType::DB,
+      CreateType::TABLE,
+      CreateType::INDEX,
+      CreateType::CONSTRAINT,
+      CreateType::TRIGGER,
+  };
+
+  // Make sure that ToString and FromString work
+  for (auto val : list) {
+    std::string str = peloton::CreateTypeToString(val);
+    EXPECT_TRUE(str.size() > 0);
+
+    auto newVal = peloton::StringToCreateType(str);
+    EXPECT_EQ(val, newVal);
+
+    std::ostringstream os;
+    os << val;
+    EXPECT_EQ(str, os.str());
+  }
+
+  // Then make sure that we can't cast garbage
+  std::string invalid("WU TANG");
+  EXPECT_THROW(peloton::StringToCreateType(invalid), peloton::Exception);
+  EXPECT_THROW(peloton::CreateTypeToString(static_cast<CreateType>(-99999)),
+               peloton::Exception);
+}
+
+TEST_F(TypesTests, DropTypeTest) {
+  std::vector<DropType> list = {
+      DropType::INVALID,
+      DropType::DB,
+      DropType::TABLE,
+      DropType::INDEX,
+      DropType::CONSTRAINT,
+      DropType::TRIGGER,
+  };
+
+  // Make sure that ToString and FromString work
+  for (auto val : list) {
+    std::string str = peloton::DropTypeToString(val);
+    EXPECT_TRUE(str.size() > 0);
+
+    auto newVal = peloton::StringToDropType(str);
+    EXPECT_EQ(val, newVal);
+
+    std::ostringstream os;
+    os << val;
+    EXPECT_EQ(str, os.str());
+  }
+
+  // Then make sure that we can't cast garbage
+  std::string invalid("WU TANG");
+  EXPECT_THROW(peloton::StringToDropType(invalid), peloton::Exception);
+  EXPECT_THROW(peloton::DropTypeToString(static_cast<DropType>(-99999)),
+               peloton::Exception);
+}
+
+TEST_F(TypesTests, AggregateTypeTest) {
+  std::vector<AggregateType> list = {
+      AggregateType::INVALID,
+      AggregateType::SORTED,
+      AggregateType::HASH,
+      AggregateType::PLAIN,
+  };
+
+  // Make sure that ToString and FromString work
+  for (auto val : list) {
+    std::string str = peloton::AggregateTypeToString(val);
+    EXPECT_TRUE(str.size() > 0);
+
+    auto newVal = peloton::StringToAggregateType(str);
+    EXPECT_EQ(val, newVal);
+
+    std::ostringstream os;
+    os << val;
+    EXPECT_EQ(str, os.str());
+  }
+
+  // Then make sure that we can't cast garbage
+  std::string invalid("WU TANG");
+  EXPECT_THROW(peloton::StringToAggregateType(invalid), peloton::Exception);
+  EXPECT_THROW(peloton::AggregateTypeToString(static_cast<AggregateType>(-99999)),
+               peloton::Exception);
+}
+
+TEST_F(TypesTests, QuantifierTypeTest) {
+  std::vector<QuantifierType> list = {
+      QuantifierType::NONE,
+      QuantifierType::ANY,
+      QuantifierType::ALL,
+  };
+
+  // Make sure that ToString and FromString work
+  for (auto val : list) {
+    std::string str = peloton::QuantifierTypeToString(val);
+    EXPECT_TRUE(str.size() > 0);
+
+    auto newVal = peloton::StringToQuantifierType(str);
+    EXPECT_EQ(val, newVal);
+
+    std::ostringstream os;
+    os << val;
+    EXPECT_EQ(str, os.str());
+  }
+
+  // Then make sure that we can't cast garbage
+  std::string invalid("WU TANG");
+  EXPECT_THROW(peloton::StringToQuantifierType(invalid), peloton::Exception);
+  EXPECT_THROW(peloton::QuantifierTypeToString(static_cast<QuantifierType>(-99999)),
+               peloton::Exception);
+}
+
+TEST_F(TypesTests, TableReferenceTypeTest) {
+  std::vector<TableReferenceType> list = {
+      TableReferenceType::INVALID,
+      TableReferenceType::NAME,
+      TableReferenceType::SELECT,
+      TableReferenceType::JOIN,
+      TableReferenceType::CROSS_PRODUCT,
+  };
+
+  // Make sure that ToString and FromString work
+  for (auto val : list) {
+    std::string str = peloton::TableReferenceTypeToString(val);
+    EXPECT_TRUE(str.size() > 0);
+
+    auto newVal = peloton::StringToTableReferenceType(str);
+    EXPECT_EQ(val, newVal);
+
+    std::ostringstream os;
+    os << val;
+    EXPECT_EQ(str, os.str());
+  }
+
+  // Then make sure that we can't cast garbage
+  std::string invalid("WU TANG");
+  EXPECT_THROW(peloton::StringToTableReferenceType(invalid), peloton::Exception);
+  EXPECT_THROW(peloton::TableReferenceTypeToString(static_cast<TableReferenceType>(-99999)),
+               peloton::Exception);
+}
+
+TEST_F(TypesTests, InsertTypeTest) {
+  std::vector<InsertType> list = {
+      InsertType::INVALID,
+      InsertType::VALUES,
+      InsertType::SELECT,
+  };
+
+  // Make sure that ToString and FromString work
+  for (auto val : list) {
+    std::string str = peloton::InsertTypeToString(val);
+    EXPECT_TRUE(str.size() > 0);
+
+    auto newVal = peloton::StringToInsertType(str);
+    EXPECT_EQ(val, newVal);
+
+    std::ostringstream os;
+    os << val;
+    EXPECT_EQ(str, os.str());
+  }
+
+  // Then make sure that we can't cast garbage
+  std::string invalid("WU TANG");
+  EXPECT_THROW(peloton::StringToInsertType(invalid), peloton::Exception);
+  EXPECT_THROW(peloton::InsertTypeToString(static_cast<InsertType>(-99999)),
+               peloton::Exception);
+}
+
+TEST_F(TypesTests, CopyTypeTest) {
+  std::vector<CopyType> list = {
+      CopyType::INVALID,
+      CopyType::IMPORT_CSV,
+      CopyType::IMPORT_TSV,
+      CopyType::EXPORT_CSV,
+      CopyType::EXPORT_STDOUT,
+      CopyType::EXPORT_OTHER,
+  };
+
+  // Make sure that ToString and FromString work
+  for (auto val : list) {
+    std::string str = peloton::CopyTypeToString(val);
+    EXPECT_TRUE(str.size() > 0);
+
+    auto newVal = peloton::StringToCopyType(str);
+    EXPECT_EQ(val, newVal);
+
+    std::ostringstream os;
+    os << val;
+    EXPECT_EQ(str, os.str());
+  }
+
+  // Then make sure that we can't cast garbage
+  std::string invalid("WU TANG");
+  EXPECT_THROW(peloton::StringToCopyType(invalid), peloton::Exception);
+  EXPECT_THROW(peloton::CopyTypeToString(static_cast<CopyType>(-99999)),
+               peloton::Exception);
+}
+
+TEST_F(TypesTests, PayloadTypeTest) {
+  std::vector<PayloadType> list = {
+      PayloadType::INVALID,
+      PayloadType::CLIENT_REQUEST,
+      PayloadType::CLIENT_RESPONSE,
+      PayloadType::STOP,
+  };
+
+  // Make sure that ToString and FromString work
+  for (auto val : list) {
+    std::string str = peloton::PayloadTypeToString(val);
+    EXPECT_TRUE(str.size() > 0);
+
+    auto newVal = peloton::StringToPayloadType(str);
+    EXPECT_EQ(val, newVal);
+
+    std::ostringstream os;
+    os << val;
+    EXPECT_EQ(str, os.str());
+  }
+
+  // Then make sure that we can't cast garbage
+  std::string invalid("Squirrels All Around");
+  EXPECT_THROW(peloton::StringToPayloadType(invalid), peloton::Exception);
+  EXPECT_THROW(peloton::PayloadTypeToString(static_cast<PayloadType>(-99999)),
+               peloton::Exception);
+}
+
+TEST_F(TypesTests, TaskPriorityTypeTest) {
+  std::vector<TaskPriorityType> list = {
+      TaskPriorityType::INVALID,
+      TaskPriorityType::LOW,
+      TaskPriorityType::NORMAL,
+      TaskPriorityType::HIGH,
+  };
+
+  // Make sure that ToString and FromString work
+  for (auto val : list) {
+    std::string str = peloton::TaskPriorityTypeToString(val);
+    EXPECT_TRUE(str.size() > 0);
+
+    auto newVal = peloton::StringToTaskPriorityType(str);
+    EXPECT_EQ(val, newVal);
+
+    std::ostringstream os;
+    os << val;
+    EXPECT_EQ(str, os.str());
+  }
+
+  // Then make sure that we can't cast garbage
+  std::string invalid("WU TANG");
+  EXPECT_THROW(peloton::StringToTaskPriorityType(invalid), peloton::Exception);
+  EXPECT_THROW(peloton::TaskPriorityTypeToString(static_cast<TaskPriorityType>(-99999)),
+               peloton::Exception);
+}
+
+TEST_F(TypesTests, SetOpTypeTest) {
+  std::vector<SetOpType> list = {
+      SetOpType::INVALID,
+      SetOpType::INTERSECT,
+      SetOpType::INTERSECT_ALL,
+      SetOpType::EXCEPT,
+      SetOpType::EXCEPT_ALL,
+  };
+
+  // Make sure that ToString and FromString work
+  for (auto val : list) {
+    std::string str = peloton::SetOpTypeToString(val);
+    EXPECT_TRUE(str.size() > 0);
+
+    auto newVal = peloton::StringToSetOpType(str);
+    EXPECT_EQ(val, newVal);
+
+    std::ostringstream os;
+    os << val;
+    EXPECT_EQ(str, os.str());
+  }
+
+  // Then make sure that we can't cast garbage
+  std::string invalid("WU TANG");
+  EXPECT_THROW(peloton::StringToSetOpType(invalid), peloton::Exception);
+  EXPECT_THROW(peloton::SetOpTypeToString(static_cast<SetOpType>(-99999)),
+               peloton::Exception);
+}
+
+TEST_F(TypesTests, LogRecordTypeTest) {
+  std::vector<LogRecordType> list = {
+      LogRecordType::INVALID,
+      LogRecordType::TRANSACTION_BEGIN,
+      LogRecordType::TRANSACTION_COMMIT,
+      LogRecordType::TUPLE_INSERT,
+      LogRecordType::TUPLE_DELETE,
+      LogRecordType::TUPLE_UPDATE,
+      LogRecordType::EPOCH_BEGIN,
+      LogRecordType::EPOCH_END,
+  };
+
+  // Make sure that ToString and FromString work
+  for (auto val : list) {
+    std::string str = peloton::LogRecordTypeToString(val);
+    EXPECT_TRUE(str.size() > 0);
+
+    auto newVal = peloton::StringToLogRecordType(str);
+    EXPECT_EQ(val, newVal);
+
+    std::ostringstream os;
+    os << val;
+    EXPECT_EQ(str, os.str());
+  }
+
+  // Then make sure that we can't cast garbage
+  std::string invalid("WU TANG");
+  EXPECT_THROW(peloton::StringToLogRecordType(invalid), peloton::Exception);
+  EXPECT_THROW(peloton::LogRecordTypeToString(static_cast<LogRecordType>(-99999)),
+               peloton::Exception);
+}
+
+TEST_F(TypesTests, PropertyTypeTest) {
+  std::vector<PropertyType> list = {
+      PropertyType::INVALID,
+      PropertyType::PREDICATE,
+      PropertyType::COLUMNS,
+      PropertyType::DISTINCT,
+      PropertyType::SORT,
+      PropertyType::LIMIT,
+  };
+
+  // Make sure that ToString and FromString work
+  for (auto val : list) {
+    std::string str = peloton::PropertyTypeToString(val);
+    EXPECT_TRUE(str.size() > 0);
+
+    auto newVal = peloton::StringToPropertyType(str);
+    EXPECT_EQ(val, newVal);
+
+    std::ostringstream os;
+    os << val;
+    EXPECT_EQ(str, os.str());
+  }
+
+  // Then make sure that we can't cast garbage
+  std::string invalid("WU TANG");
+  EXPECT_THROW(peloton::StringToPropertyType(invalid), peloton::Exception);
+  EXPECT_THROW(peloton::PropertyTypeToString(static_cast<PropertyType>(-99999)),
+               peloton::Exception);
+}
+
+TEST_F(TypesTests, EntityTypeTest) {
+  std::vector<EntityType> list = {
+      EntityType::INVALID,
+      EntityType::TABLE,
+      EntityType::SCHEMA,
+      EntityType::INDEX,
+      EntityType::VIEW,
+      EntityType::PREPARED_STATEMENT,
+  };
+
+  // Make sure that ToString and FromString work
+  for (auto val : list) {
+    std::string str = peloton::EntityTypeToString(val);
+    EXPECT_TRUE(str.size() > 0);
+
+    auto newVal = peloton::StringToEntityType(str);
+    EXPECT_EQ(val, newVal);
+
+    std::ostringstream os;
+    os << val;
+    EXPECT_EQ(str, os.str());
+  }
+
+  // Then make sure that we can't cast garbage
+  std::string invalid("The terrier is passed out right now");
+  EXPECT_THROW(peloton::StringToEntityType(invalid), peloton::Exception);
+  EXPECT_THROW(peloton::EntityTypeToString(static_cast<EntityType>(-99999)),
                peloton::Exception);
 }
 
@@ -725,6 +1156,10 @@ TEST_F(TypesTests, GCVersionTypeTest) {
 
     auto newVal = peloton::StringToGCVersionType(str);
     EXPECT_EQ(val, newVal);
+
+    std::ostringstream os;
+    os << val;
+    EXPECT_EQ(str, os.str());
   }
 
   // Then make sure that we can't cast garbage
