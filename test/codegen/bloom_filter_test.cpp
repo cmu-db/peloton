@@ -27,6 +27,8 @@
 #include "planner/hash_join_plan.h"
 #include "planner/seq_scan_plan.h"
 #include "sql/testing_sql_util.h"
+#include "executor/executor_context.h"
+#include "codegen/counting_consumer.h"
 
 namespace peloton {
 namespace test {
@@ -270,9 +272,9 @@ TEST_F(BloomFilterCodegenTest, PerformanceTest) {
   LOG_INFO("Executing with bloom filter");
   double runtime2 = ExecuteJoin(query, txn, num_iter, numbers.size(), true);
 
-  LOG_INFO("Avg With Bloom Filter Enabled: %f", runtime1);
-  LOG_INFO("Avg With Bloom Filter Disabled: %f", runtime2);
-  LOG_INFO("Ratio: %f", runtime1 / runtime2);
+  LOG_INFO("Avg With Bloom Filter Disabled: %f", runtime1);
+  LOG_INFO("Avg With Bloom Filter Enabled: %f", runtime2);
+  LOG_INFO("Ratio: %f", runtime2 / runtime1);
 
   txn_manager.CommitTransaction(txn);
 }
@@ -285,22 +287,34 @@ double BloomFilterCodegenTest::ExecuteJoin(std::string query,
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
       new optimizer::Optimizer());
   double total_runtime = 0;
+  // Run the hash join multiple times and calculate the average runtime
   for (int i = 0; i < num_iter; i++) {
     auto plan =
         TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn);
     assert(
         ((planner::SeqScanPlan *)plan->GetChild(0))->GetTable()->GetName() ==
         table1_name);
+    // Change the bloom filter flag and set the correct cardinality in the plan
     const_cast<planner::AbstractPlan *>(plan->GetChild(0))
         ->SetCardinality(inner_table_cardinality);
     dynamic_cast<planner::HashJoinPlan *>(plan.get())
         ->SetBloomFilterFlag(enable_bloom_filter);
-    std::vector<StatementResult> result;
-    executor::ExecuteResult exe_result;
-    executor::PlanExecutor::ExecutePlan(plan, txn, {}, result,
-                                                         {}, exe_result);
-//    LOG_INFO("Execution Time: %0.0f ms", runtime);
-//    total_runtime += runtime;
+    
+    // Binding
+    planner::BindingContext context;
+    plan->PerformBinding(context);
+    // Use simple CountConsumer since we don't care about the result
+    codegen::CountingConsumer consumer;
+    // Compile the query
+    codegen::QueryCompiler compiler;
+    auto compiled_query = compiler.Compile(*plan, consumer);
+    // Run and collect runtime stats
+    codegen::Query::RuntimeStats stats;
+    compiled_query->Execute(*txn, std::unique_ptr<executor::ExecutorContext>(
+              new executor::ExecutorContext{txn}).get(),
+                            consumer.GetCountAsState(), &stats);
+    LOG_INFO("Execution Time: %0.0f ms", stats.plan_ms);
+    total_runtime += stats.plan_ms;
   }
   return total_runtime / num_iter;
 }
