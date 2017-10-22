@@ -109,6 +109,8 @@ std::unique_ptr<OperatorTranslator> TranslatorFactory::CreateTranslator(
     case PlanNodeType::INSERT: {
       auto &insert_plan = static_cast<const planner::InsertPlan &>(plan_node);
       translator = new InsertTranslator(insert_plan, context, pipeline);
+      break;
+    }
     case PlanNodeType::UPDATE: {
       auto &update_plan = static_cast<const planner::UpdatePlan &>(plan_node);
       translator = new UpdateTranslator(update_plan, context, pipeline);
