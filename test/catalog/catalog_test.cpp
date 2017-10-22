@@ -171,7 +171,7 @@ TEST_F(CatalogTests, TableObject) {
   EXPECT_EQ(type::TypeId::INTEGER, column_objects[0]->column_type);
   EXPECT_EQ(true, column_objects[0]->is_inlined);
   EXPECT_EQ(true, column_objects[0]->is_primary);
-  EXPECT_EQ(false, column_objects[0]->is_not_null);
+  EXPECT_FALSE(column_objects[0]->is_not_null);
 
   EXPECT_EQ(table_object->table_oid, column_objects[1]->table_oid);
   EXPECT_EQ("name", column_objects[1]->column_name);
@@ -179,8 +179,8 @@ TEST_F(CatalogTests, TableObject) {
   EXPECT_EQ(4, column_objects[1]->column_offset);
   EXPECT_EQ(type::TypeId::VARCHAR, column_objects[1]->column_type);
   EXPECT_EQ(true, column_objects[1]->is_inlined);
-  EXPECT_EQ(false, column_objects[1]->is_primary);
-  EXPECT_EQ(false, column_objects[1]->is_not_null);
+  EXPECT_FALSE(column_objects[1]->is_primary);
+  EXPECT_FALSE(column_objects[1]->is_not_null);
 
   txn_manager.CommitTransaction(txn);
 }
