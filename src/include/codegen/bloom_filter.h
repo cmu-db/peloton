@@ -30,7 +30,10 @@ class BloomFilter {
 
   // Seed Hash Functions to use.
   static const Hash::HashMethod kSeedHashFuncs[2];
+  // Bloom Filter False Positive Rate
   static const double kFalsePositiveRate;
+  // Number of hash functions to use.
+  static const uint64_t kNumHashFuncs;
 
  public:
   // Initialize bloom filter states
@@ -48,6 +51,10 @@ class BloomFilter {
                                const std::vector<codegen::Value> &key);
 
  private:
+  static void StoreBloomFilterField(CodeGen &codegen, llvm::Value *bloom_filter,
+                                    uint32_t field_id,
+                                    llvm::Value *new_field_val);
+
   static llvm::Value *LoadBloomFilterField(CodeGen &codegen,
                                            llvm::Value *bloom_filter,
                                            uint32_t field_id);
@@ -69,6 +76,12 @@ class BloomFilter {
 
   // The capacity of the underlying bit array
   uint64_t num_bits_;
+
+  // Statistic: number of misses
+  uint64_t num_misses_;
+
+  // Statistic: number of probes
+  uint64_t num_probes_;
 };
 
 }  // namespace codegen

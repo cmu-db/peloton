@@ -18,39 +18,60 @@
 #include <cmath>
 #include <vector>
 
+#define OPTIMAL_NUM_HASH_FUNC 0
+
 namespace peloton {
 namespace codegen {
 //===----------------------------------------------------------------------===//
 // Static Members
 //===----------------------------------------------------------------------===//
 const Hash::HashMethod BloomFilter::kSeedHashFuncs[2] = {
-    Hash::HashMethod::Murmur3, Hash::HashMethod::Crc32
-};
+    Hash::HashMethod::Murmur3, Hash::HashMethod::Crc32};
 
 const double BloomFilter::kFalsePositiveRate = 0.1;
+
+// Set it to OPTIMAL_NUM_HASH_FUNC to minimize bloom filter memory footprint
+const uint64_t BloomFilter::kNumHashFuncs = 1;
 
 //===----------------------------------------------------------------------===//
 // Member Functions
 //===----------------------------------------------------------------------===//
 
 void BloomFilter::Init(uint64_t estimated_num_tuples) {
-  // Calculate the size of bloom filter and number of hashes to use based on
-  // estimated cardinalities and target false positive rate. Formula is from
-  // http://blog.michaelschmatz.com/2016/04/11/how-to-write-a-bloom-filter-cpp/
-  num_bits_ = -(double)estimated_num_tuples * log(kFalsePositiveRate) /
-              (log(2) * log(2));
-  num_hash_funcs_ = (double)num_bits_ * log(2) / (double)estimated_num_tuples;
-//  LOG_DEBUG("BloomFilter num_bits: %llu num_hash_funcs: %llu", num_bits_,
-//            num_hash_funcs_);
+  if (kNumHashFuncs == OPTIMAL_NUM_HASH_FUNC) {
+    // Calculate the optimal number of hash functions and num of bits that
+    // will minimize the bloom filter's memory footprint. Formula is from
+    // http://blog.michaelschmatz.com/2016/04/11/how-to-write-a-bloom-filter-cpp/
+    num_bits_ = -(double)estimated_num_tuples * log(kFalsePositiveRate) /
+                (log(2) * log(2));
+    num_hash_funcs_ = (double)num_bits_ * log(2) / (double)estimated_num_tuples;
+  } else {
+    // Manually set the number of hash functions to use. The memory footprint
+    // may not be mininal but the performance could better since the cost of
+    // probing bloom filter is O(num_hash_funcs_). Formula is from wikipedia.
+    num_hash_funcs_ = kNumHashFuncs;
+    num_bits_ = -(double)estimated_num_tuples * num_hash_funcs_ /
+                log(1 - pow(kFalsePositiveRate, 1.0 / (double)num_hash_funcs_));
+  }
+  LOG_INFO("BloomFilter num_bits: %lu bits_per_element: %f num_hash_funcs: %lu",
+           num_bits_, (double)num_bits_ / estimated_num_tuples,
+           num_hash_funcs_);
 
   // Allocate memory for the underlying bytes array
   uint64_t num_bytes = (num_bits_ + 7) / 8;
   bytes_ = new char[num_bytes];
   PL_MEMSET(bytes_, 0, num_bytes);
+
+  // Initialize Statistics
+  num_misses_ = 0;
+  num_probes_ = 0;
 }
 
 void BloomFilter::Destroy() {
   // Free memory of underlying bytes array
+  LOG_DEBUG("Bloom Filter, num_probes: %lu, misses: %lu, Selectivity: %f",
+            num_probes_, num_misses_,
+            (double)(num_probes_ - num_misses_) / num_probes_);
   delete[] bytes_;
 }
 
@@ -96,6 +117,11 @@ llvm::Value *BloomFilter::Contains(CodeGen &codegen, llvm::Value *bloom_filter,
   llvm::Value *seed_hash1 = Hash::HashValues(codegen, key, kSeedHashFuncs[0]);
   llvm::Value *seed_hash2 = Hash::HashValues(codegen, key, kSeedHashFuncs[1]);
 
+  // Update statistic. Increase number of probing
+  llvm::Value *num_probe = LoadBloomFilterField(codegen, bloom_filter, 4);
+  StoreBloomFilterField(codegen, bloom_filter, 4,
+                        codegen->CreateAdd(num_probe, codegen.Const64(1)));
+
   lang::Loop add_loop{codegen, end_cond, {{"i", index}}};
   {
     index = add_loop.GetLoopVar(0);
@@ -117,6 +143,9 @@ llvm::Value *BloomFilter::Contains(CodeGen &codegen, llvm::Value *bloom_filter,
     lang::If bit_not_set{codegen, equal_zero, "BitNotSet"};
     {
       // Bit is not set. It means object not in bloom filter. break
+      llvm::Value *num_misses = LoadBloomFilterField(codegen, bloom_filter, 3);
+      StoreBloomFilterField(codegen, bloom_filter, 3,
+                            codegen->CreateAdd(num_misses, codegen.Const64(1)));
       add_loop.Break();
     }
     bit_not_set.EndIf();
@@ -131,6 +160,7 @@ llvm::Value *BloomFilter::Contains(CodeGen &codegen, llvm::Value *bloom_filter,
   llvm::Value *loop_to_end = codegen->CreateICmpEQ(vals[0], num_hashes);
   llvm::Value *contains = codegen->CreateSelect(
       loop_to_end, codegen.ConstBool(true), codegen.ConstBool(false));
+
   return contains;
 }
 
@@ -164,6 +194,16 @@ void BloomFilter::LocateBit(CodeGen &codegen, llvm::Value *bloom_filter,
       codegen->CreateURem(bit_offset, bits_per_byte), codegen.Int8Type());
   byte_ptr =
       codegen->CreateInBoundsGEP(codegen.ByteType(), byte_array, byte_offset);
+}
+
+void BloomFilter::StoreBloomFilterField(CodeGen &codegen,
+                                        llvm::Value *bloom_filter,
+                                        uint32_t field_id,
+                                        llvm::Value *new_field_val) {
+  llvm::Type *bloom_filter_type = BloomFilterProxy::GetType(codegen);
+  codegen->CreateStore(new_field_val,
+                       codegen->CreateConstInBoundsGEP2_32(
+                           bloom_filter_type, bloom_filter, 0, field_id));
 }
 
 llvm::Value *BloomFilter::LoadBloomFilterField(CodeGen &codegen,
