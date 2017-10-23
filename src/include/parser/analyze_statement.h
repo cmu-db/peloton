@@ -41,8 +41,12 @@ class AnalyzeStatement : public SQLStatement {
     return analyze_columns;
   }
 
-  std::string GetDatabaseName(std::string default_database_name) const {
-    return analyze_table->GetDatabaseName(default_database_name);
+  inline void TryBindDatabaseName(std::string default_database_name) {
+    analyze_table->TryBindDatabaseName(default_database_name);
+  }
+
+  std::string GetDatabaseName() const {
+    return analyze_table->GetDatabaseName();
   }
 
   virtual void Accept(SqlNodeVisitor* v) const override {

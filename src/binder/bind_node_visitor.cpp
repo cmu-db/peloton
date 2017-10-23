@@ -98,11 +98,10 @@ void BindNodeVisitor::Visit(const parser::UpdateStatement *node) {
   context_ = nullptr;
 }
 
-void BindNodeVisitor::Visit(const parser::DeleteStatement *node) {
+void BindNodeVisitor::Visit(parser::DeleteStatement *node) {
   context_ = std::make_shared<BinderContext>();
-
-  context_->AddTable(node->GetDatabaseName(default_database_name_), 
-                     node->GetTableName(), txn_);
+  node->TryBindDatabaseName(default_database_name_);
+  context_->AddTable(node->GetDatabaseName(), node->GetTableName(), txn_);
 
   if (node->expr != nullptr) node->expr->Accept(this);
 

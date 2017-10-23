@@ -53,7 +53,7 @@ struct TableRef {
   // Convenience accessor methods
   inline bool HasSchema() { return !schema.empty(); }
 
-  // Get the name of the database of this table
+  // Try to bind the database name to the node if not specified
   inline void TryBindDatabaseName(std::string default_database_name) {
     if (table_info_ == nullptr) {
       table_info_.reset(new TableInfo());
@@ -64,6 +64,7 @@ struct TableRef {
     }
   }
 
+  // Get the name of the database of this table
   inline std::string GetDatabaseName() const {
     return table_info_->database_name;
   }

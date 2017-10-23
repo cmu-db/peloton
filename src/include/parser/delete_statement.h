@@ -36,9 +36,13 @@ class DeleteStatement : public SQLStatement {
   std::string GetTableName() const {
     return table_ref->GetTableName();
   }
+  
+  inline void TryBindDatabaseName(std::string default_database_name) {
+    table_ref->TryBindDatabaseName(default_database_name);
+  }
 
-  std::string GetDatabaseName(std::string default_database_name) const {
-    return table_ref->GetDatabaseName(default_database_name);
+  std::string GetDatabaseName() const {
+    return table_ref->GetDatabaseName();
   }
 
   virtual void Accept(SqlNodeVisitor* v) const override {
