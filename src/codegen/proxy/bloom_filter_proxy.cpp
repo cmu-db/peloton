@@ -15,12 +15,12 @@
 namespace peloton {
 namespace codegen {
 
-DEFINE_TYPE(BloomFilter, "peloton::BloomFilter", MEMBER(num_hash_funcs_),
-            MEMBER(bytes_), MEMBER(num_bits_), MEMBER(num_misses_),
-            MEMBER(num_probes_));
+DEFINE_TYPE(BloomFilter, "peloton::BloomFilter", MEMBER(num_hash_funcs),
+            MEMBER(bytes), MEMBER(num_bits), MEMBER(num_misses),
+            MEMBER(num_probes));
 
-DEFINE_METHOD(peloton::codegen, BloomFilter, Init);
-DEFINE_METHOD(peloton::codegen, BloomFilter, Destroy);
+DEFINE_METHOD(peloton::codegen::util, BloomFilter, Init);
+DEFINE_METHOD(peloton::codegen::util, BloomFilter, Destroy);
 
 }  // namespace codegen
 }  // namespace peloton

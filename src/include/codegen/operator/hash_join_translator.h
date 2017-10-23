@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "codegen/bloom_filter.h"
+#include "codegen/bloom_filter_accessor.h"
 #include "codegen/compilation_context.h"
 #include "codegen/consumer_context.h"
 #include "codegen/oa_hash_table.h"
@@ -147,6 +147,9 @@ class HashJoinTranslator : public OperatorTranslator {
 
   // The hash table we use to perform the join
   OAHashTable hash_table_;
+
+  // Bloom Filter Accessor
+  BloomFilterAccessor bloom_filter_;
 
   // The left and right hash key expressions
   std::vector<const expression::AbstractExpression *> left_key_exprs_;

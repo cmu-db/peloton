@@ -12,21 +12,21 @@
 
 #pragma once
 
-#include "codegen/bloom_filter.h"
 #include "codegen/hash.h"
 #include "codegen/proxy/proxy.h"
 #include "codegen/proxy/type_builder.h"
+#include "codegen/util/bloom_filter.h"
 
 namespace peloton {
 namespace codegen {
 
 PROXY(BloomFilter) {
   // Member Variables
-  DECLARE_MEMBER(0, uint64_t, num_hash_funcs_);
-  DECLARE_MEMBER(1, char*, bytes_);
-  DECLARE_MEMBER(2, uint64_t, num_bits_);
-  DECLARE_MEMBER(3, uint64_t, num_misses_);
-  DECLARE_MEMBER(4, uint64_t, num_probes_);
+  DECLARE_MEMBER(0, uint64_t, num_hash_funcs);
+  DECLARE_MEMBER(1, char*, bytes);
+  DECLARE_MEMBER(2, uint64_t, num_bits);
+  DECLARE_MEMBER(3, uint64_t, num_misses);
+  DECLARE_MEMBER(4, uint64_t, num_probes);
 
   DECLARE_TYPE;
 
@@ -35,7 +35,7 @@ PROXY(BloomFilter) {
   DECLARE_METHOD(Destroy);
 };
 
-TYPE_BUILDER(BloomFilter, BloomFilter);
+TYPE_BUILDER(BloomFilter, util::BloomFilter);
 
 }  // namespace codegen
 }  // namespace peloton
