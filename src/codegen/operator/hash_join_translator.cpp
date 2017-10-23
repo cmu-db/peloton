@@ -297,6 +297,7 @@ void HashJoinTranslator::ConsumeFromRight(ConsumerContext &context,
     // Prefilter the tuple using Bloom Filter
     llvm::Value *contains = BloomFilter::Contains(
         GetCodeGen(), LoadStatePtr(bloom_filter_id_), key);
+
     lang::If is_valid_row{GetCodeGen(), contains};
     {
       // For each tuple that passes the bloom filter, probe the hash table
@@ -323,10 +324,10 @@ void HashJoinTranslator::CodegenHashProbe(
 
 // Cleanup by destroying the hash-table instance
 void HashJoinTranslator::TearDownState() {
-  hash_table_.Destroy(GetCodeGen(), LoadStatePtr(hash_table_id_));
+  auto &codegen = GetCodeGen();
+  hash_table_.Destroy(codegen, LoadStatePtr(hash_table_id_));
   if (GetJoinPlan().IsBloomFilterEnabled()) {
-    GetCodeGen().Call(BloomFilterProxy::Destroy,
-                      {LoadStatePtr(bloom_filter_id_)});
+    codegen.Call(BloomFilterProxy::Destroy, {LoadStatePtr(bloom_filter_id_)});
   }
 }
 
@@ -371,7 +372,7 @@ uint64_t HashJoinTranslator::EstimateCardinalityLeft() const {
   // TODO:Implement this once optimizer provide cardinality to executor.
   // Right now, it's hard coded to a relatively large number to make sure
   // bloom filter works correctly.
-  return 500000;
+  return (uint64_t)GetJoinPlan().GetChild(0)->GetCardinality();
 }
 
 // Should this aggregation use prefetching

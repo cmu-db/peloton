@@ -14,7 +14,7 @@
 
 namespace peloton {
 namespace codegen {
-    
+
 DEFINE_TYPE(TimerSet, "peloton::util::TimerSet", MEMBER(opaque));
 
 DEFINE_METHOD(peloton::codegen::util, TimerSet, Init);
@@ -22,6 +22,6 @@ DEFINE_METHOD(peloton::codegen::util, TimerSet, Destroy);
 DEFINE_METHOD(peloton::codegen::util, TimerSet, Start);
 DEFINE_METHOD(peloton::codegen::util, TimerSet, Stop);
 DEFINE_METHOD(peloton::codegen::util, TimerSet, GetDuration);
-  
+
 }  // namespace codegen
 }  // namespace peloton
