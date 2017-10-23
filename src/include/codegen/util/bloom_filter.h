@@ -4,7 +4,7 @@
 //
 // bloom_filter.h
 //
-// Identification: include/codegen/bloom_filter.h
+// Identification: include/codegen/util/bloom_filter.h
 //
 // Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
@@ -19,6 +19,7 @@
 
 namespace peloton {
 namespace codegen {
+namespace util {
 
 class BloomFilter {
  public:
@@ -42,31 +43,6 @@ class BloomFilter {
   // Destroy the bloom filter states
   void Destroy();
 
-  // Codegen the bloom filter insert
-  static void Add(CodeGen &codegen, llvm::Value *bloom_filter,
-                  const std::vector<codegen::Value> &key);
-
-  // Codegen the bloom filter probe
-  static llvm::Value *Contains(CodeGen &codegen, llvm::Value *bloom_filter,
-                               const std::vector<codegen::Value> &key);
-
- private:
-  static void StoreBloomFilterField(CodeGen &codegen, llvm::Value *bloom_filter,
-                                    uint32_t field_id,
-                                    llvm::Value *new_field_val);
-
-  static llvm::Value *LoadBloomFilterField(CodeGen &codegen,
-                                           llvm::Value *bloom_filter,
-                                           uint32_t field_id);
-
-  static llvm::Value *CalculateHash(CodeGen &codegen, llvm::Value *index,
-                                    llvm::Value *seed_hash1,
-                                    llvm::Value *seed_hash2);
-
-  static void LocateBit(CodeGen &codegen, llvm::Value *bloom_filter,
-                        llvm::Value *hash, llvm::Value *&bit_offset_in_byte,
-                        llvm::Value *&byte_ptr);
-
  private:
   // Number of hash functions to use
   uint64_t num_hash_funcs_;
@@ -84,5 +60,6 @@ class BloomFilter {
   uint64_t num_probes_;
 };
 
+}  // namespace util
 }  // namespace codegen
 }  // namespace peloton

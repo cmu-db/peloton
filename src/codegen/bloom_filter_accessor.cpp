@@ -2,86 +2,45 @@
 //
 //                         Peloton
 //
-// bloom_filter.cpp
+// bloom_filter_accessor.cpp
 //
-// Identification: src/codegen/bloom_filter.cpp
+// Identification: src/codegen/bloom_filter_accessor.cpp
 //
 // Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/bloom_filter.h"
+#include "codegen/bloom_filter_accessor.h"
 #include "codegen/lang/if.h"
 #include "codegen/lang/loop.h"
 #include "codegen/proxy/bloom_filter_proxy.h"
+#include "codegen/util/bloom_filter.h"
 
 #include <cmath>
 #include <vector>
 
-#define OPTIMAL_NUM_HASH_FUNC 0
-
 namespace peloton {
 namespace codegen {
-//===----------------------------------------------------------------------===//
-// Static Members
-//===----------------------------------------------------------------------===//
-const Hash::HashMethod BloomFilter::kSeedHashFuncs[2] = {
-    Hash::HashMethod::Murmur3, Hash::HashMethod::Crc32};
 
-const double BloomFilter::kFalsePositiveRate = 0.1;
-
-// Set it to OPTIMAL_NUM_HASH_FUNC to minimize bloom filter memory footprint
-const uint64_t BloomFilter::kNumHashFuncs = 1;
-
-//===----------------------------------------------------------------------===//
-// Member Functions
-//===----------------------------------------------------------------------===//
-
-void BloomFilter::Init(uint64_t estimated_num_tuples) {
-  if (kNumHashFuncs == OPTIMAL_NUM_HASH_FUNC) {
-    // Calculate the optimal number of hash functions and num of bits that
-    // will minimize the bloom filter's memory footprint. Formula is from
-    // http://blog.michaelschmatz.com/2016/04/11/how-to-write-a-bloom-filter-cpp/
-    num_bits_ = -(double)estimated_num_tuples * log(kFalsePositiveRate) /
-                (log(2) * log(2));
-    num_hash_funcs_ = (double)num_bits_ * log(2) / (double)estimated_num_tuples;
-  } else {
-    // Manually set the number of hash functions to use. The memory footprint
-    // may not be mininal but the performance could better since the cost of
-    // probing bloom filter is O(num_hash_funcs_). Formula is from wikipedia.
-    num_hash_funcs_ = kNumHashFuncs;
-    num_bits_ = -(double)estimated_num_tuples * num_hash_funcs_ /
-                log(1 - pow(kFalsePositiveRate, 1.0 / (double)num_hash_funcs_));
-  }
-  LOG_INFO("BloomFilter num_bits: %lu bits_per_element: %f num_hash_funcs: %lu",
-           num_bits_, (double)num_bits_ / estimated_num_tuples,
-           num_hash_funcs_);
-
-  // Allocate memory for the underlying bytes array
-  uint64_t num_bytes = (num_bits_ + 7) / 8;
-  bytes_ = new char[num_bytes];
-  PL_MEMSET(bytes_, 0, num_bytes);
-
-  // Initialize Statistics
-  num_misses_ = 0;
-  num_probes_ = 0;
+void BloomFilterAccessor::Init(CodeGen &codegen, llvm::Value *bloom_filter,
+                               uint64_t estimated_num_tuples) const {
+  codegen.Call(BloomFilterProxy::Init,
+               {bloom_filter, codegen.Const64(estimated_num_tuples)});
 }
 
-void BloomFilter::Destroy() {
-  // Free memory of underlying bytes array
-  LOG_DEBUG("Bloom Filter, num_probes: %lu, misses: %lu, Selectivity: %f",
-            num_probes_, num_misses_,
-            (double)(num_probes_ - num_misses_) / num_probes_);
-  delete[] bytes_;
+void BloomFilterAccessor::Destroy(CodeGen &codegen,
+                                  llvm::Value *bloom_filter) const {
+  codegen.Call(BloomFilterProxy::Destroy, {bloom_filter});
 }
-
-void BloomFilter::Add(CodeGen &codegen, llvm::Value *bloom_filter,
-                      const std::vector<codegen::Value> &key) {
+void BloomFilterAccessor::Add(CodeGen &codegen, llvm::Value *bloom_filter,
+                              const std::vector<codegen::Value> &key) const {
   // Index of current hash being calculated
   llvm::Value *index = codegen.Const64(0);
   llvm::Value *num_hashes = LoadBloomFilterField(codegen, bloom_filter, 0);
-  llvm::Value *seed_hash1 = Hash::HashValues(codegen, key, kSeedHashFuncs[0]);
-  llvm::Value *seed_hash2 = Hash::HashValues(codegen, key, kSeedHashFuncs[1]);
+  llvm::Value *seed_hash1 =
+      Hash::HashValues(codegen, key, util::BloomFilter::kSeedHashFuncs[0]);
+  llvm::Value *seed_hash2 =
+      Hash::HashValues(codegen, key, util::BloomFilter::kSeedHashFuncs[1]);
 
   llvm::Value *end_cond = codegen->CreateICmpULT(index, num_hashes);
   lang::Loop add_loop{codegen, end_cond, {{"i", index}}};
@@ -108,15 +67,17 @@ void BloomFilter::Add(CodeGen &codegen, llvm::Value *bloom_filter,
   }
 }
 
-llvm::Value *BloomFilter::Contains(CodeGen &codegen, llvm::Value *bloom_filter,
-                                   const std::vector<codegen::Value> &key) {
+llvm::Value *BloomFilterAccessor::Contains(
+    CodeGen &codegen, llvm::Value *bloom_filter,
+    const std::vector<codegen::Value> &key) const {
   // Index of current hash being calculated
   llvm::Value *index = codegen.Const64(0);
   llvm::Value *num_hashes = LoadBloomFilterField(codegen, bloom_filter, 0);
   llvm::Value *end_cond = codegen->CreateICmpULT(index, num_hashes);
-  llvm::Value *seed_hash1 = Hash::HashValues(codegen, key, kSeedHashFuncs[0]);
-  llvm::Value *seed_hash2 = Hash::HashValues(codegen, key, kSeedHashFuncs[1]);
-
+  llvm::Value *seed_hash1 =
+      Hash::HashValues(codegen, key, util::BloomFilter::kSeedHashFuncs[0]);
+  llvm::Value *seed_hash2 =
+      Hash::HashValues(codegen, key, util::BloomFilter::kSeedHashFuncs[1]);
   // Update statistic. Increase number of probing
   llvm::Value *num_probe = LoadBloomFilterField(codegen, bloom_filter, 4);
   StoreBloomFilterField(codegen, bloom_filter, 4,
@@ -164,9 +125,10 @@ llvm::Value *BloomFilter::Contains(CodeGen &codegen, llvm::Value *bloom_filter,
   return contains;
 }
 
-llvm::Value *BloomFilter::CalculateHash(CodeGen &codegen, llvm::Value *index,
-                                        llvm::Value *seed_hash1,
-                                        llvm::Value *seed_hash2) {
+llvm::Value *BloomFilterAccessor::CalculateHash(CodeGen &codegen,
+                                                llvm::Value *index,
+                                                llvm::Value *seed_hash1,
+                                                llvm::Value *seed_hash2) const {
   // Calculate hashes[index]
   llvm::Value *combined_hash =
       codegen->CreateAdd(seed_hash1, codegen->CreateMul(index, seed_hash2));
@@ -181,9 +143,10 @@ llvm::Value *BloomFilter::CalculateHash(CodeGen &codegen, llvm::Value *index,
 }
 
 // Given the hash, find the corresponding byte that contains the bit
-void BloomFilter::LocateBit(CodeGen &codegen, llvm::Value *bloom_filter,
-                            llvm::Value *hash, llvm::Value *&bit_offset_in_byte,
-                            llvm::Value *&byte_ptr) {
+void BloomFilterAccessor::LocateBit(CodeGen &codegen, llvm::Value *bloom_filter,
+                                    llvm::Value *hash,
+                                    llvm::Value *&bit_offset_in_byte,
+                                    llvm::Value *&byte_ptr) const {
   llvm::Value *byte_array = LoadBloomFilterField(codegen, bloom_filter, 1);
   llvm::Value *num_bits = LoadBloomFilterField(codegen, bloom_filter, 2);
 
@@ -196,19 +159,17 @@ void BloomFilter::LocateBit(CodeGen &codegen, llvm::Value *bloom_filter,
       codegen->CreateInBoundsGEP(codegen.ByteType(), byte_array, byte_offset);
 }
 
-void BloomFilter::StoreBloomFilterField(CodeGen &codegen,
-                                        llvm::Value *bloom_filter,
-                                        uint32_t field_id,
-                                        llvm::Value *new_field_val) {
+void BloomFilterAccessor::StoreBloomFilterField(
+    CodeGen &codegen, llvm::Value *bloom_filter, uint32_t field_id,
+    llvm::Value *new_field_val) const {
   llvm::Type *bloom_filter_type = BloomFilterProxy::GetType(codegen);
   codegen->CreateStore(new_field_val,
                        codegen->CreateConstInBoundsGEP2_32(
                            bloom_filter_type, bloom_filter, 0, field_id));
 }
 
-llvm::Value *BloomFilter::LoadBloomFilterField(CodeGen &codegen,
-                                               llvm::Value *bloom_filter,
-                                               uint32_t field_id) {
+llvm::Value *BloomFilterAccessor::LoadBloomFilterField(
+    CodeGen &codegen, llvm::Value *bloom_filter, uint32_t field_id) const {
   llvm::Type *bloom_filter_type = BloomFilterProxy::GetType(codegen);
   return codegen->CreateLoad(codegen->CreateConstInBoundsGEP2_32(
       bloom_filter_type, bloom_filter, 0, field_id));

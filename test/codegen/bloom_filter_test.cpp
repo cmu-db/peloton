@@ -14,6 +14,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "codegen/bloom_filter_accessor.h"
 #include "codegen/codegen.h"
 #include "codegen/counting_consumer.h"
 #include "codegen/function_builder.h"
@@ -21,6 +22,7 @@
 #include "codegen/lang/loop.h"
 #include "codegen/proxy/bloom_filter_proxy.h"
 #include "codegen/testing_codegen_util.h"
+#include "codegen/util/bloom_filter.h"
 #include "common/timer.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/executor_context.h"
@@ -83,6 +85,7 @@ TEST_F(BloomFilterCodegenTest, FalsePositiveRateTest) {
     number_set.insert(rand());
   }
   std::vector<int> numbers(number_set.begin(), number_set.end());
+  codegen::BloomFilterAccessor bloom_filter_accessor;
 
   // Build the test function that has the following logic:
   // define @TestBloomFilter(BloomFilter* bloom_filter, i32* numbers, i32 size,
@@ -127,7 +130,7 @@ TEST_F(BloomFilterCodegenTest, FalsePositiveRateTest) {
       codegen::Value number_val{codegen::type::Type(type::INTEGER, false),
                                 number};
       // Insert numbers[i] into bloom filter
-      codegen::BloomFilter::Add(codegen, bloom_filter, {number_val});
+      bloom_filter_accessor.Add(codegen, bloom_filter, {number_val});
 
       index = codegen->CreateAdd(index, codegen.Const32(1));
       insert_loop.LoopEnd(codegen->CreateICmpULT(index, half_size), {index});
@@ -147,7 +150,7 @@ TEST_F(BloomFilterCodegenTest, FalsePositiveRateTest) {
 
       // Test if numbers[i] is contained in bloom filter
       llvm::Value *contains =
-          codegen::BloomFilter::Contains(codegen, bloom_filter, {number_val});
+          bloom_filter_accessor.Contains(codegen, bloom_filter, {number_val});
       codegen::lang::If if_contains{codegen, contains};
       {
         codegen->CreateStore(
@@ -166,18 +169,19 @@ TEST_F(BloomFilterCodegenTest, FalsePositiveRateTest) {
 
   ASSERT_TRUE(code_context.Compile());
 
-  typedef void (*ftype)(codegen::BloomFilter * bloom_filter, int *, int, int *);
+  typedef void (*ftype)(codegen::util::BloomFilter * bloom_filter, int *, int,
+                        int *);
   ftype f = (ftype)code_context.GetRawFunctionPointer(func.GetFunction());
 
-  codegen::BloomFilter bloom_filter;
+  codegen::util::BloomFilter bloom_filter;
   bloom_filter.Init(size / 2);
   int num_false_positive = 0;
 
   // Run the function
   f(&bloom_filter, &numbers[0], size, &num_false_positive);
   double actual_FPR = (double)num_false_positive / (size / 2);
-  double expected_FPR = codegen::BloomFilter::kFalsePositiveRate;
-  LOG_DEBUG("Expected FPR %f, Actula FPR: %f", expected_FPR, actual_FPR);
+  double expected_FPR = codegen::util::BloomFilter::kFalsePositiveRate;
+  LOG_INFO("Expected FPR %f, Actula FPR: %f", expected_FPR, actual_FPR);
 
   // Difference should be within 10%
   EXPECT_LT(expected_FPR * 0.9, actual_FPR);
