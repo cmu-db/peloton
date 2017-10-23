@@ -25,6 +25,8 @@ PROXY(BloomFilter) {
   DECLARE_MEMBER(0, uint64_t, num_hash_funcs_);
   DECLARE_MEMBER(1, char*, bytes_);
   DECLARE_MEMBER(2, uint64_t, num_bits_);
+  DECLARE_MEMBER(3, uint64_t, num_misses_);
+  DECLARE_MEMBER(4, uint64_t, num_probes_);
 
   DECLARE_TYPE;
 

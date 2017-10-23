@@ -18,7 +18,7 @@ void CountingConsumer::Prepare(codegen::CompilationContext &ctx) {
   auto &codegen = ctx.GetCodeGen();
   auto &runtime_state = ctx.GetRuntimeState();
   counter_state_id_ = runtime_state.RegisterState(
-                                                  "consumerState", codegen.Int64Type()->getPointerTo());
+      "consumerState", codegen.Int64Type()->getPointerTo());
 }
 
 void CountingConsumer::InitializeState(codegen::CompilationContext &context) {
@@ -31,15 +31,15 @@ void CountingConsumer::InitializeState(codegen::CompilationContext &context) {
 void CountingConsumer::ConsumeResult(codegen::ConsumerContext &context,
                                      codegen::RowBatch::Row &) const {
   auto &codegen = context.GetCodeGen();
-  
+
   auto *counter_ptr = GetCounterState(codegen, context.GetRuntimeState());
   auto *new_count =
-  codegen->CreateAdd(codegen->CreateLoad(counter_ptr), codegen.Const64(1));
+      codegen->CreateAdd(codegen->CreateLoad(counter_ptr), codegen.Const64(1));
   codegen->CreateStore(new_count, counter_ptr);
 }
 
 llvm::Value *CountingConsumer::GetCounterState(
-                                               codegen::CodeGen &codegen, codegen::RuntimeState &runtime_state) const {
+    codegen::CodeGen &codegen, codegen::RuntimeState &runtime_state) const {
   return runtime_state.LoadStateValue(codegen, counter_state_id_);
 }
 }

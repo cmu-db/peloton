@@ -16,7 +16,8 @@ namespace peloton {
 namespace codegen {
 
 DEFINE_TYPE(BloomFilter, "peloton::BloomFilter", MEMBER(num_hash_funcs_),
-            MEMBER(bytes_), MEMBER(num_bits_));
+            MEMBER(bytes_), MEMBER(num_bits_), MEMBER(num_misses_),
+            MEMBER(num_probes_));
 
 DEFINE_METHOD(peloton::codegen, BloomFilter, Init);
 DEFINE_METHOD(peloton::codegen, BloomFilter, Destroy);
