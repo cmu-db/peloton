@@ -64,7 +64,7 @@ class AbstractPlan : public Printable {
   const AbstractPlan *GetChild(uint32_t child_index) const;
 
   const AbstractPlan *GetParent() const;
-
+  
   //===--------------------------------------------------------------------===//
   // Accessors
   //===--------------------------------------------------------------------===//
@@ -75,6 +75,13 @@ class AbstractPlan : public Printable {
 
   // Setting values of the parameters in the prepare statement
   virtual void SetParameterValues(std::vector<type::Value> *values);
+  
+  // Get the estimated cardinalities of this plan
+  int GetCardinality() const { return estimated_cardinality_; }
+  
+  // TODO: This is only for testing now. When the optimizer is ready, we should
+  // delete this function and pass this information to constructor
+  void SetCardinality(int cardinality) { estimated_cardinality_ = cardinality; }
 
   //===--------------------------------------------------------------------===//
   // Utilities
@@ -124,6 +131,10 @@ class AbstractPlan : public Printable {
   std::vector<std::unique_ptr<AbstractPlan>> children_;
 
   AbstractPlan *parent_ = nullptr;
+  
+  // TODO: This field is harded coded now. This needs to be changed when
+  // optimizer has the cost model and cardinality estimation
+  int estimated_cardinality_ = 500000;
 
  private:
   DISALLOW_COPY_AND_MOVE(AbstractPlan);
