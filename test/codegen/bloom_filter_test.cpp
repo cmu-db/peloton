@@ -265,7 +265,7 @@ TEST_F(BloomFilterCodegenTest, PerformanceTest) {
   double runtime1 = ExecuteJoin(query, txn, num_iter, numbers.size(), false);
 
   // Execute plan with bloom filter enabled
-  printf("\n");
+  LOG_INFO("\n");
   LOG_INFO("Executing with bloom filter");
   double runtime2 = ExecuteJoin(query, txn, num_iter, numbers.size(), true);
 
