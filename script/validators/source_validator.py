@@ -72,7 +72,8 @@ SKIP_FILES_LIST = [
     "src/include/index/compact_ints_key.h",
     "src/include/index/bwtree.h",
     "src/codegen/util/oa_hash_table.cpp",
-    "src/codegen/util/cc_hash_table.cpp"
+    "src/codegen/util/cc_hash_table.cpp",
+    "src/include/codegen/counting_consumer.h" # Name counting_consumer contains cout
 ]
 
 ## ==============================================
