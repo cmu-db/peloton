@@ -52,16 +52,24 @@ class UpdateTranslator : public OperatorTranslator {
                       llvm::Value *length) const;
 
  private:
+  // Plan
   const planner::UpdatePlan &update_plan_;
 
+  // Target table
   storage::DataTable *target_table_;
+
+  // Boolean value representing whether it is a primary key update or not
   bool update_primary_key_;
+
+  // Target list and direct map list pointer
   TargetList *target_list_;
   DirectMapList *direct_map_list_;
 
+  // Runtime state ids for target values and column ids
   RuntimeState::StateID target_val_vec_id_;
   RuntimeState::StateID column_id_vec_id_;
 
+  // Runtime state id for the updater
   RuntimeState::StateID updater_state_id_;
 };
 
