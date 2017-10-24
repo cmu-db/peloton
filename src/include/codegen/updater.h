@@ -50,6 +50,7 @@ class Updater {
   void UpdatePrimaryKey(uint32_t tile_group_id, uint32_t tuple_offset,
                         uint32_t *col_ids, char *target_vals,
                         executor::ExecutorContext *executor_context);
+
   // Finalize the instance
   void TearDown();
 
@@ -58,12 +59,15 @@ class Updater {
   Updater(): txn_(nullptr), table_(nullptr), target_vals_size_(0) {}
 
  private:
-  // These are provided by the update translator
+  // Transaction and table from the update translator
   concurrency::Transaction *txn_;
   storage::DataTable *table_;
 
+  // Target list and direct map list pointer from the update translator
   std::unique_ptr<TargetList> target_list_;
   std::unique_ptr<DirectMapList> direct_map_list_;
+
+  // Target values size from the update translator
   uint32_t target_vals_size_;
 
  private:
