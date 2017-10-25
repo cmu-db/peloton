@@ -32,11 +32,6 @@ class Timer : public peloton::Printable {
  public:
   Timer() : elapsed_(0), invocations_(0) {}
 
-  void Init() {
-    elapsed_ = 0;
-    invocations_ = 0;
-  }
-
   inline void Start() { begin_ = clock_::now(); }
 
   inline void Stop() {
@@ -82,4 +77,4 @@ class Timer : public peloton::Printable {
   int invocations_;
 };
 
-}  // namespace
+}  // namespace peloton
