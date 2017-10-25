@@ -44,7 +44,7 @@ class Group {
 
   std::shared_ptr<GroupExpression> GetBestExpression(PropertySet properties);
 
-  const std::vector<std::shared_ptr<GroupExpression>> &GetExpressions() const;
+  const std::vector<std::shared_ptr<GroupExpression>> GetExpressions() const;
 
   inline const std::unordered_set<std::string> &GetTableAliases() const {
     return table_aliases_;

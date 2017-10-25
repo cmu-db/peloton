@@ -57,7 +57,7 @@ namespace optimizer {
 // Optimizer
 //===--------------------------------------------------------------------===//
 Optimizer::Optimizer() {
-  //  logical_transformation_rules_.emplace_back(new InnerJoinCommutativity());
+  logical_transformation_rules_.emplace_back(new InnerJoinCommutativity());
   physical_implementation_rules_.emplace_back(new LogicalDeleteToPhysical());
   physical_implementation_rules_.emplace_back(new LogicalUpdateToPhysical());
   physical_implementation_rules_.emplace_back(new LogicalInsertToPhysical());
@@ -526,9 +526,11 @@ void Optimizer::ImplementGroup(GroupID id) {
 
   for (shared_ptr<GroupExpression> gexpr :
        memo_.GetGroupByID(id)->GetExpressions()) {
+    LOG_TRACE("Gexpr with op %s", gexpr->Op().name().c_str());
     if (gexpr->Op().IsLogical()) ImplementExpression(gexpr);
   }
   memo_.GetGroupByID(id)->SetImplementationFlag();
+  LOG_TRACE("Finish implementing group %d", id);
 }
 
 void Optimizer::ImplementExpression(shared_ptr<GroupExpression> gexpr) {
