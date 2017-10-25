@@ -37,6 +37,14 @@ GroupBindingIterator::GroupBindingIterator(Optimizer &optimizer, GroupID id,
       num_group_items_(target_group_->GetExpressions().size()),
       current_item_index_(0) {
   LOG_TRACE("Attempting to bind on group %d", id);
+  // FIXME(patrick): These codes will cause dead loop and also allow optimizer
+  // to explore physical expression when we have logical transformation rules.
+  // I don't understand why we need to call ExploreExpression and I don't think
+  // this is necessary because we have called this function in optimizer.cpp.
+  // I may be wrong but in order to make logical transformation works, I comment
+  // these out.
+
+  /*
   // We'd like to only explore rules which we know will produce a match of our
   // current pattern. However, because our rules don't currently expose the
   // structure of the output they produce after a transformation, we must be
@@ -44,8 +52,9 @@ GroupBindingIterator::GroupBindingIterator(Optimizer &optimizer, GroupID id,
   const std::vector<std::shared_ptr<GroupExpression>> gexprs =
       target_group_->GetExpressions();
   for (size_t i = 0; i < num_group_items_; ++i) {
-    optimizer.ExploreExpression(gexprs[i]);
+      optimizer.ExploreExpression(gexprs[i]);
   }
+  */
 }
 
 bool GroupBindingIterator::HasNext() {

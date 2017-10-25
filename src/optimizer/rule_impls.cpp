@@ -27,11 +27,9 @@ InnerJoinCommutativity::InnerJoinCommutativity() {
 
   std::shared_ptr<Pattern> left_child(std::make_shared<Pattern>(OpType::Leaf));
   std::shared_ptr<Pattern> right_child(std::make_shared<Pattern>(OpType::Leaf));
-  std::shared_ptr<Pattern> predicate(std::make_shared<Pattern>(OpType::Leaf));
   match_pattern = std::make_shared<Pattern>(OpType::InnerJoin);
   match_pattern->AddChild(left_child);
   match_pattern->AddChild(right_child);
-  match_pattern->AddChild(predicate);
 }
 
 bool InnerJoinCommutativity::Check(std::shared_ptr<OperatorExpression> expr,
@@ -48,6 +46,8 @@ void InnerJoinCommutativity::Transform(
       std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
   std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PL_ASSERT(children.size() == 2);
+  LOG_TRACE("Reorder left child with op %s and right child with op %s for inner join",
+            children[0]->Op().name().c_str(), children[1]->Op().name().c_str());
   result_plan->PushChild(children[1]);
   result_plan->PushChild(children[0]);
 
