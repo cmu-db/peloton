@@ -4,7 +4,7 @@
 //
 // counting_consumer.h
 //
-// Identification: src/include/codegen/couting_consumer.h
+// Identification: src/include/codegen/counting_consumer.h
 //
 // Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
@@ -41,5 +41,6 @@ class CountingConsumer : public codegen::QueryResultConsumer {
   // The slot in the runtime state to find our state context
   codegen::RuntimeState::StateID counter_state_id_;
 };
-}
-}
+
+}  // namespace codegen
+}  // namespace peloton

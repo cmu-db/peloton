@@ -65,9 +65,6 @@ class BloomFilterCodegenTest : public PelotonTest {
                      int num_iter, unsigned inner_table_cardinality,
                      bool enable_bloom_filter);
 
-  double CompileAndExecute(planner::AbstractPlan &plan,
-                           concurrency::Transaction *txn);
-
   const std::string table1_name = "test1";
   const std::string table2_name = "test2";
 };
@@ -295,31 +292,26 @@ double BloomFilterCodegenTest::ExecuteJoin(std::string query,
         ->SetCardinality(inner_table_cardinality);
     dynamic_cast<planner::HashJoinPlan *>(plan.get())
         ->SetBloomFilterFlag(enable_bloom_filter);
-    double runtime = CompileAndExecute(*plan, txn);
 
-    LOG_INFO("Execution Time: %0.0f ms", runtime);
-    total_runtime += runtime;
+    // Binding
+    planner::BindingContext context;
+    plan->PerformBinding(context);
+    // Use simple CountConsumer since we don't care about the result
+    codegen::CountingConsumer consumer;
+    // Compile the query
+    codegen::QueryCompiler compiler;
+    auto compiled_query = compiler.Compile(*plan, consumer);
+    // Run and collect runtime stats
+    codegen::Query::RuntimeStats stats;
+    std::unique_ptr<executor::ExecutorContext> executor_context(
+        new executor::ExecutorContext{txn});
+    compiled_query->Execute(*txn, executor_context.get(),
+                            consumer.GetCountAsState(), &stats);
+
+    LOG_INFO("Execution Time: %0.0f ms", stats.plan_ms);
+    total_runtime += stats.plan_ms;
   }
   return total_runtime / num_iter;
-}
-
-double BloomFilterCodegenTest::CompileAndExecute(
-    planner::AbstractPlan &plan, concurrency::Transaction *txn) {
-  // Binding
-  planner::BindingContext context;
-  plan.PerformBinding(context);
-  // Use simple CountConsumer since we don't care about the result
-  codegen::CountingConsumer consumer;
-  // Compile the query
-  codegen::QueryCompiler compiler;
-  auto compiled_query = compiler.Compile(plan, consumer);
-  // Run and collect runtime stats
-  codegen::Query::RuntimeStats stats;
-  std::unique_ptr<executor::ExecutorContext> executor_context(
-      new executor::ExecutorContext{txn});
-  compiled_query->Execute(*txn, executor_context.get(),
-                          consumer.GetCountAsState(), &stats);
-  return stats.plan_ms;
 }
 
 // Create a table where all the columns are BIGINT and each tuple has desired

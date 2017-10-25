@@ -2,18 +2,20 @@
 //
 //                         Peloton
 //
-// buffering_consumer.cpp
+// counting_consumer.cpp
 //
-// Identification: src/codegen/buffering_consumer.cpp
+// Identification: src/codegen/counting_consumer.cpp
 //
 // Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 #include "codegen/counting_consumer.h"
 #include "codegen/compilation_context.h"
 
 namespace peloton {
 namespace codegen {
+
 void CountingConsumer::Prepare(codegen::CompilationContext &ctx) {
   auto &codegen = ctx.GetCodeGen();
   auto &runtime_state = ctx.GetRuntimeState();
@@ -42,5 +44,6 @@ llvm::Value *CountingConsumer::GetCounterState(
     codegen::CodeGen &codegen, codegen::RuntimeState &runtime_state) const {
   return runtime_state.LoadStateValue(codegen, counter_state_id_);
 }
-}
-}
+
+}  // namespace codegen
+}  // namespace peloton
