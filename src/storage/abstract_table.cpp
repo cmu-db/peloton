@@ -24,7 +24,7 @@
 namespace peloton {
 namespace storage {
 
-AbstractTable::AbstractTable(id_t table_oid, catalog::Schema *schema,
+AbstractTable::AbstractTable(oid_t table_oid, catalog::Schema *schema,
                              bool own_schema)
     : table_oid(table_oid), schema(schema), own_schema_(own_schema) {}
 
