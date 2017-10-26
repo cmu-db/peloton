@@ -354,7 +354,6 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
         if (traffic_cop_->is_queuing_) {
           return ProcessResult::PROCESSING;
         }
-
         ExecQueryMessageGetResult(status);
         return ProcessResult::COMPLETE;
       }
@@ -937,6 +936,7 @@ void PostgresProtocolHandler::ExecExecuteMessageGetResult(ResultType status) {
 void PostgresProtocolHandler::GetResult() {
   traffic_cop_->ExecuteStatementPlanGetResult(log_manager_);
   auto status = traffic_cop_->ExecuteStatementGetResult(rows_affected_);
+  LOG_DEBUG("######## ResultType: %d ###########", (int)status);
   switch (protocol_type_) {
     case NetworkProtocolType::POSTGRES_JDBC:
       LOG_TRACE("JDBC result");

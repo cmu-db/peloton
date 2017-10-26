@@ -105,6 +105,7 @@ class NetworkConnection {
   void Reset();
 
   static void TriggerStateMachine(void* arg);
+  static void TriggerStateMachineLog(void* arg);
 
   /* Runs the state machine for the protocol. Invoked by event handler callback */
   static void StateMachine(NetworkConnection *conn);
