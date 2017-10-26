@@ -85,7 +85,7 @@ bool ProcCatalog::InsertProc(const std::string &proname,
   oid_t proc_oid = GetNextOid();
   auto val0 = type::ValueFactory::GetIntegerValue(proc_oid);
   auto val1 = type::ValueFactory::GetVarcharValue(proname);
-  auto val2 = type::ValueFactory::GetIntegerValue(prorettype);
+  auto val2 = type::ValueFactory::GetIntegerValue(static_cast<int32_t>(prorettype));
   auto val3 = type::ValueFactory::GetVarcharValue(TypeArrayToString(proargtypes));
   auto val4 = type::ValueFactory::GetIntegerValue(prolang);
   auto val5 = type::ValueFactory::GetVarcharValue(prosrc);
