@@ -83,11 +83,11 @@ public:
     task_callback_ = task_callback;
     task_callback_arg_ = task_callback_arg;
   }
-
+  bool is_running_=false;
 private:
   void(* task_callback_)(void *);
   void * task_callback_arg_;
-  bool is_running_;
+
 
 };
 

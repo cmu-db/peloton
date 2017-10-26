@@ -27,7 +27,7 @@ ResultType WalLogManager::LogTransaction(std::vector<LogRecord> log_records){
     ResultType status = ResultType::SUCCESS;
     LogTransactionArg* arg = new LogTransactionArg(log_records, &status);
     threadpool::LoggerQueuePool::GetInstance().SubmitTask(WalLogManager::WriteTransactionWrapper, arg, task_callback_, task_callback_arg_);
-    LOG_TRACE("Submit Task into LogQueuePool");
+    LOG_DEBUG("Submit Task into LogQueuePool");
     return status;
 }
 
