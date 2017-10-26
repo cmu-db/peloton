@@ -28,35 +28,64 @@ class ValueTests : public PelotonTest {};
 const std::vector<type::TypeId> valueTestTypes = {
     type::TypeId::BOOLEAN,   type::TypeId::TINYINT, type::TypeId::SMALLINT,
     type::TypeId::INTEGER,   type::TypeId::BIGINT,  type::TypeId::DECIMAL,
-    type::TypeId::TIMESTAMP, type::TypeId::VARCHAR};
+    type::TypeId::TIMESTAMP, type::TypeId::DATE,    type::TypeId::VARCHAR};
 
 TEST_F(ValueTests, HashTest) {
   for (auto col_type : valueTestTypes) {
-    auto maxVal = type::Type::GetMaxValue(col_type);
-    auto minVal = type::Type::GetMinValue(col_type);
+    auto max_val = type::Type::GetMaxValue(col_type);
+    auto min_val = type::Type::GetMinValue(col_type);
 
     // Special case for VARCHAR
     if (col_type == type::TypeId::VARCHAR) {
-      maxVal = type::ValueFactory::GetVarcharValue(std::string("XXX"), nullptr);
-      minVal = type::ValueFactory::GetVarcharValue(std::string("YYY"), nullptr);
+      max_val = type::ValueFactory::GetVarcharValue(std::string("XXX"), nullptr);
+      min_val = type::ValueFactory::GetVarcharValue(std::string("YYY"), nullptr);
     }
     LOG_TRACE("%s => MAX:%s <-> MIN:%s", TypeIdToString(col_type).c_str(),
-              maxVal.ToString().c_str(), minVal.ToString().c_str());
+              max_val.ToString().c_str(), min_val.ToString().c_str());
 
     // They should not be equal
-    EXPECT_EQ(type::CmpBool::CMP_FALSE, maxVal.CompareEquals(minVal));
+    EXPECT_EQ(type::CmpBool::CMP_FALSE, max_val.CompareEquals(min_val));
 
     // Nor should their hash values be equal
-    auto maxHash = maxVal.Hash();
-    auto minHash = minVal.Hash();
-    EXPECT_NE(maxHash, minHash);
+    auto max_hash = max_val.Hash();
+    auto min_hash = min_val.Hash();
+    EXPECT_NE(max_hash, min_hash);
 
     // But if I copy the first value then the hashes should be the same
-    auto copyVal = maxVal.Copy();
+    auto copyVal = max_val.Copy();
     auto copyHash = copyVal.Hash();
-    EXPECT_EQ(type::CmpBool::CMP_TRUE, maxVal.CompareEquals(copyVal));
-    EXPECT_EQ(maxHash, copyHash);
+    EXPECT_EQ(type::CmpBool::CMP_TRUE, max_val.CompareEquals(copyVal));
+    EXPECT_EQ(max_hash, copyHash);
   }  // FOR
+}
+
+TEST_F(ValueTests, MinMaxTest) {
+  for (auto col_type : valueTestTypes) {
+    auto max_val = type::Type::GetMaxValue(col_type);
+    auto min_val = type::Type::GetMinValue(col_type);
+
+    // Special case for VARCHAR
+    if (col_type == type::TypeId::VARCHAR) {
+      max_val = type::ValueFactory::GetVarcharValue(std::string("AAA"), nullptr);
+      min_val = type::ValueFactory::GetVarcharValue(std::string("ZZZ"), nullptr);
+      EXPECT_EQ(type::CMP_FALSE, min_val.CompareLessThan(max_val));
+      EXPECT_EQ(type::CMP_FALSE, max_val.CompareGreaterThan(min_val));
+    }
+
+    // FIXME: Broken types!!!
+    if (col_type == type::TypeId::VARCHAR) continue;
+    LOG_DEBUG("MinMax: %s", TypeIdToString(col_type).c_str());
+
+    // Check that we always get the correct MIN value
+    EXPECT_EQ(type::CMP_TRUE, min_val.Min(min_val).CompareEquals(min_val));
+    EXPECT_EQ(type::CMP_TRUE, min_val.Min(max_val).CompareEquals(min_val));
+    EXPECT_EQ(type::CMP_TRUE, min_val.Min(min_val).CompareEquals(min_val));
+
+    // Check that we always get the correct MAX value
+    EXPECT_EQ(type::CMP_TRUE, max_val.Max(min_val).CompareEquals(max_val));
+    EXPECT_EQ(type::CMP_TRUE, min_val.Max(max_val).CompareEquals(max_val));
+    EXPECT_EQ(type::CMP_TRUE, max_val.Max(min_val).CompareEquals(max_val));
+  } // FOR
 }
 
 TEST_F(ValueTests, VarcharCopyTest) {

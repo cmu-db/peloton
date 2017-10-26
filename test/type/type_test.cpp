@@ -30,7 +30,7 @@ class TypeTests : public PelotonTest {};
 const std::vector<type::TypeId> typeTestTypes = {
     type::TypeId::BOOLEAN,   type::TypeId::TINYINT, type::TypeId::SMALLINT,
     type::TypeId::INTEGER,   type::TypeId::BIGINT,  type::TypeId::DECIMAL,
-    type::TypeId::TIMESTAMP,
+    type::TypeId::TIMESTAMP, type::TypeId::DATE
     // type::TypeId::VARCHAR
 };
 

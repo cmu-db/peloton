@@ -38,6 +38,10 @@ class BooleanType : public Type {
   CmpBool CompareGreaterThanEquals(const Value& left,
                                    const Value& right) const override;
 
+  // Other mathematical functions
+  Value Min(const Value& left, const Value& right) const override;
+  Value Max(const Value& left, const Value& right) const override;
+
   // Decimal types are always inlined
   bool IsInlined(const Value&) const override { return true; }
 

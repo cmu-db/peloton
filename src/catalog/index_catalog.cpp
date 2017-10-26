@@ -47,7 +47,7 @@ IndexCatalogObject::IndexCatalogObject(executor::LogicalTile *tile, int tupleId)
   while (std::getline(ss, tok, ' ')) {
     key_attrs.push_back(std::stoi(tok));
   }
-  LOG_DEBUG("the size for indexed key is %lu", key_attrs.size());
+  LOG_TRACE("the size for indexed key is %lu", key_attrs.size());
 }
 
 IndexCatalog *IndexCatalog::GetInstance(storage::Database *pg_catalog,

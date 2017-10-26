@@ -61,7 +61,7 @@ class Value : public Printable {
 
   // SMALLINT
   Value(TypeId type, int16_t i);
-  // INTEGER and PARAMETER_OFFSET
+  // INTEGER and PARAMETER_OFFSET and DATE
   Value(TypeId type, int32_t i);
   // BIGINT
   Value(TypeId type, int64_t i);
@@ -324,7 +324,7 @@ class Value : public Printable {
     int32_t integer;
     int64_t bigint;
     double decimal;
-    uint32_t date;
+    int32_t date;
     uint64_t timestamp;
     char *varlen;
     const char *const_varlen;

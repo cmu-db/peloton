@@ -15,6 +15,7 @@
 #include "executor/logical_tile_factory.h"
 #include "executor/hash_join_executor.h"
 #include "expression/abstract_expression.h"
+#include "expression/tuple_value_expression.h"
 #include "common/container_tuple.h"
 
 namespace peloton {
@@ -100,7 +101,16 @@ bool HashJoinExecutor::DExecute() {
 
     // Get the hash table from the hash executor
     auto &hash_table = hash_executor_->GetHashTable();
-    auto &hashed_col_ids = hash_executor_->GetHashKeyIds();
+    std::vector<const expression::AbstractExpression *> left_hashed_cols;
+    this->GetPlanNode<planner::HashJoinPlan>().GetLeftHashKeys(left_hashed_cols);
+
+    std::vector<oid_t> left_hashed_col_ids;
+    for (auto &hashkey : left_hashed_cols) {
+      PL_ASSERT(hashkey->GetExpressionType() == ExpressionType::VALUE_TUPLE);
+      auto tuple_value =
+          reinterpret_cast<const expression::TupleValueExpression *>(hashkey);
+      left_hashed_col_ids.push_back(tuple_value->GetColumnId());
+    }
 
     oid_t prev_tile = INVALID_OID;
     std::unique_ptr<LogicalTile> output_tile;
@@ -109,19 +119,19 @@ bool HashJoinExecutor::DExecute() {
     // Go over the left tile
     for (auto left_tile_itr : *left_tile) {
       const ContainerTuple<executor::LogicalTile> left_tuple(
-          left_tile, left_tile_itr, &hashed_col_ids);
+          left_tile, left_tile_itr, &left_hashed_col_ids);
 
       // Find matching tuples in the hash table built on top of the right table
       auto right_tuples = hash_table.find(left_tuple);
 
       if (right_tuples != hash_table.end()) {
     	// Not yet supported due to assertion in gettomg right_tuples->first
-//    	if (predicate_ != nullptr) {
-//    		auto eval = predicate_->Evaluate(&left_tuple, &right_tuples->first,
-//					executor_context_);
-//			if (eval.IsFalse())
-//				continue;
-//    	}
+    	if (predicate_ != nullptr) {
+    		auto eval = predicate_->Evaluate(&left_tuple, &right_tuples->first,
+					executor_context_);
+			if (eval.IsFalse())
+				continue;
+    	}
 
         RecordMatchedLeftRow(left_result_tiles_.size() - 1, left_tile_itr);
 

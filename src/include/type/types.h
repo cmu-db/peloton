@@ -617,6 +617,9 @@ enum class CreateType {
   CONSTRAINT = 4,             // constraint create type
   TRIGGER = 5                 // trigger create type
 };
+std::string CreateTypeToString(CreateType type);
+CreateType StringToCreateType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const CreateType &type);
 
 //===--------------------------------------------------------------------===//
 // Drop Types
@@ -630,9 +633,9 @@ enum class DropType {
   CONSTRAINT = 4,             // constraint drop type
   TRIGGER = 5                 // trigger drop type
 };
-std::string CreateTypeToString(CreateType type);
-CreateType StringToCreateType(const std::string &str);
-std::ostream &operator<<(std::ostream &os, const CreateType &type);
+std::string DropTypeToString(DropType type);
+DropType StringToDropType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const DropType &type);
 
 //===--------------------------------------------------------------------===//
 // Statement Types
@@ -867,6 +870,7 @@ enum class FKConstrMatchType {
 //===--------------------------------------------------------------------===//
 // Set Operation Types
 //===--------------------------------------------------------------------===//
+
 enum class SetOpType {
   INVALID = INVALID_TYPE_ID,
   INTERSECT = 1,
@@ -1264,13 +1268,18 @@ typedef std::vector<DirectMap> DirectMapList;
 //===--------------------------------------------------------------------===//
 // Optimizer
 //===--------------------------------------------------------------------===//
+
 enum class PropertyType {
+  INVALID = INVALID_TYPE_ID,
   PREDICATE,
   COLUMNS,
   DISTINCT,
   SORT,
   LIMIT,
 };
+std::string PropertyTypeToString(PropertyType type);
+PropertyType StringToPropertyType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const PropertyType &type);
 
 namespace expression {
 class AbstractExpression;
@@ -1301,7 +1310,7 @@ typedef std::unordered_set<std::shared_ptr<expression::AbstractExpression>,
                            expression::ExprHasher,
                            expression::ExprEqualCmp> ExprSet;
 
-std::string PropertyTypeToString(PropertyType type);
+
 
 //===--------------------------------------------------------------------===//
 // Wire protocol typedefs
