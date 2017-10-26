@@ -31,7 +31,7 @@ namespace function {
 // (2) The second argument is the timestamp to extract the part from
 // @return The Value returned should be a type::DecimalValue that is
 // constructed using type::ValueFactory
-type::Value DateFunctions::Extract(const std::vector<type::Value>& args) {
+type::Value DateFunctions::Extract(const std::vector<type::Value> &args) {
   DatePartType date_part = args[0].GetAs<DatePartType>();
   uint64_t timestamp = args[1].GetAs<uint64_t>();
   type::Value result;

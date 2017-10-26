@@ -73,7 +73,7 @@ void AbstractExpression::DeduceExpressionName() {
   auto children_size = children_.size();
   if (exp_type_ == ExpressionType::FUNCTION) {
     auto expr = (FunctionExpression*)this;
-    expr_name_ = expr->func_name_ + "(";
+    expr_name_ = expr->GetFuncName() + "(";
     for (size_t i = 0; i < children_size; i++) {
       if (i > 0) expr_name_.append(",");
       expr_name_.append(GetChild(i)->expr_name_);

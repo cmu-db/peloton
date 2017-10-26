@@ -12,6 +12,7 @@
 
 #include "codegen/testing_codegen_util.h"
 
+#include "catalog/table_catalog.h"
 #include "codegen/proxy/runtime_functions_proxy.h"
 #include "codegen/proxy/value_proxy.h"
 #include "codegen/proxy/values_runtime_proxy.h"

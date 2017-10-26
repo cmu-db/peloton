@@ -14,6 +14,8 @@
 #include <sql/testing_sql_util.h>
 
 #include "catalog/catalog.h"
+#include "catalog/database_catalog.h"
+#include "catalog/table_catalog.h"
 #include "common/harness.h"
 #include "common/logger.h"
 #include "common/statement.h"

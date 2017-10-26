@@ -40,14 +40,14 @@ TEST_F(StringFunctionsTests, AsciiTest) {
     std::vector<type::Value> args = {
         type::ValueFactory::GetVarcharValue(os.str())};
 
-    auto result = function::StringFunctions::Ascii(args);
+    auto result = function::StringFunctions::_Ascii(args);
     EXPECT_FALSE(result.IsNull());
     EXPECT_EQ(expected, result.GetAs<int>());
   }
   // NULL CHECK
   std::vector<type::Value> args = {
       type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR)};
-  auto result = function::StringFunctions::Ascii(args);
+  auto result = function::StringFunctions::_Ascii(args);
   EXPECT_TRUE(result.IsNull());
 }
 
