@@ -67,6 +67,8 @@ class Loop {
   std::vector<llvm::BasicBlock *> break_bbs_;
   // The list of PHI nodes (i.e. loop variables)
   std::vector<llvm::PHINode *> phi_nodes_;
+  // Name of the loop, that will be used to make the IR labels more meaningful
+  const std::string name_;
 };
 
 }  // namespace lang

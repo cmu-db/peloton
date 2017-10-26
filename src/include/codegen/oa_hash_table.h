@@ -60,7 +60,8 @@ class OAHashTable : public HashTable {
   // Constructor
   OAHashTable();
   OAHashTable(CodeGen &codegen, const std::vector<type::Type> &key_type,
-              uint64_t value_size);
+              uint64_t value_size,
+              const std::string name = "OAHashTable");
 
   void Init(CodeGen &codegen, llvm::Value *ht_ptr) const override;
 
@@ -177,6 +178,10 @@ class OAHashTable : public HashTable {
 
   // The size of value
   uint64_t value_size_;
+
+  // Name of the hash table, that will be used to make the IR labels more meaningful
+  // No reference here, to avoid writing an explicit assignment constructor
+  std::string name_;
 };
 
 }  // namespace codegen
