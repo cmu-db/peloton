@@ -95,7 +95,9 @@ ResultType TrafficCop::BeginQueryHelper(size_t thread_id) {
 //Pass the log manager to commit transaction
 ResultType TrafficCop::CommitQueryHelper(logging::WalLogManager* log_manager) {
   // do nothing if we have no active txns
-  if (tcop_txn_state_.empty()) return ResultType::NOOP;
+  if (tcop_txn_state_.empty()){
+      return ResultType::NOOP;
+  }
   auto &curr_state = tcop_txn_state_.top();
   tcop_txn_state_.pop();
   auto txn = curr_state.first;
@@ -135,7 +137,7 @@ ResultType TrafficCop::ExecuteStatementGetResult() {
             ResultTypeToString(p_status_.m_result).c_str());
   setRowsAffected(p_status_.m_processed);
   LOG_TRACE("rows_changed %d", p_status_.m_processed);
-  is_queuing_ = false;
+ // is_queuing_ = false;
   return p_status_.m_result;
 }
 
