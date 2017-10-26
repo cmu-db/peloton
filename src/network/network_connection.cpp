@@ -97,6 +97,13 @@ void NetworkConnection::Init(short event_flags, NetworkThread *thread,
 }
 
 void NetworkConnection::TriggerStateMachine(void *arg) {
+  LOG_DEBUG("STATE MACHINE TRIGGERED!!!!!!!!!!!!!!!");
+  struct event* event = static_cast<struct event*>(arg);
+  event_active(event, EV_WRITE, 0);
+}
+
+void NetworkConnection::TriggerStateMachineLog(void* arg) {
+  LOG_DEBUG("LOG LOG LOG LOG STATE MACHINE TRIGGERED!!!!!!!!!!!!!!!");
   struct event *event = static_cast<struct event *>(arg);
   event_active(event, EV_WRITE, 0);
 }
@@ -767,7 +774,11 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
               PL_ASSERT(false);
             }
             LOG_TRACE("ProcessResult: queueing");
-            conn->TransitState(ConnState::CONN_GET_RESULT);
+           // if(conn->log_manager_.is_running_){
+                conn->TransitState(ConnState::CONN_LOGGING);
+            //} else {
+            //    conn->TransitState(ConnState::CONN_GET_RESULT);
+            //}
             done = true;
             break;
           }
@@ -781,13 +792,25 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
           LOG_ERROR("Failed to add event");
           PL_ASSERT(false);
         }
-        conn->protocol_handler_->GetResult();
+            //conn->protocol_handler_->GetResult();
         if (conn->traffic_cop_.is_logging_) {
             done = true;
         }
         conn->TransitState(ConnState::CONN_WRITE);
         break;
       }
+
+    case ConnState::CONN_LOGGING: {
+      if (event_add(conn->network_event, nullptr) < 0) {
+        LOG_ERROR("Failed to add event");
+        PL_ASSERT(false);
+      }
+      conn->protocol_handler_->GetResult();
+
+      conn->TransitState(ConnState::CONN_GET_RESULT);
+      break;
+    }
+
 
       case ConnState::CONN_WRITE: {
         // examine write packets result
@@ -819,6 +842,7 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
       }
 
       case ConnState::CONN_CLOSING: {
+        usleep(10000);
         conn->CloseSocket();
         done = true;
         break;
