@@ -2,21 +2,23 @@
 //
 //                         Peloton
 //
-// data_table_proxy.cpp
+// tuple_runtime_proxy.cpp
 //
-// Identification: src/codegen/proxy/data_table_proxy.cpp
+// Identification: src/codegen/proxy/tuple_runtime_proxy.cpp
 //
 // Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/proxy/data_table_proxy.h"
+#include "codegen/proxy/tuple_runtime_proxy.h"
+
+#include "codegen/tuple_runtime.h"
+#include "codegen/proxy/pool_proxy.h"
 
 namespace peloton {
 namespace codegen {
 
-DEFINE_TYPE(DataTable, "storage::DataTable", MEMBER(opaque));
-DEFINE_METHOD(peloton::storage, DataTable, GetTileGroupCount);
+DEFINE_METHOD(peloton::codegen, TupleRuntime, CreateVarlen);
 
 }  // namespace codegen
 }  // namespace peloton

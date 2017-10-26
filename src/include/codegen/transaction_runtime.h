@@ -50,7 +50,6 @@ class TransactionRuntime {
                             uint32_t tuple_offset);
 
   static void IncreaseNumProcessed(executor::ExecutorContext *executor_context);
-  // Add other stuff for Insert/Update/Delete
 };
 
 }  // namespace codegen
