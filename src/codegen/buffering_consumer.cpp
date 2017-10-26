@@ -102,7 +102,7 @@ void BufferingConsumer::ConsumeResult(ConsumerContext &ctx,
 
     // Check if it's NULL
     Value null_val;
-    lang::If val_is_null{codegen, val.IsNull(codegen)};
+    lang::If val_is_null{codegen, val.IsNull(codegen), "BufferingConsumer.IfValIsNull"};
     {
       // If the value is NULL (i.e., has the NULL bit set), produce the NULL
       // value for the given type.

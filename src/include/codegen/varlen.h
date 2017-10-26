@@ -48,7 +48,7 @@ class Varlen {
 
     // Depending on NULL-ness, perform load
     llvm::Value *null_data = nullptr, *null_len = nullptr;
-    lang::If varlen_is_null{codegen, is_null};
+    lang::If varlen_is_null{codegen, is_null, "Varlen.GetPtrAndLength.LenIsNull"};
     {
       // The pointer is null
       null_data = codegen.Null(codegen.CharPtrType());

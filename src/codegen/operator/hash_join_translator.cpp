@@ -449,7 +449,7 @@ void HashJoinTranslator::ProbeRight::ProcessEntry(
   if (predicate != nullptr) {
     // Vectorize of TaaT filter?
     auto valid_row = row_.DeriveValue(codegen, *predicate);
-    lang::If is_valid_row{codegen, valid_row};
+    lang::If is_valid_row{codegen, valid_row, "HashJoin.IsValidRow"};
     {
       // Send row up to the parent
       context_.Consume(row_);

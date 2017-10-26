@@ -83,7 +83,12 @@ void HashTranslator::Consume(ConsumerContext &context,
   std::vector<codegen::Value> key;
   CollectHashKeys(row, key);
 
+  // If the hash value is available, use it
   llvm::Value *hash = nullptr;
+  if (row.HasAttribute(&OAHashTable::kHashAI)) {
+    codegen::Value hash_val = row.DeriveValue(codegen, &OAHashTable::kHashAI);
+    hash = hash_val.GetValue();
+  }
 
   // Perform the insertion into the hash table
   llvm::Value *hash_table = LoadStatePtr(hash_table_id_);

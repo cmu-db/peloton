@@ -98,7 +98,7 @@ HashGroupByTranslator::HashGroupByTranslator(
 
   // Create the hash table
   hash_table_ =
-      OAHashTable{codegen, key_type, aggregation_.GetAggregatesStorageSize()};
+      OAHashTable{codegen, key_type, aggregation_.GetAggregatesStorageSize(), "HashGroupBy.HashTable"};
 }
 
 // Initialize the hash table instance
@@ -372,7 +372,7 @@ void HashGroupByTranslator::ProduceResults::ProcessEntries(
     // Iterate over the batch, performing a branching predicate check
     batch.Iterate(codegen, [&](RowBatch::Row &row) {
       codegen::Value valid_row = row.DeriveValue(codegen, *predicate);
-      lang::If is_valid_row{codegen, valid_row};
+      lang::If is_valid_row{codegen, valid_row, "HashGroupBy.IsValidRow"};
       {
         // The row is valid, send along the pipeline
         context.Consume(row);

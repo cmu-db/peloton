@@ -27,12 +27,12 @@ namespace lang {
 class If {
  public:
   // Constructor
-  If(CodeGen &cg, llvm::Value *if_condition, const std::string &name = "then");
+  If(CodeGen &cg, llvm::Value *if_condition, const std::string &name = "");
   If(CodeGen &cg, const codegen::Value &if_condition,
-     const std::string &name = "then");
+     const std::string &name = "");
 
   // Begin the else block (provided the name _name_)
-  void ElseBlock(const std::string &name = "else");
+  void ElseBlock(const std::string &name = "");
 
   // End the if/else condition
   void EndIf(llvm::BasicBlock *merge_bb = nullptr);
@@ -62,6 +62,9 @@ class If {
   // the branch call to fall to the "else" block if the condition is false,
   // rather than to the merging BB as we do in the constructor.
   llvm::BranchInst *branch_;
+
+  // Name of the hash table, that will be used to make the IR labels more meaningful
+  const std::string &name_;
 };
 
 }  // namespace lang
