@@ -170,6 +170,7 @@ void NetworkManager::StartServer() {
     // Free events and event base
     event_free(NetworkManager::GetConnection(listen_fd)->network_event);
     event_free(NetworkManager::GetConnection(listen_fd)->workpool_event);
+    event_free(NetworkManager::GetConnection(listen_fd)->logpool_event);
     event_free(ev_stop_);
     event_free(ev_timeout_);
     event_base_free(base_);

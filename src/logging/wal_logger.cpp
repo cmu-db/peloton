@@ -154,17 +154,10 @@ CopySerializeOutput* WalLogger::WriteRecordToBuffer(LogRecord &record) {
 
       break;
   }
-    case LogRecordType::TRANSACTION_BEGIN: {
-      output_buffer->WriteLong(record.GetCommitId());
-      break;
-  }
-    case LogRecordType::TRANSACTION_COMMIT: {
-      output_buffer->WriteLong(record.GetCommitId());
-      break;
-    }
     default: {
       LOG_ERROR("Unsupported log record type");
       PL_ASSERT(false);
+      return nullptr;
     }
   }
 

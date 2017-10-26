@@ -909,6 +909,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
   //If there is a log manager and something to log, queue the task.
   if(log_manager != nullptr && !current_txn->log_records_.empty()){
       log_manager->LogTransaction(current_txn->log_records_);
+      log_manager->is_running_ = true;
       EndTransaction(current_txn);
       if (settings::SettingsManager::GetInt(settings::SettingId::stats_mode) !=
           STATS_TYPE_INVALID) {

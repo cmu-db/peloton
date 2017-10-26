@@ -608,6 +608,7 @@ void NetworkConnection::CloseSocket() {
   // Remove listening event
   event_del(network_event);
   event_del(workpool_event);
+  event_del(logpool_event);
   // event_free(event);
   TransitState(ConnState::CONN_CLOSED);
   Reset();
@@ -643,7 +644,7 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
   bool done = false;
 
   while (done == false) {
-    LOG_TRACE("current state: %d", (int)conn->state);
+    LOG_DEBUG("current state: %d", (int)conn->state);
     switch (conn->state) {
       case ConnState::CONN_LISTENING: {
         struct sockaddr_storage addr;
@@ -777,7 +778,8 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
           PL_ASSERT(false);
         }
         conn->protocol_handler_->GetResult();
-        conn->traffic_cop_.is_queuing_ = false;
+        if(!conn->log_manager_.is_running_)
+            conn->traffic_cop_.is_queuing_ = false;
         conn->TransitState(ConnState::CONN_WRITE);
         break;
       }
