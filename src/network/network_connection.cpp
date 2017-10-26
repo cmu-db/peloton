@@ -648,7 +648,7 @@ void NetworkConnection::Reset() {
 void NetworkConnection::StateMachine(NetworkConnection *conn) {
   bool done = false;
   while (done == false) {
-    LOG_TRACE("current state: %d", (int)conn->state);
+    LOG_DEBUG("current state: %d", (int)conn->state);
     switch (conn->state) {
       case ConnState::CONN_LISTENING: {
         struct sockaddr_storage addr;

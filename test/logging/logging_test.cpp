@@ -40,6 +40,29 @@
 // //===--------------------------------------------------------------------===//
 
 class LoggingTests : public PelotonTest {};
+/*
+ TEST_F(LoggingTests, WriteInsertRecordToBufferTest) {
+     logging::WalLogger* wl = new logging::WalLogger();
+     logging::LogRecord* record_insert = new logging::LogRecord(LogRecordType::TUPLE_INSERT,new ItemPointer(1,1), 5, 10);
+     CopySerializeOutput* buf = wl->WriteRecordToBuffer(record_insert);
+     CopySerializeInput in (buf->Data(), buf->Size());
+    EXPECT_EQ(LogRecordType::TUPLE_INSERT, in.ReadEnumInSingleByte());
+}
+ TEST_F(LoggingTests, WriteUpdateRecordToBufferTest) {
+     logging::WalLogger* wl = new logging::WalLogger();
+     logging::LogRecord* record_update = new logging::LogRecord(LogRecordType::TUPLE_UPDATE,new ItemPointer(1,2), 6, 20);
+     CopySerializeOutput* buf = wl->WriteRecordToBuffer(record_update);
+}
+ TEST_F(LoggingTests, WriteDeleteRecordToBufferTest) {
+     logging::WalLogger* wl = new logging::WalLogger();
+     logging::LogRecord* record_delete = new logging::LogRecord(LogRecordType::TUPLE_DELETE,new ItemPointer(1,3), 7, 30);
+     CopySerializeOutput* buf = wl->WriteRecordToBuffer(record_delete);
+}
+ TEST_F(LoggingTests, WriteInvalidRecordToBufferTest) {
+     logging::WalLogger* wl = new logging::WalLogger();
+     logging::LogRecord* invalid_record= new logging::LogRecord(LogRecordType::TRANSACTION_BEGIN,new ItemPointer(1,1), 8, 40);
+     CopySerializeOutput* buf = wl->WriteRecordToBuffer(invalid_record);
+}
 
 // TEST_F(LoggingTests, BasicLoggingTest) {
 //   std::unique_ptr<storage::DataTable> table(
