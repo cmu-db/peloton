@@ -383,6 +383,9 @@ static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
     {OperatorId::Div, kDivOp},
     {OperatorId::Mod, kModuloOp}};
 
+// Nary operations
+static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
+
 }  // anonymous namespace
 
 //===----------------------------------------------------------------------===//
@@ -394,7 +397,7 @@ Decimal::Decimal()
     : SqlType(peloton::type::TypeId::DECIMAL),
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
                    kComparisonTable, kUnaryOperatorTable,
-                   kBinaryOperatorTable) {}
+                   kBinaryOperatorTable, kNaryOperatorTable) {}
 
 Value Decimal::GetMinValue(CodeGen &codegen) const {
   auto *raw_val = codegen.ConstDouble(peloton::type::PELOTON_DECIMAL_MIN);

@@ -10,27 +10,31 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
-
-#include "function/date_functions.h"
-#include "function/string_functions.h"
-#include "function/decimal_functions.h"
-#include "codegen/value.h"
-
 #include <unordered_map>
+#include <vector>
+
+#include "type/value.h"
 
 namespace peloton {
 namespace function {
 
-typedef type::Value (*BuiltInFuncType)(const std::vector<type::Value> &);
+struct BuiltInFuncType {
+  typedef type::Value (*Func)(const std::vector<type::Value> &);
+
+  OperatorId op_id;
+  Func impl;
+
+  BuiltInFuncType(OperatorId _op_id, Func _impl) : op_id(_op_id), impl(_impl) {}
+  BuiltInFuncType() : BuiltInFuncType(OperatorId::Invalid, nullptr) {}
+};
 
 class BuiltInFunctions {
-  static std::unordered_map<std::string, BuiltInFuncType> func_map;
+ private:
+  static std::unordered_map<std::string, BuiltInFuncType> kFuncMap;
 
  public:
-
   static void AddFunction(const std::string &func_name, BuiltInFuncType func);
 
   static BuiltInFuncType GetFuncByName(const std::string &func_name);

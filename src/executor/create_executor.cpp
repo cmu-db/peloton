@@ -205,7 +205,7 @@ bool CreateExecutor::DExecute() {
       auto when = type::ValueFactory::GetVarbinaryValue(
           (const unsigned char *)output.Data(), (int32_t)output.Size(), true);
   
-      catalog::TriggerCatalog::GetInstance()->InsertTrigger(
+      catalog::TriggerCatalog::GetInstance().InsertTrigger(
           table_object->table_oid, trigger_name, newTrigger.GetTriggerType(),
           newTrigger.GetFuncname(), newTrigger.GetArgs(), when, time_stamp,
           pool_.get(), current_txn);

@@ -2,27 +2,23 @@
 //
 //                         Peloton
 //
-// decimal_functions.h
+// string_functions_proxy.cpp
 //
-// Identification: src/include/function/decimal_functions.h
+// Identification: src/codegen/proxy/string_functions_proxy.cpp
 //
 // Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#pragma once
+#include "codegen/proxy/string_functions_proxy.h"
 
-#include <vector>
-
-#include "type/value.h"
+#include "codegen/proxy/type_builder.h"
+#include "function/string_functions.h"
 
 namespace peloton {
-namespace function {
+namespace codegen {
 
-class DecimalFunctions {
- public:
-  static type::Value Sqrt(const std::vector<type::Value>& args);
-};
+DEFINE_METHOD(peloton::function, StringFunctions, Ascii);
 
-}  // namespace function
+}  // namespace codegen
 }  // namespace peloton

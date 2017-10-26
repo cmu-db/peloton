@@ -21,9 +21,9 @@
 namespace peloton {
 namespace catalog {
 
-SettingsCatalog *SettingsCatalog::GetInstance(concurrency::Transaction *txn) {
+SettingsCatalog &SettingsCatalog::GetInstance(concurrency::Transaction *txn) {
   static SettingsCatalog settings_catalog{txn};
-  return &settings_catalog;
+  return settings_catalog;
 }
 
 SettingsCatalog::SettingsCatalog(concurrency::Transaction *txn)

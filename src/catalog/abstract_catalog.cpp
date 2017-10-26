@@ -161,7 +161,7 @@ std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
 AbstractCatalog::GetResultWithIndexScan(std::vector<oid_t> column_offsets,
                                         oid_t index_offset,
                                         std::vector<type::Value> values,
-                                        concurrency::Transaction *txn) {
+                                        concurrency::Transaction *txn) const {
   if (txn == nullptr) throw CatalogException("Scan table requires transaction");
 
   // Index scan

@@ -35,7 +35,7 @@ class SettingsManager : public Printable {
   static void SetInt(SettingId id, int32_t value);
   static void SetBool(SettingId id, bool value);
   static void SetString(SettingId id, const std::string &value);
-  static SettingsManager* GetInstance();
+  static SettingsManager &GetInstance();
 
   // Call this method in Catalog->Bootstrap
   // to store information into pg_settings
