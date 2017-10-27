@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <string>
@@ -31,8 +30,8 @@ class DateFunctions {
   // (2) The second argument is the timestamp to extract the part from
   // @return The Value returned should be a type::DecimalValue that is
   // constructed using type::ValueFactory
-  static type::Value Extract(const std::vector<type::Value>& args);
+  static type::Value Extract(const std::vector<type::Value> &args);
 };
 
-}  // namespace expression
+}  // namespace function
 }  // namespace peloton

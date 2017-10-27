@@ -122,6 +122,9 @@ static std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {
 static std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {};
 static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {};
 
+// Nary operations
+static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
+
 }  // anonymous namespace
 
 // Initialize the TIMESTAMP SQL type with the configured type system
@@ -129,7 +132,7 @@ Timestamp::Timestamp()
     : SqlType(peloton::type::TypeId::TIMESTAMP),
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
                    kComparisonTable, kUnaryOperatorTable,
-                   kBinaryOperatorTable) {}
+                   kBinaryOperatorTable, kNaryOperatorTable) {}
 
 Value Timestamp::GetMinValue(CodeGen &codegen) const {
   auto *raw_val = codegen.Const64(peloton::type::PELOTON_TIMESTAMP_MIN);

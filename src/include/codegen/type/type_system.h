@@ -256,12 +256,36 @@ class TypeSystem {
     const BinaryOperator &binary_operation;
   };
 
+  // An n-ary function
+  struct NaryOperator {
+    virtual ~NaryOperator() {}
+
+    // Does this operator support the provided input argument types?
+    virtual bool SupportsTypes(const std::vector<Type> &arg_types) const = 0;
+
+    // What is type of the result produced by this operator?
+    virtual Type ResultType(const std::vector<Type> &arg_types) const = 0;
+
+    // Execute the actual operator
+    virtual Value DoWork(CodeGen &codegen, const std::vector<Value> &input_args,
+                         OnError on_error) const = 0;
+  };
+
+  struct NaryOpInfo {
+    // The ID of the operation
+    OperatorId op_id;
+
+    // The operation
+    const NaryOperator &nary_operation;
+  };
+
  public:
   TypeSystem(const std::vector<peloton::type::TypeId> &implicit_cast_table,
              const std::vector<CastInfo> &explicit_cast_table,
              const std::vector<ComparisonInfo> &comparison_table,
              const std::vector<UnaryOpInfo> &unary_op_table,
-             const std::vector<BinaryOpInfo> &binary_op_table);
+             const std::vector<BinaryOpInfo> &binary_op_table,
+             const std::vector<NaryOpInfo> &nary_op_table);
 
   // Can values of the provided type be implicitly casted into a value of the
   // other provided type?
@@ -287,6 +311,10 @@ class TypeSystem {
                                                  const Type &right_type,
                                                  Type &right_casted_type);
 
+  // Lookup the given nary operator that operators on the provided types
+  static const NaryOperator *GetNaryOperator(
+      OperatorId op_id, const std::vector<Type> &arg_types);
+
  private:
   // The list of types a given type can be implicitly casted to
   const std::vector<peloton::type::TypeId> &implicit_cast_table_;
@@ -302,6 +330,9 @@ class TypeSystem {
 
   // The table of builtin binary operators
   const std::vector<BinaryOpInfo> &binary_op_table_;
+
+  // The table of builtin nary operators
+  const std::vector<NaryOpInfo> &nary_op_table_;
 
  private:
   DISALLOW_COPY_AND_MOVE(TypeSystem);

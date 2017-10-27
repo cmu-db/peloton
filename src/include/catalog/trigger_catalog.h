@@ -50,7 +50,7 @@ class TriggerCatalog : public AbstractCatalog {
   ~TriggerCatalog();
 
   // Global Singleton
-  static TriggerCatalog *GetInstance(concurrency::Transaction *txn = nullptr);
+  static TriggerCatalog &GetInstance(concurrency::Transaction *txn = nullptr);
 
   //===--------------------------------------------------------------------===//
   // write Related API

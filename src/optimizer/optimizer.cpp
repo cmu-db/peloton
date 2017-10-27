@@ -15,6 +15,7 @@
 #include "optimizer/optimizer.h"
 
 #include "catalog/column_catalog.h"
+#include "catalog/table_catalog.h"
 #include "catalog/manager.h"
 
 #include "optimizer/binding.h"

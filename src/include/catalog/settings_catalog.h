@@ -22,7 +22,7 @@ class SettingsCatalog : public AbstractCatalog {
   ~SettingsCatalog();
 
   // Global Singleton
-  static SettingsCatalog *GetInstance(concurrency::Transaction *txn = nullptr);
+  static SettingsCatalog &GetInstance(concurrency::Transaction *txn = nullptr);
 
   //===--------------------------------------------------------------------===//
   // write Related API
