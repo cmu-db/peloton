@@ -21,6 +21,8 @@
 #include "codegen/value.h"
 #include "common/container_tuple.h"
 #include "expression/constant_value_expression.h"
+#include "expression/comparison_expression.h"
+#include "expression/tuple_value_expression.h"
 #include "planner/binding_context.h"
 #include "storage/data_table.h"
 #include "storage/database.h"
