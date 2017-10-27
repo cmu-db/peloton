@@ -1030,6 +1030,23 @@ enum class OperatorId : uint32_t {
   Mod,
   LogicalAnd,
   LogicalOr,
+  Ascii,
+  Chr,
+  Concat,
+  Substr,
+  CharLength,
+  OctetLength,
+  Repeat,
+  Replace,
+  LTrim,
+  RTrim,
+  BTrim,
+  Sqrt,
+  Extract,
+
+  // Add more operators here, before the last "Invalid" entry
+
+  Invalid
 };
 std::string OperatorIdToString(OperatorId op_id);
 
@@ -1214,6 +1231,8 @@ bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString);
 
 std::string TypeIdToString(type::TypeId type);
 type::TypeId StringToTypeId(const std::string &str);
+std::string TypeIdArrayToString(const std::vector<type::TypeId> &types);
+std::vector<type::TypeId> StringToTypeArray(const std::string &types);
 
 type::TypeId PostgresValueTypeToPelotonValueType(PostgresValueType type);
 ConstraintType PostgresConstraintTypeToPelotonConstraintType(

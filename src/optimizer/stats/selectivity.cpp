@@ -12,9 +12,8 @@
 
 #include "optimizer/stats/selectivity.h"
 
+#include "catalog/table_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
-
-#include "catalog/column_catalog.h"
 
 namespace peloton {
 namespace optimizer {
@@ -69,7 +68,7 @@ double Selectivity::LessThan(const std::shared_ptr<TableStats> &table_stats,
   std::vector<double> histogram = column_stats->histogram_bounds;
   size_t n = histogram.size();
   PL_ASSERT(n > 0);
-  // find correspond bin using binary serach
+  // find correspond bin using binary search
   auto it = std::lower_bound(histogram.begin(), histogram.end(), v);
   double res = (it - histogram.begin()) * 1.0 / n;
   PL_ASSERT(res >= 0);

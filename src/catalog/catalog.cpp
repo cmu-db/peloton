@@ -12,14 +12,11 @@
 
 #include "catalog/catalog.h"
 
-#include "common/exception.h"
-#include "common/macros.h"
-
 #include "catalog/column_catalog.h"
 #include "catalog/index_catalog.h"
-#include "catalog/table_catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/database_metrics_catalog.h"
+#include "catalog/table_catalog.h"
 #include "catalog/table_metrics_catalog.h"
 #include "catalog/index_metrics_catalog.h"
 #include "catalog/query_metrics_catalog.h"
@@ -28,6 +25,9 @@
 #include "catalog/trigger_catalog.h"
 #include "catalog/proc_catalog.h"
 #include "catalog/language_catalog.h"
+#include "function/date_functions.h"
+#include "function/decimal_functions.h"
+#include "function/string_functions.h"
 #include "index/index_factory.h"
 #include "storage/storage_manager.h"
 #include "storage/table_factory.h"
@@ -37,7 +37,7 @@ namespace peloton {
 namespace catalog {
 
 // Get instance of the global catalog
-Catalog *Catalog::GetInstance(void) {
+Catalog *Catalog::GetInstance() {
   static Catalog global_catalog;
   return &global_catalog;
 }
@@ -259,7 +259,7 @@ ResultType Catalog::CreateTable(const std::string &database_name,
   pg_table->InsertTable(table_oid, table_name, database_object->database_oid,
                         pool_.get(), txn);
   oid_t column_id = 0;
-  for (auto column : table->GetSchema()->GetColumns()) {
+  for (const auto &column : table->GetSchema()->GetColumns()) {
     ColumnCatalog::GetInstance()->InsertColumn(
         table_oid, column.GetName(), column_id, column.GetOffset(),
         column.GetType(), column.IsInlined(), column.GetConstraints(),
@@ -796,52 +796,67 @@ Catalog::~Catalog() {
 // FUNCTION
 //===--------------------------------------------------------------------===//
 
-/*@brief   Add new built-in function
- * 1. add the function infomation into pg_proc
- * 2. register the function pointer in function::BuiltinFunction
+/* @brief
+ * Add a new built-in function. This proceeds in two steps:
+ *   1. Add the function information into pg_catalog.pg_proc
+ *   2. Register the function pointer in function::BuiltinFunction
  * @param   name & argument_types   function name and arg types used in SQL
  * @param   return_type   the return type
  * @param   prolang       the oid of which language the function is
- * @param   func_name     the function name in C++ source code (should be unique)
+ * @param   func_name     the function name in C++ source (should be unique)
  * @param   func_ptr      the pointer to the function
  */
-void Catalog::AddFunction(const std::string &name,
-                          const std::vector<type::TypeId> &argument_types,
-                          const type::TypeId return_type,
-                          oid_t prolang,
-                          const std::string &func_name,
-                          function::BuiltInFuncType func_ptr,
-                          concurrency::Transaction *txn) {
-  if (!ProcCatalog::GetInstance()->
-      InsertProc(name, return_type, argument_types,
-                 prolang, func_name, pool_.get(), txn)) {
+void Catalog::AddBuiltinFunction(
+    const std::string &name, const std::vector<type::TypeId> &argument_types,
+    const type::TypeId return_type, oid_t prolang, const std::string &func_name,
+    function::BuiltInFuncType func, concurrency::Transaction *txn) {
+  if (!ProcCatalog::GetInstance().InsertProc(name, return_type, argument_types,
+                                             prolang, func_name, pool_.get(),
+                                             txn)) {
     throw CatalogException("Failed to add function " + func_name);
   }
-  function::BuiltInFunctions::AddFunction(func_name, func_ptr);
+  function::BuiltInFunctions::AddFunction(func_name, func);
 }
 
 const FunctionData Catalog::GetFunction(
-    const std::string &name,
-    const std::vector<type::TypeId> &argument_types) {
+    const std::string &name, const std::vector<type::TypeId> &argument_types) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  FunctionData result;
-  oid_t prolang = ProcCatalog::GetInstance()->GetProLang(name, argument_types, txn);
 
-  // if the function is "internal", then look up the map in function::BuiltInFunctions
-  // to get the function pointer
-  if (LanguageCatalog::GetInstance()->GetLanguageName(prolang, txn) == "internal") {
-    result.argument_types_ = argument_types;
-    result.func_name_ = ProcCatalog::GetInstance()->GetProSrc(name, argument_types, txn);
-    result.return_type_ = ProcCatalog::GetInstance()->GetProRetType(name, argument_types, txn);
-    result.func_ptr_ = function::BuiltInFunctions::GetFuncByName(result.func_name_);
-    if (result.func_ptr_ != nullptr) {
-      txn_manager.CommitTransaction(txn);
-      return result;
-    }
+  // Lookup the function in pg_proc
+  auto &proc_catalog = ProcCatalog::GetInstance();
+  auto proc_catalog_obj = proc_catalog.GetProcByName(name, argument_types, txn);
+  if (proc_catalog_obj == nullptr) {
+    txn_manager.AbortTransaction(txn);
+    throw CatalogException("Failed to find function " + name);
   }
-  txn_manager.AbortTransaction(txn);
-  throw CatalogException("Failed to find function " + name);
+
+  // If the language isn't 'internal', crap out ... for now ...
+  auto lang_catalog_obj = proc_catalog_obj->GetLanguage();
+  if (lang_catalog_obj == nullptr ||
+      lang_catalog_obj->GetName() != "internal") {
+    txn_manager.AbortTransaction(txn);
+    throw CatalogException(
+        "Peloton currently only supports internal functions. Function " + name +
+        " has language '" + lang_catalog_obj->GetName() + "'");
+  }
+
+  // If the function is "internal", perform the lookup in our built-in
+  // functions map (i.e., function::BuiltInFunctions) to get the function
+  FunctionData result;
+  result.argument_types_ = argument_types;
+  result.func_name_ = proc_catalog_obj->GetSrc();
+  result.return_type_ = proc_catalog_obj->GetRetType();
+  result.func_ = function::BuiltInFunctions::GetFuncByName(result.func_name_);
+
+  if (result.func_.impl == nullptr) {
+    txn_manager.AbortTransaction(txn);
+    throw CatalogException("Function " + name +
+                           " is internal, but doesn't have a function address");
+  }
+
+  txn_manager.CommitTransaction(txn);
+  return result;
 }
 
 void Catalog::InitializeLanguages() {
@@ -850,8 +865,8 @@ void Catalog::InitializeLanguages() {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
     // add "internal" language
-    if (!LanguageCatalog::GetInstance()->
-        InsertLanguage("internal", pool_.get(), txn)) {
+    if (!LanguageCatalog::GetInstance().InsertLanguage("internal", pool_.get(),
+                                                       txn)) {
       txn_manager.AbortTransaction(txn);
       throw CatalogException("Failed to add language 'internal'");
     }
@@ -866,63 +881,104 @@ void Catalog::InitializeFunctions() {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
 
-    oid_t prolang = LanguageCatalog::GetInstance()->GetLanguageOid("internal", txn);
-    if (prolang == INVALID_OID) {
-      throw CatalogException("prolang 'internal' does not exist");
+    auto lang_object =
+        LanguageCatalog::GetInstance().GetLanguageByName("internal", txn);
+    if (lang_object == nullptr) {
+      throw CatalogException("Language 'internal' does not exist");
     }
+    oid_t internal_lang = lang_object->GetOid();
 
     try {
       /**
        * string functions
        */
-      AddFunction("ascii", {type::TypeId::VARCHAR}, type::TypeId::INTEGER, prolang,
-                  "Ascii", function::StringFunctions::Ascii, txn);
-      AddFunction("chr", {type::TypeId::INTEGER}, type::TypeId::VARCHAR, prolang,
-                  "Chr", function::StringFunctions::Chr, txn);
-      AddFunction("concat", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
-                  type::TypeId::VARCHAR, prolang,
-                  "Concat", function::StringFunctions::Concat, txn);
-      AddFunction("substr", {type::TypeId::VARCHAR, type::TypeId::INTEGER,
-                             type::TypeId::INTEGER},
-                  type::TypeId::VARCHAR, prolang,
-                  "Substr", function::StringFunctions::Substr, txn);
-      AddFunction("char_length", {type::TypeId::VARCHAR},
-                  type::TypeId::INTEGER, prolang,
-                  "CharLength", function::StringFunctions::CharLength, txn);
-      AddFunction("octet_length", {type::TypeId::VARCHAR},
-                  type::TypeId::INTEGER, prolang,
-                  "OctetLength", function::StringFunctions::OctetLength, txn);
-      AddFunction("repeat", {type::TypeId::VARCHAR, type::TypeId::INTEGER},
-                  type::TypeId::VARCHAR, prolang,
-                  "Repeat", function::StringFunctions::Repeat, txn);
-      AddFunction("replace", {type::TypeId::VARCHAR, type::TypeId::VARCHAR,
-                              type::TypeId::VARCHAR},
-                  type::TypeId::VARCHAR, prolang,
-                  "Replace", function::StringFunctions::Replace, txn);
-      AddFunction("ltrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
-                  type::TypeId::VARCHAR, prolang,
-                  "LTrim", function::StringFunctions::LTrim, txn);
-      AddFunction("rtrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
-                  type::TypeId::VARCHAR, prolang,
-                  "RTrim", function::StringFunctions::RTrim, txn);
-      AddFunction("btrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
-                  type::TypeId::VARCHAR, prolang,
-                  "btrim", function::StringFunctions::BTrim, txn);
+      AddBuiltinFunction(
+          "ascii", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
+          internal_lang, "Ascii",
+          function::BuiltInFuncType{OperatorId::Ascii,
+                                    function::StringFunctions::_Ascii},
+          txn);
+      AddBuiltinFunction("chr", {type::TypeId::INTEGER}, type::TypeId::VARCHAR,
+                         internal_lang, "Chr",
+                         function::BuiltInFuncType{
+                             OperatorId::Chr, function::StringFunctions::Chr},
+                         txn);
+      AddBuiltinFunction(
+          "concat", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
+          type::TypeId::VARCHAR, internal_lang, "Concat",
+          function::BuiltInFuncType{OperatorId::Concat,
+                                    function::StringFunctions::Concat},
+          txn);
+      AddBuiltinFunction(
+          "substr",
+          {type::TypeId::VARCHAR, type::TypeId::INTEGER, type::TypeId::INTEGER},
+          type::TypeId::VARCHAR, internal_lang, "Substr",
+          function::BuiltInFuncType{OperatorId::Substr,
+                                    function::StringFunctions::Substr},
+          txn);
+      AddBuiltinFunction(
+          "char_length", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
+          internal_lang, "CharLength",
+          function::BuiltInFuncType{OperatorId::CharLength,
+                                    function::StringFunctions::CharLength},
+          txn);
+      AddBuiltinFunction(
+          "octet_length", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
+          internal_lang, "OctetLength",
+          function::BuiltInFuncType{OperatorId::OctetLength,
+                                    function::StringFunctions::OctetLength},
+          txn);
+      AddBuiltinFunction(
+          "repeat", {type::TypeId::VARCHAR, type::TypeId::INTEGER},
+          type::TypeId::VARCHAR, internal_lang, "Repeat",
+          function::BuiltInFuncType{OperatorId::Repeat,
+                                    function::StringFunctions::Repeat},
+          txn);
+      AddBuiltinFunction(
+          "replace",
+          {type::TypeId::VARCHAR, type::TypeId::VARCHAR, type::TypeId::VARCHAR},
+          type::TypeId::VARCHAR, internal_lang, "Replace",
+          function::BuiltInFuncType{OperatorId::Replace,
+                                    function::StringFunctions::Replace},
+          txn);
+      AddBuiltinFunction(
+          "ltrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
+          type::TypeId::VARCHAR, internal_lang, "LTrim",
+          function::BuiltInFuncType{OperatorId::LTrim,
+                                    function::StringFunctions::LTrim},
+          txn);
+      AddBuiltinFunction(
+          "rtrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
+          type::TypeId::VARCHAR, internal_lang, "RTrim",
+          function::BuiltInFuncType{OperatorId::RTrim,
+                                    function::StringFunctions::RTrim},
+          txn);
+      AddBuiltinFunction(
+          "btrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
+          type::TypeId::VARCHAR, internal_lang, "btrim",
+          function::BuiltInFuncType{OperatorId::BTrim,
+                                    function::StringFunctions::BTrim},
+          txn);
 
       /**
        * decimal functions
        */
-      AddFunction("sqrt", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL,
-                  prolang, "Sqrt", function::DecimalFunctions::Sqrt, txn);
+      AddBuiltinFunction(
+          "sqrt", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL, internal_lang,
+          "Sqrt", function::BuiltInFuncType{OperatorId::Sqrt,
+                                            function::DecimalFunctions::Sqrt},
+          txn);
 
       /**
        * date functions
        */
-      AddFunction("extract", {type::TypeId::INTEGER, type::TypeId::TIMESTAMP},
-                  type::TypeId::DECIMAL, prolang,
-                  "Extract", function::DateFunctions::Extract, txn);
-    }
-    catch (CatalogException e) {
+      AddBuiltinFunction(
+          "extract", {type::TypeId::INTEGER, type::TypeId::TIMESTAMP},
+          type::TypeId::DECIMAL, internal_lang, "Extract",
+          function::BuiltInFuncType{OperatorId::Extract,
+                                    function::DateFunctions::Extract},
+          txn);
+    } catch (CatalogException &e) {
       txn_manager.AbortTransaction(txn);
       throw e;
     }

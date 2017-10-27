@@ -38,6 +38,9 @@ class Loop {
   // Get the loop variable at the given index
   llvm::Value *GetLoopVar(uint32_t id) const;
 
+  // Break out of the loop
+  void Break();
+
   // Mark the end of the loop block.  The loop continues at the top if the end
   // condition is true
   void LoopEnd(llvm::Value *end_condition,
@@ -60,6 +63,8 @@ class Loop {
   // The block at the bottom where the loop jumps to when the loop condition
   // becomes false
   llvm::BasicBlock *end_bb_;
+  // The basic blocks that contians the break
+  std::vector<llvm::BasicBlock *> break_bbs_;
   // The list of PHI nodes (i.e. loop variables)
   std::vector<llvm::PHINode *> phi_nodes_;
 };

@@ -51,23 +51,23 @@ void PelotonInit::Initialize() {
   if (settings::SettingsManager::GetBool(settings::SettingId::index_tuner)) {
     // Set the default visibility flag for all indexes to false
     index::IndexMetadata::SetDefaultVisibleFlag(false);
-    auto& index_tuner = brain::IndexTuner::GetInstance();
+    auto &index_tuner = brain::IndexTuner::GetInstance();
     index_tuner.Start();
   }
 
   // start layout tuner
   if (settings::SettingsManager::GetBool(settings::SettingId::layout_tuner)) {
-    auto& layout_tuner = brain::LayoutTuner::GetInstance();
+    auto &layout_tuner = brain::LayoutTuner::GetInstance();
     layout_tuner.Start();
   }
 
   // Initialize catalog
   auto pg_catalog = catalog::Catalog::GetInstance();
   pg_catalog->Bootstrap();  // Additional catalogs
-  settings::SettingsManager::GetInstance()->InitializeCatalog();
+  settings::SettingsManager::GetInstance().InitializeCatalog();
 
   // begin a transaction
-  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
   // initialize the catalog and add the default database, so we don't do this on
@@ -80,13 +80,13 @@ void PelotonInit::Initialize() {
 void PelotonInit::Shutdown() {
   // shut down index tuner
   if (settings::SettingsManager::GetBool(settings::SettingId::index_tuner)) {
-    auto& index_tuner = brain::IndexTuner::GetInstance();
+    auto &index_tuner = brain::IndexTuner::GetInstance();
     index_tuner.Stop();
   }
 
   // shut down layout tuner
   if (settings::SettingsManager::GetBool(settings::SettingId::layout_tuner)) {
-    auto& layout_tuner = brain::LayoutTuner::GetInstance();
+    auto &layout_tuner = brain::LayoutTuner::GetInstance();
     layout_tuner.Stop();
   }
 

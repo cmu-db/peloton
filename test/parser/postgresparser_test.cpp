@@ -989,7 +989,7 @@ TEST_F(PostgresParserTests, FuncCallTest) {
   // Check ADD(1,a)
   auto fun_expr = (expression::FunctionExpression*) (select_stmt->select_list.at(0).get());
   EXPECT_TRUE(fun_expr != nullptr);
-  EXPECT_EQ("add", fun_expr->func_name_);
+  EXPECT_EQ("add", fun_expr->GetFuncName());
   EXPECT_EQ(2, fun_expr->GetChildrenSize());
   auto const_expr = (expression::ConstantValueExpression*) fun_expr->GetChild(0);
   EXPECT_TRUE(const_expr != nullptr);
@@ -1001,7 +1001,7 @@ TEST_F(PostgresParserTests, FuncCallTest) {
   // Check chr(2)
   fun_expr = (expression::FunctionExpression*) (select_stmt->select_list.at(1).get());
   EXPECT_TRUE(fun_expr != nullptr);
-  EXPECT_EQ("chr", fun_expr->func_name_);
+  EXPECT_EQ("chr", fun_expr->GetFuncName());
   EXPECT_EQ(1, fun_expr->GetChildrenSize());
   const_expr = (expression::ConstantValueExpression*) fun_expr->GetChild(0);
   EXPECT_TRUE(const_expr != nullptr);
@@ -1012,7 +1012,7 @@ TEST_F(PostgresParserTests, FuncCallTest) {
   EXPECT_TRUE(op_expr != nullptr);
   EXPECT_EQ(ExpressionType::COMPARE_GREATERTHAN, op_expr->GetExpressionType());
   fun_expr = (expression::FunctionExpression*) op_expr->GetChild(0);
-  EXPECT_EQ("fun", fun_expr->func_name_);
+  EXPECT_EQ("fun", fun_expr->GetFuncName());
   EXPECT_EQ(1, fun_expr->GetChildrenSize());
   tv_expr = (expression::TupleValueExpression*) fun_expr->GetChild(0);
   EXPECT_TRUE(tv_expr != nullptr);

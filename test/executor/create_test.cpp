@@ -420,7 +420,7 @@ TEST_F(CreateTests, CreatingTriggerInCatalog) {
   // check whether the trigger catalog table contains this new trigger
   auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
       DEFAULT_DB_NAME, "accounts", txn);
-  auto trigger_list = catalog::TriggerCatalog::GetInstance()->GetTriggersByType(
+  auto trigger_list = catalog::TriggerCatalog::GetInstance().GetTriggersByType(
       table_object->table_oid,
       (TRIGGER_TYPE_ROW | TRIGGER_TYPE_BEFORE | TRIGGER_TYPE_UPDATE), txn);
 

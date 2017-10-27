@@ -17,6 +17,7 @@
 #include "executor/plan_executor.h"
 #include "planner/abstract_plan.h"
 #include "planner/binding_context.h"
+#include "codegen/counting_consumer.h"
 
 namespace peloton {
 namespace benchmark {
@@ -162,7 +163,7 @@ void TPCHBenchmark::RunQuery(const TPCHBenchmark::QueryConfig &query_config) {
   plan->PerformBinding(binding_context);
 
   // The consumer
-  CountingConsumer counter;
+  codegen::CountingConsumer counter;
 
   // Compile
   codegen::QueryCompiler::CompileStats compile_stats;
@@ -207,38 +208,6 @@ void TPCHBenchmark::RunQuery(const TPCHBenchmark::QueryConfig &query_config) {
            overall_stats.tear_down_ms / config_.num_runs);
 }
 
-//===----------------------------------------------------------------------===//
-// COUNTING CONSUMER
-//===----------------------------------------------------------------------===//
-
-void CountingConsumer::Prepare(codegen::CompilationContext &ctx) {
-  auto &codegen = ctx.GetCodeGen();
-  auto &runtime_state = ctx.GetRuntimeState();
-  counter_state_id_ = runtime_state.RegisterState(
-      "consumerState", codegen.Int64Type()->getPointerTo());
-}
-
-void CountingConsumer::InitializeState(codegen::CompilationContext &context) {
-  auto &codegen = context.GetCodeGen();
-  auto *state_ptr = GetCounterState(codegen, context.GetRuntimeState());
-  codegen->CreateStore(codegen.Const64(0), state_ptr);
-}
-
-// Increment the counter
-void CountingConsumer::ConsumeResult(codegen::ConsumerContext &context,
-                                     codegen::RowBatch::Row &) const {
-  auto &codegen = context.GetCodeGen();
-
-  auto *counter_ptr = GetCounterState(codegen, context.GetRuntimeState());
-  auto *new_count =
-      codegen->CreateAdd(codegen->CreateLoad(counter_ptr), codegen.Const64(1));
-  codegen->CreateStore(new_count, counter_ptr);
-}
-
-llvm::Value *CountingConsumer::GetCounterState(
-    codegen::CodeGen &codegen, codegen::RuntimeState &runtime_state) const {
-  return runtime_state.LoadStateValue(codegen, counter_state_id_);
-}
 
 }  // namespace tpch
 }  // namespace benchmark
