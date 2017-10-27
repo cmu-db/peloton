@@ -39,6 +39,7 @@
 #include "storage/tile.h"
 #include "storage/tile_group.h"
 #include "type/ephemeral_pool.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 namespace benchmark {

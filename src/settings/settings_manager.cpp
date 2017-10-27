@@ -15,8 +15,9 @@
 #include "catalog/settings_catalog.h"
 #include "common/exception.h"
 #include "concurrency/transaction_manager_factory.h"
-#include "type/ephemeral_pool.h"
 #include "settings/settings_manager.h"
+#include "type/ephemeral_pool.h"
+#include "type/value_factory.h"
 #include "util/stringbox_util.h"
 
 #define __SETTING_GFLAGS_DECLARE__

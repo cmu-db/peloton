@@ -15,8 +15,7 @@
 
 #include "storage/tuple.h"
 #include "type/type_util.h"
-#include "type/value.h"
-#include "util/string_util.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 namespace test {

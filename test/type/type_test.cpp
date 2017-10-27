@@ -17,6 +17,7 @@
 #include "storage/tuple.h"
 #include "type/serializeio.h"
 #include "type/type.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 namespace test {

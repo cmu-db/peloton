@@ -15,10 +15,9 @@
 #include "catalog/catalog.h"
 #include "common/harness.h"
 #include "concurrency/transaction_manager_factory.h"
-#include "executor/create_executor.h"
 #include "optimizer/optimizer.h"
-#include "planner/create_plan.h"
 #include "sql/testing_sql_util.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 namespace test {

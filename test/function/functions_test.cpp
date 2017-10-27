@@ -17,6 +17,7 @@
 #include "concurrency/transaction_manager_factory.h"
 #include "sql/testing_sql_util.h"
 #include "type/ephemeral_pool.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 namespace test {

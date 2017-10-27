@@ -12,14 +12,14 @@
 
 #include "common/harness.h"
 
+#include <vector>
+
 #include "storage/temp_table.h"
 #include "storage/tile.h"
 #include "storage/tile_group.h"
-#include "storage/tuple.h"
 #include "storage/tuple_iterator.h"
-#include "type/value.h"
+#include "type/value_factory.h"
 
-#include <vector>
 #include "executor/testing_executor_util.h"
 
 namespace peloton {

@@ -12,11 +12,7 @@
 
 #include "type/integer_type.h"
 
-#include <cmath>
-#include <iostream>
-#include "type/boolean_type.h"
-#include "type/decimal_type.h"
-#include "type/varlen_type.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 namespace type {
