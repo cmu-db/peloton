@@ -85,17 +85,23 @@ class HashGroupByTranslator : public OperatorTranslator {
   class ConsumerProbe : public HashTable::ProbeCallback {
    public:
     // Constructor
-    ConsumerProbe(const Aggregation &aggregation,
-                  const std::vector<codegen::Value> &next_vals);
+    ConsumerProbe(CompilationContext &context,
+                  const Aggregation &aggregation,
+                  const std::vector<codegen::Value> &next_vals,
+                  const std::vector<codegen::Value> &grouping_keys);
 
     // The callback
     void ProcessEntry(CodeGen &codegen, llvm::Value *data_area) const override;
 
    private:
+    // Compilation Context need for code generation and runtime state
+    CompilationContext &context_;
     // The guy that handles the computation of the aggregates
     const Aggregation &aggregation_;
     // The next value to merge into the existing aggregates
     const std::vector<codegen::Value> &next_vals_;
+    // The key used for the Group By, will be needed for distinct aggregations
+    const std::vector<codegen::Value> grouping_keys_;
   };
 
   //===--------------------------------------------------------------------===//
@@ -106,8 +112,10 @@ class HashGroupByTranslator : public OperatorTranslator {
   class ConsumerInsert : public HashTable::InsertCallback {
    public:
     // Constructor
-    ConsumerInsert(const Aggregation &aggregation,
-                   const std::vector<codegen::Value> &initial_vals);
+    ConsumerInsert (CompilationContext &context,
+                    const Aggregation &aggregation,
+                    const std::vector<codegen::Value> &initial_vals,
+                    const std::vector<codegen::Value> &grouping_keys);
 
     // StoreValue the initial values of the aggregates into the provided storage
     void StoreValue(CodeGen &codegen, llvm::Value *data_space) const override;
@@ -115,10 +123,14 @@ class HashGroupByTranslator : public OperatorTranslator {
     llvm::Value *GetValueSize(CodeGen &codegen) const override;
 
    private:
+    // Compilation Context need for code generation and runtime state
+    CompilationContext &context_;
     // The guy that handles the computation of the aggregates
     const Aggregation &aggregation_;
     // The list of initial values to use as aggregates
     const std::vector<codegen::Value> &initial_vals_;
+    // The key used for the Group By, will be needed for distinct aggregations
+    const std::vector<codegen::Value> grouping_keys_;
   };
 
   //===--------------------------------------------------------------------===//
