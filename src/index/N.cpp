@@ -92,6 +92,29 @@ bool N::change(N *node, uint8_t key, N *val) {
   __builtin_unreachable();
 }
 
+bool N::addMultiValue(N *node, uint8_t key, uint64_t val) {
+  switch (node->getType()) {
+    case NTypes::N4: {
+      auto n = static_cast<N4 *>(node);
+      return n->addMultiValue(key, val);
+    }
+    case NTypes::N16: {
+      auto n = static_cast<N16 *>(node);
+      return n->addMultiValue(key, val);
+    }
+    case NTypes::N48: {
+      auto n = static_cast<N48 *>(node);
+      return n->addMultiValue(key, val);
+    }
+    case NTypes::N256: {
+      auto n = static_cast<N256 *>(node);
+      return n->addMultiValue(key, val);
+    }
+  }
+  assert(false);
+  __builtin_unreachable();
+}
+
 template<typename curN, typename biggerN>
 void N::insertGrow(curN *n, uint64_t v, N *parentNode, uint64_t parentVersion, uint8_t keyParent, uint8_t key, N *val, bool &needRestart, ThreadInfo &threadInfo) {
   if (!n->isFull()) {
@@ -336,7 +359,10 @@ bool N::isLeaf(const N *n) {
 }
 
 N *N::setLeaf(TID tid) {
-  return reinterpret_cast<N *>(tid | (static_cast<uint64_t>(1) << 63));
+  MultiValues *value_list = new MultiValues();
+  value_list->tid = tid;
+//  return reinterpret_cast<N *>(tid | (static_cast<uint64_t>(1) << 63));
+  return reinterpret_cast<N *>((uint64_t)(value_list) | (static_cast<uint64_t>(1) << 63));
 }
 
 TID N::getLeaf(const N *n) {

@@ -136,7 +136,10 @@ void ArtIndex::WriteValueInBytes(type::Value value, char *c, int offset, UNUSED_
 void loadKey(TID tid, Key &key, IndexMetadata *metadata) {
   // Store the key of the tuple into the key vector
   // Implementation is database specific
-  printf("enter loadKey() TID (ItemPointer) = %llu\n", tid);
+
+  // use the first value in the value list
+  MultiValues *value_list = reinterpret_cast<MultiValues *>(tid);
+  printf("enter loadKey() TID (ItemPointer) = %llu\n", value_list->tid);
 
   int columnCount = metadata->GetColumnCount();
   printf("columnCount = %d\n", columnCount);
@@ -159,7 +162,7 @@ void loadKey(TID tid, Key &key, IndexMetadata *metadata) {
 
   // TODO: recover key from tuple_pointer (recover a storage::Tuple from ItemPointer)
   auto &manager = catalog::Manager::GetInstance();
-  ItemPointer *tuple_pointer = (ItemPointer *) tid;
+  ItemPointer *tuple_pointer = (ItemPointer *) (value_list->tid);
   ItemPointer tuple_location = *tuple_pointer;
   auto tile_group = manager.GetTileGroup(tuple_location.block);
   ContainerTuple<storage::TileGroup> tuple(tile_group.get(), tuple_location.offset);
@@ -385,8 +388,15 @@ void ArtIndex::ScanKey(
   auto t = artTree.getThreadInfo();
   TID value = artTree.lookup(index_key, t);
   if (value != 0) {
-    ItemPointer *value_pointer = (ItemPointer *) value;
-    result.push_back(value_pointer);
+//    ItemPointer *value_pointer = (ItemPointer *) value;
+//    result.push_back(value_pointer);
+    MultiValues *value_list = reinterpret_cast<MultiValues *>(value);
+    while (value_list != nullptr) {
+      ItemPointer *value_pointer = (ItemPointer *) (value_list->tid);
+      printf("one of the scanKey result = %llu\n", value_list->tid);
+      result.push_back(value_pointer);
+      value_list = value_list->next;
+    }
   }
   return;
 }

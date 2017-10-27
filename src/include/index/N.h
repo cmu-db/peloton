@@ -32,6 +32,11 @@ enum class NTypes : uint8_t {
   N256 = 3
 };
 
+typedef struct MultiValues {
+  TID tid;
+  MultiValues *next;
+} MultiValues;
+
 static constexpr uint32_t maxStoredPrefixLength = 11;
 
 using Prefix = uint8_t[maxStoredPrefixLength];
@@ -97,6 +102,8 @@ public:
                               ThreadInfo &threadInfo);
 
   static bool change(N *node, uint8_t key, N *val);
+
+  static bool addMultiValue(N *node, uint8_t key, uint64_t val);
 
   static void removeAndUnlock(N *node, uint64_t v, uint8_t key, N *parentNode, uint64_t parentVersion, uint8_t keyParent, bool &needRestart, ThreadInfo &threadInfo);
 

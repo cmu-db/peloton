@@ -45,6 +45,26 @@ bool N4::change(uint8_t key, N *val) {
   __builtin_unreachable();
 }
 
+bool N4::addMultiValue(uint8_t key, uint64_t val) {
+  for (uint32_t i = 0; i < count; ++i) {
+    if (keys[i] == key) {
+//      children[i] = val;
+      TID tid = N::getLeaf(children[i]);
+
+      MultiValues *value_list = reinterpret_cast<MultiValues *>(tid);
+      while (value_list->next != nullptr) {
+        value_list = value_list->next;
+      }
+      value_list->next = new MultiValues();
+      value_list->next->tid = val;
+      value_list->next->next = nullptr;
+      return true;
+    }
+  }
+  assert(false);
+  __builtin_unreachable();
+}
+
 N *N4::getChild(const uint8_t k) const {
   for (uint32_t i = 0; i < count; ++i) {
     if (keys[i] == k) {

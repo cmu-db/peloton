@@ -37,6 +37,22 @@ bool N16::change(uint8_t key, N *val) {
   return true;
 }
 
+bool N16::addMultiValue(uint8_t key, uint64_t val) {
+  N **childPos = const_cast<N **>(getChildPos(key));
+  assert(childPos != nullptr);
+//  *childPos = val;
+  TID tid = N::getLeaf(*childPos);
+
+  MultiValues *value_list = reinterpret_cast<MultiValues *>(tid);
+  while (value_list->next != nullptr) {
+    value_list = value_list->next;
+  }
+  value_list->next = new MultiValues();
+  value_list->next->tid = val;
+  value_list->next->next = nullptr;
+  return true;
+}
+
 N *const *N16::getChildPos(const uint8_t k) const {
   __m128i cmp = _mm_cmpeq_epi8(_mm_set1_epi8(flipSign(k)),
                                _mm_loadu_si128(reinterpret_cast<const __m128i *>(keys)));

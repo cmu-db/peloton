@@ -36,6 +36,20 @@ bool N256::change(uint8_t key, N *n) {
   return true;
 }
 
+bool N256::addMultiValue(uint8_t key, uint64_t val) {
+//  children[key] = n;
+  TID tid = N::getLeaf(children[key]);
+
+  MultiValues *value_list = reinterpret_cast<MultiValues *>(tid);
+  while (value_list->next != nullptr) {
+    value_list = value_list->next;
+  }
+  value_list->next = new MultiValues();
+  value_list->next->tid = val;
+  value_list->next->next = nullptr;
+  return true;
+}
+
 N *N256::getChild(const uint8_t k) const {
   return children[k];
 }

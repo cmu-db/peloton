@@ -59,6 +59,8 @@ public:
 
   bool change(uint8_t key, N *val);
 
+  bool addMultiValue(uint8_t key, uint64_t val);
+
   N *getChild(const uint8_t k) const;
 
   void remove(uint8_t k);

@@ -35,6 +35,20 @@ bool N48::change(uint8_t key, N *val) {
   return true;
 }
 
+bool N48::addMultiValue(uint8_t key, uint64_t val) {
+//  children[childIndex[key]] = val;
+  TID tid = N::getLeaf(children[childIndex[key]]);
+
+  MultiValues *value_list = reinterpret_cast<MultiValues *>(tid);
+  while (value_list->next != nullptr) {
+    value_list = value_list->next;
+  }
+  value_list->next = new MultiValues();
+  value_list->next->tid = val;
+  value_list->next->next = nullptr;
+  return true;
+}
+
 N *N48::getChild(const uint8_t k) const {
   if (childIndex[k] == emptyMarker) {
     return nullptr;

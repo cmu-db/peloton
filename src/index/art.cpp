@@ -129,8 +129,18 @@ bool Tree::lookupRange(const Key &start, const Key &end, Key &continueKey, std::
 //        return;
 //      }
 //      result[resultsFound] = N::getLeaf(node);
-      result.push_back((ItemPointer *)(N::getLeaf(node)));
-      resultsFound++;
+
+      TID tid = N::getLeaf(node);
+      MultiValues *value_list = reinterpret_cast<MultiValues *>(tid);
+      while (value_list != nullptr) {
+        ItemPointer *new_value = (ItemPointer *)(value_list->tid);
+        result.push_back(new_value);
+        resultsFound++;
+        value_list = value_list->next;
+      }
+
+//      result.push_back((ItemPointer *)(N::getLeaf(node)));
+//      resultsFound++;
     } else {
       std::tuple<uint8_t, N *> children[256];
       uint32_t childrenCount = 0;
@@ -459,7 +469,10 @@ void Tree::insert(const Key &k, TID tid, ThreadInfo &epocheInfo) {
 
       if (key == k) {
         // upsert
-        N::change(node, k[level], N::setLeaf(tid));
+//        N::change(node, k[level], N::setLeaf(tid));
+        printf("add another value for a non-unique key %llu\n", tid);
+//        N::addMultiValue(node, k[level], N::setLeaf(tid));
+        N::addMultiValue(node, k[level], tid);
         node->writeUnlock();
         return;
       }
