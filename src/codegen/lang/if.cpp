@@ -75,7 +75,7 @@ void If::ElseBlock(const std::string &name) {
   cg_->CreateBr(merge_bb_);
 
   // Create a new else block
-  std::string bb_name = name.empty() ? name_ + ".else" : name;
+  std::string bb_name = name.empty() ? "else" : name_ + ".else";
   else_bb_ = llvm::BasicBlock::Create(cg_.GetContext(), bb_name, fn_);
   last_bb_in_else_ = else_bb_;
 
