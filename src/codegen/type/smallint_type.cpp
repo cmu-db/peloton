@@ -307,7 +307,7 @@ struct Div : public TypeSystem::BinaryOperator {
 
     if (on_error == OnError::ReturnNull) {
       Value default_val, division_result;
-      lang::If is_div0{codegen, div0};
+      lang::If is_div0{codegen, div0, "div0"};
       {
         // The divisor is 0, return NULL because that's what the caller wants
         default_val = SmallInt::Instance().GetNullValue(codegen);
@@ -364,7 +364,7 @@ struct Modulo : public TypeSystem::BinaryOperator {
 
     if (on_error == OnError::ReturnNull) {
       Value default_val, division_result;
-      lang::If is_div0{codegen, div0};
+      lang::If is_div0{codegen, div0, "div0"};
       {
         // The divisor is 0, return NULL because that's what the caller wants
         default_val = SmallInt::Instance().GetNullValue(codegen);

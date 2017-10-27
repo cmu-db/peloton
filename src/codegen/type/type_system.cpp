@@ -33,7 +33,7 @@ Value TypeSystem::CastWithNullPropagation::DoCast(CodeGen &codegen,
   PL_ASSERT(value.IsNullable());
 
   Value null_val, ret_val;
-  lang::If is_null{codegen, value.IsNull(codegen)};
+  lang::If is_null{codegen, value.IsNull(codegen), "is_null"};
   {
     // If the value is NULL, return the NULL type for the target type
     null_val = to_type.GetSqlType().GetNullValue(codegen);
@@ -138,7 +138,7 @@ Value TypeSystem::UnaryOperatorWithNullPropagation::DoWork(
   PL_ASSERT(val.IsNullable());
 
   Value null_val, ret_val;
-  lang::If is_null{codegen, val.IsNull(codegen)};
+  lang::If is_null{codegen, val.IsNull(codegen), "is_null"};
   {
     // If the value is NULL, return the NULL value for the result type
     null_val = ResultType(val.GetType()).GetSqlType().GetNullValue(codegen);
@@ -180,7 +180,7 @@ Value TypeSystem::BinaryOperatorWithNullPropagation::DoWork(
   auto *null = codegen->CreateOr(left.IsNull(codegen), right.IsNull(codegen));
 
   Value null_val, ret_val;
-  lang::If is_null{codegen, null};
+  lang::If is_null{codegen, null, "is_null"};
   {
     // If either value is null, the result of the operator is null
     const auto &result_type = ResultType(left.GetType(), right.GetType());
