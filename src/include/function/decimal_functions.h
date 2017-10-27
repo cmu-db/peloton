@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <vector>
@@ -25,5 +24,5 @@ class DecimalFunctions {
   static type::Value Sqrt(const std::vector<type::Value>& args);
 };
 
-}  // namespace expression
+}  // namespace function
 }  // namespace peloton

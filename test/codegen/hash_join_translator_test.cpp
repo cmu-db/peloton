@@ -88,7 +88,7 @@ TEST_F(HashJoinTranslatorTest, SingleHashJoinColumnTest) {
   // Finally, the fucking join node
   std::unique_ptr<planner::HashJoinPlan> hj_plan{
       new planner::HashJoinPlan(JoinType::INNER, nullptr, std::move(projection),
-                                schema, left_hash_keys, right_hash_keys)};
+                                schema, left_hash_keys, right_hash_keys, true)};
   std::unique_ptr<planner::HashPlan> hash_plan{
       new planner::HashPlan(hash_keys)};
 

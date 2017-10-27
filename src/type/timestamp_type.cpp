@@ -67,20 +67,16 @@ CmpBool TimestampType::CompareGreaterThanEquals(const Value& left, const Value &
 
 Value TimestampType::Min(const Value& left, const Value& right) const {
   PL_ASSERT(left.CheckComparable(right));
-  if (left.IsNull() || right.IsNull())
-    return left.OperateNull(right);
-  if (left.CompareLessThan(right) == CMP_TRUE)
-      return left.Copy();
+  if (left.IsNull() || right.IsNull()) return left.OperateNull(right);
+  if (left.CompareLessThan(right) == CMP_TRUE) return left.Copy();
   return right.Copy();
 }
 
 Value TimestampType::Max(const Value& left, const Value& right) const {
-    PL_ASSERT(left.CheckComparable(right));
-    if (left.IsNull() || right.IsNull())
-        return left.OperateNull(right);
-    if (left.CompareGreaterThan(right) == CMP_TRUE)
-        return left.Copy();
-    return right.Copy();
+  PL_ASSERT(left.CheckComparable(right));
+  if (left.IsNull() || right.IsNull()) return left.OperateNull(right);
+  if (left.CompareGreaterThanEquals(right) == CMP_TRUE) return left.Copy();
+  return right.Copy();
 }
 
 // Debug

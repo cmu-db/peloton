@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include "codegen/bloom_filter_accessor.h"
 #include "codegen/compilation_context.h"
 #include "codegen/consumer_context.h"
 #include "codegen/oa_hash_table.h"
@@ -73,8 +74,14 @@ class HashJoinTranslator : public OperatorTranslator {
                      const std::vector<const planner::AttributeInfo *> &ais,
                      std::vector<codegen::Value> &values) const;
 
+  void CodegenHashProbe(ConsumerContext &context, RowBatch::Row &row,
+                        std::vector<codegen::Value> &key) const;
+
   // Estimate the size of the constructed hash table
   uint64_t EstimateHashTableSize() const;
+
+  // Return the estimated number of tuples produced by the left child
+  uint64_t EstimateCardinalityLeft() const;
 
   // Should this operator employ prefetching?
   bool UsePrefetching() const;
@@ -135,8 +142,14 @@ class HashJoinTranslator : public OperatorTranslator {
   // The ID of the hash-table in the runtime state
   RuntimeState::StateID hash_table_id_;
 
+  // The ID of the bloom filter in the runtime state
+  RuntimeState::StateID bloom_filter_id_;
+
   // The hash table we use to perform the join
   OAHashTable hash_table_;
+
+  // Bloom Filter Accessor
+  BloomFilterAccessor bloom_filter_;
 
   // The left and right hash key expressions
   std::vector<const expression::AbstractExpression *> left_key_exprs_;

@@ -171,6 +171,9 @@ static std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {};
 // Binary operations
 static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {};
 
+// Nary operations
+static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
+
 }  // anonymous namespace
 
 //===----------------------------------------------------------------------===//
@@ -182,7 +185,7 @@ Varbinary::Varbinary()
     : SqlType(peloton::type::TypeId::VARBINARY),
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
                    kComparisonTable, kUnaryOperatorTable,
-                   kBinaryOperatorTable) {}
+                   kBinaryOperatorTable, kNaryOperatorTable) {}
 
 Value Varbinary::GetMinValue(UNUSED_ATTRIBUTE CodeGen &codegen) const {
   throw Exception{"The VARBINARY type does not have a minimum value ..."};

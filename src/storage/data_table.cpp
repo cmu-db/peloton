@@ -327,39 +327,47 @@ bool DataTable::InstallVersion(const AbstractTuple *tuple,
 ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
                                    concurrency::Transaction *transaction,
                                    ItemPointer **index_entry_ptr) {
-  // the upper layer may not pass a index_entry_ptr (default value: nullptr)
-  // into the function.
-  // in this case, we have to create a temp_ptr to hold the content.
-  ItemPointer *temp_ptr = nullptr;
-
-  if (index_entry_ptr == nullptr) {
-    index_entry_ptr = &temp_ptr;
-  }
-
   ItemPointer location = GetEmptyTupleSlot(tuple);
   if (location.block == INVALID_OID) {
     LOG_TRACE("Failed to get tuple slot.");
     return INVALID_ITEMPOINTER;
   }
 
+  auto result = InsertTuple(tuple, location, transaction, index_entry_ptr);
+  if (result == false) {
+    return INVALID_ITEMPOINTER;
+  }
+  return location;
+}
+
+bool DataTable::InsertTuple(const AbstractTuple *tuple,
+    ItemPointer location, concurrency::Transaction *transaction,
+    ItemPointer **index_entry_ptr) {
+  // the upper layer may not pass a index_entry_ptr (default value: nullptr)
+  // into the function.
+  // in this case, we have to create a temp_ptr to hold the content.
+  ItemPointer *temp_ptr = nullptr;
+  if (index_entry_ptr == nullptr) {
+    index_entry_ptr = &temp_ptr;
+  }
+
   LOG_TRACE("Location: %u, %u", location.block, location.offset);
 
   auto index_count = GetIndexCount();
   if (index_count == 0) {
-    // Increase the table's number of tuples by 1
     IncreaseTupleCount(1);
-    return location;
+    return true;
   }
   // Index checks and updates
   if (InsertInIndexes(tuple, location, transaction, index_entry_ptr) == false) {
     LOG_TRACE("Index constraint violated");
-    return INVALID_ITEMPOINTER;
+    return false;
   }
 
   // ForeignKey checks
   if (CheckForeignKeyConstraints(tuple) == false) {
     LOG_TRACE("ForeignKey constraint violated");
-    return INVALID_ITEMPOINTER;
+    return false;
   }
 
   PL_ASSERT((*index_entry_ptr)->block == location.block &&
@@ -367,8 +375,7 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
 
   // Increase the table's number of tuples by 1
   IncreaseTupleCount(1);
-
-  return location;
+  return true;
 }
 
 // insert tuple into a table that is without index.
@@ -397,7 +404,7 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
  * @returns True on success, false if a visible entry exists (in case of
  *primary/unique).
  */
-bool DataTable::InsertInIndexes(const storage::Tuple *tuple,
+bool DataTable::InsertInIndexes(const AbstractTuple *tuple,
                                 ItemPointer location,
                                 concurrency::Transaction *transaction,
                                 ItemPointer **index_entry_ptr) {
@@ -560,7 +567,7 @@ bool DataTable::InsertInSecondaryIndexes(const AbstractTuple *tuple,
  * @returns True on success, false if any foreign key constraints fail
  */
 bool DataTable::CheckForeignKeyConstraints(
-    const storage::Tuple *tuple UNUSED_ATTRIBUTE) {
+    const AbstractTuple *tuple UNUSED_ATTRIBUTE) {
   for (auto foreign_key : foreign_keys_) {
     oid_t sink_table_id = foreign_key->GetSinkTableOid();
     storage::DataTable *ref_table = nullptr;
@@ -1197,7 +1204,7 @@ trigger::TriggerList *DataTable::GetTriggerList() {
 
 void DataTable::UpdateTriggerListFromCatalog(concurrency::Transaction *txn) {
   trigger_list_ =
-      catalog::TriggerCatalog::GetInstance()->GetTriggers(table_oid, txn);
+      catalog::TriggerCatalog::GetInstance().GetTriggers(table_oid, txn);
 }
 
 }  // namespace storage

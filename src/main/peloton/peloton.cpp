@@ -38,8 +38,8 @@ int main(int argc, char *argv[]) {
   // Print settings
   if (peloton::settings::SettingsManager::GetBool(
           peloton::settings::SettingId::display_settings)) {
-    auto settings = peloton::settings::SettingsManager::GetInstance();
-    settings->ShowInfo();
+    auto &settings = peloton::settings::SettingsManager::GetInstance();
+    settings.ShowInfo();
   }
 
   try {
@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
 
     // Start NetworkManager
     network_manager.StartServer();
-  } catch (peloton::ConnectionException exception) {
+  } catch (peloton::ConnectionException &exception) {
     // Nothing to do here!
   }
 

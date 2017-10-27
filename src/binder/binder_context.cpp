@@ -14,9 +14,8 @@
 
 #include "catalog/catalog.h"
 #include "catalog/column_catalog.h"
-#include "common/logger.h"
+#include "catalog/table_catalog.h"
 #include "parser/table_ref.h"
-#include "storage/storage_manager.h"
 
 namespace peloton {
 namespace binder {

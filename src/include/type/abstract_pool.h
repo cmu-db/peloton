@@ -2,11 +2,11 @@
 //
 //                         Peloton
 //
-// varlen_pool.h
+// abstract_pool.h
 //
-// Identification: src/backend/type/varlen_pool.h
+// Identification: src/include/type/abstract_pool.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 

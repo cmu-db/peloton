@@ -16,7 +16,6 @@ namespace peloton {
 namespace codegen {
 
 DEFINE_TYPE(DataTable, "storage::DataTable", MEMBER(opaque));
-
 DEFINE_METHOD(peloton::storage, DataTable, GetTileGroupCount);
 
 }  // namespace codegen
