@@ -124,7 +124,7 @@ TEST_F(BloomFilterCodegenTest, FalsePositiveRateTest) {
       // Get numbers[i]
       llvm::Value *number = codegen->CreateLoad(
           codegen->CreateInBoundsGEP(codegen.Int32Type(), number_array, index));
-      codegen::Value number_val{codegen::type::Type(type::INTEGER, false),
+      codegen::Value number_val{codegen::type::Type(peloton::type::TypeId::INTEGER, false),
                                 number};
       // Insert numbers[i] into bloom filter
       bloom_filter_accessor.Add(codegen, bloom_filter, {number_val});
@@ -142,7 +142,7 @@ TEST_F(BloomFilterCodegenTest, FalsePositiveRateTest) {
       // Get numbers[i]
       llvm::Value *number = codegen->CreateLoad(
           codegen->CreateInBoundsGEP(codegen.Int32Type(), number_array, index));
-      codegen::Value number_val{codegen::type::Type(type::INTEGER, false),
+      codegen::Value number_val{codegen::type::Type(peloton::type::TypeId::INTEGER, false),
                                 number};
 
       // Test if numbers[i] is contained in bloom filter
