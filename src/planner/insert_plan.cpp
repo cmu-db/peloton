@@ -1,4 +1,3 @@
-
 //===----------------------------------------------------------------------===//
 //
 //                         PelotonDB
@@ -17,6 +16,7 @@
 #include "expression/constant_value_expression.h"
 #include "storage/data_table.h"
 #include "type/ephemeral_pool.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 namespace planner {
@@ -46,8 +46,8 @@ InsertPlan::InsertPlan(storage::DataTable *table,
 
 InsertPlan::InsertPlan(
     storage::DataTable *table, const std::vector<std::string> *columns,
-    const std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>> *
-        insert_values)
+    const std::vector<std::vector<
+        std::unique_ptr<expression::AbstractExpression>>> *insert_values)
     : bulk_insert_count_(insert_values->size()) {
   LOG_TRACE("Creating an Insert Plan with multiple expressions");
 
@@ -62,13 +62,13 @@ InsertPlan::InsertPlan(
     if (columns->empty()) {
       for (uint32_t tuple_idx = 0; tuple_idx < insert_values->size();
            tuple_idx++) {
-        auto& values = (*insert_values)[tuple_idx];
+        auto &values = (*insert_values)[tuple_idx];
         PL_ASSERT(values.size() <= table_schema->GetColumnCount());
         std::unique_ptr<storage::Tuple> tuple(
             new storage::Tuple(table_schema, true));
         int col_cntr = 0;
         int param_index = 0;
-        for (auto& elem : values) {
+        for (auto &elem : values) {
           // Default value to be inserted
           if (elem == nullptr) {
             // No default value
@@ -78,7 +78,8 @@ InsertPlan::InsertPlan(
             }
             type::Value *v = table_schema->GetDefaultValue(col_cntr);
             tuple->SetValue(col_cntr, std::move(*v), nullptr);
-          } else if (elem->GetExpressionType() == ExpressionType::VALUE_PARAMETER) {
+          } else if (elem->GetExpressionType() ==
+                     ExpressionType::VALUE_PARAMETER) {
             std::tuple<oid_t, oid_t, oid_t> pair =
                 std::make_tuple(tuple_idx, col_cntr, param_index++);
             parameter_vector_->push_back(pair);
@@ -108,7 +109,7 @@ InsertPlan::InsertPlan(
       // columns has to be less than or equal that of schema
       for (uint32_t tuple_idx = 0; tuple_idx < insert_values->size();
            tuple_idx++) {
-        auto& values = (*insert_values)[tuple_idx];
+        auto &values = (*insert_values)[tuple_idx];
         PL_ASSERT(columns->size() <= table_schema->GetColumnCount());
         std::unique_ptr<storage::Tuple> tuple(
             new storage::Tuple(table_schema, true));
@@ -128,15 +129,15 @@ InsertPlan::InsertPlan(
           // allocate
           // inline
           auto col_type = table_schema->GetColumn(col_cntr).GetType();
-          type::AbstractPool * data_pool = nullptr;
+          type::AbstractPool *data_pool = nullptr;
           if (col_type == type::TypeId::VARCHAR ||
               col_type == type::TypeId::VARBINARY)
             data_pool = GetPlanPool();
 
-          LOG_TRACE(
-              "Column %d found in INSERT query, ExpressionType: %s", col_cntr,
-              ExpressionTypeToString(values->at(pos)->GetExpressionType())
-                  .c_str());
+          LOG_TRACE("Column %d found in INSERT query, ExpressionType: %s",
+                    col_cntr,
+                    ExpressionTypeToString(values->at(pos)->GetExpressionType())
+                        .c_str());
 
           if (values.at(pos)->GetExpressionType() ==
               ExpressionType::VALUE_PARAMETER) {
@@ -159,10 +160,12 @@ InsertPlan::InsertPlan(
         if (query_columns_cnt < table_columns_cnt) {
           for (size_t col_cntr = 0; col_cntr < table_columns_cnt; col_cntr++) {
             auto col = table_columns[col_cntr];
-            if (std::find_if(query_columns->begin(), query_columns->end(), [&col](const std::string& x){return col.GetName() == x;})
-                == query_columns->end()) {
+            if (std::find_if(query_columns->begin(), query_columns->end(),
+                             [&col](const std::string &x) {
+                               return col.GetName() == x;
+                             }) == query_columns->end()) {
               tuple->SetValue(col_cntr, type::ValueFactory::GetNullValueByType(
-                  col.GetType()),
+                                            col.GetType()),
                               nullptr);
             }
           }
@@ -178,8 +181,7 @@ InsertPlan::InsertPlan(
 
 type::AbstractPool *InsertPlan::GetPlanPool() {
   // construct pool if needed
-  if (pool_.get() == nullptr)
-    pool_.reset(new type::EphemeralPool());
+  if (pool_.get() == nullptr) pool_.reset(new type::EphemeralPool());
   // return pool
   return pool_.get();
 }
@@ -198,14 +200,14 @@ void InsertPlan::SetParameterValues(std::vector<type::Value> *values) {
       case type::TypeId::VARBINARY:
       case type::TypeId::VARCHAR: {
         type::Value val = (value.CastAs(param_type));
-        tuples_[std::get<0>(put_loc)]
-            ->SetValue(std::get<1>(put_loc), val, GetPlanPool());
+        tuples_[std::get<0>(put_loc)]->SetValue(std::get<1>(put_loc), val,
+                                                GetPlanPool());
         break;
       }
       default: {
         type::Value val = (value.CastAs(param_type));
-        tuples_[std::get<0>(put_loc)]
-            ->SetValue(std::get<1>(put_loc), val, nullptr);
+        tuples_[std::get<0>(put_loc)]->SetValue(std::get<1>(put_loc), val,
+                                                nullptr);
       }
     }
   }

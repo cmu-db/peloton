@@ -10,10 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "catalog/catalog.h"
 #include "catalog/language_catalog.h"
+
+#include "catalog/catalog.h"
 #include "executor/logical_tile.h"
 #include "storage/data_table.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 namespace catalog {
