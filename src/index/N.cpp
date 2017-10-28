@@ -365,6 +365,11 @@ N *N::setLeaf(TID tid) {
   return reinterpret_cast<N *>((uint64_t)(value_list) | (static_cast<uint64_t>(1) << 63));
 }
 
+N *N::setLeafWithListPointer(MultiValues *value_list) {
+//  return reinterpret_cast<N *>(tid | (static_cast<uint64_t>(1) << 63));
+  return reinterpret_cast<N *>((uint64_t)(value_list) | (static_cast<uint64_t>(1) << 63));
+}
+
 TID N::getLeaf(const N *n) {
   return (reinterpret_cast<uint64_t>(n) & ((static_cast<uint64_t>(1) << 63) - 1));
 }

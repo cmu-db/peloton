@@ -537,52 +537,96 @@ void Tree::remove(const Key &k, TID tid, ThreadInfo &threadInfo) {
           return;
         }
         if (N::isLeaf(nextNode)) {
-          if (N::getLeaf(nextNode) != tid) {
+//          if (N::getLeaf(nextNode) != tid) {
+//            return;
+//          }
+          MultiValues *parent_value = nullptr;
+          MultiValues *value_list = reinterpret_cast<MultiValues *>(N::getLeaf(nextNode));
+          uint32_t value_count = 0;
+          bool value_found = false;
+          while (value_list != nullptr) {
+            value_count++;
+            if (value_list->tid == tid) {
+              value_found = true;
+              if (value_list->next != nullptr) {
+                value_count++;
+                break;
+              }
+            }
+            parent_value = value_list;
+            value_list = value_list->next;
+          }
+
+          if (!value_found) {
             return;
           }
-          assert(parentNode == nullptr || node->getCount() != 1);
-          if (node->getCount() == 2 && parentNode != nullptr) {
-            parentNode->upgradeToWriteLockOrRestart(parentVersion, needRestart);
+
+          if (value_count > 1) {
+            node->upgradeToWriteLockOrRestart(v, needRestart);
             if (needRestart) goto restart;
 
-            node->upgradeToWriteLockOrRestart(v, needRestart);
-            if (needRestart) {
-              parentNode->writeUnlock();
-              goto restart;
-            }
-            // 1. check remaining entries
-            N *secondNodeN;
-            uint8_t secondNodeK;
-            std::tie(secondNodeN, secondNodeK) = N::getSecondChild(node, nodeKey);
-            if (N::isLeaf(secondNodeN)) {
-              //N::remove(node, k[level]); not necessary
-              N::change(parentNode, parentKey, secondNodeN);
-
-              parentNode->writeUnlock();
-              node->writeUnlockObsolete();
-              this->epoche.markNodeForDeletion(node, threadInfo);
+            if (parent_value != nullptr) {
+              parent_value->next = value_list->next;
+              value_list->next = nullptr;
+              free(value_list);
             } else {
-              secondNodeN->writeLockOrRestart(needRestart);
+              N::change(node, k[level], N::setLeafWithListPointer(value_list->next));
+              value_list->next = nullptr;
+              free(value_list);
+            }
+
+            // remember to unlock the node!!
+            node->writeUnlockObsolete();
+
+          } else {
+            // last value in the value_list is deleted
+            assert(parentNode == nullptr || node->getCount() != 1);
+            if (node->getCount() == 2 && parentNode != nullptr) {
+              parentNode->upgradeToWriteLockOrRestart(parentVersion, needRestart);
+              if (needRestart) goto restart;
+
+              node->upgradeToWriteLockOrRestart(v, needRestart);
               if (needRestart) {
-                node->writeUnlock();
                 parentNode->writeUnlock();
                 goto restart;
               }
+              // 1. check remaining entries
+              N *secondNodeN;
+              uint8_t secondNodeK;
+              std::tie(secondNodeN, secondNodeK) = N::getSecondChild(node, nodeKey);
+              if (N::isLeaf(secondNodeN)) {
+                //N::remove(node, k[level]); not necessary
+                N::change(parentNode, parentKey, secondNodeN);
 
-              //N::remove(node, k[level]); not necessary
-              N::change(parentNode, parentKey, secondNodeN);
-              parentNode->writeUnlock();
+                parentNode->writeUnlock();
+                node->writeUnlockObsolete();
+                this->epoche.markNodeForDeletion(node, threadInfo);
+              } else {
+                secondNodeN->writeLockOrRestart(needRestart);
+                if (needRestart) {
+                  node->writeUnlock();
+                  parentNode->writeUnlock();
+                  goto restart;
+                }
 
-              secondNodeN->addPrefixBefore(node, secondNodeK);
-              secondNodeN->writeUnlock();
+                //N::remove(node, k[level]); not necessary
+                N::change(parentNode, parentKey, secondNodeN);
+                parentNode->writeUnlock();
 
-              node->writeUnlockObsolete();
-              this->epoche.markNodeForDeletion(node, threadInfo);
+                secondNodeN->addPrefixBefore(node, secondNodeK);
+                secondNodeN->writeUnlock();
+
+                node->writeUnlockObsolete();
+                this->epoche.markNodeForDeletion(node, threadInfo);
+              }
+            } else {
+              N::removeAndUnlock(node, v, k[level], parentNode, parentVersion, parentKey, needRestart, threadInfo);
+              if (needRestart) goto restart;
             }
-          } else {
-            N::removeAndUnlock(node, v, k[level], parentNode, parentVersion, parentKey, needRestart, threadInfo);
-            if (needRestart) goto restart;
           }
+
+
+
           return;
         }
         level++;

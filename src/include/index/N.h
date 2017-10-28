@@ -123,6 +123,8 @@ public:
 
   static N *setLeaf(TID tid);
 
+  static N *setLeafWithListPointer(MultiValues *value_list);
+
   static N *getAnyChild(const N *n);
 
   static TID getAnyChildTid(const N *n, bool &needRestart);
