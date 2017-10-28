@@ -35,7 +35,11 @@ void BindNodeVisitor::Visit(parser::SelectStatement *node) {
   auto pre_context = context_;
   context_ = std::make_shared<BinderContext>();
   context_->upper_context = pre_context;
-  if (node->from_table != nullptr) node->from_table->Accept(this);
+  if (node->from_table != nullptr){
+    node->from_table->Accept(this);
+    node->from_table->TryBindDatabaseName(default_database_name_);
+  }
+  
   if (node->where_clause != nullptr) node->where_clause->Accept(this);
   if (node->order != nullptr) node->order->Accept(this);
   if (node->limit != nullptr) node->limit->Accept(this);
@@ -114,6 +118,7 @@ void BindNodeVisitor::Visit(parser::CreateStatement *node) {
   node->TryBindDatabaseName(default_database_name_);
 }
 void BindNodeVisitor::Visit(parser::InsertStatement *node) {
+  node->TryBindDatabaseName(default_database_name_);
   if (node->select != nullptr) node->select->Accept(this);
   context_ = nullptr;
 }
