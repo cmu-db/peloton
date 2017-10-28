@@ -81,7 +81,7 @@ struct TableRef {
     return table_info_->table_name;
   }
 
-  void Accept(SqlNodeVisitor* v) const { v->Visit(this); }
+  void Accept(SqlNodeVisitor* v) { v->Visit(this); }
 };
 
 // Definition of a join table
@@ -98,7 +98,7 @@ class JoinDefinition {
 
   JoinType type;
 
-  void Accept(SqlNodeVisitor* v) const { v->Visit(this); }
+  void Accept(SqlNodeVisitor* v) { v->Visit(this); }
 };
 
 }  // namespace parser

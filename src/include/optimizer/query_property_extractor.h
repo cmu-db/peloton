@@ -35,24 +35,24 @@ class QueryPropertyExtractor : public SqlNodeVisitor {
   PropertySet GetProperties(parser::SQLStatement *tree);
 
   // We only assume the statement is selecting from one table for now
-  void Visit(const parser::SelectStatement *) override;
+  void Visit(parser::SelectStatement *) override;
 
-  void Visit(const parser::TableRef *) override;
-  void Visit(const parser::JoinDefinition *) override;
-  void Visit(const parser::GroupByDescription *) override;
-  void Visit(const parser::OrderDescription *) override;
-  void Visit(const parser::LimitDescription *) override;
+  void Visit(parser::TableRef *) override;
+  void Visit(parser::JoinDefinition *) override;
+  void Visit(parser::GroupByDescription *) override;
+  void Visit(parser::OrderDescription *) override;
+  void Visit(parser::LimitDescription *) override;
 
-  void Visit(const parser::CreateStatement *) override;
-  void Visit(const parser::InsertStatement *) override;
-  void Visit(const parser::DeleteStatement *) override;
-  void Visit(const parser::DropStatement *) override;
-  void Visit(const parser::PrepareStatement *) override;
-  void Visit(const parser::ExecuteStatement *) override;
-  void Visit(const parser::TransactionStatement *) override;
-  void Visit(const parser::UpdateStatement *) override;
-  void Visit(const parser::CopyStatement *) override;
-  void Visit(const parser::AnalyzeStatement *) override;
+  void Visit(parser::CreateStatement *) override;
+  void Visit(parser::InsertStatement *) override;
+  void Visit(parser::DeleteStatement *) override;
+  void Visit(parser::DropStatement *) override;
+  void Visit(parser::PrepareStatement *) override;
+  void Visit(parser::ExecuteStatement *) override;
+  void Visit(parser::TransactionStatement *) override;
+  void Visit(parser::UpdateStatement *) override;
+  void Visit(parser::CopyStatement *) override;
+  void Visit(parser::AnalyzeStatement *) override;
 
  private:
   ColumnManager &manager_;

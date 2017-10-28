@@ -30,7 +30,7 @@ void BindNodeVisitor::BindNameToNode(parser::SQLStatement *tree) {
   tree->Accept(this);
 }
 
-void BindNodeVisitor::Visit(const parser::SelectStatement *node) {
+void BindNodeVisitor::Visit(parser::SelectStatement *node) {
   // Save the upper level context
   auto pre_context = context_;
   context_ = std::make_shared<BinderContext>();
@@ -49,14 +49,14 @@ void BindNodeVisitor::Visit(const parser::SelectStatement *node) {
 }
 
 // Some sub query nodes inside SelectStatement
-void BindNodeVisitor::Visit(const parser::JoinDefinition *node) {
+void BindNodeVisitor::Visit(parser::JoinDefinition *node) {
   // The columns in join condition can only bind to the join tables
   node->left->Accept(this);
   node->right->Accept(this);
   node->condition->Accept(this);
 }
 
-void BindNodeVisitor::Visit(const parser::TableRef *node) {
+void BindNodeVisitor::Visit(parser::TableRef *node) {
   // Nested select. Not supported in the current executors
   if (node->select != nullptr) node->select->Accept(this);
   // Join
@@ -72,18 +72,18 @@ void BindNodeVisitor::Visit(const parser::TableRef *node) {
   }
 }
 
-void BindNodeVisitor::Visit(const parser::GroupByDescription *node) {
+void BindNodeVisitor::Visit(parser::GroupByDescription *node) {
   for (auto& col : node->columns) {
     col->Accept(this);
   }
   if (node->having != nullptr) node->having->Accept(this);
 }
-void BindNodeVisitor::Visit(const parser::OrderDescription *node) {
+void BindNodeVisitor::Visit(parser::OrderDescription *node) {
   for (auto& expr : node->exprs)
     if (expr != nullptr) expr->Accept(this);
 }
 
-void BindNodeVisitor::Visit(const parser::UpdateStatement *node) {
+void BindNodeVisitor::Visit(parser::UpdateStatement *node) {
   context_ = std::make_shared<BinderContext>();
 
   node->table->Accept(this);
@@ -108,18 +108,18 @@ void BindNodeVisitor::Visit(parser::DeleteStatement *node) {
   context_ = nullptr;
 }
 
-void BindNodeVisitor::Visit(const parser::LimitDescription *) {}
-void BindNodeVisitor::Visit(const parser::CopyStatement *) {}
-void BindNodeVisitor::Visit(const parser::CreateStatement *) {}
-void BindNodeVisitor::Visit(const parser::InsertStatement *node) {
+void BindNodeVisitor::Visit(parser::LimitDescription *) {}
+void BindNodeVisitor::Visit(parser::CopyStatement *) {}
+void BindNodeVisitor::Visit(parser::CreateStatement *) {}
+void BindNodeVisitor::Visit(parser::InsertStatement *node) {
   if (node->select != nullptr) node->select->Accept(this);
   context_ = nullptr;
 }
-void BindNodeVisitor::Visit(const parser::DropStatement *) {}
-void BindNodeVisitor::Visit(const parser::PrepareStatement *) {}
-void BindNodeVisitor::Visit(const parser::ExecuteStatement *) {}
-void BindNodeVisitor::Visit(const parser::TransactionStatement *) {}
-void BindNodeVisitor::Visit(const parser::AnalyzeStatement *) {}
+void BindNodeVisitor::Visit(parser::DropStatement *) {}
+void BindNodeVisitor::Visit(parser::PrepareStatement *) {}
+void BindNodeVisitor::Visit(parser::ExecuteStatement *) {}
+void BindNodeVisitor::Visit(parser::TransactionStatement *) {}
+void BindNodeVisitor::Visit(parser::AnalyzeStatement *) {}
 
 // void BindNodeVisitor::Visit(const parser::ConstantValueExpression *) {}
 

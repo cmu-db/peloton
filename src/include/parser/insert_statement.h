@@ -33,7 +33,7 @@ class InsertStatement : SQLStatement {
 
   virtual ~InsertStatement() {}
 
-  virtual void Accept(SqlNodeVisitor* v) const override { v->Visit(this); }
+  virtual void Accept(SqlNodeVisitor* v) override { v->Visit(this); }
 
   inline std::string GetTableName() const {
     return table_ref_->GetTableName();

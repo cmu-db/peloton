@@ -45,7 +45,7 @@ class DropStatement : public TableRefStatement {
 
   virtual ~DropStatement() {}
 
-  virtual void Accept(SqlNodeVisitor* v) const override {
+  virtual void Accept(SqlNodeVisitor* v) override {
     v->Visit(this);
   }
 
