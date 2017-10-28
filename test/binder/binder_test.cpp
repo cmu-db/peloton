@@ -34,21 +34,20 @@ namespace test {
 
 class BinderCorrectnessTest : public PelotonTest {};
 
-void SetupTables(std::string default_database_name) {
-  LOG_INFO("Creating default database");
+void SetupTables(std::string database_name) {
+  LOG_INFO("Creating database %s" ,database_name.c_str());
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(default_database_name, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(database_name, txn);
   txn_manager.CommitTransaction(txn);
-  LOG_INFO("Default database created!");
+  LOG_INFO("database %s created!", database_name.c_str());
 
   auto& parser = parser::PostgresParser::GetInstance();
   auto& traffic_cop = tcop::TrafficCop::GetInstance();
-  traffic_cop.SetDefaultDatabaseName(default_database_name);
+  traffic_cop.SetDefaultDatabaseName(database_name);
   traffic_cop.SetTaskCallback(TestingSQLUtil::UtilTestTaskCallback, &TestingSQLUtil::counter_);
   
   optimizer::Optimizer optimizer;
-  optimizer.SetDefaultDatabaseName(default_database_name);
 
   vector<string> createTableSQLs{"CREATE TABLE A(A1 int, a2 varchar)",
                                  "CREATE TABLE b(B1 int, b2 varchar)"};
@@ -62,7 +61,7 @@ void SetupTables(std::string default_database_name) {
     vector<int> result_format;
     unique_ptr<Statement> statement(new Statement("CREATE", sql));
     auto parse_tree = parser.BuildParseTree(sql);
-    statement->SetPlanTree(optimizer.BuildPelotonPlanTree(parse_tree, txn));
+    statement->SetPlanTree(optimizer.BuildPelotonPlanTree(parse_tree, database_name, txn));
     TestingSQLUtil::counter_.store(1);
     auto status = traffic_cop.ExecuteStatementPlan(
         statement->GetPlanTree(), params, result, result_format);

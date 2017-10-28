@@ -80,7 +80,7 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   LOG_INFO("Building parse tree completed!");
 
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(create_stmt, txn));
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(create_stmt, DEFAULT_DB_NAME, txn));
   LOG_INFO("Building plan tree completed!");
 
   std::vector<type::Value> params;
@@ -131,7 +131,7 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   LOG_INFO("Building parse tree completed!");
 
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(insert_stmt, txn));
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(insert_stmt, DEFAULT_DB_NAME, txn));
   LOG_INFO("Building plan tree completed!\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
 
@@ -168,7 +168,7 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   LOG_INFO("Building parse tree completed!");
 
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(update_stmt, txn));
+  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(update_stmt, DEFAULT_DB_NAME, txn));
   LOG_INFO("Building plan tree completed!\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
 

@@ -90,8 +90,7 @@ bool ContainsJoinColumns(
     const expression::AbstractExpression* expr);
 
 
-std::unique_ptr<planner::AbstractPlan> CreateCopyPlan(parser::CopyStatement* copy_stmt, 
-    std::string default_database_name);
+std::unique_ptr<planner::AbstractPlan> CreateCopyPlan(parser::CopyStatement* copy_stmt);
 
 
 } // namespace util

@@ -50,7 +50,6 @@ class AnalyzePlan : public AbstractPlan {
                        concurrency::Transaction *txn);
 
   explicit AnalyzePlan(parser::AnalyzeStatement *parse_tree,
-                       std::string database_name,
                        concurrency::Transaction *txn);
 
   inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::ANALYZE; }
