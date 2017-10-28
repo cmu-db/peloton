@@ -78,6 +78,10 @@ public:
   bool lookupRange(const Key &start, const Key &end, Key &continueKey, std::vector<ItemPointer *> &result, std::size_t resultLen,
                    std::size_t &resultCount, ThreadInfo &threadEpocheInfo) const;
 
+  void fullScan(std::vector<ItemPointer *> &result, std::size_t &resultCount, ThreadInfo &threadEpocheInfo) const;
+
+  void scanAllLeafNodes(const N* node, std::vector<ItemPointer *> &result, std::size_t &resultCount) const;
+
   void insert(const Key &k, TID tid, ThreadInfo &epocheInfo);
 
   void remove(const Key &k, TID tid, ThreadInfo &epocheInfo);

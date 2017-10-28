@@ -373,6 +373,32 @@ bool Tree::lookupRange(const Key &start, const Key &end, Key &continueKey, std::
   }
 }
 
+void Tree::scanAllLeafNodes(const N* node, std::vector<ItemPointer *> &result, std::size_t &resultCount) const {
+  if (N::isLeaf(node)) {
+    TID tid = N::getLeaf(node);
+    MultiValues *value_list = reinterpret_cast<MultiValues *>(tid);
+    while (value_list != nullptr) {
+      ItemPointer *new_value = (ItemPointer *)(value_list->tid);
+      result.push_back(new_value);
+      resultCount++;
+      value_list = value_list->next;
+    }
+  } else {
+    std::tuple<uint8_t, N *> children[256];
+    uint32_t childrenCount = 0;
+    N::getChildren(node, 0u, 255u, children, childrenCount);
+    for (uint32_t i = 0; i < childrenCount; ++i) {
+      const N *n = std::get<1>(children[i]);
+      scanAllLeafNodes(n, result, resultCount);
+    }
+  }
+}
+
+void Tree::fullScan(std::vector<ItemPointer *> &result, std::size_t &resultCount, ThreadInfo &threadEpocheInfo) const {
+  EpocheGuard epocheGuard(threadEpocheInfo);
+  scanAllLeafNodes(root, result, resultCount);
+}
+
 TID Tree::checkKey(const TID tid, const Key &k) const {
   Key kt;
   printf("in checkKey()\n");

@@ -523,9 +523,12 @@ void ArtIndex::ScanLimit(
   return;
 }
 
-void ArtIndex::ScanAllKeys(
-  UNUSED_ATTRIBUTE std::vector<ItemPointer *> &result) {
-  // TODO: Add your implementation here
+void ArtIndex::ScanAllKeys(std::vector<ItemPointer *> &result) {
+  auto t = artTree.getThreadInfo();
+  std::size_t actual_result_length = 0;
+  artTree.fullScan(result, actual_result_length, t);
+
+  printf("range scan actual_result_length = %lu\n", actual_result_length);
   return;
 }
 
