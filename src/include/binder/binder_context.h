@@ -41,8 +41,8 @@ class BinderContext {
   BinderContext() { upper_context = nullptr; }
 
   // Update the table alias map given a table reference (in the from clause)
-  void AddTable(const parser::TableRef* table_ref,
-                std::string default_database_name,
+  void AddTable(parser::TableRef* table_ref,
+                const std::string default_database_name,
                 concurrency::Transaction* txn);
 
   // Update the table alias map given a table reference (in the from clause)

@@ -45,7 +45,7 @@ class DeleteStatement : public SQLStatement {
     return table_ref->GetDatabaseName();
   }
 
-  virtual void Accept(SqlNodeVisitor* v) const override {
+  virtual void Accept(SqlNodeVisitor* v) override {
     v->Visit(this);
   }
 

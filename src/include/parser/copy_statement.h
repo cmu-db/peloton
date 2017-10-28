@@ -34,7 +34,7 @@ class CopyStatement : public SQLStatement {
 
   virtual ~CopyStatement() {}
 
-  virtual void Accept(SqlNodeVisitor* v) const override {
+  virtual void Accept(SqlNodeVisitor* v) override {
     v->Visit(this);
   }
 

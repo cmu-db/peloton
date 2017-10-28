@@ -332,7 +332,7 @@ std::unique_ptr<planner::AbstractPlan> CreateCopyPlan(
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-      copy_stmt->cpy_table->GetDatabaseName(default_database_name),
+      copy_stmt->cpy_table->GetDatabaseName(),
       copy_stmt->cpy_table->GetTableName(), txn);
   txn_manager.CommitTransaction(txn);
 
