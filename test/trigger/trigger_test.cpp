@@ -127,7 +127,7 @@ class TriggerTests : public PelotonTest {
         static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
 
     // Create plans
-    planner::CreatePlan plan(DEFAULT_DB_NAME, create_trigger_stmt);
+    planner::CreatePlan plan(create_trigger_stmt);
 
     // plan type
     EXPECT_EQ(CreateType::TRIGGER, plan.GetCreateType());
@@ -169,7 +169,7 @@ TEST_F(TriggerTests, BasicTest) {
       static_cast<parser::CreateStatement *>(stmt_list1->GetStatement(0));
 
   // Create plans
-  const planner::CreatePlan plan1(DEFAULT_DB_NAME, create_trigger_stmt1);
+  const planner::CreatePlan plan1(create_trigger_stmt1);
 
   trigger::Trigger trigger1(plan1);
   EXPECT_EQ("check_update", trigger1.GetTriggerName());
@@ -190,7 +190,7 @@ TEST_F(TriggerTests, BasicTest) {
   EXPECT_TRUE(stmt_list2->is_valid);
   auto create_trigger_stmt2 =
       static_cast<parser::CreateStatement *>(stmt_list2->GetStatement(0));
-  const planner::CreatePlan plan2(DEFAULT_DB_NAME, create_trigger_stmt2);
+  const planner::CreatePlan plan2(create_trigger_stmt2);
   trigger::Trigger trigger2(plan2);
   EXPECT_EQ("check_update_and_delete", trigger2.GetTriggerName());
   int16_t trigger_type2 = trigger2.GetTriggerType();
@@ -238,7 +238,7 @@ TEST_F(TriggerTests, BeforeAndAfterRowInsertTriggers) {
       static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
 
   // Create plans
-  planner::CreatePlan plan(DEFAULT_DB_NAME, create_trigger_stmt);
+  planner::CreatePlan plan(create_trigger_stmt);
 
   // plan type
   EXPECT_EQ(CreateType::TRIGGER, plan.GetCreateType());
@@ -323,7 +323,7 @@ TEST_F(TriggerTests, AfterStatmentInsertTriggers) {
       static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
 
   // Create plans
-  planner::CreatePlan plan(DEFAULT_DB_NAME, create_trigger_stmt);
+  planner::CreatePlan plan(create_trigger_stmt);
 
   // plan type
   EXPECT_EQ(CreateType::TRIGGER, plan.GetCreateType());

@@ -110,7 +110,9 @@ void BindNodeVisitor::Visit(parser::DeleteStatement *node) {
 
 void BindNodeVisitor::Visit(parser::LimitDescription *) {}
 void BindNodeVisitor::Visit(parser::CopyStatement *) {}
-void BindNodeVisitor::Visit(parser::CreateStatement *) {}
+void BindNodeVisitor::Visit(parser::CreateStatement *node) {
+  node->TryBindDatabaseName(default_database_name_);
+}
 void BindNodeVisitor::Visit(parser::InsertStatement *node) {
   if (node->select != nullptr) node->select->Accept(this);
   context_ = nullptr;

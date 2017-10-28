@@ -39,7 +39,6 @@ AnalyzePlan::AnalyzePlan(std::string table_name,
 }
 
 AnalyzePlan::AnalyzePlan(parser::AnalyzeStatement *analyze_stmt,
-                         std::string default_database_name,
                          concurrency::Transaction *txn) {
   table_name_ = analyze_stmt->GetTableName();
   column_names_ = std::vector<char*>();
@@ -47,7 +46,7 @@ AnalyzePlan::AnalyzePlan(parser::AnalyzeStatement *analyze_stmt,
     column_names_.push_back((char*)name.c_str());
   if (!table_name_.empty()) {
     target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
-        analyze_stmt->GetDatabaseName(default_database_name), table_name_, txn);
+        analyze_stmt->GetDatabaseName(), table_name_, txn);
   }
 }
 

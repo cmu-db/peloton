@@ -63,15 +63,16 @@ class TableRefStatement : public SQLStatement {
 
   virtual ~TableRefStatement() {}
 
+  virtual inline void TryBindDatabaseName(std::string default_database_name) {
+    table_info_->database_name = default_database_name;
+  }
+  
   virtual inline std::string GetTableName() const {
     return table_info_->table_name;
   }
 
   // Get the name of the database of this table
-  virtual inline std::string GetDatabaseName(std::string default_database_name_) const {
-    if (table_info_->database_name.empty()) {
-      return default_database_name_;
-    }
+  virtual inline std::string GetDatabaseName() const {
     return table_info_->database_name;
   }
 

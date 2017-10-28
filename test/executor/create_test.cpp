@@ -172,7 +172,7 @@ TEST_F(CreateTests, CreatingTrigger) {
       static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
 
   // Create plans
-  planner::CreatePlan plan(DEFAULT_DB_NAME, create_trigger_stmt);
+  planner::CreatePlan plan(create_trigger_stmt);
 
   // plan type
   EXPECT_EQ(CreateType::TRIGGER, plan.GetCreateType());
@@ -311,7 +311,7 @@ TEST_F(CreateTests, CreatingTriggerWithoutWhen) {
       static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
 
   // Create plans
-  planner::CreatePlan plan(DEFAULT_DB_NAME, create_trigger_stmt);
+  planner::CreatePlan plan(create_trigger_stmt);
 
   // plan type
   EXPECT_EQ(CreateType::TRIGGER, plan.GetCreateType());
@@ -407,7 +407,7 @@ TEST_F(CreateTests, CreatingTriggerInCatalog) {
       static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
 
   // Create plans
-  planner::CreatePlan plan(DEFAULT_DB_NAME, create_trigger_stmt);
+  planner::CreatePlan plan(create_trigger_stmt);
 
   // Execute the create trigger
   txn = txn_manager.BeginTransaction();

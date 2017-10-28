@@ -81,6 +81,7 @@ Optimizer::Optimizer() {
 
 shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
     const unique_ptr<parser::SQLStatementList> &parse_tree_list,
+    const std::string default_database_name,
     concurrency::Transaction *txn) {
   // Base Case
   if (parse_tree_list->GetStatements().size() == 0) return nullptr;
@@ -89,15 +90,17 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
 
   auto parse_tree = parse_tree_list->GetStatements().at(0).get();
 
+  // Run binder
+  auto bind_node_visitor = make_shared<binder::BindNodeVisitor>(txn, default_database_name);
+  bind_node_visitor->BindNameToNode(parse_tree);
+
   // Handle ddl statement
   bool is_ddl_stmt;
   auto ddl_plan = HandleDDLStatement(parse_tree, is_ddl_stmt, txn);
   if (is_ddl_stmt) {
     return move(ddl_plan);
   }
-  // Run binder
-  auto bind_node_visitor = make_shared<binder::BindNodeVisitor>(txn, default_database_name_);
-  bind_node_visitor->BindNameToNode(parse_tree);
+
   // Generate initial operator tree from query tree
   shared_ptr<GroupExpression> gexpr = InsertQueryTree(parse_tree, txn);
   GroupID root_id = gexpr->GetGroupID();
@@ -152,18 +155,18 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
 
       // This is adapted from the simple optimizer
       auto create_plan =
-          new planner::CreatePlan(default_database_name_,(parser::CreateStatement *)tree);
+          new planner::CreatePlan((parser::CreateStatement *)tree);
       std::unique_ptr<planner::AbstractPlan> child_CreatePlan(create_plan);
       ddl_plan = move(child_CreatePlan);
 
       if (create_plan->GetCreateType() == peloton::CreateType::INDEX) {
         auto create_stmt = (parser::CreateStatement *)tree;
         auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-            create_stmt->GetDatabaseName(default_database_name_), create_stmt->GetTableName(), txn);
+            create_stmt->GetDatabaseName(), create_stmt->GetTableName(), txn);
         std::vector<oid_t> column_ids;
         // use catalog object instead of schema to acquire metadata
         auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-            create_stmt->GetDatabaseName(default_database_name_), create_stmt->GetTableName(), txn);
+            create_stmt->GetDatabaseName(), create_stmt->GetTableName(), txn);
         for (auto column_name : create_plan->GetIndexAttributes()) {
           auto column_object = table_object->GetColumnObject(column_name);
           // Check if column is missing
@@ -195,7 +198,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
     case StatementType::ANALYZE: {
       LOG_TRACE("Adding Analyze plan...");
       unique_ptr<planner::AbstractPlan> analyze_plan(new planner::AnalyzePlan(
-          static_cast<parser::AnalyzeStatement *>(tree), default_database_name_, txn));
+          static_cast<parser::AnalyzeStatement *>(tree), txn));
       ddl_plan = move(analyze_plan);
       break;
     }
@@ -203,7 +206,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
       LOG_TRACE("Adding Copy plan...");
       parser::CopyStatement *copy_parse_tree =
           static_cast<parser::CopyStatement *>(tree);
-      ddl_plan = util::CreateCopyPlan(copy_parse_tree, default_database_name_);
+      ddl_plan = util::CreateCopyPlan(copy_parse_tree);
       break;
     }
     default:
@@ -214,7 +217,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
 
 shared_ptr<GroupExpression> Optimizer::InsertQueryTree(
     parser::SQLStatement *tree, concurrency::Transaction *txn) {
-  QueryToOperatorTransformer converter(txn, default_database_name_);
+  QueryToOperatorTransformer converter(txn);
   shared_ptr<OperatorExpression> initial =
       converter.ConvertToOpExpression(tree);
   shared_ptr<GroupExpression> gexpr;
