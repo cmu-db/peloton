@@ -227,6 +227,8 @@ bool Tree::lookupRange(const Key &start, const Key &end, Key &continueKey, std::
   std::function<void(N *, uint8_t, uint32_t, const N *, uint64_t)> findEnd = [&copy, &end, &toContinue, &findEnd, this](
     N *node, uint8_t nodeK, uint32_t level, const N *parentNode, uint64_t vp) {
     if (N::isLeaf(node)) {
+      // end boundary inclusive
+      copy(node);
       return;
     }
     uint64_t v;
