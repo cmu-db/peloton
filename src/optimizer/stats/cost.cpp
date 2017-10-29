@@ -210,8 +210,6 @@ void Cost::UpdateConditionStats(const std::shared_ptr<TableStats> &input_stats,
   if (output_stats != nullptr) {
     double selectivity =
         Selectivity::ComputeSelectivity(input_stats, condition);
-    LOG_DEBUG("selectivity %f", selectivity);
-    LOG_DEBUG("condition type %s", condition.type);
     output_stats->num_rows = input_stats->num_rows * selectivity;
   }
 }
