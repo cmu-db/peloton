@@ -1,7 +1,5 @@
 #!/bin/sh
-git stash -q --keep-index
-python script/validators/source_validator.py
-RESULT=$?
-git stash pop -q
-[ $RESULT -ne 0 ] && exit 1
-exit 0
+
+files=$(git diff --name-only HEAD --diff-filter=d | grep '\.\(cpp\|h\)$')
+python script/validators/source_validator.py --files $files
+exit $?
