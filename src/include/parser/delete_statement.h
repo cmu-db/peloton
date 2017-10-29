@@ -38,7 +38,8 @@ class DeleteStatement : public SQLStatement {
   }
   
   inline void TryBindDatabaseName(std::string default_database_name) {
-    table_ref->TryBindDatabaseName(default_database_name);
+    if (table_ref != nullptr)
+      table_ref->TryBindDatabaseName(default_database_name);
   }
 
   std::string GetDatabaseName() const {
