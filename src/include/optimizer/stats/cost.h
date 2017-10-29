@@ -23,35 +23,34 @@
 
 namespace peloton {
 namespace optimizer {
+// Default cost when cost model cannot compute correct cost.
+	static constexpr double DEFAULT_COST = 1;
 
+// Estimate the cost of processing each row during a query.
+	static constexpr double DEFAULT_TUPLE_COST = 0.01;
+
+// Estimate the cost of processing each index entry during an index scan.
+	static constexpr double DEFAULT_INDEX_TUPLE_COST = 0.005;
+
+// Estimate the cost of processing each operator or function executed during a
+// query.
+	static constexpr double DEFAULT_OPERATOR_COST = 0.0025;
 
 //===----------------------------------------------------------------------===//
 // Cost
 //===----------------------------------------------------------------------===//
 class Cost {
  private:
-	// Default cost when cost model cannot compute correct cost.
-	static constexpr double DEFAULT_COST = 1;
 
-	// Estimate the cost of processing each row during a query.
-	static constexpr double DEFAULT_TUPLE_COST = 0.01;
+  // Default cost of sorting n elements
+  static double default_sorting_cost(size_t n) { return n * std::log2(n); }
 
-	// Estimate the cost of processing each index entry during an index scan.
-	static constexpr double DEFAULT_INDEX_TUPLE_COST = 0.005;
-
-	// Estimate the cost of processing each operator or function executed during a
-	// query.
-	static constexpr double DEFAULT_OPERATOR_COST = 0.0025;
-
-	// Default cost of sorting n elements
-	static double default_sorting_cost(size_t n) { return n * std::log2(n); }
-
-	// Default number of index tuple to access for n elements
-	static double default_index_height(size_t n) { return std::log2(n); }
+  // Default number of index tuple to access for n elements
+  static double default_index_height(size_t n) { return std::log2(n); }
 
  public:
 	/*
-   * Cost of scan for the whole table
+   * Cost of seq scan for the whole table
    */
 	static inline double NoConditionSeqScanCost(
 		const std::shared_ptr<TableStats>& input_stats) {
