@@ -124,6 +124,8 @@ double Cost::HashGroupByCost(const std::shared_ptr<TableStats> &input_stats,
 //===----------------------------------------------------------------------===//
 // DISTINCT
 //===----------------------------------------------------------------------===//
+// TODO: support multiple distinct columns
+// what if the column has index?
 double Cost::DistinctCost(const std::shared_ptr<TableStats> &input_stats,
                           oid_t column,
                           std::shared_ptr<TableStats> &output_stats) {
@@ -139,7 +141,7 @@ double Cost::DistinctCost(const std::shared_ptr<TableStats> &input_stats,
 //===----------------------------------------------------------------------===//
 // Project
 //===----------------------------------------------------------------------===//
-double ProjectCost(const std::shared_ptr<TableStats> &input_stats,
+double Cost::ProjectCost(const std::shared_ptr<TableStats> &input_stats,
                    UNUSED_ATTRIBUTE std::vector<oid_t> columns,
                    std::shared_ptr<TableStats> &output_stats) {
   PL_ASSERT(input_stats);
@@ -167,7 +169,7 @@ double Cost::LimitCost(const std::shared_ptr<TableStats> &input_stats,
 //===----------------------------------------------------------------------===//
 // ORDER BY
 //===----------------------------------------------------------------------===//
-double OrderByCost(const std::shared_ptr<TableStats> &input_stats,
+double Cost::OrderByCost(const std::shared_ptr<TableStats> &input_stats,
                    const std::vector<oid_t> &columns,
                    const std::vector<bool> &orders,
                    std::shared_ptr<TableStats> &output_stats) {
@@ -208,6 +210,8 @@ void Cost::UpdateConditionStats(const std::shared_ptr<TableStats> &input_stats,
   if (output_stats != nullptr) {
     double selectivity =
         Selectivity::ComputeSelectivity(input_stats, condition);
+    LOG_DEBUG("selectivity %f", selectivity);
+    LOG_DEBUG("condition type %s", condition.type);
     output_stats->num_rows = input_stats->num_rows * selectivity;
   }
 }
