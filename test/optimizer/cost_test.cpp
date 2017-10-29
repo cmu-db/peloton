@@ -25,7 +25,6 @@
 #include "optimizer/stats/table_stats.h"
 #include "optimizer/stats/value_condition.h"
 #include "optimizer/stats/stats_storage.h"
-#include "optimizer/stats/cost.h"
 #include "type/types.h"
 #include "type/value.h"
 #include "type/value_factory.h"

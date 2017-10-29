@@ -32,20 +32,56 @@ namespace peloton {
 				oid_t column_id = (oid_t)((expression::TupleValueExpression *)columns_prop->GetColumn(i).get())->GetColumnId();
 				output_column_stats.push_back(input_table_stats->GetColumnStats(column_id));
 			}
-			return std::shared_ptr<TableStats>(new TableStats(input_table_stats->num_rows, output_column_stats));
+			return std::make_shared<TableStats>(input_table_stats->num_rows, output_column_stats);
 		}
 
-		// Update output stats num_rows for conjunctions based on two single conditions
-		// TODO: move to cost.cpp
-		void updateConjunctionStats(const std::shared_ptr<TableStats> &input_stats,
-													 ValueCondition &lhs_cond, ValueCondition &rhs_cond, const ExpressionType type,
-													 std::shared_ptr<TableStats> &output_stats) {
-			std::shared_ptr<TableStats> lhs(new TableStats());
-			std::shared_ptr<TableStats> rhs(new TableStats());
-			Cost::UpdateConditionStats(input_stats, lhs_cond, lhs);
-			Cost::UpdateConditionStats(input_stats, rhs_cond, rhs);
-			Cost::CombineConjunctionStats(lhs, rhs, input_stats->num_rows, type, output_stats);
+		// Update output stats num_rows for conjunctions based on predicate
+    double updateMultipleConjuctionStats(const std::shared_ptr<TableStats> &input_stats,
+																			 const expression::AbstractExpression *expr,
+																			 std::shared_ptr<TableStats> &output_stats, bool enable_index) {
+			if (expr->GetChild(0)->GetExpressionType() == ExpressionType::VALUE_TUPLE ||
+					expr->GetChild(1)->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
+				LOG_DEBUG("tuple value expression");
+				auto left_expr = reinterpret_cast<const expression::TupleValueExpression *>(
+					expr->GetChild(0)->GetExpressionType() == ExpressionType::VALUE_TUPLE? expr->GetChild(0):expr->GetChild(1));
+				int right_index = expr->GetChild(0)->GetExpressionType() == ExpressionType::VALUE_TUPLE?1:0;
+
+				auto column_id = left_expr->GetColumnId();
+				auto expr_type = expr->GetExpressionType();
+				type::Value value;
+				if (expr->GetChild(right_index)->GetExpressionType() == ExpressionType::VALUE_CONSTANT) {
+					value = reinterpret_cast<expression::ConstantValueExpression*>(
+						expr->GetModifiableChild(right_index))->GetValue();
+				} else {
+					value = type::ValueFactory::GetParameterOffsetValue(
+						reinterpret_cast<expression::ParameterValueExpression*>(
+							expr->GetModifiableChild(right_index))->GetValueIdx()).Copy();
+				}
+				ValueCondition condition(column_id, expr_type, value);
+        if (enable_index) {
+          return Cost::SingleConditionIndexScanCost(input_stats, condition, output_stats);
+        } else {
+					LOG_DEBUG("condition %s", condition.value.ToString().c_str());
+          return Cost::SingleConditionSeqScanCost(input_stats, condition, output_stats);
+        }
+
+			} else {
+				auto lhs = std::make_shared<TableStats>();
+				auto rhs = std::make_shared<TableStats>();
+				double left_cost = updateMultipleConjuctionStats(input_stats, expr->GetChild(0), lhs, enable_index);
+				double right_cost = updateMultipleConjuctionStats(input_stats, expr->GetChild(1), rhs, enable_index);
+
+        Cost::CombineConjunctionStats(lhs, rhs, input_stats->num_rows, expr->GetExpressionType(), output_stats);
+				LOG_DEBUG("output row %zu", output_stats->num_rows);
+        if (enable_index) {
+          return left_cost+right_cost;
+        } else {
+          return left_cost;
+        }
+			}
+
 		}
+
 
 		void CostAndStatsCalculator::CalculateCostAndStats(
 			std::shared_ptr<GroupExpression> gexpr,
@@ -61,6 +97,8 @@ namespace peloton {
 
 			gexpr->Op().Accept(this);
 		}
+
+
 
 		void CostAndStatsCalculator::Visit(const DummyScan *) {
 			// TODO: Replace with more accurate cost
@@ -85,40 +123,14 @@ namespace peloton {
 				output_stats_.reset(output_stats.get());
 				return;
 			}
-
+			LOG_DEBUG("predicate not null");
 			std::vector<oid_t> key_column_ids;
 			std::vector<ExpressionType> expr_types;
 			std::vector<type::Value> values;
 
-
 			expression::AbstractExpression *predicate = predicate_prop->GetPredicate();
-			bool canSearch;
-
-			// traverse the predicate and retrieve the several tuple value expressions
-			util::GetPredicateColumns(op->table_->GetSchema(), predicate,
-													key_column_ids, expr_types,
-													values, canSearch);
-
-			if (key_column_ids.size() == 1) { // single condition
-				ValueCondition condition(key_column_ids.at(0), expr_types.at(0), values.at(0));
-				output_cost_ = Cost::SingleConditionSeqScanCost(table_stats, condition, output_stats);
-
-			} else if (key_column_ids.size() == 2 &&
-								 (predicate->GetExpressionType() == ExpressionType::CONJUNCTION_AND ||
-									predicate->GetExpressionType() == ExpressionType::CONJUNCTION_OR)){ //conjunction expression
-				ValueCondition lhs_cond(key_column_ids.at(0), expr_types.at(0), values.at(0));
-				ValueCondition rhs_cond(key_column_ids.at(1), expr_types.at(1), values.at(1));
-				//Get the scan_cost
-				output_cost_ = Cost::NoConditionSeqScanCost(table_stats);
-				//Update output stats num_rows
-				updateConjunctionStats(table_stats, lhs_cond, rhs_cond, predicate->GetExpressionType(), output_stats);
-
-			} else {
-
-				// TODO: support multiple conjunctions
-				output_cost_ = 2;
-			}
-
+      output_cost_ = updateMultipleConjuctionStats(table_stats, predicate, output_stats, false);
+			output_stats_.reset(output_stats.get());
 		};
 
 		void CostAndStatsCalculator::Visit(const PhysicalIndexScan *op) {
@@ -145,53 +157,21 @@ namespace peloton {
 			auto output_stats = generateOutputStat(table_stats, output_properties_
 				->GetPropertyOfType(PropertyType::COLUMNS)->As<PropertyColumns>());
 			expression::AbstractExpression *predicate = predicate_prop->GetPredicate();
-
+			LOG_DEBUG("size of index columns %d", *op->table_->GetIndexColumns().at(0).begin());
 			if (util::CheckIndexSearchable(op->table_, predicate, key_column_ids,
 																		 expr_types, values, index_id)) {
+        output_cost_ = updateMultipleConjuctionStats(table_stats, predicate, output_stats, true);
 
-				if (key_column_ids.size() == 1) {
-					ValueCondition condition(key_column_ids.at(0), expr_types.at(0), values.at(0));
-					output_cost_ = Cost::SingleConditionIndexScanCost(table_stats, condition, output_stats);
-
-				} else if (key_column_ids.size() == 2 &&
-					(predicate->GetExpressionType() == ExpressionType::CONJUNCTION_AND ||
-					predicate->GetExpressionType() == ExpressionType::CONJUNCTION_OR)){
-					ValueCondition lhs_cond(key_column_ids.at(0), expr_types.at(0), values.at(0));
-					ValueCondition rhs_cond(key_column_ids.at(1), expr_types.at(1), values.at(1));
-					//Just to get the index_cost+scan_cost
-					output_cost_ = Cost::SingleConditionIndexScanCost(table_stats, lhs_cond, output_stats);
-					//Update output stats num_rows
-					updateConjunctionStats(table_stats, lhs_cond, rhs_cond, predicate->GetExpressionType(), output_stats);
-
-				} else {
-
-					// TODO: support multiple conjunctions
-					output_cost_ = 0;
-				}
 			} else {
-				if (key_column_ids.size() == 1) {
-					ValueCondition condition(key_column_ids.at(0), expr_types.at(0), values.at(0));
-					output_cost_ = Cost::SingleConditionSeqScanCost(table_stats, condition, output_stats);
 
-				} else if (key_column_ids.size() == 2 &&
-									 (predicate->GetExpressionType() == ExpressionType::CONJUNCTION_AND ||
-										predicate->GetExpressionType() == ExpressionType::CONJUNCTION_OR)){
-					ValueCondition lhs_cond(key_column_ids.at(0), expr_types.at(0), values.at(0));
-					ValueCondition rhs_cond(key_column_ids.at(1), expr_types.at(1), values.at(1));
-					//Just to get the index_cost+scan_cost
-					output_cost_ = Cost::SingleConditionSeqScanCost(table_stats, lhs_cond, output_stats);
-					//Update output stats num_rows
-					updateConjunctionStats(table_stats, lhs_cond, rhs_cond, predicate->GetExpressionType(), output_stats);
-
-				} else {
-
-					// TODO: support multiple conjunctions
-					output_cost_ = 2;
-				}
+        output_cost_ = updateMultipleConjuctionStats(table_stats, predicate, output_stats, false);
 
 			}
+
 			output_stats_.reset(output_stats.get());
-		};
+		}
+
+
 		void CostAndStatsCalculator::Visit(const PhysicalProject *) {
 			// TODO: Replace with more accurate cost
 			PL_ASSERT(child_stats_.size() == 1);
@@ -212,7 +192,7 @@ namespace peloton {
 			std::vector<oid_t> columns;
 			std::vector<bool> orders;
 			for(size_t i = 0; i < sort_prop->GetSortColumnSize(); i++) {
-				oid_t column = (oid_t)((expression::TupleValueExpression *)sort_prop->GetSortColumn(i).get())->GetColumnId();
+				oid_t column = (oid_t)(std::dynamic_pointer_cast<expression::TupleValueExpression>(sort_prop->GetSortColumn(i))->GetColumnId());
 				columns.push_back(column);
 				orders.push_back(sort_prop->GetSortAscending(i));
 			}
@@ -269,7 +249,7 @@ namespace peloton {
 				->GetPropertyOfType(PropertyType::COLUMNS)->As<PropertyColumns>());
 			std::vector<oid_t> column_ids;
 			for (auto column: op->columns) {
-				oid_t column_id = (oid_t)((expression::TupleValueExpression *)column.get())->GetColumnId();
+				oid_t column_id = (oid_t)(std::dynamic_pointer_cast<expression::TupleValueExpression>(column)->GetColumnId());
 				column_ids.push_back(column_id);
 			}
 			output_cost_ = Cost::HashGroupByCost(table_stats_ptr, column_ids, output_stats);
@@ -284,7 +264,7 @@ namespace peloton {
 																							 ->As<PropertyColumns>());
 			std::vector<oid_t> column_ids;
 			for (auto column: op->columns) {
-				oid_t column_id = (oid_t)((expression::TupleValueExpression *)column.get())->GetColumnId();
+				oid_t column_id = (oid_t)(std::dynamic_pointer_cast<expression::TupleValueExpression>(column)->GetColumnId());
 				column_ids.push_back(column_id);
 			}
 			output_cost_ = Cost::SortGroupByCost(table_stats_ptr, column_ids, output_stats);
@@ -303,9 +283,9 @@ namespace peloton {
 			auto table_stats_ptr = std::dynamic_pointer_cast<TableStats>(child_stats_.at(0));
 			auto output_stats = generateOutputStat(table_stats_ptr,
 				output_properties_->GetPropertyOfType(PropertyType::COLUMNS)->As<PropertyColumns>());
-			oid_t column_id = (oid_t)((expression::TupleValueExpression *)(
+			oid_t column_id = (oid_t)(std::dynamic_pointer_cast<expression::TupleValueExpression>(
 				output_properties_->GetPropertyOfType(PropertyType::DISTINCT)->As<PropertyDistinct>()
-				->GetDistinctColumn(0)).get())->GetColumnId();
+				->GetDistinctColumn(0)))->GetColumnId();
 
 			output_cost_ = Cost::DistinctCost(table_stats_ptr, column_id, output_stats);
 			output_stats_.reset(output_stats.get());
