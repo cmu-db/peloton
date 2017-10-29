@@ -126,7 +126,9 @@ void BindNodeVisitor::Visit(parser::DropStatement *) {}
 void BindNodeVisitor::Visit(parser::PrepareStatement *) {}
 void BindNodeVisitor::Visit(parser::ExecuteStatement *) {}
 void BindNodeVisitor::Visit(parser::TransactionStatement *) {}
-void BindNodeVisitor::Visit(parser::AnalyzeStatement *) {}
+void BindNodeVisitor::Visit(parser::AnalyzeStatement *node) {
+  node->TryBindDatabaseName(default_database_name_);
+}
 
 // void BindNodeVisitor::Visit(const parser::ConstantValueExpression *) {}
 
