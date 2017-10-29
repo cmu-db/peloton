@@ -42,10 +42,14 @@ class AnalyzeStatement : public SQLStatement {
   }
 
   inline void TryBindDatabaseName(std::string default_database_name) {
-    analyze_table->TryBindDatabaseName(default_database_name);
+    if (analyze_table != nullptr)
+      analyze_table->TryBindDatabaseName(default_database_name);
   }
 
   std::string GetDatabaseName() const {
+    if (analyze_table == nullptr) {
+      return INVALID_NAME;
+    }
     return analyze_table->GetDatabaseName();
   }
 
