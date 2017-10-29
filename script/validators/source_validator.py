@@ -178,6 +178,7 @@ if __name__ == '__main__':
     parser.add_argument("-f", "--files", nargs='*', help="A list of files to validate")
     args = parser.parse_args()
 
+    LOG.info("Running source validator ...")
     LOG.info("Peloton root : " + PELOTON_DIR)
 
     if args.files:
