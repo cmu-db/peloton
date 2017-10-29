@@ -54,7 +54,7 @@ def extract_sql(input_path, output_path):
 # DEF
 
 def get_pg_jdbc():
-    return "jdbc:postgresql://127.0.0.1:5432/%s" % pg_database
+    return "jdbc:postgresql://127.0.0.1:5433/%s" % pg_database
 # DEF
 
 def get_peloton_jdbc():
@@ -118,7 +118,11 @@ if __name__ == "__main__":
 
     try:
         # Open a connection to postgres so that we can drop the tables
-        conn = psycopg2.connect("dbname='%s' user='%s' host='localhost' password='%s'" % (pg_database, pg_username, pg_password))
+        conn = psycopg2.connect(
+                dbname = pg_database,
+                user = pg_username,
+                password = pg_password,
+                port = 5433)
       
         # Extract the SQL from the trace files
         for path in traces:
@@ -140,7 +144,7 @@ if __name__ == "__main__":
 
             # Run the test
             os.chdir(peloton_test_path)
-            test = Popen(["bash", "run.sh", "-config", config, "-trace", sql_file, "-out", output_dir, "-batchsize", "100"])
+            test = Popen(["bash", "bin/peloton-test", "-config", config, "-trace", sql_file, "-out", output_dir, "-batchsize", "100"])
             test.wait()
             os.chdir(work_path)
       
