@@ -175,7 +175,7 @@ def validate_dir(dir_path):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Perform source code validation on Peloton source')
-    parser.add_argument("-f", "--files", nargs='+', help="A list of files to validate")
+    parser.add_argument("-f", "--files", nargs='*', help="A list of files to validate")
     args = parser.parse_args()
 
     LOG.info("Peloton root : " + PELOTON_DIR)
