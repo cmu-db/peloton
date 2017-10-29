@@ -25,13 +25,13 @@ namespace optimizer {
 #define DEFAULT_HAS_INDEX false
 
 class ColumnStats;
-//class Stats;
+
 //===--------------------------------------------------------------------===//
 // TableStats
 //===--------------------------------------------------------------------===//
 class TableStats: public Stats {
  public:
-  TableStats() : TableStats(0) {}
+  TableStats() : TableStats((size_t) 0) {}
 
   TableStats(size_t num_rows)
       : Stats(nullptr), num_rows(num_rows), col_stats_list_{}, col_name_to_stats_map_{} {}
