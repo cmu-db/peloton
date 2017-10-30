@@ -34,7 +34,7 @@ class HashTranslator : public OperatorTranslator {
  public:
   // Constructor
   HashTranslator(const planner::HashPlan &hash_plan,
-                        CompilationContext &context, Pipeline &pipeline);
+                 CompilationContext &context, Pipeline &pipeline);
 
   // Codegen any initialization work for this operator
   void InitializeState() override;
@@ -47,7 +47,6 @@ class HashTranslator : public OperatorTranslator {
 
   // The method that consumes tuples from child operators
   void Consume(ConsumerContext &context, RowBatch::Row &row) const override;
-  void Consume(ConsumerContext &context, RowBatch &batch) const override;
 
   // Codegen any cleanup work for this translator
   void TearDownState() override;
@@ -82,7 +81,7 @@ class HashTranslator : public OperatorTranslator {
   class ConsumerInsert : public HashTable::InsertCallback {
    public:
     // Constructor
-    explicit ConsumerInsert (ConsumerContext &context, RowBatch::Row &row);
+    explicit ConsumerInsert(ConsumerContext &context, RowBatch::Row &row);
 
     // StoreValue the initial values of the aggregates into the provided storage
     void StoreValue(CodeGen &codegen, llvm::Value *data_space) const override;
