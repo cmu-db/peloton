@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// configuration.cpp
+// settings.cpp
 //
-// Identification: src/configuration/configuration.cpp
+// Identification: src/settings/settings.cpp
 //
 // Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
