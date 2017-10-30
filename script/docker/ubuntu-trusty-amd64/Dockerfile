@@ -1,7 +1,8 @@
 FROM ubuntu:trusty
 
 ADD . /peloton
-RUN apt-get update && apt-get -y install python-dev
+# preliminary steps to allow packages.sh to run
+RUN apt-get update && apt-get -y --no-install-recommends install python-dev
 
 RUN /bin/bash -c "source ./peloton/script/installation/packages.sh"
 
