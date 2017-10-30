@@ -699,7 +699,12 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
               conn->TransitState(ConnState::CONN_CLOSING);
               break;
             }
-            conn->TransitState(ConnState::CONN_PROCESS);
+            if (!conn->finish_startup_packet_) {
+              conn->TransitState(ConnState::CONN_PROCESS_INITIAL);
+            }
+            else {
+              conn->TransitState(ConnState::CONN_PROCESS);
+            }
             break;
           }
 
