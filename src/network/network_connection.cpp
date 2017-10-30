@@ -374,10 +374,11 @@ ProcessResult NetworkConnection::ProcessInitial() {
     }
   }
   //TODO: If other protocols are added, this need to be changed
-  protocol_handler_ =
+  if (protocol_handler_ == nullptr) {
+    protocol_handler_ =
       ProtocolHandlerFactory::CreateProtocolHandler(
           ProtocolHandlerType::Postgres, &traffic_cop_);
-
+  }
   // We need to handle startup packet first
   //TODO: If other protocols are added, this need to be changed
   if (!protocol_handler_->ProcessInitialPacket(&rpkt, client_, ssl_sent_, finish_startup_packet_)) {
