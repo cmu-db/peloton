@@ -6,7 +6,7 @@
 # failure.
 #
 # To enable, symlink this file to '.git/hooks/pre-commit' like so:
-#   ln -s script/git-hooks/pre-commit .git/hooks/pre-commit
+#   ln -s ../../script/git-hooks/pre-commit .git/hooks/pre-commit
 
 files=$(git diff --name-only HEAD --diff-filter=d | grep '\.\(cpp\|h\)$')
 python script/validators/source_validator.py --files $files
