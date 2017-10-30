@@ -85,8 +85,7 @@ class HashGroupByTranslator : public OperatorTranslator {
   class ConsumerProbe : public HashTable::ProbeCallback {
    public:
     // Constructor
-    ConsumerProbe(CompilationContext &context,
-                  const Aggregation &aggregation,
+    ConsumerProbe(CompilationContext &context, const Aggregation &aggregation,
                   const std::vector<codegen::Value> &next_vals,
                   const std::vector<codegen::Value> &grouping_keys);
 
@@ -112,10 +111,9 @@ class HashGroupByTranslator : public OperatorTranslator {
   class ConsumerInsert : public HashTable::InsertCallback {
    public:
     // Constructor
-    ConsumerInsert (CompilationContext &context,
-                    const Aggregation &aggregation,
-                    const std::vector<codegen::Value> &initial_vals,
-                    const std::vector<codegen::Value> &grouping_keys);
+    ConsumerInsert(CompilationContext &context, const Aggregation &aggregation,
+                   const std::vector<codegen::Value> &initial_vals,
+                   const std::vector<codegen::Value> &grouping_keys);
 
     // StoreValue the initial values of the aggregates into the provided storage
     void StoreValue(CodeGen &codegen, llvm::Value *data_space) const override;
