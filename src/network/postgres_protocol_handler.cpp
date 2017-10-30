@@ -349,7 +349,7 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
                                                result_format_, traffic_cop_->GetResult(),
                                                traffic_cop_->GetErrorMessage(), log_manager_, thread_id);
 
-        if (traffic_cop_->GetQueuing()) {
+        if (status == ResultType::QUEUING || status == ResultType::LOGGING) {
           return ProcessResult::PROCESSING;
         }
         ExecQueryMessageGetResult(status);
@@ -379,7 +379,7 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
         auto status =
             traffic_cop_->ExecuteStatement(traffic_cop_->GetStatement(), traffic_cop_->GetParamVal(), unnamed, nullptr,
                                            result_format_, traffic_cop_->GetResult(),
-                                           traffic_cop_->GetErrorMessage(), log_manager_, thread_id);
+        if (status == ResultType::QUEUING || status == ResultType::LOGGING) {
         if (traffic_cop_->GetQueuing()) {
           return ProcessResult::PROCESSING;
         }
@@ -898,7 +898,7 @@ ProcessResult PostgresProtocolHandler::ExecExecuteMessage(InputPacket *pkt,
   auto status = traffic_cop_->ExecuteStatement(
       traffic_cop_->GetStatement(), traffic_cop_->GetParamVal(), unnamed, param_stat, result_format_, traffic_cop_->GetResult(),
       traffic_cop_->GetErrorMessage(), log_manager_, thread_id);
-  if (traffic_cop_->GetQueuing()) {
+  if (status == ResultType::QUEUING || status == ResultType::LOGGING) {
     return ProcessResult::PROCESSING;
   }
   ExecExecuteMessageGetResult(status);
@@ -935,6 +935,10 @@ void PostgresProtocolHandler::ExecExecuteMessageGetResult(ResultType status) {
 void PostgresProtocolHandler::GetResult() {
   traffic_cop_->ExecuteStatementPlanGetResult(log_manager_);
   auto status = traffic_cop_->ExecuteStatementGetResult();
+  if(status == ResultType::LOGGING)
+      traffic_cop_->is_logging_ = true;
+  else
+      traffic_cop_->is_logging_ = false;
   LOG_DEBUG("######## ResultType: %d ###########", (int)status);
   switch (protocol_type_) {
     case NetworkProtocolType::POSTGRES_JDBC:

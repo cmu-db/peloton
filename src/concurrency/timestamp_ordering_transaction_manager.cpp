@@ -917,7 +917,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
             database_id);
       }
 
-      return ResultType::QUEUING;
+      return ResultType::LOGGING;
   }
   //If not, just return.
   else{

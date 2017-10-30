@@ -193,7 +193,9 @@ void TrafficCop::ExecuteStatementPlanGetResult(logging::WalLogManager* log_manag
     // only possible if init failed
     init_failure = true;
   }
-
+  //If there is a single commit statement,
+  //the transaction has been killed when GetResult is called again.
+  if(GetCurrentTxnState().first != nullptr){
   auto txn_result = GetCurrentTxnState().first->GetResult();
   if (is_single_statement_txn_ || init_failure ||
       txn_result == ResultType::FAILURE) {
@@ -220,6 +222,10 @@ void TrafficCop::ExecuteStatementPlanGetResult(logging::WalLogManager* log_manag
           p_status_.m_result = ResultType::ABORTED;
         }
     }
+  }
+  } else {
+      //COMMIT; statement
+      p_status_.m_result = ResultType::QUEUING;
   }
 }
 
