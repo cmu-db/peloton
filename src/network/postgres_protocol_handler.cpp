@@ -1064,7 +1064,7 @@ bool PostgresProtocolHandler::ReadPacket(Buffer &rbuf, InputPacket &rpkt) {
  * process_startup_packet - Processes the startup packet
  *  (after the size field of the header).
  */
-bool PostgresProtocolHandler::ProcessInitialPacket(InputPacket *pkt, Client client, bool& ssl_sent) {
+bool PostgresProtocolHandler::ProcessInitialPacket(InputPacket *pkt, Client client, bool& ssl_sent, bool& finish_startup_packet) {
   std::string token, value;
   std::unique_ptr<OutputPacket> response(new OutputPacket());
 
@@ -1079,7 +1079,7 @@ bool PostgresProtocolHandler::ProcessInitialPacket(InputPacket *pkt, Client clie
   }
   else {
     LOG_TRACE("process startup packet");
-    return ProcessStartupPacket(pkt, proto_version, client);
+    return ProcessStartupPacket(pkt, proto_version, client, finish_startup_packet);
   }
 }
 
@@ -1095,7 +1095,7 @@ bool PostgresProtocolHandler::ProcessSSLRequestPacket(InputPacket *pkt) {
   return true;
 }
 
-bool PostgresProtocolHandler::ProcessStartupPacket(InputPacket* pkt, int32_t proto_version, Client client) {
+bool PostgresProtocolHandler::ProcessStartupPacket(InputPacket* pkt, int32_t proto_version, Client client, bool& finished_startup_packet) {
   std::string token, value;
 
 
@@ -1128,6 +1128,7 @@ bool PostgresProtocolHandler::ProcessStartupPacket(InputPacket* pkt, int32_t pro
     }
 
   }
+  finished_startup_packet = true;
 
   SendInitialResponse();
 

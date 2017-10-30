@@ -380,7 +380,7 @@ ProcessResult NetworkConnection::ProcessInitial() {
 
   // We need to handle startup packet first
   //TODO: If other protocols are added, this need to be changed
-  if (!protocol_handler_->ProcessInitialPacket(&rpkt, client_, ssl_sent_)) {
+  if (!protocol_handler_->ProcessInitialPacket(&rpkt, client_, ssl_sent_, finish_startup_packet_)) {
     return ProcessResult::TERMINATE;
   }
   return ProcessResult::COMPLETE;
@@ -543,6 +543,7 @@ void NetworkConnection::Reset() {
   traffic_cop_.Reset();
   next_response_ = 0;
   ssl_sent_ = false;
+  finish_startup_packet_ = false;
 }
 
 void NetworkConnection::StateMachine(NetworkConnection *conn) {
@@ -570,7 +571,7 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
         switch (res) {
           case ReadState::READ_DATA_RECEIVED:
             // wait for some other event
-            if (conn->protocol_handler_ == nullptr) {
+            if (!conn->finish_startup_packet_) {
               conn->TransitState(ConnState::CONN_PROCESS_INITIAL);
             }
             else {
