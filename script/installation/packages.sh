@@ -21,9 +21,9 @@ DISTRO=$(echo $DISTRO | tr "[:lower:]" "[:upper:]")
 TMPDIR=/tmp
 
 ## ------------------------------------------------
-## UBUNTU
+## UBUNTU/DEBIAN
 ## ------------------------------------------------
-if [ "$DISTRO" = "UBUNTU" ]; then
+if [ "$DISTRO" = "UBUNTU" -o "$DISTRO" = "DEBIAN OS" ]; then
     sudo apt-get --force-yes --ignore-missing -y install \
         git \
         g++ \
