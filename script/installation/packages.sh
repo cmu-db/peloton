@@ -56,21 +56,26 @@ if [ "$DISTRO" = "UBUNTU" ]; then
 ## FEDORA
 ## ------------------------------------------------
 elif [[ "$DISTRO" == *"FEDORA"* ]]; then
-    sudo dnf install -y git \
+    sudo dnf install -y \
+        git \
         gcc-c++ \
+        make \
         cmake \
         gflags-devel \
         protobuf-devel \
         bison \
         flex \
         libevent-devel \
+        openssl-devel \
         boost-devel \
         jemalloc-devel \
         valgrind \
         lcov \
         libpqxx-devel \
         libpqxx \
-        llvm3.7 \
+        llvm \
+        llvm-devel \
+        llvm-static \
         libedit-devel \
         postgresql
 
