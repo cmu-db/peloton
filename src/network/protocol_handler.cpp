@@ -29,7 +29,8 @@ namespace network {
 
   bool ProtocolHandler::ProcessInitialPacket(UNUSED_ATTRIBUTE InputPacket* pkt,
                             UNUSED_ATTRIBUTE Client client,
-                            UNUSED_ATTRIBUTE bool& ssl_sent) {
+                            UNUSED_ATTRIBUTE bool& ssl_sent,
+                            UNUSED_ATTRIBUTE bool& finish_startup_packet) {
     return true;
   }
 
