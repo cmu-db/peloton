@@ -16,6 +16,6 @@ lesser extent, that the commit passes the tests, but this isn't
 reasonable for now.
 
 **Installation:** Under the peloton root directory, run
-`ln -s script/git-hooks/pre-commit .git/hooks/pre-commit` to
+`ln -s ../../script/git-hooks/pre-commit .git/hooks/pre-commit` to
 install locally. The pre-commit file should already have executable
 permission, but check again to make sure.
