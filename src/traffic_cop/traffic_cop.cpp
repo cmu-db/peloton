@@ -223,6 +223,10 @@ void TrafficCop::ExecuteStatementPlanGetResult(
             p_status_.m_result = ResultType::ABORTED;
           }
       }
+  }
+  } else {
+      //COMMIT; statement
+      p_status_.m_result = ResultType::QUEUING;
     }
   } else {
     // COMMIT; statement

@@ -775,9 +775,9 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
             }
             LOG_TRACE("ProcessResult: queueing");
            // if(conn->log_manager_.is_running_){
-                conn->TransitState(ConnState::CONN_LOGGING);
+           //     conn->TransitState(ConnState::CONN_LOGGING);
             //} else {
-            //    conn->TransitState(ConnState::CONN_GET_RESULT);
+                conn->TransitState(ConnState::CONN_GET_RESULT);
             //}
             done = true;
             break;
@@ -792,7 +792,7 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
           LOG_ERROR("Failed to add event");
           PL_ASSERT(false);
         }
-            //conn->protocol_handler_->GetResult();
+        conn->protocol_handler_->GetResult();
         if (conn->traffic_cop_.is_logging_) {
             done = true;
         }
@@ -810,7 +810,6 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
       conn->TransitState(ConnState::CONN_GET_RESULT);
       break;
     }
-
 
       case ConnState::CONN_WRITE: {
         // examine write packets result
@@ -842,7 +841,6 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
       }
 
       case ConnState::CONN_CLOSING: {
-        usleep(10000);
         conn->CloseSocket();
         done = true;
         break;
