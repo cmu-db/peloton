@@ -131,6 +131,7 @@ class TrafficCop {
   executor::ExecuteResult p_status_;
 
   bool is_queuing_;
+  bool is_logging_;
   
   inline void SetDefaultDatabaseName(std::string default_database_name) {
     default_database_name_ = default_database_name;

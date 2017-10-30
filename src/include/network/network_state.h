@@ -26,7 +26,7 @@ enum class ConnState {
   CONN_INVALID,    // Invalid STate
   CONN_GET_RESULT, // State when triggered by worker thread that completes the task.
   CONN_PROCESS_INITIAL, // State to process initial packets and detemine protocols
-  CONN_LOGGING //State in which worker has returned but client is waiting on logger
+  CONN_LOGGING
 };
 
 enum class ReadState {

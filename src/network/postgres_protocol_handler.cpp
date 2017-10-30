@@ -351,7 +351,7 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
                 traffic_cop_->ExecuteStatement(statement_, param_values_, unnamed, nullptr, result_format_,
                              results_, rows_affected_, error_message_, log_manager_, thread_id);
 
-        if (traffic_cop_->is_queuing_) {
+        if (status == ResultType::QUEUING || status == ResultType::LOGGING) {
           return ProcessResult::PROCESSING;
         }
         ExecQueryMessageGetResult(status);
@@ -381,7 +381,7 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
         auto status =
             traffic_cop_->ExecuteStatement(statement_, param_values_, unnamed, nullptr, result_format_,
                                            results_, rows_affected_, error_message_, log_manager_, thread_id);
-        if (traffic_cop_->is_queuing_) {
+        if (status == ResultType::QUEUING || status == ResultType::LOGGING) {
           return ProcessResult::PROCESSING;
         }
         ExecQueryMessageGetResult(status);
@@ -899,7 +899,7 @@ ProcessResult PostgresProtocolHandler::ExecExecuteMessage(InputPacket *pkt,
   auto status = traffic_cop_->ExecuteStatement(
       statement_, param_values_, unnamed, param_stat, result_format_, results_,
       rows_affected_, error_message_, log_manager_, thread_id);
-  if (traffic_cop_->is_queuing_) {
+  if (status == ResultType::QUEUING || status == ResultType::LOGGING) {
     return ProcessResult::PROCESSING;
   }
   ExecExecuteMessageGetResult(status);
@@ -936,6 +936,10 @@ void PostgresProtocolHandler::ExecExecuteMessageGetResult(ResultType status) {
 void PostgresProtocolHandler::GetResult() {
   traffic_cop_->ExecuteStatementPlanGetResult(log_manager_);
   auto status = traffic_cop_->ExecuteStatementGetResult(rows_affected_);
+  if(status == ResultType::LOGGING)
+      traffic_cop_->is_logging_ = true;
+  else
+      traffic_cop_->is_logging_ = false;
   LOG_DEBUG("######## ResultType: %d ###########", (int)status);
   switch (protocol_type_) {
     case NetworkProtocolType::POSTGRES_JDBC:

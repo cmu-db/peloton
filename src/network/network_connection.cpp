@@ -771,9 +771,9 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
             }
             LOG_TRACE("ProcessResult: queueing");
            // if(conn->log_manager_.is_running_){
-                conn->TransitState(ConnState::CONN_LOGGING);
+           //     conn->TransitState(ConnState::CONN_LOGGING);
             //} else {
-            //    conn->TransitState(ConnState::CONN_GET_RESULT);
+                conn->TransitState(ConnState::CONN_GET_RESULT);
             //}
             done = true;
             break;
@@ -788,26 +788,26 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
           LOG_ERROR("Failed to add event");
           PL_ASSERT(false);
         }
-        if(!conn->log_manager_.is_running_){
-            //conn->protocol_handler_->GetResult();
+
+        conn->protocol_handler_->GetResult();
+        if(conn->traffic_cop_.is_logging_){
+            done=true;
+            conn->TransitState(ConnState::CONN_LOGGING);
+        } else {
+            conn->TransitState(ConnState::CONN_WRITE);
         }
-        conn->traffic_cop_.is_queuing_ = false;
-        conn->log_manager_.is_running_ = false;
-        conn->TransitState(ConnState::CONN_WRITE);
         break;
       }
 
+
     case ConnState::CONN_LOGGING: {
-      if (event_add(conn->network_event, nullptr) < 0) {
-        LOG_ERROR("Failed to add event");
-        PL_ASSERT(false);
-      }
-      conn->protocol_handler_->GetResult();
-
-      conn->TransitState(ConnState::CONN_GET_RESULT);
-      break;
+        if (event_add(conn->network_event, nullptr) < 0) {
+          LOG_ERROR("Failed to add event");
+          PL_ASSERT(false);
+        }
+        conn->TransitState(ConnState::CONN_WRITE);
+        break;
     }
-
 
       case ConnState::CONN_WRITE: {
         // examine write packets result
@@ -839,7 +839,6 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
       }
 
       case ConnState::CONN_CLOSING: {
-        usleep(10000);
         conn->CloseSocket();
         done = true;
         break;

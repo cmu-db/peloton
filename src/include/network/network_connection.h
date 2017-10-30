@@ -56,6 +56,7 @@ class NetworkConnection {
   struct event *workpool_event = nullptr; // worker thread done the job
   struct event *logpool_event = nullptr; // logger thread done the job
   short event_flags;              // event flags mask
+  bool is_logging_ = false;
 
   SSL* conn_SSL_context = nullptr;          // SSL context for the connection
 

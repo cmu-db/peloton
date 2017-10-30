@@ -169,7 +169,6 @@ TEST_F(SimpleQueryTests, SimpleQueryTest) {
 
   // server & client running correctly
   SimpleQueryTest(port);
-  sleep(10);
   network_manager.CloseServer();
   serverThread.join();
   LOG_INFO("Peloton is shutting down");
