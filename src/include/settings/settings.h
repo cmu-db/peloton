@@ -18,7 +18,6 @@
 //===----------------------------------------------------------------------===//
 // CONNECTIONS
 //===----------------------------------------------------------------------===//
-
 // Peloton port
 SETTING_int(port,
            "Peloton port (default: 15721)",
@@ -39,19 +38,22 @@ SETTING_string(socket_family,
 
 // Added for SSL only begins
 
+// Enables SSL connection. The default value is false
+SETTING_bool(ssl, "Enable SSL connection (default: false)", false, false, false)
+
 // Peloton private key file
 // Currently use hardcoded private key path, may need to change
 // to generate file dynamically at runtime
 // The same applies to certificate file
 SETTING_string(private_key_file,
-              "path to private key file",
-              "/home/vagrant/temp/server.key",
+              "path to private key file, relative to data directory",
+              "server.key",
               false, false)
 
 // Peloton certificate file
 SETTING_string(certificate_file,
-              "path to certificate file",
-              "/home/vagrant/temp/server.crt",
+              "path to certificate file, relative to data directory",
+              "server.crt",
               false, false)
 
 //===----------------------------------------------------------------------===//

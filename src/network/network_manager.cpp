@@ -15,6 +15,7 @@
 #include "network/network_manager.h"
 
 #include "settings/settings_manager.h"
+#include "peloton_config.h"
 
 namespace peloton {
 namespace network {
@@ -80,8 +81,8 @@ NetworkManager::NetworkManager() {
 
   port_ = settings::SettingsManager::GetInt(settings::SettingId::port);
   max_connections_ = settings::SettingsManager::GetInt(settings::SettingId::max_connections);
-  private_key_file_ = settings::SettingsManager::GetString(settings::SettingId::private_key_file);
-  certificate_file_ = settings::SettingsManager::GetString(settings::SettingId::certificate_file);
+  private_key_file_ = DATA_DIR + settings::SettingsManager::GetString(settings::SettingId::private_key_file);
+  certificate_file_ = DATA_DIR + settings::SettingsManager::GetString(settings::SettingId::certificate_file);
 
   // For logging purposes
   //  event_enable_debug_mode();
