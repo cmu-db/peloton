@@ -14,10 +14,6 @@
 #include <include/network/postgres_protocol_handler.h>
 #include "network/network_connection.h"
 #include "network/protocol_handler_factory.h"
-
-#define SSL_MESSAGE_VERNO 80877103
-#define PROTO_MAJOR_VERSION(x) x >> 16
-#define UNUSED(x) (void)(x)
 namespace peloton {
 namespace network {
 
@@ -376,10 +372,14 @@ ProcessResult NetworkConnection::ProcessInitial() {
       return ProcessResult::MORE_DATA_REQUIRED;
     }
   }
+  //TODO: If other protocols are added, this need to be changed
+  protocol_handler_ =
+      ProtocolHandlerFactory::CreateProtocolHandler(
+          ProtocolHandlerType::Postgres, &traffic_cop_);
 
   // We need to handle startup packet first
-
-  if (!ProcessInitialPacket(&rpkt)) {
+  //TODO: If other protocols are added, this need to be changed
+  if (!protocol_handler_->ProcessInitialPacket(&rpkt, client_, ssl_sent_)) {
     return ProcessResult::TERMINATE;
   }
   return ProcessResult::COMPLETE;
@@ -409,82 +409,6 @@ bool NetworkConnection::ReadStartupPacketHeader(Buffer &rbuf, InputPacket &rpkt)
   // we have processed the data, move buffer pointer
   rbuf.buf_ptr += initial_read_size;
   rpkt.header_parsed = true;
-  return true;
-}
-
-/*
- * process_startup_packet - Processes the startup packet
- *  (after the size field of the header).
- */
-bool NetworkConnection::ProcessInitialPacket(InputPacket *pkt) {
-  std::string token, value;
-  std::unique_ptr<OutputPacket> response(new OutputPacket());
-
-  int32_t proto_version = PacketGetInt(pkt, sizeof(int32_t));
-  LOG_INFO("protocol version: %d", proto_version);
-
-  // TODO: consider more about return value
-  if (proto_version == SSL_MESSAGE_VERNO) {
-    LOG_TRACE("process SSL MESSAGE");
-    return ProcessSSLRequestPacket(pkt);
-  }
-  else {
-    LOG_TRACE("process startup packet");
-    return ProcessStartupPacket(pkt, proto_version);
-  }
-}
-
-bool NetworkConnection::ProcessSSLRequestPacket(InputPacket *pkt) {
-  UNUSED(pkt);
-  std::unique_ptr<OutputPacket> response(new OutputPacket());
-  // TODO: consider more about a proper response
-  response->msg_type = NetworkMessageType::SSL_YES;
-  protocol_handler_->responses.push_back(std::move(response));
-  protocol_handler_->force_flush = true;
-  ssl_sent_ = true;
-  return true;
-}
-
-bool NetworkConnection::ProcessStartupPacket(InputPacket* pkt, int32_t proto_version) {
-  std::string token, value;
-
-
-  // Only protocol version 3 is supported
-  if (PROTO_MAJOR_VERSION(proto_version) != 3) {
-    LOG_ERROR("Protocol error: Only protocol version 3 is supported.");
-    exit(EXIT_FAILURE);
-  }
-
-  // TODO: check for more malformed cases
-  // iterate till the end
-  for (;;) {
-    // loop end case?
-    if (pkt->ptr >= pkt->len) break;
-    GetStringToken(pkt, token);
-    // if the option database was found
-    if (token.compare("database") == 0) {
-      // loop end?
-      if (pkt->ptr >= pkt->len) break;
-      GetStringToken(pkt, client_.dbname);
-    } else if (token.compare(("user")) == 0) {
-      // loop end?
-      if (pkt->ptr >= pkt->len) break;
-      GetStringToken(pkt, client_.user);
-    }
-    else {
-      if (pkt->ptr >= pkt->len) break;
-      GetStringToken(pkt, value);
-      client_.cmdline_options[token] = value;
-    }
-
-  }
-
-  protocol_handler_ =
-      ProtocolHandlerFactory::CreateProtocolHandler(
-          ProtocolHandlerType::Postgres, &traffic_cop_);
-
-  protocol_handler_->SendInitialResponse();
-
   return true;
 }
 
