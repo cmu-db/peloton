@@ -39,57 +39,57 @@ namespace codegen {
 class Aggregation {
  public:
   // Setup the aggregation to handle the provided aggregates
-  void Setup (CompilationContext &context,
-              const std::vector<planner::AggregatePlan::AggTerm> &agg_terms,
-              bool is_global, std::vector<type::Type> &grouping_ai_types);
+  void Setup(CompilationContext &context,
+             const std::vector<planner::AggregatePlan::AggTerm> &agg_terms,
+             bool is_global, std::vector<type::Type> &grouping_ai_types);
 
   // Setup the aggregation to handle the provided aggregates
-  void Setup (CompilationContext &context,
-              const std::vector<planner::AggregatePlan::AggTerm> &agg_terms,
-              bool is_global);
+  void Setup(CompilationContext &context,
+             const std::vector<planner::AggregatePlan::AggTerm> &agg_terms,
+             bool is_global);
 
   // Codegen any initialization work for the hash tables
-  void InitializeState (CompilationContext &context);
+  void InitializeState(CompilationContext &context);
 
   // Cleanup by destroying the aggregation hash tables
-  void TearDownState (CompilationContext &context);
+  void TearDownState(CompilationContext &context);
 
   // Create default initial values for all global aggregate components
-  void CreateInitialGlobalValues (CodeGen &codegen, llvm::Value *space) const;
+  void CreateInitialGlobalValues(CodeGen &codegen, llvm::Value *space) const;
 
   // Store the provided values as the initial values for each of the aggregates
-  void CreateInitialValues (CompilationContext &context,
-                            llvm::Value *space,
-                            const std::vector<codegen::Value> &initial,
-                            const std::vector<codegen::Value> &grouping_keys) const;
+  void CreateInitialValues(
+      CompilationContext &context, llvm::Value *space,
+      const std::vector<codegen::Value> &initial,
+      const std::vector<codegen::Value> &grouping_keys) const;
 
   // Advance all stored aggregates (stored in the provided storage space) using
   // the values in the provided vector
-  void AdvanceValues (CompilationContext &context, llvm::Value *space,
-                      const std::vector<codegen::Value> &next,
-                      const std::vector<codegen::Value> &grouping_keys) const;
+  void AdvanceValues(CompilationContext &context, llvm::Value *space,
+                     const std::vector<codegen::Value> &next,
+                     const std::vector<codegen::Value> &grouping_keys) const;
 
   // Advance all stored aggregates (stored in the provided storage space) using
   // the values in the provided vector
-  void AdvanceValues (CompilationContext &context, llvm::Value *space,
-                      const std::vector<codegen::Value> &next) const;
+  void AdvanceValues(CompilationContext &context, llvm::Value *space,
+                     const std::vector<codegen::Value> &next) const;
 
   // Compute the final values of all the aggregates stored in the provided
   // storage space, inserting them into the provided output vector.
-  void FinalizeValues (CodeGen &codegen, llvm::Value *space,
-                       std::vector<codegen::Value> &final_vals) const;
+  void FinalizeValues(CodeGen &codegen, llvm::Value *space,
+                      std::vector<codegen::Value> &final_vals) const;
 
   // Get the total number of bytes needed to store all the aggregates this is
   // configured to store
-  uint32_t GetAggregatesStorageSize () const {
+  uint32_t GetAggregatesStorageSize() const {
     return storage_.GetStorageSize();
   }
 
   // Get the storage format of the aggregates this class is configured to handle
-  const UpdateableStorage &GetAggregateStorage () const { return storage_; }
+  const UpdateableStorage &GetAggregateStorage() const { return storage_; }
 
  private:
-  bool IsGlobal () const { return is_global_; }
+  bool IsGlobal() const { return is_global_; }
 
   //===--------------------------------------------------------------------===//
   // Little struct to map the aggregates we physically store to the higher level
@@ -135,20 +135,20 @@ class Aggregation {
   };
 
  private:
-  // Will perform the NULL checking, update the null bitmap and call DoAdvanceValue
+  // Will perform the NULL checking, update the null bitmap and call
+  // DoAdvanceValue
   // if appropriate
-  void DoNullCheck (CodeGen &codegen,
-                    llvm::Value *space,
-                    const Aggregation::AggregateInfo &aggregate_info,
-                    const codegen::Value &update,
-                    UpdateableStorage::NullBitmap &null_bitmap,
-                    llvm::Value *curr_val = nullptr) const;
+  void DoNullCheck(CodeGen &codegen, llvm::Value *space,
+                   const Aggregation::AggregateInfo &aggregate_info,
+                   const codegen::Value &update,
+                   UpdateableStorage::NullBitmap &null_bitmap,
+                   llvm::Value *curr_val = nullptr) const;
 
   // Advance the value of a specific aggregate, given its next value without any
   // NULL checking. This assumes that the current aggregate value is not NULL.
-  void DoAdvanceValue (CodeGen &codegen, llvm::Value *space,
-                       const AggregateInfo &agg_info,
-                       const codegen::Value &next) const;
+  void DoAdvanceValue(CodeGen &codegen, llvm::Value *space,
+                      const AggregateInfo &agg_info,
+                      const codegen::Value &next) const;
 
  private:
   // Is this a global aggregation?
@@ -160,7 +160,8 @@ class Aggregation {
   // The storage format we use to store values
   UpdateableStorage storage_;
 
-  // Hash tables and their runtime IDs for the distinct aggregations, access via index
+  // Hash tables and their runtime IDs for the distinct aggregations, access via
+  // index
   std::vector<std::pair<OAHashTable, RuntimeState::StateID>> hash_table_infos_;
 };
 

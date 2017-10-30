@@ -118,7 +118,8 @@ void GlobalGroupByTranslator::Consume(ConsumerContext &,
 
   // Just advance each of the aggregates in the buffer with the provided
   // new values
-  aggregation_.AdvanceValues(GetCompilationContext(), LoadStatePtr(mat_buffer_id_), vals);
+  aggregation_.AdvanceValues(GetCompilationContext(),
+                             LoadStatePtr(mat_buffer_id_), vals);
 }
 
 // Cleanup by destroying the aggregation hash-table
