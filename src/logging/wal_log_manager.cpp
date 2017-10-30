@@ -18,6 +18,7 @@
 #include "logging/logging_util.h"
 #include "storage/tile_group.h"
 #include "threadpool/logger_queue_pool.h"
+#include "logging/wal_recovery.h"
 
 namespace peloton {
 namespace logging {
@@ -59,7 +60,8 @@ void WalLogManager::SetDirectories(std::string logging_dir)
       }
   }
 void WalLogManager::DoRecovery(){
-    //TODO: Re-add recovery that was moved out of logger.
+    WalRecovery* wr = new WalRecovery(0, "/tmp/log");
+    wr->StartRecovery();
  }
 
 

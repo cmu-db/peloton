@@ -512,8 +512,8 @@ void WalRecovery::RunRecovery(){
     bool res = LoggingUtil::OpenFile(filename.c_str(), "rb", file_handle);
     if (res == false) {
       LOG_ERROR("Cannot open log file %s\n", filename.c_str());
-      exit(EXIT_FAILURE);
-    }
+      //exit(EXIT_FAILURE);
+    } else {
     ReplayLogFile(file_handle);
 
     // Safely close the file
@@ -522,7 +522,7 @@ void WalRecovery::RunRecovery(){
       LOG_ERROR("Cannot close pepoch file");
       exit(EXIT_FAILURE);
     }
-
+    }
   }
 
 
