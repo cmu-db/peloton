@@ -126,6 +126,9 @@ if (COVERALLS)
     coveralls_setup("${COVERAGE_SRCS}" ON)
 endif()
 
+# data directory for SSL
+set(DATA_DIR "${PROJECT_SOURCE_DIR}/data")
+
 # ---[ Config generation
 configure_file(cmake/Templates/peloton_config.h.in "${PROJECT_BINARY_DIR}/peloton_config.h")
 
@@ -155,3 +158,4 @@ peloton_print_configuration_summary()
 
 # ---[ Export configs generation
 peloton_generate_export_configs()
+

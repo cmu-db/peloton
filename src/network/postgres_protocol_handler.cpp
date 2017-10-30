@@ -1087,7 +1087,9 @@ bool PostgresProtocolHandler::ProcessSSLRequestPacket(InputPacket *pkt) {
   UNUSED(pkt);
   std::unique_ptr<OutputPacket> response(new OutputPacket());
   // TODO: consider more about a proper response
-  response->msg_type = NetworkMessageType::SSL_YES;
+  response->msg_type = (peloton::settings::SettingsManager::GetBool(
+      peloton::settings::SettingId::ssl)) ?
+                       NetworkMessageType::SSL_YES : NetworkMessageType::SSL_NO;
   responses.push_back(std::move(response));
   force_flush = true;
   return true;

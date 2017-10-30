@@ -97,4 +97,3 @@ endforeach()
 add_custom_target(benchmark)
 add_dependencies(benchmark tpcc ycsb sdbench)
 
-
