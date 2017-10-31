@@ -16,6 +16,8 @@
 #include "index/index_factory.h"
 #include "storage/tuple.h"
 #include "type/types.h"
+#include "concurrency/transaction.h"
+#include "storage/data_table.h"
 
 namespace peloton {
 namespace test {
@@ -38,17 +40,38 @@ public:
 //
 //  static void UniqueKeyDeleteTest(const IndexType index_type);
 //
-//  static void NonUniqueKeyDeleteTest(const IndexType index_type);
-//
+  static void NonUniqueKeyDeleteTest(const IndexType index_type);
+
 //  static void MultiThreadedInsertTest(const IndexType index_type);
-//
+
 //  static void UniqueKeyMultiThreadedTest(const IndexType index_type);
 //
 //  static void NonUniqueKeyMultiThreadedTest(const IndexType index_type);
-//
+
 //  static void NonUniqueKeyMultiThreadedStressTest(const IndexType index_type);
 //
 //  static void NonUniqueKeyMultiThreadedStressTest2(const IndexType index_type);
+
+  //===--------------------------------------------------------------------===//
+  // Utility Methods
+  //===--------------------------------------------------------------------===//
+  static storage::DataTable *CreateTable(int tuples_per_tilegroup_count = 5,
+    bool indexes = true, oid_t table_oid = INVALID_OID);
+
+  /**
+   * Insert helper function
+   */
+  static void InsertHelper(storage::DataTable *table,
+                           type::AbstractPool *testing_pool, size_t scale_factor, int num_rows, bool random,
+                           std::vector<storage::Tuple *> *keys, std::vector<ItemPointer *> *expected_values,
+                           UNUSED_ATTRIBUTE uint64_t thread_itr);
+
+  /**
+   * Delete helper function
+   */
+  static void DeleteHelper(storage::DataTable *table, int num_rows,
+                           std::vector<storage::Tuple *> keys, std::vector<ItemPointer *> expected_values,
+                           UNUSED_ATTRIBUTE uint64_t thread_itr);
 };
 
 
