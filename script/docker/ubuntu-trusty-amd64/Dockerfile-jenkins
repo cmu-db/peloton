@@ -2,7 +2,7 @@
 FROM ubuntu:trusty
 
 ADD . /peloton
-RUN apt-get update && apt-get -y --no-install-recommends install python-dev clang-3.9
+RUN apt-get -qq update && apt-get -qq -y --no-install-recommends install python-dev clang-3.9
 
 RUN /bin/bash -c "source ./peloton/script/installation/packages.sh"
 

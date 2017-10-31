@@ -2,7 +2,7 @@ FROM centos:7
 
 ADD . /peloton
 # preliminary steps to allow packages.sh to run
-RUN yum -y install sudo wget
+RUN yum -q -y install sudo wget
 
 RUN /bin/bash -c "source ./peloton/script/installation/packages.sh"
 

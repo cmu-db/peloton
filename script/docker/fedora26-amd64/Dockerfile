@@ -2,7 +2,7 @@ FROM fedora:26
 
 ADD . /peloton
 # preliminary steps to allow packages.sh to run
-RUN dnf -y install sudo
+RUN dnf -q -y install sudo
 
 RUN /bin/bash -c "source ./peloton/script/installation/packages.sh"
 
