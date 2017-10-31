@@ -378,7 +378,6 @@ void ArtIndex::ScanKey(
 //  index_key.setKeyLen(key->GetLength());
   WriteIndexedAttributesInKey(key, index_key);
 
-
   printf("[DEBUG] ART scan: \n");
   for (unsigned int i = 0; i < index_key.getKeyLen(); i++) {
     printf("%d ", index_key.data[i]);
@@ -471,7 +470,7 @@ void ArtIndex::Scan(
   UNUSED_ATTRIBUTE const std::vector<ExpressionType> &expr_list,
   UNUSED_ATTRIBUTE ScanDirectionType scan_direction,
   std::vector<ItemPointer *> &result,
-  UNUSED_ATTRIBUTE const ConjunctionScanPredicate *csp_p) {
+  const ConjunctionScanPredicate *csp_p) {
   LOG_INFO("ArtIndex::Scan()");
 
   if (csp_p->IsPointQuery() == true) {

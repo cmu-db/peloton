@@ -5,8 +5,7 @@
 #include "common/harness.h"
 #include "gtest/gtest.h"
 
-#include "index/testing_index_util.h"
-#include "index/testing_index_util.h"
+#include "index/testing_art_util.h"
 
 namespace peloton {
 namespace test {
@@ -18,7 +17,7 @@ namespace test {
 class ARTIndexTests : public PelotonTest {};
 
 TEST_F(ARTIndexTests, BasicTest) {
-TestingIndexUtil::BasicTest(IndexType::ART);
+  TestingArtUtil::BasicTest(IndexType::ART);
 }
 
 //TEST_F(ARTIndexTests, UniqueKeyInsertTest) {

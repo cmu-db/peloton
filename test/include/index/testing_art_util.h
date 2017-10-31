@@ -1,0 +1,56 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// testing_index_util.h
+//
+// Identification: test/include/index/testing_art_util.h
+//
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+#pragma once
+
+#include "common/macros.h"
+#include "index/index_factory.h"
+#include "storage/tuple.h"
+#include "type/types.h"
+
+namespace peloton {
+namespace test {
+
+//===--------------------------------------------------------------------===//
+// TestingARTUtil
+//===--------------------------------------------------------------------===//
+
+class TestingArtUtil {
+public:
+  //===--------------------------------------------------------------------===//
+  // Test Cases
+  //===--------------------------------------------------------------------===//
+
+  static void BasicTest(const IndexType index_type);
+
+//  static void MultiMapInsertTest(const IndexType index_type);
+//
+//  static void UniqueKeyInsertTest(const IndexType index_type);
+//
+//  static void UniqueKeyDeleteTest(const IndexType index_type);
+//
+//  static void NonUniqueKeyDeleteTest(const IndexType index_type);
+//
+//  static void MultiThreadedInsertTest(const IndexType index_type);
+//
+//  static void UniqueKeyMultiThreadedTest(const IndexType index_type);
+//
+//  static void NonUniqueKeyMultiThreadedTest(const IndexType index_type);
+//
+//  static void NonUniqueKeyMultiThreadedStressTest(const IndexType index_type);
+//
+//  static void NonUniqueKeyMultiThreadedStressTest2(const IndexType index_type);
+};
+
+
+}
+}
