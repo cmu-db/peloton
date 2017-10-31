@@ -114,7 +114,7 @@ class PostgresProtocolHandler: public ProtocolHandler {
 
   // Used to send a packet that indicates the completion of a query. Also has
   // txn state mgmt
-  void CompleteCommand(const std::string& query_type_string, const QueryType& query_type, int rows);
+  void CompleteCommand(const QueryType& query_type, int rows);
 
   // Specific response for empty or NULL queries
   void SendEmptyQueryResponse();

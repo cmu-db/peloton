@@ -75,6 +75,7 @@ class TrafficCop {
   // Prepare and bind a query from a query string
   std::shared_ptr<Statement> PrepareStatement(const std::string &statement_name,
                                               const std::string &query_string,
+                                              std::unique_ptr<parser::SQLStatementList> sql_stmt_list,
                                               std::string &error_message,
                                               size_t thread_id = 0);
 
@@ -100,6 +101,10 @@ class TrafficCop {
   }
 
   void setRowsAffected(int rows_affected) { rows_affected_ = rows_affected; }
+
+  void AbortInvalidStmt();
+
+  executor::ExecuteResult p_status_;
 
   int getRowsAffected() { return rows_affected_; }
 
@@ -169,6 +174,7 @@ class TrafficCop {
   // The current callback to be invoked after execution completes.
   void (*task_callback_)(void *);
   void *task_callback_arg_;
+  std::vector<StatementResult> result_;
 
   // pair of txn ptr and the result so-far for that txn
   // use a stack to support nested-txns
