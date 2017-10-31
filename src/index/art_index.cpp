@@ -338,7 +338,7 @@ bool ArtIndex::InsertEntry(
   printf("\n");
 
   auto t = artTree.getThreadInfo();
-  artTree.insert(index_key, reinterpret_cast<TID>(value), t);
+  artTree.insert(index_key, reinterpret_cast<TID>(value), t, ret);
 
 
 
@@ -430,13 +430,35 @@ bool ArtIndex::DeleteEntry(
   return ret;
 }
 
+/*
+ * ConditionalInsert() - Insert a key-value pair only if a given
+ *                       predicate fails for all values with a key
+ *
+ * If return true then the value has been inserted
+ * If return false then the value is not inserted. The reason could be
+ * predicates returning true for one of the values of a given key
+ * or because the value is already in the index
+ *
+ * NOTE: We first test the predicate, and then test for duplicated values
+ * so predicate test result is always available
+ */
 bool ArtIndex::CondInsertEntry(
-  UNUSED_ATTRIBUTE const storage::Tuple *key,
-  UNUSED_ATTRIBUTE ItemPointer *value,
-  UNUSED_ATTRIBUTE std::function<bool(const void *)> predicate) {
-  bool ret = false;
-  // TODO: Add your implementation here
-  return ret;
+  const storage::Tuple *key,
+  ItemPointer *value,
+  std::function<bool(const void *)> predicate) {
+
+  std::vector<ItemPointer *> result;
+  ScanKey(key, result);
+
+  for (unsigned int i = 0; i < result.size(); i++) {
+    if (predicate(result[i])) {
+      return false;
+    } else if (result[i] == value) {
+      return false;
+    }
+  }
+
+  return InsertEntry(key, value);
 }
 
 /*

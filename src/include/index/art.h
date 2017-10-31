@@ -82,7 +82,7 @@ public:
 
   void scanAllLeafNodes(const N* node, std::vector<ItemPointer *> &result, std::size_t &resultCount) const;
 
-  void insert(const Key &k, TID tid, ThreadInfo &epocheInfo);
+  void insert(const Key &k, TID tid, ThreadInfo &epocheInfo, bool &insertSuccess);
 
   void remove(const Key &k, TID tid, ThreadInfo &epocheInfo);
 

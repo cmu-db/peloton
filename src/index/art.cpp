@@ -411,9 +411,10 @@ TID Tree::checkKey(const TID tid, const Key &k) const {
   return 0;
 }
 
-void Tree::insert(const Key &k, TID tid, ThreadInfo &epocheInfo) {
+void Tree::insert(const Key &k, TID tid, ThreadInfo &epocheInfo, bool &insertSuccess) {
   EpocheGuard epocheGuard(epocheInfo);
   int restartCount = 0;
+  insertSuccess = false;
   restart:
   if (restartCount++)
     yield(restartCount);
@@ -466,6 +467,7 @@ void Tree::insert(const Key &k, TID tid, ThreadInfo &epocheInfo) {
                         node->getPrefixLength() - ((nextLevel - level) + 1));
 
         node->writeUnlock();
+        insertSuccess = true;
         return;
       }
       case CheckPrefixPessimisticResult::Match:
@@ -480,6 +482,7 @@ void Tree::insert(const Key &k, TID tid, ThreadInfo &epocheInfo) {
     if (nextNode == nullptr) {
       N::insertAndUnlock(node, v, parentNode, parentVersion, parentKey, nodeKey, N::setLeaf(tid), needRestart, epocheInfo);
       if (needRestart) goto restart;
+      insertSuccess = true;
       return;
     }
 
@@ -502,6 +505,7 @@ void Tree::insert(const Key &k, TID tid, ThreadInfo &epocheInfo) {
 //        N::addMultiValue(node, k[level], N::setLeaf(tid));
         N::addMultiValue(node, k[level], tid);
         node->writeUnlock();
+        insertSuccess = true;
         return;
       }
 
@@ -516,6 +520,7 @@ void Tree::insert(const Key &k, TID tid, ThreadInfo &epocheInfo) {
       n4->insert(key[level + prefixLength], nextNode);
       N::change(node, k[level - 1], n4);
       node->writeUnlock();
+      insertSuccess = true;
       return;
     }
     level++;
