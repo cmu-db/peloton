@@ -82,7 +82,8 @@ script:
     - mkdir build
     - cd build
     # run cmake
-    - cmake -DCOVERALLS=$COVERALLS -DCMAKE_PREFIX_PATH=`llvm-config-3.9 --prefix` -DCMAKE_BUILD_TYPE=$PELOTON_BUILD_TYPE -DUSE_SANITIZER=Address ..
+    - if [[ $TRAVIS_OS_NAME != 'osx' ]]; then cmake -DCOVERALLS=$COVERALLS -DCMAKE_PREFIX_PATH=`llvm-config-3.9 --prefix` -DCMAKE_BUILD_TYPE=$PELOTON_BUILD_TYPE -DUSE_SANITIZER=Address ..; fi
+    - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then cmake -DCOVERALLS=$COVERALLS -DCMAKE_PREFIX_PATH=`llvm-config-3.7 --prefix` -DCMAKE_BUILD_TYPE=$PELOTON_BUILD_TYPE -DUSE_SANITIZER=Address ..; fi
     # build
     - make -j4
     # run tests
