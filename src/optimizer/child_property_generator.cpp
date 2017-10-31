@@ -59,7 +59,8 @@ void ChildPropertyGenerator::Visit(const QueryDerivedScan *op) {
     if (prop->Type() == PropertyType::COLUMNS) {
       ExprMap columns;
       vector<shared_ptr<expression::AbstractExpression>> output_column_exprs;
-      std::vector<std::shared_ptr<expression::AbstractExpression>> new_column_exprs;
+      std::vector<std::shared_ptr<expression::AbstractExpression>>
+          new_column_exprs;
       auto col_prop = prop->As<PropertyColumns>();
       if (col_prop->HasStarExpression()) {
         output_column_exprs.emplace_back(new expression::StarExpression());
@@ -67,21 +68,23 @@ void ChildPropertyGenerator::Visit(const QueryDerivedScan *op) {
         for (auto entry : op->alias_to_expr_map) {
           new_column_exprs.push_back(entry.second);
         }
-      }
-      else {
+      } else {
         size_t col_len = col_prop->GetSize();
         for (size_t col_idx = 0; col_idx < col_len; col_idx++) {
           auto expr = col_prop->GetColumn(col_idx);
           expression::ExpressionUtil::GetTupleValueExprs(columns, expr.get());
           auto new_col = std::shared_ptr<expression::AbstractExpression>(
-              util::TransformQueryDerivedTablePredicates(op->alias_to_expr_map, expr->Copy()));
+              util::TransformQueryDerivedTablePredicates(op->alias_to_expr_map,
+                                                         expr->Copy()));
           new_column_exprs.push_back(new_col);
         }
         output_column_exprs.resize(columns.size());
         for (auto iter : columns) output_column_exprs[iter.second] = iter.first;
       }
-      child_prop.AddProperty(std::make_shared<PropertyColumns>(new_column_exprs));
-      provided_property.AddProperty(std::make_shared<PropertyColumns>(output_column_exprs));
+      child_prop.AddProperty(
+          std::make_shared<PropertyColumns>(new_column_exprs));
+      provided_property.AddProperty(
+          std::make_shared<PropertyColumns>(output_column_exprs));
       continue;
     }
     child_prop.AddProperty(prop);
@@ -114,7 +117,7 @@ void ChildPropertyGenerator::Visit(const PhysicalDistinct *) {}
 void ChildPropertyGenerator::Visit(const PhysicalProject *){};
 void ChildPropertyGenerator::Visit(const PhysicalOrderBy *) {}
 void ChildPropertyGenerator::Visit(const PhysicalFilter *){};
-void ChildPropertyGenerator::Visit(const PhysicalInnerNLJoin *op){
+void ChildPropertyGenerator::Visit(const PhysicalInnerNLJoin *op) {
   JoinHelper(op);
 };
 void ChildPropertyGenerator::Visit(const PhysicalLeftNLJoin *){};
@@ -128,7 +131,7 @@ void ChildPropertyGenerator::Visit(const PhysicalLeftHashJoin *){};
 void ChildPropertyGenerator::Visit(const PhysicalRightHashJoin *){};
 void ChildPropertyGenerator::Visit(const PhysicalOuterHashJoin *){};
 void ChildPropertyGenerator::Visit(const PhysicalInsert *){};
-void ChildPropertyGenerator::Visit(const PhysicalInsertSelect *){
+void ChildPropertyGenerator::Visit(const PhysicalInsertSelect *) {
   // Let child fulfil all the required properties
   vector<PropertySet> child_input_properties{requirements_};
 
@@ -429,10 +432,11 @@ void ChildPropertyGenerator::JoinHelper(const BaseOperatorNode *op) {
     // the table alias.
     PL_ASSERT(child_groups_.size() == 2);
     auto &left_table_alias = child_groups_[0]->GetTableAliases();
-    UNUSED_ATTRIBUTE auto &right_table_alias = child_groups_[1]->GetTableAliases();
+    UNUSED_ATTRIBUTE auto &right_table_alias =
+        child_groups_[1]->GetTableAliases();
 
     for (auto child_col : child_cols) {
-      auto tv_expr = (expression::TupleValueExpression *) child_col.get();
+      auto tv_expr = (expression::TupleValueExpression *)child_col.get();
       if (left_table_alias.count(tv_expr->GetTableName()) > 0) {
         // This column should be provided by the left child
         left_cols.push_back(child_col);

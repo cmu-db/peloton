@@ -373,18 +373,18 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   }
 }
 
-void TrafficCop::GetDataTables(
+void TrafficCop::GetTableColumns(
     parser::TableRef *from_table,
-    std::vector<catalog::Column> &target_tables) {
+    std::vector<catalog::Column> &target_columns) {
   if (from_table == nullptr) return;
 
   // Query derived table
   if (from_table->select != NULL) {
     for (auto& expr : from_table->select->select_list) {
       if (expr->GetExpressionType() == ExpressionType::STAR)
-        GetDataTables(from_table->select->from_table.get(), target_tables);
+        GetTableColumns(from_table->select->from_table.get(), target_columns);
       else
-        target_tables.push_back(catalog::Column(expr->GetValueType(), 0, expr->GetExpressionName()));
+        target_columns.push_back(catalog::Column(expr->GetValueType(), 0, expr->GetExpressionName()));
     }
   }
   else if (from_table->list.empty()) {
@@ -393,16 +393,16 @@ void TrafficCop::GetDataTables(
           catalog::Catalog::GetInstance()->GetTableWithName(
               from_table->GetDatabaseName(), from_table->GetTableName(),
               GetCurrentTxnState().first))->GetSchema()->GetColumns();
-      target_tables.insert(target_tables.end(), columns.begin(), columns.end());
+      target_columns.insert(target_columns.end(), columns.begin(), columns.end());
     } else {
-      GetDataTables(from_table->join->left.get(), target_tables);
-      GetDataTables(from_table->join->right.get(), target_tables);
+      GetTableColumns(from_table->join->left.get(), target_columns);
+      GetTableColumns(from_table->join->right.get(), target_columns);
     }
   }
     // Query has multiple tables. Recursively add all tables
   else {
     for (auto& table : from_table->list) {
-      GetDataTables(table.get(), target_tables);
+      GetTableColumns(table.get(), target_columns);
     }
   }
 }
@@ -426,7 +426,7 @@ std::vector<FieldInfo> TrafficCop::GenerateTupleDescriptor(
 
   // Check if query only has one Table
   // Example : SELECT * FROM A;
-  GetDataTables(select_stmt->from_table.get(), all_columns);
+  GetTableColumns(select_stmt->from_table.get(), all_columns);
 
   int count = 0;
   for (auto& expr : select_stmt->select_list) {

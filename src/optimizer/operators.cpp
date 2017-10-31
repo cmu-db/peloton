@@ -29,9 +29,9 @@ Operator LeafOperator::make(GroupID group) {
 //===--------------------------------------------------------------------===//
 // Get
 //===--------------------------------------------------------------------===//
-Operator LogicalGet::make(oid_t get_id, storage::DataTable *table, std::string alias,
-                          std::shared_ptr<expression::AbstractExpression> predicate,
-                          bool update) {
+Operator LogicalGet::make(
+    oid_t get_id, storage::DataTable *table, std::string alias,
+    std::shared_ptr<expression::AbstractExpression> predicate, bool update) {
   LogicalGet *get = new LogicalGet;
   get->table = table;
   get->table_alias = alias;
@@ -50,21 +50,20 @@ bool LogicalGet::operator==(const BaseOperatorNode &node) {
 
 hash_t LogicalGet::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
-  if (table == nullptr)
-    return hash;
-  hash = HashUtil::CombineHashes(
-      hash, HashUtil::Hash(&get_id));
+  if (table == nullptr) return hash;
+  hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&get_id));
   return hash;
 }
 
 //===--------------------------------------------------------------------===//
 // Query derived get
 //===--------------------------------------------------------------------===//
-Operator LogicalQueryDerivedGet::make(oid_t get_id, std::string& alias,
-                                      std::unordered_map<std::string,
-                                                         std::shared_ptr<expression::AbstractExpression>>
-                                      alias_to_expr_map) {
-  LogicalQueryDerivedGet* get = new LogicalQueryDerivedGet;
+Operator LogicalQueryDerivedGet::make(
+    oid_t get_id, std::string &alias,
+    std::unordered_map<std::string,
+                       std::shared_ptr<expression::AbstractExpression>>
+        alias_to_expr_map) {
+  LogicalQueryDerivedGet *get = new LogicalQueryDerivedGet;
   get->table_alias = alias;
   get->alias_to_expr_map = alias_to_expr_map;
   get->get_id = get_id;
@@ -74,14 +73,14 @@ Operator LogicalQueryDerivedGet::make(oid_t get_id, std::string& alias,
 
 bool LogicalQueryDerivedGet::operator==(const BaseOperatorNode &node) {
   if (node.type() != OpType::LogicalQueryDerivedGet) return false;
-  const LogicalQueryDerivedGet &r = *static_cast<const LogicalQueryDerivedGet *>(&node);
+  const LogicalQueryDerivedGet &r =
+      *static_cast<const LogicalQueryDerivedGet *>(&node);
   return get_id == r.get_id;
 }
 
 hash_t LogicalQueryDerivedGet::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
-  hash = HashUtil::CombineHashes(
-      hash, HashUtil::Hash(&get_id));
+  hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&get_id));
   return hash;
 }
 
@@ -98,7 +97,7 @@ Operator LogicalFilter::make() {
 //===--------------------------------------------------------------------===//
 Operator LogicalInnerJoin::make(expression::AbstractExpression *condition) {
   LogicalInnerJoin *join = new LogicalInnerJoin;
-  join->join_predicate = 
+  join->join_predicate =
       std::shared_ptr<expression::AbstractExpression>(condition);
   return Operator(join);
 }
@@ -108,7 +107,7 @@ Operator LogicalInnerJoin::make(expression::AbstractExpression *condition) {
 //===--------------------------------------------------------------------===//
 Operator LogicalLeftJoin::make(expression::AbstractExpression *condition) {
   LogicalLeftJoin *join = new LogicalLeftJoin;
-  join->join_predicate = 
+  join->join_predicate =
       std::shared_ptr<expression::AbstractExpression>(condition);
   return Operator(join);
 }
@@ -118,7 +117,7 @@ Operator LogicalLeftJoin::make(expression::AbstractExpression *condition) {
 //===--------------------------------------------------------------------===//
 Operator LogicalRightJoin::make(expression::AbstractExpression *condition) {
   LogicalRightJoin *join = new LogicalRightJoin;
-  join->join_predicate = 
+  join->join_predicate =
       std::shared_ptr<expression::AbstractExpression>(condition);
   return Operator(join);
 }
@@ -128,7 +127,7 @@ Operator LogicalRightJoin::make(expression::AbstractExpression *condition) {
 //===--------------------------------------------------------------------===//
 Operator LogicalOuterJoin::make(expression::AbstractExpression *condition) {
   LogicalOuterJoin *join = new LogicalOuterJoin;
-  join->join_predicate = 
+  join->join_predicate =
       std::shared_ptr<expression::AbstractExpression>(condition);
   return Operator(join);
 }
@@ -138,7 +137,7 @@ Operator LogicalOuterJoin::make(expression::AbstractExpression *condition) {
 //===--------------------------------------------------------------------===//
 Operator LogicalSemiJoin::make(expression::AbstractExpression *condition) {
   LogicalSemiJoin *join = new LogicalSemiJoin;
-  join->join_predicate = 
+  join->join_predicate =
       std::shared_ptr<expression::AbstractExpression>(condition);
   return Operator(join);
 }
@@ -168,8 +167,8 @@ Operator LogicalGroupBy::make(
 //===--------------------------------------------------------------------===//
 Operator LogicalInsert::make(
     storage::DataTable *target_table, const std::vector<std::string> *columns,
-    const std::vector<std::vector<std::unique_ptr<peloton::expression::AbstractExpression>>> *
-        values) {
+    const std::vector<std::vector<
+        std::unique_ptr<peloton::expression::AbstractExpression>>> *values) {
   LogicalInsert *insert_op = new LogicalInsert;
   insert_op->target_table = target_table;
   insert_op->columns = columns;
@@ -197,7 +196,8 @@ Operator LogicalDelete::make(storage::DataTable *target_table) {
 //===--------------------------------------------------------------------===//
 Operator LogicalUpdate::make(
     storage::DataTable *target_table,
-    const std::vector<std::unique_ptr<peloton::parser::UpdateClause>>* updates) {
+    const std::vector<std::unique_ptr<peloton::parser::UpdateClause>> *
+        updates) {
   LogicalUpdate *update_op = new LogicalUpdate;
   update_op->target_table = target_table;
   update_op->updates = updates;
@@ -217,8 +217,7 @@ Operator DummyScan::make() {
 //===--------------------------------------------------------------------===//
 Operator PhysicalSeqScan::make(
     oid_t get_id, storage::DataTable *table, std::string alias,
-    std::shared_ptr<expression::AbstractExpression> predicate,
-    bool update) {
+    std::shared_ptr<expression::AbstractExpression> predicate, bool update) {
   assert(table != nullptr);
   PhysicalSeqScan *scan = new PhysicalSeqScan;
   scan->table_ = table;
@@ -238,8 +237,7 @@ bool PhysicalSeqScan::operator==(const BaseOperatorNode &node) {
 
 hash_t PhysicalSeqScan::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
-  hash = HashUtil::CombineHashes(
-      hash, HashUtil::Hash(&get_id));
+  hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&get_id));
   return hash;
 }
 
@@ -248,8 +246,7 @@ hash_t PhysicalSeqScan::Hash() const {
 //===--------------------------------------------------------------------===//
 Operator PhysicalIndexScan::make(
     oid_t get_id, storage::DataTable *table, std::string alias,
-    std::shared_ptr<expression::AbstractExpression> predicate,
-    bool update) {
+    std::shared_ptr<expression::AbstractExpression> predicate, bool update) {
   assert(table != nullptr);
   PhysicalIndexScan *scan = new PhysicalIndexScan;
   scan->table_ = table;
@@ -269,19 +266,19 @@ bool PhysicalIndexScan::operator==(const BaseOperatorNode &node) {
 
 hash_t PhysicalIndexScan::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
-  hash = HashUtil::CombineHashes(
-      hash, HashUtil::Hash(&get_id));
+  hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&get_id));
   return hash;
 }
 
 //===--------------------------------------------------------------------===//
 // Query derived get
 //===--------------------------------------------------------------------===//
-Operator QueryDerivedScan::make(oid_t get_id, std::string alias,
-                                std::unordered_map<std::string,
-                                                         std::shared_ptr<expression::AbstractExpression>>
-                                      alias_to_expr_map) {
-  QueryDerivedScan * get = new QueryDerivedScan;
+Operator QueryDerivedScan::make(
+    oid_t get_id, std::string alias,
+    std::unordered_map<std::string,
+                       std::shared_ptr<expression::AbstractExpression>>
+        alias_to_expr_map) {
+  QueryDerivedScan *get = new QueryDerivedScan;
   get->table_alias = alias;
   get->alias_to_expr_map = alias_to_expr_map;
   get->get_id = get_id;
@@ -297,8 +294,7 @@ bool QueryDerivedScan::operator==(const BaseOperatorNode &node) {
 
 hash_t QueryDerivedScan::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
-  hash = HashUtil::CombineHashes(
-      hash, HashUtil::Hash(&get_id));
+  hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&get_id));
   return hash;
 }
 
@@ -335,7 +331,8 @@ Operator PhysicalFilter::make() {
 //===--------------------------------------------------------------------===//
 // InnerNLJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalInnerNLJoin::make(std::shared_ptr<expression::AbstractExpression> join_predicate) {
+Operator PhysicalInnerNLJoin::make(
+    std::shared_ptr<expression::AbstractExpression> join_predicate) {
   PhysicalInnerNLJoin *join = new PhysicalInnerNLJoin();
   join->join_predicate = join_predicate;
   return Operator(join);
@@ -344,7 +341,8 @@ Operator PhysicalInnerNLJoin::make(std::shared_ptr<expression::AbstractExpressio
 //===--------------------------------------------------------------------===//
 // LeftNLJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalLeftNLJoin::make(std::shared_ptr<expression::AbstractExpression> join_predicate) {
+Operator PhysicalLeftNLJoin::make(
+    std::shared_ptr<expression::AbstractExpression> join_predicate) {
   PhysicalLeftNLJoin *join = new PhysicalLeftNLJoin();
   join->join_predicate = join_predicate;
   return Operator(join);
@@ -353,7 +351,8 @@ Operator PhysicalLeftNLJoin::make(std::shared_ptr<expression::AbstractExpression
 //===--------------------------------------------------------------------===//
 // RightNLJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalRightNLJoin::make(std::shared_ptr<expression::AbstractExpression> join_predicate) {
+Operator PhysicalRightNLJoin::make(
+    std::shared_ptr<expression::AbstractExpression> join_predicate) {
   PhysicalRightNLJoin *join = new PhysicalRightNLJoin();
   join->join_predicate = join_predicate;
   return Operator(join);
@@ -362,7 +361,8 @@ Operator PhysicalRightNLJoin::make(std::shared_ptr<expression::AbstractExpressio
 //===--------------------------------------------------------------------===//
 // OuterNLJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalOuterNLJoin::make(std::shared_ptr<expression::AbstractExpression> join_predicate) {
+Operator PhysicalOuterNLJoin::make(
+    std::shared_ptr<expression::AbstractExpression> join_predicate) {
   PhysicalOuterNLJoin *join = new PhysicalOuterNLJoin();
   join->join_predicate = join_predicate;
   return Operator(join);
@@ -371,7 +371,8 @@ Operator PhysicalOuterNLJoin::make(std::shared_ptr<expression::AbstractExpressio
 //===--------------------------------------------------------------------===//
 // InnerHashJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalInnerHashJoin::make(std::shared_ptr<expression::AbstractExpression> join_predicate) {
+Operator PhysicalInnerHashJoin::make(
+    std::shared_ptr<expression::AbstractExpression> join_predicate) {
   PhysicalInnerHashJoin *join = new PhysicalInnerHashJoin();
   join->join_predicate = join_predicate;
   return Operator(join);
@@ -380,7 +381,8 @@ Operator PhysicalInnerHashJoin::make(std::shared_ptr<expression::AbstractExpress
 //===--------------------------------------------------------------------===//
 // LeftHashJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalLeftHashJoin::make(std::shared_ptr<expression::AbstractExpression> join_predicate) {
+Operator PhysicalLeftHashJoin::make(
+    std::shared_ptr<expression::AbstractExpression> join_predicate) {
   PhysicalLeftHashJoin *join = new PhysicalLeftHashJoin();
   join->join_predicate = join_predicate;
   return Operator(join);
@@ -389,7 +391,8 @@ Operator PhysicalLeftHashJoin::make(std::shared_ptr<expression::AbstractExpressi
 //===--------------------------------------------------------------------===//
 // RightHashJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalRightHashJoin::make(std::shared_ptr<expression::AbstractExpression> join_predicate) {
+Operator PhysicalRightHashJoin::make(
+    std::shared_ptr<expression::AbstractExpression> join_predicate) {
   PhysicalRightHashJoin *join = new PhysicalRightHashJoin();
   join->join_predicate = join_predicate;
   return Operator(join);
@@ -398,7 +401,8 @@ Operator PhysicalRightHashJoin::make(std::shared_ptr<expression::AbstractExpress
 //===--------------------------------------------------------------------===//
 // OuterHashJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalOuterHashJoin::make(std::shared_ptr<expression::AbstractExpression> join_predicate) {
+Operator PhysicalOuterHashJoin::make(
+    std::shared_ptr<expression::AbstractExpression> join_predicate) {
   PhysicalOuterHashJoin *join = new PhysicalOuterHashJoin();
   join->join_predicate = join_predicate;
   return Operator(join);
@@ -409,8 +413,8 @@ Operator PhysicalOuterHashJoin::make(std::shared_ptr<expression::AbstractExpress
 //===--------------------------------------------------------------------===//
 Operator PhysicalInsert::make(
     storage::DataTable *target_table, const std::vector<std::string> *columns,
-    const std::vector<std::vector<std::unique_ptr<peloton::expression::AbstractExpression>>> *
-        values) {
+    const std::vector<std::vector<
+        std::unique_ptr<peloton::expression::AbstractExpression>>> *values) {
   PhysicalInsert *insert_op = new PhysicalInsert;
   insert_op->target_table = target_table;
   insert_op->columns = columns;
@@ -441,7 +445,8 @@ Operator PhysicalDelete::make(storage::DataTable *target_table) {
 //===--------------------------------------------------------------------===//
 Operator PhysicalUpdate::make(
     storage::DataTable *target_table,
-    const std::vector<std::unique_ptr<peloton::parser::UpdateClause>>* updates) {
+    const std::vector<std::unique_ptr<peloton::parser::UpdateClause>> *
+        updates) {
   PhysicalUpdate *update = new PhysicalUpdate;
   update->target_table = target_table;
   update->updates = updates;
@@ -462,18 +467,18 @@ Operator PhysicalHashGroupBy::make(
 
 bool PhysicalHashGroupBy::operator==(const BaseOperatorNode &node) {
   if (node.type() != OpType::HashGroupBy) return false;
-  const PhysicalHashGroupBy &r = *static_cast<const PhysicalHashGroupBy *>(&node);
-  if ((having == nullptr && r.having != nullptr) || (r.having == nullptr && having != nullptr))
+  const PhysicalHashGroupBy &r =
+      *static_cast<const PhysicalHashGroupBy *>(&node);
+  if ((having == nullptr && r.having != nullptr) ||
+      (r.having == nullptr && having != nullptr))
     return false;
   return expression::ExpressionUtil::EqualExpressions(columns, r.columns);
 }
 
 hash_t PhysicalHashGroupBy::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
-  if (having != nullptr)
-    hash = HashUtil::SumHashes(hash, having->Hash());
-  for (auto expr : columns)
-    hash = HashUtil::SumHashes(hash, expr->Hash());
+  if (having != nullptr) hash = HashUtil::SumHashes(hash, having->Hash());
+  for (auto expr : columns) hash = HashUtil::SumHashes(hash, expr->Hash());
   return hash;
 }
 
@@ -491,18 +496,18 @@ Operator PhysicalSortGroupBy::make(
 
 bool PhysicalSortGroupBy::operator==(const BaseOperatorNode &node) {
   if (node.type() != OpType::SortGroupBy) return false;
-  const PhysicalSortGroupBy &r = *static_cast<const PhysicalSortGroupBy *>(&node);
-  if ((having == nullptr && r.having != nullptr) || (r.having == nullptr && having != nullptr))
+  const PhysicalSortGroupBy &r =
+      *static_cast<const PhysicalSortGroupBy *>(&node);
+  if ((having == nullptr && r.having != nullptr) ||
+      (r.having == nullptr && having != nullptr))
     return false;
   return expression::ExpressionUtil::EqualExpressions(columns, r.columns);
 }
 
 hash_t PhysicalSortGroupBy::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
-  if (having != nullptr)
-    hash = HashUtil::SumHashes(hash, having->Hash());
-  for (auto expr : columns)
-    hash = HashUtil::SumHashes(hash, expr->Hash());
+  if (having != nullptr) hash = HashUtil::SumHashes(hash, having->Hash());
+  for (auto expr : columns) hash = HashUtil::SumHashes(hash, expr->Hash());
   return hash;
 }
 
@@ -583,7 +588,8 @@ std::string OperatorNode<LeafOperator>::name_ = "LeafOperator";
 template <>
 std::string OperatorNode<LogicalGet>::name_ = "LogicalGet";
 template <>
-std::string OperatorNode<LogicalQueryDerivedGet>::name_ = "LogicalQueryDerivedGet";
+std::string OperatorNode<LogicalQueryDerivedGet>::name_ =
+    "LogicalQueryDerivedGet";
 template <>
 std::string OperatorNode<LogicalFilter>::name_ = "LogicalFilter";
 template <>
@@ -666,7 +672,8 @@ OpType OperatorNode<LeafOperator>::type_ = OpType::Leaf;
 template <>
 OpType OperatorNode<LogicalGet>::type_ = OpType::Get;
 template <>
-OpType OperatorNode<LogicalQueryDerivedGet>::type_ = OpType::LogicalQueryDerivedGet;
+OpType OperatorNode<LogicalQueryDerivedGet>::type_ =
+    OpType::LogicalQueryDerivedGet;
 template <>
 OpType OperatorNode<LogicalFilter>::type_ = OpType::LogicalFilter;
 template <>

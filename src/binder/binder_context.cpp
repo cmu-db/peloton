@@ -27,28 +27,34 @@ void BinderContext::AddRegularTable(parser::TableRef *table_ref,
                                     concurrency::Transaction *txn) {
   table_ref->TryBindDatabaseName(default_database_name);
   auto table_alias = table_ref->GetTableAlias();
-  AddRegularTable(table_ref->GetDatabaseName(), table_ref->GetTableName(), table_alias, txn);
+  AddRegularTable(table_ref->GetDatabaseName(), table_ref->GetTableName(),
+                  table_alias, txn);
 }
 
 void BinderContext::AddRegularTable(const std::string db_name,
                                     const std::string table_name,
                                     const std::string table_alias,
-                                    concurrency::Transaction *txn) {
+                                    concurrency::Transaction* txn) {
   // using catalog object to retrieve meta-data
   auto table_object =
       catalog::Catalog::GetInstance()->GetTableObject(db_name, table_name, txn);
 
-  if (regular_table_alias_map_.find(table_alias) != regular_table_alias_map_.end() ||
-      nested_table_alias_map_.find(table_alias) != nested_table_alias_map_.end()) {
+  if (regular_table_alias_map_.find(table_alias) !=
+          regular_table_alias_map_.end() ||
+      nested_table_alias_map_.find(table_alias) !=
+          nested_table_alias_map_.end()) {
     throw Exception("Duplicate alias " + table_alias);
   }
   regular_table_alias_map_[table_alias] = table_object;
 }
 
-void BinderContext::AddNestedTable(const std::string table_alias,
-                                   std::vector<std::unique_ptr<expression::AbstractExpression>>& select_list) {
-  if (regular_table_alias_map_.find(table_alias) != regular_table_alias_map_.end() ||
-      nested_table_alias_map_.find(table_alias) != nested_table_alias_map_.end())
+void BinderContext::AddNestedTable(
+    const std::string table_alias,
+    std::vector<std::unique_ptr<expression::AbstractExpression>>& select_list) {
+  if (regular_table_alias_map_.find(table_alias) !=
+          regular_table_alias_map_.end() ||
+      nested_table_alias_map_.find(table_alias) !=
+          nested_table_alias_map_.end())
     throw Exception("Duplicate alias " + table_alias);
 
   std::unordered_map<std::string, type::TypeId> column_alias_map;
@@ -57,26 +63,28 @@ void BinderContext::AddNestedTable(const std::string table_alias,
     if (!expr->alias.empty()) {
       alias = expr->alias;
     } else if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
-      auto tv_expr = reinterpret_cast<expression::TupleValueExpression*>(expr.get());
+      auto tv_expr =
+          reinterpret_cast<expression::TupleValueExpression*>(expr.get());
       alias = tv_expr->GetColumnName();
-    }
-    else continue;
-    std::transform(alias.begin(), alias.end(), alias.begin(),
-                   ::tolower);
+    } else
+      continue;
+    std::transform(alias.begin(), alias.end(), alias.begin(), ::tolower);
     column_alias_map[alias] = expr->GetValueType();
   }
   nested_table_alias_map_[table_alias] = column_alias_map;
 }
 
 bool BinderContext::GetColumnPosTuple(
-    const std::string& col_name, std::shared_ptr<catalog::TableCatalogObject> table_obj,
+    const std::string& col_name,
+    std::shared_ptr<catalog::TableCatalogObject> table_obj,
     std::tuple<oid_t, oid_t, oid_t>& col_pos_tuple, type::TypeId& value_type) {
   try {
     auto column_object = table_obj->GetColumnObject(col_name);
     if (column_object == nullptr) return false;
 
     oid_t col_pos = column_object->column_id;
-    col_pos_tuple = std::make_tuple(table_obj->database_oid, table_obj->table_oid, col_pos);
+    col_pos_tuple =
+        std::make_tuple(table_obj->database_oid, table_obj->table_oid, col_pos);
     value_type = column_object->column_type;
     return true;
   } catch (CatalogException& e) {
@@ -93,8 +101,8 @@ bool BinderContext::GetColumnPosTuple(
   while (current_context != nullptr && !find_matched) {
     // Check regular table
     for (auto entry : current_context->regular_table_alias_map_) {
-      bool get_matched = GetColumnPosTuple(col_name, entry.second,
-                                           col_pos_tuple, value_type);
+      bool get_matched =
+          GetColumnPosTuple(col_name, entry.second, col_pos_tuple, value_type);
       if (get_matched) {
         if (!find_matched) {
           // First match
@@ -125,8 +133,8 @@ bool BinderContext::GetColumnPosTuple(
 }
 
 bool BinderContext::GetRegularTableObj(
-    std::shared_ptr<BinderContext> current_context, std::string &alias,
-    std::shared_ptr<catalog::TableCatalogObject> &table_obj) {
+    std::shared_ptr<BinderContext> current_context, std::string& alias,
+    std::shared_ptr<catalog::TableCatalogObject>& table_obj) {
   while (current_context != nullptr) {
     auto iter = current_context->regular_table_alias_map_.find(alias);
     if (iter != current_context->regular_table_alias_map_.end()) {
@@ -138,10 +146,9 @@ bool BinderContext::GetRegularTableObj(
   return false;
 }
 
-bool BinderContext::CheckNestedTableColumn(std::shared_ptr<BinderContext> current_context,
-                                           std::string &alias,
-                                           std::string &col_name,
-                                           type::TypeId& value_type) {
+bool BinderContext::CheckNestedTableColumn(
+    std::shared_ptr<BinderContext> current_context, std::string& alias,
+    std::string& col_name, type::TypeId& value_type) {
   while (current_context != nullptr) {
     auto iter = current_context->nested_table_alias_map_.find(alias);
     if (iter != current_context->nested_table_alias_map_.end()) {

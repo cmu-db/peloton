@@ -71,5 +71,5 @@ const std::vector<std::shared_ptr<GroupExpression>> Group::GetExpressions()
   return expressions_;
 }
 
-} // namespace optimizer
-} // namespace peloton
+}  // namespace optimizer
+}  // namespace peloton

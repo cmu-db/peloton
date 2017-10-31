@@ -682,6 +682,7 @@ TEST_F(OptimizerSQLTests, QueryDerivedTableTest) {
 
 }
 
+// WIP
 TEST_F(OptimizerSQLTests, NestedQueryTest) {
 //  TestUtil("select * from test as B where b in (select b as a from test where a = B.a);", {"22"}, false);
 //  TestUtil("select (select b as a from test where a = B.a) from test as B;", {"22"}, false);
