@@ -1,5 +1,5 @@
 # parameters for connecting to postgresql
-pg_database = "SQLite_trace_test"
+pg_database = "sqlite_trace_test"
 pg_username = "jenkins"
 pg_password = "jenkinsTest123"
 
