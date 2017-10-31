@@ -58,25 +58,25 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
   
         type::TypeId val = col->GetValueType(col->type);
   
-        LOG_TRACE("Column name: %s.%s; Is primary key: %d", table_name.c_str(), col->name, col->primary);
+        LOG_TRACE("Column name: %s.%s; Is primary key: %d", table_name.c_str(), col->name.c_str(), col->primary);
   
         // Check main constraints
         if (col->primary) {
           catalog::Constraint constraint(ConstraintType::PRIMARY, "con_primary");
           column_constraints.push_back(constraint);
-          LOG_TRACE("Added a primary key constraint on column \"%s.%s\"", table_name.c_str(), col->name);
+          LOG_TRACE("Added a primary key constraint on column \"%s.%s\"", table_name.c_str(), col->name.c_str());
         }
   
         if (col->not_null) {
           catalog::Constraint constraint(ConstraintType::NOTNULL, "con_not_null");
           column_constraints.push_back(constraint);
-          LOG_TRACE("Added a not-null constraint on column \"%s.%s\"", table_name.c_str(), col->name);
+          LOG_TRACE("Added a not-null constraint on column \"%s.%s\"", table_name.c_str(), col->name.c_str());
         }
   
         if (col->unique) {
           catalog::Constraint constraint(ConstraintType::UNIQUE, "con_unique");
           column_constraints.push_back(constraint);
-          LOG_TRACE("Added a unique constraint on column \"%s.%s\"", table_name.c_str(), col->name);
+          LOG_TRACE("Added a unique constraint on column \"%s.%s\"", table_name.c_str(), col->name.c_str());
         }
   
         /* **************** */
@@ -93,7 +93,7 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
             constraint.addDefaultValue(v);
             column_constraints.push_back(constraint);
             LOG_TRACE("Added a default constraint %s on column \"%s.%s\"",
-                      v.ToString().c_str(), table_name.c_str(), col->name);
+                      v.ToString().c_str(), table_name.c_str(), col->name.c_str());
           }
         }
   
@@ -111,7 +111,7 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
             constraint.AddCheck(std::move(col->check_expression->GetExpressionType()), std::move(tmp_value));
             column_constraints.push_back(constraint);
             LOG_TRACE("Added a check constraint on column \"%s.%s\"",
-                      table_name.c_str(), col->name);
+                      table_name.c_str(), col->name.c_str());
           }
         }
   
