@@ -360,14 +360,14 @@ std::unique_ptr<planner::AbstractPlan> CreateCopyPlan(
 }
 
 std::unordered_map<std::string, std::shared_ptr<expression::AbstractExpression>>
-ConstructSelectElementMap(std::vector<expression::AbstractExpression *> &select_list) {
+ConstructSelectElementMap(std::vector<std::unique_ptr<expression::AbstractExpression>> &select_list) {
   std::unordered_map<std::string, std::shared_ptr<expression::AbstractExpression>> res;
   for (auto& expr : select_list) {
     std::string alias;
     if (!expr->alias.empty()) {
       alias = expr->alias;
     } else if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
-      auto tv_expr = reinterpret_cast<expression::TupleValueExpression*>(expr);
+      auto tv_expr = reinterpret_cast<expression::TupleValueExpression*>(expr.get());
       alias = tv_expr->GetColumnName();
     } else continue;
     std::transform(alias.begin(), alias.end(), alias.begin(),

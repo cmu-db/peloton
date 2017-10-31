@@ -93,9 +93,6 @@ TEST_F(OperatorTransformerTests, JoinTransformationTest) {
 
   // Test table list
   auto op_expr = TransformToOpExpression("SELECT * FROM test, test2 WHERE test.a = test2.a2", stmt_list);
-  // Check Where
-  auto stmt = reinterpret_cast<parser::SelectStatement*>(stmt_list->GetStatement(0));
-  EXPECT_EQ(stmt->where_clause, nullptr);
   // Check Join Predicates
   auto op = op_expr->Op().As<LogicalInnerJoin>();
   CheckPredicate(op->join_predicate.get(), "test, test2", "test.a = test2.a2");
@@ -105,8 +102,6 @@ TEST_F(OperatorTransformerTests, JoinTransformationTest) {
   op_expr = TransformToOpExpression(
       "SELECT * FROM test join test2 ON test.b = test2.b2 WHERE test.a = test2.a2", stmt_list);
   // Check Where
-  stmt = reinterpret_cast<parser::SelectStatement*>(stmt_list->GetStatement(0));
-  EXPECT_EQ(stmt->where_clause, nullptr);
   op = op_expr->Op().As<LogicalInnerJoin>();
   // Check Join Predicates
   EXPECT_TRUE(op != nullptr);
@@ -119,10 +114,6 @@ TEST_F(OperatorTransformerTests, JoinTransformationTest) {
           "WHERE (A.a = B.b OR B.b = C.c) AND A.c = B.b AND A.b = 1 AND B.c + 1 = 10", stmt_list);
   op = op_expr->Op().As<LogicalInnerJoin>();
   // Check Where
-  stmt = reinterpret_cast<parser::SelectStatement*>(stmt_list->GetStatement(0));
-  EXPECT_NE(stmt->where_clause, nullptr);
-  CheckPredicate(stmt->where_clause.get(),
-                 "test as A, test as B, test as C", "A.b = 1 AND B.c + 1 = 10");
   EXPECT_TRUE(op != nullptr);
   // Check Join Predicates
   CheckPredicate(op->join_predicate.get(),
@@ -146,9 +137,6 @@ TEST_F(OperatorTransformerTests, JoinTransformationTest) {
           "test as C "
           "  ON A.a = C.a "
           "WHERE B.c = C.c", stmt_list);
-  // Check Where
-  stmt = reinterpret_cast<parser::SelectStatement*>(stmt_list->GetStatement(0));
-  EXPECT_EQ(stmt->where_clause, nullptr);
   op = op_expr->Op().As<LogicalInnerJoin>();
   // Check Join Predicates
   EXPECT_TRUE(op != nullptr);

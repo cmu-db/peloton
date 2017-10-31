@@ -40,7 +40,7 @@ void BindNodeVisitor::Visit(parser::SelectStatement *node) {
     select_element->Accept(this);
 
     // Recursively deduce expression value type
-    expression::ExpressionUtil::EvaluateExpression({ExprMap()}, select_element);
+    expression::ExpressionUtil::EvaluateExpression({ExprMap()}, select_element.get());
     // Recursively deduce expression name
     select_element->DeduceExpressionName();
   }
@@ -58,7 +58,7 @@ void BindNodeVisitor::Visit(parser::JoinDefinition *node) {
 void BindNodeVisitor::Visit(parser::TableRef *node) {
   // Nested select. Not supported in the current executors
   if (node->select != nullptr) {
-    if (node->alias == nullptr)
+    if (node->alias.empty())
       throw Exception("Alias not found for query derived table");
 
     // Save the previous context
