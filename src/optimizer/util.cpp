@@ -386,8 +386,7 @@ expression::AbstractExpression* TransformQueryDerivedTablePredicates(
     auto new_expr =
         alias_to_expr_map
             .find(reinterpret_cast<expression::TupleValueExpression*>(expr)
-                      ->GetColumnName())
-            ->second;
+                      ->GetColumnName())->second;
     return new_expr->Copy();
   }
   auto child_size = expr->GetChildrenSize();

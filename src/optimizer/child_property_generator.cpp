@@ -73,9 +73,10 @@ void ChildPropertyGenerator::Visit(const QueryDerivedScan *op) {
         for (size_t col_idx = 0; col_idx < col_len; col_idx++) {
           auto expr = col_prop->GetColumn(col_idx);
           expression::ExpressionUtil::GetTupleValueExprs(columns, expr.get());
+          // Wrap the deep copy of the expression in a shared_ptr to avoid memory leak
+          auto copy_expr = std::shared_ptr<expression::AbstractExpression>(expr->Copy());
           auto new_col = std::shared_ptr<expression::AbstractExpression>(
-              util::TransformQueryDerivedTablePredicates(op->alias_to_expr_map,
-                                                         expr->Copy()));
+              util::TransformQueryDerivedTablePredicates(op->alias_to_expr_map, copy_expr.get()));
           new_column_exprs.push_back(new_col);
         }
         output_column_exprs.resize(columns.size());

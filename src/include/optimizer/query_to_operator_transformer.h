@@ -69,14 +69,11 @@ class QueryToOperatorTransformer : public SqlNodeVisitor {
   SingleTablePredicatesMap single_table_predicates_map;
   std::unordered_set<std::string> table_alias_set_;
 
-  // For expr nodes
-  type::TypeId output_type;
-  int output_size;
-  bool output_inlined;
   concurrency::Transaction *txn_;
-
   // identifier for get operators
   oid_t get_id;
+  bool enable_predicate_push_down_;
+
 
 };
 

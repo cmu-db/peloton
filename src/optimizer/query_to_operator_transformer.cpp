@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <cmath>
+#include <include/settings/settings_manager.h>
 
 #include "expression/expression_util.h"
 
@@ -32,7 +33,8 @@ namespace peloton {
 namespace optimizer {
 QueryToOperatorTransformer::QueryToOperatorTransformer(
     concurrency::Transaction *txn)
-    : txn_(txn), get_id(0) {}
+    : txn_(txn), get_id(0),
+      enable_predicate_push_down_(settings::SettingsManager::GetBool(settings::SettingId::predicate_push_down)) {}
 std::shared_ptr<OperatorExpression>
 QueryToOperatorTransformer::ConvertToOpExpression(parser::SQLStatement *op) {
   output_expr_ = nullptr;

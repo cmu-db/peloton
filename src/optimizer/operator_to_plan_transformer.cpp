@@ -26,6 +26,7 @@
 #include "planner/seq_scan_plan.h"
 #include "planner/update_plan.h"
 #include "storage/data_table.h"
+#include "settings/settings_manager.h"
 
 using std::vector;
 using std::make_pair;
@@ -686,7 +687,8 @@ unique_ptr<planner::AbstractPlan> OperatorToPlanTransformer::GenerateJoinPlan(
     // based on the size of the hash table and its selectivity
     join_plan = unique_ptr<planner::AbstractPlan>(new planner::HashJoinPlan(
         join_type, move(predicate), move(proj_info), schema_ptr, left_hash_keys,
-        right_hash_keys, true));
+        right_hash_keys,
+        settings::SettingsManager::GetBool(settings::SettingId::hash_join_bloom_filter)));
 
     join_plan->AddChild(move(children_plans_[0]));
     join_plan->AddChild(move(hash_plan));
