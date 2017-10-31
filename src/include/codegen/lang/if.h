@@ -27,9 +27,9 @@ namespace lang {
 class If {
  public:
   // Constructor
-  If(CodeGen &cg, llvm::Value *if_condition, const std::string &name = "");
+  If(CodeGen &cg, llvm::Value *if_condition, const std::string name = "");
   If(CodeGen &cg, const codegen::Value &if_condition,
-     const std::string &name = "");
+     const std::string name = "");
 
   // Begin the else block (provided the name _name_)
   void ElseBlock(const std::string &name = "");
@@ -64,7 +64,7 @@ class If {
   llvm::BranchInst *branch_;
 
   // Name of the hash table, that will be used to make the IR labels more meaningful
-  const std::string &name_;
+  const std::string name_;
 };
 
 }  // namespace lang
