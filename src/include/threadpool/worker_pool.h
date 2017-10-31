@@ -12,28 +12,32 @@
 
 #pragma once
 
-#include <thread>
+#include <vector>
+#include <unistd.h>
 
 #include "threadpool/task_queue.h"
+#include "threadpool/worker.h"
 
 namespace peloton{
 namespace threadpool{
+
 /**
- * @class Worker
- * @brief A worker that can execute task
+ * @class WorkerPool
+ * @brief A worker pool that maintains a group to worker thread
  */
-class Worker {
+class WorkerPool {
  public:
-  void Start(TaskQueue *task_queue);
+  // submit a threadpool for asynchronous execution.
+  WorkerPool(const size_t num_threads, TaskQueue *task_queue);
+  ~WorkerPool() { this->Shutdown(); }
 
-  void Stop();
-
-  // execute
-  static void Execute(Worker *current_thread, TaskQueue *task_queue);
+  void Shutdown();
 
  private:
-  volatile bool shutdown_thread_;
-  std::thread worker_thread_;
+  friend class Worker;
+
+  std::vector<std::unique_ptr<Worker>> worker_threads_;
+  TaskQueue* task_queue_;
 };
 
 }  // namespace threadpool
