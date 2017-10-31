@@ -609,7 +609,7 @@ void Tree::remove(const Key &k, TID tid, ThreadInfo &threadInfo) {
             }
 
             // remember to unlock the node!!
-            node->writeUnlockObsolete();
+            node->writeUnlock();
 
           } else {
             // last value in the value_list is deleted

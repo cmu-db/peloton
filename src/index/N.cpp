@@ -361,6 +361,7 @@ bool N::isLeaf(const N *n) {
 N *N::setLeaf(TID tid) {
   MultiValues *value_list = new MultiValues();
   value_list->tid = tid;
+  value_list->next = nullptr;
 //  return reinterpret_cast<N *>(tid | (static_cast<uint64_t>(1) << 63));
   return reinterpret_cast<N *>((uint64_t)(value_list) | (static_cast<uint64_t>(1) << 63));
 }
