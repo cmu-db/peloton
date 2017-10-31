@@ -123,7 +123,7 @@ WriteState NetworkConnection::WritePackets() {
   // iterate through all the packets
   for (; next_response_ < protocol_handler_->responses.size(); next_response_++) {
     auto pkt = protocol_handler_->responses[next_response_].get();
-    LOG_INFO("To send packet with type: %c", static_cast<char>(pkt->msg_type));
+    LOG_TRACE("To send packet with type: %c", static_cast<char>(pkt->msg_type));
     // write is not ready during write. transit to CONN_WRITE
     auto result = BufferWriteBytesHeader(pkt);
     if (result == WriteState::WRITE_NOT_READY || result == WriteState::WRITE_ERROR) return result;
@@ -551,7 +551,7 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
   bool done = false;
 
   while (done == false) {
-    LOG_INFO("current state: %d", (int)conn->state);
+    LOG_TRACE("current state: %d", (int)conn->state);
     switch (conn->state) {
       case ConnState::CONN_LISTENING: {
         struct sockaddr_storage addr;
