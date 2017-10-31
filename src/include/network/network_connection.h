@@ -100,11 +100,12 @@ class NetworkConnection {
 
   void Reset();
 
+  static bool HandleSSLError(NetworkConnection *conn, int ret);
+
   static void TriggerStateMachine(void* arg);
 
   /* Runs the state machine for the protocol. Invoked by event handler callback */
   static void StateMachine(NetworkConnection *conn);
-
 
  private:
 
