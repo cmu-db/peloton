@@ -48,7 +48,7 @@ public:
   ~WalLogger() {}
 
 
-void WriteTransaction(std::vector<LogRecord> log_records, ResultType* status);
+void WriteTransaction(std::vector<LogRecord> log_records);
   void PersistLogBuffer(LogBuffer* log_buffer);
 
 

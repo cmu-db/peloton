@@ -42,7 +42,7 @@ namespace peloton {
 namespace logging {
 
 //Gets all the records created on the txn rw set and logs them.
-void WalLogger::WriteTransaction(std::vector<LogRecord> log_records, ResultType* status){
+void WalLogger::WriteTransaction(std::vector<LogRecord> log_records){
 LogBuffer* buf = new LogBuffer();
 for(LogRecord record : log_records){
     CopySerializeOutput* output = WriteRecordToBuffer(record);
@@ -55,7 +55,6 @@ for(LogRecord record : log_records){
 if(!buf->Empty()){
     PersistLogBuffer(buf);
 }
-*status = ResultType::SUCCESS;
 }
 
 CopySerializeOutput* WalLogger::WriteRecordToBuffer(LogRecord &record) {
