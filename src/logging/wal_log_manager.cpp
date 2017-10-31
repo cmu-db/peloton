@@ -25,24 +25,23 @@ namespace logging {
 
 //Method to enqueue the logging task
 ResultType WalLogManager::LogTransaction(std::vector<LogRecord> log_records){
-    ResultType status = ResultType::SUCCESS;
-    LogTransactionArg* arg = new LogTransactionArg(log_records, &status);
+    LogTransactionArg* arg = new LogTransactionArg(log_records);
     threadpool::LoggerQueuePool::GetInstance().SubmitTask(WalLogManager::WriteTransactionWrapper, arg, task_callback_, task_callback_arg_);
     LOG_DEBUG("Submit Task into LogQueuePool");
-    return status;
+    return ResultType::QUEUING;
 }
 
 //Static method that accepts void pointer
 void WalLogManager::WriteTransactionWrapper(void *arg_ptr) {
     LogTransactionArg* arg = (LogTransactionArg*) arg_ptr;
-    WriteTransaction(arg->log_records_,arg->p_status_);
+    WriteTransaction(arg->log_records_);
     delete (arg);
 }
 
 //Actual method called by the logger thread
-void WalLogManager::WriteTransaction(std::vector<LogRecord> log_records, ResultType* status) {
+void WalLogManager::WriteTransaction(std::vector<LogRecord> log_records) {
     WalLogger* wl = new WalLogger(0, "/tmp/log");
-    wl->WriteTransaction(log_records,status);
+    wl->WriteTransaction(log_records);
     delete wl;
 }
 
@@ -62,6 +61,7 @@ void WalLogManager::SetDirectories(std::string logging_dir)
 void WalLogManager::DoRecovery(){
     WalRecovery* wr = new WalRecovery(0, "/tmp/log");
     wr->StartRecovery();
+    delete wr;
  }
 
 

@@ -72,7 +72,7 @@ public:
 
   static void WriteTransactionWrapper(void* args);
 
-  static void WriteTransaction(std::vector<LogRecord> log_records, ResultType* result);
+  static void WriteTransaction(std::vector<LogRecord> log_records);
 
   // Logger side logic
   static void DoRecovery();
@@ -93,15 +93,13 @@ private:
 
 
 struct LogTransactionArg {
-  inline LogTransactionArg(const std::vector<LogRecord> log_records,
-                        ResultType* p_status) :
-      log_records_(log_records),
-      p_status_(p_status) {}
+  inline LogTransactionArg(const std::vector<LogRecord> log_records
+                        ) :
+      log_records_(log_records){}
 
 
 
   std::vector<LogRecord> log_records_;
-  ResultType *p_status_;
 
 };
 }
