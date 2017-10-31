@@ -12,14 +12,13 @@
 
 #include <utility>
 
-#include "traffic_cop/traffic_cop.h"
-
 #include "catalog/catalog.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "expression/expression_util.h"
 #include "optimizer/optimizer.h"
 #include "planner/plan_util.h"
 #include "settings/settings_manager.h"
+#include "traffic_cop/traffic_cop.h"
 #include "threadpool/mono_queue_pool.h"
 
 namespace peloton {
@@ -218,6 +217,21 @@ void TrafficCop::ExecuteStatementPlanGetResult() {
   }
 }
 
+/* Do nothing if there is no active txt;
+   If single txn, abort the txn;
+   If multi-txn, set 'ABORTED'
+*/
+void TrafficCop::AbortInvalidStmt() {
+  if (single_statement_txn_) {
+    LOG_TRACE("SINGLE ABORT!");
+    AbortQueryHelper();
+  } else {  // multi-statment txn
+    if (tcop_txn_state_.top().second != ResultType::ABORTED) {
+      tcop_txn_state_.top().second = ResultType::ABORTED;
+    }
+  }
+}
+
 void TrafficCop::GetDataTables(
     parser::TableRef *from_table,
     std::vector<storage::DataTable *> &target_tables) {
@@ -350,13 +364,14 @@ FieldInfo TrafficCop::GetColumnFieldForValueType(std::string column_name,
 }
 
 std::shared_ptr<Statement> TrafficCop::PrepareStatement(
-    const std::string &statement_name, const std::string &query_string,
-    std::string &error_message, size_t thread_id) {
-  LOG_TRACE("Prepare Statement name: %s", statement_name.c_str());
+    const std::string &stmt_name, const std::string &query_string,
+    std::unique_ptr<parser::SQLStatementList> sql_stmt_list, UNUSED_ATTRIBUTE std::string &error_message,
+    const size_t thread_id UNUSED_ATTRIBUTE) {
   LOG_TRACE("Prepare Statement query: %s", query_string.c_str());
+  StatementType stmt_type = sql_stmt_list->GetStatement(0)->GetType();
+  QueryType query_type = StatementTypeToQueryType(stmt_type, sql_stmt_list->GetStatement(0));
+  std::shared_ptr<Statement> statement(new Statement(stmt_name, query_type, query_string, sql_stmt_list));
 
-  std::shared_ptr<Statement> statement(
-      new Statement(statement_name, query_string));
   // We can learn transaction's states, BEGIN, COMMIT, ABORT, or ROLLBACK from
   // member variables, tcop_txn_state_. We can also get single-statement txn or
   // multi-statement txn from member variable is_single_statement_txn_
@@ -395,14 +410,8 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   }
 
   try {
-    auto &peloton_parser = parser::PostgresParser::GetInstance();
-    auto sql_stmt = peloton_parser.BuildParseTree(query_string);
-    if (!sql_stmt->is_valid) {
-      throw ParserException("Error parsing SQL statement");
-    }
-    LOG_TRACE("Optimizer Build Peloton Plan Tree...");
-    auto plan = optimizer_->BuildPelotonPlanTree(
-        sql_stmt, default_database_name_, tcop_txn_state_.top().first);
+    auto plan =
+        optimizer_->BuildPelotonPlanTree(sql_stmt_list, default_database_name_, tcop_txn_state_.top().first);
     statement->SetPlanTree(plan);
     // Get the tables that our plan references so that we know how to
     // invalidate it at a later point when the catalog changes
@@ -410,36 +419,27 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
         planner::PlanUtil::GetTablesReferenced(plan.get());
     statement->SetReferencedTables(table_oids);
 
-    for (auto &stmt : sql_stmt->GetStatements()) {
-      LOG_TRACE("SQLStatement: %s", stmt->GetInfo().c_str());
-      if (stmt->GetType() == StatementType::SELECT) {
-        auto tuple_descriptor = GenerateTupleDescriptor(stmt.get());
-        statement->SetTupleDescriptor(tuple_descriptor);
-      }
-      break;
+    if (query_type == QueryType::QUERY_SELECT) {
+      auto tuple_descriptor = GenerateTupleDescriptor(sql_stmt_list->GetStatement(0));
+      statement->SetTupleDescriptor(tuple_descriptor);
     }
-
-#ifdef LOG_DEBUG_ENABLED
-    if (statement->GetPlanTree() != nullptr) {
-      LOG_TRACE("Statement Prepared: %s", statement->GetInfo().c_str());
-      LOG_TRACE("%s", statement->GetPlanTree().get()->GetInfo().c_str());
-    }
-#endif
-    return statement;
-  } catch (Exception &e) {
+  } catch(Exception &e) {
     error_message = e.what();
-    if (is_single_statement_txn_) {
-      LOG_DEBUG("SINGLE ABORT!");
-      AbortQueryHelper();
-    } else {  // multi-statment txn
-      if (tcop_txn_state_.top().second != ResultType::ABORTED) {
-        tcop_txn_state_.top().second = ResultType::ABORTED;
-      }
-    }
+    AbortInvalidStmt();
     return nullptr;
   }
+
+#ifdef LOG_DEBUG_ENABLED
+  if (statement->GetPlanTree().get() != nullptr) {
+    LOG_TRACE("Statement Prepared: %s", statement->GetInfo().c_str());
+    LOG_TRACE("%s", statement->GetPlanTree().get()->GetInfo().c_str());
+  }
+#endif
+  return statement;
 }
 
+=======
+>>>>>>> more fixes for review
 ResultType TrafficCop::ExecuteStatement(
     const std::shared_ptr<Statement> &statement,
     const std::vector<type::Value> &params, UNUSED_ATTRIBUTE bool unnamed,
