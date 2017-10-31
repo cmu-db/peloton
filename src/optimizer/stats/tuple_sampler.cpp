@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <cinttypes>
 #include "optimizer/stats/tuple_sampler.h"
 
 #include "storage/data_table.h"
@@ -82,7 +83,7 @@ bool TupleSampler::GetTupleInTileGroup(storage::TileGroup *tile_group,
   // Reference: TileGroupHeader::GetActiveTupleCount()
   // Check whether the transaction ID is invalid.
   txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_offset);
-  LOG_TRACE("transaction ID: %lu", tuple_txn_id);
+  LOG_TRACE("transaction ID: %" PRId64, tuple_txn_id);
   if (tuple_txn_id == INVALID_TXN_ID) {
     return false;
   }
