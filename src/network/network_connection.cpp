@@ -123,7 +123,7 @@ WriteState NetworkConnection::WritePackets() {
   // iterate through all the packets
   for (; next_response_ < protocol_handler_->responses.size(); next_response_++) {
     auto pkt = protocol_handler_->responses[next_response_].get();
-    LOG_TRACE("To send packet with type: %c", static_cast<char>(pkt->msg_type));
+    LOG_INFO("To send packet with type: %c", static_cast<char>(pkt->msg_type));
     // write is not ready during write. transit to CONN_WRITE
     auto result = BufferWriteBytesHeader(pkt);
     if (result == WriteState::WRITE_NOT_READY || result == WriteState::WRITE_ERROR) return result;
@@ -551,7 +551,7 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
   bool done = false;
 
   while (done == false) {
-    LOG_TRACE("current state: %d", (int)conn->state);
+    LOG_INFO("current state: %d", (int)conn->state);
     switch (conn->state) {
       case ConnState::CONN_LISTENING: {
         struct sockaddr_storage addr;
@@ -615,14 +615,12 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
             PL_ASSERT(false);
           }
           int ssl_accept_ret;
-          if ((ssl_accept_ret = SSL_accept(conn->conn_SSL_context)) <= 0) {
-            LOG_ERROR("Failed to accept (handshake) client SSL context.");
-            LOG_ERROR("ssl error: %d", SSL_get_error(conn->conn_SSL_context, ssl_accept_ret));
-            // TODO: consider more about proper action
-            PL_ASSERT(false);
-            conn->TransitState(ConnState::CONN_CLOSED);
+          // For non-blocking socket, check in loop
+          while ((ssl_accept_ret = SSL_accept(conn->conn_SSL_context)) <= 0) {
+            if (!HandleSSLError(conn, ssl_accept_ret)) {
+              break;
+            }
           }
-          LOG_ERROR("SSL handshake completed");
           conn->ssl_sent_ = false;
         }
 
@@ -743,5 +741,38 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
   }
   LOG_TRACE("END of while loop");
 }
+
+// TODO: yc- need to handle error properly
+bool NetworkConnection::HandleSSLError(NetworkConnection* conn, int ret) {
+  int err = SSL_get_error(conn->conn_SSL_context, ret);
+  switch (err) {
+    case SSL_ERROR_SSL:conn->TransitState(ConnState::CONN_CLOSED);
+      LOG_INFO("Error ssl handshake");
+      return false;
+      break;
+    case SSL_ERROR_ZERO_RETURN:LOG_INFO("ssl error zero return");
+      conn->TransitState(ConnState::CONN_CLOSED);
+      return false;
+      break;
+    case SSL_ERROR_NONE:LOG_INFO("ssl error none");
+      break;
+    case SSL_ERROR_WANT_READ:LOG_INFO("ssl error want read");
+      break;
+    case SSL_ERROR_WANT_WRITE:LOG_INFO("ssl error want write");
+      break;
+    case SSL_ERROR_WANT_CONNECT:LOG_INFO("ssl error want connect");
+      break;
+    case SSL_ERROR_WANT_ACCEPT:LOG_INFO("ssl error want accept");
+      break;
+    case SSL_ERROR_WANT_X509_LOOKUP:LOG_INFO("ssl error want x509 lookup");
+      break;
+    case SSL_ERROR_SYSCALL:LOG_INFO("ssl error syscall");
+      conn->TransitState(ConnState::CONN_CLOSED);
+      return false;
+      break;
+  }
+  return true;
+}
+
 }  // namespace network
 }  // namespace peloton
