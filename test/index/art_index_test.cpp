@@ -25,10 +25,10 @@ TEST_F(ARTIndexTests, NonUniqueKeyDeleteTest) {
   TestingArtUtil::NonUniqueKeyDeleteTest(IndexType::ART);
 }
 
-//TEST_F(ARTIndexTests, MultiThreadedInsertTest) {
-//  TestingArtUtil::MultiThreadedInsertTest(IndexType::ART);
-//}
-//
+TEST_F(ARTIndexTests, MultiThreadedInsertTest) {
+  TestingArtUtil::MultiThreadedInsertTest(IndexType::ART);
+}
+
 //TEST_F(ARTIndexTests, NonUniqueKeyMultiThreadedTest) {
 //  TestingArtUtil::NonUniqueKeyMultiThreadedTest(IndexType::ART);
 //}

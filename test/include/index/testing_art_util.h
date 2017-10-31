@@ -42,7 +42,7 @@ public:
 //
   static void NonUniqueKeyDeleteTest(const IndexType index_type);
 
-//  static void MultiThreadedInsertTest(const IndexType index_type);
+  static void MultiThreadedInsertTest(const IndexType index_type);
 
 //  static void UniqueKeyMultiThreadedTest(const IndexType index_type);
 //

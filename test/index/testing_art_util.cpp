@@ -105,8 +105,7 @@ void TestingArtUtil::BasicTest(UNUSED_ATTRIBUTE const IndexType index_type) {
 
 void TestingArtUtil::NonUniqueKeyDeleteTest(UNUSED_ATTRIBUTE const IndexType index_type) {
   // the index created in this table is ART index
-//  std::unique_ptr<storage::DataTable> table(TestingExecutorUtil::CreateTable(5));
-
+  // std::unique_ptr<storage::DataTable> table(TestingExecutorUtil::CreateTable(5));
   storage::DataTable *table = CreateTable(5);
   std::vector<storage::Tuple *> keys;
   std::vector<ItemPointer *> expected_values;
@@ -146,6 +145,28 @@ void TestingArtUtil::NonUniqueKeyDeleteTest(UNUSED_ATTRIBUTE const IndexType ind
   EXPECT_EQ((uint64_t) expected_values[13], (uint64_t) result[1]);
 }
 
+void TestingArtUtil::MultiThreadedInsertTest(UNUSED_ATTRIBUTE const IndexType index_type) {
+  // the index created in this table is ART index
+  storage::DataTable *table = CreateTable(5);
+  std::vector<storage::Tuple *> keys;
+  std::vector<ItemPointer *> expected_values;
+  auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
+  bool random = false;
+  int num_rows = 7;
+
+  size_t scale_factor = 5;
+  LaunchParallelTest(4, TestingArtUtil::InsertHelper, table, testing_pool,
+                     scale_factor, num_rows, random, &keys, &expected_values);
+  auto index = table->GetIndex(1);
+  std::vector<ItemPointer *> result;
+  index->ScanAllKeys(result);
+  EXPECT_EQ(140, result.size());
+  for (uint32_t i = 0; i < keys.size(); i++) {
+    result.clear();
+    index->ScanKey(keys[i], result);
+    EXPECT_EQ(4, result.size());
+  }
+}
 
 storage::DataTable *TestingArtUtil::CreateTable(
   int tuples_per_tilegroup_count, bool indexes, oid_t table_oid) {
