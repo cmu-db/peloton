@@ -1,0 +1,19 @@
+# Dockerfile specifically for build testing from Jenkins
+FROM ubuntu:trusty
+
+ADD . /peloton
+RUN apt-get update && apt-get -y --no-install-recommends install python-dev clang-3.9
+
+RUN /bin/bash -c "source ./peloton/script/installation/packages.sh"
+
+RUN echo -n "Peloton Debug build with "; g++ --version | head -1
+RUN mkdir /peloton/build && cd /peloton/build && cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERALL=False .. && make -j4 && make install
+
+RUN echo -n "Peloton Release build with "; g++ --version | head -1
+RUN rm -rf /peloton/build && mkdir /peloton/build && cd /peloton/build && cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALL=False .. && make -j4 && make install
+
+RUN echo -n "Peloton Debug build with "; clang++-3.9 --version | head -1
+RUN rm -rf /peloton/build && mkdir /peloton/build && cd /peloton/build && CC=clang-3.9 CXX=clang++-3.9 cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERALL=False .. && make -j4 && make install
+
+RUN echo -n "Peloton Release build with "; clang++-3.9 --version | head -1
+RUN rm -rf /peloton/build && mkdir /peloton/build && cd /peloton/build && CC=clang-3.9 CXX=clang++-3.9 cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALL=False .. && make -j4 && make install
