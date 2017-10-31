@@ -130,7 +130,7 @@ def check_format(file_path):
     diff = difflib.unified_diff(src, formatted_src)
     for line in diff:
         LOG.info("Invalid formatting in file : " + file_path)
-        return True
+        return False
     
     return True
 
