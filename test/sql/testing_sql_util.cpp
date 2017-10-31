@@ -20,7 +20,7 @@
 #include "parser/postgresparser.h"
 #include "planner/plan_util.h"
 #include "include/traffic_cop/traffic_cop.h"
-#include "sql/testing_sql_util.h"
+#include "gmock/gtest/gtest.h"
 
 namespace peloton {
 
@@ -71,8 +71,14 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
   //SetTrafficCopCounter();
   counter_.store(1);
   auto status =
-      traffic_cop_.ExecuteStatement(statement, param_values, unnamed, nullptr, result_format,
-                                    result, rows_changed, error_message);
+      traffic_cop_.ExecuteStatement(statement,
+                                    param_values,
+                                    unnamed,
+                                    nullptr,
+                                    result_format,
+                                    result,
+                                    rows_changed,
+                                    error_message);
   if (traffic_cop_.is_queuing_) {
     ContinueAfterComplete();
     traffic_cop_.ExecuteStatementPlanGetResult();
@@ -160,8 +166,14 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
   //SetTrafficCopCounter();
   counter_.store(1);
   auto status =
-      traffic_cop_.ExecuteStatement(statement, param_values, unnamed, nullptr, result_format,
-                                    result, rows_changed, error_message);
+      traffic_cop_.ExecuteStatement(statement,
+                                    param_values,
+                                    unnamed,
+                                    nullptr,
+                                    result_format,
+                                    result,
+                                    rows_changed,
+                                    error_message);
   if (traffic_cop_.is_queuing_) {
     ContinueAfterComplete();
     traffic_cop_.ExecuteStatementPlanGetResult();
@@ -196,8 +208,14 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
   //SetTrafficCopCounter();
   counter_.store(1);
   auto status =
-      traffic_cop_.ExecuteStatement(statement, param_values, unnamed, nullptr, result_format,
-                                    result, rows_changed, error_message);
+      traffic_cop_.ExecuteStatement(statement,
+                                    param_values,
+                                    unnamed,
+                                    nullptr,
+                                    result_format,
+                                    result,
+                                    rows_changed,
+                                    error_message);
   if (traffic_cop_.is_queuing_) {
     ContinueAfterComplete();
     traffic_cop_.ExecuteStatementPlanGetResult();
@@ -210,6 +228,70 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
   return status;
 }
 
+// Executes a query and compares the result with the given rows, either
+// ordered or not
+// The result vector has to be specified as follows:
+// {"1|string1", "2|strin2", "3|string3"}
+void TestingSQLUtil::ExecuteSQLQueryAndCheckResult
+    (std::string query, std::vector<std::string> ref_result, bool ordered) {
+  std::vector<StatementResult> result;
+  std::vector<FieldInfo> tuple_descriptor;
+  std::string error_message;
+  int rows_changed;
+
+  // Execute query
+  TestingSQLUtil::ExecuteSQLQuery(std::move(query),
+                                  result,
+                                  tuple_descriptor,
+                                  rows_changed,
+                                  error_message);
+  unsigned int rows = result.size() / tuple_descriptor.size();
+
+
+  // Build actual result as set of rows for comparison
+  std::vector<std::string> actual_result(rows);
+  for (unsigned int i = 0; i < rows; i++) {
+    std::string row_string;
+
+    for (unsigned int j = 0; j < tuple_descriptor.size(); j++) {
+      row_string +=
+          GetResultValueAsString(result, i * tuple_descriptor.size() + j);
+      if (j < tuple_descriptor.size() - 1) {
+        row_string += "|";
+      }
+    }
+
+    actual_result[i] = std::move(row_string);
+  }
+
+  // Compare actual result to expected result
+  EXPECT_EQ(ref_result.size(), actual_result.size());
+
+  for (auto &actual_row : actual_result) {
+    if (ordered) {
+      // ordered: check if the row at the same index is equal
+      auto index = &actual_row - &actual_result[0];
+
+      if (actual_row != ref_result[index]) {
+        EXPECT_EQ(ref_result, actual_result);
+        break;
+      }
+    } else {
+      // unordered: find this row and remove it
+      std::vector<std::string>::iterator position =
+          std::find(ref_result.begin(), ref_result.end(), actual_row);
+
+      if (position != ref_result.end()) {
+        ref_result.erase(position);
+      } else {
+        EXPECT_EQ(ref_result, actual_result);
+        break;
+      }
+    }
+  }
+
+}
+
 void TestingSQLUtil::ContinueAfterComplete() {
   while (TestingSQLUtil::counter_.load() == 1) {
     usleep(10);
@@ -217,7 +299,7 @@ void TestingSQLUtil::ContinueAfterComplete() {
 }
 
 void TestingSQLUtil::UtilTestTaskCallback(void *arg) {
-  std::atomic_int *count = static_cast<std::atomic_int*>(arg);
+  std::atomic_int *count = static_cast<std::atomic_int *>(arg);
   count->store(0);
 }
 
