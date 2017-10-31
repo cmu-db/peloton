@@ -71,7 +71,8 @@ Optimizer::Optimizer() {
   physical_implementation_rules_.emplace_back(new GetToDummyScan());
   physical_implementation_rules_.emplace_back(new GetToSeqScan());
   physical_implementation_rules_.emplace_back(new GetToIndexScan());
-  physical_implementation_rules_.emplace_back(new LogicalQueryDerivedGetToPhysical());
+  physical_implementation_rules_.emplace_back(
+      new LogicalQueryDerivedGetToPhysical());
   physical_implementation_rules_.emplace_back(new LogicalFilterToPhysical());
   physical_implementation_rules_.emplace_back(new InnerJoinToInnerNLJoin());
   physical_implementation_rules_.emplace_back(new LeftJoinToLeftNLJoin());

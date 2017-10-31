@@ -46,8 +46,9 @@ void InnerJoinCommutativity::Transform(
       std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
   std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PL_ASSERT(children.size() == 2);
-  LOG_TRACE("Reorder left child with op %s and right child with op %s for inner join",
-            children[0]->Op().name().c_str(), children[1]->Op().name().c_str());
+  LOG_TRACE(
+      "Reorder left child with op %s and right child with op %s for inner join",
+      children[0]->Op().name().c_str(), children[1]->Op().name().c_str());
   result_plan->PushChild(children[1]);
   result_plan->PushChild(children[0]);
 
@@ -97,9 +98,9 @@ void GetToSeqScan::Transform(
     std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
   const LogicalGet *get = input->Op().As<LogicalGet>();
 
-  auto result_plan =
-      std::make_shared<OperatorExpression>(
-          PhysicalSeqScan::make(get->get_id, get->table, get->table_alias, get->predicate, get->is_for_update));
+  auto result_plan = std::make_shared<OperatorExpression>(
+      PhysicalSeqScan::make(get->get_id, get->table, get->table_alias,
+                            get->predicate, get->is_for_update));
 
   UNUSED_ATTRIBUTE std::vector<std::shared_ptr<OperatorExpression>> children =
       input->Children();
@@ -135,7 +136,8 @@ void GetToIndexScan::Transform(
   const LogicalGet *get = input->Op().As<LogicalGet>();
 
   auto result_plan = std::make_shared<OperatorExpression>(
-      PhysicalIndexScan::make(get->get_id, get->table, get->table_alias, get->predicate, get->is_for_update));
+      PhysicalIndexScan::make(get->get_id, get->table, get->table_alias,
+                              get->predicate, get->is_for_update));
 
   UNUSED_ATTRIBUTE std::vector<std::shared_ptr<OperatorExpression>> children =
       input->Children();
@@ -153,19 +155,21 @@ LogicalQueryDerivedGetToPhysical::LogicalQueryDerivedGetToPhysical() {
   match_pattern->AddChild(child);
 }
 
-bool LogicalQueryDerivedGetToPhysical::Check(std::shared_ptr<OperatorExpression> expr,
-                                   Memo *memo) const {
+bool LogicalQueryDerivedGetToPhysical::Check(
+    std::shared_ptr<OperatorExpression> expr, Memo *memo) const {
   (void)memo;
   (void)expr;
   return true;
 }
 
-void LogicalQueryDerivedGetToPhysical::Transform(std::shared_ptr<OperatorExpression> input,
-                                                 std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
+void LogicalQueryDerivedGetToPhysical::Transform(
+    std::shared_ptr<OperatorExpression> input,
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
   const LogicalQueryDerivedGet *get = input->Op().As<LogicalQueryDerivedGet>();
 
-  auto result_plan = std::make_shared<OperatorExpression>(
-      QueryDerivedScan::make(get->get_id, get->table_alias, get->alias_to_expr_map));
+  auto result_plan =
+      std::make_shared<OperatorExpression>(QueryDerivedScan::make(
+          get->get_id, get->table_alias, get->alias_to_expr_map));
   result_plan->PushChild(input->Children().at(0));
 
   transformed.push_back(result_plan);
@@ -303,9 +307,8 @@ void LogicalInsertSelectToPhysical::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
   const LogicalInsertSelect *insert_op = input->Op().As<LogicalInsertSelect>();
-  auto result =
-      std::make_shared<OperatorExpression>(PhysicalInsertSelect::make(
-          insert_op->target_table));
+  auto result = std::make_shared<OperatorExpression>(
+      PhysicalInsertSelect::make(insert_op->target_table));
   PL_ASSERT(input->Children().size() == 1);
   result->PushChild(input->Children().at(0));
   transformed.push_back(result);

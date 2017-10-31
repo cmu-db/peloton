@@ -76,7 +76,8 @@ GroupID Memo::AddNewGroup(std::shared_ptr<GroupExpression> gexpr) {
     const LogicalGet *logical_get = gexpr->Op().As<LogicalGet>();
     table_aliases.insert(logical_get->table_alias);
   } else if (op_type == OpType::LogicalQueryDerivedGet) {
-    const LogicalQueryDerivedGet *query_get = gexpr->Op().As<LogicalQueryDerivedGet>();
+    const LogicalQueryDerivedGet *query_get =
+        gexpr->Op().As<LogicalQueryDerivedGet>();
     table_aliases.insert(query_get->table_alias);
   } else {
     // For other groups, need to aggregate the table alias from children

@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <include/expression/expression_util.h>
+#include "expression/expression_util.h"
 #include "binder/bind_node_visitor.h"
 
 #include "expression/case_expression.h"
@@ -42,15 +42,15 @@ void BindNodeVisitor::Visit(parser::SelectStatement *node) {
   if (node->order != nullptr) node->order->Accept(this);
   if (node->limit != nullptr) node->limit->Accept(this);
   if (node->group_by != nullptr) node->group_by->Accept(this);
-  for (auto& select_element : node->select_list) {
+  for (auto &select_element : node->select_list) {
     select_element->Accept(this);
 
     // Recursively deduce expression value type
-    expression::ExpressionUtil::EvaluateExpression({ExprMap()}, select_element.get());
+    expression::ExpressionUtil::EvaluateExpression({ExprMap()},
+                                                   select_element.get());
     // Recursively deduce expression name
     select_element->DeduceExpressionName();
   }
-
 }
 
 // Some sub query nodes inside SelectStatement
@@ -117,7 +117,8 @@ void BindNodeVisitor::Visit(parser::UpdateStatement *node) {
 void BindNodeVisitor::Visit(parser::DeleteStatement *node) {
   context_ = std::make_shared<BinderContext>();
 
-  context_->AddRegularTable(node->GetDatabaseName(), node->GetTableName(), node->GetTableName(), txn_);
+  context_->AddRegularTable(node->GetDatabaseName(), node->GetTableName(),
+                            node->GetTableName(), txn_);
 
   if (node->expr != nullptr) node->expr->Accept(this);
 
@@ -171,14 +172,17 @@ void BindNodeVisitor::Visit(expression::TupleValueExpression *expr) {
     else {
       // Regular table
       if (BinderContext::GetRegularTableObj(context_, table_name, table_obj)) {
-        if (!BinderContext::GetColumnPosTuple(col_name, table_obj, col_pos_tuple, value_type)) {
+        if (!BinderContext::GetColumnPosTuple(col_name, table_obj,
+                                              col_pos_tuple, value_type)) {
           throw Exception("Cannot find column " + col_name);
         }
       }
       // Nested table
-      else if (!BinderContext::CheckNestedTableColumn(context_, table_name, col_name, value_type))
+      else if (!BinderContext::CheckNestedTableColumn(context_, table_name,
+                                                      col_name, value_type))
         throw Exception("Invalid table reference " + expr->GetTableName());
     }
+    expr->SetColName(col_name);
     expr->SetValueType(value_type);
     expr->SetBoundOid(col_pos_tuple);
   }

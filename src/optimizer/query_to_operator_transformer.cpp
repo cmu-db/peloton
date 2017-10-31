@@ -43,7 +43,8 @@ QueryToOperatorTransformer::ConvertToOpExpression(parser::SQLStatement *op) {
 void QueryToOperatorTransformer::Visit(parser::SelectStatement *op) {
   if (op->where_clause != nullptr) {
     // Extract single table predicates and join predicates from the where clause
-    util::ExtractPredicates(op->where_clause.get(), single_table_predicates_map, join_predicates_);
+    util::ExtractPredicates(op->where_clause.get(), single_table_predicates_map,
+                            join_predicates_);
   }
 
   if (op->from_table != nullptr) {
@@ -52,17 +53,17 @@ void QueryToOperatorTransformer::Visit(parser::SelectStatement *op) {
     if (op->group_by != nullptr) {
       // Make copies of groupby columns
       vector<shared_ptr<expression::AbstractExpression>> group_by_cols;
-      for (auto& col : op->group_by->columns)
+      for (auto &col : op->group_by->columns)
         group_by_cols.emplace_back(col->Copy());
-      auto group_by = std::make_shared<OperatorExpression>(
-          LogicalGroupBy::make(move(group_by_cols), op->group_by->having.get()));
+      auto group_by = std::make_shared<OperatorExpression>(LogicalGroupBy::make(
+          move(group_by_cols), op->group_by->having.get()));
       group_by->PushChild(output_expr_);
       output_expr_ = group_by;
     } else {
       // Check plain aggregation
       bool has_aggregation = false;
       bool has_other_exprs = false;
-      for (auto& expr : op->getSelectList()) {
+      for (auto &expr : op->getSelectList()) {
         vector<shared_ptr<expression::AggregateExpression>> aggr_exprs;
         expression::ExpressionUtil::GetAggregateExprs(aggr_exprs, expr.get());
         if (aggr_exprs.size() > 0)
@@ -113,7 +114,9 @@ void QueryToOperatorTransformer::Visit(parser::JoinDefinition *node) {
         expression::ExpressionUtil::GenerateTableAliasSet(
             node->condition.get(), join_condition_table_alias_set);
         join_predicates_.emplace_back(
-            AnnotatedExpression(std::shared_ptr<expression::AbstractExpression>(node->condition->Copy()), join_condition_table_alias_set));
+            AnnotatedExpression(std::shared_ptr<expression::AbstractExpression>(
+                                    node->condition->Copy()),
+                                join_condition_table_alias_set));
       }
       // Based on the set of all table alias in the subtree, extract those
       // join predicates that applies to this join.
@@ -163,13 +166,14 @@ void QueryToOperatorTransformer::Visit(parser::TableRef *node) {
 
     // Construct query derived table predicates
     auto table_alias = StringUtil::Lower(node->GetTableAlias());
-    auto alias_to_expr_map = util::ConstructSelectElementMap(node->select->select_list);
+    auto alias_to_expr_map =
+        util::ConstructSelectElementMap(node->select->select_list);
     auto predicates = pre_single_table_predicates_map[table_alias];
-    std::vector<expression::AbstractExpression*> transformed_predicates;
-    for (auto& original_predicate : predicates) {
-      util::ExtractPredicates(
-          util::TransformQueryDerivedTablePredicates(alias_to_expr_map, original_predicate.get()),
-          single_table_predicates_map, join_predicates_);
+    std::vector<expression::AbstractExpression *> transformed_predicates;
+    for (auto &original_predicate : predicates) {
+      util::ExtractPredicates(util::TransformQueryDerivedTablePredicates(
+                                  alias_to_expr_map, original_predicate.get()),
+                              single_table_predicates_map, join_predicates_);
     }
 
     node->select->Accept(this);
@@ -181,8 +185,9 @@ void QueryToOperatorTransformer::Visit(parser::TableRef *node) {
     table_alias_set_ = pre_table_alias_set;
 
     auto child_expr = output_expr_;
-    output_expr_ = std::make_shared<OperatorExpression>(
-        LogicalQueryDerivedGet::make(GetAndIncreaseGetId(), alias, alias_to_expr_map));
+    output_expr_ =
+        std::make_shared<OperatorExpression>(LogicalQueryDerivedGet::make(
+            GetAndIncreaseGetId(), alias, alias_to_expr_map));
     output_expr_->PushChild(child_expr);
 
   }
@@ -221,23 +226,24 @@ void QueryToOperatorTransformer::Visit(parser::TableRef *node) {
   }
   // Single table
   else {
-    if (node->list.size() == 1)
-      node = node->list.at(0).get();
+    if (node->list.size() == 1) node = node->list.at(0).get();
     storage::DataTable *target_table =
         catalog::Catalog::GetInstance()->GetTableWithName(
             node->GetDatabaseName(), node->GetTableName(), txn_);
-    std::string table_alias = StringUtil::Lower(std::string(node->GetTableAlias()));
+    std::string table_alias =
+        StringUtil::Lower(std::string(node->GetTableAlias()));
     // Update table alias map
     table_alias_set_.insert(table_alias);
     // Construct logical operator
     auto predicates_entry = single_table_predicates_map.find(table_alias);
     if (predicates_entry != single_table_predicates_map.end())
-      output_expr_ = std::make_shared<OperatorExpression>(
-          LogicalGet::make(GetAndIncreaseGetId(), target_table, node->GetTableAlias(),
-                     std::shared_ptr<expression::AbstractExpression>(util::CombinePredicates(predicates_entry->second))));
+      output_expr_ = std::make_shared<OperatorExpression>(LogicalGet::make(
+          GetAndIncreaseGetId(), target_table, node->GetTableAlias(),
+          std::shared_ptr<expression::AbstractExpression>(
+              util::CombinePredicates(predicates_entry->second))));
     else
-      output_expr_ = std::make_shared<OperatorExpression>(
-        LogicalGet::make(GetAndIncreaseGetId(), target_table, node->GetTableAlias()));
+      output_expr_ = std::make_shared<OperatorExpression>(LogicalGet::make(
+          GetAndIncreaseGetId(), target_table, node->GetTableAlias()));
   }
 }
 
@@ -269,13 +275,12 @@ void QueryToOperatorTransformer::Visit(parser::DeleteStatement *op) {
       op->GetDatabaseName(), op->GetTableName(), txn_);
   std::shared_ptr<OperatorExpression> table_scan;
   if (op->expr != nullptr)
-    table_scan = std::make_shared<OperatorExpression>(
-        LogicalGet::make(GetAndIncreaseGetId(), target_table,
-                         op->GetTableName(),
-                         std::shared_ptr<expression::AbstractExpression>(op->expr->Copy())));
+    table_scan = std::make_shared<OperatorExpression>(LogicalGet::make(
+        GetAndIncreaseGetId(), target_table, op->GetTableName(),
+        std::shared_ptr<expression::AbstractExpression>(op->expr->Copy())));
   else
-    table_scan = std::make_shared<OperatorExpression>(
-        LogicalGet::make(GetAndIncreaseGetId(), target_table, op->GetTableName()));
+    table_scan = std::make_shared<OperatorExpression>(LogicalGet::make(
+        GetAndIncreaseGetId(), target_table, op->GetTableName()));
   auto delete_expr =
       std::make_shared<OperatorExpression>(LogicalDelete::make(target_table));
   delete_expr->PushChild(table_scan);
@@ -299,11 +304,14 @@ void QueryToOperatorTransformer::Visit(parser::UpdateStatement *op) {
       LogicalUpdate::make(target_table, &op->updates));
 
   if (op->where != nullptr)
-  table_scan = std::make_shared<OperatorExpression>(
-      LogicalGet::make(GetAndIncreaseGetId(), target_table, op->table->GetTableName(), std::shared_ptr<expression::AbstractExpression>(op->where->Copy()), true));
+    table_scan = std::make_shared<OperatorExpression>(LogicalGet::make(
+        GetAndIncreaseGetId(), target_table, op->table->GetTableName(),
+        std::shared_ptr<expression::AbstractExpression>(op->where->Copy()),
+        true));
   else
     table_scan = std::make_shared<OperatorExpression>(
-        LogicalGet::make(GetAndIncreaseGetId(), target_table, op->table->GetTableName(), nullptr, true));
+        LogicalGet::make(GetAndIncreaseGetId(), target_table,
+                         op->table->GetTableName(), nullptr, true));
 
   update_expr->PushChild(table_scan);
 

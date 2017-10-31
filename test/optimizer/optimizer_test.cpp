@@ -15,10 +15,10 @@
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"
 #include "planner/update_plan.h"
-#include <sql/testing_sql_util.h>
-#include <include/planner/seq_scan_plan.h>
-#include <include/planner/abstract_join_plan.h>
-#include <include/planner/hash_join_plan.h>
+#include "sql/testing_sql_util.h"
+#include "planner/seq_scan_plan.h"
+#include "planner/abstract_join_plan.h"
+#include "planner/hash_join_plan.h"
 #include "traffic_cop/traffic_cop.h"
 #include "expression/tuple_value_expression.h"
 
