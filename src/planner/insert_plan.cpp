@@ -136,7 +136,7 @@ InsertPlan::InsertPlan(
 
           LOG_TRACE("Column %d found in INSERT query, ExpressionType: %s",
                     col_cntr,
-                    ExpressionTypeToString(values->at(pos)->GetExpressionType())
+                    ExpressionTypeToString(values.at(pos)->GetExpressionType())
                         .c_str());
 
           if (values.at(pos)->GetExpressionType() ==
