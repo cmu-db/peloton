@@ -61,8 +61,6 @@
 
 #include "index/index_factory.h"
 
-#include "logging/log_manager.h"
-
 #include "planner/abstract_plan.h"
 #include "planner/materialization_plan.h"
 #include "planner/insert_plan.h"

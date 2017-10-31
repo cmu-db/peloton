@@ -940,7 +940,6 @@ void PostgresProtocolHandler::GetResult() {
       traffic_cop_->is_logging_ = true;
   else
       traffic_cop_->is_logging_ = false;
-  LOG_DEBUG("######## ResultType: %d ###########", (int)status);
   switch (protocol_type_) {
     case NetworkProtocolType::POSTGRES_JDBC:
       LOG_TRACE("JDBC result");
