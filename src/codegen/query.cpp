@@ -66,7 +66,7 @@ void Query::Execute(concurrency::Transaction &txn,
   timer.Start();
 
   // Call init
-  LOG_DEBUG("Calling query's init() ...");
+  LOG_TRACE("Calling query's init() ...");
   try {
     init_func_(param);
   } catch (...) {
@@ -84,7 +84,7 @@ void Query::Execute(concurrency::Transaction &txn,
   }
 
   // Execute the query!
-  LOG_DEBUG("Calling query's plan() ...");
+  LOG_TRACE("Calling query's plan() ...");
   try {
     plan_func_(param);
   } catch (...) {
@@ -102,7 +102,7 @@ void Query::Execute(concurrency::Transaction &txn,
   }
 
   // Clean up
-  LOG_DEBUG("Calling query's tearDown() ...");
+  LOG_TRACE("Calling query's tearDown() ...");
   tear_down_func_(param);
 
   // No need to cleanup if we get an exception while cleaning up...

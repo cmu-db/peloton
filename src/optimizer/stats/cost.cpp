@@ -100,7 +100,7 @@ double Cost::SortGroupByCost(const std::shared_ptr<TableStats> &input_stats,
   // Update cost to trivial if first group by column has index.
   // TODO: use more complicated cost when group by multiple columns when
   // primary index operator is supported.
-  if (input_stats->HasPrimaryIndex(columns[0])) {
+  if (!columns.empty() &&input_stats->HasPrimaryIndex(columns[0])) {
     // underestimation of group by with index.
     cost = DEFAULT_OPERATOR_COST;
   }
@@ -170,7 +170,7 @@ double Cost::LimitCost(const std::shared_ptr<TableStats> &input_stats,
 // ORDER BY
 //===----------------------------------------------------------------------===//
 double Cost::OrderByCost(const std::shared_ptr<TableStats> &input_stats,
-                   const std::vector<oid_t> &columns,
+                   const std::vector<std::string> &columns,
                    const std::vector<bool> &orders,
                    std::shared_ptr<TableStats> &output_stats) {
   PL_ASSERT(input_stats);
@@ -178,11 +178,12 @@ double Cost::OrderByCost(const std::shared_ptr<TableStats> &input_stats,
   if (columns.size() == 0 || columns.size() != orders.size()) {
     return DEFAULT_COST;
   }
-  oid_t column = columns[0];
+  std::string column = columns[0];
   bool order = orders[0];  // TRUE is ASC, FALSE is DESC
   double cost = DEFAULT_COST;
   // Special case when first column has index.
   if (input_stats->HasPrimaryIndex(column)) {
+
     if (order) {  // ascending
       // No cost for order by for now. We might need to take
       // cardinality of first column into account in the future.
