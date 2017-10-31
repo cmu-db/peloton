@@ -2,7 +2,7 @@
 FROM centos:7
 
 ADD . /peloton
-RUN yum -y install sudo wget clang
+RUN yum -q -y install sudo wget clang
 
 RUN /bin/bash -c "source ./peloton/script/installation/packages.sh"
 

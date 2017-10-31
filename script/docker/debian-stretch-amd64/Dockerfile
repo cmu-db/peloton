@@ -2,7 +2,7 @@ FROM debian:stretch
 
 ADD . /peloton
 # preliminary steps to allow packages.sh to run
-RUN apt-get update && apt-get -y --no-install-recommends install python-dev lsb-release sudo software-properties-common && apt-get clean
+RUN apt-get -qq update && apt-get -qq -y --no-install-recommends install python-dev lsb-release sudo software-properties-common && apt-get -qq clean
 
 RUN /bin/bash -c "source ./peloton/script/installation/packages.sh"
 

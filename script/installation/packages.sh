@@ -31,7 +31,7 @@ if [ "$DISTRO" = "UBUNTU" ]; then
         sudo apt-get update
     fi
 
-    sudo apt-get --force-yes --ignore-missing -y install \
+    sudo apt-get -qq --force-yes --ignore-missing -y install \
         git \
         g++ \
         cmake \
@@ -56,7 +56,7 @@ if [ "$DISTRO" = "UBUNTU" ]; then
 ## FEDORA
 ## ------------------------------------------------
 elif [[ "$DISTRO" == *"FEDORA"* ]]; then
-    sudo dnf install -y \
+    sudo dnf -q install -y \
         git \
         gcc-c++ \
         make \
@@ -113,11 +113,11 @@ elif [[ "$DISTRO" == *"REDHAT"* ]] && [[ "${DISTRO_VER%.*}" == "7" ]]; then
     )
 
     # Add EPEL repository first
-    sudo yum install -y epel-release
-    sudo yum upgrade -y epel-release
+    sudo yum -q -y install epel-release
+    sudo yum -q -y upgrade epel-release
 
     # Simple installations via yum
-    sudo yum install -y \
+    sudo yum -q -y install \
         git \
         gcc-c++ \
         make \
