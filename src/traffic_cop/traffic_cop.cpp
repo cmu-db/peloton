@@ -492,8 +492,8 @@ FieldInfo TrafficCop::GetColumnFieldForValueType(std::string column_name,
     }
     default: {
       // Type not Identified
-      LOG_ERROR("Unrecognized field type '%s' [%d] for field '%s'",
-                TypeIdToString(column_type).c_str(), column_type,
+      LOG_ERROR("Unrecognized field type '%s' for field '%s'",
+                TypeIdToString(column_type).c_str(),
                 column_name.c_str());
       field_type = PostgresValueType::TEXT;
       field_size = 255;

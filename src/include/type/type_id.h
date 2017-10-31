@@ -16,7 +16,7 @@ namespace peloton {
 namespace type {
 
 // Every possible SQL type ID
-enum TypeId {
+enum class TypeId {
   INVALID = 0,
   PARAMETER_OFFSET,
   BOOLEAN,
