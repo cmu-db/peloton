@@ -37,7 +37,6 @@ void BindNodeVisitor::Visit(parser::SelectStatement *node) {
   context_->upper_context = pre_context;
   if (node->from_table != nullptr){
     node->from_table->Accept(this);
-    node->from_table->TryBindDatabaseName(default_database_name_);
   }
   
   if (node->where_clause != nullptr) node->where_clause->Accept(this);
