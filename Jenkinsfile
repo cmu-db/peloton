@@ -15,7 +15,7 @@ pipeline {
             steps {
                 dir('build') {
 				    // the LD_PRELOADs are necessary because our Jenkins uses its own which will otherwise disrupt ASan
-                    sh 'LD_PRELOAD="" make -j4 check'
+                    sh 'LD_PRELOAD="" make -j4 check > /dev/null'
                     step([$class: 'XUnitBuilder', testTimeMargin: '3000', thresholdMode: 1, thresholds: [[$class: 'FailedThreshold', failureNewThreshold: '', failureThreshold: '', unstableNewThreshold: '', unstableThreshold: ''], [$class: 'SkippedThreshold', failureNewThreshold: '', failureThreshold: '', unstableNewThreshold: '', unstableThreshold: '']], tools: [[$class: 'GoogleTestType', deleteOutputFiles: true, failIfNotNew: true, pattern: 'test/*_test.xml', skipNoTestFiles: false, stopProcessingIfError: true]]])
                     sh 'make install'
                     sh 'LD_PRELOAD="" bash ../script/testing/psql/psql_test.sh || echo "failed, continuing"' // sometimes core dumps
