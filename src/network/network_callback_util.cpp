@@ -42,13 +42,13 @@ void CallbackUtil::WorkerHandleNewConn(evutil_socket_t new_conn_recv_fd,
       thread->new_conn_queue.Dequeue(item);
       conn = NetworkManager::GetConnection(item->new_conn_fd);
       if (conn == nullptr) {
-        LOG_DEBUG("Creating new socket fd:%d", item->new_conn_fd);
+        LOG_TRACE("Creating new socket fd:%d", item->new_conn_fd);
         /* create a new connection object */
         NetworkManager::CreateNewConnection(item->new_conn_fd, item->event_flags,
                                             static_cast<NetworkThread *>(thread),
                                             ConnState::CONN_READ);
       } else {
-        LOG_DEBUG("Reusing socket fd:%d", item->new_conn_fd);
+        LOG_TRACE("Reusing socket fd:%d", item->new_conn_fd);
         /* otherwise reset and reuse the existing conn object */
         conn->Reset();
         conn->Init(item->event_flags, static_cast<NetworkThread *>(thread),

@@ -98,13 +98,11 @@ void NetworkConnection::Init(short event_flags, NetworkThread *thread,
 }
 
 void NetworkConnection::TriggerStateMachine(void* arg) {
-  LOG_DEBUG("STATE MACHINE TRIGGERED!!!!!!!!!!!!!!!");
   struct event* event = static_cast<struct event*>(arg);
   event_active(event, EV_WRITE, 0);
 }
 
 void NetworkConnection::TriggerStateMachineLog(void* arg) {
-  LOG_DEBUG("LOG LOG LOG LOG STATE MACHINE TRIGGERED!!!!!!!!!!!!!!!");
   struct event* event = static_cast<struct event*>(arg);
   event_active(event, EV_WRITE, 0);
 }
@@ -652,7 +650,7 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
   bool done = false;
 
   while (done == false) {
-    LOG_DEBUG("current state: %d", (int)conn->state);
+    LOG_TRACE("current state: %d", (int)conn->state);
     switch (conn->state) {
       case ConnState::CONN_LISTENING: {
         struct sockaddr_storage addr;
