@@ -19,7 +19,8 @@
 #include <include/planner/seq_scan_plan.h>
 #include <include/planner/abstract_join_plan.h>
 #include <include/planner/hash_join_plan.h>
-#include "include/traffic_cop/traffic_cop.h"
+#include "traffic_cop/traffic_cop.h"
+#include "expression/tuple_value_expression.h"
 
 namespace peloton {
 namespace test {

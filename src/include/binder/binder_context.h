@@ -52,7 +52,7 @@ class BinderContext {
                        concurrency::Transaction *txn);
 
   // Update the nested table alias map
-  void AddNestedTable(const std::string table_alias, std::vector<expression::AbstractExpression*>* select_list);
+  void AddNestedTable(const std::string table_alias, std::vector<std::unique_ptr<expression::AbstractExpression>>& select_list);
 
   static bool HasTables(std::shared_ptr<BinderContext> current_context) {
     if (current_context == nullptr) return false;
