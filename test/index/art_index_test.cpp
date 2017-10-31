@@ -29,9 +29,9 @@ TEST_F(ARTIndexTests, MultiThreadedInsertTest) {
   TestingArtUtil::MultiThreadedInsertTest(IndexType::ART);
 }
 
-//TEST_F(ARTIndexTests, NonUniqueKeyMultiThreadedTest) {
-//  TestingArtUtil::NonUniqueKeyMultiThreadedTest(IndexType::ART);
-//}
+TEST_F(ARTIndexTests, NonUniqueKeyMultiThreadedStressTest) {
+  TestingArtUtil::NonUniqueKeyMultiThreadedStressTest(IndexType::ART);
+}
 
 }
 }

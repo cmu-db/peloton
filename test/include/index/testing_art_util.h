@@ -48,7 +48,7 @@ public:
 //
 //  static void NonUniqueKeyMultiThreadedTest(const IndexType index_type);
 
-//  static void NonUniqueKeyMultiThreadedStressTest(const IndexType index_type);
+  static void NonUniqueKeyMultiThreadedStressTest(const IndexType index_type);
 //
 //  static void NonUniqueKeyMultiThreadedStressTest2(const IndexType index_type);
 

@@ -130,7 +130,7 @@ void TestingArtUtil::NonUniqueKeyDeleteTest(UNUSED_ATTRIBUTE const IndexType ind
 
   result.clear();
   index->ScanAllKeys(result);
-  EXPECT_EQ(13, result.size());
+  EXPECT_EQ(10, result.size());
 
   // the first 4 keys should have one value left
   // the last 3 keys should have two values left
@@ -167,6 +167,69 @@ void TestingArtUtil::MultiThreadedInsertTest(UNUSED_ATTRIBUTE const IndexType in
     EXPECT_EQ(4, result.size());
   }
 }
+
+void TestingArtUtil::NonUniqueKeyMultiThreadedStressTest(UNUSED_ATTRIBUTE const IndexType index_type) {
+  // the index created in this table is ART index
+  // std::unique_ptr<storage::DataTable> table(TestingExecutorUtil::CreateTable(5));
+  storage::DataTable *table = CreateTable(5);
+  std::vector<storage::Tuple *> keys;
+  std::vector<ItemPointer *> expected_values;
+  auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
+  bool random = false;
+  int num_rows = 20;
+
+  // first, remember some key value pairs to delete
+  size_t scale_factor = 1;
+  size_t num_threads = 1;
+  // add 200 key-values in sequential order first, so the data
+  // in vector keys and vector expected_values are in correct order
+  for (uint32_t i = 0; i < 10; i++) {
+    LaunchParallelTest(num_threads, TestingArtUtil::InsertHelper, table, testing_pool,
+                       scale_factor, num_rows, random, &keys, &expected_values);
+  }
+
+  // insert huge amount of tuples (random data) at the same time
+  random = true;
+  scale_factor = 5;
+  num_threads = 15;
+  std::vector<storage::Tuple *> useless_keys;
+  std::vector<ItemPointer *> useless_values;
+  LaunchParallelTest(num_threads, TestingArtUtil::InsertHelper, table, testing_pool,
+                     scale_factor, num_rows, random, &useless_keys, &useless_values);
+
+  auto index = table->GetIndex(1);
+  std::vector<ItemPointer *> result;
+  index->ScanAllKeys(result);
+  // 200 + 20 * 5 * 15 = 1540 in total
+  EXPECT_EQ(1700, result.size());
+
+
+  int delete_rows = 19;
+  num_threads = 10;
+  LaunchParallelTest(num_threads, TestingArtUtil::DeleteHelper, table, delete_rows, keys, expected_values);
+
+  result.clear();
+  index->ScanAllKeys(result);
+  // 1700 - 190 = 1510
+  EXPECT_EQ(1510, result.size());
+
+  // the first 190 key-values in vector keys should be gone
+  // INCORRECT!! it's possible that these key is generated randomly!
+//  for (uint32_t i = 0; i < 190; i++) {
+//    result.clear();
+//    index->ScanKey(keys[i], result);
+//    EXPECT_EQ(0, result.size());
+//  }
+
+  // the last 10 key-values in vector keys should remain
+  for (uint32_t i = 190; i < 200; i++) {
+    result.clear();
+    index->ScanKey(keys[i], result);
+    EXPECT_EQ((uint64_t) expected_values[i], (uint64_t) result[0]);
+  }
+
+}
+
 
 storage::DataTable *TestingArtUtil::CreateTable(
   int tuples_per_tilegroup_count, bool indexes, oid_t table_oid) {
@@ -318,11 +381,16 @@ void TestingArtUtil::DeleteHelper(storage::DataTable *table, UNUSED_ATTRIBUTE in
                                   UNUSED_ATTRIBUTE uint64_t thread_itr) {
   // get secondary index which is built on the first and second columns
   auto index = table->GetIndex(1);
-
-  for (unsigned int rowid = 0; rowid < 1u; rowid++) {
-    if (rowid >= keys.size()) {
-      break;
-    }
+  printf("thread_iter = %llu\n", thread_itr);
+  int start_row = thread_itr * num_rows;
+  if (keys.size() < (uint64_t) start_row) {
+    start_row = keys.size();
+  }
+  int end_row = start_row + num_rows;
+  if ((keys.size() < (uint64_t) end_row)) {
+    end_row = keys.size();
+  }
+  for (int rowid = start_row; rowid < end_row; rowid++) {
     index->DeleteEntry(keys[rowid], expected_values[rowid]);
   }
 
