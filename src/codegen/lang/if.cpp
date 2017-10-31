@@ -25,7 +25,7 @@ namespace lang {
 // Constructor. We create two BB's, one "then" BB that appears right after the
 // conditional branch
 //===----------------------------------------------------------------------===//
-If::If(CodeGen &cg, llvm::Value *if_condition, const std::string &name)
+If::If(CodeGen &cg, llvm::Value *if_condition, const std::string name)
     : cg_(cg),
       fn_(cg_->GetInsertBlock()->getParent()),
       last_bb_in_then_(nullptr),
@@ -43,7 +43,7 @@ If::If(CodeGen &cg, llvm::Value *if_condition, const std::string &name)
   cg_->SetInsertPoint(then_bb_);
 }
 
-If::If(CodeGen &cg, const codegen::Value &if_condition, const std::string &name)
+If::If(CodeGen &cg, const codegen::Value &if_condition, const std::string name)
     : If(cg, type::Boolean::Instance().Reify(cg, if_condition), name) {}
 
 void If::EndIf(llvm::BasicBlock *end_bb) {
