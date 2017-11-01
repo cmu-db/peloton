@@ -39,7 +39,7 @@ class AggregateGroupBySQLTests : public PelotonTest {
   }
 };
 
-TEST_F (AggregateGroupBySQLTests, AggregateGroupByManyAVGsSQLTest) {
+TEST_F(AggregateGroupBySQLTests, AggregateGroupByManyAVGsSQLTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
@@ -49,9 +49,7 @@ TEST_F (AggregateGroupBySQLTests, AggregateGroupByManyAVGsSQLTest) {
 
   TestingSQLUtil::ExecuteSQLQueryAndCheckResult(
       "SELECT AVG(a), AVG(b), AVG(c), AVG(c), AVG(c) FROM test GROUP BY d;",
-      {"5|3|5|5|5",
-       "2|2|4|4|4"});
-
+      {"5|3|5|5|5", "2|2|4|4|4"});
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
@@ -59,7 +57,7 @@ TEST_F (AggregateGroupBySQLTests, AggregateGroupByManyAVGsSQLTest) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F (AggregateGroupBySQLTests, AggregateGroupByMixedAVGsSQLTest) {
+TEST_F(AggregateGroupBySQLTests, AggregateGroupByMixedAVGsSQLTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
@@ -69,10 +67,9 @@ TEST_F (AggregateGroupBySQLTests, AggregateGroupByMixedAVGsSQLTest) {
 
   // This test especially tests several AVGs in a row
   TestingSQLUtil::ExecuteSQLQueryAndCheckResult(
-      "SELECT SUM(a), AVG(a), COUNT(b), AVG(b), MAX(c), AVG(c) FROM test GROUP BY d;",
-      {"15|5|3|3|6|5",
-       "6|2|3|2|6|4"});
-
+      "SELECT SUM(a), AVG(a), COUNT(b), AVG(b), MAX(c), AVG(c) FROM test GROUP "
+      "BY d;",
+      {"15|5|3|3|6|5", "6|2|3|2|6|4"});
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
@@ -80,7 +77,7 @@ TEST_F (AggregateGroupBySQLTests, AggregateGroupByMixedAVGsSQLTest) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F (AggregateGroupBySQLTests, AggregateGroupByAllAggregationsSQLTest) {
+TEST_F(AggregateGroupBySQLTests, AggregateGroupByAllAggregationsSQLTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
@@ -90,9 +87,7 @@ TEST_F (AggregateGroupBySQLTests, AggregateGroupByAllAggregationsSQLTest) {
 
   TestingSQLUtil::ExecuteSQLQueryAndCheckResult(
       "SELECT AVG(a), SUM(a), MAX(a), MIN(a), COUNT(a) FROM test GROUP BY d;",
-      {"2|6|3|1|3",
-       "5|15|6|4|3"});
-
+      {"2|6|3|1|3", "5|15|6|4|3"});
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
@@ -100,7 +95,7 @@ TEST_F (AggregateGroupBySQLTests, AggregateGroupByAllAggregationsSQLTest) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F (AggregateGroupBySQLTests, AggregateGroupBySingleRowPerGroupSQLTest) {
+TEST_F(AggregateGroupBySQLTests, AggregateGroupBySingleRowPerGroupSQLTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
@@ -111,13 +106,7 @@ TEST_F (AggregateGroupBySQLTests, AggregateGroupBySingleRowPerGroupSQLTest) {
   // This test especially tests several AVGs in a row
   TestingSQLUtil::ExecuteSQLQueryAndCheckResult(
       "SELECT COUNT(*), MIN(b), MAX(c), AVG(d) FROM test GROUP BY a;",
-      {"1|4|6|2",
-       "1|2|3|1",
-       "1|3|6|2",
-       "1|2|3|2",
-       "1|2|3|1",
-       "1|2|6|1"});
-
+      {"1|4|6|2", "1|2|3|1", "1|3|6|2", "1|2|3|2", "1|2|3|1", "1|2|6|1"});
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
