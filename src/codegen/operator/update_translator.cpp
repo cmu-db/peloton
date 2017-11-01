@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "common/container_tuple.h"
+#include "codegen/lang/if.h"
 #include "codegen/proxy/catalog_proxy.h"
 #include "codegen/proxy/direct_map_proxy.h"
 #include "codegen/proxy/target_proxy.h"
@@ -19,8 +19,9 @@
 #include "codegen/proxy/value_proxy.h"
 #include "codegen/proxy/values_runtime_proxy.h"
 #include "codegen/operator/update_translator.h"
-#include "codegen/type/sql_type.h"
+#include "codegen/table_storage.h"
 #include "planner/project_info.h"
+#include "planner/abstract_scan_plan.h"
 #include "storage/data_table.h"
 
 namespace peloton {
@@ -29,7 +30,8 @@ namespace codegen {
 UpdateTranslator::UpdateTranslator(const planner::UpdatePlan &update_plan,
                                    CompilationContext &context,
                                    Pipeline &pipeline)
-    : OperatorTranslator(context, pipeline), update_plan_(update_plan) {
+    : OperatorTranslator(context, pipeline), update_plan_(update_plan),
+      table_storage_(*update_plan.GetTable()->GetSchema()) {
   // Create the translator for our child and derived attributes
   context.Prepare(*update_plan.GetChild(0), pipeline);
 
@@ -39,20 +41,17 @@ UpdateTranslator::UpdateTranslator(const planner::UpdatePlan &update_plan,
     const auto &derived_attribute = target.second;
     context.Prepare(*derived_attribute.expr);
   }
-
-  auto &codegen = GetCodeGen();
-  auto &runtime_state = context.GetRuntimeState();
-  auto column_num = target_list.size();
-
-  // Prepare for target value vector and column ids vector
-  target_val_vec_id_ = runtime_state.RegisterState("updateTargetValVec",
-      codegen.ArrayType(codegen.Int8Type(), column_num), true);
-  column_id_vec_id_ = runtime_state.RegisterState("updateColumnIdVec",
-      codegen.ArrayType(codegen.Int32Type(), column_num), true);
-
   // Prepare for updater
-  updater_state_id_ = runtime_state.RegisterState("updater",
-      UpdaterProxy::GetType(codegen));
+  updater_state_id_ = context.GetRuntimeState().RegisterState("updater",
+      UpdaterProxy::GetType(GetCodeGen()));
+}
+
+bool IsTarget(const TargetList &target_list, uint32_t index) {
+  for (const auto &target : target_list) {
+    if (target.first == index)
+      return true;
+  }
+  return false;
 }
 
 void UpdateTranslator::InitializeState() {
@@ -60,39 +59,28 @@ void UpdateTranslator::InitializeState() {
   auto &context = GetCompilationContext();
 
   // Prepare for all the information to be handed over to the updater
-  // Get transaction and table object pointers
+  // Get the transaction pointer
   llvm::Value *txn_ptr = context.GetTransactionPtr();
 
+  // Get the table object pointer
   storage::DataTable *table = update_plan_.GetTable();
   llvm::Value *table_ptr = codegen.Call(StorageManagerProxy::GetTableWithOid,
       {GetCatalogPtr(), codegen.Const32(table->GetDatabaseOid()),
        codegen.Const32(table->GetOid())});
 
-  // Get the Target / Direct map list's raw vectors and their sizes
+  // Get the target list's raw vectors and their sizes
+  // : this is required when installing a new version at updater
   const auto *project_info = update_plan_.GetProjectInfo();
-  auto *target_vector = project_info->GetTargetList().data();
-  auto *target_vector_int = codegen.Const64((int64_t)target_vector);
   llvm::Value *target_vector_ptr = codegen->CreateIntToPtr(
-      target_vector_int, TargetProxy::GetType(codegen)->getPointerTo());
-
-  auto target_vector_size = project_info->GetTargetList().size();
-  auto *target_vector_size_ptr = codegen.Const32((int32_t)target_vector_size);
-
-  auto *direct_map_vector = project_info->GetDirectMapList().data();
-  auto *direct_map_vector_int = codegen.Const64((int64_t)direct_map_vector);
-  llvm::Value *direct_map_vector_ptr = codegen->CreateIntToPtr(
-      direct_map_vector_int, DirectMapProxy::GetType(codegen)->getPointerTo());
-
-  auto direct_map_vector_size = project_info->GetDirectMapList().size();
-  llvm::Value *direct_map_vector_size_ptr =
-      codegen.Const32((int32_t)direct_map_vector_size);
+      codegen.Const64((int64_t)project_info->GetTargetList().data()),
+      TargetProxy::GetType(codegen)->getPointerTo());
+  llvm::Value *target_vector_size_ptr =
+      codegen.Const32((int32_t)project_info->GetTargetList().size());
 
   // Initialize the inserter with txn and table
   llvm::Value *updater = LoadStatePtr(updater_state_id_);
   codegen.Call(UpdaterProxy::Init, {updater, txn_ptr, table_ptr,
-                                    target_vector_ptr, target_vector_size_ptr,
-                                    direct_map_vector_ptr,
-                                    direct_map_vector_size_ptr});
+                                    target_vector_ptr, target_vector_size_ptr});
 }
 
 void UpdateTranslator::Produce() const {
@@ -102,49 +90,61 @@ void UpdateTranslator::Produce() const {
 void UpdateTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
   auto &codegen = GetCodeGen();
   auto &context = GetCompilationContext();
-
-  // Vector for collecting col ids that are targeted to update
   const auto *project_info = update_plan_.GetProjectInfo();
   auto target_list = project_info->GetTargetList();
-  uint32_t column_num = (uint32_t)target_list.size();
-  Vector column_ids{LoadStateValue(column_id_vec_id_), column_num,
-                    codegen.Int32Type()};
-  auto column_ids_ptr = column_ids.GetVectorPtr();
+  auto direct_map_list = project_info->GetDirectMapList();
+  uint32_t column_num =
+      static_cast<uint32_t>(target_list.size() + direct_map_list.size());
+  auto *scan =
+      static_cast<const planner::AbstractScan *>(update_plan_.GetChild(0));
+  std::vector<const planner::AttributeInfo *> ais;
+  scan->GetAttributes(ais);
 
-  // Vector for collecting results from executing target list
-  llvm::Value *target_vals_ptr = LoadStateValue(target_val_vec_id_);
-
-  // Loop for collecting target column ids and corresponding derived values
-  // TODO Could we get the tuple ptr and build it here in a neat way?
-  for (uint32_t i = 0; i < column_num; i++) {
-    auto target_id = codegen.Const32(i);
-
-    // Set the column id for the update
-    column_ids.SetValue(codegen, target_id,
-                        codegen.Const32(target_list[i].first));
-
-    // Set the value for the update
-    const auto &derived_attribute = target_list[i].second;
-    codegen::Value val = row.DeriveValue(codegen, *derived_attribute.expr);
-    const auto &sql_type = val.GetType().GetSqlType();
-    auto *set_value_func = sql_type.GetOutputFunction(codegen, val.GetType());
-    std::vector<llvm::Value *> args = {target_vals_ptr, target_id,
-                                       val.GetValue()};
-    if (val.GetLength() != nullptr) args.push_back(val.GetLength());
-    codegen.CallFunc(set_value_func, args);
+  // Collect all the column values
+  std::vector<codegen::Value> values;
+  for (uint32_t i = 0, target_id = 0; i < column_num; i++) {
+    codegen::Value val;
+    if (IsTarget(target_list, i)) {
+      // Set the value for the update
+      const auto &derived_attribute = target_list[target_id].second;
+      val = row.DeriveValue(codegen, *derived_attribute.expr);
+      target_id++;
+    } else {
+      val = row.DeriveValue(codegen, ais[i]);
+    }
+    values.push_back(val);
   }
 
-  // Finally, update with help from the Updater
+  // Get the tuple pointer from the updater
   llvm::Value *updater = LoadStatePtr(updater_state_id_);
-  std::vector<llvm::Value *> args = {updater, row.GetTileGroupID(),
-                                     row.GetTID(codegen), column_ids_ptr,
-                                     target_vals_ptr,
-                                     context.GetExecutorContextPtr()};
-  if (update_plan_.GetUpdatePrimaryKey() == true) {
-    codegen.Call(UpdaterProxy::UpdatePrimaryKey, args);
-  } else {
-    codegen.Call(UpdaterProxy::Update, args);
+  llvm::Value *tuple_ptr;
+  std::vector<llvm::Value *> prep_args = {updater, row.GetTileGroupID(),
+                                          row.GetTID(codegen)};
+  if (update_plan_.GetUpdatePrimaryKey() == false)
+    tuple_ptr = codegen.Call(UpdaterProxy::Prepare, prep_args);
+  else
+    tuple_ptr = codegen.Call(UpdaterProxy::PreparePK, prep_args);
+
+  // Update only when we have tuple_ptr, otherwise it is not allowed to update
+  llvm::Value *prepare_cond = codegen->CreateICmpNE(
+      codegen->CreatePtrToInt(tuple_ptr, codegen.Int64Type()),
+      codegen.Const64(0));
+  lang::If prepare_success{codegen, prepare_cond};
+  {
+    auto *pool_ptr = codegen.Call(UpdaterProxy::GetPool, {updater});
+
+    // Build up a tuple storage
+    table_storage_.StoreValues(codegen, tuple_ptr, values, pool_ptr);
+  
+    // Finally, update with help from the Updater
+    std::vector<llvm::Value *> update_args = {updater,
+                                              context.GetExecutorContextPtr()};
+    if (update_plan_.GetUpdatePrimaryKey() == false)
+      codegen.Call(UpdaterProxy::Update, update_args);
+    else
+      codegen.Call(UpdaterProxy::UpdatePK, update_args);
   }
+  prepare_success.EndIf();
 }
 
 void UpdateTranslator::TearDownState() {
