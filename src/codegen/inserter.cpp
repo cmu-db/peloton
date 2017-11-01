@@ -35,13 +35,16 @@ void Inserter::Init(concurrency::Transaction *txn, storage::DataTable *table,
 char *Inserter::ReserveTupleStorage() {
   location_ = table_->GetEmptyTupleSlot(nullptr);
 
-  // Get tuple storage area
+  // Get the tile offset assuming that it is in a tuple format
   auto tile_group = table_->GetTileGroupById(location_.block);
-  tile_ = tile_group->GetTileReference(0);
+  oid_t tile_offset, tile_column_offset;
+  tile_group->LocateTileAndColumn(0, tile_offset, tile_column_offset);
+  tile_ = tile_group->GetTileReference(tile_offset);
   return tile_->GetTupleLocation(location_.offset);
 }
 
 peloton::type::AbstractPool *Inserter::GetPool() {
+  // This should be called after RerserveTupleStorage()
   PL_ASSERT(tile_);
   return tile_->GetPool();
 }

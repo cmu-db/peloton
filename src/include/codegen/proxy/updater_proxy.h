@@ -26,8 +26,11 @@ PROXY(Updater) {
 
   /// Proxy Init() and Update() in codegen::Updater
   DECLARE_METHOD(Init);
+  DECLARE_METHOD(Prepare);
+  DECLARE_METHOD(PreparePK);
+  DECLARE_METHOD(GetPool);
   DECLARE_METHOD(Update);
-  DECLARE_METHOD(UpdatePrimaryKey);
+  DECLARE_METHOD(UpdatePK);
   DECLARE_METHOD(TearDown);
 };
 
