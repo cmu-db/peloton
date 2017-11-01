@@ -1,0 +1,21 @@
+!_TAG_FILE_SORTED	2	/0=unsorted, 1=sorted, 2=foldcase/
+extract_sql	/Users/Tianyu/Desktop/peloton/script/testing/sqlite_trace/trace-replay.py	/^def extract_sql(input_path, output_path):$/;"	f	language:Python
+kw_filter	/Users/Tianyu/Desktop/peloton/script/testing/sqlite_trace/config.py	/^kw_filter = map(lambda x: x.strip(), open("keyword_filter").readlines())$/;"	v	language:Python
+os	/Users/Tianyu/Desktop/peloton/script/testing/sqlite_trace/trace-replay.py	/^import os$/;"	i	language:Python
+output_dir	/Users/Tianyu/Desktop/peloton/script/testing/sqlite_trace/config.py	/^output_dir = "out"$/;"	v	language:Python
+peloton_log_file	/Users/Tianyu/Desktop/peloton/script/testing/sqlite_trace/config.py	/^peloton_log_file = "peloton_log"$/;"	v	language:Python
+peloton_password	/Users/Tianyu/Desktop/peloton/script/testing/sqlite_trace/config.py	/^peloton_password = ""$/;"	v	language:Python
+peloton_path	/Users/Tianyu/Desktop/peloton/script/testing/sqlite_trace/config.py	/^peloton_path = "..\/..\/..\/build\/bin\/peloton"$/;"	v	language:Python
+peloton_port	/Users/Tianyu/Desktop/peloton/script/testing/sqlite_trace/config.py	/^peloton_port = 52726$/;"	v	language:Python
+peloton_test_path	/Users/Tianyu/Desktop/peloton/script/testing/sqlite_trace/config.py	/^peloton_test_path = "peloton-test"$/;"	v	language:Python
+peloton_username	/Users/Tianyu/Desktop/peloton/script/testing/sqlite_trace/config.py	/^peloton_username = ""$/;"	v	language:Python
+pg_database	/Users/Tianyu/Desktop/peloton/script/testing/sqlite_trace/config.py	/^pg_database = "sqlite_trace_test"$/;"	v	language:Python
+pg_password	/Users/Tianyu/Desktop/peloton/script/testing/sqlite_trace/config.py	/^pg_password = "jenkinsTest123"$/;"	v	language:Python
+pg_username	/Users/Tianyu/Desktop/peloton/script/testing/sqlite_trace/config.py	/^pg_username = "jenkins"$/;"	v	language:Python
+Popen	/Users/Tianyu/Desktop/peloton/script/testing/sqlite_trace/trace-replay.py	/^from subprocess import Popen$/;"	i	language:Python
+re	/Users/Tianyu/Desktop/peloton/script/testing/sqlite_trace/trace-replay.py	/^import re$/;"	i	language:Python
+socket	/Users/Tianyu/Desktop/peloton/script/testing/sqlite_trace/trace-replay.py	/^import socket$/;"	i	language:Python
+sys	/Users/Tianyu/Desktop/peloton/script/testing/sqlite_trace/trace-replay.py	/^import sys$/;"	i	language:Python
+time	/Users/Tianyu/Desktop/peloton/script/testing/sqlite_trace/trace-replay.py	/^import time$/;"	i	language:Python
+traces	/Users/Tianyu/Desktop/peloton/script/testing/sqlite_trace/config.py	/^traces = map(lambda x: x.strip(), open("trace_files").readlines())$/;"	v	language:Python
+trace_file_root	/Users/Tianyu/Desktop/peloton/script/testing/sqlite_trace/config.py	/^trace_file_root = "sqllite\/trace"$/;"	v	language:Python
