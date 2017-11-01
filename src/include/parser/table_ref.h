@@ -53,11 +53,19 @@ struct TableRef {
   // Convenience accessor methods
   inline bool HasSchema() { return !schema.empty(); }
 
+  // Try to bind the database name to the node if not specified
+  inline void TryBindDatabaseName(std::string default_database_name) {
+    if (table_info_ == nullptr) {
+      table_info_.reset(new TableInfo());
+    }
+    
+    if (table_info_->database_name.empty()) {
+      table_info_->database_name = default_database_name;
+    }
+  }
+
   // Get the name of the database of this table
   inline std::string GetDatabaseName() const {
-    if (table_info_ == nullptr || table_info_->database_name.empty()) {
-      return DEFAULT_DB_NAME;
-    }
     return table_info_->database_name;
   }
 
@@ -73,7 +81,7 @@ struct TableRef {
     return table_info_->table_name;
   }
 
-  void Accept(SqlNodeVisitor* v) const { v->Visit(this); }
+  void Accept(SqlNodeVisitor* v) { v->Visit(this); }
 };
 
 // Definition of a join table
@@ -90,7 +98,7 @@ class JoinDefinition {
 
   JoinType type;
 
-  void Accept(SqlNodeVisitor* v) const { v->Visit(this); }
+  void Accept(SqlNodeVisitor* v) { v->Visit(this); }
 };
 
 }  // namespace parser

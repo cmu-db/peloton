@@ -59,7 +59,8 @@ AbstractCatalog::AbstractCatalog(const std::string &catalog_table_ddl,
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto create_plan = std::dynamic_pointer_cast<planner::CreatePlan>(
       optimizer::Optimizer().BuildPelotonPlanTree(
-          peloton_parser.BuildParseTree(catalog_table_ddl), txn));
+          peloton_parser.BuildParseTree(catalog_table_ddl), 
+          DATABASE_CATALOG_NAME, txn));
   auto catalog_table_schema = create_plan->GetSchema();
   auto catalog_table_name = create_plan->GetTableName();
 
@@ -161,7 +162,7 @@ std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
 AbstractCatalog::GetResultWithIndexScan(std::vector<oid_t> column_offsets,
                                         oid_t index_offset,
                                         std::vector<type::Value> values,
-                                        concurrency::Transaction *txn) {
+                                        concurrency::Transaction *txn) const {
   if (txn == nullptr) throw CatalogException("Scan table requires transaction");
 
   // Index scan

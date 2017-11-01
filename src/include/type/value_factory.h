@@ -98,7 +98,8 @@ class ValueFactory {
   static inline Value GetVarbinaryValue(
       const unsigned char *rawBuf, int32_t rawLength, bool manage_data,
       UNUSED_ATTRIBUTE AbstractPool *pool = nullptr) {
-    return Value(TypeId::VARBINARY, (const char *)rawBuf, rawLength, manage_data);
+    return Value(TypeId::VARBINARY, (const char *)rawBuf, rawLength,
+                 manage_data);
   }
 
   static inline Value GetNullValueByType(TypeId type_id) {
@@ -136,8 +137,8 @@ class ValueFactory {
         break;
       default: {
         std::string msg =
-            StringUtil::Format("Unknown Type '%d' for GetNullValueByType",
-                               static_cast<int>(type_id));
+            StringUtil::Format("Type '%s' does not have a NULL value",
+                               TypeIdToString(type_id).c_str());
         throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, msg);
       }
     }
@@ -220,7 +221,8 @@ class ValueFactory {
   }
 
   static inline Value CastAsInteger(const Value &value) {
-    if (Type::GetInstance(TypeId::INTEGER)->IsCoercableFrom(value.GetTypeId())) {
+    if (Type::GetInstance(TypeId::INTEGER)
+            ->IsCoercableFrom(value.GetTypeId())) {
       if (value.IsNull())
         return ValueFactory::GetIntegerValue((int32_t)PELOTON_INT32_NULL);
       switch (value.GetTypeId()) {
@@ -267,7 +269,8 @@ class ValueFactory {
   }
 
   static inline Value CastAsSmallInt(const Value &value) {
-    if (Type::GetInstance(TypeId::SMALLINT)->IsCoercableFrom(value.GetTypeId())) {
+    if (Type::GetInstance(TypeId::SMALLINT)
+            ->IsCoercableFrom(value.GetTypeId())) {
       if (value.IsNull())
         return ValueFactory::GetSmallIntValue((int16_t)PELOTON_INT16_NULL);
       switch (value.GetTypeId()) {
@@ -321,7 +324,8 @@ class ValueFactory {
   }
 
   static inline Value CastAsTinyInt(const Value &value) {
-    if (Type::GetInstance(TypeId::TINYINT)->IsCoercableFrom(value.GetTypeId())) {
+    if (Type::GetInstance(TypeId::TINYINT)
+            ->IsCoercableFrom(value.GetTypeId())) {
       if (value.IsNull())
         return ValueFactory::GetTinyIntValue(PELOTON_INT8_NULL);
       switch (value.GetTypeId()) {
@@ -378,7 +382,8 @@ class ValueFactory {
   }
 
   static inline Value CastAsDecimal(const Value &value) {
-    if (Type::GetInstance(TypeId::DECIMAL)->IsCoercableFrom(value.GetTypeId())) {
+    if (Type::GetInstance(TypeId::DECIMAL)
+            ->IsCoercableFrom(value.GetTypeId())) {
       if (value.IsNull())
         return ValueFactory::GetDecimalValue((double)PELOTON_DECIMAL_NULL);
       switch (value.GetTypeId()) {
@@ -415,7 +420,8 @@ class ValueFactory {
   }
 
   static inline Value CastAsVarchar(const Value &value) {
-    if (Type::GetInstance(TypeId::VARCHAR)->IsCoercableFrom(value.GetTypeId())) {
+    if (Type::GetInstance(TypeId::VARCHAR)
+            ->IsCoercableFrom(value.GetTypeId())) {
       if (value.IsNull()) return ValueFactory::GetVarcharValue(nullptr, 0);
       switch (value.GetTypeId()) {
         case TypeId::BOOLEAN:
@@ -510,7 +516,8 @@ class ValueFactory {
   }
 
   static inline Value CastAsBoolean(const Value &value) {
-    if (Type::GetInstance(TypeId::BOOLEAN)->IsCoercableFrom(value.GetTypeId())) {
+    if (Type::GetInstance(TypeId::BOOLEAN)
+            ->IsCoercableFrom(value.GetTypeId())) {
       if (value.IsNull())
         return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
       switch (value.GetTypeId()) {

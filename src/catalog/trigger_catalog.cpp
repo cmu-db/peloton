@@ -10,25 +10,20 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "catalog/trigger_catalog.h"
 
 #include "catalog/catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/table_catalog.h"
-#include "executor/logical_tile.h"
 #include "storage/data_table.h"
-#include "storage/tuple.h"
-#include "trigger/trigger.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 namespace catalog {
 
-TriggerCatalog *TriggerCatalog::GetInstance(concurrency::Transaction *txn) {
-  static std::unique_ptr<TriggerCatalog> trigger_catalog(
-      new TriggerCatalog(txn));
-
-  return trigger_catalog.get();
+TriggerCatalog &TriggerCatalog::GetInstance(concurrency::Transaction *txn) {
+  static TriggerCatalog trigger_catalog{txn};
+  return trigger_catalog;
 }
 
 TriggerCatalog::TriggerCatalog(concurrency::Transaction *txn)
@@ -110,7 +105,7 @@ ResultType TriggerCatalog::DropTrigger(const std::string &database_name,
   auto table_object =
       Catalog::GetInstance()->GetTableObject(database_name, table_name, txn);
 
-  oid_t trigger_oid = TriggerCatalog::GetInstance()->GetTriggerOid(
+  oid_t trigger_oid = TriggerCatalog::GetInstance().GetTriggerOid(
       trigger_name, table_object->table_oid, txn);
   if (trigger_oid == INVALID_OID) {
     LOG_TRACE("Cannot find trigger %s to drop!", trigger_name.c_str());

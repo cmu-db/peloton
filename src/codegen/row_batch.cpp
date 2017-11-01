@@ -166,8 +166,8 @@ void RowBatch::Row::SetValidity(CodeGen &codegen, llvm::Value *valid) {
 llvm::Value *RowBatch::Row::GetTID(CodeGen &codegen) {
   if (tid_ == nullptr) {
     tid_ = batch_.GetPhysicalPosition(codegen, *this);
-    PL_ASSERT(tid_ != nullptr);
   }
+  PL_ASSERT(tid_ != nullptr);
   return tid_;
 }
 

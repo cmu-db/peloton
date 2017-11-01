@@ -29,7 +29,7 @@ class ExecuteStatement : public SQLStatement {
 
   virtual ~ExecuteStatement() {}
 
-  virtual void Accept(SqlNodeVisitor* v) const override {
+  virtual void Accept(SqlNodeVisitor* v) override {
     v->Visit(this);
   }
 

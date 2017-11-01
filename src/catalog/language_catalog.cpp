@@ -10,22 +10,26 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "catalog/language_catalog.h"
 
 #include "catalog/catalog.h"
-#include "catalog/language_catalog.h"
 #include "executor/logical_tile.h"
 #include "storage/data_table.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 namespace catalog {
 
-LanguageCatalog *LanguageCatalog::GetInstance(
-    concurrency::Transaction *txn) {
+LanguageCatalogObject::LanguageCatalogObject(executor::LogicalTile *tuple)
+    : lang_oid_(tuple->GetValue(0, 0).GetAs<oid_t>()),
+      lang_name_(tuple->GetValue(0, 1).GetAs<const char *>()) {}
+
+LanguageCatalog &LanguageCatalog::GetInstance(concurrency::Transaction *txn) {
   static LanguageCatalog language_catalog{txn};
-  return &language_catalog;
+  return language_catalog;
 }
 
-LanguageCatalog::~LanguageCatalog() {};
+LanguageCatalog::~LanguageCatalog(){};
 
 LanguageCatalog::LanguageCatalog(concurrency::Transaction *txn)
     : AbstractCatalog("CREATE TABLE " CATALOG_DATABASE_NAME
@@ -35,9 +39,8 @@ LanguageCatalog::LanguageCatalog(concurrency::Transaction *txn)
                       "lanname        VARCHAR NOT NULL);",
                       txn) {
   Catalog::GetInstance()->CreateIndex(
-      CATALOG_DATABASE_NAME, LANGUAGE_CATALOG_NAME,
-      {1}, LANGUAGE_CATALOG_NAME "_skey0",
-      false, IndexType::BWTREE, txn);
+      CATALOG_DATABASE_NAME, LANGUAGE_CATALOG_NAME, {1},
+      LANGUAGE_CATALOG_NAME "_skey0", false, IndexType::BWTREE, txn);
 }
 
 // insert a new language by name
@@ -64,53 +67,50 @@ bool LanguageCatalog::DeleteLanguage(const std::string &lanname,
   oid_t index_offset = IndexId::SECONDARY_KEY_0;
 
   std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetVarcharValue(lanname, nullptr).Copy());
+  values.push_back(
+      type::ValueFactory::GetVarcharValue(lanname, nullptr).Copy());
 
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 
-// get language_oid by name
-oid_t LanguageCatalog::GetLanguageOid(const std::string &lanname,
-                                      concurrency::Transaction *txn) {
-  std::vector<oid_t> column_ids({ColumnId::OID});
-  oid_t index_offset = IndexId::SECONDARY_KEY_0;
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetVarcharValue(lanname).Copy());
-
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
-
-  oid_t language_oid = INVALID_OID;
-  PL_ASSERT(result_tiles->size() <= 1);  // unique
-  if (result_tiles->size() != 0) {
-    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-    if ((*result_tiles)[0]->GetTupleCount() != 0) {
-      language_oid = (*result_tiles)[0]->GetValue(0, 0).GetAs<oid_t>();
-    }
-  }
-  return language_oid;
-}
-
-// get language name by oid
-std::string LanguageCatalog::GetLanguageName(oid_t language_oid,
-                                             concurrency::Transaction *txn) {
-  std::vector<oid_t> column_ids({ColumnId::LANNAME});
+std::unique_ptr<LanguageCatalogObject> LanguageCatalog::GetLanguageByOid(
+    oid_t lang_oid, concurrency::Transaction *txn) const {
+  std::vector<oid_t> column_ids(all_column_ids);
   oid_t index_offset = IndexId::PRIMARY_KEY;
   std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(language_oid).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(lang_oid).Copy());
 
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
+  PL_ASSERT(result_tiles->size() <= 1);
 
-  std::string lanname;
-  PL_ASSERT(result_tiles->size() <= 1);  // unique
-  if (result_tiles->size() != 0) {
+  std::unique_ptr<LanguageCatalogObject> ret;
+  if (result_tiles->size() == 1) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-    if ((*result_tiles)[0]->GetTupleCount() != 0) {
-      lanname = (*result_tiles)[0]->GetValue(0, 0).GetAs<const char*>();
-    }
+    ret.reset(new LanguageCatalogObject((*result_tiles)[0].get()));
   }
-  return lanname;
+
+  return ret;
+}
+
+std::unique_ptr<LanguageCatalogObject> LanguageCatalog::GetLanguageByName(
+    const std::string &lang_name, concurrency::Transaction *txn) const {
+  std::vector<oid_t> column_ids(all_column_ids);
+  oid_t index_offset = IndexId::SECONDARY_KEY_0;
+  std::vector<type::Value> values;
+  values.push_back(type::ValueFactory::GetVarcharValue(lang_name).Copy());
+
+  auto result_tiles =
+      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+  PL_ASSERT(result_tiles->size() <= 1);
+
+  std::unique_ptr<LanguageCatalogObject> ret;
+  if (result_tiles->size() == 1) {
+    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
+    ret.reset(new LanguageCatalogObject((*result_tiles)[0].get()));
+  }
+
+  return ret;
 }
 
 }  // namespace catalog

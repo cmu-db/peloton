@@ -232,6 +232,9 @@ static LogicalOr kLogicalOr;
 static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
     {OperatorId::LogicalAnd, kLogicalAnd}, {OperatorId::LogicalOr, kLogicalOr}};
 
+// Nary operations
+static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
+
 }  // anonymous namespace
 
 // Initialize the BOOLEAN SQL type with the configured type system
@@ -239,7 +242,7 @@ Boolean::Boolean()
     : SqlType(peloton::type::TypeId::BOOLEAN),
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
                    kComparisonTable, kUnaryOperatorTable,
-                   kBinaryOperatorTable) {}
+                   kBinaryOperatorTable, kNaryOperatorTable) {}
 
 Value Boolean::GetMinValue(CodeGen &codegen) const {
   auto *raw_val = codegen.ConstBool(peloton::type::PELOTON_BOOLEAN_MIN);
@@ -254,6 +257,14 @@ Value Boolean::GetMaxValue(CodeGen &codegen) const {
 Value Boolean::GetNullValue(CodeGen &codegen) const {
   auto *raw_val = codegen.ConstBool(peloton::type::PELOTON_BOOLEAN_NULL);
   return Value{Type{TypeId(), true}, raw_val, nullptr, codegen.ConstBool(true)};
+}
+
+llvm::Value *Boolean::CheckNull(CodeGen &codegen, llvm::Value *bool_ptr) const {
+  auto *b = codegen->CreateLoad(
+      codegen.Int8Type(),
+      codegen->CreateBitCast(bool_ptr, codegen.Int8Type()->getPointerTo()));
+  return codegen->CreateICmpEQ(
+      b, codegen.Const8(peloton::type::PELOTON_BOOLEAN_NULL));
 }
 
 void Boolean::GetTypeForMaterialization(CodeGen &codegen, llvm::Type *&val_type,

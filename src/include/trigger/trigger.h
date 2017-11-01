@@ -13,13 +13,13 @@
 #pragma once
 
 #include <vector>
-#include "boost/algorithm/string/join.hpp"
+
+#include <boost/algorithm/string/join.hpp>
+
+#include "common/logger.h"
 #include "expression/abstract_expression.h"
 #include "planner/create_plan.h"
-#include "common/logger.h"
 #include "storage/tuple.h"
-#include "expression/tuple_value_expression.h"
-#include "expression/comparison_expression.h"
 #include "type/types.h"
 #include "parser/pg_trigger.h"
 
@@ -40,29 +40,27 @@ class TriggerData {
   // TriggerEvent
   int16_t tg_event;
   Trigger *tg_trigger;
-  storage::Tuple *tg_trigtuple; // i.e. old tuple
+  storage::Tuple *tg_trigtuple;  // i.e. old tuple
   storage::Tuple *tg_newtuple;
 
   TriggerData() {}
   TriggerData(int16_t tg_event, Trigger *tg_trigger,
-              storage::Tuple *tg_trigtuple, storage::Tuple *tg_newtuple) :
-    tg_event(tg_event),
-    tg_trigger(tg_trigger),
-    tg_trigtuple(tg_trigtuple),
-    tg_newtuple(tg_newtuple) {}
+              storage::Tuple *tg_trigtuple, storage::Tuple *tg_newtuple)
+      : tg_event(tg_event),
+        tg_trigger(tg_trigger),
+        tg_trigtuple(tg_trigtuple),
+        tg_newtuple(tg_newtuple) {}
 };
 
 class Trigger {
  public:
-  Trigger(const planner::CreatePlan& plan);
+  Trigger(const planner::CreatePlan &plan);
 
-  Trigger(const std::string &name,
-          int16_t type,
-          const std::string &function_name,
-          const std::string &arguments,
+  Trigger(const std::string &name, int16_t type,
+          const std::string &function_name, const std::string &arguments,
           const void *fire_condition);
 
-  Trigger(const Trigger& that) {
+  Trigger(const Trigger &that) {
     trigger_name = that.trigger_name;
     trigger_funcname = that.trigger_funcname;
     trigger_args = that.trigger_args;
@@ -85,37 +83,35 @@ class Trigger {
 
   std::string GetTriggerName() { return trigger_name; }
 
-  storage::Tuple* ExecCallTriggerFunc(TriggerData &trigger_data);
+  storage::Tuple *ExecCallTriggerFunc(TriggerData &trigger_data);
 
   std::string GetFuncname() { return trigger_funcname; }
 
-  std::string GetArgs() {
-    return boost::algorithm::join(trigger_args, ",");
-  }
+  std::string GetArgs() { return boost::algorithm::join(trigger_args, ","); }
 
-  expression::AbstractExpression* GetTriggerWhen() const {
+  expression::AbstractExpression *GetTriggerWhen() const {
     return trigger_when;
   }
 
-  //only apply to the simple case: old.balance != new.balance
+  // only apply to the simple case: old.balance != new.balance
   void SerializeWhen(SerializeOutput &output, oid_t database_oid,
                      oid_t table_oid, concurrency::Transaction *txn);
-  expression::AbstractExpression* DeserializeWhen(SerializeInput &input);
+  expression::AbstractExpression *DeserializeWhen(SerializeInput &input);
 
  private:
   std::string trigger_name;
   std::string trigger_funcname;
   std::vector<std::string> trigger_args;
   std::vector<std::string> trigger_columns;
-  expression::AbstractExpression* trigger_when = nullptr;
+  expression::AbstractExpression *trigger_when = nullptr;
   // information about row, timing, events access by pg_trigger
   int16_t trigger_type;
 };
 
-
 class TriggerList {
  public:
-  TriggerList() {/*do nothing*/}
+  TriggerList() { /*do nothing*/
+  }
 
   bool HasTriggerType(TriggerType type) const {
     return types_summary[static_cast<int>(type)];
@@ -127,16 +123,15 @@ class TriggerList {
 
   void UpdateTypeSummary(int16_t type);
 
-  Trigger* Get(int n) { return &triggers[n]; }  // get trigger by index
+  Trigger *Get(int n) { return &triggers[n]; }  // get trigger by index
 
   bool CheckTriggerType(int16_t trigger_type, TriggerType type) {
     int type_code = static_cast<int>(type);
-    return
-        ((TRIGGER_TYPE_TIMING_MASK & type_code) ==
+    return ((TRIGGER_TYPE_TIMING_MASK & type_code) ==
             (TRIGGER_TYPE_TIMING_MASK & trigger_type)) &&
-        ((TRIGGER_TYPE_LEVEL_MASK & type_code) ==
+           ((TRIGGER_TYPE_LEVEL_MASK & type_code) ==
             (TRIGGER_TYPE_LEVEL_MASK & trigger_type)) &&
-        ((TRIGGER_TYPE_EVENT_MASK & type_code & trigger_type) ==
+           ((TRIGGER_TYPE_EVENT_MASK & type_code & trigger_type) ==
             (TRIGGER_TYPE_EVENT_MASK & type_code));
   }
 
@@ -172,7 +167,6 @@ class TriggerSet : public std::vector<TriggerData> {
   }
   ~TriggerSet() {}
 };
-
 
 }  // namespace trigger
 }  // namespace peloton

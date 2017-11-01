@@ -12,11 +12,7 @@
 
 #include "type/bigint_type.h"
 
-#include <cmath>
-#include <iostream>
-#include "type/boolean_type.h"
-#include "type/decimal_type.h"
-#include "type/varlen_type.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 namespace type {
@@ -65,7 +61,7 @@ namespace type {
   } // SWITCH
 
 BigintType::BigintType() :
-    IntegerParentType(BIGINT) {
+    IntegerParentType(TypeId::BIGINT) {
 }
 
 bool BigintType::IsZero(const Value& val) const {

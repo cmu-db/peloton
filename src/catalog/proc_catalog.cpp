@@ -10,23 +10,39 @@
 //
 //===----------------------------------------------------------------------===//
 
-
-#include <sstream>
-#include "catalog/catalog.h"
 #include "catalog/proc_catalog.h"
+
+#include "catalog/catalog.h"
+#include "catalog/language_catalog.h"
 #include "executor/logical_tile.h"
 #include "storage/data_table.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 namespace catalog {
 
-ProcCatalog *ProcCatalog::GetInstance(
-    concurrency::Transaction *txn) {
-  static std::unique_ptr<ProcCatalog> proc_catalog(new ProcCatalog(txn));
-  return proc_catalog.get();
+#define PROC_CATALOG_NAME "pg_proc"
+
+ProcCatalogObject::ProcCatalogObject(executor::LogicalTile *tile,
+                                     concurrency::Transaction *txn)
+    : oid_(tile->GetValue(0, 0).GetAs<oid_t>()),
+      name_(tile->GetValue(0, 1).GetAs<const char *>()),
+      ret_type_(tile->GetValue(0, 2).GetAs<type::TypeId>()),
+      arg_types_(StringToTypeArray(tile->GetValue(0, 3).GetAs<const char *>())),
+      lang_oid_(tile->GetValue(0, 4).GetAs<oid_t>()),
+      src_(tile->GetValue(0, 5).GetAs<const char *>()),
+      txn_(txn) {}
+
+std::unique_ptr<LanguageCatalogObject> ProcCatalogObject::GetLanguage() const {
+  return LanguageCatalog::GetInstance().GetLanguageByOid(GetLangOid(), txn_);
 }
 
-ProcCatalog::~ProcCatalog() {};
+ProcCatalog &ProcCatalog::GetInstance(concurrency::Transaction *txn) {
+  static ProcCatalog proc_catalog{txn};
+  return proc_catalog;
+}
+
+ProcCatalog::~ProcCatalog(){};
 
 ProcCatalog::ProcCatalog(concurrency::Transaction *txn)
     : AbstractCatalog("CREATE TABLE " CATALOG_DATABASE_NAME
@@ -39,44 +55,15 @@ ProcCatalog::ProcCatalog(concurrency::Transaction *txn)
                       "prolang       INT NOT NULL, "
                       "prosrc        VARCHAR NOT NULL);",
                       txn) {
-
-  Catalog::GetInstance()->CreateIndex(
-      CATALOG_DATABASE_NAME, PROC_CATALOG_NAME,
-      {1,3}, PROC_CATALOG_NAME "_skey0",
-      false, IndexType::BWTREE, txn);
-}
-
-// generate a string representation for an argument type vector
-// e.g. vector{TypeId::INTEGER, TypeId::BOOLEAN} --> "integer,boolean"
-std::string ProcCatalog::TypeArrayToString(
-    const std::vector<type::TypeId> types) {
-  std::string result = "";
-  for (auto type : types) {
-    if (result != "")
-      result.append(",");
-    result.append(TypeIdToString(type));
-  }
-  return result;
-}
-
-// get argument type vector from its string representation
-// e.g. "integer,boolean" --> vector{TypeId::INTEGER, TypeId::BOOLEAN}
-std::vector<type::TypeId> ProcCatalog::StringToTypeArray(
-    const std::string &types) {
-  std::vector<type::TypeId> result;
-  std::istringstream stream(types);
-  std::string type;
-  while (getline(stream, type, ',')) {
-    result.push_back(StringToTypeId(type));
-  }
-  return result;
+  Catalog::GetInstance()->CreateIndex(CATALOG_DATABASE_NAME, PROC_CATALOG_NAME,
+                                      {1, 3}, PROC_CATALOG_NAME "_skey0", false,
+                                      IndexType::BWTREE, txn);
 }
 
 bool ProcCatalog::InsertProc(const std::string &proname,
                              type::TypeId prorettype,
                              const std::vector<type::TypeId> &proargtypes,
-                             oid_t prolang,
-                             const std::string &prosrc,
+                             oid_t prolang, const std::string &prosrc,
                              type::AbstractPool *pool,
                              concurrency::Transaction *txn) {
   std::unique_ptr<storage::Tuple> tuple(
@@ -85,8 +72,9 @@ bool ProcCatalog::InsertProc(const std::string &proname,
   oid_t proc_oid = GetNextOid();
   auto val0 = type::ValueFactory::GetIntegerValue(proc_oid);
   auto val1 = type::ValueFactory::GetVarcharValue(proname);
-  auto val2 = type::ValueFactory::GetIntegerValue(prorettype);
-  auto val3 = type::ValueFactory::GetVarcharValue(TypeArrayToString(proargtypes));
+  auto val2 = type::ValueFactory::GetIntegerValue(static_cast<int>(prorettype));
+  auto val3 =
+      type::ValueFactory::GetVarcharValue(TypeIdArrayToString(proargtypes));
   auto val4 = type::ValueFactory::GetIntegerValue(prolang);
   auto val5 = type::ValueFactory::GetVarcharValue(prosrc);
 
@@ -101,79 +89,48 @@ bool ProcCatalog::InsertProc(const std::string &proname,
   return InsertTuple(std::move(tuple), txn);
 }
 
-// get prosrc by name and argument types
-std::string ProcCatalog::GetProSrc(const std::string &proname,
-                                   const std::vector<type::TypeId> &proargtypes,
-                                   concurrency::Transaction *txn) {
-  std::vector<oid_t> column_ids({ColumnId::PROSRC});
-  oid_t index_offset = IndexId::SECONDARY_KEY_0;
+std::unique_ptr<ProcCatalogObject> ProcCatalog::GetProcByOid(
+    oid_t proc_oid, concurrency::Transaction *txn) const {
+  std::vector<oid_t> column_ids(all_column_ids);
+  oid_t index_offset = IndexId::PRIMARY_KEY;
   std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetVarcharValue(proname).Copy());
-  values.push_back(type::ValueFactory::GetVarcharValue(
-      TypeArrayToString(proargtypes)).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(proc_oid).Copy());
 
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
+  PL_ASSERT(result_tiles->size() <= 1);
 
-  std::string prosrc;
-  PL_ASSERT(result_tiles->size() <= 1);  // unique
-  if (result_tiles->size() != 0) {
+  std::unique_ptr<ProcCatalogObject> ret;
+  if (result_tiles->size() == 1) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-    if ((*result_tiles)[0]->GetTupleCount() != 0) {
-      prosrc = (*result_tiles)[0]->GetValue(0, 0).GetAs<const char*>();
-    }
+    ret.reset(new ProcCatalogObject((*result_tiles)[0].get(), txn));
   }
-  return prosrc;
+
+  return ret;
 }
 
-// get return type by name and argument types
-type::TypeId ProcCatalog::GetProRetType(const std::string &proname,
-                                        const std::vector<type::TypeId> &proargtypes,
-                                        concurrency::Transaction *txn) {
-  std::vector<oid_t> column_ids({ColumnId::PRORETTYPE});
+std::unique_ptr<ProcCatalogObject> ProcCatalog::GetProcByName(
+    const std::string &proc_name,
+    const std::vector<type::TypeId> &proc_arg_types,
+    concurrency::Transaction *txn) const {
+  std::vector<oid_t> column_ids(all_column_ids);
   oid_t index_offset = IndexId::SECONDARY_KEY_0;
   std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetVarcharValue(proname).Copy());
+  values.push_back(type::ValueFactory::GetVarcharValue(proc_name).Copy());
   values.push_back(type::ValueFactory::GetVarcharValue(
-      TypeArrayToString(proargtypes)).Copy());
+      TypeIdArrayToString(proc_arg_types)).Copy());
 
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
+  PL_ASSERT(result_tiles->size() <= 1);
 
-  type::TypeId prorettype = type::TypeId::INVALID;
-  PL_ASSERT(result_tiles->size() <= 1);  // unique
-  if (result_tiles->size() != 0) {
+  std::unique_ptr<ProcCatalogObject> ret;
+  if (result_tiles->size() == 1) {
     PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-    if ((*result_tiles)[0]->GetTupleCount() != 0) {
-      prorettype = (*result_tiles)[0]->GetValue(0, 0).GetAs<type::TypeId>();
-    }
+    ret.reset(new ProcCatalogObject((*result_tiles)[0].get(), txn));
   }
-  return prorettype;
-}
 
-// get language type by name and argument types
-oid_t ProcCatalog::GetProLang(const std::string &proname,
-                              const std::vector<type::TypeId> &proargtypes,
-                              concurrency::Transaction *txn) {
-  std::vector<oid_t> column_ids({ColumnId::PROLANG});
-  oid_t index_offset = IndexId::SECONDARY_KEY_0;
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetVarcharValue(proname).Copy());
-  values.push_back(type::ValueFactory::GetVarcharValue(
-      TypeArrayToString(proargtypes)).Copy());
-
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
-
-  oid_t prolang = INVALID_OID;
-  PL_ASSERT(result_tiles->size() <= 1);  // unique
-  if (result_tiles->size() != 0) {
-    PL_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-    if ((*result_tiles)[0]->GetTupleCount() != 0) {
-      prolang = (*result_tiles)[0]->GetValue(0, 0).GetAs<oid_t>();
-    }
-  }
-  return prolang;
+  return ret;
 }
 
 }  // namespace catalog

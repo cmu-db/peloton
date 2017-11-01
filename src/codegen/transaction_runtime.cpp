@@ -63,21 +63,6 @@ uint32_t TransactionRuntime::PerformVectorizedRead(
   return out_idx;
 }
 
-/**
-* @brief Delete executor.
-*
-* This function will be called from the JITed code to perform delete on the
-* specified tuple.
-* This logic is extracted from executor::delete_executor, and refactorized.
-*
-* @param tile_group_id the offset of the tile in the table where the tuple
-*        resides
-* @param tuple_id the tuple id of the tuple in current tile
-* @param txn the transaction executing this delete operation
-* @param table the table containing the tuple to be deleted
-*
-* @return true on success, false otherwise.
-*/
 bool TransactionRuntime::PerformDelete(concurrency::Transaction &txn,
                                        storage::DataTable &table,
                                        uint32_t tile_group_id,
@@ -89,16 +74,16 @@ bool TransactionRuntime::PerformDelete(concurrency::Transaction &txn,
 
   auto *tile_group_header = tile_group->GetHeader();
 
+  bool is_owner = txn_manager.IsOwner(&txn, tile_group_header, tuple_offset);
   bool is_written =
       txn_manager.IsWritten(&txn, tile_group_header, tuple_offset);
 
-  if (is_written) {
+  if (is_owner && is_written) {
     LOG_TRACE("I am the owner of the tuple");
     txn_manager.PerformDelete(&txn, old_location);
     return true;
   }
 
-  bool is_owner = txn_manager.IsOwner(&txn, tile_group_header, tuple_offset);
   bool is_ownable =
       is_owner || txn_manager.IsOwnable(&txn, tile_group_header, tuple_offset);
   if (!is_ownable) {

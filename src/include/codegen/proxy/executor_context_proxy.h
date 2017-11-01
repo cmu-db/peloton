@@ -20,6 +20,7 @@ namespace peloton {
 namespace codegen {
 
 PROXY(ExecutorContext) {
+  /// We don't need access to internal fields, so use an opaque byte array
   DECLARE_MEMBER(0, char[sizeof(executor::ExecutorContext)], opaque);
   DECLARE_TYPE;
 };

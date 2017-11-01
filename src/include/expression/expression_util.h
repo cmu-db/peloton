@@ -522,11 +522,11 @@ class ExpressionUtil {
       // Check and set the function ptr
       auto catalog = catalog::Catalog::GetInstance();
       const catalog::FunctionData &func_data =
-          catalog->GetFunction(func_expr->func_name_, argtypes);
+          catalog->GetFunction(func_expr->GetFuncName(), argtypes);
       LOG_INFO("Function %s found in the catalog",
                func_data.func_name_.c_str());
       LOG_INFO("Argument num: %ld", func_data.argument_types_.size());
-      func_expr->SetFunctionExpressionParameters(func_data.func_ptr_,
+      func_expr->SetFunctionExpressionParameters(func_data.func_,
                                                  func_data.return_type_,
                                                  func_data.argument_types_);
     } else if (expr->GetExpressionType() ==
@@ -775,8 +775,8 @@ class ExpressionUtil {
         argtypes.push_back(expr->GetChild(i)->GetValueType());
       auto catalog = catalog::Catalog::GetInstance();
       const catalog::FunctionData &func_data =
-          catalog->GetFunction(func_expr->func_name_, argtypes);
-      func_expr->SetFunctionExpressionParameters(func_data.func_ptr_,
+          catalog->GetFunction(func_expr->GetFuncName(), argtypes);
+      func_expr->SetFunctionExpressionParameters(func_data.func_,
                                                  func_data.return_type_,
                                                  func_data.argument_types_);
     }

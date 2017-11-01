@@ -32,6 +32,7 @@
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"
 #include "planner/update_plan.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 namespace test {

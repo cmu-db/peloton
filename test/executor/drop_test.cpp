@@ -15,12 +15,11 @@
 #include "gtest/gtest.h"
 
 #include "catalog/catalog.h"
+#include "catalog/database_catalog.h"
 #include "common/harness.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/drop_executor.h"
-#include "common/logger.h"
 #include "executor/create_executor.h"
-#include "executor/drop_executor.h"
 #include "parser/postgresparser.h"
 #include "planner/drop_plan.h"
 #include "planner/plan_util.h"
@@ -120,6 +119,9 @@ TEST_F(DropTests, DroppingTrigger) {
   EXPECT_EQ(StatementType::CREATE, stmt_list->GetStatement(0)->GetType());
   auto create_trigger_stmt =
       static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
+  
+  create_trigger_stmt->TryBindDatabaseName(DEFAULT_DB_NAME);
+  
   // Create plans
   planner::CreatePlan plan(create_trigger_stmt);
   // Execute the create trigger

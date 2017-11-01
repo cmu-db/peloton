@@ -21,6 +21,7 @@
 #include "common/macros.h"
 #include "storage/tuple.h"
 #include "type/value.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 namespace storage {
@@ -149,7 +150,7 @@ size_t Tuple::ExportSerializationSize() const {
 
       default:
         throw UnknownTypeException(
-            GetType(column_itr),
+            static_cast<int>(GetType(column_itr)),
             "Unknown ValueType found during Export serialization.");
         return (size_t)0;
     }

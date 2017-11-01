@@ -19,9 +19,14 @@
 namespace peloton {
 namespace codegen {
 
-void ValuesRuntime::OutputBoolean(char *values, uint32_t idx, bool val) {
+void ValuesRuntime::OutputBoolean(char *values, uint32_t idx, bool val,
+                                  bool is_null) {
   type::Value *vals = reinterpret_cast<type::Value *>(values);
-  vals[idx] = type::ValueFactory::GetBooleanValue(val);
+  if (is_null) {
+    vals[idx] = type::ValueFactory::GetNullValueByType(type::TypeId::BOOLEAN);
+  } else {
+    vals[idx] = type::ValueFactory::GetBooleanValue(val);
+  }
 }
 
 void ValuesRuntime::OutputTinyInt(char *values, uint32_t idx, int8_t val) {

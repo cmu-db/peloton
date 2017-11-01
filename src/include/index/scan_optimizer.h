@@ -18,6 +18,7 @@
 #include "common/logger.h"
 #include "index/index.h"
 #include "storage/tuple.h"
+#include "type/value_peeker.h"
 
 #include "index/index_util.h"
 

@@ -21,7 +21,7 @@ namespace codegen {
 
 PROXY(Varlen) {
   DECLARE_MEMBER(0, uint32_t, length);
-  DECLARE_MEMBER(0, const char, ptr);
+  DECLARE_MEMBER(1, const char, ptr);
   DECLARE_TYPE;
 };
 

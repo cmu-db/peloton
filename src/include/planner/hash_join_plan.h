@@ -28,37 +28,41 @@ class HashJoinPlan : public AbstractJoinPlan {
       JoinType join_type,
       std::unique_ptr<const expression::AbstractExpression> &&predicate,
       std::unique_ptr<const ProjectInfo> &&proj_info,
-      std::shared_ptr<const catalog::Schema> &proj_schema);
+      std::shared_ptr<const catalog::Schema> &proj_schema,
+      bool build_bloomfilter);
 
   HashJoinPlan(
       JoinType join_type,
       std::unique_ptr<const expression::AbstractExpression> &&predicate,
       std::unique_ptr<const ProjectInfo> &&proj_info,
       std::shared_ptr<const catalog::Schema> &proj_schema,
-      const std::vector<oid_t> &outer_hashkeys);
+      const std::vector<oid_t> &outer_hashkeys, bool build_bloomfilter);
 
   HashJoinPlan(
       JoinType join_type,
       std::unique_ptr<const expression::AbstractExpression> &&predicate,
       std::unique_ptr<const ProjectInfo> &&proj_info,
       std::shared_ptr<const catalog::Schema> &proj_schema,
-      std::vector<std::unique_ptr<const expression::AbstractExpression>> &
-          left_hash_keys,
-      std::vector<std::unique_ptr<const expression::AbstractExpression>> &
-          right_hash_keys)
-      : AbstractJoinPlan(join_type, std::move(predicate), std::move(proj_info),
-                         proj_schema),
-        left_hash_keys_(std::move(left_hash_keys)),
-        right_hash_keys_(std::move(right_hash_keys)) {}
+      std::vector<std::unique_ptr<const expression::AbstractExpression>>
+          &left_hash_keys,
+      std::vector<std::unique_ptr<const expression::AbstractExpression>>
+          &right_hash_keys,
+      bool build_bloomfilter);
 
   void HandleSubplanBinding(bool is_left, const BindingContext &input) override;
 
-  inline PlanNodeType GetPlanNodeType() const override { return PlanNodeType::HASHJOIN; }
+  inline PlanNodeType GetPlanNodeType() const override {
+    return PlanNodeType::HASHJOIN;
+  }
 
   void GetOutputColumns(std::vector<oid_t> &columns) const override {
     columns.resize(GetSchema()->GetColumnCount());
     std::iota(columns.begin(), columns.end(), 0);
   }
+
+  bool IsBloomFilterEnabled() const { return build_bloomfilter_; }
+  
+  void SetBloomFilterFlag(bool flag) { build_bloomfilter_ = flag; }
 
   const std::string GetInfo() const override { return "HashJoin"; }
 
@@ -81,13 +85,12 @@ class HashJoinPlan : public AbstractJoinPlan {
   }
 
   std::unique_ptr<AbstractPlan> Copy() const override {
-    std::unique_ptr<const expression::AbstractExpression> predicate_copy(
-        GetPredicate()->Copy());
+    std::unique_ptr<const expression::AbstractExpression> predicate_copy(GetPredicate() ? GetPredicate()->Copy() : nullptr);
     std::shared_ptr<const catalog::Schema> schema_copy(
         catalog::Schema::CopySchema(GetSchema()));
     HashJoinPlan *new_plan = new HashJoinPlan(
-        GetJoinType(), std::move(predicate_copy),
-        GetProjInfo()->Copy(), schema_copy, outer_column_ids_);
+        GetJoinType(), std::move(predicate_copy), GetProjInfo()->Copy(),
+        schema_copy, outer_column_ids_, build_bloomfilter_);
     return std::unique_ptr<AbstractPlan>(new_plan);
   }
 
@@ -96,8 +99,11 @@ class HashJoinPlan : public AbstractJoinPlan {
 
   std::vector<std::unique_ptr<const expression::AbstractExpression>>
       left_hash_keys_;
+  
   std::vector<std::unique_ptr<const expression::AbstractExpression>>
       right_hash_keys_;
+  
+  bool build_bloomfilter_;
 
  private:
   DISALLOW_COPY_AND_MOVE(HashJoinPlan);

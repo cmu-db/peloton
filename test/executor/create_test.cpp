@@ -170,6 +170,7 @@ TEST_F(CreateTests, CreatingTrigger) {
   EXPECT_EQ(StatementType::CREATE, stmt_list->GetStatement(0)->GetType());
   auto create_trigger_stmt =
       static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
+  create_trigger_stmt->TryBindDatabaseName(DEFAULT_DB_NAME);
 
   // Create plans
   planner::CreatePlan plan(create_trigger_stmt);
@@ -230,7 +231,7 @@ TEST_F(CreateTests, CreatingTrigger) {
   executor::CreateExecutor createTriggerExecutor(&plan, context2.get());
   createTriggerExecutor.Init();
   createTriggerExecutor.Execute();
-
+  
   // Check the effect of creation
   storage::DataTable *target_table =
       catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
@@ -309,6 +310,8 @@ TEST_F(CreateTests, CreatingTriggerWithoutWhen) {
   EXPECT_EQ(StatementType::CREATE, stmt_list->GetStatement(0)->GetType());
   auto create_trigger_stmt =
       static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
+
+  create_trigger_stmt->TryBindDatabaseName(DEFAULT_DB_NAME);
 
   // Create plans
   planner::CreatePlan plan(create_trigger_stmt);
@@ -406,6 +409,7 @@ TEST_F(CreateTests, CreatingTriggerInCatalog) {
   auto create_trigger_stmt =
       static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
 
+  create_trigger_stmt->TryBindDatabaseName(DEFAULT_DB_NAME);
   // Create plans
   planner::CreatePlan plan(create_trigger_stmt);
 
@@ -420,7 +424,7 @@ TEST_F(CreateTests, CreatingTriggerInCatalog) {
   // check whether the trigger catalog table contains this new trigger
   auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
       DEFAULT_DB_NAME, "accounts", txn);
-  auto trigger_list = catalog::TriggerCatalog::GetInstance()->GetTriggersByType(
+  auto trigger_list = catalog::TriggerCatalog::GetInstance().GetTriggersByType(
       table_object->table_oid,
       (TRIGGER_TYPE_ROW | TRIGGER_TYPE_BEFORE | TRIGGER_TYPE_UPDATE), txn);
 

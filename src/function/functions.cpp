@@ -10,24 +10,23 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "function/functions.h"
 
 namespace peloton {
 namespace function {
 
-std::unordered_map<std::string, BuiltInFuncType>
-    BuiltInFunctions::func_map;
+std::unordered_map<std::string, BuiltInFuncType> BuiltInFunctions::kFuncMap;
 
 void BuiltInFunctions::AddFunction(const std::string &func_name,
                                    BuiltInFuncType func) {
-  func_map.emplace(func_name, func);
+  kFuncMap.emplace(func_name, func);
 }
 
 BuiltInFuncType BuiltInFunctions::GetFuncByName(const std::string &func_name) {
-  auto func = func_map.find(func_name);
-  if (func == func_map.end())
-    return nullptr;
+  auto func = kFuncMap.find(func_name);
+  if (func == kFuncMap.end()) {
+    return {OperatorId::Invalid, nullptr};
+  }
   return func->second;
 }
 

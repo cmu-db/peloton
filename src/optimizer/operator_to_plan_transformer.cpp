@@ -444,7 +444,6 @@ vector<oid_t> OperatorToPlanTransformer::GenerateColumnsForScan(
       column_ids.push_back(col_id);
     GenerateTableExprMap(*output_expr_map_, alias, table);
     auto t = *output_expr_map_;
-    LOG_INFO("%ld", t.size());
   } else {
     auto output_column_size = column_prop->GetSize();
     for (oid_t idx = 0; idx < output_column_size; ++idx) {
@@ -668,9 +667,13 @@ unique_ptr<planner::AbstractPlan> OperatorToPlanTransformer::GenerateJoinPlan(
     unique_ptr<planner::HashPlan> hash_plan(new planner::HashPlan(hash_keys));
     hash_plan->AddChild(move(children_plans_[1]));
 
+    // TODO: Right now we always enable bloom filter. Later when we have
+    // cost model in place, we need to decide whether to enable bloom filter
+    // based on the size of the hash table and its selectivity
     join_plan = unique_ptr<planner::AbstractPlan>(
         new planner::HashJoinPlan(join_type, move(predicate), move(proj_info),
-                                  schema_ptr, left_hash_keys, right_hash_keys));
+                                  schema_ptr, left_hash_keys, right_hash_keys,
+                                  true));
 
     join_plan->AddChild(move(children_plans_[0]));
     join_plan->AddChild(move(hash_plan));

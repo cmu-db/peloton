@@ -33,7 +33,7 @@ class TransactionStatement : public SQLStatement {
   TransactionStatement(CommandType type)
       : SQLStatement(StatementType::TRANSACTION), type(type) {}
 
-  virtual void Accept(SqlNodeVisitor* v) const override {
+  virtual void Accept(SqlNodeVisitor* v) override {
     v->Visit(this);
   }
 

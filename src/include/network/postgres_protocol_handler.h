@@ -81,7 +81,7 @@ class PostgresProtocolHandler: public ProtocolHandler {
   // Deserialize the parameter value from packet
   static size_t ReadParamValue(
       InputPacket* pkt, int num_params, std::vector<int32_t>& param_types,
-      std::vector<std::pair<int, std::string>>& bind_parameters,
+      std::vector<std::pair<type::TypeId, std::string>>& bind_parameters,
       std::vector<type::Value>& param_values, std::vector<int16_t>& formats);
 
 

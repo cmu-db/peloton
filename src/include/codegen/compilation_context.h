@@ -118,7 +118,7 @@ class CompilationContext {
   // The factory that creates translators for operators and expressions
   TranslatorFactory translator_factory_;
 
-  // The ID for the catalog and transaction state
+  // The runtime state IDs
   RuntimeState::StateID txn_state_id_;
   RuntimeState::StateID catalog_state_id_;
   RuntimeState::StateID executor_context_state_id_;
