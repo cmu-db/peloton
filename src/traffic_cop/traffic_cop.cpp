@@ -150,14 +150,14 @@ ResultType TrafficCop::ExecuteStatement(
     stats::BackendStatsContext::GetInstance()->InitQueryMetric(statement,
                                                                param_stats);
   }
-  LOG_DEBUG("Execute Statement of name: %s",
+  LOG_TRACE("Execute Statement of name: %s",
             statement->GetStatementName().c_str());
-  LOG_DEBUG("Execute Statement of query: %s",
+  LOG_TRACE("Execute Statement of query: %s",
             statement->GetQueryString().c_str());
-  LOG_DEBUG("Execute Statement Plan:\n%s",
+  LOG_TRACE("Execute Statement Plan:\n%s",
             planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
-  LOG_DEBUG("Execute Statement Query Type: %s", statement->GetQueryTypeString().c_str());
-  LOG_DEBUG("----QueryType: %d--------", (int)statement->GetQueryType());
+  LOG_TRACE("Execute Statement Query Type: %s", statement->GetQueryTypeString().c_str());
+  LOG_TRACE("----QueryType: %d--------", (int)statement->GetQueryType());
   try {
     switch (statement->GetQueryType()) {
       case QueryType::QUERY_BEGIN:
@@ -183,10 +183,10 @@ ResultType TrafficCop::ExecuteStatement(
 }
 
 ResultType TrafficCop::ExecuteStatementGetResult(int &rows_changed) {
-  LOG_DEBUG("Statement executed. Result: %s",
+  LOG_TRACE("Statement executed. Result: %s",
             ResultTypeToString(p_status_.m_result).c_str());
   rows_changed = p_status_.m_processed;
-  LOG_DEBUG("rows_changed %d", rows_changed);
+  LOG_TRACE("rows_changed %d", rows_changed);
  // is_queuing_ = false;
   return p_status_.m_result;
 }
@@ -222,7 +222,7 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
     PL_ASSERT(task_callback_arg_);
     ExecutePlanArg* arg = new ExecutePlanArg(plan, txn, params, result, result_format, p_status_);
     threadpool::MonoQueuePool::GetInstance().SubmitTask(ExecutePlanWrapper, arg, task_callback_, task_callback_arg_);
-    LOG_DEBUG("Submit Task into MonoQueuePool");
+    LOG_TRACE("Submit Task into MonoQueuePool");
 
     is_queuing_ = true;
     return p_status_;
@@ -231,7 +231,7 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
     // otherwise, we have already aborted
     p_status_.m_result = ResultType::ABORTED;
   }
-  LOG_DEBUG("Check Tcop_txn_state Size After ExecuteStatementPlan %lu", tcop_txn_state_.size());
+  LOG_TRACE("Check Tcop_txn_state Size After ExecuteStatementPlan %lu", tcop_txn_state_.size());
   return p_status_;
 }
 
