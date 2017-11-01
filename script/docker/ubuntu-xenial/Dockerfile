@@ -8,7 +8,7 @@ RUN /bin/bash -c "source ./peloton/script/installation/packages.sh"
 
 RUN mkdir /peloton/build
 
-RUN cd /peloton/build && cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALL=False ..
+RUN cd /peloton/build && cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False ..
 
 RUN cd /peloton/build && make -j4 && make install
 
