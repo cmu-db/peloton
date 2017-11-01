@@ -43,7 +43,7 @@ class HyperLogLog {
 
   uint64_t EstimateCardinality() {
     uint64_t cardinality = hll_->Estimate();
-    LOG_TRACE("Estimated cardinality: %lu", cardinality);
+    LOG_TRACE("Estimated cardinality: %" PRId64, cardinality);
     return cardinality;
   }
 
