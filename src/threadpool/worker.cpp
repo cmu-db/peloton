@@ -10,67 +10,48 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <unistd.h>
+
 #include "threadpool/worker.h"
 #include "common/logger.h"
+
+// TODO Add comments
 #define EMPTY_COUNT_BOUND 10
 #define WORKER_PAUSE_TIME 10
 
 namespace peloton {
 namespace threadpool {
 
-void Worker::StartThread(WorkerPool* current_pool){
+void Worker::Start(TaskQueue *task_queue) {
   shutdown_thread_ = false;
-  worker_thread_ = std::thread(Worker::PollForWork, this, current_pool);
+  worker_thread_ = std::thread(Worker::Execute, this, task_queue);
 }
 
-void Worker::PollForWork(Worker* current_thread, WorkerPool* current_pool){
+void Worker::Execute(Worker *current_thread, TaskQueue *task_queue) {
   size_t empty_count = 0;
-  std::shared_ptr<Task> t;
-  while(!current_thread->shutdown_thread_ || !current_pool->task_queue_->IsEmpty()){
+  std::shared_ptr<Task> task;
+  while (!current_thread->shutdown_thread_ || !task_queue->IsEmpty()) {
     // poll the queue
-    if(!current_pool->task_queue_->PollTask(t)){
+    if (!task_queue->Poll(task)) {
       empty_count++;
       if (empty_count == EMPTY_COUNT_BOUND) {
         empty_count = 0;
         usleep(WORKER_PAUSE_TIME);
       }
-      continue;
+    } else {
+      LOG_TRACE("Grabbed one task, now execute it");
+      // call the threadpool
+      task->Run();
+      LOG_TRACE("Finished one task");
+      empty_count = 0;
     }
-    LOG_TRACE("Grab one task, going to execute it");
-    // call the threadpool
-    t->ExecuteTask();
-    LOG_TRACE("Finish one task");
-    empty_count = 0;
   }
 }
 
-void Worker::Shutdown() {
+void Worker::Stop() {
   shutdown_thread_ = true;
   worker_thread_.join();
 }
 
-WorkerPool::WorkerPool(size_t num_threads, TaskQueue *task_queue) {
-  this->task_queue_ = task_queue;
-  for (size_t thread_id = 0; thread_id < num_threads; thread_id++){
-    // start thread on construction
-    std::unique_ptr<Worker> worker = std::make_unique<Worker>();
-    worker->StartThread(this);
-    worker_threads_.push_back(std::move(worker));
-  }
-}
-/*
-WorkerPool& WorkerPool::GetInstance() {
-  static WorkerPool wp(DEFAULT_NUM_WORKER_THREADS, DEFAULT_TASK_QUEUE_LENGTH);
-  return wp;
-}*/
-
-void WorkerPool::Shutdown() {
-  for (auto& thread : worker_threads_){
-    thread->Shutdown();
-  }
-  worker_threads_.clear();
-  return;
-}
-
-} // namespace threadpool
-} // namespace peloton
+}  // namespace threadpool
+}  // namespace peloton

@@ -609,7 +609,7 @@ void PostgresProtocolHandler::ExecBindMessage(InputPacket *pkt) {
   }
 
   // Group the parameter types and the parameters in this vector
-  std::vector<std::pair<int, std::string>> bind_parameters(num_params);
+  std::vector<std::pair<type::TypeId, std::string>> bind_parameters(num_params);
   std::vector<type::Value> param_values(num_params);
 
   auto param_types = statement->GetParamTypes();
@@ -712,7 +712,7 @@ size_t PostgresProtocolHandler::ReadParamFormat(InputPacket *pkt, int num_params
 // For consistency, this function assumes the input vectors has the correct size
 size_t PostgresProtocolHandler::ReadParamValue(
     InputPacket *pkt, int num_params, std::vector<int32_t> &param_types,
-    std::vector<std::pair<int, std::string>> &bind_parameters,
+    std::vector<std::pair<type::TypeId, std::string>> &bind_parameters,
     std::vector<type::Value> &param_values, std::vector<int16_t> &formats) {
   auto begin = pkt->ptr;
   ByteBuf param;
@@ -787,8 +787,7 @@ size_t PostgresProtocolHandler::ReadParamValue(
             break;
           }
           case PostgresValueType::VARBINARY: {
-            bind_parameters[param_idx] = std::make_pair(
-                type::TypeId::VARBINARY,
+            bind_parameters[param_idx] = std::make_pair(type::TypeId::VARBINARY,
                 std::string(reinterpret_cast<char *>(&param[0]), param_len));
             param_values[param_idx] = type::ValueFactory::GetVarbinaryValue(
                 &param[0], param_len, true);

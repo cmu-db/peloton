@@ -278,6 +278,7 @@ distribute/*
 cmake_build
 .cmake_build
 cmake-build-debug
+cmake-build-release
 
 # Bison/Flex
 sql_parser.cpp

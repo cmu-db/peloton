@@ -62,7 +62,7 @@ namespace type {
 
 
 TinyintType::TinyintType() :
-    IntegerParentType(TINYINT) {
+    IntegerParentType(TypeId::TINYINT) {
 }
 
 bool TinyintType::IsZero(const Value& val) const {

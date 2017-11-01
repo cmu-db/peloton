@@ -19,8 +19,8 @@
 #include "optimizer/rule.h"
 #include "parser/postgresparser.h"
 #include "planner/plan_util.h"
-#include "include/traffic_cop/traffic_cop.h"
 #include "gmock/gtest/gtest.h"
+#include "traffic_cop/traffic_cop.h"
 
 namespace peloton {
 
@@ -106,7 +106,7 @@ ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
   traffic_cop_.SetTcopTxnState(txn);
 
   auto parsed_stmt = peloton_parser.BuildParseTree(query);
-  auto plan = optimizer->BuildPelotonPlanTree(parsed_stmt, txn);
+  auto plan = optimizer->BuildPelotonPlanTree(parsed_stmt, DEFAULT_DB_NAME, txn);
   tuple_descriptor =
       traffic_cop_.GenerateTupleDescriptor(parsed_stmt->GetStatement(0));
   auto result_format = std::vector<int>(tuple_descriptor.size(), 0);
@@ -140,8 +140,7 @@ TestingSQLUtil::GeneratePlanWithOptimizer(
   auto &peloton_parser = parser::PostgresParser::GetInstance();
 
   auto parsed_stmt = peloton_parser.BuildParseTree(query);
-
-  auto return_value = optimizer->BuildPelotonPlanTree(parsed_stmt, txn);
+  auto return_value = optimizer->BuildPelotonPlanTree(parsed_stmt, DEFAULT_DB_NAME, txn);
   return return_value;
 }
 

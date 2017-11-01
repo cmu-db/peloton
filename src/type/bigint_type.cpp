@@ -61,7 +61,7 @@ namespace type {
   } // SWITCH
 
 BigintType::BigintType() :
-    IntegerParentType(BIGINT) {
+    IntegerParentType(TypeId::BIGINT) {
 }
 
 bool BigintType::IsZero(const Value& val) const {

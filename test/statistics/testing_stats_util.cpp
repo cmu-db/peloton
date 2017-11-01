@@ -27,7 +27,7 @@
 #include "planner/insert_plan.h"
 #include "planner/plan_util.h"
 #include "storage/tile.h"
-#include "include/traffic_cop/traffic_cop.h"
+#include "traffic_cop/traffic_cop.h"
 
 namespace peloton {
 namespace test {
@@ -47,7 +47,7 @@ void TestingStatsUtil::ShowTable(std::string database_name,
   auto txn = txn_manager.BeginTransaction();
   auto select_stmt = peloton_parser.BuildParseTree(sql);
   statement->SetPlanTree(
-      optimizer::Optimizer().BuildPelotonPlanTree(select_stmt, txn));
+      optimizer::Optimizer().BuildPelotonPlanTree(select_stmt, DEFAULT_DB_NAME, txn));
   LOG_DEBUG("%s",
             planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
@@ -173,7 +173,7 @@ void TestingStatsUtil::ParseAndPlan(Statement *statement, std::string sql) {
   auto update_stmt = peloton_parser.BuildParseTree(sql);
   LOG_TRACE("Building plan tree...");
   statement->SetPlanTree(
-      optimizer::Optimizer().BuildPelotonPlanTree(update_stmt, txn));
+      optimizer::Optimizer().BuildPelotonPlanTree(update_stmt, DEFAULT_DB_NAME, txn));
   LOG_TRACE("Building plan tree completed!");
   LOG_TRACE("%s", statement->GetPlanTree().get()->GetInfo().c_str());
   txn_manager.CommitTransaction(txn);
