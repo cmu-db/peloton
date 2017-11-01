@@ -832,7 +832,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         // add old version into gc set.
         // may need to delete versions from secondary indexes.
         gc_set->operator[](tile_group_id)[tuple_slot] = GCVersionType::COMMIT_UPDATE;
-        logging::LogRecord record = logging::LogRecordFactory::CreateTupleRecord(LogRecordType::TUPLE_INSERT, new_version, end_commit_id, epoch_id);
+        logging::LogRecord record = logging::LogRecordFactory::CreateTupleRecord(LogRecordType::TUPLE_UPDATE, new_version, end_commit_id, epoch_id);
         record.SetOldItemPointer(old_version);
         current_txn->log_records_.push_back(record);
       } else if (tuple_entry.second == RWType::DELETE) {

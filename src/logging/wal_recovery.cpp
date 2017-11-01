@@ -356,6 +356,7 @@ bool WalRecovery::ReplayLogFile(FileHandle &file_handle){
                 table->AddTileGroupWithOidForRecovery(tg->GetTileGroupId()+1);
                 catalog::Manager::GetInstance().GetNextTileGroupId();
         }
+        break;
     }
       case LogRecordType::TUPLE_UPDATE:{
         eid_t record_eid = record_decode.ReadLong();
