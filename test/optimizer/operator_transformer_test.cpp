@@ -47,7 +47,7 @@ class OperatorTransformerTests : public PelotonTest {
     auto stmt = reinterpret_cast<parser::SelectStatement*>(stmt_list->GetStatement(0));
 
     // Bind query
-    binder::BindNodeVisitor binder(txn);
+    binder::BindNodeVisitor binder(txn, DEFAULT_DB_NAME);
     binder.BindNameToNode(stmt);
 
     QueryToOperatorTransformer transformer(txn);
@@ -67,7 +67,7 @@ class OperatorTransformerTests : public PelotonTest {
         "SELECT %s FROM %s", true_predicates.c_str(), table_names.c_str());
     auto parsed_stmt = peloton_parser.BuildParseTree(ref_query);
     auto ref_stmt = parsed_stmt->GetStatement(0);
-    binder::BindNodeVisitor binder(txn);
+    binder::BindNodeVisitor binder(txn, DEFAULT_DB_NAME);
     binder.BindNameToNode(ref_stmt);
     auto ref_expr = ((parser::SelectStatement*)ref_stmt)->select_list.at(0).get();
     txn_manager.CommitTransaction(txn);

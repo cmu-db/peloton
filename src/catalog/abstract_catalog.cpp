@@ -59,7 +59,8 @@ AbstractCatalog::AbstractCatalog(const std::string &catalog_table_ddl,
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto create_plan = std::dynamic_pointer_cast<planner::CreatePlan>(
       optimizer::Optimizer().BuildPelotonPlanTree(
-          peloton_parser.BuildParseTree(catalog_table_ddl), txn));
+          peloton_parser.BuildParseTree(catalog_table_ddl), 
+          DATABASE_CATALOG_NAME, txn));
   auto catalog_table_schema = create_plan->GetSchema();
   auto catalog_table_name = create_plan->GetTableName();
 

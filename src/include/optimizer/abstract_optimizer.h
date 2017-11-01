@@ -14,6 +14,8 @@
 
 #include <memory>
 
+#include "type/types.h"
+
 namespace peloton {
 namespace planner {
 class AbstractPlan;
@@ -44,7 +46,9 @@ class AbstractOptimizer {
   virtual ~AbstractOptimizer();
 
   virtual std::shared_ptr<planner::AbstractPlan> BuildPelotonPlanTree(
-      const std::unique_ptr<parser::SQLStatementList> &parse_tree, concurrency::Transaction *txn) = 0;
+      const std::unique_ptr<parser::SQLStatementList> &parse_tree, 
+      const std::string default_database_name,
+      concurrency::Transaction *txn) = 0;
 
   virtual void Reset(){};
 };
