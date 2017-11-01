@@ -25,7 +25,7 @@ namespace test {
 class WalLoggerTests : public PelotonTest {};
 
 TEST_F(WalLoggerTests, LogWrittenTest) {
-  logging::WalLogger* logger = new logging::WalLogger(1, "/tmp/log");
+  logging::WalLogger* logger = new logging::WalLogger(1, "/tmp");
   catalog::Catalog::GetInstance();
 
   std::vector<logging::LogRecord> rs;
