@@ -82,11 +82,11 @@ class Cost {
    * Cost of GROUP BY.
    */
   static double SortGroupByCost(const std::shared_ptr<TableStats>& input_stats,
-                                std::vector<oid_t> columns,
+                                std::vector<std::string> columns,
                                 std::shared_ptr<TableStats>& output_stats);
 
   static double HashGroupByCost(const std::shared_ptr<TableStats>& input_stats,
-                                std::vector<oid_t> columns,
+                                std::vector<std::string> columns,
                                 std::shared_ptr<TableStats>& output_stats);
 
   /*
@@ -151,7 +151,7 @@ class Cost {
    */
   static size_t GetEstimatedGroupByRows(
       const std::shared_ptr<TableStats>& input_stats,
-      std::vector<oid_t>& columns);
+      std::vector<std::string>& columns);
 };
 
 }  // namespace optimizer

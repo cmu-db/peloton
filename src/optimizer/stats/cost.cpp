@@ -85,7 +85,7 @@ void Cost::CombineConjunctionStats(const std::shared_ptr<TableStats> &lhs,
 // GROUP BY
 //===----------------------------------------------------------------------===//
 double Cost::SortGroupByCost(const std::shared_ptr<TableStats> &input_stats,
-                             std::vector<oid_t> columns,
+                             std::vector<std::string> columns,
                              std::shared_ptr<TableStats> &output_stats) {
   PL_ASSERT(input_stats);
   PL_ASSERT(columns.size() > 0);
@@ -109,7 +109,7 @@ double Cost::SortGroupByCost(const std::shared_ptr<TableStats> &input_stats,
 }
 
 double Cost::HashGroupByCost(const std::shared_ptr<TableStats> &input_stats,
-                             std::vector<oid_t> columns,
+                             std::vector<std::string> columns,
                              std::shared_ptr<TableStats> &output_stats) {
   PL_ASSERT(input_stats);
 
@@ -216,14 +216,14 @@ void Cost::UpdateConditionStats(const std::shared_ptr<TableStats> &input_stats,
 
 size_t Cost::GetEstimatedGroupByRows(
     const std::shared_ptr<TableStats> &input_stats,
-    std::vector<oid_t> &columns) {
+    std::vector<std::string> &columns) {
   // Idea is to assume each column is uniformaly network and get an
   // overestimation.
   // Then use max cardinality among all columns as underestimation.
   // And combine them together.
   double rows = 1;
   double max_cardinality = 0;
-  for (oid_t column : columns) {
+  for (auto column : columns) {
     double cardinality = input_stats->GetCardinality(column);
     max_cardinality = std::max(max_cardinality, cardinality);
     rows *= cardinality;
