@@ -768,11 +768,7 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
               PL_ASSERT(false);
             }
             LOG_TRACE("ProcessResult: queueing");
-           // if(conn->log_manager_.is_running_){
-           //     conn->TransitState(ConnState::CONN_LOGGING);
-            //} else {
-                conn->TransitState(ConnState::CONN_GET_RESULT);
-            //}
+            conn->TransitState(ConnState::CONN_GET_RESULT);
             done = true;
             break;
           }
@@ -788,12 +784,9 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
         }
 
         conn->protocol_handler_->GetResult();
-        if(conn->traffic_cop_.is_logging_){
+        if(conn->traffic_cop_.is_logging_)
             done=true;
-            conn->TransitState(ConnState::CONN_LOGGING);
-        } else {
-            conn->TransitState(ConnState::CONN_WRITE);
-        }
+        conn->TransitState(ConnState::CONN_WRITE);
         break;
       }
 

@@ -171,7 +171,6 @@ ResultType TrafficCop::ExecuteStatement(
         ExecuteStatementPlan(statement->GetPlanTree(), params, result,
                              result_format, thread_id);
         if (is_queuing_) {
-            LOG_DEBUG("QUEUED OPERATION");
           return ResultType::QUEUING;
         }
         // if in ExecuteStatementPlan, these is no need to queue task, like 'BEGIN', directly return result
