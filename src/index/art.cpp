@@ -9,13 +9,6 @@
 #include "index/art.h"
 #include "index/Key.h"
 #include "index/Epoche.h"
-
-//#include "N.cpp"
-//#include "N4.cpp"
-//#include "N16.cpp"
-//#include "N48.cpp"
-//#include "N256.cpp"
-//#include "Epoche.cpp"
 #include "index/N.h"
 #include "index/N4.h"
 #include "index/N16.h"
@@ -522,6 +515,131 @@ void Tree::insert(const Key &k, TID tid, ThreadInfo &epocheInfo, bool &insertSuc
       node->writeUnlock();
       insertSuccess = true;
       return;
+    }
+    level++;
+    parentVersion = v;
+  }
+}
+
+bool Tree::conditionalInsert(const Key &k, TID tid, ThreadInfo &epocheInfo, std::function<bool(const void *)> predicate) {
+  EpocheGuard epocheGuard(epocheInfo);
+  int restartCount = 0;
+  restart:
+  if (restartCount++)
+    yield(restartCount);
+  bool needRestart = false;
+
+  N *node = nullptr;
+  N *nextNode = root;
+  N *parentNode = nullptr;
+  uint8_t parentKey, nodeKey = 0;
+  uint64_t parentVersion = 0;
+  uint32_t level = 0;
+
+  while (true) {
+    parentNode = node;
+    parentKey = nodeKey;
+    node = nextNode;
+    auto v = node->readLockOrRestart(needRestart);
+    if (needRestart) goto restart;
+
+    uint32_t nextLevel = level;
+
+    uint8_t nonMatchingKey;
+    Prefix remainingPrefix;
+    auto res = checkPrefixPessimistic(node, k, nextLevel, nonMatchingKey, remainingPrefix,
+                                      this->loadKey, needRestart, metadata); // increases level
+    if (needRestart) goto restart;
+    switch (res) {
+      case CheckPrefixPessimisticResult::NoMatch: {
+        parentNode->upgradeToWriteLockOrRestart(parentVersion, needRestart);
+        if (needRestart) goto restart;
+
+        node->upgradeToWriteLockOrRestart(v, needRestart);
+        if (needRestart) {
+          parentNode->writeUnlock();
+          goto restart;
+        }
+        // 1) Create new node which will be parent of node, Set common prefix, level to this node
+        auto newNode = new N4(node->getPrefix(), nextLevel - level);
+
+        // 2)  add node and (tid, *k) as children
+        newNode->insert(k[nextLevel], N::setLeaf(tid));
+        newNode->insert(nonMatchingKey, node);
+
+        // 3) upgradeToWriteLockOrRestart, update parentNode to point to the new node, unlock
+        N::change(parentNode, parentKey, newNode);
+        parentNode->writeUnlock();
+
+        // 4) update prefix of node, unlock
+        node->setPrefix(remainingPrefix,
+                        node->getPrefixLength() - ((nextLevel - level) + 1));
+
+        node->writeUnlock();
+        return true;
+      }
+      case CheckPrefixPessimisticResult::Match:
+        break;
+    }
+    level = nextLevel;
+    nodeKey = k[level];
+    nextNode = N::getChild(nodeKey, node);
+    node->checkOrRestart(v,needRestart);
+    if (needRestart) goto restart;
+
+    if (nextNode == nullptr) {
+      N::insertAndUnlock(node, v, parentNode, parentVersion, parentKey, nodeKey, N::setLeaf(tid), needRestart, epocheInfo);
+      if (needRestart) goto restart;
+      return true;
+    }
+
+    if (parentNode != nullptr) {
+      parentNode->readUnlockOrRestart(parentVersion, needRestart);
+      if (needRestart) goto restart;
+    }
+
+    if (N::isLeaf(nextNode)) {
+      node->upgradeToWriteLockOrRestart(v, needRestart);
+      if (needRestart) goto restart;
+
+      Key key;
+      loadKey(N::getLeaf(nextNode), key, metadata);
+
+      if (key == k) {
+        MultiValues *value_list = reinterpret_cast<MultiValues *>(N::getLeaf(nextNode));
+        while (value_list != nullptr) {
+          ItemPointer *value_pointer = (ItemPointer *) (value_list->tid);
+          if (predicate(value_pointer)) {
+            node->writeUnlock();
+            return false;
+          } else if ((uint64_t) value_pointer == tid) {
+            node->writeUnlock();
+            return false;
+          }
+          value_list = value_list->next;
+        }
+
+        // upsert
+//        N::change(node, k[level], N::setLeaf(tid));
+        printf("add another value for a non-unique key %llu\n", tid);
+//        N::addMultiValue(node, k[level], N::setLeaf(tid));
+        N::addMultiValue(node, k[level], tid);
+        node->writeUnlock();
+        return true;
+      }
+
+      level++;
+      uint32_t prefixLength = 0;
+      while (key[level + prefixLength] == k[level + prefixLength]) {
+        prefixLength++;
+      }
+
+      auto n4 = new N4(&k[level], prefixLength);
+      n4->insert(k[level + prefixLength], N::setLeaf(tid));
+      n4->insert(key[level + prefixLength], nextNode);
+      N::change(node, k[level - 1], n4);
+      node->writeUnlock();
+      return true;
     }
     level++;
     parentVersion = v;

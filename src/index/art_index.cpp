@@ -281,6 +281,10 @@ void ArtIndex::WriteIndexedAttributesInKey(const storage::Tuple *tuple, Key& ind
   for (int i = 0; i < columnsInKey; i++) {
     total_bytes += columns[i].GetLength();
   }
+
+//  // include the tuple id in the key so that duplicate key becomes unique keys
+//  total_bytes += 8;
+
   char *c = new char[total_bytes];
   int offset = 0;
   for (int i = 0; i < columnsInKey; i++) {
@@ -291,6 +295,17 @@ void ArtIndex::WriteIndexedAttributesInKey(const storage::Tuple *tuple, Key& ind
     offset += columns[i].GetLength();
 
   }
+
+//  // append the tuple id to the key
+//  // pointer is unsigned long
+//  c[offset] = (tuple_id >> 56) & 0xFF;
+//  c[offset + 1] = (tuple_id >> 48) & 0xFF;
+//  c[offset + 2] = (tuple_id >> 40) & 0xFF;
+//  c[offset + 3] = (tuple_id >> 32) & 0xFF;
+//  c[offset + 4] = (tuple_id >> 24) & 0xFF;
+//  c[offset + 5] = (tuple_id >> 16) & 0xFF;
+//  c[offset + 6] = (tuple_id >> 8) & 0xFF;
+//  c[offset + 7] = tuple_id & 0xFF;
 
   printf("below is the BINARY COMPARABLE KEY!\n");
   index_key.set(c, total_bytes);
@@ -446,18 +461,11 @@ bool ArtIndex::CondInsertEntry(
   ItemPointer *value,
   std::function<bool(const void *)> predicate) {
 
-  std::vector<ItemPointer *> result;
-  ScanKey(key, result);
-
-  for (unsigned int i = 0; i < result.size(); i++) {
-    if (predicate(result[i])) {
-      return false;
-    } else if (result[i] == value) {
-      return false;
-    }
-  }
-
-  return InsertEntry(key, value);
+  Key index_key;
+  WriteIndexedAttributesInKey(key, index_key);
+  TID tid = reinterpret_cast<TID>(value);
+  auto t = artTree.getThreadInfo();
+  return artTree.conditionalInsert(index_key, tid, t, predicate);
 }
 
 /*

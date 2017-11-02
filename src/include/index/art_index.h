@@ -79,7 +79,7 @@ public:
 
   static void WriteValueInBytes(type::Value value, char *c, int offset, int length);
 
-  void WriteIndexedAttributesInKey(const storage::Tuple *tuple, Key& index_key);
+  static void WriteIndexedAttributesInKey(const storage::Tuple *tuple, Key& index_key);
 
 protected:
   int KeyType;

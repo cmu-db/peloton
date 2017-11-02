@@ -86,6 +86,8 @@ public:
 
   void remove(const Key &k, TID tid, ThreadInfo &epocheInfo);
 
+  bool conditionalInsert(const Key &k, TID tid, ThreadInfo &epocheInfo, std::function<bool(const void *)> predicate);
+
   void setIndexMetadata(IndexMetadata *metadata);
 };
 
