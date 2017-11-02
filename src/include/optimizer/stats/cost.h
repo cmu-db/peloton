@@ -89,6 +89,14 @@ class Cost {
                                 std::vector<std::string> columns,
                                 std::shared_ptr<TableStats>& output_stats);
 
+  static double SortGroupByCost(const std::shared_ptr<TableStats>& input_stats,
+                                std::vector<oid_t> columns,
+                                std::shared_ptr<TableStats>& output_stats);
+
+  static double HashGroupByCost(const std::shared_ptr<TableStats>& input_stats,
+                                std::vector<oid_t> columns,
+                                std::shared_ptr<TableStats>& output_stats);
+
   /*
    * Aggregation (SUM, COUNT, etc) cost = cost of scan input table.
    * Note it does not update table stats.
@@ -103,7 +111,7 @@ class Cost {
    * Cost of DISTINCT = cost of building hash table.
    */
   static double DistinctCost(const std::shared_ptr<TableStats>& input_stats,
-                             oid_t column,
+                             std::string column_name,
                              std::shared_ptr<TableStats>& output_stats);
 
   /*
@@ -152,6 +160,10 @@ class Cost {
   static size_t GetEstimatedGroupByRows(
       const std::shared_ptr<TableStats>& input_stats,
       std::vector<std::string>& columns);
+
+  static size_t GetEstimatedGroupByRows(
+    const std::shared_ptr<TableStats>& input_stats,
+    std::vector<oid_t>& columns);
 };
 
 }  // namespace optimizer

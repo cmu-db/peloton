@@ -17,12 +17,15 @@
 #include "common/macros.h"
 #include "optimizer/stats.h"
 #include "common/internal_types.h"
+#include "optimizer/stats/tuple_sampler.h"
+#include "index/index.h"
 
 namespace peloton {
 namespace optimizer {
 
 #define DEFAULT_CARDINALITY 1
 #define DEFAULT_HAS_INDEX false
+#define DEFAULT_SAMPLE_NUM 100
 
 class ColumnStats;
 
@@ -33,16 +36,19 @@ class TableStats : public Stats {
  public:
   TableStats() : TableStats((size_t)0) {}
 
-  TableStats(size_t num_rows)
+
+  TableStats(size_t num_rows, bool is_base_table = true)
       : Stats(nullptr),
         num_rows(num_rows),
         col_stats_list_{},
-        col_name_to_stats_map_{} {}
+        col_name_to_stats_map_{},
+        is_base_table_(is_base_table_),
+        tuple_sampler_{} {}
 
   TableStats(size_t num_rows,
-             std::vector<std::shared_ptr<ColumnStats>> col_stats_ptrs);
+             std::vector<std::shared_ptr<ColumnStats>> col_stats_ptrs, bool is_base_table = true);
 
-  TableStats(std::vector<std::shared_ptr<ColumnStats>> col_stats_ptrs);
+  TableStats(std::vector<std::shared_ptr<ColumnStats>> col_stats_ptrs, bool is_base_table = true);
 
   /*
    * Right now table_stats need to support both column id and column name
@@ -79,6 +85,18 @@ class TableStats : public Stats {
 
   bool RemoveColumnStats(const oid_t column_id);
 
+  bool AddIndex(const std::string table_name, const std::shared_ptr<index::Index> index);
+
+  std::shared_ptr<index::Index> GetIndex(const std::string col_name);
+
+  inline bool IsBaseTable() { return is_base_table_; }
+
+  void SampleTuples(storage::DataTable * table);
+
+  inline std::shared_ptr<TupleSampler> GetSampler() { return tuple_sampler_; }
+
+  inline void SetTupleSampler(std::shared_ptr<TupleSampler> tuple_sampler) { tuple_sampler_ = tuple_sampler; }
+
   size_t GetColumnCount();
 
   std::string ToCSV();
@@ -90,6 +108,9 @@ class TableStats : public Stats {
   std::vector<std::shared_ptr<ColumnStats>> col_stats_list_;
   std::unordered_map<std::string, std::shared_ptr<ColumnStats>>
       col_name_to_stats_map_;
+  std::unordered_map<std::string, std::shared_ptr<index::Index>> index_map_;
+  bool is_base_table_;
+  std::shared_ptr<TupleSampler> tuple_sampler_;
 };
 
 }  // namespace optimizer

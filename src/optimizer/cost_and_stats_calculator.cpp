@@ -34,6 +34,11 @@ std::shared_ptr<TableStats> generateOutputStat(
   std::vector<std::shared_ptr<ColumnStats>> output_column_stats;
   if (columns_prop->HasStarExpression()) {
     for (size_t i = 0; i < input_table_stats->GetColumnCount(); i++) {
+      auto column_stat = input_table_stats->GetColumnStats((oid_t)i);
+      if (data_table != nullptr) {
+        // add table_name for base table
+        column_stat->column_name = data_table->GetName() + "." + column_stat->column_name;
+      }
       output_column_stats.push_back(
           input_table_stats->GetColumnStats((oid_t)i));
     }
@@ -43,11 +48,17 @@ std::shared_ptr<TableStats> generateOutputStat(
 
       // TODO: Deal with or add column stats for complex expressions like a+b
       if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
-        auto column_name =
-            (std::dynamic_pointer_cast<expression::TupleValueExpression>(expr))
-                ->GetColumnName();
+        auto tv_expr = std::dynamic_pointer_cast<expression::TupleValueExpression>(expr);
+        auto column_name = tv_expr->GetColumnName();
+        if (data_table == nullptr) {
+          column_name = tv_expr->GetTableName() + "." + column_name;
+        }
         auto column_stat = input_table_stats->GetColumnStats(column_name);
         if (column_stat != nullptr) {
+          if (data_table != nullptr) {
+            // add table_name for base table
+            column_stat->column_name = data_table->GetName() + "." + column_stat->column_name;
+          }
           output_column_stats.push_back(column_stat);
         };
       }
@@ -55,6 +66,7 @@ std::shared_ptr<TableStats> generateOutputStat(
   }
   auto output_table_stats = std::make_shared<TableStats>(
       input_table_stats->num_rows, output_column_stats);
+  output_table_stats->SetTupleSampler(input_table_stats->GetSampler());
   return output_table_stats;
 }
 
@@ -184,7 +196,7 @@ void CostAndStatsCalculator::Visit(const PhysicalSeqScan *op) {
   auto columns_prop =
       output_properties_->GetPropertyOfType(PropertyType::COLUMNS)
           ->As<PropertyColumns>();
-  auto output_stats = generateOutputStat(table_stats, columns_prop);
+  auto output_stats = generateOutputStat(table_stats, columns_prop, op->table_);
   auto predicate_prop =
       output_properties_->GetPropertyOfType(PropertyType::PREDICATE)
           ->As<PropertyPredicate>();
@@ -239,7 +251,7 @@ void CostAndStatsCalculator::Visit(const PhysicalIndexScan *op) {
   auto columns_prop =
       output_properties_->GetPropertyOfType(PropertyType::COLUMNS)
           ->As<PropertyColumns>();
-  auto output_stats = generateOutputStat(table_stats, columns_prop);
+  auto output_stats = generateOutputStat(table_stats, columns_prop, op->table_);
 
   if (predicate_prop == nullptr) {
     output_cost_ += Cost::NoConditionSeqScanCost(table_stats);
@@ -396,8 +408,8 @@ void CostAndStatsCalculator::Visit(const PhysicalHashGroupBy *op) {
   for (auto column: op->columns) {
     // TODO: Deal with complex expressions like a+b
     if (column->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
-      std::string column_name = std::dynamic_pointer_cast<expression::TupleValueExpression>(
-        column)->GetColumnName();
+      auto tv_expr = std::dynamic_pointer_cast<expression::TupleValueExpression>(column);
+      std::string column_name = tv_expr->GetTableName() + "." + tv_expr->GetColumnName();
       column_names.push_back(column_name);
     }
   }
@@ -424,8 +436,8 @@ void CostAndStatsCalculator::Visit(const PhysicalSortGroupBy *op) {
   for (auto column : op->columns) {
     // TODO: Deal with complex expressions like a+b
     if (column->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
-      std::string column_name = std::dynamic_pointer_cast<expression::TupleValueExpression>(
-        column)->GetColumnName();
+      auto tv_expr = std::dynamic_pointer_cast<expression::TupleValueExpression>(column);
+      std::string column_name = tv_expr->GetTableName() + "." + tv_expr->GetColumnName();
       column_name.push_back(column_name);
     }
   }
@@ -471,9 +483,8 @@ void CostAndStatsCalculator::Visit(const PhysicalDistinct *) {
           ExpressionType::VALUE_TUPLE) {
     auto tv_expr = std::dynamic_pointer_cast<expression::TupleValueExpression>(
         distinct_prop->GetDistinctColumn(0));
-    oid_t column_id = table_stats_ptr->GetColumnStats(tv_expr->GetColumnName())->column_id;
-    output_cost_ +=
-        Cost::DistinctCost(table_stats_ptr, column_id, output_stats);
+    std::string column_name = tv_expr->GetTableName() + "." + tv_expr->GetColumnName();
+    output_cost_ += Cost::DistinctCost(table_stats_ptr, column_name, output_stats);
   }
   output_stats_ = output_stats;
 };
