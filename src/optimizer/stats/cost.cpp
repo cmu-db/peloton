@@ -84,8 +84,46 @@ void Cost::CombineConjunctionStats(const std::shared_ptr<TableStats> &lhs,
 //===----------------------------------------------------------------------===//
 // GROUP BY
 //===----------------------------------------------------------------------===//
+
+  double Cost::SortGroupByCost(const std::shared_ptr<TableStats> &input_stats,
+                               std::vector<std::string> columns,
+                               std::shared_ptr<TableStats> &output_stats) {
+    PL_ASSERT(input_stats);
+    PL_ASSERT(columns.size() > 0);
+
+//    if (output_stats != nullptr) {
+    if (false) {
+      output_stats->num_rows = GetEstimatedGroupByRows(input_stats, columns);
+    }
+
+    double cost =
+      default_sorting_cost(input_stats->num_rows) * DEFAULT_TUPLE_COST;
+
+    // Update cost to trivial if first group by column has index.
+    // TODO: use more complicated cost when group by multiple columns when
+    // primary index operator is supported.
+    if (!columns.empty() &&input_stats->HasPrimaryIndex(columns[0])) {
+      // underestimation of group by with index.
+      cost = DEFAULT_OPERATOR_COST;
+    }
+
+    return cost;
+  }
+
+  double Cost::HashGroupByCost(const std::shared_ptr<TableStats> &input_stats,
+                               std::vector<std::string> columns,
+                               std::shared_ptr<TableStats> &output_stats) {
+    PL_ASSERT(input_stats);
+
+    if (output_stats != nullptr) {
+      output_stats->num_rows = GetEstimatedGroupByRows(input_stats, columns);
+    }
+
+    // Directly hash tuple
+    return input_stats->num_rows * DEFAULT_TUPLE_COST;
+  }
 double Cost::SortGroupByCost(const std::shared_ptr<TableStats> &input_stats,
-                             std::vector<std::string> columns,
+                             std::vector<oid_t> columns,
                              std::shared_ptr<TableStats> &output_stats) {
   PL_ASSERT(input_stats);
   PL_ASSERT(columns.size() > 0);
@@ -109,7 +147,7 @@ double Cost::SortGroupByCost(const std::shared_ptr<TableStats> &input_stats,
 }
 
 double Cost::HashGroupByCost(const std::shared_ptr<TableStats> &input_stats,
-                             std::vector<std::string> columns,
+                             std::vector<oid_t > columns,
                              std::shared_ptr<TableStats> &output_stats) {
   PL_ASSERT(input_stats);
 
@@ -127,13 +165,13 @@ double Cost::HashGroupByCost(const std::shared_ptr<TableStats> &input_stats,
 // TODO: support multiple distinct columns
 // what if the column has index?
 double Cost::DistinctCost(const std::shared_ptr<TableStats> &input_stats,
-                          oid_t column,
+                          std::string column_name,
                           std::shared_ptr<TableStats> &output_stats) {
   PL_ASSERT(input_stats);
 
   if (output_stats != nullptr) {
     // update number of rows to be number of unique element of column
-    output_stats->num_rows = input_stats->GetCardinality(column);
+    output_stats->num_rows = input_stats->GetCardinality(column_name);
   }
   return input_stats->num_rows * DEFAULT_TUPLE_COST;
 }
@@ -217,6 +255,23 @@ void Cost::UpdateConditionStats(const std::shared_ptr<TableStats> &input_stats,
 size_t Cost::GetEstimatedGroupByRows(
     const std::shared_ptr<TableStats> &input_stats,
     std::vector<std::string> &columns) {
+  // Idea is to assume each column is uniformaly network and get an
+  // overestimation.
+  // Then use max cardinality among all columns as underestimation.
+  // And combine them together.
+  double rows = 1;
+  double max_cardinality = 0;
+  for (auto column : columns) {
+    double cardinality = input_stats->GetCardinality(column);
+    max_cardinality = std::max(max_cardinality, cardinality);
+    rows *= cardinality;
+  }
+  return static_cast<size_t>(rows + max_cardinality / 2);
+}
+
+size_t Cost::GetEstimatedGroupByRows(
+  const std::shared_ptr<TableStats> &input_stats,
+  std::vector<oid_t> &columns) {
   // Idea is to assume each column is uniformaly network and get an
   // overestimation.
   // Then use max cardinality among all columns as underestimation.

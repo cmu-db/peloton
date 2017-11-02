@@ -18,15 +18,16 @@ namespace peloton {
 namespace optimizer {
 
 TableStats::TableStats(size_t num_rows,
-                       std::vector<std::shared_ptr<ColumnStats>> col_stats_ptrs)
-    : Stats(nullptr), num_rows(num_rows), col_stats_list_(col_stats_ptrs) {
+                       std::vector<std::shared_ptr<ColumnStats>> col_stats_ptrs, bool is_base_table)
+    : Stats(nullptr), num_rows(num_rows), col_stats_list_(col_stats_ptrs),
+      is_base_table_(is_base_table), tuple_sampler_{} {
   for (size_t i = 0; i < col_stats_ptrs.size(); ++i) {
     AddColumnStats(col_stats_ptrs[i]);
   }
 }
 
-TableStats::TableStats(std::vector<std::shared_ptr<ColumnStats>> col_stats_ptrs)
-    : Stats(nullptr), col_stats_list_(col_stats_ptrs) {
+TableStats::TableStats(std::vector<std::shared_ptr<ColumnStats>> col_stats_ptrs, bool is_base_table)
+    : Stats(nullptr), col_stats_list_(col_stats_ptrs), is_base_table_(is_base_table), tuple_sampler_{} {
   size_t col_count = col_stats_ptrs.size();
   for (size_t i = 0; i < col_count; ++i) {
     AddColumnStats(col_stats_ptrs[i]);
@@ -152,6 +153,30 @@ bool TableStats::RemoveColumnStats(const oid_t column_id) {
   }
   col_stats_list_.erase(col_stats_list_.begin() + column_id);
   return true;
+}
+
+bool TableStats::AddIndex(const std::string table_name, const std::shared_ptr<index::Index> index_) {
+  if (index_->GetColumnCount() > 1)
+    return false;
+  auto col_name = this->GetColumnStats(index_->GetMetadata()->GetKeyAttrs().at(0))->column_name;
+  auto key = table_name + "." + col_name;
+  if (index_map_.find(key) != index_map_.end()) {
+    index_map_.insert({key, index_});
+    return true;
+  }
+  return false;
+}
+
+std::shared_ptr<index::Index> TableStats::GetIndex(std::string col_name) {
+  if (index_map_.find(col_name) != index_map_.end()) {
+    return index_map_.find(col_name)->second;
+  }
+  return std::shared_ptr<index::Index>(nullptr);
+}
+
+void TableStats::SampleTuples(storage::DataTable *table) {
+  tuple_sampler_ = std::make_shared<TupleSampler>(table);
+  tuple_sampler_->AcquireSampleTuples(DEFAULT_SAMPLE_NUM);
 }
 
 }  // namespace optimizer
