@@ -30,8 +30,11 @@ using std::shared_ptr;
 
 namespace peloton {
 namespace optimizer {
-QueryToOperatorTransformer::QueryToOperatorTransformer(concurrency::Transaction *txn): txn_(txn){
-}
+QueryToOperatorTransformer::QueryToOperatorTransformer(
+  concurrency::Transaction *txn)
+  : txn_(txn) {}
+
+
 std::shared_ptr<OperatorExpression>
 QueryToOperatorTransformer::ConvertToOpExpression(parser::SQLStatement *op) {
   output_expr = nullptr;
@@ -39,7 +42,7 @@ QueryToOperatorTransformer::ConvertToOpExpression(parser::SQLStatement *op) {
   return output_expr;
 }
 
-void QueryToOperatorTransformer::Visit(const parser::SelectStatement *op) {
+void QueryToOperatorTransformer::Visit(parser::SelectStatement *op) {
   auto upper_expr = output_expr;
 
   if (op->where_clause != nullptr) {
@@ -108,7 +111,7 @@ void QueryToOperatorTransformer::Visit(const parser::SelectStatement *op) {
     output_expr = upper_expr;
   }
 }
-void QueryToOperatorTransformer::Visit(const parser::JoinDefinition *node) {
+void QueryToOperatorTransformer::Visit(parser::JoinDefinition *node) {
   // Get left operator
   node->left->Accept(this);
   auto left_expr = output_expr;
@@ -166,7 +169,7 @@ void QueryToOperatorTransformer::Visit(const parser::JoinDefinition *node) {
 
   output_expr = join_expr;
 }
-void QueryToOperatorTransformer::Visit(const parser::TableRef *node) {
+void QueryToOperatorTransformer::Visit(parser::TableRef *node) {
   // Nested select. Not supported in the current executors
   if (node->select != nullptr) {
     throw NotImplementedException("Not support joins");
@@ -221,13 +224,14 @@ void QueryToOperatorTransformer::Visit(const parser::TableRef *node) {
   }
 }
 
-void QueryToOperatorTransformer::Visit(const parser::GroupByDescription *) {}
-void QueryToOperatorTransformer::Visit(const parser::OrderDescription *) {}
-void QueryToOperatorTransformer::Visit(const parser::LimitDescription *) {}
+void QueryToOperatorTransformer::Visit(parser::GroupByDescription *) {}
+void QueryToOperatorTransformer::Visit(parser::OrderDescription *) {}
+void QueryToOperatorTransformer::Visit(parser::LimitDescription *) {}
 
 void QueryToOperatorTransformer::Visit(
-    UNUSED_ATTRIBUTE const parser::CreateStatement *op) {}
-void QueryToOperatorTransformer::Visit(const parser::InsertStatement *op) {
+    UNUSED_ATTRIBUTE parser::CreateStatement *op) {}
+
+void QueryToOperatorTransformer::Visit(parser::InsertStatement *op) {
   storage::DataTable *target_table =
       catalog::Catalog::GetInstance()->GetTableWithName(op->GetDatabaseName(),
                                                         op->GetTableName(),
@@ -246,7 +250,7 @@ void QueryToOperatorTransformer::Visit(const parser::InsertStatement *op) {
   }
 }
 
-void QueryToOperatorTransformer::Visit(const parser::DeleteStatement *op) {
+void QueryToOperatorTransformer::Visit(parser::DeleteStatement *op) {
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
       op->GetDatabaseName(), op->GetTableName(), txn_);
   auto table_scan = std::make_shared<OperatorExpression>(
@@ -258,14 +262,14 @@ void QueryToOperatorTransformer::Visit(const parser::DeleteStatement *op) {
   output_expr = delete_expr;
 }
 void QueryToOperatorTransformer::Visit(
-    UNUSED_ATTRIBUTE const parser::DropStatement *op) {}
+    UNUSED_ATTRIBUTE parser::DropStatement *op) {}
 void QueryToOperatorTransformer::Visit(
-    UNUSED_ATTRIBUTE const parser::PrepareStatement *op) {}
+    UNUSED_ATTRIBUTE parser::PrepareStatement *op) {}
 void QueryToOperatorTransformer::Visit(
-    UNUSED_ATTRIBUTE const parser::ExecuteStatement *op) {}
+    UNUSED_ATTRIBUTE parser::ExecuteStatement *op) {}
 void QueryToOperatorTransformer::Visit(
-    UNUSED_ATTRIBUTE const parser::TransactionStatement *op) {}
-void QueryToOperatorTransformer::Visit(const parser::UpdateStatement *op) {
+    UNUSED_ATTRIBUTE parser::TransactionStatement *op) {}
+void QueryToOperatorTransformer::Visit(parser::UpdateStatement *op) {
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
       op->table->GetDatabaseName(), op->table->GetTableName(), txn_);
 
@@ -280,9 +284,9 @@ void QueryToOperatorTransformer::Visit(const parser::UpdateStatement *op) {
   output_expr = update_expr;
 }
 void QueryToOperatorTransformer::Visit(
-    UNUSED_ATTRIBUTE const parser::CopyStatement *op) {}
+    UNUSED_ATTRIBUTE parser::CopyStatement *op) {}
 void QueryToOperatorTransformer::Visit(
-    UNUSED_ATTRIBUTE const parser::AnalyzeStatement *op) {}
+    UNUSED_ATTRIBUTE parser::AnalyzeStatement *op) {}
 
 }  // namespace optimizer
 }  // namespace peloton

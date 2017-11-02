@@ -23,6 +23,7 @@
 #include "codegen/operator/global_group_by_translator.h"
 #include "codegen/operator/hash_group_by_translator.h"
 #include "codegen/operator/hash_join_translator.h"
+#include "codegen/operator/hash_translator.h"
 #include "codegen/operator/insert_translator.h"
 #include "codegen/expression/negation_translator.h"
 #include "codegen/operator/order_by_translator.h"
@@ -30,12 +31,15 @@
 #include "codegen/operator/table_scan_translator.h"
 #include "codegen/expression/tuple_value_translator.h"
 #include "expression/case_expression.h"
+#include "expression/comparison_expression.h"
 #include "expression/conjunction_expression.h"
 #include "expression/function_expression.h"
 #include "expression/constant_value_expression.h"
 #include "expression/operator_expression.h"
 #include "expression/tuple_value_expression.h"
 #include "expression/aggregate_expression.h"
+#include "planner/aggregate_plan.h"
+#include "planner/hash_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/hash_join_plan.h"
 #include "planner/insert_plan.h"
@@ -68,6 +72,11 @@ std::unique_ptr<OperatorTranslator> TranslatorFactory::CreateTranslator(
     case PlanNodeType::HASHJOIN: {
       auto &join = static_cast<const planner::HashJoinPlan &>(plan_node);
       translator = new HashJoinTranslator(join, context, pipeline);
+      break;
+    }
+    case PlanNodeType::HASH: {
+      auto &hash = static_cast<const planner::HashPlan &>(plan_node);
+      translator = new HashTranslator(hash, context, pipeline);
       break;
     }
     case PlanNodeType::AGGREGATE_V2: {

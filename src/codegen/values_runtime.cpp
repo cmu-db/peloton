@@ -23,7 +23,7 @@ void ValuesRuntime::OutputBoolean(char *values, uint32_t idx, bool val,
                                   bool is_null) {
   type::Value *vals = reinterpret_cast<type::Value *>(values);
   if (is_null) {
-    vals[idx] = type::ValueFactory::GetNullValueByType(type::BOOLEAN);
+    vals[idx] = type::ValueFactory::GetNullValueByType(type::TypeId::BOOLEAN);
   } else {
     vals[idx] = type::ValueFactory::GetBooleanValue(val);
   }

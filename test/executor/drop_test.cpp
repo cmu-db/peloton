@@ -119,6 +119,9 @@ TEST_F(DropTests, DroppingTrigger) {
   EXPECT_EQ(StatementType::CREATE, stmt_list->GetStatement(0)->GetType());
   auto create_trigger_stmt =
       static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
+  
+  create_trigger_stmt->TryBindDatabaseName(DEFAULT_DB_NAME);
+  
   // Create plans
   planner::CreatePlan plan(create_trigger_stmt);
   // Execute the create trigger

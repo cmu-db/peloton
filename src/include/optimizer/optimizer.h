@@ -58,6 +58,7 @@ class Optimizer : public AbstractOptimizer {
 
   std::shared_ptr<planner::AbstractPlan> BuildPelotonPlanTree(
       const std::unique_ptr<parser::SQLStatementList> &parse_tree,
+      const std::string default_database_name,
       concurrency::Transaction *txn) override;
 
   void Reset() override;

@@ -114,9 +114,16 @@ class TrafficCop {
   executor::ExecuteResult p_status_;
 
   bool is_queuing_;
+  
+  inline void SetDefaultDatabaseName(std::string default_database_name) {
+    default_database_name_ = default_database_name;
+  }
 
 //  struct event* event_;
  private:
+
+  // Default database name
+  std::string default_database_name_ = DEFAULT_DB_NAME;
 
   // The optimizer used for this connection
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer_;

@@ -38,24 +38,24 @@ class QueryToOperatorTransformer : public SqlNodeVisitor {
   std::shared_ptr<OperatorExpression> ConvertToOpExpression(
       parser::SQLStatement *op);
 
-  void Visit(const parser::SelectStatement *op) override;
+  void Visit(parser::SelectStatement *op) override;
 
-  void Visit(const parser::TableRef *) override;
-  void Visit(const parser::JoinDefinition *) override;
-  void Visit(const parser::GroupByDescription *) override;
-  void Visit(const parser::OrderDescription *) override;
-  void Visit(const parser::LimitDescription *) override;
+  void Visit(parser::TableRef *) override;
+  void Visit(parser::JoinDefinition *) override;
+  void Visit(parser::GroupByDescription *) override;
+  void Visit(parser::OrderDescription *) override;
+  void Visit(parser::LimitDescription *) override;
 
-  void Visit(const parser::CreateStatement *op) override;
-  void Visit(const parser::InsertStatement *op) override;
-  void Visit(const parser::DeleteStatement *op) override;
-  void Visit(const parser::DropStatement *op) override;
-  void Visit(const parser::PrepareStatement *op) override;
-  void Visit(const parser::ExecuteStatement *op) override;
-  void Visit(const parser::TransactionStatement *op) override;
-  void Visit(const parser::UpdateStatement *op) override;
-  void Visit(const parser::CopyStatement *op) override;
-  void Visit(const parser::AnalyzeStatement *op) override;
+  void Visit(parser::CreateStatement *op) override;
+  void Visit(parser::InsertStatement *op) override;
+  void Visit(parser::DeleteStatement *op) override;
+  void Visit(parser::DropStatement *op) override;
+  void Visit(parser::PrepareStatement *op) override;
+  void Visit(parser::ExecuteStatement *op) override;
+  void Visit(parser::TransactionStatement *op) override;
+  void Visit(parser::UpdateStatement *op) override;
+  void Visit(parser::CopyStatement *op) override;
+  void Visit(parser::AnalyzeStatement *op) override;
 
  private:
   std::shared_ptr<OperatorExpression> output_expr;

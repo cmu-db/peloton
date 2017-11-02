@@ -34,7 +34,7 @@ class OrderDescription {
 
   virtual ~OrderDescription() {}
 
-  void Accept(SqlNodeVisitor* v) const { v->Visit(this); }
+  void Accept(SqlNodeVisitor* v) { v->Visit(this); }
 
   std::vector<OrderType> types;
   std::vector<std::unique_ptr<expression::AbstractExpression>> exprs;
@@ -51,7 +51,7 @@ class LimitDescription {
   LimitDescription(int64_t limit, int64_t offset)
       : limit(limit), offset(offset) {}
 
-  void Accept(SqlNodeVisitor* v) const { v->Visit(this); }
+  void Accept(SqlNodeVisitor* v) { v->Visit(this); }
 
   int64_t limit;
   int64_t offset;
@@ -66,7 +66,7 @@ class GroupByDescription {
 
   ~GroupByDescription() {}
 
-  void Accept(SqlNodeVisitor* v) const { v->Visit(this); }
+  void Accept(SqlNodeVisitor* v) { v->Visit(this); }
 
   std::vector<std::unique_ptr<expression::AbstractExpression>> columns;
   std::unique_ptr<expression::AbstractExpression> having;
@@ -93,7 +93,7 @@ class SelectStatement : public SQLStatement {
 
   virtual ~SelectStatement() {}
 
-  virtual void Accept(SqlNodeVisitor* v) const override {
+  virtual void Accept(SqlNodeVisitor* v) override {
     v->Visit(this);
   }
 

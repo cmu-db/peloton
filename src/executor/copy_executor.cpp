@@ -198,7 +198,7 @@ bool CopyExecutor::DExecute() {
 
     // vectors for prepared statement parameters
     int num_params = 0;
-    std::vector<std::pair<int, std::string>> bind_parameters;
+    std::vector<std::pair<type::TypeId, std::string>> bind_parameters;
     std::vector<type::Value> param_values;
     std::vector<int16_t> formats;
     std::vector<int32_t> types;

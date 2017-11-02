@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <cinttypes>
 #include "concurrency/timestamp_ordering_transaction_manager.h"
 
 #include "catalog/manager.h"
@@ -737,7 +738,7 @@ void TimestampOrderingTransactionManager::PerformDelete(
 
 ResultType TimestampOrderingTransactionManager::CommitTransaction(
     Transaction *const current_txn) {
-  LOG_TRACE("Committing peloton txn : %lu ", current_txn->GetTransactionId());
+  LOG_TRACE("Committing peloton txn : %" PRId64, current_txn->GetTransactionId());
 
   //////////////////////////////////////////////////////////
   //// handle READ_ONLY
@@ -925,7 +926,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
   // a pre-declared read-only transaction will never abort.
   PL_ASSERT(current_txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY);
 
-  LOG_TRACE("Aborting peloton txn : %lu ", current_txn->GetTransactionId());
+  LOG_TRACE("Aborting peloton txn : %" PRId64, current_txn->GetTransactionId());
   auto &manager = catalog::Manager::GetInstance();
 
   auto &rw_set = current_txn->GetReadWriteSet();

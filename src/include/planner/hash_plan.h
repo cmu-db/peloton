@@ -33,6 +33,8 @@ class HashPlan : public AbstractPlan {
 
   void PerformBinding(BindingContext &binding_context) override;
 
+  void GetOutputColumns(std::vector<oid_t> &columns) const override;
+
   inline PlanNodeType GetPlanNodeType() const override { return PlanNodeType::HASH; }
 
   const std::string GetInfo() const override { return "Hash"; }
