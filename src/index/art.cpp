@@ -494,7 +494,7 @@ void Tree::insert(const Key &k, TID tid, ThreadInfo &epocheInfo, bool &insertSuc
       if (key == k) {
         // upsert
 //        N::change(node, k[level], N::setLeaf(tid));
-        printf("add another value for a non-unique key %llu\n", tid);
+//        printf("add another value for a non-unique key %llu\n", tid);
 //        N::addMultiValue(node, k[level], N::setLeaf(tid));
         N::addMultiValue(node, k[level], tid);
         node->writeUnlock();
@@ -621,7 +621,7 @@ bool Tree::conditionalInsert(const Key &k, TID tid, ThreadInfo &epocheInfo, std:
 
         // upsert
 //        N::change(node, k[level], N::setLeaf(tid));
-        printf("add another value for a non-unique key %llu\n", tid);
+//        printf("add another value for a non-unique key %llu\n", tid);
 //        N::addMultiValue(node, k[level], N::setLeaf(tid));
         N::addMultiValue(node, k[level], tid);
         node->writeUnlock();
@@ -719,11 +719,11 @@ void Tree::remove(const Key &k, TID tid, ThreadInfo &threadInfo) {
             if (parent_value != nullptr) {
               parent_value->next = value_list->next;
               value_list->next = nullptr;
-              free(value_list);
+              delete value_list;
             } else {
               N::change(node, k[level], N::setLeafWithListPointer(value_list->next));
               value_list->next = nullptr;
-              free(value_list);
+              delete value_list;
             }
 
             // remember to unlock the node!!

@@ -46,11 +46,8 @@ void ArtIndex::WriteValueInBytes(type::Value value, char *c, int offset, UNUSED_
     case type::TypeId::INTEGER:
     {
       int32_t v = value.GetAs<int32_t>();
-      printf("value insert in offset %d is %d\n", offset, v);
       uint32_t unsigned_value = (uint32_t) v;
-      printf("unsigned value = %u\n", unsigned_value);
       unsigned_value ^= (1u << 31);
-      printf("fliped unsigned value = %u\n", unsigned_value);
       c[offset] = (unsigned_value >> 24) & 0xFF;
       c[offset + 1] = (unsigned_value >> 16) & 0xFF;
       c[offset + 2] = (unsigned_value >> 8) & 0xFF;
@@ -139,25 +136,12 @@ void loadKey(TID tid, Key &key, IndexMetadata *metadata) {
 
   // use the first value in the value list
   MultiValues *value_list = reinterpret_cast<MultiValues *>(tid);
-  printf("enter loadKey() TID (ItemPointer) = %llu\n", value_list->tid);
 
   int columnCount = metadata->GetColumnCount();
-  printf("columnCount = %d\n", columnCount);
 
   std::vector<oid_t> indexedColumns = metadata->GetKeySchema()->GetIndexedColumns();
-//  if (indexedColumns.size() != columnCount) {
-//    printf("column count is not equal to the size of indexed column vector\n");
-//  } else {
-//    printf("column count is equal to the size of indexed column vector\n");
-//  }
-  for (int i = 0; i < columnCount; i++) {
-    printf("indexed column id = %u\n", indexedColumns[i]);
-  }
 
   std::vector<catalog::Column> columns = metadata->GetKeySchema()->GetColumns();
-  for (int i = 0; i < columnCount; i++) {
-    printf("typeid=%d length=%lu, offset?=%d\n", columns[i].GetType(), columns[i].GetLength(), columns[i].GetOffset());
-  }
 
 
   // TODO: recover key from tuple_pointer (recover a storage::Tuple from ItemPointer)
@@ -177,12 +161,6 @@ void loadKey(TID tid, Key &key, IndexMetadata *metadata) {
   }
 
   char* c =new char[total_bytes];
-  c[0] = 'a';
-  c[1] = '\0';
-  printf("dynamic string : %s\n", c);
-
-
-  printf("total bytes = %d\n", total_bytes);
 
   // write values to char array
   int offset = 0;
@@ -196,26 +174,8 @@ void loadKey(TID tid, Key &key, IndexMetadata *metadata) {
 
   delete[] c;
 
-  printf("good after constructing a tuple\n");
-  printf("%s\n", tuple.GetValue(0).GetInfo().c_str());
-  printf("%s\n", tuple.GetValue(1).GetInfo().c_str());
-
   auto value = tuple.GetValue(0);
 
-  if (value.CheckInteger()) {
-    printf("attribute 1 is integer\n");
-    CopySerializeOutput output;
-    type::Type::GetInstance(value.GetTypeId())->SerializeTo(value, output);
-    const char *array = output.Data();
-    int len = 4;
-    for (int i = 0; i < len; i++) {
-      printf("%d ", (int)array[i]);
-    }
-    printf("\n");
-
-//    key.set(array, len);
-//    key.setKeyLen(len);
-  }
 //  unsigned int len = value.GetLength();
 //  unsigned int len = 4;
 //  const char *array = value.GetData();
@@ -273,7 +233,6 @@ ArtIndex::~ArtIndex() {}
 
 void ArtIndex::WriteIndexedAttributesInKey(const storage::Tuple *tuple, Key& index_key) {
   int columnsInKey = tuple->GetColumnCount();
-  printf("inserted key has %d columns\n", columnsInKey);
 
   const catalog::Schema *tuple_schema = tuple->GetSchema();
   std::vector<catalog::Column> columns = tuple_schema->GetColumns();
@@ -289,7 +248,6 @@ void ArtIndex::WriteIndexedAttributesInKey(const storage::Tuple *tuple, Key& ind
   int offset = 0;
   for (int i = 0; i < columnsInKey; i++) {
     type::Value keyColumnValue = tuple->GetValue(i);
-    printf("keyColumnValue type id = %d\n", keyColumnValue.GetTypeId());
 
     WriteValueInBytes(tuple->GetValue(i), c, offset, columns[i].GetLength());
     offset += columns[i].GetLength();
@@ -307,7 +265,6 @@ void ArtIndex::WriteIndexedAttributesInKey(const storage::Tuple *tuple, Key& ind
 //  c[offset + 6] = (tuple_id >> 8) & 0xFF;
 //  c[offset + 7] = tuple_id & 0xFF;
 
-  printf("below is the BINARY COMPARABLE KEY!\n");
   index_key.set(c, total_bytes);
   index_key.setKeyLen(total_bytes);
 
@@ -327,30 +284,8 @@ bool ArtIndex::InsertEntry(
   bool ret = true;
 
   Key index_key;
-  index_key.set(key->GetData(), key->GetLength());
-  index_key.setKeyLen(key->GetLength());
-  printf("[DEBUG] ART insert: \n");
-  for (unsigned int i = 0; i < index_key.getKeyLen(); i++) {
-    printf("%d ", index_key.data[i]);
-  }
-  printf("\n");
-  for (int i = 0; i < key->GetLength(); i++) {
-    printf("%d ", (key->GetData())[i]);
-  }
-  printf("\n");
-
-  TID tid =  reinterpret_cast<TID>(value);
-  printf("tid = %llu\n", tid);
-
-//  auto t = artTree.getThreadInfo();
-//  artTree.insert(index_key, reinterpret_cast<TID>(value), t);
 
   WriteIndexedAttributesInKey(key, index_key);
-  printf("[DEBUG] ART insert: \n");
-  for (unsigned int i = 0; i < index_key.getKeyLen(); i++) {
-    printf("%d ", index_key.data[i]);
-  }
-  printf("\n");
 
   auto t = artTree.getThreadInfo();
   artTree.insert(index_key, reinterpret_cast<TID>(value), t, ret);
@@ -393,12 +328,6 @@ void ArtIndex::ScanKey(
 //  index_key.setKeyLen(key->GetLength());
   WriteIndexedAttributesInKey(key, index_key);
 
-  printf("[DEBUG] ART scan: \n");
-  for (unsigned int i = 0; i < index_key.getKeyLen(); i++) {
-    printf("%d ", index_key.data[i]);
-  }
-  printf("\n");
-
   auto t = artTree.getThreadInfo();
   TID value = artTree.lookup(index_key, t);
   if (value != 0) {
@@ -407,7 +336,6 @@ void ArtIndex::ScanKey(
     MultiValues *value_list = reinterpret_cast<MultiValues *>(value);
     while (value_list != nullptr) {
       ItemPointer *value_pointer = (ItemPointer *) (value_list->tid);
-      printf("one of the scanKey result = %llu\n", value_list->tid);
       result.push_back(value_pointer);
       value_list = value_list->next;
     }
@@ -429,14 +357,8 @@ bool ArtIndex::DeleteEntry(
 //  index_key.set(key->GetData(), key->GetLength());
 //  index_key.setKeyLen(key->GetLength());
   WriteIndexedAttributesInKey(key, index_key);
-  printf("[DEBUG] ART delete: \n");
-  for (unsigned int i = 0; i < index_key.getKeyLen(); i++) {
-    printf("%d ", index_key.data[i]);
-  }
-  printf("\n");
 
   TID tid = reinterpret_cast<TID>(value);
-  printf("tid = %llu\n", tid);
 
   auto t = artTree.getThreadInfo();
   artTree.remove(index_key, tid, t);
@@ -479,14 +401,11 @@ void ArtIndex::Scan(
   UNUSED_ATTRIBUTE ScanDirectionType scan_direction,
   std::vector<ItemPointer *> &result,
   const ConjunctionScanPredicate *csp_p) {
-  LOG_INFO("ArtIndex::Scan()");
 
   if (csp_p->IsPointQuery() == true) {
-    LOG_INFO("ArtIndex::Scan() Point query");
     const storage::Tuple *point_query_key_p = csp_p->GetPointQueryKey();
     ScanKey(point_query_key_p, result);
   } else if (csp_p->IsFullIndexScan() == true) {
-    LOG_INFO("ArtIndex::Scan() full scan");
     if (scan_direction == ScanDirectionType::FORWARD) {
       ScanAllKeys(result);
     } else if (scan_direction == ScanDirectionType::BACKWARD) {
@@ -494,7 +413,6 @@ void ArtIndex::Scan(
     }
   } else {
     // range scan
-    LOG_INFO("ArtIndex::Scan() range scan");
     const storage::Tuple *low_key_p = csp_p->GetLowKey();
     const storage::Tuple *high_key_p = csp_p->GetHighKey();
 
@@ -506,16 +424,6 @@ void ArtIndex::Scan(
     WriteIndexedAttributesInKey(low_key_p, index_low_key);
     WriteIndexedAttributesInKey(high_key_p, index_high_key);
 
-    for (unsigned int i = 0; i < index_low_key.getKeyLen(); i++) {
-      printf("%d ", index_low_key.data[i]);
-    }
-    printf("\n");
-
-    for (unsigned int i = 0; i < index_high_key.getKeyLen(); i++) {
-      printf("%d ", index_high_key.data[i]);
-    }
-    printf("\n");
-
     // TODO: how do I know the result length before scanning?
     std::size_t range = 1000;
     std::size_t actual_result_length = 0;
@@ -524,8 +432,6 @@ void ArtIndex::Scan(
     auto t = artTree.getThreadInfo();
     artTree.lookupRange(index_low_key, index_high_key, continue_key, result, range,
       actual_result_length, t);
-
-    printf("range scan actual_result_length = %lu\n", actual_result_length);
 
 //    for (std::size_t i = 0; i < actual_result_length; i++) {
 //      ItemPointer *value_pointer = (ItemPointer *) results[i];
