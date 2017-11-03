@@ -391,10 +391,11 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
     }
     // Normal SQL (without limit)
     else {
-      LOG_TRACE("Index Scan in Primary Index");
+      LOG_TRACE("Index Scan in Secondary Index");
       index_->Scan(values_, key_column_ids_, expr_types_,
                    ScanDirectionType::FORWARD, tuple_location_ptrs,
                    &index_predicate_.GetConjunctionList()[0]);
+      LOG_TRACE("size of result tuple = %lu", tuple_location_ptrs.size());
     }
   }
 
