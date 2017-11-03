@@ -26,6 +26,7 @@
 #include "expression/operator_expression.h"
 #include "expression/star_expression.h"
 #include "expression/tuple_value_expression.h"
+#include "expression/subquery_expression.h"
 #include "parser/pg_query.h"
 #include "parser/pg_trigger.h"
 #include "parser/pg_list.h"
@@ -644,6 +645,10 @@ expression::AbstractExpression* PostgresParser::ExprTransform(Node* node) {
       expr = CaseExprTransform(reinterpret_cast<CaseExpr*>(node));
       break;
     }
+    case T_SubLink: {
+      expr = SubqueryExprTransform(reinterpret_cast<SubLink*>(node));
+      break;
+    }
     default: {
       throw NotImplementedException(StringUtil::Format(
           "Expr of type %d not supported yet...\n", node->type));
@@ -708,6 +713,38 @@ expression::AbstractExpression* PostgresParser::AExprTransform(A_Expr* root) {
         "A_Expr Transform for type %d is not implemented yet...\n", type_id));
   }
   return result;
+}
+
+expression::AbstractExpression* PostgresParser::SubqueryExprTransform(SubLink *node) {
+  if (node == nullptr) {
+    return nullptr;
+  }
+
+  expression::AbstractExpression* expr = nullptr;
+  auto select_stmt = SelectTransform(reinterpret_cast<SelectStmt*>(node->subselect));
+  auto subquery_expr = new expression::SubqueryExpression();
+  subquery_expr->SetSubSelect(reinterpret_cast<SelectStatement*>(select_stmt));
+  switch (node->subLinkType) {
+    case ANY_SUBLINK: {
+      auto col_expr = ColumnRefTransform(reinterpret_cast<ColumnRef*>(node->testexpr));
+      expr = new expression::ComparisonExpression(ExpressionType::COMPARE_IN, col_expr, subquery_expr);
+      break;
+    }
+    case EXISTS_SUBLINK: {
+      expr = new expression::OperatorExpression(ExpressionType::OPERATOR_EXISTS, type::TypeId::BOOLEAN, subquery_expr,
+                                                nullptr);
+      break;
+    }
+    case EXPR_SUBLINK: {
+      expr = subquery_expr;
+      break;
+    }
+    default: {
+      throw NotImplementedException(StringUtil::Format(
+          "Expr of type %d not supported yet...\n", node->subLinkType));
+    }
+  }
+  return expr;
 }
 
 // This function takes in the whereClause part of a Postgres SelectStmt

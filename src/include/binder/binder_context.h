@@ -38,7 +38,9 @@ namespace binder {
 // can bind to.
 class BinderContext {
  public:
-  BinderContext() : upper_context_(nullptr) {}
+  BinderContext(std::shared_ptr<BinderContext> upper_context = nullptr) : upper_context_(upper_context) {
+
+  }
 
   // Update the table alias map given a table reference (in the from clause)
   void AddRegularTable(parser::TableRef *table_ref,

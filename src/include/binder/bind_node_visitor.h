@@ -21,6 +21,7 @@ namespace expression {
 class CaseExpression;
 class ConstantExpression;
 class TupleValueExpression;
+class SubqueryExpression;
 }  // namespace expression
 
 namespace parser {
@@ -55,6 +56,8 @@ class BindNodeVisitor : public SqlNodeVisitor {
   void Visit(parser::AnalyzeStatement *) override;
 
   void Visit(expression::CaseExpression *expr) override;
+  void Visit(expression::SubqueryExpression *expr) override;
+
   // void Visit(const expression::ConstantValueExpression *expr) override;
   void Visit(expression::TupleValueExpression *expr) override;
   void SetTxn(concurrency::Transaction *txn) {

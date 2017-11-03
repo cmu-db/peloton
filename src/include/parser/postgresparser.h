@@ -225,6 +225,9 @@ class PostgresParser {
 
   // transform helper for analyze statement
   static parser::AnalyzeStatement* VacuumTransform(VacuumStmt* root);
+
+  // transform helper for subquery expressions
+  static expression::AbstractExpression* SubqueryExprTransform(SubLink* node);
 };
 
 }  // namespace parser

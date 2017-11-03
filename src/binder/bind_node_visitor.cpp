@@ -16,6 +16,7 @@
 
 #include "expression/case_expression.h"
 #include "expression/tuple_value_expression.h"
+#include "expression/subquery_expression.h"
 
 namespace peloton {
 namespace binder {
@@ -201,6 +202,17 @@ void BindNodeVisitor::Visit(expression::CaseExpression *expr) {
   for (size_t i = 0; i < expr->GetWhenClauseSize(); ++i) {
     expr->GetWhenClauseCond(i)->Accept(this);
   }
+}
+
+void BindNodeVisitor::Visit(expression::SubqueryExpression *expr) {
+  LOG_INFO("Bind subquery: context switch...");
+  context_ = std::make_shared<BinderContext>(context_);
+  PL_ASSERT(context_->GetUpperContext() != nullptr);
+
+  expr->GetSubSelect()->Accept(this);
+
+  LOG_INFO("Bind subquery: context restore...");
+  context_ = context_->GetUpperContext();
 }
 
 }  // namespace binder
