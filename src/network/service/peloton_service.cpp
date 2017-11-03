@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <iostream>
+#include <cinttypes>
 
 namespace peloton {
 namespace network {
@@ -250,7 +251,7 @@ void PelotonService::Heartbeat(::google::protobuf::RpcController* controller,
   // If request is not null, this is a rpc  call, server should handle the
   // reqeust
   if (request != NULL) {
-    LOG_TRACE("Received from client, sender site: %d, last_txn_id: %ld",
+    LOG_TRACE("Received from client, sender site: %d, last_txn_id: %" PRId64,
               request->sender_site(), request->last_transaction_id());
 
     response->set_sender_site(9876);
