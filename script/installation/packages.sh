@@ -21,9 +21,16 @@ DISTRO=$(echo $DISTRO | tr "[:lower:]" "[:upper:]")
 TMPDIR=/tmp
 
 ## ------------------------------------------------
-## UBUNTU/DEBIAN
+## UBUNTU
 ## ------------------------------------------------
-if [ "$DISTRO" = "UBUNTU" -o "$DISTRO" = "DEBIAN OS" ]; then
+if [ "$DISTRO" = "UBUNTU" ]; then
+    # Fix for LLVM-3.7 on Ubuntu 14.04
+    if [ "$DISTRO_VER" == "14.04" ]; then
+        sudo add-apt-repository 'deb http://llvm.org/apt/trusty/ llvm-toolchain-trusty-3.7 main'
+        sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 15CF4D18AF4F7421
+        sudo apt-get update
+    fi
+
     sudo apt-get -qq --force-yes --ignore-missing -y install \
         git \
         g++ \
@@ -41,7 +48,7 @@ if [ "$DISTRO" = "UBUNTU" -o "$DISTRO" = "DEBIAN OS" ]; then
         valgrind \
         lcov \
         libpqxx-dev \
-        llvm-3.9 \
+        llvm-3.7 \
         libedit-dev \
         postgresql-client
 
