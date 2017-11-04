@@ -162,6 +162,21 @@ class AbstractExpression : public Printable {
     }
   }
 
+  virtual int DeriveDepth() {
+    if (depth_ < 0) {
+      for (auto &child : children_) {
+        auto child_depth = child->DeriveDepth();
+        if (child_depth >= 0 && (depth_ == -1 || child_depth < depth_))
+          depth_ = child_depth;
+      }
+    }
+    return depth_;
+  }
+
+  void SetDepth(int depth) { depth_ = depth; }
+
+  int GetDepth() const { return depth_; }
+
  protected:
   AbstractExpression(ExpressionType type) : exp_type_(type) {}
   AbstractExpression(ExpressionType exp_type, type::TypeId return_value_type)
@@ -182,7 +197,8 @@ class AbstractExpression : public Printable {
         distinct_(other.distinct_),
         exp_type_(other.exp_type_),
         return_value_type_(other.return_value_type_),
-        has_parameter_(other.has_parameter_) {
+        has_parameter_(other.has_parameter_),
+        depth_(other.depth_){
     for (auto &child : other.children_) {
       children_.push_back(std::unique_ptr<AbstractExpression>(child->Copy()));
     }
@@ -194,6 +210,8 @@ class AbstractExpression : public Printable {
   std::vector<std::unique_ptr<AbstractExpression>> children_;
 
   bool has_parameter_ = false;
+
+  int depth_ = -1;
 };
 
 // Equality Comparator class for Abstract Expression

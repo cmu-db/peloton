@@ -107,6 +107,7 @@ class SelectStatement : public SQLStatement {
   std::unique_ptr<OrderDescription> order;
   std::unique_ptr<LimitDescription> limit;
   bool is_for_update;
+  int depth = -1;
 
  public:
   const std::vector<std::unique_ptr<expression::AbstractExpression>>& getSelectList() const {

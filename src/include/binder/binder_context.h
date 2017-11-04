@@ -39,7 +39,8 @@ namespace binder {
 class BinderContext {
  public:
   BinderContext(std::shared_ptr<BinderContext> upper_context = nullptr) : upper_context_(upper_context) {
-
+    if (upper_context != nullptr)
+      depth_ = upper_context->depth_ + 1;
   }
 
   // Update the table alias map given a table reference (in the from clause)
@@ -72,16 +73,16 @@ class BinderContext {
                                 const std::string& col_name,
                                 std::tuple<oid_t, oid_t, oid_t>& col_pos_tuple,
                                 std::string& table_alias,
-                                type::TypeId& value_type);
+                                type::TypeId& value_type ,int& depth);
 
   // Construct the table obj given the table alias
   static bool GetRegularTableObj(
       std::shared_ptr<BinderContext> current_context, std::string &alias,
-      std::shared_ptr<catalog::TableCatalogObject> &table_obj);
+      std::shared_ptr<catalog::TableCatalogObject> &table_obj, int& depth);
 
   static bool CheckNestedTableColumn(
       std::shared_ptr<BinderContext> current_context, std::string& alias,
-      std::string& col_name, type::TypeId& value_type);
+      std::string& col_name, type::TypeId& value_type, int& depth);
 
 
   std::shared_ptr<BinderContext> GetUpperContext() { return upper_context_; }
@@ -89,6 +90,10 @@ class BinderContext {
   void SetUpperContext(std::shared_ptr<BinderContext> upper_context) {
     upper_context_ = upper_context;
   }
+  
+  void inline SetDepth(int depth) { depth_ = depth; }
+  
+  int inline GetDepth() { return depth_; }
 
   void GenerateAllColumnExpressions(
       std::vector<std::unique_ptr<expression::AbstractExpression>>& exprs);
@@ -98,6 +103,7 @@ class BinderContext {
   std::unordered_map<std::string, std::shared_ptr<catalog::TableCatalogObject>> regular_table_alias_map_;
   std::unordered_map<std::string, std::unordered_map<std::string, type::TypeId>> nested_table_alias_map_;
   std::shared_ptr<BinderContext> upper_context_;
+  int depth_ = -1;
 };
 
 }  // namespace binder

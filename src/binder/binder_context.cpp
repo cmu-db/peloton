@@ -96,9 +96,9 @@ bool BinderContext::GetColumnPosTuple(
 bool BinderContext::GetColumnPosTuple(
     std::shared_ptr<BinderContext> current_context, const std::string& col_name,
     std::tuple<oid_t, oid_t, oid_t>& col_pos_tuple, std::string& table_alias,
-    type::TypeId& value_type) {
+    type::TypeId& value_type, int& depth) {
   bool find_matched = false;
-  while (current_context != nullptr && !find_matched) {
+  while (current_context != nullptr) {
     // Check regular table
     for (auto entry : current_context->regular_table_alias_map_) {
       bool get_matched =
@@ -127,18 +127,23 @@ bool BinderContext::GetColumnPosTuple(
         }
       }
     }
+    if (find_matched) {
+      depth = current_context->depth_;
+      return true;
+    }
     current_context = current_context->GetUpperContext();
   }
-  return find_matched;
+  return false;
 }
 
 bool BinderContext::GetRegularTableObj(
     std::shared_ptr<BinderContext> current_context, std::string& alias,
-    std::shared_ptr<catalog::TableCatalogObject>& table_obj) {
+    std::shared_ptr<catalog::TableCatalogObject>& table_obj, int& depth) {
   while (current_context != nullptr) {
     auto iter = current_context->regular_table_alias_map_.find(alias);
     if (iter != current_context->regular_table_alias_map_.end()) {
       table_obj = iter->second;
+      depth = current_context->depth_;
       return true;
     }
     current_context = current_context->GetUpperContext();
@@ -148,7 +153,7 @@ bool BinderContext::GetRegularTableObj(
 
 bool BinderContext::CheckNestedTableColumn(
     std::shared_ptr<BinderContext> current_context, std::string& alias,
-    std::string& col_name, type::TypeId& value_type) {
+    std::string& col_name, type::TypeId& value_type, int& depth) {
   while (current_context != nullptr) {
     auto iter = current_context->nested_table_alias_map_.find(alias);
     if (iter != current_context->nested_table_alias_map_.end()) {
@@ -157,6 +162,7 @@ bool BinderContext::CheckNestedTableColumn(
         throw Exception("Cannot find column " + col_name);
       }
       value_type = col_iter->second;
+      depth = current_context->depth_;
       return true;
     }
     current_context = current_context->GetUpperContext();

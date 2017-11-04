@@ -38,7 +38,11 @@ void BindNodeVisitor::Visit(parser::SelectStatement *node) {
   // Upper context should be set outside (e.g. when where contains subquery)
   //  context_->SetUpperContext(pre_context);
   if (node->from_table != nullptr) node->from_table->Accept(this);
-  if (node->where_clause != nullptr) node->where_clause->Accept(this);
+  if (node->where_clause != nullptr) {
+    node->where_clause->Accept(this);
+    // Derive depth for all exprs in the where clause
+    node->where_clause->DeriveDepth();
+  }
   if (node->order != nullptr) node->order->Accept(this);
   if (node->limit != nullptr) node->limit->Accept(this);
   if (node->group_by != nullptr) node->group_by->Accept(this);
@@ -51,6 +55,11 @@ void BindNodeVisitor::Visit(parser::SelectStatement *node) {
     }
 
     select_element->Accept(this);
+    // Derive depth for all exprs in the select clause
+    if (select_element->GetExpressionType() == ExpressionType::STAR)
+      select_element->SetDepth(context_->GetDepth());
+    else
+      select_element->DeriveDepth();
 
     // Recursively deduce expression value type
     expression::ExpressionUtil::EvaluateExpression({ExprMap()},
@@ -60,6 +69,8 @@ void BindNodeVisitor::Visit(parser::SelectStatement *node) {
     new_select_list.push_back(std::move(select_element));
   }
   node->select_list = std::move(new_select_list);
+  // Temporarily discard const to update the depth
+  const_cast<parser::SelectStatement*>(node)->depth = context_->GetDepth();
 }
 
 // Some sub query nodes inside SelectStatement
@@ -158,6 +169,8 @@ void BindNodeVisitor::Visit(expression::TupleValueExpression *expr) {
   if (!expr->GetIsBound()) {
     std::tuple<oid_t, oid_t, oid_t> col_pos_tuple;
     std::shared_ptr<catalog::TableCatalogObject> table_obj = nullptr;
+    type::TypeId value_type;
+    int depth = -1;
 
     std::string table_name = expr->GetTableName();
     std::string col_name = expr->GetColumnName();
@@ -168,12 +181,11 @@ void BindNodeVisitor::Visit(expression::TupleValueExpression *expr) {
     std::transform(col_name.begin(), col_name.end(), col_name.begin(),
                    ::tolower);
 
-    type::TypeId value_type;
     // Table name not specified in the expression. Loop through all the table
     // in the binder context.
     if (table_name.empty()) {
       if (!BinderContext::GetColumnPosTuple(context_, col_name, col_pos_tuple,
-                                            table_name, value_type)) {
+                                            table_name, value_type, depth)) {
         throw Exception("Cannot find column " + col_name);
       }
       expr->SetTableName(table_name);
@@ -181,7 +193,7 @@ void BindNodeVisitor::Visit(expression::TupleValueExpression *expr) {
     // Table name is present
     else {
       // Regular table
-      if (BinderContext::GetRegularTableObj(context_, table_name, table_obj)) {
+      if (BinderContext::GetRegularTableObj(context_, table_name, table_obj, depth)) {
         if (!BinderContext::GetColumnPosTuple(col_name, table_obj,
                                               col_pos_tuple, value_type)) {
           throw Exception("Cannot find column " + col_name);
@@ -189,9 +201,10 @@ void BindNodeVisitor::Visit(expression::TupleValueExpression *expr) {
       }
       // Nested table
       else if (!BinderContext::CheckNestedTableColumn(context_, table_name,
-                                                      col_name, value_type))
+                                                      col_name, value_type, depth))
         throw Exception("Invalid table reference " + expr->GetTableName());
     }
+    expr->SetDepth(depth);
     expr->SetColName(col_name);
     expr->SetValueType(value_type);
     expr->SetBoundOid(col_pos_tuple);

@@ -18,6 +18,7 @@
 #include "common/statement.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "expression/tuple_value_expression.h"
+#include "expression/subquery_expression.h"
 #include "optimizer/optimizer.h"
 #include "parser/postgresparser.h"
 #include "include/traffic_cop/traffic_cop.h"
@@ -257,6 +258,79 @@ TEST_F(BinderCorrectnessTest, DeleteStatementTest) {
   catalog_ptr->DropDatabaseWithName(default_database_name, txn);
   txn_manager.CommitTransaction(txn);
 }
+
+TEST_F(BinderCorrectnessTest, BindDepthTest) {
+  SetupTables();
+  auto& parser = parser::PostgresParser::GetInstance();
+
+  // Test regular table name
+  LOG_INFO("Parsing sql query");
+
+  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  unique_ptr<binder::BindNodeVisitor> binder(new binder::BindNodeVisitor(txn));
+  string selectSQL =
+      "SELECT A.a1 FROM A WHERE A.a1 IN (SELECT b1 FROM B WHERE b1 = 2 AND b2 > (SELECT a1 FROM A WHERE a2 > 0)) "
+          "AND EXISTS (SELECT * FROM B WHERE B.b1 = A.a1)";
+
+  auto parse_tree = parser.BuildParseTree(selectSQL);
+  auto selectStmt = dynamic_cast<parser::SelectStatement*>(
+      parse_tree->GetStatements().at(0).get());
+  binder->BindNameToNode(selectStmt);
+  txn_manager.CommitTransaction(txn);
+
+  // Check select depth
+  EXPECT_EQ(0, selectStmt->depth);
+
+  // Check select_list
+  LOG_INFO("Checking select list");
+  auto tv_expr = selectStmt->select_list[0].get();
+  EXPECT_EQ(0, tv_expr->GetDepth());  // A.a1
+
+  // Check Where clause
+  LOG_INFO("Checking where clause");
+  EXPECT_EQ(0, selectStmt->where_clause->GetDepth());
+  auto in_expr = selectStmt->where_clause->GetChild(0);
+  auto exists_expr = selectStmt->where_clause->GetChild(1);
+  auto exists_sub_expr = exists_expr->GetChild(0);
+  auto exists_sub_expr_select = dynamic_cast<const expression::SubqueryExpression*>(exists_sub_expr)->GetSubSelect();
+  auto exists_sub_expr_select_where = exists_sub_expr_select->where_clause->Copy();
+  auto exists_sub_expr_select_ele = exists_sub_expr_select->select_list[0].get();
+  auto in_tv_expr = in_expr->GetChild(0);
+  auto in_sub_expr = in_expr->GetChild(1);
+  auto in_sub_expr_select = dynamic_cast<const expression::SubqueryExpression*>(in_sub_expr)->GetSubSelect();
+  auto in_sub_expr_select_where = in_sub_expr_select->where_clause->Copy();
+  auto in_sub_expr_select_ele = in_sub_expr_select->select_list[0].get();
+  auto in_sub_expr_select_where_left = in_sub_expr_select_where->GetChild(0);
+  auto in_sub_expr_select_where_right = in_sub_expr_select_where->GetChild(1);
+  auto in_sub_expr_select_where_right_tv = in_sub_expr_select_where_right->GetChild(0);
+  auto in_sub_expr_select_where_right_sub = in_sub_expr_select_where_right->GetChild(1);
+  auto in_sub_expr_select_where_right_sub_select =
+      dynamic_cast<const expression::SubqueryExpression*>(in_sub_expr_select_where_right_sub)->GetSubSelect();
+  auto in_sub_expr_select_where_right_sub_select_where =
+      in_sub_expr_select_where_right_sub_select->where_clause.get();
+  auto in_sub_expr_select_where_right_sub_select_ele =
+      in_sub_expr_select_where_right_sub_select->select_list[0].get();
+  EXPECT_EQ(0, in_expr->GetDepth());
+  EXPECT_EQ(0, exists_expr->GetDepth());
+  EXPECT_EQ(0, exists_sub_expr->GetDepth());
+  EXPECT_EQ(1, exists_sub_expr_select->depth);
+  EXPECT_EQ(0, exists_sub_expr_select_where->GetDepth());
+  EXPECT_EQ(1, exists_sub_expr_select_ele->GetDepth());
+  EXPECT_EQ(0, in_tv_expr->GetDepth());
+  EXPECT_EQ(1, in_sub_expr->GetDepth());
+  EXPECT_EQ(1, in_sub_expr_select->depth);
+  EXPECT_EQ(1, in_sub_expr_select_where->GetDepth());
+  EXPECT_EQ(1, in_sub_expr_select_ele->GetDepth());
+  EXPECT_EQ(1, in_sub_expr_select_where_left->GetDepth());
+  EXPECT_EQ(1, in_sub_expr_select_where_right->GetDepth());
+  EXPECT_EQ(1, in_sub_expr_select_where_right_tv->GetDepth());
+  EXPECT_EQ(2, in_sub_expr_select_where_right_sub->GetDepth());
+  EXPECT_EQ(2, in_sub_expr_select_where_right_sub_select->depth);
+  EXPECT_EQ(2, in_sub_expr_select_where_right_sub_select_where->GetDepth());
+  EXPECT_EQ(2, in_sub_expr_select_where_right_sub_select_ele->GetDepth());
+}
+
 
 }  // namespace test
 }  // namespace peloton
