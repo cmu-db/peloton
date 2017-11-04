@@ -15,6 +15,7 @@
 #include "storage/tile.h"
 #include "common/logger.h"
 #include "catalog/column.h"
+#include <thread>
 
 namespace peloton {
 namespace index {
@@ -287,7 +288,7 @@ bool ArtIndex::InsertEntry(
 
   WriteIndexedAttributesInKey(key, index_key);
 
-  auto t = artTree.getThreadInfo();
+  auto &t = artTree.getThreadInfo(std::this_thread::get_id());
   artTree.insert(index_key, reinterpret_cast<TID>(value), t, ret);
 
 
@@ -328,7 +329,7 @@ void ArtIndex::ScanKey(
 //  index_key.setKeyLen(key->GetLength());
   WriteIndexedAttributesInKey(key, index_key);
 
-  auto t = artTree.getThreadInfo();
+  auto &t = artTree.getThreadInfo(std::this_thread::get_id());
   TID value = artTree.lookup(index_key, t);
   if (value != 0) {
 //    ItemPointer *value_pointer = (ItemPointer *) value;
@@ -360,7 +361,7 @@ bool ArtIndex::DeleteEntry(
 
   TID tid = reinterpret_cast<TID>(value);
 
-  auto t = artTree.getThreadInfo();
+  auto &t = artTree.getThreadInfo(std::this_thread::get_id());
   artTree.remove(index_key, tid, t);
 
   return ret;
@@ -386,7 +387,7 @@ bool ArtIndex::CondInsertEntry(
   Key index_key;
   WriteIndexedAttributesInKey(key, index_key);
   TID tid = reinterpret_cast<TID>(value);
-  auto t = artTree.getThreadInfo();
+  auto &t = artTree.getThreadInfo(std::this_thread::get_id());
   return artTree.conditionalInsert(index_key, tid, t, predicate);
 }
 
@@ -429,7 +430,7 @@ void ArtIndex::Scan(
     std::size_t actual_result_length = 0;
 //    TID results[range];
 
-    auto t = artTree.getThreadInfo();
+    auto &t = artTree.getThreadInfo(std::this_thread::get_id());
     artTree.lookupRange(index_low_key, index_high_key, continue_key, result, range,
       actual_result_length, t);
 
@@ -459,7 +460,7 @@ void ArtIndex::ScanLimit(
 }
 
 void ArtIndex::ScanAllKeys(std::vector<ItemPointer *> &result) {
-  auto t = artTree.getThreadInfo();
+  auto &t = artTree.getThreadInfo(std::this_thread::get_id());
   std::size_t actual_result_length = 0;
   artTree.fullScan(result, actual_result_length, t);
 

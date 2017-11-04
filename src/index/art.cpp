@@ -29,8 +29,9 @@ Tree::~Tree() {
   N::deleteNode(root);
 }
 
-ThreadInfo Tree::getThreadInfo() {
-  return ThreadInfo(this->epoche);
+ThreadInfo &Tree::getThreadInfo(std::thread::id thread_id) {
+  return (this->epoche).getThreadInfoByID(thread_id);
+//  return ThreadInfo(this->epoche);
 }
 
 void Tree::setIndexMetadata(IndexMetadata *metadata) {

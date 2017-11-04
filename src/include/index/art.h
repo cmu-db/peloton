@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <thread>
 #include "index/N.h"
 #include "index/index.h"
 
@@ -71,7 +72,7 @@ public:
 
   ~Tree();
 
-  ThreadInfo getThreadInfo();
+  ThreadInfo &getThreadInfo(std::thread::id thread_id);
 
   TID lookup(const Key &k, ThreadInfo &threadEpocheInfo) const;
 

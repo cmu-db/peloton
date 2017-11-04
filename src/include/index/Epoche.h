@@ -10,8 +10,8 @@
 #include <atomic>
 #include <array>
 #include <iostream>
-#include "tbb/enumerable_thread_specific.h"
-#include "tbb/combinable.h"
+#include <thread>
+#include <map>
 
 namespace peloton {
 namespace index {
@@ -51,33 +51,60 @@ class ThreadInfo {
   friend class Epoche;
   friend class EpocheGuard;
   Epoche &epoche;
-  DeletionList &deletionList;
+  DeletionList deletionList;
 
 
-  DeletionList & getDeletionList() const;
+  DeletionList & getDeletionList();
 public:
 
   ThreadInfo(Epoche &epoche);
 
-  ThreadInfo(const ThreadInfo &ti) : epoche(ti.epoche), deletionList(ti.deletionList) {
-  }
+//  ThreadInfo(const ThreadInfo &ti) : epoche(ti.epoche), deletionList(ti.deletionList) {
+//  }
 
   ~ThreadInfo();
 
   Epoche & getEpoche() const;
 };
 
+class PaddedThreadInfo {
+public:
+  static constexpr size_t ALIGNMENT = 64;
+  ThreadInfo threadInfo;
+
+  PaddedThreadInfo(Epoche &epoche):
+    threadInfo{epoche}
+  {};
+
+private:
+  char padding[ALIGNMENT - sizeof(ThreadInfo)];
+};
+
 class Epoche {
   friend class ThreadInfo;
   std::atomic<uint64_t> currentEpoche{0};
 
-  tbb::enumerable_thread_specific<DeletionList> deletionLists;
+  // This is the presumed size of cache line
+  static constexpr size_t CACHE_LINE_SIZE = 64;
+
+  // This is the mask we used for address alignment (AND with this)
+  static constexpr size_t CACHE_LINE_MASK = ~(CACHE_LINE_SIZE - 1);
+
+  static constexpr size_t THREAD_NUM = 1024;
+
+//  tbb::enumerable_thread_specific<DeletionList> deletionLists;
+  PaddedThreadInfo *thread_info_list;
+  unsigned char *original_p;
+  std::atomic<uint64_t> thread_info_index{0};
+  std::map<std::thread::id, size_t> thread_id_to_info_index;
+
+  std::atomic<uint64_t> thread_info_counter{0};
 
   size_t startGCThreshhold;
 
 
 public:
-  Epoche(size_t startGCThreshhold) : startGCThreshhold(startGCThreshhold) { }
+  Epoche(size_t startGCThreshhold);
 
   ~Epoche();
 
@@ -88,6 +115,8 @@ public:
   void exitEpocheAndCleanup(ThreadInfo &info);
 
   void showDeleteRatio();
+
+  ThreadInfo &getThreadInfoByID(std::thread::id thread_id);
 
 };
 
@@ -207,8 +236,14 @@ inline void Epoche::exitEpocheAndCleanup(ThreadInfo &epocheInfo) {
     deletionList.localEpoche.store(std::numeric_limits<uint64_t>::max());
 
     uint64_t oldestEpoche = std::numeric_limits<uint64_t>::max();
-    for (auto &epoche : deletionLists) {
-      auto e = epoche.localEpoche.load();
+//    for (auto &epoche : deletionLists) {
+//      auto e = epoche.localEpoche.load();
+//      if (e < oldestEpoche) {
+//        oldestEpoche = e;
+//      }
+//    }
+    for (size_t i = 0; i < thread_info_counter; i++) {
+      auto e = (thread_info_list + i)->threadInfo.getDeletionList().localEpoche.load();
       if (e < oldestEpoche) {
         oldestEpoche = e;
       }
@@ -234,13 +269,33 @@ inline void Epoche::exitEpocheAndCleanup(ThreadInfo &epocheInfo) {
 
 inline Epoche::~Epoche() {
   uint64_t oldestEpoche = std::numeric_limits<uint64_t>::max();
-  for (auto &epoche : deletionLists) {
-    auto e = epoche.localEpoche.load();
+//  for (auto &epoche : deletionLists) {
+//    auto e = epoche.localEpoche.load();
+//    if (e < oldestEpoche) {
+//      oldestEpoche = e;
+//    }
+//  }
+  for (size_t i = 0; i < thread_info_counter; i++) {
+    auto e = (thread_info_list + i)->threadInfo.getDeletionList().localEpoche.load();
     if (e < oldestEpoche) {
       oldestEpoche = e;
     }
   }
-  for (auto &d : deletionLists) {
+//  for (auto &d : deletionLists) {
+//    LabelDelete *cur = d.head(), *next, *prev = nullptr;
+//    while (cur != nullptr) {
+//      next = cur->next;
+//
+//      assert(cur->epoche < oldestEpoche);
+//      for (std::size_t i = 0; i < cur->nodesCount; ++i) {
+//        operator delete(cur->nodes[i]);
+//      }
+//      d.remove(cur, prev);
+//      cur = next;
+//    }
+//  }
+  for (size_t i = 0; i < thread_info_counter; i++) {
+    auto &d = (thread_info_list + i)->threadInfo.getDeletionList();
     LabelDelete *cur = d.head(), *next, *prev = nullptr;
     while (cur != nullptr) {
       next = cur->next;
@@ -256,15 +311,19 @@ inline Epoche::~Epoche() {
 }
 
 inline void Epoche::showDeleteRatio() {
-  for (auto &d : deletionLists) {
+//  for (auto &d : deletionLists) {
+//    std::cout << "deleted " << d.deleted << " of " << d.added << std::endl;
+//  }
+  for (size_t i = 0; i < thread_info_counter; i++) {
+    auto &d = (thread_info_list + i)->threadInfo.getDeletionList();
     std::cout << "deleted " << d.deleted << " of " << d.added << std::endl;
   }
 }
 
 inline ThreadInfo::ThreadInfo(Epoche &epoche)
-  : epoche(epoche), deletionList(epoche.deletionLists.local()) { }
+  : epoche(epoche), deletionList() { }
 
-inline DeletionList &ThreadInfo::getDeletionList() const {
+inline DeletionList &ThreadInfo::getDeletionList() {
   return deletionList;
 }
 
