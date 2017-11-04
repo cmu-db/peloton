@@ -10,8 +10,6 @@
 #include <atomic>
 #include <array>
 #include <iostream>
-#include <thread>
-#include <map>
 
 namespace peloton {
 namespace index {
@@ -92,16 +90,10 @@ class Epoche {
 
   static constexpr size_t THREAD_NUM = 1024;
 
-//  tbb::enumerable_thread_specific<DeletionList> deletionLists;
   PaddedThreadInfo *thread_info_list;
   unsigned char *original_p;
-  std::atomic<uint64_t> thread_info_index{0};
-  std::map<std::thread::id, size_t> thread_id_to_info_index;
-
-  std::atomic<uint64_t> thread_info_counter{0};
 
   size_t startGCThreshhold;
-
 
 public:
   Epoche(size_t startGCThreshhold);
@@ -116,7 +108,9 @@ public:
 
   void showDeleteRatio();
 
-  ThreadInfo &getThreadInfoByID(std::thread::id thread_id);
+  ThreadInfo &getThreadInfoByID(int gc_id);
+
+  std::atomic<uint64_t> thread_info_counter{0};
 
 };
 
