@@ -145,6 +145,57 @@ class Cost {
   inline static double InnerHashJoin() { return DEFAULT_COST; }
 
   /*
+   * Join with Sampling
+   */
+  static double InnerNLJoinWithSampling(const std::shared_ptr<TableStats>& left_input_stats,
+                                        const std::shared_ptr<TableStats>& right_input_stats,
+                                        std::shared_ptr<TableStats>& output_stats,
+                                        const std::shared_ptr<expression::AbstractExpression> predicate);
+
+  static double LeftNLJoinWithSampling(const std::shared_ptr<TableStats>& left_input_stats,
+                                        const std::shared_ptr<TableStats>& right_input_stats,
+                                        std::shared_ptr<TableStats>& output_stats,
+                                        const std::shared_ptr<expression::AbstractExpression> predicate);
+
+  static double RightNLJoinWithSampling(const std::shared_ptr<TableStats>& left_input_stats,
+                                       const std::shared_ptr<TableStats>& right_input_stats,
+                                       std::shared_ptr<TableStats>& output_stats,
+                                       const std::shared_ptr<expression::AbstractExpression> predicate);
+
+  static double OuterNLJoinWithSampling(const std::shared_ptr<TableStats>& left_input_stats,
+                                       const std::shared_ptr<TableStats>& right_input_stats,
+                                       std::shared_ptr<TableStats>& output_stats,
+                                       const std::shared_ptr<expression::AbstractExpression> predicate);
+  static double InnerHashJoinWithSampling(const std::shared_ptr<TableStats>& left_input_stats,
+                                        const std::shared_ptr<TableStats>& right_input_stats,
+                                        std::shared_ptr<TableStats>& output_stats,
+                                        const std::shared_ptr<expression::AbstractExpression> predicate);
+
+  static double LeftHashJoinWithSampling(const std::shared_ptr<TableStats>& left_input_stats,
+                                       const std::shared_ptr<TableStats>& right_input_stats,
+                                       std::shared_ptr<TableStats>& output_stats,
+                                       const std::shared_ptr<expression::AbstractExpression> predicate);
+
+  static double RightHashJoinWithSampling(const std::shared_ptr<TableStats>& left_input_stats,
+                                        const std::shared_ptr<TableStats>& right_input_stats,
+                                        std::shared_ptr<TableStats>& output_stats,
+                                        const std::shared_ptr<expression::AbstractExpression> predicate);
+
+  static double OuterHashJoinWithSampling(const std::shared_ptr<TableStats>& left_input_stats,
+                                        const std::shared_ptr<TableStats>& right_input_stats,
+                                        std::shared_ptr<TableStats>& output_stats,
+                                        const std::shared_ptr<expression::AbstractExpression> predicate);
+
+  /*
+   * Update output statistics given left, right input statistics and predicate for join operators
+   */
+  static void UpdateJoinOutputSize(const std::shared_ptr<TableStats>& left_input_stats,
+                   const std::shared_ptr<TableStats>& right_input_stats,
+                   std::shared_ptr<TableStats>& output_stats,
+                   const std::shared_ptr<expression::AbstractExpression> predicate,
+                   size_t adjustment);
+
+  /*
    * Update output statistics given input table and one condition.
    * Updated stats will be placed in output_stats.
    */

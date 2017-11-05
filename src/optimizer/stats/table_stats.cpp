@@ -155,7 +155,7 @@ bool TableStats::RemoveColumnStats(const oid_t column_id) {
   return true;
 }
 
-bool TableStats::AddIndex(const std::string table_name, const std::shared_ptr<index::Index> index_) {
+bool TableStats::AddIndex(const std::string table_name, std::shared_ptr<index::Index> index_) {
   if (index_->GetColumnCount() > 1)
     return false;
   auto col_name = this->GetColumnStats(index_->GetMetadata()->GetKeyAttrs().at(0))->column_name;

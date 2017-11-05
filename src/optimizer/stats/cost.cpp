@@ -12,6 +12,7 @@
 
 #include "optimizer/stats/cost.h"
 #include "expression/comparison_expression.h"
+#include "expression/tuple_value_expression.h"
 #include "optimizer/stats/selectivity.h"
 #include "type/value.h"
 
@@ -240,15 +241,191 @@ double Cost::OrderByCost(const std::shared_ptr<TableStats> &input_stats,
 }
 
 //===----------------------------------------------------------------------===//
+// INNER NL JOIN
+//===----------------------------------------------------------------------===//
+double Cost::InnerNLJoinWithSampling(const std::shared_ptr<TableStats>& left_input_stats,
+                                      const std::shared_ptr<TableStats>& right_input_stats,
+                                      std::shared_ptr<TableStats>& output_stats,
+                                      const std::shared_ptr<expression::AbstractExpression> predicate) {
+
+  UpdateJoinOutputSize(left_input_stats, right_input_stats, output_stats, predicate, 0);
+  return left_input_stats->num_rows * right_input_stats->num_rows * DEFAULT_TUPLE_COST;
+}
+
+
+//===----------------------------------------------------------------------===//
+// LEFT NL JOIN
+//===----------------------------------------------------------------------===//
+double Cost::LeftNLJoinWithSampling(const std::shared_ptr<TableStats>& left_input_stats,
+                                     const std::shared_ptr<TableStats>& right_input_stats,
+                                     std::shared_ptr<TableStats>& output_stats,
+                                     const std::shared_ptr<expression::AbstractExpression> predicate) {
+
+  UpdateJoinOutputSize(left_input_stats, right_input_stats, output_stats, predicate, left_input_stats->num_rows);
+  return left_input_stats->num_rows * right_input_stats->num_rows * DEFAULT_TUPLE_COST;
+}
+
+
+
+//===----------------------------------------------------------------------===//
+// RIGHT NL JOIN
+//===----------------------------------------------------------------------===//
+double Cost::RightNLJoinWithSampling(const std::shared_ptr<TableStats>& left_input_stats,
+                                    const std::shared_ptr<TableStats>& right_input_stats,
+                                    std::shared_ptr<TableStats>& output_stats,
+                                    const std::shared_ptr<expression::AbstractExpression> predicate) {
+
+  UpdateJoinOutputSize(left_input_stats, right_input_stats, output_stats, predicate, right_input_stats->num_rows);
+  return left_input_stats->num_rows * right_input_stats->num_rows * DEFAULT_TUPLE_COST;
+}
+
+
+
+//===----------------------------------------------------------------------===//
+// OUTER NL JOIN
+//===----------------------------------------------------------------------===//
+double Cost::OuterNLJoinWithSampling(const std::shared_ptr<TableStats>& left_input_stats,
+                                     const std::shared_ptr<TableStats>& right_input_stats,
+                                     std::shared_ptr<TableStats>& output_stats,
+                                     const std::shared_ptr<expression::AbstractExpression> predicate) {
+
+  UpdateJoinOutputSize(left_input_stats, right_input_stats, output_stats,
+                       predicate, left_input_stats->num_rows + right_input_stats->num_rows);
+  return left_input_stats->num_rows * right_input_stats->num_rows * DEFAULT_TUPLE_COST;
+}
+
+
+
+//===----------------------------------------------------------------------===//
+// INNER HASH JOIN
+//===----------------------------------------------------------------------===//
+double Cost::InnerHashJoinWithSampling(const std::shared_ptr<TableStats>& left_input_stats,
+                                     const std::shared_ptr<TableStats>& right_input_stats,
+                                     std::shared_ptr<TableStats>& output_stats,
+                                     const std::shared_ptr<expression::AbstractExpression> predicate) {
+
+  UpdateJoinOutputSize(left_input_stats, right_input_stats, output_stats, predicate, 0);
+  return (left_input_stats->num_rows + right_input_stats->num_rows) * DEFAULT_TUPLE_COST;
+}
+
+
+//===----------------------------------------------------------------------===//
+// LEFT HASH JOIN
+//===----------------------------------------------------------------------===//
+double Cost::LeftHashJoinWithSampling(const std::shared_ptr<TableStats>& left_input_stats,
+                                    const std::shared_ptr<TableStats>& right_input_stats,
+                                    std::shared_ptr<TableStats>& output_stats,
+                                    const std::shared_ptr<expression::AbstractExpression> predicate) {
+
+  UpdateJoinOutputSize(left_input_stats, right_input_stats, output_stats, predicate, left_input_stats->num_rows);
+  return (left_input_stats->num_rows + right_input_stats->num_rows) * DEFAULT_TUPLE_COST;
+}
+
+
+
+//===----------------------------------------------------------------------===//
+// RIGHT HASH JOIN
+//===----------------------------------------------------------------------===//
+double Cost::RightHashJoinWithSampling(const std::shared_ptr<TableStats>& left_input_stats,
+                                     const std::shared_ptr<TableStats>& right_input_stats,
+                                     std::shared_ptr<TableStats>& output_stats,
+                                     const std::shared_ptr<expression::AbstractExpression> predicate) {
+
+  UpdateJoinOutputSize(left_input_stats, right_input_stats, output_stats, predicate, right_input_stats->num_rows);
+  return (left_input_stats->num_rows + right_input_stats->num_rows) * DEFAULT_TUPLE_COST;
+}
+
+
+
+//===----------------------------------------------------------------------===//
+// OUTER HASH JOIN
+//===----------------------------------------------------------------------===//
+double Cost::OuterHashJoinWithSampling(const std::shared_ptr<TableStats>& left_input_stats,
+                                     const std::shared_ptr<TableStats>& right_input_stats,
+                                     std::shared_ptr<TableStats>& output_stats,
+                                     const std::shared_ptr<expression::AbstractExpression> predicate) {
+
+  UpdateJoinOutputSize(left_input_stats, right_input_stats, output_stats,
+                       predicate, left_input_stats->num_rows + right_input_stats->num_rows);
+  return (left_input_stats->num_rows + right_input_stats->num_rows) * DEFAULT_TUPLE_COST;
+}
+
+
+
+//===----------------------------------------------------------------------===//
 // Helper functions
 //===----------------------------------------------------------------------===//
+void Cost::UpdateJoinOutputSize(const std::shared_ptr<TableStats>& left_input_stats,
+                            const std::shared_ptr<TableStats>& right_input_stats,
+                            std::shared_ptr<TableStats>& output_stats,
+                            const std::shared_ptr<expression::AbstractExpression> predicate,
+                            size_t adjustment) {
+    size_t default_join_size = left_input_stats->num_rows * right_input_stats->num_rows + adjustment;
+    if (predicate == nullptr) {
+      output_stats->num_rows = default_join_size;
+    } else if (predicate->GetExpressionType() == ExpressionType::COMPARE_EQUAL) {
+      // consider only A.a = B.a case here
+      if (predicate->GetChildrenSize() != 2 ||
+          predicate->GetChild(0)->GetExpressionType() != ExpressionType::VALUE_TUPLE
+          || predicate->GetChild(1)->GetExpressionType() != ExpressionType::VALUE_TUPLE) {
+
+        output_stats->num_rows = default_join_size;
+        return;
+      }
+      auto left_child = reinterpret_cast<const expression::TupleValueExpression *>(predicate->GetChild(0));
+      auto right_child = reinterpret_cast<const expression::TupleValueExpression *>(predicate->GetChild(1));
+      std::string left_column_name = left_child->GetTableName()+"."+left_child->GetColumnName();
+      std::string right_column_name = right_child->GetTableName()+"."+right_child->GetColumnName();
+      bool primary_key = false;
+      if (left_input_stats->HasPrimaryIndex(left_column_name) || left_input_stats->HasPrimaryIndex(right_column_name)) {
+        output_stats->num_rows = right_input_stats->num_rows;
+        primary_key = true;
+      }
+      if (right_input_stats->HasPrimaryIndex(left_column_name) || right_input_stats->HasPrimaryIndex(right_column_name)) {
+        if (!primary_key || left_input_stats->num_rows < output_stats->num_rows) {
+          output_stats->num_rows = left_input_stats->num_rows;
+        }
+        primary_key = true;
+      }
+      if (!primary_key) {
+        double left_cardinality, right_cardinality;
+        if (left_input_stats->HasColumnStats(left_column_name)) {
+          left_cardinality = left_input_stats->GetCardinality(left_column_name);
+        } else if (right_input_stats->HasColumnStats(right_column_name)) {
+          left_cardinality = right_input_stats->GetCardinality(left_column_name);
+        } else {
+          left_cardinality = 0;
+          LOG_ERROR("join column %s not found", left_column_name.c_str());
+        }
+
+        if (left_input_stats->HasColumnStats(right_column_name)) {
+          right_cardinality = left_input_stats->GetCardinality(right_column_name);
+        } else if (right_input_stats->HasColumnStats(right_column_name)) {
+          right_cardinality = right_input_stats->GetCardinality(right_column_name);
+        } else {
+          right_cardinality = 0;
+          LOG_ERROR("join column %s not found", right_column_name.c_str());
+        }
+        if (left_cardinality == 0 || right_cardinality == 0) {
+          output_stats->num_rows = default_join_size;
+        } else {
+          output_stats->num_rows = (size_t) (left_input_stats->num_rows * right_input_stats->num_rows
+                                             / std::sqrt(left_cardinality * right_cardinality)) + adjustment;
+        }
+      }
+    } else {
+      // conjunction predicates
+      output_stats->num_rows = default_join_size;
+    }
+
+}
 void Cost::UpdateConditionStats(const std::shared_ptr<TableStats> &input_stats,
                                 const ValueCondition &condition,
                                 std::shared_ptr<TableStats> &output_stats) {
   if (output_stats != nullptr) {
     double selectivity =
         Selectivity::ComputeSelectivity(input_stats, condition);
-    output_stats->num_rows = input_stats->num_rows * selectivity;
+    output_stats->num_rows =input_stats->num_rows * selectivity;
   }
 }
 
