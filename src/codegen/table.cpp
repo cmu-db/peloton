@@ -64,7 +64,7 @@ llvm::Value *Table::GetZoneMap(CodeGen &codegen, llvm::Value *tile_group_ptr) co
 //
 // @endcode
 void Table::GenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
-                         uint32_t batch_size, ScanCallback &consumer, llvm::Value *predicate_array, size_t num_predicates) const {
+                         uint32_t batch_size, ScanCallback &consumer, llvm::Value *predicate_ptr, size_t num_predicates) const {
   // First get the columns from the table the consumer needs. For every column,
   // we'll need to have a ColumnInfoLayout struct
   const uint32_t num_columns =
@@ -73,51 +73,53 @@ void Table::GenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
   llvm::Value *column_layouts = codegen->CreateAlloca(
       ColumnLayoutInfoProxy::GetType(codegen), codegen.Const32(num_columns));
 
+  llvm::Value *predicate_array = codegen->CreateAlloca(PredicateInfoProxy::GetType(codegen), codegen.Const32(num_predicates));
+  codegen.Call(RuntimeFunctionsProxy::FillPredicateArray, {predicate_ptr, predicate_array});
+  
   // Get the number of tile groups in the given table
+  llvm::Value *scanned_tiles = codegen.Const64(0);
   llvm::Value *tile_group_idx = codegen.Const64(0);
   llvm::Value *num_tile_groups = GetTileGroupCount(codegen, table_ptr);
+  // num_predicates = 0;
+  // predicate_ptr = nullptr;
   // Iterate over all tile groups in the table
+  LOG_INFO("Begin Looping over all tile groups");
   lang::Loop loop{codegen,
                   codegen->CreateICmpULT(tile_group_idx, num_tile_groups),
-                  {{"tileGroupIdx", tile_group_idx}}};
+                  {{"tileGroupIdx", tile_group_idx},{"scanned_tiles", scanned_tiles}}};
   {
     // Get the tile group with the given tile group ID
     tile_group_idx = loop.GetLoopVar(0);
-    //llvm::Value *scanned_tiles = loop.GetLoopVar(1);
-
+    scanned_tiles = loop.GetLoopVar(1);
     llvm::Value *tile_group_ptr =
         GetTileGroup(codegen, table_ptr, tile_group_idx);
+    llvm::Value *zone_map_ptr =
+        GetZoneMap(codegen, tile_group_ptr);
     llvm::Value *tile_group_id =
         tile_group_.GetTileGroupId(codegen, tile_group_ptr);
-    llvm::Value *zone_map_ptr = 
-        GetZoneMap(codegen, tile_group_ptr);
-    //llvm::Value *scan_tile_group =;
-
-    // llvm::Value *new_scanned_tiles = nullptr;
-    codegen::lang::If cond{codegen, zone_map_.ComparePredicateWithZoneMap(codegen, predicate_array, num_predicates, zone_map_ptr)};
+    llvm::Value *new_scanned_tiles = nullptr;
+    codegen::lang::If cond{codegen, codegen.Call(ZoneMapProxy::ComparePredicate, {zone_map_ptr, predicate_array ,codegen.Const32(num_predicates)})};
     {
-      codegen.CallPrintf("Scanning Tile\n", {});
-      // Invoke the consumer to let her know that we're starting to iterate over
-      // the tile group now
+      //Invoke the consumer to let her know that we're starting to iterate over
+      //the tile group now
       consumer.TileGroupStart(codegen, tile_group_id, tile_group_ptr);
       // Generate the scan cover over the given tile group
       tile_group_.GenerateTidScan(codegen, tile_group_ptr, column_layouts,
                                   batch_size, consumer);
       // Invoke the consumer to let her know that we're done with this tile group
       consumer.TileGroupFinish(codegen, tile_group_ptr);
-    //   new_scanned_tiles = codegen->CreateAdd(scanned_tiles, codegen.Const64(1));
+      new_scanned_tiles = codegen->CreateAdd(scanned_tiles, codegen.Const64(1));
     }
     cond.EndIf();
-    // scanned_tiles = cond.BuildPHI(new_scanned_tiles, scanned_tiles);
-    // // Move to next tile group in the table
+    scanned_tiles = cond.BuildPHI(new_scanned_tiles, scanned_tiles);
+    // Move to next tile group in the table
     tile_group_idx = codegen->CreateAdd(tile_group_idx, codegen.Const64(1));
     loop.LoopEnd(codegen->CreateICmpULT(tile_group_idx, num_tile_groups),
-                 {tile_group_idx});
+                 {tile_group_idx, scanned_tiles});
+    std::vector<llvm::Value *> final;
+    loop.CollectFinalLoopVariables(final);
+    codegen.CallPrintf("The number of scanned tiles is : [%lu]\n", {final[1]});
   }
-
-    // std::vector<llvm::Value *> final;
-    // loop.CollectFinalLoopVariables(final);
-    // codegen.CallPrintf("The number of scanned tiles is : [%lu]\n", {final[1]});
 }
 
 }  // namespace codegen

@@ -29,8 +29,12 @@
 namespace peloton {
 namespace codegen {
 
-  llvm::Value *ZoneMap::ComparePredicateWithZoneMap(CodeGen &codegen, llvm::Value* predicate_array , size_t num_predicates, llvm::Value *zone_map) const {
+  llvm::Value *ZoneMap::ComparePredicateWithZoneMap(CodeGen &codegen, const storage::PredicateInfo *arr, size_t num_predicates, llvm::Value *zone_map) const {
+  	llvm::Value *predicate_array = codegen->CreateIntToPtr(codegen.Const64((int64_t)arr),
+                                    PredicateInfoProxy::GetType(codegen)->getPointerTo());
+    codegen.CallPrintf("Call to ComparePredicate\n",{});
     llvm::Value *skip_tile_group = codegen.Call(ZoneMapProxy::ComparePredicate, {zone_map, predicate_array ,codegen.Const32(num_predicates)});
+    codegen.CallPrintf("Call ended ComparePredicate\n",{});
     codegen.CallPrintf("Scan Tile: [%lu]\n", {skip_tile_group});
     return skip_tile_group;
   }

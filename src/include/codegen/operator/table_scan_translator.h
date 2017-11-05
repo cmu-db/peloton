@@ -158,6 +158,11 @@ class TableScanTranslator : public OperatorTranslator {
   // The code-generating table instance
   codegen::Table table_;
 
+  //std::vector<storage::PredicateInfo> predicate_array;
+
+  size_t num_preds;
+
+  llvm::Value *predicate_array;
 
 };
 

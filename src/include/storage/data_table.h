@@ -122,6 +122,8 @@ class DataTable : public AbstractTable {
   // aggregate_executor.
   ItemPointer InsertTuple(const Tuple *tuple);
 
+  bool CreateZoneMaps(); 
+
   //===--------------------------------------------------------------------===//
   // TILE GROUP
   //===--------------------------------------------------------------------===//

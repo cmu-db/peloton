@@ -39,9 +39,7 @@ PROXY(RuntimeFunctions) {
   DECLARE_METHOD(GetTileGroup);
   DECLARE_METHOD(GetTileGroupLayout);
   DECLARE_METHOD(GetZoneMap);
-  DECLARE_METHOD(PrintPredicate);
-  DECLARE_METHOD(GetMinValuefromZoneMap);
-  DECLARE_METHOD(GetMaxValuefromZoneMap);
+  DECLARE_METHOD(FillPredicateArray);
   DECLARE_METHOD(ThrowDivideByZeroException);
   DECLARE_METHOD(ThrowOverflowException);
 };

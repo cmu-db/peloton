@@ -63,6 +63,7 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
       table_name(table_name),
       tuples_per_tilegroup_(tuples_per_tilegroup),
       adapt_table_(adapt_table) {
+
   // Init default partition
   auto col_count = schema->GetColumnCount();
   for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
@@ -1113,6 +1114,23 @@ storage::TileGroup *DataTable::TransformTileGroup(
   catalog_manager.AddTileGroup(tile_group_id, new_tile_group);
 
   return new_tile_group.get();
+}
+
+// API for Brain to call to create zone maps
+bool DataTable::CreateZoneMaps() {
+  oid_t tilegroups_size = tile_groups_.GetSize();
+  LOG_DEBUG("Creating Zone Maps");
+  for (oid_t i = 0; i < tilegroups_size; i++) {
+    std::shared_ptr<storage::TileGroup> tile_group =
+        GetTileGroupById(tile_groups_.Find(i));
+    if (tile_group == nullptr) {
+      return false;
+    }
+    if (tile_group->CreateZoneMap() == false) {
+      return false;
+    }
+  }
+  return true;
 }
 
 void DataTable::RecordLayoutSample(const brain::Sample &sample) {

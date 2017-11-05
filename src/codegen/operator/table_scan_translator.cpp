@@ -44,7 +44,9 @@ TableScanTranslator::TableScanTranslator(const planner::SeqScanPlan &scan,
 
   // The restriction, if one exists
   const auto *predicate = GetScanPlan().GetPredicate();
-
+  auto pred = (expression::AbstractExpression *)GetScanPlan().GetPredicate();
+  auto &codegen = GetCodeGen();
+  num_preds = 0;
   if (predicate != nullptr) {
     // If there is a predicate, prepare a translator for it
     context.Prepare(*predicate);
@@ -53,8 +55,31 @@ TableScanTranslator::TableScanTranslator(const planner::SeqScanPlan &scan,
     if (predicate->IsSIMDable()) {
       pipeline.InstallBoundaryAtOutput(this);
     }
+    if (pred->IsZoneMappable()) {
+
+      
+      // const std::vector<std::unique_ptr<const expression::AbstractExpression>> *parsed_predicates;
+      // parsed_predicates = pred->GetParsedPredicates();
+      // num_preds = parsed_predicates->size();
+      // size_t i = 0;
+      // for (i = 0; i < num_preds; i++) {
+      //   auto temp_predicate = ((*parsed_predicates)[i]).get();
+      //   std::string predicate_str;
+      //   predicate_str = pred->GetInfo();
+      //   auto right_exp = (const expression::ConstantValueExpression *)(temp_predicate->GetChild(1));
+      //   auto predicate_val = right_exp->GetValue();
+      //   // Get the column id for this predicate
+      //   auto left_exp = (const expression::TupleValueExpression *)(temp_predicate->GetChild(0));
+      //   int col_id = left_exp->GetColumnId();
+      //   // Get the comparison operator
+      //   int comparison_operator = (int)temp_predicate->GetExpressionType();
+      //   // Set the values in the struct
+      //   storage::PredicateInfo pred_info = {col_id, comparison_operator, predicate_val};
+      //   predicate_array.push_back(pred_info);
+      // }
+    }
+
   }
-  auto &codegen = GetCodeGen();
   auto &runtime_state = context.GetRuntimeState();
   selection_vector_id_ = runtime_state.RegisterState(
       "scanSelVec",
@@ -84,20 +109,25 @@ void TableScanTranslator::Produce() const {
                  Vector::kDefaultVectorSize, codegen.Int32Type()};
 
   auto predicate = (expression::AbstractExpression *)GetScanPlan().GetPredicate();
-  bool use_zone_map = predicate->IsZoneMappable();
+  // bool use_zone_map = predicate->IsZoneMappable();
   size_t num_preds = 0;
-  if (use_zone_map) {
-    LOG_DEBUG("Predicate is Zone Mappable");
-    num_preds = predicate->GetNumberofParsedPredicates();
-    LOG_DEBUG("Number of Parsed Predicates : [%lu]", num_preds);
-  }
-  llvm::Value *predicate_ptr =
-           codegen->CreateIntToPtr(codegen.Const64((int64_t)predicate),
-                                   AbstractExpressionProxy::GetType(codegen)->getPointerTo());
-  llvm::Value *predicate_array = codegen->CreateAlloca(PredicateInfoProxy::GetType(codegen), codegen.Const32(num_preds));
-  codegen.Call(RuntimeFunctionsProxy::PrintPredicate, {predicate_ptr, predicate_array});
+  // if (use_zone_map) {
+  //   LOG_DEBUG("Predicate is Zone Mappable");
+  //   num_preds = predicate->GetNumberofParsedPredicates();
+  //   LOG_DEBUG("Number of Parsed Predicates : [%lu]", num_preds);
+  // }
+  // llvm::Value *predicate_ptr =
+  //          codegen->CreateIntToPtr(codegen.Const64((int64_t)predicate),
+  //                                  AbstractExpressionProxy::GetType(codegen)->getPointerTo());
+  // llvm::Value *predicate_array2 = codegen->CreateAlloca(PredicateInfoProxy::GetType(codegen), codegen.Const32(num_preds));
+  // codegen.Call(RuntimeFunctionsProxy::FillPredicateArray, {predicate_ptr, predicate_array2});
+  // auto arr = predicate_array.data();
+      llvm::Value *predicate_ptr = codegen->CreateIntToPtr(codegen.Const64((int64_t)predicate),
+          AbstractExpressionProxy::GetType(codegen)->getPointerTo());
+  num_preds = predicate->GetNumberofParsedPredicates();
+  //LOG_INFO("The number of parsed predicates is : %lu", num_preds);
   ScanConsumer scan_consumer{*this, sel_vec};
-  table_.GenerateScan(codegen, table_ptr, sel_vec.GetCapacity(), scan_consumer, predicate_array, num_preds);
+  table_.GenerateScan(codegen, table_ptr, sel_vec.GetCapacity(), scan_consumer, predicate_ptr, num_preds);
   LOG_DEBUG("TableScan on [%u] finished producing tuples ...", table.GetOid());
 }
 

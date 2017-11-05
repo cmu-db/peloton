@@ -42,9 +42,6 @@ namespace codegen {
 		DECLARE_MEMBER(0, char[sizeof(storage::ZoneMap)], opaque);
 		DECLARE_TYPE;
 	
-		DECLARE_METHOD(GetMinValue);
-		DECLARE_METHOD(GetMaxValue);
-		DECLARE_METHOD(TestCall);
 		DECLARE_METHOD(ComparePredicate);
 	};
 

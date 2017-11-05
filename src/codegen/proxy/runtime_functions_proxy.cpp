@@ -28,9 +28,7 @@ DEFINE_METHOD(peloton::codegen, RuntimeFunctions, HashCrc64);
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, GetTileGroup);
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, GetTileGroupLayout);
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, GetZoneMap);
-DEFINE_METHOD(peloton::codegen, RuntimeFunctions, PrintPredicate);
-DEFINE_METHOD(peloton::codegen, RuntimeFunctions, GetMinValuefromZoneMap);
-DEFINE_METHOD(peloton::codegen, RuntimeFunctions, GetMaxValuefromZoneMap);
+DEFINE_METHOD(peloton::codegen, RuntimeFunctions, FillPredicateArray);
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, ThrowDivideByZeroException);
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, ThrowOverflowException);
 

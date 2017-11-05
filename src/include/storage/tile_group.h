@@ -108,6 +108,8 @@ class TileGroup : public Printable {
   oid_t InsertTupleFromCheckpoint(oid_t tuple_slot_id, const Tuple *tuple,
                                   cid_t commit_id);
 
+  bool CreateZoneMap();
+
   //===--------------------------------------------------------------------===//
   // Utilities
   //===--------------------------------------------------------------------===//
