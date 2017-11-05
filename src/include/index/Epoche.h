@@ -29,6 +29,7 @@ class DeletionList {
 public:
   std::atomic<uint64_t> localEpoche;
   size_t thresholdCounter{0};
+  std::atomic<int> cleanupLatch{0b00};
 
   ~DeletionList();
   LabelDelete *head();
@@ -68,7 +69,7 @@ public:
 
 class PaddedThreadInfo {
 public:
-  static constexpr size_t ALIGNMENT = 64;
+  static constexpr size_t ALIGNMENT = 128;
   ThreadInfo threadInfo;
 
   PaddedThreadInfo(Epoche &epoche):
@@ -84,7 +85,7 @@ class Epoche {
   std::atomic<uint64_t> currentEpoche{0};
 
   // This is the presumed size of cache line
-  static constexpr size_t CACHE_LINE_SIZE = 64;
+  static constexpr size_t CACHE_LINE_SIZE = 128;
 
   // This is the mask we used for address alignment (AND with this)
   static constexpr size_t CACHE_LINE_MASK = ~(CACHE_LINE_SIZE - 1);
@@ -223,42 +224,43 @@ inline void Epoche::exitEpocheAndCleanup(ThreadInfo &epocheInfo) {
   if ((deletionList.thresholdCounter & (64 - 1)) == 1) {
     currentEpoche++;
   }
-  if (deletionList.thresholdCounter > startGCThreshhold) {
-    if (deletionList.size() == 0) {
-      deletionList.thresholdCounter = 0;
-      return;
-    }
-    deletionList.localEpoche.store(std::numeric_limits<uint64_t>::max());
-
-    uint64_t oldestEpoche = std::numeric_limits<uint64_t>::max();
-//    for (auto &epoche : deletionLists) {
-//      auto e = epoche.localEpoche.load();
-//      if (e < oldestEpoche) {
-//        oldestEpoche = e;
-//      }
-//    }
-    for (size_t i = 0; i < thread_info_counter; i++) {
-      auto e = (thread_info_list + i)->threadInfo.getDeletionList().localEpoche.load();
-      if (e < oldestEpoche) {
-        oldestEpoche = e;
+  int latch = deletionList.cleanupLatch.load();
+  if (deletionList.thresholdCounter > startGCThreshhold && latch == 0) {
+    if (deletionList.cleanupLatch.compare_exchange_strong(latch, latch + 1)) {
+      // got the clean up latch for this thread gc
+      if (deletionList.size() == 0) {
+        deletionList.thresholdCounter = 0;
+        return;
       }
-    }
+      deletionList.localEpoche.store(std::numeric_limits<uint64_t>::max());
 
-    LabelDelete *cur = deletionList.head(), *next, *prev = nullptr;
-    while (cur != nullptr) {
-      next = cur->next;
-
-      if (cur->epoche < oldestEpoche) {
-        for (std::size_t i = 0; i < cur->nodesCount; ++i) {
-          operator delete(cur->nodes[i]);
+      uint64_t oldestEpoche = std::numeric_limits<uint64_t>::max();
+      for (size_t i = 0; i < thread_info_counter; i++) {
+        auto e = (thread_info_list + i)->threadInfo.getDeletionList().localEpoche.load();
+        if (e < oldestEpoche) {
+          oldestEpoche = e;
         }
-        deletionList.remove(cur, prev);
-      } else {
-        prev = cur;
       }
-      cur = next;
+
+      LabelDelete *cur = deletionList.head(), *next, *prev = nullptr;
+      while (cur != nullptr) {
+        next = cur->next;
+
+        if (cur->epoche < oldestEpoche) {
+          for (std::size_t i = 0; i < cur->nodesCount; ++i) {
+            operator delete(cur->nodes[i]);
+          }
+          deletionList.remove(cur, prev);
+        } else {
+          prev = cur;
+        }
+        cur = next;
+      }
+      deletionList.thresholdCounter = 0;
+
+      deletionList.cleanupLatch.store(0);
     }
-    deletionList.thresholdCounter = 0;
+
   }
 }
 
