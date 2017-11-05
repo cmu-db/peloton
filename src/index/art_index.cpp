@@ -424,6 +424,24 @@ void ArtIndex::Scan(
     WriteIndexedAttributesInKey(low_key_p, index_low_key);
     WriteIndexedAttributesInKey(high_key_p, index_high_key);
 
+    // check whether they are the same key; if so, use lookup
+    bool sameKey = true;
+    if (index_low_key.getKeyLen() != index_high_key.getKeyLen()) {
+      sameKey = false;
+    } else {
+      for (unsigned int i = 0; i < index_low_key.getKeyLen(); i++) {
+        if (index_low_key.data[i] != index_high_key.data[i]) {
+          sameKey = false;
+          break;
+        }
+      }
+    }
+
+    if (sameKey) {
+      ScanKey(low_key_p, result);
+      return;
+    }
+
     // TODO: how do I know the result length before scanning?
     std::size_t range = 1000;
     std::size_t actual_result_length = 0;

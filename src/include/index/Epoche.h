@@ -7,6 +7,7 @@
 #ifndef PELOTON_EPOCHE_H
 #define PELOTON_EPOCHE_H
 
+#include <limits>
 #include <atomic>
 #include <array>
 #include <iostream>
