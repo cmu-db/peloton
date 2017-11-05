@@ -286,8 +286,7 @@ class ExpressionUtil {
     }
   }
 
-  inline static ExpressionType ReverseComparisonExpressionType(
-      ExpressionType type) {
+  inline static ExpressionType ReverseComparisonExpressionType(ExpressionType type) {
     switch (type) {
       case ExpressionType::COMPARE_GREATERTHAN:
         return ExpressionType::COMPARE_LESSTHANOREQUALTO;

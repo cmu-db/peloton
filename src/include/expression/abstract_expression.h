@@ -177,6 +177,23 @@ class AbstractExpression : public Printable {
 
   int GetDepth() const { return depth_; }
 
+  bool HasSubquery() const { return has_subquery_; }
+
+  virtual bool DeriveSubqueryFlag() {
+    if (exp_type_ == ExpressionType::ROW_SUBQUERY ||
+        exp_type_ == ExpressionType::SELECT_SUBQUERY) {
+      has_subquery_ = true;
+    } else {
+      for (auto &child : children_) {
+        if (child->DeriveSubqueryFlag()) {
+          has_subquery_ = true;
+          break;
+        }
+      }
+    }
+    return has_subquery_;
+  }
+
  protected:
   AbstractExpression(ExpressionType type) : exp_type_(type) {}
   AbstractExpression(ExpressionType exp_type, type::TypeId return_value_type)
@@ -212,6 +229,8 @@ class AbstractExpression : public Printable {
   bool has_parameter_ = false;
 
   int depth_ = -1;
+
+  bool has_subquery_ = false;
 };
 
 // Equality Comparator class for Abstract Expression
