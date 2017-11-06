@@ -355,6 +355,104 @@ double Cost::OuterHashJoinWithSampling(const std::shared_ptr<TableStats>& left_i
 //===----------------------------------------------------------------------===//
 // Helper functions
 //===----------------------------------------------------------------------===//
+void Cost::UpdateColumnStatsWithSampling(const std::shared_ptr<TableStats>& left_input_stats,
+                                         const std::shared_ptr<TableStats>& right_input_stats,
+                                         std::shared_ptr<TableStats>& output_stats,
+                                         const std::string& left_column_name, const std::string& right_column_name) {
+  std::string left = left_column_name, right = right_column_name;
+  if (!left_input_stats->HasColumnStats(left_column_name)) {
+      left = right_column_name;
+      right = left_column_name;
+  }
+  auto column_ids = GenerateJoinSamples(left_input_stats, right_input_stats, output_stats, left, right);
+  if (column_ids.empty()) {
+    return;
+  }
+  std::unordered_map<oid_t, std::unordered_set<std::string >> distinct_values(column_ids.size());
+  auto &samples = output_stats->GetSampler()->GetSampledTuples();
+  double sample_size = samples.size();
+  LOG_DEBUG("join schema info %s", samples[0]->GetSchema()->GetInfo().c_str());
+  for (size_t i = 0; i < samples.size(); i++) {
+    for (size_t j = 0; j < column_ids.size(); j++) {
+      distinct_values[column_ids[j]].insert(samples.at(i)->GetValue(column_ids.at(j)).ToString());
+    }
+  }
+  for (size_t i = 0; i < output_stats->GetColumnCount(); i++) {
+    auto column_stats = output_stats->GetColumnStats(i);
+    column_stats->cardinality = std::min(column_stats->cardinality,
+                                         distinct_values.find(column_stats->column_id)->second.size() *
+                                           output_stats->num_rows/sample_size);
+  }
+}
+
+std::vector<oid_t> Cost::GenerateJoinSamples(const std::shared_ptr<TableStats>& left_input_stats,
+                            const std::shared_ptr<TableStats>& right_input_stats,
+                            std::shared_ptr<TableStats>& output_stats,
+                            const std::string& left_column_name, const std::string& right_column_name) {
+    std::vector<oid_t> column_ids;
+    auto sample_stats = left_input_stats, index_stats = right_input_stats;
+    auto sample_column = left_column_name, index_column = right_column_name;
+    if (!right_input_stats->IsBaseTable() || right_input_stats->GetIndex(right_column_name) == nullptr) {
+      sample_stats = right_input_stats;
+      index_stats = left_input_stats;
+      sample_column = right_column_name;
+      index_column = left_column_name;
+    }
+    // Already have tuple sampled
+    if (!index_stats->GetSampler()->GetSampledTuples().empty()) {
+      return column_ids;
+    }
+    auto index = index_stats->GetIndex(index_column);
+    // No index available
+    if (index == nullptr) {
+      return column_ids;
+    }
+
+    if (sample_stats->IsBaseTable() && sample_stats->GetSampler()->GetSampledTuples().empty()) {
+      sample_stats->SampleTuples();
+    }
+    auto column_id = sample_stats->GetColumnStats(sample_column)->column_id;
+    auto &sample_tuples = sample_stats->GetSampler()->GetSampledTuples();
+    if (sample_tuples.empty()) {
+      return column_ids;
+    }
+    int cnt = 0;
+    std::vector<std::vector<ItemPointer *>> matched_tuples;
+    for (size_t i = 0; i < sample_tuples.size(); i++) {
+      auto key = sample_tuples.at(i)->GetValue(column_id);
+
+      std::vector<ItemPointer *> fetched_tuples;
+      auto schema = sample_tuples.at(i)->GetSchema();
+      std::vector<oid_t> key_attrs;
+      key_attrs.push_back(column_id);
+      std::unique_ptr<catalog::Schema> key_schema(
+        catalog::Schema::CopySchema(schema, key_attrs));
+      auto key_tuple = std::make_shared<storage::Tuple>(key_schema.get(), true);
+      type::Value fetched_value = (sample_tuples.at(i)->GetValue(column_id));
+      key_tuple->SetValue(column_id, fetched_value);
+      LOG_DEBUG("check key: %s", key_tuple->GetInfo().c_str());
+      index->ScanKey(key_tuple.get(), fetched_tuples);
+      matched_tuples.push_back(fetched_tuples);
+      cnt += fetched_tuples.size();
+
+    }
+    LOG_DEBUG("sample number %d", cnt);
+    index_stats->GetSampler()->AcquireSampleTuplesForIndexJoin(sample_tuples, matched_tuples, cnt);
+    output_stats->SetTupleSampler(index_stats->GetSampler());
+
+
+    oid_t column_offset = sample_tuples.at(0)->GetColumnCount();
+    for (oid_t i = 0; i < output_stats->GetColumnCount(); i++) {
+      auto column_stats = output_stats->GetColumnStats(i);
+      if (index_stats->HasColumnStats(column_stats->column_name)) {
+        column_stats->column_id = column_stats->column_id + column_offset;
+      }
+      column_ids.push_back(column_stats->column_id);
+    }
+    return column_ids;
+}
+
+
 void Cost::UpdateJoinOutputSize(const std::shared_ptr<TableStats>& left_input_stats,
                             const std::shared_ptr<TableStats>& right_input_stats,
                             std::shared_ptr<TableStats>& output_stats,
@@ -370,6 +468,7 @@ void Cost::UpdateJoinOutputSize(const std::shared_ptr<TableStats>& left_input_st
           || predicate->GetChild(1)->GetExpressionType() != ExpressionType::VALUE_TUPLE) {
 
         output_stats->num_rows = default_join_size;
+        LOG_ERROR("Join predicate not supported %s", predicate->GetInfo().c_str());
         return;
       }
       auto left_child = reinterpret_cast<const expression::TupleValueExpression *>(predicate->GetChild(0));
@@ -391,7 +490,7 @@ void Cost::UpdateJoinOutputSize(const std::shared_ptr<TableStats>& left_input_st
         double left_cardinality, right_cardinality;
         if (left_input_stats->HasColumnStats(left_column_name)) {
           left_cardinality = left_input_stats->GetCardinality(left_column_name);
-        } else if (right_input_stats->HasColumnStats(right_column_name)) {
+        } else if (right_input_stats->HasColumnStats(left_column_name)) {
           left_cardinality = right_input_stats->GetCardinality(left_column_name);
         } else {
           left_cardinality = 0;
@@ -413,6 +512,8 @@ void Cost::UpdateJoinOutputSize(const std::shared_ptr<TableStats>& left_input_st
                                              / std::sqrt(left_cardinality * right_cardinality)) + adjustment;
         }
       }
+      UpdateColumnStatsWithSampling(left_input_stats, right_input_stats, output_stats,
+                                    left_column_name, right_column_name);
     } else {
       // conjunction predicates
       output_stats->num_rows = default_join_size;

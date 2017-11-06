@@ -186,6 +186,15 @@ class Cost {
                                         std::shared_ptr<TableStats>& output_stats,
                                         const std::shared_ptr<expression::AbstractExpression> predicate);
 
+  static std::vector<oid_t> GenerateJoinSamples(const std::shared_ptr<TableStats>& left_input_stats,
+                      const std::shared_ptr<TableStats>& right_input_stats,
+                      std::shared_ptr<TableStats>& output_stats,
+                      const std::string& left_column_name, const std::string& right_column_name);
+
+  static void UpdateColumnStatsWithSampling(const std::shared_ptr<TableStats>& left_input_stats,
+                      const std::shared_ptr<TableStats>& right_input_stats,
+                      std::shared_ptr<TableStats>& output_stats,
+                      const std::string& left_column_name, const std::string& right_column_name);
   /*
    * Update output statistics given left, right input statistics and predicate for join operators
    */
