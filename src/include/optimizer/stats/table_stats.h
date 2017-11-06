@@ -85,13 +85,13 @@ class TableStats : public Stats {
 
   bool RemoveColumnStats(const oid_t column_id);
 
-  bool AddIndex(const std::string table_name, const std::shared_ptr<index::Index> index);
+  bool AddIndex(std::string key, const std::shared_ptr<index::Index> index);
 
   std::shared_ptr<index::Index> GetIndex(const std::string col_name);
 
   inline bool IsBaseTable() { return is_base_table_; }
 
-  void SampleTuples(storage::DataTable * table);
+  void SampleTuples();
 
   inline std::shared_ptr<TupleSampler> GetSampler() { return tuple_sampler_; }
 

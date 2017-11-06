@@ -155,12 +155,12 @@ bool TableStats::RemoveColumnStats(const oid_t column_id) {
   return true;
 }
 
-bool TableStats::AddIndex(const std::string table_name, std::shared_ptr<index::Index> index_) {
+bool TableStats::AddIndex(std::string key, std::shared_ptr<index::Index> index_) {
+  // Only consider adding single column index for now
   if (index_->GetColumnCount() > 1)
     return false;
-  auto col_name = this->GetColumnStats(index_->GetMetadata()->GetKeyAttrs().at(0))->column_name;
-  auto key = table_name + "." + col_name;
-  if (index_map_.find(key) != index_map_.end()) {
+
+  if (index_map_.find(key) == index_map_.end()) {
     index_map_.insert({key, index_});
     return true;
   }
@@ -174,8 +174,10 @@ std::shared_ptr<index::Index> TableStats::GetIndex(std::string col_name) {
   return std::shared_ptr<index::Index>(nullptr);
 }
 
-void TableStats::SampleTuples(storage::DataTable *table) {
-  tuple_sampler_ = std::make_shared<TupleSampler>(table);
+void TableStats::SampleTuples() {
+//  tuple_sampler_ = std::make_shared<TupleSampler>(table);
+  if (tuple_sampler_ == nullptr)
+    return;
   tuple_sampler_->AcquireSampleTuples(DEFAULT_SAMPLE_NUM);
 }
 
