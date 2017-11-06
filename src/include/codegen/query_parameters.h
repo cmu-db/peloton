@@ -14,8 +14,8 @@
 
 #include "expression/parameter.h"
 #include "planner/abstract_plan.h"
-#include "type/value_peeker.h"
 #include "type/type_id.h"
+#include "type/value_peeker.h"
 
 namespace peloton {
 
@@ -33,6 +33,24 @@ class QueryParameters {
 
     // Set the values from the user's query parameters
     SetParameterExpressionValues(parameter_values);
+  }
+
+  // Provide the index of the expresson in the parameter storage
+  size_t GetParameterIdx(const expression::AbstractExpression *expression)
+      const {
+    auto param = parameters_index_.find(expression);
+    PL_ASSERT(param != parameters_index_.end());
+    return param->second;
+  }
+
+  // Provide the parameter value's type at the specified index
+  peloton::type::TypeId GetValueType(int32_t index) {
+    return parameters_[index].GetValue().GetTypeId();
+  }
+
+  // Provide the parameter object vector
+  std::vector<expression::Parameter> &GetParameters() {
+    return parameters_;
   }
 
   int8_t GetTinyInt(int32_t index) {
@@ -76,17 +94,6 @@ class QueryParameters {
 
   uint32_t GetVarcharLen(int32_t index) {
     return parameters_[index].GetValue().GetLength();
-  }
-
-  size_t GetParameterIdx(const expression::AbstractExpression *expression)
-      const {
-    auto param = parameters_index_.find(expression);
-    PL_ASSERT(param != parameters_index_.end());
-    return param->second;
-  }
-
-  peloton::type::TypeId GetValueType(int32_t index) {
-    return parameters_[index].GetValue().GetTypeId();
   }
 
  private:

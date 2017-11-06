@@ -35,7 +35,7 @@ class ConstantTranslator : public ExpressionTranslator {
   codegen::Value DeriveValue(CodeGen &codegen,
                              RowBatch::Row &row) const override;
  private:
-  size_t parameter_index_;
+  size_t index_;
 };
 
 }  // namespace codegen

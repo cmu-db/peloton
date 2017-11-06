@@ -55,7 +55,7 @@ class QueryCompiler {
   // object pointer if they want to collect statistics on the compilation
   // process.
   std::unique_ptr<Query> Compile(const planner::AbstractPlan &query_plan,
-                                 const QueryParameters &parameters,
+                                 QueryParameters &parameters,
                                  QueryResultConsumer &consumer,
                                  CompileStats *stats = nullptr);
 

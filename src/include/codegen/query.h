@@ -15,6 +15,7 @@
 #include "codegen/code_context.h"
 #include "codegen/runtime_state.h"
 #include "codegen/query_parameters.h"
+#include "codegen/parameter_storage.h"
 
 namespace peloton {
 
@@ -66,7 +67,7 @@ class Query {
   const planner::AbstractPlan &GetPlan() const { return query_plan_; }
 
   // Return the query parameters
-  const codegen::QueryParameters &GetQueryParameters() const {
+  codegen::QueryParameters &GetQueryParameters() const {
     return parameters_;
   }
 
@@ -80,19 +81,25 @@ class Query {
     return parameters_.GetParameterIdx(expression);
   }
 
+  ParameterStorage &GetParameterStorage() {
+    return parameters_storage_;
+  }
+
  private:
   friend class QueryCompiler;
 
   // Constructor
-  Query(const planner::AbstractPlan &query_plan,
-        const QueryParameters &parameters);
+  Query(const planner::AbstractPlan &query_plan, QueryParameters &parameters);
 
  private:
   // The query plan
   const planner::AbstractPlan &query_plan_;
 
   // The parameters and mapping for expression and parameter ids to
-  const QueryParameters &parameters_;
+  QueryParameters &parameters_;
+
+  // The parameters and mapping for expression and parameter ids to
+  ParameterStorage parameters_storage_;
 
   // The code context where the compiled code for the query goes
   CodeContext code_context_;

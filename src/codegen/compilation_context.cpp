@@ -27,6 +27,7 @@ namespace codegen {
 CompilationContext::CompilationContext(Query &query,
                                        QueryResultConsumer &result_consumer)
     : query_(query), result_consumer_(result_consumer),
+      parameter_storage_(query_.GetParameterStorage()),
       codegen_(query_.GetCodeContext()) {
   // Allocate a catalog and transaction instance in the runtime state
   auto &runtime_state = GetRuntimeState();
@@ -47,6 +48,11 @@ CompilationContext::CompilationContext(Query &query,
       QueryParametersProxy::GetType(codegen_)->getPointerTo();
   query_parameters_state_id_ =
       runtime_state.RegisterState("queryParameters", query_parameters_type);
+
+  auto *parameter_storage_type = parameter_storage_.Setup(codegen_,
+      query_.GetQueryParameters().GetParameters());
+  parameter_storage_state_id_ = runtime_state.RegisterState("parameterStorage",
+      parameter_storage_type, true);
 
   // Let the query consumer modify the runtime state object
   result_consumer_.Prepare(*this);
@@ -150,6 +156,11 @@ llvm::Value *CompilationContext::GetQueryParametersPtr() {
   return GetRuntimeState().LoadStateValue(codegen_, query_parameters_state_id_);
 }
 
+llvm::Value *CompilationContext::GetParameterStoragePtr() {
+  return GetRuntimeState().LoadStateValue(codegen_,
+                                          parameter_storage_state_id_);
+}
+
 // Generate code for the init() function of the query
 llvm::Function *CompilationContext::GenerateInitFunction() {
   // Create function definition
@@ -195,6 +206,10 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
 
   // Create all local state
   runtime_state.CreateLocalState(codegen_);
+
+  // Load the query parameter values
+  parameter_storage_.SetValues(codegen_, GetQueryParametersPtr(),
+                               GetParameterStoragePtr());
 
   // Generate the primary plan logic
   Produce(root);

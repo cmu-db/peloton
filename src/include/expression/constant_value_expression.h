@@ -62,7 +62,7 @@ class ConstantValueExpression : public AbstractExpression {
       return false;
     if (return_value_type_ != rhs.GetValueType())
       return false;
-    // Do not hash value since we are going to parameterize and cache
+    // Do not check value since we are going to parameterize and cache
     return true;
   }
 
@@ -74,6 +74,7 @@ class ConstantValueExpression : public AbstractExpression {
     // Use VALUE_PARAMTER for parameterization with the compiled query cache
     auto val = ExpressionType::VALUE_PARAMETER;
     hash_t hash = HashUtil::Hash(&val);
+    // Do not hash value since we are going to parameterize and cache
     return HashUtil::CombineHashes(hash, HashUtil::Hash(&return_value_type_));
   }
 
