@@ -75,6 +75,10 @@ class CompilationContext {
     return query_.GetQueryParameters();
   }
 
+  const ParameterStorage &GetParameterStorage() const {
+    return query_.GetParameterStorage();
+  }
+
   QueryResultConsumer &GetQueryResultConsumer() const { return result_consumer_; }
 
   // Get a pointer to the catalog object from the runtime state
@@ -88,6 +92,8 @@ class CompilationContext {
 
   // Get a pointer to the query parameter instance
   llvm::Value *GetQueryParametersPtr();
+
+  llvm::Value *GetParameterStoragePtr();
 
   // Get the parameter index to be used to get value, for the given expression
   size_t GetParameterIdx(const expression::AbstractExpression *expression) {
@@ -119,6 +125,9 @@ class CompilationContext {
   // The consumer of the results of the query
   QueryResultConsumer &result_consumer_;
 
+  // The parameter value storage of the query
+  ParameterStorage &parameter_storage_;
+
   // The code generator
   CodeGen codegen_;
 
@@ -133,6 +142,7 @@ class CompilationContext {
   RuntimeState::StateID catalog_state_id_;
   RuntimeState::StateID executor_context_state_id_;
   RuntimeState::StateID query_parameters_state_id_;
+  RuntimeState::StateID parameter_storage_state_id_;
 
   // The mapping of an operator in the tree to its translator
   std::unordered_map<const planner::AbstractPlan *,

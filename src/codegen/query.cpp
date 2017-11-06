@@ -22,7 +22,7 @@ namespace codegen {
 
 // Constructor
 Query::Query(const planner::AbstractPlan &query_plan,
-             const QueryParameters &parameters)
+             QueryParameters &parameters)
     : query_plan_(query_plan), parameters_(parameters) {}
 
 // Execute the query on the given database (and within the provided transaction)
