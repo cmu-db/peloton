@@ -39,20 +39,20 @@ SETTING_string(socket_family,
 // Added for SSL only begins
 
 // Enables SSL connection. The default value is false
-SETTING_bool(ssl, "Enable SSL connection (default: false)", true, false, false)
+SETTING_bool(ssl, "Enable SSL connection (default: true)", true, false, false)
 
 // Peloton private key file
 // Currently use hardcoded private key path, may need to change
 // to generate file dynamically at runtime
 // The same applies to certificate file
 SETTING_string(private_key_file,
-              "path to private key file, relative to data directory",
+              "path to private key file",
               "server.key",
               false, false)
 
 // Peloton certificate file
 SETTING_string(certificate_file,
-              "path to certificate file, relative to data directory",
+              "path to certificate file",
               "server.crt",
               false, false)
 

@@ -130,8 +130,9 @@ void NetworkManager::StartServer() {
       throw ConnectionException("Error creating SSL context.");
     }
 
-    /*
-     * Temporarily commented to pass tests START
+    LOG_INFO("private key file path %s", private_key_file_.c_str());
+
+    // Temporarily commented to pass tests START
     // register private key
     LOG_DEBUG("private key file path %s", private_key_file_.c_str());
     if (SSL_CTX_use_PrivateKey_file(ssl_context, private_key_file_.c_str(),
@@ -148,9 +149,10 @@ void NetworkManager::StartServer() {
       SSL_CTX_free(ssl_context);
       throw ConnectionException("Error associating certificate.\n");
     }
-    * Temporarily commented to pass tests END
-    */
-    if (bind(listen_fd, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
+    // Temporarily commented to pass tests END
+
+    if (bind(listen_fd, (struct sockaddr *) &sin, sizeof(sin)) < 0)
+    {
       SSL_CTX_free(ssl_context);
       throw ConnectionException("Failed binding socket.");
     }

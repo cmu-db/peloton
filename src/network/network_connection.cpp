@@ -123,7 +123,7 @@ WriteState NetworkConnection::WritePackets() {
   // iterate through all the packets
   for (; next_response_ < protocol_handler_->responses.size(); next_response_++) {
     auto pkt = protocol_handler_->responses[next_response_].get();
-    LOG_TRACE("To send packet with type: %c", static_cast<char>(pkt->msg_type));
+    LOG_INFO("To send packet with type: %c, len %lu", static_cast<char>(pkt->msg_type), pkt->len);
     // write is not ready during write. transit to CONN_WRITE
     auto result = BufferWriteBytesHeader(pkt);
     if (result == WriteState::WRITE_NOT_READY || result == WriteState::WRITE_ERROR) return result;
@@ -251,89 +251,94 @@ ReadState NetworkConnection::FillReadBuffer() {
 WriteState NetworkConnection::FlushWriteBuffer() {
   ssize_t written_bytes = 0;
   // while we still have outstanding bytes to write
-  while (wbuf_.buf_size > 0) {
-    written_bytes = 0;
-    while (written_bytes <= 0) {
-      if (conn_SSL_context != nullptr) {
-        written_bytes =
-            SSL_write(conn_SSL_context, &wbuf_.buf[wbuf_.buf_flush_ptr], wbuf_.buf_size);
-      }
-      else {
-        written_bytes =
-           write(sock_fd, &wbuf_.buf[wbuf_.buf_flush_ptr], wbuf_.buf_size);
-      }
-      // Write failed
-      if (written_bytes < 0) {
-        switch (errno) {
-          case EINTR:
-            LOG_TRACE("Error Writing: EINTR");
-            break;
-          case EAGAIN:
-            LOG_TRACE("Error Writing: EAGAIN");
-            break;
-          case EBADF:
-            LOG_TRACE("Error Writing: EBADF");
-            break;
-          case EDESTADDRREQ:
-            LOG_TRACE("Error Writing: EDESTADDRREQ");
-            break;
-          case EDQUOT:
-            LOG_TRACE("Error Writing: EDQUOT");
-            break;
-          case EFAULT:
-            LOG_TRACE("Error Writing: EFAULT");
-            break;
-          case EFBIG:
-            LOG_TRACE("Error Writing: EFBIG");
-            break;
-          case EINVAL:
-            LOG_TRACE("Error Writing: EINVAL");
-            break;
-          case EIO:
-            LOG_TRACE("Error Writing: EIO");
-            break;
-          case ENOSPC:
-            LOG_TRACE("Error Writing: ENOSPC");
-            break;
-          case EPIPE:
-            LOG_TRACE("Error Writing: EPIPE");
-            break;
-          default:
-            LOG_TRACE("Error Writing: UNKNOWN");
+  // SSL write
+  if (conn_SSL_context != nullptr) {
+    while (wbuf_.buf_size > 0) {
+      LOG_INFO("SSL_write flush");
+      while ((written_bytes = SSL_write(conn_SSL_context, &wbuf_.buf[wbuf_.buf_flush_ptr], wbuf_.buf_size)) <= 0) {
+        int ssl_write = HandleSSLError(this, written_bytes);
+        if (!ssl_write) {
+          LOG_INFO("ssl write error");
+          break;
         }
-        if (errno == EINTR) {
-          // interrupts are ok, try again
-          written_bytes = 0;
-          continue;
-          // Write would have blocked if the socket was
-          // in blocking mode. Wait till it's readable
-        } else if (errno == EAGAIN || errno == EWOULDBLOCK) {
-          // Listen for socket being enabled for write
-          if (!UpdateEvent(EV_WRITE | EV_PERSIST)) {
+      }
+      LOG_INFO("%ld bytes", written_bytes);
+      wbuf_.buf_flush_ptr += written_bytes;
+      wbuf_.buf_size -= written_bytes;
+    }
+  } else {
+    while (wbuf_.buf_size > 0) {
+      written_bytes = 0;
+      while (written_bytes <= 0) {
+//        if (conn_SSL_context != nullptr) {
+//          LOG_INFO("SSL_write flush");
+//          written_bytes =
+//              SSL_write(conn_SSL_context, &wbuf_.buf[wbuf_.buf_flush_ptr], wbuf_.buf_size);
+//        } else {
+          LOG_INFO("Normal write flush");
+          written_bytes =
+              write(sock_fd, &wbuf_.buf[wbuf_.buf_flush_ptr], wbuf_.buf_size);
+//        }
+        // Write failed
+        if (written_bytes < 0) {
+          switch (errno) {
+            case EINTR:LOG_TRACE("Error Writing: EINTR");
+              break;
+            case EAGAIN:LOG_TRACE("Error Writing: EAGAIN");
+              break;
+            case EBADF:LOG_TRACE("Error Writing: EBADF");
+              break;
+            case EDESTADDRREQ:LOG_TRACE("Error Writing: EDESTADDRREQ");
+              break;
+            case EDQUOT:LOG_TRACE("Error Writing: EDQUOT");
+              break;
+            case EFAULT:LOG_TRACE("Error Writing: EFAULT");
+              break;
+            case EFBIG:LOG_TRACE("Error Writing: EFBIG");
+              break;
+            case EINVAL:LOG_TRACE("Error Writing: EINVAL");
+              break;
+            case EIO:LOG_TRACE("Error Writing: EIO");
+              break;
+            case ENOSPC:LOG_TRACE("Error Writing: ENOSPC");
+              break;
+            case EPIPE:LOG_TRACE("Error Writing: EPIPE");
+              break;
+            default:LOG_TRACE("Error Writing: UNKNOWN");
+          }
+          if (errno == EINTR) {
+            // interrupts are ok, try again
+            written_bytes = 0;
+            continue;
+            // Write would have blocked if the socket was
+            // in blocking mode. Wait till it's readable
+          } else if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            // Listen for socket being enabled for write
+            if (!UpdateEvent(EV_WRITE | EV_PERSIST)) {
+              return WriteState::WRITE_ERROR;
+            }
+            // We should go to CONN_WRITE state
+            LOG_DEBUG("WRITE NOT READY");
+            return WriteState::WRITE_NOT_READY;
+          } else {
+            // fatal errors
+            LOG_ERROR("Fatal error during write, errno %d", errno);
             return WriteState::WRITE_ERROR;
           }
-          // We should go to CONN_WRITE state
-          LOG_DEBUG("WRITE NOT READY");
-          return WriteState::WRITE_NOT_READY;
-        } else {
-          // fatal errors
-          LOG_ERROR("Fatal error during write, errno %d", errno);
-          return WriteState::WRITE_ERROR;
+        }
+
+        // weird edge case?
+        if (written_bytes == 0 && wbuf_.buf_size != 0) {
+          LOG_DEBUG("Not all data is written");
+          continue;
         }
       }
 
-      // weird edge case?
-      if (written_bytes == 0 && wbuf_.buf_size != 0) {
-        LOG_DEBUG("Not all data is written");
-        continue;
-      }
+      // update book keeping
+      wbuf_.buf_flush_ptr += written_bytes;
+      wbuf_.buf_size -= written_bytes;
     }
-
-    // update book keeping
-    wbuf_.buf_flush_ptr += written_bytes;
-    wbuf_.buf_size -= written_bytes;
   }
-
   // buffer is empty
   wbuf_.Reset();
 
@@ -422,6 +427,19 @@ WriteState NetworkConnection::BufferWriteBytesHeader(OutputPacket *pkt) {
   if (pkt->skip_header_write) {
     return WriteState::WRITE_COMPLETE;
   }
+//  if (pkt->msg_type == NetworkMessageType::SSL_YES || pkt->msg_type == NetworkMessageType::SSL_NO) {
+//    unsigned char type = static_cast<unsigned char>(pkt->msg_type);
+//    if (wbuf_.GetMaxSize() - wbuf_.buf_ptr < 1) {
+//      auto result = FlushWriteBuffer();
+//      if (result == WriteState::WRITE_NOT_READY || result == WriteState::WRITE_ERROR) {
+//        return result;
+//      }
+//    }
+//    wbuf_.buf[wbuf_.buf_ptr++] = type;
+//    wbuf_.buf_size = wbuf_.buf_ptr;
+//    pkt->skip_header_write = true;
+//    return WriteState::WRITE_COMPLETE;
+//  }
 
   size_t len = pkt->len;
   unsigned char type = static_cast<unsigned char>(pkt->msg_type);
@@ -616,11 +634,19 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
             PL_ASSERT(false);
           }
           int ssl_accept_ret;
+          bool ssl_handshake = true;
           // For non-blocking socket, check in loop
           while ((ssl_accept_ret = SSL_accept(conn->conn_SSL_context)) <= 0) {
-            if (!HandleSSLError(conn, ssl_accept_ret)) {
+            ssl_handshake = HandleSSLError(conn, ssl_accept_ret);
+            if (!ssl_handshake) {
               break;
             }
+          }
+          // TODO: Handle the situation when ssl handshake fails
+          if (!ssl_handshake) {
+            // handshake fails, reset ssl_sent_
+            conn->ssl_sent_ = false;
+            conn->TransitState(ConnState::CONN_PROCESS_INITIAL);
           }
           conn->ssl_sent_ = false;
         }
