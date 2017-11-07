@@ -10,10 +10,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "type/value.h"
-#include "optimizer/stats/selectivity.h"
-#include "expression/comparison_expression.h"
 #include "optimizer/stats/cost.h"
+#include "expression/comparison_expression.h"
+#include "optimizer/stats/selectivity.h"
+#include "type/value.h"
 
 #include <cmath>
 
@@ -100,7 +100,7 @@ double Cost::SortGroupByCost(const std::shared_ptr<TableStats> &input_stats,
   // Update cost to trivial if first group by column has index.
   // TODO: use more complicated cost when group by multiple columns when
   // primary index operator is supported.
-  if (!columns.empty() &&input_stats->HasPrimaryIndex(columns[0])) {
+  if (!columns.empty() && input_stats->HasPrimaryIndex(columns[0])) {
     // underestimation of group by with index.
     cost = DEFAULT_OPERATOR_COST;
   }
@@ -142,8 +142,8 @@ double Cost::DistinctCost(const std::shared_ptr<TableStats> &input_stats,
 // Project
 //===----------------------------------------------------------------------===//
 double Cost::ProjectCost(const std::shared_ptr<TableStats> &input_stats,
-                   UNUSED_ATTRIBUTE std::vector<oid_t> columns,
-                   std::shared_ptr<TableStats> &output_stats) {
+                         UNUSED_ATTRIBUTE std::vector<oid_t> columns,
+                         std::shared_ptr<TableStats> &output_stats) {
   PL_ASSERT(input_stats);
 
   if (output_stats != nullptr) {
@@ -170,9 +170,9 @@ double Cost::LimitCost(const std::shared_ptr<TableStats> &input_stats,
 // ORDER BY
 //===----------------------------------------------------------------------===//
 double Cost::OrderByCost(const std::shared_ptr<TableStats> &input_stats,
-                   const std::vector<std::string> &columns,
-                   const std::vector<bool> &orders,
-                   std::shared_ptr<TableStats> &output_stats) {
+                         const std::vector<std::string> &columns,
+                         const std::vector<bool> &orders,
+                         std::shared_ptr<TableStats> &output_stats) {
   PL_ASSERT(input_stats);
   // Invalid case.
   if (columns.size() == 0 || columns.size() != orders.size()) {
@@ -183,7 +183,6 @@ double Cost::OrderByCost(const std::shared_ptr<TableStats> &input_stats,
   double cost = DEFAULT_COST;
   // Special case when first column has index.
   if (input_stats->HasPrimaryIndex(column)) {
-
     if (order) {  // ascending
       // No cost for order by for now. We might need to take
       // cardinality of first column into account in the future.

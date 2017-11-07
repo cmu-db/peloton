@@ -35,7 +35,7 @@ class CostAndStatsCalculator : public OperatorVisitor {
       std::vector<double> child_costs);
 
   inline std::shared_ptr<Stats> GetOutputStats() {
-//    return std::move(output_stats_);
+    //    return std::move(output_stats_);
     return output_stats_;
   }
 
@@ -80,5 +80,5 @@ class CostAndStatsCalculator : public OperatorVisitor {
   double output_cost_;
 };
 
-} // namespace optimizer
-} // namespace peloton
+}  // namespace optimizer
+}  // namespace peloton

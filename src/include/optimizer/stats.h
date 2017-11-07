@@ -23,10 +23,11 @@ namespace optimizer {
 class Stats {
  public:
   Stats(TupleSample *sample) : sample_(sample){};
-	virtual ~Stats() {}
+  virtual ~Stats() {}
+
  private:
-   TupleSample *sample_;
+  TupleSample *sample_;
 };
 
-} // namespace optimizer
-} // namespace peloton
+}  // namespace optimizer
+}  // namespace peloton
