@@ -24,6 +24,10 @@
 #include <ctime>
 #include <string>
 
+// Fix for PRId64 (See https://stackoverflow.com/a/18719205)
+#define __STDC_FORMAT_MACROS 1 // Not sure where to put this
+#include <inttypes.h>
+
 namespace peloton {
 
 // Note that __PELOTONFILE__ is a special pre-processor macro that we
