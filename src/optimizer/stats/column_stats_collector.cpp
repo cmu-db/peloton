@@ -36,8 +36,9 @@ ColumnStatsCollector::~ColumnStatsCollector() {}
 void ColumnStatsCollector::AddValue(const type::Value &value) {
   if (value.GetTypeId() != column_type_) {
     LOG_TRACE(
-        "Incompatible value type %d with expected column stats value type %d",
-        value.GetTypeId(), column_type_);
+        "Incompatible value type %s with expected column stats value type %s",
+        TypeIdToString(value.GetTypeId()).c_str(),
+        TypeIdToString(column_type_).c_str());
     return;
   }
   total_count_++;

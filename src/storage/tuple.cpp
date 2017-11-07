@@ -53,8 +53,9 @@ void Tuple::SetValue(const oid_t column_offset, const type::Value &value,
   UNUSED_ATTRIBUTE size_t column_length =
       tuple_schema_->GetLength(column_offset);
 
-  LOG_TRACE("column_offset: %d; value_location %p; column_length %lu; type %d",
-            column_offset, value_location, column_length, type);
+  LOG_TRACE("column_offset: %d; value_location %p; column_length %lu; type %s",
+            column_offset, value_location, column_length,
+            TypeIdToString(type).c_str());
 
   // Skip casting if type is same
   if (type == value.GetTypeId()) {

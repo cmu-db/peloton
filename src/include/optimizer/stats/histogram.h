@@ -84,7 +84,8 @@ class Histogram {
       int raw_value = value.GetAs<double>();
       Update(raw_value);
     } else {
-      LOG_TRACE("Unsupported histogram value type %d", value.GetTypeId());
+      LOG_TRACE("Unsupported histogram value type %s",
+                TypeIdToString(value.GetTypeId()).c_str());
     }
   }
 
