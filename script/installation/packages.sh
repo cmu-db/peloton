@@ -26,7 +26,7 @@ TMPDIR=/tmp
 if [ "$DISTRO" = "UBUNTU" ]; then
     # Fix for LLVM-3.7 on Ubuntu 14.04
     if [ "$DISTRO_VER" == "14.04" ]; then
-        sudo add-apt-repository 'deb http://llvm.org/apt/trusty/ llvm-toolchain-trusty-3.7 main'
+        sudo sh -c "echo 'deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-3.7 main' >> /etc/apt/sources.list"
         sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 15CF4D18AF4F7421
         sudo apt-get update
     fi
