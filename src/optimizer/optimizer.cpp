@@ -81,6 +81,7 @@ Optimizer::Optimizer() {
 
 shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
     const unique_ptr<parser::SQLStatementList> &parse_tree_list,
+    const std::string default_database_name,
     concurrency::Transaction *txn) {
   // Base Case
   if (parse_tree_list->GetStatements().size() == 0) return nullptr;
@@ -89,15 +90,17 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
 
   auto parse_tree = parse_tree_list->GetStatements().at(0).get();
 
+  // Run binder
+  auto bind_node_visitor = make_shared<binder::BindNodeVisitor>(txn, default_database_name);
+  bind_node_visitor->BindNameToNode(parse_tree);
+
   // Handle ddl statement
   bool is_ddl_stmt;
   auto ddl_plan = HandleDDLStatement(parse_tree, is_ddl_stmt, txn);
   if (is_ddl_stmt) {
     return move(ddl_plan);
   }
-  // Run binder
-  auto bind_node_visitor = make_shared<binder::BindNodeVisitor>(txn);
-  bind_node_visitor->BindNameToNode(parse_tree);
+
   // Generate initial operator tree from query tree
   shared_ptr<GroupExpression> gexpr = InsertQueryTree(parse_tree, txn);
   GroupID root_id = gexpr->GetGroupID();

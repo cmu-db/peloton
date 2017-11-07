@@ -19,8 +19,8 @@
 #include "optimizer/rule.h"
 #include "parser/postgresparser.h"
 #include "planner/plan_util.h"
-#include "include/traffic_cop/traffic_cop.h"
-#include "sql/testing_sql_util.h"
+#include "gmock/gtest/gtest.h"
+#include "traffic_cop/traffic_cop.h"
 
 namespace peloton {
 
@@ -58,8 +58,8 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
   LOG_INFO("Query: %s", query.c_str());
   // prepareStatement
   std::string unnamed_statement = "unnamed";
-  auto statement = traffic_cop_.PrepareStatement(unnamed_statement, query,
-                                                 error_message);
+  auto statement =
+      traffic_cop_.PrepareStatement(unnamed_statement, query, error_message);
   if (statement.get() == nullptr) {
     rows_changed = 0;
     return ResultType::FAILURE;
@@ -68,11 +68,11 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
   std::vector<type::Value> param_values;
   bool unnamed = false;
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
-  //SetTrafficCopCounter();
+  // SetTrafficCopCounter();
   counter_.store(1);
-  auto status =
-      traffic_cop_.ExecuteStatement(statement, param_values, unnamed, nullptr, result_format,
-                                    result, rows_changed, error_message);
+  auto status = traffic_cop_.ExecuteStatement(statement, param_values, unnamed,
+                                              nullptr, result_format, result,
+                                              rows_changed, error_message);
   if (traffic_cop_.is_queuing_) {
     ContinueAfterComplete();
     traffic_cop_.ExecuteStatementPlanGetResult();
@@ -100,17 +100,18 @@ ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
   traffic_cop_.SetTcopTxnState(txn);
 
   auto parsed_stmt = peloton_parser.BuildParseTree(query);
-  auto plan = optimizer->BuildPelotonPlanTree(parsed_stmt, txn);
+  auto plan =
+      optimizer->BuildPelotonPlanTree(parsed_stmt, DEFAULT_DB_NAME, txn);
   tuple_descriptor =
       traffic_cop_.GenerateTupleDescriptor(parsed_stmt->GetStatement(0));
   auto result_format = std::vector<int>(tuple_descriptor.size(), 0);
 
   try {
     LOG_DEBUG("%s", planner::PlanUtil::GetInfo(plan.get()).c_str());
-    //SetTrafficCopCounter();
+    // SetTrafficCopCounter();
     counter_.store(1);
-    auto status = traffic_cop_.ExecuteStatementPlan(plan, params, result,
-                                                    result_format);
+    auto status =
+        traffic_cop_.ExecuteStatementPlan(plan, params, result, result_format);
     if (traffic_cop_.is_queuing_) {
       TestingSQLUtil::ContinueAfterComplete();
       traffic_cop_.ExecuteStatementPlanGetResult();
@@ -134,8 +135,8 @@ TestingSQLUtil::GeneratePlanWithOptimizer(
   auto &peloton_parser = parser::PostgresParser::GetInstance();
 
   auto parsed_stmt = peloton_parser.BuildParseTree(query);
-
-  auto return_value = optimizer->BuildPelotonPlanTree(parsed_stmt, txn);
+  auto return_value =
+      optimizer->BuildPelotonPlanTree(parsed_stmt, DEFAULT_DB_NAME, txn);
   return return_value;
 }
 
@@ -147,8 +148,8 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
 
   // prepareStatement
   std::string unnamed_statement = "unnamed";
-  auto statement = traffic_cop_.PrepareStatement(unnamed_statement, query,
-                                                 error_message);
+  auto statement =
+      traffic_cop_.PrepareStatement(unnamed_statement, query, error_message);
   if (statement.get() == nullptr) {
     rows_changed = 0;
     return ResultType::FAILURE;
@@ -157,11 +158,11 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
   std::vector<type::Value> param_values;
   bool unnamed = false;
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
-  //SetTrafficCopCounter();
+  // SetTrafficCopCounter();
   counter_.store(1);
-  auto status =
-      traffic_cop_.ExecuteStatement(statement, param_values, unnamed, nullptr, result_format,
-                                    result, rows_changed, error_message);
+  auto status = traffic_cop_.ExecuteStatement(statement, param_values, unnamed,
+                                              nullptr, result_format, result,
+                                              rows_changed, error_message);
   if (traffic_cop_.is_queuing_) {
     ContinueAfterComplete();
     traffic_cop_.ExecuteStatementPlanGetResult();
@@ -183,8 +184,8 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
   // execute the query using tcop
   // prepareStatement
   std::string unnamed_statement = "unnamed";
-  auto statement = traffic_cop_.PrepareStatement(unnamed_statement, query,
-                                                 error_message);
+  auto statement =
+      traffic_cop_.PrepareStatement(unnamed_statement, query, error_message);
   if (statement.get() == nullptr) {
     rows_changed = 0;
     return ResultType::FAILURE;
@@ -193,11 +194,11 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
   std::vector<type::Value> param_values;
   bool unnamed = false;
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
-  //SetTrafficCopCounter();
+  // SetTrafficCopCounter();
   counter_.store(1);
-  auto status =
-      traffic_cop_.ExecuteStatement(statement, param_values, unnamed, nullptr, result_format,
-                                    result, rows_changed, error_message);
+  auto status = traffic_cop_.ExecuteStatement(statement, param_values, unnamed,
+                                              nullptr, result_format, result,
+                                              rows_changed, error_message);
   if (traffic_cop_.is_queuing_) {
     ContinueAfterComplete();
     traffic_cop_.ExecuteStatementPlanGetResult();
@@ -210,6 +211,65 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
   return status;
 }
 
+// Executes a query and compares the result with the given rows, either
+// ordered or not
+// The result vector has to be specified as follows:
+// {"1|string1", "2|strin2", "3|string3"}
+void TestingSQLUtil::ExecuteSQLQueryAndCheckResult(
+    std::string query, std::vector<std::string> ref_result, bool ordered) {
+  std::vector<StatementResult> result;
+  std::vector<FieldInfo> tuple_descriptor;
+  std::string error_message;
+  int rows_changed;
+
+  // Execute query
+  TestingSQLUtil::ExecuteSQLQuery(std::move(query), result, tuple_descriptor,
+                                  rows_changed, error_message);
+  unsigned int rows = result.size() / tuple_descriptor.size();
+
+  // Build actual result as set of rows for comparison
+  std::vector<std::string> actual_result(rows);
+  for (unsigned int i = 0; i < rows; i++) {
+    std::string row_string;
+
+    for (unsigned int j = 0; j < tuple_descriptor.size(); j++) {
+      row_string +=
+          GetResultValueAsString(result, i * tuple_descriptor.size() + j);
+      if (j < tuple_descriptor.size() - 1) {
+        row_string += "|";
+      }
+    }
+
+    actual_result[i] = std::move(row_string);
+  }
+
+  // Compare actual result to expected result
+  EXPECT_EQ(ref_result.size(), actual_result.size());
+
+  for (auto &actual_row : actual_result) {
+    if (ordered) {
+      // ordered: check if the row at the same index is equal
+      auto index = &actual_row - &actual_result[0];
+
+      if (actual_row != ref_result[index]) {
+        EXPECT_EQ(ref_result, actual_result);
+        break;
+      }
+    } else {
+      // unordered: find this row and remove it
+      std::vector<std::string>::iterator position =
+          std::find(ref_result.begin(), ref_result.end(), actual_row);
+
+      if (position != ref_result.end()) {
+        ref_result.erase(position);
+      } else {
+        EXPECT_EQ(ref_result, actual_result);
+        break;
+      }
+    }
+  }
+}
+
 void TestingSQLUtil::ContinueAfterComplete() {
   while (TestingSQLUtil::counter_.load() == 1) {
     usleep(10);
@@ -217,7 +277,7 @@ void TestingSQLUtil::ContinueAfterComplete() {
 }
 
 void TestingSQLUtil::UtilTestTaskCallback(void *arg) {
-  std::atomic_int *count = static_cast<std::atomic_int*>(arg);
+  std::atomic_int *count = static_cast<std::atomic_int *>(arg);
   count->store(0);
 }
 

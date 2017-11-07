@@ -335,7 +335,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     }
     LOG_TRACE("Optimizer Build Peloton Plan Tree...");
     auto plan =
-        optimizer_->BuildPelotonPlanTree(sql_stmt, tcop_txn_state_.top().first);
+        optimizer_->BuildPelotonPlanTree(sql_stmt, default_database_name_, tcop_txn_state_.top().first);
     statement->SetPlanTree(plan);
     // Get the tables that our plan references so that we know how to
     // invalidate it at a later point when the catalog changes
@@ -492,8 +492,8 @@ FieldInfo TrafficCop::GetColumnFieldForValueType(std::string column_name,
     }
     default: {
       // Type not Identified
-      LOG_ERROR("Unrecognized field type '%s' [%d] for field '%s'",
-                TypeIdToString(column_type).c_str(), column_type,
+      LOG_ERROR("Unrecognized field type '%s' for field '%s'",
+                TypeIdToString(column_type).c_str(),
                 column_name.c_str());
       field_type = PostgresValueType::TEXT;
       field_size = 255;

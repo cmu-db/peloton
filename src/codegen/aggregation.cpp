@@ -141,7 +141,7 @@ void Aggregation::CreateInitialValues(
       case ExpressionType::AGGREGATE_MAX: {
         // For the above aggregations, the initial value is the attribute value
         const auto &input_val = initial[agg_info.source_index];
-        if (null_bitmap.IsNullable(i)) {
+        if (null_bitmap.IsNullable(agg_info.storage_index)) {
           storage_.SetValue(codegen, space, agg_info.storage_index, input_val,
                             null_bitmap);
         } else {

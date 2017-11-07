@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "executor/plan_executor.h"
+#include <cinttypes>
 
 #include "codegen/buffering_consumer.h"
 #include "codegen/query_compiler.h"
@@ -46,7 +47,7 @@ void PlanExecutor::ExecutePlan(
     const std::vector<int> &result_format,
     executor::ExecuteResult &p_status) {
   PL_ASSERT(plan != nullptr && txn != nullptr);
-  LOG_TRACE("PlanExecutor Start (Txn ID=%lu)", txn->GetTransactionId());
+  LOG_TRACE("PlanExecutor Start (Txn ID=%" PRId64")", txn->GetTransactionId());
 
   result.clear();
   std::unique_ptr<executor::ExecutorContext> executor_context(
@@ -149,7 +150,7 @@ int PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   PL_ASSERT(txn);
-  LOG_TRACE("Txn ID = %lu ", txn->GetTransactionId());
+  LOG_TRACE("Txn ID = %" PRId64, txn->GetTransactionId());
 
   std::unique_ptr<executor::ExecutorContext> executor_context(
       new executor::ExecutorContext(txn, params));

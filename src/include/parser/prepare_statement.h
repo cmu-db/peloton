@@ -60,7 +60,7 @@ class PrepareStatement : public SQLStatement {
     for (uint i = 0; i < placeholders.size(); ++i) placeholders[i]->ival_ = i;
   }
 
-  virtual void Accept(SqlNodeVisitor* v) const override {
+  virtual void Accept(SqlNodeVisitor* v) override {
     v->Visit(this);
   }
 

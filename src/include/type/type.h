@@ -56,7 +56,7 @@ class Type {
   static Value GetMinValue(TypeId type_id);
   static Value GetMaxValue(TypeId type_id);
 
-  inline static Type* GetInstance(TypeId type_id) { return kTypes[type_id]; }
+  inline static Type* GetInstance(TypeId type_id) { return kTypes[static_cast<int>(type_id)]; }
 
   inline TypeId GetTypeId() const { return type_id_; }
 

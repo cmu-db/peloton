@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <cinttypes>
 #include "statistics/stats_aggregator.h"
 
 #include "catalog/catalog.h"
@@ -72,7 +73,7 @@ void StatsAggregator::Aggregate(int64_t &interval_cnt, double &alpha,
   LOG_TRACE(
       "\n//////////////////////////////////////////////////////"
       "//////////////////////////////////////////////////////\n");
-  LOG_TRACE("TIME ELAPSED: %ld sec", interval_cnt);
+  LOG_TRACE("TIME ELAPSED: %" PRId64 " sec", interval_cnt);
 
   aggregated_stats_.Reset();
   std::thread::id this_id = aggregator_thread_.get_id();

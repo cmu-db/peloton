@@ -50,24 +50,24 @@ Type* Type::kTypes[] = {
 // Get the size of this data type in bytes
 uint64_t Type::GetTypeSize(const TypeId type_id) {
   switch (type_id) {
-    case BOOLEAN:
-    case TINYINT:
+    case TypeId::BOOLEAN:
+    case TypeId::TINYINT:
       return 1;
-    case SMALLINT:
+    case TypeId::SMALLINT:
       return 2;
-    case INTEGER:
-    case PARAMETER_OFFSET:
-    case DATE:
+    case TypeId::INTEGER:
+    case TypeId::PARAMETER_OFFSET:
+    case TypeId::DATE:
       return 4;
-    case BIGINT:
+    case TypeId::BIGINT:
       return 8;
-    case DECIMAL:
+    case TypeId::DECIMAL:
       return 8;
-    case TIMESTAMP:
+    case TypeId::TIMESTAMP:
       return 8;
-    case VARCHAR:
-    case VARBINARY:
-    case ARRAY:
+    case TypeId::VARCHAR:
+    case TypeId::VARBINARY:
+    case TypeId::ARRAY:
       return 0;
     default:
       break;
@@ -78,41 +78,41 @@ uint64_t Type::GetTypeSize(const TypeId type_id) {
 // Is this type coercable from the other type
 bool Type::IsCoercableFrom(const TypeId type_id) const {
   switch (type_id_) {
-    case INVALID:
+    case TypeId::INVALID:
       return false;
-    case BOOLEAN:
+    case TypeId::BOOLEAN:
       return true;
-    case TINYINT:
-    case SMALLINT:
-    case INTEGER:
-    case BIGINT:
-    case DECIMAL:
+    case TypeId::TINYINT:
+    case TypeId::SMALLINT:
+    case TypeId::INTEGER:
+    case TypeId::BIGINT:
+    case TypeId::DECIMAL:
       switch (type_id) {
-        case TINYINT:
-        case SMALLINT:
-        case INTEGER:
-        case BIGINT:
-        case DECIMAL:
-        case VARCHAR:
+        case TypeId::TINYINT:
+        case TypeId::SMALLINT:
+        case TypeId::INTEGER:
+        case TypeId::BIGINT:
+        case TypeId::DECIMAL:
+        case TypeId::VARCHAR:
           return true;
         default:
           return false;
       }
       break;
-    case DATE:
-      return (type_id == DATE || type_id == VARCHAR);
-    case TIMESTAMP:
-      return (type_id == VARCHAR || type_id == TIMESTAMP);
-    case VARCHAR:
+    case TypeId::DATE:
+      return (type_id == TypeId::DATE || type_id == TypeId::VARCHAR);
+    case TypeId::TIMESTAMP:
+      return (type_id == TypeId::VARCHAR || type_id == TypeId::TIMESTAMP);
+    case TypeId::VARCHAR:
       switch (type_id) {
-        case BOOLEAN:
-        case TINYINT:
-        case SMALLINT:
-        case INTEGER:
-        case BIGINT:
-        case DECIMAL:
-        case TIMESTAMP:
-        case VARCHAR:
+        case TypeId::BOOLEAN:
+        case TypeId::TINYINT:
+        case TypeId::SMALLINT:
+        case TypeId::INTEGER:
+        case TypeId::BIGINT:
+        case TypeId::DECIMAL:
+        case TypeId::TIMESTAMP:
+        case TypeId::VARCHAR:
           return true;
         default:
           return false;
@@ -127,25 +127,25 @@ std::string Type::ToString() const { return (TypeIdToString(type_id_)); }
 
 Value Type::GetMinValue(TypeId type_id) {
   switch (type_id) {
-    case BOOLEAN:
+    case TypeId::BOOLEAN:
       return Value(type_id, 0);
-    case TINYINT:
+    case TypeId::TINYINT:
       return Value(type_id, (int8_t)PELOTON_INT8_MIN);
-    case SMALLINT:
+    case TypeId::SMALLINT:
       return Value(type_id, (int16_t)PELOTON_INT16_MIN);
-    case INTEGER:
+    case TypeId::INTEGER:
       return Value(type_id, (int32_t)PELOTON_INT32_MIN);
-    case BIGINT:
+    case TypeId::BIGINT:
       return Value(type_id, (int64_t)PELOTON_INT64_MIN);
-    case DECIMAL:
+    case TypeId::DECIMAL:
       return Value(type_id, PELOTON_DECIMAL_MIN);
-    case TIMESTAMP:
+    case TypeId::TIMESTAMP:
       return Value(type_id, PELOTON_TIMESTAMP_MIN);
-    case DATE:
+    case TypeId::DATE:
       return Value(type_id, PELOTON_DATE_MIN);
-    case VARCHAR:
+    case TypeId::VARCHAR:
       return Value(type_id, "");
-    case VARBINARY:
+    case TypeId::VARBINARY:
       return Value(type_id, "");
     default:
       break;
@@ -155,25 +155,25 @@ Value Type::GetMinValue(TypeId type_id) {
 
 Value Type::GetMaxValue(TypeId type_id) {
   switch (type_id) {
-    case BOOLEAN:
+    case TypeId::BOOLEAN:
       return Value(type_id, 1);
-    case TINYINT:
+    case TypeId::TINYINT:
       return Value(type_id, (int8_t)PELOTON_INT8_MAX);
-    case SMALLINT:
+    case TypeId::SMALLINT:
       return Value(type_id, (int16_t)PELOTON_INT16_MAX);
-    case INTEGER:
+    case TypeId::INTEGER:
       return Value(type_id, (int32_t)PELOTON_INT32_MAX);
-    case BIGINT:
+    case TypeId::BIGINT:
       return Value(type_id, (int64_t)PELOTON_INT64_MAX);
-    case DECIMAL:
+    case TypeId::DECIMAL:
       return Value(type_id, PELOTON_DECIMAL_MAX);
-    case TIMESTAMP:
+    case TypeId::TIMESTAMP:
       return Value(type_id, PELOTON_TIMESTAMP_MAX);
-    case DATE:
+    case TypeId::DATE:
       return Value(type_id, PELOTON_DATE_MAX);
-    case VARCHAR:
+    case TypeId::VARCHAR:
       return Value(type_id, nullptr, 0, false);
-    case VARBINARY:
+    case TypeId::VARBINARY:
       return Value(type_id, nullptr, 0, false);
     default:
       break;

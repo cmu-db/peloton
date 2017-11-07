@@ -25,7 +25,6 @@ namespace optimizer {
 class AbstractOptimizer;
 }
 
-
 //===--------------------------------------------------------------------===//
 // Utils
 //===--------------------------------------------------------------------===//
@@ -73,6 +72,14 @@ class TestingSQLUtil {
   // A another simpler wrapper around ExecuteSQLQuery
   static ResultType ExecuteSQLQuery(const std::string query);
 
+  // Executes a query and compares the result with the given rows, either
+  // ordered or not
+  // The result vector has to be specified as follows:
+  // {"1|string1", "2|strin2", "3|string3"}
+  static void ExecuteSQLQueryAndCheckResult(std::string query,
+                                            std::vector<std::string> ref_result,
+                                            bool ordered = false);
+
   // Get the return value of one column as string at a given position
   // NOTE: Result columns across different rows are unfolded into a single
   // vector (vector<ResultType>).
@@ -88,11 +95,10 @@ class TestingSQLUtil {
 
   static tcop::TrafficCop traffic_cop_;
   static std::atomic_int counter_;
-//  inline static void SetTrafficCopCounter() {
-//    counter_.store(1);
-//  }
+  //  inline static void SetTrafficCopCounter() {
+  //    counter_.store(1);
+  //  }
   static void ContinueAfterComplete();
-
 };
 }  // namespace test
 }  // namespace peloton

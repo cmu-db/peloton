@@ -1,6 +1,6 @@
 This is a short document describing the preferred coding style for Peloton.
 
-**VARIABLE AND FUNCTION NAMES**: Use descriptive variable and function names. Ex: Instead of using `i`, `j` etc. use `index_itr`, `query_counter`. GLOBAL variables (to be used only if you _really_ need them) need to have descriptive names, as do global functions.  If you have a function that counts the number of active users, you should call that "count_active_users()" or similar, you should _not_ call it "cntusr()".
+**VARIABLE AND FUNCTION NAMES**: Use descriptive variable and function names. Ex: Instead of using `i`, `j` etc. use `index_itr`, `query_counter`. GLOBAL variables (to be used only if you _really_ need them) need to have descriptive names, as do global functions.  If you have a function that counts the number of active users, you should call that "CountActiveUsers()" or similar, you should _not_ call it "Cntusr()".
 
 **FORWARD DECLARATIONS** Use `forward declaration` in .h files as much as possible. Instead, include the required files only in the .cpp files. This will significantly reduce coupling and compilation times after minor changes.
 

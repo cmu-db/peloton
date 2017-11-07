@@ -57,7 +57,7 @@ TEST_F(OptimizerTests, HashJoinTest) {
   auto create_stmt = peloton_parser.BuildParseTree(
       "CREATE TABLE table_a(aid INT PRIMARY KEY,value INT);");
 
-  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(create_stmt, txn));
+  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(create_stmt, DEFAULT_DB_NAME, txn));
 
   std::vector<type::Value> params;
   std::vector<StatementResult> result;
@@ -93,7 +93,7 @@ TEST_F(OptimizerTests, HashJoinTest) {
   create_stmt = peloton_parser.BuildParseTree(
       "CREATE TABLE table_b(bid INT PRIMARY KEY,value INT);");
 
-  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(create_stmt, txn));
+  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(create_stmt, DEFAULT_DB_NAME, txn));
 
   result_format =
       std::vector<int>(statement->GetTupleDescriptor().size(), 0);
@@ -127,7 +127,7 @@ TEST_F(OptimizerTests, HashJoinTest) {
   auto insert_stmt = peloton_parser.BuildParseTree(
       "INSERT INTO table_a(aid, value) VALUES (1, 1);");
 
-  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(insert_stmt, txn));
+  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(insert_stmt, DEFAULT_DB_NAME, txn));
 
   result_format =
       std::vector<int>(statement->GetTupleDescriptor().size(), 0);
@@ -156,7 +156,7 @@ TEST_F(OptimizerTests, HashJoinTest) {
   insert_stmt = peloton_parser.BuildParseTree(
       "INSERT INTO table_b(bid, value) VALUES (1, 2);");
 
-  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(insert_stmt, txn));
+  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(insert_stmt, DEFAULT_DB_NAME, txn));
 
   result_format =
       std::vector<int>(statement->GetTupleDescriptor().size(), 0);
@@ -184,7 +184,7 @@ TEST_F(OptimizerTests, HashJoinTest) {
   auto select_stmt = peloton_parser.BuildParseTree(
       "SELECT * FROM table_a INNER JOIN table_b ON aid = bid;");
 
-  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(select_stmt, txn));
+  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(select_stmt, DEFAULT_DB_NAME, txn));
 
   result_format = std::vector<int>(4, 0);
   TestingSQLUtil::counter_.store(1);

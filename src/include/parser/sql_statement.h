@@ -51,7 +51,7 @@ class SQLStatement : public Printable {
   // Visitor Pattern used for the optimizer to access statements
   // This allows a facility outside the object itself to determine the type of
   // class using the built-in type system.
-  virtual void Accept(SqlNodeVisitor* v) const = 0;
+  virtual void Accept(SqlNodeVisitor* v) = 0;
 
  private:
   StatementType stmt_type;
@@ -63,15 +63,16 @@ class TableRefStatement : public SQLStatement {
 
   virtual ~TableRefStatement() {}
 
+  virtual inline void TryBindDatabaseName(std::string default_database_name) {
+    table_info_->database_name = default_database_name;
+  }
+  
   virtual inline std::string GetTableName() const {
     return table_info_->table_name;
   }
 
   // Get the name of the database of this table
   virtual inline std::string GetDatabaseName() const {
-    if (table_info_->database_name.empty()) {
-      return DEFAULT_DB_NAME;
-    }
     return table_info_->database_name;
   }
 
