@@ -10,9 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "optimizer/stats/column_stats.h"
 #include "optimizer/stats/table_stats.h"
 #include "common/logger.h"
+#include "optimizer/stats/column_stats.h"
 
 namespace peloton {
 namespace optimizer {
