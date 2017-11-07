@@ -20,6 +20,7 @@ class ArtIndex : public Index {
 public:
   ArtIndex();
   ArtIndex(IndexMetadata *metadata);
+  ArtIndex(IndexMetadata *metadata, Tree::LoadKeyFunction loadKeyForTest);
   ~ArtIndex();
 
 

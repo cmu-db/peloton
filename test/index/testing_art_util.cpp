@@ -32,6 +32,17 @@
 namespace peloton {
 namespace test {
 
+bool TestingArtUtil::map_populated = false;
+std::map<index::TID, index::Key> TestingArtUtil::value_to_key;
+
+void loadKeyForTest(index::TID tid, index::Key &key, UNUSED_ATTRIBUTE index::IndexMetadata *metadata) {
+  if (TestingArtUtil::value_to_key.find(tid) != TestingArtUtil::value_to_key.end()) {
+    key.setKeyLen(TestingArtUtil::value_to_key.at(tid).getKeyLen());
+    key.set((const char *)TestingArtUtil::value_to_key.at(tid).data, key.getKeyLen());
+  }
+  key = 0;
+}
+
 void TestingArtUtil::BasicTest(UNUSED_ATTRIBUTE const IndexType index_type) {
   // the index created in this table is ART index
   std::unique_ptr<storage::DataTable> table(CreateTable(5));
@@ -146,6 +157,23 @@ void TestingArtUtil::NonUniqueKeyDeleteTest(UNUSED_ATTRIBUTE const IndexType ind
 }
 
 void TestingArtUtil::MultiThreadedInsertTest(UNUSED_ATTRIBUTE const IndexType index_type) {
+  if (!map_populated) {
+    PopulateMap();
+  }
+  catalog::Schema *tuple_schema = new catalog::Schema(
+    {TestingExecutorUtil::GetColumnInfo(0), TestingExecutorUtil::GetColumnInfo(1),
+     TestingExecutorUtil::GetColumnInfo(2), TestingExecutorUtil::GetColumnInfo(3)});
+  std::vector<oid_t> key_attrs = {0};
+  catalog::Schema *key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+
+  bool unique = true;
+  index::IndexMetadata *index_metadata = new index::IndexMetadata(
+    "primary_btree_index", 123, INVALID_OID, INVALID_OID, IndexType::ART,
+    IndexConstraintType::DEFAULT, tuple_schema, key_schema, key_attrs,
+    unique);
+
+  index::ArtIndex artindex(index_metadata, loadKeyForTest);
+
   // the index created in this table is ART index
   storage::DataTable *table = CreateTable(5);
   std::vector<storage::Tuple *> keys;
@@ -283,6 +311,8 @@ storage::DataTable *TestingArtUtil::CreateTable(
       IndexConstraintType::DEFAULT, tuple_schema, key_schema, key_attrs,
       unique);
 
+//    index::ArtIndex dbg(index_metadata, loadKeyForTest);
+
     std::shared_ptr<index::Index> pkey_index(
       index::IndexFactory::GetIndex(index_metadata));
 
@@ -310,7 +340,9 @@ storage::DataTable *TestingArtUtil::CreateTable(
   return table;
 }
 
+void TestingArtUtil::PopulateMap() {
 
+}
 
 void TestingArtUtil::InsertHelper(storage::DataTable *table,
                                   type::AbstractPool *testing_pool, size_t scale_factor, int num_rows,

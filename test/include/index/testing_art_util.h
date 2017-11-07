@@ -18,6 +18,10 @@
 #include "type/types.h"
 #include "concurrency/transaction.h"
 #include "storage/data_table.h"
+#include "index/art_index.h"
+#include "index/art.h"
+#include "index/index.h"
+#include <map>
 
 namespace peloton {
 namespace test {
@@ -72,6 +76,11 @@ public:
   static void DeleteHelper(storage::DataTable *table, int num_rows,
                            std::vector<storage::Tuple *> keys, std::vector<ItemPointer *> expected_values,
                            UNUSED_ATTRIBUTE uint64_t thread_itr);
+
+  static std::map<index::TID, index::Key> value_to_key;
+  static bool map_populated;
+
+  static void PopulateMap();
 };
 
 

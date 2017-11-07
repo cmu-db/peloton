@@ -228,6 +228,12 @@ ArtIndex::ArtIndex(IndexMetadata *metadata)
   return;
 }
 
+ArtIndex::ArtIndex(IndexMetadata *metadata, Tree::LoadKeyFunction loadKeyForTest)
+  :
+  Index{metadata}, artTree(loadKeyForTest) {
+  printf("yoo Art Index is created for testing\n");
+}
+
 ArtIndex::~ArtIndex() {}
 
 
