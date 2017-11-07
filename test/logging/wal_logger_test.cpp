@@ -33,9 +33,7 @@ TEST_F(WalLoggerTests, LogWrittenTest) {
   rs.push_back(r);
   logger->WriteTransaction(rs);
   delete logger;
-  //log_manager.Reset();
-
-  EXPECT_TRUE(FileUtil::Exists("/tmp/log/log_1_0"));
+  EXPECT_TRUE(FileUtil::Exists("/tmp/log_1_0"));
 
 }
 
