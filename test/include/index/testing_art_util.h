@@ -70,6 +70,9 @@ public:
                            std::vector<storage::Tuple *> *keys, std::vector<ItemPointer *> *expected_values,
                            UNUSED_ATTRIBUTE uint64_t thread_itr);
 
+  static void InsertHelperMicroBench(index::ArtIndex *index, size_t scale_factor,
+                                     int num_rows, UNUSED_ATTRIBUTE uint64_t thread_itr);
+
   /**
    * Delete helper function
    */
@@ -77,10 +80,15 @@ public:
                            std::vector<storage::Tuple *> keys, std::vector<ItemPointer *> expected_values,
                            UNUSED_ATTRIBUTE uint64_t thread_itr);
 
-  static std::map<index::TID, index::Key> value_to_key;
+  struct KeyAndValues {
+    std::array<uint64_t, 16> values;
+    index::Key key;
+  };
+  static std::array<KeyAndValues, 10000> key_to_values;
+  static std::map<index::TID, index::Key *> value_to_key;
   static bool map_populated;
 
-  static void PopulateMap();
+  static void PopulateMap(index::Index &index);
 };
 
 

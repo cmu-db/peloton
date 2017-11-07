@@ -278,26 +278,12 @@ inline Epoche::~Epoche() {
       oldestEpoche = e;
     }
   }
-//  for (auto &d : deletionLists) {
-//    LabelDelete *cur = d.head(), *next, *prev = nullptr;
-//    while (cur != nullptr) {
-//      next = cur->next;
-//
-//      assert(cur->epoche < oldestEpoche);
-//      for (std::size_t i = 0; i < cur->nodesCount; ++i) {
-//        operator delete(cur->nodes[i]);
-//      }
-//      d.remove(cur, prev);
-//      cur = next;
-//    }
-//  }
   for (size_t i = 0; i < thread_info_counter; i++) {
     auto &d = (thread_info_list + i)->threadInfo.getDeletionList();
     LabelDelete *cur = d.head(), *next, *prev = nullptr;
     while (cur != nullptr) {
       next = cur->next;
-
-      assert(cur->epoche < oldestEpoche);
+      assert(cur->epoche <= oldestEpoche);
       for (std::size_t i = 0; i < cur->nodesCount; ++i) {
         operator delete(cur->nodes[i]);
       }

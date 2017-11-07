@@ -28,17 +28,24 @@
 #include "concurrency/transaction_manager_factory.h"
 
 #include "executor/testing_executor_util.h"
+#include "common/timer.h"
+#include <chrono>
+#include <thread>
 
 namespace peloton {
 namespace test {
 
 bool TestingArtUtil::map_populated = false;
-std::map<index::TID, index::Key> TestingArtUtil::value_to_key;
+std::map<index::TID, index::Key *> TestingArtUtil::value_to_key;
+std::array<TestingArtUtil::KeyAndValues, 10000> TestingArtUtil::key_to_values;
 
 void loadKeyForTest(index::TID tid, index::Key &key, UNUSED_ATTRIBUTE index::IndexMetadata *metadata) {
-  if (TestingArtUtil::value_to_key.find(tid) != TestingArtUtil::value_to_key.end()) {
-    key.setKeyLen(TestingArtUtil::value_to_key.at(tid).getKeyLen());
-    key.set((const char *)TestingArtUtil::value_to_key.at(tid).data, key.getKeyLen());
+  index::MultiValues *value_list = reinterpret_cast<index::MultiValues *>(tid);
+  if (TestingArtUtil::value_to_key.find(value_list->tid) != TestingArtUtil::value_to_key.end()) {
+    index::Key *key_p = TestingArtUtil::value_to_key.at(value_list->tid);
+    key.setKeyLen(key_p->getKeyLen());
+    key.set((const char *)(key_p->data), key.getKeyLen());
+    return;
   }
   key = 0;
 }
@@ -157,9 +164,7 @@ void TestingArtUtil::NonUniqueKeyDeleteTest(UNUSED_ATTRIBUTE const IndexType ind
 }
 
 void TestingArtUtil::MultiThreadedInsertTest(UNUSED_ATTRIBUTE const IndexType index_type) {
-  if (!map_populated) {
-    PopulateMap();
-  }
+
   catalog::Schema *tuple_schema = new catalog::Schema(
     {TestingExecutorUtil::GetColumnInfo(0), TestingExecutorUtil::GetColumnInfo(1),
      TestingExecutorUtil::GetColumnInfo(2), TestingExecutorUtil::GetColumnInfo(3)});
@@ -174,26 +179,34 @@ void TestingArtUtil::MultiThreadedInsertTest(UNUSED_ATTRIBUTE const IndexType in
 
   index::ArtIndex artindex(index_metadata, loadKeyForTest);
 
-  // the index created in this table is ART index
-  storage::DataTable *table = CreateTable(5);
-  std::vector<storage::Tuple *> keys;
-  std::vector<ItemPointer *> expected_values;
-  auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
-  bool random = false;
-  int num_rows = 7;
-
-  size_t scale_factor = 5;
-  LaunchParallelTest(4, TestingArtUtil::InsertHelper, table, testing_pool,
-                     scale_factor, num_rows, random, &keys, &expected_values);
-  auto index = table->GetIndex(1);
-  std::vector<ItemPointer *> result;
-  index->ScanAllKeys(result);
-  EXPECT_EQ(140, result.size());
-  for (uint32_t i = 0; i < keys.size(); i++) {
-    result.clear();
-    index->ScanKey(keys[i], result);
-    EXPECT_EQ(4, result.size());
+  if (!map_populated) {
+    PopulateMap(artindex);
   }
+
+  int num_rows = 10000;
+
+  size_t scale_factor = 1;
+  Timer<> timer;
+  timer.Start();
+  LaunchParallelTest(16, TestingArtUtil::InsertHelperMicroBench, &artindex, scale_factor, num_rows);
+  timer.Stop();
+  printf("elapsed time = %.5lf\n", timer.GetDuration());
+
+
+  std::vector<ItemPointer *> result;
+  artindex.ScanAllKeys(result);
+  printf("Size = %lu\n", result.size());
+
+//
+//  // wait for all the EpochGuard to deconstruct
+//  std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+
+//  EXPECT_EQ(140, result.size());
+//  for (uint32_t i = 0; i < keys.size(); i++) {
+//    result.clear();
+//    index->ScanKey(keys[i], result);
+//    EXPECT_EQ(4, result.size());
+//  }
 }
 
 void TestingArtUtil::NonUniqueKeyMultiThreadedStressTest(UNUSED_ATTRIBUTE const IndexType index_type) {
@@ -340,8 +353,78 @@ storage::DataTable *TestingArtUtil::CreateTable(
   return table;
 }
 
-void TestingArtUtil::PopulateMap() {
+void TestingArtUtil::PopulateMap(UNUSED_ATTRIBUTE index::Index &index) {
+//  auto key_schema = index.GetKeySchema();
 
+  // Random values
+  std::srand(std::time(nullptr));
+  std::unordered_set<uint64_t> values_set;
+//  auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
+
+  for (int i = 0; i < 10000; i++) {
+    // create the key
+    int populate_value = i;
+
+    auto v0 = type::ValueFactory::GetIntegerValue(
+      TestingExecutorUtil::PopulatedValue(populate_value, 0));
+
+    auto v1 = type::ValueFactory::GetIntegerValue(
+      TestingExecutorUtil::PopulatedValue(std::rand() % (10000 / 3), 1));
+
+    char *c = new char[8];
+    index::ArtIndex::WriteValueInBytes(v0, c, 0, 4);
+    index::ArtIndex::WriteValueInBytes(v1, c, 4, 4);
+
+//    storage::Tuple *key = new storage::Tuple(key_schema, true);
+//    key->SetValue(0, v0, testing_pool);
+//    key->SetValue(1, v1, testing_pool);
+
+    index::Key index_key;
+//    index::ArtIndex::WriteIndexedAttributesInKey(key, index_key);
+    index_key.setKeyLen(8);
+    index_key.set(c, 8);
+
+    key_to_values[i].key.setKeyLen(index_key.getKeyLen());
+    key_to_values[i].key.set((const char *)index_key.data, index_key.getKeyLen());
+
+    // generate 16 random values
+    for (int j = 0; j < 16; j++) {
+      uint64_t new_value = ((uint64_t)(std::rand()) << 30) + ((uint64_t)(std::rand()) << 15) + (uint64_t)(std::rand());
+      while (values_set.find(new_value) != values_set.end()) {
+        new_value = ((uint64_t)(std::rand()) << 30) + ((uint64_t)(std::rand()) << 15) + (uint64_t)(std::rand());
+      }
+      values_set.insert(new_value);
+
+      key_to_values[i].values[j] = new_value;
+//      value_to_key.insert(std::pair<index::TID, index::Key>((index::TID)new_value, index_key));
+      value_to_key[(index::TID)new_value] = &(key_to_values[i].key);
+    }
+
+
+  }
+
+  map_populated = true;
+
+
+//  // debug
+//  for (int i = 0; i < 10; i++) {
+//    printf("key = ");
+//    for (unsigned int j = 0; j < key_to_values[i].key.getKeyLen(); j++) {
+//      printf("%d ", key_to_values[i].key[j]);
+//    }
+//    printf("\nValues:\n");
+//    for (int j = 0; j < 16; j++) {
+//      printf("%llu ", key_to_values[i].values[j]);
+//      printf("recovered key = ");
+//      index::Key *key_p = value_to_key[key_to_values[i].values[j]];
+//      for (unsigned int k = 0; k < key_p->getKeyLen(); k++) {
+//        printf("%d ", (*key_p)[k]);
+//      }
+//      printf("\n");
+//    }
+//
+//  }
+//  // end of debug
 }
 
 void TestingArtUtil::InsertHelper(storage::DataTable *table,
@@ -405,6 +488,18 @@ void TestingArtUtil::InsertHelper(storage::DataTable *table,
     }
   }
   txn_manager.CommitTransaction(txn);
+}
+
+void TestingArtUtil::InsertHelperMicroBench(index::ArtIndex *index, size_t scale_factor,
+                                            int num_rows, UNUSED_ATTRIBUTE uint64_t thread_itr) {
+  // Loop based on scale factor
+  for (size_t scale_itr = 1; scale_itr <= scale_factor; scale_itr++) {
+    for (int rowid = 0; rowid < num_rows; rowid++) {
+      auto &t = (index->artTree).getThreadInfo();
+      bool insertSuccess = false;
+      (index->artTree).insert(key_to_values[rowid].key, key_to_values[rowid].values[thread_itr], t, insertSuccess);
+    }
+  }
 }
 
 void TestingArtUtil::DeleteHelper(storage::DataTable *table, UNUSED_ATTRIBUTE int num_rows,

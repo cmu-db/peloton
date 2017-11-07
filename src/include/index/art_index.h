@@ -82,7 +82,7 @@ public:
 
   static void WriteIndexedAttributesInKey(const storage::Tuple *tuple, Key& index_key);
 
-protected:
+public:
   int KeyType;
 
   Tree artTree;
