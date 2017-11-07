@@ -1057,12 +1057,12 @@ bool PostgresProtocolHandler::ProcessInitialPacket(InputPacket *pkt, Client clie
 
   // TODO: consider more about return value
   if (proto_version == SSL_MESSAGE_VERNO) {
-    LOG_TRACE("process SSL MESSAGE");
+    LOG_INFO("process SSL MESSAGE");
     ssl_sent = true;
     return ProcessSSLRequestPacket(pkt);
   }
   else {
-    LOG_TRACE("process startup packet");
+    LOG_INFO("process startup packet");
     return ProcessStartupPacket(pkt, proto_version, client, finish_startup_packet);
   }
 }
@@ -1074,6 +1074,11 @@ bool PostgresProtocolHandler::ProcessSSLRequestPacket(InputPacket *pkt) {
   if (peloton::settings::SettingsManager::GetBool(
       peloton::settings::SettingId::ssl)) {
     response->msg_type = NetworkMessageType::SSL_YES;
+//    PacketPutByte(response.get(), static_cast<unsigned char>(NetworkMessageType::READY_FOR_QUERY));
+//    PacketPutByte(response.get(), static_cast<unsigned char>(NetworkMessageType::READY_FOR_QUERY));
+//    PacketPutByte(response.get(), static_cast<unsigned char>(NetworkMessageType::READY_FOR_QUERY));
+//    PacketPutByte(response.get(), static_cast<unsigned char>(NetworkMessageType::READY_FOR_QUERY));
+//    PacketPutByte(response.get(), static_cast<unsigned char>(NetworkMessageType::READY_FOR_QUERY));
     LOG_INFO("SSL support");
   } else {
     response->msg_type = NetworkMessageType::SSL_NO;
@@ -1119,6 +1124,7 @@ bool PostgresProtocolHandler::ProcessStartupPacket(InputPacket* pkt, int32_t pro
   }
   finished_startup_packet = true;
 
+  // Send AuthRequestOK to client (skip client authentication)
   SendInitialResponse();
 
   return true;
