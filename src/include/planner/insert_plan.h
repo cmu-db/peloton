@@ -6,7 +6,7 @@
 //
 // Identification: src/include/planner/insert_plan.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -30,12 +30,11 @@ class InsertStatement;
 namespace planner {
 class InsertPlan : public AbstractPlan {
  public:
-  // This constructor takes in neither a project info nor a tuple
-  // It must be used when the input is a logical tile
+  // Construct when input is a logical tile - WARNING Not supported by codegen
   InsertPlan(storage::DataTable *table, oid_t bulk_insert_count = 1)
     : target_table_(table), bulk_insert_count_(bulk_insert_count) {}
 
-  // This constructor takes in a project info
+  // Construct with a project info
   InsertPlan(storage::DataTable *table,
              std::unique_ptr<const planner::ProjectInfo> &&project_info,
              oid_t bulk_insert_count = 1)
@@ -44,7 +43,7 @@ class InsertPlan : public AbstractPlan {
     LOG_TRACE("Creating an Insert Plan with a projection");
   }
 
-  // This constructor takes in a tuple
+  // Construct with a tuple - WARNING Not supported by codegen
   InsertPlan(storage::DataTable *table,
              std::unique_ptr<storage::Tuple> &&tuple,
              oid_t bulk_insert_count = 1)
@@ -53,11 +52,12 @@ class InsertPlan : public AbstractPlan {
     tuples_.push_back(std::move(tuple));
   }
 
+  // Construct with specific values - WARNING Not supported by the interpreter
   InsertPlan(storage::DataTable *table, const std::vector<std::string> *columns,
              const std::vector<std::vector<std::unique_ptr<
                  expression::AbstractExpression>>> *insert_values);
 
-  // Get a varlen pool (will construct the pool only if needed)
+  // Get a varlen pool - will construct the pool only if needed
   type::AbstractPool *GetPlanPool();
 
   inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::INSERT; }
@@ -81,8 +81,9 @@ class InsertPlan : public AbstractPlan {
 
   const std::string GetInfo() const { return "InsertPlan"; }
 
+  // WARNING - Not Implemented
   std::unique_ptr<AbstractPlan> Copy() const {
-    // TODO: Add copying mechanism
+    LOG_INFO("InsertPlan Copy() not implemented");
     std::unique_ptr<AbstractPlan> dummy;
     return dummy;
   }

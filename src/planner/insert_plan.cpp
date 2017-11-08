@@ -45,8 +45,10 @@ InsertPlan::InsertPlan(storage::DataTable *table,
         if (exp == nullptr) {
           type::Value *v = schema->GetDefaultValue(column_id);
           if (v == nullptr)
-            throw ConstraintException("No DEFAULT constraint !");
-          tuple->SetValue(column_id, std::move(*v), nullptr);
+            tuple->SetValue(column_id, type::ValueFactory::GetNullValueByType(
+                schema->GetColumn(column_id).GetType()), nullptr);
+          else
+            tuple->SetValue(column_id, *v, nullptr);
         } else if (exp->GetExpressionType() ==
                    ExpressionType::VALUE_PARAMETER) {
           std::tuple<oid_t, oid_t, oid_t> pair =
@@ -55,6 +57,7 @@ InsertPlan::InsertPlan(storage::DataTable *table,
           params_value_type_->push_back(
               schema->GetColumn(column_id).GetType());
         } else {
+          PL_ASSERT(exp->GetExpressionType() == ExpressionType::VALUE_CONSTANT);
           auto *const_exp =
               dynamic_cast<expression::ConstantValueExpression *>(exp.get());
           type::Value value = const_exp->GetValue();
@@ -115,8 +118,12 @@ InsertPlan::InsertPlan(storage::DataTable *table,
           if (std::find_if(columns->begin(), columns->end(),
                   [&col](const std::string &x) { return col.GetName() == x; })
               == columns->end()) {
-            tuple->SetValue(column_id,
-                type::ValueFactory::GetNullValueByType(col.GetType()), nullptr);
+            type::Value *v = schema->GetDefaultValue(column_id);
+            if (v == nullptr)
+              tuple->SetValue(column_id, type::ValueFactory::GetNullValueByType(
+                  col.GetType()), nullptr);
+            else
+              tuple->SetValue(column_id, *v, nullptr);
           }
         }
       }
