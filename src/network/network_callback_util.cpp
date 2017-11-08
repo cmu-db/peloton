@@ -19,7 +19,8 @@ namespace network {
 class NetworkManager;
 
 void CallbackUtil::WorkerHandleNewConn(evutil_socket_t new_conn_recv_fd,
-                         UNUSED_ATTRIBUTE short ev_flags, void *arg) {
+                                       UNUSED_ATTRIBUTE short ev_flags,
+                                       void *arg) {
   // buffer used to receive messages from the main thread
   char m_buf[1];
   std::shared_ptr<NewConnQueueItem> item;
@@ -44,9 +45,9 @@ void CallbackUtil::WorkerHandleNewConn(evutil_socket_t new_conn_recv_fd,
       if (conn == nullptr) {
         LOG_TRACE("Creating new socket fd:%d", item->new_conn_fd);
         /* create a new connection object */
-        NetworkManager::CreateNewConnection(item->new_conn_fd, item->event_flags,
-                                            static_cast<NetworkThread *>(thread),
-                                            ConnState::CONN_READ);
+        NetworkManager::CreateNewConnection(
+            item->new_conn_fd, item->event_flags,
+            static_cast<NetworkThread *>(thread), ConnState::CONN_READ);
       } else {
         LOG_TRACE("Reusing socket fd:%d", item->new_conn_fd);
         /* otherwise reset and reuse the existing conn object */
@@ -72,8 +73,7 @@ void CallbackUtil::EventHandler(UNUSED_ATTRIBUTE evutil_socket_t connfd,
   }
 
 #ifdef LOG_DEBUG_ENABLED
-  if (ev_flags == EV_READ)
-    assert(connfd == conn->sock_fd);
+  if (ev_flags == EV_READ) assert(connfd == conn->sock_fd);
 #endif
   NetworkConnection::StateMachine(conn);
 }
@@ -82,16 +82,15 @@ void CallbackUtil::EventHandler(UNUSED_ATTRIBUTE evutil_socket_t connfd,
  * Stop signal handling
  */
 void CallbackUtil::Signal_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
-                                      UNUSED_ATTRIBUTE short what, void *arg) {
+                                   UNUSED_ATTRIBUTE short what, void *arg) {
   struct event_base *base = (event_base *)arg;
   LOG_TRACE("stop");
   event_base_loopexit(base, NULL);
 }
 
-void CallbackUtil::ServerControl_Callback(UNUSED_ATTRIBUTE evutil_socket_t
-                                                 fd,
-                                             UNUSED_ATTRIBUTE short what,
-                                             void *arg) {
+void CallbackUtil::ServerControl_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
+                                          UNUSED_ATTRIBUTE short what,
+                                          void *arg) {
   NetworkManager *server = (NetworkManager *)arg;
   if (server->GetIsStarted() == false) {
     server->SetIsStarted(true);
@@ -103,10 +102,9 @@ void CallbackUtil::ServerControl_Callback(UNUSED_ATTRIBUTE evutil_socket_t
   LOG_TRACE("Closing server::exiting event loop -- Done");
 }
 
-void CallbackUtil::ThreadControl_Callback(UNUSED_ATTRIBUTE evutil_socket_t
-                                                 fd,
-                                             UNUSED_ATTRIBUTE short what,
-                                             void *arg) {
+void CallbackUtil::ThreadControl_Callback(UNUSED_ATTRIBUTE evutil_socket_t fd,
+                                          UNUSED_ATTRIBUTE short what,
+                                          void *arg) {
   NetworkWorkerThread *thread = static_cast<NetworkWorkerThread *>(arg);
   if (!thread->GetThreadIsStarted()) {
     thread->SetThreadIsStarted(true);

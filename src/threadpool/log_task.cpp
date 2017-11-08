@@ -23,18 +23,19 @@ void LogTask::ExecuteTask() {
 }
 
 // Current thread would be blocked until the call back function finishes.
-void LogTaskQueue::EnqueueTask(void(*task_ptr)(void*), void* task_arg, void(*task_callback_ptr)(void*), void* task_callback_arg){
-  std::shared_ptr<LogTask> task = std::make_shared<LogTask>(task_ptr, task_arg, task_callback_ptr, task_callback_arg);
+void LogTaskQueue::EnqueueTask(void (*task_ptr)(void*), void* task_arg,
+                               void (*task_callback_ptr)(void*),
+                               void* task_callback_arg) {
+  std::shared_ptr<LogTask> task = std::make_shared<LogTask>(
+      task_ptr, task_arg, task_callback_ptr, task_callback_arg);
   task_queue_.Enqueue(task);
 }
 
-bool LogTaskQueue::PollTask(std::shared_ptr<LogTask> &task) {
+bool LogTaskQueue::PollTask(std::shared_ptr<LogTask>& task) {
   return task_queue_.Dequeue(task);
 }
 
-bool LogTaskQueue::IsEmpty() {
-  return task_queue_.IsEmpty();
-}
+bool LogTaskQueue::IsEmpty() { return task_queue_.IsEmpty(); }
 
-} // namespace threadpool
-} // namespace peloton
+}  // namespace threadpool
+}  // namespace peloton

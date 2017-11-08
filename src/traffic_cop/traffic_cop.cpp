@@ -91,12 +91,11 @@ ResultType TrafficCop::BeginQueryHelper(size_t thread_id) {
   return ResultType::SUCCESS;
 }
 
-
-//Pass the log manager to commit transaction
-ResultType TrafficCop::CommitQueryHelper(logging::WalLogManager* log_manager) {
+// Pass the log manager to commit transaction
+ResultType TrafficCop::CommitQueryHelper(logging::WalLogManager *log_manager) {
   // do nothing if we have no active txns
-  if (tcop_txn_state_.empty()){
-      return ResultType::NOOP;
+  if (tcop_txn_state_.empty()) {
+    return ResultType::NOOP;
   }
   auto &curr_state = tcop_txn_state_.top();
   tcop_txn_state_.pop();
@@ -186,46 +185,47 @@ executor::ExecutionResult TrafficCop::ExecuteHelper(
   return p_status_;
 }
 
-//Pass log manager to CommitTransaction
-void TrafficCop::ExecuteStatementPlanGetResult(logging::WalLogManager* log_manager) {
+// Pass log manager to CommitTransaction
+void TrafficCop::ExecuteStatementPlanGetResult(
+    logging::WalLogManager *log_manager) {
   bool init_failure = false;
   if (p_status_.m_result == ResultType::FAILURE) {
     // only possible if init failed
     init_failure = true;
   }
-  //If there is a single commit statement,
-  //the transaction has been killed when GetResult is called again.
-  if(GetCurrentTxnState().first != nullptr){
-  auto txn_result = GetCurrentTxnState().first->GetResult();
+  // If there is a single commit statement,
+  // the transaction has been killed when GetResult is called again.
+  if (GetCurrentTxnState().first != nullptr) {
+    auto txn_result = GetCurrentTxnState().first->GetResult();
   if (is_single_statement_txn_ || init_failure ||
-      txn_result == ResultType::FAILURE) {
-    LOG_TRACE(
-        "About to commit: single stmt: %d, init_failure: %d, txn_result: %s",
+        txn_result == ResultType::FAILURE) {
+      LOG_TRACE(
+          "About to commit: single stmt: %d, init_failure: %d, txn_result: %s",
         is_single_statement_txn_, init_failure,
-        ResultTypeToString(txn_result).c_str());
-    switch (txn_result) {
-      case ResultType::SUCCESS:
-        // Commit single statement
-        LOG_TRACE("Commit Transaction");
-        p_status_.m_result = CommitQueryHelper(log_manager);
-        break;
+          ResultTypeToString(txn_result).c_str());
+      switch (txn_result) {
+        case ResultType::SUCCESS:
+          // Commit single statement
+          LOG_TRACE("Commit Transaction");
+          p_status_.m_result = CommitQueryHelper(log_manager);
+          break;
 
-      case ResultType::FAILURE:
-      default:
-        // Abort
-        LOG_TRACE("Abort Transaction");
+        case ResultType::FAILURE:
+        default:
+          // Abort
+          LOG_TRACE("Abort Transaction");
         if (is_single_statement_txn_) {
-          LOG_TRACE("Tcop_txn_state size: %lu", tcop_txn_state_.size());
-          p_status_.m_result = AbortQueryHelper();
-        } else {
-          tcop_txn_state_.top().second = ResultType::ABORTED;
-          p_status_.m_result = ResultType::ABORTED;
-        }
+            LOG_TRACE("Tcop_txn_state size: %lu", tcop_txn_state_.size());
+            p_status_.m_result = AbortQueryHelper();
+          } else {
+            tcop_txn_state_.top().second = ResultType::ABORTED;
+            p_status_.m_result = ResultType::ABORTED;
+          }
+      }
     }
-  }
   } else {
-      //COMMIT; statement
-      p_status_.m_result = ResultType::QUEUING;
+    // COMMIT; statement
+    p_status_.m_result = ResultType::QUEUING;
   }
 }
 

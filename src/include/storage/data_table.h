@@ -157,12 +157,11 @@ class DataTable : public AbstractTable {
 
   int GetTriggerNumber();
 
-  trigger::Trigger* GetTriggerByIndex(int n);
+  trigger::Trigger *GetTriggerByIndex(int n);
 
-  trigger::TriggerList* GetTriggerList();
+  trigger::TriggerList *GetTriggerList();
 
   void UpdateTriggerListFromCatalog(concurrency::TransactionContext *txn);
-
 
   //===--------------------------------------------------------------------===//
   // INDEX
@@ -304,8 +303,8 @@ class DataTable : public AbstractTable {
   //===--------------------------------------------------------------------===//
 
   bool CheckNotNulls(const AbstractTuple *tuple, oid_t column_idx) const;
-//  bool MultiCheckNotNulls(const storage::Tuple *tuple,
-//                          std::vector<oid_t> cols) const;
+  //  bool MultiCheckNotNulls(const storage::Tuple *tuple,
+  //                          std::vector<oid_t> cols) const;
 
   // bool CheckExp(const storage::Tuple *tuple, oid_t column_idx,
   //              std::pair<ExpressionType, type::Value> exp) const;
@@ -314,7 +313,6 @@ class DataTable : public AbstractTable {
   // bool CheckExp(const storage::Tuple *tuple, oid_t column_idx) const;
 
   bool CheckConstraints(const AbstractTuple *tuple) const;
-
 
   // add a tile group to the table. replace the active_tile_group_id-th active
   // tile group.

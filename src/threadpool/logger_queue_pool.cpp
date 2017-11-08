@@ -15,17 +15,18 @@
 namespace peloton {
 namespace threadpool {
 
-LoggerQueuePool::~LoggerQueuePool() {
-  logger_pool_.Shutdown();
-}
+LoggerQueuePool::~LoggerQueuePool() { logger_pool_.Shutdown(); }
 
-void LoggerQueuePool::SubmitTask(void(*task_ptr)(void *), void* task_arg, void(*task_callback_ptr)(void*), void* task_callback_arg) {
-  task_queue_.EnqueueTask(task_ptr, task_arg, task_callback_ptr, task_callback_arg);
+void LoggerQueuePool::SubmitTask(void (*task_ptr)(void*), void* task_arg,
+                                 void (*task_callback_ptr)(void*),
+                                 void* task_callback_arg) {
+  task_queue_.EnqueueTask(task_ptr, task_arg, task_callback_ptr,
+                          task_callback_arg);
 }
 
 LoggerQueuePool& LoggerQueuePool::GetInstance() {
   static LoggerQueuePool logger_queue_pool;
   return logger_queue_pool;
 }
-} // namespace threadpool
-} // namespace peloton
+}  // namespace threadpool
+}  // namespace peloton

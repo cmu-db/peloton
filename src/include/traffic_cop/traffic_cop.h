@@ -65,16 +65,18 @@ class TrafficCop {
       const std::vector<type::Value> &params, bool unnamed,
       std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
       const std::vector<int> &result_format, std::vector<ResultValue> &result,
-      std::string &error_message, size_t thread_id = 0);
-      std::string &error_message, logging::WalLogManager* log_manager, const size_t thread_id = 0);
+      std::string &error_message, logging::WalLogManager *log_manager,
+      const size_t thread_id = 0);
   ResultType ExecuteStatement(
       const std::shared_ptr<Statement> &statement,
       const std::vector<type::Value> &params, const bool unnamed,
       std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
       const std::vector<int> &result_format,
       std::vector<StatementResult> &result, int &rows_change,
-      std::string &error_message, const size_t thread_id = 0){
-      return ExecuteStatement(statement,params, unnamed, param_stats, result_format, result, rows_change, error_message, nullptr, thread_id);
+      std::string &error_message, const size_t thread_id = 0) {
+    return ExecuteStatement(statement, params, unnamed, param_stats,
+                            result_format, result, rows_change, error_message,
+                            nullptr, thread_id);
   }
 
   // Helper to handle txn-specifics for the plan-tree of a statement.
@@ -99,16 +101,14 @@ class TrafficCop {
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
 
-  ResultType CommitQueryHelper(logging::WalLogManager* log_manager);
+  ResultType CommitQueryHelper(logging::WalLogManager *log_manager);
 
-  void ExecuteStatementPlanGetResult(logging::WalLogManager* log_manager);
+  void ExecuteStatementPlanGetResult(logging::WalLogManager *log_manager);
 
   ResultType ExecuteStatementGetResult();
-  ResultType CommitQueryHelper(){
-    return CommitQueryHelper(nullptr);
-  }
+  ResultType CommitQueryHelper() { return CommitQueryHelper(nullptr); }
 
-  void ExecuteStatementPlanGetResult(){
+  void ExecuteStatementPlanGetResult() {
     ExecuteStatementPlanGetResult(nullptr);
   }
 

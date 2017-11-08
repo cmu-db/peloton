@@ -29,13 +29,12 @@ TEST_F(WalLoggerTests, LogWrittenTest) {
   catalog::Catalog::GetInstance();
 
   std::vector<logging::LogRecord> rs;
-  logging::LogRecord r = logging::LogRecordFactory::CreateTupleRecord(LogRecordType::TUPLE_INSERT,ItemPointer(2,5),1,1);
+  logging::LogRecord r = logging::LogRecordFactory::CreateTupleRecord(
+      LogRecordType::TUPLE_INSERT, ItemPointer(2, 5), 1, 1);
   rs.push_back(r);
   logger->WriteTransaction(rs);
   delete logger;
   EXPECT_TRUE(FileUtil::Exists("/tmp/log_1_0"));
-
 }
-
 }
 }

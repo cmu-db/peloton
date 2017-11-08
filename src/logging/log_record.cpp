@@ -15,7 +15,5 @@
 #include "logging/log_record.h"
 
 namespace peloton {
-namespace logging {
-
-}
+namespace logging {}
 }

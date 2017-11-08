@@ -41,39 +41,39 @@
 namespace peloton {
 namespace logging {
 
-//Gets all the records created on the txn rw set and logs them.
-void WalLogger::WriteTransaction(std::vector<LogRecord> log_records){
-LogBuffer* buf = new LogBuffer();
-for(LogRecord record : log_records){
-    CopySerializeOutput* output = WriteRecordToBuffer(record);
-    if(!buf->WriteData(output->Data(),output->Size())){
-        PersistLogBuffer(buf);
-        buf = new LogBuffer();
+// Gets all the records created on the txn rw set and logs them.
+void WalLogger::WriteTransaction(std::vector<LogRecord> log_records) {
+  LogBuffer *buf = new LogBuffer();
+  for (LogRecord record : log_records) {
+    CopySerializeOutput *output = WriteRecordToBuffer(record);
+    if (!buf->WriteData(output->Data(), output->Size())) {
+      PersistLogBuffer(buf);
+      buf = new LogBuffer();
     }
     delete output;
-}
-if(!buf->Empty()){
+  }
+  if (!buf->Empty()) {
     PersistLogBuffer(buf);
-}
+  }
 }
 
-CopySerializeOutput* WalLogger::WriteRecordToBuffer(LogRecord &record) {
+CopySerializeOutput *WalLogger::WriteRecordToBuffer(LogRecord &record) {
   // Reset the output buffer
-  CopySerializeOutput* output_buffer = new CopySerializeOutput();
+  CopySerializeOutput *output_buffer = new CopySerializeOutput();
 
   // Reserve for the frame length
   size_t start = output_buffer->Position();
   output_buffer->WriteInt(0);
 
   LogRecordType type = record.GetType();
-  output_buffer->WriteEnumInSingleByte(static_cast<std::underlying_type_t<LogRecordType>>(type));
+  output_buffer->WriteEnumInSingleByte(
+      static_cast<std::underlying_type_t<LogRecordType>>(type));
 
   output_buffer->WriteLong(record.GetEpochId());
   output_buffer->WriteLong(record.GetCommitId());
 
   switch (type) {
-    case LogRecordType::TUPLE_INSERT:
-     {
+    case LogRecordType::TUPLE_INSERT: {
       auto &manager = catalog::Manager::GetInstance();
       auto tuple_pos = record.GetItemPointer();
       auto tg = manager.GetTileGroup(tuple_pos.block).get();
@@ -86,24 +86,21 @@ CopySerializeOutput* WalLogger::WriteRecordToBuffer(LogRecord &record) {
       output_buffer->WriteLong(tuple_pos.offset);
 
       // Write the full tuple into the buffer
-      for(auto schema : tg->GetTileSchemas()){
-          for(auto column : schema.GetColumns()){
-              columns.push_back(column);
-          }
+      for (auto schema : tg->GetTileSchemas()) {
+        for (auto column : schema.GetColumns()) {
+          columns.push_back(column);
+        }
       }
 
-      ContainerTuple<storage::TileGroup> container_tuple(
-        tg, tuple_pos.offset
-      );
-      for(oid_t oid = 0; oid < columns.size(); oid++){
+      ContainerTuple<storage::TileGroup> container_tuple(tg, tuple_pos.offset);
+      for (oid_t oid = 0; oid < columns.size(); oid++) {
         auto val = container_tuple.GetValue(oid);
         val.SerializeTo(*(output_buffer));
       }
 
       break;
     }
-  case LogRecordType::TUPLE_DELETE:
-  {
+    case LogRecordType::TUPLE_DELETE: {
       auto &manager = catalog::Manager::GetInstance();
       auto tuple_pos = record.GetItemPointer();
       auto tg = manager.GetTileGroup(tuple_pos.block).get();
@@ -115,11 +112,9 @@ CopySerializeOutput* WalLogger::WriteRecordToBuffer(LogRecord &record) {
       output_buffer->WriteLong(tuple_pos.block);
       output_buffer->WriteLong(tuple_pos.offset);
 
-
       break;
-  }
-  case LogRecordType::TUPLE_UPDATE:
-  {
+    }
+    case LogRecordType::TUPLE_UPDATE: {
       auto &manager = catalog::Manager::GetInstance();
       auto tuple_pos = record.GetItemPointer();
       auto old_tuple_pos = record.GetOldItemPointer();
@@ -136,23 +131,20 @@ CopySerializeOutput* WalLogger::WriteRecordToBuffer(LogRecord &record) {
       output_buffer->WriteLong(tuple_pos.block);
       output_buffer->WriteLong(tuple_pos.offset);
       // Write the full tuple into the buffer
-      for(auto schema : tg->GetTileSchemas()){
-          for(auto column : schema.GetColumns()){
-              columns.push_back(column);
-          }
+      for (auto schema : tg->GetTileSchemas()) {
+        for (auto column : schema.GetColumns()) {
+          columns.push_back(column);
+        }
       }
 
-      ContainerTuple<storage::TileGroup> container_tuple(
-        tg, tuple_pos.offset
-      );
-      for(oid_t oid = 0; oid < columns.size(); oid++){
+      ContainerTuple<storage::TileGroup> container_tuple(tg, tuple_pos.offset);
+      for (oid_t oid = 0; oid < columns.size(); oid++) {
         auto val = container_tuple.GetValue(oid);
         val.SerializeTo(*(output_buffer));
       }
 
-
       break;
-  }
+    }
     default: {
       LOG_ERROR("Unsupported log record type");
       PL_ASSERT(false);
@@ -165,22 +157,23 @@ CopySerializeOutput* WalLogger::WriteRecordToBuffer(LogRecord &record) {
   int32_t length = output_buffer->Position() - start - sizeof(int32_t);
   output_buffer->WriteIntAt(start, length);
   return output_buffer;
-
 }
-void WalLogger::PersistLogBuffer(LogBuffer* log_buffer) {
-    FileHandle *new_file_handle = new FileHandle();
-    if(likely_branch(log_buffer != nullptr)){
+void WalLogger::PersistLogBuffer(LogBuffer *log_buffer) {
+  FileHandle *new_file_handle = new FileHandle();
+  if (likely_branch(log_buffer != nullptr)) {
     std::string filename = GetLogFileFullPath(0);
     // Create a new file
-    if (LoggingUtil::OpenFile(filename.c_str(), "ab", *new_file_handle) == false) {
+    if (LoggingUtil::OpenFile(filename.c_str(), "ab", *new_file_handle) ==
+        false) {
       LOG_ERROR("Unable to create log file %s\n", filename.c_str());
       exit(EXIT_FAILURE);
     }
 
-    fwrite((const void *) (log_buffer->GetData()), log_buffer->GetSize(), 1, new_file_handle->file);
+    fwrite((const void *)(log_buffer->GetData()), log_buffer->GetSize(), 1,
+           new_file_handle->file);
     delete log_buffer;
 
-//  Call fsync
+    //  Call fsync
     LoggingUtil::FFlushFsync(*new_file_handle);
 
     bool res = LoggingUtil::CloseFile(*new_file_handle);
@@ -188,9 +181,8 @@ void WalLogger::PersistLogBuffer(LogBuffer* log_buffer) {
       LOG_ERROR("Cannot close log file under directory %s", log_dir_.c_str());
       exit(EXIT_FAILURE);
     }
+  }
+  delete new_file_handle;
 }
-    delete new_file_handle;
-
 }
-
-}}
+}

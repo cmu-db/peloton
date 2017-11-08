@@ -27,13 +27,17 @@ namespace threadpool {
  * @brief Element in threadpool queue that can be execute by workers
  */
 class LogTask {
-  friend class LogTaskQueue; // grant access to sync variables
-  friend class Logger; // grant access to ExecuteTask
+  friend class LogTaskQueue;  // grant access to sync variables
+  friend class Logger;        // grant access to ExecuteTask
 
  public:
-  inline LogTask() {};
-  inline LogTask(void(*task_ptr)(void*), void* task_arg, void(*task_callback_ptr)(void*), void* task_callback_arg) :
-      task_ptr_(task_ptr), task_arg_(task_arg), task_callback_ptr_(task_callback_ptr), task_callback_arg_(task_callback_arg) {};
+  inline LogTask(){};
+  inline LogTask(void (*task_ptr)(void*), void* task_arg,
+                 void (*task_callback_ptr)(void*), void* task_callback_arg)
+      : task_ptr_(task_ptr),
+        task_arg_(task_arg),
+        task_callback_ptr_(task_callback_ptr),
+        task_callback_arg_(task_callback_arg){};
 
  private:
   // Functions
@@ -41,10 +45,10 @@ class LogTask {
 
   // Instance variables
   // Callback function
-  void(*task_ptr_)(void *);
-  void * task_arg_;
-  void(*task_callback_ptr_)(void *);
-  void * task_callback_arg_;
+  void (*task_ptr_)(void*);
+  void* task_arg_;
+  void (*task_callback_ptr_)(void*);
+  void* task_callback_arg_;
 };
 
 /**
@@ -53,15 +57,16 @@ class LogTask {
  */
 class LogTaskQueue {
  public:
-  inline LogTaskQueue(const size_t sz) : task_queue_(sz) {};
-void LogTransactionWrapper(void *arg_ptr);
-  bool PollTask(std::shared_ptr<LogTask> &task);
+  inline LogTaskQueue(const size_t sz) : task_queue_(sz){};
+  void LogTransactionWrapper(void* arg_ptr);
+  bool PollTask(std::shared_ptr<LogTask>& task);
   bool IsEmpty();
-  void EnqueueTask(void(*task_ptr)(void*), void* task_arg, void(*task_callback_ptr)(void*), void* task_callback_arg);
+  void EnqueueTask(void (*task_ptr)(void*), void* task_arg,
+                   void (*task_callback_ptr)(void*), void* task_callback_arg);
 
  private:
   peloton::LockFreeQueue<std::shared_ptr<LogTask>> task_queue_;
 };
 
-} // namespace threadpool
-} // namespace peloton
+}  // namespace threadpool
+}  // namespace peloton

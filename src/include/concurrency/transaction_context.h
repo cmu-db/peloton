@@ -32,7 +32,7 @@ class TriggerSet;
 class TriggerData;
 }  // namespace trigger
 
-namespace logging{
+namespace logging {
 class LogRecord;
 }
 namespace concurrency {
@@ -152,8 +152,8 @@ class TransactionContext : public Printable {
   // cache for table catalog objects
   catalog::CatalogCache catalog_cache;
 
-
   std::vector<logging::LogRecord> log_records_;
+
  private:
   //===--------------------------------------------------------------------===//
   // Data members
@@ -187,7 +187,6 @@ class TransactionContext : public Printable {
 
   // result of the transaction
   ResultType result_ = ResultType::SUCCESS;
-
 
   bool is_written_;
   size_t insert_count_;

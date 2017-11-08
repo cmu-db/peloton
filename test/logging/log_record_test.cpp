@@ -23,44 +23,37 @@ namespace test {
 class LogRecordTests : public PelotonTest {};
 
 TEST_F(LogRecordTests, LogRecordTest) {
-  
-  std::vector<LogRecordType> tuple_type_list = {
-    LogRecordType::TUPLE_INSERT,
-    LogRecordType::TUPLE_DELETE,
-    LogRecordType::TUPLE_UPDATE
-  };
+  std::vector<LogRecordType> tuple_type_list = {LogRecordType::TUPLE_INSERT,
+                                                LogRecordType::TUPLE_DELETE,
+                                                LogRecordType::TUPLE_UPDATE};
 
   for (auto type : tuple_type_list) {
-    logging::LogRecord tuple_record = 
-        logging::LogRecordFactory::CreateTupleRecord(type, ItemPointer(0, 0), 5, 1);
+    logging::LogRecord tuple_record =
+        logging::LogRecordFactory::CreateTupleRecord(type, ItemPointer(0, 0), 5,
+                                                     1);
 
     EXPECT_EQ(tuple_record.GetType(), type);
   }
-  
+
   std::vector<LogRecordType> txn_type_list = {
-    LogRecordType::TRANSACTION_BEGIN,
-    LogRecordType::TRANSACTION_COMMIT
-  };
+      LogRecordType::TRANSACTION_BEGIN, LogRecordType::TRANSACTION_COMMIT};
 
   for (auto type : txn_type_list) {
-    logging::LogRecord txn_record = 
+    logging::LogRecord txn_record =
         logging::LogRecordFactory::CreateTxnRecord(type, 50);
 
     EXPECT_EQ(txn_record.GetType(), type);
   }
 
-  std::vector<LogRecordType> epoch_type_list = {
-    LogRecordType::EPOCH_BEGIN, 
-    LogRecordType::EPOCH_END
-  };
+  std::vector<LogRecordType> epoch_type_list = {LogRecordType::EPOCH_BEGIN,
+                                                LogRecordType::EPOCH_END};
 
   for (auto type : epoch_type_list) {
-    logging::LogRecord epoch_record = 
+    logging::LogRecord epoch_record =
         logging::LogRecordFactory::CreateEpochRecord(type, 100);
 
     EXPECT_EQ(epoch_record.GetType(), type);
   }
 }
-
 }
 }

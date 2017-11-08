@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -81,10 +80,10 @@ namespace tpcc {
 // WORKLOAD
 /////////////////////////////////////////////////////////
 
-#define STOCK_LEVEL_RATIO     0.04
-#define ORDER_STATUS_RATIO    0.0
-#define PAYMENT_RATIO         0.48
-#define NEW_ORDER_RATIO       0.48
+#define STOCK_LEVEL_RATIO 0.04
+#define ORDER_STATUS_RATIO 0.0
+#define PAYMENT_RATIO 0.48
+#define NEW_ORDER_RATIO 0.48
 
 volatile bool is_running = true;
 
@@ -98,8 +97,9 @@ size_t GenerateWarehouseId(const size_t &thread_id) {
     } else {
       int warehouse_per_partition = state.warehouse_count / state.backend_count;
       int start_warehouse = warehouse_per_partition * thread_id;
-      int end_warehouse = ((int)thread_id != (state.backend_count - 1)) ? 
-        start_warehouse + warehouse_per_partition - 1 : state.warehouse_count - 1;
+      int end_warehouse = ((int)thread_id != (state.backend_count - 1))
+                              ? start_warehouse + warehouse_per_partition - 1
+                              : state.warehouse_count - 1;
       return GetRandomInteger(start_warehouse, end_warehouse);
     }
   } else {
@@ -115,17 +115,19 @@ void PinToCore(size_t core) {
   pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
 #else
 void PinToCore(size_t UNUSED_ATTRIBUTE core) {
-// Mac OS X does not export interfaces that identify processors or control thread placement
+// Mac OS X does not export interfaces that identify processors or control
+// thread placement
 // explicit thread to processor binding is not supported.
-// Reference: https://superuser.com/questions/149312/how-to-set-processor-affinity-on-os-x
+// Reference:
+// https://superuser.com/questions/149312/how-to-set-processor-affinity-on-os-x
 #endif
 }
 
 void RunBackend(const size_t thread_id) {
-
   PinToCore(thread_id);
 
-  if (concurrency::EpochManagerFactory::GetEpochType() == EpochType::DECENTRALIZED_EPOCH) {
+  if (concurrency::EpochManagerFactory::GetEpochType() ==
+      EpochType::DECENTRALIZED_EPOCH) {
     // register thread to epoch manager
     auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
     epoch_manager.RegisterThread(thread_id);
@@ -133,18 +135,17 @@ void RunBackend(const size_t thread_id) {
 
   PadInt &execution_count_ref = abort_counts[thread_id];
   PadInt &transaction_count_ref = commit_counts[thread_id];
-  
+
   // backoff
   uint32_t backoff_shifts = 0;
 
   while (true) {
-
     if (is_running == false) {
       break;
     }
 
     FastRandom rng(rand());
-    
+
     auto rng_val = rng.NextUniform();
     if (rng_val <= STOCK_LEVEL_RATIO) {
       while (RunStockLevel(thread_id) == false) {
@@ -159,7 +160,8 @@ void RunBackend(const size_t thread_id) {
           }
           uint64_t sleep_duration = 1UL << backoff_shifts;
           sleep_duration *= 100;
-          std::this_thread::sleep_for(std::chrono::microseconds(sleep_duration));
+          std::this_thread::sleep_for(
+              std::chrono::microseconds(sleep_duration));
         }
       }
     } else if (rng_val <= ORDER_STATUS_RATIO + STOCK_LEVEL_RATIO) {
@@ -175,10 +177,12 @@ void RunBackend(const size_t thread_id) {
           }
           uint64_t sleep_duration = 1UL << backoff_shifts;
           sleep_duration *= 100;
-          std::this_thread::sleep_for(std::chrono::microseconds(sleep_duration));
+          std::this_thread::sleep_for(
+              std::chrono::microseconds(sleep_duration));
         }
       }
-    } else if (rng_val <= PAYMENT_RATIO + ORDER_STATUS_RATIO + STOCK_LEVEL_RATIO) {
+    } else if (rng_val <=
+               PAYMENT_RATIO + ORDER_STATUS_RATIO + STOCK_LEVEL_RATIO) {
       while (RunPayment(thread_id) == false) {
         if (is_running == false) {
           break;
@@ -191,10 +195,12 @@ void RunBackend(const size_t thread_id) {
           }
           uint64_t sleep_duration = 1UL << backoff_shifts;
           sleep_duration *= 100;
-          std::this_thread::sleep_for(std::chrono::microseconds(sleep_duration));
+          std::this_thread::sleep_for(
+              std::chrono::microseconds(sleep_duration));
         }
       }
-    } else if (rng_val <= PAYMENT_RATIO + ORDER_STATUS_RATIO + STOCK_LEVEL_RATIO + NEW_ORDER_RATIO) {
+    } else if (rng_val <= PAYMENT_RATIO + ORDER_STATUS_RATIO +
+                              STOCK_LEVEL_RATIO + NEW_ORDER_RATIO) {
       while (RunNewOrder(thread_id) == false) {
         if (is_running == false) {
           break;
@@ -207,7 +213,8 @@ void RunBackend(const size_t thread_id) {
           }
           uint64_t sleep_duration = 1UL << backoff_shifts;
           sleep_duration *= 100;
-          std::this_thread::sleep_for(std::chrono::microseconds(sleep_duration));
+          std::this_thread::sleep_for(
+              std::chrono::microseconds(sleep_duration));
         }
       }
     } else {
@@ -223,23 +230,22 @@ void RunBackend(const size_t thread_id) {
           }
           uint64_t sleep_duration = 1UL << backoff_shifts;
           sleep_duration *= 100;
-          std::this_thread::sleep_for(std::chrono::microseconds(sleep_duration));
+          std::this_thread::sleep_for(
+              std::chrono::microseconds(sleep_duration));
         }
       }
     }
 
     backoff_shifts >>= 1;
     transaction_count_ref.data++;
-
   }
 }
 
 void RunWorkload() {
-
   // Execute the workload to build the log
   std::vector<std::thread> thread_group;
   size_t num_threads = state.backend_count;
-  
+
   abort_counts = new PadInt[num_threads];
   PL_MEMSET(abort_counts, 0, sizeof(PadInt) * num_threads);
 
@@ -268,20 +274,21 @@ void RunWorkload() {
     std::this_thread::sleep_for(
         std::chrono::milliseconds(int(state.profile_duration * 1000)));
     PL_MEMCPY(abort_counts_profiles[round_id], abort_counts,
-           sizeof(PadInt) * num_threads);
+              sizeof(PadInt) * num_threads);
     PL_MEMCPY(commit_counts_profiles[round_id], commit_counts,
-           sizeof(PadInt) * num_threads);
-    
-    auto& manager = catalog::Manager::GetInstance();
+              sizeof(PadInt) * num_threads);
+
+    auto &manager = catalog::Manager::GetInstance();
     oid_t current_tile_group_id = manager.GetCurrentTileGroupId();
     if (round_id != 0) {
-      state.profile_memory.push_back(current_tile_group_id - last_tile_group_id);
+      state.profile_memory.push_back(current_tile_group_id -
+                                     last_tile_group_id);
     }
     last_tile_group_id = current_tile_group_id;
-    
   }
-  
-  state.profile_memory.push_back(state.profile_memory.at(state.profile_memory.size() - 1));
+
+  state.profile_memory.push_back(
+      state.profile_memory.at(state.profile_memory.size() - 1));
 
   is_running = false;
 
@@ -301,10 +308,10 @@ void RunWorkload() {
     total_abort_count += abort_counts_profiles[0][i].data;
   }
 
-  state.profile_throughput
-      .push_back(total_commit_count * 1.0 / state.profile_duration);
-  state.profile_abort_rate
-      .push_back(total_abort_count * 1.0 / total_commit_count);
+  state.profile_throughput.push_back(total_commit_count * 1.0 /
+                                     state.profile_duration);
+  state.profile_abort_rate.push_back(total_abort_count * 1.0 /
+                                     total_commit_count);
 
   // calculate the throughput and abort rate for the remaining rounds.
   for (size_t round_id = 0; round_id < profile_round - 1; ++round_id) {
@@ -320,10 +327,10 @@ void RunWorkload() {
                            abort_counts_profiles[round_id][i].data;
     }
 
-    state.profile_throughput
-        .push_back(total_commit_count * 1.0 / state.profile_duration);
-    state.profile_abort_rate
-        .push_back(total_abort_count * 1.0 / total_commit_count);
+    state.profile_throughput.push_back(total_commit_count * 1.0 /
+                                       state.profile_duration);
+    state.profile_abort_rate.push_back(total_abort_count * 1.0 /
+                                       total_commit_count);
   }
 
   // calculate the aggregated throughput and abort rate.
@@ -365,16 +372,17 @@ void RunWorkload() {
 // HARNESS
 /////////////////////////////////////////////////////////
 
-std::vector<std::vector<type::Value >> ExecuteRead(executor::AbstractExecutor* executor) {
+std::vector<std::vector<type::Value>> ExecuteRead(
+    executor::AbstractExecutor *executor) {
   executor->Init();
 
-  std::vector<std::vector<type::Value >> logical_tile_values;
+  std::vector<std::vector<type::Value>> logical_tile_values;
 
   // Execute stuff
   while (executor->Execute() == true) {
     std::unique_ptr<executor::LogicalTile> result_tile(executor->GetOutput());
 
-    if(result_tile == nullptr) {
+    if (result_tile == nullptr) {
       break;
     }
 
@@ -384,10 +392,10 @@ std::vector<std::vector<type::Value >> ExecuteRead(executor::AbstractExecutor* e
     for (oid_t tuple_id : *result_tile) {
       ContainerTuple<executor::LogicalTile> cur_tuple(result_tile.get(),
                                                       tuple_id);
-      std::vector<type::Value > tuple_values;
-      for (oid_t column_itr = 0; column_itr < column_count; column_itr++){
-         auto value = cur_tuple.GetValue(column_itr);
-         tuple_values.push_back(value);
+      std::vector<type::Value> tuple_values;
+      for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
+        auto value = cur_tuple.GetValue(column_itr);
+        tuple_values.push_back(value);
       }
 
       // Move the tuple list
@@ -398,19 +406,19 @@ std::vector<std::vector<type::Value >> ExecuteRead(executor::AbstractExecutor* e
   return logical_tile_values;
 }
 
-void ExecuteUpdate(executor::AbstractExecutor* executor) {
+void ExecuteUpdate(executor::AbstractExecutor *executor) {
   executor->Init();
   // Execute stuff
-  while (executor->Execute() == true);
+  while (executor->Execute() == true)
+    ;
 }
 
-
-void ExecuteDelete(executor::AbstractExecutor* executor) {
+void ExecuteDelete(executor::AbstractExecutor *executor) {
   executor->Init();
   // Execute stuff
-  while (executor->Execute() == true);
+  while (executor->Execute() == true)
+    ;
 }
-
 
 }  // namespace tpcc
 }  // namespace benchmark

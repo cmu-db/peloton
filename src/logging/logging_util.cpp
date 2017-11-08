@@ -98,7 +98,8 @@ void LoggingUtil::FFlushFsync(FileHandle &file_handle) {
   }
 }
 
-bool LoggingUtil::OpenFile(const char *name, const char *mode, FileHandle &file_handle) {
+bool LoggingUtil::OpenFile(const char *name, const char *mode,
+                           FileHandle &file_handle) {
   auto file = fopen(name, mode);
   if (file == NULL) {
     LOG_ERROR("Checkpoint File is NULL");
@@ -121,7 +122,8 @@ bool LoggingUtil::OpenFile(const char *name, const char *mode, FileHandle &file_
 }
 
 bool LoggingUtil::CloseFile(FileHandle &file_handle) {
-  PL_ASSERT(file_handle.file != nullptr && file_handle.fd != INVALID_FILE_DESCRIPTOR);
+  PL_ASSERT(file_handle.file != nullptr &&
+            file_handle.fd != INVALID_FILE_DESCRIPTOR);
   int ret = fclose(file_handle.file);
 
   if (ret == 0) {
@@ -155,12 +157,13 @@ size_t LoggingUtil::GetFileSize(FileHandle &file_handle) {
   return file_stats.st_size;
 }
 
-bool LoggingUtil::ReadNBytesFromFile(FileHandle &file_handle, void *bytes_read, size_t n) {
-  PL_ASSERT(file_handle.fd != INVALID_FILE_DESCRIPTOR && file_handle.file != nullptr);
+bool LoggingUtil::ReadNBytesFromFile(FileHandle &file_handle, void *bytes_read,
+                                     size_t n) {
+  PL_ASSERT(file_handle.fd != INVALID_FILE_DESCRIPTOR &&
+            file_handle.file != nullptr);
   int res = fread(bytes_read, n, 1, file_handle.file);
   return res == 1;
 }
-
 
 }  // namespace logging
 }  // namespace peloton

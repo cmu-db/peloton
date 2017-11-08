@@ -27,12 +27,13 @@ namespace threadpool {
 class LoggerQueuePool {
  public:
   inline LoggerQueuePool()
-    : task_queue_(DEFAULT_TASK_QUEUE_SIZE),
-      logger_pool_(DEFAULT_LOGGER_POOL_SIZE, &task_queue_){}
+      : task_queue_(DEFAULT_TASK_QUEUE_SIZE),
+        logger_pool_(DEFAULT_LOGGER_POOL_SIZE, &task_queue_) {}
 
   ~LoggerQueuePool();
 
-  void SubmitTask(void(*task_ptr)(void *), void* task_arg, void(*task_callback_ptr)(void *), void* task_callback_arg);
+  void SubmitTask(void (*task_ptr)(void*), void* task_arg,
+                  void (*task_callback_ptr)(void*), void* task_callback_arg);
 
   static LoggerQueuePool& GetInstance();
 
@@ -40,6 +41,5 @@ class LoggerQueuePool {
   LogTaskQueue task_queue_;
   LoggerPool logger_pool_;
 };
-} // namespace threadpool
-} // namespace peloton
-
+}  // namespace threadpool
+}  // namespace peloton

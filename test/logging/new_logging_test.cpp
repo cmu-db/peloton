@@ -22,12 +22,10 @@ namespace test {
 class NewLoggingTests : public PelotonTest {};
 
 TEST_F(NewLoggingTests, MyTest) {
-  //auto &log_manager = logging::LogManagerFactory::GetInstance();
-  //log_manager.Reset();
-  
-  EXPECT_TRUE(true);
-  
-}
+  // auto &log_manager = logging::LogManagerFactory::GetInstance();
+  // log_manager.Reset();
 
+  EXPECT_TRUE(true);
+}
 }
 }

@@ -26,8 +26,8 @@ typedef std::vector<std::unique_ptr<OutputPacket>> ResponseBuffer;
 
 class ProtocolHandler {
  public:
-
-  ProtocolHandler(tcop::TrafficCop *traffic_cop, logging::WalLogManager* log_manager);
+  ProtocolHandler(tcop::TrafficCop* traffic_cop,
+                  logging::WalLogManager* log_manager);
 
   virtual ~ProtocolHandler();
 
@@ -38,7 +38,7 @@ class ProtocolHandler {
   //  bool ManageStartupPacket();
   virtual void SendInitialResponse();
 
-  virtual ProcessResult Process(Buffer &rbuf, const size_t thread_id);
+  virtual ProcessResult Process(Buffer& rbuf, const size_t thread_id);
 
   virtual void Reset();
 
@@ -54,12 +54,11 @@ class ProtocolHandler {
   // so that we don't have to new packet each time
   ResponseBuffer responses;
 
-  InputPacket request;                // Used for reading a single request
+  InputPacket request;  // Used for reading a single request
 
   // The traffic cop used for this connection
   tcop::TrafficCop* traffic_cop_;
   logging::WalLogManager* log_manager_;
-
 };
 
 }  // namespace network

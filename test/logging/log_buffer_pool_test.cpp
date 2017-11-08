@@ -23,7 +23,6 @@ namespace test {
 class LogBufferPoolTests : public PelotonTest {};
 
 TEST_F(LogBufferPoolTests, PoolTest) {
-  
   /*logging::LogBufferPool log_buffer_pool(1);
 
   size_t thread_id = log_buffer_pool.GetThreadId();
@@ -35,16 +34,15 @@ TEST_F(LogBufferPoolTests, PoolTest) {
   log_buffer_pool.GetBuffer(1);
 
   size_t slot_count = log_buffer_pool.GetEmptySlotCount();
-  
+
   EXPECT_EQ(slot_count, log_buffer_pool.GetMaxSlotCount() - 1);
 
   log_buffer_pool.PutBuffer(std::move(log_buffer));
 
   slot_count = log_buffer_pool.GetEmptySlotCount();
-  
+
   EXPECT_EQ(slot_count, log_buffer_pool.GetMaxSlotCount());
 */
 }
-
 }
 }

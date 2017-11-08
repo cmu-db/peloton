@@ -27,7 +27,6 @@
 #include "container/lock_free_queue.h"
 #include "common/logger.h"
 
-
 namespace peloton {
 namespace logging {
 
@@ -40,7 +39,8 @@ namespace logging {
  * logging file layout :
  *
  *  -----------------------------------------------------------------------------
- *  | txn_eid | txn_cid | database_id | table_id | operation_type | tilegroup and offset |data | ... | txn_end_flag
+ *  | txn_eid | txn_cid | database_id | table_id | operation_type | tilegroup
+ *and offset |data | ... | txn_end_flag
  *  -----------------------------------------------------------------------------
  *
  * NOTE: this layout is designed for physiological logging.
@@ -55,22 +55,17 @@ class WalLogManager {
   WalLogManager(WalLogManager &&) = delete;
   WalLogManager &operator=(WalLogManager &&) = delete;
 
+ public:
+  WalLogManager() {}
 
-
-
-public:
-  WalLogManager()
-     {}
-
-  //Constructor. Same fashion as tcop
-  WalLogManager(void(* task_callback)(void *), void *task_callback_arg):
-      task_callback_(task_callback), task_callback_arg_(task_callback_arg) {
-  }
+  // Constructor. Same fashion as tcop
+  WalLogManager(void (*task_callback)(void *), void *task_callback_arg)
+      : task_callback_(task_callback), task_callback_arg_(task_callback_arg) {}
   ~WalLogManager() {}
 
   static void SetDirectories(std::string logging_dir);
 
-  static void WriteTransactionWrapper(void* args);
+  static void WriteTransactionWrapper(void *args);
 
   static void WriteTransaction(std::vector<LogRecord> log_records);
 
@@ -79,28 +74,22 @@ public:
 
   ResultType LogTransaction(std::vector<LogRecord> log_records);
 
-  void SetTaskCallback(void(* task_callback)(void*), void *task_callback_arg) {
+  void SetTaskCallback(void (*task_callback)(void *), void *task_callback_arg) {
     task_callback_ = task_callback;
     task_callback_arg_ = task_callback_arg;
   }
-  bool is_running_=false;
-private:
-  void(* task_callback_)(void *);
-  void * task_callback_arg_;
+  bool is_running_ = false;
 
-
+ private:
+  void (*task_callback_)(void *);
+  void *task_callback_arg_;
 };
 
-
 struct LogTransactionArg {
-  inline LogTransactionArg(const std::vector<LogRecord> log_records
-                        ) :
-      log_records_(log_records){}
-
-
+  inline LogTransactionArg(const std::vector<LogRecord> log_records)
+      : log_records_(log_records) {}
 
   std::vector<LogRecord> log_records_;
-
 };
 }
 }

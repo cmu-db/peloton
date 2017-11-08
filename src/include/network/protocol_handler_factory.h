@@ -30,9 +30,9 @@ enum class ProtocolHandlerType {
 // The factory of ProtocolHandler
 class ProtocolHandlerFactory {
  public:
-  static std::unique_ptr<ProtocolHandler>
-  CreateProtocolHandler(ProtocolHandlerType type, tcop::TrafficCop *trafficCop, logging::WalLogManager *log_manager);
-
+  static std::unique_ptr<ProtocolHandler> CreateProtocolHandler(
+      ProtocolHandlerType type, tcop::TrafficCop *trafficCop,
+      logging::WalLogManager *log_manager);
 };
 }
 }

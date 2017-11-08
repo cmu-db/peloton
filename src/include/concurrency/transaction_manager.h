@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <atomic>
@@ -47,8 +46,7 @@ class TransactionManager {
 
   virtual ~TransactionManager() {}
 
-  void Init(const ProtocolType protocol,
-            const IsolationLevelType isolation, 
+  void Init(const ProtocolType protocol, const IsolationLevelType isolation,
             const ConflictAvoidanceType conflict) {
     protocol_ = protocol;
     isolation_level_ = isolation;
@@ -69,20 +67,21 @@ class TransactionManager {
   // This method test whether the current transaction is the owner of this version.
   virtual bool IsOwner(
       TransactionContext *const current_txn,
-      const storage::TileGroupHeader *const tile_group_header,
-      const oid_t &tuple_id) = 0;
+                       const storage::TileGroupHeader *const tile_group_header,
+                       const oid_t &tuple_id) = 0;
 
   // This method tests whether any other transaction has owned this version.
-  virtual bool IsOwned(
+  virtual bool IsOwned(Transaction *const current_txn,
       TransactionContext *const current_txn,
-      const storage::TileGroupHeader *const tile_group_header,
-      const oid_t &tuple_id) = 0;
+                       const storage::TileGroupHeader *const tile_group_header,
+                       const oid_t &tuple_id) = 0;
 
-  // This method tests whether the current transaction has created this version of the tuple
+  // This method tests whether the current transaction has created this version
+  // of the tuple
   virtual bool IsWritten(
     TransactionContext *const current_txn,
-    const storage::TileGroupHeader *const tile_group_header,
-    const oid_t &tuple_id) = 0;
+      const storage::TileGroupHeader *const tile_group_header,
+      const oid_t &tuple_id) = 0;
 
   // This method tests whether it is possible to obtain the ownership.
   virtual bool IsOwnable(
@@ -93,20 +92,21 @@ class TransactionManager {
   // This method is used to acquire the ownership of a tuple for a transaction.
   virtual bool AcquireOwnership(
       TransactionContext *const current_txn,
-      const storage::TileGroupHeader *const tile_group_header, 
+      const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id) = 0;
 
-  // This method is used by executor to yield ownership after the acquired ownership.
+  // This method is used by executor to yield ownership after the acquired
+  // ownership.
   virtual void YieldOwnership(
       TransactionContext *const current_txn,
-      // const oid_t &tile_group_id, 
-      const storage::TileGroupHeader *const tile_group_header, 
+      // const oid_t &tile_group_id,
+      const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id) = 0;
 
-  // The index_entry_ptr is the address of the head node of the version chain, 
+  // The index_entry_ptr is the address of the head node of the version chain,
   // which is directly pointed by the primary index.
   virtual void PerformInsert(TransactionContext *const current_txn,
-                             const ItemPointer &location, 
+                             const ItemPointer &location,
                              ItemPointer *index_entry_ptr = nullptr) = 0;
 
   virtual bool PerformRead(TransactionContext *const current_txn,
@@ -151,15 +151,12 @@ class TransactionManager {
     return EpochManagerFactory::GetInstance().GetExpiredCid();
   }
 
-  IsolationLevelType GetIsolationLevel() {
-    return isolation_level_;
-  }
+  IsolationLevelType GetIsolationLevel() { return isolation_level_; }
 
  protected:
   static ProtocolType protocol_;
   static IsolationLevelType isolation_level_;
   static ConflictAvoidanceType conflict_avoidance_;
-
 };
 }  // namespace storage
 }  // namespace peloton

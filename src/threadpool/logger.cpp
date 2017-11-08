@@ -18,17 +18,18 @@
 namespace peloton {
 namespace threadpool {
 
-void Logger::StartThread(LoggerPool* current_pool){
+void Logger::StartThread(LoggerPool* current_pool) {
   shutdown_thread_ = false;
   logger_thread_ = std::thread(Logger::PollForWork, this, current_pool);
 }
 
-void Logger::PollForWork(Logger* current_thread, LoggerPool* current_pool){
+void Logger::PollForWork(Logger* current_thread, LoggerPool* current_pool) {
   size_t empty_count = 0;
   std::shared_ptr<LogTask> t;
-  while(!current_thread->shutdown_thread_ || !current_pool->task_queue_->IsEmpty()){
+  while (!current_thread->shutdown_thread_ ||
+         !current_pool->task_queue_->IsEmpty()) {
     // poll the queue
-    if(!current_pool->task_queue_->PollTask(t)){
+    if (!current_pool->task_queue_->PollTask(t)) {
       empty_count++;
       if (empty_count == EMPTY_COUNT_BOUND) {
         empty_count = 0;
@@ -49,9 +50,9 @@ void Logger::Shutdown() {
   logger_thread_.join();
 }
 
-LoggerPool::LoggerPool(size_t num_threads, LogTaskQueue *task_queue) {
+LoggerPool::LoggerPool(size_t num_threads, LogTaskQueue* task_queue) {
   this->task_queue_ = task_queue;
-  for (size_t thread_id = 0; thread_id < num_threads; thread_id++){
+  for (size_t thread_id = 0; thread_id < num_threads; thread_id++) {
     // start thread on construction
     std::unique_ptr<Logger> logger = std::make_unique<Logger>();
     logger->StartThread(this);
@@ -60,12 +61,12 @@ LoggerPool::LoggerPool(size_t num_threads, LogTaskQueue *task_queue) {
 }
 
 void LoggerPool::Shutdown() {
-  for (auto& thread : logger_threads_){
+  for (auto& thread : logger_threads_) {
     thread->Shutdown();
   }
   logger_threads_.clear();
   return;
 }
 
-} // namespace threadpool
-} // namespace peloton
+}  // namespace threadpool
+}  // namespace peloton

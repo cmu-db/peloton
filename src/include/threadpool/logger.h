@@ -19,9 +19,9 @@
 
 #include "threadpool/log_task.h"
 
-namespace peloton{
-namespace threadpool{
-//Forward declaration
+namespace peloton {
+namespace threadpool {
+// Forward declaration
 class LoggerPool;
 /**
  * @class Logger
@@ -37,7 +37,6 @@ class Logger {
   // wait for the current threadpool to complete and shutdown the thread;
   void Shutdown();
 
-
   volatile bool shutdown_thread_;
   std::thread logger_thread_;
 };
@@ -48,17 +47,16 @@ class Logger {
  */
 class LoggerPool {
   friend class Logger;
+
  public:
   // submit a threadpool for asynchronous execution.
   void Shutdown();
-  LoggerPool(const size_t num_threads, LogTaskQueue *taskQueue);
-  ~LoggerPool(){ this->Shutdown(); }
+  LoggerPool(const size_t num_threads, LogTaskQueue* taskQueue);
+  ~LoggerPool() { this->Shutdown(); }
+
  private:
   std::vector<std::unique_ptr<Logger>> logger_threads_;
   LogTaskQueue* task_queue_;
 };
-
 }
 }
-
-

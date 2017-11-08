@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <thread>
@@ -26,19 +25,19 @@ namespace peloton {
 namespace concurrency {
 
 class EpochManager {
-  EpochManager(const EpochManager&) = delete;
+  EpochManager(const EpochManager &) = delete;
 
-public:
+ public:
   EpochManager() {}
 
-  static inline size_t GetEpochQueueCapacity() {return 40960;}
+  static inline size_t GetEpochQueueCapacity() { return 40960; }
 
   size_t GetEpochLengthInMicroSecQuarter() const {
-      return (int)(100 * 1000 / 4); //epoch_duration_millisec_
-    }
+    return (int)(100 * 1000 / 4);  // epoch_duration_millisec_
+  }
   size_t GetEpochDurationMilliSecond() const {
-      return (int)(100); //epoch_duration_millisec_
-    }
+    return (int)(100);  // epoch_duration_millisec_
+  }
 
   // TODO: stop epoch threads before resetting epoch id.
   virtual void Reset() = 0;
@@ -53,7 +52,6 @@ public:
 
   virtual void StopEpoch() = 0;
 
-
   //====================================================
   // designed for decentralized epoch manager
   //====================================================
@@ -61,7 +59,8 @@ public:
 
   virtual void DeregisterThread(const size_t thread_id) = 0;
 
-  virtual cid_t EnterEpoch(const size_t thread_id, const TimestampType timestamp_type) = 0;
+  virtual cid_t EnterEpoch(const size_t thread_id,
+                           const TimestampType timestamp_type) = 0;
 
   virtual void ExitEpoch(const size_t thread_id, const eid_t epoch_id) = 0;
 
@@ -72,8 +71,6 @@ public:
   virtual eid_t GetCurrentEpochId() = 0;
 
   virtual cid_t GetExpiredCid() = 0;
-
 };
-
 }
 }

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -72,7 +71,6 @@ namespace peloton {
 namespace benchmark {
 namespace ycsb {
 
-
 /////////////////////////////////////////////////////////
 // WORKLOAD
 /////////////////////////////////////////////////////////
@@ -90,21 +88,21 @@ void PinToCore(size_t core) {
   pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
 #else
 void PinToCore(size_t UNUSED_ATTRIBUTE core) {
-// Mac OS X does not export interfaces that identify processors or control thread placement
+// Mac OS X does not export interfaces that identify processors or control
+// thread placement
 // explicit thread to processor binding is not supported.
-// Reference: https://superuser.com/questions/149312/how-to-set-processor-affinity-on-os-x
+// Reference:
+// https://superuser.com/questions/149312/how-to-set-processor-affinity-on-os-x
 #endif
 }
 
 void RunBackend(const size_t thread_id) {
-
   PinToCore(thread_id);
 
   PadInt &execution_count_ref = abort_counts[thread_id];
   PadInt &transaction_count_ref = commit_counts[thread_id];
 
-  ZipfDistribution zipf((state.scale_factor * 1000) - 1,
-                        state.zipf_theta);
+  ZipfDistribution zipf((state.scale_factor * 1000) - 1, state.zipf_theta);
 
   FastRandom rng(rand());
 
@@ -169,20 +167,21 @@ void RunWorkload() {
     std::this_thread::sleep_for(
         std::chrono::milliseconds(int(state.profile_duration * 1000)));
     PL_MEMCPY(abort_counts_profiles[round_id], abort_counts,
-           sizeof(PadInt) * num_threads);
+              sizeof(PadInt) * num_threads);
     PL_MEMCPY(commit_counts_profiles[round_id], commit_counts,
-           sizeof(PadInt) * num_threads);
-    
-    auto& manager = catalog::Manager::GetInstance();
+              sizeof(PadInt) * num_threads);
+
+    auto &manager = catalog::Manager::GetInstance();
     oid_t current_tile_group_id = manager.GetCurrentTileGroupId();
     if (round_id != 0) {
-      state.profile_memory.push_back(current_tile_group_id - last_tile_group_id);
+      state.profile_memory.push_back(current_tile_group_id -
+                                     last_tile_group_id);
     }
     last_tile_group_id = current_tile_group_id;
-  
   }
-  
-  state.profile_memory.push_back(state.profile_memory.at(state.profile_memory.size() - 1));
+
+  state.profile_memory.push_back(
+      state.profile_memory.at(state.profile_memory.size() - 1));
 
   is_running = false;
 
@@ -203,9 +202,9 @@ void RunWorkload() {
   }
 
   state.profile_throughput.push_back(total_commit_count * 1.0 /
-                                      state.profile_duration);
+                                     state.profile_duration);
   state.profile_abort_rate.push_back(total_abort_count * 1.0 /
-                                      total_commit_count);
+                                     total_commit_count);
 
   // calculate the throughput and abort rate for the remaining rounds.
   for (size_t round_id = 0; round_id < profile_round - 1; ++round_id) {
@@ -222,9 +221,9 @@ void RunWorkload() {
     }
 
     state.profile_throughput.push_back(total_commit_count * 1.0 /
-                                        state.profile_duration);
+                                       state.profile_duration);
     state.profile_abort_rate.push_back(total_abort_count * 1.0 /
-                                        total_commit_count);
+                                       total_commit_count);
   }
 
   //////////////////////////////////////////////////
@@ -264,24 +263,23 @@ void RunWorkload() {
   abort_counts = nullptr;
   delete[] commit_counts;
   commit_counts = nullptr;
-
 }
-
 
 /////////////////////////////////////////////////////////
 // HARNESS
 /////////////////////////////////////////////////////////
 
-std::vector<std::vector<type::Value >> ExecuteRead(executor::AbstractExecutor* executor) {
+std::vector<std::vector<type::Value>> ExecuteRead(
+    executor::AbstractExecutor *executor) {
   executor->Init();
 
-  std::vector<std::vector<type::Value >> logical_tile_values;
+  std::vector<std::vector<type::Value>> logical_tile_values;
 
   // Execute stuff
   while (executor->Execute() == true) {
     std::unique_ptr<executor::LogicalTile> result_tile(executor->GetOutput());
 
-    if(result_tile == nullptr) {
+    if (result_tile == nullptr) {
       break;
     }
 
@@ -291,10 +289,10 @@ std::vector<std::vector<type::Value >> ExecuteRead(executor::AbstractExecutor* e
     for (oid_t tuple_id : *result_tile) {
       ContainerTuple<executor::LogicalTile> cur_tuple(result_tile.get(),
                                                       tuple_id);
-      std::vector<type::Value > tuple_values;
-      for (oid_t column_itr = 0; column_itr < column_count; column_itr++){
-         auto value = cur_tuple.GetValue(column_itr);
-         tuple_values.push_back(value);
+      std::vector<type::Value> tuple_values;
+      for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
+        auto value = cur_tuple.GetValue(column_itr);
+        tuple_values.push_back(value);
       }
 
       // Move the tuple list
@@ -305,13 +303,12 @@ std::vector<std::vector<type::Value >> ExecuteRead(executor::AbstractExecutor* e
   return logical_tile_values;
 }
 
-void ExecuteUpdate(executor::AbstractExecutor* executor) {
+void ExecuteUpdate(executor::AbstractExecutor *executor) {
   executor->Init();
   // Execute stuff
-  while (executor->Execute() == true);
+  while (executor->Execute() == true)
+    ;
 }
-
-
 
 }  // namespace ycsb
 }  // namespace benchmark

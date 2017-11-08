@@ -217,7 +217,7 @@ class Value : public Printable {
   inline static Value DeserializeFrom(const char *storage, const TypeId type_id,
                                       const bool inlined,
                                       AbstractPool *pool = nullptr) {
-      Type *t = Type::GetInstance(type_id);
+    Type *t = Type::GetInstance(type_id);
     return t->DeserializeFrom(storage, inlined, pool);
   }
 

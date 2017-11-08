@@ -10,16 +10,15 @@
 // //
 // //===----------------------------------------------------------------------===//
 
-
- #include "common/harness.h"
+#include "common/harness.h"
 // #include "logging/circular_buffer_pool.h"
- #include <stdlib.h>
+#include <stdlib.h>
 
- #include "executor/testing_executor_util.h"
- #include "logging/testing_logging_util.h"
+#include "executor/testing_executor_util.h"
+#include "logging/testing_logging_util.h"
 
- namespace peloton {
- namespace test {
+namespace peloton {
+namespace test {
 
 // //===--------------------------------------------------------------------===//
 // // Buffer Pool Tests
@@ -27,7 +26,8 @@
 
 // class BufferPoolTests : public PelotonTest {};
 
-// void EnqueueTest(logging::CircularBufferPool *buffer_pool, unsigned int count) {
+// void EnqueueTest(logging::CircularBufferPool *buffer_pool, unsigned int
+// count) {
 //   for (unsigned int i = 0; i < count; i++) {
 //     std::unique_ptr<logging::LogBuffer> buf(new logging::LogBuffer(nullptr));
 //     buf->SetSize(i);
@@ -35,7 +35,8 @@
 //   }
 // }
 
-// void DequeueTest(logging::CircularBufferPool *buffer_pool, unsigned int count) {
+// void DequeueTest(logging::CircularBufferPool *buffer_pool, unsigned int
+// count) {
 //   for (unsigned int i = 0; i < count; i++) {
 //     auto buf = std::move(buffer_pool->Get());
 //     PL_ASSERT(buf);
@@ -46,7 +47,8 @@
 // void BackendThread(logging::WriteAheadBackendLogger *logger,
 //                    unsigned int count) {
 //   for (unsigned int i = 1; i <= count; i++) {
-//     logging::TransactionRecord begin_record(LOGRECORD_TYPE_TRANSACTION_COMMIT,
+//     logging::TransactionRecord
+//     begin_record(LOGRECORD_TYPE_TRANSACTION_COMMIT,
 //                                             i);
 //     logger->Log(&begin_record);
 //   }
@@ -90,44 +92,46 @@
 //   }
 // }
 
- /*TEST_F(BufferPoolTests, LogBufferBasicTest) {
-   size_t tile_group_size = TESTS_TUPLES_PER_TILEGROUP;
-   size_t table_tile_group_count = 3;
+/*TEST_F(BufferPoolTests, LogBufferBasicTest) {
+  size_t tile_group_size = TESTS_TUPLES_PER_TILEGROUP;
+  size_t table_tile_group_count = 3;
 
-   std::unique_ptr<storage::DataTable> recovery_table(
-       TestingExecutorUtil::CreateTable(tile_group_size));
+  std::unique_ptr<storage::DataTable> recovery_table(
+      TestingExecutorUtil::CreateTable(tile_group_size));
 
-   // prepare tuples
-   auto mutate = true;
-   auto random = false;
-   int num_rows = tile_group_size * table_tile_group_count;
-   std::vector<std::shared_ptr<storage::Tuple>> tuples =
-       TestingLoggingUtil::BuildTuples(recovery_table.get(), num_rows, mutate,
-                                     random);
-   std::vector<logging::TupleRecord> records =
-       TestingLoggingUtil::BuildTupleRecords(tuples, tile_group_size,
-                                           table_tile_group_count);
-   logging::LogBuffer log_buffer(0);
-   size_t total_length = 0;
-   for (auto record : records) {
-     PL_ASSERT(record.GetTuple()->GetSchema());
-     CopySerializeOutput output_buffer;
-     record.Serialize(output_buffer);
-     size_t len = record.GetMessageLength();
-     total_length += len;
-     log_buffer.WriteRecord(&record);
-   }
-   EXPECT_EQ(log_buffer.GetSize(), total_length);
- }*/
+  // prepare tuples
+  auto mutate = true;
+  auto random = false;
+  int num_rows = tile_group_size * table_tile_group_count;
+  std::vector<std::shared_ptr<storage::Tuple>> tuples =
+      TestingLoggingUtil::BuildTuples(recovery_table.get(), num_rows, mutate,
+                                    random);
+  std::vector<logging::TupleRecord> records =
+      TestingLoggingUtil::BuildTupleRecords(tuples, tile_group_size,
+                                          table_tile_group_count);
+  logging::LogBuffer log_buffer(0);
+  size_t total_length = 0;
+  for (auto record : records) {
+    PL_ASSERT(record.GetTuple()->GetSchema());
+    CopySerializeOutput output_buffer;
+    record.Serialize(output_buffer);
+    size_t len = record.GetMessageLength();
+    total_length += len;
+    log_buffer.WriteRecord(&record);
+  }
+  EXPECT_EQ(log_buffer.GetSize(), total_length);
+}*/
 
 // TEST_F(BufferPoolTests, LargeTupleRecordTest) {
 //   auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
 
 //   std::vector<catalog::Column> columns;
 
-//   catalog::Column column1(type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+//   catalog::Column column1(type::TypeId::INTEGER,
+//   type::Type::GetTypeSize(type::TypeId::INTEGER),
 //                           "A", true);
-//   catalog::Column column2(type::TypeId::VARCHAR, 1024 * 1024 * 20, "B", false);
+//   catalog::Column column2(type::TypeId::VARCHAR, 1024 * 1024 * 20, "B",
+//   false);
 
 //   columns.push_back(column1);
 //   columns.push_back(column2);
@@ -140,9 +144,11 @@
 //                          std::string(1024 * 1024 * 20, 'e').c_str()),
 //                   testing_pool);
 
-//   logging::TupleRecord record(LOGRECORD_TYPE_WAL_TUPLE_INSERT, INITIAL_TXN_ID,
+//   logging::TupleRecord record(LOGRECORD_TYPE_WAL_TUPLE_INSERT,
+//   INITIAL_TXN_ID,
 //                               INVALID_OID, INVALID_ITEMPOINTER,
-//                               INVALID_ITEMPOINTER, tuple.get(), DEFAULT_DB_ID);
+//                               INVALID_ITEMPOINTER, tuple.get(),
+//                               DEFAULT_DB_ID);
 //   record.SetTuple(tuple.get());
 
 //   logging::LogBuffer log_buffer(0);
@@ -178,5 +184,5 @@
 //   frontend_thread.join();
 // }
 
- }  // namespace test
- }  // namespace peloton
+}  // namespace test
+}  // namespace peloton
