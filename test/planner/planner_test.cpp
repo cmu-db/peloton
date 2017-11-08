@@ -6,7 +6,7 @@
 //
 // Identification: test/planner/planner_test.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -102,15 +102,14 @@ TEST_F(PlannerTests, DeletePlanTestParameter) {
   LOG_INFO("Plan created:\n%s",
            planner::PlanUtil::GetInfo(delete_plan.get()).c_str());
 
-  std::unique_ptr<std::vector<type::Value>> values(
-      new std::vector<type::Value>());
+  std::vector<type::Value> values;
 
   // id = 15
   LOG_INFO("Binding values");
-  values->push_back(type::ValueFactory::GetIntegerValue(15).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(15).Copy());
 
   // bind values to parameters in plan
-  delete_plan->SetParameterValues(values.get());
+  delete_plan->SetParameterValues(&values);
 
   // free the database just created
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
@@ -198,16 +197,15 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
 
   LOG_INFO("Plan created:\n%s", update_plan->GetInfo().c_str());
 
-  std::unique_ptr<std::vector<type::Value>> values(
-      new std::vector<type::Value>());
+  std::vector<type::Value> values;
 
   // name = CS, id = 1
   LOG_INFO("Binding values");
-  values->push_back(type::ValueFactory::GetVarcharValue("CS").Copy());
-  values->push_back(type::ValueFactory::GetIntegerValue(1).Copy());
+  values.push_back(type::ValueFactory::GetVarcharValue("CS").Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(1).Copy());
 
   // bind values to parameters in plan
-  update_plan->SetParameterValues(values.get());
+  update_plan->SetParameterValues(&values);
   txn_manager.CommitTransaction(txn);
 
   // free the database just created
@@ -239,8 +237,8 @@ TEST_F(PlannerTests, InsertPlanTestParameter) {
 
   // INSERT INTO department_table VALUES ($0, $1)
   txn = txn_manager.BeginTransaction();
-  auto insert_statement =
-      new parser::InsertStatement(peloton::InsertType::VALUES);
+  std::unique_ptr<parser::InsertStatement> insert_statement(
+      new parser::InsertStatement(peloton::InsertType::VALUES));
 
   std::string name = "department_table";
   auto table_ref = new parser::TableRef(TableReferenceType::NAME);
@@ -262,31 +260,28 @@ TEST_F(PlannerTests, InsertPlanTestParameter) {
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
       DEFAULT_DB_NAME, "department_table", txn);
 
-  planner::InsertPlan *insert_plan = new planner::InsertPlan(
-      target_table, &insert_statement->columns, &insert_statement->insert_values);
+  std::unique_ptr<planner::InsertPlan> insert_plan(new planner::InsertPlan(
+      target_table, &insert_statement->columns,
+      &insert_statement->insert_values));
   LOG_INFO("Plan created:\n%s", insert_plan->GetInfo().c_str());
 
   // VALUES(1, "CS")
   LOG_INFO("Binding values");
-  auto values = new std::vector<type::Value>();
-  values->push_back(type::ValueFactory::GetIntegerValue(1).Copy());
-  values->push_back(type::ValueFactory::GetVarcharValue(
+  std::vector<type::Value> values;
+  values.push_back(type::ValueFactory::GetIntegerValue(1).Copy());
+  values.push_back(type::ValueFactory::GetVarcharValue(
                         (std::string) "CS",
                         TestingHarness::GetInstance().GetTestingPool()).Copy());
-  LOG_INFO("Value 1: %s", values->at(0).GetInfo().c_str());
-  LOG_INFO("Value 2: %s", values->at(1).GetInfo().c_str());
+  LOG_INFO("Value 1: %s", values.at(0).GetInfo().c_str());
+  LOG_INFO("Value 2: %s", values.at(1).GetInfo().c_str());
   // bind values to parameters in plan
-  insert_plan->SetParameterValues(values);
+  insert_plan->SetParameterValues(&values);
   txn_manager.CommitTransaction(txn);
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
-
-  delete values;
-  delete insert_plan;
-  delete insert_statement;
 }
 
 TEST_F(PlannerTests, InsertPlanTestParameterColumns) {
@@ -311,8 +306,8 @@ TEST_F(PlannerTests, InsertPlanTestParameterColumns) {
 
   // INSERT INTO department_table VALUES (1, $1)
   txn = txn_manager.BeginTransaction();
-  auto insert_statement =
-      new parser::InsertStatement(peloton::InsertType::VALUES);
+  std::unique_ptr<parser::InsertStatement> insert_statement(
+      new parser::InsertStatement(peloton::InsertType::VALUES));
 
   std::string name = "department_table";
   auto table_ref = new parser::TableRef(TableReferenceType::NAME);
@@ -328,7 +323,7 @@ TEST_F(PlannerTests, InsertPlanTestParameterColumns) {
   //    type::ValueFactory::GetNullValue();  // The value is not important
   // at  this point
   auto constant_expr_1 = new expression::ConstantValueExpression(
-      type::ValueFactory::GetIntegerValue(1).Copy());
+      type::ValueFactory::GetIntegerValue(1));
   auto parameter_expr_2 = new expression::ParameterValueExpression(1);
   insert_statement->insert_values.push_back(
       std::vector<std::unique_ptr<expression::AbstractExpression>>());
@@ -339,29 +334,26 @@ TEST_F(PlannerTests, InsertPlanTestParameterColumns) {
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
       DEFAULT_DB_NAME, "department_table", txn);
 
-  planner::InsertPlan *insert_plan = new planner::InsertPlan(
-      target_table, &insert_statement->columns, &insert_statement->insert_values);
+  std::unique_ptr<planner::InsertPlan> insert_plan(new planner::InsertPlan(
+      target_table, &insert_statement->columns,
+      &insert_statement->insert_values));
   LOG_INFO("Plan created:\n%s", insert_plan->GetInfo().c_str());
 
   // VALUES(1, "CS")
   LOG_INFO("Binding values");
-  auto values = new std::vector<type::Value>();
-  values->push_back(type::ValueFactory::GetVarcharValue(
+  std::vector<type::Value> values;
+  values.push_back(type::ValueFactory::GetVarcharValue(
                         (std::string) "CS",
                         TestingHarness::GetInstance().GetTestingPool()).Copy());
-  LOG_INFO("Value 1: %s", values->at(0).GetInfo().c_str());
+  LOG_INFO("Value 1: %s", values.at(0).GetInfo().c_str());
   // bind values to parameters in plan
-  insert_plan->SetParameterValues(values);
+  insert_plan->SetParameterValues(&values);
   txn_manager.CommitTransaction(txn);
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
-
-  delete values;
-  delete insert_plan;
-  delete insert_statement;
 }
 
 }  // namespace test
