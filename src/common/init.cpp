@@ -48,9 +48,6 @@ void PelotonInit::Initialize() {
   // start epoch.
   concurrency::EpochManagerFactory::GetInstance().StartEpoch();
 
-  // logging::DurabilityFactory::Configure(LoggingType::ON,
-  // CheckpointType::CHECKPOINT_TYPE_INVALID, TimerType::TIMER_OFF);
-
   // start GC.
   gc::GCManagerFactory::GetInstance().StartGC();
 
@@ -83,9 +80,9 @@ void PelotonInit::Initialize() {
   pg_catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
 
   txn_manager.CommitTransaction(txn);
-  logging::WalLogManager::SetDirectories({"/tmp/log"});
+  //Change this to config-defined constant
+  logging::WalLogManager::SetDirectory(settings::SettingsManager::GetString(settings::SettingId::log_directory));
   logging::WalLogManager::DoRecovery();
-  // log_manager.StartLoggers();
 }
 
 void PelotonInit::Shutdown() {

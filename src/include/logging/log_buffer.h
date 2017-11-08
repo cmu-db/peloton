@@ -46,17 +46,11 @@ class LogBuffer {
 
   inline size_t GetSize() { return size_; }
 
-  // inline size_t GetEpochId() { return eid_; }
-
-  inline size_t GetThreadId() { return thread_id_; }
-
   inline bool Empty() { return size_ == 0; }
 
   bool WriteData(const char *data, size_t len);
 
  private:
-  size_t thread_id_;
-  // size_t eid_;
   size_t size_;
   char *data_;
 };

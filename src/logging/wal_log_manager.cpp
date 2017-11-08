@@ -47,7 +47,7 @@ void WalLogManager::WriteTransaction(std::vector<LogRecord> log_records) {
   delete wl;
 }
 
-void WalLogManager::SetDirectories(std::string logging_dir) {
+void WalLogManager::SetDirectory(std::string logging_dir) {
   // check the existence of logging directories.
   // if not exists, then create the directory.
   if (LoggingUtil::CheckDirectoryExistence(logging_dir.c_str()) == false) {
@@ -57,6 +57,7 @@ void WalLogManager::SetDirectories(std::string logging_dir) {
     if (res == false) {
       LOG_ERROR("Cannot create directory: %s", logging_dir.c_str());
     }
+    log_directory_ = logging_dir;
   }
 }
 void WalLogManager::DoRecovery() {
