@@ -32,14 +32,15 @@ class HashJoinPlan : public AbstractJoinPlan {
       std::unique_ptr<const expression::AbstractExpression> &&predicate,
       std::unique_ptr<const ProjectInfo> &&proj_info,
       std::shared_ptr<const catalog::Schema> &proj_schema,
-      bool build_bloomfilter);
+      bool build_bloomfilter = false);
 
   HashJoinPlan(
       JoinType join_type,
       std::unique_ptr<const expression::AbstractExpression> &&predicate,
       std::unique_ptr<const ProjectInfo> &&proj_info,
       std::shared_ptr<const catalog::Schema> &proj_schema,
-      const std::vector<oid_t> &outer_hashkeys, bool build_bloomfilter);
+      const std::vector<oid_t> &outer_hashkeys,
+      bool build_bloomfilter = false);
 
   HashJoinPlan(
       JoinType join_type,
@@ -50,7 +51,7 @@ class HashJoinPlan : public AbstractJoinPlan {
           &left_hash_keys,
       std::vector<std::unique_ptr<const expression::AbstractExpression>>
           &right_hash_keys,
-      bool build_bloomfilter);
+      bool build_bloomfilter = false);
 
   void HandleSubplanBinding(bool is_left, const BindingContext &input) override;
 
