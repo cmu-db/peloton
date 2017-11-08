@@ -10,10 +10,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "type/value.h"
-#include "optimizer/stats/selectivity.h"
-#include "expression/comparison_expression.h"
 #include "optimizer/stats/cost.h"
+#include "expression/comparison_expression.h"
+#include "optimizer/stats/selectivity.h"
+#include "type/value.h"
 
 #include <cmath>
 
@@ -100,7 +100,7 @@ double Cost::SortGroupByCost(const std::shared_ptr<TableStats> &input_stats,
   // Update cost to trivial if first group by column has index.
   // TODO: use more complicated cost when group by multiple columns when
   // primary index operator is supported.
-  if (input_stats->HasPrimaryIndex(columns[0])) {
+  if (!columns.empty() && input_stats->HasPrimaryIndex(columns[0])) {
     // underestimation of group by with index.
     cost = DEFAULT_OPERATOR_COST;
   }
@@ -124,6 +124,8 @@ double Cost::HashGroupByCost(const std::shared_ptr<TableStats> &input_stats,
 //===----------------------------------------------------------------------===//
 // DISTINCT
 //===----------------------------------------------------------------------===//
+// TODO: support multiple distinct columns
+// what if the column has index?
 double Cost::DistinctCost(const std::shared_ptr<TableStats> &input_stats,
                           oid_t column,
                           std::shared_ptr<TableStats> &output_stats) {
@@ -139,9 +141,9 @@ double Cost::DistinctCost(const std::shared_ptr<TableStats> &input_stats,
 //===----------------------------------------------------------------------===//
 // Project
 //===----------------------------------------------------------------------===//
-double ProjectCost(const std::shared_ptr<TableStats> &input_stats,
-                   UNUSED_ATTRIBUTE std::vector<oid_t> columns,
-                   std::shared_ptr<TableStats> &output_stats) {
+double Cost::ProjectCost(const std::shared_ptr<TableStats> &input_stats,
+                         UNUSED_ATTRIBUTE std::vector<oid_t> columns,
+                         std::shared_ptr<TableStats> &output_stats) {
   PL_ASSERT(input_stats);
 
   if (output_stats != nullptr) {
@@ -167,16 +169,16 @@ double Cost::LimitCost(const std::shared_ptr<TableStats> &input_stats,
 //===----------------------------------------------------------------------===//
 // ORDER BY
 //===----------------------------------------------------------------------===//
-double OrderByCost(const std::shared_ptr<TableStats> &input_stats,
-                   const std::vector<oid_t> &columns,
-                   const std::vector<bool> &orders,
-                   std::shared_ptr<TableStats> &output_stats) {
+double Cost::OrderByCost(const std::shared_ptr<TableStats> &input_stats,
+                         const std::vector<std::string> &columns,
+                         const std::vector<bool> &orders,
+                         std::shared_ptr<TableStats> &output_stats) {
   PL_ASSERT(input_stats);
   // Invalid case.
   if (columns.size() == 0 || columns.size() != orders.size()) {
     return DEFAULT_COST;
   }
-  oid_t column = columns[0];
+  std::string column = columns[0];
   bool order = orders[0];  // TRUE is ASC, FALSE is DESC
   double cost = DEFAULT_COST;
   // Special case when first column has index.
