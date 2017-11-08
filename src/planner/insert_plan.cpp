@@ -179,10 +179,14 @@ hash_t InsertPlan::Hash() const {
   auto type = GetPlanNodeType();
   hash_t hash = HashUtil::Hash(&type);
   hash = HashUtil::CombineHashes(hash, GetTable()->Hash());
-  if (GetProjectInfo() != nullptr)
-    hash = HashUtil::CombineHashes(hash, GetProjectInfo()->Hash());
-  auto count = GetBulkInsertCount();
-  hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&count));
+  if (GetChildren().size() == 0) {
+    if (GetProjectInfo() != nullptr)
+      hash = HashUtil::CombineHashes(hash, GetProjectInfo()->Hash());
+    auto bulk_insert_count = GetBulkInsertCount();
+    hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&bulk_insert_count));
+    for (decltype(bulk_insert_count) i = 0; i < bulk_insert_count; i++)
+      hash = HashUtil::CombineHashes(hash, GetTuple(i)->HashCode());
+  }
   return HashUtil::CombineHashes(hash, AbstractPlan::Hash());
 }
 
@@ -213,8 +217,8 @@ bool InsertPlan::operator==(AbstractPlan &rhs) const {
     if (bulk_insert_count != other.GetBulkInsertCount())
       return false;
     for (decltype(bulk_insert_count) i = 0; i < bulk_insert_count; i++) {
-      auto is_equal = GetTuple(i)->Compare(*other.GetTuple(i));
-      if (is_equal == false)
+      auto compared = GetTuple(i)->Compare(*other.GetTuple(i));
+      if (compared == 0)
         return false;
     }
   }
