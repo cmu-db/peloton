@@ -6,7 +6,7 @@
 //
 // Identification: test/executor/mutate_test.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -192,7 +192,7 @@ TEST_F(MutateTests, StressTests) {
   auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
 
   // Create insert node for this test.
-  storage::DataTable *table = TestingExecutorUtil::CreateTable();
+  std::unique_ptr<storage::DataTable> table(TestingExecutorUtil::CreateTable());
 
   // Pass through insert executor.
   /*
@@ -209,8 +209,8 @@ TEST_F(MutateTests, StressTests) {
   */
 
   auto non_empty_tuple =
-      TestingExecutorUtil::GetTuple(table, ++tuple_id, testing_pool);
-  planner::InsertPlan node2(table, std::move(non_empty_tuple));
+      TestingExecutorUtil::GetTuple(table.get(), ++tuple_id, testing_pool);
+  planner::InsertPlan node2(table.get(), std::move(non_empty_tuple));
   executor::InsertExecutor executor2(&node2, context.get());
   executor2.Execute();
 
@@ -222,7 +222,7 @@ TEST_F(MutateTests, StressTests) {
 
   txn_manager.CommitTransaction(txn);
 
-  LaunchParallelTest(1, InsertTuple, table, testing_pool);
+  LaunchParallelTest(1, InsertTuple, table.get(), testing_pool);
   LOG_TRACE("%s", table->GetInfo().c_str());
 
   LOG_TRACE("---------------------------------------------");
@@ -232,7 +232,7 @@ TEST_F(MutateTests, StressTests) {
 
   LOG_TRACE("---------------------------------------------");
 
-  LaunchParallelTest(1, DeleteTuple, table);
+  LaunchParallelTest(1, DeleteTuple, table.get());
 
   LOG_TRACE("%s", table->GetInfo().c_str());
 
@@ -240,36 +240,31 @@ TEST_F(MutateTests, StressTests) {
   std::vector<catalog::Column> columns;
 
   columns.push_back(TestingExecutorUtil::GetColumnInfo(0));
-  catalog::Schema *key_schema = new catalog::Schema(columns);
-  storage::Tuple *key1 = new storage::Tuple(key_schema, true);
-  storage::Tuple *key2 = new storage::Tuple(key_schema, true);
+  std::unique_ptr<catalog::Schema> key_schema(new catalog::Schema(columns));
+  std::unique_ptr<storage::Tuple> key1(new storage::Tuple(key_schema.get(),
+                                                          true));
+  std::unique_ptr<storage::Tuple> key2(new storage::Tuple(key_schema.get(),
+                                                          true));
 
   key1->SetValue(0, type::ValueFactory::GetIntegerValue(10), nullptr);
   key2->SetValue(0, type::ValueFactory::GetIntegerValue(100), nullptr);
-
-  delete key1;
-  delete key2;
-  delete key_schema;
 
   // SEC KEY
   columns.clear();
   columns.push_back(TestingExecutorUtil::GetColumnInfo(0));
   columns.push_back(TestingExecutorUtil::GetColumnInfo(1));
-  key_schema = new catalog::Schema(columns);
+  key_schema.reset(new catalog::Schema(columns));
 
-  storage::Tuple *key3 = new storage::Tuple(key_schema, true);
-  storage::Tuple *key4 = new storage::Tuple(key_schema, true);
+  std::unique_ptr<storage::Tuple> key3(new storage::Tuple(key_schema.get(),
+                                                          true));
+  std::unique_ptr<storage::Tuple> key4(new storage::Tuple(key_schema.get(),
+                                                          true));
 
   key3->SetValue(0, type::ValueFactory::GetIntegerValue(10), nullptr);
   key3->SetValue(1, type::ValueFactory::GetIntegerValue(11), nullptr);
   key4->SetValue(0, type::ValueFactory::GetIntegerValue(100), nullptr);
   key4->SetValue(1, type::ValueFactory::GetIntegerValue(101), nullptr);
 
-  delete key3;
-  delete key4;
-  delete key_schema;
-
-  delete table;
   tuple_id = 0;
 }
 
@@ -331,12 +326,11 @@ TEST_F(MutateTests, InsertTest) {
 
 TEST_F(MutateTests, DeleteTest) {
   // We are going to insert a tile group into a table in this test
-
-  storage::DataTable *table = TestingExecutorUtil::CreateTable();
+  std::unique_ptr<storage::DataTable> table(TestingExecutorUtil::CreateTable());
   auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
 
-  LaunchParallelTest(1, InsertTuple, table, testing_pool);
-  LaunchParallelTest(1, DeleteTuple, table);
+  LaunchParallelTest(1, InsertTuple, table.get(), testing_pool);
+  LaunchParallelTest(1, DeleteTuple, table.get());
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -344,7 +338,7 @@ TEST_F(MutateTests, DeleteTest) {
       new executor::ExecutorContext(txn));
   // Seq scan
   std::vector<oid_t> column_ids = {0};
-  planner::SeqScanPlan seq_scan_node(table, nullptr, column_ids);
+  planner::SeqScanPlan seq_scan_node(table.get(), nullptr, column_ids);
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
   EXPECT_TRUE(seq_scan_executor.Init());
 
@@ -356,7 +350,6 @@ TEST_F(MutateTests, DeleteTest) {
   }
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(tuple_cnt, 6);
-  delete table;
   tuple_id = 0;
 }
 
@@ -387,15 +380,15 @@ static int SeqScanCount(storage::DataTable *table,
 
 TEST_F(MutateTests, UpdateTest) {
   // We are going to insert a tile group into a table in this test
-  storage::DataTable *table = TestingExecutorUtil::CreateTable();
+  std::unique_ptr<storage::DataTable> table(TestingExecutorUtil::CreateTable());
   auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
 
-  LaunchParallelTest(1, InsertTuple, table, testing_pool);
-  LaunchParallelTest(1, UpdateTuple, table);
+  LaunchParallelTest(1, InsertTuple, table.get(), testing_pool);
+  LaunchParallelTest(1, UpdateTuple, table.get());
 
   // Seq scan to check number
   std::vector<oid_t> column_ids = {0};
-  auto tuple_cnt = SeqScanCount(table, column_ids, nullptr);
+  auto tuple_cnt = SeqScanCount(table.get(), column_ids, nullptr);
   EXPECT_EQ(tuple_cnt, 10);
 
   // ATTR = 23.5
@@ -408,10 +401,9 @@ TEST_F(MutateTests, UpdateTest) {
   auto predicate = new expression::ComparisonExpression(
       ExpressionType::COMPARE_EQUAL, tup_val_exp, const_val_exp);
 
-  tuple_cnt = SeqScanCount(table, column_ids, predicate);
+  tuple_cnt = SeqScanCount(table.get(), column_ids, predicate);
   EXPECT_EQ(tuple_cnt, 6);
 
-  delete table;
   tuple_id = 0;
 }
 

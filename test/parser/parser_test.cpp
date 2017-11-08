@@ -114,15 +114,14 @@ TEST_F(ParserTests, BasicTest) {
   // Parsing
   UNUSED_ATTRIBUTE int ii = 0;
   for (auto query : queries) {
-    parser::SQLStatementList* stmt_list =
-        parser::PostgresParser::ParseSQLString(query.c_str());
+    std::unique_ptr<parser::SQLStatementList> stmt_list(
+        parser::PostgresParser::ParseSQLString(query.c_str()));
     EXPECT_TRUE(stmt_list->is_valid);
     if (stmt_list->is_valid == false) {
       LOG_ERROR("Message: %s, line: %d, col: %d", stmt_list->parser_msg,
                 stmt_list->error_line, stmt_list->error_col);
     }
     LOG_TRACE("%d : %s", ++ii, stmt_list->GetInfo().c_str());
-    delete stmt_list;
   }
 }
 
@@ -138,13 +137,12 @@ TEST_F(ParserTests, GrammarTest) {
       "orders.customer_id ORDER BY order_value;");
 
   for (auto query : valid_queries) {
-    parser::SQLStatementList* result =
-        parser::PostgresParser::ParseSQLString(query.c_str());
+    std::unique_ptr<parser::SQLStatementList> result(
+        parser::PostgresParser::ParseSQLString(query.c_str()));
     EXPECT_TRUE(result->is_valid);
     if (result->is_valid == false) {
       LOG_ERROR("Parsing failed: %s (%s)\n", query.c_str(), result->parser_msg);
     }
-    delete result;
   }
 }
 
@@ -157,8 +155,8 @@ TEST_F(ParserTests, SelectParserTest) {
       "orders ON customers.id = orders.customer_id GROUP BY customer_id ORDER "
       "BY SUM(order_value) DESC LIMIT 5;";
 
-  parser::SQLStatementList* list =
-      parser::PostgresParser::ParseSQLString(query.c_str());
+  std::unique_ptr<parser::SQLStatementList> list(
+      parser::PostgresParser::ParseSQLString(query.c_str()));
   EXPECT_TRUE(list->is_valid);
   if (list->is_valid == false) {
     LOG_ERROR("Parsing failed: %s (%s)\n", query.c_str(), list->parser_msg);
@@ -203,8 +201,6 @@ TEST_F(ParserTests, SelectParserTest) {
 
   // Limit
   EXPECT_EQ(stmt->limit->limit, 5);
-
-  delete list;
 }
 
 TEST_F(ParserTests, TransactionTest) {
@@ -216,39 +212,34 @@ TEST_F(ParserTests, TransactionTest) {
   valid_queries.push_back("ROLLBACK TRANSACTION;");
 
   for (auto query : valid_queries) {
-    parser::SQLStatementList* result =
-        parser::PostgresParser::ParseSQLString(query.c_str());
+    std::unique_ptr<parser::SQLStatementList> result(
+        parser::PostgresParser::ParseSQLString(query.c_str()));
     EXPECT_TRUE(result->is_valid);
 
     if (result->is_valid == false) {
       LOG_ERROR("Parsing failed: %s (%s)\n", query.c_str(), result->parser_msg);
     }
     LOG_TRACE("%s", result->GetInfo().c_str());
-    delete result;
   }
 
-  parser::SQLStatementList* list =
-      parser::PostgresParser::ParseSQLString(valid_queries[0].c_str());
+  std::unique_ptr<parser::SQLStatementList> list(
+      parser::PostgresParser::ParseSQLString(valid_queries[0].c_str()));
   parser::TransactionStatement* stmt =
       (parser::TransactionStatement*)list->GetStatement(0);
   EXPECT_EQ(list->GetStatement(0)->GetType(), StatementType::TRANSACTION);
   EXPECT_EQ(stmt->type, parser::TransactionStatement::kBegin);
-  delete list;
 
-  list = parser::PostgresParser::ParseSQLString(valid_queries[1].c_str());
+  list.reset(parser::PostgresParser::ParseSQLString(valid_queries[1].c_str()));
   stmt = (parser::TransactionStatement*)list->GetStatement(0);
   EXPECT_EQ(stmt->type, parser::TransactionStatement::kBegin);
-  delete list;
 
-  list = parser::PostgresParser::ParseSQLString(valid_queries[2].c_str());
+  list.reset(parser::PostgresParser::ParseSQLString(valid_queries[2].c_str()));
   stmt = (parser::TransactionStatement*)list->GetStatement(0);
   EXPECT_EQ(stmt->type, parser::TransactionStatement::kCommit);
-  delete list;
 
-  list = parser::PostgresParser::ParseSQLString(valid_queries[3].c_str());
+  list.reset(parser::PostgresParser::ParseSQLString(valid_queries[3].c_str()));
   stmt = (parser::TransactionStatement*)list->GetStatement(0);
   EXPECT_EQ(stmt->type, parser::TransactionStatement::kRollback);
-  delete list;
 }
 
 TEST_F(ParserTests, CreateTest) {
@@ -276,18 +267,15 @@ TEST_F(ParserTests, CreateTest) {
   // Parsing
   UNUSED_ATTRIBUTE int ii = 0;
   for (auto query : queries) {
-    parser::SQLStatementList* result =
-        parser::PostgresParser::ParseSQLString(query.c_str());
+    std::unique_ptr<parser::SQLStatementList> result(
+        parser::PostgresParser::ParseSQLString(query.c_str()));
 
     if (result->is_valid == false) {
       LOG_ERROR("Parsing failed: %s (%s)\n", query.c_str(), result->parser_msg);
     }
     EXPECT_EQ(result->is_valid, true);
 
-    if (result) {
-      LOG_TRACE("%d : %s", ++ii, result->GetInfo().c_str());
-      delete result;
-    }
+    LOG_TRACE("%d : %s", ++ii, result->GetInfo().c_str());
   }
 }
 
@@ -333,18 +321,15 @@ TEST_F(ParserTests, TM1Test) {
   // Parsing
   UNUSED_ATTRIBUTE int ii = 0;
   for (auto query : queries) {
-    parser::SQLStatementList* result =
-        parser::PostgresParser::ParseSQLString(query.c_str());
+    std::unique_ptr<parser::SQLStatementList> result(
+        parser::PostgresParser::ParseSQLString(query.c_str()));
 
     if (result->is_valid == false) {
       LOG_ERROR("Parsing failed: %s (%s)\n", query.c_str(), result->parser_msg);
     }
     EXPECT_EQ(result->is_valid, true);
 
-    if (result) {
-      LOG_TRACE("%d : %s", ++ii, result->GetInfo().c_str());
-      delete result;
-    }
+    LOG_TRACE("%d : %s", ++ii, result->GetInfo().c_str());
   }
 }
 
@@ -366,18 +351,15 @@ TEST_F(ParserTests, IndexTest) {
   // Parsing
   UNUSED_ATTRIBUTE int ii = 0;
   for (auto query : queries) {
-    parser::SQLStatementList* result =
-        parser::PostgresParser::ParseSQLString(query.c_str());
+    std::unique_ptr<parser::SQLStatementList> result(
+        parser::PostgresParser::ParseSQLString(query.c_str()));
 
     if (result->is_valid == false) {
       LOG_ERROR("Parsing failed: %s (%s)\n", query.c_str(), result->parser_msg);
     }
     EXPECT_EQ(result->is_valid, true);
 
-    if (result) {
-      LOG_TRACE("%d : %s", ++ii, result->GetInfo().c_str());
-      delete result;
-    }
+    LOG_TRACE("%d : %s", ++ii, result->GetInfo().c_str());
   }
 }
 
@@ -390,8 +372,8 @@ TEST_F(ParserTests, CopyTest) {
   // Parsing
   UNUSED_ATTRIBUTE int ii = 0;
   for (auto query : queries) {
-    parser::SQLStatementList* result =
-        parser::PostgresParser::ParseSQLString(query.c_str());
+    std::unique_ptr<parser::SQLStatementList> result(
+        parser::PostgresParser::ParseSQLString(query.c_str()));
 
     if (result->is_valid == false) {
       LOG_ERROR("Message: %s, line: %d, col: %d", result->parser_msg,
@@ -405,10 +387,7 @@ TEST_F(ParserTests, CopyTest) {
     EXPECT_EQ(copy_stmt->delimiter, ',');
     EXPECT_STREQ(copy_stmt->file_path.c_str(), "/home/user/output.csv");
 
-    if (result != nullptr) {
-      LOG_TRACE("%d : %s", ++ii, result->GetInfo().c_str());
-      delete result;
-    }
+    LOG_TRACE("%d : %s", ++ii, result->GetInfo().c_str());
   }
 }
 
