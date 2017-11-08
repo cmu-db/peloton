@@ -281,25 +281,25 @@ void WriteTransaction(std::vector<LogRecord> log_records, ResultType* status) {
     *status = ResultType::SUCCESS;
 }
 
-CopySerializeOutput* WalLogger::WriteRecordToBuffer(LogRecord &record) {
+CopySerializeOutput *WalLogger::WriteRecordToBuffer(LogRecord &record) {
   if(likely_branch(is_running_)){
 
   // Reset the output buffer
-  CopySerializeOutput* output_buffer = new CopySerializeOutput();
+  CopySerializeOutput *output_buffer = new CopySerializeOutput();
 
   // Reserve for the frame length
   size_t start = output_buffer->Position();
   output_buffer->WriteInt(0);
 
   LogRecordType type = record.GetType();
-  output_buffer->WriteEnumInSingleByte(static_cast<std::underlying_type_t<LogRecordType>>(type));
+  output_buffer->WriteEnumInSingleByte(
+      static_cast<std::underlying_type_t<LogRecordType>>(type));
 
   output_buffer->WriteLong(record.GetEpochId());
   output_buffer->WriteLong(record.GetCommitId());
 
   switch (type) {
-    case LogRecordType::TUPLE_INSERT:
-     {
+    case LogRecordType::TUPLE_INSERT: {
       auto &manager = catalog::Manager::GetInstance();
       auto tuple_pos = record.GetItemPointer();
       auto tg = manager.GetTileGroup(tuple_pos.block).get();
@@ -312,24 +312,21 @@ CopySerializeOutput* WalLogger::WriteRecordToBuffer(LogRecord &record) {
       output_buffer->WriteLong(tuple_pos.offset);
 
       // Write the full tuple into the buffer
-      for(auto schema : tg->GetTileSchemas()){
-          for(auto column : schema.GetColumns()){
-              columns.push_back(column);
-          }
+      for (auto schema : tg->GetTileSchemas()) {
+        for (auto column : schema.GetColumns()) {
+          columns.push_back(column);
+        }
       }
 
-      ContainerTuple<storage::TileGroup> container_tuple(
-        tg, tuple_pos.offset
-      );
-      for(oid_t oid = 0; oid < columns.size(); oid++){
+      ContainerTuple<storage::TileGroup> container_tuple(tg, tuple_pos.offset);
+      for (oid_t oid = 0; oid < columns.size(); oid++) {
         auto val = container_tuple.GetValue(oid);
         val.SerializeTo(*(output_buffer));
       }
 
       break;
     }
-  case LogRecordType::TUPLE_DELETE:
-  {
+    case LogRecordType::TUPLE_DELETE: {
       auto &manager = catalog::Manager::GetInstance();
       auto tuple_pos = record.GetItemPointer();
       auto tg = manager.GetTileGroup(tuple_pos.block).get();
@@ -341,11 +338,9 @@ CopySerializeOutput* WalLogger::WriteRecordToBuffer(LogRecord &record) {
       output_buffer->WriteLong(tuple_pos.block);
       output_buffer->WriteLong(tuple_pos.offset);
 
-
       break;
-  }
-  case LogRecordType::TUPLE_UPDATE:
-  {
+    }
+    case LogRecordType::TUPLE_UPDATE: {
       auto &manager = catalog::Manager::GetInstance();
       auto tuple_pos = record.GetItemPointer();
       auto old_tuple_pos = record.GetOldItemPointer();
@@ -362,23 +357,20 @@ CopySerializeOutput* WalLogger::WriteRecordToBuffer(LogRecord &record) {
       output_buffer->WriteLong(tuple_pos.block);
       output_buffer->WriteLong(tuple_pos.offset);
       // Write the full tuple into the buffer
-      for(auto schema : tg->GetTileSchemas()){
-          for(auto column : schema.GetColumns()){
-              columns.push_back(column);
-          }
+      for (auto schema : tg->GetTileSchemas()) {
+        for (auto column : schema.GetColumns()) {
+          columns.push_back(column);
+        }
       }
 
-      ContainerTuple<storage::TileGroup> container_tuple(
-        tg, tuple_pos.offset
-      );
-      for(oid_t oid = 0; oid < columns.size(); oid++){
+      ContainerTuple<storage::TileGroup> container_tuple(tg, tuple_pos.offset);
+      for (oid_t oid = 0; oid < columns.size(); oid++) {
         auto val = container_tuple.GetValue(oid);
         val.SerializeTo(*(output_buffer));
       }
 
-
       break;
-  }
+    }
     default: {
       LOG_ERROR("Unsupported log record type");
       PL_ASSERT(false);
@@ -421,4 +413,4 @@ void WalLogger::PersistLogBuffer(LogBuffer *log_buffer) {
   }
   delete new_file_handle;
 }
-}}
+}

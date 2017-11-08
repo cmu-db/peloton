@@ -868,8 +868,8 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         // we require the GC to delete tuple from index only once.
         // recycle old version, delete from index
         // the gc should be responsible for recycling the newer empty version.
-        gc_set->operator[](tile_group_id)[tuple_slot] = GCVersionType::COMMIT_DELETE;
-        //log_manager.StartPersistTxn(end_commit_id);
+        gc_set->operator[](tile_group_id)[tuple_slot] =
+            GCVersionType::COMMIT_DELETE;
         logging::LogRecord record =
             logging::LogRecordFactory::CreateTupleRecord(
                 LogRecordType::TUPLE_DELETE,
@@ -877,8 +877,6 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
                 epoch_id);
         current_txn->log_records_.push_back(record);
       } else if (tuple_entry.second == RWType::INSERT) {
-
-
         PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
                   current_txn->GetTransactionId());
         // set the begin commit id to persist insert
@@ -920,16 +918,16 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
     }
   }
 
-  //If there is a log manager and something to log, queue the task.
-  if(log_manager != nullptr && !current_txn->log_records_.empty()){
-      log_manager->LogTransaction(current_txn->log_records_);
-      log_manager->is_running_ = true;
-      EndTransaction(current_txn);
-      if (settings::SettingsManager::GetInt(settings::SettingId::stats_mode) !=
-          STATS_TYPE_INVALID) {
-        stats::BackendStatsContext::GetInstance()->IncrementTxnCommitted(
-            database_id);
-      }
+  // If there is a log manager and something to log, queue the task.
+  if (log_manager != nullptr && !current_txn->log_records_.empty()) {
+    log_manager->LogTransaction(current_txn->log_records_);
+    log_manager->is_running_ = true;
+    EndTransaction(current_txn);
+    if (settings::SettingsManager::GetInt(settings::SettingId::stats_mode) !=
+        STATS_TYPE_INVALID) {
+      stats::BackendStatsContext::GetInstance()->IncrementTxnCommitted(
+          database_id);
+    }
 
   // If there is a log manager and something to log, queue the task.
   if (log_manager != nullptr && !current_txn->log_records_.empty()) {
@@ -956,10 +954,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
     return result;
   }
   }
-
-
 }
-
 
 ResultType TimestampOrderingTransactionManager::AbortTransaction(
     TransactionContext *const current_txn) {

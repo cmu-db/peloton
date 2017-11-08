@@ -154,8 +154,8 @@ class TransactionContext : public Printable {
 
   std::vector<logging::LogRecord> log_records_;
 
-
   std::vector<logging::LogRecord> log_records_;
+
  private:
   //===--------------------------------------------------------------------===//
   // Data members
@@ -189,7 +189,6 @@ class TransactionContext : public Printable {
 
   // result of the transaction
   ResultType result_ = ResultType::SUCCESS;
-
 
   bool is_written_;
   size_t insert_count_;

@@ -10,7 +10,6 @@
 // //
 // //===----------------------------------------------------------------------===//
 
-
 // #include "common/harness.h"
 // #include "logging/circular_buffer_pool.h"
 // #include <stdlib.h>

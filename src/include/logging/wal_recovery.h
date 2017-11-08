@@ -70,6 +70,7 @@ class WalRecovery {
   std::vector<size_t> file_eids_;
   std::atomic<int> max_replay_file_id_;
 
+  // Since every thing is copied to the
   const std::string logging_filename_prefix_ = "log";
 
 };

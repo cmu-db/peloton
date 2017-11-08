@@ -536,5 +536,5 @@ void WalRecovery::RunRecovery() {
     }
   }
 }
+void WalRecovery::RunSecIndexRebuildThread() {}
 }
-}}

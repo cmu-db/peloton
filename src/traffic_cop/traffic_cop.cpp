@@ -91,8 +91,7 @@ ResultType TrafficCop::BeginQueryHelper(size_t thread_id) {
   return ResultType::SUCCESS;
 }
 
-
-//Pass the log manager to commit transaction
+// Pass the log manager to commit transaction
 ResultType TrafficCop::CommitQueryHelper(logging::WalLogManager *log_manager) {
   // do nothing if we have no active txns
   if (tcop_txn_state_.empty()) {
@@ -223,10 +222,10 @@ void TrafficCop::ExecuteStatementPlanGetResult(
             p_status_.m_result = ResultType::ABORTED;
           }
       }
-  }
+    }
   } else {
-      //COMMIT; statement
-      p_status_.m_result = ResultType::QUEUING;
+    // COMMIT; statement
+    p_status_.m_result = ResultType::QUEUING;
     }
   } else {
     // COMMIT; statement

@@ -1673,9 +1673,9 @@ std::string ResultTypeToString(ResultType type) {
     case ResultType::QUEUING: {
       return ("QUEUING");
     }
-  case ResultType::LOGGING: {
-    return ("LOGGING");
-  }
+    case ResultType::LOGGING: {
+      return ("LOGGING");
+    }
     default: {
       throw ConversionException(
           StringUtil::Format("No string conversion for ResultType value '%d'",
@@ -1703,10 +1703,11 @@ ResultType StringToResultType(const std::string &str) {
     return ResultType::QUEUING;
   } else if (upper_str == "LOGGING") {
     return ResultType::QUEUING;
-    } else {
-      throw ConversionException(StringUtil::Format(
-          "No ResultType conversion from string '%s'", upper_str.c_str()));
-    }{
+  } else {
+    throw ConversionException(StringUtil::Format(
+        "No ResultType conversion from string '%s'", upper_str.c_str()));
+  }
+  {
     throw ConversionException(StringUtil::Format(
         "No ResultType conversion from string '%s'", upper_str.c_str()));
   }

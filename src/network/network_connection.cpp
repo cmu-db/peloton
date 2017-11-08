@@ -97,11 +97,11 @@ void NetworkConnection::Init(short event_flags, NetworkThread *thread,
 }
 
 void NetworkConnection::TriggerStateMachine(void *arg) {
-  struct event* event = static_cast<struct event*>(arg);
+  struct event *event = static_cast<struct event *>(arg);
   event_active(event, EV_WRITE, 0);
 }
 
-void NetworkConnection::TriggerStateMachineLog(void* arg) {
+void NetworkConnection::TriggerStateMachineLog(void *arg) {
   struct event *event = static_cast<struct event *>(arg);
   event_active(event, EV_WRITE, 0);
 }
@@ -794,7 +794,7 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
         break;
       }
 
-    case ConnState::CONN_LOGGING: {
+      case ConnState::CONN_LOGGING: {
       if (event_add(conn->network_event, nullptr) < 0) {
         LOG_ERROR("Failed to add event");
         PL_ASSERT(false);
@@ -803,7 +803,7 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
 
       conn->TransitState(ConnState::CONN_GET_RESULT);
       break;
-    }
+      }
 
       case ConnState::CONN_WRITE: {
         // examine write packets result
