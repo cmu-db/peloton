@@ -33,14 +33,14 @@ namespace logging {
 /**
  * logging file name layout :
  *
- * dir_name + "/" + prefix + "_" + epoch_id
+ * dir_name + "/" + prefix + "_" + 0
  *
  *
  * logging file layout :
  *
  *  -----------------------------------------------------------------------------
  *  | txn_eid | txn_cid | database_id | table_id | operation_type | tilegroup
- *and offset |data | ... | txn_end_flag
+ *and offset |data | ... |
  *  -----------------------------------------------------------------------------
  *
  * NOTE: this layout is designed for physiological logging.
@@ -48,6 +48,7 @@ namespace logging {
  * NOTE: tuple length can be obtained from the table schema.
  *
  */
+
 
 class WalLogManager {
   WalLogManager(const WalLogManager &) = delete;
@@ -63,7 +64,7 @@ class WalLogManager {
       : task_callback_(task_callback), task_callback_arg_(task_callback_arg) {}
   ~WalLogManager() {}
 
-  static void SetDirectories(std::string logging_dir);
+  static void SetDirectory(std::string logging_dir);
 
   static void WriteTransactionWrapper(void *args);
 
@@ -79,11 +80,15 @@ class WalLogManager {
     task_callback_arg_ = task_callback_arg;
   }
   bool is_running_ = false;
-
  private:
   void (*task_callback_)(void *);
   void *task_callback_arg_;
+
+
 };
+
+
+static std::string log_directory_;
 
 struct LogTransactionArg {
   inline LogTransactionArg(const std::vector<LogRecord> log_records)
