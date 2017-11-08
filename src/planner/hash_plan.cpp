@@ -31,10 +31,6 @@ void HashPlan::GetOutputColumns (std::vector<oid_t> &columns) const {
   GetChild(0)->GetOutputColumns(columns);
 }
 
-bool HashPlan::Equals(planner::AbstractPlan &plan) const {
-  return (*this == plan);
-}
-
 hash_t HashPlan::Hash() const {
   auto type = GetPlanNodeType();
   hash_t hash = HashUtil::Hash(&type);
