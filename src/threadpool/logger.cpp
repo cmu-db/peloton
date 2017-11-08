@@ -13,7 +13,7 @@
 #include "threadpool/logger.h"
 #include "common/logger.h"
 #define EMPTY_COUNT_BOUND 10
-#define WORKER_PAUSE_TIME 10
+#define LOGGER_PAUSE_TIME 50
 
 namespace peloton {
 namespace threadpool {
@@ -32,7 +32,7 @@ void Logger::PollForWork(Logger* current_thread, LoggerPool* current_pool){
       empty_count++;
       if (empty_count == EMPTY_COUNT_BOUND) {
         empty_count = 0;
-        usleep(WORKER_PAUSE_TIME);
+        usleep(LOGGER_PAUSE_TIME);
       }
       continue;
     }
@@ -53,16 +53,11 @@ LoggerPool::LoggerPool(size_t num_threads, LogTaskQueue *task_queue) {
   this->task_queue_ = task_queue;
   for (size_t thread_id = 0; thread_id < num_threads; thread_id++){
     // start thread on construction
-    std::unique_ptr<Logger> worker = std::make_unique<Logger>();
-    worker->StartThread(this);
-    logger_threads_.push_back(std::move(worker));
+    std::unique_ptr<Logger> logger = std::make_unique<Logger>();
+    logger->StartThread(this);
+    logger_threads_.push_back(std::move(logger));
   }
 }
-/*
-WorkerPool& WorkerPool::GetInstance() {
-  static WorkerPool wp(DEFAULT_NUM_WORKER_THREADS, DEFAULT_TASK_QUEUE_LENGTH);
-  return wp;
-}*/
 
 void LoggerPool::Shutdown() {
   for (auto& thread : logger_threads_){
