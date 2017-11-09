@@ -143,21 +143,16 @@ void InsertPlan::SetParameterValues(std::vector<type::Value> *values) {
   LOG_TRACE("Set Parameter Values in Insert");
   PL_ASSERT(values->size() == parameter_vector_->size());
   for (unsigned int i = 0; i < values->size(); i++) {
-    auto param_type = params_value_type_->at(i);
-    auto &put_loc = parameter_vector_->at(i);
-    auto value = values->at(std::get<2>(put_loc));
-    type::Value val = value.CastAs(param_type);
-    switch (param_type) {
-      case type::TypeId::VARBINARY:
-      case type::TypeId::VARCHAR: {
-        tuples_[std::get<0>(put_loc)]->SetValue(std::get<1>(put_loc), val,
-                                                GetPlanPool());
-        break;
-      }
-      default: {
-        tuples_[std::get<0>(put_loc)]->SetValue(std::get<1>(put_loc), val);
-      }
-    }
+    auto type = params_value_type_->at(i);
+    auto &param_info = parameter_vector_->at(i);
+    auto tuple_idx = std::get<0>(param_info);
+    auto column_id = std::get<1>(param_info);
+    auto param_idx = std::get<2>(param_info);
+    type::Value value = values->at(param_idx).CastAs(type);
+    if (type == type::TypeId::VARCHAR || type == type::TypeId::VARBINARY)
+      tuples_[tuple_idx]->SetValue(column_id, value, GetPlanPool());
+    else
+      tuples_[tuple_idx]->SetValue(column_id, value);
   }
 }
 

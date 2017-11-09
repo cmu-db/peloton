@@ -30,7 +30,7 @@ class InsertStatement;
 namespace planner {
 class InsertPlan : public AbstractPlan {
  public:
-  // Construct when input is a logical tile - WARNING Not supported by codegen
+  // Construct when input is a logical tile
   InsertPlan(storage::DataTable *table, oid_t bulk_insert_count = 1)
     : target_table_(table), bulk_insert_count_(bulk_insert_count) {}
 
@@ -43,7 +43,7 @@ class InsertPlan : public AbstractPlan {
     LOG_TRACE("Creating an Insert Plan with a projection");
   }
 
-  // Construct with a tuple - WARNING Not supported by codegen
+  // Construct with a tuple
   InsertPlan(storage::DataTable *table,
              std::unique_ptr<storage::Tuple> &&tuple,
              oid_t bulk_insert_count = 1)
@@ -52,7 +52,7 @@ class InsertPlan : public AbstractPlan {
     tuples_.push_back(std::move(tuple));
   }
 
-  // Construct with specific values - WARNING Not supported by the interpreter
+  // Construct with specific values
   InsertPlan(storage::DataTable *table, const std::vector<std::string> *columns,
              const std::vector<std::vector<std::unique_ptr<
                  expression::AbstractExpression>>> *insert_values);
