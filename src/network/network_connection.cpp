@@ -794,17 +794,6 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
         break;
       }
 
-      case ConnState::CONN_LOGGING: {
-      if (event_add(conn->network_event, nullptr) < 0) {
-        LOG_ERROR("Failed to add event");
-        PL_ASSERT(false);
-      }
-      conn->protocol_handler_->GetResult();
-
-      conn->TransitState(ConnState::CONN_GET_RESULT);
-      break;
-      }
-
       case ConnState::CONN_WRITE: {
         // examine write packets result
         switch (conn->WritePackets()) {

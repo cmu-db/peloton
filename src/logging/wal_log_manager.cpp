@@ -2,23 +2,21 @@
 //
 //                         Peloton
 //
-// reordered_phylog_log_manager.cpp
+// wal_log_manager.cpp
 //
-// Identification: src/backend/logging/reordered_phylog_log_manager.cpp
+// Identification: src/logging/wal_log_manager.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include <cstdio>
 
 #include "logging/wal_log_manager.h"
-#include "catalog/manager.h"
-#include "common/container_tuple.h"
 #include "logging/logging_util.h"
-#include "storage/tile_group.h"
 #include "threadpool/logger_queue_pool.h"
 #include "logging/wal_recovery.h"
+#include "logging/wal_logger.h"
 
 namespace peloton {
 namespace logging {

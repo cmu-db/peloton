@@ -17,10 +17,6 @@
 #include <cstdio>
 
 #include "catalog/manager.h"
-#include "catalog/column_catalog.h"
-#include "catalog/index_catalog.h"
-#include "catalog/table_catalog.h"
-#include "catalog/database_catalog.h"
 #include "common/container_tuple.h"
 #include "logging/logging_util.h"
 #include "storage/tile_group.h"
