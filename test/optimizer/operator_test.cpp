@@ -30,8 +30,8 @@ TEST_F(OperatorTests, OperatorHashAndEqualTest){
   }
 
   // Generate having
-  expression::AbstractExpression* having =
-      new expression::ComparisonExpression(ExpressionType::COMPARE_EQUAL);
+  std::unique_ptr<expression::AbstractExpression> having(
+      new expression::ComparisonExpression(ExpressionType::COMPARE_EQUAL));
   auto col1 = new expression::TupleValueExpression("a");
   col1->SetBoundOid(0,0,1);
   auto col2 = new expression::TupleValueExpression("b");
@@ -41,34 +41,28 @@ TEST_F(OperatorTests, OperatorHashAndEqualTest){
 
   const size_t num_iter = 1000;
   // HashGroupBy
-  Operator l_group_by =
-      PhysicalHashGroupBy::make(cols, having);
-
+  Operator l_group_by = PhysicalHashGroupBy::make(cols, having.get());
   for (size_t i = 0; i<num_iter; i++) {
     std::random_shuffle(cols.begin(), cols.end());
 
-    Operator r_group_by =
-        PhysicalHashGroupBy::make(cols, having);
+    Operator r_group_by = PhysicalHashGroupBy::make(cols, having.get());
 
     EXPECT_EQ(l_group_by.Hash(), r_group_by.Hash());
     EXPECT_TRUE(l_group_by == r_group_by);
   }
 
   // SortGroupBy
-  l_group_by =
-      PhysicalSortGroupBy::make(cols, having);
+  l_group_by = PhysicalSortGroupBy::make(cols, having.get());
 
   for (size_t i = 0; i<num_iter; i++) {
     std::random_shuffle(cols.begin(), cols.end());
 
     Operator r_group_by =
-        PhysicalSortGroupBy::make(cols, having);
+        PhysicalSortGroupBy::make(cols, having.get());
 
     EXPECT_EQ(l_group_by.Hash(), r_group_by.Hash());
     EXPECT_TRUE(l_group_by == r_group_by);
   }
-
-  delete having;
 }
 
 }  // namespace test

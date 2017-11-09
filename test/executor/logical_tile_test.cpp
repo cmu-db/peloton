@@ -55,7 +55,8 @@ TEST_F(LogicalTileTests, TempTableTest) {
 
   // Then shove some tuples in it
   for (int i = 0; i < tuple_count; i++) {
-    storage::Tuple *tuple = new storage::Tuple(table.GetSchema(), true);
+    std::unique_ptr<storage::Tuple> tuple(
+        new storage::Tuple(table.GetSchema(), true));
     auto val1 = type::ValueFactory::GetIntegerValue(
         TestingExecutorUtil::PopulatedValue(i, 0));
     auto val2 = type::ValueFactory::GetIntegerValue(
@@ -65,23 +66,20 @@ TEST_F(LogicalTileTests, TempTableTest) {
     tuple->SetValue(0, val1, pool);
     tuple->SetValue(1, val2, pool);
     tuple->SetValue(2, val3, pool);
-    table.InsertTuple(tuple);
-
-    delete tuple;
+    table.InsertTuple(tuple.get());
   }
   LOG_INFO("%s", table.GetInfo().c_str());
   LOG_INFO("%s", GETINFO_SINGLE_LINE.c_str());
 
   // Check to see whether we can wrap a LogicalTile around it
   auto tile_group_count = table.GetTileGroupCount();
-  std::vector<executor::LogicalTile *> logicalTiles;
   for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
        tile_group_itr++) {
     auto tile_group = table.GetTileGroup(tile_group_itr);
     EXPECT_NE(nullptr, tile_group);
-    auto logical_tile = executor::LogicalTileFactory::WrapTileGroup(tile_group);
+    std::unique_ptr<executor::LogicalTile> logical_tile(
+        executor::LogicalTileFactory::WrapTileGroup(tile_group));
     EXPECT_NE(nullptr, logical_tile);
-    logicalTiles.push_back(logical_tile);
 
     // Make sure that we can iterate over the LogicalTile and get
     // at our TempTable tuples
@@ -92,11 +90,6 @@ TEST_F(LogicalTileTests, TempTableTest) {
     LOG_INFO("%s", tile_group->GetInfo().c_str());
     LOG_INFO("*****************************************");
     LOG_INFO("%s", logical_tile->GetInfo().c_str());
-  }
-  EXPECT_FALSE(logicalTiles.empty());
-
-  for (executor::LogicalTile *lt : logicalTiles) {
-    delete lt;
   }
 }
 

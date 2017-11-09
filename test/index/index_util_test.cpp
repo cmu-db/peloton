@@ -131,7 +131,7 @@ static index::Index *BuildIndex() {
  * index_key: 3 0 1
  */
 TEST_F(IndexUtilTests, FindValueIndexTest) {
-  const index::Index *index_p = BuildIndex();
+  std::unique_ptr<index::Index> index_p(BuildIndex());
   bool ret;
 
   std::vector<std::pair<oid_t, oid_t>> value_index_list{};
@@ -227,8 +227,6 @@ TEST_F(IndexUtilTests, FindValueIndexTest) {
   EXPECT_EQ(ret, false);
   value_index_list.clear();
 
-  delete index_p;
-
   return;
 }
 
@@ -237,7 +235,7 @@ TEST_F(IndexUtilTests, FindValueIndexTest) {
  *                              conjunctions
  */
 TEST_F(IndexUtilTests, ConstructBoundaryKeyTest) {
-  index::Index *index_p = BuildIndex();
+  std::unique_ptr<index::Index> index_p(BuildIndex());
 
   // This is the output variable
   std::vector<std::pair<oid_t, oid_t>> value_index_list{};
@@ -262,8 +260,8 @@ TEST_F(IndexUtilTests, ConstructBoundaryKeyTest) {
 
   IndexScanPredicate isp{};
 
-  isp.AddConjunctionScanPredicate(index_p, value_list, tuple_column_id_list,
-                                  expr_list);
+  isp.AddConjunctionScanPredicate(index_p.get(), value_list,
+                                  tuple_column_id_list, expr_list);
 
   const std::vector<ConjunctionScanPredicate> &cl = isp.GetConjunctionList();
 
@@ -303,8 +301,8 @@ TEST_F(IndexUtilTests, ConstructBoundaryKeyTest) {
       ExpressionType::COMPARE_NOTEQUAL,
   };
 
-  isp.AddConjunctionScanPredicate(index_p, value_list, tuple_column_id_list,
-                                  expr_list);
+  isp.AddConjunctionScanPredicate(index_p.get(), value_list,
+                                  tuple_column_id_list, expr_list);
 
   const std::vector<ConjunctionScanPredicate> &cl2 = isp.GetConjunctionList();
 
@@ -335,8 +333,8 @@ TEST_F(IndexUtilTests, ConstructBoundaryKeyTest) {
       ExpressionType::COMPARE_EQUAL,
   };
 
-  isp2.AddConjunctionScanPredicate(index_p, value_list, tuple_column_id_list,
-                                   expr_list);
+  isp2.AddConjunctionScanPredicate(index_p.get(), value_list,
+                                   tuple_column_id_list, expr_list);
 
   const std::vector<ConjunctionScanPredicate> &cl3 = isp2.GetConjunctionList();
 
@@ -352,7 +350,6 @@ TEST_F(IndexUtilTests, ConstructBoundaryKeyTest) {
   ///////////////////////////////////////////////////////////////////
   // End of all test cases
   ///////////////////////////////////////////////////////////////////
-  delete index_p;
 
   return;
 }
@@ -361,7 +358,7 @@ TEST_F(IndexUtilTests, ConstructBoundaryKeyTest) {
  * BindKeyTest() - Tests binding values onto keys that are not bound
  */
 TEST_F(IndexUtilTests, BindKeyTest) {
-  index::Index *index_p = BuildIndex();
+  std::unique_ptr<index::Index> index_p(BuildIndex());
 
   // This is the output variable
   std::vector<std::pair<oid_t, oid_t>> value_index_list{};
@@ -386,8 +383,8 @@ TEST_F(IndexUtilTests, BindKeyTest) {
 
   IndexScanPredicate isp{};
 
-  isp.AddConjunctionScanPredicate(index_p, value_list, tuple_column_id_list,
-                                  expr_list);
+  isp.AddConjunctionScanPredicate(index_p.get(), value_list,
+                                  tuple_column_id_list, expr_list);
 
   const std::vector<ConjunctionScanPredicate> &cl = isp.GetConjunctionList();
 
@@ -415,7 +412,7 @@ TEST_F(IndexUtilTests, BindKeyTest) {
       type::ValueFactory::GetIntegerValue(200).Copy());
   type::Value val3 = (
       type::ValueFactory::GetIntegerValue(300).Copy());
-  isp.LateBindValues(index_p, {val1, val2, val3});
+  isp.LateBindValues(index_p.get(), {val1, val2, val3});
 
   // This is important - Since binding does not change the number of
   // binding points, and their information is preserved for next
@@ -429,7 +426,6 @@ TEST_F(IndexUtilTests, BindKeyTest) {
   ///////////////////////////////////////////////////////////////////
   // End of all tests
   ///////////////////////////////////////////////////////////////////
-  delete index_p;
 
   return;
 }

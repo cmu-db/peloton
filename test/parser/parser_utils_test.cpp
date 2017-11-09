@@ -115,8 +115,8 @@ TEST_F(ParserUtilTests, BasicTest) {
   // Parsing
   UNUSED_ATTRIBUTE int ii = 0;
   for (auto query : queries) {
-    parser::SQLStatementList* stmt_list =
-        parser::PostgresParser::ParseSQLString(query.c_str());
+    std::unique_ptr<parser::SQLStatementList> stmt_list(
+        parser::PostgresParser::ParseSQLString(query));
     EXPECT_TRUE(stmt_list->is_valid);
     if (stmt_list->is_valid == false) {
       LOG_ERROR("Message: %s, line: %d, col: %d", stmt_list->parser_msg,
@@ -152,7 +152,6 @@ TEST_F(ParserUtilTests, BasicTest) {
           break;
       }
     }
-    delete stmt_list;
   }
 }
 

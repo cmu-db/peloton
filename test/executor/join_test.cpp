@@ -325,8 +325,8 @@ void ExecuteNestedLoopJoinTest(JoinType join_type, bool IndexScan) {
   expression::AbstractExpression *predicate_scan = nullptr;
   std::vector<oid_t> column_ids({0, 1, 3});  // COL_A, B, D
 
-  executor::AbstractExecutor* left_table_scan_executor;
-  planner::AbstractPlan* left_table_node;
+  std::unique_ptr<executor::AbstractExecutor> left_table_scan_executor;
+  std::unique_ptr<planner::AbstractPlan> left_table_node;
   if (IndexScan) {
     LOG_INFO("Construct Left Index Scan Node");
     // Create index scan desc
@@ -334,20 +334,20 @@ void ExecuteNestedLoopJoinTest(JoinType join_type, bool IndexScan) {
         index, key_column_ids, expr_types, values, runtime_keys);
 
     // Create plan node.
-    left_table_node = new planner::IndexScanPlan(left_table.get(), predicate_scan,
-                                           column_ids, index_scan_desc);
+    left_table_node.reset(new planner::IndexScanPlan(left_table.get(), predicate_scan,
+                                           column_ids, index_scan_desc));
 
     // executor
-    left_table_scan_executor =
-        new executor::IndexScanExecutor(left_table_node, context.get());
+    left_table_scan_executor.reset(
+        new executor::IndexScanExecutor(left_table_node.get(), context.get()));
   }
   else {
     LOG_INFO("Construct Left Seq Scan Node");
     // Create sequential scan plan node
-    left_table_node = new planner::SeqScanPlan(left_table.get(), predicate_scan, column_ids);
+    left_table_node.reset(new planner::SeqScanPlan(left_table.get(), predicate_scan, column_ids));
 
     // Executor
-    left_table_scan_executor = new executor::SeqScanExecutor(left_table_node, context.get());
+    left_table_scan_executor.reset(new executor::SeqScanExecutor(left_table_node.get(), context.get()));
   }
 
   // Right ATTR 0 =
@@ -366,8 +366,8 @@ void ExecuteNestedLoopJoinTest(JoinType join_type, bool IndexScan) {
   expression::AbstractExpression *predicate_scan_right = nullptr;
   std::vector<oid_t> column_ids_right({0, 1});
 
-  executor::AbstractExecutor* right_table_scan_executor;
-  planner::AbstractPlan* right_table_node;
+  std::unique_ptr<executor::AbstractExecutor> right_table_scan_executor;
+  std::unique_ptr<planner::AbstractPlan> right_table_node;
 
   if (IndexScan) {
     LOG_INFO("Construct Right Index Scan Node");
@@ -377,22 +377,22 @@ void ExecuteNestedLoopJoinTest(JoinType join_type, bool IndexScan) {
         runtime_keys_right);
 
     // Create plan node.
-    right_table_node = new planner::IndexScanPlan(
+    right_table_node.reset(new planner::IndexScanPlan(
         right_table.get(), predicate_scan_right, column_ids_right,
-        index_scan_desc_right);
+        index_scan_desc_right));
 
     // executor
-    right_table_scan_executor =
-        new executor::IndexScanExecutor(right_table_node, context.get());
+    right_table_scan_executor.reset(
+        new executor::IndexScanExecutor(right_table_node.get(), context.get()));
   }
   else {
     LOG_INFO("Construct Right Seq Scan Node");
     // Create sequential scan plan node
-    right_table_node =
-        new planner::SeqScanPlan(right_table.get(), predicate_scan_right, column_ids_right);
+    right_table_node.reset(
+        new planner::SeqScanPlan(right_table.get(), predicate_scan_right, column_ids_right));
 
     // Executor
-    right_table_scan_executor = new executor::SeqScanExecutor(right_table_node, context.get());
+    right_table_scan_executor.reset(new executor::SeqScanExecutor(right_table_node.get(), context.get()));
   }
 
   //===--------------------------------------------------------------------===//
@@ -431,8 +431,8 @@ void ExecuteNestedLoopJoinTest(JoinType join_type, bool IndexScan) {
       &nested_loop_join_node, context.get());
 
   // Construct the executor tree
-  nested_loop_join_executor.AddChild(left_table_scan_executor);
-  nested_loop_join_executor.AddChild(right_table_scan_executor);
+  nested_loop_join_executor.AddChild(left_table_scan_executor.get());
+  nested_loop_join_executor.AddChild(right_table_scan_executor.get());
 
   // Run the nested loop join executor
   EXPECT_TRUE(nested_loop_join_executor.Init());
@@ -453,11 +453,6 @@ void ExecuteNestedLoopJoinTest(JoinType join_type, bool IndexScan) {
   }
 
   txn_manager.CommitTransaction(txn);
-
-  delete left_table_node;
-  delete right_table_node;
-  delete left_table_scan_executor;
-  delete right_table_scan_executor;
 }
 
 void ExecuteJoinTest(PlanNodeType join_algorithm, JoinType join_type,

@@ -45,20 +45,16 @@ void AddTileGroup(UNUSED_ATTRIBUTE uint64_t thread_id) {
                           "A", true);
   columns.push_back(column1);
 
-  catalog::Schema *schema1 = new catalog::Schema(columns);
+  std::unique_ptr<catalog::Schema> schema1(new catalog::Schema(columns));
   schemas.push_back(*schema1);
 
   std::map<oid_t, std::pair<oid_t, oid_t>> column_map;
   column_map[0] = std::make_pair(0, 0);
 
   for (oid_t txn_itr = 0; txn_itr < 100; txn_itr++) {
-    storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(
-        INVALID_OID, INVALID_OID, INVALID_OID, nullptr, schemas, column_map, 3);
-
-    delete tile_group;
+    std::unique_ptr<storage::TileGroup> tile_group(storage::TileGroupFactory::GetTileGroup(
+        INVALID_OID, INVALID_OID, INVALID_OID, nullptr, schemas, column_map, 3));
   }
-
-  delete schema1;
 }
 
 TEST_F(ManagerTests, TransactionTest) {
