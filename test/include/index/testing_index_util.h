@@ -60,6 +60,8 @@ class TestingIndexUtil {
   static index::Index *BuildIndex(const IndexType index_type,
                                   const bool unique_keys);
 
+  static void DestroyIndex(index::Index *index);
+
   /**
    * Insert helper function
    */

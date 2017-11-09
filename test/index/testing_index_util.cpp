@@ -36,11 +36,8 @@ void TestingIndexUtil::BasicTest(const IndexType index_type) {
   std::vector<ItemPointer *> location_ptrs;
 
   // INDEX
-  std::unique_ptr<index::Index, std::function<void(index::Index *)>> index(
-      TestingIndexUtil::BuildIndex(index_type, false),
-      [](index::Index *index) {
-          delete index->GetMetadata()->GetTupleSchema();
-          delete index; });
+  std::unique_ptr<index::Index, void(*)(index::Index *)> index(
+      TestingIndexUtil::BuildIndex(index_type, false), DestroyIndex);
   const catalog::Schema *key_schema = index->GetKeySchema();
 
   std::unique_ptr<storage::Tuple> key0(new storage::Tuple(key_schema, true));
@@ -69,11 +66,8 @@ void TestingIndexUtil::MultiMapInsertTest(const IndexType index_type) {
   std::vector<ItemPointer *> location_ptrs;
 
   // INDEX
-  std::unique_ptr<index::Index, std::function<void(index::Index *)>> index(
-      TestingIndexUtil::BuildIndex(index_type, false),
-      [](index::Index *index) {
-          delete index->GetMetadata()->GetTupleSchema();
-          delete index; });
+  std::unique_ptr<index::Index, void(*)(index::Index *)> index(
+      TestingIndexUtil::BuildIndex(index_type, false), DestroyIndex);
   const catalog::Schema *key_schema = index->GetKeySchema();
 
   // Single threaded test
@@ -109,11 +103,8 @@ void TestingIndexUtil::UniqueKeyInsertTest(const IndexType index_type) {
   std::vector<ItemPointer *> location_ptrs;
 
   // INDEX
-  std::unique_ptr<index::Index, std::function<void(index::Index *)>> index(
-      TestingIndexUtil::BuildIndex(index_type, false),
-      [](index::Index *index) {
-          delete index->GetMetadata()->GetTupleSchema();
-          delete index; });
+  std::unique_ptr<index::Index, void(*)(index::Index *)> index(
+      TestingIndexUtil::BuildIndex(index_type, false), DestroyIndex);
   const catalog::Schema *key_schema = index->GetKeySchema();
 
   // Single threaded test
@@ -136,11 +127,8 @@ void TestingIndexUtil::UniqueKeyDeleteTest(const IndexType index_type) {
   std::vector<ItemPointer *> location_ptrs;
 
   // INDEX
-  std::unique_ptr<index::Index, std::function<void(index::Index *)>> index(
-      TestingIndexUtil::BuildIndex(index_type, false),
-      [](index::Index *index) {
-          delete index->GetMetadata()->GetTupleSchema();
-          delete index; });
+  std::unique_ptr<index::Index, void(*)(index::Index *)> index(
+      TestingIndexUtil::BuildIndex(index_type, false), DestroyIndex);
   const catalog::Schema *key_schema = index->GetKeySchema();
 
   // Single threaded test
@@ -183,11 +171,8 @@ void TestingIndexUtil::NonUniqueKeyDeleteTest(const IndexType index_type) {
   std::vector<ItemPointer *> location_ptrs;
 
   // INDEX
-  std::unique_ptr<index::Index, std::function<void(index::Index *)>> index(
-      TestingIndexUtil::BuildIndex(index_type, false),
-      [](index::Index *index) {
-          delete index->GetMetadata()->GetTupleSchema();
-          delete index; });
+  std::unique_ptr<index::Index, void(*)(index::Index *)> index(
+      TestingIndexUtil::BuildIndex(index_type, false), DestroyIndex);
   const catalog::Schema *key_schema = index->GetKeySchema();
 
   // Single threaded test
@@ -228,11 +213,8 @@ void TestingIndexUtil::MultiThreadedInsertTest(const IndexType index_type) {
   std::vector<ItemPointer *> location_ptrs;
 
   // INDEX
-  std::unique_ptr<index::Index, std::function<void(index::Index *)>> index(
-      TestingIndexUtil::BuildIndex(index_type, false),
-      [](index::Index *index) {
-          delete index->GetMetadata()->GetTupleSchema();
-          delete index; });
+  std::unique_ptr<index::Index, void(*)(index::Index *)> index(
+      TestingIndexUtil::BuildIndex(index_type, false), DestroyIndex);
   const catalog::Schema *key_schema = index->GetKeySchema();
 
   // Parallel Test
@@ -270,11 +252,8 @@ void TestingIndexUtil::UniqueKeyMultiThreadedTest(const IndexType index_type) {
   std::vector<ItemPointer *> location_ptrs;
 
   // INDEX
-  std::unique_ptr<index::Index, std::function<void(index::Index *)>> index(
-      TestingIndexUtil::BuildIndex(index_type, false),
-      [](index::Index *index) {
-          delete index->GetMetadata()->GetTupleSchema();
-          delete index; });
+  std::unique_ptr<index::Index, void(*)(index::Index *)> index(
+      TestingIndexUtil::BuildIndex(index_type, false), DestroyIndex);
   const catalog::Schema *key_schema = index->GetKeySchema();
 
   // Parallel Test
@@ -366,11 +345,8 @@ void TestingIndexUtil::NonUniqueKeyMultiThreadedTest(const IndexType index_type)
   std::vector<ItemPointer *> location_ptrs;
 
   // INDEX
-  std::unique_ptr<index::Index, std::function<void(index::Index *)>> index(
-      TestingIndexUtil::BuildIndex(index_type, false),
-      [](index::Index *index) {
-          delete index->GetMetadata()->GetTupleSchema();
-          delete index; });
+  std::unique_ptr<index::Index, void(*)(index::Index *)> index(
+      TestingIndexUtil::BuildIndex(index_type, false), DestroyIndex);
   const catalog::Schema *key_schema = index->GetKeySchema();
 
   // Parallel Test
@@ -563,11 +539,8 @@ void TestingIndexUtil::NonUniqueKeyMultiThreadedStressTest(const IndexType index
   std::vector<ItemPointer *> location_ptrs;
 
   // INDEX
-  std::unique_ptr<index::Index, std::function<void(index::Index *)>> index(
-      TestingIndexUtil::BuildIndex(index_type, false),
-      [](index::Index *index) {
-          delete index->GetMetadata()->GetTupleSchema();
-          delete index; });
+  std::unique_ptr<index::Index, void(*)(index::Index *)> index(
+      TestingIndexUtil::BuildIndex(index_type, false), DestroyIndex);
   const catalog::Schema *key_schema = index->GetKeySchema();
 
   // Parallel Test
@@ -614,11 +587,8 @@ void TestingIndexUtil::NonUniqueKeyMultiThreadedStressTest2(const IndexType inde
   std::vector<ItemPointer *> location_ptrs;
 
   // INDEX
-  std::unique_ptr<index::Index, std::function<void(index::Index *)>> index(
-      TestingIndexUtil::BuildIndex(index_type, false),
-      [](index::Index *index) { 
-          delete index->GetMetadata()->GetTupleSchema();
-          delete index; });
+  std::unique_ptr<index::Index, void(*)(index::Index *)> index(
+      TestingIndexUtil::BuildIndex(index_type, false), DestroyIndex);
   const catalog::Schema *key_schema = index->GetKeySchema();
 
   // Parallel Test
@@ -740,6 +710,11 @@ index::Index *TestingIndexUtil::BuildIndex(const IndexType index_type,
   EXPECT_EQ(unique_keys, index->HasUniqueKeys());
 
   return index;
+}
+
+void TestingIndexUtil::DestroyIndex(index::Index *index) {
+  delete index->GetMetadata()->GetTupleSchema();
+  delete index;
 }
 
 void TestingIndexUtil::InsertHelper(index::Index *index, type::AbstractPool *pool,
