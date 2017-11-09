@@ -892,31 +892,14 @@ enum TimerType {
 enum class LogRecordType {
   INVALID = INVALID_TYPE_ID,
 
-  // TransactionContext-related records
-  TRANSACTION_BEGIN = 1,
-  TRANSACTION_COMMIT = 2,
-
   // Generic dml records
   TUPLE_INSERT = 11,
   TUPLE_DELETE = 12,
   TUPLE_UPDATE = 13,
-
-  // Epoch related records
-  EPOCH_BEGIN = 21,
-  EPOCH_END = 22,
 };
 std::string LogRecordTypeToString(LogRecordType type);
 LogRecordType StringToLogRecordType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const LogRecordType &type);
-
-enum class CheckpointingType {
-  INVALID = INVALID_TYPE_ID,
-  OFF = 1,  // turn off GC
-  ON = 2    // turn on GC
-};
-std::string CheckpointingTypeToString(CheckpointingType type);
-CheckpointingType StringToCheckpointingType(const std::string &str);
-std::ostream &operator<<(std::ostream &os, const CheckpointingType &type);
 
 /* Possible values for peloton_tilegroup_layout GUC */
 enum class LayoutType {

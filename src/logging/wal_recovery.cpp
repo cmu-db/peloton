@@ -2,11 +2,11 @@
 //
 //                         Peloton
 //
-// reordered_phylog_logger.cpp
+// wal_recovery.cpp
 //
-// Identification: src/backend/logging/reordered_phylog_logger.cpp
+// Identification: src/logging/wal_recovery.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 #include <sys/stat.h>
@@ -214,20 +214,6 @@ bool WalRecovery::ReplayLogFile(FileHandle &file_handle) {
     LogRecordType record_type =
         (LogRecordType)(record_decode.ReadEnumInSingleByte());
     switch (record_type) {
-      case LogRecordType::TRANSACTION_BEGIN: {
-        current_cid = (cid_t)record_decode.ReadLong();
-
-        break;
-      }
-      case LogRecordType::TRANSACTION_COMMIT: {
-        cid_t cid = (cid_t)record_decode.ReadLong();
-        if (cid != current_cid) {
-          LOG_ERROR("Mismatched txn in log record");
-          return false;
-        }
-        current_cid = INVALID_CID;
-        break;
-      }
       case LogRecordType::TUPLE_INSERT: {
         eid_t record_eid = record_decode.ReadLong();
         if (record_eid > current_eid) {
@@ -550,10 +536,5 @@ void WalRecovery::RunRecovery() {
     }
   }
 }
-
-void WalRecovery::RunSecIndexRebuildThread() {}
-
-void WalRecovery::RebuildSecIndexForTable(storage::DataTable *table
-                                              UNUSED_ATTRIBUTE) {}
 }
 }

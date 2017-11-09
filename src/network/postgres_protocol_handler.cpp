@@ -944,10 +944,10 @@ void PostgresProtocolHandler::ExecExecuteMessageGetResult(ResultType status) {
 void PostgresProtocolHandler::GetResult() {
   traffic_cop_->ExecuteStatementPlanGetResult(log_manager_);
   auto status = traffic_cop_->ExecuteStatementGetResult();
-  if (status == ResultType::LOGGING)
-    traffic_cop_->is_logging_ = true;
+  if(status == ResultType::LOGGING)
+      traffic_cop_->is_logging_ = true;
   else
-    traffic_cop_->is_logging_ = false;
+      traffic_cop_->is_logging_ = false;
   switch (protocol_type_) {
     case NetworkProtocolType::POSTGRES_JDBC:
       LOG_TRACE("JDBC result");

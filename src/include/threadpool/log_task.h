@@ -4,7 +4,7 @@
 //
 // task.h
 //
-// Identification: src/threadpool/task.h
+// Identification: src/include/threadpool/log_task.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //

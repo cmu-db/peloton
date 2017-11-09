@@ -35,25 +35,6 @@ TEST_F(LogRecordTests, LogRecordTest) {
     EXPECT_EQ(tuple_record.GetType(), type);
   }
 
-  std::vector<LogRecordType> txn_type_list = {
-      LogRecordType::TRANSACTION_BEGIN, LogRecordType::TRANSACTION_COMMIT};
-
-  for (auto type : txn_type_list) {
-    logging::LogRecord txn_record =
-        logging::LogRecordFactory::CreateTxnRecord(type, 50);
-
-    EXPECT_EQ(txn_record.GetType(), type);
-  }
-
-  std::vector<LogRecordType> epoch_type_list = {LogRecordType::EPOCH_BEGIN,
-                                                LogRecordType::EPOCH_END};
-
-  for (auto type : epoch_type_list) {
-    logging::LogRecord epoch_record =
-        logging::LogRecordFactory::CreateEpochRecord(type, 100);
-
-    EXPECT_EQ(epoch_record.GetType(), type);
-  }
 }
 }
 }

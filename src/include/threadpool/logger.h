@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// worker.h
+// logger.h
 //
-// Identification: src/threadpool/worker.h
+// Identification: src/include/threadpool/logger.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -42,8 +42,8 @@ class Logger {
 };
 
 /**
- * @class WorkerPool
- * @brief A worker pool that maintains a group to worker thread
+ * @class LoggerPool
+ * @brief A logger pool that maintains a group to logger threads
  */
 class LoggerPool {
   friend class Logger;

@@ -2,29 +2,18 @@
 //
 //                         Peloton
 //
-// reordered_phylog_log_manager.h
+// wal_log_manager.h
 //
-// Identification: src/backend/logging/reordered_phylog_log_manager.h
+// Identification: src/include/logging/wal_log_manager.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #pragma once
 
-#include <vector>
-#include <thread>
-#include <list>
-#include <stack>
-
-#include "concurrency/transaction.h"
-#include "logging/log_buffer.h"
 #include "logging/log_record.h"
-#include "logging/logging_util.h"
-#include "logging/wal_logger.h"
 #include "type/types.h"
-#include "type/serializer.h"
-#include "container/lock_free_queue.h"
 #include "common/logger.h"
 
 namespace peloton {

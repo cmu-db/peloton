@@ -15,25 +15,11 @@
 #include <algorithm>
 #include <dirent.h>
 #include <cstdio>
-#include "gc/gc_manager_factory.h"
-#include "concurrency/transaction_manager_factory.h"
-#include "index/index_factory.h"
 
-#include "catalog/catalog_defaults.h"
-#include "catalog/column.h"
 #include "catalog/manager.h"
-#include "catalog/column_catalog.h"
-#include "catalog/index_catalog.h"
-#include "catalog/table_catalog.h"
-#include "catalog/database_catalog.h"
-#include "concurrency/epoch_manager_factory.h"
 #include "common/container_tuple.h"
 #include "logging/logging_util.h"
 #include "storage/tile_group.h"
-#include "storage/database.h"
-#include "storage/tile_group_header.h"
-#include "type/ephemeral_pool.h"
-#include "storage/storage_manager.h"
 
 #include "logging/wal_logger.h"
 #include "logging/wal_log_manager.h"

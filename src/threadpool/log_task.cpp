@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// task.cpp
+// log_task.cpp
 //
-// Identification: src/threadpool/task.cpp
+// Identification: src/threadpool/log_task.cpp
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //

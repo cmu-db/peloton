@@ -1673,9 +1673,6 @@ std::string ResultTypeToString(ResultType type) {
     case ResultType::QUEUING: {
       return ("QUEUING");
     }
-    case ResultType::LOGGING: {
-      return ("LOGGING");
-    }
     default: {
       throw ConversionException(
           StringUtil::Format("No string conversion for ResultType value '%d'",
@@ -2258,12 +2255,6 @@ std::string LogRecordTypeToString(LogRecordType type) {
     case LogRecordType::INVALID: {
       return "INVALID";
     }
-    case LogRecordType::TRANSACTION_BEGIN: {
-      return "TRANSACTION_BEGIN";
-    }
-    case LogRecordType::TRANSACTION_COMMIT: {
-      return "TRANSACTION_COMMIT";
-    }
     case LogRecordType::TUPLE_INSERT: {
       return "TUPLE_INSERT";
     }
@@ -2272,12 +2263,6 @@ std::string LogRecordTypeToString(LogRecordType type) {
     }
     case LogRecordType::TUPLE_UPDATE: {
       return "TUPLE_UPDATE";
-    }
-    case LogRecordType::EPOCH_BEGIN: {
-      return "EPOCH_BEGIN";
-    }
-    case LogRecordType::EPOCH_END: {
-      return "EPOCH_END";
     }
     default: {
       throw ConversionException(StringUtil::Format(
@@ -2292,20 +2277,12 @@ LogRecordType StringToLogRecordType(const std::string &str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
     return LogRecordType::INVALID;
-  } else if (upper_str == "TRANSACTION_BEGIN") {
-    return LogRecordType::TRANSACTION_BEGIN;
-  } else if (upper_str == "TRANSACTION_COMMIT") {
-    return LogRecordType::TRANSACTION_COMMIT;
   } else if (upper_str == "TUPLE_INSERT") {
     return LogRecordType::TUPLE_INSERT;
   } else if (upper_str == "TUPLE_DELETE") {
     return LogRecordType::TUPLE_DELETE;
   } else if (upper_str == "TUPLE_UPDATE") {
     return LogRecordType::TUPLE_UPDATE;
-  } else if (upper_str == "EPOCH_BEGIN") {
-    return LogRecordType::EPOCH_BEGIN;
-  } else if (upper_str == "EPOCH_END") {
-    return LogRecordType::EPOCH_END;
   } else {
     throw ConversionException(StringUtil::Format(
         "No LogRecordType conversion from string '%s'", upper_str.c_str()));
@@ -2315,50 +2292,6 @@ LogRecordType StringToLogRecordType(const std::string &str) {
 
 std::ostream &operator<<(std::ostream &os, const LogRecordType &type) {
   os << LogRecordTypeToString(type);
-  return os;
-}
-
-//===--------------------------------------------------------------------===//
-// CheckpointingType - String Utilities
-//===--------------------------------------------------------------------===//
-
-std::string CheckpointingTypeToString(CheckpointingType type) {
-  switch (type) {
-    case CheckpointingType::INVALID: {
-      return "INVALID";
-    }
-    case CheckpointingType::OFF: {
-      return "OFF";
-    }
-    case CheckpointingType::ON: {
-      return "ON";
-    }
-    default: {
-      throw ConversionException(StringUtil::Format(
-          "No string conversion for CheckpointingType value '%d'",
-          static_cast<int>(type)));
-    }
-  }
-  return "INVALID";
-}
-
-CheckpointingType StringToCheckpointingType(const std::string &str) {
-  std::string upper_str = StringUtil::Upper(str);
-  if (upper_str == "INVALID") {
-    return CheckpointingType::INVALID;
-  } else if (upper_str == "OFF") {
-    return CheckpointingType::OFF;
-  } else if (upper_str == "ON") {
-    return CheckpointingType::ON;
-  } else {
-    throw ConversionException(StringUtil::Format(
-        "No CheckpointingType conversion from string '%s'", upper_str.c_str()));
-  }
-  return CheckpointingType::INVALID;
-}
-
-std::ostream &operator<<(std::ostream &os, const CheckpointingType &type) {
-  os << CheckpointingTypeToString(type);
   return os;
 }
 

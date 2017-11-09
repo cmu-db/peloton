@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// mono_queue_pool.h
+// logger_queue_pool.h
 //
-// Identification: test/threadpool/mono_queue_pool.h
+// Identification: src/include/threadpool/logger_queue_pool.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -20,7 +20,7 @@
 namespace peloton {
 namespace threadpool {
 /**
- * @class MonoQueuePool
+ * @class LoggerQueuePool
  * @brief Wrapper class for single queue and single pool
  * One should use this if possible.
  */
