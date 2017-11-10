@@ -16,6 +16,7 @@
 #include <date/iso_week.h>
 #include <inttypes.h>
 #include <time.h>
+#include <sys/time.h>
 
 #include "common/logger.h"
 #include "type/types.h"
@@ -150,12 +151,12 @@ type::Value DateFunctions::Extract(const std::vector<type::Value> &args) {
 // Postgres is returning the time when the transaction begins
 // We are here intead generating a new time when this function
 // is called
-int64_t StringFunctions::Now() {
+int64_t DateFunctions::Now() {
   // TODO there might be some cross platform casting problem
   // by Tianyi
-  time_t now;
-  time(&now);
-  return now;
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  return tv.tv_usec + tv.tv_sec * (uint64_t)1000000;
 }
 
 type::Value DateFunctions::_Now(const UNUSED_ATTRIBUTE std::vector<type::Value> &args) {

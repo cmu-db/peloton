@@ -13,6 +13,7 @@
 #include "codegen/type/timestamp_type.h"
 
 #include "codegen/proxy/values_runtime_proxy.h"
+#include "codegen/proxy/date_functions_proxy.h"
 #include "codegen/type/boolean_type.h"
 #include "codegen/type/date_type.h"
 #include "codegen/type/integer_type.h"
@@ -113,11 +114,12 @@ struct CompareTimestamp : public TypeSystem::SimpleComparisonHandleNull {
 
 struct Now : public TypeSystem::NoArgOperator {
   Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
-    return TimeStamp::Instance();
+    return Timestamp::Instance();
   }
 
   Value DoWork(CodeGen &codegen) const override {
-    llvm::Value *raw_ret = codegen.Call(StringFunctionsProxy::Now);
+    std::vector<llvm::Value *> dummy;
+    llvm::Value *raw_ret = codegen.Call(DateFunctionsProxy::Now, dummy);
     return Value{Timestamp::Instance(), raw_ret};
   }
 };
@@ -146,7 +148,7 @@ static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
 static Now kNow;
 static std::vector<TypeSystem::NoArgOpInfo> kNoArgOperatorTable = {
   {OperatorId::Now, kNow}
-}
+};
 
 }  // anonymous namespace
 
@@ -154,8 +156,9 @@ static std::vector<TypeSystem::NoArgOpInfo> kNoArgOperatorTable = {
 Timestamp::Timestamp()
     : SqlType(peloton::type::TypeId::TIMESTAMP),
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
-                   kComparisonTable, kUnaryOperatorTable, kBinaryOperatorTable,
-                   kNaryOperatorTable) {}
+                   kComparisonTable, kUnaryOperatorTable,
+                   kBinaryOperatorTable, kNaryOperatorTable,
+                   kNoArgOperatorTable) {}
 
 Value Timestamp::GetMinValue(CodeGen &codegen) const {
   auto *raw_val = codegen.Const64(peloton::type::PELOTON_TIMESTAMP_MIN);
