@@ -18,9 +18,14 @@
 namespace peloton {
 namespace codegen {
 
+// String Function
 DEFINE_METHOD(peloton::function, StringFunctions, Ascii);
 DEFINE_METHOD(peloton::function, StringFunctions, Like);
 DEFINE_METHOD(peloton::function, StringFunctions, Length);
+DEFINE_METHOD(peloton::function, StringFunctions, Substr);
+
+// StrWithLen Struct
+DEFINE_TYPE(StrWithLen, "peloton::StrWithLen", MEMBER(str), MEMBER(length));
 
 // Trim-related functions
 DEFINE_METHOD(peloton::function, StringFunctions, BTrim);
