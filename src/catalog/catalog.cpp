@@ -959,6 +959,12 @@ void Catalog::InitializeFunctions() {
           function::BuiltInFuncType{OperatorId::BTrim,
                                     function::StringFunctions::BTrim},
           txn);
+      AddBuiltinFunction(
+          "like", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
+          type::TypeId::VARCHAR, internal_lang, "like",
+          function::BuiltInFuncType{OperatorId::Like,
+                                    function::StringFunctions::_Like},
+          txn);
 
       /**
        * decimal functions

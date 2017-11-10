@@ -19,6 +19,7 @@ namespace peloton {
 namespace codegen {
 
 DEFINE_METHOD(peloton::function, StringFunctions, Ascii);
+DEFINE_METHOD(peloton::function, StringFunctions, Like);
 
 }  // namespace codegen
 }  // namespace peloton
