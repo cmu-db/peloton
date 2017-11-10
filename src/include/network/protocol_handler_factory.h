@@ -15,6 +15,7 @@
 #include <memory>
 
 #include "network/protocol_handler.h"
+#include "logging/wal_log_manager.h"
 
 // Packet content macros
 
@@ -30,7 +31,7 @@ enum class ProtocolHandlerType {
 class ProtocolHandlerFactory {
  public:
   static std::unique_ptr<ProtocolHandler>
-  CreateProtocolHandler(ProtocolHandlerType type, tcop::TrafficCop *trafficCop);
+  CreateProtocolHandler(ProtocolHandlerType type, tcop::TrafficCop *trafficCop, logging::WalLogManager *log_manager);
 
 };
 }

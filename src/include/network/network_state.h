@@ -25,7 +25,8 @@ enum class ConnState {
   CONN_CLOSED,     // State for closed connection
   CONN_INVALID,    // Invalid STate
   CONN_GET_RESULT, // State when triggered by worker thread that completes the task.
-  CONN_PROCESS_INITIAL// State to process initial packets and detemine protocols
+  CONN_PROCESS_INITIAL, // State to process initial packets and detemine protocols
+  CONN_LOGGING
 };
 
 enum class ReadState {

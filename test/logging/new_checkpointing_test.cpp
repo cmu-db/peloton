@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "logging/checkpoint_manager_factory.h"
 #include "common/harness.h"
 
 namespace peloton {
@@ -23,8 +22,8 @@ namespace test {
 class NewCheckpointingTests : public PelotonTest {};
 
 TEST_F(NewCheckpointingTests, MyTest) {
-  auto &checkpoint_manager = logging::CheckpointManagerFactory::GetInstance();
-  checkpoint_manager.Reset();
+  //auto &checkpoint_manager = logging::CheckpointManagerFactory::GetInstance();
+  //checkpoint_manager.Reset();
   
   EXPECT_TRUE(true);
 }

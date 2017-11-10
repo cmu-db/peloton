@@ -22,7 +22,7 @@
 #include "concurrency/transaction_manager_factory.h"
 #include "gc/gc_manager_factory.h"
 #include "settings/settings_manager.h"
-
+#include "logging/wal_log_manager.h"
 namespace peloton {
 
 ThreadPool thread_pool;
@@ -44,6 +44,8 @@ void PelotonInit::Initialize() {
   // start epoch.
   concurrency::EpochManagerFactory::GetInstance().StartEpoch();
 
+  //logging::DurabilityFactory::Configure(LoggingType::ON, CheckpointType::CHECKPOINT_TYPE_INVALID, TimerType::TIMER_OFF);
+
   // start GC.
   gc::GCManagerFactory::GetInstance().StartGC();
 
@@ -63,6 +65,7 @@ void PelotonInit::Initialize() {
 
   // Initialize catalog
   auto pg_catalog = catalog::Catalog::GetInstance();
+
   pg_catalog->Bootstrap();  // Additional catalogs
   settings::SettingsManager::GetInstance().InitializeCatalog();
 
@@ -75,6 +78,10 @@ void PelotonInit::Initialize() {
   pg_catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
 
   txn_manager.CommitTransaction(txn);
+  logging::WalLogManager::SetDirectories({"/tmp/log"});
+  logging::WalLogManager::DoRecovery();
+  //log_manager.StartLoggers();
+
 }
 
 void PelotonInit::Shutdown() {

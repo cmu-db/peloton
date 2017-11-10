@@ -96,7 +96,7 @@ class TimestampOrderingTransactionManager : public TransactionManager {
   virtual void PerformDelete(Transaction *const current_txn,
                              const ItemPointer &location);
 
-  virtual ResultType CommitTransaction(Transaction *const current_txn);
+  virtual ResultType CommitTransaction(Transaction *const current_txn, logging::WalLogManager *log_manager);
 
   virtual ResultType AbortTransaction(Transaction *const current_txn);
 

@@ -97,9 +97,13 @@ ResultType TrafficCop::BeginQueryHelper(const size_t thread_id) {
   return ResultType::SUCCESS;
 }
 
-ResultType TrafficCop::CommitQueryHelper() {
+
+//Pass the log manager to commit transaction
+ResultType TrafficCop::CommitQueryHelper(logging::WalLogManager* log_manager) {
   // do nothing if we have no active txns
-  if (tcop_txn_state_.empty()) return ResultType::NOOP;
+  if (tcop_txn_state_.empty()){
+      return ResultType::NOOP;
+  }
   auto &curr_state = tcop_txn_state_.top();
   tcop_txn_state_.pop();
   auto txn = curr_state.first;
@@ -110,7 +114,7 @@ ResultType TrafficCop::CommitQueryHelper() {
   // 'ROLLBACK' After receive 'COMMIT', see if it is rollback or really commit.
   if (curr_state.second != ResultType::ABORTED) {
     // txn committed
-    return txn_manager.CommitTransaction(txn);
+    return txn_manager.CommitTransaction(txn, log_manager);
   } else {
     // otherwise, rollback
     return txn_manager.AbortTransaction(txn);
@@ -139,7 +143,7 @@ ResultType TrafficCop::ExecuteStatement(
     const std::vector<type::Value> &params, UNUSED_ATTRIBUTE const bool unnamed,
     std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
     const std::vector<int> &result_format, std::vector<StatementResult> &result,
-    int &rows_changed, UNUSED_ATTRIBUTE std::string &error_message,
+    int &rows_changed, UNUSED_ATTRIBUTE std::string &error_message, logging::WalLogManager *log_manager,
     const size_t thread_id UNUSED_ATTRIBUTE) {
   if (settings::SettingsManager::GetInt(settings::SettingId::stats_mode) !=
       STATS_TYPE_INVALID) {
@@ -160,7 +164,7 @@ ResultType TrafficCop::ExecuteStatement(
         LOG_TRACE("QUERY_BEGIN");
         return BeginQueryHelper(thread_id);
       case QueryType::QUERY_COMMIT:
-        return CommitQueryHelper();
+        return CommitQueryHelper(log_manager);
       case QueryType::QUERY_ROLLBACK:
         return AbortQueryHelper();
       default:
@@ -183,7 +187,7 @@ ResultType TrafficCop::ExecuteStatementGetResult(int &rows_changed) {
             ResultTypeToString(p_status_.m_result).c_str());
   rows_changed = p_status_.m_processed;
   LOG_TRACE("rows_changed %d", rows_changed);
-  is_queuing_ = false;
+ // is_queuing_ = false;
   return p_status_.m_result;
 }
 
@@ -245,13 +249,16 @@ void TrafficCop::ExecutePlanWrapper(void *arg_ptr) {
   delete(arg);
 }
 
-void TrafficCop::ExecuteStatementPlanGetResult() {
+//Pass log manager to CommitTransaction
+void TrafficCop::ExecuteStatementPlanGetResult(logging::WalLogManager* log_manager) {
   bool init_failure = false;
   if (p_status_.m_result == ResultType::FAILURE) {
     // only possible if init failed
     init_failure = true;
   }
-
+  //If there is a single commit statement,
+  //the transaction has been killed when GetResult is called again.
+  if(GetCurrentTxnState().first != nullptr){
   auto txn_result = GetCurrentTxnState().first->GetResult();
   if (single_statement_txn_ == true || init_failure == true ||
       txn_result == ResultType::FAILURE) {
@@ -263,7 +270,7 @@ void TrafficCop::ExecuteStatementPlanGetResult() {
       case ResultType::SUCCESS:
         // Commit single statement
         LOG_TRACE("Commit Transaction");
-        p_status_.m_result = CommitQueryHelper();
+        p_status_.m_result = CommitQueryHelper(log_manager);
         break;
 
       case ResultType::FAILURE:
@@ -278,6 +285,10 @@ void TrafficCop::ExecuteStatementPlanGetResult() {
           p_status_.m_result = ResultType::ABORTED;
         }
     }
+  }
+  } else {
+      //COMMIT; statement
+      p_status_.m_result = ResultType::QUEUING;
   }
 }
 

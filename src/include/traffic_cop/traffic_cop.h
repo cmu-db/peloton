@@ -25,6 +25,7 @@
 #include "optimizer/abstract_optimizer.h"
 #include "parser/sql_statement.h"
 #include "storage/data_table.h"
+#include "logging/wal_log_manager.h"
 #include "type/type.h"
 #include "type/types.h"
 #include "event.h"
@@ -66,7 +67,16 @@ class TrafficCop {
       std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
       const std::vector<int> &result_format,
       std::vector<StatementResult> &result, int &rows_change,
-      std::string &error_message, const size_t thread_id = 0);
+      std::string &error_message, logging::WalLogManager* log_manager, const size_t thread_id = 0);
+  ResultType ExecuteStatement(
+      const std::shared_ptr<Statement> &statement,
+      const std::vector<type::Value> &params, const bool unnamed,
+      std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
+      const std::vector<int> &result_format,
+      std::vector<StatementResult> &result, int &rows_change,
+      std::string &error_message, const size_t thread_id = 0){
+      return ExecuteStatement(statement,params, unnamed, param_stats, result_format, result, rows_change, error_message, nullptr, thread_id);
+  }
 
   // ExecutePrepStmt - Helper to handle txn-specifics for the plan-tree of a
   // statement
@@ -98,10 +108,17 @@ class TrafficCop {
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
 
-  ResultType CommitQueryHelper();
+  ResultType CommitQueryHelper(logging::WalLogManager* log_manager);
 
-  void ExecuteStatementPlanGetResult();
+  void ExecuteStatementPlanGetResult(logging::WalLogManager* log_manager);
 
+  ResultType CommitQueryHelper(){
+    return CommitQueryHelper(nullptr);
+  }
+
+  void ExecuteStatementPlanGetResult(){
+    ExecuteStatementPlanGetResult(nullptr);
+  }
   ResultType ExecuteStatementGetResult(int &rows_changed);
 
   static void ExecutePlanWrapper(void *arg_ptr);
@@ -114,6 +131,7 @@ class TrafficCop {
   executor::ExecuteResult p_status_;
 
   bool is_queuing_;
+  bool is_logging_;
   
   inline void SetDefaultDatabaseName(std::string default_database_name) {
     default_database_name_ = default_database_name;

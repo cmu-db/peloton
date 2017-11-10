@@ -70,15 +70,39 @@ void NetworkConnection::Init(short event_flags, NetworkThread *thread,
       PL_ASSERT(false);
     }
   }
+  //Adding log event
+  if (logpool_event == nullptr) {
+    logpool_event = event_new(thread->GetEventBase(), -1, EV_PERSIST,
+    CallbackUtil::EventHandler, this);
+  } else {
+    if (event_del(logpool_event) == -1) {
+      LOG_ERROR("Failed to delete event");
+      PL_ASSERT(false);
+    }
+    auto result = event_assign(logpool_event, thread->GetEventBase(), -1,
+                                EV_PERSIST, CallbackUtil::EventHandler, this);
+    if (result != 0) {
+      LOG_ERROR("Failed to update workpool event");
+      PL_ASSERT(false);
+    }
+  }
 
   event_add(network_event, nullptr);
   event_add(workpool_event, nullptr);
+  event_add(logpool_event, nullptr);
 
   //TODO:: should put the initialization else where.. check correctness first.
   traffic_cop_.SetTaskCallback(TriggerStateMachine, workpool_event);
+  //Registering the logger callback
+  log_manager_.SetTaskCallback(TriggerStateMachineLog, logpool_event);
 }
 
 void NetworkConnection::TriggerStateMachine(void* arg) {
+  struct event* event = static_cast<struct event*>(arg);
+  event_active(event, EV_WRITE, 0);
+}
+
+void NetworkConnection::TriggerStateMachineLog(void* arg) {
   struct event* event = static_cast<struct event*>(arg);
   event_active(event, EV_WRITE, 0);
 }
@@ -481,7 +505,7 @@ bool NetworkConnection::ProcessStartupPacket(InputPacket* pkt, int32_t proto_ver
 
   protocol_handler_ =
       ProtocolHandlerFactory::CreateProtocolHandler(
-          ProtocolHandlerType::Postgres, &traffic_cop_);
+          ProtocolHandlerType::Postgres, &traffic_cop_, &log_manager_);
 
   protocol_handler_->SendInitialResponse();
 
@@ -589,6 +613,7 @@ void NetworkConnection::CloseSocket() {
   // Remove listening event
   event_del(network_event);
   event_del(workpool_event);
+  event_del(logpool_event);
   // event_free(event);
   TransitState(ConnState::CONN_CLOSED);
   Reset();
@@ -757,11 +782,23 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
           LOG_ERROR("Failed to add event");
           PL_ASSERT(false);
         }
+
         conn->protocol_handler_->GetResult();
-        conn->traffic_cop_.is_queuing_ = false;
+        if(conn->traffic_cop_.is_logging_)
+            done=true;
         conn->TransitState(ConnState::CONN_WRITE);
         break;
       }
+
+
+    case ConnState::CONN_LOGGING: {
+        if (event_add(conn->network_event, nullptr) < 0) {
+          LOG_ERROR("Failed to add event");
+          PL_ASSERT(false);
+        }
+        conn->TransitState(ConnState::CONN_WRITE);
+        break;
+    }
 
       case ConnState::CONN_WRITE: {
         // examine write packets result

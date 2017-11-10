@@ -103,6 +103,7 @@ void NetworkMasterThread::StartWorker(NetworkWorkerThread *worker_thread) {
 
     event_free(connection->network_event);
     event_free(connection->workpool_event);
+    event_free(connection->logpool_event);
   }
   event_free(worker_thread->GetNewConnEvent());
   event_free(worker_thread->GetTimeoutEvent());
