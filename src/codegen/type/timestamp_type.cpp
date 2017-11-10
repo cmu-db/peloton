@@ -106,16 +106,16 @@ struct CompareTimestamp : public TypeSystem::Comparison {
   }
 };
 
-// struct Now : public TypeSystem::NoArgOperator {
-//   Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
-//     return Integer::Instance();
-//   }
+struct Now : public TypeSystem::NoArgOperator {
+  Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
+    return TimeStamp::Instance();
+  }
 
-//   Value DoWork(CodeGen &codegen) const override {
-//     llvm::Value *raw_ret = codegen.Call(StringFunctionsProxy::Now);
-//     return Value{Integer::Instance(), raw_ret};
-//   }
-// };
+  Value DoWork(CodeGen &codegen) const override {
+    llvm::Value *raw_ret = codegen.Call(StringFunctionsProxy::Now);
+    return Value{Timestamp::Instance(), raw_ret};
+  }
+};
 
 // The list of types a SQL timestamp type can be implicitly casted to
 const std::vector<peloton::type::TypeId> kImplicitCastingTable = {
@@ -135,6 +135,12 @@ static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {};
 
 // Nary operations
 static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
+
+// NoArg operators
+static Now kNow;
+static std::vector<TypeSystem::NoArgOpInfo> kNoArgOperatorTable = {
+  {OperatorId::Now, kNow}
+}
 
 }  // anonymous namespace
 

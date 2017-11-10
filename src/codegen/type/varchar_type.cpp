@@ -185,6 +185,8 @@ static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
 
 }  // anonymous namespace
 
+static std::vector<TypeSystem::NoArgOpInfo> kOfknasdlkf = {};
+
 //===----------------------------------------------------------------------===//
 // TINYINT TYPE CONFIGURATION
 //===----------------------------------------------------------------------===//
