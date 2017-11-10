@@ -212,6 +212,29 @@ struct DateTrunc : public TypeSystem::BinaryOperatorHandleNull {
   }
 };
 
+struct BTrim : public TypeSystem::BinaryOperator {
+  bool SupportsTypes(const Type &left_type,
+                     const Type &right_type) const override {
+    return left_type.GetSqlType() == Varchar::Instance() &&
+           right_type.GetSqlType() == Varchar::Instance();
+  }
+
+  Type ResultType(UNUSED_ATTRIBUTE const Type &left_type,
+                  UNUSED_ATTRIBUTE const Type &right_type) const override {
+    return Varchar::Instance();
+  }
+
+  Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
+               OnError on_error) const override {
+    llvm::Value *raw_len = codegen->CreateAlloca(codegen.Int32Type());
+    llvm::Value *raw_ptr =
+        codegen.Call(StringFunctionsProxy::BTrim,
+                     {left.GetValue(), left.GetLength(), right.GetValue(),
+                      right.GetLength(), raw_len});
+    return Value{Varchar::Instance(), raw_ptr, raw_len};
+  }
+};
+
 //===----------------------------------------------------------------------===//
 // TYPE SYSTEM CONSTRUCTION
 //===----------------------------------------------------------------------===//
@@ -237,8 +260,10 @@ static std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {
 // Binary operations
 static Like kLike;
 static DateTrunc kDateTrunc;
+static BTrim kBTrim;
 static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
-    {OperatorId::Like, kLike}, {OperatorId::DateTrunc, kDateTrunc}};
+    {OperatorId::Like, kLike}, {OperatorId::DateTrunc, kDateTrunc},
+    {OperatorId::BTrim, kBTrim}};
 
 // Nary operations
 static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};

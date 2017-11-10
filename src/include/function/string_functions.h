@@ -61,7 +61,10 @@ class StringFunctions {
 
   // Remove the longest string consisting only of characters in characters
   // from the start and end of string
-  static type::Value BTrim(const std::vector<type::Value> &args);
+  static const char *BTrim(const char *str, uint32_t str_len,
+                                            const char *from, uint32_t from_len,
+                                            uint32_t *ret_len);
+  static type::Value _BTrim(const std::vector<type::Value> &args);
 
   // This function is used by LLVM engine
   // Length will return the number of characters in the given string

@@ -12,6 +12,7 @@
 
 #include <cctype>
 #include <string>
+#include <algorithm>
 
 #include "function/string_functions.h"
 #include "type/value_factory.h"
@@ -236,7 +237,26 @@ type::Value StringFunctions::RTrim(const std::vector<type::Value> &args) {
 
 // Remove the longest string consisting only of characters in characters
 // from the start and end of string
-type::Value StringFunctions::BTrim(const std::vector<type::Value> &args) {
+const char *StringFunctions::BTrim(const char *str, uint32_t str_len,
+                                   const char *from,
+                                   UNUSED_ATTRIBUTE uint32_t from_len,
+                                   uint32_t *ret_len) {
+  PL_ASSERT(str != nullptr && from != nullptr);
+  if (str_len == 0) {
+    *ret_len = 0;
+    return str;
+  }
+
+  size_t tail = str_len - 1, head = 0;
+  while (tail >= 0 && strchr(from, str[tail] != NULL)) tail--;
+
+  while (head < str_len && strchr(from, str[head] != NULL)) head++;
+
+  *ret_len = std::max(tail - head + 1, 0);
+  return str + head;
+}
+
+type::Value StringFunctions::_BTrim(const std::vector<type::Value> &args) {
   PL_ASSERT(args.size() == 2);
   if (args[0].IsNull() || args[1].IsNull()) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);

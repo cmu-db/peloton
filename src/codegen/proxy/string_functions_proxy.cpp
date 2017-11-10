@@ -21,6 +21,7 @@ namespace codegen {
 DEFINE_METHOD(peloton::function, StringFunctions, Ascii);
 DEFINE_METHOD(peloton::function, StringFunctions, Like);
 DEFINE_METHOD(peloton::function, StringFunctions, Length);
+DEFINE_METHOD(peloton::function, StringFunctions, BTrim);
 
 }  // namespace codegen
 }  // namespace peloton
