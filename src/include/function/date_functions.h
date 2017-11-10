@@ -31,6 +31,8 @@ class DateFunctions {
   // @return The Value returned should be a type::DecimalValue that is
   // constructed using type::ValueFactory
   static type::Value Extract(const std::vector<type::Value> &args);
+
+  static type::Value Now();
 };
 
 }  // namespace function
