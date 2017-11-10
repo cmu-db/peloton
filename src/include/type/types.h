@@ -1050,7 +1050,7 @@ enum class OperatorId : uint32_t {
   Floor,
   DateTrunc,
   Like,
-
+  Now,
 
   // Add more operators here, before the last "Invalid" entry
   Invalid
