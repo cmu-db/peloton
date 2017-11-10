@@ -1013,6 +1013,13 @@ void Catalog::InitializeFunctions() {
           function::BuiltInFuncType{OperatorId::Extract,
                                     function::DateFunctions::Extract},
           txn);
+      // add now()
+      AddBuiltinFunction(
+          "now", {type::TypeId::INTEGER, type::TypeId::TIMESTAMP},
+          type::TypeId::DECIMAL, internal_lang, "Now",
+          function::BuiltInFuncType{OperatorId::Now,
+                                    function::DateFunctions::Now},
+          txn);
     } catch (CatalogException &e) {
       txn_manager.AbortTransaction(txn);
       throw e;
