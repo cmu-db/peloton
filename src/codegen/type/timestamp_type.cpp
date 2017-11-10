@@ -111,6 +111,17 @@ struct CompareTimestamp : public TypeSystem::SimpleComparisonHandleNull {
   }
 };
 
+// struct Now : public TypeSystem::NoArgOperator {
+//   Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
+//     return Integer::Instance();
+//   }
+
+//   Value DoWork(CodeGen &codegen) const override {
+//     llvm::Value *raw_ret = codegen.Call(StringFunctionsProxy::Now);
+//     return Value{Integer::Instance(), raw_ret};
+//   }
+// };
+
 // The list of types a SQL timestamp type can be implicitly casted to
 const std::vector<peloton::type::TypeId> kImplicitCastingTable = {
     peloton::type::TypeId::DATE, peloton::type::TypeId::TIMESTAMP};
