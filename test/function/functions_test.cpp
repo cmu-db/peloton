@@ -127,5 +127,34 @@ TEST_F(FunctionsTests, FuncCallTest) {
   txn_manager.CommitTransaction(txn);
 }
 
+
+TEST_F(FunctionsTests, SubstrFuncCallTest) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+
+  TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE test(a DECIMAL, s VARCHAR);");
+
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (4.0, '1234567');");
+
+  std::vector<StatementResult> result;
+  std::vector<FieldInfo> tuple_descriptor;
+  std::string error_message;
+  int rows_affected;
+
+  TestingSQLUtil::ExecuteSQLQuery("SELECT SUBSTR(s,1,5) FROM test;",
+                                  result, tuple_descriptor, rows_affected,
+                                  error_message);
+  EXPECT_EQ(1, result.size());
+  auto res = TestingSQLUtil::GetResultValueAsString(result, 0)
+  EXPECT_EQ("12345", res);
+
+  // free the database just created
+  txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+}
+
 }  // namespace test
 }  // namespace peloton
