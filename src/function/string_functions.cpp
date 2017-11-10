@@ -266,10 +266,10 @@ type::Value StringFunctions::BTrim(const std::vector<type::Value> &args) {
 uint32_t StringFunctions::Length(UNUSED_ATTRIBUTE const char *str,
                                  uint32_t length) {
   PL_ASSERT(str != nullptr);
-  return length;
+  return length > 0 ? length - 1 : length;
 }
 
-// Length of the argument.
+// The length of the string
 type::Value StringFunctions::_Length(const std::vector<type::Value> &args) {
   PL_ASSERT(args.size() == 1);
   if (args[0].IsNull()) {
