@@ -15,9 +15,8 @@
 #include "threadpool/worker.h"
 #include "common/logger.h"
 
-// TODO Add comments
-#define EMPTY_COUNT_BOUND 10
-#define WORKER_PAUSE_TIME 10
+#define MIN_PAUSE_TIME 1
+#define MAX_PAUSE_TIME 1000
 
 namespace peloton {
 namespace threadpool {
@@ -28,22 +27,20 @@ void Worker::Start(TaskQueue *task_queue) {
 }
 
 void Worker::Execute(Worker *current_thread, TaskQueue *task_queue) {
-  size_t empty_count = 0;
+  size_t time_pause = MIN_PAUSE_TIME;
   std::shared_ptr<Task> task;
   while (!current_thread->shutdown_thread_ || !task_queue->IsEmpty()) {
     // poll the queue
     if (!task_queue->Poll(task)) {
-      empty_count++;
-      if (empty_count == EMPTY_COUNT_BOUND) {
-        empty_count = 0;
-        usleep(WORKER_PAUSE_TIME);
-      }
+      usleep(time_pause);
+      time_pause = time_pause * 2 < MAX_PAUSE_TIME ?
+                       time_pause * 2 : MAX_PAUSE_TIME;
     } else {
       LOG_TRACE("Grabbed one task, now execute it");
       // call the threadpool
       task->Run();
       LOG_TRACE("Finished one task");
-      empty_count = 0;
+      time_pause = MIN_PAUSE_TIME;
     }
   }
 }
