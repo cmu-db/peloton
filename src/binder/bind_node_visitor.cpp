@@ -205,8 +205,8 @@ void BindNodeVisitor::Visit(expression::FunctionExpression *expr) {
   auto catalog = catalog::Catalog::GetInstance();
   const catalog::FunctionData &func_data =
       catalog->GetFunction(expr->GetFuncName(), argtypes);
-  LOG_INFO("Function %s found in the catalog", func_data.func_name_.c_str());
-  LOG_INFO("Argument num: %ld", func_data.argument_types_.size());
+  LOG_DEBUG("Function %s found in the catalog", func_data.func_name_.c_str());
+  LOG_DEBUG("Argument num: %ld", func_data.argument_types_.size());
   expr->SetFunctionExpressionParameters(func_data.func_, func_data.return_type_,
                                         func_data.argument_types_);
 }
