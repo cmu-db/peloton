@@ -275,5 +275,27 @@ TEST_F(StringFunctionsTests, BTrimTest) {
   }
 }
 
+TEST_F(StringFunctionsTests, LengthTest) {
+  const char column_char = 'A';
+  int expected = 1;
+  std::string str = "";
+  for (int i = 0; i < 52; i++) {
+    str += (char) (column_char + i);
+    expected++; 
+
+    std::vector<type::Value> args = {
+        type::ValueFactory::GetVarcharValue(str)};
+
+    auto result = function::StringFunctions::_Length(args);
+    EXPECT_FALSE(result.IsNull());
+    EXPECT_EQ(expected, result.GetAs<int>());
+  }
+  // NULL CHECK
+  std::vector<type::Value> args = {
+      type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR)};
+  auto result = function::StringFunctions::_Length(args);
+  EXPECT_TRUE(result.IsNull());
+}
+
 }  // namespace test
 }  // namespace peloton
