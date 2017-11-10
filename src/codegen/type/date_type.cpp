@@ -128,6 +128,9 @@ static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {};
 // Nary operations
 static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
 
+// No arg operations
+static std::vector<TypeSystem::NoArgOpInfo> kNoArgOperatorTable = {};
+
 }  // anonymous namespace
 
 // Initialize the DATE SQL type with the configured type system
@@ -135,7 +138,8 @@ Date::Date()
     : SqlType(peloton::type::TypeId::DATE),
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
                    kComparisonTable, kUnaryOperatorTable,
-                   kBinaryOperatorTable, kNaryOperatorTable) {}
+                   kBinaryOperatorTable, kNaryOperatorTable,
+                   kNoArgOperatorTable) {}
 
 Value Date::GetMinValue(CodeGen &codegen) const {
   auto *raw_val = codegen.Const32(peloton::type::PELOTON_DATE_MIN);
