@@ -13,18 +13,18 @@
 #include "catalog/catalog.h"
 
 #include "catalog/column_catalog.h"
-#include "catalog/index_catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/database_metrics_catalog.h"
-#include "catalog/table_catalog.h"
-#include "catalog/table_metrics_catalog.h"
+#include "catalog/index_catalog.h"
 #include "catalog/index_metrics_catalog.h"
+#include "catalog/language_catalog.h"
+#include "catalog/proc_catalog.h"
 #include "catalog/query_metrics_catalog.h"
 #include "catalog/settings_catalog.h"
-#include "concurrency/transaction_manager_factory.h"
+#include "catalog/table_catalog.h"
+#include "catalog/table_metrics_catalog.h"
 #include "catalog/trigger_catalog.h"
-#include "catalog/proc_catalog.h"
-#include "catalog/language_catalog.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "function/date_functions.h"
 #include "function/decimal_functions.h"
 #include "function/string_functions.h"
@@ -1025,6 +1025,10 @@ void Catalog::InitializeFunctions() {
           function::BuiltInFuncType{OperatorId::Extract,
                                     function::DateFunctions::Extract},
           txn);
+      AddBuiltinFunction(
+          "date_trunc", {type::TypeId::INTEGER, type::TypeId::TIMESTAMP},
+          type::TypeId::TIMESTAMP, internal_lang, "DateTrunc",
+          function::BuiltInFuncType{OperatorId::DateTrunc, NULL}, txn);
     } catch (CatalogException &e) {
       txn_manager.AbortTransaction(txn);
       throw & e;
