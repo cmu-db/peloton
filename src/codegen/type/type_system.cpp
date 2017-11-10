@@ -275,7 +275,7 @@ TypeSystem::TypeSystem(
     const std::vector<TypeSystem::UnaryOpInfo> &unary_op_table,
     const std::vector<TypeSystem::BinaryOpInfo> &binary_op_table,
     const std::vector<TypeSystem::NaryOpInfo> &nary_op_table,
-    const std::vector<TypeSystem::NoArgOpInfo> &no_arg_op_table,
+    const std::vector<TypeSystem::NoArgOpInfo> &no_arg_op_table)
     : implicit_cast_table_(implicit_cast_table),
       explicit_cast_table_(explicit_cast_table),
       comparison_table_(comparison_table),
