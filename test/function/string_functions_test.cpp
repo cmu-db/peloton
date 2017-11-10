@@ -277,14 +277,13 @@ TEST_F(StringFunctionsTests, BTrimTest) {
 
 TEST_F(StringFunctionsTests, LengthTest) {
   const char column_char = 'A';
-  int expected = 1;
+  int expected = 0;
   std::string str = "";
   for (int i = 0; i < 52; i++) {
-    str += (char) (column_char + i);
-    expected++; 
+    str += (char)(column_char + i);
+    expected++;
 
-    std::vector<type::Value> args = {
-        type::ValueFactory::GetVarcharValue(str)};
+    std::vector<type::Value> args = {type::ValueFactory::GetVarcharValue(str)};
 
     auto result = function::StringFunctions::_Length(args);
     EXPECT_FALSE(result.IsNull());
