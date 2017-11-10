@@ -269,5 +269,16 @@ uint32_t StringFunctions::Length(const char *str, uint32_t length) {
   return length;
 }
 
+// Length of the argument.
+type::Value StringFunctions::_Length(const std::vector<type::Value> &args) {
+  PL_ASSERT(args.size() == 1);
+  if (args[0].IsNull()) {
+    return type::ValueFactory::GetNullValueByType(type::TypeId::INTEGER);
+  }
+
+  uint32_t ret = Length(args[0].GetAs<const char *>(), args[0].GetLength());
+  return type::ValueFactory::GetIntegerValue(ret);
+}
+
 }  // namespace function
 }  // namespace peloton
