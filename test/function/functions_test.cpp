@@ -37,7 +37,7 @@ class FunctionsTests : public PelotonTest {
 
 TEST_F(FunctionsTests, CatalogTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-
+  auto catalog = catalog::Catalog::GetInstance();
   auto &pg_language = catalog::LanguageCatalog::GetInstance();
 
   // Test "internal" language
