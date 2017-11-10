@@ -225,7 +225,7 @@ struct BTrim : public TypeSystem::BinaryOperator {
   }
 
   Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
-               OnError on_error) const override {
+               UNUSED_ATTRIBUTE OnError on_error) const override {
     llvm::Value *raw_len = codegen->CreateAlloca(codegen.Int32Type());
     llvm::Value *raw_ptr =
         codegen.Call(StringFunctionsProxy::BTrim,

@@ -247,10 +247,10 @@ const char *StringFunctions::BTrim(const char *str, uint32_t str_len,
     return str;
   }
 
-  size_t tail = str_len - 1, head = 0;
-  while (tail >= 0 && strchr(from, str[tail] != NULL)) tail--;
+  int tail = str_len - 1, head = 0;
+  while (tail >= 0 && strchr(from, str[tail]) != NULL) tail--;
 
-  while (head < str_len && strchr(from, str[head] != NULL)) head++;
+  while (head < (int)str_len && strchr(from, str[head]) != NULL) head++;
 
   *ret_len = std::max(tail - head + 1, 0);
   return str + head;
