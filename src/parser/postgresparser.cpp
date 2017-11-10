@@ -495,16 +495,18 @@ expression::AbstractExpression* PostgresParser::FuncCallTransform(
     fun_name = (reinterpret_cast<value*>(root->funcname->tail->data.ptr_value))
                    ->val.str;
     std::vector<expression::AbstractExpression*> children;
-    for (auto cell = root->args->head; cell != nullptr; cell = cell->next) {
-      auto expr_node = (Node*)cell->data.ptr_value;
-      expression::AbstractExpression* child_expr = nullptr;
-      try {
-        child_expr = ExprTransform(expr_node);
-      } catch (NotImplementedException e) {
-        throw NotImplementedException(StringUtil::Format(
-            "Exception thrown in function expr:\n%s", e.what()));
+    if (root->args != nullptr) {
+      for (auto cell = root->args->head; cell != nullptr; cell = cell->next) {
+        auto expr_node = (Node*)cell->data.ptr_value;
+        expression::AbstractExpression* child_expr = nullptr;
+        try {
+          child_expr = ExprTransform(expr_node);
+        } catch (NotImplementedException e) {
+          throw NotImplementedException(StringUtil::Format(
+                "Exception thrown in function expr:\n%s", e.what()));
+        }
+        children.push_back(child_expr);
       }
-      children.push_back(child_expr);
     }
     result = new expression::FunctionExpression(fun_name.c_str(), children);
   } else {
