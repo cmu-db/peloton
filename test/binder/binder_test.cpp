@@ -18,11 +18,14 @@
 #include "common/statement.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "expression/tuple_value_expression.h"
+#include "expression/function_expression.h"
 #include "optimizer/optimizer.h"
 #include "parser/postgresparser.h"
 #include "include/traffic_cop/traffic_cop.h"
 
 #include <sql/testing_sql_util.h>
+#include "type/value_factory.h"
+#include "executor/testing_executor_util.h"
 
 using std::string;
 using std::unique_ptr;
@@ -32,7 +35,19 @@ using std::make_tuple;
 namespace peloton {
 namespace test {
 
-class BinderCorrectnessTest : public PelotonTest {};
+class BinderCorrectnessTest : public PelotonTest {
+  virtual void SetUp() override {
+    PelotonTest::SetUp();
+    auto catalog = catalog::Catalog::GetInstance();
+    catalog->Bootstrap();
+    TestingExecutorUtil::InitializeDatabase(DEFAULT_DB_NAME);
+  }
+
+  virtual void TearDown() override {
+    TestingExecutorUtil::DeleteDatabase(DEFAULT_DB_NAME);
+    PelotonTest::TearDown();
+  }
+};
 
 void SetupTables(std::string database_name) {
   LOG_INFO("Creating database %s" ,database_name.c_str());
@@ -256,6 +271,30 @@ TEST_F(BinderCorrectnessTest, DeleteStatementTest) {
   txn = txn_manager.BeginTransaction();
   catalog_ptr->DropDatabaseWithName(default_database_name, txn);
   txn_manager.CommitTransaction(txn);
+}
+
+TEST_F(BinderCorrectnessTest, FunctionExpressionTest) {
+  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
+  string function_sql = "SELECT substr('test123', a, 3)";
+  auto& parser = parser::PostgresParser::GetInstance();
+  auto parse_tree = parser.BuildParseTree(function_sql);
+  auto stmt = parse_tree->GetStatement(0);
+  unique_ptr<binder::BindNodeVisitor> binder(new binder::BindNodeVisitor(txn, DEFAULT_DB_NAME));
+  EXPECT_THROW(
+      binder->BindNameToNode(stmt),
+      peloton::BinderException);
+
+  function_sql = "SELECT substr('test123', 2, 3)";
+  auto parse_tree2 = parser.BuildParseTree(function_sql);
+  stmt = parse_tree2->GetStatement(0);
+  binder->BindNameToNode(stmt);
+  auto funct_expr = dynamic_cast<expression::FunctionExpression*>(
+      dynamic_cast<parser::SelectStatement*>(stmt)->select_list[0].get());
+  EXPECT_TRUE(funct_expr->Evaluate(nullptr, nullptr, nullptr).
+      CompareEquals(type::ValueFactory::GetVarcharValue("est")) ==
+      type::CMP_TRUE);
 }
 
 }  // namespace test

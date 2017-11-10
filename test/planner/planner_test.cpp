@@ -153,8 +153,6 @@ TEST_F(PlannerTests, UpdatePlanTestParameter) {
   col_id = schema->GetColumnID(std::string("name"));
   column_ids.push_back(col_id);
   auto *update_expr = new expression::ParameterValueExpression(0);
-  expression::ExpressionUtil::TransformExpression(target_table->GetSchema(),
-                                                  update_expr);
 
   planner::DerivedAttribute attribute(update_expr);
   attribute.attribute_info.type = update_expr->ResultType();
