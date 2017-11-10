@@ -32,7 +32,8 @@ class DateFunctions {
   // constructed using type::ValueFactory
   static type::Value Extract(const std::vector<type::Value> &args);
 
-  static type::Value Now();
+  static int64_t Now();
+  static type::Value _Now(const std::vector<type::Value> &args);
 };
 
 }  // namespace function
