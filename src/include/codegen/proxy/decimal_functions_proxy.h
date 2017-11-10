@@ -19,7 +19,7 @@ namespace codegen {
 
 PROXY(DecimalFunctions) {
   // Proxy everything in function::DecimalFunctions
-  // DECLARE_METHOD(Floor);
+  DECLARE_METHOD(Floor);
 };
 
 }  // namespace codegen
