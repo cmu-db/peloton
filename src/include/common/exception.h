@@ -55,7 +55,8 @@ enum ExceptionType {
   EXCEPTION_TYPE_STAT = 20,              // stat related
   EXCEPTION_TYPE_CONNECTION = 21,        // connection related
   EXCEPTION_TYPE_SYNTAX = 22,            // syntax related
-  EXCEPTION_TYPE_SETTINGS = 23      // settings related
+  EXCEPTION_TYPE_SETTINGS = 23,          // settings related
+  EXCEPTION_TYPE_BINDER = 24             // settings related
 };
 
 class Exception : public std::runtime_error {
@@ -211,8 +212,7 @@ class CastException : public Exception {
   CastException() = delete;
 
  public:
-  CastException(const type::TypeId origType,
-                const type::TypeId newType)
+  CastException(const type::TypeId origType, const type::TypeId newType)
       : Exception(EXCEPTION_TYPE_CONVERSION,
                   "Type " + TypeIdToString(origType) + " can't be cast as " +
                       TypeIdToString(newType)) {}
@@ -222,8 +222,7 @@ class ValueOutOfRangeException : public Exception {
   ValueOutOfRangeException() = delete;
 
  public:
-  ValueOutOfRangeException(const int64_t value,
-                           const type::TypeId origType,
+  ValueOutOfRangeException(const int64_t value, const type::TypeId origType,
                            const type::TypeId newType)
       : Exception(EXCEPTION_TYPE_CONVERSION,
                   "Type " + TypeIdToString(origType) + " with value " +
@@ -232,8 +231,7 @@ class ValueOutOfRangeException : public Exception {
                       "for the destination type " +
                       TypeIdToString(newType)) {}
 
-  ValueOutOfRangeException(const double value,
-                           const type::TypeId origType,
+  ValueOutOfRangeException(const double value, const type::TypeId origType,
                            const type::TypeId newType)
       : Exception(EXCEPTION_TYPE_CONVERSION,
                   "Type " + TypeIdToString(origType) + " with value " +
@@ -241,12 +239,11 @@ class ValueOutOfRangeException : public Exception {
                       " can't be cast as %s because the value is out of range "
                       "for the destination type " +
                       TypeIdToString(newType)) {}
-  ValueOutOfRangeException(const type::TypeId varType,
-                           const size_t length)
+  ValueOutOfRangeException(const type::TypeId varType, const size_t length)
       : Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
                   "The value is too long to fit into type " +
-                          TypeIdToString(varType) +
-                          "(" + std::to_string(length) + ")") {};
+                      TypeIdToString(varType) + "(" + std::to_string(length) +
+                      ")"){};
 };
 
 class ConversionException : public Exception {
@@ -320,8 +317,7 @@ class IncompatibleTypeException : public Exception {
   IncompatibleTypeException(int type, std::string msg)
       : Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
                   "Incompatible type " +
-                      TypeIdToString(static_cast<type::TypeId>(type)) +
-                      msg) {}
+                      TypeIdToString(static_cast<type::TypeId>(type)) + msg) {}
 };
 
 class SerializationException : public Exception {
@@ -397,8 +393,7 @@ class SyntaxException : public Exception {
   SyntaxException() = delete;
 
  public:
-  SyntaxException(std::string msg)
-      : Exception(EXCEPTION_TYPE_SYNTAX, msg) {}
+  SyntaxException(std::string msg) : Exception(EXCEPTION_TYPE_SYNTAX, msg) {}
 };
 
 class ConstraintException : public Exception {
@@ -437,6 +432,13 @@ class SettingsException : public Exception {
  public:
   SettingsException(std::string msg)
       : Exception(EXCEPTION_TYPE_SETTINGS, msg) {}
+};
+
+class BinderException : public Exception {
+  BinderException() = delete;
+
+ public:
+  BinderException(std::string msg) : Exception(EXCEPTION_TYPE_BINDER, msg) {}
 };
 
 }  // namespace peloton

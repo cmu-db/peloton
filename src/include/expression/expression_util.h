@@ -514,21 +514,6 @@ class ExpressionUtil {
       auto &expr_map = expr_maps[0];
       auto iter = expr_map.find(probe_expr);
       if (iter != expr_map.end()) aggr_expr->SetValueIdx(iter->second);
-    } else if (expr->GetExpressionType() == ExpressionType::FUNCTION) {
-      auto func_expr = (expression::FunctionExpression *)expr;
-      std::vector<type::TypeId> argtypes;
-      for (size_t i = 0; i < children_size; i++)
-        argtypes.push_back(expr->GetChild(i)->GetValueType());
-      // Check and set the function ptr
-      auto catalog = catalog::Catalog::GetInstance();
-      const catalog::FunctionData &func_data =
-          catalog->GetFunction(func_expr->GetFuncName(), argtypes);
-      LOG_INFO("Function %s found in the catalog",
-               func_data.func_name_.c_str());
-      LOG_INFO("Argument num: %ld", func_data.argument_types_.size());
-      func_expr->SetFunctionExpressionParameters(func_data.func_,
-                                                 func_data.return_type_,
-                                                 func_data.argument_types_);
     } else if (expr->GetExpressionType() ==
                ExpressionType::OPERATOR_CASE_EXPR) {
       auto case_expr = reinterpret_cast<expression::CaseExpression *>(expr);
@@ -776,9 +761,8 @@ class ExpressionUtil {
       auto catalog = catalog::Catalog::GetInstance();
       const catalog::FunctionData &func_data =
           catalog->GetFunction(func_expr->GetFuncName(), argtypes);
-      func_expr->SetFunctionExpressionParameters(func_data.func_,
-                                                 func_data.return_type_,
-                                                 func_data.argument_types_);
+      func_expr->SetFunctionExpressionParameters(
+          func_data.func_, func_data.return_type_, func_data.argument_types_);
     }
 
     // Handle case expressions

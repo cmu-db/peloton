@@ -28,11 +28,14 @@ class FunctionsTests : public PelotonTest {
       UNUSED_ATTRIBUTE const std::vector<type::Value> &args) {
     return type::ValueFactory::GetIntegerValue(0);
   }
+
+  virtual void SetUp() override {
+    auto catalog = catalog::Catalog::GetInstance();
+    catalog->Bootstrap();
+  }
 };
 
 TEST_F(FunctionsTests, CatalogTest) {
-  auto catalog = catalog::Catalog::GetInstance();
-  catalog->Bootstrap();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   auto &pg_language = catalog::LanguageCatalog::GetInstance();
