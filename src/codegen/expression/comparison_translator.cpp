@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "codegen/expression/comparison_translator.h"
+#include "codegen/type/type_system.h"
 
 #include "expression/comparison_expression.h"
 
@@ -46,7 +47,7 @@ codegen::Value ComparisonTranslator::DeriveValue(CodeGen &codegen,
       return left.CompareGt(codegen, right);
     case ExpressionType::COMPARE_GREATERTHANOREQUALTO:
       return left.CompareGte(codegen, right);
-    case ExpressionType::COMPARE_LIKE:
+    case ExpressionType::COMPARE_LIKE: {
       type::Type left_type = left.GetType();
       type::Type right_type = right.GetType();
       auto *binary_op = type::TypeSystem::GetBinaryOperator(
@@ -56,6 +57,7 @@ codegen::Value ComparisonTranslator::DeriveValue(CodeGen &codegen,
       return binary_op->DoWork(codegen, left.CastTo(codegen, left_type),
                                right.CastTo(codegen, right_type),
                                OnError::Exception);
+    }
     default: {
       throw Exception{"Invalid expression type for translation " +
                       ExpressionTypeToString(comparison.GetExpressionType())};

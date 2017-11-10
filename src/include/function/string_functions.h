@@ -26,8 +26,9 @@ class StringFunctions {
   static type::Value _Ascii(const std::vector<type::Value> &args);
 
   // Like
-  static int32_t Like(const char *t, uint32_t tlen,
-                      const char *p, uint32_t plen);
+  static bool Like(const char *t, uint32_t tlen,
+                   const char *p, uint32_t plen);
+  static type::Value _Like(const std::vector<type::Value> &args);
 
   // Get Character from integer
   static type::Value Chr(const std::vector<type::Value> &args);
