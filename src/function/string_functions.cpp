@@ -263,8 +263,8 @@ type::Value StringFunctions::BTrim(const std::vector<type::Value> &args) {
   return (type::ValueFactory::GetVarcharValue(str));
 }
 
-}  // namespace peloton
-uint32_t StringFunctions::Length(const char *str, uint32_t length) {
+uint32_t StringFunctions::Length(UNUSED_ATTRIBUTE const char *str,
+                                 uint32_t length) {
   PL_ASSERT(str != nullptr);
   return length;
 }
