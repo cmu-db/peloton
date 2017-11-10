@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 #include "catalog/catalog.h"
-#include "catalog/proc_catalog.h"
 #include "catalog/language_catalog.h"
+#include "catalog/proc_catalog.h"
 #include "common/harness.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "sql/testing_sql_util.h"
@@ -39,6 +39,11 @@ TEST_F(FunctionsTests, CatalogTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto catalog = catalog::Catalog::GetInstance();
   auto &pg_language = catalog::LanguageCatalog::GetInstance();
+  
+TEST_F(FunctionsTests, CatalogTest) {
+  auto catalog = catalog::Catalog::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &pg_language = catalog::LanguageCatalog::GetInstance();
 
   // Test "internal" language
   auto txn = txn_manager.BeginTransaction();
@@ -47,7 +52,7 @@ TEST_F(FunctionsTests, CatalogTest) {
   internal_lang = pg_language.GetLanguageByOid(internal_lang->GetOid(), txn);
   EXPECT_NE(nullptr, internal_lang);
   EXPECT_EQ("internal", internal_lang->GetName());
-
+  
   // test add/del language
   type::EphemeralPool pool;
   std::string lanname = "foo_lang";
@@ -60,9 +65,8 @@ TEST_F(FunctionsTests, CatalogTest) {
   pg_language.DeleteLanguage(lanname, txn);
   inserted_lang = pg_language.GetLanguageByName(lanname, txn);
   EXPECT_EQ(nullptr, inserted_lang);
-
+  
   txn_manager.CommitTransaction(txn);
-
   auto &pg_proc = catalog::ProcCatalog::GetInstance();
 
   // test pg_proc
@@ -95,9 +99,8 @@ TEST_F(FunctionsTests, FuncCallTest) {
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
-
+  
   TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE test(a DECIMAL, s VARCHAR);");
-
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (4.0, 'abc');");
 
   std::vector<ResultValue> result;
@@ -126,15 +129,14 @@ TEST_F(FunctionsTests, FuncCallTest) {
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
-
+  
 TEST_F(FunctionsTests, SubstrFuncCallTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
-
+  
   TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE test(a DECIMAL, s VARCHAR);");
-
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (4.0, '1234567');");
 
   std::vector<StatementResult> result;
@@ -178,4 +180,3 @@ TEST_F(FunctionsTests, SubstrFuncCallTest) {
 
 }  // namespace test
 }  // namespace peloton
-
