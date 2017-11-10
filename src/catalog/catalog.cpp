@@ -930,6 +930,12 @@ void Catalog::InitializeFunctions() {
                                     function::StringFunctions::OctetLength},
           txn);
       AddBuiltinFunction(
+          "length", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
+          internal_lang, "Length",
+          function::BuiltInFuncType{OperatorId::Length,
+                                    function::StringFunctions::Length},
+          txn);
+      AddBuiltinFunction(
           "repeat", {type::TypeId::VARCHAR, type::TypeId::INTEGER},
           type::TypeId::VARCHAR, internal_lang, "Repeat",
           function::BuiltInFuncType{OperatorId::Repeat,
