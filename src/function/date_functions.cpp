@@ -16,6 +16,7 @@
 #include <date/date.h>
 #include <inttypes.h>
 #include <date/iso_week.h>
+#include <time.h>
 
 #include "common/logger.h"
 #include "type/types.h"
@@ -144,6 +145,14 @@ type::Value DateFunctions::Extract(const std::vector<type::Value> &args) {
   };
 
   return (result);
+}
+
+type::Value DateFunctions::Now() {
+  time_t now;
+  time(&now);
+  // TODO there might be some cross platform casting problem
+  // by Tianyi
+  return type::ValueFactory::GetTimestampValue(now);
 }
 
 }  // namespace expression
