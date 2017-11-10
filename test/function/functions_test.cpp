@@ -29,13 +29,15 @@ class FunctionsTests : public PelotonTest {
     return type::ValueFactory::GetIntegerValue(0);
   }
 
-  virtual void SetUp() override {
+  virtual void SetUp() {
+    PelotonTest::SetUp();
     auto catalog = catalog::Catalog::GetInstance();
     catalog->Bootstrap();
   }
 };
 
 TEST_F(FunctionsTests, CatalogTest) {
+  auto catalog = catalog::Catalog::GetInstance();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto catalog = catalog::Catalog::GetInstance();
   auto &pg_language = catalog::LanguageCatalog::GetInstance();
@@ -147,7 +149,7 @@ TEST_F(FunctionsTests, SubstrFuncCallTest) {
                                   result, tuple_descriptor, rows_affected,
                                   error_message);
   EXPECT_EQ(1, result.size());
-  auto res = TestingSQLUtil::GetResultValueAsString(result, 0)
+  auto res = TestingSQLUtil::GetResultValueAsString(result, 0);
   EXPECT_EQ("12345", res);
 
   // free the database just created
