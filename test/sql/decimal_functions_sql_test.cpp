@@ -2,11 +2,11 @@
 //
 //                         Peloton
 //
-// distinct_sql_test.cpp
+// decimal_functions_sql_test.cpp
 //
-// Identification: test/sql/distinct_sql_test.cpp
+// Identification: test/sql/decimal_functions_sql_test.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -55,10 +55,9 @@ class DecimalFunctionsSQLTest : public PelotonTest {};
     std::vector<FieldInfo> tuple_descriptor;
     std::string error_message;
     int rows_affected;
-    std::ostringstream os;
-    os << "select id, floor(income) from foo;";
+    std::string testQuery = "select id, floor(income) from foo;";
 
-    TestingSQLUtil::ExecuteSQLQuery(os.str(), result, tuple_descriptor,
+    TestingSQLUtil::ExecuteSQLQuery(testQuery.c_str(), result, tuple_descriptor,
                                     rows_affected, error_message);
     for (i = 0; i < numEntries; i++) {
       std::string result_id(
