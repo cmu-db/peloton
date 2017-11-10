@@ -123,8 +123,21 @@ type::Value StringFunctions::Chr(const std::vector<type::Value> &args) {
   return type::ValueFactory::GetVarcharValue(str);
 }
 
+StringFunctions::StrWithLen StringFunctions::Substr(const char *str, uint32_t str_length, int32_t from, int32_t len) {
+  int32_t signed_end = from+len-1;
+  if (signed_end < 0 || str_length == 0)
+    return StringFunctions::StrWithLen(nullptr, 0);
+
+  uint32_t begin = from > 0 ? unsigned(from)-1 : 0;
+  uint32_t end = unsigned(signed_end);
+  if (end > str_length) end = str_length;
+  if (begin > end)
+    return StringFunctions::StrWithLen(nullptr, 0);
+  return StringFunctions::StrWithLen(str+begin, end-begin);
+}
+
 // substring
-type::Value StringFunctions::Substr(const std::vector<type::Value> &args) {
+type::Value StringFunctions::_Substr(const std::vector<type::Value> &args) {
   PL_ASSERT(args.size() == 3);
   if (args[0].IsNull() || args[1].IsNull() || args[2].IsNull()) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);

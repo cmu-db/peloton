@@ -39,7 +39,8 @@ class StringFunctions {
   static type::Value Chr(const std::vector<type::Value> &args);
 
   // substring
-  static type::Value Substr(const std::vector<type::Value> &args);
+  static StrWithLen Substr(const char *str, uint32_t str_length, int32_t from, int32_t len);
+  static type::Value _Substr(const std::vector<type::Value> &args);
 
   // Number of characters in string
   static type::Value CharLength(const std::vector<type::Value> &args);

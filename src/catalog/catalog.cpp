@@ -916,7 +916,7 @@ void Catalog::InitializeFunctions() {
           {type::TypeId::VARCHAR, type::TypeId::INTEGER, type::TypeId::INTEGER},
           type::TypeId::VARCHAR, internal_lang, "Substr",
           function::BuiltInFuncType{OperatorId::Substr,
-                                    function::StringFunctions::Substr},
+                                    function::StringFunctions::_Substr},
           txn);
       AddBuiltinFunction(
           "char_length", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
