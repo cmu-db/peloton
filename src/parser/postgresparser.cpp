@@ -192,8 +192,13 @@ bool IsTargetListWithVariable(List *target_list) {
   // The only valid situation of a null from list is that all targets are
   // constant
   for (auto cell = target_list->head; cell != nullptr; cell = cell->next) {
+<<<<<<< HEAD
     ResTarget *target = reinterpret_cast<ResTarget *>(cell->data.ptr_value);
     LOG_TRACE("Type: %d", target->type);
+=======
+    ResTarget* target = reinterpret_cast<ResTarget*>(cell->data.ptr_value);
+    LOG_DEBUG("Type: %d", target->type);
+>>>>>>> remove my previous fix to enable parser
 
     // Bypass the target nodes with type:
     // constant("SELECT 1;"), expression ("SELECT 1 + 1"),
@@ -205,6 +210,7 @@ bool IsTargetListWithVariable(List *target_list) {
       case T_BoolExpr:
         continue;
       default:
+        LOG_DEBUG("HERE");
         return true;
     }
   }
