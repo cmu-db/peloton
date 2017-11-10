@@ -10,19 +10,22 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "catalog/catalog.h"
 #include "binder/bind_node_visitor.h"
 
 #include "expression/case_expression.h"
 #include "expression/tuple_value_expression.h"
+#include "expression/function_expression.h"
+#include "expression/operator_expression.h"
+#include "expression/aggregate_expression.h"
+#include "expression/star_expression.h"
 
 namespace peloton {
 namespace binder {
 
-BindNodeVisitor::BindNodeVisitor(
-  concurrency::Transaction *txn, 
-  std::string default_database_name) 
-: txn_(txn),
-  default_database_name_(default_database_name) {
+BindNodeVisitor::BindNodeVisitor(concurrency::Transaction *txn,
+                                 std::string default_database_name)
+    : txn_(txn), default_database_name_(default_database_name) {
   context_ = nullptr;
 }
 
@@ -35,15 +38,15 @@ void BindNodeVisitor::Visit(parser::SelectStatement *node) {
   auto pre_context = context_;
   context_ = std::make_shared<BinderContext>();
   context_->upper_context = pre_context;
-  if (node->from_table != nullptr){
+  if (node->from_table != nullptr) {
     node->from_table->Accept(this);
   }
-  
+
   if (node->where_clause != nullptr) node->where_clause->Accept(this);
   if (node->order != nullptr) node->order->Accept(this);
   if (node->limit != nullptr) node->limit->Accept(this);
   if (node->group_by != nullptr) node->group_by->Accept(this);
-  for (auto& select_element : node->select_list) {
+  for (auto &select_element : node->select_list) {
     select_element->Accept(this);
   }
 
@@ -67,22 +70,22 @@ void BindNodeVisitor::Visit(parser::TableRef *node) {
     node->join->Accept(this);
   // Multiple tables
   else if (!node->list.empty()) {
-    for (auto& table : node->list) table->Accept(this);
+    for (auto &table : node->list) table->Accept(this);
   }
   // Single table
   else {
-    context_->AddTable(node, default_database_name_ ,txn_);
+    context_->AddTable(node, default_database_name_, txn_);
   }
 }
 
 void BindNodeVisitor::Visit(parser::GroupByDescription *node) {
-  for (auto& col : node->columns) {
+  for (auto &col : node->columns) {
     col->Accept(this);
   }
   if (node->having != nullptr) node->having->Accept(this);
 }
 void BindNodeVisitor::Visit(parser::OrderDescription *node) {
-  for (auto& expr : node->exprs)
+  for (auto &expr : node->exprs)
     if (expr != nullptr) expr->Accept(this);
 }
 
@@ -91,7 +94,7 @@ void BindNodeVisitor::Visit(parser::UpdateStatement *node) {
 
   node->table->Accept(this);
   if (node->where != nullptr) node->where->Accept(this);
-  for (auto& update : node->updates) {
+  for (auto &update : node->updates) {
     update->value->Accept(this);
   }
 
@@ -173,6 +176,39 @@ void BindNodeVisitor::Visit(expression::CaseExpression *expr) {
   for (size_t i = 0; i < expr->GetWhenClauseSize(); ++i) {
     expr->GetWhenClauseCond(i)->Accept(this);
   }
+}
+
+void BindNodeVisitor::Visit(expression::StarExpression *expr) {
+  if (!BinderContext::HasTables(context_))
+    throw Exception("Invalid expression" + expr->GetInfo());
+}
+
+// Deduce value type for these expressions
+void BindNodeVisitor::Visit(expression::OperatorExpression *expr) {
+  SqlNodeVisitor::Visit(expr);
+  expr->DeduceExpressionType();
+}
+void BindNodeVisitor::Visit(expression::AggregateExpression *expr) {
+  SqlNodeVisitor::Visit(expr);
+  expr->DeduceExpressionType();
+}
+
+void BindNodeVisitor::Visit(expression::FunctionExpression *expr) {
+  // Visit the subtree first
+  SqlNodeVisitor::Visit(expr);
+
+  // Check catalog and bind function
+  std::vector<type::TypeId> argtypes;
+  for (size_t i = 0; i < expr->GetChildrenSize(); i++)
+    argtypes.push_back(expr->GetChild(i)->GetValueType());
+  // Check and set the function ptr
+  auto catalog = catalog::Catalog::GetInstance();
+  const catalog::FunctionData &func_data =
+      catalog->GetFunction(expr->GetFuncName(), argtypes);
+  LOG_INFO("Function %s found in the catalog", func_data.func_name_.c_str());
+  LOG_INFO("Argument num: %ld", func_data.argument_types_.size());
+  expr->SetFunctionExpressionParameters(func_data.func_, func_data.return_type_,
+                                        func_data.argument_types_);
 }
 
 }  // namespace binder
