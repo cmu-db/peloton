@@ -11,7 +11,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "codegen/type/varchar_type.h"
-
 #include "codegen/lang/if.h"
 #include "codegen/proxy/string_functions_proxy.h"
 #include "codegen/proxy/values_runtime_proxy.h"
@@ -212,6 +211,7 @@ struct DateTrunc : public TypeSystem::BinaryOperatorHandleNull {
   }
 };
 
+
 struct Trim : public TypeSystem::UnaryOperatorHandleNull {
   bool SupportsType(const Type &type) const override {
     return type.GetSqlType() == Varchar::Instance();
@@ -303,13 +303,41 @@ struct RTrim : public TypeSystem::BinaryOperatorHandleNull {
   }
 };
 
+struct Substr : public TypeSystem::NaryOperator {
+  bool SupportsType(const std::vector<Type> &arg_types) const override {
+    return arg_types[0].GetSqlType() == Varchar::Instance() &&
+           arg_types[1].GetSqlType() == Integer::Instance() &&
+           arg_types[2].GetSqlType() == Integer::Instance();
+  }
+
+  Type ReulstType(const std::vector<Type> &arg_types) const override {
+    return Varchar::Instance();
+  }
+
+  Value DoWork(CodeGen &codegen, const std::vector<Value> &input_args,
+               OnError on_error) const override {
+    llvm::Type *ret_type = StrWithLenProxy::GetType(codegen);
+    llvm::Value *ret =
+        codegen.Call(StringFunctionsProxy::Substr,
+                     {
+                         input_args[0].GetValue(), input_args[0].GetLength(),
+                         input_args[1].GetValue(), input_args[2].GetValue(),
+                     });
+    llvm::Value *str_ptr = codegen->CreateLoad(
+        codegen->CreateConstInBoundsGEP2_32(ret_type, ret, 0, 0));
+    llvm::Value *str_len = codegen->CreateLoad(
+        codegen->CreateConstInBoundsGEP2_32(ret_type, ret, 0, 1));
+    return Value(VarChar::Instance(), str_ptr, str_len);
+  }
+}
+
 //===----------------------------------------------------------------------===//
 // TYPE SYSTEM CONSTRUCTION
 //===----------------------------------------------------------------------===//
 
 // The list of types a SQL varchar type can be implicitly casted to
-const std::vector<peloton::type::TypeId> kImplicitCastingTable = {
-    peloton::type::TypeId::VARCHAR};
+const std::vector<peloton::type::TypeId>
+    kImplicitCastingTable = {peloton::type::TypeId::VARCHAR};
 
 // Explicit casting rules
 static std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {};
@@ -342,7 +370,9 @@ static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
     {OperatorId::RTrim, kRTrim}};
 
 // Nary operations
-static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
+static Substr kSubstr;
+static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {
+    {OperatorId::Substr, kSubstr}};
 
 }  // anonymous namespace
 
