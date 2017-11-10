@@ -170,14 +170,13 @@ struct Like : public TypeSystem::BinaryOperator {
   Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
                UNUSED_ATTRIBUTE OnError on_error) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
-
     // Do match
     llvm::Value *raw_ret = codegen.Call(StringFunctionsProxy::Like,
                                         {left.GetValue(), left.GetLength(),
                                          right.GetValue(), right.GetLength()});
 
     // return value
-    return Value{Integer::Instance(), raw_ret};
+    return Value{Boolean::Instance(), raw_ret};
   }
 };
 
