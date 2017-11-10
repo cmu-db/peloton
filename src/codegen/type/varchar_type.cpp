@@ -304,18 +304,19 @@ struct RTrim : public TypeSystem::BinaryOperatorHandleNull {
 };
 
 struct Substr : public TypeSystem::NaryOperator {
-  bool SupportsType(const std::vector<Type> &arg_types) const override {
+  bool SupportsTypes(const std::vector<Type> &arg_types) const override {
     return arg_types[0].GetSqlType() == Varchar::Instance() &&
            arg_types[1].GetSqlType() == Integer::Instance() &&
            arg_types[2].GetSqlType() == Integer::Instance();
   }
 
-  Type ReulstType(const std::vector<Type> &arg_types) const override {
+  Type ResultType(
+      UNUSED_ATTRIBUTE const std::vector<Type> &arg_types) const override {
     return Varchar::Instance();
   }
 
   Value DoWork(CodeGen &codegen, const std::vector<Value> &input_args,
-               OnError on_error) const override {
+               UNUSED_ATTRIBUTE OnError on_error) const override {
     llvm::Type *ret_type = StrWithLenProxy::GetType(codegen);
     llvm::Value *ret =
         codegen.Call(StringFunctionsProxy::Substr,
@@ -327,17 +328,17 @@ struct Substr : public TypeSystem::NaryOperator {
         codegen->CreateConstInBoundsGEP2_32(ret_type, ret, 0, 0));
     llvm::Value *str_len = codegen->CreateLoad(
         codegen->CreateConstInBoundsGEP2_32(ret_type, ret, 0, 1));
-    return Value(VarChar::Instance(), str_ptr, str_len);
+    return Value(Varchar::Instance(), str_ptr, str_len);
   }
-}
+};
 
 //===----------------------------------------------------------------------===//
 // TYPE SYSTEM CONSTRUCTION
 //===----------------------------------------------------------------------===//
 
 // The list of types a SQL varchar type can be implicitly casted to
-const std::vector<peloton::type::TypeId>
-    kImplicitCastingTable = {peloton::type::TypeId::VARCHAR};
+const std::vector<peloton::type::TypeId> kImplicitCastingTable = {
+    peloton::type::TypeId::VARCHAR};
 
 // Explicit casting rules
 static std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {};

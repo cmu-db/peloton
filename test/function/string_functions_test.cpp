@@ -311,15 +311,17 @@ TEST_F(StringFunctionsTests, CodegenSubstrTest) {
   const std::string message = "1234567";
   int from = 1;
   int len = 5;
-  std::string expected = message.substr(from-1, len);
-  auto res = function::StringFunctions::Substr(message.c_str(), message.length(), from, len);
+  std::string expected = message.substr(from - 1, len);
+  auto res = function::StringFunctions::Substr(message.c_str(),
+                                               message.length(), from, len);
   EXPECT_EQ(len, res.length);
   EXPECT_EQ(expected, std::string(res.str, len));
 
   from = 7;
   len = 1;
-  expected = message.substr(from-1, len);
-  res = function::StringFunctions::Substr(message.c_str(), message.length(), from, len);
+  expected = message.substr(from - 1, len);
+  res = function::StringFunctions::Substr(message.c_str(), message.length(),
+                                          from, len);
   EXPECT_EQ(len, res.length);
   EXPECT_EQ(expected, std::string(res.str, len));
 }
