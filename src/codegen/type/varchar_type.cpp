@@ -317,17 +317,22 @@ struct Substr : public TypeSystem::NaryOperator {
 
   Value DoWork(CodeGen &codegen, const std::vector<Value> &input_args,
                UNUSED_ATTRIBUTE OnError on_error) const override {
-    llvm::Type *ret_type = StrWithLenProxy::GetType(codegen);
+//    llvm::Type *ret_type = StrWithLenProxy::GetType(codegen);
     llvm::Value *ret =
         codegen.Call(StringFunctionsProxy::Substr,
                      {
                          input_args[0].GetValue(), input_args[0].GetLength(),
                          input_args[1].GetValue(), input_args[2].GetValue(),
                      });
-    llvm::Value *str_ptr = codegen->CreateLoad(
-        codegen->CreateConstInBoundsGEP2_32(ret_type, ret, 0, 0));
-    llvm::Value *str_len = codegen->CreateLoad(
-        codegen->CreateConstInBoundsGEP2_32(ret_type, ret, 0, 1));
+    LOG_INFO("Before Load %d", ret->getType()->getTypeID());
+//    llvm::Value *str_ptr = codegen->CreateLoad(
+//        codegen->CreateConstInBoundsGEP2_32(ret_type, ret, 0, 0));
+//    llvm::Value *str_len = codegen->CreateLoad(
+//        codegen->CreateConstInBoundsGEP2_32(ret_type, ret, 0, 1));
+    llvm::Value *str_ptr = codegen->CreateExtractValue(ret, 0);
+    llvm::Value *str_len = codegen->CreateExtractValue(ret, 1);
+    codegen.CallPrintf("ptr: %p, str_ptr: %p, len: %d\n", {input_args[0].GetValue(),str_ptr, str_len});
+    LOG_INFO("After Load");
     return Value(Varchar::Instance(), str_ptr, str_len);
   }
 };
