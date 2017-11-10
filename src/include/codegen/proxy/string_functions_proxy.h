@@ -22,6 +22,7 @@ PROXY(StringFunctions) {
   DECLARE_METHOD(Ascii);
   DECLARE_METHOD(Like);
   DECLARE_METHOD(Length);
+  DECLARE_METHOD(BTrim);
 };
 
 }  // namespace codegen

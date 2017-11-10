@@ -965,7 +965,7 @@ void Catalog::InitializeFunctions() {
           "btrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
           type::TypeId::VARCHAR, internal_lang, "btrim",
           function::BuiltInFuncType{OperatorId::BTrim,
-                                    function::StringFunctions::BTrim},
+                                    function::StringFunctions::_BTrim},
           txn);
       AddBuiltinFunction(
           "like", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
