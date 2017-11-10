@@ -66,6 +66,7 @@ class StringFunctions {
   // This function is used by LLVM engine
   // Length will return the number of characters in the given string
   static uint32_t Length(const char *str, uint32_t length);
+  static type::Value _Length(const std::vector<type::Value> &args);
 };
 
 }  // namespace function

@@ -933,7 +933,7 @@ void Catalog::InitializeFunctions() {
           "length", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
           internal_lang, "Length",
           function::BuiltInFuncType{OperatorId::Length,
-                                    function::StringFunctions::Length},
+                                    function::StringFunctions::_Length},
           txn);
       AddBuiltinFunction(
           "repeat", {type::TypeId::VARCHAR, type::TypeId::INTEGER},
