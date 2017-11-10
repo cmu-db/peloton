@@ -963,7 +963,7 @@ void Catalog::InitializeFunctions() {
           "like", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
           type::TypeId::VARCHAR, internal_lang, "like",
           function::BuiltInFuncType{OperatorId::Like,
-                                    function::StringFunctions::Like},
+                                    function::StringFunctions::_Like},
           txn);
 
       /**
