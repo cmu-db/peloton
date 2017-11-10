@@ -124,7 +124,7 @@ TEST_F(StringFunctionsTests, SubstrTest) {
       type::ValueFactory::GetIntegerValue(from),
       type::ValueFactory::GetIntegerValue(len),
   };
-  auto result = function::StringFunctions::Substr(args);
+  auto result = function::StringFunctions::_Substr(args);
   EXPECT_FALSE(result.IsNull());
   EXPECT_EQ(expected, result.ToString());
 
@@ -136,7 +136,7 @@ TEST_F(StringFunctionsTests, SubstrTest) {
         type::ValueFactory::GetVarcharValue("ccc"),
     };
     nullargs[i] = type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
-    auto result = function::StringFunctions::Substr(nullargs);
+    auto result = function::StringFunctions::_Substr(nullargs);
     EXPECT_TRUE(result.IsNull());
   }
 }
@@ -285,7 +285,7 @@ TEST_F(StringFunctionsTests, BTrimTest) {
     EXPECT_TRUE(result.IsNull());
   }
 }
-
+  
 TEST_F(StringFunctionsTests, LengthTest) {
   const char column_char = 'A';
   int expected = 1;
@@ -305,6 +305,23 @@ TEST_F(StringFunctionsTests, LengthTest) {
       type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR)};
   auto result = function::StringFunctions::_Length(args);
   EXPECT_TRUE(result.IsNull());
+}
+
+TEST_F(StringFunctionsTests, CodegenSubstrTest) {
+  const std::string message = "1234567";
+  int from = 1;
+  int len = 5;
+  std::string expected = message.substr(from-1, len);
+  auto res = function::StringFunctions::Substr(message.c_str(), message.length(), from, len);
+  EXPECT_EQ(len, res.length);
+  EXPECT_EQ(expected, std::string(res.str, len));
+
+  from = 7;
+  len = 1;
+  expected = message.substr(from-1, len);
+  res = function::StringFunctions::Substr(message.c_str(), message.length(), from, len);
+  EXPECT_EQ(len, res.length);
+  EXPECT_EQ(expected, std::string(res.str, len));
 }
 
 }  // namespace test
