@@ -15,6 +15,7 @@
 #include "codegen/lang/if.h"
 #include "codegen/value.h"
 #include "codegen/proxy/values_runtime_proxy.h"
+#include "codegen/proxy/decimal_functions_proxy.h"
 #include "codegen/type/boolean_type.h"
 #include "codegen/type/integer_type.h"
 #include "common/exception.h"
@@ -157,6 +158,23 @@ struct Negate : public TypeSystem::UnaryOperator {
     // Return result
     return Value{Decimal::Instance(), result, nullptr, nullptr};
   }
+};
+
+struct Floor : public TypeSystem::UnaryOperator {
+  bool SupportsType(const Type &type) const override {
+    return type.GetSqlType() == Decimal::Instance();
+  }
+
+  Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
+    return Type{Decimal::Instance()};
+  }
+
+  Value DoWork(CodeGen &codegen, const Value &val) const override {
+    llvm::Value *raw_ret = codegen.Call(DecimalFunctionsProxy::Floor,
+                                        {val.GetValue()});
+    return Value{Integer::Instance(), raw_ret};
+  }
+
 };
 
 // Addition
@@ -367,8 +385,9 @@ static std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {
 
 // Unary operators
 static Negate kNegOp;
+static Floor kFloorOp;
 static std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {
-    {OperatorId::Negation, kNegOp}};
+    {OperatorId::Negation, kNegOp}, {OperatorId::Floor, kFloorOp}};
 
 // Binary operations
 static Add kAddOp;
