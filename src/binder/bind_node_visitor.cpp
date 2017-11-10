@@ -153,7 +153,7 @@ void BindNodeVisitor::Visit(expression::TupleValueExpression *expr) {
     if (table_name.empty()) {
       if (!BinderContext::GetColumnPosTuple(context_, col_name, col_pos_tuple,
                                             table_name, value_type, txn_))
-        throw Exception("Cannot find column " + col_name);
+        throw BinderException("Cannot find column " + col_name);
       expr->SetTableName(table_name);
     }
     // Table name is present
@@ -161,11 +161,11 @@ void BindNodeVisitor::Visit(expression::TupleValueExpression *expr) {
       // Find the corresponding table in the context
       if (!BinderContext::GetTableIdTuple(context_, table_name,
                                           &table_id_tuple))
-        throw Exception("Invalid table reference " + expr->GetTableName());
+        throw BinderException("Invalid table reference " + expr->GetTableName());
       // Find the column offset in that table
       if (!BinderContext::GetColumnPosTuple(col_name, table_id_tuple,
                                             col_pos_tuple, value_type, txn_))
-        throw Exception("Cannot find column " + col_name);
+        throw BinderException("Cannot find column " + col_name);
     }
     expr->SetValueType(value_type);
     expr->SetBoundOid(col_pos_tuple);
@@ -180,7 +180,7 @@ void BindNodeVisitor::Visit(expression::CaseExpression *expr) {
 
 void BindNodeVisitor::Visit(expression::StarExpression *expr) {
   if (!BinderContext::HasTables(context_))
-    throw Exception("Invalid expression" + expr->GetInfo());
+    throw BinderException("Invalid expression" + expr->GetInfo());
 }
 
 // Deduce value type for these expressions
