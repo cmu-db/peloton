@@ -146,11 +146,21 @@ type::Value DateFunctions::Extract(const std::vector<type::Value> &args) {
   return (result);
 }
 
-type::Value DateFunctions::Now() {
-  time_t now;
-  time(&now);
+// This now is not what postgres does.
+// Postgres is returning the time when the transaction begins
+// We are here intead generating a new time when this function
+// is called
+int64_t StringFunctions::Now() {
   // TODO there might be some cross platform casting problem
   // by Tianyi
+  time_t now;
+  time(&now);
+  return now;
+}
+
+type::Value DateFunctions::_Now(const UNUSED_ATTRIBUTE std::vector<type::Value> &args) {
+  PL_ASSERT(args.size() == 0);
+  int64_t now = Now();
   return type::ValueFactory::GetTimestampValue(now);
 }
 

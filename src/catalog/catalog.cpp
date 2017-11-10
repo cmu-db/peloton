@@ -1116,11 +1116,12 @@ void Catalog::InitializeFunctions() {
                                     function::TimestampFunctions::_DateTrunc},
       // add now()
       AddBuiltinFunction(
-          "now", {type::TypeId::INTEGER, type::TypeId::TIMESTAMP},
-          type::TypeId::DECIMAL, internal_lang, "Now",
+          "now", {},
+          type::TypeId::TIMESTAMP, internal_lang, "Now",
           function::BuiltInFuncType{OperatorId::Now,
-                                    function::DateFunctions::Now},
+                                    function::DateFunctions::_Now},
           txn);
+
     } catch (CatalogException &e) {
       txn_manager.AbortTransaction(txn);
       throw & e;
