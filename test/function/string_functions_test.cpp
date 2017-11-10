@@ -30,6 +30,22 @@ namespace test {
 
 class StringFunctionsTests : public PelotonTest {};
 
+TEST_F(StringFunctionsTests, LikeTest) {
+  //-------------- match ---------------- //
+  std::string s1 = "forbes \\avenue"; // "forbes \avenue"
+  std::string p1 = "%b_s \\\\avenue"; // "%b_s \\avenue"
+  EXPECT_TRUE(function::StringFunctions::Like(s1.c_str(), s1.size(), p1.c_str(), p1.size()));
+
+  std::string s2 = "for%bes avenue%"; // "for%bes avenue"
+  std::string p2 = "for%bes a_enue\\%"; // "for%bes a_enue"
+  EXPECT_TRUE(function::StringFunctions::Like(s2.c_str(), s2.size(), p2.c_str(), p2.size()));
+
+  //-------------- not match ----------------//
+  std::string s4 = "forbes avenue"; // "forbes avenue"
+  std::string p4 = "f_bes avenue"; // "f_bes avenue"
+  EXPECT_FALSE(function::StringFunctions::Like(s4.c_str(), s4.size(), p4.c_str(), p4.size()));
+}
+
 TEST_F(StringFunctionsTests, AsciiTest) {
   const char column_char = 'A';
   for (int i = 0; i < 52; i++) {

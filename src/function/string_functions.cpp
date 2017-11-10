@@ -42,7 +42,6 @@ bool StringFunctions::Like(const char *t, uint32_t tlen,
                            const char *p, uint32_t plen) {
   PL_ASSERT(t != nullptr);
   PL_ASSERT(p != nullptr);
-
   if (plen == 1 && *p == '%')
 		return true;
 
