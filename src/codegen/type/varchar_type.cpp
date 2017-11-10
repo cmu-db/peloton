@@ -15,6 +15,7 @@
 #include "codegen/value.h"
 #include "codegen/proxy/string_functions_proxy.h"
 #include "codegen/proxy/values_runtime_proxy.h"
+#include "codegen/proxy/date_functions_proxy.h"
 #include "codegen/type/boolean_type.h"
 #include "codegen/type/integer_type.h"
 

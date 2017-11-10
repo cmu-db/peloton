@@ -351,9 +351,6 @@ class TypeSystem {
   // The comparison table
   const std::vector<ComparisonInfo> &comparison_table_;
 
-  // The table of builti no-arg operators
-  const std::vector<NoArgOpInfo> &no_arg_op_table_;
-
   // The table of builtin unary operators
   const std::vector<UnaryOpInfo> &unary_op_table_;
 
@@ -362,6 +359,9 @@ class TypeSystem {
 
   // The table of builtin nary operators
   const std::vector<NaryOpInfo> &nary_op_table_;
+
+  // The table of builti no-arg operators
+  const std::vector<NoArgOpInfo> &no_arg_op_table_;
 
  private:
   DISALLOW_COPY_AND_MOVE(TypeSystem);
