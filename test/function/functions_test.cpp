@@ -9,7 +9,6 @@
 // Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
 #include "catalog/catalog.h"
 #include "catalog/proc_catalog.h"
 #include "catalog/language_catalog.h"
@@ -18,7 +17,6 @@
 #include "sql/testing_sql_util.h"
 #include "type/ephemeral_pool.h"
 #include "type/value_factory.h"
-
 namespace peloton {
 namespace test {
 
@@ -180,3 +178,4 @@ TEST_F(FunctionsTests, SubstrFuncCallTest) {
 
 }  // namespace test
 }  // namespace peloton
+

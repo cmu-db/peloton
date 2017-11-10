@@ -134,6 +134,7 @@ StringFunctions::StrWithLen StringFunctions::Substr(const char *str,
   uint32_t end = unsigned(signed_end);
   if (end > str_length) end = str_length;
   if (begin > end) return StringFunctions::StrWithLen(nullptr, 0);
+  LOG_INFO("begin: %d, len: %d", begin, end - begin);
   return StringFunctions::StrWithLen(str + begin, end - begin);
 }
 
