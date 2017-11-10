@@ -23,6 +23,13 @@ uint32_t StringFunctions::Ascii(const char *str, uint32_t length) {
   return length <= 1 ? 0 : static_cast<uint32_t>(str[0]);
 }
 
+int32_t StringFunctions::Like(const char *t, uint32_t tlen,
+                              const char *p, uint32_t plen) {
+  PL_ASSERT(t != nullptr);
+  PL_ASSERT(p != nullptr);
+  // TODO(yuchen)
+}
+
 // ASCII code of the first character of the argument.
 type::Value StringFunctions::_Ascii(const std::vector<type::Value> &args) {
   PL_ASSERT(args.size() == 1);

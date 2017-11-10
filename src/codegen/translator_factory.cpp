@@ -143,7 +143,8 @@ std::unique_ptr<ExpressionTranslator> TranslatorFactory::CreateTranslator(
     case ExpressionType::COMPARE_LESSTHAN:
     case ExpressionType::COMPARE_GREATERTHAN:
     case ExpressionType::COMPARE_LESSTHANOREQUALTO:
-    case ExpressionType::COMPARE_GREATERTHANOREQUALTO: {
+    case ExpressionType::COMPARE_GREATERTHANOREQUALTO:
+    case ExpressionType::COMPARE_LIKE: {
       const auto &cmp_exp =
           static_cast<const expression::ComparisonExpression &>(exp);
       translator = new ComparisonTranslator(cmp_exp, context);
