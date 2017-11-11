@@ -11,11 +11,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "codegen/type/integer_type.h"
+#include "codegen/type/timestamp_type.h"
 
 #include "codegen/lang/if.h"
-#include "codegen/value.h"
+#include "codegen/proxy/timestamp_functions_proxy.h"
 #include "codegen/proxy/values_runtime_proxy.h"
 #include "codegen/type/boolean_type.h"
+#include "codegen/value.h"
 #include "common/exception.h"
 #include "type/limits.h"
 #include "util/string_util.h"
@@ -374,6 +376,31 @@ struct Modulo : public TypeSystem::BinaryOperator {
   }
 };
 
+// DateTrunc
+struct DateTrunc : public TypeSystem::BinaryOperator {
+  bool SupportsTypes(const Type &left_type,
+                     const Type &right_type) const override {
+    return left_type.GetSqlType() == Integer::Instance() &&
+           right_type.GetSqlType() == Timestamp::Instance();
+  }
+
+  Type ResultType(UNUSED_ATTRIBUTE const Type &left_type,
+                  UNUSED_ATTRIBUTE const Type &right_type) const override {
+    return Type{Timestamp::Instance()};
+  }
+
+  Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
+               UNUSED_ATTRIBUTE OnError on_error) const override {
+    PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
+
+    // TODO(lma): I actually don't know whether this should be called
+    // TimestampFunctionsProxy or IntegerFunctionsProxy...
+    llvm::Value *raw_ret = codegen.Call(TimestampFunctionsProxy::DateTrunc,
+                                        {left.GetValue(), right.GetValue()});
+    return Value{Timestamp::Instance(), raw_ret};
+  }
+};
+
 //===----------------------------------------------------------------------===//
 // TYPE SYSTEM CONSTRUCTION
 //===----------------------------------------------------------------------===//
@@ -415,12 +442,11 @@ static Sub kSubOp;
 static Mul kMulOp;
 static Div kDivOp;
 static Modulo kModuloOp;
+static DateTrunc kDateTrunc;
 static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
-    {OperatorId::Add, kAddOp},
-    {OperatorId::Sub, kSubOp},
-    {OperatorId::Mul, kMulOp},
-    {OperatorId::Div, kDivOp},
-    {OperatorId::Mod, kModuloOp}};
+    {OperatorId::Add, kAddOp},    {OperatorId::Sub, kSubOp},
+    {OperatorId::Mul, kMulOp},    {OperatorId::Div, kDivOp},
+    {OperatorId::Mod, kModuloOp}, {OperatorId::DateTrunc, kDateTrunc}};
 
 // Nary operations
 static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
@@ -435,8 +461,8 @@ static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
 Integer::Integer()
     : SqlType(peloton::type::TypeId::INTEGER),
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
-                   kComparisonTable, kUnaryOperatorTable,
-                   kBinaryOperatorTable, kNaryOperatorTable) {}
+                   kComparisonTable, kUnaryOperatorTable, kBinaryOperatorTable,
+                   kNaryOperatorTable) {}
 
 Value Integer::GetMinValue(CodeGen &codegen) const {
   auto *raw_val = codegen.Const32(peloton::type::PELOTON_INT32_MIN);

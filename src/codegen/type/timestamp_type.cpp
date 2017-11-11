@@ -12,7 +12,6 @@
 
 #include "codegen/type/timestamp_type.h"
 
-#include "codegen/proxy/timestamp_functions_proxy.h"
 #include "codegen/proxy/values_runtime_proxy.h"
 #include "codegen/type/boolean_type.h"
 #include "codegen/type/date_type.h"
@@ -107,28 +106,6 @@ struct CompareTimestamp : public TypeSystem::Comparison {
   }
 };
 
-// DateTrunc
-struct DateTrunc : public TypeSystem::BinaryOperator {
-  bool SupportsTypes(const Type &left_type,
-                     const Type &right_type) const override {
-    return left_type.GetSqlType() == Integer::Instance() &&
-           right_type.GetSqlType() == Timestamp::Instance();
-  }
-
-  Type ResultType(UNUSED_ATTRIBUTE const Type &left_type,
-                  UNUSED_ATTRIBUTE const Type &right_type) const override {
-    return Type{Timestamp::Instance()};
-  }
-
-  Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
-               UNUSED_ATTRIBUTE OnError on_error) const override {
-    PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
-    llvm::Value *raw_ret = codegen.Call(TimestampFunctionsProxy::DateTrunc,
-                                        {left.GetValue(), right.GetLength()});
-    return Value{Timestamp::Instance(), raw_ret};
-  }
-};
-
 // The list of types a SQL timestamp type can be implicitly casted to
 const std::vector<peloton::type::TypeId> kImplicitCastingTable = {
     peloton::type::TypeId::DATE, peloton::type::TypeId::TIMESTAMP};
@@ -144,9 +121,7 @@ static std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {
 
 static std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {};
 
-static DateTrunc kDateTrunc;
-static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
-    {OperatorId::DateTrunc, kDateTrunc}};
+static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {};
 
 // Nary operations
 static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
