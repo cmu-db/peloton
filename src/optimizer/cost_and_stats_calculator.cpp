@@ -38,7 +38,8 @@ std::shared_ptr<TableStats> generateOutputStat(
       auto column_stat = input_table_stats->GetColumnStats((oid_t)i);
       if (data_table != nullptr) {
         // add table_name for base table
-        column_stat->column_name = data_table->GetName() + "." + column_stat->column_name;
+        column_stat->column_name =
+            data_table->GetName() + "." + column_stat->column_name;
       }
       output_column_stats.push_back(
           input_table_stats->GetColumnStats((oid_t)i));
@@ -49,7 +50,8 @@ std::shared_ptr<TableStats> generateOutputStat(
 
       // TODO: Deal with or add column stats for complex expressions like a+b
       if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
-        auto tv_expr = std::dynamic_pointer_cast<expression::TupleValueExpression>(expr);
+        auto tv_expr =
+            std::dynamic_pointer_cast<expression::TupleValueExpression>(expr);
         auto column_name = tv_expr->GetColumnName();
         if (data_table == nullptr) {
           column_name = tv_expr->GetTableName() + "." + column_name;
@@ -58,7 +60,8 @@ std::shared_ptr<TableStats> generateOutputStat(
         if (column_stat != nullptr) {
           if (data_table != nullptr) {
             // add table_name for base table
-            column_stat->column_name = data_table->GetName() + "." + column_stat->column_name;
+            column_stat->column_name =
+                data_table->GetName() + "." + column_stat->column_name;
           }
           output_column_stats.push_back(column_stat);
         };
@@ -67,20 +70,37 @@ std::shared_ptr<TableStats> generateOutputStat(
   }
   auto output_table_stats = std::make_shared<TableStats>(
       input_table_stats->num_rows, output_column_stats);
+
+  // Set sampler
   output_table_stats->SetTupleSampler(input_table_stats->GetSampler());
+
+  // Add indexes to index map for base table
   if (data_table != nullptr) {
     for (oid_t i = 0; i < data_table->GetIndexCount(); i++) {
+      auto index = data_table->GetIndex(i);
+      // If the index is for multiple columns, we don't add
+      if (index->GetMetadata()->GetKeyAttrs().size() > 1) {
+        continue;
+      }
+      auto column_id = index->GetMetadata()->GetKeyAttrs()[0];
+      // If the index column does not exist in the property column, we don't add
+      if (input_table_stats->GetColumnStats(column_id)->column_name.find(".") ==
+          std::string::npos) {
+        continue;
+      }
       // To use input_table_stats to ensure the column id is correct
-      output_table_stats->AddIndex(data_table->GetName() + "." +
-                                     input_table_stats->GetColumnStats(i)->column_name, data_table->GetIndex(i));
+      output_table_stats->AddIndex(
+          input_table_stats->GetColumnStats(column_id)->column_name,
+          data_table->GetIndex(i));
     }
   }
   return output_table_stats;
 }
 
-std::shared_ptr<TableStats> generateOutputStatFromTwoTable(std::shared_ptr<TableStats>& left_table_stats,
-    std::shared_ptr<TableStats>& right_table_stats,
-    const PropertyColumns* columns_prop) {
+std::shared_ptr<TableStats> generateOutputStatFromTwoTable(
+    std::shared_ptr<TableStats> &left_table_stats,
+    std::shared_ptr<TableStats> &right_table_stats,
+    const PropertyColumns *columns_prop) {
   std::vector<std::shared_ptr<ColumnStats>> output_column_stats;
   if (columns_prop->HasStarExpression()) {
     for (size_t i = 0; i < left_table_stats->GetColumnCount(); i++) {
@@ -97,19 +117,23 @@ std::shared_ptr<TableStats> generateOutputStatFromTwoTable(std::shared_ptr<Table
 
       // TODO: Deal with or add column stats for complex expressions like a+b
       if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
-        auto tv_expr = std::dynamic_pointer_cast<expression::TupleValueExpression>(expr);
-        auto column_name = tv_expr->GetTableName() + "." + tv_expr->GetColumnName();
+        auto tv_expr =
+            std::dynamic_pointer_cast<expression::TupleValueExpression>(expr);
+        auto column_name =
+            tv_expr->GetTableName() + "." + tv_expr->GetColumnName();
 
         if (left_table_stats->HasColumnStats(column_name)) {
-            output_column_stats.push_back(left_table_stats->GetColumnStats(column_name));
+          output_column_stats.push_back(
+              left_table_stats->GetColumnStats(column_name));
         } else if (right_table_stats->HasColumnStats(column_name)) {
-          output_column_stats.push_back(right_table_stats->GetColumnStats(column_name));
+          output_column_stats.push_back(
+              right_table_stats->GetColumnStats(column_name));
         }
       }
-
     }
   }
-  auto output_table_stats = std::make_shared<TableStats>(output_column_stats);
+  auto output_table_stats =
+      std::make_shared<TableStats>(output_column_stats, false);
   return output_table_stats;
 }
 
@@ -268,7 +292,7 @@ void CostAndStatsCalculator::Visit(const PhysicalIndexScan *op) {
   auto table_stats =
       std::dynamic_pointer_cast<TableStats>(stats_storage->GetTableStats(
           op->table_->GetDatabaseOid(), op->table_->GetOid()));
-  table_stats->SetTupleSampler(std::make_shared<TupleSampler>(op->table_)); 
+  table_stats->SetTupleSampler(std::make_shared<TupleSampler>(op->table_));
 
   std::vector<oid_t> key_column_ids;
   std::vector<ExpressionType> expr_types;
@@ -278,9 +302,10 @@ void CostAndStatsCalculator::Visit(const PhysicalIndexScan *op) {
   expression::AbstractExpression *predicate =
       predicate_prop == nullptr ? nullptr : predicate_prop->GetPredicate();
   bool index_searchable =
-      predicate == nullptr ? false : util::CheckIndexSearchable(
-                                         op->table_, predicate, key_column_ids,
-                                         expr_types, values, index_id);
+      predicate == nullptr
+          ? false
+          : util::CheckIndexSearchable(op->table_, predicate, key_column_ids,
+                                       expr_types, values, index_id);
   // No table stats available
   if (table_stats->GetColumnCount() == 0) {
     output_stats_.reset(new Stats(nullptr));
@@ -403,123 +428,167 @@ void CostAndStatsCalculator::Visit(const PhysicalLimit *) {
   output_stats_ = output_stats;
 }
 void CostAndStatsCalculator::Visit(const PhysicalFilter *){};
-void CostAndStatsCalculator::Visit(const PhysicalInnerNLJoin * op){
-
+void CostAndStatsCalculator::Visit(const PhysicalInnerNLJoin *op) {
   // TODO: Replace with more accurate cost
   PL_ASSERT(child_stats_.size() == 2);
-  auto left_table_stats = std::dynamic_pointer_cast<TableStats>(child_stats_.at(LEFT_CHILD_INDEX));
-  auto right_table_stats = std::dynamic_pointer_cast<TableStats>(child_stats_.at(RIGHT_CHILD_INDEX));
+  auto left_table_stats =
+      std::dynamic_pointer_cast<TableStats>(child_stats_.at(LEFT_CHILD_INDEX));
+  auto right_table_stats =
+      std::dynamic_pointer_cast<TableStats>(child_stats_.at(RIGHT_CHILD_INDEX));
   if (left_table_stats == nullptr || right_table_stats == nullptr) {
     output_cost_ = 1;
     return;
   }
   output_cost_ = getCostOfChildren(child_costs_);
-  auto property_ = output_properties_->GetPropertyOfType(PropertyType::COLUMNS)->As<PropertyColumns>();
-  auto output_stats = generateOutputStatFromTwoTable(left_table_stats, right_table_stats, property_);
+  auto property_ = output_properties_->GetPropertyOfType(PropertyType::COLUMNS)
+                       ->As<PropertyColumns>();
+  auto output_stats = generateOutputStatFromTwoTable(
+      left_table_stats, right_table_stats, property_);
   auto predicate = op->join_predicate;
-  output_cost_ += Cost::InnerNLJoinWithSampling(left_table_stats, right_table_stats, output_stats, predicate);
-
+  output_cost_ += Cost::InnerNLJoinWithSampling(
+      left_table_stats, right_table_stats, output_stats, predicate);
+  output_stats_ = output_stats;
 };
-void CostAndStatsCalculator::Visit(const PhysicalLeftNLJoin * op){
-
+void CostAndStatsCalculator::Visit(const PhysicalLeftNLJoin *op) {
   PL_ASSERT(child_stats_.size() == 2);
-  auto left_table_stats = std::dynamic_pointer_cast<TableStats>(child_stats_.at(LEFT_CHILD_INDEX));
-  auto right_table_stats = std::dynamic_pointer_cast<TableStats>(child_stats_.at(RIGHT_CHILD_INDEX));
+  auto left_table_stats =
+      std::dynamic_pointer_cast<TableStats>(child_stats_.at(LEFT_CHILD_INDEX));
+  auto right_table_stats =
+      std::dynamic_pointer_cast<TableStats>(child_stats_.at(RIGHT_CHILD_INDEX));
   if (left_table_stats == nullptr || right_table_stats == nullptr) {
     output_cost_ = 1;
     return;
   }
   output_cost_ = getCostOfChildren(child_costs_);
-  auto property_ = output_properties_->GetPropertyOfType(PropertyType::COLUMNS)->As<PropertyColumns>();
-  auto output_stats = generateOutputStatFromTwoTable(left_table_stats, right_table_stats, property_);
+  auto property_ = output_properties_->GetPropertyOfType(PropertyType::COLUMNS)
+                       ->As<PropertyColumns>();
+  auto output_stats = generateOutputStatFromTwoTable(
+      left_table_stats, right_table_stats, property_);
   auto predicate = op->join_predicate;
-  output_cost_ += Cost::LeftNLJoinWithSampling(left_table_stats, right_table_stats, output_stats, predicate);
+  output_cost_ += Cost::LeftNLJoinWithSampling(
+      left_table_stats, right_table_stats, output_stats, predicate);
+  output_stats_ = output_stats;
 };
-void CostAndStatsCalculator::Visit(const PhysicalRightNLJoin * op){
+void CostAndStatsCalculator::Visit(const PhysicalRightNLJoin *op) {
   PL_ASSERT(child_stats_.size() == 2);
-  auto left_table_stats = std::dynamic_pointer_cast<TableStats>(child_stats_.at(LEFT_CHILD_INDEX));
-  auto right_table_stats = std::dynamic_pointer_cast<TableStats>(child_stats_.at(RIGHT_CHILD_INDEX));
+  auto left_table_stats =
+      std::dynamic_pointer_cast<TableStats>(child_stats_.at(LEFT_CHILD_INDEX));
+  auto right_table_stats =
+      std::dynamic_pointer_cast<TableStats>(child_stats_.at(RIGHT_CHILD_INDEX));
   if (left_table_stats == nullptr || right_table_stats == nullptr) {
     output_cost_ = 1;
     return;
   }
   output_cost_ = getCostOfChildren(child_costs_);
-  auto property_ = output_properties_->GetPropertyOfType(PropertyType::COLUMNS)->As<PropertyColumns>();
-  auto output_stats = generateOutputStatFromTwoTable(left_table_stats, right_table_stats, property_);
+  auto property_ = output_properties_->GetPropertyOfType(PropertyType::COLUMNS)
+                       ->As<PropertyColumns>();
+  auto output_stats = generateOutputStatFromTwoTable(
+      left_table_stats, right_table_stats, property_);
   auto predicate = op->join_predicate;
-  output_cost_ += Cost::RightNLJoinWithSampling(left_table_stats, right_table_stats, output_stats, predicate);
+  output_cost_ += Cost::RightNLJoinWithSampling(
+      left_table_stats, right_table_stats, output_stats, predicate);
+  output_stats_ = output_stats;
 };
-void CostAndStatsCalculator::Visit(const PhysicalOuterNLJoin * op){
+void CostAndStatsCalculator::Visit(const PhysicalOuterNLJoin *op) {
   PL_ASSERT(child_stats_.size() == 2);
-  auto left_table_stats = std::dynamic_pointer_cast<TableStats>(child_stats_.at(LEFT_CHILD_INDEX));
-  auto right_table_stats = std::dynamic_pointer_cast<TableStats>(child_stats_.at(RIGHT_CHILD_INDEX));
+  auto left_table_stats =
+      std::dynamic_pointer_cast<TableStats>(child_stats_.at(LEFT_CHILD_INDEX));
+  auto right_table_stats =
+      std::dynamic_pointer_cast<TableStats>(child_stats_.at(RIGHT_CHILD_INDEX));
   if (left_table_stats == nullptr || right_table_stats == nullptr) {
     output_cost_ = 1;
     return;
   }
   output_cost_ = getCostOfChildren(child_costs_);
-  auto property_ = output_properties_->GetPropertyOfType(PropertyType::COLUMNS)->As<PropertyColumns>();
-  auto output_stats = generateOutputStatFromTwoTable(left_table_stats, right_table_stats, property_);
+  auto property_ = output_properties_->GetPropertyOfType(PropertyType::COLUMNS)
+                       ->As<PropertyColumns>();
+  auto output_stats = generateOutputStatFromTwoTable(
+      left_table_stats, right_table_stats, property_);
   auto predicate = op->join_predicate;
-  output_cost_ += Cost::OuterNLJoinWithSampling(left_table_stats, right_table_stats, output_stats, predicate);
+  output_cost_ += Cost::OuterNLJoinWithSampling(
+      left_table_stats, right_table_stats, output_stats, predicate);
+  output_stats_ = output_stats;
 };
-void CostAndStatsCalculator::Visit(const PhysicalInnerHashJoin * op){
+void CostAndStatsCalculator::Visit(const PhysicalInnerHashJoin *op) {
   // TODO: Replace with more accurate cost
   PL_ASSERT(child_stats_.size() == 2);
-  auto left_table_stats = std::dynamic_pointer_cast<TableStats>(child_stats_.at(LEFT_CHILD_INDEX));
-  auto right_table_stats = std::dynamic_pointer_cast<TableStats>(child_stats_.at(RIGHT_CHILD_INDEX));
+  auto left_table_stats =
+      std::dynamic_pointer_cast<TableStats>(child_stats_.at(LEFT_CHILD_INDEX));
+  auto right_table_stats =
+      std::dynamic_pointer_cast<TableStats>(child_stats_.at(RIGHT_CHILD_INDEX));
   if (left_table_stats == nullptr || right_table_stats == nullptr) {
     output_cost_ = 1;
     return;
   }
   output_cost_ = getCostOfChildren(child_costs_);
-  auto property_ = output_properties_->GetPropertyOfType(PropertyType::COLUMNS)->As<PropertyColumns>();
-  auto output_stats = generateOutputStatFromTwoTable(left_table_stats, right_table_stats, property_);
+  auto property_ = output_properties_->GetPropertyOfType(PropertyType::COLUMNS)
+                       ->As<PropertyColumns>();
+  auto output_stats = generateOutputStatFromTwoTable(
+      left_table_stats, right_table_stats, property_);
   auto predicate = op->join_predicate;
-  output_cost_ += Cost::InnerHashJoinWithSampling(left_table_stats, right_table_stats, output_stats, predicate);
+  output_cost_ += Cost::InnerHashJoinWithSampling(
+      left_table_stats, right_table_stats, output_stats, predicate);
+  output_stats_ = output_stats;
 };
-void CostAndStatsCalculator::Visit(const PhysicalLeftHashJoin * op){
+void CostAndStatsCalculator::Visit(const PhysicalLeftHashJoin *op) {
   PL_ASSERT(child_stats_.size() == 2);
-  auto left_table_stats = std::dynamic_pointer_cast<TableStats>(child_stats_.at(LEFT_CHILD_INDEX
-    ));
-  auto right_table_stats = std::dynamic_pointer_cast<TableStats>(child_stats_.at(RIGHT_CHILD_INDEX));
+  auto left_table_stats =
+      std::dynamic_pointer_cast<TableStats>(child_stats_.at(LEFT_CHILD_INDEX));
+  auto right_table_stats =
+      std::dynamic_pointer_cast<TableStats>(child_stats_.at(RIGHT_CHILD_INDEX));
   if (left_table_stats == nullptr || right_table_stats == nullptr) {
     output_cost_ = 1;
     return;
   }
   output_cost_ = getCostOfChildren(child_costs_);
-  auto property_ = output_properties_->GetPropertyOfType(PropertyType::COLUMNS)->As<PropertyColumns>();
-  auto output_stats = generateOutputStatFromTwoTable(left_table_stats, right_table_stats, property_);
+  auto property_ = output_properties_->GetPropertyOfType(PropertyType::COLUMNS)
+                       ->As<PropertyColumns>();
+  auto output_stats = generateOutputStatFromTwoTable(
+      left_table_stats, right_table_stats, property_);
   auto predicate = op->join_predicate;
-  output_cost_ += Cost::LeftHashJoinWithSampling(left_table_stats, right_table_stats, output_stats, predicate);
+  output_cost_ += Cost::LeftHashJoinWithSampling(
+      left_table_stats, right_table_stats, output_stats, predicate);
+  output_stats_ = output_stats;
 };
-void CostAndStatsCalculator::Visit(const PhysicalRightHashJoin * op){
+void CostAndStatsCalculator::Visit(const PhysicalRightHashJoin *op) {
   PL_ASSERT(child_stats_.size() == 2);
-  auto left_table_stats = std::dynamic_pointer_cast<TableStats>(child_stats_.at(LEFT_CHILD_INDEX));
-  auto right_table_stats = std::dynamic_pointer_cast<TableStats>(child_stats_.at(RIGHT_CHILD_INDEX));
+  auto left_table_stats =
+      std::dynamic_pointer_cast<TableStats>(child_stats_.at(LEFT_CHILD_INDEX));
+  auto right_table_stats =
+      std::dynamic_pointer_cast<TableStats>(child_stats_.at(RIGHT_CHILD_INDEX));
   if (left_table_stats == nullptr || right_table_stats == nullptr) {
     output_cost_ = 1;
     return;
   }
   output_cost_ = getCostOfChildren(child_costs_);
-  auto property_ = output_properties_->GetPropertyOfType(PropertyType::COLUMNS)->As<PropertyColumns>();
-  auto output_stats = generateOutputStatFromTwoTable(left_table_stats, right_table_stats, property_);
+  auto property_ = output_properties_->GetPropertyOfType(PropertyType::COLUMNS)
+                       ->As<PropertyColumns>();
+  auto output_stats = generateOutputStatFromTwoTable(
+      left_table_stats, right_table_stats, property_);
   auto predicate = op->join_predicate;
-  output_cost_ += Cost::RightHashJoinWithSampling(left_table_stats, right_table_stats, output_stats, predicate);
+  output_cost_ += Cost::RightHashJoinWithSampling(
+      left_table_stats, right_table_stats, output_stats, predicate);
+  output_stats_ = output_stats;
 };
-void CostAndStatsCalculator::Visit(const PhysicalOuterHashJoin * op){
+void CostAndStatsCalculator::Visit(const PhysicalOuterHashJoin *op) {
   PL_ASSERT(child_stats_.size() == 2);
-  auto left_table_stats = std::dynamic_pointer_cast<TableStats>(child_stats_.at(LEFT_CHILD_INDEX));
-  auto right_table_stats = std::dynamic_pointer_cast<TableStats>(child_stats_.at(RIGHT_CHILD_INDEX));
+  auto left_table_stats =
+      std::dynamic_pointer_cast<TableStats>(child_stats_.at(LEFT_CHILD_INDEX));
+  auto right_table_stats =
+      std::dynamic_pointer_cast<TableStats>(child_stats_.at(RIGHT_CHILD_INDEX));
   if (left_table_stats == nullptr || right_table_stats == nullptr) {
     output_cost_ = 1;
     return;
   }
   output_cost_ = getCostOfChildren(child_costs_);
-  auto property_ = output_properties_->GetPropertyOfType(PropertyType::COLUMNS)->As<PropertyColumns>();
-  auto output_stats = generateOutputStatFromTwoTable(left_table_stats, right_table_stats, property_);
+  auto property_ = output_properties_->GetPropertyOfType(PropertyType::COLUMNS)
+                       ->As<PropertyColumns>();
+  auto output_stats = generateOutputStatFromTwoTable(
+      left_table_stats, right_table_stats, property_);
   auto predicate = op->join_predicate;
-  output_cost_ += Cost::OuterHashJoinWithSampling(left_table_stats, right_table_stats, output_stats, predicate);
+  output_cost_ += Cost::OuterHashJoinWithSampling(
+      left_table_stats, right_table_stats, output_stats, predicate);
+  output_stats_ = output_stats;
 };
 void CostAndStatsCalculator::Visit(const PhysicalInsert *) {
   // TODO: Replace with more accurate cost
@@ -553,11 +622,13 @@ void CostAndStatsCalculator::Visit(const PhysicalHashGroupBy *op) {
   auto output_stats = generateOutputStat(table_stats_ptr, columns_prop);
 
   std::vector<std::string> column_names;
-  for (auto column: op->columns) {
+  for (auto column : op->columns) {
     // TODO: Deal with complex expressions like a+b
     if (column->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
-      auto tv_expr = std::dynamic_pointer_cast<expression::TupleValueExpression>(column);
-      std::string column_name = tv_expr->GetTableName() + "." + tv_expr->GetColumnName();
+      auto tv_expr =
+          std::dynamic_pointer_cast<expression::TupleValueExpression>(column);
+      std::string column_name =
+          tv_expr->GetTableName() + "." + tv_expr->GetColumnName();
       column_names.push_back(column_name);
     }
   }
@@ -584,9 +655,11 @@ void CostAndStatsCalculator::Visit(const PhysicalSortGroupBy *op) {
   for (auto column : op->columns) {
     // TODO: Deal with complex expressions like a+b
     if (column->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
-      auto tv_expr = std::dynamic_pointer_cast<expression::TupleValueExpression>(column);
-      std::string column_name = tv_expr->GetTableName() + "." + tv_expr->GetColumnName();
-      column_name.push_back(column_name);
+      auto tv_expr =
+          std::dynamic_pointer_cast<expression::TupleValueExpression>(column);
+      std::string column_name =
+          tv_expr->GetTableName() + "." + tv_expr->GetColumnName();
+      column_names.push_back(column_name);
     }
   }
   output_cost_ +=
@@ -631,8 +704,10 @@ void CostAndStatsCalculator::Visit(const PhysicalDistinct *) {
           ExpressionType::VALUE_TUPLE) {
     auto tv_expr = std::dynamic_pointer_cast<expression::TupleValueExpression>(
         distinct_prop->GetDistinctColumn(0));
-    std::string column_name = tv_expr->GetTableName() + "." + tv_expr->GetColumnName();
-    output_cost_ += Cost::DistinctCost(table_stats_ptr, column_name, output_stats);
+    std::string column_name =
+        tv_expr->GetTableName() + "." + tv_expr->GetColumnName();
+    output_cost_ +=
+        Cost::DistinctCost(table_stats_ptr, column_name, output_stats);
   }
   output_stats_ = output_stats;
 };

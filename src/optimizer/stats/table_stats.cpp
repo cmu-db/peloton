@@ -18,16 +18,24 @@ namespace peloton {
 namespace optimizer {
 
 TableStats::TableStats(size_t num_rows,
-                       std::vector<std::shared_ptr<ColumnStats>> col_stats_ptrs, bool is_base_table)
-    : Stats(nullptr), num_rows(num_rows), col_stats_list_(col_stats_ptrs),
-      is_base_table_(is_base_table), tuple_sampler_{} {
+                       std::vector<std::shared_ptr<ColumnStats>> col_stats_ptrs,
+                       bool is_base_table)
+    : Stats(nullptr),
+      num_rows(num_rows),
+      col_stats_list_(col_stats_ptrs),
+      is_base_table_(is_base_table),
+      tuple_sampler_{} {
   for (size_t i = 0; i < col_stats_ptrs.size(); ++i) {
     AddColumnStats(col_stats_ptrs[i]);
   }
 }
 
-TableStats::TableStats(std::vector<std::shared_ptr<ColumnStats>> col_stats_ptrs, bool is_base_table)
-    : Stats(nullptr), col_stats_list_(col_stats_ptrs), is_base_table_(is_base_table), tuple_sampler_{} {
+TableStats::TableStats(std::vector<std::shared_ptr<ColumnStats>> col_stats_ptrs,
+                       bool is_base_table)
+    : Stats(nullptr),
+      col_stats_list_(col_stats_ptrs),
+      is_base_table_(is_base_table),
+      tuple_sampler_{} {
   size_t col_count = col_stats_ptrs.size();
   for (size_t i = 0; i < col_count; ++i) {
     AddColumnStats(col_stats_ptrs[i]);
@@ -155,10 +163,10 @@ bool TableStats::RemoveColumnStats(const oid_t column_id) {
   return true;
 }
 
-bool TableStats::AddIndex(std::string key, std::shared_ptr<index::Index> index_) {
+bool TableStats::AddIndex(std::string key,
+                          std::shared_ptr<index::Index> index_) {
   // Only consider adding single column index for now
-  if (index_->GetColumnCount() > 1)
-    return false;
+  if (index_->GetColumnCount() > 1) return false;
 
   if (index_map_.find(key) == index_map_.end()) {
     index_map_.insert({key, index_});
@@ -175,9 +183,8 @@ std::shared_ptr<index::Index> TableStats::GetIndex(std::string col_name) {
 }
 
 void TableStats::SampleTuples() {
-//  tuple_sampler_ = std::make_shared<TupleSampler>(table);
-  if (tuple_sampler_ == nullptr)
-    return;
+  //  tuple_sampler_ = std::make_shared<TupleSampler>(table);
+  if (tuple_sampler_ == nullptr) return;
   tuple_sampler_->AcquireSampleTuples(DEFAULT_SAMPLE_NUM);
 }
 
