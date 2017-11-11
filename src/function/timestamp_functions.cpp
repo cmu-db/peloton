@@ -62,20 +62,23 @@ uint64_t TimestampFunctions::DateTrunc(uint32_t date_part_type,
 
   switch (date_part) {
     case DatePartType::CENTURY: {
-      result = ((32 + 1) * 27 * 10000 + year - year % 100) * 100000 * 1000000;
+      result = (((uint64_t)32 + 1) * 27 * 10000 + year - year % 100) * 100000 *
+               1000000;
       break;
     }
     case DatePartType::DAY: {
-      result = ((month * 32 + day) * 27 * 10000 + year) * 100000 * 1000000;
+      result =
+          (((uint64_t)month * 32 + day) * 27 * 10000 + year) * 100000 * 1000000;
       break;
     }
     case DatePartType::DECADE: {
-      result = ((32 + 1) * 27 * 10000 + year - year % 10) * 100000 * 1000000;
+      result = (((uint64_t)32 + 1) * 27 * 10000 + year - year % 10) * 100000 *
+               1000000;
       break;
     }
     case DatePartType::HOUR: {
-      result = (((month * 32 + day) * 27 * 10000 + year - year % 100) * 100000 +
-                hour * 86400) *
+      result = ((((uint64_t)month * 32 + day) * 27 * 10000 + year) * 100000 +
+                hour * 3600) *
                1000000;
       break;
     }
@@ -84,7 +87,8 @@ uint64_t TimestampFunctions::DateTrunc(uint32_t date_part_type,
       break;
     }
     case DatePartType::MILLENNIUM: {
-      result = ((32 + 1) * 27 * 10000 + year - year % 1000) * 100000 * 1000000;
+      result = (((uint64_t)32 + 1) * 27 * 10000 + year - year % 1000) * 100000 *
+               1000000;
       break;
     }
     case DatePartType::MILLISECOND: {
@@ -96,12 +100,14 @@ uint64_t TimestampFunctions::DateTrunc(uint32_t date_part_type,
       break;
     }
     case DatePartType::MONTH: {
-      result = ((month * 32 + 1) * 27 * 10000 + year) * 100000 * 1000000;
+      result =
+          (((uint64_t)month * 32 + 1) * 27 * 10000 + year) * 100000 * 1000000;
       break;
     }
     case DatePartType::QUARTER: {
-      result = ((((quarter - 1) * 3 + 1) * 32 + 1) * 27 * 10000 + year) *
-               100000 * 1000000;
+      result =
+          (((((uint64_t)quarter - 1) * 3 + 1) * 32 + 1) * 27 * 10000 + year) *
+          100000 * 1000000;
       break;
     }
     case DatePartType::SECOND: {
@@ -109,12 +115,14 @@ uint64_t TimestampFunctions::DateTrunc(uint32_t date_part_type,
       break;
     }
     case DatePartType::WEEK: {
-      result =
-          ((month * 32 + day - dow) * 27 * 10000 + year) * 100000 * 1000000;
+      result = (((uint64_t)month * 32 + day - (dow == 0 ? 6 : (dow - 1))) * 27 *
+                    10000 +
+                year) *
+               100000 * 1000000;
       break;
     }
     case DatePartType::YEAR: {
-      result = ((32 + 1) * 27 * 10000 + year) * 100000 * 1000000;
+      result = (((uint64_t)32 + 1) * 27 * 10000 + year) * 100000 * 1000000;
       break;
     }
     default: { result = type::PELOTON_TIMESTAMP_NULL; }

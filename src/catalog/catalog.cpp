@@ -28,6 +28,7 @@
 #include "function/date_functions.h"
 #include "function/decimal_functions.h"
 #include "function/string_functions.h"
+#include "function/timestamp_functions.h"
 #include "index/index_factory.h"
 #include "storage/storage_manager.h"
 #include "storage/table_factory.h"
@@ -1028,7 +1029,9 @@ void Catalog::InitializeFunctions() {
       AddBuiltinFunction(
           "date_trunc", {type::TypeId::INTEGER, type::TypeId::TIMESTAMP},
           type::TypeId::TIMESTAMP, internal_lang, "DateTrunc",
-          function::BuiltInFuncType{OperatorId::DateTrunc, NULL}, txn);
+          function::BuiltInFuncType{OperatorId::DateTrunc,
+                                    function::DateFunctions::Extract},
+          txn);
     } catch (CatalogException &e) {
       txn_manager.AbortTransaction(txn);
       throw & e;
