@@ -50,6 +50,7 @@ class DecimalFunctionsSQLTest : public PelotonTest {};
     }
     EXPECT_EQ(i, numEntries);
 
+    txn_manager.CommitTransaction(txn);
     // Fetch values from the table
     std::vector<StatementResult> result;
     std::vector<FieldInfo> tuple_descriptor;
