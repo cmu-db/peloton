@@ -22,7 +22,7 @@ namespace storage {
 class DataTable;
 class Tuple;
 class TileGroup;
-}
+}  // namespace storage
 
 namespace optimizer {
 
@@ -42,12 +42,13 @@ class TupleSampler {
 
   std::vector<std::unique_ptr<storage::Tuple>> &GetSampledTuples();
 
-  size_t AcquireSampleTuplesForIndexJoin(std::vector<std::unique_ptr<storage::Tuple>>& sample_tuples,
-      std::vector<std::vector<ItemPointer *>>& matched_tuples, size_t count);
+  size_t AcquireSampleTuplesForIndexJoin(
+      std::vector<std::unique_ptr<storage::Tuple>> &sample_tuples,
+      std::vector<std::vector<ItemPointer *>> &matched_tuples, size_t count);
 
  private:
-
-  void AddJoinTuple(std::unique_ptr<storage::Tuple>& left_tuple, std::unique_ptr<storage::Tuple>& right_tuple);
+  void AddJoinTuple(std::unique_ptr<storage::Tuple> &left_tuple,
+                    std::unique_ptr<storage::Tuple> &right_tuple);
 
   std::unique_ptr<type::AbstractPool> pool_;
 
