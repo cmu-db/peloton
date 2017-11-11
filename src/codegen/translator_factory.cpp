@@ -19,30 +19,30 @@
 #include "codegen/expression/constant_translator.h"
 #include "codegen/expression/function_translator.h"
 #include "codegen/expression/negation_translator.h"
+#include "codegen/expression/null_check_translator.h"
+#include "codegen/expression/tuple_value_translator.h"
 #include "codegen/operator/delete_translator.h"
 #include "codegen/operator/global_group_by_translator.h"
 #include "codegen/operator/hash_group_by_translator.h"
 #include "codegen/operator/hash_join_translator.h"
 #include "codegen/operator/hash_translator.h"
 #include "codegen/operator/insert_translator.h"
-#include "codegen/expression/negation_translator.h"
 #include "codegen/operator/order_by_translator.h"
 #include "codegen/operator/projection_translator.h"
 #include "codegen/operator/table_scan_translator.h"
 #include "codegen/operator/update_translator.h"
-#include "codegen/expression/tuple_value_translator.h"
+#include "expression/aggregate_expression.h"
 #include "expression/case_expression.h"
 #include "expression/comparison_expression.h"
 #include "expression/conjunction_expression.h"
-#include "expression/function_expression.h"
 #include "expression/constant_value_expression.h"
+#include "expression/function_expression.h"
 #include "expression/operator_expression.h"
 #include "expression/tuple_value_expression.h"
-#include "expression/aggregate_expression.h"
 #include "planner/aggregate_plan.h"
-#include "planner/hash_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/hash_join_plan.h"
+#include "planner/hash_plan.h"
 #include "planner/insert_plan.h"
 #include "planner/order_by_plan.h"
 #include "planner/projection_plan.h"
@@ -177,6 +177,13 @@ std::unique_ptr<ExpressionTranslator> TranslatorFactory::CreateTranslator(
       auto &negation_exp =
           static_cast<const expression::OperatorUnaryMinusExpression &>(exp);
       translator = new NegationTranslator(negation_exp, context);
+      break;
+    }
+    case ExpressionType::OPERATOR_IS_NULL:
+    case ExpressionType::OPERATOR_IS_NOT_NULL: {
+      auto &null_check_exp =
+          static_cast<const expression::OperatorExpression &>(exp);
+      translator = new NullCheckTranslator(null_check_exp, context);
       break;
     }
     case ExpressionType::OPERATOR_CASE_EXPR: {
