@@ -70,7 +70,7 @@ public:
                            std::vector<storage::Tuple *> *keys, std::vector<ItemPointer *> *expected_values,
                            UNUSED_ATTRIBUTE uint64_t thread_itr);
 
-  static void InsertHelperMicroBench(index::ArtIndex *index, size_t scale_factor,
+  static void InsertHelperMicroBench(index::ArtIndex *index,
                                      int num_rows, UNUSED_ATTRIBUTE uint64_t thread_itr);
 
   /**
@@ -80,9 +80,13 @@ public:
                            std::vector<storage::Tuple *> keys, std::vector<ItemPointer *> expected_values,
                            UNUSED_ATTRIBUTE uint64_t thread_itr);
 
+  static void DeleteHelperMicroBench(index::ArtIndex *index,
+                                     int num_rows, UNUSED_ATTRIBUTE uint64_t thread_itr);
+
   struct KeyAndValues {
     std::array<uint64_t, 16> values;
     index::Key key;
+    storage::Tuple *tuple;
   };
   static std::array<KeyAndValues, 10000> key_to_values;
   static std::map<index::TID, index::Key *> value_to_key;

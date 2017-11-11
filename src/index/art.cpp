@@ -649,6 +649,7 @@ bool Tree::conditionalInsert(const Key &k, TID tid, ThreadInfo &epocheInfo, std:
 }
 
 void Tree::remove(const Key &k, TID tid, ThreadInfo &threadInfo) {
+//  printf("begin remove\n");
   EpocheGuard epocheGuard(threadInfo);
   int restartCount = 0;
   restart:
@@ -721,10 +722,15 @@ void Tree::remove(const Key &k, TID tid, ThreadInfo &threadInfo) {
           if (value_count > 1) {
 
             if (parent_value != nullptr) {
+//              printf("deleted value is not the head value\n");
+              if (value_list == nullptr) {
+                printf("wtf!! r u kidding me?\n");
+              }
               parent_value->next = value_list->next;
               value_list->next = nullptr;
               delete value_list;
             } else {
+//              printf("deleted value is the head value\n");
               N::change(node, k[level], N::setLeafWithListPointer(value_list->next));
               value_list->next = nullptr;
               delete value_list;
@@ -732,7 +738,7 @@ void Tree::remove(const Key &k, TID tid, ThreadInfo &threadInfo) {
 
             // remember to unlock the node!!
             node->writeUnlock();
-
+//            printf("unlock the node and carry on\n");
           } else {
             // last value in the value_list is deleted
             assert(parentNode == nullptr || node->getCount() != 1);
