@@ -47,5 +47,21 @@ TEST_F(DecimalFunctionsTests, SqrtTest) {
   EXPECT_TRUE(result.IsNull());
 }
 
+TEST_F(DecimalFunctionsTests, AbsTest) {
+  std::vector<double> inputs = {9.5, -2.5, -4.4, 0.0};
+  std::vector<type::Value> args;
+  for (double in : inputs) {
+    args = {type::ValueFactory::GetDecimalValue(in)};
+    auto result = function::DecimalFunctions::_Abs(args);
+    EXPECT_FALSE(result.IsNull());
+    EXPECT_EQ(fabs(in), result.GetAs<double>());
+  }
+
+  // NULL CHECK
+  args = {type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL)};
+  auto result = function::DecimalFunctions::_Abs(args);
+  EXPECT_TRUE(result.IsNull());
+}
+
 }  // namespace test
 }  // namespace peloton
