@@ -6,7 +6,7 @@
 //
 // Identification: test/storage/masked_tuple_test.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -21,8 +21,8 @@
 namespace peloton {
 namespace test {
 
-catalog::Schema *key_schema = nullptr;
-catalog::Schema *tuple_schema = nullptr;
+std::unique_ptr<catalog::Schema> key_schema(nullptr);
+std::unique_ptr<catalog::Schema> tuple_schema(nullptr);
 
 const int NUM_COLUMNS = 5;
 
@@ -62,12 +62,13 @@ TEST_F(MaskedTupleTests, BasicTest) {
     column_list.push_back(column);
     key_attrs.push_back(i);
   }  // FOR
-  key_schema = new catalog::Schema(column_list);
+  key_schema.reset(new catalog::Schema(column_list));
   key_schema->SetIndexedColumns(key_attrs);
-  tuple_schema = new catalog::Schema(column_list);
+  tuple_schema.reset(new catalog::Schema(column_list));
 
   // CREATE REAL TUPLE
-  storage::Tuple *tuple(new storage::Tuple(tuple_schema, true));
+  std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(tuple_schema.get(),
+                                                           true));
   std::vector<int> values;
   for (int i = 0; i < NUM_COLUMNS; i++) {
     int val = (10 * i) + i;
@@ -87,7 +88,7 @@ TEST_F(MaskedTupleTests, BasicTest) {
   for (int i = NUM_COLUMNS - 1; i >= 0; i--) {
     mask.push_back(i);
   }
-  storage::MaskedTuple masked_tuple(tuple, mask);
+  storage::MaskedTuple masked_tuple(tuple.get(), mask);
   MaskedTupleTestHelper(&masked_tuple, values, mask);
   EXPECT_FALSE(tuple->EqualsNoSchemaCheck(masked_tuple, mask));
 
@@ -99,10 +100,6 @@ TEST_F(MaskedTupleTests, BasicTest) {
   masked_tuple.SetMask(new_mask);
   MaskedTupleTestHelper(&masked_tuple, values, new_mask);
   EXPECT_TRUE(tuple->EqualsNoSchemaCheck(masked_tuple, new_mask));
-
-  delete tuple;
-  delete tuple_schema;
-  delete key_schema;
 }
 
 }  // namespace test

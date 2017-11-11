@@ -82,7 +82,7 @@ void CompilationContext::GeneratePlan(QueryCompiler::CompileStats *stats) {
     timer.Start();
   }
 
-  LOG_DEBUG("Main pipeline: %s", main_pipeline_.GetInfo().c_str());
+  LOG_TRACE("Main pipeline: %s", main_pipeline_.GetInfo().c_str());
 
   // Generate the helper functions the query needs
   GenerateHelperFunctions();

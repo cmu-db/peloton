@@ -2,11 +2,11 @@
 //
 //                         Peloton
 //
-// varlen_pool_test.cpp
+// pool_test.cpp
 //
-// Identification: test/common/varlen_pool_test.cpp
+// Identification: test/type/pool_test.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -52,7 +52,7 @@ size_t get_align(size_t size) {
 
 // Allocate and free once
 TEST_F(PoolTests, AllocateOnceTest) {
-  type::EphemeralPool *pool = new type::EphemeralPool();
+  std::unique_ptr<type::EphemeralPool> pool(new type::EphemeralPool());
   void *p = nullptr;
   size_t size;
   size = 40;
@@ -61,9 +61,7 @@ TEST_F(PoolTests, AllocateOnceTest) {
   EXPECT_TRUE(p != nullptr);
 
   pool->Free(p);
-
-  delete pool;
 }
 
-}
-}
+}  // namespace test
+}  // namespace peloton

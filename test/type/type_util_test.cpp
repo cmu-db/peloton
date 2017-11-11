@@ -115,12 +115,12 @@ std::shared_ptr<storage::Tuple> TypeUtilTestsHelper(catalog::Schema* schema,
 
 TEST_F(TypeUtilTests, CompareEqualsRawTest) {
   // This is going to be a nasty ride, so strap yourself in...
-  catalog::Schema* schema = TypeUtilTestsGenerateSchema();
+  std::unique_ptr<catalog::Schema> schema(TypeUtilTestsGenerateSchema());
 
   std::vector<std::shared_ptr<storage::Tuple>> tuples = {
-      TypeUtilTestsHelper(schema, 0),
-      TypeUtilTestsHelper(schema, 1),  // Different than tuple0
-      TypeUtilTestsHelper(schema, 0),  // Same as tuple0
+      TypeUtilTestsHelper(schema.get(), 0),
+      TypeUtilTestsHelper(schema.get(), 1),  // Different than tuple0
+      TypeUtilTestsHelper(schema.get(), 0),  // Same as tuple0
   };
   LOG_TRACE("TUPLE0: %s", tuples[0]->GetInfo().c_str());
   LOG_TRACE("TUPLE1: %s", tuples[1]->GetInfo().c_str());
@@ -147,15 +147,14 @@ TEST_F(TypeUtilTests, CompareEqualsRawTest) {
       EXPECT_EQ(expected, result);
     }  // FOR (columns)
   }    // FOR (tuples)
-  delete schema;
 }
 
 TEST_F(TypeUtilTests, CompareLessThanRawTest) {
-  catalog::Schema* schema = TypeUtilTestsGenerateSchema();
+  std::unique_ptr<catalog::Schema> schema(TypeUtilTestsGenerateSchema());
   std::vector<std::shared_ptr<storage::Tuple>> tuples = {
-      TypeUtilTestsHelper(schema, 0),
-      TypeUtilTestsHelper(schema, 1),  // Different than tuple0
-      TypeUtilTestsHelper(schema, 0),  // Same as tuple0
+      TypeUtilTestsHelper(schema.get(), 0),
+      TypeUtilTestsHelper(schema.get(), 1),  // Different than tuple0
+      TypeUtilTestsHelper(schema.get(), 0),  // Same as tuple0
   };
 
   const int num_cols = (int)schema->GetColumnCount();
@@ -176,15 +175,14 @@ TEST_F(TypeUtilTests, CompareLessThanRawTest) {
       EXPECT_EQ(expected, result);
     }  // FOR (columns)
   }    // FOR (tuples)
-  delete schema;
 }
 
 TEST_F(TypeUtilTests, CompareGreaterThanRawTest) {
-  catalog::Schema* schema = TypeUtilTestsGenerateSchema();
+  std::unique_ptr<catalog::Schema> schema(TypeUtilTestsGenerateSchema());
   std::vector<std::shared_ptr<storage::Tuple>> tuples = {
-      TypeUtilTestsHelper(schema, 0),
-      TypeUtilTestsHelper(schema, 1),  // Different than tuple0
-      TypeUtilTestsHelper(schema, 0),  // Same as tuple0
+      TypeUtilTestsHelper(schema.get(), 0),
+      TypeUtilTestsHelper(schema.get(), 1),  // Different than tuple0
+      TypeUtilTestsHelper(schema.get(), 0),  // Same as tuple0
   };
 
   const int num_cols = (int)schema->GetColumnCount();
@@ -205,7 +203,6 @@ TEST_F(TypeUtilTests, CompareGreaterThanRawTest) {
       EXPECT_EQ(expected, result);
     }  // FOR (columns)
   }    // FOR (tuples)
-  delete schema;
 }
 
 TEST_F(TypeUtilTests, CompareStringsTest) {

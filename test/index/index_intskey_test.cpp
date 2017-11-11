@@ -6,7 +6,7 @@
 //
 // Identification: test/index/index_test.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -30,7 +30,7 @@ namespace test {
 class IndexIntsKeyTests : public PelotonTest {};
 
 catalog::Schema *key_schema = nullptr;
-catalog::Schema *tuple_schema = nullptr;
+std::unique_ptr<catalog::Schema> tuple_schema(nullptr);
 
 // You can't set this too large because we will
 // have duplicates for the TINYINT keys
@@ -63,13 +63,13 @@ index::Index *BuildIndex(IndexType index_type, const bool unique_keys,
   }  // FOR
   key_schema = new catalog::Schema(column_list);
   key_schema->SetIndexedColumns(key_attrs);
-  tuple_schema = new catalog::Schema(column_list);
+  tuple_schema.reset(new catalog::Schema(column_list));
 
   // Build index metadata
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
       "MAGIC_TEST_INDEX", 125,  // Index oid
       INVALID_OID, INVALID_OID, index_type, IndexConstraintType::DEFAULT,
-      tuple_schema, key_schema, key_attrs, unique_keys);
+      tuple_schema.get(), key_schema, key_attrs, unique_keys);
 
   // Build index
   // The type of index key has been chosen inside this function, but we are
@@ -83,7 +83,6 @@ index::Index *BuildIndex(IndexType index_type, const bool unique_keys,
   // would be raised (maybe out of memory would result in a nullptr? Anyway
   // leave it here)
   EXPECT_TRUE(index != NULL);
-
   return index;
 }
 
@@ -105,7 +104,8 @@ void IndexIntsKeyTestHelper(IndexType index_type,
 #endif
 
   for (int i = 0; i < NUM_TUPLES; i++) {
-    std::shared_ptr<storage::Tuple> key(new storage::Tuple(key_schema, true));
+    std::shared_ptr<storage::Tuple> key(
+        new storage::Tuple(key_schema, true));
     std::shared_ptr<ItemPointer> item(new ItemPointer(i, i * i));
 
     for (int col_idx = 0; col_idx < (int)col_types.size(); col_idx++) {
@@ -184,8 +184,6 @@ void IndexIntsKeyTestHelper(IndexType index_type,
            IndexTypeToString(index_type).c_str(), (int)col_types.size(),
            timer.GetDuration());
 #endif
-
-  delete tuple_schema;
 }
 
 // TEST_F(IndexIntsKeyTests, SpeedTest) {

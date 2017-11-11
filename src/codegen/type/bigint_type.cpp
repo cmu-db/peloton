@@ -150,7 +150,7 @@ struct CompareBigInt : public TypeSystem::Comparison {
 // Negation
 struct Negate : public TypeSystem::UnaryOperator {
   bool SupportsType(const Type &type) const override {
-    return type.type_id == peloton::type::TypeId::SMALLINT;
+    return type.GetSqlType() == BigInt::Instance();
   }
 
   Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {

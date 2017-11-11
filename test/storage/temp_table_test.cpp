@@ -48,7 +48,8 @@ TEST_F(TempTableTests, InsertTest) {
 
   // Then shove some tuples in it
   for (int i = 0; i < tuple_count; i++) {
-    storage::Tuple *tuple = new storage::Tuple(table.GetSchema(), true);
+    std::unique_ptr<storage::Tuple> tuple(
+        new storage::Tuple(table.GetSchema(), true));
     auto val1 = type::ValueFactory::GetIntegerValue(
         TestingExecutorUtil::PopulatedValue(i, 0));
     auto val2 = type::ValueFactory::GetIntegerValue(
@@ -60,13 +61,11 @@ TEST_F(TempTableTests, InsertTest) {
     tuple->SetValue(1, val2, pool);
     tuple->SetValue(2, val3, pool);
     tuple->SetValue(3, val4, pool);
-    table.InsertTuple(tuple);
+    table.InsertTuple(tuple.get());
 
     // Copy the first value so that we can just check that we are able to
     // correctly get the values back.
     values.push_back(val1);
-
-    delete tuple;
   }
 
   // Make sure that we have the correct count

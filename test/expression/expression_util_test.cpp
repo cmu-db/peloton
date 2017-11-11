@@ -57,15 +57,13 @@ expression::AbstractExpression *createExpTree() {
 
 // Make sure that we can traverse a tree
 TEST_F(ExpressionUtilTests, GetInfoTest) {
-  auto root = createExpTree();
-  std::string info = expression::ExpressionUtil::GetInfo(root);
+  std::unique_ptr<expression::AbstractExpression> root(createExpTree());
+  std::string info = expression::ExpressionUtil::GetInfo(root.get());
 
   // Just make sure that it has our constant strings
   EXPECT_TRUE(info.size() > 0);
   EXPECT_NE(std::string::npos, info.find(CONSTANT_VALUE_STRING1));
   EXPECT_NE(std::string::npos, info.find(CONSTANT_VALUE_STRING2));
-
-  delete root;
 }
 
 TEST_F(ExpressionUtilTests, ExtractJoinColTest) {
@@ -104,18 +102,21 @@ TEST_F(ExpressionUtilTests, ExtractJoinColTest) {
   std::vector<std::unique_ptr<const expression::AbstractExpression>>
       l_column_ids, r_column_ids;
   // Table1.a = Table2.b -> nullptr
-  auto ret_expr1 = expression::ExpressionUtil::ExtractJoinColumns(
-      l_column_ids, r_column_ids, expr3);
-  EXPECT_EQ(nullptr, ret_expr1);
+  std::unique_ptr<expression::AbstractExpression> ret_expr1(
+      expression::ExpressionUtil::ExtractJoinColumns(
+          l_column_ids, r_column_ids, expr3));
+  EXPECT_EQ(nullptr, ret_expr1.get());
   EXPECT_EQ(1, l_column_ids.size());
 
   // (Table1.a = Table2.b) AND (Table1.c < Table2.d) -> (Table1.c < Table2.d)
-  auto expr13 = expression::ExpressionUtil::ConjunctionFactory(
-      ExpressionType::CONJUNCTION_AND, expr3, expr6);
+  std::unique_ptr<expression::AbstractExpression> expr13(
+      expression::ExpressionUtil::ConjunctionFactory(
+          ExpressionType::CONJUNCTION_AND, expr3, expr6));
   l_column_ids.clear();
   r_column_ids.clear();
-  auto ret_expr2 = expression::ExpressionUtil::ExtractJoinColumns(
-      l_column_ids, r_column_ids, expr13);
+  std::unique_ptr<expression::AbstractExpression> ret_expr2(
+      expression::ExpressionUtil::ExtractJoinColumns(
+          l_column_ids, r_column_ids, expr13.get()));
 
   EXPECT_EQ(ExpressionType::COMPARE_LESSTHAN, ret_expr2->GetExpressionType());
   EXPECT_EQ(ExpressionType::VALUE_TUPLE,
@@ -141,13 +142,15 @@ TEST_F(ExpressionUtilTests, ExtractJoinColTest) {
   auto expr17 = expression::ExpressionUtil::ConjunctionFactory(
       ExpressionType::CONJUNCTION_AND, expr16, expr12);
 
-  auto expr18 = expression::ExpressionUtil::ConjunctionFactory(
-      ExpressionType::CONJUNCTION_AND, expr17, expr9);
+  std::unique_ptr<expression::AbstractExpression> expr18(
+      expression::ExpressionUtil::ConjunctionFactory(
+          ExpressionType::CONJUNCTION_AND, expr17, expr9));
 
   l_column_ids.clear();
   r_column_ids.clear();
-  auto ret_expr3 = expression::ExpressionUtil::ExtractJoinColumns(
-      l_column_ids, r_column_ids, expr18);
+  std::unique_ptr<expression::AbstractExpression> ret_expr3(
+      expression::ExpressionUtil::ExtractJoinColumns(
+          l_column_ids, r_column_ids, expr18.get()));
 
   EXPECT_EQ(2, l_column_ids.size());
   EXPECT_EQ(1, reinterpret_cast<const expression::TupleValueExpression *>(
@@ -164,12 +167,7 @@ TEST_F(ExpressionUtilTests, ExtractJoinColTest) {
             ret_expr3->GetChild(0)->GetExpressionType());
   EXPECT_EQ(ExpressionType::VALUE_CONSTANT,
             ret_expr3->GetChild(1)->GetExpressionType());
-
-  if (ret_expr1 != nullptr) delete ret_expr1;
-  delete ret_expr2;
-  delete ret_expr3;
-  delete expr18;
-  delete expr13;
 }
+
 }  // namespace test
 }  // namespace peloton

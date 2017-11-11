@@ -25,7 +25,9 @@
 #include <string>
 
 // Fix for PRId64 (See https://stackoverflow.com/a/18719205)
+#if defined(__cplusplus) && !defined(__STDC_FORMAT_MACROS)
 #define __STDC_FORMAT_MACROS 1 // Not sure where to put this
+#endif 
 #include <inttypes.h>
 
 namespace peloton {

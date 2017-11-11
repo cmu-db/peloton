@@ -90,14 +90,17 @@ class TriggerTests : public PelotonTest {
     insert_node->columns.push_back(col_1);
     insert_node->columns.push_back(col_2);
 
-    insert_node->insert_values.push_back(std::vector<std::unique_ptr<expression::AbstractExpression>>());
+    insert_node->insert_values.push_back(
+        std::vector<std::unique_ptr<expression::AbstractExpression>>());
     auto& values = insert_node->insert_values.at(0);
 
-    values.push_back(std::unique_ptr<expression::AbstractExpression>(new expression::ConstantValueExpression(
-      type::ValueFactory::GetIntegerValue(number))));
+    values.push_back(std::unique_ptr<expression::AbstractExpression>(
+        new expression::ConstantValueExpression(
+            type::ValueFactory::GetIntegerValue(number))));
 
-    values.push_back(std::unique_ptr<expression::AbstractExpression>(new expression::ConstantValueExpression(
-      type::ValueFactory::GetVarcharValue(text))));
+    values.push_back(std::unique_ptr<expression::AbstractExpression>(
+        new expression::ConstantValueExpression(
+            type::ValueFactory::GetVarcharValue(text))));
 
     insert_node->select.reset(new parser::SelectStatement());
 
