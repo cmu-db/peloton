@@ -2,7 +2,12 @@
 //
 //                         Peloton
 //
-// Compression Testing Script
+// string_functions_sql_test.cpp
+//
+// Identification: test/sql/string_functions_sql_test.cpp
+//
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+//
 //===----------------------------------------------------------------------===//
 #include <memory>
 #include <math.h>
@@ -19,8 +24,8 @@ namespace peloton {
 namespace test {
 class StringFunctionTest : public PelotonTest {};
 /*
-The following test inserts 500 tuples in the datatable.
-Each tuple inserted is of the form (i, i * 'a' ), where i belongs to [0,500)
+The following test inserts 32 tuples in the datatable.
+Each tuple inserted is of the form (i, i * 'a' ), where i belongs to [0,32)
 We then perform a sequential scan on the table and retrieve the id and length
 of the second column.
 */
@@ -34,17 +39,17 @@ TEST_F(StringFunctionTest, LengthTest) {
   txn = txn_manager.BeginTransaction();
 
   TestingSQLUtil::ExecuteSQLQuery(
-      "CREATE TABLE foo(id integer, name varchar(500));");
+      "CREATE TABLE foo(id integer, name varchar(32));");
   int i;
   std::string s = "'", t = "'";
-  for (i = 0; i < 500; i++) {
+  for (i = 0; i < 32; i++) {
     s += "a";
     t = s + "'";
     std::string os =
         "insert into foo values(" + std::to_string(i) + ", " + t + ");";
     TestingSQLUtil::ExecuteSQLQuery(os);
   }
-  EXPECT_EQ(i, 500);
+  EXPECT_EQ(i, 32);
 
   std::vector<StatementResult> result;
   std::vector<FieldInfo> tuple_descriptor;
@@ -57,7 +62,7 @@ TEST_F(StringFunctionTest, LengthTest) {
   os << "select length(name) from foo;";
   TestingSQLUtil::ExecuteSQLQuery(os.str(), result, tuple_descriptor,
                                   rows_affected, error_message);
-  for (i = 0; i < 500; i++) {
+  for (i = 0; i < 32; i++) {
     std::string resultStr(TestingSQLUtil::GetResultValueAsString(result, i));
     std::string expectedStr(std::to_string(i + 1));
     EXPECT_EQ(resultStr, expectedStr);
@@ -67,5 +72,6 @@ TEST_F(StringFunctionTest, LengthTest) {
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
-}
-}
+
+}  // namespace test
+}  // namespace peloton
