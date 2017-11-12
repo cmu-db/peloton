@@ -49,6 +49,51 @@ TableStats::TableStats(std::vector<std::shared_ptr<ColumnStats>> col_stats_ptrs,
 
 void TableStats::UpdateNumRows(size_t new_num_rows) { num_rows = new_num_rows; }
 
+bool TableStats::AddColumnStats(std::shared_ptr<ColumnStats> col_stats) {
+  auto it = col_name_to_stats_map_.find(col_stats->column_name);
+  if (it != col_name_to_stats_map_.end()) {
+    return false;
+  }
+  col_name_to_stats_map_.insert({col_stats->column_name, col_stats});
+  return true;
+}
+
+void TableStats::ClearColumnStats() { col_name_to_stats_map_.clear(); }
+
+size_t TableStats::GetColumnCount() { return col_stats_list_.size(); }
+
+bool TableStats::AddIndex(std::string key,
+                          std::shared_ptr<index::Index> index_) {
+  // Only consider adding single column index for now
+  if (index_->GetColumnCount() > 1) return false;
+
+  if (index_map_.find(key) == index_map_.end()) {
+    index_map_.insert({key, index_});
+    return true;
+  }
+  return false;
+}
+
+void TableStats::SampleTuples() {
+  if (tuple_sampler_ == nullptr) return;
+  tuple_sampler_->AcquireSampleTuples(DEFAULT_SAMPLE_NUM);
+}
+
+std::string TableStats::ToCSV() {
+  std::ostringstream os;
+  os << "\n"
+     << "===[TableStats]===\n";
+  os << "column_id|column_name|num_rows|has_index|cardinality|"
+     << "frac_null|most_common_freqs|most_common_vals|histogram_bounds\n";
+  for (auto column_stats : col_stats_list_) {
+    os << column_stats->ToCSV();
+  }
+  return os.str();
+}
+
+//===--------------------------------------------------------------------===//
+// TableStats with column_name operations
+//===--------------------------------------------------------------------===//
 bool TableStats::HasIndex(const std::string column_name) {
   auto column_stats = GetColumnStats(column_name);
   if (column_stats == nullptr) {
@@ -69,8 +114,6 @@ double TableStats::GetCardinality(const std::string column_name) {
   return column_stats->cardinality;
 }
 
-void TableStats::ClearColumnStats() { col_name_to_stats_map_.clear(); }
-
 bool TableStats::HasColumnStats(const std::string col_name) {
   auto it = col_name_to_stats_map_.find(col_name);
   if (it == col_name_to_stats_map_.end()) {
@@ -88,13 +131,11 @@ std::shared_ptr<ColumnStats> TableStats::GetColumnStats(
   return nullptr;
 }
 
-bool TableStats::AddColumnStats(std::shared_ptr<ColumnStats> col_stats) {
-  auto it = col_name_to_stats_map_.find(col_stats->column_name);
-  if (it != col_name_to_stats_map_.end()) {
-    return false;
+std::shared_ptr<index::Index> TableStats::GetIndex(std::string col_name) {
+  if (index_map_.find(col_name) != index_map_.end()) {
+    return index_map_.find(col_name)->second;
   }
-  col_name_to_stats_map_.insert({col_stats->column_name, col_stats});
-  return true;
+  return std::shared_ptr<index::Index>(nullptr);
 }
 
 bool TableStats::RemoveColumnStats(const std::string col_name) {
@@ -104,20 +145,6 @@ bool TableStats::RemoveColumnStats(const std::string col_name) {
   }
   col_name_to_stats_map_.erase(col_name);
   return true;
-}
-
-size_t TableStats::GetColumnCount() { return col_stats_list_.size(); }
-
-std::string TableStats::ToCSV() {
-  std::ostringstream os;
-  os << "\n"
-     << "===[TableStats]===\n";
-  os << "column_id|column_name|num_rows|has_index|cardinality|"
-     << "frac_null|most_common_freqs|most_common_vals|histogram_bounds\n";
-  for (auto column_stats : col_stats_list_) {
-    os << column_stats->ToCSV();
-  }
-  return os.str();
 }
 
 //===--------------------------------------------------------------------===//
@@ -161,31 +188,6 @@ bool TableStats::RemoveColumnStats(const oid_t column_id) {
   }
   col_stats_list_.erase(col_stats_list_.begin() + column_id);
   return true;
-}
-
-bool TableStats::AddIndex(std::string key,
-                          std::shared_ptr<index::Index> index_) {
-  // Only consider adding single column index for now
-  if (index_->GetColumnCount() > 1) return false;
-
-  if (index_map_.find(key) == index_map_.end()) {
-    index_map_.insert({key, index_});
-    return true;
-  }
-  return false;
-}
-
-std::shared_ptr<index::Index> TableStats::GetIndex(std::string col_name) {
-  if (index_map_.find(col_name) != index_map_.end()) {
-    return index_map_.find(col_name)->second;
-  }
-  return std::shared_ptr<index::Index>(nullptr);
-}
-
-void TableStats::SampleTuples() {
-  //  tuple_sampler_ = std::make_shared<TupleSampler>(table);
-  if (tuple_sampler_ == nullptr) return;
-  tuple_sampler_->AcquireSampleTuples(DEFAULT_SAMPLE_NUM);
 }
 
 }  // namespace optimizer

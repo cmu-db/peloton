@@ -385,6 +385,9 @@ void Cost::UpdateColumnStatsWithSampling(
   }
   for (size_t i = 0; i < output_stats->GetColumnCount(); i++) {
     auto column_stats = output_stats->GetColumnStats(i);
+
+    // FIX ME: for now using samples's cardinality * samples size / number of
+    // rows to ensure the same selectivity among samples and the whole table
     column_stats->cardinality =
         std::min(column_stats->cardinality,
                  distinct_values.find(column_stats->column_id)->second.size() *
@@ -498,48 +501,36 @@ void Cost::UpdateJoinOutputSize(
         left_child->GetTableName() + "." + left_child->GetColumnName();
     std::string right_column_name =
         right_child->GetTableName() + "." + right_child->GetColumnName();
-    bool primary_key = false;
-    if (left_input_stats->HasPrimaryIndex(left_column_name) ||
-        left_input_stats->HasPrimaryIndex(right_column_name)) {
-      output_stats->num_rows = right_input_stats->num_rows;
-      primary_key = true;
-    }
-    if (right_input_stats->HasPrimaryIndex(left_column_name) ||
-        right_input_stats->HasPrimaryIndex(right_column_name)) {
-      if (!primary_key || left_input_stats->num_rows < output_stats->num_rows) {
-        output_stats->num_rows = left_input_stats->num_rows;
-      }
-      primary_key = true;
-    }
-    if (!primary_key) {
-      double left_cardinality, right_cardinality;
-      if (left_input_stats->HasColumnStats(left_column_name)) {
-        left_cardinality = left_input_stats->GetCardinality(left_column_name);
-      } else if (right_input_stats->HasColumnStats(left_column_name)) {
-        left_cardinality = right_input_stats->GetCardinality(left_column_name);
-      } else {
-        left_cardinality = 0;
-        LOG_ERROR("join column %s not found", left_column_name.c_str());
-      }
 
-      if (left_input_stats->HasColumnStats(right_column_name)) {
-        right_cardinality = left_input_stats->GetCardinality(right_column_name);
-      } else if (right_input_stats->HasColumnStats(right_column_name)) {
-        right_cardinality =
-            right_input_stats->GetCardinality(right_column_name);
-      } else {
-        right_cardinality = 0;
-        LOG_ERROR("join column %s not found", right_column_name.c_str());
-      }
-      if (left_cardinality == 0 || right_cardinality == 0) {
-        output_stats->num_rows = default_join_size;
-      } else {
-        output_stats->num_rows =
-            (size_t)(left_input_stats->num_rows * right_input_stats->num_rows /
-                     std::sqrt(left_cardinality * right_cardinality)) +
-            adjustment;
-      }
+    double left_cardinality, right_cardinality;
+    if (left_input_stats->HasColumnStats(left_column_name)) {
+      left_cardinality = left_input_stats->GetCardinality(left_column_name);
+    } else if (right_input_stats->HasColumnStats(left_column_name)) {
+      left_cardinality = right_input_stats->GetCardinality(left_column_name);
+    } else {
+      left_cardinality = 0;
+      LOG_ERROR("join column %s not found", left_column_name.c_str());
     }
+
+    if (left_input_stats->HasColumnStats(right_column_name)) {
+      right_cardinality = left_input_stats->GetCardinality(right_column_name);
+    } else if (right_input_stats->HasColumnStats(right_column_name)) {
+      right_cardinality = right_input_stats->GetCardinality(right_column_name);
+    } else {
+      right_cardinality = 0;
+      LOG_ERROR("join column %s not found", right_column_name.c_str());
+    }
+    if (left_cardinality == 0 || right_cardinality == 0) {
+      output_stats->num_rows = default_join_size;
+    } else {
+      // n_l * n_r / sqrt(V(A, l) * V(A, r))
+      output_stats->num_rows =
+          (size_t)(left_input_stats->num_rows * right_input_stats->num_rows /
+                   std::sqrt(left_cardinality * right_cardinality)) +
+          adjustment;
+    }
+
+    // update column stats cardinality using samples
     UpdateColumnStatsWithSampling(left_input_stats, right_input_stats,
                                   output_stats, left_column_name,
                                   right_column_name);
