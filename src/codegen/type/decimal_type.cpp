@@ -190,7 +190,8 @@ struct Ceil : public TypeSystem::UnaryOperator {
   Value DoWork(CodeGen &codegen, const Value &val) const override {
     PL_ASSERT(SupportsType(val.GetType()));
 
-    llvm::Value *result = codegen.Call(DecimalFunctionsProxy::Ceil, {val.GetValue()});
+    llvm::Value *result = codegen.Call(DecimalFunctionsProxy::Ceil,
+                                       {val.GetValue()});
     // Return result
     return Value{Decimal::Instance(), result};
   }
@@ -421,15 +422,25 @@ static std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {
 
 // Unary operators
 static Negate kNegOp;
+<<<<<<< HEAD
 static Floor kFloorOp;
 static Round kRound;
+=======
+>>>>>>> a30455269... ceiling
 static Ceil kCeilOp;
+static Floor kFloorOp;
 static std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {
+<<<<<<< HEAD
     {OperatorId::Negation, kNegOp},
     {OperatorId::Floor, kFloorOp},
     {OperatorId::Round, kRound},
     {OperatorId::Floor, kFloorOp}};
 
+=======
+    {OperatorId::Negation, kNegOp},
+    {OperatorId::Floor, kFloorOp},
+    {OperatorId::Ceil, kCeilOp}};
+>>>>>>> a30455269... ceiling
 
 // Binary operations
 static Add kAddOp;
