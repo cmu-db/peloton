@@ -24,7 +24,7 @@ namespace peloton {
 namespace index {
 using KeyLen = uint32_t;
 
-class Key {
+class ARTKey {
 public:
 
   static constexpr uint32_t stackLen = 128;
@@ -34,23 +34,23 @@ public:
 
   uint8_t stackKey[stackLen];
 
-  Key(uint64_t k) { setInt(k); }
+  ARTKey(uint64_t k) { setInt(k); }
 
   void setInt(uint64_t k) { data = stackKey; len = 8; *reinterpret_cast<uint64_t*>(stackKey) = __builtin_bswap64(k); }
 
-  Key() {}
+  ARTKey() {}
 
-  ~Key();
+  ~ARTKey();
 
-  Key(const Key &key) = delete;
+  ARTKey(const ARTKey &key) = delete;
 
-  Key(Key &&key);
+  ARTKey(ARTKey &&key);
 
   void set(const char bytes[], const std::size_t length);
 
   void operator=(const char key[]);
 
-  bool operator==(const Key &k) const {
+  bool operator==(const ARTKey &k) const {
     if (k.getKeyLen() != getKeyLen()) {
       return false;
     }
@@ -67,27 +67,26 @@ public:
 
 };
 
-
-inline uint8_t &Key::operator[](std::size_t i) {
+inline uint8_t &ARTKey::operator[](std::size_t i) {
   assert(i < len);
   return data[i];
 }
 
-inline const uint8_t &Key::operator[](std::size_t i) const {
+inline const uint8_t &ARTKey::operator[](std::size_t i) const {
   assert(i < len);
   return data[i];
 }
 
-inline KeyLen Key::getKeyLen() const { return len; }
+inline KeyLen ARTKey::getKeyLen() const { return len; }
 
-inline Key::~Key() {
+inline ARTKey::~ARTKey() {
   if (len > stackLen) {
     delete[] data;
     data = nullptr;
   }
 }
 
-inline Key::Key(Key &&key) {
+inline ARTKey::ARTKey(ARTKey &&key) {
   len = key.len;
   if (len > stackLen) {
     data = key.data;
@@ -98,7 +97,7 @@ inline Key::Key(Key &&key) {
   }
 }
 
-inline void Key::set(const char bytes[], const std::size_t length) {
+inline void ARTKey::set(const char bytes[], const std::size_t length) {
   if (len > stackLen) {
     delete[] data;
   }
@@ -112,7 +111,7 @@ inline void Key::set(const char bytes[], const std::size_t length) {
   len = length;
 }
 
-inline void Key::operator=(const char key[]) {
+inline void ARTKey::operator=(const char key[]) {
   if (len > stackLen) {
     delete[] data;
   }
@@ -126,7 +125,7 @@ inline void Key::operator=(const char key[]) {
   }
 }
 
-inline void Key::setKeyLen(KeyLen newLen) {
+inline void ARTKey::setKeyLen(KeyLen newLen) {
   if (len == newLen) return;
   if (len > stackLen) {
     delete[] data;

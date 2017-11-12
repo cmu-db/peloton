@@ -36,13 +36,13 @@ namespace peloton {
 namespace test {
 
 bool TestingArtUtil::map_populated = false;
-std::map<index::TID, index::Key *> TestingArtUtil::value_to_key;
+std::map<index::TID, index::ARTKey *> TestingArtUtil::value_to_key;
 std::array<TestingArtUtil::KeyAndValues, 10000> TestingArtUtil::key_to_values;
 
-void loadKeyForTest(index::TID tid, index::Key &key, UNUSED_ATTRIBUTE index::IndexMetadata *metadata) {
+void loadKeyForTest(index::TID tid, index::ARTKey &key, UNUSED_ATTRIBUTE index::IndexMetadata *metadata) {
   index::MultiValues *value_list = reinterpret_cast<index::MultiValues *>(tid);
   if (TestingArtUtil::value_to_key.find(value_list->tid) != TestingArtUtil::value_to_key.end()) {
-    index::Key *key_p = TestingArtUtil::value_to_key.at(value_list->tid);
+    index::ARTKey *key_p = TestingArtUtil::value_to_key.at(value_list->tid);
     key.setKeyLen(key_p->getKeyLen());
     key.set((const char *)(key_p->data), key.getKeyLen());
     return;
@@ -372,7 +372,7 @@ void TestingArtUtil::PopulateMap(UNUSED_ATTRIBUTE index::Index &index) {
 
     key_to_values[i].tuple = tuple;
 
-    index::Key index_key;
+    index::ARTKey index_key;
     index_key.setKeyLen(8);
     index_key.set(c, 8);
 

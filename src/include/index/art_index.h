@@ -28,7 +28,7 @@ class ArtIndex : public Index {
 public:
   ArtIndex();
   ArtIndex(IndexMetadata *metadata);
-  ArtIndex(IndexMetadata *metadata, Tree::LoadKeyFunction loadKeyForTest);
+  ArtIndex(IndexMetadata *metadata, AdaptiveRadixTree::LoadKeyFunction loadKeyForTest);
   ~ArtIndex();
 
 
@@ -88,12 +88,12 @@ public:
 
   static void WriteValueInBytes(type::Value value, char *c, int offset, int length);
 
-  static void WriteIndexedAttributesInKey(const storage::Tuple *tuple, Key& index_key);
+  static void WriteIndexedAttributesInKey(const storage::Tuple *tuple, ARTKey& index_key);
 
 public:
   int KeyType;
 
-  Tree artTree;
+  AdaptiveRadixTree art_;
 
 };
 }

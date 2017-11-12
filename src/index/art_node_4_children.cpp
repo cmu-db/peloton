@@ -4,7 +4,7 @@
 //
 // copy_executor.cpp
 //
-// Identification: src/index/N4.cpp
+// Identification: src/index/art_node_4_children.cpp
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -12,20 +12,20 @@
 
 #include <assert.h>
 #include <algorithm>
-#include "index/N.h"
-#include "index/N4.h"
+#include "index/art_node.h"
+#include "index/art_node_4_children.h"
 
 namespace peloton {
 namespace index {
-void N4::deleteChildren() {
-  for (uint32_t i = 0; i < count; ++i) {
-    N::deleteChildren(children[i]);
-    N::deleteNode(children[i]);
+void N4::DeleteChildren() {
+  for (uint32_t i = 0; i < count_; ++i) {
+    N::DeleteChildren(children[i]);
+    N::DeleteNode(children[i]);
   }
 }
 
 bool N4::isFull() const {
-  return count == 4;
+  return count_ == 4;
 }
 
 bool N4::isUnderfull() const {
@@ -34,16 +34,16 @@ bool N4::isUnderfull() const {
 
 void N4::insert(uint8_t key, N *n) {
   unsigned pos;
-  for (pos = 0; (pos < count) && (keys[pos] < key); pos++);
-  memmove(keys + pos + 1, keys + pos, count - pos);
-  memmove(children + pos + 1, children + pos, (count - pos) * sizeof(N*));
+  for (pos = 0; (pos < count_) && (keys[pos] < key); pos++);
+  memmove(keys + pos + 1, keys + pos, count_ - pos);
+  memmove(children + pos + 1, children + pos, (count_ - pos) * sizeof(N*));
   keys[pos] = key;
   children[pos] = n;
-  count++;
+  count_++;
 }
 
-bool N4::change(uint8_t key, N *val) {
-  for (uint32_t i = 0; i < count; ++i) {
+bool N4::Change(uint8_t key, N *val) {
+  for (uint32_t i = 0; i < count_; ++i) {
     if (keys[i] == key) {
       children[i] = val;
       return true;
@@ -53,11 +53,11 @@ bool N4::change(uint8_t key, N *val) {
   __builtin_unreachable();
 }
 
-bool N4::addMultiValue(uint8_t key, uint64_t val) {
-  for (uint32_t i = 0; i < count; ++i) {
+bool N4::AddMultiValue(uint8_t key, uint64_t val) {
+  for (uint32_t i = 0; i < count_; ++i) {
     if (keys[i] == key) {
 //      children[i] = val;
-      TID tid = N::getLeaf(children[i]);
+      TID tid = N::GetLeaf(children[i]);
 
       MultiValues *value_list = reinterpret_cast<MultiValues *>(tid);
       while (value_list->next != 0) {
@@ -74,8 +74,8 @@ bool N4::addMultiValue(uint8_t key, uint64_t val) {
   __builtin_unreachable();
 }
 
-N *N4::getChild(const uint8_t k) const {
-  for (uint32_t i = 0; i < count; ++i) {
+N *N4::GetChild(const uint8_t k) const {
+  for (uint32_t i = 0; i < count_; ++i) {
     if (keys[i] == k) {
       return children[i];
     }
@@ -84,20 +84,20 @@ N *N4::getChild(const uint8_t k) const {
 }
 
 void N4::remove(uint8_t k) {
-  for (uint32_t i = 0; i < count; ++i) {
+  for (uint32_t i = 0; i < count_; ++i) {
     if (keys[i] == k) {
-      memmove(keys + i, keys + i + 1, count - i - 1);
-      memmove(children + i, children + i + 1, (count - i - 1) * sizeof(N *));
-      count--;
+      memmove(keys + i, keys + i + 1, count_ - i - 1);
+      memmove(children + i, children + i + 1, (count_ - i - 1) * sizeof(N *));
+      count_--;
       return;
     }
   }
 }
 
-N *N4::getAnyChild() const {
+N *N4::GetAnyChild() const {
   N *anyChild = nullptr;
-  for (uint32_t i = 0; i < count; ++i) {
-    if (N::isLeaf(children[i])) {
+  for (uint32_t i = 0; i < count_; ++i) {
+    if (N::IsLeaf(children[i])) {
       return children[i];
     } else {
       anyChild = children[i];
@@ -106,8 +106,8 @@ N *N4::getAnyChild() const {
   return anyChild;
 }
 
-std::tuple<N *, uint8_t> N4::getSecondChild(const uint8_t key) const {
-  for (uint32_t i = 0; i < count; ++i) {
+std::tuple<N *, uint8_t> N4::GetSecondChild(const uint8_t key) const {
+  for (uint32_t i = 0; i < count_; ++i) {
     if (keys[i] != key) {
       return std::make_tuple(children[i], keys[i]);
     }
@@ -115,21 +115,21 @@ std::tuple<N *, uint8_t> N4::getSecondChild(const uint8_t key) const {
   return std::make_tuple(nullptr, 0);
 }
 
-uint64_t N4::getChildren(uint8_t start, uint8_t end, std::tuple<uint8_t, N *> *&children,
+uint64_t N4::GetChildren(uint8_t start, uint8_t end, std::tuple<uint8_t, N *> *&children,
                          uint32_t &childrenCount) const {
   restart:
   bool needRestart = false;
   uint64_t v;
-  v = readLockOrRestart(needRestart);
+  v = ReadLockOrRestart(needRestart);
   if (needRestart) goto restart;
   childrenCount = 0;
-  for (uint32_t i = 0; i < count; ++i) {
+  for (uint32_t i = 0; i < count_; ++i) {
     if (this->keys[i] >= start && this->keys[i] <= end) {
       children[childrenCount] = std::make_tuple(this->keys[i], this->children[i]);
       childrenCount++;
     }
   }
-  readUnlockOrRestart(v, needRestart);
+  ReadUnlockOrRestart(v, needRestart);
   if (needRestart) goto restart;
   return v;
 }

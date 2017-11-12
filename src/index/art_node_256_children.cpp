@@ -4,7 +4,7 @@
 //
 // copy_executor.cpp
 //
-// Identification: src/index/N256.cpp
+// Identification: src/index/art_node_256_children.cpp
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -12,8 +12,8 @@
 
 #include <assert.h>
 #include <algorithm>
-#include "index/N.h"
-#include "index/N256.h"
+#include "index/art_node.h"
+#include "index/art_node_256_children.h"
 
 namespace peloton {
 namespace index {
@@ -22,31 +22,31 @@ bool N256::isFull() const {
 }
 
 bool N256::isUnderfull() const {
-  return count == 37;
+  return count_ == 37;
 }
 
-void N256::deleteChildren() {
+void N256::DeleteChildren() {
   for (uint64_t i = 0; i < 256; ++i) {
     if (children[i] != nullptr) {
-      N::deleteChildren(children[i]);
-      N::deleteNode(children[i]);
+      N::DeleteChildren(children[i]);
+      N::DeleteNode(children[i]);
     }
   }
 }
 
 void N256::insert(uint8_t key, N *val) {
   children[key] = val;
-  count++;
+  count_++;
 }
 
-bool N256::change(uint8_t key, N *n) {
+bool N256::Change(uint8_t key, N *n) {
   children[key] = n;
   return true;
 }
 
-bool N256::addMultiValue(uint8_t key, uint64_t val) {
+bool N256::AddMultiValue(uint8_t key, uint64_t val) {
 //  children[key] = n;
-  TID tid = N::getLeaf(children[key]);
+  TID tid = N::GetLeaf(children[key]);
 
   MultiValues *value_list = reinterpret_cast<MultiValues *>(tid);
   while (value_list->next != 0) {
@@ -59,20 +59,20 @@ bool N256::addMultiValue(uint8_t key, uint64_t val) {
   return true;
 }
 
-N *N256::getChild(const uint8_t k) const {
+N *N256::GetChild(const uint8_t k) const {
   return children[k];
 }
 
 void N256::remove(uint8_t k) {
   children[k] = nullptr;
-  count--;
+  count_--;
 }
 
-N *N256::getAnyChild() const {
+N *N256::GetAnyChild() const {
   N *anyChild = nullptr;
   for (uint64_t i = 0; i < 256; ++i) {
     if (children[i] != nullptr) {
-      if (N::isLeaf(children[i])) {
+      if (N::IsLeaf(children[i])) {
         return children[i];
       } else {
         anyChild = children[i];
@@ -82,12 +82,12 @@ N *N256::getAnyChild() const {
   return anyChild;
 }
 
-uint64_t N256::getChildren(uint8_t start, uint8_t end, std::tuple<uint8_t, N *> *&children,
+uint64_t N256::GetChildren(uint8_t start, uint8_t end, std::tuple<uint8_t, N *> *&children,
                            uint32_t &childrenCount) const {
   restart:
   bool needRestart = false;
   uint64_t v;
-  v = readLockOrRestart(needRestart);
+  v = ReadLockOrRestart(needRestart);
   if (needRestart) goto restart;
   childrenCount = 0;
   for (unsigned i = start; i <= end; i++) {
@@ -96,7 +96,7 @@ uint64_t N256::getChildren(uint8_t start, uint8_t end, std::tuple<uint8_t, N *> 
       childrenCount++;
     }
   }
-  readUnlockOrRestart(v, needRestart);
+  ReadUnlockOrRestart(v, needRestart);
   if (needRestart) goto restart;
   return v;
 }

@@ -138,7 +138,7 @@ void ArtIndex::WriteValueInBytes(type::Value value, char *c, int offset, UNUSED_
   return;
 }
 
-void loadKey(TID tid, Key &key, IndexMetadata *metadata) {
+void LoadKey(TID tid, ARTKey &key, IndexMetadata *metadata) {
   // Store the key of the tuple into the key vector
   // Implementation is database specific
 
@@ -183,47 +183,43 @@ void loadKey(TID tid, Key &key, IndexMetadata *metadata) {
 
 ArtIndex::ArtIndex(IndexMetadata *metadata)
   :  // Base class
-  Index{metadata}, artTree(loadKey) {
-  artTree.setIndexMetadata(metadata);
-  LOG_INFO("Congrats!! Art Index is created for %s\n", (metadata->GetName()).c_str());
+  Index{metadata}, art_(LoadKey) {
+  art_.SetIndexMetadata(metadata);
+  LOG_INFO("Art Index is created for %s\n", (metadata->GetName()).c_str());
   return;
 }
 
 // this constructor is used for testing
-ArtIndex::ArtIndex(IndexMetadata *metadata, Tree::LoadKeyFunction loadKeyForTest)
+ArtIndex::ArtIndex(IndexMetadata *metadata, AdaptiveRadixTree::LoadKeyFunction loadKeyForTest)
   :
-  Index{metadata}, artTree(loadKeyForTest) {
+  Index{metadata}, art_(loadKeyForTest) {
   LOG_INFO("Art Index is created for testing\n");
 }
 
 ArtIndex::~ArtIndex() {}
 
 
-void ArtIndex::WriteIndexedAttributesInKey(const storage::Tuple *tuple, Key& index_key) {
-  int columnsInKey = tuple->GetColumnCount();
+void ArtIndex::WriteIndexedAttributesInKey(const storage::Tuple *tuple, ARTKey& index_key) {
+  int columns_in_key = tuple->GetColumnCount();
 
   const catalog::Schema *tuple_schema = tuple->GetSchema();
   std::vector<catalog::Column> columns = tuple_schema->GetColumns();
   int total_bytes = 0;
-  for (int i = 0; i < columnsInKey; i++) {
+  for (int i = 0; i < columns_in_key; i++) {
     total_bytes += columns[i].GetLength();
   }
 
   char *c = new char[total_bytes];
   int offset = 0;
-  for (int i = 0; i < columnsInKey; i++) {
-    type::Value keyColumnValue = tuple->GetValue(i);
-
+  for (int i = 0; i < columns_in_key; i++) {
     WriteValueInBytes(tuple->GetValue(i), c, offset, columns[i].GetLength());
     offset += columns[i].GetLength();
-
   }
 
   index_key.set(c, total_bytes);
   index_key.setKeyLen(total_bytes);
 
   delete[] c;
-
 }
 
 
@@ -237,12 +233,12 @@ bool ArtIndex::InsertEntry(
   ItemPointer *value) {
   bool ret = true;
 
-  Key index_key;
+  ARTKey index_key;
 
   WriteIndexedAttributesInKey(key, index_key);
 
-  auto &t = artTree.getThreadInfo();
-  artTree.insert(index_key, reinterpret_cast<TID>(value), t, ret);
+  auto &t = art_.GetThreadInfo();
+  art_.Insert(index_key, reinterpret_cast<TID>(value), t, ret);
 
   return ret;
 }
@@ -251,11 +247,11 @@ void ArtIndex::ScanKey(
   const storage::Tuple *key,
   std::vector<ItemPointer *> &result) {
 
-  Key index_key;
+  ARTKey index_key;
   WriteIndexedAttributesInKey(key, index_key);
 
-  auto &t = artTree.getThreadInfo();
-  TID value = artTree.lookup(index_key, t);
+  auto &t = art_.GetThreadInfo();
+  TID value = art_.Lookup(index_key, t);
   if (value != 0) {
     MultiValues *value_list = reinterpret_cast<MultiValues *>(value);
     while (value_list != nullptr) {
@@ -277,13 +273,13 @@ bool ArtIndex::DeleteEntry(
   ItemPointer *value) {
   bool ret = true;
 
-  Key index_key;
+  ARTKey index_key;
   WriteIndexedAttributesInKey(key, index_key);
 
   TID tid = reinterpret_cast<TID>(value);
 
-  auto &t = artTree.getThreadInfo();
-  artTree.remove(index_key, tid, t);
+  auto &t = art_.GetThreadInfo();
+  art_.Remove(index_key, tid, t);
 
   return ret;
 }
@@ -305,11 +301,11 @@ bool ArtIndex::CondInsertEntry(
   ItemPointer *value,
   std::function<bool(const void *)> predicate) {
 
-  Key index_key;
+  ARTKey index_key;
   WriteIndexedAttributesInKey(key, index_key);
   TID tid = reinterpret_cast<TID>(value);
-  auto &t = artTree.getThreadInfo();
-  return artTree.conditionalInsert(index_key, tid, t, predicate);
+  auto &t = art_.GetThreadInfo();
+  return art_.ConditionalInsert(index_key, tid, t, predicate);
 }
 
 /*
@@ -338,24 +334,24 @@ void ArtIndex::Scan(
     const storage::Tuple *low_key_p = csp_p->GetLowKey();
     const storage::Tuple *high_key_p = csp_p->GetHighKey();
 
-    Key index_low_key, index_high_key, continue_key;
+    ARTKey index_low_key, index_high_key, continue_key;
     WriteIndexedAttributesInKey(low_key_p, index_low_key);
     WriteIndexedAttributesInKey(high_key_p, index_high_key);
 
     // check whether they are the same key; if so, use lookup
-    bool sameKey = true;
+    bool is_same_key = true;
     if (index_low_key.getKeyLen() != index_high_key.getKeyLen()) {
-      sameKey = false;
+      is_same_key = false;
     } else {
       for (unsigned int i = 0; i < index_low_key.getKeyLen(); i++) {
         if (index_low_key.data[i] != index_high_key.data[i]) {
-          sameKey = false;
+          is_same_key = false;
           break;
         }
       }
     }
 
-    if (sameKey) {
+    if (is_same_key) {
       ScanKey(low_key_p, result);
       return;
     }
@@ -364,8 +360,8 @@ void ArtIndex::Scan(
     std::size_t range = 1000;
     std::size_t actual_result_length = 0;
 
-    auto &t = artTree.getThreadInfo();
-    artTree.lookupRange(index_low_key, index_high_key, continue_key, result, range,
+    auto &t = art_.GetThreadInfo();
+    art_.LookupRange(index_low_key, index_high_key, continue_key, result, range,
       actual_result_length, t);
 
   }
@@ -388,9 +384,9 @@ void ArtIndex::ScanLimit(
 }
 
 void ArtIndex::ScanAllKeys(std::vector<ItemPointer *> &result) {
-  auto &t = artTree.getThreadInfo();
+  auto &t = art_.GetThreadInfo();
   std::size_t actual_result_length = 0;
-  artTree.fullScan(result, actual_result_length, t);
+  art_.FullScan(result, actual_result_length, t);
   return;
 }
 

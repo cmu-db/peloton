@@ -4,7 +4,7 @@
 //
 // copy_executor.cpp
 //
-// Identification: src/include/index/N48.h
+// Identification: src/include/index/art_node_48_node.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -18,8 +18,8 @@
 #include <stdint.h>
 #include <atomic>
 #include <string.h>
-#include "index/Key.h"
-#include "index/Epoche.h"
+#include "index/art_key.h"
+#include "index/art_epoch_manager.h"
 
 namespace peloton {
 namespace index {
@@ -46,23 +46,23 @@ public:
     }
   }
 
-  bool change(uint8_t key, N *val);
+  bool Change(uint8_t key, N *val);
 
-  bool addMultiValue(uint8_t key, uint64_t val);
+  bool AddMultiValue(uint8_t key, uint64_t val);
 
-  N *getChild(const uint8_t k) const;
+  N *GetChild(const uint8_t k) const;
 
   void remove(uint8_t k);
 
-  N *getAnyChild() const;
+  N *GetAnyChild() const;
 
   bool isFull() const;
 
   bool isUnderfull() const;
 
-  void deleteChildren();
+  void DeleteChildren();
 
-  uint64_t getChildren(uint8_t start, uint8_t end, std::tuple<uint8_t, N *> *&children,
+  uint64_t GetChildren(uint8_t start, uint8_t end, std::tuple<uint8_t, N *> *&children,
                        uint32_t &childrenCount) const;
 };
 }

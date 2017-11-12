@@ -85,11 +85,11 @@ public:
 
   struct KeyAndValues {
     std::array<uint64_t, 16> values;
-    index::Key key;
+    index::ARTKey key;
     storage::Tuple *tuple;
   };
   static std::array<KeyAndValues, 10000> key_to_values;
-  static std::map<index::TID, index::Key *> value_to_key;
+  static std::map<index::TID, index::ARTKey *> value_to_key;
   static bool map_populated;
 
   static void PopulateMap(index::Index &index);
