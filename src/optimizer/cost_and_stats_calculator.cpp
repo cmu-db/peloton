@@ -517,7 +517,7 @@ void CostAndStatsCalculator::Visit(const PhysicalInnerHashJoin *op) {
   auto right_table_stats =
       std::dynamic_pointer_cast<TableStats>(child_stats_.at(RIGHT_CHILD_INDEX));
   if (left_table_stats == nullptr || right_table_stats == nullptr) {
-    output_cost_ = 1;
+    output_cost_ = 0;
     return;
   }
   output_cost_ = getCostOfChildren(child_costs_);
