@@ -1040,6 +1040,7 @@ enum class OperatorId : uint32_t {
   RTrim,
   BTrim,
   Sqrt,
+  Ceil,
   Round,
   Extract,
   Floor,
@@ -1219,6 +1220,12 @@ struct FileHandle {
       : file(file), fd(fd), size(size) {}
 };
 extern FileHandle INVALID_FILE_HANDLE;
+
+//===--------------------------------------------------------------------===//
+// Utilities
+//===--------------------------------------------------------------------===//
+
+bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString);
 
 //===--------------------------------------------------------------------===//
 // Transformers

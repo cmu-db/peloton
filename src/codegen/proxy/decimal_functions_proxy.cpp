@@ -22,5 +22,6 @@ DEFINE_METHOD(peloton::function, DecimalFunctions, Floor);
 
 DEFINE_METHOD(peloton::function, DecimalFunctions, Round);
 
+DEFINE_METHOD(peloton::function, DecimalFunctions, Ceil);
 }  // namespace codegen
 }  // namespace peloton
