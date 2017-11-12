@@ -41,6 +41,7 @@ class TimestampFunctions {
   // support explicit type casts. For example:
   // SELECT date_trunc('hour', TIMESTAMP '2001-02-16 20:38:40');
   static uint64_t DateTrunc(uint32_t date_part_type, uint64_t value);
+  static type::Value _DateTrunc(const std::vector<type::Value> &args);
 };
 
 }  // namespace function
