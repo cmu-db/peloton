@@ -286,6 +286,60 @@ void N::removeAndUnlock(N *node, uint64_t v, uint8_t key, N *parentNode, uint64_
   }
 }
 
+void N::removeLockedNodeAndUnlock(N *node, uint8_t key, N *parentNode, uint64_t parentVersion, uint8_t keyParent, bool &needRestart, ThreadInfo &threadInfo) {
+  switch (node->getType()) {
+    case NTypes::N4: {
+      auto n = static_cast<N4 *>(node);
+      removeLockedNodeAndShrink<N4, N4>(n, parentNode, parentVersion, keyParent, key, needRestart, threadInfo);
+      break;
+    }
+    case NTypes::N16: {
+      auto n = static_cast<N16 *>(node);
+      removeLockedNodeAndShrink<N16, N4>(n, parentNode, parentVersion, keyParent, key, needRestart, threadInfo);
+      break;
+    }
+    case NTypes::N48: {
+      auto n = static_cast<N48 *>(node);
+      removeLockedNodeAndShrink<N48, N16>(n, parentNode, parentVersion, keyParent, key, needRestart, threadInfo);
+      break;
+    }
+    case NTypes::N256: {
+      auto n = static_cast<N256 *>(node);
+      removeLockedNodeAndShrink<N256, N48>(n, parentNode, parentVersion, keyParent, key, needRestart, threadInfo);
+      break;
+    }
+  }
+}
+
+template<typename curN, typename smallerN>
+void N::removeLockedNodeAndShrink(curN *n, N *parentNode, uint64_t parentVersion, uint8_t keyParent, uint8_t key, bool &needRestart, ThreadInfo &threadInfo) {
+  if (!n->isUnderfull() || parentNode == nullptr) {
+    if (parentNode != nullptr) {
+      parentNode->readUnlockOrRestart(parentVersion, needRestart);
+      if (needRestart) return;
+    }
+
+    n->remove(key);
+    n->writeUnlock();
+    return;
+  }
+  parentNode->upgradeToWriteLockOrRestart(parentVersion, needRestart);
+  if (needRestart) {
+    n->writeUnlock();
+    return;
+  }
+
+  auto nSmall = new smallerN(n->getPrefix(), n->getPrefixLength());
+
+  n->copyTo(nSmall);
+  nSmall->remove(key);
+  N::change(parentNode, keyParent, nSmall);
+
+  n->writeUnlockObsolete();
+  threadInfo.getEpoche().markNodeForDeletion(n, threadInfo);
+  parentNode->writeUnlock();
+}
+
 bool N::isLocked(uint64_t version) const {
   return ((version & 0b10) == 0b10);
 }

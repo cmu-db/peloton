@@ -693,6 +693,9 @@ void Tree::remove(const Key &k, TID tid, ThreadInfo &threadInfo) {
 //          if (N::getLeaf(nextNode) != tid) {
 //            return;
 //          }
+          node->upgradeToWriteLockOrRestart(v, needRestart);
+          if (needRestart) goto restart;
+
           MultiValues *parent_value = nullptr;
           MultiValues *value_list = reinterpret_cast<MultiValues *>(N::getLeaf(nextNode));
           uint32_t value_count = 0;
@@ -703,20 +706,19 @@ void Tree::remove(const Key &k, TID tid, ThreadInfo &threadInfo) {
               value_found = true;
               if (value_list->next != nullptr) {
                 value_count++;
-                break;
               }
+              break;
             }
             parent_value = value_list;
             value_list = value_list->next;
           }
 
           if (!value_found) {
+            node->writeUnlock();
             return;
           }
 
           if (value_count > 1) {
-            node->upgradeToWriteLockOrRestart(v, needRestart);
-            if (needRestart) goto restart;
 
             if (parent_value != nullptr) {
               parent_value->next = value_list->next;
@@ -736,13 +738,16 @@ void Tree::remove(const Key &k, TID tid, ThreadInfo &threadInfo) {
             assert(parentNode == nullptr || node->getCount() != 1);
             if (node->getCount() == 2 && parentNode != nullptr) {
               parentNode->upgradeToWriteLockOrRestart(parentVersion, needRestart);
-              if (needRestart) goto restart;
-
-              node->upgradeToWriteLockOrRestart(v, needRestart);
               if (needRestart) {
-                parentNode->writeUnlock();
+                node->writeUnlock();
                 goto restart;
               }
+
+//              node->upgradeToWriteLockOrRestart(v, needRestart);
+//              if (needRestart) {
+//                parentNode->writeUnlock();
+//                goto restart;
+//              }
               // 1. check remaining entries
               N *secondNodeN;
               uint8_t secondNodeK;
@@ -773,7 +778,8 @@ void Tree::remove(const Key &k, TID tid, ThreadInfo &threadInfo) {
                 this->epoche.markNodeForDeletion(node, threadInfo);
               }
             } else {
-              N::removeAndUnlock(node, v, k[level], parentNode, parentVersion, parentKey, needRestart, threadInfo);
+//              N::removeAndUnlock(node, v, k[level], parentNode, parentVersion, parentKey, needRestart, threadInfo);
+              N::removeLockedNodeAndUnlock(node, k[level], parentNode, parentVersion, parentKey, needRestart, threadInfo);
               if (needRestart) goto restart;
             }
           }

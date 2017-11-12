@@ -107,6 +107,8 @@ public:
 
   static void removeAndUnlock(N *node, uint64_t v, uint8_t key, N *parentNode, uint64_t parentVersion, uint8_t keyParent, bool &needRestart, ThreadInfo &threadInfo);
 
+  static void removeLockedNodeAndUnlock(N *node, uint8_t key, N *parentNode, uint64_t parentVersion, uint8_t keyParent, bool &needRestart, ThreadInfo &threadInfo);
+
   bool hasPrefix() const;
 
   const uint8_t *getPrefix() const;
@@ -140,6 +142,9 @@ public:
 
   template<typename curN, typename smallerN>
   static void removeAndShrink(curN *n, uint64_t v, N *parentNode, uint64_t parentVersion, uint8_t keyParent, uint8_t key, bool &needRestart, ThreadInfo &threadInfo);
+
+  template<typename curN, typename smallerN>
+  static void removeLockedNodeAndShrink(curN *n, N *parentNode, uint64_t parentVersion, uint8_t keyParent, uint8_t key, bool &needRestart, ThreadInfo &threadInfo);
 
   static uint64_t getChildren(const N *node, uint8_t start, uint8_t end, std::tuple<uint8_t, N *> children[],
                               uint32_t &childrenCount);
