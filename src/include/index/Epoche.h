@@ -221,6 +221,7 @@ inline void Epoche::markNodeForDeletion(void *n, ThreadInfo &epocheInfo) {
 
 inline void Epoche::exitEpocheAndCleanup(ThreadInfo &epocheInfo) {
   DeletionList &deletionList = epocheInfo.getDeletionList();
+  deletionList.localEpoche.store(std::numeric_limits<uint64_t>::max());
   if ((deletionList.thresholdCounter & (64 - 1)) == 1) {
     currentEpoche++;
   }
@@ -232,7 +233,6 @@ inline void Epoche::exitEpocheAndCleanup(ThreadInfo &epocheInfo) {
         deletionList.thresholdCounter = 0;
         return;
       }
-      deletionList.localEpoche.store(std::numeric_limits<uint64_t>::max());
 
       uint64_t oldestEpoche = std::numeric_limits<uint64_t>::max();
       for (size_t i = 0; i < thread_info_counter; i++) {
