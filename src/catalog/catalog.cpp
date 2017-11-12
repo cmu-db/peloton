@@ -1030,7 +1030,7 @@ void Catalog::InitializeFunctions() {
           "date_trunc", {type::TypeId::INTEGER, type::TypeId::TIMESTAMP},
           type::TypeId::TIMESTAMP, internal_lang, "DateTrunc",
           function::BuiltInFuncType{OperatorId::DateTrunc,
-                                    function::DateFunctions::Extract},
+                                    function::TimestampFunctions::_DateTrunc},
           txn);
     } catch (CatalogException &e) {
       txn_manager.AbortTransaction(txn);

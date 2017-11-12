@@ -28,7 +28,7 @@ namespace function {
 uint64_t TimestampFunctions::DateTrunc(uint32_t date_part_type,
                                        uint64_t value) {
   DatePartType date_part =
-      *reinterpret_cast<const DatePartType*>(&date_part_type);
+      *reinterpret_cast<const DatePartType *>(&date_part_type);
 
   uint64_t timestamp = value;
   uint64_t result = 0;
@@ -131,5 +131,18 @@ uint64_t TimestampFunctions::DateTrunc(uint32_t date_part_type,
   return (result);
 }
 
-}  // namespace expression
+type::Value TimestampFunctions::_DateTrunc(
+    const std::vector<type::Value> &args) {
+  uint32_t date_part = args[0].GetAs<uint32_t>();
+  uint64_t timestamp = args[1].GetAs<uint64_t>();
+  type::Value result;
+
+  if (timestamp == type::PELOTON_TIMESTAMP_NULL) {
+    return type::ValueFactory::GetNullValueByType(type::TypeId::TIMESTAMP);
+  }
+
+  uint64_t ret = DateTrunc(date_part, timestamp);
+  return type::ValueFactory::GetTimestampValue(ret);
+}
+}  // namespace function
 }  // namespace peloton
