@@ -15,7 +15,6 @@
 #include <string>
 #include <vector>
 
-#include "common/logger.h"
 #include "type/types.h"
 #include "type/value.h"
 
