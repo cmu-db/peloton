@@ -6,6 +6,7 @@ import sys
 import socket
 import time
 import psycopg2
+from optparse import OptionParser
 from config import *
 from subprocess import Popen
 
@@ -103,11 +104,13 @@ def drop_all_tables(conn):
 if __name__ == "__main__":
     global peloton_path, output_dir, peloton_log_file
 
+
     work_path = os.path.abspath(".")
     output_dir = os.path.abspath(output_dir)
     sql_file = os.path.abspath(os.path.join(output_dir, "test.sql"))
     config = os.path.abspath(os.path.join(output_dir, "config"))
     peloton_log_file = os.path.abspath(os.path.join(output_dir, peloton_log_file))
+
 
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
@@ -116,6 +119,11 @@ if __name__ == "__main__":
     peloton_log = open(peloton_log_file, "w")
     peloton = None
 
+    parser = OptionParser()
+    parser.add_option("--config", dest="config", help="config file path for the testing framework", default=config)
+    parser.add_option("--out", dest="out", help="Output path for JUnit XML files", default=output_dir)
+    (options, args) = parser.parse_args()
+
     try:
         # Open a connection to postgres so that we can drop the tables
         conn = psycopg2.connect(
@@ -123,17 +131,17 @@ if __name__ == "__main__":
                 user = pg_username,
                 password = pg_password,
                 port = 5433)
-      
+
         # Extract the SQL from the trace files
         for path in traces:
             print "="*80
             print "test: ", path
             print "="*80
             sys.stdout.flush()
-            
+
             # Always drop the tables in the database first
             drop_all_tables(conn)
-            
+
             # Convert the trace file into a format that we can handle
             extract_sql(path, sql_file)
 
@@ -144,13 +152,13 @@ if __name__ == "__main__":
 
             # Run the test
             os.chdir(peloton_test_path)
-            test = Popen(["bash", "bin/peloton-test", "-config", config, "-trace", sql_file, "-out", output_dir, "-batchsize", "100"])
+            test = Popen(["bash", "bin/peloton-test", "-config", options.config, "-trace", sql_file, "-out", options.out, "-batchsize", "100"])
             test.wait()
             os.chdir(work_path)
-      
+
             peloton.kill()
             peloton = None
-        # FOR
+            # FOR
     except Exception as e:
         raise
     finally:
