@@ -131,7 +131,7 @@ bool Tree::lookupRange(const Key &start, const Key &end, Key &continueKey, std::
         ItemPointer *new_value = (ItemPointer *)(value_list->tid);
         result.push_back(new_value);
         resultsFound++;
-        value_list = value_list->next;
+        value_list = (MultiValues *)value_list->next.load();
       }
 
 //      result.push_back((ItemPointer *)(N::getLeaf(node)));
@@ -376,7 +376,7 @@ void Tree::scanAllLeafNodes(const N* node, std::vector<ItemPointer *> &result, s
       ItemPointer *new_value = (ItemPointer *)(value_list->tid);
       result.push_back(new_value);
       resultCount++;
-      value_list = value_list->next;
+      value_list = (MultiValues *)value_list->next.load();
     }
   } else {
     std::tuple<uint8_t, N *> children[256];
@@ -396,13 +396,10 @@ void Tree::fullScan(std::vector<ItemPointer *> &result, std::size_t &resultCount
 
 TID Tree::checkKey(const TID tid, const Key &k) const {
   Key kt;
-  printf("in checkKey()\n");
   this->loadKey(tid, kt, metadata);
   if (k == kt) {
-    printf("recovered key is the same as the inserted key\n");
     return tid;
   }
-  printf("recovered key is not the same as the inserted key!\n");
   return 0;
 }
 
@@ -618,7 +615,7 @@ bool Tree::conditionalInsert(const Key &k, TID tid, ThreadInfo &epocheInfo, std:
             node->writeUnlock();
             return false;
           }
-          value_list = value_list->next;
+          value_list = (MultiValues *)value_list->next.load();
         }
 
         // upsert
@@ -705,13 +702,13 @@ void Tree::remove(const Key &k, TID tid, ThreadInfo &threadInfo) {
             value_count++;
             if (value_list->tid == tid) {
               value_found = true;
-              if (value_list->next != nullptr) {
+              if (value_list->next != 0) {
                 value_count++;
               }
               break;
             }
             parent_value = value_list;
-            value_list = value_list->next;
+            value_list = (MultiValues *)value_list->next.load();
           }
 
           if (!value_found) {
@@ -726,14 +723,19 @@ void Tree::remove(const Key &k, TID tid, ThreadInfo &threadInfo) {
               if (value_list == nullptr) {
                 printf("wtf!! r u kidding me?\n");
               }
-              parent_value->next = value_list->next;
-              value_list->next = nullptr;
-              delete value_list;
+              uint64_t expected = parent_value->next;
+              uint64_t new_next = value_list->next;
+//              parent_value->next = value_list->next;
+              parent_value->next.compare_exchange_strong(expected, new_next);
+//              value_list->next = nullptr;
+//              delete value_list;
+              this->epoche.markNodeForDeletion(value_list, threadInfo);
             } else {
 //              printf("deleted value is the head value\n");
-              N::change(node, k[level], N::setLeafWithListPointer(value_list->next));
-              value_list->next = nullptr;
-              delete value_list;
+              N::change(node, k[level], N::setLeafWithListPointer((MultiValues *)value_list->next.load()));
+//              value_list->next = nullptr;
+//              delete value_list;
+              this->epoche.markNodeForDeletion(value_list, threadInfo);
             }
 
             // remember to unlock the node!!

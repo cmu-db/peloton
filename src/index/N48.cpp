@@ -40,12 +40,13 @@ bool N48::addMultiValue(uint8_t key, uint64_t val) {
   TID tid = N::getLeaf(children[childIndex[key]]);
 
   MultiValues *value_list = reinterpret_cast<MultiValues *>(tid);
-  while (value_list->next != nullptr) {
-    value_list = value_list->next;
+  while (value_list->next != 0) {
+    value_list = (MultiValues *)(value_list->next.load());
   }
-  value_list->next = new MultiValues();
-  value_list->next->tid = val;
-  value_list->next->next = nullptr;
+  MultiValues *new_value = new MultiValues();
+  new_value->tid = val;
+  new_value->next = 0;
+  value_list->next = (uint64_t) new_value;
   return true;
 }
 

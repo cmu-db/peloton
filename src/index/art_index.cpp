@@ -343,7 +343,7 @@ void ArtIndex::ScanKey(
     while (value_list != nullptr) {
       ItemPointer *value_pointer = (ItemPointer *) (value_list->tid);
       result.push_back(value_pointer);
-      value_list = value_list->next;
+      value_list = (MultiValues *)value_list->next.load();
     }
   }
   return;

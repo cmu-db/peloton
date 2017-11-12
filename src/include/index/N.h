@@ -34,7 +34,7 @@ enum class NTypes : uint8_t {
 
 typedef struct MultiValues {
   TID tid;
-  MultiValues *next;
+  std::atomic<uint64_t> next;
 } MultiValues;
 
 static constexpr uint32_t maxStoredPrefixLength = 11;
