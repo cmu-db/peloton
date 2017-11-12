@@ -79,7 +79,7 @@ Index *IndexFactory::GetIndex(IndexMetadata *metadata) {
 
     // ART
   } else if (index_type == IndexType::ART) {
-    printf("creating a art index!");
+    LOG_INFO("creating an art index!");
     index = IndexFactory::GetARTIntsKeyIndex(metadata);
 
   // -----------------------
@@ -100,7 +100,7 @@ Index *IndexFactory::GetARTIntsKeyIndex(IndexMetadata *metadata) {
 
   // The size of the key in bytes
   const auto key_size = metadata->key_schema->GetLength();
-  printf("[DEBUG] key_size = %d\n", key_size);
+  LOG_DEBUG("[DEBUG] ART key size = %d\n", key_size);
 
   index = new ArtIndex(metadata);
 

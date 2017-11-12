@@ -1,6 +1,14 @@
+//===----------------------------------------------------------------------===//
 //
-// Created by Min Huang on 9/20/17.
+//                         Peloton
 //
+// bwtree_index_test.cpp
+//
+// Identification: test/index/art_index_test.cpp
+//
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "common/harness.h"
 #include "gtest/gtest.h"

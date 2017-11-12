@@ -1,6 +1,14 @@
+//===----------------------------------------------------------------------===//
 //
-// Created by Min Huang on 9/18/17.
+//                         Peloton
 //
+// copy_executor.cpp
+//
+// Identification: src/include/index/art_index.h
+//
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 

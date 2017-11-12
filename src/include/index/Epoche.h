@@ -1,6 +1,14 @@
+//===----------------------------------------------------------------------===//
 //
-// Created by Min Huang on 9/20/17.
+//                         Peloton
 //
+// copy_executor.cpp
+//
+// Identification: src/include/index/Epoche.h
+//
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -266,12 +274,6 @@ inline void Epoche::exitEpocheAndCleanup(ThreadInfo &epocheInfo) {
 
 inline Epoche::~Epoche() {
   uint64_t oldestEpoche = std::numeric_limits<uint64_t>::max();
-//  for (auto &epoche : deletionLists) {
-//    auto e = epoche.localEpoche.load();
-//    if (e < oldestEpoche) {
-//      oldestEpoche = e;
-//    }
-//  }
   for (size_t i = 0; i < thread_info_counter; i++) {
     auto e = (thread_info_list + i)->threadInfo.getDeletionList().localEpoche.load();
     if (e < oldestEpoche) {
@@ -294,9 +296,6 @@ inline Epoche::~Epoche() {
 }
 
 inline void Epoche::showDeleteRatio() {
-//  for (auto &d : deletionLists) {
-//    std::cout << "deleted " << d.deleted << " of " << d.added << std::endl;
-//  }
   for (size_t i = 0; i < thread_info_counter; i++) {
     auto &d = (thread_info_list + i)->threadInfo.getDeletionList();
     std::cout << "deleted " << d.deleted << " of " << d.added << std::endl;

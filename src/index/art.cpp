@@ -1,6 +1,14 @@
+//===----------------------------------------------------------------------===//
 //
-// Created by Min Huang on 9/20/17.
+//                         Peloton
 //
+// copy_executor.cpp
+//
+// Identification: src/index/art.cpp
+//
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include <assert.h>
 #include <algorithm>
@@ -32,7 +40,6 @@ Tree::~Tree() {
 ThreadInfo &Tree::getThreadInfo() {
   static thread_local int gc_id = (this->epoche).thread_info_counter++;
   return (this->epoche).getThreadInfoByID(gc_id);
-//  return ThreadInfo(this->epoche);
 }
 
 void Tree::setIndexMetadata(IndexMetadata *metadata) {
@@ -133,9 +140,6 @@ bool Tree::lookupRange(const Key &start, const Key &end, Key &continueKey, std::
         resultsFound++;
         value_list = (MultiValues *)value_list->next.load();
       }
-
-//      result.push_back((ItemPointer *)(N::getLeaf(node)));
-//      resultsFound++;
     } else {
       std::tuple<uint8_t, N *> children[256];
       uint32_t childrenCount = 0;
@@ -491,10 +495,6 @@ void Tree::insert(const Key &k, TID tid, ThreadInfo &epocheInfo, bool &insertSuc
       loadKey(N::getLeaf(nextNode), key, metadata);
 
       if (key == k) {
-        // upsert
-//        N::change(node, k[level], N::setLeaf(tid));
-//        printf("add another value for a non-unique key %llu\n", tid);
-//        N::addMultiValue(node, k[level], N::setLeaf(tid));
         N::addMultiValue(node, k[level], tid);
         node->writeUnlock();
         insertSuccess = true;
@@ -618,10 +618,6 @@ bool Tree::conditionalInsert(const Key &k, TID tid, ThreadInfo &epocheInfo, std:
           value_list = (MultiValues *)value_list->next.load();
         }
 
-        // upsert
-//        N::change(node, k[level], N::setLeaf(tid));
-//        printf("add another value for a non-unique key %llu\n", tid);
-//        N::addMultiValue(node, k[level], N::setLeaf(tid));
         N::addMultiValue(node, k[level], tid);
         node->writeUnlock();
         return true;
@@ -646,7 +642,6 @@ bool Tree::conditionalInsert(const Key &k, TID tid, ThreadInfo &epocheInfo, std:
 }
 
 void Tree::remove(const Key &k, TID tid, ThreadInfo &threadInfo) {
-//  printf("begin remove\n");
   EpocheGuard epocheGuard(threadInfo);
   int restartCount = 0;
   restart:
@@ -688,9 +683,6 @@ void Tree::remove(const Key &k, TID tid, ThreadInfo &threadInfo) {
           return;
         }
         if (N::isLeaf(nextNode)) {
-//          if (N::getLeaf(nextNode) != tid) {
-//            return;
-//          }
           node->upgradeToWriteLockOrRestart(v, needRestart);
           if (needRestart) goto restart;
 
@@ -719,28 +711,17 @@ void Tree::remove(const Key &k, TID tid, ThreadInfo &threadInfo) {
           if (value_count > 1) {
 
             if (parent_value != nullptr) {
-//              printf("deleted value is not the head value\n");
-              if (value_list == nullptr) {
-                printf("wtf!! r u kidding me?\n");
-              }
               uint64_t expected = parent_value->next;
               uint64_t new_next = value_list->next;
-//              parent_value->next = value_list->next;
               parent_value->next.compare_exchange_strong(expected, new_next);
-//              value_list->next = nullptr;
-//              delete value_list;
               this->epoche.markNodeForDeletion(value_list, threadInfo);
             } else {
-//              printf("deleted value is the head value\n");
               N::change(node, k[level], N::setLeafWithListPointer((MultiValues *)value_list->next.load()));
-//              value_list->next = nullptr;
-//              delete value_list;
               this->epoche.markNodeForDeletion(value_list, threadInfo);
             }
 
             // remember to unlock the node!!
             node->writeUnlock();
-//            printf("unlock the node and carry on\n");
           } else {
             // last value in the value_list is deleted
             assert(parentNode == nullptr || node->getCount() != 1);
@@ -751,11 +732,6 @@ void Tree::remove(const Key &k, TID tid, ThreadInfo &threadInfo) {
                 goto restart;
               }
 
-//              node->upgradeToWriteLockOrRestart(v, needRestart);
-//              if (needRestart) {
-//                parentNode->writeUnlock();
-//                goto restart;
-//              }
               // 1. check remaining entries
               N *secondNodeN;
               uint8_t secondNodeK;
@@ -786,7 +762,6 @@ void Tree::remove(const Key &k, TID tid, ThreadInfo &threadInfo) {
                 this->epoche.markNodeForDeletion(node, threadInfo);
               }
             } else {
-//              N::removeAndUnlock(node, v, k[level], parentNode, parentVersion, parentKey, needRestart, threadInfo);
               N::removeLockedNodeAndUnlock(node, k[level], parentNode, parentVersion, parentKey, needRestart, threadInfo);
               if (needRestart) goto restart;
             }

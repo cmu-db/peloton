@@ -123,7 +123,6 @@ void TestingArtUtil::BasicTest(UNUSED_ATTRIBUTE const IndexType index_type) {
 
 void TestingArtUtil::NonUniqueKeyDeleteTest(UNUSED_ATTRIBUTE const IndexType index_type) {
   // the index created in this table is ART index
-  // std::unique_ptr<storage::DataTable> table(TestingExecutorUtil::CreateTable(5));
   storage::DataTable *table = CreateTable(5);
   std::vector<storage::Tuple *> keys;
   std::vector<ItemPointer *> expected_values;
@@ -189,7 +188,6 @@ void TestingArtUtil::MultiThreadedInsertTest(UNUSED_ATTRIBUTE const IndexType in
   timer.Start();
   LaunchParallelTest(num_threads, TestingArtUtil::InsertHelperMicroBench, &art_index, num_rows);
   timer.Stop();
-  printf("elapsed time = %.5lf\n", timer.GetDuration());
   LOG_INFO("1,600 tuples inserted in %.5lfs", timer.GetDuration());
 
 
@@ -203,7 +201,6 @@ void TestingArtUtil::MultiThreadedInsertTest(UNUSED_ATTRIBUTE const IndexType in
   art_index.ScanKey(key_to_values[test_key_index].tuple, result);
   EXPECT_EQ(16, result.size());
 
-  // check values
   for (int i = 0; i < 16; i++) {
     art_index.DeleteEntry(key_to_values[test_key_index].tuple, result[i]);
   }
@@ -211,17 +208,6 @@ void TestingArtUtil::MultiThreadedInsertTest(UNUSED_ATTRIBUTE const IndexType in
   result.clear();
   art_index.ScanKey(key_to_values[test_key_index].tuple, result);
   EXPECT_EQ(0, result.size());
-
-//
-//  // wait for all the EpochGuard to deconstruct
-//  std::this_thread::sleep_for(std::chrono::milliseconds(10000));
-
-//  EXPECT_EQ(140, result.size());
-//  for (uint32_t i = 0; i < keys.size(); i++) {
-//    result.clear();
-//    index->ScanKey(keys[i], result);
-//    EXPECT_EQ(4, result.size());
-//  }
 }
 
 void TestingArtUtil::NonUniqueKeyMultiThreadedStressTest(UNUSED_ATTRIBUTE const IndexType index_type) {
@@ -250,7 +236,6 @@ void TestingArtUtil::NonUniqueKeyMultiThreadedStressTest(UNUSED_ATTRIBUTE const 
   timer.Start();
   LaunchParallelTest(num_threads, TestingArtUtil::InsertHelperMicroBench, &art_index, num_rows);
   timer.Stop();
-  printf("elapsed time = %.5lf\n", timer.GetDuration());
   LOG_INFO("160,000 tuples inserted in %.5lfs", timer.GetDuration());
 
 
@@ -275,64 +260,6 @@ void TestingArtUtil::NonUniqueKeyMultiThreadedStressTest(UNUSED_ATTRIBUTE const 
     EXPECT_EQ(1, result.size());
     EXPECT_EQ((uint64_t)key_to_values[i].values[15], (uint64_t)result[0]);
   }
-//  // the index created in this table is ART index
-//  // std::unique_ptr<storage::DataTable> table(TestingExecutorUtil::CreateTable(5));
-//  storage::DataTable *table = CreateTable(5);
-//  std::vector<storage::Tuple *> keys;
-//  std::vector<ItemPointer *> expected_values;
-//  auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
-//  bool random = false;
-//  int num_rows = 20;
-//
-//  // first, remember some key value pairs to delete
-//  size_t scale_factor = 1;
-//  size_t num_threads = 1;
-//  // add 200 key-values in sequential order first, so the data
-//  // in vector keys and vector expected_values are in correct order
-//  for (uint32_t i = 0; i < 10; i++) {
-//    LaunchParallelTest(num_threads, TestingArtUtil::InsertHelper, table, testing_pool,
-//                       scale_factor, num_rows, random, &keys, &expected_values);
-//  }
-//
-//  // insert huge amount of tuples (random data) at the same time
-//  random = true;
-//  scale_factor = 5;
-//  num_threads = 15;
-//  std::vector<storage::Tuple *> useless_keys;
-//  std::vector<ItemPointer *> useless_values;
-//  LaunchParallelTest(num_threads, TestingArtUtil::InsertHelper, table, testing_pool,
-//                     scale_factor, num_rows, random, &useless_keys, &useless_values);
-//
-//  auto index = table->GetIndex(1);
-//  std::vector<ItemPointer *> result;
-//  index->ScanAllKeys(result);
-//  // 200 + 20 * 5 * 15 = 1540 in total
-//  EXPECT_EQ(1700, result.size());
-//
-//
-//  int delete_rows = 19;
-//  num_threads = 10;
-//  LaunchParallelTest(num_threads, TestingArtUtil::DeleteHelper, table, delete_rows, keys, expected_values);
-//
-//  result.clear();
-//  index->ScanAllKeys(result);
-//  // 1700 - 190 = 1510
-//  EXPECT_EQ(1510, result.size());
-//
-//  // the first 190 key-values in vector keys should be gone
-//  // INCORRECT!! it's possible that these key is generated randomly!
-////  for (uint32_t i = 0; i < 190; i++) {
-////    result.clear();
-////    index->ScanKey(keys[i], result);
-////    EXPECT_EQ(0, result.size());
-////  }
-//
-//  // the last 10 key-values in vector keys should remain
-//  for (uint32_t i = 190; i < 200; i++) {
-//    result.clear();
-//    index->ScanKey(keys[i], result);
-//    EXPECT_EQ((uint64_t) expected_values[i], (uint64_t) result[0]);
-//  }
 
 }
 
@@ -389,8 +316,6 @@ storage::DataTable *TestingArtUtil::CreateTable(
       IndexConstraintType::DEFAULT, tuple_schema, key_schema, key_attrs,
       unique);
 
-//    index::ArtIndex dbg(index_metadata, loadKeyForTest);
-
     std::shared_ptr<index::Index> pkey_index(
       index::IndexFactory::GetIndex(index_metadata));
 
@@ -419,7 +344,6 @@ storage::DataTable *TestingArtUtil::CreateTable(
 }
 
 void TestingArtUtil::PopulateMap(UNUSED_ATTRIBUTE index::Index &index) {
-//  auto key_schema = index.GetKeySchema();
   catalog::Schema *table_schema = new catalog::Schema(
     {TestingExecutorUtil::GetColumnInfo(0), TestingExecutorUtil::GetColumnInfo(1)});
 
@@ -449,7 +373,6 @@ void TestingArtUtil::PopulateMap(UNUSED_ATTRIBUTE index::Index &index) {
     key_to_values[i].tuple = tuple;
 
     index::Key index_key;
-//    index::ArtIndex::WriteIndexedAttributesInKey(key, index_key);
     index_key.setKeyLen(8);
     index_key.set(c, 8);
 
@@ -465,7 +388,6 @@ void TestingArtUtil::PopulateMap(UNUSED_ATTRIBUTE index::Index &index) {
       values_set.insert(new_value);
 
       key_to_values[i].values[j] = new_value;
-//      value_to_key.insert(std::pair<index::TID, index::Key>((index::TID)new_value, index_key));
       value_to_key[(index::TID)new_value] = &(key_to_values[i].key);
     }
 
@@ -473,27 +395,6 @@ void TestingArtUtil::PopulateMap(UNUSED_ATTRIBUTE index::Index &index) {
   }
 
   map_populated = true;
-
-
-//  // debug
-//  for (int i = 0; i < 10; i++) {
-//    printf("key = ");
-//    for (unsigned int j = 0; j < key_to_values[i].key.getKeyLen(); j++) {
-//      printf("%d ", key_to_values[i].key[j]);
-//    }
-//    printf("\nValues:\n");
-//    for (int j = 0; j < 16; j++) {
-//      printf("%llu ", key_to_values[i].values[j]);
-//      printf("recovered key = ");
-//      index::Key *key_p = value_to_key[key_to_values[i].values[j]];
-//      for (unsigned int k = 0; k < key_p->getKeyLen(); k++) {
-//        printf("%d ", (*key_p)[k]);
-//      }
-//      printf("\n");
-//    }
-//
-//  }
-//  // end of debug
 }
 
 void TestingArtUtil::InsertHelper(storage::DataTable *table,
@@ -572,7 +473,6 @@ void TestingArtUtil::DeleteHelper(storage::DataTable *table, UNUSED_ATTRIBUTE in
                                   UNUSED_ATTRIBUTE uint64_t thread_itr) {
   // get secondary index which is built on the first and second columns
   auto index = table->GetIndex(1);
-  printf("thread_iter = %llu\n", thread_itr);
   int start_row = thread_itr * num_rows;
   if (keys.size() < (uint64_t) start_row) {
     start_row = keys.size();

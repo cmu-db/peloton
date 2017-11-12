@@ -1,6 +1,14 @@
+//===----------------------------------------------------------------------===//
 //
-// Created by Min Huang on 9/21/17.
+//                         Peloton
 //
+// copy_executor.cpp
+//
+// Identification: src/include/index/N256.h
+//
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #ifndef PELOTON_N256_H
 #define PELOTON_N256_H
