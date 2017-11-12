@@ -51,17 +51,18 @@ TEST_F(TileGroupTests, BasicTest) {
   columns.push_back(column1);
   columns.push_back(column2);
 
-  catalog::Schema *schema1 = new catalog::Schema(columns);
+  std::unique_ptr<catalog::Schema> schema1(new catalog::Schema(columns));
   schemas.push_back(*schema1);
 
   columns.clear();
   columns.push_back(column3);
   columns.push_back(column4);
 
-  catalog::Schema *schema2 = new catalog::Schema(columns);
+  std::unique_ptr<catalog::Schema> schema2(new catalog::Schema(columns));
   schemas.push_back(*schema2);
 
-  catalog::Schema *schema = catalog::Schema::AppendSchema(schema1, schema2);
+  std::unique_ptr<catalog::Schema> schema(
+      catalog::Schema::AppendSchema(schema1.get(), schema2.get()));
 
   // TILES
 
@@ -93,8 +94,10 @@ TEST_F(TileGroupTests, BasicTest) {
 
   // TUPLES
 
-  storage::Tuple *tuple1 = new storage::Tuple(schema, true);
-  storage::Tuple *tuple2 = new storage::Tuple(schema, true);
+  std::unique_ptr<storage::Tuple> tuple1(
+      new storage::Tuple(schema.get(), true));
+  std::unique_ptr<storage::Tuple> tuple2(
+      new storage::Tuple(schema.get(), true));
   auto pool = tile_group->GetTilePool(1);
 
   tuple1->SetValue(0, type::ValueFactory::GetIntegerValue(1), pool);
@@ -115,28 +118,21 @@ TEST_F(TileGroupTests, BasicTest) {
 
   auto txn = txn_manager.BeginTransaction();
 
-  auto tuple_slot = tile_group->InsertTuple(tuple1);
+  auto tuple_slot = tile_group->InsertTuple(tuple1.get());
   txn_manager.PerformInsert(txn,
       ItemPointer(tile_group->GetTileGroupId(), tuple_slot));
 
-  tuple_slot = tile_group->InsertTuple(tuple2);
+  tuple_slot = tile_group->InsertTuple(tuple2.get());
   txn_manager.PerformInsert(txn,
       ItemPointer(tile_group->GetTileGroupId(), tuple_slot));
 
-  tuple_slot = tile_group->InsertTuple(tuple1);
+  tuple_slot = tile_group->InsertTuple(tuple1.get());
   txn_manager.PerformInsert(txn,
       ItemPointer(tile_group->GetTileGroupId(), tuple_slot));
 
   txn_manager.CommitTransaction(txn);
 
   EXPECT_EQ(3, tile_group->GetActiveTupleCount());
-
-  delete tuple1;
-  delete tuple2;
-  delete schema;
-
-  delete schema1;
-  delete schema2;
 }
 
 void TileGroupInsert(std::shared_ptr<storage::TileGroup> tile_group,
@@ -144,7 +140,7 @@ void TileGroupInsert(std::shared_ptr<storage::TileGroup> tile_group,
                      UNUSED_ATTRIBUTE uint64_t thread_itr) {
   uint64_t thread_id = TestingHarness::GetInstance().GetThreadId();
 
-  storage::Tuple *tuple = new storage::Tuple(schema, true);
+  std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
@@ -159,14 +155,12 @@ void TileGroupInsert(std::shared_ptr<storage::TileGroup> tile_group,
 
   for (int insert_itr = 0; insert_itr < 1000; insert_itr++) {
     ItemPointer *index_entry_ptr = nullptr;
-    auto tuple_slot = tile_group->InsertTuple(tuple);
+    auto tuple_slot = tile_group->InsertTuple(tuple.get());
     txn_manager.PerformInsert(txn,
         ItemPointer(tile_group->GetTileGroupId(), tuple_slot), index_entry_ptr);
   }
 
   txn_manager.CommitTransaction(txn);
-
-  delete tuple;
 }
 
 TEST_F(TileGroupTests, StressTest) {
@@ -187,17 +181,18 @@ TEST_F(TileGroupTests, StressTest) {
   columns.push_back(column1);
   columns.push_back(column2);
 
-  catalog::Schema *schema1 = new catalog::Schema(columns);
+  std::unique_ptr<catalog::Schema> schema1(new catalog::Schema(columns));
   schemas.push_back(*schema1);
 
   columns.clear();
   columns.push_back(column3);
   columns.push_back(column4);
 
-  catalog::Schema *schema2 = new catalog::Schema(columns);
+  std::unique_ptr<catalog::Schema> schema2(new catalog::Schema(columns));
   schemas.push_back(*schema2);
 
-  catalog::Schema *schema = catalog::Schema::AppendSchema(schema1, schema2);
+  std::unique_ptr<catalog::Schema> schema(
+      catalog::Schema::AppendSchema(schema1.get(), schema2.get()));
 
   // TILES
   tile_column_names.push_back("COL 1");
@@ -225,13 +220,9 @@ TEST_F(TileGroupTests, StressTest) {
   catalog::Manager::GetInstance().AddTileGroup(tile_group->GetTileGroupId(),
                                                tile_group);
 
-  LaunchParallelTest(6, TileGroupInsert, tile_group, schema);
+  LaunchParallelTest(6, TileGroupInsert, tile_group, schema.get());
 
   EXPECT_EQ(6000, tile_group->GetActiveTupleCount());
-
-  delete schema1;
-  delete schema2;
-  delete schema;
 }
 
 // TEST_F(TileGroupTests, MVCCInsert) {
@@ -368,7 +359,7 @@ TEST_F(TileGroupTests, TileCopyTest) {
   columns.push_back(column4);
   columns.push_back(column5);
 
-  catalog::Schema *schema = new catalog::Schema(columns);
+  std::unique_ptr<catalog::Schema> schema(new catalog::Schema(columns));
   schemas.push_back(*schema);
 
   tile_column_names.push_back("COL 1");
@@ -398,9 +389,9 @@ TEST_F(TileGroupTests, TileCopyTest) {
 
   storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
 
-  storage::Tile *tile = storage::TileFactory::GetTile(
+  std::unique_ptr<storage::Tile> tile(storage::TileFactory::GetTile(
       BackendType::MM, INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
-      tile_group_header, *schema, nullptr, tuple_count);
+      tile_group_header, *schema, nullptr, tuple_count));
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -408,9 +399,12 @@ TEST_F(TileGroupTests, TileCopyTest) {
   oid_t tuple_slot_id = INVALID_OID;
   auto pool = tile->GetPool();
 
-  storage::Tuple *tuple1 = new storage::Tuple(schema, true);
-  storage::Tuple *tuple2 = new storage::Tuple(schema, true);
-  storage::Tuple *tuple3 = new storage::Tuple(schema, true);
+  std::unique_ptr<storage::Tuple> tuple1(
+      new storage::Tuple(schema.get(), true));
+  std::unique_ptr<storage::Tuple> tuple2(
+      new storage::Tuple(schema.get(), true));
+  std::unique_ptr<storage::Tuple> tuple3(
+      new storage::Tuple(schema.get(), true));
 
   tuple1->SetValue(0, type::ValueFactory::GetIntegerValue(1), pool);
   tuple1->SetValue(1, type::ValueFactory::GetIntegerValue(1), pool);
@@ -431,19 +425,19 @@ TEST_F(TileGroupTests, TileCopyTest) {
   tuple3->SetValue(3, type::ValueFactory::GetVarcharValue("jinwoong kim"), pool);
   tuple3->SetValue(4, type::ValueFactory::GetVarcharValue("jinwoong kim again"), pool);
 
-  tile->InsertTuple(0, tuple1);
-  tile->InsertTuple(1, tuple2);
-  tile->InsertTuple(2, tuple3);
+  tile->InsertTuple(0, tuple1.get());
+  tile->InsertTuple(1, tuple2.get());
+  tile->InsertTuple(2, tuple3.get());
 
-  tuple_slot_id = tile_group->InsertTuple(tuple1);
+  tuple_slot_id = tile_group->InsertTuple(tuple1.get());
   txn_manager.PerformInsert(txn,
       ItemPointer(tile_group->GetTileGroupId(), tuple_slot_id));
   EXPECT_EQ(0, tuple_slot_id);
-  tuple_slot_id = tile_group->InsertTuple(tuple2);
+  tuple_slot_id = tile_group->InsertTuple(tuple2.get());
   txn_manager.PerformInsert(txn,
       ItemPointer(tile_group->GetTileGroupId(), tuple_slot_id));
   EXPECT_EQ(1, tuple_slot_id);
-  tuple_slot_id = tile_group->InsertTuple(tuple3);
+  tuple_slot_id = tile_group->InsertTuple(tuple3.get());
   txn_manager.PerformInsert(txn,
       ItemPointer(tile_group->GetTileGroupId(), tuple_slot_id));
   EXPECT_EQ(2, tuple_slot_id);
@@ -455,7 +449,7 @@ TEST_F(TileGroupTests, TileCopyTest) {
 
   const catalog::Schema *old_schema = tile->GetSchema();
   const catalog::Schema *new_schema = old_schema;
-  storage::Tile *new_tile = tile->CopyTile(BackendType::MM);
+  std::unique_ptr<storage::Tile> new_tile(tile->CopyTile(BackendType::MM));
 
   LOG_INFO("\t Copied Tile Details ...");
   LOG_INFO("%s", new_tile->GetInfo().c_str());
@@ -535,13 +529,6 @@ TEST_F(TileGroupTests, TileCopyTest) {
 
   // At the end of all the checks, intended_behavior is expected to be true
   EXPECT_EQ(true, intended_behavior);
-
-  delete tuple1;
-  delete tuple2;
-  delete tuple3;
-  delete tile;
-  delete new_tile;
-  delete schema;
 }
 
 }  // namespace test

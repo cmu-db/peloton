@@ -12,18 +12,17 @@
 
 #pragma once
 
-#include <vector>
 #include <cmath>
 #include <memory>
+#include <vector>
 
-#include "table_stats.h"
-#include "value_condition.h"
 #include "common/logger.h"
 #include "common/macros.h"
+#include "table_stats.h"
+#include "value_condition.h"
 
 namespace peloton {
 namespace optimizer {
-
 // Default cost when cost model cannot compute correct cost.
 static constexpr double DEFAULT_COST = 1;
 
@@ -37,17 +36,25 @@ static constexpr double DEFAULT_INDEX_TUPLE_COST = 0.005;
 // query.
 static constexpr double DEFAULT_OPERATOR_COST = 0.0025;
 
-// Default cost of sorting n elements
-  double default_sorting_cost(size_t n) { return n * std::log2(n); }
-
-// Default number of index tuple to access for n elements
-  double default_index_height(size_t n) { return std::log2(n); }
-
 //===----------------------------------------------------------------------===//
 // Cost
 //===----------------------------------------------------------------------===//
 class Cost {
+ private:
+  // Default cost of sorting n elements
+  static double default_sorting_cost(size_t n) { return n * std::log2(n); }
+
+  // Default number of index tuple to access for n elements
+  static double default_index_height(size_t n) { return std::log2(n); }
+
  public:
+  /*
+   * Cost of seq scan for the whole table
+   */
+  static inline double NoConditionSeqScanCost(
+      const std::shared_ptr<TableStats>& input_stats) {
+    return input_stats->num_rows * DEFAULT_TUPLE_COST;
+  }
   /*
    * Cost of scan for single condition. For scan with multiple conditions,
    * you should use CombineConjunctionStats to combine output_stats.
@@ -118,7 +125,7 @@ class Cost {
    * Note right only first column is taken into consideration.
    */
   static double OrderByCost(const std::shared_ptr<TableStats>& input_stats,
-                            const std::vector<oid_t>& columns,
+                            const std::vector<std::string>& columns,
                             const std::vector<bool>& orders,
                             std::shared_ptr<TableStats>& output_stats);
 

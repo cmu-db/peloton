@@ -72,7 +72,7 @@ TEST_F(TupleSchemaTests, TupleSchemaFilteringTest) {
   ///////////////////////////////////////////////////////////////////
   
   std::vector<oid_t> subset{0, 2};
-  catalog::Schema *schema3_p = catalog::Schema::FilterSchema(&schema2, subset);
+  std::unique_ptr<catalog::Schema> schema3_p(catalog::Schema::FilterSchema(&schema2, subset));
   LOG_INFO("%s", schema3_p->GetInfo().c_str());
 
   EXPECT_NE(schema1, (*schema3_p));
@@ -82,7 +82,7 @@ TEST_F(TupleSchemaTests, TupleSchemaFilteringTest) {
   ///////////////////////////////////////////////////////////////////
   
   subset = {2, 0};
-  catalog::Schema *schema4_p = catalog::Schema::FilterSchema(&schema2, subset);
+  std::unique_ptr<catalog::Schema> schema4_p(catalog::Schema::FilterSchema(&schema2, subset));
   LOG_INFO("%s", schema4_p->GetInfo().c_str());
 
   EXPECT_EQ((*schema4_p), (*schema3_p));
@@ -93,15 +93,11 @@ TEST_F(TupleSchemaTests, TupleSchemaFilteringTest) {
   
   subset = {666, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 2, 100, 101};
   
-  catalog::Schema *schema5_p = catalog::Schema::FilterSchema(&schema2, subset);
+  std::unique_ptr<catalog::Schema> schema5_p(catalog::Schema::FilterSchema(&schema2, subset));
   LOG_INFO("%s", schema5_p->GetInfo().c_str());
 
   EXPECT_EQ(schema5_p->GetColumnCount(), 2);
   EXPECT_EQ((*schema5_p), (*schema4_p));
-  
-  delete schema3_p;
-  delete schema4_p;
-  delete schema5_p;
   
   ///////////////////////////////////////////////////////////////////
   // All tests finished
@@ -136,7 +132,7 @@ TEST_F(TupleSchemaTests, TupleSchemaCopyTest) {
   ///////////////////////////////////////////////////////////////////
 
   std::vector<oid_t> subset{0, 2};
-  catalog::Schema *schema3_p = catalog::Schema::CopySchema(&schema1, subset);
+  std::unique_ptr<catalog::Schema> schema3_p(catalog::Schema::CopySchema(&schema1, subset));
   LOG_INFO("%s", schema3_p->GetInfo().c_str());
 
   EXPECT_NE(schema1, (*schema3_p));
@@ -146,7 +142,7 @@ TEST_F(TupleSchemaTests, TupleSchemaCopyTest) {
   ///////////////////////////////////////////////////////////////////
 
   subset = {2, 0};
-  catalog::Schema *schema4_p = catalog::Schema::CopySchema(&schema1, subset);
+  std::unique_ptr<catalog::Schema> schema4_p(catalog::Schema::CopySchema(&schema1, subset));
   LOG_INFO("%s", schema4_p->GetInfo().c_str());
 
   EXPECT_NE((*schema4_p), (*schema3_p));
@@ -157,16 +153,12 @@ TEST_F(TupleSchemaTests, TupleSchemaCopyTest) {
 
   subset = {0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 2, 1};
 
-  catalog::Schema *schema5_p = catalog::Schema::CopySchema(&schema1, subset);
+  std::unique_ptr<catalog::Schema> schema5_p(catalog::Schema::CopySchema(&schema1, subset));
   LOG_INFO("%s", schema5_p->GetInfo().c_str());
 
   EXPECT_EQ(schema5_p->GetColumnCount(), subset.size());
   EXPECT_NE((*schema5_p), (*schema4_p));
   EXPECT_NE((*schema5_p), (*schema3_p));
-
-  delete schema3_p;
-  delete schema4_p;
-  delete schema5_p;
 
   ///////////////////////////////////////////////////////////////////
   // All tests finished

@@ -46,7 +46,7 @@ TEST_F(TileTests, BasicTest) {
   columns.push_back(column5);
 
   // Schema
-  catalog::Schema *schema = new catalog::Schema(columns);
+  std::unique_ptr<catalog::Schema> schema(new catalog::Schema(columns));
 
   // Column Names
   std::vector<std::string> column_names;
@@ -60,16 +60,19 @@ TEST_F(TileTests, BasicTest) {
   // Allocated Tuple Count
   const int tuple_count = 6;
 
-  storage::TileGroupHeader *header =
-      new storage::TileGroupHeader(BackendType::MM, tuple_count);
+  std::unique_ptr<storage::TileGroupHeader> header(
+      new storage::TileGroupHeader(BackendType::MM, tuple_count));
 
-  storage::Tile *tile = storage::TileFactory::GetTile(
+  std::unique_ptr<storage::Tile> tile(storage::TileFactory::GetTile(
       BackendType::MM, INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
-      header, *schema, nullptr, tuple_count);
+      header.get(), *schema, nullptr, tuple_count));
 
-  storage::Tuple *tuple1 = new storage::Tuple(schema, true);
-  storage::Tuple *tuple2 = new storage::Tuple(schema, true);
-  storage::Tuple *tuple3 = new storage::Tuple(schema, true);
+  std::unique_ptr<storage::Tuple> tuple1(new storage::Tuple(schema.get(),
+                                                            true));
+  std::unique_ptr<storage::Tuple> tuple2(new storage::Tuple(schema.get(),
+                                                            true));
+  std::unique_ptr<storage::Tuple> tuple3(new storage::Tuple(schema.get(),
+                                                            true));
   auto pool = tile->GetPool();
 
   tuple1->SetValue(0, type::ValueFactory::GetIntegerValue(1), pool);
@@ -91,16 +94,9 @@ TEST_F(TileTests, BasicTest) {
   tuple3->SetValue(3, type::ValueFactory::GetVarcharValue("jinwoong kim"), pool);
   tuple3->SetValue(4, type::ValueFactory::GetVarcharValue("jinwoong kim again"), pool);
 
-  tile->InsertTuple(0, tuple1);
-  tile->InsertTuple(1, tuple2);
-  tile->InsertTuple(2, tuple3);
-
-  delete tuple1;
-  delete tuple2;
-  delete tuple3;
-  delete tile;
-  delete header;
-  delete schema;
+  tile->InsertTuple(0, tuple1.get());
+  tile->InsertTuple(1, tuple2.get());
+  tile->InsertTuple(2, tuple3.get());
 }
 
 }  // namespace test

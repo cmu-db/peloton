@@ -6,7 +6,7 @@
 //
 // Identification: test/storage/tuple_test.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -44,9 +44,9 @@ TEST_F(TupleTests, BasicTest) {
   columns.push_back(column2);
   columns.push_back(column3);
 
-  catalog::Schema *schema(new catalog::Schema(columns));
+  std::unique_ptr<catalog::Schema> schema(new catalog::Schema(columns));
 
-  storage::Tuple *tuple(new storage::Tuple(schema, true));
+  std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema.get(), true));
   auto pool = TestingHarness::GetInstance().GetTestingPool();
 
   tuple->SetValue(0, type::ValueFactory::GetIntegerValue(23), pool);
@@ -79,9 +79,6 @@ TEST_F(TupleTests, BasicTest) {
   EXPECT_EQ(0, tuple->GetUninlinedMemorySize());
 
   LOG_TRACE("%s", tuple->GetInfo().c_str());
-
-  delete tuple;
-  delete schema;
 }
 
 TEST_F(TupleTests, VarcharTest) {
@@ -103,9 +100,9 @@ TEST_F(TupleTests, VarcharTest) {
   columns.push_back(column3);
   columns.push_back(column4);
 
-  catalog::Schema *schema(new catalog::Schema(columns));
+  std::unique_ptr<catalog::Schema> schema(new catalog::Schema(columns));
 
-  storage::Tuple *tuple(new storage::Tuple(schema, true));
+  std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema.get(), true));
   auto pool = TestingHarness::GetInstance().GetTestingPool();
 
   tuple->SetValue(0, type::ValueFactory::GetIntegerValue(23), pool);
@@ -150,9 +147,6 @@ TEST_F(TupleTests, VarcharTest) {
   // Make sure that our tuple tells us the right estimated size
   size_t expected_size = sizeof(int32_t) + value3.GetLength();
   EXPECT_EQ(expected_size, tuple->GetUninlinedMemorySize());
-
-  delete tuple;
-  delete schema;
 }
 
 }  // namespace test

@@ -355,7 +355,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
 #ifdef LOG_DEBUG_ENABLED
     if (statement->GetPlanTree().get() != nullptr) {
       LOG_TRACE("Statement Prepared: %s", statement->GetInfo().c_str());
-      LOG_DEBUG("%s", statement->GetPlanTree().get()->GetInfo().c_str());
+      LOG_TRACE("%s", statement->GetPlanTree().get()->GetInfo().c_str());
     }
 #endif
     return statement;

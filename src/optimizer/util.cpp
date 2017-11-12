@@ -147,9 +147,11 @@ void GetPredicateColumns(const catalog::Schema* schema,
       if (right_type == ExpressionType::VALUE_CONSTANT) {
         values.push_back(reinterpret_cast<expression::ConstantValueExpression*>(
                              expression->GetModifiableChild(1))->GetValue());
-        LOG_TRACE("Value Type: %d",
-                  reinterpret_cast<expression::ConstantValueExpression*>(
-                      expression->GetModifiableChild(1))->GetValueType());
+        LOG_TRACE("Value Type: %s",
+                  TypeIdToString(
+                      reinterpret_cast<expression::ConstantValueExpression*>(
+                      expression->GetModifiableChild(1))
+                                ->GetValueType()).c_str());
       } else
         values.push_back(
             type::ValueFactory::GetParameterOffsetValue(
@@ -173,9 +175,11 @@ void GetPredicateColumns(const catalog::Schema* schema,
       if (left_type == ExpressionType::VALUE_CONSTANT) {
         values.push_back(reinterpret_cast<expression::ConstantValueExpression*>(
                              expression->GetModifiableChild(1))->GetValue());
-        LOG_TRACE("Value Type: %d",
-                  reinterpret_cast<expression::ConstantValueExpression*>(
-                      expression->GetModifiableChild(0))->GetValueType());
+        LOG_TRACE("Value Type: %s",
+                  TypeIdToString(
+                      reinterpret_cast<expression::ConstantValueExpression*>(
+                      expression->GetModifiableChild(0))
+                                ->GetValueType()).c_str());
       } else
         values.push_back(
             type::ValueFactory::GetParameterOffsetValue(

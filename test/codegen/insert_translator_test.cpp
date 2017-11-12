@@ -38,16 +38,31 @@ TEST_F(InsertTranslatorTest, InsertOneTuple) {
   EXPECT_EQ(num_tuples, 0);
 
   // Build an insert plan
-  auto pool = TestingHarness::GetInstance().GetTestingPool();
-  std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(table->GetSchema(),
-                                        true));
-  tuple->SetValue(0, type::ValueFactory::GetIntegerValue(0));
-  tuple->SetValue(1, type::ValueFactory::GetIntegerValue(1));
-  tuple->SetValue(2, type::ValueFactory::GetIntegerValue(2));
-  tuple->SetValue(3, type::ValueFactory::GetVarcharValue("Tuple1", true), pool);
+  auto constant_expr_0 = new expression::ConstantValueExpression(
+      type::ValueFactory::GetIntegerValue(0));
+  auto constant_expr_1 = new expression::ConstantValueExpression(
+      type::ValueFactory::GetIntegerValue(1));
+  auto constant_expr_2 = new expression::ConstantValueExpression(
+      type::ValueFactory::GetIntegerValue(2));
+  auto constant_expr_3 = new expression::ConstantValueExpression(
+      type::ValueFactory::GetVarcharValue("Tuple1", true));
+  std::vector<std::vector<
+      std::unique_ptr<expression::AbstractExpression>>> tuples;
+  tuples.push_back(
+      std::vector<std::unique_ptr<expression::AbstractExpression>>());
+  auto& values = tuples[0];
+  values.push_back(
+      std::unique_ptr<expression::AbstractExpression>(constant_expr_0));
+  values.push_back(
+      std::unique_ptr<expression::AbstractExpression>(constant_expr_1));
+  values.push_back(
+      std::unique_ptr<expression::AbstractExpression>(constant_expr_2));
+  values.push_back(
+      std::unique_ptr<expression::AbstractExpression>(constant_expr_3));
 
-  std::unique_ptr<planner::InsertPlan> insert_plan(
-      new planner::InsertPlan(table, std::move(tuple)));
+  std::vector<std::string> columns;
+  std::unique_ptr<planner::InsertPlan> insert_plan(new planner::InsertPlan(
+      table, &columns, &tuples));
 
   // Bind the plan
   planner::BindingContext context;
@@ -63,6 +78,34 @@ TEST_F(InsertTranslatorTest, InsertOneTuple) {
   // Check the post-condition, i.e. verify the result
   num_tuples = table->GetTupleCount();
   EXPECT_EQ(num_tuples, 1);
+
+  // Setup the scan plan node
+  std::unique_ptr<planner::SeqScanPlan> seq_scan_plan_table1(
+      new planner::SeqScanPlan(table, nullptr, {0, 1, 2, 3}));
+
+  // Do binding
+  planner::BindingContext context1;
+  seq_scan_plan_table1->PerformBinding(context1);
+
+  // Printing consumer
+  codegen::BufferingConsumer buffer_table1{{0, 1, 2, 3}, context1};
+
+  // COMPILE and execute
+  CompileAndExecute(*seq_scan_plan_table1, buffer_table1,
+                    reinterpret_cast<char*>(buffer_table1.GetState()));
+
+  // Check that we got all the results
+  auto &results_table1 = buffer_table1.GetOutputTuples();
+
+  EXPECT_EQ(type::CMP_TRUE, results_table1[0].GetValue(0).CompareEquals(
+                                type::ValueFactory::GetIntegerValue(0)));
+  EXPECT_EQ(type::CMP_TRUE, results_table1[0].GetValue(1).CompareEquals(
+                                type::ValueFactory::GetIntegerValue(1)));
+  EXPECT_EQ(type::CMP_TRUE, results_table1[0].GetValue(2).CompareEquals(
+                                type::ValueFactory::GetIntegerValue(2)));
+  EXPECT_EQ(type::CMP_TRUE, results_table1[0].GetValue(3).CompareEquals(
+                                type::ValueFactory::GetVarcharValue("Tuple1")));
+
 }
 
 // Insert all tuples from table2 into table1.

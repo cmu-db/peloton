@@ -165,7 +165,8 @@ TEST_F(CreateTests, CreatingTrigger) {
       "FOR EACH ROW "
       "WHEN (OLD.balance <> NEW.balance) "
       "EXECUTE PROCEDURE check_account_update();";
-  auto stmt_list = parser.BuildParseTree(query).release();
+  std::unique_ptr<parser::SQLStatementList> stmt_list(
+      parser.BuildParseTree(query).release());
   EXPECT_TRUE(stmt_list->is_valid);
   EXPECT_EQ(StatementType::CREATE, stmt_list->GetStatement(0)->GetType());
   auto create_trigger_stmt =
@@ -192,7 +193,7 @@ TEST_F(CreateTests, CreatingTrigger) {
   EXPECT_EQ(1, columns.size());
   EXPECT_EQ("balance", columns[0]);
   // when
-  auto when = plan.GetTriggerWhen();
+  std::unique_ptr<expression::AbstractExpression> when(plan.GetTriggerWhen());
   EXPECT_NE(nullptr, when);
   EXPECT_EQ(ExpressionType::COMPARE_NOTEQUAL, when->GetExpressionType());
   EXPECT_EQ(2, when->GetChildrenSize());
@@ -249,14 +250,6 @@ TEST_F(CreateTests, CreatingTrigger) {
   txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
-
-  if (when) {
-    delete when;
-  }
-
-  if (stmt_list) {
-    delete stmt_list;
-  }
 }
 
 // This test is added because there was a bug for triggers without "when". After
@@ -305,7 +298,9 @@ TEST_F(CreateTests, CreatingTriggerWithoutWhen) {
       "BEFORE UPDATE OF balance ON accounts "
       "FOR EACH ROW "
       "EXECUTE PROCEDURE check_account_update();";
-  auto stmt_list = parser.BuildParseTree(query).release();
+  std::unique_ptr<parser::SQLStatementList> stmt_list(
+      parser.BuildParseTree(query).release());
+  EXPECT_TRUE(stmt_list->is_valid);
   EXPECT_TRUE(stmt_list->is_valid);
   EXPECT_EQ(StatementType::CREATE, stmt_list->GetStatement(0)->GetType());
   auto create_trigger_stmt =
@@ -319,7 +314,7 @@ TEST_F(CreateTests, CreatingTriggerWithoutWhen) {
   // plan type
   EXPECT_EQ(CreateType::TRIGGER, plan.GetCreateType());
   // when
-  auto when = plan.GetTriggerWhen();
+  std::unique_ptr<expression::AbstractExpression> when(plan.GetTriggerWhen());
   EXPECT_EQ(nullptr, when);
 
   // Execute the create trigger
@@ -347,14 +342,6 @@ TEST_F(CreateTests, CreatingTriggerWithoutWhen) {
   txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
-
-  if (when) {
-    delete when;
-  }
-
-  if (stmt_list) {
-    delete stmt_list;
-  }
 }
 
 TEST_F(CreateTests, CreatingTriggerInCatalog) {
@@ -403,7 +390,8 @@ TEST_F(CreateTests, CreatingTriggerInCatalog) {
       "FOR EACH ROW "
       "WHEN (OLD.balance <> NEW.balance) "
       "EXECUTE PROCEDURE check_account_update();";
-  auto stmt_list = parser.BuildParseTree(query).release();
+  std::unique_ptr<parser::SQLStatementList> stmt_list(
+      parser.BuildParseTree(query).release());
   EXPECT_TRUE(stmt_list->is_valid);
   EXPECT_EQ(StatementType::CREATE, stmt_list->GetStatement(0)->GetType());
   auto create_trigger_stmt =
@@ -437,10 +425,6 @@ TEST_F(CreateTests, CreatingTriggerInCatalog) {
   txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
-
-  if (stmt_list) {
-    delete stmt_list;
-  }
 }
 
 }  // namespace test

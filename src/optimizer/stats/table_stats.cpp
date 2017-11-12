@@ -10,23 +10,23 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "optimizer/stats/column_stats.h"
 #include "optimizer/stats/table_stats.h"
 #include "common/logger.h"
+#include "optimizer/stats/column_stats.h"
 
 namespace peloton {
 namespace optimizer {
 
 TableStats::TableStats(size_t num_rows,
                        std::vector<std::shared_ptr<ColumnStats>> col_stats_ptrs)
-    : num_rows(num_rows), col_stats_list_(col_stats_ptrs) {
+    : Stats(nullptr), num_rows(num_rows), col_stats_list_(col_stats_ptrs) {
   for (size_t i = 0; i < col_stats_ptrs.size(); ++i) {
     AddColumnStats(col_stats_ptrs[i]);
   }
 }
 
 TableStats::TableStats(std::vector<std::shared_ptr<ColumnStats>> col_stats_ptrs)
-    : col_stats_list_(col_stats_ptrs) {
+    : Stats(nullptr), col_stats_list_(col_stats_ptrs) {
   size_t col_count = col_stats_ptrs.size();
   for (size_t i = 0; i < col_count; ++i) {
     AddColumnStats(col_stats_ptrs[i]);

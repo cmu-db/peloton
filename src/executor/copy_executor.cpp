@@ -269,7 +269,8 @@ bool CopyExecutor::DExecute() {
           // Write all the values to output file
           for (int i = 0; i < num_params; i++) {
             auto param_value = param_values[i];
-            LOG_TRACE("param_value.GetTypeId(): %d", param_value.GetTypeId());
+            LOG_TRACE("param_value.GetTypeId(): %s",
+                      TypeIdToString(param_value.GetTypeId()).c_str());
             // Avoid extra copy for varlen types
             if (param_value.GetTypeId() == type::TypeId::VARBINARY) {
               const char *data = param_value.GetData();

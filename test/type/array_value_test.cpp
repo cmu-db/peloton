@@ -52,11 +52,10 @@ int64_t RANDOM64() {
 }
 
 std::string RANDOM_STRING(size_t size) {
-  char *str = new char[size];
-  for (size_t i = 0; i < size - 1; i++) str[i] = RANDOM(26) + 'a';
-  str[size - 1] = '\0';
-  std::string rand_string(str);
-  delete[] str;
+  std::unique_ptr<char[]> str(new char[size]);
+  for (size_t i = 0; i < size - 1; i++) str.get()[i] = RANDOM(26) + 'a';
+  str.get()[size - 1] = '\0';
+  std::string rand_string(str.get());
   return rand_string;
 }
 
