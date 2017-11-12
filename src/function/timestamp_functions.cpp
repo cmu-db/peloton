@@ -18,8 +18,6 @@
 
 #include "common/logger.h"
 #include "type/limits.h"
-#include "type/types.h"
-#include "type/value.h"
 #include "type/value_factory.h"
 
 namespace peloton {
