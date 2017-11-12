@@ -75,7 +75,6 @@ class DecimalFunctionsSQLTest : public PelotonTest {};
     txn = txn_manager.BeginTransaction();
     catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
     txn_manager.CommitTransaction(txn);
-    txn = txn_manager.EndTransaction();
   }
 
 }  // namespace test
