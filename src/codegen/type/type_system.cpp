@@ -119,12 +119,7 @@ Value TypeSystem::SimpleNullableComparison::DoCompareForSort(
 //
 // SimpleNullableUnaryOperator
 //
-// This is a wrapper around lower-level unary operators which are not
-// null-aware. This class properly computes the result of a unary operator in
-// the presence of null input values.
-//
 //===----------------------------------------------------------------------===//
-
 Value TypeSystem::SimpleNullableUnaryOperator::DoWork(CodeGen &codegen,
                                                       const Value &val) const {
   if (!val.IsNullable()) {
@@ -152,27 +147,18 @@ Value TypeSystem::SimpleNullableUnaryOperator::DoWork(CodeGen &codegen,
 }
 
 //===----------------------------------------------------------------------===//
-// BinaryOperatorWithNullPropagation
 //
-// This is a wrapper around lower-level binary operators which are not
-// null-aware. This class properly computes the result of a binary operator in
-// the presence of null input values.
+// SimpleNullableBinaryOperator
+//
 //===----------------------------------------------------------------------===//
-
-bool TypeSystem::BinaryOperatorWithNullPropagation::SupportsTypes(
-    const Type &left_type, const Type &right_type) const {
-  return inner_op_.SupportsTypes(left_type, right_type);
-}
-
-Type TypeSystem::BinaryOperatorWithNullPropagation::ResultType(
-    const Type &left_type, const Type &right_type) const {
-  return inner_op_.ResultType(left_type, right_type).AsNullable();
-}
-
-Value TypeSystem::BinaryOperatorWithNullPropagation::DoWork(
-    CodeGen &codegen, const Value &left, const Value &right,
-    OnError on_error) const {
-  PL_ASSERT(left.IsNullable() || right.IsNullable());
+Value TypeSystem::SimpleNullableBinaryOperator::DoWork(CodeGen &codegen,
+                                                       const Value &left,
+                                                       const Value &right,
+                                                       OnError on_error) const {
+  if (!left.IsNullable() && !right.IsNullable()) {
+    // Neither input is NULLable, elide the NULL check
+    return Impl(codegen, left, right, on_error);
+  }
 
   // One of the inputs is nullable, compute the null bit first
   auto *null = codegen->CreateOr(left.IsNull(codegen), right.IsNull(codegen));
@@ -187,12 +173,17 @@ Value TypeSystem::BinaryOperatorWithNullPropagation::DoWork(
   is_null.ElseBlock();
   {
     // If both values are not null, perform the non-null-aware operation
-    ret_val = inner_op_.DoWork(codegen, left, right, on_error);
+    ret_val = Impl(codegen, left, right, on_error);
   }
   is_null.EndIf();
   return is_null.BuildPHI(null_val, ret_val);
 }
 
+//===----------------------------------------------------------------------===//
+//
+// TypeSystem
+//
+//===----------------------------------------------------------------------===//
 TypeSystem::TypeSystem(
     const std::vector<peloton::type::TypeId> &implicit_cast_table,
     const std::vector<TypeSystem::CastInfo> &explicit_cast_table,

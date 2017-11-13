@@ -166,7 +166,7 @@ struct CompareBoolean : public TypeSystem::SimpleNullableComparison {
 //===----------------------------------------------------------------------===//
 
 // Logical AND
-struct LogicalAnd : public TypeSystem::BinaryOperator {
+struct LogicalAnd : public TypeSystem::SimpleNullableBinaryOperator {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type.GetSqlType() == Boolean::Instance() &&
@@ -178,15 +178,15 @@ struct LogicalAnd : public TypeSystem::BinaryOperator {
     return type::Type{Boolean::Instance()};
   }
 
-  Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
-               UNUSED_ATTRIBUTE OnError on_error) const override {
+  Value Impl(CodeGen &codegen, const Value &left, const Value &right,
+             UNUSED_ATTRIBUTE OnError on_error) const override {
     auto *raw_val = codegen->CreateAnd(left.GetValue(), right.GetValue());
     return Value{Boolean::Instance(), raw_val, nullptr, nullptr};
   }
 };
 
 // Logical OR
-struct LogicalOr : public TypeSystem::BinaryOperator {
+struct LogicalOr : public TypeSystem::SimpleNullableBinaryOperator {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type.GetSqlType() == Boolean::Instance() &&
@@ -198,8 +198,8 @@ struct LogicalOr : public TypeSystem::BinaryOperator {
     return type::Type{Boolean::Instance()};
   }
 
-  Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
-               UNUSED_ATTRIBUTE OnError on_error) const override {
+  Value Impl(CodeGen &codegen, const Value &left, const Value &right,
+             UNUSED_ATTRIBUTE OnError on_error) const override {
     auto *raw_val = codegen->CreateOr(left.GetValue(), right.GetValue());
     return Value{Boolean::Instance(), raw_val, nullptr, nullptr};
   }
