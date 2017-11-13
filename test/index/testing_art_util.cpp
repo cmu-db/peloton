@@ -54,19 +54,19 @@ void loadKeyForTest(index::TID tid, index::ARTKey &key,
 
 void TestingArtUtil::BasicTest(UNUSED_ATTRIBUTE const IndexType index_type) {
   catalog::Schema *tuple_schema =
-    new catalog::Schema({TestingExecutorUtil::GetColumnInfo(0),
-                         TestingExecutorUtil::GetColumnInfo(1),
-                         TestingExecutorUtil::GetColumnInfo(2),
-                         TestingExecutorUtil::GetColumnInfo(3)});
+      new catalog::Schema({TestingExecutorUtil::GetColumnInfo(0),
+                           TestingExecutorUtil::GetColumnInfo(1),
+                           TestingExecutorUtil::GetColumnInfo(2),
+                           TestingExecutorUtil::GetColumnInfo(3)});
   std::vector<oid_t> key_attrs = {0};
   catalog::Schema *key_schema =
-    catalog::Schema::CopySchema(tuple_schema, key_attrs);
+      catalog::Schema::CopySchema(tuple_schema, key_attrs);
 
   bool unique = false;
   index::IndexMetadata *index_metadata =
-    new index::IndexMetadata("art_index", 123, INVALID_OID, INVALID_OID,
-                             IndexType::ART, IndexConstraintType::DEFAULT,
-                             tuple_schema, key_schema, key_attrs, unique);
+      new index::IndexMetadata("art_index", 123, INVALID_OID, INVALID_OID,
+                               IndexType::ART, IndexConstraintType::DEFAULT,
+                               tuple_schema, key_schema, key_attrs, unique);
 
   index::ArtIndex art_index(index_metadata, loadKeyForTest);
 
@@ -107,19 +107,19 @@ void TestingArtUtil::BasicTest(UNUSED_ATTRIBUTE const IndexType index_type) {
 void TestingArtUtil::NonUniqueKeyDeleteTest(UNUSED_ATTRIBUTE const IndexType
                                                 index_type) {
   catalog::Schema *tuple_schema =
-    new catalog::Schema({TestingExecutorUtil::GetColumnInfo(0),
-                         TestingExecutorUtil::GetColumnInfo(1),
-                         TestingExecutorUtil::GetColumnInfo(2),
-                         TestingExecutorUtil::GetColumnInfo(3)});
+      new catalog::Schema({TestingExecutorUtil::GetColumnInfo(0),
+                           TestingExecutorUtil::GetColumnInfo(1),
+                           TestingExecutorUtil::GetColumnInfo(2),
+                           TestingExecutorUtil::GetColumnInfo(3)});
   std::vector<oid_t> key_attrs = {0};
   catalog::Schema *key_schema =
-    catalog::Schema::CopySchema(tuple_schema, key_attrs);
+      catalog::Schema::CopySchema(tuple_schema, key_attrs);
 
   bool unique = false;
   index::IndexMetadata *index_metadata =
-    new index::IndexMetadata("art_index", 123, INVALID_OID, INVALID_OID,
-                             IndexType::ART, IndexConstraintType::DEFAULT,
-                             tuple_schema, key_schema, key_attrs, unique);
+      new index::IndexMetadata("art_index", 123, INVALID_OID, INVALID_OID,
+                               IndexType::ART, IndexConstraintType::DEFAULT,
+                               tuple_schema, key_schema, key_attrs, unique);
 
   index::ArtIndex art_index(index_metadata, loadKeyForTest);
 
@@ -128,8 +128,8 @@ void TestingArtUtil::NonUniqueKeyDeleteTest(UNUSED_ATTRIBUTE const IndexType
   }
 
   int num_rows = 10;
-  LaunchParallelTest(2, TestingArtUtil::InsertHelperMicroBench,
-                     &art_index, num_rows);
+  LaunchParallelTest(2, TestingArtUtil::InsertHelperMicroBench, &art_index,
+                     num_rows);
 
   std::vector<ItemPointer *> result;
   for (int i = 0; i < num_rows; i++) {

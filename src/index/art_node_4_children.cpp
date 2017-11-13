@@ -84,7 +84,8 @@ void N4::remove(uint8_t k, ThreadInfo &thread_info) {
   for (uint32_t i = 0; i < count_; ++i) {
     if (keys[i] == k) {
       if (N::IsLeaf(children[i])) {
-        thread_info.GetEpochManager().MarkNodeForDeletion((MultiValues *)N::GetLeaf(children[i]), thread_info);
+        thread_info.GetEpochManager().MarkNodeForDeletion(
+            (MultiValues *)N::GetLeaf(children[i]), thread_info);
       }
       memmove(keys + i, keys + i + 1, count_ - i - 1);
       memmove(children + i, children + i + 1, (count_ - i - 1) * sizeof(N *));

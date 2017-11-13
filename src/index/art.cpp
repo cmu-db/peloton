@@ -510,7 +510,8 @@ restart:
                          thread_epoch_info);
       if (need_restart) {
         // free the memory in new leaf node
-        MultiValues *value_list = reinterpret_cast<MultiValues *>(N::GetLeaf(new_leaf_node));
+        MultiValues *value_list =
+            reinterpret_cast<MultiValues *>(N::GetLeaf(new_leaf_node));
         delete value_list;
         goto restart;
       }
@@ -633,7 +634,8 @@ restart:
                          thread_epoch_info);
       if (need_restart) {
         // free the memory in new leaf node
-        MultiValues *value_list = reinterpret_cast<MultiValues *>(N::GetLeaf(new_leaf_node));
+        MultiValues *value_list =
+            reinterpret_cast<MultiValues *>(N::GetLeaf(new_leaf_node));
         delete value_list;
         goto restart;
       }
@@ -818,7 +820,8 @@ restart:
                 this->epoch_manager_.MarkNodeForDeletion(node,
                                                          thread_epoch_info);
               }
-              this->epoch_manager_.MarkNodeForDeletion((MultiValues *)N::GetLeaf(next_node), thread_epoch_info);
+              this->epoch_manager_.MarkNodeForDeletion(
+                  (MultiValues *)N::GetLeaf(next_node), thread_epoch_info);
             } else {
               N::RemoveLockedNodeAndUnlock(node, k[level], parent_node,
                                            parent_version, parent_key,

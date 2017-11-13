@@ -87,7 +87,8 @@ void N16::remove(uint8_t k, ThreadInfo &thread_info) {
   assert(leafPlace != nullptr);
   std::size_t pos = leafPlace - children;
   if (N::IsLeaf(children[pos])) {
-    thread_info.GetEpochManager().MarkNodeForDeletion((MultiValues *)N::GetLeaf(children[pos]), thread_info);
+    thread_info.GetEpochManager().MarkNodeForDeletion(
+        (MultiValues *)N::GetLeaf(children[pos]), thread_info);
   }
   memmove(keys + pos, keys + pos + 1, count_ - pos - 1);
   memmove(children + pos, children + pos + 1, (count_ - pos - 1) * sizeof(N *));
