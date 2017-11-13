@@ -69,15 +69,15 @@ struct CastBooleanToVarchar : public TypeSystem::SimpleNullableCast {
 //===----------------------------------------------------------------------===//
 
 // Comparison functions
-struct CompareBoolean : public TypeSystem::Comparison {
+struct CompareBoolean : public TypeSystem::SimpleNullableComparison {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type.type_id == peloton::type::TypeId::BOOLEAN &&
            left_type == right_type;
   }
 
-  Value DoCompareLt(CodeGen &codegen, const Value &left,
-                    const Value &right) const override {
+  Value CompareLtImpl(CodeGen &codegen, const Value &left,
+                      const Value &right) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // Do the comparison
@@ -88,8 +88,8 @@ struct CompareBoolean : public TypeSystem::Comparison {
     return Value{Boolean::Instance(), result, nullptr, nullptr};
   }
 
-  Value DoCompareLte(CodeGen &codegen, const Value &left,
-                     const Value &right) const override {
+  Value CompareLteImpl(CodeGen &codegen, const Value &left,
+                       const Value &right) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // Do the comparison
@@ -100,8 +100,8 @@ struct CompareBoolean : public TypeSystem::Comparison {
     return Value{Boolean::Instance(), result, nullptr, nullptr};
   }
 
-  Value DoCompareEq(CodeGen &codegen, const Value &left,
-                    const Value &right) const override {
+  Value CompareEqImpl(CodeGen &codegen, const Value &left,
+                      const Value &right) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // Do the comparison
@@ -112,8 +112,8 @@ struct CompareBoolean : public TypeSystem::Comparison {
     return Value{Boolean::Instance(), result, nullptr, nullptr};
   }
 
-  Value DoCompareNe(CodeGen &codegen, const Value &left,
-                    const Value &right) const override {
+  Value CompareNeImpl(CodeGen &codegen, const Value &left,
+                      const Value &right) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // Do the comparison
@@ -124,8 +124,8 @@ struct CompareBoolean : public TypeSystem::Comparison {
     return Value{Boolean::Instance(), result, nullptr, nullptr};
   }
 
-  Value DoCompareGt(CodeGen &codegen, const Value &left,
-                    const Value &right) const override {
+  Value CompareGtImpl(CodeGen &codegen, const Value &left,
+                      const Value &right) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // Do the comparison
@@ -136,8 +136,8 @@ struct CompareBoolean : public TypeSystem::Comparison {
     return Value{Boolean::Instance(), result, nullptr, nullptr};
   }
 
-  Value DoCompareGte(CodeGen &codegen, const Value &left,
-                     const Value &right) const override {
+  Value CompareGteImpl(CodeGen &codegen, const Value &left,
+                       const Value &right) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // Do the comparison
@@ -148,8 +148,8 @@ struct CompareBoolean : public TypeSystem::Comparison {
     return Value{Boolean::Instance(), result, nullptr, nullptr};
   }
 
-  Value DoComparisonForSort(CodeGen &codegen, const Value &left,
-                            const Value &right) const override {
+  Value CompareForSortImpl(CodeGen &codegen, const Value &left,
+                           const Value &right) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // For boolean sorting, we convert 1-bit boolean values into a 32-bit number

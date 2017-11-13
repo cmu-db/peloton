@@ -49,7 +49,7 @@ class TypeSystem {
   class Cast {
    public:
     // Virtual destructor
-    virtual ~Cast() {}
+    virtual ~Cast() = default;
 
     // Does this cast support casting from the given type to the given type?
     virtual bool SupportsTypes(const Type &from_type,
@@ -64,10 +64,11 @@ class TypeSystem {
   //
   // SimpleNullableCast
   //
-  // A abstract base class for cast operations. This class performs generic NULL
-  // checking logic that is common across most casting operations. If the input
+  // An abstract base class for cast operations. This class performs generic
+  // NULL checking logic common across **most** casting operations. If the input
   // is NULLable, an if-then-else construct is generated to perform the NULL
-  // check. Subclasses implement casting logic assuming non-NULLable inputs.
+  // check. Subclasses implement casting logic assuming non-NULLable inputs. If
+  // the input is **not** NULLable, the  NULL check is elided completely.
   //
   //===--------------------------------------------------------------------===//
   class SimpleNullableCast : public TypeSystem::Cast {
@@ -95,7 +96,7 @@ class TypeSystem {
   class Comparison {
    public:
     // Virtual destructor
-    virtual ~Comparison() {}
+    virtual ~Comparison() = default;
 
     // Does this instance support comparison of the values of the given left and
     // right SQL types?
@@ -126,48 +127,54 @@ class TypeSystem {
     //  < 0 - if the left value comes before the right value when sorted
     //  = 0 - if the left value is equivalent to the right element
     //  > 0 - if the left value comes after the right value when sorted
-    virtual Value DoComparisonForSort(CodeGen &codegen, const Value &left,
-                                      const Value &right) const = 0;
+    virtual Value DoCompareForSort(CodeGen &codegen, const Value &left,
+                                   const Value &right) const = 0;
   };
 
-  class ComparisonWithNullPropagation : public Comparison {
+  //===--------------------------------------------------------------------===//
+  //
+  // SimpleNullableComparison
+  //
+  // An abstract base class for comparison operations. This class handles
+  // generic NULL-checking code, this, allowing subclass comparisons to assume
+  // and work on non-null inputs. Depending on the NULLness of its inputs,
+  // this class properly computes (or entirely elides) the NULL bit, deferring
+  // to the subclass to implement the comparison.
+  //
+  //===--------------------------------------------------------------------===//
+  class SimpleNullableComparison : public Comparison {
    public:
-    ComparisonWithNullPropagation(
-        const TypeSystem::Comparison &inner_comparison)
-        : inner_comparison_(inner_comparison) {}
-
-    bool SupportsTypes(const Type &left_type,
-                       const Type &right_type) const override;
-
-    // Main comparison operators
     Value DoCompareLt(CodeGen &codegen, const Value &left,
                       const Value &right) const override;
-
     Value DoCompareLte(CodeGen &codegen, const Value &left,
                        const Value &right) const override;
-
     Value DoCompareEq(CodeGen &codegen, const Value &left,
                       const Value &right) const override;
-
     Value DoCompareNe(CodeGen &codegen, const Value &left,
                       const Value &right) const override;
-
     Value DoCompareGt(CodeGen &codegen, const Value &left,
                       const Value &right) const override;
-
     Value DoCompareGte(CodeGen &codegen, const Value &left,
                        const Value &right) const override;
+    Value DoCompareForSort(CodeGen &codegen, const Value &left,
+                           const Value &right) const override;
 
-    // Perform a comparison used for sorting. We need a stable and transitive
-    // sorting comparison operator here. The operator returns:
-    //  < 0 - if the left value comes before the right value when sorted
-    //  = 0 - if the left value is equivalent to the right element
-    //  > 0 - if the left value comes after the right value when sorted
-    Value DoComparisonForSort(CodeGen &codegen, const Value &left,
-                              const Value &right) const override;
-
-   private:
-    const Comparison &inner_comparison_;
+   protected:
+    // The non-null comparison implementations
+    virtual Value CompareLtImpl(CodeGen &codegen, const Value &left,
+                                const Value &right) const = 0;
+    virtual Value CompareLteImpl(CodeGen &codegen, const Value &left,
+                                 const Value &right) const = 0;
+    virtual Value CompareEqImpl(CodeGen &codegen, const Value &left,
+                                const Value &right) const = 0;
+    virtual Value CompareNeImpl(CodeGen &codegen, const Value &left,
+                                const Value &right) const = 0;
+    virtual Value CompareGtImpl(CodeGen &codegen, const Value &left,
+                                const Value &right) const = 0;
+    virtual Value CompareGteImpl(CodeGen &codegen, const Value &left,
+                                 const Value &right) const = 0;
+    virtual Value CompareForSortImpl(CodeGen &codegen, const Value &left,
+                                     const Value &right) const = 0;
   };
 
   struct ComparisonInfo {

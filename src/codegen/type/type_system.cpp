@@ -54,15 +54,21 @@ Value TypeSystem::SimpleNullableCast::DoCast(CodeGen &codegen,
 }
 
 //===----------------------------------------------------------------------===//
-// ComparisonWithNullPropagation
+//
+// SimpleNullableComparison
 //
 // This is a wrapper around lower-level comparisons that are not null-aware.
 // This class computes the null-bit of the result of the comparison based on the
 // values being compared. It delegates to the wrapped comparison function to
 // perform the actual comparison. The null-bit and resulting value are combined.
+//
 //===----------------------------------------------------------------------===//
 
-#define DO_COMPARE(OP)                                                     \
+#define DO_COMPARE(IMPL)                                                   \
+  if (!left.IsNullable() && !right.IsNullable()) {                         \
+    /* Neither left nor right are NULLable, elide the NULL check */        \
+    return (IMPL);                                                         \
+  }                                                                        \
   PL_ASSERT(left.IsNullable() || right.IsNullable());                      \
   /* Determine the null bit based on the left and right values */          \
   llvm::Value *null = nullptr;                                             \
@@ -74,48 +80,43 @@ Value TypeSystem::SimpleNullableCast::DoCast(CodeGen &codegen,
     null = right.IsNull(codegen);                                          \
   }                                                                        \
   /* Now perform the comparison using a non-null-aware comparison */       \
-  Value result = (OP);                                                     \
+  Value result = (IMPL);                                                   \
   /* Return the result with the computed null-bit */                       \
   return Value{result.GetType().AsNullable(), result.GetValue(), nullptr, null};
 
-bool TypeSystem::ComparisonWithNullPropagation::SupportsTypes(
-    const Type &left_type, const Type &right_type) const {
-  return inner_comparison_.SupportsTypes(left_type, right_type);
+Value TypeSystem::SimpleNullableComparison::DoCompareLt(
+    CodeGen &codegen, const Value &left, const Value &right) const {
+  DO_COMPARE(CompareLtImpl(codegen, left, right));
 }
 
-Value TypeSystem::ComparisonWithNullPropagation::DoCompareLt(
+Value TypeSystem::SimpleNullableComparison::DoCompareLte(
     CodeGen &codegen, const Value &left, const Value &right) const {
-  DO_COMPARE(inner_comparison_.DoCompareLt(codegen, left, right));
+  DO_COMPARE(CompareLteImpl(codegen, left, right));
 }
 
-Value TypeSystem::ComparisonWithNullPropagation::DoCompareLte(
+Value TypeSystem::SimpleNullableComparison::DoCompareEq(
     CodeGen &codegen, const Value &left, const Value &right) const {
-  DO_COMPARE(inner_comparison_.DoCompareLte(codegen, left, right));
+  DO_COMPARE(CompareEqImpl(codegen, left, right));
 }
 
-Value TypeSystem::ComparisonWithNullPropagation::DoCompareEq(
+Value TypeSystem::SimpleNullableComparison::DoCompareNe(
     CodeGen &codegen, const Value &left, const Value &right) const {
-  DO_COMPARE(inner_comparison_.DoCompareEq(codegen, left, right));
+  DO_COMPARE(CompareNeImpl(codegen, left, right));
 }
 
-Value TypeSystem::ComparisonWithNullPropagation::DoCompareNe(
+Value TypeSystem::SimpleNullableComparison::DoCompareGt(
     CodeGen &codegen, const Value &left, const Value &right) const {
-  DO_COMPARE(inner_comparison_.DoCompareNe(codegen, left, right));
+  DO_COMPARE(CompareGtImpl(codegen, left, right));
 }
 
-Value TypeSystem::ComparisonWithNullPropagation::DoCompareGt(
+Value TypeSystem::SimpleNullableComparison::DoCompareGte(
     CodeGen &codegen, const Value &left, const Value &right) const {
-  DO_COMPARE(inner_comparison_.DoCompareGt(codegen, left, right));
+  DO_COMPARE(CompareGteImpl(codegen, left, right));
 }
 
-Value TypeSystem::ComparisonWithNullPropagation::DoCompareGte(
+Value TypeSystem::SimpleNullableComparison::DoCompareForSort(
     CodeGen &codegen, const Value &left, const Value &right) const {
-  DO_COMPARE(inner_comparison_.DoCompareGte(codegen, left, right));
-}
-
-Value TypeSystem::ComparisonWithNullPropagation::DoComparisonForSort(
-    CodeGen &codegen, const Value &left, const Value &right) const {
-  DO_COMPARE(inner_comparison_.DoComparisonForSort(codegen, left, right));
+  DO_COMPARE(CompareForSortImpl(codegen, left, right));
 }
 
 #undef DO_COMPARE

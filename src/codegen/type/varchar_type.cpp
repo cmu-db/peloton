@@ -27,7 +27,7 @@ namespace type {
 namespace {
 
 // Comparison
-struct CompareVarchar : public TypeSystem::Comparison {
+struct CompareVarchar : public TypeSystem::SimpleNullableComparison {
   bool SupportsTypes(const type::Type &left_type,
                      const type::Type &right_type) const override {
     return left_type.GetSqlType() == Varchar::Instance() &&
@@ -45,8 +45,8 @@ struct CompareVarchar : public TypeSystem::Comparison {
     return codegen.Call(ValuesRuntimeProxy::CompareStrings, args);
   }
 
-  Value DoCompareLt(CodeGen &codegen, const Value &left,
-                    const Value &right) const override {
+  Value CompareLtImpl(CodeGen &codegen, const Value &left,
+                      const Value &right) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // Call CompareStrings(...)
@@ -59,8 +59,8 @@ struct CompareVarchar : public TypeSystem::Comparison {
     return Value{Boolean::Instance(), result};
   }
 
-  Value DoCompareLte(CodeGen &codegen, const Value &left,
-                     const Value &right) const override {
+  Value CompareLteImpl(CodeGen &codegen, const Value &left,
+                       const Value &right) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // Call CompareStrings(...)
@@ -73,8 +73,8 @@ struct CompareVarchar : public TypeSystem::Comparison {
     return Value{Boolean::Instance(), result};
   }
 
-  Value DoCompareEq(CodeGen &codegen, const Value &left,
-                    const Value &right) const override {
+  Value CompareEqImpl(CodeGen &codegen, const Value &left,
+                      const Value &right) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // Call CompareStrings(...)
@@ -87,8 +87,8 @@ struct CompareVarchar : public TypeSystem::Comparison {
     return Value{Boolean::Instance(), result};
   }
 
-  Value DoCompareNe(CodeGen &codegen, const Value &left,
-                    const Value &right) const override {
+  Value CompareNeImpl(CodeGen &codegen, const Value &left,
+                      const Value &right) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // Call CompareStrings(...)
@@ -101,8 +101,8 @@ struct CompareVarchar : public TypeSystem::Comparison {
     return Value{Boolean::Instance(), result};
   }
 
-  Value DoCompareGt(CodeGen &codegen, const Value &left,
-                    const Value &right) const override {
+  Value CompareGtImpl(CodeGen &codegen, const Value &left,
+                      const Value &right) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // Call CompareStrings(...)
@@ -115,8 +115,8 @@ struct CompareVarchar : public TypeSystem::Comparison {
     return Value{Boolean::Instance(), result};
   }
 
-  Value DoCompareGte(CodeGen &codegen, const Value &left,
-                     const Value &right) const override {
+  Value CompareGteImpl(CodeGen &codegen, const Value &left,
+                       const Value &right) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // Call CompareStrings(...)
@@ -129,8 +129,8 @@ struct CompareVarchar : public TypeSystem::Comparison {
     return Value{Boolean::Instance(), result};
   }
 
-  Value DoComparisonForSort(CodeGen &codegen, const Value &left,
-                            const Value &right) const override {
+  Value CompareForSortImpl(CodeGen &codegen, const Value &left,
+                           const Value &right) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // Call CompareStrings(...)
