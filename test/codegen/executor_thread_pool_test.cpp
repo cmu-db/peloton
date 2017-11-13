@@ -10,13 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/multi_thread/executor_thread_pool.h"
-#include "codegen/codegen.h"
 #include "codegen/function_builder.h"
+#include "codegen/multi_thread/executor_thread_pool.h"
+#include "codegen/multi_thread/count_down.h"
 #include "codegen/proxy/runtime_functions_proxy.h"
 #include "common/harness.h"
-
-#include <condition_variable>
 
 namespace peloton {
 namespace test {
@@ -27,34 +25,38 @@ class ExecutorThreadPoolTest : public PelotonTest {};
 TEST_F(ExecutorThreadPoolTest, UseThreadPoolTest) {
   struct TestRuntimeState {
     int ans = 0;
-    bool finished = false;
-    std::mutex mutex;
-    std::condition_variable cv;
+
+    // This is what codegen will generate.
+    char count_down[sizeof(codegen::CountDown)] = {0};
   };
-  TestRuntimeState runtime_state;
+  TestRuntimeState test_runtime_state;
+
+  auto count_down = reinterpret_cast<codegen::CountDown *>(
+      &test_runtime_state.count_down
+  );
+  count_down->Init(1);
 
   auto pool = codegen::ExecutorThreadPool::GetInstance();
   pool->SubmitTask(
-      reinterpret_cast<char *>(&runtime_state),
+      reinterpret_cast<char *>(&test_runtime_state),
       nullptr,
       [](char *ptr, codegen::TaskInfo *task_info) {
         auto test_runtime_state = reinterpret_cast<TestRuntimeState *>(ptr);
 
-        std::unique_lock<std::mutex> lock(test_runtime_state->mutex);
         test_runtime_state->ans = 1;
-        test_runtime_state->finished = true;
-        lock.unlock();
-        test_runtime_state->cv.notify_one();
+
+        auto count_down = reinterpret_cast<codegen::CountDown *>(
+            &test_runtime_state->count_down
+        );
+        count_down->Decrease();
       }
   );
 
-  // Main thread: wait for finished flag.
-  std::unique_lock<std::mutex> lock(runtime_state.mutex);
-  runtime_state.cv.wait(lock, [&] {
-    return runtime_state.finished;
-  });
+  count_down->Wait();
 
-  EXPECT_EQ(runtime_state.ans, 1);
+  EXPECT_EQ(test_runtime_state.ans, 1);
+
+  count_down->Destroy();
 }
 
 }  // namespace test
