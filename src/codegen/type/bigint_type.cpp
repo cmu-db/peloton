@@ -52,8 +52,8 @@ struct CastBigInt : public TypeSystem::SimpleNullableCast {
     }
   }
 
-  Value CastImpl(CodeGen &codegen, const Value &value,
-                 const Type &to_type) const override {
+  Value Impl(CodeGen &codegen, const Value &value,
+             const Type &to_type) const override {
     llvm::Value *result = nullptr;
     switch (to_type.GetSqlType().TypeId()) {
       case peloton::type::TypeId::BOOLEAN: {

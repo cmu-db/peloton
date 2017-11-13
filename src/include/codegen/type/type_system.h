@@ -56,8 +56,8 @@ class TypeSystem {
                                const Type &to_type) const = 0;
 
     // Perform the cast on the given value to the provided type
-    virtual Value DoCast(CodeGen &codegen, const Value &value,
-                         const Type &to_type) const = 0;
+    virtual Value Eval(CodeGen &codegen, const Value &value,
+                       const Type &to_type) const = 0;
   };
 
   //===--------------------------------------------------------------------===//
@@ -73,13 +73,13 @@ class TypeSystem {
   //===--------------------------------------------------------------------===//
   class SimpleNullableCast : public TypeSystem::Cast {
    public:
-    Value DoCast(CodeGen &codegen, const Value &value,
-                 const Type &to_type) const override;
+    Value Eval(CodeGen &codegen, const Value &value,
+               const Type &to_type) const override;
 
    protected:
     // Perform the cast assuming the input is not NULLable
-    virtual Value CastImpl(CodeGen &codegen, const Value &value,
-                           const Type &to_type) const = 0;
+    virtual Value Impl(CodeGen &codegen, const Value &value,
+                       const Type &to_type) const = 0;
   };
 
   struct CastInfo {
@@ -104,26 +104,26 @@ class TypeSystem {
                                const Type &right_type) const = 0;
 
     // Main comparison operators
-    virtual Value DoCompareLt(CodeGen &codegen, const Value &left,
-                              const Value &right) const = 0;
-    virtual Value DoCompareLte(CodeGen &codegen, const Value &left,
-                               const Value &right) const = 0;
-    virtual Value DoCompareEq(CodeGen &codegen, const Value &left,
-                              const Value &right) const = 0;
-    virtual Value DoCompareNe(CodeGen &codegen, const Value &left,
-                              const Value &right) const = 0;
-    virtual Value DoCompareGt(CodeGen &codegen, const Value &left,
-                              const Value &right) const = 0;
-    virtual Value DoCompareGte(CodeGen &codegen, const Value &left,
-                               const Value &right) const = 0;
+    virtual Value EvalCompareLt(CodeGen &codegen, const Value &left,
+                                const Value &right) const = 0;
+    virtual Value EvalCompareLte(CodeGen &codegen, const Value &left,
+                                 const Value &right) const = 0;
+    virtual Value EvalCompareEq(CodeGen &codegen, const Value &left,
+                                const Value &right) const = 0;
+    virtual Value EvalCompareNe(CodeGen &codegen, const Value &left,
+                                const Value &right) const = 0;
+    virtual Value EvalCompareGt(CodeGen &codegen, const Value &left,
+                                const Value &right) const = 0;
+    virtual Value EvalCompareGte(CodeGen &codegen, const Value &left,
+                                 const Value &right) const = 0;
 
     // Perform a comparison used for sorting. We need a stable and transitive
     // sorting comparison operator here. The operator returns:
     //  < 0 - if the left value comes before the right value when sorted
     //  = 0 - if the left value is equivalent to the right element
     //  > 0 - if the left value comes after the right value when sorted
-    virtual Value DoCompareForSort(CodeGen &codegen, const Value &left,
-                                   const Value &right) const = 0;
+    virtual Value EvalCompareForSort(CodeGen &codegen, const Value &left,
+                                     const Value &right) const = 0;
   };
 
   //===--------------------------------------------------------------------===//
@@ -139,20 +139,20 @@ class TypeSystem {
   //===--------------------------------------------------------------------===//
   class SimpleNullableComparison : public Comparison {
    public:
-    Value DoCompareLt(CodeGen &codegen, const Value &left,
-                      const Value &right) const override;
-    Value DoCompareLte(CodeGen &codegen, const Value &left,
-                       const Value &right) const override;
-    Value DoCompareEq(CodeGen &codegen, const Value &left,
-                      const Value &right) const override;
-    Value DoCompareNe(CodeGen &codegen, const Value &left,
-                      const Value &right) const override;
-    Value DoCompareGt(CodeGen &codegen, const Value &left,
-                      const Value &right) const override;
-    Value DoCompareGte(CodeGen &codegen, const Value &left,
-                       const Value &right) const override;
-    Value DoCompareForSort(CodeGen &codegen, const Value &left,
-                           const Value &right) const override;
+    Value EvalCompareLt(CodeGen &codegen, const Value &left,
+                        const Value &right) const override;
+    Value EvalCompareLte(CodeGen &codegen, const Value &left,
+                         const Value &right) const override;
+    Value EvalCompareEq(CodeGen &codegen, const Value &left,
+                        const Value &right) const override;
+    Value EvalCompareNe(CodeGen &codegen, const Value &left,
+                        const Value &right) const override;
+    Value EvalCompareGt(CodeGen &codegen, const Value &left,
+                        const Value &right) const override;
+    Value EvalCompareGte(CodeGen &codegen, const Value &left,
+                         const Value &right) const override;
+    Value EvalCompareForSort(CodeGen &codegen, const Value &left,
+                             const Value &right) const override;
 
    protected:
     // The non-null comparison implementations
@@ -193,7 +193,7 @@ class TypeSystem {
     virtual Type ResultType(const Type &val_type) const = 0;
 
     // Apply the operator on the given value
-    virtual Value DoWork(CodeGen &codegen, const Value &val) const = 0;
+    virtual Value Eval(CodeGen &codegen, const Value &val) const = 0;
   };
 
   //===--------------------------------------------------------------------===//
@@ -208,7 +208,7 @@ class TypeSystem {
   //===--------------------------------------------------------------------===//
   class SimpleNullableUnaryOperator : public UnaryOperator {
    public:
-    Value DoWork(CodeGen &codegen, const Value &val) const override;
+    Value Eval(CodeGen &codegen, const Value &val) const override;
 
    protected:
     // The actual implementation assuming non-NULL input
@@ -246,8 +246,8 @@ class TypeSystem {
                             const Type &right_type) const = 0;
 
     // Execute the actual operator
-    virtual Value DoWork(CodeGen &codegen, const Value &left,
-                         const Value &right, OnError on_error) const = 0;
+    virtual Value Eval(CodeGen &codegen, const Value &left, const Value &right,
+                       OnError on_error) const = 0;
   };
 
   //===--------------------------------------------------------------------===//
@@ -262,8 +262,8 @@ class TypeSystem {
   //===--------------------------------------------------------------------===//
   struct SimpleNullableBinaryOperator : public BinaryOperator {
    public:
-    Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
-                 OnError on_error) const override;
+    Value Eval(CodeGen &codegen, const Value &left, const Value &right,
+               OnError on_error) const override;
 
    protected:
     // The implementation assuming non-nullable types
@@ -291,8 +291,8 @@ class TypeSystem {
     virtual Type ResultType(const std::vector<Type> &arg_types) const = 0;
 
     // Execute the actual operator
-    virtual Value DoWork(CodeGen &codegen, const std::vector<Value> &input_args,
-                         OnError on_error) const = 0;
+    virtual Value Eval(CodeGen &codegen, const std::vector<Value> &input_args,
+                       OnError on_error) const = 0;
   };
 
   struct NaryOpInfo {
