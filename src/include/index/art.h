@@ -81,7 +81,7 @@ public:
 
   ThreadInfo &GetThreadInfo();
 
-  TID Lookup(const ARTKey &k, ThreadInfo &threadEpocheInfo) const;
+  TID Lookup(const ARTKey &k, ThreadInfo &threadEpocheInfo, std::vector<ItemPointer *> &result) const;
 
   bool LookupRange(const ARTKey &start, const ARTKey &end, ARTKey &continueKey, std::vector<ItemPointer *> &result, std::size_t resultLen,
                    std::size_t &resultCount, ThreadInfo &threadEpocheInfo) const;
@@ -92,7 +92,7 @@ public:
 
   void Insert(const ARTKey &k, TID tid, ThreadInfo &epocheInfo, bool &insertSuccess);
 
-  void Remove(const ARTKey &k, TID tid, ThreadInfo &epocheInfo);
+  bool Remove(const ARTKey &k, TID tid, ThreadInfo &epocheInfo);
 
   bool ConditionalInsert(const ARTKey &k, TID tid, ThreadInfo &epocheInfo, std::function<bool(const void *)> predicate);
 

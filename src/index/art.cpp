@@ -53,7 +53,8 @@ void yield(int count) {
     _mm_pause();
 }
 
-TID AdaptiveRadixTree::Lookup(const ARTKey &k, ThreadInfo &thread_epoch_info) const {
+TID AdaptiveRadixTree::Lookup(const ARTKey &k, ThreadInfo &thread_epoch_info,
+                              std::vector<ItemPointer *> &result) const {
   EpochGuardReadonly epoche_guard(thread_epoch_info);
   int restart_count = 0;
   restart:
@@ -97,7 +98,15 @@ TID AdaptiveRadixTree::Lookup(const ARTKey &k, ThreadInfo &thread_epoch_info) co
 
           TID tid = N::GetLeaf(node);
           if (level < k.getKeyLen() - 1 || optimistic_prefix_match) {
-            return CheckKey(tid, k);
+            if (CheckKey(tid, k) == 0) {
+              return 0;
+            }
+          }
+          MultiValues *value_list = reinterpret_cast<MultiValues *>(tid);
+          while (value_list != nullptr) {
+            ItemPointer *value_pointer = (ItemPointer *) (value_list->tid);
+            result.push_back(value_pointer);
+            value_list = (MultiValues *)value_list->next.load();
           }
           return tid;
         }
@@ -641,7 +650,7 @@ bool AdaptiveRadixTree::ConditionalInsert(const ARTKey &k, TID tid, ThreadInfo &
   }
 }
 
-void AdaptiveRadixTree::Remove(const ARTKey &k, TID tid, ThreadInfo &thread_epoch_info) {
+bool AdaptiveRadixTree::Remove(const ARTKey &k, TID tid, ThreadInfo &thread_epoch_info) {
   EpochGuard epoche_guard(thread_epoch_info);
   int restart_count = 0;
   restart:
@@ -667,7 +676,7 @@ void AdaptiveRadixTree::Remove(const ARTKey &k, TID tid, ThreadInfo &thread_epoc
       case CheckPrefixResult::NoMatch:
         node->ReadUnlockOrRestart(v, need_restart);
         if (need_restart) goto restart;
-        return;
+        return false;
       case CheckPrefixResult::OptimisticMatch:
         // fallthrough
       case CheckPrefixResult::Match: {
@@ -680,7 +689,7 @@ void AdaptiveRadixTree::Remove(const ARTKey &k, TID tid, ThreadInfo &thread_epoc
         if (next_node == nullptr) {
           node->ReadUnlockOrRestart(v, need_restart);
           if (need_restart) goto restart;
-          return;
+          return false;
         }
         if (N::IsLeaf(next_node)) {
           node->UpgradeToWriteLockOrRestart(v, need_restart);
@@ -705,7 +714,7 @@ void AdaptiveRadixTree::Remove(const ARTKey &k, TID tid, ThreadInfo &thread_epoc
 
           if (!value_found) {
             node->WriteUnlock();
-            return;
+            return false;
           }
 
           if (value_count > 1) {
@@ -767,9 +776,7 @@ void AdaptiveRadixTree::Remove(const ARTKey &k, TID tid, ThreadInfo &thread_epoc
             }
           }
 
-
-
-          return;
+          return true;
         }
         level++;
         parent_version = v;

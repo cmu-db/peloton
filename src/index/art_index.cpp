@@ -135,27 +135,18 @@ void ArtIndex::ScanKey(
   WriteIndexedAttributesInKey(key, index_key);
 
   auto &t = art_.GetThreadInfo();
-  TID value = art_.Lookup(index_key, t);
-  if (value != 0) {
-    MultiValues *value_list = reinterpret_cast<MultiValues *>(value);
-    while (value_list != nullptr) {
-      ItemPointer *value_pointer = (ItemPointer *) (value_list->tid);
-      result.push_back(value_pointer);
-      value_list = (MultiValues *)value_list->next.load();
-    }
-  }
+  art_.Lookup(index_key, t, result);
   return;
 }
 
 /*
  * DeleteEntry() - Removes a key-value pair
  *
- * If the key-value pair does not exists yet in the map return false
+ * If the key-value pair does not exists yet, return false
  */
 bool ArtIndex::DeleteEntry(
   const storage::Tuple *key,
   ItemPointer *value) {
-  bool ret = true;
 
   ARTKey index_key;
   WriteIndexedAttributesInKey(key, index_key);
@@ -163,9 +154,7 @@ bool ArtIndex::DeleteEntry(
   TID tid = reinterpret_cast<TID>(value);
 
   auto &t = art_.GetThreadInfo();
-  art_.Remove(index_key, tid, t);
-
-  return ret;
+  return art_.Remove(index_key, tid, t);
 }
 
 /*
