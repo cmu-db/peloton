@@ -818,6 +818,7 @@ restart:
                 this->epoch_manager_.MarkNodeForDeletion(node,
                                                          thread_epoch_info);
               }
+              this->epoch_manager_.MarkNodeForDeletion((MultiValues *)N::GetLeaf(next_node), thread_epoch_info);
             } else {
               N::RemoveLockedNodeAndUnlock(node, k[level], parent_node,
                                            parent_version, parent_key,
