@@ -61,23 +61,17 @@ Value Value::CastTo(CodeGen &codegen, const type::Type &to_type) const {
   return cast_op->DoCast(codegen, *this, to_type);
 }
 
-#define DO_COMPARE(OP)                                                     \
-  type::Type left_cast = GetType();                                        \
-  type::Type right_cast = other.GetType();                                 \
-                                                                           \
-  const auto *comparison = type::TypeSystem::GetComparison(                \
-      GetType(), left_cast, other.GetType(), right_cast);                  \
-                                                                           \
-  Value left = CastTo(codegen, left_cast);                                 \
-  Value right = other.CastTo(codegen, right_cast);                         \
-                                                                           \
-  if (!left.IsNullable() && !right.IsNullable()) {                         \
-    return comparison->Do##OP(codegen, left, right);                       \
-  } else {                                                                 \
-    type::TypeSystem::ComparisonWithNullPropagation null_aware_comparison{ \
-        *comparison};                                                      \
-    return null_aware_comparison.Do##OP(codegen, left, right);             \
-  }
+#define DO_COMPARE(OP)                                      \
+  type::Type left_cast = GetType();                         \
+  type::Type right_cast = other.GetType();                  \
+                                                            \
+  const auto *comparison = type::TypeSystem::GetComparison( \
+      GetType(), left_cast, other.GetType(), right_cast);   \
+                                                            \
+  Value left = CastTo(codegen, left_cast);                  \
+  Value right = other.CastTo(codegen, right_cast);          \
+                                                            \
+  return comparison->Do##OP(codegen, left, right);
 
 Value Value::CompareEq(CodeGen &codegen, const Value &other) const {
   DO_COMPARE(CompareEq);
@@ -104,7 +98,7 @@ Value Value::CompareGte(CodeGen &codegen, const Value &other) const {
 }
 
 Value Value::CompareForSort(CodeGen &codegen, const Value &other) const {
-  DO_COMPARE(ComparisonForSort);
+  DO_COMPARE(CompareForSort);
 }
 
 #undef DO_COMPARE
