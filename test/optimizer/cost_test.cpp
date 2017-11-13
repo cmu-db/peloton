@@ -24,6 +24,9 @@
 #include "common/logger.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/testing_executor_util.h"
+#include "expression/tuple_value_expression.h"
+#include "expression/expression_util.h"
+#include "expression/star_expression.h"
 #include "optimizer/stats/cost.h"
 #include "optimizer/stats/stats_storage.h"
 #include "optimizer/stats/table_stats.h"
@@ -32,6 +35,8 @@
 #include "common/internal_types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
+#include "optimizer/cost_and_stats_calculator.cpp"
+#include "optimizer/properties.h"
 
 namespace peloton {
 namespace test {
@@ -44,14 +49,21 @@ class CostTests : public PelotonTest {};
 
 // tablename: test
 // database name: DEFAULT_DB_NAME
-void CreateAndLoadTable() {
+void CreateAndLoadTable(const std::string& table_name = {"test"}) {
   TestingSQLUtil::ExecuteSQLQuery(
-      "CREATE TABLE test(id INT PRIMARY KEY, name VARCHAR, salary DECIMAL);");
+      "CREATE TABLE " + table_name + " (id INT PRIMARY KEY, name VARCHAR, salary DECIMAL);");
   for (int i = 1; i <= N_ROW; i++) {
     std::stringstream ss;
-    ss << "INSERT INTO test VALUES (" << i << ", 'name', 1.1);";
+    ss << "INSERT INTO " << table_name << " VALUES (" << i << ", 'name', 1.1);";
     TestingSQLUtil::ExecuteSQLQuery(ss.str());
   }
+}
+
+std::shared_ptr<PropertyColumns> GetPropertyColumns() {
+  std::vector<std::shared_ptr<expression::AbstractExpression>> cols;
+  auto star_expr = std::shared_ptr<expression::AbstractExpression>(new expression::StarExpression());
+  cols.push_back(star_expr);
+  return std::make_shared<PropertyColumns>(cols);
 }
 
 std::shared_ptr<TableStats> GetTableStatsWithName(
@@ -63,6 +75,21 @@ std::shared_ptr<TableStats> GetTableStatsWithName(
   oid_t table_id = table->GetOid();
   auto stats_storage = StatsStorage::GetInstance();
   return stats_storage->GetTableStats(db_id, table_id);
+}
+
+
+std::shared_ptr<TableStats> GetTableStatsForJoin(
+  std::string table_name, concurrency::Transaction *txn) {
+  auto catalog = catalog::Catalog::GetInstance();
+  auto database = catalog->GetDatabaseWithName(DEFAULT_DB_NAME, txn);
+  auto table = catalog->GetTableWithName(DEFAULT_DB_NAME, table_name, txn);
+  oid_t db_id = database->GetOid();
+  oid_t table_id = table->GetOid();
+  auto stats_storage = StatsStorage::GetInstance();
+  auto table_stats = stats_storage->GetTableStats(db_id, table_id);
+  table_stats->SetTupleSampler(std::make_shared<TupleSampler>(table));
+  auto column_prop = GetPropertyColumns();
+  return generateOutputStat(table_stats, column_prop.get(), table);
 }
 
 TEST_F(CostTests, ScanCostTest) {
@@ -126,5 +153,46 @@ TEST_F(CostTests, ConjunctionTest) {
   EXPECT_LE(output->num_rows, 11626);
 }
 
+TEST_F(CostTests, JoinTest) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+
+  // create table with name test1 and test2
+  CreateAndLoadTable("test1");
+  CreateAndLoadTable("test2");
+
+  // Collect stats
+  TestingSQLUtil::ExecuteSQLQuery("ANALYZE test1");
+  TestingSQLUtil::ExecuteSQLQuery("ANALYZE test2");
+
+  txn = txn_manager.BeginTransaction();
+  auto left_table_stats = GetTableStatsForJoin("test1", txn);
+  auto right_table_stats = GetTableStatsForJoin("test2", txn);
+
+  txn_manager.CommitTransaction(txn);
+
+  auto expr1 = new expression::TupleValueExpression("id", "test1");
+  auto expr2 = new expression::TupleValueExpression("id", "test2");
+  auto predicate = std::shared_ptr<expression::AbstractExpression>(expression::ExpressionUtil::ComparisonFactory(
+    ExpressionType::COMPARE_EQUAL, expr1, expr2));
+
+
+  auto column_prop = GetPropertyColumns();
+
+  std::shared_ptr<TableStats> output_stats = generateOutputStatFromTwoTable(
+    left_table_stats,
+    right_table_stats,
+    column_prop.get());
+
+  double cost = Cost::InnerNLJoinWithSampling(left_table_stats, right_table_stats, output_stats, predicate);
+  LOG_INFO("Estimated output size %lu", output_stats->num_rows);
+  EXPECT_EQ(cost, 100);
+  EXPECT_EQ(output_stats->GetSampler()->GetSampledTuples().size(), 100);
+
+
+
+}
 }  // namespace test
 }  // namespace peloton

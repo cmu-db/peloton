@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// cost_test.cpp
+// cost_and_stats_calculator_test.cpp
 //
 // Identification: test/optimizer/cost_and_stats_calculator_test.cpp
 //

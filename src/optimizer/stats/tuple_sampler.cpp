@@ -147,10 +147,10 @@ size_t TupleSampler::AcquireSampleTuplesForIndexJoin(
     std::unique_ptr<storage::Tuple> tuple(
         new storage::Tuple(table->GetSchema(), true));
     GetTupleInTileGroup(tile_group, item->offset, tuple);
-    LOG_DEBUG("tuple info %s", tuple->GetInfo().c_str());
+    LOG_TRACE("tuple info %s", tuple->GetInfo().c_str());
     AddJoinTuple(sample_tuples.at(chosen), tuple);
   }
-  LOG_DEBUG("join schema info %s",
+  LOG_TRACE("join schema info %s",
             sampled_tuples[0]->GetSchema()->GetInfo().c_str());
   return sampled_tuples.size();
 }
@@ -175,7 +175,7 @@ void TupleSampler::AddJoinTuple(std::unique_ptr<storage::Tuple> &left_tuple,
   for (oid_t i = 0; i < right_tuple->GetColumnCount(); i++) {
     tuple->SetValue(i + column_offset, right_tuple->GetValue(i));
   }
-  LOG_DEBUG("join tuple info %s", tuple->GetInfo().c_str());
+  LOG_TRACE("join tuple info %s", tuple->GetInfo().c_str());
 
   sampled_tuples.push_back(std::move(tuple));
 }
