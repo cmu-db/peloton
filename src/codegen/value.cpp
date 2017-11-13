@@ -61,47 +61,48 @@ Value Value::CastTo(CodeGen &codegen, const type::Type &to_type) const {
   return cast_op->DoCast(codegen, *this, to_type);
 }
 
-#define DO_COMPARE(OP)                                      \
+#define GEN_COMPARE(OP)                                     \
   type::Type left_cast = GetType();                         \
   type::Type right_cast = other.GetType();                  \
                                                             \
   const auto *comparison = type::TypeSystem::GetComparison( \
       GetType(), left_cast, other.GetType(), right_cast);   \
                                                             \
+  PL_ASSERT(comparison != nullptr);                         \
   Value left = CastTo(codegen, left_cast);                  \
   Value right = other.CastTo(codegen, right_cast);          \
                                                             \
   return comparison->Do##OP(codegen, left, right);
 
 Value Value::CompareEq(CodeGen &codegen, const Value &other) const {
-  DO_COMPARE(CompareEq);
+  GEN_COMPARE(CompareEq);
 }
 
 Value Value::CompareNe(CodeGen &codegen, const Value &other) const {
-  DO_COMPARE(CompareNe);
+  GEN_COMPARE(CompareNe);
 }
 
 Value Value::CompareLt(CodeGen &codegen, const Value &other) const {
-  DO_COMPARE(CompareLt);
+  GEN_COMPARE(CompareLt);
 }
 
 Value Value::CompareLte(CodeGen &codegen, const Value &other) const {
-  DO_COMPARE(CompareLte);
+  GEN_COMPARE(CompareLte);
 }
 
 Value Value::CompareGt(CodeGen &codegen, const Value &other) const {
-  DO_COMPARE(CompareGt);
+  GEN_COMPARE(CompareGt);
 }
 
 Value Value::CompareGte(CodeGen &codegen, const Value &other) const {
-  DO_COMPARE(CompareGte);
+  GEN_COMPARE(CompareGte);
 }
 
 Value Value::CompareForSort(CodeGen &codegen, const Value &other) const {
-  DO_COMPARE(CompareForSort);
+  GEN_COMPARE(CompareForSort);
 }
 
-#undef DO_COMPARE
+#undef GEN_COMPARE
 
 // Check that all the values from the left and equal to all the values in right
 Value Value::TestEquality(CodeGen &codegen, const std::vector<Value> &lhs,
@@ -233,7 +234,7 @@ Value Value::ValueFromMaterialization(const type::Type &type, llvm::Value *val,
 Value Value::BuildPHI(
     CodeGen &codegen,
     const std::vector<std::pair<Value, llvm::BasicBlock *>> &vals) {
-  uint32_t num_entries = static_cast<uint32_t>(vals.size());
+  const auto num_entries = static_cast<uint32_t>(vals.size());
 
   // The SQL type of the values that we merge here
   // TODO: Need to make sure all incoming types are unifyable
@@ -272,13 +273,8 @@ Value Value::BuildPHI(
 
 Value Value::CallUnaryOp(CodeGen &codegen, OperatorId op_id) const {
   auto *unary_op = type::TypeSystem::GetUnaryOperator(op_id, GetType());
-  if (!IsNullable()) {
-    return unary_op->DoWork(codegen, *this);
-  } else {
-    type::TypeSystem::UnaryOperatorWithNullPropagation null_aware_unary_op{
-        *unary_op};
-    return null_aware_unary_op.DoWork(codegen, *this);
-  }
+  PL_ASSERT(unary_op != nullptr);
+  return unary_op->DoWork(codegen, *this);
 }
 
 Value Value::CallBinaryOp(CodeGen &codegen, OperatorId op_id,

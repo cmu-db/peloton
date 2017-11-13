@@ -57,19 +57,13 @@ Value TypeSystem::SimpleNullableCast::DoCast(CodeGen &codegen,
 //
 // SimpleNullableComparison
 //
-// This is a wrapper around lower-level comparisons that are not null-aware.
-// This class computes the null-bit of the result of the comparison based on the
-// values being compared. It delegates to the wrapped comparison function to
-// perform the actual comparison. The null-bit and resulting value are combined.
-//
 //===----------------------------------------------------------------------===//
 
-#define DO_COMPARE(IMPL)                                                   \
+#define GEN_COMPARE(IMPL)                                                  \
   if (!left.IsNullable() && !right.IsNullable()) {                         \
     /* Neither left nor right are NULLable, elide the NULL check */        \
     return (IMPL);                                                         \
   }                                                                        \
-  PL_ASSERT(left.IsNullable() || right.IsNullable());                      \
   /* Determine the null bit based on the left and right values */          \
   llvm::Value *null = nullptr;                                             \
   if (left.IsNullable() && right.IsNullable()) {                           \
@@ -86,61 +80,59 @@ Value TypeSystem::SimpleNullableCast::DoCast(CodeGen &codegen,
 
 Value TypeSystem::SimpleNullableComparison::DoCompareLt(
     CodeGen &codegen, const Value &left, const Value &right) const {
-  DO_COMPARE(CompareLtImpl(codegen, left, right));
+  GEN_COMPARE(CompareLtImpl(codegen, left, right));
 }
 
 Value TypeSystem::SimpleNullableComparison::DoCompareLte(
     CodeGen &codegen, const Value &left, const Value &right) const {
-  DO_COMPARE(CompareLteImpl(codegen, left, right));
+  GEN_COMPARE(CompareLteImpl(codegen, left, right));
 }
 
 Value TypeSystem::SimpleNullableComparison::DoCompareEq(
     CodeGen &codegen, const Value &left, const Value &right) const {
-  DO_COMPARE(CompareEqImpl(codegen, left, right));
+  GEN_COMPARE(CompareEqImpl(codegen, left, right));
 }
 
 Value TypeSystem::SimpleNullableComparison::DoCompareNe(
     CodeGen &codegen, const Value &left, const Value &right) const {
-  DO_COMPARE(CompareNeImpl(codegen, left, right));
+  GEN_COMPARE(CompareNeImpl(codegen, left, right));
 }
 
 Value TypeSystem::SimpleNullableComparison::DoCompareGt(
     CodeGen &codegen, const Value &left, const Value &right) const {
-  DO_COMPARE(CompareGtImpl(codegen, left, right));
+  GEN_COMPARE(CompareGtImpl(codegen, left, right));
 }
 
 Value TypeSystem::SimpleNullableComparison::DoCompareGte(
     CodeGen &codegen, const Value &left, const Value &right) const {
-  DO_COMPARE(CompareGteImpl(codegen, left, right));
+  GEN_COMPARE(CompareGteImpl(codegen, left, right));
 }
 
 Value TypeSystem::SimpleNullableComparison::DoCompareForSort(
     CodeGen &codegen, const Value &left, const Value &right) const {
-  DO_COMPARE(CompareForSortImpl(codegen, left, right));
+  GEN_COMPARE(CompareForSortImpl(codegen, left, right));
 }
 
-#undef DO_COMPARE
+#undef GEN_COMPARE
 
 //===----------------------------------------------------------------------===//
-// UnaryOperatorWithNullPropagation
+//
+// SimpleNullableUnaryOperator
 //
 // This is a wrapper around lower-level unary operators which are not
 // null-aware. This class properly computes the result of a unary operator in
 // the presence of null input values.
+//
 //===----------------------------------------------------------------------===//
 
-bool TypeSystem::UnaryOperatorWithNullPropagation::SupportsType(
-    const Type &type) const {
-  return inner_op_.SupportsType(type);
-}
+Value TypeSystem::SimpleNullableUnaryOperator::DoWork(CodeGen &codegen,
+                                                      const Value &val) const {
+  if (!val.IsNullable()) {
+    // If the input is not NULLable, elide the NULL check
+    return Impl(codegen, val);
+  }
 
-Type TypeSystem::UnaryOperatorWithNullPropagation::ResultType(
-    const Type &val_type) const {
-  return inner_op_.ResultType(val_type).AsNullable();
-}
-
-Value TypeSystem::UnaryOperatorWithNullPropagation::DoWork(
-    CodeGen &codegen, const Value &val) const {
+  // The input is NULLable
   PL_ASSERT(val.IsNullable());
 
   Value null_val, ret_val;
@@ -152,7 +144,7 @@ Value TypeSystem::UnaryOperatorWithNullPropagation::DoWork(
   is_null.ElseBlock();
   {
     // If the input isn't NULL, perform the non-null-aware operation
-    ret_val = inner_op_.DoWork(codegen, val);
+    ret_val = Impl(codegen, val);
   }
   is_null.EndIf();
 

@@ -183,40 +183,41 @@ class TypeSystem {
   };
 
   //===--------------------------------------------------------------------===//
+  //
   // A unary operator (i.e., an operator that accepts a single argument)
+  //
   //===--------------------------------------------------------------------===//
   class UnaryOperator {
    public:
-    virtual ~UnaryOperator() {}
+    virtual ~UnaryOperator() = default;
 
-    // Does this unary operator support values of the given type?
+    // Is this input type supported by this operator?
     virtual bool SupportsType(const Type &type) const = 0;
 
-    // What is the SQL type of the result of applying the unary operator on a
-    // value of the provided type?
+    // The result type of the operator
     virtual Type ResultType(const Type &val_type) const = 0;
 
     // Apply the operator on the given value
     virtual Value DoWork(CodeGen &codegen, const Value &val) const = 0;
   };
 
-  class UnaryOperatorWithNullPropagation : public UnaryOperator {
+  //===--------------------------------------------------------------------===//
+  //
+  // SimpleNullableUnaryOperator
+  //
+  // An abstract base class for NULLable unary operators. This class performs
+  // generic NULL checking logic. A NULL value is returned if the input is NULL.
+  // Otherwise, the unary function logic is executed. If the input is not
+  // NULLable, the NULL-check is entirely elided.
+  //
+  //===--------------------------------------------------------------------===//
+  class SimpleNullableUnaryOperator : public UnaryOperator {
    public:
-    UnaryOperatorWithNullPropagation(const UnaryOperator &inner_op)
-        : inner_op_(inner_op) {}
-
-    // Does this unary operator support values of the given type?
-    bool SupportsType(const Type &type) const override;
-
-    // What is the SQL type of the result of applying the unary operator on a
-    // value of the provided type?
-    Type ResultType(const Type &val_type) const override;
-
-    // Apply the operator on the given value
     Value DoWork(CodeGen &codegen, const Value &val) const override;
 
-   private:
-    const UnaryOperator &inner_op_;
+   protected:
+    // The actual implementation assuming non-NULL input
+    virtual Value Impl(CodeGen &codegen, const Value &val) const = 0;
   };
 
   struct UnaryOpInfo {
@@ -232,14 +233,13 @@ class TypeSystem {
   //===--------------------------------------------------------------------===//
   class BinaryOperator {
    public:
-    virtual ~BinaryOperator() {}
+    virtual ~BinaryOperator() = default;
 
-    // Does this binary operator support the two provided input types?
+    // Are these input types supported by this operator?
     virtual bool SupportsTypes(const Type &left_type,
                                const Type &right_type) const = 0;
 
-    // What is the SQL type of the result of applying the binary operator on the
-    // provided left and right value types?
+    // The SQL type of the result of this operator
     virtual Type ResultType(const Type &left_type,
                             const Type &right_type) const = 0;
 
@@ -278,7 +278,7 @@ class TypeSystem {
   // An n-ary function
   class NaryOperator {
    public:
-    virtual ~NaryOperator() {}
+    virtual ~NaryOperator() = default;
 
     // Does this operator support the provided input argument types?
     virtual bool SupportsTypes(const std::vector<Type> &arg_types) const = 0;
