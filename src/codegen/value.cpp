@@ -55,18 +55,10 @@ Value Value::CastTo(CodeGen &codegen, const type::Type &to_type) const {
     return *this;
   }
 
-  // Do the explicit cast
-  const auto *cast = type::TypeSystem::GetCast(GetType(), to_type);
-
-  if (IsNullable()) {
-    // We need to handle NULL's during casting
-    type::TypeSystem::CastWithNullPropagation null_aware_cast{*cast};
-    return null_aware_cast.DoCast(codegen, *this, to_type);
-  } else {
-    // No NULL, just do the cast
-    PL_ASSERT(!to_type.nullable);
-    return cast->DoCast(codegen, *this, to_type);
-  }
+  // Lookup the cast operation and execute it
+  const auto *cast_op = type::TypeSystem::GetCast(GetType(), to_type);
+  PL_ASSERT(cast_op != nullptr);
+  return cast_op->DoCast(codegen, *this, to_type);
 }
 
 #define DO_COMPARE(OP)                                                     \

@@ -33,7 +33,7 @@ namespace {
 // We do SMALLINT -> {INTEGRAL_TYPE, DECIMAL, VARCHAR, BOOLEAN}
 //===----------------------------------------------------------------------===//
 
-struct CastSmallInt : public TypeSystem::Cast {
+struct CastSmallInt : public TypeSystem::SimpleNullableCast {
   bool SupportsTypes(const Type &from_type,
                      const Type &to_type) const override {
     if (from_type.GetSqlType() != SmallInt::Instance()) {
@@ -53,8 +53,8 @@ struct CastSmallInt : public TypeSystem::Cast {
     }
   }
 
-  Value DoCast(CodeGen &codegen, const Value &value,
-               const Type &to_type) const override {
+  Value CastImpl(CodeGen &codegen, const Value &value,
+                 const Type &to_type) const override {
     llvm::Value *result = nullptr;
     switch (to_type.GetSqlType().TypeId()) {
       case peloton::type::TypeId::BOOLEAN: {
@@ -452,8 +452,8 @@ static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
 SmallInt::SmallInt()
     : SqlType(peloton::type::TypeId::SMALLINT),
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
-                   kComparisonTable, kUnaryOperatorTable,
-                   kBinaryOperatorTable, kNaryOperatorTable) {}
+                   kComparisonTable, kUnaryOperatorTable, kBinaryOperatorTable,
+                   kNaryOperatorTable) {}
 
 Value SmallInt::GetMinValue(CodeGen &codegen) const {
   auto *raw_val = codegen.Const16(peloton::type::PELOTON_INT16_MIN);

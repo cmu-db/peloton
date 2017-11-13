@@ -35,7 +35,7 @@ namespace {
 // We do DECIMAL -> {INTEGRAL_TYPE, VARCHAR, BOOLEAN}
 //===----------------------------------------------------------------------===//
 
-struct CastDecimal : public TypeSystem::Cast {
+struct CastDecimal : public TypeSystem::SimpleNullableCast {
   bool SupportsTypes(const type::Type &from_type,
                      const type::Type &to_type) const override {
     if (from_type.GetSqlType() != Decimal::Instance()) {
@@ -54,9 +54,10 @@ struct CastDecimal : public TypeSystem::Cast {
   }
 
   // Cast the given decimal value into the provided type
-  Value DoCast(CodeGen &codegen, const Value &value,
-               const type::Type &to_type) const override {
+  Value CastImpl(CodeGen &codegen, const Value &value,
+                 const type::Type &to_type) const override {
     PL_ASSERT(SupportsTypes(value.GetType(), to_type));
+    PL_ASSERT(!to_type.nullable);
 
     llvm::Type *val_type = nullptr, *len_type = nullptr;
     to_type.GetSqlType().GetTypeForMaterialization(codegen, val_type, len_type);

@@ -33,7 +33,7 @@ namespace {
 // We do DATE -> {TIMESTAMP, VARCHAR}
 //===----------------------------------------------------------------------===//
 
-struct CastDateToTimestamp : public TypeSystem::Cast {
+struct CastDateToTimestamp : public TypeSystem::SimpleNullableCast {
   bool SupportsTypes(const type::Type &from_type,
                      const type::Type &to_type) const override {
     return from_type.GetSqlType() == Date::Instance() &&
@@ -41,8 +41,8 @@ struct CastDateToTimestamp : public TypeSystem::Cast {
   }
 
   // Cast the given decimal value into the provided type
-  Value DoCast(CodeGen &codegen, const Value &value,
-               const type::Type &to_type) const override {
+  Value CastImpl(CodeGen &codegen, const Value &value,
+                 const type::Type &to_type) const override {
     PL_ASSERT(SupportsTypes(value.GetType(), to_type));
 
     // Date is number of days since 2000, timestamp is micros since same
@@ -134,8 +134,8 @@ static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
 Date::Date()
     : SqlType(peloton::type::TypeId::DATE),
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
-                   kComparisonTable, kUnaryOperatorTable,
-                   kBinaryOperatorTable, kNaryOperatorTable) {}
+                   kComparisonTable, kUnaryOperatorTable, kBinaryOperatorTable,
+                   kNaryOperatorTable) {}
 
 Value Date::GetMinValue(CodeGen &codegen) const {
   auto *raw_val = codegen.Const32(peloton::type::PELOTON_DATE_MIN);

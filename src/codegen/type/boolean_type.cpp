@@ -29,15 +29,15 @@ namespace {
 // CASTING OPERATIONS
 //===----------------------------------------------------------------------===//
 
-struct CastBooleanToInteger : public TypeSystem::Cast {
+struct CastBooleanToInteger : public TypeSystem::SimpleNullableCast {
   bool SupportsTypes(const Type &from_type,
                      const Type &to_type) const override {
     return from_type.type_id == peloton::type::TypeId::BOOLEAN &&
            to_type.type_id == peloton::type::TypeId::INTEGER;
   }
 
-  Value DoCast(CodeGen &codegen, const Value &value,
-               const Type &to_type) const override {
+  Value CastImpl(CodeGen &codegen, const Value &value,
+                 const Type &to_type) const override {
     PL_ASSERT(SupportsTypes(value.GetType(), to_type));
 
     // Any integral value requires a zero-extension
@@ -46,15 +46,15 @@ struct CastBooleanToInteger : public TypeSystem::Cast {
   }
 };
 
-struct CastBooleanToVarchar : public TypeSystem::Cast {
+struct CastBooleanToVarchar : public TypeSystem::SimpleNullableCast {
   bool SupportsTypes(const Type &from_type,
                      const Type &to_type) const override {
     return from_type.type_id == peloton::type::TypeId::BOOLEAN &&
            to_type.type_id == peloton::type::TypeId::VARCHAR;
   }
 
-  Value DoCast(CodeGen &codegen, const Value &value,
-               const Type &to_type) const override {
+  Value CastImpl(CodeGen &codegen, const Value &value,
+                 const Type &to_type) const override {
     PL_ASSERT(SupportsTypes(value.GetType(), to_type));
 
     // Convert this boolean (unsigned int) into a string
@@ -241,8 +241,8 @@ static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
 Boolean::Boolean()
     : SqlType(peloton::type::TypeId::BOOLEAN),
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
-                   kComparisonTable, kUnaryOperatorTable,
-                   kBinaryOperatorTable, kNaryOperatorTable) {}
+                   kComparisonTable, kUnaryOperatorTable, kBinaryOperatorTable,
+                   kNaryOperatorTable) {}
 
 Value Boolean::GetMinValue(CodeGen &codegen) const {
   auto *raw_val = codegen.ConstBool(peloton::type::PELOTON_BOOLEAN_MIN);
