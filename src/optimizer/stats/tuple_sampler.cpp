@@ -168,12 +168,12 @@ void TupleSampler::AddJoinTuple(std::unique_ptr<storage::Tuple> &left_tuple,
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(join_schema.get(), true));
   for (oid_t i = 0; i < left_tuple->GetColumnCount(); i++) {
-    tuple->SetValue(i, left_tuple->GetValue(i));
+    tuple->SetValue(i, left_tuple->GetValue(i), pool_.get());
   }
 
   oid_t column_offset = left_tuple->GetColumnCount();
   for (oid_t i = 0; i < right_tuple->GetColumnCount(); i++) {
-    tuple->SetValue(i + column_offset, right_tuple->GetValue(i));
+    tuple->SetValue(i + column_offset, right_tuple->GetValue(i), pool_.get());
   }
   LOG_TRACE("join tuple info %s", tuple->GetInfo().c_str());
 
