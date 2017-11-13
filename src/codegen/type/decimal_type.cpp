@@ -162,7 +162,7 @@ struct Negate : public TypeSystem::UnaryOperator {
   }
 };
 
-struct Floor : public TypeSystem::UnaryOperator {
+struct Floor : public TypeSystem::SimpleNullableUnaryOperator {
   bool SupportsType(const Type &type) const override {
     return type.GetSqlType() == Decimal::Instance();
   }
@@ -171,7 +171,7 @@ struct Floor : public TypeSystem::UnaryOperator {
     return Type{Decimal::Instance()};
   }
 
-  Value DoWork(CodeGen &codegen, const Value &val) const override {
+  Value Impl(CodeGen &codegen, const Value &val) const override {
     llvm::Value *raw_ret =
         codegen.Call(DecimalFunctionsProxy::Floor, {val.GetValue()});
     return Value{Integer::Instance(), raw_ret};

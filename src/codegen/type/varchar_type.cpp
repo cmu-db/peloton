@@ -141,7 +141,7 @@ struct CompareVarchar : public TypeSystem::SimpleNullableComparison {
   }
 };
 
-struct Ascii : public TypeSystem::UnaryOperator {
+struct Ascii : public TypeSystem::SimpleNullableUnaryOperator {
   bool SupportsType(const Type &type) const override {
     return type.GetSqlType() == Varchar::Instance();
   }
@@ -150,7 +150,7 @@ struct Ascii : public TypeSystem::UnaryOperator {
     return Integer::Instance();
   }
 
-  Value DoWork(CodeGen &codegen, const Value &val) const override {
+  Value Impl(CodeGen &codegen, const Value &val) const override {
     llvm::Value *raw_ret = codegen.Call(StringFunctionsProxy::Ascii,
                                         {val.GetValue(), val.GetLength()});
     return Value{Integer::Instance(), raw_ret};

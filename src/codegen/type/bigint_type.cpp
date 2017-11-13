@@ -148,7 +148,7 @@ struct CompareBigInt : public TypeSystem::SimpleNullableComparison {
 };
 
 // Negation
-struct Negate : public TypeSystem::UnaryOperator {
+struct Negate : public TypeSystem::SimpleNullableUnaryOperator {
   bool SupportsType(const Type &type) const override {
     return type.GetSqlType() == BigInt::Instance();
   }
@@ -157,7 +157,7 @@ struct Negate : public TypeSystem::UnaryOperator {
     return Type{BigInt::Instance()};
   }
 
-  Value DoWork(CodeGen &codegen, const Value &val) const override {
+  Value Impl(CodeGen &codegen, const Value &val) const override {
     PL_ASSERT(SupportsType(val.GetType()));
 
     llvm::Value *overflow_bit = nullptr;
