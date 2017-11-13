@@ -376,7 +376,7 @@ void Cost::UpdateColumnStatsWithSampling(
       column_ids.size());
   auto &samples = output_stats->GetSampler()->GetSampledTuples();
   double sample_size = samples.size();
-  LOG_DEBUG("join schema info %s", samples[0]->GetSchema()->GetInfo().c_str());
+  LOG_TRACE("join schema info %s", samples[0]->GetSchema()->GetInfo().c_str());
   for (size_t i = 0; i < samples.size(); i++) {
     for (size_t j = 0; j < column_ids.size(); j++) {
       distinct_values[column_ids[j]].insert(
@@ -448,12 +448,11 @@ std::vector<oid_t> Cost::GenerateJoinSamples(
     auto key_tuple = std::make_shared<storage::Tuple>(key_schema.get(), true);
     type::Value fetched_value = (sample_tuples.at(i)->GetValue(column_id));
     key_tuple->SetValue(0, fetched_value);
-    LOG_DEBUG("check key: %s", key_tuple->GetInfo().c_str());
     index->ScanKey(key_tuple.get(), fetched_tuples);
     matched_tuples.push_back(fetched_tuples);
     cnt += fetched_tuples.size();
   }
-  LOG_DEBUG("sample number %d", cnt);
+  LOG_TRACE("sample number %d", cnt);
   index_stats->GetSampler()->AcquireSampleTuplesForIndexJoin(
       sample_tuples, matched_tuples, cnt);
   output_stats->SetTupleSampler(index_stats->GetSampler());
