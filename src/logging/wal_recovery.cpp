@@ -254,6 +254,69 @@ bool WalRecovery::ReplayLogFile(FileHandle &file_handle) {
           switch (table_id) {
             case TABLE_CATALOG_OID:  // pg_table
             {
+              bool is_column = true;
+              auto offset = ftell(file_handle.file);
+              while(is_column){
+                  char length_buf[sizeof(int32_t)];
+                  LoggingUtil::ReadNBytesFromFile(file_handle, (void *)&length_buf, 4);
+                  CopySerializeInput length_decode((const void *)&length_buf, 4);
+                  int length = length_decode.ReadInt();
+                  std::unique_ptr<char[]> buffer2(new char[buf_size]);
+                  if ((size_t)length > buf_size) {
+                    buffer.reset(new char[(int)(length * 1.2)]);
+                    buf_size = (size_t)length;
+                  }
+
+                  LoggingUtil::ReadNBytesFromFile(file_handle, (void *)buffer.get(), length);
+                  CopySerializeInput record_decode((const void *)buffer.get(), length);
+                  record_decode.ReadEnumInSingleByte(); //Record type
+                  eid_t record_eid = record_decode.ReadLong();
+                  if (record_eid > current_eid) {
+                    current_eid = record_eid;
+                  }
+                  current_cid = record_decode.ReadLong();
+
+                  oid_t database_id = record_decode.ReadLong();
+                  oid_t table_id = (oid_t)record_decode.ReadLong();
+                  if (table_id != COLUMN_CATALOG_OID){
+                      is_column = false;
+                      break;
+                  }
+                  record_decode.ReadLong();  //block
+                  record_decode.ReadLong(); //offset
+                  auto table = storage::StorageManager::GetInstance()->GetTableWithOid(
+                      database_id, table_id);
+                  auto schema = table->GetSchema();
+                  std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
+                  for (oid_t oid = 0; oid < schema->GetColumns().size(); oid++) {
+                    type::Value val = type::Value::DeserializeFrom(
+                        record_decode, schema->GetColumn(oid).GetType());
+                    tuple->SetValue(oid, val);
+                  }
+                  std::string typeId = tuple->GetValue(4).ToString();
+                  type::TypeId column_type = StringToTypeId(typeId);
+                  uint index = stoi(tuple->GetValue(2).ToString());
+                  if (index >= columns.size()) {
+                    // Made to fit index as the last element
+                    columns.resize(index + 1);
+                  }
+                  if (column_type == type::TypeId::VARCHAR ||
+                      column_type == type::TypeId::VARBINARY) {
+                    catalog::Column tmp_col(column_type,
+                                            type::Type::GetTypeSize(column_type),
+                                            tuple->GetValue(1).ToString(), false,
+                                            tuple->GetValue(1).GetAs<oid_t>());
+                    columns[index] = tmp_col;
+                  } else {
+                    catalog::Column tmp_col(column_type,
+                                            type::Type::GetTypeSize(column_type),
+                                            tuple->GetValue(1).ToString(), true,
+                                            tuple->GetValue(1).GetAs<oid_t>());
+                    columns[index] = tmp_col;
+                  }
+
+
+              }
               auto database =
                   storage::StorageManager::GetInstance()->GetDatabaseWithOid(
                       tuple->GetValue(2).GetAs<oid_t>());  // Getting database
@@ -265,34 +328,13 @@ bool WalRecovery::ReplayLogFile(FileHandle &file_handle) {
               LOG_DEBUG("\n\n\nPG_TABLE\n\n\n");
               catalog::TableCatalog::GetInstance()->GetNextOid();
               columns.clear();
+              fseek(file_handle.file,offset,SEEK_SET);
               break;
             }
             case COLUMN_CATALOG_OID:  // pg_attribute
             {
-              std::string typeId = tuple->GetValue(4).ToString();
-              type::TypeId column_type = StringToTypeId(typeId);
-              uint index = stoi(tuple->GetValue(2).ToString());
-              if (index >= columns.size()) {
-                // Made to fit index as the last element
-                columns.resize(index + 1);
-              }
-              if (column_type == type::TypeId::VARCHAR ||
-                  column_type == type::TypeId::VARBINARY) {
-                catalog::Column tmp_col(column_type,
-                                        type::Type::GetTypeSize(column_type),
-                                        tuple->GetValue(1).ToString(), false,
-                                        tuple->GetValue(1).GetAs<oid_t>());
-                columns[index] = tmp_col;
-              } else {
-                catalog::Column tmp_col(column_type,
-                                        type::Type::GetTypeSize(column_type),
-                                        tuple->GetValue(1).ToString(), true,
-                                        tuple->GetValue(1).GetAs<oid_t>());
-                columns[index] = tmp_col;
-                //  columns.insert(columns.begin(), catalog::Column();
-              }
+
               catalog::ColumnCatalog::GetInstance()->GetNextOid();
-              LOG_DEBUG("\n\n\nPG_ATTRIBUTE\n\n\n");
               break;
             }
             case INDEX_CATALOG_OID: {
@@ -451,7 +493,7 @@ bool WalRecovery::ReplayLogFile(FileHandle &file_handle) {
 
   if (current_eid != INVALID_EID) {
     auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
-    epoch_manager.Reset(current_eid);
+    epoch_manager.Reset(current_eid+1);
     epoch_manager.StartEpoch();
   }
   std::set<storage::DataTable *> tables_with_indexes;
@@ -460,10 +502,10 @@ bool WalRecovery::ReplayLogFile(FileHandle &file_handle) {
   for (auto const &tup : indexes) {
     std::vector<oid_t> key_attrs;
     oid_t key_attr;
-    auto table_catalog = catalog::TableCatalog::GetInstance();
     auto txn =
         concurrency::TransactionManagerFactory::GetInstance().BeginTransaction(
             IsolationLevelType::SERIALIZABLE);
+    auto table_catalog = catalog::TableCatalog::GetInstance();
     auto table_object =
         table_catalog->GetTableObject(tup->GetValue(2).GetAs<oid_t>(), txn);
     auto database_oid = table_object->database_oid;

@@ -488,6 +488,13 @@ void TimestampOrderingTransactionManager::PerformInsert(
   // Add the new tuple into the insert set
   current_txn->RecordInsert(location);
 
+  logging::LogRecord record =
+      logging::LogRecordFactory::CreateTupleRecord(
+          LogRecordType::TUPLE_INSERT,
+          location, current_txn->GetCommitId(),
+          current_txn->GetEpochId());
+  current_txn->log_records_.push_back(record);
+
   InitTupleReserved(tile_group_header, tuple_id);
 
   // Write down the head pointer's address in tile group header
@@ -499,6 +506,7 @@ void TimestampOrderingTransactionManager::PerformInsert(
     stats::BackendStatsContext::GetInstance()->IncrementTableInserts(
         location.block);
   }
+
 }
 
 void TimestampOrderingTransactionManager::PerformUpdate(
@@ -575,6 +583,14 @@ void TimestampOrderingTransactionManager::PerformUpdate(
 
   // Add the old tuple into the update set
   current_txn->RecordUpdate(old_location);
+
+  logging::LogRecord record =
+      logging::LogRecordFactory::CreateTupleRecord(
+          LogRecordType::TUPLE_UPDATE,
+          new_location, current_txn->GetCommitId(),
+          current_txn->GetEpochId());
+  record.SetOldItemPointer(old_location);
+  current_txn->log_records_.push_back(record);
 
   // Increment table update op stats
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
@@ -694,8 +710,14 @@ void TimestampOrderingTransactionManager::PerformDelete(
     PL_ASSERT(res == true);
   }
 
-  current_txn->RecordDelete(old_location);
-
+  if(!current_txn->RecordDelete(old_location)){
+  logging::LogRecord record =
+      logging::LogRecordFactory::CreateTupleRecord(
+          LogRecordType::TUPLE_DELETE,
+          old_location, current_txn->GetCommitId(),
+          current_txn->GetEpochId());
+  current_txn->log_records_.push_back(record);
+}
   // Increment table delete op stats
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
       StatsType::INVALID) {
@@ -724,10 +746,24 @@ void TimestampOrderingTransactionManager::PerformDelete(
   auto old_location = tile_group_header->GetNextItemPointer(tuple_id);
   if (old_location.IsNull() == false) {
     // if this version is not newly inserted.
-    current_txn->RecordDelete(old_location);
+    if(!current_txn->RecordDelete(old_location)){
+    logging::LogRecord record =
+        logging::LogRecordFactory::CreateTupleRecord(
+            LogRecordType::TUPLE_DELETE,
+            old_location, current_txn->GetCommitId(),
+            current_txn->GetEpochId());
+    current_txn->log_records_.push_back(record);
+    }
   } else {
     // if this version is newly inserted.
-    current_txn->RecordDelete(location);
+    if(!current_txn->RecordDelete(location)){
+    logging::LogRecord record =
+        logging::LogRecordFactory::CreateTupleRecord(
+            LogRecordType::TUPLE_DELETE,
+            old_location, current_txn->GetCommitId(),
+            current_txn->GetEpochId());
+     current_txn->log_records_.push_back(record);
+    }
   }
 
   // Increment table delete op stats
@@ -889,12 +925,6 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
         // nothing to be added to gc set.
-        logging::LogRecord record =
-            logging::LogRecordFactory::CreateTupleRecord(
-                LogRecordType::TUPLE_INSERT,
-                ItemPointer(tile_group_id, tuple_slot), end_commit_id,
-                epoch_id);
-        current_txn->log_records_.push_back(record);
 
       } else if (tuple_entry.second == RWType::INS_DEL) {
         PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==

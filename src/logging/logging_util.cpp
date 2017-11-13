@@ -165,5 +165,14 @@ bool LoggingUtil::ReadNBytesFromFile(FileHandle &file_handle, void *bytes_read,
   return res == 1;
 }
 
+bool LoggingUtil::PeekNBytesFromFile(FileHandle &file_handle, void *bytes_read,
+                                     size_t n) {
+  PL_ASSERT(file_handle.fd != INVALID_FILE_DESCRIPTOR &&
+            file_handle.file != nullptr);
+  int res = fread(bytes_read, n, 1, file_handle.file);
+  return res == 1;
+}
+
+
 }  // namespace logging
 }  // namespace peloton

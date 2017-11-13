@@ -46,6 +46,10 @@ class LoggingUtil {
 
   static bool ReadNBytesFromFile(FileHandle &file_handle, void *bytes_read,
                                  size_t n);
+
+  static bool PeekNBytesFromFile(FileHandle &file_handle, void *bytes_read,
+                                 size_t n);
+
 };
 
 }  // namespace logging

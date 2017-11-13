@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// mono_queue_pool.cpp
+// logger_queue_pool.cpp
 //
-// Identification: test/threadpool/mono_queue_pool.cpp
+// Identification: test/threadpool/logger_queue_pool.cpp
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -30,3 +30,4 @@ LoggerQueuePool& LoggerQueuePool::GetInstance() {
 }
 }  // namespace threadpool
 }  // namespace peloton
+

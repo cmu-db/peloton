@@ -218,5 +218,5 @@ TEST_F(SimpleQueryTests, SimpleQueryTest) {
 //  LOG_INFO("[ScalabilityTest] Peloton has shut down");
 //}
 
-}  // namespace test
+} // namespace test
 }  // namespace peloton

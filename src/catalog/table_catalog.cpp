@@ -406,7 +406,10 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
   }
   // try get from cache
   auto table_object = txn->catalog_cache.GetCachedTableObject(table_oid);
-  if (table_object) return table_object;
+  if (table_object.get() != nullptr){
+
+      return table_object;
+  }
 
   // cache miss, get from pg_table
   std::vector<oid_t> column_ids(all_column_ids);
