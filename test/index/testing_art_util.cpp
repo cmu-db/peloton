@@ -39,9 +39,11 @@ bool TestingArtUtil::map_populated = false;
 std::map<index::TID, index::ARTKey *> TestingArtUtil::value_to_key;
 std::array<TestingArtUtil::KeyAndValues, 10000> TestingArtUtil::key_to_values;
 
-void loadKeyForTest(index::TID tid, index::ARTKey &key, UNUSED_ATTRIBUTE index::IndexMetadata *metadata) {
+void loadKeyForTest(index::TID tid, index::ARTKey &key,
+                    UNUSED_ATTRIBUTE index::IndexMetadata *metadata) {
   index::MultiValues *value_list = reinterpret_cast<index::MultiValues *>(tid);
-  if (TestingArtUtil::value_to_key.find(value_list->tid) != TestingArtUtil::value_to_key.end()) {
+  if (TestingArtUtil::value_to_key.find(value_list->tid) !=
+      TestingArtUtil::value_to_key.end()) {
     index::ARTKey *key_p = TestingArtUtil::value_to_key.at(value_list->tid);
     key.setKeyLen(key_p->getKeyLen());
     key.set((const char *)(key_p->data), key.getKeyLen());
@@ -73,25 +75,35 @@ void TestingArtUtil::BasicTest(UNUSED_ATTRIBUTE const IndexType index_type) {
 
     storage::Tuple tuple(schema, allocate);
 
-    tuple.SetValue(0, type::ValueFactory::GetIntegerValue(10 * populate_value + 0), testing_pool);
+    tuple.SetValue(0,
+                   type::ValueFactory::GetIntegerValue(10 * populate_value + 0),
+                   testing_pool);
 
-    tuple.SetValue(1, type::ValueFactory::GetIntegerValue(10 * populate_value + 1), testing_pool);
+    tuple.SetValue(1,
+                   type::ValueFactory::GetIntegerValue(10 * populate_value + 1),
+                   testing_pool);
 
-    tuple.SetValue(2, type::ValueFactory::GetDecimalValue(10 * populate_value + 2), testing_pool);
+    tuple.SetValue(2,
+                   type::ValueFactory::GetDecimalValue(10 * populate_value + 2),
+                   testing_pool);
 
-    auto string_value =
-      type::ValueFactory::GetVarcharValue(std::to_string(10 * populate_value + 3));
+    auto string_value = type::ValueFactory::GetVarcharValue(
+        std::to_string(10 * populate_value + 3));
     tuple.SetValue(3, string_value, testing_pool);
 
     ItemPointer *index_entry_ptr = nullptr;
     ItemPointer tuple_slot_id =
-      table->InsertTuple(&tuple, txn, &index_entry_ptr);
+        table->InsertTuple(&tuple, txn, &index_entry_ptr);
     PL_ASSERT(tuple_slot_id.block != INVALID_OID);
     PL_ASSERT(tuple_slot_id.offset != INVALID_OID);
 
     storage::Tuple *key = new storage::Tuple(key_schema, true);
-    key->SetValue(0, type::ValueFactory::GetIntegerValue(10 * populate_value + 0), testing_pool);
-    key->SetValue(1, type::ValueFactory::GetIntegerValue(10 * populate_value + 1), testing_pool);
+    key->SetValue(0,
+                  type::ValueFactory::GetIntegerValue(10 * populate_value + 0),
+                  testing_pool);
+    key->SetValue(1,
+                  type::ValueFactory::GetIntegerValue(10 * populate_value + 1),
+                  testing_pool);
     keys.push_back(key);
     expected_values.push_back(index_entry_ptr);
 
@@ -107,21 +119,22 @@ void TestingArtUtil::BasicTest(UNUSED_ATTRIBUTE const IndexType index_type) {
   result.clear();
   index->ScanKey(keys[0], result);
   EXPECT_EQ(1, result.size());
-  EXPECT_EQ((uint64_t) expected_values[0], (uint64_t) result[0]);
+  EXPECT_EQ((uint64_t)expected_values[0], (uint64_t)result[0]);
 
   result.clear();
   index->ScanKey(keys[1], result);
   EXPECT_EQ(1, result.size());
-  EXPECT_EQ((uint64_t) expected_values[1], (uint64_t) result[0]);
+  EXPECT_EQ((uint64_t)expected_values[1], (uint64_t)result[0]);
 
   result.clear();
   index->DeleteEntry(keys[0], expected_values[0]);
   index->ScanAllKeys(result);
   EXPECT_EQ(1, result.size());
-  EXPECT_EQ((uint64_t) expected_values[1], (uint64_t) result[0]);
+  EXPECT_EQ((uint64_t)expected_values[1], (uint64_t)result[0]);
 }
 
-void TestingArtUtil::NonUniqueKeyDeleteTest(UNUSED_ATTRIBUTE const IndexType index_type) {
+void TestingArtUtil::NonUniqueKeyDeleteTest(UNUSED_ATTRIBUTE const IndexType
+                                                index_type) {
   // the index created in this table is ART index
   storage::DataTable *table = CreateTable(5);
   std::vector<storage::Tuple *> keys;
@@ -141,9 +154,9 @@ void TestingArtUtil::NonUniqueKeyDeleteTest(UNUSED_ATTRIBUTE const IndexType ind
   // 7 different keys, each has two values
   EXPECT_EQ(14, result.size());
 
-
   int delete_rows = 4;
-  LaunchParallelTest(1, TestingArtUtil::DeleteHelper, table, delete_rows, keys, expected_values);
+  LaunchParallelTest(1, TestingArtUtil::DeleteHelper, table, delete_rows, keys,
+                     expected_values);
 
   result.clear();
   index->ScanAllKeys(result);
@@ -154,26 +167,30 @@ void TestingArtUtil::NonUniqueKeyDeleteTest(UNUSED_ATTRIBUTE const IndexType ind
   result.clear();
   index->ScanKey(keys[0], result);
   EXPECT_EQ(1, result.size());
-  EXPECT_EQ((uint64_t) expected_values[7], (uint64_t) result[0]);
+  EXPECT_EQ((uint64_t)expected_values[7], (uint64_t)result[0]);
 
   result.clear();
   index->ScanKey(keys[13], result);
   EXPECT_EQ(2, result.size());
-  EXPECT_EQ((uint64_t) expected_values[13], (uint64_t) result[1]);
+  EXPECT_EQ((uint64_t)expected_values[13], (uint64_t)result[1]);
 }
 
-void TestingArtUtil::MultiThreadedInsertTest(UNUSED_ATTRIBUTE const IndexType index_type) {
-  catalog::Schema *tuple_schema = new catalog::Schema(
-    {TestingExecutorUtil::GetColumnInfo(0), TestingExecutorUtil::GetColumnInfo(1),
-     TestingExecutorUtil::GetColumnInfo(2), TestingExecutorUtil::GetColumnInfo(3)});
+void TestingArtUtil::MultiThreadedInsertTest(UNUSED_ATTRIBUTE const IndexType
+                                                 index_type) {
+  catalog::Schema *tuple_schema =
+      new catalog::Schema({TestingExecutorUtil::GetColumnInfo(0),
+                           TestingExecutorUtil::GetColumnInfo(1),
+                           TestingExecutorUtil::GetColumnInfo(2),
+                           TestingExecutorUtil::GetColumnInfo(3)});
   std::vector<oid_t> key_attrs = {0};
-  catalog::Schema *key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+  catalog::Schema *key_schema =
+      catalog::Schema::CopySchema(tuple_schema, key_attrs);
 
   bool unique = false;
-  index::IndexMetadata *index_metadata = new index::IndexMetadata(
-    "art_index", 123, INVALID_OID, INVALID_OID, IndexType::ART,
-    IndexConstraintType::DEFAULT, tuple_schema, key_schema, key_attrs,
-    unique);
+  index::IndexMetadata *index_metadata =
+      new index::IndexMetadata("art_index", 123, INVALID_OID, INVALID_OID,
+                               IndexType::ART, IndexConstraintType::DEFAULT,
+                               tuple_schema, key_schema, key_attrs, unique);
 
   index::ArtIndex art_index(index_metadata, loadKeyForTest);
 
@@ -186,15 +203,14 @@ void TestingArtUtil::MultiThreadedInsertTest(UNUSED_ATTRIBUTE const IndexType in
 
   Timer<> timer;
   timer.Start();
-  LaunchParallelTest(num_threads, TestingArtUtil::InsertHelperMicroBench, &art_index, num_rows);
+  LaunchParallelTest(num_threads, TestingArtUtil::InsertHelperMicroBench,
+                     &art_index, num_rows);
   timer.Stop();
   LOG_INFO("1,600 tuples inserted in %.5lfs", timer.GetDuration());
-
 
   std::vector<ItemPointer *> result;
   art_index.ScanAllKeys(result);
   EXPECT_EQ(num_rows * num_threads, result.size());
-
 
   int test_key_index = std::rand() % num_rows;
   result.clear();
@@ -210,18 +226,22 @@ void TestingArtUtil::MultiThreadedInsertTest(UNUSED_ATTRIBUTE const IndexType in
   EXPECT_EQ(0, result.size());
 }
 
-void TestingArtUtil::NonUniqueKeyMultiThreadedScanTest(UNUSED_ATTRIBUTE const IndexType index_type) {
-  catalog::Schema *tuple_schema = new catalog::Schema(
-    {TestingExecutorUtil::GetColumnInfo(0), TestingExecutorUtil::GetColumnInfo(1),
-     TestingExecutorUtil::GetColumnInfo(2), TestingExecutorUtil::GetColumnInfo(3)});
+void TestingArtUtil::NonUniqueKeyMultiThreadedScanTest(
+    UNUSED_ATTRIBUTE const IndexType index_type) {
+  catalog::Schema *tuple_schema =
+      new catalog::Schema({TestingExecutorUtil::GetColumnInfo(0),
+                           TestingExecutorUtil::GetColumnInfo(1),
+                           TestingExecutorUtil::GetColumnInfo(2),
+                           TestingExecutorUtil::GetColumnInfo(3)});
   std::vector<oid_t> key_attrs = {0};
-  catalog::Schema *key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+  catalog::Schema *key_schema =
+      catalog::Schema::CopySchema(tuple_schema, key_attrs);
 
   bool unique = false;
-  index::IndexMetadata *index_metadata = new index::IndexMetadata(
-    "art_index", 123, INVALID_OID, INVALID_OID, IndexType::ART,
-    IndexConstraintType::DEFAULT, tuple_schema, key_schema, key_attrs,
-    unique);
+  index::IndexMetadata *index_metadata =
+      new index::IndexMetadata("art_index", 123, INVALID_OID, INVALID_OID,
+                               IndexType::ART, IndexConstraintType::DEFAULT,
+                               tuple_schema, key_schema, key_attrs, unique);
 
   index::ArtIndex art_index(index_metadata, loadKeyForTest);
 
@@ -234,10 +254,10 @@ void TestingArtUtil::NonUniqueKeyMultiThreadedScanTest(UNUSED_ATTRIBUTE const In
 
   Timer<> timer;
   timer.Start();
-  LaunchParallelTest(num_threads, TestingArtUtil::InsertHelperMicroBench, &art_index, num_rows);
+  LaunchParallelTest(num_threads, TestingArtUtil::InsertHelperMicroBench,
+                     &art_index, num_rows);
   timer.Stop();
   LOG_INFO("160,000 tuples inserted in %.5lfs", timer.GetDuration());
-
 
   std::vector<ItemPointer *> result;
   art_index.ScanAllKeys(result);
@@ -247,25 +267,28 @@ void TestingArtUtil::NonUniqueKeyMultiThreadedScanTest(UNUSED_ATTRIBUTE const In
   size_t scan_workers_threads = 16;
   timer.Reset();
   timer.Start();
-  LaunchParallelTest(scan_workers_threads, TestingArtUtil::ScanHelperMicroBench, &art_index, scan_scale_factor, num_rows, num_threads);
+  LaunchParallelTest(scan_workers_threads, TestingArtUtil::ScanHelperMicroBench,
+                     &art_index, scan_scale_factor, num_rows, num_threads);
   timer.Stop();
   LOG_INFO("1,600 scans in %.5lfs", timer.GetDuration());
-
 }
 
-
-void TestingArtUtil::NonUniqueKeyMultiThreadedStressTest(UNUSED_ATTRIBUTE const IndexType index_type) {
-  catalog::Schema *tuple_schema = new catalog::Schema(
-    {TestingExecutorUtil::GetColumnInfo(0), TestingExecutorUtil::GetColumnInfo(1),
-     TestingExecutorUtil::GetColumnInfo(2), TestingExecutorUtil::GetColumnInfo(3)});
+void TestingArtUtil::NonUniqueKeyMultiThreadedStressTest(
+    UNUSED_ATTRIBUTE const IndexType index_type) {
+  catalog::Schema *tuple_schema =
+      new catalog::Schema({TestingExecutorUtil::GetColumnInfo(0),
+                           TestingExecutorUtil::GetColumnInfo(1),
+                           TestingExecutorUtil::GetColumnInfo(2),
+                           TestingExecutorUtil::GetColumnInfo(3)});
   std::vector<oid_t> key_attrs = {0};
-  catalog::Schema *key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+  catalog::Schema *key_schema =
+      catalog::Schema::CopySchema(tuple_schema, key_attrs);
 
   bool unique = false;
-  index::IndexMetadata *index_metadata = new index::IndexMetadata(
-    "art_index", 123, INVALID_OID, INVALID_OID, IndexType::ART,
-    IndexConstraintType::DEFAULT, tuple_schema, key_schema, key_attrs,
-    unique);
+  index::IndexMetadata *index_metadata =
+      new index::IndexMetadata("art_index", 123, INVALID_OID, INVALID_OID,
+                               IndexType::ART, IndexConstraintType::DEFAULT,
+                               tuple_schema, key_schema, key_attrs, unique);
 
   index::ArtIndex art_index(index_metadata, loadKeyForTest);
 
@@ -278,10 +301,10 @@ void TestingArtUtil::NonUniqueKeyMultiThreadedStressTest(UNUSED_ATTRIBUTE const 
 
   Timer<> timer;
   timer.Start();
-  LaunchParallelTest(num_threads, TestingArtUtil::InsertHelperMicroBench, &art_index, num_rows);
+  LaunchParallelTest(num_threads, TestingArtUtil::InsertHelperMicroBench,
+                     &art_index, num_rows);
   timer.Stop();
   LOG_INFO("160,000 tuples inserted in %.5lfs", timer.GetDuration());
-
 
   std::vector<ItemPointer *> result;
   art_index.ScanAllKeys(result);
@@ -291,12 +314,15 @@ void TestingArtUtil::NonUniqueKeyMultiThreadedStressTest(UNUSED_ATTRIBUTE const 
   size_t delete_workers_threads = 15;
   timer.Reset();
   timer.Start();
-  LaunchParallelTest(delete_workers_threads, TestingArtUtil::DeleteHelperMicroBench, &art_index, delete_rows);
+  LaunchParallelTest(delete_workers_threads,
+                     TestingArtUtil::DeleteHelperMicroBench, &art_index,
+                     delete_rows);
   timer.Stop();
   LOG_INFO("150,000 tuples deleted in %.5lfs", timer.GetDuration());
   result.clear();
   art_index.ScanAllKeys(result);
-  EXPECT_EQ(num_rows * num_threads - delete_rows * delete_workers_threads, result.size());
+  EXPECT_EQ(num_rows * num_threads - delete_rows * delete_workers_threads,
+            result.size());
 
   for (int i = 0; i < num_rows; i++) {
     result.clear();
@@ -304,22 +330,23 @@ void TestingArtUtil::NonUniqueKeyMultiThreadedStressTest(UNUSED_ATTRIBUTE const 
     EXPECT_EQ(1, result.size());
     EXPECT_EQ((uint64_t)key_to_values[i].values[15], (uint64_t)result[0]);
   }
-
 }
 
-storage::DataTable *TestingArtUtil::CreateTable(
-  int tuples_per_tilegroup_count, bool indexes, oid_t table_oid) {
-  catalog::Schema *table_schema = new catalog::Schema(
-    {TestingExecutorUtil::GetColumnInfo(0), TestingExecutorUtil::GetColumnInfo(1),
-     TestingExecutorUtil::GetColumnInfo(2), TestingExecutorUtil::GetColumnInfo(3)});
+storage::DataTable *TestingArtUtil::CreateTable(int tuples_per_tilegroup_count,
+                                                bool indexes, oid_t table_oid) {
+  catalog::Schema *table_schema =
+      new catalog::Schema({TestingExecutorUtil::GetColumnInfo(0),
+                           TestingExecutorUtil::GetColumnInfo(1),
+                           TestingExecutorUtil::GetColumnInfo(2),
+                           TestingExecutorUtil::GetColumnInfo(3)});
   std::string table_name("test_table");
 
   // Create table.
   bool own_schema = true;
   bool adapt_table = false;
   storage::DataTable *table = storage::TableFactory::GetDataTable(
-    INVALID_OID, table_oid, table_schema, table_name,
-    tuples_per_tilegroup_count, own_schema, adapt_table);
+      INVALID_OID, table_oid, table_schema, table_name,
+      tuples_per_tilegroup_count, own_schema, adapt_table);
 
   if (indexes == true) {
     // This holds column ID in the underlying table that are being indexed
@@ -354,13 +381,13 @@ storage::DataTable *TestingArtUtil::CreateTable(
 
     unique = true;
 
-    index_metadata = new index::IndexMetadata(
-      "art_index", 123, INVALID_OID, INVALID_OID, IndexType::ART,
-      IndexConstraintType::DEFAULT, tuple_schema, key_schema, key_attrs,
-      unique);
+    index_metadata =
+        new index::IndexMetadata("art_index", 123, INVALID_OID, INVALID_OID,
+                                 IndexType::ART, IndexConstraintType::DEFAULT,
+                                 tuple_schema, key_schema, key_attrs, unique);
 
     std::shared_ptr<index::Index> pkey_index(
-      index::IndexFactory::GetIndex(index_metadata));
+        index::IndexFactory::GetIndex(index_metadata));
 
     table->AddIndex(pkey_index);
 
@@ -374,11 +401,11 @@ storage::DataTable *TestingArtUtil::CreateTable(
 
     unique = false;
     index_metadata = new index::IndexMetadata(
-      "secondary_btree_index", 124, INVALID_OID, INVALID_OID,
-      IndexType::ART, IndexConstraintType::DEFAULT, tuple_schema,
-      key_schema, key_attrs, unique);
+        "secondary_btree_index", 124, INVALID_OID, INVALID_OID, IndexType::ART,
+        IndexConstraintType::DEFAULT, tuple_schema, key_schema, key_attrs,
+        unique);
     std::shared_ptr<index::Index> sec_index(
-      index::IndexFactory::GetIndex(index_metadata));
+        index::IndexFactory::GetIndex(index_metadata));
 
     table->AddIndex(sec_index);
   }
@@ -387,8 +414,9 @@ storage::DataTable *TestingArtUtil::CreateTable(
 }
 
 void TestingArtUtil::PopulateMap(UNUSED_ATTRIBUTE index::Index &index) {
-  catalog::Schema *table_schema = new catalog::Schema(
-    {TestingExecutorUtil::GetColumnInfo(0), TestingExecutorUtil::GetColumnInfo(1)});
+  catalog::Schema *table_schema =
+      new catalog::Schema({TestingExecutorUtil::GetColumnInfo(0),
+                           TestingExecutorUtil::GetColumnInfo(1)});
 
   // Random values
   std::srand(std::time(nullptr));
@@ -400,10 +428,10 @@ void TestingArtUtil::PopulateMap(UNUSED_ATTRIBUTE index::Index &index) {
     int populate_value = i;
 
     auto v0 = type::ValueFactory::GetIntegerValue(
-      TestingExecutorUtil::PopulatedValue(populate_value, 0));
+        TestingExecutorUtil::PopulatedValue(populate_value, 0));
 
     auto v1 = type::ValueFactory::GetIntegerValue(
-      TestingExecutorUtil::PopulatedValue(std::rand() % (10000 / 3), 1));
+        TestingExecutorUtil::PopulatedValue(std::rand() % (10000 / 3), 1));
 
     char *c = new char[8];
     index::ArtIndex::WriteValueInBytes(v0, c, 0, 4);
@@ -420,13 +448,17 @@ void TestingArtUtil::PopulateMap(UNUSED_ATTRIBUTE index::Index &index) {
     index_key.set(c, 8);
 
     key_to_values[i].key.setKeyLen(index_key.getKeyLen());
-    key_to_values[i].key.set((const char *)index_key.data, index_key.getKeyLen());
+    key_to_values[i].key.set((const char *)index_key.data,
+                             index_key.getKeyLen());
 
     // generate 16 random values
     for (int j = 0; j < 16; j++) {
-      uint64_t new_value = ((uint64_t)(std::rand()) << 30) + ((uint64_t)(std::rand()) << 15) + (uint64_t)(std::rand());
+      uint64_t new_value = ((uint64_t)(std::rand()) << 30) +
+                           ((uint64_t)(std::rand()) << 15) +
+                           (uint64_t)(std::rand());
       while (values_set.find(new_value) != values_set.end()) {
-        new_value = ((uint64_t)(std::rand()) << 30) + ((uint64_t)(std::rand()) << 15) + (uint64_t)(std::rand());
+        new_value = ((uint64_t)(std::rand()) << 30) +
+                    ((uint64_t)(std::rand()) << 15) + (uint64_t)(std::rand());
       }
       values_set.insert(new_value);
 
@@ -441,8 +473,10 @@ void TestingArtUtil::PopulateMap(UNUSED_ATTRIBUTE index::Index &index) {
 }
 
 void TestingArtUtil::InsertHelper(storage::DataTable *table,
-                                  type::AbstractPool *testing_pool, size_t scale_factor, int num_rows,
-                                  bool random, std::vector<storage::Tuple *> *keys,
+                                  type::AbstractPool *testing_pool,
+                                  size_t scale_factor, int num_rows,
+                                  bool random,
+                                  std::vector<storage::Tuple *> *keys,
                                   std::vector<ItemPointer *> *expected_values,
                                   UNUSED_ATTRIBUTE uint64_t thread_itr) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -466,28 +500,31 @@ void TestingArtUtil::InsertHelper(storage::DataTable *table,
       storage::Tuple tuple(schema, allocate);
 
       auto v0 = type::ValueFactory::GetIntegerValue(
-                TestingExecutorUtil::PopulatedValue(populate_value, 0) * scale_itr);
+          TestingExecutorUtil::PopulatedValue(populate_value, 0) * scale_itr);
       tuple.SetValue(0, v0, testing_pool);
 
       auto v1 = type::ValueFactory::GetIntegerValue(
-                TestingExecutorUtil::PopulatedValue(
-                random ? std::rand() % (num_rows / 3) : populate_value, 1) * scale_itr);
+          TestingExecutorUtil::PopulatedValue(
+              random ? std::rand() % (num_rows / 3) : populate_value, 1) *
+          scale_itr);
       tuple.SetValue(1, v1, testing_pool);
 
       tuple.SetValue(2, type::ValueFactory::GetDecimalValue(
-                     TestingExecutorUtil::PopulatedValue(
-                     random ? std::rand() : populate_value, 2) * scale_itr),
+                            TestingExecutorUtil::PopulatedValue(
+                                random ? std::rand() : populate_value, 2) *
+                            scale_itr),
                      testing_pool);
 
       // In case of random, make sure this column has duplicated values
-      auto string_value =
-        type::ValueFactory::GetVarcharValue(std::to_string(TestingExecutorUtil::PopulatedValue(
-          random ? std::rand() % (num_rows / 3) : populate_value, 3) * scale_itr));
+      auto string_value = type::ValueFactory::GetVarcharValue(std::to_string(
+          TestingExecutorUtil::PopulatedValue(
+              random ? std::rand() % (num_rows / 3) : populate_value, 3) *
+          scale_itr));
       tuple.SetValue(3, string_value, testing_pool);
 
       ItemPointer *index_entry_ptr = nullptr;
       ItemPointer tuple_slot_id =
-        table->InsertTuple(&tuple, txn, &index_entry_ptr);
+          table->InsertTuple(&tuple, txn, &index_entry_ptr);
       PL_ASSERT(tuple_slot_id.block != INVALID_OID);
       PL_ASSERT(tuple_slot_id.offset != INVALID_OID);
 
@@ -504,39 +541,48 @@ void TestingArtUtil::InsertHelper(storage::DataTable *table,
 }
 
 void TestingArtUtil::InsertHelperMicroBench(index::ArtIndex *index,
-                                            int num_rows, UNUSED_ATTRIBUTE uint64_t thread_itr) {
+                                            int num_rows,
+                                            UNUSED_ATTRIBUTE uint64_t
+                                                thread_itr) {
   for (int rowid = 0; rowid < num_rows; rowid++) {
-    index->InsertEntry(key_to_values[rowid].tuple, (ItemPointer *)key_to_values[rowid].values[thread_itr]);
+    index->InsertEntry(key_to_values[rowid].tuple,
+                       (ItemPointer *)key_to_values[rowid].values[thread_itr]);
   }
 }
 
-void TestingArtUtil::DeleteHelper(storage::DataTable *table, UNUSED_ATTRIBUTE int num_rows,
+void TestingArtUtil::DeleteHelper(storage::DataTable *table,
+                                  UNUSED_ATTRIBUTE int num_rows,
                                   std::vector<storage::Tuple *> keys,
                                   std::vector<ItemPointer *> expected_values,
                                   UNUSED_ATTRIBUTE uint64_t thread_itr) {
   // get secondary index which is built on the first and second columns
   auto index = table->GetIndex(1);
   int start_row = thread_itr * num_rows;
-  if (keys.size() < (uint64_t) start_row) {
+  if (keys.size() < (uint64_t)start_row) {
     start_row = keys.size();
   }
   int end_row = start_row + num_rows;
-  if ((keys.size() < (uint64_t) end_row)) {
+  if ((keys.size() < (uint64_t)end_row)) {
     end_row = keys.size();
   }
   for (int rowid = start_row; rowid < end_row; rowid++) {
     index->DeleteEntry(keys[rowid], expected_values[rowid]);
   }
-
 }
 
-void TestingArtUtil::DeleteHelperMicroBench(index::ArtIndex *index, int num_rows, uint64_t thread_itr) {
+void TestingArtUtil::DeleteHelperMicroBench(index::ArtIndex *index,
+                                            int num_rows, uint64_t thread_itr) {
   for (int rowid = 0; rowid < num_rows; rowid++) {
-    index->DeleteEntry(key_to_values[rowid].tuple, (ItemPointer *)key_to_values[rowid].values[thread_itr]);
+    index->DeleteEntry(key_to_values[rowid].tuple,
+                       (ItemPointer *)key_to_values[rowid].values[thread_itr]);
   }
 }
 
-void TestingArtUtil::ScanHelperMicroBench(index::ArtIndex *index, size_t scale_factor, int total_rows, int insert_workers, UNUSED_ATTRIBUTE uint64_t thread_itr) {
+void TestingArtUtil::ScanHelperMicroBench(index::ArtIndex *index,
+                                          size_t scale_factor, int total_rows,
+                                          int insert_workers,
+                                          UNUSED_ATTRIBUTE uint64_t
+                                              thread_itr) {
   for (size_t scale_itr = 0; scale_itr < scale_factor; scale_itr++) {
     int begin_index = std::rand() % (total_rows - 1);
     int end_index = std::rand() % (total_rows - begin_index) + begin_index + 1;
@@ -547,10 +593,11 @@ void TestingArtUtil::ScanHelperMicroBench(index::ArtIndex *index, size_t scale_f
     std::vector<ItemPointer *> result;
     size_t result_found = 0;
     auto &t = index->art_.GetThreadInfo();
-    index->art_.LookupRange(key_to_values[begin_index].key, key_to_values[end_index].key, continue_key, result, 0, result_found, t);
+    index->art_.LookupRange(key_to_values[begin_index].key,
+                            key_to_values[end_index].key, continue_key, result,
+                            0, result_found, t);
     EXPECT_EQ(insert_workers * (end_index - begin_index + 1), result_found);
   }
 }
-
 }
 }

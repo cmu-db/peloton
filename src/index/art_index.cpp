@@ -50,15 +50,17 @@ void LoadKey(TID tid, ARTKey &key, IndexMetadata *metadata) {
 
   int columnCount = metadata->GetColumnCount();
 
-  std::vector<oid_t> indexedColumns = metadata->GetKeySchema()->GetIndexedColumns();
+  std::vector<oid_t> indexedColumns =
+      metadata->GetKeySchema()->GetIndexedColumns();
 
   std::vector<catalog::Column> columns = metadata->GetKeySchema()->GetColumns();
 
   auto &manager = catalog::Manager::GetInstance();
-  ItemPointer *tuple_pointer = (ItemPointer *) (value_list->tid);
+  ItemPointer *tuple_pointer = (ItemPointer *)(value_list->tid);
   ItemPointer tuple_location = *tuple_pointer;
   auto tile_group = manager.GetTileGroup(tuple_location.block);
-  ContainerTuple<storage::TileGroup> tuple(tile_group.get(), tuple_location.offset);
+  ContainerTuple<storage::TileGroup> tuple(tile_group.get(),
+                                           tuple_location.offset);
 
   std::vector<type::Value> values;
   int total_bytes = 0;
@@ -69,7 +71,7 @@ void LoadKey(TID tid, ARTKey &key, IndexMetadata *metadata) {
     total_bytes += columns[i].GetLength();
   }
 
-  char* c =new char[total_bytes];
+  char *c = new char[total_bytes];
 
   // write values to char array
   int offset = 0;
@@ -85,17 +87,18 @@ void LoadKey(TID tid, ARTKey &key, IndexMetadata *metadata) {
 }
 
 ArtIndex::ArtIndex(IndexMetadata *metadata)
-  :  // Base class
-  Index{metadata}, art_(LoadKey) {
+    :  // Base class
+      Index{metadata},
+      art_(LoadKey) {
   art_.SetIndexMetadata(metadata);
   LOG_INFO("Art Index is created for %s\n", (metadata->GetName()).c_str());
   return;
 }
 
 // this constructor is used for testing
-ArtIndex::ArtIndex(IndexMetadata *metadata, AdaptiveRadixTree::LoadKeyFunction loadKeyForTest)
-  :
-  Index{metadata}, art_(loadKeyForTest) {
+ArtIndex::ArtIndex(IndexMetadata *metadata,
+                   AdaptiveRadixTree::LoadKeyFunction loadKeyForTest)
+    : Index{metadata}, art_(loadKeyForTest) {
   LOG_INFO("Art Index is created for testing\n");
 }
 
@@ -108,9 +111,7 @@ ArtIndex::~ArtIndex() {}
  * by default, non-unque key is allowed
  *
  */
-bool ArtIndex::InsertEntry(
-  const storage::Tuple *key,
-  ItemPointer *value) {
+bool ArtIndex::InsertEntry(const storage::Tuple *key, ItemPointer *value) {
   bool ret = true;
 
   ARTKey index_key;
@@ -127,10 +128,8 @@ bool ArtIndex::InsertEntry(
  * ScanKey() - return all the values for a given key
  *
  */
-void ArtIndex::ScanKey(
-  const storage::Tuple *key,
-  std::vector<ItemPointer *> &result) {
-
+void ArtIndex::ScanKey(const storage::Tuple *key,
+                       std::vector<ItemPointer *> &result) {
   ARTKey index_key;
   WriteIndexedAttributesInKey(key, index_key);
 
@@ -144,10 +143,7 @@ void ArtIndex::ScanKey(
  *
  * If the key-value pair does not exists yet, return false
  */
-bool ArtIndex::DeleteEntry(
-  const storage::Tuple *key,
-  ItemPointer *value) {
-
+bool ArtIndex::DeleteEntry(const storage::Tuple *key, ItemPointer *value) {
   ARTKey index_key;
   WriteIndexedAttributesInKey(key, index_key);
 
@@ -169,11 +165,8 @@ bool ArtIndex::DeleteEntry(
  * NOTE: We first test the predicate, and then test for duplicated values
  * so predicate test result is always available
  */
-bool ArtIndex::CondInsertEntry(
-  const storage::Tuple *key,
-  ItemPointer *value,
-  std::function<bool(const void *)> predicate) {
-
+bool ArtIndex::CondInsertEntry(const storage::Tuple *key, ItemPointer *value,
+                               std::function<bool(const void *)> predicate) {
   ARTKey index_key;
   WriteIndexedAttributesInKey(key, index_key);
   TID tid = reinterpret_cast<TID>(value);
@@ -186,13 +179,11 @@ bool ArtIndex::CondInsertEntry(
  *
  */
 void ArtIndex::Scan(
-  UNUSED_ATTRIBUTE const std::vector<type::Value> &value_list,
-  UNUSED_ATTRIBUTE const std::vector<oid_t> &tuple_column_id_list,
-  UNUSED_ATTRIBUTE const std::vector<ExpressionType> &expr_list,
-  UNUSED_ATTRIBUTE ScanDirectionType scan_direction,
-  std::vector<ItemPointer *> &result,
-  const ConjunctionScanPredicate *csp_p) {
-
+    UNUSED_ATTRIBUTE const std::vector<type::Value> &value_list,
+    UNUSED_ATTRIBUTE const std::vector<oid_t> &tuple_column_id_list,
+    UNUSED_ATTRIBUTE const std::vector<ExpressionType> &expr_list,
+    UNUSED_ATTRIBUTE ScanDirectionType scan_direction,
+    std::vector<ItemPointer *> &result, const ConjunctionScanPredicate *csp_p) {
   if (csp_p->IsPointQuery() == true) {
     const storage::Tuple *point_query_key_p = csp_p->GetPointQueryKey();
     ScanKey(point_query_key_p, result);
@@ -236,8 +227,7 @@ void ArtIndex::Scan(
 
     auto &t = art_.GetThreadInfo();
     art_.LookupRange(index_low_key, index_high_key, continue_key, result, range,
-      actual_result_length, t);
-
+                     actual_result_length, t);
   }
 }
 
@@ -246,13 +236,13 @@ void ArtIndex::Scan(
  *
  */
 void ArtIndex::ScanLimit(
-  UNUSED_ATTRIBUTE const std::vector<type::Value> &value_list,
-  UNUSED_ATTRIBUTE const std::vector<oid_t> &tuple_column_id_list,
-  UNUSED_ATTRIBUTE const std::vector<ExpressionType> &expr_list,
-  UNUSED_ATTRIBUTE ScanDirectionType scan_direction,
-  UNUSED_ATTRIBUTE std::vector<ItemPointer *> &result,
-  UNUSED_ATTRIBUTE const ConjunctionScanPredicate *csp_p,
-  UNUSED_ATTRIBUTE uint64_t limit, UNUSED_ATTRIBUTE uint64_t offset) {
+    UNUSED_ATTRIBUTE const std::vector<type::Value> &value_list,
+    UNUSED_ATTRIBUTE const std::vector<oid_t> &tuple_column_id_list,
+    UNUSED_ATTRIBUTE const std::vector<ExpressionType> &expr_list,
+    UNUSED_ATTRIBUTE ScanDirectionType scan_direction,
+    UNUSED_ATTRIBUTE std::vector<ItemPointer *> &result,
+    UNUSED_ATTRIBUTE const ConjunctionScanPredicate *csp_p,
+    UNUSED_ATTRIBUTE uint64_t limit, UNUSED_ATTRIBUTE uint64_t offset) {
   // TODO
   return;
 }
@@ -275,34 +265,31 @@ std::string ArtIndex::GetTypeName() const { return "ART"; }
  *                       transformed into binary comparable bytes array.
  *
  */
-void ArtIndex::WriteValueInBytes(type::Value value, char *c, int offset, UNUSED_ATTRIBUTE int length) {
+void ArtIndex::WriteValueInBytes(type::Value value, char *c, int offset,
+                                 UNUSED_ATTRIBUTE int length) {
   switch (value.GetTypeId()) {
-    case type::TypeId::BOOLEAN:
-    {
+    case type::TypeId::BOOLEAN: {
       c[offset] = value.GetAs<int8_t>();
       break;
     }
-    case type::TypeId::TINYINT:
-    {
+    case type::TypeId::TINYINT: {
       int8_t v = value.GetAs<int8_t>();
-      uint8_t unsigned_value = (uint8_t) v;
+      uint8_t unsigned_value = (uint8_t)v;
       unsigned_value ^= (1u << 7);
       c[offset] = unsigned_value & 0xFF;
       break;
     }
-    case type::TypeId::SMALLINT:
-    {
+    case type::TypeId::SMALLINT: {
       int16_t v = value.GetAs<int16_t>();
-      uint16_t unsigned_value = (uint16_t) v;
+      uint16_t unsigned_value = (uint16_t)v;
       unsigned_value ^= (1u << 15);
       c[offset] = (unsigned_value >> 8) & 0xFF;
       c[offset + 1] = unsigned_value & 0xFF;
       break;
     }
-    case type::TypeId::INTEGER:
-    {
+    case type::TypeId::INTEGER: {
       int32_t v = value.GetAs<int32_t>();
-      uint32_t unsigned_value = (uint32_t) v;
+      uint32_t unsigned_value = (uint32_t)v;
       unsigned_value ^= (1u << 31);
       c[offset] = (unsigned_value >> 24) & 0xFF;
       c[offset + 1] = (unsigned_value >> 16) & 0xFF;
@@ -310,10 +297,9 @@ void ArtIndex::WriteValueInBytes(type::Value value, char *c, int offset, UNUSED_
       c[offset + 3] = unsigned_value & 0xFF;
       break;
     }
-    case type::TypeId::BIGINT:
-    {
+    case type::TypeId::BIGINT: {
       int64_t v = value.GetAs<int64_t>();
-      uint64_t unsigned_value = (uint64_t) v;
+      uint64_t unsigned_value = (uint64_t)v;
       unsigned_value ^= (1lu << 63);
       c[offset] = (unsigned_value >> 56) & 0xFF;
       c[offset + 1] = (unsigned_value >> 48) & 0xFF;
@@ -325,11 +311,10 @@ void ArtIndex::WriteValueInBytes(type::Value value, char *c, int offset, UNUSED_
       c[offset + 7] = unsigned_value & 0xFF;
       break;
     }
-    case type::TypeId::DECIMAL:
-    {
+    case type::TypeId::DECIMAL: {
       // double
       double v = value.GetAs<double>();
-      uint64_t bits = (uint64_t) v;
+      uint64_t bits = (uint64_t)v;
       bits ^= (1lu << 63);
 
       // bits distribution in double:
@@ -344,8 +329,7 @@ void ArtIndex::WriteValueInBytes(type::Value value, char *c, int offset, UNUSED_
       c[offset + 7] = bits & 0xFF;
       break;
     }
-    case type::TypeId::DATE:
-    {
+    case type::TypeId::DATE: {
       uint32_t unsigned_value = value.GetAs<uint32_t>();
       c[offset] = (unsigned_value >> 24) & 0xFF;
       c[offset + 1] = (unsigned_value >> 16) & 0xFF;
@@ -353,8 +337,7 @@ void ArtIndex::WriteValueInBytes(type::Value value, char *c, int offset, UNUSED_
       c[offset + 3] = unsigned_value & 0xFF;
       break;
     }
-    case type::TypeId::TIMESTAMP:
-    {
+    case type::TypeId::TIMESTAMP: {
       uint64_t unsigned_value = value.GetAs<uint64_t>();
       c[offset] = (unsigned_value >> 56) & 0xFF;
       c[offset + 1] = (unsigned_value >> 48) & 0xFF;
@@ -368,9 +351,9 @@ void ArtIndex::WriteValueInBytes(type::Value value, char *c, int offset, UNUSED_
     }
     case type::TypeId::VARCHAR:
     case type::TypeId::VARBINARY:
-    case type::TypeId::ARRAY:
-    {
-      int len = ((uint32_t) length < value.GetLength()) ? length : value.GetLength();
+    case type::TypeId::ARRAY: {
+      int len =
+          ((uint32_t)length < value.GetLength()) ? length : value.GetLength();
       memcpy(c + offset, value.GetData(), len);
       if (len < length) {
         for (int i = len; i < length; i++) {
@@ -392,7 +375,8 @@ void ArtIndex::WriteValueInBytes(type::Value value, char *c, int offset, UNUSED_
  *                                 bytes array.
  *
  */
-void ArtIndex::WriteIndexedAttributesInKey(const storage::Tuple *tuple, ARTKey& index_key) {
+void ArtIndex::WriteIndexedAttributesInKey(const storage::Tuple *tuple,
+                                           ARTKey &index_key) {
   int columns_in_key = tuple->GetColumnCount();
 
   const catalog::Schema *tuple_schema = tuple->GetSchema();

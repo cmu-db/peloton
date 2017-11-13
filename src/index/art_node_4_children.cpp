@@ -24,19 +24,16 @@ void N4::DeleteChildren() {
   }
 }
 
-bool N4::isFull() const {
-  return count_ == 4;
-}
+bool N4::isFull() const { return count_ == 4; }
 
-bool N4::isUnderfull() const {
-  return false;
-}
+bool N4::isUnderfull() const { return false; }
 
 void N4::insert(uint8_t key, N *n) {
   unsigned pos;
-  for (pos = 0; (pos < count_) && (keys[pos] < key); pos++);
+  for (pos = 0; (pos < count_) && (keys[pos] < key); pos++)
+    ;
   memmove(keys + pos + 1, keys + pos, count_ - pos);
-  memmove(children + pos + 1, children + pos, (count_ - pos) * sizeof(N*));
+  memmove(children + pos + 1, children + pos, (count_ - pos) * sizeof(N *));
   keys[pos] = key;
   children[pos] = n;
   count_++;
@@ -56,7 +53,7 @@ bool N4::Change(uint8_t key, N *val) {
 bool N4::AddMultiValue(uint8_t key, uint64_t val) {
   for (uint32_t i = 0; i < count_; ++i) {
     if (keys[i] == key) {
-//      children[i] = val;
+      //      children[i] = val;
       TID tid = N::GetLeaf(children[i]);
 
       MultiValues *value_list = reinterpret_cast<MultiValues *>(tid);
@@ -66,7 +63,7 @@ bool N4::AddMultiValue(uint8_t key, uint64_t val) {
       MultiValues *new_value = new MultiValues();
       new_value->tid = val;
       new_value->next = 0;
-      value_list->next = (uint64_t) new_value;
+      value_list->next = (uint64_t)new_value;
       return true;
     }
   }
@@ -115,9 +112,10 @@ std::tuple<N *, uint8_t> N4::GetSecondChild(const uint8_t key) const {
   return std::make_tuple(nullptr, 0);
 }
 
-uint64_t N4::GetChildren(uint8_t start, uint8_t end, std::tuple<uint8_t, N *> *&children,
+uint64_t N4::GetChildren(uint8_t start, uint8_t end,
+                         std::tuple<uint8_t, N *> *&children,
                          uint32_t &childrenCount) const {
-  restart:
+restart:
   bool needRestart = false;
   uint64_t v;
   v = ReadLockOrRestart(needRestart);
@@ -125,7 +123,8 @@ uint64_t N4::GetChildren(uint8_t start, uint8_t end, std::tuple<uint8_t, N *> *&
   childrenCount = 0;
   for (uint32_t i = 0; i < count_; ++i) {
     if (this->keys[i] >= start && this->keys[i] <= end) {
-      children[childrenCount] = std::make_tuple(this->keys[i], this->children[i]);
+      children[childrenCount] =
+          std::make_tuple(this->keys[i], this->children[i]);
       childrenCount++;
     }
   }

@@ -20,21 +20,18 @@
 
 namespace peloton {
 namespace index {
-bool N48::isFull() const {
-  return count_ == 48;
-}
+bool N48::isFull() const { return count_ == 48; }
 
-bool N48::isUnderfull() const {
-  return count_ == 12;
-}
+bool N48::isUnderfull() const { return count_ == 12; }
 
 void N48::insert(uint8_t key, N *n) {
   unsigned pos = count_;
   if (children[pos]) {
-    for (pos = 0; children[pos] != nullptr; pos++);
+    for (pos = 0; children[pos] != nullptr; pos++)
+      ;
   }
   children[pos] = n;
-  childIndex[key] = (uint8_t) pos;
+  childIndex[key] = (uint8_t)pos;
   count_++;
 }
 
@@ -44,7 +41,7 @@ bool N48::Change(uint8_t key, N *val) {
 }
 
 bool N48::AddMultiValue(uint8_t key, uint64_t val) {
-//  children[childIndex[key]] = val;
+  //  children[childIndex[key]] = val;
   TID tid = N::GetLeaf(children[childIndex[key]]);
 
   MultiValues *value_list = reinterpret_cast<MultiValues *>(tid);
@@ -54,7 +51,7 @@ bool N48::AddMultiValue(uint8_t key, uint64_t val) {
   MultiValues *new_value = new MultiValues();
   new_value->tid = val;
   new_value->next = 0;
-  value_list->next = (uint64_t) new_value;
+  value_list->next = (uint64_t)new_value;
   return true;
 }
 
@@ -97,9 +94,10 @@ void N48::DeleteChildren() {
   }
 }
 
-uint64_t N48::GetChildren(uint8_t start, uint8_t end, std::tuple<uint8_t, N *> *&children,
+uint64_t N48::GetChildren(uint8_t start, uint8_t end,
+                          std::tuple<uint8_t, N *> *&children,
                           uint32_t &childrenCount) const {
-  restart:
+restart:
   bool needRestart = false;
   uint64_t v;
   v = ReadLockOrRestart(needRestart);
@@ -107,7 +105,8 @@ uint64_t N48::GetChildren(uint8_t start, uint8_t end, std::tuple<uint8_t, N *> *
   childrenCount = 0;
   for (unsigned i = start; i <= end; i++) {
     if (this->childIndex[i] != emptyMarker) {
-      children[childrenCount] = std::make_tuple(i, this->children[this->childIndex[i]]);
+      children[childrenCount] =
+          std::make_tuple(i, this->children[this->childIndex[i]]);
       childrenCount++;
     }
   }
@@ -115,6 +114,5 @@ uint64_t N48::GetChildren(uint8_t start, uint8_t end, std::tuple<uint8_t, N *> *
   if (needRestart) goto restart;
   return v;
 }
-
 }
 }

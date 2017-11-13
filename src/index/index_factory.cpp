@@ -98,10 +98,6 @@ Index *IndexFactory::GetARTIntsKeyIndex(IndexMetadata *metadata) {
   // Our new Index!
   Index *index = nullptr;
 
-  // The size of the key in bytes
-  const auto key_size = metadata->key_schema->GetLength();
-  LOG_DEBUG("[DEBUG] ART key size = %d\n", key_size);
-
   index = new ArtIndex(metadata);
 
 //  if (key_size <= sizeof(uint64_t)) {

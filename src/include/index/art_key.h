@@ -25,8 +25,7 @@ namespace index {
 using KeyLen = uint32_t;
 
 class ARTKey {
-public:
-
+ public:
   static constexpr uint32_t stackLen = 128;
   uint32_t len = 0;
 
@@ -36,7 +35,11 @@ public:
 
   ARTKey(uint64_t k) { setInt(k); }
 
-  void setInt(uint64_t k) { data = stackKey; len = 8; *reinterpret_cast<uint64_t*>(stackKey) = __builtin_bswap64(k); }
+  void setInt(uint64_t k) {
+    data = stackKey;
+    len = 8;
+    *reinterpret_cast<uint64_t *>(stackKey) = __builtin_bswap64(k);
+  }
 
   ARTKey() {}
 
@@ -64,7 +67,6 @@ public:
   KeyLen getKeyLen() const;
 
   void setKeyLen(KeyLen len);
-
 };
 
 inline uint8_t &ARTKey::operator[](std::size_t i) {
@@ -137,8 +139,7 @@ inline void ARTKey::setKeyLen(KeyLen newLen) {
     data = stackKey;
   }
 }
-
 }
 }
 
-#endif //PELOTON_KEY_H
+#endif  // PELOTON_KEY_H

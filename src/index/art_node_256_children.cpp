@@ -17,13 +17,9 @@
 
 namespace peloton {
 namespace index {
-bool N256::isFull() const {
-  return false;
-}
+bool N256::isFull() const { return false; }
 
-bool N256::isUnderfull() const {
-  return count_ == 37;
-}
+bool N256::isUnderfull() const { return count_ == 37; }
 
 void N256::DeleteChildren() {
   for (uint64_t i = 0; i < 256; ++i) {
@@ -45,7 +41,7 @@ bool N256::Change(uint8_t key, N *n) {
 }
 
 bool N256::AddMultiValue(uint8_t key, uint64_t val) {
-//  children[key] = n;
+  //  children[key] = n;
   TID tid = N::GetLeaf(children[key]);
 
   MultiValues *value_list = reinterpret_cast<MultiValues *>(tid);
@@ -55,13 +51,11 @@ bool N256::AddMultiValue(uint8_t key, uint64_t val) {
   MultiValues *new_value = new MultiValues();
   new_value->tid = val;
   new_value->next = 0;
-  value_list->next = (uint64_t) new_value;
+  value_list->next = (uint64_t)new_value;
   return true;
 }
 
-N *N256::GetChild(const uint8_t k) const {
-  return children[k];
-}
+N *N256::GetChild(const uint8_t k) const { return children[k]; }
 
 void N256::remove(uint8_t k) {
   children[k] = nullptr;
@@ -82,9 +76,10 @@ N *N256::GetAnyChild() const {
   return anyChild;
 }
 
-uint64_t N256::GetChildren(uint8_t start, uint8_t end, std::tuple<uint8_t, N *> *&children,
+uint64_t N256::GetChildren(uint8_t start, uint8_t end,
+                           std::tuple<uint8_t, N *> *&children,
                            uint32_t &childrenCount) const {
-  restart:
+restart:
   bool needRestart = false;
   uint64_t v;
   v = ReadLockOrRestart(needRestart);

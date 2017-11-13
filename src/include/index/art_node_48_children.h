@@ -26,18 +26,19 @@ namespace index {
 class N48 : public N {
   uint8_t childIndex[256];
   N *children[48];
-public:
+
+ public:
   static const uint8_t emptyMarker = 48;
 
-  N48(const uint8_t *prefix, uint32_t prefixLength) : N(NTypes::N48, prefix,
-                                                        prefixLength) {
+  N48(const uint8_t *prefix, uint32_t prefixLength)
+      : N(NTypes::N48, prefix, prefixLength) {
     memset(childIndex, emptyMarker, sizeof(childIndex));
     memset(children, 0, sizeof(children));
   }
 
   void insert(uint8_t key, N *n);
 
-  template<class NODE>
+  template <class NODE>
   void copyTo(NODE *n) const {
     for (unsigned i = 0; i < 256; i++) {
       if (childIndex[i] != emptyMarker) {
@@ -62,10 +63,11 @@ public:
 
   void DeleteChildren();
 
-  uint64_t GetChildren(uint8_t start, uint8_t end, std::tuple<uint8_t, N *> *&children,
+  uint64_t GetChildren(uint8_t start, uint8_t end,
+                       std::tuple<uint8_t, N *> *&children,
                        uint32_t &childrenCount) const;
 };
 }
 }
 
-#endif //PELOTON_N48_H
+#endif  // PELOTON_N48_H

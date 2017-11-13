@@ -24,17 +24,17 @@
 namespace peloton {
 namespace index {
 class N4 : public N {
-public:
+ public:
   uint8_t keys[4];
   N *children[4] = {nullptr, nullptr, nullptr, nullptr};
 
-public:
-  N4(const uint8_t *prefix, uint32_t prefixLength) : N(NTypes::N4, prefix,
-                                                       prefixLength) { }
+ public:
+  N4(const uint8_t *prefix, uint32_t prefixLength)
+      : N(NTypes::N4, prefix, prefixLength) {}
 
   void insert(uint8_t key, N *n);
 
-  template<class NODE>
+  template <class NODE>
   void copyTo(NODE *n) const {
     for (uint32_t i = 0; i < count_; ++i) {
       n->insert(keys[i], children[i]);
@@ -59,10 +59,11 @@ public:
 
   void DeleteChildren();
 
-  uint64_t GetChildren(uint8_t start, uint8_t end, std::tuple<uint8_t, N *> *&children,
+  uint64_t GetChildren(uint8_t start, uint8_t end,
+                       std::tuple<uint8_t, N *> *&children,
                        uint32_t &childrenCount) const;
 };
 }
 }
 
-#endif //PELOTON_N4_H
+#endif  // PELOTON_N4_H

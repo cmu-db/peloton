@@ -33,12 +33,7 @@ using TID = uint64_t;
  * UnsynchronizedTree
  */
 
-enum class NTypes : uint8_t {
-  N4 = 0,
-  N16 = 1,
-  N48 = 2,
-  N256 = 3
-};
+enum class NTypes : uint8_t { N4 = 0, N16 = 1, N48 = 2, N256 = 3 };
 
 typedef struct MultiValues {
   TID tid;
@@ -50,7 +45,7 @@ static constexpr uint32_t max_stored_prefix_length = 11;
 using Prefix = uint8_t[max_stored_prefix_length];
 
 class N {
-protected:
+ protected:
   N(NTypes type, const uint8_t *prefix, uint32_t prefixLength) {
     SetType(type);
     SetPrefix(prefix, prefixLength);
@@ -60,7 +55,7 @@ protected:
 
   N(N &&) = delete;
 
-  //2b type 60b version 1b lock 1b obsolete
+  // 2b type 60b version 1b lock 1b obsolete
   std::atomic<uint64_t> type_version_lock_obsolete_{0b100};
   // version 1, unlocked, not obsolete
   uint32_t prefix_count_ = 0;
@@ -68,13 +63,11 @@ protected:
   uint8_t count_ = 0;
   Prefix prefix_;
 
-
   void SetType(NTypes type);
 
   static uint64_t ConvertTypeToVersion(NTypes type);
 
-public:
-
+ public:
   NTypes GetType() const;
 
   uint32_t GetCount() const;
@@ -100,22 +93,27 @@ public:
   /**
    * can only be called when node is locked
    */
-  void WriteUnlockObsolete() {
-    type_version_lock_obsolete_.fetch_add(0b11);
-  }
+  void WriteUnlockObsolete() { type_version_lock_obsolete_.fetch_add(0b11); }
 
   static N *GetChild(const uint8_t k, const N *node);
 
-  static void InsertAndUnlock(N *node, uint64_t v, N *parentNode, uint64_t parentVersion, uint8_t keyParent, uint8_t key, N *val, bool &needRestart,
+  static void InsertAndUnlock(N *node, uint64_t v, N *parentNode,
+                              uint64_t parentVersion, uint8_t keyParent,
+                              uint8_t key, N *val, bool &needRestart,
                               ThreadInfo &threadInfo);
 
   static bool Change(N *node, uint8_t key, N *val);
 
   static bool AddMultiValue(N *node, uint8_t key, uint64_t val);
 
-  static void RemoveAndUnlock(N *node, uint64_t v, uint8_t key, N *parentNode, uint64_t parentVersion, uint8_t keyParent, bool &needRestart, ThreadInfo &threadInfo);
+  static void RemoveAndUnlock(N *node, uint64_t v, uint8_t key, N *parentNode,
+                              uint64_t parentVersion, uint8_t keyParent,
+                              bool &needRestart, ThreadInfo &threadInfo);
 
-  static void RemoveLockedNodeAndUnlock(N *node, uint8_t key, N *parentNode, uint64_t parentVersion, uint8_t keyParent, bool &needRestart, ThreadInfo &threadInfo);
+  static void RemoveLockedNodeAndUnlock(N *node, uint8_t key, N *parentNode,
+                                        uint64_t parentVersion,
+                                        uint8_t keyParent, bool &needRestart,
+                                        ThreadInfo &threadInfo);
 
   bool HasPrefix() const;
 
@@ -145,22 +143,29 @@ public:
 
   static std::tuple<N *, uint8_t> GetSecondChild(N *node, const uint8_t k);
 
-  template<typename curN, typename biggerN>
-  static void InsertGrow(curN *n, uint64_t v, N *parentNode, uint64_t parentVersion, uint8_t keyParent, uint8_t key, N *val, bool &needRestart, ThreadInfo &threadInfo);
+  template <typename curN, typename biggerN>
+  static void InsertGrow(curN *n, uint64_t v, N *parentNode,
+                         uint64_t parentVersion, uint8_t keyParent, uint8_t key,
+                         N *val, bool &needRestart, ThreadInfo &threadInfo);
 
-  template<typename curN, typename smallerN>
-  static void RemoveAndShrink(curN *n, uint64_t v, N *parentNode, uint64_t parentVersion, uint8_t keyParent, uint8_t key, bool &needRestart, ThreadInfo &threadInfo);
+  template <typename curN, typename smallerN>
+  static void RemoveAndShrink(curN *n, uint64_t v, N *parentNode,
+                              uint64_t parentVersion, uint8_t keyParent,
+                              uint8_t key, bool &needRestart,
+                              ThreadInfo &threadInfo);
 
-  template<typename curN, typename smallerN>
-  static void RemoveLockedNodeAndShrink(curN *n, N *parentNode, uint64_t parentVersion, uint8_t keyParent, uint8_t key, bool &needRestart, ThreadInfo &threadInfo);
+  template <typename curN, typename smallerN>
+  static void RemoveLockedNodeAndShrink(curN *n, N *parentNode,
+                                        uint64_t parentVersion,
+                                        uint8_t keyParent, uint8_t key,
+                                        bool &needRestart,
+                                        ThreadInfo &threadInfo);
 
-  static uint64_t GetChildren(const N *node, uint8_t start, uint8_t end, std::tuple<uint8_t, N *> children[],
+  static uint64_t GetChildren(const N *node, uint8_t start, uint8_t end,
+                              std::tuple<uint8_t, N *> children[],
                               uint32_t &childrenCount);
 };
-
-
 }
 }
 
-
-#endif //PELOTON_N_H
+#endif  // PELOTON_N_H

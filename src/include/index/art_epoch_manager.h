@@ -23,7 +23,7 @@
 namespace peloton {
 namespace index {
 struct LabelDelete {
-  std::array<void*, 32> nodes;
+  std::array<void *, 32> nodes;
   uint64_t epoche;
   std::size_t nodes_count;
   LabelDelete *next;
@@ -34,7 +34,7 @@ class DeletionList {
   LabelDelete *free_label_deletes_ = nullptr;
   std::size_t deletion_list_count_ = 0;
 
-public:
+ public:
   std::atomic<uint64_t> local_epoch_;
   size_t threshold_counter_{0};
   std::atomic<int> cleanup_latch_{0b00};
@@ -61,30 +61,29 @@ class ThreadInfo {
   ARTEpochManager &epoch_manager_;
   DeletionList deletion_list_;
 
+  DeletionList &GetDeletionList();
 
-  DeletionList & GetDeletionList();
-public:
-
+ public:
   ThreadInfo(ARTEpochManager &epoch_manager);
 
-//  ThreadInfo(const ThreadInfo &ti) : epoche(ti.epoche), deletionList(ti.deletionList) {
-//  }
+  //  ThreadInfo(const ThreadInfo &ti) : epoche(ti.epoche),
+  //  deletionList(ti.deletionList) {
+  //  }
 
   ~ThreadInfo();
 
-  ARTEpochManager & GetEpochManager() const;
+  ARTEpochManager &GetEpochManager() const;
 };
 
 class PaddedThreadInfo {
-public:
+ public:
   static constexpr size_t ALIGNMENT = 128;
   ThreadInfo thread_info_;
 
-  PaddedThreadInfo(ARTEpochManager &epoch_manager):
-    thread_info_{epoch_manager}
-  {};
+  PaddedThreadInfo(ARTEpochManager &epoch_manager)
+      : thread_info_{epoch_manager} {};
 
-private:
+ private:
   char padding[ALIGNMENT - sizeof(ThreadInfo)];
 };
 
@@ -105,7 +104,7 @@ class ARTEpochManager {
 
   size_t start_GC_threshhold_;
 
-public:
+ public:
   ARTEpochManager(size_t start_GC_threshhold_);
 
   ~ARTEpochManager();
@@ -121,37 +120,35 @@ public:
   ThreadInfo &getThreadInfoByID(int gc_id);
 
   std::atomic<uint64_t> thread_info_counter_{0};
-
 };
 
 class EpochGuard {
   ThreadInfo &thread_epoch_info_;
-public:
 
-  EpochGuard(ThreadInfo &thread_epoch_info) : thread_epoch_info_(thread_epoch_info) {
+ public:
+  EpochGuard(ThreadInfo &thread_epoch_info)
+      : thread_epoch_info_(thread_epoch_info) {
     thread_epoch_info_.GetEpochManager().EnterEpoch(thread_epoch_info);
   }
 
   ~EpochGuard() {
-    thread_epoch_info_.GetEpochManager().ExitEpochAndCleanup(thread_epoch_info_);
+    thread_epoch_info_.GetEpochManager().ExitEpochAndCleanup(
+        thread_epoch_info_);
   }
 };
 
 class EpochGuardReadonly {
-public:
-
+ public:
   EpochGuardReadonly(ThreadInfo &thread_epoch_info) {
     thread_epoch_info.GetEpochManager().EnterEpoch(thread_epoch_info);
   }
 
-  ~EpochGuardReadonly() {
-  }
+  ~EpochGuardReadonly() {}
 };
 
 inline ThreadInfo::~ThreadInfo() {
   deletion_list_.local_epoch_.store(std::numeric_limits<uint64_t>::max());
 }
-
 }
 }
 
@@ -168,9 +165,7 @@ inline DeletionList::~DeletionList() {
   free_label_deletes_ = nullptr;
 }
 
-inline std::size_t DeletionList::size() {
-  return deletion_list_count_;
-}
+inline std::size_t DeletionList::size() { return deletion_list_count_; }
 
 inline void DeletionList::remove(LabelDelete *label, LabelDelete *prev) {
   if (prev == nullptr) {
@@ -188,7 +183,8 @@ inline void DeletionList::remove(LabelDelete *label, LabelDelete *prev) {
 inline void DeletionList::add(void *n, uint64_t global_epoch) {
   deletion_list_count_++;
   LabelDelete *label;
-  if (head_deletion_list_ != nullptr && head_deletion_list_->nodes_count < head_deletion_list_->nodes.size()) {
+  if (head_deletion_list_ != nullptr &&
+      head_deletion_list_->nodes_count < head_deletion_list_->nodes.size()) {
     label = head_deletion_list_;
   } else {
     if (free_label_deletes_ != nullptr) {
@@ -208,16 +204,16 @@ inline void DeletionList::add(void *n, uint64_t global_epoch) {
   added_++;
 }
 
-inline LabelDelete *DeletionList::head() {
-  return head_deletion_list_;
-}
+inline LabelDelete *DeletionList::head() { return head_deletion_list_; }
 
 inline void ARTEpochManager::EnterEpoch(ThreadInfo &epoch_info) {
   unsigned long current_epoch = current_epoch_.load(std::memory_order_relaxed);
-  epoch_info.GetDeletionList().local_epoch_.store(current_epoch, std::memory_order_release);
+  epoch_info.GetDeletionList().local_epoch_.store(current_epoch,
+                                                  std::memory_order_release);
 }
 
-inline void ARTEpochManager::MarkNodeForDeletion(void *n, ThreadInfo &epoch_info) {
+inline void ARTEpochManager::MarkNodeForDeletion(void *n,
+                                                 ThreadInfo &epoch_info) {
   epoch_info.GetDeletionList().add(n, current_epoch_.load());
   epoch_info.GetDeletionList().threshold_counter_++;
 }
@@ -230,7 +226,8 @@ inline void ARTEpochManager::ExitEpochAndCleanup(ThreadInfo &epoch_info) {
   }
   int latch = deletion_list.cleanup_latch_.load();
   if (deletion_list.threshold_counter_ > start_GC_threshhold_ && latch == 0) {
-    if (deletion_list.cleanup_latch_.compare_exchange_strong(latch, latch + 1)) {
+    if (deletion_list.cleanup_latch_.compare_exchange_strong(latch,
+                                                             latch + 1)) {
       // got the clean up latch for this thread gc
       if (deletion_list.size() == 0) {
         deletion_list.threshold_counter_ = 0;
@@ -239,7 +236,9 @@ inline void ARTEpochManager::ExitEpochAndCleanup(ThreadInfo &epoch_info) {
 
       uint64_t oldest_epoch = std::numeric_limits<uint64_t>::max();
       for (size_t i = 0; i < thread_info_counter_; i++) {
-        auto e = (thread_info_list_ + i)->thread_info_.GetDeletionList().local_epoch_.load();
+        auto e = (thread_info_list_ + i)
+                     ->thread_info_.GetDeletionList()
+                     .local_epoch_.load();
         if (e < oldest_epoch) {
           oldest_epoch = e;
         }
@@ -263,14 +262,15 @@ inline void ARTEpochManager::ExitEpochAndCleanup(ThreadInfo &epoch_info) {
 
       deletion_list.cleanup_latch_.store(0);
     }
-
   }
 }
 
 inline ARTEpochManager::~ARTEpochManager() {
   uint64_t oldest_epoch = std::numeric_limits<uint64_t>::max();
   for (size_t i = 0; i < thread_info_counter_; i++) {
-    auto e = (thread_info_list_ + i)->thread_info_.GetDeletionList().local_epoch_.load();
+    auto e = (thread_info_list_ + i)
+                 ->thread_info_.GetDeletionList()
+                 .local_epoch_.load();
     if (e < oldest_epoch) {
       oldest_epoch = e;
     }
@@ -293,22 +293,20 @@ inline ARTEpochManager::~ARTEpochManager() {
 inline void ARTEpochManager::ShowDeleteRatio() {
   for (size_t i = 0; i < thread_info_counter_; i++) {
     auto &d = (thread_info_list_ + i)->thread_info_.GetDeletionList();
-    LOG_INFO("deleted %llu of %llu", d.deleted_, d.added_);
+    LOG_INFO("deleted %llu of %llu", (unsigned long long)d.deleted_,
+             (unsigned long long)d.added_);
   }
 }
 
 inline ThreadInfo::ThreadInfo(ARTEpochManager &epoch_manager)
-  : epoch_manager_(epoch_manager), deletion_list_() { }
+    : epoch_manager_(epoch_manager), deletion_list_() {}
 
-inline DeletionList &ThreadInfo::GetDeletionList() {
-  return deletion_list_;
-}
+inline DeletionList &ThreadInfo::GetDeletionList() { return deletion_list_; }
 
 inline ARTEpochManager &ThreadInfo::GetEpochManager() const {
   return epoch_manager_;
 }
-
 }
 }
 
-#endif //PELOTON_EPOCHE_H
+#endif  // PELOTON_EPOCHE_H
