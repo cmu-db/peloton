@@ -31,7 +31,7 @@ namespace {
 // We do DATE -> {TIMESTAMP, VARCHAR}
 //===----------------------------------------------------------------------===//
 
-struct CastTimestampToDate : public TypeSystem::Cast {
+struct CastTimestampToDate : public TypeSystem::SimpleNullableCast {
   bool SupportsTypes(const type::Type &from_type,
                      const type::Type &to_type) const override {
     return from_type.GetSqlType() == Timestamp::Instance() &&
@@ -39,8 +39,8 @@ struct CastTimestampToDate : public TypeSystem::Cast {
   }
 
   // Cast the given decimal value into the provided type
-  Value DoCast(CodeGen &codegen, const Value &value,
-               const type::Type &to_type) const override {
+  Value CastImpl(CodeGen &codegen, const Value &value,
+                 const type::Type &to_type) const override {
     PL_ASSERT(SupportsTypes(value.GetType(), to_type));
 
     // TODO: Fix me

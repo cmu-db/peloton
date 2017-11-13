@@ -33,7 +33,7 @@ namespace {
 // We do BIGINT -> {INTEGRAL_TYPE, DECIMAL, VARCHAR, BOOLEAN}
 //===----------------------------------------------------------------------===//
 
-struct CastBigInt : public TypeSystem::Cast {
+struct CastBigInt : public TypeSystem::SimpleNullableCast {
   bool SupportsTypes(const Type &from_type,
                      const Type &to_type) const override {
     if (from_type.GetSqlType() != BigInt::Instance()) {
@@ -52,8 +52,8 @@ struct CastBigInt : public TypeSystem::Cast {
     }
   }
 
-  Value DoCast(CodeGen &codegen, const Value &value,
-               const Type &to_type) const override {
+  Value CastImpl(CodeGen &codegen, const Value &value,
+                 const Type &to_type) const override {
     llvm::Value *result = nullptr;
     switch (to_type.GetSqlType().TypeId()) {
       case peloton::type::TypeId::BOOLEAN: {
@@ -431,8 +431,8 @@ static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
 BigInt::BigInt()
     : SqlType(peloton::type::TypeId::BIGINT),
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
-                   kComparisonTable, kUnaryOperatorTable,
-                   kBinaryOperatorTable, kNaryOperatorTable) {}
+                   kComparisonTable, kUnaryOperatorTable, kBinaryOperatorTable,
+                   kNaryOperatorTable) {}
 
 Value BigInt::GetMinValue(CodeGen &codegen) const {
   auto *raw_val = codegen.Const64(peloton::type::PELOTON_INT64_MIN);

@@ -42,7 +42,9 @@ class Type;
 class TypeSystem {
  public:
   //===--------------------------------------------------------------------===//
-  // Casting operator
+  //
+  // Casting operation
+  //
   //===--------------------------------------------------------------------===//
   class Cast {
    public:
@@ -58,21 +60,25 @@ class TypeSystem {
                          const Type &to_type) const = 0;
   };
 
-  class CastWithNullPropagation : public Cast {
+  //===--------------------------------------------------------------------===//
+  //
+  // SimpleNullableCast
+  //
+  // A abstract base class for cast operations. This class performs generic NULL
+  // checking logic that is common across most casting operations. If the input
+  // is NULLable, an if-then-else construct is generated to perform the NULL
+  // check. Subclasses implement casting logic assuming non-NULLable inputs.
+  //
+  //===--------------------------------------------------------------------===//
+  class SimpleNullableCast : public TypeSystem::Cast {
    public:
-    CastWithNullPropagation(const TypeSystem::Cast &inner_cast)
-        : inner_cast_(inner_cast) {}
-
-    // Does this cast support casting from the given type to the given type?
-    bool SupportsTypes(const Type &from_type,
-                       const Type &to_type) const override;
-
-    // Perform the cast on the given value to the provided type
     Value DoCast(CodeGen &codegen, const Value &value,
                  const Type &to_type) const override;
 
-   private:
-    const TypeSystem::Cast &inner_cast_;
+   protected:
+    // Perform the cast assuming the input is not NULLable
+    virtual Value CastImpl(CodeGen &codegen, const Value &value,
+                           const Type &to_type) const = 0;
   };
 
   struct CastInfo {
@@ -82,7 +88,9 @@ class TypeSystem {
   };
 
   //===--------------------------------------------------------------------===//
+  //
   // The generic comparison interface for all comparisons between all types
+  //
   //===--------------------------------------------------------------------===//
   class Comparison {
    public:

@@ -22,15 +22,19 @@ namespace peloton {
 namespace codegen {
 namespace type {
 
-bool TypeSystem::CastWithNullPropagation::SupportsTypes(
-    const Type &from_type, const Type &to_type) const {
-  return inner_cast_.SupportsTypes(from_type, to_type);
-}
+//===----------------------------------------------------------------------===//
+//
+// SimpleNullableCast
+//
+//===----------------------------------------------------------------------===//
+Value TypeSystem::SimpleNullableCast::DoCast(
+    CodeGen &codegen, const Value &value, const Type &to_type) const {
+  if (!value.IsNullable()) {
+    // If the value isn't NULLable, avoid the NULL check and just invoke
+    return CastImpl(codegen, value, to_type);
+  }
 
-Value TypeSystem::CastWithNullPropagation::DoCast(CodeGen &codegen,
-                                                  const Value &value,
-                                                  const Type &to_type) const {
-  PL_ASSERT(value.IsNullable());
+  // The value is NULLable, we need to perform a null check
 
   Value null_val, ret_val;
   lang::If is_null{codegen, value.IsNull(codegen), "is_null"};
@@ -41,7 +45,7 @@ Value TypeSystem::CastWithNullPropagation::DoCast(CodeGen &codegen,
   is_null.ElseBlock();
   {
     // If both values are not null, perform the non-null-aware operation
-    ret_val = inner_cast_.DoCast(codegen, value, to_type.AsNonNullable());
+    ret_val = CastImpl(codegen, value, to_type.AsNonNullable());
   }
   is_null.EndIf();
 

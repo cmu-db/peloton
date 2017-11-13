@@ -32,7 +32,7 @@ namespace {
 // We do BIGINT -> {INTEGRAL_TYPE, DECIMAL, VARCHAR, BOOLEAN}
 //===----------------------------------------------------------------------===//
 
-struct CastInteger : public TypeSystem::Cast {
+struct CastInteger : public TypeSystem::SimpleNullableCast {
   bool SupportsTypes(const Type &from_type,
                      const Type &to_type) const override {
     if (from_type.GetSqlType() != Integer::Instance()) {
@@ -51,8 +51,8 @@ struct CastInteger : public TypeSystem::Cast {
     }
   }
 
-  Value DoCast(CodeGen &codegen, const Value &value,
-               const Type &to_type) const override {
+  Value CastImpl(CodeGen &codegen, const Value &value,
+                 const Type &to_type) const override {
     llvm::Value *result = nullptr;
     switch (to_type.GetSqlType().TypeId()) {
       case peloton::type::TypeId::BOOLEAN: {
