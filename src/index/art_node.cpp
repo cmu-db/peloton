@@ -473,6 +473,12 @@ std::tuple<N *, uint8_t> N::GetSecondChild(N *node, const uint8_t key) {
 
 void N::DeleteNode(N *node) {
   if (N::IsLeaf(node)) {
+    MultiValues *value_list = reinterpret_cast<MultiValues *>(N::GetLeaf(node));
+    while (value_list != nullptr) {
+      MultiValues *next = (MultiValues *)value_list->next.load();
+      delete value_list;
+      value_list = next;
+    }
     return;
   }
   switch (node->GetType()) {
