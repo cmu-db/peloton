@@ -20,57 +20,18 @@ unset UNAME
 DISTRO=$(echo $DISTRO | tr "[:lower:]" "[:upper:]")
 TMPDIR=/tmp
 
-function install_repo_package() {
-    if [ "$#" -ne 1 ]; then
-        echo "The download path is required."
-        exit 1 
-    else
-        dpath=$(basename "$1")
-    fi
-    pushd $TMPDIR
-    wget -nc --no-check-certificate "$1"
-    sudo yum install -y "$dpath"
-    popd
-    return 0
-}
-
-function install_package() {
-    if [ "$#" -lt 1 ]; then
-        echo "The download path is required."
-        exit 1
-    fi
-
-    pushd $TMPDIR
-    wget -nc --no-check-certificate "$1"
-    tpath=$(basename "$1")
-    dpath=$(tar --exclude='*/*' -tf "$tpath")
-    tar xzf $tpath
-    pushd $dpath
-    if [ -e "bootstrap.sh" ]; then
-        ./bootstrap.sh
-        sudo ./b2 install
-    else
-        ./configure
-        make
-        sudo make install
-    fi
-    popd; popd
-    return 0
-}
-
-
 ## ------------------------------------------------
 ## UBUNTU
 ## ------------------------------------------------
 if [ "$DISTRO" = "UBUNTU" ]; then
     # Fix for LLVM-3.7 on Ubuntu 14.04
     if [ "$DISTRO_VER" == "14.04" ]; then
-        sudo add-apt-repository 'deb http://llvm.org/apt/trusty/ llvm-toolchain-trusty-3.7 main'
+        sudo sh -c "echo 'deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-3.7 main' >> /etc/apt/sources.list"
         sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 15CF4D18AF4F7421
         sudo apt-get update
     fi
 
-    sudo apt-get --force-yes --ignore-missing -y install \
+    sudo apt-get -qq --force-yes --ignore-missing -y install \
         git \
         g++ \
         cmake \
@@ -95,21 +56,26 @@ if [ "$DISTRO" = "UBUNTU" ]; then
 ## FEDORA
 ## ------------------------------------------------
 elif [[ "$DISTRO" == *"FEDORA"* ]]; then
-    sudo dnf install -y git \
+    sudo dnf -q install -y \
+        git \
         gcc-c++ \
+        make \
         cmake \
         gflags-devel \
         protobuf-devel \
         bison \
         flex \
         libevent-devel \
+        openssl-devel \
         boost-devel \
         jemalloc-devel \
         valgrind \
         lcov \
         libpqxx-devel \
         libpqxx \
-        llvm3.7 \
+        llvm \
+        llvm-devel \
+        llvm-static \
         libedit-devel \
         postgresql
 
@@ -117,39 +83,64 @@ elif [[ "$DISTRO" == *"FEDORA"* ]]; then
 ## REDHAT
 ## ------------------------------------------------
 elif [[ "$DISTRO" == *"REDHAT"* ]] && [[ "${DISTRO_VER%.*}" == "7" ]]; then
+    function install_package() {
+        if [ "$#" -lt 1 ]; then
+            echo "The download path is required."
+            exit 1
+        fi
+    
+        pushd $TMPDIR
+        wget -nc --no-check-certificate "$1"
+        tpath=$(basename "$1")
+        dpath=$(tar --exclude='*/*' -tf "$tpath")
+        tar xzf $tpath
+        pushd $dpath
+        if [ -e "bootstrap.sh" ]; then
+            ./bootstrap.sh
+            sudo ./b2 install
+        else
+            ./configure
+            make
+            sudo make install
+        fi
+        popd; popd
+        return 0
+    }
+
     # Package download paths
-    PKG_REPOS=(
-        "https://download.postgresql.org/pub/repos/yum/9.3/redhat/rhel-7-x86_64/pgdg-redhat93-9.3-3.noarch.rpm"
-    )
     PKGS=(
-        "https://github.com/downloads/libevent/libevent/libevent-2.0.21-stable.tar.gz"
-        "http://ftp.gnu.org/gnu/bison/bison-3.0.tar.gz"
         "https://github.com/schuhschuh/gflags/archive/v2.0.tar.gz"
-        "https://sourceforge.net/projects/boost/files/boost/1.54.0/boost_1_54_0.tar.gz"
     )
 
-    # Add required repos
-    for repo_path in ${PKG_REPOS[@]}; do
-        install_repo_package $repo_path
-    done
+    # Add EPEL repository first
+    sudo yum -q -y install epel-release
+    sudo yum -q -y upgrade epel-release
 
     # Simple installations via yum
-    sudo yum install -y \
+    sudo yum -q -y install \
         git \
         gcc-c++ \
+        make \
         cmake \
         flex \
+        bison \
+        libevent-devel \
+        openssl-devel \
+        boost-devel \
         protobuf-devel \
         jemalloc-devel \
+        libedit-devel \
         valgrind \
         lcov \
         m4 \
         doxygen \
         graphviz \
+        libpqxx \
         libpqxx-devel \
-        llvm3.7 \
-        libedit-devel \
-        postgresql93
+        llvm3.9 \
+        llvm3.9-static \
+        llvm3.9-devel \
+        postgresql
 
     # Manually download some packages to guarantee
     # version compatibility
