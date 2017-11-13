@@ -40,7 +40,7 @@ TEST_F(ExecutorThreadPoolTest, UseThreadPoolTest) {
   pool->SubmitTask(
       reinterpret_cast<char *>(&test_runtime_state),
       nullptr,
-      [](char *ptr, codegen::TaskInfo *task_info) {
+      [](char *ptr, UNUSED_ATTRIBUTE codegen::TaskInfo *task_info) {
         auto test_runtime_state = reinterpret_cast<TestRuntimeState *>(ptr);
 
         test_runtime_state->ans = 1;
