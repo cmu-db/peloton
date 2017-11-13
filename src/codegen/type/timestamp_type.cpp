@@ -39,8 +39,8 @@ struct CastTimestampToDate : public TypeSystem::SimpleNullableCast {
   }
 
   // Cast the given decimal value into the provided type
-  Value CastImpl(CodeGen &codegen, const Value &value,
-                 const type::Type &to_type) const override {
+  Value Impl(CodeGen &codegen, const Value &value,
+             const type::Type &to_type) const override {
     PL_ASSERT(SupportsTypes(value.GetType(), to_type));
 
     // TODO: Fix me

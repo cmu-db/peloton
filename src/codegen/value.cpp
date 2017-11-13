@@ -58,7 +58,7 @@ Value Value::CastTo(CodeGen &codegen, const type::Type &to_type) const {
   // Lookup the cast operation and execute it
   const auto *cast_op = type::TypeSystem::GetCast(GetType(), to_type);
   PL_ASSERT(cast_op != nullptr);
-  return cast_op->DoCast(codegen, *this, to_type);
+  return cast_op->Eval(codegen, *this, to_type);
 }
 
 #define GEN_COMPARE(OP)                                     \
@@ -72,7 +72,7 @@ Value Value::CastTo(CodeGen &codegen, const type::Type &to_type) const {
   Value left = CastTo(codegen, left_cast);                  \
   Value right = other.CastTo(codegen, right_cast);          \
                                                             \
-  return comparison->Do##OP(codegen, left, right);
+  return comparison->Eval##OP(codegen, left, right);
 
 Value Value::CompareEq(CodeGen &codegen, const Value &other) const {
   GEN_COMPARE(CompareEq);
@@ -274,7 +274,7 @@ Value Value::BuildPHI(
 Value Value::CallUnaryOp(CodeGen &codegen, OperatorId op_id) const {
   auto *unary_op = type::TypeSystem::GetUnaryOperator(op_id, GetType());
   PL_ASSERT(unary_op != nullptr);
-  return unary_op->DoWork(codegen, *this);
+  return unary_op->Eval(codegen, *this);
 }
 
 Value Value::CallBinaryOp(CodeGen &codegen, OperatorId op_id,
@@ -291,7 +291,7 @@ Value Value::CallBinaryOp(CodeGen &codegen, OperatorId op_id,
   Value casted_right = other.CastTo(codegen, right_target_type);
 
   // Evaluate
-  return binary_op->DoWork(codegen, casted_left, casted_right, on_error);
+  return binary_op->Eval(codegen, casted_left, casted_right, on_error);
 }
 
 }  // namespace codegen

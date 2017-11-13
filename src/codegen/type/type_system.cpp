@@ -27,12 +27,11 @@ namespace type {
 // SimpleNullableCast
 //
 //===----------------------------------------------------------------------===//
-Value TypeSystem::SimpleNullableCast::DoCast(CodeGen &codegen,
-                                             const Value &value,
-                                             const Type &to_type) const {
+Value TypeSystem::SimpleNullableCast::Eval(CodeGen &codegen, const Value &value,
+                                           const Type &to_type) const {
   if (!value.IsNullable()) {
     // If the value isn't NULLable, avoid the NULL check and just invoke
-    return CastImpl(codegen, value, to_type);
+    return Impl(codegen, value, to_type);
   }
 
   // The value is NULLable, we need to perform a null check
@@ -46,7 +45,7 @@ Value TypeSystem::SimpleNullableCast::DoCast(CodeGen &codegen,
   is_null.ElseBlock();
   {
     // If both values are not null, perform the non-null-aware operation
-    ret_val = CastImpl(codegen, value, to_type.AsNonNullable());
+    ret_val = Impl(codegen, value, to_type.AsNonNullable());
   }
   is_null.EndIf();
 
@@ -78,37 +77,37 @@ Value TypeSystem::SimpleNullableCast::DoCast(CodeGen &codegen,
   /* Return the result with the computed null-bit */                       \
   return Value{result.GetType().AsNullable(), result.GetValue(), nullptr, null};
 
-Value TypeSystem::SimpleNullableComparison::DoCompareLt(
+Value TypeSystem::SimpleNullableComparison::EvalCompareLt(
     CodeGen &codegen, const Value &left, const Value &right) const {
   GEN_COMPARE(CompareLtImpl(codegen, left, right));
 }
 
-Value TypeSystem::SimpleNullableComparison::DoCompareLte(
+Value TypeSystem::SimpleNullableComparison::EvalCompareLte(
     CodeGen &codegen, const Value &left, const Value &right) const {
   GEN_COMPARE(CompareLteImpl(codegen, left, right));
 }
 
-Value TypeSystem::SimpleNullableComparison::DoCompareEq(
+Value TypeSystem::SimpleNullableComparison::EvalCompareEq(
     CodeGen &codegen, const Value &left, const Value &right) const {
   GEN_COMPARE(CompareEqImpl(codegen, left, right));
 }
 
-Value TypeSystem::SimpleNullableComparison::DoCompareNe(
+Value TypeSystem::SimpleNullableComparison::EvalCompareNe(
     CodeGen &codegen, const Value &left, const Value &right) const {
   GEN_COMPARE(CompareNeImpl(codegen, left, right));
 }
 
-Value TypeSystem::SimpleNullableComparison::DoCompareGt(
+Value TypeSystem::SimpleNullableComparison::EvalCompareGt(
     CodeGen &codegen, const Value &left, const Value &right) const {
   GEN_COMPARE(CompareGtImpl(codegen, left, right));
 }
 
-Value TypeSystem::SimpleNullableComparison::DoCompareGte(
+Value TypeSystem::SimpleNullableComparison::EvalCompareGte(
     CodeGen &codegen, const Value &left, const Value &right) const {
   GEN_COMPARE(CompareGteImpl(codegen, left, right));
 }
 
-Value TypeSystem::SimpleNullableComparison::DoCompareForSort(
+Value TypeSystem::SimpleNullableComparison::EvalCompareForSort(
     CodeGen &codegen, const Value &left, const Value &right) const {
   GEN_COMPARE(CompareForSortImpl(codegen, left, right));
 }
@@ -120,8 +119,8 @@ Value TypeSystem::SimpleNullableComparison::DoCompareForSort(
 // SimpleNullableUnaryOperator
 //
 //===----------------------------------------------------------------------===//
-Value TypeSystem::SimpleNullableUnaryOperator::DoWork(CodeGen &codegen,
-                                                      const Value &val) const {
+Value TypeSystem::SimpleNullableUnaryOperator::Eval(CodeGen &codegen,
+                                                    const Value &val) const {
   if (!val.IsNullable()) {
     // If the input is not NULLable, elide the NULL check
     return Impl(codegen, val);
@@ -151,10 +150,10 @@ Value TypeSystem::SimpleNullableUnaryOperator::DoWork(CodeGen &codegen,
 // SimpleNullableBinaryOperator
 //
 //===----------------------------------------------------------------------===//
-Value TypeSystem::SimpleNullableBinaryOperator::DoWork(CodeGen &codegen,
-                                                       const Value &left,
-                                                       const Value &right,
-                                                       OnError on_error) const {
+Value TypeSystem::SimpleNullableBinaryOperator::Eval(CodeGen &codegen,
+                                                     const Value &left,
+                                                     const Value &right,
+                                                     OnError on_error) const {
   if (!left.IsNullable() && !right.IsNullable()) {
     // Neither input is NULLable, elide the NULL check
     return Impl(codegen, left, right, on_error);

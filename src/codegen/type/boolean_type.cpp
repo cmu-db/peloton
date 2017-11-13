@@ -36,8 +36,8 @@ struct CastBooleanToInteger : public TypeSystem::SimpleNullableCast {
            to_type.type_id == peloton::type::TypeId::INTEGER;
   }
 
-  Value CastImpl(CodeGen &codegen, const Value &value,
-                 const Type &to_type) const override {
+  Value Impl(CodeGen &codegen, const Value &value,
+             const Type &to_type) const override {
     PL_ASSERT(SupportsTypes(value.GetType(), to_type));
 
     // Any integral value requires a zero-extension
@@ -53,8 +53,8 @@ struct CastBooleanToVarchar : public TypeSystem::SimpleNullableCast {
            to_type.type_id == peloton::type::TypeId::VARCHAR;
   }
 
-  Value CastImpl(CodeGen &codegen, const Value &value,
-                 const Type &to_type) const override {
+  Value Impl(CodeGen &codegen, const Value &value,
+             const Type &to_type) const override {
     PL_ASSERT(SupportsTypes(value.GetType(), to_type));
 
     // Convert this boolean (unsigned int) into a string
