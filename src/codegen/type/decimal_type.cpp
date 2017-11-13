@@ -139,7 +139,7 @@ struct CompareDecimal : public TypeSystem::SimpleNullableComparison {
 };
 
 // Negation
-struct Negate : public TypeSystem::UnaryOperator {
+struct Negate : public TypeSystem::SimpleNullableUnaryOperator {
   bool SupportsType(const Type &type) const override {
     return type.GetSqlType() == Decimal::Instance();
   }
@@ -148,7 +148,7 @@ struct Negate : public TypeSystem::UnaryOperator {
     return Type{Decimal::Instance()};
   }
 
-  Value DoWork(CodeGen &codegen, const Value &val) const override {
+  Value Impl(CodeGen &codegen, const Value &val) const override {
     PL_ASSERT(SupportsType(val.GetType()));
 
     llvm::Value *overflow_bit = nullptr;
@@ -179,7 +179,7 @@ struct Floor : public TypeSystem::SimpleNullableUnaryOperator {
 };
 
 // Addition
-struct Add : public TypeSystem::BinaryOperator {
+struct Add : public TypeSystem::SimpleNullableBinaryOperator {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type.GetSqlType() == Decimal::Instance() &&
@@ -191,8 +191,8 @@ struct Add : public TypeSystem::BinaryOperator {
     return Type{Decimal::Instance()};
   }
 
-  Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
-               UNUSED_ATTRIBUTE OnError on_error) const override {
+  Value Impl(CodeGen &codegen, const Value &left, const Value &right,
+             UNUSED_ATTRIBUTE OnError on_error) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
     auto *raw_val = codegen->CreateFAdd(left.GetValue(), right.GetValue());
     return Value{Decimal::Instance(), raw_val, nullptr, nullptr};
@@ -200,7 +200,7 @@ struct Add : public TypeSystem::BinaryOperator {
 };
 
 // Subtraction
-struct Sub : public TypeSystem::BinaryOperator {
+struct Sub : public TypeSystem::SimpleNullableBinaryOperator {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type.GetSqlType() == Decimal::Instance() &&
@@ -212,8 +212,8 @@ struct Sub : public TypeSystem::BinaryOperator {
     return Type{Decimal::Instance()};
   }
 
-  Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
-               UNUSED_ATTRIBUTE OnError on_error) const override {
+  Value Impl(CodeGen &codegen, const Value &left, const Value &right,
+             UNUSED_ATTRIBUTE OnError on_error) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
     auto *raw_val = codegen->CreateFSub(left.GetValue(), right.GetValue());
     return Value{Decimal::Instance(), raw_val, nullptr, nullptr};
@@ -221,7 +221,7 @@ struct Sub : public TypeSystem::BinaryOperator {
 };
 
 // Multiplication
-struct Mul : public TypeSystem::BinaryOperator {
+struct Mul : public TypeSystem::SimpleNullableBinaryOperator {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type.GetSqlType() == Decimal::Instance() &&
@@ -233,8 +233,8 @@ struct Mul : public TypeSystem::BinaryOperator {
     return Type{Decimal::Instance()};
   }
 
-  Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
-               UNUSED_ATTRIBUTE OnError on_error) const override {
+  Value Impl(CodeGen &codegen, const Value &left, const Value &right,
+             UNUSED_ATTRIBUTE OnError on_error) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
     auto *raw_val = codegen->CreateFMul(left.GetValue(), right.GetValue());
     return Value{Decimal::Instance(), raw_val, nullptr, nullptr};
@@ -242,7 +242,7 @@ struct Mul : public TypeSystem::BinaryOperator {
 };
 
 // Division
-struct Div : public TypeSystem::BinaryOperator {
+struct Div : public TypeSystem::SimpleNullableBinaryOperator {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type.GetSqlType() == Decimal::Instance() &&
@@ -254,8 +254,8 @@ struct Div : public TypeSystem::BinaryOperator {
     return Type{Decimal::Instance()};
   }
 
-  Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
-               OnError on_error) const override {
+  Value Impl(CodeGen &codegen, const Value &left, const Value &right,
+             OnError on_error) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // First, check if the divisor is zero
@@ -299,7 +299,7 @@ struct Div : public TypeSystem::BinaryOperator {
 };
 
 // Modulo
-struct Modulo : public TypeSystem::BinaryOperator {
+struct Modulo : public TypeSystem::SimpleNullableBinaryOperator {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type.GetSqlType() == Decimal::Instance() &&
@@ -311,8 +311,8 @@ struct Modulo : public TypeSystem::BinaryOperator {
     return Type{Decimal::Instance()};
   }
 
-  Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
-               OnError on_error) const override {
+  Value Impl(CodeGen &codegen, const Value &left, const Value &right,
+             OnError on_error) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // First, check if the divisor is zero

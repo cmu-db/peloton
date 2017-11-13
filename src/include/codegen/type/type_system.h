@@ -106,19 +106,14 @@ class TypeSystem {
     // Main comparison operators
     virtual Value DoCompareLt(CodeGen &codegen, const Value &left,
                               const Value &right) const = 0;
-
     virtual Value DoCompareLte(CodeGen &codegen, const Value &left,
                                const Value &right) const = 0;
-
     virtual Value DoCompareEq(CodeGen &codegen, const Value &left,
                               const Value &right) const = 0;
-
     virtual Value DoCompareNe(CodeGen &codegen, const Value &left,
                               const Value &right) const = 0;
-
     virtual Value DoCompareGt(CodeGen &codegen, const Value &left,
                               const Value &right) const = 0;
-
     virtual Value DoCompareGte(CodeGen &codegen, const Value &left,
                                const Value &right) const = 0;
 
@@ -220,6 +215,9 @@ class TypeSystem {
     virtual Value Impl(CodeGen &codegen, const Value &val) const = 0;
   };
 
+  //===--------------------------------------------------------------------===//
+  // Metadata structure capturing an operator ID and an instance
+  //===--------------------------------------------------------------------===//
   struct UnaryOpInfo {
     // The ID of the operation
     OperatorId op_id;
@@ -229,7 +227,11 @@ class TypeSystem {
   };
 
   //===--------------------------------------------------------------------===//
+  //
+  // BinaryOperator
+  //
   // A binary operator (i.e., an operator that accepts two arguments)
+  //
   //===--------------------------------------------------------------------===//
   class BinaryOperator {
    public:
@@ -248,23 +250,25 @@ class TypeSystem {
                          const Value &right, OnError on_error) const = 0;
   };
 
-  class BinaryOperatorWithNullPropagation : public BinaryOperator {
+  //===--------------------------------------------------------------------===//
+  //
+  // SimpleNullableBinaryOperator
+  //
+  // An abstract base class for NULLable unary operators. This class performs
+  // generic NULL checking logic. A NULL value is returned if the input is NULL.
+  // Otherwise, the unary function logic is executed. If the input is not
+  // NULLable, the NULL-check is entirely elided.
+  //
+  //===--------------------------------------------------------------------===//
+  struct SimpleNullableBinaryOperator : public BinaryOperator {
    public:
-    BinaryOperatorWithNullPropagation(
-        const TypeSystem::BinaryOperator &inner_op)
-        : inner_op_(inner_op) {}
-
-    bool SupportsTypes(const Type &left_type,
-                       const Type &right_type) const override;
-
-    Type ResultType(const Type &left_type,
-                    const Type &right_type) const override;
-
     Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
                  OnError on_error) const override;
 
-   private:
-    const BinaryOperator &inner_op_;
+   protected:
+    // The implementation assuming non-nullable types
+    virtual Value Impl(CodeGen &codegen, const Value &left, const Value &right,
+                       OnError on_error) const = 0;
   };
 
   struct BinaryOpInfo {

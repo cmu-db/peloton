@@ -161,7 +161,7 @@ struct CompareSmallInt : public TypeSystem::SimpleNullableComparison {
 //===----------------------------------------------------------------------===//
 
 // Negation
-struct Negate : public TypeSystem::UnaryOperator {
+struct Negate : public TypeSystem::SimpleNullableUnaryOperator {
   bool SupportsType(const Type &type) const override {
     return type.GetSqlType() == SmallInt::Instance();
   }
@@ -170,7 +170,7 @@ struct Negate : public TypeSystem::UnaryOperator {
     return Type{SmallInt::Instance()};
   }
 
-  Value DoWork(CodeGen &codegen, const Value &val) const override {
+  Value Impl(CodeGen &codegen, const Value &val) const override {
     PL_ASSERT(SupportsType(val.GetType()));
 
     llvm::Value *overflow_bit = nullptr;
@@ -189,7 +189,7 @@ struct Negate : public TypeSystem::UnaryOperator {
 //===----------------------------------------------------------------------===//
 
 // Addition
-struct Add : public TypeSystem::BinaryOperator {
+struct Add : public TypeSystem::SimpleNullableBinaryOperator {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type.GetSqlType() == SmallInt::Instance() &&
@@ -201,8 +201,8 @@ struct Add : public TypeSystem::BinaryOperator {
     return Type{SmallInt::Instance()};
   }
 
-  Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
-               OnError on_error) const override {
+  Value Impl(CodeGen &codegen, const Value &left, const Value &right,
+             OnError on_error) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // Do addition
@@ -220,7 +220,7 @@ struct Add : public TypeSystem::BinaryOperator {
 };
 
 // Subtraction
-struct Sub : public TypeSystem::BinaryOperator {
+struct Sub : public TypeSystem::SimpleNullableBinaryOperator {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type.GetSqlType() == SmallInt::Instance() &&
@@ -232,8 +232,8 @@ struct Sub : public TypeSystem::BinaryOperator {
     return Type{SmallInt::Instance()};
   }
 
-  Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
-               OnError on_error) const override {
+  Value Impl(CodeGen &codegen, const Value &left, const Value &right,
+             OnError on_error) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // Do subtraction
@@ -251,7 +251,7 @@ struct Sub : public TypeSystem::BinaryOperator {
 };
 
 // Multiplication
-struct Mul : public TypeSystem::BinaryOperator {
+struct Mul : public TypeSystem::SimpleNullableBinaryOperator {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type.GetSqlType() == SmallInt::Instance() &&
@@ -263,8 +263,8 @@ struct Mul : public TypeSystem::BinaryOperator {
     return Type{SmallInt::Instance()};
   }
 
-  Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
-               OnError on_error) const override {
+  Value Impl(CodeGen &codegen, const Value &left, const Value &right,
+             OnError on_error) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // Do multiplication
@@ -282,7 +282,7 @@ struct Mul : public TypeSystem::BinaryOperator {
 };
 
 // Division
-struct Div : public TypeSystem::BinaryOperator {
+struct Div : public TypeSystem::SimpleNullableBinaryOperator {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type.GetSqlType() == SmallInt::Instance() &&
@@ -294,8 +294,8 @@ struct Div : public TypeSystem::BinaryOperator {
     return Type{SmallInt::Instance()};
   }
 
-  Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
-               OnError on_error) const override {
+  Value Impl(CodeGen &codegen, const Value &left, const Value &right,
+             OnError on_error) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // First, check if the divisor is zero
@@ -339,7 +339,7 @@ struct Div : public TypeSystem::BinaryOperator {
 };
 
 // Modulo
-struct Modulo : public TypeSystem::BinaryOperator {
+struct Modulo : public TypeSystem::SimpleNullableBinaryOperator {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type.GetSqlType() == SmallInt::Instance() &&
@@ -351,8 +351,8 @@ struct Modulo : public TypeSystem::BinaryOperator {
     return Type{SmallInt::Instance()};
   }
 
-  Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
-               OnError on_error) const override {
+  Value Impl(CodeGen &codegen, const Value &left, const Value &right,
+             OnError on_error) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // First, check if the divisor is zero

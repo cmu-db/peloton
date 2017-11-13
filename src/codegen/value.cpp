@@ -285,20 +285,13 @@ Value Value::CallBinaryOp(CodeGen &codegen, OperatorId op_id,
   auto *binary_op = type::TypeSystem::GetBinaryOperator(
       op_id, GetType(), left_target_type, other.GetType(), right_target_type);
 
+  PL_ASSERT(binary_op != nullptr);
+
   Value casted_left = CastTo(codegen, left_target_type);
   Value casted_right = other.CastTo(codegen, right_target_type);
 
-  // Check if we need to do a NULL-aware binary operation invocation
-  if (!casted_left.IsNullable() && !casted_right.IsNullable()) {
-    // Nope
-    return binary_op->DoWork(codegen, casted_left, casted_right, on_error);
-  } else {
-    // One of the inputs are NULL
-    type::TypeSystem::BinaryOperatorWithNullPropagation null_aware_bin_op{
-        *binary_op};
-    return null_aware_bin_op.DoWork(codegen, casted_left, casted_right,
-                                    on_error);
-  }
+  // Evaluate
+  return binary_op->DoWork(codegen, casted_left, casted_right, on_error);
 }
 
 }  // namespace codegen
