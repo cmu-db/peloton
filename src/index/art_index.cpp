@@ -27,117 +27,20 @@
 namespace peloton {
 namespace index {
 
-void ArtIndex::WriteValueInBytes(type::Value value, char *c, int offset, UNUSED_ATTRIBUTE int length) {
-  switch (value.GetTypeId()) {
-    case type::TypeId::BOOLEAN:
-    {
-      c[offset] = value.GetAs<int8_t>();
-      break;
-    }
-    case type::TypeId::TINYINT:
-    {
-      int8_t v = value.GetAs<int8_t>();
-      uint8_t unsigned_value = (uint8_t) v;
-      unsigned_value ^= (1u << 7);
-      c[offset] = unsigned_value & 0xFF;
-      break;
-    }
-    case type::TypeId::SMALLINT:
-    {
-      int16_t v = value.GetAs<int16_t>();
-      uint16_t unsigned_value = (uint16_t) v;
-      unsigned_value ^= (1u << 15);
-      c[offset] = (unsigned_value >> 8) & 0xFF;
-      c[offset + 1] = unsigned_value & 0xFF;
-      break;
-    }
-    case type::TypeId::INTEGER:
-    {
-      int32_t v = value.GetAs<int32_t>();
-      uint32_t unsigned_value = (uint32_t) v;
-      unsigned_value ^= (1u << 31);
-      c[offset] = (unsigned_value >> 24) & 0xFF;
-      c[offset + 1] = (unsigned_value >> 16) & 0xFF;
-      c[offset + 2] = (unsigned_value >> 8) & 0xFF;
-      c[offset + 3] = unsigned_value & 0xFF;
-      break;
-    }
-    case type::TypeId::BIGINT:
-    {
-      int64_t v = value.GetAs<int64_t>();
-      uint64_t unsigned_value = (uint64_t) v;
-      unsigned_value ^= (1lu << 63);
-      c[offset] = (unsigned_value >> 56) & 0xFF;
-      c[offset + 1] = (unsigned_value >> 48) & 0xFF;
-      c[offset + 2] = (unsigned_value >> 40) & 0xFF;
-      c[offset + 3] = (unsigned_value >> 32) & 0xFF;
-      c[offset + 4] = (unsigned_value >> 24) & 0xFF;
-      c[offset + 5] = (unsigned_value >> 16) & 0xFF;
-      c[offset + 6] = (unsigned_value >> 8) & 0xFF;
-      c[offset + 7] = unsigned_value & 0xFF;
-      break;
-    }
-    case type::TypeId::DECIMAL:
-    {
-      // double
-      double v = value.GetAs<double>();
-      uint64_t bits = (uint64_t) v;
-      bits ^= (1lu << 63);
-
-      // bits distribution in double:
-      // 0: sign bit; 1-11: exponent; 12-63: fraction
-      c[offset] = (bits >> 56) & 0xFF;
-      c[offset + 1] = (bits >> 48) & 0xFF;
-      c[offset + 2] = (bits >> 40) & 0xFF;
-      c[offset + 3] = (bits >> 32) & 0xFF;
-      c[offset + 4] = (bits >> 24) & 0xFF;
-      c[offset + 5] = (bits >> 16) & 0xFF;
-      c[offset + 6] = (bits >> 8) & 0xFF;
-      c[offset + 7] = bits & 0xFF;
-      break;
-    }
-    case type::TypeId::DATE:
-    {
-      uint32_t unsigned_value = value.GetAs<uint32_t>();
-      c[offset] = (unsigned_value >> 24) & 0xFF;
-      c[offset + 1] = (unsigned_value >> 16) & 0xFF;
-      c[offset + 2] = (unsigned_value >> 8) & 0xFF;
-      c[offset + 3] = unsigned_value & 0xFF;
-      break;
-    }
-    case type::TypeId::TIMESTAMP:
-    {
-      uint64_t unsigned_value = value.GetAs<uint64_t>();
-      c[offset] = (unsigned_value >> 56) & 0xFF;
-      c[offset + 1] = (unsigned_value >> 48) & 0xFF;
-      c[offset + 2] = (unsigned_value >> 40) & 0xFF;
-      c[offset + 3] = (unsigned_value >> 32) & 0xFF;
-      c[offset + 4] = (unsigned_value >> 24) & 0xFF;
-      c[offset + 5] = (unsigned_value >> 16) & 0xFF;
-      c[offset + 6] = (unsigned_value >> 8) & 0xFF;
-      c[offset + 7] = unsigned_value & 0xFF;
-      break;
-    }
-    case type::TypeId::VARCHAR:
-    case type::TypeId::VARBINARY:
-    case type::TypeId::ARRAY:
-    {
-      int len = ((uint32_t) length < value.GetLength()) ? length : value.GetLength();
-      memcpy(c + offset, value.GetData(), len);
-      if (len < length) {
-        for (int i = len; i < length; i++) {
-          c[offset + i] = 0;
-        }
-      }
-      break;
-    }
-
-    default:
-      break;
-  }
-  return;
-}
-
+/*
+ * LoadKey() - Given a value tid which is the pointer to tuple, the key of
+ *             that tuple will be recovered in the second parameter; the
+ *             index metadata knows which columns in the tuple are needed;
+ *             each column will be transformed into binary comparable bytes.
+ *
+ * ART uses lazy expansion technique and adopts a hybrid path compression
+ * approach, both optimistic and pessimistic. For example, when doing a
+ * lookup for 8 bytes key, a 6 bytes prefix (same as the given key) is found
+ * and reach the leaf node, LoadKey will be called to reconstruct the key
+ * using the value stored in leaf node in order to ensure that the key found
+ * in ART is the same as the given key.
+ *
+ */
 void LoadKey(TID tid, ARTKey &key, IndexMetadata *metadata) {
   // Store the key of the tuple into the key vector
   // Implementation is database specific
@@ -198,35 +101,12 @@ ArtIndex::ArtIndex(IndexMetadata *metadata, AdaptiveRadixTree::LoadKeyFunction l
 
 ArtIndex::~ArtIndex() {}
 
-
-void ArtIndex::WriteIndexedAttributesInKey(const storage::Tuple *tuple, ARTKey& index_key) {
-  int columns_in_key = tuple->GetColumnCount();
-
-  const catalog::Schema *tuple_schema = tuple->GetSchema();
-  std::vector<catalog::Column> columns = tuple_schema->GetColumns();
-  int total_bytes = 0;
-  for (int i = 0; i < columns_in_key; i++) {
-    total_bytes += columns[i].GetLength();
-  }
-
-  char *c = new char[total_bytes];
-  int offset = 0;
-  for (int i = 0; i < columns_in_key; i++) {
-    WriteValueInBytes(tuple->GetValue(i), c, offset, columns[i].GetLength());
-    offset += columns[i].GetLength();
-  }
-
-  index_key.set(c, total_bytes);
-  index_key.setKeyLen(total_bytes);
-
-  delete[] c;
-}
-
-
 /*
- * InsertEntry() - insert a key-value pair into the map
+ * InsertEntry() - insert a key-value pair
  *
- * If the key value pair already exists in the map, just return false
+ * If the key value pair already exists in the map, just return false;
+ * by default, non-unque key is allowed; use CondInsertEntry() for
+ * unique key.
  */
 bool ArtIndex::InsertEntry(
   const storage::Tuple *key,
@@ -243,6 +123,10 @@ bool ArtIndex::InsertEntry(
   return ret;
 }
 
+/*
+ * ScanKey() - return all the values for a given key
+ *
+ */
 void ArtIndex::ScanKey(
   const storage::Tuple *key,
   std::vector<ItemPointer *> &result) {
@@ -356,7 +240,8 @@ void ArtIndex::Scan(
       return;
     }
 
-    // TODO: how do I know the result length before scanning?
+    // the range specify the maximum number of tuples retrieved in this scan
+    // the range parameter is unused so far, but it's useful in code gen
     std::size_t range = 1000;
     std::size_t actual_result_length = 0;
 
@@ -379,10 +264,14 @@ void ArtIndex::ScanLimit(
   UNUSED_ATTRIBUTE std::vector<ItemPointer *> &result,
   UNUSED_ATTRIBUTE const ConjunctionScanPredicate *csp_p,
   UNUSED_ATTRIBUTE uint64_t limit, UNUSED_ATTRIBUTE uint64_t offset) {
-  // TODO: Add your implementation here
+  // TODO
   return;
 }
 
+/*
+ * ScanAllKeys() - A complete scan of the entire tree; return all tuples
+ *
+ */
 void ArtIndex::ScanAllKeys(std::vector<ItemPointer *> &result) {
   auto &t = art_.GetThreadInfo();
   std::size_t actual_result_length = 0;
@@ -391,6 +280,151 @@ void ArtIndex::ScanAllKeys(std::vector<ItemPointer *> &result) {
 }
 
 std::string ArtIndex::GetTypeName() const { return "ART"; }
+
+/*
+ * WriteValueInBytes() - Given a value and its type, the value will be
+ *                       transformed into binary comparable bytes array.
+ *
+ */
+void ArtIndex::WriteValueInBytes(type::Value value, char *c, int offset, UNUSED_ATTRIBUTE int length) {
+  switch (value.GetTypeId()) {
+    case type::TypeId::BOOLEAN:
+    {
+      c[offset] = value.GetAs<int8_t>();
+      break;
+    }
+    case type::TypeId::TINYINT:
+    {
+      int8_t v = value.GetAs<int8_t>();
+      uint8_t unsigned_value = (uint8_t) v;
+      unsigned_value ^= (1u << 7);
+      c[offset] = unsigned_value & 0xFF;
+      break;
+    }
+    case type::TypeId::SMALLINT:
+    {
+      int16_t v = value.GetAs<int16_t>();
+      uint16_t unsigned_value = (uint16_t) v;
+      unsigned_value ^= (1u << 15);
+      c[offset] = (unsigned_value >> 8) & 0xFF;
+      c[offset + 1] = unsigned_value & 0xFF;
+      break;
+    }
+    case type::TypeId::INTEGER:
+    {
+      int32_t v = value.GetAs<int32_t>();
+      uint32_t unsigned_value = (uint32_t) v;
+      unsigned_value ^= (1u << 31);
+      c[offset] = (unsigned_value >> 24) & 0xFF;
+      c[offset + 1] = (unsigned_value >> 16) & 0xFF;
+      c[offset + 2] = (unsigned_value >> 8) & 0xFF;
+      c[offset + 3] = unsigned_value & 0xFF;
+      break;
+    }
+    case type::TypeId::BIGINT:
+    {
+      int64_t v = value.GetAs<int64_t>();
+      uint64_t unsigned_value = (uint64_t) v;
+      unsigned_value ^= (1lu << 63);
+      c[offset] = (unsigned_value >> 56) & 0xFF;
+      c[offset + 1] = (unsigned_value >> 48) & 0xFF;
+      c[offset + 2] = (unsigned_value >> 40) & 0xFF;
+      c[offset + 3] = (unsigned_value >> 32) & 0xFF;
+      c[offset + 4] = (unsigned_value >> 24) & 0xFF;
+      c[offset + 5] = (unsigned_value >> 16) & 0xFF;
+      c[offset + 6] = (unsigned_value >> 8) & 0xFF;
+      c[offset + 7] = unsigned_value & 0xFF;
+      break;
+    }
+    case type::TypeId::DECIMAL:
+    {
+      // double
+      double v = value.GetAs<double>();
+      uint64_t bits = (uint64_t) v;
+      bits ^= (1lu << 63);
+
+      // bits distribution in double:
+      // 0: sign bit; 1-11: exponent; 12-63: fraction
+      c[offset] = (bits >> 56) & 0xFF;
+      c[offset + 1] = (bits >> 48) & 0xFF;
+      c[offset + 2] = (bits >> 40) & 0xFF;
+      c[offset + 3] = (bits >> 32) & 0xFF;
+      c[offset + 4] = (bits >> 24) & 0xFF;
+      c[offset + 5] = (bits >> 16) & 0xFF;
+      c[offset + 6] = (bits >> 8) & 0xFF;
+      c[offset + 7] = bits & 0xFF;
+      break;
+    }
+    case type::TypeId::DATE:
+    {
+      uint32_t unsigned_value = value.GetAs<uint32_t>();
+      c[offset] = (unsigned_value >> 24) & 0xFF;
+      c[offset + 1] = (unsigned_value >> 16) & 0xFF;
+      c[offset + 2] = (unsigned_value >> 8) & 0xFF;
+      c[offset + 3] = unsigned_value & 0xFF;
+      break;
+    }
+    case type::TypeId::TIMESTAMP:
+    {
+      uint64_t unsigned_value = value.GetAs<uint64_t>();
+      c[offset] = (unsigned_value >> 56) & 0xFF;
+      c[offset + 1] = (unsigned_value >> 48) & 0xFF;
+      c[offset + 2] = (unsigned_value >> 40) & 0xFF;
+      c[offset + 3] = (unsigned_value >> 32) & 0xFF;
+      c[offset + 4] = (unsigned_value >> 24) & 0xFF;
+      c[offset + 5] = (unsigned_value >> 16) & 0xFF;
+      c[offset + 6] = (unsigned_value >> 8) & 0xFF;
+      c[offset + 7] = unsigned_value & 0xFF;
+      break;
+    }
+    case type::TypeId::VARCHAR:
+    case type::TypeId::VARBINARY:
+    case type::TypeId::ARRAY:
+    {
+      int len = ((uint32_t) length < value.GetLength()) ? length : value.GetLength();
+      memcpy(c + offset, value.GetData(), len);
+      if (len < length) {
+        for (int i = len; i < length; i++) {
+          c[offset + i] = 0;
+        }
+      }
+      break;
+    }
+
+    default:
+      break;
+  }
+  return;
+}
+
+/*
+ * WriteIndexedAttributesInKey() - Given a tuple, the data in each column
+ *                                 will be transform into binary comparable
+ *                                 bytes array.
+ *
+ */
+void ArtIndex::WriteIndexedAttributesInKey(const storage::Tuple *tuple, ARTKey& index_key) {
+  int columns_in_key = tuple->GetColumnCount();
+
+  const catalog::Schema *tuple_schema = tuple->GetSchema();
+  std::vector<catalog::Column> columns = tuple_schema->GetColumns();
+  int total_bytes = 0;
+  for (int i = 0; i < columns_in_key; i++) {
+    total_bytes += columns[i].GetLength();
+  }
+
+  char *c = new char[total_bytes];
+  int offset = 0;
+  for (int i = 0; i < columns_in_key; i++) {
+    WriteValueInBytes(tuple->GetValue(i), c, offset, columns[i].GetLength());
+    offset += columns[i].GetLength();
+  }
+
+  index_key.set(c, total_bytes);
+  index_key.setKeyLen(total_bytes);
+
+  delete[] c;
+}
 
 }  // namespace index
 }  // namespace peloton

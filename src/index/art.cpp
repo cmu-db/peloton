@@ -806,6 +806,22 @@ typename AdaptiveRadixTree::CheckPrefixPessimisticResult AdaptiveRadixTree::Chec
     ARTKey kt;
     for (uint32_t i = 0; i < n->GetPrefixLength(); ++i) {
       if (i == max_stored_prefix_length) {
+        /*
+         * ART uses path compression, assume that the pessimistic path compression
+         * only records 3 bytes of prefix in each node, consider a case where only
+         * keys are inserted in the ART, key 'abcdef123' and key 'abcdef456', 3 nodes
+         * will be constructed, a root node which records a prefix 'abc' ('def' is
+         * skipped due to optimistic path compression) and has two pointers, pointer
+         * '1' to left leaf node and pointer '4' to right leaf node; 2 leaf nodes
+         * only store the pointer to the tuple; when doing a lookup for key
+         * 'abcdef789' or key 'abcxyzrst', ART knows the first 3 bytes match the
+         * prefix recorded in root node and it also knows 3 bytes are missing in the
+         * actual prefix that root node represents, so ART uses the value in any
+         * leaf values below the current node to reconstruct a key and continues
+         * comparing the remaining 3 bytes missing because of optimistic path
+         * compression. The idea of getting any children is smart because any keys
+         * that go through this node share the same 6 bytes.
+         */
         auto any_tid = N::GetAnyChildTid(n, need_restart);
         if (need_restart) return CheckPrefixPessimisticResult::Match;
         loadKey(any_tid, kt, metadata);
