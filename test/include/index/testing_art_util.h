@@ -52,6 +52,8 @@ public:
 //
 //  static void NonUniqueKeyMultiThreadedTest(const IndexType index_type);
 
+  static void NonUniqueKeyMultiThreadedScanTest(const IndexType index_type);
+
   static void NonUniqueKeyMultiThreadedStressTest(const IndexType index_type);
 //
 //  static void NonUniqueKeyMultiThreadedStressTest2(const IndexType index_type);
@@ -82,6 +84,9 @@ public:
 
   static void DeleteHelperMicroBench(index::ArtIndex *index,
                                      int num_rows, UNUSED_ATTRIBUTE uint64_t thread_itr);
+
+  static void ScanHelperMicroBench(index::ArtIndex *index, size_t scale_factor,
+                                     int total_rows, int insert_workers, UNUSED_ATTRIBUTE uint64_t thread_itr);
 
   struct KeyAndValues {
     std::array<uint64_t, 16> values;

@@ -105,8 +105,8 @@ ArtIndex::~ArtIndex() {}
  * InsertEntry() - insert a key-value pair
  *
  * If the key value pair already exists in the map, just return false;
- * by default, non-unque key is allowed; use CondInsertEntry() for
- * unique key.
+ * by default, non-unque key is allowed
+ *
  */
 bool ArtIndex::InsertEntry(
   const storage::Tuple *key,

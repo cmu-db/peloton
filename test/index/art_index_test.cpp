@@ -37,6 +37,10 @@ TEST_F(ARTIndexTests, MultiThreadedInsertTest) {
   TestingArtUtil::MultiThreadedInsertTest(IndexType::ART);
 }
 
+TEST_F(ARTIndexTests, NonUniqueKeyMultiThreadedScanTest) {
+  TestingArtUtil::NonUniqueKeyMultiThreadedScanTest(IndexType::ART);
+}
+
 TEST_F(ARTIndexTests, NonUniqueKeyMultiThreadedStressTest) {
   TestingArtUtil::NonUniqueKeyMultiThreadedStressTest(IndexType::ART);
 }

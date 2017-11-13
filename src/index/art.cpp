@@ -617,7 +617,7 @@ bool AdaptiveRadixTree::ConditionalInsert(const ARTKey &k, TID tid, ThreadInfo &
         MultiValues *value_list = reinterpret_cast<MultiValues *>(N::GetLeaf(next_node));
         while (value_list != nullptr) {
           ItemPointer *value_pointer = (ItemPointer *) (value_list->tid);
-          if (predicate(value_pointer)) {
+          if (predicate != nullptr && predicate(value_pointer)) {
             node->WriteUnlock();
             return false;
           } else if ((uint64_t) value_pointer == tid) {

@@ -171,7 +171,7 @@ void TestingArtUtil::MultiThreadedInsertTest(UNUSED_ATTRIBUTE const IndexType in
 
   bool unique = false;
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
-    "primary_btree_index", 123, INVALID_OID, INVALID_OID, IndexType::ART,
+    "art_index", 123, INVALID_OID, INVALID_OID, IndexType::ART,
     IndexConstraintType::DEFAULT, tuple_schema, key_schema, key_attrs,
     unique);
 
@@ -210,6 +210,50 @@ void TestingArtUtil::MultiThreadedInsertTest(UNUSED_ATTRIBUTE const IndexType in
   EXPECT_EQ(0, result.size());
 }
 
+void TestingArtUtil::NonUniqueKeyMultiThreadedScanTest(UNUSED_ATTRIBUTE const IndexType index_type) {
+  catalog::Schema *tuple_schema = new catalog::Schema(
+    {TestingExecutorUtil::GetColumnInfo(0), TestingExecutorUtil::GetColumnInfo(1),
+     TestingExecutorUtil::GetColumnInfo(2), TestingExecutorUtil::GetColumnInfo(3)});
+  std::vector<oid_t> key_attrs = {0};
+  catalog::Schema *key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+
+  bool unique = false;
+  index::IndexMetadata *index_metadata = new index::IndexMetadata(
+    "art_index", 123, INVALID_OID, INVALID_OID, IndexType::ART,
+    IndexConstraintType::DEFAULT, tuple_schema, key_schema, key_attrs,
+    unique);
+
+  index::ArtIndex art_index(index_metadata, loadKeyForTest);
+
+  if (!map_populated) {
+    PopulateMap(art_index);
+  }
+
+  int num_rows = 10000;
+  size_t num_threads = 16;
+
+  Timer<> timer;
+  timer.Start();
+  LaunchParallelTest(num_threads, TestingArtUtil::InsertHelperMicroBench, &art_index, num_rows);
+  timer.Stop();
+  LOG_INFO("160,000 tuples inserted in %.5lfs", timer.GetDuration());
+
+
+  std::vector<ItemPointer *> result;
+  art_index.ScanAllKeys(result);
+  EXPECT_EQ(num_rows * num_threads, result.size());
+
+  int scan_scale_factor = 100;
+  size_t scan_workers_threads = 16;
+  timer.Reset();
+  timer.Start();
+  LaunchParallelTest(scan_workers_threads, TestingArtUtil::ScanHelperMicroBench, &art_index, scan_scale_factor, num_rows, num_threads);
+  timer.Stop();
+  LOG_INFO("1,600 scans in %.5lfs", timer.GetDuration());
+
+}
+
+
 void TestingArtUtil::NonUniqueKeyMultiThreadedStressTest(UNUSED_ATTRIBUTE const IndexType index_type) {
   catalog::Schema *tuple_schema = new catalog::Schema(
     {TestingExecutorUtil::GetColumnInfo(0), TestingExecutorUtil::GetColumnInfo(1),
@@ -219,7 +263,7 @@ void TestingArtUtil::NonUniqueKeyMultiThreadedStressTest(UNUSED_ATTRIBUTE const 
 
   bool unique = false;
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
-    "primary_btree_index", 123, INVALID_OID, INVALID_OID, IndexType::ART,
+    "art_index", 123, INVALID_OID, INVALID_OID, IndexType::ART,
     IndexConstraintType::DEFAULT, tuple_schema, key_schema, key_attrs,
     unique);
 
@@ -262,7 +306,6 @@ void TestingArtUtil::NonUniqueKeyMultiThreadedStressTest(UNUSED_ATTRIBUTE const 
   }
 
 }
-
 
 storage::DataTable *TestingArtUtil::CreateTable(
   int tuples_per_tilegroup_count, bool indexes, oid_t table_oid) {
@@ -312,7 +355,7 @@ storage::DataTable *TestingArtUtil::CreateTable(
     unique = true;
 
     index_metadata = new index::IndexMetadata(
-      "primary_btree_index", 123, INVALID_OID, INVALID_OID, IndexType::ART,
+      "art_index", 123, INVALID_OID, INVALID_OID, IndexType::ART,
       IndexConstraintType::DEFAULT, tuple_schema, key_schema, key_attrs,
       unique);
 
@@ -490,6 +533,22 @@ void TestingArtUtil::DeleteHelper(storage::DataTable *table, UNUSED_ATTRIBUTE in
 void TestingArtUtil::DeleteHelperMicroBench(index::ArtIndex *index, int num_rows, uint64_t thread_itr) {
   for (int rowid = 0; rowid < num_rows; rowid++) {
     index->DeleteEntry(key_to_values[rowid].tuple, (ItemPointer *)key_to_values[rowid].values[thread_itr]);
+  }
+}
+
+void TestingArtUtil::ScanHelperMicroBench(index::ArtIndex *index, size_t scale_factor, int total_rows, int insert_workers, UNUSED_ATTRIBUTE uint64_t thread_itr) {
+  for (size_t scale_itr = 0; scale_itr < scale_factor; scale_itr++) {
+    int begin_index = std::rand() % (total_rows - 1);
+    int end_index = std::rand() % (total_rows - begin_index) + begin_index + 1;
+    if (end_index >= total_rows) {
+      end_index = total_rows - 1;
+    }
+    index::ARTKey continue_key;
+    std::vector<ItemPointer *> result;
+    size_t result_found = 0;
+    auto &t = index->art_.GetThreadInfo();
+    index->art_.LookupRange(key_to_values[begin_index].key, key_to_values[end_index].key, continue_key, result, 0, result_found, t);
+    EXPECT_EQ(insert_workers * (end_index - begin_index + 1), result_found);
   }
 }
 
