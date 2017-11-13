@@ -27,8 +27,9 @@ namespace type {
 // SimpleNullableCast
 //
 //===----------------------------------------------------------------------===//
-Value TypeSystem::SimpleNullableCast::DoCast(
-    CodeGen &codegen, const Value &value, const Type &to_type) const {
+Value TypeSystem::SimpleNullableCast::DoCast(CodeGen &codegen,
+                                             const Value &value,
+                                             const Type &to_type) const {
   if (!value.IsNullable()) {
     // If the value isn't NULLable, avoid the NULL check and just invoke
     return CastImpl(codegen, value, to_type);
