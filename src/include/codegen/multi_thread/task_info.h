@@ -21,15 +21,22 @@ namespace codegen {
 // thread information stored in RuntimeState.
 class TaskInfo {
  public:
+  // "Constructor"
   void Init(int32_t thread_id, int32_t nthreads);
 
+  // "Destructor"
+  void Destroy();
+
+  // TODO(zhixunt): Change this to task-related property.
   int32_t GetThreadId();
 
+  // TODO(zhixunt): Change this to task-related property.
   int32_t GetNumThreads();
 
  private:
-  // Can't construct
-  TaskInfo() = default;
+  // Use Init and Destroy on allocated memory instead.
+  TaskInfo(int32_t thread_id, int32_t nthreads);
+  ~TaskInfo() = default;
 
   int32_t thread_id_;
   int32_t nthreads_;
