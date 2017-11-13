@@ -504,10 +504,16 @@ restart:
     if (need_restart) goto restart;
 
     if (next_node == nullptr) {
+      N *new_leaf_node = N::SetLeaf(tid);
       N::InsertAndUnlock(node, v, parent_node, parent_version, parent_key,
-                         node_key, N::SetLeaf(tid), need_restart,
+                         node_key, new_leaf_node, need_restart,
                          thread_epoch_info);
-      if (need_restart) goto restart;
+      if (need_restart) {
+        // free the memory in new leaf node
+        MultiValues *value_list = reinterpret_cast<MultiValues *>(N::GetLeaf(new_leaf_node));
+        delete value_list;
+        goto restart;
+      }
       insert_success = true;
       return;
     }
@@ -621,10 +627,16 @@ restart:
     if (need_restart) goto restart;
 
     if (next_node == nullptr) {
+      N *new_leaf_node = N::SetLeaf(tid);
       N::InsertAndUnlock(node, v, parent_node, parent_version, parent_key,
-                         node_key, N::SetLeaf(tid), need_restart,
+                         node_key, new_leaf_node, need_restart,
                          thread_epoch_info);
-      if (need_restart) goto restart;
+      if (need_restart) {
+        // free the memory in new leaf node
+        MultiValues *value_list = reinterpret_cast<MultiValues *>(N::GetLeaf(new_leaf_node));
+        delete value_list;
+        goto restart;
+      }
       return true;
     }
 

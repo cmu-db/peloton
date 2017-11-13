@@ -254,7 +254,7 @@ void N::RemoveAndShrink(curN *n, uint64_t v, N *parentNode,
     n->UpgradeToWriteLockOrRestart(v, needRestart);
     if (needRestart) return;
 
-    n->remove(key);
+    n->remove(key, threadInfo);
     n->WriteUnlock();
     return;
   }
@@ -270,7 +270,7 @@ void N::RemoveAndShrink(curN *n, uint64_t v, N *parentNode,
   auto nSmall = new smallerN(n->GetPrefix(), n->GetPrefixLength());
 
   n->copyTo(nSmall);
-  nSmall->remove(key);
+  nSmall->remove(key, threadInfo);
   N::Change(parentNode, keyParent, nSmall);
 
   n->WriteUnlockObsolete();
@@ -354,7 +354,7 @@ void N::RemoveLockedNodeAndShrink(curN *n, N *parentNode,
       if (needRestart) return;
     }
 
-    n->remove(key);
+    n->remove(key, threadInfo);
     n->WriteUnlock();
     return;
   }
@@ -367,7 +367,7 @@ void N::RemoveLockedNodeAndShrink(curN *n, N *parentNode,
   auto nSmall = new smallerN(n->GetPrefix(), n->GetPrefixLength());
 
   n->copyTo(nSmall);
-  nSmall->remove(key);
+  nSmall->remove(key, threadInfo);
   N::Change(parentNode, keyParent, nSmall);
 
   n->WriteUnlockObsolete();

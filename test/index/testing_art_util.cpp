@@ -224,6 +224,8 @@ void TestingArtUtil::MultiThreadedInsertTest(UNUSED_ATTRIBUTE const IndexType
   result.clear();
   art_index.ScanKey(key_to_values[test_key_index].tuple, result);
   EXPECT_EQ(0, result.size());
+
+  delete tuple_schema;
 }
 
 void TestingArtUtil::NonUniqueKeyMultiThreadedScanTest(
@@ -271,6 +273,8 @@ void TestingArtUtil::NonUniqueKeyMultiThreadedScanTest(
                      &art_index, scan_scale_factor, num_rows, num_threads);
   timer.Stop();
   LOG_INFO("1,600 scans in %.5lfs", timer.GetDuration());
+
+  delete tuple_schema;
 }
 
 void TestingArtUtil::NonUniqueKeyMultiThreadedStressTest(
@@ -330,6 +334,8 @@ void TestingArtUtil::NonUniqueKeyMultiThreadedStressTest(
     EXPECT_EQ(1, result.size());
     EXPECT_EQ((uint64_t)key_to_values[i].values[15], (uint64_t)result[0]);
   }
+
+  delete tuple_schema;
 }
 
 storage::DataTable *TestingArtUtil::CreateTable(int tuples_per_tilegroup_count,

@@ -47,7 +47,7 @@ class N4 : public N {
 
   N *GetChild(const uint8_t k) const;
 
-  void remove(uint8_t k);
+  void remove(uint8_t k, ThreadInfo &thread_info);
 
   N *GetAnyChild() const;
 

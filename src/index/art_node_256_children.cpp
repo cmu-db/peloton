@@ -57,7 +57,10 @@ bool N256::AddMultiValue(uint8_t key, uint64_t val) {
 
 N *N256::GetChild(const uint8_t k) const { return children[k]; }
 
-void N256::remove(uint8_t k) {
+void N256::remove(uint8_t k, ThreadInfo &thread_info) {
+  if (N::IsLeaf(children[k])) {
+    thread_info.GetEpochManager().MarkNodeForDeletion((MultiValues *)N::GetLeaf(children[k]), thread_info);
+  }
   children[k] = nullptr;
   count_--;
 }

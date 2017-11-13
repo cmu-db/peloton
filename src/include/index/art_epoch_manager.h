@@ -287,6 +287,7 @@ inline ARTEpochManager::~ARTEpochManager() {
       d.remove(cur, prev);
       cur = next;
     }
+    d.~DeletionList();
   }
   free(original_pointer_);
 }

@@ -63,8 +63,11 @@ N *N48::GetChild(const uint8_t k) const {
   }
 }
 
-void N48::remove(uint8_t k) {
+void N48::remove(uint8_t k, ThreadInfo &thread_info) {
   assert(childIndex[k] != emptyMarker);
+  if (N::IsLeaf(children[childIndex[k]])) {
+    thread_info.GetEpochManager().MarkNodeForDeletion((MultiValues *)N::GetLeaf(children[childIndex[k]]), thread_info);
+  }
   children[childIndex[k]] = nullptr;
   childIndex[k] = emptyMarker;
   count_--;
