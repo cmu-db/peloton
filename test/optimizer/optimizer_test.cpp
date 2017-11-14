@@ -227,7 +227,7 @@ TEST_F(OptimizerTests, PredicatePushDownTest) {
 
   optimizer::Optimizer optimizer;
   txn = txn_manager.BeginTransaction();
-  auto plan = optimizer.BuildPelotonPlanTree(stmt, txn);
+  auto plan = optimizer.BuildPelotonPlanTree(stmt, DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 
 
