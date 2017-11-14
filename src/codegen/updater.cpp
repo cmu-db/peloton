@@ -27,14 +27,16 @@
 namespace peloton {
 namespace codegen {
 
-void Updater::Init(concurrency::Transaction *txn, storage::DataTable *table,
+void Updater::Init(storage::DataTable *table,
+                   executor::ExecutorContext *executor_context,
                    Target *target_vector, uint32_t target_vector_size) {
-  PL_ASSERT(txn != nullptr && table != nullptr && target_vector != nullptr);
-  txn_ = txn;
+  PL_ASSERT(table != nullptr && executor_context != nullptr&&
+            target_vector != nullptr);
   table_ = table;
+  executor_context_ = executor_context;
   // Target list is kept since it is required at a new version update
-  target_list_.reset(
-      new TargetList(target_vector, target_vector + target_vector_size));
+  target_list_ =
+      new TargetList(target_vector, target_vector + target_vector_size);
 }
 
 char *Updater::GetDataPtr(uint32_t tile_group_id, uint32_t tuple_offset) {
@@ -48,20 +50,21 @@ char *Updater::GetDataPtr(uint32_t tile_group_id, uint32_t tuple_offset) {
 }
 
 char *Updater::Prepare(uint32_t tile_group_id, uint32_t tuple_offset) {
-  PL_ASSERT(txn_ != nullptr && table_ != nullptr);
+  PL_ASSERT(table_ != nullptr && executor_context_ != nullptr);
+  auto *txn = executor_context_->GetTransaction();
   auto tile_group = table_->GetTileGroupById(tile_group_id).get();
   auto *tile_group_header = tile_group->GetHeader();
   old_location_.block = tile_group_id;
   old_location_.offset = tuple_offset;
 
   // If I am the owner, update in-place
-  is_owner_ = TransactionRuntime::IsOwner(*txn_, tile_group_header,
+  is_owner_ = TransactionRuntime::IsOwner(*txn, tile_group_header,
                                           tuple_offset);
   if (is_owner_ == true)
     return GetDataPtr(tile_group_id, tuple_offset);
 
   // If not the owner, acquire ownership and build a new version tuple
-  acquired_ownership_ = TransactionRuntime::AcquireOwnership(*txn_,
+  acquired_ownership_ = TransactionRuntime::AcquireOwnership(*txn,
       tile_group_header, tuple_offset);
   if (acquired_ownership_ == false)
     return nullptr;
@@ -71,17 +74,18 @@ char *Updater::Prepare(uint32_t tile_group_id, uint32_t tuple_offset) {
 }
 
 char *Updater::PreparePK(uint32_t tile_group_id, uint32_t tuple_offset) {
-  PL_ASSERT(txn_ != nullptr && table_ != nullptr);
+  PL_ASSERT(table_ != nullptr && executor_context_ != nullptr);
+  auto *txn = executor_context_->GetTransaction();
   auto tile_group = table_->GetTileGroupById(tile_group_id).get();
   auto *tile_group_header = tile_group->GetHeader();
 
   // Check ownership
-  is_owner_ = TransactionRuntime::IsOwner(*txn_, tile_group_header,
+  is_owner_ = TransactionRuntime::IsOwner(*txn, tile_group_header,
                                           tuple_offset);
   acquired_ownership_ = false;
   if (is_owner_ == false) {
     acquired_ownership_ = TransactionRuntime::AcquireOwnership(
-        *txn_, tile_group_header, tuple_offset);
+        *txn, tile_group_header, tuple_offset);
     if (acquired_ownership_ == false)
       return nullptr;
   }
@@ -90,12 +94,12 @@ char *Updater::PreparePK(uint32_t tile_group_id, uint32_t tuple_offset) {
   ItemPointer old_location(tile_group_id, tuple_offset);
   ItemPointer empty_location = table_->InsertEmptyVersion();
   if (empty_location.IsNull() == true && acquired_ownership_ == true) {
-    TransactionRuntime::YieldOwnership(*txn_, tile_group_header,
+    TransactionRuntime::YieldOwnership(*txn, tile_group_header,
                                        tuple_offset);
     return nullptr;
   }
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  txn_manager.PerformDelete(txn_, old_location, empty_location);
+  txn_manager.PerformDelete(txn, old_location, empty_location);
 
   // Get the tuple data pointer for a new version
   new_location_ = table_->GetEmptyTupleSlot(nullptr);
@@ -108,20 +112,21 @@ peloton::type::AbstractPool *Updater::GetPool() {
   return tile_->GetPool();
 }
 
-void Updater::Update(executor::ExecutorContext *executor_context) {
-  PL_ASSERT(txn_ != nullptr && table_ != nullptr);
+void Updater::Update() {
+  PL_ASSERT(table_ != nullptr && executor_context_ != nullptr);
   LOG_TRACE("Updating tuple <%u, %u> from table '%s' (db ID: %u, table ID: %u)",
             old_location_.block, old_location_.offset,
             table_->GetName().c_str(), table_->GetDatabaseOid(),
             table_->GetOid());
+  auto *txn = executor_context_->GetTransaction();
   auto tile_group = table_->GetTileGroupById(old_location_.block).get();
   auto *tile_group_header = tile_group->GetHeader();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   // Either update in-place
   if (is_owner_ == true) {
-    txn_manager.PerformUpdate(txn_, old_location_);
-    executor_context->num_processed++;
+    txn_manager.PerformUpdate(txn, old_location_);
+    executor_context_->num_processed++;
     return;
   }
 
@@ -130,43 +135,44 @@ void Updater::Update(executor::ExecutorContext *executor_context) {
     table_->GetTileGroupById(new_location_.block).get(), new_location_.offset);
   ItemPointer *indirection =
       tile_group_header->GetIndirection(old_location_.offset);
-  auto result = table_->InstallVersion(&new_tuple, target_list_.get(), txn_,
+  auto result = table_->InstallVersion(&new_tuple, target_list_, txn,
                                        indirection);
   if (result == false) {
-    TransactionRuntime::YieldOwnership(*txn_, tile_group_header,
+    TransactionRuntime::YieldOwnership(*txn, tile_group_header,
                                        old_location_.offset);
     return;
   }
-  txn_manager.PerformUpdate(txn_, old_location_, new_location_);
-  executor_context->num_processed++;
+  txn_manager.PerformUpdate(txn, old_location_, new_location_);
+  executor_context_->num_processed++;
 }
 
-void Updater::UpdatePK(executor::ExecutorContext *executor_context) {
-  PL_ASSERT(txn_ != nullptr && table_ != nullptr);
+void Updater::UpdatePK() {
+  PL_ASSERT(table_ != nullptr && executor_context_ != nullptr);
   LOG_TRACE("Updating tuple <%u, %u> from table '%s' (db ID: %u, table ID: %u)",
             old_location_.block, old_location_.offset,
             table_->GetName().c_str(), table_->GetDatabaseOid(),
             table_->GetOid());
+  auto *txn = executor_context_->GetTransaction();
   auto tile_group = table_->GetTileGroupById(new_location_.block).get();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   // Insert a new tuple
   ContainerTuple<storage::TileGroup> tuple(tile_group, new_location_.offset);
   ItemPointer *index_entry_ptr = nullptr;
-  bool result = table_->InsertTuple(&tuple, new_location_, txn_,
+  bool result = table_->InsertTuple(&tuple, new_location_, txn,
                                     &index_entry_ptr);
   if (result == false) {
-    txn_manager.SetTransactionResult(txn_, ResultType::FAILURE);
+    txn_manager.SetTransactionResult(txn, ResultType::FAILURE);
     return;
   }
-  txn_manager.PerformInsert(txn_, new_location_, index_entry_ptr);
-  executor_context->num_processed++;
+  txn_manager.PerformInsert(txn, new_location_, index_entry_ptr);
+  executor_context_->num_processed++;
 }
 
 void Updater::TearDown() {
   // Updater object does not destruct its own data structures
   tile_.reset();
-  target_list_.reset();
+  delete target_list_;
 }
 
 }  // namespace codegen

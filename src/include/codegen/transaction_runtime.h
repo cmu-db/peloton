@@ -13,8 +13,6 @@
 #pragma once
 
 #include <cstdint>
-#include "type/types.h"
-#include "common/item_pointer.h"
 
 namespace peloton {
 

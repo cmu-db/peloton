@@ -38,7 +38,8 @@ namespace codegen {
 class Updater {
  public:
   // Initialize the instance
-  void Init(concurrency::Transaction *txn, storage::DataTable *table,
+  void Init(storage::DataTable *table,
+            executor::ExecutorContext *executor_context,
             Target *target_vector, uint32_t target_vector_size);
 
   // Prepare for a non-primary key update and get a tuple data pointer
@@ -51,28 +52,28 @@ class Updater {
   peloton::type::AbstractPool *GetPool();
 
   // Update a tuple
-  void Update(executor::ExecutorContext *executor_context);
+  void Update();
 
   // Update a tuple with primary key
-  void UpdatePK(executor::ExecutorContext *executor_context);
+  void UpdatePK();
 
   // Finalize the instance
   void TearDown();
 
  private:
   // No external constructor
-  Updater(): txn_(nullptr), table_(nullptr), target_list_(nullptr),
+  Updater(): table_(nullptr), executor_context_(nullptr), target_list_(nullptr),
              is_owner_(false), acquired_ownership_(false), tile_(nullptr) {}
 
   char *GetDataPtr(uint32_t tile_group_id, uint32_t tuple_offset);
 
  private:
-  // Transaction and table from the update translator
-  concurrency::Transaction *txn_;
+  // Table and executor context from the update translator
   storage::DataTable *table_;
+  executor::ExecutorContext *executor_context_;
 
   // Target list and direct map list pointer from the update translator
-  std::unique_ptr<TargetList> target_list_;
+  TargetList *target_list_;
 
   // Ownership information
   bool is_owner_;

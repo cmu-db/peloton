@@ -24,10 +24,9 @@
 namespace peloton {
 namespace codegen {
 
-void Inserter::Init(concurrency::Transaction *txn, storage::DataTable *table,
+void Inserter::Init(storage::DataTable *table,
                     executor::ExecutorContext *executor_context) {
-  PL_ASSERT(txn && table && executor_context);
-  txn_ = txn;
+  PL_ASSERT(table && executor_context);
   table_ = table;
   executor_context_ = executor_context;
 }
@@ -50,18 +49,19 @@ peloton::type::AbstractPool *Inserter::GetPool() {
 }
 
 void Inserter::InsertReserved() {
-  PL_ASSERT(txn_ && table_ && executor_context_ && tile_);
+  PL_ASSERT(table_ && executor_context_ && tile_);
+  auto *txn = executor_context_->GetTransaction();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   ContainerTuple<storage::TileGroup> tuple(
       table_->GetTileGroupById(location_.block).get(), location_.offset);
   ItemPointer *index_entry_ptr = nullptr;
-  bool result = table_->InsertTuple(&tuple, location_, txn_, &index_entry_ptr);
+  bool result = table_->InsertTuple(&tuple, location_, txn, &index_entry_ptr);
   if (result == false) {
-    txn_manager.SetTransactionResult(txn_, ResultType::FAILURE);
+    txn_manager.SetTransactionResult(txn, ResultType::FAILURE);
     return;
   }
-  txn_manager.PerformInsert(txn_, location_, index_entry_ptr);
+  txn_manager.PerformInsert(txn, location_, index_entry_ptr);
   executor_context_->num_processed++;
 
   // the tile pointer is there for an insertion, so we release it at this moment
@@ -69,16 +69,17 @@ void Inserter::InsertReserved() {
 }
 
 void Inserter::Insert(const storage::Tuple *tuple) {
-  PL_ASSERT(txn_ && table_ && executor_context_);
+  PL_ASSERT(table_ && executor_context_);
+  auto *txn = executor_context_->GetTransaction();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   ItemPointer *index_entry_ptr = nullptr;
-  ItemPointer location = table_->InsertTuple(tuple, txn_, &index_entry_ptr);
+  ItemPointer location = table_->InsertTuple(tuple, txn, &index_entry_ptr);
   if (location.block == INVALID_OID) {
-    txn_manager.SetTransactionResult(txn_, ResultType::FAILURE);
+    txn_manager.SetTransactionResult(txn, ResultType::FAILURE);
     return;
   }
-  txn_manager.PerformInsert(txn_, location, index_entry_ptr);
+  txn_manager.PerformInsert(txn, location, index_entry_ptr);
   executor_context_->num_processed++;
 }
 
