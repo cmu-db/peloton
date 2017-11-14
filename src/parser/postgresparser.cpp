@@ -192,7 +192,7 @@ bool IsTargetListWithVariable(List* target_list) {
   // constant
   for (auto cell = target_list->head; cell != nullptr; cell = cell->next) {
     ResTarget* target = reinterpret_cast<ResTarget*>(cell->data.ptr_value);
-    LOG_DEBUG("Type: %d", target->type);
+    LOG_TRACE("Type: %d", target->type);
 
     // Bypass the target nodes with type:
     // constant("SELECT 1;"), expression ("SELECT 1 + 1"),
@@ -204,7 +204,6 @@ bool IsTargetListWithVariable(List* target_list) {
       case T_BoolExpr:
         continue;
       default:
-        LOG_DEBUG("HERE");
         return true;
     }
   }
@@ -222,14 +221,14 @@ parser::TableRef* PostgresParser::FromTransform(SelectStmt* select_root) {
    * to
    * a null list of from clause*/
   if (root == nullptr) {
-    // auto target_list = select_root->targetList;
-    // // The only valid situation of a null 'from list' is that all targets are
-    // // constant
-    // LOG_TRACE("size is : %d", target_list->length);
-    // // print_pg_parse_tree(target_list);
-    // if (IsTargetListWithVariable(target_list)) {
-    //   throw ParserException("Error parsing SQL statement");
-    // }
+    auto target_list = select_root->targetList;
+    // The only valid situation of a null 'from list' is that all targets are
+    // constant
+    LOG_TRACE("size is : %d", target_list->length);
+    // print_pg_parse_tree(target_list);
+    if (IsTargetListWithVariable(target_list)) {
+      throw ParserException("Error parsing SQL statement");
+    }
     return nullptr;
   }
 
