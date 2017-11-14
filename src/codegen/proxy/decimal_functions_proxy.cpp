@@ -10,15 +10,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/proxy/string_functions_proxy.h"
+#include "codegen/proxy/decimal_functions_proxy.h"
 
 #include "codegen/proxy/type_builder.h"
-#include "function/string_functions.h"
+#include "function/decimal_functions.h"
 
 namespace peloton {
 namespace codegen {
 
-// DEFINE_METHOD(peloton::function, DecimalFunctions, Floor);
+  DEFINE_METHOD(peloton::function, DecimalFunctions, Floor);
 
 }  // namespace codegen
 }  // namespace peloton
