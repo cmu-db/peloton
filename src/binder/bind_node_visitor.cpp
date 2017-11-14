@@ -23,9 +23,11 @@
 namespace peloton {
 namespace binder {
 
-BindNodeVisitor::BindNodeVisitor(concurrency::Transaction *txn,
-                                 std::string default_database_name)
-    : txn_(txn), default_database_name_(default_database_name) {
+BindNodeVisitor::BindNodeVisitor(
+    concurrency::Transaction *txn,
+    std::string default_database_name)
+    : txn_(txn),
+      default_database_name_(default_database_name) {
   context_ = nullptr;
 }
 
@@ -84,7 +86,7 @@ void BindNodeVisitor::Visit(parser::TableRef *node) {
   }
   // Single table
   else {
-    context_->AddRegularTable(node, txn_);
+    context_->AddRegularTable(node, default_database_name_, txn_);
   }
 }
 
@@ -116,7 +118,7 @@ void BindNodeVisitor::Visit(parser::UpdateStatement *node) {
 
 void BindNodeVisitor::Visit(parser::DeleteStatement *node) {
   context_ = std::make_shared<BinderContext>();
-
+  node->TryBindDatabaseName(default_database_name_);
   context_->AddRegularTable(node->GetDatabaseName(), node->GetTableName(),
                             node->GetTableName(), txn_);
 

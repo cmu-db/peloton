@@ -165,6 +165,10 @@ void CostAndStatsCalculator::Visit(const DummyScan *) {
   output_cost_ = 0;
 }
 
+void CostAndStatsCalculator::Visit(const QueryDerivedScan *) {
+  output_cost_ = child_costs_[0];
+}
+
 void CostAndStatsCalculator::Visit(const PhysicalSeqScan *op) {
   // TODO : Replace with more accurate cost
   // retrieve table_stats from catalog by db_id and table_id
@@ -185,17 +189,14 @@ void CostAndStatsCalculator::Visit(const PhysicalSeqScan *op) {
       output_properties_->GetPropertyOfType(PropertyType::COLUMNS)
           ->As<PropertyColumns>();
   auto output_stats = generateOutputStat(table_stats, columns_prop);
-  auto predicate_prop =
-      output_properties_->GetPropertyOfType(PropertyType::PREDICATE)
-          ->As<PropertyPredicate>();
-  if (predicate_prop == nullptr) {
+  auto predicate = op->predicate;
+  if (predicate == nullptr) {
     output_cost_ += Cost::NoConditionSeqScanCost(table_stats);
     output_stats_ = output_stats;
     return;
   }
 
-  expression::AbstractExpression *predicate = predicate_prop->GetPredicate();
-  output_cost_ += updateMultipleConjuctionStats(table_stats, predicate,
+  output_cost_ += updateMultipleConjuctionStats(table_stats, predicate.get(),
                                                 output_stats, false);
   output_stats_ = output_stats;
 };
@@ -205,9 +206,6 @@ void CostAndStatsCalculator::Visit(const PhysicalIndexScan *op) {
   // indexSearchable ? Index : SeqScan
   // TODO : Replace with more accurate cost
   output_cost_ = getCostOfChildren(child_costs_);
-  auto predicate_prop =
-      output_properties_->GetPropertyOfType(PropertyType::PREDICATE)
-          ->As<PropertyPredicate>();
 
   auto stats_storage = StatsStorage::GetInstance();
   auto table_stats =
@@ -219,8 +217,7 @@ void CostAndStatsCalculator::Visit(const PhysicalIndexScan *op) {
   std::vector<type::Value> values;
   oid_t index_id = 0;
 
-  expression::AbstractExpression *predicate =
-      predicate_prop == nullptr ? nullptr : predicate_prop->GetPredicate();
+  expression::AbstractExpression *predicate = op->predicate.get();
   bool index_searchable =
       predicate == nullptr ? false : util::CheckIndexSearchable(
           op->table_, predicate, key_column_ids,
@@ -241,7 +238,7 @@ void CostAndStatsCalculator::Visit(const PhysicalIndexScan *op) {
           ->As<PropertyColumns>();
   auto output_stats = generateOutputStat(table_stats, columns_prop);
 
-  if (predicate_prop == nullptr) {
+  if (predicate == nullptr) {
     output_cost_ += Cost::NoConditionSeqScanCost(table_stats);
   } else {
     if (index_searchable) {

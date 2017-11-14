@@ -566,14 +566,14 @@ TEST_F(OptimizerSQLTests, JoinTest) {
   // This one test NLJoin.
   // Currently cannot support this query because
   // the interpreted hash join is broken.
-  //   TestUtil(
-  //       "SELECT test.a, test.b, test1.b, test2.c FROM test, test1, test2 "
-  //       "WHERE test.b = test2.b AND test2.c = test1.c",
-  //       {"1", "22", "11", "0",
-  //        "2", "11", "22", "333",
-  //        "2", "11", "0", "333",
-  //        "4", "0", "11", "0"},
-  //       false);
+   TestUtil(
+       "SELECT test.a, test.b, test1.b, test2.c FROM test, test1, test2 "
+       "WHERE test.b = test2.b AND test2.c = test1.c",
+       {"1", "22", "11", "0",
+        "2", "11", "22", "333",
+        "2", "11", "0", "333",
+        "4", "0", "11", "0"},
+       false);
 
   // 2 table join with where clause and predicate
   TestUtil(
@@ -614,13 +614,10 @@ TEST_F(OptimizerSQLTests, JoinTest) {
       {"1", "44", "2", "22", "3", "55", "4", "0"}, false);
 
   // Test order by, limit, projection with join
-  // PAVLO 2017-06-26
-  // Temporarily disabling this query to try to get the test to reliably
-  // pass so that we can merge in the new optimizer code.
-  // TestUtil("SELECT test.a, test.b+test2.b FROM TEST, TEST2 "
-  //             "WHERE test.a = test2.a "
-  //             "ORDER BY test.c+test2.c LIMIT 3",
-  //         {"1", "44", "2", "22", "4", "0"}, true);
+   TestUtil("SELECT test.a, test.b+test2.b FROM TEST, TEST2 "
+               "WHERE test.a = test2.a "
+               "ORDER BY test.c+test2.c LIMIT 3",
+           {"1", "44", "2", "22", "4", "0"}, true);
 
   // Test group by with join
   TestUtil(
@@ -676,19 +673,6 @@ TEST_F(OptimizerSQLTests, QueryDerivedTableTest) {
            {"13","0","13","2nd","23","333","23","1st","36","444","36","3rd"}, false);
   TestUtil("select A.c, B.c from (select a+b as a, c from test) as A, (select a+b as a, c as c from test2) as B where A.a=B.a order by A.a",
            {"0", "2nd","333","1st","444","3rd"}, true);
-//  TestUtil("select * from test as B where b in (select b as a from test where a = B.a);", {"22"}, false);
-//  TestUtil("select (select b as a from test where a = B.a) from test as B;", {"22"}, false);
-//  TestUtil("select * from test where a in (select * from test)", {}, false);
-
 }
-
-// WIP
-TEST_F(OptimizerSQLTests, NestedQueryTest) {
-//  TestUtil("select * from test as B where b in (select b as a from test where a = B.a);", {"22"}, false);
-//  TestUtil("select (select b as a from test where a = B.a) from test as B;", {"22"}, false);
-//  TestUtil("select * from test where a in (select * from test)", {}, false);
-
-}
-
 }  // namespace test
 }  // namespace peloton
