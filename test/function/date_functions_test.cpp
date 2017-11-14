@@ -57,7 +57,13 @@ void ExtractTestHelper(DatePartType part, std::string &date,
             result.ToString().c_str());
   EXPECT_EQ(type::CmpBool::TRUE, expected.CompareEquals(result));
 }
-
+// Invoke DateFunctions::Now()
+TEST_F(DateFunctionsTests, NowTest) {
+  auto result1 = function::DateFunctions::Now();
+  sleep(1);
+  auto result2 = function::DateFunctions::Now();
+  EXPECT_GT(result2, result1);
+}
 // Invoke DateFunctions::Extract(NULL)
 TEST_F(DateFunctionsTests, NullExtractTest) {
   std::vector<type::Value> args = {
