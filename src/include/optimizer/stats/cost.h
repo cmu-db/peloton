@@ -89,14 +89,6 @@ class Cost {
                                 std::vector<std::string> columns,
                                 std::shared_ptr<TableStats>& output_stats);
 
-  static double SortGroupByCost(const std::shared_ptr<TableStats>& input_stats,
-                                std::vector<oid_t> columns,
-                                std::shared_ptr<TableStats>& output_stats);
-
-  static double HashGroupByCost(const std::shared_ptr<TableStats>& input_stats,
-                                std::vector<oid_t> columns,
-                                std::shared_ptr<TableStats>& output_stats);
-
   /*
    * Aggregation (SUM, COUNT, etc) cost = cost of scan input table.
    * Note it does not update table stats.
@@ -137,62 +129,27 @@ class Cost {
                             const std::vector<bool>& orders,
                             std::shared_ptr<TableStats>& output_stats);
 
+
   /*
    * Join
    */
-  inline static double InnerNLJoin() { return DEFAULT_COST; }
-
-  inline static double InnerHashJoin() { return DEFAULT_COST; }
-
-  /*
-   * Join with Sampling
-   */
-  static double InnerNLJoinWithSampling(
+  static double NLJoinCost(
       const std::shared_ptr<TableStats>& left_input_stats,
       const std::shared_ptr<TableStats>& right_input_stats,
       std::shared_ptr<TableStats>& output_stats,
-      const std::shared_ptr<expression::AbstractExpression> predicate);
+      const std::shared_ptr<expression::AbstractExpression> predicate,
+      JoinType join_type,
+      bool enable_sampling = false);
 
-  static double LeftNLJoinWithSampling(
-      const std::shared_ptr<TableStats>& left_input_stats,
-      const std::shared_ptr<TableStats>& right_input_stats,
-      std::shared_ptr<TableStats>& output_stats,
-      const std::shared_ptr<expression::AbstractExpression> predicate);
 
-  static double RightNLJoinWithSampling(
+  static double HashJoinCost(
       const std::shared_ptr<TableStats>& left_input_stats,
       const std::shared_ptr<TableStats>& right_input_stats,
       std::shared_ptr<TableStats>& output_stats,
-      const std::shared_ptr<expression::AbstractExpression> predicate);
+      const std::shared_ptr<expression::AbstractExpression> predicate,
+      JoinType join_type,
+      bool enable_sampling = false);
 
-  static double OuterNLJoinWithSampling(
-      const std::shared_ptr<TableStats>& left_input_stats,
-      const std::shared_ptr<TableStats>& right_input_stats,
-      std::shared_ptr<TableStats>& output_stats,
-      const std::shared_ptr<expression::AbstractExpression> predicate);
-  static double InnerHashJoinWithSampling(
-      const std::shared_ptr<TableStats>& left_input_stats,
-      const std::shared_ptr<TableStats>& right_input_stats,
-      std::shared_ptr<TableStats>& output_stats,
-      const std::shared_ptr<expression::AbstractExpression> predicate);
-
-  static double LeftHashJoinWithSampling(
-      const std::shared_ptr<TableStats>& left_input_stats,
-      const std::shared_ptr<TableStats>& right_input_stats,
-      std::shared_ptr<TableStats>& output_stats,
-      const std::shared_ptr<expression::AbstractExpression> predicate);
-
-  static double RightHashJoinWithSampling(
-      const std::shared_ptr<TableStats>& left_input_stats,
-      const std::shared_ptr<TableStats>& right_input_stats,
-      std::shared_ptr<TableStats>& output_stats,
-      const std::shared_ptr<expression::AbstractExpression> predicate);
-
-  static double OuterHashJoinWithSampling(
-      const std::shared_ptr<TableStats>& left_input_stats,
-      const std::shared_ptr<TableStats>& right_input_stats,
-      std::shared_ptr<TableStats>& output_stats,
-      const std::shared_ptr<expression::AbstractExpression> predicate);
 
   static std::vector<oid_t> GenerateJoinSamples(
       const std::shared_ptr<TableStats>& left_input_stats,
@@ -212,11 +169,11 @@ class Cost {
    * for join operators
    */
   static void UpdateJoinOutputSize(
-      const std::shared_ptr<TableStats>& left_input_stats,
-      const std::shared_ptr<TableStats>& right_input_stats,
-      std::shared_ptr<TableStats>& output_stats,
-      const std::shared_ptr<expression::AbstractExpression> predicate,
-      size_t adjustment);
+    const std::shared_ptr<TableStats> &left_input_stats,
+    const std::shared_ptr<TableStats> &right_input_stats,
+    std::shared_ptr<TableStats> &output_stats,
+    const std::shared_ptr<expression::AbstractExpression> predicate,
+    JoinType join_type, bool enable_sampling);
 
   /*
    * Update output statistics given input table and one condition.
@@ -235,9 +192,6 @@ class Cost {
       const std::shared_ptr<TableStats>& input_stats,
       std::vector<std::string>& columns);
 
-  static size_t GetEstimatedGroupByRows(
-      const std::shared_ptr<TableStats>& input_stats,
-      std::vector<oid_t>& columns);
 };
 
 }  // namespace optimizer

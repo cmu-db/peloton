@@ -25,7 +25,6 @@ namespace optimizer {
 
 #define DEFAULT_CARDINALITY 1
 #define DEFAULT_HAS_INDEX false
-#define DEFAULT_SAMPLE_NUM 100
 
 class ColumnStats;
 

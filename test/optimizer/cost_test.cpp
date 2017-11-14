@@ -186,7 +186,7 @@ TEST_F(CostTests, JoinTest) {
     right_table_stats,
     column_prop.get());
 
-  double cost = Cost::InnerNLJoinWithSampling(left_table_stats, right_table_stats, output_stats, predicate);
+  double cost = Cost::NLJoinCost(left_table_stats, right_table_stats, output_stats, predicate, JoinType::INNER, true);
   LOG_INFO("Estimated output size %lu", output_stats->num_rows);
   EXPECT_EQ(cost, 100);
   EXPECT_EQ(output_stats->GetSampler()->GetSampledTuples().size(), 100);
