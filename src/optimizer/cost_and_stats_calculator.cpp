@@ -30,6 +30,14 @@ static constexpr int DEFAULT_NL_JOIN_COST = 1;
 //===----------------------------------------------------------------------===//
 // Helper functions
 //===----------------------------------------------------------------------===//
+// Return column name from abstract expression
+std::string getColumnName(
+    std::shared_ptr<expression::AbstractExpression> column) {
+  auto tv_expr =
+      std::dynamic_pointer_cast<expression::TupleValueExpression>(column);
+  return tv_expr->GetTableName() + "." + tv_expr->GetColumnName();
+}
+
 // Generate output stats based on the input stats and the property column
 std::shared_ptr<TableStats> generateOutputStat(
     std::shared_ptr<TableStats> &input_table_stats,
@@ -39,11 +47,6 @@ std::shared_ptr<TableStats> generateOutputStat(
   if (columns_prop->HasStarExpression()) {
     for (size_t i = 0; i < input_table_stats->GetColumnCount(); i++) {
       auto column_stat = input_table_stats->GetColumnStats((oid_t)i);
-      if (data_table != nullptr) {
-        // add table_name for base table
-        column_stat->column_name =
-            data_table->GetName() + "." + column_stat->column_name;
-      }
       output_column_stats.push_back(
           input_table_stats->GetColumnStats((oid_t)i));
     }
@@ -61,11 +64,6 @@ std::shared_ptr<TableStats> generateOutputStat(
         }
         auto column_stat = input_table_stats->GetColumnStats(column_name);
         if (column_stat != nullptr) {
-          if (data_table != nullptr) {
-            // add table_name for base table
-            column_stat->column_name =
-                data_table->GetName() + "." + column_stat->column_name;
-          }
           output_column_stats.push_back(column_stat);
         };
       }
@@ -86,11 +84,7 @@ std::shared_ptr<TableStats> generateOutputStat(
         continue;
       }
       auto column_id = index->GetMetadata()->GetKeyAttrs()[0];
-      // If the index column does not exist in the property column, we don't add
-      if (input_table_stats->GetColumnStats(column_id)->column_name.find(".") ==
-          std::string::npos) {
-        continue;
-      }
+
       // To use input_table_stats to ensure the column id is correct
       output_table_stats->AddIndex(
           input_table_stats->GetColumnStats(column_id)->column_name,
@@ -122,8 +116,7 @@ std::shared_ptr<TableStats> generateOutputStatFromTwoTable(
       if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
         auto tv_expr =
             std::dynamic_pointer_cast<expression::TupleValueExpression>(expr);
-        auto column_name =
-            tv_expr->GetTableName() + "." + tv_expr->GetColumnName();
+        auto column_name = getColumnName(expr);
 
         if (left_table_stats->HasColumnStats(column_name)) {
           output_column_stats.push_back(
@@ -138,13 +131,6 @@ std::shared_ptr<TableStats> generateOutputStatFromTwoTable(
   auto output_table_stats =
       std::make_shared<TableStats>(output_column_stats, false);
   return output_table_stats;
-}
-
-// Helper function to return column name from abstract expression
-std::string getColumnName(std::shared_ptr<expression::AbstractExpression> column) {
-  auto tv_expr =
-    std::dynamic_pointer_cast<expression::TupleValueExpression>(column);
-  return tv_expr->GetTableName() + "." + tv_expr->GetColumnName();
 }
 
 // Update output stats num_rows for conjunctions based on predicate
@@ -463,26 +449,29 @@ void CostAndStatsCalculator::Visit(const PhysicalOuterHashJoin *op) {
   JoinVisitHelper(op->join_predicate, JoinType::OUTER, true);
 };
 
-void CostAndStatsCalculator::JoinVisitHelper(std::shared_ptr<expression::AbstractExpression> predicate,
-  JoinType join_type, bool is_hash_join) {
+void CostAndStatsCalculator::JoinVisitHelper(
+    std::shared_ptr<expression::AbstractExpression> predicate,
+    JoinType join_type, bool is_hash_join) {
   PL_ASSERT(child_stats_.size() == JOIN_CHILD_NUM);
 
   auto left_table_stats =
-    std::dynamic_pointer_cast<TableStats>(child_stats_.at(LEFT_CHILD_INDEX));
+      std::dynamic_pointer_cast<TableStats>(child_stats_.at(LEFT_CHILD_INDEX));
   auto right_table_stats =
-    std::dynamic_pointer_cast<TableStats>(child_stats_.at(RIGHT_CHILD_INDEX));
+      std::dynamic_pointer_cast<TableStats>(child_stats_.at(RIGHT_CHILD_INDEX));
   if (left_table_stats == nullptr || right_table_stats == nullptr) {
-    output_cost_ = is_hash_join? DEFAULT_HASH_JOIN_COST : DEFAULT_NL_JOIN_COST;
+    output_cost_ = is_hash_join ? DEFAULT_HASH_JOIN_COST : DEFAULT_NL_JOIN_COST;
     return;
   }
   output_cost_ = getCostOfChildren(child_costs_);
   auto property_ = output_properties_->GetPropertyOfType(PropertyType::COLUMNS)
-    ->As<PropertyColumns>();
+                       ->As<PropertyColumns>();
   auto output_stats = generateOutputStatFromTwoTable(
-    left_table_stats, right_table_stats, property_);
-  output_cost_ += is_hash_join ? Cost::HashJoinCost(
-    left_table_stats, right_table_stats, output_stats, predicate, join_type):
-                  Cost::NLJoinCost(left_table_stats, right_table_stats, output_stats, predicate, join_type);
+      left_table_stats, right_table_stats, property_);
+  output_cost_ += is_hash_join
+                      ? Cost::HashJoinCost(left_table_stats, right_table_stats,
+                                           output_stats, predicate, join_type)
+                      : Cost::NLJoinCost(left_table_stats, right_table_stats,
+                                         output_stats, predicate, join_type);
 
   output_stats_ = output_stats;
 }
