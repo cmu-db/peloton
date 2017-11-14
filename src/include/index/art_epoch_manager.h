@@ -289,7 +289,7 @@ inline ARTEpochManager::~ARTEpochManager() {
     }
     d.~DeletionList();
   }
-  free(original_pointer_);
+  delete[] original_pointer_;
 }
 
 inline void ARTEpochManager::ShowDeleteRatio() {
