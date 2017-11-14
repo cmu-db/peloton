@@ -17,6 +17,8 @@
 #include "common/item_pointer.h"
 #include "catalog/schema.h"
 
+#define DEFAULT_SAMPLE_SIZE 100
+
 namespace peloton {
 namespace storage {
 class DataTable;

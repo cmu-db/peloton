@@ -76,7 +76,7 @@ bool TableStats::AddIndex(std::string key,
 
 void TableStats::SampleTuples() {
   if (tuple_sampler_ == nullptr) return;
-  tuple_sampler_->AcquireSampleTuples(DEFAULT_SAMPLE_NUM);
+  tuple_sampler_->AcquireSampleTuples(DEFAULT_SAMPLE_SIZE);
 }
 
 std::string TableStats::ToCSV() {

@@ -123,42 +123,7 @@ double Cost::HashGroupByCost(const std::shared_ptr<TableStats> &input_stats,
   // Directly hash tuple
   return input_stats->num_rows * DEFAULT_TUPLE_COST;
 }
-double Cost::SortGroupByCost(const std::shared_ptr<TableStats> &input_stats,
-                             std::vector<oid_t> columns,
-                             std::shared_ptr<TableStats> &output_stats) {
-  PL_ASSERT(input_stats);
-  PL_ASSERT(columns.size() > 0);
 
-  if (output_stats != nullptr) {
-    output_stats->num_rows = GetEstimatedGroupByRows(input_stats, columns);
-  }
-
-  double cost =
-      default_sorting_cost(input_stats->num_rows) * DEFAULT_TUPLE_COST;
-
-  // Update cost to trivial if first group by column has index.
-  // TODO: use more complicated cost when group by multiple columns when
-  // primary index operator is supported.
-  if (!columns.empty() && input_stats->HasPrimaryIndex(columns[0])) {
-    // underestimation of group by with index.
-    cost = DEFAULT_OPERATOR_COST;
-  }
-
-  return cost;
-}
-
-double Cost::HashGroupByCost(const std::shared_ptr<TableStats> &input_stats,
-                             std::vector<oid_t> columns,
-                             std::shared_ptr<TableStats> &output_stats) {
-  PL_ASSERT(input_stats);
-
-  if (output_stats != nullptr) {
-    output_stats->num_rows = GetEstimatedGroupByRows(input_stats, columns);
-  }
-
-  // Directly hash tuple
-  return input_stats->num_rows * DEFAULT_TUPLE_COST;
-}
 
 //===----------------------------------------------------------------------===//
 // DISTINCT
@@ -240,119 +205,40 @@ double Cost::OrderByCost(const std::shared_ptr<TableStats> &input_stats,
   return cost;
 }
 
+
 //===----------------------------------------------------------------------===//
-// INNER NL JOIN
+// NL JOIN
 //===----------------------------------------------------------------------===//
-double Cost::InnerNLJoinWithSampling(
+double Cost::NLJoinCost(
     const std::shared_ptr<TableStats> &left_input_stats,
     const std::shared_ptr<TableStats> &right_input_stats,
     std::shared_ptr<TableStats> &output_stats,
-    const std::shared_ptr<expression::AbstractExpression> predicate) {
+    const std::shared_ptr<expression::AbstractExpression> predicate,
+    JoinType join_type, bool enable_sampling) {
+
   UpdateJoinOutputSize(left_input_stats, right_input_stats, output_stats,
-                       predicate, 0);
+                        predicate, join_type, enable_sampling);
+
   return left_input_stats->num_rows * right_input_stats->num_rows *
          DEFAULT_TUPLE_COST;
 }
 
 //===----------------------------------------------------------------------===//
-// LEFT NL JOIN
+// HASH JOIN
 //===----------------------------------------------------------------------===//
-double Cost::LeftNLJoinWithSampling(
+double Cost::HashJoinCost(
     const std::shared_ptr<TableStats> &left_input_stats,
     const std::shared_ptr<TableStats> &right_input_stats,
     std::shared_ptr<TableStats> &output_stats,
-    const std::shared_ptr<expression::AbstractExpression> predicate) {
+    const std::shared_ptr<expression::AbstractExpression> predicate,
+    JoinType join_type,
+    bool enable_sampling) {
   UpdateJoinOutputSize(left_input_stats, right_input_stats, output_stats,
-                       predicate, left_input_stats->num_rows);
-  return left_input_stats->num_rows * right_input_stats->num_rows *
-         DEFAULT_TUPLE_COST;
-}
-
-//===----------------------------------------------------------------------===//
-// RIGHT NL JOIN
-//===----------------------------------------------------------------------===//
-double Cost::RightNLJoinWithSampling(
-    const std::shared_ptr<TableStats> &left_input_stats,
-    const std::shared_ptr<TableStats> &right_input_stats,
-    std::shared_ptr<TableStats> &output_stats,
-    const std::shared_ptr<expression::AbstractExpression> predicate) {
-  UpdateJoinOutputSize(left_input_stats, right_input_stats, output_stats,
-                       predicate, right_input_stats->num_rows);
-  return left_input_stats->num_rows * right_input_stats->num_rows *
-         DEFAULT_TUPLE_COST;
-}
-
-//===----------------------------------------------------------------------===//
-// OUTER NL JOIN
-//===----------------------------------------------------------------------===//
-double Cost::OuterNLJoinWithSampling(
-    const std::shared_ptr<TableStats> &left_input_stats,
-    const std::shared_ptr<TableStats> &right_input_stats,
-    std::shared_ptr<TableStats> &output_stats,
-    const std::shared_ptr<expression::AbstractExpression> predicate) {
-  UpdateJoinOutputSize(
-      left_input_stats, right_input_stats, output_stats, predicate,
-      left_input_stats->num_rows + right_input_stats->num_rows);
-  return left_input_stats->num_rows * right_input_stats->num_rows *
-         DEFAULT_TUPLE_COST;
-}
-
-//===----------------------------------------------------------------------===//
-// INNER HASH JOIN
-//===----------------------------------------------------------------------===//
-double Cost::InnerHashJoinWithSampling(
-    const std::shared_ptr<TableStats> &left_input_stats,
-    const std::shared_ptr<TableStats> &right_input_stats,
-    std::shared_ptr<TableStats> &output_stats,
-    const std::shared_ptr<expression::AbstractExpression> predicate) {
-  UpdateJoinOutputSize(left_input_stats, right_input_stats, output_stats,
-                       predicate, 0);
+                       predicate, join_type, enable_sampling);
   return (left_input_stats->num_rows + right_input_stats->num_rows) *
          DEFAULT_TUPLE_COST;
 }
 
-//===----------------------------------------------------------------------===//
-// LEFT HASH JOIN
-//===----------------------------------------------------------------------===//
-double Cost::LeftHashJoinWithSampling(
-    const std::shared_ptr<TableStats> &left_input_stats,
-    const std::shared_ptr<TableStats> &right_input_stats,
-    std::shared_ptr<TableStats> &output_stats,
-    const std::shared_ptr<expression::AbstractExpression> predicate) {
-  UpdateJoinOutputSize(left_input_stats, right_input_stats, output_stats,
-                       predicate, left_input_stats->num_rows);
-  return (left_input_stats->num_rows + right_input_stats->num_rows) *
-         DEFAULT_TUPLE_COST;
-}
-
-//===----------------------------------------------------------------------===//
-// RIGHT HASH JOIN
-//===----------------------------------------------------------------------===//
-double Cost::RightHashJoinWithSampling(
-    const std::shared_ptr<TableStats> &left_input_stats,
-    const std::shared_ptr<TableStats> &right_input_stats,
-    std::shared_ptr<TableStats> &output_stats,
-    const std::shared_ptr<expression::AbstractExpression> predicate) {
-  UpdateJoinOutputSize(left_input_stats, right_input_stats, output_stats,
-                       predicate, right_input_stats->num_rows);
-  return (left_input_stats->num_rows + right_input_stats->num_rows) *
-         DEFAULT_TUPLE_COST;
-}
-
-//===----------------------------------------------------------------------===//
-// OUTER HASH JOIN
-//===----------------------------------------------------------------------===//
-double Cost::OuterHashJoinWithSampling(
-    const std::shared_ptr<TableStats> &left_input_stats,
-    const std::shared_ptr<TableStats> &right_input_stats,
-    std::shared_ptr<TableStats> &output_stats,
-    const std::shared_ptr<expression::AbstractExpression> predicate) {
-  UpdateJoinOutputSize(
-      left_input_stats, right_input_stats, output_stats, predicate,
-      left_input_stats->num_rows + right_input_stats->num_rows);
-  return (left_input_stats->num_rows + right_input_stats->num_rows) *
-         DEFAULT_TUPLE_COST;
-}
 
 //===----------------------------------------------------------------------===//
 // Helper functions
@@ -473,7 +359,21 @@ void Cost::UpdateJoinOutputSize(
     const std::shared_ptr<TableStats> &right_input_stats,
     std::shared_ptr<TableStats> &output_stats,
     const std::shared_ptr<expression::AbstractExpression> predicate,
-    size_t adjustment) {
+    JoinType join_type, bool enable_sampling) {
+
+  size_t adjustment;
+  switch (join_type) {
+    case JoinType::INNER:
+      adjustment = 0;
+    case JoinType::LEFT:
+      adjustment = left_input_stats->num_rows;
+    case JoinType::RIGHT:
+      adjustment = right_input_stats->num_rows;
+    case JoinType::OUTER:
+      adjustment = left_input_stats->num_rows+right_input_stats->num_rows;
+    default:
+      adjustment = 0;
+  }
   size_t default_join_size =
       left_input_stats->num_rows * right_input_stats->num_rows + adjustment;
   if (predicate == nullptr) {
@@ -529,15 +429,18 @@ void Cost::UpdateJoinOutputSize(
           adjustment;
     }
 
-    // update column stats cardinality using samples
-    UpdateColumnStatsWithSampling(left_input_stats, right_input_stats,
-                                  output_stats, left_column_name,
-                                  right_column_name);
+    if (enable_sampling) {
+      // update column stats cardinality using samples
+      UpdateColumnStatsWithSampling(left_input_stats, right_input_stats,
+                                    output_stats, left_column_name,
+                                    right_column_name);
+    }
   } else {
     // conjunction predicates
     output_stats->num_rows = default_join_size;
   }
 }
+
 void Cost::UpdateConditionStats(const std::shared_ptr<TableStats> &input_stats,
                                 const ValueCondition &condition,
                                 std::shared_ptr<TableStats> &output_stats) {
@@ -551,23 +454,6 @@ void Cost::UpdateConditionStats(const std::shared_ptr<TableStats> &input_stats,
 size_t Cost::GetEstimatedGroupByRows(
     const std::shared_ptr<TableStats> &input_stats,
     std::vector<std::string> &columns) {
-  // Idea is to assume each column is uniformaly network and get an
-  // overestimation.
-  // Then use max cardinality among all columns as underestimation.
-  // And combine them together.
-  double rows = 1;
-  double max_cardinality = 0;
-  for (auto column : columns) {
-    double cardinality = input_stats->GetCardinality(column);
-    max_cardinality = std::max(max_cardinality, cardinality);
-    rows *= cardinality;
-  }
-  return static_cast<size_t>(rows + max_cardinality / 2);
-}
-
-size_t Cost::GetEstimatedGroupByRows(
-    const std::shared_ptr<TableStats> &input_stats,
-    std::vector<oid_t> &columns) {
   // Idea is to assume each column is uniformaly network and get an
   // overestimation.
   // Then use max cardinality among all columns as underestimation.

@@ -429,167 +429,53 @@ void CostAndStatsCalculator::Visit(const PhysicalLimit *) {
 }
 void CostAndStatsCalculator::Visit(const PhysicalFilter *){};
 void CostAndStatsCalculator::Visit(const PhysicalInnerNLJoin *op) {
-  // TODO: Replace with more accurate cost
-  PL_ASSERT(child_stats_.size() == 2);
-  auto left_table_stats =
-      std::dynamic_pointer_cast<TableStats>(child_stats_.at(LEFT_CHILD_INDEX));
-  auto right_table_stats =
-      std::dynamic_pointer_cast<TableStats>(child_stats_.at(RIGHT_CHILD_INDEX));
-  if (left_table_stats == nullptr || right_table_stats == nullptr) {
-    output_cost_ = 1;
-    return;
-  }
-  output_cost_ = getCostOfChildren(child_costs_);
-  auto property_ = output_properties_->GetPropertyOfType(PropertyType::COLUMNS)
-                       ->As<PropertyColumns>();
-  auto output_stats = generateOutputStatFromTwoTable(
-      left_table_stats, right_table_stats, property_);
-  auto predicate = op->join_predicate;
-  output_cost_ += Cost::InnerNLJoinWithSampling(
-      left_table_stats, right_table_stats, output_stats, predicate);
-  output_stats_ = output_stats;
+  JoinVisitHelper(op->join_predicate, JoinType::INNER, false);
 };
 void CostAndStatsCalculator::Visit(const PhysicalLeftNLJoin *op) {
-  PL_ASSERT(child_stats_.size() == 2);
-  auto left_table_stats =
-      std::dynamic_pointer_cast<TableStats>(child_stats_.at(LEFT_CHILD_INDEX));
-  auto right_table_stats =
-      std::dynamic_pointer_cast<TableStats>(child_stats_.at(RIGHT_CHILD_INDEX));
-  if (left_table_stats == nullptr || right_table_stats == nullptr) {
-    output_cost_ = 1;
-    return;
-  }
-  output_cost_ = getCostOfChildren(child_costs_);
-  auto property_ = output_properties_->GetPropertyOfType(PropertyType::COLUMNS)
-                       ->As<PropertyColumns>();
-  auto output_stats = generateOutputStatFromTwoTable(
-      left_table_stats, right_table_stats, property_);
-  auto predicate = op->join_predicate;
-  output_cost_ += Cost::LeftNLJoinWithSampling(
-      left_table_stats, right_table_stats, output_stats, predicate);
-  output_stats_ = output_stats;
+  JoinVisitHelper(op->join_predicate, JoinType::LEFT, false);
 };
 void CostAndStatsCalculator::Visit(const PhysicalRightNLJoin *op) {
-  PL_ASSERT(child_stats_.size() == 2);
-  auto left_table_stats =
-      std::dynamic_pointer_cast<TableStats>(child_stats_.at(LEFT_CHILD_INDEX));
-  auto right_table_stats =
-      std::dynamic_pointer_cast<TableStats>(child_stats_.at(RIGHT_CHILD_INDEX));
-  if (left_table_stats == nullptr || right_table_stats == nullptr) {
-    output_cost_ = 1;
-    return;
-  }
-  output_cost_ = getCostOfChildren(child_costs_);
-  auto property_ = output_properties_->GetPropertyOfType(PropertyType::COLUMNS)
-                       ->As<PropertyColumns>();
-  auto output_stats = generateOutputStatFromTwoTable(
-      left_table_stats, right_table_stats, property_);
-  auto predicate = op->join_predicate;
-  output_cost_ += Cost::RightNLJoinWithSampling(
-      left_table_stats, right_table_stats, output_stats, predicate);
-  output_stats_ = output_stats;
+  JoinVisitHelper(op->join_predicate, JoinType::RIGHT, false);
 };
 void CostAndStatsCalculator::Visit(const PhysicalOuterNLJoin *op) {
-  PL_ASSERT(child_stats_.size() == 2);
-  auto left_table_stats =
-      std::dynamic_pointer_cast<TableStats>(child_stats_.at(LEFT_CHILD_INDEX));
-  auto right_table_stats =
-      std::dynamic_pointer_cast<TableStats>(child_stats_.at(RIGHT_CHILD_INDEX));
-  if (left_table_stats == nullptr || right_table_stats == nullptr) {
-    output_cost_ = 1;
-    return;
-  }
-  output_cost_ = getCostOfChildren(child_costs_);
-  auto property_ = output_properties_->GetPropertyOfType(PropertyType::COLUMNS)
-                       ->As<PropertyColumns>();
-  auto output_stats = generateOutputStatFromTwoTable(
-      left_table_stats, right_table_stats, property_);
-  auto predicate = op->join_predicate;
-  output_cost_ += Cost::OuterNLJoinWithSampling(
-      left_table_stats, right_table_stats, output_stats, predicate);
-  output_stats_ = output_stats;
+  JoinVisitHelper(op->join_predicate, JoinType::OUTER, false);
 };
 void CostAndStatsCalculator::Visit(const PhysicalInnerHashJoin *op) {
-  // TODO: Replace with more accurate cost
-  PL_ASSERT(child_stats_.size() == 2);
-  auto left_table_stats =
-      std::dynamic_pointer_cast<TableStats>(child_stats_.at(LEFT_CHILD_INDEX));
-  auto right_table_stats =
-      std::dynamic_pointer_cast<TableStats>(child_stats_.at(RIGHT_CHILD_INDEX));
-  if (left_table_stats == nullptr || right_table_stats == nullptr) {
-    output_cost_ = 0;
-    return;
-  }
-  output_cost_ = getCostOfChildren(child_costs_);
-  auto property_ = output_properties_->GetPropertyOfType(PropertyType::COLUMNS)
-                       ->As<PropertyColumns>();
-  auto output_stats = generateOutputStatFromTwoTable(
-      left_table_stats, right_table_stats, property_);
-  auto predicate = op->join_predicate;
-  output_cost_ += Cost::InnerHashJoinWithSampling(
-      left_table_stats, right_table_stats, output_stats, predicate);
-  output_stats_ = output_stats;
+  JoinVisitHelper(op->join_predicate, JoinType::INNER, true);
 };
 void CostAndStatsCalculator::Visit(const PhysicalLeftHashJoin *op) {
-  PL_ASSERT(child_stats_.size() == 2);
-  auto left_table_stats =
-      std::dynamic_pointer_cast<TableStats>(child_stats_.at(LEFT_CHILD_INDEX));
-  auto right_table_stats =
-      std::dynamic_pointer_cast<TableStats>(child_stats_.at(RIGHT_CHILD_INDEX));
-  if (left_table_stats == nullptr || right_table_stats == nullptr) {
-    output_cost_ = 1;
-    return;
-  }
-  output_cost_ = getCostOfChildren(child_costs_);
-  auto property_ = output_properties_->GetPropertyOfType(PropertyType::COLUMNS)
-                       ->As<PropertyColumns>();
-  auto output_stats = generateOutputStatFromTwoTable(
-      left_table_stats, right_table_stats, property_);
-  auto predicate = op->join_predicate;
-  output_cost_ += Cost::LeftHashJoinWithSampling(
-      left_table_stats, right_table_stats, output_stats, predicate);
-  output_stats_ = output_stats;
+  JoinVisitHelper(op->join_predicate, JoinType::LEFT, true);
 };
 void CostAndStatsCalculator::Visit(const PhysicalRightHashJoin *op) {
-  PL_ASSERT(child_stats_.size() == 2);
-  auto left_table_stats =
-      std::dynamic_pointer_cast<TableStats>(child_stats_.at(LEFT_CHILD_INDEX));
-  auto right_table_stats =
-      std::dynamic_pointer_cast<TableStats>(child_stats_.at(RIGHT_CHILD_INDEX));
-  if (left_table_stats == nullptr || right_table_stats == nullptr) {
-    output_cost_ = 1;
-    return;
-  }
-  output_cost_ = getCostOfChildren(child_costs_);
-  auto property_ = output_properties_->GetPropertyOfType(PropertyType::COLUMNS)
-                       ->As<PropertyColumns>();
-  auto output_stats = generateOutputStatFromTwoTable(
-      left_table_stats, right_table_stats, property_);
-  auto predicate = op->join_predicate;
-  output_cost_ += Cost::RightHashJoinWithSampling(
-      left_table_stats, right_table_stats, output_stats, predicate);
-  output_stats_ = output_stats;
+  JoinVisitHelper(op->join_predicate, JoinType::RIGHT, true);
 };
 void CostAndStatsCalculator::Visit(const PhysicalOuterHashJoin *op) {
+  JoinVisitHelper(op->join_predicate, JoinType::OUTER, true);
+};
+
+void CostAndStatsCalculator::JoinVisitHelper(std::shared_ptr<expression::AbstractExpression> predicate,
+  JoinType join_type, bool is_hash_join) {
   PL_ASSERT(child_stats_.size() == 2);
+
   auto left_table_stats =
-      std::dynamic_pointer_cast<TableStats>(child_stats_.at(LEFT_CHILD_INDEX));
+    std::dynamic_pointer_cast<TableStats>(child_stats_.at(LEFT_CHILD_INDEX));
   auto right_table_stats =
-      std::dynamic_pointer_cast<TableStats>(child_stats_.at(RIGHT_CHILD_INDEX));
+    std::dynamic_pointer_cast<TableStats>(child_stats_.at(RIGHT_CHILD_INDEX));
   if (left_table_stats == nullptr || right_table_stats == nullptr) {
     output_cost_ = 1;
     return;
   }
   output_cost_ = getCostOfChildren(child_costs_);
   auto property_ = output_properties_->GetPropertyOfType(PropertyType::COLUMNS)
-                       ->As<PropertyColumns>();
+    ->As<PropertyColumns>();
   auto output_stats = generateOutputStatFromTwoTable(
-      left_table_stats, right_table_stats, property_);
-  auto predicate = op->join_predicate;
-  output_cost_ += Cost::OuterHashJoinWithSampling(
-      left_table_stats, right_table_stats, output_stats, predicate);
+    left_table_stats, right_table_stats, property_);
+  output_cost_ += is_hash_join ? Cost::HashJoinCost(
+    left_table_stats, right_table_stats, output_stats, predicate, join_type):
+                  Cost::NLJoinCost(left_table_stats, right_table_stats, output_stats, predicate, join_type);
+
   output_stats_ = output_stats;
-};
+}
 void CostAndStatsCalculator::Visit(const PhysicalInsert *) {
   // TODO: Replace with more accurate cost
   output_cost_ = 0;
