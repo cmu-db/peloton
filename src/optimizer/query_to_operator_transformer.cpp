@@ -254,8 +254,8 @@ void QueryToOperatorTransformer::Visit(parser::OrderDescription *) {}
 void QueryToOperatorTransformer::Visit(parser::LimitDescription *) {}
 
 void QueryToOperatorTransformer::Visit(
-    UNUSED_ATTRIBUTE const parser::CreateStatement *op) {}
-void QueryToOperatorTransformer::Visit(const parser::InsertStatement *op) {
+    UNUSED_ATTRIBUTE parser::CreateStatement *op) {}
+void QueryToOperatorTransformer::Visit(parser::InsertStatement *op) {
   storage::DataTable *target_table =
       catalog::Catalog::GetInstance()->GetTableWithName(
           op->GetDatabaseName(), op->GetTableName(), txn_);
