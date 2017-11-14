@@ -56,12 +56,9 @@ std::shared_ptr<TableStats> generateOutputStat(
 
       // TODO: Deal with or add column stats for complex expressions like a+b
       if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
-        auto tv_expr =
-            std::dynamic_pointer_cast<expression::TupleValueExpression>(expr);
-        auto column_name = tv_expr->GetColumnName();
-        if (data_table == nullptr) {
-          column_name = tv_expr->GetTableName() + "." + column_name;
-        }
+
+        auto column_name = getColumnName(expr);
+
         auto column_stat = input_table_stats->GetColumnStats(column_name);
         if (column_stat != nullptr) {
           output_column_stats.push_back(column_stat);
@@ -114,8 +111,7 @@ std::shared_ptr<TableStats> generateOutputStatFromTwoTable(
 
       // TODO: Deal with or add column stats for complex expressions like a+b
       if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
-        auto tv_expr =
-            std::dynamic_pointer_cast<expression::TupleValueExpression>(expr);
+
         auto column_name = getColumnName(expr);
 
         if (left_table_stats->HasColumnStats(column_name)) {
