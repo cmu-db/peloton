@@ -100,14 +100,6 @@ Index *IndexFactory::GetARTIntsKeyIndex(IndexMetadata *metadata) {
 
   index = new ArtIndex(metadata);
 
-//  if (key_size <= sizeof(uint64_t)) {
-//    printf("in ART index factory, key size smaller than %lu\n", sizeof(uint64_t));
-//    index = new ArtIndex(metadata);
-//  } else {
-//    printf("in ART index factory, key size bigger than %lu\n", sizeof(uint64_t));
-//    throw IndexException("Unsupported IntsKey scheme");
-//  }
-
 #ifdef LOG_TRACE_ENABLED
   LOG_TRACE("%s", IndexFactory::GetInfo(metadata, comparatorType).c_str());
 #endif

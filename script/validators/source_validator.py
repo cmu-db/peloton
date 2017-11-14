@@ -79,7 +79,14 @@ SKIP_FILES_LIST = [
     "src/include/index/compact_ints_key.h",
     "src/include/index/bwtree.h",
     "src/codegen/util/oa_hash_table.cpp",
-    "src/codegen/util/cc_hash_table.cpp"
+    "src/codegen/util/cc_hash_table.cpp",
+    "src/include/index/art_key.h",
+    "src/include/index/art_node_16_children.h",
+    "src/include/index/art_node_256_children.h",
+    "src/include/index/art_node_48_children.h",
+    "src/index/art.cpp",
+    "src/index/art_index.cpp",
+    "src/index/art_node.cpp"
 ]
 
 FORMATTING_FILE_WHITELIST = [
