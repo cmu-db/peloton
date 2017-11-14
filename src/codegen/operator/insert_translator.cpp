@@ -44,19 +44,16 @@ void InsertTranslator::InitializeState() {
   auto &codegen = GetCodeGen();
   auto &context = GetCompilationContext();
 
-  llvm::Value *txn_ptr = context.GetTransactionPtr();
-
   storage::DataTable *table = insert_plan_.GetTable();
   llvm::Value *table_ptr = codegen.Call(StorageManagerProxy::GetTableWithOid,
       {GetCatalogPtr(), codegen.Const32(table->GetDatabaseOid()),
        codegen.Const32(table->GetOid())});
  
-  llvm::Value *executor_ptr = GetCompilationContext().GetExecutorContextPtr();
+  llvm::Value *executor_ptr = context.GetExecutorContextPtr();
 
   // Initialize the inserter with txn and table
   llvm::Value *inserter = LoadStatePtr(inserter_state_id_);
-  codegen.Call(InserterProxy::Init, {inserter, txn_ptr, table_ptr,
-                                     executor_ptr});
+  codegen.Call(InserterProxy::Init, {inserter, table_ptr, executor_ptr});
 }
 
 void InsertTranslator::Produce() const {

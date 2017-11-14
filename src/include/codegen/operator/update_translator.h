@@ -48,19 +48,11 @@ class UpdateTranslator : public OperatorTranslator {
   std::string GetName() const override { return "Update"; }
 
  private:
-  void SetTargetValue(llvm::Value *target_val_vec, llvm::Value *target_id,
-                      type::Type type, llvm::Value *value,
-                      llvm::Value *length) const;
-
- private:
   // Plan
   const planner::UpdatePlan &update_plan_;
 
   // Target table
   storage::DataTable *target_table_;
-
-  // Boolean value representing whether it is a primary key update or not
-  bool update_primary_key_;
 
   // Runtime state id for the updater
   RuntimeState::StateID updater_state_id_;

@@ -40,9 +40,6 @@ DeleteTranslator::DeleteTranslator(const planner::DeletePlan &delete_plan,
 void DeleteTranslator::InitializeState() {
   auto &codegen = GetCodeGen();
 
-  // The transaction pointer
-  llvm::Value *txn_ptr = GetCompilationContext().GetTransactionPtr();
-
   // Get the table pointer
   storage::DataTable *table = delete_plan_.GetTable();
   llvm::Value *table_ptr =
@@ -54,7 +51,7 @@ void DeleteTranslator::InitializeState() {
 
   // Call Deleter.Init(txn, table)
   llvm::Value *deleter = LoadStatePtr(deleter_state_id_);
-  codegen.Call(DeleterProxy::Init, {deleter, txn_ptr, table_ptr, executor_ptr});
+  codegen.Call(DeleterProxy::Init, {deleter, table_ptr, executor_ptr});
 }
 
 void DeleteTranslator::Produce() const {
@@ -68,8 +65,7 @@ void DeleteTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
   // Call Deleter::Delete(tile_group_id, tuple_offset)
   auto *deleter = LoadStatePtr(deleter_state_id_);
   codegen.Call(DeleterProxy::Delete,
-               {deleter, row.GetTileGroupID(), row.GetTID(codegen),
-                GetCompilationContext().GetExecutorContextPtr()});
+               {deleter, row.GetTileGroupID(), row.GetTID(codegen)});
 }
 
 }  // namespace codegen

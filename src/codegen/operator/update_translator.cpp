@@ -59,8 +59,6 @@ void UpdateTranslator::InitializeState() {
 
   // Prepare for all the information to be handed over to the updater
   // Get the transaction pointer
-  llvm::Value *txn_ptr = context.GetTransactionPtr();
-
   // Get the table object pointer
   storage::DataTable *table = update_plan_.GetTable();
   llvm::Value *table_ptr = codegen.Call(StorageManagerProxy::GetTableWithOid,
@@ -78,7 +76,8 @@ void UpdateTranslator::InitializeState() {
 
   // Initialize the inserter with txn and table
   llvm::Value *updater = LoadStatePtr(updater_state_id_);
-  codegen.Call(UpdaterProxy::Init, {updater, txn_ptr, table_ptr,
+  codegen.Call(UpdaterProxy::Init, {updater, table_ptr,
+                                    context.GetExecutorContextPtr(),
                                     target_vector_ptr, target_vector_size_ptr});
 }
 
@@ -88,7 +87,6 @@ void UpdateTranslator::Produce() const {
 
 void UpdateTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
   auto &codegen = GetCodeGen();
-  auto &context = GetCompilationContext();
   const auto *project_info = update_plan_.GetProjectInfo();
   auto target_list = project_info->GetTargetList();
   auto direct_map_list = project_info->GetDirectMapList();
@@ -136,8 +134,7 @@ void UpdateTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
     table_storage_.StoreValues(codegen, tuple_ptr, values, pool_ptr);
   
     // Finally, update with help from the Updater
-    std::vector<llvm::Value *> update_args = {updater,
-                                              context.GetExecutorContextPtr()};
+    std::vector<llvm::Value *> update_args = {updater};
     if (update_plan_.GetUpdatePrimaryKey() == false)
       codegen.Call(UpdaterProxy::Update, update_args);
     else
