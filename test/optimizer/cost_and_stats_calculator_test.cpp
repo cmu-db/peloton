@@ -59,9 +59,8 @@ TEST_F(CostAndStatsCalculatorTests, NoConditionSeqScanTest) {
   auto catalog = catalog::Catalog::GetInstance();
   auto table_ = catalog->GetTableWithName(DEFAULT_DB_NAME, "test", txn);
   txn_manager.CommitTransaction(txn);
-  Operator op = PhysicalSeqScan::make(table_, "", false);
-  ColumnManager manager;
-  CostAndStatsCalculator calculator(manager);
+  Operator op = PhysicalSeqScan::make(0, table_, "", nullptr, false);
+  CostAndStatsCalculator calculator;
 
   std::vector<std::shared_ptr<expression::AbstractExpression>> cols;
 
@@ -104,9 +103,16 @@ TEST_F(CostAndStatsCalculatorTests, SingleConditionSeqScanTest) {
   auto catalog = catalog::Catalog::GetInstance();
   auto table_ = catalog->GetTableWithName(DEFAULT_DB_NAME, "test", txn);
   txn_manager.CommitTransaction(txn);
-  Operator op = PhysicalSeqScan::make(table_, "", false);
-  ColumnManager manager;
-  CostAndStatsCalculator calculator(manager);
+  auto expr1 = expression::ExpressionUtil::TupleValueFactory(
+      type::TypeId::DECIMAL, 0, 2);
+  auto expr2 = expression::ExpressionUtil::ConstantValueFactory(
+      type::ValueFactory::GetDecimalValue(1.0));
+  auto predicate = expression::ExpressionUtil::ComparisonFactory(
+      ExpressionType::COMPARE_EQUAL, expr1, expr2);
+  Operator op = PhysicalSeqScan::make(
+      0, table_, "", std::shared_ptr<expression::AbstractExpression>(predicate),
+      false);
+  CostAndStatsCalculator calculator;
 
   std::vector<std::shared_ptr<expression::AbstractExpression>> cols;
 
@@ -117,14 +123,6 @@ TEST_F(CostAndStatsCalculatorTests, SingleConditionSeqScanTest) {
   cols.push_back(tv_expr);
   PropertySet *set = new PropertySet;
   set->AddProperty(std::make_shared<PropertyColumns>(cols));
-
-  auto expr1 = expression::ExpressionUtil::TupleValueFactory(
-      type::TypeId::DECIMAL, 0, 2);
-  auto expr2 = expression::ExpressionUtil::ConstantValueFactory(
-      type::ValueFactory::GetDecimalValue(1.0));
-  auto predicate = expression::ExpressionUtil::ComparisonFactory(
-      ExpressionType::COMPARE_EQUAL, expr1, expr2);
-  set->AddProperty(std::make_shared<PropertyPredicate>(predicate));
 
   calculator.output_properties_ = set;
   op.Accept(dynamic_cast<OperatorVisitor *>(&calculator));
@@ -157,9 +155,17 @@ TEST_F(CostAndStatsCalculatorTests, SingleConditionIndexScanTest) {
   auto catalog = catalog::Catalog::GetInstance();
   auto table_ = catalog->GetTableWithName(DEFAULT_DB_NAME, "test", txn);
   txn_manager.CommitTransaction(txn);
-  Operator op = PhysicalIndexScan::make(table_, "", false);
-  ColumnManager manager;
-  CostAndStatsCalculator calculator(manager);
+  // test.salary = 1.0
+  auto expr1 = new expression::TupleValueExpression("id");
+  expr1->SetTupleValueExpressionParams(type::TypeId::INTEGER, 0, 0);
+  auto expr2 = expression::ExpressionUtil::ConstantValueFactory(
+      type::ValueFactory::GetIntegerValue(30));
+  auto predicate = expression::ExpressionUtil::ComparisonFactory(
+      ExpressionType::COMPARE_GREATERTHAN, expr1, expr2);
+  Operator op = PhysicalIndexScan::make(
+      0, table_, "", std::shared_ptr<expression::AbstractExpression>(predicate),
+      false);
+  CostAndStatsCalculator calculator;
 
   std::vector<std::shared_ptr<expression::AbstractExpression>> cols;
 
@@ -170,15 +176,6 @@ TEST_F(CostAndStatsCalculatorTests, SingleConditionIndexScanTest) {
   cols.push_back(tv_expr);
   PropertySet *set = new PropertySet;
   set->AddProperty(std::make_shared<PropertyColumns>(cols));
-
-  // test.salary = 1.0
-  auto expr1 = new expression::TupleValueExpression("id");
-  expr1->SetTupleValueExpressionParams(type::TypeId::INTEGER, 0, 0);
-  auto expr2 = expression::ExpressionUtil::ConstantValueFactory(
-      type::ValueFactory::GetIntegerValue(30));
-  auto predicate = expression::ExpressionUtil::ComparisonFactory(
-      ExpressionType::COMPARE_GREATERTHAN, expr1, expr2);
-  set->AddProperty(std::make_shared<PropertyPredicate>(predicate));
 
   calculator.output_properties_ = set;
   op.Accept(dynamic_cast<OperatorVisitor *>(&calculator));
@@ -211,21 +208,6 @@ TEST_F(CostAndStatsCalculatorTests, ConjunctionConditionSeqScanTest) {
   auto catalog = catalog::Catalog::GetInstance();
   auto table_ = catalog->GetTableWithName(DEFAULT_DB_NAME, "test", txn);
   txn_manager.CommitTransaction(txn);
-
-  Operator op = PhysicalSeqScan::make(table_, "", false);
-  ColumnManager manager;
-  CostAndStatsCalculator calculator(manager);
-
-  std::vector<std::shared_ptr<expression::AbstractExpression>> cols;
-
-  auto tv_expr = std::shared_ptr<expression::AbstractExpression>(
-      expression::ExpressionUtil::TupleValueFactory(type::TypeId::DECIMAL, 0,
-                                                    2));
-
-  cols.push_back(tv_expr);
-  PropertySet *set = new PropertySet;
-  set->AddProperty(std::make_shared<PropertyColumns>(cols));
-
   // test.id > 30
   auto expr1 = expression::ExpressionUtil::TupleValueFactory(
       type::TypeId::INTEGER, 0, 0);
@@ -245,7 +227,20 @@ TEST_F(CostAndStatsCalculatorTests, ConjunctionConditionSeqScanTest) {
   // (test.id > 30) && (test.salary = 1.0)
   auto predicate = expression::ExpressionUtil::ConjunctionFactory(
       ExpressionType::CONJUNCTION_AND, expr3, expr6);
-  set->AddProperty(std::make_shared<PropertyPredicate>(predicate));
+  Operator op = PhysicalSeqScan::make(
+      0, table_, "", std::shared_ptr<expression::AbstractExpression>(predicate),
+      false);
+  CostAndStatsCalculator calculator;
+
+  std::vector<std::shared_ptr<expression::AbstractExpression>> cols;
+
+  auto tv_expr = std::shared_ptr<expression::AbstractExpression>(
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::DECIMAL, 0,
+                                                    2));
+
+  cols.push_back(tv_expr);
+  PropertySet *set = new PropertySet;
+  set->AddProperty(std::make_shared<PropertyColumns>(cols));
 
   calculator.output_properties_ = set;
   op.Accept(dynamic_cast<OperatorVisitor *>(&calculator));
@@ -278,20 +273,6 @@ TEST_F(CostAndStatsCalculatorTests, ConjunctionConditionIndexScanTest) {
   auto catalog = catalog::Catalog::GetInstance();
   auto table_ = catalog->GetTableWithName(DEFAULT_DB_NAME, "test", txn);
   txn_manager.CommitTransaction(txn);
-  Operator op = PhysicalIndexScan::make(table_, "", false);
-  ColumnManager manager;
-  CostAndStatsCalculator calculator(manager);
-
-  std::vector<std::shared_ptr<expression::AbstractExpression>> cols;
-
-  auto tv_expr = std::shared_ptr<expression::AbstractExpression>(
-      expression::ExpressionUtil::TupleValueFactory(type::TypeId::DECIMAL, 0,
-                                                    2));
-
-  cols.push_back(tv_expr);
-  PropertySet *set = new PropertySet;
-  set->AddProperty(std::make_shared<PropertyColumns>(cols));
-
   // test.id > 30
   auto expr1 = new expression::TupleValueExpression("id");
   expr1->SetTupleValueExpressionParams(type::TypeId::INTEGER, 0, 0);
@@ -323,7 +304,20 @@ TEST_F(CostAndStatsCalculatorTests, ConjunctionConditionIndexScanTest) {
   // ((test.id > 30) && (test.id <= 90)) && (test.salary = 1.0)
   auto predicate = expression::ExpressionUtil::ConjunctionFactory(
       ExpressionType::CONJUNCTION_AND, expr10, expr9);
-  set->AddProperty(std::make_shared<PropertyPredicate>(predicate));
+  Operator op = PhysicalIndexScan::make(
+      0, table_, "", std::shared_ptr<expression::AbstractExpression>(predicate),
+      false);
+  CostAndStatsCalculator calculator;
+
+  std::vector<std::shared_ptr<expression::AbstractExpression>> cols;
+
+  auto tv_expr = std::shared_ptr<expression::AbstractExpression>(
+      expression::ExpressionUtil::TupleValueFactory(type::TypeId::DECIMAL, 0,
+                                                    2));
+
+  cols.push_back(tv_expr);
+  PropertySet *set = new PropertySet;
+  set->AddProperty(std::make_shared<PropertyColumns>(cols));
 
   calculator.output_properties_ = set;
   op.Accept(dynamic_cast<OperatorVisitor *>(&calculator));
