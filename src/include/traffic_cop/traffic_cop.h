@@ -118,6 +118,14 @@ class TrafficCop {
     return rows_affected_;
   }
 
+  void SetStatement(std::shared_ptr<Statement> statement) {
+    statement_ = statement;
+  }
+
+  std::shared_ptr<Statement> GetStatement() {
+    return statement_;
+  }
+
   executor::ExecuteResult p_status_;
 
   bool is_queuing_;
@@ -125,9 +133,6 @@ class TrafficCop {
   inline void SetDefaultDatabaseName(std::string default_database_name) {
     default_database_name_ = default_database_name;
   }
-
-  //TODO: should this stay in traffic_cop?
-  std::shared_ptr<Statement> statement_;
 
   std::string error_message_;
 
@@ -145,6 +150,9 @@ class TrafficCop {
 
 //  struct event* event_;
  private:
+
+  // This save currnet statement in the traffic cop
+  std::shared_ptr<Statement> statement_;
 
   // Default database name
   std::string default_database_name_ = DEFAULT_DB_NAME;
