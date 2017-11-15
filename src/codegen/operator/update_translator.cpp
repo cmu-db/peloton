@@ -21,6 +21,7 @@
 #include "codegen/table_storage.h"
 #include "planner/project_info.h"
 #include "planner/abstract_scan_plan.h"
+#include "planner/update_plan.h"
 #include "storage/data_table.h"
 
 namespace peloton {
@@ -92,10 +93,7 @@ void UpdateTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
   auto direct_map_list = project_info->GetDirectMapList();
   uint32_t column_num =
       static_cast<uint32_t>(target_list.size() + direct_map_list.size());
-  auto *scan =
-      static_cast<const planner::AbstractScan *>(update_plan_.GetChild(0));
-  std::vector<const planner::AttributeInfo *> ais;
-  scan->GetAttributes(ais);
+  auto &ais = update_plan_.GetAttributeInfos();
 
   // Collect all the column values
   std::vector<codegen::Value> values;

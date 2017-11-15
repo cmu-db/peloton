@@ -55,12 +55,18 @@ class UpdatePlan : public AbstractPlan {
 
   void PerformBinding(BindingContext &binding_context) override;
 
+  const std::vector<const AttributeInfo *> &GetAttributeInfos() const {
+    return ais_;
+  }
+
  private:
   storage::DataTable *target_table_;
 
   std::unique_ptr<const planner::ProjectInfo> project_info_;
 
   bool update_primary_key_;
+
+  std::vector<const AttributeInfo *> ais_;
 
  private:
   DISALLOW_COPY_AND_MOVE(UpdatePlan);
