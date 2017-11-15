@@ -15,21 +15,23 @@
 namespace peloton {
 namespace threadpool {
 
-WorkerPool::WorkerPool(size_t num_threads, TaskQueue *task_queue) {
-  task_queue_ = task_queue;
-  for (size_t thread_id = 0; thread_id < num_threads; thread_id++) {
+WorkerPool::WorkerPool(size_t num_workers, TaskQueue *task_queue) :
+  num_workers_(num_workers), task_queue_(task_queue) {}
+
+void WorkerPool::Startup() {
+  for (size_t i = 0; i < num_workers_; i++) {
     // start thread on construction
     std::unique_ptr<Worker> worker(new Worker());
     worker->Start(task_queue_);
-    worker_threads_.push_back(std::move(worker));
+    workers_.push_back(std::move(worker));
   }
 }
 
 void WorkerPool::Shutdown() {
-  for (auto &thread : worker_threads_) {
-    thread->Stop();
+  for (auto &worker: workers_) {
+    worker->Stop();
   }
-  worker_threads_.clear();
+  workers_.clear();
 }
 
 }  // namespace threadpool

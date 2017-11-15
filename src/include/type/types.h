@@ -1048,6 +1048,7 @@ enum class OperatorId : uint32_t {
   DateTrunc,
   Like,
 
+
   // Add more operators here, before the last "Invalid" entry
   Invalid
 };
@@ -1221,12 +1222,6 @@ struct FileHandle {
       : file(file), fd(fd), size(size) {}
 };
 extern FileHandle INVALID_FILE_HANDLE;
-
-//===--------------------------------------------------------------------===//
-// Utilities
-//===--------------------------------------------------------------------===//
-
-bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString);
 
 //===--------------------------------------------------------------------===//
 // Transformers

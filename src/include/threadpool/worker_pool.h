@@ -28,15 +28,20 @@ namespace threadpool{
 class WorkerPool {
  public:
   // submit a threadpool for asynchronous execution.
-  WorkerPool(const size_t num_threads, TaskQueue *task_queue);
-  ~WorkerPool() { this->Shutdown(); }
+  WorkerPool(const size_t num_workers, TaskQueue *task_queue);
 
+  // explicitly start up the pool
+  void Startup();
+
+  // explicitly shut down the pool
   void Shutdown();
 
  private:
   friend class Worker;
 
-  std::vector<std::unique_ptr<Worker>> worker_threads_;
+  std::vector<std::unique_ptr<Worker>> workers_;
+
+  size_t num_workers_;
   TaskQueue* task_queue_;
 };
 
