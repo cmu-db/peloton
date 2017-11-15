@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "planner/update_plan.h"
+#include "planner/abstract_scan_plan.h"
 #include "planner/project_info.h"
 #include "storage/data_table.h"
 #include "type/types.h"
@@ -50,6 +51,9 @@ void UpdatePlan::PerformBinding(BindingContext &binding_context) {
   PL_ASSERT(children.size() == 1);
 
   children[0]->PerformBinding(input_context);
+
+  auto *scan = static_cast<planner::AbstractScan *>(children[0].get());
+  scan->GetAttributes(ais_);
 
   // Do projection (if one exists)
   if (GetProjectInfo() != nullptr) {

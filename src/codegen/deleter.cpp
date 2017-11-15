@@ -20,7 +20,7 @@ namespace codegen {
 
 void Deleter::Init(storage::DataTable *table,
                    executor::ExecutorContext *executor_context) {
-  PL_ASSERT(txn != nullptr && table != nullptr && executor_context != nullptr);
+  PL_ASSERT(table != nullptr && executor_context != nullptr);
   table_ = table;
   executor_context_ = executor_context;
 }

@@ -82,7 +82,7 @@ class InsertPlan : public AbstractPlan {
   const std::string GetInfo() const override { return "InsertPlan"; }
 
   // WARNING - Not Implemented
-  std::unique_ptr<AbstractPlan> Copy() const {
+  std::unique_ptr<AbstractPlan> Copy() const override {
     LOG_INFO("InsertPlan Copy() not implemented");
     std::unique_ptr<AbstractPlan> dummy;
     return dummy;
