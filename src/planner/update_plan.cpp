@@ -63,9 +63,7 @@ void UpdatePlan::PerformBinding(BindingContext &binding_context) {
     std::vector<const BindingContext *> inputs = {&input_context};
     GetProjectInfo()->PerformRebinding(binding_context, inputs);
   }
-
-bool UpdatePlan::Equals(planner::AbstractPlan &plan) const {
-  return (*this == plan);
+}
 
 hash_t UpdatePlan::Hash() const {
   auto type = GetPlanNodeType();
