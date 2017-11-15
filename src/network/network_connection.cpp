@@ -759,7 +759,7 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
           PL_ASSERT(false);
         }
         conn->protocol_handler_->GetResult();
-        conn->traffic_cop_.is_queuing_ = false;
+        conn->traffic_cop_.SetQueuing(false);
         conn->TransitState(ConnState::CONN_WRITE);
         break;
       }

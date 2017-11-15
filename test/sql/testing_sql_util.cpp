@@ -74,11 +74,11 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
   auto status =
       traffic_cop_.ExecuteStatement(statement, param_values, unnamed, nullptr, result_format,
                                     result, error_message);
-  if (traffic_cop_.is_queuing_) {
+  if (traffic_cop_.GetQueuing()) {
     ContinueAfterComplete();
     traffic_cop_.ExecuteStatementPlanGetResult();
     status = traffic_cop_.ExecuteStatementGetResult();
-    traffic_cop_.is_queuing_ = false;
+    traffic_cop.SetQueuing(false);
   }
   if (status == ResultType::SUCCESS) {
     tuple_descriptor = statement->GetTupleDescriptor();
@@ -114,11 +114,11 @@ ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
     counter_.store(1);
     auto status =
         traffic_cop_.ExecuteStatementPlan(plan, params, result, result_format);
-    if (traffic_cop_.is_queuing_) {
+    if (traffic_cop_.GetQueuing()) {
       TestingSQLUtil::ContinueAfterComplete();
       traffic_cop_.ExecuteStatementPlanGetResult();
       status = traffic_cop_.p_status_;
-      traffic_cop_.is_queuing_ = false;
+      traffic_cop.SetQueuing(false);
     }
     rows_changed = status.m_processed;
     LOG_INFO("Statement executed. Result: %s",
@@ -164,11 +164,11 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
   auto status =
       traffic_cop_.ExecuteStatement(statement, param_values, unnamed, nullptr, result_format,
                                     result, error_message);
-  if (traffic_cop_.is_queuing_) {
+  if (traffic_cop_.GetQueuing()) {
     ContinueAfterComplete();
     traffic_cop_.ExecuteStatementPlanGetResult();
     status = traffic_cop_.ExecuteStatementGetResult();
-    traffic_cop_.is_queuing_ = false;
+    traffic_cop.SetQueuing(false);
   }
   if (status == ResultType::SUCCESS) {
     tuple_descriptor = statement->GetTupleDescriptor();
@@ -199,11 +199,11 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
   auto status =
       traffic_cop_.ExecuteStatement(statement, param_values, unnamed, nullptr, result_format,
                                     result,error_message);
-  if (traffic_cop_.is_queuing_) {
+  if (traffic_cop_.GetQueuing()) {
     ContinueAfterComplete();
     traffic_cop_.ExecuteStatementPlanGetResult();
     status = traffic_cop_.ExecuteStatementGetResult();
-    traffic_cop_.is_queuing_ = false;
+    traffic_cop.SetQueuing(false);
   }
   if (status == ResultType::SUCCESS) {
     tuple_descriptor = statement->GetTupleDescriptor();
