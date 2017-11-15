@@ -121,6 +121,11 @@ class ParameterStorage {
         len = codegen.Call(QueryParametersProxy::GetVarcharLen, args);
         break;
       }
+      case peloton::type::TypeId::VARBINARY: {
+        val = codegen.Call(QueryParametersProxy::GetVarbinaryVal, args);
+        len = codegen.Call(QueryParametersProxy::GetVarbinaryLen, args);
+        break;
+      }
       default: {
         throw Exception{"Unknown constant value type " +
                         TypeIdToString(type_id)};
