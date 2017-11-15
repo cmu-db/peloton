@@ -24,14 +24,13 @@ ConstantTranslator::ConstantTranslator(
     const expression::ConstantValueExpression &exp, CompilationContext &ctx)
     : ExpressionTranslator(exp, ctx) {}
 
-// Return an LLVM value for our constant (i.e., a compile-time constant)
 codegen::Value ConstantTranslator::DeriveValue(
     CodeGen &codegen, UNUSED_ATTRIBUTE RowBatch::Row &row) const {
   // Pull out the constant from the expression
   const peloton::type::Value &constant =
       GetExpressionAs<expression::ConstantValueExpression>().GetValue();
 
-  // Convert the value into an LLVM compile-time constant
+  // Convert the constant into a codegen::Value
   llvm::Value *val = nullptr;
   llvm::Value *len = nullptr;
   switch (constant.GetTypeId()) {
@@ -67,7 +66,6 @@ codegen::Value ConstantTranslator::DeriveValue(
     }
     case peloton::type::TypeId::VARCHAR: {
       std::string str = peloton::type::ValuePeeker::PeekVarchar(constant);
-      // val should be a pointer type to be used in comparisions inside a PHI
       val = codegen.ConstStringPtr(str);
       len = codegen.Const32(str.length() + 1); // length includes the null-terminator
       break;
