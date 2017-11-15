@@ -69,7 +69,7 @@ codegen::Value ConstantTranslator::DeriveValue(
       std::string str = peloton::type::ValuePeeker::PeekVarchar(constant);
       // val should be a pointer type to be used in comparisions inside a PHI
       val = codegen.ConstStringPtr(str);
-      len = codegen.Const32(str.length());
+      len = codegen.Const32(str.length() + 1); // length includes the null-terminator
       break;
     }
     default: {
