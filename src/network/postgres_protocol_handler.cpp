@@ -140,7 +140,7 @@ void PostgresProtocolHandler::PutTupleDescriptor(
 }
 
 void PostgresProtocolHandler::SendDataRows(std::vector<StatementResult> &results,
-                                 int colcount, int &rows_affected) {
+                                 int colcount) {
   if (results.empty() || colcount == 0) return;
 
   size_t numrows = results.size() / colcount;
@@ -165,7 +165,7 @@ void PostgresProtocolHandler::SendDataRows(std::vector<StatementResult> &results
     }
     responses.push_back(std::move(pkt));
   }
-  rows_affected = numrows;
+  traffic_cop_->setRowsAffected(numrows);
 }
 
 void PostgresProtocolHandler::CompleteCommand(const std::string &query, const QueryType& query_type, int rows) {
@@ -258,7 +258,6 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
     std::vector<StatementResult> result;
     std::vector<FieldInfo> tuple_descriptor;
     std::string error_message;
-    int rows_affected = 0;
 
     std::string query_type_string_;
     Statement::ParseQueryTypeString(query, query_type_string_);
@@ -349,7 +348,7 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
 
         auto status =
                 traffic_cop_->ExecuteStatement(traffic_cop_->statement_, traffic_cop_->param_values_, unnamed, nullptr,
-                                               result_format_, traffic_cop_->results_, traffic_cop_->rows_affected_,
+                                               result_format_, traffic_cop_->results_,
                                                traffic_cop_->error_message_, thread_id);
 
         if (traffic_cop_->is_queuing_) {
@@ -366,7 +365,7 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
         traffic_cop_->statement_ = traffic_cop_->PrepareStatement(unnamed_statement, traffic_cop_->query_,
                                                     error_message);
         if (traffic_cop_->statement_.get() == nullptr) {
-          rows_affected = 0;
+          traffic_cop_->setRowsAffected(0);
           SendErrorResponse(
             {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
           SendReadyForQuery(NetworkTransactionStateType::IDLE);
@@ -382,7 +381,7 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
         // should results_ be reset when PakcetManager.reset(), why results_ cannot be read?
         auto status =
             traffic_cop_->ExecuteStatement(traffic_cop_->statement_, traffic_cop_->param_values_, unnamed, nullptr,
-                                           result_format_, traffic_cop_->results_, traffic_cop_->rows_affected_,
+                                           result_format_, traffic_cop_->results_,
                                            traffic_cop_->error_message_, thread_id);
         if (traffic_cop_->is_queuing_) {
           return ProcessResult::PROCESSING;
@@ -396,10 +395,10 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
     PutTupleDescriptor(tuple_descriptor);
 
     // send the result rows
-    SendDataRows(result, tuple_descriptor.size(), rows_affected);
+    SendDataRows(result, tuple_descriptor.size());
 
     // The response to the SimpleQueryCommand is the query string.
-    CompleteCommand(traffic_cop_->query_, traffic_cop_->query_type_, rows_affected);
+    CompleteCommand(traffic_cop_->query_, traffic_cop_->query_type_, traffic_cop_->getRowsAffected());
   } else {
     SendEmptyQueryResponse();
   }
@@ -429,10 +428,10 @@ void PostgresProtocolHandler::ExecQueryMessageGetResult(ResultType status) {
   PutTupleDescriptor(tuple_descriptor);
 
   // send the result rows
-  SendDataRows(traffic_cop_->results_, tuple_descriptor.size(), traffic_cop_->rows_affected_);
+  SendDataRows(traffic_cop_->results_, tuple_descriptor.size());
 
   // The response to the SimpleQueryCommand is the query string.
-  CompleteCommand(traffic_cop_->query_, traffic_cop_->query_type_, traffic_cop_->rows_affected_);
+  CompleteCommand(traffic_cop_->query_, traffic_cop_->query_type_, traffic_cop_->getRowsAffected());
 
   SendReadyForQuery(NetworkTransactionStateType::IDLE);
 }
@@ -869,7 +868,7 @@ ProcessResult PostgresProtocolHandler::ExecExecuteMessage(InputPacket *pkt,
       std::string skipped_query_type_string;
       Statement::ParseQueryTypeString(skipped_query_string_, skipped_query_type_string);
       // The response to ExecuteCommand is the query_type string token.
-      CompleteCommand(skipped_query_type_string, skipped_query_type_, traffic_cop_->rows_affected_);
+      CompleteCommand(skipped_query_type_string, skipped_query_type_, traffic_cop_->getRowsAffected());
     }
     skipped_stmt_ = false;
     return ProcessResult::COMPLETE;
@@ -901,7 +900,7 @@ ProcessResult PostgresProtocolHandler::ExecExecuteMessage(InputPacket *pkt,
 
   auto status = traffic_cop_->ExecuteStatement(
       traffic_cop_->statement_, traffic_cop_->param_values_, unnamed, param_stat, result_format_, traffic_cop_->results_,
-      traffic_cop_->rows_affected_, traffic_cop_->error_message_, thread_id);
+      traffic_cop_->error_message_, thread_id);
   if (traffic_cop_->is_queuing_) {
     return ProcessResult::PROCESSING;
   }
@@ -928,9 +927,9 @@ void PostgresProtocolHandler::ExecExecuteMessageGetResult(ResultType status) {
       return;
     default: {
       auto tuple_descriptor = traffic_cop_->statement_->GetTupleDescriptor();
-      SendDataRows(traffic_cop_->results_, tuple_descriptor.size(), traffic_cop_->rows_affected_);
+      SendDataRows(traffic_cop_->results_, tuple_descriptor.size());
       // The reponse to ExecuteCommand is the query_type string token.
-      CompleteCommand(traffic_cop_->statement_->GetQueryTypeString(), query_type, traffic_cop_->rows_affected_);
+      CompleteCommand(traffic_cop_->statement_->GetQueryTypeString(), query_type, traffic_cop_->getRowsAffected());
       return;
     }
   }
@@ -938,7 +937,7 @@ void PostgresProtocolHandler::ExecExecuteMessageGetResult(ResultType status) {
 
 void PostgresProtocolHandler::GetResult() {
   traffic_cop_->ExecuteStatementPlanGetResult();
-  auto status = traffic_cop_->ExecuteStatementGetResult(traffic_cop_->rows_affected_);
+  auto status = traffic_cop_->ExecuteStatementGetResult();
   switch (protocol_type_) {
     case NetworkProtocolType::POSTGRES_JDBC:
       LOG_TRACE("JDBC result");
@@ -1180,10 +1179,10 @@ void PostgresProtocolHandler::Reset() {
   result_format_.clear();
   traffic_cop_->results_.clear();
   traffic_cop_->param_values_.clear();
+  traffic_cop_->setRowsAffected(0);
   txn_state_ = NetworkTransactionStateType::IDLE;
   skipped_stmt_ = false;
   skipped_query_string_.clear();
-
   statement_cache_.clear();
   table_statement_cache_.clear();
   portals_.clear();

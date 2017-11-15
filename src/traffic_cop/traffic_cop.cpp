@@ -32,7 +32,7 @@
 namespace peloton {
 namespace tcop {
 
-TrafficCop::TrafficCop():is_queuing_(false) {
+TrafficCop::TrafficCop():is_queuing_(false), rows_affected_(0) {
   LOG_TRACE("Starting a new TrafficCop");
   optimizer_.reset(new optimizer::Optimizer);
 //  result_ = ResultType::QUEUING;
@@ -139,7 +139,7 @@ ResultType TrafficCop::ExecuteStatement(
     const std::vector<type::Value> &params, UNUSED_ATTRIBUTE const bool unnamed,
     std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
     const std::vector<int> &result_format, std::vector<StatementResult> &result,
-    int &rows_changed, UNUSED_ATTRIBUTE std::string &error_message,
+    UNUSED_ATTRIBUTE std::string &error_message,
     const size_t thread_id UNUSED_ATTRIBUTE) {
   if (settings::SettingsManager::GetInt(settings::SettingId::stats_mode) !=
       STATS_TYPE_INVALID) {
@@ -170,7 +170,7 @@ ResultType TrafficCop::ExecuteStatement(
           return ResultType::QUEUING;
         }
         // if in ExecuteStatementPlan, these is no need to queue task, like 'BEGIN', directly return result
-        return ExecuteStatementGetResult(rows_changed);
+        return ExecuteStatementGetResult();
     }
   } catch (Exception &e) {
     error_message = e.what();
@@ -178,11 +178,11 @@ ResultType TrafficCop::ExecuteStatement(
   }
 }
 
-ResultType TrafficCop::ExecuteStatementGetResult(int &rows_changed) {
+ResultType TrafficCop::ExecuteStatementGetResult() {
   LOG_TRACE("Statement executed. Result: %s",
             ResultTypeToString(p_status_.m_result).c_str());
-  rows_changed = p_status_.m_processed;
-  LOG_TRACE("rows_changed %d", rows_changed);
+  setRowsAffected(p_status_.m_processed);
+  LOG_TRACE("rows_changed %d", p_status_.m_processed);
   is_queuing_ = false;
   return p_status_.m_result;
 }

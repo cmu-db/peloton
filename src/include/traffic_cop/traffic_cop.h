@@ -65,7 +65,7 @@ class TrafficCop {
       const std::vector<type::Value> &params, const bool unnamed,
       std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
       const std::vector<int> &result_format,
-      std::vector<StatementResult> &result, int &rows_change,
+      std::vector<StatementResult> &result,
       std::string &error_message, const size_t thread_id = 0);
 
   // ExecutePrepStmt - Helper to handle txn-specifics for the plan-tree of a
@@ -102,13 +102,21 @@ class TrafficCop {
 
   void ExecuteStatementPlanGetResult();
 
-  ResultType ExecuteStatementGetResult(int &rows_changed);
+  ResultType ExecuteStatementGetResult();
 
   static void ExecutePlanWrapper(void *arg_ptr);
 
   void SetTaskCallback(void(* task_callback)(void*), void *task_callback_arg) {
     task_callback_ = task_callback;
     task_callback_arg_ = task_callback_arg;
+  }
+
+  void setRowsAffected(int rows_affected) {
+    rows_affected_ = rows_affected;
+  }
+
+  int getRowsAffected() {
+    return rows_affected_;
   }
 
   executor::ExecuteResult p_status_;
@@ -124,13 +132,10 @@ class TrafficCop {
 
   std::string error_message_;
 
-  //TODO: shoud this stay in traffic_cop?
+  //this should stay in traffic_cop, because ExecutePlanArg will use it
   std::vector<StatementResult> results_;
 
-  //TODO: should this stay in traffic_cop?
-  int rows_affected_ = 0;
-
-  //TODO: should this stay in traffic_cop?
+  //this should stay in traffic_cop, because ExecutePlanArg will use it
   std::vector<type::Value> param_values_;
 
   //TODO: should this stay in traffic_cop?
@@ -144,6 +149,8 @@ class TrafficCop {
 
   // Default database name
   std::string default_database_name_ = DEFAULT_DB_NAME;
+  
+  int rows_affected_;
 
   // The optimizer used for this connection
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer_;
