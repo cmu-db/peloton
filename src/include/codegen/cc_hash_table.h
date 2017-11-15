@@ -31,7 +31,7 @@ class CCHashTable : public HashTable {
  public:
   // Constructor
   CCHashTable();
-  CCHashTable(CodeGen &codegen, const std::vector<type::Type> &key_type, const std::string name = "CCHashTable");
+  CCHashTable(CodeGen &codegen, const std::vector<type::Type> &key_type);
 
   // Initialize the hash-table instance
   void Init(CodeGen &codegen, llvm::Value *ht_ptr) const override;
@@ -67,10 +67,6 @@ class CCHashTable : public HashTable {
  private:
   // The storage strategy we use to store the lookup keys inside every HashEntry
   CompactStorage key_storage_;
-
-  // Name of the hash table, that will be used to make the IR labels more meaningful
-  // No reference here, to avoid writing an explicit assignment constructor
-  std::string name_;
 };
 
 }  // namespace codegen

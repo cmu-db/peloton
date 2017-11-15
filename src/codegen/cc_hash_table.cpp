@@ -25,13 +25,12 @@ namespace codegen {
 
 /// Constructors
 
-CCHashTable::CCHashTable() : name_("CCHashTable") {
+CCHashTable::CCHashTable() {
   // This constructor shouldn't generally be used at all, but there are
   // cases when the key-type is not known at construction time.
 }
 CCHashTable::CCHashTable(CodeGen &codegen,
-                         const std::vector<type::Type> &key_type, const std::string name)
-  : name_(name) {
+                         const std::vector<type::Type> &key_type) {
   key_storage_.Setup(codegen, key_type);
 }
 
@@ -62,7 +61,7 @@ void CCHashTable::ProbeOrInsert(CodeGen &codegen, llvm::Value *ht_ptr,
                                 ProbeCallback &probe_callback,
                                 InsertCallback &insert_callback) const {
   llvm::BasicBlock *cont_bb =
-      llvm::BasicBlock::Create(codegen.GetContext(), name_ + ".ProbeOrInsert.cont");
+      llvm::BasicBlock::Create(codegen.GetContext(), "cont");
   llvm::Type *ht_type = CCHashTableProxy::GetType(codegen);
   llvm::Value *buckets_ptr = codegen->CreateLoad(
       codegen->CreateConstInBoundsGEP2_32(ht_type, ht_ptr, 0, 0));
@@ -75,7 +74,7 @@ void CCHashTable::ProbeOrInsert(CodeGen &codegen, llvm::Value *ht_ptr,
   llvm::Value *bucket_mask = codegen->CreateLoad(
       codegen->CreateConstInBoundsGEP2_32(ht_type, ht_ptr, 0, 2));
   llvm::Value *bucket_num =
-      codegen->CreateAnd(hash_val, bucket_mask, name_ + ".ProbeOrInsert.bucketNum");
+      codegen->CreateAnd(hash_val, bucket_mask, "bucketNum");
   llvm::Value *bucket =
       codegen->CreateLoad(codegen->CreateGEP(buckets_ptr, bucket_num));
 
@@ -83,7 +82,7 @@ void CCHashTable::ProbeOrInsert(CodeGen &codegen, llvm::Value *ht_ptr,
   llvm::Value *null =
       codegen.NullPtr(llvm::cast<llvm::PointerType>(bucket->getType()));
   llvm::Value *end_condition = codegen->CreateICmpNE(bucket, null);
-  lang::Loop chain_loop{codegen, end_condition, {{name_ + ".ProbeOrInsert.iter", bucket}}};
+  lang::Loop chain_loop{codegen, end_condition, {{"iter", bucket}}};
   {
     llvm::Type *ht_entry_type = HashEntryProxy::GetType(codegen);
     llvm::Value *entry = chain_loop.GetLoopVar(0);
@@ -92,7 +91,7 @@ void CCHashTable::ProbeOrInsert(CodeGen &codegen, llvm::Value *ht_ptr,
     llvm::Value *entry_hash = codegen->CreateLoad(
         codegen->CreateConstInBoundsGEP2_32(ht_entry_type, entry, 0, 0));
     lang::If hash_match{codegen, codegen->CreateICmpEQ(entry_hash, hash_val),
-                        name_ + ".ProbeOrInsert.hashMatch"};
+                        "hashMatch"};
     {
       // (3.2.1) Load the keys from the hash entry
       llvm::Value *keys_ptr =
@@ -103,7 +102,7 @@ void CCHashTable::ProbeOrInsert(CodeGen &codegen, llvm::Value *ht_ptr,
 
       // (3.2.1)
       auto keys_are_equal = Value::TestEquality(codegen, key, hash_entry_keys);
-      lang::If key_match{codegen, keys_are_equal.GetValue(), name_ + ".ProbeOrInsert.keyMatch"};
+      lang::If key_match{codegen, keys_are_equal.GetValue(), "keyMatch"};
       {
         // (3.2.2) Call the probe callback since we found a matching key
         probe_callback.ProcessEntry(codegen, values_area);
@@ -184,7 +183,7 @@ void CCHashTable::Iterate(CodeGen &codegen, llvm::Value *ht_ptr,
   llvm::Value *bucket_num = codegen.Const64(0);
   llvm::Value *bucket_cond = codegen->CreateICmpULT(bucket_num, num_buckets);
   // (1)
-  lang::Loop bucket_loop{codegen, bucket_cond, {{name_ + ".Iterate.bucketNum", bucket_num}}};
+  lang::Loop bucket_loop{codegen, bucket_cond, {{"bucketNum", bucket_num}}};
   {
     // (1.1)
     bucket_num = bucket_loop.GetLoopVar(0);
@@ -195,7 +194,7 @@ void CCHashTable::Iterate(CodeGen &codegen, llvm::Value *ht_ptr,
     // (1.2)
     lang::Loop chain_loop{codegen,
                           codegen->CreateICmpNE(bucket, null_bucket),
-                          {{name_ + ".Iterate.entry", bucket}}};
+                          {{"entry", bucket}}};
     {
       // (1.2.1)
       llvm::Type *ht_entry_type = HashEntryProxy::GetType(codegen);
@@ -234,7 +233,7 @@ void CCHashTable::FindAll(CodeGen &codegen, llvm::Value *ht_ptr,
   // (2) bucket = hash & (num_buckets-1)
   llvm::Value *bucket_mask = codegen->CreateLoad(
       codegen->CreateConstInBoundsGEP2_32(ht_type, ht_ptr, 0, 2));
-  llvm::Value *bucket_num = codegen->CreateAnd(hash, bucket_mask);
+  llvm::Value *bucket_num = codegen->CreateAnd(hash, bucket_mask, "bucketNum");
   llvm::Value *bucket =
       codegen->CreateLoad(codegen->CreateGEP(buckets_ptr, bucket_num));
 
@@ -242,7 +241,7 @@ void CCHashTable::FindAll(CodeGen &codegen, llvm::Value *ht_ptr,
   llvm::Value *null =
       codegen.NullPtr(llvm::cast<llvm::PointerType>(bucket->getType()));
   llvm::Value *end_condition = codegen->CreateICmpNE(bucket, null);
-  lang::Loop chain_loop{codegen, end_condition, {{name_ + ".FindAll.iter", bucket}}};
+  lang::Loop chain_loop{codegen, end_condition, {{"iter", bucket}}};
   {
     llvm::Type *ht_entry_type = HashEntryProxy::GetType(codegen);
     llvm::Value *entry = chain_loop.GetLoopVar(0);
@@ -250,7 +249,8 @@ void CCHashTable::FindAll(CodeGen &codegen, llvm::Value *ht_ptr,
     // (3.1) Check if the current iter's hash matches what we calculated earlier
     llvm::Value *entry_hash = codegen->CreateLoad(
         codegen->CreateConstInBoundsGEP2_32(ht_entry_type, entry, 0, 0));
-    lang::If hash_match{codegen, codegen->CreateICmpEQ(entry_hash, hash)};
+    lang::If hash_match{codegen, codegen->CreateICmpEQ(entry_hash, hash),
+                        "hashMatch"};
     {
       // (3.2.1) Load the keys from the hash entry
       llvm::Value *iter_keys =
@@ -260,7 +260,7 @@ void CCHashTable::FindAll(CodeGen &codegen, llvm::Value *ht_ptr,
           key_storage_.LoadValues(codegen, iter_keys, entry_keys);
 
       auto keys_are_equal = Value::TestEquality(codegen, key, entry_keys);
-      lang::If key_match{codegen, keys_are_equal.GetValue()};
+      lang::If key_match{codegen, keys_are_equal.GetValue(), "keyMatch"};
       {
         // (3.2.2) Call the probe callback since we found a matching key
         callback.ProcessEntry(codegen, key, data_area);
