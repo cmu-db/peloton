@@ -30,6 +30,8 @@ DEFINE_METHOD(peloton::codegen, QueryParameters, GetDate);
 DEFINE_METHOD(peloton::codegen, QueryParameters, GetTimestamp);
 DEFINE_METHOD(peloton::codegen, QueryParameters, GetVarcharVal);
 DEFINE_METHOD(peloton::codegen, QueryParameters, GetVarcharLen);
+DEFINE_METHOD(peloton::codegen, QueryParameters, GetVarbinaryVal);
+DEFINE_METHOD(peloton::codegen, QueryParameters, GetVarbinaryLen);
 
 }  // namespace codegen
 }  // namespace peloton

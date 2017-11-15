@@ -101,6 +101,15 @@ class QueryParameters {
     return parameters_[index].GetValue().GetLength();
   }
 
+  const char *GetVarbinaryVal(int32_t index) {
+    return peloton::type::ValuePeeker::PeekVarbinary(
+        parameters_[index].GetValue());
+  }
+
+  uint32_t GetVarbinaryLen(int32_t index) {
+    return parameters_[index].GetValue().GetLength();
+  }
+
  private:
   // Set values from parameters into member variables
   void SetParameterExpressionValues(

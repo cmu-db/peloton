@@ -77,6 +77,11 @@ class ValuePeeker {
     PL_ASSERT(value.GetTypeId() == TypeId::VARCHAR);
     return value.GetData();
   }
+
+  static inline const char *PeekVarbinary(const Value &value) {
+    PL_ASSERT(value.GetTypeId() == TypeId::VARBINARY);
+    return value.GetData();
+  }
 };
 
 
