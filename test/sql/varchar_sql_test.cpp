@@ -26,18 +26,14 @@ void PopulateVarcharTable() {
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
   catalog::Catalog::GetInstance()->Bootstrap();
   txn_manager.CommitTransaction(txn);
-  txn = txn_manager.BeginTransaction();
 
   TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE foo(name varchar(250));");
   std::vector<std::string> names{"Alice", "Peter",  "Cathy",
                                  "Bob",   "Alicia", "David"};
   for (size_t i = 0; i < names.size(); i++) {
-    std::ostringstream os;
-    os << "INSERT INTO foo VALUES ('" << names[i] << "');";
-    TestingSQLUtil::ExecuteSQLQuery(os.str());
+    std::string sql = "INSERT INTO foo VALUES ('" + names[i] + "');";
+    TestingSQLUtil::ExecuteSQLQuery(sql);
   }
-
-  txn_manager.CommitTransaction(txn);
 }
 
 void CleanUp() {
