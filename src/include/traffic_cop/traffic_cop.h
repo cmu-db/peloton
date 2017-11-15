@@ -142,24 +142,41 @@ class TrafficCop {
     return param_values_;
   }
 
-  executor::ExecuteResult p_status_;
+  void SetErrorMessage(std::string error_message) {
+    error_message_ = error_message;
+  }
 
-  bool is_queuing_;
+  std::string& GetErrorMessage() {
+    return error_message_;
+  }
+
+  void SetQueuing(bool is_queuing) {
+    is_queuing_ = is_queuing;
+  }
+
+  bool GetQueuing() {
+    return is_queuing_;
+  }
+
+  executor::ExecuteResult p_status_;
   
   inline void SetDefaultDatabaseName(std::string default_database_name) {
     default_database_name_ = default_database_name;
   }
 
-  std::string error_message_;
-
-  //TODO: should this stay in traffic_cop?
+  //TODO: I leave this variable here to remind that after parser part finished,
+  //TODO: don't forget move query to statement_ according to the way of query_type_
   // QueryType query_type_;
 
-  //TODO: should this stay in traffic_cop?
+  //TODO: this member variable should be in statement_ after parser part finished
   std::string query_;
 
 //  struct event* event_;
  private:
+
+  bool is_queuing_;
+
+  std::string error_message_;
 
   //this should stay in traffic_cop, because ExecutePlanArg will use it
   std::vector<type::Value> param_values_;

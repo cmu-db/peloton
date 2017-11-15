@@ -318,10 +318,10 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
         }
         // Did not find statement with same name
         else {
-          traffic_cop_->error_message_ = "The prepared statement does not exist";
-          LOG_ERROR("%s", traffic_cop_->error_message_.c_str());
+          traffic_cop_->SetErrorMessage("The prepared statement does not exist");
+          LOG_ERROR("%s", traffic_cop_->GetErrorMessage().c_str());
           SendErrorResponse(
-              {{NetworkMessageType::HUMAN_READABLE_ERROR, traffic_cop_->error_message_}});
+              {{NetworkMessageType::HUMAN_READABLE_ERROR, traffic_cop_->GetErrorMessage()}});
           SendReadyForQuery(NetworkTransactionStateType::IDLE);
           return ProcessResult::COMPLETE;
         }
@@ -347,9 +347,9 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
         auto status =
                 traffic_cop_->ExecuteStatement(traffic_cop_->GetStatement(), traffic_cop_->GetParamVal(), unnamed, nullptr,
                                                result_format_, traffic_cop_->GetResult(),
-                                               traffic_cop_->error_message_, thread_id);
+                                               traffic_cop_->GetErrorMessage(), thread_id);
 
-        if (traffic_cop_->is_queuing_) {
+        if (traffic_cop_->GetQueuing()) {
           return ProcessResult::PROCESSING;
         }
 
@@ -380,8 +380,8 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
         auto status =
             traffic_cop_->ExecuteStatement(traffic_cop_->GetStatement(), traffic_cop_->GetParamVal(), unnamed, nullptr,
                                            result_format_, traffic_cop_->GetResult(),
-                                           traffic_cop_->error_message_, thread_id);
-        if (traffic_cop_->is_queuing_) {
+                                           traffic_cop_->GetErrorMessage(), thread_id);
+        if (traffic_cop_->GetQueuing()) {
           return ProcessResult::PROCESSING;
         }
         ExecQueryMessageGetResult(status);
@@ -417,7 +417,7 @@ void PostgresProtocolHandler::ExecQueryMessageGetResult(ResultType status) {
     tuple_descriptor = traffic_cop_->GetStatement()->GetTupleDescriptor();
   } else if (status == ResultType::FAILURE) { // check status
     SendErrorResponse(
-        {{NetworkMessageType::HUMAN_READABLE_ERROR, traffic_cop_->error_message_}});
+        {{NetworkMessageType::HUMAN_READABLE_ERROR, traffic_cop_->GetErrorMessage()}});
     SendReadyForQuery(NetworkTransactionStateType::IDLE);
     return;
   }
@@ -876,7 +876,7 @@ ProcessResult PostgresProtocolHandler::ExecExecuteMessage(InputPacket *pkt,
   if (portal.get() == nullptr) {
     LOG_ERROR("Did not find portal : %s", portal_name.c_str());
     SendErrorResponse(
-        {{NetworkMessageType::HUMAN_READABLE_ERROR, traffic_cop_->error_message_}});
+        {{NetworkMessageType::HUMAN_READABLE_ERROR, traffic_cop_->GetErrorMessage()}});
     SendReadyForQuery(txn_state_);
     return ProcessResult::TERMINATE;
   }
@@ -898,8 +898,8 @@ ProcessResult PostgresProtocolHandler::ExecExecuteMessage(InputPacket *pkt,
 
   auto status = traffic_cop_->ExecuteStatement(
       traffic_cop_->GetStatement(), traffic_cop_->GetParamVal(), unnamed, param_stat, result_format_, traffic_cop_->GetResult(),
-      traffic_cop_->error_message_, thread_id);
-  if (traffic_cop_->is_queuing_) {
+      traffic_cop_->GetErrorMessage(), thread_id);
+  if (traffic_cop_->GetQueuing()) {
     return ProcessResult::PROCESSING;
   }
   ExecExecuteMessageGetResult(status);
@@ -910,9 +910,9 @@ void PostgresProtocolHandler::ExecExecuteMessageGetResult(ResultType status) {
   const auto &query_type = traffic_cop_->GetStatement()->GetQueryType();
   switch (status) {
     case ResultType::FAILURE:
-      LOG_ERROR("Failed to execute: %s", traffic_cop_->error_message_.c_str());
+      LOG_ERROR("Failed to execute: %s", traffic_cop_->GetErrorMessage().c_str());
       SendErrorResponse(
-          {{NetworkMessageType::HUMAN_READABLE_ERROR, traffic_cop_->error_message_}});
+          {{NetworkMessageType::HUMAN_READABLE_ERROR, traffic_cop_->GetErrorMessage()}});
       return;
     case ResultType::ABORTED:
       if (query_type != QueryType::QUERY_ROLLBACK) {
