@@ -61,6 +61,7 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
   auto statement =
       traffic_cop_.PrepareStatement(unnamed_statement, query, error_message);
   if (statement.get() == nullptr) {
+    traffic_cop_.setRowsAffected(0);
     rows_changed = 0;
     return ResultType::FAILURE;
   }
@@ -70,13 +71,13 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
   // SetTrafficCopCounter();
   counter_.store(1);
-  auto status = traffic_cop_.ExecuteStatement(statement, param_values, unnamed,
-                                              nullptr, result_format, result,
-                                              rows_changed, error_message);
+  auto status =
+      traffic_cop_.ExecuteStatement(statement, param_values, unnamed, nullptr, result_format,
+                                    result, error_message);
   if (traffic_cop_.is_queuing_) {
     ContinueAfterComplete();
     traffic_cop_.ExecuteStatementPlanGetResult();
-    status = traffic_cop_.ExecuteStatementGetResult(rows_changed);
+    status = traffic_cop_.ExecuteStatementGetResult();
     traffic_cop_.is_queuing_ = false;
   }
   if (status == ResultType::SUCCESS) {
@@ -84,6 +85,7 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
   }
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status).c_str());
+  rows_changed = traffic_cop_.getRowsAffected();
   return status;
 }
 
@@ -144,14 +146,13 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
     const std::string query, std::vector<StatementResult> &result) {
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
-  int rows_changed;
 
   // prepareStatement
   std::string unnamed_statement = "unnamed";
   auto statement =
       traffic_cop_.PrepareStatement(unnamed_statement, query, error_message);
   if (statement.get() == nullptr) {
-    rows_changed = 0;
+    traffic_cop_.setRowsAffected(0);
     return ResultType::FAILURE;
   }
   // ExecuteStatment
@@ -160,13 +161,13 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
   // SetTrafficCopCounter();
   counter_.store(1);
-  auto status = traffic_cop_.ExecuteStatement(statement, param_values, unnamed,
-                                              nullptr, result_format, result,
-                                              rows_changed, error_message);
+  auto status =
+      traffic_cop_.ExecuteStatement(statement, param_values, unnamed, nullptr, result_format,
+                                    result, error_message);
   if (traffic_cop_.is_queuing_) {
     ContinueAfterComplete();
     traffic_cop_.ExecuteStatementPlanGetResult();
-    status = traffic_cop_.ExecuteStatementGetResult(rows_changed);
+    status = traffic_cop_.ExecuteStatementGetResult();
     traffic_cop_.is_queuing_ = false;
   }
   if (status == ResultType::SUCCESS) {
@@ -179,7 +180,6 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
   std::vector<StatementResult> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
-  int rows_changed;
 
   // execute the query using tcop
   // prepareStatement
@@ -187,7 +187,7 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
   auto statement =
       traffic_cop_.PrepareStatement(unnamed_statement, query, error_message);
   if (statement.get() == nullptr) {
-    rows_changed = 0;
+    traffic_cop_.setRowsAffected(0);
     return ResultType::FAILURE;
   }
   // ExecuteStatment
@@ -196,13 +196,13 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
   // SetTrafficCopCounter();
   counter_.store(1);
-  auto status = traffic_cop_.ExecuteStatement(statement, param_values, unnamed,
-                                              nullptr, result_format, result,
-                                              rows_changed, error_message);
+  auto status =
+      traffic_cop_.ExecuteStatement(statement, param_values, unnamed, nullptr, result_format,
+                                    result,error_message);
   if (traffic_cop_.is_queuing_) {
     ContinueAfterComplete();
     traffic_cop_.ExecuteStatementPlanGetResult();
-    status = traffic_cop_.ExecuteStatementGetResult(rows_changed);
+    status = traffic_cop_.ExecuteStatementGetResult();
     traffic_cop_.is_queuing_ = false;
   }
   if (status == ResultType::SUCCESS) {
