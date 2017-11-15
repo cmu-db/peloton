@@ -78,7 +78,7 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
     ContinueAfterComplete();
     traffic_cop_.ExecuteStatementPlanGetResult();
     status = traffic_cop_.ExecuteStatementGetResult();
-    traffic_cop.SetQueuing(false);
+    traffic_cop_.SetQueuing(false);
   }
   if (status == ResultType::SUCCESS) {
     tuple_descriptor = statement->GetTupleDescriptor();
@@ -118,7 +118,7 @@ ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
       TestingSQLUtil::ContinueAfterComplete();
       traffic_cop_.ExecuteStatementPlanGetResult();
       status = traffic_cop_.p_status_;
-      traffic_cop.SetQueuing(false);
+      traffic_cop_.SetQueuing(false);
     }
     rows_changed = status.m_processed;
     LOG_INFO("Statement executed. Result: %s",
@@ -168,7 +168,7 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
     ContinueAfterComplete();
     traffic_cop_.ExecuteStatementPlanGetResult();
     status = traffic_cop_.ExecuteStatementGetResult();
-    traffic_cop.SetQueuing(false);
+    traffic_cop_.SetQueuing(false);
   }
   if (status == ResultType::SUCCESS) {
     tuple_descriptor = statement->GetTupleDescriptor();
@@ -203,7 +203,7 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
     ContinueAfterComplete();
     traffic_cop_.ExecuteStatementPlanGetResult();
     status = traffic_cop_.ExecuteStatementGetResult();
-    traffic_cop.SetQueuing(false);
+    traffic_cop_.SetQueuing(false);
   }
   if (status == ResultType::SUCCESS) {
     tuple_descriptor = statement->GetTupleDescriptor();
