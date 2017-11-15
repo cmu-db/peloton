@@ -14,6 +14,7 @@
 #include "codegen/proxy/inserter_proxy.h"
 #include "codegen/proxy/transaction_runtime_proxy.h"
 #include "codegen/proxy/tuple_proxy.h"
+#include "codegen/proxy/query_parameters_proxy.h"
 #include "codegen/operator/insert_translator.h"
 #include "planner/insert_plan.h"
 #include "storage/data_table.h"
@@ -54,24 +55,35 @@ void InsertTranslator::InitializeState() {
 }
 
 void InsertTranslator::Produce() const {
+  auto &context = GetCompilationContext();
   if (insert_plan_.GetChildrenSize() != 0) {
     // Produce on its child(a scan), to produce the tuples to be inserted
-    GetCompilationContext().Produce(*insert_plan_.GetChild(0));
+    context.Produce(*insert_plan_.GetChild(0));
   }
   else {
     auto &codegen = GetCodeGen();
     auto *inserter = LoadStatePtr(inserter_state_id_);
 
     auto num_tuples = insert_plan_.GetBulkInsertCount();
-    for (decltype(num_tuples) i = 0; i < num_tuples; ++i) {
-      // Convert the tuple address to the LLVM pointer value
-      auto *tuple = insert_plan_.GetTuple(i);
-      llvm::Value *tuple_ptr =
-          codegen->CreateIntToPtr(codegen.Const64((int64_t)tuple),
-                                  TupleProxy::GetType(codegen)->getPointerTo());
- 
-      // Perform insertion of each tuple through inserter
-      codegen.Call(InserterProxy::Insert, {inserter, tuple_ptr});
+    auto num_columns = insert_plan_.GetTable()->GetSchema()->GetColumnCount();
+
+    // Read tuple data from the parameter storage and insert
+    for (uint32_t tuple_idx = 0; tuple_idx < num_tuples; tuple_idx++) {
+      auto *tuple_ptr = codegen.Call(InserterProxy::AllocateTupleStorage,
+                                     {inserter});
+      auto *pool = codegen.Call(InserterProxy::GetPool, {inserter});
+
+      // Trasform into the codegen values and store values in the tuple storage
+      std::vector<codegen::Value> values;
+      for (uint32_t column_id = 0; column_id< num_columns; column_id++) {
+        auto v = context.GetParameterStorage().GetValue(codegen,
+            column_id + tuple_idx * num_columns);
+        values.push_back(v);
+      }
+      table_storage_.StoreValues(codegen, tuple_ptr, values, pool);
+
+      // Complete the insertion
+      codegen.Call(InserterProxy::Insert, {inserter});
     }
   }
 }
@@ -80,7 +92,7 @@ void InsertTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
   auto &codegen = GetCodeGen();
   auto *inserter = LoadStatePtr(inserter_state_id_);
 
-  auto *tuple_ptr = codegen.Call(InserterProxy::ReserveTupleStorage,
+  auto *tuple_ptr = codegen.Call(InserterProxy::AllocateTupleStorage,
                                  {inserter});
   auto *pool = codegen.Call(InserterProxy::GetPool, {inserter});
 
@@ -94,7 +106,7 @@ void InsertTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
   table_storage_.StoreValues(codegen, tuple_ptr, values, pool);
 
   // Call Inserter to insert the reserved tuple storage area
-  codegen.Call(InserterProxy::InsertReserved, {inserter});
+  codegen.Call(InserterProxy::Insert, {inserter});
 }
 
 }  // namespace codegen

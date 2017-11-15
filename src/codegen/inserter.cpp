@@ -31,7 +31,7 @@ void Inserter::Init(storage::DataTable *table,
   executor_context_ = executor_context;
 }
 
-char *Inserter::ReserveTupleStorage() {
+char *Inserter::AllocateTupleStorage() {
   location_ = table_->GetEmptyTupleSlot(nullptr);
 
   // Get the tile offset assuming that it is in a tuple format
@@ -48,9 +48,8 @@ peloton::type::AbstractPool *Inserter::GetPool() {
   return tile_->GetPool();
 }
 
-void Inserter::InsertReserved() {
-  PL_ASSERT(table_ && executor_context_ && tile_);
-  auto *txn = executor_context_->GetTransaction();
+void Inserter::Insert() {
+  PL_ASSERT(txn_ && table_ && executor_context_ && tile_);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   ContainerTuple<storage::TileGroup> tuple(
@@ -66,21 +65,6 @@ void Inserter::InsertReserved() {
 
   // the tile pointer is there for an insertion, so we release it at this moment
   tile_.reset();
-}
-
-void Inserter::Insert(const storage::Tuple *tuple) {
-  PL_ASSERT(table_ && executor_context_);
-  auto *txn = executor_context_->GetTransaction();
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-
-  ItemPointer *index_entry_ptr = nullptr;
-  ItemPointer location = table_->InsertTuple(tuple, txn, &index_entry_ptr);
-  if (location.block == INVALID_OID) {
-    txn_manager.SetTransactionResult(txn, ResultType::FAILURE);
-    return;
-  }
-  txn_manager.PerformInsert(txn, location, index_entry_ptr);
-  executor_context_->num_processed++;
 }
 
 }  // namespace codegen
