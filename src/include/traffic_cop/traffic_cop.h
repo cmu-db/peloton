@@ -127,6 +127,14 @@ class TrafficCop {
     return statement_;
   }
 
+  void SetResult(std::vector<StatementResult> result) {
+    result_ = result;
+  }
+
+  std::vector<StatementResult>& GetResult() {
+    return result_;
+  }
+
   executor::ExecuteResult p_status_;
 
   bool is_queuing_;
@@ -136,9 +144,6 @@ class TrafficCop {
   }
 
   std::string error_message_;
-
-  //this should stay in traffic_cop, because ExecutePlanArg will use it
-  std::vector<StatementResult> results_;
 
   //this should stay in traffic_cop, because ExecutePlanArg will use it
   std::vector<type::Value> param_values_;
@@ -151,6 +156,9 @@ class TrafficCop {
 
 //  struct event* event_;
  private:
+
+  //this should stay in traffic_cop, because ExecutePlanArg will use it
+  std::vector<StatementResult> results_;
 
   // This save currnet statement in the traffic cop
   std::shared_ptr<Statement> statement_;
