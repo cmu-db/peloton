@@ -138,7 +138,7 @@ class TrafficCop {
   std::vector<type::Value> param_values_;
 
   //TODO: should this stay in traffic_cop?
-  QueryType query_type_;
+  // QueryType query_type_;
 
   //TODO: should this stay in traffic_cop?
   std::string query_;

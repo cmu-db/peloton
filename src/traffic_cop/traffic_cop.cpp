@@ -48,6 +48,9 @@ void TrafficCop::Reset() {
   // clear out the stack
   swap(tcop_txn_state_, new_tcop_txn_state);
   optimizer_->Reset();
+  results_.clear();
+  param_values_.clear();
+  setRowsAffected(0);
 //  result_ = ResultType::QUEUING;
 }
 
