@@ -22,6 +22,7 @@
 #include "concurrency/transaction_manager_factory.h"
 #include "gc/gc_manager_factory.h"
 #include "settings/settings_manager.h"
+#include "threadpool/mono_queue_pool.h"
 
 namespace peloton {
 
@@ -36,6 +37,9 @@ void PelotonInit::Initialize() {
 
   // set max thread number.
   thread_pool.Initialize(0, std::thread::hardware_concurrency() + 3);
+
+  // start worker pool
+  threadpool::MonoQueuePool::GetInstance().Startup();
 
   int parallelism = (std::thread::hardware_concurrency() + 3) / 4;
   storage::DataTable::SetActiveTileGroupCount(parallelism);
@@ -95,6 +99,9 @@ void PelotonInit::Shutdown() {
 
   // shut down epoch.
   concurrency::EpochManagerFactory::GetInstance().StopEpoch();
+
+  // stop worker pool
+  threadpool::MonoQueuePool::GetInstance().Shutdown();
 
   thread_pool.Shutdown();
 

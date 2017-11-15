@@ -76,7 +76,6 @@ class DecimalFunctionsSQLTest : public PelotonTest {};
     txn_manager.CommitTransaction(txn);
   }
 
-<<<<<<< HEAD
   TEST_F(DecimalFunctionsSQLTest, CeilTest) {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
@@ -146,41 +145,6 @@ class DecimalFunctionsSQLTest : public PelotonTest {};
     txn = txn_manager.BeginTransaction();
     catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
     txn_manager.CommitTransaction(txn);
-    txn = txn_manager.EndTransaction();
-=======
-  // free the database just created
-  txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
-  txn_manager.CommitTransaction(txn);
-}
-
-TEST_F(DecimalFunctionsSQLTest, FloorTest) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
-  catalog::Catalog::GetInstance()->Bootstrap();
-  txn_manager.CommitTransaction(txn);
-  // Create a t
-  txn = txn_manager.BeginTransaction();
-
-  TestingSQLUtil::ExecuteSQLQuery(
-          "CREATE TABLE foo(id integer, income decimal);");
-
-  // Adding in 500 random decimal inputs between [-500, 500]
-  int i;
-  std::vector<double> inputs;
-  int lo = -500;
-  int hi = 500;
-  int numEntries = 500;
-  // Setting a seed
-  std::srand(std::time(0));
-  for (i = 0; i < numEntries; i++) {
-    double num = 0.45 + (std::rand() % (hi - lo));
-    inputs.push_back(num);
-    std::ostringstream os;
-    os << "insert into foo values(" << i << ", " << num << ");";
-    TestingSQLUtil::ExecuteSQLQuery(os.str());
->>>>>>> 67337d1c1... Missed one
   }
 
 }  // namespace test
