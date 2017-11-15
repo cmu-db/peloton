@@ -28,6 +28,7 @@ PROXY(Inserter) {
   DECLARE_METHOD(AllocateTupleStorage);
   DECLARE_METHOD(GetPool);
   DECLARE_METHOD(Insert);
+  DECLARE_METHOD(TearDown);
 };
 
 TYPE_BUILDER(Inserter, codegen::Inserter);

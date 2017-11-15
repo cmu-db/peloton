@@ -56,6 +56,9 @@ class Inserter {
   // Insert a tuple
   void Insert();
 
+  // Finalize the instance
+  void TearDown();
+
  private:
   // No external constructor
   Inserter(): table_(nullptr), executor_context_(nullptr), tile_(nullptr) {}

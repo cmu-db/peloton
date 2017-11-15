@@ -109,5 +109,12 @@ void InsertTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
   codegen.Call(InserterProxy::Insert, {inserter});
 }
 
+void InsertTranslator::TearDownState() {
+  auto &codegen = GetCodeGen();
+  // Tear down the inserter
+  llvm::Value *inserter = LoadStatePtr(inserter_state_id_);
+  codegen.Call(InserterProxy::TearDown, {inserter});
+}
+
 }  // namespace codegen
 }  // namespace peloton
