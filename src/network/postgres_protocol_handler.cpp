@@ -346,7 +346,7 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
 
         auto status =
                 traffic_cop_->ExecuteStatement(traffic_cop_->GetStatement(), traffic_cop_->param_values_, unnamed, nullptr,
-                                               result_format_, traffic_cop_->results_,
+                                               result_format_, traffic_cop_->GetResult(),
                                                traffic_cop_->error_message_, thread_id);
 
         if (traffic_cop_->is_queuing_) {
@@ -379,7 +379,7 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
         // should results_ be reset when PakcetManager.reset(), why results_ cannot be read?
         auto status =
             traffic_cop_->ExecuteStatement(traffic_cop_->GetStatement(), traffic_cop_->param_values_, unnamed, nullptr,
-                                           result_format_, traffic_cop_->results_,
+                                           result_format_, traffic_cop_->GetResult(),
                                            traffic_cop_->error_message_, thread_id);
         if (traffic_cop_->is_queuing_) {
           return ProcessResult::PROCESSING;
@@ -426,7 +426,7 @@ void PostgresProtocolHandler::ExecQueryMessageGetResult(ResultType status) {
   PutTupleDescriptor(tuple_descriptor);
 
   // send the result rows
-  SendDataRows(traffic_cop_->results_, tuple_descriptor.size());
+  SendDataRows(traffic_cop_->GetResult(), tuple_descriptor.size());
 
   // The response to the SimpleQueryCommand is the query string.
   CompleteCommand(traffic_cop_->query_, traffic_cop_->GetStatement()->GetQueryType(), traffic_cop_->getRowsAffected());
@@ -897,7 +897,7 @@ ProcessResult PostgresProtocolHandler::ExecExecuteMessage(InputPacket *pkt,
   traffic_cop_->param_values_ = portal->GetParameters();
 
   auto status = traffic_cop_->ExecuteStatement(
-      traffic_cop_->GetStatement(), traffic_cop_->param_values_, unnamed, param_stat, result_format_, traffic_cop_->results_,
+      traffic_cop_->GetStatement(), traffic_cop_->param_values_, unnamed, param_stat, result_format_, traffic_cop_->GetResult(),
       traffic_cop_->error_message_, thread_id);
   if (traffic_cop_->is_queuing_) {
     return ProcessResult::PROCESSING;
@@ -925,7 +925,7 @@ void PostgresProtocolHandler::ExecExecuteMessageGetResult(ResultType status) {
       return;
     default: {
       auto tuple_descriptor = traffic_cop_->GetStatement()->GetTupleDescriptor();
-      SendDataRows(traffic_cop_->results_, tuple_descriptor.size());
+      SendDataRows(traffic_cop_->GetResult(), tuple_descriptor.size());
       // The reponse to ExecuteCommand is the query_type string token.
       CompleteCommand(traffic_cop_->GetStatement()->GetQueryTypeString(), query_type, traffic_cop_->getRowsAffected());
       return;
