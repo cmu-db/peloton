@@ -266,7 +266,6 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
     Statement::MapToQueryType(query_type_string_, query_type);
 
     traffic_cop_->query_ = query;
-    traffic_cop_->query_type_ = query_type;
 
     switch (query_type) {
       case QueryType::QUERY_PREPARE:
@@ -327,7 +326,6 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
           return ProcessResult::COMPLETE;
         }
 
-        traffic_cop_->query_type_ = traffic_cop_->statement_->GetQueryType();
         traffic_cop_->query_ = traffic_cop_->statement_->GetQueryString();
         std::vector<int> result_format(traffic_cop_->statement_->GetTupleDescriptor().size(), 0);
         result_format_ = result_format;
@@ -398,7 +396,7 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
     SendDataRows(result, tuple_descriptor.size());
 
     // The response to the SimpleQueryCommand is the query string.
-    CompleteCommand(traffic_cop_->query_, traffic_cop_->query_type_, traffic_cop_->getRowsAffected());
+    CompleteCommand(traffic_cop_->query_, traffic_cop_->statement_->GetQueryType(), traffic_cop_->getRowsAffected());
   } else {
     SendEmptyQueryResponse();
   }
@@ -431,7 +429,7 @@ void PostgresProtocolHandler::ExecQueryMessageGetResult(ResultType status) {
   SendDataRows(traffic_cop_->results_, tuple_descriptor.size());
 
   // The response to the SimpleQueryCommand is the query string.
-  CompleteCommand(traffic_cop_->query_, traffic_cop_->query_type_, traffic_cop_->getRowsAffected());
+  CompleteCommand(traffic_cop_->query_, traffic_cop_->statement_->GetQueryType(), traffic_cop_->getRowsAffected());
 
   SendReadyForQuery(NetworkTransactionStateType::IDLE);
 }
@@ -1177,9 +1175,7 @@ void PostgresProtocolHandler::Reset() {
 
   unnamed_statement_.reset();
   result_format_.clear();
-  traffic_cop_->results_.clear();
-  traffic_cop_->param_values_.clear();
-  traffic_cop_->setRowsAffected(0);
+  traffic_cop_->Reset();
   txn_state_ = NetworkTransactionStateType::IDLE;
   skipped_stmt_ = false;
   skipped_query_string_.clear();
