@@ -63,9 +63,11 @@ void Inserter::Insert() {
   }
   txn_manager.PerformInsert(txn, location_, index_entry_ptr);
   executor_context_->num_processed++;
+}
 
-  // the tile pointer is there for an insertion, so we release it at this moment
-  tile_.reset();
+void Inserter::TearDown() {
+  // Updater object does not destruct its own data structures
+  if (tile_ != nullptr) tile_.reset();
 }
 
 }  // namespace codegen
