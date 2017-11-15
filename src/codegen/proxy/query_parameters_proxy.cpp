@@ -20,6 +20,7 @@ namespace codegen {
 
 DEFINE_TYPE(QueryParameters, "codegen::QueryParameters", MEMBER(opaque));
 
+DEFINE_METHOD(peloton::codegen, QueryParameters, GetBoolean);
 DEFINE_METHOD(peloton::codegen, QueryParameters, GetTinyInt);
 DEFINE_METHOD(peloton::codegen, QueryParameters, GetSmallInt);
 DEFINE_METHOD(peloton::codegen, QueryParameters, GetInteger);

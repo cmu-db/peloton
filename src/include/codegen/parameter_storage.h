@@ -66,7 +66,7 @@ class ParameterStorage {
     null_bitmap.WriteBack(codegen);
   }
 
-  codegen::Value GetValue(CodeGen &codegen, uint32_t index) {
+  codegen::Value GetValue(CodeGen &codegen, uint32_t index) const {
     PL_ASSERT(space_ptr_);
     UpdateableStorage::NullBitmap null_bitmap{codegen, storage_, space_ptr_};
     if (null_bitmap.IsNullable(index))
@@ -84,6 +84,10 @@ class ParameterStorage {
                                        codegen.Const32(index)};
     auto type_id = parameter.GetValueType();
     switch (type_id) {
+      case peloton::type::TypeId::BOOLEAN: {
+        val = codegen.Call(QueryParametersProxy::GetBoolean, args);
+        break;
+      }
       case peloton::type::TypeId::TINYINT: {
         val = codegen.Call(QueryParametersProxy::GetTinyInt, args);
         break;

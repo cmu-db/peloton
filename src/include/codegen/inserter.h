@@ -47,17 +47,14 @@ class Inserter {
   void Init(storage::DataTable *table,
             executor::ExecutorContext *executor_context);
 
-  // Get the storage area that is to be reserved
-  char *ReserveTupleStorage();
+  // Allocate the storage area that is to be reserved
+  char *AllocateTupleStorage();
 
   // Get the pool address
   peloton::type::AbstractPool *GetPool();
 
-  // Insert the tuple instance
-  void InsertReserved();
-
   // Insert a tuple
-  void Insert(const storage::Tuple *tuple);
+  void Insert();
 
  private:
   // No external constructor

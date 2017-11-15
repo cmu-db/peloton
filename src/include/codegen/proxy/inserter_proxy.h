@@ -25,9 +25,8 @@ PROXY(Inserter) {
   DECLARE_TYPE;
 
   DECLARE_METHOD(Init);
-  DECLARE_METHOD(ReserveTupleStorage);
+  DECLARE_METHOD(AllocateTupleStorage);
   DECLARE_METHOD(GetPool);
-  DECLARE_METHOD(InsertReserved);
   DECLARE_METHOD(Insert);
 };
 

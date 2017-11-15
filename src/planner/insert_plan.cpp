@@ -38,37 +38,30 @@ InsertPlan::InsertPlan(storage::DataTable *table,
          tuple_idx++) {
       auto &values = (*insert_values)[tuple_idx];
       PL_ASSERT(values.size() <= schema->GetColumnCount());
-      std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
-      int column_id = 0, param_idx = 0;
-      for (uint32_t idx = 0; idx < values.size(); idx++, column_id++) {
-        auto &exp = values[idx];
+      uint32_t param_idx = 0;
+      for (uint32_t column_id = 0; column_id < values.size(); column_id++) {
+        auto &exp = values[column_id];
+        const type::TypeId type = schema->GetType(column_id);
         if (exp == nullptr) {
           type::Value *v = schema->GetDefaultValue(column_id);
           if (v == nullptr)
-            tuple->SetValue(column_id, type::ValueFactory::GetNullValueByType(
-                schema->GetColumn(column_id).GetType()), nullptr);
+            values_.push_back(type::ValueFactory::GetNullValueByType(type));
           else
-            tuple->SetValue(column_id, *v, nullptr);
+            values_.push_back(*v);
         } else if (exp->GetExpressionType() ==
                    ExpressionType::VALUE_PARAMETER) {
           std::tuple<oid_t, oid_t, oid_t> pair =
               std::make_tuple(tuple_idx, column_id, param_idx++);
           parameter_vector_->push_back(pair);
-          params_value_type_->push_back(
-              schema->GetColumn(column_id).GetType());
+          params_value_type_->push_back(type);
         } else {
           PL_ASSERT(exp->GetExpressionType() == ExpressionType::VALUE_CONSTANT);
           auto *const_exp =
               dynamic_cast<expression::ConstantValueExpression *>(exp.get());
-          type::Value value = const_exp->GetValue();
-          auto type = const_exp->GetValueType();
-          type::AbstractPool *data_pool = nullptr;
-          if (type == type::TypeId::VARCHAR || type == type::TypeId::VARBINARY)
-            data_pool = GetPlanPool();
-          tuple->SetValue(column_id, value, data_pool);
+          type::Value value = const_exp->GetValue().CastAs(type);
+          values_.push_back(value);
         }
       }
-      tuples_.push_back(std::move(tuple));
     }
   }
   // INSERT INTO table_name (col1, col2, ...) VALUES (val1, val2, ...);
@@ -77,58 +70,38 @@ InsertPlan::InsertPlan(storage::DataTable *table,
     for (uint32_t tuple_idx = 0; tuple_idx < insert_values->size();
          tuple_idx++) {
       auto &values = (*insert_values)[tuple_idx];
-      std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
+
       auto &table_columns = schema->GetColumns();
-      auto columns_cnt = columns->size();
-      int param_idx = 0;
-
-      // Update parameter info in the specified columns order
-      for (size_t pos = 0; pos < columns_cnt; pos++) {
-        auto column_id = schema->GetColumnID(columns->at(pos));
-        PL_ASSERT(column_id != INVALID_OID);
-
-        auto type = schema->GetColumn(column_id).GetType();
-        type::AbstractPool *data_pool = nullptr;
-        if (type == type::TypeId::VARCHAR || type == type::TypeId::VARBINARY)
-          data_pool = GetPlanPool();
-
-        LOG_TRACE("Column %d found in INSERT, ExpressionType: %s", column_id,
-                  ExpressionTypeToString(values.at(pos)->GetExpressionType())
-                      .c_str());
-
-        if (values.at(pos)->GetExpressionType() ==
-            ExpressionType::VALUE_PARAMETER) {
+      auto table_columns_num = schema->GetColumnCount();
+      uint32_t param_idx = 0;
+      for (size_t column_id = 0; column_id < table_columns_num; column_id++) {
+        auto col = table_columns[column_id];
+        const type::TypeId type = schema->GetType(column_id);
+        auto found = std::find_if(columns->begin(), columns->end(),
+            [&col](const std::string &x) { return col.GetName() == x; });
+        if (found == columns->end()) {
+          type::Value *v = schema->GetDefaultValue(column_id);
+          if (v == nullptr)
+            values_.push_back(type::ValueFactory::GetNullValueByType(type));
+          else
+            values_.push_back(*v);
+          continue;
+        }
+        auto idx = std::distance(columns->begin(), found);
+        auto &exp = values[idx];
+        if (exp->GetExpressionType() == ExpressionType::VALUE_PARAMETER) {
           std::tuple<oid_t, oid_t, oid_t> pair =
               std::make_tuple(tuple_idx, column_id, param_idx++);
           parameter_vector_->push_back(pair);
-          params_value_type_->push_back(schema->GetColumn(column_id).GetType());
+          params_value_type_->push_back(type);
         } else {
-          expression::ConstantValueExpression *const_exp =
-              dynamic_cast<expression::ConstantValueExpression *>(
-                  values.at(pos).get());
-          tuple->SetValue(column_id, const_exp->GetValue(), data_pool);
+          PL_ASSERT(exp->GetExpressionType() == ExpressionType::VALUE_CONSTANT);
+          auto *const_exp =
+              dynamic_cast<expression::ConstantValueExpression *>(exp.get());
+          type::Value value = const_exp->GetValue().CastAs(type);
+          values_.push_back(value);
         }
       }
-
-      // Insert a null value for non-specified columns
-      auto table_columns_cnt = schema->GetColumnCount();
-      if (columns_cnt < table_columns_cnt) {
-        for (size_t column_id = 0; column_id < table_columns_cnt; column_id++) {
-          auto col = table_columns[column_id];
-          if (std::find_if(columns->begin(), columns->end(),
-                  [&col](const std::string &x) { return col.GetName() == x; })
-              == columns->end()) {
-            type::Value *v = schema->GetDefaultValue(column_id);
-            if (v == nullptr)
-              tuple->SetValue(column_id, type::ValueFactory::GetNullValueByType(
-                  col.GetType()), nullptr);
-            else
-              tuple->SetValue(column_id, *v, nullptr);
-          }
-        }
-      }
-      LOG_TRACE("Tuple to be inserted: %s", tuple->GetInfo().c_str());
-      tuples_.push_back(std::move(tuple));
     }
   }
 }
@@ -149,10 +122,8 @@ void InsertPlan::SetParameterValues(std::vector<type::Value> *values) {
     auto column_id = std::get<1>(param_info);
     auto param_idx = std::get<2>(param_info);
     type::Value value = values->at(param_idx).CastAs(type);
-    if (type == type::TypeId::VARCHAR || type == type::TypeId::VARBINARY)
-      tuples_[tuple_idx]->SetValue(column_id, value, GetPlanPool());
-    else
-      tuples_[tuple_idx]->SetValue(column_id, value);
+    auto it = values_.begin();
+    values_.insert(it + (tuple_idx + 1) * column_id, value);
   }
 }
 
@@ -171,10 +142,6 @@ void InsertPlan::PerformBinding(BindingContext &binding_context) {
   // Binding is not required if there is no child
 }
 
-bool InsertPlan::Equals(AbstractPlan &plan) const {
-  return (*this == plan);
-}
-
 hash_t InsertPlan::Hash() const {
   auto type = GetPlanNodeType();
   hash_t hash = HashUtil::Hash(&type);
@@ -184,13 +151,11 @@ hash_t InsertPlan::Hash() const {
       hash = HashUtil::CombineHashes(hash, GetProjectInfo()->Hash());
     auto bulk_insert_count = GetBulkInsertCount();
     hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&bulk_insert_count));
-    for (decltype(bulk_insert_count) i = 0; i < bulk_insert_count; i++)
-      hash = HashUtil::CombineHashes(hash, GetTuple(i)->HashCode());
   }
   return HashUtil::CombineHashes(hash, AbstractPlan::Hash());
 }
 
-bool InsertPlan::operator==(AbstractPlan &rhs) const {
+bool InsertPlan::operator==(const AbstractPlan &rhs) const {
   if (GetPlanNodeType() != rhs.GetPlanNodeType())
     return false;
 
@@ -216,11 +181,6 @@ bool InsertPlan::operator==(AbstractPlan &rhs) const {
     auto bulk_insert_count = GetBulkInsertCount();
     if (bulk_insert_count != other.GetBulkInsertCount())
       return false;
-    for (decltype(bulk_insert_count) i = 0; i < bulk_insert_count; i++) {
-      auto compared = GetTuple(i)->Compare(*other.GetTuple(i));
-      if (compared == 0)
-        return false;
-    }
   }
 
   return AbstractPlan::operator==(rhs);
@@ -234,6 +194,12 @@ void InsertPlan::VisitParameters(
     auto *proj_info = const_cast<planner::ProjectInfo *>(GetProjectInfo());
     if (proj_info != nullptr) {
       proj_info->VisitParameters(parameters, index, parameter_values);
+    }
+    for (uint32_t i = 0; i < values_.size(); i++) {
+      parameters.push_back(
+          expression::Parameter::CreateConstParameter(values_.at(i)));
+      // The following is not necessary since we are not searching for one later
+      //index[this] = parameters.size() - 1;
     }
   } else {
     PL_ASSERT(GetChildren().size() == 1);

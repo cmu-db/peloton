@@ -25,6 +25,7 @@ PROXY(QueryParameters) {
   DECLARE_TYPE;
 
   /// Proxy Init() and Delete() in codegen::Deleter
+  DECLARE_METHOD(GetBoolean);
   DECLARE_METHOD(GetTinyInt);
   DECLARE_METHOD(GetSmallInt);
   DECLARE_METHOD(GetInteger);

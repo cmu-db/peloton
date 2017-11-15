@@ -53,6 +53,11 @@ class QueryParameters {
     return parameters_;
   }
 
+  bool GetBoolean(int32_t index) {
+    return peloton::type::ValuePeeker::PeekBoolean(
+        parameters_[index].GetValue());
+  }
+
   int8_t GetTinyInt(int32_t index) {
     return peloton::type::ValuePeeker::PeekTinyInt(
         parameters_[index].GetValue());
