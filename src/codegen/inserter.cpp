@@ -49,7 +49,8 @@ peloton::type::AbstractPool *Inserter::GetPool() {
 }
 
 void Inserter::Insert() {
-  PL_ASSERT(txn_ && table_ && executor_context_ && tile_);
+  PL_ASSERT(table_ && executor_context_ && tile_);
+  auto *txn = executor_context_->GetTransaction();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   ContainerTuple<storage::TileGroup> tuple(
