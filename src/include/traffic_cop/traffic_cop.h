@@ -134,6 +134,14 @@ class TrafficCop {
     return result_;
   }
 
+  void SetParamVal(std::vector<type::Value> param_values) {
+    param_values_ = param_values;
+  }
+
+  std::vector<type::Value>& GetParamVal() {
+    return param_values_;
+  }
+
   executor::ExecuteResult p_status_;
 
   bool is_queuing_;
@@ -144,9 +152,6 @@ class TrafficCop {
 
   std::string error_message_;
 
-  //this should stay in traffic_cop, because ExecutePlanArg will use it
-  std::vector<type::Value> param_values_;
-
   //TODO: should this stay in traffic_cop?
   // QueryType query_type_;
 
@@ -155,6 +160,9 @@ class TrafficCop {
 
 //  struct event* event_;
  private:
+
+  //this should stay in traffic_cop, because ExecutePlanArg will use it
+  std::vector<type::Value> param_values_;
 
   //this should stay in traffic_cop, because ExecutePlanArg will use it
   std::vector<StatementResult> results_;

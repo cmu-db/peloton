@@ -342,10 +342,10 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
         if (param_values.size() > 0) {
           traffic_cop_->GetStatement()->GetPlanTree()->SetParameterValues(&param_values);
         }
-        traffic_cop_->param_values_ = param_values;
+        traffic_cop_->SetParamVal(param_values);
 
         auto status =
-                traffic_cop_->ExecuteStatement(traffic_cop_->GetStatement(), traffic_cop_->param_values_, unnamed, nullptr,
+                traffic_cop_->ExecuteStatement(traffic_cop_->GetStatement(), traffic_cop_->GetParamVal(), unnamed, nullptr,
                                                result_format_, traffic_cop_->GetResult(),
                                                traffic_cop_->error_message_, thread_id);
 
@@ -371,14 +371,14 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
         }
         // ExecuteStatment
         std::vector<type::Value> param_values;
-        traffic_cop_->param_values_ = param_values;
+        traffic_cop_->SetParamVal(param_values);
         bool unnamed = false;
         std::vector<int> result_format(traffic_cop_->GetStatement()->GetTupleDescriptor().size(), 0);
         result_format_ = result_format;
         // should param_values and result_format be local variable?
         // should results_ be reset when PakcetManager.reset(), why results_ cannot be read?
         auto status =
-            traffic_cop_->ExecuteStatement(traffic_cop_->GetStatement(), traffic_cop_->param_values_, unnamed, nullptr,
+            traffic_cop_->ExecuteStatement(traffic_cop_->GetStatement(), traffic_cop_->GetParamVal(), unnamed, nullptr,
                                            result_format_, traffic_cop_->GetResult(),
                                            traffic_cop_->error_message_, thread_id);
         if (traffic_cop_->is_queuing_) {
@@ -894,10 +894,10 @@ ProcessResult PostgresProtocolHandler::ExecExecuteMessage(InputPacket *pkt,
 
   auto statement_name = traffic_cop_->GetStatement()->GetStatementName();
   bool unnamed = statement_name.empty();
-  traffic_cop_->param_values_ = portal->GetParameters();
+  traffic_cop_->SetParamVal(portal->GetParameters());
 
   auto status = traffic_cop_->ExecuteStatement(
-      traffic_cop_->GetStatement(), traffic_cop_->param_values_, unnamed, param_stat, result_format_, traffic_cop_->GetResult(),
+      traffic_cop_->GetStatement(), traffic_cop_->GetParamVal(), unnamed, param_stat, result_format_, traffic_cop_->GetResult(),
       traffic_cop_->error_message_, thread_id);
   if (traffic_cop_->is_queuing_) {
     return ProcessResult::PROCESSING;
