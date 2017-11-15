@@ -144,13 +144,13 @@ codegen::Value UpdateableStorage::GetValue(
     UpdateableStorage::NullBitmap &null_bitmap) const {
   codegen::Value null_val, read_val;
 
-  lang::If val_is_null{codegen, null_bitmap.IsNull(codegen, index), "UpdateableStorage.ValIsNull"};
+  lang::If val_is_null{codegen, null_bitmap.IsNull(codegen, index)};
   {
     // If the index has its null-bit set, return NULL
     const auto &type = schema_[index];
     null_val = type.GetSqlType().GetNullValue(codegen);
   }
-  val_is_null.ElseBlock("UpdateableStorage.ValIsNotNull");
+  val_is_null.ElseBlock();
   {
     // If the index doesn't have its null-bit set, read from storage
     read_val = GetValueSkipNull(codegen, space, index);
@@ -198,7 +198,7 @@ void UpdateableStorage::SetValue(
   llvm::Value *null = value.IsNull(codegen);
   null_bitmap.SetNull(codegen, index, null);
 
-  lang::If val_not_null{codegen, codegen->CreateNot(null), "UpdateableStorage.ValIsNotNull"};
+  lang::If val_not_null{codegen, codegen->CreateNot(null)};
   {
     // If the value isn't NULL, write it into storage
     SetValueSkipNull(codegen, space, index, value);
@@ -291,8 +291,8 @@ void UpdateableStorage::NullBitmap::SetNull(CodeGen &codegen, uint32_t index,
   dirty_[byte_pos] = true;
 }
 
-void UpdateableStorage::NullBitmap::MergeValues (lang::If &if_clause,
-                                                          llvm::Value *before_if_value) {
+void UpdateableStorage::NullBitmap::MergeValues(lang::If &if_clause,
+                                                llvm::Value *before_if_value) {
   PL_ASSERT(bytes_[active_byte_pos_] != nullptr);
   bytes_[active_byte_pos_] =
       if_clause.BuildPHI(bytes_[active_byte_pos_], before_if_value);

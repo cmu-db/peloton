@@ -61,8 +61,7 @@ void Aggregation::Setup(
           // Create the hash table
           // we don't need to save any values, so value_size is zero
           auto hash_table =
-              OAHashTable{codegen, key_type, 0,
-                          "Agg" + std::to_string(source_idx) + ".HashTable"};
+              OAHashTable{codegen, key_type, 0};
 
           hash_table_infos_.emplace_back(
               std::pair<OAHashTable, RuntimeState::StateID>(
@@ -98,8 +97,7 @@ void Aggregation::Setup(
           // Create the hash table
           // we don't need to save any values, so value_size is zero
           auto hash_table =
-              OAHashTable{codegen, key_type, 0,
-                          "Agg" + std::to_string(source_idx) + ".HashTable"};
+              OAHashTable{codegen, key_type, 0};
 
           hash_table_infos_.emplace_back(
               std::pair<OAHashTable, RuntimeState::StateID>(
@@ -177,11 +175,9 @@ void Aggregation::Setup(
           // Create the hash table
           // we don't need to save any values, so value_size is zero
           auto sum_hash_table =
-              OAHashTable{codegen, key_type, 0,
-                          "Agg" + std::to_string(source_idx) + ".HashTable"};
+              OAHashTable{codegen, key_type, 0};
           auto count_hash_table =
-              OAHashTable{codegen, key_type, 0,
-                          "Agg" + std::to_string(source_idx) + ".HashTable"};
+              OAHashTable{codegen, key_type, 0};
 
           hash_table_infos_.emplace_back(
               std::pair<OAHashTable, RuntimeState::StateID>(

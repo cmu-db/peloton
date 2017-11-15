@@ -98,7 +98,7 @@ HashGroupByTranslator::HashGroupByTranslator(
 
   // Create the hash table
   hash_table_ =
-      OAHashTable{codegen, key_type, aggregation_.GetAggregatesStorageSize(), "HashGroupBy.HashTable"};
+      OAHashTable{codegen, key_type, aggregation_.GetAggregatesStorageSize()};
 }
 
 // Initialize the hash table instance
@@ -375,7 +375,7 @@ void HashGroupByTranslator::ProduceResults::ProcessEntries(
     // Iterate over the batch, performing a branching predicate check
     batch.Iterate(codegen, [&](RowBatch::Row &row) {
       codegen::Value valid_row = row.DeriveValue(codegen, *predicate);
-      lang::If is_valid_row{codegen, valid_row, "HashGroupBy.IsValidRow"};
+      lang::If is_valid_row{codegen, valid_row};
       {
         // The row is valid, send along the pipeline
         context.Consume(row);
@@ -395,17 +395,19 @@ void HashGroupByTranslator::ProduceResults::ProcessEntries(
 
 // Constructor
 HashGroupByTranslator::ConsumerProbe::ConsumerProbe(
-    CompilationContext &context,
-    const Aggregation &aggregation,
+    CompilationContext &context, const Aggregation &aggregation,
     const std::vector<codegen::Value> &next_vals,
     const std::vector<codegen::Value> &grouping_keys)
-    : context_(context), aggregation_(aggregation), next_vals_(next_vals), grouping_keys_(grouping_keys) {}
+    : context_(context),
+      aggregation_(aggregation),
+      next_vals_(next_vals),
+      grouping_keys_(grouping_keys) {}
 
 // The callback invoked when we probe the hash table with a given key and find
 // an existing value for the key.  In this case, since we're aggregating, we
 // advance all of the aggregates.
 void HashGroupByTranslator::ConsumerProbe::ProcessEntry(
-   UNUSED_ATTRIBUTE CodeGen &codegen, llvm::Value *data_area) const {
+    UNUSED_ATTRIBUTE CodeGen &codegen, llvm::Value *data_area) const {
   aggregation_.AdvanceValues(context_, data_area, next_vals_, grouping_keys_);
 }
 
@@ -413,17 +415,21 @@ void HashGroupByTranslator::ConsumerProbe::ProcessEntry(
 // CONSUMER INSERT
 //===----------------------------------------------------------------------===//
 
-HashGroupByTranslator::ConsumerInsert::ConsumerInsert (CompilationContext &context,
-                                                       const Aggregation &aggregation,
-                                                       const std::vector<codegen::Value> &initial_vals,
-                                                       const std::vector<codegen::Value> &grouping_keys)
-    : context_(context), aggregation_(aggregation), initial_vals_(initial_vals), grouping_keys_(grouping_keys) {}
+HashGroupByTranslator::ConsumerInsert::ConsumerInsert(
+    CompilationContext &context, const Aggregation &aggregation,
+    const std::vector<codegen::Value> &initial_vals,
+    const std::vector<codegen::Value> &grouping_keys)
+    : context_(context),
+      aggregation_(aggregation),
+      initial_vals_(initial_vals),
+      grouping_keys_(grouping_keys) {}
 
 // Given free storage space in the hash table, store the initial values of all
 // the aggregates
 void HashGroupByTranslator::ConsumerInsert::StoreValue(
     UNUSED_ATTRIBUTE CodeGen &codegen, llvm::Value *space) const {
-  aggregation_.CreateInitialValues(context_, space, initial_vals_, grouping_keys_);
+  aggregation_.CreateInitialValues(context_, space, initial_vals_,
+                                   grouping_keys_);
 }
 
 llvm::Value *HashGroupByTranslator::ConsumerInsert::GetValueSize(
