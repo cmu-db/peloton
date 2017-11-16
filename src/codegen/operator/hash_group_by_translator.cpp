@@ -33,7 +33,8 @@ HashGroupByTranslator::HashGroupByTranslator(
     Pipeline &pipeline)
     : OperatorTranslator(context, pipeline),
       group_by_(group_by),
-      child_pipeline_(this) {
+      child_pipeline_(this),
+      aggregation_(Aggregation(context.GetRuntimeState())) {
   LOG_DEBUG("Constructing HashGroupByTranslator ...");
 
   auto &codegen = GetCodeGen();
@@ -104,7 +105,7 @@ HashGroupByTranslator::HashGroupByTranslator(
 // Initialize the hash table instance
 void HashGroupByTranslator::InitializeState() {
   hash_table_.Init(GetCodeGen(), LoadStatePtr(hash_table_id_));
-  aggregation_.InitializeState(GetCompilationContext());
+  aggregation_.InitializeState(GetCodeGen());
 }
 
 // Produce!
@@ -247,7 +248,7 @@ void HashGroupByTranslator::Consume(ConsumerContext &,
 // Cleanup by destroying the aggregation hash-table
 void HashGroupByTranslator::TearDownState() {
   hash_table_.Destroy(GetCodeGen(), LoadStatePtr(hash_table_id_));
-  aggregation_.TearDownState(GetCompilationContext());
+  aggregation_.TearDownState(GetCodeGen());
 }
 
 // Get the stringified name of this hash-based group-by
@@ -408,7 +409,7 @@ HashGroupByTranslator::ConsumerProbe::ConsumerProbe(
 // advance all of the aggregates.
 void HashGroupByTranslator::ConsumerProbe::ProcessEntry(
     UNUSED_ATTRIBUTE CodeGen &codegen, llvm::Value *data_area) const {
-  aggregation_.AdvanceValues(context_, data_area, next_vals_, grouping_keys_);
+  aggregation_.AdvanceValues(codegen, data_area, next_vals_, grouping_keys_);
 }
 
 //===----------------------------------------------------------------------===//
@@ -428,7 +429,7 @@ HashGroupByTranslator::ConsumerInsert::ConsumerInsert(
 // the aggregates
 void HashGroupByTranslator::ConsumerInsert::StoreValue(
     UNUSED_ATTRIBUTE CodeGen &codegen, llvm::Value *space) const {
-  aggregation_.CreateInitialValues(context_, space, initial_vals_,
+  aggregation_.CreateInitialValues(codegen, space, initial_vals_,
                                    grouping_keys_);
 }
 

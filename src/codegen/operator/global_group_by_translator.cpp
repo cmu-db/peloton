@@ -26,7 +26,8 @@ GlobalGroupByTranslator::GlobalGroupByTranslator(
     Pipeline &pipeline)
     : OperatorTranslator(context, pipeline),
       plan_(plan),
-      child_pipeline_(this) {
+      child_pipeline_(this),
+      aggregation_(Aggregation(context.GetRuntimeState())) {
   LOG_DEBUG("Constructing GlobalGroupByTranslator ...");
 
   // Prepare the child in the new child pipeline
@@ -64,7 +65,7 @@ GlobalGroupByTranslator::GlobalGroupByTranslator(
 
 // Initialize the hash table instance
 void GlobalGroupByTranslator::InitializeState() {
-  aggregation_.InitializeState(GetCompilationContext());
+  aggregation_.InitializeState(GetCodeGen());
 }
 
 void GlobalGroupByTranslator::Produce() const {
@@ -118,13 +119,13 @@ void GlobalGroupByTranslator::Consume(ConsumerContext &,
 
   // Just advance each of the aggregates in the buffer with the provided
   // new values
-  aggregation_.AdvanceValues(GetCompilationContext(),
+  aggregation_.AdvanceValues(GetCodeGen(),
                              LoadStatePtr(mat_buffer_id_), vals);
 }
 
 // Cleanup by destroying the aggregation hash-table
 void GlobalGroupByTranslator::TearDownState() {
-  aggregation_.TearDownState(GetCompilationContext());
+  aggregation_.TearDownState(GetCodeGen());
 }
 
 //===----------------------------------------------------------------------===//
