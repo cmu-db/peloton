@@ -18,11 +18,14 @@
 #include "common/statement.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "expression/tuple_value_expression.h"
+#include "expression/function_expression.h"
 #include "optimizer/optimizer.h"
 #include "parser/postgresparser.h"
 #include "include/traffic_cop/traffic_cop.h"
 
 #include <sql/testing_sql_util.h>
+#include "type/value_factory.h"
+#include "executor/testing_executor_util.h"
 
 using std::string;
 using std::unique_ptr;
@@ -32,10 +35,22 @@ using std::make_tuple;
 namespace peloton {
 namespace test {
 
-class BinderCorrectnessTest : public PelotonTest {};
+class BinderCorrectnessTest : public PelotonTest {
+  virtual void SetUp() override {
+    PelotonTest::SetUp();
+    auto catalog = catalog::Catalog::GetInstance();
+    catalog->Bootstrap();
+    TestingExecutorUtil::InitializeDatabase(DEFAULT_DB_NAME);
+  }
+
+  virtual void TearDown() override {
+    TestingExecutorUtil::DeleteDatabase(DEFAULT_DB_NAME);
+    PelotonTest::TearDown();
+  }
+};
 
 void SetupTables(std::string database_name) {
-  LOG_INFO("Creating database %s" ,database_name.c_str());
+  LOG_INFO("Creating database %s", database_name.c_str());
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(database_name, txn);
@@ -45,8 +60,9 @@ void SetupTables(std::string database_name) {
   auto& parser = parser::PostgresParser::GetInstance();
   auto& traffic_cop = tcop::TrafficCop::GetInstance();
   traffic_cop.SetDefaultDatabaseName(database_name);
-  traffic_cop.SetTaskCallback(TestingSQLUtil::UtilTestTaskCallback, &TestingSQLUtil::counter_);
-  
+  traffic_cop.SetTaskCallback(TestingSQLUtil::UtilTestTaskCallback,
+                              &TestingSQLUtil::counter_);
+
   optimizer::Optimizer optimizer;
 
   vector<string> createTableSQLs{"CREATE TABLE A(A1 int, a2 varchar)",
@@ -61,7 +77,8 @@ void SetupTables(std::string database_name) {
     vector<int> result_format;
     unique_ptr<Statement> statement(new Statement("CREATE", sql));
     auto parse_tree = parser.BuildParseTree(sql);
-    statement->SetPlanTree(optimizer.BuildPelotonPlanTree(parse_tree, database_name, txn));
+    statement->SetPlanTree(
+        optimizer.BuildPelotonPlanTree(parse_tree, database_name, txn));
     TestingSQLUtil::counter_.store(1);
     auto status = traffic_cop.ExecuteStatementPlan(
         statement->GetPlanTree(), params, result, result_format);
@@ -88,7 +105,8 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
 
   auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  unique_ptr<binder::BindNodeVisitor> binder(new binder::BindNodeVisitor(txn, default_database_name));
+  unique_ptr<binder::BindNodeVisitor> binder(
+      new binder::BindNodeVisitor(txn, default_database_name));
   string selectSQL =
       "SELECT A.a1, B.b2 FROM A INNER JOIN b ON a.a1 = b.b1 "
       "WHERE a1 < 100 GROUP BY A.a1, B.b2 HAVING a1 > 50 "
@@ -96,7 +114,7 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
 
   auto parse_tree = parser.BuildParseTree(selectSQL);
   auto selectStmt = dynamic_cast<parser::SelectStatement*>(
-          parse_tree->GetStatements().at(0).get());
+      parse_tree->GetStatements().at(0).get());
   binder->BindNameToNode(selectStmt);
 
   oid_t db_oid =
@@ -114,7 +132,8 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   EXPECT_EQ(tupleExpr->GetBoundOid(),
             make_tuple(db_oid, tableA_oid, 0));  // A.a1
   EXPECT_EQ(type::TypeId::INTEGER, tupleExpr->GetValueType());
-  tupleExpr = (expression::TupleValueExpression*)selectStmt->select_list[1].get();
+  tupleExpr =
+      (expression::TupleValueExpression*)selectStmt->select_list[1].get();
   EXPECT_EQ(tupleExpr->GetBoundOid(),
             make_tuple(db_oid, tableB_oid, 1));  // B.b2
   EXPECT_EQ(type::TypeId::VARCHAR, tupleExpr->GetValueType());
@@ -139,7 +158,8 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
   // Check Group By and Having
   LOG_INFO("Checking group by");
   tupleExpr =
-      (expression::TupleValueExpression*)selectStmt->group_by->columns.at(0).get();
+      (expression::TupleValueExpression*)selectStmt->group_by->columns.at(0)
+          .get();
   EXPECT_EQ(tupleExpr->GetBoundOid(),
             make_tuple(db_oid, tableA_oid, 0));  // A.a1
   tupleExpr = dynamic_cast<const expression::TupleValueExpression*>(
@@ -233,11 +253,12 @@ TEST_F(BinderCorrectnessTest, DeleteStatementTest) {
       catalog_ptr->GetTableWithName(default_database_name, "b", txn)->GetOid();
 
   string deleteSQL = "DELETE FROM b WHERE 1 = b1 AND b2 = 'str'";
-  unique_ptr<binder::BindNodeVisitor> binder(new binder::BindNodeVisitor(txn, default_database_name));
+  unique_ptr<binder::BindNodeVisitor> binder(
+      new binder::BindNodeVisitor(txn, default_database_name));
 
   auto parse_tree = parser.BuildParseTree(deleteSQL);
-  auto deleteStmt =
-      dynamic_cast<parser::DeleteStatement*>(parse_tree->GetStatements().at(0).get());
+  auto deleteStmt = dynamic_cast<parser::DeleteStatement*>(
+      parse_tree->GetStatements().at(0).get());
   binder->BindNameToNode(deleteStmt);
 
   txn_manager.CommitTransaction(txn);
@@ -255,6 +276,31 @@ TEST_F(BinderCorrectnessTest, DeleteStatementTest) {
   // Delete the test database
   txn = txn_manager.BeginTransaction();
   catalog_ptr->DropDatabaseWithName(default_database_name, txn);
+  txn_manager.CommitTransaction(txn);
+}
+
+TEST_F(BinderCorrectnessTest, FunctionExpressionTest) {
+  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
+  string function_sql = "SELECT substr('test123', a, 3)";
+  auto& parser = parser::PostgresParser::GetInstance();
+  auto parse_tree = parser.BuildParseTree(function_sql);
+  auto stmt = parse_tree->GetStatement(0);
+  unique_ptr<binder::BindNodeVisitor> binder(
+      new binder::BindNodeVisitor(txn, DEFAULT_DB_NAME));
+  EXPECT_THROW(binder->BindNameToNode(stmt), peloton::BinderException);
+
+  function_sql = "SELECT substr('test123', 2, 3)";
+  auto parse_tree2 = parser.BuildParseTree(function_sql);
+  stmt = parse_tree2->GetStatement(0);
+  binder->BindNameToNode(stmt);
+  auto funct_expr = dynamic_cast<expression::FunctionExpression*>(
+      dynamic_cast<parser::SelectStatement*>(stmt)->select_list[0].get());
+  EXPECT_TRUE(funct_expr->Evaluate(nullptr, nullptr, nullptr)
+                  .CompareEquals(type::ValueFactory::GetVarcharValue("est")) ==
+              type::CMP_TRUE);
+
   txn_manager.CommitTransaction(txn);
 }
 

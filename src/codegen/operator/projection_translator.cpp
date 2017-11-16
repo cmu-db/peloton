@@ -23,6 +23,7 @@ ProjectionTranslator::ProjectionTranslator(const planner::ProjectionPlan &plan,
                                            Pipeline &pipeline)
     : OperatorTranslator(context, pipeline), plan_(plan) {
   // Prepare translator for our child
+  PL_ASSERT(plan.GetChildrenSize() < 2);
   context.Prepare(*plan_.GetChild(0), pipeline);
 
   // Prepare translators for the projection
