@@ -14,6 +14,7 @@
 
 #include "codegen/codegen.h"
 
+#include <mutex>
 #include <condition_variable>
 
 namespace peloton {
@@ -38,7 +39,7 @@ class CountDown {
   explicit CountDown(int32_t count) : count_(count) {}
   ~CountDown() = default;
 
-  std::atomic_int32_t count_;
+  std::int32_t count_;
   std::mutex mutex_;
   std::condition_variable cv_;
 };
