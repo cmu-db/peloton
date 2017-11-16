@@ -111,10 +111,10 @@ class HashTable {
   //===--------------------------------------------------------------------===//
   struct ProbeResult {
     // Actual probe result (bool), if the key alredy exists in the hast table
-    llvm::Value* key_exists;
+    llvm::Value *key_exists;
 
     // Data pointer (u8*), either to the existing data or to the new empty entry
-    llvm::Value* data_ptr;
+    llvm::Value *data_ptr;
   };
 
   // Destructor
@@ -130,9 +130,11 @@ class HashTable {
                              ProbeCallback &probe_callback,
                              InsertCallback &insert_callback) const = 0;
 
-  // Probe the hash table and insert a new slot if needed, returning both the result and the data pointer
-  virtual ProbeResult ProbeOrInsert(CodeGen &codegen, llvm::Value *ht_ptr, llvm::Value *hash,
-                             const std::vector<codegen::Value> &key) const = 0;
+  // Probe the hash table and insert a new slot if needed, returning both the
+  // result and the data pointer
+  virtual ProbeResult ProbeOrInsert(
+      CodeGen &codegen, llvm::Value *ht_ptr, llvm::Value *hash,
+      const std::vector<codegen::Value> &key) const = 0;
 
   // Insert a new entry into the hash table with the given keys, but don't
   // perform any key matching or merging
@@ -142,9 +144,8 @@ class HashTable {
 
   // Insert a new entry into the hash table with the given keys, not caring
   // about existing entries.
-  virtual void Insert (CodeGen &codegen, llvm::Value *ht_ptr,
-                            llvm::Value *hash,
-                            const std::vector<codegen::Value> &key) const = 0;
+  virtual void Insert(CodeGen &codegen, llvm::Value *ht_ptr, llvm::Value *hash,
+                      const std::vector<codegen::Value> &key) const = 0;
 
   // Generate code to iterate over the entire hash table
   virtual void Iterate(CodeGen &codegen, llvm::Value *ht_ptr,
