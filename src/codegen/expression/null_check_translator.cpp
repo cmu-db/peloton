@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "codegen/expression/null_check_translator.h"
+
 #include "codegen/type/boolean_type.h"
 #include "codegen/type/type_system.h"
 #include "expression/operator_expression.h"
@@ -36,7 +37,7 @@ Value NullCheckTranslator::DeriveValue(CodeGen &codegen,
       return Value{type::Boolean::Instance(), val.IsNotNull(codegen)};
     default: {
       throw Exception(
-          "Null_check expression has invalid type for translation: " +
+          "NullCheck expression has invalid ExpressionType: " +
           ExpressionTypeToString(null_check.GetExpressionType()));
     }
   }
