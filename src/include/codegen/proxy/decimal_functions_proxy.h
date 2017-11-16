@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// transaction_runtime_proxy.h
+// decimal_functions_proxy.h
 //
-// Identification: src/include/codegen/proxy/transaction_runtime_proxy.h
+// Identification: src/include/codegen/proxy/decimal_functions_proxy.h
 //
 // Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
@@ -17,10 +17,9 @@
 namespace peloton {
 namespace codegen {
 
-PROXY(TransactionRuntime) {
-  /// We only need to proxy PerformVectorizedRead()
-  /// in codegen::TransactionRuntime.
-  DECLARE_METHOD(PerformVectorizedRead);
+PROXY(DecimalFunctions) {
+  // Proxy everything in function::DecimalFunctions
+  DECLARE_METHOD(Floor);
 };
 
 }  // namespace codegen

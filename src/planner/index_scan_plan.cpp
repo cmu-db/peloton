@@ -42,8 +42,6 @@ IndexScanPlan::IndexScanPlan(storage::DataTable *table,
   SetTargetTable(table);
 
   if (predicate != NULL) {
-    expression::ExpressionUtil::TransformExpression(table->GetSchema(),
-                                                    predicate);
     SetPredicate(predicate);
   }
 

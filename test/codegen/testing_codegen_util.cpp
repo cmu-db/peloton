@@ -54,7 +54,8 @@ PelotonCodeGenTest::~PelotonCodeGenTest() {
 }
 
 // Create the test schema for all the tables
-std::unique_ptr<catalog::Schema> PelotonCodeGenTest::CreateTestSchema() const {
+std::unique_ptr<catalog::Schema> PelotonCodeGenTest::CreateTestSchema(
+    bool add_primary) const {
   bool is_inlined = true;
 
   // Create the columns
@@ -71,6 +72,9 @@ std::unique_ptr<catalog::Schema> PelotonCodeGenTest::CreateTestSchema() const {
   // Add NOT NULL constraints on COL_A, COL_C, COL_D
   cols[0].AddConstraint(
       catalog::Constraint{ConstraintType::NOTNULL, "not_null"});
+  if (add_primary == true)
+    cols[0].AddConstraint(
+        catalog::Constraint{ConstraintType::PRIMARY, "con_primary"});
   cols[2].AddConstraint(
       catalog::Constraint{ConstraintType::NOTNULL, "not_null"});
   cols[3].AddConstraint(
@@ -86,6 +90,14 @@ void PelotonCodeGenTest::CreateTestTables(concurrency::Transaction *txn) {
 
   for (int i = 0; i < 4; i++) {
     auto table_schema = CreateTestSchema();
+    catalog->CreateTable(test_db_name, test_table_names[i],
+                         std::move(table_schema), txn);
+    test_table_oids.push_back(catalog->GetTableObject(test_db_name,
+                                                      test_table_names[i],
+                                                      txn)->table_oid);
+  }
+  for (int i = 4; i < 5; i++) {
+    auto table_schema = CreateTestSchema(true);
     catalog->CreateTable(test_db_name, test_table_names[i],
                          std::move(table_schema), txn);
     test_table_oids.push_back(catalog->GetTableObject(test_db_name,

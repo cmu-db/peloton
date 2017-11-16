@@ -28,14 +28,27 @@ namespace threadpool {
 class MonoQueuePool {
  public:
   MonoQueuePool() : task_queue_(DEFAULT_TASK_QUEUE_SIZE),
-                    worker_pool_(DEFAULT_WORKER_POOL_SIZE, &task_queue_){}
-
+                    worker_pool_(DEFAULT_WORKER_POOL_SIZE, &task_queue_),
+                    startup_(false) {}
   ~MonoQueuePool() {
+    if (startup_ == true)
+      Shutdown();
+  }
+
+  void Startup() {
+    worker_pool_.Startup();
+    startup_ = true;
+  }
+
+  void Shutdown() {
     worker_pool_.Shutdown();
+    startup_ = false;
   }
 
   void SubmitTask(void (*task_ptr)(void *), void *task_arg,
                   void (*callback_ptr)(void *), void *callback_arg) {
+    if (startup_ == false)
+      Startup();
     task_queue_.Enqueue(task_ptr, task_arg, callback_ptr, callback_arg);
   }
 
@@ -47,6 +60,7 @@ class MonoQueuePool {
  private:
   TaskQueue task_queue_;
   WorkerPool worker_pool_;
+  bool startup_;
 };
 
 } // namespace threadpool
