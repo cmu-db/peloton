@@ -114,6 +114,7 @@ TEST_F(ExecutorThreadPoolTest, UseThreadPoolTest) {
   count_down->Destroy();
 }
 
+// This test case shows how to generate code for the task function.
 TEST_F(ExecutorThreadPoolTest, CodeGenTaskTest) {
   codegen::CodeContext code_context;
   codegen::CodeGen cgen(code_context);

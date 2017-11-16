@@ -26,7 +26,11 @@ void CountDown::Destroy() {
 }
 
 void CountDown::Decrease() {
-  if (--count_ == 0) {
+  std::unique_lock<decltype(mutex_)> lock(mutex_);
+  int32_t new_count = --count_;
+  lock.unlock();
+
+  if (new_count == 0) {
     // If after atomic decrease, the count becomes 0, notify the waiter.
     cv_.notify_one();
   }
@@ -34,7 +38,7 @@ void CountDown::Decrease() {
 
 void CountDown::Wait() {
   std::unique_lock<decltype(mutex_)> lock(mutex_);
-  cv_.wait(lock, [&] { return count_.load() == 0; });
+  cv_.wait(lock, [&] { return count_ == 0; });
 }
 
 }  // namespace codegen
