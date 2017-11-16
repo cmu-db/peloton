@@ -38,6 +38,9 @@ namespace codegen {
 //===----------------------------------------------------------------------===//
 class Aggregation {
  public:
+  // Constructor taking the runtime state reference
+  Aggregation(RuntimeState &runtime_state) : runtime_state_(runtime_state) {}
+
   // Setup the aggregation to handle the provided aggregates
   void Setup(CompilationContext &context,
              const std::vector<planner::AggregatePlan::AggTerm> &agg_terms,
@@ -49,29 +52,29 @@ class Aggregation {
              bool is_global);
 
   // Codegen any initialization work for the hash tables
-  void InitializeState(CompilationContext &context);
+  void InitializeState(CodeGen &codegen);
 
   // Cleanup by destroying the aggregation hash tables
-  void TearDownState(CompilationContext &context);
+  void TearDownState(CodeGen &codegen);
 
   // Create default initial values for all global aggregate components
   void CreateInitialGlobalValues(CodeGen &codegen, llvm::Value *space) const;
 
   // Store the provided values as the initial values for each of the aggregates
   void CreateInitialValues(
-      CompilationContext &context, llvm::Value *space,
+      CodeGen &codegen, llvm::Value *space,
       const std::vector<codegen::Value> &initial,
       const std::vector<codegen::Value> &grouping_keys) const;
 
   // Advance all stored aggregates (stored in the provided storage space) using
   // the values in the provided vector
-  void AdvanceValues(CompilationContext &context, llvm::Value *space,
+  void AdvanceValues(CodeGen &codegen, llvm::Value *space,
                      const std::vector<codegen::Value> &next,
                      const std::vector<codegen::Value> &grouping_keys) const;
 
   // Advance all stored aggregates (stored in the provided storage space) using
   // the values in the provided vector
-  void AdvanceValues(CompilationContext &context, llvm::Value *space,
+  void AdvanceValues(CodeGen &codegen, llvm::Value *space,
                      const std::vector<codegen::Value> &next) const;
 
   // Compute the final values of all the aggregates stored in the provided
@@ -92,63 +95,59 @@ class Aggregation {
   bool IsGlobal() const { return is_global_; }
 
   //===--------------------------------------------------------------------===//
-  // Little struct to map the aggregates we physically store to the higher level
-  // aggregates. It is possible that the number of these structs is greater than
-  // the total number of aggregates the caller has setup. This can occur for two
-  // reasons:
+  // Little struct to map higher level aggregates to their physical storage
+  // and to their hash tables if they are distinct.
   //
-  // 1) Some aggregates decompose into multiple aggregations. For example, AVG()
-  //    aggregates decompose into a SUM() and COUNT(), therefore occupying three
-  //    slots: one each for the sum, count, and logical average.
-  // 2) There are occasions where components of aggregates can be shared across
-  //    multiple aggregates.  An example is a SUM(a) and AVG(a). Both of these
-  //    will share the summation aggregate on 'a'.
+  // Some aggregates decompose into multiple components. For example, AVG()
+  // aggregates decompose into a SUM() and COUNT(). Therefore, the storage
+  // indexes are stored in an array. The array has fixed size of the maximum
+  // number of components that a aggregation is decomposed to, so for now
+  // only 2 for AVG. The aggregations have to know which component is
+  // stored at which index.
   //
   // Storing the mapping from the physical position the aggregate is stored to
   // where the caller expects them allows us to rearrange positions without
   // the caller knowing or caring.
   //===--------------------------------------------------------------------===//
-  struct AggregateInfo {
-    // The type of aggregate
-    ExpressionType aggregate_type;
+  static const unsigned int max_comp_size_ = 2;
 
-    // The data type of the aggregate
-    const type::Type type;
+  struct AggregateInfo {
+    // The overall type of the aggregation
+    const ExpressionType aggregate_type;
 
     // The position in the original (ordered) list of aggregates that this
     // aggregate is stored
-    uint32_t source_index;
+    const uint32_t source_index;
 
-    // The position in the physical storage space where this aggregate is stored
-    uint32_t storage_index;
-
-    // Is this aggregate purely for internal use? Is this externally visible?
-    bool is_internal;
+    // This array contains the physical storage indices for the components the
+    // aggregation is composed of.
+    // The array is fixed-sized to the maximum possible length
+    const std::array<uint32_t, max_comp_size_> storage_indices;
 
     // If the aggregate shall produce distinct output
     bool is_distinct;
 
     // Index for the runtime hash table, only used if is_distinct is true
-    // Exception: AVG is a internal aggregation that can be distinct,
-    // but doesn't have a hash table
     uint32_t hast_table_index;
   };
 
  private:
+  void DoInitializeValue(CodeGen &codegen, llvm::Value *space,
+                         ExpressionType type, uint32_t storage_index,
+                         const Value &initial,
+                         UpdateableStorage::NullBitmap &null_bitmap) const;
+
   // Will perform the NULL checking, update the null bitmap and call
-  // DoAdvanceValue
-  // if appropriate
-  void DoNullCheck(CodeGen &codegen, llvm::Value *space,
-                   const Aggregation::AggregateInfo &aggregate_info,
-                   const codegen::Value &update,
+  // DoAdvanceValue if appropriate
+  void DoNullCheck(CodeGen &codegen, llvm::Value *space, ExpressionType type,
+                   uint32_t storage_index, const codegen::Value &update,
                    UpdateableStorage::NullBitmap &null_bitmap,
                    llvm::Value *curr_val = nullptr) const;
 
   // Advance the value of a specific aggregate, given its next value without any
   // NULL checking. This assumes that the current aggregate value is not NULL.
-  void DoAdvanceValue(CodeGen &codegen, llvm::Value *space,
-                      const AggregateInfo &agg_info,
-                      const codegen::Value &next) const;
+  void DoAdvanceValue(CodeGen &codegen, llvm::Value *space, ExpressionType type,
+                      uint32_t storage_index, const codegen::Value &next) const;
 
  private:
   // Is this a global aggregation?
@@ -163,6 +162,9 @@ class Aggregation {
   // Hash tables and their runtime IDs for the distinct aggregations, access via
   // index
   std::vector<std::pair<OAHashTable, RuntimeState::StateID>> hash_table_infos_;
+
+  // Reference to RuntimeState, needed for the hash tables
+  RuntimeState &runtime_state_;
 };
 
 }  // namespace codegen
