@@ -51,8 +51,8 @@ static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
 Array::Array()
     : SqlType(peloton::type::TypeId::ARRAY),
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
-                   kComparisonTable, kUnaryOperatorTable,
-                   kBinaryOperatorTable, kNaryOperatorTable) {}
+                   kComparisonTable, kUnaryOperatorTable, kBinaryOperatorTable,
+                   kNaryOperatorTable) {}
 
 Value Array::GetMinValue(UNUSED_ATTRIBUTE CodeGen &codegen) const {
   throw Exception{"Arrays don't have minimum values ...."};

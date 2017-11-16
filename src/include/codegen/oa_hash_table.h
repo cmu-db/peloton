@@ -73,9 +73,11 @@ class OAHashTable : public HashTable {
                      HashTable::ProbeCallback &probe_callback,
                      HashTable::InsertCallback &insert_callback) const override;
 
-  // Probe the hash table and insert a new slot if needed, returning both the result and the data pointer
-  ProbeResult ProbeOrInsert(CodeGen &codegen, llvm::Value *ht_ptr, llvm::Value *hash,
-                                    const std::vector<codegen::Value> &key) const override;
+  // Probe the hash table and insert a new slot if needed, returning both the
+  // result and the data pointer
+  ProbeResult ProbeOrInsert(
+      CodeGen &codegen, llvm::Value *ht_ptr, llvm::Value *hash,
+      const std::vector<codegen::Value> &key) const override;
 
   // Insert a new entry into the hash table with the given keys, not caring
   // about existing entries.
@@ -85,9 +87,8 @@ class OAHashTable : public HashTable {
 
   // Insert a new entry into the hash table with the given keys, not caring
   // about existing entries.
-  void Insert (CodeGen &codegen, llvm::Value *ht_ptr,
-                            llvm::Value *hash,
-                            const std::vector<codegen::Value> &key) const override;
+  void Insert(CodeGen &codegen, llvm::Value *ht_ptr, llvm::Value *hash,
+              const std::vector<codegen::Value> &key) const override;
 
   // Generate code to iterate over the entire hash table
   void Iterate(CodeGen &codegen, llvm::Value *ht_ptr,
@@ -132,16 +133,14 @@ class OAHashTable : public HashTable {
         : entry_index(entry_index_), entry_ptr(entry_ptr_) {}
   };
 
-  ProbeResult TranslateProbing (CodeGen &codegen,
-                                  llvm::Value *hash_table,
-                                  llvm::Value *hash,
-                                  const std::vector<codegen::Value> &key,
-                                  std::function<void (llvm::Value *)> key_found,
-                                  std::function<void (llvm::Value *)> key_not_found,
-                                  bool process_value,
-                                  bool process_only_one_value,
-                                  bool create_key_if_missing,
-                                  bool return_probe_result) const;
+  ProbeResult TranslateProbing(CodeGen &codegen, llvm::Value *hash_table,
+                               llvm::Value *hash,
+                               const std::vector<codegen::Value> &key,
+                               std::function<void(llvm::Value *)> key_found,
+                               std::function<void(llvm::Value *)> key_not_found,
+                               bool process_value, bool process_only_one_value,
+                               bool create_key_if_missing,
+                               bool return_probe_result) const;
 
   llvm::Value *LoadHashTableField(CodeGen &codegen, llvm::Value *hash_table,
                                   uint32_t field_id) const;

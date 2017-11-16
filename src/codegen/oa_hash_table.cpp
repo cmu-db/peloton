@@ -50,19 +50,19 @@ OAHashTable::OAHashTable(CodeGen &codegen,
 
   // Configure the size of each HashEntry
   hash_entry_size_ = sizeof(codegen::util::OAHashTable::HashEntry) +
-      key_storage_.MaxStorageSize() + value_size_;
+                     key_storage_.MaxStorageSize() + value_size_;
 }
 
-llvm::Value *OAHashTable::HashKey (
+llvm::Value *OAHashTable::HashKey(
     CodeGen &codegen, const std::vector<codegen::Value> &key) const {
   return Hash::HashValues(codegen, key);
 }
 
 // Load the value of a field from the given hash table instance.
 // NOTE: the type returned is the actual type registered in HashTable type
-llvm::Value *OAHashTable::LoadHashTableField (CodeGen &codegen,
-                                              llvm::Value *hash_table,
-                                              uint32_t field_id) const {
+llvm::Value *OAHashTable::LoadHashTableField(CodeGen &codegen,
+                                             llvm::Value *hash_table,
+                                             uint32_t field_id) const {
   llvm::Type *hash_table_type = OAHashTableProxy::GetType(codegen);
   return codegen->CreateLoad(codegen->CreateConstInBoundsGEP2_32(
       hash_table_type, hash_table, 0, field_id));
@@ -70,16 +70,16 @@ llvm::Value *OAHashTable::LoadHashTableField (CodeGen &codegen,
 
 // Return the element stored in a specified field of a HashEntry struct. Since
 // we also need to access data field, the offset is an extra argument
-llvm::Value *OAHashTable::LoadHashEntryField (CodeGen &codegen,
-                                              llvm::Value *entry_ptr,
-                                              uint32_t offset,
-                                              uint32_t field_id) const {
+llvm::Value *OAHashTable::LoadHashEntryField(CodeGen &codegen,
+                                             llvm::Value *entry_ptr,
+                                             uint32_t offset,
+                                             uint32_t field_id) const {
   llvm::Type *entry_type = OAHashEntryProxy::GetType(codegen);
   return codegen->CreateLoad(codegen->CreateConstInBoundsGEP2_32(
       entry_type, entry_ptr, offset, field_id));
 }
 
-llvm::Value *OAHashTable::PtrToInt (CodeGen &codegen, llvm::Value *ptr) const {
+llvm::Value *OAHashTable::PtrToInt(CodeGen &codegen, llvm::Value *ptr) const {
   // Casts the pointer to uint64_t which is no-op on x86-64
   return codegen->CreatePtrToInt(ptr, codegen.Int64Type());
 }
@@ -87,8 +87,8 @@ llvm::Value *OAHashTable::PtrToInt (CodeGen &codegen, llvm::Value *ptr) const {
 // Advance a given pointer by some number of bytes. This function is designed to
 // manipulate pointer as byte addressable. The return value is a pointer of the
 // same type with the value advanced by delta bytes.
-llvm::Value *OAHashTable::AdvancePointer (CodeGen &codegen, llvm::Value *ptr,
-                                          llvm::Value *delta) const {
+llvm::Value *OAHashTable::AdvancePointer(CodeGen &codegen, llvm::Value *ptr,
+                                         llvm::Value *delta) const {
   // Cast it to uint64_t
   llvm::Value *ptr_int = PtrToInt(codegen, ptr);
 
@@ -98,8 +98,8 @@ llvm::Value *OAHashTable::AdvancePointer (CodeGen &codegen, llvm::Value *ptr,
   return codegen->CreateIntToPtr(new_ptr_int, ptr->getType());
 }
 
-llvm::Value *OAHashTable::AdvancePointer (CodeGen &codegen, llvm::Value *ptr,
-                                          uint64_t delta) const {
+llvm::Value *OAHashTable::AdvancePointer(CodeGen &codegen, llvm::Value *ptr,
+                                         uint64_t delta) const {
   return AdvancePointer(codegen, ptr, codegen.Const64(delta));
 }
 
@@ -110,10 +110,10 @@ llvm::Value *OAHashTable::AdvancePointer (CodeGen &codegen, llvm::Value *ptr,
 // and has one IF branch
 // Note that entry_p is a pointer of HashEntry type
 //===----------------------------------------------------------------------===//
-OAHashTable::HashTablePos OAHashTable::GetNextEntry (CodeGen &codegen,
-                                                     llvm::Value *hash_table,
-                                                     llvm::Value *entry_ptr,
-                                                     llvm::Value *index) const {
+OAHashTable::HashTablePos OAHashTable::GetNextEntry(CodeGen &codegen,
+                                                    llvm::Value *hash_table,
+                                                    llvm::Value *entry_ptr,
+                                                    llvm::Value *index) const {
   // hash_table_size = hash_table->num_buckets_
   llvm::Value *hash_table_size = LoadHashTableField(codegen, hash_table, 1);
   // next_index = index + 1
@@ -139,8 +139,8 @@ OAHashTable::HashTablePos OAHashTable::GetNextEntry (CodeGen &codegen,
   return HashTablePos{final_index, final_entry_ptr};
 }
 
-llvm::Value *OAHashTable::GetEntry (CodeGen &codegen, llvm::Value *hash_table,
-                                    llvm::Value *index) const {
+llvm::Value *OAHashTable::GetEntry(CodeGen &codegen, llvm::Value *hash_table,
+                                   llvm::Value *index) const {
   llvm::Value *byte_offset = codegen->CreateMul(
       codegen.Const64(hash_entry_size_),
       codegen->CreateZExtOrBitCast(index, codegen.Int64Type()));
@@ -148,7 +148,7 @@ llvm::Value *OAHashTable::GetEntry (CodeGen &codegen, llvm::Value *hash_table,
   return AdvancePointer(codegen, base_ptr, byte_offset);
 }
 
-OAHashTable::HashTablePos OAHashTable::GetEntryByHash (
+OAHashTable::HashTablePos OAHashTable::GetEntryByHash(
     CodeGen &codegen, llvm::Value *hash_table, llvm::Value *hash_value) const {
   // Given the hash value, return a HashEntry * and the index
   // We need both to judge whether to wrap back
@@ -163,28 +163,28 @@ OAHashTable::HashTablePos OAHashTable::GetEntryByHash (
 // Return KeyValueList * inside the provided HashEntry *. Note that this
 // function is quite redundant, but we would like to emphasize the fact that
 // this function returns a pointer to KeyValueList rather than the status code.
-llvm::Value *OAHashTable::GetKeyValueList (CodeGen &codegen,
-                                           llvm::Value *entry_ptr) const {
+llvm::Value *OAHashTable::GetKeyValueList(CodeGen &codegen,
+                                          llvm::Value *entry_ptr) const {
   return LoadHashEntryField(codegen, entry_ptr, 0, 0);
 }
 
 // Get the pointer to the key in the provided HashEntry *
-llvm::Value *OAHashTable::GetKeyPtr (CodeGen &codegen,
-                                     llvm::Value *entry_ptr) const {
+llvm::Value *OAHashTable::GetKeyPtr(CodeGen &codegen,
+                                    llvm::Value *entry_ptr) const {
   llvm::Type *entry_type = OAHashEntryProxy::GetType(codegen);
   return codegen->CreateConstInBoundsGEP2_32(entry_type, entry_ptr, 1, 0);
 }
 
 // Return boolean result on whther the pointer is equal to a given
 // integer that is LLVM compile time constant
-llvm::Value *OAHashTable::IsPtrEqualTo (CodeGen &codegen, llvm::Value *ptr,
-                                        uint64_t value) const {
+llvm::Value *OAHashTable::IsPtrEqualTo(CodeGen &codegen, llvm::Value *ptr,
+                                       uint64_t value) const {
   return codegen->CreateICmpEQ(PtrToInt(codegen, ptr), codegen.Const64(value));
 }
 
 // Reverse of IsPtrEqualTo()
-llvm::Value *OAHashTable::IsPtrUnEqualTo (CodeGen &codegen, llvm::Value *ptr,
-                                          uint64_t value) const {
+llvm::Value *OAHashTable::IsPtrUnEqualTo(CodeGen &codegen, llvm::Value *ptr,
+                                         uint64_t value) const {
   return codegen->CreateICmpNE(PtrToInt(codegen, ptr), codegen.Const64(value));
 }
 
@@ -192,7 +192,7 @@ llvm::Value *OAHashTable::IsPtrUnEqualTo (CodeGen &codegen, llvm::Value *ptr,
 // to process and determine the location of data items which is a consecutive
 // chunk of storage of size (data item count) * (value size). We return a
 // {data_count, data_array*} pair.
-std::pair<llvm::Value *, llvm::Value *> OAHashTable::GetDataCountAndPointer (
+std::pair<llvm::Value *, llvm::Value *> OAHashTable::GetDataCountAndPointer(
     CodeGen &codegen, llvm::Value *kv_p, llvm::Value *after_key_p) const {
   llvm::Value *data_count_inline = nullptr, *data_count_noninline = nullptr;
   llvm::Value *data_ptr_inline = nullptr, *data_ptr_noninline = nullptr;
@@ -202,7 +202,7 @@ std::pair<llvm::Value *, llvm::Value *> OAHashTable::GetDataCountAndPointer (
                                  "singleValue"};
   {
     data_count_inline = codegen.Const64(1);
-    data_ptr_inline = AdvancePointer(codegen, after_key_p, (uint64_t) 0UL);
+    data_ptr_inline = AdvancePointer(codegen, after_key_p, (uint64_t)0UL);
   }
   is_entry_single_value.ElseBlock("multipleValue");
   {
@@ -239,16 +239,13 @@ std::pair<llvm::Value *, llvm::Value *> OAHashTable::GetDataCountAndPointer (
 // Beware that returned struct will contain nullptr's if return_probe_result
 // is set to false!
 //===----------------------------------------------------------------------===//
-OAHashTable::ProbeResult OAHashTable::TranslateProbing (CodeGen &codegen,
-                                                        llvm::Value *hash_table,
-                                                        llvm::Value *hash,
-                                                        const std::vector<codegen::Value> &key,
-                                                        std::function<void (llvm::Value *)> key_found,
-                                                        std::function<void (llvm::Value *)> key_not_found,
-                                                        bool process_value,
-                                                        bool process_only_one_value,
-                                                        bool create_key_if_missing,
-                                                        bool return_probe_result) const {
+OAHashTable::ProbeResult OAHashTable::TranslateProbing(
+    CodeGen &codegen, llvm::Value *hash_table, llvm::Value *hash,
+    const std::vector<codegen::Value> &key,
+    std::function<void(llvm::Value *)> key_found,
+    std::function<void(llvm::Value *)> key_not_found, bool process_value,
+    bool process_only_one_value, bool create_key_if_missing,
+    bool return_probe_result) const {
   // This is the basic block that we go through if the key is found
   // or jumped when after the key is missing and the call back is invoked
   llvm::BasicBlock *key_found_or_inserted_bb =
@@ -260,7 +257,8 @@ OAHashTable::ProbeResult OAHashTable::TranslateProbing (CodeGen &codegen,
   // Create struct that will be returned
   ProbeResult probe_result;
 
-  // Create the data_ptr values for both paths (for later use in the result struct)
+  // Create the data_ptr values for both paths (for later use in the result
+  // struct)
   llvm::Value *data_ptr;
   llvm::Value *dump_data_ptr;
 
@@ -411,8 +409,7 @@ OAHashTable::ProbeResult OAHashTable::TranslateProbing (CodeGen &codegen,
 
     // First store the keys into the region in hash entry. The pointer returned
     // is where the value goes.
-    dump_data_ptr =
-        key_storage_.StoreValues(codegen, dump_key_ptr, key);
+    dump_data_ptr = key_storage_.StoreValues(codegen, dump_key_ptr, key);
 
     // Call the call back with the pointer to dump data
     if (key_not_found != nullptr) {
@@ -439,18 +436,21 @@ OAHashTable::ProbeResult OAHashTable::TranslateProbing (CodeGen &codegen,
     auto bb_pred_num = std::distance(bb_pred.begin(), bb_pred.end());
 
     // Create Phis
-    llvm::PHINode *key_exists_phi = codegen->CreatePHI(codegen.BoolType(), bb_pred_num);
+    llvm::PHINode *key_exists_phi =
+        codegen->CreatePHI(codegen.BoolType(), bb_pred_num);
     llvm::PHINode *data_ptr_phi = nullptr;
 
     if (create_key_if_missing) {
       data_ptr_phi = codegen->CreatePHI(data_ptr->getType(), bb_pred_num);
     }
 
-
-    // This value needs special treatment, because one path is from the early loop drop out,
-    // and there can be numerous other paths that have been created from the given functions,
+    // This value needs special treatment, because one path is from the early
+    // loop drop out,
+    // and there can be numerous other paths that have been created from the
+    // given functions,
     // that all end at the key_found_or_inserted_bb basic block
-    for (llvm::BasicBlock *pred : llvm::predecessors(key_found_or_inserted_bb)) {
+    for (llvm::BasicBlock *pred :
+         llvm::predecessors(key_found_or_inserted_bb)) {
       if (pred == before_jump_out_bb) {
         key_exists_phi->addIncoming(codegen.ConstBool(true), pred);
 
@@ -478,7 +478,7 @@ OAHashTable::ProbeResult OAHashTable::TranslateProbing (CodeGen &codegen,
   return probe_result;
 }
 
-void OAHashTable::Init (CodeGen &codegen, llvm::Value *ht_ptr) const {
+void OAHashTable::Init(CodeGen &codegen, llvm::Value *ht_ptr) const {
   auto *key_size = codegen.Const64(key_storage_.MaxStorageSize());
   auto *value_size = codegen.Const64(value_size_);
   auto *initial_size =
@@ -487,92 +487,68 @@ void OAHashTable::Init (CodeGen &codegen, llvm::Value *ht_ptr) const {
                {ht_ptr, key_size, value_size, initial_size});
 }
 
-void OAHashTable::ProbeOrInsert (CodeGen &codegen, llvm::Value *ht_ptr,
-                                 llvm::Value *hash,
-                                 const std::vector<codegen::Value> &key,
-                                 ProbeCallback &probe_callback,
-                                 InsertCallback &insert_callback) const {
-  auto key_found = [&codegen, &probe_callback] (llvm::Value *data_ptr) {
+void OAHashTable::ProbeOrInsert(CodeGen &codegen, llvm::Value *ht_ptr,
+                                llvm::Value *hash,
+                                const std::vector<codegen::Value> &key,
+                                ProbeCallback &probe_callback,
+                                InsertCallback &insert_callback) const {
+  auto key_found = [&codegen, &probe_callback](llvm::Value *data_ptr) {
     probe_callback.ProcessEntry(codegen, data_ptr);
   };
 
-  auto key_not_found = [&codegen, &insert_callback] (llvm::Value *data_ptr) {
+  auto key_not_found = [&codegen, &insert_callback](llvm::Value *data_ptr) {
     insert_callback.StoreValue(codegen, data_ptr);
   };
 
-  TranslateProbing(codegen,
-                   ht_ptr,
-                   hash,
-                   key,
-                   key_found,
-                   key_not_found,
+  TranslateProbing(codegen, ht_ptr, hash, key, key_found, key_not_found, true,
                    true,
-                   true,
-                   true,          // If key is missing create it in empty slot
+                   true,  // If key is missing create it in empty slot
                    false);
 }
 
-// Probe the hash table and insert a new slot if needed, returning both the result and the data pointer
-OAHashTable::ProbeResult OAHashTable::ProbeOrInsert (CodeGen &codegen, llvm::Value *ht_ptr, llvm::Value *hash,
-                                                     const std::vector<codegen::Value> &key) const {
+// Probe the hash table and insert a new slot if needed, returning both the
+// result and the data pointer
+OAHashTable::ProbeResult OAHashTable::ProbeOrInsert(
+    CodeGen &codegen, llvm::Value *ht_ptr, llvm::Value *hash,
+    const std::vector<codegen::Value> &key) const {
   ProbeResult probe_result;
 
-  probe_result = TranslateProbing(codegen,
-                                  ht_ptr,
-                                  hash,
-                                  key,
-                                  nullptr,
-                                  nullptr,
-                                  true,
-                                  true,
-                                  true,          // If key is missing create it in empty slot
-                                  true);
+  probe_result =
+      TranslateProbing(codegen, ht_ptr, hash, key, nullptr, nullptr, true, true,
+                       true,  // If key is missing create it in empty slot
+                       true);
 
   return probe_result;
 }
 
-void OAHashTable::Insert (CodeGen &codegen, llvm::Value *ht_ptr,
-                          llvm::Value *hash,
-                          const std::vector<codegen::Value> &key,
-                          InsertCallback &insert_callback) const {
-  auto key_found = [&codegen, &insert_callback] (llvm::Value *data_ptr) {
+void OAHashTable::Insert(CodeGen &codegen, llvm::Value *ht_ptr,
+                         llvm::Value *hash,
+                         const std::vector<codegen::Value> &key,
+                         InsertCallback &insert_callback) const {
+  auto key_found = [&codegen, &insert_callback](llvm::Value *data_ptr) {
     insert_callback.StoreValue(codegen, data_ptr);
   };
 
-  auto key_not_found = [&codegen, &insert_callback] (llvm::Value *data_ptr) {
+  auto key_not_found = [&codegen, &insert_callback](llvm::Value *data_ptr) {
     insert_callback.StoreValue(codegen, data_ptr);
   };
 
-  TranslateProbing(codegen,
-                   ht_ptr,
-                   hash,
-                   key,
-                   key_found,
-                   key_not_found,
+  TranslateProbing(codegen, ht_ptr, hash, key, key_found, key_not_found, false,
                    false,
-                   false,
-                   true,         // If key is missing create it in empty slot
+                   true,  // If key is missing create it in empty slot
                    false);
 }
 
-void OAHashTable::Insert (CodeGen &codegen, llvm::Value *ht_ptr,
-                          llvm::Value *hash,
-                          const std::vector<codegen::Value> &key) const {
-
-  TranslateProbing(codegen,
-                   ht_ptr,
-                   hash,
-                   key,
-                   nullptr,
-                   nullptr,
-                   false,
-                   false,
-                   true,         // If key is missing create it in empty slot
+void OAHashTable::Insert(CodeGen &codegen, llvm::Value *ht_ptr,
+                         llvm::Value *hash,
+                         const std::vector<codegen::Value> &key) const {
+  TranslateProbing(codegen, ht_ptr, hash, key, nullptr, nullptr, false, false,
+                   true,  // If key is missing create it in empty slot
                    false);
 }
 
-void OAHashTable::Iterate (CodeGen &codegen, llvm::Value *hash_table,
-                           IterateCallback &callback) const {
+void OAHashTable::Iterate(CodeGen &codegen, llvm::Value *hash_table,
+                          IterateCallback &callback) const {
   // Load the size of the array
   llvm::Value *num_buckets = LoadHashTableField(codegen, hash_table, 1);
 
@@ -650,7 +626,7 @@ void OAHashTable::Iterate (CodeGen &codegen, llvm::Value *hash_table,
   }
 }
 
-void OAHashTable::VectorizedIterate (
+void OAHashTable::VectorizedIterate(
     CodeGen &codegen, llvm::Value *hash_table, Vector &selection_vector,
     OAHashTable::VectorizedIterateCallback &callback) const {
   // A vectorized iteration is done in two passes:
@@ -720,36 +696,30 @@ void OAHashTable::VectorizedIterate (
   }
 }
 
-void OAHashTable::FindAll (CodeGen &codegen, llvm::Value *ht_ptr,
-                           const std::vector<codegen::Value> &key,
-                           IterateCallback &callback) const {
-  auto key_found = [&codegen, &callback, &key] (llvm::Value *data_ptr) {
+void OAHashTable::FindAll(CodeGen &codegen, llvm::Value *ht_ptr,
+                          const std::vector<codegen::Value> &key,
+                          IterateCallback &callback) const {
+  auto key_found = [&codegen, &callback, &key](llvm::Value *data_ptr) {
     callback.ProcessEntry(codegen, key, data_ptr);
   };
 
   // It does not do anything for a key that is not found
-  auto key_not_found = [] (llvm::Value *data_ptr) { (void) data_ptr; };
+  auto key_not_found = [](llvm::Value *data_ptr) { (void)data_ptr; };
 
-  TranslateProbing(codegen,
-                   ht_ptr,
-                   nullptr,
-                   key,
-                   key_found,
-                   key_not_found,
-                   true,
-                   false,
-                   false,         // If key is missing create it in empty slot
+  TranslateProbing(codegen, ht_ptr, nullptr, key, key_found, key_not_found,
+                   true, false,
+                   false,  // If key is missing create it in empty slot
                    false);
 }
 
-void OAHashTable::Destroy (CodeGen &codegen, llvm::Value *ht_ptr) const {
+void OAHashTable::Destroy(CodeGen &codegen, llvm::Value *ht_ptr) const {
   codegen.Call(OAHashTableProxy::Destroy, {ht_ptr});
 }
 
-void OAHashTable::PrefetchBucket (CodeGen &codegen, llvm::Value *ht_ptr,
-                                  llvm::Value *hash,
-                                  OAHashTable::PrefetchType pf_type,
-                                  OAHashTable::Locality locality) const {
+void OAHashTable::PrefetchBucket(CodeGen &codegen, llvm::Value *ht_ptr,
+                                 llvm::Value *hash,
+                                 OAHashTable::PrefetchType pf_type,
+                                 OAHashTable::Locality locality) const {
   static constexpr uint32_t kDataCache = 1;
 
   auto pos = GetEntryByHash(codegen, ht_ptr, hash);
@@ -779,7 +749,7 @@ void OAHashTable::PrefetchBucket (CodeGen &codegen, llvm::Value *ht_ptr,
   codegen.CallFunc(prefetch_func, fn_args);
 }
 
-void OAHashTable::OAHashTableAccess::ExtractBucketKeys (
+void OAHashTable::OAHashTableAccess::ExtractBucketKeys(
     CodeGen &codegen, llvm::Value *index,
     std::vector<codegen::Value> &key) const {
   auto *entry_ptr = hash_table_.GetEntry(codegen, ht_ptr_, index);
@@ -787,7 +757,7 @@ void OAHashTable::OAHashTableAccess::ExtractBucketKeys (
   hash_table_.key_storage_.LoadValues(codegen, key_ptr, key);
 }
 
-llvm::Value *OAHashTable::OAHashTableAccess::BucketValue (
+llvm::Value *OAHashTable::OAHashTableAccess::BucketValue(
     CodeGen &codegen, llvm::Value *index) const {
   llvm::Value *entry_ptr = hash_table_.GetEntry(codegen, ht_ptr_, index);
   llvm::Value *key_ptr = hash_table_.GetKeyPtr(codegen, entry_ptr);
