@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/expression/null_checker_translator.h"
+#include "codegen/expression/null_check_translator.h"
 #include "codegen/type/boolean_type.h"
 #include "codegen/type/type_system.h"
 #include "expression/operator_expression.h"
