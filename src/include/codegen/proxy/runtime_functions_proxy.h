@@ -37,6 +37,7 @@ PROXY(AbstractExpression) {
 PROXY(RuntimeFunctions) {
   DECLARE_METHOD(HashCrc64);
   DECLARE_METHOD(GetTileGroup);
+  DECLARE_METHOD(GetTileGroupByGlobalId);
   DECLARE_METHOD(GetTileGroupLayout);
   DECLARE_METHOD(FillPredicateArray);
   DECLARE_METHOD(ThrowDivideByZeroException);

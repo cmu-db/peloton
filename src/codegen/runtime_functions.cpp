@@ -71,6 +71,12 @@ storage::TileGroup *RuntimeFunctions::GetTileGroup(storage::DataTable *table,
   return tile_group.get();
 }
 
+storage::TileGroup *RuntimeFunctions::GetTileGroupByGlobalId(storage::DataTable *table,
+                                                             uint64_t tile_group_id) {
+  auto tile_group = table->GetTileGroupById(tile_group_id);
+  return tile_group.get();
+}
+
 //===----------------------------------------------------------------------===//
 // Fills in the Predicate Array for the Zone Map to compare against.
 // Predicates are converted into an array of struct.

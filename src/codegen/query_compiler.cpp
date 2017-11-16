@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <include/planner/index_scan_plan.h>
 #include "codegen/query_compiler.h"
 
 #include "codegen/compilation_context.h"
@@ -29,12 +30,14 @@ std::unique_ptr<Query> QueryCompiler::Compile(
     const planner::AbstractPlan &root, const QueryParametersMap &parameters_map,
     QueryResultConsumer &result_consumer, CompileStats *stats) {
   // The query statement we compile
+  printf("before constructing query\n");
   std::unique_ptr<Query> query{new Query(root)};
 
   // Set up the compilation context
   CompilationContext context{*query, parameters_map, result_consumer};
 
   // Perform the compilation
+  printf("before generating plan(stats)\n");
   context.GeneratePlan(stats);
 
   // Return the compiled query statement
@@ -45,6 +48,7 @@ std::unique_ptr<Query> QueryCompiler::Compile(
 bool QueryCompiler::IsSupported(const planner::AbstractPlan &plan) {
   switch (plan.GetPlanNodeType()) {
     case PlanNodeType::SEQSCAN:
+    case PlanNodeType::INDEXSCAN:
     case PlanNodeType::ORDERBY:
     case PlanNodeType::DELETE:
     case PlanNodeType::INSERT:
@@ -87,6 +91,11 @@ bool QueryCompiler::IsSupported(const planner::AbstractPlan &plan) {
     case PlanNodeType::SEQSCAN: {
       auto &scan_plan = static_cast<const planner::SeqScanPlan &>(plan);
       pred = scan_plan.GetPredicate();
+      break;
+    }
+    case PlanNodeType::INDEXSCAN: {
+      auto &index_scan_plan = static_cast<const planner::IndexScanPlan &>(plan);
+      pred = index_scan_plan.GetPredicate();
       break;
     }
     case PlanNodeType::AGGREGATE_V2: {
