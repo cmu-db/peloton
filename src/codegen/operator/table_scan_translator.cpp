@@ -124,8 +124,10 @@ void TableScanTranslator::Produce() const {
   // auto arr = predicate_array.data();
       llvm::Value *predicate_ptr = codegen->CreateIntToPtr(codegen.Const64((int64_t)predicate),
           AbstractExpressionProxy::GetType(codegen)->getPointerTo());
-  num_preds = predicate->GetNumberofParsedPredicates();
-  //LOG_INFO("The number of parsed predicates is : %lu", num_preds);
+  if (predicate !=nullptr) {
+    num_preds = predicate->GetNumberofParsedPredicates();
+  }
+  LOG_DEBUG("Number of Predicates is %lu", num_preds);
   ScanConsumer scan_consumer{*this, sel_vec};
   table_.GenerateScan(codegen, table_ptr, sel_vec.GetCapacity(), scan_consumer, predicate_ptr, num_preds);
   LOG_DEBUG("TableScan on [%u] finished producing tuples ...", table.GetOid());

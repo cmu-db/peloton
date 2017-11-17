@@ -32,7 +32,11 @@ namespace test {
 class ZoneMapTests : public PelotonTest {};
 
 TEST_F(ZoneMapTests, ZoneMapContentsTest) {
-  storage::DataTable *data_table = TestingExecutorUtil::CreateAndPopulateTable();
+  storage::DataTable *data_table = TestingExecutorUtil::CreateTable(5, false, 1);
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  TestingExecutorUtil::PopulateTable(data_table, 15, false, false, true, txn);
+  txn_manager.CommitTransaction(txn);
   data_table->CreateZoneMaps();
   oid_t num_tile_groups = data_table->GetTileGroupCount();
   for (oid_t i = 1; i < num_tile_groups; i++) {
