@@ -24,6 +24,7 @@
 #include "index/scan_optimizer.h"
 #include "index/art_key.h"
 #include "index/art_index.h"
+#include "codegen/proxy/index_proxy.h"
 
 namespace peloton {
 namespace codegen {
@@ -84,7 +85,7 @@ void IndexScanTranslator::Produce() const {
                   {{"tileGroupIdx", tile_group_idx}}};
   {
     tile_group_idx = loop.GetLoopVar(0);
-    codegen.Call(IndexProxy::CodeGenScan, {index_ptr, csp_p, key_p, tile_group_idx, tile_group_offset});
+    codegen.Call(ArtIndexProxy::CodeGenScan, {index_ptr, csp_p, key_p, tile_group_idx, tile_group_offset});
 
     auto *not0 = codegen->CreateICmpNE(tile_group_idx, codegen.Const32(0));
     lang::If tile_group_id_not0{codegen, not0};
