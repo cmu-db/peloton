@@ -46,7 +46,7 @@ class TileGroup {
 
   llvm::Value *GetTileGroupId(CodeGen &codegen, llvm::Value *tile_group) const;
 
- private:
+ public:
   // A struct to capture enough information to perform strided accesses
   struct ColumnLayout {
     uint32_t col_id;

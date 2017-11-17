@@ -57,7 +57,7 @@ class TableScanTranslator : public OperatorTranslator {
   // Get a stringified version of this translator
   std::string GetName() const override;
 
- private:
+ public:
   //===--------------------------------------------------------------------===//
   // An attribute accessor that uses the backing tile group to access columns
   //===--------------------------------------------------------------------===//

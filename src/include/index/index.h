@@ -25,6 +25,7 @@
 #include "type/abstract_pool.h"
 #include "common/internal_types.h"
 #include "type/value.h"
+#include "index/art_key.h"
 
 namespace peloton {
 
@@ -195,6 +196,10 @@ class IndexMetadata : public Printable {
 /////////////////////////////////////////////////////////////////////
 // Index class definition
 /////////////////////////////////////////////////////////////////////
+struct ResultAndKey {
+  ItemPointer *tuple_p;
+  ARTKey continue_key;
+};
 
 /*
  * class Index - Base class for derived indices of different types
@@ -283,6 +288,9 @@ class Index : public Printable {
 
   virtual void ScanKey(const storage::Tuple *key,
                        std::vector<ItemPointer *> &result) = 0;
+
+//  virtual void CodeGenScan(uint64_t csp, uint64_t continue_key, uint64_t &tile_id, uint64_t &tile_offset) = 0;
+  virtual void CodeGenScanKey(uint64_t query_key, uint64_t result) = 0;
 
   ///////////////////////////////////////////////////////////////////
   // Garbage Collection

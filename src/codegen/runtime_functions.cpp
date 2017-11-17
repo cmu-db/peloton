@@ -23,6 +23,7 @@
 #include "storage/tile.h"
 #include "storage/zone_map_manager.h"
 #include "type/value_factory.h"
+#include "codegen/proxy/result_and_key_proxy.h"
 
 namespace peloton {
 namespace codegen {
@@ -133,6 +134,23 @@ void RuntimeFunctions::ThrowDivideByZeroException() {
 
 void RuntimeFunctions::ThrowOverflowException() {
   throw std::overflow_error("ERROR: overflow");
+}
+
+void RuntimeFunctions::ScanKey(index::Index *index, uint64_t query_key, index::ResultAndKey* result) {
+  return index->CodeGenScanKey(query_key, (uint64_t)result);
+}
+
+index::ResultAndKey* RuntimeFunctions::GetOneResultAndKey() {
+  index::ResultAndKey *new_result = new index::ResultAndKey();
+  return new_result;
+}
+
+uint64_t RuntimeFunctions::GetTileGroupIdFromResult(index::ResultAndKey* result) {
+  return (uint64_t)(result->tuple_p->block);
+}
+
+int32_t RuntimeFunctions::GetTileGroupOffsetFromResult(index::ResultAndKey* result) {
+  return result->tuple_p->offset;
 }
 
 }  // namespace codegen

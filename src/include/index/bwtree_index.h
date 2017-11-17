@@ -96,6 +96,8 @@ class BWTreeIndex : public Index {
   void ScanKey(const storage::Tuple *key,
                std::vector<ValueType> &result);
 
+  void CodeGenScanKey(UNUSED_ATTRIBUTE uint64_t query_key, UNUSED_ATTRIBUTE uint64_t result) {}
+
   std::string GetTypeName() const;
 
   // TODO: Implement this

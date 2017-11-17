@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// index_proxy.h
+// item_pointer_proxy.h
 //
-// Identification: src/include/codegen/proxy/index_proxy.h
+// Identification: src/include/codegen/proxy/item_pointer_proxy.h
 //
 // Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
@@ -14,19 +14,17 @@
 
 #include "codegen/proxy/proxy.h"
 #include "codegen/proxy/type_builder.h"
+#include "common/item_pointer.h"
 #include "index/index.h"
 #include "index/art_index.h"
 
 namespace peloton {
 namespace codegen {
-PROXY(Index) {
-  DECLARE_MEMBER(0, char[sizeof(index::Index)], opaque);
+PROXY(ItemPointer) {
+  DECLARE_MEMBER(0, char[sizeof(ItemPointer)], opaque);
   DECLARE_TYPE;
-
-//  DECLARE_METHOD(CodeGenScan);
 };
 
-TYPE_BUILDER(Index, index::Index);
-
+TYPE_BUILDER(ItemPointer, ItemPointer);
 }
 }
