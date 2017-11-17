@@ -42,15 +42,21 @@ class UpdatePlan : public AbstractPlan {
 
   bool GetUpdatePrimaryKey() const { return update_primary_key_; }
 
-  void SetParameterValues(std::vector<type::Value> *values);
+  void SetParameterValues(std::vector<type::Value> *values) override;
 
-  PlanNodeType GetPlanNodeType() const { return PlanNodeType::UPDATE; }
+  PlanNodeType GetPlanNodeType() const override { return PlanNodeType::UPDATE; }
 
-  const std::string GetInfo() const { return "UpdatePlan"; }
+  const std::string GetInfo() const override { return "UpdatePlan"; }
 
-  std::unique_ptr<AbstractPlan> Copy() const {
+  std::unique_ptr<AbstractPlan> Copy() const override {
     return std::unique_ptr<AbstractPlan>(
         new UpdatePlan(target_table_, project_info_->Copy()));
+  }
+
+  void PerformBinding(BindingContext &binding_context) override;
+
+  const std::vector<const AttributeInfo *> &GetAttributeInfos() const {
+    return ais_;
   }
 
  private:
@@ -59,6 +65,8 @@ class UpdatePlan : public AbstractPlan {
   std::unique_ptr<const planner::ProjectInfo> project_info_;
 
   bool update_primary_key_;
+
+  std::vector<const AttributeInfo *> ais_;
 
  private:
   DISALLOW_COPY_AND_MOVE(UpdatePlan);
