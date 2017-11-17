@@ -539,14 +539,6 @@ void OAHashTable::Insert(CodeGen &codegen, llvm::Value *ht_ptr,
                    false);
 }
 
-void OAHashTable::Insert(CodeGen &codegen, llvm::Value *ht_ptr,
-                         llvm::Value *hash,
-                         const std::vector<codegen::Value> &key) const {
-  TranslateProbing(codegen, ht_ptr, hash, key, nullptr, nullptr, false, false,
-                   true,  // If key is missing create it in empty slot
-                   false);
-}
-
 void OAHashTable::Iterate(CodeGen &codegen, llvm::Value *hash_table,
                           IterateCallback &callback) const {
   // Load the size of the array
