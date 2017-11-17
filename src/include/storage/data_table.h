@@ -126,6 +126,8 @@ class DataTable : public AbstractTable {
   bool InsertTuple(const AbstractTuple *tuple, ItemPointer location,
       concurrency::Transaction *transaction, ItemPointer **index_entry_ptr);
 
+  bool CreateZoneMaps(); 
+
   //===--------------------------------------------------------------------===//
   // TILE GROUP
   //===--------------------------------------------------------------------===//

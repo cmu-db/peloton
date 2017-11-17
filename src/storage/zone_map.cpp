@@ -53,23 +53,29 @@ void ZoneMap::UpdateZoneMap(oid_t tile_column_itr, type::Value val)  {
 	}
 }
 
+void ZoneMap::UpdateMinAndMaxValue(oid_t col_id, type::Value min_val, type::Value max_val) {
+	statistics stats = {min_val, max_val};
+	stats_map[col_id] = stats;
+}
+
+
 void ZoneMap::TestCall() {
 	std::cout << "This is a test call \n";
 	LOG_DEBUG("Column Max : [%s]", stats_map[0].max.ToString().c_str());
 }
 
 bool ZoneMap::ComparePredicate(storage::PredicateInfo *parsed_predicates , int32_t num_predicates) {
-
-	LOG_DEBUG("The number of predicates is [%d]", num_predicates);
+	if (stats_map.size() == 0) {
+		return false;
+	}
 	for (int32_t i = 0; i < num_predicates; i++) {
 		// Extract the col_id, operator and predicate_value
-		int col_id = parsed_predicates[i].col_id;
-		int comparison_operator	= parsed_predicates[i].comparison_operator;
-		type::Value predicate_value = parsed_predicates[i].predicate_value;
-		// Get Min and Max value for this column
-		type::Value max_val = GetMaxValue_(col_id);
-		type::Value min_val = GetMinValue_(col_id);
-
+	 	int col_id = parsed_predicates[i].col_id;
+	 	int comparison_operator	= parsed_predicates[i].comparison_operator;
+	 	type::Value predicate_value = parsed_predicates[i].predicate_value;
+	 	// LOG_DEBUG("col_id : [%d]", col_id);
+		// LOG_DEBUG("comparison_operator : [%d]", comparison_operator);
+		// LOG_DEBUG("predicate_value : [%s]", predicate_value.ToString().c_str());
 		switch(comparison_operator) {
 			case (int)ExpressionType::COMPARE_EQUAL:
 				if(!checkEqual(col_id, predicate_value)) {
@@ -87,9 +93,6 @@ bool ZoneMap::ComparePredicate(storage::PredicateInfo *parsed_predicates , int32
 				}
 				break;
 		    case (int)ExpressionType::COMPARE_GREATERTHAN:
-				LOG_DEBUG("Called");
-				LOG_DEBUG("predicateVal : [%s]", predicate_value.ToString().c_str());
-				LOG_DEBUG("Column Max : [%s]", max_val.ToString().c_str());
 				if(!checkGreaterThan(col_id, predicate_value)) {
 					return false;
 				}

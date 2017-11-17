@@ -42,32 +42,19 @@ class ZoneMap : public Printable {
 
   void UpdateZoneMap(oid_t tile_column_itr, type::Value val) ;
 
-  inline int32_t GetMinValue(oid_t tile_column_itr) {
-    return stats_map[tile_column_itr].min.GetAs<int32_t>();
-  }
-
-  inline int32_t GetMaxValue(oid_t tile_column_itr) {
-    return stats_map[tile_column_itr].max.GetAs<int32_t>();
-  }
-
   inline bool IsCreated() {
     return zone_map_created;
   }
 
-  inline int GetFakeMin() {
-    return min;
+
+  void UpdateMinAndMaxValue(oid_t col_id, type::Value min_val, type::Value max_val);
+
+  type::Value GetMinValue(oid_t col_id) {
+    return stats_map[col_id].min;
   }
 
-  inline int GetFakeMax() {
-    return max;
-  }
-
-  type::Value GetMinValue_(int colId) {
-    return stats_map[colId].min;
-  }
-
-  type::Value GetMaxValue_(int colId) {
-    return stats_map[colId].max;
+  type::Value GetMaxValue(oid_t col_id) {
+    return stats_map[col_id].max;
   }
 
   //===--------------------------------------------------------------------===//

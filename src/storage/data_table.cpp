@@ -1114,6 +1114,23 @@ storage::TileGroup *DataTable::TransformTileGroup(
   return new_tile_group.get();
 }
 
+// API for Brain to call to create zone maps
+bool DataTable::CreateZoneMaps() {
+  oid_t tilegroups_size = tile_groups_.GetSize();
+  LOG_DEBUG("Creating Zone Maps");
+  for (oid_t i = 0; i < tilegroups_size; i++) {
+    std::shared_ptr<storage::TileGroup> tile_group =
+        GetTileGroupById(tile_groups_.Find(i));
+    if (tile_group == nullptr) {
+      return false;
+    }
+    if (tile_group->CreateZoneMap() == false) {
+      return false;
+    }
+  }
+  return true;
+}
+
 void DataTable::RecordLayoutSample(const brain::Sample &sample) {
   // Add layout sample
   {

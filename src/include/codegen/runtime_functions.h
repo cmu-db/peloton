@@ -50,10 +50,7 @@ class RuntimeFunctions {
 
   static storage::ZoneMap *GetZoneMap(storage::TileGroup *tile_group);
 
-  static int32_t GetMinValuefromZoneMap(storage::ZoneMap *zone_map, uint32_t col_num);
-  static int32_t GetMaxValuefromZoneMap(storage::ZoneMap *zone_map, uint32_t col_num);
-
-  static void PrintPredicate(const expression::AbstractExpression *expr, storage::PredicateInfo *predicate_array);
+  static void FillPredicateArray(const expression::AbstractExpression *expr, storage::PredicateInfo *predicate_array);
 
   // This struct represents the layout (or configuration) of a column in a
   // tile group. A configuration is characterized by two properties: its

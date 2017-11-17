@@ -20,10 +20,6 @@ DEFINE_TYPE(PredicateInfo, "peloton::storage::PredicateInfo", MEMBER(col_id), ME
 //DEFINE_TYPE(Value, "peloton::type::Value", MEMBER(opaque));
 DEFINE_TYPE(ZoneMap, "peloton::storage::ZoneMap", MEMBER(opaque));
 
-
-DEFINE_METHOD(peloton::storage, ZoneMap, GetMinValue);
-DEFINE_METHOD(peloton::storage, ZoneMap, GetMaxValue);
-DEFINE_METHOD(peloton::storage, ZoneMap, TestCall);
 DEFINE_METHOD(peloton::storage, ZoneMap, ComparePredicate);
 
 }  // namespace codegen
