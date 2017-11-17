@@ -37,6 +37,12 @@ class HashTable {
     virtual void ProcessEntry(CodeGen &codegen, llvm::Value *value) const = 0;
   };
 
+  // No-op ProbeCallback
+  struct NoOpProbeCallback : ProbeCallback {
+    void ProcessEntry(UNUSED_ATTRIBUTE CodeGen &codegen,
+                      UNUSED_ATTRIBUTE llvm::Value *value) const override {}
+  };
+
   //===--------------------------------------------------------------------===//
   // A callback used when inserting insert a new entry into the hash table. The
   // caller implements the StoreValue() method to perform the insertion.  The
@@ -53,6 +59,13 @@ class HashTable {
 
     // Called to determine the size of the payload the caller wants to store
     virtual llvm::Value *GetValueSize(CodeGen &codegen) const = 0;
+  };
+
+  // No-op InsertCallback
+  struct NoOpInsertCallback : InsertCallback {
+    void StoreValue(UNUSED_ATTRIBUTE CodeGen &codegen,
+                    UNUSED_ATTRIBUTE llvm::Value *space) const override {}
+    llvm::Value *GetValueSize(UNUSED_ATTRIBUTE CodeGen &codegen) const override { return nullptr; }
   };
 
   //===--------------------------------------------------------------------===//
@@ -141,11 +154,6 @@ class HashTable {
   virtual void Insert(CodeGen &codegen, llvm::Value *ht_ptr, llvm::Value *hash,
                       const std::vector<codegen::Value> &keys,
                       InsertCallback &callback) const = 0;
-
-  // Insert a new entry into the hash table with the given keys, not caring
-  // about existing entries.
-  virtual void Insert(CodeGen &codegen, llvm::Value *ht_ptr, llvm::Value *hash,
-                      const std::vector<codegen::Value> &key) const = 0;
 
   // Generate code to iterate over the entire hash table
   virtual void Iterate(CodeGen &codegen, llvm::Value *ht_ptr,

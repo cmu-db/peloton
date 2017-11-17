@@ -85,11 +85,6 @@ class OAHashTable : public HashTable {
               const std::vector<codegen::Value> &key,
               HashTable::InsertCallback &callback) const override;
 
-  // Insert a new entry into the hash table with the given keys, not caring
-  // about existing entries.
-  void Insert(CodeGen &codegen, llvm::Value *ht_ptr, llvm::Value *hash,
-              const std::vector<codegen::Value> &key) const override;
-
   // Generate code to iterate over the entire hash table
   void Iterate(CodeGen &codegen, llvm::Value *ht_ptr,
                HashTable::IterateCallback &callback) const override;

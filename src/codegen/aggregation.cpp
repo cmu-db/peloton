@@ -267,7 +267,8 @@ void Aggregation::CreateInitialValues(
       key.push_back(input_val);
 
       // Perform the dummy lookup in the hash table that creates the entry
-      hash_table.Insert(codegen, state_pointer, hash, key);
+      HashTable::NoOpInsertCallback insert_callback;
+      hash_table.Insert(codegen, state_pointer, hash, key, insert_callback);
     }
   }  // iterate aggregations
 }
