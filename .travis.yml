@@ -18,7 +18,6 @@ matrix:
                   sources:
                       - llvm-toolchain-precise-3.7
                       - ubuntu-toolchain-r-test
-                      - boost-latest
                   packages:
                     - g++-4.9
           env: 
@@ -33,7 +32,6 @@ matrix:
                   sources:
                       - llvm-toolchain-precise-3.7
                       - ubuntu-toolchain-r-test
-                      - boost-latest
                   packages:
                     - g++-4.9
           env: 
@@ -49,7 +47,6 @@ matrix:
                   sources:
                       - llvm-toolchain-precise-3.7
                       - ubuntu-toolchain-r-test
-                      - boost-latest
                   packages:
                     - g++-5
           env: 
@@ -64,7 +61,6 @@ matrix:
                   sources:
                       - llvm-toolchain-precise-3.7
                       - ubuntu-toolchain-r-test
-                      - boost-latest
                   packages:
                     - g++-5
           env: 
