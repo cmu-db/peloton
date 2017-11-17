@@ -42,7 +42,7 @@ void Aggregation::Setup(
 
         // Add metadata for the aggregate
         AggregateInfo agg_info{
-            agg_term.aggtype, source_idx, {storage_pos}, agg_term.distinct, 0};
+            agg_term.aggtype, source_idx, {{storage_pos}}, agg_term.distinct, 0};
         aggregate_infos_.push_back(agg_info);
         break;
       }
@@ -59,7 +59,7 @@ void Aggregation::Setup(
 
         // Add metadata for the aggregate
         AggregateInfo agg_info{
-            agg_term.aggtype, source_idx, {storage_pos}, agg_term.distinct, 0};
+            agg_term.aggtype, source_idx, {{storage_pos}}, agg_term.distinct, 0};
         aggregate_infos_.push_back(agg_info);
         break;
       }
@@ -77,7 +77,7 @@ void Aggregation::Setup(
 
         // Add metadata for the aggregate
         AggregateInfo agg_info{
-            agg_term.aggtype, source_idx, {storage_pos}, agg_term.distinct, 0};
+            agg_term.aggtype, source_idx, {{storage_pos}}, agg_term.distinct, 0};
         aggregate_infos_.push_back(agg_info);
         break;
       }
@@ -98,7 +98,7 @@ void Aggregation::Setup(
         // Add metadata for the aggregate
         AggregateInfo agg_info{agg_term.aggtype,
                                source_idx,
-                               {sum_storage_pos, count_storage_pos},
+                               {{sum_storage_pos, count_storage_pos}},
                                agg_term.distinct,
                                0};
         aggregate_infos_.push_back(agg_info);
