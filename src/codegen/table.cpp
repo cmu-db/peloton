@@ -74,8 +74,9 @@ void Table::GenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
       ColumnLayoutInfoProxy::GetType(codegen), codegen.Const32(num_columns));
 
   llvm::Value *predicate_array = codegen->CreateAlloca(PredicateInfoProxy::GetType(codegen), codegen.Const32(num_predicates));
-  codegen.Call(RuntimeFunctionsProxy::FillPredicateArray, {predicate_ptr, predicate_array});
-  
+  if (num_predicates!=0) {
+      codegen.Call(RuntimeFunctionsProxy::FillPredicateArray, {predicate_ptr, predicate_array});
+  }  
   // Get the number of tile groups in the given table
   llvm::Value *scanned_tiles = codegen.Const64(0);
   llvm::Value *tile_group_idx = codegen.Const64(0);
