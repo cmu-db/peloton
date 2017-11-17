@@ -23,5 +23,8 @@ DEFINE_TYPE(StorageManager, "peloton::storage::StorageManager", MEMBER(opaque));
 // Define a method that proxies storage::StorageManager::GetTableWithOid()
 DEFINE_METHOD(peloton::storage, StorageManager, GetTableWithOid);
 
+// Define a method that proxies catalog::Catalog::GetIndexWithOid()
+DEFINE_METHOD(peloton::storage, StorageManager, GetIndexWithOid);
+
 }  // namespace codegen
 }  // namespace peloton

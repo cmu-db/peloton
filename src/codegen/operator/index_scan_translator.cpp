@@ -21,6 +21,9 @@
 #include "index/art_index.h"
 #include "storage/data_table.h"
 #include "codegen/proxy/data_table_proxy.h"
+#include "index/scan_optimizer.h"
+#include "index/art_key.h"
+#include "index/art_index.h"
 
 namespace peloton {
 namespace codegen {
@@ -53,18 +56,51 @@ IndexScanTranslator::IndexScanTranslator(const planner::IndexScanPlan &index_sca
 void IndexScanTranslator::Produce() const {
   printf("producing in index scan translator\n");
   auto &codegen = GetCodeGen();
-//  auto &index = GetIndex();
-//
-//  LOG_INFO("IndexScan on [%s] starting to produce tuples ...", index.GetName().c_str());
-  storage::DataTable *table = index_scan_.GetTable();
-  llvm::Value *table_ptr = (llvm::Value *)table;
-//  llvm::Value *tile_group_ptr = codegen.Call(DataTableProxy::GetTileGroup, {table_ptr, 0});
-//  llvm::Value tile_id = (llvm::Value)13;
-//  llvm::Value *tile_group_id = (llvm::Value *)13u;
-  llvm::Value *tile_group_ptr = codegen.Call(RuntimeFunctionsProxy::GetTileGroupByGlobalId, {table_ptr, codegen.Const32(13)});
-  std::vector<llvm::Value *> debug_values;
-  debug_values.push_back(tile_group_ptr);
-  codegen.CallPrintf("tile group ptr = %d", debug_values);
+
+  const index::ConjunctionScanPredicate* csp = &index_scan_.GetIndexPredicate().GetConjunctionList()[0];
+  index::ARTKey continue_key;
+  llvm::Value *key_p = codegen.Const64((uint64_t)&continue_key);
+  llvm::Value *csp_p = codegen.Const64((uint64_t)csp);
+
+  storage::DataTable &table = *index_scan_.GetTable();
+  llvm::Value *catalog_ptr = GetCatalogPtr();
+  llvm::Value *db_oid = codegen.Const32(table.GetDatabaseOid());
+  llvm::Value *table_oid = codegen.Const32(table.GetOid());
+  llvm::Value *table_ptr = codegen.Call(StorageManagerProxy::GetTableWithOid,
+                                        {catalog_ptr, db_oid, table_oid});
+  llvm::Value *index_oid = codegen.Const32(index_scan_.GetIndex()->GetOid());
+  llvm::Value *index_ptr = codegen.Call(StorageManagerProxy::GetIndexWithOid,
+                                         {catalog_ptr, db_oid, table_oid, index_oid});
+
+  llvm::Value *tile_group_idx = codegen.Const64(0);
+  llvm::Value *tile_group_offset = codegen.Const64(0);
+
+  Vector sel_vec{LoadStateValue(selection_vector_id_),
+                 Vector::kDefaultVectorSize, codegen.Int32Type()};
+
+  // after getting the index, keep making function calls to index.CodeGenScan until there are no new tuples
+  lang::Loop loop{codegen,
+                  codegen->CreateICmpULT(tile_group_idx, codegen.Const64(-1)),
+                  {{"tileGroupIdx", tile_group_idx}}};
+  {
+    tile_group_idx = loop.GetLoopVar(0);
+    codegen.Call(IndexProxy::CodeGenScan, {index_ptr, csp_p, key_p, tile_group_idx, tile_group_offset});
+
+    auto *not0 = codegen->CreateICmpNE(tile_group_idx, codegen.Const32(0));
+    lang::If tile_group_id_not0{codegen, not0};
+    {
+      // use tile group id and offset to get the tuple!
+      llvm::Value *tile_group_ptr = codegen.Call(RuntimeFunctionsProxy::GetTileGroupByGlobalId, {table_ptr, tile_group_idx});
+
+      RowBatch batch{this->GetCompilationContext(), tile_group_idx, tile_group_offset,
+                     tile_group_offset, sel_vec, true};
+
+      ConsumerContext context{this->GetCompilationContext(),
+                              this->GetPipeline()};
+      context.Consume(batch);
+    }
+    tile_group_id_not0.EndIf();
+  }
 
 }
 
