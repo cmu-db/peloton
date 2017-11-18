@@ -53,17 +53,17 @@ class BindNodeVisitor : public SqlNodeVisitor {
   void Visit(parser::OrderDescription *) override;
   void Visit(parser::LimitDescription *) override;
 
-  void Visit(const parser::CreateStatement *) override;
-  void Visit(const parser::CreateFunctionStatement *) override;
-  void Visit(const parser::InsertStatement *) override;
-  void Visit(const parser::DeleteStatement *) override;
-  void Visit(const parser::DropStatement *) override;
-  void Visit(const parser::PrepareStatement *) override;
-  void Visit(const parser::ExecuteStatement *) override;
-  void Visit(const parser::TransactionStatement *) override;
-  void Visit(const parser::UpdateStatement *) override;
-  void Visit(const parser::CopyStatement *) override;
-  void Visit(const parser::AnalyzeStatement *) override;
+  void Visit(parser::CreateStatement *) override;
+  void Visit(parser::CreateFunctionStatement *) override;
+  void Visit(parser::InsertStatement *) override;
+  void Visit(parser::DeleteStatement *) override;
+  void Visit(parser::DropStatement *) override;
+  void Visit(parser::PrepareStatement *) override;
+  void Visit(parser::ExecuteStatement *) override;
+  void Visit(parser::TransactionStatement *) override;
+  void Visit(parser::UpdateStatement *) override;
+  void Visit(parser::CopyStatement *) override;
+  void Visit(parser::AnalyzeStatement *) override;
 
   void Visit(expression::CaseExpression *expr) override;
   void Visit(expression::SubqueryExpression *expr) override;

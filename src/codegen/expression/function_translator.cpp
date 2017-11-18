@@ -29,6 +29,7 @@ FunctionTranslator::FunctionTranslator(
   // Prepare each of the child expressions
   for (uint32_t i = 0; i < func_expr.GetChildrenSize(); i++) {
     context.Prepare(*func_expr.GetChild(i));
+    }
   }
 }
 

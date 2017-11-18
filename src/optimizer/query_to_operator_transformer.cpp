@@ -219,10 +219,10 @@ void QueryToOperatorTransformer::Visit(parser::TableRef *node) {
   }
 }
 
-void QueryToOperatorTransformer::Visit(const parser::GroupByDescription *) {}
-void QueryToOperatorTransformer::Visit(const parser::OrderDescription *) {}
-void QueryToOperatorTransformer::Visit(const parser::LimitDescription *) {}
-void QueryToOperatorTransformer::Visit(const parser::CreateFunctionStatement *) {}
+void QueryToOperatorTransformer::Visit(parser::GroupByDescription *) {}
+void QueryToOperatorTransformer::Visit(parser::OrderDescription *) {}
+void QueryToOperatorTransformer::Visit(parser::LimitDescription *) {}
+void QueryToOperatorTransformer::Visit(parser::CreateFunctionStatement *) {}
 
 void QueryToOperatorTransformer::Visit(
     UNUSED_ATTRIBUTE parser::CreateStatement *op) {}

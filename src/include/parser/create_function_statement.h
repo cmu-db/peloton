@@ -107,7 +107,7 @@ class CreateFunctionStatement : public SQLStatement {
     delete func_parameters;
   }
 
-  virtual void Accept(SqlNodeVisitor* v) const override { v->Visit(this); }
+  virtual void Accept(SqlNodeVisitor* v) override { v->Visit(this); }
 
   PLType language;
   ASclause as_type;

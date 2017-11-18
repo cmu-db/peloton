@@ -2,7 +2,7 @@
 #include "codegen/type/type.h"
 #include "type/types.h"
 #include "codegen/lang/if.h"
-#include "catalog/catalog.cpp"
+#include "catalog/catalog.h"
 #include <iostream> ////TODO(PP) Remove
 
 namespace peloton {
@@ -81,23 +81,23 @@ peloton::codegen::Value CallExprAST::Codegen(
     peloton::codegen::CodeGen &codegen,
     peloton::codegen::FunctionBuilder &fb) {
 
-  llvm::Function* callee_func = nullptr;
-  if(callee == current_func) {
-    callee_func = fb.GetFunction();
-  } else { // Else, check the catalog and get it
-    std::vector<arg_type> argument_types;
-    for (unsigned i = 0, size = args.size(); i != size; ++i) {
-      argument_types.push_back(type::TypeId::DECIMAL);
-    }
+  // llvm::Function* callee_func = nullptr;
+  // if(callee == current_func) {
+  //   callee_func = fb.GetFunction();
+  // } else { // Else, check the catalog and get it
+  //   std::vector<arg_type> argument_types;
+  //   for (unsigned i = 0, size = args.size(); i != size; ++i) {
+  //     argument_types.push_back(type::TypeId::DECIMAL);
+  //   }
 
-    auto catalog = peloton::catalog::Catalog::GetInstance();
-    const peloton::catalog::FunctionData &func_data =
-          catalog->GetFunction(callee, argument_types);
-  }
+  //   auto catalog = peloton::catalog::Catalog::GetInstance();
+  //   const peloton::catalog::FunctionData &func_data =
+  //         catalog->GetFunction(callee, argument_types);
+  // }
 
   // Check if present in the current code context
   // Else, check the catalog and get it
-  //auto *callee_func = fb.GetFunction();
+  auto *callee_func = fb.GetFunction();
 
   // TODO(PP) : Later change this to also check in the catalog
   if (callee_func == 0) {

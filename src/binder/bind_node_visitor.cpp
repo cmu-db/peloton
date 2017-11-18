@@ -169,6 +169,7 @@ void BindNodeVisitor::Visit(parser::DeleteStatement *node) {
 
 void BindNodeVisitor::Visit(parser::LimitDescription *) {}
 void BindNodeVisitor::Visit(parser::CopyStatement *) {}
+void BindNodeVisitor::Visit(parser::CreateFunctionStatement *) {}
 void BindNodeVisitor::Visit(parser::CreateStatement *node) {
   node->TryBindDatabaseName(default_database_name_);
 }
@@ -280,21 +281,27 @@ void BindNodeVisitor::Visit(expression::FunctionExpression *expr) {
       catalog_->GetFunction(expr->GetFuncName(), argtypes);
   LOG_DEBUG("Function %s found in the catalog", func_data.func_name_.c_str());
   LOG_DEBUG("Argument num: %ld", func_data.argument_types_.size());
-  expr->SetFunctionExpressionParameters(func_data.func_, func_data.return_type_,
-                                        func_data.argument_types_);
 
-  // Look into the OperatorId for built-in functions to check the first argument
-  // for timestamp functions.
-  // TODO(LM): The OperatorId might need to be changed to global ID after we
-  // rewrite the function identification logic.
-  auto func_operator_id = func_data.func_.op_id;
-  if (func_operator_id == OperatorId::DateTrunc ||
-      func_operator_id == OperatorId::Extract) {
-    auto date_part = expr->GetChild(0);
+  if(!func_data.isUDF_) {
+    expr->SetBuiltinFunctionExpressionParameters(func_data.func_,
+                                      func_data.return_type_,
+                                      func_data.argument_types_);
+    // Look into the OperatorId for built-in functions to check the first argument
+    // for timestamp functions.
+    // TODO(LM): The OperatorId might need to be changed to global ID after we
+    // rewrite the function identification logic.
+    auto func_operator_id = func_data.func_.op_id;
+    if (func_operator_id == OperatorId::DateTrunc ||
+        func_operator_id == OperatorId::Extract) {
+      auto date_part = expr->GetChild(0);
 
-    // Test whether the first argument is a correct DatePartType
-    StringToDatePartType(
-        date_part->Evaluate(nullptr, nullptr, nullptr).ToString());
+      // Test whether the first argument is a correct DatePartType
+      StringToDatePartType(
+          date_part->Evaluate(nullptr, nullptr, nullptr).ToString());
+  } else {
+    expr->SetUDFFunctionExpressionParameters(func_data.func_context_,
+                                      func_data.return_type_,
+                                      func_data.argument_types_);
   }
 }
 
