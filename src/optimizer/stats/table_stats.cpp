@@ -190,5 +190,26 @@ bool TableStats::RemoveColumnStats(const oid_t column_id) {
   return true;
 }
 
+void TableStats::UpdateJoinColumnStats(std::vector<oid_t> &column_ids) {
+
+  std::unordered_map<oid_t, std::unordered_set<std::string>> distinct_values(
+    column_ids.size());
+  auto &samples = GetSampler()->GetSampledTuples();
+  auto sample_size = samples.size();
+
+  for (auto &sample : samples) {
+    for (unsigned int column_id : column_ids) {
+      distinct_values[column_id].insert(
+        sample->GetValue(column_id).ToString());
+    }
+  }
+  for (size_t i = 0; i < GetColumnCount(); i++) {
+    auto column_stats = GetColumnStats(i);
+    column_stats->UpdateJoinStats(num_rows, sample_size, distinct_values[column_stats->column_id].size());
+
+  }
+}
+
+
 }  // namespace optimizer
 }  // namespace peloton

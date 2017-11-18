@@ -89,6 +89,16 @@ class ColumnStats {
        << VectorToString(histogram_bounds) << "\n";
     return os.str();
   }
+
+  void UpdateJoinStats(size_t table_num_rows, size_t sample_size, size_t sample_card) {
+
+    num_rows = table_num_rows;
+
+    // FIX ME: for now using samples's cardinality * samples size / number of
+    // rows to ensure the same selectivity among samples and the whole table
+    cardinality =  (size_t) (sample_card * num_rows / (double) sample_size);
+
+  }
 };
 
 }  // namespace optimizer

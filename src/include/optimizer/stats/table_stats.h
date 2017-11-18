@@ -99,6 +99,8 @@ class TableStats : public Stats {
     tuple_sampler_ = tuple_sampler;
   }
 
+  void UpdateJoinColumnStats(std::vector<oid_t> &column_ids);
+
   size_t GetColumnCount();
 
   std::string ToCSV();
@@ -113,6 +115,7 @@ class TableStats : public Stats {
   std::unordered_map<std::string, std::shared_ptr<index::Index>> index_map_;
   bool is_base_table_;
   std::shared_ptr<TupleSampler> tuple_sampler_;
+
 };
 
 }  // namespace optimizer
