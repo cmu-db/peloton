@@ -581,6 +581,7 @@ enum class PlanNodeType {
   // Utility
   RESULT = 70,
   COPY = 71,
+  CREATE_FUNC = 72,
 
   // Test
   MOCK = 80
@@ -629,6 +630,15 @@ template<class E> class EnumHash {
 };
 
 //===--------------------------------------------------------------------===//
+// Language Types for UDFs
+//===--------------------------------------------------------------------===//
+
+enum class PLType {
+   PL_PGSQL=0,                // UDF language: Pl_PGSQL
+   PL_C=1                     // UDF language: PL_C
+};
+
+//===--------------------------------------------------------------------===//
 // Statement Types
 //===--------------------------------------------------------------------===//
 
@@ -648,6 +658,7 @@ enum class StatementType {
   COPY = 14,                  // copy type
   ANALYZE = 15,                // analyze type
   VARIABLE_SET = 16,          // variable set statement type
+  CREATE_FUNC = 17,            // create func statement type
 };
 std::string StatementTypeToString(StatementType type);
 StatementType StringToStatementType(const std::string &str);

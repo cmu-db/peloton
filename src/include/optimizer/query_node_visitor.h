@@ -17,6 +17,7 @@ namespace peloton {
 namespace parser {
 class SelectStatement;
 class CreateStatement;
+class CreateFunctionStatement;
 class InsertStatement;
 class DeleteStatement;
 class DropStatement;
@@ -55,6 +56,7 @@ class QueryNodeVisitor {
   virtual void Visit(const parser::LimitDescription *) = 0;
 
   virtual void Visit(const parser::CreateStatement *) = 0;
+  virtual void Visit(const parser::CreateFunctionStatement *) = 0;
   virtual void Visit(const parser::InsertStatement *) = 0;
   virtual void Visit(const parser::DeleteStatement *) = 0;
   virtual void Visit(const parser::DropStatement *) = 0;

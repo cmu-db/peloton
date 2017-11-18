@@ -55,8 +55,7 @@ class CodeContext {
   void RegisterFunction(llvm::Function *func);
 
   /// Register a function that is defined externally
-  void RegisterExternalFunction(llvm::Function *func_decl,
-                                llvm::Function *external, FuncPtr func_impl);
+  void RegisterExternalFunction(llvm::Function *func_decl, FuncPtr func_impl);
 
   /// Register a built-in C/C++ function
   void RegisterBuiltin(llvm::Function *func_decl, FuncPtr func_impl);
@@ -65,6 +64,17 @@ class CodeContext {
   llvm::Function *LookupBuiltin(const std::string &name) const {
     auto iter = builtins_.find(name);
     return iter != builtins_.end() ? iter->second : nullptr;
+  }
+
+  // Returns the function pointer for UDF that has been registered in this
+  // context
+  llvm::Function *GetUDF() const {
+    return udf_func_ptr_;
+  }
+
+  // Sets UDF function ptr
+  void SetUDF(llvm::Function *func_ptr) {
+    udf_func_ptr_ = func_ptr;
   }
 
   /// Compile all the code contained in this context
@@ -96,12 +106,12 @@ class CodeContext {
   // Get the module
   llvm::Module &GetModule() const { return *module_; }
 
+  // Get the IR Builder
+  llvm::IRBuilder<> &GetBuilder() { return *builder_; }
+
  private:
   // Get the raw IR in text form
   std::string GetIR() const;
-
-  // Get the IR Builder
-  llvm::IRBuilder<> &GetBuilder() { return *builder_; }
 
   // Get the data layout
   const llvm::DataLayout &GetDataLayout() const;
@@ -127,6 +137,9 @@ class CodeContext {
 
   // The function that is currently being generated
   FunctionBuilder *func_;
+
+  // The llvm::Function ptr of the outermost function built
+  llvm::Function *udf_func_ptr_;
 
   // The optimization pass manager
   std::unique_ptr<llvm::legacy::FunctionPassManager> pass_manager_;

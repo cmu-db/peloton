@@ -20,6 +20,7 @@
 #include "executor/append_executor.h"
 #include "executor/copy_executor.h"
 #include "executor/create_executor.h"
+#include "executor/create_function_executor.h"
 #include "executor/delete_executor.h"
 #include "executor/drop_executor.h"
 #include "executor/hash_executor.h"

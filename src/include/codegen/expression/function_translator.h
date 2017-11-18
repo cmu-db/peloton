@@ -13,6 +13,8 @@
 #pragma once
 
 #include "codegen/expression/expression_translator.h"
+#include "codegen/compilation_context.h"
+#include "type/type.h"
 
 namespace peloton {
 

@@ -37,8 +37,12 @@ class FunctionExpression : public AbstractExpression {
   type::Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
                        executor::ExecutorContext *context) const override;
 
-  void SetFunctionExpressionParameters(
+  void SetBuiltinFunctionExpressionParameters(
       function::BuiltInFuncType func_ptr, type::TypeId val_type,
+      const std::vector<type::TypeId> &arg_types);
+
+  void SetUDFFunctionExpressionParameters(
+      peloton::codegen::CodeContext *func_context, type::TypeId val_type,
       const std::vector<type::TypeId> &arg_types);
 
   AbstractExpression *Copy() const override {
@@ -61,6 +65,12 @@ class FunctionExpression : public AbstractExpression {
 
   const function::BuiltInFuncType &GetFunc() const { return func_; }
 
+  codegen::CodeContext *GetFuncContext() const {
+    return func_context_;
+  }
+
+  bool isUDF() const { return isUDF_; }
+
   const std::vector<type::TypeId> &GetArgTypes() const {
     return func_arg_types_;
   }
@@ -70,7 +80,9 @@ class FunctionExpression : public AbstractExpression {
       : AbstractExpression(other),
         func_name_(other.func_name_),
         func_(other.func_),
-        func_arg_types_(other.func_arg_types_) {}
+        func_arg_types_(other.func_arg_types_),
+        func_context_(other.func_context_),
+        isUDF_(other.isUDF_) {}
 
  private:
   // throws an exception if children return unexpected types
@@ -85,6 +97,12 @@ class FunctionExpression : public AbstractExpression {
 
   // The argument types
   std::vector<type::TypeId> func_arg_types_;
+
+  // The function context which encapculates the compiled function
+  codegen::CodeContext *func_context_;
+
+  // Indicates if function is a UDF
+  bool isUDF_;
 };
 
 }  // namespace expression

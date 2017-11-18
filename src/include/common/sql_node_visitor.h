@@ -17,6 +17,7 @@ namespace peloton {
 namespace parser {
 class SelectStatement;
 class CreateStatement;
+class CreateFunctionStatement;
 class InsertStatement;
 class DeleteStatement;
 class DropStatement;
@@ -68,16 +69,17 @@ class SqlNodeVisitor {
   virtual void Visit(parser::OrderDescription *) {}
   virtual void Visit(parser::LimitDescription *) {}
 
-  virtual void Visit(parser::CreateStatement *) {}
-  virtual void Visit(parser::InsertStatement *) {}
-  virtual void Visit(parser::DeleteStatement *) {}
-  virtual void Visit(parser::DropStatement *) {}
-  virtual void Visit(parser::PrepareStatement *) {}
-  virtual void Visit(parser::ExecuteStatement *) {}
-  virtual void Visit(parser::TransactionStatement *) {}
-  virtual void Visit(parser::UpdateStatement *) {}
-  virtual void Visit(parser::CopyStatement *) {}
-  virtual void Visit(parser::AnalyzeStatement *) {};
+  virtual void Visit(const parser::CreateStatement *) {} 
+  virtual void Visit(const parser::CreateFunctionStatement *) {}
+  virtual void Visit(const parser::InsertStatement *) {}
+  virtual void Visit(const parser::DeleteStatement *) {}
+  virtual void Visit(const parser::DropStatement *) {}
+  virtual void Visit(const parser::PrepareStatement *) {}
+  virtual void Visit(const parser::ExecuteStatement *) {}
+  virtual void Visit(const parser::TransactionStatement *) {}
+  virtual void Visit(const parser::UpdateStatement *) {}
+  virtual void Visit(const parser::CopyStatement *) {}
+  virtual void Visit(const parser::AnalyzeStatement *) {};
 
   virtual void Visit(expression::ComparisonExpression *expr);
   virtual void Visit(expression::AggregateExpression *expr);
