@@ -158,7 +158,7 @@ class Cost {
       const std::string& left_column_name,
       const std::string& right_column_name);
 
-  static void UpdateColumnStatsWithSampling(
+  static bool UpdateJoinOutputStatsWithSampling(
       const std::shared_ptr<TableStats>& left_input_stats,
       const std::shared_ptr<TableStats>& right_input_stats,
       std::shared_ptr<TableStats>& output_stats,
@@ -168,7 +168,7 @@ class Cost {
    * Update output statistics given left, right input statistics and predicate
    * for join operators
    */
-  static void UpdateJoinOutputSize(
+  static void UpdateJoinOutputStats(
     const std::shared_ptr<TableStats> &left_input_stats,
     const std::shared_ptr<TableStats> &right_input_stats,
     std::shared_ptr<TableStats> &output_stats,
