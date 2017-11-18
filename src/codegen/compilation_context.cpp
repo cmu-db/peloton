@@ -91,9 +91,7 @@ void CompilationContext::GeneratePlan(QueryCompiler::CompileStats *stats) {
   timer.Start();
 
   // First we prepare the translators for all the operators in the tree
-  printf("before prepare\n");
   Prepare(query_.GetPlan(), main_pipeline_);
-  printf("after prepare\n");
   if (stats != nullptr) {
     timer.Stop();
     stats->setup_ms = timer.GetDuration();
@@ -101,7 +99,7 @@ void CompilationContext::GeneratePlan(QueryCompiler::CompileStats *stats) {
     timer.Start();
   }
 
-  LOG_INFO("Main pipeline: %s", main_pipeline_.GetInfo().c_str());
+  LOG_TRACE("Main pipeline: %s", main_pipeline_.GetInfo().c_str());
 
   // Generate the helper functions the query needs
   GenerateHelperFunctions();
@@ -110,7 +108,6 @@ void CompilationContext::GeneratePlan(QueryCompiler::CompileStats *stats) {
   llvm::Function *init = GenerateInitFunction();
 
   // Generate the plan() function
-  printf("before generating plan in query_\n");
   llvm::Function *plan = GeneratePlanFunction(query_.GetPlan());
 
   // Generate the  tearDown() function

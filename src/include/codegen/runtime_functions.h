@@ -87,6 +87,8 @@ class RuntimeFunctions {
   static uint64_t GetTileGroupIdFromResult(index::ResultAndKey* result);
 
   static int32_t GetTileGroupOffsetFromResult(index::ResultAndKey* result);
+
+  static bool IsValidTileGroup(index::ResultAndKey* result);
 };
 
 }  // namespace codegen

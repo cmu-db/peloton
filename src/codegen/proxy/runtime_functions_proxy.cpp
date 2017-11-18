@@ -38,5 +38,6 @@ DEFINE_METHOD(peloton::codegen, RuntimeFunctions, ScanKey);
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, GetOneResultAndKey);
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, GetTileGroupIdFromResult);
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, GetTileGroupOffsetFromResult);
+DEFINE_METHOD(peloton::codegen, RuntimeFunctions, IsValidTileGroup);
 }  // namespace codegen
 }  // namespace peloton
