@@ -200,6 +200,9 @@ void TransactionLevelGCManager::AddToRecycleMap(
     PL_ASSERT(table != nullptr);
 
     oid_t table_id = table->GetOid();
+    auto tile_group_header = tile_group->GetHeader();
+    PL_ASSERT(tile_group_header != nullptr);
+    bool immutability = tile_group_header->GetImmutability();
 
     for (auto &element : entry.second) {
       // as this transaction has been committed, we should reclaim older
@@ -210,8 +213,8 @@ void TransactionLevelGCManager::AddToRecycleMap(
       if (ResetTuple(location) == false) {
         continue;
       }
-      // if the entry for table_id exists.
-      if (recycle_queue_map_.find(table_id) != recycle_queue_map_.end()) {
+      // if immutability is false and the entry for table_id exists.
+      if ((!immutability) && recycle_queue_map_.find(table_id) != recycle_queue_map_.end()) {
         recycle_queue_map_[table_id]->Enqueue(location);
       }
     }

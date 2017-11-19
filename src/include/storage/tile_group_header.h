@@ -238,6 +238,19 @@ class TileGroupHeader : public Printable {
                                         transaction_id);
   }
 
+  inline void SetImmutability() {
+    immutability = true;
+  }
+
+  inline void ResetImmutability() {
+    immutability = false;
+  }
+
+  inline bool GetImmutability() {
+    return immutability;
+  }
+
+
   void PrintVisibility(txn_id_t txn_id, cid_t at_cid);
 
   // Getter for spin lock
@@ -298,6 +311,10 @@ class TileGroupHeader : public Printable {
   std::unique_ptr<storage::ZoneMap> zone_map;
 
   Spinlock tile_header_lock;
+
+  // Immmutability Flag. Should be set by the brain to be true.
+  // By default it will be set to false.
+  bool immutability;
 };
 
 }  // namespace storage

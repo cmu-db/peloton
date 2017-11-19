@@ -60,6 +60,9 @@ TileGroupHeader::TileGroupHeader(const BackendType &backend_type,
     SetNextItemPointer(tuple_slot_id, INVALID_ITEMPOINTER);
     SetPrevItemPointer(tuple_slot_id, INVALID_ITEMPOINTER);
   }
+
+  // Initially immutability to false initially.
+  immutability = false;
   zone_map = std::make_unique< storage::ZoneMap>();
   
 }

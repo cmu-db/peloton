@@ -23,6 +23,10 @@
 #include "storage/tile_group_header.h"
 #include "storage/tuple.h"
 #include "storage/zone_map.h"
+#include "storage/zone_map_manager.h"
+#include "catalog/schema.h"
+#include "catalog/catalog.h"
+#include "catalog/zone_map_catalog.h"
 
 #include "concurrency/transaction_manager_factory.h"
 
@@ -35,39 +39,48 @@ TEST_F(ZoneMapTests, ZoneMapContentsTest) {
   storage::DataTable *data_table = TestingExecutorUtil::CreateTable(5, false, 1);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  TestingExecutorUtil::PopulateTable(data_table, 15, false, false, true, txn);
+  TestingExecutorUtil::PopulateTable(data_table, 20, false, false, false, txn);
   txn_manager.CommitTransaction(txn);
-  data_table->CreateZoneMaps();
+
+
   oid_t num_tile_groups = data_table->GetTileGroupCount();
-  for (oid_t i = 1; i < num_tile_groups; i++) {
-    storage::TileGroup *tile_group = (data_table->GetTileGroupById(i)).get();
-    storage::ZoneMap *zone_map = tile_group->GetZoneMap();
-    int max = ((TESTS_TUPLES_PER_TILEGROUP * i) - 1)*10;
-    int min = (TESTS_TUPLES_PER_TILEGROUP * (i - 1))*10;
+  for (oid_t i = 0; i < num_tile_groups - 1; i++) {
+    auto tile_group = data_table->GetTileGroup(i);
+    auto tile_group_ptr = tile_group.get();
+    auto tile_group_header = tile_group_ptr->GetHeader();
+    tile_group_header->SetImmutability();
+  }
+
+  auto catalog = catalog::Catalog::GetInstance();
+  (void)catalog;
+  storage::ZoneMapManager *zone_map_manager = storage::ZoneMapManager::GetInstance();
+  txn = txn_manager.BeginTransaction();
+  zone_map_manager->CreateZoneMapsForTable(data_table, txn);
+  txn_manager.CommitTransaction(txn);
+
+  for (oid_t i = 0; i < num_tile_groups - 1; i++) {
+    oid_t database_id = data_table->GetDatabaseOid();
+    oid_t table_id = data_table->GetOid();
     for (int j = 0; j < 4; j++) {
+      std::shared_ptr<storage::ZoneMapManager::ColumnStatistics> stats = zone_map_manager->GetZoneMapFromCatalog(database_id, table_id, i, j);
+      type::Value min_val = (stats.get())->min;
+      type::Value max_val = (stats.get())->max;
+      int max = ((TESTS_TUPLES_PER_TILEGROUP * (i+1)) - 1)*10;
+      int min = (TESTS_TUPLES_PER_TILEGROUP * (i))*10;
       // Integer Columns
       if (j == 0 || j == 1) {
-        type::Value min_val = zone_map->GetMinValue(j);
-        type::Value max_val = zone_map->GetMaxValue(j);
-
         int min_zone_map = min_val.GetAs<int>();
         int max_zone_map = max_val.GetAs<int>();
         EXPECT_EQ(min + j, min_zone_map);
         EXPECT_EQ(max + j, max_zone_map);
       } else if (j == 2) {
         // Decimal Column
-        type::Value min_val = zone_map->GetMinValue(j);
-        type::Value max_val = zone_map->GetMaxValue(j);
-
         double min_zone_map = min_val.GetAs<double>();
         double max_zone_map = max_val.GetAs<double>();
         EXPECT_EQ((double)(min + j), min_zone_map);
         EXPECT_EQ((double)(max + j), max_zone_map);
       } else {
         // VARCHAR Column
-        type::Value min_val = zone_map->GetMinValue(j);
-        type::Value max_val = zone_map->GetMaxValue(j);
-
         const char *min_zone_map_str;
         const char *max_zone_map_str;
 
@@ -76,7 +89,7 @@ TEST_F(ZoneMapTests, ZoneMapContentsTest) {
 
         std::stringstream min_ss;
         std::stringstream max_ss;
-        if (i == 1) {
+        if (i == 0) {
           min_ss << (min + j + 10);
         } else {
           min_ss << (min + j);
@@ -88,9 +101,7 @@ TEST_F(ZoneMapTests, ZoneMapContentsTest) {
         EXPECT_EQ(max_str, max_zone_map_str);
       }
     }
-  }
-    
+  } 
 }
-
 }  // End test namespace
 }  // End peloton namespace

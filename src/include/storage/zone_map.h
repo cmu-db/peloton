@@ -96,7 +96,6 @@ class ZoneMap : public Printable {
  	std::map<oid_t, statistics> stats_map;
  	oid_t num_columns;
   bool zone_map_created = false;
-  int min, max;
 };
 
 
