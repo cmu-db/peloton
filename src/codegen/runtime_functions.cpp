@@ -20,6 +20,7 @@
 #include "storage/tile_group.h"
 #include "storage/tile.h"
 #include "storage/zone_map.h"
+#include "storage/zone_map_manager.h"
 #include "expression/abstract_expression.h"
 #include "expression/expression_util.h"
 
@@ -72,6 +73,10 @@ storage::TileGroup *RuntimeFunctions::GetTileGroup(storage::DataTable *table,
 
 storage::ZoneMap *RuntimeFunctions::GetZoneMap(storage::TileGroup *tile_group) {
   return tile_group->GetZoneMap();
+}
+
+storage::ZoneMapManager *RuntimeFunctions::GetZoneMapManager() {
+  return storage::ZoneMapManager::GetInstance();
 }
 
 void RuntimeFunctions::FillPredicateArray(const expression::AbstractExpression *expr, storage::PredicateInfo *predicate_array) {

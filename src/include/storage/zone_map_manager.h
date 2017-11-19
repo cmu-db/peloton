@@ -17,7 +17,7 @@
 #include "common/macros.h"
 #include "type/types.h"
 #include "type/value_factory.h"
-
+#include "concurrency/transaction.h"
 namespace peloton {
 namespace storage {
 
@@ -49,7 +49,7 @@ class ZoneMapManager {
   std::shared_ptr<ZoneMapManager::ColumnStatistics> GetZoneMapFromCatalog(oid_t database_id, oid_t table_id, 
     oid_t tile_group_id, oid_t col_itr);
   
-  bool ComparePredicate(storage::PredicateInfo *parsed_predicates , int32_t num_predicates, 
+  bool ComparePredicateAgainstZoneMap(storage::PredicateInfo *parsed_predicates , int32_t num_predicates, 
     storage::DataTable *table, int64_t tile_group_id);
 
   private:

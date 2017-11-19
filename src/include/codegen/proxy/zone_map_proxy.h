@@ -15,18 +15,16 @@
 #include "codegen/proxy/proxy.h"
 #include "codegen/proxy/type_builder.h"
 #include "storage/zone_map.h"
+#include "storage/zone_map_manager.h"
 #include "codegen/zone_map.h"
+#include "concurrency/transaction.h"
 #include "codegen/proxy/value_proxy.h"
+#include "codegen/proxy/transaction_proxy.h"
+#include "codegen/proxy/data_table_proxy.h"
 #include "type/value.h"
 
 namespace peloton {
 namespace codegen {
-
-	// PROXY(Value) {
-	
-	// 	DECLARE_MEMBER(0, char[sizeof(peloton::type::Value)], opaque);
-	// 	DECLARE_TYPE;
-	// };
 
 	PROXY(PredicateInfo) {
 	
@@ -45,9 +43,17 @@ namespace codegen {
 		DECLARE_METHOD(ComparePredicate);
 	};
 
-// TYPE_BUILDER(Value, peloton::type::Value);
+	PROXY(ZoneMapManager) {
+
+		DECLARE_MEMBER(0, char[sizeof(storage::ZoneMapManager)], opaque);
+		DECLARE_TYPE;
+	
+		DECLARE_METHOD(ComparePredicateAgainstZoneMap);
+	};
+
 TYPE_BUILDER(PredicateInfo, storage::PredicateInfo);
 TYPE_BUILDER(ZoneMap, storage::ZoneMap);
+TYPE_BUILDER(ZoneMapManager, storage::ZoneMapManager);
 
 
 }  // namespace codegen

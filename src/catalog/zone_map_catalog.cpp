@@ -96,7 +96,7 @@ bool ZoneMapCatalog::DeleteColumnStatistics(oid_t database_id, oid_t table_id,
 std::unique_ptr<std::vector<type::Value>> ZoneMapCatalog::GetColumnStatistics(
     oid_t database_id, oid_t table_id, oid_t tile_group_id, oid_t column_id,
     concurrency::Transaction *txn) {
-  LOG_DEBUG("Database Id : %u , Table Id : %u , TileGroup Id : %u, Column Id : %u ", database_id, table_id, tile_group_id, column_id);
+  // LOG_DEBUG("Database Id : %u , Table Id : %u , TileGroup Id : %u, Column Id : %u ", database_id, table_id, tile_group_id, column_id);
   std::vector<oid_t> column_ids(
       {ColumnId::MINIMUM, ColumnId::MAXIMUM, ColumnId::TYPE});
 
@@ -120,7 +120,7 @@ std::unique_ptr<std::vector<type::Value>> ZoneMapCatalog::GetColumnStatistics(
   auto tile = (*result_tiles)[0].get();
   PL_ASSERT(tile->GetTupleCount() <= 1);
   if (tile->GetTupleCount() == 0) {
-    LOG_DEBUG("Result Tile has tuple count = 0");
+    // LOG_DEBUG("Result Tile has tuple count = 0");
     return nullptr;
   }
 

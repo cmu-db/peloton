@@ -46,6 +46,10 @@ llvm::Value *Table::GetZoneMap(CodeGen &codegen, llvm::Value *tile_group_ptr) co
   return codegen.Call(RuntimeFunctionsProxy::GetZoneMap, {tile_group_ptr});
 }
 
+llvm::Value *Table::GetZoneMapManager(CodeGen &codegen) const{
+  return codegen.Call(RuntimeFunctionsProxy::GetZoneMapManager, {});
+}
+
 // Generate a scan over all tile groups.
 //
 // @code
@@ -92,14 +96,17 @@ void Table::GenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
     // Get the tile group with the given tile group ID
     tile_group_idx = loop.GetLoopVar(0);
     scanned_tiles = loop.GetLoopVar(1);
+    llvm::Value *zone_map_manager = GetZoneMapManager(codegen);
     llvm::Value *tile_group_ptr =
         GetTileGroup(codegen, table_ptr, tile_group_idx);
-    llvm::Value *zone_map_ptr =
-        GetZoneMap(codegen, tile_group_ptr);
+    // llvm::Value *zone_map_ptr =
+    //     GetZoneMap(codegen, tile_group_ptr);
     llvm::Value *tile_group_id =
         tile_group_.GetTileGroupId(codegen, tile_group_ptr);
     llvm::Value *new_scanned_tiles = nullptr;
-    codegen::lang::If cond{codegen, codegen.Call(ZoneMapProxy::ComparePredicate, {zone_map_ptr, predicate_array ,codegen.Const32(num_predicates)})};
+    // llvm::Value *decision = codegen.Call(ZoneMapManagerProxy::ComparePredicateAgainstZoneMap, {zone_map_manager, predicate_array ,codegen.Const32(num_predicates), table_ptr ,tile_group_idx });
+    //  codegen.CallPrintf("Scan Tile: [%lu]\n", {decision});
+    codegen::lang::If cond{codegen, codegen.Call(ZoneMapManagerProxy::ComparePredicateAgainstZoneMap, {zone_map_manager, predicate_array ,codegen.Const32(num_predicates), table_ptr ,tile_group_idx })};
     {
       //Invoke the consumer to let her know that we're starting to iterate over
       //the tile group now

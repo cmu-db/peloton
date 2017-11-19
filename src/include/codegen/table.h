@@ -58,6 +58,8 @@ class Table {
 
   llvm::Value *GetZoneMap(CodeGen &codegen, llvm::Value *tile_group_ptr) const;
 
+  llvm::Value *GetZoneMapManager(CodeGen &codegen) const;
+
  private:
   // The table associated with this generator
   storage::DataTable &table_;

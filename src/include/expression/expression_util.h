@@ -629,11 +629,14 @@ class ExpressionUtil {
       expr_type == ExpressionType::COMPARE_GREATERTHAN ||
       expr_type == ExpressionType::COMPARE_GREATERTHANOREQUALTO) {
 
-      predicate_restrictions.emplace_back(new expression::ComparisonExpression(
-        expr_type, expr->GetModifiableChild(0), expr->GetModifiableChild(1) ));
-      return true;
+      // The right child should be a constant.
+      auto right_child = expr->GetModifiableChild(1);
+      if (right_child->GetExpressionType() == ExpressionType::VALUE_CONSTANT) {
+        predicate_restrictions.emplace_back(new expression::ComparisonExpression(
+          expr_type, expr->GetModifiableChild(0), expr->GetModifiableChild(1) ));
+        return true;
+      }
     }
-    
     return false;
   }
 

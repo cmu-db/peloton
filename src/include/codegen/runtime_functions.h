@@ -23,6 +23,7 @@ namespace storage {
 class DataTable;
 class TileGroup;
 class ZoneMap;
+class ZoneMapManager;
 struct PredicateInfo;
 }  // namespace storage
 
@@ -49,6 +50,8 @@ class RuntimeFunctions {
                                           uint64_t tile_group_index);
 
   static storage::ZoneMap *GetZoneMap(storage::TileGroup *tile_group);
+
+  static storage::ZoneMapManager *GetZoneMapManager();
 
   static void FillPredicateArray(const expression::AbstractExpression *expr, storage::PredicateInfo *predicate_array);
 
