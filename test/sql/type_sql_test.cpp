@@ -183,6 +183,24 @@ TEST_F(TypeSQLTests, VarcharTest) {
   TestingSQLUtil::ExecuteSQLQuery(query.c_str(), result, tuple_descriptor,
                                   rows_changed, error_message);
   CheckQueryResult(result, expected, tuple_descriptor.size());
+
+  query = "SELECT * FROM foo WHERE name LIKE '%li%'";
+  expected = {"Alice", "Alicia"};
+  TestingSQLUtil::ExecuteSQLQuery(query.c_str(), result, tuple_descriptor,
+                                  rows_changed, error_message);
+  CheckQueryResult(result, expected, tuple_descriptor.size());
+
+  query = "SELECT * FROM foo WHERE name LIKE '_____'";
+  expected = {"Alice", "Peter", "Cathy", "David"};
+  TestingSQLUtil::ExecuteSQLQuery(query.c_str(), result, tuple_descriptor,
+                                  rows_changed, error_message);
+  CheckQueryResult(result, expected, tuple_descriptor.size());
+
+  query = "SELECT * FROM foo WHERE name LIKE '%th'";
+  expected = {};
+  TestingSQLUtil::ExecuteSQLQuery(query.c_str(), result, tuple_descriptor,
+                                  rows_changed, error_message);
+  CheckQueryResult(result, expected, tuple_descriptor.size());
 }
 
 }  // namespace test
