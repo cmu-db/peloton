@@ -167,7 +167,7 @@ class TrafficCop {
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer_;
 
   // flag of single statement txn
-  bool is_single_statement_txn_;
+  bool single_statement_txn_ = true;
 
   std::vector<ResultValue> result_;
 
