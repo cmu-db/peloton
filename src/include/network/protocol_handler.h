@@ -47,7 +47,6 @@ class ProtocolHandler {
 
   bool GetFlushFlag() {return force_flush_;}
 
-  // Should we send the buffered packets right away?
   bool force_flush_ = false;
 
   // TODO declare a response buffer pool so that we can reuse the responses
