@@ -261,11 +261,11 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
     return ProcessResult::COMPLETE;
   }
 
-  //TODO(ydeng1): Hack. We only process the first statement in the packet now.
-  // We should store the rest of statements.
-  // In most cases, it works. For example in psql, each query
-  // is sent in different packets. But when using the pipeline mode
-  // in Libpqxx, it sens multiple query in one packet.
+  //TODO(Yuchen): Hack. We only process the first statement in the packet now.
+  // We should store the rest of statements that will not be processed right away.
+  // For the hack, in most cases, it works. Because for example in psql, one packet
+  // contains only one query. But when using the pipeline mode in Libpqxx,
+  // it sens multiple query in one packet. In this case, it's incorrect.
   auto sql_stmt = sql_stmt_list->PassOutStatement(0);
 
   traffic_cop_->query_ = query;
@@ -277,7 +277,7 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
   switch (traffic_cop_->query_type_) {
     case QueryType::QUERY_PREPARE: {
       std::shared_ptr<Statement> statement(nullptr);
-      auto prep_stmt = (parser::PrepareStatement*)sql_stmt.get();
+      auto prep_stmt = dynamic_cast<parser::PrepareStatement*>(sql_stmt.get());
       std::string stmt_name = prep_stmt->name;
       statement = traffic_cop_->PrepareStatement(stmt_name, query, std::move(prep_stmt->query), error_message);
       if (statement.get() == nullptr) {
@@ -323,10 +323,10 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
       std::vector<int> result_format(traffic_cop_->GetStatement()->GetTupleDescriptor().size(), 0);
       result_format_ = result_format;
 
-      //TODO(ydeng1): We assume it's only constant value expression
+      //TODO(Yuchen): We assume it's only constant value expression
       // If we have a table foo(id integer),
       // we should support query like: insert into foo values(1+2);
-      for (std::unique_ptr<expression::AbstractExpression>& param : exec_stmt->parameters) {
+      for (const std::unique_ptr<expression::AbstractExpression>& param : exec_stmt->parameters) {
         param_values.push_back(((expression::ConstantValueExpression*) param.get())->GetValue());
       }
       if (param_values.size() > 0) {

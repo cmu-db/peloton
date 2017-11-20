@@ -685,7 +685,7 @@ enum class QueryType {
 std::string QueryTypeToString(QueryType query_type);
 QueryType StringToQueryType(std::string str);
 namespace parser{ class SQLStatement;}
-QueryType StatementTypeToQueryType(StatementType stmt_type, parser::SQLStatement* sql_stmt);
+QueryType StatementTypeToQueryType(StatementType stmt_type, const parser::SQLStatement* sql_stmt);
 //===--------------------------------------------------------------------===//
 // Scan Direction Types
 //===--------------------------------------------------------------------===//
