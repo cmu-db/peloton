@@ -138,12 +138,12 @@ WriteState NetworkConnection::WritePackets() {
   protocol_handler_->responses.clear();
   next_response_ = 0;
 
-  if (protocol_handler_->force_flush == true) {
+  if (protocol_handler_->GetFlushFlag()) {
     return FlushWriteBuffer();
   }
 
   // we have flushed, disable force flush now
-  protocol_handler_->force_flush = false;
+  protocol_handler_->SetFlushFlag(false);
 
   return WriteState::WRITE_COMPLETE;
 }
@@ -441,7 +441,7 @@ bool NetworkConnection::ProcessSSLRequestPacket(InputPacket *pkt) {
   // TODO: consider more about a proper response
   response->msg_type = NetworkMessageType::SSL_YES;
   protocol_handler_->responses.push_back(std::move(response));
-  protocol_handler_->force_flush = true;
+  protocol_handler_->SetFlushFlag(true);
   ssl_sent_ = true;
   return true;
 }

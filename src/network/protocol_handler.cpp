@@ -34,7 +34,7 @@ namespace network {
   }
 
   void ProtocolHandler::Reset() {
-    force_flush = false;
+    SetFlushFlag(false);
     responses.clear();
     request.Reset();
   }
