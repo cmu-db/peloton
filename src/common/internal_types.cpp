@@ -551,22 +551,21 @@ std::string QueryTypeToString(QueryType query_type) {
   }
 }
 
-std::unordered_map<std::string, QueryType> querytype_string_map {
-    {"BEGIN", QueryType::QUERY_BEGIN}, {"COMMIT", QueryType::QUERY_COMMIT},
-    {"ROLLBACK", QueryType::QUERY_ROLLBACK}, {"CREATE DATABASE", QueryType::QUERY_CREATE_DB},
-    {"CREATE INDEX", QueryType::QUERY_CREATE_INDEX}, {"CREATE TABLE", QueryType::QUERY_CREATE_TABLE},
-    {"DROP", QueryType::QUERY_DROP}, {"INSERT", QueryType::QUERY_INSERT},
-    {"SET", QueryType::QUERY_SET}, {"SHOW", QueryType::QUERY_SHOW},
-    {"SHOW", QueryType::QUERY_SHOW}, {"UPDATE", QueryType::QUERY_UPDATE},
-    {"ALTER", QueryType::QUERY_ALTER}, {"DELETE", QueryType::QUERY_DELETE},
-    {"COPY", QueryType::QUERY_COPY}, {"ANALYZE", QueryType::QUERY_ANALYZE},
-    {"RENAME", QueryType::QUERY_RENAME}, {"PREPARE", QueryType::QUERY_PREPARE},
-    {"EXECUTE", QueryType::QUERY_EXECUTE}, {"SELECT", QueryType::QUERY_SELECT},
-    {"CREATE TRIGGER", QueryType::QUERY_CREATE_TRIGGER},
-    {"OTHER", QueryType::QUERY_OTHER},
-};
-
-QueryType StringToQueryType(std::string str) {
+QueryType StringToQueryType(const std::string &str) {
+  static std::unordered_map<std::string, QueryType> querytype_string_map {
+      {"BEGIN", QueryType::QUERY_BEGIN}, {"COMMIT", QueryType::QUERY_COMMIT},
+      {"ROLLBACK", QueryType::QUERY_ROLLBACK}, {"CREATE DATABASE", QueryType::QUERY_CREATE_DB},
+      {"CREATE INDEX", QueryType::QUERY_CREATE_INDEX}, {"CREATE TABLE", QueryType::QUERY_CREATE_TABLE},
+      {"DROP", QueryType::QUERY_DROP}, {"INSERT", QueryType::QUERY_INSERT},
+      {"SET", QueryType::QUERY_SET}, {"SHOW", QueryType::QUERY_SHOW},
+      {"SHOW", QueryType::QUERY_SHOW}, {"UPDATE", QueryType::QUERY_UPDATE},
+      {"ALTER", QueryType::QUERY_ALTER}, {"DELETE", QueryType::QUERY_DELETE},
+      {"COPY", QueryType::QUERY_COPY}, {"ANALYZE", QueryType::QUERY_ANALYZE},
+      {"RENAME", QueryType::QUERY_RENAME}, {"PREPARE", QueryType::QUERY_PREPARE},
+      {"EXECUTE", QueryType::QUERY_EXECUTE}, {"SELECT", QueryType::QUERY_SELECT},
+      {"CREATE TRIGGER", QueryType::QUERY_CREATE_TRIGGER},
+      {"OTHER", QueryType::QUERY_OTHER},
+  };
   std::unordered_map<std::string, QueryType>::iterator it  = querytype_string_map.find(str);
   if (it != querytype_string_map.end()) {
     return it -> second;
@@ -575,10 +574,9 @@ QueryType StringToQueryType(std::string str) {
   }
 }
 
-QueryType StatementTypeToQueryType(StatementType stmt_type, parser::SQLStatement* sql_stmt) {
+QueryType StatementTypeToQueryType(StatementType stmt_type, const parser::SQLStatement* sql_stmt) {
   LOG_TRACE("%s", StatementTypeToString(stmt_type).c_str());
-  QueryType query_type = QueryType::QUERY_OTHER;
-  std::unordered_map<StatementType, QueryType, EnumHash<StatementType>> type_map {
+  static std::unordered_map<StatementType, QueryType, EnumHash<StatementType>> type_map {
       {StatementType::EXECUTE, QueryType::QUERY_EXECUTE},
       {StatementType::PREPARE, QueryType::QUERY_PREPARE},
       {StatementType::INSERT, QueryType::QUERY_INSERT},
@@ -591,40 +589,38 @@ QueryType StatementTypeToQueryType(StatementType stmt_type, parser::SQLStatement
       {StatementType::SELECT, QueryType::QUERY_SELECT},
       {StatementType::VARIABLE_SET, QueryType::QUERY_SET},
   };
+  QueryType query_type = QueryType::QUERY_OTHER;
   std::unordered_map<StatementType, QueryType, EnumHash<StatementType>>::iterator it  = type_map.find(stmt_type);
   if (it != type_map.end()) {
     query_type = it -> second;
   } else {
     switch(stmt_type) {
-      case StatementType::TRANSACTION:
-        switch(static_cast<parser::TransactionStatement*>(sql_stmt)->type) {
-          case parser::TransactionStatement::CommandType::kBegin:
-            query_type = QueryType::QUERY_BEGIN;
+      case StatementType::TRANSACTION: {
+//        const parser::TransactionStatement *transaction_stmt = static_cast<const parser::TransactionStatement *>(sql_stmt);
+        switch (static_cast<const parser::TransactionStatement*>(sql_stmt) ->type) {
+          case parser::TransactionStatement::CommandType::kBegin:query_type = QueryType::QUERY_BEGIN;
             break;
-          case parser::TransactionStatement::CommandType::kCommit:
-            query_type = QueryType::QUERY_COMMIT;
+          case parser::TransactionStatement::CommandType::kCommit:query_type = QueryType::QUERY_COMMIT;
             break;
-          case parser::TransactionStatement::CommandType::kRollback:
-            query_type = QueryType::QUERY_ROLLBACK;
+          case parser::TransactionStatement::CommandType::kRollback:query_type = QueryType::QUERY_ROLLBACK;
             break;
         }
         break;
-      case StatementType::CREATE:
-        switch (static_cast<parser::CreateStatement*>(sql_stmt) -> type) {
-          case parser::CreateStatement::CreateType::kDatabase:
-            query_type = QueryType::QUERY_CREATE_DB;
+      }
+      case StatementType::CREATE: {
+//        const parser::CreateStatement *create_stmt = static_cast<const parser::CreateStatement *>(sql_stmt);
+        switch (static_cast<const parser::CreateStatement*>(sql_stmt) ->type) {
+          case parser::CreateStatement::CreateType::kDatabase:query_type = QueryType::QUERY_CREATE_DB;
             break;
-          case parser::CreateStatement::CreateType::kIndex:
-            query_type = QueryType::QUERY_CREATE_INDEX;
+          case parser::CreateStatement::CreateType::kIndex:query_type = QueryType::QUERY_CREATE_INDEX;
             break;
-          case parser::CreateStatement::CreateType::kTable:
-            query_type = QueryType::QUERY_CREATE_TABLE;
+          case parser::CreateStatement::CreateType::kTable:query_type = QueryType::QUERY_CREATE_TABLE;
             break;
-          case parser::CreateStatement::CreateType::kTrigger:
-            query_type = QueryType::QUERY_CREATE_TRIGGER;
+          case parser::CreateStatement::CreateType::kTrigger:query_type = QueryType::QUERY_CREATE_TRIGGER;
             break;
         }
         break;
+      }
       default:
         query_type = QueryType::QUERY_OTHER;
     }

@@ -22,9 +22,11 @@
 
 namespace peloton {
 namespace parser {
-/* TODO: Do not support VariableSetStatement yet
+/* TODO(Yuchen): Do not support VariableSetStatement yet
  * When JDBC starts connection, it will send SET statement and need server's response to build the connection.
- * Create VariableSetStatement here to avoid connection error. Actually the statement is not handled now.
+ * Add VariableSetStatement here so it can be handled by the parser to avoid connection error.
+ * Actually after parsing stage, the statement will not be processed by the server.
+ * It will be skipped. See HardcodedExecuteFilter()
  */
 class VariableSetStatement : public SQLStatement {
  public:
