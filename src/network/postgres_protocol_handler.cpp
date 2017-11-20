@@ -243,7 +243,9 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
   try {
     auto &peloton_parser = parser::PostgresParser::GetInstance();
     sql_stmt_list = peloton_parser.BuildParseTree(query);
-    if (!sql_stmt_list->is_valid) {
+
+    // When the query is empty(such as ";" or ";;", the pare tree is empty, parser will return nullptr
+    if (sql_stmt_list.get() != nullptr && !sql_stmt_list->is_valid) {
       throw ParserException("Error Parsing SQL statement");
     }
   } // If the statement is invalid or not supported yet
@@ -255,9 +257,10 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
     SendReadyForQuery(NetworkTransactionStateType::IDLE);
     return ProcessResult::COMPLETE;
   }
-  // If the query contains zero sql statements, for example ";;;"
-  if (sql_stmt_list->GetNumStatements() == 0) {
+
+  if (sql_stmt_list.get() == nullptr || sql_stmt_list->GetNumStatements() == 0) {
     SendEmptyQueryResponse();
+    SendReadyForQuery(NetworkTransactionStateType::IDLE);
     return ProcessResult::COMPLETE;
   }
 

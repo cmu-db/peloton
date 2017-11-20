@@ -1702,7 +1702,9 @@ std::unique_ptr<parser::SQLStatementList> PostgresParser::BuildParseTree(
     const std::string &query_string) {
   auto stmt = PostgresParser::ParseSQLString(query_string);
 
-  LOG_TRACE("Number of statements: %lu", stmt->GetStatements().size());
+  if (stmt) {
+    LOG_TRACE("Number of statements: %lu", stmt->GetStatements().size());
+  }
 
   std::unique_ptr<parser::SQLStatementList> sql_stmt(stmt);
   return sql_stmt;
