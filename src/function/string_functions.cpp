@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <string>
 #include <cctype>
+#include <string>
 
 #include "function/string_functions.h"
 #include "type/value_factory.h"
@@ -37,79 +37,67 @@ type::Value StringFunctions::_Ascii(const std::vector<type::Value> &args) {
   return type::ValueFactory::GetIntegerValue(ret);
 }
 
-//
-bool StringFunctions::Like(const char *t, uint32_t tlen,
-                           const char *p, uint32_t plen) {
+bool StringFunctions::Like(const char *t, uint32_t tlen, const char *p,
+                           uint32_t plen) {
   PL_ASSERT(t != nullptr);
   PL_ASSERT(p != nullptr);
-  if (plen == 1 && *p == '%')
-		return true;
+  if (plen == 1 && *p == '%') return true;
 
-	while (tlen > 0 && plen > 0) {
-		if (*p == '\\') {
-			NextByte(p, plen);
-			if (plen <= 0)
-				return false;
-			if (tolower(*p) != tolower(*t))
-				return false;
-	  } else if (*p == '%') {
-			char		firstpat;
-			NextByte(p, plen);
+  while (tlen > 0 && plen > 0) {
+    if (*p == '\\') {
+      NextByte(p, plen);
+      if (plen <= 0) return false;
+      if (tolower(*p) != tolower(*t)) return false;
+    } else if (*p == '%') {
+      char firstpat;
+      NextByte(p, plen);
 
-			while (plen > 0) {
-				if (*p == '%')
-					NextByte(p, plen);
-				else if (*p == '_') {
-					if (tlen <= 0)
-						return false;
-					NextByte(t, tlen);
-					NextByte(p, plen);
-				}
-				else
-					break;
-			}
+      while (plen > 0) {
+        if (*p == '%')
+          NextByte(p, plen);
+        else if (*p == '_') {
+          if (tlen <= 0) return false;
+          NextByte(t, tlen);
+          NextByte(p, plen);
+        } else
+          break;
+      }
 
-			if (plen <= 0)
-				return true;
+      if (plen <= 0) return true;
 
-			if (*p == '\\') {
-				if (plen < 2)
-					return false;
-				firstpat = tolower(p[1]);
-			} else
-				firstpat = tolower(*p);
+      if (*p == '\\') {
+        if (plen < 2) return false;
+        firstpat = tolower(p[1]);
+      } else
+        firstpat = tolower(*p);
 
-			while (tlen > 0) {
-				if (tolower(*t) == firstpat) {
-					int matched = Like(t, tlen, p, plen);
+      while (tlen > 0) {
+        if (tolower(*t) == firstpat) {
+          int matched = Like(t, tlen, p, plen);
 
-					if (matched != false)
-						return matched;
-				}
+          if (matched != false) return matched;
+        }
 
-				NextByte(t, tlen);
-			}
-			return false;
-		} else if (*p == '_') {
-			NextByte(t, tlen);
-			NextByte(p, plen);
-			continue;
-		} else if (tolower(*p) != tolower(*t)) {
-			return false;
-		}
-		NextByte(t, tlen);
-		NextByte(p, plen);
-	}
+        NextByte(t, tlen);
+      }
+      return false;
+    } else if (*p == '_') {
+      NextByte(t, tlen);
+      NextByte(p, plen);
+      continue;
+    } else if (tolower(*p) != tolower(*t)) {
+      return false;
+    }
+    NextByte(t, tlen);
+    NextByte(p, plen);
+  }
 
-	if (tlen > 0)
-		return false;
+  if (tlen > 0) return false;
 
-	while (plen > 0 && *p == '%')
-		NextByte(p, plen);
-	if (plen <= 0)
-		return true;
+  while (plen > 0 && *p == '%') NextByte(p, plen);
+  if (plen <= 0) return true;
 
-	return false;
+  return false;
 }
 
 type::Value StringFunctions::_Like(const std::vector<type::Value> &args) {
@@ -119,7 +107,7 @@ type::Value StringFunctions::_Like(const std::vector<type::Value> &args) {
   }
 
   bool ret = Like(args[0].GetAs<const char *>(), args[0].GetLength(),
-                      args[1].GetAs<const char *>(), args[1].GetLength());
+                  args[1].GetAs<const char *>(), args[1].GetLength());
   return type::ValueFactory::GetBooleanValue(ret);
 }
 
@@ -275,5 +263,5 @@ type::Value StringFunctions::BTrim(const std::vector<type::Value> &args) {
   return (type::ValueFactory::GetVarcharValue(str));
 }
 
-}  // namespace expression
+}  // namespace function
 }  // namespace peloton
