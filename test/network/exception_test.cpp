@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// simple_query_test.cpp
+// exception_test.cpp
 //
-// Identification: test/network/simple_query_test.cpp
+// Identification: test/network/exception_test.cpp
 //
 // Copyright (c) 2016-17, Carnegie Mellon University Database Group
 //
@@ -25,10 +25,10 @@ namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
-// Simple Query Tests
+// Exception Test
 //===--------------------------------------------------------------------===//
 
-class FailureTests : public PelotonTest {};
+class ExceptionTests : public PelotonTest {};
 
 static void *LaunchServer(peloton::network::NetworkManager network_manager,
                           int port) {
@@ -45,7 +45,7 @@ static void *LaunchServer(peloton::network::NetworkManager network_manager,
  * To test with the queries with syntax error that will be caught by parser.
  * The server will catch these errors in Networking layer and directly return ERROR response.
  */
-void *ParserFailureTest(int port) {
+void *ParserExceptionTest(int port) {
   try {
     // forcing the factory to generate psql protocol handler
     pqxx::connection C(StringUtil::Format(
@@ -172,7 +172,7 @@ void *ParserFailureTest(int port) {
  * Simple query test to guarantee both sides run correctly
  * Callback method to close server after client finishes
  */
-TEST_F(FailureTests, ParserFailureTest) {
+TEST_F(ExceptionTests, ParserExceptionTest) {
   peloton::PelotonInit::Initialize();
   LOG_INFO("Server initialized");
   peloton::network::NetworkManager network_manager;
@@ -184,7 +184,7 @@ TEST_F(FailureTests, ParserFailureTest) {
   }
 
   // server & client running correctly
-  ParserFailureTest(port);
+  ParserExceptionTest(port);
 
   network_manager.CloseServer();
   serverThread.join();
