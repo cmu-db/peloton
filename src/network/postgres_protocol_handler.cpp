@@ -410,7 +410,7 @@ void PostgresProtocolHandler::ExecParseMessage(InputPacket *pkt) {
     LOG_TRACE("%s, %s", statement_name.c_str(), query.c_str());
     auto &peloton_parser = parser::PostgresParser::GetInstance();
     sql_stmt_list = peloton_parser.BuildParseTree(query);
-    if (!sql_stmt_list->is_valid) {
+    if (sql_stmt_list.get() != nullptr && !sql_stmt_list->is_valid) {
       throw ParserException("Error parsing SQL statement");
     }
   }
@@ -421,7 +421,7 @@ void PostgresProtocolHandler::ExecParseMessage(InputPacket *pkt) {
         {{NetworkMessageType::HUMAN_READABLE_ERROR, e.what()}});
     return;
   }
-  bool skip = (sql_stmt_list->GetNumStatements() == 0);
+  bool skip = (sql_stmt_list.get() == nullptr || sql_stmt_list->GetNumStatements() == 0);
   if (!skip) {
     parser::SQLStatement* sql_stmt = sql_stmt_list->GetStatement(0);
     query_type = StatementTypeToQueryType(sql_stmt->GetType(), sql_stmt);
