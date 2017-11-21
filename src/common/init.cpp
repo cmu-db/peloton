@@ -23,6 +23,7 @@
 #include "gc/gc_manager_factory.h"
 #include "settings/settings_manager.h"
 #include "logging/wal_log_manager.h"
+#include "threadpool/mono_queue_pool.h"
 namespace peloton {
 
 ThreadPool thread_pool;
