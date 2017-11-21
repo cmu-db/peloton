@@ -596,7 +596,6 @@ QueryType StatementTypeToQueryType(StatementType stmt_type, const parser::SQLSta
   } else {
     switch(stmt_type) {
       case StatementType::TRANSACTION: {
-//        const parser::TransactionStatement *transaction_stmt = static_cast<const parser::TransactionStatement *>(sql_stmt);
         switch (static_cast<const parser::TransactionStatement*>(sql_stmt) ->type) {
           case parser::TransactionStatement::CommandType::kBegin:query_type = QueryType::QUERY_BEGIN;
             break;
@@ -608,7 +607,6 @@ QueryType StatementTypeToQueryType(StatementType stmt_type, const parser::SQLSta
         break;
       }
       case StatementType::CREATE: {
-//        const parser::CreateStatement *create_stmt = static_cast<const parser::CreateStatement *>(sql_stmt);
         switch (static_cast<const parser::CreateStatement*>(sql_stmt) ->type) {
           case parser::CreateStatement::CreateType::kDatabase:query_type = QueryType::QUERY_CREATE_DB;
             break;

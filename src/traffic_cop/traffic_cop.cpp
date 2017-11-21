@@ -24,13 +24,13 @@
 namespace peloton {
 namespace tcop {
 
-TrafficCop::TrafficCop() : is_queuing_(false), rows_affected_(0) {
+TrafficCop::TrafficCop() : is_queuing_(false), rows_affected_(0), single_statement_txn_(true) {
   LOG_TRACE("Starting a new TrafficCop");
   optimizer_.reset(new optimizer::Optimizer);
 }
 
 TrafficCop::TrafficCop(void (*task_callback)(void *), void *task_callback_arg)
-    : task_callback_(task_callback), task_callback_arg_(task_callback_arg) {
+    : single_statement_txn_(true), task_callback_(task_callback), task_callback_arg_(task_callback_arg) {
   optimizer_.reset(new optimizer::Optimizer);
 }
 
@@ -136,6 +136,14 @@ ResultType TrafficCop::ExecuteStatementGetResult() {
 }
 
 executor::ExecutionResult TrafficCop::ExecuteHelper(
+/*
+ * Execute a statement that needs a plan(so, BEGIN, COMMIT, ROLLBACK does not come here).
+ * Begin a new transaction if necessary.
+ * If the current transaction is already broken(for example due to previous invalid
+ * queries), directly return
+ * Otherwise, call ExecutePlan()
+ */
+executor::ExecuteResult TrafficCop::ExecuteHelper(
     std::shared_ptr<planner::AbstractPlan> plan,
     const std::vector<type::Value> &params, std::vector<ResultValue> &result,
     const std::vector<int> &result_format, size_t thread_id) {
@@ -156,7 +164,11 @@ executor::ExecutionResult TrafficCop::ExecuteHelper(
 
   // Skip if already aborted.
   if (curr_state.second == ResultType::ABORTED) {
-    p_status_.m_result = ResultType::ABORTED;
+    // If the transaction state is ABORTED, the transaction should be aborted
+    // but Peloton didn't explicitly abort it yet since it didn't receive a COMMIT/ROLLBACK.
+    // Here, it receive queries other than COMMIT/ROLLBACK in an broken transaction,
+    // it should tell the client that these queries will not be executed.
+    p_status_.m_result = ResultType::TO_ABORT;
     return p_status_;
   }
 
@@ -216,6 +228,16 @@ void TrafficCop::ExecuteStatementPlanGetResult() {
   }
 }
 
+/*
+ * Prepare a statement based on parse tree. Begin a transaction if necessary.
+ * If the query is not issued in a transaction (when the query type is not 'BEGIN'
+ * and the tcop_txn_state is empty), Peloton will wrap it in a transaction and
+ * begin a transaction here. It is a single_stmt transaction.
+ * Otherwise, the query is issued inside a transaction by the client. It is a multi_stmt transaction.
+ * TODO(Yuchen): We do not need a query string to prepare a statement and the query string may
+ * contain the information of multiple statements rather than the single one. Hack here. We store
+ * the query string inside Statement objects for the purpose of printing info.
+ */
 std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     const std::string &stmt_name, const std::string &query_string,
     std::unique_ptr<parser::SQLStatementList> sql_stmt_list, UNUSED_ATTRIBUTE std::string &error_message,
@@ -224,7 +246,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   LOG_TRACE("Prepare Statement query: %s", query_string.c_str());
   StatementType stmt_type = sql_stmt_list->GetStatement(0)->GetType();
   QueryType query_type = StatementTypeToQueryType(stmt_type, sql_stmt_list->GetStatement(0));
-  std::shared_ptr<Statement> statement(new Statement(stmt_name, query_type, query_string, sql_stmt_list));
+  std::shared_ptr<Statement> statement = std::make_shared<Statement>(stmt_name, query_type, query_string, std::move(sql_stmt_list));
 
   // We can learn transaction's states, BEGIN, COMMIT, ABORT, or ROLLBACK from
   // member variables, tcop_txn_state_. We can also get single-statement txn or
@@ -246,11 +268,11 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     // from multi-statement query
     if (statement->GetQueryType() == QueryType::QUERY_BEGIN) {  // only begin a new transaction
       // note this transaction is not single-statement transaction
-      LOG_INFO("BEGIN");
+      LOG_TRACE("BEGIN");
       single_statement_txn_ = false;
     } else {
       // single statement
-      LOG_INFO("SINGLE TXN");
+      LOG_TRACE("SINGLE TXN");
       single_statement_txn_ = true;
     }
     auto txn = txn_manager.BeginTransaction(thread_id);
@@ -264,7 +286,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
 
   try {
     auto plan =
-        optimizer_->BuildPelotonPlanTree(sql_stmt_list, default_database_name_, tcop_txn_state_.top().first);
+        optimizer_->BuildPelotonPlanTree(statement->GetStmtParseTreeList(), default_database_name_, tcop_txn_state_.top().first);
     statement->SetPlanTree(plan);
     // Get the tables that our plan references so that we know how to
     // invalidate it at a later point when the catalog changes
@@ -273,12 +295,13 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     statement->SetReferencedTables(table_oids);
 
     if (query_type == QueryType::QUERY_SELECT) {
-      auto tuple_descriptor = GenerateTupleDescriptor(sql_stmt_list->GetStatement(0));
+      auto tuple_descriptor = GenerateTupleDescriptor(statement->GetStmtParseTreeList()->GetStatement(0));
       statement->SetTupleDescriptor(tuple_descriptor);
+      LOG_TRACE("select query, finish setting");
     }
   } catch(Exception &e) {
     error_message = e.what();
-    AbortInvalidStmt();
+    ProcessInvalidStatement();
     return nullptr;
   }
 
@@ -291,11 +314,13 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   return statement;
 }
 
-/* Do nothing if there is no active txt;
-   If single txn, abort the txn;
-   If multi-txn, set 'ABORTED'. The multi-txn will be explicitly aborted when receiving 'Commit' or 'Abort' or Terminate command.
-*/
-void TrafficCop::AbortInvalidStmt() {
+/*
+ * Do nothing if there is no active transaction;
+ * If single-stmt transaction, abort it;
+ * If multi-stmt transaction, just set transaction state to 'ABORTED'.
+ * The multi-stmt txn will be explicitly aborted when receiving 'Commit' or 'Rollback'.
+ */
+void TrafficCop::ProcessInvalidStatement() {
   if (single_statement_txn_) {
     LOG_TRACE("SINGLE ABORT!");
     AbortQueryHelper();
@@ -470,13 +495,10 @@ ResultType TrafficCop::ExecuteStatement(
       }
       case QueryType::QUERY_ROLLBACK: {
         return AbortQueryHelper();
-      }
-      default: {
-        ExecuteHelper(statement->GetPlanTree(), params, result, result_format,
-                      thread_id);
-
-        // ExecuteHelper decides whether it is needed to queue task.
-        if (is_queuing_) {
+      default:
+        ExecuteHelper(statement->GetPlanTree(), params, result,
+                      result_format, thread_id);
+        if (GetQueuing()) {
           return ResultType::QUEUING;
         } else {
           return ExecuteStatementGetResult();

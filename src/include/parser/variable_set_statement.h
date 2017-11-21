@@ -18,7 +18,6 @@
 #include "common/sql_node_visitor.h"
 #include "parser/sql_statement.h"
 #include "parser/table_ref.h"
-#include "sql_statement.h"
 
 namespace peloton {
 namespace parser {
@@ -31,9 +30,9 @@ namespace parser {
 class VariableSetStatement : public SQLStatement {
  public:
   VariableSetStatement() : SQLStatement(StatementType::VARIABLE_SET) {};
-  virtual ~VariableSetStatement() {};
+  virtual ~VariableSetStatement() {}
 
-  virtual void Accept(UNUSED_ATTRIBUTE SqlNodeVisitor* v) override {};
+  virtual void Accept(UNUSED_ATTRIBUTE SqlNodeVisitor* v) override {}
 };
 } // namespace parser
 } // namespace peloton

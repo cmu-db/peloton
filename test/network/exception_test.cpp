@@ -62,10 +62,6 @@ void *ParserExceptionTest(int port) {
     // If an exception occurs on one transaction, we can not use this transaction anymore
     int exception_count = 0, total = 6;
 
-    // TODO(Yuchen), the cause of the memory leak:
-    // In libpqxx, once a txn is abort, we cannot use it anymore. But the server expects a commit/abort
-    // to fully terminate the txn.
-    // Confusing: what happens if we open multiple txn on the same connection. The previous txn is not closed yet.
     // DROP query
     pqxx::work txn1(C);
     try {
