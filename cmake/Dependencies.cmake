@@ -73,6 +73,11 @@ list(APPEND Peloton_LINKER_LIBS ${LLVM_LIBRARIES})
 
 # --[ IWYU
 
+# ---[ Libunwind
+find_package(Libunwind)
+include_directories(SYSTEM ${LIBUNWIND_INCLUDE_DIR})
+list(APPEND Peloton_LINKER_LIBS ${LIBUNWIND_LIBRARIES})
+
 # Generate clang compilation database
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 

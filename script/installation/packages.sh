@@ -104,7 +104,7 @@ elif [[ "$DISTRO" == *"REDHAT"* ]] && [[ "${DISTRO_VER%.*}" == "7" ]]; then
             echo "The download path is required."
             exit 1
         fi
-    
+
         pushd $TMPDIR
         wget -nc --no-check-certificate "$1"
         tpath=$(basename "$1")
