@@ -1,5 +1,5 @@
 # Dockerfile specifically for build testing from Jenkins
-FROM fedora:25
+FROM fedora:27
 
 ADD . /peloton
 RUN dnf -q -y install sudo clang
