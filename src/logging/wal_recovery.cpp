@@ -178,6 +178,7 @@ bool WalRecovery::ReplayLogFile(FileHandle &file_handle) {
   // Status
   cid_t current_cid = INVALID_CID;
   cid_t current_eid = INVALID_EID;
+  std::unique_ptr<type::AbstractPool> pool(new type::EphemeralPool());
   size_t buf_size = 4096;
   std::unique_ptr<char[]> buffer(new char[buf_size]);
   char length_buf[sizeof(int32_t)];
@@ -196,7 +197,7 @@ bool WalRecovery::ReplayLogFile(FileHandle &file_handle) {
     // Adjust the buffer
     if ((size_t)length > buf_size) {
       buffer.reset(new char[(int)(length * 1.2)]);
-      buf_size = (size_t)length;
+      buf_size = (size_t)length * 1.2;
     }
 
     if (LoggingUtil::ReadNBytesFromFile(file_handle, (void *)buffer.get(),
@@ -243,7 +244,7 @@ bool WalRecovery::ReplayLogFile(FileHandle &file_handle) {
         for (oid_t oid = 0; oid < schema->GetColumns().size(); oid++) {
           type::Value val = type::Value::DeserializeFrom(
               record_decode, schema->GetColumn(oid).GetType());
-          tuple->SetValue(oid, val);
+          tuple->SetValue(oid, val, pool.get());
         }
         // When inserts happen in catalog tables, there must be a corresponding
         // data structure
@@ -284,18 +285,18 @@ bool WalRecovery::ReplayLogFile(FileHandle &file_handle) {
                   }
                   record_decode.ReadLong();  //block
                   record_decode.ReadLong(); //offset
-                  auto table = storage::StorageManager::GetInstance()->GetTableWithOid(
+                  auto column_table = storage::StorageManager::GetInstance()->GetTableWithOid(
                       database_id, table_id);
-                  auto schema = table->GetSchema();
-                  std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
-                  for (oid_t oid = 0; oid < schema->GetColumns().size(); oid++) {
+                  auto column_schema = column_table->GetSchema();
+                  storage::Tuple column_tuple (column_schema, true);
+                  for (oid_t oid = 0; oid < column_schema->GetColumns().size(); oid++) {
                     type::Value val = type::Value::DeserializeFrom(
-                        record_decode, schema->GetColumn(oid).GetType());
-                    tuple->SetValue(oid, val);
+                        record_decode, column_schema->GetColumn(oid).GetType());
+                    column_tuple.SetValue(oid, val, pool.get());
                   }
-                  std::string typeId = tuple->GetValue(4).ToString();
+                  std::string typeId = column_tuple.GetValue(4).ToString();
                   type::TypeId column_type = StringToTypeId(typeId);
-                  uint index = stoi(tuple->GetValue(2).ToString());
+                  uint index = stoi(column_tuple.GetValue(2).ToString());
                   if (index >= columns.size()) {
                     // Made to fit index as the last element
                     columns.resize(index + 1);
@@ -304,14 +305,14 @@ bool WalRecovery::ReplayLogFile(FileHandle &file_handle) {
                       column_type == type::TypeId::VARBINARY) {
                     catalog::Column tmp_col(column_type,
                                             type::Type::GetTypeSize(column_type),
-                                            tuple->GetValue(1).ToString(), false,
-                                            tuple->GetValue(1).GetAs<oid_t>());
+                                            column_tuple.GetValue(1).ToString(), false,
+                                            column_tuple.GetValue(1).GetAs<oid_t>());
                     columns[index] = tmp_col;
                   } else {
                     catalog::Column tmp_col(column_type,
                                             type::Type::GetTypeSize(column_type),
-                                            tuple->GetValue(1).ToString(), true,
-                                            tuple->GetValue(1).GetAs<oid_t>());
+                                            column_tuple.GetValue(1).ToString(), true,
+                                            column_tuple.GetValue(1).GetAs<oid_t>());
                     columns[index] = tmp_col;
                   }
 
@@ -442,7 +443,7 @@ bool WalRecovery::ReplayLogFile(FileHandle &file_handle) {
         for (oid_t oid = 0; oid < schema->GetColumns().size(); oid++) {
           type::Value val = type::Value::DeserializeFrom(
               record_decode, schema->GetColumn(oid).GetType());
-          tuple->SetValue(oid, val);
+          tuple->SetValue(oid, val, pool.get());
         }
         auto tuple_id =
             tg->InsertTupleFromRecovery(current_cid, tg_offset, tuple.get());
@@ -545,15 +546,15 @@ bool WalRecovery::ReplayLogFile(FileHandle &file_handle) {
         txn_id_t tuple_txn_id = tile_group->GetHeader()->GetTransactionId(tuple_slot_id);
         if (tuple_txn_id != INVALID_TXN_ID) {
           PL_ASSERT(tuple_txn_id == INITIAL_TXN_ID);
-          storage::Tuple *t = new storage::Tuple(schema, true);
+          std::unique_ptr<storage::Tuple> t(new storage::Tuple(schema, true));
           for (size_t col = 0; col < schema->GetColumnCount(); col++) {
-            t->SetValue(col, tile_group->GetValue(tuple_slot_id, col));
+            t->SetValue(col, tile_group->GetValue(tuple_slot_id, col), pool.get());
           }
           ItemPointer p(tile_group->GetTileGroupId(), tuple_slot_id);
           auto txn = concurrency::TransactionManagerFactory::GetInstance()
                          .BeginTransaction(IsolationLevelType::SERIALIZABLE);
           ItemPointer *i = new ItemPointer(tg, tuple_slot_id);
-          table->InsertInIndexes(t, p, txn, &i);
+          table->InsertInIndexes(t.get(), p, txn, &i);
           tile_group->GetHeader()->SetIndirection(tuple_slot_id, i);
           concurrency::TransactionManagerFactory::GetInstance().CommitTransaction(
               txn);
