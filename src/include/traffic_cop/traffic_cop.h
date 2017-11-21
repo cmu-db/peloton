@@ -69,7 +69,7 @@ class TrafficCop {
 
   // ExecutePrepStmt - Helper to handle txn-specifics for the plan-tree of a
   // statement
-  executor::ExecuteResult ExecuteStatementPlan(
+  executor::ExecuteResult ExecuteHelper(
       std::shared_ptr<planner::AbstractPlan> plan,
       const std::vector<type::Value> &params,
       std::vector<StatementResult> &result,

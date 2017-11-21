@@ -167,12 +167,12 @@ ResultType TrafficCop::ExecuteStatement(
       case QueryType::QUERY_ROLLBACK:
         return AbortQueryHelper();
       default:
-        ExecuteStatementPlan(statement->GetPlanTree(), params, result,
-                             result_format, thread_id);
+        ExecuteHelper(statement->GetPlanTree(), params, result,
+                      result_format, thread_id);
         if (is_queuing_) {
           return ResultType::QUEUING;
         }
-        // if in ExecuteStatementPlan, these is no need to queue task, like 'BEGIN', directly return result
+        // if in ExecuteHelper, these is no need to queue task, like 'BEGIN', directly return result
         return ExecuteStatementGetResult();
     }
   } catch (Exception &e) {
@@ -190,7 +190,7 @@ ResultType TrafficCop::ExecuteStatementGetResult() {
   return p_status_.m_result;
 }
 
-executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
+executor::ExecuteResult TrafficCop::ExecuteHelper(
     std::shared_ptr<planner::AbstractPlan> plan,
     const std::vector<type::Value> &params,
     std::vector<StatementResult> &result, const std::vector<int> &result_format,
@@ -199,7 +199,7 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
 
   auto &curr_state = GetCurrentTxnState();
   // check and begin txn here, partly because tests directly call
-  // ExecuteStatementPlan
+  // ExecuteHelper
   if (tcop_txn_state_.empty()) {
     // no active txn, single-statement txn
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -230,7 +230,7 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
     // otherwise, we have already aborted
     p_status_.m_result = ResultType::ABORTED;
   }
-  LOG_TRACE("Check Tcop_txn_state Size After ExecuteStatementPlan %lu", tcop_txn_state_.size());
+  LOG_TRACE("Check Tcop_txn_state Size After ExecuteHelper %lu", tcop_txn_state_.size());
   return p_status_;
 }
 

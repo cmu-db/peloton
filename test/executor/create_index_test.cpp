@@ -92,7 +92,7 @@ TEST_F(CreateIndexTests, CreatingIndex) {
       std::vector<int>(statement->GetTupleDescriptor().size(), 0);
 
   TestingSQLUtil::counter_.store(1);
-  executor::ExecuteResult status = traffic_cop.ExecuteStatementPlan(
+  executor::ExecuteResult status = traffic_cop.ExecuteHelper(
       statement->GetPlanTree(), params, result, result_format);
 
   if (traffic_cop.GetQueuing()) {
@@ -140,7 +140,7 @@ TEST_F(CreateIndexTests, CreatingIndex) {
       std::vector<int>(statement->GetTupleDescriptor().size(), 0);
 
   TestingSQLUtil::counter_.store(1);
-  status = traffic_cop.ExecuteStatementPlan(
+  status = traffic_cop.ExecuteHelper(
       statement->GetPlanTree(), params, result, result_format);
 
   if (traffic_cop.GetQueuing()) {
@@ -177,7 +177,7 @@ TEST_F(CreateIndexTests, CreatingIndex) {
       std::vector<int>(statement->GetTupleDescriptor().size(), 0);
 
   TestingSQLUtil::counter_.store(1);
-  status = traffic_cop.ExecuteStatementPlan(
+  status = traffic_cop.ExecuteHelper(
       statement->GetPlanTree(), params, result, result_format);
 
   if (traffic_cop.GetQueuing()) {
