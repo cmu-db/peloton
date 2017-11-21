@@ -20,6 +20,48 @@ unset UNAME
 DISTRO=$(echo $DISTRO | tr "[:lower:]" "[:upper:]")
 TMPDIR=/tmp
 
+<<<<<<< HEAD
+=======
+function install_repo_package() {
+    if [ "$#" -ne 1 ]; then
+        echo "The download path is required."
+        exit 1
+    else
+        dpath=$(basename "$1")
+    fi
+    pushd $TMPDIR
+    wget -nc --no-check-certificate "$1"
+    sudo yum install -y "$dpath"
+    popd
+    return 0
+}
+
+function install_package() {
+    if [ "$#" -lt 1 ]; then
+        echo "The download path is required."
+        exit 1
+    fi
+
+    pushd $TMPDIR
+    wget -nc --no-check-certificate "$1"
+    tpath=$(basename "$1")
+    dpath=$(tar --exclude='*/*' -tf "$tpath")
+    tar xzf $tpath
+    pushd $dpath
+    if [ -e "bootstrap.sh" ]; then
+        ./bootstrap.sh
+        sudo ./b2 install
+    else
+        ./configure
+        make
+        sudo make install
+    fi
+    popd; popd
+    return 0
+}
+
+
+>>>>>>> 2f09c62... using libunwind to print out stack trace info when throw out exception
 ## ------------------------------------------------
 ## UBUNTU
 ## ------------------------------------------------
@@ -60,8 +102,12 @@ if [ "$DISTRO" = "UBUNTU" ]; then
         libboost-thread-dev \
         libboost-filesystem-dev \
         libjemalloc-dev \
+<<<<<<< HEAD
         libunwind8-dev \
         liblzma-dev \
+=======
+        libunwind-dev \
+>>>>>>> 2f09c62... using libunwind to print out stack trace info when throw out exception
         valgrind \
         lcov \
         libpqxx-dev \

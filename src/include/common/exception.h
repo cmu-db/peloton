@@ -128,7 +128,11 @@ class Exception : public std::runtime_error {
     }
   }
 
+<<<<<<< HEAD
   static void PrintStackTrace(FILE *out = ::stderr) {
+=======
+  static void PrintStackTrace(FILE *out = ::stderr) {
+>>>>>>> 2f09c62... using libunwind to print out stack trace info when throw out exception
     unw_cursor_t cursor;
     unw_context_t context;
 
@@ -136,7 +140,11 @@ class Exception : public std::runtime_error {
     unw_init_local(&cursor, &context);
 
     int count = 0;
+<<<<<<< HEAD
     while (unw_step(&cursor) && count < 8) {
+=======
+    while (unw_step(&cursor)) {
+>>>>>>> 2f09c62... using libunwind to print out stack trace info when throw out exception
       unw_word_t ip, off;
       // get program counter register info
       unw_get_reg(&cursor, UNW_REG_IP, &ip);
@@ -146,10 +154,17 @@ class Exception : public std::runtime_error {
 
       char sym[256] = "Unknown";
       if (unw_get_proc_name(&cursor, sym, sizeof(sym), &off) == 0) {
+<<<<<<< HEAD
         char *nameptr = sym;
         int status;
         // demangle c++ function name
         char *demangled = abi::__cxa_demangle(sym, nullptr, nullptr, &status);
+=======
+        char *nameptr = sym;
+        int status;
+        // demangle c++ function name
+        char *demangled = abi::__cxa_demangle(sym, nullptr, nullptr, &status);
+>>>>>>> 2f09c62... using libunwind to print out stack trace info when throw out exception
         if (status == 0) {
           nameptr = demangled;
         }
