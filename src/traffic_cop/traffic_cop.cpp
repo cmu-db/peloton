@@ -509,47 +509,5 @@ FieldInfo TrafficCop::GetColumnFieldForValueType(std::string column_name,
                          field_size);
 }
 
-FieldInfo TrafficCop::GetColumnFieldForAggregates(std::string name,
-                                                  ExpressionType expr_type) {
-  // For now we only return INT for (MAX , MIN)
-  // TODO: Check if column type is DOUBLE and return it for (MAX. MIN)
-
-  PostgresValueType field_type;
-  size_t field_size;
-  std::string field_name;
-
-  // Check the expression type and return the corresponding description
-  switch (expr_type) {
-    case ExpressionType::AGGREGATE_MAX:
-    case ExpressionType::AGGREGATE_MIN:
-    case ExpressionType::AGGREGATE_COUNT: {
-      field_type = PostgresValueType::INTEGER;
-      field_size = 4;
-      field_name = name;
-      break;
-    }
-    // Return a DOUBLE if the functiob is AVG
-    case ExpressionType::AGGREGATE_AVG: {
-      field_type = PostgresValueType::DOUBLE;
-      field_size = 8;
-      field_name = name;
-      break;
-    }
-    case ExpressionType::AGGREGATE_COUNT_STAR: {
-      field_type = PostgresValueType::INTEGER;
-      field_size = 4;
-      field_name = "COUNT(*)";
-      break;
-    }
-    default: {
-      field_type = PostgresValueType::TEXT;
-      field_size = 255;
-      field_name = name;
-    }
-  }  // SWITCH
-  return std::make_tuple(field_name, static_cast<oid_t>(field_type),
-                         field_size);
-}
-
 }  // namespace tcop
 }  // namespace peloton
