@@ -65,7 +65,7 @@ TEST_F(OptimizerTests, HashJoinTest) {
   result_format =
       std::vector<int>(statement->GetTupleDescriptor().size(), 0);
   TestingSQLUtil::counter_.store(1);
-  executor::ExecuteResult status = traffic_cop.ExecuteStatementPlan(
+  executor::ExecuteResult status = traffic_cop.ExecuteHelper(
       statement->GetPlanTree(), params, result, result_format);
   if (traffic_cop.GetQueuing()) {
     TestingSQLUtil::ContinueAfterComplete();
@@ -98,8 +98,8 @@ TEST_F(OptimizerTests, HashJoinTest) {
   result_format =
       std::vector<int>(statement->GetTupleDescriptor().size(), 0);
   TestingSQLUtil::counter_.store(1);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
-                                            params, result, result_format);
+  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(),
+                                     params, result, result_format);
   if (traffic_cop.GetQueuing()) {
     TestingSQLUtil::ContinueAfterComplete();
     traffic_cop.ExecuteStatementPlanGetResult();
@@ -132,8 +132,8 @@ TEST_F(OptimizerTests, HashJoinTest) {
   result_format =
       std::vector<int>(statement->GetTupleDescriptor().size(), 0);
   TestingSQLUtil::counter_.store(1);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
-                                            params, result, result_format);
+  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(),
+                                     params, result, result_format);
   if (traffic_cop.GetQueuing()) {
     TestingSQLUtil::ContinueAfterComplete();
     traffic_cop.ExecuteStatementPlanGetResult();
@@ -161,8 +161,8 @@ TEST_F(OptimizerTests, HashJoinTest) {
   result_format =
       std::vector<int>(statement->GetTupleDescriptor().size(), 0);
   TestingSQLUtil::counter_.store(1);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
-                                            params, result, result_format);
+  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(),
+                                     params, result, result_format);
   if (traffic_cop.GetQueuing()) {
     TestingSQLUtil::ContinueAfterComplete();
     traffic_cop.ExecuteStatementPlanGetResult();
@@ -188,8 +188,8 @@ TEST_F(OptimizerTests, HashJoinTest) {
 
   result_format = std::vector<int>(4, 0);
   TestingSQLUtil::counter_.store(1);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
-                                            params, result, result_format);
+  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(),
+                                     params, result, result_format);
   if (traffic_cop.GetQueuing()) {
     TestingSQLUtil::ContinueAfterComplete();
     traffic_cop.ExecuteStatementPlanGetResult();

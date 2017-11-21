@@ -113,7 +113,7 @@ ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
     // SetTrafficCopCounter();
     counter_.store(1);
     auto status =
-        traffic_cop_.ExecuteStatementPlan(plan, params, result, result_format);
+        traffic_cop_.ExecuteHelper(plan, params, result, result_format);
     if (traffic_cop_.GetQueuing()) {
       TestingSQLUtil::ContinueAfterComplete();
       traffic_cop_.ExecuteStatementPlanGetResult();

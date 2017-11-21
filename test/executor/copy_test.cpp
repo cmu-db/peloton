@@ -89,7 +89,7 @@ TEST_F(CopyTests, Copying) {
 
     TestingSQLUtil::counter_.store(1);
     LOG_DEBUG("-----here: %d", i);
-    executor::ExecuteResult status = traffic_cop.ExecuteStatementPlan(
+    executor::ExecuteResult status = traffic_cop.ExecuteHelper(
         statement->GetPlanTree(), params, result, result_format);
 
     if (traffic_cop.GetQueuing()) {

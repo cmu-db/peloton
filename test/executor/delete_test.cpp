@@ -73,8 +73,8 @@ void ShowTable(std::string database_name, std::string table_name) {
       (parser::SelectStatement*)select_stmt->GetStatement(0));
   result_format = std::vector<int>(tuple_descriptor.size(), 0);
   TestingSQLUtil::counter_.store(1);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
-                                            params, result, result_format);
+  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(),
+                                     params, result, result_format);
   if (traffic_cop.GetQueuing()) {
     TestingSQLUtil::ContinueAfterComplete();
     traffic_cop.ExecuteStatementPlanGetResult();
@@ -149,7 +149,7 @@ TEST_F(DeleteTests, VariousOperations) {
   std::vector<int> result_format;
   result_format = std::vector<int>(0, 0);
   TestingSQLUtil::counter_.store(1);
-  executor::ExecuteResult status = traffic_cop.ExecuteStatementPlan(
+  executor::ExecuteResult status = traffic_cop.ExecuteHelper(
       statement->GetPlanTree(), params, result, result_format);
   if (traffic_cop.GetQueuing()) {
     TestingSQLUtil::ContinueAfterComplete();
@@ -183,8 +183,8 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("Executing plan...");
   result_format = std::vector<int>(0, 0);
   TestingSQLUtil::counter_.store(1);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
-                                            params, result, result_format);
+  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(),
+                                     params, result, result_format);
   if (traffic_cop.GetQueuing()) {
     TestingSQLUtil::ContinueAfterComplete();
     traffic_cop.ExecuteStatementPlanGetResult();
@@ -217,8 +217,8 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("Executing plan...");
   result_format = std::vector<int>(0, 0);
   TestingSQLUtil::counter_.store(1);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
-                                            params, result, result_format);
+  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(),
+                                     params, result, result_format);
   if (traffic_cop.GetQueuing()) {
     TestingSQLUtil::ContinueAfterComplete();
     traffic_cop.ExecuteStatementPlanGetResult();
@@ -253,8 +253,8 @@ TEST_F(DeleteTests, VariousOperations) {
       traffic_cop.GenerateTupleDescriptor(select_stmt->GetStatement(0));
   result_format = std::vector<int>(tuple_descriptor.size(), 0);
   TestingSQLUtil::counter_.store(1);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
-                                            params, result, result_format);
+  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(),
+                                     params, result, result_format);
   if (traffic_cop.GetQueuing()) {
     TestingSQLUtil::ContinueAfterComplete();
     traffic_cop.ExecuteStatementPlanGetResult();
@@ -284,8 +284,8 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("Executing plan...");
   result_format = std::vector<int>(0, 0);
   TestingSQLUtil::counter_.store(1);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
-                                            params, result, result_format);
+  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(),
+                                     params, result, result_format);
   if (traffic_cop.GetQueuing()) {
     TestingSQLUtil::ContinueAfterComplete();
     traffic_cop.ExecuteStatementPlanGetResult();
@@ -317,8 +317,8 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("Executing plan...");
   result_format = std::vector<int>(0, 0);
   TestingSQLUtil::counter_.store(1);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
-                                            params, result, result_format);
+  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(),
+                                     params, result, result_format);
   if (traffic_cop.GetQueuing()) {
     TestingSQLUtil::ContinueAfterComplete();
     traffic_cop.ExecuteStatementPlanGetResult();

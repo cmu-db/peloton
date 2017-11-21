@@ -51,8 +51,8 @@ void TestingStatsUtil::ShowTable(std::string database_name,
   LOG_DEBUG("%s",
             planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
-  traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(), params, result,
-                                   result_format);
+  traffic_cop.ExecuteHelper(statement->GetPlanTree(), params, result,
+                            result_format);
   txn_manager.CommitTransaction(txn);
 }
 
