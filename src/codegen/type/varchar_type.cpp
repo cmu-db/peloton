@@ -177,91 +177,92 @@ struct Like : public TypeSystem::BinaryOperator {
 
     // return value
     return Value{Boolean::Instance(), raw_ret};
+  }
+};
 
-    struct Length : public TypeSystem::UnaryOperator {
-      bool SupportsType(const Type &type) const override {
-        return type.GetSqlType() == Varchar::Instance();
-      }
-
-      Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
-        return Integer::Instance();
-      }
-
-      Value DoWork(CodeGen &codegen, const Value &val) const override {
-        llvm::Value *raw_ret = codegen.Call(StringFunctionsProxy::Length,
-                                            {val.GetValue(), val.GetLength()});
-        return Value{Integer::Instance(), raw_ret};
-      }
-    };
-
-    //===----------------------------------------------------------------------===//
-    // TYPE SYSTEM CONSTRUCTION
-    //===----------------------------------------------------------------------===//
-
-    // The list of types a SQL varchar type can be implicitly casted to
-    const std::vector<peloton::type::TypeId> kImplicitCastingTable = {
-        peloton::type::TypeId::VARCHAR};
-
-    // Explicit casting rules
-    static std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {};
-
-    // Comparison operations
-    static CompareVarchar kCompareVarchar;
-    static std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {
-        {kCompareVarchar}};
-
-    // Unary operators
-    static Ascii kAscii;
-    static Length kLength;
-    static std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {
-        {OperatorId::Ascii, kAscii}, {OperatorId::Length, kLength}};
-
-    // Binary operations
-    static Like kLike;
-    static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
-        {OperatorId::Like, kLike}};
-
-    // Nary operations
-    static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
-
-  }  // anonymous namespace
-
-  //===----------------------------------------------------------------------===//
-  // TINYINT TYPE CONFIGURATION
-  //===----------------------------------------------------------------------===//
-
-  // Initialize the VARCHAR SQL type with the configured type system
-  Varchar::Varchar()
-      : SqlType(peloton::type::TypeId::VARCHAR),
-        type_system_(kImplicitCastingTable, kExplicitCastingTable,
-                     kComparisonTable, kUnaryOperatorTable,
-                     kBinaryOperatorTable, kNaryOperatorTable) {}
-
-  Value Varchar::GetMinValue(UNUSED_ATTRIBUTE CodeGen &codegen) const {
-    throw Exception{"The VARCHAR type does not have a minimum value ..."};
+struct Length : public TypeSystem::UnaryOperator {
+  bool SupportsType(const Type &type) const override {
+    return type.GetSqlType() == Varchar::Instance();
   }
 
-  Value Varchar::GetMaxValue(UNUSED_ATTRIBUTE CodeGen &codegen) const {
-    throw Exception{"The VARCHAR type does not have a maximum value ..."};
+  Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
+    return Integer::Instance();
   }
 
-  Value Varchar::GetNullValue(CodeGen &codegen) const {
-    return Value{Type{TypeId(), true}, codegen.NullPtr(codegen.CharPtrType()),
-                 codegen.Const32(0), codegen.ConstBool(true)};
+  Value DoWork(CodeGen &codegen, const Value &val) const override {
+    llvm::Value *raw_ret = codegen.Call(StringFunctionsProxy::Length,
+                                        {val.GetValue(), val.GetLength()});
+    return Value{Integer::Instance(), raw_ret};
   }
+};
 
-  void Varchar::GetTypeForMaterialization(CodeGen &codegen,
-                                          llvm::Type *&val_type,
-                                          llvm::Type *&len_type) const {
-    val_type = codegen.CharPtrType();
-    len_type = codegen.Int32Type();
-  }
+//===----------------------------------------------------------------------===//
+// TYPE SYSTEM CONSTRUCTION
+//===----------------------------------------------------------------------===//
 
-  llvm::Function *Varchar::GetOutputFunction(
-      CodeGen &codegen, UNUSED_ATTRIBUTE const Type &type) const {
-    // TODO: We should use the length information in the type?
-    return ValuesRuntimeProxy::OutputVarchar.GetFunction(codegen);
-  }
+// The list of types a SQL varchar type can be implicitly casted to
+const std::vector<peloton::type::TypeId> kImplicitCastingTable = {
+    peloton::type::TypeId::VARCHAR};
+
+// Explicit casting rules
+static std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {};
+
+// Comparison operations
+static CompareVarchar kCompareVarchar;
+static std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {
+    {kCompareVarchar}};
+
+// Unary operators
+static Ascii kAscii;
+static Length kLength;
+static std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {
+    {OperatorId::Ascii, kAscii}, {OperatorId::Length, kLength}};
+
+// Binary operations
+static Like kLike;
+static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
+    {OperatorId::Like, kLike}};
+
+// Nary operations
+static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
+
+}  // anonymous namespace
+
+//===----------------------------------------------------------------------===//
+// TINYINT TYPE CONFIGURATION
+//===----------------------------------------------------------------------===//
+
+// Initialize the VARCHAR SQL type with the configured type system
+Varchar::Varchar()
+    : SqlType(peloton::type::TypeId::VARCHAR),
+      type_system_(kImplicitCastingTable, kExplicitCastingTable,
+                   kComparisonTable, kUnaryOperatorTable, kBinaryOperatorTable,
+                   kNaryOperatorTable) {}
+
+Value Varchar::GetMinValue(UNUSED_ATTRIBUTE CodeGen &codegen) const {
+  throw Exception{"The VARCHAR type does not have a minimum value ..."};
+}
+
+Value Varchar::GetMaxValue(UNUSED_ATTRIBUTE CodeGen &codegen) const {
+  throw Exception{"The VARCHAR type does not have a maximum value ..."};
+}
+
+Value Varchar::GetNullValue(CodeGen &codegen) const {
+  return Value{Type{TypeId(), true}, codegen.NullPtr(codegen.CharPtrType()),
+               codegen.Const32(0), codegen.ConstBool(true)};
+}
+
+void Varchar::GetTypeForMaterialization(CodeGen &codegen, llvm::Type *&val_type,
+                                        llvm::Type *&len_type) const {
+  val_type = codegen.CharPtrType();
+  len_type = codegen.Int32Type();
+}
+
+llvm::Function *Varchar::GetOutputFunction(
+    CodeGen &codegen, UNUSED_ATTRIBUTE const Type &type) const {
+  // TODO: We should use the length information in the type?
+  return ValuesRuntimeProxy::OutputVarchar.GetFunction(codegen);
+}
 
 }  // namespace type
 }  // namespace codegen

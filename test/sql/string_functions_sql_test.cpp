@@ -64,7 +64,7 @@ TEST_F(StringFunctionTest, LengthTest) {
                                   rows_affected, error_message);
   for (i = 0; i < 32; i++) {
     std::string resultStr(TestingSQLUtil::GetResultValueAsString(result, i));
-    std::string expectedStr(std::to_string(i + 1));
+    std::string expectedStr(std::to_string(i + 2));
     EXPECT_EQ(resultStr, expectedStr);
   }
 
