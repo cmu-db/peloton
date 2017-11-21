@@ -33,31 +33,17 @@ pipeline {
                     }
                 }
                 
-                stage('Debian Stretch') {
-                    agent { dockerfile { filename 'script/docker/debian-stretch/Dockerfile-jenkins' } }
-                    steps {
-                        sh 'echo Debian Stretch'
-                    }
-                }
-
-                stage('Fedora 24') {
-                    agent { dockerfile { filename 'script/docker/fedora24/Dockerfile-jenkins' } }
-                    steps {
-                        sh 'echo Fedora 24'
-                    }
-                }
-
-                stage('Fedora 25') {
-                    agent { dockerfile { filename 'script/docker/fedora25/Dockerfile-jenkins' } }
-                    steps {
-                        sh 'echo Fedora 25'
-                    }
-                }
-
                 stage('Fedora 26') {
                     agent { dockerfile { filename 'script/docker/fedora26/Dockerfile-jenkins' } }
                     steps {
                         sh 'echo Fedora 26'
+                    }
+                }
+
+                stage('Fedora 27') {
+                    agent { dockerfile { filename 'script/docker/fedora27/Dockerfile-jenkins' } }
+                    steps {
+                        sh 'echo Fedora 27'
                     }
                 }
 

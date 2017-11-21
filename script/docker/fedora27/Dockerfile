@@ -1,4 +1,4 @@
-FROM fedora:24
+FROM fedora:27
 
 ADD . /peloton
 # preliminary steps to allow packages.sh to run
