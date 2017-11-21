@@ -89,6 +89,16 @@ class PostgresProtocolHandler: public ProtocolHandler {
   // Extracts the contents of Postgres packet from the read socket buffer
   static bool ReadPacket(Buffer &rbuf, InputPacket &rpkt);
 
+  /* Routine to deal with the first packet from the client */
+  bool ProcessInitialPacket(InputPacket* pkt, Client client, bool& ssl_sent, bool& finish_startup_packet);
+
+  /* Routine to deal with SSL request message */
+  bool ProcessSSLRequestPacket(InputPacket *pkt);
+
+  /* Routine to deal with general Startup message */
+  bool ProcessStartupPacket(InputPacket* pkt, int32_t proto_version, Client client, bool& finish_startup_packet);
+
+  bool GetFinishedStartupPacket();
 
  private:
 

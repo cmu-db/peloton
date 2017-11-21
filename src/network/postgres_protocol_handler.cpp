@@ -28,6 +28,9 @@
 #include "type/value_factory.h"
 #include "network/marshal.h"
 #include "settings/settings_manager.h"
+#define SSL_MESSAGE_VERNO 80877103
+#define PROTO_MAJOR_VERSION(x) x >> 16
+#define UNUSED(x) (void)(x)
 
 namespace peloton {
 namespace network {
@@ -1052,6 +1055,86 @@ bool PostgresProtocolHandler::ReadPacket(Buffer &rbuf, InputPacket &rpkt) {
     // We have processed the data, move buffer pointer
     rbuf.buf_ptr += rpkt.len;
   }
+
+  return true;
+}
+
+/*
+ * process_startup_packet - Processes the startup packet
+ *  (after the size field of the header).
+ */
+bool PostgresProtocolHandler::ProcessInitialPacket(InputPacket *pkt, Client client, bool& ssl_sent, bool& finish_startup_packet) {
+  std::string token, value;
+  std::unique_ptr<OutputPacket> response(new OutputPacket());
+
+  int32_t proto_version = PacketGetInt(pkt, sizeof(int32_t));
+  LOG_INFO("protocol version: %d", proto_version);
+
+  // TODO: consider more about return value
+  if (proto_version == SSL_MESSAGE_VERNO) {
+    LOG_TRACE("process SSL MESSAGE");
+    ssl_sent = true;
+    return ProcessSSLRequestPacket(pkt);
+  }
+  else {
+    LOG_TRACE("process startup packet");
+    return ProcessStartupPacket(pkt, proto_version, client, finish_startup_packet);
+  }
+}
+
+bool PostgresProtocolHandler::ProcessSSLRequestPacket(InputPacket *pkt) {
+  UNUSED(pkt);
+  std::unique_ptr<OutputPacket> response(new OutputPacket());
+  // TODO: consider more about a proper response
+  if (peloton::settings::SettingsManager::GetBool(
+      peloton::settings::SettingId::ssl)) {
+    response->msg_type = NetworkMessageType::SSL_YES;
+    LOG_INFO("SSL support");
+  } else {
+    response->msg_type = NetworkMessageType::SSL_NO;
+    LOG_INFO("SSL not support");
+  }
+  responses.push_back(std::move(response));
+  force_flush = true;
+  return true;
+}
+
+bool PostgresProtocolHandler::ProcessStartupPacket(InputPacket* pkt, int32_t proto_version, Client client, bool& finished_startup_packet) {
+  std::string token, value;
+
+
+  // Only protocol version 3 is supported
+  if (PROTO_MAJOR_VERSION(proto_version) != 3) {
+    LOG_ERROR("Protocol error: Only protocol version 3 is supported.");
+    exit(EXIT_FAILURE);
+  }
+
+  // TODO: check for more malformed cases
+  // iterate till the end
+  for (;;) {
+    // loop end case?
+    if (pkt->ptr >= pkt->len) break;
+    GetStringToken(pkt, token);
+    // if the option database was found
+    if (token.compare("database") == 0) {
+      // loop end?
+      if (pkt->ptr >= pkt->len) break;
+      GetStringToken(pkt, client.dbname);
+    } else if (token.compare(("user")) == 0) {
+      // loop end?
+      if (pkt->ptr >= pkt->len) break;
+      GetStringToken(pkt, client.user);
+    }
+    else {
+      if (pkt->ptr >= pkt->len) break;
+      GetStringToken(pkt, value);
+      client.cmdline_options[token] = value;
+    }
+
+  }
+  finished_startup_packet = true;
+
+  SendInitialResponse();
 
   return true;
 }

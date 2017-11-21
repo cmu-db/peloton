@@ -12,12 +12,9 @@
 
 #include <unistd.h>
 #include <include/network/postgres_protocol_handler.h>
+#include <settings/settings_manager.h>
 #include "network/network_connection.h"
 #include "network/protocol_handler_factory.h"
-
-#define SSL_MESSAGE_VERNO 80877103
-#define PROTO_MAJOR_VERSION(x) x >> 16
-#define UNUSED(x) (void)(x)
 namespace peloton {
 namespace network {
 
@@ -376,10 +373,15 @@ ProcessResult NetworkConnection::ProcessInitial() {
       return ProcessResult::MORE_DATA_REQUIRED;
     }
   }
-
+  //TODO: If other protocols are added, this need to be changed
+  if (protocol_handler_ == nullptr) {
+    protocol_handler_ =
+      ProtocolHandlerFactory::CreateProtocolHandler(
+          ProtocolHandlerType::Postgres, &traffic_cop_);
+  }
   // We need to handle startup packet first
-
-  if (!ProcessInitialPacket(&rpkt)) {
+  //TODO: If other protocols are added, this need to be changed
+  if (!protocol_handler_->ProcessInitialPacket(&rpkt, client_, ssl_sent_, finish_startup_packet_)) {
     return ProcessResult::TERMINATE;
   }
   return ProcessResult::COMPLETE;
@@ -409,82 +411,6 @@ bool NetworkConnection::ReadStartupPacketHeader(Buffer &rbuf, InputPacket &rpkt)
   // we have processed the data, move buffer pointer
   rbuf.buf_ptr += initial_read_size;
   rpkt.header_parsed = true;
-  return true;
-}
-
-/*
- * process_startup_packet - Processes the startup packet
- *  (after the size field of the header).
- */
-bool NetworkConnection::ProcessInitialPacket(InputPacket *pkt) {
-  std::string token, value;
-  std::unique_ptr<OutputPacket> response(new OutputPacket());
-
-  int32_t proto_version = PacketGetInt(pkt, sizeof(int32_t));
-  LOG_INFO("protocol version: %d", proto_version);
-
-  // TODO: consider more about return value
-  if (proto_version == SSL_MESSAGE_VERNO) {
-    LOG_TRACE("process SSL MESSAGE");
-    return ProcessSSLRequestPacket(pkt);
-  }
-  else {
-    LOG_TRACE("process startup packet");
-    return ProcessStartupPacket(pkt, proto_version);
-  }
-}
-
-bool NetworkConnection::ProcessSSLRequestPacket(InputPacket *pkt) {
-  UNUSED(pkt);
-  std::unique_ptr<OutputPacket> response(new OutputPacket());
-  // TODO: consider more about a proper response
-  response->msg_type = NetworkMessageType::SSL_YES;
-  protocol_handler_->responses.push_back(std::move(response));
-  protocol_handler_->force_flush = true;
-  ssl_sent_ = true;
-  return true;
-}
-
-bool NetworkConnection::ProcessStartupPacket(InputPacket* pkt, int32_t proto_version) {
-  std::string token, value;
-
-
-  // Only protocol version 3 is supported
-  if (PROTO_MAJOR_VERSION(proto_version) != 3) {
-    LOG_ERROR("Protocol error: Only protocol version 3 is supported.");
-    exit(EXIT_FAILURE);
-  }
-
-  // TODO: check for more malformed cases
-  // iterate till the end
-  for (;;) {
-    // loop end case?
-    if (pkt->ptr >= pkt->len) break;
-    GetStringToken(pkt, token);
-    // if the option database was found
-    if (token.compare("database") == 0) {
-      // loop end?
-      if (pkt->ptr >= pkt->len) break;
-      GetStringToken(pkt, client_.dbname);
-    } else if (token.compare(("user")) == 0) {
-      // loop end?
-      if (pkt->ptr >= pkt->len) break;
-      GetStringToken(pkt, client_.user);
-    }
-    else {
-      if (pkt->ptr >= pkt->len) break;
-      GetStringToken(pkt, value);
-      client_.cmdline_options[token] = value;
-    }
-
-  }
-
-  protocol_handler_ =
-      ProtocolHandlerFactory::CreateProtocolHandler(
-          ProtocolHandlerType::Postgres, &traffic_cop_);
-
-  protocol_handler_->SendInitialResponse();
-
   return true;
 }
 
@@ -618,6 +544,7 @@ void NetworkConnection::Reset() {
   traffic_cop_.Reset();
   next_response_ = 0;
   ssl_sent_ = false;
+  finish_startup_packet_ = false;
 }
 
 void NetworkConnection::StateMachine(NetworkConnection *conn) {
@@ -645,7 +572,7 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
         switch (res) {
           case ReadState::READ_DATA_RECEIVED:
             // wait for some other event
-            if (conn->protocol_handler_ == nullptr) {
+            if (!conn->finish_startup_packet_) {
               conn->TransitState(ConnState::CONN_PROCESS_INITIAL);
             }
             else {
@@ -688,14 +615,12 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
             PL_ASSERT(false);
           }
           int ssl_accept_ret;
-          if ((ssl_accept_ret = SSL_accept(conn->conn_SSL_context)) <= 0) {
-            LOG_ERROR("Failed to accept (handshake) client SSL context.");
-            LOG_ERROR("ssl error: %d", SSL_get_error(conn->conn_SSL_context, ssl_accept_ret));
-            // TODO: consider more about proper action
-            PL_ASSERT(false);
-            conn->TransitState(ConnState::CONN_CLOSED);
+          // For non-blocking socket, check in loop
+          while ((ssl_accept_ret = SSL_accept(conn->conn_SSL_context)) <= 0) {
+            if (!HandleSSLError(conn, ssl_accept_ret)) {
+              break;
+            }
           }
-          LOG_ERROR("SSL handshake completed");
           conn->ssl_sent_ = false;
         }
 
@@ -772,7 +697,12 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
               conn->TransitState(ConnState::CONN_CLOSING);
               break;
             }
-            conn->TransitState(ConnState::CONN_PROCESS);
+            if (!conn->finish_startup_packet_) {
+              conn->TransitState(ConnState::CONN_PROCESS_INITIAL);
+            }
+            else {
+              conn->TransitState(ConnState::CONN_PROCESS);
+            }
             break;
           }
 
@@ -811,5 +741,38 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
   }
   LOG_TRACE("END of while loop");
 }
+
+// TODO: yc- need to handle error properly
+bool NetworkConnection::HandleSSLError(NetworkConnection* conn, int ret) {
+  int err = SSL_get_error(conn->conn_SSL_context, ret);
+  switch (err) {
+    case SSL_ERROR_SSL:conn->TransitState(ConnState::CONN_CLOSED);
+      LOG_INFO("Error ssl handshake");
+      return false;
+      break;
+    case SSL_ERROR_ZERO_RETURN:LOG_INFO("ssl error zero return");
+      conn->TransitState(ConnState::CONN_CLOSED);
+      return false;
+      break;
+    case SSL_ERROR_NONE:LOG_INFO("ssl error none");
+      break;
+    case SSL_ERROR_WANT_READ:LOG_INFO("ssl error want read");
+      break;
+    case SSL_ERROR_WANT_WRITE:LOG_INFO("ssl error want write");
+      break;
+    case SSL_ERROR_WANT_CONNECT:LOG_INFO("ssl error want connect");
+      break;
+    case SSL_ERROR_WANT_ACCEPT:LOG_INFO("ssl error want accept");
+      break;
+    case SSL_ERROR_WANT_X509_LOOKUP:LOG_INFO("ssl error want x509 lookup");
+      break;
+    case SSL_ERROR_SYSCALL:LOG_INFO("ssl error syscall");
+      conn->TransitState(ConnState::CONN_CLOSED);
+      return false;
+      break;
+  }
+  return true;
+}
+
 }  // namespace network
 }  // namespace peloton

@@ -27,6 +27,13 @@ namespace network {
   //  bool ManageStartupPacket();
   void ProtocolHandler::SendInitialResponse() {}
 
+  bool ProtocolHandler::ProcessInitialPacket(UNUSED_ATTRIBUTE InputPacket* pkt,
+                            UNUSED_ATTRIBUTE Client client,
+                            UNUSED_ATTRIBUTE bool& ssl_sent,
+                            UNUSED_ATTRIBUTE bool& finish_startup_packet) {
+    return true;
+  }
+
   ProcessResult ProtocolHandler::Process(
       UNUSED_ATTRIBUTE Buffer& rbuf,
       UNUSED_ATTRIBUTE const size_t thread_id) {
