@@ -1,44 +1,33 @@
-# - Try to find Liblzma
+# Try to find LibLZMA library and include path.
+# Once done this will define
 #
-#
-# Usage:
-# LIBLZMA_INCLUDE_DIRS, where to find LibLzma headers
-# LIBLZMA_LIBRARIES, LibLzma libraries
-# Liblzma_FOUND, If false, do not try to use Liblzma
+# LIBLZMA_INCLUDE_DIRS - where to find lzma/version.h, etc.
+# LIBLZMA_LIBRARIES - List of libraries when using liblzma.
+# LIBLZMA_FOUND - True if liblzma found.
 
-set(LIBLZMA_ROOT CACHE PATH "Root directory of Liblzma installation")
-set(LibLzma_EXTRA_PREFIXES /usr/local /opt/local "$ENV{HOME}" ${LIBLZMA_ROOT})
-foreach(prefix ${LibLzma_EXTRA_PREFIXES})
-  list(APPEND LibLzma_INCLUDE_PATHS "${prefix}/include")
-  list(APPEND LibLzma_LIBRARIES_PATHS "${prefix}/lib")
-endforeach()
+if(LIBLZMA_INCLUDE_DIR AND LIBLZMA_LIBRARY)
+  set(LIBLZMA_FOUND 1)
+  set(LIBLZMA_LIBRARIES ${LIBLZMA_LIBRARY})
+  set(LIBLZMA_INCLUDE_DIRS ${LIBLZMA_INCLUDE_DIR})
+else(LIBLZMA_INCLUDE_DIR AND LIBLZMA_LIBRARY)
+    set(LIBLZMA_FOUND 0)
+    set(LIBLZMA_LIBRARIES)
+    set(LIBLZMA_INCLUDE_DIRS)
+endif(LIBLZMA_INCLUDE_DIR AND LIBLZMA_LIBRARY)
 
-find_path(LIBLZMA_INCLUDE_DIRS event.h PATHS ${LibLzma_INCLUDE_PATHS})
-# "lib" prefix is needed on Windows
-find_library(LIBLZMA_LIBRARIES NAMES event Liblzma PATHS ${LibLzma_LIBRARIES_PATHS})
-find_library(LIBLZMA_PTHREAD_LIBRARIES NAMES Liblzma_pthreads event_pthreads PATHS ${LibLzma_LIBRARIES_PATHS})
+mark_as_advanced(LIBLZMA_INCLUDE_DIR)
+mark_as_advanced(LIBLZMA_LIBRARY)
+mark_as_advanced(LIBLZMA_FOUND)
 
-if (LIBLZMA_LIBRARIES AND LIBLZMA_INCLUDE_DIRS AND LIBLZMA_PTHREAD_LIBRARIES)
-  set(Liblzma_FOUND TRUE)
-  set(LIBLZMA_LIBRARIES ${LIBLZMA_LIBRARIES})
-  set(LIBLZMA_PTHREAD_LIBRARIES ${LIBLZMA_PTHREAD_LIBRARIES})
-  message(STATUS "Found Liblzma pthread (include: ${LIBLZMA_INCLUDE_DIRS}, library: ${LIBLZMA_PTHREAD_LIBRARIES})")
-else ()
-  set(Liblzma_FOUND FALSE)
-endif ()
-
-if (Liblzma_FOUND)
-  if (NOT Liblzma_FIND_QUIETLY)
-    message(STATUS "Found Liblzma (include: ${LIBLZMA_INCLUDE_DIRS}, library: ${LIBLZMA_LIBRARIES})")
-  endif ()
-else ()
-  if (LibLzma_FIND_REQUIRED)
-    message(FATAL_ERROR "Could NOT find Liblzma.")
-  endif ()
-  message(STATUS "Liblzma NOT found.")
-endif ()
-
-mark_as_advanced(
-    LIBLZMA_LIBRARIES
-    LIBLZMA_INCLUDE_DIRS
-  )
+if(NOT LIBLZMA_FOUND)
+  set(LIBLZMA_DIR_MESSAGE "liblzma was not found. Make sure LIBLZMA_LIBRARY and LIBLZMA_INCLUDE_DIR are set.")
+  if(NOT LIBLZMA_FIND_QUIETLY)
+    message(STATUS "${LIBLZMA_DIR_MESSAGE}")
+  else(NOT LIBLZMA_FIND_QUIETLY)
+    if(LIBLZMA_FIND_REQUIRED)
+      message(FATAL_ERROR "${LIBLZMA_DIR_MESSAGE}")
+    endif(LIBLZMA_FIND_REQUIRED)
+  endif(NOT LIBLZMA_FIND_QUIETLY)
+else(NOT LIBLZMA_FOUND)
+  message(STATUS "Found liblzma: ${LIBLZMA_LIBRARY}")
+endif(NOT LIBLZMA_FOUND)
