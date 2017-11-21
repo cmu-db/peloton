@@ -1019,6 +1019,14 @@ void Catalog::InitializeFunctions() {
           function::BuiltInFuncType{OperatorId::Extract,
                                     function::DateFunctions::Extract},
           txn);
+
+      AddBuiltinFunction(
+          "now", {},
+          type::TypeId::TIMESTAMP, internal_lang, "Now",
+          function::BuiltInFuncType{OperatorId::Now,
+                                    function::DateFunctions::_Now},
+          txn);
+
     } catch (CatalogException &e) {
       txn_manager.AbortTransaction(txn);
       throw e;

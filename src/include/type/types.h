@@ -1044,6 +1044,7 @@ enum class OperatorId : uint32_t {
   Sqrt,
   Extract,
   Floor,
+  Now,
 
   // Add more operators here, before the last "Invalid" entry
   Like,

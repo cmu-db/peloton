@@ -429,6 +429,8 @@ static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
 // Nary operations
 static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
 
+static std::vector<TypeSystem::NoArgOpInfo> kNoArgOperatorTable = {};
+
 }  // anonymous namespace
 
 //===----------------------------------------------------------------------===//
@@ -440,7 +442,7 @@ TinyInt::TinyInt()
     : SqlType(peloton::type::TypeId::TINYINT),
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
                    kComparisonTable, kUnaryOperatorTable,
-                   kBinaryOperatorTable, kNaryOperatorTable) {}
+                   kBinaryOperatorTable, kNaryOperatorTable, kNoArgOperatorTable) {}
 
 Value TinyInt::GetMinValue(CodeGen &codegen) const {
   auto *raw_val = codegen.Const8(peloton::type::PELOTON_INT8_MIN);
