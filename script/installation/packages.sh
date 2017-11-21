@@ -23,7 +23,7 @@ TMPDIR=/tmp
 function install_repo_package() {
     if [ "$#" -ne 1 ]; then
         echo "The download path is required."
-        exit 1 
+        exit 1
     else
         dpath=$(basename "$1")
     fi
@@ -84,6 +84,7 @@ if [ "$DISTRO" = "UBUNTU" ]; then
         libboost-thread-dev \
         libboost-filesystem-dev \
         libjemalloc-dev \
+        libunwind-dev \
         valgrind \
         lcov \
         libpqxx-dev \
