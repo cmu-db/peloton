@@ -1043,11 +1043,8 @@ enum class OperatorId : uint32_t {
   BTrim,
   Sqrt,
   Extract,
-<<<<<<< HEAD
   Floor,
-=======
   Now,
->>>>>>> catalog part
 
   // Add more operators here, before the last "Invalid" entry
 
