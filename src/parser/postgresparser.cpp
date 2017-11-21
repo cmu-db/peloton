@@ -1590,11 +1590,11 @@ parser::SQLStatement *PostgresParser::NodeTransform(Node *stmt) {
 // This function transfers a list of Postgres statements into
 // a Peloton SQLStatementList object. It traverses the parse list
 // and call the helper for singles nodes.
-parser::SQLStatementList *PostgresParser::ListTransform(List *root) {
-  auto result = new parser::SQLStatementList();
+parser::SQLStatementList* PostgresParser::ListTransform(List *root) {
   if (root == nullptr) {
     return nullptr;
   }
+  auto result = new parser::SQLStatementList();
   LOG_TRACE("%d statements in total\n", (root->length));
   try {
     for (auto cell = root->head; cell != nullptr; cell = cell->next) {

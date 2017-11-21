@@ -221,7 +221,7 @@ bool PostgresProtocolHandler::HardcodedExecuteFilter(QueryType query_type) {
         return false;
       }
       break;
-    // Skip duuplicate Commits and Rollbacks
+    // Skip duplicate Commits and Rollbacks
     case QueryType::QUERY_COMMIT:
     case QueryType::QUERY_ROLLBACK:
       if (txn_state_ == NetworkTransactionStateType::IDLE) {
@@ -244,12 +244,15 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
     auto &peloton_parser = parser::PostgresParser::GetInstance();
     sql_stmt_list = peloton_parser.BuildParseTree(query);
 
-    // When the query is empty(such as ";" or ";;", the pare tree is empty, parser will return nullptr
+    // When the query is empty(such as ";" or ";;", still valid), the pare tree is empty, parser will return nullptr.
+    // Double check is_valid here in case it's an unsupported SQL
     if (sql_stmt_list.get() != nullptr && !sql_stmt_list->is_valid) {
       throw ParserException("Error Parsing SQL statement");
     }
   } // If the statement is invalid or not supported yet
   catch (Exception &e) {
+    // If it's a single-stmt txn, abort it directly
+    // If it's a multi-stmt txn, cannot abort it right away. In case 'commit' or 'rollback' cannot be executed.
     traffic_cop_->AbortInvalidStmt();
     error_message = e.what();
     SendErrorResponse(
@@ -268,13 +271,11 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
   // We should store the rest of statements that will not be processed right away.
   // For the hack, in most cases, it works. Because for example in psql, one packet
   // contains only one query. But when using the pipeline mode in Libpqxx,
-  // it sens multiple query in one packet. In this case, it's incorrect.
+  // it sends multiple query in one packet. In this case, it's incorrect.
   auto sql_stmt = sql_stmt_list->PassOutStatement(0);
 
   traffic_cop_->query_ = query;
   traffic_cop_->query_type_ = StatementTypeToQueryType(sql_stmt->GetType(), sql_stmt.get());
-
-  LOG_TRACE("%s",QueryTypeToString(query_type_).c_str());
   protocol_type_ = NetworkProtocolType::POSTGRES_PSQL;
 
   switch (traffic_cop_->query_type_) {
@@ -327,7 +328,7 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
       result_format_ = result_format;
 
       //TODO(Yuchen): We assume it's only constant value expression
-      // If we have a table foo(id integer),
+      // If we have a table: foo(id integer),
       // we should support query like: insert into foo values(1+2);
       for (const std::unique_ptr<expression::AbstractExpression>& param : exec_stmt->parameters) {
         param_values.push_back(((expression::ConstantValueExpression*) param.get())->GetValue());
@@ -402,7 +403,7 @@ void PostgresProtocolHandler::ExecParseMessage(InputPacket *pkt) {
   std::string error_message, statement_name, query, query_type_string;
   GetStringToken(pkt, statement_name);
   GetStringToken(pkt, query);
-  // TODO: Why do we set skippd_stmt_ here?????
+  // In parsing stage, reset skipped_stmt_ to false
   skipped_stmt_ = false;
   std::unique_ptr<parser::SQLStatementList> sql_stmt_list;
   QueryType query_type = QueryType::QUERY_OTHER;
@@ -421,6 +422,9 @@ void PostgresProtocolHandler::ExecParseMessage(InputPacket *pkt) {
         {{NetworkMessageType::HUMAN_READABLE_ERROR, e.what()}});
     return;
   }
+
+  // If the query is either empty or redundant commands, or not supported yet,
+  // we will skip the rest commands (B,E,..) for this query
   bool skip = (sql_stmt_list.get() == nullptr || sql_stmt_list->GetNumStatements() == 0);
   if (!skip) {
     parser::SQLStatement* sql_stmt = sql_stmt_list->GetStatement(0);
@@ -436,6 +440,7 @@ void PostgresProtocolHandler::ExecParseMessage(InputPacket *pkt) {
     responses.push_back(std::move(response));
     return;
   }
+
   // Prepare statement
   std::shared_ptr<Statement> statement(nullptr);
 

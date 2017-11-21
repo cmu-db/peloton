@@ -51,7 +51,6 @@ void *ParserExceptionTest(int port) {
     pqxx::connection C(StringUtil::Format(
         "host=127.0.0.1 port=%d user=postgres sslmode=disable application_name=psql", port));
 
-
     peloton::network::NetworkConnection *conn =
         peloton::network::NetworkManager::GetConnection(
             peloton::network::NetworkManager::recent_connfd);
@@ -62,11 +61,16 @@ void *ParserExceptionTest(int port) {
 
     // If an exception occurs on one transaction, we can not use this transaction anymore
     int exception_count = 0, total = 6;
-    // Some DDLs
+
+    // TODO(Yuchen), the cause of the memory leak:
+    // In libpqxx, once a txn is abort, we cannot use it anymore. But the server expects a commit/abort
+    // to fully terminate the txn.
+    // Confusing: what happens if we open multiple txn on the same connection. The previous txn is not closed yet.
     // DROP query
     pqxx::work txn1(C);
     try {
       txn1.exec("DROP TABEL IF EXISTS employee;");
+      txn1.commit();
     } catch (const pqxx::pqxx_exception &e) {
       const pqxx::sql_error *s = dynamic_cast<const pqxx::sql_error*>(&e.base());
       if (s) {
@@ -78,7 +82,11 @@ void *ParserExceptionTest(int port) {
     // CREATE query
     pqxx::work txn2(C);
     try {
-      txn2.exec("CREATE TABLE employee(id ITN, name VARCHAR(100));");
+      // TODO(Yuchen): If the query is 'CREATE TABLE employee(id ITN)', postgres parser will generate a valid parse tree
+      // but when doing the node transform, Peloton recognize the type error. It throws exception but it has
+      // memory leak in postgresparser.cpp: CreateTransform
+      txn2.exec("CREATE TABEL employee(id ITN, name VARCHAR(100));");
+      txn2.commit();
     } catch (const pqxx::pqxx_exception &e) {
       const pqxx::sql_error *s = dynamic_cast<const pqxx::sql_error*>(&e.base());
       if (s) {
@@ -91,11 +99,11 @@ void *ParserExceptionTest(int port) {
     txn3.exec("CREATE TABLE foo(id INT);");
     txn3.commit();
 
-    // Some DMLs
     // Select query
     pqxx::work txn4(C);
     try {
       txn4.exec("SELECT name FROM foo id = 1;");
+      txn4.commit();
     } catch (const pqxx::pqxx_exception &e) {
       const pqxx::sql_error *s = dynamic_cast<const pqxx::sql_error*>(&e.base());
       if (s) {
@@ -108,6 +116,7 @@ void *ParserExceptionTest(int port) {
     pqxx::work txn5(C);
     try {
       txn5.exec("SELECT ;");
+      txn5.commit();
     } catch (const pqxx::pqxx_exception &e) {
       const pqxx::sql_error *s = dynamic_cast<const pqxx::sql_error*>(&e.base());
       if (s) {
@@ -120,6 +129,7 @@ void *ParserExceptionTest(int port) {
     pqxx::work txn6(C);
     try {
       txn6.exec("PREPARE func INSERT INTO foo VALUES($1, $2);");
+      txn6.commit();
     } catch (const pqxx::pqxx_exception &e) {
       const pqxx::sql_error *s = dynamic_cast<const pqxx::sql_error*>(&e.base());
       if (s) {
@@ -133,6 +143,7 @@ void *ParserExceptionTest(int port) {
     try {
       txn7.exec("PREPARE func(INT) AS INSERT INTO foo VALUES($1);");
       txn7.exec("EXECUTE fun;");
+      txn7.commit();
     } catch (const pqxx::pqxx_exception &e) {
       const pqxx::sql_error *s = dynamic_cast<const pqxx::sql_error*>(&e.base());
       if (s) {
@@ -158,11 +169,11 @@ void *ParserExceptionTest(int port) {
     EXPECT_EQ(exception_count, total);
 
   } catch (const std::exception &e) {
-    LOG_INFO("[SimpleQueryTest] Exception occurred: %s", e.what());
+    LOG_INFO("[ExceptionTest] Exception occurred: %s", e.what());
     EXPECT_TRUE(false);
   }
 
-  LOG_INFO("[FailureTest] Client has closed");
+  LOG_INFO("[ExceptionTest] Client has closed");
   return NULL;
 }
 
