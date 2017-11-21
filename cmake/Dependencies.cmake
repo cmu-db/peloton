@@ -73,14 +73,11 @@ list(APPEND Peloton_LINKER_LIBS ${LLVM_LIBRARIES})
 
 # --[ IWYU
 
-<<<<<<< HEAD
 # ---[ Liblzma
 find_package(Liblzma)
 include_directories(SYSTEM ${LIBLZMA_INCLUDE_DIR})
 list(APPEND Peloton_LINKER_LIBS ${LIBLZMA_LIBRARIES})
 
-=======
->>>>>>> 2f09c62... using libunwind to print out stack trace info when throw out exception
 # ---[ Libunwind
 find_package(Libunwind)
 include_directories(SYSTEM ${LIBUNWIND_INCLUDE_DIR})
