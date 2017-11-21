@@ -156,7 +156,8 @@ class Cost {
       const std::shared_ptr<TableStats>& right_input_stats,
       std::shared_ptr<TableStats>& output_stats,
       const std::string& left_column_name,
-      const std::string& right_column_name);
+      const std::string& right_column_name,
+      bool &enable_sampling);
 
   static bool UpdateJoinOutputStatsWithSampling(
       const std::shared_ptr<TableStats>& left_input_stats,
