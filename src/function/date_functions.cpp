@@ -168,10 +168,10 @@ int64_t DateFunctions::Now() {
                           time_info->tm_min * 60 + 
                           time_info->tm_sec;
   // EPOCH time start from 1970
-  uint16_t year = time_info->tm_year + 1970;
+  uint16_t year = time_info->tm_year + 1900;
   uint16_t day = time_info->tm_mday;
-  uint16_t month = time_info->tm_mon;
-  
+  uint16_t month = time_info->tm_mon + 1; // tm_mon is from 0 - 11
+
   time_stamp = tv.tv_usec;
   time_stamp += hour_min_sec_base * hour_min_sec;
   time_stamp += year_base * year;
