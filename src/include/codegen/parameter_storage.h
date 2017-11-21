@@ -26,23 +26,23 @@ namespace peloton {
 namespace codegen {
 
 //===----------------------------------------------------------------------===//
-// A storage area where slots can be updated.
+// A parameter storage which stores the parameterized values for codegen runtime
 //===----------------------------------------------------------------------===//
 class ParameterStorage {
  public:
   // Constructor
-  ParameterStorage() : space_ptr_(nullptr) {}
+  ParameterStorage(std::vector<expression::Parameter> &parameters) :
+      space_ptr_(nullptr), parameters_(parameters) {}
 
   // Build up the parameter storage and load up the values
-  llvm::Type *Setup(CodeGen &codegen,
-                    std::vector<expression::Parameter> &parameters) {
-    parameters_ = &parameters;
+  llvm::Type *Setup(CodeGen &codegen) {
     // Build the storage with type information
     // TODO Check whether we need to support nullability
     //      We have implemented the rest to support nullability
-    for (auto &parameter: parameters)
+    for (auto &parameter: parameters_) {
       storage_.AddType(codegen::type::Type{parameter.GetValueType(),
                                            false});
+    }
     return storage_.Finalize(codegen);
   }
 
@@ -54,14 +54,15 @@ class ParameterStorage {
 
     // Set the values to the storage
     UpdateableStorage::NullBitmap null_bitmap{codegen, storage_, space_ptr_};
-    for (uint32_t i = 0; i < parameters_->size(); i++) {
-      auto &parameter = parameters_->at(i);
+    for (uint32_t i = 0; i < parameters_.size(); i++) {
+      auto &parameter = parameters_[i];
       auto val = DeriveParameterValue(codegen, parameter, query_parameters_ptr,
                                       i);
-      if (null_bitmap.IsNullable(i))
+      if (null_bitmap.IsNullable(i)) {
         storage_.SetValue(codegen, space_ptr_, i, val, null_bitmap);
-      else
+      } else {
         storage_.SetValueSkipNull(codegen, space_ptr_, i, val);
+      }
     }
     null_bitmap.WriteBack(codegen);
   }
@@ -69,10 +70,11 @@ class ParameterStorage {
   codegen::Value GetValue(CodeGen &codegen, uint32_t index) const {
     PL_ASSERT(space_ptr_);
     UpdateableStorage::NullBitmap null_bitmap{codegen, storage_, space_ptr_};
-    if (null_bitmap.IsNullable(index))
+    if (null_bitmap.IsNullable(index)) {
       return storage_.GetValue(codegen, space_ptr_, index, null_bitmap);
-    else
+    } else {
       return storage_.GetValueSkipNull(codegen, space_ptr_, index);
+    }
   }
 
  private:
@@ -143,7 +145,7 @@ class ParameterStorage {
   llvm::Value *space_ptr_;
 
   // Parameters' information
-  std::vector<expression::Parameter> *parameters_;
+  std::vector<expression::Parameter> &parameters_;
 };
 
 }  // namespace codegen

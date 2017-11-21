@@ -311,7 +311,7 @@ double BloomFilterCodegenTest::ExecuteJoin(std::string query,
     auto compiled_query = compiler.Compile(*plan.get(),
                                            *parameters.get(), consumer);
     // Run
-    compiled_query->Execute(*txn, executor_context.get(), parameters.get(),
+    compiled_query->Execute(*executor_context.get(), *parameters.get(),
                             consumer.GetCountAsState(), &stats);
 
     LOG_INFO("Execution Time: %0.0f ms", stats.plan_ms);

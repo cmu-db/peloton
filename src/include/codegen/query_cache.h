@@ -37,11 +37,11 @@ class QueryCache : public Singleton<QueryCache> {
   void Add(const std::shared_ptr<planner::AbstractPlan> &key,
            std::unique_ptr<Query> &&val);
 
-  size_t GetSize() { return size_; }
+  size_t GetCapacity() { return capacity_; }
 
-  void SetSize(size_t size) {
-    Resize(size);
-    size_ = size;
+  void SetCapacity(size_t capacity) {
+    Resize(capacity);
+    capacity_ = capacity;
   }
 
   size_t GetCount() { return cache_map_.size(); }
@@ -79,7 +79,7 @@ class QueryCache : public Singleton<QueryCache> {
            decltype(query_list_.begin()),
            planner::Hash, planner::Equal> cache_map_;
 
-  size_t size_ = 0;
+  size_t capacity_ = 0;
 };
 
 }  // namespace codegen

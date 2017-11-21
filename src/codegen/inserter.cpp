@@ -43,7 +43,7 @@ char *Inserter::AllocateTupleStorage() {
 }
 
 peloton::type::AbstractPool *Inserter::GetPool() {
-  // This should be called after RerserveTupleStorage()
+  // This should be called after AllocateTupleStorage()
   PL_ASSERT(tile_);
   return tile_->GetPool();
 }
@@ -67,7 +67,7 @@ void Inserter::Insert() {
 
 void Inserter::TearDown() {
   // Updater object does not destruct its own data structures
-  if (tile_ != nullptr) tile_.reset();
+  tile_.reset();
 }
 
 }  // namespace codegen

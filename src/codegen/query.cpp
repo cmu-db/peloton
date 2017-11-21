@@ -15,6 +15,7 @@
 #include "codegen/query_parameters.h"
 #include "common/logger.h"
 #include "common/timer.h"
+#include "executor/executor_context.h"
 #include "storage/storage_manager.h"
 
 namespace peloton {
@@ -23,15 +24,15 @@ namespace codegen {
 // Constructor
 Query::Query(const planner::AbstractPlan &query_plan,
              QueryParameters &parameters)
-    : query_plan_(query_plan), parameters_(parameters) {}
+    : query_plan_(query_plan), parameters_(parameters),
+      parameters_storage_(parameters.GetParameters()) {}
 
 // Execute the query on the given database (and within the provided transaction)
 // This really involves calling the init(), plan() and tearDown() functions, in
 // that order. We also need to correctly handle cases where _any_ of those
 // functions throw exceptions.
-void Query::Execute(concurrency::Transaction &txn,
-                    executor::ExecutorContext *executor_context,
-                    QueryParameters *query_parameters,
+void Query::Execute(executor::ExecutorContext &executor_context,
+                    QueryParameters &query_parameters,
                     char *consumer_arg, RuntimeStats *stats) {
   CodeGen codegen{GetCodeContext()};
 
@@ -60,10 +61,10 @@ void Query::Execute(concurrency::Transaction &txn,
 
   // Set up the function arguments
   auto *func_args = reinterpret_cast<FunctionArguments *>(param_data.get());
-  func_args->txn = &txn;
+  func_args->txn = executor_context.GetTransaction();
   func_args->catalog = storage::StorageManager::GetInstance();
-  func_args->executor_context = executor_context;
-  func_args->query_parameters = query_parameters;
+  func_args->executor_context = &executor_context;
+  func_args->query_parameters = &query_parameters;
   func_args->consumer_arg = consumer_arg;
 
   // Timer

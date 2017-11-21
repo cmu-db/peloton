@@ -176,7 +176,7 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecute(
   auto compiled_query = compiler.Compile(plan, *parameters.get(), consumer,
                                          &stats);
   // Run
-  compiled_query->Execute(*txn, executor_context.get(), parameters.get(),
+  compiled_query->Execute(*executor_context.get(), *parameters.get(),
                           consumer_state);
 
   txn_manager.CommitTransaction(txn);
@@ -209,12 +209,12 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecuteCache(
   if (query == nullptr) {
     auto compiled_query = compiler.Compile(*plan, *parameters.get(), consumer,
                                            &stats);
-    compiled_query->Execute(*txn, executor_context.get(), parameters.get(),
+    compiled_query->Execute(*executor_context.get(), *parameters.get(),
                             consumer_state);
     codegen::QueryCache::Instance().Add(plan, std::move(compiled_query));
     if (cached != nullptr) *cached = false;
   } else {
-    query->Execute(*txn, executor_context.get(), parameters.get(), consumer_state);
+    query->Execute(*executor_context.get(), *parameters.get(), consumer_state);
     if (cached != nullptr) *cached = true;
   }
   txn_manager.CommitTransaction(txn);
