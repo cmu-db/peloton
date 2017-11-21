@@ -59,7 +59,7 @@ double Selectivity::LessThan(const std::shared_ptr<TableStats> &table_stats,
   // TODO: make sure condition uses column id. check if column name is not
   // empty.
   std::shared_ptr<ColumnStats> column_stats =
-      table_stats->GetColumnStats(condition.column_id);
+      table_stats->GetColumnStats(condition.column_name);
   // Return default selectivity if no column stats for given column_id
   if (column_stats == nullptr) {
     return DEFAULT_SELECTIVITY;
@@ -79,8 +79,8 @@ double Selectivity::LessThan(const std::shared_ptr<TableStats> &table_stats,
 double Selectivity::Equal(const std::shared_ptr<TableStats> &table_stats,
                           const ValueCondition &condition) {
   double value = StatsUtil::PelotonValueToNumericValue(condition.value);
-  auto column_stats = table_stats->GetColumnStats(condition.column_id);
-
+  auto column_stats = table_stats->GetColumnStats(condition.column_name);
+//  LOG_INFO("column name %s", condition.column_name);
   if (std::isnan(value) || column_stats == nullptr) {
     LOG_DEBUG("Calculate selectivity: return null");
     return DEFAULT_SELECTIVITY;
@@ -142,7 +142,7 @@ double Selectivity::Like(const std::shared_ptr<TableStats> &table_stats,
   }
 
   UNUSED_ATTRIBUTE const char *pattern = (condition.value).GetData();
-  auto column_stats = table_stats->GetColumnStats(condition.column_id);
+  auto column_stats = table_stats->GetColumnStats(condition.column_name);
   if (column_stats == nullptr) {
     return DEFAULT_SELECTIVITY;
   }

@@ -66,6 +66,7 @@ size_t TupleSampler::AcquireSampleTuples(size_t target_sample_count) {
     LOG_TRACE("Add sampled tuple: %s", tuple->GetInfo().c_str());
     sampled_tuples.push_back(std::move(tuple));
   }
+  LOG_INFO("%lu Sample added - size: %lu", sampled_tuples.size(), sampled_tuples.size() * tuple_schema->GetLength());
   return sampled_tuples.size();
 }
 
@@ -111,6 +112,7 @@ bool TupleSampler::GetTupleInTileGroup(storage::TileGroup *tile_group,
   }
   LOG_TRACE("offset %lu, Tuple info: %s", tuple_offset,
             tuple->GetInfo().c_str());
+
   return true;
 }
 
@@ -152,6 +154,7 @@ size_t TupleSampler::AcquireSampleTuplesForIndexJoin(
   }
   LOG_TRACE("join schema info %s",
             sampled_tuples[0]->GetSchema()->GetInfo().c_str());
+  LOG_INFO("%lu Sample added - size: %lu", sampled_tuples.size(), sampled_tuples.size() * join_schema->GetLength());
   return sampled_tuples.size();
 }
 

@@ -253,14 +253,17 @@ bool Cost::UpdateJoinOutputStatsWithSampling(const std::shared_ptr<TableStats> &
     left = right_column_name;
     right = left_column_name;
   }
+  bool enable_sampling = true;
   auto column_ids = GenerateJoinSamples(left_input_stats, right_input_stats,
-                                        output_stats, left, right);
+                                        output_stats, left, right, enable_sampling);
   if (column_ids.empty()) {
-    return false;
+    return enable_sampling;
   }
 
   LOG_TRACE("join schema info %s", samples[0]->GetSchema()->GetInfo().c_str());
+
   output_stats->UpdateJoinColumnStats(column_ids);
+  LOG_INFO("Join using sampling %lu", output_stats->num_rows);
 
   return true;
 }
@@ -271,7 +274,7 @@ std::vector<oid_t> Cost::GenerateJoinSamples(
     const std::shared_ptr<TableStats> &left_input_stats,
     const std::shared_ptr<TableStats> &right_input_stats,
     std::shared_ptr<TableStats> &output_stats,
-    const std::string &left_column_name, const std::string &right_column_name) {
+    const std::string &left_column_name, const std::string &right_column_name, bool &enable_sampling) {
   std::vector<oid_t> column_ids;
   auto sample_stats = left_input_stats, index_stats = right_input_stats;
   auto sample_column = left_column_name, index_column = right_column_name;
@@ -286,6 +289,7 @@ std::vector<oid_t> Cost::GenerateJoinSamples(
   auto index = index_stats->GetIndex(index_column);
   // No index available or sample_stats doesn't have samples available
   if (index == nullptr || !sample_stats->GetSampler()) {
+    enable_sampling = false;
     return column_ids;
   }
   // index_stats should be base table and have non-null sampler
@@ -304,6 +308,7 @@ std::vector<oid_t> Cost::GenerateJoinSamples(
   auto column_id = sample_stats->GetColumnStats(sample_column)->column_id;
   auto &sample_tuples = sample_stats->GetSampler()->GetSampledTuples();
   if (sample_tuples.empty()) {
+    enable_sampling = false;
     return column_ids;
   }
   int cnt = 0;
@@ -324,7 +329,13 @@ std::vector<oid_t> Cost::GenerateJoinSamples(
     matched_tuples.push_back(fetched_tuples);
     cnt += fetched_tuples.size();
   }
-  LOG_TRACE("sample number %d", cnt);
+  LOG_INFO("sample number %d", cnt);
+
+  if (cnt == 0) {
+    enable_sampling = false;
+    return column_ids;
+  }
+
   index_stats->GetSampler()->AcquireSampleTuplesForIndexJoin(
       sample_tuples, matched_tuples, cnt);
   output_stats->SetTupleSampler(index_stats->GetSampler());
@@ -389,7 +400,7 @@ void Cost::UpdateJoinOutputStats(
     std::string right_column_name =
         right_child->GetTableName() + "." + right_child->GetColumnName();
 
-    if (!enable_sampling || UpdateJoinOutputStatsWithSampling(left_input_stats, right_input_stats,
+    if (!enable_sampling || !UpdateJoinOutputStatsWithSampling(left_input_stats, right_input_stats,
                                                           output_stats, left_column_name,
                                                           right_column_name)) {
       double left_cardinality, right_cardinality;
