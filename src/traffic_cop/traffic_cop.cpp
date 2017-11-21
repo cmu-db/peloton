@@ -77,13 +77,11 @@ ResultType TrafficCop::BeginQueryHelper(size_t thread_id) {
   if (tcop_txn_state_.empty()) {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction(thread_id);
-
     // this shouldn't happen
     if (txn == nullptr) {
       LOG_DEBUG("Begin txn failed");
       return ResultType::FAILURE;
     }
-
     // initialize the current result as success
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
@@ -122,6 +120,7 @@ ResultType TrafficCop::AbortQueryHelper() {
     auto result = txn_manager.AbortTransaction(txn);
     return result;
   } else {
+    delete curr_state.first;
     // otherwise, the txn has already been aborted
     return ResultType::ABORTED;
   }
@@ -217,9 +216,84 @@ void TrafficCop::ExecuteStatementPlanGetResult() {
   }
 }
 
+std::shared_ptr<Statement> TrafficCop::PrepareStatement(
+    const std::string &stmt_name, const std::string &query_string,
+    std::unique_ptr<parser::SQLStatementList> sql_stmt_list, UNUSED_ATTRIBUTE std::string &error_message,
+    const size_t thread_id UNUSED_ATTRIBUTE) {
+
+  LOG_TRACE("Prepare Statement query: %s", query_string.c_str());
+  StatementType stmt_type = sql_stmt_list->GetStatement(0)->GetType();
+  QueryType query_type = StatementTypeToQueryType(stmt_type, sql_stmt_list->GetStatement(0));
+  std::shared_ptr<Statement> statement(new Statement(stmt_name, query_type, query_string, sql_stmt_list));
+
+  // We can learn transaction's states, BEGIN, COMMIT, ABORT, or ROLLBACK from
+  // member variables, tcop_txn_state_. We can also get single-statement txn or
+  // multi-statement txn from member variable single_statement_txn_
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  // --multi-statements except BEGIN in a transaction
+  if (!tcop_txn_state_.empty()) {
+    single_statement_txn_ = false;
+    // multi-statment txn has been aborted, just skip this query,
+    // and do not need to parse or execute this query anymore.
+    // Do not return nullptr in case that 'COMMIT' cannot be execute,
+    // because nullptr will directly return ResultType::FAILURE to
+    // packet_manager
+    if (tcop_txn_state_.top().second == ResultType::ABORTED) {
+      return statement;
+    }
+  } else {
+    // Begin new transaction when received single-statement query or "BEGIN"
+    // from multi-statement query
+    if (statement->GetQueryType() == QueryType::QUERY_BEGIN) {  // only begin a new transaction
+      // note this transaction is not single-statement transaction
+      LOG_INFO("BEGIN");
+      single_statement_txn_ = false;
+    } else {
+      // single statement
+      LOG_INFO("SINGLE TXN");
+      single_statement_txn_ = true;
+    }
+    auto txn = txn_manager.BeginTransaction(thread_id);
+    // this shouldn't happen
+    if (txn == nullptr) {
+      LOG_TRACE("Begin txn failed");
+    }
+    // initialize the current result as success
+    tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+  }
+
+  try {
+    auto plan =
+        optimizer_->BuildPelotonPlanTree(sql_stmt_list, default_database_name_, tcop_txn_state_.top().first);
+    statement->SetPlanTree(plan);
+    // Get the tables that our plan references so that we know how to
+    // invalidate it at a later point when the catalog changes
+    const std::set<oid_t> table_oids =
+        planner::PlanUtil::GetTablesReferenced(plan.get());
+    statement->SetReferencedTables(table_oids);
+
+    if (query_type == QueryType::QUERY_SELECT) {
+      auto tuple_descriptor = GenerateTupleDescriptor(sql_stmt_list->GetStatement(0));
+      statement->SetTupleDescriptor(tuple_descriptor);
+    }
+  } catch(Exception &e) {
+    error_message = e.what();
+    AbortInvalidStmt();
+    return nullptr;
+  }
+
+#ifdef LOG_DEBUG_ENABLED
+  if (statement->GetPlanTree().get() != nullptr) {
+    LOG_TRACE("Statement Prepared: %s", statement->GetInfo().c_str());
+    LOG_TRACE("%s", statement->GetPlanTree().get()->GetInfo().c_str());
+  }
+#endif
+  return statement;
+}
+
 /* Do nothing if there is no active txt;
    If single txn, abort the txn;
-   If multi-txn, set 'ABORTED'
+   If multi-txn, set 'ABORTED'. The multi-txn will be explicitly aborted when receiving 'Commit' or 'Abort' or Terminate command.
 */
 void TrafficCop::AbortInvalidStmt() {
   if (single_statement_txn_) {
@@ -363,83 +437,6 @@ FieldInfo TrafficCop::GetColumnFieldForValueType(std::string column_name,
                          field_size);
 }
 
-std::shared_ptr<Statement> TrafficCop::PrepareStatement(
-    const std::string &stmt_name, const std::string &query_string,
-    std::unique_ptr<parser::SQLStatementList> sql_stmt_list, UNUSED_ATTRIBUTE std::string &error_message,
-    const size_t thread_id UNUSED_ATTRIBUTE) {
-  LOG_TRACE("Prepare Statement query: %s", query_string.c_str());
-  StatementType stmt_type = sql_stmt_list->GetStatement(0)->GetType();
-  QueryType query_type = StatementTypeToQueryType(stmt_type, sql_stmt_list->GetStatement(0));
-  std::shared_ptr<Statement> statement(new Statement(stmt_name, query_type, query_string, sql_stmt_list));
-
-  // We can learn transaction's states, BEGIN, COMMIT, ABORT, or ROLLBACK from
-  // member variables, tcop_txn_state_. We can also get single-statement txn or
-  // multi-statement txn from member variable is_single_statement_txn_
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  // --multi-statements except BEGIN in a transaction
-  if (!tcop_txn_state_.empty()) {
-    is_single_statement_txn_ = false;
-    // multi-statment txn has been aborted, just skip this query,
-    // and do not need to parse or execute this query anymore.
-    // Do not return nullptr in case that 'COMMIT' cannot be execute,
-    // because nullptr will directly return ResultType::FAILURE to
-    // packet_manager
-    if (tcop_txn_state_.top().second == ResultType::ABORTED) {
-      return statement;
-    }
-  } else {
-    // Begin new transaction when received single-statement query or "BEGIN"
-    // from multi-statement query
-    if (statement->GetQueryType() ==
-        QueryType::QUERY_BEGIN) {  // only begin a new transaction
-      // note this transaction is not single-statement transaction
-      LOG_TRACE("BEGIN");
-      is_single_statement_txn_ = false;
-    } else {
-      // single statement
-      LOG_TRACE("SINGLE TXN");
-      is_single_statement_txn_ = true;
-    }
-    auto txn = txn_manager.BeginTransaction(thread_id);
-    // this shouldn't happen
-    if (txn == nullptr) {
-      LOG_TRACE("Begin txn failed");
-    }
-    // initialize the current result as success
-    tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
-  }
-
-  try {
-    auto plan =
-        optimizer_->BuildPelotonPlanTree(sql_stmt_list, default_database_name_, tcop_txn_state_.top().first);
-    statement->SetPlanTree(plan);
-    // Get the tables that our plan references so that we know how to
-    // invalidate it at a later point when the catalog changes
-    const std::set<oid_t> table_oids =
-        planner::PlanUtil::GetTablesReferenced(plan.get());
-    statement->SetReferencedTables(table_oids);
-
-    if (query_type == QueryType::QUERY_SELECT) {
-      auto tuple_descriptor = GenerateTupleDescriptor(sql_stmt_list->GetStatement(0));
-      statement->SetTupleDescriptor(tuple_descriptor);
-    }
-  } catch(Exception &e) {
-    error_message = e.what();
-    AbortInvalidStmt();
-    return nullptr;
-  }
-
-#ifdef LOG_DEBUG_ENABLED
-  if (statement->GetPlanTree().get() != nullptr) {
-    LOG_TRACE("Statement Prepared: %s", statement->GetInfo().c_str());
-    LOG_TRACE("%s", statement->GetPlanTree().get()->GetInfo().c_str());
-  }
-#endif
-  return statement;
-}
-
-=======
->>>>>>> more fixes for review
 ResultType TrafficCop::ExecuteStatement(
     const std::shared_ptr<Statement> &statement,
     const std::vector<type::Value> &params, UNUSED_ATTRIBUTE bool unnamed,
