@@ -1048,8 +1048,11 @@ enum class OperatorId : uint32_t {
   Round,
   Extract,
   Floor,
+<<<<<<< HEAD
   DateTrunc,
   Like,
+=======
+>>>>>>> fix time stamp converting, year, month and day
   Now,
 
   // Add more operators here, before the last "Invalid" entry
