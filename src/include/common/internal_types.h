@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include<bitset>
+#include <bitset>
 #include <climits>
 #include <cstdint>
 #include <functional>
@@ -821,7 +821,8 @@ enum class ResultType {
   ABORTED = 3,  // aborted
   NOOP = 4,     // no op
   UNKNOWN = 5,
-  QUEUING = 6
+  QUEUING = 6,
+  TO_ABORT = 7,
 };
 std::string ResultTypeToString(ResultType type);
 ResultType StringToResultType(const std::string &str);

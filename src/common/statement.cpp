@@ -27,14 +27,15 @@ Statement::Statement(const std::string& statement_name,
   try {
     auto &peloton_parser = parser::PostgresParser::GetInstance();
     sql_stmt_list_ = peloton_parser.BuildParseTree(query_string);
-    if (!sql_stmt_list_->is_valid) {
+    if (sql_stmt_list_.get() != nullptr && !sql_stmt_list_->is_valid) {
       throw ParserException("Error Parsing SQL statement");
     }
   } // If the statement is invalid or not supported yet
   catch (Exception &e) {
     LOG_ERROR("%s", e.what());
   }
-  if (sql_stmt_list_->GetNumStatements() == 0) {
+  if (sql_stmt_list_ == nullptr || sql_stmt_list_->GetNumStatements() == 0) {
+    // This should not happen. We only initialize Statement with query string in tests.
     LOG_ERROR("Empty statement");
   }
   LOG_INFO("create statement: %s", query_string.c_str());

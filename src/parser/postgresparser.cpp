@@ -1302,7 +1302,12 @@ parser::AnalyzeStatement *PostgresParser::VacuumTransform(VacuumStmt *root) {
   return result;
 }
 
-std::vector<std::string> *PostgresParser::ColumnNameTransform(List *root) {
+parser::VariableSetStatement *PostgresParser::VariableSetTransform(UNUSED_ATTRIBUTE VariableSetStmt* root) {
+  VariableSetStatement* res = new VariableSetStatement();
+  return res;
+}
+
+std::vector<std::string>* PostgresParser::ColumnNameTransform(List* root) {
   auto result = new std::vector<std::string>();
 
   if (root == nullptr) return result;
@@ -1592,6 +1597,9 @@ parser::SQLStatement *PostgresParser::NodeTransform(Node *stmt) {
       break;
     case T_VacuumStmt:
       result = VacuumTransform((VacuumStmt *)stmt);
+      break;
+    case T_VariableSetStmt:
+      result = VariableSetTransform((VariableSetStmt*)stmt);
       break;
     default: {
       throw NotImplementedException(StringUtil::Format(
