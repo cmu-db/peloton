@@ -15,6 +15,7 @@
 #include <cstdint>
 
 #include "common/macros.h"
+#include "executor/executor_context.h"
 
 namespace peloton {
 
@@ -40,7 +41,7 @@ class Deleter {
   // Initializer this deleter instance using the provided transaction and table.
   // All tuples to be deleted occur within the provided transaction are from
   // the provided table
-  void Init(concurrency::Transaction *txn, storage::DataTable *table,
+  void Init(storage::DataTable *table,
             executor::ExecutorContext *executor_context);
 
   // Delete the tuple within the provided tile group ID (unique) at the provided
@@ -49,12 +50,9 @@ class Deleter {
 
  private:
   // Can't construct
-  Deleter() : txn_(nullptr), table_(nullptr), executor_context_(nullptr) {}
+  Deleter() : table_(nullptr), executor_context_(nullptr) {}
 
  private:
-  // The transaction deletions happen in
-  concurrency::Transaction *txn_;
-
   // The table the tuples are deleted from
   storage::DataTable *table_;
 

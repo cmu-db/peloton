@@ -220,17 +220,7 @@ parser::TableRef* PostgresParser::FromTransform(SelectStmt* select_root) {
   /* Statement like 'SELECT *;' cannot detect by postgres parser and would lead
    * to
    * a null list of from clause*/
-  if (root == nullptr) {
-    auto target_list = select_root->targetList;
-    // The only valid situation of a null 'from list' is that all targets are
-    // constant
-    LOG_TRACE("size is : %d", target_list->length);
-    // print_pg_parse_tree(target_list);
-    if (IsTargetListWithVariable(target_list)) {
-      throw ParserException("Error parsing SQL statement");
-    }
-    return nullptr;
-  }
+  if (root == nullptr) return nullptr;
 
   parser::TableRef* result = nullptr;
   Node* node;

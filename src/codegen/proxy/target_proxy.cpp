@@ -2,26 +2,20 @@
 //
 //                         Peloton
 //
-// string_functions_proxy.h
+// target_proxy.cpp
 //
-// Identification: src/include/codegen/proxy/string_functions_proxy.h
+// Identification: src/codegen/proxy/target_proxy.cpp
 //
 // Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#pragma once
-
-#include "codegen/proxy/proxy.h"
+#include "codegen/proxy/target_proxy.h"
 
 namespace peloton {
 namespace codegen {
 
-PROXY(StringFunctions) {
-  // Proxy everything in function::StringFunctions
-  DECLARE_METHOD(Ascii);
-  DECLARE_METHOD(Like);
-};
+DEFINE_TYPE(Target, "peloton::Target", MEMBER(opaque));
 
 }  // namespace codegen
 }  // namespace peloton

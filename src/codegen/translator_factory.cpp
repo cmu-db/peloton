@@ -29,6 +29,7 @@
 #include "codegen/operator/order_by_translator.h"
 #include "codegen/operator/projection_translator.h"
 #include "codegen/operator/table_scan_translator.h"
+#include "codegen/operator/update_translator.h"
 #include "codegen/expression/tuple_value_translator.h"
 #include "expression/case_expression.h"
 #include "expression/comparison_expression.h"
@@ -46,6 +47,7 @@
 #include "planner/order_by_plan.h"
 #include "planner/projection_plan.h"
 #include "planner/seq_scan_plan.h"
+#include "planner/update_plan.h"
 
 namespace peloton {
 namespace codegen {
@@ -109,6 +111,11 @@ std::unique_ptr<OperatorTranslator> TranslatorFactory::CreateTranslator(
       translator = new InsertTranslator(insert_plan, context, pipeline);
       break;
     }
+    case PlanNodeType::UPDATE: {
+      auto &update_plan = static_cast<const planner::UpdatePlan &>(plan_node);
+      translator = new UpdateTranslator(update_plan, context, pipeline);
+      break;
+    }
     default: {
       throw Exception{"We don't have a translator for plan node type: " +
                       PlanNodeTypeToString(plan_node.GetPlanNodeType())};
@@ -143,7 +150,8 @@ std::unique_ptr<ExpressionTranslator> TranslatorFactory::CreateTranslator(
     case ExpressionType::COMPARE_LESSTHAN:
     case ExpressionType::COMPARE_GREATERTHAN:
     case ExpressionType::COMPARE_LESSTHANOREQUALTO:
-    case ExpressionType::COMPARE_GREATERTHANOREQUALTO: {
+    case ExpressionType::COMPARE_GREATERTHANOREQUALTO:
+    case ExpressionType::COMPARE_LIKE: {
       const auto &cmp_exp =
           static_cast<const expression::ComparisonExpression &>(exp);
       translator = new ComparisonTranslator(cmp_exp, context);

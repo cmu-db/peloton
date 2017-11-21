@@ -27,7 +27,12 @@ class ExecutorContext;
 namespace storage {
 class DataTable;
 class TileGroup;
+class TileGroupHeader;
 }  // namespace storage
+
+namespace type {
+class Value;
+}  // namespace type
 
 namespace codegen {
 
@@ -43,13 +48,20 @@ class TransactionRuntime {
                                         storage::TileGroup &tile_group,
                                         uint32_t tid_start, uint32_t tid_end,
                                         uint32_t *selection_vector);
-
-  // Perform a delete operation: see more descriptions in the .cpp file
-  static bool PerformDelete(concurrency::Transaction &txn,
-                            storage::DataTable &table, uint32_t tile_group_id,
-                            uint32_t tuple_offset);
-
-  static void IncreaseNumProcessed(executor::ExecutorContext *executor_context);
+  // Check Ownership
+  static bool IsOwner(concurrency::Transaction &txn,
+                      storage::TileGroupHeader *tile_group_header,
+                      uint32_t tuple_offset);
+  // Acquire Ownership
+  static bool AcquireOwnership(concurrency::Transaction &txn,
+                               storage::TileGroupHeader *tile_group_header,
+                               uint32_t tuple_offset);
+  // Yield Ownership
+  // Note: this should be called when failed after acquired ownership
+  //       otherwise, ownership is yielded inside transaction functions
+  static void YieldOwnership(concurrency::Transaction &txn,
+                             storage::TileGroupHeader *tile_group_header,
+                             uint32_t tuple_offset);
 };
 
 }  // namespace codegen

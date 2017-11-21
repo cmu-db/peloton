@@ -49,6 +49,12 @@ class BinderContext {
   void AddTable(const std::string db_name, const std::string table_name,
                 concurrency::Transaction* txn);
 
+  static bool HasTables(std::shared_ptr<BinderContext> current_context) {
+    if (current_context == nullptr) return false;
+    if (!current_context->table_alias_map.empty()) return true;
+    return HasTables(current_context->upper_context);
+  }
+
   // Construct the column position tuple given column name and the
   // corresponding tabld id tuple. Also set the value type
   // Note that this is just a helper function and it is independent of

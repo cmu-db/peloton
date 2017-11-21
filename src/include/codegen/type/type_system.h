@@ -44,7 +44,8 @@ class TypeSystem {
   //===--------------------------------------------------------------------===//
   // Casting operator
   //===--------------------------------------------------------------------===//
-  struct Cast {
+  class Cast {
+   public:
     // Virtual destructor
     virtual ~Cast() {}
 
@@ -83,7 +84,8 @@ class TypeSystem {
   //===--------------------------------------------------------------------===//
   // The generic comparison interface for all comparisons between all types
   //===--------------------------------------------------------------------===//
-  struct Comparison {
+  class Comparison {
+   public:
     // Virtual destructor
     virtual ~Comparison() {}
 
@@ -193,7 +195,8 @@ class TypeSystem {
   //===--------------------------------------------------------------------===//
   // A unary operator (i.e., an operator that accepts a single argument)
   //===--------------------------------------------------------------------===//
-  struct UnaryOperator {
+  class UnaryOperator {
+   public:
     virtual ~UnaryOperator() {}
 
     // Does this unary operator support values of the given type?
@@ -237,7 +240,8 @@ class TypeSystem {
   //===--------------------------------------------------------------------===//
   // A binary operator (i.e., an operator that accepts two arguments)
   //===--------------------------------------------------------------------===//
-  struct BinaryOperator {
+  class BinaryOperator {
+   public:
     virtual ~BinaryOperator() {}
 
     // Does this binary operator support the two provided input types?
@@ -254,7 +258,7 @@ class TypeSystem {
                          const Value &right, OnError on_error) const = 0;
   };
 
-  struct BinaryOperatorWithNullPropagation : public BinaryOperator {
+  class BinaryOperatorWithNullPropagation : public BinaryOperator {
    public:
     BinaryOperatorWithNullPropagation(
         const TypeSystem::BinaryOperator &inner_op)
@@ -282,7 +286,8 @@ class TypeSystem {
   };
 
   // An n-ary function
-  struct NaryOperator {
+  class NaryOperator {
+   public:
     virtual ~NaryOperator() {}
 
     // Does this operator support the provided input argument types?
