@@ -178,10 +178,8 @@ class TrafficCop {
 
   std::string error_message_;
 
-  //this should stay in traffic_cop, because ExecutePlanArg will use it
   std::vector<type::Value> param_values_;
 
-  //this should stay in traffic_cop, because ExecutePlanArg will use it
   std::vector<StatementResult> results_;
 
   // This save currnet statement in the traffic cop
