@@ -45,14 +45,39 @@ TEST_F(TimestampFunctionsSQLTest, DateTruncTest) {
   std::string error_message;
   int rows_affected;
 
-  // TODO(lma): We cannot properly test it until the binder supports checking
-  // the string value of the DatePartType in the function and replace it with
-  // its id. Right now we can only directly pass the id through the function.
-  std::string test_query = "select date_trunc(13, value) from foo;";
+  // wrong argument type
+  std::string test_query = "select date_trunc(123, value) from foo;";
+  TestingSQLUtil::ExecuteSQLQuery(test_query.c_str(), result, tuple_descriptor,
+                                  rows_affected, error_message);
+  EXPECT_EQ(result.size(), 0);
+
+  // wrong DatePartType
+  test_query = "select date_trunc('abc', value) from foo;";
+  TestingSQLUtil::ExecuteSQLQuery(test_query.c_str(), result, tuple_descriptor,
+                                  rows_affected, error_message);
+  EXPECT_EQ(result.size(), 0);
+
+  // Test a few end-to-end DatePartType strings. The correctness of the function
+  // is already tested in the unit tests.
+  test_query = "select date_trunc('minute', value) from foo;";
   std::string expected = "2016-12-07 13:26:00.000000-05";
   TestingSQLUtil::ExecuteSQLQuery(test_query.c_str(), result, tuple_descriptor,
                                   rows_affected, error_message);
   auto query_result = TestingSQLUtil::GetResultValueAsString(result, 0);
+  EXPECT_EQ(query_result, expected);
+
+  test_query = "select date_trunc('DAY', value) from foo;";
+  expected = "2016-12-07 00:00:00.000000-05";
+  TestingSQLUtil::ExecuteSQLQuery(test_query.c_str(), result, tuple_descriptor,
+                                  rows_affected, error_message);
+  query_result = TestingSQLUtil::GetResultValueAsString(result, 0);
+  EXPECT_EQ(query_result, expected);
+
+  test_query = "select date_trunc('CenTuRy', value) from foo;";
+  expected = "2001-01-01 00:00:00.000000-05";
+  TestingSQLUtil::ExecuteSQLQuery(test_query.c_str(), result, tuple_descriptor,
+                                  rows_affected, error_message);
+  query_result = TestingSQLUtil::GetResultValueAsString(result, 0);
   EXPECT_EQ(query_result, expected);
 
   // free the database just created
