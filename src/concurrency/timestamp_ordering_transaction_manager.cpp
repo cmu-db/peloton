@@ -795,7 +795,6 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
   auto &manager = catalog::Manager::GetInstance();
 
   cid_t end_commit_id = current_txn->GetCommitId();
-  eid_t epoch_id = current_txn->GetEpochId();
   
   // generate transaction id.
   auto &rw_set = current_txn->GetReadWriteSet();
@@ -843,7 +842,6 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         // visible.
         ItemPointer new_version =
             tile_group_header->GetPrevItemPointer(tuple_slot);
-        ItemPointer old_version = ItemPointer(tile_group_id, tuple_slot);
 
         PL_ASSERT(new_version.IsNull() == false);
 
@@ -870,12 +868,6 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         // may need to delete versions from secondary indexes.
         gc_set->operator[](tile_group_id)[tuple_slot] =
             GCVersionType::COMMIT_UPDATE;
-        logging::LogRecord record =
-            logging::LogRecordFactory::CreateTupleRecord(
-                LogRecordType::TUPLE_UPDATE, new_version, end_commit_id,
-                epoch_id);
-        record.SetOldItemPointer(old_version);
-        current_txn->log_records_.push_back(record);
       } else if (tuple_entry.second == RWType::DELETE) {
         ItemPointer new_version =
             tile_group_header->GetPrevItemPointer(tuple_slot);
@@ -906,12 +898,6 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         // the gc should be responsible for recycling the newer empty version.
         gc_set->operator[](tile_group_id)[tuple_slot] =
             GCVersionType::COMMIT_DELETE;
-        logging::LogRecord record =
-            logging::LogRecordFactory::CreateTupleRecord(
-                LogRecordType::TUPLE_DELETE,
-                ItemPointer(tile_group_id, tuple_slot), end_commit_id,
-                epoch_id);
-        current_txn->log_records_.push_back(record);
       } else if (tuple_entry.second == RWType::INSERT) {
         PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
                   current_txn->GetTransactionId());
