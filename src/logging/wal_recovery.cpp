@@ -539,20 +539,29 @@ bool WalRecovery::ReplayLogFile(FileHandle &file_handle) {
     size_t tg_count = table->GetTileGroupCount();
     for (oid_t tg = 0; tg < tg_count; tg++) {
       auto tile_group = table->GetTileGroup(tg);
-      for (oid_t offset = 0; offset < tile_group->GetActiveTupleCount();
-           offset++) {
-        storage::Tuple *t = new storage::Tuple(schema, true);
-        for (size_t col = 0; col < schema->GetColumnCount(); col++) {
-          t->SetValue(col, tile_group->GetValue(offset, col));
+
+      for (int tuple_slot_id = START_OID; tuple_slot_id < DEFAULT_TUPLES_PER_TILEGROUP;
+           tuple_slot_id++) {
+        txn_id_t tuple_txn_id = tile_group->GetHeader()->GetTransactionId(tuple_slot_id);
+        if (tuple_txn_id != INVALID_TXN_ID) {
+          PL_ASSERT(tuple_txn_id == INITIAL_TXN_ID);
+          storage::Tuple *t = new storage::Tuple(schema, true);
+          for (size_t col = 0; col < schema->GetColumnCount(); col++) {
+            t->SetValue(col, tile_group->GetValue(tuple_slot_id, col));
+          }
+          ItemPointer p(tile_group->GetTileGroupId(), tuple_slot_id);
+          auto txn = concurrency::TransactionManagerFactory::GetInstance()
+                         .BeginTransaction(IsolationLevelType::SERIALIZABLE);
+          ItemPointer *i = new ItemPointer(tg, tuple_slot_id);
+          table->InsertInIndexes(t, p, txn, &i);
+          tile_group->GetHeader()->SetIndirection(tuple_slot_id, i);
+          concurrency::TransactionManagerFactory::GetInstance().CommitTransaction(
+              txn);
+
         }
-        ItemPointer p(tile_group->GetTileGroupId(), offset);
-        auto txn = concurrency::TransactionManagerFactory::GetInstance()
-                       .BeginTransaction(IsolationLevelType::SERIALIZABLE);
-        ItemPointer *i = new ItemPointer(tg, offset);
-        table->InsertInIndexes(t, p, txn, &i);
-        concurrency::TransactionManagerFactory::GetInstance().CommitTransaction(
-            txn);
       }
+
+
     }
   }
   return true;
