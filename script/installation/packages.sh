@@ -84,7 +84,7 @@ if [ "$DISTRO" = "UBUNTU" ]; then
         libboost-thread-dev \
         libboost-filesystem-dev \
         libjemalloc-dev \
-        libunwind-dev \
+        libunwind8-dev \
         valgrind \
         lcov \
         libpqxx-dev \
