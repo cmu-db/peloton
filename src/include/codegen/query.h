@@ -29,7 +29,6 @@ class ExecutorContext;
 
 namespace planner {
 class AbstractPlan;
-class Parameter;
 }  // namespace planner
 
 namespace codegen {
@@ -58,9 +57,8 @@ class Query {
 
   // Execute th e query given the catalog manager and runtime/consumer state
   // that is passed along to the query execution code.
-  void Execute(concurrency::Transaction &txn,
-               executor::ExecutorContext *executor_context,
-               QueryParameters *parameters, char *consumer_arg,
+  void Execute(executor::ExecutorContext &executor_context,
+               QueryParameters &parameters, char *consumer_arg,
                RuntimeStats *stats = nullptr);
 
   // Return the query plan
@@ -98,7 +96,7 @@ class Query {
   // The parameters and mapping for expression and parameter ids to
   QueryParameters &parameters_;
 
-  // The parameters and mapping for expression and parameter ids to
+  // The parameters values storage
   ParameterStorage parameters_storage_;
 
   // The code context where the compiled code for the query goes

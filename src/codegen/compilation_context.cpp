@@ -49,8 +49,7 @@ CompilationContext::CompilationContext(Query &query,
   query_parameters_state_id_ =
       runtime_state.RegisterState("queryParameters", query_parameters_type);
 
-  auto *parameter_storage_type = parameter_storage_.Setup(codegen_,
-      query_.GetQueryParameters().GetParameters());
+  auto *parameter_storage_type = parameter_storage_.Setup(codegen_);
   parameter_storage_state_id_ = runtime_state.RegisterState("parameterStorage",
       parameter_storage_type, true);
 
