@@ -161,12 +161,11 @@ double Selectivity::Like(const std::shared_ptr<TableStats> &table_stats,
     oid_t database_id = column_stats->database_id;
     oid_t table_id = column_stats->table_id;
 
-    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    auto txn = txn_manager.BeginTransaction();
-
     std::vector<type::Value> column_samples;
     auto tuple_storage = optimizer::TupleSamplesStorage::GetInstance();
-    txn = txn_manager.BeginTransaction();
+
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto txn = txn_manager.BeginTransaction();
     tuple_storage->GetColumnSamples(database_id, table_id, column_id,
                                     column_samples);
     txn_manager.CommitTransaction(txn);
