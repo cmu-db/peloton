@@ -83,7 +83,8 @@ class ConstantValueExpression : public AbstractExpression {
       UNUSED_ATTRIBUTE const std::vector<peloton::type::Value>
           &parameter_values) override {
     // Add a new parameter object for a constant
-    parameters.push_back(Parameter::CreateConstParameter(GetValue()));
+    parameters.push_back(Parameter::CreateConstParameter(GetValue(),
+                                                         IsNullable()));
     index[this] = parameters.size() - 1;
   };
 
@@ -97,7 +98,7 @@ class ConstantValueExpression : public AbstractExpression {
 
   virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
-  bool IsNullable() const override { return false; }
+  bool IsNullable() const override { return value_.IsNull(); }
 
  protected:
   ConstantValueExpression(const ConstantValueExpression &other)

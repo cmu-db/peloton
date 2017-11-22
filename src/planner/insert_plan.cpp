@@ -196,10 +196,9 @@ void InsertPlan::VisitParameters(
       proj_info->VisitParameters(parameters, index, parameter_values);
     }
     for (uint32_t i = 0; i < values_.size(); i++) {
+      auto value = values_[i];
       parameters.push_back(
-          expression::Parameter::CreateConstParameter(values_.at(i)));
-      // The following is not necessary since we are not searching for one later
-      //index[this] = parameters.size() - 1;
+          expression::Parameter::CreateConstParameter(value, value.IsNull()));
     }
   } else {
     PL_ASSERT(GetChildren().size() == 1);
