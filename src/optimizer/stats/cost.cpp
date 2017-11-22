@@ -124,7 +124,6 @@ double Cost::HashGroupByCost(const std::shared_ptr<TableStats> &input_stats,
   return input_stats->num_rows * DEFAULT_TUPLE_COST;
 }
 
-
 //===----------------------------------------------------------------------===//
 // DISTINCT
 //===----------------------------------------------------------------------===//
@@ -205,7 +204,6 @@ double Cost::OrderByCost(const std::shared_ptr<TableStats> &input_stats,
   return cost;
 }
 
-
 //===----------------------------------------------------------------------===//
 // NL JOIN
 //===----------------------------------------------------------------------===//
@@ -215,7 +213,6 @@ double Cost::NLJoinCost(
     std::shared_ptr<TableStats> &output_stats,
     const std::shared_ptr<expression::AbstractExpression> predicate,
     JoinType join_type, bool enable_sampling) {
-
   UpdateJoinOutputStats(left_input_stats, right_input_stats, output_stats,
                         predicate, join_type, enable_sampling);
 
@@ -231,40 +228,34 @@ double Cost::HashJoinCost(
     const std::shared_ptr<TableStats> &right_input_stats,
     std::shared_ptr<TableStats> &output_stats,
     const std::shared_ptr<expression::AbstractExpression> predicate,
-    JoinType join_type,
-    bool enable_sampling) {
+    JoinType join_type, bool enable_sampling) {
   UpdateJoinOutputStats(left_input_stats, right_input_stats, output_stats,
-                       predicate, join_type, enable_sampling);
+                        predicate, join_type, enable_sampling);
   return (left_input_stats->num_rows + right_input_stats->num_rows) *
          DEFAULT_TUPLE_COST;
 }
 
-
 //===----------------------------------------------------------------------===//
 // Helper functions
 //===----------------------------------------------------------------------===//
-bool Cost::UpdateJoinOutputStatsWithSampling(const std::shared_ptr<TableStats> &left_input_stats,
-     const std::shared_ptr<TableStats> &right_input_stats,
-     std::shared_ptr<TableStats> &output_stats,
-     const std::string &left_column_name,
-     const std::string &right_column_name) {
+bool Cost::UpdateJoinOutputStatsWithSampling(
+    const std::shared_ptr<TableStats> &left_input_stats,
+    const std::shared_ptr<TableStats> &right_input_stats,
+    std::shared_ptr<TableStats> &output_stats,
+    const std::string &left_column_name, const std::string &right_column_name) {
   std::string left = left_column_name, right = right_column_name;
   if (!left_input_stats->HasColumnStats(left_column_name)) {
     left = right_column_name;
     right = left_column_name;
   }
   bool enable_sampling = true;
-  auto column_ids = GenerateJoinSamples(left_input_stats, right_input_stats,
-                                        output_stats, left, right, enable_sampling);
+  auto column_ids =
+      GenerateJoinSamples(left_input_stats, right_input_stats, output_stats,
+                          left, right, enable_sampling);
   if (column_ids.empty()) {
     return enable_sampling;
   }
-
-  LOG_TRACE("join schema info %s", samples[0]->GetSchema()->GetInfo().c_str());
-
   output_stats->UpdateJoinColumnStats(column_ids);
-  LOG_INFO("Join using sampling %lu", output_stats->num_rows);
-
   return true;
 }
 
@@ -274,7 +265,8 @@ std::vector<oid_t> Cost::GenerateJoinSamples(
     const std::shared_ptr<TableStats> &left_input_stats,
     const std::shared_ptr<TableStats> &right_input_stats,
     std::shared_ptr<TableStats> &output_stats,
-    const std::string &left_column_name, const std::string &right_column_name, bool &enable_sampling) {
+    const std::string &left_column_name, const std::string &right_column_name,
+    bool &enable_sampling) {
   std::vector<oid_t> column_ids;
   auto sample_stats = left_input_stats, index_stats = right_input_stats;
   auto sample_column = left_column_name, index_column = right_column_name;
@@ -329,7 +321,6 @@ std::vector<oid_t> Cost::GenerateJoinSamples(
     matched_tuples.push_back(fetched_tuples);
     cnt += fetched_tuples.size();
   }
-  LOG_INFO("sample number %d", cnt);
 
   if (cnt == 0) {
     enable_sampling = false;
@@ -339,7 +330,8 @@ std::vector<oid_t> Cost::GenerateJoinSamples(
   index_stats->GetSampler()->AcquireSampleTuplesForIndexJoin(
       sample_tuples, matched_tuples, cnt);
   output_stats->SetTupleSampler(index_stats->GetSampler());
-  output_stats->num_rows = (size_t) (sample_stats->num_rows * cnt / (double) sample_tuples.size());
+  output_stats->num_rows =
+      (size_t)(sample_stats->num_rows * cnt / (double)sample_tuples.size());
 
   oid_t column_offset = sample_tuples.at(0)->GetColumnCount();
   for (oid_t i = 0; i < output_stats->GetColumnCount(); i++) {
@@ -358,7 +350,6 @@ void Cost::UpdateJoinOutputStats(
     std::shared_ptr<TableStats> &output_stats,
     const std::shared_ptr<expression::AbstractExpression> predicate,
     JoinType join_type, bool enable_sampling) {
-
   size_t adjustment;
   switch (join_type) {
     case JoinType::INNER:
@@ -368,7 +359,7 @@ void Cost::UpdateJoinOutputStats(
     case JoinType::RIGHT:
       adjustment = right_input_stats->num_rows;
     case JoinType::OUTER:
-      adjustment = left_input_stats->num_rows+right_input_stats->num_rows;
+      adjustment = left_input_stats->num_rows + right_input_stats->num_rows;
     default:
       adjustment = 0;
   }
@@ -400,9 +391,10 @@ void Cost::UpdateJoinOutputStats(
     std::string right_column_name =
         right_child->GetTableName() + "." + right_child->GetColumnName();
 
-    if (!enable_sampling || !UpdateJoinOutputStatsWithSampling(left_input_stats, right_input_stats,
-                                                          output_stats, left_column_name,
-                                                          right_column_name)) {
+    if (!enable_sampling ||
+        !UpdateJoinOutputStatsWithSampling(left_input_stats, right_input_stats,
+                                           output_stats, left_column_name,
+                                           right_column_name)) {
       double left_cardinality, right_cardinality;
       if (left_input_stats->HasColumnStats(left_column_name)) {
         left_cardinality = left_input_stats->GetCardinality(left_column_name);
@@ -416,7 +408,8 @@ void Cost::UpdateJoinOutputStats(
       if (left_input_stats->HasColumnStats(right_column_name)) {
         right_cardinality = left_input_stats->GetCardinality(right_column_name);
       } else if (right_input_stats->HasColumnStats(right_column_name)) {
-        right_cardinality = right_input_stats->GetCardinality(right_column_name);
+        right_cardinality =
+            right_input_stats->GetCardinality(right_column_name);
       } else {
         right_cardinality = 0;
         LOG_ERROR("join column %s not found", right_column_name.c_str());
@@ -426,9 +419,9 @@ void Cost::UpdateJoinOutputStats(
       } else {
         // n_l * n_r / sqrt(V(A, l) * V(A, r))
         output_stats->num_rows =
-          (size_t) (left_input_stats->num_rows * right_input_stats->num_rows /
-                    std::max(left_cardinality, right_cardinality)) +
-          adjustment;
+            (size_t)(left_input_stats->num_rows * right_input_stats->num_rows /
+                     std::max(left_cardinality, right_cardinality)) +
+            adjustment;
       }
     }
   } else {

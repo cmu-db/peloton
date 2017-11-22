@@ -24,17 +24,15 @@ namespace optimizer {
 
 static constexpr int LEFT_CHILD_INDEX = 0;
 static constexpr int RIGHT_CHILD_INDEX = 1;
-//static constexpr int JOIN_CHILD_NUM = 2;
+// static constexpr int JOIN_CHILD_NUM = 2;
 static constexpr int DEFAULT_HASH_JOIN_COST = 0;
 static constexpr int DEFAULT_NL_JOIN_COST = 1;
 //===----------------------------------------------------------------------===//
 // Helper functions
 //===----------------------------------------------------------------------===//
 // Return column name from abstract expression
-std::string getColumnName(
-    std::shared_ptr<expression::AbstractExpression> column) {
-  auto tv_expr =
-      std::dynamic_pointer_cast<expression::TupleValueExpression>(column);
+std::string getColumnName(const expression::AbstractExpression *expr) {
+  auto tv_expr = dynamic_cast<const expression::TupleValueExpression *>(expr);
   return tv_expr->GetTableName() + "." + tv_expr->GetColumnName();
 }
 
@@ -56,8 +54,7 @@ std::shared_ptr<TableStats> generateOutputStat(
 
       // TODO: Deal with or add column stats for complex expressions like a+b
       if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
-
-        auto column_name = getColumnName(expr);
+        auto column_name = getColumnName(expr.get());
 
         auto column_stat = input_table_stats->GetColumnStats(column_name);
         if (column_stat != nullptr) {
@@ -111,8 +108,7 @@ std::shared_ptr<TableStats> generateOutputStatFromTwoTable(
 
       // TODO: Deal with or add column stats for complex expressions like a+b
       if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
-
-        auto column_name = getColumnName(expr);
+        auto column_name = getColumnName(expr.get());
 
         if (left_table_stats->HasColumnStats(column_name)) {
           output_column_stats.push_back(
@@ -142,8 +138,7 @@ double updateMultipleConjuctionStats(
         expr->GetChild(0)->GetExpressionType() == ExpressionType::VALUE_TUPLE
             ? 1
             : 0;
-    auto left_expr = reinterpret_cast<const expression::TupleValueExpression *>(
-        right_index == 1 ? expr->GetChild(0) : expr->GetChild(1));
+    auto left_expr = expr->GetChild(1 - right_index);
 
     auto expr_type = expr->GetExpressionType();
     if (right_index == 0) {
@@ -178,7 +173,7 @@ double updateMultipleConjuctionStats(
                       ->GetValueIdx())
                   .Copy();
     }
-    ValueCondition condition(left_expr->GetTableName()+"."+left_expr->GetColumnName(), expr_type, value);
+    ValueCondition condition(getColumnName(left_expr), expr_type, value);
     if (enable_index) {
       return Cost::SingleConditionIndexScanCost(input_stats, condition,
                                                 output_stats);
@@ -462,13 +457,12 @@ void CostAndStatsCalculator::JoinVisitHelper(
                        ->As<PropertyColumns>();
   auto output_stats = generateOutputStatFromTwoTable(
       left_table_stats, right_table_stats, property_);
-  output_cost_ += is_hash_join
-                      ? Cost::HashJoinCost(left_table_stats, right_table_stats,
-                                           output_stats, predicate, join_type, true)
-//                                            output_stats, predicate, join_type)
-                      : Cost::NLJoinCost(left_table_stats, right_table_stats,
-                                         output_stats, predicate, join_type, true);
-//                                          output_stats, predicate, join_type);
+  output_cost_ +=
+      is_hash_join
+          ? Cost::HashJoinCost(left_table_stats, right_table_stats,
+                               output_stats, predicate, join_type, true)
+          : Cost::NLJoinCost(left_table_stats, right_table_stats, output_stats,
+                             predicate, join_type, true);
 
   output_stats_ = output_stats;
 }
@@ -507,7 +501,7 @@ void CostAndStatsCalculator::Visit(const PhysicalHashGroupBy *op) {
   for (auto column : op->columns) {
     // TODO: Deal with complex expressions like a+b
     if (column->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
-      column_names.push_back(getColumnName(column));
+      column_names.push_back(getColumnName(column.get()));
     }
   }
   output_cost_ +=
@@ -533,7 +527,7 @@ void CostAndStatsCalculator::Visit(const PhysicalSortGroupBy *op) {
   for (auto column : op->columns) {
     // TODO: Deal with complex expressions like a+b
     if (column->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
-      column_names.push_back(getColumnName(column));
+      column_names.push_back(getColumnName(column.get()));
     }
   }
   output_cost_ +=
@@ -576,7 +570,7 @@ void CostAndStatsCalculator::Visit(const PhysicalDistinct *) {
   if (distinct_prop->GetSize() == 1 &&
       distinct_prop->GetDistinctColumn(0)->GetExpressionType() ==
           ExpressionType::VALUE_TUPLE) {
-    auto column_name = getColumnName(distinct_prop->GetDistinctColumn(0));
+    auto column_name = getColumnName(distinct_prop->GetDistinctColumn(0).get());
     output_cost_ +=
         Cost::DistinctCost(table_stats_ptr, column_name, output_stats);
   }
