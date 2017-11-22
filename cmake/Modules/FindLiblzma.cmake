@@ -1,33 +1,54 @@
-# Try to find LibLZMA library and include path.
-# Once done this will define
+# Find LibLZMA headers and library
 #
-# LIBLZMA_INCLUDE_DIRS - where to find lzma/version.h, etc.
-# LIBLZMA_LIBRARIES - List of libraries when using liblzma.
-# LIBLZMA_FOUND - True if liblzma found.
+#   LIBLZMA_FOUND             - True if liblzma is found.
+#   LIBLZMA_INCLUDE_DIRS      - Directory where liblzma headers are located.
+#   LIBLZMA_LIBRARIES         - Lzma libraries to link against.
+#   LIBLZMA_HAS_AUTO_DECODER  - True if lzma_auto_decoder() is found (required).
+#   LIBLZMA_HAS_EASY_ENCODER  - True if lzma_easy_encoder() is found (required).
+#   LIBLZMA_HAS_LZMA_PRESET   - True if lzma_lzma_preset() is found (required).
+#   LIBLZMA_VERSION_MAJOR     - The major version of lzma
+#   LIBLZMA_VERSION_MINOR     - The minor version of lzma
+#   LIBLZMA_VERSION_PATCH     - The patch version of lzma
+#   LIBLZMA_VERSION_STRING    - version number as a string (ex: "5.0.3")
 
-if(LIBLZMA_INCLUDE_DIR AND LIBLZMA_LIBRARY)
-  set(LIBLZMA_FOUND 1)
-  set(LIBLZMA_LIBRARIES ${LIBLZMA_LIBRARY})
-  set(LIBLZMA_INCLUDE_DIRS ${LIBLZMA_INCLUDE_DIR})
-else(LIBLZMA_INCLUDE_DIR AND LIBLZMA_LIBRARY)
-    set(LIBLZMA_FOUND 0)
-    set(LIBLZMA_LIBRARIES)
-    set(LIBLZMA_INCLUDE_DIRS)
-endif(LIBLZMA_INCLUDE_DIR AND LIBLZMA_LIBRARY)
+#=============================================================================
+find_path(LIBLZMA_INCLUDE_DIR lzma.h )
+find_library(LIBLZMA_LIBRARY lzma)
 
-mark_as_advanced(LIBLZMA_INCLUDE_DIR)
-mark_as_advanced(LIBLZMA_LIBRARY)
-mark_as_advanced(LIBLZMA_FOUND)
+if(LIBLZMA_INCLUDE_DIR AND EXISTS "${LIBLZMA_INCLUDE_DIR}/lzma/version.h")
+    file(STRINGS "${LIBLZMA_INCLUDE_DIR}/lzma/version.h" LIBLZMA_HEADER_CONTENTS REGEX "#define LZMA_VERSION_[A-Z]+ [0-9]+")
 
-if(NOT LIBLZMA_FOUND)
-  set(LIBLZMA_DIR_MESSAGE "liblzma was not found. Make sure LIBLZMA_LIBRARY and LIBLZMA_INCLUDE_DIR are set.")
-  if(NOT LIBLZMA_FIND_QUIETLY)
-    message(STATUS "${LIBLZMA_DIR_MESSAGE}")
-  else(NOT LIBLZMA_FIND_QUIETLY)
-    if(LIBLZMA_FIND_REQUIRED)
-      message(FATAL_ERROR "${LIBLZMA_DIR_MESSAGE}")
-    endif(LIBLZMA_FIND_REQUIRED)
-  endif(NOT LIBLZMA_FIND_QUIETLY)
-else(NOT LIBLZMA_FOUND)
-  message(STATUS "Found liblzma: ${LIBLZMA_LIBRARY}")
-endif(NOT LIBLZMA_FOUND)
+    string(REGEX REPLACE ".*#define LZMA_VERSION_MAJOR ([0-9]+).*" "\\1" LIBLZMA_VERSION_MAJOR "${LIBLZMA_HEADER_CONTENTS}")
+    string(REGEX REPLACE ".*#define LZMA_VERSION_MINOR ([0-9]+).*" "\\1" LIBLZMA_VERSION_MINOR "${LIBLZMA_HEADER_CONTENTS}")
+    string(REGEX REPLACE ".*#define LZMA_VERSION_PATCH ([0-9]+).*" "\\1" LIBLZMA_VERSION_PATCH "${LIBLZMA_HEADER_CONTENTS}")
+
+    set(LIBLZMA_VERSION_STRING "${LIBLZMA_VERSION_MAJOR}.${LIBLZMA_VERSION_MINOR}.${LIBLZMA_VERSION_PATCH}")
+    unset(LIBLZMA_HEADER_CONTENTS)
+endif()
+
+# We're using new code known now as XZ, even library still been called LZMA
+# it can be found in http://tukaani.org/xz/
+# Avoid using old codebase
+if (LIBLZMA_LIBRARY)
+   include(CheckLibraryExists)
+   CHECK_LIBRARY_EXISTS(${LIBLZMA_LIBRARY} lzma_auto_decoder "" LIBLZMA_HAS_AUTO_DECODER)
+   CHECK_LIBRARY_EXISTS(${LIBLZMA_LIBRARY} lzma_easy_encoder "" LIBLZMA_HAS_EASY_ENCODER)
+   CHECK_LIBRARY_EXISTS(${LIBLZMA_LIBRARY} lzma_lzma_preset "" LIBLZMA_HAS_LZMA_PRESET)
+endif ()
+
+include(FindPackageHandleStandardArgs)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(LibLZMA  REQUIRED_VARS  LIBLZMA_INCLUDE_DIR
+                                                          LIBLZMA_LIBRARY
+                                                          LIBLZMA_HAS_AUTO_DECODER
+                                                          LIBLZMA_HAS_EASY_ENCODER
+                                                          LIBLZMA_HAS_LZMA_PRESET
+                                           VERSION_VAR    LIBLZMA_VERSION_STRING
+                                 )
+
+if (LIBLZMA_FOUND)
+    set(LIBLZMA_LIBRARIES ${LIBLZMA_LIBRARY})
+    set(LIBLZMA_INCLUDE_DIRS ${LIBLZMA_INCLUDE_DIR})
+endif ()
+
+mark_as_advanced( LIBLZMA_INCLUDE_DIR LIBLZMA_LIBRARY )
+message(STATUS "Found liblzma (include: ${LIBLZMA_INCLUDE_DIRS}, library: ${LIBLZMA_LIBRARIES})")
