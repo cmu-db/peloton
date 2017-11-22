@@ -132,17 +132,12 @@ TEST_F(SelectivityTests, LikeSelectivityTest) {
                                                                txn);
   txn_manager.CommitTransaction(txn);
 
-  // Collect samples and add samples.
-  txn = txn_manager.BeginTransaction();
-  TupleSamplesStorage *tuple_samples_storage =
-      TupleSamplesStorage::GetInstance();
-  tuple_samples_storage->CollectSamplesForTable(data_table.get(), txn);
-  txn_manager.CommitTransaction(txn);
-
   oid_t db_id = data_table->GetDatabaseOid();
   oid_t table_id = data_table->GetOid();
+
   auto stats_storage = StatsStorage::GetInstance();
   auto table_stats = stats_storage->GetTableStats(db_id, table_id);
+  table_stats->SetTupleSampler(std::make_shared<TupleSampler>(data_table.get()));
 
   type::Value value = type::ValueFactory::GetVarcharValue("%3");
   ValueCondition condition1{"test_table.COL_D", ExpressionType::COMPARE_LIKE,
