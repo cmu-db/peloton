@@ -24,6 +24,8 @@ class DecimalFunctions {
   static type::Value Sqrt(const std::vector<type::Value>& args);
   static type::Value _Floor(const std::vector<type::Value>& args);
   static double Floor(const double val);
+  static double Round(double arg);
+  static type::Value _Round(const std::vector<type::Value>& args);
 };
 
 }  // namespace function

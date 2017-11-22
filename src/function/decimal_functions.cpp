@@ -58,5 +58,17 @@ double DecimalFunctions::Floor(const double val) {
   return floor(val);
 }
 
+// Round to nearest integer
+double DecimalFunctions::Round(double arg) {
+	return round(arg);
+}
+type::Value DecimalFunctions::_Round(const std::vector<type::Value> &args) {
+  PL_ASSERT(args.size() == 1);
+  if (args[0].IsNull()) {
+    return type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL);
+  }
+  return type::ValueFactory::GetDecimalValue(Round(args[0].GetAs<double>()));
+}
+
 }  // namespace function
 }  // namespace peloton

@@ -14,6 +14,7 @@
 
 #include "codegen/lang/if.h"
 #include "codegen/value.h"
+#include "codegen/proxy/decimal_functions_proxy.h"
 #include "codegen/proxy/values_runtime_proxy.h"
 #include "codegen/proxy/decimal_functions_proxy.h"
 #include "codegen/type/boolean_type.h"
@@ -354,6 +355,23 @@ struct Modulo : public TypeSystem::BinaryOperator {
   }
 };
 
+// Round
+struct Round : public TypeSystem::UnaryOperator {
+  bool SupportsType(const Type &type) const override {
+    return type.GetSqlType() == Decimal::Instance();
+  }
+
+  Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
+    return Decimal::Instance();
+  }
+
+  Value DoWork(CodeGen &codegen, const Value &val) const override {
+    llvm::Value *raw_ret = codegen.Call(DecimalFunctionsProxy::Round,
+                                        {val.GetValue()});
+    return Value{Decimal::Instance(), raw_ret};
+  }
+};
+
 //===----------------------------------------------------------------------===//
 // TYPE SYSTEM CONSTRUCTION
 //===----------------------------------------------------------------------===//
@@ -386,8 +404,12 @@ static std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {
 // Unary operators
 static Negate kNegOp;
 static Floor kFloorOp;
+static Round kRound;
 static std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {
-    {OperatorId::Negation, kNegOp}, {OperatorId::Floor, kFloorOp}};
+    {OperatorId::Negation, kNegOp},
+		{OperatorId::Floor, kFloorOp},
+    {OperatorId::Round, kRound}
+};
 
 // Binary operations
 static Add kAddOp;
