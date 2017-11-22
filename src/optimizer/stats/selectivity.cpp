@@ -15,7 +15,6 @@
 #include "catalog/table_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "function/string_functions.h"
-#define SAMPLE_STORAGE true
 
 namespace peloton {
 namespace optimizer {
@@ -155,48 +154,24 @@ double Selectivity::Like(const std::shared_ptr<TableStats> &table_stats,
   size_t matched_count = 0;
   size_t total_count = 0;
 
-  // TODO: decide when to sample (while anaylze or on the fly) and remove the
-  // 'if' statement here
-  if (SAMPLE_STORAGE) {
-    oid_t database_id = column_stats->database_id;
-    oid_t table_id = column_stats->table_id;
-
-    std::vector<type::Value> column_samples;
-    auto tuple_storage = optimizer::TupleSamplesStorage::GetInstance();
-
-    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    auto txn = txn_manager.BeginTransaction();
-    tuple_storage->GetColumnSamples(database_id, table_id, column_id,
-                                    column_samples);
-    txn_manager.CommitTransaction(txn);
-
-    for (size_t i = 0; i < column_samples.size(); i++) {
-      LOG_TRACE("Value: %s", column_samples[i].GetInfo().c_str());
-      if (function::StringFunctions::Like(
-              column_samples[i].GetData(), column_samples[i].GetLength(),
-              pattern, condition.value.GetLength())) {
-        matched_count++;
-      }
-    }
-    total_count = column_samples.size();
-  } else {
-    auto sampler = table_stats->GetSampler();
-    PL_ASSERT(sampler != nullptr);
-    if (sampler->GetSampledTuples().empty()) {
-      sampler->AcquireSampleTuples(DEFAULT_SAMPLE_SIZE);
-    }
-    auto &sample_tuples = sampler->GetSampledTuples();
-    for (size_t i = 0; i < sample_tuples.size(); i++) {
-      auto value = sample_tuples[i]->GetValue(column_id);
-      PL_ASSERT(value.GetTypeId() == type::TypeId::VARCHAR);
-      if (function::StringFunctions::Like(value.GetData(), value.GetLength(),
-                                          pattern,
-                                          condition.value.GetLength())) {
-        matched_count++;
-      }
-    }
-    total_count = sample_tuples.size();
+  // Sample on the fly
+  auto sampler = table_stats->GetSampler();
+  PL_ASSERT(sampler != nullptr);
+  if (sampler->GetSampledTuples().empty()) {
+    sampler->AcquireSampleTuples(DEFAULT_SAMPLE_SIZE);
   }
+  auto &sample_tuples = sampler->GetSampledTuples();
+  for (size_t i = 0; i < sample_tuples.size(); i++) {
+    auto value = sample_tuples[i]->GetValue(column_id);
+    PL_ASSERT(value.GetTypeId() == type::TypeId::VARCHAR);
+    if (function::StringFunctions::Like(value.GetData(), value.GetLength(),
+                                        pattern,
+                                        condition.value.GetLength())) {
+      matched_count++;
+    }
+  }
+  total_count = sample_tuples.size();
+  LOG_TRACE("total sample size %lu matched tupe %lu", total_count, matched_count);
 
   return total_count == 0 ? DEFAULT_SELECTIVITY
                           : (double)matched_count / total_count;
