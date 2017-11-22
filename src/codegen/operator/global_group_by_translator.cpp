@@ -30,6 +30,8 @@ GlobalGroupByTranslator::GlobalGroupByTranslator(
       aggregation_(Aggregation(context.GetRuntimeState())) {
   LOG_DEBUG("Constructing GlobalGroupByTranslator ...");
 
+  auto &codegen = context.GetCodeGen();
+
   // Prepare the child in the new child pipeline
   context.Prepare(*plan_.GetChild(0), child_pipeline_);
 
@@ -42,10 +44,9 @@ GlobalGroupByTranslator::GlobalGroupByTranslator(
   }
 
   // Setup the aggregation handler with the terms we use for aggregation
-  aggregation_.Setup(context, aggregates, true);
+  aggregation_.Setup(codegen, aggregates, true);
 
   // Create the materialization buffer where we aggregate things
-  auto &codegen = GetCodeGen();
   auto *aggregate_storage = aggregation_.GetAggregateStorage().GetStorageType();
   PL_ASSERT(aggregate_storage->isStructTy());
 

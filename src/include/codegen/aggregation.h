@@ -42,12 +42,12 @@ class Aggregation {
   Aggregation(RuntimeState &runtime_state) : runtime_state_(runtime_state) {}
 
   // Setup the aggregation to handle the provided aggregates
-  void Setup(CompilationContext &context,
+  void Setup(CodeGen &codegen,
              const std::vector<planner::AggregatePlan::AggTerm> &agg_terms,
              bool is_global, std::vector<type::Type> &grouping_ai_types);
 
   // Setup the aggregation to handle the provided aggregates
-  void Setup(CompilationContext &context,
+  void Setup(CodeGen &codegen,
              const std::vector<planner::AggregatePlan::AggTerm> &agg_terms,
              bool is_global);
 
@@ -109,7 +109,7 @@ class Aggregation {
   // where the caller expects them allows us to rearrange positions without
   // the caller knowing or caring.
   //===--------------------------------------------------------------------===//
-  static const unsigned int max_comp_size_ = 2;
+  static const unsigned int kMaxNumComponents = 2;
 
   struct AggregateInfo {
     // The overall type of the aggregation
@@ -122,7 +122,7 @@ class Aggregation {
     // This array contains the physical storage indices for the components the
     // aggregation is composed of.
     // The array is fixed-sized to the maximum possible length
-    const std::array<uint32_t, max_comp_size_> storage_indices;
+    const std::array<uint32_t, kMaxNumComponents> storage_indices;
 
     // If the aggregate shall produce distinct output
     bool is_distinct;
@@ -138,16 +138,29 @@ class Aggregation {
                          UpdateableStorage::NullBitmap &null_bitmap) const;
 
   // Will perform the NULL checking, update the null bitmap and call
-  // DoAdvanceValue if appropriate
+  // DoAdvanceValue if appropriate. If a valid pointer for curr_val is given,
+  // this one will be used, otherwise a new one is created. (needed if value
+  // must be PHI merged later)
   void DoNullCheck(CodeGen &codegen, llvm::Value *space, ExpressionType type,
                    uint32_t storage_index, const codegen::Value &update,
                    UpdateableStorage::NullBitmap &null_bitmap,
                    llvm::Value *curr_val = nullptr) const;
 
-  // Advance the value of a specific aggregate, given its next value without any
-  // NULL checking. This assumes that the current aggregate value is not NULL.
+  // Advance the value of a specific aggregate component, given its next value.
+  // No NULL checking, the function assumes that the current aggregate value is
+  // not NULL.
   void DoAdvanceValue(CodeGen &codegen, llvm::Value *space, ExpressionType type,
                       uint32_t storage_index, const codegen::Value &next) const;
+
+  // Advancethe value of a specifig aggregate. Performs NULL check if necessary
+  // and finally calls DoAdvanceValue(). If a valid pointer for curr_val is
+  // given, this one will be used, otherwise a new one is created. (needed if
+  // value must be PHI merged later)
+  void AdvanceValue(CodeGen &codegen, llvm::Value *space,
+                    const std::vector<codegen::Value> &next_vals,
+                    const Aggregation::AggregateInfo &agg,
+                    UpdateableStorage::NullBitmap &null_bitmap,
+                    llvm::Value *curr_val = nullptr) const;
 
  private:
   // Is this a global aggregation?
