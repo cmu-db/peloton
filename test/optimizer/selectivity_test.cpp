@@ -19,10 +19,10 @@
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/testing_executor_util.h"
 #include "optimizer/stats/selectivity.h"
-#include "optimizer/stats/tuple_samples_storage.h"
 #include "optimizer/stats/stats_storage.h"
-#include "optimizer/stats/value_condition.h"
 #include "optimizer/stats/table_stats.h"
+#include "optimizer/stats/tuple_samples_storage.h"
+#include "optimizer/stats/value_condition.h"
 #include "sql/testing_sql_util.h"
 #include "type/type.h"
 #include "type/value.h"
@@ -78,11 +78,12 @@ TEST_F(SelectivityTests, RangeSelectivityTest) {
   txn_manager.CommitTransaction(txn);
   oid_t db_id = database->GetOid();
   oid_t table_id = table->GetOid();
-  oid_t column_id = 0;  // first column
+  std::string column_name = "test.id";  // first column
   auto stats_storage = StatsStorage::GetInstance();
   auto table_stats = stats_storage->GetTableStats(db_id, table_id);
   type::Value value1 = type::ValueFactory::GetIntegerValue(nrow / 4);
-  ValueCondition condition{column_id, ExpressionType::COMPARE_LESSTHAN, value1};
+  ValueCondition condition{column_name, ExpressionType::COMPARE_LESSTHAN,
+                           value1};
 
   // Check for default selectivity when table stats does not exist.
   double default_sel = Selectivity::ComputeSelectivity(table_stats, condition);
@@ -98,7 +99,7 @@ TEST_F(SelectivityTests, RangeSelectivityTest) {
   ExpectSelectivityEqual(less_than_sel, 0.25);
 
   condition =
-      ValueCondition{column_id, ExpressionType::COMPARE_GREATERTHAN, value1};
+      ValueCondition{column_name, ExpressionType::COMPARE_GREATERTHAN, value1};
   double greater_than_sel =
       Selectivity::ComputeSelectivity(table_stats, condition);
   ExpectSelectivityEqual(greater_than_sel, 0.75);
@@ -125,6 +126,12 @@ TEST_F(SelectivityTests, LikeSelectivityTest) {
                                      false, true, txn);
   txn_manager.CommitTransaction(txn);
 
+  // Run analyze
+  txn = txn_manager.BeginTransaction();
+  optimizer::StatsStorage::GetInstance()->AnalyzeStatsForTable(data_table.get(),
+                                                               txn);
+  txn_manager.CommitTransaction(txn);
+
   // Collect samples and add samples.
   txn = txn_manager.BeginTransaction();
   TupleSamplesStorage *tuple_samples_storage =
@@ -134,28 +141,24 @@ TEST_F(SelectivityTests, LikeSelectivityTest) {
 
   oid_t db_id = data_table->GetDatabaseOid();
   oid_t table_id = data_table->GetOid();
-  type::Value value = type::ValueFactory::GetVarcharValue("a");
   auto stats_storage = StatsStorage::GetInstance();
   auto table_stats = stats_storage->GetTableStats(db_id, table_id);
 
-  ValueCondition condition1{0, ExpressionType::COMPARE_LIKE, value};
-  ValueCondition condition2{1, ExpressionType::COMPARE_LIKE, value};
-  ValueCondition condition3{2, ExpressionType::COMPARE_LIKE, value};
-  ValueCondition condition4{3, ExpressionType::COMPARE_LIKE, value};
+  type::Value value = type::ValueFactory::GetVarcharValue("%3");
+  ValueCondition condition1{"test_table.COL_D", ExpressionType::COMPARE_LIKE,
+                            value};
+
+  value = type::ValueFactory::GetVarcharValue("____3");
+  ValueCondition condition2{"test_table.COL_D", ExpressionType::COMPARE_LIKE,
+                            value};
 
   double like_than_sel_1 =
       Selectivity::ComputeSelectivity(table_stats, condition1);
   double like_than_sel_2 =
       Selectivity::ComputeSelectivity(table_stats, condition2);
-  double like_than_sel_3 =
-      Selectivity::ComputeSelectivity(table_stats, condition3);
-  double like_than_sel_4 =
-      Selectivity::ComputeSelectivity(table_stats, condition4);
 
-  EXPECT_EQ(like_than_sel_1, DEFAULT_SELECTIVITY);
-  EXPECT_EQ(like_than_sel_2, DEFAULT_SELECTIVITY);
-  EXPECT_EQ(like_than_sel_3, DEFAULT_SELECTIVITY);
-  EXPECT_EQ(like_than_sel_4, DEFAULT_SELECTIVITY);
+  EXPECT_EQ(like_than_sel_1, 1);
+  EXPECT_EQ(like_than_sel_2, 0);
 }
 
 TEST_F(SelectivityTests, EqualSelectivityTest) {
@@ -181,14 +184,15 @@ TEST_F(SelectivityTests, EqualSelectivityTest) {
   txn_manager.CommitTransaction(txn);
   oid_t db_id = database->GetOid();
   oid_t table_id = table->GetOid();
-  oid_t column_id1 = 1;
+  std::string column_name1 = "test.b";
   auto stats_storage = StatsStorage::GetInstance();
   auto table_stats = stats_storage->GetTableStats(db_id, table_id);
 
   type::Value value1 = type::ValueFactory::GetDecimalValue(1.0);
 
   // Check for default selectivity when table stats does not exist.
-  ValueCondition condition1{column_id1, ExpressionType::COMPARE_EQUAL, value1};
+  ValueCondition condition1{column_name1, ExpressionType::COMPARE_EQUAL,
+                            value1};
   double sel = Selectivity::ComputeSelectivity(table_stats, condition1);
   EXPECT_EQ(sel, DEFAULT_SELECTIVITY);
 
@@ -201,7 +205,7 @@ TEST_F(SelectivityTests, EqualSelectivityTest) {
   double eq_sel_in_mcv =
       Selectivity::ComputeSelectivity(table_stats, condition1);
   condition1 =
-      ValueCondition{column_id1, ExpressionType::COMPARE_NOTEQUAL, value1};
+      ValueCondition{column_name1, ExpressionType::COMPARE_NOTEQUAL, value1};
   double neq_sel_in_mcv =
       Selectivity::ComputeSelectivity(table_stats, condition1);
   ExpectSelectivityEqual(eq_sel_in_mcv, 0.33);
@@ -229,14 +233,15 @@ TEST_F(SelectivityTests, EqualSelectivityTest) {
 
   // Check selectivity
   // equal, not in mcv
-  oid_t column_id2 = 0;
+  std::string column_name2 = "test.id";
   type::Value value2 = type::ValueFactory::GetDecimalValue(20.0);
-  ValueCondition condition2{column_id2, ExpressionType::COMPARE_EQUAL, value2};
+  ValueCondition condition2{column_name2, ExpressionType::COMPARE_EQUAL,
+                            value2};
 
   double eq_sel_nin_mcv =
       Selectivity::ComputeSelectivity(table_stats, condition2);
   condition2 =
-      ValueCondition{column_id2, ExpressionType::COMPARE_NOTEQUAL, value2};
+      ValueCondition{column_name2, ExpressionType::COMPARE_NOTEQUAL, value2};
   double neq_sel_nin_mcv =
       Selectivity::ComputeSelectivity(table_stats, condition2);
   // (1 - 2/3) / (3 + 7 + 50 - 10) = 1 / 150 = 0.01667
