@@ -95,7 +95,7 @@ HashGroupByTranslator::HashGroupByTranslator(
   }
 
   // Setup the aggregation logic for this group by
-  aggregation_.Setup(context, aggregates, false, key_type);
+  aggregation_.Setup(codegen, aggregates, false, key_type);
 
   // Create the hash table
   hash_table_ =
@@ -241,7 +241,7 @@ void HashGroupByTranslator::Consume(ConsumerContext &,
   // Perform the insertion into the hash table
   llvm::Value *hash_table = LoadStatePtr(hash_table_id_);
   ConsumerProbe probe{context, aggregation_, vals, key};
-  ConsumerInsert insert{context, aggregation_, vals, key};
+  ConsumerInsert insert{aggregation_, vals, key};
   hash_table_.ProbeOrInsert(codegen, hash_table, hash, key, probe, insert);
 }
 
@@ -417,11 +417,10 @@ void HashGroupByTranslator::ConsumerProbe::ProcessEntry(
 //===----------------------------------------------------------------------===//
 
 HashGroupByTranslator::ConsumerInsert::ConsumerInsert(
-    CompilationContext &context, const Aggregation &aggregation,
+    const Aggregation &aggregation,
     const std::vector<codegen::Value> &initial_vals,
     const std::vector<codegen::Value> &grouping_keys)
-    : context_(context),
-      aggregation_(aggregation),
+      : aggregation_(aggregation),
       initial_vals_(initial_vals),
       grouping_keys_(grouping_keys) {}
 

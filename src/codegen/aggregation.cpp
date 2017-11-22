@@ -24,11 +24,9 @@ namespace codegen {
 
 // Configure/setup the aggregation class to handle the provided aggregate types
 void Aggregation::Setup(
-    CompilationContext &context,
+    CodeGen &codegen,
     const std::vector<planner::AggregatePlan::AggTerm> &aggregates,
     bool is_global, std::vector<type::Type> &grouping_ai_types) {
-  auto &codegen = context.GetCodeGen();
-
   is_global_ = is_global;
 
   for (uint32_t source_idx = 0; source_idx < aggregates.size(); source_idx++) {
@@ -41,8 +39,11 @@ void Aggregation::Setup(
         uint32_t storage_pos = storage_.AddType(count_type);
 
         // Add metadata for the aggregate
-        AggregateInfo agg_info{
-            agg_term.aggtype, source_idx, {{storage_pos}}, agg_term.distinct, 0};
+        AggregateInfo agg_info{agg_term.aggtype,
+                               source_idx,
+                               {{storage_pos}},
+                               agg_term.distinct,
+                               0};
         aggregate_infos_.push_back(agg_info);
         break;
       }
@@ -58,8 +59,11 @@ void Aggregation::Setup(
         uint32_t storage_pos = storage_.AddType(value_type);
 
         // Add metadata for the aggregate
-        AggregateInfo agg_info{
-            agg_term.aggtype, source_idx, {{storage_pos}}, agg_term.distinct, 0};
+        AggregateInfo agg_info{agg_term.aggtype,
+                               source_idx,
+                               {{storage_pos}},
+                               agg_term.distinct,
+                               0};
         aggregate_infos_.push_back(agg_info);
         break;
       }
@@ -76,8 +80,11 @@ void Aggregation::Setup(
         uint32_t storage_pos = storage_.AddType(value_type);
 
         // Add metadata for the aggregate
-        AggregateInfo agg_info{
-            agg_term.aggtype, source_idx, {{storage_pos}}, agg_term.distinct, 0};
+        AggregateInfo agg_info{agg_term.aggtype,
+                               source_idx,
+                               {{storage_pos}},
+                               agg_term.distinct,
+                               0};
         aggregate_infos_.push_back(agg_info);
         break;
       }
@@ -160,14 +167,14 @@ void Aggregation::Setup(
 
 // Setup the aggregation to handle the provided aggregates
 void Aggregation::Setup(
-    CompilationContext &context,
+    CodeGen &codegen,
     const std::vector<planner::AggregatePlan::AggTerm> &agg_terms,
     bool is_global) {
   PL_ASSERT(is_global);
   // Create empty vector and hand the reference to the actual implementation
   // makes it easier to call this function without providing grouping keys
   std::vector<type::Type> empty;
-  Setup(context, agg_terms, is_global, empty);
+  Setup(codegen, agg_terms, is_global, empty);
 }
 
 // Codegen any initialization work for the hash tables
@@ -441,6 +448,68 @@ void Aggregation::DoNullCheck(CodeGen &codegen, llvm::Value *space,
   null_bitmap.MergeValues(valid_update, curr_val);
 }
 
+// Advancethe value of a specifig aggregate. Performs NULL check if necessary
+// and finally calls DoAdvanceValue()
+void Aggregation::AdvanceValue(CodeGen &codegen, llvm::Value *space,
+                               const std::vector<codegen::Value> &next_vals,
+                               const Aggregation::AggregateInfo &aggregate_info,
+                               UpdateableStorage::NullBitmap &null_bitmap,
+                               llvm::Value *curr_val) const {
+  const Value &update = next_vals[aggregate_info.source_index];
+
+  switch (aggregate_info.aggregate_type) {
+    case ExpressionType::AGGREGATE_SUM:
+    case ExpressionType::AGGREGATE_MIN:
+    case ExpressionType::AGGREGATE_MAX: {
+      // If the aggregate is not NULL-able, avoid NULL checking altogether
+      if (!null_bitmap.IsNullable(aggregate_info.storage_indices[0])) {
+        DoAdvanceValue(codegen, space, aggregate_info.aggregate_type,
+                       aggregate_info.storage_indices[0], update);
+      } else {
+        // else do NULL check, which will then call DoAdvanceValue if
+        // appropriate
+        DoNullCheck(codegen, space, aggregate_info.aggregate_type,
+                    aggregate_info.storage_indices[0], update, null_bitmap,
+                    curr_val);
+      }
+      break;
+    }
+    case ExpressionType::AGGREGATE_COUNT:
+    case ExpressionType::AGGREGATE_COUNT_STAR: {
+      // the COUNT can't be nullable, so skip the null check
+      DoAdvanceValue(codegen, space, ExpressionType::AGGREGATE_COUNT,
+                     aggregate_info.storage_indices[0], update);
+      break;
+    }
+    case ExpressionType::AGGREGATE_AVG: {
+      // If the SUM is not NULL-able, avoid NULL checking altogether
+      if (!null_bitmap.IsNullable(aggregate_info.storage_indices[0])) {
+        DoAdvanceValue(codegen, space, ExpressionType::AGGREGATE_SUM,
+                       aggregate_info.storage_indices[0], update);
+      } else {
+        // else do NULL check, which will then call DoAdvanceValue if
+        // appropriate
+        DoNullCheck(codegen, space, ExpressionType::AGGREGATE_SUM,
+                    aggregate_info.storage_indices[0], update, null_bitmap,
+                    curr_val);
+      }
+
+      // the COUNT can't be nullable, so skip the null check
+      DoAdvanceValue(codegen, space, ExpressionType::AGGREGATE_COUNT,
+                     aggregate_info.storage_indices[1], update);
+
+      break;
+    }
+    default: {
+      std::string message = StringUtil::Format(
+          "Unexpected aggregate type [%s] when advancing aggregator",
+          ExpressionTypeToString(aggregate_info.aggregate_type).c_str());
+      LOG_ERROR("%s", message.c_str());
+      throw Exception{EXCEPTION_TYPE_UNKNOWN_TYPE, message};
+    }
+  }  // switch
+}
+
 // Advance each of the aggregates stored in the provided storage space
 void Aggregation::AdvanceValues(
     CodeGen &codegen, llvm::Value *space,
@@ -487,6 +556,7 @@ void Aggregation::AdvanceValues(
       // Create llvm values for the bitmap bytes here already, so we can create
       // the Phis to merge the two paths that are created by the hast table
       llvm::Value *curr_val;
+
       // Every aggregation has at least one component
       curr_val =
           null_bitmap.ByteFor(codegen, aggregate_info.storage_indices[0]);
@@ -498,57 +568,9 @@ void Aggregation::AdvanceValues(
                                    std::to_string(aggregate_info.source_index) +
                                    ".AdvanceValues.IfAggValueIsDistinct"};
       {
-        switch (aggregate_info.aggregate_type) {
-          case ExpressionType::AGGREGATE_SUM:
-          case ExpressionType::AGGREGATE_MIN:
-          case ExpressionType::AGGREGATE_MAX: {
-            // If the aggregate is not NULL-able, avoid NULL checking altogether
-            if (!null_bitmap.IsNullable(aggregate_info.storage_indices[0])) {
-              DoAdvanceValue(codegen, space, aggregate_info.aggregate_type,
-                             aggregate_info.storage_indices[0], update);
-            } else {
-              // else do NULL check, which will then call DoAdvanceValue if
-              // appropriate
-              DoNullCheck(codegen, space, aggregate_info.aggregate_type,
-                          aggregate_info.storage_indices[0], update,
-                          null_bitmap, curr_val);
-            }
-            break;
-          }
-          case ExpressionType::AGGREGATE_COUNT:
-          case ExpressionType::AGGREGATE_COUNT_STAR: {
-            // the COUNT can't be nullable, so skip the null check
-            DoAdvanceValue(codegen, space, ExpressionType::AGGREGATE_COUNT,
-                           aggregate_info.storage_indices[0], update);
-            break;
-          }
-          case ExpressionType::AGGREGATE_AVG: {
-            // If the SUM is not NULL-able, avoid NULL checking altogether
-            if (!null_bitmap.IsNullable(aggregate_info.storage_indices[0])) {
-              DoAdvanceValue(codegen, space, ExpressionType::AGGREGATE_SUM,
-                             aggregate_info.storage_indices[0], update);
-            } else {
-              // else do NULL check, which will then call DoAdvanceValue if
-              // appropriate
-              DoNullCheck(codegen, space, ExpressionType::AGGREGATE_SUM,
-                          aggregate_info.storage_indices[0], update,
-                          null_bitmap, curr_val);
-            }
-
-            // the COUNT can't be nullable, so skip the null check
-            DoAdvanceValue(codegen, space, ExpressionType::AGGREGATE_COUNT,
-                           aggregate_info.storage_indices[1], update);
-
-            break;
-          }
-          default: {
-            std::string message = StringUtil::Format(
-                "Unexpected aggregate type [%s] when advancing aggregator",
-                ExpressionTypeToString(aggregate_info.aggregate_type).c_str());
-            LOG_ERROR("%s", message.c_str());
-            throw Exception{EXCEPTION_TYPE_UNKNOWN_TYPE, message};
-          }
-        }  // switch
+        // Advance value
+        AdvanceValue(codegen, space, next_vals, aggregate_info, null_bitmap,
+                     curr_val);
       }
       agg_is_distinct.EndIf();
 
@@ -557,56 +579,7 @@ void Aggregation::AdvanceValues(
       null_bitmap.MergeValues(agg_is_distinct, curr_val);
     } else {
       // Aggregation is not distinct, just advance value
-
-      switch (aggregate_info.aggregate_type) {
-        case ExpressionType::AGGREGATE_SUM:
-        case ExpressionType::AGGREGATE_MIN:
-        case ExpressionType::AGGREGATE_MAX: {
-          // If the aggregate is not NULL-able, avoid NULL checking altogether
-          if (!null_bitmap.IsNullable(aggregate_info.storage_indices[0])) {
-            DoAdvanceValue(codegen, space, aggregate_info.aggregate_type,
-                           aggregate_info.storage_indices[0], update);
-          } else {
-            // else do NULL check, which will then call DoAdvanceValue if
-            // appropriate
-            DoNullCheck(codegen, space, aggregate_info.aggregate_type,
-                        aggregate_info.storage_indices[0], update, null_bitmap);
-          }
-          break;
-        }
-        case ExpressionType::AGGREGATE_COUNT:
-        case ExpressionType::AGGREGATE_COUNT_STAR: {
-          // the COUNT can't be nullable, so skip the null check
-          DoAdvanceValue(codegen, space, ExpressionType::AGGREGATE_COUNT,
-                         aggregate_info.storage_indices[0], update);
-          break;
-        }
-        case ExpressionType::AGGREGATE_AVG: {
-          // If the SUM is not NULL-able, avoid NULL checking altogether
-          if (!null_bitmap.IsNullable(aggregate_info.storage_indices[0])) {
-            DoAdvanceValue(codegen, space, ExpressionType::AGGREGATE_SUM,
-                           aggregate_info.storage_indices[0], update);
-          } else {
-            // else do NULL check, which will then call DoAdvanceValue if
-            // appropriate
-            DoNullCheck(codegen, space, ExpressionType::AGGREGATE_SUM,
-                        aggregate_info.storage_indices[0], update, null_bitmap);
-          }
-
-          // the COUNT can't be nullable, so skip the null check
-          DoAdvanceValue(codegen, space, ExpressionType::AGGREGATE_COUNT,
-                         aggregate_info.storage_indices[1], update);
-
-          break;
-        }
-        default: {
-          std::string message = StringUtil::Format(
-              "Unexpected aggregate type [%s] when advancing aggregator",
-              ExpressionTypeToString(aggregate_info.aggregate_type).c_str());
-          LOG_ERROR("%s", message.c_str());
-          throw Exception{EXCEPTION_TYPE_UNKNOWN_TYPE, message};
-        }
-      }  // switch
+      AdvanceValue(codegen, space, next_vals, aggregate_info, null_bitmap);
     }
   }
 

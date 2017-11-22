@@ -111,7 +111,7 @@ class HashGroupByTranslator : public OperatorTranslator {
   class ConsumerInsert : public HashTable::InsertCallback {
    public:
     // Constructor
-    ConsumerInsert(CompilationContext &context, const Aggregation &aggregation,
+    ConsumerInsert(const Aggregation &aggregation,
                    const std::vector<codegen::Value> &initial_vals,
                    const std::vector<codegen::Value> &grouping_keys);
 
@@ -121,8 +121,6 @@ class HashGroupByTranslator : public OperatorTranslator {
     llvm::Value *GetValueSize(CodeGen &codegen) const override;
 
    private:
-    // Compilation Context need for code generation and runtime state
-    CompilationContext &context_;
     // The guy that handles the computation of the aggregates
     const Aggregation &aggregation_;
     // The list of initial values to use as aggregates
