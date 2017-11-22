@@ -14,6 +14,8 @@
 
 #include "catalog/table_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
+#include "function/string_functions.h"
+#define SAMPLE_STORAGE true
 
 namespace peloton {
 namespace optimizer {
@@ -80,7 +82,7 @@ double Selectivity::Equal(const std::shared_ptr<TableStats> &table_stats,
                           const ValueCondition &condition) {
   double value = StatsUtil::PelotonValueToNumericValue(condition.value);
   auto column_stats = table_stats->GetColumnStats(condition.column_name);
-//  LOG_INFO("column name %s", condition.column_name);
+  //  LOG_INFO("column name %s", condition.column_name);
   if (std::isnan(value) || column_stats == nullptr) {
     LOG_DEBUG("Calculate selectivity: return null");
     return DEFAULT_SELECTIVITY;
@@ -137,43 +139,68 @@ double Selectivity::Equal(const std::shared_ptr<TableStats> &table_stats,
 // Complete implementation once we support LIKE operator.
 double Selectivity::Like(const std::shared_ptr<TableStats> &table_stats,
                          const ValueCondition &condition) {
+  // Check whether column type is VARCHAR.
   if ((condition.value).GetTypeId() != type::TypeId::VARCHAR) {
     return DEFAULT_SELECTIVITY;
   }
 
-  UNUSED_ATTRIBUTE const char *pattern = (condition.value).GetData();
+  const char *pattern = (condition.value).GetData();
+
   auto column_stats = table_stats->GetColumnStats(condition.column_name);
   if (column_stats == nullptr) {
     return DEFAULT_SELECTIVITY;
   }
-  oid_t database_id = column_stats->database_id;
-  oid_t table_id = column_stats->table_id;
   oid_t column_id = column_stats->column_id;
 
-  // Check whether column type is VARCHAR.
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-      database_id, table_id, txn);
-  auto column_type = table_object->GetColumnObject(column_id)->GetColumnType();
-  txn_manager.CommitTransaction(txn);
+  size_t matched_count = 0;
+  size_t total_count = 0;
 
-  if (column_type != type::TypeId::VARCHAR) {
-    return DEFAULT_SELECTIVITY;
+  // TODO: decide when to sample (while anaylze or on the fly) and remove the
+  // 'if' statement here
+  if (SAMPLE_STORAGE) {
+    oid_t database_id = column_stats->database_id;
+    oid_t table_id = column_stats->table_id;
+
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto txn = txn_manager.BeginTransaction();
+
+    std::vector<type::Value> column_samples;
+    auto tuple_storage = optimizer::TupleSamplesStorage::GetInstance();
+    txn = txn_manager.BeginTransaction();
+    tuple_storage->GetColumnSamples(database_id, table_id, column_id,
+                                    column_samples);
+    txn_manager.CommitTransaction(txn);
+
+    for (size_t i = 0; i < column_samples.size(); i++) {
+      LOG_TRACE("Value: %s", column_samples[i].GetInfo().c_str());
+      if (function::StringFunctions::Like(
+              column_samples[i].GetData(), column_samples[i].GetLength(),
+              pattern, condition.value.GetLength())) {
+        matched_count++;
+      }
+    }
+    total_count = column_samples.size();
+  } else {
+    auto sampler = table_stats->GetSampler();
+    PL_ASSERT(sampler != nullptr);
+    if (sampler->GetSampledTuples().empty()) {
+      sampler->AcquireSampleTuples(DEFAULT_SAMPLE_SIZE);
+    }
+    auto &sample_tuples = sampler->GetSampledTuples();
+    for (size_t i = 0; i < sample_tuples.size(); i++) {
+      auto value = sample_tuples[i]->GetValue(column_id);
+      PL_ASSERT(value.GetTypeId() == type::TypeId::VARCHAR);
+      if (function::StringFunctions::Like(value.GetData(), value.GetLength(),
+                                          pattern,
+                                          condition.value.GetLength())) {
+        matched_count++;
+      }
+    }
+    total_count = sample_tuples.size();
   }
 
-  std::vector<type::Value> column_samples;
-  auto tuple_storage = optimizer::TupleSamplesStorage::GetInstance();
-  txn = txn_manager.BeginTransaction();
-  tuple_storage->GetColumnSamples(database_id, table_id, column_id,
-                                  column_samples);
-  txn_manager.CommitTransaction(txn);
-
-  for (size_t i = 0; i < column_samples.size(); i++) {
-    LOG_DEBUG("Value: %s", column_samples[i].GetInfo().c_str());
-  }
-
-  return DEFAULT_SELECTIVITY;
+  return total_count == 0 ? DEFAULT_SELECTIVITY
+                          : (double)matched_count / total_count;
 }
 
 }  // namespace optimizer
