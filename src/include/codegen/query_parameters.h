@@ -26,6 +26,7 @@ class Value;
 namespace codegen {
 class QueryParameters {
  public:
+  // Constructor
   QueryParameters(planner::AbstractPlan &plan,
                   const std::vector<peloton::type::Value> &parameter_values) {
     // Extract Parameters information and set value type for all the PVE
@@ -35,7 +36,7 @@ class QueryParameters {
     SetParameterExpressionValues(parameter_values);
   }
 
-  // Provide the index of the expresson in the parameter storage
+  // Get the index of the expresson in the parameter storage
   size_t GetParameterIdx(const expression::AbstractExpression *expression)
       const {
     auto param = parameters_index_.find(expression);
@@ -43,12 +44,12 @@ class QueryParameters {
     return param->second;
   }
 
-  // Provide the parameter value's type at the specified index
+  // Get the parameter value's type at the specified index
   peloton::type::TypeId GetValueType(int32_t index) {
     return parameters_[index].GetValue().GetTypeId();
   }
 
-  // Provide the parameter object vector
+  // Get the parameter object vector
   std::vector<expression::Parameter> &GetParameters() {
     return parameters_;
   }
@@ -118,7 +119,8 @@ class QueryParameters {
       auto &param = parameters_[i];
       if (param.GetType() == expression::Parameter::Type::PARAMETER) {
         auto value = values[param.GetParamIdx()];
-        parameters_[i] = expression::Parameter::CreateConstParameter(value);
+        param = expression::Parameter::CreateConstParameter(value,
+                                                            value.IsNull());
       }
     }
   }
