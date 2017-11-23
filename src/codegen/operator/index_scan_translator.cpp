@@ -165,7 +165,6 @@ void IndexScanTranslator::Produce() const {
     const uint32_t num_columns = static_cast<uint32_t>(table.GetSchema()->GetColumnCount());
     llvm::Value *column_layouts = codegen->CreateAlloca(ColumnLayoutInfoProxy::GetType(codegen), codegen.Const32(num_columns));
 
-    printf("good before getting distinct tile group number\n");
     llvm::Value *distinct_tile_group_num = codegen.Call(IndexScanIteratorProxy::GetDistinctTileGroupNum, {iterator_ptr});
     llvm::Value *distinct_tile_group_iter = codegen.Const32(0);
     lang::Loop loop{codegen,
@@ -173,13 +172,9 @@ void IndexScanTranslator::Produce() const {
                     {{"distinctTileGroupIter", distinct_tile_group_iter}}};
     {
 //      distinct_tile_group_iter = loop.GetLoopVar(0);
-      printf("start looping over distinct tile group\n");
       llvm::Value *tile_group_id = codegen.Call(IndexScanIteratorProxy::GetTileGroupId, {iterator_ptr, distinct_tile_group_iter});
-      printf("middle ground\n");
       llvm::Value *tile_group_ptr = codegen.Call(RuntimeFunctionsProxy::GetTileGroupByGlobalId, {table_ptr, tile_group_id});
-      printf("good after geting tile group id and tile group pointer\n");
 
-      // TODO: try to move this line out of the loop!
       codegen.Call(RuntimeFunctionsProxy::GetTileGroupLayout, {tile_group_ptr, column_layouts, codegen.Const32(num_columns)});
       // Collect <start, stride, is_columnar> triplets of all columns
       std::vector<TileGroup::ColumnLayout> col_layouts;
@@ -194,7 +189,6 @@ void IndexScanTranslator::Produce() const {
         col_layouts.push_back(TileGroup::ColumnLayout{col_id, start, stride, columnar});
       }
 
-      printf("good before looping over all tuples in the tile group\n");
       TileGroup tileGroup(*table.GetSchema());
       llvm::Value *num_tuples = codegen.Call(TileGroupProxy::GetNextTupleSlot, {tile_group_ptr});
       lang::VectorizedLoop vec_loop{codegen, num_tuples, batch_size, {}};
@@ -220,19 +214,7 @@ void IndexScanTranslator::Produce() const {
         auto &compilation_ctx = this->GetCompilationContext();
         RowBatch batch{compilation_ctx, tile_group_id,   tid_start,
                        tid_end,         sel_vec, true};
-        // TODO: try not to do this attribute accesses
-        std::vector<TableScanTranslator::AttributeAccess> attribute_accesses;
-        std::vector<const planner::AttributeInfo *> ais;
-        index_scan_.GetAttributes(ais);
-        const auto &output_col_ids = index_scan_.GetColumnIds();
-        for (oid_t col_idx = 0; col_idx < output_col_ids.size(); col_idx++) {
-          attribute_accesses.emplace_back(tile_group_access, ais[output_col_ids[col_idx]]);
-        }
-        for (oid_t col_idx = 0; col_idx < output_col_ids.size(); col_idx++) {
-          auto *attribute = ais[output_col_ids[col_idx]];
-          batch.AddAttribute(attribute, &attribute_accesses[col_idx]);
-        }
-        printf("good before iterating over batch to check row offset\n");
+
         batch.Iterate(codegen, [&](RowBatch::Row &row) {
           // Check whether this row in the scan result to determine row validity
           llvm::Value *bool_val = codegen.Call(IndexScanIteratorProxy::RowOffsetInResult, {iterator_ptr, distinct_tile_group_iter, row.GetTID(codegen)});
@@ -241,7 +223,6 @@ void IndexScanTranslator::Produce() const {
           row.SetValidity(codegen, bool_val);
         });
 
-        printf("good before the final batch constuction\n");
         // construct the final row batch
         // generate the row batch
         RowBatch final_batch{this->GetCompilationContext(), tile_group_id, codegen.Const32(0),
@@ -250,7 +231,7 @@ void IndexScanTranslator::Produce() const {
         std::vector<TableScanTranslator::AttributeAccess> final_attribute_accesses;
         std::vector<const planner::AttributeInfo *> final_ais;
         index_scan_.GetAttributes(final_ais);
-//        const auto &output_col_ids = index_scan_.GetColumnIds();
+        const auto &output_col_ids = index_scan_.GetColumnIds();
         for (oid_t col_idx = 0; col_idx < output_col_ids.size(); col_idx++) {
           final_attribute_accesses.emplace_back(tile_group_access, final_ais[output_col_ids[col_idx]]);
         }
