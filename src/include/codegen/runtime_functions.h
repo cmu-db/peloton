@@ -23,11 +23,12 @@ class TileGroup;
 class ZoneMap;
 class ZoneMapManager;
 struct PredicateInfo;
+class Tuple;
 }  // namespace storage
 
 namespace expression {
 class AbstractExpression;
-}  // namespace storage
+}  // namespace expression
 
 namespace index {
 class Index;
@@ -35,6 +36,13 @@ struct ResultAndKey;
 }
 
 namespace codegen {
+namespace util {
+class IndexScanIterator;
+}
+}
+
+namespace codegen {
+
 //===----------------------------------------------------------------------===//
 // Various common functions that are called from compiled query plans
 //===----------------------------------------------------------------------===//
@@ -84,11 +92,15 @@ class RuntimeFunctions {
 
   static index::ResultAndKey *GetOneResultAndKey();
 
+  static void FreeOneResultAndKey(index::ResultAndKey *result);
+
   static uint64_t GetTileGroupIdFromResult(index::ResultAndKey* result);
 
   static int32_t GetTileGroupOffsetFromResult(index::ResultAndKey* result);
 
   static bool IsValidTileGroup(index::ResultAndKey* result);
+
+  static util::IndexScanIterator *GetIterator(index::Index *index, uint64_t low_key_p, uint64_t high_key_p);
 };
 
 }  // namespace codegen

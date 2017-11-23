@@ -26,6 +26,7 @@
 #include "index/art_index.h"
 #include "codegen/proxy/index_proxy.h"
 #include "codegen/operator/table_scan_translator.h"
+#include "codegen/proxy/index_scan_iterator_proxy.h"
 
 namespace peloton {
 namespace codegen {
@@ -70,13 +71,12 @@ void IndexScanTranslator::Produce() const {
   llvm::Value *index_ptr = codegen.Call(StorageManagerProxy::GetIndexWithOid,
                                          {catalog_ptr, db_oid, table_oid, index_oid});
 
-  llvm::Value *result_p = codegen.Call(RuntimeFunctionsProxy::GetOneResultAndKey, {});
-
   Vector sel_vec{LoadStateValue(selection_vector_id_),
                  Vector::kDefaultVectorSize, codegen.Int32Type()};
 
 
   if (csp->IsPointQuery()) {
+    llvm::Value *result_p = codegen.Call(RuntimeFunctionsProxy::GetOneResultAndKey, {});
     const storage::Tuple *point_query_key_p = csp->GetPointQueryKey();
     llvm::Value *query_key = codegen.Const64((uint64_t)point_query_key_p);
     codegen.Call(RuntimeFunctionsProxy::ScanKey, {index_ptr, query_key, result_p});
@@ -146,10 +146,18 @@ void IndexScanTranslator::Produce() const {
       context.Consume(batch);
     }
     tile_group_id_valid.EndIf();
+
+    codegen.Call(RuntimeFunctionsProxy::FreeOneResultAndKey, {result_p});
   } else if (csp->IsFullIndexScan()) {
 
   } else {
-
+    // range scan
+    const storage::Tuple *low_key_p = csp->GetLowKey();
+    const storage::Tuple *high_key_p = csp->GetHighKey();
+    llvm::Value *low_key = codegen.Const64((uint64_t)low_key_p);
+    llvm::Value *high_key = codegen.Const64((uint64_t)high_key_p);
+    llvm::Value *iterator_ptr = codegen.Call(RuntimeFunctionsProxy::GetIterator, {index_ptr, low_key, high_key});
+    codegen.Call(IndexScanIteratorProxy::DoScan, {iterator_ptr});
   }
 
   /*

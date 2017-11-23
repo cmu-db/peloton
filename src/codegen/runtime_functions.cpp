@@ -24,6 +24,8 @@
 #include "storage/zone_map_manager.h"
 #include "type/value_factory.h"
 #include "codegen/proxy/result_and_key_proxy.h"
+#include "codegen/util/index_scan_iterator.h"
+#include "storage/tuple.h"
 
 namespace peloton {
 namespace codegen {
@@ -145,6 +147,10 @@ index::ResultAndKey* RuntimeFunctions::GetOneResultAndKey() {
   return new_result;
 }
 
+void RuntimeFunctions::FreeOneResultAndKey(index::ResultAndKey *result) {
+  delete result;
+}
+
 uint64_t RuntimeFunctions::GetTileGroupIdFromResult(index::ResultAndKey* result) {
   return (uint64_t)(result->tuple_p->block);
 }
@@ -159,6 +165,11 @@ bool RuntimeFunctions::IsValidTileGroup(index::ResultAndKey* result) {
   } else {
     return true;
   }
+}
+
+util::IndexScanIterator *RuntimeFunctions::GetIterator(index::Index *index, uint64_t low_key_p, uint64_t high_key_p) {
+  util::IndexScanIterator *iterator = new util::IndexScanIterator(index, (storage::Tuple *)low_key_p, (storage::Tuple *)high_key_p);
+  return iterator;
 }
 
 }  // namespace codegen
