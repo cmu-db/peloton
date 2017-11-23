@@ -47,10 +47,10 @@ class ParameterValueExpression : public AbstractExpression {
 
   virtual bool operator==(const AbstractExpression &rhs) const override {
     auto type = rhs.GetExpressionType();
-    if (type != ExpressionType::VALUE_CONSTANT && exp_type_ != type)
+    if ((type != ExpressionType::VALUE_CONSTANT) &&
+        (exp_type_ != type || return_value_type_ != rhs.GetValueType())) {
       return false;
-    if (return_value_type_ != rhs.GetValueType())
-      return false;
+    }
     return true;
   }
 
@@ -59,8 +59,7 @@ class ParameterValueExpression : public AbstractExpression {
   }
 
   virtual hash_t Hash() const override {
-    hash_t hash = HashUtil::Hash(&exp_type_);
-    return HashUtil::CombineHashes(hash, HashUtil::Hash(&return_value_type_));
+    return HashUtil::Hash(&exp_type_);
   }
 
   virtual void VisitParameters(std::vector<Parameter> &parameters,
