@@ -171,7 +171,7 @@ void Updater::UpdatePK() {
 
 void Updater::TearDown() {
   // Updater object does not destruct its own data structures
-  if (tile_ != nullptr) tile_.reset();
+  tile_.reset();
   delete target_list_;
 }
 
