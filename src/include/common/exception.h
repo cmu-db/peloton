@@ -136,7 +136,7 @@ class Exception : public std::runtime_error {
     unw_init_local(&cursor, &context);
 
     int count = 0;
-    while (unw_step(&cursor)) {
+    while (unw_step(&cursor) && count < 8) {
       unw_word_t ip, off;
       // get program counter register info
       unw_get_reg(&cursor, UNW_REG_IP, &ip);
