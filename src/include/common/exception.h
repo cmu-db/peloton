@@ -74,7 +74,7 @@ class Exception : public std::runtime_error {
         "\nMessage :: " + message + "\n";
     std::cerr << exception_message;
 
-    PrintStackTrace();
+    // PrintStackTrace();
   }
 
   std::string ExpectionTypeToString(ExceptionType type) {
