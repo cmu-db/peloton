@@ -59,11 +59,14 @@ class DatabaseCatalogObject {
   std::unordered_map<oid_t, std::shared_ptr<TableCatalogObject>>
   GetTableObjects(bool cached_only = false);
 
+  oid_t GetDatabaseOid() { return database_oid; }
+  std::string GetDatabaseName() { return database_name; }
+
+ private:
   // member variables
   oid_t database_oid;
   std::string database_name;
 
- private:
   bool InsertTableObject(std::shared_ptr<TableCatalogObject> table_object);
   bool EvictTableObject(oid_t table_oid);
   bool EvictTableObject(const std::string &table_name);

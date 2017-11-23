@@ -45,13 +45,22 @@ class IndexCatalogObject {
  public:
   IndexCatalogObject(executor::LogicalTile *tile, int tupleId = 0);
 
+  inline oid_t GetIndexOid() { return index_oid; }
+  inline std::string GetIndexName() { return index_name; }
+  inline oid_t GetTableOid() { return table_oid; }
+  inline IndexType GetIndexType() { return index_type; }
+  inline IndexConstraintType GetIndexConstraint() { return index_constraint; }
+  inline bool HasUniqueKeys() { return unique_keys; }
+  inline const std::vector<oid_t> &GetKeyAttrs() { return key_attrs; }
+
+ private:
   // member variables
-  const oid_t index_oid;
-  const std::string index_name;
-  const oid_t table_oid;
-  const IndexType index_type;
-  const IndexConstraintType index_constraint;
-  const bool unique_keys;
+  oid_t index_oid;
+  std::string index_name;
+  oid_t table_oid;
+  IndexType index_type;
+  IndexConstraintType index_constraint;
+  bool unique_keys;
   std::vector<oid_t> key_attrs;
 };
 
