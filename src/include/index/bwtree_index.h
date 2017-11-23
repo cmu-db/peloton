@@ -96,7 +96,12 @@ class BWTreeIndex : public Index {
   void ScanKey(const storage::Tuple *key,
                std::vector<ValueType> &result);
 
-  void CodeGenScanKey(UNUSED_ATTRIBUTE uint64_t query_key, UNUSED_ATTRIBUTE uint64_t result) {}
+  void CodeGenScanKey(UNUSED_ATTRIBUTE uint64_t query_key, UNUSED_ATTRIBUTE uint64_t result) {
+    LOG_INFO("code gen ScanKey is not implemented in BwTree yet");
+  }
+  void CodeGenRangeScan(UNUSED_ATTRIBUTE storage::Tuple *low_key_p, UNUSED_ATTRIBUTE storage::Tuple *high_key_p, UNUSED_ATTRIBUTE std::vector<ItemPointer *> &result) {
+    LOG_INFO("code gen RangeScan is not implemented in BwTree yet");
+  }
 
   std::string GetTypeName() const;
 

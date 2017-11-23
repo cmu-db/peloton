@@ -17,5 +17,8 @@ namespace codegen {
 DEFINE_TYPE(IndexScanIterator, "peloton::codegen::util::IndexScanIterator", MEMBER(opaque));
 
 DEFINE_METHOD(peloton::codegen::util, IndexScanIterator, DoScan);
+DEFINE_METHOD(peloton::codegen::util, IndexScanIterator, GetDistinctTileGroupNum);
+DEFINE_METHOD(peloton::codegen::util, IndexScanIterator, GetTileGroupId);
+DEFINE_METHOD(peloton::codegen::util, IndexScanIterator, RowOffsetInResult);
 }
 }

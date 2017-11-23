@@ -29,10 +29,17 @@ private:
   index::Index *index_;
   storage::Tuple *low_key_p_;
   storage::Tuple *high_key_p_;
+  std::vector<ItemPointer *> result_;
+
+  oid_t distinct_tile_group_num_;
+  std::vector<uint32_t> result_metadata_;
 
 public:
   IndexScanIterator(index::Index *index, storage::Tuple *low_key_p, storage::Tuple *high_key_p);
   void DoScan();
+  oid_t GetDistinctTileGroupNum() { return distinct_tile_group_num_; }
+  uint64_t GetTileGroupId(uint32_t distinct_tile_index) { return (uint64_t)(result_metadata_[3 * distinct_tile_index]); }
+  bool RowOffsetInResult(uint32_t distinct_tile_index, uint32_t row_offset);
 };
 
 }

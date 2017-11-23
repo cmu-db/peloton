@@ -24,6 +24,9 @@ PROXY(IndexScanIterator) {
   DECLARE_TYPE;
 
   DECLARE_METHOD(DoScan);
+  DECLARE_METHOD(GetDistinctTileGroupNum);
+  DECLARE_METHOD(GetTileGroupId);
+  DECLARE_METHOD(RowOffsetInResult);
 };
 
 TYPE_BUILDER(IndexScanIterator, util::IndexScanIterator);
