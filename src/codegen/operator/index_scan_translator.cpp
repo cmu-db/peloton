@@ -166,12 +166,12 @@ void IndexScanTranslator::Produce() const {
     llvm::Value *column_layouts = codegen->CreateAlloca(ColumnLayoutInfoProxy::GetType(codegen), codegen.Const32(num_columns));
 
     llvm::Value *distinct_tile_group_num = codegen.Call(IndexScanIteratorProxy::GetDistinctTileGroupNum, {iterator_ptr});
-    llvm::Value *distinct_tile_group_iter = codegen.Const32(0);
+    llvm::Value *distinct_tile_group_iter = codegen.Const64(0);
     lang::Loop loop{codegen,
                     codegen->CreateICmpULT(distinct_tile_group_iter, distinct_tile_group_num),
                     {{"distinctTileGroupIter", distinct_tile_group_iter}}};
     {
-//      distinct_tile_group_iter = loop.GetLoopVar(0);
+      distinct_tile_group_iter = loop.GetLoopVar(0);
       llvm::Value *tile_group_id = codegen.Call(IndexScanIteratorProxy::GetTileGroupId, {iterator_ptr, distinct_tile_group_iter});
       llvm::Value *tile_group_ptr = codegen.Call(RuntimeFunctionsProxy::GetTileGroupByGlobalId, {table_ptr, tile_group_id});
 
@@ -225,8 +225,8 @@ void IndexScanTranslator::Produce() const {
 
         // construct the final row batch
         // generate the row batch
-        RowBatch final_batch{this->GetCompilationContext(), tile_group_id, codegen.Const32(0),
-                       codegen.Const32(1), sel_vec, true};
+        RowBatch final_batch{this->GetCompilationContext(), tile_group_id, tid_start,
+                             tid_end, sel_vec, true};
 
         std::vector<TableScanTranslator::AttributeAccess> final_attribute_accesses;
         std::vector<const planner::AttributeInfo *> final_ais;
@@ -250,7 +250,7 @@ void IndexScanTranslator::Produce() const {
 
 
       // Move to next tile group in the table
-      distinct_tile_group_iter = codegen->CreateAdd(distinct_tile_group_iter, codegen.Const32(1));
+      distinct_tile_group_iter = codegen->CreateAdd(distinct_tile_group_iter, codegen.Const64(1));
       loop.LoopEnd(codegen->CreateICmpULT(distinct_tile_group_iter, distinct_tile_group_num),
                    {distinct_tile_group_iter});
     }
