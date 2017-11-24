@@ -203,7 +203,7 @@ void BindNodeVisitor::Visit(expression::FunctionExpression *expr) {
   // we have to do the string comparison to find out the corresponding
   // DatePartType when scanning every tuple.
   auto func_name = expr->GetFuncName();
-  if (func_name == "date_trunc" or expr->GetFuncName() == "extract") {
+  if (func_name == "date_trunc" or func_name == "extract") {
     // Check the type of the first argument. Should be VARCHAR
     auto date_part = expr->GetChild(0);
     if (date_part->GetValueType() != type::TypeId::VARCHAR) {
