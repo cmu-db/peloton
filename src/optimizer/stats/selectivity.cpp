@@ -155,7 +155,7 @@ double Selectivity::Like(const std::shared_ptr<TableStats> &table_stats,
   auto txn = txn_manager.BeginTransaction();
   auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
       database_id, table_id, txn);
-  auto column_type = table_object->GetColumnObject(column_id)->column_type;
+  auto column_type = table_object->GetColumnObject(column_id)->GetColumnType();
   txn_manager.CommitTransaction(txn);
 
   if (column_type != type::TypeId::VARCHAR) {
