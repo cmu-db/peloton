@@ -59,8 +59,8 @@ class DatabaseCatalogObject {
   std::unordered_map<oid_t, std::shared_ptr<TableCatalogObject>>
   GetTableObjects(bool cached_only = false);
 
-  oid_t GetDatabaseOid() { return database_oid; }
-  std::string GetDatabaseName() { return database_name; }
+  inline oid_t GetDatabaseOid() { return database_oid; }
+  inline const std::string &GetDatabaseName() { return database_name; }
 
  private:
   // member variables

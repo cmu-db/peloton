@@ -71,9 +71,9 @@ class TableCatalogObject {
   std::shared_ptr<ColumnCatalogObject> GetColumnObject(
       const std::string &column_name, bool cached_only = false);
 
-  oid_t GetTableOid() { return table_oid; }
-  std::string GetTableName() { return table_name; }
-  oid_t GetDatabaseOid() { return database_oid; }
+  inline oid_t GetTableOid() { return table_oid; }
+  inline const std::string &GetTableName() { return table_name; }
+  inline oid_t GetDatabaseOid() { return database_oid; }
 
  private:
   // member variables

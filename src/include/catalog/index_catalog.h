@@ -46,7 +46,7 @@ class IndexCatalogObject {
   IndexCatalogObject(executor::LogicalTile *tile, int tupleId = 0);
 
   inline oid_t GetIndexOid() { return index_oid; }
-  inline std::string GetIndexName() { return index_name; }
+  inline const std::string &GetIndexName() { return index_name; }
   inline oid_t GetTableOid() { return table_oid; }
   inline IndexType GetIndexType() { return index_type; }
   inline IndexConstraintType GetIndexConstraint() { return index_constraint; }

@@ -42,14 +42,14 @@ class ColumnCatalogObject {
  public:
   ColumnCatalogObject(executor::LogicalTile *tile, int tupleId = 0);
 
-  oid_t GetTableOid() { return table_oid; }
-  std::string GetColumnName() { return column_name; }
-  oid_t GetColumnId() { return column_id; }
-  oid_t GetColumnOffset() { return column_offset; }
-  type::TypeId GetColumnType() { return column_type; }
-  bool IsInlined() { return is_inlined; }
-  bool IsPrimary() { return is_primary; }
-  bool IsNotNull() { return is_not_null; }
+  inline oid_t GetTableOid() { return table_oid; }
+  inline const std::string &GetColumnName() { return column_name; }
+  inline oid_t GetColumnId() { return column_id; }
+  inline oid_t GetColumnOffset() { return column_offset; }
+  inline type::TypeId GetColumnType() { return column_type; }
+  inline bool IsInlined() { return is_inlined; }
+  inline bool IsPrimary() { return is_primary; }
+  inline bool IsNotNull() { return is_not_null; }
 
  private:
   // member variables
