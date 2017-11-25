@@ -226,12 +226,13 @@ struct BTrim : public TypeSystem::BinaryOperator {
 
   Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
                UNUSED_ATTRIBUTE OnError on_error) const override {
-    llvm::Value *raw_len = codegen->CreateAlloca(codegen.Int32Type());
-    llvm::Value *raw_ptr =
-        codegen.Call(StringFunctionsProxy::BTrim,
-                     {left.GetValue(), left.GetLength(), right.GetValue(),
-                      right.GetLength(), raw_len});
-    return Value{Varchar::Instance(), raw_ptr, raw_len};
+    llvm::Value *ret = codegen.Call(StringFunctionsProxy::BTrim,
+                                    {left.GetValue(), left.GetLength(),
+                                     right.GetValue(), right.GetLength()});
+
+    llvm::Value *str_ptr = codegen->CreateExtractValue(ret, 0);
+    llvm::Value *str_len = codegen->CreateExtractValue(ret, 1);
+    return Value(Varchar::Instance(), str_ptr, str_len);
   }
 };
 

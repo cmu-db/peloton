@@ -237,14 +237,12 @@ type::Value StringFunctions::RTrim(const std::vector<type::Value> &args) {
 
 // Remove the longest string consisting only of characters in characters
 // from the start and end of string
-const char *StringFunctions::BTrim(const char *str, uint32_t str_len,
-                                   const char *from,
-                                   UNUSED_ATTRIBUTE uint32_t from_len,
-                                   uint32_t *ret_len) {
+StringFunctions::StrWithLen StringFunctions::BTrim(
+    const char *str, uint32_t str_len, const char *from,
+    UNUSED_ATTRIBUTE uint32_t from_len) {
   PL_ASSERT(str != nullptr && from != nullptr);
   if (str_len == 0) {
-    *ret_len = 0;
-    return str;
+    return StringFunctions::StrWithLen(nullptr, 0);
   }
 
   int tail = str_len - 1, head = 0;
@@ -252,8 +250,7 @@ const char *StringFunctions::BTrim(const char *str, uint32_t str_len,
 
   while (head < (int)str_len && strchr(from, str[head]) != NULL) head++;
 
-  *ret_len = std::max(tail - head + 1, 0);
-  return str + head;
+  return StringFunctions::StrWithLen(str + head, std::max(tail - head + 1, 0));
 }
 
 type::Value StringFunctions::_BTrim(const std::vector<type::Value> &args) {

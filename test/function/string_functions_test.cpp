@@ -265,7 +265,7 @@ TEST_F(StringFunctionsTests, BTrimTest) {
   const std::string expected = message;
   std::vector<type::Value> args = {type::ValueFactory::GetVarcharValue(origStr),
                                    type::ValueFactory::GetVarcharValue(" ")};
-  auto result = function::StringFunctions::BTrim(args);
+  auto result = function::StringFunctions::_BTrim(args);
   EXPECT_FALSE(result.IsNull());
   EXPECT_EQ(expected, result.ToString());
 
@@ -276,7 +276,7 @@ TEST_F(StringFunctionsTests, BTrimTest) {
         type::ValueFactory::GetVarcharValue("bbb"),
     };
     nullargs[i] = type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
-    auto result = function::StringFunctions::BTrim(nullargs);
+    auto result = function::StringFunctions::_BTrim(nullargs);
     EXPECT_TRUE(result.IsNull());
   }
 }

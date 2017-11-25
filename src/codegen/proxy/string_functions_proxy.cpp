@@ -23,5 +23,8 @@ DEFINE_METHOD(peloton::function, StringFunctions, Like);
 DEFINE_METHOD(peloton::function, StringFunctions, Length);
 DEFINE_METHOD(peloton::function, StringFunctions, BTrim);
 
+// StrWithLen Struct
+DEFINE_TYPE(StrWithLen, "peloton::StrWithLen", MEMBER(str), MEMBER(length));
+
 }  // namespace codegen
 }  // namespace peloton

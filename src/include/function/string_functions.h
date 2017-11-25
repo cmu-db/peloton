@@ -21,6 +21,12 @@ namespace function {
 
 class StringFunctions {
  public:
+  struct StrWithLen {
+    StrWithLen(const char *str, uint32_t length) : str(str), length(length) {}
+    const char *str;
+    uint32_t length;
+  };
+
   // ASCII code of the first character of the argument.
   static uint32_t Ascii(const char *str, uint32_t length);
   static type::Value _Ascii(const std::vector<type::Value> &args);
@@ -61,9 +67,8 @@ class StringFunctions {
 
   // Remove the longest string consisting only of characters in characters
   // from the start and end of string
-  static const char *BTrim(const char *str, uint32_t str_len,
-                                            const char *from, uint32_t from_len,
-                                            uint32_t *ret_len);
+  static StrWithLen BTrim(const char *str, uint32_t str_len, const char *from,
+                          uint32_t from_len);
   static type::Value _BTrim(const std::vector<type::Value> &args);
 
   // This function is used by LLVM engine
