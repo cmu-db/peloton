@@ -953,13 +953,13 @@ void Catalog::InitializeFunctions() {
           "ltrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
           type::TypeId::VARCHAR, internal_lang, "LTrim",
           function::BuiltInFuncType{OperatorId::LTrim,
-                                    function::StringFunctions::LTrim},
+                                    function::StringFunctions::_LTrim},
           txn);
       AddBuiltinFunction(
           "rtrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
           type::TypeId::VARCHAR, internal_lang, "RTrim",
           function::BuiltInFuncType{OperatorId::RTrim,
-                                    function::StringFunctions::RTrim},
+                                    function::StringFunctions::_RTrim},
           txn);
       AddBuiltinFunction(
           "btrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
