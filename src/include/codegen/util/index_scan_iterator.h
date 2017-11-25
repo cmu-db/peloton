@@ -39,9 +39,13 @@ public:
   void DoScan();
   uint64_t GetDistinctTileGroupNum() { return (uint64_t)distinct_tile_group_num_; }
   uint64_t GetTileGroupId(uint64_t distinct_tile_index) {
-    return (uint64_t)(result_metadata_[3 * distinct_tile_index]);
+    return (uint64_t)(result_[distinct_tile_index]->block);
+  }
+  uint32_t GetTileGroupOffset(uint64_t result_iter) {
+    return (uint32_t)(result_[result_iter]->offset);
   }
   bool RowOffsetInResult(uint64_t distinct_tile_index, uint32_t row_offset);
+  uint64_t GetResultSize() { return (uint64_t)result_.size(); }
 };
 
 }

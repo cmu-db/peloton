@@ -26,46 +26,47 @@ void IndexScanIterator::DoScan() {
   LOG_INFO("do scan in iterator");
   index_->CodeGenRangeScan(low_key_p_, high_key_p_, result_);
   LOG_INFO("result size = %lu\n", result_.size());
-  // debug
-  printf("before sorting:\n");
-  for (std::vector<ItemPointer *>::iterator it = result_.begin(); it != result_.end(); ++it) {
-    printf("%u %u\n", (*it)->block, (*it)->offset);
-  }
-  // debug
-  std::sort(result_.begin(), result_.end(), SortByTileId);
-  // debug
-  printf("after sorting:\n");
-  for (std::vector<ItemPointer *>::iterator it = result_.begin(); it != result_.end(); ++it) {
-    printf("%u %u\n", (*it)->block, (*it)->offset);
-  }
-  // debug
 
-  // find all distinct tile group id and their start/end position in result vector
-  distinct_tile_group_num_ = 0;
-  if (result_.size() > 0) {
-    uint32_t previous_tile_group_id = result_[0]->block;
-    uint32_t begin = 0, iter = 0;
-    while (iter < result_.size() && result_[iter]->block == previous_tile_group_id) {
-      ++iter;
-    }
-    while (iter < result_.size()) {
-      if (result_[iter]->block != previous_tile_group_id) {
-        result_metadata_.push_back(previous_tile_group_id);
-        result_metadata_.push_back(begin);
-        result_metadata_.push_back(iter);
-        distinct_tile_group_num_++;
+//  std::sort(result_.begin(), result_.end(), SortByTileId);
 
-        previous_tile_group_id = result_[iter]->block;
-        begin = iter;
-      }
-      ++iter;
-    }
-    // don't forget the last one
-    result_metadata_.push_back(previous_tile_group_id);
-    result_metadata_.push_back(begin);
-    result_metadata_.push_back(iter);
-    distinct_tile_group_num_++;
-  }
+//  distinct_tile_group_num_ = 0;
+//  if (result_.size() > 0) {
+//    uint32_t previous_tile_group_id = result_[0]->block;
+//    uint32_t tuple_sum = 0;
+//    uint32_t iter = 0;
+//    while (iter < result_)
+//  }
+
+
+
+  
+
+//  // find all distinct tile group id and their start/end position in result vector
+//  distinct_tile_group_num_ = 0;
+//  if (result_.size() > 0) {
+//    uint32_t previous_tile_group_id = result_[0]->block;
+//    uint32_t begin = 0, iter = 0;
+//    while (iter < result_.size() && result_[iter]->block == previous_tile_group_id) {
+//      ++iter;
+//    }
+//    while (iter < result_.size()) {
+//      if (result_[iter]->block != previous_tile_group_id) {
+//        result_metadata_.push_back(previous_tile_group_id);
+//        result_metadata_.push_back(begin);
+//        result_metadata_.push_back(iter);
+//        distinct_tile_group_num_++;
+//
+//        previous_tile_group_id = result_[iter]->block;
+//        begin = iter;
+//      }
+//      ++iter;
+//    }
+//    // don't forget the last one
+//    result_metadata_.push_back(previous_tile_group_id);
+//    result_metadata_.push_back(begin);
+//    result_metadata_.push_back(iter);
+//    distinct_tile_group_num_++;
+//  }
 }
 
 bool IndexScanIterator::RowOffsetInResult(uint64_t distinct_tile_index, uint32_t row_offset) {

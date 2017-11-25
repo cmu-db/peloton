@@ -20,5 +20,7 @@ DEFINE_METHOD(peloton::codegen::util, IndexScanIterator, DoScan);
 DEFINE_METHOD(peloton::codegen::util, IndexScanIterator, GetDistinctTileGroupNum);
 DEFINE_METHOD(peloton::codegen::util, IndexScanIterator, GetTileGroupId);
 DEFINE_METHOD(peloton::codegen::util, IndexScanIterator, RowOffsetInResult);
+DEFINE_METHOD(peloton::codegen::util, IndexScanIterator, GetResultSize);
+DEFINE_METHOD(peloton::codegen::util, IndexScanIterator, GetTileGroupOffset);
 }
 }

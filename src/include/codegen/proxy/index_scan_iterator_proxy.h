@@ -27,6 +27,8 @@ PROXY(IndexScanIterator) {
   DECLARE_METHOD(GetDistinctTileGroupNum);
   DECLARE_METHOD(GetTileGroupId);
   DECLARE_METHOD(RowOffsetInResult);
+  DECLARE_METHOD(GetResultSize);
+  DECLARE_METHOD(GetTileGroupOffset);
 };
 
 TYPE_BUILDER(IndexScanIterator, util::IndexScanIterator);
