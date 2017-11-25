@@ -14,6 +14,9 @@
 
 #include "codegen/proxy/proxy.h"
 
+#include "codegen/proxy/type_builder.h"
+#include "function/string_functions.h"
+
 namespace peloton {
 namespace codegen {
 

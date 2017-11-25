@@ -247,6 +247,7 @@ StringFunctions::StrWithLen StringFunctions::BTrim(
 
   int tail = str_len - 1, head = 0;
   while (tail >= 0 && strchr(from, str[tail]) != NULL) tail--;
+  tail++;
 
   while (head < (int)str_len && strchr(from, str[head]) != NULL) head++;
 
