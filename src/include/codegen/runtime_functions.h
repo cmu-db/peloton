@@ -88,8 +88,6 @@ class RuntimeFunctions {
 
   static void ThrowOverflowException();
 
-  static void ScanKey(index::Index *index, uint64_t query_key, index::ResultAndKey* result);
-
   static index::ResultAndKey *GetOneResultAndKey();
 
   static void FreeOneResultAndKey(index::ResultAndKey *result);
@@ -100,7 +98,7 @@ class RuntimeFunctions {
 
   static bool IsValidTileGroup(index::ResultAndKey* result);
 
-  static util::IndexScanIterator *GetIterator(index::Index *index, uint64_t low_key_p, uint64_t high_key_p);
+  static util::IndexScanIterator *GetIterator(index::Index *index, uint64_t point_key_p, uint64_t low_key_p, uint64_t high_key_p);
 };
 
 }  // namespace codegen

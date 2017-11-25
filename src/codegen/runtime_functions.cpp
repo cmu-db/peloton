@@ -138,10 +138,6 @@ void RuntimeFunctions::ThrowOverflowException() {
   throw std::overflow_error("ERROR: overflow");
 }
 
-void RuntimeFunctions::ScanKey(index::Index *index, uint64_t query_key, index::ResultAndKey* result) {
-  return index->CodeGenScanKey(query_key, (uint64_t)result);
-}
-
 index::ResultAndKey* RuntimeFunctions::GetOneResultAndKey() {
   index::ResultAndKey *new_result = new index::ResultAndKey();
   return new_result;
@@ -167,8 +163,8 @@ bool RuntimeFunctions::IsValidTileGroup(index::ResultAndKey* result) {
   }
 }
 
-util::IndexScanIterator *RuntimeFunctions::GetIterator(index::Index *index, uint64_t low_key_p, uint64_t high_key_p) {
-  util::IndexScanIterator *iterator = new util::IndexScanIterator(index, (storage::Tuple *)low_key_p, (storage::Tuple *)high_key_p);
+util::IndexScanIterator *RuntimeFunctions::GetIterator(index::Index *index, uint64_t point_key_p, uint64_t low_key_p, uint64_t high_key_p) {
+  util::IndexScanIterator *iterator = new util::IndexScanIterator(index, (storage::Tuple *)point_key_p, (storage::Tuple *)low_key_p, (storage::Tuple *)high_key_p);
   return iterator;
 }
 

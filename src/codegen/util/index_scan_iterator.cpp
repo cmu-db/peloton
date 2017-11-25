@@ -16,15 +16,38 @@
 namespace peloton {
 namespace codegen {
 namespace util {
-IndexScanIterator::IndexScanIterator(index::Index *index, storage::Tuple *low_key_p, storage::Tuple *high_key_p)
-  : index_(index), low_key_p_(low_key_p), high_key_p_(high_key_p) {}
+IndexScanIterator::IndexScanIterator(index::Index *index, storage::Tuple *point_key_p, storage::Tuple *low_key_p, storage::Tuple *high_key_p) {
+  index_ = index;
+  if (point_key_p != nullptr) {
+    printf("is a pointer query!\n");
+    is_point_query_ = true;
+    is_full_scan_ = false;
+    point_key_p_ = point_key_p;
+  } else if (low_key_p != nullptr && high_key_p != nullptr) {
+    printf("is range query\n");
+    is_point_query_ = false;
+    is_full_scan_ = false;
+    low_key_p_ = low_key_p;
+    high_key_p_ = high_key_p;
+  } else {
+    printf("is full key scan\n");
+    is_point_query_ = false;
+    is_full_scan_ = true;
+  }
+}
 
 bool SortByTileId(ItemPointer *left, ItemPointer *right) {
   return (left->block < right->block || (left->block == right->block && left->offset < right->offset));
 }
 void IndexScanIterator::DoScan() {
   LOG_INFO("do scan in iterator");
-  index_->CodeGenRangeScan(low_key_p_, high_key_p_, result_);
+  if (is_point_query_) {
+    index_->ScanKey(point_key_p_, result_);
+  } else if (is_full_scan_) {
+    // TODO
+  } else {
+    index_->CodeGenRangeScan(low_key_p_, high_key_p_, result_);
+  }
   LOG_INFO("result size = %lu\n", result_.size());
 
 //  std::sort(result_.begin(), result_.end(), SortByTileId);

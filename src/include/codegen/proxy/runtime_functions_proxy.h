@@ -42,7 +42,6 @@ PROXY(RuntimeFunctions) {
   DECLARE_METHOD(FillPredicateArray);
   DECLARE_METHOD(ThrowDivideByZeroException);
   DECLARE_METHOD(ThrowOverflowException);
-  DECLARE_METHOD(ScanKey);
   DECLARE_METHOD(GetOneResultAndKey);
   DECLARE_METHOD(FreeOneResultAndKey);
   DECLARE_METHOD(GetTileGroupIdFromResult);

@@ -289,8 +289,7 @@ class Index : public Printable {
   virtual void ScanKey(const storage::Tuple *key,
                        std::vector<ItemPointer *> &result) = 0;
 
-//  virtual void CodeGenScan(uint64_t csp, uint64_t continue_key, uint64_t &tile_id, uint64_t &tile_offset) = 0;
-  virtual void CodeGenScanKey(uint64_t query_key, uint64_t result) = 0;
+
   virtual void CodeGenRangeScan(storage::Tuple *low_key_p, storage::Tuple *high_key_p, std::vector<ItemPointer *> &result) = 0;
 
   ///////////////////////////////////////////////////////////////////

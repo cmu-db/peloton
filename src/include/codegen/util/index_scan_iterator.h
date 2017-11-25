@@ -26,7 +26,9 @@ namespace util {
 class IndexScanIterator {
 private:
   bool is_full_scan_;
+  bool is_point_query_;
   index::Index *index_;
+  storage::Tuple *point_key_p_;
   storage::Tuple *low_key_p_;
   storage::Tuple *high_key_p_;
   std::vector<ItemPointer *> result_;
@@ -35,7 +37,7 @@ private:
   std::vector<uint32_t> result_metadata_;
 
 public:
-  IndexScanIterator(index::Index *index, storage::Tuple *low_key_p, storage::Tuple *high_key_p);
+  IndexScanIterator(index::Index *index, storage::Tuple *point_key_p, storage::Tuple *low_key_p, storage::Tuple *high_key_p);
   void DoScan();
   uint64_t GetDistinctTileGroupNum() { return (uint64_t)distinct_tile_group_num_; }
   uint64_t GetTileGroupId(uint64_t distinct_tile_index) {
