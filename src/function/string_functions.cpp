@@ -222,7 +222,7 @@ type::Value StringFunctions::_LTrim(const std::vector<type::Value> &args) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
   }
 
-  StrWithLen ret = LTrim(args.at(0).GetData(), strlen(args.at(0).GetData() + 1),
+  StrWithLen ret = LTrim(args.at(0).GetData(), strlen(args.at(0).GetData()) + 1,
                          args.at(1).GetData(), strlen(args.at(1).GetData()) + 1);
 
   std::string str(ret.str, ret.length - 1);
@@ -254,7 +254,7 @@ type::Value StringFunctions::_RTrim(const std::vector<type::Value> &args) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
   }
 
-  StrWithLen ret = RTrim(args.at(0).GetData(), strlen(args.at(0).GetData() + 1),
+  StrWithLen ret = RTrim(args.at(0).GetData(), strlen(args.at(0).GetData()) + 1,
                          args.at(1).GetData(), strlen(args.at(1).GetData()) + 1);
 
   std::string str(ret.str, ret.length - 1);
@@ -298,7 +298,7 @@ type::Value StringFunctions::_BTrim(const std::vector<type::Value> &args) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
   }
 
-  StrWithLen ret = BTrim(args.at(0).GetData(), strlen(args.at(0).GetData() + 1),
+  StrWithLen ret = BTrim(args.at(0).GetData(), strlen(args.at(0).GetData()) + 1,
                          args.at(1).GetData(), strlen(args.at(1).GetData()) + 1);
 
   std::string str(ret.str, ret.length - 1);
