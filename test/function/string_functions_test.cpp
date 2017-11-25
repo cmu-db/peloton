@@ -163,7 +163,7 @@ TEST_F(StringFunctionsTests, RepeatTest) {
   const std::string str = "A";
   for (int i = 0; i < 100; i++) {
     std::string expected = StringUtil::Repeat(str, i);
-    EXPECT_EQ((size_t)i, expected.size());
+    EXPECT_EQ(i, expected.size());
     std::vector<type::Value> args = {type::ValueFactory::GetVarcharValue(str),
                                      type::ValueFactory::GetIntegerValue(i)};
 
