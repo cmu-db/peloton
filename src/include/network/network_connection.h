@@ -66,8 +66,9 @@ class NetworkConnection {
   Buffer wbuf_;                     // Socket's write buffer
   unsigned int next_response_ = 0;  // The next response in the response buffer
   Client client_;
-  bool ssl_sent_ = false;
+  bool ssl_handshake_ = false;
   bool finish_startup_packet_ = false;
+  InputPacket initial_packet;
 
  public:
   inline NetworkConnection(int sock_fd, short event_flags, NetworkThread *thread,
