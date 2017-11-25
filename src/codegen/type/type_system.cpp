@@ -41,7 +41,7 @@ Value TypeSystem::CastWithNullPropagation::DoCast(CodeGen &codegen,
   is_null.ElseBlock();
   {
     // If both values are not null, perform the non-null-aware operation
-    ret_val = inner_cast_.DoCast(codegen, value, to_type);
+    ret_val = inner_cast_.DoCast(codegen, value, to_type.AsNonNullable());
   }
   is_null.EndIf();
 

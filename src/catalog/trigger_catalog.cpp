@@ -106,7 +106,7 @@ ResultType TriggerCatalog::DropTrigger(const std::string &database_name,
       Catalog::GetInstance()->GetTableObject(database_name, table_name, txn);
 
   oid_t trigger_oid = TriggerCatalog::GetInstance().GetTriggerOid(
-      trigger_name, table_object->table_oid, txn);
+      trigger_name, table_object->GetTableOid(), txn);
   if (trigger_oid == INVALID_OID) {
     LOG_TRACE("Cannot find trigger %s to drop!", trigger_name.c_str());
     return ResultType::FAILURE;
@@ -115,7 +115,7 @@ ResultType TriggerCatalog::DropTrigger(const std::string &database_name,
   LOG_INFO("trigger %d will be deleted!", trigger_oid);
 
   bool delete_success =
-      DeleteTriggerByName(trigger_name, table_object->table_oid, txn);
+      DeleteTriggerByName(trigger_name, table_object->GetTableOid(), txn);
   if (delete_success) {
     LOG_DEBUG("Delete trigger successfully");
     // ask target table to update its trigger list variable

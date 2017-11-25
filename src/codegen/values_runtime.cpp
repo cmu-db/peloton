@@ -67,11 +67,7 @@ void ValuesRuntime::OutputDecimal(char *values, uint32_t idx, double val) {
 void ValuesRuntime::OutputVarchar(char *values, uint32_t idx, char *str,
                                   UNUSED_ATTRIBUTE uint32_t len) {
   type::Value *vals = reinterpret_cast<type::Value *>(values);
-  // There are two types of VARCHAR: one is from storage and the other is from
-  // the query, e.g. CASE. In the latter case, the variable 'len' does not
-  // include a null terminator at the end of the array, while it does in the
-  // former. This function is used for both of them, so computes based on 'str'.
-  vals[idx] = type::ValueFactory::GetVarcharValue(str, false);
+  vals[idx] = type::ValueFactory::GetVarcharValue(str, len, false);
 }
 
 void ValuesRuntime::OutputVarbinary(char *values, uint32_t idx, char *ptr,

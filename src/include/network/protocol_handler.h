@@ -43,8 +43,11 @@ class ProtocolHandler {
 
   virtual void GetResult();
 
-  // Should we send the buffered packets right away?
-  bool force_flush = false;
+  void SetFlushFlag(bool flush) {force_flush_ = flush;}
+
+  bool GetFlushFlag() {return force_flush_;}
+
+  bool force_flush_ = false;
 
   // TODO declare a response buffer pool so that we can reuse the responses
   // so that we don't have to new packet each time
