@@ -163,7 +163,7 @@ TEST_F(StringFunctionsTests, RepeatTest) {
   const std::string str = "A";
   for (int i = 0; i < 100; i++) {
     std::string expected = StringUtil::Repeat(str, i);
-    EXPECT_EQ(i, expected.size());
+    EXPECT_EQ((size_t)i, expected.size());
     std::vector<type::Value> args = {type::ValueFactory::GetVarcharValue(str),
                                      type::ValueFactory::GetIntegerValue(i)};
 
@@ -219,7 +219,7 @@ TEST_F(StringFunctionsTests, LTrimTest) {
   const std::string expected = message + spaces;
   std::vector<type::Value> args = {type::ValueFactory::GetVarcharValue(origStr),
                                    type::ValueFactory::GetVarcharValue(" ")};
-  auto result = function::StringFunctions::LTrim(args);
+  auto result = function::StringFunctions::_LTrim(args);
   EXPECT_FALSE(result.IsNull());
   EXPECT_EQ(expected, result.ToString());
 
@@ -230,7 +230,7 @@ TEST_F(StringFunctionsTests, LTrimTest) {
         type::ValueFactory::GetVarcharValue("bbb"),
     };
     nullargs[i] = type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
-    auto result = function::StringFunctions::LTrim(nullargs);
+    auto result = function::StringFunctions::_LTrim(nullargs);
     EXPECT_TRUE(result.IsNull());
   }
 }
@@ -242,7 +242,7 @@ TEST_F(StringFunctionsTests, RTrimTest) {
   const std::string expected = spaces + message;
   std::vector<type::Value> args = {type::ValueFactory::GetVarcharValue(origStr),
                                    type::ValueFactory::GetVarcharValue(" ")};
-  auto result = function::StringFunctions::RTrim(args);
+  auto result = function::StringFunctions::_RTrim(args);
   EXPECT_FALSE(result.IsNull());
   EXPECT_EQ(expected, result.ToString());
 
@@ -253,7 +253,7 @@ TEST_F(StringFunctionsTests, RTrimTest) {
         type::ValueFactory::GetVarcharValue("bbb"),
     };
     nullargs[i] = type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
-    auto result = function::StringFunctions::RTrim(nullargs);
+    auto result = function::StringFunctions::_RTrim(nullargs);
     EXPECT_TRUE(result.IsNull());
   }
 }
