@@ -236,6 +236,54 @@ struct BTrim : public TypeSystem::BinaryOperator {
   }
 };
 
+struct LTrim : public TypeSystem::BinaryOperator {
+  bool SupportsTypes(const Type &left_type,
+                     const Type &right_type) const override {
+    return left_type.GetSqlType() == Varchar::Instance() &&
+           right_type.GetSqlType() == Varchar::Instance();
+  }
+
+  Type ResultType(UNUSED_ATTRIBUTE const Type &left_type,
+                  UNUSED_ATTRIBUTE const Type &right_type) const override {
+    return Varchar::Instance();
+  }
+
+  Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
+               UNUSED_ATTRIBUTE OnError on_error) const override {
+    llvm::Value *ret = codegen.Call(StringFunctionsProxy::LTrim,
+                                    {left.GetValue(), left.GetLength(),
+                                     right.GetValue(), right.GetLength()});
+
+    llvm::Value *str_ptr = codegen->CreateExtractValue(ret, 0);
+    llvm::Value *str_len = codegen->CreateExtractValue(ret, 1);
+    return Value(Varchar::Instance(), str_ptr, str_len);
+  }
+};
+
+struct RTrim : public TypeSystem::BinaryOperator {
+  bool SupportsTypes(const Type &left_type,
+                     const Type &right_type) const override {
+    return left_type.GetSqlType() == Varchar::Instance() &&
+           right_type.GetSqlType() == Varchar::Instance();
+  }
+
+  Type ResultType(UNUSED_ATTRIBUTE const Type &left_type,
+                  UNUSED_ATTRIBUTE const Type &right_type) const override {
+    return Varchar::Instance();
+  }
+
+  Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
+               UNUSED_ATTRIBUTE OnError on_error) const override {
+    llvm::Value *ret = codegen.Call(StringFunctionsProxy::RTrim,
+                                    {left.GetValue(), left.GetLength(),
+                                     right.GetValue(), right.GetLength()});
+
+    llvm::Value *str_ptr = codegen->CreateExtractValue(ret, 0);
+    llvm::Value *str_len = codegen->CreateExtractValue(ret, 1);
+    return Value(Varchar::Instance(), str_ptr, str_len);
+  }
+};
+
 //===----------------------------------------------------------------------===//
 // TYPE SYSTEM CONSTRUCTION
 //===----------------------------------------------------------------------===//
@@ -262,9 +310,12 @@ static std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {
 static Like kLike;
 static DateTrunc kDateTrunc;
 static BTrim kBTrim;
+static LTrim kLTrim;
+static RTrim kRTrim;
 static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
     {OperatorId::Like, kLike}, {OperatorId::DateTrunc, kDateTrunc},
-    {OperatorId::BTrim, kBTrim}};
+    {OperatorId::BTrim, kBTrim}, {OperatorId::LTrim, kLTrim},
+    {OperatorId::RTrim, kRTrim}};
 
 // Nary operations
 static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};

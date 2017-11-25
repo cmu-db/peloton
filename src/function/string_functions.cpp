@@ -196,9 +196,27 @@ type::Value StringFunctions::Replace(const std::vector<type::Value> &args) {
   return (type::ValueFactory::GetVarcharValue(str));
 }
 
+StringFunctions::StrWithLen StringFunctions::LTrim(
+    const char *str, uint32_t str_len, const char *from,
+    UNUSED_ATTRIBUTE uint32_t from_len)
+{
+  PL_ASSERT(str != nullptr && from != nullptr);
+  // llvm expects the len to include the terminating '\0'
+  if (str_len == 1) {
+    return StringFunctions::StrWithLen(nullptr, 1);
+  }
+
+  str_len -= 1;
+  int tail = str_len - 1, head = 0;
+
+  while (head < (int)str_len && strchr(from, str[head]) != NULL) head++;
+
+  return StringFunctions::StrWithLen(str + head, std::max(tail - head + 1, 0) + 1);
+}
+
 // Remove the longest string containing only characters from characters
 // from the start of string
-type::Value StringFunctions::LTrim(const std::vector<type::Value> &args) {
+type::Value StringFunctions::_LTrim(const std::vector<type::Value> &args) {
   PL_ASSERT(args.size() == 2);
   if (args[0].IsNull() || args[1].IsNull()) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
@@ -215,9 +233,26 @@ type::Value StringFunctions::LTrim(const std::vector<type::Value> &args) {
   return (type::ValueFactory::GetVarcharValue(str));
 }
 
+StringFunctions::StrWithLen StringFunctions::RTrim(
+    const char *str, uint32_t str_len, const char *from,
+    UNUSED_ATTRIBUTE uint32_t from_len)
+{
+  PL_ASSERT(str != nullptr && from != nullptr);
+  // llvm expects the len to include the terminating '\0'
+  if (str_len == 1) {
+    return StringFunctions::StrWithLen(nullptr, 1);
+  }
+
+  str_len -= 1;
+  int tail = str_len - 1, head = 0;
+  while (tail >= 0 && strchr(from, str[tail]) != NULL) tail--;
+
+  return StringFunctions::StrWithLen(str + head, std::max(tail - head + 1, 0) + 1);
+}
+
 // Remove the longest string containing only characters from characters
 // from the end of string
-type::Value StringFunctions::RTrim(const std::vector<type::Value> &args) {
+type::Value StringFunctions::_RTrim(const std::vector<type::Value> &args) {
   PL_ASSERT(args.size() == 2);
   if (args[0].IsNull() || args[1].IsNull()) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);

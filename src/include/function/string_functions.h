@@ -59,11 +59,15 @@ class StringFunctions {
 
   // Remove the longest string containing only characters from characters
   // from the start of string
-  static type::Value LTrim(const std::vector<type::Value> &args);
+  static StrWithLen LTrim(const char *str, uint32_t str_len, const char *from,
+                          uint32_t from_len);
+  static type::Value _LTrim(const std::vector<type::Value> &args);
 
   // Remove the longest string containing only characters from characters
   // from the end of string
-  static type::Value RTrim(const std::vector<type::Value> &args);
+  static StrWithLen RTrim(const char *str, uint32_t str_len, const char *from,
+                          uint32_t from_len);
+  static type::Value _RTrim(const std::vector<type::Value> &args);
 
   // Remove the longest string consisting only of characters in characters
   // from the start and end of string
