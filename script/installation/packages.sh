@@ -109,7 +109,7 @@ elif [[ "$DISTRO" == *"FEDORA"* ]]; then
         lcov \
         libpqxx-devel \
         libpqxx \
-        llvm3.7 \
+        llvm3.7-devel \
         libedit-devel \
         postgresql
 
@@ -147,7 +147,7 @@ elif [[ "$DISTRO" == *"REDHAT"* ]] && [[ "${DISTRO_VER%.*}" == "7" ]]; then
         doxygen \
         graphviz \
         libpqxx-devel \
-        llvm3.7 \
+        llvm3.7-devel \
         libedit-devel \
         postgresql93
 
