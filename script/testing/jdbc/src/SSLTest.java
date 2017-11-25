@@ -23,8 +23,7 @@ public class SSLTest {
         props.setProperty("password", "postgres");
         props.setProperty("ssl", "true");
         props.setProperty("sslkey", "../data/client.key");
-        props.setProperty("sslrootcert", "../data/root.crt");
-        props.setProperty("sslcert", "../data/client.csr");
+        props.setProperty("sslcert", "../data/client.crt");
         conn = makeConnection();
     }
 

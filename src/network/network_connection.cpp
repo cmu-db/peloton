@@ -120,6 +120,9 @@ bool NetworkConnection::UpdateEvent(short flags) {
  */
 
 WriteState NetworkConnection::WritePackets() {
+  // TODO(Yuchen): Should I send a single S or S with length?
+
+
   // iterate through all the packets
   for (; next_response_ < protocol_handler_->responses.size(); next_response_++) {
     auto pkt = protocol_handler_->responses[next_response_].get();
@@ -360,26 +363,29 @@ std::string NetworkConnection::WriteBufferToString() {
 
 ProcessResult NetworkConnection::ProcessInitial() {
   //TODO: this is a direct copy and we should get rid of it later;
-  InputPacket rpkt;
+  // TODO(Yuchen): Why don't use request here? This should not be a local variable!!
+  // NOTE: If we process the SSL initial packet, we should clear it
 
-  if (rpkt.header_parsed == false) {
+  if (initial_packet.header_parsed == false) {
     // parse out the header first
-    if (ReadStartupPacketHeader(rbuf_, rpkt) == false) {
+    if (ReadStartupPacketHeader(rbuf_, initial_packet) == false) {
       // need more data
       return ProcessResult::MORE_DATA_REQUIRED;
     }
   }
-  PL_ASSERT(rpkt.header_parsed == true);
+  PL_ASSERT(initial_packet.header_parsed == true);
 
-  if (rpkt.is_initialized == false) {
+  if (initial_packet.is_initialized == false) {
     // packet needs to be initialized with rest of the contents
     //TODO: If other protocols are added, this need to be changed
-    if (PostgresProtocolHandler::ReadPacket(rbuf_, rpkt) == false) {
+    if (PostgresProtocolHandler::ReadPacket(rbuf_, initial_packet) == false) {
       // need more data
       return ProcessResult::MORE_DATA_REQUIRED;
     }
   }
   //TODO: If other protocols are added, this need to be changed
+
+  //TODO(Yuchen): can we use a more elegant way to create protocol_handler??
   if (protocol_handler_ == nullptr) {
     protocol_handler_ =
       ProtocolHandlerFactory::CreateProtocolHandler(
@@ -387,10 +393,13 @@ ProcessResult NetworkConnection::ProcessInitial() {
   }
   // We need to handle startup packet first
   //TODO: If other protocols are added, this need to be changed
-  if (!protocol_handler_->ProcessInitialPacket(&rpkt, client_, ssl_sent_, finish_startup_packet_)) {
+  bool result = protocol_handler_->ProcessInitialPacket(&initial_packet, client_, ssl_handshake_, finish_startup_packet_);
+  initial_packet.Reset();
+  if (result) {
+    return ProcessResult::COMPLETE;
+  } else {
     return ProcessResult::TERMINATE;
   }
-  return ProcessResult::COMPLETE;
 }
 
 // TODO: This function is now dedicated for postgres packet
@@ -427,19 +436,6 @@ WriteState NetworkConnection::BufferWriteBytesHeader(OutputPacket *pkt) {
   if (pkt->skip_header_write) {
     return WriteState::WRITE_COMPLETE;
   }
-//  if (pkt->msg_type == NetworkMessageType::SSL_YES || pkt->msg_type == NetworkMessageType::SSL_NO) {
-//    unsigned char type = static_cast<unsigned char>(pkt->msg_type);
-//    if (wbuf_.GetMaxSize() - wbuf_.buf_ptr < 1) {
-//      auto result = FlushWriteBuffer();
-//      if (result == WriteState::WRITE_NOT_READY || result == WriteState::WRITE_ERROR) {
-//        return result;
-//      }
-//    }
-//    wbuf_.buf[wbuf_.buf_ptr++] = type;
-//    wbuf_.buf_size = wbuf_.buf_ptr;
-//    pkt->skip_header_write = true;
-//    return WriteState::WRITE_COMPLETE;
-//  }
 
   size_t len = pkt->len;
   unsigned char type = static_cast<unsigned char>(pkt->msg_type);
@@ -464,13 +460,15 @@ WriteState NetworkConnection::BufferWriteBytesHeader(OutputPacket *pkt) {
   // make len include its field size as well
   len_nb = htonl(len + sizeof(int32_t));
 
-  // append the bytes of this integer in network-byte order
-  std::copy(reinterpret_cast<uchar *>(&len_nb),
-            reinterpret_cast<uchar *>(&len_nb) + 4,
-            std::begin(wbuf_.buf) + wbuf_.buf_ptr);
+  if (!ssl_handshake_) {
+    // append the bytes of this integer in network-byte order
+    std::copy(reinterpret_cast<uchar *>(&len_nb),
+              reinterpret_cast<uchar *>(&len_nb) + 4,
+              std::begin(wbuf_.buf) + wbuf_.buf_ptr);
 
-  // move the write buffer pointer and update size of the socket buffer
-  wbuf_.buf_ptr += sizeof(int32_t);
+    // move the write buffer pointer and update size of the socket buffer
+    wbuf_.buf_ptr += sizeof(int32_t);
+  }
   wbuf_.buf_size = wbuf_.buf_ptr;
 
   // Header is written to socket buf. No need to write it in the future
@@ -562,8 +560,9 @@ void NetworkConnection::Reset() {
   state = ConnState::CONN_INVALID;
   traffic_cop_.Reset();
   next_response_ = 0;
-  ssl_sent_ = false;
+  ssl_handshake_ = false;
   finish_startup_packet_ = false;
+  initial_packet.Reset();
 }
 
 void NetworkConnection::StateMachine(NetworkConnection *conn) {
@@ -625,7 +624,7 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
       }
 
       case ConnState::CONN_PROCESS_INITIAL: {
-        if (conn->ssl_sent_) {
+        if (conn->ssl_handshake_) {
           // start SSL handshake
           // TODO: consider free conn_SSL_context
           conn->conn_SSL_context = SSL_new(NetworkManager::ssl_context);
@@ -634,21 +633,23 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
             PL_ASSERT(false);
           }
           int ssl_accept_ret;
-          bool ssl_handshake = true;
-          // For non-blocking socket, check in loop
+          // keep trying untial fatal error happens or the ssl handshake succeeds.
+          bool continue_handshake = true;
           while ((ssl_accept_ret = SSL_accept(conn->conn_SSL_context)) <= 0) {
-            ssl_handshake = HandleSSLError(conn, ssl_accept_ret);
-            if (!ssl_handshake) {
+            continue_handshake = HandleSSLError(conn, ssl_accept_ret);
+            if (!continue_handshake) {
               break;
             }
           }
-          // TODO: Handle the situation when ssl handshake fails
-          if (!ssl_handshake) {
-            // handshake fails, reset ssl_sent_
-            conn->ssl_sent_ = false;
+          if (ssl_accept_ret > 0) {
+            // handshake succeeds, reset ssl_sent_
+            conn->ssl_handshake_ = false;
             conn->TransitState(ConnState::CONN_PROCESS_INITIAL);
+          } else {
+            // TODO(Yuchen): Handle the case when ssl fails, shall we close the connection directly?
+            conn->ssl_handshake_ = false;
+            conn->TransitState(ConnState::CONN_CLOSING);
           }
-          conn->ssl_sent_ = false;
         }
 
         switch (conn->ProcessInitial()) {
@@ -776,11 +777,9 @@ bool NetworkConnection::HandleSSLError(NetworkConnection* conn, int ret) {
     case SSL_ERROR_SSL:conn->TransitState(ConnState::CONN_CLOSED);
       LOG_INFO("Error ssl handshake");
       return false;
-      break;
     case SSL_ERROR_ZERO_RETURN:LOG_INFO("ssl error zero return");
       conn->TransitState(ConnState::CONN_CLOSED);
       return false;
-      break;
     case SSL_ERROR_NONE:LOG_INFO("ssl error none");
       break;
     case SSL_ERROR_WANT_READ:LOG_INFO("ssl error want read");
@@ -796,7 +795,6 @@ bool NetworkConnection::HandleSSLError(NetworkConnection* conn, int ret) {
     case SSL_ERROR_SYSCALL:LOG_INFO("ssl error syscall");
       conn->TransitState(ConnState::CONN_CLOSED);
       return false;
-      break;
   }
   return true;
 }
