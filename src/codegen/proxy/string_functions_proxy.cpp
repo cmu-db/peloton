@@ -22,6 +22,7 @@ DEFINE_METHOD(peloton::function, StringFunctions, Ascii);
 DEFINE_METHOD(peloton::function, StringFunctions, Like);
 DEFINE_METHOD(peloton::function, StringFunctions, Length);
 DEFINE_METHOD(peloton::function, StringFunctions, BTrim);
+DEFINE_METHOD(peloton::function, StringFunctions, Trim);
 DEFINE_METHOD(peloton::function, StringFunctions, LTrim);
 DEFINE_METHOD(peloton::function, StringFunctions, RTrim);
 

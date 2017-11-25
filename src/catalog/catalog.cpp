@@ -967,6 +967,13 @@ void Catalog::InitializeFunctions() {
           function::BuiltInFuncType{OperatorId::BTrim,
                                     function::StringFunctions::_BTrim},
           txn);
+      // Trim
+      AddBuiltinFunction(
+          "btrim", {type::TypeId::VARCHAR},
+          type::TypeId::VARCHAR, internal_lang, "trim",
+          function::BuiltInFuncType{OperatorId::Trim,
+                                    function::StringFunctions::_Trim},
+          txn);
       AddBuiltinFunction(
           "like", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
           type::TypeId::VARCHAR, internal_lang, "like",

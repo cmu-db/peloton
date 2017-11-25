@@ -26,6 +26,7 @@ PROXY(StringFunctions) {
   DECLARE_METHOD(Like);
   DECLARE_METHOD(Length);
   DECLARE_METHOD(BTrim);
+  DECLARE_METHOD(Trim);
   DECLARE_METHOD(LTrim);
   DECLARE_METHOD(RTrim);
 };

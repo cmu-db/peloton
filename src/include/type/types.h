@@ -1040,6 +1040,7 @@ enum class OperatorId : uint32_t {
   LTrim,
   RTrim,
   BTrim,
+  Trim,
   Sqrt,
   Ceil,
   Round,

@@ -261,6 +261,16 @@ type::Value StringFunctions::_RTrim(const std::vector<type::Value> &args) {
   return type::ValueFactory::GetVarcharValue(str);
 }
 
+StringFunctions::StrWithLen StringFunctions::Trim(
+    const char *str, uint32_t str_len) {
+  return BTrim(str, str_len, " ", 2);
+}
+
+type::Value StringFunctions::_Trim(const std::vector<type::Value> &args) {
+  PL_ASSERT(args.size() == 1);
+  return _BTrim({args[0], type::ValueFactory::GetVarcharValue(" ")});
+}
+
 // Remove the longest string consisting only of characters in characters
 // from the start and end of string
 StringFunctions::StrWithLen StringFunctions::BTrim(
