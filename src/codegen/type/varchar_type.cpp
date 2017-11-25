@@ -212,6 +212,25 @@ struct DateTrunc : public TypeSystem::BinaryOperatorHandleNull {
   }
 };
 
+struct Trim : public TypeSystem::UnaryOperator {
+  bool SupportsType(const Type &type) const override {
+    return type.GetSqlType() == Varchar::Instance();
+  }
+
+  Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
+    return Varchar::Instance();
+  }
+
+  Value DoWork(CodeGen &codegen, const Value &val) const override {
+    llvm::Value *ret = codegen.Call(StringFunctionsProxy::Trim,
+                                    {val.GetValue(), val.GetLength()});
+
+    llvm::Value *str_ptr = codegen->CreateExtractValue(ret, 0);
+    llvm::Value *str_len = codegen->CreateExtractValue(ret, 1);
+    return Value(Varchar::Instance(), str_ptr, str_len);
+  }
+};
+
 struct BTrim : public TypeSystem::BinaryOperator {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
@@ -303,8 +322,10 @@ static std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {
 // Unary operators
 static Ascii kAscii;
 static Length kLength;
+static Trim kTrim;
 static std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {
-    {OperatorId::Ascii, kAscii}, {OperatorId::Length, kLength}};
+    {OperatorId::Ascii, kAscii}, {OperatorId::Length, kLength},
+    {OperatorId::Trim, kTrim}};
 
 // Binary operations
 static Like kLike;

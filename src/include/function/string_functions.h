@@ -32,8 +32,7 @@ class StringFunctions {
   static type::Value _Ascii(const std::vector<type::Value> &args);
 
   // Like
-  static bool Like(const char *t, uint32_t tlen,
-                   const char *p, uint32_t plen);
+  static bool Like(const char *t, uint32_t tlen, const char *p, uint32_t plen);
   static type::Value _Like(const std::vector<type::Value> &args);
 
   // Get Character from integer
@@ -68,6 +67,9 @@ class StringFunctions {
   static StrWithLen RTrim(const char *str, uint32_t str_len, const char *from,
                           uint32_t from_len);
   static type::Value _RTrim(const std::vector<type::Value> &args);
+
+  static StrWithLen Trim(const char *str, uint32_t str_len);
+  static type::Value _Trim(const std::vector<type::Value> &args);
 
   // Remove the longest string consisting only of characters in characters
   // from the start and end of string

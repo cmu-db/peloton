@@ -269,6 +269,11 @@ TEST_F(StringFunctionsTests, BTrimTest) {
   EXPECT_FALSE(result.IsNull());
   EXPECT_EQ(expected, result.ToString());
 
+  result = function::StringFunctions::_Trim(
+      {type::ValueFactory::GetVarcharValue(origStr)});
+  EXPECT_FALSE(result.IsNull());
+  EXPECT_EQ(expected, result.ToString());
+
   // Use NULL for every argument and make sure that it always returns NULL.
   for (int i = 0; i < 2; i++) {
     std::vector<type::Value> nullargs = {
