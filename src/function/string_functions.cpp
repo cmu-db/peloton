@@ -221,16 +221,12 @@ type::Value StringFunctions::_LTrim(const std::vector<type::Value> &args) {
   if (args[0].IsNull() || args[1].IsNull()) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
   }
-  std::string str = args[0].ToString();
-  std::string from = args[1].ToString();
-  size_t pos = 0;
-  bool erase = 0;
-  while (from.find(str[pos]) != std::string::npos) {
-    erase = 1;
-    pos++;
-  }
-  if (erase) str.erase(0, pos);
-  return (type::ValueFactory::GetVarcharValue(str));
+
+  StrWithLen ret = LTrim(args.at(0).GetData(), strlen(args.at(0).GetData() + 1),
+                         args.at(1).GetData(), strlen(args.at(1).GetData()) + 1);
+
+  std::string str(ret.str, ret.length - 1);
+  return type::ValueFactory::GetVarcharValue(str);
 }
 
 StringFunctions::StrWithLen StringFunctions::RTrim(
@@ -257,17 +253,12 @@ type::Value StringFunctions::_RTrim(const std::vector<type::Value> &args) {
   if (args[0].IsNull() || args[1].IsNull()) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
   }
-  std::string str = args.at(0).ToString();
-  std::string from = args.at(1).ToString();
-  if (str.length() == 0) return (type::ValueFactory::GetVarcharValue(""));
-  size_t pos = str.length() - 1;
-  bool erase = 0;
-  while (from.find(str[pos]) != std::string::npos) {
-    erase = 1;
-    pos--;
-  }
-  if (erase) str.erase(pos + 1, str.length() - pos - 1);
-  return (type::ValueFactory::GetVarcharValue(str));
+
+  StrWithLen ret = RTrim(args.at(0).GetData(), strlen(args.at(0).GetData() + 1),
+                         args.at(1).GetData(), strlen(args.at(1).GetData()) + 1);
+
+  std::string str(ret.str, ret.length - 1);
+  return type::ValueFactory::GetVarcharValue(str);
 }
 
 // Remove the longest string consisting only of characters in characters
