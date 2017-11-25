@@ -241,17 +241,19 @@ StringFunctions::StrWithLen StringFunctions::BTrim(
     const char *str, uint32_t str_len, const char *from,
     UNUSED_ATTRIBUTE uint32_t from_len) {
   PL_ASSERT(str != nullptr && from != nullptr);
+
+  str_len--;  // skip the tailing 0
+
   if (str_len == 0) {
-    return StringFunctions::StrWithLen(nullptr, 0);
+    return StringFunctions::StrWithLen(str, 1);
   }
 
   int tail = str_len - 1, head = 0;
   while (tail >= 0 && strchr(from, str[tail]) != NULL) tail--;
-  tail++;
 
   while (head < (int)str_len && strchr(from, str[head]) != NULL) head++;
 
-  return StringFunctions::StrWithLen(str + head, std::max(tail - head + 1, 0));
+  return StringFunctions::StrWithLen(str + head, std::max(tail - head + 1, 0) + 1);
 }
 
 type::Value StringFunctions::_BTrim(const std::vector<type::Value> &args) {
@@ -259,26 +261,12 @@ type::Value StringFunctions::_BTrim(const std::vector<type::Value> &args) {
   if (args[0].IsNull() || args[1].IsNull()) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
   }
-  std::string str = args.at(0).ToString();
-  std::string from = args.at(1).ToString();
-  if (str.length() == 0) return (type::ValueFactory::GetVarcharValue(""));
 
-  size_t pos = str.length() - 1;
-  bool erase = 0;
-  while (from.find(str[pos]) != std::string::npos) {
-    erase = 1;
-    pos--;
-  }
-  if (erase) str.erase(pos + 1, str.length() - pos - 1);
+  StrWithLen ret = BTrim(args.at(0).GetData(), strlen(args.at(0).GetData() + 1),
+                         args.at(1).GetData(), strlen(args.at(1).GetData()) + 1);
 
-  pos = 0;
-  erase = 0;
-  while (from.find(str[pos]) != std::string::npos) {
-    erase = 1;
-    pos++;
-  }
-  if (erase) str.erase(0, pos);
-  return (type::ValueFactory::GetVarcharValue(str));
+  std::string str(ret.str, ret.length - 1);
+  return type::ValueFactory::GetVarcharValue(str);
 }
 
 uint32_t StringFunctions::Length(UNUSED_ATTRIBUTE const char *str,
