@@ -33,7 +33,7 @@ endforeach(perf_src ${perf_srcs})
 
 set(GMOCK_DIR  "${PROJECT_SOURCE_DIR}/third_party/gmock")
 file(GLOB gmock_srcs  ${GMOCK_DIR}/*.cc)
-include_directories(SYSTEM ${GMOCK_DIR})
+include_directories(${GMOCK_DIR})
 
 ##################################################################################
 
