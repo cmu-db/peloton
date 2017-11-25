@@ -28,7 +28,6 @@ class PlannerEqualityTest : public PelotonTest {
 
     // Create test database
     CreateAndLoadTable();
-    optimizer.reset(new optimizer::Optimizer());
   }
 
   virtual void TearDown() override {
@@ -90,6 +89,9 @@ class PlannerEqualityTest : public PelotonTest {
 };
 
 TEST_F(PlannerEqualityTest, Select) {
+  // set up optimizer for every test
+  optimizer.reset(new optimizer::Optimizer());
+
   std::vector<TestItem> items {
     {"SELECT * from test", "SELECT * from test", true, true},
     {"SELECT * from test", "SELECT * from test2", false, false},
@@ -149,7 +151,13 @@ TEST_F(PlannerEqualityTest, Select) {
     auto plan_1 = GeneratePlanWithOptimizer(optimizer, item.q1, txn);
     auto plan_2 = GeneratePlanWithOptimizer(optimizer, item.q2, txn);
     txn_manager.CommitTransaction(txn);
-    
+
+    planner::BindingContext context_1;
+    plan_1->PerformBinding(context_1);
+
+    planner::BindingContext context_2;
+    plan_2->PerformBinding(context_2);
+
     auto hash_equal = (plan_1->Hash() == plan_2->Hash());
     EXPECT_EQ(item.hash_equal, hash_equal);
     
@@ -159,6 +167,9 @@ TEST_F(PlannerEqualityTest, Select) {
 }
 
 TEST_F(PlannerEqualityTest, Insert) {
+  // set up optimizer for every test
+  optimizer.reset(new optimizer::Optimizer());
+
   std::vector<TestItem> items {
     {"INSERT into test values(1,1)",
      "INSERT into test values(1,2)", true, true},
@@ -186,7 +197,13 @@ TEST_F(PlannerEqualityTest, Insert) {
     auto plan_1 = GeneratePlanWithOptimizer(optimizer, item.q1, txn);
     auto plan_2 = GeneratePlanWithOptimizer(optimizer, item.q2, txn);
     txn_manager.CommitTransaction(txn);
-    
+
+    planner::BindingContext context_1;
+    plan_1->PerformBinding(context_1);
+
+    planner::BindingContext context_2;
+    plan_2->PerformBinding(context_2);
+
     auto hash_equal = (plan_1->Hash() == plan_2->Hash());
     EXPECT_EQ(item.hash_equal, hash_equal);
     
@@ -196,6 +213,7 @@ TEST_F(PlannerEqualityTest, Insert) {
 }
 
 TEST_F(PlannerEqualityTest, Delete) {
+  optimizer.reset(new optimizer::Optimizer());
   std::vector<TestItem> items {
     {"DELETE from test where a=1", "DELETE from test where a=1", true, true},
     {"DELETE from test where a=1", "DELETE from test where a=2", true, true},
@@ -211,7 +229,13 @@ TEST_F(PlannerEqualityTest, Delete) {
     auto plan_1 = GeneratePlanWithOptimizer(optimizer, item.q1, txn);
     auto plan_2 = GeneratePlanWithOptimizer(optimizer, item.q2, txn);
     txn_manager.CommitTransaction(txn);
-    
+
+    planner::BindingContext context_1;
+    plan_1->PerformBinding(context_1);
+
+    planner::BindingContext context_2;
+    plan_2->PerformBinding(context_2);
+
     auto hash_equal = (plan_1->Hash() == plan_2->Hash());
     EXPECT_EQ(item.hash_equal, hash_equal);
     
@@ -221,6 +245,9 @@ TEST_F(PlannerEqualityTest, Delete) {
 }
 
 TEST_F(PlannerEqualityTest, Update) {
+  // set up optimizer for every test
+  optimizer.reset(new optimizer::Optimizer());
+
   std::vector<TestItem> items {
     {"UPDATE test SET c = b + 1 WHERE a=1",
      "UPDATE test SET c = b + 2 WHERE a=1", true, true},
@@ -240,7 +267,13 @@ TEST_F(PlannerEqualityTest, Update) {
     auto plan_1 = GeneratePlanWithOptimizer(optimizer, item.q1, txn);
     auto plan_2 = GeneratePlanWithOptimizer(optimizer, item.q2, txn);
     txn_manager.CommitTransaction(txn);
-    
+
+    planner::BindingContext context_1;
+    plan_1->PerformBinding(context_1);
+
+    planner::BindingContext context_2;
+    plan_2->PerformBinding(context_2);
+
     auto hash_equal = (plan_1->Hash() == plan_2->Hash());
     EXPECT_EQ(item.hash_equal, hash_equal);
     
