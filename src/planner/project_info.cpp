@@ -140,6 +140,9 @@ void ProjectInfo::PerformRebinding(
     // Setup the result type of the derived attribute
     derived_attribute.attribute_info.type = expr->ResultType();
 
+    // Setup the attribute id of the derived attribute
+    derived_attribute.attribute_info.attribute_id = dest_col_id;
+
     const auto *dest_ai = &derived_attribute.attribute_info;
     LOG_DEBUG("Target: Dest col %u is bound to AI %p", dest_col_id, dest_ai);
     output_context.BindNew(dest_col_id, dest_ai);
