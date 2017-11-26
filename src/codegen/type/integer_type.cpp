@@ -377,6 +377,8 @@ struct Modulo : public TypeSystem::BinaryOperator {
 };
 
 // DateTrunc
+// TODO(lma): Move this to the Timestamp type once the function lookup logic is
+// corrected.
 struct DateTrunc : public TypeSystem::BinaryOperator {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
