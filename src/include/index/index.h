@@ -292,6 +292,8 @@ class Index : public Printable {
 
   virtual void CodeGenRangeScan(storage::Tuple *low_key_p, storage::Tuple *high_key_p, std::vector<ItemPointer *> &result) = 0;
 
+  virtual void CodeGenFullScan(std::vector<ItemPointer *> &result) = 0;
+
   ///////////////////////////////////////////////////////////////////
   // Garbage Collection
   ///////////////////////////////////////////////////////////////////

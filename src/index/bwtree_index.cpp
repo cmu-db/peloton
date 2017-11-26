@@ -212,6 +212,14 @@ void BWTREE_INDEX_TYPE::CodeGenRangeScan(UNUSED_ATTRIBUTE storage::Tuple *low_ke
   }
 }
 
+BWTREE_TEMPLATE_ARGUMENTS
+void BWTREE_INDEX_TYPE::CodeGenFullScan(UNUSED_ATTRIBUTE std::vector<ItemPointer *> &result) {
+  for (auto scan_itr = container.Begin(); (scan_itr.IsEnd() == false);
+       scan_itr++) {
+    result.push_back(scan_itr->second);
+  }
+}
+
 /*
  * ScanLimit() - Scan the index with predicate and limit/offset
  *

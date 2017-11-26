@@ -44,7 +44,7 @@ void IndexScanIterator::DoScan() {
   if (is_point_query_) {
     index_->ScanKey(point_key_p_, result_);
   } else if (is_full_scan_) {
-    // TODO
+    index_->CodeGenFullScan(result_);
   } else {
     index_->CodeGenRangeScan(low_key_p_, high_key_p_, result_);
   }

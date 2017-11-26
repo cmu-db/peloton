@@ -78,6 +78,8 @@ class SkipListIndex : public Index {
 
   void CodeGenRangeScan(UNUSED_ATTRIBUTE storage::Tuple *low_key_p, UNUSED_ATTRIBUTE storage::Tuple *high_key_p, UNUSED_ATTRIBUTE std::vector<ItemPointer *> &result) {}
 
+  void CodeGenFullScan(UNUSED_ATTRIBUTE std::vector<ItemPointer *> &result) {}
+
   std::string GetTypeName() const;
 
   // TODO: Implement this
