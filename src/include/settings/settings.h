@@ -56,6 +56,12 @@ SETTING_string(certificate_file,
               "server.crt",
               false, false)
 
+// Peloton root certificate file
+SETTING_string(root_cert_file,
+               "path to root certificate file",
+               "root.crt",
+               false, false)
+
 //===----------------------------------------------------------------------===//
 // RESOURCE USAGE
 //===----------------------------------------------------------------------===//
