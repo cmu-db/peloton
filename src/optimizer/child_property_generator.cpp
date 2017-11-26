@@ -125,8 +125,9 @@ void ChildPropertyGenerator::ScanHelper() {
   // AbstractExpression -> offset when insert
   ExprMap columns;
   vector<shared_ptr<expression::AbstractExpression>> column_exprs;
-  auto columns_prop = requirements_.GetPropertyOfType(PropertyType::COLUMNS)
-                          ->As<PropertyColumns>();
+  auto columns_prop = requirements_.GetPropertyOfTypeAs<PropertyColumns>(PropertyType::COLUMNS);
+  PL_ASSERT(columns_prop != nullptr);
+
   if (columns_prop->HasStarExpression()) {
     column_exprs.emplace_back(new expression::StarExpression());
   } else {
@@ -140,7 +141,7 @@ void ChildPropertyGenerator::ScanHelper() {
 
     // Add all the columns from PropertySort to column_set
     auto sort_prop =
-        requirements_.GetPropertyOfType(PropertyType::SORT)->As<PropertySort>();
+        requirements_.GetPropertyOfTypeAs<PropertySort>(PropertyType::SORT);
     if (sort_prop != nullptr) {
       for (size_t i = 0; i < sort_prop->GetSortColumnSize(); i++) {
         auto expr = sort_prop->GetSortColumn(i);
