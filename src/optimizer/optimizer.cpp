@@ -15,8 +15,8 @@
 #include "optimizer/optimizer.h"
 
 #include "catalog/column_catalog.h"
-#include "catalog/table_catalog.h"
 #include "catalog/manager.h"
+#include "catalog/table_catalog.h"
 
 #include "optimizer/binding.h"
 #include "optimizer/child_property_generator.h"
@@ -65,8 +65,9 @@ Optimizer::Optimizer() {
       new LogicalInsertSelectToPhysical());
   physical_implementation_rules_.emplace_back(
       new LogicalGroupByToHashGroupBy());
-  physical_implementation_rules_.emplace_back(
-      new LogicalGroupByToSortGroupBy());
+  // Comment out because codegen does not support sort groupby now
+  // physical_implementation_rules_.emplace_back(
+  //     new LogicalGroupByToSortGroupBy());
   physical_implementation_rules_.emplace_back(new LogicalAggregateToPhysical());
   physical_implementation_rules_.emplace_back(new GetToDummyScan());
   physical_implementation_rules_.emplace_back(new GetToSeqScan());
@@ -83,8 +84,7 @@ Optimizer::Optimizer() {
 
 shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
     const unique_ptr<parser::SQLStatementList> &parse_tree_list,
-    const std::string default_database_name,
-    concurrency::Transaction *txn) {
+    const std::string default_database_name, concurrency::Transaction *txn) {
   // Base Case
   if (parse_tree_list->GetStatements().size() == 0) return nullptr;
 
@@ -93,7 +93,8 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   auto parse_tree = parse_tree_list->GetStatements().at(0).get();
 
   // Run binder
-  auto bind_node_visitor = make_shared<binder::BindNodeVisitor>(txn, default_database_name);
+  auto bind_node_visitor =
+      make_shared<binder::BindNodeVisitor>(txn, default_database_name);
   bind_node_visitor->BindNameToNode(parse_tree);
 
   // Handle ddl statement
@@ -245,7 +246,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
   Group *group = memo_.GetGroupByID(id);
   shared_ptr<GroupExpression> gexpr = group->GetBestExpression(requirements);
 
-  LOG_TRACE("Choosing best plan for group %d with op %s", gexpr->GetGroupID(),
+  LOG_DEBUG("Choosing best plan for group %d with op %s", gexpr->GetGroupID(),
             gexpr->Op().name().c_str());
 
   vector<GroupID> child_groups = gexpr->GetChildGroupIDs();
