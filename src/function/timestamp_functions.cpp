@@ -25,8 +25,7 @@ namespace function {
 
 uint64_t TimestampFunctions::DateTrunc(uint32_t date_part_type,
                                        uint64_t value) {
-  DatePartType date_part =
-      *reinterpret_cast<const DatePartType *>(&date_part_type);
+  DatePartType date_part = static_cast<DatePartType>(date_part_type);
 
   uint64_t timestamp = value;
   uint64_t result = 0;
