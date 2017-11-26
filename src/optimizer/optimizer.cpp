@@ -246,7 +246,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
   Group *group = memo_.GetGroupByID(id);
   shared_ptr<GroupExpression> gexpr = group->GetBestExpression(requirements);
 
-  LOG_DEBUG("Choosing best plan for group %d with op %s", gexpr->GetGroupID(),
+  LOG_TRACE("Choosing best plan for group %d with op %s", gexpr->GetGroupID(),
             gexpr->Op().name().c_str());
 
   vector<GroupID> child_groups = gexpr->GetChildGroupIDs();
