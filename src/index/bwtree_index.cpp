@@ -191,6 +191,27 @@ void BWTREE_INDEX_TYPE::Scan(
   return;
 }
 
+BWTREE_TEMPLATE_ARGUMENTS
+void BWTREE_INDEX_TYPE::CodeGenRangeScan(UNUSED_ATTRIBUTE storage::Tuple *low_key_p, UNUSED_ATTRIBUTE storage::Tuple *high_key_p, UNUSED_ATTRIBUTE std::vector<ItemPointer *> &result) {
+  // Construct low key and high key in KeyType form, rather than
+  // the standard in-memory tuple
+  KeyType index_low_key;
+  KeyType index_high_key;
+  index_low_key.SetFromKey(low_key_p);
+  index_high_key.SetFromKey(high_key_p);
+
+  // We use bwtree Begin() to first reach the lower bound
+  // of the search key
+  // Also we keep scanning until we have reached the end of the index
+  // or we have seen a key higher than the high key
+  for (auto scan_itr = container.Begin(index_low_key);
+       (scan_itr.IsEnd() == false) &&
+       (container.KeyCmpLessEqual(scan_itr->first, index_high_key));
+       scan_itr++) {
+    result.push_back(scan_itr->second);
+  }
+}
+
 /*
  * ScanLimit() - Scan the index with predicate and limit/offset
  *
