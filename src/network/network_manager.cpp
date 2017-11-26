@@ -83,6 +83,7 @@ NetworkManager::NetworkManager() {
   max_connections_ = settings::SettingsManager::GetInt(settings::SettingId::max_connections);
   private_key_file_ = DATA_DIR + settings::SettingsManager::GetString(settings::SettingId::private_key_file);
   certificate_file_ = DATA_DIR + settings::SettingsManager::GetString(settings::SettingId::certificate_file);
+  root_cert_file_ = DATA_DIR + settings::SettingsManager::GetString(settings::SettingId::root_cert_file);
 
   // For logging purposes
   //  event_enable_debug_mode();
@@ -131,6 +132,14 @@ void NetworkManager::StartServer() {
     }
 
     LOG_INFO("private key file path %s", private_key_file_.c_str());
+
+    if (SSL_CTX_load_verify_locations(ssl_context, certificate_file_.c_str(), nullptr) != 1) {
+      SSL_CTX_free(ssl_context);
+      LOG_INFO("Exception when loading root_crt!");
+      throw ConnectionException("Error associating root certificate.\n");
+    } else {
+      LOG_INFO("Read root_crt!");
+    }
 
     // Temporarily commented to pass tests START
     // register private key

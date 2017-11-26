@@ -58,6 +58,7 @@ class NetworkManager {
 
   std::string private_key_file_;
   std::string certificate_file_;
+  std::string root_cert_file_;
 
   struct event *ev_stop_;     // libevent stop event
   struct event *ev_timeout_;  // libevent timeout event
