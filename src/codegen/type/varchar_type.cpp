@@ -182,11 +182,12 @@ struct Like : public TypeSystem::BinaryOperator {
   Value Eval(CodeGen &codegen, const Value &left, const Value &right,
              UNUSED_ATTRIBUTE OnError on_error) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
+    
+    // Pre-condition: Left value is the input string; right value is the pattern
+    
     if (!left.IsNullable()) {
       return Impl(codegen, left, right);
     }
-
-    // The input string is NULLable, perform NULL check
 
     codegen::Value null_ret, not_null_ret;
     lang::If input_null{codegen, left.IsNull(codegen)};
@@ -195,7 +196,10 @@ struct Like : public TypeSystem::BinaryOperator {
       null_ret = codegen::Value{Boolean::Instance(), codegen.ConstBool(false)};
     }
     input_null.ElseBlock();
-    { not_null_ret = Impl(codegen, left, right); }
+    { 
+      // Input is not null, invoke LIKE
+      not_null_ret = Impl(codegen, left, right); 
+    }
     return input_null.BuildPHI(null_ret, not_null_ret);
   }
 };
