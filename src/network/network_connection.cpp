@@ -15,6 +15,7 @@
 #include <settings/settings_manager.h>
 #include "network/network_connection.h"
 #include "network/protocol_handler_factory.h"
+#include "errno.h"
 namespace peloton {
 namespace network {
 
@@ -273,15 +274,9 @@ WriteState NetworkConnection::FlushWriteBuffer() {
     while (wbuf_.buf_size > 0) {
       written_bytes = 0;
       while (written_bytes <= 0) {
-//        if (conn_SSL_context != nullptr) {
-//          LOG_INFO("SSL_write flush");
-//          written_bytes =
-//              SSL_write(conn_SSL_context, &wbuf_.buf[wbuf_.buf_flush_ptr], wbuf_.buf_size);
-//        } else {
           LOG_INFO("Normal write flush");
           written_bytes =
               write(sock_fd, &wbuf_.buf[wbuf_.buf_flush_ptr], wbuf_.buf_size);
-//        }
         // Write failed
         if (written_bytes < 0) {
           switch (errno) {
@@ -360,6 +355,7 @@ std::string NetworkConnection::WriteBufferToString() {
 
   return std::string(wbuf_.buf.begin(), wbuf_.buf.end());
 }
+
 
 ProcessResult NetworkConnection::ProcessInitial() {
   //TODO: this is a direct copy and we should get rid of it later;
@@ -792,9 +788,14 @@ bool NetworkConnection::HandleSSLError(NetworkConnection* conn, int ret) {
       break;
     case SSL_ERROR_WANT_X509_LOOKUP:LOG_INFO("ssl error want x509 lookup");
       break;
-    case SSL_ERROR_SYSCALL:LOG_INFO("ssl error syscall");
+    case SSL_ERROR_SYSCALL: {
+      LOG_INFO("ssl error syscall, errno: %d, %s", errno, strerror(errno));
+      if (errno == 0) {
+        LOG_INFO("EOF observed that violates the protocol");
+      }
       conn->TransitState(ConnState::CONN_CLOSED);
       return false;
+    }
   }
   return true;
 }
