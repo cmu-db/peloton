@@ -12,13 +12,14 @@
 
 #include "codegen/type/varchar_type.h"
 
-#include "codegen/value.h"
+#include "codegen/lang/if.h"
 #include "codegen/proxy/string_functions_proxy.h"
 #include "codegen/proxy/values_runtime_proxy.h"
 #include "codegen/type/boolean_type.h"
 #include "codegen/type/integer_type.h"
 #include "codegen/type/timestamp_type.h"
 #include "codegen/proxy/timestamp_functions_proxy.h"
+#include "codegen/value.h"
 
 namespace peloton {
 namespace codegen {
@@ -166,19 +167,36 @@ struct Like : public TypeSystem::BinaryOperator {
 
   Type ResultType(UNUSED_ATTRIBUTE const Type &left_type,
                   UNUSED_ATTRIBUTE const Type &right_type) const override {
-    return Integer::Instance();
+    return Boolean::Instance();
   }
 
-  Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
-               UNUSED_ATTRIBUTE OnError on_error) const override {
-    PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
-    // Do match
+  Value Impl(CodeGen &codegen, const Value &left, const Value &right) const {
+    // Call StringFunctions::Like(...)
     llvm::Value *raw_ret = codegen.Call(StringFunctionsProxy::Like,
                                         {left.GetValue(), left.GetLength(),
                                          right.GetValue(), right.GetLength()});
-
-    // return value
+    // Return the result
     return Value{Boolean::Instance(), raw_ret};
+  }
+
+  Value Eval(CodeGen &codegen, const Value &left, const Value &right,
+             UNUSED_ATTRIBUTE OnError on_error) const override {
+    PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
+    if (!left.IsNullable()) {
+      return Impl(codegen, left, right);
+    }
+
+    // The input string is NULLable, perform NULL check
+
+    codegen::Value null_ret, not_null_ret;
+    lang::If input_null{codegen, left.IsNull(codegen)};
+    {
+      // Input is null, return false
+      null_ret = codegen::Value{Boolean::Instance(), codegen.ConstBool(false)};
+    }
+    input_null.ElseBlock();
+    { not_null_ret = Impl(codegen, left, right); }
+    return input_null.BuildPHI(null_ret, not_null_ret);
   }
 };
 
