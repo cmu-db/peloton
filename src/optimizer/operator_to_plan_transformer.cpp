@@ -189,7 +189,10 @@ void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
   vector<catalog::Column> columns;
   size_t curr_col_offset = 0;
   for (auto expr : output_exprs) {
-    if (child_expr_map.find(expr) != child_expr_map.end()) {
+    // TODO(boweic): currently do a check for dummy scan to deal with empty
+    // children_expr_map_, but I think we need to clean up the code here a bit
+    if (!children_expr_map_.empty() &&
+        child_expr_map.find(expr) != child_expr_map.end()) {
       // For TupleValueExpr, we can just do a direct mapping.
       dml.emplace_back(curr_col_offset, make_pair(0, child_expr_map[expr]));
     } else {

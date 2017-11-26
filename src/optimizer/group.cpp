@@ -48,14 +48,7 @@ void Group::SetExpressionCost(std::shared_ptr<GroupExpression> expr,
   if (it == lowest_cost_expressions_.end() || std::get<0>(it->second) > cost) {
     // No other cost to compare against or the cost is lower than the existing
     // cost
-    LOG_DEBUG("Adding expression cost on group %d with op %s, req %s",
-              expr->GetGroupID(), expr->Op().name().c_str(),
-              properties.ToString().c_str());
     lowest_cost_expressions_[properties] = std::make_tuple(cost, expr);
-    for (auto& pr : lowest_cost_expressions_) {
-      LOG_DEBUG("group %d has req %s", expr->GetGroupID(),
-                pr.first.ToString().c_str());
-    }
   }
 }
 std::shared_ptr<GroupExpression> Group::GetBestExpression(
@@ -64,10 +57,7 @@ std::shared_ptr<GroupExpression> Group::GetBestExpression(
   if (it != lowest_cost_expressions_.end()) {
     return std::get<1>(it->second);
   }
-  for (auto& pr : lowest_cost_expressions_) {
-    LOG_DEBUG("Has property %s", pr.first.ToString().c_str());
-  }
-  LOG_DEBUG("Didn't get best expression with properties %s",
+  LOG_TRACE("Didn't get best expression with properties %s",
             properties.ToString().c_str());
   return nullptr;
 }
