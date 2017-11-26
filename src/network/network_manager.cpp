@@ -98,6 +98,23 @@ NetworkManager::NetworkManager() {
   signal(SIGPIPE, SIG_IGN);
 }
 
+int NetworkManager::verify_callback(int ok, X509_STORE_CTX *store) {
+  char data[256];
+  if (!ok)
+  {
+    X509 *cert = X509_STORE_CTX_get_current_cert(store);
+    int depth = X509_STORE_CTX_get_error_depth(store);
+    int err = X509_STORE_CTX_get_error(store);
+    LOG_ERROR("-Error with certificate at depth: %i", depth);
+    X509_NAME_oneline(X509_get_issuer_name(cert), data, 256);
+    LOG_ERROR(" issuer = %s", data);
+    X509_NAME_oneline(X509_get_subject_name(cert), data, 256);
+    LOG_ERROR(" subject = %s", data);
+    LOG_ERROR(" err %i:%s", err, X509_verify_cert_error_string(err));
+  }
+  return ok;
+}
+
 void NetworkManager::StartServer() {
   if (settings::SettingsManager::GetString(settings::SettingId::socket_family) == "AF_INET") {
     struct sockaddr_in sin;
@@ -122,12 +139,8 @@ void NetworkManager::StartServer() {
     SSL_load_error_strings();
     SSL_library_init();
 
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
-    ssl_context = SSL_CTX_new(TLS_server_method());
-#else
-    ssl_context = SSL_CTX_new(SSLv23_server_method());
-#endif
-    if (ssl_context == nullptr) {
+    if ((ssl_context = SSL_CTX_new(SSLv23_method())) == nullptr)
+    {
       throw ConnectionException("Error creating SSL context.");
     }
 
@@ -137,27 +150,44 @@ void NetworkManager::StartServer() {
       SSL_CTX_free(ssl_context);
       LOG_INFO("Exception when loading root_crt!");
       throw ConnectionException("Error associating root certificate.\n");
-    } else {
-      LOG_INFO("Read root_crt!");
+    }
+
+    if (SSL_CTX_set_default_verify_paths(ssl_context) != 1) {
+      SSL_CTX_free(ssl_context);
+      LOG_INFO("Exception when setting default verify path!");
+      throw ConnectionException("Error associating root certificate.\n");
     }
 
     // Temporarily commented to pass tests START
-    // register private key
-    LOG_DEBUG("private key file path %s", private_key_file_.c_str());
-    if (SSL_CTX_use_PrivateKey_file(ssl_context, private_key_file_.c_str(),
-                                    SSL_FILETYPE_PEM) == 0)
-    {
-      SSL_CTX_free(ssl_context);
-      throw ConnectionException("Error associating private key.\n");
-    }
     LOG_INFO("certificate file path %s", certificate_file_.c_str());
     // register public key (certificate)
-    if (SSL_CTX_use_certificate_file(ssl_context, certificate_file_.c_str(),
-                                     SSL_FILETYPE_PEM) == 0)
+    if (SSL_CTX_use_certificate_chain_file(ssl_context, certificate_file_.c_str()) != 1)
     {
       SSL_CTX_free(ssl_context);
       throw ConnectionException("Error associating certificate.\n");
     }
+
+    // register private key
+    LOG_DEBUG("private key file path %s", private_key_file_.c_str());
+    if (SSL_CTX_use_PrivateKey_file(ssl_context, private_key_file_.c_str(),
+                                    SSL_FILETYPE_PEM) != 1)
+    {
+      SSL_CTX_free(ssl_context);
+      throw ConnectionException("Error associating private key.\n");
+    }
+
+    if (SSL_CTX_check_private_key(ssl_context) != 1) {
+      SSL_CTX_free(ssl_context);
+      throw ConnectionException("Error checking private key.\n");
+    }
+
+    SSL_CTX_set_verify(ssl_context, SSL_VERIFY_NONE, verify_callback);
+
+    SSL_CTX_set_verify_depth(ssl_context, 4);
+
+    // postgres use : SSL_OP_SINGLE_DH_USE
+    SSL_CTX_set_options(ssl_context, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
+
     // Temporarily commented to pass tests END
 
     if (bind(listen_fd, (struct sockaddr *) &sin, sizeof(sin)) < 0)

@@ -39,6 +39,9 @@
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+// How do we enforce ssl v3?
+#include <openssl/x509.h>
+#include <openssl/x509_vfy.h>
 
 namespace peloton {
 namespace network {
@@ -98,6 +101,7 @@ class NetworkManager {
 
   event_base *GetEventBase() { return base_; }
 
+  static int verify_callback(int ok, X509_STORE_CTX *store);
  private:
   /* Maintain a global list of connections.
    * Helps reuse connection objects when possible
