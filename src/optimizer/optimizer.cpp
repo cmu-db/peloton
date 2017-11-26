@@ -380,10 +380,11 @@ void Optimizer::OptimizeExpression(shared_ptr<GroupExpression> gexpr,
 }
 
 Property *Optimizer::GenerateNewPropertyCols(PropertySet requirements) {
-  auto cols_prop = requirements.GetPropertyOfType(PropertyType::COLUMNS)
-                       ->As<PropertyColumns>();
-  auto sort_prop =
-      requirements.GetPropertyOfType(PropertyType::SORT)->As<PropertySort>();
+  auto cols_prop = requirements.GetPropertyOfTypeAs<PropertyColumns>(PropertyType::COLUMNS);
+  auto sort_prop = requirements.GetPropertyOfTypeAs<PropertySort>(PropertyType::SORT);
+
+  PL_ASSERT(cols_prop != nullptr);
+  PL_ASSERT(sort_prop != nullptr);
 
   // Check if there is any missing columns from orderby need to be added
   ExprSet columns_set;
