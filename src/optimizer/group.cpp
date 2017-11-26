@@ -41,28 +41,34 @@ void Group::AddExpression(std::shared_ptr<GroupExpression> expr,
 
 void Group::SetExpressionCost(std::shared_ptr<GroupExpression> expr,
                               double cost, PropertySet properties) {
-  LOG_TRACE("Adding expression cost on group %d with op %s", expr->GetGroupID(),
-            expr->Op().name().c_str());
+  LOG_TRACE("Adding expression cost on group %d with op %s, req %s",
+            expr->GetGroupID(), expr->Op().name().c_str(),
+            properties.ToString().c_str());
   auto it = lowest_cost_expressions_.find(properties);
-  if (it == lowest_cost_expressions_.end()) {
-    // No other cost to compare against
-    lowest_cost_expressions_.insert(
-        std::make_pair(properties, std::make_tuple(cost, expr)));
-  } else {
-    // Only insert if the cost is lower than the existing cost
-    if (std::get<0>(it->second) > cost) {
-      lowest_cost_expressions_[properties] = std::make_tuple(cost, expr);
+  if (it == lowest_cost_expressions_.end() || std::get<0>(it->second) > cost) {
+    // No other cost to compare against or the cost is lower than the existing
+    // cost
+    LOG_DEBUG("Adding expression cost on group %d with op %s, req %s",
+              expr->GetGroupID(), expr->Op().name().c_str(),
+              properties.ToString().c_str());
+    lowest_cost_expressions_[properties] = std::make_tuple(cost, expr);
+    for (auto& pr : lowest_cost_expressions_) {
+      LOG_DEBUG("group %d has req %s", expr->GetGroupID(),
+                pr.first.ToString().c_str());
     }
   }
 }
-
 std::shared_ptr<GroupExpression> Group::GetBestExpression(
     PropertySet properties) {
   auto it = lowest_cost_expressions_.find(properties);
   if (it != lowest_cost_expressions_.end()) {
     return std::get<1>(it->second);
   }
-  LOG_TRACE("Didn't get best expression with required properties!");
+  for (auto& pr : lowest_cost_expressions_) {
+    LOG_DEBUG("Has property %s", pr.first.ToString().c_str());
+  }
+  LOG_DEBUG("Didn't get best expression with properties %s",
+            properties.ToString().c_str());
   return nullptr;
 }
 

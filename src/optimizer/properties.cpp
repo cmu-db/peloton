@@ -28,10 +28,15 @@ PropertyType PropertyColumns::Type() const { return PropertyType::COLUMNS; }
 
 bool PropertyColumns::operator>=(const Property &r) const {
   // check the type
-  if (r.Type() != PropertyType::COLUMNS) return false;
+  if (r.Type() != PropertyType::COLUMNS) {
+    return false;
+  }
   const PropertyColumns &r_columns =
       *reinterpret_cast<const PropertyColumns *>(&r);
-
+  // lhs is less than rhs if size is smaller
+  if (column_exprs_.size() < r_columns.column_exprs_.size()) {
+    return false;
+  }
   // check that every column in the right hand side property exists in the left
   // hand side property
   for (auto r_column : r_columns.column_exprs_) {
@@ -76,8 +81,9 @@ std::string PropertyColumns::ToString() const {
                  ->GetColumnName();
       str += " ";
     } else {
-      // TODO: Add support for other expression
-      str += "expr ";
+      column_expr->DeduceExpressionName();
+      str += column_expr->GetExpressionName();
+      str += " ";
     }
   }
   return str + "\n";
@@ -85,8 +91,9 @@ std::string PropertyColumns::ToString() const {
 
 /*************** PropertyDistinct *****************/
 
-PropertyDistinct::PropertyDistinct(std::vector<
-    std::shared_ptr<expression::AbstractExpression>> distinct_column_exprs)
+PropertyDistinct::PropertyDistinct(
+    std::vector<std::shared_ptr<expression::AbstractExpression>>
+        distinct_column_exprs)
     : distinct_column_exprs_(std::move(distinct_column_exprs)) {
   LOG_TRACE("Size of column property: %ld", distinct_column_exprs_.size());
 }

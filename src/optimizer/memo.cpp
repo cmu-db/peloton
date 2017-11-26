@@ -62,9 +62,11 @@ std::shared_ptr<GroupExpression> Memo::InsertExpression(
   }
 }
 
-const std::vector<Group> &Memo::Groups() const { return groups_; }
+const std::vector<std::unique_ptr<Group>> &Memo::Groups() const {
+  return groups_;
+}
 
-Group *Memo::GetGroupByID(GroupID id) { return &(groups_[id]); }
+Group *Memo::GetGroupByID(GroupID id) { return groups_[id].get(); }
 
 GroupID Memo::AddNewGroup(std::shared_ptr<GroupExpression> gexpr) {
   GroupID new_group_id = groups_.size();
@@ -88,7 +90,7 @@ GroupID Memo::AddNewGroup(std::shared_ptr<GroupExpression> gexpr) {
       }
     }
   }
-  groups_.emplace_back(new_group_id, std::move(table_aliases));
+  groups_.emplace_back(new Group(new_group_id, std::move(table_aliases)));
   return new_group_id;
 }
 

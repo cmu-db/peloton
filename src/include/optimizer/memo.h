@@ -57,7 +57,7 @@ class Memo {
       std::shared_ptr<GroupExpression> gexpr, GroupID target_group,
       bool enforced);
 
-  const std::vector<Group>& Groups() const;
+  const std::vector<std::unique_ptr<Group>>& Groups() const;
 
   Group* GetGroupByID(GroupID id);
 
@@ -66,8 +66,8 @@ class Memo {
 
   std::unordered_set<std::shared_ptr<GroupExpression>, GExprPtrHash, GExprPtrEq>
       group_expressions_;
-  std::vector<Group> groups_;
+  std::vector<std::unique_ptr<Group>> groups_;
 };
 
-} // namespace optimizer
-} // namespace peloton
+}  // namespace optimizer
+}  // namespace peloton

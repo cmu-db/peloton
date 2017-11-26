@@ -15,18 +15,18 @@
 #include "optimizer/operator_expression.h"
 #include "planner/aggregate_plan.h"
 #include "planner/delete_plan.h"
-#include "planner/hash_plan.h"
 #include "planner/hash_join_plan.h"
+#include "planner/hash_plan.h"
+#include "planner/index_scan_plan.h"
 #include "planner/insert_plan.h"
 #include "planner/limit_plan.h"
 #include "planner/nested_loop_join_plan.h"
 #include "planner/order_by_plan.h"
-#include "planner/index_scan_plan.h"
 #include "planner/projection_plan.h"
 #include "planner/seq_scan_plan.h"
 #include "planner/update_plan.h"
-#include "storage/data_table.h"
 #include "settings/settings_manager.h"
+#include "storage/data_table.h"
 
 using std::vector;
 using std::make_pair;
@@ -189,8 +189,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
   vector<catalog::Column> columns;
   size_t curr_col_offset = 0;
   for (auto expr : output_exprs) {
-    auto expr_type = expr->GetExpressionType();
-    if (expr_type == ExpressionType::VALUE_TUPLE) {
+    if (child_expr_map.find(expr) != child_expr_map.end()) {
       // For TupleValueExpr, we can just do a direct mapping.
       dml.emplace_back(curr_col_offset, make_pair(0, child_expr_map[expr]));
     } else {
@@ -333,7 +332,8 @@ void OperatorToPlanTransformer::Visit(const PhysicalDistinct *) {
         if (input_expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
           auto &column_idx = expr_idx_pair.second;
 
-          auto col_expr = static_cast<expression::TupleValueExpression *>(input_expr->Copy());
+          auto col_expr = static_cast<expression::TupleValueExpression *>(
+              input_expr->Copy());
           col_expr->SetValueIdx(static_cast<int>(column_idx));
 
           hash_keys.emplace_back(col_expr);
@@ -345,7 +345,8 @@ void OperatorToPlanTransformer::Visit(const PhysicalDistinct *) {
       PL_ASSERT(expr->GetExpressionType() == ExpressionType::VALUE_TUPLE);
 
       auto column_idx = child_expr_map[expr];
-      auto col_expr = static_cast<expression::TupleValueExpression *>(expr->Copy());
+      auto col_expr =
+          static_cast<expression::TupleValueExpression *>(expr->Copy());
       col_expr->SetValueIdx(static_cast<int>(column_idx));
 
       hash_keys.emplace_back(col_expr);
@@ -513,8 +514,8 @@ OperatorToPlanTransformer::GeneratePredicateForScan(
 std::unique_ptr<planner::AggregatePlan>
 OperatorToPlanTransformer::GenerateAggregatePlan(
     const PropertyColumns *prop_col, AggregateType agg_type,
-    const std::vector<std::shared_ptr<expression::AbstractExpression>> *
-        group_by_exprs,
+    const std::vector<std::shared_ptr<expression::AbstractExpression>>
+        *group_by_exprs,
     expression::AbstractExpression *having) {
   auto child_expr_map = children_expr_map_[0];
 
@@ -688,7 +689,8 @@ unique_ptr<planner::AbstractPlan> OperatorToPlanTransformer::GenerateJoinPlan(
     join_plan = unique_ptr<planner::AbstractPlan>(new planner::HashJoinPlan(
         join_type, move(predicate), move(proj_info), schema_ptr, left_hash_keys,
         right_hash_keys,
-        settings::SettingsManager::GetBool(settings::SettingId::hash_join_bloom_filter)));
+        settings::SettingsManager::GetBool(
+            settings::SettingId::hash_join_bloom_filter)));
 
     join_plan->AddChild(move(children_plans_[0]));
     join_plan->AddChild(move(hash_plan));
