@@ -202,13 +202,15 @@ void BindNodeVisitor::Visit(expression::FunctionExpression *expr) {
   // Specialize the first argument (DatePartType) for date functions, otherwise
   // we have to do the string comparison to find out the corresponding
   // DatePartType when scanning every tuple.
-  auto func_name = expr->GetFuncName();
-  if (func_name == "date_trunc" || func_name == "extract") {
+  auto func_op_id = expr->GetFunc().op_id;
+  if (func_op_id == OperatorId::DateTrunc ||
+      func_op_id == OperatorId::Extract) {
     // Check the type of the first argument. Should be VARCHAR
     auto date_part = expr->GetChild(0);
     if (date_part->GetValueType() != type::TypeId::VARCHAR) {
       throw Exception(EXCEPTION_TYPE_EXPRESSION,
-                      "Incorrect argument type to function: " + func_name +
+                      "Incorrect argument type to function: " +
+                          expr->GetFuncName() +
                           ". Argument 0 expected type VARCHAR but found " +
                           TypeIdToString(date_part->GetValueType()) + ".");
     }
