@@ -203,7 +203,10 @@ void BindNodeVisitor::Visit(expression::FunctionExpression *expr) {
   // we have to do the string comparison to find out the corresponding
   // DatePartType when scanning every tuple.
   auto func_name = expr->GetFuncName();
-  if (func_name == "date_trunc" || func_name == "extract") {
+  auto func_operator_id =
+      function::BuiltInFunctions::GetFuncBySQLName(func_name).op_id;
+  if (func_operator_id == OperatorId::DateTrunc ||
+      func_operator_id == OperatorId::Extract) {
     // Check the type of the first argument. Should be VARCHAR
     auto date_part = expr->GetChild(0);
     if (date_part->GetValueType() != type::TypeId::VARCHAR) {
