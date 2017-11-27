@@ -81,8 +81,7 @@ Optimizer::Optimizer() {
 
 shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
     const unique_ptr<parser::SQLStatementList> &parse_tree_list,
-    const std::string default_database_name,
-    concurrency::Transaction *txn) {
+    const std::string default_database_name, concurrency::Transaction *txn) {
   // Base Case
   if (parse_tree_list->GetStatements().size() == 0) return nullptr;
 
@@ -91,7 +90,8 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   auto parse_tree = parse_tree_list->GetStatements().at(0).get();
 
   // Run binder
-  auto bind_node_visitor = make_shared<binder::BindNodeVisitor>(txn, default_database_name);
+  auto bind_node_visitor =
+      make_shared<binder::BindNodeVisitor>(txn, default_database_name);
   bind_node_visitor->BindNameToNode(parse_tree);
 
   // Handle ddl statement
@@ -174,7 +174,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
             throw CatalogException(
                 "Some columns are missing when create index " +
                 std::string(create_stmt->index_name));
-          oid_t col_pos = column_object->column_id;
+          oid_t col_pos = column_object->GetColumnId();
           column_ids.push_back(col_pos);
         }
         // Create a plan to retrieve data

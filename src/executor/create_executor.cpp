@@ -195,15 +195,15 @@ bool CreateExecutor::DExecute() {
               std::chrono::system_clock::now().time_since_epoch()).count());
 
       CopySerializeOutput output;
-      newTrigger.SerializeWhen(output, table_object->database_oid,
-                               table_object->table_oid, current_txn);
+      newTrigger.SerializeWhen(output, table_object->GetDatabaseOid(),
+                               table_object->GetTableOid(), current_txn);
       auto when = type::ValueFactory::GetVarbinaryValue(
           (const unsigned char *)output.Data(), (int32_t)output.Size(), true);
 
       catalog::TriggerCatalog::GetInstance().InsertTrigger(
-          table_object->table_oid, trigger_name, newTrigger.GetTriggerType(),
-          newTrigger.GetFuncname(), newTrigger.GetArgs(), when, time_stamp,
-          pool_.get(), current_txn);
+          table_object->GetTableOid(), trigger_name,
+          newTrigger.GetTriggerType(), newTrigger.GetFuncname(),
+          newTrigger.GetArgs(), when, time_stamp, pool_.get(), current_txn);
       // ask target table to update its trigger list variable
       storage::DataTable *target_table =
           catalog::Catalog::GetInstance()->GetTableWithName(

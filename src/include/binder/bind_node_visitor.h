@@ -10,6 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#pragma once
+
 #include "common/sql_node_visitor.h"
 #include "binder/binder_context.h"
 #include "parser/statements.h"
@@ -21,6 +23,9 @@ namespace expression {
 class CaseExpression;
 class ConstantExpression;
 class TupleValueExpression;
+class StarExpression;
+class OperatorExpression;
+class AggregateExpression;
 }  // namespace expression
 
 namespace parser {
@@ -31,7 +36,8 @@ namespace binder {
 
 class BindNodeVisitor : public SqlNodeVisitor {
  public:
-  BindNodeVisitor(concurrency::Transaction *txn, std::string default_database_name);
+  BindNodeVisitor(concurrency::Transaction *txn,
+                  std::string default_database_name);
 
   void BindNameToNode(parser::SQLStatement *tree);
   void Visit(parser::SelectStatement *) override;
@@ -55,11 +61,15 @@ class BindNodeVisitor : public SqlNodeVisitor {
   void Visit(parser::AnalyzeStatement *) override;
 
   void Visit(expression::CaseExpression *expr) override;
-  // void Visit(const expression::ConstantValueExpression *expr) override;
   void Visit(expression::TupleValueExpression *expr) override;
-  void SetTxn(concurrency::Transaction *txn) {
-    this->txn_ = txn;
-  }
+  void Visit(expression::StarExpression *expr) override;
+  void Visit(expression::FunctionExpression *expr) override;
+
+  // Deduce value type for these expressions
+  void Visit(expression::OperatorExpression *expr) override;
+  void Visit(expression::AggregateExpression *expr) override;
+
+  void SetTxn(concurrency::Transaction *txn) { this->txn_ = txn; }
 
  private:
   std::shared_ptr<BinderContext> context_;

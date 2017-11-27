@@ -100,7 +100,7 @@ void PostgresProtocolHandler::SendInitialResponse() {
   SendReadyForQuery(NetworkTransactionStateType::IDLE);
 
   // we need to send the response right away
-  force_flush = true;
+  SetFlushFlag(true);
 }
 
 void PostgresProtocolHandler::MakeHardcodedParameterStatus(
@@ -1094,7 +1094,7 @@ ProcessResult PostgresProtocolHandler::ProcessPacket(InputPacket *pkt, const siz
   switch (pkt->msg_type) {
     case NetworkMessageType::SIMPLE_QUERY_COMMAND: {
       LOG_TRACE("SIMPLE_QUERY_COMMAND");
-      force_flush = true;
+      SetFlushFlag(true);
       return ExecQueryMessage(pkt, thread_id);
     }
     case NetworkMessageType::PARSE_COMMAND: {
@@ -1116,7 +1116,7 @@ ProcessResult PostgresProtocolHandler::ProcessPacket(InputPacket *pkt, const siz
     case NetworkMessageType::SYNC_COMMAND: {
       LOG_TRACE("SYNC_COMMAND");
       SendReadyForQuery(txn_state_);
-      force_flush = true;
+      SetFlushFlag(true);
     } break;
     case NetworkMessageType::CLOSE_COMMAND: {
       LOG_TRACE("CLOSE_COMMAND");
@@ -1124,12 +1124,12 @@ ProcessResult PostgresProtocolHandler::ProcessPacket(InputPacket *pkt, const siz
     } break;
     case NetworkMessageType::TERMINATE_COMMAND: {
       LOG_TRACE("TERMINATE_COMMAND");
-      force_flush = true;
+      SetFlushFlag(true);
       return ProcessResult::TERMINATE;
     }
     case NetworkMessageType::NULL_COMMAND: {
       LOG_TRACE("NULL");
-      force_flush = true;
+      SetFlushFlag(true);
       return ProcessResult::TERMINATE;
     }
     default: {

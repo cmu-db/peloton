@@ -42,28 +42,28 @@ DatabaseCatalogObject::DatabaseCatalogObject(executor::LogicalTile *tile,
  */
 bool DatabaseCatalogObject::InsertTableObject(
     std::shared_ptr<TableCatalogObject> table_object) {
-  if (!table_object || table_object->table_oid == INVALID_OID) {
+  if (!table_object || table_object->GetTableOid() == INVALID_OID) {
     return false;  // invalid object
   }
 
   // check if already in cache
-  if (table_objects_cache.find(table_object->table_oid) !=
+  if (table_objects_cache.find(table_object->GetTableOid()) !=
       table_objects_cache.end()) {
-    LOG_DEBUG("Table %u already exists in cache!", table_object->table_oid);
+    LOG_DEBUG("Table %u already exists in cache!", table_object->GetTableOid());
     return false;
   }
 
-  if (table_name_cache.find(table_object->table_name) !=
+  if (table_name_cache.find(table_object->GetTableName()) !=
       table_name_cache.end()) {
     LOG_DEBUG("Table %s already exists in cache!",
-              table_object->table_name.c_str());
+              table_object->GetTableName().c_str());
     return false;
   }
 
   table_objects_cache.insert(
-      std::make_pair(table_object->table_oid, table_object));
+      std::make_pair(table_object->GetTableOid(), table_object));
   table_name_cache.insert(
-      std::make_pair(table_object->table_name, table_object));
+      std::make_pair(table_object->GetTableName(), table_object));
   return true;
 }
 
@@ -81,7 +81,7 @@ bool DatabaseCatalogObject::EvictTableObject(oid_t table_oid) {
   auto table_object = it->second;
   PL_ASSERT(table_object);
   table_objects_cache.erase(it);
-  table_name_cache.erase(table_object->table_name);
+  table_name_cache.erase(table_object->GetTableName());
   return true;
 }
 
@@ -99,7 +99,7 @@ bool DatabaseCatalogObject::EvictTableObject(const std::string &table_name) {
   auto table_object = it->second;
   PL_ASSERT(table_object);
   table_name_cache.erase(it);
-  table_objects_cache.erase(table_object->table_oid);
+  table_objects_cache.erase(table_object->GetTableOid());
   return true;
 }
 
