@@ -42,6 +42,27 @@ If::If(CodeGen &cg, llvm::Value *if_condition, const std::string &name)
 If::If(CodeGen &cg, const codegen::Value &if_condition, const std::string &name)
     : If(cg, type::Boolean::Instance().Reify(cg, if_condition), name) {}
 
+llvm::Value *If::If2(CodeGen &cg, llvm::Value *if_condition, 
+                   const std::function<llvm::Value *()> &cgen_then_branch,
+                   const std::function<llvm::Value *()> &cgen_else_branch) {
+  auto new_if = new If(cg, if_condition, "new_if");
+
+  // Run the then-branch
+  llvm::Value *then_result = cgen_then_branch();
+  new_if->ElseBlock();
+  // Run the else-branch
+  llvm::Value *else_result = cgen_else_branch();
+  new_if->EndIf();
+  return new_if->BuildPHI(then_result,else_result);
+}
+
+llvm::Value *If::If2(CodeGen &cg, const codegen::Value &if_condition, 
+                   const std::function<llvm::Value *()> &cgen_then_branch,
+                   const std::function<llvm::Value *()> &cgen_else_branch){
+  return If::If2(cg, type::Boolean::Instance().Reify(cg, if_condition),
+                 cgen_then_branch,cgen_else_branch);
+}
+
 void If::EndIf(llvm::BasicBlock *end_bb) {
   if (end_bb != nullptr) {
     // Create an unconditional branch to the provided basic block

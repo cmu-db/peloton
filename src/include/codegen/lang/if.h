@@ -31,6 +31,14 @@ class If {
   If(CodeGen &cg, const codegen::Value &if_condition,
      const std::string &name = "then");
 
+  // Add a support for different IF usage without explicit use of PHI
+  llvm::Value *If2(CodeGen &cg, llvm::Value *if_condition, 
+                   const std::function<llvm::Value *()> &cgen_then_branch,
+                   const std::function<llvm::Value *()> &cgen_else_branch);
+  llvm::Value *If2(CodeGen &cg, const codegen::Value &if_condition, 
+                   const std::function<llvm::Value *()> &cgen_then_branch,
+                   const std::function<llvm::Value *()> &cgen_else_branch);
+
   // Begin the else block (provided the name _name_)
   void ElseBlock(const std::string &name = "else");
 
