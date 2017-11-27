@@ -42,5 +42,6 @@ DEFINE_METHOD(peloton::codegen, RuntimeFunctions, GetTileGroupIdFromResult);
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, GetTileGroupOffsetFromResult);
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, IsValidTileGroup);
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, GetIterator);
+DEFINE_METHOD(peloton::codegen, RuntimeFunctions, DeleteIterator);
 }  // namespace codegen
 }  // namespace peloton

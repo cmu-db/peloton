@@ -237,6 +237,7 @@ void IndexScanTranslator::Produce() const {
 
 //  }
 
+  codegen.Call(RuntimeFunctionsProxy::DeleteIterator, {iterator_ptr});
 }
 
 

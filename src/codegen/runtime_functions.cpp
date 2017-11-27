@@ -168,5 +168,10 @@ util::IndexScanIterator *RuntimeFunctions::GetIterator(index::Index *index, uint
   return iterator;
 }
 
+void RuntimeFunctions::DeleteIterator(util::IndexScanIterator *iterator) {
+  PL_ASSERT(iterator != nullptr);
+  delete iterator;
+}
+
 }  // namespace codegen
 }  // namespace peloton
