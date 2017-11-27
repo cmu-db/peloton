@@ -45,7 +45,7 @@ class QueryParameters {
   }
 
   // Get the parameter value's type at the specified index
-  peloton::type::TypeId GetValueType(int32_t index) {
+  peloton::type::TypeId GetValueType(uint32_t index) {
     return parameters_[index].GetValue().GetTypeId();
   }
 
@@ -54,60 +54,72 @@ class QueryParameters {
     return parameters_;
   }
 
-  bool GetBoolean(int32_t index) {
+  // Get the boolean value for the index
+  bool GetBoolean(uint32_t index) {
     return peloton::type::ValuePeeker::PeekBoolean(
         parameters_[index].GetValue());
   }
 
-  int8_t GetTinyInt(int32_t index) {
+  // Get the tinyint value for the index
+  int8_t GetTinyInt(uint32_t index) {
     return peloton::type::ValuePeeker::PeekTinyInt(
         parameters_[index].GetValue());
   }
 
-  int16_t GetSmallInt(int32_t index) {
+  // Get the smallint value for the index
+  int16_t GetSmallInt(uint32_t index) {
     return peloton::type::ValuePeeker::PeekSmallInt(
         parameters_[index].GetValue());
   }
 
-  int32_t GetInteger(int32_t index) {
+  // Get the integer value for the index
+  int32_t GetInteger(uint32_t index) {
     return peloton::type::ValuePeeker::PeekInteger(
         parameters_[index].GetValue());
   }
 
-  int64_t GetBigInt(int32_t index) {
+  // Get the bigint value for the index
+  int64_t GetBigInt(uint32_t index) {
     return peloton::type::ValuePeeker::PeekBigInt(
         parameters_[index].GetValue());
   }
 
-  double GetDouble(int32_t index) {
+  // Get the double value for the index
+  double GetDouble(uint32_t index) {
     return peloton::type::ValuePeeker::PeekDouble(
         parameters_[index].GetValue());
   }
 
-  int32_t GetDate(int32_t index) {
+  // Get the date value for the index
+  int32_t GetDate(uint32_t index) {
     return peloton::type::ValuePeeker::PeekDate(parameters_[index].GetValue());
   }
 
-  uint64_t GetTimestamp(int32_t index) {
+  // Get the timestamp value for the index
+  uint64_t GetTimestamp(uint32_t index) {
     return peloton::type::ValuePeeker::PeekTimestamp(
         parameters_[index].GetValue());
   }
 
-  const char *GetVarcharVal(int32_t index) {
+  // Get the valrchar value for the index
+  const char *GetVarcharVal(uint32_t index) {
     return peloton::type::ValuePeeker::PeekVarchar(
         parameters_[index].GetValue());
   }
 
-  uint32_t GetVarcharLen(int32_t index) {
+  // Get the valrchar length for the index
+  uint32_t GetVarcharLen(uint32_t index) {
     return parameters_[index].GetValue().GetLength();
   }
 
-  const char *GetVarbinaryVal(int32_t index) {
+  // Get the valrbinary value for the index
+  const char *GetVarbinaryVal(uint32_t index) {
     return peloton::type::ValuePeeker::PeekVarbinary(
         parameters_[index].GetValue());
   }
 
-  uint32_t GetVarbinaryLen(int32_t index) {
+  // Get the valrbinary length for the index
+  uint32_t GetVarbinaryLen(uint32_t index) {
     return parameters_[index].GetValue().GetLength();
   }
 
