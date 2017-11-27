@@ -121,9 +121,6 @@ bool NetworkConnection::UpdateEvent(short flags) {
  */
 
 WriteState NetworkConnection::WritePackets() {
-  // TODO(Yuchen): Should I send a single S or S with length?
-
-
   // iterate through all the packets
   for (; next_response_ < protocol_handler_->responses.size(); next_response_++) {
     auto pkt = protocol_handler_->responses[next_response_].get();
@@ -184,91 +181,143 @@ ReadState NetworkConnection::FillReadBuffer() {
       // if the connection is a SSL connection, we use SSL_read, otherwise
       // we use general read function
       if (conn_SSL_context != nullptr) {
+        ERR_clear_error();
+        // TODO(Yuchen): For the transparent negotiation to succeed, the ssl must have been initialized to client or server mode?
+        // Only when the record has been received and processed completely,
+        // SSL_read() will return reporting success.
+        // TODO(Yuchen): How does it know whether one record is fininished or not??
+        // As the size of an SSL/TLS record may exceed the maximum packet size of the
+        // underlying transport (e.g. TCP), it may be necessary to read several packets
+        // from the transport layer before the record is complete and SSL_read() can succeed.
+        // TODO(Yuchen): How should we deal with SSL_pending()? We can't rely on select()/libevent to trigger the event
+        // since the data is in SSL buffer not in network buffer.
+        // Can we add a state in WAIT??
+        // TODO(Yuchen): What happens if SSL buffer is larger than the available connection buffer
+        SetReadBlockedOnWrite(false);
         bytes_read = SSL_read(conn_SSL_context, rbuf_.GetPtr(rbuf_.buf_size),
-                                rbuf_.GetMaxSize() - rbuf_.buf_size);
-      }
-      else {
-        bytes_read = read(sock_fd, rbuf_.GetPtr(rbuf_.buf_size),
-                        rbuf_.GetMaxSize() - rbuf_.buf_size);
-        LOG_TRACE("When filling read buffer, read %ld bytes", bytes_read);
-      }
-
-      if (bytes_read > 0) {
-        // read succeeded, update buffer size
-        rbuf_.buf_size += bytes_read;
-        result = ReadState::READ_DATA_RECEIVED;
-      } else if (bytes_read == 0) {
-        // Read failed
-        return ReadState::READ_ERROR;
-      } else if (bytes_read < 0) {
-        // related to non-blocking?
-        if (errno == EAGAIN || errno == EWOULDBLOCK) {
-          // return whatever results we have
-          LOG_TRACE("Received: EAGAIN or EWOULDBLOCK");
-          done = true;
-        } else if (errno == EINTR) {
-          // interrupts are ok, try again
-          LOG_TRACE("Error Reading: EINTR");
-          continue;
-        } else {
-          // otherwise, we have some other error
-          switch (errno) {
-            case EBADF:
-              LOG_TRACE("Error Reading: EBADF");
-              break;
-            case EDESTADDRREQ:
-              LOG_TRACE("Error Reading: EDESTADDRREQ");
-              break;
-            case EDQUOT:
-              LOG_TRACE("Error Reading: EDQUOT");
-              break;
-            case EFAULT:
-              LOG_TRACE("Error Reading: EFAULT");
-              break;
-            case EFBIG:
-              LOG_TRACE("Error Reading: EFBIG");
-              break;
-            case EINVAL:
-              LOG_TRACE("Error Reading: EINVAL");
-              break;
-            case EIO:
-              LOG_TRACE("Error Reading: EIO");
-              break;
-            case ENOSPC:
-              LOG_TRACE("Error Reading: ENOSPC");
-              break;
-            case EPIPE:
-              LOG_TRACE("Error Reading: EPIPE");
-              break;
-            default:
-              LOG_TRACE("Error Reading: UNKNOWN");
+                              rbuf_.GetMaxSize() - rbuf_.buf_size);
+        // read_blocked = false;
+        int err = SSL_get_error(conn_SSL_context, bytes_read);
+        switch (err) {
+          case SSL_ERROR_NONE: {
+            // If successfully received, update buffer ptr
+            rbuf_.buf_size += bytes_read;
+            result = ReadState::READ_DATA_RECEIVED;
+            break;
           }
-          // some other error occured
+          // It means the socket would have blocked when it's empty. It happens when
+          // when the SSL record arrives in multiple packets.
+          case SSL_ERROR_WANT_READ: {
+            LOG_INFO("Waiting for more data in a SSL record");
+            done = true;
+            // TODO(Yuchen): Why do we need read_blocked here??
+//            read_blocked = true;
+            break;
+          }
+          // It happens when we're trying to rehandshake and we block on a write
+          // during the handshake. We need to wait on the socket to be writable
+          case SSL_ERROR_WANT_WRITE: {
+            LOG_INFO("Trying to rehandshake when reading");
+            SetReadBlockedOnWrite(true);
+            break;
+          }
+          default: {
+            LOG_ERROR("SSL read error: %d", err);
+            return ReadState::READ_ERROR;
+          }
+            // SSL_pending() checks when the SSL buffer is larger than local buffer, and there
+            // is data left in SSL buffer that is not processed.
+            // TODO(Yuchen): If it's the case, we need to process the buffer first and then come to read the rest.
+            // Are we going to read state after processing??
+            // We need to check if it is doing handshake because SSL_pending() doesn't work
+            // properly during handshake.
+        }
+      } else {
+        bytes_read = read(sock_fd, rbuf_.GetPtr(rbuf_.buf_size),
+                          rbuf_.GetMaxSize() - rbuf_.buf_size);
+        LOG_TRACE("When filling read buffer, read %ld bytes", bytes_read);
+        if (bytes_read > 0) {
+          // read succeeded, update buffer size
+          rbuf_.buf_size += bytes_read;
+          result = ReadState::READ_DATA_RECEIVED;
+        } else if (bytes_read == 0) {
+          // Read failed
           return ReadState::READ_ERROR;
+        } else if (bytes_read < 0) {
+          // related to non-blocking?
+          if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            // return whatever results we have
+            // TODO(Yuchen): What if we need to return the result back to client but it cannot be done immediately?
+            // Oh, maybe it's libevent EV_WRITE: when the fd becomes writable, if will be triggered.
+            LOG_TRACE("Received: EAGAIN or EWOULDBLOCK");
+            done = true;
+          } else if (errno == EINTR) {
+            // interrupts are ok, try again
+            LOG_TRACE("Error Reading: EINTR");
+            continue;
+          } else {
+            // otherwise, we have some other error
+            switch (errno) {
+              case EBADF:LOG_TRACE("Error Reading: EBADF");
+                break;
+              case EDESTADDRREQ:LOG_TRACE("Error Reading: EDESTADDRREQ");
+                break;
+              case EDQUOT:LOG_TRACE("Error Reading: EDQUOT");
+                break;
+              case EFAULT:LOG_TRACE("Error Reading: EFAULT");
+                break;
+              case EFBIG:LOG_TRACE("Error Reading: EFBIG");
+                break;
+              case EINVAL:LOG_TRACE("Error Reading: EINVAL");
+                break;
+              case EIO:LOG_TRACE("Error Reading: EIO");
+                break;
+              case ENOSPC:LOG_TRACE("Error Reading: ENOSPC");
+                break;
+              case EPIPE:LOG_TRACE("Error Reading: EPIPE");
+                break;
+              default:LOG_TRACE("Error Reading: UNKNOWN");
+            }
+            // some other error occured
+            return ReadState::READ_ERROR;
+          }
         }
       }
     }
   }
   return result;
 }
-
+// TODO(Yuchen): Is this done in a non-blocking way? How do we know the network-buffer is empty so it's ready to write?
 WriteState NetworkConnection::FlushWriteBuffer() {
   ssize_t written_bytes = 0;
   // while we still have outstanding bytes to write
-  // SSL write
   if (conn_SSL_context != nullptr) {
     while (wbuf_.buf_size > 0) {
       LOG_INFO("SSL_write flush");
-      while ((written_bytes = SSL_write(conn_SSL_context, &wbuf_.buf[wbuf_.buf_flush_ptr], wbuf_.buf_size)) <= 0) {
-        int ssl_write = HandleSSLError(this, written_bytes);
-        if (!ssl_write) {
-          LOG_INFO("ssl write error");
+      ERR_clear_error();
+      SetWriteBlockedOnRead(false);
+      written_bytes = SSL_write(conn_SSL_context, &wbuf_.buf[wbuf_.buf_flush_ptr], wbuf_.buf_size);
+      int err = SSL_get_error(conn_SSL_context, written_bytes);
+      switch (err) {
+        case SSL_ERROR_NONE: {
+          LOG_INFO("%ld bytes", written_bytes);
+          wbuf_.buf_flush_ptr += written_bytes;
+          wbuf_.buf_size -= written_bytes;
           break;
         }
+        // We would have blocked on write
+        case SSL_ERROR_WANT_WRITE: {
+          return WriteState::WRITE_NOT_READY;
+        }
+        case SSL_ERROR_WANT_READ: {
+          SetWriteBlockedOnRead(true);
+          break;
+        }
+        default: {
+          LOG_ERROR("SSL write error: %d", err);
+          return WriteState::WRITE_ERROR;
+        }
       }
-      LOG_INFO("%ld bytes", written_bytes);
-      wbuf_.buf_flush_ptr += written_bytes;
-      wbuf_.buf_size -= written_bytes;
     }
   } else {
     while (wbuf_.buf_size > 0) {
@@ -530,6 +579,27 @@ void NetworkConnection::CloseSocket() {
   event_del(workpool_event);
   // event_free(event);
   TransitState(ConnState::CONN_CLOSED);
+  if (conn_SSL_context != nullptr) {
+    int shutdown_ret = 0;
+    while (1) {
+      ERR_clear_error();
+      shutdown_ret = SSL_shutdown(conn_SSL_context);
+      int err = SSL_get_error(conn_SSL_context, shutdown_ret);
+      if (shutdown_ret == 1) {
+        break;
+      } else if (shutdown_ret == 0) {
+        LOG_INFO("SSL shutdown is not finished yet");
+        continue;
+      } else {
+        if (err == SSL_ERROR_WANT_WRITE || err == SSL_ERROR_WANT_READ) {
+          continue;
+        } else {
+          LOG_ERROR("Error shutting down ssl session, err: %d", err);
+          break;
+        }
+      }
+    }
+  }
   Reset();
   for (;;) {
     int status = close(sock_fd);
@@ -559,6 +629,12 @@ void NetworkConnection::Reset() {
   ssl_handshake_ = false;
   finish_startup_packet_ = false;
   initial_packet.Reset();
+  if (conn_SSL_context != nullptr) {
+    SSL_free(conn_SSL_context);
+    conn_SSL_context = nullptr;
+  }
+  SetWriteBlockedOnRead(false);
+  SetReadBlockedOnWrite(false);
 }
 
 void NetworkConnection::StateMachine(NetworkConnection *conn) {
@@ -615,7 +691,12 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
         }
 
         conn->TransitState(ConnState::CONN_READ);
-        done = true;
+        // If the ssl session is doing rehandshake or there is no data left in SSL buffer
+        // exit the StateMachine and wait for the Libevent signal
+        if (conn->conn_SSL_context == nullptr || conn->GetReadBlockedOnWrite() ||
+            conn->GetReadBlockedOnWrite() || !SSL_pending(conn->conn_SSL_context)) {
+          done = true;
+        }
         break;
       }
 
@@ -628,21 +709,56 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
             LOG_ERROR("Failed to set SSL fd");
             PL_ASSERT(false);
           }
-          int ssl_accept_ret;
-          // keep trying untial fatal error happens or the ssl handshake succeeds.
-          bool continue_handshake = true;
-          while ((ssl_accept_ret = SSL_accept(conn->conn_SSL_context)) <= 0) {
-            continue_handshake = HandleSSLError(conn, ssl_accept_ret);
-            if (!continue_handshake) {
+
+          // Clear thread's OpenSSL error queue so that SSL_get_error() works reliably
+          ERR_clear_error();
+          bool handshake_fail = false;
+          while (!handshake_fail) {
+            int ssl_accept_ret = SSL_accept(conn->conn_SSL_context);
+            if (ssl_accept_ret > 0) {
               break;
             }
+            int err = SSL_get_error(conn->conn_SSL_context, ssl_accept_ret);
+            int ecode = ERR_get_error();
+            switch (err) {
+              case SSL_ERROR_SSL: {
+                if (ecode < 0) {
+                  LOG_ERROR("Could not accept SSL connection");
+                } else {
+                  LOG_ERROR("Could not accept SSL connection: EOF detected");
+                }
+                handshake_fail = true;
+                break;
+              }
+              case SSL_ERROR_ZERO_RETURN: {
+                LOG_ERROR("Could not accept SSL connection: EOF detected");
+                handshake_fail = true;
+                break;
+              }
+              case SSL_ERROR_SYSCALL: {
+                if (ecode < 0) {
+                  LOG_ERROR("Could not accept SSL connection");
+                } else {
+                  LOG_ERROR("Could not accept SSL connection: EOF detected");
+                }
+                handshake_fail = true;
+                break;
+              }
+              case SSL_ERROR_WANT_READ:
+              case SSL_ERROR_WANT_WRITE:break;
+              default: {
+                LOG_ERROR("Unrecognized SSL error code: %d", err);
+                handshake_fail = true;
+              }
+            }
           }
-          if (ssl_accept_ret > 0) {
+          if (!handshake_fail) {
             // handshake succeeds, reset ssl_sent_
             conn->ssl_handshake_ = false;
             conn->TransitState(ConnState::CONN_PROCESS_INITIAL);
           } else {
             // TODO(Yuchen): Handle the case when ssl fails, shall we close the connection directly?
+            // Step1. close the connection directly.
             conn->ssl_handshake_ = false;
             conn->TransitState(ConnState::CONN_CLOSING);
           }
@@ -716,6 +832,7 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
         // examine write packets result
         switch (conn->WritePackets()) {
           case WriteState::WRITE_COMPLETE: {
+            // TODO(Yuchen): We need to check the update events carefully.
             if (!conn->UpdateEvent(EV_READ | EV_PERSIST)) {
               LOG_ERROR("Failed to update event, closing");
               conn->TransitState(ConnState::CONN_CLOSING);
@@ -748,12 +865,14 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
 
       case ConnState::CONN_CLOSING: {
         conn->CloseSocket();
+        LOG_INFO("It's closing connection");
         done = true;
         break;
       }
 
       case ConnState::CONN_CLOSED: {
         done = true;
+        LOG_INFO("Has closed connection");
         break;
       }
 
@@ -764,40 +883,6 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
     }
   }
   LOG_TRACE("END of while loop");
-}
-
-// TODO: yc- need to handle error properly
-bool NetworkConnection::HandleSSLError(NetworkConnection* conn, int ret) {
-  int err = SSL_get_error(conn->conn_SSL_context, ret);
-  switch (err) {
-    case SSL_ERROR_SSL:conn->TransitState(ConnState::CONN_CLOSED);
-      LOG_INFO("Error ssl handshake");
-      return false;
-    case SSL_ERROR_ZERO_RETURN:LOG_INFO("ssl error zero return");
-      conn->TransitState(ConnState::CONN_CLOSED);
-      return false;
-    case SSL_ERROR_NONE:LOG_INFO("ssl error none");
-      break;
-    case SSL_ERROR_WANT_READ:LOG_INFO("ssl error want read");
-      break;
-    case SSL_ERROR_WANT_WRITE:LOG_INFO("ssl error want write");
-      break;
-    case SSL_ERROR_WANT_CONNECT:LOG_INFO("ssl error want connect");
-      break;
-    case SSL_ERROR_WANT_ACCEPT:LOG_INFO("ssl error want accept");
-      break;
-    case SSL_ERROR_WANT_X509_LOOKUP:LOG_INFO("ssl error want x509 lookup");
-      break;
-    case SSL_ERROR_SYSCALL: {
-      LOG_INFO("ssl error syscall, errno: %d, %s", errno, strerror(errno));
-      if (errno == 0) {
-        LOG_INFO("EOF observed that violates the protocol");
-      }
-      conn->TransitState(ConnState::CONN_CLOSED);
-      return false;
-    }
-  }
-  return true;
 }
 
 }  // namespace network
