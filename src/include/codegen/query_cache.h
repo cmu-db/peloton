@@ -32,34 +32,40 @@ namespace codegen {
 //   2) Configure the cache size
 class QueryCache : public Singleton<QueryCache> {
  public:
+  // Find the cached query object with the given plan
   Query* Find(const std::shared_ptr<planner::AbstractPlan> &key);
 
+  // Add a plan and a query object to the cache
   void Add(const std::shared_ptr<planner::AbstractPlan> &key,
            std::unique_ptr<Query> &&val);
 
-  size_t GetCapacity() { return capacity_; }
+  // Get the total capacity of the cache, i.e. max. no. of queries to be cached
+  size_t GetCapacity() const { return capacity_; }
 
+  // Set the total capacity of the cache
   void SetCapacity(size_t capacity) {
     Resize(capacity);
     capacity_ = capacity;
   }
 
-  size_t GetCount() { return cache_map_.size(); }
+  // Get the number of queries currently cached
+  size_t GetCount() const { return cache_map_.size(); }
 
+  // Remove all the items in the cache
   void Clear() {
     cache_map_.clear();
     query_list_.clear();
   }
 
+  // Remove all the cached query items related to a table
   void Remove(const oid_t table_oid);
-
-  void RemoveCache(const oid_t table_oid);
 
  private:
   friend class Singleton<QueryCache>;
 
   QueryCache() {}
 
+  // Resize the cache in the LRU manner
   void Resize(size_t target_size) {
     while (cache_map_.size() > target_size) {
       auto last_it = query_list_.end();
@@ -69,6 +75,7 @@ class QueryCache : public Singleton<QueryCache> {
     }
   }
 
+  // Get the table Oid from the plan given
   oid_t GetOidFromPlan(const planner::AbstractPlan &plan);
 
  private:
