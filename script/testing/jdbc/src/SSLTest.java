@@ -8,7 +8,7 @@ public class SSLTest {
     private final String DROP = "DROP TABLE IF EXISTS A;";
     private final String DDL = "CREATE TABLE A (id INT PRIMARY KEY, city TEXT);";
     private final String INSERT_1 = "INSERT INTO A VALUES (1, 'New York')";
-    private final String INSERT_2 = "INSERT INTO A VALUES (1, 'Pittsburgh')";
+    private final String INSERT_2 = "INSERT INTO A VALUES (2, 'Pittsburgh')";
     private final String SELECT_1 = "SELECT * FROM A";
 
     private final Connection conn;
@@ -22,8 +22,9 @@ public class SSLTest {
         props.setProperty("user", "progres");
         props.setProperty("password", "postgres");
         props.setProperty("ssl", "true");
-        props.setProperty("sslkey", "../data/client.key");
-        props.setProperty("sslcert", "../data/client.crt");
+        props.setProperty("sslkey", "data/client.key");
+        props.setProperty("sslcert", "data/client.crt");
+        props.setProperty("sslrootcert", "data/root.crt");
         conn = makeConnection();
     }
 
@@ -39,22 +40,24 @@ public class SSLTest {
 
     public void Init() throws SQLException {
         System.out.println("Init");
-        conn.setAutoCommit(true);
+        conn.setAutoCommit(false);
         Statement stmt = conn.createStatement();
         stmt.execute(DROP);
         stmt.execute(DDL);
+        conn.commit();
     }
 
     public void Basic() throws SQLException {
         Statement stmt = conn.createStatement();
         stmt.execute(INSERT_1);
         stmt.execute(INSERT_2);
+        stmt.execute(SELECT_1);
         ResultSet rs = stmt.getResultSet();
         while (rs.next()) {
-            String city_name = rs.getString(0);
+            String city_name = rs.getString("city");
             System.out.println(city_name);
         }
-        stmt.execute(SELECT_1);
+        conn.commit();
     }
 
     public static void main(String[] args) throws SQLException {
