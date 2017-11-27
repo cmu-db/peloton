@@ -70,6 +70,10 @@ class NetworkConnection {
   bool finish_startup_packet_ = false;
   InputPacket initial_packet;
 
+  // Set when doing rehandshake in SSL
+  bool read_blocked_on_write_ = false;
+  bool write_blocked_on_read_ = false;
+
  public:
   inline NetworkConnection(int sock_fd, short event_flags, NetworkThread *thread,
                         ConnState init_state)
@@ -101,7 +105,13 @@ class NetworkConnection {
 
   void Reset();
 
-  static bool HandleSSLError(NetworkConnection *conn, int ret);
+  void SetReadBlockedOnWrite(bool flag) { read_blocked_on_write_ = flag; }
+
+  void SetWriteBlockedOnRead(bool flag) { write_blocked_on_read_ = flag; }
+
+  bool GetReadBlockedOnWrite() { return read_blocked_on_write_; }
+
+  bool GetWriteBlockedOnRead() { return write_blocked_on_read_; }
 
   static void TriggerStateMachine(void* arg);
 
