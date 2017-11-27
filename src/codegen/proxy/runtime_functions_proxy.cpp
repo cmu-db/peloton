@@ -16,7 +16,6 @@
 #include "codegen/proxy/tile_group_proxy.h"
 #include "codegen/proxy/zone_map_proxy.h"
 #include "codegen/proxy/index_proxy.h"
-#include "codegen/proxy/result_and_key_proxy.h"
 #include "codegen/proxy/index_scan_iterator_proxy.h"
 #include "codegen/proxy/tuple_proxy.h"
 
@@ -36,11 +35,6 @@ DEFINE_METHOD(peloton::codegen, RuntimeFunctions, GetTileGroupLayout);
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, FillPredicateArray);
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, ThrowDivideByZeroException);
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, ThrowOverflowException);
-DEFINE_METHOD(peloton::codegen, RuntimeFunctions, GetOneResultAndKey);
-DEFINE_METHOD(peloton::codegen, RuntimeFunctions, FreeOneResultAndKey);
-DEFINE_METHOD(peloton::codegen, RuntimeFunctions, GetTileGroupIdFromResult);
-DEFINE_METHOD(peloton::codegen, RuntimeFunctions, GetTileGroupOffsetFromResult);
-DEFINE_METHOD(peloton::codegen, RuntimeFunctions, IsValidTileGroup);
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, GetIterator);
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, DeleteIterator);
 }  // namespace codegen

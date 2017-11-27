@@ -16,8 +16,7 @@
 #include "codegen/consumer_context.h"
 #include "codegen/operator/operator_translator.h"
 #include "codegen/scan_callback.h"
-#include "codegen/art_index.h"
-
+#include "index/index.h"
 
 namespace peloton {
 
@@ -26,7 +25,7 @@ class IndexScanPlan;
 }  // namespace planner
 
 namespace index {
-class ArtIndex;
+class Index;
 }  // namespace index
 
 namespace codegen {
@@ -62,8 +61,8 @@ class IndexScanTranslator : public OperatorTranslator {
   // Plan accessor
   const planner::IndexScanPlan &GetIndexScanPlan() const { return index_scan_; }
 
-  // Table accessor
-//  const index::ArtIndex &GetIndex() const;
+  // Index accessor
+  const index::Index &GetIndex() const;
 
  private:
   // The scan

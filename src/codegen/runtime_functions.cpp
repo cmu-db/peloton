@@ -138,31 +138,6 @@ void RuntimeFunctions::ThrowOverflowException() {
   throw std::overflow_error("ERROR: overflow");
 }
 
-index::ResultAndKey* RuntimeFunctions::GetOneResultAndKey() {
-  index::ResultAndKey *new_result = new index::ResultAndKey();
-  return new_result;
-}
-
-void RuntimeFunctions::FreeOneResultAndKey(index::ResultAndKey *result) {
-  delete result;
-}
-
-uint64_t RuntimeFunctions::GetTileGroupIdFromResult(index::ResultAndKey* result) {
-  return (uint64_t)(result->tuple_p->block);
-}
-
-int32_t RuntimeFunctions::GetTileGroupOffsetFromResult(index::ResultAndKey* result) {
-  return result->tuple_p->offset;
-}
-
-bool RuntimeFunctions::IsValidTileGroup(index::ResultAndKey* result) {
-  if (result->tuple_p == (0lu)) {
-    return false;
-  } else {
-    return true;
-  }
-}
-
 util::IndexScanIterator *RuntimeFunctions::GetIterator(index::Index *index, uint64_t point_key_p, uint64_t low_key_p, uint64_t high_key_p) {
   util::IndexScanIterator *iterator = new util::IndexScanIterator(index, (storage::Tuple *)point_key_p, (storage::Tuple *)low_key_p, (storage::Tuple *)high_key_p);
   return iterator;

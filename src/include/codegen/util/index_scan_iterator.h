@@ -16,7 +16,7 @@
 #include <vector>
 
 #include "codegen/codegen.h"
-#include "index/art_index.h"
+#include "index/index.h"
 
 
 namespace peloton {

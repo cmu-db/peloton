@@ -25,7 +25,6 @@
 #include "type/abstract_pool.h"
 #include "common/internal_types.h"
 #include "type/value.h"
-#include "index/art_key.h"
 
 namespace peloton {
 
@@ -196,10 +195,6 @@ class IndexMetadata : public Printable {
 /////////////////////////////////////////////////////////////////////
 // Index class definition
 /////////////////////////////////////////////////////////////////////
-struct ResultAndKey {
-  ItemPointer *tuple_p;
-  ARTKey continue_key;
-};
 
 /*
  * class Index - Base class for derived indices of different types

@@ -32,7 +32,6 @@ class AbstractExpression;
 
 namespace index {
 class Index;
-struct ResultAndKey;
 }
 
 namespace codegen {
@@ -87,16 +86,6 @@ class RuntimeFunctions {
   static void ThrowDivideByZeroException();
 
   static void ThrowOverflowException();
-
-  static index::ResultAndKey *GetOneResultAndKey();
-
-  static void FreeOneResultAndKey(index::ResultAndKey *result);
-
-  static uint64_t GetTileGroupIdFromResult(index::ResultAndKey* result);
-
-  static int32_t GetTileGroupOffsetFromResult(index::ResultAndKey* result);
-
-  static bool IsValidTileGroup(index::ResultAndKey* result);
 
   static util::IndexScanIterator *GetIterator(index::Index *index, uint64_t point_key_p, uint64_t low_key_p, uint64_t high_key_p);
 

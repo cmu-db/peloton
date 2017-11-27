@@ -16,7 +16,6 @@
 #include "codegen/proxy/type_builder.h"
 #include "common/item_pointer.h"
 #include "index/index.h"
-#include "index/art_index.h"
 
 namespace peloton {
 namespace codegen {

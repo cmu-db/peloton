@@ -92,7 +92,7 @@ class IndexScanTranslatorTest : public PelotonCodeGenTest {
     key_schema->SetIndexedColumns(key_attrs);
 
     index_metadata = new index::IndexMetadata(
-      "art_index", 123, INVALID_OID, INVALID_OID, IndexType::ART,
+      "bwtree_index", 123, INVALID_OID, INVALID_OID, IndexType::BWTREE,
       IndexConstraintType::PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
       false);
 

@@ -15,7 +15,6 @@
 #include "codegen/proxy/proxy.h"
 #include "codegen/proxy/type_builder.h"
 #include "index/index.h"
-#include "index/art_index.h"
 
 namespace peloton {
 namespace codegen {

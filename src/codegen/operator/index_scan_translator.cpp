@@ -18,12 +18,9 @@
 #include "codegen/proxy/transaction_runtime_proxy.h"
 #include "codegen/type/boolean_type.h"
 #include "planner/index_scan_plan.h"
-#include "index/art_index.h"
 #include "storage/data_table.h"
 #include "codegen/proxy/data_table_proxy.h"
 #include "index/scan_optimizer.h"
-#include "index/art_key.h"
-#include "index/art_index.h"
 #include "codegen/proxy/index_proxy.h"
 #include "codegen/operator/table_scan_translator.h"
 #include "codegen/proxy/index_scan_iterator_proxy.h"
@@ -59,6 +56,7 @@ IndexScanTranslator::IndexScanTranslator(const planner::IndexScanPlan &index_sca
 
 // Produce!
 void IndexScanTranslator::Produce() const {
+  LOG_INFO("IndexScanTranslator %s start producing\n", GetName().c_str());
   auto &codegen = GetCodeGen();
 
   const index::ConjunctionScanPredicate* csp = &index_scan_.GetIndexPredicate().GetConjunctionList()[0];
@@ -75,85 +73,6 @@ void IndexScanTranslator::Produce() const {
 
   Vector sel_vec{LoadStateValue(selection_vector_id_),
                  Vector::kDefaultVectorSize, codegen.Int32Type()};
-
-
-//  if (csp->IsPointQuery()) {
-//    llvm::Value *result_p = codegen.Call(RuntimeFunctionsProxy::GetOneResultAndKey, {});
-//    const storage::Tuple *point_query_key_p = csp->GetPointQueryKey();
-//    llvm::Value *query_key = codegen.Const64((uint64_t)point_query_key_p);
-//    codegen.Call(RuntimeFunctionsProxy::ScanKey, {index_ptr, query_key, result_p});
-//    llvm::Value *valid_id = codegen.Call(RuntimeFunctionsProxy::IsValidTileGroup, {result_p});
-//    lang::If tile_group_id_valid{codegen, valid_id};
-//    {
-//      llvm::Value *tile_group_id = codegen.Call(RuntimeFunctionsProxy::GetTileGroupIdFromResult, {result_p});
-//      llvm::Value *tile_group_offset = codegen.Call(RuntimeFunctionsProxy::GetTileGroupOffsetFromResult, {result_p});
-//      const uint32_t num_columns =
-//        static_cast<uint32_t>(table.GetSchema()->GetColumnCount());
-//      llvm::Value *column_layouts = codegen->CreateAlloca(
-//        ColumnLayoutInfoProxy::GetType(codegen), codegen.Const32(num_columns));
-//
-//      llvm::Value *tile_group_ptr = codegen.Call(RuntimeFunctionsProxy::GetTileGroupByGlobalId,
-//                                                 {table_ptr, tile_group_id});
-//
-//      // auto col_layouts = GetColumnLayouts(codegen, tile_group_ptr, column_layouts);
-//      uint32_t num_cols = table.GetSchema()->GetColumnCount();
-//      codegen.Call(
-//        RuntimeFunctionsProxy::GetTileGroupLayout,
-//        {tile_group_ptr, column_layouts, codegen.Const32(num_cols)});
-//
-//      // Collect <start, stride, is_columnar> triplets of all columns
-//      std::vector<TileGroup::ColumnLayout> col_layouts;
-//      auto *layout_type = ColumnLayoutInfoProxy::GetType(codegen);
-//      for (uint32_t col_id = 0; col_id < num_cols; col_id++) {
-//        auto *start = codegen->CreateLoad(codegen->CreateConstInBoundsGEP2_32(
-//          layout_type, column_layouts, col_id, 0));
-//        auto *stride = codegen->CreateLoad(codegen->CreateConstInBoundsGEP2_32(
-//          layout_type, column_layouts, col_id, 1));
-//        auto *columnar = codegen->CreateLoad(codegen->CreateConstInBoundsGEP2_32(
-//          layout_type, column_layouts, col_id, 2));
-//        col_layouts.push_back(TileGroup::ColumnLayout{col_id, start, stride, columnar});
-//      }
-//
-//      TileGroup tileGroup(*table.GetSchema());
-//      TileGroup::TileGroupAccess tile_group_access{tileGroup, col_layouts};
-//
-//      // visibility
-//      llvm::Value *txn = this->GetCompilationContext().GetTransactionPtr();
-//      llvm::Value *raw_sel_vec = sel_vec.GetVectorPtr();
-//
-//      // Invoke TransactionRuntime::PerformRead(...)
-//      llvm::Value *out_idx =
-//        codegen.Call(TransactionRuntimeProxy::PerformVectorizedRead,
-//                     {txn, tile_group_ptr, tile_group_offset, codegen->CreateAdd(tile_group_offset, codegen.Const32(1)), raw_sel_vec});
-//      sel_vec.SetNumElements(out_idx);
-//
-//      // generate the row batch
-//      RowBatch batch{this->GetCompilationContext(), tile_group_id, codegen.Const32(0),
-//                     codegen.Const32(1), sel_vec, true};
-//
-//      std::vector<TableScanTranslator::AttributeAccess> attribute_accesses;
-//      std::vector<const planner::AttributeInfo *> ais;
-//      index_scan_.GetAttributes(ais);
-//      const auto &output_col_ids = index_scan_.GetColumnIds();
-//      for (oid_t col_idx = 0; col_idx < output_col_ids.size(); col_idx++) {
-//        attribute_accesses.emplace_back(tile_group_access, ais[output_col_ids[col_idx]]);
-//      }
-//      for (oid_t col_idx = 0; col_idx < output_col_ids.size(); col_idx++) {
-//        auto *attribute = ais[output_col_ids[col_idx]];
-//        batch.AddAttribute(attribute, &attribute_accesses[col_idx]);
-//      }
-//
-//      ConsumerContext context{this->GetCompilationContext(),
-//                              this->GetPipeline()};
-//      context.Consume(batch);
-//    }
-//    tile_group_id_valid.EndIf();
-//
-//    codegen.Call(RuntimeFunctionsProxy::FreeOneResultAndKey, {result_p});
-//  } else if (csp->IsFullIndexScan()) {
-//
-//  } else {
-    // range scan
 
   llvm::Value *point_key = codegen.Const64(0);
   llvm::Value *low_key = codegen.Const64(0);
@@ -241,22 +160,21 @@ void IndexScanTranslator::Produce() const {
 }
 
 
-// Get the stringified name of this scan
+// Get the name of this scan
 std::string IndexScanTranslator::GetName() const {
-//  std::string name = "Scan('" + GetIndex().GetName() + "'";
-//  auto *predicate = GetIndexScanPlan().GetPredicate();
-//  if (predicate != nullptr && predicate->IsSIMDable()) {
-//    name.append(", ").append(std::to_string(Vector::kDefaultVectorSize));
-//  }
-//  name.append(")");
-  std::string name = "haha";
+  std::string name = "Scan('" + GetIndex().GetName() + "'";
+  auto *predicate = GetIndexScanPlan().GetPredicate();
+  if (predicate != nullptr && predicate->IsSIMDable()) {
+    name.append(", ").append(std::to_string(Vector::kDefaultVectorSize));
+  }
+  name.append(")");
   return name;
 }
 
-//// Index accessor
-//const index::ArtIndex &IndexScanTranslator::GetIndex() const {
-//  return dynamic_cast<index::ArtIndex &> (*index_scan_.GetIndex().get());
-//}
+// Index accessor
+const index::Index &IndexScanTranslator::GetIndex() const {
+  return dynamic_cast<index::Index &> (*index_scan_.GetIndex().get());
+}
 }
 }
 
