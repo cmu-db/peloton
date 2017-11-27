@@ -49,7 +49,11 @@ bool IndexUtil::HasNonOptimizablePredicate(const std::vector<ExpressionType> &ex
       return true;
     }
   }
-  
+
+  if (expr_types.size() == 0) {
+    return true;
+  }
+
   return false;
 }
 

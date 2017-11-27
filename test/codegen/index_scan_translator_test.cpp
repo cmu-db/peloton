@@ -264,5 +264,45 @@ TEST_F(IndexScanTranslatorTest, IndexRangeScan) {
   EXPECT_EQ(key2_idx - key1_idx + 1, results.size());
 }
 
+TEST_F(IndexScanTranslatorTest, IndexFullScan) {
+  //
+  // SELECT a, b, c, d FROM table;
+  //
+
+  auto &data_table = GetTableWithIndex();
+
+  // Column ids to be added to logical tile after scan.
+  std::vector<oid_t> column_ids({0, 1, 2, 3});
+
+  auto index = data_table.GetIndex(0);
+  std::vector<oid_t> key_column_ids;
+  std::vector<ExpressionType> expr_types;
+  std::vector<type::Value> values;
+  std::vector<expression::AbstractExpression *> runtime_keys;
+
+  // Create index scan desc
+  planner::IndexScanPlan::IndexScanDesc index_scan_desc(
+    index, key_column_ids, expr_types, values, runtime_keys);
+
+  expression::AbstractExpression *predicate = nullptr;
+
+  // Create plan node.
+  planner::IndexScanPlan scan(&data_table, predicate, column_ids, index_scan_desc);
+
+  // Do binding
+  planner::BindingContext context;
+  scan.PerformBinding(context);
+
+  // Printing consumer
+  codegen::BufferingConsumer buffer{{0, 1, 2, 3}, context};
+
+  // COMPILE and execute
+  CompileAndExecute(scan, buffer, reinterpret_cast<char *>(buffer.GetState()));
+
+  // Check that we got all the results
+  const auto &results = buffer.GetOutputTuples();
+  EXPECT_EQ(GetTestTableSize(), results.size());
+}
+
 }
 }
