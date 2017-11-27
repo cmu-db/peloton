@@ -6,7 +6,8 @@ matrix:
           osx_image: xcode8.3
           compiler: clang
           env:
-            - PELOTON_BUILD_TYPE=Debug COVERALLS=Off
+            - PELOTON_BUILD_TYPE=Debug
+            - COVERALLS=Off
 
         # Linux builds
         - os: linux
@@ -21,7 +22,9 @@ matrix:
                   packages:
                     - g++-4.9
           env: 
-            - CXX=g++-4.9 PELOTON_BUILD_TYPE=Debug COVERALLS=Off
+            - CXX=g++-4.9
+            - PELOTON_BUILD_TYPE=Debug
+            - COVERALLS=Off
 
         - os: linux
           sudo: required
@@ -35,7 +38,9 @@ matrix:
                   packages:
                     - g++-4.9
           env: 
-            - CXX=g++-4.9 PELOTON_BUILD_TYPE=Release COVERALLS=Off
+            - CXX=g++-4.9
+            - PELOTON_BUILD_TYPE=Release
+            - COVERALLS=Off
         
         #Job where coveralls is executed
         - os: linux
@@ -50,7 +55,9 @@ matrix:
                   packages:
                     - g++-5
           env: 
-            - CXX=g++-5 PELOTON_BUILD_TYPE=Debug COVERALLS=On
+            - CXX=g++-5
+            - PELOTON_BUILD_TYPE=Debug
+            - COVERALLS=On
 
         - os: linux
           sudo: required
@@ -64,7 +71,9 @@ matrix:
                   packages:
                     - g++-5
           env: 
-            - CXX=g++-5 PELOTON_BUILD_TYPE=Release COVERALLS=Off
+            - CXX=g++-5
+            - PELOTON_BUILD_TYPE=Release
+            - COVERALLS=Off
 
 before_script:
     # setup environment
@@ -94,4 +103,3 @@ script:
     - python ../script/validators/jdbc_validator.py
     # upload coverage info
     - bash -c "if [ $(echo $COVERALLS | tr "[:lower:]" "[:upper:]") = 'ON' ] ; then make coveralls; fi"
-
