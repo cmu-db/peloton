@@ -22,6 +22,7 @@
 #include "index/index_factory.h"
 #include <vector>
 #include <set>
+#include <algorithm>
 
 #include "codegen/testing_codegen_util.h"
 
@@ -130,8 +131,10 @@ class IndexScanTranslatorTest : public PelotonCodeGenTest {
       txn_manager.PerformInsert(txn, tuple_slot_id, index_entry_ptr);
     }
 
-
     txn_manager.CommitTransaction(txn);
+
+    // sort the keys
+    std::sort(keys_.begin(), keys_.end());
   }
 
   oid_t TestTableId() { return test_table_oids[0]; }
@@ -153,7 +156,7 @@ class IndexScanTranslatorTest : public PelotonCodeGenTest {
   std::vector<int> keys_;
 };
 
-TEST_F(IndexScanTranslatorTest, PointQuery) {
+TEST_F(IndexScanTranslatorTest, IndexPointQuery) {
   //
   // SELECT a, b, c, d FROM table where a = x;
   //
@@ -202,6 +205,64 @@ TEST_F(IndexScanTranslatorTest, PointQuery) {
   EXPECT_EQ(1, results.size());
 }
 
+
+TEST_F(IndexScanTranslatorTest, IndexRangeScan) {
+  //
+  // SELECT a, b, c, d FROM table where a = x;
+  //
+
+  auto &data_table = GetTableWithIndex();
+
+  // Column ids to be added to logical tile after scan.
+  std::vector<oid_t> column_ids({0, 1, 2, 3});
+
+  int key1_idx = std::rand() % (GetTestTableSize() / 2);
+  int key2_idx = std::rand() % (GetTestTableSize() / 2) + key1_idx;
+
+  int key1 = GetKey(key1_idx);
+  int key2 = GetKey(key2_idx);
+  //===--------------------------------------------------------------------===//
+  // ATTR 0 >= key1 and ATTR 0 <= key2
+  //===--------------------------------------------------------------------===//
+  auto index = data_table.GetIndex(0);
+  std::vector<oid_t> key_column_ids;
+  std::vector<ExpressionType> expr_types;
+  std::vector<type::Value> values;
+  std::vector<expression::AbstractExpression *> runtime_keys;
+
+  key_column_ids.push_back(0);
+  expr_types.push_back(
+    ExpressionType::COMPARE_GREATERTHANOREQUALTO);
+  values.push_back(type::ValueFactory::GetIntegerValue(key1).Copy());
+
+  key_column_ids.push_back(0);
+  expr_types.push_back(
+    ExpressionType::COMPARE_LESSTHANOREQUALTO);
+  values.push_back(type::ValueFactory::GetIntegerValue(key2).Copy());
+
+  // Create index scan desc
+  planner::IndexScanPlan::IndexScanDesc index_scan_desc(
+    index, key_column_ids, expr_types, values, runtime_keys);
+
+  expression::AbstractExpression *predicate = nullptr;
+
+  // Create plan node.
+  planner::IndexScanPlan scan(&data_table, predicate, column_ids, index_scan_desc);
+
+  // Do binding
+  planner::BindingContext context;
+  scan.PerformBinding(context);
+
+  // Printing consumer
+  codegen::BufferingConsumer buffer{{0, 1, 2, 3}, context};
+
+  // COMPILE and execute
+  CompileAndExecute(scan, buffer, reinterpret_cast<char *>(buffer.GetState()));
+
+  // Check that we got all the results
+  const auto &results = buffer.GetOutputTuples();
+  EXPECT_EQ(key2_idx - key1_idx + 1, results.size());
+}
 
 }
 }
