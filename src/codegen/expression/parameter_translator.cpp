@@ -26,10 +26,11 @@ ParameterTranslator::ParameterTranslator(
 
 // Return an LLVM value for the constant: run-time value
 codegen::Value ParameterTranslator::DeriveValue(
-    CodeGen &codegen, UNUSED_ATTRIBUTE RowBatch::Row &row) const {
+    UNUSED_ATTRIBUTE CodeGen &codegen,
+    UNUSED_ATTRIBUTE RowBatch::Row &row) const {
   auto &parameter_storage = context_.GetParameterStorage();
 
-  return parameter_storage.GetValue(codegen, index_);
+  return parameter_storage.GetValue(index_);
 }
 
 }  // namespace codegen

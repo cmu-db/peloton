@@ -37,6 +37,7 @@ PROXY(QueryParameters) {
   DECLARE_METHOD(GetVarcharLen);
   DECLARE_METHOD(GetVarbinaryVal);
   DECLARE_METHOD(GetVarbinaryLen);
+  DECLARE_METHOD(IsNull);
 };
 
 TYPE_BUILDER(QueryParameters, codegen::QueryParameters);

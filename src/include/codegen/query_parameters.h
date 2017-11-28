@@ -123,6 +123,11 @@ class QueryParameters {
     return parameters_[index].GetValue().GetLength();
   }
 
+  // Get the nullability for the value at the index
+  bool IsNull(uint32_t index) {
+    return parameters_[index].GetValue().IsNull();
+  }
+
  private:
   // Set values from parameters into member variables
   void SetParameterExpressionValues(

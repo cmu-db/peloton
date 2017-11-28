@@ -75,8 +75,8 @@ void InsertTranslator::Produce() const {
 
       // Trasform into the codegen values and store values in the tuple storage
       std::vector<codegen::Value> values;
-      for (uint32_t column_id = 0; column_id< num_columns; column_id++) {
-        auto v = context.GetParameterStorage().GetValue(codegen,
+      for (uint32_t column_id = 0; column_id < num_columns; column_id++) {
+        auto v = context.GetParameterStorage().GetValue(
             column_id + tuple_idx * num_columns);
         values.push_back(v);
       }

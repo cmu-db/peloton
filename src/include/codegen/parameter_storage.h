@@ -28,32 +28,25 @@ class ParameterStorage {
  public:
   // Constructor
   ParameterStorage(std::vector<expression::Parameter> &parameters) :
-      space_ptr_(nullptr), parameters_(parameters) {}
-
-  // Build up the parameter storage and load up the values
-  llvm::Type *Setup(CodeGen &codegen);
+      parameters_(parameters) {}
 
   // Set the parameter values
-  void SetValues(CodeGen &codegen, llvm::Value *query_parameters_ptr,
-                 llvm::Value *space_ptr);
+  void StoreValues(CodeGen &codegen, llvm::Value *query_parameters_ptr);
 
   // Get the codegen value for the specific index
-  codegen::Value GetValue(CodeGen &codegen, uint32_t index) const;
+  codegen::Value GetValue(uint32_t index) const;
 
  private:
   codegen::Value DeriveParameterValue(CodeGen &codegen,
-      expression::Parameter &parameter, llvm::Value *query_parameters_ptr,
-      uint32_t index);
+      llvm::Value *query_parameters_ptr, uint32_t index,
+      peloton::type::TypeId type_id, bool is_nullable);
 
  private:
-  // Storage format
-  UpdateableStorage storage_;
-
-  // Storage space
-  llvm::Value *space_ptr_;
-
-  // Parameters' information
+  // Parameter information
   std::vector<expression::Parameter> &parameters_;
+
+  // Parameter value storage
+  std::vector<codegen::Value> values_;
 };
 
 }  // namespace codegen

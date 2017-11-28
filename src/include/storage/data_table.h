@@ -286,8 +286,7 @@ class DataTable : public AbstractTable {
   }
 
   // Claim a tuple slot in a tile group
-  ItemPointer GetEmptyTupleSlot(const storage::Tuple *tuple,
-                                bool check_constraint = true);
+  ItemPointer GetEmptyTupleSlot(const storage::Tuple *tuple);
 
   hash_t Hash() const;
 
@@ -300,7 +299,7 @@ class DataTable : public AbstractTable {
   // INTEGRITY CHECKS
   //===--------------------------------------------------------------------===//
 
-  bool CheckNotNulls(const storage::Tuple *tuple, oid_t column_idx) const;
+  bool CheckNotNulls(const AbstractTuple *tuple, oid_t column_idx) const;
 //  bool MultiCheckNotNulls(const storage::Tuple *tuple,
 //                          std::vector<oid_t> cols) const;
 
@@ -310,7 +309,7 @@ class DataTable : public AbstractTable {
 
   // bool CheckExp(const storage::Tuple *tuple, oid_t column_idx) const;
 
-  bool CheckConstraints(const storage::Tuple *tuple) const;
+  bool CheckConstraints(const AbstractTuple *tuple) const;
 
   // add a tile group to the table
   oid_t AddDefaultTileGroup();
