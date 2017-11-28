@@ -29,8 +29,8 @@ namespace logging {
 
 class WalLogger {
  public:
-  WalLogger(const size_t &logger_id, const std::string &log_dir)
-      : logger_id_(logger_id), log_dir_(log_dir) {}
+  WalLogger(const size_t &log_id, const std::string &log_dir)
+      : log_id_(log_id), log_dir_(log_dir) {}
 
   ~WalLogger() {}
 
@@ -38,23 +38,18 @@ class WalLogger {
   void PersistLogBuffer(LogBuffer *log_buffer);
 
  private:
-  // void Run();
-
-  std::string GetLogFileFullPath(size_t epoch_id) {
+  std::string GetLogFileFullPath() {
     return log_dir_ + "/" + logging_filename_prefix_ + "_" +
-           std::to_string(logger_id_) + "_" + std::to_string(epoch_id);
+           std::to_string(log_id_);
   }
 
   CopySerializeOutput *WriteRecordToBuffer(LogRecord &record);
 
  private:
-  size_t logger_id_;
+  size_t log_id_;
   std::string log_dir_;
 
-  std::vector<size_t> file_eids_;
-  std::atomic<int> max_replay_file_id_;
-
-  const std::string logging_filename_prefix_ = "log";
+  const std::string logging_filename_prefix_ = "logfile";
 };
 }
 }

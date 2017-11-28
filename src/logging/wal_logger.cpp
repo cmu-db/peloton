@@ -34,6 +34,7 @@ void WalLogger::WriteTransaction(std::vector<LogRecord> log_records) {
     CopySerializeOutput *output = WriteRecordToBuffer(record);
     if (!buf->WriteData(output->Data(), output->Size())) {
       PersistLogBuffer(buf);
+      delete buf;
       buf = new LogBuffer();
     }
     delete output;
@@ -41,6 +42,7 @@ void WalLogger::WriteTransaction(std::vector<LogRecord> log_records) {
   }
   if (!buf->Empty()) {
     PersistLogBuffer(buf);
+    delete buf;
   }
 }
 CopySerializeOutput *WalLogger::WriteRecordToBuffer(LogRecord &record) {
@@ -386,7 +388,7 @@ CopySerializeOutput *WalLogger::WriteRecordToBuffer(LogRecord &record) {
 void WalLogger::PersistLogBuffer(LogBuffer *log_buffer) {
   FileHandle *new_file_handle = new FileHandle();
   if (likely_branch(log_buffer != nullptr)) {
-    std::string filename = GetLogFileFullPath(0);
+    std::string filename = GetLogFileFullPath();
     // Create a new file
     if (LoggingUtil::OpenFile(filename.c_str(), "ab", *new_file_handle) ==
         false) {
@@ -396,7 +398,6 @@ void WalLogger::PersistLogBuffer(LogBuffer *log_buffer) {
 
     fwrite((const void *)(log_buffer->GetData()), log_buffer->GetSize(), 1,
            new_file_handle->file);
-    delete log_buffer;
 
     //  Call fsync
     LoggingUtil::FFlushFsync(*new_file_handle);

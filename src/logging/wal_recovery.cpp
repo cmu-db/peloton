@@ -57,32 +57,24 @@ void WalRecovery::GetSortedLogFileIdList() {
 
   // Filter out all log files
   std::string base_name =
-      logging_filename_prefix_ + "_" + std::to_string(logger_id_) + "_";
+      logging_filename_prefix_ + "_" + std::to_string(log_id_);
 
-  file_eids_.clear();
 
   while ((file = readdir(dirp)) != nullptr) {
     if (strncmp(file->d_name, base_name.c_str(), base_name.length()) == 0) {
       // Find one log file
-      LOG_TRACE("Logger %d find a log file %s\n", (int)logger_id_,
+      LOG_TRACE("Logger %d find a log file %s\n", (int)log_id_,
                 file->d_name);
-      // Get the file epoch id
-      size_t file_eid =
-          (size_t)std::stoi(std::string(file->d_name + base_name.length()));
-
-      file_eids_.push_back(file_eid);
     }
   }
 
   // Sort in descending order
-  std::sort(file_eids_.begin(), file_eids_.end(), std::less<size_t>());
-  max_replay_file_id_ = file_eids_.size() - 1;
   closedir(dirp);
 }
 
 txn_id_t WalRecovery::LockTuple(storage::TileGroupHeader *tg_header,
                                 oid_t tuple_offset) {
-  txn_id_t txnid_logger = (this->logger_id_);
+  txn_id_t txnid_logger = (this->log_id_);
   while (true) {
     // We use the txn_id field as a lock. However this field also stored
     // information about whether a tuple is deleted or not.
@@ -101,7 +93,7 @@ txn_id_t WalRecovery::LockTuple(storage::TileGroupHeader *tg_header,
 void WalRecovery::UnlockTuple(storage::TileGroupHeader *tg_header,
                               oid_t tuple_offset, txn_id_t new_txn_id) {
   PL_ASSERT(new_txn_id == INVALID_TXN_ID || new_txn_id == INITIAL_TXN_ID);
-  tg_header->SetAtomicTransactionId(tuple_offset, (txn_id_t)(this->logger_id_),
+  tg_header->SetAtomicTransactionId(tuple_offset, (txn_id_t)(this->log_id_),
                                     new_txn_id);
 }
 
@@ -259,7 +251,10 @@ bool WalRecovery::ReplayLogFile(FileHandle &file_handle) {
               auto offset = ftell(file_handle.file);
               while(is_column){
                   char length_buf[sizeof(int32_t)];
-                  LoggingUtil::ReadNBytesFromFile(file_handle, (void *)&length_buf, 4);
+                  if(LoggingUtil::ReadNBytesFromFile(file_handle, (void *)&length_buf, 4) == false){
+                      is_column  = false;
+                      break;
+                  }
                   CopySerializeInput length_decode((const void *)&length_buf, 4);
                   int length = length_decode.ReadInt();
                   std::unique_ptr<char[]> buffer2(new char[buf_size]);
@@ -268,7 +263,10 @@ bool WalRecovery::ReplayLogFile(FileHandle &file_handle) {
                     buf_size = (size_t)length;
                   }
 
-                  LoggingUtil::ReadNBytesFromFile(file_handle, (void *)buffer.get(), length);
+                  if(LoggingUtil::ReadNBytesFromFile(file_handle, (void *)buffer.get(), length) == false){
+                      is_column  = false;
+                      break;
+                  }
                   CopySerializeInput record_decode((const void *)buffer.get(), length);
                   record_decode.ReadEnumInSingleByte(); //Record type
                   eid_t record_eid = record_decode.ReadLong();
@@ -326,7 +324,6 @@ bool WalRecovery::ReplayLogFile(FileHandle &file_handle) {
                   new catalog::Schema(columns), tuple->GetValue(1).ToString(),
                   database->GetOid(), tuple->GetValue(0).GetAs<oid_t>(),
                   DEFAULT_TUPLES_PER_TILEGROUP, true, false, false));
-              LOG_DEBUG("\n\n\nPG_TABLE\n\n\n");
               catalog::TableCatalog::GetInstance()->GetNextOid();
               columns.clear();
               fseek(file_handle.file,offset,SEEK_SET);
@@ -339,7 +336,6 @@ bool WalRecovery::ReplayLogFile(FileHandle &file_handle) {
               break;
             }
             case INDEX_CATALOG_OID: {
-              LOG_DEBUG("\n\n\nPG_INDEX\n\n\n");
               indexes.push_back(std::move(tuple));
               catalog::IndexCatalog::GetInstance()->GetNextOid();
             }
@@ -384,7 +380,6 @@ bool WalRecovery::ReplayLogFile(FileHandle &file_handle) {
                   storage::StorageManager::GetInstance()->GetDatabaseWithOid(
                       db_oid);  // Getting database oid from pg_table
               database->DropTableWithOid(table_oid);
-              LOG_DEBUG("\n\n\nPG_TABLE\n\n\n");
               break;
             }
             case INDEX_CATALOG_OID:  // pg_index
@@ -571,7 +566,7 @@ bool WalRecovery::ReplayLogFile(FileHandle &file_handle) {
 void WalRecovery::RunRecovery() {
   // size_t file_eid = file_eids_.at(replay_cap - replay_file_id);
   // Replay a single file
-  std::string filename = GetLogFileFullPath(0);
+  std::string filename = GetLogFileFullPath();
   FileHandle file_handle;
   bool res = LoggingUtil::OpenFile(filename.c_str(), "rb", file_handle);
   if (res == false) {
@@ -583,7 +578,7 @@ void WalRecovery::RunRecovery() {
     // Safely close the file
     res = LoggingUtil::CloseFile(file_handle);
     if (res == false) {
-      LOG_ERROR("Cannot close pepoch file");
+      LOG_ERROR("Cannot close log file");
       exit(EXIT_FAILURE);
     }
   }

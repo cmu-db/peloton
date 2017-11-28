@@ -68,16 +68,12 @@ class WalLogManager {
     task_callback_ = task_callback;
     task_callback_arg_ = task_callback_arg;
   }
-  bool is_running_ = false;
  private:
   void (*task_callback_)(void *);
   void *task_callback_arg_;
 
 
 };
-
-
-static std::string log_directory_;
 
 struct LogTransactionArg {
   inline LogTransactionArg(const std::vector<LogRecord> log_records)

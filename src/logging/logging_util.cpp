@@ -102,7 +102,7 @@ bool LoggingUtil::OpenFile(const char *name, const char *mode,
                            FileHandle &file_handle) {
   auto file = fopen(name, mode);
   if (file == NULL) {
-    LOG_ERROR("Checkpoint File is NULL");
+    LOG_ERROR("File is NULL");
     return false;
   } else {
     file_handle.file = file;
@@ -111,7 +111,7 @@ bool LoggingUtil::OpenFile(const char *name, const char *mode,
   // also, get the descriptor
   auto fd = fileno(file);
   if (fd == INVALID_FILE_DESCRIPTOR) {
-    LOG_ERROR("checkpoint_file_fd_ is -1");
+    LOG_ERROR("file_fd_ is -1");
     return false;
   } else {
     file_handle.fd = fd;

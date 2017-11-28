@@ -17,6 +17,7 @@
 #include "threadpool/logger_queue_pool.h"
 #include "logging/wal_recovery.h"
 #include "logging/wal_logger.h"
+#include "settings/settings_manager.h"
 
 namespace peloton {
 namespace logging {
@@ -28,7 +29,7 @@ ResultType WalLogManager::LogTransaction(std::vector<LogRecord> log_records) {
       WalLogManager::WriteTransactionWrapper, arg, task_callback_,
       task_callback_arg_);
   LOG_DEBUG("Submit Task into LogQueuePool");
-  return ResultType::QUEUING;
+  return ResultType::LOGGING;
 }
 
 // Static method that accepts void pointer
@@ -40,7 +41,7 @@ void WalLogManager::WriteTransactionWrapper(void* arg_ptr) {
 
 // Actual method called by the logger thread
 void WalLogManager::WriteTransaction(std::vector<LogRecord> log_records) {
-  WalLogger* wl = new WalLogger(0, "/tmp/log");
+  WalLogger* wl = new WalLogger(0, settings::SettingsManager::GetString(settings::SettingId::log_directory));
   wl->WriteTransaction(log_records);
   delete wl;
 }
@@ -55,11 +56,10 @@ void WalLogManager::SetDirectory(std::string logging_dir) {
     if (res == false) {
       LOG_ERROR("Cannot create directory: %s", logging_dir.c_str());
     }
-    log_directory_ = logging_dir;
   }
 }
 void WalLogManager::DoRecovery() {
-  WalRecovery* wr = new WalRecovery(0, "/tmp/log");
+  WalRecovery* wr = new WalRecovery(0, settings::SettingsManager::GetString(settings::SettingId::log_directory));
   wr->StartRecovery();
   delete wr;
 }
