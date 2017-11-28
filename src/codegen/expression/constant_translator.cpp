@@ -28,9 +28,7 @@ ConstantTranslator::ConstantTranslator(
 codegen::Value ConstantTranslator::DeriveValue(
     UNUSED_ATTRIBUTE CodeGen &codegen,
     UNUSED_ATTRIBUTE RowBatch::Row &row) const {
-  auto &parameter_storage = context_.GetParameterStorage();
-
-  return parameter_storage.GetValue(index_);
+  return context_.GetParameterCache().GetValue(index_);
 }
 
 }  // namespace codegen

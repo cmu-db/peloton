@@ -15,7 +15,7 @@
 #include "codegen/code_context.h"
 #include "codegen/runtime_state.h"
 #include "codegen/query_parameters.h"
-#include "codegen/parameter_storage.h"
+#include "codegen/parameter_cache.h"
 
 namespace peloton {
 
@@ -79,8 +79,8 @@ class Query {
     return parameters_.GetParameterIdx(expression);
   }
 
-  ParameterStorage &GetParameterStorage() {
-    return parameters_storage_;
+  ParameterCache &GetParameterCache() {
+    return parameters_cache_;
   }
 
  private:
@@ -97,7 +97,7 @@ class Query {
   QueryParameters &parameters_;
 
   // The parameters values storage
-  ParameterStorage parameters_storage_;
+  ParameterCache parameters_cache_;
 
   // The code context where the compiled code for the query goes
   CodeContext code_context_;

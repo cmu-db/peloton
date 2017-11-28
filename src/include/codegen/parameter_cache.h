@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// parameter_storage.h
+// parameter_cache.h
 //
-// Identification: src/include/codegen/parameter_storage.h
+// Identification: src/include/codegen/parameter_cache.h
 //
 // Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
@@ -22,12 +22,12 @@ namespace peloton {
 namespace codegen {
 
 //===----------------------------------------------------------------------===//
-// A parameter storage which stores the parameterized values for codegen runtime
+// A parameter cache which stores the parameterized values for codegen runtime
 //===----------------------------------------------------------------------===//
-class ParameterStorage {
+class ParameterCache {
  public:
   // Constructor
-  ParameterStorage(std::vector<expression::Parameter> &parameters) :
+  ParameterCache(std::vector<expression::Parameter> &parameters) :
       parameters_(parameters) {}
 
   // Set the parameter values

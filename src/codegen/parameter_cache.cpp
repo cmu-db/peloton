@@ -2,16 +2,16 @@
 //
 //                         Peloton
 //
-// parameter_storage.cpp
+// parameter_cache.cpp
 //
-// Identification: src/include/codegen/parameter_storage.cpp
+// Identification: src/include/codegen/parameter_cache.cpp
 //
 // Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "codegen/codegen.h"
-#include "codegen/parameter_storage.h"
+#include "codegen/parameter_cache.h"
 #include "codegen/updateable_storage.h"
 #include "codegen/value.h"
 #include "codegen/proxy/query_parameters_proxy.h"
@@ -21,7 +21,7 @@
 namespace peloton {
 namespace codegen {
 
-void ParameterStorage::StoreValues(CodeGen &codegen,
+void ParameterCache::StoreValues(CodeGen &codegen,
     llvm::Value *query_parameters_ptr) {
   for (uint32_t i = 0; i < parameters_.size(); i++) {
     auto &parameter = parameters_[i];
@@ -33,11 +33,11 @@ void ParameterStorage::StoreValues(CodeGen &codegen,
   }
 }
 
-codegen::Value ParameterStorage::GetValue(uint32_t index) const {
+codegen::Value ParameterCache::GetValue(uint32_t index) const {
   return values_[index];
 }
 
-codegen::Value ParameterStorage::DeriveParameterValue(CodeGen &codegen,
+codegen::Value ParameterCache::DeriveParameterValue(CodeGen &codegen,
     llvm::Value *query_parameters_ptr, uint32_t index,
     peloton::type::TypeId type_id, bool is_nullable) {
   llvm::Value *val = nullptr, *len = nullptr;

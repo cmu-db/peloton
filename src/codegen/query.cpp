@@ -25,7 +25,7 @@ namespace codegen {
 Query::Query(const planner::AbstractPlan &query_plan,
              QueryParameters &parameters)
     : query_plan_(query_plan), parameters_(parameters),
-      parameters_storage_(parameters.GetParameters()) {}
+      parameters_cache_(parameters.GetParameters()) {}
 
 // Execute the query on the given database (and within the provided transaction)
 // This really involves calling the init(), plan() and tearDown() functions, in
