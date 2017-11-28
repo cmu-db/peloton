@@ -15,6 +15,7 @@
 #include "codegen/codegen.h"
 #include "codegen/scan_callback.h"
 #include "codegen/tile_group.h"
+#include "codegen/compilation_context.h"
 
 namespace peloton {
 
@@ -39,7 +40,8 @@ class Table {
   // Generate code to perform a scan over the given table. The table pointer
   // is provided as the second argument. The scan consumer (third argument)
   // should be notified when ready to generate the scan loop body.
-  void GenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
+  void GenerateScan(CodeGen &codegen, llvm::Value *table_ptr, CompilationContext &compilation_context,
+                    const codegen::RuntimeState::StateID& taskinfo_vec_id, const codegen::RuntimeState::StateID& count_down_id,
                     uint32_t batch_size, ScanCallback &consumer) const;
 
   // Given a table instance, return the number of tile groups in the table.

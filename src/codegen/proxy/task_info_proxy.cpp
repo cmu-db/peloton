@@ -18,8 +18,8 @@ namespace codegen {
 DEFINE_TYPE(TaskInfo, "codegen::TaskInfo", MEMBER(opaque));
 
 DEFINE_METHOD(peloton::codegen, TaskInfo, Init);
-DEFINE_METHOD(peloton::codegen, TaskInfo, GetThreadId);
-DEFINE_METHOD(peloton::codegen, TaskInfo, GetNumThreads);
+DEFINE_METHOD(peloton::codegen, TaskInfo, Destroy);
+DEFINE_METHOD(peloton::codegen, TaskInfo, GetTileGroupId);
 
 }  // namespace codegen
 }  // namespace peloton

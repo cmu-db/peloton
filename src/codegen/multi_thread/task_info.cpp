@@ -15,9 +15,9 @@
 namespace peloton {
 namespace codegen {
 
-void TaskInfo::Init(int32_t thread_id, int32_t nthreads) {
+void TaskInfo::Init(int32_t tile_group_id) {
   // Call constructor explicitly on memory buffer.
-  new (this) TaskInfo(thread_id, nthreads);
+  new (this) TaskInfo(tile_group_id);
 }
 
 void TaskInfo::Destroy() {
@@ -25,17 +25,13 @@ void TaskInfo::Destroy() {
   this->~TaskInfo();
 }
 
-int32_t TaskInfo::GetThreadId() {
-  return thread_id_;
+int32_t TaskInfo::GetTileGroupId() {
+  return tile_group_id_;
 }
 
-int32_t TaskInfo::GetNumThreads() {
-  return nthreads_;
-}
-
-TaskInfo::TaskInfo(int32_t thread_id, int32_t nthreads)
-    : thread_id_(thread_id), nthreads_(nthreads) {
-  PL_ASSERT(thread_id > 0 && thread_id < nthreads);
+TaskInfo::TaskInfo(int32_t tile_group_id)
+    : tile_group_id_(tile_group_id) {
+  PL_ASSERT(tile_group_id >= 0);
 }
 
 }  // namespace codegen
