@@ -40,15 +40,7 @@ static void CompileAndExecutePlan(
   plan->PerformBinding(context);
   // Prepare output buffer
   std::vector<oid_t> columns;
-  if (plan->GetPlanNodeType() == PlanNodeType::INDEXSCAN) {
-    // must use GetColumnIds() function in index scan plan node
-    // to get output columns, because the column_ids_ variable
-    // in IndexScanPlan class is different from the column_ids_
-    // variable in its parent class AbstractScan!
-    columns = (dynamic_cast<planner::IndexScanPlan &>(*plan)).GetColumnIds();
-  } else {
-    plan->GetOutputColumns(columns);
-  }
+  plan->GetOutputColumns(columns);
   codegen::BufferingConsumer consumer{columns, context};
 
   std::unique_ptr<executor::ExecutorContext> executor_context(

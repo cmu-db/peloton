@@ -213,6 +213,7 @@ void IndexScanTranslator::Produce() const {
     std::vector<TableScanTranslator::AttributeAccess> final_attribute_accesses;
     std::vector<const planner::AttributeInfo *> final_ais;
     index_scan_.GetAttributes(final_ais);
+    printf("final_ais size = %lud\n", final_ais.size());
     std::vector<oid_t> output_col_ids;
     if (index_scan_.GetColumnIds().size() != 0) {
       output_col_ids = index_scan_.GetColumnIds();

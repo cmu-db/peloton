@@ -75,7 +75,7 @@ storage::TileGroup *RuntimeFunctions::GetTileGroup(storage::DataTable *table,
 }
 
 storage::TileGroup *RuntimeFunctions::GetTileGroupByGlobalId(
-    storage::DataTable *table, uint64_t tile_group_id) {
+    storage::DataTable *table, uint32_t tile_group_id) {
   auto tile_group = table->GetTileGroupById(tile_group_id);
   return tile_group.get();
 }
