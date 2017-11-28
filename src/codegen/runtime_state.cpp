@@ -124,33 +124,5 @@ llvm::Type *RuntimeState::FinalizeType(CodeGen &codegen) {
   return constructed_type_;
 }
 
-void RuntimeState::CreateLocalState(CodeGen &codegen) {
-  for (auto &state_info : state_slots_) {
-    if (state_info.local) {
-      (void)codegen;
-//      if (auto *arr_type = llvm::dyn_cast<llvm::ArrayType>(state_info.type)) {
-//        // Do the stack allocation of the array
-//        llvm::AllocaInst *arr = codegen->CreateAlloca(
-//            arr_type->getArrayElementType(),
-//            codegen.Const32(arr_type->getArrayNumElements()));
-//
-//        // Set the alignment
-//        arr->setAlignment(Vector::kDefaultVectorAlignment);
-//
-//        // Zero-out the allocated space
-//        uint64_t sz = codegen.SizeOf(state_info.type);
-//        codegen->CreateMemSet(arr, codegen.Const8(0), sz, arr->getAlignment());
-//
-//        state_info.val = arr;
-//      } else {
-//        state_info.val = codegen->CreateAlloca(state_info.type);
-//      }
-//
-//      // Set the name of the local state to what the client wants
-//      state_info.val->setName(state_info.name);
-    }
-  }
-}
-
 }  // namespace codegen
 }  // namespace peloton

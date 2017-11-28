@@ -68,9 +68,6 @@ class RuntimeState {
   // Construct the equivalent LLVM type that represents this runtime state
   llvm::Type *FinalizeType(CodeGen &codegen);
 
-  // Create/initialize all registered state that is stack-local
-  void CreateLocalState(CodeGen &codegen);
-
  private:
   // Little struct to track information of elements in the runtime state
   struct StateInfo {
