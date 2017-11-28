@@ -129,7 +129,8 @@ TEST_F(DecimalFunctionsTests, CeilTestInt) {
   std::vector<int8_t> tinyIntTestInputs = {-20, -15, -10, 0, 10, 20};
 
   std::vector<type::Value> args;
-  for (int in: bigIntTestInputs) {
+  // Testing Ceil with Integer Types
+  for (int64_t in: bigIntTestInputs) {
     args = {type::ValueFactory::GetIntegerValue(in)};
     auto result = function::DecimalFunctions::_Ceil(args);
     EXPECT_FALSE(result.IsNull());
