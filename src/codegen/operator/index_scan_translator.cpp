@@ -45,6 +45,19 @@ IndexScanTranslator::IndexScanTranslator(
 {
   LOG_DEBUG("Constructing IndexScanTranslator ...");
 
+  // The restriction, if one exists
+  const auto *predicate = index_scan_.GetPredicate();
+
+  if (predicate != nullptr) {
+    // If there is a predicate, prepare a translator for it
+    context.Prepare(*predicate);
+
+    // If the scan's predicate is SIMDable, install a boundary at the output
+    if (predicate->IsSIMDable()) {
+      pipeline.InstallBoundaryAtOutput(this);
+    }
+  }
+
   auto &codegen = GetCodeGen();
   auto &runtime_state = context.GetRuntimeState();
   selection_vector_id_ = runtime_state.RegisterState(
@@ -128,6 +141,7 @@ void IndexScanTranslator::Produce() const {
     // Collect <start, stride, is_columnar> triplets of all columns
     std::vector<TileGroup::ColumnLayout> col_layouts;
     auto *layout_type = ColumnLayoutInfoProxy::GetType(codegen);
+    printf("num_columns = %d\n", num_columns);
     for (uint32_t col_id = 0; col_id < num_columns; col_id++) {
       auto *start = codegen->CreateLoad(codegen->CreateConstInBoundsGEP2_32(
           layout_type, column_layouts, col_id, 0));
@@ -153,29 +167,31 @@ void IndexScanTranslator::Produce() const {
                       raw_sel_vec});
     sel_vec.SetNumElements(out_idx);
 
-    // construct the final row batch
-    // one tuple per row batch
-    RowBatch final_batch{this->GetCompilationContext(), tile_group_id,
-                         codegen.Const32(0), codegen.Const32(1), sel_vec, true};
-
-    std::vector<TableScanTranslator::AttributeAccess> final_attribute_accesses;
-    std::vector<const planner::AttributeInfo *> final_ais;
-    index_scan_.GetAttributes(final_ais);
-    const auto &output_col_ids = index_scan_.GetColumnIds();
-    for (oid_t col_idx = 0; col_idx < output_col_ids.size(); col_idx++) {
-      final_attribute_accesses.emplace_back(tile_group_access,
-                                            final_ais[output_col_ids[col_idx]]);
-    }
-    for (oid_t col_idx = 0; col_idx < output_col_ids.size(); col_idx++) {
-      auto *attribute = final_ais[output_col_ids[col_idx]];
-      final_batch.AddAttribute(attribute, &final_attribute_accesses[col_idx]);
-    }
-
     // filter by predicate
     const auto *predicate = index_scan_.GetPredicate();
     if (predicate != nullptr) {
+      RowBatch batch{this->GetCompilationContext(), tile_group_id,
+                           codegen.Const32(0), codegen.Const32(1), sel_vec, true};
+      // Determine the attributes the predicate needs
+      std::unordered_set<const planner::AttributeInfo *> used_attributes;
+      predicate->GetUsedAttributes(used_attributes);
+      printf("used_attributes size = %lu\n", used_attributes.size());
+
+
+      // Setup the row batch with attribute accessors for the predicate
+      std::vector<TableScanTranslator::AttributeAccess> attribute_accessors;
+      for (const auto *ai : used_attributes) {
+        printf("used attributed name = %s\n", ai->name.c_str());
+        attribute_accessors.emplace_back(tile_group_access, ai);
+      }
+      for (uint32_t i = 0; i < attribute_accessors.size(); i++) {
+        auto &accessor = attribute_accessors[i];
+        printf("attribute accessor name = %s\n", accessor.GetAttributeRef()->name.c_str());
+        batch.AddAttribute(accessor.GetAttributeRef(), &accessor);
+      }
+
       // Iterate over the batch using a scalar loop
-      final_batch.Iterate(codegen, [&](RowBatch::Row &row) {
+      batch.Iterate(codegen, [&](RowBatch::Row &row) {
         // Evaluate the predicate to determine row validity
         codegen::Value valid_row = row.DeriveValue(codegen, *predicate);
 
@@ -187,6 +203,35 @@ void IndexScanTranslator::Produce() const {
         row.SetValidity(codegen, bool_val);
       });
     }
+    printf("good after filtering by predicate\n");
+
+    // construct the final row batch
+    // one tuple per row batch
+    RowBatch final_batch{this->GetCompilationContext(), tile_group_id,
+                         codegen.Const32(0), codegen.Const32(1), sel_vec, true};
+
+    std::vector<TableScanTranslator::AttributeAccess> final_attribute_accesses;
+    std::vector<const planner::AttributeInfo *> final_ais;
+    index_scan_.GetAttributes(final_ais);
+    std::vector<oid_t> output_col_ids;
+    if (index_scan_.GetColumnIds().size() != 0) {
+      output_col_ids = index_scan_.GetColumnIds();
+    } else {
+      output_col_ids.resize(table.GetSchema()->GetColumnCount());
+      std::iota(output_col_ids.begin(), output_col_ids.end(), 0);
+    }
+//    const auto &output_col_ids = index_scan_.GetColumnIds();
+
+    printf("output column size = %lu\n", output_col_ids.size());
+    for (oid_t col_idx = 0; col_idx < output_col_ids.size(); col_idx++) {
+      final_attribute_accesses.emplace_back(tile_group_access,
+                                            final_ais[output_col_ids[col_idx]]);
+    }
+    for (oid_t col_idx = 0; col_idx < output_col_ids.size(); col_idx++) {
+      auto *attribute = final_ais[output_col_ids[col_idx]];
+      final_batch.AddAttribute(attribute, &final_attribute_accesses[col_idx]);
+    }
+
 
     ConsumerContext context{this->GetCompilationContext(), this->GetPipeline()};
     context.Consume(final_batch);
