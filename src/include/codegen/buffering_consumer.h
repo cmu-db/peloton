@@ -52,7 +52,9 @@ class WrappedTuple
 class BufferingConsumer : public QueryResultConsumer {
  public:
   struct BufferingState {
-    std::vector<WrappedTuple> *output;
+    BufferingState(std::vector<std::vector<WrappedTuple>> *output)
+        : output(output) {}
+    std::vector<std::vector<WrappedTuple>> *output;
   };
 
   // Constructor
@@ -79,14 +81,18 @@ class BufferingConsumer : public QueryResultConsumer {
 
   BufferingState *GetState() { return &state; }
 
-  const std::vector<WrappedTuple> &GetOutputTuples() const { return tuples_; }
+  const std::vector<WrappedTuple> &GetOutputTuples() const;
 
  private:
   // The attributes we want to output
   std::vector<const planner::AttributeInfo *> output_ais_;
 
-  // Buffered output tuples
-  std::vector<WrappedTuple> tuples_;
+  // Output target for all tasks.
+  std::vector<std::vector<WrappedTuple>> output_chunks_;
+
+  // Merged output.
+  mutable bool merged = false;
+  mutable std::vector<WrappedTuple> tuples_;
 
   // Running buffering state
   BufferingState state;

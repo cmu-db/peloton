@@ -17,6 +17,7 @@
 #include "codegen/proxy/value_proxy.h"
 #include "codegen/proxy/values_runtime_proxy.h"
 #include "codegen/type/sql_type.h"
+#include "common/logger.h"
 #include "planner/binding_context.h"
 
 namespace peloton {
@@ -53,11 +54,12 @@ DEFINE_METHOD(peloton::codegen, BufferingConsumer, BufferTuple);
 //===----------------------------------------------------------------------===//
 
 BufferingConsumer::BufferingConsumer(const std::vector<oid_t> &cols,
-                                     planner::BindingContext &context) {
+                                     planner::BindingContext &context)
+    : state(&output_chunks_) {
+  output_chunks_.emplace_back();
   for (oid_t col_id : cols) {
     output_ais_.push_back(context.Find(col_id));
   }
-  state.output = &tuples_;
 }
 
 // Append the array of values (i.e., a tuple) into the consumer's buffer of
@@ -65,7 +67,7 @@ BufferingConsumer::BufferingConsumer(const std::vector<oid_t> &cols,
 void BufferingConsumer::BufferTuple(char *state, char *tuple,
                                     uint32_t num_cols) {
   BufferingState *buffer_state = reinterpret_cast<BufferingState *>(state);
-  buffer_state->output->emplace_back(
+  buffer_state->output->at(0).emplace_back(
       reinterpret_cast<peloton::type::Value *>(tuple), num_cols);
 }
 
@@ -140,6 +142,19 @@ void BufferingConsumer::ConsumeResult(ConsumerContext &ctx,
   std::vector<llvm::Value *> args = {consumer_state, tuple_buffer_,
                                      codegen.Const32(output_ais_.size())};
   codegen.Call(BufferingConsumerProxy::BufferTuple, args);
+}
+
+const std::vector<WrappedTuple> &BufferingConsumer::GetOutputTuples() const {
+  if (!merged) {
+    LOG_DEBUG("Merging result tuples...");
+    for (auto &chunk : output_chunks_) {
+      for (auto &tuple : chunk) {
+        tuples_.push_back(tuple);
+      }
+    }
+    merged = true;
+  }
+  return tuples_;
 }
 
 }  // namespace codegen

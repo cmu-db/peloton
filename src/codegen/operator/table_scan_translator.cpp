@@ -96,7 +96,6 @@ void TableScanTranslator::Produce() const {
   auto &codegen = GetCodeGen();
   auto &compilation_context = GetCompilationContext();
   auto &runtime_state = compilation_context.GetRuntimeState();
-  auto &table = GetTable();
 
   LOG_TRACE("TableScan on [%u] starting to produce tuples ...", table.GetOid());
 
@@ -173,10 +172,14 @@ void TableScanTranslator::Produce() const {
     });
 
     codegen.Call(CountDownProxy::Wait, {count_down_ptr});
+
     codegen.Call(CountDownProxy::Destroy, {count_down_ptr});
+
+    codegen.Call(TaskInfoProxy::Destroy, {task_info_ptr});
   }
 
-  LOG_DEBUG("TableScan on [%u] finished producing tuples ...", table.GetOid());
+  LOG_DEBUG("TableScan on [%u] finished producing tuples ...",
+            GetTable().GetOid());
 }
 
 // Get the stringified name of this scan

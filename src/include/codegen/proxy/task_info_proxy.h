@@ -24,6 +24,7 @@ PROXY(TaskInfo) {
   DECLARE_TYPE;
 
   DECLARE_METHOD(Init);
+  DECLARE_METHOD(Destroy);
   DECLARE_METHOD(GetTaskId);
   DECLARE_METHOD(GetNumTasks);
 };
