@@ -32,6 +32,7 @@
 #include "executor/delete_executor.h"
 #include "executor/index_scan_executor.h"
 #include "executor/insert_executor.h"
+#include "executor/plan_executor.h"
 #include "executor/seq_scan_executor.h"
 
 #include "storage/database.h"
@@ -107,14 +108,20 @@ bool AbstractCatalog::InsertTuple(std::unique_ptr<storage::Tuple> tuple,
   if (txn == nullptr)
     throw CatalogException("Insert tuple requires transaction");
 
-  std::unique_ptr<executor::ExecutorContext> context(
-      new executor::ExecutorContext(txn));
-  planner::InsertPlan node(catalog_table_, std::move(tuple));
-  executor::InsertExecutor executor(&node, context.get());
-  executor.Init();
-  bool status = executor.Execute();
+  std::vector<type::Value> params;
+  std::vector<int> result_format(tuple->GetSchema()->GetColumnCount(), 0);
+  for (size_t i = 0; i < tuple->GetSchema()->GetColumnCount(); i++) {
+    params.push_back(tuple->GetValue(i));
+  }
+  std::vector<StatementResult> result;
+  executor::ExecuteResult p_status;
+  auto node =
+      std::make_shared<planner::InsertPlan>(catalog_table_, std::move(tuple));
 
-  return status;
+  executor::PlanExecutor::ExecutePlan(node, txn, params, result, result_format,
+                                      p_status);
+
+  return p_status.m_result == peloton::ResultType::SUCCESS;
 }
 
 /*@brief   Delete a tuple using index scan
