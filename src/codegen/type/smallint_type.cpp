@@ -187,6 +187,24 @@ struct Negate : public TypeSystem::UnaryOperatorHandleNull {
   }
 };
 
+// Ceiling
+struct Ceil : public TypeSystem::UnaryOperator {
+  bool SupportsType(const Type &type) const override {
+    return type.GetSqlType() == SmallInt::Instance();
+  }
+
+  Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
+    return Type{SmallInt::Instance()};
+  }
+
+  Value DoWork(CodeGen __attribute__((unused))&codegen, const Value &val) const override {
+      PL_ASSERT(SupportsType(val.GetType()));
+
+    // Return result
+    return val;
+  }
+};
+
 //===----------------------------------------------------------------------===//
 // BINARY OPERATIONS
 //===----------------------------------------------------------------------===//
@@ -430,8 +448,10 @@ static std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {
 
 // Unary operators
 static Negate kNegOp;
+static Ceil kCeilOp;
 static std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {
-    {OperatorId::Negation, kNegOp}};
+    {OperatorId::Negation, kNegOp},
+    {OperatorId::Ceil, kCeilOp}};
 
 // Binary operations
 static Add kAddOp;
