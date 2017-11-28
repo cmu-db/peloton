@@ -34,6 +34,8 @@ class ScanCallback;
 //===----------------------------------------------------------------------===//
 class TileGroup {
  public:
+  friend class IndexScanTranslator;
+
   // Constructor
   TileGroup(const catalog::Schema &schema);
 
@@ -46,7 +48,7 @@ class TileGroup {
 
   llvm::Value *GetTileGroupId(CodeGen &codegen, llvm::Value *tile_group) const;
 
- public:
+ private:
   // A struct to capture enough information to perform strided accesses
   struct ColumnLayout {
     uint32_t col_id;

@@ -35,6 +35,8 @@ namespace codegen {
 //===----------------------------------------------------------------------===//
 class TableScanTranslator : public OperatorTranslator {
  public:
+  friend class IndexScanTranslator;
+
   // Constructor
   TableScanTranslator(const planner::SeqScanPlan &scan,
                       CompilationContext &context, Pipeline &pipeline);
@@ -57,7 +59,7 @@ class TableScanTranslator : public OperatorTranslator {
   // Get a stringified version of this translator
   std::string GetName() const override;
 
- public:
+ private:
   //===--------------------------------------------------------------------===//
   // An attribute accessor that uses the backing tile group to access columns
   //===--------------------------------------------------------------------===//
