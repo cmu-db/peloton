@@ -90,7 +90,7 @@ class RuntimeState {
 
  private:
   // All the states we've allocated
-  std::vector<RuntimeState::StateInfo> state_slots_;
+  mutable std::vector<RuntimeState::StateInfo> state_slots_;
 
   // The LLVM type of this runtime state. This type is cached for re-use.
   llvm::Type *constructed_type_;

@@ -24,8 +24,8 @@ PROXY(TaskInfo) {
   DECLARE_TYPE;
 
   DECLARE_METHOD(Init);
-  DECLARE_METHOD(GetThreadId);
-  DECLARE_METHOD(GetNumThreads);
+  DECLARE_METHOD(GetTaskId);
+  DECLARE_METHOD(GetNumTasks);
 };
 
 TYPE_BUILDER(TaskInfo, codegen::TaskInfo);

@@ -152,6 +152,10 @@ class TableScanTranslator : public OperatorTranslator {
   // The ID of the selection vector in runtime state
   RuntimeState::StateID selection_vector_id_;
 
+  RuntimeState::StateID task_info_vector_id_;
+
+  RuntimeState::StateID count_down_id_;
+
   // The code-generating table instance
   codegen::Table table_;
 };

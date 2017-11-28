@@ -13,6 +13,7 @@
 #pragma once
 
 #include "codegen/codegen.h"
+#include "common/logger.h"
 
 namespace peloton {
 namespace codegen {
@@ -28,18 +29,17 @@ class TaskInfo {
   void Destroy();
 
   // TODO(zhixunt): Change this to task-related property.
-  int32_t GetThreadId();
+  int32_t GetTaskId();
 
   // TODO(zhixunt): Change this to task-related property.
-  int32_t GetNumThreads();
+  int32_t GetNumTasks();
 
  private:
   // Use Init and Destroy on allocated memory instead.
-  TaskInfo(int32_t thread_id, int32_t nthreads);
-  ~TaskInfo() = default;
+  TaskInfo(int32_t task_id, int32_t ntasks);
 
-  int32_t thread_id_;
-  int32_t nthreads_;
+  int32_t task_id_;
+  int32_t ntasks_;
 };
 
 }  // namespace codegen

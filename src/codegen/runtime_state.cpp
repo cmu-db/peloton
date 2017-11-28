@@ -10,6 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <utility>
+
 #include "codegen/runtime_state.h"
 #include "codegen/vector.h"
 
@@ -26,11 +28,14 @@ RuntimeState::StateID RuntimeState::RegisterState(std::string name,
                                                   llvm::Type *type,
                                                   bool is_on_stack) {
   PL_ASSERT(constructed_type_ == nullptr);
-  RuntimeState::StateID state_id = state_slots_.size();
-  RuntimeState::StateInfo state_info;
-  state_info.name = name;
-  state_info.type = type;
-  state_info.local = is_on_stack;
+  StateID state_id = static_cast<StateID>(state_slots_.size());
+  StateInfo state_info = {
+      .name = std::move(name),
+      .type = type,
+      .local = is_on_stack,
+      .index = 0,
+      .val = nullptr
+  };
   state_slots_.push_back(state_info);
   return state_id;
 }
@@ -59,6 +64,28 @@ llvm::Value *RuntimeState::LoadStateValue(
     CodeGen &codegen, RuntimeState::StateID state_id) const {
   auto &state_info = state_slots_[state_id];
   if (state_info.local) {
+    if (state_info.val == nullptr) {
+      if (auto *arr_type = llvm::dyn_cast<llvm::ArrayType>(state_info.type)) {
+        // Do the stack allocation of the array
+        llvm::AllocaInst *arr = codegen->CreateAlloca(
+            arr_type->getArrayElementType(),
+            codegen.Const32(arr_type->getArrayNumElements()));
+
+        // Set the alignment
+        arr->setAlignment(Vector::kDefaultVectorAlignment);
+
+        // Zero-out the allocated space
+        uint64_t sz = codegen.SizeOf(state_info.type);
+        codegen->CreateMemSet(arr, codegen.Const8(0), sz, arr->getAlignment());
+
+        state_info.val = arr;
+      } else {
+        state_info.val = codegen->CreateAlloca(state_info.type);
+      }
+
+      // Set the name of the local state to what the client wants
+      state_info.val->setName(state_info.name);
+    }
     return state_info.val;
   }
 
@@ -100,26 +127,27 @@ llvm::Type *RuntimeState::FinalizeType(CodeGen &codegen) {
 void RuntimeState::CreateLocalState(CodeGen &codegen) {
   for (auto &state_info : state_slots_) {
     if (state_info.local) {
-      if (auto *arr_type = llvm::dyn_cast<llvm::ArrayType>(state_info.type)) {
-        // Do the stack allocation of the array
-        llvm::AllocaInst *arr = codegen->CreateAlloca(
-            arr_type->getArrayElementType(),
-            codegen.Const32(arr_type->getArrayNumElements()));
-
-        // Set the alignment
-        arr->setAlignment(Vector::kDefaultVectorAlignment);
-
-        // Zero-out the allocated space
-        uint64_t sz = codegen.SizeOf(state_info.type);
-        codegen->CreateMemSet(arr, codegen.Const8(0), sz, arr->getAlignment());
-
-        state_info.val = arr;
-      } else {
-        state_info.val = codegen->CreateAlloca(state_info.type);
-      }
-
-      // Set the name of the local state to what the client wants
-      state_info.val->setName(state_info.name);
+      (void)codegen;
+//      if (auto *arr_type = llvm::dyn_cast<llvm::ArrayType>(state_info.type)) {
+//        // Do the stack allocation of the array
+//        llvm::AllocaInst *arr = codegen->CreateAlloca(
+//            arr_type->getArrayElementType(),
+//            codegen.Const32(arr_type->getArrayNumElements()));
+//
+//        // Set the alignment
+//        arr->setAlignment(Vector::kDefaultVectorAlignment);
+//
+//        // Zero-out the allocated space
+//        uint64_t sz = codegen.SizeOf(state_info.type);
+//        codegen->CreateMemSet(arr, codegen.Const8(0), sz, arr->getAlignment());
+//
+//        state_info.val = arr;
+//      } else {
+//        state_info.val = codegen->CreateAlloca(state_info.type);
+//      }
+//
+//      // Set the name of the local state to what the client wants
+//      state_info.val->setName(state_info.name);
     }
   }
 }

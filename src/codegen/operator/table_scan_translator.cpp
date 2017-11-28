@@ -12,8 +12,12 @@
 
 #include "codegen/operator/table_scan_translator.h"
 
+#include "codegen/function_builder.h"
 #include "codegen/lang/if.h"
 #include "codegen/proxy/catalog_proxy.h"
+#include "codegen/proxy/count_down_proxy.h"
+#include "codegen/proxy/executor_thread_pool_proxy.h"
+#include "codegen/proxy/task_info_proxy.h"
 #include "codegen/proxy/transaction_runtime_proxy.h"
 #include "codegen/type/boolean_type.h"
 #include "planner/seq_scan_plan.h"
@@ -50,34 +54,113 @@ TableScanTranslator::TableScanTranslator(const planner::SeqScanPlan &scan,
 
   auto &codegen = GetCodeGen();
   auto &runtime_state = context.GetRuntimeState();
+
   selection_vector_id_ = runtime_state.RegisterState(
       "scanSelVec",
       codegen.ArrayType(codegen.Int32Type(), Vector::kDefaultVectorSize), true);
 
-  LOG_TRACE("Finished constructing TableScanTranslator ...");
+  auto task_info_type = TaskInfoProxy::GetType(codegen);
+  task_info_vector_id_ = runtime_state.RegisterState(
+      "scanTaskInfoVec",
+      codegen.ArrayType(task_info_type, Vector::kDefaultVectorSize), true);
+
+  count_down_id_ = runtime_state.RegisterState(
+            "scanCountDown", CountDownProxy::GetType(codegen), false);
+
+  LOG_DEBUG("Finished constructing TableScanTranslator ...");
 }
 
 // Produce!
 void TableScanTranslator::Produce() const {
   auto &codegen = GetCodeGen();
+  auto &compilation_context = GetCompilationContext();
+  auto &runtime_state = compilation_context.GetRuntimeState();
   auto &table = GetTable();
 
   LOG_TRACE("TableScan on [%u] starting to produce tuples ...", table.GetOid());
 
-  // Get the table instance from the database
-  llvm::Value *catalog_ptr = GetCatalogPtr();
-  llvm::Value *db_oid = codegen.Const32(table.GetDatabaseOid());
-  llvm::Value *table_oid = codegen.Const32(table.GetOid());
-  llvm::Value *table_ptr = codegen.Call(StorageManagerProxy::GetTableWithOid,
-                                        {catalog_ptr, db_oid, table_oid});
+  codegen::FunctionBuilder task(
+      codegen.GetCodeContext(),
+      "task",
+      codegen.VoidType(),
+      {
+          {"runtime_state", codegen.GetState()->getType()},
+          {"task_info", TaskInfoProxy::GetType(codegen)->getPointerTo()}
+      }
+  );
+  {
+    auto task_info_ptr = task.GetArgumentByPosition(1);
+    auto task_id = codegen.Call(TaskInfoProxy::GetTaskId, {task_info_ptr});
+    codegen.CallPrintf("I am task %d!\n", {task_id});
 
-  // The selection vector for the scan
-  Vector sel_vec{LoadStateValue(selection_vector_id_),
-                 Vector::kDefaultVectorSize, codegen.Int32Type()};
+    // Get the table instance from the database
+    llvm::Value* catalog_ptr = GetCatalogPtr();
+    llvm::Value* db_oid = codegen.Const32(table.GetDatabaseOid());
+    llvm::Value* table_oid = codegen.Const32(table.GetOid());
+    llvm::Value* table_ptr = codegen.Call(StorageManagerProxy::GetTableWithOid,
+                                          {catalog_ptr, db_oid, table_oid});
 
-  // Generate the scan
-  ScanConsumer scan_consumer{*this, sel_vec};
-  table_.GenerateScan(codegen, table_ptr, sel_vec.GetCapacity(), scan_consumer);
+    // The selection vector for the scan
+    Vector sel_vec{LoadStateValue(selection_vector_id_),
+                   Vector::kDefaultVectorSize, codegen.Int32Type()};
+
+    // Generate the scan
+    ScanConsumer scan_consumer{*this, sel_vec};
+    table_.GenerateScan(codegen, table_ptr, sel_vec.GetCapacity(),
+                        scan_consumer);
+
+    auto count_down_ptr = runtime_state.LoadStatePtr(codegen, count_down_id_);
+    codegen.Call(CountDownProxy::Decrease, {count_down_ptr});
+
+    task.ReturnAndFinish();
+  }
+
+  auto task_func = task.GetFunction();
+
+  auto count_down_ptr = runtime_state.LoadStatePtr(codegen, count_down_id_);
+  codegen.Call(CountDownProxy::Init, {count_down_ptr, codegen.Const32(1)});
+
+  Vector task_info_vec{LoadStateValue(task_info_vector_id_),
+                       Vector::kDefaultVectorSize,
+                       TaskInfoProxy::GetType(codegen)};
+
+  auto task_info_ptr = task_info_vec.GetPtrToValue(codegen, codegen.Const32(0));
+
+  codegen.Call(TaskInfoProxy::Init, {
+      task_info_ptr,
+      /*task_id=*/codegen.Const32(0),
+      /*ntasks=*/codegen.Const32(1)
+  });
+
+  // auto thread_pool = codegen::ExecutorThreadPool::GetInstance();
+  auto thread_pool_ptr = codegen.Call(
+      ExecutorThreadPoolProxy::GetInstance, {}
+  );
+
+  // using task_type = void (*)(char *ptr, TaskInfo *);
+  auto task_info_type = TaskInfoProxy::GetType(codegen);
+  auto task_func_type = llvm::FunctionType::get(
+      codegen.VoidType(), {
+          codegen.CharPtrType(),
+          task_info_type->getPointerTo()
+      },
+      false
+  )->getPointerTo();
+
+  // thread_pool->SubmitTask(
+  //   (char *)runtime_state,
+  //   task_info,
+  //   (task_type)task
+  // );
+  codegen.Call(codegen::ExecutorThreadPoolProxy::SubmitTask, {
+      thread_pool_ptr,
+      codegen->CreatePointerCast(codegen.GetState(), codegen.CharPtrType()),
+      task_info_ptr,
+      codegen->CreatePointerCast(task_func, task_func_type)
+  });
+
+  codegen.Call(CountDownProxy::Wait, {count_down_ptr});
+  codegen.Call(CountDownProxy::Destroy, {count_down_ptr});
 
   LOG_TRACE("TableScan on [%u] finished producing tuples ...", table.GetOid());
 }
