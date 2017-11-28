@@ -13,6 +13,7 @@
 #include "codegen/compilation_context.h"
 
 #include "codegen/function_builder.h"
+#include "codegen/multi_thread/multithread_supported.h"
 #include "codegen/proxy/catalog_proxy.h"
 #include "codegen/proxy/transaction_proxy.h"
 #include "codegen/proxy/executor_context_proxy.h"
@@ -25,7 +26,8 @@ namespace codegen {
 // Constructor
 CompilationContext::CompilationContext(Query &query,
                                        QueryResultConsumer &result_consumer)
-    : query_(query),
+    : multithread_on_(MultithreadSupported(query.GetPlan())),
+      query_(query),
       result_consumer_(result_consumer),
       codegen_(query_.GetCodeContext()) {
   // Allocate a catalog and transaction instance in the runtime state

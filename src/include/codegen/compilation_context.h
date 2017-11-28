@@ -63,6 +63,8 @@ class CompilationContext {
   // the plan and prepare the provided query statement.
   void GeneratePlan(QueryCompiler::CompileStats *stats);
 
+  bool MultithreadOn() const { return multithread_on_; }
+
   //===--------------------------------------------------------------------===//
   // ACCESSORS
   //===--------------------------------------------------------------------===//
@@ -103,6 +105,9 @@ class CompilationContext {
   OperatorTranslator *GetTranslator(const planner::AbstractPlan &op) const;
 
  private:
+  // Multithread turned on
+  bool multithread_on_;
+
   // The query we'll compile
   Query &query_;
 
