@@ -59,9 +59,7 @@ class NetworkManager {
   uint64_t port_;             // port number
   size_t max_connections_;    // maximum number of connections
 
-  static std::string private_key_file_;
-  static std::string certificate_file_;
-  static std::string root_cert_file_;
+
   static SSLLevel ssl_level_;
 
   struct event *ev_stop_;     // libevent stop event
@@ -77,6 +75,9 @@ class NetworkManager {
  public:
   static int recent_connfd;
   static SSL_CTX *ssl_context;
+  static std::string private_key_file_;
+  static std::string certificate_file_;
+  static std::string root_cert_file_;
 
  public:
   NetworkManager();
@@ -110,6 +111,8 @@ class NetworkManager {
   static void SetSSLLevel(SSLLevel ssl_level) { ssl_level_ = ssl_level; }
 
   static SSLLevel GetSSLLevel() { return ssl_level_; }
+
+  static void LoadSSLFileSettings();
 
  private:
   /* Maintain a global list of connections.

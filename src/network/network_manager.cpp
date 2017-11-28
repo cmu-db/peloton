@@ -59,6 +59,12 @@ void NetworkManager::CreateNewConnection(const int &connfd, short ev_flags,
   thread->SetThreadSockFd(connfd);
 }
 
+void NetworkManager::LoadSSLFileSettings() {
+  private_key_file_ = DATA_DIR + settings::SettingsManager::GetString(settings::SettingId::private_key_file);
+  certificate_file_ = DATA_DIR + settings::SettingsManager::GetString(settings::SettingId::certificate_file);
+  root_cert_file_ = DATA_DIR + settings::SettingsManager::GetString(settings::SettingId::root_cert_file);
+}
+
 void NetworkManager::SSLInit() {
 
   if (!settings::SettingsManager::GetBool(settings::SettingId::ssl)) {
@@ -67,9 +73,6 @@ void NetworkManager::SSLInit() {
   }
 
   SetSSLLevel(SSLLevel::SSL_VERIIFY);
-  private_key_file_ = DATA_DIR + settings::SettingsManager::GetString(settings::SettingId::private_key_file);
-  certificate_file_ = DATA_DIR + settings::SettingsManager::GetString(settings::SettingId::certificate_file);
-  root_cert_file_ = DATA_DIR + settings::SettingsManager::GetString(settings::SettingId::root_cert_file);
 
   /* Initialize SSL listener connection */
   SSL_load_error_strings();
@@ -80,29 +83,30 @@ void NetworkManager::SSLInit() {
     return;
   }
 
-  LOG_INFO("private key file path %s", private_key_file_.c_str());
-
   if (SSL_CTX_load_verify_locations(ssl_context, certificate_file_.c_str(), nullptr) != 1) {
-    LOG_INFO("Exception when loading root_crt!");
+    LOG_ERROR("Exception when loading root_crt!");
     SetSSLLevel(SSLLevel::SSL_PREFER);
   }
 
   if (SSL_CTX_set_default_verify_paths(ssl_context) != 1) {
-    LOG_INFO("Exception when setting default verify path!");
+    LOG_ERROR("Exception when setting default verify path!");
     SetSSLLevel(SSLLevel::SSL_PREFER);
   }
 
   LOG_INFO("certificate file path %s", certificate_file_.c_str());
   if (SSL_CTX_use_certificate_chain_file(ssl_context, certificate_file_.c_str()) != 1) {
     SSL_CTX_free(ssl_context);
+    LOG_ERROR("Exception when loading server certificate!");
     ssl_context = nullptr;
     SetSSLLevel(SSLLevel::SSL_DISABLE);
     return;
   }
 
+  LOG_INFO("private key file path %s", private_key_file_.c_str());
   // register private key
   if (SSL_CTX_use_PrivateKey_file(ssl_context, private_key_file_.c_str(), SSL_FILETYPE_PEM) != 1) {
     SSL_CTX_free(ssl_context);
+    LOG_ERROR("Exception when loading server key!");
     ssl_context = nullptr;
     SetSSLLevel(SSLLevel::SSL_DISABLE);
     return;
@@ -202,8 +206,6 @@ void NetworkManager::StartServer() {
     int conn_backlog = 12;
     int reuse = 1;
     setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
-
-    SSLInit();
 
     if (bind(listen_fd, (struct sockaddr *) &sin, sizeof(sin)) < 0)
     {
