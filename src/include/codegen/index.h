@@ -22,10 +22,10 @@ class Index;
 
 namespace codegen {
 class Index {
-public:
+ public:
   Index(index::Index &index);
 
-private:
+ private:
   index::Index &index_;
 };
 }

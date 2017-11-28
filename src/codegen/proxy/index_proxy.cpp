@@ -16,7 +16,7 @@ namespace peloton {
 namespace codegen {
 
 DEFINE_TYPE(Index, "index::Index", MEMBER(opaque));
-//DEFINE_METHOD(peloton::index, Index, CodeGenScan);
+// DEFINE_METHOD(peloton::index, Index, CodeGenScan);
 
 }  // namespace codegen
 }  // namespace peloton

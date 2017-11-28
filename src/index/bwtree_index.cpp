@@ -192,7 +192,10 @@ void BWTREE_INDEX_TYPE::Scan(
 }
 
 BWTREE_TEMPLATE_ARGUMENTS
-void BWTREE_INDEX_TYPE::CodeGenRangeScan(UNUSED_ATTRIBUTE storage::Tuple *low_key_p, UNUSED_ATTRIBUTE storage::Tuple *high_key_p, UNUSED_ATTRIBUTE std::vector<ItemPointer *> &result) {
+void BWTREE_INDEX_TYPE::CodeGenRangeScan(
+    UNUSED_ATTRIBUTE storage::Tuple *low_key_p,
+    UNUSED_ATTRIBUTE storage::Tuple *high_key_p,
+    UNUSED_ATTRIBUTE std::vector<ItemPointer *> &result) {
   // Construct low key and high key in KeyType form, rather than
   // the standard in-memory tuple
   KeyType index_low_key;
@@ -206,14 +209,15 @@ void BWTREE_INDEX_TYPE::CodeGenRangeScan(UNUSED_ATTRIBUTE storage::Tuple *low_ke
   // or we have seen a key higher than the high key
   for (auto scan_itr = container.Begin(index_low_key);
        (scan_itr.IsEnd() == false) &&
-       (container.KeyCmpLessEqual(scan_itr->first, index_high_key));
+           (container.KeyCmpLessEqual(scan_itr->first, index_high_key));
        scan_itr++) {
     result.push_back(scan_itr->second);
   }
 }
 
 BWTREE_TEMPLATE_ARGUMENTS
-void BWTREE_INDEX_TYPE::CodeGenFullScan(UNUSED_ATTRIBUTE std::vector<ItemPointer *> &result) {
+void BWTREE_INDEX_TYPE::CodeGenFullScan(
+    UNUSED_ATTRIBUTE std::vector<ItemPointer *> &result) {
   for (auto scan_itr = container.Begin(); (scan_itr.IsEnd() == false);
        scan_itr++) {
     result.push_back(scan_itr->second);
@@ -236,7 +240,6 @@ void BWTREE_INDEX_TYPE::ScanLimit(
     const std::vector<ExpressionType> &expr_list,
     ScanDirectionType scan_direction, std::vector<ValueType> &result,
     const ConjunctionScanPredicate *csp_p, uint64_t limit, uint64_t offset) {
-
   // Only work with limit == 1 and offset == 0
   // Because that gets translated to "min"
   // But still since we could not access tuples in the table
@@ -258,7 +261,6 @@ void BWTREE_INDEX_TYPE::ScanLimit(
     auto scan_itr = container.Begin(index_low_key);
     if ((scan_itr.IsEnd() == false) &&
         (container.KeyCmpLessEqual(scan_itr->first, index_high_key))) {
-
       result.push_back(scan_itr->second);
     }
   } else {

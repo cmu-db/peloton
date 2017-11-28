@@ -87,7 +87,10 @@ class RuntimeFunctions {
 
   static void ThrowOverflowException();
 
-  static util::IndexScanIterator *GetIterator(index::Index *index, uint64_t point_key_p, uint64_t low_key_p, uint64_t high_key_p);
+  static util::IndexScanIterator *GetIterator(index::Index *index,
+                                              uint64_t point_key_p,
+                                              uint64_t low_key_p,
+                                              uint64_t high_key_p);
 
   static void DeleteIterator(util::IndexScanIterator *iterator);
 };

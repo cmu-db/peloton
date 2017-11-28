@@ -21,6 +21,6 @@
 namespace peloton {
 namespace codegen {
 
-Index::Index(index::Index &index) : index_(index){}
+Index::Index(index::Index &index) : index_(index) {}
 }
 }

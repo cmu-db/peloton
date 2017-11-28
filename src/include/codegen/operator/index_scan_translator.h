@@ -72,8 +72,7 @@ class IndexScanTranslator : public OperatorTranslator {
   RuntimeState::StateID selection_vector_id_;
 
   // The code-generating table instance
-//  codegen::ArtIndex index_;
+  //  codegen::ArtIndex index_;
 };
-
 }
 }

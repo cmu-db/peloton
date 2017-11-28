@@ -74,8 +74,8 @@ storage::TileGroup *RuntimeFunctions::GetTileGroup(storage::DataTable *table,
   return tile_group.get();
 }
 
-storage::TileGroup *RuntimeFunctions::GetTileGroupByGlobalId(storage::DataTable *table,
-                                                             uint64_t tile_group_id) {
+storage::TileGroup *RuntimeFunctions::GetTileGroupByGlobalId(
+    storage::DataTable *table, uint64_t tile_group_id) {
   auto tile_group = table->GetTileGroupById(tile_group_id);
   return tile_group.get();
 }
@@ -138,8 +138,13 @@ void RuntimeFunctions::ThrowOverflowException() {
   throw std::overflow_error("ERROR: overflow");
 }
 
-util::IndexScanIterator *RuntimeFunctions::GetIterator(index::Index *index, uint64_t point_key_p, uint64_t low_key_p, uint64_t high_key_p) {
-  util::IndexScanIterator *iterator = new util::IndexScanIterator(index, (storage::Tuple *)point_key_p, (storage::Tuple *)low_key_p, (storage::Tuple *)high_key_p);
+util::IndexScanIterator *RuntimeFunctions::GetIterator(index::Index *index,
+                                                       uint64_t point_key_p,
+                                                       uint64_t low_key_p,
+                                                       uint64_t high_key_p) {
+  util::IndexScanIterator *iterator = new util::IndexScanIterator(
+      index, (storage::Tuple *)point_key_p, (storage::Tuple *)low_key_p,
+      (storage::Tuple *)high_key_p);
   return iterator;
 }
 

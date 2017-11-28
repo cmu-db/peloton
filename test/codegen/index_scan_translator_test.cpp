@@ -47,16 +47,17 @@ class IndexScanTranslatorTest : public PelotonCodeGenTest {
 
     const bool is_inlined = true;
     std::vector<catalog::Column> cols = {
-      {type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER), "COL_A", is_inlined},
-      {type::TypeId::DECIMAL, type::Type::GetTypeSize(type::TypeId::DECIMAL), "COL_B", is_inlined},
-      {type::TypeId::TIMESTAMP, type::Type::GetTypeSize(type::TypeId::TIMESTAMP), "COL_C", is_inlined},
-      {type::TypeId::VARCHAR, 25, "COL_D", !is_inlined}
-    };
+        {type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+         "COL_A", is_inlined},
+        {type::TypeId::DECIMAL, type::Type::GetTypeSize(type::TypeId::DECIMAL),
+         "COL_B", is_inlined},
+        {type::TypeId::TIMESTAMP,
+         type::Type::GetTypeSize(type::TypeId::TIMESTAMP), "COL_C", is_inlined},
+        {type::TypeId::VARCHAR, 25, "COL_D", !is_inlined}};
     std::unique_ptr<catalog::Schema> schema{new catalog::Schema(cols)};
 
     // Insert table in catalog
-    catalog->CreateTable(test_db_name, table_name_, std::move(schema),
-                         txn);
+    catalog->CreateTable(test_db_name, table_name_, std::move(schema), txn);
     txn_manager.CommitTransaction(txn);
 
     auto &table = GetTableWithIndex();
@@ -92,12 +93,12 @@ class IndexScanTranslatorTest : public PelotonCodeGenTest {
     key_schema->SetIndexedColumns(key_attrs);
 
     index_metadata = new index::IndexMetadata(
-      "bwtree_index", 123, INVALID_OID, INVALID_OID, IndexType::BWTREE,
-      IndexConstraintType::PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
-      false);
+        "bwtree_index", 123, INVALID_OID, INVALID_OID, IndexType::BWTREE,
+        IndexConstraintType::PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
+        false);
 
     std::shared_ptr<index::Index> pkey_index(
-      index::IndexFactory::GetIndex(index_metadata));
+        index::IndexFactory::GetIndex(index_metadata));
 
     table.AddIndex(pkey_index);
 
@@ -119,13 +120,19 @@ class IndexScanTranslatorTest : public PelotonCodeGenTest {
       keys_.push_back(key);
 
       tuple.SetValue(0, type::ValueFactory::GetIntegerValue(key), testing_pool);
-      tuple.SetValue(1, type::ValueFactory::GetDecimalValue((double)std::rand() / 10000.0), testing_pool);
-      tuple.SetValue(2, type::ValueFactory::GetTimestampValue((int64_t)std::rand()), testing_pool);
-      tuple.SetValue(3, type::ValueFactory::GetVarcharValue(std::to_string(std::rand())), testing_pool);
+      tuple.SetValue(
+          1, type::ValueFactory::GetDecimalValue((double)std::rand() / 10000.0),
+          testing_pool);
+      tuple.SetValue(
+          2, type::ValueFactory::GetTimestampValue((int64_t)std::rand()),
+          testing_pool);
+      tuple.SetValue(
+          3, type::ValueFactory::GetVarcharValue(std::to_string(std::rand())),
+          testing_pool);
 
       ItemPointer *index_entry_ptr = nullptr;
       ItemPointer tuple_slot_id =
-        table.InsertTuple(&tuple, txn, &index_entry_ptr);
+          table.InsertTuple(&tuple, txn, &index_entry_ptr);
 
       auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
       txn_manager.PerformInsert(txn, tuple_slot_id, index_entry_ptr);
@@ -177,18 +184,18 @@ TEST_F(IndexScanTranslatorTest, IndexPointQuery) {
   std::vector<expression::AbstractExpression *> runtime_keys;
 
   key_column_ids.push_back(0);
-  expr_types.push_back(
-    ExpressionType::COMPARE_EQUAL);
+  expr_types.push_back(ExpressionType::COMPARE_EQUAL);
   values.push_back(type::ValueFactory::GetIntegerValue(key).Copy());
 
   // Create index scan desc
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
-    index, key_column_ids, expr_types, values, runtime_keys);
+      index, key_column_ids, expr_types, values, runtime_keys);
 
   expression::AbstractExpression *predicate = nullptr;
 
   // Create plan node.
-  planner::IndexScanPlan scan(&data_table, predicate, column_ids, index_scan_desc);
+  planner::IndexScanPlan scan(&data_table, predicate, column_ids,
+                              index_scan_desc);
 
   // Do binding
   planner::BindingContext context;
@@ -204,7 +211,6 @@ TEST_F(IndexScanTranslatorTest, IndexPointQuery) {
   const auto &results = buffer.GetOutputTuples();
   EXPECT_EQ(1, results.size());
 }
-
 
 TEST_F(IndexScanTranslatorTest, IndexRangeScan) {
   //
@@ -231,23 +237,22 @@ TEST_F(IndexScanTranslatorTest, IndexRangeScan) {
   std::vector<expression::AbstractExpression *> runtime_keys;
 
   key_column_ids.push_back(0);
-  expr_types.push_back(
-    ExpressionType::COMPARE_GREATERTHANOREQUALTO);
+  expr_types.push_back(ExpressionType::COMPARE_GREATERTHANOREQUALTO);
   values.push_back(type::ValueFactory::GetIntegerValue(key1).Copy());
 
   key_column_ids.push_back(0);
-  expr_types.push_back(
-    ExpressionType::COMPARE_LESSTHANOREQUALTO);
+  expr_types.push_back(ExpressionType::COMPARE_LESSTHANOREQUALTO);
   values.push_back(type::ValueFactory::GetIntegerValue(key2).Copy());
 
   // Create index scan desc
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
-    index, key_column_ids, expr_types, values, runtime_keys);
+      index, key_column_ids, expr_types, values, runtime_keys);
 
   expression::AbstractExpression *predicate = nullptr;
 
   // Create plan node.
-  planner::IndexScanPlan scan(&data_table, predicate, column_ids, index_scan_desc);
+  planner::IndexScanPlan scan(&data_table, predicate, column_ids,
+                              index_scan_desc);
 
   // Do binding
   planner::BindingContext context;
@@ -282,12 +287,13 @@ TEST_F(IndexScanTranslatorTest, IndexFullScan) {
 
   // Create index scan desc
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
-    index, key_column_ids, expr_types, values, runtime_keys);
+      index, key_column_ids, expr_types, values, runtime_keys);
 
   expression::AbstractExpression *predicate = nullptr;
 
   // Create plan node.
-  planner::IndexScanPlan scan(&data_table, predicate, column_ids, index_scan_desc);
+  planner::IndexScanPlan scan(&data_table, predicate, column_ids,
+                              index_scan_desc);
 
   // Do binding
   planner::BindingContext context;
@@ -303,6 +309,5 @@ TEST_F(IndexScanTranslatorTest, IndexFullScan) {
   const auto &results = buffer.GetOutputTuples();
   EXPECT_EQ(GetTestTableSize(), results.size());
 }
-
 }
 }
