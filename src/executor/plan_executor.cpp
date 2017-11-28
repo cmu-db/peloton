@@ -17,7 +17,6 @@
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/executors.h"
 #include "settings/settings_manager.h"
-#include "common/timer.h"
 
 namespace peloton {
 namespace executor {
