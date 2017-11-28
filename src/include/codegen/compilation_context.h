@@ -75,8 +75,8 @@ class CompilationContext {
     return query_.GetQueryParameters();
   }
 
-  const ParameterStorage &GetParameterStorage() const {
-    return query_.GetParameterStorage();
+  const ParameterCache &GetParameterCache() const {
+    return query_.GetParameterCache();
   }
 
   QueryResultConsumer &GetQueryResultConsumer() const { return result_consumer_; }
@@ -123,8 +123,8 @@ class CompilationContext {
   // The consumer of the results of the query
   QueryResultConsumer &result_consumer_;
 
-  // The parameter value storage of the query
-  ParameterStorage &parameter_storage_;
+  // The parameter value cache of the query
+  ParameterCache &parameter_cache_;
 
   // The code generator
   CodeGen codegen_;

@@ -27,7 +27,7 @@ namespace codegen {
 CompilationContext::CompilationContext(Query &query,
                                        QueryResultConsumer &result_consumer)
     : query_(query), result_consumer_(result_consumer),
-      parameter_storage_(query_.GetParameterStorage()),
+      parameter_cache_(query_.GetParameterCache()),
       codegen_(query_.GetCodeContext()) {
   // Allocate a catalog and transaction instance in the runtime state
   auto &runtime_state = GetRuntimeState();
@@ -198,7 +198,7 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
   runtime_state.CreateLocalState(codegen_);
 
   // Load the query parameter values
-  parameter_storage_.StoreValues(codegen_, GetQueryParametersPtr());
+  parameter_cache_.StoreValues(codegen_, GetQueryParametersPtr());
 
   // Generate the primary plan logic
   Produce(root);
