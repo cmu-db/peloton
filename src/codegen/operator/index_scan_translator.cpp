@@ -171,6 +171,23 @@ void IndexScanTranslator::Produce() const {
       final_batch.AddAttribute(attribute, &final_attribute_accesses[col_idx]);
     }
 
+    // filter by predicate
+    const auto *predicate = index_scan_.GetPredicate();
+    if (predicate != nullptr) {
+      // Iterate over the batch using a scalar loop
+      final_batch.Iterate(codegen, [&](RowBatch::Row &row) {
+        // Evaluate the predicate to determine row validity
+        codegen::Value valid_row = row.DeriveValue(codegen, *predicate);
+
+        // Reify the boolean value since it may be NULL
+        PL_ASSERT(valid_row.GetType().GetSqlType() == type::Boolean::Instance());
+        llvm::Value *bool_val = type::Boolean::Instance().Reify(codegen, valid_row);
+
+        // Set the validity of the row
+        row.SetValidity(codegen, bool_val);
+      });
+    }
+
     ConsumerContext context{this->GetCompilationContext(), this->GetPipeline()};
     context.Consume(final_batch);
 
