@@ -61,6 +61,7 @@ void IndexScanTranslator::Produce() const {
 
   const index::ConjunctionScanPredicate* csp = &index_scan_.GetIndexPredicate().GetConjunctionList()[0];
 
+  // get pointer to data table and pointer to index
   storage::DataTable &table = *index_scan_.GetTable();
   llvm::Value *catalog_ptr = GetCatalogPtr();
   llvm::Value *db_oid = codegen.Const32(table.GetDatabaseOid());
@@ -74,6 +75,7 @@ void IndexScanTranslator::Produce() const {
   Vector sel_vec{LoadStateValue(selection_vector_id_),
                  Vector::kDefaultVectorSize, codegen.Int32Type()};
 
+  // get query keys in the ConjunctionScanPredicate in index scan plan node
   llvm::Value *point_key = codegen.Const64(0);
   llvm::Value *low_key = codegen.Const64(0);
   llvm::Value *high_key = codegen.Const64(0);
@@ -84,11 +86,16 @@ void IndexScanTranslator::Produce() const {
     low_key = codegen.Const64((uint64_t)(csp->GetLowKey()));
     high_key = codegen.Const64((uint64_t)(csp->GetHighKey()));
   }
+
+  // construct an iterator for code gen index scan
   llvm::Value *iterator_ptr = codegen.Call(RuntimeFunctionsProxy::GetIterator, {index_ptr, point_key, low_key, high_key});
+  // the iterator makes function call to the index
   codegen.Call(IndexScanIteratorProxy::DoScan, {iterator_ptr});
 
   const uint32_t num_columns = static_cast<uint32_t>(table.GetSchema()->GetColumnCount());
   llvm::Value *column_layouts = codegen->CreateAlloca(ColumnLayoutInfoProxy::GetType(codegen), codegen.Const32(num_columns));
+
+  // get the index scan result size and iterator over all the results
   llvm::Value *result_size = codegen.Call(IndexScanIteratorProxy::GetResultSize, {iterator_ptr});
   llvm::Value *result_iter = codegen.Const64(0);
   lang::Loop loop{codegen,
@@ -96,6 +103,8 @@ void IndexScanTranslator::Produce() const {
                   {{"distinctTileGroupIter", result_iter}}};
   {
     result_iter = loop.GetLoopVar(0);
+
+    // get pointer to the target tile group
     llvm::Value *tile_group_id = codegen.Call(IndexScanIteratorProxy::GetTileGroupId, {iterator_ptr, result_iter});
     llvm::Value *tile_group_offset = codegen.Call(IndexScanIteratorProxy::GetTileGroupOffset, {iterator_ptr, result_iter});
     llvm::Value *tile_group_ptr = codegen.Call(RuntimeFunctionsProxy::GetTileGroupByGlobalId, {table_ptr, tile_group_id});
@@ -128,7 +137,7 @@ void IndexScanTranslator::Produce() const {
     sel_vec.SetNumElements(out_idx);
 
     // construct the final row batch
-    // generate the row batch
+    // one tuple per row batch
     RowBatch final_batch{this->GetCompilationContext(), tile_group_id, codegen.Const32(0),
                          codegen.Const32(1), sel_vec, true};
 
@@ -148,14 +157,13 @@ void IndexScanTranslator::Produce() const {
                             this->GetPipeline()};
     context.Consume(final_batch);
 
-    // Move to next tile group in the table
+    // Move to next tuple in the index scan result
     result_iter = codegen->CreateAdd(result_iter, codegen.Const64(1));
     loop.LoopEnd(codegen->CreateICmpULT(result_iter, result_size),
                  {result_iter});
   }
 
-//  }
-
+  // free the memory allocated for the index scan iterator
   codegen.Call(RuntimeFunctionsProxy::DeleteIterator, {iterator_ptr});
 }
 

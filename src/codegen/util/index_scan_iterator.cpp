@@ -86,6 +86,7 @@ void IndexScanIterator::DoScan() {
 //  }
 }
 
+// binary search to check whether the target offset is in the results
 bool IndexScanIterator::RowOffsetInResult(uint64_t distinct_tile_index, uint32_t row_offset) {
   uint32_t l = result_metadata_[distinct_tile_index * 3 + 1];
   uint32_t r = result_metadata_[distinct_tile_index * 3 + 2];
