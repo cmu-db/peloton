@@ -124,7 +124,7 @@ WriteState NetworkConnection::WritePackets() {
   // iterate through all the packets
   for (; next_response_ < protocol_handler_->responses.size(); next_response_++) {
     auto pkt = protocol_handler_->responses[next_response_].get();
-    LOG_INFO("To send packet with type: %c, len %lu", static_cast<char>(pkt->msg_type), pkt->len);
+    LOG_TRACE("To send packet with type: %c, len %lu", static_cast<char>(pkt->msg_type), pkt->len);
     // write is not ready during write. transit to CONN_WRITE
     auto result = BufferWriteBytesHeader(pkt);
     if (result == WriteState::WRITE_NOT_READY || result == WriteState::WRITE_ERROR) return result;
@@ -182,17 +182,14 @@ ReadState NetworkConnection::FillReadBuffer() {
       // we use general read function
       if (conn_SSL_context != nullptr) {
         ERR_clear_error();
-        // TODO(Yuchen): For the transparent negotiation to succeed, the ssl must have been initialized to client or server mode?
-        // Only when the record has been received and processed completely,
+        // TODO(Yuchen): For the transparent negotiation to succeed, the ssl must have been
+        // initialized to client or server mode?
+        // Only when the whole SSL record has been received and processed completely,
         // SSL_read() will return reporting success.
-        // TODO(Yuchen): How does it know whether one record is fininished or not??
-        // As the size of an SSL/TLS record may exceed the maximum packet size of the
-        // underlying transport (e.g. TCP), it may be necessary to read several packets
-        // from the transport layer before the record is complete and SSL_read() can succeed.
-        // TODO(Yuchen): How should we deal with SSL_pending()? We can't rely on select()/libevent to trigger the event
-        // since the data is in SSL buffer not in network buffer.
-        // Can we add a state in WAIT??
-        // TODO(Yuchen): What happens if SSL buffer is larger than the available connection buffer
+        // Special case would be: SSL_read() reads the whole SSL record from the network buffer.
+        // The network buffer becomes empty and data is in SSL buffer. We can't rely on
+        // libevent read event since the system does not know about the SSL buffer. We need to
+        // call SSL_pending() to check manually. (See StateMachine)
         SetReadBlockedOnWrite(false);
         bytes_read = SSL_read(conn_SSL_context, rbuf_.GetPtr(rbuf_.buf_size),
                               rbuf_.GetMaxSize() - rbuf_.buf_size);
@@ -206,18 +203,19 @@ ReadState NetworkConnection::FillReadBuffer() {
             break;
           }
           // It means the socket would have blocked when it's empty. It happens when
-          // when the SSL record arrives in multiple packets.
+          // when one SSL record arrives in multiple packets. We need to receive all
+          // the packets for SSL_read() to return successfully.
           case SSL_ERROR_WANT_READ: {
-            LOG_INFO("Waiting for more data in a SSL record");
+            LOG_TRACE("Waiting for more data in a SSL record");
             done = true;
-            // TODO(Yuchen): Why do we need read_blocked here??
-//            read_blocked = true;
+            // TODO(Yuchen): Why do we need read_blocked here?
+//          read_blocked = true;
             break;
           }
           // It happens when we're trying to rehandshake and we block on a write
           // during the handshake. We need to wait on the socket to be writable
           case SSL_ERROR_WANT_WRITE: {
-            LOG_INFO("Trying to rehandshake when reading");
+            LOG_TRACE("Trying to rehandshake when reading");
             SetReadBlockedOnWrite(true);
             break;
           }
@@ -225,12 +223,6 @@ ReadState NetworkConnection::FillReadBuffer() {
             LOG_ERROR("SSL read error: %d", err);
             return ReadState::READ_ERROR;
           }
-            // SSL_pending() checks when the SSL buffer is larger than local buffer, and there
-            // is data left in SSL buffer that is not processed.
-            // TODO(Yuchen): If it's the case, we need to process the buffer first and then come to read the rest.
-            // Are we going to read state after processing??
-            // We need to check if it is doing handshake because SSL_pending() doesn't work
-            // properly during handshake.
         }
       } else {
         bytes_read = read(sock_fd, rbuf_.GetPtr(rbuf_.buf_size),
@@ -244,11 +236,8 @@ ReadState NetworkConnection::FillReadBuffer() {
           // Read failed
           return ReadState::READ_ERROR;
         } else if (bytes_read < 0) {
-          // related to non-blocking?
           if (errno == EAGAIN || errno == EWOULDBLOCK) {
             // return whatever results we have
-            // TODO(Yuchen): What if we need to return the result back to client but it cannot be done immediately?
-            // Oh, maybe it's libevent EV_WRITE: when the fd becomes writable, if will be triggered.
             LOG_TRACE("Received: EAGAIN or EWOULDBLOCK");
             done = true;
           } else if (errno == EINTR) {
@@ -287,28 +276,28 @@ ReadState NetworkConnection::FillReadBuffer() {
   }
   return result;
 }
-// TODO(Yuchen): Is this done in a non-blocking way? How do we know the network-buffer is empty so it's ready to write?
+
 WriteState NetworkConnection::FlushWriteBuffer() {
   ssize_t written_bytes = 0;
   // while we still have outstanding bytes to write
   if (conn_SSL_context != nullptr) {
     while (wbuf_.buf_size > 0) {
-      LOG_INFO("SSL_write flush");
+      LOG_TRACE("SSL_write flush");
       ERR_clear_error();
       SetWriteBlockedOnRead(false);
       written_bytes = SSL_write(conn_SSL_context, &wbuf_.buf[wbuf_.buf_flush_ptr], wbuf_.buf_size);
       int err = SSL_get_error(conn_SSL_context, written_bytes);
       switch (err) {
         case SSL_ERROR_NONE: {
-          LOG_INFO("%ld bytes", written_bytes);
           wbuf_.buf_flush_ptr += written_bytes;
           wbuf_.buf_size -= written_bytes;
           break;
         }
-        // We would have blocked on write
+        // We would have blocked on write. For example, the network buffer is full.
         case SSL_ERROR_WANT_WRITE: {
           return WriteState::WRITE_NOT_READY;
         }
+        // Doing rehandshake.
         case SSL_ERROR_WANT_READ: {
           SetWriteBlockedOnRead(true);
           break;
@@ -323,7 +312,7 @@ WriteState NetworkConnection::FlushWriteBuffer() {
     while (wbuf_.buf_size > 0) {
       written_bytes = 0;
       while (written_bytes <= 0) {
-          LOG_INFO("Normal write flush");
+          LOG_TRACE("Normal write flush");
           written_bytes =
               write(sock_fd, &wbuf_.buf[wbuf_.buf_flush_ptr], wbuf_.buf_size);
         // Write failed
@@ -408,8 +397,6 @@ std::string NetworkConnection::WriteBufferToString() {
 
 ProcessResult NetworkConnection::ProcessInitial() {
   //TODO: this is a direct copy and we should get rid of it later;
-  // TODO(Yuchen): Why don't use request here? This should not be a local variable!!
-  // NOTE: If we process the SSL initial packet, we should clear it
 
   if (initial_packet.header_parsed == false) {
     // parse out the header first
@@ -430,7 +417,6 @@ ProcessResult NetworkConnection::ProcessInitial() {
   }
   //TODO: If other protocols are added, this need to be changed
 
-  //TODO(Yuchen): can we use a more elegant way to create protocol_handler??
   if (protocol_handler_ == nullptr) {
     protocol_handler_ =
       ProtocolHandlerFactory::CreateProtocolHandler(
@@ -439,6 +425,7 @@ ProcessResult NetworkConnection::ProcessInitial() {
   // We need to handle startup packet first
   //TODO: If other protocols are added, this need to be changed
   bool result = protocol_handler_->ProcessInitialPacket(&initial_packet, client_, ssl_able_, ssl_handshake_, finish_startup_packet_);
+  // Clean up the initial_packet after finishing processing.
   initial_packet.Reset();
   if (result) {
     return ProcessResult::COMPLETE;
@@ -588,7 +575,7 @@ void NetworkConnection::CloseSocket() {
       if (shutdown_ret == 1) {
         break;
       } else if (shutdown_ret == 0) {
-        LOG_INFO("SSL shutdown is not finished yet");
+        LOG_TRACE("SSL shutdown is not finished yet");
         continue;
       } else {
         if (err == SSL_ERROR_WANT_WRITE || err == SSL_ERROR_WANT_READ) {
@@ -691,8 +678,10 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
         }
 
         conn->TransitState(ConnState::CONN_READ);
-        // If the ssl session is doing rehandshake or there is no data left in SSL buffer
-        // exit the StateMachine and wait for the Libevent signal
+        // SSL_pending() checks whether there is data left in SSL buffer.
+        // It does not work reliably when doing handshake.
+        // If SSL session doing rehandshake or there is not data left in SSL buffer,
+        // exit the loop and wait for event trigger.
         if (conn->conn_SSL_context == nullptr || conn->GetReadBlockedOnWrite() ||
             conn->GetReadBlockedOnWrite() || !SSL_pending(conn->conn_SSL_context)) {
           done = true;
@@ -757,8 +746,8 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
             conn->ssl_handshake_ = false;
             conn->TransitState(ConnState::CONN_PROCESS_INITIAL);
           } else {
-            // TODO(Yuchen): Handle the case when ssl fails, shall we close the connection directly?
-            // Step1. close the connection directly.
+            // TODO(Yuchen): Handle the case when ssl handshake fails,
+            // shall we close the connection directly?
             conn->ssl_handshake_ = false;
             conn->TransitState(ConnState::CONN_CLOSING);
           }
@@ -865,14 +854,12 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
 
       case ConnState::CONN_CLOSING: {
         conn->CloseSocket();
-        LOG_INFO("It's closing connection");
         done = true;
         break;
       }
 
       case ConnState::CONN_CLOSED: {
         done = true;
-        LOG_INFO("Has closed connection");
         break;
       }
 

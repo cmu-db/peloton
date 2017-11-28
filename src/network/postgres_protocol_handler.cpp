@@ -1057,14 +1057,11 @@ bool PostgresProtocolHandler::ProcessInitialPacket(InputPacket *pkt, Client clie
 
   // TODO: consider more about return value
   if (proto_version == SSL_MESSAGE_VERNO) {
-    LOG_INFO("process SSL MESSAGE");
-
-    // TODO(Yuchen): can we have a more expressive name?
-    // This means, the server is waiting for a ssl handshake.
+    LOG_TRACE("process SSL MESSAGE");
     return ProcessSSLRequestPacket(pkt, ssl_able, ssl_handshake);
   }
   else {
-    LOG_INFO("process startup packet");
+    LOG_TRACE("process startup packet");
     return ProcessStartupPacket(pkt, proto_version, client, finish_startup_packet);
   }
 }
@@ -1076,11 +1073,11 @@ bool PostgresProtocolHandler::ProcessSSLRequestPacket(InputPacket *pkt, bool ssl
   if (ssl_able) {
     response->msg_type = NetworkMessageType::SSL_YES;
     ssl_handshake = true;
-    LOG_INFO("SSL support");
+    LOG_TRACE("SSL support");
   } else {
     response->msg_type = NetworkMessageType::SSL_NO;
     ssl_handshake = false;
-    LOG_INFO("SSL not support");
+    LOG_TRACE("SSL not support");
   }
   responses.push_back(std::move(response));
   SetFlushFlag(true);
