@@ -1395,4 +1395,11 @@ enum class NetworkProtocolType {
   POSTGRES_PSQL,
 };
 
+
+enum class SSLLevel {
+  SSL_DISABLE = 0,
+  SSL_PREFER = 1,
+  SSL_VERIIFY = 2,
+};
+
 }  // namespace peloton

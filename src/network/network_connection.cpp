@@ -438,7 +438,7 @@ ProcessResult NetworkConnection::ProcessInitial() {
   }
   // We need to handle startup packet first
   //TODO: If other protocols are added, this need to be changed
-  bool result = protocol_handler_->ProcessInitialPacket(&initial_packet, client_, ssl_handshake_, finish_startup_packet_);
+  bool result = protocol_handler_->ProcessInitialPacket(&initial_packet, client_, ssl_able_, ssl_handshake_, finish_startup_packet_);
   initial_packet.Reset();
   if (result) {
     return ProcessResult::COMPLETE;
@@ -505,7 +505,7 @@ WriteState NetworkConnection::BufferWriteBytesHeader(OutputPacket *pkt) {
   // make len include its field size as well
   len_nb = htonl(len + sizeof(int32_t));
 
-  if (!ssl_handshake_) {
+  if (finish_startup_packet_) {
     // append the bytes of this integer in network-byte order
     std::copy(reinterpret_cast<uchar *>(&len_nb),
               reinterpret_cast<uchar *>(&len_nb) + 4,

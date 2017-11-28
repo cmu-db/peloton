@@ -1048,7 +1048,7 @@ bool PostgresProtocolHandler::ReadPacket(Buffer &rbuf, InputPacket &rpkt) {
  * process_startup_packet - Processes the startup packet
  *  (after the size field of the header).
  */
-bool PostgresProtocolHandler::ProcessInitialPacket(InputPacket *pkt, Client client, bool& ssl_handshake, bool& finish_startup_packet) {
+bool PostgresProtocolHandler::ProcessInitialPacket(InputPacket *pkt, Client client, bool ssl_able, bool& ssl_handshake, bool& finish_startup_packet) {
   std::string token, value;
   std::unique_ptr<OutputPacket> response(new OutputPacket());
 
@@ -1061,8 +1061,7 @@ bool PostgresProtocolHandler::ProcessInitialPacket(InputPacket *pkt, Client clie
 
     // TODO(Yuchen): can we have a more expressive name?
     // This means, the server is waiting for a ssl handshake.
-    ssl_handshake = true;
-    return ProcessSSLRequestPacket(pkt);
+    return ProcessSSLRequestPacket(pkt, ssl_able, ssl_handshake);
   }
   else {
     LOG_INFO("process startup packet");
@@ -1070,16 +1069,17 @@ bool PostgresProtocolHandler::ProcessInitialPacket(InputPacket *pkt, Client clie
   }
 }
 
-bool PostgresProtocolHandler::ProcessSSLRequestPacket(InputPacket *pkt) {
+bool PostgresProtocolHandler::ProcessSSLRequestPacket(InputPacket *pkt, bool ssl_able, bool& ssl_handshake) {
   UNUSED(pkt);
   std::unique_ptr<OutputPacket> response(new OutputPacket());
   // TODO: consider more about a proper response
-  if (peloton::settings::SettingsManager::GetBool(
-      peloton::settings::SettingId::ssl)) {
+  if (ssl_able) {
     response->msg_type = NetworkMessageType::SSL_YES;
+    ssl_handshake = true;
     LOG_INFO("SSL support");
   } else {
     response->msg_type = NetworkMessageType::SSL_NO;
+    ssl_handshake = false;
     LOG_INFO("SSL not support");
   }
   responses.push_back(std::move(response));
