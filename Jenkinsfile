@@ -5,7 +5,7 @@ pipeline {
             steps {
                 sh 'rm -rf build && mkdir build'
                 dir('build') {
-                    sh 'cmake -DCMAKE_BUILD_TYPE=Debug -DUSE_SANITIZER=Address -DCMAKE_CXX_FLAGS="-DLOG_LEVEL=LOG_LEVEL_TRACE" ..'
+                    sh 'cmake -DCMAKE_BUILD_TYPE=Debug -DUSE_SANITIZER=Address ..'
                     sh 'make -j4'
                 }
             }
@@ -28,30 +28,22 @@ pipeline {
             parallel {
                 stage('Ubuntu Trusty') {
                     agent { dockerfile { filename 'script/docker/ubuntu-trusty/Dockerfile-jenkins' } }
-                    steps {
-                        sh 'echo Ubuntu Trusty'
-                    }
+                    steps { sh 'echo Ubuntu Trusty' }
                 }
                 
                 stage('Fedora 26') {
                     agent { dockerfile { filename 'script/docker/fedora26/Dockerfile-jenkins' } }
-                    steps {
-                        sh 'echo Fedora 26'
-                    }
+                    steps { sh 'echo Fedora 26' }
                 }
 
                 stage('Fedora 27') {
                     agent { dockerfile { filename 'script/docker/fedora27/Dockerfile-jenkins' } }
-                    steps {
-                        sh 'echo Fedora 27'
-                    }
+                    steps { sh 'echo Fedora 27' }
                 }
 
                 stage('CentOS 7') {
                     agent { dockerfile { filename 'script/docker/centos7/Dockerfile-jenkins' } }
-                    steps {
-                        sh 'echo CentOS 7'
-                    }
+                    steps { sh 'echo CentOS 7' }
                 }
             }
         }
