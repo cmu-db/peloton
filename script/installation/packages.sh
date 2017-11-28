@@ -26,14 +26,15 @@ TMPDIR=/tmp
 if [ "$DISTRO" = "UBUNTU" ]; then
     # Fix for LLVM-3.7 on Ubuntu 14.04
     if [ "$DISTRO_VER" == "14.04" ]; then
-        sudo add-apt-repository 'deb http://llvm.org/apt/trusty/ llvm-toolchain-trusty-3.7 main'
+        echo 'deb http://llvm.org/apt/trusty/ llvm-toolchain-trusty-3.7 main' | sudo tee -a /etc/apt/sources.list > /dev/null
         sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 15CF4D18AF4F7421
-        sudo apt-get update
+        sudo apt-get update -qq
     fi
 
     sudo apt-get -qq --force-yes --ignore-missing -y install \
         git \
         g++ \
+        clang-3.7 \
         cmake \
         libgflags-dev \
         libprotobuf-dev \
