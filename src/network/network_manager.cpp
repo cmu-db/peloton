@@ -22,6 +22,10 @@ namespace network {
 
 int NetworkManager::recent_connfd = -1;
 SSL_CTX *NetworkManager::ssl_context = nullptr;
+std::string NetworkManager::private_key_file_;
+std::string NetworkManager::certificate_file_;
+std::string NetworkManager::root_cert_file_;
+SSLLevel NetworkManager::ssl_level_;
 
 std::unordered_map<int, std::unique_ptr<NetworkConnection>> &
 NetworkManager::GetGlobalSocketList() {
@@ -49,9 +53,76 @@ void NetworkManager::CreateNewConnection(const int &connfd, short ev_flags,
   if (global_socket_list.find(connfd) == global_socket_list.end()) {
     LOG_INFO("Create new connection: id = %d", connfd);
   }
+  bool ssl_able = (GetSSLLevel() != SSLLevel::SSL_DISABLE);
   global_socket_list[connfd].reset(
-      new NetworkConnection(connfd, ev_flags, thread, init_state));
+      new NetworkConnection(connfd, ev_flags, thread, init_state, ssl_able));
   thread->SetThreadSockFd(connfd);
+}
+
+void NetworkManager::SSLInit() {
+
+  if (!settings::SettingsManager::GetBool(settings::SettingId::ssl)) {
+    SetSSLLevel(SSLLevel::SSL_DISABLE);
+    return;
+  }
+
+  SetSSLLevel(SSLLevel::SSL_VERIIFY);
+  private_key_file_ = DATA_DIR + settings::SettingsManager::GetString(settings::SettingId::private_key_file);
+  certificate_file_ = DATA_DIR + settings::SettingsManager::GetString(settings::SettingId::certificate_file);
+  root_cert_file_ = DATA_DIR + settings::SettingsManager::GetString(settings::SettingId::root_cert_file);
+
+  /* Initialize SSL listener connection */
+  SSL_load_error_strings();
+  SSL_library_init();
+
+  if ((ssl_context = SSL_CTX_new(SSLv23_method())) == nullptr) {
+    SetSSLLevel(SSLLevel::SSL_DISABLE);
+    return;
+  }
+
+  LOG_INFO("private key file path %s", private_key_file_.c_str());
+
+  if (SSL_CTX_load_verify_locations(ssl_context, certificate_file_.c_str(), nullptr) != 1) {
+    LOG_INFO("Exception when loading root_crt!");
+    SetSSLLevel(SSLLevel::SSL_PREFER);
+  }
+
+  if (SSL_CTX_set_default_verify_paths(ssl_context) != 1) {
+    LOG_INFO("Exception when setting default verify path!");
+    SetSSLLevel(SSLLevel::SSL_PREFER);
+  }
+
+  LOG_INFO("certificate file path %s", certificate_file_.c_str());
+  if (SSL_CTX_use_certificate_chain_file(ssl_context, certificate_file_.c_str()) != 1) {
+    SSL_CTX_free(ssl_context);
+    ssl_context = nullptr;
+    SetSSLLevel(SSLLevel::SSL_DISABLE);
+    return;
+  }
+
+  // register private key
+  if (SSL_CTX_use_PrivateKey_file(ssl_context, private_key_file_.c_str(), SSL_FILETYPE_PEM) != 1) {
+    SSL_CTX_free(ssl_context);
+    ssl_context = nullptr;
+    SetSSLLevel(SSLLevel::SSL_DISABLE);
+    return;
+  }
+
+  if (SSL_CTX_check_private_key(ssl_context) != 1) {
+    SSL_CTX_free(ssl_context);
+    ssl_context = nullptr;
+    SetSSLLevel(SSLLevel::SSL_DISABLE);
+    return;
+  }
+
+  if (GetSSLLevel() == SSLLevel::SSL_VERIIFY) {
+    SSL_CTX_set_verify(ssl_context, SSL_VERIFY_PEER, verify_callback);
+    SSL_CTX_set_verify_depth(ssl_context, 4);
+  } else {
+    SSL_CTX_set_verify(ssl_context, SSL_VERIFY_NONE, verify_callback);
+  }
+  // postgres use : SSL_OP_SINGLE_DH_USE
+  SSL_CTX_set_options(ssl_context, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
 }
 
 NetworkManager::NetworkManager() {
@@ -81,9 +152,6 @@ NetworkManager::NetworkManager() {
 
   port_ = settings::SettingsManager::GetInt(settings::SettingId::port);
   max_connections_ = settings::SettingsManager::GetInt(settings::SettingId::max_connections);
-  private_key_file_ = DATA_DIR + settings::SettingsManager::GetString(settings::SettingId::private_key_file);
-  certificate_file_ = DATA_DIR + settings::SettingsManager::GetString(settings::SettingId::certificate_file);
-  root_cert_file_ = DATA_DIR + settings::SettingsManager::GetString(settings::SettingId::root_cert_file);
 
   // For logging purposes
   //  event_enable_debug_mode();
@@ -135,69 +203,21 @@ void NetworkManager::StartServer() {
     int reuse = 1;
     setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
 
-    /* Initialize SSL listener connection */
-    SSL_load_error_strings();
-    SSL_library_init();
-
-    if ((ssl_context = SSL_CTX_new(SSLv23_method())) == nullptr)
-    {
-      throw ConnectionException("Error creating SSL context.");
-    }
-
-    LOG_INFO("private key file path %s", private_key_file_.c_str());
-
-    if (SSL_CTX_load_verify_locations(ssl_context, certificate_file_.c_str(), nullptr) != 1) {
-      SSL_CTX_free(ssl_context);
-      LOG_INFO("Exception when loading root_crt!");
-      throw ConnectionException("Error associating root certificate.\n");
-    }
-
-    if (SSL_CTX_set_default_verify_paths(ssl_context) != 1) {
-      SSL_CTX_free(ssl_context);
-      LOG_INFO("Exception when setting default verify path!");
-      throw ConnectionException("Error associating root certificate.\n");
-    }
-
-    // Temporarily commented to pass tests START
-    LOG_INFO("certificate file path %s", certificate_file_.c_str());
-    // register public key (certificate)
-    if (SSL_CTX_use_certificate_chain_file(ssl_context, certificate_file_.c_str()) != 1)
-    {
-      SSL_CTX_free(ssl_context);
-      throw ConnectionException("Error associating certificate.\n");
-    }
-
-    // register private key
-    LOG_DEBUG("private key file path %s", private_key_file_.c_str());
-    if (SSL_CTX_use_PrivateKey_file(ssl_context, private_key_file_.c_str(),
-                                    SSL_FILETYPE_PEM) != 1)
-    {
-      SSL_CTX_free(ssl_context);
-      throw ConnectionException("Error associating private key.\n");
-    }
-
-    if (SSL_CTX_check_private_key(ssl_context) != 1) {
-      SSL_CTX_free(ssl_context);
-      throw ConnectionException("Error checking private key.\n");
-    }
-
-    SSL_CTX_set_verify(ssl_context, SSL_VERIFY_NONE, verify_callback);
-
-    SSL_CTX_set_verify_depth(ssl_context, 4);
-
-    // postgres use : SSL_OP_SINGLE_DH_USE
-    SSL_CTX_set_options(ssl_context, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
-
-    // Temporarily commented to pass tests END
+    SSLInit();
 
     if (bind(listen_fd, (struct sockaddr *) &sin, sizeof(sin)) < 0)
     {
-      SSL_CTX_free(ssl_context);
+      if (GetSSLLevel() != SSLLevel::SSL_DISABLE) {
+        SSL_CTX_free(ssl_context);
+      }
       throw ConnectionException("Failed binding socket.");
     }
 
-    if (listen(listen_fd, conn_backlog) < 0) {
-      SSL_CTX_free(ssl_context);
+    if (listen(listen_fd, conn_backlog) < 0)
+    {
+      if (GetSSLLevel() != SSLLevel::SSL_DISABLE) {
+        SSL_CTX_free(ssl_context);
+      }
       throw ConnectionException("Error listening onsocket.");
     }
 

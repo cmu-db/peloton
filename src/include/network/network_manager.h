@@ -59,9 +59,10 @@ class NetworkManager {
   uint64_t port_;             // port number
   size_t max_connections_;    // maximum number of connections
 
-  std::string private_key_file_;
-  std::string certificate_file_;
-  std::string root_cert_file_;
+  static std::string private_key_file_;
+  static std::string certificate_file_;
+  static std::string root_cert_file_;
+  static SSLLevel ssl_level_;
 
   struct event *ev_stop_;     // libevent stop event
   struct event *ev_timeout_;  // libevent timeout event
@@ -71,6 +72,7 @@ class NetworkManager {
   // Flags for controlling server start/close status
   bool is_started_ = false;
   bool is_closed_ = false;
+
 
  public:
   static int recent_connfd;
@@ -102,6 +104,13 @@ class NetworkManager {
   event_base *GetEventBase() { return base_; }
 
   static int verify_callback(int ok, X509_STORE_CTX *store);
+
+  static void SSLInit();
+
+  static void SetSSLLevel(SSLLevel ssl_level) { ssl_level_ = ssl_level; }
+
+  static SSLLevel GetSSLLevel() { return ssl_level_; }
+
  private:
   /* Maintain a global list of connections.
    * Helps reuse connection objects when possible

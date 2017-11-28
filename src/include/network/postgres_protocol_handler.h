@@ -90,10 +90,10 @@ class PostgresProtocolHandler: public ProtocolHandler {
   static bool ReadPacket(Buffer &rbuf, InputPacket &rpkt);
 
   /* Routine to deal with the first packet from the client */
-  bool ProcessInitialPacket(InputPacket* pkt, Client client, bool& ssl_sent, bool& finish_startup_packet);
+  bool ProcessInitialPacket(InputPacket* pkt, Client client, bool ssl_able, bool& ssl_sent, bool& finish_startup_packet);
 
   /* Routine to deal with SSL request message */
-  bool ProcessSSLRequestPacket(InputPacket *pkt);
+  bool ProcessSSLRequestPacket(InputPacket *pkt, bool ssl_able, bool& ssl_handshake);
 
   /* Routine to deal with general Startup message */
   bool ProcessStartupPacket(InputPacket* pkt, int32_t proto_version, Client client, bool& finish_startup_packet);
@@ -162,6 +162,7 @@ class PostgresProtocolHandler: public ProtocolHandler {
   void ExecExecuteMessageGetResult(ResultType status);
 
   void ExecQueryMessageGetResult(ResultType status);
+
   //===--------------------------------------------------------------------===//
   // MEMBERS
   //===--------------------------------------------------------------------===//
