@@ -26,10 +26,11 @@ ConstantTranslator::ConstantTranslator(
 
 // Return an LLVM value for our constant: values passed over at run time
 codegen::Value ConstantTranslator::DeriveValue(
-    CodeGen &codegen, UNUSED_ATTRIBUTE RowBatch::Row &row) const {
+    UNUSED_ATTRIBUTE CodeGen &codegen,
+    UNUSED_ATTRIBUTE RowBatch::Row &row) const {
   auto &parameter_storage = context_.GetParameterStorage();
 
-  return parameter_storage.GetValue(codegen, index_);
+  return parameter_storage.GetValue(index_);
 }
 
 }  // namespace codegen

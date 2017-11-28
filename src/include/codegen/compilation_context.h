@@ -93,8 +93,6 @@ class CompilationContext {
   // Get a pointer to the query parameter instance
   llvm::Value *GetQueryParametersPtr();
 
-  llvm::Value *GetParameterStoragePtr();
-
   // Get the parameter index to be used to get value, for the given expression
   size_t GetParameterIdx(const expression::AbstractExpression *expression) {
     return query_.GetParameterIdx(expression);
@@ -142,7 +140,6 @@ class CompilationContext {
   RuntimeState::StateID catalog_state_id_;
   RuntimeState::StateID executor_context_state_id_;
   RuntimeState::StateID query_parameters_state_id_;
-  RuntimeState::StateID parameter_storage_state_id_;
 
   // The mapping of an operator in the tree to its translator
   std::unordered_map<const planner::AbstractPlan *,

@@ -32,7 +32,7 @@ InsertPlan::InsertPlan(storage::DataTable *table,
   params_value_type_.reset(new std::vector<type::TypeId>);
 
   auto *schema = target_table_->GetSchema();
-  // INSERT INTO table_name VALUES (val2, val2, ...)
+  // INSERT INTO table_name VALUES (val1, val2, ...)
   if (columns->empty()) {
     for (uint32_t tuple_idx = 0; tuple_idx < insert_values->size();
          tuple_idx++) {
@@ -147,8 +147,6 @@ hash_t InsertPlan::Hash() const {
   hash_t hash = HashUtil::Hash(&type);
   hash = HashUtil::CombineHashes(hash, GetTable()->Hash());
   if (GetChildren().size() == 0) {
-    if (GetProjectInfo() != nullptr)
-      hash = HashUtil::CombineHashes(hash, GetProjectInfo()->Hash());
     auto bulk_insert_count = GetBulkInsertCount();
     hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&bulk_insert_count));
   }
@@ -170,14 +168,6 @@ bool InsertPlan::operator==(const AbstractPlan &rhs) const {
     if (other.GetChildren().size() != 0)
       return false;
 
-    auto *proj_info = GetProjectInfo();
-    auto *other_proj_info = other.GetProjectInfo();
-    if ((proj_info == nullptr && other_proj_info != nullptr) ||
-        (proj_info != nullptr && other_proj_info == nullptr))
-      return false;
-    if (proj_info && *proj_info != *other_proj_info)
-      return false;
-
     auto bulk_insert_count = GetBulkInsertCount();
     if (bulk_insert_count != other.GetBulkInsertCount())
       return false;
@@ -191,14 +181,13 @@ void InsertPlan::VisitParameters(
     std::unordered_map<const expression::AbstractExpression *, size_t> &index,
     const std::vector<peloton::type::Value> &parameter_values) {
   if (GetChildren().size() == 0) {
-    auto *proj_info = const_cast<planner::ProjectInfo *>(GetProjectInfo());
-    if (proj_info != nullptr) {
-      proj_info->VisitParameters(parameters, index, parameter_values);
-    }
+    auto *schema = target_table_->GetSchema();
+    auto columns_num = schema->GetColumnCount();
     for (uint32_t i = 0; i < values_.size(); i++) {
       auto value = values_[i];
-      parameters.push_back(
-          expression::Parameter::CreateConstParameter(value, value.IsNull()));
+      auto column_id = i % columns_num;
+      parameters.push_back(expression::Parameter::CreateConstParameter(value,
+          schema->AllowNull(column_id)));
     }
   } else {
     PL_ASSERT(GetChildren().size() == 1);

@@ -32,6 +32,7 @@ DEFINE_METHOD(peloton::codegen, QueryParameters, GetVarcharVal);
 DEFINE_METHOD(peloton::codegen, QueryParameters, GetVarcharLen);
 DEFINE_METHOD(peloton::codegen, QueryParameters, GetVarbinaryVal);
 DEFINE_METHOD(peloton::codegen, QueryParameters, GetVarbinaryLen);
+DEFINE_METHOD(peloton::codegen, QueryParameters, IsNull);
 
 }  // namespace codegen
 }  // namespace peloton

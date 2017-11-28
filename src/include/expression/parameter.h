@@ -26,12 +26,13 @@ class Parameter {
   enum class Type { CONSTANT = 0, PARAMETER = 1 };
 
   static Parameter CreateConstParameter(type::Value value,
-                                        bool is_nullable) {
+                                        bool is_nullable = true) {
     return Parameter{value.GetTypeId(), value, is_nullable};
   }
 
-  static Parameter CreateParamParameter(int32_t param_idx) {
-    return Parameter{param_idx};
+  static Parameter CreateParamParameter(int32_t param_idx,
+                                        bool is_nullable = true) {
+    return Parameter{param_idx, is_nullable};
   }
 
   Type GetType() { return type_; }
@@ -46,7 +47,7 @@ class Parameter {
   }
 
   uint32_t GetParamIdx() {
-    PL_ASSERT(type_==Type::PARAMETER);
+    PL_ASSERT(type_ == Type::PARAMETER);
     return param_idx_;
   }
 
@@ -55,9 +56,9 @@ class Parameter {
       : type_(Type::CONSTANT), type_id_(type_id), value_(value),
         is_nullable_(is_nullable) {}
 
-  Parameter(int32_t param_idx)
+  Parameter(int32_t param_idx, bool is_nullable)
       : type_(Type::PARAMETER), type_id_(type::TypeId::INVALID),
-        param_idx_(param_idx) {}
+        param_idx_(param_idx), is_nullable_(is_nullable) {}
 
  private:
   // Type of the parameter
@@ -69,11 +70,12 @@ class Parameter {
   // Value for ConstantValueExpression
   type::Value value_;
 
-  // Boolean to show if the value is nullable(set when constant is avialable)
-  bool is_nullable_;
-
   // Index for ParameterValueExpression
   int32_t param_idx_;
+
+  // Boolean to show if the value is nullable
+  bool is_nullable_;
+
 };
 
 }  // namespace codegen

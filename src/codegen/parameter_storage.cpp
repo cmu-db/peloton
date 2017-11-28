@@ -16,61 +16,33 @@
 #include "codegen/value.h"
 #include "codegen/proxy/query_parameters_proxy.h"
 #include "codegen/type/sql_type.h"
-#include "expression/parameter.h"
-#include "type/type.h"
-#include "type/type_id.h"
-#include "type/value_peeker.h"
+#include "codegen/type/type.h"
 
 namespace peloton {
 namespace codegen {
 
-llvm::Type *ParameterStorage::Setup(CodeGen &codegen) {
-  // Build the storage with type information
-  for (auto &parameter: parameters_) {
-    storage_.AddType(codegen::type::Type{parameter.GetValueType(),
-                                         parameter.IsNullable()});
-  }
-  return storage_.Finalize(codegen);
-}
-
-void ParameterStorage::SetValues(CodeGen &codegen,
-    llvm::Value *query_parameters_ptr, llvm::Value *space_ptr) {
-  // Find out the storage size and allocate the storage area
-  space_ptr_ = space_ptr;
-
-  // Set the values to the storage
-  UpdateableStorage::NullBitmap null_bitmap{codegen, storage_, space_ptr_};
+void ParameterStorage::StoreValues(CodeGen &codegen,
+    llvm::Value *query_parameters_ptr) {
   for (uint32_t i = 0; i < parameters_.size(); i++) {
     auto &parameter = parameters_[i];
-    auto val = DeriveParameterValue(codegen, parameter, query_parameters_ptr,
-                                    i);
-    if (null_bitmap.IsNullable(i)) {
-      storage_.SetValue(codegen, space_ptr_, i, val, null_bitmap);
-    } else {
-      storage_.SetValueSkipNull(codegen, space_ptr_, i, val);
-    }
+    auto type_id = parameter.GetValueType();
+    auto is_nullable = parameter.IsNullable();
+    auto val = DeriveParameterValue(codegen, query_parameters_ptr, i,
+                                    type_id, is_nullable);
+    values_.push_back(val);
   }
-  null_bitmap.WriteBack(codegen);
 }
 
-codegen::Value ParameterStorage::GetValue(CodeGen &codegen, uint32_t index)
-    const {
-  PL_ASSERT(space_ptr_);
-  UpdateableStorage::NullBitmap null_bitmap{codegen, storage_, space_ptr_};
-  if (null_bitmap.IsNullable(index)) {
-    return storage_.GetValue(codegen, space_ptr_, index, null_bitmap);
-  } else {
-    return storage_.GetValueSkipNull(codegen, space_ptr_, index);
-  }
+codegen::Value ParameterStorage::GetValue(uint32_t index) const {
+  return values_[index];
 }
 
 codegen::Value ParameterStorage::DeriveParameterValue(CodeGen &codegen,
-    expression::Parameter &parameter, llvm::Value *query_parameters_ptr,
-    uint32_t index) {
+    llvm::Value *query_parameters_ptr, uint32_t index,
+    peloton::type::TypeId type_id, bool is_nullable) {
   llvm::Value *val = nullptr, *len = nullptr;
   std::vector<llvm::Value *> args = {query_parameters_ptr,
                                      codegen.Const32(index)};
-  auto type_id = parameter.GetValueType();
   switch (type_id) {
     case peloton::type::TypeId::BOOLEAN: {
       val = codegen.Call(QueryParametersProxy::GetBoolean, args);
@@ -119,8 +91,8 @@ codegen::Value ParameterStorage::DeriveParameterValue(CodeGen &codegen,
                       TypeIdToString(type_id)};
     }
   }
-  return codegen::Value{type::SqlType::LookupType(type_id), val, len,
-                        nullptr};
+  llvm::Value *is_null = codegen.Call(QueryParametersProxy::IsNull, args);
+  return Value{type::Type{type_id, is_nullable}, val, len, is_null};
 }
 
 }  // namespace codegen

@@ -49,10 +49,6 @@ CompilationContext::CompilationContext(Query &query,
   query_parameters_state_id_ =
       runtime_state.RegisterState("queryParameters", query_parameters_type);
 
-  auto *parameter_storage_type = parameter_storage_.Setup(codegen_);
-  parameter_storage_state_id_ = runtime_state.RegisterState("parameterStorage",
-      parameter_storage_type, true);
-
   // Let the query consumer modify the runtime state object
   result_consumer_.Prepare(*this);
 }
@@ -155,11 +151,6 @@ llvm::Value *CompilationContext::GetQueryParametersPtr() {
   return GetRuntimeState().LoadStateValue(codegen_, query_parameters_state_id_);
 }
 
-llvm::Value *CompilationContext::GetParameterStoragePtr() {
-  return GetRuntimeState().LoadStateValue(codegen_,
-                                          parameter_storage_state_id_);
-}
-
 // Generate code for the init() function of the query
 llvm::Function *CompilationContext::GenerateInitFunction() {
   // Create function definition
@@ -207,8 +198,7 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
   runtime_state.CreateLocalState(codegen_);
 
   // Load the query parameter values
-  parameter_storage_.SetValues(codegen_, GetQueryParametersPtr(),
-                               GetParameterStoragePtr());
+  parameter_storage_.StoreValues(codegen_, GetQueryParametersPtr());
 
   // Generate the primary plan logic
   Produce(root);
