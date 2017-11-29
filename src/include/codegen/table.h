@@ -40,6 +40,7 @@ class Table {
   // is provided as the second argument. The scan consumer (third argument)
   // should be notified when ready to generate the scan loop body.
   void GenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
+                    llvm::Value *tile_group_begin, llvm::Value *tile_group_end,
                     uint32_t batch_size, ScanCallback &consumer) const;
 
   // Given a table instance, return the number of tile groups in the table.

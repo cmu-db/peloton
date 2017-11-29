@@ -51,6 +51,8 @@ class ConsumerContext {
   // Get the pipeline
   const Pipeline &GetPipeline() const { return pipeline_; }
 
+  llvm::Value *GetTaskId() const;
+
  private:
   // The compilation context
   CompilationContext &compilation_context_;

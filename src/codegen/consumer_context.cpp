@@ -13,6 +13,8 @@
 #include "codegen/consumer_context.h"
 
 #include "codegen/compilation_context.h"
+#include "codegen/function_builder.h"
+#include "codegen/proxy/task_info_proxy.h"
 
 namespace peloton {
 namespace codegen {
@@ -71,6 +73,18 @@ CodeGen &ConsumerContext::GetCodeGen() const {
 
 RuntimeState &ConsumerContext::GetRuntimeState() const {
   return compilation_context_.GetRuntimeState();
+}
+
+llvm::Value *ConsumerContext::GetTaskId() const {
+  auto &codegen = GetCodeGen();
+
+  if (!compilation_context_.MultithreadOn()) {
+    return codegen.Const32(0);
+  } else {
+    auto task_info_ptr =
+        codegen.GetCodeContext().GetCurrentFunction()->GetArgumentByPosition(1);
+    return codegen.Call(TaskInfoProxy::GetTaskId, {task_info_ptr});
+  }
 }
 
 }  // namespace codegen

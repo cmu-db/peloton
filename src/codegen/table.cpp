@@ -56,26 +56,27 @@ llvm::Value *Table::GetTileGroup(CodeGen &codegen, llvm::Value *table_ptr,
 //
 // @endcode
 void Table::GenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
+                         llvm::Value *tile_group_begin,
+                         llvm::Value *tile_group_end,
                          uint32_t batch_size, ScanCallback &consumer) const {
   // First get the columns from the table the consumer needs. For every column,
   // we'll need to have a ColumnInfoLayout struct
-  const uint32_t num_columns =
+  auto num_columns =
       static_cast<uint32_t>(table_.GetSchema()->GetColumnCount());
 
   llvm::Value *column_layouts = codegen->CreateAlloca(
       ColumnLayoutInfoProxy::GetType(codegen), codegen.Const32(num_columns));
 
   // Get the number of tile groups in the given table
-  llvm::Value *tile_group_idx = codegen.Const64(0);
-  llvm::Value *num_tile_groups = GetTileGroupCount(codegen, table_ptr);
+//  llvm::Value *tile_group_idx = tile_group_begin;
 
   // Iterate over all tile groups in the table
   lang::Loop loop{codegen,
-                  codegen->CreateICmpULT(tile_group_idx, num_tile_groups),
-                  {{"tileGroupIdx", tile_group_idx}}};
+                  codegen->CreateICmpULT(tile_group_begin, tile_group_end),
+                  {{"tileGroupIdx", tile_group_begin}}};
   {
     // Get the tile group with the given tile group ID
-    tile_group_idx = loop.GetLoopVar(0);
+    llvm::Value *tile_group_idx = loop.GetLoopVar(0);
     llvm::Value *tile_group_ptr =
         GetTileGroup(codegen, table_ptr, tile_group_idx);
     llvm::Value *tile_group_id =
@@ -94,7 +95,7 @@ void Table::GenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
 
     // Move to next tile group in the table
     tile_group_idx = codegen->CreateAdd(tile_group_idx, codegen.Const64(1));
-    loop.LoopEnd(codegen->CreateICmpULT(tile_group_idx, num_tile_groups),
+    loop.LoopEnd(codegen->CreateICmpULT(tile_group_idx, tile_group_end),
                  {tile_group_idx});
   }
 }

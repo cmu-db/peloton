@@ -65,9 +65,9 @@ BufferingConsumer::BufferingConsumer(const std::vector<oid_t> &cols,
 // Append the array of values (i.e., a tuple) into the consumer's buffer of
 // output tuples.
 void BufferingConsumer::BufferTuple(char *state, char *tuple,
-                                    uint32_t num_cols) {
+                                    int32_t task_id, uint32_t num_cols) {
   BufferingState *buffer_state = reinterpret_cast<BufferingState *>(state);
-  buffer_state->output->at(0).emplace_back(
+  buffer_state->output->at(task_id).emplace_back(
       reinterpret_cast<peloton::type::Value *>(tuple), num_cols);
 }
 
@@ -137,9 +137,13 @@ void BufferingConsumer::ConsumeResult(ConsumerContext &ctx,
     codegen.CallFunc(output_func, args);
   }
 
+  llvm::Value *task_id = ctx.GetTaskId();
+  codegen.CallPrintf("[BufferingConsumer] My task id = %d\n", {task_id});
+
   // Append the tuple to the output buffer (by calling BufferTuple(...))
   auto *consumer_state = GetStateValue(ctx, consumer_state_id_);
   std::vector<llvm::Value *> args = {consumer_state, tuple_buffer_,
+                                     task_id,
                                      codegen.Const32(output_ais_.size())};
   codegen.Call(BufferingConsumerProxy::BufferTuple, args);
 }
