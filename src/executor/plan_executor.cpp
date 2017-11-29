@@ -108,12 +108,13 @@ void PlanExecutor::ExecutePlan(
   plan->GetOutputColumns(columns);
   codegen::BufferingConsumer consumer{columns, context};
 
-  // Compile and execute the query
-  codegen::QueryCompiler compiler;
+  // Prepare parameter: TODO Combine with executor context when legacy is removed
   codegen::QueryParameters parameters{*plan, params};
 
+  // Compile and execute the query
   codegen::Query *query = codegen::QueryCache::Instance().Find(plan);
   if (query == nullptr) {
+    codegen::QueryCompiler compiler;
     auto compiled_query = compiler.Compile(*plan, parameters, consumer);
 
     compiled_query->Execute(*executor_context.get(), parameters,
