@@ -27,6 +27,8 @@ PROXY(TaskInfo) {
   DECLARE_METHOD(Destroy);
   DECLARE_METHOD(GetTaskId);
   DECLARE_METHOD(GetNumTasks);
+  DECLARE_METHOD(GetBegin);
+  DECLARE_METHOD(GetEnd);
 };
 
 TYPE_BUILDER(TaskInfo, codegen::TaskInfo);

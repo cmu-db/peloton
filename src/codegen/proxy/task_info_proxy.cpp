@@ -21,6 +21,8 @@ DEFINE_METHOD(peloton::codegen, TaskInfo, Init);
 DEFINE_METHOD(peloton::codegen, TaskInfo, Destroy);
 DEFINE_METHOD(peloton::codegen, TaskInfo, GetTaskId);
 DEFINE_METHOD(peloton::codegen, TaskInfo, GetNumTasks);
+DEFINE_METHOD(peloton::codegen, TaskInfo, GetBegin);
+DEFINE_METHOD(peloton::codegen, TaskInfo, GetEnd);
 
 }  // namespace codegen
 }  // namespace peloton

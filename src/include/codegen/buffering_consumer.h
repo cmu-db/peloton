@@ -52,7 +52,7 @@ class WrappedTuple
 class BufferingConsumer : public QueryResultConsumer {
  public:
   struct BufferingState {
-    BufferingState(std::vector<std::vector<WrappedTuple>> *output)
+    explicit BufferingState(std::vector<std::vector<WrappedTuple>> *output)
         : output(output) {}
     std::vector<std::vector<WrappedTuple>> *output;
   };

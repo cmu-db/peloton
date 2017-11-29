@@ -23,23 +23,27 @@ namespace codegen {
 class TaskInfo {
  public:
   // "Constructor"
-  void Init(int32_t thread_id, int32_t nthreads);
+  void Init(int32_t task_id, int32_t ntasks, int64_t begin, int64_t end);
 
   // "Destructor"
   void Destroy();
 
-  // TODO(zhixunt): Change this to task-related property.
   int32_t GetTaskId();
 
-  // TODO(zhixunt): Change this to task-related property.
   int32_t GetNumTasks();
+
+  int64_t GetBegin();
+
+  int64_t GetEnd();
 
  private:
   // Use Init and Destroy on allocated memory instead.
-  TaskInfo(int32_t task_id, int32_t ntasks);
+  TaskInfo(int32_t task_id, int32_t ntasks, int64_t begin, int64_t end);
 
   int32_t task_id_;
   int32_t ntasks_;
+  int64_t begin_;
+  int64_t end_;
 };
 
 }  // namespace codegen

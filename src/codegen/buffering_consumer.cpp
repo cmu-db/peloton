@@ -53,10 +53,10 @@ DEFINE_METHOD(peloton::codegen, BufferingConsumer, BufferTuple);
 // BUFFERING CONSUMER
 //===----------------------------------------------------------------------===//
 
+// TODO(zhixunt): Very important! Don't fix Vector::kDefaultVectorSize!
 BufferingConsumer::BufferingConsumer(const std::vector<oid_t> &cols,
                                      planner::BindingContext &context)
-    : state(&output_chunks_) {
-  output_chunks_.emplace_back();
+    : output_chunks_(Vector::kDefaultVectorSize), state(&output_chunks_) {
   for (oid_t col_id : cols) {
     output_ais_.push_back(context.Find(col_id));
   }
