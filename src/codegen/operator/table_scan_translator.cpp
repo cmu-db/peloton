@@ -143,24 +143,27 @@ void TableScanTranslator::Produce() const {
     }
     auto task_func = task.GetFunction();
 
-    // Initialize the CountDown.
-    auto count_down_ptr = runtime_state.LoadStatePtr(codegen, count_down_id_);
-    codegen.Call(CountDownProxy::Init, {count_down_ptr, codegen.Const32(1)});
-
-    Vector task_info_vec{LoadStateValue(task_info_vector_id_),
-                         Vector::kDefaultVectorSize,
-                         TaskInfoProxy::GetType(codegen)};
-
     // TODO(zhixunt): This is a tunable parameter.
-    llvm::Value *ntile_groups_per_task = ntile_groups;
+    llvm::Value *ntile_groups_per_task = codegen.Const64(1);
     codegen.CallPrintf("Number of tilegroups per task = %zu\n",
                        {ntile_groups_per_task});
 
     llvm::Value *ntasks = codegen->CreateIntCast(codegen->CreateUDiv(
-        ntile_groups,
+        codegen->CreateSub(
+            codegen->CreateAdd(ntile_groups, ntile_groups_per_task),
+            codegen.Const64(1)
+        ),
         ntile_groups_per_task
     ), codegen.Int32Type(), /*isSigned=*/true);
     codegen.CallPrintf("Number of tasks = %zu\n", {ntasks});
+
+    // Initialize the CountDown.
+    auto count_down_ptr = runtime_state.LoadStatePtr(codegen, count_down_id_);
+    codegen.Call(CountDownProxy::Init, {count_down_ptr, ntasks});
+
+    Vector task_info_vec{LoadStateValue(task_info_vector_id_),
+                         Vector::kDefaultVectorSize,
+                         TaskInfoProxy::GetType(codegen)};
 
     lang::Loop loop(
         codegen,
@@ -183,17 +186,11 @@ void TableScanTranslator::Produce() const {
       llvm::Value *next_end = codegen->CreateAdd(curr_end,
                                                  ntile_groups_per_task);
 
-      llvm::Value *real_end;
-      lang::If cond(codegen, codegen->CreateAnd(
+      llvm::Value *real_end = codegen->CreateSelect(
           codegen->CreateICmpEQ(next_i, ntasks),
-          codegen->CreateICmpULT(curr_end, ntile_groups)
-      ));
-      {
-        real_end = ntile_groups;
-      }
-      cond.EndIf();
-      real_end = cond.BuildPHI(real_end, curr_end);
-
+          ntile_groups,
+          curr_end
+      );
       codegen.CallPrintf("Creating task %d, [%d, %d)\n",
                          {curr_i, curr_begin, real_end});
 
