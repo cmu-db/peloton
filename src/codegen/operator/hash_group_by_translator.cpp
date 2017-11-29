@@ -34,7 +34,7 @@ HashGroupByTranslator::HashGroupByTranslator(
     : OperatorTranslator(context, pipeline),
       group_by_(group_by),
       child_pipeline_(this),
-      aggregation_(Aggregation(context.GetRuntimeState())) {
+      aggregation_(context.GetRuntimeState()) {
   LOG_DEBUG("Constructing HashGroupByTranslator ...");
 
   auto &codegen = GetCodeGen();
@@ -420,7 +420,7 @@ HashGroupByTranslator::ConsumerInsert::ConsumerInsert(
     const Aggregation &aggregation,
     const std::vector<codegen::Value> &initial_vals,
     const std::vector<codegen::Value> &grouping_keys)
-      : aggregation_(aggregation),
+    : aggregation_(aggregation),
       initial_vals_(initial_vals),
       grouping_keys_(grouping_keys) {}
 
