@@ -390,8 +390,7 @@ void Aggregation::DoAdvanceValue(CodeGen &codegen, llvm::Value *space,
 void Aggregation::DoNullCheck(CodeGen &codegen, llvm::Value *space,
                               ExpressionType type, uint32_t storage_index,
                               const codegen::Value &update,
-                              UpdateableStorage::NullBitmap &null_bitmap,
-                              llvm::Value *curr_val) const {
+                              UpdateableStorage::NullBitmap &null_bitmap) const {
   // This aggregate is NULL-able, we need to check if the update value is
   // NULL, and whether the current value of the aggregate is NULL.
 
@@ -408,9 +407,9 @@ void Aggregation::DoNullCheck(CodeGen &codegen, llvm::Value *space,
   llvm::Value *update_not_null = update.IsNotNull(codegen);
   llvm::Value *agg_null = null_bitmap.IsNull(codegen, storage_index);
 
-  if (curr_val == nullptr) {
-    curr_val = null_bitmap.ByteFor(codegen, storage_index);
-  }
+  // fetch null byte value here already, as we need it to create the PHIs
+  // after the branches (MergeValues)
+  llvm::Value *curr_val = null_bitmap.ByteFor(codegen, storage_index);
 
   lang::If valid_update{codegen, update_not_null, "Agg.IfValidUpdate"};
   {
@@ -448,13 +447,12 @@ void Aggregation::DoNullCheck(CodeGen &codegen, llvm::Value *space,
   null_bitmap.MergeValues(valid_update, curr_val);
 }
 
-// Advancethe value of a specifig aggregate. Performs NULL check if necessary
+// Advance the value of a specific aggregate. Performs NULL check if necessary
 // and finally calls DoAdvanceValue()
 void Aggregation::AdvanceValue(CodeGen &codegen, llvm::Value *space,
                                const std::vector<codegen::Value> &next_vals,
                                const Aggregation::AggregateInfo &aggregate_info,
-                               UpdateableStorage::NullBitmap &null_bitmap,
-                               llvm::Value *curr_val) const {
+                               UpdateableStorage::NullBitmap &null_bitmap) const {
   const Value &update = next_vals[aggregate_info.source_index];
 
   switch (aggregate_info.aggregate_type) {
@@ -469,8 +467,7 @@ void Aggregation::AdvanceValue(CodeGen &codegen, llvm::Value *space,
         // else do NULL check, which will then call DoAdvanceValue if
         // appropriate
         DoNullCheck(codegen, space, aggregate_info.aggregate_type,
-                    aggregate_info.storage_indices[0], update, null_bitmap,
-                    curr_val);
+                    aggregate_info.storage_indices[0], update, null_bitmap);
       }
       break;
     }
@@ -490,8 +487,7 @@ void Aggregation::AdvanceValue(CodeGen &codegen, llvm::Value *space,
         // else do NULL check, which will then call DoAdvanceValue if
         // appropriate
         DoNullCheck(codegen, space, ExpressionType::AGGREGATE_SUM,
-                    aggregate_info.storage_indices[0], update, null_bitmap,
-                    curr_val);
+                    aggregate_info.storage_indices[0], update, null_bitmap);
       }
 
       // the COUNT can't be nullable, so skip the null check
@@ -555,10 +551,10 @@ void Aggregation::AdvanceValues(
 
       // Create llvm values for the bitmap bytes here already, so we can create
       // the Phis to merge the two paths that are created by the hast table
-      llvm::Value *curr_val;
-
-      // Every aggregation has at least one component
-      curr_val =
+      // so far only one snapshow needed, as the only aggregate with two
+      // components (AVG) has only one nullable component
+      llvm::Value *null_byte_snapshot;
+      null_byte_snapshot =
           null_bitmap.ByteFor(codegen, aggregate_info.storage_indices[0]);
 
       // Only process aggregation if value is distinct (key didn't exist in hash
@@ -569,14 +565,13 @@ void Aggregation::AdvanceValues(
                                    ".AdvanceValues.IfAggValueIsDistinct"};
       {
         // Advance value
-        AdvanceValue(codegen, space, next_vals, aggregate_info, null_bitmap,
-                     curr_val);
+        AdvanceValue(codegen, space, next_vals, aggregate_info, null_bitmap);
       }
       agg_is_distinct.EndIf();
 
       // A hash table lookup also produces several paths, so we need to merge
       // the NullBitmap values
-      null_bitmap.MergeValues(agg_is_distinct, curr_val);
+      null_bitmap.MergeValues(agg_is_distinct, null_byte_snapshot);
     } else {
       // Aggregation is not distinct, just advance value
       AdvanceValue(codegen, space, next_vals, aggregate_info, null_bitmap);
