@@ -314,7 +314,7 @@ TEST_F(StringFunctionsTests, CodegenSubstrTest) {
   std::string expected = message.substr(from - 1, len);
   auto res = function::StringFunctions::Substr(message.c_str(),
                                                message.length(), from, len);
-  EXPECT_EQ(len, res.length);
+  EXPECT_EQ(len + 1, res.length);
   EXPECT_EQ(expected, std::string(res.str, len));
 
   from = 7;
@@ -322,20 +322,22 @@ TEST_F(StringFunctionsTests, CodegenSubstrTest) {
   expected = message.substr(from - 1, len);
   res = function::StringFunctions::Substr(message.c_str(), message.length(),
                                           from, len);
-  EXPECT_EQ(len, res.length);
+  EXPECT_EQ(len + 1, res.length);
   EXPECT_EQ(expected, std::string(res.str, len));
 
   from = -2;
   len = 4;
   expected = message.substr(0, 1);
-  res = function::StringFunctions::Substr(message.c_str(), message.length(), from, len);
-  EXPECT_EQ(1, res.length);
+  res = function::StringFunctions::Substr(message.c_str(), message.length(),
+                                          from, len);
+  EXPECT_EQ(2, res.length);
   EXPECT_EQ(expected, std::string(res.str, 1));
 
   from = -2;
   len = 2;
   expected = "";
-  res = function::StringFunctions::Substr(message.c_str(), message.length(), from, len);
+  res = function::StringFunctions::Substr(message.c_str(), message.length(),
+                                          from, len);
   EXPECT_EQ(0, res.length);
   EXPECT_EQ(nullptr, res.str);
 }
