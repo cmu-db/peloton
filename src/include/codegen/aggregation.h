@@ -13,6 +13,7 @@
 #pragma once
 
 #include <vector>
+#include <array>
 
 #include "codegen/codegen.h"
 #include "codegen/updateable_storage.h"
@@ -138,13 +139,10 @@ class Aggregation {
                          UpdateableStorage::NullBitmap &null_bitmap) const;
 
   // Will perform the NULL checking, update the null bitmap and call
-  // DoAdvanceValue if appropriate. If a valid pointer for curr_val is given,
-  // this one will be used, otherwise a new one is created. (needed if value
-  // must be PHI merged later)
+  // DoAdvanceValue if appropriate
   void DoNullCheck(CodeGen &codegen, llvm::Value *space, ExpressionType type,
                    uint32_t storage_index, const codegen::Value &update,
-                   UpdateableStorage::NullBitmap &null_bitmap,
-                   llvm::Value *curr_val = nullptr) const;
+                   UpdateableStorage::NullBitmap &null_bitmap) const;
 
   // Advance the value of a specific aggregate component, given its next value.
   // No NULL checking, the function assumes that the current aggregate value is
@@ -153,14 +151,11 @@ class Aggregation {
                       uint32_t storage_index, const codegen::Value &next) const;
 
   // Advancethe value of a specifig aggregate. Performs NULL check if necessary
-  // and finally calls DoAdvanceValue(). If a valid pointer for curr_val is
-  // given, this one will be used, otherwise a new one is created. (needed if
-  // value must be PHI merged later)
+  // and finally calls DoAdvanceValue()
   void AdvanceValue(CodeGen &codegen, llvm::Value *space,
                     const std::vector<codegen::Value> &next_vals,
                     const Aggregation::AggregateInfo &agg,
-                    UpdateableStorage::NullBitmap &null_bitmap,
-                    llvm::Value *curr_val = nullptr) const;
+                    UpdateableStorage::NullBitmap &null_bitmap) const;
 
  private:
   // Is this a global aggregation?
