@@ -17,8 +17,9 @@ namespace codegen {
 
 bool MultithreadSupported(const planner::AbstractPlan &plan) {
   switch (plan.GetPlanNodeType()) {
-    case PlanNodeType::SEQSCAN:
-      return true;
+// Temporarily turned off...
+//    case PlanNodeType::SEQSCAN:
+//      return true;
     default:
       return false;
   }
