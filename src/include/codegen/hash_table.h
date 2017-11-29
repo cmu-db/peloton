@@ -65,7 +65,10 @@ class HashTable {
   struct NoOpInsertCallback : InsertCallback {
     void StoreValue(UNUSED_ATTRIBUTE CodeGen &codegen,
                     UNUSED_ATTRIBUTE llvm::Value *space) const override {}
-    llvm::Value *GetValueSize(UNUSED_ATTRIBUTE CodeGen &codegen) const override { return nullptr; }
+    llvm::Value *GetValueSize(
+        UNUSED_ATTRIBUTE CodeGen &codegen) const override {
+      return nullptr;
+    }
   };
 
   //===--------------------------------------------------------------------===//

@@ -27,7 +27,7 @@ GlobalGroupByTranslator::GlobalGroupByTranslator(
     : OperatorTranslator(context, pipeline),
       plan_(plan),
       child_pipeline_(this),
-      aggregation_(Aggregation(context.GetRuntimeState())) {
+      aggregation_(context.GetRuntimeState()) {
   LOG_DEBUG("Constructing GlobalGroupByTranslator ...");
 
   auto &codegen = context.GetCodeGen();
@@ -120,8 +120,7 @@ void GlobalGroupByTranslator::Consume(ConsumerContext &,
 
   // Just advance each of the aggregates in the buffer with the provided
   // new values
-  aggregation_.AdvanceValues(GetCodeGen(),
-                             LoadStatePtr(mat_buffer_id_), vals);
+  aggregation_.AdvanceValues(GetCodeGen(), LoadStatePtr(mat_buffer_id_), vals);
 }
 
 // Cleanup by destroying the aggregation hash-table
