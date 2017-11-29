@@ -12,12 +12,10 @@
 
 #include "codegen/aggregation.h"
 
-#include "codegen/lang/if.h"
+#include "codegen/proxy/oa_hash_table_proxy.h"
 #include "codegen/type/boolean_type.h"
 #include "codegen/type/bigint_type.h"
 #include "codegen/type/decimal_type.h"
-#include "codegen/proxy/oa_hash_table_proxy.h"
-#include "common/logger.h"
 
 namespace peloton {
 namespace codegen {
@@ -132,33 +130,34 @@ void Aggregation::Setup(
       continue;
     }
 
-    if (agg_info.is_distinct) {
-      // Register the hash-table instance in the runtime state
-      auto hash_table_id = runtime_state_.RegisterState(
-          "agg_hash" + std::to_string(agg_info.source_index),
-          OAHashTableProxy::GetType(codegen));
-
-      // Prepare the hash keys
-      // if not global, start with grouping keys, then add aggregation key
-      std::vector<type::Type> key_type;
-      if (!IsGlobal()) {
-        key_type = grouping_ai_types;
-      }
-      key_type.push_back(
-          aggregates[agg_info.source_index].expression->ResultType());
-
-      // Create the hash table
-      // we don't need to save any values, so value_size is zero
-      auto hash_table = OAHashTable{codegen, key_type, 0};
-
-      hash_table_infos_.emplace_back(
-          std::pair<OAHashTable, RuntimeState::StateID>(std::move(hash_table),
-                                                        hash_table_id));
-
-      // add index to the aggregation_info struct
-      agg_info.hast_table_index =
-          static_cast<uint32_t>(hash_table_infos_.size() - 1);
+    if (!agg_info.is_distinct) {
+      // No hash tables needed for non-distinct aggregates
+      continue;
     }
+
+    // Register the hash-table instance in the runtime state
+    auto hash_table_id = runtime_state_.RegisterState(
+        "agg_hash" + std::to_string(agg_info.source_index),
+        OAHashTableProxy::GetType(codegen));
+
+    // Prepare the hash keys
+    // if not global, start with grouping keys, then add aggregation key
+    std::vector<type::Type> key_type;
+    if (!IsGlobal()) {
+      key_type = grouping_ai_types;
+    }
+    key_type.push_back(
+        aggregates[agg_info.source_index].expression->ResultType());
+
+    // Create the hash table. We don't need to save any values, hence the zero
+    // payload value size.
+    auto hash_table = OAHashTable{codegen, key_type, 0};
+
+    hash_table_infos_.emplace_back(std::move(hash_table), hash_table_id);
+
+    // Add index to the aggregation_info struct
+    agg_info.hast_table_index =
+        static_cast<uint32_t>(hash_table_infos_.size() - 1);
   }
 
   // Finalize the storage format
@@ -330,19 +329,16 @@ void Aggregation::DoAdvanceValue(CodeGen &codegen, llvm::Value *space,
   codegen::Value next;
   switch (type) {
     case ExpressionType::AGGREGATE_SUM: {
-      // Simply increment the current aggregate value by the provided update
       auto curr = storage_.GetValueSkipNull(codegen, space, storage_index);
       next = curr.Add(codegen, update);
       break;
     }
     case ExpressionType::AGGREGATE_MIN: {
-      // Determine the minimum of the current aggregate value and the update
       auto curr = storage_.GetValueSkipNull(codegen, space, storage_index);
       next = curr.Min(codegen, update);
       break;
     }
     case ExpressionType::AGGREGATE_MAX: {
-      // Determine the maximum of the current aggregate value and the update
       auto curr = storage_.GetValueSkipNull(codegen, space, storage_index);
       next = curr.Max(codegen, update);
       break;
@@ -367,7 +363,6 @@ void Aggregation::DoAdvanceValue(CodeGen &codegen, llvm::Value *space,
       break;
     }
     case ExpressionType::AGGREGATE_COUNT_STAR: {
-      // Simply increment current count by one
       auto curr = storage_.GetValueSkipNull(codegen, space, storage_index);
       auto delta = Value{type::BigInt::Instance(), codegen.Const64(1)};
       next = curr.Add(codegen, delta);
@@ -387,10 +382,10 @@ void Aggregation::DoAdvanceValue(CodeGen &codegen, llvm::Value *space,
   storage_.SetValueSkipNull(codegen, space, storage_index, next);
 }
 
-void Aggregation::DoNullCheck(CodeGen &codegen, llvm::Value *space,
-                              ExpressionType type, uint32_t storage_index,
-                              const codegen::Value &update,
-                              UpdateableStorage::NullBitmap &null_bitmap) const {
+void Aggregation::DoNullCheck(
+    CodeGen &codegen, llvm::Value *space, ExpressionType type,
+    uint32_t storage_index, const codegen::Value &update,
+    UpdateableStorage::NullBitmap &null_bitmap) const {
   // This aggregate is NULL-able, we need to check if the update value is
   // NULL, and whether the current value of the aggregate is NULL.
 
@@ -407,9 +402,8 @@ void Aggregation::DoNullCheck(CodeGen &codegen, llvm::Value *space,
   llvm::Value *update_not_null = update.IsNotNull(codegen);
   llvm::Value *agg_null = null_bitmap.IsNull(codegen, storage_index);
 
-  // fetch null byte value here already, as we need it to create the PHIs
-  // after the branches (MergeValues)
-  llvm::Value *curr_val = null_bitmap.ByteFor(codegen, storage_index);
+  // Fetch null byte so we can phi-resolve it after all the branches
+  llvm::Value *null_byte_snapshot = null_bitmap.ByteFor(codegen, storage_index);
 
   lang::If valid_update{codegen, update_not_null, "Agg.IfValidUpdate"};
   {
@@ -439,33 +433,32 @@ void Aggregation::DoNullCheck(CodeGen &codegen, llvm::Value *space,
     agg_is_null.EndIf();
 
     // Merge the null value
-    null_bitmap.MergeValues(agg_is_null, curr_val);
+    null_bitmap.MergeValues(agg_is_null, null_byte_snapshot);
   }
   valid_update.EndIf();
 
   // Merge the null value
-  null_bitmap.MergeValues(valid_update, curr_val);
+  null_bitmap.MergeValues(valid_update, null_byte_snapshot);
 }
 
 // Advance the value of a specific aggregate. Performs NULL check if necessary
-// and finally calls DoAdvanceValue()
-void Aggregation::AdvanceValue(CodeGen &codegen, llvm::Value *space,
-                               const std::vector<codegen::Value> &next_vals,
-                               const Aggregation::AggregateInfo &aggregate_info,
-                               UpdateableStorage::NullBitmap &null_bitmap) const {
+// and finally calls DoAdvanceValue().
+void Aggregation::AdvanceValue(
+    CodeGen &codegen, llvm::Value *space,
+    const std::vector<codegen::Value> &next_vals,
+    const Aggregation::AggregateInfo &aggregate_info,
+    UpdateableStorage::NullBitmap &null_bitmap) const {
   const Value &update = next_vals[aggregate_info.source_index];
 
   switch (aggregate_info.aggregate_type) {
     case ExpressionType::AGGREGATE_SUM:
     case ExpressionType::AGGREGATE_MIN:
     case ExpressionType::AGGREGATE_MAX: {
-      // If the aggregate is not NULL-able, avoid NULL checking altogether
+      // If the aggregate is not NULL-able, elide NULL check
       if (!null_bitmap.IsNullable(aggregate_info.storage_indices[0])) {
         DoAdvanceValue(codegen, space, aggregate_info.aggregate_type,
                        aggregate_info.storage_indices[0], update);
       } else {
-        // else do NULL check, which will then call DoAdvanceValue if
-        // appropriate
         DoNullCheck(codegen, space, aggregate_info.aggregate_type,
                     aggregate_info.storage_indices[0], update, null_bitmap);
       }
@@ -473,24 +466,22 @@ void Aggregation::AdvanceValue(CodeGen &codegen, llvm::Value *space,
     }
     case ExpressionType::AGGREGATE_COUNT:
     case ExpressionType::AGGREGATE_COUNT_STAR: {
-      // the COUNT can't be nullable, so skip the null check
+      // COUNT can't be nullable, so skip the null check
       DoAdvanceValue(codegen, space, ExpressionType::AGGREGATE_COUNT,
                      aggregate_info.storage_indices[0], update);
       break;
     }
     case ExpressionType::AGGREGATE_AVG: {
-      // If the SUM is not NULL-able, avoid NULL checking altogether
+      // If the SUM is not NULL-able, elide NULL check
       if (!null_bitmap.IsNullable(aggregate_info.storage_indices[0])) {
         DoAdvanceValue(codegen, space, ExpressionType::AGGREGATE_SUM,
                        aggregate_info.storage_indices[0], update);
       } else {
-        // else do NULL check, which will then call DoAdvanceValue if
-        // appropriate
         DoNullCheck(codegen, space, ExpressionType::AGGREGATE_SUM,
                     aggregate_info.storage_indices[0], update, null_bitmap);
       }
 
-      // the COUNT can't be nullable, so skip the null check
+      // COUNT can't be nullable, so skip the null check
       DoAdvanceValue(codegen, space, ExpressionType::AGGREGATE_COUNT,
                      aggregate_info.storage_indices[1], update);
 
@@ -518,64 +509,61 @@ void Aggregation::AdvanceValues(
   for (const auto &aggregate_info : aggregate_infos_) {
     const Value &update = next_vals[aggregate_info.source_index];
 
-    // Check if aggregation is distinct, then add another hash table lookup
-    // before advancing the value
-    if (aggregate_info.is_distinct) {
-      auto &hash_table =
-          hash_table_infos_[aggregate_info.hast_table_index].first;
-      auto hash_table_id =
-          hash_table_infos_[aggregate_info.hast_table_index].second;
-
-      // Get runtime state pointer for this hash table
-      llvm::Value *state_pointer =
-          runtime_state_.LoadStatePtr(codegen, hash_table_id);
-
-      // TODO(marcel): is it possible to cache the hash value for this
-      // expression?
-      llvm::Value *hash = nullptr;
-
-      // Prepare the hash keys
-      // if not global, start with grouping keys, then add aggregation key
-      std::vector<codegen::Value> key;
-      if (!IsGlobal()) {
-        key = grouping_keys;
-      }
-      key.push_back(update);
-
-      // Perform the lookup in the hash table
-      OAHashTable::ProbeResult probe_result =
-          hash_table.ProbeOrInsert(codegen, state_pointer, hash, key);
-
-      // Prepare condition for If
-      llvm::Value *condition = codegen->CreateNot(probe_result.key_exists);
-
-      // Create llvm values for the bitmap bytes here already, so we can create
-      // the Phis to merge the two paths that are created by the hast table
-      // so far only one snapshow needed, as the only aggregate with two
-      // components (AVG) has only one nullable component
-      llvm::Value *null_byte_snapshot;
-      null_byte_snapshot =
-          null_bitmap.ByteFor(codegen, aggregate_info.storage_indices[0]);
-
-      // Only process aggregation if value is distinct (key didn't exist in hash
-      // table)
-      lang::If agg_is_distinct{codegen, condition,
-                               "Agg" +
-                                   std::to_string(aggregate_info.source_index) +
-                                   ".AdvanceValues.IfAggValueIsDistinct"};
-      {
-        // Advance value
-        AdvanceValue(codegen, space, next_vals, aggregate_info, null_bitmap);
-      }
-      agg_is_distinct.EndIf();
-
-      // A hash table lookup also produces several paths, so we need to merge
-      // the NullBitmap values
-      null_bitmap.MergeValues(agg_is_distinct, null_byte_snapshot);
-    } else {
+    if (!aggregate_info.is_distinct) {
       // Aggregation is not distinct, just advance value
       AdvanceValue(codegen, space, next_vals, aggregate_info, null_bitmap);
+      continue;
     }
+
+    // Check if aggregation is distinct, then add another hash table lookup
+    // before advancing the value
+    auto &hash_table = hash_table_infos_[aggregate_info.hast_table_index].first;
+    auto hash_table_id =
+        hash_table_infos_[aggregate_info.hast_table_index].second;
+
+    // Get runtime state pointer for this hash table
+    llvm::Value *ht_ptr = runtime_state_.LoadStatePtr(codegen, hash_table_id);
+
+    // TODO(marcel): is it possible to cache the hash value for this
+    // expression?
+    llvm::Value *hash = nullptr;
+
+    // Prepare the hash keys
+    // if not global, start with grouping keys, then add aggregation key
+    std::vector<codegen::Value> key;
+    if (!IsGlobal()) {
+      key = grouping_keys;
+    }
+    key.push_back(update);
+
+    // Perform the lookup in the hash table
+    OAHashTable::ProbeResult probe_result =
+        hash_table.ProbeOrInsert(codegen, ht_ptr, hash, key);
+
+    // Prepare condition for If
+    llvm::Value *condition = codegen->CreateNot(probe_result.key_exists);
+
+    // Grab a snapshot of the NULL indicator before the branch because it may
+    // change after inside the if-clause. After the if-clause, we can use the
+    // snapshot before and after to correctly resolve the final NULL indication
+    // bit.
+    llvm::Value *null_byte_snapshot =
+        null_bitmap.ByteFor(codegen, aggregate_info.storage_indices[0]);
+
+    // Only process aggregation if value is distinct (key didn't exist in hash
+    // table)
+    auto name = "agg" + std::to_string(aggregate_info.source_index) +
+                ".advanceValues.ifAggValueIsDistinct";
+    lang::If agg_is_distinct{codegen, condition, name};
+    {
+      // Advance value
+      AdvanceValue(codegen, space, next_vals, aggregate_info, null_bitmap);
+    }
+    agg_is_distinct.EndIf();
+
+    // Merge the NULL indicator (potentially modified in the branch) with the
+    // snapshot we grabbed before the if-clause to resolve the final value.
+    null_bitmap.MergeValues(agg_is_distinct, null_byte_snapshot);
   }
 
   // Write the final contents of the null bitmap
@@ -583,19 +571,17 @@ void Aggregation::AdvanceValues(
 }
 
 // Advance all stored aggregates (stored in the provided storage space) using
-// the values in the provided vector// Helper Function to advance global
-// aggregations
-// that creates an empty vector for the reference
+// the update values provided in "next". Since global aggregations don't
+// have grouping keys, this function creates an empty vector of keys in order
+// to use AdvanceValues() that assumes grouping keys.
 void Aggregation::AdvanceValues(CodeGen &codegen, llvm::Value *space,
                                 const std::vector<codegen::Value> &next) const {
-  // Create empty vector and hand the reference to the actual implementation
-  // makes it easier to call this function without providing grouping keys
   std::vector<codegen::Value> empty;
   AdvanceValues(codegen, space, next, empty);
 }
 
-// This function will computes the final values of all aggregates stored in the
-// provided storage space, and populates the provided vector with these values.
+// This function will compute the final values of all aggregates stored in the
+// provided storage space, populating the provided vector with these values.
 void Aggregation::FinalizeValues(
     CodeGen &codegen, llvm::Value *space,
     std::vector<codegen::Value> &final_vals) const {
