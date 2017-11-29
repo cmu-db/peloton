@@ -46,7 +46,7 @@ TEST_F(FunctionsTests, CatalogTest) {
   internal_lang = pg_language.GetLanguageByOid(internal_lang->GetOid(), txn);
   EXPECT_NE(nullptr, internal_lang);
   EXPECT_EQ("internal", internal_lang->GetName());
-  
+
   // test add/del language
   type::EphemeralPool pool;
   std::string lanname = "foo_lang";
@@ -59,7 +59,7 @@ TEST_F(FunctionsTests, CatalogTest) {
   pg_language.DeleteLanguage(lanname, txn);
   inserted_lang = pg_language.GetLanguageByName(lanname, txn);
   EXPECT_EQ(nullptr, inserted_lang);
-  
+
   txn_manager.CommitTransaction(txn);
   auto &pg_proc = catalog::ProcCatalog::GetInstance();
 
@@ -93,7 +93,7 @@ TEST_F(FunctionsTests, FuncCallTest) {
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
-  
+
   TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE test(a DECIMAL, s VARCHAR);");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (4.0, 'abc');");
 
@@ -129,7 +129,7 @@ TEST_F(FunctionsTests, SubstrFuncCallTest) {
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
-  
+
   TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE test(a DECIMAL, s VARCHAR);");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (4.0, '1234567');");
 
@@ -138,34 +138,32 @@ TEST_F(FunctionsTests, SubstrFuncCallTest) {
   std::string error_message;
   int rows_affected;
 
-  //  TestingSQLUtil::ExecuteSQLQuery("SELECT SUBSTR(s,1,5) FROM test;", result,
-  //                                  tuple_descriptor, rows_affected,
-  //                                  error_message);
-  //  EXPECT_EQ(1, result.size());
-  //  auto res = TestingSQLUtil::GetResultValueAsString(result, 0);
-  //  EXPECT_EQ("12345", res);
-  TestingSQLUtil::ExecuteSQLQuery("SELECT SUBSTR(s,7,1) FROM test;", result,
+  TestingSQLUtil::ExecuteSQLQuery("SELECT SUBSTR(s,1,5) FROM test;", result,
                                   tuple_descriptor, rows_affected,
                                   error_message);
   EXPECT_EQ(1, result.size());
   auto res = TestingSQLUtil::GetResultValueAsString(result, 0);
+  EXPECT_EQ("12345", res);
+  TestingSQLUtil::ExecuteSQLQuery("SELECT SUBSTR(s,7,1) FROM test;", result,
+                                  tuple_descriptor, rows_affected,
+                                  error_message);
+  EXPECT_EQ(1, result.size());
+  res = TestingSQLUtil::GetResultValueAsString(result, 0);
   EXPECT_EQ("7", res);
 
-  //  TestingSQLUtil::ExecuteSQLQuery("SELECT SUBSTR(s,-2,4) FROM test;",
-  //  result,
-  //                                  tuple_descriptor, rows_affected,
-  //                                  error_message);
-  //  EXPECT_EQ(1, result.size());
-  //  res = TestingSQLUtil::GetResultValueAsString(result, 0);
-  //  EXPECT_EQ("1", res);
+  TestingSQLUtil::ExecuteSQLQuery("SELECT SUBSTR(s,-2,4) FROM test;", result,
+                                  tuple_descriptor, rows_affected,
+                                  error_message);
+  EXPECT_EQ(1, result.size());
+  res = TestingSQLUtil::GetResultValueAsString(result, 0);
+  EXPECT_EQ("1", res);
 
-  //  TestingSQLUtil::ExecuteSQLQuery("SELECT SUBSTR(s,-2,2) FROM test;",
-  //  result,
-  //                                  tuple_descriptor, rows_affected,
-  //                                  error_message);
-  //  EXPECT_EQ(1, result.size());
-  //  res = TestingSQLUtil::GetResultValueAsString(result, 0);
-  //  EXPECT_EQ("", res);
+  TestingSQLUtil::ExecuteSQLQuery("SELECT SUBSTR(s,-2,2) FROM test;", result,
+                                  tuple_descriptor, rows_affected,
+                                  error_message);
+  EXPECT_EQ(1, result.size());
+  res = TestingSQLUtil::GetResultValueAsString(result, 0);
+  EXPECT_EQ("", res);
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
