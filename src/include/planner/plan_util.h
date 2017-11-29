@@ -34,6 +34,7 @@ class PlanUtil {
    */
   static std::string GetInfo(const planner::AbstractPlan *plan) {
     std::ostringstream os;
+    os << std::endl;
     std::string spacer("");
 
     if (plan == nullptr) {
@@ -47,13 +48,12 @@ class PlanUtil {
  private:
   static void GetInfo(const planner::AbstractPlan *plan, std::ostringstream &os,
                       std::string prefix) {
-    prefix += "  ";
-    os << "Plan Type: " << PlanNodeTypeToString(plan->GetPlanNodeType())
-       << std::endl;
-    os << prefix << plan->GetInfo() << std::endl;
-
     auto &children = plan->GetChildren();
-    os << "NumChildren: " << children.size();
+    os << prefix << plan->GetInfo()
+       << " (Plan Type: " << PlanNodeTypeToString(plan->GetPlanNodeType())
+       << " | NumChildren: " << children.size() << ")" << std::endl;
+
+    prefix += "--";
 
     for (auto &child : children) {
       GetInfo(child.get(), os, prefix);
@@ -95,7 +95,7 @@ class PlanUtil {
       }
       case PlanNodeType::POPULATE_INDEX: {
         const planner::PopulateIndexPlan *populate_index_node =
-                reinterpret_cast<const planner::PopulateIndexPlan *>(plan);
+            reinterpret_cast<const planner::PopulateIndexPlan *>(plan);
         table_ids.insert(populate_index_node->GetTable()->GetOid());
         break;
       }
