@@ -38,9 +38,9 @@ typedef std::vector<std::unique_ptr<OutputPacket>> ResponseBuffer;
 class PostgresProtocolHandler : public ProtocolHandler {
  public:
   // TODO we need to somehow make this virtual?
-  // Get the log_manager reference to pass below.
-  PostgresProtocolHandler(tcop::TrafficCop* traffic_cop,
-                          logging::WalLogManager* log_manager);
+    // Get the log_manager reference to pass below.
+    PostgresProtocolHandler(tcop::TrafficCop* traffic_cop,
+                              logging::WalLogManager* log_manager);
 
   ~PostgresProtocolHandler();
 

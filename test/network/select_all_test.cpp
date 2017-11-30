@@ -102,7 +102,6 @@ TEST_F(SelectAllTests, SelectAllTest) {
   network_manager.CloseServer();
   serverThread.join();
   LOG_INFO("Peloton is shutting down");
-  remove("/tmp/log/log_0_0");
   peloton::PelotonInit::Shutdown();
   LOG_INFO("Peloton has shut down");
 }

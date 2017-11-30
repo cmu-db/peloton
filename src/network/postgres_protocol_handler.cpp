@@ -51,7 +51,7 @@ const std::unordered_map<std::string, std::string>
 // clang-format on
 
 PostgresProtocolHandler::PostgresProtocolHandler(
-    tcop::TrafficCop *traffic_cop, logging::WalLogManager *log_manager)
+    tcop::TrafficCop *traffic_cop, logging::WalLogManager* log_manager)
     : ProtocolHandler(traffic_cop, log_manager),
       txn_state_(NetworkTransactionStateType::IDLE) {}
 

@@ -151,14 +151,16 @@ bool WalRecovery::InstallTupleRecord(LogRecordType type, storage::Tuple *tuple,
     tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
   } else if (type == LogRecordType::TUPLE_INSERT) {
+    ItemPointer *i = nullptr;
     ItemPointer insert_location = table->InsertTuple(
-        tuple, nullptr);  // This function does insert indexes
+        tuple, nullptr, &i);  // This function does insert indexes
     // set the begin commit id to persist insert
     tile_group_header->SetBeginCommitId(insert_location.offset, cur_cid);
     tile_group_header->SetEndCommitId(insert_location.offset, MAX_CID);
     tile_group_header->SetTransactionId(insert_location.offset, INITIAL_TXN_ID);
     tile_group_header->SetNextItemPointer(insert_location.offset,
                                           INVALID_ITEMPOINTER);
+    tile_group_header->SetIndirection(insert_location.offset,i);
   }
   return true;
 }

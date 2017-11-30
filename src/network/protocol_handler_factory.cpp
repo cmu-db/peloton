@@ -17,7 +17,7 @@ namespace peloton {
 namespace network {
 std::unique_ptr<ProtocolHandler> ProtocolHandlerFactory::CreateProtocolHandler(
     ProtocolHandlerType type, tcop::TrafficCop* traffic_cop,
-    logging::WalLogManager* log_manager) {
+        logging::WalLogManager* log_manager) {
   switch (type) {
     case ProtocolHandlerType::Postgres: {
       return std::unique_ptr<PostgresProtocolHandler>(

@@ -92,7 +92,7 @@ ResultType TrafficCop::BeginQueryHelper(size_t thread_id) {
 }
 
 // Pass the log manager to commit transaction
-ResultType TrafficCop::CommitQueryHelper(logging::WalLogManager *log_manager) {
+ResultType TrafficCop::CommitQueryHelper(logging::WalLogManager* log_manager_) {
   // do nothing if we have no active txns
   if (tcop_txn_state_.empty()) {
     return ResultType::NOOP;
@@ -107,7 +107,7 @@ ResultType TrafficCop::CommitQueryHelper(logging::WalLogManager *log_manager) {
   // 'ROLLBACK' After receive 'COMMIT', see if it is rollback or really commit.
   if (curr_state.second != ResultType::ABORTED) {
     // txn committed
-    return txn_manager.CommitTransaction(txn, log_manager);
+    return txn_manager.CommitTransaction(txn, log_manager_);
   } else {
     // otherwise, rollback
     return txn_manager.AbortTransaction(txn);

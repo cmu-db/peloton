@@ -26,8 +26,9 @@ typedef std::vector<std::unique_ptr<OutputPacket>> ResponseBuffer;
 
 class ProtocolHandler {
  public:
-  ProtocolHandler(tcop::TrafficCop* traffic_cop,
-                  logging::WalLogManager* log_manager);
+    ProtocolHandler(tcop::TrafficCop* traffic_cop,
+                      logging::WalLogManager* log_manager);
+
 
   virtual ~ProtocolHandler();
 

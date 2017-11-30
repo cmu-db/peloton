@@ -65,7 +65,6 @@ class NetworkConnection {
       protocol_handler_;                      // Stores state for this socket
   ConnState state = ConnState::CONN_INVALID;  // Initial state of connection
   tcop::TrafficCop traffic_cop_;
-
   logging::WalLogManager log_manager_;
 
  private:
