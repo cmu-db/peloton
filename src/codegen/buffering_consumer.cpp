@@ -138,7 +138,6 @@ void BufferingConsumer::ConsumeResult(ConsumerContext &ctx,
   }
 
   llvm::Value *task_id = ctx.GetTaskId();
-  codegen.CallPrintf("[BufferingConsumer] My task id = %d\n", {task_id});
 
   // Append the tuple to the output buffer (by calling BufferTuple(...))
   auto *consumer_state = GetStateValue(ctx, consumer_state_id_);

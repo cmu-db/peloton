@@ -90,6 +90,8 @@ void Transaction::Init(const size_t thread_id,
 }
 
 RWType Transaction::GetRWType(const ItemPointer &location) {
+  std::lock_guard<std::mutex> lock(mu_);
+
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
   auto itr = rw_set_.find(tile_group_id);
@@ -106,6 +108,8 @@ RWType Transaction::GetRWType(const ItemPointer &location) {
 }
 
 void Transaction::RecordRead(const ItemPointer &location) {
+  std::lock_guard<std::mutex> lock(mu_);
+
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
@@ -119,6 +123,8 @@ void Transaction::RecordRead(const ItemPointer &location) {
 }
 
 void Transaction::RecordReadOwn(const ItemPointer &location) {
+  std::lock_guard<std::mutex> lock(mu_);
+
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
@@ -136,6 +142,8 @@ void Transaction::RecordReadOwn(const ItemPointer &location) {
 }
 
 void Transaction::RecordUpdate(const ItemPointer &location) {
+  std::lock_guard<std::mutex> lock(mu_);
+
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
@@ -166,6 +174,8 @@ void Transaction::RecordUpdate(const ItemPointer &location) {
 }
 
 void Transaction::RecordInsert(const ItemPointer &location) {
+  std::lock_guard<std::mutex> lock(mu_);
+
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
@@ -178,6 +188,8 @@ void Transaction::RecordInsert(const ItemPointer &location) {
 }
 
 bool Transaction::RecordDelete(const ItemPointer &location) {
+  std::lock_guard<std::mutex> lock(mu_);
+
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
