@@ -23,7 +23,7 @@ namespace optimizer {
 ///////////////////////////////////////////////////////////////////////////////
 /// InnerJoinCommutativity
 InnerJoinCommutativity::InnerJoinCommutativity() {
-  logical = true;
+  type_ = RuleType::INNER_JOIN_COMMUTE;
 
   std::shared_ptr<Pattern> left_child(std::make_shared<Pattern>(OpType::Leaf));
   std::shared_ptr<Pattern> right_child(std::make_shared<Pattern>(OpType::Leaf));
@@ -58,7 +58,7 @@ void InnerJoinCommutativity::Transform(
 ///////////////////////////////////////////////////////////////////////////////
 /// GetToDummyScan
 GetToDummyScan::GetToDummyScan() {
-  physical = true;
+  type_ = RuleType::GET_TO_DUMMY_SCAN;
 
   match_pattern = std::make_shared<Pattern>(OpType::Get);
 }
@@ -81,7 +81,7 @@ void GetToDummyScan::Transform(
 ///////////////////////////////////////////////////////////////////////////////
 /// GetToSeqScan
 GetToSeqScan::GetToSeqScan() {
-  physical = true;
+  type_ = RuleType::GET_TO_SEQ_SCAN;
 
   match_pattern = std::make_shared<Pattern>(OpType::Get);
 }
@@ -112,7 +112,7 @@ void GetToSeqScan::Transform(
 ///////////////////////////////////////////////////////////////////////////////
 /// GetToIndexScan
 GetToIndexScan::GetToIndexScan() {
-  physical = true;
+  type_ = RuleType::GET_TO_INDEX_SCAN;
 
   match_pattern = std::make_shared<Pattern>(OpType::Get);
 }
@@ -149,7 +149,7 @@ void GetToIndexScan::Transform(
 ///////////////////////////////////////////////////////////////////////////////
 /// LogicalQueryDerivedGetToPhysical
 LogicalQueryDerivedGetToPhysical::LogicalQueryDerivedGetToPhysical() {
-  physical = true;
+  type_ = RuleType::QUERY_DERIVED_GET_TO_PHYSICAL;
   match_pattern = std::make_shared<Pattern>(OpType::LogicalQueryDerivedGet);
   std::shared_ptr<Pattern> child(std::make_shared<Pattern>(OpType::Leaf));
   match_pattern->AddChild(child);
@@ -176,40 +176,9 @@ void LogicalQueryDerivedGetToPhysical::Transform(
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/// SelectToFilter
-LogicalFilterToPhysical::LogicalFilterToPhysical() {
-  physical = true;
-
-  std::shared_ptr<Pattern> child(std::make_shared<Pattern>(OpType::Leaf));
-  std::shared_ptr<Pattern> predicate(std::make_shared<Pattern>(OpType::Leaf));
-  match_pattern = std::make_shared<Pattern>(OpType::LogicalFilter);
-  match_pattern->AddChild(child);
-  match_pattern->AddChild(predicate);
-}
-
-bool LogicalFilterToPhysical::Check(std::shared_ptr<OperatorExpression> plan,
-                                    Memo *memo) const {
-  (void)plan;
-  (void)memo;
-  return true;
-}
-
-void LogicalFilterToPhysical::Transform(
-    std::shared_ptr<OperatorExpression> input,
-    std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
-  auto result = std::make_shared<OperatorExpression>(PhysicalFilter::make());
-  std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
-  PL_ASSERT(children.size() == 2);
-  result->PushChild(children[0]);
-  result->PushChild(children[1]);
-
-  transformed.push_back(result);
-}
-
-///////////////////////////////////////////////////////////////////////////////
 /// LogicalDeleteToPhysical
 LogicalDeleteToPhysical::LogicalDeleteToPhysical() {
-  physical = true;
+  type_ = RuleType::DELETE_TO_PHYSICAL;
   match_pattern = std::make_shared<Pattern>(OpType::LogicalDelete);
   std::shared_ptr<Pattern> child(std::make_shared<Pattern>(OpType::Leaf));
   match_pattern->AddChild(child);
@@ -236,7 +205,7 @@ void LogicalDeleteToPhysical::Transform(
 ///////////////////////////////////////////////////////////////////////////////
 /// LogicalUpdateToPhysical
 LogicalUpdateToPhysical::LogicalUpdateToPhysical() {
-  physical = true;
+  type_ = RuleType::UPDATE_TO_PHYSICAL;
   match_pattern = std::make_shared<Pattern>(OpType::LogicalUpdate);
   std::shared_ptr<Pattern> child(std::make_shared<Pattern>(OpType::Leaf));
   match_pattern->AddChild(child);
@@ -263,7 +232,7 @@ void LogicalUpdateToPhysical::Transform(
 ///////////////////////////////////////////////////////////////////////////////
 /// LogicalInsertToPhysical
 LogicalInsertToPhysical::LogicalInsertToPhysical() {
-  physical = true;
+  type_ = RuleType::INSERT_TO_PHYSICAL;
   match_pattern = std::make_shared<Pattern>(OpType::LogicalInsert);
   //  std::shared_ptr<Pattern> child(std::make_shared<Pattern>(OpType::Leaf));
   //  match_pattern->AddChild(child);
@@ -290,7 +259,7 @@ void LogicalInsertToPhysical::Transform(
 ///////////////////////////////////////////////////////////////////////////////
 /// LogicalInsertSelectToPhysical
 LogicalInsertSelectToPhysical::LogicalInsertSelectToPhysical() {
-  physical = true;
+  type_ = RuleType::INSERT_SELECT_TO_PHYSICAL;
   match_pattern = std::make_shared<Pattern>(OpType::LogicalInsertSelect);
   std::shared_ptr<Pattern> child(std::make_shared<Pattern>(OpType::Leaf));
   match_pattern->AddChild(child);
@@ -317,7 +286,7 @@ void LogicalInsertSelectToPhysical::Transform(
 ///////////////////////////////////////////////////////////////////////////////
 /// LogicalGroupByToHashGroupBy
 LogicalGroupByToHashGroupBy::LogicalGroupByToHashGroupBy() {
-  physical = true;
+  type_ = RuleType::AGGREGATE_TO_HASH_AGGREGATE;
   match_pattern = std::make_shared<Pattern>(OpType::LogicalGroupBy);
   std::shared_ptr<Pattern> child(std::make_shared<Pattern>(OpType::Leaf));
   match_pattern->AddChild(child);
@@ -344,7 +313,7 @@ void LogicalGroupByToHashGroupBy::Transform(
 ///////////////////////////////////////////////////////////////////////////////
 /// LogicalGroupByToSortGroupBy
 LogicalGroupByToSortGroupBy::LogicalGroupByToSortGroupBy() {
-  physical = true;
+  type_ = RuleType::AGGREGATE_TO_SORT_AGGREGATE;
   match_pattern = std::make_shared<Pattern>(OpType::LogicalGroupBy);
   std::shared_ptr<Pattern> child(std::make_shared<Pattern>(OpType::Leaf));
   match_pattern->AddChild(child);
@@ -371,7 +340,7 @@ void LogicalGroupByToSortGroupBy::Transform(
 ///////////////////////////////////////////////////////////////////////////////
 /// LogicalAggregateToPhysical
 LogicalAggregateToPhysical::LogicalAggregateToPhysical() {
-  physical = true;
+  type_ = RuleType::AGGREGATE_TO_PLAIN_AGGREGATE;
   match_pattern = std::make_shared<Pattern>(OpType::LogicalAggregate);
   std::shared_ptr<Pattern> child(std::make_shared<Pattern>(OpType::Leaf));
   match_pattern->AddChild(child);
@@ -396,7 +365,7 @@ void LogicalAggregateToPhysical::Transform(
 ///////////////////////////////////////////////////////////////////////////////
 /// InnerJoinToInnerNLJoin
 InnerJoinToInnerNLJoin::InnerJoinToInnerNLJoin() {
-  physical = true;
+  type_ = RuleType::INNER_JOIN_TO_NL_JOIN;
 
   // TODO NLJoin currently only support left deep tree
   std::shared_ptr<Pattern> left_child(std::make_shared<Pattern>(OpType::Leaf));
@@ -438,139 +407,11 @@ void InnerJoinToInnerNLJoin::Transform(
   return;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-/// LeftJoinToLeftNLJoin
-LeftJoinToLeftNLJoin::LeftJoinToLeftNLJoin() {
-  physical = true;
-
-  std::shared_ptr<Pattern> left_child(std::make_shared<Pattern>(OpType::Leaf));
-  std::shared_ptr<Pattern> right_child(std::make_shared<Pattern>(OpType::Leaf));
-  std::shared_ptr<Pattern> predicate(std::make_shared<Pattern>(OpType::Leaf));
-
-  match_pattern = std::make_shared<Pattern>(OpType::LeftJoin);
-
-  match_pattern->AddChild(left_child);
-  match_pattern->AddChild(right_child);
-  match_pattern->AddChild(predicate);
-
-  return;
-}
-
-bool LeftJoinToLeftNLJoin::Check(std::shared_ptr<OperatorExpression> plan,
-                                 Memo *memo) const {
-  (void)memo;
-  (void)plan;
-  return true;
-}
-
-void LeftJoinToLeftNLJoin::Transform(
-    std::shared_ptr<OperatorExpression> input,
-    std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
-  const LogicalLeftJoin *left_join = input->Op().As<LogicalLeftJoin>();
-  auto result_plan = std::make_shared<OperatorExpression>(
-      PhysicalLeftNLJoin::make(left_join->join_predicate));
-  std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
-  PL_ASSERT(children.size() == 3);
-
-  result_plan->PushChild(children[0]);
-  result_plan->PushChild(children[1]);
-  result_plan->PushChild(children[2]);
-
-  transformed.push_back(result_plan);
-
-  return;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/// RightJoinToRightNLJoin
-RightJoinToRightNLJoin::RightJoinToRightNLJoin() {
-  physical = true;
-
-  std::shared_ptr<Pattern> left_child(std::make_shared<Pattern>(OpType::Leaf));
-  std::shared_ptr<Pattern> right_child(std::make_shared<Pattern>(OpType::Leaf));
-  std::shared_ptr<Pattern> predicate(std::make_shared<Pattern>(OpType::Leaf));
-
-  match_pattern = std::make_shared<Pattern>(OpType::RightJoin);
-
-  match_pattern->AddChild(left_child);
-  match_pattern->AddChild(right_child);
-  match_pattern->AddChild(predicate);
-
-  return;
-}
-
-bool RightJoinToRightNLJoin::Check(std::shared_ptr<OperatorExpression> plan,
-                                   Memo *memo) const {
-  (void)memo;
-  (void)plan;
-  return true;
-}
-
-void RightJoinToRightNLJoin::Transform(
-    std::shared_ptr<OperatorExpression> input,
-    std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
-  const LogicalRightJoin *right_join = input->Op().As<LogicalRightJoin>();
-  auto result_plan = std::make_shared<OperatorExpression>(
-      PhysicalRightNLJoin::make(right_join->join_predicate));
-  std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
-  PL_ASSERT(children.size() == 3);
-
-  result_plan->PushChild(children[0]);
-  result_plan->PushChild(children[1]);
-  result_plan->PushChild(children[2]);
-
-  transformed.push_back(result_plan);
-
-  return;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/// OuterJoinToOuterNLJoin
-OuterJoinToOuterNLJoin::OuterJoinToOuterNLJoin() {
-  physical = true;
-
-  std::shared_ptr<Pattern> left_child(std::make_shared<Pattern>(OpType::Leaf));
-  std::shared_ptr<Pattern> right_child(std::make_shared<Pattern>(OpType::Leaf));
-  std::shared_ptr<Pattern> predicate(std::make_shared<Pattern>(OpType::Leaf));
-
-  match_pattern = std::make_shared<Pattern>(OpType::OuterJoin);
-
-  match_pattern->AddChild(left_child);
-  match_pattern->AddChild(right_child);
-  match_pattern->AddChild(predicate);
-
-  return;
-}
-
-bool OuterJoinToOuterNLJoin::Check(std::shared_ptr<OperatorExpression> plan,
-                                   Memo *memo) const {
-  (void)memo;
-  (void)plan;
-  return true;
-}
-
-void OuterJoinToOuterNLJoin::Transform(
-    std::shared_ptr<OperatorExpression> input,
-    std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
-  const LogicalOuterJoin *outer_join = input->Op().As<LogicalOuterJoin>();
-  auto result_plan = std::make_shared<OperatorExpression>(
-      PhysicalOuterNLJoin::make(outer_join->join_predicate));
-  std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
-  PL_ASSERT(children.size() == 3);
-
-  result_plan->PushChild(children[0]);
-  result_plan->PushChild(children[1]);
-  result_plan->PushChild(children[2]);
-
-  transformed.push_back(result_plan);
-
-  return;
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 /// InnerJoinToInnerHashJoin
 InnerJoinToInnerHashJoin::InnerJoinToInnerHashJoin() {
-  physical = true;
+  type_ = RuleType::INNER_JOIN_TO_HASH_JOIN;
 
   // Make three node types for pattern matching
   std::shared_ptr<Pattern> left_child(std::make_shared<Pattern>(OpType::Leaf));
@@ -626,135 +467,5 @@ void InnerJoinToInnerHashJoin::Transform(
 
   return;
 }
-
-///////////////////////////////////////////////////////////////////////////////
-/// LeftJoinToLeftHashJoin
-LeftJoinToLeftHashJoin::LeftJoinToLeftHashJoin() {
-  physical = true;
-
-  std::shared_ptr<Pattern> left_child(std::make_shared<Pattern>(OpType::Leaf));
-  std::shared_ptr<Pattern> right_child(std::make_shared<Pattern>(OpType::Leaf));
-  std::shared_ptr<Pattern> predicate(std::make_shared<Pattern>(OpType::Leaf));
-
-  match_pattern = std::make_shared<Pattern>(OpType::LeftJoin);
-
-  match_pattern->AddChild(left_child);
-  match_pattern->AddChild(right_child);
-  match_pattern->AddChild(predicate);
-
-  return;
-}
-
-bool LeftJoinToLeftHashJoin::Check(std::shared_ptr<OperatorExpression> plan,
-                                   Memo *memo) const {
-  (void)memo;
-  (void)plan;
-  return false;
-}
-
-void LeftJoinToLeftHashJoin::Transform(
-    std::shared_ptr<OperatorExpression> input,
-    std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
-  const LogicalLeftJoin *left_join = input->Op().As<LogicalLeftJoin>();
-  auto result_plan = std::make_shared<OperatorExpression>(
-      PhysicalLeftHashJoin::make(left_join->join_predicate));
-  std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
-  PL_ASSERT(children.size() == 3);
-
-  result_plan->PushChild(children[0]);
-  result_plan->PushChild(children[1]);
-  result_plan->PushChild(children[2]);
-
-  transformed.push_back(result_plan);
-
-  return;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/// RightJoinToRightHashJoin
-RightJoinToRightHashJoin::RightJoinToRightHashJoin() {
-  physical = true;
-
-  std::shared_ptr<Pattern> left_child(std::make_shared<Pattern>(OpType::Leaf));
-  std::shared_ptr<Pattern> right_child(std::make_shared<Pattern>(OpType::Leaf));
-  std::shared_ptr<Pattern> predicate(std::make_shared<Pattern>(OpType::Leaf));
-
-  match_pattern = std::make_shared<Pattern>(OpType::RightJoin);
-
-  match_pattern->AddChild(left_child);
-  match_pattern->AddChild(right_child);
-  match_pattern->AddChild(predicate);
-
-  return;
-}
-
-bool RightJoinToRightHashJoin::Check(std::shared_ptr<OperatorExpression> plan,
-                                     Memo *memo) const {
-  (void)memo;
-  (void)plan;
-  return false;
-}
-
-void RightJoinToRightHashJoin::Transform(
-    std::shared_ptr<OperatorExpression> input,
-    std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
-  const LogicalRightJoin *right_join = input->Op().As<LogicalRightJoin>();
-  auto result_plan = std::make_shared<OperatorExpression>(
-      PhysicalRightHashJoin::make(right_join->join_predicate));
-  std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
-  PL_ASSERT(children.size() == 3);
-
-  result_plan->PushChild(children[0]);
-  result_plan->PushChild(children[1]);
-  result_plan->PushChild(children[2]);
-
-  transformed.push_back(result_plan);
-
-  return;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/// OuterJoinToOuterHashJoin
-OuterJoinToOuterHashJoin::OuterJoinToOuterHashJoin() {
-  physical = true;
-
-  std::shared_ptr<Pattern> left_child(std::make_shared<Pattern>(OpType::Leaf));
-  std::shared_ptr<Pattern> right_child(std::make_shared<Pattern>(OpType::Leaf));
-  std::shared_ptr<Pattern> predicate(std::make_shared<Pattern>(OpType::Leaf));
-
-  match_pattern = std::make_shared<Pattern>(OpType::OuterJoin);
-
-  match_pattern->AddChild(left_child);
-  match_pattern->AddChild(right_child);
-  match_pattern->AddChild(predicate);
-
-  return;
-}
-
-bool OuterJoinToOuterHashJoin::Check(std::shared_ptr<OperatorExpression> plan,
-                                     Memo *memo) const {
-  (void)memo;
-  (void)plan;
-  return false;
-}
-
-void OuterJoinToOuterHashJoin::Transform(
-    std::shared_ptr<OperatorExpression> input,
-    std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
-  const LogicalOuterJoin *outer_join = input->Op().As<LogicalOuterJoin>();
-  auto result_plan = std::make_shared<OperatorExpression>(
-      PhysicalOuterHashJoin::make(outer_join->join_predicate));
-  std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
-  PL_ASSERT(children.size() == 3);
-
-  result_plan->PushChild(children[0]);
-  result_plan->PushChild(children[1]);
-  result_plan->PushChild(children[2]);
-
-  transformed.push_back(result_plan);
-
-  return;
-}
-
 }  // namespace optimizer
 }  // namespace peloton

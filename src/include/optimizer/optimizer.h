@@ -228,11 +228,7 @@ class Optimizer : public AbstractOptimizer {
   /// Member variables
   Memo memo_;
 
-  // Rules to transform logical plan to equivalent logical plans
-  std::vector<std::unique_ptr<Rule>> logical_transformation_rules_;
-
-  // Rules to transform logical plan to physical implementation
-  std::vector<std::unique_ptr<Rule>> physical_implementation_rules_;
+  RuleSet rule_set_;
 };
 
 }  // namespace optimizer

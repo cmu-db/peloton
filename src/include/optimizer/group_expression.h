@@ -57,10 +57,23 @@ class GroupExpression {
 
   bool operator==(const GroupExpression &r);
 
+  void ResetRuleMask(size_t num_rules) {
+    rule_mask_.reset(new std::vector<bool>{num_rules, false});
+  }
+
+  void SetRuleExplored(Rule* rule) {
+    (*rule_mask_.get())[rule->GetRuleIdx()] = true;
+  }
+
+  bool HasRuleExplored(Rule* rule) {
+    return rule_mask_->at(rule->GetRuleIdx());
+  }
+
  private:
   GroupID group_id;
   Operator op;
   std::vector<GroupID> child_groups;
+  std::unique_ptr<std::vector<bool>> rule_mask_;
 
   // Mapping from output properties to the corresponding best cost, statistics,
   // and child properties

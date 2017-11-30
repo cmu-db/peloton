@@ -57,29 +57,31 @@ namespace optimizer {
 // Optimizer
 //===--------------------------------------------------------------------===//
 Optimizer::Optimizer() {
-  logical_transformation_rules_.emplace_back(new InnerJoinCommutativity());
-  physical_implementation_rules_.emplace_back(new LogicalDeleteToPhysical());
-  physical_implementation_rules_.emplace_back(new LogicalUpdateToPhysical());
-  physical_implementation_rules_.emplace_back(new LogicalInsertToPhysical());
-  physical_implementation_rules_.emplace_back(
+  rule_set_.AddRule(new InnerJoinCommutativity());
+  rule_set_.AddRule(new LogicalDeleteToPhysical());
+  rule_set_.AddRule(new LogicalUpdateToPhysical());
+  rule_set_.AddRule(new LogicalInsertToPhysical());
+  rule_set_.AddRule(
       new LogicalInsertSelectToPhysical());
-  physical_implementation_rules_.emplace_back(
+  rule_set_.AddRule(
       new LogicalGroupByToHashGroupBy());
   // Comment out because codegen does not support sort groupby now
-  // physical_implementation_rules_.emplace_back(
+  // rule_set_.AddRule(
   //     new LogicalGroupByToSortGroupBy());
-  physical_implementation_rules_.emplace_back(new LogicalAggregateToPhysical());
-  physical_implementation_rules_.emplace_back(new GetToDummyScan());
-  physical_implementation_rules_.emplace_back(new GetToSeqScan());
-  physical_implementation_rules_.emplace_back(new GetToIndexScan());
-  physical_implementation_rules_.emplace_back(
+  rule_set_.AddRule(new LogicalAggregateToPhysical());
+  rule_set_.AddRule(new GetToDummyScan());
+  rule_set_.AddRule(new GetToSeqScan());
+  rule_set_.AddRule(new GetToIndexScan());
+  rule_set_.AddRule(
       new LogicalQueryDerivedGetToPhysical());
-  physical_implementation_rules_.emplace_back(new LogicalFilterToPhysical());
-  physical_implementation_rules_.emplace_back(new InnerJoinToInnerNLJoin());
-  physical_implementation_rules_.emplace_back(new LeftJoinToLeftNLJoin());
-  physical_implementation_rules_.emplace_back(new RightJoinToRightNLJoin());
-  physical_implementation_rules_.emplace_back(new OuterJoinToOuterNLJoin());
-  physical_implementation_rules_.emplace_back(new InnerJoinToInnerHashJoin());
+//  rule_set_.AddRule(new LogicalFilterToPhysical());
+  rule_set_.AddRule(new InnerJoinToInnerNLJoin());
+//  rule_set_.AddRule(new LeftJoinToLeftNLJoin());
+//  rule_set_.AddRule(new RightJoinToRightNLJoin());
+//  rule_set_.AddRule(new OuterJoinToOuterNLJoin());
+  rule_set_.AddRule(new InnerJoinToInnerHashJoin());
+
+  memo_
 }
 
 shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
@@ -612,7 +614,11 @@ bool Optimizer::RecordTransformedExpression(shared_ptr<OperatorExpression> expr,
                                             shared_ptr<GroupExpression> &gexpr,
                                             GroupID target_group) {
   gexpr = MakeGroupExpression(expr);
-  return memo_.InsertExpression(gexpr, target_group, false) != gexpr;
+  if (memo_.InsertExpression(gexpr, target_group, false) != gexpr) {
+    gexpr->ResetRuleMask(rule_set_.size());
+    return true;
+  }
+  return false;
 }
 
 }  // namespace optimizer

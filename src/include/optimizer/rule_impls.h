@@ -84,19 +84,6 @@ class LogicalQueryDerivedGetToPhysical : public Rule {
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-/// LogicalFilterToPhysical
-class LogicalFilterToPhysical : public Rule {
- public:
-  LogicalFilterToPhysical();
-
-  bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
-
-  void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed)
-      const override;
-};
-
-///////////////////////////////////////////////////////////////////////////////
 /// LogicalDeleteToPhysical
 class LogicalDeleteToPhysical : public Rule {
  public:
@@ -203,88 +190,10 @@ class InnerJoinToInnerNLJoin : public Rule {
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-/// LeftJoinToLeftNLJoin
-class LeftJoinToLeftNLJoin : public Rule {
- public:
-  LeftJoinToLeftNLJoin();
-
-  bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
-
-  void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed)
-      const override;
-};
-
-///////////////////////////////////////////////////////////////////////////////
-/// RightJoinToRightNLJoin
-class RightJoinToRightNLJoin : public Rule {
- public:
-  RightJoinToRightNLJoin();
-
-  bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
-
-  void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed)
-      const override;
-};
-
-///////////////////////////////////////////////////////////////////////////////
-/// OuterJoinToOuterNLJoin
-class OuterJoinToOuterNLJoin : public Rule {
- public:
-  OuterJoinToOuterNLJoin();
-
-  bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
-
-  void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed)
-      const override;
-};
-
-///////////////////////////////////////////////////////////////////////////////
 /// InnerJoinToInnerHashJoin
 class InnerJoinToInnerHashJoin : public Rule {
  public:
   InnerJoinToInnerHashJoin();
-
-  bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
-
-  void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed)
-      const override;
-};
-
-///////////////////////////////////////////////////////////////////////////////
-/// LeftJoinToLeftHashJoin
-class LeftJoinToLeftHashJoin : public Rule {
- public:
-  LeftJoinToLeftHashJoin();
-
-  bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
-
-  void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed)
-      const override;
-};
-
-///////////////////////////////////////////////////////////////////////////////
-/// RightJoinToRightHashJoin
-class RightJoinToRightHashJoin : public Rule {
- public:
-  RightJoinToRightHashJoin();
-
-  bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
-
-  void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed)
-      const override;
-};
-
-///////////////////////////////////////////////////////////////////////////////
-/// OuterJoinToOuterHashJoin
-class OuterJoinToOuterHashJoin : public Rule {
- public:
-  OuterJoinToOuterHashJoin();
 
   bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
 
