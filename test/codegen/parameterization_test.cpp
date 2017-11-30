@@ -61,8 +61,7 @@ TEST_F(ParameterizationTest, ConstParameterVarchar) {
 
   bool cached;
   CompileAndExecuteCache(scan, buffer,
-                         reinterpret_cast<char *>(buffer.GetState()), nullptr,
-                         &cached);
+                         reinterpret_cast<char *>(buffer.GetState()), cached);
   const auto &results = buffer.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable(), results.size());
   EXPECT_EQ(false, cached);
@@ -84,8 +83,7 @@ TEST_F(ParameterizationTest, ConstParameterVarchar) {
   codegen::BufferingConsumer buffer_2{{3}, context_2};
 
   CompileAndExecuteCache(scan_2, buffer_2,
-                         reinterpret_cast<char *>(buffer_2.GetState()),
-                         nullptr, &cached);
+                         reinterpret_cast<char *>(buffer_2.GetState()), cached);
 
   const auto &results_2 = buffer_2.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable(), results_2.size());
@@ -120,7 +118,7 @@ TEST_F(ParameterizationTest, ParamParameterVarchar) {
   bool cached;
   CompileAndExecuteCache(scan, buffer,
                          reinterpret_cast<char *>(buffer.GetState()),
-                         &params, &cached);
+                         cached, &params);
 
   const auto &results = buffer.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable(), results.size());
@@ -134,21 +132,21 @@ TEST_F(ParameterizationTest, ParamParameterVarchar) {
   auto *d_ne_str2 = new expression::ComparisonExpression(
       ExpressionType::COMPARE_NOTEQUAL, d_col_exp2, param_str_exp2);
 
-  std::shared_ptr<planner::SeqScanPlan> scan2{new planner::SeqScanPlan{
+  std::shared_ptr<planner::SeqScanPlan> scan_2{new planner::SeqScanPlan{
       &GetTestTable(TestTableId()), d_ne_str2, {0, 1, 2, 3}}};
 
   planner::BindingContext context2;
-  scan2->PerformBinding(context);
+  scan_2->PerformBinding(context);
 
-  std::vector<type::Value> params2 = {param_str2};
+  std::vector<type::Value> params_2 = {param_str2};
 
-  codegen::BufferingConsumer buffer2{{3}, context};
+  codegen::BufferingConsumer buffer_2{{3}, context};
 
-  CompileAndExecuteCache(scan2, buffer2,
-                         reinterpret_cast<char *>(buffer2.GetState()),
-                         &params2, &cached);
+  CompileAndExecuteCache(scan_2, buffer_2,
+                         reinterpret_cast<char *>(buffer_2.GetState()),
+                         cached, &params_2);
 
-  const auto &results2 = buffer2.GetOutputTuples();
+  const auto &results2 = buffer_2.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable(), results2.size());
   EXPECT_EQ(true, cached);
 
@@ -170,7 +168,7 @@ TEST_F(ParameterizationTest, ParamParameterVarchar) {
 
   CompileAndExecuteCache(scan_3, buffer_3,
                          reinterpret_cast<char *>(buffer_3.GetState()),
-                         nullptr, &cached);
+                         cached, nullptr);
 
   const auto &results_3 = buffer_3.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable(), results_3.size());
@@ -208,8 +206,7 @@ TEST_F(ParameterizationTest, ConstParameterWithConjunction) {
 
   bool cached;
   CompileAndExecuteCache(scan, buffer,
-                         reinterpret_cast<char *>(buffer.GetState()),
-                         nullptr, &cached);
+                         reinterpret_cast<char *>(buffer.GetState()), cached);
 
   const auto &results = buffer.GetOutputTuples();
   ASSERT_EQ(1, results.size());
@@ -246,8 +243,7 @@ TEST_F(ParameterizationTest, ConstParameterWithConjunction) {
   codegen::BufferingConsumer buffer_2{{0, 1, 2}, context_2};
 
   CompileAndExecuteCache(scan_2, buffer_2,
-                         reinterpret_cast<char *>(buffer_2.GetState()), nullptr,
-                         &cached);
+                         reinterpret_cast<char *>(buffer_2.GetState()), cached);
 
   const auto &results_2 = buffer_2.GetOutputTuples();
   ASSERT_EQ(1, results_2.size());
@@ -294,8 +290,8 @@ TEST_F(ParameterizationTest, ParamParameterWithConjunction) {
 
   bool cached;
   CompileAndExecuteCache(scan, buffer,
-                         reinterpret_cast<char *>(buffer.GetState()),
-                         &params, &cached);
+                         reinterpret_cast<char *>(buffer.GetState()), cached,
+                         &params);
 
   const auto &results = buffer.GetOutputTuples();
   ASSERT_EQ(NumRowsInTestTable() - 2, results.size());
@@ -334,7 +330,7 @@ TEST_F(ParameterizationTest, ParamParameterWithConjunction) {
 
   CompileAndExecuteCache(scan_2, buffer_2,
                          reinterpret_cast<char *>(buffer_2.GetState()),
-                         &params_2, &cached);
+                         cached, &params_2);
 
   const auto &results_2 = buffer_2.GetOutputTuples();
   ASSERT_EQ(NumRowsInTestTable() - 3, results_2.size());
@@ -373,7 +369,7 @@ TEST_F(ParameterizationTest, ParamParameterWithConjunction) {
 
   CompileAndExecuteCache(scan_3, buffer_3,
                          reinterpret_cast<char *>(buffer_3.GetState()),
-                         &params_3, &cached);
+                         cached, &params_3);
 
   const auto &results_3 = buffer_3.GetOutputTuples();
   ASSERT_EQ(NumRowsInTestTable() - 3, results_3.size());
@@ -415,8 +411,9 @@ TEST_F(ParameterizationTest, ParamParameterWithOperators) {
   codegen::BufferingConsumer buffer{{0, 1}, context};
 
   bool cached;
-  CompileAndExecuteCache(scan, buffer, reinterpret_cast<char *>(buffer.GetState()),
-                         &params, &cached);
+  CompileAndExecuteCache(scan, buffer,
+                         reinterpret_cast<char *>(buffer.GetState()), cached,
+                         &params);
 
   const auto &results = buffer.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable(), results.size());
@@ -448,7 +445,7 @@ TEST_F(ParameterizationTest, ParamParameterWithOperators) {
 
   CompileAndExecuteCache(scan_2, buffer_2,
                          reinterpret_cast<char *>(buffer_2.GetState()),
-                         &params_2, &cached);
+                         cached, &params_2);
 
   const auto &results_2 = buffer_2.GetOutputTuples();
   EXPECT_EQ(0, results_2.size());
@@ -480,7 +477,7 @@ TEST_F(ParameterizationTest, ParamParameterWithOperators) {
 
   CompileAndExecuteCache(scan_3, buffer_3,
                          reinterpret_cast<char *>(buffer_3.GetState()),
-                         &params_3, &cached);
+                         cached, &params_3);
   const auto &results_3 = buffer_3.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable(), results_3.size());
   EXPECT_EQ(false, cached);
@@ -516,7 +513,7 @@ TEST_F(ParameterizationTest, ParamParameterWithOperatersLeftHand) {
   bool cached;
   CompileAndExecuteCache(scan, buffer,
                          reinterpret_cast<char *>(buffer.GetState()),
-                         nullptr, &cached);
+                         cached);
 
   const auto &results = buffer.GetOutputTuples();
   EXPECT_EQ(1, results.size());
@@ -552,7 +549,7 @@ TEST_F(ParameterizationTest, ParamParameterWithOperatersLeftHand) {
 
   CompileAndExecuteCache(scan_2, buffer_2,
                          reinterpret_cast<char *>(buffer_2.GetState()),
-                         &params_2, &cached);
+                         cached, &params_2);
 
   const auto &results_2 = buffer_2.GetOutputTuples();
   EXPECT_EQ(1, results_2.size());

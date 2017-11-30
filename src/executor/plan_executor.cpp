@@ -45,8 +45,7 @@ void PlanExecutor::ExecutePlan(
     std::shared_ptr<planner::AbstractPlan> plan,
     concurrency::Transaction *txn, const std::vector<type::Value> &params,
     std::vector<StatementResult> &result,
-    const std::vector<int> &result_format,
-    executor::ExecuteResult &p_status) {
+    const std::vector<int> &result_format, executor::ExecuteResult &p_status) {
   PL_ASSERT(plan != nullptr && txn != nullptr);
   LOG_TRACE("PlanExecutor Start (Txn ID=%" PRId64")", txn->GetTransactionId());
 
@@ -108,7 +107,7 @@ void PlanExecutor::ExecutePlan(
   plan->GetOutputColumns(columns);
   codegen::BufferingConsumer consumer{columns, context};
 
-  // Prepare parameter: TODO Combine with executor context when legacy is removed
+  // Prepare parameter: TODO Combine with executor context when legacy is gone
   codegen::QueryParameters parameters{*plan, params};
 
   // Compile and execute the query

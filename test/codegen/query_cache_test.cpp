@@ -180,10 +180,10 @@ TEST_F(QueryCacheTest, SimpleCache) {
   std::shared_ptr<planner::SeqScanPlan> scan1 = GetSeqScanPlan();
   std::shared_ptr<planner::SeqScanPlan> scan2 = GetSeqScanPlan();
 
-  planner::BindingContext context1;
-  scan1->PerformBinding(context1);
-  planner::BindingContext context2;
-  scan2->PerformBinding(context2);
+  planner::BindingContext context_1;
+  scan1->PerformBinding(context_1);
+  planner::BindingContext context_2;
+  scan2->PerformBinding(context_2);
 
   // Check the plan is the same
   auto hash_equal = (scan1->Hash() == scan2->Hash());
@@ -194,19 +194,22 @@ TEST_F(QueryCacheTest, SimpleCache) {
   EXPECT_EQ(is_equal, true);
 
   // Execute a new query
-  codegen::BufferingConsumer buffer1{{0}, context1};
-  CompileAndExecuteCache(scan1, buffer1,
-                         reinterpret_cast<char*>(buffer1.GetState()));
-  const auto& results1 = buffer1.GetOutputTuples();
-  EXPECT_EQ(NumRowsInTestTable() - 4, results1.size());
+  codegen::BufferingConsumer buffer_1{{0}, context_1};
+  bool cached;
+  CompileAndExecuteCache(scan1, buffer_1,
+                         reinterpret_cast<char*>(buffer_1.GetState()), cached);
+  const auto& results_1 = buffer_1.GetOutputTuples();
+  EXPECT_EQ(NumRowsInTestTable() - 4, results_1.size());
+  EXPECT_EQ(false, cached);
   EXPECT_EQ(1, codegen::QueryCache::Instance().GetCount());
 
   // Execute a query cached
-  codegen::BufferingConsumer buffer2{{0}, context2};
-  CompileAndExecuteCache(scan2, buffer2,
-                         reinterpret_cast<char*>(buffer2.GetState()));
-  const auto& results2 = buffer2.GetOutputTuples();
-  EXPECT_EQ(NumRowsInTestTable() - 4, results2.size());
+  codegen::BufferingConsumer buffer_2{{0}, context_2};
+  CompileAndExecuteCache(scan2, buffer_2,
+                         reinterpret_cast<char*>(buffer_2.GetState()), cached);
+  const auto& results_2 = buffer_2.GetOutputTuples();
+  EXPECT_EQ(true, cached);
+  EXPECT_EQ(NumRowsInTestTable() - 4, results_2.size());
 
   EXPECT_EQ(1, codegen::QueryCache::Instance().GetCount());
 
@@ -223,10 +226,10 @@ TEST_F(QueryCacheTest, CacheSeqScanPlan) {
   auto scan2 = GetSeqScanPlanWithPredicate();
 
   // Do binding
-  planner::BindingContext context1;
-  scan1->PerformBinding(context1);
-  planner::BindingContext context2;
-  scan2->PerformBinding(context2);
+  planner::BindingContext context_1;
+  scan1->PerformBinding(context_1);
+  planner::BindingContext context_2;
+  scan2->PerformBinding(context_2);
 
   auto hash_equal = (scan1->Hash() == scan2->Hash());
   EXPECT_EQ(hash_equal, true);
@@ -234,30 +237,32 @@ TEST_F(QueryCacheTest, CacheSeqScanPlan) {
   auto is_equal = (*scan1.get() == *scan2.get());
   EXPECT_EQ(is_equal, true);
 
-  codegen::BufferingConsumer buffer1{{0, 1, 2}, context1};
+  codegen::BufferingConsumer buffer_1{{0, 1, 2}, context_1};
 
-  CompileAndExecuteCache(scan1, buffer1,
-                         reinterpret_cast<char*>(buffer1.GetState()));
+  bool cached;
+  CompileAndExecuteCache(scan1, buffer_1,
+                         reinterpret_cast<char*>(buffer_1.GetState()), cached);
 
   // Check that we got all the results
-  const auto& results1 = buffer1.GetOutputTuples();
-  EXPECT_EQ(1, results1.size());
-  EXPECT_EQ(type::CMP_TRUE, results1[0].GetValue(0).CompareEquals(
+  const auto& results_1 = buffer_1.GetOutputTuples();
+  EXPECT_EQ(1, results_1.size());
+  EXPECT_EQ(type::CMP_TRUE, results_1[0].GetValue(0).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(20)));
-  EXPECT_EQ(type::CMP_TRUE, results1[0].GetValue(1).CompareEquals(
+  EXPECT_EQ(type::CMP_TRUE, results_1[0].GetValue(1).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(21)));
+  EXPECT_EQ(false, cached);
 
-  codegen::BufferingConsumer buffer2{{0, 1, 2}, context2};
-  CompileAndExecuteCache(scan2, buffer2,
-                         reinterpret_cast<char*>(buffer2.GetState()));
+  codegen::BufferingConsumer buffer_2{{0, 1, 2}, context_2};
+  CompileAndExecuteCache(scan2, buffer_2,
+                         reinterpret_cast<char*>(buffer_2.GetState()), cached);
 
-  const auto& results2 = buffer2.GetOutputTuples();
-  EXPECT_EQ(1, results2.size());
-  EXPECT_EQ(type::CMP_TRUE, results2[0].GetValue(0).CompareEquals(
+  const auto& results_2 = buffer_2.GetOutputTuples();
+  EXPECT_EQ(1, results_2.size());
+  EXPECT_EQ(type::CMP_TRUE, results_2[0].GetValue(0).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(20)));
-  EXPECT_EQ(type::CMP_TRUE, results2[0].GetValue(1).CompareEquals(
+  EXPECT_EQ(type::CMP_TRUE, results_2[0].GetValue(1).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(21)));
-
+  EXPECT_EQ(true, cached);
   EXPECT_EQ(1, codegen::QueryCache::Instance().GetCount());
 
   // PelotonCodeTest dies after each TEST_F()
@@ -268,31 +273,32 @@ TEST_F(QueryCacheTest, CacheSeqScanPlan) {
 
 TEST_F(QueryCacheTest, CacheHashJoinPlan) {
   auto hj_plan1 = GetHashJoinPlan();
-  auto hj_plan2 = GetHashJoinPlan();
+  auto hj_plan_2 = GetHashJoinPlan();
 
   // Do binding
-  planner::BindingContext context1, context2;
-  hj_plan1->PerformBinding(context1);
-  hj_plan2->PerformBinding(context2);
+  planner::BindingContext context_1, context_2;
+  hj_plan1->PerformBinding(context_1);
+  hj_plan_2->PerformBinding(context_2);
 
-  auto hash_equal = (hj_plan1->Hash() == hj_plan2->Hash());
+  auto hash_equal = (hj_plan1->Hash() == hj_plan_2->Hash());
   EXPECT_EQ(hash_equal, true);
 
-  bool is_equal = (*hj_plan1.get() == *hj_plan2.get());
+  bool is_equal = (*hj_plan1.get() == *hj_plan_2.get());
   EXPECT_EQ(is_equal, true);
 
   // We collect the results of the query into an in-memory buffer
-  codegen::BufferingConsumer buffer1{{0, 1, 2, 3}, context1};
+  codegen::BufferingConsumer buffer_1{{0, 1, 2, 3}, context_1};
 
-  CompileAndExecuteCache(hj_plan1, buffer1,
-                         reinterpret_cast<char*>(buffer1.GetState()));
+  bool cached;
+  CompileAndExecuteCache(hj_plan1, buffer_1,
+                         reinterpret_cast<char*>(buffer_1.GetState()), cached);
 
   // Check results
-  const auto& results1 = buffer1.GetOutputTuples();
-  EXPECT_EQ(64, results1.size());
+  const auto& results_1 = buffer_1.GetOutputTuples();
+  EXPECT_EQ(64, results_1.size());
 
   // The output has the join columns (that should match) in positions 0 and 1
-  for (const auto& tuple : results1) {
+  for (const auto& tuple : results_1) {
     type::Value v0 = tuple.GetValue(0);
     EXPECT_EQ(v0.GetTypeId(), type::TypeId::INTEGER);
 
@@ -302,14 +308,15 @@ TEST_F(QueryCacheTest, CacheHashJoinPlan) {
   }
 
   // We collect the results of the query into an in-memory buffer
-  codegen::BufferingConsumer buffer2{{0, 1, 2, 3}, context2};
+  codegen::BufferingConsumer buffer_2{{0, 1, 2, 3}, context_2};
 
-  CompileAndExecuteCache(hj_plan2, buffer2,
-                             reinterpret_cast<char*>(buffer2.GetState()));
+  CompileAndExecuteCache(hj_plan_2, buffer_2,
+                         reinterpret_cast<char*>(buffer_2.GetState()), cached);
+  EXPECT_EQ(true, cached);
   // Check results
-  const auto& results2 = buffer2.GetOutputTuples();
-  EXPECT_EQ(64, results2.size());
-  for (const auto& tuple : results2) {
+  const auto& results_2 = buffer_2.GetOutputTuples();
+  EXPECT_EQ(64, results_2.size());
+  for (const auto& tuple : results_2) {
     type::Value v0 = tuple.GetValue(0);
     EXPECT_EQ(v0.GetTypeId(), type::TypeId::INTEGER);
 
@@ -348,10 +355,10 @@ TEST_F(QueryCacheTest, CacheOrderByPlan) {
   order_by_plan_2->AddChild(std::move(seq_scan_plan_2));
   order_by_plan_3->AddChild(std::move(seq_scan_plan_3));
 
-  planner::BindingContext context1, context2, context3;
-  order_by_plan_1->PerformBinding(context1);
-  order_by_plan_2->PerformBinding(context2);
-  order_by_plan_3->PerformBinding(context3);
+  planner::BindingContext context_1, context_2, context_3;
+  order_by_plan_1->PerformBinding(context_1);
+  order_by_plan_2->PerformBinding(context_2);
+  order_by_plan_3->PerformBinding(context_3);
 
   auto hash_equal = (order_by_plan_1->Hash() == order_by_plan_2->Hash());
   EXPECT_EQ(hash_equal, true);
@@ -365,27 +372,29 @@ TEST_F(QueryCacheTest, CacheOrderByPlan) {
   is_equal = (*order_by_plan_1.get() == *order_by_plan_3.get());
   EXPECT_EQ(is_equal, false);
 
-  codegen::BufferingConsumer buffer1{{0, 1}, context1};
-  codegen::BufferingConsumer buffer2{{0, 1}, context2};
+  codegen::BufferingConsumer buffer_1{{0, 1}, context_1};
+  codegen::BufferingConsumer buffer_2{{0, 1}, context_2};
 
-  CompileAndExecuteCache(order_by_plan_1, buffer1,
-                             reinterpret_cast<char*>(buffer1.GetState()));
-
-  auto& results1 = buffer1.GetOutputTuples();
-  EXPECT_EQ(results1.size(), NumRowsInTestTable());
+  bool cached;
+  CompileAndExecuteCache(order_by_plan_1, buffer_1,
+                         reinterpret_cast<char*>(buffer_1.GetState()), cached);
+  EXPECT_EQ(false, cached);
+  auto& results_1 = buffer_1.GetOutputTuples();
+  EXPECT_EQ(results_1.size(), NumRowsInTestTable());
   EXPECT_TRUE(std::is_sorted(
-      results1.begin(), results1.end(),
+      results_1.begin(), results_1.end(),
       [](const codegen::WrappedTuple& t1, const codegen::WrappedTuple& t2) {
         auto is_gte = t1.GetValue(0).CompareGreaterThanEquals(t2.GetValue(0));
         return is_gte == type::CMP_TRUE;
       }));
 
-  CompileAndExecuteCache(order_by_plan_2, buffer2,
-                             reinterpret_cast<char*>(buffer2.GetState()));
-  auto& results2 = buffer2.GetOutputTuples();
-  EXPECT_EQ(results2.size(), NumRowsInTestTable());
+  CompileAndExecuteCache(order_by_plan_2, buffer_2,
+                         reinterpret_cast<char*>(buffer_2.GetState()), cached);
+  EXPECT_EQ(true, cached);
+  auto& results_2 = buffer_2.GetOutputTuples();
+  EXPECT_EQ(results_2.size(), NumRowsInTestTable());
   EXPECT_TRUE(std::is_sorted(
-      results2.begin(), results2.end(),
+      results_2.begin(), results_2.end(),
       [](const codegen::WrappedTuple& t1, const codegen::WrappedTuple& t2) {
         auto is_gte = t1.GetValue(0).CompareGreaterThanEquals(t2.GetValue(0));
         return is_gte == type::CMP_TRUE;
@@ -406,48 +415,51 @@ TEST_F(QueryCacheTest, CacheOrderByPlan) {
 
 TEST_F(QueryCacheTest, CacheAggregatePlan) {
   auto agg_plan1 = GetAggregatePlan();
-  auto agg_plan2 = GetAggregatePlan();
+  auto agg_plan_2 = GetAggregatePlan();
 
-  planner::BindingContext context1, context2;
-  agg_plan1->PerformBinding(context1);
-  agg_plan2->PerformBinding(context2);
+  planner::BindingContext context_1, context_2;
+  agg_plan1->PerformBinding(context_1);
+  agg_plan_2->PerformBinding(context_2);
 
-  auto hash_equal = (agg_plan1->Hash() == agg_plan2->Hash());
+  auto hash_equal = (agg_plan1->Hash() == agg_plan_2->Hash());
   EXPECT_EQ(hash_equal, true);
 
-  auto is_equal = (*agg_plan1.get() == *agg_plan2.get());
+  auto is_equal = (*agg_plan1.get() == *agg_plan_2.get());
   EXPECT_EQ(is_equal, true);
   EXPECT_EQ(0, codegen::QueryCache::Instance().GetCount());
 
-  codegen::BufferingConsumer buffer1{{0, 1}, context1};
-  codegen::BufferingConsumer buffer2{{0, 1}, context2};
+  codegen::BufferingConsumer buffer_1{{0, 1}, context_1};
+  codegen::BufferingConsumer buffer_2{{0, 1}, context_2};
 
   // Compile and execute
-  CompileAndExecuteCache(agg_plan1, buffer1,
-                         reinterpret_cast<char*>(buffer1.GetState()));
+  bool cached;
+  CompileAndExecuteCache(agg_plan1, buffer_1,
+                         reinterpret_cast<char*>(buffer_1.GetState()), cached);
   // Check results
-  const auto& results1 = buffer1.GetOutputTuples();
-  EXPECT_EQ(results1.size(), 59);
+  const auto& results_1 = buffer_1.GetOutputTuples();
+  EXPECT_EQ(results_1.size(), 59);
+  EXPECT_EQ(false, cached);
   EXPECT_EQ(1, codegen::QueryCache::Instance().GetCount());
 
   // Compile and execute with the cached query
-  CompileAndExecuteCache(agg_plan2, buffer2,
-                         reinterpret_cast<char*>(buffer2.GetState()));
+  CompileAndExecuteCache(agg_plan_2, buffer_2,
+                         reinterpret_cast<char*>(buffer_2.GetState()), cached);
 
-  const auto& results2 = buffer2.GetOutputTuples();
-  EXPECT_EQ(results2.size(), 59);
+  const auto& results_2 = buffer_2.GetOutputTuples();
+  EXPECT_EQ(results_2.size(), 59);
+  EXPECT_EQ(true, cached);
 
   // Clean the query cache and leaves only one query
   EXPECT_EQ(1, codegen::QueryCache::Instance().GetCount());
   codegen::QueryCache::Instance().Clear();
+  EXPECT_EQ(0, codegen::QueryCache::Instance().GetCount());
 
   // Check the correctness of LRU
-  auto agg_plan3 = GetAggregatePlan();
-  planner::BindingContext context3;
-  agg_plan3->PerformBinding(context3);
-  auto found = (codegen::QueryCache::Instance().Find(agg_plan3) != nullptr);
-  EXPECT_EQ(found, false);
-  EXPECT_EQ(0, codegen::QueryCache::Instance().GetCount());
+  auto agg_plan_3 = GetAggregatePlan();
+  planner::BindingContext context_3;
+  agg_plan_3->PerformBinding(context_3);
+  auto found = (codegen::QueryCache::Instance().Find(agg_plan_3) != nullptr);
+  EXPECT_EQ(false, found);
 }
 
 TEST_F(QueryCacheTest, PerformanceBenchmark) {
@@ -469,8 +481,12 @@ TEST_F(QueryCacheTest, PerformanceBenchmark) {
   }
   timer1.Stop();
 
-  timer2.Start();
-  for (int i = 0; i < 10; i++) {
+  // Add one more for the caching effect
+  bool cached;
+  for (int i = 0; i < 11; i++) {
+    if (i == 1) {
+      timer2.Start();
+    }
     auto plan = GetHashJoinPlan();
     // Do binding
     planner::BindingContext context;
@@ -479,7 +495,12 @@ TEST_F(QueryCacheTest, PerformanceBenchmark) {
     codegen::BufferingConsumer buffer{{0, 1, 2, 3}, context};
     // COMPILE and execute with cache
     CompileAndExecuteCache(plan, buffer,
-                           reinterpret_cast<char*>(buffer.GetState()));
+                           reinterpret_cast<char*>(buffer.GetState()), cached);
+    if (i == 0) {
+      EXPECT_EQ(false, cached);
+    } else {
+      EXPECT_EQ(true, cached);
+    }
   }
   timer2.Stop();
 
