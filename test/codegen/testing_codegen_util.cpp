@@ -163,30 +163,27 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecute(
   // Compile
   codegen::QueryCompiler::CompileStats stats;
   codegen::QueryCompiler compiler;
-  std::unique_ptr<executor::ExecutorContext> executor_context{
-      new executor::ExecutorContext(txn)};
-  std::unique_ptr<codegen::QueryParameters> parameters;
-  if (params == nullptr) {
-    parameters.reset(new codegen::QueryParameters(plan,
-        executor_context->GetParams()));
+  std::unique_ptr<executor::ExecutorContext> executor_context;
+  if (params != nullptr) {
+    executor_context.reset(new executor::ExecutorContext{txn, *params});
   } else {
-    parameters.reset(new codegen::QueryParameters(plan, *params));
+    executor_context.reset(new executor::ExecutorContext{txn});
   }
+  codegen::QueryParameters parameters{plan, executor_context->GetParams()};
 
-  auto compiled_query = compiler.Compile(plan, *parameters.get(), consumer,
+  auto compiled_query = compiler.Compile(plan, parameters, consumer,
                                          &stats);
   // Run
-  compiled_query->Execute(*executor_context.get(), *parameters.get(),
+  compiled_query->Execute(*executor_context.get(), parameters,
                           consumer_state);
-
   txn_manager.CommitTransaction(txn);
   return stats;
 }
 
 codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecuteCache(
     std::shared_ptr<planner::AbstractPlan> plan,
-    codegen::QueryResultConsumer &consumer, char *consumer_state,
-    std::vector<type::Value> *params, bool *cached) {
+    codegen::QueryResultConsumer &consumer, char *consumer_state, bool &cached,
+    std::vector<type::Value> *params) {
   // Start a transaction
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto *txn = txn_manager.BeginTransaction();
@@ -195,27 +192,26 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecuteCache(
   codegen::QueryCompiler::CompileStats stats;
   codegen::QueryCompiler compiler;
 
-  std::unique_ptr<executor::ExecutorContext> executor_context{
-      new executor::ExecutorContext(txn)};
-  std::unique_ptr<codegen::QueryParameters> parameters;
-  if (params == nullptr) {
-    parameters.reset(new codegen::QueryParameters(*plan.get(),
-        executor_context->GetParams()));
+  std::unique_ptr<executor::ExecutorContext> executor_context;
+  if (params != nullptr) {
+    executor_context.reset(new executor::ExecutorContext{txn, *params});
   } else {
-    parameters.reset(new codegen::QueryParameters(*plan.get(), *params));
+    executor_context.reset(new executor::ExecutorContext{txn});
   }
+  codegen::QueryParameters parameters{*plan.get(),
+                                      executor_context->GetParams()};
 
-  codegen::Query* query = codegen::QueryCache::Instance().Find(plan);
+  codegen::Query *query = codegen::QueryCache::Instance().Find(plan);
   if (query == nullptr) {
-    auto compiled_query = compiler.Compile(*plan, *parameters.get(), consumer,
+    auto compiled_query = compiler.Compile(*plan, parameters, consumer,
                                            &stats);
-    compiled_query->Execute(*executor_context.get(), *parameters.get(),
+    compiled_query->Execute(*executor_context.get(), parameters,
                             consumer_state);
     codegen::QueryCache::Instance().Add(plan, std::move(compiled_query));
-    if (cached != nullptr) *cached = false;
+    cached = false;
   } else {
-    query->Execute(*executor_context.get(), *parameters.get(), consumer_state);
-    if (cached != nullptr) *cached = true;
+    query->Execute(*executor_context.get(), parameters, consumer_state);
+    cached = true;
   }
   txn_manager.CommitTransaction(txn);
 
