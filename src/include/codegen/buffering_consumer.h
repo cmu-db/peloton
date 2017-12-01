@@ -63,6 +63,8 @@ class BufferingConsumer : public QueryResultConsumer {
 
   void Prepare(CompilationContext &compilation_context) override;
   void InitializeState(CompilationContext &) override {}
+  void InitializeParallelState(CompilationContext &compilation_context,
+                               llvm::Value *ntasks) override;
   void TearDownState(CompilationContext &) override {}
   void ConsumeResult(ConsumerContext &ctx, RowBatch::Row &row) const override;
 
@@ -71,6 +73,9 @@ class BufferingConsumer : public QueryResultConsumer {
     auto &runtime_state = ctx.GetRuntimeState();
     return runtime_state.LoadStateValue(ctx.GetCodeGen(), id);
   }
+
+  // Setup after acknowleding number of tasks.
+  static void SetNumTasks(char *state, int32_t ntasks);
 
   // Called from compiled query code to buffer the tuple
   static void BufferTuple(char *state, char *tuple, int32_t task_id, uint32_t num_cols);

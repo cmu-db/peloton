@@ -31,6 +31,9 @@ class QueryResultConsumer {
   // Called to generate any initialization code the consumer needs
   virtual void InitializeState(CompilationContext &compilation_context) = 0;
 
+  virtual void InitializeParallelState(CompilationContext &compilation_context,
+                                       llvm::Value *ntasks) = 0;
+
   // Called during plan-generation to consume the results of the query
   virtual void ConsumeResult(ConsumerContext &context,
                              RowBatch::Row &row) const = 0;

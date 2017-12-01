@@ -45,8 +45,12 @@ WrappedTuple &WrappedTuple::operator=(const WrappedTuple &o) {
 // BufferTuple() Proxy
 //===----------------------------------------------------------------------===//
 
-PROXY(BufferingConsumer) { DECLARE_METHOD(BufferTuple); };
+PROXY(BufferingConsumer) {
+  DECLARE_METHOD(SetNumTasks);
+  DECLARE_METHOD(BufferTuple);
+};
 
+DEFINE_METHOD(peloton::codegen, BufferingConsumer, SetNumTasks);
 DEFINE_METHOD(peloton::codegen, BufferingConsumer, BufferTuple);
 
 //===----------------------------------------------------------------------===//
@@ -56,10 +60,15 @@ DEFINE_METHOD(peloton::codegen, BufferingConsumer, BufferTuple);
 // TODO(zhixunt): Very important! Don't fix Vector::kDefaultVectorSize!
 BufferingConsumer::BufferingConsumer(const std::vector<oid_t> &cols,
                                      planner::BindingContext &context)
-    : output_chunks_(Vector::kDefaultVectorSize), state(&output_chunks_) {
+    : output_chunks_(), state(&output_chunks_) {
   for (oid_t col_id : cols) {
     output_ais_.push_back(context.Find(col_id));
   }
+}
+
+void BufferingConsumer::SetNumTasks(char *state, int32_t ntasks) {
+  auto buffer_state = reinterpret_cast<BufferingState *>(state);
+  buffer_state->output->resize(ntasks);
 }
 
 // Append the array of values (i.e., a tuple) into the consumer's buffer of
@@ -83,6 +92,16 @@ void BufferingConsumer::Prepare(CompilationContext &ctx) {
   auto *value_type = ValueProxy::GetType(codegen);
   tuple_output_state_id_ = runtime_state.RegisterState(
       "output", codegen.ArrayType(value_type, output_ais_.size()), true);
+}
+
+void BufferingConsumer::InitializeParallelState(
+    CompilationContext &compilation_context, llvm::Value *ntasks) {
+  auto &codegen = compilation_context.GetCodeGen();
+  auto &runtime_state = compilation_context.GetRuntimeState();
+  codegen.Call(BufferingConsumerProxy::SetNumTasks, {
+      runtime_state.LoadStateValue(codegen, consumer_state_id_),
+      ntasks
+  });
 }
 
 // For each output attribute, we write out the attribute's value into the

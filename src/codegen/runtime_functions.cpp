@@ -102,5 +102,25 @@ void RuntimeFunctions::ThrowOverflowException() {
   throw std::overflow_error("ERROR: overflow");
 }
 
+int32_t RuntimeFunctions::NewTaskInfos(int64_t task_size, int64_t total_size,
+                                       TaskInfo **task_infos) {
+  auto ntasks = static_cast<int32_t>((total_size + task_size - 1) / task_size);
+  size_t nbytes = ntasks * sizeof(TaskInfo);
+  *task_infos = reinterpret_cast<TaskInfo *>(new char[nbytes]);
+  for (int32_t task_id = 0; task_id < ntasks; ++task_id) {
+    int64_t begin = task_id * task_size;
+    int64_t end = (task_id + 1 == ntasks) ? total_size : (begin + task_size);
+    (*task_infos)[task_id].Init(task_id, ntasks, begin, end);
+  }
+  return ntasks;
+}
+
+void RuntimeFunctions::DeleteTaskInfos(TaskInfo *task_infos, int32_t ntasks) {
+  for (int32_t task_id = 0; task_id < ntasks; ++task_id) {
+    task_infos[task_id].Destroy();
+  }
+  delete[] reinterpret_cast<char *>(task_infos);
+}
+
 }  // namespace codegen
 }  // namespace peloton

@@ -14,6 +14,7 @@
 
 #include "codegen/proxy/proxy.h"
 #include "codegen/proxy/type_builder.h"
+#include "codegen/proxy/task_info_proxy.h"
 #include "codegen/runtime_functions.h"
 
 namespace peloton {
@@ -32,6 +33,8 @@ PROXY(RuntimeFunctions) {
   DECLARE_METHOD(GetTileGroupLayout);
   DECLARE_METHOD(ThrowDivideByZeroException);
   DECLARE_METHOD(ThrowOverflowException);
+  DECLARE_METHOD(NewTaskInfos);
+  DECLARE_METHOD(DeleteTaskInfos);
 };
 
 TYPE_BUILDER(ColumnLayoutInfo, codegen::RuntimeFunctions::ColumnLayoutInfo);

@@ -121,6 +121,8 @@ class Printer : public codegen::QueryResultConsumer {
   // None of these are used, except ConsumeResult()
   void Prepare(codegen::CompilationContext &) override {}
   void InitializeState(codegen::CompilationContext &) override {}
+  void InitializeParallelState(codegen::CompilationContext &,
+                               llvm::Value *) override {}
   void TearDownState(codegen::CompilationContext &) override {}
   // Use
   void ConsumeResult(codegen::ConsumerContext &ctx,
@@ -137,6 +139,8 @@ class CountingConsumer : public codegen::QueryResultConsumer {
  public:
   void Prepare(codegen::CompilationContext &compilation_context) override;
   void InitializeState(codegen::CompilationContext &context) override;
+  void InitializeParallelState(codegen::CompilationContext &,
+                               llvm::Value *) override {}
   void ConsumeResult(codegen::ConsumerContext &context,
                      codegen::RowBatch::Row &row) const override;
   void TearDownState(codegen::CompilationContext &) override {}

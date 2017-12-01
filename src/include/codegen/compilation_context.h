@@ -65,6 +65,21 @@ class CompilationContext {
 
   bool MultithreadOn() const { return multithread_on_; }
 
+  // Add a callback to be invoked when the number of tasks is determined in the
+  // main plan function. This is used for consumer initialization for parallel
+  // execution.
+  void PushParallelInitCallback(std::function<void(llvm::Value*)> callback);
+
+  std::vector<std::function<void(llvm::Value *)>> PopParallelInitCallbacks();
+
+  void ParallelInit(llvm::Value* ntasks);
+
+  void PushParallelDestroyCallback(std::function<void(llvm::Value *)> callback);
+
+  std::vector<std::function<void(llvm::Value *)>> PopParallelDestroyCallbacks();
+
+  void ParallelDestroy(llvm::Value* ntasks);
+
   //===--------------------------------------------------------------------===//
   // ACCESSORS
   //===--------------------------------------------------------------------===//
@@ -135,6 +150,10 @@ class CompilationContext {
   // The mapping of an expression somewhere in the tree to its translator
   std::unordered_map<const expression::AbstractExpression *,
                      std::unique_ptr<ExpressionTranslator>> exp_translators_;
+
+  // Callback functions intended to be called around submitting tasks.
+  std::vector<std::function<void(llvm::Value *)>> parallal_init_callbacks_;
+  std::vector<std::function<void(llvm::Value *)>> parallel_destroy_callbacks_;
 };
 
 }  // namespace codegen
