@@ -241,7 +241,6 @@ void Tuple::DeserializeWithHeaderFrom(SerializeInput &input UNUSED_ATTRIBUTE) {
 
     // SetValue(column_itr,type::ValueFactory::GetIntegerValue(input.ReadInt()));
   }
-  }
 }
 
 void Tuple::SerializeWithHeaderTo(SerializeOutput &output) {
@@ -449,6 +448,7 @@ const std::string Tuple::GetInfo() const {
   os << ")";
   return os.str();
 }
+
 
 }  // namespace storage
 }  // namespace peloton

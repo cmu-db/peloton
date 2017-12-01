@@ -154,8 +154,6 @@ class TransactionContext : public Printable {
 
   std::vector<logging::LogRecord> log_records_;
 
-  std::vector<logging::LogRecord> log_records_;
-
  private:
   //===--------------------------------------------------------------------===//
   // Data members

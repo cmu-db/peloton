@@ -62,8 +62,6 @@ class LogRecord {
 
   ItemPointer old_tuple_pos_;
 
-  ItemPointer old_tuple_pos_;
-
   ItemPointer tuple_pos_;
 
   eid_t eid_;

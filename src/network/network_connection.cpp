@@ -106,10 +106,6 @@ void NetworkConnection::TriggerStateMachineLog(void *arg) {
   event_active(event, EV_WRITE, 0);
 }
 
-void NetworkConnection::TriggerStateMachineLog(void *arg) {
-  struct event *event = static_cast<struct event *>(arg);
-  event_active(event, EV_WRITE, 0);
-}
 
 void NetworkConnection::TransitState(ConnState next_state) {
 #ifdef LOG_TRACE_ENABLED

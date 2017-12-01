@@ -793,9 +793,8 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
   //////////////////////////////////////////////////////////
 
   auto &manager = catalog::Manager::GetInstance();
-
   cid_t end_commit_id = current_txn->GetCommitId();
-  
+
   // generate transaction id.
   auto &rw_set = current_txn->GetReadWriteSet();
   auto &rw_object_set = current_txn->GetCreateDropSet();
@@ -842,7 +841,6 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         // visible.
         ItemPointer new_version =
             tile_group_header->GetPrevItemPointer(tuple_slot);
-
         PL_ASSERT(new_version.IsNull() == false);
 
         auto cid = tile_group_header->GetEndCommitId(tuple_slot);
@@ -944,16 +942,6 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
           database_id);
     }
 
-  // If there is a log manager and something to log, queue the task.
-  if (log_manager != nullptr && !current_txn->log_records_.empty()) {
-    log_manager->LogTransaction(current_txn->log_records_);
-    log_manager->is_running_ = true;
-    EndTransaction(current_txn);
-    if (settings::SettingsManager::GetInt(settings::SettingId::stats_mode) !=
-        STATS_TYPE_INVALID) {
-      stats::BackendStatsContext::GetInstance()->IncrementTxnCommitted(
-          database_id);
-    }
     return ResultType::LOGGING;
   }
   // If not, just return.
@@ -967,7 +955,6 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
     }
 
     return result;
-  }
   }
 }
 

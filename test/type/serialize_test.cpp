@@ -129,46 +129,6 @@
 
     type::Value val = type::Value::DeserializeFrom(record_decode,
     type::TypeId::VARCHAR);
-
-}
-
- TEST_F(SerializeTests, SerializeVarlenValueToFileTest) {
-    type::Value value =
-    type::ValueFactory::GetVarcharValue("hellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohello");
-    logging::LogBuffer* buf = new logging::LogBuffer();
-    CopySerializeOutput output_buffer;
-    size_t buf_size = 4096;
-    std::unique_ptr<char[]> buffer(new char[buf_size]);
-    output_buffer.Reset();
-    value.SerializeTo(output_buffer);
-    buf->WriteData(output_buffer.Data(), output_buffer.Size());
-    FileHandle *new_file_handle = new FileHandle();
-
-    std::string filename = "test_file";
-    // Create a new file
-    logging::LoggingUtil::OpenFile(filename.c_str(), "wb", *new_file_handle);
-    fwrite((const void *) (buf->GetData()), buf->GetSize(), 1,
-    new_file_handle->file);
-    buf->Reset();
-
-//  Call fsync
-    logging::LoggingUtil::FFlushFsync(*new_file_handle);
-
-    logging::LoggingUtil::CloseFile(*new_file_handle);
-
-    delete new_file_handle;
-
-    new_file_handle = new FileHandle();
-    logging::LoggingUtil::OpenFile(filename.c_str(), "rb", *new_file_handle);
-
-    logging::LoggingUtil::ReadNBytesFromFile(*new_file_handle, (void *)
-    buffer.get(), output_buffer.Size());
-
-    CopySerializeInput record_decode((const void *) buffer.get(),
-    output_buffer.Size());
-
-    type::Value val = type::Value::DeserializeFrom(record_decode,
-    type::TypeId::VARCHAR);
     delete new_file_handle;
     delete buf;
     EXPECT_EQ(type::CMP_TRUE,value.CompareEquals(val));
@@ -265,8 +225,6 @@
     delete buf;
     delete new_file_handle;
 }
-    delete buf;
-    delete new_file_handle;
 
 }  // End test namespace
 }  // End peloton namespace

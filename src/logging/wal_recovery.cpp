@@ -506,9 +506,9 @@ bool WalRecovery::ReplayLogFile(FileHandle &file_handle) {
     auto table_catalog = catalog::TableCatalog::GetInstance();
     auto table_object =
         table_catalog->GetTableObject(tup->GetValue(2).GetAs<oid_t>(), txn);
-    auto database_oid = table_object->database_oid;
+    auto database_oid = table_object->GetDatabaseOid();
     auto table = storage::StorageManager::GetInstance()->GetTableWithOid(
-        database_oid, table_object->table_oid);
+        database_oid, table_object->GetTableOid());
     concurrency::TransactionManagerFactory::GetInstance().CommitTransaction(
         txn);
     auto tuple_schema = table->GetSchema();
@@ -584,5 +584,6 @@ void WalRecovery::RunRecovery() {
       exit(EXIT_FAILURE);
     }
   }
+}
 }
 }

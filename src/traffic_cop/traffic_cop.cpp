@@ -227,10 +227,7 @@ void TrafficCop::ExecuteStatementPlanGetResult(
     // COMMIT; statement
     p_status_.m_result = ResultType::QUEUING;
     }
-  } else {
-    // COMMIT; statement
-    p_status_.m_result = ResultType::QUEUING;
-  }
+
 }
 
 void TrafficCop::GetDataTables(
