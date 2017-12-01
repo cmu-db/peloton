@@ -28,6 +28,8 @@
 #include "optimizer/query_property_extractor.h"
 #include "optimizer/query_to_operator_transformer.h"
 #include "optimizer/rule_impls.h"
+#include "optimizer/optimizer_task_pool.h"
+#include "optimizer/optimize_context.h"
 #include "parser/create_statement.h"
 
 #include "planner/analyze_plan.h"
@@ -57,31 +59,45 @@ namespace optimizer {
 // Optimizer
 //===--------------------------------------------------------------------===//
 Optimizer::Optimizer() {
-  rule_set_.AddRule(new InnerJoinCommutativity());
-  rule_set_.AddRule(new LogicalDeleteToPhysical());
-  rule_set_.AddRule(new LogicalUpdateToPhysical());
-  rule_set_.AddRule(new LogicalInsertToPhysical());
-  rule_set_.AddRule(
+  metadata_.AddRule(new InnerJoinCommutativity());
+  metadata_.AddRule(new LogicalDeleteToPhysical());
+  metadata_.AddRule(new LogicalUpdateToPhysical());
+  metadata_.AddRule(new LogicalInsertToPhysical());
+  metadata_.AddRule(
       new LogicalInsertSelectToPhysical());
-  rule_set_.AddRule(
+  metadata_.AddRule(
       new LogicalGroupByToHashGroupBy());
   // Comment out because codegen does not support sort groupby now
   // rule_set_.AddRule(
   //     new LogicalGroupByToSortGroupBy());
-  rule_set_.AddRule(new LogicalAggregateToPhysical());
-  rule_set_.AddRule(new GetToDummyScan());
-  rule_set_.AddRule(new GetToSeqScan());
-  rule_set_.AddRule(new GetToIndexScan());
-  rule_set_.AddRule(
+  metadata_.AddRule(new LogicalAggregateToPhysical());
+  metadata_.AddRule(new GetToDummyScan());
+  metadata_.AddRule(new GetToSeqScan());
+  metadata_.AddRule(new GetToIndexScan());
+  metadata_.AddRule(
       new LogicalQueryDerivedGetToPhysical());
 //  rule_set_.AddRule(new LogicalFilterToPhysical());
-  rule_set_.AddRule(new InnerJoinToInnerNLJoin());
+  metadata_.AddRule(new InnerJoinToInnerNLJoin());
 //  rule_set_.AddRule(new LeftJoinToLeftNLJoin());
 //  rule_set_.AddRule(new RightJoinToRightNLJoin());
 //  rule_set_.AddRule(new OuterJoinToOuterNLJoin());
-  rule_set_.AddRule(new InnerJoinToInnerHashJoin());
+  metadata_.AddRule(new InnerJoinToInnerHashJoin());
+}
 
-  memo_
+void Optimizer::OptimizeLoop(int root_group_id, PropertySet *required_props) {
+  OptimizerTaskStack task_pool;
+  std::shared_ptr<OptimizeContext> root_context = std::make_shared<OptimizeContext>(&task_pool, required_props);
+  OptimizerTask* t = new OptimizeGroup(metadata_.memo.GetGroupByID(root_group_id), root_context);
+  task_pool.Push(new OptimizeGroup(metadata_.memo.GetGroupByID(root_group_id), root_context));
+
+  OptimizerTask::SetMetadata(&metadata_);
+
+  // TODO: Add timer for early stop
+  while (!task_pool.Empty()) {
+    auto task = task_pool.Pop();
+    task->execute();
+  }
+
 }
 
 shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
@@ -596,29 +612,18 @@ vector<shared_ptr<GroupExpression>> Optimizer::TransformExpression(
 /// Memo insertion
 shared_ptr<GroupExpression> Optimizer::MakeGroupExpression(
     shared_ptr<OperatorExpression> expr) {
-  vector<GroupID> child_groups;
-  for (auto &child : expr->Children()) {
-    auto gexpr = MakeGroupExpression(child);
-    memo_.InsertExpression(gexpr, false);
-    child_groups.push_back(gexpr->GetGroupID());
-  }
-  return make_shared<GroupExpression>(expr->Op(), child_groups);
+  memo_.MakeGroupExpression(expr);
 }
 
 bool Optimizer::RecordTransformedExpression(
     shared_ptr<OperatorExpression> expr, shared_ptr<GroupExpression> &gexpr) {
-  return RecordTransformedExpression(expr, gexpr, UNDEFINED_GROUP);
+  return memo_.RecordTransformedExpression(expr, gexpr);
 }
 
 bool Optimizer::RecordTransformedExpression(shared_ptr<OperatorExpression> expr,
                                             shared_ptr<GroupExpression> &gexpr,
                                             GroupID target_group) {
-  gexpr = MakeGroupExpression(expr);
-  if (memo_.InsertExpression(gexpr, target_group, false) != gexpr) {
-    gexpr->ResetRuleMask(rule_set_.size());
-    return true;
-  }
-  return false;
+  return memo_.RecordTransformedExpression(expr, gexpr, target_group);
 }
 
 }  // namespace optimizer

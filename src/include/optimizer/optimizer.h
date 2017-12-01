@@ -15,9 +15,8 @@
 #include <memory>
 
 #include "optimizer/abstract_optimizer.h"
-#include "optimizer/memo.h"
 #include "optimizer/property_set.h"
-#include "optimizer/rule.h"
+#include "optimizer/optimizer_metadata.h"
 
 namespace peloton {
 
@@ -59,6 +58,8 @@ class Optimizer : public AbstractOptimizer {
       const std::unique_ptr<parser::SQLStatementList> &parse_tree,
       const std::string default_database_name,
       concurrency::Transaction *txn) override;
+
+  void OptimizeLoop(int root_group_id, PropertySet *required_props);
 
   void Reset() override;
 
@@ -225,10 +226,8 @@ class Optimizer : public AbstractOptimizer {
   Property *GenerateNewPropertyCols(PropertySet requirements);
 
   //////////////////////////////////////////////////////////////////////////////
-  /// Member variables
-  Memo memo_;
-
-  RuleSet rule_set_;
+  /// Metadata
+  OptimizerMetadata metadata_;
 };
 
 }  // namespace optimizer

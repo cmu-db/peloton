@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <include/optimizer/group_expression.h>
 #include "optimizer/memo.h"
 #include "optimizer/operators.h"
 

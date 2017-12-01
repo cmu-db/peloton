@@ -81,12 +81,23 @@ class Rule {
   int rule_idx_;
 };
 
+struct RuleWithPromise {
+  Rule* rule;
+  int promise;
+
+  bool operator()(const RuleWithPromise& l, const RuleWithPromise& r) const {
+    return l.promise < r.promise;
+  }
+};
+
 class RuleSet {
  public:
   void AddRule(Rule* rule) {
     rule->SetRuleIdx(rules_.size());
     rules_.emplace_back(rule);
   }
+
+  std::vector<std::unique_ptr<Rule>>& GetRules() {return rules_;}
 
   inline size_t size() {return rules_.size();}
 

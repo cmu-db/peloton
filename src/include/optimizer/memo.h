@@ -61,12 +61,15 @@ class Memo {
 
   Group* GetGroupByID(GroupID id);
 
+  inline void SetRuleSetSize(size_t rule_set_size) {rule_set_size_ = rule_set_size};
+
  private:
   GroupID AddNewGroup(std::shared_ptr<GroupExpression> gexpr);
 
   std::unordered_set<std::shared_ptr<GroupExpression>, GExprPtrHash, GExprPtrEq>
       group_expressions_;
   std::vector<std::unique_ptr<Group>> groups_;
+  size_t rule_set_size_;
 };
 
 }  // namespace optimizer

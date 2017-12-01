@@ -33,10 +33,16 @@ void Group::AddExpression(std::shared_ptr<GroupExpression> expr,
                           bool enforced) {
   // Do duplicate detection
   expr->SetGroupID(id_);
+  // TODO: Remove
   if (enforced)
     enforced_exprs_.push_back(expr);
   else
     expressions_.push_back(expr);
+
+  if (expr->Op().IsPhysical())
+    physical_expressions_.push_back(expr);
+  else
+    logical_expressions_.push_back(expr);
 }
 
 void Group::SetExpressionCost(std::shared_ptr<GroupExpression> expr,

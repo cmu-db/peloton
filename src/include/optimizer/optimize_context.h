@@ -12,7 +12,8 @@
 
 #pragma once
 
-#include "property_set.h"
+#include "optimizer/property_set.h"
+#include "optimizer/optimizer_task.h"
 
 namespace peloton {
 namespace optimizer {
@@ -20,9 +21,13 @@ namespace optimizer {
 class OptimizeContext {
  public:
   OptimizeContext(
+      OptimizerTaskPool *task_pool,
       std::unique_ptr<PropertySet> required_prop,
-      double cost_upper_bound = -1) :
+      double cost_upper_bound = std::numeric_limits<double>::max()) :
+      task_pool(task_pool),
       required_prop(std::move(required_prop)), cost_upper_bound(cost_upper_bound) {}
+
+  OptimizerTaskPool *task_pool;
   std::unique_ptr<PropertySet> required_prop;
   double cost_upper_bound;
 };
