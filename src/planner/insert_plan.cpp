@@ -156,5 +156,20 @@ void InsertPlan::SetParameterValues(std::vector<type::Value> *values) {
   }
 }
 
+void InsertPlan::PerformBinding(BindingContext &binding_context) {
+  const auto &children = GetChildren();
+
+  if (children.size() == 1) {
+    children[0]->PerformBinding(binding_context);
+
+    auto *scan = static_cast<planner::AbstractScan *>(children[0].get());
+    auto &col_ids = scan->GetColumnIds();
+    for (oid_t col_id = 0; col_id < col_ids.size(); col_id++) {
+      ais_.push_back(binding_context.Find(col_id));
+    }
+  }
+  // Binding is not required if there is no child
+}
+
 }  // namespace planner
 }  // namespace peloton
