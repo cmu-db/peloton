@@ -83,17 +83,13 @@ void InsertTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
   auto &codegen = GetCodeGen();
   auto *inserter = LoadStatePtr(inserter_state_id_);
 
-  auto *scan =
-      static_cast<const planner::AbstractScan *>(insert_plan_.GetChild(0));
-  std::vector<const planner::AttributeInfo *> ais;
-  scan->GetAttributes(ais);
-
   auto *tuple_ptr = codegen.Call(InserterProxy::ReserveTupleStorage,
                                  {inserter});
   auto *pool = codegen.Call(InserterProxy::GetPool, {inserter});
 
   // Generate/Materialize tuple data from row and attribute information
   std::vector<codegen::Value> values;
+  auto &ais = insert_plan_.GetAttributeInfos();
   for (const auto *ai : ais) {
     codegen::Value v = row.DeriveValue(codegen, ai);
     values.push_back(v);
