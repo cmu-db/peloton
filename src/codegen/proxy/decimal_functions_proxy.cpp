@@ -18,7 +18,8 @@
 namespace peloton {
 namespace codegen {
 
-  DEFINE_METHOD(peloton::function, DecimalFunctions, Floor);
+DEFINE_METHOD(peloton::function, DecimalFunctions, Floor);
+DEFINE_METHOD(peloton::function, DecimalFunctions, Sqrt);
 
 }  // namespace codegen
 }  // namespace peloton

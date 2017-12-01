@@ -973,7 +973,30 @@ void Catalog::InitializeFunctions() {
       AddBuiltinFunction(
           "sqrt", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL, internal_lang,
           "Sqrt", function::BuiltInFuncType{OperatorId::Sqrt,
-                                            function::DecimalFunctions::Sqrt},
+                                            function::DecimalFunctions::_Sqrt},
+          txn);
+
+      AddBuiltinFunction(
+          "sqrt", {type::TypeId::BIGINT}, type::TypeId::DECIMAL, internal_lang,
+          "Sqrt", function::BuiltInFuncType{OperatorId::Sqrt,
+                                            function::DecimalFunctions::_Sqrt},
+          txn);
+
+      AddBuiltinFunction(
+          "sqrt", {type::TypeId::INTEGER}, type::TypeId::DECIMAL, internal_lang,
+          "Sqrt", function::BuiltInFuncType{OperatorId::Sqrt,
+                                            function::DecimalFunctions::_Sqrt},
+          txn);
+      AddBuiltinFunction(
+          "sqrt", {type::TypeId::SMALLINT}, type::TypeId::DECIMAL,
+          internal_lang, "Sqrt",
+          function::BuiltInFuncType{OperatorId::Sqrt,
+                                    function::DecimalFunctions::_Sqrt},
+          txn);
+      AddBuiltinFunction(
+          "sqrt", {type::TypeId::TINYINT}, type::TypeId::DECIMAL, internal_lang,
+          "Sqrt", function::BuiltInFuncType{OperatorId::Sqrt,
+                                            function::DecimalFunctions::_Sqrt},
           txn);
       AddBuiltinFunction(
           "floor", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL,
