@@ -230,7 +230,7 @@ bool SeqScanPlan::DeserializeFrom(SerializeInput &input) {
  *      [(bytes) predicate] : predicate->GetSerializeSize()
  *      [(bytes) parent]    : parent->GetSerializeSize()
  */
-int SeqScanPlan::SerializeSize() {
+int SeqScanPlan::SerializeSize() const {
   // Fixed size. see the detail above
   int size_fix = sizeof(int) * 4 + 3;
   int size_column_ids = GetColumnIds().size() * sizeof(int);

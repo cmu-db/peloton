@@ -64,7 +64,7 @@ class SeqScanPlan : public AbstractScan {
   bool DeserializeFrom(SerializeInput &input) override;
 
   /* For init SerializeOutput */
-  int SerializeSize() override;
+  int SerializeSize() const override;
 
   oid_t GetColumnID(std::string col_name);
 
