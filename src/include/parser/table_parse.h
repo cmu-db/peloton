@@ -24,9 +24,9 @@ namespace parser {
 class TableParse : public AbstractParse {
  public:
   TableParse() = delete;
-  TableParse(const DropParse &) = delete;
+  TableParse(const TableParse &) = delete;
   TableParse &operator=(const TableParse &) = delete;
-  TableParse(DropParse &&) = delete;
+  TableParse(TableParse &&) = delete;
   TableParse &operator=(TableParse &&) = delete;
 
   /*
