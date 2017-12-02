@@ -14,6 +14,7 @@
 
 #include <list>
 #include "codegen/query.h"
+#include "common/platform.h"
 #include "common/singleton.h"
 #include "planner/abstract_plan.h"
 
@@ -53,8 +54,10 @@ class QueryCache : public Singleton<QueryCache> {
 
   // Remove all the items in the cache
   void Clear() {
+    cache_lock_.WriteLock();
     cache_map_.clear();
     query_list_.clear();
+    cache_lock_.Unlock();
   }
 
   // Remove all the cached query items related to a table
@@ -67,12 +70,14 @@ class QueryCache : public Singleton<QueryCache> {
 
   // Resize the cache in the LRU manner
   void Resize(size_t target_size) {
+    cache_lock_.WriteLock();
     while (cache_map_.size() > target_size) {
       auto last_it = query_list_.end();
       last_it--;
       cache_map_.erase(last_it->first);
       query_list_.pop_back();
     }
+    cache_lock_.Unlock();
   }
 
   // Get the table Oid from the plan given
@@ -85,6 +90,8 @@ class QueryCache : public Singleton<QueryCache> {
   std::unordered_map<std::shared_ptr<planner::AbstractPlan>,
            decltype(query_list_.begin()),
            planner::Hash, planner::Equal> cache_map_;
+
+  RWLock cache_lock_;
 
   size_t capacity_ = 0;
 };
