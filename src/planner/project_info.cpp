@@ -180,27 +180,31 @@ std::string ProjectInfo::Debug() const {
 
 hash_t ProjectInfo::Hash(const planner::DerivedAttribute &attribute) const {
   hash_t hash = HashUtil::Hash(&attribute.attribute_info.type.type_id);
+
   hash = HashUtil::CombineHashes(hash,
       HashUtil::Hash(&attribute.attribute_info.attribute_id));
-  hash = HashUtil::CombineHashes(hash, attribute.expr->Hash());
-  return hash;
+
+  return HashUtil::CombineHashes(hash, attribute.expr->Hash());
 }
 
 hash_t ProjectInfo::Hash() const {
   hash_t hash = 0;
 
-  for (size_t i = 0; i < GetTargetList().size(); i++) {
-    Target t = GetTargetList().at(i);
+  for (size_t i = 0; i < target_list_.size(); i++) {
+    Target t = target_list_[i];
+
     hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&t.first));
     hash = HashUtil::CombineHashes(hash, Hash(t.second));
   }
 
-  for (size_t i = 0; i < GetDirectMapList().size(); i++) {
-    DirectMap dm = GetDirectMapList().at(i);
+  for (size_t i = 0; i < direct_map_list_.size(); i++) {
+    DirectMap dm = direct_map_list_[i];
+
     hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&dm.first));
     hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&dm.second.first));
     hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&dm.second.second));
   }
+
   return hash;
 }
 
@@ -208,19 +212,22 @@ bool ProjectInfo::AreEqual(const planner::DerivedAttribute &A,
                            const planner::DerivedAttribute &B) const {
   if (A.attribute_info.type != B.attribute_info.type)
     return false;
+
   if (A.attribute_info.attribute_id != B.attribute_info.attribute_id)
     return false;
+
   return *A.expr == *B.expr;
 }
 
 bool ProjectInfo::operator==(const ProjectInfo &rhs) const {
   // TargetList
-  size_t tl_size = GetTargetList().size();
+  size_t tl_size = target_list_.size();
   if (tl_size != rhs.GetTargetList().size())
     return false;
+
   for (size_t i = 0; i < tl_size; i++) {
-    Target t = GetTargetList().at(i);
-    Target other_t = rhs.GetTargetList().at(i);
+    Target t = target_list_[i];
+    Target other_t = rhs.GetTargetList()[i];
     if (t.first != other_t.first)
       return false;
     if (!AreEqual(t.second, other_t.second))
@@ -228,12 +235,13 @@ bool ProjectInfo::operator==(const ProjectInfo &rhs) const {
   }
 
   // DirectMapList
-  size_t dml_size = GetDirectMapList().size();
+  size_t dml_size = direct_map_list_.size();
   if (dml_size != rhs.GetDirectMapList().size())
     return false;
+
   for (size_t i = 0; i < dml_size; i++) {
-    DirectMap dm = GetDirectMapList().at(i);
-    DirectMap other_dm = rhs.GetDirectMapList().at(i);
+    DirectMap dm = direct_map_list_[i];
+    DirectMap other_dm = rhs.GetDirectMapList()[i];
     if (dm.first != other_dm.first)
       return false;
     else if (dm.second.first != other_dm.second.first)
@@ -241,6 +249,7 @@ bool ProjectInfo::operator==(const ProjectInfo &rhs) const {
     else if (dm.second.second != other_dm.second.second)
       return false;
   }
+
   return true;
 }
 
@@ -249,9 +258,11 @@ void ProjectInfo::VisitParameters(
     std::unordered_map<const expression::AbstractExpression *, size_t> &index,
     const std::vector<peloton::type::Value> &parameter_values) {
   if (isNonTrivial()) {
+
     for (auto &target : GetTargetList()) {
       const auto &derived_attribute = target.second;
       PL_ASSERT(derived_attribute.expr != nullptr);
+
       auto *expr =
           const_cast<expression::AbstractExpression *>(derived_attribute.expr);
       expr->VisitParameters(parameters, index, parameter_values);

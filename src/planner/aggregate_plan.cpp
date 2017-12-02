@@ -124,10 +124,13 @@ void AggregatePlan::PerformBinding(BindingContext &binding_context) {
 hash_t AggregatePlan::Hash(
     const std::vector<planner::AggregatePlan::AggTerm> &agg_terms) const {
   hash_t hash = 0;
+
   for (auto &agg_term : agg_terms) {
     hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&agg_term.aggtype));
+
     if (agg_term.expression != nullptr)
       hash = HashUtil::CombineHashes(hash, agg_term.expression->Hash());
+
     hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&agg_term.distinct));
   }
   return hash;
@@ -137,13 +140,15 @@ hash_t AggregatePlan::Hash() const {
   auto type = GetPlanNodeType();
   hash_t hash = HashUtil::Hash(&type);
 
-  if (GetPredicate() != nullptr)
+  if (GetPredicate() != nullptr) {
     hash = HashUtil::CombineHashes(hash, GetPredicate()->Hash());
+  }
 
   hash = HashUtil::CombineHashes(hash, Hash(GetUniqueAggTerms()));
 
-  if (GetProjectInfo() != nullptr)
+  if (GetProjectInfo() != nullptr) {
     hash = HashUtil::CombineHashes(hash, GetProjectInfo()->Hash());
+  }
 
   for (const oid_t gb_col_id : GetGroupbyColIds()) {
     hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&gb_col_id));
@@ -162,13 +167,17 @@ bool AggregatePlan::AreEqual(
     const std::vector<planner::AggregatePlan::AggTerm> &B) const {
   if (A.size() != B.size())
     return false;
+
   for (size_t i = 0; i < A.size(); i++) {
-    if (A.at(i).aggtype != B.at(i).aggtype)
+    if (A[i].aggtype != B[i].aggtype)
       return false;
-    auto *expr = A.at(i).expression;
-    if (expr && (*expr != *B.at(i).expression))
+
+    auto *expr = A[i].expression;
+
+    if (expr && (*expr != *B[i].expression))
       return false;
-    if (A.at(i).distinct != B.at(i).distinct)
+
+    if (A[i].distinct != B[i].distinct)
       return false;
   }
   return true;
@@ -189,6 +198,7 @@ bool AggregatePlan::operator==(const AbstractPlan &rhs) const {
   if (pred && *pred != *other_pred)
     return false;
 
+  // UniqueAggTerms
   if (!AreEqual(GetUniqueAggTerms(), other.GetUniqueAggTerms()))
     return false;
 
@@ -201,11 +211,13 @@ bool AggregatePlan::operator==(const AbstractPlan &rhs) const {
   if (proj_info && *proj_info != *other_proj_info)
     return false;
 
+  // Group by
   size_t group_by_col_ids_count = GetGroupbyColIds().size();
   if (group_by_col_ids_count != other.GetGroupbyColIds().size())
     return false;
+
   for (size_t i = 0; i < group_by_col_ids_count; i++) {
-    if (GetGroupbyColIds().at(i) != other.GetGroupbyColIds().at(i))
+    if (GetGroupbyColIds()[i] != other.GetGroupbyColIds()[i])
       return false;
   }
 
@@ -233,7 +245,6 @@ void AggregatePlan::VisitParameters(
   }
 
   if (GetGroupbyColIds().size() > 0) {
-    // HashGroupBy
     auto *predicate =
         const_cast<expression::AbstractExpression *>(GetPredicate());
     if (predicate != nullptr) {

@@ -76,7 +76,7 @@ class QueryCache : public Singleton<QueryCache> {
   }
 
   // Get the table Oid from the plan given
-  oid_t GetOidFromPlan(const planner::AbstractPlan &plan);
+  oid_t GetOidFromPlan(const planner::AbstractPlan &plan) const;
 
  private:
   std::list<std::pair<std::shared_ptr<planner::AbstractPlan>,

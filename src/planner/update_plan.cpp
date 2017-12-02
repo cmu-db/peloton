@@ -68,11 +68,16 @@ void UpdatePlan::PerformBinding(BindingContext &binding_context) {
 hash_t UpdatePlan::Hash() const {
   auto type = GetPlanNodeType();
   hash_t hash = HashUtil::Hash(&type);
+
   hash = HashUtil::CombineHashes(hash, GetTable()->Hash());
-  if (GetProjectInfo() != nullptr)
+
+  if (GetProjectInfo() != nullptr) {
     hash = HashUtil::CombineHashes(hash, GetProjectInfo()->Hash());
+  }
+
   auto is_update_primary_key = GetUpdatePrimaryKey();
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&is_update_primary_key));
+
   return HashUtil::CombineHashes(hash, AbstractPlan::Hash());
 }
 

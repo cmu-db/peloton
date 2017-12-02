@@ -128,9 +128,7 @@ class AbstractExpression : public Printable {
 
   const std::string GetInfo() const;
 
-  // Equlity checks without those on actual values
-  static bool AreEqual(const AbstractExpression *expr1,
-                       const AbstractExpression *expr2);
+  // Equlity checks without actual values
   virtual bool operator==(const AbstractExpression &rhs) const;
   virtual bool operator!=(const AbstractExpression &rhs) const {
     return !(*this == rhs);

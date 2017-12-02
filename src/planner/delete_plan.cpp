@@ -30,7 +30,9 @@ void DeletePlan::SetParameterValues(std::vector<type::Value> *values) {
 hash_t DeletePlan::Hash() const {
   auto type = GetPlanNodeType();
   hash_t hash = HashUtil::Hash(&type);
+
   hash = HashUtil::CombineHashes(hash, GetTable()->Hash());
+
   return HashUtil::CombineHashes(hash, AbstractPlan::Hash());
 }
 
@@ -39,6 +41,7 @@ bool DeletePlan::operator==(const AbstractPlan &rhs) const {
     return false;
 
   auto &other = static_cast<const planner::DeletePlan &>(rhs);
+
   auto *table = GetTable();
   auto *other_table = other.GetTable();
   PL_ASSERT(table && other_table);
