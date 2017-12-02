@@ -122,7 +122,7 @@ class AbstractPlan : public Printable {
   virtual bool DeserializeFrom(SerializeInput &input UNUSED_ATTRIBUTE) {
     return false;
   }
-  virtual int SerializeSize() { return 0; }
+  virtual int SerializeSize() const { return 0; }
 
   virtual hash_t Hash() const;
 
@@ -141,7 +141,7 @@ class AbstractPlan : public Printable {
 
  protected:
   // only used by its derived classes (when deserialization)
-  AbstractPlan *Parent() { return parent_; }
+  AbstractPlan *Parent() const { return parent_; }
 
  private:
   // A plan node can have multiple children
