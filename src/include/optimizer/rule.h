@@ -53,10 +53,10 @@ class Rule {
 
   bool IsPhysical() { return RuleType > RuleType::LogicalPhysicalDelimiter; }
 
-  virtual int Promise(std::shared_ptr<OperatorExpression> op_expr, OptimizeContext *context) const {
+  virtual int Promise(GroupExpression* group_expr, OptimizeContext *context) const {
     auto root_type = match_pattern->Type();
     // This rule is not applicable
-    if (root_type != OpType::Leaf && root_type != op_expr->Op().type())
+    if (root_type != OpType::Leaf && root_type != group_expr->Op())
       return 0;
     if (IsPhysical()) return PHYS_PROMISE;
     return LOG_PROMISE;
@@ -82,6 +82,8 @@ class Rule {
 };
 
 struct RuleWithPromise {
+  RuleWithPromise(rule, promise) : rule(rule), promise(promise) {}
+
   Rule* rule;
   int promise;
 

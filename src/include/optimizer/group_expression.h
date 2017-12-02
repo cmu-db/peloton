@@ -69,6 +69,8 @@ class GroupExpression {
     return rule_mask_->at(rule->GetRuleIdx());
   }
 
+  const inline size_t GetChildrenGroupsSize() const {return child_groups.size();}
+
  private:
   GroupID group_id;
   Operator op;

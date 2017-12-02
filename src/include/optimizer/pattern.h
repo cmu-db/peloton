@@ -28,6 +28,8 @@ class Pattern {
 
   const std::vector<std::shared_ptr<Pattern>> &Children() const;
 
+  const inline size_t GetChildPatternsSize() const { return children.size(); }
+
   OpType Type() const;
 
  private:

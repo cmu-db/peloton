@@ -37,13 +37,14 @@ class OptimizerTask {
   virtual void execute() = 0;
   
   void PushTask(OptimizerTask* task);
-  
-  static void SetMetadata(OptimizerMetadata *metadata) { metadata_ = metadata; }
+
+  inline Memo& GetMemo() const;
+
+  inline RuleSet& GetRuleSet() const;
 
  protected:
   OptimizerTaskType type_;
   std::shared_ptr<OptimizeContext> context_;
-  static OptimizerMetadata *metadata_;
 };
 
 class OptimizeGroup : public OptimizerTask {
