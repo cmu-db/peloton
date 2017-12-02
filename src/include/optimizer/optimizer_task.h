@@ -96,7 +96,7 @@ class ApplyRule : public OptimizerTask {
  public:
   ApplyRule(GroupExpression *group_expr,
             Rule *rule,
-            std::shared_ptr<OptimizeContext> context)
+            std::shared_ptr<OptimizeContext> context, explore_only = false)
       : OptimizerTask(context, OptimizerTaskType::APPLY_RULE),
         group_expr_(group_expr), rule_(rule) {}
   virtual void execute() override;
@@ -104,6 +104,7 @@ class ApplyRule : public OptimizerTask {
  private:
   GroupExpression *group_expr_;
   Rule *rule_;
+  bool explore_only;
 };
 
 class OptimizeInputs : public OptimizerTask {
@@ -120,7 +121,7 @@ class OptimizeInputs : public OptimizerTask {
   GroupExpression *group_expr_;
   std::vector<double> child_costs_;
   double local_cost_ = 0;
-  int current_child_no_ = 0;
+  int current_child_no_ = -1;
 };
 
 } // namespace optimizer

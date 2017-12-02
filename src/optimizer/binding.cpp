@@ -22,13 +22,13 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 // Base Binding Iterator
 //===--------------------------------------------------------------------===//
-BindingIterator::BindingIterator(Optimizer &optimizer)
-    : optimizer_(optimizer), memo_(optimizer.memo_) {}
+BindingIterator::BindingIterator(Optimizer *optimizer)
+    : optimizer_(optimizer), memo_(optimizer->metadata_.memo) {}
 
 //===--------------------------------------------------------------------===//
 // Group Binding Iterator
 //===--------------------------------------------------------------------===//
-GroupBindingIterator::GroupBindingIterator(Optimizer &optimizer, GroupID id,
+GroupBindingIterator::GroupBindingIterator(Optimizer *optimizer, GroupID id,
                                            std::shared_ptr<Pattern> pattern)
     : BindingIterator(optimizer),
       group_id_(id),
@@ -101,7 +101,7 @@ std::shared_ptr<OperatorExpression> GroupBindingIterator::Next() {
 //===--------------------------------------------------------------------===//
 // Item Binding Iterator
 //===--------------------------------------------------------------------===//
-ItemBindingIterator::ItemBindingIterator(Optimizer &optimizer,
+ItemBindingIterator::ItemBindingIterator(Optimizer *optimizer,
                                          std::shared_ptr<GroupExpression> gexpr,
                                          std::shared_ptr<Pattern> pattern)
     : BindingIterator(optimizer),

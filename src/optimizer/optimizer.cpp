@@ -576,11 +576,11 @@ vector<shared_ptr<GroupExpression>> Optimizer::TransformExpression(
   shared_ptr<Pattern> pattern = rule.GetMatchPattern();
 
   vector<shared_ptr<GroupExpression>> output_plans;
-  ItemBindingIterator iterator(*this, gexpr, pattern);
+  ItemBindingIterator iterator(this, gexpr, pattern);
   while (iterator.HasNext()) {
     shared_ptr<OperatorExpression> plan = iterator.Next();
     // Check rule condition function
-    if (rule.Check(plan, &memo_)) {
+    if (rule.Check(plan, &metadata_.memo)) {
       LOG_TRACE("Rule matched expression of group %d with op %s",
                 gexpr->GetGroupID(), gexpr->Op().name().c_str());
       // Apply rule transformations
@@ -612,18 +612,18 @@ vector<shared_ptr<GroupExpression>> Optimizer::TransformExpression(
 /// Memo insertion
 shared_ptr<GroupExpression> Optimizer::MakeGroupExpression(
     shared_ptr<OperatorExpression> expr) {
-  memo_.MakeGroupExpression(expr);
+  metadata_.MakeGroupExpression(expr);
 }
 
 bool Optimizer::RecordTransformedExpression(
     shared_ptr<OperatorExpression> expr, shared_ptr<GroupExpression> &gexpr) {
-  return memo_.RecordTransformedExpression(expr, gexpr);
+  return metadata_.RecordTransformedExpression(expr, gexpr);
 }
 
 bool Optimizer::RecordTransformedExpression(shared_ptr<OperatorExpression> expr,
                                             shared_ptr<GroupExpression> &gexpr,
                                             GroupID target_group) {
-  return memo_.RecordTransformedExpression(expr, gexpr, target_group);
+  return metadata_.RecordTransformedExpression(expr, gexpr, target_group);
 }
 
 }  // namespace optimizer
