@@ -36,13 +36,13 @@ class Parameter {
   }
 
   // Get type of the parameter
-  Type GetType() { return type_; }
+  Type GetType() const { return type_; }
 
   // Get value type of the parameter
-  peloton::type::TypeId GetValueType() { return type_id_; }
+  peloton::type::TypeId GetValueType() const { return type_id_; }
 
   // Get its nullabilityy
-  bool IsNullable() { return is_nullable_; }
+  bool IsNullable() const { return is_nullable_; }
 
   // Get value
   const type::Value &GetValue() const {
@@ -51,7 +51,7 @@ class Parameter {
   }
 
   // Get paramer index
-  uint32_t GetParamIdx() {
+  uint32_t GetParamIdx() const {
     PL_ASSERT(type_ == Type::PARAMETER);
     return param_idx_;
   }

@@ -50,7 +50,7 @@ class QueryParameters {
   }
 
   // Get the parameter object vector
-  std::vector<expression::Parameter> &GetParameters() {
+  const std::vector<expression::Parameter> &GetParameters() const {
     return parameters_;
   }
 
