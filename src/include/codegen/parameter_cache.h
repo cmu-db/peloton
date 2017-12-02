@@ -27,7 +27,7 @@ namespace codegen {
 class ParameterCache {
  public:
   // Constructor
-  ParameterCache(std::vector<expression::Parameter> &parameters) :
+  ParameterCache(const std::vector<expression::Parameter> &parameters) :
       parameters_(parameters) {}
 
   // Set the parameter values
@@ -43,7 +43,7 @@ class ParameterCache {
 
  private:
   // Parameter information
-  std::vector<expression::Parameter> &parameters_;
+  const std::vector<expression::Parameter> &parameters_;
 
   // Parameter value storage
   std::vector<codegen::Value> values_;
