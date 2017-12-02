@@ -121,7 +121,14 @@ class CaseExpression : public AbstractExpression {
         return false;
     }
 
-    return AbstractExpression::AreEqual(GetDefault(), other.GetDefault());
+    auto *default_exp = GetDefault();
+    auto *other_default_exp = other.GetDefault();
+    if ((default_exp != nullptr && other_default_exp == nullptr) ||
+        (default_exp == nullptr && other_default_exp != nullptr))
+      return false;
+    if (default_exp == nullptr && other_default_exp == nullptr)
+      return true;
+    return (*default_exp == *other_default_exp);
   }
 
   bool operator!=(const AbstractExpression &rhs) const override {

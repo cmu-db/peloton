@@ -68,10 +68,12 @@ bool OrderByPlan::operator==(const AbstractPlan &rhs) const {
     return false;
 
   auto &other = static_cast<const planner::OrderByPlan &>(rhs);
+
   // Sort Keys 
   size_t sort_keys_count = GetSortKeys().size();
   if (sort_keys_count != other.GetSortKeys().size())
     return false;
+
   for (size_t i = 0; i < sort_keys_count; i++) {
     if (GetSortKeys()[i] != other.GetSortKeys()[i])
       return false;
@@ -81,6 +83,7 @@ bool OrderByPlan::operator==(const AbstractPlan &rhs) const {
   size_t descend_flags_count = GetDescendFlags().size();
   if (descend_flags_count != other.GetDescendFlags().size())
     return false;
+
   for (size_t i = 0; i < descend_flags_count; i++) {
     if (GetDescendFlags()[i] != other.GetDescendFlags()[i])
       return false;
@@ -90,6 +93,7 @@ bool OrderByPlan::operator==(const AbstractPlan &rhs) const {
   size_t column_id_count = GetOutputColumnIds().size();
   if (column_id_count != other.GetOutputColumnIds().size())
     return false;
+
   for (size_t i = 0; i < column_id_count; i++) {
     if (GetOutputColumnIds()[i] != other.GetOutputColumnIds()[i])
       return false;

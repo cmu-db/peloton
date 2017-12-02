@@ -34,8 +34,10 @@ void HashPlan::GetOutputColumns (std::vector<oid_t> &columns) const {
 hash_t HashPlan::Hash() const {
   auto type = GetPlanNodeType();
   hash_t hash = HashUtil::Hash(&type);
+
   for (auto &hash_key : hash_keys_)
     hash = HashUtil::CombineHashes(hash, hash_key->Hash());
+
   return HashUtil::CombineHashes(hash, AbstractPlan::Hash());
 }
 
@@ -47,8 +49,9 @@ bool HashPlan::operator==(const AbstractPlan &rhs) const {
   auto hash_key_size = GetHashKeys().size();
   if (hash_key_size != other.GetHashKeys().size())
     return false;
+
   for (size_t i = 0; i < hash_key_size; i++) {
-    if (*GetHashKeys().at(i).get() != *other.GetHashKeys().at(i).get())
+    if (*GetHashKeys()[i].get() != *other.GetHashKeys()[i].get())
       return false;
   }
  
@@ -65,8 +68,6 @@ void HashPlan::VisitParameters(std::vector<expression::Parameter> &parameters,
     expr->VisitParameters(parameters, index, parameter_values);
   }
 }
-
-
 
 }  // namespace planner
 }  // namespace peloton

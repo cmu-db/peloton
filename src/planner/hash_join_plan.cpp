@@ -76,20 +76,27 @@ hash_t HashJoinPlan::Hash() const {
 
   auto join_type = GetJoinType();
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&join_type));
-  if (GetPredicate() != nullptr)
+
+  if (GetPredicate() != nullptr) {
     hash = HashUtil::CombineHashes(hash, GetPredicate()->Hash());
-  if (GetProjInfo() != nullptr)
+  }
+
+  if (GetProjInfo() != nullptr) {
     hash = HashUtil::CombineHashes(hash, GetProjInfo()->Hash());
+  }
+
   std::vector<const expression::AbstractExpression *> keys;
   GetLeftHashKeys(keys);
   for (size_t i = 0; i < keys.size(); i++) {
-    hash = HashUtil::CombineHashes(hash, keys.at(i)->Hash());
+    hash = HashUtil::CombineHashes(hash, keys[i]->Hash());
   }
+
   keys.clear();
   GetRightHashKeys(keys);
   for (size_t i = 0; i < keys.size(); i++) {
-    hash = HashUtil::CombineHashes(hash, keys.at(i)->Hash());
+    hash = HashUtil::CombineHashes(hash, keys[i]->Hash());
   }
+
   return HashUtil::CombineHashes(hash, AbstractPlan::Hash());
 }
 
@@ -119,28 +126,32 @@ bool HashJoinPlan::operator==(const AbstractPlan &rhs) const {
   if (proj_info && *proj_info != *other_proj_info)
     return false;
 
-  // Left hash keys
   std::vector<const expression::AbstractExpression *> keys, other_keys;
+
+  // Left hash keys
   GetLeftHashKeys(keys);
   other.GetLeftHashKeys(other_keys);
   size_t keys_count = keys.size();
   if (keys_count != other_keys.size())
     return false;
+
   for (size_t i = 0; i < keys_count; i++) {
-    if (*keys.at(i) != *other_keys.at(i))
+    if (*keys[i] != *other_keys[i])
       return false;
   }
 
-  // Right hash keys
   keys.clear();
   other_keys.clear();
+
+  // Right hash keys
   GetRightHashKeys(keys);
   other.GetRightHashKeys(other_keys);
   keys_count = keys.size();
   if (keys_count != other_keys.size())
     return false;
+
   for (size_t i = 0; i < keys_count; i++) {
-    if (*keys.at(i) != *other_keys.at(i))
+    if (*keys[i] != *other_keys[i])
       return false;
   }
 

@@ -35,7 +35,7 @@ void QueryCache::Add(const std::shared_ptr<planner::AbstractPlan> &key,
   cache_map_.insert(make_pair(key, query_list_.begin()));
 }
 
-oid_t QueryCache::GetOidFromPlan(const planner::AbstractPlan &plan) {
+oid_t QueryCache::GetOidFromPlan(const planner::AbstractPlan &plan) const {
  switch (plan.GetPlanNodeType()) {
     case PlanNodeType::SEQSCAN: {
       auto &dplan = static_cast<const planner::SeqScanPlan &>(plan);

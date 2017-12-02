@@ -19,33 +19,38 @@
 namespace peloton {
 namespace expression {
 
-// We have one Parameter class both for CONSTANT and PARAMETER expressions.
-// This is to simplify the implementation over having separate inherited classes
 class Parameter {
  public:
   enum class Type { CONSTANT = 0, PARAMETER = 1 };
 
+  // Create Constant Parameter object
   static Parameter CreateConstParameter(type::Value value,
                                         bool is_nullable = true) {
     return Parameter{value.GetTypeId(), value, is_nullable};
   }
 
+  // Create Parameter Parameter object
   static Parameter CreateParamParameter(int32_t param_idx,
                                         bool is_nullable = true) {
     return Parameter{param_idx, is_nullable};
   }
 
+  // Get type of the parameter
   Type GetType() { return type_; }
 
+  // Get value type of the parameter
   peloton::type::TypeId GetValueType() { return type_id_; }
 
+  // Get its nullabilityy
   bool IsNullable() { return is_nullable_; }
 
+  // Get value
   type::Value &GetValue() {
     PL_ASSERT(type_==Type::CONSTANT);
     return value_;
   }
 
+  // Get paramer index
   uint32_t GetParamIdx() {
     PL_ASSERT(type_ == Type::PARAMETER);
     return param_idx_;
@@ -75,7 +80,6 @@ class Parameter {
 
   // Boolean to show if the value is nullable
   bool is_nullable_;
-
 };
 
 }  // namespace codegen

@@ -115,6 +115,7 @@ type::AbstractPool *InsertPlan::GetPlanPool() {
 void InsertPlan::SetParameterValues(std::vector<type::Value> *values) {
   LOG_TRACE("Set Parameter Values in Insert");
   PL_ASSERT(values->size() == parameter_vector_->size());
+  PL_ASSERT(values->size() == parameter_value-type_->size());
   for (unsigned int i = 0; i < values->size(); i++) {
     auto type = params_value_type_->at(i);
     auto &param_info = parameter_vector_->at(i);
@@ -145,11 +146,13 @@ void InsertPlan::PerformBinding(BindingContext &binding_context) {
 hash_t InsertPlan::Hash() const {
   auto type = GetPlanNodeType();
   hash_t hash = HashUtil::Hash(&type);
+
   hash = HashUtil::CombineHashes(hash, GetTable()->Hash());
   if (GetChildren().size() == 0) {
     auto bulk_insert_count = GetBulkInsertCount();
     hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&bulk_insert_count));
   }
+
   return HashUtil::CombineHashes(hash, AbstractPlan::Hash());
 }
 
@@ -158,6 +161,7 @@ bool InsertPlan::operator==(const AbstractPlan &rhs) const {
     return false;
 
   auto &other = static_cast<const planner::InsertPlan &>(rhs);
+
   auto *table = GetTable();
   auto *other_table = other.GetTable();
   PL_ASSERT(table && other_table);
@@ -168,8 +172,7 @@ bool InsertPlan::operator==(const AbstractPlan &rhs) const {
     if (other.GetChildren().size() != 0)
       return false;
 
-    auto bulk_insert_count = GetBulkInsertCount();
-    if (bulk_insert_count != other.GetBulkInsertCount())
+    if (GetBulkInsertCount() != other.GetBulkInsertCount())
       return false;
   }
 
@@ -183,6 +186,7 @@ void InsertPlan::VisitParameters(
   if (GetChildren().size() == 0) {
     auto *schema = target_table_->GetSchema();
     auto columns_num = schema->GetColumnCount();
+
     for (uint32_t i = 0; i < values_.size(); i++) {
       auto value = values_[i];
       auto column_id = i % columns_num;

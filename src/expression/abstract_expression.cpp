@@ -102,17 +102,6 @@ const std::string AbstractExpression::GetInfo() const {
   return os.str();
 }
 
-bool AbstractExpression::AreEqual(const AbstractExpression *expr1,
-                                  const AbstractExpression *expr2) {
-  if (expr1 == nullptr && expr2 == nullptr)
-    return true;
-  if (expr1 == nullptr && expr2 != nullptr)
-    return false;
-  if (expr1 != nullptr && expr2 == nullptr)
-    return false;
-  return (*expr1 == *expr2);
-}
-
 bool AbstractExpression::operator==(const AbstractExpression &rhs) const {
   if (exp_type_ != rhs.exp_type_ || children_.size() != rhs.children_.size())
     return false;
@@ -121,15 +110,18 @@ bool AbstractExpression::operator==(const AbstractExpression &rhs) const {
     if (*children_[i].get() != *rhs.children_[i].get())
       return false;
   }
+
   return true;
 }
 
 hash_t AbstractExpression::Hash() const {
   hash_t hash = HashUtil::Hash(&exp_type_);
+
   for (size_t i = 0; i < GetChildrenSize(); i++) {
     auto child = GetChild(i);
     hash = HashUtil::CombineHashes(hash, child->Hash());
   }
+
   return hash;
 }
 

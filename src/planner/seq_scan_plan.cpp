@@ -269,14 +269,19 @@ void SeqScanPlan::SetParameterValues(std::vector<type::Value> *values) {
 hash_t SeqScanPlan::Hash() const {
   auto type = GetPlanNodeType();
   hash_t hash = HashUtil::Hash(&type);
+
   hash = HashUtil::CombineHashes(hash, GetTable()->Hash());
-  if (GetPredicate() != nullptr)
+  if (GetPredicate() != nullptr) {
     hash = HashUtil::CombineHashes(hash, GetPredicate()->Hash());
+  }
+
   for (auto &column_id : GetColumnIds()) {
     hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&column_id));
   }
+
   auto is_update = IsForUpdate();
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&is_update));
+
   return HashUtil::CombineHashes(hash, AbstractPlan::Hash());
 }
 
@@ -323,7 +328,8 @@ void SeqScanPlan::VisitParameters(
     const std::vector<peloton::type::Value> &parameter_values) {
   AbstractPlan::VisitParameters(parameters, index, parameter_values);
 
-  auto *predicate = const_cast<expression::AbstractExpression *>(GetPredicate());
+  auto *predicate =
+      const_cast<expression::AbstractExpression *>(GetPredicate());
   if (predicate != nullptr) {
     predicate->VisitParameters(parameters, index, parameter_values);
   }
