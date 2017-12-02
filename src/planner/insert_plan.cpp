@@ -115,7 +115,7 @@ type::AbstractPool *InsertPlan::GetPlanPool() {
 void InsertPlan::SetParameterValues(std::vector<type::Value> *values) {
   LOG_TRACE("Set Parameter Values in Insert");
   PL_ASSERT(values->size() == parameter_vector_->size());
-  PL_ASSERT(values->size() == parameter_value-type_->size());
+  PL_ASSERT(values->size() == params_value_type_->size());
   for (unsigned int i = 0; i < values->size(); i++) {
     auto type = params_value_type_->at(i);
     auto &param_info = parameter_vector_->at(i);
