@@ -21,18 +21,24 @@ namespace peloton {
 namespace codegen {
 
 Query* QueryCache::Find(const std::shared_ptr<planner::AbstractPlan> &key) {
+  cache_lock_.ReadLock();
   auto it = cache_map_.find(key);
   if (it == cache_map_.end()) {
+    cache_lock_.Unlock();
     return nullptr;
   }
   query_list_.splice(query_list_.begin(), query_list_, it->second);
-  return it->second->second.get();
+  auto *query = it->second->second.get();
+  cache_lock_.Unlock();
+  return query;
 }
 
 void QueryCache::Add(const std::shared_ptr<planner::AbstractPlan> &key,
                      std::unique_ptr<Query> &&val) {
+  cache_lock_.WriteLock();
   query_list_.push_front(make_pair(key, std::move(val)));
   cache_map_.insert(make_pair(key, query_list_.begin()));
+  cache_lock_.Unlock();
 }
 
 oid_t QueryCache::GetOidFromPlan(const planner::AbstractPlan &plan) const {
@@ -62,6 +68,8 @@ oid_t QueryCache::GetOidFromPlan(const planner::AbstractPlan &plan) const {
 }
 
 void QueryCache::Remove(const oid_t table_oid) {
+  cache_lock_.WriteLock();
+
   for (auto it = cache_map_.begin(); it != cache_map_.end(); ) {
     oid_t oid = GetOidFromPlan(*it->first.get());
     if (oid == table_oid) {
@@ -71,6 +79,7 @@ void QueryCache::Remove(const oid_t table_oid) {
       ++it;
     }
   }
+  cache_lock_.Unlock();
 }
 
 }  // namespace codegen
