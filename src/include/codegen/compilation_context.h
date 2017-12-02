@@ -94,7 +94,8 @@ class CompilationContext {
   llvm::Value *GetQueryParametersPtr();
 
   // Get the parameter index to be used to get value, for the given expression
-  size_t GetParameterIdx(const expression::AbstractExpression *expression) {
+  size_t GetParameterIdx(const expression::AbstractExpression *expression)
+      const {
     return query_.GetParameterIdx(expression);
   }
 

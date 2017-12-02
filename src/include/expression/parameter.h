@@ -45,7 +45,7 @@ class Parameter {
   bool IsNullable() { return is_nullable_; }
 
   // Get value
-  type::Value &GetValue() {
+  const type::Value &GetValue() const {
     PL_ASSERT(type_==Type::CONSTANT);
     return value_;
   }
