@@ -53,7 +53,10 @@ void UpdatePlan::PerformBinding(BindingContext &binding_context) {
   children[0]->PerformBinding(input_context);
 
   auto *scan = static_cast<planner::AbstractScan *>(children[0].get());
-  scan->GetAttributes(ais_);
+  auto &col_ids = scan->GetColumnIds();
+  for (oid_t col_id = 0; col_id < col_ids.size(); col_id++) {
+    ais_.push_back(input_context.Find(col_id));
+  }
 
   // Do projection (if one exists)
   if (GetProjectInfo() != nullptr) {
