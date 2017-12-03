@@ -14,6 +14,7 @@
 
 #include "optimizer/optimizer_task.h"
 #include <stack>
+#include <memory>
 
 namespace peloton {
 namespace optimizer {
@@ -27,30 +28,26 @@ class OptimizerTaskPool {
   virtual bool Empty() = 0;
 };
 
-
 //===--------------------------------------------------------------------===//
 // Task stack
 //===--------------------------------------------------------------------===//
 class OptimizerTaskStack : public OptimizerTaskPool {
  public:
   virtual std::unique_ptr<OptimizerTask> Pop() {
-    auto task = task_stack_.top();
+    auto task = std::move(task_stack_.top());
     task_stack_.pop();
     return task;
   }
 
-  virtual void Push(OptimizerTask* task)  {
+  virtual void Push(OptimizerTask* task) {
     task_stack_.push(std::unique_ptr<OptimizerTask>(task));
   }
 
-  virtual bool Empty() {
-    return task_stack_.empty();
-  }
+  virtual bool Empty() { return task_stack_.empty(); }
 
  private:
   std::stack<std::unique_ptr<OptimizerTask>> task_stack_;
-
 };
 
-} // namespace optimizer
-} // namespace peloton
+}  // namespace optimizer
+}  // namespace peloton

@@ -23,7 +23,7 @@ namespace peloton {
 namespace optimizer {
 
 #define PHYS_PROMISE 3
-#define	LOG_PROMISE 1
+#define LOG_PROMISE 1
 
 enum class RuleType {
   INNER_JOIN_COMMUTE,
@@ -47,42 +47,44 @@ enum class RuleType {
 
 class Rule {
  public:
-  virtual ~Rule() {};
+  virtual ~Rule(){};
 
   std::shared_ptr<Pattern> GetMatchPattern() const { return match_pattern; }
 
-  bool IsPhysical() { return RuleType > RuleType::LogicalPhysicalDelimiter; }
+  bool IsPhysical() const { return type_ > RuleType::LogicalPhysicalDelimiter; }
 
-  virtual int Promise(GroupExpression* group_expr, OptimizeContext *context) const {
+  virtual int Promise(GroupExpression* group_expr,
+                      OptimizeContext* context) const {
+    (void)context;
     auto root_type = match_pattern->Type();
     // This rule is not applicable
-    if (root_type != OpType::Leaf && root_type != group_expr->Op())
+    if (root_type != OpType::Leaf && root_type != group_expr->Op().type())
       return 0;
     if (IsPhysical()) return PHYS_PROMISE;
     return LOG_PROMISE;
   }
 
-  virtual bool Check(std::shared_ptr<OperatorExpression> expr, Memo *memo) const = 0;
+  virtual bool Check(std::shared_ptr<OperatorExpression> expr,
+                     Memo* memo) const = 0;
 
   virtual void Transform(
       std::shared_ptr<OperatorExpression> input,
-      std::vector<std::shared_ptr<OperatorExpression>> &transformed) const = 0;
+      std::vector<std::shared_ptr<OperatorExpression>>& transformed) const = 0;
 
   inline RuleType GetType() { return type_; }
 
-  inline void SetRuleIdx(int index) {rule_idx_ = index;}
+  inline void SetRuleIdx(int index) { rule_idx_ = index; }
 
-  inline int GetRuleIdx() {return rule_idx_;}
-
+  inline int GetRuleIdx() { return rule_idx_; }
 
  protected:
-  std::shared_ptr<Pattern> match_pattern
+  std::shared_ptr<Pattern> match_pattern;
   RuleType type_;
   int rule_idx_;
 };
 
 struct RuleWithPromise {
-  RuleWithPromise(rule, promise) : rule(rule), promise(promise) {}
+  RuleWithPromise(Rule* rule, int promise) : rule(rule), promise(promise) {}
 
   Rule* rule;
   int promise;
@@ -94,18 +96,19 @@ struct RuleWithPromise {
 
 class RuleSet {
  public:
+  // RuleSet will take the ownership of the rule object
   void AddRule(Rule* rule) {
     rule->SetRuleIdx(rules_.size());
     rules_.emplace_back(rule);
   }
 
-  std::vector<std::unique_ptr<Rule>>& GetRules() {return rules_;}
+  std::vector<std::unique_ptr<Rule>>& GetRules() { return rules_; }
 
-  inline size_t size() {return rules_.size();}
+  inline size_t size() { return rules_.size(); }
 
  private:
   std::vector<std::unique_ptr<Rule>> rules_;
 };
 
-} // namespace optimizer
-} // namespace peloton
+}  // namespace optimizer
+}  // namespace peloton

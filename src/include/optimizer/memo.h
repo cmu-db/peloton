@@ -61,7 +61,9 @@ class Memo {
 
   Group* GetGroupByID(GroupID id);
 
-  inline void SetRuleSetSize(size_t rule_set_size) {rule_set_size_ = rule_set_size};
+  inline void SetRuleSetSize(size_t rule_set_size) {
+    rule_set_size_ = rule_set_size;
+  }
 
  private:
   GroupID AddNewGroup(std::shared_ptr<GroupExpression> gexpr);

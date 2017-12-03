@@ -10,10 +10,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
-#include "optimizer/metadata.h"
+#include <memory>
+#include "optimizer/optimizer_metadata.h"
+#include "optimizer/memo.h"
+#include "optimizer/group_expression.h"
+#include "optimizer/group.h"
+#include "optimizer/rule.h"
+#include "optimizer/memo.h"
 
 namespace peloton {
 namespace optimizer {
@@ -31,11 +36,12 @@ enum class OptimizerTaskType {
 
 class OptimizerTask {
  public:
-  OptimizerTask(std::shared_ptr<OptimizeContext> context, OptimizerTaskType type):
-      context_(context), type_(type){}
+  OptimizerTask(std::shared_ptr<OptimizeContext> context,
+                OptimizerTaskType type)
+      : type_(type), context_(context) {}
 
   virtual void execute() = 0;
-  
+
   void PushTask(OptimizerTask* task);
 
   inline Memo& GetMemo() const;
@@ -73,7 +79,8 @@ class OptimizeExpression : public OptimizerTask {
 class ExploreGroup : public OptimizerTask {
  public:
   ExploreGroup(Group* group, std::shared_ptr<OptimizeContext> context)
-      : OptimizerTask(context, OptimizerTaskType::EXPLORE_GROUP), group_(group) {}
+      : OptimizerTask(context, OptimizerTaskType::EXPLORE_GROUP),
+        group_(group) {}
   virtual void execute() override;
 
  private:
@@ -94,22 +101,22 @@ class ExploreExpression : public OptimizerTask {
 
 class ApplyRule : public OptimizerTask {
  public:
-  ApplyRule(GroupExpression *group_expr,
-            Rule *rule,
+  ApplyRule(GroupExpression* group_expr, Rule* rule,
             std::shared_ptr<OptimizeContext> context)
       : OptimizerTask(context, OptimizerTaskType::APPLY_RULE),
-        group_expr_(group_expr), rule_(rule) {}
+        group_expr_(group_expr),
+        rule_(rule) {}
   virtual void execute() override;
 
  private:
-  GroupExpression *group_expr_;
-  Rule *rule_;
+  GroupExpression* group_expr_;
+  Rule* rule_;
   bool explore_only;
 };
 
 class OptimizeInputs : public OptimizerTask {
  public:
-  OptimizeInputs(GroupExpression *group_expr,
+  OptimizeInputs(GroupExpression* group_expr,
                  std::shared_ptr<OptimizeContext> context)
       : OptimizerTask(context, OptimizerTaskType::OPTIMIZE_INPUTS),
         group_expr_(group_expr) {
@@ -126,11 +133,11 @@ class OptimizeInputs : public OptimizerTask {
   }
 
  private:
-  GroupExpression *group_expr_;
+  GroupExpression* group_expr_;
   std::vector<double> child_costs_;
   double local_cost_ = 0;
   int current_child_no_ = -1;
 };
 
-} // namespace optimizer
-} // namespace peloton
+}  // namespace optimizer
+}  // namespace peloton

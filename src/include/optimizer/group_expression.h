@@ -15,6 +15,7 @@
 #include "optimizer/operator_node.h"
 #include "optimizer/stats.h"
 #include "optimizer/util.h"
+#include "optimizer/rule.h"
 
 #include <map>
 #include <tuple>
@@ -58,18 +59,18 @@ class GroupExpression {
   bool operator==(const GroupExpression &r);
 
   void ResetRuleMask(size_t num_rules) {
-    rule_mask_.reset(new std::vector<bool>{num_rules, false});
+    rule_mask_.reset(new std::vector<bool>(num_rules, false));
   }
 
-  void SetRuleExplored(Rule* rule) {
+  void SetRuleExplored(Rule *rule) {
     (*rule_mask_.get())[rule->GetRuleIdx()] = true;
   }
 
-  bool HasRuleExplored(Rule* rule) {
+  bool HasRuleExplored(Rule *rule) {
     return rule_mask_->at(rule->GetRuleIdx());
   }
 
-  const inline size_t GetChildrenGroupsSize() const {return child_groups.size();}
+  inline size_t GetChildrenGroupsSize() const { return child_groups.size(); }
 
  private:
   GroupID group_id;
@@ -84,8 +85,8 @@ class GroupExpression {
       lowest_cost_table_;
 };
 
-} // namespace optimizer
-} // namespace peloton
+}  // namespace optimizer
+}  // namespace peloton
 
 namespace std {
 
@@ -96,4 +97,4 @@ struct hash<peloton::optimizer::GroupExpression> {
   result_type operator()(argument_type const &s) const { return s.Hash(); }
 };
 
-} // namespace std
+}  // namespace std

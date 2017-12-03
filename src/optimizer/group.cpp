@@ -68,8 +68,7 @@ std::shared_ptr<GroupExpression> Group::GetBestExpression(
   return nullptr;
 }
 
-const std::vector<std::shared_ptr<GroupExpression>> Group::GetExpressions()
-    const {
+std::vector<std::shared_ptr<GroupExpression>> Group::GetExpressions() const {
   return expressions_;
 }
 

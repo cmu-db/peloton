@@ -28,7 +28,7 @@ class Pattern {
 
   const std::vector<std::shared_ptr<Pattern>> &Children() const;
 
-  const inline size_t GetChildPatternsSize() const { return children.size(); }
+  inline size_t GetChildPatternsSize() const { return children.size(); }
 
   OpType Type() const;
 
@@ -37,5 +37,5 @@ class Pattern {
   std::vector<std::shared_ptr<Pattern>> children;
 };
 
-} // namespace optimizer
-} // namespace peloton
+}  // namespace optimizer
+}  // namespace peloton

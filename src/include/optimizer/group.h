@@ -52,17 +52,18 @@ class Group {
   }
 
   // TODO: thread safety?
-  const std::vector<std::shared_ptr<GroupExpression>> GetLogicalExpressions() const {
+  const std::vector<std::shared_ptr<GroupExpression>> GetLogicalExpressions()
+      const {
     return logical_expressions_;
   }
 
   // TODO: thread safety?
-  const std::vector<std::shared_ptr<GroupExpression>> GetPhysicalExpressions() const {
+  const std::vector<std::shared_ptr<GroupExpression>> GetPhysicalExpressions()
+      const {
     return physical_expressions_;
   }
 
-  inline double GetCostLB() {return cost_lower_bound_;}
-
+  inline double GetCostLB() { return cost_lower_bound_; }
 
   inline void SetExplorationFlag() { has_explored_ = true; }
   inline bool HasExplored() { return has_explored_; }
@@ -83,7 +84,6 @@ class Group {
                      std::tuple<double, std::shared_ptr<GroupExpression>>>
       lowest_cost_expressions_;
 
-
   // TODO: Remove
   // Whether equivalent logical expressions have been explored for this group
   bool has_explored_;
@@ -96,8 +96,7 @@ class Group {
   std::vector<std::shared_ptr<GroupExpression>> physical_expressions_;
 
   double cost_lower_bound_ = -1;
-
 };
 
-} // namespace optimizer
-} // namespace peloton
+}  // namespace optimizer
+}  // namespace peloton
