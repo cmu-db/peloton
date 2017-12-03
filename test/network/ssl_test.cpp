@@ -34,9 +34,9 @@ class SSLTests : public PelotonTest {};
 static void *LaunchServer(peloton::network::NetworkManager network_manager,
                           int port) {
   try {
-    std::string server_crt = "/test/network/ssl/server.crt";
-    std::string server_key = "/test/network/ssl/server.key";
-    std::string root_crt = "/test/network/ssl/root.crt";
+    std::string server_crt = "/test/network/ssl/server_test.crt";
+    std::string server_key = "/test/network/ssl/server_test.key";
+    std::string root_crt = "/test/network/ssl/root_test.crt";
     peloton::network::NetworkManager::certificate_file_ = SOURCE_FOLDER + server_crt;
     peloton::network::NetworkManager::private_key_file_ = SOURCE_FOLDER + server_key;
     peloton::network::NetworkManager::root_cert_file_ = SOURCE_FOLDER + root_crt;
@@ -57,7 +57,7 @@ void *BasicTest(int port) {
   try {
     // forcing the factory to generate psql protocol handler
     pqxx::connection C(StringUtil::Format(
-        "host=127.0.0.1 port=%d user=postgres application_name=psql", port));
+        "host=127.0.0.1 port=%d user=postgres application_name=psql sslmode=require", port));
     pqxx::work txn1(C);
 
     peloton::network::NetworkConnection *conn =

@@ -39,7 +39,6 @@
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
-// How do we enforce ssl v3?
 #include <openssl/x509.h>
 #include <openssl/x509_vfy.h>
 
@@ -115,6 +114,9 @@ class NetworkManager {
   static void LoadSSLFileSettings();
 
  private:
+
+  template<typename... Ts> void try_do(int(*func)(Ts...), Ts... arg);
+
   /* Maintain a global list of connections.
    * Helps reuse connection objects when possible
    */

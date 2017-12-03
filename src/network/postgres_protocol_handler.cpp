@@ -34,8 +34,7 @@
 #include "network/marshal.h"
 #include "settings/settings_manager.h"
 #define SSL_MESSAGE_VERNO 80877103
-#define PROTO_MAJOR_VERSION(x) x >> 16
-#define UNUSED(x) (void)(x)
+#define PROTO_MAJOR_VERSION(x) (x >> 16)
 
 namespace peloton {
 namespace network {
@@ -1050,15 +1049,16 @@ bool PostgresProtocolHandler::ReadPacket(Buffer &rbuf, InputPacket &rpkt) {
  */
 bool PostgresProtocolHandler::ProcessInitialPacket(InputPacket *pkt, Client client, bool ssl_able, bool& ssl_handshake, bool& finish_startup_packet) {
   std::string token, value;
-  std::unique_ptr<OutputPacket> response(new OutputPacket());
+  std::unique_ptr<OutputPacket> response = std::make_unique<OutputPacket>();
 
   int32_t proto_version = PacketGetInt(pkt, sizeof(int32_t));
   LOG_INFO("protocol version: %d", proto_version);
 
-  // TODO: consider more about return value
+  // TODO(Yuchen): consider more about return value
   if (proto_version == SSL_MESSAGE_VERNO) {
     LOG_TRACE("process SSL MESSAGE");
-    return ProcessSSLRequestPacket(pkt, ssl_able, ssl_handshake);
+    ProcessSSLRequestPacket(ssl_able, ssl_handshake);
+    return true;
   }
   else {
     LOG_TRACE("process startup packet");
@@ -1066,27 +1066,16 @@ bool PostgresProtocolHandler::ProcessInitialPacket(InputPacket *pkt, Client clie
   }
 }
 
-bool PostgresProtocolHandler::ProcessSSLRequestPacket(InputPacket *pkt, bool ssl_able, bool& ssl_handshake) {
-  UNUSED(pkt);
+void PostgresProtocolHandler::ProcessSSLRequestPacket(bool ssl_able, bool& ssl_handshake) {
   std::unique_ptr<OutputPacket> response(new OutputPacket());
-  // TODO: consider more about a proper response
-  if (ssl_able) {
-    response->msg_type = NetworkMessageType::SSL_YES;
-    ssl_handshake = true;
-    LOG_TRACE("SSL support");
-  } else {
-    response->msg_type = NetworkMessageType::SSL_NO;
-    ssl_handshake = false;
-    LOG_TRACE("SSL not support");
-  }
+  ssl_handshake = ssl_able;
+  response->msg_type = ssl_able ? NetworkMessageType::SSL_YES : NetworkMessageType::SSL_NO;
   responses.push_back(std::move(response));
   SetFlushFlag(true);
-  return true;
 }
 
 bool PostgresProtocolHandler::ProcessStartupPacket(InputPacket* pkt, int32_t proto_version, Client client, bool& finished_startup_packet) {
   std::string token, value;
-
 
   // Only protocol version 3 is supported
   if (PROTO_MAJOR_VERSION(proto_version) != 3) {
@@ -1094,11 +1083,9 @@ bool PostgresProtocolHandler::ProcessStartupPacket(InputPacket* pkt, int32_t pro
     exit(EXIT_FAILURE);
   }
 
-  // TODO: check for more malformed cases
-  // iterate till the end
-  for (;;) {
+  // TODO(Yuchen): check for more malformed cases
+  while (pkt->ptr < pkt->len) {
     // loop end case?
-    if (pkt->ptr >= pkt->len) break;
     GetStringToken(pkt, token);
     // if the option database was found
     if (token.compare("database") == 0) {
@@ -1119,7 +1106,9 @@ bool PostgresProtocolHandler::ProcessStartupPacket(InputPacket* pkt, int32_t pro
   }
   finished_startup_packet = true;
 
-  // Send AuthRequestOK to client (skip client authentication)
+  // Send AuthRequestOK to client
+  // TODO(Yuchen): Peloton does not do any kind of trust authentication now.
+  // For example, no password authentication.
   SendInitialResponse();
 
   return true;

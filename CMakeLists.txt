@@ -158,4 +158,3 @@ peloton_print_configuration_summary()
 
 # ---[ Export configs generation
 peloton_generate_export_configs()
-
