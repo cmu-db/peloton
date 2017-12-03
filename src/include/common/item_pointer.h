@@ -54,6 +54,10 @@ class ItemPointerComparator {
     return (p1->block == p2->block) && (p1->offset == p2->offset);
   }
 
+  bool operator()(const ItemPointer &p1, ItemPointer &p2) const {
+    return (p1.block == p2.block) && (p1.offset == p2.offset);
+  }
+
   ItemPointerComparator(const ItemPointerComparator &) {}
   ItemPointerComparator() {}
 };
