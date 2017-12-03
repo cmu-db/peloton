@@ -96,7 +96,7 @@ class ApplyRule : public OptimizerTask {
  public:
   ApplyRule(GroupExpression *group_expr,
             Rule *rule,
-            std::shared_ptr<OptimizeContext> context, explore_only = false)
+            std::shared_ptr<OptimizeContext> context)
       : OptimizerTask(context, OptimizerTaskType::APPLY_RULE),
         group_expr_(group_expr), rule_(rule) {}
   virtual void execute() override;

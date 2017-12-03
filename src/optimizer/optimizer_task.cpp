@@ -12,7 +12,6 @@
 
 #include "optimizer/optimizer_task.h"
 #include "optimizer/optimize_context.h"
-#include "optimizer/optimizer_metadata.h"
 #include "optimizer/binding.h"
 
 namespace peloton {
@@ -24,15 +23,15 @@ void OptimizerTask::PushTask(OptimizerTask *task) {
   context_->task_pool->Push(task);
 }
 
-Memo& OptimizerTask::GetMemo() const {return context_->metadata->memo;}
+Memo &OptimizerTask::GetMemo() const { return context_->metadata->memo; }
 
-RuleSet& OptimizerTask::GetRuleSet() const { return context_->metadata->rule_set;}
+RuleSet &OptimizerTask::GetRuleSet() const { return context_->metadata->rule_set; }
 
 //===--------------------------------------------------------------------===//
 // OptimizeGroup
 //===--------------------------------------------------------------------===//
 void OptimizeGroup::execute() {
-  if (group_->GetCostLB() > context_->cost_upper_boun ||  // Cost LB > Cost UB
+  if (group_->GetCostLB() > context_->cost_upper_bound ||  // Cost LB > Cost UB
       group_->GetBestExpression(*(context_->required_prop.get())) != nullptr)  // Has optimized given the context
     return;
 
@@ -43,14 +42,13 @@ void OptimizeGroup::execute() {
   }
 
   // Push implement tasks to ensure that they are run first (for early pruning)
-  for(auto& physical_expr : group_->GetPhysicalExpressions())
+  for (auto &physical_expr : group_->GetPhysicalExpressions())
     PushTask(new OptimizeInputs(physical_expr.get(), context_));
 
 
   // Since there is no cycle in the tree, it is safe to set the flag even before all expressions are explored
   group_->SetExplorationFlag();
 }
-
 
 //===--------------------------------------------------------------------===//
 // OptimizeExpression
@@ -64,7 +62,7 @@ void OptimizeExpression::execute() {
             != rule->GetMatchPattern()->GetChildPatternsSize()) // Children size does not math
       continue;
 
-    auto promise = rule->Promise(group_expr_, context_);
+    auto promise = rule->Promise(group_expr_, context_.get());
     if (promise > 0)
       valid_rules.emplace_back(rule.get(), promise);
   }
@@ -79,7 +77,8 @@ void OptimizeExpression::execute() {
       // Only need to explore non-leaf children before applying rule to the current group
       // this condition is important for early-pruning
       if (child_pattern->GetChildPatternsSize() > 0) {
-        PushTask(new ExploreGroup(GetMemo().GetGroupByID(group_expr_->GetChildGroupIDs()[child_group_idx]), metadata_));
+        PushTask(new ExploreGroup(
+            GetMemo().GetGroupByID(group_expr_->GetChildGroupIDs()[child_group_idx]), context_));
       }
       child_group_idx++;
     }
@@ -115,7 +114,7 @@ void ExploreExpression::execute() {
             != rule->GetMatchPattern()->GetChildPatternsSize()) // Children size does not math
       continue;
 
-    auto promise = rule->Promise(group_expr_, context_);
+    auto promise = rule->Promise(group_expr_, context_.get());
     if (promise > 0)
       valid_rules.emplace_back(rule.get(), promise);
   }
@@ -124,19 +123,20 @@ void ExploreExpression::execute() {
 
   // Apply rule
   for (auto &r : valid_rules) {
-    PushTask(new ApplyRule(group_expr_, r.rule, context_, true));
+    PushTask(new ApplyRule(group_expr_, r.rule, context_));
     int child_group_idx = 0;
     for (auto &child_pattern : r.rule->GetMatchPattern()->Children()) {
       // Only need to explore non-leaf children before applying rule to the current group
       // this condition is important for early-pruning
       if (child_pattern->GetChildPatternsSize() > 0) {
-        PushTask(new ExploreGroup(GetMemo().GetGroupByID(group_expr_->GetChildGroupIDs()[child_group_idx]), metadata_));
+        PushTask(
+            new ExploreGroup(GetMemo().GetGroupByID(group_expr_->GetChildGroupIDs()[child_group_idx]),
+                             context_));
       }
       child_group_idx++;
     }
   }
 }
-
 
 //===--------------------------------------------------------------------===//
 // ApplyRule
@@ -145,13 +145,13 @@ void ApplyRule::execute() {
   if (group_expr_->HasRuleExplored(rule_))
     return;
 
-  ItemBindingIterator iterator(nullptr, gexpr, rule_->GetMatchPattern());
+  ItemBindingIterator iterator(nullptr, group_expr_, rule_->GetMatchPattern());
   while (iterator.HasNext()) {
     auto before = iterator.Next();
     if (!rule_->Check(before, &GetMemo()))
       continue;
 
-    vector<shared_ptr<OperatorExpression>> after;
+    std::vector<std::shared_ptr<OperatorExpression>> after;
     rule_->Transform(before, after);
     for (auto &new_expr : after) {
       std::shared_ptr<GroupExpression> new_gexpr;
@@ -160,8 +160,7 @@ void ApplyRule::execute() {
         if (new_gexpr->Op().IsLogical()) {
           // Optimize this logical expression
           PushTask(new OptimizeExpression(new_gexpr.get(), context_));
-        }
-        else {
+        } else {
           // Cost this physical expression and optimize its inputs
           PushTask(new OptimizeInputs(new_gexpr.get(), context_));
         }
@@ -171,7 +170,6 @@ void ApplyRule::execute() {
 
   group_expr_->SetRuleExplored(rule_);
 }
-
 
 //===--------------------------------------------------------------------===//
 // OptimizeInputs
