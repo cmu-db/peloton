@@ -41,7 +41,7 @@ class UpdateTranslator : public OperatorTranslator {
   // Consume : No Cosume() override for Batch
   void Consume(ConsumerContext &context, RowBatch::Row &row) const override;
 
-  // No state finalization
+  // State finalization
   void TearDownState() override;
 
   // Get the stringified name of this translator

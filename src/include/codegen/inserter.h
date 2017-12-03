@@ -12,9 +12,12 @@
 
 #pragma once
 
+#include <unordered_set>
+
 #include "codegen/compilation_context.h"
 #include "codegen/consumer_context.h"
 #include "common/item_pointer.h"
+#include "type/types.h"
 
 namespace peloton {
 
@@ -47,6 +50,12 @@ class Inserter {
   void Init(storage::DataTable *table,
             executor::ExecutorContext *executor_context);
 
+  // Create the filter that checks the tuple can be inserted
+  void CreateFilter();
+
+  // Check whether the tuple can be inserted, i.e. not inserted by myself
+  bool IsEligible(oid_t tile_group_id, oid_t tuple_offset);
+
   // Get the storage area that is to be reserved
   char *ReserveTupleStorage();
 
@@ -59,9 +68,13 @@ class Inserter {
   // Insert a tuple
   void Insert(const storage::Tuple *tuple);
 
+  // Finalizes the instance
+  void TearDown();
+
  private:
   // No external constructor
-  Inserter(): table_(nullptr), executor_context_(nullptr), tile_(nullptr) {}
+  Inserter(): table_(nullptr), executor_context_(nullptr), tile_(nullptr),
+              filter_(nullptr) {}
 
  private:
   // Provided by its insert translator
@@ -71,6 +84,10 @@ class Inserter {
   // Set once a tuple storage is reserved
   std::shared_ptr<storage::Tile> tile_;
   ItemPointer location_;
+
+  // Tuples inserted from this INSERT execution
+  std::unordered_set<ItemPointer, ItemPointerHasher, ItemPointerComparator>
+      *filter_;
 
  private:
   DISALLOW_COPY_AND_MOVE(Inserter);

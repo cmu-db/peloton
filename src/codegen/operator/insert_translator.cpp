@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "codegen/table_storage.h"
+#include "codegen/lang/if.h"
 #include "codegen/proxy/catalog_proxy.h"
 #include "codegen/proxy/inserter_proxy.h"
 #include "codegen/proxy/transaction_runtime_proxy.h"
@@ -54,6 +55,11 @@ void InsertTranslator::InitializeState() {
   // Initialize the inserter with txn and table
   llvm::Value *inserter = LoadStatePtr(inserter_state_id_);
   codegen.Call(InserterProxy::Init, {inserter, table_ptr, executor_ptr});
+
+  if (insert_plan_.GetChildrenSize() != 0) {
+    // Create the filter that checks the tuple read is eligible to be inserted
+    codegen.Call(InserterProxy::CreateFilter, {inserter});
+  }
 }
 
 void InsertTranslator::Produce() const {
@@ -64,7 +70,6 @@ void InsertTranslator::Produce() const {
   else {
     auto &codegen = GetCodeGen();
     auto *inserter = LoadStatePtr(inserter_state_id_);
-
     auto num_tuples = insert_plan_.GetBulkInsertCount();
     for (decltype(num_tuples) i = 0; i < num_tuples; ++i) {
       // Convert the tuple address to the LLVM pointer value
@@ -83,21 +88,37 @@ void InsertTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
   auto &codegen = GetCodeGen();
   auto *inserter = LoadStatePtr(inserter_state_id_);
 
-  auto *tuple_ptr = codegen.Call(InserterProxy::ReserveTupleStorage,
-                                 {inserter});
-  auto *pool = codegen.Call(InserterProxy::GetPool, {inserter});
+  // Check whether it is the tuple that was inserted by myself
+  auto *is_eligible=
+      codegen.Call(InserterProxy::IsEligible,
+                   {inserter, row.GetTileGroupID(), row.GetTID(codegen)});
 
-  // Generate/Materialize tuple data from row and attribute information
-  std::vector<codegen::Value> values;
-  auto &ais = insert_plan_.GetAttributeInfos();
-  for (const auto *ai : ais) {
-    codegen::Value v = row.DeriveValue(codegen, ai);
-    values.push_back(v);
+  lang::If insert_tuple{codegen, is_eligible};
+  {
+    auto *tuple_ptr = codegen.Call(InserterProxy::ReserveTupleStorage,
+                                   {inserter});
+    auto *pool = codegen.Call(InserterProxy::GetPool, {inserter});
+
+    // Generate/Materialize tuple data from row and attribute information
+    std::vector<codegen::Value> values;
+    auto &ais = insert_plan_.GetAttributeInfos();
+    for (const auto *ai : ais) {
+      codegen::Value v = row.DeriveValue(codegen, ai);
+      values.push_back(v);
+    }
+    table_storage_.StoreValues(codegen, tuple_ptr, values, pool);
+
+    // Call Inserter to insert the reserved tuple storage area
+    codegen.Call(InserterProxy::InsertReserved, {inserter});
   }
-  table_storage_.StoreValues(codegen, tuple_ptr, values, pool);
+  insert_tuple.EndIf();
+}
 
-  // Call Inserter to insert the reserved tuple storage area
-  codegen.Call(InserterProxy::InsertReserved, {inserter});
+void InsertTranslator::TearDownState() {
+  // Tear down the inserter 
+  auto &codegen = GetCodeGen();
+  llvm::Value *inserter = LoadStatePtr(inserter_state_id_);
+  codegen.Call(InserterProxy::TearDown, {inserter});
 }
 
 }  // namespace codegen

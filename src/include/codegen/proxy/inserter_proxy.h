@@ -25,10 +25,13 @@ PROXY(Inserter) {
   DECLARE_TYPE;
 
   DECLARE_METHOD(Init);
+  DECLARE_METHOD(CreateFilter);
+  DECLARE_METHOD(IsEligible);
   DECLARE_METHOD(ReserveTupleStorage);
   DECLARE_METHOD(GetPool);
   DECLARE_METHOD(InsertReserved);
   DECLARE_METHOD(Insert);
+  DECLARE_METHOD(TearDown);
 };
 
 TYPE_BUILDER(Inserter, codegen::Inserter);

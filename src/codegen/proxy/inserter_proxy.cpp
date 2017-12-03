@@ -24,10 +24,13 @@ namespace codegen {
 DEFINE_TYPE(Inserter, "codegen::Inserter", MEMBER(opaque));
 
 DEFINE_METHOD(peloton::codegen, Inserter, Init);
+DEFINE_METHOD(peloton::codegen, Inserter, CreateFilter);
+DEFINE_METHOD(peloton::codegen, Inserter, IsEligible);
 DEFINE_METHOD(peloton::codegen, Inserter, ReserveTupleStorage);
 DEFINE_METHOD(peloton::codegen, Inserter, GetPool);
 DEFINE_METHOD(peloton::codegen, Inserter, InsertReserved);
 DEFINE_METHOD(peloton::codegen, Inserter, Insert);
+DEFINE_METHOD(peloton::codegen, Inserter, TearDown);
 
 }  // namespace codegen
 }  // namespace peloton

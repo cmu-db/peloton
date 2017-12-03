@@ -62,7 +62,7 @@ class InsertTranslator : public OperatorTranslator {
   void Consume(ConsumerContext &context, RowBatch::Row &row) const override;
 
   // Codegen any cleanup work
-  void TearDownState() override {}
+  void TearDownState() override;
 
   // Get the name of this trnslator
   std::string GetName() const override { return "Insert"; }
