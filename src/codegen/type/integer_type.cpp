@@ -182,10 +182,9 @@ struct Ceil : public TypeSystem::UnaryOperator {
     return Type{Integer::Instance()};
   }
 
-  Value DoWork(CodeGen __attribute__((unused))&codegen, const Value &val) const override {
-      PL_ASSERT(SupportsType(val.GetType()));
-
-    // Return result
+  Value DoWork(UNUSED_ATTRIBUTE CodeGen &codegen,
+               const Value &val) const override {
+    PL_ASSERT(SupportsType(val.GetType()));
     return val;
   }
 };
