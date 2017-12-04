@@ -80,7 +80,10 @@ struct CastDecimal : public TypeSystem::SimpleNullableCast {
       }
     }
 
-    return Value{to_type, result, nullptr, nullptr};
+    // We could be casting this non-nullable value to a nullable type
+    llvm::Value *null = to_type.nullable ? codegen.ConstBool(false) : nullptr;
+
+    return Value{to_type, result, nullptr, null};
   }
 };
 

@@ -89,8 +89,11 @@ struct CastTinyInt : public TypeSystem::SimpleNullableCast {
       }
     }
 
+    // We could be casting this non-nullable value to a nullable type
+    llvm::Value *null = to_type.nullable ? codegen.ConstBool(false) : nullptr;
+
     // Return the result
-    return Value{to_type, result, nullptr, nullptr};
+    return Value{to_type, result, nullptr, null};
   }
 };
 
