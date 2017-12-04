@@ -31,7 +31,7 @@ class ParameterCache {
       parameters_(parameters) {}
 
   // Set the parameter values
-  void StoreValues(CodeGen &codegen, llvm::Value *query_parameters_ptr);
+  void Populate(CodeGen &codegen, llvm::Value *query_parameters_ptr);
 
   // Get the codegen value for the specific index
   codegen::Value GetValue(uint32_t index) const;

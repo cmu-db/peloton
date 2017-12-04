@@ -41,6 +41,40 @@ void QueryCache::Add(const std::shared_ptr<planner::AbstractPlan> &key,
   cache_lock_.Unlock();
 }
 
+void QueryCache::Clear() {
+  cache_lock_.WriteLock();
+  cache_map_.clear();
+  query_list_.clear();
+  cache_lock_.Unlock();
+}
+
+void QueryCache::Remove(const oid_t table_oid) {
+  cache_lock_.WriteLock();
+
+  for (auto it = cache_map_.begin(); it != cache_map_.end(); ) {
+    oid_t oid = GetOidFromPlan(*it->first.get());
+    if (oid == table_oid) {
+      query_list_.erase(it->second);
+      it = cache_map_.erase(it);
+    } else {
+      ++it;
+    }
+  }
+  cache_lock_.Unlock();
+}
+
+void QueryCache::Resize(size_t target_size) {
+  cache_lock_.WriteLock();
+  while (cache_map_.size() > target_size) {
+    auto last_it = query_list_.end();
+    last_it--;
+    cache_map_.erase(last_it->first);
+    query_list_.pop_back();
+  }
+  capacity_ = target_size;
+  cache_lock_.Unlock();
+}
+
 oid_t QueryCache::GetOidFromPlan(const planner::AbstractPlan &plan) const {
  switch (plan.GetPlanNodeType()) {
     case PlanNodeType::SEQSCAN: {
@@ -65,21 +99,6 @@ oid_t QueryCache::GetOidFromPlan(const planner::AbstractPlan &plan) const {
     return INVALID_OID;
   else
     return GetOidFromPlan(*plan.GetChild(0));
-}
-
-void QueryCache::Remove(const oid_t table_oid) {
-  cache_lock_.WriteLock();
-
-  for (auto it = cache_map_.begin(); it != cache_map_.end(); ) {
-    oid_t oid = GetOidFromPlan(*it->first.get());
-    if (oid == table_oid) {
-      query_list_.erase(it->second);
-      it = cache_map_.erase(it); 
-    } else {
-      ++it;
-    }
-  }
-  cache_lock_.Unlock();
 }
 
 }  // namespace codegen

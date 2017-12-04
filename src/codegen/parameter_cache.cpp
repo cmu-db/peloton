@@ -21,7 +21,7 @@
 namespace peloton {
 namespace codegen {
 
-void ParameterCache::StoreValues(CodeGen &codegen,
+void ParameterCache::Populate(CodeGen &codegen,
     llvm::Value *query_parameters_ptr) {
   for (uint32_t i = 0; i < parameters_.size(); i++) {
     auto &parameter = parameters_[i];
