@@ -49,7 +49,8 @@ class CompilationContext {
 
  public:
   // Constructor
-  CompilationContext(Query &query, QueryResultConsumer &result_consumer);
+  CompilationContext(Query &query, QueryParameters &parameters,
+                     QueryResultConsumer &result_consumer);
 
   // Prepare a translator in this context
   void Prepare(const planner::AbstractPlan &op, Pipeline &pipeline);
@@ -72,11 +73,11 @@ class CompilationContext {
   RuntimeState &GetRuntimeState() const { return query_.GetRuntimeState(); }
 
   const QueryParameters &GetQueryParameters() const {
-    return query_.GetQueryParameters();
+    return parameters_;
   }
 
   const ParameterCache &GetParameterCache() const {
-    return query_.GetParameterCache();
+    return parameter_cache_;
   }
 
   QueryResultConsumer &GetQueryResultConsumer() const { return result_consumer_; }
@@ -96,7 +97,7 @@ class CompilationContext {
   // Get the parameter index to be used to get value, for the given expression
   size_t GetParameterIdx(const expression::AbstractExpression *expression)
       const {
-    return query_.GetParameterIdx(expression);
+    return parameters_.GetParameterIdx(expression);
   }
 
  private:
@@ -121,11 +122,14 @@ class CompilationContext {
   // The query we'll compile
   Query &query_;
 
-  // The consumer of the results of the query
-  QueryResultConsumer &result_consumer_;
+  // The parameters and mapping for expression and parameter ids to
+  QueryParameters &parameters_;
 
   // The parameter value cache of the query
-  ParameterCache &parameter_cache_;
+  ParameterCache parameter_cache_;
+
+  // The consumer of the results of the query
+  QueryResultConsumer &result_consumer_;
 
   // The code generator
   CodeGen codegen_;

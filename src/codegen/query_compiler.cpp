@@ -29,10 +29,10 @@ std::unique_ptr<Query> QueryCompiler::Compile(
     const planner::AbstractPlan &root, QueryParameters &parameters,
     QueryResultConsumer &result_consumer, CompileStats *stats) {
   // The query statement we compile
-  std::unique_ptr<Query> query{new Query(root, parameters)};
+  std::unique_ptr<Query> query{new Query(root)};
 
   // Set up the compilation context
-  CompilationContext context{*query, result_consumer};
+  CompilationContext context{*query, parameters, result_consumer};
 
   // Perform the compilation
   context.GeneratePlan(stats);

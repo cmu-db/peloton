@@ -64,40 +64,21 @@ class Query {
   // Return the query plan
   const planner::AbstractPlan &GetPlan() const { return query_plan_; }
 
-  // Return the query parameters
-  codegen::QueryParameters &GetQueryParameters() const {
-    return parameters_;
-  }
-
   // Get the holder of the code
   CodeContext &GetCodeContext() { return code_context_; }
 
   // The class tracking all the state needed by this query
   RuntimeState &GetRuntimeState() { return runtime_state_; }
 
-  size_t GetParameterIdx(const expression::AbstractExpression *expression) {
-    return parameters_.GetParameterIdx(expression);
-  }
-
-  ParameterCache &GetParameterCache() {
-    return parameters_cache_;
-  }
-
  private:
   friend class QueryCompiler;
 
   // Constructor
-  Query(const planner::AbstractPlan &query_plan, QueryParameters &parameters);
+  Query(const planner::AbstractPlan &query_plan);
 
  private:
   // The query plan
   const planner::AbstractPlan &query_plan_;
-
-  // The parameters and mapping for expression and parameter ids to
-  QueryParameters &parameters_;
-
-  // The parameters values storage
-  ParameterCache parameters_cache_;
 
   // The code context where the compiled code for the query goes
   CodeContext code_context_;
