@@ -13,6 +13,7 @@
 #include "codegen/inserter.h"
 #include "codegen/transaction_runtime.h"
 #include "common/container_tuple.h"
+#include "common/item_pointer.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/executor_context.h"
 #include "executor/logical_tile.h"
@@ -29,6 +30,19 @@ void Inserter::Init(storage::DataTable *table,
   PL_ASSERT(table && executor_context);
   table_ = table;
   executor_context_ = executor_context;
+  filter_ = nullptr;
+}
+
+void Inserter::CreateFilter() {
+  filter_ = new std::unordered_set<ItemPointer, ItemPointerHasher,
+                                   ItemPointerComparator>;
+}
+
+bool Inserter::IsEligible(oid_t tile_group_id, oid_t tuple_offset) {
+  PL_ASSERT(filter_);
+  ItemPointer location(tile_group_id, tuple_offset);
+  auto it = filter_->find(location);
+  return (it == filter_->end());
 }
 
 char *Inserter::ReserveTupleStorage() {
@@ -49,7 +63,7 @@ peloton::type::AbstractPool *Inserter::GetPool() {
 }
 
 void Inserter::InsertReserved() {
-  PL_ASSERT(table_ && executor_context_ && tile_);
+  PL_ASSERT(table_ && executor_context_ && tile_ && filter_);
   auto *txn = executor_context_->GetTransaction();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
@@ -63,6 +77,9 @@ void Inserter::InsertReserved() {
   }
   txn_manager.PerformInsert(txn, location_, index_entry_ptr);
   executor_context_->num_processed++;
+
+  // Keep this in the cache so that we can filter this
+  filter_->insert(location_);
 
   // the tile pointer is there for an insertion, so we release it at this moment
   tile_.reset();
@@ -81,6 +98,11 @@ void Inserter::Insert(const storage::Tuple *tuple) {
   }
   txn_manager.PerformInsert(txn, location, index_entry_ptr);
   executor_context_->num_processed++;
+}
+
+void Inserter::TearDown() {
+  if (filter_ != nullptr)
+    delete filter_;
 }
 
 }  // namespace codegen
