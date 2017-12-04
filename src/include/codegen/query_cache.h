@@ -40,28 +40,20 @@ class QueryCache : public Singleton<QueryCache> {
   void Add(const std::shared_ptr<planner::AbstractPlan> &key,
            std::unique_ptr<Query> &&val);
 
-  // Get the total capacity of the cache, i.e. max. no. of queries to be cached
-  size_t GetCapacity() const { return capacity_; }
+  // Remove all the items in the cache
+  void Clear();
 
-  // Set the total capacity of the cache
-  void SetCapacity(size_t capacity) {
-    Resize(capacity);
-    capacity_ = capacity;
-  }
+  // Remove all the cached query items related to a table
+  void Remove(const oid_t table_oid);
 
   // Get the number of queries currently cached
   size_t GetCount() const { return cache_map_.size(); }
 
-  // Remove all the items in the cache
-  void Clear() {
-    cache_lock_.WriteLock();
-    cache_map_.clear();
-    query_list_.clear();
-    cache_lock_.Unlock();
-  }
+  // Get the total capacity of the cache, i.e. max. no. of queries to be cached
+  size_t GetCapacity() const { return capacity_; }
 
-  // Remove all the cached query items related to a table
-  void Remove(const oid_t table_oid);
+  // Set the total capacity of the cache
+  void SetCapacity(size_t capacity) { Resize(capacity); }
 
  private:
   friend class Singleton<QueryCache>;
@@ -69,16 +61,7 @@ class QueryCache : public Singleton<QueryCache> {
   QueryCache() {}
 
   // Resize the cache in the LRU manner
-  void Resize(size_t target_size) {
-    cache_lock_.WriteLock();
-    while (cache_map_.size() > target_size) {
-      auto last_it = query_list_.end();
-      last_it--;
-      cache_map_.erase(last_it->first);
-      query_list_.pop_back();
-    }
-    cache_lock_.Unlock();
-  }
+  void Resize(size_t target_size);
 
   // Get the table Oid from the plan given
   oid_t GetOidFromPlan(const planner::AbstractPlan &plan) const;

@@ -198,7 +198,7 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
   runtime_state.CreateLocalState(codegen_);
 
   // Load the query parameter values
-  parameter_cache_.StoreValues(codegen_, GetQueryParametersPtr());
+  parameter_cache_.Populate(codegen_, GetQueryParametersPtr());
 
   // Generate the primary plan logic
   Produce(root);
