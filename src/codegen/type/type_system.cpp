@@ -45,7 +45,7 @@ Value TypeSystem::SimpleNullableCast::Eval(CodeGen &codegen, const Value &value,
   is_null.ElseBlock();
   {
     // If both values are not null, perform the non-null-aware operation
-    ret_val = Impl(codegen, value, to_type.AsNonNullable());
+    ret_val = Impl(codegen, value, to_type);
   }
   is_null.EndIf();
 

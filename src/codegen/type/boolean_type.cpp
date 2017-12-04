@@ -42,7 +42,12 @@ struct CastBooleanToInteger : public TypeSystem::SimpleNullableCast {
 
     // Any integral value requires a zero-extension
     auto *raw_val = codegen->CreateZExt(value.GetValue(), codegen.Int32Type());
-    return Value{to_type, raw_val, nullptr, nullptr};
+
+    // We could be casting this non-nullable value to a nullable type
+    llvm::Value *null = to_type.nullable ? codegen.ConstBool(false) : nullptr;
+
+    // Return the result
+    return Value{to_type, raw_val, nullptr, null};
   }
 };
 
@@ -60,7 +65,12 @@ struct CastBooleanToVarchar : public TypeSystem::SimpleNullableCast {
     // Convert this boolean (unsigned int) into a string
     llvm::Value *str_val = codegen->CreateSelect(
         value.GetValue(), codegen.ConstString("T"), codegen.ConstString("F"));
-    return Value{to_type, str_val, codegen.Const32(1)};
+
+    // We could be casting this non-nullable value to a nullable type
+    llvm::Value *null = to_type.nullable ? codegen.ConstBool(false) : nullptr;
+
+    // Return the result
+    return Value{to_type, str_val, codegen.Const32(1), null};
   }
 };
 

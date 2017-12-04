@@ -51,7 +51,10 @@ struct CastDateToTimestamp : public TypeSystem::SimpleNullableCast {
         codegen.Const64(peloton::type::TimestampType::kUsecsPerDate);
     llvm::Value *timestamp = codegen->CreateMul(date, usecs_per_date);
 
-    return Value{to_type, timestamp, nullptr, nullptr};
+    // We could be casting this non-nullable value to a nullable type
+    llvm::Value *null = to_type.nullable ? codegen.ConstBool(false) : nullptr;
+
+    return Value{to_type, timestamp, nullptr, null};
   }
 };
 
