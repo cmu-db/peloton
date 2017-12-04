@@ -95,6 +95,9 @@ class Group {
   std::vector<std::shared_ptr<GroupExpression>> logical_expressions_;
   std::vector<std::shared_ptr<GroupExpression>> physical_expressions_;
 
+  // TODO(boweic): we need to add some fileds that indicate the logical property
+  // of the given group, e.g. output schema, stats and cost
+
   double cost_lower_bound_ = -1;
 };
 

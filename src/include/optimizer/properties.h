@@ -21,6 +21,8 @@ namespace peloton {
 namespace optimizer {
 
 // Specifies which columns should the operator returns
+// TODO(boweic): property column is not needed and should be deprecated after
+// columns are implemented as logical properties of each group
 class PropertyColumns : public Property {
  public:
   PropertyColumns(std::vector<std::shared_ptr<expression::AbstractExpression>>
@@ -52,6 +54,8 @@ class PropertyColumns : public Property {
 // Specify which columns values are dictinct
 // PropertyDistinct(col_a, col_b, col_c) should have
 // distinct value for (col_a, col_b, col_c) in each return tuple
+// TODO(boweic): This should be deprecated as distinct should be implemented as
+// an operator
 class PropertyDistinct : public Property {
  public:
   PropertyDistinct(std::vector<std::shared_ptr<expression::AbstractExpression>>
@@ -78,26 +82,29 @@ class PropertyDistinct : public Property {
   std::vector<std::shared_ptr<expression::AbstractExpression>>
       distinct_column_exprs_;
 };
-  
+
 // Specify how many tuples to output
+// TODO(boweic): We do not need limit as a property, should be implemented as an
+// operator
 class PropertyLimit : public Property {
  public:
-  PropertyLimit(int64_t offset, int64_t limit):offset_(offset), limit_(limit){}
-  
+  PropertyLimit(int64_t offset, int64_t limit)
+      : offset_(offset), limit_(limit) {}
+
   PropertyType Type() const override;
-  
+
   hash_t Hash() const override;
-  
+
   bool operator>=(const Property &r) const override;
-  
+
   void Accept(PropertyVisitor *v) const override;
-  
+
   std::string ToString() const override;
-  
+
   inline int64_t GetLimit() const { return limit_; }
-  
+
   inline int64_t GetOffset() const { return offset_; }
-  
+
  private:
   int64_t offset_;
   int64_t limit_;
@@ -134,5 +141,5 @@ class PropertySort : public Property {
   std::vector<bool> sort_ascending_;
 };
 
-} // namespace optimizer
-} // namespace peloton
+}  // namespace optimizer
+}  // namespace peloton
