@@ -175,6 +175,16 @@ void ApplyRule::execute() {
 // OptimizeInputs
 //===--------------------------------------------------------------------===//
 void OptimizeInputs::execute() {
+  // TODO: We can init input cost using non-zero value for pruning
+
+  // Pruning
+  if (CostSoFar() > context_->cost_upper_bound)
+    return;
+
+
+  for (int child_idx = current_child_no_; child_idx < group_expr_->GetChildrenGroupsSize(); child_idx++) {
+
+  }
 
 }
 

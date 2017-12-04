@@ -115,7 +115,15 @@ class OptimizeInputs : public OptimizerTask {
         group_expr_(group_expr) {
     child_costs_.resize(group_expr->GetChildGroupIDs().size(), 0);
   }
+
   virtual void execute() override;
+
+  double CostSoFar() {
+    double cost = local_cost_;
+    for (auto &c_cost : child_costs_)
+      cost += c_cost;
+    return cost;
+  }
 
  private:
   GroupExpression *group_expr_;
