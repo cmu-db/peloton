@@ -22,10 +22,8 @@ namespace peloton {
 namespace codegen {
 
 // Constructor
-Query::Query(const planner::AbstractPlan &query_plan,
-             QueryParameters &parameters)
-    : query_plan_(query_plan), parameters_(parameters),
-      parameters_cache_(parameters.GetParameters()) {}
+Query::Query(const planner::AbstractPlan &query_plan)
+    : query_plan_(query_plan) {}
 
 // Execute the query on the given database (and within the provided transaction)
 // This really involves calling the init(), plan() and tearDown() functions, in
