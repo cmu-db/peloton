@@ -10,14 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/table_storage.h"
 #include "codegen/proxy/catalog_proxy.h"
 #include "codegen/proxy/inserter_proxy.h"
 #include "codegen/proxy/transaction_runtime_proxy.h"
 #include "codegen/proxy/tuple_proxy.h"
 #include "codegen/operator/insert_translator.h"
-#include "codegen/type/sql_type.h"
-#include "planner/abstract_scan_plan.h"
 #include "planner/insert_plan.h"
 #include "storage/data_table.h"
 
