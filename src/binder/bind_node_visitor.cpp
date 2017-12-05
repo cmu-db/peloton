@@ -199,34 +199,6 @@ void BindNodeVisitor::Visit(expression::FunctionExpression *expr) {
   // Visit the subtree first
   SqlNodeVisitor::Visit(expr);
 
-  // Specialize the first argument (DatePartType) for date functions, otherwise
-  // we have to do the string comparison to find out the corresponding
-  // DatePartType when scanning every tuple.
-  auto func_name = expr->GetFuncName();
-  auto func_operator_id =
-      function::BuiltInFunctions::GetFuncBySQLName(func_name).op_id;
-  if (func_operator_id == OperatorId::DateTrunc ||
-      func_operator_id == OperatorId::Extract) {
-    // Check the type of the first argument. Should be VARCHAR
-    auto date_part = expr->GetChild(0);
-    if (date_part->GetValueType() != type::TypeId::VARCHAR) {
-      throw Exception(EXCEPTION_TYPE_EXPRESSION,
-                      "Incorrect argument type to function: " + func_name +
-                          ". Argument 0 expected type VARCHAR but found " +
-                          TypeIdToString(date_part->GetValueType()) + ".");
-    }
-
-    // Convert the first argument to DatePartType
-    auto date_part_type = StringToDatePartType(
-        date_part->Evaluate(nullptr, nullptr, nullptr).ToString());
-    auto date_part_integer = type::ValueFactory::GetIntegerValue(
-        static_cast<int32_t>(date_part_type));
-
-    // Replace the first argument with an Integer expression of the DatePartType
-    expr->SetChild(0,
-                   new expression::ConstantValueExpression(date_part_integer));
-  }
-
   // Check catalog and bind function
   std::vector<type::TypeId> argtypes;
   for (size_t i = 0; i < expr->GetChildrenSize(); i++)
@@ -239,6 +211,20 @@ void BindNodeVisitor::Visit(expression::FunctionExpression *expr) {
   LOG_DEBUG("Argument num: %ld", func_data.argument_types_.size());
   expr->SetFunctionExpressionParameters(func_data.func_, func_data.return_type_,
                                         func_data.argument_types_);
+
+  // Look into the OperatorId for built-in functions to check the first argument
+  // for timestamp functions.
+  // TODO(LM): The OperatorId might need to be changed to global ID after we
+  // rewrite the function identification logic.
+  auto func_operator_id = func_data.func_.op_id;
+  if (func_operator_id == OperatorId::DateTrunc ||
+      func_operator_id == OperatorId::Extract) {
+    auto date_part = expr->GetChild(0);
+
+    // Test whether the first argument is a correct DatePartType
+    StringToDatePartType(
+        date_part->Evaluate(nullptr, nullptr, nullptr).ToString());
+  }
 }
 
 }  // namespace binder

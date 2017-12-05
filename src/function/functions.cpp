@@ -15,31 +15,16 @@
 namespace peloton {
 namespace function {
 
-std::unordered_map<std::string, BuiltInFuncType>
-    BuiltInFunctions::kSourceNameFuncMap;
-std::unordered_map<std::string, BuiltInFuncType>
-    BuiltInFunctions::kSQLNameFuncMap;
+std::unordered_map<std::string, BuiltInFuncType> BuiltInFunctions::kFuncMap;
 
-void BuiltInFunctions::AddFunction(const std::string &sql_func_name,
-                                   const std::string &source_func_name,
+void BuiltInFunctions::AddFunction(const std::string &func_name,
                                    BuiltInFuncType func) {
-  kSourceNameFuncMap.emplace(source_func_name, func);
-  kSQLNameFuncMap.emplace(sql_func_name, func);
+  kFuncMap.emplace(func_name, func);
 }
 
-BuiltInFuncType BuiltInFunctions::GetFuncBySourceName(
-    const std::string &func_name) {
-  auto func = kSourceNameFuncMap.find(func_name);
-  if (func == kSourceNameFuncMap.end()) {
-    return {OperatorId::Invalid, nullptr};
-  }
-  return func->second;
-}
-
-BuiltInFuncType BuiltInFunctions::GetFuncBySQLName(
-    const std::string &func_name) {
-  auto func = kSQLNameFuncMap.find(func_name);
-  if (func == kSQLNameFuncMap.end()) {
+BuiltInFuncType BuiltInFunctions::GetFuncByName(const std::string &func_name) {
+  auto func = kFuncMap.find(func_name);
+  if (func == kFuncMap.end()) {
     return {OperatorId::Invalid, nullptr};
   }
   return func->second;

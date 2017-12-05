@@ -34,22 +34,13 @@ class BuiltInFunctions {
  private:
   // Map the function name in C++ source (should be unique) to the actual
   // function implementation
-  static std::unordered_map<std::string, BuiltInFuncType> kSourceNameFuncMap;
-
-  // Map the function name used in SQL to the actual function implementation.
-  // Different SQL names can map to the same function implementation(alias).
-  static std::unordered_map<std::string, BuiltInFuncType> kSQLNameFuncMap;
+  static std::unordered_map<std::string, BuiltInFuncType> kFuncMap;
 
  public:
-  static void AddFunction(const std::string &sql_func_name,
-                          const std::string &source_func_name,
-                          BuiltInFuncType func);
+  static void AddFunction(const std::string &func_name, BuiltInFuncType func);
 
   // Get the function from the name in C++ source code
-  static BuiltInFuncType GetFuncBySourceName(const std::string &func_name);
-
-  // Get the function from the name used in SQL
-  static BuiltInFuncType GetFuncBySQLName(const std::string &func_name);
+  static BuiltInFuncType GetFuncByName(const std::string &func_name);
 };
 
 }  // namespace function

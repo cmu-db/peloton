@@ -39,21 +39,22 @@ class TimestampFunctionsTests : public PelotonTest {};
  */
 void DateTruncTestHelper(DatePartType part, std::string &date,
                          std::string &expected) {
-  // The first argument is an IntegerValue of the DatePartType
+  // The first argument is an VarcharValue of the DatePartType
   // The second argument is a TimestampValue of the date
-  uint32_t int_date_part = *reinterpret_cast<const uint32_t *>(&part);
-  uint64_t int_date = type::ValueFactory::CastAsTimestamp(
-                          type::ValueFactory::GetVarcharValue(date))
-                          .GetAs<uint64_t>();
+  std::string string_date_part = DatePartTypeToString(part);
+  const char *char_date_part = string_date_part.c_str();
+  uint64_t int_date =
+      type::ValueFactory::CastAsTimestamp(
+          type::ValueFactory::GetVarcharValue(date)).GetAs<uint64_t>();
 
   // The expected return value
-  uint64_t int_expected = type::ValueFactory::CastAsTimestamp(
-                              type::ValueFactory::GetVarcharValue(expected))
-                              .GetAs<uint64_t>();
+  uint64_t int_expected =
+      type::ValueFactory::CastAsTimestamp(
+          type::ValueFactory::GetVarcharValue(expected)).GetAs<uint64_t>();
 
   // Invoke the DateTrunc method and get back the result
   auto result =
-      function::TimestampFunctions::DateTrunc(int_date_part, int_date);
+      function::TimestampFunctions::DateTrunc(char_date_part, int_date);
 
   // <PART> <EXPECTED>
   // You can generate the expected value in postgres using this SQL:
@@ -70,8 +71,8 @@ void DateTruncTestHelper(DatePartType part, std::string &date,
 
 // Invoke TimestampFunctions::DateTrunc(NULL)
 TEST_F(TimestampFunctionsTests, NullDateTruncTest) {
-  auto result =
-      function::TimestampFunctions::DateTrunc(3, type::PELOTON_TIMESTAMP_NULL);
+  auto result = function::TimestampFunctions::DateTrunc(
+      "hour", type::PELOTON_TIMESTAMP_NULL);
   EXPECT_EQ(result, type::PELOTON_TIMESTAMP_NULL);
 }
 
