@@ -43,8 +43,9 @@ UpdateTranslator::UpdateTranslator(const planner::UpdatePlan &update_plan,
 
 bool IsTarget(const TargetList &target_list, uint32_t index) {
   for (const auto &target : target_list) {
-    if (target.first == index)
+    if (target.first == index) {
       return true;
+    }
   }
   return false;
 }
@@ -110,10 +111,11 @@ void UpdateTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
   llvm::Value *tuple_ptr;
   std::vector<llvm::Value *> prep_args = {updater, row.GetTileGroupID(),
                                           row.GetTID(codegen)};
-  if (update_plan_.GetUpdatePrimaryKey() == false)
+  if (update_plan_.GetUpdatePrimaryKey() == false) {
     tuple_ptr = codegen.Call(UpdaterProxy::Prepare, prep_args);
-  else
+  } else {
     tuple_ptr = codegen.Call(UpdaterProxy::PreparePK, prep_args);
+  }
 
   // Update only when we have tuple_ptr, otherwise it is not allowed to update
   llvm::Value *prepare_cond = codegen->CreateICmpNE(
@@ -128,10 +130,11 @@ void UpdateTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
   
     // Finally, update with help from the Updater
     std::vector<llvm::Value *> update_args = {updater};
-    if (update_plan_.GetUpdatePrimaryKey() == false)
+    if (update_plan_.GetUpdatePrimaryKey() == false) {
       codegen.Call(UpdaterProxy::Update, update_args);
-    else
+    } else {
       codegen.Call(UpdaterProxy::UpdatePK, update_args);
+    }
   }
   prepare_success.EndIf();
 }
