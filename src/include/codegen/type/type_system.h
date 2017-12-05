@@ -134,10 +134,14 @@ class TypeSystem {
   // SimpleComparisonHandleNull
   //
   // An abstract base class for comparison operations. This class computes the
-  // NULL bit based on arguments, but **always** invokes the derived comparison
-  // implementation. For simple comparisons, i.e., numeric comparisons, this is
-  // safe since the values will always be valid (though potentially garbage),
-  // but the resulting boolean is masked with the NULL bit. For string
+  // NULL bit based on arguments and **always** invokes the derived
+  // implementation to perform the comparison. This means that derived classes
+  // may operate on SQL NULL values. For simple comparisons, i.e., numeric
+  // comparisons, this is safe since the values will always be valid, though
+  // potentially garbage). The resulting boolean value is still marked with the
+  // correct NULL bit, thus hiding the (potentially) garbage comparison.
+  //
+  // This class isn't safe for string comparisons since strings  For string
   // comparisons, this is not safe because the string can take on C/C++ NULL,
   // and SEGFAULT.
   //
