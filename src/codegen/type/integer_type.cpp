@@ -32,7 +32,7 @@ namespace {
 // We do BIGINT -> {INTEGRAL_TYPE, DECIMAL, VARCHAR, BOOLEAN}
 //===----------------------------------------------------------------------===//
 
-struct CastInteger : public TypeSystem::SimpleNullableCast {
+struct CastInteger : public TypeSystem::CastHandleNull {
   bool SupportsTypes(const Type &from_type,
                      const Type &to_type) const override {
     if (from_type.GetSqlType() != Integer::Instance()) {
@@ -97,7 +97,7 @@ struct CastInteger : public TypeSystem::SimpleNullableCast {
 };
 
 // Comparison
-struct CompareInteger : public TypeSystem::SimpleNullableComparison {
+struct CompareInteger : public TypeSystem::SimpleComparisonHandleNull {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type == Integer::Instance() && left_type == right_type;

@@ -35,7 +35,7 @@ namespace {
 ///===--------------------------------------------------------------------===///
 
 // Comparison
-struct CompareVarbinary : public TypeSystem::SimpleNullableComparison {
+struct CompareVarbinary : public TypeSystem::SimpleComparisonHandleNull {
   bool SupportsTypes(const type::Type &left_type,
                      const type::Type &right_type) const override {
     return left_type.GetSqlType() == Varbinary::Instance() &&

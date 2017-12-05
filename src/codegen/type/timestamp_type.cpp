@@ -31,7 +31,7 @@ namespace {
 // We do DATE -> {TIMESTAMP, VARCHAR}
 //===----------------------------------------------------------------------===//
 
-struct CastTimestampToDate : public TypeSystem::SimpleNullableCast {
+struct CastTimestampToDate : public TypeSystem::CastHandleNull {
   bool SupportsTypes(const type::Type &from_type,
                      const type::Type &to_type) const override {
     return from_type.GetSqlType() == Timestamp::Instance() &&
@@ -58,7 +58,7 @@ struct CastTimestampToDate : public TypeSystem::SimpleNullableCast {
 };
 
 // Comparison
-struct CompareTimestamp : public TypeSystem::SimpleNullableComparison {
+struct CompareTimestamp : public TypeSystem::SimpleComparisonHandleNull {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type == Timestamp::Instance() && left_type == right_type;

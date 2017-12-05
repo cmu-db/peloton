@@ -15,6 +15,7 @@
 #include "codegen/lang/if.h"
 #include "codegen/value.h"
 #include "codegen/type/boolean_type.h"
+#include "codegen/type/integer_type.h"
 #include "common/exception.h"
 #include "util/string_util.h"
 
@@ -27,8 +28,8 @@ namespace type {
 // SimpleNullableCast
 //
 //===----------------------------------------------------------------------===//
-Value TypeSystem::SimpleNullableCast::Eval(CodeGen &codegen, const Value &value,
-                                           const Type &to_type) const {
+Value TypeSystem::CastHandleNull::Eval(CodeGen &codegen, const Value &value,
+                                       const Type &to_type) const {
   if (!value.IsNullable()) {
     // If the value isn't NULLable, avoid the NULL check and just invoke
     return Impl(codegen, value, to_type);
@@ -77,41 +78,98 @@ Value TypeSystem::SimpleNullableCast::Eval(CodeGen &codegen, const Value &value,
   /* Return the result with the computed null-bit */                       \
   return Value{result.GetType().AsNullable(), result.GetValue(), nullptr, null};
 
-Value TypeSystem::SimpleNullableComparison::EvalCompareLt(
+Value TypeSystem::SimpleComparisonHandleNull::EvalCompareLt(
     CodeGen &codegen, const Value &left, const Value &right) const {
   GEN_COMPARE(CompareLtImpl(codegen, left, right));
 }
 
-Value TypeSystem::SimpleNullableComparison::EvalCompareLte(
+Value TypeSystem::SimpleComparisonHandleNull::EvalCompareLte(
     CodeGen &codegen, const Value &left, const Value &right) const {
   GEN_COMPARE(CompareLteImpl(codegen, left, right));
 }
 
-Value TypeSystem::SimpleNullableComparison::EvalCompareEq(
+Value TypeSystem::SimpleComparisonHandleNull::EvalCompareEq(
     CodeGen &codegen, const Value &left, const Value &right) const {
   GEN_COMPARE(CompareEqImpl(codegen, left, right));
 }
 
-Value TypeSystem::SimpleNullableComparison::EvalCompareNe(
+Value TypeSystem::SimpleComparisonHandleNull::EvalCompareNe(
     CodeGen &codegen, const Value &left, const Value &right) const {
   GEN_COMPARE(CompareNeImpl(codegen, left, right));
 }
 
-Value TypeSystem::SimpleNullableComparison::EvalCompareGt(
+Value TypeSystem::SimpleComparisonHandleNull::EvalCompareGt(
     CodeGen &codegen, const Value &left, const Value &right) const {
   GEN_COMPARE(CompareGtImpl(codegen, left, right));
 }
 
-Value TypeSystem::SimpleNullableComparison::EvalCompareGte(
+Value TypeSystem::SimpleComparisonHandleNull::EvalCompareGte(
     CodeGen &codegen, const Value &left, const Value &right) const {
   GEN_COMPARE(CompareGteImpl(codegen, left, right));
 }
 
-Value TypeSystem::SimpleNullableComparison::EvalCompareForSort(
+Value TypeSystem::SimpleComparisonHandleNull::EvalCompareForSort(
     CodeGen &codegen, const Value &left, const Value &right) const {
   GEN_COMPARE(CompareForSortImpl(codegen, left, right));
 }
 
+#undef GEN_COMPARE
+
+//===----------------------------------------------------------------------===//
+//
+// SimpleNullableComparison
+//
+//===----------------------------------------------------------------------===//
+
+#define GEN_COMPARE(RET_TYPE, IMPL)                                   \
+  if (!left.IsNullable() && !right.IsNullable()) {                    \
+    /* Neither left nor right are NULLable, elide the NULL check */   \
+    return (IMPL);                                                    \
+  }                                                                   \
+  /* Determine the null bit based on the left and right values */     \
+  llvm::Value *null =                                                 \
+      codegen->CreateOr(left.IsNull(codegen), right.IsNull(codegen)); \
+  codegen::Value null_val, non_null_val;                              \
+  lang::If input_is_null{codegen, null};                              \
+  {                                                                   \
+    /* One of the inputs are NULL */                                  \
+    null_val = (RET_TYPE).GetNullValue(codegen);                      \
+  }                                                                   \
+  input_is_null.ElseBlock();                                          \
+  {                                                                   \
+    /* Neither input is NULL */                                       \
+    non_null_val = (IMPL);                                            \
+  }                                                                   \
+  return input_is_null.BuildPHI(null_val, non_null_val);
+
+Value TypeSystem::ExpensiveComparisonHandleNull::EvalCompareLt(
+    CodeGen &codegen, const Value &left, const Value &right) const {
+  GEN_COMPARE(Boolean::Instance(), CompareLtImpl(codegen, left, right));
+}
+Value TypeSystem::ExpensiveComparisonHandleNull::EvalCompareLte(
+    CodeGen &codegen, const Value &left, const Value &right) const {
+  GEN_COMPARE(Boolean::Instance(), CompareLteImpl(codegen, left, right));
+}
+Value TypeSystem::ExpensiveComparisonHandleNull::EvalCompareEq(
+    CodeGen &codegen, const Value &left, const Value &right) const {
+  GEN_COMPARE(Boolean::Instance(), CompareEqImpl(codegen, left, right));
+}
+Value TypeSystem::ExpensiveComparisonHandleNull::EvalCompareNe(
+    CodeGen &codegen, const Value &left, const Value &right) const {
+  GEN_COMPARE(Boolean::Instance(), CompareNeImpl(codegen, left, right));
+}
+Value TypeSystem::ExpensiveComparisonHandleNull::EvalCompareGt(
+    CodeGen &codegen, const Value &left, const Value &right) const {
+  GEN_COMPARE(Boolean::Instance(), CompareGtImpl(codegen, left, right));
+}
+Value TypeSystem::ExpensiveComparisonHandleNull::EvalCompareGte(
+    CodeGen &codegen, const Value &left, const Value &right) const {
+  GEN_COMPARE(Boolean::Instance(), CompareGteImpl(codegen, left, right));
+}
+Value TypeSystem::ExpensiveComparisonHandleNull::EvalCompareForSort(
+    CodeGen &codegen, const Value &left, const Value &right) const {
+  GEN_COMPARE(Integer::Instance(), CompareForSortImpl(codegen, left, right));
+}
 #undef GEN_COMPARE
 
 //===----------------------------------------------------------------------===//

@@ -33,7 +33,7 @@ namespace {
 // We do TINYINT -> {INTEGRAL_TYPE, DECIMAL, VARCHAR, BOOLEAN}
 //===----------------------------------------------------------------------===//
 
-struct CastTinyInt : public TypeSystem::SimpleNullableCast {
+struct CastTinyInt : public TypeSystem::CastHandleNull {
   bool SupportsTypes(const Type &from_type,
                      const Type &to_type) const override {
     if (from_type.GetSqlType() != TinyInt::Instance()) {
@@ -98,7 +98,7 @@ struct CastTinyInt : public TypeSystem::SimpleNullableCast {
 };
 
 // Comparison
-struct CompareTinyInt : public TypeSystem::SimpleNullableComparison {
+struct CompareTinyInt : public TypeSystem::SimpleComparisonHandleNull {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type == TinyInt::Instance() && left_type == right_type;
