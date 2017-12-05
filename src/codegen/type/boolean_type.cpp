@@ -29,7 +29,7 @@ namespace {
 // CASTING OPERATIONS
 //===----------------------------------------------------------------------===//
 
-struct CastBooleanToInteger : public TypeSystem::SimpleNullableCast {
+struct CastBooleanToInteger : public TypeSystem::CastHandleNull {
   bool SupportsTypes(const Type &from_type,
                      const Type &to_type) const override {
     return from_type.type_id == peloton::type::TypeId::BOOLEAN &&
@@ -51,7 +51,7 @@ struct CastBooleanToInteger : public TypeSystem::SimpleNullableCast {
   }
 };
 
-struct CastBooleanToVarchar : public TypeSystem::SimpleNullableCast {
+struct CastBooleanToVarchar : public TypeSystem::CastHandleNull {
   bool SupportsTypes(const Type &from_type,
                      const Type &to_type) const override {
     return from_type.type_id == peloton::type::TypeId::BOOLEAN &&
@@ -79,7 +79,7 @@ struct CastBooleanToVarchar : public TypeSystem::SimpleNullableCast {
 //===----------------------------------------------------------------------===//
 
 // Comparison functions
-struct CompareBoolean : public TypeSystem::SimpleNullableComparison {
+struct CompareBoolean : public TypeSystem::SimpleComparisonHandleNull {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type.type_id == peloton::type::TypeId::BOOLEAN &&

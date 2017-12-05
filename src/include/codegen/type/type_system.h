@@ -48,30 +48,33 @@ class TypeSystem {
   //===--------------------------------------------------------------------===//
   class Cast {
    public:
-    // Virtual destructor
     virtual ~Cast() = default;
 
     // Does this cast support casting from the given type to the given type?
     virtual bool SupportsTypes(const Type &from_type,
                                const Type &to_type) const = 0;
 
-    // Perform the cast on the given value to the provided type
+    // Cast the given value to the provided type
     virtual Value Eval(CodeGen &codegen, const Value &value,
                        const Type &to_type) const = 0;
   };
 
   //===--------------------------------------------------------------------===//
   //
-  // SimpleNullableCast
+  // CastHandleNull
   //
-  // An abstract base class for cast operations. This class performs generic
-  // NULL checking logic common across **most** casting operations. If the input
-  // is NULLable, an if-then-else construct is generated to perform the NULL
-  // check. Subclasses implement casting logic assuming non-NULLable inputs. If
-  // the input is **not** NULLable, the  NULL check is elided completely.
+  // An abstract base class for cast operations. This class performs common,
+  // generic NULL checking logic for most cast operations. Derived classes
+  // implement Impl() and assume non-null inputs.
+  //
+  // If the input is not NULL-able, no NULL check is performs, and the derived
+  // classes implementation is invoked.
+  //
+  // If the input is NULLable, an if-then-else construct is generated to perform
+  // the NULL check. Derived classes are invoked in the non-null branch.
   //
   //===--------------------------------------------------------------------===//
-  class SimpleNullableCast : public TypeSystem::Cast {
+  class CastHandleNull : public TypeSystem::Cast {
    public:
     Value Eval(CodeGen &codegen, const Value &value,
                const Type &to_type) const override;
@@ -128,16 +131,64 @@ class TypeSystem {
 
   //===--------------------------------------------------------------------===//
   //
-  // SimpleNullableComparison
+  // SimpleComparisonHandleNull
   //
-  // An abstract base class for comparison operations. This class handles
-  // generic NULL-checking code, this, allowing subclass comparisons to assume
-  // and work on non-null inputs. Depending on the NULLness of its inputs,
-  // this class properly computes (or entirely elides) the NULL bit, deferring
-  // to the subclass to implement the comparison.
+  // An abstract base class for comparison operations. This class computes the
+  // NULL bit based on arguments, but **always** invokes the derived comparison
+  // implementation. For simple comparisons, i.e., numeric comparisons, this is
+  // safe since the values will always be valid (though potentially garbage),
+  // but the resulting boolean is masked with the NULL bit. For string
+  // comparisons, this is not safe because the string can take on C/C++ NULL,
+  // and SEGFAULT.
   //
   //===--------------------------------------------------------------------===//
-  class SimpleNullableComparison : public Comparison {
+  class SimpleComparisonHandleNull : public Comparison {
+   public:
+    Value EvalCompareLt(CodeGen &codegen, const Value &left,
+                        const Value &right) const override;
+    Value EvalCompareLte(CodeGen &codegen, const Value &left,
+                         const Value &right) const override;
+    Value EvalCompareEq(CodeGen &codegen, const Value &left,
+                        const Value &right) const override;
+    Value EvalCompareNe(CodeGen &codegen, const Value &left,
+                        const Value &right) const override;
+    Value EvalCompareGt(CodeGen &codegen, const Value &left,
+                        const Value &right) const override;
+    Value EvalCompareGte(CodeGen &codegen, const Value &left,
+                         const Value &right) const override;
+    Value EvalCompareForSort(CodeGen &codegen, const Value &left,
+                             const Value &right) const override;
+
+   protected:
+    // The non-null comparison implementations
+    virtual Value CompareLtImpl(CodeGen &codegen, const Value &left,
+                                const Value &right) const = 0;
+    virtual Value CompareLteImpl(CodeGen &codegen, const Value &left,
+                                 const Value &right) const = 0;
+    virtual Value CompareEqImpl(CodeGen &codegen, const Value &left,
+                                const Value &right) const = 0;
+    virtual Value CompareNeImpl(CodeGen &codegen, const Value &left,
+                                const Value &right) const = 0;
+    virtual Value CompareGtImpl(CodeGen &codegen, const Value &left,
+                                const Value &right) const = 0;
+    virtual Value CompareGteImpl(CodeGen &codegen, const Value &left,
+                                 const Value &right) const = 0;
+    virtual Value CompareForSortImpl(CodeGen &codegen, const Value &left,
+                                     const Value &right) const = 0;
+  };
+
+  //===--------------------------------------------------------------------===//
+  //
+  // ExpensiveComparisonHandleNull
+  //
+  // An abstract base class for comparison operations. This class correctly
+  // computes the NULL bit, but generates a full-blown if-then-else clause
+  // (hence the "expensive" part) to perform the NULL check. Thus, derived
+  // comparison implementations are assured that arguments are not NULLable.
+  // If the arguments are non-NULLable, then the NULL check is elided.
+  //
+  //===--------------------------------------------------------------------===//
+  class ExpensiveComparisonHandleNull : public Comparison {
    public:
     Value EvalCompareLt(CodeGen &codegen, const Value &left,
                         const Value &right) const override;

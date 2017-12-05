@@ -35,7 +35,7 @@ namespace {
 // We do DECIMAL -> {INTEGRAL_TYPE, VARCHAR, BOOLEAN}
 //===----------------------------------------------------------------------===//
 
-struct CastDecimal : public TypeSystem::SimpleNullableCast {
+struct CastDecimal : public TypeSystem::CastHandleNull {
   bool SupportsTypes(const type::Type &from_type,
                      const type::Type &to_type) const override {
     if (from_type.GetSqlType() != Decimal::Instance()) {
@@ -88,7 +88,7 @@ struct CastDecimal : public TypeSystem::SimpleNullableCast {
 };
 
 // Comparison
-struct CompareDecimal : public TypeSystem::SimpleNullableComparison {
+struct CompareDecimal : public TypeSystem::SimpleComparisonHandleNull {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type == Decimal::Instance() && left_type == right_type;
