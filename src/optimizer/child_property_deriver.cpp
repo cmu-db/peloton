@@ -14,6 +14,7 @@
 #include "optimizer/properties.h"
 #include "optimizer/property_set.h"
 #include "optimizer/memo.h"
+#include "storage/data_table.h"
 
 using std::move;
 using std::vector;
@@ -44,11 +45,39 @@ void ChildPropertyDeriver::Visit(const PhysicalSeqScan *) {
       make_pair(make_shared<PropertySet>(), vector<shared_ptr<PropertySet>>{}));
 };
 
-void ChildPropertyDeriver::Visit(const PhysicalIndexScan *) {
-  // TODO(boweic): Index Scan should provide sort property if the index is built
-  // on sort column
+void ChildPropertyDeriver::Visit(const PhysicalIndexScan *op) {
+  auto provided_prop = make_shared<PropertySet>();
+  storage::DataTable *target_table = op->table_;
+  for (auto prop : requirements_->Properties()) {
+    if (prop->Type() == PropertyType::SORT) {
+      // Walk through all indices in the table, check if
+      // TODO(boweic) : for now we only consider index built on one column since
+      // from the current interface we cannot know the order of column in the
+      // index
+      auto sort_prop = prop->As<PropertySort>();
+      if (sort_prop->GetSortColumnSize() > 1 ||
+          sort_prop->GetSortColumn(0)->GetExpressionType() !=
+              ExpressionType::VALUE_TUPLE) {
+        break;
+      }
+      auto tv_expr = reinterpret_cast<expression::TupleValueExpression *>(
+          sort_prop->GetSortColumn(0).get());
+      // TODO(boweic): add assert to ensure the table oid is correct,
+      auto obj_id = tv_expr->GetBoundOid();
+      oid_t col_id = std::get<2>(obj_id);
+      for (auto &column_set : target_table->GetIndexColumns()) {
+        if (column_set.size() > 1) {
+          continue;
+        }
+        if (column_set.count(col_id)) {
+          provided_prop = requirements_;
+          break;
+        }
+      }
+    }
+  }
   output_.push_back(
-      make_pair(make_shared<PropertySet>(), vector<shared_ptr<PropertySet>>{}));
+      make_pair(provided_prop, vector<shared_ptr<PropertySet>>{}));
 }
 
 void ChildPropertyDeriver::Visit(const QueryDerivedScan *) {
@@ -70,10 +99,14 @@ void ChildPropertyDeriver::Visit(const PhysicalHashGroupBy *) {
                 vector<shared_ptr<PropertySet>>{make_shared<PropertySet>()}));
 }
 
-void ChildPropertyDeriver::Visit(const PhysicalSortGroupBy *) {
-  // TODO(boweic): add sort requirement
+void ChildPropertyDeriver::Visit(const PhysicalSortGroupBy *op) {
+  // Child must provide sort for Groupby columns
+  vector<bool> sort_acsending(op->columns.size(), true);
+  shared_ptr<Property> sort_prop(
+      new PropertySort(op->columns, move(sort_acsending)));
+  shared_ptr<PropertySet> prop_set(new vector<shared_ptr<Property>>{sort_prop});
   output_.push_back(
-      make_pair(requirements_, vector<shared_ptr<PropertySet>>{requirements_}));
+      make_pair(prop_set, vector<shared_ptr<PropertySet>>{prop_set}));
 }
 
 void ChildPropertyDeriver::Visit(const PhysicalAggregate *) {
@@ -90,14 +123,12 @@ void ChildPropertyDeriver::Visit(const PhysicalProject *) {}
 void ChildPropertyDeriver::Visit(const PhysicalOrderBy *) {}
 void ChildPropertyDeriver::Visit(const PhysicalFilter *) {}
 void ChildPropertyDeriver::Visit(const PhysicalInnerNLJoin *) {
-  // TODO(boweic): Check if sort could be pass down
   DeriveForJoin();
 }
 void ChildPropertyDeriver::Visit(const PhysicalLeftNLJoin *) {}
 void ChildPropertyDeriver::Visit(const PhysicalRightNLJoin *) {}
 void ChildPropertyDeriver::Visit(const PhysicalOuterNLJoin *) {}
 void ChildPropertyDeriver::Visit(const PhysicalInnerHashJoin *) {
-  // TODO(boweic): Check if sort could be pass down
   DeriveForJoin();
 }
 

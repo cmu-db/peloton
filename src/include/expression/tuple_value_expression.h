@@ -69,7 +69,7 @@ class TupleValueExpression : public AbstractExpression {
     value_idx_ = value_idx;
     tuple_idx_ = tuple_idx;
   }
-  
+
   inline void SetValueType(type::TypeId type_id) {
     return_value_type_ = type_id;
   }
@@ -108,7 +108,8 @@ class TupleValueExpression : public AbstractExpression {
     // A.id and B.id have the same bound oids since they refer to the same table
     // but they have different table alias.
     if ((table_name_.empty() xor tup_expr->table_name_.empty()) ||
-        col_name_.empty() xor tup_expr->col_name_.empty()) return false;
+        col_name_.empty() xor tup_expr->col_name_.empty())
+      return false;
     bool res = bound_obj_id_ == tup_expr->bound_obj_id_;
     if (!table_name_.empty() && !tup_expr->table_name_.empty())
       res = table_name_ == tup_expr->table_name_ && res;
@@ -146,6 +147,11 @@ class TupleValueExpression : public AbstractExpression {
   void SetBoundOid(std::tuple<oid_t, oid_t, oid_t> &bound_oid) {
     bound_obj_id_ = bound_oid;
     is_bound_ = true;
+  }
+
+  std::tuple<oid_t, oid_t, oid_t> GetBoundOid() {
+    PL_ASSERT(is_bound_);
+    return bound_obj_id_;
   }
 
   virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
