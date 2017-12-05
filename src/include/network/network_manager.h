@@ -60,6 +60,7 @@ class NetworkManager {
 
 
   static SSLLevel ssl_level_;
+  static pthread_mutex_t *ssl_mutex_buf_ = nullptr;
 
   struct event *ev_stop_;     // libevent stop event
   struct event *ev_timeout_;  // libevent timeout event
@@ -112,6 +113,14 @@ class NetworkManager {
   static SSLLevel GetSSLLevel() { return ssl_level_; }
 
   static void LoadSSLFileSettings();
+
+  static void SSLLockingFunction(int mode, int n, const char* file, int line);
+
+  static void SSLIdFunction(CRYPTO_THREADID *id);
+
+  static int SSLMutexSetup(void);
+
+  static int SSLMutexCleanup(void);
 
  private:
 
