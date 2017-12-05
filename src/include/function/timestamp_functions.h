@@ -26,11 +26,7 @@ class TimestampFunctions {
   // Truncate a timestamp to specified precision
   // (1) The first argument selects to which precision to truncate the input
   // value
-  // (2) The second argument is the length of the precision value (used to
-  // evaluate whether the value is NULL)
-  // (3) The third argument is the value expression of type timestamp
-  // (4) The fourth argument is the length of the timestamp value (used to
-  // evaluate whether the value is NULL)
+  // (2) The second argument is the value of the timestamp expression
   // @return The Value returned is the value of type timestamp with
   // all fields that are less significant than the selected one set to zero (or
   // one, for day and month).
@@ -39,7 +35,7 @@ class TimestampFunctions {
   // this function here to support that, but we need the parser/binder to
   // support explicit type casts. For example:
   // SELECT date_trunc('hour', TIMESTAMP '2001-02-16 20:38:40');
-  static uint64_t DateTrunc(uint32_t date_part_type, uint64_t value);
+  static uint64_t DateTrunc(const char *date_part_type, uint64_t value);
   static type::Value _DateTrunc(const std::vector<type::Value> &args);
 };
 

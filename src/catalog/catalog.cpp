@@ -817,7 +817,7 @@ void Catalog::AddBuiltinFunction(
                                              txn)) {
     throw CatalogException("Failed to add function " + func_name);
   }
-  function::BuiltInFunctions::AddFunction(name, func_name, func);
+  function::BuiltInFunctions::AddFunction(func_name, func);
 }
 
 const FunctionData Catalog::GetFunction(
@@ -849,7 +849,7 @@ const FunctionData Catalog::GetFunction(
   result.argument_types_ = argument_types;
   result.func_name_ = proc_catalog_obj->GetSrc();
   result.return_type_ = proc_catalog_obj->GetRetType();
-  result.func_ = function::BuiltInFunctions::GetFuncBySourceName(result.func_name_);
+  result.func_ = function::BuiltInFunctions::GetFuncByName(result.func_name_);
 
   if (result.func_.impl == nullptr) {
     txn_manager.AbortTransaction(txn);
@@ -1027,7 +1027,7 @@ void Catalog::InitializeFunctions() {
                                     function::DateFunctions::Extract},
           txn);
       AddBuiltinFunction(
-          "date_trunc", {type::TypeId::INTEGER, type::TypeId::TIMESTAMP},
+          "date_trunc", {type::TypeId::VARCHAR, type::TypeId::TIMESTAMP},
           type::TypeId::TIMESTAMP, internal_lang, "DateTrunc",
           function::BuiltInFuncType{OperatorId::DateTrunc,
                                     function::TimestampFunctions::_DateTrunc},
