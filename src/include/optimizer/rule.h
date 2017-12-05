@@ -45,6 +45,7 @@ enum class RuleType {
   INNER_JOIN_TO_HASH_JOIN
 };
 
+
 class Rule {
  public:
   virtual ~Rule(){};

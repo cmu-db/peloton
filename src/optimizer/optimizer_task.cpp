@@ -177,6 +177,8 @@ void ApplyRule::execute() {
 void OptimizeInputs::execute() {
   // TODO: We can init input cost using non-zero value for pruning
 
+
+
   // Pruning
   if (CostSoFar() > context_->cost_upper_bound)
     return;

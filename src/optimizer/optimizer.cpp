@@ -85,16 +85,12 @@ Optimizer::Optimizer() {
 }
 
 void Optimizer::OptimizeLoop(int root_group_id, PropertySet *required_props) {
-  OptimizerTaskStack task_pool;
-  std::shared_ptr<OptimizeContext> root_context = std::make_shared<OptimizeContext>(&task_pool, required_props);
-  OptimizerTask* t = new OptimizeGroup(metadata_.memo.GetGroupByID(root_group_id), root_context);
-  task_pool.Push(new OptimizeGroup(metadata_.memo.GetGroupByID(root_group_id), root_context));
-
-  OptimizerTask::SetMetadata(&metadata_);
+  std::shared_ptr<OptimizeContext> root_context = std::make_shared<OptimizeContext>(&metadata_, required_props);
+  metadata_.task_pool.Push(new OptimizeGroup(metadata_.memo.GetGroupByID(root_group_id), root_context));
 
   // TODO: Add timer for early stop
-  while (!task_pool.Empty()) {
-    auto task = task_pool.Pop();
+  while (!metadata_.task_pool.Empty()) {
+    auto task = metadata_.task_pool.Pop();
     task->execute();
   }
 

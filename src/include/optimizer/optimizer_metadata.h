@@ -20,6 +20,7 @@ class OptimizerMetadata {
  public:
   Memo memo;
   RuleSet rule_set;
+  OptimizerTaskPool task_pool;
 
   void AddRule(Rule *rule) { rule_set.AddRule(rule); }
 
