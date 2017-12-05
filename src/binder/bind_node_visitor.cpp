@@ -166,7 +166,7 @@ void BindNodeVisitor::Visit(expression::TupleValueExpression *expr) {
     // in the binder context.
     if (table_name.empty()) {
       if (!BinderContext::GetColumnPosTuple(context_, col_name, col_pos_tuple,
-                                            table_name, value_type, txn_))
+                                            table_name, value_type))
         throw BinderException("Cannot find column " + col_name);
       expr->SetTableName(table_name);
     }
