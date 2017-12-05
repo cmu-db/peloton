@@ -8,8 +8,8 @@ jar -cvf out.jar -C out .
 if [ "$#" -ne 2 ]; then
 	java -cp out.jar:./lib/postgresql-9.4.1209.jre6.jar PelotonTest $1
 else
-	Pass the file path for copy test
+#	Pass the file path for copy test
 	java -cp out.jar:./lib/postgresql-9.4.1209.jre6.jar PelotonTest $1 $2
 fi
 
-# java -cp out.jar:./lib/postgresql-9.4.1209.jre6.jar SSLTest $1
+#java -cp out.jar:./lib/postgresql-9.4.1209.jre6.jar SSLTest $1

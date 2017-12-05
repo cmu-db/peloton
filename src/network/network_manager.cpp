@@ -195,7 +195,16 @@ void NetworkManager::SSLInit() {
   //SSLv2 and SSLv3 are deprecated, shoud not use them
   //TODO(Yuchen): postgres uses SSLv2 | SSLv3 | SSL_OP_SINGLE_DH_USE
   SSL_CTX_set_options(ssl_context, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
-  //TODO(Yuchen): Incorporating certificate revocation lists
+  //TODO(Yuchen): adding certificate revocation lists
+  //TODO(Yuchen): enable SSL session reuse
+//  int status = SSL_CTX_set_session_id_context(ssl_context,
+//               static_cast<unsigned char*>(static_cast<void*>(&ssl_context)), sizeof(ssl_context));
+//  if (!status) {
+//    LOG_ERROR("ssl initialization problem");
+//  }
+  // disallow SSL session caching
+  SSL_CTX_set_session_cache_mode(ssl_context, SSL_SESS_CACHE_OFF);
+
 }
 
 NetworkManager::NetworkManager() {

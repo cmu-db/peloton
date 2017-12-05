@@ -121,9 +121,10 @@ bool NetworkConnection::UpdateEvent(short flags) {
  */
 
 WriteState NetworkConnection::WritePackets() {
-  // If I have data left in SSL buffer, send them out first.
+  // If I have data left in SSL buffer, before moving data into the local buffer,
+  // send out the data in SSL buffer first.
   if (GetWriteBlocked()) {
-    return FlushWriteBuffer();
+    FlushWriteBuffer();
   }
   // iterate through all the packets
   for (; next_response_ < protocol_handler_->responses.size(); next_response_++) {
@@ -218,7 +219,7 @@ ReadState NetworkConnection::FillReadBuffer() {
           // TODO(Yuchen): does libevent notifies if more data arrives? If that's the case, we don't
           // need to wait here. Actually, the buffer ptr is changed before the call..
           case SSL_ERROR_WANT_READ: {
-            LOG_TRACE("Waiting for more data in a SSL record");
+            LOG_INFO("Fill read buffer, want read");
             SetReadBlocked(true);
             done = true;
             break;
@@ -226,6 +227,7 @@ ReadState NetworkConnection::FillReadBuffer() {
           // It happens when we're trying to rehandshake and we block on a write
           // during the handshake. We need to wait on the socket to be writable
           case SSL_ERROR_WANT_WRITE: {
+            LOG_INFO("Fill read buffer, want write");
             SetReadBlockedOnWrite(true);
             done = true;
             break;
@@ -233,7 +235,7 @@ ReadState NetworkConnection::FillReadBuffer() {
           case SSL_ERROR_SYSCALL: {
             // if interrupted, try again
             if (errno == EINTR) {
-              LOG_TRACE("Error SSL Reading: EINTR");
+              LOG_INFO("Error SSL Reading: EINTR");
               break;
             }
           }
@@ -321,16 +323,19 @@ WriteState NetworkConnection::FlushWriteBuffer() {
         // TODO(Yuchen): Change this. Can't write more packets and update buffer ptr when SSL_write() is not succeeded yet.
         case SSL_ERROR_WANT_WRITE: {
           SetWriteBlocked(true);
+          LOG_TRACE("Flush write buffer, want write, not ready");
           return WriteState::WRITE_NOT_READY;
         }
         // It happens when doing rehandshake with client.
         case SSL_ERROR_WANT_READ: {
           SetWriteBlockedOnRead(true);
+          LOG_TRACE("Flush write buffer, want read, not ready");
           return WriteState::WRITE_NOT_READY;
         }
         case SSL_ERROR_SYSCALL: {
           // If interrupted, try again.
           if (errno == EINTR) {
+            LOG_TRACE("Flush write buffer, eintr");
             break;
           }
         }
@@ -728,6 +733,7 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
           // start SSL handshake
           // TODO: consider free conn_SSL_context
           conn->conn_SSL_context = SSL_new(NetworkManager::ssl_context);
+          SSL_set_session_id_context(conn->conn_SSL_context, nullptr, 0);
           if (SSL_set_fd(conn->conn_SSL_context, conn->sock_fd) == 0) {
             LOG_ERROR("Failed to set SSL fd");
             PL_ASSERT(false);
@@ -744,26 +750,28 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
             }
             int err = SSL_get_error(conn->conn_SSL_context, ssl_accept_ret);
             int ecode = ERR_get_error();
+            char error_string[120];
+            ERR_error_string(ecode, error_string);
             switch (err) {
               case SSL_ERROR_SSL: {
                 if (ecode < 0) {
                   LOG_ERROR("Could not accept SSL connection");
                 } else {
-                  LOG_ERROR("Could not accept SSL connection: EOF detected");
+                  LOG_ERROR("Could not accept SSL connection: EOF detected, ssl_error_ssl, %s", error_string);
                 }
                 handshake_fail = true;
                 break;
               }
               case SSL_ERROR_ZERO_RETURN: {
-                LOG_ERROR("Could not accept SSL connection: EOF detected");
+                LOG_ERROR("Could not accept SSL connection: EOF detected, ssl_error_zero_return, %s", error_string);
                 handshake_fail = true;
                 break;
               }
               case SSL_ERROR_SYSCALL: {
                 if (ecode < 0) {
-                  LOG_ERROR("Could not accept SSL connection");
+                  LOG_ERROR("Could not accept SSL connection, %s", error_string);
                 } else {
-                  LOG_ERROR("Could not accept SSL connection: EOF detected");
+                  LOG_ERROR("Could not accept SSL connection: EOF detected, ssl_sys_call, %s", error_string);
                 }
                 handshake_fail = true;
                 break;
