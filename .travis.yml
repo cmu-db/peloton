@@ -6,7 +6,8 @@ matrix:
           osx_image: xcode8.3
           compiler: clang
           env:
-            - PELOTON_BUILD_TYPE=Debug COVERALLS=Off
+            - PELOTON_BUILD_TYPE=Debug
+            - COVERALLS=Off
 
         # Linux builds
         - os: linux
@@ -18,11 +19,12 @@ matrix:
                   sources:
                       - llvm-toolchain-precise-3.7
                       - ubuntu-toolchain-r-test
-                      - boost-latest
                   packages:
                     - g++-4.9
           env: 
-            - CXX=g++-4.9 PELOTON_BUILD_TYPE=Debug COVERALLS=Off
+            - CXX=g++-4.9
+            - PELOTON_BUILD_TYPE=Debug
+            - COVERALLS=Off
 
         - os: linux
           sudo: required
@@ -33,11 +35,12 @@ matrix:
                   sources:
                       - llvm-toolchain-precise-3.7
                       - ubuntu-toolchain-r-test
-                      - boost-latest
                   packages:
                     - g++-4.9
           env: 
-            - CXX=g++-4.9 PELOTON_BUILD_TYPE=Release COVERALLS=Off
+            - CXX=g++-4.9
+            - PELOTON_BUILD_TYPE=Release
+            - COVERALLS=Off
         
         #Job where coveralls is executed
         - os: linux
@@ -49,11 +52,12 @@ matrix:
                   sources:
                       - llvm-toolchain-precise-3.7
                       - ubuntu-toolchain-r-test
-                      - boost-latest
                   packages:
                     - g++-5
           env: 
-            - CXX=g++-5 PELOTON_BUILD_TYPE=Debug COVERALLS=On
+            - CXX=g++-5
+            - PELOTON_BUILD_TYPE=Debug
+            - COVERALLS=On
 
         - os: linux
           sudo: required
@@ -64,11 +68,12 @@ matrix:
                   sources:
                       - llvm-toolchain-precise-3.7
                       - ubuntu-toolchain-r-test
-                      - boost-latest
                   packages:
                     - g++-5
           env: 
-            - CXX=g++-5 PELOTON_BUILD_TYPE=Release COVERALLS=Off
+            - CXX=g++-5
+            - PELOTON_BUILD_TYPE=Release
+            - COVERALLS=Off
 
 before_script:
     # setup environment
@@ -82,7 +87,7 @@ script:
     - mkdir build
     - cd build
     # run cmake
-    - cmake -DCOVERALLS=$COVERALLS -DCMAKE_PREFIX_PATH=`llvm-config-3.7 --prefix` -DCMAKE_BUILD_TYPE=$PELOTON_BUILD_TYPE -DUSE_SANITIZER=Address ..
+    - PATH=/usr/lib/llvm-3.7/bin:/usr/bin:$PATH cmake -DCOVERALLS=$COVERALLS -DCMAKE_PREFIX_PATH=`llvm-config-3.7 --prefix` -DCMAKE_BUILD_TYPE=$PELOTON_BUILD_TYPE -DUSE_SANITIZER=Address ..
     # build
     - make -j4
     # run tests
@@ -98,4 +103,3 @@ script:
     - python ../script/validators/jdbc_validator.py
     # upload coverage info
     - bash -c "if [ $(echo $COVERALLS | tr "[:lower:]" "[:upper:]") = 'ON' ] ; then make coveralls; fi"
-

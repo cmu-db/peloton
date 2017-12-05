@@ -47,25 +47,27 @@ TableCatalogObject::TableCatalogObject(executor::LogicalTile *tile,
  */
 bool TableCatalogObject::InsertIndexObject(
     std::shared_ptr<IndexCatalogObject> index_object) {
-  if (!index_object || index_object->index_oid == INVALID_OID) {
+  if (!index_object || index_object->GetIndexOid() == INVALID_OID) {
     return false;  // invalid object
   }
 
   // check if already in cache
-  if (index_objects.find(index_object->index_oid) != index_objects.end()) {
-    LOG_DEBUG("Index %u already exists in cache!", index_object->index_oid);
+  if (index_objects.find(index_object->GetIndexOid()) != index_objects.end()) {
+    LOG_DEBUG("Index %u already exists in cache!", index_object->GetIndexOid());
     return false;
   }
 
-  if (index_names.find(index_object->index_name) != index_names.end()) {
+  if (index_names.find(index_object->GetIndexName()) != index_names.end()) {
     LOG_DEBUG("Index %s already exists in cache!",
-              index_object->index_name.c_str());
+              index_object->GetIndexName().c_str());
     return false;
   }
 
   valid_index_objects = true;
-  index_objects.insert(std::make_pair(index_object->index_oid, index_object));
-  index_names.insert(std::make_pair(index_object->index_name, index_object));
+  index_objects.insert(
+      std::make_pair(index_object->GetIndexOid(), index_object));
+  index_names.insert(
+      std::make_pair(index_object->GetIndexName(), index_object));
   return true;
 }
 
@@ -85,7 +87,7 @@ bool TableCatalogObject::EvictIndexObject(oid_t index_oid) {
   auto index_object = it->second;
   PL_ASSERT(index_object);
   index_objects.erase(it);
-  index_names.erase(index_object->index_name);
+  index_names.erase(index_object->GetIndexName());
   return true;
 }
 
@@ -105,7 +107,7 @@ bool TableCatalogObject::EvictIndexObject(const std::string &index_name) {
   auto index_object = it->second;
   PL_ASSERT(index_object);
   index_names.erase(it);
-  index_objects.erase(index_object->index_oid);
+  index_objects.erase(index_object->GetIndexOid());
   return true;
 }
 
@@ -167,27 +169,29 @@ std::shared_ptr<IndexCatalogObject> TableCatalogObject::GetIndexObject(
  */
 bool TableCatalogObject::InsertColumnObject(
     std::shared_ptr<ColumnCatalogObject> column_object) {
-  if (!column_object || column_object->table_oid == INVALID_OID) {
+  if (!column_object || column_object->GetTableOid() == INVALID_OID) {
     return false;  // invalid object
   }
 
   // check if already in cache
-  if (column_objects.find(column_object->column_id) != column_objects.end()) {
-    LOG_DEBUG("Column %u already exists in cache!", column_object->column_id);
+  if (column_objects.find(column_object->GetColumnId()) !=
+      column_objects.end()) {
+    LOG_DEBUG("Column %u already exists in cache!",
+              column_object->GetColumnId());
     return false;
   }
 
-  if (column_names.find(column_object->column_name) != column_names.end()) {
+  if (column_names.find(column_object->GetColumnName()) != column_names.end()) {
     LOG_DEBUG("Column %s already exists in cache!",
-              column_object->column_name.c_str());
+              column_object->GetColumnName().c_str());
     return false;
   }
 
   valid_column_objects = true;
   column_objects.insert(
-      std::make_pair(column_object->column_id, column_object));
+      std::make_pair(column_object->GetColumnId(), column_object));
   column_names.insert(
-      std::make_pair(column_object->column_name, column_object));
+      std::make_pair(column_object->GetColumnName(), column_object));
   return true;
 }
 
@@ -207,7 +211,7 @@ bool TableCatalogObject::EvictColumnObject(oid_t column_id) {
   auto column_object = it->second;
   PL_ASSERT(column_object);
   column_objects.erase(it);
-  column_names.erase(column_object->column_name);
+  column_names.erase(column_object->GetColumnName());
   return true;
 }
 
@@ -227,7 +231,7 @@ bool TableCatalogObject::EvictColumnObject(const std::string &column_name) {
   auto column_object = it->second;
   PL_ASSERT(column_object);
   column_names.erase(it);
-  column_objects.erase(column_object->column_id);
+  column_objects.erase(column_object->GetColumnId());
   return true;
 }
 
@@ -383,7 +387,7 @@ bool TableCatalog::DeleteTable(oid_t table_oid, concurrency::Transaction *txn) {
   auto table_object = txn->catalog_cache.GetCachedTableObject(table_oid);
   if (table_object) {
     auto database_object = DatabaseCatalog::GetInstance()->GetDatabaseObject(
-        table_object->database_oid, txn);
+        table_object->GetDatabaseOid(), txn);
     database_object->EvictTableObject(table_oid);
   }
 
@@ -418,7 +422,7 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
         std::make_shared<TableCatalogObject>((*result_tiles)[0].get(), txn);
     // insert into cache
     auto database_object = DatabaseCatalog::GetInstance()->GetDatabaseObject(
-        table_object->database_oid, txn);
+        table_object->GetDatabaseOid(), txn);
     PL_ASSERT(database_object);
     bool success = database_object->InsertTableObject(table_object);
     PL_ASSERT(success == true);
@@ -469,7 +473,7 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
         std::make_shared<TableCatalogObject>((*result_tiles)[0].get(), txn);
     // insert into cache
     auto database_object = DatabaseCatalog::GetInstance()->GetDatabaseObject(
-        table_object->database_oid, txn);
+        table_object->GetDatabaseOid(), txn);
     PL_ASSERT(database_object);
     bool success = database_object->InsertTableObject(table_object);
     PL_ASSERT(success == true);

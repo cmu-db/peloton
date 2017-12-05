@@ -180,6 +180,22 @@ struct Like : public TypeSystem::BinaryOperator {
   }
 };
 
+struct Length : public TypeSystem::UnaryOperator {
+  bool SupportsType(const Type &type) const override {
+    return type.GetSqlType() == Varchar::Instance();
+  }
+
+  Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
+    return Integer::Instance();
+  }
+
+  Value DoWork(CodeGen &codegen, const Value &val) const override {
+    llvm::Value *raw_ret = codegen.Call(StringFunctionsProxy::Length,
+                                        {val.GetValue(), val.GetLength()});
+    return Value{Integer::Instance(), raw_ret};
+  }
+};
+
 //===----------------------------------------------------------------------===//
 // TYPE SYSTEM CONSTRUCTION
 //===----------------------------------------------------------------------===//
@@ -198,15 +214,14 @@ static std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {
 
 // Unary operators
 static Ascii kAscii;
+static Length kLength;
 static std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {
-    {OperatorId::Ascii, kAscii}
-};
+    {OperatorId::Ascii, kAscii}, {OperatorId::Length, kLength}};
 
 // Binary operations
 static Like kLike;
 static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
-    {OperatorId::Like, kLike}
-};
+    {OperatorId::Like, kLike}};
 
 // Nary operations
 static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};

@@ -40,41 +40,41 @@ namespace test {
 class CreateTests : public PelotonTest {};
 
 TEST_F(CreateTests, CreatingDB) {
-    // Bootstrap
-    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    auto txn = txn_manager.BeginTransaction();
-  
-    // Create plans with database name set.
-    planner::CreatePlan node("PelotonDB", CreateType::DB);
+  // Bootstrap
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
 
-    std::unique_ptr<executor::ExecutorContext> context(
-        new executor::ExecutorContext(txn));
-    // Create executer
-    executor::CreateExecutor executor(&node, context.get());
-  
-    executor.Init();
-    executor.Execute();
-    // Check if the database exists in the same txn
-    EXPECT_EQ(0, catalog::Catalog::GetInstance()
-    ->GetDatabaseObject("PelotonDB", txn)
-    ->database_name
-    .compare("PelotonDB"));
+  // Create plans with database name set.
+  planner::CreatePlan node("PelotonDB", CreateType::DB);
 
-    txn_manager.CommitTransaction(txn);
-  
-    // start a new txn
-    txn = txn_manager.BeginTransaction();
-    // Check if the database exists in a new txn
-    EXPECT_EQ(0, catalog::Catalog::GetInstance()
-    ->GetDatabaseObject("PelotonDB", txn)
-    ->database_name
-    .compare("PelotonDB"));
-  
-    // free the database just created  
-    catalog::Catalog::GetInstance()->DropDatabaseWithName("PelotonDB", txn);
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+  // Create executer
+  executor::CreateExecutor executor(&node, context.get());
 
-    txn_manager.CommitTransaction(txn);
-  }
+  executor.Init();
+  executor.Execute();
+  // Check if the database exists in the same txn
+  EXPECT_EQ(0, catalog::Catalog::GetInstance()
+                   ->GetDatabaseObject("PelotonDB", txn)
+                   ->GetDatabaseName()
+                   .compare("PelotonDB"));
+
+  txn_manager.CommitTransaction(txn);
+
+  // start a new txn
+  txn = txn_manager.BeginTransaction();
+  // Check if the database exists in a new txn
+  EXPECT_EQ(0, catalog::Catalog::GetInstance()
+                   ->GetDatabaseObject("PelotonDB", txn)
+                   ->GetDatabaseName()
+                   .compare("PelotonDB"));
+
+  // free the database just created
+  catalog::Catalog::GetInstance()->DropDatabaseWithName("PelotonDB", txn);
+
+  txn_manager.CommitTransaction(txn);
+}
 
 TEST_F(CreateTests, CreatingTable) {
   // Bootstrap
@@ -202,15 +202,13 @@ TEST_F(CreateTests, CreatingTrigger) {
   EXPECT_EQ(ExpressionType::VALUE_TUPLE, left->GetExpressionType());
   EXPECT_EQ("old", static_cast<const expression::TupleValueExpression *>(left)
                        ->GetTableName());
-  EXPECT_EQ("balance",
-            static_cast<const expression::TupleValueExpression *>(left)
-                ->GetColumnName());
+  EXPECT_EQ("balance", static_cast<const expression::TupleValueExpression *>(
+                           left)->GetColumnName());
   EXPECT_EQ(ExpressionType::VALUE_TUPLE, right->GetExpressionType());
   EXPECT_EQ("new", static_cast<const expression::TupleValueExpression *>(right)
                        ->GetTableName());
-  EXPECT_EQ("balance",
-            static_cast<const expression::TupleValueExpression *>(right)
-                ->GetColumnName());
+  EXPECT_EQ("balance", static_cast<const expression::TupleValueExpression *>(
+                           right)->GetColumnName());
   // type (level, timing, event)
   auto trigger_type = plan.GetTriggerType();
   // level
@@ -232,7 +230,7 @@ TEST_F(CreateTests, CreatingTrigger) {
   executor::CreateExecutor createTriggerExecutor(&plan, context2.get());
   createTriggerExecutor.Init();
   createTriggerExecutor.Execute();
-  
+
   // Check the effect of creation
   storage::DataTable *target_table =
       catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
@@ -413,7 +411,7 @@ TEST_F(CreateTests, CreatingTriggerInCatalog) {
   auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
       DEFAULT_DB_NAME, "accounts", txn);
   auto trigger_list = catalog::TriggerCatalog::GetInstance().GetTriggersByType(
-      table_object->table_oid,
+      table_object->GetTableOid(),
       (TRIGGER_TYPE_ROW | TRIGGER_TYPE_BEFORE | TRIGGER_TYPE_UPDATE), txn);
 
   txn_manager.CommitTransaction(txn);

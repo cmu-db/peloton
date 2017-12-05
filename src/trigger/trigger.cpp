@@ -94,8 +94,8 @@ void Trigger::SerializeWhen(SerializeOutput &output, oid_t database_oid,
                 database_oid, table_oid, txn);
             auto column_object =
                 table_object->GetColumnObject(e->GetColumnName());
-            output.WriteInt(static_cast<int>(column_object->column_type));
-            output.WriteInt(static_cast<int>(column_object->column_id));
+            output.WriteInt(static_cast<int>(column_object->GetColumnType()));
+            output.WriteInt(static_cast<int>(column_object->GetColumnId()));
             break;
           }
           default:
