@@ -33,6 +33,7 @@ std::string NetworkManager::private_key_file_;
 std::string NetworkManager::certificate_file_;
 std::string NetworkManager::root_cert_file_;
 SSLLevel NetworkManager::ssl_level_;
+MUTEX_TYPE *NetworkManager::ssl_mutex_buf_;
 
 std::unordered_map<int, std::unique_ptr<NetworkConnection>> &
 NetworkManager::GetGlobalSocketList() {
@@ -66,7 +67,7 @@ void NetworkManager::CreateNewConnection(const int &connfd, short ev_flags,
   thread->SetThreadSockFd(connfd);
 }
 
-static int NetworkManager::SSLMutexSetup(void) {
+int NetworkManager::SSLMutexSetup(void) {
   int i;
   ssl_mutex_buf_ = new MUTEX_TYPE[CRYPTO_num_locks()];
   if (!ssl_mutex_buf_)
@@ -80,7 +81,7 @@ static int NetworkManager::SSLMutexSetup(void) {
   return 1;
 }
 
-static int NetworkManager::SSLMutexCleanup(void) {
+int NetworkManager::SSLMutexCleanup(void) {
   int i;
   if (!ssl_mutex_buf_) {
     return 0;
@@ -96,7 +97,7 @@ static int NetworkManager::SSLMutexCleanup(void) {
   return 1;
 }
 
-static void NetworkManager::SSLLockingFunction(int mode, int n, const char* file, int line) {
+void NetworkManager::SSLLockingFunction(int mode, int n, UNUSED_ATTRIBUTE const char* file, UNUSED_ATTRIBUTE int line) {
   if (mode & CRYPTO_LOCK) {
     MUTEX_LOCK(ssl_mutex_buf_[n]);
   }
@@ -134,18 +135,20 @@ void NetworkManager::SSLInit() {
   // OpenSSL uses locks to make it thread safe.
   //TODO(Yuchen): deal with returned error 0?
   SSLMutexSetup();
-
+  //set general-purpose version, actual protocol will be negotiated to the highest version
+  //mutually support between client and server during handshake
   ssl_context = SSL_CTX_new(SSLv23_method());
   if (ssl_context == nullptr) {
     SetSSLLevel(SSLLevel::SSL_DISABLE);
     return;
   }
-
+  //TODO(Yuchen): change this.
+  //load trusted CA certificates (peer authentication)
   if (SSL_CTX_load_verify_locations(ssl_context, certificate_file_.c_str(), nullptr) != 1) {
     LOG_ERROR("Exception when loading root_crt!");
     SetSSLLevel(SSLLevel::SSL_PREFER);
   }
-
+  //load OpenSSL's default CA certificate location
   if (SSL_CTX_set_default_verify_paths(ssl_context) != 1) {
     LOG_ERROR("Exception when setting default verify path!");
     SetSSLLevel(SSLLevel::SSL_PREFER);
@@ -177,13 +180,22 @@ void NetworkManager::SSLInit() {
   }
 
   if (GetSSLLevel() == SSLLevel::SSL_VERIIFY) {
+    //use built-in function to verify the peer's certificate chain automatically.
+    //set routine to filter the return status of the default verification and returns new verification status.
+    //SSL_VERIFY_PEER: send certificate request to client. Client may ignore the request. If the client sends
+    //back the certificate, it will be verified. Handshake will be terminated if the verification fails.
+    //SSL_VERIFY_FAIL_IF_NO_PEER_CERT: use with SSL_VERIFY_PEER, if client does not send back the certificate,
+    //terminate the handshake.
     SSL_CTX_set_verify(ssl_context, SSL_VERIFY_PEER, verify_callback);
     SSL_CTX_set_verify_depth(ssl_context, 4);
   } else {
+    //SSL_VERIFY_NONE: Server does not request certificate from client.
     SSL_CTX_set_verify(ssl_context, SSL_VERIFY_NONE, verify_callback);
   }
-  // TODO(Yuchen): postgres uses SSLv2 | SSLv3 | SSL_OP_SINGLE_DH_USE
+  //SSLv2 and SSLv3 are deprecated, shoud not use them
+  //TODO(Yuchen): postgres uses SSLv2 | SSLv3 | SSL_OP_SINGLE_DH_USE
   SSL_CTX_set_options(ssl_context, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
+  //TODO(Yuchen): Incorporating certificate revocation lists
 }
 
 NetworkManager::NetworkManager() {
@@ -227,6 +239,7 @@ NetworkManager::NetworkManager() {
   signal(SIGPIPE, SIG_IGN);
 }
 
+//Report errors in more details and does not change verification result.
 int NetworkManager::verify_callback(int ok, X509_STORE_CTX *store) {
   char data[256];
   if (!ok) {
