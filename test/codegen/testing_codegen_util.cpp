@@ -94,7 +94,7 @@ void PelotonCodeGenTest::CreateTestTables(concurrency::Transaction *txn) {
                          std::move(table_schema), txn);
     test_table_oids.push_back(catalog->GetTableObject(test_db_name,
                                                       test_table_names[i],
-                                                      txn)->table_oid);
+                                                      txn)->GetTableOid());
   }
   for (int i = 4; i < 5; i++) {
     auto table_schema = CreateTestSchema(true);
@@ -102,7 +102,7 @@ void PelotonCodeGenTest::CreateTestTables(concurrency::Transaction *txn) {
                          std::move(table_schema), txn);
     test_table_oids.push_back(catalog->GetTableObject(test_db_name,
                                                       test_table_names[i],
-                                                      txn)->table_oid);
+                                                      txn)->GetTableOid());
   }
 }
 

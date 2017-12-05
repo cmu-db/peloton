@@ -26,10 +26,10 @@ void BinderContext::AddTable(parser::TableRef* table_ref,
   // using catalog object to retrieve meta-data
   table_ref->TryBindDatabaseName(default_database_name);
   auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-    table_ref->GetDatabaseName(), table_ref->GetTableName(), txn);
+      table_ref->GetDatabaseName(), table_ref->GetTableName(), txn);
 
-  auto id_tuple =
-      std::make_tuple(table_object->database_oid, table_object->table_oid);
+  auto id_tuple = std::make_tuple(table_object->GetDatabaseOid(),
+                                  table_object->GetTableOid());
 
   std::string alias = table_ref->GetTableAlias();
 
@@ -46,8 +46,8 @@ void BinderContext::AddTable(const std::string db_name,
   auto table_object =
       catalog::Catalog::GetInstance()->GetTableObject(db_name, table_name, txn);
 
-  auto id_tuple =
-      std::make_tuple(table_object->database_oid, table_object->table_oid);
+  auto id_tuple = std::make_tuple(table_object->GetDatabaseOid(),
+                                  table_object->GetTableOid());
 
   if (table_alias_map.find(table_name) != table_alias_map.end()) {
     throw Exception("Duplicate alias " + table_name);
@@ -69,9 +69,9 @@ bool BinderContext::GetColumnPosTuple(
     auto column_object = table_object->GetColumnObject(col_name);
     if (column_object == nullptr) return false;
 
-    oid_t col_pos = column_object->column_id;
+    oid_t col_pos = column_object->GetColumnId();
     col_pos_tuple = std::make_tuple(db_oid, table_oid, col_pos);
-    value_type = column_object->column_type;
+    value_type = column_object->GetColumnType();
     return true;
   } catch (CatalogException& e) {
     LOG_TRACE("Can't find table %d! Return false", std::get<1>(table_id_tuple));

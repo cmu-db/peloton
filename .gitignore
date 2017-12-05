@@ -251,6 +251,9 @@ io_file
 *.*project
 .settings
 
+# Visual Studio
+.vs
+
 # QtCreator files
 *.user
 

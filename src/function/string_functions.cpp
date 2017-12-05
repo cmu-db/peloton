@@ -263,5 +263,22 @@ type::Value StringFunctions::BTrim(const std::vector<type::Value> &args) {
   return (type::ValueFactory::GetVarcharValue(str));
 }
 
+uint32_t StringFunctions::Length(UNUSED_ATTRIBUTE const char *str,
+                                 uint32_t length) {
+  PL_ASSERT(str != nullptr);
+  return length;
+}
+
+// The length of the string
+type::Value StringFunctions::_Length(const std::vector<type::Value> &args) {
+  PL_ASSERT(args.size() == 1);
+  if (args[0].IsNull()) {
+    return type::ValueFactory::GetNullValueByType(type::TypeId::INTEGER);
+  }
+
+  uint32_t ret = Length(args[0].GetAs<const char *>(), args[0].GetLength());
+  return type::ValueFactory::GetIntegerValue(ret);
+}
+
 }  // namespace function
 }  // namespace peloton

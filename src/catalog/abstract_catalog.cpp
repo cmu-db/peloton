@@ -59,7 +59,7 @@ AbstractCatalog::AbstractCatalog(const std::string &catalog_table_ddl,
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto create_plan = std::dynamic_pointer_cast<planner::CreatePlan>(
       optimizer::Optimizer().BuildPelotonPlanTree(
-          peloton_parser.BuildParseTree(catalog_table_ddl), 
+          peloton_parser.BuildParseTree(catalog_table_ddl),
           DATABASE_CATALOG_NAME, txn));
   auto catalog_table_schema = create_plan->GetSchema();
   auto catalog_table_name = create_plan->GetTableName();
@@ -76,9 +76,10 @@ AbstractCatalog::AbstractCatalog(const std::string &catalog_table_ddl,
   // set catalog_table_
   try {
     catalog_table_ = storage::StorageManager::GetInstance()->GetTableWithOid(
-        CATALOG_DATABASE_OID, catalog_table_object->table_oid);
+        CATALOG_DATABASE_OID, catalog_table_object->GetTableOid());
   } catch (CatalogException &e) {
-    LOG_TRACE("Can't find table %d! Return false", catalog_table_object->table_oid);
+    LOG_TRACE("Can't find table %d! Return false",
+              catalog_table_object->GetTableOid());
   }
 }
 
