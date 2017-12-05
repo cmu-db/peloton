@@ -58,7 +58,7 @@ TEST_F(WalLoggerTests, LogInsertTest) {
   EXPECT_EQ(COLUMN_CATALOG_OID, record_decode.ReadLong());
   EXPECT_EQ(2, record_decode.ReadLong());
   EXPECT_EQ(5, record_decode.ReadLong());
-
+  logging::LoggingUtil::CloseFile(f);
 
 }
 
@@ -91,7 +91,7 @@ TEST_F(WalLoggerTests, LogDeleteTest) {
   EXPECT_EQ(COLUMN_CATALOG_OID, record_decode.ReadLong());
   EXPECT_EQ(2, record_decode.ReadLong());
   EXPECT_EQ(5, record_decode.ReadLong());
-
+  logging::LoggingUtil::CloseFile(f);
 
 }
 
@@ -127,7 +127,7 @@ TEST_F(WalLoggerTests, LogUpdateTest) {
   EXPECT_EQ(4, record_decode.ReadLong());
   EXPECT_EQ(2, record_decode.ReadLong());
   EXPECT_EQ(5, record_decode.ReadLong());
-
+  logging::LoggingUtil::CloseFile(f);
 
 }
 }
