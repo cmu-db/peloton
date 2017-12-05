@@ -92,7 +92,7 @@ int NetworkManager::SSLMutexCleanup(void) {
   for (i = 0; i < CRYPTO_num_locks(); i++) {
     MUTEX_CLEANUP(ssl_mutex_buf_[i]);
   }
-  free(ssl_mutex_buf_);
+  delete ssl_mutex_buf_;
   ssl_mutex_buf_ = nullptr;
   return 1;
 }
