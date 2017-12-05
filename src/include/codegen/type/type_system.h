@@ -184,8 +184,8 @@ class TypeSystem {
   // An abstract base class for comparison operations. This class correctly
   // computes the NULL bit, but generates a full-blown if-then-else clause
   // (hence the "expensive" part) to perform the NULL check. Thus, derived
-  // comparison implementations are assured that arguments are not NULLable.
-  // If the arguments are non-NULLable, then the NULL check is elided.
+  // comparison implementations are assured that arguments are not NULL-able.
+  // If the arguments are non-NULL-able, then the NULL check is elided.
   //
   //===--------------------------------------------------------------------===//
   class ExpensiveComparisonHandleNull : public Comparison {
@@ -249,15 +249,19 @@ class TypeSystem {
 
   //===--------------------------------------------------------------------===//
   //
-  // SimpleNullableUnaryOperator
+  // UnaryOperatorHandleNull
   //
-  // An abstract base class for NULLable unary operators. This class performs
-  // generic NULL checking logic. A NULL value is returned if the input is NULL.
-  // Otherwise, the unary function logic is executed. If the input is not
-  // NULLable, the NULL-check is entirely elided.
+  // An abstract base class for unary operators that returns NULL if the input
+  // is NULL. If the input is not NULL, derived implementations are invoked to
+  // execute the operator logic.
+  //
+  // If the input is not NULL-able, no NULL check is performed.
+  //
+  // If the input is NULL-able, an if-then-else clause is created, and derived
+  // implementations are called in the non-NULL branch.
   //
   //===--------------------------------------------------------------------===//
-  class SimpleNullableUnaryOperator : public UnaryOperator {
+  class UnaryOperatorHandleNull : public UnaryOperator {
    public:
     Value Eval(CodeGen &codegen, const Value &val) const override;
 
@@ -303,15 +307,19 @@ class TypeSystem {
 
   //===--------------------------------------------------------------------===//
   //
-  // SimpleNullableBinaryOperator
+  // BinaryOperatorHandleNull
   //
-  // An abstract base class for NULLable unary operators. This class performs
-  // generic NULL checking logic. A NULL value is returned if the input is NULL.
-  // Otherwise, the unary function logic is executed. If the input is not
-  // NULLable, the NULL-check is entirely elided.
+  // An abstract base class for binary operators that returns NULL if either
+  // input argument is NULL. If neither input is NULL, derived implementations
+  // are called (through Impl()) to execute operator logic.
+  //
+  // If the input is not NULL-able, no NULL check is performed.
+  //
+  // If the input is NULL-able, an if-then-else clause is created, and derived
+  // implementations are called in the non-NULL branch.
   //
   //===--------------------------------------------------------------------===//
-  struct SimpleNullableBinaryOperator : public BinaryOperator {
+  struct BinaryOperatorHandleNull : public BinaryOperator {
    public:
     Value Eval(CodeGen &codegen, const Value &left, const Value &right,
                OnError on_error) const override;
