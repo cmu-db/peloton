@@ -17,6 +17,13 @@
 #include "settings/settings_manager.h"
 #include "peloton_config.h"
 
+#define MUTEX_TYPE pthread_mutex_t
+#define MUTEX_SETUP(x) pthread_mutex_init(&(x), NULL)
+#define MUTEX_CLEANUP(x) pthread_mutex_destroy(&(x))
+#define MUTEX_LOCK(x) pthread_mutex_lock(&(x))
+#define MUTEX_UNLOCK(x) pthread_mutex_unlock(&(x))
+#define THREAD_ID pthread_self()
+
 namespace peloton {
 namespace network {
 
@@ -59,6 +66,49 @@ void NetworkManager::CreateNewConnection(const int &connfd, short ev_flags,
   thread->SetThreadSockFd(connfd);
 }
 
+static int NetworkManager::SSLMutexSetup(void) {
+  int i;
+  ssl_mutex_buf_ = new MUTEX_TYPE[CRYPTO_num_locks()];
+  if (!ssl_mutex_buf_)
+    return 0;
+  for (i = 0; i < CRYPTO_num_locks(); i++)
+    MUTEX_SETUP(ssl_mutex_buf_[i]);
+  //register the callback to record the currently-executing thread's identifier
+  CRYPTO_THREADID_set_callback(SSLIdFunction);
+  //register the callback to perform locking/unlocking
+  CRYPTO_set_locking_callback(SSLLockingFunction);
+  return 1;
+}
+
+static int NetworkManager::SSLMutexCleanup(void) {
+  int i;
+  if (!ssl_mutex_buf_) {
+    return 0;
+  }
+  CRYPTO_set_id_callback(nullptr);
+  CRYPTO_set_locking_callback(nullptr);
+  //crypto_num_locks(): number of mutex lock
+  for (i = 0; i < CRYPTO_num_locks(); i++) {
+    MUTEX_CLEANUP(ssl_mutex_buf_[i]);
+  }
+  free(ssl_mutex_buf_);
+  ssl_mutex_buf_ = nullptr;
+  return 1;
+}
+
+static void NetworkManager::SSLLockingFunction(int mode, int n, const char* file, int line) {
+  if (mode & CRYPTO_LOCK) {
+    MUTEX_LOCK(ssl_mutex_buf_[n]);
+  }
+  else {
+    MUTEX_UNLOCK(ssl_mutex_buf_[n]);
+  }
+}
+
+void NetworkManager::SSLIdFunction(CRYPTO_THREADID *id) {
+  CRYPTO_THREADID_set_numeric(id, (unsigned long)THREAD_ID);
+}
+
 void NetworkManager::LoadSSLFileSettings() {
   private_key_file_ = DATA_DIR + settings::SettingsManager::GetString(settings::SettingId::private_key_file);
   certificate_file_ = DATA_DIR + settings::SettingsManager::GetString(settings::SettingId::certificate_file);
@@ -74,9 +124,16 @@ void NetworkManager::SSLInit() {
 
   SetSSLLevel(SSLLevel::SSL_VERIIFY);
 
-  /* Initialize SSL listener connection */
+  //load error strings for libssl calls(about SSL/TLS protocol)
   SSL_load_error_strings();
+  //load error strings for libcrypto calls(about cryptographic algorithms)
+  ERR_load_crypto_strings();
   SSL_library_init();
+  // For OpenSSL<1.1.0, set up thread callbacks in multithreaded environment. (Not needed if >= 1.1.0)
+  // Some global data structures are implicitly shared across threads (error queue...)
+  // OpenSSL uses locks to make it thread safe.
+  //TODO(Yuchen): deal with returned error 0?
+  SSLMutexSetup();
 
   ssl_context = SSL_CTX_new(SSLv23_method());
   if (ssl_context == nullptr) {
