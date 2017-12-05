@@ -91,9 +91,8 @@ std::string PropertyColumns::ToString() const {
 
 /*************** PropertyDistinct *****************/
 
-PropertyDistinct::PropertyDistinct(
-    std::vector<std::shared_ptr<expression::AbstractExpression>>
-        distinct_column_exprs)
+PropertyDistinct::PropertyDistinct(std::vector<
+    std::shared_ptr<expression::AbstractExpression>> distinct_column_exprs)
     : distinct_column_exprs_(std::move(distinct_column_exprs)) {
   LOG_TRACE("Size of column property: %ld", distinct_column_exprs_.size());
 }
@@ -195,11 +194,24 @@ bool PropertySort::operator>=(const Property &r) const {
   const PropertySort &r_sort = *reinterpret_cast<const PropertySort *>(&r);
 
   // All the sorting orders in r must be satisfied
-  size_t num_sort_columns = r_sort.sort_columns_.size();
+  size_t l_num_sort_columns = sort_columns_.size();
+  size_t r_num_sort_columns = r_sort.sort_columns_.size();
   PL_ASSERT(num_sort_columns == r_sort.sort_ascending_.size());
-  for (size_t i = 0; i < num_sort_columns; ++i) {
-    if (!sort_columns_[i]->Equals(r_sort.sort_columns_[i].get())) return false;
-    if (sort_ascending_[i] != r_sort.sort_ascending_[i]) return false;
+  size_t l_sort_col_idx = 0;
+  // We want to ensure that Sort(a, b, c, d, e) >= Sort(a, c, e)
+  for (size_t r_sort_col_idx = 0; r_sort_col_idx < r_num_sort_columns;
+       ++r_sort_col_idx) {
+    while (l_sort_col_idx < l_num_sort_columns &&
+           !sort_columns_[l_sort_col_idx]->Equals(
+               r_sort.sort_columns_[r_sort_col_idx].get())) {
+      ++l_sort_col_idx;
+    }
+    if (l_sort_col_idx == l_num_sort_columns ||
+        sort_ascending_[l_sort_col_idx] !=
+            r_sort.sort_ascending_[r_sort_col_idx]) {
+      return false;
+    }
+    ++l_sort_col_idx;
   }
   return true;
 }
