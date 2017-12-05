@@ -145,6 +145,7 @@ uint64_t TimestampFunctions::DateTrunc(const char *date_part_type,
 type::Value TimestampFunctions::_DateTrunc(
     const std::vector<type::Value> &args) {
   char *date_part = args[0].GetAs<char *>();
+
   uint64_t timestamp = args[1].GetAs<uint64_t>();
   type::Value result;
 
