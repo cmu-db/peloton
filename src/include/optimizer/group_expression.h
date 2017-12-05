@@ -63,11 +63,11 @@ class GroupExpression {
   }
 
   void SetRuleExplored(Rule *rule) {
-    (*rule_mask_.get())[rule->GetRuleIdx()] = true;
+    rule_mask_.set(rule->GetRuleIdx()) = true;
   }
 
   bool HasRuleExplored(Rule *rule) {
-    return rule_mask_->at(rule->GetRuleIdx());
+    return rule_mask_.test(rule->GetRuleIdx());
   }
 
   inline size_t GetChildrenGroupsSize() const { return child_groups.size(); }
@@ -76,7 +76,7 @@ class GroupExpression {
   GroupID group_id;
   Operator op;
   std::vector<GroupID> child_groups;
-  std::unique_ptr<std::vector<bool>> rule_mask_;
+  std::bitset<static_cast<uint32_t>(RuleType::NUM_RULES_PLUS_ONE)-1> rule_mask_;
 
   // Mapping from output properties to the corresponding best cost, statistics,
   // and child properties

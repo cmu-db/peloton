@@ -58,31 +58,7 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 // Optimizer
 //===--------------------------------------------------------------------===//
-Optimizer::Optimizer() {
-  metadata_.AddRule(new InnerJoinCommutativity());
-  metadata_.AddRule(new LogicalDeleteToPhysical());
-  metadata_.AddRule(new LogicalUpdateToPhysical());
-  metadata_.AddRule(new LogicalInsertToPhysical());
-  metadata_.AddRule(
-      new LogicalInsertSelectToPhysical());
-  metadata_.AddRule(
-      new LogicalGroupByToHashGroupBy());
-  // Comment out because codegen does not support sort groupby now
-  // rule_set_.AddRule(
-  //     new LogicalGroupByToSortGroupBy());
-  metadata_.AddRule(new LogicalAggregateToPhysical());
-  metadata_.AddRule(new GetToDummyScan());
-  metadata_.AddRule(new GetToSeqScan());
-  metadata_.AddRule(new GetToIndexScan());
-  metadata_.AddRule(
-      new LogicalQueryDerivedGetToPhysical());
-//  rule_set_.AddRule(new LogicalFilterToPhysical());
-  metadata_.AddRule(new InnerJoinToInnerNLJoin());
-//  rule_set_.AddRule(new LeftJoinToLeftNLJoin());
-//  rule_set_.AddRule(new RightJoinToRightNLJoin());
-//  rule_set_.AddRule(new OuterJoinToOuterNLJoin());
-  metadata_.AddRule(new InnerJoinToInnerHashJoin());
-}
+Optimizer::Optimizer() {}
 
 void Optimizer::OptimizeLoop(int root_group_id, PropertySet *required_props) {
   std::shared_ptr<OptimizeContext> root_context = std::make_shared<OptimizeContext>(&metadata_, required_props);

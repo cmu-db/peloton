@@ -25,8 +25,8 @@ namespace optimizer {
 #define PHYS_PROMISE 3
 #define LOG_PROMISE 1
 
-enum class RuleType {
-  INNER_JOIN_COMMUTE,
+enum class RuleType : uint32_t {
+  INNER_JOIN_COMMUTE = 0,
 
   LogicalPhysicalDelimiter,
 
@@ -39,10 +39,12 @@ enum class RuleType {
   INSERT_TO_PHYSICAL,
   INSERT_SELECT_TO_PHYSICAL,
   AGGREGATE_TO_HASH_AGGREGATE,
-  AGGREGATE_TO_SORT_AGGREGATE,
   AGGREGATE_TO_PLAIN_AGGREGATE,
   INNER_JOIN_TO_NL_JOIN,
-  INNER_JOIN_TO_HASH_JOIN
+  INNER_JOIN_TO_HASH_JOIN,
+
+  // Place holder to generate compile time
+  NUM_RULES_PLUS_ONE
 };
 
 
@@ -74,14 +76,12 @@ class Rule {
 
   inline RuleType GetType() { return type_; }
 
-  inline void SetRuleIdx(int index) { rule_idx_ = index; }
 
-  inline int GetRuleIdx() { return rule_idx_; }
+  inline uint32_t GetRuleIdx() { return static_cast<uint32_t>(type_); }
 
  protected:
   std::shared_ptr<Pattern> match_pattern;
   RuleType type_;
-  int rule_idx_;
 };
 
 struct RuleWithPromise {
@@ -98,9 +98,20 @@ struct RuleWithPromise {
 class RuleSet {
  public:
   // RuleSet will take the ownership of the rule object
-  void AddRule(Rule* rule) {
-    rule->SetRuleIdx(rules_.size());
-    rules_.emplace_back(rule);
+  RuleSet() {
+    rules_.emplace_back(new InnerJoinCommutativity());
+    rules_.emplace_back(new LogicalDeleteToPhysical());
+    rules_.emplace_back(new LogicalUpdateToPhysical());
+    rules_.emplace_back(new LogicalInsertToPhysical());
+    rules_.emplace_back(new LogicalInsertSelectToPhysical());
+    rules_.emplace_back(new LogicalGroupByToHashGroupBy());
+    rules_.emplace_back(new LogicalAggregateToPhysical());
+    rules_.emplace_back(new GetToDummyScan());
+    rules_.emplace_back(new GetToSeqScan());
+    rules_.emplace_back(new GetToIndexScan());
+    rules_.emplace_back(new LogicalQueryDerivedGetToPhysical());
+    rules_.emplace_back(new InnerJoinToInnerNLJoin());
+    rules_.emplace_back(new InnerJoinToInnerHashJoin());
   }
 
   std::vector<std::unique_ptr<Rule>>& GetRules() { return rules_; }
