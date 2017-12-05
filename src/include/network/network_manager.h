@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <vector>
-
+#include <pthread.h>
 #include <sys/file.h>
 
 #include "common/exception.h"
@@ -60,7 +60,7 @@ class NetworkManager {
 
 
   static SSLLevel ssl_level_;
-  static pthread_mutex_t *ssl_mutex_buf_ = nullptr;
+  static pthread_mutex_t *ssl_mutex_buf_;
 
   struct event *ev_stop_;     // libevent stop event
   struct event *ev_timeout_;  // libevent timeout event
