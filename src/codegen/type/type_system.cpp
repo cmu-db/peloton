@@ -23,6 +23,38 @@ namespace peloton {
 namespace codegen {
 namespace type {
 
+namespace {
+
+Value GenerateBinaryHandleNull(
+    CodeGen &codegen, const SqlType &result_type, const Value &left,
+    const Value &right,
+    const std::function<Value(CodeGen &codegen, const Value &left,
+                              const Value &right)> &impl) {
+  if (!left.IsNullable() && !right.IsNullable()) {
+    // Neither input is NULLable, elide the NULL check
+    return impl(codegen, left, right);
+  }
+
+  // One of the inputs is nullable, compute the null bit first
+  auto *null = codegen->CreateOr(left.IsNull(codegen), right.IsNull(codegen));
+
+  Value null_val, ret_val;
+  lang::If is_null{codegen, null, "is_null"};
+  {
+    // If either value is null, the result of the operator is null
+    null_val = result_type.GetNullValue(codegen);
+  }
+  is_null.ElseBlock();
+  {
+    // If both values are not null, perform the non-null-aware operation
+    ret_val = impl(codegen, left, right);
+  }
+  is_null.EndIf();
+  return is_null.BuildPHI(null_val, ret_val);
+}
+
+}  // anonymous namespace
+
 //===----------------------------------------------------------------------===//
 //
 // CastHandleNull
@@ -122,56 +154,68 @@ Value TypeSystem::SimpleComparisonHandleNull::EvalCompareForSort(
 //
 //===----------------------------------------------------------------------===//
 
-#define GEN_COMPARE(RET_TYPE, IMPL)                                   \
-  if (!left.IsNullable() && !right.IsNullable()) {                    \
-    /* Neither left nor right are NULLable, elide the NULL check */   \
-    return (IMPL);                                                    \
-  }                                                                   \
-  /* Determine the null bit based on the left and right values */     \
-  llvm::Value *null =                                                 \
-      codegen->CreateOr(left.IsNull(codegen), right.IsNull(codegen)); \
-  codegen::Value null_val, non_null_val;                              \
-  lang::If input_is_null{codegen, null};                              \
-  {                                                                   \
-    /* One of the inputs are NULL */                                  \
-    null_val = (RET_TYPE).GetNullValue(codegen);                      \
-  }                                                                   \
-  input_is_null.ElseBlock();                                          \
-  {                                                                   \
-    /* Neither input is NULL */                                       \
-    non_null_val = (IMPL);                                            \
-  }                                                                   \
-  return input_is_null.BuildPHI(null_val, non_null_val);
-
 Value TypeSystem::ExpensiveComparisonHandleNull::EvalCompareLt(
     CodeGen &codegen, const Value &left, const Value &right) const {
-  GEN_COMPARE(Boolean::Instance(), CompareLtImpl(codegen, left, right));
+  auto impl = [this](CodeGen &codegen, const Value &left, const Value &right) {
+    return CompareLtImpl(codegen, left, right);
+  };
+  const auto &result_type = Boolean::Instance();
+  return GenerateBinaryHandleNull(codegen, result_type, left, right, impl);
 }
+
 Value TypeSystem::ExpensiveComparisonHandleNull::EvalCompareLte(
     CodeGen &codegen, const Value &left, const Value &right) const {
-  GEN_COMPARE(Boolean::Instance(), CompareLteImpl(codegen, left, right));
+  auto impl = [this](CodeGen &codegen, const Value &left, const Value &right) {
+    return CompareLteImpl(codegen, left, right);
+  };
+  const auto &result_type = Boolean::Instance();
+  return GenerateBinaryHandleNull(codegen, result_type, left, right, impl);
 }
+
 Value TypeSystem::ExpensiveComparisonHandleNull::EvalCompareEq(
     CodeGen &codegen, const Value &left, const Value &right) const {
-  GEN_COMPARE(Boolean::Instance(), CompareEqImpl(codegen, left, right));
+  auto impl = [this](CodeGen &codegen, const Value &left, const Value &right) {
+    return CompareEqImpl(codegen, left, right);
+  };
+  const auto &result_type = Boolean::Instance();
+  return GenerateBinaryHandleNull(codegen, result_type, left, right, impl);
 }
+
 Value TypeSystem::ExpensiveComparisonHandleNull::EvalCompareNe(
     CodeGen &codegen, const Value &left, const Value &right) const {
-  GEN_COMPARE(Boolean::Instance(), CompareNeImpl(codegen, left, right));
+  auto impl = [this](CodeGen &codegen, const Value &left, const Value &right) {
+    return CompareNeImpl(codegen, left, right);
+  };
+  const auto &result_type = Boolean::Instance();
+  return GenerateBinaryHandleNull(codegen, result_type, left, right, impl);
 }
+
 Value TypeSystem::ExpensiveComparisonHandleNull::EvalCompareGt(
     CodeGen &codegen, const Value &left, const Value &right) const {
-  GEN_COMPARE(Boolean::Instance(), CompareGtImpl(codegen, left, right));
+  auto impl = [this](CodeGen &codegen, const Value &left, const Value &right) {
+    return CompareGtImpl(codegen, left, right);
+  };
+  const auto &result_type = Boolean::Instance();
+  return GenerateBinaryHandleNull(codegen, result_type, left, right, impl);
 }
+
 Value TypeSystem::ExpensiveComparisonHandleNull::EvalCompareGte(
     CodeGen &codegen, const Value &left, const Value &right) const {
-  GEN_COMPARE(Boolean::Instance(), CompareGteImpl(codegen, left, right));
+  auto impl = [this](CodeGen &codegen, const Value &left, const Value &right) {
+    return CompareGteImpl(codegen, left, right);
+  };
+  const auto &result_type = Boolean::Instance();
+  return GenerateBinaryHandleNull(codegen, result_type, left, right, impl);
 }
+
 Value TypeSystem::ExpensiveComparisonHandleNull::EvalCompareForSort(
     CodeGen &codegen, const Value &left, const Value &right) const {
-  GEN_COMPARE(Integer::Instance(), CompareForSortImpl(codegen, left, right));
+  auto impl = [this](CodeGen &codegen, const Value &left, const Value &right) {
+    return CompareForSortImpl(codegen, left, right);
+  };
+  const auto &result_type = Integer::Instance();
+  return GenerateBinaryHandleNull(codegen, result_type, left, right, impl);
 }
-#undef GEN_COMPARE
 
 //===----------------------------------------------------------------------===//
 //
@@ -213,28 +257,13 @@ Value TypeSystem::BinaryOperatorHandleNull::Eval(CodeGen &codegen,
                                                  const Value &left,
                                                  const Value &right,
                                                  OnError on_error) const {
-  if (!left.IsNullable() && !right.IsNullable()) {
-    // Neither input is NULLable, elide the NULL check
+  auto impl = [this, &on_error](CodeGen &codegen, const Value &left,
+                                const Value &right) {
     return Impl(codegen, left, right, on_error);
-  }
+  };
 
-  // One of the inputs is nullable, compute the null bit first
-  auto *null = codegen->CreateOr(left.IsNull(codegen), right.IsNull(codegen));
-
-  Value null_val, ret_val;
-  lang::If is_null{codegen, null, "is_null"};
-  {
-    // If either value is null, the result of the operator is null
-    const auto &result_type = ResultType(left.GetType(), right.GetType());
-    null_val = result_type.GetSqlType().GetNullValue(codegen);
-  }
-  is_null.ElseBlock();
-  {
-    // If both values are not null, perform the non-null-aware operation
-    ret_val = Impl(codegen, left, right, on_error);
-  }
-  is_null.EndIf();
-  return is_null.BuildPHI(null_val, ret_val);
+  auto &result_type = ResultType(left.GetType(), right.GetType()).GetSqlType();
+  return GenerateBinaryHandleNull(codegen, result_type, left, right, impl);
 }
 
 //===----------------------------------------------------------------------===//
