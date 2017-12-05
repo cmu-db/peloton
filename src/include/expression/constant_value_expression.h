@@ -83,7 +83,9 @@ class ConstantValueExpression : public AbstractExpression {
       UNUSED_ATTRIBUTE const std::vector<peloton::type::Value>
           &parameter_values) override {
     // Add a new parameter object for a constant
-    parameters.push_back(Parameter::CreateConstParameter(GetValue()));
+    auto is_nullable = true;;
+    parameters.push_back(Parameter::CreateConstParameter(GetValue(),
+                                                         is_nullable));
     index[this] = parameters.size() - 1;
   };
 
