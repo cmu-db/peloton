@@ -176,7 +176,7 @@ struct CompareBoolean : public TypeSystem::SimpleComparisonHandleNull {
 //===----------------------------------------------------------------------===//
 
 // Logical AND
-struct LogicalAnd : public TypeSystem::SimpleNullableBinaryOperator {
+struct LogicalAnd : public TypeSystem::BinaryOperatorHandleNull {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type.GetSqlType() == Boolean::Instance() &&
@@ -196,7 +196,7 @@ struct LogicalAnd : public TypeSystem::SimpleNullableBinaryOperator {
 };
 
 // Logical OR
-struct LogicalOr : public TypeSystem::SimpleNullableBinaryOperator {
+struct LogicalOr : public TypeSystem::BinaryOperatorHandleNull {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type.GetSqlType() == Boolean::Instance() &&

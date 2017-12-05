@@ -149,7 +149,7 @@ struct CompareInteger : public TypeSystem::SimpleComparisonHandleNull {
 };
 
 // Negation
-struct Negate : public TypeSystem::SimpleNullableUnaryOperator {
+struct Negate : public TypeSystem::UnaryOperatorHandleNull {
   bool SupportsType(const Type &type) const override {
     return type.GetSqlType() == Integer::Instance();
   }
@@ -173,7 +173,7 @@ struct Negate : public TypeSystem::SimpleNullableUnaryOperator {
 };
 
 // Addition
-struct Add : public TypeSystem::SimpleNullableBinaryOperator {
+struct Add : public TypeSystem::BinaryOperatorHandleNull {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type.GetSqlType() == Integer::Instance() &&
@@ -204,7 +204,7 @@ struct Add : public TypeSystem::SimpleNullableBinaryOperator {
 };
 
 // Subtraction
-struct Sub : public TypeSystem::SimpleNullableBinaryOperator {
+struct Sub : public TypeSystem::BinaryOperatorHandleNull {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type.GetSqlType() == Integer::Instance() &&
@@ -235,7 +235,7 @@ struct Sub : public TypeSystem::SimpleNullableBinaryOperator {
 };
 
 // Multiplication
-struct Mul : public TypeSystem::SimpleNullableBinaryOperator {
+struct Mul : public TypeSystem::BinaryOperatorHandleNull {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type.GetSqlType() == Integer::Instance() &&
@@ -266,7 +266,7 @@ struct Mul : public TypeSystem::SimpleNullableBinaryOperator {
 };
 
 // Division
-struct Div : public TypeSystem::SimpleNullableBinaryOperator {
+struct Div : public TypeSystem::BinaryOperatorHandleNull {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type.GetSqlType() == Integer::Instance() &&
@@ -322,7 +322,7 @@ struct Div : public TypeSystem::SimpleNullableBinaryOperator {
 };
 
 // Modulo
-struct Modulo : public TypeSystem::SimpleNullableBinaryOperator {
+struct Modulo : public TypeSystem::BinaryOperatorHandleNull {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type.GetSqlType() == Integer::Instance() &&

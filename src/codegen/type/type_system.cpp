@@ -13,9 +13,9 @@
 #include "codegen/type/type_system.h"
 
 #include "codegen/lang/if.h"
-#include "codegen/value.h"
 #include "codegen/type/boolean_type.h"
 #include "codegen/type/integer_type.h"
+#include "codegen/value.h"
 #include "common/exception.h"
 #include "util/string_util.h"
 
@@ -25,9 +25,10 @@ namespace type {
 
 //===----------------------------------------------------------------------===//
 //
-// SimpleNullableCast
+// CastHandleNull
 //
 //===----------------------------------------------------------------------===//
+
 Value TypeSystem::CastHandleNull::Eval(CodeGen &codegen, const Value &value,
                                        const Type &to_type) const {
   if (!value.IsNullable()) {
@@ -55,7 +56,7 @@ Value TypeSystem::CastHandleNull::Eval(CodeGen &codegen, const Value &value,
 
 //===----------------------------------------------------------------------===//
 //
-// SimpleNullableComparison
+// SimpleComparisonHandleNull
 //
 //===----------------------------------------------------------------------===//
 
@@ -117,7 +118,7 @@ Value TypeSystem::SimpleComparisonHandleNull::EvalCompareForSort(
 
 //===----------------------------------------------------------------------===//
 //
-// SimpleNullableComparison
+// ExpensiveComparisonHandleNull
 //
 //===----------------------------------------------------------------------===//
 
@@ -174,11 +175,11 @@ Value TypeSystem::ExpensiveComparisonHandleNull::EvalCompareForSort(
 
 //===----------------------------------------------------------------------===//
 //
-// SimpleNullableUnaryOperator
+// UnaryOperatorHandleNull
 //
 //===----------------------------------------------------------------------===//
-Value TypeSystem::SimpleNullableUnaryOperator::Eval(CodeGen &codegen,
-                                                    const Value &val) const {
+Value TypeSystem::UnaryOperatorHandleNull::Eval(CodeGen &codegen,
+                                                const Value &val) const {
   if (!val.IsNullable()) {
     // If the input is not NULLable, elide the NULL check
     return Impl(codegen, val);
@@ -205,13 +206,13 @@ Value TypeSystem::SimpleNullableUnaryOperator::Eval(CodeGen &codegen,
 
 //===----------------------------------------------------------------------===//
 //
-// SimpleNullableBinaryOperator
+// BinaryOperatorHandleNull
 //
 //===----------------------------------------------------------------------===//
-Value TypeSystem::SimpleNullableBinaryOperator::Eval(CodeGen &codegen,
-                                                     const Value &left,
-                                                     const Value &right,
-                                                     OnError on_error) const {
+Value TypeSystem::BinaryOperatorHandleNull::Eval(CodeGen &codegen,
+                                                 const Value &left,
+                                                 const Value &right,
+                                                 OnError on_error) const {
   if (!left.IsNullable() && !right.IsNullable()) {
     // Neither input is NULLable, elide the NULL check
     return Impl(codegen, left, right, on_error);

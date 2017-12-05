@@ -109,7 +109,7 @@ struct CompareVarchar : public TypeSystem::ExpensiveComparisonHandleNull {
   }
 };
 
-struct Ascii : public TypeSystem::SimpleNullableUnaryOperator {
+struct Ascii : public TypeSystem::UnaryOperatorHandleNull {
   bool SupportsType(const Type &type) const override {
     return type.GetSqlType() == Varchar::Instance();
   }
@@ -171,7 +171,7 @@ struct Like : public TypeSystem::BinaryOperator {
   }
 };
 
-struct Length : public TypeSystem::SimpleNullableUnaryOperator {
+struct Length : public TypeSystem::UnaryOperatorHandleNull {
   bool SupportsType(const Type &type) const override {
     return type.GetSqlType() == Varchar::Instance();
   }
