@@ -62,7 +62,7 @@ TileGroupHeader::TileGroupHeader(const BackendType &backend_type,
   }
 
   // Initially immutability to false initially.
-  immutability = false;
+  *immutability = false;
   zone_map = std::make_unique< storage::ZoneMap>();
   
 }
@@ -85,7 +85,8 @@ const std::string TileGroupHeader::GetInfo() const {
   os << "TILE GROUP HEADER (";
   os << "Address:" << this << ", ";
   os << "NumActiveTuples:";
-  os << GetActiveTupleCount();
+  os << GetActiveTupleCount() << ", ";
+  os << "Immutability: " << GetImmutability();
   os << ")";
   os << std::endl;
 

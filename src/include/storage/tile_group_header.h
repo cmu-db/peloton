@@ -238,16 +238,16 @@ class TileGroupHeader : public Printable {
                                         transaction_id);
   }
 
-  inline void SetImmutability() {
-    immutability = true;
+  inline bool SetImmutability() {
+    return __sync_bool_compare_and_swap(immutability, false, true);
   }
 
-  inline void ResetImmutability() {
-    immutability = false;
+  inline bool ResetImmutability() {
+    return __sync_bool_compare_and_swap(immutability, true, false);
   }
 
-  inline bool GetImmutability() {
-    return immutability;
+  inline bool GetImmutability() const{
+    return *immutability;
   }
 
 
@@ -314,7 +314,7 @@ class TileGroupHeader : public Printable {
 
   // Immmutability Flag. Should be set by the brain to be true.
   // By default it will be set to false.
-  bool immutability;
+  bool *immutability;
 };
 
 }  // namespace storage
