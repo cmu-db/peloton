@@ -105,7 +105,8 @@ void ChildPropertyDeriver::Visit(const PhysicalSortGroupBy *op) {
   vector<bool> sort_acsending(op->columns.size(), true);
   shared_ptr<Property> sort_prop(
       new PropertySort(op->columns, move(sort_acsending)));
-  shared_ptr<PropertySet> prop_set(new vector<shared_ptr<Property>>{sort_prop});
+  shared_ptr<PropertySet> prop_set =
+      make_shared<PropertySet>(vector<shared_ptr<Property>>{sort_prop});
   output_.push_back(
       make_pair(prop_set, vector<shared_ptr<PropertySet>>{prop_set}));
 }
