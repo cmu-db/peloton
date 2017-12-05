@@ -1044,9 +1044,9 @@ enum class OperatorId : uint32_t {
   Extract,
   Floor,
   DateTrunc,
+  Like,
 
   // Add more operators here, before the last "Invalid" entry
-  Like,
   Invalid
 };
 std::string OperatorIdToString(OperatorId op_id);

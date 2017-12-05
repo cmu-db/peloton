@@ -171,7 +171,7 @@ struct Like : public TypeSystem::BinaryOperator {
   }
 };
 
-struct Length : public TypeSystem::UnaryOperator {
+struct Length : public TypeSystem::SimpleNullableUnaryOperator {
   bool SupportsType(const Type &type) const override {
     return type.GetSqlType() == Varchar::Instance();
   }
@@ -180,7 +180,7 @@ struct Length : public TypeSystem::UnaryOperator {
     return Integer::Instance();
   }
 
-  Value DoWork(CodeGen &codegen, const Value &val) const override {
+  Value Impl(CodeGen &codegen, const Value &val) const override {
     llvm::Value *raw_ret = codegen.Call(StringFunctionsProxy::Length,
                                         {val.GetValue(), val.GetLength()});
     return Value{Integer::Instance(), raw_ret};
