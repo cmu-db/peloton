@@ -66,7 +66,9 @@ class ParameterValueExpression : public AbstractExpression {
       std::unordered_map<const AbstractExpression *, size_t> &index,
       const std::vector<peloton::type::Value> &parameter_values) override {
     // Add a new parameter object for a parameter
-    parameters.push_back(Parameter::CreateParamParameter(GetValueIdx()));
+    auto is_nullable = true;
+    parameters.push_back(Parameter::CreateParamParameter(GetValueIdx(),
+                                                         is_nullable));
     index[this] = parameters.size() - 1;
 
     return_value_type_ = parameter_values[value_idx_].GetTypeId();

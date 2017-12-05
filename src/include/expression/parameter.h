@@ -24,14 +24,12 @@ class Parameter {
   enum class Type { CONSTANT = 0, PARAMETER = 1 };
 
   // Create Constant Parameter object
-  static Parameter CreateConstParameter(type::Value value,
-                                        bool is_nullable = true) {
+  static Parameter CreateConstParameter(type::Value value, bool is_nullable) {
     return Parameter{value.GetTypeId(), value, is_nullable};
   }
 
   // Create Parameter Parameter object
-  static Parameter CreateParamParameter(int32_t param_idx,
-                                        bool is_nullable = true) {
+  static Parameter CreateParamParameter(int32_t param_idx, bool is_nullable) {
     return Parameter{param_idx, is_nullable};
   }
 
