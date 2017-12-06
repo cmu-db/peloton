@@ -63,7 +63,14 @@ class ConstantValueExpression : public AbstractExpression {
         (exp_type_ != type || return_value_type_ != rhs.GetValueType())) {
       return false;
     }
+
+    auto &other = static_cast<const expression::ConstantValueExpression &>(rhs);
     // Do not check value since we are going to parameterize and cache
+    // but, check the nullability to optimize the non-nullable cases
+    if (value_.IsNull() != other.IsNullable()) {
+      return false;
+    }
+
     return true;
   }
 
@@ -74,15 +81,19 @@ class ConstantValueExpression : public AbstractExpression {
   virtual hash_t Hash() const override {
     // Use VALUE_PARAMTER for parameterization with the compiled query cache
     auto val = ExpressionType::VALUE_PARAMETER;
-    // Do not hash value since we are going to parameterize and cache
-    return HashUtil::Hash(&val);
+    hash_t hash = HashUtil::Hash(&val);
+
+    // Do not check value since we are going to parameterize and cache
+    // but, check the nullability to optimize the non-nullable cases
+    auto is_nullable = value_.IsNull();
+    return HashUtil::CombineHashes(hash, HashUtil::Hash(&is_nullable));
   }
 
   virtual void VisitParameters(codegen::QueryParametersMap &map,
       std::vector<peloton::type::Value> &values,
       UNUSED_ATTRIBUTE const std::vector<peloton::type::Value>
           &values_from_user) override {
-    auto is_nullable = true;;
+    auto is_nullable = value_.IsNull();
     map.Insert(Parameter::CreateConstParameter(value_.GetTypeId(), is_nullable),
                this);
     values.push_back(value_);
