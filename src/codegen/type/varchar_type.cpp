@@ -190,7 +190,7 @@ struct Length : public TypeSystem::UnaryOperatorHandleNull {
 // DateTrunc
 // TODO(lma): Move this to the Timestamp type once the function lookup logic is
 // corrected.
-struct DateTrunc : public TypeSystem::BinaryOperator {
+struct DateTrunc : public TypeSystem::BinaryOperatorHandleNull {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type.GetSqlType() == Varchar::Instance() &&
@@ -202,8 +202,8 @@ struct DateTrunc : public TypeSystem::BinaryOperator {
     return Type{Timestamp::Instance()};
   }
 
-  Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
-               UNUSED_ATTRIBUTE OnError on_error) const override {
+  Value Impl(CodeGen &codegen, const Value &left, const Value &right,
+             UNUSED_ATTRIBUTE OnError on_error) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     llvm::Value *raw_ret = codegen.Call(TimestampFunctionsProxy::DateTrunc,
