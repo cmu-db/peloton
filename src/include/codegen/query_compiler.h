@@ -16,7 +16,7 @@
 #include <memory>
 
 #include "codegen/query.h"
-#include "codegen/query_parameters.h"
+#include "codegen/query_parameters_map.h"
 #include "codegen/query_result_consumer.h"
 
 namespace peloton {
@@ -55,7 +55,7 @@ class QueryCompiler {
   // object pointer if they want to collect statistics on the compilation
   // process.
   std::unique_ptr<Query> Compile(const planner::AbstractPlan &query_plan,
-                                 QueryParameters &parameters,
+                                 const QueryParametersMap &parameters_map,
                                  QueryResultConsumer &consumer,
                                  CompileStats *stats = nullptr);
 

@@ -309,7 +309,8 @@ double BloomFilterCodegenTest::ExecuteJoin(std::string query,
                                      executor_context->GetParams()));
 
     auto compiled_query = compiler.Compile(*plan.get(),
-                                           *parameters.get(), consumer);
+                                           parameters->GetQueryParametersMap(),
+                                           consumer);
     // Run
     compiled_query->Execute(*executor_context.get(), *parameters.get(),
                             consumer.GetCountAsState(), &stats);

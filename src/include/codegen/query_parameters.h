@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include "codegen/query_parameters_map.h"
 #include "expression/parameter.h"
 #include "planner/abstract_plan.h"
 #include "type/type_id.h"
@@ -28,125 +29,102 @@ class QueryParameters {
  public:
   // Constructor
   QueryParameters(planner::AbstractPlan &plan,
-                  const std::vector<peloton::type::Value> &parameter_values) {
+                  const std::vector<peloton::type::Value> &values) {
     // Extract Parameters information and set value type for all the PVE
-    plan.VisitParameters(parameters_, parameters_index_, parameter_values);
-
-    // Set the values from the user's query parameters
-    SetParameterExpressionValues(parameter_values);
+    plan.VisitParameters(parameters_map_, parameters_values_, values);
   }
 
-  // Get the index of the expresson in the parameter storage
-  size_t GetParameterIdx(const expression::AbstractExpression *expression)
-      const {
-    auto param = parameters_index_.find(expression);
-    PL_ASSERT(param != parameters_index_.end());
-    return param->second;
+  // Set the values from the user's query parameters
+  const QueryParametersMap &GetQueryParametersMap() {
+    return parameters_map_;
+  }
+
+  uint32_t GetParameterIdx(
+      const expression::AbstractExpression *expression) const {
+    return parameters_map_.GetIndex(expression);
   }
 
   // Get the parameter value's type at the specified index
   peloton::type::TypeId GetValueType(uint32_t index) const {
-    return parameters_[index].GetValue().GetTypeId();
+    return parameters_values_[index].GetTypeId();
   }
 
   // Get the parameter object vector
   const std::vector<expression::Parameter> &GetParameters() const {
-    return parameters_;
+    return parameters_map_.GetParameters();
   }
 
   // Get the boolean value for the index
   bool GetBoolean(uint32_t index) const {
-    return peloton::type::ValuePeeker::PeekBoolean(
-        parameters_[index].GetValue());
+    return peloton::type::ValuePeeker::PeekBoolean(parameters_values_[index]);
   }
 
   // Get the tinyint value for the index
   int8_t GetTinyInt(uint32_t index) const {
-    return peloton::type::ValuePeeker::PeekTinyInt(
-        parameters_[index].GetValue());
+    return peloton::type::ValuePeeker::PeekTinyInt(parameters_values_[index]);
   }
 
   // Get the smallint value for the index
   int16_t GetSmallInt(uint32_t index) const {
-    return peloton::type::ValuePeeker::PeekSmallInt(
-        parameters_[index].GetValue());
+    return peloton::type::ValuePeeker::PeekSmallInt(parameters_values_[index]);
   }
 
   // Get the integer value for the index
   int32_t GetInteger(uint32_t index) const {
-    return peloton::type::ValuePeeker::PeekInteger(
-        parameters_[index].GetValue());
+    return peloton::type::ValuePeeker::PeekInteger(parameters_values_[index]);
   }
 
   // Get the bigint value for the index
   int64_t GetBigInt(uint32_t index) const {
-    return peloton::type::ValuePeeker::PeekBigInt(
-        parameters_[index].GetValue());
+    return peloton::type::ValuePeeker::PeekBigInt(parameters_values_[index]);
   }
 
   // Get the double value for the index
   double GetDouble(uint32_t index) const {
-    return peloton::type::ValuePeeker::PeekDouble(
-        parameters_[index].GetValue());
+    return peloton::type::ValuePeeker::PeekDouble(parameters_values_[index]);
   }
 
   // Get the date value for the index
   int32_t GetDate(uint32_t index) const {
-    return peloton::type::ValuePeeker::PeekDate(parameters_[index].GetValue());
+    return peloton::type::ValuePeeker::PeekDate(parameters_values_[index]);
   }
 
   // Get the timestamp value for the index
   uint64_t GetTimestamp(uint32_t index) const {
-    return peloton::type::ValuePeeker::PeekTimestamp(
-        parameters_[index].GetValue());
+    return peloton::type::ValuePeeker::PeekTimestamp(parameters_values_[index]);
   }
 
   // Get the valrchar value for the index
   const char *GetVarcharVal(uint32_t index) const {
-    return peloton::type::ValuePeeker::PeekVarchar(
-        parameters_[index].GetValue());
+    return peloton::type::ValuePeeker::PeekVarchar(parameters_values_[index]);
   }
 
   // Get the valrchar length for the index
   uint32_t GetVarcharLen(uint32_t index) const {
-    return parameters_[index].GetValue().GetLength();
+    return parameters_values_[index].GetLength();
   }
 
   // Get the valrbinary value for the index
   const char *GetVarbinaryVal(uint32_t index) const {
-    return peloton::type::ValuePeeker::PeekVarbinary(
-        parameters_[index].GetValue());
+    return peloton::type::ValuePeeker::PeekVarbinary(parameters_values_[index]);
   }
 
   // Get the valrbinary length for the index
   uint32_t GetVarbinaryLen(uint32_t index) const {
-    return parameters_[index].GetValue().GetLength();
+    return parameters_values_[index].GetLength();
   }
 
   // Get the nullability for the value at the index
   bool IsNull(uint32_t index) const {
-    return parameters_[index].GetValue().IsNull();
+    return parameters_values_[index].IsNull();
   }
 
  private:
-  // Set values from parameters into member variables
-  void SetParameterExpressionValues(
-      const std::vector<peloton::type::Value> &values) {
-    for (size_t i = 0; i < parameters_.size(); i++) {
-      auto &param = parameters_[i];
-      if (param.GetType() == expression::Parameter::Type::PARAMETER) {
-        auto value = values[param.GetParamIdx()];
-        param = expression::Parameter::CreateConstParameter(value,
-                                                            value.IsNull());
-      }
-    }
-  }
+  // Parameter Map
+  QueryParametersMap parameters_map_;
 
- private:
-  // Parameter information vector and expression index to the vector
-  std::vector<expression::Parameter> parameters_;
-  std::unordered_map<const expression::AbstractExpression *, size_t>
-      parameters_index_;
+  // Parameter's value
+  std::vector<peloton::type::Value> parameters_values_;
 };
 
 }  // namespace codegen

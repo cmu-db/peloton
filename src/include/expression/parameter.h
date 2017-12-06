@@ -19,18 +19,21 @@
 namespace peloton {
 namespace expression {
 
+// This class keeps a parameter's meta information such as type, etc.
 class Parameter {
  public:
   enum class Type { CONSTANT = 0, PARAMETER = 1 };
 
   // Create Constant Parameter object
-  static Parameter CreateConstParameter(type::Value value, bool is_nullable) {
-    return Parameter{value.GetTypeId(), value, is_nullable};
+  static Parameter CreateConstParameter(type::TypeId type_id,
+                                        bool is_nullable) {
+    return Parameter{Type::CONSTANT, type_id, is_nullable};
   }
 
   // Create Parameter Parameter object
-  static Parameter CreateParamParameter(int32_t param_idx, bool is_nullable) {
-    return Parameter{param_idx, is_nullable};
+  static Parameter CreateParamParameter(type::TypeId type_id,
+                                        bool is_nullable) {
+    return Parameter{Type::PARAMETER, type_id, is_nullable};
   }
 
   // Get type of the parameter
@@ -42,26 +45,9 @@ class Parameter {
   // Get its nullabilityy
   bool IsNullable() const { return is_nullable_; }
 
-  // Get value
-  const type::Value &GetValue() const {
-    PL_ASSERT(type_==Type::CONSTANT);
-    return value_;
-  }
-
-  // Get paramer index
-  uint32_t GetParamIdx() const {
-    PL_ASSERT(type_ == Type::PARAMETER);
-    return param_idx_;
-  }
-
  private:
-  Parameter(peloton::type::TypeId type_id, type::Value value, bool is_nullable)
-      : type_(Type::CONSTANT), type_id_(type_id), value_(value),
-        is_nullable_(is_nullable) {}
-
-  Parameter(int32_t param_idx, bool is_nullable)
-      : type_(Type::PARAMETER), type_id_(type::TypeId::INVALID),
-        param_idx_(param_idx), is_nullable_(is_nullable) {}
+  Parameter(Type type, peloton::type::TypeId type_id, bool is_nullable)
+      : type_(type), type_id_(type_id), is_nullable_(is_nullable) {}
 
  private:
   // Type of the parameter
@@ -69,12 +55,6 @@ class Parameter {
 
   // Type Id of the value
   peloton::type::TypeId type_id_;
-
-  // Value for ConstantValueExpression
-  type::Value value_;
-
-  // Index for ParameterValueExpression
-  int32_t param_idx_;
 
   // Boolean to show if the value is nullable
   bool is_nullable_;

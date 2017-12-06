@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "catalog/schema.h"
+#include "codegen/query_parameters_map.h"
 #include "common/printable.h"
 #include "planner/binding_context.h"
 #include "type/serializeio.h"
@@ -131,11 +132,11 @@ class AbstractPlan : public Printable {
     return !(*this == rhs);
   }
 
-  virtual void VisitParameters(std::vector<expression::Parameter> &parameters,
-      std::unordered_map<const expression::AbstractExpression *, size_t> &index,
-      const std::vector<peloton::type::Value> &parameter_values) {
+  virtual void VisitParameters(codegen::QueryParametersMap &map,
+      std::vector<peloton::type::Value> &values,
+      const std::vector<peloton::type::Value> &values_from_user) {
     for (auto &child : GetChildren()) {
-      child->VisitParameters(parameters, index, parameter_values);
+      child->VisitParameters(map, values, values_from_user);
     }
   }
 

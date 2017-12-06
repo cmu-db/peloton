@@ -137,9 +137,9 @@ class AggregatePlan : public AbstractPlan {
     return !(*this == rhs);
   }
 
-  void VisitParameters(std::vector<expression::Parameter> &parameters,
-      std::unordered_map<const expression::AbstractExpression *, size_t> &index,
-      const std::vector<peloton::type::Value> &parameter_values) override;
+  virtual void VisitParameters(codegen::QueryParametersMap &map,
+      std::vector<peloton::type::Value> &values,
+      const std::vector<peloton::type::Value> &values_from_user) override;
 
  private:
   bool AreEqual(const std::vector<planner::AggregatePlan::AggTerm> &A,

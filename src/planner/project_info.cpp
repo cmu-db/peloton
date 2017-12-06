@@ -254,9 +254,8 @@ bool ProjectInfo::operator==(const ProjectInfo &rhs) const {
 }
 
 void ProjectInfo::VisitParameters(
-    std::vector<expression::Parameter> &parameters,
-    std::unordered_map<const expression::AbstractExpression *, size_t> &index,
-    const std::vector<peloton::type::Value> &parameter_values) {
+    codegen::QueryParametersMap &map, std::vector<peloton::type::Value> &values,
+    const std::vector<peloton::type::Value> &values_from_user) {
   if (isNonTrivial()) {
 
     for (auto &target : GetTargetList()) {
@@ -265,7 +264,7 @@ void ProjectInfo::VisitParameters(
 
       auto *expr =
           const_cast<expression::AbstractExpression *>(derived_attribute.expr);
-      expr->VisitParameters(parameters, index, parameter_values);
+      expr->VisitParameters(map, values, values_from_user);
     }
   }
 }

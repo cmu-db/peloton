@@ -62,16 +62,16 @@ class ParameterValueExpression : public AbstractExpression {
     return HashUtil::Hash(&exp_type_);
   }
 
-  virtual void VisitParameters(std::vector<Parameter> &parameters,
-      std::unordered_map<const AbstractExpression *, size_t> &index,
-      const std::vector<peloton::type::Value> &parameter_values) override {
+  virtual void VisitParameters(codegen::QueryParametersMap &map,
+      std::vector<peloton::type::Value> &values,
+      const std::vector<peloton::type::Value> &values_from_user) override {
     // Add a new parameter object for a parameter
+    auto &value = values_from_user[value_idx_];
     auto is_nullable = true;
-    parameters.push_back(Parameter::CreateParamParameter(GetValueIdx(),
-                                                         is_nullable));
-    index[this] = parameters.size() - 1;
-
-    return_value_type_ = parameter_values[value_idx_].GetTypeId();
+    map.Insert(Parameter::CreateParamParameter(value.GetTypeId(), is_nullable),
+               this);
+    values.push_back(value);
+    return_value_type_ = value.GetTypeId();
   };
 
  protected:

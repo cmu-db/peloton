@@ -58,14 +58,14 @@ bool HashPlan::operator==(const AbstractPlan &rhs) const {
   return AbstractPlan::operator==(rhs);
 }
 
-void HashPlan::VisitParameters(std::vector<expression::Parameter> &parameters,
-    std::unordered_map<const expression::AbstractExpression *, size_t> &index,
-    const std::vector<peloton::type::Value> &parameter_values) {
-  AbstractPlan::VisitParameters(parameters, index, parameter_values);
+void HashPlan::VisitParameters(
+    codegen::QueryParametersMap &map, std::vector<peloton::type::Value> &values,
+    const std::vector<peloton::type::Value> &values_from_user) {
+  AbstractPlan::VisitParameters(map, values, values_from_user);
 
   for (auto &hash_key : hash_keys_) {
     auto *expr = const_cast<expression::AbstractExpression *>(hash_key.get());
-    expr->VisitParameters(parameters, index, parameter_values);
+    expr->VisitParameters(map, values, values_from_user);
   }
 }
 
