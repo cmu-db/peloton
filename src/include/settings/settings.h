@@ -115,10 +115,5 @@ SETTING_bool(codegen,
 // GENERAL
 //===----------------------------------------------------------------------===//
 
-// Both for showing the help info
-SETTING_bool(h,
-            "Show help",
-            false,
-            false, false)
 
 
