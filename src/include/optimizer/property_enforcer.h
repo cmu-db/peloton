@@ -28,9 +28,10 @@ class PropertySet;
 // Enforce missing physical properties to group expression
 class PropertyEnforcer : public PropertyVisitor {
  public:
+
+
   std::shared_ptr<GroupExpression> EnforceProperty(
-      std::shared_ptr<GroupExpression> gexpr, PropertySet *properties,
-      std::shared_ptr<Property> property);
+      GroupExpression* gexpr, Property* property);
 
   virtual void Visit(const PropertyColumns *) override;
   virtual void Visit(const PropertySort *) override;
@@ -38,9 +39,8 @@ class PropertyEnforcer : public PropertyVisitor {
   virtual void Visit(const PropertyLimit *) override;
 
  private:
-  std::shared_ptr<GroupExpression> input_gexpr_;
+  GroupExpression* input_gexpr_;
   std::shared_ptr<GroupExpression> output_gexpr_;
-  PropertySet *input_properties_;
 };
 
 }  // namespace optimizer

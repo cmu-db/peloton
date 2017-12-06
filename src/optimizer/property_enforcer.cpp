@@ -20,10 +20,8 @@ namespace peloton {
 namespace optimizer {
 
 std::shared_ptr<GroupExpression> PropertyEnforcer::EnforceProperty(
-    std::shared_ptr<GroupExpression> gexpr, PropertySet *properties,
-    std::shared_ptr<Property> property) {
+    GroupExpression* gexpr, Property* property) {
   input_gexpr_ = gexpr;
-  input_properties_ = properties;
   property->Accept(this);
   return output_gexpr_;
 }

@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <include/optimizer/property_enforcer.h>
 #include "optimizer/optimizer_task.h"
 #include "optimizer/optimize_context.h"
 #include "optimizer/binding.h"
@@ -193,6 +194,9 @@ void OptimizeInputs::execute() {
     output_input_properties_ = std::move(prop_deriver.GetProperties(
         group_expr_, context_->required_prop.get(), &context_->metadata->memo));
     cur_child_idx_ = 0;
+
+    // TODO: If later on we support properties that may not be enforced in some cases,
+    // we can check whether it is the case here to do the pruning
   }
 
   // Loop over (output prop, input props) pair
@@ -226,13 +230,56 @@ void OptimizeInputs::execute() {
     if (cur_child_idx_ == output_input_properties_.size()) {
       // Not need to do pruning here because it has been done when we get the best expr from the child group
 
-      // Add this group expression to the hash tables
+      // Add this group expression to group expression hash table
       group_expr_->SetLocalHashTable(output_prop, input_props, cur_total_cost_);
-       if (GetMemo().GetGroupByID(group_expr_->GetGroupID())->SetExpressionCost(
-           group_expr_, cur_total_cost_, output_prop)) {
-         // If the cost is smaller than the winner, update the context upper bound
-         context_->cost_upper_bound -= cur_total_cost_;
-       }
+      auto cur_group = GetMemo().GetGroupByID(group_expr_->GetGroupID());
+      cur_group->SetExpressionCost(group_expr_, cur_total_cost_, output_prop);
+
+      // Enforce property if the requirement does not meet
+      PropertyEnforcer prop_enforcer;
+      auto extended_output_properties = output_prop->Properties();
+      std::shared_ptr<GroupExpression> memo_enforced_expr = nullptr;
+      bool meet_requirement = true;
+      // TODO: For now, we enforce the missing properties in the order of how we find them. This may
+      // miss the opportunity to enforce them or may lead to sub-optimal plan. This is fine now
+      // because we only have one physical property (sort). If more properties are added, we should
+      // add some heuristics to derive the optimal enforce order or perform a cost-based full enumeration.
+      for (auto &prop : context_->required_prop->Properties()) {
+        if (!output_prop->HasProperty(*prop)) {
+          auto enforced_expr = prop_enforcer.EnforceProperty(group_expr_, prop.get());
+          // Cannot enforce the missing property
+          if (enforced_expr == nullptr) {
+            meet_requirement = false;
+            break;
+          }
+          memo_enforced_expr = GetMemo().InsertExpression(enforced_expr, group_expr_->GetGroupID(), true);
+
+          // TODO: Cost the enforced expression
+          cur_total_cost_ += 0;
+
+          // Extend the output properties after enforcement
+          auto pre_output_prop_set = std::make_shared<PropertySet>(extended_output_properties);
+          extended_output_properties.push_back(prop);
+
+          // Update hash tables for group and group expression
+          auto extended_prop_set = std::make_shared<PropertySet>(extended_output_properties);
+          memo_enforced_expr->SetLocalHashTable(extended_prop_set, {pre_output_prop_set}, cur_total_cost_);
+         cur_group->SetExpressionCost(memo_enforced_expr.get(), cur_total_cost_, output_prop);
+        }
+      }
+
+      // Can meet the requirement
+      if (meet_requirement) {
+        // If the cost is smaller than the winner, update the context upper bound
+        context_->cost_upper_bound -= cur_total_cost_;
+        if (memo_enforced_expr != nullptr) { // Enforcement takes place
+          cur_group->SetExpressionCost(memo_enforced_expr.get(), cur_total_cost_, context_->required_prop);
+        } else if (output_prop->Properties().size() != context_->required_prop->Properties().size()) {
+          // The original output property is a super set of the requirement
+          cur_group->SetExpressionCost(group_expr_, cur_total_cost_, context_->required_prop);
+        }
+      }
+
     }
 
     // Reset child idx and total cost
