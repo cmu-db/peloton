@@ -566,14 +566,14 @@ TEST_F(OptimizerSQLTests, JoinTest) {
   // This one test NLJoin.
   // Currently cannot support this query because
   // the interpreted hash join is broken.
-  //   TestUtil(
-  //       "SELECT test.a, test.b, test1.b, test2.c FROM test, test1, test2 "
-  //       "WHERE test.b = test2.b AND test2.c = test1.c",
-  //       {"1", "22", "11", "0",
-  //        "2", "11", "22", "333",
-  //        "2", "11", "0", "333",
-  //        "4", "0", "11", "0"},
-  //       false);
+   TestUtil(
+       "SELECT test.a, test.b, test1.b, test2.c FROM test, test1, test2 "
+       "WHERE test.b = test2.b AND test2.c = test1.c",
+       {"1", "22", "11", "0",
+        "2", "11", "22", "333",
+        "2", "11", "0", "333",
+        "4", "0", "11", "0"},
+       false);
 
   // 2 table join with where clause and predicate
   TestUtil(
@@ -614,13 +614,10 @@ TEST_F(OptimizerSQLTests, JoinTest) {
       {"1", "44", "2", "22", "3", "55", "4", "0"}, false);
 
   // Test order by, limit, projection with join
-  // PAVLO 2017-06-26
-  // Temporarily disabling this query to try to get the test to reliably
-  // pass so that we can merge in the new optimizer code.
-  // TestUtil("SELECT test.a, test.b+test2.b FROM TEST, TEST2 "
-  //             "WHERE test.a = test2.a "
-  //             "ORDER BY test.c+test2.c LIMIT 3",
-  //         {"1", "44", "2", "22", "4", "0"}, true);
+   TestUtil("SELECT test.a, test.b+test2.b FROM TEST, TEST2 "
+               "WHERE test.a = test2.a "
+               "ORDER BY test.c+test2.c LIMIT 3",
+           {"1", "44", "2", "22", "4", "0"}, true);
 
   // Test group by with join
   TestUtil(
@@ -651,5 +648,31 @@ TEST_F(OptimizerSQLTests, IndexTest) {
            false);
 }
 
+TEST_F(OptimizerSQLTests, QueryDerivedTableTest) {
+  // Create extra table
+  TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE test2(a int primary key, b int, c varchar(32))");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test2 VALUES (1, 22, '1st');");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test2 VALUES (2, 11, '2nd');");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test2 VALUES (3, 33, '3rd');");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test2 VALUES (5, 00, '4th');");
+  TestUtil("select A.b from (select b from test where a = 1) as A", {"22"}, false);
+  TestUtil("select * from (select b from test where a = 1) as A", {"22"}, false);
+  TestUtil("select A.b, B.b from (select b from test where a = 1) as A, (select b from test as t where a=2) as B",
+           {"22", "11"}, false);
+  TestUtil("select B.b from (select b from test where a = 1) as A, (select b from test as t where a=2) as B",
+           {"11"}, false);
+  TestUtil("select * from (select b from test where a = 1) as A, (select b from test as t where a=2) as B",
+           {"22", "11"}, false);
+  TestUtil("select * from (select b from test) as A, (select b from test as t) as B where A.b = B.b",
+           {"22", "22", "11", "11", "33", "33","0", "0"}, false);
+  TestUtil("select * from (select b from test) as A, (select b from test) as B where A.b = B.b",
+           {"22", "22", "11", "11", "33", "33","0", "0"}, false);
+  TestUtil("select A.a, B.c from (select count(*) as a from test) as A, (select avg(a) as C from test2) as B",
+           {"4", "2.75"}, false);
+  TestUtil("select * from (select a+b as a, c from test) as A, (select a+b as a, c as c from test2) as B where A.a=B.a",
+           {"13","0","13","2nd","23","333","23","1st","36","444","36","3rd"}, false);
+  TestUtil("select A.c, B.c from (select a+b as a, c from test) as A, (select a+b as a, c as c from test2) as B where A.a=B.a order by A.a",
+           {"0", "2nd","333","1st","444","3rd"}, true);
+}
 }  // namespace test
 }  // namespace peloton

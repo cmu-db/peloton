@@ -15,8 +15,12 @@
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"
 #include "planner/update_plan.h"
-#include <sql/testing_sql_util.h>
-#include "include/traffic_cop/traffic_cop.h"
+#include "sql/testing_sql_util.h"
+#include "planner/seq_scan_plan.h"
+#include "planner/abstract_join_plan.h"
+#include "planner/hash_join_plan.h"
+#include "traffic_cop/traffic_cop.h"
+#include "expression/tuple_value_expression.h"
 
 namespace peloton {
 namespace test {
@@ -206,6 +210,52 @@ TEST_F(OptimizerTests, HashJoinTest) {
   txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
+}
+
+TEST_F(OptimizerTests, PredicatePushDownTest) {
+  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+
+  TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE test(a INT PRIMARY KEY, b INT, c INT);");
+  TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE test1(a INT PRIMARY KEY, b INT, c INT);");
+
+  auto& peloton_parser = parser::PostgresParser::GetInstance();
+  auto stmt = peloton_parser.BuildParseTree(
+      "SELECT * FROM test, test1 WHERE test.a = test1.a AND test1.b = 22");
+
+  optimizer::Optimizer optimizer;
+  txn = txn_manager.BeginTransaction();
+  auto plan = optimizer.BuildPelotonPlanTree(stmt, DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+
+
+  auto& child_plan = plan->GetChildren();
+  EXPECT_EQ(2, child_plan.size());
+
+
+  auto l_plan = dynamic_cast<planner::SeqScanPlan*>(child_plan[0].get());
+  auto r_plan = dynamic_cast<planner::SeqScanPlan*>(child_plan[1]->GetChildren()[0].get());
+  planner::SeqScanPlan* test_plan = l_plan;
+  planner::SeqScanPlan* test1_plan = r_plan;
+
+  if (l_plan->GetTable()->GetName() == "test1") {
+    test_plan = r_plan;
+    test1_plan = l_plan;
+  }
+
+  auto test_predicate = test_plan->GetPredicate();
+  EXPECT_EQ(nullptr, test_predicate);
+  auto test1_predicate = test1_plan->GetPredicate();
+  EXPECT_EQ(ExpressionType::COMPARE_EQUAL, test1_predicate->GetExpressionType());
+  auto tv = dynamic_cast<expression::TupleValueExpression*>(test1_predicate->GetModifiableChild(0));
+  EXPECT_TRUE(tv != nullptr);
+  EXPECT_EQ("test1", tv->GetTableName());
+  EXPECT_EQ("b", tv->GetColumnName());
+  auto constant = dynamic_cast<expression::ConstantValueExpression*>(test1_predicate->GetModifiableChild(1));
+  EXPECT_TRUE(constant != nullptr);
+  EXPECT_EQ(22, constant->GetValue().GetAs<int>());
 }
 
 }  // namespace test

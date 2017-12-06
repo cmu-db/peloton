@@ -25,9 +25,11 @@ namespace concurrency {
 class Transaction;
 }
 
-namespace binder {
+namespace catalog{
+class TableCatalogObject;
+}
 
-class BinderContext;
+namespace binder {
 
 // Store the visible table alias and the corresponding <db_id, table_id> tuple.
 // Also record the upper level context when traversing into the nested query.
@@ -36,54 +38,68 @@ class BinderContext;
 // can bind to.
 class BinderContext {
  public:
-  std::shared_ptr<BinderContext> upper_context;
-
-  BinderContext() { upper_context = nullptr; }
+  BinderContext() : upper_context_(nullptr) {}
 
   // Update the table alias map given a table reference (in the from clause)
-  void AddTable(parser::TableRef* table_ref,
-                const std::string default_database_name,
-                concurrency::Transaction* txn);
+  void AddRegularTable(parser::TableRef *table_ref,
+                       const std::string default_database_name,
+                       concurrency::Transaction *txn);
 
   // Update the table alias map given a table reference (in the from clause)
-  void AddTable(const std::string db_name, const std::string table_name,
-                concurrency::Transaction* txn);
+  void AddRegularTable(const std::string db_name,
+                       const std::string table_name,
+                       const std::string table_alias,
+                       concurrency::Transaction *txn);
+
+  // Update the nested table alias map
+  void AddNestedTable(const std::string table_alias, std::vector<std::unique_ptr<expression::AbstractExpression>>& select_list);
 
   static bool HasTables(std::shared_ptr<BinderContext> current_context) {
     if (current_context == nullptr) return false;
-    if (!current_context->table_alias_map.empty()) return true;
-    return HasTables(current_context->upper_context);
+    if (!current_context->regular_table_alias_map_.empty() ||
+        !current_context->nested_table_alias_map_.empty()) return true;
+    return HasTables(current_context->GetUpperContext());
   }
 
   // Construct the column position tuple given column name and the
-  // corresponding tabld id tuple. Also set the value type
+  // corresponding table obj. Also set the value type
   // Note that this is just a helper function and it is independent of
   // the context.
-  static bool GetColumnPosTuple(std::string& col_name,
-                                std::tuple<oid_t, oid_t>& table_id_tuple,
-                                std::tuple<oid_t, oid_t, oid_t>& col_pos_tuple,
-                                type::TypeId& value_type,
-                                concurrency::Transaction* txn);
+  static bool GetColumnPosTuple(
+      const std::string& col_name, std::shared_ptr<catalog::TableCatalogObject> table_obj,
+      std::tuple<oid_t, oid_t, oid_t>& col_pos_tuple, type::TypeId& value_type);
 
   // Construct the column position tuple given only the column name and the
   // context. Also set the value type based on column type
   // This function is used when the table alias is absent in the
   // TupleValueExpression
   static bool GetColumnPosTuple(std::shared_ptr<BinderContext> current_context,
-                                std::string& col_name,
+                                const std::string& col_name,
                                 std::tuple<oid_t, oid_t, oid_t>& col_pos_tuple,
                                 std::string& table_alias,
-                                type::TypeId& value_type,
-                                concurrency::Transaction* txn);
+                                type::TypeId& value_type);
 
-  // Construct the table id tuple given the table alias
-  static bool GetTableIdTuple(std::shared_ptr<BinderContext> current_context,
-                              std::string& alias,
-                              std::tuple<oid_t, oid_t>* id_tuple_ptr);
+  // Construct the table obj given the table alias
+  static bool GetRegularTableObj(
+      std::shared_ptr<BinderContext> current_context, std::string &alias,
+      std::shared_ptr<catalog::TableCatalogObject> &table_obj);
+
+  static bool CheckNestedTableColumn(
+      std::shared_ptr<BinderContext> current_context, std::string& alias,
+      std::string& col_name, type::TypeId& value_type);
+
+
+  std::shared_ptr<BinderContext> GetUpperContext() { return upper_context_; }
+
+  void SetUpperContext(std::shared_ptr<BinderContext> upper_context) {
+    upper_context_ = upper_context;
+  }
 
  private:
-  // Map table alias to <db_id, table_id>
-  std::unordered_map<std::string, std::tuple<oid_t, oid_t>> table_alias_map;
+  // Map table alias to table obj
+  std::unordered_map<std::string, std::shared_ptr<catalog::TableCatalogObject>> regular_table_alias_map_;
+  std::unordered_map<std::string, std::unordered_map<std::string, type::TypeId>> nested_table_alias_map_;
+  std::shared_ptr<BinderContext> upper_context_;
 };
 
 }  // namespace binder

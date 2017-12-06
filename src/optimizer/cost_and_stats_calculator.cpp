@@ -64,13 +64,13 @@ double updateMultipleConjuctionStats(
     const expression::AbstractExpression *expr,
     std::shared_ptr<TableStats> &output_stats, bool enable_index) {
   if (expr->GetChild(LEFT_CHILD_INDEX)->GetExpressionType() ==
-          ExpressionType::VALUE_TUPLE ||
+      ExpressionType::VALUE_TUPLE ||
       expr->GetChild(RIGHT_CHILD_INDEX)->GetExpressionType() ==
           ExpressionType::VALUE_TUPLE) {
     int right_index =
         expr->GetChild(0)->GetExpressionType() == ExpressionType::VALUE_TUPLE
-            ? 1
-            : 0;
+        ? 1
+        : 0;
     auto left_expr = reinterpret_cast<const expression::TupleValueExpression *>(
         right_index == 1 ? expr->GetChild(0) : expr->GetChild(1));
 
@@ -99,14 +99,14 @@ double updateMultipleConjuctionStats(
     if (expr->GetChild(right_index)->GetExpressionType() ==
         ExpressionType::VALUE_CONSTANT) {
       value = reinterpret_cast<expression::ConstantValueExpression *>(
-                  expr->GetModifiableChild(right_index))
-                  ->GetValue();
+          expr->GetModifiableChild(right_index))
+          ->GetValue();
     } else {
       value = type::ValueFactory::GetParameterOffsetValue(
-                  reinterpret_cast<expression::ParameterValueExpression *>(
-                      expr->GetModifiableChild(right_index))
-                      ->GetValueIdx())
-                  .Copy();
+          reinterpret_cast<expression::ParameterValueExpression *>(
+              expr->GetModifiableChild(right_index))
+              ->GetValueIdx())
+          .Copy();
     }
     ValueCondition condition(column_id, expr_type, value);
     if (enable_index) {
@@ -165,6 +165,10 @@ void CostAndStatsCalculator::Visit(const DummyScan *) {
   output_cost_ = 0;
 }
 
+void CostAndStatsCalculator::Visit(const QueryDerivedScan *) {
+  output_cost_ = child_costs_[0];
+}
+
 void CostAndStatsCalculator::Visit(const PhysicalSeqScan *op) {
   // TODO : Replace with more accurate cost
   // retrieve table_stats from catalog by db_id and table_id
@@ -185,17 +189,14 @@ void CostAndStatsCalculator::Visit(const PhysicalSeqScan *op) {
       output_properties_->GetPropertyOfType(PropertyType::COLUMNS)
           ->As<PropertyColumns>();
   auto output_stats = generateOutputStat(table_stats, columns_prop);
-  auto predicate_prop =
-      output_properties_->GetPropertyOfType(PropertyType::PREDICATE)
-          ->As<PropertyPredicate>();
-  if (predicate_prop == nullptr) {
+  auto predicate = op->predicate;
+  if (predicate == nullptr) {
     output_cost_ += Cost::NoConditionSeqScanCost(table_stats);
     output_stats_ = output_stats;
     return;
   }
 
-  expression::AbstractExpression *predicate = predicate_prop->GetPredicate();
-  output_cost_ += updateMultipleConjuctionStats(table_stats, predicate,
+  output_cost_ += updateMultipleConjuctionStats(table_stats, predicate.get(),
                                                 output_stats, false);
   output_stats_ = output_stats;
 };
@@ -205,9 +206,6 @@ void CostAndStatsCalculator::Visit(const PhysicalIndexScan *op) {
   // indexSearchable ? Index : SeqScan
   // TODO : Replace with more accurate cost
   output_cost_ = getCostOfChildren(child_costs_);
-  auto predicate_prop =
-      output_properties_->GetPropertyOfType(PropertyType::PREDICATE)
-          ->As<PropertyPredicate>();
 
   auto stats_storage = StatsStorage::GetInstance();
   auto table_stats =
@@ -219,12 +217,11 @@ void CostAndStatsCalculator::Visit(const PhysicalIndexScan *op) {
   std::vector<type::Value> values;
   oid_t index_id = 0;
 
-  expression::AbstractExpression *predicate =
-      predicate_prop == nullptr ? nullptr : predicate_prop->GetPredicate();
+  expression::AbstractExpression *predicate = op->predicate.get();
   bool index_searchable =
       predicate == nullptr ? false : util::CheckIndexSearchable(
-                                         op->table_, predicate, key_column_ids,
-                                         expr_types, values, index_id);
+          op->table_, predicate, key_column_ids,
+          expr_types, values, index_id);
   // No table stats available
   if (table_stats->GetColumnCount() == 0) {
     output_stats_.reset(new Stats(nullptr));
@@ -241,7 +238,7 @@ void CostAndStatsCalculator::Visit(const PhysicalIndexScan *op) {
           ->As<PropertyColumns>();
   auto output_stats = generateOutputStat(table_stats, columns_prop);
 
-  if (predicate_prop == nullptr) {
+  if (predicate == nullptr) {
     output_cost_ += Cost::NoConditionSeqScanCost(table_stats);
   } else {
     if (index_searchable) {
@@ -300,8 +297,8 @@ void CostAndStatsCalculator::Visit(const PhysicalOrderBy *) {
     // TODO: Deal with complex expressions like a+b, a+30
     if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
       auto column = std::dynamic_pointer_cast<expression::TupleValueExpression>(
-                        sort_prop->GetSortColumn(i))
-                        ->GetColumnName();
+          sort_prop->GetSortColumn(i))
+          ->GetColumnName();
 
       // In case the first column is not a tuple expression which is ignored
       // previously
@@ -339,8 +336,8 @@ void CostAndStatsCalculator::Visit(const PhysicalLimit *) {
   auto output_stats = generateOutputStat(table_stats_ptr, columns_prop);
 
   size_t limit = (size_t)std::dynamic_pointer_cast<PropertyLimit>(
-                     output_properties_->GetPropertyOfType(PropertyType::LIMIT))
-                     ->GetLimit();
+      output_properties_->GetPropertyOfType(PropertyType::LIMIT))
+      ->GetLimit();
   output_cost_ +=
       Cost::LimitCost(std::dynamic_pointer_cast<TableStats>(child_stats_.at(0)),
                       limit, output_stats);

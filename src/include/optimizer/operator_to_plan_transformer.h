@@ -48,6 +48,8 @@ class OperatorToPlanTransformer : public OperatorVisitor {
 
   void Visit(const PhysicalIndexScan *op) override;
 
+  void Visit(const QueryDerivedScan *op) override;
+
   void Visit(const PhysicalProject *) override;
 
   void Visit(const PhysicalOrderBy *) override;
@@ -98,7 +100,8 @@ class OperatorToPlanTransformer : public OperatorVisitor {
                                             const storage::DataTable *table);
 
   expression::AbstractExpression *GeneratePredicateForScan(
-      const PropertyPredicate *predicate_prop, const std::string &alias, const storage::DataTable *table);
+      const std::shared_ptr<expression::AbstractExpression> predicate_expr, const std::string &alias,
+      const storage::DataTable *table);
 
   // Generate group by plan
   std::unique_ptr<planner::AggregatePlan> GenerateAggregatePlan(

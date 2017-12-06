@@ -10,10 +10,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "catalog/schema.h"
+#include "common/sql_node_visitor.h"
 #include "optimizer/column_manager.h"
 #include "optimizer/property_set.h"
-#include "common/sql_node_visitor.h"
-#include "catalog/schema.h"
 
 namespace peloton {
 
@@ -30,8 +30,6 @@ namespace optimizer {
  */
 class QueryPropertyExtractor : public SqlNodeVisitor {
  public:
-  QueryPropertyExtractor(ColumnManager &manager) : manager_(manager) {}
-
   PropertySet GetProperties(parser::SQLStatement *tree);
 
   // We only assume the statement is selecting from one table for now
@@ -55,11 +53,9 @@ class QueryPropertyExtractor : public SqlNodeVisitor {
   void Visit(parser::AnalyzeStatement *) override;
 
  private:
-  ColumnManager &manager_;
-
   // Required properties by the visitor
   PropertySet property_set_;
 };
 
-} // namespace optimizer
-} // namespace peloton
+}  // namespace optimizer
+}  // namespace peloton

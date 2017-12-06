@@ -19,7 +19,7 @@ namespace peloton {
 namespace optimizer {
 
 /*************** PropertyColumns *****************/
-  
+
 PropertyColumns::PropertyColumns(
     std::vector<std::shared_ptr<expression::AbstractExpression>> column_exprs)
     : column_exprs_(std::move(column_exprs)) {}
@@ -28,10 +28,15 @@ PropertyType PropertyColumns::Type() const { return PropertyType::COLUMNS; }
 
 bool PropertyColumns::operator>=(const Property &r) const {
   // check the type
-  if (r.Type() != PropertyType::COLUMNS) return false;
+  if (r.Type() != PropertyType::COLUMNS) {
+    return false;
+  }
   const PropertyColumns &r_columns =
       *reinterpret_cast<const PropertyColumns *>(&r);
-
+  // lhs is less than rhs if size is smaller
+  if (column_exprs_.size() < r_columns.column_exprs_.size()) {
+    return false;
+  }
   // check that every column in the right hand side property exists in the left
   // hand side property
   for (auto r_column : r_columns.column_exprs_) {
@@ -76,17 +81,19 @@ std::string PropertyColumns::ToString() const {
                  ->GetColumnName();
       str += " ";
     } else {
-      // TODO: Add support for other expression
-      str += "expr ";
+      column_expr->DeduceExpressionName();
+      str += column_expr->GetExpressionName();
+      str += " ";
     }
   }
   return str + "\n";
 }
 
 /*************** PropertyDistinct *****************/
-  
-PropertyDistinct::PropertyDistinct(std::vector<
-    std::shared_ptr<expression::AbstractExpression>> distinct_column_exprs)
+
+PropertyDistinct::PropertyDistinct(
+    std::vector<std::shared_ptr<expression::AbstractExpression>>
+        distinct_column_exprs)
     : distinct_column_exprs_(std::move(distinct_column_exprs)) {
   LOG_TRACE("Size of column property: %ld", distinct_column_exprs_.size());
 }
@@ -146,36 +153,34 @@ std::string PropertyDistinct::ToString() const {
 }
 
 /*************** PropertyLimit *****************/
-  
+
 PropertyType PropertyLimit::Type() const { return PropertyType::LIMIT; }
-  
 
 bool PropertyLimit::operator>=(const Property &r) const {
   if (r.Type() != PropertyType::LIMIT) return false;
-  const PropertyLimit &r_limit = *reinterpret_cast<const PropertyLimit*>(&r);
+  const PropertyLimit &r_limit = *reinterpret_cast<const PropertyLimit *>(&r);
   return offset_ == r_limit.offset_ && limit_ == r_limit.limit_;
 }
-  
+
 hash_t PropertyLimit::Hash() const {
   hash_t hash = Property::Hash();
   HashUtil::CombineHashes(hash, offset_);
   HashUtil::CombineHashes(hash, limit_);
   return hash;
 }
-  
+
 void PropertyLimit::Accept(PropertyVisitor *v) const {
   v->Visit((const PropertyLimit *)this);
 }
-  
+
 std::string PropertyLimit::ToString() const {
   std::string res = PropertyTypeToString(Type());
   res += std::to_string(offset_) + " " + std::to_string(limit_) + "\n";
   return res;
 }
 
-
 /*************** PropertySort *****************/
-  
+
 PropertySort::PropertySort(
     std::vector<std::shared_ptr<expression::AbstractExpression>> sort_columns,
     std::vector<bool> sort_ascending)
@@ -217,34 +222,6 @@ void PropertySort::Accept(PropertyVisitor *v) const {
 }
 
 std::string PropertySort::ToString() const {
-  return PropertyTypeToString(Type()) + "\n";
-}
-
-/*************** PropertyPredicate *****************/
-  
-PropertyPredicate::PropertyPredicate(expression::AbstractExpression *predicate)
-    : predicate_(predicate){};
-
-PropertyType PropertyPredicate::Type() const { return PropertyType::PREDICATE; }
-
-// For now we always assume the predicate property of the child operator will
-// satisfy the parent operator, so we don't check the exact expression of the
-// predicate.
-// TODO: Check the content of the member variable predicate_ to see whether it
-// satisfies r.
-bool PropertyPredicate::operator>=(const Property &r) const {
-  return Property::operator>=(r);
-}
-
-// Same as operator>=, we directly hash the type.
-// TODO: Hash the content of the predicate expression
-hash_t PropertyPredicate::Hash() const { return Property::Hash(); }
-
-void PropertyPredicate::Accept(PropertyVisitor *v) const {
-  v->Visit((const PropertyPredicate *)this);
-}
-
-std::string PropertyPredicate::ToString() const {
   return PropertyTypeToString(Type()) + "\n";
 }
 

@@ -1264,7 +1264,6 @@ typedef std::vector<DirectMap> DirectMapList;
 
 enum class PropertyType {
   INVALID = INVALID_TYPE_ID,
-  PREDICATE,
   COLUMNS,
   DISTINCT,
   SORT,
@@ -1281,18 +1280,20 @@ class ExprEqualCmp;
 }  // namespace expression
 
 // Augment abstract expression with a table alias set
-struct MultiTableExpression {
-  MultiTableExpression(expression::AbstractExpression *i_expr,
-                       std::unordered_set<std::string> &i_set)
+struct AnnotatedExpression {
+  AnnotatedExpression(
+      std::shared_ptr<expression::AbstractExpression> i_expr,
+      std::unordered_set<std::string>& i_set)
       : expr(i_expr), table_alias_set(i_set) {}
-  MultiTableExpression(const MultiTableExpression &mt_expr)
+  AnnotatedExpression(const AnnotatedExpression& mt_expr)
       : expr(mt_expr.expr), table_alias_set(mt_expr.table_alias_set) {}
-  expression::AbstractExpression *expr;
+  std::shared_ptr<expression::AbstractExpression> expr;
   std::unordered_set<std::string> table_alias_set;
 };
 
-typedef std::vector<expression::AbstractExpression *> SingleTablePredicates;
-typedef std::vector<MultiTableExpression> MultiTablePredicates;
+typedef std::vector<AnnotatedExpression> MultiTablePredicates;
+typedef std::unordered_map<std::string,
+                           std::vector<std::shared_ptr<expression::AbstractExpression>>> SingleTablePredicatesMap;
 
 // Mapping of Expression -> Column Offset created by operator
 typedef std::unordered_map<std::shared_ptr<expression::AbstractExpression>,

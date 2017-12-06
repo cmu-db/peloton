@@ -62,18 +62,25 @@ std::shared_ptr<GroupExpression> Memo::InsertExpression(
   }
 }
 
-const std::vector<Group> &Memo::Groups() const { return groups_; }
+const std::vector<std::unique_ptr<Group>> &Memo::Groups() const {
+  return groups_;
+}
 
-Group *Memo::GetGroupByID(GroupID id) { return &(groups_[id]); }
+Group *Memo::GetGroupByID(GroupID id) { return groups_[id].get(); }
 
 GroupID Memo::AddNewGroup(std::shared_ptr<GroupExpression> gexpr) {
   GroupID new_group_id = groups_.size();
   // Find out the table alias that this group represents
   std::unordered_set<std::string> table_aliases;
-  if (gexpr->Op().type() == OpType::Get) {
+  auto op_type = gexpr->Op().type();
+  if (op_type == OpType::Get) {
     // For base group, the table alias can get directly from logical get
     const LogicalGet *logical_get = gexpr->Op().As<LogicalGet>();
     table_aliases.insert(logical_get->table_alias);
+  } else if (op_type == OpType::LogicalQueryDerivedGet) {
+    const LogicalQueryDerivedGet *query_get =
+        gexpr->Op().As<LogicalQueryDerivedGet>();
+    table_aliases.insert(query_get->table_alias);
   } else {
     // For other groups, need to aggregate the table alias from children
     for (auto child_group_id : gexpr->GetChildGroupIDs()) {
@@ -83,7 +90,7 @@ GroupID Memo::AddNewGroup(std::shared_ptr<GroupExpression> gexpr) {
       }
     }
   }
-  groups_.emplace_back(new_group_id, std::move(table_aliases));
+  groups_.emplace_back(new Group(new_group_id, std::move(table_aliases)));
   return new_group_id;
 }
 

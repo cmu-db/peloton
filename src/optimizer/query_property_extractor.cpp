@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <include/parser/statements.h>
+#include <include/optimizer/util.h>
 #include "optimizer/query_property_extractor.h"
 
 #include "catalog/catalog.h"
@@ -34,20 +35,9 @@ PropertySet QueryPropertyExtractor::GetProperties(parser::SQLStatement *stmt) {
 }
 
 void QueryPropertyExtractor::Visit(parser::SelectStatement *select_stmt) {
-  // Generate PropertyPredicate
-  auto predicate = select_stmt->where_clause.get();
-  if (predicate != nullptr) {
-    property_set_.AddProperty(shared_ptr<PropertyPredicate>(
-        new PropertyPredicate(predicate->Copy())));
-  }
-
   // Generate PropertyColumns
   vector<shared_ptr<expression::AbstractExpression>> output_expressions;
-  for (auto& col : select_stmt->select_list) {
-    // Recursively deduce expression value type
-    expression::ExpressionUtil::EvaluateExpression({ExprMap()}, col.get());
-    // Recursively deduce expression name
-    col->DeduceExpressionName();
+  for (auto &col : select_stmt->select_list) {
     output_expressions.emplace_back(col->Copy());
   }
   property_set_.AddProperty(
@@ -61,12 +51,10 @@ void QueryPropertyExtractor::Visit(parser::SelectStatement *select_stmt) {
   }
 
   // Generate PropertySort
-  if (select_stmt->order != nullptr)
-    select_stmt->order->Accept(this);
-  
+  if (select_stmt->order != nullptr) select_stmt->order->Accept(this);
+
   // Generate PropertyLimit
-  if (select_stmt->limit != nullptr)
-    select_stmt->limit->Accept(this);
+  if (select_stmt->limit != nullptr) select_stmt->limit->Accept(this);
 };
 void QueryPropertyExtractor::Visit(parser::TableRef *) {}
 void QueryPropertyExtractor::Visit(parser::JoinDefinition *) {}
@@ -87,8 +75,8 @@ void QueryPropertyExtractor::Visit(parser::OrderDescription *node) {
 void QueryPropertyExtractor::Visit(parser::LimitDescription *limit) {
   // When offset is not specified in the query, parser will set offset to -1
   int64_t offset = limit->offset == -1 ? 0 : limit->offset;
-  property_set_.AddProperty(shared_ptr<PropertyLimit>(
-      new PropertyLimit(offset, limit->limit)));
+  property_set_.AddProperty(
+      shared_ptr<PropertyLimit>(new PropertyLimit(offset, limit->limit)));
 }
 
 void QueryPropertyExtractor::Visit(
@@ -99,11 +87,7 @@ void QueryPropertyExtractor::Visit(
     op->select->Accept(this);
 }
 
-void QueryPropertyExtractor::Visit(parser::DeleteStatement *op) {
-  if (op->expr != nullptr) {
-    property_set_.AddProperty(
-        shared_ptr<PropertyPredicate>(new PropertyPredicate(op->expr->Copy())));
-  }
+void QueryPropertyExtractor::Visit(parser::DeleteStatement *) {
   property_set_.AddProperty(shared_ptr<PropertyColumns>(new PropertyColumns(
       vector<shared_ptr<expression::AbstractExpression>>())));
 }
@@ -117,10 +101,6 @@ void QueryPropertyExtractor::Visit(
     UNUSED_ATTRIBUTE parser::TransactionStatement *op) {}
 void QueryPropertyExtractor::Visit(
     UNUSED_ATTRIBUTE parser::UpdateStatement *op) {
-  if (op->where != nullptr) {
-    property_set_.AddProperty(
-        shared_ptr<PropertyPredicate>(new PropertyPredicate(op->where->Copy())));
-  }
   property_set_.AddProperty(shared_ptr<PropertyColumns>(new PropertyColumns(
       vector<shared_ptr<expression::AbstractExpression>>())));
 }

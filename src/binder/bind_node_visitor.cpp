@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "catalog/catalog.h"
+#include "expression/expression_util.h"
 #include "binder/bind_node_visitor.h"
 
 #include "expression/case_expression.h"
@@ -23,9 +23,11 @@
 namespace peloton {
 namespace binder {
 
-BindNodeVisitor::BindNodeVisitor(concurrency::Transaction *txn,
-                                 std::string default_database_name)
-    : txn_(txn), default_database_name_(default_database_name) {
+BindNodeVisitor::BindNodeVisitor(
+    concurrency::Transaction *txn,
+    std::string default_database_name)
+    : txn_(txn),
+      default_database_name_(default_database_name) {
   context_ = nullptr;
 }
 
@@ -34,24 +36,23 @@ void BindNodeVisitor::BindNameToNode(parser::SQLStatement *tree) {
 }
 
 void BindNodeVisitor::Visit(parser::SelectStatement *node) {
-  // Save the upper level context
-  auto pre_context = context_;
   context_ = std::make_shared<BinderContext>();
-  context_->upper_context = pre_context;
-  if (node->from_table != nullptr) {
-    node->from_table->Accept(this);
-  }
-
+  // Upper context should be set outside (e.g. when where contains subquery)
+  //  context_->SetUpperContext(pre_context);
+  if (node->from_table != nullptr) node->from_table->Accept(this);
   if (node->where_clause != nullptr) node->where_clause->Accept(this);
   if (node->order != nullptr) node->order->Accept(this);
   if (node->limit != nullptr) node->limit->Accept(this);
   if (node->group_by != nullptr) node->group_by->Accept(this);
   for (auto &select_element : node->select_list) {
     select_element->Accept(this);
-  }
 
-  // Restore the upper level context
-  context_ = context_->upper_context;
+    // Recursively deduce expression value type
+    expression::ExpressionUtil::EvaluateExpression({ExprMap()},
+                                                   select_element.get());
+    // Recursively deduce expression name
+    select_element->DeduceExpressionName();
+  }
 }
 
 // Some sub query nodes inside SelectStatement
@@ -64,7 +65,18 @@ void BindNodeVisitor::Visit(parser::JoinDefinition *node) {
 
 void BindNodeVisitor::Visit(parser::TableRef *node) {
   // Nested select. Not supported in the current executors
-  if (node->select != nullptr) node->select->Accept(this);
+  if (node->select != nullptr) {
+    if (node->alias.empty())
+      throw Exception("Alias not found for query derived table");
+
+    // Save the previous context
+    auto pre_context = context_;
+    node->select->Accept(this);
+    // Restore the previous level context
+    context_ = pre_context;
+    // Add the table to the current context at the end
+    context_->AddNestedTable(node->alias, node->select->select_list);
+  }
   // Join
   else if (node->join != nullptr)
     node->join->Accept(this);
@@ -74,7 +86,7 @@ void BindNodeVisitor::Visit(parser::TableRef *node) {
   }
   // Single table
   else {
-    context_->AddTable(node, default_database_name_, txn_);
+    context_->AddRegularTable(node, default_database_name_, txn_);
   }
 }
 
@@ -107,7 +119,8 @@ void BindNodeVisitor::Visit(parser::UpdateStatement *node) {
 void BindNodeVisitor::Visit(parser::DeleteStatement *node) {
   context_ = std::make_shared<BinderContext>();
   node->TryBindDatabaseName(default_database_name_);
-  context_->AddTable(node->GetDatabaseName(), node->GetTableName(), txn_);
+  context_->AddRegularTable(node->GetDatabaseName(), node->GetTableName(),
+                            node->GetTableName(), txn_);
 
   if (node->expr != nullptr) node->expr->Accept(this);
 
@@ -137,7 +150,7 @@ void BindNodeVisitor::Visit(parser::AnalyzeStatement *node) {
 void BindNodeVisitor::Visit(expression::TupleValueExpression *expr) {
   if (!expr->GetIsBound()) {
     std::tuple<oid_t, oid_t, oid_t> col_pos_tuple;
-    std::tuple<oid_t, oid_t> table_id_tuple;
+    std::shared_ptr<catalog::TableCatalogObject> table_obj = nullptr;
 
     std::string table_name = expr->GetTableName();
     std::string col_name = expr->GetColumnName();
@@ -149,24 +162,29 @@ void BindNodeVisitor::Visit(expression::TupleValueExpression *expr) {
                    ::tolower);
 
     type::TypeId value_type;
-    // Table name not specified in the expression
+    // Table name not specified in the expression. Loop through all the table
+    // in the binder context.
     if (table_name.empty()) {
       if (!BinderContext::GetColumnPosTuple(context_, col_name, col_pos_tuple,
-                                            table_name, value_type, txn_))
+                                            table_name, value_type))
         throw BinderException("Cannot find column " + col_name);
       expr->SetTableName(table_name);
     }
     // Table name is present
     else {
-      // Find the corresponding table in the context
-      if (!BinderContext::GetTableIdTuple(context_, table_name,
-                                          &table_id_tuple))
-        throw BinderException("Invalid table reference " + expr->GetTableName());
-      // Find the column offset in that table
-      if (!BinderContext::GetColumnPosTuple(col_name, table_id_tuple,
-                                            col_pos_tuple, value_type, txn_))
-        throw BinderException("Cannot find column " + col_name);
+      // Regular table
+      if (BinderContext::GetRegularTableObj(context_, table_name, table_obj)) {
+        if (!BinderContext::GetColumnPosTuple(col_name, table_obj,
+                                              col_pos_tuple, value_type)) {
+          throw Exception("Cannot find column " + col_name);
+        }
+      }
+      // Nested table
+      else if (!BinderContext::CheckNestedTableColumn(context_, table_name,
+                                                      col_name, value_type))
+        throw Exception("Invalid table reference " + expr->GetTableName());
     }
+    expr->SetColName(col_name);
     expr->SetValueType(value_type);
     expr->SetBoundOid(col_pos_tuple);
   }

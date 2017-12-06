@@ -147,11 +147,9 @@ void GetPredicateColumns(const catalog::Schema* schema,
       if (right_type == ExpressionType::VALUE_CONSTANT) {
         values.push_back(reinterpret_cast<expression::ConstantValueExpression*>(
                              expression->GetModifiableChild(1))->GetValue());
-        LOG_TRACE("Value Type: %s",
-                  TypeIdToString(
-                      reinterpret_cast<expression::ConstantValueExpression*>(
-                      expression->GetModifiableChild(1))
-                                ->GetValueType()).c_str());
+        LOG_TRACE("Value Type: %d",
+                  reinterpret_cast<expression::ConstantValueExpression*>(
+                      expression->GetModifiableChild(1))->GetValueType());
       } else
         values.push_back(
             type::ValueFactory::GetParameterOffsetValue(
@@ -175,11 +173,9 @@ void GetPredicateColumns(const catalog::Schema* schema,
       if (left_type == ExpressionType::VALUE_CONSTANT) {
         values.push_back(reinterpret_cast<expression::ConstantValueExpression*>(
                              expression->GetModifiableChild(1))->GetValue());
-        LOG_TRACE("Value Type: %s",
-                  TypeIdToString(
-                      reinterpret_cast<expression::ConstantValueExpression*>(
-                      expression->GetModifiableChild(0))
-                                ->GetValueType()).c_str());
+        LOG_TRACE("Value Type: %d",
+                  reinterpret_cast<expression::ConstantValueExpression*>(
+                      expression->GetModifiableChild(0))->GetValueType());
       } else
         values.push_back(
             type::ValueFactory::GetParameterOffsetValue(
@@ -199,9 +195,9 @@ void GetPredicateColumns(const catalog::Schema* schema,
  * Extract single table precates and multi-table predicates from the expr
  */
 void ExtractPredicates(expression::AbstractExpression* expr,
-                       SingleTablePredicates& where_predicates,
+                       SingleTablePredicatesMap& single_table_predicates_map,
                        MultiTablePredicates& join_predicates) {
-  // Split expression
+  // Split a complex predicate into a set of predicates connected by AND.
   std::vector<expression::AbstractExpression*> predicates;
   SplitPredicates(expr, predicates);
 
@@ -211,10 +207,19 @@ void ExtractPredicates(expression::AbstractExpression* expr,
                                                       table_alias_set);
     // Deep copy expression to avoid memory leak
     if (table_alias_set.size() > 1)
-      join_predicates.emplace_back(
-          MultiTableExpression(predicate->Copy(), table_alias_set));
-    else
-      where_predicates.emplace_back(predicate->Copy());
+      join_predicates.emplace_back(AnnotatedExpression(
+          std::shared_ptr<expression::AbstractExpression>(predicate->Copy()),
+          table_alias_set));
+    else {
+      std::string table_alias = StringUtil::Lower(*(table_alias_set.begin()));
+      if (single_table_predicates_map.find(table_alias) ==
+          single_table_predicates_map.end())
+        single_table_predicates_map[table_alias] = {
+            std::shared_ptr<expression::AbstractExpression>(predicate->Copy())};
+      else
+        single_table_predicates_map[table_alias].emplace_back(
+            std::shared_ptr<expression::AbstractExpression>(predicate->Copy()));
+    }
   }
 }
 
@@ -226,7 +231,7 @@ void ExtractPredicates(expression::AbstractExpression* expr,
 expression::AbstractExpression* ConstructJoinPredicate(
     std::unordered_set<std::string>& table_alias_set,
     MultiTablePredicates& join_predicates) {
-  std::vector<expression::AbstractExpression*> qualified_exprs;
+  std::vector<std::shared_ptr<expression::AbstractExpression>> qualified_exprs;
   MultiTablePredicates new_join_predicates;
   for (auto predicate : join_predicates) {
     if (IsSubset(table_alias_set, predicate.table_alias_set))
@@ -243,30 +248,32 @@ expression::AbstractExpression* ConstructJoinPredicate(
  */
 void SplitPredicates(expression::AbstractExpression* expr,
                      std::vector<expression::AbstractExpression*>& predicates) {
-  // Traverse down the expression tree along conjunction
   if (expr->GetExpressionType() == ExpressionType::CONJUNCTION_AND) {
+    // Traverse down the expression tree along conjunction
     for (size_t i = 0; i < expr->GetChildrenSize(); i++) {
       SplitPredicates(expr->GetModifiableChild(i), predicates);
     }
-    return;
+  } else {
+    // Find an expression that is the child of conjunction expression
+    predicates.push_back(expr);
   }
-  predicates.push_back(expr);
 }
 
 /**
- * Combine a vector of expressions with AND (deep copy each expr)
+ * Combine a vector of expressions with AND
  */
 expression::AbstractExpression* CombinePredicates(
-    std::vector<expression::AbstractExpression*> predicates) {
+    std::vector<std::shared_ptr<expression::AbstractExpression>> predicates) {
   if (predicates.empty()) return nullptr;
 
-  if (predicates.size() == 1) return predicates[0];
+  if (predicates.size() == 1) return predicates[0]->Copy();
 
   auto conjunction = new expression::ConjunctionExpression(
-      ExpressionType::CONJUNCTION_AND, predicates[0], predicates[1]);
+      ExpressionType::CONJUNCTION_AND, predicates[0]->Copy(),
+      predicates[1]->Copy());
   for (size_t i = 2; i < predicates.size(); i++) {
     conjunction = new expression::ConjunctionExpression(
-        ExpressionType::CONJUNCTION_AND, conjunction, predicates[i]);
+        ExpressionType::CONJUNCTION_AND, conjunction, predicates[i]->Copy());
   }
   return conjunction;
 }
@@ -347,6 +354,47 @@ std::unique_ptr<planner::AbstractPlan> CreateCopyPlan(
   // Attach it to the copy plan
   copy_plan->AddChild(std::move(select_plan));
   return copy_plan;
+}
+
+std::unordered_map<std::string, std::shared_ptr<expression::AbstractExpression>>
+ConstructSelectElementMap(
+    std::vector<std::unique_ptr<expression::AbstractExpression>>& select_list) {
+  std::unordered_map<std::string,
+                     std::shared_ptr<expression::AbstractExpression>> res;
+  for (auto& expr : select_list) {
+    std::string alias;
+    if (!expr->alias.empty()) {
+      alias = expr->alias;
+    } else if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
+      auto tv_expr =
+          reinterpret_cast<expression::TupleValueExpression*>(expr.get());
+      alias = tv_expr->GetColumnName();
+    } else
+      continue;
+    std::transform(alias.begin(), alias.end(), alias.begin(), ::tolower);
+    res[alias] = std::shared_ptr<expression::AbstractExpression>(expr->Copy());
+  }
+  return res;
+};
+
+expression::AbstractExpression* TransformQueryDerivedTablePredicates(
+    const std::unordered_map<std::string,
+                             std::shared_ptr<expression::AbstractExpression>>&
+        alias_to_expr_map,
+    expression::AbstractExpression* expr) {
+  if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
+    auto new_expr =
+        alias_to_expr_map
+            .find(reinterpret_cast<expression::TupleValueExpression*>(expr)
+                      ->GetColumnName())->second;
+    return new_expr->Copy();
+  }
+  auto child_size = expr->GetChildrenSize();
+  for (size_t i = 0; i < child_size; i++) {
+    expr->SetChild(i, TransformQueryDerivedTablePredicates(
+                          alias_to_expr_map, expr->GetModifiableChild(i)));
+  }
+  return expr;
 }
 
 }  // namespace util

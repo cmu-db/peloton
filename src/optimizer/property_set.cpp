@@ -10,9 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "util/hash_util.h"
 #include "optimizer/property_set.h"
 #include "common/logger.h"
+#include "util/hash_util.h"
 
 namespace peloton {
 namespace optimizer {
@@ -58,7 +58,7 @@ const std::shared_ptr<Property> PropertySet::GetPropertyOfType(
 
 bool PropertySet::HasProperty(const Property &r_property) const {
   for (auto property : properties_) {
-    if (*property >= r_property && r_property >= *property) {
+    if (*property >= r_property) {
       return true;
     }
   }

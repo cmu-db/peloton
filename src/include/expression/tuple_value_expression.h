@@ -33,7 +33,7 @@ class TupleValueExpression : public AbstractExpression {
       : AbstractExpression(ExpressionType::VALUE_TUPLE, type::TypeId::INVALID),
         value_idx_(-1),
         tuple_idx_(-1),
-        col_name_(col_name),
+        col_name_(StringUtil::Lower(col_name)),
         ai_(nullptr) {}
 
   TupleValueExpression(std::string &&col_name, std::string &&table_name)
@@ -41,7 +41,7 @@ class TupleValueExpression : public AbstractExpression {
         value_idx_(-1),
         tuple_idx_(-1),
         table_name_(StringUtil::Lower(table_name)),
-        col_name_(col_name),
+        col_name_(StringUtil::Lower(col_name)),
         ai_(nullptr) {}
 
   TupleValueExpression(type::TypeId type_id, const int tuple_idx,
@@ -107,10 +107,13 @@ class TupleValueExpression : public AbstractExpression {
     // we need to know whether A.id is from A.id or B.id. In this case,
     // A.id and B.id have the same bound oids since they refer to the same table
     // but they have different table alias.
-    if (table_name_.empty() xor tup_expr->table_name_.empty()) return false;
+    if ((table_name_.empty() xor tup_expr->table_name_.empty()) ||
+        col_name_.empty() xor tup_expr->col_name_.empty()) return false;
     bool res = bound_obj_id_ == tup_expr->bound_obj_id_;
     if (!table_name_.empty() && !tup_expr->table_name_.empty())
       res = table_name_ == tup_expr->table_name_ && res;
+    if (!col_name_.empty() && !tup_expr->col_name_.empty())
+      res = col_name_ == tup_expr->col_name_ && res;
     return res;
   }
 
@@ -127,6 +130,8 @@ class TupleValueExpression : public AbstractExpression {
   std::string GetColumnName() const { return col_name_; }
 
   void SetTableName(std::string table_alias) { table_name_ = table_alias; }
+
+  void SetColName(std::string col_name) { col_name_ = col_name; }
 
   bool GetIsBound() const { return is_bound_; }
 

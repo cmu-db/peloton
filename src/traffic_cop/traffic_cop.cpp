@@ -25,21 +25,21 @@
 #include "planner/plan_util.h"
 #include "settings/settings_manager.h"
 
+#include "threadpool/mono_queue_pool.h"
 #include "type/type.h"
 #include "type/types.h"
-#include "threadpool/mono_queue_pool.h"
 
 namespace peloton {
 namespace tcop {
 
-TrafficCop::TrafficCop():is_queuing_(false) {
+TrafficCop::TrafficCop() : is_queuing_(false) {
   LOG_TRACE("Starting a new TrafficCop");
   optimizer_.reset(new optimizer::Optimizer);
-//  result_ = ResultType::QUEUING;
+  //  result_ = ResultType::QUEUING;
 }
 
-TrafficCop::TrafficCop(void(* task_callback)(void *), void *task_callback_arg):
-    task_callback_(task_callback), task_callback_arg_(task_callback_arg) {
+TrafficCop::TrafficCop(void (*task_callback)(void *), void *task_callback_arg)
+    : task_callback_(task_callback), task_callback_arg_(task_callback_arg) {
   optimizer_.reset(new optimizer::Optimizer);
 }
 
@@ -48,7 +48,7 @@ void TrafficCop::Reset() {
   // clear out the stack
   swap(tcop_txn_state_, new_tcop_txn_state);
   optimizer_->Reset();
-//  result_ = ResultType::QUEUING;
+  //  result_ = ResultType::QUEUING;
 }
 
 TrafficCop::~TrafficCop() {
@@ -152,7 +152,8 @@ ResultType TrafficCop::ExecuteStatement(
             statement->GetQueryString().c_str());
   LOG_TRACE("Execute Statement Plan:\n%s",
             planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
-  LOG_TRACE("Execute Statement Query Type: %s", statement->GetQueryTypeString().c_str());
+  LOG_TRACE("Execute Statement Query Type: %s",
+            statement->GetQueryTypeString().c_str());
   LOG_TRACE("----QueryType: %d--------", (int)statement->GetQueryType());
   try {
     switch (statement->GetQueryType()) {
@@ -164,12 +165,15 @@ ResultType TrafficCop::ExecuteStatement(
       case QueryType::QUERY_ROLLBACK:
         return AbortQueryHelper();
       default:
+        LOG_TRACE("1");
         ExecuteStatementPlan(statement->GetPlanTree(), params, result,
                              result_format, thread_id);
+        LOG_TRACE("2");
         if (is_queuing_) {
           return ResultType::QUEUING;
         }
-        // if in ExecuteStatementPlan, these is no need to queue task, like 'BEGIN', directly return result
+        // if in ExecuteStatementPlan, these is no need to queue task, like
+        // 'BEGIN', directly return result
         return ExecuteStatementGetResult(rows_changed);
     }
   } catch (Exception &e) {
@@ -216,8 +220,10 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
     PL_ASSERT(plan);
     PL_ASSERT(task_callback_);
     PL_ASSERT(task_callback_arg_);
-    ExecutePlanArg* arg = new ExecutePlanArg(plan, txn, params, result, result_format, p_status_);
-    threadpool::MonoQueuePool::GetInstance().SubmitTask(ExecutePlanWrapper, arg, task_callback_, task_callback_arg_);
+    ExecutePlanArg *arg =
+        new ExecutePlanArg(plan, txn, params, result, result_format, p_status_);
+    threadpool::MonoQueuePool::GetInstance().SubmitTask(
+        ExecutePlanWrapper, arg, task_callback_, task_callback_arg_);
     LOG_TRACE("Submit Task into MonoQueuePool");
 
     is_queuing_ = true;
@@ -227,22 +233,23 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
     // otherwise, we have already aborted
     p_status_.m_result = ResultType::ABORTED;
   }
-  LOG_TRACE("Check Tcop_txn_state Size After ExecuteStatementPlan %lu", tcop_txn_state_.size());
+  LOG_TRACE("Check Tcop_txn_state Size After ExecuteStatementPlan %lu",
+            tcop_txn_state_.size());
   return p_status_;
 }
 
 void TrafficCop::ExecutePlanWrapper(void *arg_ptr) {
   LOG_TRACE("Entering ExecutePlanWrapper");
   PL_ASSERT(arg_ptr);
-  ExecutePlanArg* arg = (ExecutePlanArg*) arg_ptr;
+  ExecutePlanArg *arg = (ExecutePlanArg *)arg_ptr;
   PL_ASSERT(arg->plan_);
   PL_ASSERT(arg->txn_);
-//  PL_ASSERT(&arg->result_);
+  //  PL_ASSERT(&arg->result_);
   PL_ASSERT(&arg->params_);
   executor::PlanExecutor::ExecutePlan(arg->plan_, arg->txn_, arg->params_,
                                       arg->result_, arg->result_format_,
                                       arg->p_status_);
-  delete(arg);
+  delete (arg);
 }
 
 void TrafficCop::ExecuteStatementPlanGetResult() {
@@ -333,9 +340,9 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     if (sql_stmt->is_valid == false) {
       throw ParserException("Error parsing SQL statement");
     }
-    LOG_TRACE("Optimizer Build Peloton Plan Tree...");
-    auto plan =
-        optimizer_->BuildPelotonPlanTree(sql_stmt, default_database_name_, tcop_txn_state_.top().first);
+    LOG_DEBUG("Optimizer Build Peloton Plan Tree...");
+    auto plan = optimizer_->BuildPelotonPlanTree(
+        sql_stmt, default_database_name_, tcop_txn_state_.top().first);
     statement->SetPlanTree(plan);
     // Get the tables that our plan references so that we know how to
     // invalidate it at a later point when the catalog changes
@@ -343,7 +350,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
         planner::PlanUtil::GetTablesReferenced(plan.get());
     statement->SetReferencedTables(table_oids);
 
-    for (auto& stmt : sql_stmt->GetStatements()) {
+    for (auto &stmt : sql_stmt->GetStatements()) {
       LOG_TRACE("SQLStatement: %s", stmt->GetInfo().c_str());
       if (stmt->GetType() == StatementType::SELECT) {
         auto tuple_descriptor = GenerateTupleDescriptor(stmt.get());
@@ -352,12 +359,12 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
       break;
     }
 
-#ifdef LOG_DEBUG_ENABLED
     if (statement->GetPlanTree().get() != nullptr) {
       LOG_TRACE("Statement Prepared: %s", statement->GetInfo().c_str());
-      LOG_TRACE("%s", statement->GetPlanTree().get()->GetInfo().c_str());
+      LOG_INFO("%s", planner::PlanUtil::GetInfo(statement->GetPlanTree().get())
+          .c_str());
     }
-#endif
+
     return statement;
   } catch (Exception &e) {
     error_message = e.what();
@@ -373,27 +380,39 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   }
 }
 
-void TrafficCop::GetDataTables(
-    parser::TableRef *from_table,
-    std::vector<storage::DataTable *> &target_tables) {
+void TrafficCop::GetTableColumns(parser::TableRef *from_table,
+                                 std::vector<catalog::Column> &target_columns) {
   if (from_table == nullptr) return;
 
-  if (from_table->list.empty()) {
+  // Query derived table
+  if (from_table->select != NULL) {
+    for (auto &expr : from_table->select->select_list) {
+      if (expr->GetExpressionType() == ExpressionType::STAR)
+        GetTableColumns(from_table->select->from_table.get(), target_columns);
+      else
+        target_columns.push_back(catalog::Column(expr->GetValueType(), 0,
+                                                 expr->GetExpressionName()));
+    }
+  } else if (from_table->list.empty()) {
     if (from_table->join == NULL) {
-      auto *target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-          from_table->GetDatabaseName(), from_table->GetTableName(),
-          GetCurrentTxnState().first);
-      target_tables.push_back(target_table);
+      auto columns =
+          static_cast<storage::DataTable *>(
+              catalog::Catalog::GetInstance()->GetTableWithName(
+                  from_table->GetDatabaseName(), from_table->GetTableName(),
+                  GetCurrentTxnState().first))
+              ->GetSchema()
+              ->GetColumns();
+      target_columns.insert(target_columns.end(), columns.begin(),
+                            columns.end());
     } else {
-      GetDataTables(from_table->join->left.get(), target_tables);
-      GetDataTables(from_table->join->right.get(), target_tables);
+      GetTableColumns(from_table->join->left.get(), target_columns);
+      GetTableColumns(from_table->join->right.get(), target_columns);
     }
   }
-
   // Query has multiple tables. Recursively add all tables
   else {
-    for (auto& table : from_table->list) {
-      GetDataTables(table.get(), target_tables);
+    for (auto &table : from_table->list) {
+      GetTableColumns(table.get(), target_columns);
     }
   }
 }
@@ -413,23 +432,19 @@ std::vector<FieldInfo> TrafficCop::GenerateTupleDescriptor(
   // Get the columns information and set up
   // the columns description for the returned results
   // Set up the table
-  std::vector<storage::DataTable *> target_tables;
+  std::vector<catalog::Column> all_columns;
 
   // Check if query only has one Table
   // Example : SELECT * FROM A;
-  GetDataTables(select_stmt->from_table.get(), target_tables);
+  GetTableColumns(select_stmt->from_table.get(), all_columns);
 
   int count = 0;
-  for (auto& expr : select_stmt->select_list) {
+  for (auto &expr : select_stmt->select_list) {
     count++;
     if (expr->GetExpressionType() == ExpressionType::STAR) {
-      for (auto target_table : target_tables) {
-        // Get the columns of the table
-        auto &table_columns = target_table->GetSchema()->GetColumns();
-        for (auto column : table_columns) {
-          tuple_descriptor.push_back(
-              GetColumnFieldForValueType(column.GetName(), column.GetType()));
-        }
+      for (auto column : all_columns) {
+        tuple_descriptor.push_back(
+            GetColumnFieldForValueType(column.GetName(), column.GetType()));
       }
     } else {
       std::string col_name;
@@ -493,8 +508,7 @@ FieldInfo TrafficCop::GetColumnFieldForValueType(std::string column_name,
     default: {
       // Type not Identified
       LOG_ERROR("Unrecognized field type '%s' for field '%s'",
-                TypeIdToString(column_type).c_str(),
-                column_name.c_str());
+                TypeIdToString(column_type).c_str(), column_name.c_str());
       field_type = PostgresValueType::TEXT;
       field_size = 255;
       break;

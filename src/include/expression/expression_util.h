@@ -12,9 +12,9 @@
 
 #pragma once
 
+#include <sstream>
 #include <string>
 #include <vector>
-#include <sstream>
 
 #include "catalog/catalog.h"
 #include "catalog/schema.h"
@@ -378,10 +378,10 @@ class ExpressionUtil {
     if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
       table_alias_set.insert(
           reinterpret_cast<const TupleValueExpression *>(expr)->GetTableName());
-      return;
+    } else {
+      for (size_t i = 0; i < expr->GetChildrenSize(); i++)
+        GenerateTableAliasSet(expr->GetChild(i), table_alias_set);
     }
-    for (size_t i = 0; i < expr->GetChildrenSize(); i++)
-      GenerateTableAliasSet(expr->GetChild(i), table_alias_set);
   }
 
   /**
@@ -535,10 +535,10 @@ class ExpressionUtil {
    */
 
   static expression::AbstractExpression *ExtractJoinColumns(
-      std::vector<std::unique_ptr<const expression::AbstractExpression>> &
-          l_column_exprs,
-      std::vector<std::unique_ptr<const expression::AbstractExpression>> &
-          r_column_exprs,
+      std::vector<std::unique_ptr<const expression::AbstractExpression>>
+          &l_column_exprs,
+      std::vector<std::unique_ptr<const expression::AbstractExpression>>
+          &r_column_exprs,
       const expression::AbstractExpression *expr) {
     if (expr == nullptr) return nullptr;
     if (expr->GetExpressionType() == ExpressionType::CONJUNCTION_AND) {

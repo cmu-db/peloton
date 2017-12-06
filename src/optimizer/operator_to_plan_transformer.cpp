@@ -15,16 +15,17 @@
 #include "optimizer/operator_expression.h"
 #include "planner/aggregate_plan.h"
 #include "planner/delete_plan.h"
-#include "planner/hash_plan.h"
 #include "planner/hash_join_plan.h"
+#include "planner/hash_plan.h"
+#include "planner/index_scan_plan.h"
 #include "planner/insert_plan.h"
 #include "planner/limit_plan.h"
 #include "planner/nested_loop_join_plan.h"
 #include "planner/order_by_plan.h"
-#include "planner/index_scan_plan.h"
 #include "planner/projection_plan.h"
 #include "planner/seq_scan_plan.h"
 #include "planner/update_plan.h"
+#include "settings/settings_manager.h"
 #include "storage/data_table.h"
 
 using std::vector;
@@ -72,11 +73,8 @@ void OperatorToPlanTransformer::Visit(const PhysicalSeqScan *op) {
   vector<oid_t> column_ids =
       GenerateColumnsForScan(column_prop, op->table_alias, op->table_);
   // Add Scan Predicates
-  auto predicate_prop =
-      requirements_->GetPropertyOfType(PropertyType::PREDICATE)
-          ->As<PropertyPredicate>();
   expression::AbstractExpression *predicate =
-      GeneratePredicateForScan(predicate_prop, op->table_alias, op->table_);
+      GeneratePredicateForScan(op->predicate, op->table_alias, op->table_);
 
   // Create scan plan
   unique_ptr<planner::AbstractPlan> seq_scan_plan(
@@ -85,12 +83,8 @@ void OperatorToPlanTransformer::Visit(const PhysicalSeqScan *op) {
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalIndexScan *op) {
-  auto predicate_prop =
-      requirements_->GetPropertyOfType(PropertyType::PREDICATE)
-          ->As<PropertyPredicate>();
-
   expression::AbstractExpression *predicate =
-      GeneratePredicateForScan(predicate_prop, op->table_alias, op->table_);
+      GeneratePredicateForScan(op->predicate, op->table_alias, op->table_);
   vector<oid_t> key_column_ids;
   vector<ExpressionType> expr_types;
   vector<type::Value> values;
@@ -128,6 +122,42 @@ void OperatorToPlanTransformer::Visit(const PhysicalIndexScan *op) {
   output_plan_ = move(index_scan_plan);
 }
 
+void OperatorToPlanTransformer::Visit(const QueryDerivedScan *op) {
+  PL_ASSERT(children_plans_.size() == 1);
+  PL_ASSERT(children_expr_map_.size() == 1);
+  auto child_expr_map = children_expr_map_[0];
+
+  auto cols_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
+                       ->As<PropertyColumns>();
+  size_t col_size = cols_prop->GetSize();
+  for (size_t i = 0; i < col_size; i++) {
+    auto expr = cols_prop->GetColumn(i);
+    if (expr->GetExpressionType() == ExpressionType::STAR) {
+      for (auto entry : op->alias_to_expr_map) {
+        auto col_name = entry.first;
+        auto original_expr = entry.second;
+        auto col_id = child_expr_map[entry.second];
+        auto tv_expr = new expression::TupleValueExpression(
+            original_expr->GetValueType(), 0, col_id);
+        tv_expr->SetTableName(op->table_alias);
+        tv_expr->SetColName(col_name);
+        tv_expr->SetBoundOid(0, 0, 0);
+        (*output_expr_map_)[std::shared_ptr<expression::AbstractExpression>(
+            tv_expr)] = col_id;
+      }
+    } else {
+      PL_ASSERT(expr->GetExpressionType() == ExpressionType::VALUE_TUPLE);
+      auto tv_expr =
+          reinterpret_cast<expression::TupleValueExpression *>(expr.get());
+      std::string col_name = tv_expr->GetColumnName();
+      auto transformed_expr = op->alias_to_expr_map.find(col_name)->second;
+      tv_expr->SetValueType(transformed_expr->GetValueType());
+      (*output_expr_map_)[expr] = child_expr_map[transformed_expr];
+    }
+  }
+  output_plan_ = std::move(children_plans_[0]);
+}
+
 void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
   auto cols_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
                        ->As<PropertyColumns>();
@@ -159,8 +189,10 @@ void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
   vector<catalog::Column> columns;
   size_t curr_col_offset = 0;
   for (auto expr : output_exprs) {
-    auto expr_type = expr->GetExpressionType();
-    if (expr_type == ExpressionType::VALUE_TUPLE) {
+    // TODO(boweic): currently do a check for dummy scan to deal with empty
+    // children_expr_map_, but I think we need to clean up the code here a bit
+    if (!children_expr_map_.empty() &&
+        child_expr_map.find(expr) != child_expr_map.end()) {
       // For TupleValueExpr, we can just do a direct mapping.
       dml.emplace_back(curr_col_offset, make_pair(0, child_expr_map[expr]));
     } else {
@@ -278,7 +310,8 @@ void OperatorToPlanTransformer::Visit(const PhysicalAggregate *) {
 
   PL_ASSERT(col_prop != nullptr);
 
-  output_plan_ = GenerateAggregatePlan(col_prop, AggregateType::PLAIN, nullptr, nullptr);
+  output_plan_ =
+      GenerateAggregatePlan(col_prop, AggregateType::PLAIN, nullptr, nullptr);
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalDistinct *) {
@@ -302,7 +335,8 @@ void OperatorToPlanTransformer::Visit(const PhysicalDistinct *) {
         if (input_expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
           auto &column_idx = expr_idx_pair.second;
 
-          auto col_expr = static_cast<expression::TupleValueExpression *>(input_expr->Copy());
+          auto col_expr = static_cast<expression::TupleValueExpression *>(
+              input_expr->Copy());
           col_expr->SetValueIdx(static_cast<int>(column_idx));
 
           hash_keys.emplace_back(col_expr);
@@ -314,7 +348,8 @@ void OperatorToPlanTransformer::Visit(const PhysicalDistinct *) {
       PL_ASSERT(expr->GetExpressionType() == ExpressionType::VALUE_TUPLE);
 
       auto column_idx = child_expr_map[expr];
-      auto col_expr = static_cast<expression::TupleValueExpression *>(expr->Copy());
+      auto col_expr =
+          static_cast<expression::TupleValueExpression *>(expr->Copy());
       col_expr->SetValueIdx(static_cast<int>(column_idx));
 
       hash_keys.emplace_back(col_expr);
@@ -331,7 +366,8 @@ void OperatorToPlanTransformer::Visit(const PhysicalDistinct *) {
 void OperatorToPlanTransformer::Visit(const PhysicalFilter *) {}
 
 void OperatorToPlanTransformer::Visit(const PhysicalInnerNLJoin *op) {
-  output_plan_ = GenerateJoinPlan((op->join_predicate).get(), JoinType::INNER, false);
+  output_plan_ =
+      GenerateJoinPlan((op->join_predicate).get(), JoinType::INNER, false);
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalLeftNLJoin *) {}
@@ -385,7 +421,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalUpdate *op) {
   GenerateTableExprMap(table_expr_map, table_alias, op->target_table);
 
   // Evaluate update expression and add to target list
-  for (auto& update : *(op->updates)) {
+  for (auto &update : *(op->updates)) {
     auto column = update->column;
     auto col_id = schema->GetColumnID(column);
     if (update_col_ids.find(col_id) != update_col_ids.end())
@@ -421,12 +457,14 @@ void OperatorToPlanTransformer::GenerateTableExprMap(
     const storage::DataTable *table) {
   auto db_id = table->GetDatabaseOid();
   oid_t table_id = table->GetOid();
-  size_t num_col = table->GetSchema()->GetColumnCount();
+  auto cols = table->GetSchema()->GetColumns();
+  size_t num_col = cols.size();
   for (oid_t col_id = 0; col_id < num_col; ++col_id) {
     // Only bound_obj_id is needed for expr_map
     // TODO potential memory leak here?
     auto col_expr = shared_ptr<expression::TupleValueExpression>(
-        new expression::TupleValueExpression("", alias.c_str()));
+        new expression::TupleValueExpression(cols[col_id].column_name.c_str(),
+                                             alias.c_str()));
     col_expr->SetValueType(table->GetSchema()->GetColumn(col_id).GetType());
     col_expr->SetBoundOid(db_id, table_id, col_id);
     expr_map[col_expr] = col_id;
@@ -462,16 +500,15 @@ vector<oid_t> OperatorToPlanTransformer::GenerateColumnsForScan(
   return column_ids;
 }
 
-// Generate predicate for scan plan
 expression::AbstractExpression *
 OperatorToPlanTransformer::GeneratePredicateForScan(
-    const PropertyPredicate *predicate_prop, const std::string &alias,
-    const storage::DataTable *table) {
+    const std::shared_ptr<expression::AbstractExpression> predicate_expr,
+    const std::string &alias, const storage::DataTable *table) {
   expression::AbstractExpression *predicate = nullptr;
-  if (predicate_prop != nullptr) {
+  if (predicate_expr != nullptr) {
     ExprMap table_expr_map;
     GenerateTableExprMap(table_expr_map, alias, table);
-    predicate = predicate_prop->GetPredicate()->Copy();
+    predicate = predicate_expr->Copy();
     expression::ExpressionUtil::EvaluateExpression({table_expr_map}, predicate);
   }
   return predicate;
@@ -480,8 +517,8 @@ OperatorToPlanTransformer::GeneratePredicateForScan(
 std::unique_ptr<planner::AggregatePlan>
 OperatorToPlanTransformer::GenerateAggregatePlan(
     const PropertyColumns *prop_col, AggregateType agg_type,
-    const std::vector<std::shared_ptr<expression::AbstractExpression>> *
-        group_by_exprs,
+    const std::vector<std::shared_ptr<expression::AbstractExpression>>
+        *group_by_exprs,
     expression::AbstractExpression *having) {
   auto child_expr_map = children_expr_map_[0];
 
@@ -580,8 +617,7 @@ unique_ptr<planner::AbstractPlan> OperatorToPlanTransformer::GenerateJoinPlan(
                           l_output_exprs.end());
       output_exprs.insert(output_exprs.end(), r_output_exprs.begin(),
                           r_output_exprs.end());
-    }
-    else
+    } else
       output_exprs.emplace_back(expr);
   }
 
@@ -592,11 +628,12 @@ unique_ptr<planner::AbstractPlan> OperatorToPlanTransformer::GenerateJoinPlan(
   // schema of the projections output
   vector<catalog::Column> columns;
   size_t output_size = output_exprs.size();
-  for (size_t output_offset = 0; output_offset<output_size; output_offset++) {
+  for (size_t output_offset = 0; output_offset < output_size; output_offset++) {
     auto expr = output_exprs[output_offset];
     auto expr_type = expr->GetExpressionType();
 
-    expression::ExpressionUtil::EvaluateExpression(children_expr_map_, expr.get());
+    expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
+                                                   expr.get());
     if (expr_type == ExpressionType::VALUE_TUPLE) {
       // For TupleValueExpr, we can just do a direct mapping.
       if (l_child_map.count(expr))
@@ -624,34 +661,16 @@ unique_ptr<planner::AbstractPlan> OperatorToPlanTransformer::GenerateJoinPlan(
   // with predicate in join clause
   // TODO the two predicate should not be combined
   // But hash plan currently only have one predicate
-  vector<expression::AbstractExpression *> predicates;
-  auto predicate_prop =
-      requirements_->GetPropertyOfType(PropertyType::PREDICATE)
-          ->As<PropertyPredicate>();
-
-  if (predicate_prop != nullptr) {
-    auto where_predicate = predicate_prop->GetPredicate()->Copy();
-    LOG_TRACE("where_predicate %s", where_predicate->GetInfo().c_str());
-    predicates.emplace_back(where_predicate);
-  }
-
   // Extract join columns
   expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
                                                  join_predicate);
   vector<unique_ptr<const expression::AbstractExpression>> left_hash_keys,
       right_hash_keys;
-  auto remaining_predicate = expression::ExpressionUtil::ExtractJoinColumns(
-      left_hash_keys, right_hash_keys, join_predicate);
-  if (remaining_predicate != nullptr) {
-    LOG_TRACE("remaining %s", remaining_predicate->GetInfo().c_str());
-    predicates.emplace_back(remaining_predicate);
-  }
 
   // Generate the combined predicate and evaluate it
   unique_ptr<expression::AbstractExpression> predicate{
-      util::CombinePredicates(predicates)};
-  expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
-                                                 predicate.get());
+      expression::ExpressionUtil::ExtractJoinColumns(
+          left_hash_keys, right_hash_keys, join_predicate)};
 
   unique_ptr<planner::AbstractPlan> join_plan;
   if (is_hash) {
@@ -670,10 +689,11 @@ unique_ptr<planner::AbstractPlan> OperatorToPlanTransformer::GenerateJoinPlan(
     // TODO: Right now we always enable bloom filter. Later when we have
     // cost model in place, we need to decide whether to enable bloom filter
     // based on the size of the hash table and its selectivity
-    join_plan = unique_ptr<planner::AbstractPlan>(
-        new planner::HashJoinPlan(join_type, move(predicate), move(proj_info),
-                                  schema_ptr, left_hash_keys, right_hash_keys,
-                                  true));
+    join_plan = unique_ptr<planner::AbstractPlan>(new planner::HashJoinPlan(
+        join_type, move(predicate), move(proj_info), schema_ptr, left_hash_keys,
+        right_hash_keys,
+        settings::SettingsManager::GetBool(
+            settings::SettingId::hash_join_bloom_filter)));
 
     join_plan->AddChild(move(children_plans_[0]));
     join_plan->AddChild(move(hash_plan));
