@@ -35,7 +35,7 @@ namespace {
 ///===--------------------------------------------------------------------===///
 
 // Comparison
-struct CompareVarbinary : public TypeSystem::SimpleComparisonHandleNull {
+struct CompareVarbinary : public TypeSystem::ExpensiveComparisonHandleNull {
   bool SupportsTypes(const type::Type &left_type,
                      const type::Type &right_type) const override {
     return left_type.GetSqlType() == Varbinary::Instance() &&
@@ -45,8 +45,8 @@ struct CompareVarbinary : public TypeSystem::SimpleComparisonHandleNull {
   // Call ValuesRuntime::CompareStrings(). This function behaves like strcmp(),
   // returning a values less than, equal to, or greater than zero if left is
   // found to be less than, matches, or is greater than the right value.
-  llvm::Value *CallCompareStrings(CodeGen &codegen, const Value &left,
-                                  const Value &right) const {
+  llvm::Value *CompareStrings(CodeGen &codegen, const Value &left,
+                              const Value &right) const {
     // Setup the function arguments and invoke the call
     std::vector<llvm::Value *> args = {left.GetValue(), left.GetLength(),
                                        right.GetValue(), right.GetLength()};
@@ -56,95 +56,62 @@ struct CompareVarbinary : public TypeSystem::SimpleComparisonHandleNull {
   Value CompareLtImpl(CodeGen &codegen, const Value &left,
                       const Value &right) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
-
-    // Call CompareStrings(...)
-    llvm::Value *result = CallCompareStrings(codegen, left, right);
-
-    // Check if the result is < 0
-    result = codegen->CreateICmpSLT(result, codegen.Const32(0));
-
-    // Return the comparison
-    return Value{Boolean::Instance(), result};
+    // Call CompareStrings, check is result is < 0
+    llvm::Value *result = CompareStrings(codegen, left, right);
+    llvm::Value *is_lt_0 = codegen->CreateICmpSLT(result, codegen.Const32(0));
+    return Value{Boolean::Instance(), is_lt_0};
   }
 
   Value CompareLteImpl(CodeGen &codegen, const Value &left,
                        const Value &right) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
-
-    // Call CompareStrings(...)
-    llvm::Value *result = CallCompareStrings(codegen, left, right);
-
-    // Check if the result is <= 0
-    result = codegen->CreateICmpSLE(result, codegen.Const32(0));
-
-    // Return the comparison
-    return Value{Boolean::Instance(), result};
+    // Call CompareStrings, check is result is <= 0
+    llvm::Value *result = CompareStrings(codegen, left, right);
+    llvm::Value *is_lte_0 = codegen->CreateICmpSLE(result, codegen.Const32(0));
+    return Value{Boolean::Instance(), is_lte_0};
   }
 
   Value CompareEqImpl(CodeGen &codegen, const Value &left,
                       const Value &right) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
-
-    // Call CompareStrings(...)
-    llvm::Value *result = CallCompareStrings(codegen, left, right);
-
-    // Check if the result is == 0
-    result = codegen->CreateICmpEQ(result, codegen.Const32(0));
-
-    // Return the comparison
-    return Value{Boolean::Instance(), result};
+    // Call CompareStrings, check is result is == 0
+    llvm::Value *result = CompareStrings(codegen, left, right);
+    llvm::Value *is_eq_0 = codegen->CreateICmpEQ(result, codegen.Const32(0));
+    return Value{Boolean::Instance(), is_eq_0};
   }
 
   Value CompareNeImpl(CodeGen &codegen, const Value &left,
                       const Value &right) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
-
-    // Call CompareStrings(...)
-    llvm::Value *result = CallCompareStrings(codegen, left, right);
-
-    // Check if the result is == 0
-    result = codegen->CreateICmpNE(result, codegen.Const32(0));
-
-    // Return the comparison
-    return Value{Boolean::Instance(), result};
+    // Call CompareStrings, check is result is != 0
+    llvm::Value *result = CompareStrings(codegen, left, right);
+    llvm::Value *is_ne_0 = codegen->CreateICmpNE(result, codegen.Const32(0));
+    return Value{Boolean::Instance(), is_ne_0};
   }
 
   Value CompareGtImpl(CodeGen &codegen, const Value &left,
                       const Value &right) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
-
-    // Call CompareStrings(...)
-    llvm::Value *result = CallCompareStrings(codegen, left, right);
-
-    // Check if the result is > 0
-    result = codegen->CreateICmpSGT(result, codegen.Const32(0));
-
-    // Return the comparison
-    return Value{Boolean::Instance(), result};
+    // Call CompareStrings, check is result is <= 0
+    llvm::Value *result = CompareStrings(codegen, left, right);
+    llvm::Value *is_gt_0 = codegen->CreateICmpSGT(result, codegen.Const32(0));
+    return Value{Boolean::Instance(), is_gt_0};
   }
 
   Value CompareGteImpl(CodeGen &codegen, const Value &left,
                        const Value &right) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
-
-    // Call CompareStrings(...)
-    llvm::Value *result = CallCompareStrings(codegen, left, right);
-
-    // Check if the result is >= 0
-    result = codegen->CreateICmpSGE(result, codegen.Const32(0));
-
-    // Return the comparison
-    return Value{Boolean::Instance(), result};
+    // Call CompareStrings, check is result is >= 0
+    llvm::Value *result = CompareStrings(codegen, left, right);
+    llvm::Value *is_gte_0 = codegen->CreateICmpSGE(result, codegen.Const32(0));
+    return Value{Boolean::Instance(), is_gte_0};
   }
 
   Value CompareForSortImpl(CodeGen &codegen, const Value &left,
                            const Value &right) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
-
-    // Call CompareStrings(...)
-    llvm::Value *result = CallCompareStrings(codegen, left, right);
-
-    // Return the comparison
+    // Call CompareStrings, return result directly
+    llvm::Value *result = CompareStrings(codegen, left, right);
     return Value{Integer::Instance(), result};
   }
 };
