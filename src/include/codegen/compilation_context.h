@@ -49,7 +49,7 @@ class CompilationContext {
 
  public:
   // Constructor
-  CompilationContext(Query &query, QueryParameters &parameters,
+  CompilationContext(Query &query, const QueryParametersMap &parameters_map,
                      QueryResultConsumer &result_consumer);
 
   // Prepare a translator in this context
@@ -72,9 +72,9 @@ class CompilationContext {
 
   RuntimeState &GetRuntimeState() const { return query_.GetRuntimeState(); }
 
-  const QueryParameters &GetQueryParameters() const {
-    return parameters_;
-  }
+//  const QueryParameters &GetQueryParameters() const {
+//    return parameters_;
+//  }
 
   const ParameterCache &GetParameterCache() const {
     return parameter_cache_;
@@ -94,10 +94,10 @@ class CompilationContext {
   // Get a pointer to the query parameter instance
   llvm::Value *GetQueryParametersPtr();
 
-  // Get the parameter index to be used to get value, for the given expression
+  // Get the parameter index to be used to get value for the given expression
   size_t GetParameterIdx(const expression::AbstractExpression *expression)
       const {
-    return parameters_.GetParameterIdx(expression);
+    return parameters_map_.GetIndex(expression);
   }
 
  private:
@@ -123,7 +123,7 @@ class CompilationContext {
   Query &query_;
 
   // The parameters and mapping for expression and parameter ids to
-  QueryParameters &parameters_;
+  const QueryParametersMap &parameters_map_;
 
   // The parameter value cache of the query
   ParameterCache parameter_cache_;

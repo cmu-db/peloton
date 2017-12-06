@@ -114,7 +114,8 @@ void PlanExecutor::ExecutePlan(
   codegen::Query *query = codegen::QueryCache::Instance().Find(plan);
   if (query == nullptr) {
     codegen::QueryCompiler compiler;
-    auto compiled_query = compiler.Compile(*plan, parameters, consumer);
+    auto compiled_query =
+        compiler.Compile(*plan, parameters.GetQueryParametersMap(), consumer);
 
     compiled_query->Execute(*executor_context.get(), parameters,
                             reinterpret_cast<char *>(consumer.GetState()));

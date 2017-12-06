@@ -146,17 +146,16 @@ class CaseExpression : public AbstractExpression {
     return hash;
   }
 
-  virtual void VisitParameters(std::vector<Parameter> &parameters,
-      std::unordered_map<const AbstractExpression *, size_t> &index,
-      const std::vector<peloton::type::Value> &parameter_values)
-      override {
+  virtual void VisitParameters(codegen::QueryParametersMap &map,
+      std::vector<peloton::type::Value> &values,
+      const std::vector<peloton::type::Value> &values_from_user) override {
     for (const auto &clause : clauses_) {
-      clause.first->VisitParameters(parameters, index, parameter_values);
-      clause.second->VisitParameters(parameters, index, parameter_values);
+      clause.first->VisitParameters(map, values, values_from_user);
+      clause.second->VisitParameters(map, values, values_from_user);
     }
 
     if (GetDefault() != nullptr) {
-      default_expr_->VisitParameters(parameters, index, parameter_values);
+      default_expr_->VisitParameters(map, values, values_from_user);
     }
   };
 

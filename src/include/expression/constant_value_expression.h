@@ -78,15 +78,14 @@ class ConstantValueExpression : public AbstractExpression {
     return HashUtil::Hash(&val);
   }
 
-  virtual void VisitParameters(std::vector<Parameter> &parameters,
-      std::unordered_map<const AbstractExpression *, size_t> &index,
+  virtual void VisitParameters(codegen::QueryParametersMap &map,
+      std::vector<peloton::type::Value> &values,
       UNUSED_ATTRIBUTE const std::vector<peloton::type::Value>
-          &parameter_values) override {
-    // Add a new parameter object for a constant
+          &values_from_user) override {
     auto is_nullable = true;;
-    parameters.push_back(Parameter::CreateConstParameter(GetValue(),
-                                                         is_nullable));
-    index[this] = parameters.size() - 1;
+    map.Insert(Parameter::CreateConstParameter(value_.GetTypeId(), is_nullable),
+               this);
+    values.push_back(value_);
   };
 
   type::Value GetValue() const { return value_; }

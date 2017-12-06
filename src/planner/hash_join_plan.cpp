@@ -159,28 +159,27 @@ bool HashJoinPlan::operator==(const AbstractPlan &rhs) const {
 }
 
 void HashJoinPlan::VisitParameters(
-    std::vector<expression::Parameter> &parameters,
-    std::unordered_map<const expression::AbstractExpression *, size_t> &index,
-    const std::vector<peloton::type::Value> &parameter_values) {
-  AbstractPlan::VisitParameters(parameters, index, parameter_values);
+    codegen::QueryParametersMap &map, std::vector<peloton::type::Value> &values,
+    const std::vector<peloton::type::Value> &values_from_user) {
+  AbstractPlan::VisitParameters(map, values, values_from_user);
 
   std::vector<const expression::AbstractExpression *> left_hash_keys;
   GetLeftHashKeys(left_hash_keys);
   for (auto left_hash_key : left_hash_keys) {
     auto key = const_cast<expression::AbstractExpression *>(left_hash_key);
-    key->VisitParameters(parameters, index, parameter_values);
+    key->VisitParameters(map, values, values_from_user);
   }
 
   std::vector<const expression::AbstractExpression *> right_hash_keys;
   GetLeftHashKeys(right_hash_keys);
   for (auto right_hash_key : right_hash_keys) {
     auto key = const_cast<expression::AbstractExpression *>(right_hash_key);
-    key->VisitParameters(parameters, index, parameter_values);
+    key->VisitParameters(map, values, values_from_user);
   }
 
   auto predicate = const_cast<expression::AbstractExpression *>(GetPredicate());
   if (predicate != nullptr) {
-    predicate->VisitParameters(parameters, index, parameter_values);
+    predicate->VisitParameters(map, values, values_from_user);
   }
 }
 

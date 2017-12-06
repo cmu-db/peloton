@@ -171,8 +171,8 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecute(
   }
   codegen::QueryParameters parameters{plan, executor_context->GetParams()};
 
-  auto compiled_query = compiler.Compile(plan, parameters, consumer,
-                                         &stats);
+  auto compiled_query = compiler.Compile(plan,
+      parameters.GetQueryParametersMap(), consumer, &stats);
   // Run
   compiled_query->Execute(*executor_context.get(), parameters,
                           consumer_state);
@@ -203,8 +203,9 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecuteCache(
 
   codegen::Query *query = codegen::QueryCache::Instance().Find(plan);
   if (query == nullptr) {
-    auto compiled_query = compiler.Compile(*plan, parameters, consumer,
-                                           &stats);
+    auto compiled_query = compiler.Compile(*plan,
+                                           parameters.GetQueryParametersMap(),
+                                           consumer, &stats);
     compiled_query->Execute(*executor_context.get(), parameters,
                             consumer_state);
     codegen::QueryCache::Instance().Add(plan, std::move(compiled_query));

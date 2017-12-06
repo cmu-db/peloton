@@ -231,16 +231,15 @@ bool AggregatePlan::operator==(const AbstractPlan &rhs) const {
 }
 
 void AggregatePlan::VisitParameters(
-    std::vector<expression::Parameter> &parameters,
-    std::unordered_map<const expression::AbstractExpression *, size_t> &index,
-    const std::vector<peloton::type::Value> &parameter_values) {
-  AbstractPlan::VisitParameters(parameters, index, parameter_values);
+    codegen::QueryParametersMap &map, std::vector<peloton::type::Value> &values,
+    const std::vector<peloton::type::Value> &values_from_user) {
+  AbstractPlan::VisitParameters(map, values, values_from_user);
 
   for (const auto &agg_term : GetUniqueAggTerms()) {
     if (agg_term.expression != nullptr) {
       auto *expr =
           const_cast<expression::AbstractExpression *>(agg_term.expression);
-      expr->VisitParameters(parameters, index, parameter_values);
+      expr->VisitParameters(map, values, values_from_user);
     }
   }
 
@@ -248,12 +247,12 @@ void AggregatePlan::VisitParameters(
     auto *predicate =
         const_cast<expression::AbstractExpression *>(GetPredicate());
     if (predicate != nullptr) {
-      predicate->VisitParameters(parameters, index, parameter_values);
+      predicate->VisitParameters(map, values, values_from_user);
     }
 
     auto *proj_info = const_cast<planner::ProjectInfo *>(GetProjectInfo());
     if (proj_info != nullptr) {
-      proj_info->VisitParameters(parameters, index, parameter_values);
+      proj_info->VisitParameters(map, values, values_from_user);
     }
   }
 }

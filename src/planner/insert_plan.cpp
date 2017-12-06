@@ -180,9 +180,8 @@ bool InsertPlan::operator==(const AbstractPlan &rhs) const {
 }
 
 void InsertPlan::VisitParameters(
-    std::vector<expression::Parameter> &parameters,
-    std::unordered_map<const expression::AbstractExpression *, size_t> &index,
-    const std::vector<peloton::type::Value> &parameter_values) {
+    codegen::QueryParametersMap &map, std::vector<peloton::type::Value> &values,
+    const std::vector<peloton::type::Value> &values_from_user) {
   if (GetChildren().size() == 0) {
     auto *schema = target_table_->GetSchema();
     auto columns_num = schema->GetColumnCount();
@@ -190,13 +189,14 @@ void InsertPlan::VisitParameters(
     for (uint32_t i = 0; i < values_.size(); i++) {
       auto value = values_[i];
       auto column_id = i % columns_num;
-      parameters.push_back(expression::Parameter::CreateConstParameter(value,
-          schema->AllowNull(column_id)));
+      map.Insert(expression::Parameter::CreateConstParameter(value.GetTypeId(),
+          schema->AllowNull(column_id)), nullptr);
+      values.push_back(value);
     }
   } else {
     PL_ASSERT(GetChildren().size() == 1);
     auto *plan = const_cast<planner::AbstractPlan *>(GetChild(0));
-    plan->VisitParameters(parameters, index, parameter_values);
+    plan->VisitParameters(map, values, values_from_user);
   }
 }
 

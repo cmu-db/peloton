@@ -17,6 +17,7 @@
 #include "common/printable.h"
 #include "planner/attribute_info.h"
 #include "expression/parameter.h"
+#include "codegen/query_parameters_map.h"
 #include "type/types.h"
 
 namespace peloton {
@@ -139,11 +140,11 @@ class AbstractExpression : public Printable {
   virtual bool ExactlyEquals(const AbstractExpression &other) const;
   virtual hash_t HashForExactMatch() const;
 
-  virtual void VisitParameters(std::vector<Parameter> &parameters,
-      std::unordered_map<const AbstractExpression *, size_t> &index,
-      const std::vector<peloton::type::Value> &parameter_values) {
+  virtual void VisitParameters(codegen::QueryParametersMap &map,
+      std::vector<peloton::type::Value> &values,
+      const std::vector<peloton::type::Value> &values_from_user) {
     for (auto &child : children_) {
-      child->VisitParameters(parameters, index, parameter_values);
+      child->VisitParameters(map, values, values_from_user);
     }
   };
 

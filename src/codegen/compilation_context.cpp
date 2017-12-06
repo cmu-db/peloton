@@ -25,10 +25,10 @@ namespace codegen {
 
 // Constructor
 CompilationContext::CompilationContext(Query &query,
-                                       QueryParameters &parameters,
+                                       const QueryParametersMap &parameters_map,
                                        QueryResultConsumer &result_consumer)
-    : query_(query), parameters_(parameters),
-      parameter_cache_(parameters.GetParameters()),
+    : query_(query), parameters_map_(parameters_map),
+      parameter_cache_(parameters_map_),
       result_consumer_(result_consumer),
       codegen_(query_.GetCodeContext()) {
   // Allocate a catalog and transaction instance in the runtime state

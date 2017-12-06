@@ -13,7 +13,7 @@
 #pragma once
 
 #include "codegen/codegen.h"
-#include "codegen/updateable_storage.h"
+#include "codegen/query_parameters_map.h"
 #include "codegen/value.h"
 #include "expression/parameter.h"
 #include "type/type.h"
@@ -27,8 +27,7 @@ namespace codegen {
 class ParameterCache {
  public:
   // Constructor
-  ParameterCache(const std::vector<expression::Parameter> &parameters) :
-      parameters_(parameters) {}
+  ParameterCache(const QueryParametersMap &map) : parameters_map_(map) {}
 
   // Set the parameter values
   void Populate(CodeGen &codegen, llvm::Value *query_parameters_ptr);
@@ -43,7 +42,7 @@ class ParameterCache {
 
  private:
   // Parameter information
-  const std::vector<expression::Parameter> &parameters_;
+  const QueryParametersMap &parameters_map_;
 
   // Parameter value storage
   std::vector<codegen::Value> values_;
