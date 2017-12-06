@@ -10,14 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/table_storage.h"
 #include "codegen/proxy/catalog_proxy.h"
 #include "codegen/proxy/inserter_proxy.h"
 #include "codegen/proxy/transaction_runtime_proxy.h"
 #include "codegen/proxy/tuple_proxy.h"
 #include "codegen/operator/insert_translator.h"
-#include "codegen/type/sql_type.h"
-#include "planner/abstract_scan_plan.h"
 #include "planner/insert_plan.h"
 #include "storage/data_table.h"
 
@@ -83,17 +80,13 @@ void InsertTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
   auto &codegen = GetCodeGen();
   auto *inserter = LoadStatePtr(inserter_state_id_);
 
-  auto *scan =
-      static_cast<const planner::AbstractScan *>(insert_plan_.GetChild(0));
-  std::vector<const planner::AttributeInfo *> ais;
-  scan->GetAttributes(ais);
-
   auto *tuple_ptr = codegen.Call(InserterProxy::ReserveTupleStorage,
                                  {inserter});
   auto *pool = codegen.Call(InserterProxy::GetPool, {inserter});
 
   // Generate/Materialize tuple data from row and attribute information
   std::vector<codegen::Value> values;
+  auto &ais = insert_plan_.GetAttributeInfos();
   for (const auto *ai : ais) {
     codegen::Value v = row.DeriveValue(codegen, ai);
     values.push_back(v);
