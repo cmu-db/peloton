@@ -151,7 +151,7 @@ storage::DataTable *TestingTransactionUtil::CreatePrimaryKeyUniqueKeyTable() {
 
 storage::DataTable *TestingTransactionUtil::CreateTable(
     int num_key, std::string table_name, oid_t database_id, oid_t relation_id,
-    oid_t index_oid, bool need_primary_index) {
+    oid_t index_oid, bool need_primary_index, size_t tuples_per_tilegroup) {
   auto id_column =
       catalog::Column(type::TypeId::INTEGER,
                       type::Type::GetTypeSize(type::TypeId::INTEGER), "id", true);
@@ -163,7 +163,6 @@ storage::DataTable *TestingTransactionUtil::CreateTable(
   catalog::Schema *table_schema =
       new catalog::Schema({id_column, value_column});
 
-  size_t tuples_per_tilegroup = 100;
   auto table = storage::TableFactory::GetDataTable(
       database_id, relation_id, table_schema, table_name, tuples_per_tilegroup,
       true, false);
