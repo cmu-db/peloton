@@ -11,6 +11,7 @@ import os
 import re
 import sys
 import datetime
+import subprocess
 
 ## ==============================================
 ## CONFIGURATION
@@ -122,7 +123,7 @@ def format_file(file_path, add_header, strip_header, clang_format_code):
         elif clang_format_code:
             formatting_command = CLANG_FORMAT + " -style=file " + " -i " + file_path
             LOG.info(formatting_command)
-            os.system(formatting_command)
+            subprocess.call([CLANG_FORMAT, "-style=file", "-i", file_path])
 
     #END WITH
 
@@ -155,7 +156,8 @@ if __name__ == '__main__':
     parser.add_argument("-a", "--add-header", help='Action: Add suitable header(s)', action='store_true')
     parser.add_argument("-s", "--strip-header", help='Action: Strip existing header(s)', action='store_true')
     parser.add_argument("-c", "--clang-format-code", help='Action: Apply clang-format to source code', action='store_true')
-    parser.add_argument('paths', metavar='PATH', type=str, nargs='+',
+    parser.add_argument("-f", "--staged-files", help='Action: Apply the selected action(s) to all staged files (git)', action='store_true')
+    parser.add_argument('paths', metavar='PATH', type=str, nargs='*',
                         help='Files or directories to (recursively) apply the actions to')
     
     args = parser.parse_args()
@@ -165,9 +167,18 @@ if __name__ == '__main__':
         LOG.error("adding and stripping headers cannot be done together -- exiting")
         sys.exit("adding and stripping headers cannot be done together")
 
-    # If there are no paths given, then we will scan the defaults
-    # PAVLO 2017-07-09: ^^^ The above logic seems like a bad idea
-    targets = DEFAULT_DIRS if not args.paths else args.paths
+
+    if args.staged_files:
+        targets = [os.path.abspath(os.path.join(PELOTON_DIR, f)) for f in subprocess.check_output(["git", "diff", "--name-only", "HEAD", "--cached", "--diff-filter=d"]).split()]
+        if not targets:
+            LOG.error("no staged files or not calling from a repository -- exiting")
+            sys.exit("no staged files or not calling from a repository")
+    elif not args.paths:
+        LOG.error("no files or directories given -- exiting")
+        sys.exit("no files or directories given")
+    else:
+        targets = args.paths
+    
     for x in targets:
         if os.path.isfile(x):
             LOG.info("Scanning file: " + x)
