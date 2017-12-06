@@ -13,6 +13,7 @@
 #pragma once
 
 #include "planner/abstract_plan.h"
+#include "planner/abstract_scan_plan.h"
 #include "planner/project_info.h"
 #include "type/abstract_pool.h"
 
@@ -30,9 +31,11 @@ class InsertStatement;
 namespace planner {
 class InsertPlan : public AbstractPlan {
  public:
-  // Construct when input is a logical tile
+  // Construct when SELECT comes in with it
   InsertPlan(storage::DataTable *table, oid_t bulk_insert_count = 1)
-    : target_table_(table), bulk_insert_count_(bulk_insert_count) {}
+    : target_table_(table), bulk_insert_count_(bulk_insert_count) {
+    LOG_TRACE("Creating an Insert Plan with SELECT as a child");
+  }
 
   // Construct with a project info
   InsertPlan(storage::DataTable *table,
@@ -81,6 +84,12 @@ class InsertPlan : public AbstractPlan {
 
   const std::string GetInfo() const override { return "InsertPlan"; }
 
+  void PerformBinding(BindingContext &binding_context) override;
+
+  const std::vector<const AttributeInfo *> &GetAttributeInfos() const {
+    return ais_;
+  }
+
   // WARNING - Not Implemented
   std::unique_ptr<AbstractPlan> Copy() const override {
     LOG_INFO("InsertPlan Copy() not implemented");
@@ -108,7 +117,10 @@ class InsertPlan : public AbstractPlan {
   // Number of times to insert
   oid_t bulk_insert_count_;
 
-  // pool for variable length types
+  // Vector storing attribute information for INSERT SELECT
+  std::vector<const AttributeInfo *> ais_;
+
+  // Pool for variable length types
   std::unique_ptr<type::AbstractPool> pool_;
 
  private:

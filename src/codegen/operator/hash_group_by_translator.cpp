@@ -33,7 +33,8 @@ HashGroupByTranslator::HashGroupByTranslator(
     Pipeline &pipeline)
     : OperatorTranslator(context, pipeline),
       group_by_(group_by),
-      child_pipeline_(this) {
+      child_pipeline_(this),
+      aggregation_(context.GetRuntimeState()) {
   LOG_DEBUG("Constructing HashGroupByTranslator ...");
 
   auto &codegen = GetCodeGen();
@@ -94,7 +95,7 @@ HashGroupByTranslator::HashGroupByTranslator(
   }
 
   // Setup the aggregation logic for this group by
-  aggregation_.Setup(codegen, aggregates, false);
+  aggregation_.Setup(codegen, aggregates, false, key_type);
 
   // Create the hash table
   hash_table_ =
@@ -104,6 +105,7 @@ HashGroupByTranslator::HashGroupByTranslator(
 // Initialize the hash table instance
 void HashGroupByTranslator::InitializeState() {
   hash_table_.Init(GetCodeGen(), LoadStatePtr(hash_table_id_));
+  aggregation_.InitializeState(GetCodeGen());
 }
 
 // Produce!
@@ -212,6 +214,7 @@ void HashGroupByTranslator::Consume(ConsumerContext &,
                                     RowBatch::Row &row) const {
   LOG_DEBUG("HashGroupBy consuming results ...");
 
+  auto &context = GetCompilationContext();
   auto &codegen = GetCodeGen();
 
   // Collect the keys we use to probe the hash table
@@ -237,14 +240,15 @@ void HashGroupByTranslator::Consume(ConsumerContext &,
 
   // Perform the insertion into the hash table
   llvm::Value *hash_table = LoadStatePtr(hash_table_id_);
-  ConsumerProbe probe{aggregation_, vals};
-  ConsumerInsert insert{aggregation_, vals};
+  ConsumerProbe probe{context, aggregation_, vals, key};
+  ConsumerInsert insert{aggregation_, vals, key};
   hash_table_.ProbeOrInsert(codegen, hash_table, hash, key, probe, insert);
 }
 
 // Cleanup by destroying the aggregation hash-table
 void HashGroupByTranslator::TearDownState() {
   hash_table_.Destroy(GetCodeGen(), LoadStatePtr(hash_table_id_));
+  aggregation_.TearDownState(GetCodeGen());
 }
 
 // Get the stringified name of this hash-based group-by
@@ -392,16 +396,20 @@ void HashGroupByTranslator::ProduceResults::ProcessEntries(
 
 // Constructor
 HashGroupByTranslator::ConsumerProbe::ConsumerProbe(
-    const Aggregation &aggregation,
-    const std::vector<codegen::Value> &next_vals)
-    : aggregation_(aggregation), next_vals_(next_vals) {}
+    CompilationContext &context, const Aggregation &aggregation,
+    const std::vector<codegen::Value> &next_vals,
+    const std::vector<codegen::Value> &grouping_keys)
+    : context_(context),
+      aggregation_(aggregation),
+      next_vals_(next_vals),
+      grouping_keys_(grouping_keys) {}
 
 // The callback invoked when we probe the hash table with a given key and find
 // an existing value for the key.  In this case, since we're aggregating, we
 // advance all of the aggregates.
 void HashGroupByTranslator::ConsumerProbe::ProcessEntry(
-    CodeGen &codegen, llvm::Value *data_area) const {
-  aggregation_.AdvanceValues(codegen, data_area, next_vals_);
+    UNUSED_ATTRIBUTE CodeGen &codegen, llvm::Value *data_area) const {
+  aggregation_.AdvanceValues(codegen, data_area, next_vals_, grouping_keys_);
 }
 
 //===----------------------------------------------------------------------===//
@@ -410,14 +418,18 @@ void HashGroupByTranslator::ConsumerProbe::ProcessEntry(
 
 HashGroupByTranslator::ConsumerInsert::ConsumerInsert(
     const Aggregation &aggregation,
-    const std::vector<codegen::Value> &initial_vals)
-    : aggregation_(aggregation), initial_vals_(initial_vals) {}
+    const std::vector<codegen::Value> &initial_vals,
+    const std::vector<codegen::Value> &grouping_keys)
+    : aggregation_(aggregation),
+      initial_vals_(initial_vals),
+      grouping_keys_(grouping_keys) {}
 
 // Given free storage space in the hash table, store the initial values of all
 // the aggregates
 void HashGroupByTranslator::ConsumerInsert::StoreValue(
-    CodeGen &codegen, llvm::Value *space) const {
-  aggregation_.CreateInitialValues(codegen, space, initial_vals_);
+    UNUSED_ATTRIBUTE CodeGen &codegen, llvm::Value *space) const {
+  aggregation_.CreateInitialValues(codegen, space, initial_vals_,
+                                   grouping_keys_);
 }
 
 llvm::Value *HashGroupByTranslator::ConsumerInsert::GetValueSize(

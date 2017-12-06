@@ -55,7 +55,7 @@ TEST_F(CatalogTests, CreatingDatabase) {
   auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
       CATALOG_DATABASE_NAME, INDEX_CATALOG_NAME, txn);
   auto index_object = table_object->GetIndexObject(INDEX_CATALOG_PKEY_OID);
-  std::vector<oid_t> key_attrs = index_object->key_attrs;
+  std::vector<oid_t> key_attrs = index_object->GetKeyAttrs();
 
   EXPECT_EQ("EMP_DB", catalog::Catalog::GetInstance()
                           ->GetDatabaseWithName("EMP_DB", txn)
@@ -164,23 +164,23 @@ TEST_F(CatalogTests, TableObject) {
   EXPECT_EQ(1, index_objects.size());
   EXPECT_EQ(2, column_objects.size());
 
-  EXPECT_EQ(table_object->table_oid, column_objects[0]->table_oid);
-  EXPECT_EQ("id", column_objects[0]->column_name);
-  EXPECT_EQ(0, column_objects[0]->column_id);
-  EXPECT_EQ(0, column_objects[0]->column_offset);
-  EXPECT_EQ(type::TypeId::INTEGER, column_objects[0]->column_type);
-  EXPECT_EQ(true, column_objects[0]->is_inlined);
-  EXPECT_EQ(true, column_objects[0]->is_primary);
-  EXPECT_EQ(false, column_objects[0]->is_not_null);
+  EXPECT_EQ(table_object->GetTableOid(), column_objects[0]->GetTableOid());
+  EXPECT_EQ("id", column_objects[0]->GetColumnName());
+  EXPECT_EQ(0, column_objects[0]->GetColumnId());
+  EXPECT_EQ(0, column_objects[0]->GetColumnOffset());
+  EXPECT_EQ(type::TypeId::INTEGER, column_objects[0]->GetColumnType());
+  EXPECT_EQ(true, column_objects[0]->IsInlined());
+  EXPECT_EQ(true, column_objects[0]->IsPrimary());
+  EXPECT_EQ(false, column_objects[0]->IsNotNull());
 
-  EXPECT_EQ(table_object->table_oid, column_objects[1]->table_oid);
-  EXPECT_EQ("name", column_objects[1]->column_name);
-  EXPECT_EQ(1, column_objects[1]->column_id);
-  EXPECT_EQ(4, column_objects[1]->column_offset);
-  EXPECT_EQ(type::TypeId::VARCHAR, column_objects[1]->column_type);
-  EXPECT_EQ(true, column_objects[1]->is_inlined);
-  EXPECT_EQ(false, column_objects[1]->is_primary);
-  EXPECT_EQ(false, column_objects[1]->is_not_null);
+  EXPECT_EQ(table_object->GetTableOid(), column_objects[1]->GetTableOid());
+  EXPECT_EQ("name", column_objects[1]->GetColumnName());
+  EXPECT_EQ(1, column_objects[1]->GetColumnId());
+  EXPECT_EQ(4, column_objects[1]->GetColumnOffset());
+  EXPECT_EQ(type::TypeId::VARCHAR, column_objects[1]->GetColumnType());
+  EXPECT_EQ(true, column_objects[1]->IsInlined());
+  EXPECT_EQ(false, column_objects[1]->IsPrimary());
+  EXPECT_EQ(false, column_objects[1]->IsNotNull());
 
   txn_manager.CommitTransaction(txn);
 }

@@ -155,6 +155,47 @@ struct Ascii : public TypeSystem::UnaryOperator {
   }
 };
 
+struct Like : public TypeSystem::BinaryOperator {
+  bool SupportsTypes(const Type &left_type,
+                     const Type &right_type) const override {
+    return left_type.GetSqlType() == Varchar::Instance() &&
+           left_type == right_type;
+  }
+
+  Type ResultType(UNUSED_ATTRIBUTE const Type &left_type,
+                  UNUSED_ATTRIBUTE const Type &right_type) const override {
+    return Integer::Instance();
+  }
+
+  Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
+               UNUSED_ATTRIBUTE OnError on_error) const override {
+    PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
+    // Do match
+    llvm::Value *raw_ret = codegen.Call(StringFunctionsProxy::Like,
+                                        {left.GetValue(), left.GetLength(),
+                                         right.GetValue(), right.GetLength()});
+
+    // return value
+    return Value{Boolean::Instance(), raw_ret};
+  }
+};
+
+struct Length : public TypeSystem::UnaryOperator {
+  bool SupportsType(const Type &type) const override {
+    return type.GetSqlType() == Varchar::Instance();
+  }
+
+  Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
+    return Integer::Instance();
+  }
+
+  Value DoWork(CodeGen &codegen, const Value &val) const override {
+    llvm::Value *raw_ret = codegen.Call(StringFunctionsProxy::Length,
+                                        {val.GetValue(), val.GetLength()});
+    return Value{Integer::Instance(), raw_ret};
+  }
+};
+
 //===----------------------------------------------------------------------===//
 // TYPE SYSTEM CONSTRUCTION
 //===----------------------------------------------------------------------===//
@@ -173,12 +214,14 @@ static std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {
 
 // Unary operators
 static Ascii kAscii;
+static Length kLength;
 static std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {
-    {OperatorId::Ascii, kAscii}
-};
+    {OperatorId::Ascii, kAscii}, {OperatorId::Length, kLength}};
 
 // Binary operations
-static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {};
+static Like kLike;
+static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
+    {OperatorId::Like, kLike}};
 
 // Nary operations
 static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
