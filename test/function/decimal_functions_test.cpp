@@ -29,21 +29,169 @@ using ::testing::Return;
 namespace peloton {
 namespace test {
 
+static const double MAX_ABS_ERROR = 0.1;
+
 class DecimalFunctionsTests : public PelotonTest {};
 
-TEST_F(DecimalFunctionsTests, SqrtTest) {
-  const double column_val = 9.0;
-  const double expected = sqrt(9.0);
-  std::vector<type::Value> args = {
-      type::ValueFactory::GetDecimalValue(column_val)};
+// Test DOUBLE square root
+TEST_F(DecimalFunctionsTests, SqrtSmallDoubleTest) {
+  std::vector<double> inputs = {9.0, 12.0, 16.0};
+  std::vector<type::Value> args;
 
-  auto result = function::DecimalFunctions::Sqrt(args);
-  EXPECT_FALSE(result.IsNull());
-  EXPECT_EQ(expected, result.GetAs<double>());
+  for (double in : inputs) {
+    args = {type::ValueFactory::GetDecimalValue(in)};
+    auto result = function::DecimalFunctions::_Sqrt(args);
+    EXPECT_FALSE(result.IsNull());
+    EXPECT_DOUBLE_EQ(sqrt(in), result.GetAs<double>());
+  }
 
   // NULL CHECK
   args = {type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL)};
-  result = function::DecimalFunctions::Sqrt(args);
+  auto result = function::DecimalFunctions::_Sqrt(args);
+  EXPECT_TRUE(result.IsNull());
+}
+
+// Test DOUBLE square root with larger numbers
+TEST_F(DecimalFunctionsTests, SqrtLargeDoubleTest) {
+  std::vector<double> inputs = {5000.0, 50000.0, 500000.0};
+  std::vector<type::Value> args;
+
+  for (double in : inputs) {
+    args = {type::ValueFactory::GetDecimalValue(in)};
+    auto result = function::DecimalFunctions::_Sqrt(args);
+    EXPECT_FALSE(result.IsNull());
+    EXPECT_DOUBLE_EQ(sqrt(in), result.GetAs<double>());
+  }
+
+  // NULL CHECK
+  args = {type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL)};
+  auto result = function::DecimalFunctions::_Sqrt(args);
+  EXPECT_TRUE(result.IsNull());
+}
+
+// Test TINYINT square root
+TEST_F(DecimalFunctionsTests, SqrtTinyIntTest1) {
+  std::vector<int8_t> inputs = {4, 30, 55};
+  std::vector<type::Value> args;
+
+  for (int8_t in : inputs) {
+    args = {type::ValueFactory::GetTinyIntValue(in)};
+    auto result = function::DecimalFunctions::_Sqrt(args);
+    EXPECT_FALSE(result.IsNull());
+    EXPECT_DOUBLE_EQ(sqrt(in), result.GetAs<double>());
+  }
+
+  // NULL CHECK
+  args = {type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL)};
+  auto result = function::DecimalFunctions::_Sqrt(args);
+  EXPECT_TRUE(result.IsNull());
+}
+
+// Test TINYINT square root
+TEST_F(DecimalFunctionsTests, SqrtTinyIntTest2) {
+  std::vector<int8_t> inputs = {100, 120, 127};
+  std::vector<type::Value> args;
+
+  for (int8_t in : inputs) {
+    args = {type::ValueFactory::GetTinyIntValue(in)};
+    auto result = function::DecimalFunctions::_Sqrt(args);
+    EXPECT_FALSE(result.IsNull());
+    EXPECT_DOUBLE_EQ(sqrt(in), result.GetAs<double>());
+  }
+
+  // NULL CHECK
+  args = {type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL)};
+  auto result = function::DecimalFunctions::_Sqrt(args);
+  EXPECT_TRUE(result.IsNull());
+}
+
+// Test SMALLINT square root
+TEST_F(DecimalFunctionsTests, SqrtSmallIntTest1) {
+  std::vector<int16_t> inputs = {100, 120, 127};
+  std::vector<type::Value> args;
+
+  for (int16_t in : inputs) {
+    args = {type::ValueFactory::GetSmallIntValue(in)};
+    auto result = function::DecimalFunctions::_Sqrt(args);
+    EXPECT_FALSE(result.IsNull());
+    EXPECT_DOUBLE_EQ(sqrt(in), result.GetAs<double>());
+  }
+
+  // NULL CHECK
+  args = {type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL)};
+  auto result = function::DecimalFunctions::_Sqrt(args);
+  EXPECT_TRUE(result.IsNull());
+}
+
+// Test SMALLINT square root
+TEST_F(DecimalFunctionsTests, SqrtSmallIntTest2) {
+  std::vector<int16_t> inputs = {10000, 25000, 32767};
+  std::vector<type::Value> args;
+
+  for (int16_t in : inputs) {
+    args = {type::ValueFactory::GetSmallIntValue(in)};
+    auto result = function::DecimalFunctions::_Sqrt(args);
+    EXPECT_FALSE(result.IsNull());
+    EXPECT_DOUBLE_EQ(sqrt(in), result.GetAs<double>());
+  }
+
+  // NULL CHECK
+  args = {type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL)};
+  auto result = function::DecimalFunctions::_Sqrt(args);
+  EXPECT_TRUE(result.IsNull());
+}
+
+// Test INT square root
+TEST_F(DecimalFunctionsTests, SqrtInt32Test1) {
+  std::vector<int32_t> inputs = {10000, 25000, 32767};
+  std::vector<type::Value> args;
+
+  for (int32_t in : inputs) {
+    args = {type::ValueFactory::GetIntegerValue(in)};
+    auto result = function::DecimalFunctions::_Sqrt(args);
+    EXPECT_FALSE(result.IsNull());
+    EXPECT_DOUBLE_EQ(sqrt(in), result.GetAs<double>());
+  }
+
+  // NULL CHECK
+  args = {type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL)};
+  auto result = function::DecimalFunctions::_Sqrt(args);
+  EXPECT_TRUE(result.IsNull());
+}
+
+// Test INT square root
+TEST_F(DecimalFunctionsTests, SqrtInt32Test2) {
+  std::vector<int32_t> inputs = {100000000, 1073741824, 2147483647};
+  std::vector<type::Value> args;
+
+  for (int32_t in : inputs) {
+    args = {type::ValueFactory::GetIntegerValue(in)};
+    auto result = function::DecimalFunctions::_Sqrt(args);
+    EXPECT_FALSE(result.IsNull());
+    EXPECT_DOUBLE_EQ(sqrt(in), result.GetAs<double>());
+  }
+
+  // NULL CHECK
+  args = {type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL)};
+  auto result = function::DecimalFunctions::_Sqrt(args);
+  EXPECT_TRUE(result.IsNull());
+}
+
+// Test BIGINT square root
+TEST_F(DecimalFunctionsTests, SqrtInt64Test1) {
+  std::vector<int64_t> inputs = {100000000, 1073741824, 2147483647};
+  std::vector<type::Value> args;
+
+  for (int64_t in : inputs) {
+    args = {type::ValueFactory::GetBigIntValue(in)};
+    auto result = function::DecimalFunctions::_Sqrt(args);
+    EXPECT_FALSE(result.IsNull());
+    EXPECT_DOUBLE_EQ(sqrt(in), result.GetAs<double>());
+  }
+
+  // NULL CHECK
+  args = {type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL)};
+  auto result = function::DecimalFunctions::_Sqrt(args);
   EXPECT_TRUE(result.IsNull());
 }
 
@@ -51,7 +199,7 @@ TEST_F(DecimalFunctionsTests, FloorTest) {
   // Testing Floor with DecimalTypes
   std::vector<double> inputs = {9.5, 3.3, -4.4, 0.0};
   std::vector<type::Value> args;
-  for(double in: inputs) {
+  for (double in : inputs) {
     args = {type::ValueFactory::GetDecimalValue(in)};
     auto result = function::DecimalFunctions::_Floor(args);
     EXPECT_FALSE(result.IsNull());

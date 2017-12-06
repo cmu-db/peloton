@@ -21,9 +21,11 @@ namespace function {
 
 class DecimalFunctions {
  public:
-  static type::Value Sqrt(const std::vector<type::Value>& args);
+  static type::Value _Sqrt(const std::vector<type::Value>& args);
   static type::Value _Floor(const std::vector<type::Value>& args);
   static double Floor(const double val);
+  static double Sqrt(double arg);
+  static double SqrtInt(int64_t arg);
 };
 
 }  // namespace function

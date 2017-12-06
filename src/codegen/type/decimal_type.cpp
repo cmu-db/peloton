@@ -170,11 +170,26 @@ struct Floor : public TypeSystem::UnaryOperator {
   }
 
   Value DoWork(CodeGen &codegen, const Value &val) const override {
-    llvm::Value *raw_ret = codegen.Call(DecimalFunctionsProxy::Floor,
-                                        {val.GetValue()});
+    llvm::Value *raw_ret =
+        codegen.Call(DecimalFunctionsProxy::Floor, {val.GetValue()});
     return Value{Integer::Instance(), raw_ret};
   }
+};
 
+struct Sqrt : public TypeSystem::UnaryOperator {
+  bool SupportsType(const Type &type) const override {
+    return type.GetSqlType() == Decimal::Instance();
+  }
+
+  Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
+    return Decimal::Instance();
+  }
+
+  Value DoWork(CodeGen &codegen, const Value &val) const override {
+    llvm::Value *raw_ret =
+        codegen.Call(DecimalFunctionsProxy::Sqrt, {val.GetValue()});
+    return Value{Decimal::Instance(), raw_ret, nullptr, nullptr};
+  }
 };
 
 // Addition
@@ -415,8 +430,8 @@ static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
 Decimal::Decimal()
     : SqlType(peloton::type::TypeId::DECIMAL),
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
-                   kComparisonTable, kUnaryOperatorTable,
-                   kBinaryOperatorTable, kNaryOperatorTable) {}
+                   kComparisonTable, kUnaryOperatorTable, kBinaryOperatorTable,
+                   kNaryOperatorTable) {}
 
 Value Decimal::GetMinValue(CodeGen &codegen) const {
   auto *raw_val = codegen.ConstDouble(peloton::type::PELOTON_DECIMAL_MIN);
