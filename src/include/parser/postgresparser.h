@@ -12,9 +12,9 @@
 
 #pragma once
 
-#include "parser/statements.h"
-#include "parser/pg_query.h"
 #include "parser/parsenodes.h"
+#include "parser/pg_query.h"
+#include "parser/statements.h"
 #include "type/types.h"
 
 namespace peloton {
@@ -57,30 +57,39 @@ class PostgresParser {
   // Helper Functions
   //===--------------------------------------------------------------------===//
 
-  static FKConstrActionType CharToActionType(char &type) {
+  static FKConstrActionType CharToActionType(char& type) {
     switch (type) {
-      case 'a':return FKConstrActionType::NOACTION;
-      case 'r':return FKConstrActionType::RESTRICT;
-      case 'c':return FKConstrActionType::CASCADE;
-      case 'n':return FKConstrActionType::SETNULL;
-      case 'd':return FKConstrActionType::SETDEFAULT;
-      default:return FKConstrActionType::NOACTION;
+      case 'a':
+        return FKConstrActionType::NOACTION;
+      case 'r':
+        return FKConstrActionType::RESTRICT;
+      case 'c':
+        return FKConstrActionType::CASCADE;
+      case 'n':
+        return FKConstrActionType::SETNULL;
+      case 'd':
+        return FKConstrActionType::SETDEFAULT;
+      default:
+        return FKConstrActionType::NOACTION;
     }
   }
 
-  static FKConstrMatchType CharToMatchType(char &type) {
+  static FKConstrMatchType CharToMatchType(char& type) {
     switch (type) {
-      case 'f':return FKConstrMatchType::FULL;
-      case 'p':return FKConstrMatchType::PARTIAL;
-      case 's':return FKConstrMatchType::SIMPLE;
-      default:return FKConstrMatchType::SIMPLE;
+      case 'f':
+        return FKConstrMatchType::FULL;
+      case 'p':
+        return FKConstrMatchType::PARTIAL;
+      case 's':
+        return FKConstrMatchType::SIMPLE;
+      default:
+        return FKConstrMatchType::SIMPLE;
     }
   }
 
   static bool IsAggregateFunction(std::string& fun_name) {
-    if (fun_name == "min" || fun_name == "max" ||
-        fun_name == "count" || fun_name == "avg" ||
-        fun_name == "sum")
+    if (fun_name == "min" || fun_name == "max" || fun_name == "count" ||
+        fun_name == "avg" || fun_name == "sum")
       return true;
     return false;
   }
@@ -90,8 +99,8 @@ class PostgresParser {
   //===--------------------------------------------------------------------===//
 
   // transform helper for internal parse tree
-  static parser::SQLStatementList*
-    PgQueryInternalParsetreeTransform(PgQueryInternalParsetreeAndError stmt);
+  static parser::SQLStatementList* PgQueryInternalParsetreeTransform(
+      PgQueryInternalParsetreeAndError stmt);
 
   // transform helper for Alias parsenodes
   static std::string AliasTransform(Alias* root);
@@ -109,7 +118,8 @@ class PostgresParser {
   static parser::TableRef* FromTransform(SelectStmt* root);
 
   // transform helper for select targets
-  static std::vector<std::unique_ptr<expression::AbstractExpression>>* TargetTransform(List* root);
+  static std::vector<std::unique_ptr<expression::AbstractExpression>>*
+  TargetTransform(List* root);
 
   // transform helper for all expr nodes
   static expression::AbstractExpression* ExprTransform(Node* root);
@@ -119,6 +129,9 @@ class PostgresParser {
 
   // transform helper for BoolExpr nodes
   static expression::AbstractExpression* BoolExprTransform(BoolExpr* root);
+
+  // transform helper for NullTest nodes
+  static expression::AbstractExpression* NullTestTransform(NullTest* root);
 
   // transform helper for where clauses
   static expression::AbstractExpression* WhereTransform(Node* root);
@@ -169,7 +182,8 @@ class PostgresParser {
   static std::vector<std::string>* ColumnNameTransform(List* root);
 
   // transform helper for ListsTransform (insert multiple rows)
-  static std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>>*
+  static std::vector<
+      std::vector<std::unique_ptr<expression::AbstractExpression>>>*
   ValueListsTransform(List* root);
 
   // transform helper for insert statements
@@ -191,7 +205,8 @@ class PostgresParser {
   static parser::UpdateStatement* UpdateTransform(UpdateStmt* update_stmt);
 
   // transform helper for update statement
-  static std::vector<std::unique_ptr<parser::UpdateClause>>* UpdateTargetTransform(List* root);
+  static std::vector<std::unique_ptr<parser::UpdateClause>>*
+  UpdateTargetTransform(List* root);
 
   // transform helper for drop statement
   static parser::DropStatement* DropTransform(DropStmt* root);
@@ -215,7 +230,8 @@ class PostgresParser {
   // transform helper for constant values
   static expression::AbstractExpression* ValueTransform(value val);
 
-  static std::vector<std::unique_ptr<expression::AbstractExpression>> ParamListTransform(List* root);
+  static std::vector<std::unique_ptr<expression::AbstractExpression>>
+  ParamListTransform(List* root);
 
   // transform helper for execute statement
   static parser::PrepareStatement* PrepareTransform(PrepareStmt* root);

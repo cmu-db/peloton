@@ -79,6 +79,31 @@ void CreateAndLoadTable5() {
       "i CHAR, j VARCHAR, k VARBINARY, l BOOLEAN);");
 }
 
+void CreateAndLoadTable6() {
+  // Create a table first
+  TestingSQLUtil::ExecuteSQLQuery(
+      "CREATE TABLE test6(a INT, b INT, c INT);");
+
+  // Insert tuples into table
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test6 VALUES (1, 22, 333);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test6 VALUES (2, 11, 000);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test6 VALUES (3, 33, 444);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test6 VALUES (4, 00, 555);");
+}
+
+void CreateAndLoadTable7() {
+  // Create a table first
+  TestingSQLUtil::ExecuteSQLQuery(
+      "CREATE TABLE test7(a INT, b INT, c INT);");
+
+  // Insert tuples into table
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test7 VALUES (99, 5, 888);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test7 VALUES (88, 6, 777);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test7 VALUES (77, 7, 666);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test7 VALUES (55, 8, 999);");
+}
+
+
 TEST_F(InsertSQLTests, InsertOneValue) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -402,6 +427,81 @@ TEST_F(InsertSQLTests, InsertIntoSelectSimpleAllType) {
   EXPECT_EQ("b", TestingSQLUtil::GetResultValueAsString(result, 8));
   EXPECT_EQ('2', TestingSQLUtil::GetResultValueAsString(result, 9).at(0));
   EXPECT_EQ("false", TestingSQLUtil::GetResultValueAsString(result, 10));
+
+  // free the database just created
+  txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+}
+
+TEST_F(InsertSQLTests, InsertIntoSelectColumn) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+
+  CreateAndLoadTable6();
+  CreateAndLoadTable7();
+
+  std::vector<StatementResult> result;
+  std::vector<FieldInfo> tuple_descriptor;
+  std::string error_message;
+  int rows_changed;
+  std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
+      new optimizer::Optimizer());
+
+  // TEST CASE 1
+  std::string query_1("INSERT INTO test6 SELECT b,a,c FROM test7;");
+
+  txn = txn_manager.BeginTransaction();
+  auto plan =
+      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query_1, txn);
+  txn_manager.CommitTransaction(txn);
+  EXPECT_EQ(plan->GetPlanNodeType(), PlanNodeType::INSERT);
+
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(optimizer, query_1, result,
+                                               tuple_descriptor, rows_changed,
+                                               error_message);
+
+  EXPECT_EQ(4, rows_changed);
+
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
+      optimizer, "SELECT * FROM test6 WHERE a=8", result, tuple_descriptor,
+      rows_changed, error_message);
+  EXPECT_EQ(3, result.size());
+  EXPECT_EQ("8", TestingSQLUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("55", TestingSQLUtil::GetResultValueAsString(result, 1));
+  EXPECT_EQ("999", TestingSQLUtil::GetResultValueAsString(result, 2));
+
+  // TEST CASE 2
+  std::string query_2("INSERT INTO test7 SELECT * FROM test6 WHERE a=1;");
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(optimizer, query_2, result,
+                                               tuple_descriptor, rows_changed,
+                                               error_message);
+  EXPECT_EQ(1, rows_changed);
+
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
+      optimizer, "SELECT * FROM test7 WHERE a=1", result, tuple_descriptor,
+      rows_changed, error_message);
+  EXPECT_EQ(3, result.size());
+  EXPECT_EQ("1", TestingSQLUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("22", TestingSQLUtil::GetResultValueAsString(result, 1));
+  EXPECT_EQ("333", TestingSQLUtil::GetResultValueAsString(result, 2));
+
+  // TEST CASE 3
+  std::string query_3("INSERT INTO test7 SELECT b,a,c FROM test6 WHERE a=2;");
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(optimizer, query_3, result,
+                                               tuple_descriptor, rows_changed,
+                                               error_message);
+  EXPECT_EQ(1, rows_changed);
+
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
+      optimizer, "SELECT * FROM test7 WHERE a=11", result, tuple_descriptor,
+      rows_changed, error_message);
+  EXPECT_EQ(3, result.size());
+  EXPECT_EQ("11", TestingSQLUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("2", TestingSQLUtil::GetResultValueAsString(result, 1));
+  EXPECT_EQ("0", TestingSQLUtil::GetResultValueAsString(result, 2));
 
   // free the database just created
   txn = txn_manager.BeginTransaction();

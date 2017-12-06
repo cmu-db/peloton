@@ -23,12 +23,12 @@
 #include <unordered_set>
 #include <vector>
 
-#include "type/type_id.h"
 #include "parser/pg_trigger.h"
+#include "type/type_id.h"
 
-#include "unistd.h"
 #include "common/logger.h"
 #include "common/macros.h"
+#include "unistd.h"
 namespace peloton {
 
 // For all of the enums defined in this header, we will
@@ -147,8 +147,10 @@ enum class ExpressionType {
   OPERATOR_CAST = 7,
   // logical not operator
   OPERATOR_NOT = 8,
-  // is null test.
-  OPERATOR_IS_NULL = 9,
+  // is null operator
+  OPERATOR_IS_NULL = 21,
+  // is not null operator
+  OPERATOR_IS_NOT_NULL = 22,
   // exists test.
   OPERATOR_EXISTS = 18,
   OPERATOR_UNARY_MINUS = 60,
@@ -1031,6 +1033,7 @@ enum class OperatorId : uint32_t {
   Substr,
   CharLength,
   OctetLength,
+  Length,
   Repeat,
   Replace,
   LTrim,
