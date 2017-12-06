@@ -26,6 +26,8 @@ DEFINE_METHOD(peloton::codegen, RuntimeFunctions, GetTileGroup);
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, GetTileGroupLayout);
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, ThrowDivideByZeroException);
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, ThrowOverflowException);
+DEFINE_METHOD(peloton::codegen, RuntimeFunctions, NewTaskInfos);
+DEFINE_METHOD(peloton::codegen, RuntimeFunctions, DeleteTaskInfos);
 
 }  // namespace codegen
 }  // namespace peloton

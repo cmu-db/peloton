@@ -47,6 +47,9 @@ class TableScanTranslator : public OperatorTranslator {
   // The method that produces new tuples
   void Produce() const override;
 
+  void TaskProduce(llvm::Value *tile_group_begin,
+                   llvm::Value *tile_group_end) const;
+
   // Scans are leaves in the query plan and, hence, do not consume tuples
   void Consume(ConsumerContext &, RowBatch &) const override {}
   void Consume(ConsumerContext &, RowBatch::Row &) const override {}
@@ -151,6 +154,10 @@ class TableScanTranslator : public OperatorTranslator {
 
   // The ID of the selection vector in runtime state
   RuntimeState::StateID selection_vector_id_;
+
+  RuntimeState::StateID task_infos_id_;
+
+  RuntimeState::StateID count_down_id_;
 
   // The code-generating table instance
   codegen::Table table_;

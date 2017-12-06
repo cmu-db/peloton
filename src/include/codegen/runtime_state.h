@@ -68,9 +68,6 @@ class RuntimeState {
   // Construct the equivalent LLVM type that represents this runtime state
   llvm::Type *FinalizeType(CodeGen &codegen);
 
-  // Create/initialize all registered state that is stack-local
-  void CreateLocalState(CodeGen &codegen);
-
  private:
   // Little struct to track information of elements in the runtime state
   struct StateInfo {
@@ -90,7 +87,7 @@ class RuntimeState {
 
  private:
   // All the states we've allocated
-  std::vector<RuntimeState::StateInfo> state_slots_;
+  mutable std::vector<RuntimeState::StateInfo> state_slots_;
 
   // The LLVM type of this runtime state. This type is cached for re-use.
   llvm::Type *constructed_type_;

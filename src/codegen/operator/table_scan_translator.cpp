@@ -12,8 +12,14 @@
 
 #include "codegen/operator/table_scan_translator.h"
 
+#include "codegen/function_builder.h"
 #include "codegen/lang/if.h"
+#include "codegen/lang/loop.h"
 #include "codegen/proxy/catalog_proxy.h"
+#include "codegen/proxy/count_down_proxy.h"
+#include "codegen/proxy/executor_thread_pool_proxy.h"
+#include "codegen/proxy/runtime_functions_proxy.h"
+#include "codegen/proxy/task_info_proxy.h"
 #include "codegen/proxy/transaction_runtime_proxy.h"
 #include "codegen/type/boolean_type.h"
 #include "planner/seq_scan_plan.h"
@@ -50,25 +56,31 @@ TableScanTranslator::TableScanTranslator(const planner::SeqScanPlan &scan,
 
   auto &codegen = GetCodeGen();
   auto &runtime_state = context.GetRuntimeState();
+
   selection_vector_id_ = runtime_state.RegisterState(
       "scanSelVec",
       codegen.ArrayType(codegen.Int32Type(), Vector::kDefaultVectorSize), true);
 
-  LOG_TRACE("Finished constructing TableScanTranslator ...");
+  auto task_info_type = TaskInfoProxy::GetType(codegen);
+  task_infos_id_ = runtime_state.RegisterState("task_infos",
+                                               task_info_type->getPointerTo());
+
+  count_down_id_ = runtime_state.RegisterState(
+            "scanCountDown", CountDownProxy::GetType(codegen), false);
+
+  LOG_DEBUG("Finished constructing TableScanTranslator ...");
 }
 
-// Produce!
-void TableScanTranslator::Produce() const {
+void TableScanTranslator::TaskProduce(llvm::Value *tile_group_begin,
+                                      llvm::Value *tile_group_end) const {
   auto &codegen = GetCodeGen();
   auto &table = GetTable();
 
-  LOG_TRACE("TableScan on [%u] starting to produce tuples ...", table.GetOid());
-
   // Get the table instance from the database
-  llvm::Value *catalog_ptr = GetCatalogPtr();
-  llvm::Value *db_oid = codegen.Const32(table.GetDatabaseOid());
-  llvm::Value *table_oid = codegen.Const32(table.GetOid());
-  llvm::Value *table_ptr = codegen.Call(StorageManagerProxy::GetTableWithOid,
+  llvm::Value* catalog_ptr = GetCatalogPtr();
+  llvm::Value* db_oid = codegen.Const32(table.GetDatabaseOid());
+  llvm::Value* table_oid = codegen.Const32(table.GetOid());
+  llvm::Value* table_ptr = codegen.Call(StorageManagerProxy::GetTableWithOid,
                                         {catalog_ptr, db_oid, table_oid});
 
   // The selection vector for the scan
@@ -77,9 +89,133 @@ void TableScanTranslator::Produce() const {
 
   // Generate the scan
   ScanConsumer scan_consumer{*this, sel_vec};
-  table_.GenerateScan(codegen, table_ptr, sel_vec.GetCapacity(), scan_consumer);
+  table_.GenerateScan(codegen, table_ptr, tile_group_begin, tile_group_end,
+                      sel_vec.GetCapacity(), scan_consumer);
+}
 
-  LOG_TRACE("TableScan on [%u] finished producing tuples ...", table.GetOid());
+// Produce!
+void TableScanTranslator::Produce() const {
+  auto &codegen = GetCodeGen();
+  auto &code_context = codegen.GetCodeContext();
+  auto &compilation_context = GetCompilationContext();
+  auto &runtime_state = compilation_context.GetRuntimeState();
+
+  llvm::Value *catalog_ptr = GetCatalogPtr();
+  llvm::Value *db_oid = codegen.Const32(GetTable().GetDatabaseOid());
+  llvm::Value *table_oid = codegen.Const32(GetTable().GetOid());
+  llvm::Value *table_ptr = codegen.Call(StorageManagerProxy::GetTableWithOid,
+                                        {catalog_ptr, db_oid, table_oid});
+  llvm::Value *ntile_groups = table_.GetTileGroupCount(codegen, table_ptr);
+  codegen.CallPrintf("Number of tilegroups = %d\n", {ntile_groups});
+
+  LOG_DEBUG("TableScan on [%u] starting to produce tuples ...",
+            GetTable().GetOid());
+
+  if (!compilation_context.MultithreadOn()) {
+    TaskProduce(codegen.Const64(0), ntile_groups);
+
+  } else {
+    // Multithread On!
+
+    // Build the task function.
+    // void task(RuntimeState *runtime_state, TaskInfo *task_info);
+    FunctionBuilder task(code_context, "task", codegen.VoidType(), {
+        {"runtime_state", codegen.GetState()->getType()},
+        {"task_info", TaskInfoProxy::GetType(codegen)->getPointerTo()}
+    });
+    {
+      auto task_info_ptr = task.GetArgumentByPosition(1);
+      auto task_id = codegen.Call(TaskInfoProxy::GetTaskId, {task_info_ptr});
+      auto tile_group_begin =
+          codegen.Call(TaskInfoProxy::GetBegin, {task_info_ptr});
+      auto tile_group_end =
+          codegen.Call(TaskInfoProxy::GetEnd, {task_info_ptr});
+      codegen.CallPrintf("I am task %d [%zu, %zu)!\n",
+                         {task_id, tile_group_begin, tile_group_end});
+
+      // Scan the designated portion of the table.
+      TaskProduce(tile_group_begin, tile_group_end);
+
+      // Decrease the counter.
+      auto count_down_ptr = runtime_state.LoadStatePtr(codegen, count_down_id_);
+      codegen.Call(CountDownProxy::Decrease, {count_down_ptr});
+
+      task.ReturnAndFinish();
+    }
+    llvm::Function *task_func = task.GetFunction();
+
+    // TODO(zhixunt): This is a tunable parameter.
+    llvm::Value *ntile_groups_per_task = codegen.Const64(1);
+    codegen.CallPrintf("Number of tilegroups per task = %zu\n",
+                       {ntile_groups_per_task});
+
+    llvm::Value *ntasks = codegen.Call(RuntimeFunctionsProxy::NewTaskInfos, {
+        ntile_groups_per_task,
+        ntile_groups,
+        runtime_state.LoadStatePtr(codegen, task_infos_id_)
+    });
+
+    compilation_context.ParallelInit(ntasks);
+
+    // Initialize the CountDown.
+    auto count_down_ptr = runtime_state.LoadStatePtr(codegen, count_down_id_);
+    codegen.Call(CountDownProxy::Init, {count_down_ptr, ntasks});
+
+    lang::Loop loop(
+        codegen,
+        codegen->CreateICmpSLT(codegen.Const32(0), ntasks),
+        {{"task_id", codegen.Const32(0)}}
+    );
+    {
+      llvm::Value *curr_i = loop.GetLoopVar(0);
+      llvm::Value *next_i = codegen->CreateAdd(curr_i, codegen.Const32(1));
+
+      auto task_info_ptr = codegen->CreateGEP(
+          runtime_state.LoadStateValue(codegen, task_infos_id_), curr_i);
+
+      // auto thread_pool = codegen::ExecutorThreadPool::GetInstance();
+      auto thread_pool_ptr = codegen.Call(
+          ExecutorThreadPoolProxy::GetInstance, {}
+      );
+
+      // using task_type = void (*)(char *ptr, TaskInfo *);
+      auto task_info_type = TaskInfoProxy::GetType(codegen);
+      auto task_func_type = llvm::FunctionType::get(
+          codegen.VoidType(), {
+              codegen.CharPtrType(),
+              task_info_type->getPointerTo()
+          },
+          false
+      )->getPointerTo();
+
+      // thread_pool->SubmitTask(
+      //   (char *)runtime_state,
+      //   task_info,
+      //   (task_type)task
+      // );
+      codegen.Call(codegen::ExecutorThreadPoolProxy::SubmitTask, {
+          thread_pool_ptr,
+          codegen->CreatePointerCast(codegen.GetState(), codegen.CharPtrType()),
+          task_info_ptr,
+          codegen->CreatePointerCast(task_func, task_func_type)
+      });
+
+      loop.LoopEnd(codegen->CreateICmpSLT(next_i, ntasks), {next_i});
+    }
+
+    codegen.Call(CountDownProxy::Wait, {count_down_ptr});
+
+    compilation_context.ParallelDestroy(ntasks);
+
+    codegen.Call(CountDownProxy::Destroy, {count_down_ptr});
+
+    codegen.Call(RuntimeFunctionsProxy::DeleteTaskInfos, {
+        runtime_state.LoadStateValue(codegen, task_infos_id_), ntasks
+    });
+  }
+
+  LOG_DEBUG("TableScan on [%u] finished producing tuples ...",
+            GetTable().GetOid());
 }
 
 // Get the stringified name of this scan

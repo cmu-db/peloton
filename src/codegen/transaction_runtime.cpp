@@ -57,6 +57,7 @@ uint32_t TransactionRuntime::PerformVectorizedRead(
 
     // Perform the read
     bool can_read = txn_manager.PerformRead(&txn, location);
+//    bool can_read = true;
 
     // Update the selection vector and output position
     selection_vector[out_idx] = selection_vector[idx];

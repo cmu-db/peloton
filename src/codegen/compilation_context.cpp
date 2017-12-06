@@ -13,6 +13,7 @@
 #include "codegen/compilation_context.h"
 
 #include "codegen/function_builder.h"
+#include "codegen/multi_thread/multithread_supported.h"
 #include "codegen/proxy/catalog_proxy.h"
 #include "codegen/proxy/transaction_proxy.h"
 #include "codegen/proxy/executor_context_proxy.h"
@@ -25,7 +26,8 @@ namespace codegen {
 // Constructor
 CompilationContext::CompilationContext(Query &query,
                                        QueryResultConsumer &result_consumer)
-    : query_(query),
+    : multithread_on_(MultithreadSupported(query.GetPlan())),
+      query_(query),
       result_consumer_(result_consumer),
       codegen_(query_.GetCodeContext()) {
   // Allocate a catalog and transaction instance in the runtime state
@@ -117,6 +119,42 @@ void CompilationContext::GeneratePlan(QueryCompiler::CompileStats *stats) {
   }
 }
 
+void CompilationContext::PushParallelInitCallback(
+    std::function<void(llvm::Value*)> callback) {
+  parallal_init_callbacks_.push_back(callback);
+}
+
+std::vector<std::function<void(llvm::Value *)>>
+CompilationContext::PopParallelInitCallbacks() {
+  std::vector<std::function<void(llvm::Value *)>> callbacks
+      = std::move(parallal_init_callbacks_);
+  return callbacks;
+}
+
+void CompilationContext::ParallelInit(llvm::Value* ntasks) {
+  for (auto &callback : PopParallelInitCallbacks()) {
+    callback(ntasks);
+  }
+}
+
+void CompilationContext::PushParallelDestroyCallback(
+    std::function<void(llvm::Value *)> callback) {
+  parallel_destroy_callbacks_.push_back(callback);
+}
+
+std::vector<std::function<void(llvm::Value *)>>
+CompilationContext::PopParallelDestroyCallbacks() {
+  std::vector<std::function<void(llvm::Value *)>> callbacks
+      = std::move(parallel_destroy_callbacks_);
+  return callbacks;
+}
+
+void CompilationContext::ParallelDestroy(llvm::Value* ntasks) {
+  for (auto &callback : PopParallelDestroyCallbacks()) {
+    callback(ntasks);
+  }
+}
+
 // Generate any helper functions that the query needs
 void CompilationContext::GenerateHelperFunctions() {
   // Allow each operator to initialize its state
@@ -183,8 +221,9 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
       codegen_.VoidType(),
       {{"runtimeState", runtime_state.FinalizeType(codegen_)->getPointerTo()}}};
 
-  // Create all local state
-  runtime_state.CreateLocalState(codegen_);
+  PushParallelInitCallback([&](llvm::Value *ntasks) {
+    result_consumer_.InitializeParallelState(*this, ntasks);
+  });
 
   // Generate the primary plan logic
   Produce(root);

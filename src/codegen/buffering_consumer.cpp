@@ -17,6 +17,7 @@
 #include "codegen/proxy/value_proxy.h"
 #include "codegen/proxy/values_runtime_proxy.h"
 #include "codegen/type/sql_type.h"
+#include "common/logger.h"
 #include "planner/binding_context.h"
 
 namespace peloton {
@@ -44,8 +45,12 @@ WrappedTuple &WrappedTuple::operator=(const WrappedTuple &o) {
 // BufferTuple() Proxy
 //===----------------------------------------------------------------------===//
 
-PROXY(BufferingConsumer) { DECLARE_METHOD(BufferTuple); };
+PROXY(BufferingConsumer) {
+  DECLARE_METHOD(SetNumTasks);
+  DECLARE_METHOD(BufferTuple);
+};
 
+DEFINE_METHOD(peloton::codegen, BufferingConsumer, SetNumTasks);
 DEFINE_METHOD(peloton::codegen, BufferingConsumer, BufferTuple);
 
 //===----------------------------------------------------------------------===//
@@ -53,19 +58,24 @@ DEFINE_METHOD(peloton::codegen, BufferingConsumer, BufferTuple);
 //===----------------------------------------------------------------------===//
 
 BufferingConsumer::BufferingConsumer(const std::vector<oid_t> &cols,
-                                     planner::BindingContext &context) {
+                                     planner::BindingContext &context)
+    : output_chunks_(1), state(&output_chunks_) {
   for (oid_t col_id : cols) {
     output_ais_.push_back(context.Find(col_id));
   }
-  state.output = &tuples_;
+}
+
+void BufferingConsumer::SetNumTasks(char *state, int32_t ntasks) {
+  auto buffer_state = reinterpret_cast<BufferingState *>(state);
+  buffer_state->output->resize(ntasks);
 }
 
 // Append the array of values (i.e., a tuple) into the consumer's buffer of
 // output tuples.
 void BufferingConsumer::BufferTuple(char *state, char *tuple,
-                                    uint32_t num_cols) {
+                                    int32_t task_id, uint32_t num_cols) {
   BufferingState *buffer_state = reinterpret_cast<BufferingState *>(state);
-  buffer_state->output->emplace_back(
+  buffer_state->output->at(task_id).emplace_back(
       reinterpret_cast<peloton::type::Value *>(tuple), num_cols);
 }
 
@@ -81,6 +91,16 @@ void BufferingConsumer::Prepare(CompilationContext &ctx) {
   auto *value_type = ValueProxy::GetType(codegen);
   tuple_output_state_id_ = runtime_state.RegisterState(
       "output", codegen.ArrayType(value_type, output_ais_.size()), true);
+}
+
+void BufferingConsumer::InitializeParallelState(
+    CompilationContext &compilation_context, llvm::Value *ntasks) {
+  auto &codegen = compilation_context.GetCodeGen();
+  auto &runtime_state = compilation_context.GetRuntimeState();
+  codegen.Call(BufferingConsumerProxy::SetNumTasks, {
+      runtime_state.LoadStateValue(codegen, consumer_state_id_),
+      ntasks
+  });
 }
 
 // For each output attribute, we write out the attribute's value into the
@@ -135,11 +155,27 @@ void BufferingConsumer::ConsumeResult(ConsumerContext &ctx,
     codegen.CallFunc(output_func, args);
   }
 
+  llvm::Value *task_id = ctx.GetTaskId();
+
   // Append the tuple to the output buffer (by calling BufferTuple(...))
   auto *consumer_state = GetStateValue(ctx, consumer_state_id_);
   std::vector<llvm::Value *> args = {consumer_state, tuple_buffer_,
+                                     task_id,
                                      codegen.Const32(output_ais_.size())};
   codegen.Call(BufferingConsumerProxy::BufferTuple, args);
+}
+
+const std::vector<WrappedTuple> &BufferingConsumer::GetOutputTuples() const {
+  if (!merged) {
+    LOG_DEBUG("Merging result tuples...");
+    for (auto &chunk : output_chunks_) {
+      for (auto &tuple : chunk) {
+        tuples_.push_back(tuple);
+      }
+    }
+    merged = true;
+  }
+  return tuples_;
 }
 
 }  // namespace codegen

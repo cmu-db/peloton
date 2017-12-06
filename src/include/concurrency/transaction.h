@@ -76,11 +76,13 @@ class Transaction : public Printable {
   inline void SetCommitId(const cid_t commit_id) { commit_id_ = commit_id; }
 
   void RecordCreate(oid_t database_oid, oid_t table_oid, oid_t index_oid) {
+    std::lock_guard<std::mutex> lock(mu_);
     rw_object_set_.emplace_back(database_oid, table_oid, index_oid,
                                 DDLType::CREATE);
   }
 
   void RecordDrop(oid_t database_oid, oid_t table_oid, oid_t index_oid) {
+    std::lock_guard<std::mutex> lock(mu_);
     rw_object_set_.emplace_back(database_oid, table_oid, index_oid,
                                 DDLType::DROP);
   }
@@ -188,6 +190,10 @@ class Transaction : public Printable {
   IsolationLevelType isolation_level_;
 
   std::unique_ptr<trigger::TriggerSet> on_commit_triggers_;
+
+  // TODO(zhixunt): The key is to make the class Transaction concurrent!
+  // A mutex isn't necessarily the best way!
+  std::mutex mu_;
 };
 
 }  // namespace concurrency

@@ -15,6 +15,7 @@
 #include <stdint.h>
 
 #include "type/types.h"
+#include "multi_thread/task_info.h"
 
 namespace peloton {
 
@@ -63,6 +64,11 @@ class RuntimeFunctions {
   static void ThrowDivideByZeroException();
 
   static void ThrowOverflowException();
+
+  static int32_t NewTaskInfos(int64_t task_size, int64_t total_size,
+                              TaskInfo **task_infos);
+
+  static void DeleteTaskInfos(TaskInfo *task_infos, int32_t ntasks);
 };
 
 }  // namespace codegen

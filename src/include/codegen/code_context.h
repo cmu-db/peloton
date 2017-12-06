@@ -44,6 +44,7 @@ class CodeContext {
   friend class CodeGen;
   friend class FunctionBuilder;
   friend class PelotonMM;
+  friend class ConsumerContext;
 
  public:
   using FuncPtr = void *;

@@ -52,7 +52,9 @@ class WrappedTuple
 class BufferingConsumer : public QueryResultConsumer {
  public:
   struct BufferingState {
-    std::vector<WrappedTuple> *output;
+    explicit BufferingState(std::vector<std::vector<WrappedTuple>> *output)
+        : output(output) {}
+    std::vector<std::vector<WrappedTuple>> *output;
   };
 
   // Constructor
@@ -61,6 +63,8 @@ class BufferingConsumer : public QueryResultConsumer {
 
   void Prepare(CompilationContext &compilation_context) override;
   void InitializeState(CompilationContext &) override {}
+  void InitializeParallelState(CompilationContext &compilation_context,
+                               llvm::Value *ntasks) override;
   void TearDownState(CompilationContext &) override {}
   void ConsumeResult(ConsumerContext &ctx, RowBatch::Row &row) const override;
 
@@ -70,8 +74,11 @@ class BufferingConsumer : public QueryResultConsumer {
     return runtime_state.LoadStateValue(ctx.GetCodeGen(), id);
   }
 
+  // Setup after acknowleding number of tasks.
+  static void SetNumTasks(char *state, int32_t ntasks);
+
   // Called from compiled query code to buffer the tuple
-  static void BufferTuple(char *state, char *tuple, uint32_t num_cols);
+  static void BufferTuple(char *state, char *tuple, int32_t task_id, uint32_t num_cols);
 
   //===--------------------------------------------------------------------===//
   // ACCESSORS
@@ -79,14 +86,18 @@ class BufferingConsumer : public QueryResultConsumer {
 
   BufferingState *GetState() { return &state; }
 
-  const std::vector<WrappedTuple> &GetOutputTuples() const { return tuples_; }
+  const std::vector<WrappedTuple> &GetOutputTuples() const;
 
  private:
   // The attributes we want to output
   std::vector<const planner::AttributeInfo *> output_ais_;
 
-  // Buffered output tuples
-  std::vector<WrappedTuple> tuples_;
+  // Output target for all tasks.
+  std::vector<std::vector<WrappedTuple>> output_chunks_;
+
+  // Merged output.
+  mutable bool merged = false;
+  mutable std::vector<WrappedTuple> tuples_;
 
   // Running buffering state
   BufferingState state;

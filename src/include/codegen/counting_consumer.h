@@ -24,6 +24,7 @@ class CountingConsumer : public codegen::QueryResultConsumer {
  public:
   void Prepare(codegen::CompilationContext &compilation_context) override;
   void InitializeState(codegen::CompilationContext &context) override;
+  void InitializeParallelState(CompilationContext &, llvm::Value *) override {}
   void ConsumeResult(codegen::ConsumerContext &context,
                      codegen::RowBatch::Row &row) const override;
   void TearDownState(codegen::CompilationContext &) override {}
