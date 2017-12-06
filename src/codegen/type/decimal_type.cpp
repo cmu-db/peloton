@@ -171,11 +171,10 @@ struct Floor : public TypeSystem::UnaryOperator {
   }
 
   Value DoWork(CodeGen &codegen, const Value &val) const override {
-    llvm::Value *raw_ret = codegen.Call(DecimalFunctionsProxy::Floor,
-                                        {val.GetValue()});
+    llvm::Value *raw_ret =
+        codegen.Call(DecimalFunctionsProxy::Floor, {val.GetValue()});
     return Value{Integer::Instance(), raw_ret};
   }
-
 };
 
 // Addition
@@ -366,8 +365,8 @@ struct Round : public TypeSystem::UnaryOperator {
   }
 
   Value DoWork(CodeGen &codegen, const Value &val) const override {
-    llvm::Value *raw_ret = codegen.Call(DecimalFunctionsProxy::Round,
-                                        {val.GetValue()});
+    llvm::Value *raw_ret =
+        codegen.Call(DecimalFunctionsProxy::Round, {val.GetValue()});
     return Value{Decimal::Instance(), raw_ret};
   }
 };
@@ -407,9 +406,8 @@ static Floor kFloorOp;
 static Round kRound;
 static std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {
     {OperatorId::Negation, kNegOp},
-		{OperatorId::Floor, kFloorOp},
-    {OperatorId::Round, kRound}
-};
+    {OperatorId::Floor, kFloorOp},
+    {OperatorId::Round, kRound}};
 
 // Binary operations
 static Add kAddOp;
@@ -437,8 +435,8 @@ static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
 Decimal::Decimal()
     : SqlType(peloton::type::TypeId::DECIMAL),
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
-                   kComparisonTable, kUnaryOperatorTable,
-                   kBinaryOperatorTable, kNaryOperatorTable) {}
+                   kComparisonTable, kUnaryOperatorTable, kBinaryOperatorTable,
+                   kNaryOperatorTable) {}
 
 Value Decimal::GetMinValue(CodeGen &codegen) const {
   auto *raw_val = codegen.ConstDouble(peloton::type::PELOTON_DECIMAL_MIN);

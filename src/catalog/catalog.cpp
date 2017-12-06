@@ -975,45 +975,45 @@ void Catalog::InitializeFunctions() {
                                             function::DecimalFunctions::Sqrt},
           txn);
       AddBuiltinFunction(
-              "floor", {type::TypeId::DECIMAL},
-              type::TypeId::DECIMAL, internal_lang,
-              "Floor", function::BuiltInFuncType{OperatorId::Floor,
-                                                function::DecimalFunctions::_Floor},
-              txn);
+          "floor", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL,
+          internal_lang, "Floor",
+          function::BuiltInFuncType{OperatorId::Floor,
+                                    function::DecimalFunctions::_Floor},
+          txn);
 
       /**
        * integer functions
        */
       AddBuiltinFunction(
-              "floor", {type::TypeId::INTEGER},
-              type::TypeId::DECIMAL, internal_lang,
-              "Floor", function::BuiltInFuncType{OperatorId::Floor,
-                                                 function::DecimalFunctions::_Floor},
-              txn);
+          "floor", {type::TypeId::INTEGER}, type::TypeId::DECIMAL,
+          internal_lang, "Floor",
+          function::BuiltInFuncType{OperatorId::Floor,
+                                    function::DecimalFunctions::_Floor},
+          txn);
       AddBuiltinFunction(
-              "floor", {type::TypeId::BIGINT},
-              type::TypeId::DECIMAL, internal_lang,
-              "Floor", function::BuiltInFuncType{OperatorId::Floor,
-                                                 function::DecimalFunctions::_Floor},
-              txn);
+          "floor", {type::TypeId::BIGINT}, type::TypeId::DECIMAL, internal_lang,
+          "Floor",
+          function::BuiltInFuncType{OperatorId::Floor,
+                                    function::DecimalFunctions::_Floor},
+          txn);
       AddBuiltinFunction(
-              "floor", {type::TypeId::TINYINT},
-              type::TypeId::DECIMAL, internal_lang,
-              "Floor", function::BuiltInFuncType{OperatorId::Floor,
-                                                 function::DecimalFunctions::_Floor},
-              txn);
+          "floor", {type::TypeId::TINYINT}, type::TypeId::DECIMAL,
+          internal_lang, "Floor",
+          function::BuiltInFuncType{OperatorId::Floor,
+                                    function::DecimalFunctions::_Floor},
+          txn);
       AddBuiltinFunction(
-              "floor", {type::TypeId::SMALLINT},
-              type::TypeId::DECIMAL, internal_lang,
-              "Floor", function::BuiltInFuncType{OperatorId::Floor,
-                                                 function::DecimalFunctions::_Floor},
-              txn);
+          "floor", {type::TypeId::SMALLINT}, type::TypeId::DECIMAL,
+          internal_lang, "Floor",
+          function::BuiltInFuncType{OperatorId::Floor,
+                                    function::DecimalFunctions::_Floor},
+          txn);
 
-
       AddBuiltinFunction(
-          "round", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL, internal_lang,
-          "Round", function::BuiltInFuncType{OperatorId::Round,
-                                            function::DecimalFunctions::_Round},
+          "round", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL,
+          internal_lang, "Round",
+          function::BuiltInFuncType{OperatorId::Round,
+                                    function::DecimalFunctions::_Round},
           txn);
 
       /**

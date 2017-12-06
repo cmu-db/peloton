@@ -32,7 +32,7 @@ type::Value DecimalFunctions::_Floor(const std::vector<type::Value> &args) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL);
   }
   double res;
-  switch(args[0].GetElementType()) {
+  switch (args[0].GetElementType()) {
     case type::TypeId::DECIMAL:
       res = Floor(args[0].GetAs<double>());
       break;
@@ -54,14 +54,10 @@ type::Value DecimalFunctions::_Floor(const std::vector<type::Value> &args) {
   return type::ValueFactory::GetDecimalValue(res);
 }
 
-double DecimalFunctions::Floor(const double val) {
-  return floor(val);
-}
+double DecimalFunctions::Floor(const double val) { return floor(val); }
 
 // Round to nearest integer
-double DecimalFunctions::Round(double arg) {
-	return round(arg);
-}
+double DecimalFunctions::Round(double arg) { return round(arg); }
 type::Value DecimalFunctions::_Round(const std::vector<type::Value> &args) {
   PL_ASSERT(args.size() == 1);
   if (args[0].IsNull()) {
