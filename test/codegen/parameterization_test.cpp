@@ -254,6 +254,39 @@ TEST_F(ParameterizationTest, ConstParameterWithConjunction) {
   EXPECT_EQ(type::CMP_TRUE, results_2[0].GetValue(2).CompareEquals(
                                 type::ValueFactory::GetDecimalValue(32)));
   EXPECT_EQ(true, cached);
+
+  // SELECT a, b, c FROM table where a >= 30 and b = null;
+  auto *a_col_exp_3 =
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
+  auto *const_30_exp_3 = new expression::ConstantValueExpression(
+      type::ValueFactory::GetIntegerValue(30));
+  auto *a_gt_30_3 = new expression::ComparisonExpression(
+      ExpressionType::COMPARE_GREATERTHANOREQUALTO, a_col_exp_3,
+      const_30_exp_3);
+
+  auto *b_col_exp_3 =
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 1);
+  auto *const_31_exp_3 = new expression::ConstantValueExpression(
+      type::ValueFactory::GetNullValueByType(peloton::type::TypeId::INTEGER));
+  auto *b_eq_31_3 = new expression::ComparisonExpression(
+      ExpressionType::COMPARE_EQUAL, b_col_exp_3, const_31_exp_3);
+
+  // a >= 30 AND b = null
+  auto *conj_eq_3 = new expression::ConjunctionExpression(
+      ExpressionType::CONJUNCTION_AND, b_eq_31_3, a_gt_30_3);
+
+  std::shared_ptr<planner::SeqScanPlan> scan_3{new planner::SeqScanPlan{
+      &GetTestTable(TestTableId()), conj_eq_3, {0, 1, 2}}};
+  planner::BindingContext context_3;
+  scan_3->PerformBinding(context_3);
+  codegen::BufferingConsumer buffer_3{{0, 1, 2}, context_3};
+
+  CompileAndExecuteCache(scan_3, buffer_3,
+                         reinterpret_cast<char *>(buffer_3.GetState()), cached);
+
+  const auto &results_3 = buffer_3.GetOutputTuples();
+  ASSERT_EQ(0, results_3.size());
+  EXPECT_EQ(false, cached);
 }
 
 // Tests whether parameterization works for conjuction with Param Value Exprs
@@ -307,7 +340,8 @@ TEST_F(ParameterizationTest, ParamParameterWithConjunction) {
   auto *param_30_exp_2 = new expression::ParameterValueExpression(0);
   type::Value param_a_2 = type::ValueFactory::GetIntegerValue(30);
   auto *a_gt_30_2 = new expression::ComparisonExpression(
-      ExpressionType::COMPARE_GREATERTHANOREQUALTO, a_col_exp_2, param_30_exp_2);
+      ExpressionType::COMPARE_GREATERTHANOREQUALTO, a_col_exp_2,
+      param_30_exp_2);
 
   auto *d_col_exp_2 =
       new expression::TupleValueExpression(type::TypeId::VARCHAR, 0, 3);
@@ -346,7 +380,8 @@ TEST_F(ParameterizationTest, ParamParameterWithConjunction) {
   auto *const_30_exp_3 = new expression::ConstantValueExpression(
       type::ValueFactory::GetIntegerValue(30));
   auto *a_gt_30_3 = new expression::ComparisonExpression(
-      ExpressionType::COMPARE_GREATERTHANOREQUALTO, a_col_exp_3, const_30_exp_3);
+      ExpressionType::COMPARE_GREATERTHANOREQUALTO, a_col_exp_3,
+      const_30_exp_3);
 
   auto *d_col_exp_3 =
       new expression::TupleValueExpression(type::TypeId::VARCHAR, 0, 3);
@@ -376,6 +411,46 @@ TEST_F(ParameterizationTest, ParamParameterWithConjunction) {
   EXPECT_EQ(type::CMP_TRUE, results_3[0].GetValue(0).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(30)));
   EXPECT_EQ(type::CMP_FALSE, results_3[0].GetValue(3).CompareEquals(
+                                 type::ValueFactory::GetVarcharValue("empty")));
+  EXPECT_EQ(true, cached);
+
+  // SELECT a, b, c FROM table where a >= ? and d != "empty";
+  auto *d_col_exp_4 =
+      new expression::TupleValueExpression(type::TypeId::VARCHAR, 0, 3);
+  auto *const_empty_exp_4 = new expression::ConstantValueExpression(
+      type::ValueFactory::GetVarcharValue("empty"));
+  auto *d_ne_str_4 = new expression::ComparisonExpression(
+      ExpressionType::COMPARE_NOTEQUAL, d_col_exp_4, const_empty_exp_4);
+
+  auto *a_col_exp_4 =
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
+  type::Value param_int_4 = type::ValueFactory::GetIntegerValue(30);
+  auto *param_int_exp_4 = new expression::ParameterValueExpression(0);
+  auto *a_gt_30_4 = new expression::ComparisonExpression(
+      ExpressionType::COMPARE_GREATERTHANOREQUALTO, a_col_exp_4,
+      param_int_exp_4);
+
+  // a >= 30 AND d != "empty"
+  auto *conj_eq_4 = new expression::ConjunctionExpression(
+      ExpressionType::CONJUNCTION_AND, a_gt_30_4, d_ne_str_4);
+
+  std::shared_ptr<planner::SeqScanPlan> scan_4{new planner::SeqScanPlan{
+      &GetTestTable(TestTableId()), conj_eq_4, {0, 1, 2, 3}}};
+  planner::BindingContext context_4;
+  scan_4->PerformBinding(context_4);
+  codegen::BufferingConsumer buffer_4{{0, 1, 2, 3}, context_4};
+
+  std::vector<type::Value> params_4 = {param_int_4};
+
+  CompileAndExecuteCache(scan_4, buffer_4,
+                         reinterpret_cast<char *>(buffer_4.GetState()),
+                         cached, &params_4);
+
+  const auto &results_4 = buffer_4.GetOutputTuples();
+  ASSERT_EQ(NumRowsInTestTable() - 3, results_3.size());
+  EXPECT_EQ(type::CMP_TRUE, results_4[0].GetValue(0).CompareEquals(
+                                type::ValueFactory::GetIntegerValue(30)));
+  EXPECT_EQ(type::CMP_FALSE, results_4[0].GetValue(3).CompareEquals(
                                  type::ValueFactory::GetVarcharValue("empty")));
   EXPECT_EQ(true, cached);
 }
