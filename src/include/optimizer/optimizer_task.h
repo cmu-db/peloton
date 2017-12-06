@@ -119,24 +119,24 @@ class OptimizeInputs : public OptimizerTask {
   OptimizeInputs(GroupExpression* group_expr,
                  std::shared_ptr<OptimizeContext> context)
       : OptimizerTask(context, OptimizerTaskType::OPTIMIZE_INPUTS),
-        group_expr_(group_expr) {
-    child_costs_.resize(group_expr->GetChildGroupIDs().size(), 0);
-  }
+        group_expr_(group_expr) {}
+
+  OptimizeInputs(OptimizeInputs* task)
+      : output_input_properties_(std::move(task->output_input_properties_)),
+        group_expr_(task->group_expr_), cur_total_cost_(task->cur_total_cost_),
+        cur_child_idx_(task->cur_child_idx_),
+        cur_prop_pair_idx_(task->cur_prop_pair_idx_) {}
 
   virtual void execute() override;
 
-  double CostSoFar() {
-    double cost = local_cost_;
-    for (auto &c_cost : child_costs_)
-      cost += c_cost;
-    return cost;
-  }
-
  private:
+  std::vector<std::pair<std::shared_ptr<PropertySet>,
+                        std::vector<std::shared_ptr<PropertySet>>>> output_input_properties_;
   GroupExpression* group_expr_;
-  std::vector<double> child_costs_;
-  double local_cost_ = 0;
-  int current_child_no_ = -1;
+  double cur_total_cost_;
+  int cur_child_idx_ = -1;
+  int pre_child_idx_ = -1;
+  int cur_prop_pair_idx_ = 0;
 };
 
 }  // namespace optimizer

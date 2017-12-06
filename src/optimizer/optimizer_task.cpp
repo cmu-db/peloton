@@ -13,6 +13,7 @@
 #include "optimizer/optimizer_task.h"
 #include "optimizer/optimize_context.h"
 #include "optimizer/binding.h"
+#include "optimizer/child_property_deriver.h"
 
 namespace peloton {
 namespace optimizer {
@@ -20,7 +21,7 @@ namespace optimizer {
 // Base class
 //===--------------------------------------------------------------------===//
 void OptimizerTask::PushTask(OptimizerTask *task) {
-  context_->task_pool->Push(task);
+  context_->metadata->task_pool.Push(task);
 }
 
 Memo &OptimizerTask::GetMemo() const { return context_->metadata->memo; }
@@ -32,7 +33,7 @@ RuleSet &OptimizerTask::GetRuleSet() const { return context_->metadata->rule_set
 //===--------------------------------------------------------------------===//
 void OptimizeGroup::execute() {
   if (group_->GetCostLB() > context_->cost_upper_bound ||  // Cost LB > Cost UB
-      group_->GetBestExpression(*(context_->required_prop.get())) != nullptr)  // Has optimized given the context
+      group_->GetBestExpression(context_->required_prop) != nullptr)  // Has optimized given the context
     return;
 
   // Push explore task first for logical expressions if the group has not been explored
@@ -175,17 +176,69 @@ void ApplyRule::execute() {
 // OptimizeInputs
 //===--------------------------------------------------------------------===//
 void OptimizeInputs::execute() {
-  // TODO: We can init input cost using non-zero value for pruning
+  // Init logic: only run once per task
+  if (cur_child_idx_ == -1) {
+    // TODO(patrick):
+    // 1. We can init input cost using non-zero value for pruning
+    // 2. We can calculate the current operator cost if we have maintain
+    //    logical properties in group (e.g. stats, schema, cardinality)
+    cur_total_cost_ = 0;
 
+    // Pruning
+    if (cur_total_cost_ > context_->cost_upper_bound)
+      return;
 
+    // Derive output and input properties
+    ChildPropertyDeriver prop_deriver;
+    output_input_properties_ = std::move(prop_deriver.GetProperties(
+        group_expr_, context_->required_prop.get(), &context_->metadata->memo));
+    cur_child_idx_ = 0;
+  }
 
-  // Pruning
-  if (CostSoFar() > context_->cost_upper_bound)
-    return;
+  // Loop over (output prop, input props) pair
+  for (;cur_prop_pair_idx_ < output_input_properties_.size(); cur_prop_pair_idx_++) {
+    auto &output_prop = output_input_properties_[cur_prop_pair_idx_].first;
+    auto &input_props = output_input_properties_[cur_prop_pair_idx_].second;
+    for (; cur_child_idx_  < group_expr_->GetChildrenGroupsSize(); cur_child_idx_++) {
+      auto &i_prop = input_props[cur_child_idx_];
+      auto child_group = context_->metadata->memo.GetGroupByID(
+      group_expr_->GetChildGroupId(cur_child_idx_));
 
+      // Check whether the child group is already optimized for the prop
+      auto child_best_expr = child_group->GetBestExpression(i_prop);
+      if (child_best_expr != nullptr) { // Directly get back the best expr if the child group is optimized
+        cur_total_cost_ += child_best_expr->GetCost(i_prop);
+        // Pruning
+        if (cur_total_cost_ > context_->cost_upper_bound)
+          break;
+      } else if (pre_child_idx_ != cur_child_idx_) { // First time to optimize child group
+        pre_child_idx_ = cur_child_idx_;
+        PushTask(new OptimizeInputs(this));
+        PushTask(new OptimizeGroup(child_group, std::make_shared<OptimizeContext>(
+            context_->metadata, i_prop, context_->cost_upper_bound - cur_total_cost_)));
+        return;
+      } else { // If we return from OptimizeGroup, then there is no expr for the context
+        break;
+      }
 
-  for (int child_idx = current_child_no_; child_idx < group_expr_->GetChildrenGroupsSize(); child_idx++) {
+    }
+    // Check whether we successfully optimize all child group
+    if (cur_child_idx_ == output_input_properties_.size()) {
+      // Not need to do pruning here because it has been done when we get the best expr from the child group
 
+      // Add this group expression to the hash tables
+      group_expr_->SetLocalHashTable(output_prop, input_props, cur_total_cost_);
+       if (GetMemo().GetGroupByID(group_expr_->GetGroupID())->SetExpressionCost(
+           group_expr_, cur_total_cost_, output_prop)) {
+         // If the cost is smaller than the winner, update the context upper bound
+         context_->cost_upper_bound -= cur_total_cost_;
+       }
+    }
+
+    // Reset child idx and total cost
+    pre_child_idx_ = -1;
+    cur_child_idx_ = 0;
+    cur_total_cost_ = 0;
   }
 
 }

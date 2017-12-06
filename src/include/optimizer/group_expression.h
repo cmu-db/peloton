@@ -16,6 +16,7 @@
 #include "optimizer/stats.h"
 #include "optimizer/util.h"
 #include "optimizer/rule.h"
+#include "optimizer/property_set.h"
 
 #include <map>
 #include <tuple>
@@ -39,17 +40,19 @@ class GroupExpression {
 
   const std::vector<GroupID> &GetChildGroupIDs() const;
 
+  const GroupID GetChildGroupId(int child_idx) const;
+
   Operator Op() const;
 
   std::shared_ptr<Stats> GetStats(PropertySet requirements) const;
 
-  double GetCost(PropertySet requirements) const;
+  double GetCost(std::shared_ptr<PropertySet>& requirements) const;
 
-  std::vector<PropertySet> GetInputProperties(PropertySet requirements) const;
+  std::vector<std::shared_ptr<PropertySet>> GetInputProperties(std::shared_ptr<PropertySet> requirements) const;
 
-  void SetLocalHashTable(const PropertySet &output_properties,
-                         const std::vector<PropertySet> &input_properties_list,
-                         double cost, std::shared_ptr<Stats> stats);
+  void SetLocalHashTable(const std::shared_ptr<PropertySet> &output_properties,
+                         const std::vector<std::shared_ptr<PropertySet>> &input_properties_list,
+                         double cost);
 
   void SetStats(const PropertySet &output_properties,
                 std::shared_ptr<Stats> stats);
@@ -78,11 +81,12 @@ class GroupExpression {
   std::vector<GroupID> child_groups;
   std::bitset<static_cast<uint32_t>(RuleType::NUM_RULES_PLUS_ONE)-1> rule_mask_;
 
+
   // Mapping from output properties to the corresponding best cost, statistics,
   // and child properties
-  std::unordered_map<PropertySet, std::tuple<double, std::shared_ptr<Stats>,
-                                             std::vector<PropertySet>>>
-      lowest_cost_table_;
+  std::unordered_map<std::shared_ptr<PropertySet>,
+                     std::tuple<double, std::vector<std::shared_ptr<PropertySet>>>,
+                     PropSetPtrHash, PropSetPtrEq> lowest_cost_table_;
 };
 
 }  // namespace optimizer

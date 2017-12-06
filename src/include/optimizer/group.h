@@ -18,6 +18,7 @@
 #include "optimizer/group_expression.h"
 #include "optimizer/operator_node.h"
 #include "optimizer/property.h"
+#include "optimizer/property_set.h"
 
 namespace peloton {
 namespace optimizer {
@@ -40,10 +41,10 @@ class Group {
   // TODO: Remove enforced
   void AddExpression(std::shared_ptr<GroupExpression> expr, bool enforced);
 
-  void SetExpressionCost(std::shared_ptr<GroupExpression> expr, double cost,
-                         PropertySet properties);
+  bool SetExpressionCost(GroupExpression* expr, double cost,
+                         std::shared_ptr<PropertySet>& properties);
 
-  std::shared_ptr<GroupExpression> GetBestExpression(PropertySet properties);
+  std::shared_ptr<GroupExpression> GetBestExpression(std::shared_ptr<PropertySet>& properties);
 
   const std::vector<std::shared_ptr<GroupExpression>> GetExpressions() const;
 
@@ -80,8 +81,8 @@ class Group {
   std::vector<std::shared_ptr<GroupExpression>> expressions_;
   // TODO: Remove
   std::vector<std::shared_ptr<GroupExpression>> enforced_exprs_;
-  std::unordered_map<PropertySet,
-                     std::tuple<double, std::shared_ptr<GroupExpression>>>
+  std::unordered_map<std::shared_ptr<PropertySet>,
+                     std::tuple<double, GroupExpression*, PropSetPtrHash, PropSetPtrEq>>
       lowest_cost_expressions_;
 
   // TODO: Remove

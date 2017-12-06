@@ -60,7 +60,7 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 Optimizer::Optimizer() {}
 
-void Optimizer::OptimizeLoop(int root_group_id, PropertySet *required_props) {
+void Optimizer::OptimizeLoop(int root_group_id, std::shared_ptr<PropertySet> required_props) {
   std::shared_ptr<OptimizeContext> root_context = std::make_shared<OptimizeContext>(&metadata_, required_props);
   metadata_.task_pool.Push(new OptimizeGroup(metadata_.memo.GetGroupByID(root_group_id), root_context));
 

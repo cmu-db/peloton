@@ -33,7 +33,6 @@ void Group::AddExpression(std::shared_ptr<GroupExpression> expr,
                           bool enforced) {
   // Do duplicate detection
   expr->SetGroupID(id_);
-  // TODO: Remove
   if (enforced)
     enforced_exprs_.push_back(expr);
   else
@@ -45,8 +44,8 @@ void Group::AddExpression(std::shared_ptr<GroupExpression> expr,
     logical_expressions_.push_back(expr);
 }
 
-void Group::SetExpressionCost(std::shared_ptr<GroupExpression> expr,
-                              double cost, PropertySet properties) {
+bool Group::SetExpressionCost(GroupExpression* expr, double cost,
+                              std::shared_ptr<PropertySet>& properties) {
   LOG_TRACE("Adding expression cost on group %d with op %s, req %s",
             expr->GetGroupID(), expr->Op().name().c_str(),
             properties.ToString().c_str());
@@ -55,10 +54,12 @@ void Group::SetExpressionCost(std::shared_ptr<GroupExpression> expr,
     // No other cost to compare against or the cost is lower than the existing
     // cost
     lowest_cost_expressions_[properties] = std::make_tuple(cost, expr);
+    return true;
   }
+  return false;
 }
 std::shared_ptr<GroupExpression> Group::GetBestExpression(
-    PropertySet properties) {
+    std::shared_ptr<PropertySet>& properties) {
   auto it = lowest_cost_expressions_.find(properties);
   if (it != lowest_cost_expressions_.end()) {
     return std::get<1>(it->second);
