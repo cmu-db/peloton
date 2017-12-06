@@ -125,6 +125,22 @@ struct Ascii : public TypeSystem::UnaryOperatorHandleNull {
   }
 };
 
+struct Length : public TypeSystem::UnaryOperatorHandleNull {
+  bool SupportsType(const Type &type) const override {
+    return type.GetSqlType() == Varchar::Instance();
+  }
+
+  Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
+    return Integer::Instance();
+  }
+
+  Value Impl(CodeGen &codegen, const Value &val) const override {
+    llvm::Value *raw_ret = codegen.Call(StringFunctionsProxy::Length,
+                                        {val.GetValue(), val.GetLength()});
+    return Value{Integer::Instance(), raw_ret};
+  }
+};
+
 struct Like : public TypeSystem::BinaryOperator {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
@@ -168,22 +184,6 @@ struct Like : public TypeSystem::BinaryOperator {
       not_null_ret = Impl(codegen, left, right);
     }
     return input_null.BuildPHI(null_ret, not_null_ret);
-  }
-};
-
-struct Length : public TypeSystem::UnaryOperatorHandleNull {
-  bool SupportsType(const Type &type) const override {
-    return type.GetSqlType() == Varchar::Instance();
-  }
-
-  Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
-    return Integer::Instance();
-  }
-
-  Value Impl(CodeGen &codegen, const Value &val) const override {
-    llvm::Value *raw_ret = codegen.Call(StringFunctionsProxy::Length,
-                                        {val.GetValue(), val.GetLength()});
-    return Value{Integer::Instance(), raw_ret};
   }
 };
 
