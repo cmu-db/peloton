@@ -14,9 +14,7 @@
 
 #include "codegen/proxy/proxy.h"
 #include "codegen/proxy/type_builder.h"
-#include "storage/zone_map.h"
 #include "storage/zone_map_manager.h"
-#include "codegen/zone_map.h"
 #include "concurrency/transaction.h"
 #include "codegen/proxy/value_proxy.h"
 #include "codegen/proxy/transaction_proxy.h"
@@ -33,11 +31,6 @@ PROXY(PredicateInfo) {
 	DECLARE_TYPE;
 };
 
-PROXY(ZoneMap) {
-	DECLARE_MEMBER(0, char[sizeof(storage::ZoneMap)], opaque);
-	DECLARE_TYPE;
-};
-
 PROXY(ZoneMapManager) {
 	DECLARE_MEMBER(0, char[sizeof(storage::ZoneMapManager)], opaque);
 	DECLARE_TYPE;
@@ -45,7 +38,6 @@ PROXY(ZoneMapManager) {
 };
 
 TYPE_BUILDER(PredicateInfo, storage::PredicateInfo);
-TYPE_BUILDER(ZoneMap, storage::ZoneMap);
 TYPE_BUILDER(ZoneMapManager, storage::ZoneMapManager);
 
 }  // namespace codegen

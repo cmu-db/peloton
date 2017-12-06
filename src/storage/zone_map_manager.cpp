@@ -16,6 +16,7 @@
 #include "catalog/zone_map_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "storage/storage_manager.h"
+#include "storage/data_table.h"
 #include "type/ephemeral_pool.h"
 #include "storage/zone_map_manager.h"
 
@@ -101,10 +102,6 @@ void ZoneMapManager::CreateOrUpdateZoneMapForTileGroup(oid_t database_id, oid_t 
 void ZoneMapManager::CreateOrUpdateZoneMapinCatalog(oid_t database_id, oid_t table_id, 
   oid_t tile_group_id, oid_t column_id, std::string min, std::string max, std::string type, 
   concurrency::Transaction *txn){
-  
-  LOG_DEBUG("Database Id : %u , Table Id : %u , TileGroup Id : %u, Column Id : %u, Minimum : %s, \
-    Maximum : %s, Type : %s", database_id, table_id, tile_group_id, column_id, min.c_str(), \
-    max.c_str(), type.c_str());
 
   auto stats_catalog = catalog::ZoneMapCatalog::GetInstance(nullptr);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();

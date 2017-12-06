@@ -21,6 +21,9 @@
 namespace peloton {
 namespace storage {
 
+class DataTable;
+class TileGroup;
+
 struct PredicateInfo {
   int col_id;
   int comparison_operator;

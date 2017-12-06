@@ -19,7 +19,6 @@
 #include "storage/data_table.h"
 #include "storage/tile_group.h"
 #include "storage/tile.h"
-#include "storage/zone_map.h"
 #include "storage/zone_map_manager.h"
 #include "expression/abstract_expression.h"
 #include "expression/expression_util.h"

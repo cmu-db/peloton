@@ -22,7 +22,6 @@
 #include "storage/tile.h"
 #include "storage/tile_group_header.h"
 #include "storage/tuple.h"
-#include "storage/zone_map.h"
 #include "storage/zone_map_manager.h"
 #include "catalog/schema.h"
 #include "catalog/catalog.h"

@@ -77,7 +77,6 @@ bool ZoneMapCatalog::InsertColumnStatistics(
   tuple->SetValue(ColumnId::TYPE, val_type, pool);
 
   bool return_val = InsertTuple(std::move(tuple), txn);
-  LOG_DEBUG("Inserted Tuple : %d", return_val);
   return return_val;
 }
 

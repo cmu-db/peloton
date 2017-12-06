@@ -15,10 +15,7 @@
 #include "codegen/codegen.h"
 #include "codegen/scan_callback.h"
 #include "codegen/tile_group.h"
-#include "codegen/zone_map.h"
 #include "type/value.h"
-
-
 
 namespace peloton {
 
