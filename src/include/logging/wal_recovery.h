@@ -38,7 +38,9 @@ class WalRecovery {
   ~WalRecovery() {}
 
   void StartRecovery();
-  void WaitForRecovery();
+  bool RecoveryTest(FileHandle &file_handle) {
+      return ReplayLogFile(file_handle);
+  }
 
  private:
   // void Run();

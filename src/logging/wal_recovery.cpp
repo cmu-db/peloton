@@ -166,6 +166,9 @@ bool WalRecovery::InstallTupleRecord(LogRecordType type, storage::Tuple *tuple,
 }
 
 bool WalRecovery::ReplayLogFile(FileHandle &file_handle) {
+    char result[ PATH_MAX ];
+    ssize_t count = readlink( "/proc/self/exe", result, PATH_MAX );
+    std::cout<< std::string( result, (count > 0) ? count : 0 )<<std::endl;
   PL_ASSERT(file_handle.file != nullptr &&
             file_handle.fd != INVALID_FILE_DESCRIPTOR);
 
