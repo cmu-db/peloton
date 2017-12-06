@@ -26,35 +26,27 @@
 namespace peloton {
 namespace codegen {
 
-	PROXY(PredicateInfo) {
-	
-		DECLARE_MEMBER(0, int, col_id);
-		DECLARE_MEMBER(1, int, comparison_operator);
-		DECLARE_MEMBER(2, peloton::type::Value, predicate_value);
-	
-		DECLARE_TYPE;
-	};
+PROXY(PredicateInfo) {
+	DECLARE_MEMBER(0, int, col_id);
+	DECLARE_MEMBER(1, int, comparison_operator);
+	DECLARE_MEMBER(2, peloton::type::Value, predicate_value);
+	DECLARE_TYPE;
+};
 
-	PROXY(ZoneMap) {
-	
-		DECLARE_MEMBER(0, char[sizeof(storage::ZoneMap)], opaque);
-		DECLARE_TYPE;
-	
-		DECLARE_METHOD(ComparePredicate);
-	};
+PROXY(ZoneMap) {
+	DECLARE_MEMBER(0, char[sizeof(storage::ZoneMap)], opaque);
+	DECLARE_TYPE;
+};
 
-	PROXY(ZoneMapManager) {
-
-		DECLARE_MEMBER(0, char[sizeof(storage::ZoneMapManager)], opaque);
-		DECLARE_TYPE;
-	
-		DECLARE_METHOD(ComparePredicateAgainstZoneMap);
-	};
+PROXY(ZoneMapManager) {
+	DECLARE_MEMBER(0, char[sizeof(storage::ZoneMapManager)], opaque);
+	DECLARE_TYPE;
+	DECLARE_METHOD(ComparePredicateAgainstZoneMap);
+};
 
 TYPE_BUILDER(PredicateInfo, storage::PredicateInfo);
 TYPE_BUILDER(ZoneMap, storage::ZoneMap);
 TYPE_BUILDER(ZoneMapManager, storage::ZoneMapManager);
-
 
 }  // namespace codegen
 }  // namespace peloton

@@ -71,10 +71,6 @@ storage::TileGroup *RuntimeFunctions::GetTileGroup(storage::DataTable *table,
   return tile_group.get();
 }
 
-storage::ZoneMap *RuntimeFunctions::GetZoneMap(storage::TileGroup *tile_group) {
-  return tile_group->GetZoneMap();
-}
-
 storage::ZoneMapManager *RuntimeFunctions::GetZoneMapManager() {
   return storage::ZoneMapManager::GetInstance();
 }

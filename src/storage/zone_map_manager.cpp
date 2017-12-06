@@ -4,7 +4,7 @@
 //
 // 
 //
-// Identification: src/
+// Identification: src/storage/zone_map_manager.cpp
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -137,7 +137,6 @@ std::shared_ptr<ZoneMapManager::ColumnStatistics> ZoneMapManager::GetZoneMapFrom
   txn_manager.CommitTransaction(txn);
 
   if (result_vector == nullptr) {
-    // LOG_DEBUG("Result vector is NULL");
     return NULL;
   }
   return GetResultVectorAsZoneMap(result_vector);
@@ -149,7 +148,6 @@ std::shared_ptr<ZoneMapManager::ColumnStatistics> ZoneMapManager::GetResultVecto
   type::Value type_varchar = (*result_vector)[catalog::ZoneMapCatalog::TYPE_OFF];
 
   ZoneMapManager::ColumnStatistics stats = {GetValueAsOriginal(min_varchar, type_varchar), GetValueAsOriginal(max_varchar, type_varchar)};
-  // LOG_DEBUG("Minimum : %s , Maximum : %s", stats.min.ToString().c_str(), stats.max.ToString().c_str());
   return std::make_shared<ZoneMapManager::ColumnStatistics>(stats);
 }
 
@@ -164,15 +162,11 @@ bool ZoneMapManager::ComparePredicateAgainstZoneMap(storage::PredicateInfo *pars
   oid_t database_id = table->GetDatabaseOid();
   oid_t table_id = table->GetOid();
 
-  // LOG_DEBUG("Database Id : %u , Table Id : %u , TileGroup Id : %lld, Column Id : %d", database_id, table_id, tile_group_id, col_id);
   std::shared_ptr<ZoneMapManager::ColumnStatistics> stats = GetZoneMapFromCatalog(database_id, table_id, tile_group_id, col_id);
 
   if (stats == nullptr) {
     return true;
   }
-  // LOG_DEBUG("col_id : [%d]", col_id);
-  // LOG_DEBUG("comparison_operator : [%d]", comparison_operator);
-  // LOG_DEBUG("predicate_value : [%s]", predicate_value.ToString().c_str());
   switch(comparison_operator) {
     case (int)ExpressionType::COMPARE_EQUAL:
       if(!checkEqual(predicate_value, stats.get())) {

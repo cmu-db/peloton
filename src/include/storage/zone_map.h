@@ -99,11 +99,11 @@ class ZoneMap : public Printable {
 };
 
 
-  struct PredicateInfo {
-    int col_id;
-    int comparison_operator;
-    type::Value predicate_value;
-  };
+  // struct PredicateInfo {
+  //   int col_id;
+  //   int comparison_operator;
+  //   type::Value predicate_value;
+  // };
 
 }  // namespace storage
 }  // namespace peloton

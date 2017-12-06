@@ -21,6 +21,12 @@
 namespace peloton {
 namespace storage {
 
+struct PredicateInfo {
+  int col_id;
+  int comparison_operator;
+  type::Value predicate_value;
+};
+
 class ZoneMapManager {
 
   public:
@@ -30,6 +36,7 @@ class ZoneMapManager {
     } ColumnStatistics;
 
   // Global Singleton
+
   static ZoneMapManager *GetInstance();
 
   ZoneMapManager();

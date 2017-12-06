@@ -56,8 +56,6 @@ class Table {
   llvm::Value *GetTileGroup(CodeGen &codegen, llvm::Value *table_ptr,
                             llvm::Value *tile_group_id) const;
 
-  llvm::Value *GetZoneMap(CodeGen &codegen, llvm::Value *tile_group_ptr) const;
-
   llvm::Value *GetZoneMapManager(CodeGen &codegen) const;
 
  private:
@@ -66,8 +64,6 @@ class Table {
 
   // The generator for a tile group
   TileGroup tile_group_;
-
-  ZoneMap zone_map_;
 };
 
 }  // namespace codegen

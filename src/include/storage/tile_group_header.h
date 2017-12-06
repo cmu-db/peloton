@@ -20,7 +20,6 @@
 #include "common/platform.h"
 #include "common/printable.h"
 #include "storage/tuple.h"
-#include "storage/zone_map.h"
 #include "type/types.h"
 #include "type/value.h"
 #include <map>
@@ -140,8 +139,6 @@ class TileGroupHeader : public Printable {
 
   oid_t GetActiveTupleCount() const;
 
-  void UpdateZoneMap(oid_t tile_column_itr, type::Value val) const;
-
   //===--------------------------------------------------------------------===//
   // MVCC utilities
   //===--------------------------------------------------------------------===//
@@ -150,10 +147,6 @@ class TileGroupHeader : public Printable {
   inline const TileGroup *GetTileGroup() const {
     PL_ASSERT(tile_group);
     return tile_group;
-  }
-
-  inline storage::ZoneMap *GetZoneMap() const {
-    return zone_map.get();
   }
 
   // it is possible that some other transactions are modifying the txn_id,
@@ -239,15 +232,15 @@ class TileGroupHeader : public Printable {
   }
 
   inline bool SetImmutability() {
-    return __sync_bool_compare_and_swap(immutability, false, true);
+    return __sync_bool_compare_and_swap(&immutability, false, true);
   }
 
   inline bool ResetImmutability() {
-    return __sync_bool_compare_and_swap(immutability, true, false);
+    return __sync_bool_compare_and_swap(&immutability, true, false);
   }
 
   inline bool GetImmutability() const{
-    return *immutability;
+    return immutability;
   }
 
 
@@ -308,13 +301,11 @@ class TileGroupHeader : public Printable {
   // IT MAY OUT OF BOUNDARY! ALWAYS CHECK IF IT EXCEEDS num_tuple_slots
   std::atomic<oid_t> next_tuple_slot;
 
-  std::unique_ptr<storage::ZoneMap> zone_map;
-
   Spinlock tile_header_lock;
 
   // Immmutability Flag. Should be set by the brain to be true.
   // By default it will be set to false.
-  bool *immutability;
+  bool immutability;
 };
 
 }  // namespace storage

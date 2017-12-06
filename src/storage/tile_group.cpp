@@ -92,9 +92,6 @@ oid_t TileGroup::GetActiveTupleCount() const {
   return tile_group_header->GetActiveTupleCount();
 }
 
-storage::ZoneMap *TileGroup::GetZoneMap() const {
-  return tile_group_header->GetZoneMap();
-}
 
 //===--------------------------------------------------------------------===//
 // Operations
@@ -126,7 +123,6 @@ void TileGroup::CopyTuple(const Tuple *tuple, const oid_t &tuple_slot_id) {
          tile_column_itr++) {
       type::Value val = (tuple->GetValue(column_itr));
       tile_tuple.SetValue(tile_column_itr, val, tile->GetPool());
-      tile_group_header->UpdateZoneMap(tile_column_itr, val);
       column_itr++;
     }
   }
@@ -320,36 +316,6 @@ oid_t TileGroup::InsertTupleFromCheckpoint(oid_t tuple_slot_id,
   tile_group_header->SetNextItemPointer(tuple_slot_id, INVALID_ITEMPOINTER);
 
   return tuple_slot_id;
-}
-
-bool TileGroup::CreateZoneMap() {
-  oid_t next_tuple_slot = tile_group_header->GetCurrentNextTupleSlot();
-
-  if (next_tuple_slot < num_tuple_slots) {
-    LOG_DEBUG("TileGroup is currently not full. Skipping ZoneMap Creation ::  %u out of %u slots ", next_tuple_slot, num_tuple_slots);
-    return false;
-  }
-
-  oid_t num_columns = column_map.size();
-  storage::ZoneMap *zone_map_ptr = GetZoneMap();
-  PL_ASSERT(zone_map_ptr);
-  for (oid_t col_itr = 0; col_itr < num_columns; col_itr++) {
-    // Set temp min and temp max as the first value.
-    type::Value min = GetValue(0, col_itr);
-    type::Value max = GetValue(0, col_itr);
-    // Iterate over all tuples in this column
-    for (oid_t tuple_itr = 1; tuple_itr < num_tuple_slots; tuple_itr++) {
-      type::Value current_val = GetValue(tuple_itr, col_itr);
-      if (current_val.CompareGreaterThan(max)) {
-        max = current_val;
-      }
-      if (current_val.CompareLessThan(min)) {
-        min = current_val;
-      }
-    }
-    zone_map_ptr->UpdateMinAndMaxValue(col_itr, min, max);
-  }
-  return true;
 }
 
 oid_t TileGroup::GetTileIdFromColumnId(oid_t column_id) {

@@ -95,7 +95,8 @@ void TableScanTranslator::Produce() const {
   LOG_DEBUG("Number of Predicates is %lu", num_preds);
   ScanConsumer scan_consumer{*this, sel_vec};
   table_.GenerateScan(codegen, table_ptr, sel_vec.GetCapacity(), scan_consumer, predicate_ptr, num_preds);
-  LOG_DEBUG("TableScan on [%u] finished producing tuples ...", table.GetOid());
+  
+  LOG_TRACE("TableScan on [%u] finished producing tuples ...", table.GetOid());
 }
 
 // Get the stringified name of this scan

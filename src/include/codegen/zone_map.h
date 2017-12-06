@@ -29,8 +29,8 @@ namespace codegen {
 //===----------------------------------------------------------------------===//
 class ZoneMap {
  public:
-  // Get the column configuration for every column in the tile group
-  llvm::Value *ComparePredicateWithZoneMap(CodeGen &codegen , const storage::PredicateInfo *arr, size_t num_predicates, llvm::Value *zone_map) const;
+  // // Get the column configuration for every column in the tile group
+  // llvm::Value *ComparePredicateWithZoneMap(CodeGen &codegen , const storage::PredicateInfo *arr, size_t num_predicates, llvm::Value *zone_map) const;
 };
 
 }  // namespace codegen

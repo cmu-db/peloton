@@ -431,13 +431,14 @@ TEST_F(TransactionLevelGCManagerTests, ImmutabilityTest) {
   EXPECT_EQ(1, reclaimed_count);
   EXPECT_EQ(0, unlinked_count);
 
-  // Return Free Slot should return null because deleted tuple was from immutable tilegroup.
+  // ReturnFreeSlot() should return null because deleted tuple was from immutable tilegroup.
   auto location = gc_manager.ReturnFreeSlot((table.get())->GetOid());
   EXPECT_EQ(location.IsNull(), true);
 
 
   // Deleting a tuple from the 2nd tilegroup which is mutable.
   ret = DeleteTuple(table.get(), 6);
+  
   EXPECT_TRUE(ret == ResultType::SUCCESS);
   epoch_manager.SetCurrentEpochId(4);
   expired_eid = epoch_manager.GetExpiredEpochId();
@@ -459,7 +460,7 @@ TEST_F(TransactionLevelGCManagerTests, ImmutabilityTest) {
   EXPECT_EQ(1, reclaimed_count);
   EXPECT_EQ(0, unlinked_count);
 
-  // Return Free Slot should not return null because deleted tuple was from mutable tilegroup.
+  // ReturnFreeSlot() should not return null because deleted tuple was from mutable tilegroup.
   location = gc_manager.ReturnFreeSlot((table.get())->GetOid());
   EXPECT_EQ(location.IsNull(), false);
 

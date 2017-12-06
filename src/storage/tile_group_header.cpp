@@ -24,7 +24,6 @@
 #include "logging/log_manager.h"
 #include "storage/backend_manager.h"
 #include "storage/tile_group_header.h"
-#include "storage/zone_map.h"
 #include "type/value.h"
 #include "storage/tuple.h"
 
@@ -62,8 +61,7 @@ TileGroupHeader::TileGroupHeader(const BackendType &backend_type,
   }
 
   // Initially immutability to false initially.
-  *immutability = false;
-  zone_map = std::make_unique< storage::ZoneMap>();
+  immutability = false;
   
 }
 
@@ -248,10 +246,6 @@ oid_t TileGroupHeader::GetActiveTupleCount() const {
   }
 
   return active_tuple_slots;
-}
-
-void TileGroupHeader::UpdateZoneMap(oid_t tile_column_itr, type::Value val)  const{
-  zone_map->UpdateZoneMap(tile_column_itr, val);
 }
 
 }  // namespace storage

@@ -64,51 +64,51 @@ void ZoneMap::TestCall() {
 	LOG_DEBUG("Column Max : [%s]", stats_map[0].max.ToString().c_str());
 }
 
-bool ZoneMap::ComparePredicate(storage::PredicateInfo *parsed_predicates , int32_t num_predicates) {
-	if (stats_map.size() == 0) {
-		return false;
-	}
-	for (int32_t i = 0; i < num_predicates; i++) {
-		// Extract the col_id, operator and predicate_value
-	 	int col_id = parsed_predicates[i].col_id;
-	 	int comparison_operator	= parsed_predicates[i].comparison_operator;
-	 	type::Value predicate_value = parsed_predicates[i].predicate_value;
-	 	// LOG_DEBUG("col_id : [%d]", col_id);
-		// LOG_DEBUG("comparison_operator : [%d]", comparison_operator);
-		// LOG_DEBUG("predicate_value : [%s]", predicate_value.ToString().c_str());
-		switch(comparison_operator) {
-			case (int)ExpressionType::COMPARE_EQUAL:
-				if(!checkEqual(col_id, predicate_value)) {
-					return false;
-				}
-				break;
-		    case (int)ExpressionType::COMPARE_LESSTHAN:
-				if(!checkLessThan(col_id, predicate_value)) {
-					return false;
-				}
-				break;
-		    case (int)ExpressionType::COMPARE_LESSTHANOREQUALTO:
-				if(!checkLessThanEquals(col_id, predicate_value)) {
-					return false;
-				}
-				break;
-		    case (int)ExpressionType::COMPARE_GREATERTHAN:
-				if(!checkGreaterThan(col_id, predicate_value)) {
-					return false;
-				}
-				break;
-		    case (int)ExpressionType::COMPARE_GREATERTHANOREQUALTO:
-				if(!checkGreaterThanEquals(col_id, predicate_value)) {
-					return false;
-				}
-				break;
-		    default: {
-		      throw Exception{"Invalid expression type for translation "};
-		    }
-		}
-	}
-	return true;
-}
+// bool ZoneMap::ComparePredicate(storage::PredicateInfo *parsed_predicates , int32_t num_predicates) {
+// 	if (stats_map.size() == 0) {
+// 		return false;
+// 	}
+// 	for (int32_t i = 0; i < num_predicates; i++) {
+// 		// Extract the col_id, operator and predicate_value
+// 	 	int col_id = parsed_predicates[i].col_id;
+// 	 	int comparison_operator	= parsed_predicates[i].comparison_operator;
+// 	 	type::Value predicate_value = parsed_predicates[i].predicate_value;
+// 	 	// LOG_DEBUG("col_id : [%d]", col_id);
+// 		// LOG_DEBUG("comparison_operator : [%d]", comparison_operator);
+// 		// LOG_DEBUG("predicate_value : [%s]", predicate_value.ToString().c_str());
+// 		switch(comparison_operator) {
+// 			case (int)ExpressionType::COMPARE_EQUAL:
+// 				if(!checkEqual(col_id, predicate_value)) {
+// 					return false;
+// 				}
+// 				break;
+// 		    case (int)ExpressionType::COMPARE_LESSTHAN:
+// 				if(!checkLessThan(col_id, predicate_value)) {
+// 					return false;
+// 				}
+// 				break;
+// 		    case (int)ExpressionType::COMPARE_LESSTHANOREQUALTO:
+// 				if(!checkLessThanEquals(col_id, predicate_value)) {
+// 					return false;
+// 				}
+// 				break;
+// 		    case (int)ExpressionType::COMPARE_GREATERTHAN:
+// 				if(!checkGreaterThan(col_id, predicate_value)) {
+// 					return false;
+// 				}
+// 				break;
+// 		    case (int)ExpressionType::COMPARE_GREATERTHANOREQUALTO:
+// 				if(!checkGreaterThanEquals(col_id, predicate_value)) {
+// 					return false;
+// 				}
+// 				break;
+// 		    default: {
+// 		      throw Exception{"Invalid expression type for translation "};
+// 		    }
+// 		}
+// 	}
+// 	return true;
+// }
 
 
 

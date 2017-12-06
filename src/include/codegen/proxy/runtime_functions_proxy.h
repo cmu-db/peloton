@@ -38,7 +38,6 @@ PROXY(RuntimeFunctions) {
   DECLARE_METHOD(HashCrc64);
   DECLARE_METHOD(GetTileGroup);
   DECLARE_METHOD(GetTileGroupLayout);
-  DECLARE_METHOD(GetZoneMap);
   DECLARE_METHOD(GetZoneMapManager);
   DECLARE_METHOD(FillPredicateArray);
   DECLARE_METHOD(ThrowDivideByZeroException);

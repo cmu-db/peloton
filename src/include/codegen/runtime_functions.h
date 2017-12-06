@@ -49,8 +49,6 @@ class RuntimeFunctions {
   static storage::TileGroup *GetTileGroup(storage::DataTable *table,
                                           uint64_t tile_group_index);
 
-  static storage::ZoneMap *GetZoneMap(storage::TileGroup *tile_group);
-
   static storage::ZoneMapManager *GetZoneMapManager();
 
   static void FillPredicateArray(const expression::AbstractExpression *expr, storage::PredicateInfo *predicate_array);

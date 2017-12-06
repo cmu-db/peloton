@@ -42,10 +42,6 @@ llvm::Value *Table::GetTileGroup(CodeGen &codegen, llvm::Value *table_ptr,
                       {table_ptr, tile_group_id});
 }
 
-llvm::Value *Table::GetZoneMap(CodeGen &codegen, llvm::Value *tile_group_ptr) const {
-  return codegen.Call(RuntimeFunctionsProxy::GetZoneMap, {tile_group_ptr});
-}
-
 llvm::Value *Table::GetZoneMapManager(CodeGen &codegen) const{
   return codegen.Call(RuntimeFunctionsProxy::GetZoneMapManager, {});
 }
@@ -99,8 +95,6 @@ void Table::GenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
     llvm::Value *zone_map_manager = GetZoneMapManager(codegen);
     llvm::Value *tile_group_ptr =
         GetTileGroup(codegen, table_ptr, tile_group_idx);
-    // llvm::Value *zone_map_ptr =
-    //     GetZoneMap(codegen, tile_group_ptr);
     llvm::Value *tile_group_id =
         tile_group_.GetTileGroupId(codegen, tile_group_ptr);
     llvm::Value *new_scanned_tiles = nullptr;
