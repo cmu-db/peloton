@@ -2,25 +2,22 @@
 //
 //                         Peloton
 //
-// string_functions_proxy.cpp
+// timestamp_functions_proxy.cpp
 //
-// Identification: src/codegen/proxy/string_functions_proxy.cpp
+// Identification: src/codegen/proxy/timestamp_functions_proxy.cpp
 //
 // Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/proxy/string_functions_proxy.h"
-
+#include "function/timestamp_functions.h"
+#include "codegen/proxy/timestamp_functions_proxy.h"
 #include "codegen/proxy/type_builder.h"
-#include "function/string_functions.h"
 
 namespace peloton {
 namespace codegen {
 
-DEFINE_METHOD(peloton::function, StringFunctions, Ascii);
-DEFINE_METHOD(peloton::function, StringFunctions, Like);
-DEFINE_METHOD(peloton::function, StringFunctions, Length);
+DEFINE_METHOD(peloton::function, TimestampFunctions, DateTrunc);
 
 }  // namespace codegen
 }  // namespace peloton

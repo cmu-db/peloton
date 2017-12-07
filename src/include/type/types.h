@@ -262,7 +262,7 @@ ExpressionType ParserExpressionNameToExpressionType(const std::string &str);
 
 // Note that we have some duplicate DatePartTypes with the 's' suffix
 // They have to have the same value in order for it to work.
-enum class DatePartType {
+enum class DatePartType : uint32_t {
   INVALID = INVALID_TYPE_ID,
   CENTURY = 1,
   DAY = 2,
@@ -1033,14 +1033,17 @@ enum class OperatorId : uint32_t {
   Substr,
   CharLength,
   OctetLength,
+  Length,
   Repeat,
   Replace,
   LTrim,
   RTrim,
   BTrim,
   Sqrt,
+  Round,
   Extract,
   Floor,
+  DateTrunc,
 
   // Add more operators here, before the last "Invalid" entry
   Like,
@@ -1296,12 +1299,11 @@ typedef std::vector<MultiTableExpression> MultiTablePredicates;
 // Mapping of Expression -> Column Offset created by operator
 typedef std::unordered_map<std::shared_ptr<expression::AbstractExpression>,
                            unsigned, expression::ExprHasher,
-                           expression::ExprEqualCmp>
-    ExprMap;
+                           expression::ExprEqualCmp> ExprMap;
 // Used in optimizer to speed up expression comparsion
 typedef std::unordered_set<std::shared_ptr<expression::AbstractExpression>,
-                           expression::ExprHasher, expression::ExprEqualCmp>
-    ExprSet;
+                           expression::ExprHasher,
+                           expression::ExprEqualCmp> ExprSet;
 
 //===--------------------------------------------------------------------===//
 // Wire protocol typedefs
