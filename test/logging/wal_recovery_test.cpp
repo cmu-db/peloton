@@ -24,6 +24,8 @@
 #include "concurrency/transaction_manager_factory.h"
 #include "logging/wal_recovery.h"
 #include "logging/logging_util.h"
+#include "settings/settings_manager.h"
+#include "settings/setting_id.h"
 
 #include <pqxx/pqxx> /* libpqxx is used to instantiate C++ client */
 #include <include/network/postgres_protocol_handler.h>
@@ -113,7 +115,7 @@ void *RecoveryTest(int port) {
 //}
 
 TEST_F(RecoveryTests, RecoveryQueryTest) {
-
+  settings::SettingsManager::SetBool(settings::SettingId::recovery, false);
   peloton::PelotonInit::Initialize();
   LOG_INFO("Server initialized");
   peloton::network::NetworkManager network_manager;

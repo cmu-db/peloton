@@ -82,7 +82,10 @@ void PelotonInit::Initialize() {
   txn_manager.CommitTransaction(txn);
   //Change this to config-defined constant
   logging::WalLogManager::SetDirectory(settings::SettingsManager::GetString(settings::SettingId::log_directory));
-  logging::WalLogManager::DoRecovery();
+  if (settings::SettingsManager::GetBool(settings::SettingId::recovery)) {
+    logging::WalLogManager::DoRecovery();
+  }
+
 }
 
 void PelotonInit::Shutdown() {

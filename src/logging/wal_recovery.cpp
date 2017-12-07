@@ -101,12 +101,15 @@ bool WalRecovery::InstallTupleRecord(LogRecordType type, storage::Tuple *tuple,
                                      storage::DataTable *table, cid_t cur_cid,
                                      ItemPointer location) {
   oid_t tile_group_id = location.block;
+  auto txn = concurrency::TransactionManagerFactory::GetInstance()
+          .BeginTransaction(IsolationLevelType::SERIALIZABLE);
+  ItemPointer *i = nullptr;
   auto tile_group_header =
       catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
   auto tuple_slot = location.offset;
 
   if (type == LogRecordType::TUPLE_UPDATE) {
-    ItemPointer insert_location = table->InsertTuple(tuple, nullptr);
+    ItemPointer insert_location = table->InsertTuple(tuple, txn, &i);
     if (insert_location.block == INVALID_OID) {
       LOG_ERROR("Failed to get tuple slot");
       return false;
@@ -126,6 +129,7 @@ bool WalRecovery::InstallTupleRecord(LogRecordType type, storage::Tuple *tuple,
     new_tile_group_header->SetTransactionId(insert_location.offset,
                                             INITIAL_TXN_ID);
     tile_group_header->SetTransactionId(tuple_slot, INVALID_TXN_ID);
+    tile_group_header->SetIndirection(insert_location.offset,i);
 
   } else if (type == LogRecordType::TUPLE_DELETE) {
     ItemPointer insert_location =
@@ -151,9 +155,8 @@ bool WalRecovery::InstallTupleRecord(LogRecordType type, storage::Tuple *tuple,
     tile_group_header->SetTransactionId(tuple_slot, INITIAL_TXN_ID);
 
   } else if (type == LogRecordType::TUPLE_INSERT) {
-    ItemPointer *i = nullptr;
     ItemPointer insert_location = table->InsertTuple(
-        tuple, nullptr, &i);  // This function does insert indexes
+        tuple, txn, &i);  // This function does insert indexes
     // set the begin commit id to persist insert
     tile_group_header->SetBeginCommitId(insert_location.offset, cur_cid);
     tile_group_header->SetEndCommitId(insert_location.offset, MAX_CID);
@@ -167,8 +170,7 @@ bool WalRecovery::InstallTupleRecord(LogRecordType type, storage::Tuple *tuple,
 
 bool WalRecovery::ReplayLogFile(FileHandle &file_handle) {
     char result[ PATH_MAX ];
-    ssize_t count = readlink( "/proc/self/exe", result, PATH_MAX );
-    std::cout<< std::string( result, (count > 0) ? count : 0 )<<std::endl;
+    std::cout<< std::string( getcwd(result, PATH_MAX) )<<std::endl;
   PL_ASSERT(file_handle.file != nullptr &&
             file_handle.fd != INVALID_FILE_DESCRIPTOR);
 

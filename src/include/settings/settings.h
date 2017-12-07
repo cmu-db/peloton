@@ -66,6 +66,11 @@ SETTING_string(log_directory,
               "/tmp/log",
               false, false)
 
+SETTING_bool(recovery,
+            "Enable recovery (default: true)",
+            true,
+            true, true)
+
 
 //===----------------------------------------------------------------------===//
 // ERROR REPORTING AND LOGGING
