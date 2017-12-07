@@ -14,11 +14,12 @@
 
 #include "optimizer/property_set.h"
 #include "optimizer/optimizer_task.h"
-#include "optimizer/optimizer_metadata.h"
 #include "optimizer/optimizer_task_pool.h"
 
 namespace peloton {
 namespace optimizer {
+
+class OptimizerMetadata;
 
 class OptimizeContext {
  public:

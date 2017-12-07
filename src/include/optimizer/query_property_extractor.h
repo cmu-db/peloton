@@ -30,7 +30,10 @@ namespace optimizer {
  */
 class QueryPropertyExtractor : public SqlNodeVisitor {
  public:
-  PropertySet GetProperties(parser::SQLStatement *tree);
+  QueryPropertyExtractor() {
+    property_set_ = std::make_shared<PropertySet>();
+  }
+  std::shared_ptr<PropertySet> GetProperties(parser::SQLStatement *tree);
 
   // We only assume the statement is selecting from one table for now
   void Visit(parser::SelectStatement *) override;
@@ -54,7 +57,7 @@ class QueryPropertyExtractor : public SqlNodeVisitor {
 
  private:
   // Required properties by the visitor
-  PropertySet property_set_;
+  std::shared_ptr<PropertySet> property_set_;
 };
 
 }  // namespace optimizer

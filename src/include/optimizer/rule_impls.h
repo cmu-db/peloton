@@ -149,19 +149,6 @@ class LogicalGroupByToHashGroupBy : public Rule {
       const override;
 };
 
-///////////////////////////////////////////////////////////////////////////////
-/// LogicalGroupByToSortGroupBy
-class LogicalGroupByToSortGroupBy : public Rule {
- public:
-  LogicalGroupByToSortGroupBy();
-
-  bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
-
-  void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed)
-  const override;
-};
-
 
 ///////////////////////////////////////////////////////////////////////////////
 /// LogicalAggregateToPhysical

@@ -12,6 +12,7 @@
 
 #include "optimizer/group_expression.h"
 #include "optimizer/group.h"
+#include "optimizer/rule.h"
 
 namespace peloton {
 namespace optimizer {
@@ -30,16 +31,11 @@ const std::vector<GroupID> &GroupExpression::GetChildGroupIDs() const {
   return child_groups;
 }
 
-const GroupID GroupExpression::GetChildGroupId(int child_idx) const {
+GroupID GroupExpression::GetChildGroupId(int child_idx) const {
   return child_groups[child_idx];
 }
 
 Operator GroupExpression::Op() const { return op; }
-
-std::shared_ptr<Stats> GroupExpression::GetStats(
-    PropertySet requirements) const {
-  return std::get<1>(lowest_cost_table_.find(requirements)->second);
-}
 
 double GroupExpression::GetCost(std::shared_ptr<PropertySet>& requirements) const {
   return std::get<0>(lowest_cost_table_.find(requirements)->second);
@@ -86,6 +82,14 @@ bool GroupExpression::operator==(const GroupExpression &r) {
   }
 
   return eq;
+}
+
+void GroupExpression::SetRuleExplored(Rule *rule) {
+  rule_mask_.set(rule->GetRuleIdx()) = true;
+}
+
+bool GroupExpression::HasRuleExplored(Rule *rule) {
+  return rule_mask_.test(rule->GetRuleIdx());
 }
 
 }  // namespace optimizer

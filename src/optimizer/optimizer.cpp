@@ -62,11 +62,13 @@ Optimizer::Optimizer() {}
 
 void Optimizer::OptimizeLoop(int root_group_id, std::shared_ptr<PropertySet> required_props) {
   std::shared_ptr<OptimizeContext> root_context = std::make_shared<OptimizeContext>(&metadata_, required_props);
-  metadata_.task_pool.Push(new OptimizeGroup(metadata_.memo.GetGroupByID(root_group_id), root_context));
+  auto task_stack = std::make_unique<OptimizerTaskStack>();
+  metadata_.SetTaskPool(task_stack.get());
+  task_stack->Push(new OptimizeGroup(metadata_.memo.GetGroupByID(root_group_id), root_context));
 
   // TODO: Add timer for early stop
-  while (!metadata_.task_pool.Empty()) {
-    auto task = metadata_.task_pool.Pop();
+  while (!task_stack->Empty()) {
+    auto task = task_stack->Pop();
     task->execute();
   }
 
@@ -98,8 +100,11 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   shared_ptr<GroupExpression> gexpr = InsertQueryTree(parse_tree, txn);
   GroupID root_id = gexpr->GetGroupID();
   // Get the physical properties the final plan must output
-  PropertySet properties = GetQueryRequiredProperties(parse_tree);
+  auto properties = GetQueryRequiredProperties(parse_tree);
 
+  OptimizeLoop(root_id, properties);
+
+  /*
   // Explore the logically equivalent plans from the root group
   ExploreGroup(root_id);
 
@@ -108,6 +113,7 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
 
   // Find least cost plan for root group
   OptimizeGroup(root_id, properties);
+  */
 
   try {
     ExprMap output_expr_map;
@@ -123,7 +129,7 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   }
 }
 
-void Optimizer::Reset() { memo_ = Memo(); }
+void Optimizer::Reset() { metadata_ = OptimizerMetadata(); }
 
 unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
     parser::SQLStatement *tree, bool &is_ddl_stmt,
@@ -211,37 +217,36 @@ shared_ptr<GroupExpression> Optimizer::InsertQueryTree(
   shared_ptr<OperatorExpression> initial =
       converter.ConvertToOpExpression(tree);
   shared_ptr<GroupExpression> gexpr;
-  RecordTransformedExpression(initial, gexpr);
+  metadata_.RecordTransformedExpression(initial, gexpr);
   return gexpr;
 }
 
-PropertySet Optimizer::GetQueryRequiredProperties(parser::SQLStatement *tree) {
+std::shared_ptr<PropertySet> Optimizer::GetQueryRequiredProperties(parser::SQLStatement *tree) {
   QueryPropertyExtractor converter;
   return converter.GetProperties(tree);
 }
 
 unique_ptr<planner::AbstractPlan> Optimizer::OptimizerPlanToPlannerPlan(
-    shared_ptr<OperatorExpression> plan, PropertySet &requirements,
-    vector<PropertySet> &required_input_props,
+    shared_ptr<OperatorExpression> plan, std::shared_ptr<PropertySet> &requirements,
+    vector<std::shared_ptr<PropertySet>> &required_input_props,
     vector<unique_ptr<planner::AbstractPlan>> &children_plans,
     vector<ExprMap> &children_expr_map, ExprMap *output_expr_map) {
   OperatorToPlanTransformer transformer;
-  return transformer.ConvertOpExpression(plan, &requirements,
+  return transformer.ConvertOpExpression(plan, requirements,
                                          &required_input_props, children_plans,
                                          children_expr_map, output_expr_map);
 }
 
 unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
-    GroupID id, PropertySet requirements, ExprMap *output_expr_map) {
-  Group *group = memo_.GetGroupByID(id);
-  shared_ptr<GroupExpression> gexpr = group->GetBestExpression(requirements);
+    GroupID id, std::shared_ptr<PropertySet> requirements, ExprMap *output_expr_map) {
+  Group *group = metadata_.memo.GetGroupByID(id);
+  auto gexpr = group->GetBestExpression(requirements);
 
   LOG_TRACE("Choosing best plan for group %d with op %s", gexpr->GetGroupID(),
             gexpr->Op().name().c_str());
 
   vector<GroupID> child_groups = gexpr->GetChildGroupIDs();
-  vector<PropertySet> required_input_props =
-      gexpr->GetInputProperties(requirements);
+  auto required_input_props = gexpr->GetInputProperties(requirements);
   PL_ASSERT(required_input_props.size() == child_groups.size());
 
   // Derive chidren plans first because they are useful in the derivation of
@@ -270,6 +275,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
   return plan;
 }
 
+/*
 void Optimizer::OptimizeGroup(GroupID id, PropertySet requirements) {
   LOG_TRACE("Optimizing group %d with req %s", id,
             requirements.ToString().c_str());
@@ -597,6 +603,6 @@ bool Optimizer::RecordTransformedExpression(shared_ptr<OperatorExpression> expr,
                                             GroupID target_group) {
   return metadata_.RecordTransformedExpression(expr, gexpr, target_group);
 }
-
+*/
 }  // namespace optimizer
 }  // namespace peloton

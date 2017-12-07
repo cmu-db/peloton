@@ -28,7 +28,7 @@ namespace optimizer {
 
 vector<pair<shared_ptr<PropertySet>, vector<shared_ptr<PropertySet>>>>
 ChildPropertyDeriver::GetProperties(GroupExpression *gexpr,
-                                    PropertySet *requirements, Memo *memo) {
+                                    shared_ptr<PropertySet> requirements, Memo *memo) {
   requirements_ = requirements;
   output_.clear();
   memo_ = memo;
@@ -52,7 +52,7 @@ void ChildPropertyDeriver::Visit(const PhysicalIndexScan *) {
 void ChildPropertyDeriver::Visit(const QueryDerivedScan *) {
   // TODO(boweic): QueryDerivedScan should be deprecated when we added schema
   // for logical groups
-  output_.push_back(make_pair(requirements_, vector<PropertySet>{requirements_});
+  output_.push_back(make_pair(requirements_, vector<shared_ptr<PropertySet>>{requirements_}));
 }
 
 /**
@@ -69,7 +69,7 @@ void ChildPropertyDeriver::Visit(const PhysicalHashGroupBy *) {
 
 void ChildPropertyDeriver::Visit(const PhysicalSortGroupBy *) {
   // TODO(boweic): add sort requirement
-  output_.push_back(make_pair(requirements_, vector<PropertySet>{requirements_});
+  output_.push_back(make_pair(requirements_, vector<shared_ptr<PropertySet>>{requirements_}));
 }
 
 void ChildPropertyDeriver::Visit(const PhysicalAggregate *) {
@@ -107,26 +107,26 @@ void ChildPropertyDeriver::Visit(const PhysicalOuterHashJoin *) {}
 void ChildPropertyDeriver::Visit(const PhysicalInsert *) {}
 void ChildPropertyDeriver::Visit(const PhysicalInsertSelect *) {
   // Let child fulfil all the required properties
-  vector<PropertySet> child_input_properties{requirements_};
+  vector<shared_ptr<PropertySet>> child_input_properties{requirements_};
 
   output_.push_back(make_pair(requirements_, move(child_input_properties)));
 }
 void ChildPropertyDeriver::Visit(const PhysicalUpdate *) {
   // Let child fulfil all the required properties
-  vector<PropertySet> child_input_properties{requirements_};
+  vector<shared_ptr<PropertySet>> child_input_properties{requirements_};
 
   output_.push_back(make_pair(requirements_, move(child_input_properties)));
 }
 void ChildPropertyDeriver::Visit(const PhysicalDelete *) {
   // Let child fulfil all the required properties
-  vector<PropertySet> child_input_properties{requirements_};
+  vector<shared_ptr<PropertySet>> child_input_properties{requirements_};
 
   output_.push_back(make_pair(requirements_, move(child_input_properties)));
 };
 
 void ChildPropertyDeriver::Visit(const DummyScan *) {
   // Provide nothing
-  output_.push_back(make_pair(PropertySet(), vector<PropertySet>()));
+  output_.push_back(make_pair(make_shared<PropertySet>(), vector<shared_ptr<PropertySet>>()));
 }
 
 }  // namespace optimizer

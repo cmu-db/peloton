@@ -11,11 +11,14 @@
 //===----------------------------------------------------------------------===//
 
 #include <include/optimizer/property_enforcer.h>
+#include <include/optimizer/optimizer_metadata.h>
 #include "optimizer/optimizer_task.h"
 #include "optimizer/optimize_context.h"
 #include "optimizer/binding.h"
 #include "optimizer/child_property_deriver.h"
 #include "optimizer/cost_calculator.h"
+#include "optimizer/optimizer_task_pool.h"
+#include "optimizer/rule.h"
 
 namespace peloton {
 namespace optimizer {
@@ -23,7 +26,7 @@ namespace optimizer {
 // Base class
 //===--------------------------------------------------------------------===//
 void OptimizerTask::PushTask(OptimizerTask *task) {
-  context_->metadata->task_pool.Push(task);
+  context_->metadata->task_pool->Push(task);
 }
 
 Memo &OptimizerTask::GetMemo() const { return context_->metadata->memo; }
@@ -193,7 +196,7 @@ void OptimizeInputs::execute() {
     // Derive output and input properties
     ChildPropertyDeriver prop_deriver;
     output_input_properties_ = std::move(prop_deriver.GetProperties(
-        group_expr_, context_->required_prop.get(), &context_->metadata->memo));
+        group_expr_, context_->required_prop, &context_->metadata->memo));
     cur_child_idx_ = 0;
 
     // TODO: If later on we support properties that may not be enforced in some cases,
@@ -201,7 +204,7 @@ void OptimizeInputs::execute() {
   }
 
   // Loop over (output prop, input props) pair
-  for (;cur_prop_pair_idx_ < output_input_properties_.size(); cur_prop_pair_idx_++) {
+  for (;cur_prop_pair_idx_ < (int)output_input_properties_.size(); cur_prop_pair_idx_++) {
     auto &output_prop = output_input_properties_[cur_prop_pair_idx_].first;
     auto &input_props = output_input_properties_[cur_prop_pair_idx_].second;
 
@@ -211,7 +214,7 @@ void OptimizeInputs::execute() {
       cur_total_cost_ += cost_calculator.CalculatorCost(group_expr_, output_prop.get());
     }
 
-    for (; cur_child_idx_  < group_expr_->GetChildrenGroupsSize(); cur_child_idx_++) {
+    for (; cur_child_idx_  < (int)group_expr_->GetChildrenGroupsSize(); cur_child_idx_++) {
       auto &i_prop = input_props[cur_child_idx_];
       auto child_group = context_->metadata->memo.GetGroupByID(
       group_expr_->GetChildGroupId(cur_child_idx_));
@@ -235,7 +238,7 @@ void OptimizeInputs::execute() {
 
     }
     // Check whether we successfully optimize all child group
-    if (cur_child_idx_ == output_input_properties_.size()) {
+    if (cur_child_idx_ == (int)output_input_properties_.size()) {
       // Not need to do pruning here because it has been done when we get the best expr from the child group
 
       // Add this group expression to group expression hash table
@@ -271,7 +274,7 @@ void OptimizeInputs::execute() {
           // Cost the enforced expression
           auto extended_prop_set = std::make_shared<PropertySet>(extended_output_properties);
           CostCalculator cost_calculator;
-          cur_total_cost_ += cost_calculator.CalculatorCost(memo_enforced_expr, extended_prop_set.get());
+          cur_total_cost_ += cost_calculator.CalculatorCost(memo_enforced_expr.get(), extended_prop_set.get());
 
           // Update hash tables for group and group expression
           memo_enforced_expr->SetLocalHashTable(extended_prop_set, {pre_output_prop_set}, cur_total_cost_);

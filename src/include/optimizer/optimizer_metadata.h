@@ -12,17 +12,22 @@
 
 #pragma once
 #include "optimizer/memo.h"
+#include "optimizer/group_expression.h"
 #include "optimizer/rule.h"
+
 namespace peloton {
 namespace optimizer {
+
+class OptimizerTaskPool;
+class RuleSet;
 
 class OptimizerMetadata {
  public:
   Memo memo;
   RuleSet rule_set;
-  OptimizerTaskPool task_pool;
+  OptimizerTaskPool* task_pool;
 
-  void AddRule(Rule *rule) { rule_set.AddRule(rule); }
+  void SetTaskPool(OptimizerTaskPool* task_pool) { this->task_pool = task_pool; }
 
   std::shared_ptr<GroupExpression> MakeGroupExpression(
       std::shared_ptr<OperatorExpression> expr) {
@@ -45,11 +50,7 @@ class OptimizerMetadata {
                                    std::shared_ptr<GroupExpression> &gexpr,
                                    GroupID target_group) {
     gexpr = MakeGroupExpression(expr);
-    if (memo.InsertExpression(gexpr, target_group, false) != gexpr) {
-      gexpr->ResetRuleMask(rule_set.size());
-      return true;
-    }
-    return false;
+    return (memo.InsertExpression(gexpr, target_group, false) != gexpr);
   }
 };
 

@@ -37,8 +37,8 @@ class OperatorToPlanTransformer : public OperatorVisitor {
   OperatorToPlanTransformer();
 
   std::unique_ptr<planner::AbstractPlan> ConvertOpExpression(
-      std::shared_ptr<OperatorExpression> plan, PropertySet *requirements,
-      std::vector<PropertySet> *required_input_props,
+      std::shared_ptr<OperatorExpression> plan, std::shared_ptr<PropertySet> requirements,
+      std::vector<std::shared_ptr<PropertySet>> *required_input_props,
       std::vector<std::unique_ptr<planner::AbstractPlan>> &children_plans,
       std::vector<ExprMap> &children_expr_map, ExprMap *output_expr_map);
 
@@ -116,8 +116,8 @@ class OperatorToPlanTransformer : public OperatorVisitor {
 
   std::unique_ptr<planner::AbstractPlan> output_plan_;
   std::vector<std::unique_ptr<planner::AbstractPlan>> children_plans_;
-  PropertySet *requirements_;
-  std::vector<PropertySet> *required_input_props_;
+  std::shared_ptr<PropertySet> requirements_;
+  std::vector<std::shared_ptr<PropertySet>> *required_input_props_;
 
   std::vector<ExprMap> children_expr_map_;
   ExprMap *output_expr_map_;

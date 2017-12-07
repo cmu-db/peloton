@@ -1275,6 +1275,29 @@ std::string PropertyTypeToString(PropertyType type);
 PropertyType StringToPropertyType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const PropertyType &type);
 
+
+enum class RuleType : uint32_t {
+  INNER_JOIN_COMMUTE = 0,
+
+  LogicalPhysicalDelimiter,
+
+  GET_TO_DUMMY_SCAN,
+  GET_TO_SEQ_SCAN,
+  GET_TO_INDEX_SCAN,
+  QUERY_DERIVED_GET_TO_PHYSICAL,
+  DELETE_TO_PHYSICAL,
+  UPDATE_TO_PHYSICAL,
+  INSERT_TO_PHYSICAL,
+  INSERT_SELECT_TO_PHYSICAL,
+  AGGREGATE_TO_HASH_AGGREGATE,
+  AGGREGATE_TO_PLAIN_AGGREGATE,
+  INNER_JOIN_TO_NL_JOIN,
+  INNER_JOIN_TO_HASH_JOIN,
+
+  // Place holder to generate compile time
+  NUM_RULES_PLUS_ONE
+};
+
 namespace expression {
 class AbstractExpression;
 class ExprHasher;

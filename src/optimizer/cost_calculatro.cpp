@@ -15,37 +15,37 @@
 namespace peloton {
 namespace optimizer {
 
-double CostCalculator::CalculatorCost(std::shared_ptr<GroupExpression> gexpr, const PropertySet *opoutput_properties) {
+double CostCalculator::CalculatorCost(GroupExpression *gexpr, const PropertySet *output_properties) {
   gexpr_ = gexpr;
   output_properties_ = output_properties;
   gexpr_->Op().Accept(this);
   return output_cost_;
 }
 
-void CostCalculator::Visit(const DummyScan *op) {}
-void CostCalculator::Visit(const PhysicalSeqScan *op) {}
-void CostCalculator::Visit(const PhysicalIndexScan *op) {}
-void CostCalculator::Visit(const QueryDerivedScan *op) {}
-void CostCalculator::Visit(const PhysicalProject *op) {}
-void CostCalculator::Visit(const PhysicalOrderBy *op) {}
-void CostCalculator::Visit(const PhysicalLimit *op) {}
-void CostCalculator::Visit(const PhysicalFilter *op) {}
-void CostCalculator::Visit(const PhysicalInnerNLJoin *op) {}
-void CostCalculator::Visit(const PhysicalLeftNLJoin *op) {}
-void CostCalculator::Visit(const PhysicalRightNLJoin *op) {}
-void CostCalculator::Visit(const PhysicalOuterNLJoin *op) {}
-void CostCalculator::Visit(const PhysicalInnerHashJoin *op) {}
-void CostCalculator::Visit(const PhysicalLeftHashJoin *op) {}
-void CostCalculator::Visit(const PhysicalRightHashJoin *op) {}
-void CostCalculator::Visit(const PhysicalOuterHashJoin *op) {}
-void CostCalculator::Visit(const PhysicalInsert *op) {}
-void CostCalculator::Visit(const PhysicalInsertSelect *op) {}
-void CostCalculator::Visit(const PhysicalDelete *op) {}
-void CostCalculator::Visit(const PhysicalUpdate *op) {}
-void CostCalculator::Visit(const PhysicalHashGroupBy *op) {}
-void CostCalculator::Visit(const PhysicalSortGroupBy *op) {}
-void CostCalculator::Visit(const PhysicalDistinct *op) {}
-void CostCalculator::Visit(const PhysicalAggregate *op) {}
+void CostCalculator::Visit(UNUSED_ATTRIBUTE const DummyScan *op) {}
+void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalSeqScan *op) {}
+void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalIndexScan *op) {}
+void CostCalculator::Visit(UNUSED_ATTRIBUTE const QueryDerivedScan *op) {}
+void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalProject *op) {}
+void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalOrderBy *op) {}
+void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalLimit *op) {}
+void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalFilter *op) {}
+void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalInnerNLJoin *op) {}
+void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalLeftNLJoin *op) {}
+void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalRightNLJoin *op) {}
+void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalOuterNLJoin *op) {}
+void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalInnerHashJoin *op) {}
+void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalLeftHashJoin *op) {}
+void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalRightHashJoin *op) {}
+void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalOuterHashJoin *op) {}
+void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalInsert *op) {}
+void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalInsertSelect *op) {}
+void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalDelete *op) {}
+void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalUpdate *op) {}
+void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalHashGroupBy *op) {}
+void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalSortGroupBy *op) {}
+void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalDistinct *op) {}
+void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalAggregate *op) {}
 
 } // namespace optimizer
 } // namespace peloton

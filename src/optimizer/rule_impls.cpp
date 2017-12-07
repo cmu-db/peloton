@@ -311,33 +311,6 @@ void LogicalGroupByToHashGroupBy::Transform(
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/// LogicalGroupByToSortGroupBy
-LogicalGroupByToSortGroupBy::LogicalGroupByToSortGroupBy() {
-  type_ = RuleType::AGGREGATE_TO_SORT_AGGREGATE;
-  match_pattern = std::make_shared<Pattern>(OpType::LogicalGroupBy);
-  std::shared_ptr<Pattern> child(std::make_shared<Pattern>(OpType::Leaf));
-  match_pattern->AddChild(child);
-}
-
-bool LogicalGroupByToSortGroupBy::Check(
-    UNUSED_ATTRIBUTE std::shared_ptr<OperatorExpression> plan,
-    Memo *memo) const {
-  (void)memo;
-  return true;
-}
-
-void LogicalGroupByToSortGroupBy::Transform(
-    std::shared_ptr<OperatorExpression> input,
-    std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
-  const LogicalGroupBy *agg_op = input->Op().As<LogicalGroupBy>();
-  auto result = std::make_shared<OperatorExpression>(
-      PhysicalSortGroupBy::make(agg_op->columns, agg_op->having));
-  PL_ASSERT(input->Children().size() == 1);
-  result->PushChild(input->Children().at(0));
-  transformed.push_back(result);
-}
-
-///////////////////////////////////////////////////////////////////////////////
 /// LogicalAggregateToPhysical
 LogicalAggregateToPhysical::LogicalAggregateToPhysical() {
   type_ = RuleType::AGGREGATE_TO_PLAIN_AGGREGATE;

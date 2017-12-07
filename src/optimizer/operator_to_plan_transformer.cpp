@@ -46,8 +46,8 @@ OperatorToPlanTransformer::OperatorToPlanTransformer() {}
 
 unique_ptr<planner::AbstractPlan>
 OperatorToPlanTransformer::ConvertOpExpression(
-    shared_ptr<OperatorExpression> plan, PropertySet *requirements,
-    vector<PropertySet> *required_input_props,
+    shared_ptr<OperatorExpression> plan, std::shared_ptr<PropertySet> requirements,
+    vector<std::shared_ptr<PropertySet>> *required_input_props,
     vector<unique_ptr<planner::AbstractPlan>> &children_plans,
     vector<ExprMap> &children_expr_map, ExprMap *output_expr_map) {
   requirements_ = requirements;

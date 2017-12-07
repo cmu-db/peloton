@@ -21,21 +21,21 @@ std::shared_ptr<Stats> StatsCalculator::CalculateStats(std::shared_ptr<GroupExpr
   return output_stats_;
 }
 
-void StatsCalculator::Visit(const LeafOperator *op) {}
-void StatsCalculator::Visit(const LogicalGet *op) {}
-void StatsCalculator::Visit(const LogicalQueryDerivedGet *op) {}
-void StatsCalculator::Visit(const LogicalFilter *op) {}
-void StatsCalculator::Visit(const LogicalInnerJoin *op) {}
-void StatsCalculator::Visit(const LogicalLeftJoin *op) {}
-void StatsCalculator::Visit(const LogicalRightJoin *op) {}
-void StatsCalculator::Visit(const LogicalOuterJoin *op) {}
-void StatsCalculator::Visit(const LogicalSemiJoin *op) {}
-void StatsCalculator::Visit(const LogicalAggregate *op) {}
-void StatsCalculator::Visit(const LogicalGroupBy *op) {}
-void StatsCalculator::Visit(const LogicalInsert *op) {}
-void StatsCalculator::Visit(const LogicalInsertSelect *op) {}
-void StatsCalculator::Visit(const LogicalDelete *op) {}
-void StatsCalculator::Visit(const LogicalUpdate *op) {}
+void StatsCalculator::Visit(UNUSED_ATTRIBUTE const LeafOperator *op) {}
+void StatsCalculator::Visit(UNUSED_ATTRIBUTE const LogicalGet *op) {}
+void StatsCalculator::Visit(UNUSED_ATTRIBUTE const LogicalQueryDerivedGet *op) {}
+void StatsCalculator::Visit(UNUSED_ATTRIBUTE const LogicalFilter *op) {}
+void StatsCalculator::Visit(UNUSED_ATTRIBUTE const LogicalInnerJoin *op) {}
+void StatsCalculator::Visit(UNUSED_ATTRIBUTE const LogicalLeftJoin *op) {}
+void StatsCalculator::Visit(UNUSED_ATTRIBUTE const LogicalRightJoin *op) {}
+void StatsCalculator::Visit(UNUSED_ATTRIBUTE const LogicalOuterJoin *op) {}
+void StatsCalculator::Visit(UNUSED_ATTRIBUTE const LogicalSemiJoin *op) {}
+void StatsCalculator::Visit(UNUSED_ATTRIBUTE const LogicalAggregate *op) {}
+void StatsCalculator::Visit(UNUSED_ATTRIBUTE const LogicalGroupBy *op) {}
+void StatsCalculator::Visit(UNUSED_ATTRIBUTE const LogicalInsert *op) {}
+void StatsCalculator::Visit(UNUSED_ATTRIBUTE const LogicalInsertSelect *op) {}
+void StatsCalculator::Visit(UNUSED_ATTRIBUTE const LogicalDelete *op) {}
+void StatsCalculator::Visit(UNUSED_ATTRIBUTE const LogicalUpdate *op) {}
 
 
 } // namespace optimizer

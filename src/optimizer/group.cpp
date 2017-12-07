@@ -51,7 +51,7 @@ bool Group::SetExpressionCost(GroupExpression* expr, double cost,
   }
   return false;
 }
-std::shared_ptr<GroupExpression> Group::GetBestExpression(
+GroupExpression* Group::GetBestExpression(
     std::shared_ptr<PropertySet>& properties) {
   auto it = lowest_cost_expressions_.find(properties);
   if (it != lowest_cost_expressions_.end()) {

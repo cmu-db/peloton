@@ -13,17 +13,17 @@
 #pragma once
 
 #include <memory>
-#include "optimizer/optimizer_metadata.h"
-#include "optimizer/memo.h"
-#include "optimizer/group_expression.h"
-#include "optimizer/group.h"
-#include "optimizer/rule.h"
-#include "optimizer/memo.h"
 
 namespace peloton {
 namespace optimizer {
 
 class OptimizeContext;
+class Memo;
+class Rule;
+class RuleSet;
+class Group;
+class GroupExpression;
+class OptimizerMetadata;
 
 enum class OptimizerTaskType {
   OPTIMIZE_GROUP,
@@ -122,7 +122,8 @@ class OptimizeInputs : public OptimizerTask {
         group_expr_(group_expr) {}
 
   OptimizeInputs(OptimizeInputs* task)
-      : output_input_properties_(std::move(task->output_input_properties_)),
+      : OptimizerTask(task->context_, OptimizerTaskType::OPTIMIZE_INPUTS),
+        output_input_properties_(std::move(task->output_input_properties_)),
         group_expr_(task->group_expr_), cur_total_cost_(task->cur_total_cost_),
         cur_child_idx_(task->cur_child_idx_),
         cur_prop_pair_idx_(task->cur_prop_pair_idx_) {}

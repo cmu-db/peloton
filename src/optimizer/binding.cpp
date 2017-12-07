@@ -34,27 +34,9 @@ GroupBindingIterator::GroupBindingIterator(Optimizer *optimizer, GroupID id,
       group_id_(id),
       pattern_(pattern),
       target_group_(memo_.GetGroupByID(id)),
-      num_group_items_(target_group_->GetExpressions().size()),
+      num_group_items_(target_group_->GetLogicalExpressions().size()),
       current_item_index_(0) {
   LOG_TRACE("Attempting to bind on group %d", id);
-  // FIXME(patrick): These codes will cause dead loop and also allow optimizer
-  // to explore physical expression when we have logical transformation rules.
-  // I don't understand why we need to call ExploreExpression and I don't think
-  // this is necessary because we have called this function in optimizer.cpp.
-  // I may be wrong but in order to make logical transformation works, I comment
-  // these out.
-
-  /*
-  // We'd like to only explore rules which we know will produce a match of our
-  // current pattern. However, because our rules don't currently expose the
-  // structure of the output they produce after a transformation, we must be
-  // conservative and apply all rules
-  const std::vector<std::shared_ptr<GroupExpression>> gexprs =
-      target_group_->GetExpressions();
-  for (size_t i = 0; i < num_group_items_; ++i) {
-      optimizer.ExploreExpression(gexprs[i]);
-  }
-  */
 }
 
 bool GroupBindingIterator::HasNext() {
@@ -75,7 +57,7 @@ bool GroupBindingIterator::HasNext() {
     // Keep checking item iterators until we find a match
     while (current_item_index_ < num_group_items_) {
       current_iterator_.reset(new ItemBindingIterator(
-          optimizer_, target_group_->GetExpressions()[current_item_index_],
+          optimizer_, target_group_->GetLogicalExpressions()[current_item_index_].get(),
           pattern_));
 
       if (current_iterator_->HasNext()) {
@@ -102,7 +84,7 @@ std::shared_ptr<OperatorExpression> GroupBindingIterator::Next() {
 // Item Binding Iterator
 //===--------------------------------------------------------------------===//
 ItemBindingIterator::ItemBindingIterator(Optimizer *optimizer,
-                                         std::shared_ptr<GroupExpression> gexpr,
+                                         GroupExpression *gexpr,
                                          std::shared_ptr<Pattern> pattern)
     : BindingIterator(optimizer),
       gexpr_(gexpr),

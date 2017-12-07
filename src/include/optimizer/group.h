@@ -42,9 +42,7 @@ class Group {
   bool SetExpressionCost(GroupExpression* expr, double cost,
                          std::shared_ptr<PropertySet>& properties);
 
-  std::shared_ptr<GroupExpression> GetBestExpression(std::shared_ptr<PropertySet>& properties);
-
-  const std::vector<std::shared_ptr<GroupExpression>> GetExpressions() const;
+  GroupExpression* GetBestExpression(std::shared_ptr<PropertySet>& properties);
 
   inline const std::unordered_set<std::string> &GetTableAliases() const {
     return table_aliases_;
@@ -75,7 +73,7 @@ class Group {
   // All the table alias this group represents. This will not change once create
   std::unordered_set<std::string> table_aliases_;
   std::unordered_map<std::shared_ptr<PropertySet>,
-                     std::tuple<double, GroupExpression*, PropSetPtrHash, PropSetPtrEq>>
+                     std::tuple<double, GroupExpression*>, PropSetPtrHash, PropSetPtrEq>
       lowest_cost_expressions_;
 
   // Whether equivalent logical expressions have been explored for this group

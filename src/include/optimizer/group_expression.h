@@ -15,8 +15,8 @@
 #include "optimizer/operator_node.h"
 #include "optimizer/stats.h"
 #include "optimizer/util.h"
-#include "optimizer/rule.h"
 #include "optimizer/property_set.h"
+#include "type/types.h"
 
 #include <map>
 #include <tuple>
@@ -24,6 +24,8 @@
 
 namespace peloton {
 namespace optimizer {
+
+class Rule;
 
 using GroupID = int32_t;
 
@@ -40,11 +42,9 @@ class GroupExpression {
 
   const std::vector<GroupID> &GetChildGroupIDs() const;
 
-  const GroupID GetChildGroupId(int child_idx) const;
+  GroupID GetChildGroupId(int child_idx) const;
 
   Operator Op() const;
-
-  std::shared_ptr<Stats> GetStats(PropertySet requirements) const;
 
   double GetCost(std::shared_ptr<PropertySet>& requirements) const;
 
@@ -61,17 +61,9 @@ class GroupExpression {
 
   bool operator==(const GroupExpression &r);
 
-  void ResetRuleMask(size_t num_rules) {
-    rule_mask_.reset(new std::vector<bool>(num_rules, false));
-  }
+  void SetRuleExplored(Rule *rule);
 
-  void SetRuleExplored(Rule *rule) {
-    rule_mask_.set(rule->GetRuleIdx()) = true;
-  }
-
-  bool HasRuleExplored(Rule *rule) {
-    return rule_mask_.test(rule->GetRuleIdx());
-  }
+  bool HasRuleExplored(Rule *rule);
 
   inline size_t GetChildrenGroupsSize() const { return child_groups.size(); }
 
@@ -80,7 +72,6 @@ class GroupExpression {
   Operator op;
   std::vector<GroupID> child_groups;
   std::bitset<static_cast<uint32_t>(RuleType::NUM_RULES_PLUS_ONE)-1> rule_mask_;
-
 
   // Mapping from output properties to the corresponding best cost, statistics,
   // and child properties

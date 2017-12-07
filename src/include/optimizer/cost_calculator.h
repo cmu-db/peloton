@@ -21,7 +21,7 @@ namespace optimizer {
 class CostCalculator : public OperatorVisitor {
  public:
   double CalculatorCost(
-      std::shared_ptr<GroupExpression> gexpr,
+      GroupExpression* gexpr,
       const PropertySet *output_properties);
 
   void Visit(const DummyScan *) override;
@@ -52,7 +52,7 @@ class CostCalculator : public OperatorVisitor {
  private:
   // We cannot use reference here because otherwise we have to initialize them
   // when constructing the class
-  std::shared_ptr<GroupExpression> gexpr_;
+  GroupExpression* gexpr_;
   const PropertySet *output_properties_;
   double output_cost_;
 };
