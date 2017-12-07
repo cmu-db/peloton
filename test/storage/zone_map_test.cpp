@@ -37,7 +37,6 @@ class ZoneMapTests : public PelotonTest {};
 TEST_F(ZoneMapTests, ZoneMapContentsTest) {
 
   std::unique_ptr<storage::DataTable> data_table(TestingExecutorUtil::CreateTable(5, false, 1));
-  // storage::DataTable *data_table = TestingExecutorUtil::CreateTable(5, false, 1);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   TestingExecutorUtil::PopulateTable(data_table.get(), 20, false, false, false, txn);
