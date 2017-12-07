@@ -18,16 +18,81 @@ namespace peloton {
 namespace codegen {
 
 //===----------------------------------------------------------------------===//
-// A handy class to create a new LLVM function, configure the code context and
-// "complete" the function when the user wants to.
+//
+// FunctionSignature
+//
+// A FunctionSignature fully identifies a function. A signature includes a name,
+// the return type of the function and all the arguments to the function.
+// Additionally, users can decide the visibility of the function, and define
+// attributes/properties on the arguments of the function.
+//
+//===----------------------------------------------------------------------===//
+class FunctionSignature {
+ public:
+  /// The visibility of the function
+  enum class Visibility : uint8_t {
+    External = 0,
+    ExternalAvailable = 1,
+    Internal = 2,
+  };
+
+  /// Information about each function argument
+  struct ArgumentInfo {
+    std::string name;
+    llvm::Type *type;
+  };
+
+  /// Constructors
+  FunctionSignature(const std::string &name, Visibility visibility,
+                    llvm::Type *ret_type,
+                    std::initializer_list<ArgumentInfo> args);
+
+  FunctionSignature(const std::string &name, Visibility visibility,
+                    llvm::Type *ret_type,
+                    const std::vector<ArgumentInfo> &args);
+
+  /// Construct an LLVM function declaration from this signature
+  llvm::Function *MakeDeclaration(CodeContext &cc) const;
+
+ private:
+  // The name of the function
+  std::string name_;
+  // The visibility of this function
+  Visibility visibility_;
+  // The return type of the function
+  llvm::Type *ret_type_;
+  // The function arguments
+  std::vector<ArgumentInfo> args_info_;
+};
+
+//===----------------------------------------------------------------------===//
+//
+// FunctionBuilder
+//
+// A handy class to construct a function. Creating an instance of this class
+// begins construction of a new function with the provided function signature.
+// After construction, code-generation shifts to the entry point of the
+// function, letting users generate the definition of the function. All function
+// arguments are accessible through the GetArgumentBy*(...) methods. Functions
+// complete upon a call to Finish(...). At this point, the function is fully
+// defined.
+//
+// FunctionBuilders can safely nest. This enables construction of one function
+// while in the middle of construction of a different function. However, to do
+// this safely, the functions must be "finished" in reverse order of nesting.
+//
 //===----------------------------------------------------------------------===//
 class FunctionBuilder {
   friend class CodeGen;
+
  public:
   // Constructor
-  FunctionBuilder(
-      CodeContext &code_context, std::string name, llvm::Type *ret_type,
-      const std::vector<std::pair<std::string, llvm::Type *>> &args);
+  FunctionBuilder(CodeContext &code_context,
+                  const FunctionSignature &signature);
+
+  FunctionBuilder(CodeContext &code_context, std::string name,
+                  llvm::Type *ret_type,
+                  const std::vector<FunctionSignature::ArgumentInfo> &args);
 
   // Destructor
   ~FunctionBuilder();

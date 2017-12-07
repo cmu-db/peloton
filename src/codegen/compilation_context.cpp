@@ -152,27 +152,30 @@ llvm::Function *CompilationContext::GenerateInitFunction() {
   auto &code_context = query_.GetCodeContext();
   auto &runtime_state = query_.GetRuntimeState();
 
-  auto init_fn_name = "_" + std::to_string(code_context.GetID()) + "_init";
-  FunctionBuilder function_builder{
-      code_context,
-      init_fn_name,
-      codegen_.VoidType(),
-      {{"runtimeState", runtime_state.FinalizeType(codegen_)->getPointerTo()}}};
+  std::vector<FunctionSignature::ArgumentInfo> fn_args = {
+      {.name = "runtimeState",
+       .type = runtime_state.FinalizeType(codegen_)->getPointerTo()}};
+  FunctionSignature signature{
+      StringUtil::Format("_%lu_init", code_context.GetID()),
+      FunctionSignature::Visibility::Internal, codegen_.VoidType(), fn_args};
 
-  // Let the consumer initialize
-  result_consumer_.InitializeState(*this);
+  FunctionBuilder init_func{code_context, signature};
+  {
+    // Let the consumer initialize
+    result_consumer_.InitializeState(*this);
 
-  // Allow each operator to initialize its state
-  for (auto &iter : op_translators_) {
-    auto &translator = iter.second;
-    translator->InitializeState();
+    // Allow each operator to initialize their state
+    for (auto &iter : op_translators_) {
+      auto &translator = iter.second;
+      translator->InitializeState();
+    }
+
+    // Finish the function
+    init_func.ReturnAndFinish();
   }
 
-  // Finish the function
-  function_builder.ReturnAndFinish();
-
-  // Get the function
-  return function_builder.GetFunction();
+  // Get the generated function
+  return init_func.GetFunction();
 }
 
 // Generate the code for the plan() function of the query
@@ -182,24 +185,30 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
   auto &code_context = query_.GetCodeContext();
   auto &runtime_state = query_.GetRuntimeState();
 
-  auto plan_fn_name = "_" + std::to_string(code_context.GetID()) + "_plan";
-  FunctionBuilder function_builder{
-      code_context,
-      plan_fn_name,
-      codegen_.VoidType(),
-      {{"runtimeState", runtime_state.FinalizeType(codegen_)->getPointerTo()}}};
+  std::vector<FunctionSignature::ArgumentInfo> fn_args = {
+      {.name = "runtimeState",
+       .type = runtime_state.FinalizeType(codegen_)->getPointerTo()}};
+  FunctionSignature signature{
+      StringUtil::Format("_%lu_plan", code_context.GetID()),
+      FunctionSignature::Visibility::Internal, codegen_.VoidType(), fn_args};
 
-  // Load the query parameter values
-  parameter_cache_.Populate(codegen_, GetQueryParametersPtr());
+  FunctionBuilder plan_func{code_context, signature};
+  {
+    // Create all local state
+    runtime_state.CreateLocalState(codegen_);
 
-  // Generate the primary plan logic
-  Produce(root);
+    // Load the query parameter values
+    parameter_cache_.Populate(codegen_, GetQueryParametersPtr());
 
-  // Finish the function
-  function_builder.ReturnAndFinish();
+    // Generate the primary plan logic
+    Produce(root);
+
+    // Finish the function
+    plan_func.ReturnAndFinish();
+  }
 
   // Get the function
-  return function_builder.GetFunction();
+  return plan_func.GetFunction();
 }
 
 // Generate the code for the tearDown() function of the query
@@ -208,27 +217,29 @@ llvm::Function *CompilationContext::GenerateTearDownFunction() {
   auto &code_context = query_.GetCodeContext();
   auto &runtime_state = query_.GetRuntimeState();
 
-  auto fn_name = "_" + std::to_string(code_context.GetID()) + "_tearDown";
-  FunctionBuilder function_builder{
-      code_context,
-      fn_name,
-      codegen_.VoidType(),
-      {{"runtimeState", runtime_state.FinalizeType(codegen_)->getPointerTo()}}};
+  std::vector<FunctionSignature::ArgumentInfo> fn_args = {
+      {.name = "runtimeState",
+       .type = runtime_state.FinalizeType(codegen_)->getPointerTo()}};
+  FunctionSignature signature{
+      StringUtil::Format("_%lu_tearDown", code_context.GetID()),
+      FunctionSignature::Visibility::Internal, codegen_.VoidType(), fn_args};
 
-  // Let the consumer initialize
-  result_consumer_.TearDownState(*this);
+  FunctionBuilder tear_down_func{code_context, signature};
+  {
+    // Let the consumer initialize
+    result_consumer_.TearDownState(*this);
 
-  // Allow each operator to initialize its state
-  for (auto &iter : op_translators_) {
-    auto &translator = iter.second;
-    translator->TearDownState();
+    // Allow each operator to clean up their state
+    for (auto &iter : op_translators_) {
+      auto &translator = iter.second;
+      translator->TearDownState();
+    }
+
+    // Finish the function
+    tear_down_func.ReturnAndFinish();
   }
-
-  // Finish the function
-  function_builder.ReturnAndFinish();
-
   // Get the function
-  return function_builder.GetFunction();
+  return tear_down_func.GetFunction();
 }
 
 // Get the registered translator for the given expression
