@@ -138,7 +138,7 @@ void OrderByTranslator::DefineAuxiliaryFunctions() {
   auto &storage_format = sorter_.GetStorageFormat();
 
   // The comparison function builder
-  std::vector<std::pair<std::string, llvm::Type *>> args = {
+  std::vector<FunctionSignature::ArgumentInfo> args = {
       {"leftTuple", codegen.CharPtrType()},
       {"rightTuple", codegen.CharPtrType()}};
   FunctionBuilder compare{codegen.GetCodeContext(), "compare",
