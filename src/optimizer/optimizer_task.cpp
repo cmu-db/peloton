@@ -15,6 +15,7 @@
 #include "optimizer/optimize_context.h"
 #include "optimizer/binding.h"
 #include "optimizer/child_property_deriver.h"
+#include "optimizer/cost_calculator.h"
 
 namespace peloton {
 namespace optimizer {
@@ -203,6 +204,13 @@ void OptimizeInputs::execute() {
   for (;cur_prop_pair_idx_ < output_input_properties_.size(); cur_prop_pair_idx_++) {
     auto &output_prop = output_input_properties_[cur_prop_pair_idx_].first;
     auto &input_props = output_input_properties_[cur_prop_pair_idx_].second;
+
+    // Calculate local cost and update total cost
+    if (cur_child_idx_ == 0) {
+      CostCalculator cost_calculator;
+      cur_total_cost_ += cost_calculator.CalculatorCost(group_expr_, output_prop.get());
+    }
+
     for (; cur_child_idx_  < group_expr_->GetChildrenGroupsSize(); cur_child_idx_++) {
       auto &i_prop = input_props[cur_child_idx_];
       auto child_group = context_->metadata->memo.GetGroupByID(
@@ -254,15 +262,18 @@ void OptimizeInputs::execute() {
           }
           memo_enforced_expr = GetMemo().InsertExpression(enforced_expr, group_expr_->GetGroupID(), true);
 
-          // TODO: Cost the enforced expression
-          cur_total_cost_ += 0;
+
 
           // Extend the output properties after enforcement
           auto pre_output_prop_set = std::make_shared<PropertySet>(extended_output_properties);
           extended_output_properties.push_back(prop);
 
-          // Update hash tables for group and group expression
+          // Cost the enforced expression
           auto extended_prop_set = std::make_shared<PropertySet>(extended_output_properties);
+          CostCalculator cost_calculator;
+          cur_total_cost_ += cost_calculator.CalculatorCost(memo_enforced_expr, extended_prop_set.get());
+
+          // Update hash tables for group and group expression
           memo_enforced_expr->SetLocalHashTable(extended_prop_set, {pre_output_prop_set}, cur_total_cost_);
          cur_group->SetExpressionCost(memo_enforced_expr.get(), cur_total_cost_, output_prop);
         }
