@@ -62,6 +62,8 @@ class ZoneMapManager {
   bool ComparePredicateAgainstZoneMap(storage::PredicateInfo *parsed_predicates , int32_t num_predicates, 
     storage::DataTable *table, int64_t tile_group_id);
 
+  bool ZoneMapTableExists();
+
   private:
 
   //===--------------------------------------------------------------------===//
@@ -101,6 +103,8 @@ class ZoneMapManager {
   // Data Members
   //===--------------------------------------------------------------------===//
    std::unique_ptr<type::AbstractPool> pool_;
+
+   bool zone_map_table;
 
 };
 

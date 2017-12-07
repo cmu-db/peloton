@@ -40,7 +40,6 @@ PROXY(RuntimeFunctions) {
   DECLARE_METHOD(GetTileGroupLayout);
   DECLARE_METHOD(GetZoneMapManager);
   DECLARE_METHOD(FillPredicateArray);
-  DECLARE_METHOD(EmptyPredicateArray);
   DECLARE_METHOD(ThrowDivideByZeroException);
   DECLARE_METHOD(ThrowOverflowException);
 };

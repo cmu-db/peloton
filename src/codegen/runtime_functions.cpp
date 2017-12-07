@@ -93,15 +93,6 @@ void RuntimeFunctions::FillPredicateArray(const expression::AbstractExpression *
   LOG_DEBUG("Number of Parsed Predicates is [%lu]", num_preds);
 }
 
-void RuntimeFunctions::EmptyPredicateArray(storage::PredicateInfo *predicate_array, int32_t num_preds) {
-  for (int32_t i = 0; i < num_preds; i++) {
-    auto pred_val = predicate_array[i].predicate_value;
-    if (pred_val.GetTypeId() == peloton::type::TypeId::VARCHAR) {
-      pred_val = peloton::type::ValueFactory::GetNullValueByType(peloton::type::TypeId::VARCHAR);
-    }
-  }
-}
-
 //===----------------------------------------------------------------------===//
 // For every column in the tile group, fill out the layout information for the
 // column in the provided 'infos' array.  Specifically, we need a pointer to

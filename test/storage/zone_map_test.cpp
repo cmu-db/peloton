@@ -53,6 +53,7 @@ TEST_F(ZoneMapTests, ZoneMapContentsTest) {
   auto catalog = catalog::Catalog::GetInstance();
   (void)catalog;
   storage::ZoneMapManager *zone_map_manager = storage::ZoneMapManager::GetInstance();
+  zone_map_manager->CreateZoneMapTableInCatalog();
   txn = txn_manager.BeginTransaction();
   zone_map_manager->CreateZoneMapsForTable(data_table, txn);
   txn_manager.CommitTransaction(txn);

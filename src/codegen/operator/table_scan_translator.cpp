@@ -19,6 +19,7 @@
 #include "codegen/type/boolean_type.h"
 #include "planner/seq_scan_plan.h"
 #include "storage/data_table.h"
+#include "storage/zone_map_manager.h"
 #include "expression/abstract_expression.h"
 #include "expression/constant_value_expression.h"
 #include "expression/tuple_value_expression.h"
@@ -40,7 +41,7 @@ TableScanTranslator::TableScanTranslator(const planner::SeqScanPlan &scan,
     : OperatorTranslator(context, pipeline),
       scan_(scan),
       table_(*scan_.GetTable()) {
-  LOG_TRACE("Constructing TableScanTranslator ...");
+  LOG_DEBUG("Constructing TableScanTranslator ...");
 
   // The restriction, if one exists
   const auto *predicate = GetScanPlan().GetPredicate();
@@ -60,7 +61,9 @@ TableScanTranslator::TableScanTranslator(const planner::SeqScanPlan &scan,
       "scanSelVec",
       codegen.ArrayType(codegen.Int32Type(), Vector::kDefaultVectorSize), true);
 
-  LOG_TRACE("Finished constructing TableScanTranslator ...");
+  storage::ZoneMapManager *zone_map_manager = storage::ZoneMapManager::GetInstance();
+  zone_map_table = zone_map_manager->ZoneMapTableExists();
+  LOG_DEBUG("Finished constructing TableScanTranslator ...");
 }
 
 // Produce!
@@ -68,7 +71,7 @@ void TableScanTranslator::Produce() const {
   auto &codegen = GetCodeGen();
   auto &table = GetTable();
 
-  LOG_TRACE("TableScan on [%u] starting to produce tuples ...", table.GetOid());
+  LOG_DEBUG("TableScan on [%u] starting to produce tuples ...", table.GetOid());
 
   // Get the table instance from the database
   llvm::Value *catalog_ptr = GetCatalogPtr();
@@ -87,7 +90,8 @@ void TableScanTranslator::Produce() const {
   llvm::Value *predicate_ptr = codegen->CreateIntToPtr(codegen.Const64((int64_t)predicate),
           AbstractExpressionProxy::GetType(codegen)->getPointerTo());
   size_t num_preds = 0;
-  if (predicate !=nullptr) {
+
+  if ((predicate !=nullptr) && (zone_map_table)) {
     if(predicate->IsZoneMappable()) {
       num_preds = predicate->GetNumberofParsedPredicates();
     }
@@ -95,8 +99,7 @@ void TableScanTranslator::Produce() const {
   LOG_DEBUG("Number of Predicates is %lu", num_preds);
   ScanConsumer scan_consumer{*this, sel_vec};
   table_.GenerateScan(codegen, table_ptr, sel_vec.GetCapacity(), scan_consumer, predicate_ptr, num_preds);
-  
-  LOG_TRACE("TableScan on [%u] finished producing tuples ...", table.GetOid());
+  LOG_DEBUG("TableScan on [%u] finished producing tuples ...", table.GetOid());
 }
 
 // Get the stringified name of this scan
@@ -173,7 +176,7 @@ void TableScanTranslator::ScanConsumer::SetupRowBatch(
   // 2. Add the attribute accessors into the row batch
   for (oid_t col_idx = 0; col_idx < output_col_ids.size(); col_idx++) {
     auto *attribute = ais[output_col_ids[col_idx]];
-    LOG_TRACE("Adding attribute '%s.%s' (%p) into row batch",
+    LOG_DEBUG("Adding attribute '%s.%s' (%p) into row batch",
               scan_plan.GetTable()->GetName().c_str(), attribute->name.c_str(),
               attribute);
     batch.AddAttribute(attribute, &access[col_idx]);

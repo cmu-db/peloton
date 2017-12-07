@@ -14,6 +14,7 @@
 
 #include "catalog/catalog.h"
 #include "catalog/zone_map_catalog.h"
+#include "catalog/database_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "storage/storage_manager.h"
 #include "storage/data_table.h"
@@ -30,8 +31,8 @@ ZoneMapManager *ZoneMapManager::GetInstance() {
 }
 
 ZoneMapManager::ZoneMapManager() {
+  zone_map_table = false;
   pool_.reset(new type::EphemeralPool());
-  CreateZoneMapTableInCatalog();
 }
 
 void ZoneMapManager::CreateZoneMapTableInCatalog() {
@@ -40,6 +41,7 @@ void ZoneMapManager::CreateZoneMapTableInCatalog() {
   auto txn = txn_manager.BeginTransaction();
   catalog::ZoneMapCatalog::GetInstance(txn);
   txn_manager.CommitTransaction(txn);
+  zone_map_table = true;
 }
 
 
@@ -196,6 +198,10 @@ bool ZoneMapManager::ComparePredicateAgainstZoneMap(storage::PredicateInfo *pars
     }
   }
   return true;
+}
+
+bool ZoneMapManager::ZoneMapTableExists() {
+  return zone_map_table;
 }
 
 }  // namespace optimizer
