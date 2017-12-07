@@ -1016,6 +1016,12 @@ void Catalog::InitializeFunctions() {
           function::BuiltInFuncType{OperatorId::Floor,
                                     function::DecimalFunctions::_Floor},
           txn);
+      AddBuiltinFunction(
+          "round", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL,
+          internal_lang, "Round",
+          function::BuiltInFuncType{OperatorId::Round,
+                                    function::DecimalFunctions::_Round},
+          txn);
 
       /**
        * date functions
