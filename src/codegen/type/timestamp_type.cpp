@@ -12,11 +12,11 @@
 
 #include "codegen/type/timestamp_type.h"
 
-#include "codegen/value.h"
 #include "codegen/proxy/values_runtime_proxy.h"
 #include "codegen/type/boolean_type.h"
 #include "codegen/type/date_type.h"
 #include "codegen/type/integer_type.h"
+#include "codegen/value.h"
 #include "type/timestamp_type.h"
 
 namespace peloton {
@@ -120,6 +120,7 @@ static std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {
     {kCompareTimestamp}};
 
 static std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {};
+
 static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {};
 
 // Nary operations
@@ -131,8 +132,8 @@ static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
 Timestamp::Timestamp()
     : SqlType(peloton::type::TypeId::TIMESTAMP),
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
-                   kComparisonTable, kUnaryOperatorTable,
-                   kBinaryOperatorTable, kNaryOperatorTable) {}
+                   kComparisonTable, kUnaryOperatorTable, kBinaryOperatorTable,
+                   kNaryOperatorTable) {}
 
 Value Timestamp::GetMinValue(CodeGen &codegen) const {
   auto *raw_val = codegen.Const64(peloton::type::PELOTON_TIMESTAMP_MIN);

@@ -35,7 +35,6 @@ class UpdateTranslatorTest : public PelotonCodeGenTest {
  public:
   UpdateTranslatorTest() : PelotonCodeGenTest() {}
 
-
   oid_t TestTableId1() { return test_table_oids[0]; }
   oid_t TestTableId2() { return test_table_oids[1]; }
   oid_t TestTableId5() { return test_table_oids[4]; }
@@ -506,6 +505,163 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithAConstantPrimary) {
   EXPECT_EQ(type::CMP_TRUE, results_5[0].GetValue(2).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(12)));
   EXPECT_EQ(type::CMP_TRUE, results_5[0].GetValue(3).CompareEquals(
+                                type::ValueFactory::GetVarcharValue("13")));
+}
+
+TEST_F(UpdateTranslatorTest, UpdateColumnsWithCast) {
+  LoadTestTable(TestTableId1(), NumRowsInTestTable());
+
+  // SET a = 1;
+  storage::DataTable *table = &this->GetTestTable(this->TestTableId1());
+  LOG_DEBUG("Table has %zu tuples", table->GetTupleCount());
+  LOG_DEBUG("%s", table->GetInfo().c_str());
+
+  // Pre-condition
+  EXPECT_EQ(NumRowsInTestTable(), table->GetTupleCount());
+
+  // Get the scan plan without a predicate with four columns
+  std::unique_ptr<expression::AbstractExpression> a_eq_10 =
+      CmpEqExpr(ColRefExpr(type::TypeId::INTEGER, 0), ConstIntExpr(10));
+  std::unique_ptr<planner::SeqScanPlan> scan_plan(new planner::SeqScanPlan(
+      &GetTestTable(TestTableId1()), a_eq_10.release(), {0, 1, 2, 3}));
+
+  // Transform using a projection
+  // Column 0 of the updated tuple will have constant value 1
+  std::unique_ptr<const planner::ProjectInfo> project_info(
+      new planner::ProjectInfo(
+          // Target List : [(oid_t, planner::DerivedAttribute)]
+          // Specify columns that are transformed.
+          {{2, planner::DerivedAttribute{
+                   expression::ExpressionUtil::ConstantValueFactory(
+                       type::ValueFactory::GetDecimalValue(2.0))}}},
+          // Direct Map List : [(oid_t, (oid_t, oid_t))]
+          // Specify columns that are directly pulled from the original tuple.
+          {{0, {0, 0}}, {1, {0, 1}}, {3, {0, 3}}}));
+
+  // Embed the transformation to build up an update plan.
+  std::unique_ptr<planner::UpdatePlan> update_plan(new planner::UpdatePlan(
+      &GetTestTable(TestTableId1()), std::move(project_info)));
+
+  // Add the scan to the update plan
+  update_plan->AddChild(std::move(scan_plan));
+
+  // Do binding
+  planner::BindingContext context;
+  update_plan->PerformBinding(context);
+
+  // We collect the results of the query into an in-memory buffer
+  codegen::BufferingConsumer buffer{{}, context};
+
+  // COMPILE and execute
+  CompileAndExecute(*update_plan, buffer,
+                    reinterpret_cast<char *>(buffer.GetState()));
+
+  LOG_DEBUG("Table has %zu tuples", table->GetTupleCount());
+  LOG_DEBUG("%s", table->GetInfo().c_str());
+
+  // Post-condition: The table will have twice many, since it also has old ones
+  EXPECT_EQ(NumRowsInTestTable()+1, table->GetTupleCount());
+
+  // Setup the scan plan node
+  std::unique_ptr<expression::AbstractExpression> a_eq_10_1 =
+      CmpEqExpr(ColRefExpr(type::TypeId::INTEGER, 0), ConstIntExpr(10));
+  std::unique_ptr<planner::SeqScanPlan> scan_plan_1(
+      new planner::SeqScanPlan(
+          &GetTestTable(TestTableId1()), a_eq_10_1.release(), {0, 1, 2, 3}));
+
+  // Do binding
+  planner::BindingContext context_1;
+  scan_plan_1->PerformBinding(context_1);
+
+  // Printing consumer
+  codegen::BufferingConsumer buffer_1{{0, 1, 2, 3}, context_1};
+
+  // COMPILE and execute
+  CompileAndExecute(*scan_plan_1, buffer_1,
+                    reinterpret_cast<char*>(buffer_1.GetState()));
+
+  // Check that we got all the results
+  auto &results_1 = buffer_1.GetOutputTuples();
+
+  EXPECT_EQ(type::CMP_TRUE, results_1[0].GetValue(0).CompareEquals(
+                                type::ValueFactory::GetIntegerValue(10)));
+  EXPECT_EQ(type::CMP_TRUE, results_1[0].GetValue(1).CompareEquals(
+                                type::ValueFactory::GetIntegerValue(11)));
+  EXPECT_EQ(type::CMP_TRUE, results_1[0].GetValue(2).CompareEquals(
+                                type::ValueFactory::GetIntegerValue(2)));
+  EXPECT_EQ(type::CMP_TRUE, results_1[0].GetValue(3).CompareEquals(
+                                type::ValueFactory::GetVarcharValue("13")));
+
+  // Get the scan plan without a predicate with four columns
+  std::unique_ptr<expression::AbstractExpression> a_eq_10_2 =
+      CmpEqExpr(ColRefExpr(type::TypeId::INTEGER, 0), ConstIntExpr(10));
+  std::unique_ptr<planner::SeqScanPlan> scan_plan_2(new planner::SeqScanPlan(
+      &GetTestTable(TestTableId1()), a_eq_10_2.release(), {0, 1, 2, 3}));
+
+  // Transform using a projection
+  // Column 0 of the updated tuple will have constant value 1
+  std::unique_ptr<const planner::ProjectInfo> project_info_2(
+      new planner::ProjectInfo(
+          // Target List : [(oid_t, planner::DerivedAttribute)]
+          // Specify columns that are transformed.
+          {{2, planner::DerivedAttribute{
+                   expression::ExpressionUtil::ConstantValueFactory(
+                       type::ValueFactory::GetIntegerValue(3))}}},
+          // Direct Map List : [(oid_t, (oid_t, oid_t))]
+          // Specify columns that are directly pulled from the original tuple.
+          {{0, {0, 0}}, {1, {0, 1}}, {3, {0, 3}}}));
+
+  // Embed the transformation to build up an update plan.
+  std::unique_ptr<planner::UpdatePlan> update_plan_2(new planner::UpdatePlan(
+      &GetTestTable(TestTableId1()), std::move(project_info_2)));
+
+  // Add the scan to the update plan
+  update_plan_2->AddChild(std::move(scan_plan_2));
+
+  // Do binding
+  planner::BindingContext context_2;
+  update_plan_2->PerformBinding(context_2);
+
+  // We collect the results of the query into an in-memory buffer
+  codegen::BufferingConsumer buffer_2{{}, context_2};
+
+  // COMPILE and execute
+  CompileAndExecute(*update_plan_2, buffer_2,
+                    reinterpret_cast<char *>(buffer_2.GetState()));
+
+  LOG_DEBUG("Table has %zu tuples", table->GetTupleCount());
+  LOG_DEBUG("%s", table->GetInfo().c_str());
+
+  // Post-condition: The table will have twice many, since it also has old ones
+  EXPECT_EQ(NumRowsInTestTable()+2, table->GetTupleCount());
+
+  // Setup the scan plan node
+  std::unique_ptr<expression::AbstractExpression> a_eq_10_3 =
+      CmpEqExpr(ColRefExpr(type::TypeId::INTEGER, 0), ConstIntExpr(10));
+  std::unique_ptr<planner::SeqScanPlan> scan_plan_3(
+      new planner::SeqScanPlan(
+          &GetTestTable(TestTableId1()), a_eq_10_3.release(), {0, 1, 2, 3}));
+
+  // Do binding
+  planner::BindingContext context_3;
+  scan_plan_3->PerformBinding(context_3);
+
+  // Printing consumer
+  codegen::BufferingConsumer buffer_3{{0, 1, 2, 3}, context_3};
+
+  CompileAndExecute(*scan_plan_3, buffer_3,
+                    reinterpret_cast<char*>(buffer_3.GetState()));
+
+  // Check that we got all the results
+  auto &results_3 = buffer_3.GetOutputTuples();
+
+  EXPECT_EQ(type::CMP_TRUE, results_3[0].GetValue(0).CompareEquals(
+                                type::ValueFactory::GetIntegerValue(10)));
+  EXPECT_EQ(type::CMP_TRUE, results_3[0].GetValue(1).CompareEquals(
+                                type::ValueFactory::GetIntegerValue(11)));
+  EXPECT_EQ(type::CMP_TRUE, results_3[0].GetValue(2).CompareEquals(
+                                type::ValueFactory::GetIntegerValue(3)));
+  EXPECT_EQ(type::CMP_TRUE, results_3[0].GetValue(3).CompareEquals(
                                 type::ValueFactory::GetVarcharValue("13")));
 }
 
