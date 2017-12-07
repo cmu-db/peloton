@@ -16,6 +16,7 @@
 #include "codegen/lang/if.h"
 #include "codegen/proxy/tuple_runtime_proxy.h"
 #include "codegen/type/sql_type.h"
+#include "codegen/type/type.h"
 #include "codegen/value.h"
 
 namespace peloton {
@@ -24,14 +25,17 @@ namespace codegen {
 void TableStorage::StoreValues(CodeGen &codegen, llvm::Value *tuple_ptr,
     const std::vector<codegen::Value> &values, llvm::Value *pool) const {
   for (oid_t i = 0; i < schema_.GetColumnCount(); i++) {
-    auto offset = schema_.GetOffset(i);
-    auto *ptr = codegen->CreateConstInBoundsGEP1_32(codegen.ByteType(),
-                                                    tuple_ptr, offset);
-    auto &value = values[i];
-    auto &sql_type = value.GetType().GetSqlType();
+    type::Type schema_type =
+        type::Type{schema_.GetType(i),schema_.AllowNull(i)};
+    auto &sql_type = schema_type.GetSqlType();
     llvm::Type *val_type, *len_type;
     sql_type.GetTypeForMaterialization(codegen, val_type, len_type);
 
+    auto &value = values[i];
+
+    auto offset = schema_.GetOffset(i);
+    auto *ptr = codegen->CreateConstInBoundsGEP1_32(codegen.ByteType(),
+                                                    tuple_ptr, offset);
     if (sql_type.IsVariableLength()) {
       PL_ASSERT(value.GetLength() != nullptr);
       auto val_ptr = codegen->CreateBitCast(ptr, val_type);
@@ -56,7 +60,8 @@ void TableStorage::StoreValues(CodeGen &codegen, llvm::Value *tuple_ptr,
       }
       value_is_null.ElseBlock();
       {
-        codegen->CreateStore(value.GetValue(), val_ptr);
+        auto val = value.CastTo(codegen, schema_type);
+        codegen->CreateStore(val.GetValue(), val_ptr);
       }
       value_is_null.EndIf();
     }
