@@ -2,25 +2,25 @@
 //
 //                         Peloton
 //
-// decimal_functions_proxy.cpp
+// timestamp_functions_proxy.h
 //
-// Identification: src/codegen/proxy/decimal_functions_proxy.cpp
+// Identification: src/include/codegen/proxy/timestamp_functions_proxy.h
 //
 // Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/proxy/decimal_functions_proxy.h"
+#pragma once
 
-#include "codegen/proxy/type_builder.h"
-#include "function/decimal_functions.h"
+#include "codegen/proxy/proxy.h"
 
 namespace peloton {
 namespace codegen {
 
-DEFINE_METHOD(peloton::function, DecimalFunctions, Floor);
-
-DEFINE_METHOD(peloton::function, DecimalFunctions, Round);
+PROXY(TimestampFunctions) {
+  // Proxy everything in function::DateFunctions
+  DECLARE_METHOD(DateTrunc);
+};
 
 }  // namespace codegen
 }  // namespace peloton

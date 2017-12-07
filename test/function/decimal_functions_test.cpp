@@ -51,7 +51,7 @@ TEST_F(DecimalFunctionsTests, FloorTest) {
   // Testing Floor with DecimalTypes
   std::vector<double> inputs = {9.5, 3.3, -4.4, 0.0};
   std::vector<type::Value> args;
-  for(double in: inputs) {
+  for (double in : inputs) {
     args = {type::ValueFactory::GetDecimalValue(in)};
     auto result = function::DecimalFunctions::_Floor(args);
     EXPECT_FALSE(result.IsNull());
@@ -86,6 +86,22 @@ TEST_F(DecimalFunctionsTests, FloorTest) {
   // NULL CHECK
   args = {type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL)};
   result = function::DecimalFunctions::_Floor(args);
+  EXPECT_TRUE(result.IsNull());
+}
+
+TEST_F(DecimalFunctionsTests, RoundTest) {
+  std::vector<double> column_vals = {9.5, 3.3, -4.4, -5.5, 0.0};
+  std::vector<type::Value> args;
+  for (double val : column_vals) {
+    args = {type::ValueFactory::GetDecimalValue(val)};
+    auto result = function::DecimalFunctions::_Round(args);
+    EXPECT_FALSE(result.IsNull());
+    EXPECT_EQ(round(val), result.GetAs<double>());
+  }
+
+  // NULL CHECK
+  args = {type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL)};
+  auto result = function::DecimalFunctions::_Round(args);
   EXPECT_TRUE(result.IsNull());
 }
 

@@ -10,15 +10,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "catalog/catalog.h"
 #include "binder/bind_node_visitor.h"
+#include "catalog/catalog.h"
+#include "type/type_id.h"
 
+#include "expression/aggregate_expression.h"
 #include "expression/case_expression.h"
-#include "expression/tuple_value_expression.h"
 #include "expression/function_expression.h"
 #include "expression/operator_expression.h"
-#include "expression/aggregate_expression.h"
 #include "expression/star_expression.h"
+#include "expression/tuple_value_expression.h"
 
 namespace peloton {
 namespace binder {
@@ -161,7 +162,8 @@ void BindNodeVisitor::Visit(expression::TupleValueExpression *expr) {
       // Find the corresponding table in the context
       if (!BinderContext::GetTableIdTuple(context_, table_name,
                                           &table_id_tuple))
-        throw BinderException("Invalid table reference " + expr->GetTableName());
+        throw BinderException("Invalid table reference " +
+                              expr->GetTableName());
       // Find the column offset in that table
       if (!BinderContext::GetColumnPosTuple(col_name, table_id_tuple,
                                             col_pos_tuple, value_type, txn_))
@@ -209,6 +211,20 @@ void BindNodeVisitor::Visit(expression::FunctionExpression *expr) {
   LOG_DEBUG("Argument num: %ld", func_data.argument_types_.size());
   expr->SetFunctionExpressionParameters(func_data.func_, func_data.return_type_,
                                         func_data.argument_types_);
+
+  // Look into the OperatorId for built-in functions to check the first argument
+  // for timestamp functions.
+  // TODO(LM): The OperatorId might need to be changed to global ID after we
+  // rewrite the function identification logic.
+  auto func_operator_id = func_data.func_.op_id;
+  if (func_operator_id == OperatorId::DateTrunc ||
+      func_operator_id == OperatorId::Extract) {
+    auto date_part = expr->GetChild(0);
+
+    // Test whether the first argument is a correct DatePartType
+    StringToDatePartType(
+        date_part->Evaluate(nullptr, nullptr, nullptr).ToString());
+  }
 }
 
 }  // namespace binder
