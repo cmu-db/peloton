@@ -10,9 +10,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <include/optimizer/group_expression.h>
+#include "optimizer/group_expression.h"
 #include "optimizer/memo.h"
 #include "optimizer/operators.h"
+#include "optimizer/stats_calculator.h"
 
 namespace peloton {
 namespace optimizer {
@@ -91,7 +92,11 @@ GroupID Memo::AddNewGroup(std::shared_ptr<GroupExpression> gexpr) {
       }
     }
   }
-  groups_.emplace_back(new Group(new_group_id, std::move(table_aliases)));
+
+  StatsCalculator stats_calculator;
+  auto stats = stats_calculator.CalculateStats(gexpr);
+
+  groups_.emplace_back(new Group(new_group_id, std::move(table_aliases), stats));
   return new_group_id;
 }
 

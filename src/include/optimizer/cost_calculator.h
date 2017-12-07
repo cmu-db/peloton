@@ -20,16 +20,9 @@ namespace optimizer {
 // Derive cost for a physical group expressionh
 class CostCalculator : public OperatorVisitor {
  public:
-  void CalculatorCost(
+  double CalculatorCost(
       std::shared_ptr<GroupExpression> gexpr,
       const PropertySet *output_properties);
-
-  inline std::shared_ptr<Stats> GetOutputStats() {
-    //    return std::move(output_stats_);
-    return output_stats_;
-  }
-
-  inline double GetOutputCost() { return output_cost_; }
 
   void Visit(const DummyScan *) override;
   void Visit(const PhysicalSeqScan *) override;

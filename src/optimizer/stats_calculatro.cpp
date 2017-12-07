@@ -15,7 +15,7 @@
 namespace peloton {
 namespace optimizer {
 
-void StatsCalculator::CalculateStats(std::shared_ptr<GroupExpression> gexpr) {
+std::shared_ptr<Stats> StatsCalculator::CalculateStats(std::shared_ptr<GroupExpression> gexpr) {
   gexpr_ = gexpr;
   gexpr->Op().Accept(this);
   return output_stats_;

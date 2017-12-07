@@ -20,12 +20,7 @@ namespace optimizer {
 // Derive stats for a logical group expression
 class StatsCalculator : public OperatorVisitor {
  public:
-  void CalculateStats(
-      std::shared_ptr<GroupExpression> gexpr);
-
-  inline std::shared_ptr<Stats> GetOutputStats() {
-    return output_stats_;
-  }
+  std::shared_ptr<Stats> CalculateStats(std::shared_ptr<GroupExpression> gexpr);
 
   void Visit(const LeafOperator *) override;
   void Visit(const LogicalGet *) override;

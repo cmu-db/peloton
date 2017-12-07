@@ -15,7 +15,7 @@
 namespace peloton {
 namespace optimizer {
 
-void CostCalculator::CalculatorCost(std::shared_ptr<GroupExpression> gexpr, const PropertySet *opoutput_properties) {
+double CostCalculator::CalculatorCost(std::shared_ptr<GroupExpression> gexpr, const PropertySet *opoutput_properties) {
   gexpr_ = gexpr;
   output_properties_ = output_properties;
   gexpr_->Op().Accept(this);
