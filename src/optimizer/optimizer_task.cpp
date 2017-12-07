@@ -279,7 +279,6 @@ void OptimizeInputs::execute() {
           cur_group->SetExpressionCost(group_expr_, cur_total_cost_, context_->required_prop);
         }
       }
-
     }
 
     // Reset child idx and total cost

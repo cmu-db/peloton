@@ -20,25 +20,18 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 // Group
 //===--------------------------------------------------------------------===//
-Group::Group(GroupID id, std::unordered_set<std::string> table_aliases)
-    : id_(id), table_aliases_(std::move(table_aliases)) {
+Group::Group(GroupID id, std::unordered_set<std::string> table_aliases, std::shared_ptr<Stats> stats)
+    : id_(id), table_aliases_(std::move(table_aliases)), stats_(stats) {
   has_explored_ = false;
-  has_implemented_ = false;
 }
-void Group::add_item(Operator op) {
-  // TODO(abpoms): do duplicate checking
-  items_.push_back(op);
-}
+
 void Group::AddExpression(std::shared_ptr<GroupExpression> expr,
                           bool enforced) {
   // Do duplicate detection
   expr->SetGroupID(id_);
   if (enforced)
     enforced_exprs_.push_back(expr);
-  else
-    expressions_.push_back(expr);
-
-  if (expr->Op().IsPhysical())
+  else if (expr->Op().IsPhysical())
     physical_expressions_.push_back(expr);
   else
     logical_expressions_.push_back(expr);
@@ -67,10 +60,6 @@ std::shared_ptr<GroupExpression> Group::GetBestExpression(
   LOG_TRACE("Didn't get best expression with properties %s",
             properties.ToString().c_str());
   return nullptr;
-}
-
-std::vector<std::shared_ptr<GroupExpression>> Group::GetExpressions() const {
-  return expressions_;
 }
 
 }  // namespace optimizer
