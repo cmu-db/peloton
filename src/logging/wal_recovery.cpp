@@ -101,8 +101,8 @@ bool WalRecovery::InstallTupleRecord(LogRecordType type, storage::Tuple *tuple,
                                      storage::DataTable *table, cid_t cur_cid,
                                      ItemPointer location) {
   oid_t tile_group_id = location.block;
-  auto txn = concurrency::TransactionManagerFactory::GetInstance()
-          .BeginTransaction(IsolationLevelType::SERIALIZABLE);
+  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction(IsolationLevelType::SERIALIZABLE);
   ItemPointer *i = nullptr;
   auto tile_group_header =
       catalog::Manager::GetInstance().GetTileGroup(tile_group_id)->GetHeader();
@@ -165,6 +165,7 @@ bool WalRecovery::InstallTupleRecord(LogRecordType type, storage::Tuple *tuple,
                                           INVALID_ITEMPOINTER);
     tile_group_header->SetIndirection(insert_location.offset,i);
   }
+  txn_manager.CommitTransaction(txn);
   return true;
 }
 
