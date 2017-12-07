@@ -289,8 +289,7 @@ Value::Value(TypeId type, float f) : Value(type) {
 }
 
 // VARCHAR and VARBINARY
-Value::Value(TypeId type, const char *data, uint32_t len,
-             bool manage_data)
+Value::Value(TypeId type, const char *data, uint32_t len, bool manage_data)
     : Value(type) {
   switch (type) {
     case TypeId::VARCHAR:
@@ -379,8 +378,9 @@ bool Value::CheckComparable(const Value &o) const {
         case TypeId::BOOLEAN:
         case TypeId::VARCHAR:
           return (true);
-        default:break;
-      } // SWITCH
+        default:
+          break;
+      }  // SWITCH
       break;
     case TypeId::TINYINT:
     case TypeId::SMALLINT:
@@ -397,7 +397,7 @@ bool Value::CheckComparable(const Value &o) const {
           return true;
         default:
           break;
-      } // SWITCH
+      }  // SWITCH
       break;
     case TypeId::VARCHAR:
       // Anything can be cast to a string!
@@ -414,7 +414,7 @@ bool Value::CheckComparable(const Value &o) const {
       break;
     default:
       break;
-  } // SWITCH
+  }  // SWITCH
   return false;
 }
 

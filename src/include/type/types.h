@@ -262,7 +262,7 @@ ExpressionType ParserExpressionNameToExpressionType(const std::string &str);
 
 // Note that we have some duplicate DatePartTypes with the 's' suffix
 // They have to have the same value in order for it to work.
-enum class DatePartType {
+enum class DatePartType : uint32_t {
   INVALID = INVALID_TYPE_ID,
   CENTURY = 1,
   DAY = 2,
@@ -1043,6 +1043,7 @@ enum class OperatorId : uint32_t {
   Round,
   Extract,
   Floor,
+  DateTrunc,
 
   // Add more operators here, before the last "Invalid" entry
   Like,

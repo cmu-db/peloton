@@ -13,21 +13,22 @@
 #include "catalog/catalog.h"
 
 #include "catalog/column_catalog.h"
-#include "catalog/index_catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/database_metrics_catalog.h"
-#include "catalog/table_catalog.h"
-#include "catalog/table_metrics_catalog.h"
+#include "catalog/index_catalog.h"
 #include "catalog/index_metrics_catalog.h"
+#include "catalog/language_catalog.h"
+#include "catalog/proc_catalog.h"
 #include "catalog/query_metrics_catalog.h"
 #include "catalog/settings_catalog.h"
-#include "concurrency/transaction_manager_factory.h"
+#include "catalog/table_catalog.h"
+#include "catalog/table_metrics_catalog.h"
 #include "catalog/trigger_catalog.h"
-#include "catalog/proc_catalog.h"
-#include "catalog/language_catalog.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "function/date_functions.h"
 #include "function/decimal_functions.h"
 #include "function/string_functions.h"
+#include "function/timestamp_functions.h"
 #include "index/index_factory.h"
 #include "storage/storage_manager.h"
 #include "storage/table_factory.h"
@@ -1030,6 +1031,12 @@ void Catalog::InitializeFunctions() {
           type::TypeId::DECIMAL, internal_lang, "Extract",
           function::BuiltInFuncType{OperatorId::Extract,
                                     function::DateFunctions::Extract},
+          txn);
+      AddBuiltinFunction(
+          "date_trunc", {type::TypeId::VARCHAR, type::TypeId::TIMESTAMP},
+          type::TypeId::TIMESTAMP, internal_lang, "DateTrunc",
+          function::BuiltInFuncType{OperatorId::DateTrunc,
+                                    function::TimestampFunctions::_DateTrunc},
           txn);
     } catch (CatalogException &e) {
       txn_manager.AbortTransaction(txn);

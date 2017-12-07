@@ -13,9 +13,9 @@
 #include "codegen/type/integer_type.h"
 
 #include "codegen/lang/if.h"
-#include "codegen/value.h"
 #include "codegen/proxy/values_runtime_proxy.h"
 #include "codegen/type/boolean_type.h"
+#include "codegen/value.h"
 #include "common/exception.h"
 #include "type/limits.h"
 #include "util/string_util.h"
@@ -420,7 +420,8 @@ static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
     {OperatorId::Sub, kSubOp},
     {OperatorId::Mul, kMulOp},
     {OperatorId::Div, kDivOp},
-    {OperatorId::Mod, kModuloOp}};
+    {OperatorId::Mod, kModuloOp},
+};
 
 // Nary operations
 static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
@@ -435,8 +436,8 @@ static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
 Integer::Integer()
     : SqlType(peloton::type::TypeId::INTEGER),
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
-                   kComparisonTable, kUnaryOperatorTable,
-                   kBinaryOperatorTable, kNaryOperatorTable) {}
+                   kComparisonTable, kUnaryOperatorTable, kBinaryOperatorTable,
+                   kNaryOperatorTable) {}
 
 Value Integer::GetMinValue(CodeGen &codegen) const {
   auto *raw_val = codegen.Const32(peloton::type::PELOTON_INT32_MIN);

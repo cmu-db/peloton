@@ -8,3 +8,9 @@ TabWidth: 2
 
 # No tabs
 UseTab: Never
+
+# Don't automatically derive the alignment of & and *
+DerivePointerAlignment: false
+
+# Always align pointer and reference to the right
+PointerAlignment: Right
