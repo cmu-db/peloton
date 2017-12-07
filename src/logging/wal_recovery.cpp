@@ -169,8 +169,6 @@ bool WalRecovery::InstallTupleRecord(LogRecordType type, storage::Tuple *tuple,
 }
 
 bool WalRecovery::ReplayLogFile(FileHandle &file_handle) {
-    char result[ PATH_MAX ];
-    std::cout<< std::string( getcwd(result, PATH_MAX) )<<std::endl;
   PL_ASSERT(file_handle.file != nullptr &&
             file_handle.fd != INVALID_FILE_DESCRIPTOR);
 
