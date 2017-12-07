@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// simple_query_test.cpp
+// wal_recovery_test.cpp
 //
-// Identification: test/network/simple_query_test.cpp
+// Identification: test/logging/wal_recovery_test.cpp
 //
 // Copyright (c) 2016-17, Carnegie Mellon University Database Group
 //
@@ -39,7 +39,7 @@ namespace test {
 // Simple Query Tests
 //===--------------------------------------------------------------------===//
 
-class RecoveryTests : public PelotonTest {};
+class DeleteRecoveryTests : public PelotonTest {};
 
 static void *LaunchServer(peloton::network::NetworkManager network_manager,
                           int port) {
@@ -53,11 +53,11 @@ static void *LaunchServer(peloton::network::NetworkManager network_manager,
 }
 
 
-void *RecoveryTest(int port) {
+void *RecoveryDeleteTest(int port) {
   try {
     logging::WalRecovery rec(0,"");
     FileHandle f;
-    logging::LoggingUtil::OpenFile("logging_samples/logfile_insert", "rb", f);
+    logging::LoggingUtil::OpenFile("logging_samples/logfile_delete", "rb", f);
     rec.RecoveryTest(f);
     // forcing the factory to generate psql protocol handler
     pqxx::connection C(StringUtil::Format(
@@ -71,10 +71,10 @@ void *RecoveryTest(int port) {
     EXPECT_NE(handler, nullptr);
 
     pqxx::work txn2(C);
-    pqxx::result R = txn2.exec("SELECT name FROM employee where id=1;");
+    pqxx::result R = txn2.exec("SELECT name FROM employee;");
     txn2.commit();
 
-    EXPECT_EQ(R.size(), 1);
+    EXPECT_EQ(R.size(), 2);
   } catch (const std::exception &e) {
     LOG_INFO("[SimpleQueryTest] Exception occurred: %s", e.what());
     EXPECT_TRUE(false);
@@ -87,34 +87,8 @@ void *RecoveryTest(int port) {
 
 
 
-/**
- * Use std::thread to initiate peloton server and pqxx client in separate
- * threads
- * Simple query test to guarantee both sides run correctly
- * Callback method to close server after client finishes
- */
-//TEST_F(RecoveryTests, SetupQueryTest) {
-//  peloton::PelotonInit::Initialize();
-//  LOG_INFO("Server initialized");
-//  peloton::network::NetworkManager network_manager;
 
-//  int port = 15721;
-//  std::thread serverThread(LaunchServer, network_manager, port);
-//  while (!network_manager.GetIsStarted()) {
-//    sleep(1);
-//  }
-
-//  // server & client running correctly
-//  StartTest(port);
-
-//  network_manager.CloseServer();
-//  serverThread.join();
-//  LOG_INFO("Peloton is shutting down");
-//  peloton::PelotonInit::Shutdown();
-//  LOG_INFO("Peloton has shut down");
-//}
-
-TEST_F(RecoveryTests, RecoveryQueryTest) {
+TEST_F(DeleteRecoveryTests, RecoveryDeleteQueryTest) {
   settings::SettingsManager::SetBool(settings::SettingId::recovery, false);
   peloton::PelotonInit::Initialize();
   LOG_INFO("Server initialized");
@@ -127,7 +101,7 @@ TEST_F(RecoveryTests, RecoveryQueryTest) {
   }
 
   // server & client running correctly
-  RecoveryTest(port);
+  RecoveryDeleteTest(port);
 
   network_manager.CloseServer();
   serverThread.join();
@@ -135,6 +109,8 @@ TEST_F(RecoveryTests, RecoveryQueryTest) {
   peloton::PelotonInit::Shutdown();
   LOG_INFO("Peloton has shut down");
 }
+
+
 
 
 }  // namespace test
