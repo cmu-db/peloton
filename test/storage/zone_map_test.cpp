@@ -35,16 +35,18 @@ namespace test {
 class ZoneMapTests : public PelotonTest {};
 
 TEST_F(ZoneMapTests, ZoneMapContentsTest) {
-  storage::DataTable *data_table = TestingExecutorUtil::CreateTable(5, false, 1);
+
+  std::unique_ptr<storage::DataTable> data_table(TestingExecutorUtil::CreateTable(5, false, 1));
+  // storage::DataTable *data_table = TestingExecutorUtil::CreateTable(5, false, 1);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  TestingExecutorUtil::PopulateTable(data_table, 20, false, false, false, txn);
+  TestingExecutorUtil::PopulateTable(data_table.get(), 20, false, false, false, txn);
   txn_manager.CommitTransaction(txn);
 
 
-  oid_t num_tile_groups = data_table->GetTileGroupCount();
+  oid_t num_tile_groups = (data_table.get())->GetTileGroupCount();
   for (oid_t i = 0; i < num_tile_groups - 1; i++) {
-    auto tile_group = data_table->GetTileGroup(i);
+    auto tile_group = (data_table.get())->GetTileGroup(i);
     auto tile_group_ptr = tile_group.get();
     auto tile_group_header = tile_group_ptr->GetHeader();
     tile_group_header->SetImmutability();
@@ -55,12 +57,12 @@ TEST_F(ZoneMapTests, ZoneMapContentsTest) {
   storage::ZoneMapManager *zone_map_manager = storage::ZoneMapManager::GetInstance();
   zone_map_manager->CreateZoneMapTableInCatalog();
   txn = txn_manager.BeginTransaction();
-  zone_map_manager->CreateZoneMapsForTable(data_table, txn);
+  zone_map_manager->CreateZoneMapsForTable((data_table.get()), txn);
   txn_manager.CommitTransaction(txn);
 
   for (oid_t i = 0; i < num_tile_groups - 1; i++) {
-    oid_t database_id = data_table->GetDatabaseOid();
-    oid_t table_id = data_table->GetOid();
+    oid_t database_id = (data_table.get())->GetDatabaseOid();
+    oid_t table_id = (data_table.get())->GetOid();
     for (int j = 0; j < 4; j++) {
       std::shared_ptr<storage::ZoneMapManager::ColumnStatistics> stats = zone_map_manager->GetZoneMapFromCatalog(database_id, table_id, i, j);
       type::Value min_val = (stats.get())->min;
@@ -101,7 +103,7 @@ TEST_F(ZoneMapTests, ZoneMapContentsTest) {
         EXPECT_EQ(max_str, max_zone_map_str);
       }
     }
-  } 
+  }
 }
 }  // End test namespace
 }  // End peloton namespace
