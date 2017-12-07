@@ -75,26 +75,17 @@ storage::ZoneMapManager *RuntimeFunctions::GetZoneMapManager() {
 }
 
 void RuntimeFunctions::FillPredicateArray(const expression::AbstractExpression *expr, storage::PredicateInfo *predicate_array) {
-  const std::vector<std::unique_ptr<const expression::AbstractExpression>> *parsed_predicates;
+  const std::vector<storage::PredicateInfo> *parsed_predicates;
   parsed_predicates = expr->GetParsedPredicates();
   size_t num_preds = parsed_predicates->size();
   size_t i;
   for (i = 0; i < num_preds; i++) {
-      auto temp_predicate = ((*parsed_predicates)[i]).get();
-      std::string predicate_str;
-      predicate_str = expr->GetInfo();
-      LOG_DEBUG("Predicate is [%s] : ", predicate_str.c_str());
-      auto right_exp = (const expression::ConstantValueExpression *)(temp_predicate->GetChild(1));
-      auto predicate_val = right_exp->GetValue();
-      // Get the column id for this predicate
-      auto left_exp = (const expression::TupleValueExpression *)(temp_predicate->GetChild(0));
-      int col_id = left_exp->GetColumnId();
-      // Set the values in the struct
-      predicate_array[i].col_id = col_id;
-      predicate_array[i].comparison_operator = (int)temp_predicate->GetExpressionType();
-      predicate_array[i].predicate_value = predicate_val;
-
+    predicate_array[i].col_id = (*parsed_predicates)[i].col_id;
+    predicate_array[i].comparison_operator = (*parsed_predicates)[i].comparison_operator;
+    predicate_array[i].predicate_value = (*parsed_predicates)[i].predicate_value;
   }
+  auto temp_expr = (expression::AbstractExpression *)expr;
+  temp_expr->ClearParsedPredicates();
   LOG_DEBUG("Number of Parsed Predicates is [%lu]", num_preds);
 }
 

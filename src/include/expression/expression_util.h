@@ -606,7 +606,7 @@ class ExpressionUtil {
 
   /*
   */
-  static bool GetPredicateForZoneMap(std::vector<std::unique_ptr<const expression::AbstractExpression>> &predicate_restrictions,
+  static bool GetPredicateForZoneMap(std::vector<storage::PredicateInfo> &predicate_restrictions,
     const expression::AbstractExpression *expr) {
     if (expr == nullptr) {
       return false;
@@ -631,9 +631,23 @@ class ExpressionUtil {
 
       // The right child should be a constant.
       auto right_child = expr->GetModifiableChild(1);
+
       if (right_child->GetExpressionType() == ExpressionType::VALUE_CONSTANT) {
-        predicate_restrictions.emplace_back(new expression::ComparisonExpression(
-          expr_type, expr->GetModifiableChild(0), expr->GetModifiableChild(1) ));
+      
+        auto right_exp = (const expression::ConstantValueExpression *)(expr->GetModifiableChild(1));
+        auto predicate_val = right_exp->GetValue();
+        // Get the column id for this predicate
+        auto left_exp = (const expression::TupleValueExpression *)(expr->GetModifiableChild(0));
+        int col_id = left_exp->GetColumnId();
+
+        auto comparison_operator = (int)expr->GetExpressionType();
+        storage::PredicateInfo p_info;
+
+        p_info.col_id = col_id;
+        p_info.comparison_operator = comparison_operator;
+        p_info.predicate_value = predicate_val;
+
+        predicate_restrictions.push_back(p_info);
         return true;
       }
     }

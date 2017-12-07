@@ -81,9 +81,6 @@ void Table::GenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
   llvm::Value *scanned_tiles = codegen.Const64(0);
   llvm::Value *tile_group_idx = codegen.Const64(0);
   llvm::Value *num_tile_groups = GetTileGroupCount(codegen, table_ptr);
-  // num_predicates = 0;
-  // predicate_ptr = nullptr;
-  // Iterate over all tile groups in the table
   LOG_INFO("Begin Looping over all tile groups");
   lang::Loop loop{codegen,
                   codegen->CreateICmpULT(tile_group_idx, num_tile_groups),
@@ -98,8 +95,6 @@ void Table::GenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
     llvm::Value *tile_group_id =
         tile_group_.GetTileGroupId(codegen, tile_group_ptr);
     llvm::Value *new_scanned_tiles = nullptr;
-    // llvm::Value *decision = codegen.Call(ZoneMapManagerProxy::ComparePredicateAgainstZoneMap, {zone_map_manager, predicate_array ,codegen.Const32(num_predicates), table_ptr ,tile_group_idx });
-    //  codegen.CallPrintf("Scan Tile: [%lu]\n", {decision});
     codegen::lang::If cond{codegen, codegen.Call(ZoneMapManagerProxy::ComparePredicateAgainstZoneMap, {zone_map_manager, predicate_array ,codegen.Const32(num_predicates), table_ptr ,tile_group_idx })};
     {
       //Invoke the consumer to let her know that we're starting to iterate over

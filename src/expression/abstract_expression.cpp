@@ -122,11 +122,9 @@ hash_t AbstractExpression::Hash() const {
 }
 
 bool AbstractExpression::IsZoneMappable() {
-  bool is_zone_mappable = ExpressionUtil::GetPredicateForZoneMap(parsed_predicates,Copy());
+  bool is_zone_mappable = ExpressionUtil::GetPredicateForZoneMap(parsed_predicates, this);
   return is_zone_mappable;
 }
-
-
 
 }  // namespace expression
 }  // namespace peloton

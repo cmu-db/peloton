@@ -17,6 +17,7 @@
 #include "common/printable.h"
 #include "planner/attribute_info.h"
 #include "type/types.h"
+#include "storage/zone_map_manager.h"
 
 namespace peloton {
 
@@ -100,11 +101,15 @@ class AbstractExpression : public Printable {
     return parsed_predicates.size();
   }
 
-  const std::vector<std::unique_ptr<const expression::AbstractExpression>> *GetParsedPredicates() const {
+  const std::vector<storage::PredicateInfo> *GetParsedPredicates() const {
     return &parsed_predicates;
   }
 
-  std::vector<std::unique_ptr<const expression::AbstractExpression>> parsed_predicates;
+  void ClearParsedPredicates() {
+    parsed_predicates.clear();
+  }
+
+  std::vector<storage::PredicateInfo> parsed_predicates;
   /** accessors */
 
   ExpressionType GetExpressionType() const { return exp_type_; }
