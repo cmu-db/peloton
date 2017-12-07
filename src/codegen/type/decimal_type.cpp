@@ -422,7 +422,6 @@ static std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {
 
 // Unary operators
 static Negate kNegOp;
-<<<<<<< HEAD
 static Floor kFloorOp;
 static Round kRound;
 static Ceil kCeilOp;
