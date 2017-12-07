@@ -13,7 +13,6 @@
 #pragma once
 
 #include <stdint.h>
-
 #include "type/types.h"
 
 
@@ -52,6 +51,8 @@ class RuntimeFunctions {
   static storage::ZoneMapManager *GetZoneMapManager();
 
   static void FillPredicateArray(const expression::AbstractExpression *expr, storage::PredicateInfo *predicate_array);
+
+  static void EmptyPredicateArray(storage::PredicateInfo *predicate_array, int32_t num_preds);
 
   // This struct represents the layout (or configuration) of a column in a
   // tile group. A configuration is characterized by two properties: its

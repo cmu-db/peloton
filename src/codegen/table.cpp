@@ -117,6 +117,7 @@ void Table::GenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
     loop.CollectFinalLoopVariables(final);
     codegen.CallPrintf("The number of scanned tiles is : [%lu]\n", {final[1]});
   }
+  codegen.Call(RuntimeFunctionsProxy::EmptyPredicateArray, {predicate_array, codegen.Const32(num_predicates)});
 }
 
 }  // namespace codegen

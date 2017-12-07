@@ -22,6 +22,7 @@
 #include "storage/zone_map_manager.h"
 #include "expression/abstract_expression.h"
 #include "expression/expression_util.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 namespace codegen {
@@ -82,11 +83,23 @@ void RuntimeFunctions::FillPredicateArray(const expression::AbstractExpression *
   for (i = 0; i < num_preds; i++) {
     predicate_array[i].col_id = (*parsed_predicates)[i].col_id;
     predicate_array[i].comparison_operator = (*parsed_predicates)[i].comparison_operator;
+    LOG_DEBUG("Copying from : [%s]", (*parsed_predicates)[i].predicate_value.GetInfo().c_str());
     predicate_array[i].predicate_value = (*parsed_predicates)[i].predicate_value;
+    LOG_DEBUG("Copied to : [%s]", predicate_array[i].predicate_value.GetInfo().c_str());
+
   }
   auto temp_expr = (expression::AbstractExpression *)expr;
   temp_expr->ClearParsedPredicates();
   LOG_DEBUG("Number of Parsed Predicates is [%lu]", num_preds);
+}
+
+void RuntimeFunctions::EmptyPredicateArray(storage::PredicateInfo *predicate_array, int32_t num_preds) {
+  for (int32_t i = 0; i < num_preds; i++) {
+    auto pred_val = predicate_array[i].predicate_value;
+    if (pred_val.GetTypeId() == peloton::type::TypeId::VARCHAR) {
+      pred_val = peloton::type::ValueFactory::GetNullValueByType(peloton::type::TypeId::VARCHAR);
+    }
+  }
 }
 
 //===----------------------------------------------------------------------===//
