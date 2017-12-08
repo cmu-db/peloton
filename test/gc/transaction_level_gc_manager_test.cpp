@@ -370,7 +370,7 @@ TEST_F(TransactionLevelGCManagerTests, ReInsertTest) {
 
 /*
 Brief Summary : This tests tries to check immutability of a tile group.
-Once a tile group is set immutable, gc should not recycle slots from the 
+Once a tile group is set immutable, gc should not recycle slots from the
 tile group. We will first insert into a tile group and then delete tuples
 from the tile group. After setting immutability further inserts or updates
 should not use slots from the tile group where delete happened.
@@ -431,14 +431,14 @@ TEST_F(TransactionLevelGCManagerTests, ImmutabilityTest) {
   EXPECT_EQ(1, reclaimed_count);
   EXPECT_EQ(0, unlinked_count);
 
-  // ReturnFreeSlot() should return null because deleted tuple was from immutable tilegroup.
+  // ReturnFreeSlot() should return null because deleted tuple was from
+  // immutable tilegroup.
   auto location = gc_manager.ReturnFreeSlot((table.get())->GetOid());
   EXPECT_EQ(location.IsNull(), true);
 
-
   // Deleting a tuple from the 2nd tilegroup which is mutable.
   ret = DeleteTuple(table.get(), 6);
-  
+
   EXPECT_TRUE(ret == ResultType::SUCCESS);
   epoch_manager.SetCurrentEpochId(4);
   expired_eid = epoch_manager.GetExpiredEpochId();
@@ -460,7 +460,8 @@ TEST_F(TransactionLevelGCManagerTests, ImmutabilityTest) {
   EXPECT_EQ(1, reclaimed_count);
   EXPECT_EQ(0, unlinked_count);
 
-  // ReturnFreeSlot() should not return null because deleted tuple was from mutable tilegroup.
+  // ReturnFreeSlot() should not return null because deleted tuple was from
+  // mutable tilegroup.
   location = gc_manager.ReturnFreeSlot((table.get())->GetOid());
   EXPECT_EQ(location.IsNull(), false);
 
@@ -474,7 +475,6 @@ TEST_F(TransactionLevelGCManagerTests, ImmutabilityTest) {
       catalog::Catalog::GetInstance()->GetDatabaseObject("ImmutabilityDB", txn),
       CatalogException);
   txn_manager.CommitTransaction(txn);
-
 }
 
 }  // namespace test

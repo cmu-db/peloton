@@ -101,8 +101,8 @@ int TransactionLevelGCManager::Unlink(const int &thread_id,
 
   // First iterate the local unlink queue
   local_unlink_queues_[thread_id].remove_if(
-      [&garbages, &tuple_counter, expired_eid, this](
-          const std::shared_ptr<GarbageContext> &garbage_ctx) -> bool {
+      [&garbages, &tuple_counter, expired_eid,
+       this](const std::shared_ptr<GarbageContext> &garbage_ctx) -> bool {
         bool res = garbage_ctx->epoch_id_ <= expired_eid;
         if (res == true) {
           // unlink versions from version chain and indexes
@@ -214,7 +214,8 @@ void TransactionLevelGCManager::AddToRecycleMap(
         continue;
       }
       // if immutability is false and the entry for table_id exists.
-      if ((!immutability) && recycle_queue_map_.find(table_id) != recycle_queue_map_.end()) {
+      if ((!immutability) &&
+          recycle_queue_map_.find(table_id) != recycle_queue_map_.end()) {
         recycle_queue_map_[table_id]->Enqueue(location);
       }
     }

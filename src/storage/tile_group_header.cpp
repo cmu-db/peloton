@@ -62,7 +62,6 @@ TileGroupHeader::TileGroupHeader(const BackendType &backend_type,
 
   // Initially immutability to false initially.
   immutability = false;
-  
 }
 
 TileGroupHeader::~TileGroupHeader() {

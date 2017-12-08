@@ -23,11 +23,10 @@ namespace peloton {
 namespace catalog {
 
 // Global Singleton : I really dont want to do this and I know this sucks.
-// but #796 is still not merged when I am writing this code and I really 
-// am sorry to do this. When PelotonMain() becomes a reality, I will 
+// but #796 is still not merged when I am writing this code and I really
+// am sorry to do this. When PelotonMain() becomes a reality, I will
 // fix this for sure.
-ZoneMapCatalog *ZoneMapCatalog::GetInstance(
-    concurrency::Transaction *txn) {
+ZoneMapCatalog *ZoneMapCatalog::GetInstance(concurrency::Transaction *txn) {
   static ZoneMapCatalog zone_map_catalog{txn};
   return &zone_map_catalog;
 }
@@ -44,9 +43,8 @@ ZoneMapCatalog::ZoneMapCatalog(concurrency::Transaction *txn)
                       "maximum        VARCHAR, "
                       "type           VARCHAR);",
                       txn) {
-
   Catalog::GetInstance()->CreateIndex(
-      CATALOG_DATABASE_NAME, ZONE_MAP_CATALOG_NAME, {0,1,2,3},
+      CATALOG_DATABASE_NAME, ZONE_MAP_CATALOG_NAME, {0, 1, 2, 3},
       ZONE_MAP_CATALOG_NAME "_skey0", true, IndexType::BWTREE, txn);
 }
 
@@ -54,9 +52,8 @@ ZoneMapCatalog::~ZoneMapCatalog() {}
 
 bool ZoneMapCatalog::InsertColumnStatistics(
     oid_t database_id, oid_t table_id, oid_t tile_group_id, oid_t column_id,
-    std::string minimum, std::string maximum, std::string type, type::AbstractPool *pool,
-    concurrency::Transaction *txn) {
-
+    std::string minimum, std::string maximum, std::string type,
+    type::AbstractPool *pool, concurrency::Transaction *txn) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
@@ -81,8 +78,9 @@ bool ZoneMapCatalog::InsertColumnStatistics(
 }
 
 bool ZoneMapCatalog::DeleteColumnStatistics(oid_t database_id, oid_t table_id,
-                                           oid_t tile_group_id, oid_t column_id,
-                                           concurrency::Transaction *txn) {
+                                            oid_t tile_group_id,
+                                            oid_t column_id,
+                                            concurrency::Transaction *txn) {
   oid_t index_offset = IndexId::SECONDARY_KEY_0;
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(database_id).Copy());
@@ -126,7 +124,7 @@ std::unique_ptr<std::vector<type::Value>> ZoneMapCatalog::GetColumnStatistics(
   max = tile->GetValue(0, ZoneMapOffset::MAXIMUM_OFF);
   actual_type = tile->GetValue(0, ZoneMapOffset::TYPE_OFF);
 
-  // min and max are stored as VARCHARs and should be convertd to their 
+  // min and max are stored as VARCHARs and should be convertd to their
   // original types.
 
   std::unique_ptr<std::vector<type::Value>> zone_map(

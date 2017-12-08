@@ -1,5 +1,5 @@
 //===----------------------------------------------------------------------===//
-//                                                                            
+//
 //                         Peloton
 //
 // abstract_expression.cpp
@@ -63,28 +63,26 @@ void AbstractExpression::DeduceExpressionName() {
   // If alias exists, it will be used in TrafficCop
   if (!alias.empty()) return;
 
-  for (auto& child : children_) child->DeduceExpressionName();
+  for (auto &child : children_) child->DeduceExpressionName();
 
   // Aggregate expression already has correct expr_name_
-  if (ExpressionUtil::IsAggregateExpression(exp_type_))
-    return;
+  if (ExpressionUtil::IsAggregateExpression(exp_type_)) return;
 
   auto op_str = ExpressionTypeToString(exp_type_, true);
   auto children_size = children_.size();
   if (exp_type_ == ExpressionType::FUNCTION) {
-    auto expr = (FunctionExpression*)this;
+    auto expr = (FunctionExpression *)this;
     expr_name_ = expr->GetFuncName() + "(";
     for (size_t i = 0; i < children_size; i++) {
       if (i > 0) expr_name_.append(",");
       expr_name_.append(GetChild(i)->expr_name_);
     }
     expr_name_.append(")");
-  }
-  else {
+  } else {
     PL_ASSERT(children_size <= 2);
     if (children_size == 2) {
-      expr_name_ =
-          GetChild(0)->expr_name_ + " " + op_str + " " + GetChild(1)->expr_name_;
+      expr_name_ = GetChild(0)->expr_name_ + " " + op_str + " " +
+                   GetChild(1)->expr_name_;
     } else if (children_size == 1) {
       expr_name_ = op_str + " " + GetChild(0)->expr_name_;
     }
@@ -102,7 +100,7 @@ const std::string AbstractExpression::GetInfo() const {
   return os.str();
 }
 
-bool AbstractExpression::Equals(AbstractExpression* expr) const{
+bool AbstractExpression::Equals(AbstractExpression *expr) const {
   if (exp_type_ != expr->exp_type_ ||
       children_.size() != expr->children_.size())
     return false;
@@ -122,7 +120,8 @@ hash_t AbstractExpression::Hash() const {
 }
 
 bool AbstractExpression::IsZoneMappable() {
-  bool is_zone_mappable = ExpressionUtil::GetPredicateForZoneMap(parsed_predicates, this);
+  bool is_zone_mappable =
+      ExpressionUtil::GetPredicateForZoneMap(parsed_predicates, this);
   return is_zone_mappable;
 }
 

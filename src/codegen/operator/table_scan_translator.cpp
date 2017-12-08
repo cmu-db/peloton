@@ -61,7 +61,8 @@ TableScanTranslator::TableScanTranslator(const planner::SeqScanPlan &scan,
       "scanSelVec",
       codegen.ArrayType(codegen.Int32Type(), Vector::kDefaultVectorSize), true);
 
-  storage::ZoneMapManager *zone_map_manager = storage::ZoneMapManager::GetInstance();
+  storage::ZoneMapManager *zone_map_manager =
+      storage::ZoneMapManager::GetInstance();
   zone_map_table = zone_map_manager->ZoneMapTableExists();
   LOG_DEBUG("Finished constructing TableScanTranslator ...");
 }
@@ -80,25 +81,28 @@ void TableScanTranslator::Produce() const {
   llvm::Value *table_ptr = codegen.Call(StorageManagerProxy::GetTableWithOid,
                                         {catalog_ptr, db_oid, table_oid});
   codegen.Call(RuntimeFunctionsProxy::GetTileGroup,
-                                        {table_ptr, codegen.Const64(0)});
+               {table_ptr, codegen.Const64(0)});
 
   // The selection vector for the scan
   Vector sel_vec{LoadStateValue(selection_vector_id_),
                  Vector::kDefaultVectorSize, codegen.Int32Type()};
 
-  auto predicate = (expression::AbstractExpression *)GetScanPlan().GetPredicate();
-  llvm::Value *predicate_ptr = codegen->CreateIntToPtr(codegen.Const64((int64_t)predicate),
-          AbstractExpressionProxy::GetType(codegen)->getPointerTo());
+  auto predicate =
+      (expression::AbstractExpression *)GetScanPlan().GetPredicate();
+  llvm::Value *predicate_ptr = codegen->CreateIntToPtr(
+      codegen.Const64((int64_t)predicate),
+      AbstractExpressionProxy::GetType(codegen)->getPointerTo());
   size_t num_preds = 0;
 
-  if ((predicate !=nullptr) && (zone_map_table)) {
-    if(predicate->IsZoneMappable()) {
+  if ((predicate != nullptr) && (zone_map_table)) {
+    if (predicate->IsZoneMappable()) {
       num_preds = predicate->GetNumberofParsedPredicates();
     }
   }
   LOG_DEBUG("Number of Predicates is %lu", num_preds);
   ScanConsumer scan_consumer{*this, sel_vec};
-  table_.GenerateScan(codegen, table_ptr, sel_vec.GetCapacity(), scan_consumer, predicate_ptr, num_preds);
+  table_.GenerateScan(codegen, table_ptr, sel_vec.GetCapacity(), scan_consumer,
+                      predicate_ptr, num_preds);
   LOG_DEBUG("TableScan on [%u] finished producing tuples ...", table.GetOid());
 }
 
@@ -145,8 +149,12 @@ void TableScanTranslator::ScanConsumer::ProcessTuples(
   }
 
   // 3. Setup the (filtered) row batch and setup attribute accessors
-  RowBatch batch{translator_.GetCompilationContext(), tile_group_id_, tid_start,
-                 tid_end, selection_vector_, true};
+  RowBatch batch{translator_.GetCompilationContext(),
+                 tile_group_id_,
+                 tid_start,
+                 tid_end,
+                 selection_vector_,
+                 true};
 
   std::vector<TableScanTranslator::AttributeAccess> attribute_accesses;
   SetupRowBatch(batch, tile_group_access, attribute_accesses);

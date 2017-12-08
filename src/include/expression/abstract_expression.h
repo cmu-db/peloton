@@ -95,7 +95,7 @@ class AbstractExpression : public Printable {
     children_[index].reset(expr);
   }
 
-  bool IsZoneMappable() ;
+  bool IsZoneMappable();
 
   size_t GetNumberofParsedPredicates() const {
     return parsed_predicates.size();
@@ -105,9 +105,7 @@ class AbstractExpression : public Printable {
     return &parsed_predicates;
   }
 
-  void ClearParsedPredicates() {
-    parsed_predicates.clear();
-  }
+  void ClearParsedPredicates() { parsed_predicates.clear(); }
 
   std::vector<storage::PredicateInfo> parsed_predicates;
   /** accessors */

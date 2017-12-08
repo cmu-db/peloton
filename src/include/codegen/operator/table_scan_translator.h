@@ -162,7 +162,6 @@ class TableScanTranslator : public OperatorTranslator {
   llvm::Value *predicate_array;
 
   bool zone_map_table;
-
 };
 
 }  // namespace codegen

@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
-// 
+//
 // Schema: (column offset: column_name)
 // 0: database_id (pkey)
 // 1: table_id (pkey)
@@ -39,33 +39,32 @@ class ZoneMapCatalog : public AbstractCatalog {
   ~ZoneMapCatalog();
 
   // Global Singleton : I really dont want to do this and I know this sucks.
-  // but #796 is still not merged when I am writing this code and I really 
-  // am sorry to do this. When PelotonMain() becomes a reality, I will 
+  // but #796 is still not merged when I am writing this code and I really
+  // am sorry to do this. When PelotonMain() becomes a reality, I will
   // fix this for sure.
 
-  static ZoneMapCatalog *GetInstance(
-      concurrency::Transaction *txn = nullptr);
+  static ZoneMapCatalog *GetInstance(concurrency::Transaction *txn = nullptr);
 
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//
-  bool InsertColumnStatistics(
-    oid_t database_id, oid_t table_id, oid_t tile_group_id, oid_t column_id,
-    std::string minimum, std::string maximum, std::string type, type::AbstractPool *pool,
-    concurrency::Transaction *txn);
+  bool InsertColumnStatistics(oid_t database_id, oid_t table_id,
+                              oid_t tile_group_id, oid_t column_id,
+                              std::string minimum, std::string maximum,
+                              std::string type, type::AbstractPool *pool,
+                              concurrency::Transaction *txn);
 
-  bool DeleteColumnStatistics(oid_t database_id, 
-    oid_t table_id, oid_t tile_group_id, oid_t column_id, 
-    concurrency::Transaction *txn);
+  bool DeleteColumnStatistics(oid_t database_id, oid_t table_id,
+                              oid_t tile_group_id, oid_t column_id,
+                              concurrency::Transaction *txn);
 
   //===--------------------------------------------------------------------===//
   // Read-only Related API
   //===--------------------------------------------------------------------===//
 
   std::unique_ptr<std::vector<type::Value>> GetColumnStatistics(
-    oid_t database_id, oid_t table_id, oid_t tile_group_id, oid_t column_id,
-    concurrency::Transaction *txn);
-
+      oid_t database_id, oid_t table_id, oid_t tile_group_id, oid_t column_id,
+      concurrency::Transaction *txn);
 
   enum ColumnId {
     DATABASE_ID = 0,
@@ -77,11 +76,7 @@ class ZoneMapCatalog : public AbstractCatalog {
     TYPE = 6
   };
 
-  enum ZoneMapOffset {
-    MINIMUM_OFF = 0,
-    MAXIMUM_OFF = 1,
-    TYPE_OFF = 2
-  };
+  enum ZoneMapOffset { MINIMUM_OFF = 0, MAXIMUM_OFF = 1, TYPE_OFF = 2 };
 
  private:
   ZoneMapCatalog(concurrency::Transaction *txn);

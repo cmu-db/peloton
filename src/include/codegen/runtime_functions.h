@@ -15,7 +15,6 @@
 #include <stdint.h>
 #include "type/types.h"
 
-
 namespace peloton {
 
 namespace storage {
@@ -50,7 +49,8 @@ class RuntimeFunctions {
 
   static storage::ZoneMapManager *GetZoneMapManager();
 
-  static void FillPredicateArray(const expression::AbstractExpression *expr, storage::PredicateInfo *predicate_array);
+  static void FillPredicateArray(const expression::AbstractExpression *expr,
+                                 storage::PredicateInfo *predicate_array);
 
   // This struct represents the layout (or configuration) of a column in a
   // tile group. A configuration is characterized by two properties: its

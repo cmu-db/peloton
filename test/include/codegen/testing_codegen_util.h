@@ -58,12 +58,13 @@ class PelotonCodeGenTest : public PelotonTest {
   }
 
   // Create the schema (common among all tables)
-  std::unique_ptr<catalog::Schema> CreateTestSchema(bool add_primary = false)
-      const;
+  std::unique_ptr<catalog::Schema> CreateTestSchema(
+      bool add_primary = false) const;
 
   // Create the test tables
-  void CreateTestTables(concurrency::Transaction *txn,
-                        oid_t tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP);
+  void CreateTestTables(
+      concurrency::Transaction *txn,
+      oid_t tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP);
 
   // Load the given table with the given number of rows
   void LoadTestTable(oid_t table_id, uint32_t num_rows,

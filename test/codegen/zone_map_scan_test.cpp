@@ -29,7 +29,8 @@ class ZoneMapScanTest : public PelotonCodeGenTest {
   std::string all_cols_table_name = "skipping_table";
 
  public:
-  ZoneMapScanTest() : PelotonCodeGenTest(TEST_TUPLES_PER_TILEGROUP), num_rows_to_insert(20) {
+  ZoneMapScanTest()
+      : PelotonCodeGenTest(TEST_TUPLES_PER_TILEGROUP), num_rows_to_insert(20) {
     // Load test table
     LoadTestTable(TestTableId(), num_rows_to_insert);
 
@@ -53,7 +54,8 @@ class ZoneMapScanTest : public PelotonCodeGenTest {
     // Create Zone Maps.
     auto catalog = catalog::Catalog::GetInstance();
     (void)catalog;
-    storage::ZoneMapManager *zone_map_manager = storage::ZoneMapManager::GetInstance();
+    storage::ZoneMapManager *zone_map_manager =
+        storage::ZoneMapManager::GetInstance();
     zone_map_manager->CreateZoneMapTableInCatalog();
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
@@ -119,7 +121,6 @@ TEST_F(ZoneMapScanTest, PredicateOnNonOutputColumn) {
   EXPECT_EQ(NumRowsInTestTable() - 4, results.size());
 }
 
-
 TEST_F(ZoneMapScanTest, ScanwithConjunctionPredicate) {
   // SELECT a, b, c FROM table where a >= 20 and b = 21;
   // 1) Construct the components of the predicate
@@ -149,6 +150,5 @@ TEST_F(ZoneMapScanTest, ScanwithConjunctionPredicate) {
   EXPECT_EQ(type::CMP_TRUE, results[0].GetValue(1).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(21)));
 }
-
 }
 }

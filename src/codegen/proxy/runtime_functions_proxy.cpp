@@ -22,7 +22,8 @@ namespace codegen {
 DEFINE_TYPE(ColumnLayoutInfo, "peloton::ColumnLayoutInfo",
             MEMBER(col_start_ptr), MEMBER(stride), MEMBER(columnar));
 
-DEFINE_TYPE(AbstractExpression, "peloton::expression::AbstractExpression", MEMBER(opaque));
+DEFINE_TYPE(AbstractExpression, "peloton::expression::AbstractExpression",
+            MEMBER(opaque));
 
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, HashCrc64);
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, GetTileGroup);

@@ -40,9 +40,9 @@ class ProjectInfo;
 namespace test {
 
 storage::DataTable *TestingTransactionUtil::CreateCombinedPrimaryKeyTable() {
-  auto id_column =
-      catalog::Column(type::TypeId::INTEGER,
-                      type::Type::GetTypeSize(type::TypeId::INTEGER), "id", true);
+  auto id_column = catalog::Column(
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "id", true);
   id_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, "not_null"));
   auto value_column = catalog::Column(
@@ -57,7 +57,8 @@ storage::DataTable *TestingTransactionUtil::CreateCombinedPrimaryKeyTable() {
   auto table_name = "TEST_TABLE";
   size_t tuples_per_tilegroup = 100;
   auto table = storage::TableFactory::GetDataTable(
-     CATALOG_DATABASE_OID, TEST_TABLE_OID, table_schema, table_name, tuples_per_tilegroup, true, false);
+      CATALOG_DATABASE_OID, TEST_TABLE_OID, table_schema, table_name,
+      tuples_per_tilegroup, true, false);
 
   // Create index on the (id, value) column
   std::vector<oid_t> key_attrs = {0, 1};
@@ -67,9 +68,9 @@ storage::DataTable *TestingTransactionUtil::CreateCombinedPrimaryKeyTable() {
   key_schema->SetIndexedColumns(key_attrs);
 
   auto index_metadata = new index::IndexMetadata(
-      "primary_btree_index", 1234, TEST_TABLE_OID, CATALOG_DATABASE_OID, IndexType::BWTREE,
-      IndexConstraintType::PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
-      unique);
+      "primary_btree_index", 1234, TEST_TABLE_OID, CATALOG_DATABASE_OID,
+      IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY, tuple_schema,
+      key_schema, key_attrs, unique);
 
   std::shared_ptr<index::Index> pkey_index(
       index::IndexFactory::GetIndex(index_metadata));
@@ -88,9 +89,9 @@ storage::DataTable *TestingTransactionUtil::CreateCombinedPrimaryKeyTable() {
 }
 
 storage::DataTable *TestingTransactionUtil::CreatePrimaryKeyUniqueKeyTable() {
-  auto id_column =
-      catalog::Column(type::TypeId::INTEGER,
-                      type::Type::GetTypeSize(type::TypeId::INTEGER), "id", true);
+  auto id_column = catalog::Column(
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "id", true);
   id_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, "not_null"));
   auto value_column = catalog::Column(
@@ -103,7 +104,8 @@ storage::DataTable *TestingTransactionUtil::CreatePrimaryKeyUniqueKeyTable() {
   auto table_name = "TEST_TABLE";
   size_t tuples_per_tilegroup = 100;
   auto table = storage::TableFactory::GetDataTable(
-     CATALOG_DATABASE_OID, TEST_TABLE_OID, table_schema, table_name, tuples_per_tilegroup, true, false);
+      CATALOG_DATABASE_OID, TEST_TABLE_OID, table_schema, table_name,
+      tuples_per_tilegroup, true, false);
 
   // Create primary index on the id column
   std::vector<oid_t> key_attrs = {0};
@@ -113,9 +115,9 @@ storage::DataTable *TestingTransactionUtil::CreatePrimaryKeyUniqueKeyTable() {
   key_schema->SetIndexedColumns(key_attrs);
 
   auto index_metadata = new index::IndexMetadata(
-      "primary_btree_index", 1234, TEST_TABLE_OID, CATALOG_DATABASE_OID, IndexType::BWTREE,
-      IndexConstraintType::PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
-      unique);
+      "primary_btree_index", 1234, TEST_TABLE_OID, CATALOG_DATABASE_OID,
+      IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY, tuple_schema,
+      key_schema, key_attrs, unique);
 
   std::shared_ptr<index::Index> pkey_index(
       index::IndexFactory::GetIndex(index_metadata));
@@ -128,10 +130,10 @@ storage::DataTable *TestingTransactionUtil::CreatePrimaryKeyUniqueKeyTable() {
   bool unique2 = false;
   auto key_schema2 = catalog::Schema::CopySchema(tuple_schema2, key_attrs2);
   key_schema2->SetIndexedColumns(key_attrs2);
-  auto index_metadata2 =
-      new index::IndexMetadata("unique_btree_index", 1235, TEST_TABLE_OID, CATALOG_DATABASE_OID,
-                               IndexType::BWTREE, IndexConstraintType::UNIQUE,
-                               tuple_schema2, key_schema2, key_attrs2, unique2);
+  auto index_metadata2 = new index::IndexMetadata(
+      "unique_btree_index", 1235, TEST_TABLE_OID, CATALOG_DATABASE_OID,
+      IndexType::BWTREE, IndexConstraintType::UNIQUE, tuple_schema2,
+      key_schema2, key_attrs2, unique2);
 
   std::shared_ptr<index::Index> ukey_index(
       index::IndexFactory::GetIndex(index_metadata2));
@@ -152,9 +154,9 @@ storage::DataTable *TestingTransactionUtil::CreatePrimaryKeyUniqueKeyTable() {
 storage::DataTable *TestingTransactionUtil::CreateTable(
     int num_key, std::string table_name, oid_t database_id, oid_t relation_id,
     oid_t index_oid, bool need_primary_index, size_t tuples_per_tilegroup) {
-  auto id_column =
-      catalog::Column(type::TypeId::INTEGER,
-                      type::Type::GetTypeSize(type::TypeId::INTEGER), "id", true);
+  auto id_column = catalog::Column(
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "id", true);
   auto value_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "value", true);
@@ -175,9 +177,9 @@ storage::DataTable *TestingTransactionUtil::CreateTable(
   key_schema->SetIndexedColumns(key_attrs);
 
   auto index_metadata = new index::IndexMetadata(
-      "primary_btree_index", index_oid, TEST_TABLE_OID, CATALOG_DATABASE_OID, IndexType::BWTREE,
-      need_primary_index ? IndexConstraintType::PRIMARY_KEY
-                         : IndexConstraintType::DEFAULT,
+      "primary_btree_index", index_oid, TEST_TABLE_OID, CATALOG_DATABASE_OID,
+      IndexType::BWTREE, need_primary_index ? IndexConstraintType::PRIMARY_KEY
+                                            : IndexConstraintType::DEFAULT,
       tuple_schema, key_schema, key_attrs, unique);
 
   std::shared_ptr<index::Index> pkey_index(
@@ -189,11 +191,12 @@ storage::DataTable *TestingTransactionUtil::CreateTable(
   catalog::Catalog::GetInstance();
   LOG_INFO("the database_id is %d", database_id);
   storage::Database *db = nullptr;
-  try{
-      db = storage::StorageManager::GetInstance()->GetDatabaseWithOid(database_id);
+  try {
+    db =
+        storage::StorageManager::GetInstance()->GetDatabaseWithOid(database_id);
   } catch (CatalogException &e) {
-      LOG_TRACE("Can't find database %d! ", database_id);
-      return nullptr;
+    LOG_TRACE("Can't find database %d! ", database_id);
+    return nullptr;
   }
   PL_ASSERT(db);
   db->AddTable(table);
