@@ -36,6 +36,73 @@ namespace test {
 class ZoneMapTests : public PelotonTest {};
 
 namespace {
+  /*
+     Creates a table with 4 tile groups. Each having 5 tuples.
+     Drawing the tilegroups here so that people can understand what tilegroups
+     should be skipped/scanned based on predicate.
+
+     Tile Group 0:-
+     |----------------|-----------------|-----------------|---------------|
+     |COL A (Integer) | COL B (Integer) | COL C (Decimal) | COL D(Varchar)|
+     |________________|_________________|_________________|_______________|
+     |      0         |       1         |        2        |       3       |
+     |________________|_________________|_________________|_______________|
+     |      10        |       11        |        12       |       13      |
+     |________________|_________________|_________________|_______________|
+     |      20        |       21        |        22       |       23      |
+     |________________|_________________|_________________|_______________|
+     |      30        |       31        |        32       |       33      |
+     |________________|_________________|_________________|_______________|
+     |      40        |       41        |        42       |       43      |
+     |________________|_________________|_________________|_______________|
+
+     Tile Group 1:-
+     |----------------|-----------------|-----------------|---------------|
+     |COL A (Integer) | COL B (Integer) | COL C (Decimal) | COL D(Varchar)|
+     |________________|_________________|_________________|_______________|
+     |      50        |       51        |        52       |       53      |
+     |________________|_________________|_________________|_______________|
+     |      60        |       61        |        62       |       63      |
+     |________________|_________________|_________________|_______________|
+     |      70        |       71        |        72       |       73      |
+     |________________|_________________|_________________|_______________|
+     |      80        |       81        |        82       |       83      |
+     |________________|_________________|_________________|_______________|
+     |      90        |       91        |        92       |       93      |
+     |________________|_________________|_________________|_______________|
+
+     Tile Group 2:-
+     |----------------|-----------------|-----------------|---------------|
+     |COL A (Integer) | COL B (Integer) | COL C (Decimal) | COL D(Varchar)|
+     |________________|_________________|_________________|_______________|
+     |      100       |       101       |        102      |       103     |
+     |________________|_________________|_________________|_______________|
+     |      110       |       111       |        112      |       113     |
+     |________________|_________________|_________________|_______________|
+     |      120       |       121       |        122      |       123     |
+     |________________|_________________|_________________|_______________|
+     |      130       |       131       |        132      |       133     |
+     |________________|_________________|_________________|_______________|
+     |      140       |       141       |        142      |       143     |
+     |________________|_________________|_________________|_______________|
+
+     Tile Group 3:-
+     |----------------|-----------------|-----------------|---------------|
+     |COL A (Integer) | COL B (Integer) | COL C (Decimal) | COL D(Varchar)|
+     |________________|_________________|_________________|_______________|
+     |      150       |       151       |        152      |       153     |
+     |________________|_________________|_________________|_______________|
+     |      160       |       161       |        162      |       163     |
+     |________________|_________________|_________________|_______________|
+     |      170       |       171       |        172      |       173     |
+     |________________|_________________|_________________|_______________|
+     |      180       |       181       |        182      |       183     |
+     |________________|_________________|_________________|_______________|
+     |      190       |       191       |        192      |       193     |
+     |________________|_________________|_________________|_______________|
+
+     // Artwork on Sublime Text. Dated 12/08/2017 by Anonymous.
+  */
 
   storage::DataTable *CreateTestTable() {
     std::unique_ptr<storage::DataTable> data_table(TestingExecutorUtil::CreateTable(5, false, 1));
@@ -241,7 +308,7 @@ TEST_F(ZoneMapTests, ZoneMapIntegerConjunctionPredicateTest) {
 }
 
 TEST_F(ZoneMapTests, ZoneMapDecimalConjunctionPredicateTest) {
-  // Predicate A > 150 and A < 200
+  // Predicate C > 150 and C < 200
   std::unique_ptr<storage::DataTable> data_table(CreateTestTable());
 
   auto constant_value = type::ValueFactory::GetDecimalValue(150);
@@ -274,8 +341,51 @@ TEST_F(ZoneMapTests, ZoneMapDecimalConjunctionPredicateTest) {
   delete conj_pred;
 }
 
+TEST_F(ZoneMapTests, ZoneMapMultiColumnConjunctionPredicateTest) {
+  // Predicate C > 100 and C < 150 and A > 120 and A < 140
+  std::unique_ptr<storage::DataTable> data_table(CreateTestTable());
 
+  auto constant_value = type::ValueFactory::GetDecimalValue(100);
+  auto pred1 = CreateSinglePredicate(2, ExpressionType::COMPARE_GREATERTHAN, constant_value);
+  constant_value = type::ValueFactory::GetDecimalValue(150);
+  auto pred2 = CreateSinglePredicate(2, ExpressionType::COMPARE_LESSTHAN, constant_value);
 
+  auto conj_pred1 = CreateConjunctionPredicate(pred1, pred2);
+
+  constant_value = type::ValueFactory::GetIntegerValue(120);
+  auto pred3 = CreateSinglePredicate(0, ExpressionType::COMPARE_GREATERTHAN, constant_value);
+  constant_value = type::ValueFactory::GetIntegerValue(140);
+  auto pred4 = CreateSinglePredicate(0, ExpressionType::COMPARE_LESSTHAN, constant_value);
+
+  auto conj_pred2 = CreateConjunctionPredicate(pred3, pred4);
+
+  auto conj_pred = CreateConjunctionPredicate(conj_pred1, conj_pred2);
+
+  bool zone_mappable = conj_pred->IsZoneMappable();
+  EXPECT_EQ(zone_mappable, true);
+  auto parsed_predicates = conj_pred->GetParsedPredicates();
+  size_t num_preds = parsed_predicates->size();
+  EXPECT_EQ(num_preds, 4);
+  storage::ZoneMapManager *zone_map_manager = storage::ZoneMapManager::GetInstance();
+  oid_t num_tile_groups = (data_table.get())->GetTileGroupCount();
+  auto temp =(std::vector<storage::PredicateInfo> *)parsed_predicates;
+  for (oid_t i = 0; i < num_tile_groups - 1; i++) {
+      bool result = zone_map_manager->ComparePredicateAgainstZoneMap(temp->data() , 4, data_table.get(), i);
+      if (i == 2) {
+        EXPECT_EQ(result, true);
+      } else {
+        EXPECT_EQ(result, false);
+      }
+  }
+  conj_pred->ClearParsedPredicates();
+  conj_pred1->ClearParsedPredicates();
+  conj_pred2->ClearParsedPredicates();
+  pred1->ClearParsedPredicates();
+  pred2->ClearParsedPredicates();
+  pred3->ClearParsedPredicates();
+  pred4->ClearParsedPredicates();
+  delete conj_pred;
+}
 
 }
 }  // End test namespace
