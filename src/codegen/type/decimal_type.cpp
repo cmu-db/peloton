@@ -165,6 +165,7 @@ struct Negate : public TypeSystem::UnaryOperatorHandleNull {
   }
 };
 
+// Floor
 struct Floor : public TypeSystem::UnaryOperatorHandleNull {
   bool SupportsType(const Type &type) const override {
     return type.GetSqlType() == Decimal::Instance();
@@ -178,6 +179,23 @@ struct Floor : public TypeSystem::UnaryOperatorHandleNull {
     llvm::Value *raw_ret =
         codegen.Call(DecimalFunctionsProxy::Floor, {val.GetValue()});
     return Value{Integer::Instance(), raw_ret};
+  }
+};
+
+// Round
+struct Round : public TypeSystem::UnaryOperatorHandleNull {
+  bool SupportsType(const Type &type) const override {
+    return type.GetSqlType() == Decimal::Instance();
+  }
+
+  Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
+    return Decimal::Instance();
+  }
+
+  Value Impl(CodeGen &codegen, const Value &val) const override {
+    llvm::Value *raw_ret =
+        codegen.Call(DecimalFunctionsProxy::Round, {val.GetValue()});
+    return Value{Decimal::Instance(), raw_ret};
   }
 };
 
@@ -355,23 +373,6 @@ struct Modulo : public TypeSystem::BinaryOperatorHandleNull {
 
     // Return result
     return result;
-  }
-};
-
-// Round
-struct Round : public TypeSystem::UnaryOperator {
-  bool SupportsType(const Type &type) const override {
-    return type.GetSqlType() == Decimal::Instance();
-  }
-
-  Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
-    return Decimal::Instance();
-  }
-
-  Value DoWork(CodeGen &codegen, const Value &val) const override {
-    llvm::Value *raw_ret =
-        codegen.Call(DecimalFunctionsProxy::Round, {val.GetValue()});
-    return Value{Decimal::Instance(), raw_ret};
   }
 };
 

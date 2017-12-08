@@ -229,9 +229,6 @@ Value TypeSystem::UnaryOperatorHandleNull::Eval(CodeGen &codegen,
     return Impl(codegen, val);
   }
 
-  // The input is NULLable
-  PL_ASSERT(val.IsNullable());
-
   Value null_val, ret_val;
   lang::If is_null{codegen, val.IsNull(codegen), "is_null"};
   {
