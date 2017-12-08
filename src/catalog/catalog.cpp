@@ -208,7 +208,7 @@ ResultType Catalog::CreateTable(const std::string &database_name,
                                 const std::string &table_name,
                                 std::unique_ptr<catalog::Schema> schema,
                                 concurrency::Transaction *txn,
-                                bool is_catalog) {
+                                bool is_catalog, oid_t tuples_per_tilegroup) {
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to create table " +
                            table_name);
@@ -250,7 +250,7 @@ ResultType Catalog::CreateTable(const std::string &database_name,
   bool adapt_table = false;
   auto table = storage::TableFactory::GetDataTable(
       database_object->GetDatabaseOid(), table_oid, schema.release(),
-      table_name, DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table,
+      table_name, tuples_per_tilegroup, own_schema, adapt_table,
       is_catalog);
   database->AddTable(table, is_catalog);
   // put data table object into rw_object_set

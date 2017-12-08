@@ -45,7 +45,7 @@ class PelotonCodeGenTest : public PelotonTest {
                                                "table4", "table5"};
   std::vector<oid_t> test_table_oids;
 
-  PelotonCodeGenTest();
+  PelotonCodeGenTest(oid_t tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP);
 
   virtual ~PelotonCodeGenTest();
 
@@ -62,7 +62,8 @@ class PelotonCodeGenTest : public PelotonTest {
       const;
 
   // Create the test tables
-  void CreateTestTables(concurrency::Transaction *txn);
+  void CreateTestTables(concurrency::Transaction *txn,
+                        oid_t tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP);
 
   // Load the given table with the given number of rows
   void LoadTestTable(oid_t table_id, uint32_t num_rows,
