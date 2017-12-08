@@ -22,6 +22,7 @@ namespace peloton {
 
 namespace expression {
 class AbstractExpression;
+class Parameter;
 }
 
 namespace planner {
@@ -128,6 +129,24 @@ class AggregatePlan : public AbstractPlan {
         output_schema_copy, agg_strategy_);
     return std::unique_ptr<AbstractPlan>(new_plan);
   }
+
+  hash_t Hash() const override;
+
+  bool operator==(const AbstractPlan &rhs) const override;
+  bool operator!=(const AbstractPlan &rhs) const override {
+    return !(*this == rhs);
+  }
+
+  virtual void VisitParameters(codegen::QueryParametersMap &map,
+      std::vector<peloton::type::Value> &values,
+      const std::vector<peloton::type::Value> &values_from_user) override;
+
+ private:
+  bool AreEqual(const std::vector<planner::AggregatePlan::AggTerm> &A,
+                const std::vector<planner::AggregatePlan::AggTerm> &B) const;
+
+  hash_t Hash(const std::vector<planner::AggregatePlan::AggTerm> &agg_terms)
+      const;
 
  private:
   /* For projection */

@@ -63,6 +63,7 @@ class Type {
 
   // Equality check
   bool operator==(const Type &other) const;
+  bool operator!=(const Type &other) const { return !(*this == other); }
 
   // Get the SQL type of this runtime type
   const SqlType &GetSqlType() const;
