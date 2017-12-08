@@ -14,12 +14,6 @@
 
 #include "type/types.h"
 
-// gflags DEFINE
-#define __SETTING_GFLAGS_DEFINE__
-#include "settings/settings_macro.h"
-#include "settings/settings.h"
-#undef __SETTING_GFLAGS_DEFINE__
-
 // Layout mode
 peloton::LayoutType peloton_layout_mode = peloton::LAYOUT_TYPE_ROW;
 

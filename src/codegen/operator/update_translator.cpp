@@ -13,14 +13,9 @@
 #include "codegen/lang/if.h"
 #include "codegen/proxy/catalog_proxy.h"
 #include "codegen/proxy/target_proxy.h"
-#include "codegen/proxy/transaction_runtime_proxy.h"
 #include "codegen/proxy/updater_proxy.h"
-#include "codegen/proxy/value_proxy.h"
-#include "codegen/proxy/values_runtime_proxy.h"
 #include "codegen/operator/update_translator.h"
 #include "codegen/table_storage.h"
-#include "planner/project_info.h"
-#include "planner/abstract_scan_plan.h"
 #include "planner/update_plan.h"
 #include "storage/data_table.h"
 
@@ -48,8 +43,9 @@ UpdateTranslator::UpdateTranslator(const planner::UpdatePlan &update_plan,
 
 bool IsTarget(const TargetList &target_list, uint32_t index) {
   for (const auto &target : target_list) {
-    if (target.first == index)
+    if (target.first == index) {
       return true;
+    }
   }
   return false;
 }
@@ -115,10 +111,11 @@ void UpdateTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
   llvm::Value *tuple_ptr;
   std::vector<llvm::Value *> prep_args = {updater, row.GetTileGroupID(),
                                           row.GetTID(codegen)};
-  if (update_plan_.GetUpdatePrimaryKey() == false)
+  if (update_plan_.GetUpdatePrimaryKey() == false) {
     tuple_ptr = codegen.Call(UpdaterProxy::Prepare, prep_args);
-  else
+  } else {
     tuple_ptr = codegen.Call(UpdaterProxy::PreparePK, prep_args);
+  }
 
   // Update only when we have tuple_ptr, otherwise it is not allowed to update
   llvm::Value *prepare_cond = codegen->CreateICmpNE(
@@ -133,10 +130,11 @@ void UpdateTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
   
     // Finally, update with help from the Updater
     std::vector<llvm::Value *> update_args = {updater};
-    if (update_plan_.GetUpdatePrimaryKey() == false)
+    if (update_plan_.GetUpdatePrimaryKey() == false) {
       codegen.Call(UpdaterProxy::Update, update_args);
-    else
+    } else {
       codegen.Call(UpdaterProxy::UpdatePK, update_args);
+    }
   }
   prepare_success.EndIf();
 }

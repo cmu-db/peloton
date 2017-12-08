@@ -21,7 +21,7 @@ namespace codegen {
 
 ExpressionTranslator::ExpressionTranslator(
     const expression::AbstractExpression &expression, CompilationContext &ctx)
-    : expression_(expression) {
+    : context_(ctx), expression_(expression) {
   if (expression::ExpressionUtil::IsAggregateExpression(
           expression.GetExpressionType()))
     return;

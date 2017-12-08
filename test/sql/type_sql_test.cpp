@@ -121,12 +121,15 @@ void CheckQueryResult(std::vector<StatementResult> result,
 
 TEST_F(TypeSQLTests, VarcharTest) {
   TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE foo(name varchar(250));");
-  std::vector<std::string> names{"Alice", "Peter",  "Cathy",
-                                 "Bob",   "Alicia", "David"};
-  for (size_t i = 0; i < names.size(); i++) {
-    std::string sql = "INSERT INTO foo VALUES ('" + names[i] + "');";
+
+  for (const std::string &name :
+       {"Alice", "Peter", "Cathy", "Bob", "Alicia", "David"}) {
+    std::string sql = "INSERT INTO foo VALUES ('" + name + "');";
     TestingSQLUtil::ExecuteSQLQuery(sql);
   }
+
+  // NULL for good measure
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO foo VALUES (NULL);");
 
   std::vector<StatementResult> result;
   std::vector<FieldInfo> tuple_descriptor;

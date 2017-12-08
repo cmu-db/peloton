@@ -60,8 +60,7 @@ class TrafficCop {
 //                              const size_t thread_id = 0);
 
   // ExecPrepStmt - Execute a statement from a prepared and bound statement
-  ResultType ExecuteStatement(
-      const std::shared_ptr<Statement> &statement,
+  ResultType ExecuteStatement(const std::shared_ptr<Statement> &statement,
       const std::vector<type::Value> &params, const bool unnamed,
       std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
       const std::vector<int> &result_format,

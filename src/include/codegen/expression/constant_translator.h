@@ -34,6 +34,8 @@ class ConstantTranslator : public ExpressionTranslator {
   // Produce the value that is the result of codegen-ing the expression
   codegen::Value DeriveValue(CodeGen &codegen,
                              RowBatch::Row &row) const override;
+ private:
+  size_t index_;
 };
 
 }  // namespace codegen
