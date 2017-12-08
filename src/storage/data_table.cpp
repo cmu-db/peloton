@@ -6,7 +6,7 @@
 //
 // Identification: src/storage/data_table.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -127,9 +127,9 @@ DataTable::~DataTable() {
 // TUPLE HELPER OPERATIONS
 //===--------------------------------------------------------------------===//
 
-bool DataTable::CheckNotNulls(const storage::Tuple *tuple,
+bool DataTable::CheckNotNulls(const AbstractTuple *tuple,
                               oid_t column_idx) const {
-  if (tuple->IsNull(column_idx)) {
+  if (tuple->GetValue(column_idx).IsNull()) {
     LOG_TRACE(
         "%u th attribute in the tuple was NULL. It is non-nullable "
         "attribute.",
@@ -139,9 +139,7 @@ bool DataTable::CheckNotNulls(const storage::Tuple *tuple,
   return true;
 }
 
-bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
-  PL_ASSERT(schema->GetColumnCount() == tuple->GetColumnCount());
-
+bool DataTable::CheckConstraints(const AbstractTuple *tuple) const {
   // For each column in the table, check to see whether they have
   // any constraints. Then if they do, make sure that the
   // given tuple does not violate them.
@@ -224,12 +222,7 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
 // in-place update at executor level.
 // however, when performing insert, we have to copy data immediately,
 // and the argument cannot be set to nullptr.
-ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple,
-                                         bool check_constraint) {
-  // assert(tuple);
-  if (check_constraint && tuple != nullptr) {
-    if (CheckConstraints(tuple) == false) return INVALID_ITEMPOINTER;
-  }
+ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple) {
 
   //=============== garbage collection==================
   // check if there are recycled tuple slots
@@ -344,6 +337,13 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
 bool DataTable::InsertTuple(const AbstractTuple *tuple,
     ItemPointer location, concurrency::Transaction *transaction,
     ItemPointer **index_entry_ptr) {
+
+  auto result = CheckConstraints(tuple);
+  if (result == false) {
+    LOG_TRACE("Constraint violated");
+    return false;
+  }
+
   // the upper layer may not pass a index_entry_ptr (default value: nullptr)
   // into the function.
   // in this case, we have to create a temp_ptr to hold the content.
@@ -1208,5 +1208,29 @@ void DataTable::UpdateTriggerListFromCatalog(concurrency::Transaction *txn) {
       catalog::TriggerCatalog::GetInstance().GetTriggers(table_oid, txn);
 }
 
-}  // namespace storage
-}  // namespace peloton
+hash_t DataTable::Hash() const {
+  auto oid = GetOid();
+  hash_t hash = HashUtil::Hash(&oid);
+  hash = HashUtil::CombineHashes(hash, HashUtil::HashBytes(GetName().c_str(),
+                                                           GetName().length()));
+  auto db_oid = GetOid();
+  hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&db_oid));
+  return hash;
+}
+
+bool DataTable::Equals(const storage::DataTable &other) const {
+  return (*this == other);
+}
+
+bool DataTable::operator==(const DataTable &rhs) const {
+  if (GetName() != rhs.GetName())
+    return false;
+  if (GetDatabaseOid() != rhs.GetDatabaseOid())
+    return false;
+  if (GetOid() != rhs.GetOid())
+    return false;
+  return true;
+}
+
+}  // End storage namespace
+}  // End peloton namespace

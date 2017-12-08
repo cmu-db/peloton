@@ -5,9 +5,9 @@
 //
 // hybrid_scan_plan.cpp
 //
-// Identification: /peloton/src/planner/hybrid_scan_plan.cpp
+// Identification: src/planner/hybrid_scan_plan.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -40,13 +40,11 @@ namespace planner {
     // initializer of the scan descriptor, then we do not try to add predicate
     // since it causes memory fault
     if(index_.get() != nullptr) {
-      index_predicate_.AddConjunctionScanPredicate(index_.get(),
-                                                   values_,
+      index_predicate_.AddConjunctionScanPredicate(index_.get(), values_,
                                                    key_column_ids_,
                                                    expr_types_);
     }
-                                              
-    return;
   }
-}
-}
+
+}  // namespace planner
+}  // namespace peloton

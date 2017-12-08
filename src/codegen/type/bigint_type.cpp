@@ -33,7 +33,7 @@ namespace {
 // We do BIGINT -> {INTEGRAL_TYPE, DECIMAL, VARCHAR, BOOLEAN}
 //===----------------------------------------------------------------------===//
 
-struct CastBigInt : public TypeSystem::Cast {
+struct CastBigInt : public TypeSystem::CastHandleNull {
   bool SupportsTypes(const Type &from_type,
                      const Type &to_type) const override {
     if (from_type.GetSqlType() != BigInt::Instance()) {
@@ -52,8 +52,8 @@ struct CastBigInt : public TypeSystem::Cast {
     }
   }
 
-  Value DoCast(CodeGen &codegen, const Value &value,
-               const Type &to_type) const override {
+  Value Impl(CodeGen &codegen, const Value &value,
+             const Type &to_type) const override {
     llvm::Value *result = nullptr;
     switch (to_type.GetSqlType().TypeId()) {
       case peloton::type::TypeId::BOOLEAN: {
@@ -88,56 +88,59 @@ struct CastBigInt : public TypeSystem::Cast {
       }
     }
 
+    // We could be casting this non-nullable value to a nullable type
+    llvm::Value *null = to_type.nullable ? codegen.ConstBool(false) : nullptr;
+
     // Return the result
-    return Value{to_type, result, nullptr, nullptr};
+    return Value{to_type, result, nullptr, null};
   }
 };
 
 // Comparison
-struct CompareBigInt : public TypeSystem::Comparison {
+struct CompareBigInt : public TypeSystem::SimpleComparisonHandleNull {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type == BigInt::Instance() && left_type == right_type;
   }
 
-  Value DoCompareLt(CodeGen &codegen, const Value &left,
-                    const Value &right) const override {
+  Value CompareLtImpl(CodeGen &codegen, const Value &left,
+                      const Value &right) const override {
     auto *raw_val = codegen->CreateICmpSLT(left.GetValue(), right.GetValue());
     return Value{Boolean::Instance(), raw_val, nullptr, nullptr};
   }
 
-  Value DoCompareLte(CodeGen &codegen, const Value &left,
-                     const Value &right) const override {
+  Value CompareLteImpl(CodeGen &codegen, const Value &left,
+                       const Value &right) const override {
     auto *raw_val = codegen->CreateICmpSLE(left.GetValue(), right.GetValue());
     return Value{Boolean::Instance(), raw_val, nullptr, nullptr};
   }
 
-  Value DoCompareEq(CodeGen &codegen, const Value &left,
-                    const Value &right) const override {
+  Value CompareEqImpl(CodeGen &codegen, const Value &left,
+                      const Value &right) const override {
     auto *raw_val = codegen->CreateICmpEQ(left.GetValue(), right.GetValue());
     return Value{Boolean::Instance(), raw_val, nullptr, nullptr};
   }
 
-  Value DoCompareNe(CodeGen &codegen, const Value &left,
-                    const Value &right) const override {
+  Value CompareNeImpl(CodeGen &codegen, const Value &left,
+                      const Value &right) const override {
     auto *raw_val = codegen->CreateICmpNE(left.GetValue(), right.GetValue());
     return Value{Boolean::Instance(), raw_val, nullptr, nullptr};
   }
 
-  Value DoCompareGt(CodeGen &codegen, const Value &left,
-                    const Value &right) const override {
+  Value CompareGtImpl(CodeGen &codegen, const Value &left,
+                      const Value &right) const override {
     auto *raw_val = codegen->CreateICmpSGT(left.GetValue(), right.GetValue());
     return Value{Boolean::Instance(), raw_val, nullptr, nullptr};
   }
 
-  Value DoCompareGte(CodeGen &codegen, const Value &left,
-                     const Value &right) const override {
+  Value CompareGteImpl(CodeGen &codegen, const Value &left,
+                       const Value &right) const override {
     auto *raw_val = codegen->CreateICmpSGE(left.GetValue(), right.GetValue());
     return Value{Boolean::Instance(), raw_val, nullptr, nullptr};
   }
 
-  Value DoComparisonForSort(CodeGen &codegen, const Value &left,
-                            const Value &right) const override {
+  Value CompareForSortImpl(CodeGen &codegen, const Value &left,
+                           const Value &right) const override {
     // For integer comparisons, just subtract left from right and cast the
     // result to a 32-bit value
     llvm::Value *diff = codegen->CreateSub(left.GetValue(), right.GetValue());
@@ -148,7 +151,7 @@ struct CompareBigInt : public TypeSystem::Comparison {
 };
 
 // Negation
-struct Negate : public TypeSystem::UnaryOperator {
+struct Negate : public TypeSystem::UnaryOperatorHandleNull {
   bool SupportsType(const Type &type) const override {
     return type.GetSqlType() == BigInt::Instance();
   }
@@ -157,7 +160,7 @@ struct Negate : public TypeSystem::UnaryOperator {
     return Type{BigInt::Instance()};
   }
 
-  Value DoWork(CodeGen &codegen, const Value &val) const override {
+  Value Impl(CodeGen &codegen, const Value &val) const override {
     PL_ASSERT(SupportsType(val.GetType()));
 
     llvm::Value *overflow_bit = nullptr;
@@ -172,7 +175,7 @@ struct Negate : public TypeSystem::UnaryOperator {
 };
 
 // Addition
-struct Add : public TypeSystem::BinaryOperator {
+struct Add : public TypeSystem::BinaryOperatorHandleNull {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type.GetSqlType() == BigInt::Instance() &&
@@ -184,8 +187,8 @@ struct Add : public TypeSystem::BinaryOperator {
     return Type{BigInt::Instance()};
   }
 
-  Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
-               OnError on_error) const override {
+  Value Impl(CodeGen &codegen, const Value &left, const Value &right,
+             OnError on_error) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // Do addition
@@ -203,7 +206,7 @@ struct Add : public TypeSystem::BinaryOperator {
 };
 
 // Subtraction
-struct Sub : public TypeSystem::BinaryOperator {
+struct Sub : public TypeSystem::BinaryOperatorHandleNull {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type.GetSqlType() == BigInt::Instance() &&
@@ -215,8 +218,8 @@ struct Sub : public TypeSystem::BinaryOperator {
     return Type{BigInt::Instance()};
   }
 
-  Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
-               OnError on_error) const override {
+  Value Impl(CodeGen &codegen, const Value &left, const Value &right,
+             OnError on_error) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // Do subtraction
@@ -234,7 +237,7 @@ struct Sub : public TypeSystem::BinaryOperator {
 };
 
 // Multiplication
-struct Mul : public TypeSystem::BinaryOperator {
+struct Mul : public TypeSystem::BinaryOperatorHandleNull {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type.GetSqlType() == BigInt::Instance() &&
@@ -246,8 +249,8 @@ struct Mul : public TypeSystem::BinaryOperator {
     return Type{BigInt::Instance()};
   }
 
-  Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
-               OnError on_error) const override {
+  Value Impl(CodeGen &codegen, const Value &left, const Value &right,
+             OnError on_error) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // Do multiplication
@@ -265,7 +268,7 @@ struct Mul : public TypeSystem::BinaryOperator {
 };
 
 // Division
-struct Div : public TypeSystem::BinaryOperator {
+struct Div : public TypeSystem::BinaryOperatorHandleNull {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type.GetSqlType() == BigInt::Instance() &&
@@ -277,8 +280,8 @@ struct Div : public TypeSystem::BinaryOperator {
     return Type{BigInt::Instance()};
   }
 
-  Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
-               OnError on_error) const override {
+  Value Impl(CodeGen &codegen, const Value &left, const Value &right,
+             OnError on_error) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // First, check if the divisor is zero
@@ -321,7 +324,7 @@ struct Div : public TypeSystem::BinaryOperator {
 };
 
 // Modulo
-struct Modulo : public TypeSystem::BinaryOperator {
+struct Modulo : public TypeSystem::BinaryOperatorHandleNull {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type.GetSqlType() == BigInt::Instance() &&
@@ -333,8 +336,8 @@ struct Modulo : public TypeSystem::BinaryOperator {
     return Type{BigInt::Instance()};
   }
 
-  Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
-               OnError on_error) const override {
+  Value Impl(CodeGen &codegen, const Value &left, const Value &right,
+             OnError on_error) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // First, check if the divisor is zero
@@ -431,8 +434,8 @@ static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
 BigInt::BigInt()
     : SqlType(peloton::type::TypeId::BIGINT),
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
-                   kComparisonTable, kUnaryOperatorTable,
-                   kBinaryOperatorTable, kNaryOperatorTable) {}
+                   kComparisonTable, kUnaryOperatorTable, kBinaryOperatorTable,
+                   kNaryOperatorTable) {}
 
 Value BigInt::GetMinValue(CodeGen &codegen) const {
   auto *raw_val = codegen.Const64(peloton::type::PELOTON_INT64_MIN);

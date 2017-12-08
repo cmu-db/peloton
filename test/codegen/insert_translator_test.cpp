@@ -43,7 +43,7 @@ TEST_F(InsertTranslatorTest, InsertOneTuple) {
   auto constant_expr_1 = new expression::ConstantValueExpression(
       type::ValueFactory::GetIntegerValue(1));
   auto constant_expr_2 = new expression::ConstantValueExpression(
-      type::ValueFactory::GetIntegerValue(2));
+      type::ValueFactory::GetDecimalValue(2));
   auto constant_expr_3 = new expression::ConstantValueExpression(
       type::ValueFactory::GetVarcharValue("Tuple1", true));
   std::vector<std::vector<
@@ -102,7 +102,7 @@ TEST_F(InsertTranslatorTest, InsertOneTuple) {
   EXPECT_EQ(type::CMP_TRUE, results_table1[0].GetValue(1).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(1)));
   EXPECT_EQ(type::CMP_TRUE, results_table1[0].GetValue(2).CompareEquals(
-                                type::ValueFactory::GetIntegerValue(2)));
+                                type::ValueFactory::GetDecimalValue(2)));
   EXPECT_EQ(type::CMP_TRUE, results_table1[0].GetValue(3).CompareEquals(
                                 type::ValueFactory::GetVarcharValue("Tuple1")));
 

@@ -33,7 +33,7 @@ namespace {
 // We do DATE -> {TIMESTAMP, VARCHAR}
 //===----------------------------------------------------------------------===//
 
-struct CastDateToTimestamp : public TypeSystem::Cast {
+struct CastDateToTimestamp : public TypeSystem::CastHandleNull {
   bool SupportsTypes(const type::Type &from_type,
                      const type::Type &to_type) const override {
     return from_type.GetSqlType() == Date::Instance() &&
@@ -41,8 +41,8 @@ struct CastDateToTimestamp : public TypeSystem::Cast {
   }
 
   // Cast the given decimal value into the provided type
-  Value DoCast(CodeGen &codegen, const Value &value,
-               const type::Type &to_type) const override {
+  Value Impl(CodeGen &codegen, const Value &value,
+             const type::Type &to_type) const override {
     PL_ASSERT(SupportsTypes(value.GetType(), to_type));
 
     // Date is number of days since 2000, timestamp is micros since same
@@ -51,55 +51,58 @@ struct CastDateToTimestamp : public TypeSystem::Cast {
         codegen.Const64(peloton::type::TimestampType::kUsecsPerDate);
     llvm::Value *timestamp = codegen->CreateMul(date, usecs_per_date);
 
-    return Value{to_type, timestamp, nullptr, nullptr};
+    // We could be casting this non-nullable value to a nullable type
+    llvm::Value *null = to_type.nullable ? codegen.ConstBool(false) : nullptr;
+
+    return Value{to_type, timestamp, nullptr, null};
   }
 };
 
 // Comparison
-struct CompareDate : public TypeSystem::Comparison {
+struct CompareDate : public TypeSystem::SimpleComparisonHandleNull {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type == Date::Instance() && left_type == right_type;
   }
 
-  Value DoCompareLt(CodeGen &codegen, const Value &left,
-                    const Value &right) const override {
+  Value CompareLtImpl(CodeGen &codegen, const Value &left,
+                      const Value &right) const override {
     auto *raw_val = codegen->CreateICmpSLT(left.GetValue(), right.GetValue());
     return Value{Boolean::Instance(), raw_val, nullptr, nullptr};
   }
 
-  Value DoCompareLte(CodeGen &codegen, const Value &left,
-                     const Value &right) const override {
+  Value CompareLteImpl(CodeGen &codegen, const Value &left,
+                       const Value &right) const override {
     auto *raw_val = codegen->CreateICmpSLE(left.GetValue(), right.GetValue());
     return Value{Boolean::Instance(), raw_val, nullptr, nullptr};
   }
 
-  Value DoCompareEq(CodeGen &codegen, const Value &left,
-                    const Value &right) const override {
+  Value CompareEqImpl(CodeGen &codegen, const Value &left,
+                      const Value &right) const override {
     auto *raw_val = codegen->CreateICmpEQ(left.GetValue(), right.GetValue());
     return Value{Boolean::Instance(), raw_val, nullptr, nullptr};
   }
 
-  Value DoCompareNe(CodeGen &codegen, const Value &left,
-                    const Value &right) const override {
+  Value CompareNeImpl(CodeGen &codegen, const Value &left,
+                      const Value &right) const override {
     auto *raw_val = codegen->CreateICmpNE(left.GetValue(), right.GetValue());
     return Value{Boolean::Instance(), raw_val, nullptr, nullptr};
   }
 
-  Value DoCompareGt(CodeGen &codegen, const Value &left,
-                    const Value &right) const override {
+  Value CompareGtImpl(CodeGen &codegen, const Value &left,
+                      const Value &right) const override {
     auto *raw_val = codegen->CreateICmpSGT(left.GetValue(), right.GetValue());
     return Value{Boolean::Instance(), raw_val, nullptr, nullptr};
   }
 
-  Value DoCompareGte(CodeGen &codegen, const Value &left,
-                     const Value &right) const override {
+  Value CompareGteImpl(CodeGen &codegen, const Value &left,
+                       const Value &right) const override {
     auto *raw_val = codegen->CreateICmpSGE(left.GetValue(), right.GetValue());
     return Value{Boolean::Instance(), raw_val, nullptr, nullptr};
   }
 
-  Value DoComparisonForSort(CodeGen &codegen, const Value &left,
-                            const Value &right) const override {
+  Value CompareForSortImpl(CodeGen &codegen, const Value &left,
+                           const Value &right) const override {
     // For integer comparisons, just subtract left from right and cast the
     // result to a 32-bit value
     llvm::Value *diff = codegen->CreateSub(left.GetValue(), right.GetValue());
@@ -134,8 +137,8 @@ static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
 Date::Date()
     : SqlType(peloton::type::TypeId::DATE),
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
-                   kComparisonTable, kUnaryOperatorTable,
-                   kBinaryOperatorTable, kNaryOperatorTable) {}
+                   kComparisonTable, kUnaryOperatorTable, kBinaryOperatorTable,
+                   kNaryOperatorTable) {}
 
 Value Date::GetMinValue(CodeGen &codegen) const {
   auto *raw_val = codegen.Const32(peloton::type::PELOTON_DATE_MIN);

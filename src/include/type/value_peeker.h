@@ -4,9 +4,9 @@
 //
 // value_peeker.h
 //
-// Identification: src/backend/type/value_peeker.h
+// Identification: src/include/type/value_peeker.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -75,6 +75,11 @@ class ValuePeeker {
 
   static inline const char *PeekVarchar(const Value &value) {
     PL_ASSERT(value.GetTypeId() == TypeId::VARCHAR);
+    return value.GetData();
+  }
+
+  static inline const char *PeekVarbinary(const Value &value) {
+    PL_ASSERT(value.GetTypeId() == TypeId::VARBINARY);
     return value.GetData();
   }
 };

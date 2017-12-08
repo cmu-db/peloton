@@ -80,6 +80,13 @@ class OrderByPlan : public AbstractPlan {
         new OrderByPlan(sort_keys_, descend_flags_, output_column_ids_));
   }
 
+  hash_t Hash() const override;
+
+  bool operator==(const AbstractPlan &rhs) const override;
+  bool operator!=(const AbstractPlan &rhs) const override {
+    return !(*this == rhs);
+  }
+
  private:
   /** @brief Column Ids to sort keys w.r.t input tiles.
    *  Primary sort key comes first, secondary comes next, etc.
