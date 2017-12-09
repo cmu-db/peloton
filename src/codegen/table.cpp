@@ -41,7 +41,8 @@ llvm::Value *Table::GetTileGroup(CodeGen &codegen, llvm::Value *table_ptr,
   return codegen.Call(RuntimeFunctionsProxy::GetTileGroup,
                       {table_ptr, tile_group_id});
 }
-
+// We acquire a Zone Map manager instance by calling 
+// RuntimeFunctions::GetZoneMapManager
 llvm::Value *Table::GetZoneMapManager(CodeGen &codegen) const {
   return codegen.Call(RuntimeFunctionsProxy::GetZoneMapManager, {});
 }
@@ -51,15 +52,19 @@ llvm::Value *Table::GetZoneMapManager(CodeGen &codegen) const {
 // @code
 // column_layouts := alloca<peloton::ColumnLayoutInfo>(
 //     table.GetSchema().GetColumnCount())
+// predicate_array := alloca<peloton::PredicateInfo>(
+//     num_predicates)
 //
 // oid_t tile_group_idx := 0
 // num_tile_groups = GetTileGroupCount(table_ptr)
 //
 // for (; tile_group_idx < num_tile_groups; ++tile_group_idx) {
-//   tile_group_ptr := GetTileGroup(table_ptr, tile_group_idx)
-//   consumer.TileGroupStart(tile_group_ptr);
-//   tile_group.TidScan(tile_group_ptr, column_layouts, vector_size, consumer);
-//   consumer.TileGroupEnd(tile_group_ptr);
+//   if (ComparePredicateAgainstZoneMaps(predicate_array, tile_group_idx) == true) {
+//      tile_group_ptr := GetTileGroup(table_ptr, tile_group_idx)
+//      consumer.TileGroupStart(tile_group_ptr);
+//      tile_group.TidScan(tile_group_ptr, column_layouts, vector_size, consumer);
+//      consumer.TileGroupEnd(tile_group_ptr);
+//   }
 // }
 //
 // @endcode
@@ -124,9 +129,6 @@ void Table::GenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
     tile_group_idx = codegen->CreateAdd(tile_group_idx, codegen.Const64(1));
     loop.LoopEnd(codegen->CreateICmpULT(tile_group_idx, num_tile_groups),
                  {tile_group_idx, scanned_tiles});
-    std::vector<llvm::Value *> final;
-    loop.CollectFinalLoopVariables(final);
-    codegen.CallPrintf("The number of scanned tiles is : [%lu]\n", {final[1]});
   }
 }
 

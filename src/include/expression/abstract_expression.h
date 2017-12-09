@@ -97,6 +97,9 @@ class AbstractExpression : public Printable {
     children_[index].reset(expr);
   }
 
+  //===----------------------------------------------------------------------===//
+  // Utilities and members for Zone Map consumption.
+  //===----------------------------------------------------------------------===//
   bool IsZoneMappable();
 
   size_t GetNumberofParsedPredicates() const {
@@ -110,6 +113,8 @@ class AbstractExpression : public Printable {
   void ClearParsedPredicates() { parsed_predicates.clear(); }
 
   std::vector<storage::PredicateInfo> parsed_predicates;
+  //===----------------------------------------------------------------------===//
+  
   /** accessors */
 
   ExpressionType GetExpressionType() const { return exp_type_; }

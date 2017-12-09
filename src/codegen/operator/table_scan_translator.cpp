@@ -99,7 +99,6 @@ void TableScanTranslator::Produce() const {
       num_preds = predicate->GetNumberofParsedPredicates();
     }
   }
-  LOG_DEBUG("Number of Predicates is %lu", num_preds);
   ScanConsumer scan_consumer{*this, sel_vec};
   table_.GenerateScan(codegen, table_ptr, sel_vec.GetCapacity(), scan_consumer,
                       predicate_ptr, num_preds);

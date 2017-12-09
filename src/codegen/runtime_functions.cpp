@@ -71,10 +71,16 @@ storage::TileGroup *RuntimeFunctions::GetTileGroup(storage::DataTable *table,
   return tile_group.get();
 }
 
+//===----------------------------------------------------------------------===//
+// Get the Zone Map Manager Instance
+//===----------------------------------------------------------------------===//
 storage::ZoneMapManager *RuntimeFunctions::GetZoneMapManager() {
   return storage::ZoneMapManager::GetInstance();
 }
 
+//===----------------------------------------------------------------------===//
+// Fills in the Predicate Array for the Zone Map to compare against.
+//===----------------------------------------------------------------------===//
 void RuntimeFunctions::FillPredicateArray(
     const expression::AbstractExpression *expr,
     storage::PredicateInfo *predicate_array) {

@@ -157,10 +157,13 @@ class TableScanTranslator : public OperatorTranslator {
   // The code-generating table instance
   codegen::Table table_;
 
+  // Number of Predicates
   size_t num_preds;
 
+  // Parsed Predicate Array
   llvm::Value *predicate_array;
 
+  // Existence of Zone Map Table
   bool zone_map_table;
 };
 

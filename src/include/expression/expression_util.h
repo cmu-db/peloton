@@ -604,7 +604,9 @@ class ExpressionUtil {
   }
 
   /*
-  */
+   * Recursively call on each child and fill in the predicate array.
+   * Returns true for zone mappable predicate. 
+   * */
   static bool GetPredicateForZoneMap(
       std::vector<storage::PredicateInfo> &predicate_restrictions,
       const expression::AbstractExpression *expr) {
