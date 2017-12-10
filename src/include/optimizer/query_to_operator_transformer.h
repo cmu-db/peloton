@@ -63,11 +63,10 @@ class QueryToOperatorTransformer : public SqlNodeVisitor {
 
   inline oid_t GetAndIncreaseGetId() { return get_id++; }
 
+  static bool RequireAggregation(const parser::SelectStatement* op);
+
  private:
   std::shared_ptr<OperatorExpression> output_expr_;
-  MultiTablePredicates join_predicates_;
-  SingleTablePredicatesMap single_table_predicates_map;
-  std::unordered_set<std::string> table_alias_set_;
 
   concurrency::Transaction *txn_;
   // identifier for get operators

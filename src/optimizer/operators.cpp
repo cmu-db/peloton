@@ -87,18 +87,54 @@ hash_t LogicalQueryDerivedGet::Hash() const {
 //===--------------------------------------------------------------------===//
 // Select
 //===--------------------------------------------------------------------===//
-Operator LogicalFilter::make() {
+Operator LogicalFilter::make(std::shared_ptr<expression::AbstractExpression>& filter) {
   LogicalFilter *select = new LogicalFilter;
+  select->predicate = std::move(filter);
   return Operator(select);
+}
+
+//===--------------------------------------------------------------------===//
+// Project
+//===--------------------------------------------------------------------===//
+Operator LogicalProjection::make(std::vector<std::shared_ptr<expression::AbstractExpression>> &elements) {
+  LogicalProjection *projection = new LogicalProjection;
+  projection->expressions = std::move(elements);
+  return Operator(projection);
+}
+
+
+//===--------------------------------------------------------------------===//
+// DependentJoin
+//===--------------------------------------------------------------------===//
+Operator LogicalDependentJoin::make(expression::AbstractExpression *condition) {
+  LogicalDependentJoin *join = new LogicalDependentJoin;
+  join->join_predicate =
+      std::shared_ptr<expression::AbstractExpression>(condition);
+  return Operator(join);
+}
+
+//===--------------------------------------------------------------------===//
+// MarkJoin
+//===--------------------------------------------------------------------===//
+Operator LogicalMarkJoin::make(expression::AbstractExpression *condition) {
+  LogicalMarkJoin *join = new LogicalMarkJoin;
+  join->join_predicate =
+      std::shared_ptr<expression::AbstractExpression>(condition);
+  return Operator(join);
 }
 
 //===--------------------------------------------------------------------===//
 // InnerJoin
 //===--------------------------------------------------------------------===//
-Operator LogicalInnerJoin::make(expression::AbstractExpression *condition) {
+Operator LogicalInnerJoin::make() {
   LogicalInnerJoin *join = new LogicalInnerJoin;
-  join->join_predicate =
-      std::shared_ptr<expression::AbstractExpression>(condition);
+  join->join_predicate = nullptr;
+  return Operator(join);
+}
+
+Operator LogicalInnerJoin::make(std::shared_ptr<expression::AbstractExpression>& condition) {
+  LogicalInnerJoin *join = new LogicalInnerJoin;
+  join->join_predicate = std::move(condition);
   return Operator(join);
 }
 
@@ -153,9 +189,15 @@ Operator LogicalAggregate::make() {
 //===--------------------------------------------------------------------===//
 // Aggregate
 //===--------------------------------------------------------------------===//
+Operator LogicalGroupBy::make() {
+  LogicalGroupBy *group_by = new LogicalGroupBy;
+  group_by->columns = {};
+  group_by->having = nullptr;
+  return Operator(group_by);
+}
 Operator LogicalGroupBy::make(
-    std::vector<std::shared_ptr<expression::AbstractExpression>> columns,
-    expression::AbstractExpression *having) {
+    std::vector<std::shared_ptr<expression::AbstractExpression>>& columns,
+    std::shared_ptr<expression::AbstractExpression>& having) {
   LogicalGroupBy *group_by = new LogicalGroupBy;
   group_by->columns = move(columns);
   group_by->having = having;
@@ -460,7 +502,7 @@ Operator PhysicalHashGroupBy::make(
     std::vector<std::shared_ptr<expression::AbstractExpression>> columns,
     expression::AbstractExpression *having) {
   PhysicalHashGroupBy *agg = new PhysicalHashGroupBy;
-  agg->columns = std::move(columns);
+  agg->columns = columns;
   agg->having = having;
   return Operator(agg);
 }
@@ -593,6 +635,12 @@ std::string OperatorNode<LogicalQueryDerivedGet>::name_ =
 template <>
 std::string OperatorNode<LogicalFilter>::name_ = "LogicalFilter";
 template <>
+std::string OperatorNode<LogicalProjection>::name_ = "LogicalProjection";
+template <>
+std::string OperatorNode<LogicalMarkJoin>::name_ = "LogicalMarkJoin";
+template <>
+std::string OperatorNode<LogicalDependentJoin>::name_ = "LogicalDependentJoin";
+template <>
 std::string OperatorNode<LogicalInnerJoin>::name_ = "LogicalInnerJoin";
 template <>
 std::string OperatorNode<LogicalLeftJoin>::name_ = "LogicalLeftJoin";
@@ -676,6 +724,12 @@ OpType OperatorNode<LogicalQueryDerivedGet>::type_ =
     OpType::LogicalQueryDerivedGet;
 template <>
 OpType OperatorNode<LogicalFilter>::type_ = OpType::LogicalFilter;
+template <>
+OpType OperatorNode<LogicalProjection>::type_ = OpType::LogicalProjection;
+template <>
+OpType OperatorNode<LogicalMarkJoin>::type_ = OpType::LogicalMarkJoin;
+template <>
+OpType OperatorNode<LogicalDependentJoin>::type_ = OpType::LogicalDependentJoin;
 template <>
 OpType OperatorNode<LogicalInnerJoin>::type_ = OpType::InnerJoin;
 template <>

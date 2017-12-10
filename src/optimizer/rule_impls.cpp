@@ -304,7 +304,7 @@ void LogicalGroupByToHashGroupBy::Transform(
     std::vector<std::shared_ptr<OperatorExpression>> &transformed) const {
   const LogicalGroupBy *agg_op = input->Op().As<LogicalGroupBy>();
   auto result = std::make_shared<OperatorExpression>(
-      PhysicalHashGroupBy::make(agg_op->columns, agg_op->having));
+      PhysicalHashGroupBy::make(agg_op->columns, agg_op->having.get()));
   PL_ASSERT(input->Children().size() == 1);
   result->PushChild(input->Children().at(0));
   transformed.push_back(result);

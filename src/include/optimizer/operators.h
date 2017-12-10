@@ -93,15 +93,46 @@ class LogicalQueryDerivedGet : public OperatorNode<LogicalQueryDerivedGet> {
 //===--------------------------------------------------------------------===//
 class LogicalFilter : public OperatorNode<LogicalFilter> {
  public:
-  static Operator make();
+  static Operator make(std::shared_ptr<expression::AbstractExpression>& filter);
+  std::shared_ptr<expression::AbstractExpression> predicate;
 };
+
+//===--------------------------------------------------------------------===//
+// Project
+//===--------------------------------------------------------------------===//
+class LogicalProjection: public OperatorNode<LogicalProjection> {
+ public:
+  static Operator make(std::vector<std::shared_ptr<expression::AbstractExpression>>& elements);
+  std::vector<std::shared_ptr<expression::AbstractExpression>> expressions;
+};
+
+//===--------------------------------------------------------------------===//
+// DependentJoin
+//===--------------------------------------------------------------------===//
+class LogicalDependentJoin: public OperatorNode<LogicalDependentJoin> {
+ public:
+  static Operator make(expression::AbstractExpression *condition = nullptr);
+  std::shared_ptr<expression::AbstractExpression> join_predicate;
+};
+
+//===--------------------------------------------------------------------===//
+// MarkJoin
+//===--------------------------------------------------------------------===//
+class LogicalMarkJoin: public OperatorNode<LogicalMarkJoin> {
+ public:
+  static Operator make(expression::AbstractExpression *condition = nullptr);
+  std::shared_ptr<expression::AbstractExpression> join_predicate;
+};
+
 
 //===--------------------------------------------------------------------===//
 // InnerJoin
 //===--------------------------------------------------------------------===//
 class LogicalInnerJoin : public OperatorNode<LogicalInnerJoin> {
  public:
-  static Operator make(expression::AbstractExpression *condition = nullptr);
+  static Operator make();
+
+  static Operator make(std::shared_ptr<expression::AbstractExpression>& condition);
 
   std::shared_ptr<expression::AbstractExpression> join_predicate;
 };
@@ -159,12 +190,14 @@ class LogicalAggregate : public OperatorNode<LogicalAggregate> {
 //===--------------------------------------------------------------------===//
 class LogicalGroupBy : public OperatorNode<LogicalGroupBy> {
  public:
+  static Operator make();
+
   static Operator make(
-      std::vector<std::shared_ptr<expression::AbstractExpression>> columns,
-      expression::AbstractExpression *having);
+      std::vector<std::shared_ptr<expression::AbstractExpression>>& columns,
+      std::shared_ptr<expression::AbstractExpression>& having);
 
   std::vector<std::shared_ptr<expression::AbstractExpression>> columns;
-  expression::AbstractExpression *having;
+  std::shared_ptr<expression::AbstractExpression> having;
 };
 
 //===--------------------------------------------------------------------===//

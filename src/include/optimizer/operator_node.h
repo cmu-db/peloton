@@ -28,8 +28,10 @@ enum class OpType {
   // Logical ops
   Get,
   LogicalQueryDerivedGet,
-  LogicalProject,
+  LogicalProjection,
   LogicalFilter,
+  LogicalMarkJoin,
+  LogicalDependentJoin,
   InnerJoin,
   LeftJoin,
   RightJoin,
