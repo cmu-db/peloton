@@ -1275,12 +1275,14 @@ std::string PropertyTypeToString(PropertyType type);
 PropertyType StringToPropertyType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const PropertyType &type);
 
-
 enum class RuleType : uint32_t {
+  // Transformation rules (logical -> logical)
   INNER_JOIN_COMMUTE = 0,
 
+  // Don't move this one
   LogicalPhysicalDelimiter,
 
+  // Implementation rules (logical -> physical)
   GET_TO_DUMMY_SCAN,
   GET_TO_SEQ_SCAN,
   GET_TO_INDEX_SCAN,
@@ -1294,8 +1296,18 @@ enum class RuleType : uint32_t {
   INNER_JOIN_TO_NL_JOIN,
   INNER_JOIN_TO_HASH_JOIN,
 
-  // Place holder to generate compile time
-  NUM_RULES_PLUS_ONE
+  // Don't move this one
+  RewriteDelimiter,
+
+  // Rewrite rules (logical -> logical)
+
+
+
+  // Place holder to generate number of rules compile time
+  NUM_RULES_PLUS_TWO
+
+
+
 };
 
 namespace expression {

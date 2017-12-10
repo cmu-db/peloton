@@ -23,12 +23,12 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 Memo::Memo() {}
 
-std::shared_ptr<GroupExpression> Memo::InsertExpression(
+GroupExpression* Memo::InsertExpression(
     std::shared_ptr<GroupExpression> gexpr, bool enforced) {
   return InsertExpression(gexpr, UNDEFINED_GROUP, enforced);
 }
 
-std::shared_ptr<GroupExpression> Memo::InsertExpression(
+GroupExpression* Memo::InsertExpression(
     std::shared_ptr<GroupExpression> gexpr, GroupID target_group,
     bool enforced) {
   // If leaf, then just return
@@ -41,7 +41,7 @@ std::shared_ptr<GroupExpression> Memo::InsertExpression(
   }
 
   // Lookup in hash table
-  auto it = group_expressions_.find(gexpr);
+  auto it = group_expressions_.find(gexpr.get());
 
   if (it != group_expressions_.end()) {
     assert(target_group == UNDEFINED_GROUP ||
@@ -49,7 +49,7 @@ std::shared_ptr<GroupExpression> Memo::InsertExpression(
     gexpr->SetGroupID((*it)->GetGroupID());
     return *it;
   } else {
-    group_expressions_.insert(gexpr);
+    group_expressions_.insert(gexpr.get());
     // New expression, so try to insert into an existing group or
     // create a new group if none specified
     GroupID group_id;
@@ -60,7 +60,7 @@ std::shared_ptr<GroupExpression> Memo::InsertExpression(
     }
     Group *group = GetGroupByID(group_id);
     group->AddExpression(gexpr, enforced);
-    return gexpr;
+    return gexpr.get();
   }
 }
 

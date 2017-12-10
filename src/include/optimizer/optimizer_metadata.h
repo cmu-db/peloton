@@ -50,7 +50,7 @@ class OptimizerMetadata {
                                    std::shared_ptr<GroupExpression> &gexpr,
                                    GroupID target_group) {
     gexpr = MakeGroupExpression(expr);
-    return (memo.InsertExpression(gexpr, target_group, false) != gexpr);
+    return (memo.InsertExpression(gexpr, target_group, false) == gexpr.get());
   }
 };
 

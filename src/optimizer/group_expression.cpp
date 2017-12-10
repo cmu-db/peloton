@@ -27,6 +27,10 @@ GroupID GroupExpression::GetGroupID() const { return group_id; }
 
 void GroupExpression::SetGroupID(GroupID id) { group_id = id; }
 
+void GroupExpression::SetChildGroupID(int child_group_idx, GroupID group_id) {
+  child_groups[child_group_idx] = group_id;
+}
+
 const std::vector<GroupID> &GroupExpression::GetChildGroupIDs() const {
   return child_groups;
 }

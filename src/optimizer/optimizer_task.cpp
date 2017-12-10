@@ -10,21 +10,33 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "optimizer/optimizer_task.h"
 #include <include/optimizer/property_enforcer.h>
 #include <include/optimizer/optimizer_metadata.h>
-#include "optimizer/optimizer_task.h"
-#include "optimizer/optimize_context.h"
 #include "optimizer/binding.h"
 #include "optimizer/child_property_deriver.h"
 #include "optimizer/cost_calculator.h"
-#include "optimizer/optimizer_task_pool.h"
-#include "optimizer/rule.h"
 
 namespace peloton {
 namespace optimizer {
 //===--------------------------------------------------------------------===//
 // Base class
 //===--------------------------------------------------------------------===//
+void OptimizerTask::ConstructValidRules(GroupExpression *group_expr, OptimizeContext* context,
+                                        std::vector<std::unique_ptr<Rule>> &rules,
+                                        std::vector<RuleWithPromise> &valid_rules) {
+  for (auto &rule : rules) {
+    if (group_expr->HasRuleExplored(rule.get()) ||     // Rule has been applied
+        group_expr->GetChildrenGroupsSize()
+            != rule->GetMatchPattern()->GetChildPatternsSize()) // Children size does not math
+      continue;
+
+    auto promise = rule->Promise(group_expr, context);
+    if (promise > 0)
+      valid_rules.emplace_back(rule.get(), promise);
+  }
+}
+
 void OptimizerTask::PushTask(OptimizerTask *task) {
   context_->metadata->task_pool->Push(task);
 }
@@ -32,6 +44,8 @@ void OptimizerTask::PushTask(OptimizerTask *task) {
 Memo &OptimizerTask::GetMemo() const { return context_->metadata->memo; }
 
 RuleSet &OptimizerTask::GetRuleSet() const { return context_->metadata->rule_set; }
+
+
 
 //===--------------------------------------------------------------------===//
 // OptimizeGroup
@@ -62,16 +76,12 @@ void OptimizeGroup::execute() {
 void OptimizeExpression::execute() {
   std::vector<RuleWithPromise> valid_rules;
 
-  for (auto &rule : GetRuleSet().GetRules()) {
-    if (group_expr_->HasRuleExplored(rule.get()) ||     // Rule has been applied
-        group_expr_->GetChildrenGroupsSize()
-            != rule->GetMatchPattern()->GetChildPatternsSize()) // Children size does not math
-      continue;
-
-    auto promise = rule->Promise(group_expr_, context_.get());
-    if (promise > 0)
-      valid_rules.emplace_back(rule.get(), promise);
-  }
+  // Construct valid transformation rules from rule set
+  ConstructValidRules(group_expr_, context_.get(),
+                      GetRuleSet().GetTransformationRules(), valid_rules);
+  // Construct valid implementation rules from rule set
+  ConstructValidRules(group_expr_, context_.get(),
+                      GetRuleSet().GetTransformationRules(), valid_rules);
 
   std::sort(valid_rules.begin(), valid_rules.end());
 
@@ -113,23 +123,15 @@ void ExploreGroup::execute() {
 void ExploreExpression::execute() {
   std::vector<RuleWithPromise> valid_rules;
 
-  for (auto &rule : GetRuleSet().GetRules()) {
-    if (rule->IsPhysical() || // It is a physical rule
-        group_expr_->HasRuleExplored(rule.get()) ||     // Rule has been applied
-        group_expr_->GetChildrenGroupsSize()
-            != rule->GetMatchPattern()->GetChildPatternsSize()) // Children size does not math
-      continue;
-
-    auto promise = rule->Promise(group_expr_, context_.get());
-    if (promise > 0)
-      valid_rules.emplace_back(rule.get(), promise);
-  }
+  // Construct valid transformation rules from rule set
+  ConstructValidRules(group_expr_, context_.get(),
+                      GetRuleSet().GetTransformationRules(), valid_rules);
 
   std::sort(valid_rules.begin(), valid_rules.end());
 
   // Apply rule
   for (auto &r : valid_rules) {
-    PushTask(new ApplyRule(group_expr_, r.rule, context_));
+    PushTask(new ApplyRule(group_expr_, r.rule, context_, true));
     int child_group_idx = 0;
     for (auto &child_pattern : r.rule->GetMatchPattern()->Children()) {
       // Only need to explore non-leaf children before applying rule to the current group
@@ -151,7 +153,7 @@ void ApplyRule::execute() {
   if (group_expr_->HasRuleExplored(rule_))
     return;
 
-  ItemBindingIterator iterator(nullptr, group_expr_, rule_->GetMatchPattern());
+  GroupExprBindingIterator iterator(nullptr, group_expr_, rule_->GetMatchPattern());
   while (iterator.HasNext()) {
     auto before = iterator.Next();
     if (!rule_->Check(before, &GetMemo()))
@@ -164,8 +166,12 @@ void ApplyRule::execute() {
       if (context_->metadata->RecordTransformedExpression(new_expr, new_gexpr, group_expr_->GetGroupID())) {
         // A new group expression is generated
         if (new_gexpr->Op().IsLogical()) {
-          // Optimize this logical expression
-          PushTask(new OptimizeExpression(new_gexpr.get(), context_));
+          if (explore_only)
+            // Explore this logical expression
+            PushTask(new ExploreExpression(new_gexpr.get(), context_));
+          else
+            // Optimize this logical expression
+            PushTask(new OptimizeExpression(new_gexpr.get(), context_));
         } else {
           // Cost this physical expression and optimize its inputs
           PushTask(new OptimizeInputs(new_gexpr.get(), context_));
@@ -249,7 +255,7 @@ void OptimizeInputs::execute() {
       // Enforce property if the requirement does not meet
       PropertyEnforcer prop_enforcer;
       auto extended_output_properties = output_prop->Properties();
-      std::shared_ptr<GroupExpression> memo_enforced_expr = nullptr;
+      GroupExpression* memo_enforced_expr = nullptr;
       bool meet_requirement = true;
       // TODO: For now, we enforce the missing properties in the order of how we find them. This may
       // miss the opportunity to enforce them or may lead to sub-optimal plan. This is fine now
@@ -274,11 +280,11 @@ void OptimizeInputs::execute() {
           // Cost the enforced expression
           auto extended_prop_set = std::make_shared<PropertySet>(extended_output_properties);
           CostCalculator cost_calculator;
-          cur_total_cost_ += cost_calculator.CalculatorCost(memo_enforced_expr.get(), extended_prop_set.get());
+          cur_total_cost_ += cost_calculator.CalculatorCost(memo_enforced_expr, extended_prop_set.get());
 
           // Update hash tables for group and group expression
           memo_enforced_expr->SetLocalHashTable(extended_prop_set, {pre_output_prop_set}, cur_total_cost_);
-         cur_group->SetExpressionCost(memo_enforced_expr.get(), cur_total_cost_, output_prop);
+         cur_group->SetExpressionCost(memo_enforced_expr, cur_total_cost_, output_prop);
         }
       }
 
@@ -287,7 +293,7 @@ void OptimizeInputs::execute() {
         // If the cost is smaller than the winner, update the context upper bound
         context_->cost_upper_bound -= cur_total_cost_;
         if (memo_enforced_expr != nullptr) { // Enforcement takes place
-          cur_group->SetExpressionCost(memo_enforced_expr.get(), cur_total_cost_, context_->required_prop);
+          cur_group->SetExpressionCost(memo_enforced_expr, cur_total_cost_, context_->required_prop);
         } else if (output_prop->Properties().size() != context_->required_prop->Properties().size()) {
           // The original output property is a super set of the requirement
           cur_group->SetExpressionCost(group_expr_, cur_total_cost_, context_->required_prop);
@@ -301,6 +307,79 @@ void OptimizeInputs::execute() {
     cur_total_cost_ = 0;
   }
 
+}
+
+
+//===--------------------------------------------------------------------===//
+// RewriteExpression
+//===--------------------------------------------------------------------===//
+void RewriteExpression::execute() {
+  std::vector<RuleWithPromise> valid_rules;
+
+  auto cur_group = GetMemo().GetGroupByID(parent_group_expr_->GetChildGroupId(parent_group_offset_));
+  auto cur_group_exprs = cur_group->GetLogicalExpressions();
+
+  // Ensure that this group only has one logical expression
+  PL_ASSERT(cur_group_exprs.size() == 1);
+  auto cur_group_expr = cur_group_exprs.at(0).get();
+
+
+  // Construct valid transformation rules from rule set
+  ConstructValidRules(cur_group_expr, context_.get(),
+                      GetRuleSet().GetImplementationRules(), valid_rules);
+
+  std::sort(valid_rules.begin(), valid_rules.end());
+
+
+  // Apply rule
+  for (auto &r : valid_rules) {
+    PushTask(new ApplyRewriteRule(parent_group_expr_, parent_group_offset_, r.rule, context_));
+    int child_group_idx = 0;
+    for (auto &child_pattern : r.rule->GetMatchPattern()->Children()) {
+      // Only need to explore non-leaf children before applying rule to the current group
+      // this condition is important for early-pruning
+      if (child_pattern->GetChildPatternsSize() > 0) {
+        PushTask(
+            new RewriteExpression(cur_group_expr, child_group_idx, context_));
+      }
+      child_group_idx++;
+    }
+  }
+}
+
+//===--------------------------------------------------------------------===//
+// ApplyRewriteRule
+//===--------------------------------------------------------------------===//
+void ApplyRewriteRule::execute() {
+  auto cur_group = GetMemo().GetGroupByID(parent_group_expr_->GetChildGroupId(parent_group_offset_));
+  auto cur_group_expr = cur_group->GetLogicalExpressions().at(0).get();
+
+  if (cur_group_expr->HasRuleExplored(rule_))
+    return;
+
+  GroupExprBindingIterator iterator(nullptr, cur_group_expr, rule_->GetMatchPattern());
+  while (iterator.HasNext()) {
+    auto before = iterator.Next();
+    if (!rule_->Check(before, &GetMemo()))
+      continue;
+
+    std::vector<std::shared_ptr<OperatorExpression>> after;
+    rule_->Transform(before, after);
+    for (auto &new_expr : after) {
+      std::shared_ptr<GroupExpression> new_gexpr;
+      if (context_->metadata->RecordTransformedExpression(new_expr, new_gexpr, cur_group_expr->GetGroupID())) {
+        // Update parent group expression
+        GetMemo().RemoveParExpressionForRewirte(parent_group_expr_);
+        parent_group_expr_->SetChildGroupID(parent_group_offset_, new_gexpr->GetGroupID());
+        GetMemo().AddParExpressionForRewrite(parent_group_expr_);
+
+        PushTask(
+            new RewriteExpression(parent_group_expr_, parent_group_offset_, context_));
+      }
+    }
+  }
+
+  cur_group_expr->SetRuleExplored(rule_);
 }
 
 } // namespace optimizer

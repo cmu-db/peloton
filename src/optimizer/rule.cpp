@@ -27,19 +27,19 @@ int Rule::Promise(GroupExpression *group_expr, OptimizeContext *context) const {
 }
 
 RuleSet::RuleSet() {
-  rules_.emplace_back(new InnerJoinCommutativity());
-  rules_.emplace_back(new LogicalDeleteToPhysical());
-  rules_.emplace_back(new LogicalUpdateToPhysical());
-  rules_.emplace_back(new LogicalInsertToPhysical());
-  rules_.emplace_back(new LogicalInsertSelectToPhysical());
-  rules_.emplace_back(new LogicalGroupByToHashGroupBy());
-  rules_.emplace_back(new LogicalAggregateToPhysical());
-  rules_.emplace_back(new GetToDummyScan());
-  rules_.emplace_back(new GetToSeqScan());
-  rules_.emplace_back(new GetToIndexScan());
-  rules_.emplace_back(new LogicalQueryDerivedGetToPhysical());
-  rules_.emplace_back(new InnerJoinToInnerNLJoin());
-  rules_.emplace_back(new InnerJoinToInnerHashJoin());
+  transformation_rules_.emplace_back(new InnerJoinCommutativity());
+  implementation_rules_.emplace_back(new LogicalDeleteToPhysical());
+  implementation_rules_.emplace_back(new LogicalUpdateToPhysical());
+  implementation_rules_.emplace_back(new LogicalInsertToPhysical());
+  implementation_rules_.emplace_back(new LogicalInsertSelectToPhysical());
+  implementation_rules_.emplace_back(new LogicalGroupByToHashGroupBy());
+  implementation_rules_.emplace_back(new LogicalAggregateToPhysical());
+  implementation_rules_.emplace_back(new GetToDummyScan());
+  implementation_rules_.emplace_back(new GetToSeqScan());
+  implementation_rules_.emplace_back(new GetToIndexScan());
+  implementation_rules_.emplace_back(new LogicalQueryDerivedGetToPhysical());
+  implementation_rules_.emplace_back(new InnerJoinToInnerNLJoin());
+  implementation_rules_.emplace_back(new InnerJoinToInnerHashJoin());
 }
 
 }  // namespace optimizer

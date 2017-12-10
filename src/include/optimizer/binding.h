@@ -63,9 +63,9 @@ class GroupBindingIterator : public BindingIterator {
   std::unique_ptr<BindingIterator> current_iterator_;
 };
 
-class ItemBindingIterator : public BindingIterator {
+class GroupExprBindingIterator : public BindingIterator {
  public:
-  ItemBindingIterator(Optimizer *optimizer,
+  GroupExprBindingIterator(Optimizer *optimizer,
                       GroupExpression *gexpr,
                       std::shared_ptr<Pattern> pattern);
 

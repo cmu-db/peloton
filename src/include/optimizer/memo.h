@@ -23,14 +23,14 @@ namespace peloton {
 namespace optimizer {
 
 struct GExprPtrHash {
-  std::size_t operator()(std::shared_ptr<GroupExpression> const& s) const {
+  std::size_t operator()(GroupExpression* const& s) const {
     return s->Hash();
   }
 };
 
 struct GExprPtrEq {
-  bool operator()(std::shared_ptr<GroupExpression> const& t1,
-                  std::shared_ptr<GroupExpression> const& t2) const {
+  bool operator()(GroupExpression* const& t1,
+                  GroupExpression* const& t2) const {
     return *t1 == *t2;
   }
 };
@@ -50,12 +50,13 @@ class Memo {
    * target_group: an optional target group to insert expression into
    * return: existing expression if found. Otherwise, return the new expr
    */
-  std::shared_ptr<GroupExpression> InsertExpression(
+  GroupExpression* InsertExpression(
       std::shared_ptr<GroupExpression> gexpr, bool enforced);
 
-  std::shared_ptr<GroupExpression> InsertExpression(
+  GroupExpression* InsertExpression(
       std::shared_ptr<GroupExpression> gexpr, GroupID target_group,
       bool enforced);
+
 
   const std::vector<std::unique_ptr<Group>>& Groups() const;
 
@@ -65,10 +66,21 @@ class Memo {
     rule_set_size_ = rule_set_size;
   }
 
+  //===--------------------------------------------------------------------===//
+  // For rewrite phase: remove and add expression directly for the set
+  //===--------------------------------------------------------------------===//
+  void RemoveParExpressionForRewirte(GroupExpression* gexpr) {
+    group_expressions_.erase(gexpr);
+  }
+  void AddParExpressionForRewrite(GroupExpression* gexpr) {
+    group_expressions_.insert(gexpr);
+  }
+
  private:
   GroupID AddNewGroup(std::shared_ptr<GroupExpression> gexpr);
 
-  std::unordered_set<std::shared_ptr<GroupExpression>, GExprPtrHash, GExprPtrEq>
+  // The group owns the group expressions, not the memo
+  std::unordered_set<GroupExpression*, GExprPtrHash, GExprPtrEq>
       group_expressions_;
   std::vector<std::unique_ptr<Group>> groups_;
   size_t rule_set_size_;

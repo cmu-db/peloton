@@ -56,7 +56,7 @@ bool GroupBindingIterator::HasNext() {
   if (current_iterator_ == nullptr) {
     // Keep checking item iterators until we find a match
     while (current_item_index_ < num_group_items_) {
-      current_iterator_.reset(new ItemBindingIterator(
+      current_iterator_.reset(new GroupExprBindingIterator(
           optimizer_, target_group_->GetLogicalExpressions()[current_item_index_].get(),
           pattern_));
 
@@ -83,7 +83,7 @@ std::shared_ptr<OperatorExpression> GroupBindingIterator::Next() {
 //===--------------------------------------------------------------------===//
 // Item Binding Iterator
 //===--------------------------------------------------------------------===//
-ItemBindingIterator::ItemBindingIterator(Optimizer *optimizer,
+GroupExprBindingIterator::GroupExprBindingIterator(Optimizer *optimizer,
                                          GroupExpression *gexpr,
                                          std::shared_ptr<Pattern> pattern)
     : BindingIterator(optimizer),
@@ -125,7 +125,7 @@ ItemBindingIterator::ItemBindingIterator(Optimizer *optimizer,
   has_next_ = true;
 }
 
-bool ItemBindingIterator::HasNext() {
+bool GroupExprBindingIterator::HasNext() {
   LOG_TRACE("HasNext");
   if (has_next_ && first_) {
     first_ = false;
@@ -167,7 +167,7 @@ bool ItemBindingIterator::HasNext() {
   return has_next_;
 }
 
-std::shared_ptr<OperatorExpression> ItemBindingIterator::Next() {
+std::shared_ptr<OperatorExpression> GroupExprBindingIterator::Next() {
   return current_binding_;
 }
 

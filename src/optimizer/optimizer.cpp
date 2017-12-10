@@ -554,7 +554,7 @@ vector<shared_ptr<GroupExpression>> Optimizer::TransformExpression(
   shared_ptr<Pattern> pattern = rule.GetMatchPattern();
 
   vector<shared_ptr<GroupExpression>> output_plans;
-  ItemBindingIterator iterator(this, gexpr, pattern);
+  GroupExprBindingIterator iterator(this, gexpr, pattern);
   while (iterator.HasNext()) {
     shared_ptr<OperatorExpression> plan = iterator.Next();
     // Check rule condition function

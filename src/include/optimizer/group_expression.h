@@ -40,6 +40,8 @@ class GroupExpression {
 
   void SetGroupID(GroupID group_id);
 
+  void SetChildGroupID(int child_group_idx, GroupID group_id);
+
   const std::vector<GroupID> &GetChildGroupIDs() const;
 
   GroupID GetChildGroupId(int child_idx) const;
@@ -71,7 +73,7 @@ class GroupExpression {
   GroupID group_id;
   Operator op;
   std::vector<GroupID> child_groups;
-  std::bitset<static_cast<uint32_t>(RuleType::NUM_RULES_PLUS_ONE)-1> rule_mask_;
+  std::bitset<static_cast<uint32_t>(RuleType::NUM_RULES_PLUS_TWO)-2> rule_mask_;
 
   // Mapping from output properties to the corresponding best cost, statistics,
   // and child properties

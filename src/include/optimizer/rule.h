@@ -32,7 +32,13 @@ class Rule {
 
   std::shared_ptr<Pattern> GetMatchPattern() const { return match_pattern; }
 
-  bool IsPhysical() const { return type_ > RuleType::LogicalPhysicalDelimiter; }
+  bool IsPhysical() const {
+    return type_ > RuleType::LogicalPhysicalDelimiter && type_ < RuleType::RewriteDelimiter;
+  }
+
+  bool IsLogical() const { return type_ < RuleType::LogicalPhysicalDelimiter; }
+
+  bool IsRewrite() const { return type_ > RuleType::RewriteDelimiter; }
 
   virtual int Promise(GroupExpression* group_expr,
                       OptimizeContext* context) const;
@@ -70,12 +76,15 @@ class RuleSet {
   // RuleSet will take the ownership of the rule object
   RuleSet();
 
-  std::vector<std::unique_ptr<Rule>>& GetRules() { return rules_; }
-
-  inline size_t size() { return rules_.size(); }
+  std::vector<std::unique_ptr<Rule>>& GetTransformationRules() { return transformation_rules_; }
+  std::vector<std::unique_ptr<Rule>>& GetImplementationRules() { return implementation_rules_; }
+  std::vector<std::unique_ptr<Rule>>& GetRewriteRules() { return rewrite_rules_; }
 
  private:
-  std::vector<std::unique_ptr<Rule>> rules_;
+  std::vector<std::unique_ptr<Rule>> transformation_rules_;
+  std::vector<std::unique_ptr<Rule>> implementation_rules_;
+  std::vector<std::unique_ptr<Rule>> rewrite_rules_;
+
 };
 
 }  // namespace optimizer

@@ -13,6 +13,7 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 
 namespace peloton {
 namespace optimizer {
@@ -20,10 +21,12 @@ namespace optimizer {
 class OptimizeContext;
 class Memo;
 class Rule;
+class RuleWithPromise;
 class RuleSet;
 class Group;
 class GroupExpression;
 class OptimizerMetadata;
+class PropertySet;
 
 enum class OptimizerTaskType {
   OPTIMIZE_GROUP,
@@ -31,7 +34,9 @@ enum class OptimizerTaskType {
   EXPLORE_GROUP,
   EXPLORE_EXPR,
   APPLY_RULE,
-  OPTIMIZE_INPUTS
+  OPTIMIZE_INPUTS,
+  REWRITE_EXPR,
+  APPLY_REWIRE_RULE,
 };
 
 class OptimizerTask {
@@ -40,6 +45,10 @@ class OptimizerTask {
                 OptimizerTaskType type)
       : type_(type), context_(context) {}
 
+  static void ConstructValidRules(GroupExpression* group_expr, OptimizeContext* context,
+                                  std::vector<std::unique_ptr<Rule>>& rules,
+                                  std::vector<RuleWithPromise>& valid_rules);
+
   virtual void execute() = 0;
 
   void PushTask(OptimizerTask* task);
@@ -47,6 +56,7 @@ class OptimizerTask {
   inline Memo& GetMemo() const;
 
   inline RuleSet& GetRuleSet() const;
+
 
  protected:
   OptimizerTaskType type_;
@@ -102,10 +112,10 @@ class ExploreExpression : public OptimizerTask {
 class ApplyRule : public OptimizerTask {
  public:
   ApplyRule(GroupExpression* group_expr, Rule* rule,
-            std::shared_ptr<OptimizeContext> context)
+            std::shared_ptr<OptimizeContext> context, bool explore = false)
       : OptimizerTask(context, OptimizerTaskType::APPLY_RULE),
         group_expr_(group_expr),
-        rule_(rule) {}
+        rule_(rule), explore_only(explore) {}
   virtual void execute() override;
 
  private:
@@ -138,6 +148,36 @@ class OptimizeInputs : public OptimizerTask {
   int cur_child_idx_ = -1;
   int pre_child_idx_ = -1;
   int cur_prop_pair_idx_ = 0;
+};
+
+class RewriteExpression : public OptimizerTask {
+ public:
+  RewriteExpression(GroupExpression* parent_group_expr, int parent_group_offset_,
+                    std::shared_ptr<OptimizeContext> context)
+      : OptimizerTask(context, OptimizerTaskType::REWRITE_EXPR),
+        parent_group_expr_(parent_group_expr),
+        parent_group_offset_(parent_group_offset_) {}
+  virtual void execute() override;
+
+ private:
+  GroupExpression* parent_group_expr_;
+  int parent_group_offset_;
+};
+
+class ApplyRewriteRule : public OptimizerTask {
+ public:
+  ApplyRewriteRule(GroupExpression* parent_group_expr, int parent_group_offset_,
+                   Rule* rule, std::shared_ptr<OptimizeContext> context)
+      : OptimizerTask(context, OptimizerTaskType::APPLY_REWIRE_RULE),
+        parent_group_expr_(parent_group_expr),
+        parent_group_offset_(parent_group_offset_),
+        rule_(rule) {}
+  virtual void execute() override;
+
+ private:
+  GroupExpression* parent_group_expr_;
+  int parent_group_offset_;
+  Rule* rule_;
 };
 
 }  // namespace optimizer
