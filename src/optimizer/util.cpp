@@ -195,8 +195,7 @@ void GetPredicateColumns(const catalog::Schema* schema,
  * Extract single table precates and multi-table predicates from the expr
  */
 void ExtractPredicates(expression::AbstractExpression* expr,
-                       SingleTablePredicatesMap& single_table_predicates_map,
-                       MultiTablePredicates& join_predicates) {
+                       std::vector<AnnotatedExpression>& annotated_predicates) {
   // Split a complex predicate into a set of predicates connected by AND.
   std::vector<expression::AbstractExpression*> predicates;
   SplitPredicates(expr, predicates);
@@ -206,20 +205,8 @@ void ExtractPredicates(expression::AbstractExpression* expr,
     expression::ExpressionUtil::GenerateTableAliasSet(predicate,
                                                       table_alias_set);
     // Deep copy expression to avoid memory leak
-    if (table_alias_set.size() > 1)
-      join_predicates.emplace_back(AnnotatedExpression(
-          std::shared_ptr<expression::AbstractExpression>(predicate->Copy()),
-          table_alias_set));
-    else {
-      std::string table_alias = StringUtil::Lower(*(table_alias_set.begin()));
-      if (single_table_predicates_map.find(table_alias) ==
-          single_table_predicates_map.end())
-        single_table_predicates_map[table_alias] = {
-            std::shared_ptr<expression::AbstractExpression>(predicate->Copy())};
-      else
-        single_table_predicates_map[table_alias].emplace_back(
-            std::shared_ptr<expression::AbstractExpression>(predicate->Copy()));
-    }
+    annotated_predicates.emplace_back(AnnotatedExpression(
+        std::shared_ptr<expression::AbstractExpression>(predicate->Copy()), table_alias_set));
   }
 }
 

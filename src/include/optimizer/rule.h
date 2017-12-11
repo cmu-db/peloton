@@ -48,7 +48,7 @@ class Rule {
 
   virtual void Transform(
       std::shared_ptr<OperatorExpression> input,
-      std::vector<std::shared_ptr<OperatorExpression>>& transformed) const = 0;
+      std::vector<std::shared_ptr<OperatorExpression>>& transformed, Memo* memo) const = 0;
 
   inline RuleType GetType() { return type_; }
 

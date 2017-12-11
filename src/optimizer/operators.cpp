@@ -87,9 +87,9 @@ hash_t LogicalQueryDerivedGet::Hash() const {
 //===--------------------------------------------------------------------===//
 // Select
 //===--------------------------------------------------------------------===//
-Operator LogicalFilter::make(std::shared_ptr<expression::AbstractExpression>& filter) {
+Operator LogicalFilter::make(std::vector<AnnotatedExpression>& filter) {
   LogicalFilter *select = new LogicalFilter;
-  select->predicate = std::move(filter);
+  select->predicates = std::move(filter);
   return Operator(select);
 }
 
@@ -128,14 +128,34 @@ Operator LogicalMarkJoin::make(expression::AbstractExpression *condition) {
 //===--------------------------------------------------------------------===//
 Operator LogicalInnerJoin::make() {
   LogicalInnerJoin *join = new LogicalInnerJoin;
-  join->join_predicate = nullptr;
+  join->join_predicates = {};
   return Operator(join);
 }
 
-Operator LogicalInnerJoin::make(std::shared_ptr<expression::AbstractExpression>& condition) {
+Operator LogicalInnerJoin::make(std::vector<std::shared_ptr<expression::AbstractExpression>>& conditions) {
   LogicalInnerJoin *join = new LogicalInnerJoin;
-  join->join_predicate = std::move(condition);
+  join->join_predicates = std::move(conditions);
   return Operator(join);
+}
+
+hash_t LogicalInnerJoin::Hash() const {
+  hash_t hash = BaseOperatorNode::Hash();
+  for (auto& pred : join_predicates)
+    hash = HashUtil::CombineHashes(hash, pred->Hash());
+  return hash;
+}
+
+bool LogicalInnerJoin::operator==(const BaseOperatorNode &r) {
+  if (r.type() != OpType::InnerJoin) return false;
+  const LogicalInnerJoin &node =
+      *static_cast<const LogicalInnerJoin *>(&r);
+  if (join_predicates.size() != node.join_predicates.size())
+    return false;
+  for (size_t i = 0; i<join_predicates.size(); i++) {
+    if (!join_predicates[i]->Equals(node.join_predicates[i].get()))
+      return false;
+  }
+  return true;
 }
 
 //===--------------------------------------------------------------------===//

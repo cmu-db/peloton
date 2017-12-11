@@ -19,6 +19,10 @@
 namespace peloton {
 namespace optimizer {
 
+//===--------------------------------------------------------------------===//
+// Transformation rules
+//===--------------------------------------------------------------------===//
+
 ///////////////////////////////////////////////////////////////////////////////
 /// InnerJoinCommutativity
 class InnerJoinCommutativity : public Rule {
@@ -28,9 +32,13 @@ class InnerJoinCommutativity : public Rule {
   bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
 
   void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed)
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed, Memo* memo)
       const override;
 };
+
+//===--------------------------------------------------------------------===//
+// Implementation rules
+//===--------------------------------------------------------------------===//
 
 ///////////////////////////////////////////////////////////////////////////////
 /// GetToScan
@@ -41,7 +49,7 @@ class GetToSeqScan : public Rule {
   bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
 
   void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed)
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed, Memo* memo)
       const override;
 };
 
@@ -54,7 +62,7 @@ class GetToDummyScan : public Rule {
   bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
 
   void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed)
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed, Memo* memo)
       const override;
 };
 
@@ -67,7 +75,7 @@ class GetToIndexScan : public Rule {
   bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
 
   void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed)
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed, Memo* memo)
       const override;
 };
 
@@ -80,7 +88,7 @@ class LogicalQueryDerivedGetToPhysical : public Rule {
   bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
 
   void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed) const override;
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed, Memo* memo) const override;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -92,7 +100,7 @@ class LogicalDeleteToPhysical : public Rule {
   bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
 
   void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed)
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed, Memo* memo)
       const override;
 };
 
@@ -105,7 +113,7 @@ class LogicalUpdateToPhysical : public Rule {
   bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
 
   void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed)
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed, Memo* memo)
       const override;
 };
 
@@ -118,7 +126,7 @@ class LogicalInsertToPhysical : public Rule {
   bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
 
   void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed)
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed, Memo* memo)
       const override;
 };
 
@@ -132,7 +140,7 @@ class LogicalInsertSelectToPhysical : public Rule {
       override;
 
   void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed)
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed, Memo* memo)
       const override;
 };
 
@@ -145,7 +153,7 @@ class LogicalGroupByToHashGroupBy : public Rule {
   bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
 
   void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed)
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed, Memo* memo)
       const override;
 };
 
@@ -159,7 +167,7 @@ class LogicalAggregateToPhysical : public Rule {
   bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
 
   void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed)
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed, Memo* memo)
       const override;
 };
 
@@ -172,7 +180,7 @@ class InnerJoinToInnerNLJoin : public Rule {
   bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
 
   void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed)
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed, Memo* memo)
       const override;
 };
 
@@ -185,9 +193,28 @@ class InnerJoinToInnerHashJoin : public Rule {
   bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
 
   void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed)
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed, Memo* memo)
       const override;
 };
+
+//===--------------------------------------------------------------------===//
+// Rewrite rules
+//===--------------------------------------------------------------------===//
+class PushFilterThroughJoin : public Rule {
+ public:
+  PushFilterThroughJoin();
+
+  bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
+
+  void Transform(std::shared_ptr<OperatorExpression> input,
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed, Memo* memo)
+  const override;
+
+ private:
+  std::unordered_set<std::string> left_group_table_alias_;
+  std::unordered_set<std::string> right_group_table_alias_;
+};
+
 
 } // namespace optimizer
 } // namespace peloton

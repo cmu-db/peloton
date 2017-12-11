@@ -160,7 +160,7 @@ void ApplyRule::execute() {
       continue;
 
     std::vector<std::shared_ptr<OperatorExpression>> after;
-    rule_->Transform(before, after);
+    rule_->Transform(before, after, &GetMemo());
     for (auto &new_expr : after) {
       std::shared_ptr<GroupExpression> new_gexpr;
       if (context_->metadata->RecordTransformedExpression(new_expr, new_gexpr, group_expr_->GetGroupID())) {
@@ -364,7 +364,7 @@ void ApplyRewriteRule::execute() {
       continue;
 
     std::vector<std::shared_ptr<OperatorExpression>> after;
-    rule_->Transform(before, after);
+    rule_->Transform(before, after, &GetMemo());
     for (auto &new_expr : after) {
       std::shared_ptr<GroupExpression> new_gexpr;
       if (context_->metadata->RecordTransformedExpression(new_expr, new_gexpr, cur_group_expr->GetGroupID())) {

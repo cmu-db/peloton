@@ -1300,7 +1300,7 @@ enum class RuleType : uint32_t {
   RewriteDelimiter,
 
   // Rewrite rules (logical -> logical)
-
+  PUSH_FILTER_THROUGH_JOIN,
 
 
   // Place holder to generate number of rules compile time

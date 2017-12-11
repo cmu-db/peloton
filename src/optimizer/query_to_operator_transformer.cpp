@@ -53,7 +53,8 @@ void QueryToOperatorTransformer::Visit(parser::SelectStatement *op) {
   }
 
   if (op->where_clause != nullptr) {
-    auto predicates = std::shared_ptr<expression::AbstractExpression>(op->where_clause->Copy());
+    std::vector<AnnotatedExpression> predicates;
+    util::ExtractPredicates(op->where_clause.get(), predicates);
     auto filter_expr = std::make_shared<OperatorExpression>(LogicalFilter::make(predicates));
     filter_expr->PushChild(filter_expr);
     output_expr_ = filter_expr;
@@ -91,7 +92,9 @@ void QueryToOperatorTransformer::Visit(parser::JoinDefinition *node) {
   std::shared_ptr<OperatorExpression> join_expr;
   switch (node->type) {
     case JoinType::INNER: {
-      auto join_condition =  std::shared_ptr<expression::AbstractExpression>(node->condition->Copy());
+      auto join_condition =  std::vector<std::shared_ptr<expression::AbstractExpression>>{
+          std::shared_ptr<expression::AbstractExpression>(node->condition->Copy())
+      };
       join_expr = std::make_shared<OperatorExpression>(LogicalInnerJoin::make(join_condition));
       break;
     }

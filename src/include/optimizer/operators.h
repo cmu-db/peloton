@@ -93,8 +93,8 @@ class LogicalQueryDerivedGet : public OperatorNode<LogicalQueryDerivedGet> {
 //===--------------------------------------------------------------------===//
 class LogicalFilter : public OperatorNode<LogicalFilter> {
  public:
-  static Operator make(std::shared_ptr<expression::AbstractExpression>& filter);
-  std::shared_ptr<expression::AbstractExpression> predicate;
+  static Operator make(std::vector<AnnotatedExpression>& filter);
+  std::vector<AnnotatedExpression> predicates;
 };
 
 //===--------------------------------------------------------------------===//
@@ -132,9 +132,13 @@ class LogicalInnerJoin : public OperatorNode<LogicalInnerJoin> {
  public:
   static Operator make();
 
-  static Operator make(std::shared_ptr<expression::AbstractExpression>& condition);
+  static Operator make(std::vector<std::shared_ptr<expression::AbstractExpression>>& conditions);
 
-  std::shared_ptr<expression::AbstractExpression> join_predicate;
+  bool operator==(const BaseOperatorNode &r) override;
+
+  hash_t Hash() const override;
+
+  std::vector<std::shared_ptr<expression::AbstractExpression>> join_predicates;
 };
 
 //===--------------------------------------------------------------------===//
