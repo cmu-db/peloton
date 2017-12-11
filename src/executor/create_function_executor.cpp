@@ -51,13 +51,11 @@ bool CreateFunctionExecutor::DExecute() {
   auto proname = node.GetFunctionName();
   oid_t prolang = catalog::LanguageCatalog::GetInstance().GetLanguageByName(
     "plpgsql", current_txn)->GetOid();
-  //auto pronargs = node.GetNumParams();
   auto prorettype = node.GetReturnType();
   auto proargtypes = node.GetFunctionParameterTypes();
   auto proargnames = node.GetFunctionParameterNames();
   auto prosrc = node.GetFunctionBody()[0];
   //TODO(PP) : Check and handle Replace
-  //auto isReplace = node.IsReplace();
 
   /* Pass it off to the UDF handler. Once the UDF is compiled,
     put that along with the other UDF details into the catalog */

@@ -36,11 +36,11 @@ std::unordered_map<oid_t,
       peloton::codegen::CodeContext *> PlpgsqlFunctions::kFuncMap;
 
 void PlpgsqlFunctions::AddFunction(const oid_t oid,
-                            peloton::codegen::CodeContext *func_context) {
+                        peloton::codegen::CodeContext *func_context) {
   kFuncMap.emplace(oid, func_context);
 }
 
-peloton::codegen::CodeContext *PlpgsqlFunctions::GetFuncContextByOid(
+peloton::codegen::CodeContext *PlpgsqlFunctions::GetFuncContextByOid( 
     const oid_t oid) {
   auto func = kFuncMap.find(oid);
   if (func == kFuncMap.end()) {

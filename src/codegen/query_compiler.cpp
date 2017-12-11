@@ -54,7 +54,9 @@ bool QueryCompiler::IsSupported(const planner::AbstractPlan &plan) {
     }
     case PlanNodeType::PROJECTION: {
       // TODO(pmenon): Why does this check exists?
-      if (plan.GetChildren().empty()) return false;
+      if (plan.GetChildren().empty()) {
+        return false;
+      }
 
       // Check each projection expression
       auto &proj_plan = static_cast<const planner::ProjectionPlan &>(plan);

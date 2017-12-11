@@ -163,11 +163,6 @@ void CodeContext::RegisterExternalFunction(
     llvm::Function *func_decl, CodeContext::FuncPtr func_impl) {
   PL_ASSERT(func_decl->isDeclaration() &&
             "The first argument must be a function declaration");
-  /*PL_ASSERT(!external->isDeclaration() &&
-            "The second argument must be a full LLVM function definition that "
-            "exists in an external module");
-  PL_ASSERT(func_decl->getName() == external->getName() &&
-            "The declaration and definition functions have different names!"); */
   PL_ASSERT(func_impl != nullptr && "The function pointer cannot be NULL");
   functions_.emplace_back(func_decl, func_impl);
 
