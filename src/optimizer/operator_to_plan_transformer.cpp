@@ -366,8 +366,9 @@ void OperatorToPlanTransformer::Visit(const PhysicalDistinct *) {
 void OperatorToPlanTransformer::Visit(const PhysicalFilter *) {}
 
 void OperatorToPlanTransformer::Visit(const PhysicalInnerNLJoin *op) {
+  auto join_predicate = util::CombinePredicates(op->join_predicates);
   output_plan_ =
-      GenerateJoinPlan((op->join_predicate).get(), JoinType::INNER, false);
+      GenerateJoinPlan(join_predicate, JoinType::INNER, false);
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalLeftNLJoin *) {}
@@ -377,8 +378,10 @@ void OperatorToPlanTransformer::Visit(const PhysicalRightNLJoin *) {}
 void OperatorToPlanTransformer::Visit(const PhysicalOuterNLJoin *) {}
 
 void OperatorToPlanTransformer::Visit(const PhysicalInnerHashJoin *op) {
+  auto join_predicate = util::CombinePredicates(op->join_predicates);
+
   output_plan_ =
-      GenerateJoinPlan((op->join_predicate).get(), JoinType::INNER, true);
+      GenerateJoinPlan(join_predicate, JoinType::INNER, true);
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalLeftHashJoin *) {}

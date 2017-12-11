@@ -355,8 +355,13 @@ class PhysicalFilter : public OperatorNode<PhysicalFilter> {
 //===--------------------------------------------------------------------===//
 class PhysicalInnerNLJoin : public OperatorNode<PhysicalInnerNLJoin> {
  public:
-  std::shared_ptr<expression::AbstractExpression> join_predicate;
-  static Operator make(std::shared_ptr<expression::AbstractExpression> join_predicate);
+  static Operator make(std::vector<std::shared_ptr<expression::AbstractExpression>> conditions);
+
+  bool operator==(const BaseOperatorNode &r) override;
+
+  hash_t Hash() const override;
+
+  std::vector<std::shared_ptr<expression::AbstractExpression>> join_predicates;
 };
 
 //===--------------------------------------------------------------------===//
@@ -391,8 +396,13 @@ class PhysicalOuterNLJoin : public OperatorNode<PhysicalOuterNLJoin> {
 //===--------------------------------------------------------------------===//
 class PhysicalInnerHashJoin : public OperatorNode<PhysicalInnerHashJoin> {
  public:
-  std::shared_ptr<expression::AbstractExpression> join_predicate;
-  static Operator make(std::shared_ptr<expression::AbstractExpression> join_predicate);
+  static Operator make(std::vector<std::shared_ptr<expression::AbstractExpression>> conditions);
+
+  bool operator==(const BaseOperatorNode &r) override;
+
+  hash_t Hash() const override;
+
+  std::vector<std::shared_ptr<expression::AbstractExpression>> join_predicates;
 };
 
 //===--------------------------------------------------------------------===//

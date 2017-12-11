@@ -375,7 +375,7 @@ void InnerJoinToInnerNLJoin::Transform(
   // first build an expression representing hash join
   const LogicalInnerJoin *inner_join = input->Op().As<LogicalInnerJoin>();
   auto result_plan = std::make_shared<OperatorExpression>(
-      PhysicalInnerNLJoin::make(inner_join->join_predicate));
+      PhysicalInnerNLJoin::make(inner_join->join_predicates));
   std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PL_ASSERT(children.size() == 2);
 
@@ -423,10 +423,12 @@ bool InnerJoinToInnerHashJoin::Check(std::shared_ptr<OperatorExpression> plan,
   const auto &right_group_alias =
       memo->GetGroupByID(right_group_id)->GetTableAliases();
 
-  auto expr = plan->Op().As<LogicalInnerJoin>()->join_predicate.get();
+  auto predicates = plan->Op().As<LogicalInnerJoin>()->join_predicates;
 
-  if (util::ContainsJoinColumns(left_group_alias, right_group_alias, expr))
-    return true;
+  for (auto& expr : predicates) {
+    if (util::ContainsJoinColumns(left_group_alias, right_group_alias, expr.get()))
+      return true;
+  }
   return false;
 }
 
@@ -436,7 +438,7 @@ void InnerJoinToInnerHashJoin::Transform(
   // first build an expression representing hash join
   const LogicalInnerJoin *inner_join = input->Op().As<LogicalInnerJoin>();
   auto result_plan = std::make_shared<OperatorExpression>(
-      PhysicalInnerHashJoin::make(inner_join->join_predicate));
+      PhysicalInnerHashJoin::make(inner_join->join_predicates));
   std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PL_ASSERT(children.size() == 2);
 
@@ -512,7 +514,7 @@ void PushFilterThroughJoin::Transform(std::shared_ptr<OperatorExpression> input,
     output = join_op_expr;
   else {
     auto pre_join_predicate = join_op_expr->Op().As<LogicalInnerJoin>()->join_predicates;
-    join_predicates.emplace_back(pre_join_predicate);
+    join_predicates.insert(join_predicates.end(), pre_join_predicate.begin(), pre_join_predicate.end());
     output = std::make_shared<OperatorExpression>(LogicalInnerJoin::make(join_predicates));
   }
 
@@ -534,7 +536,7 @@ void PushFilterThroughJoin::Transform(std::shared_ptr<OperatorExpression> input,
   else
     output->PushChild(join_op_expr->Children()[1]);
 
-  transformed.emplace_back(output);
+  transformed.push_back(output);
 }
 
 }  // namespace optimizer

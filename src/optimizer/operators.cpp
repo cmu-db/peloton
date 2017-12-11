@@ -393,11 +393,31 @@ Operator PhysicalFilter::make() {
 //===--------------------------------------------------------------------===//
 // InnerNLJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalInnerNLJoin::make(
-    std::shared_ptr<expression::AbstractExpression> join_predicate) {
+Operator PhysicalInnerNLJoin::make(std::vector<std::shared_ptr<expression::AbstractExpression>> conditions) {
   PhysicalInnerNLJoin *join = new PhysicalInnerNLJoin();
-  join->join_predicate = join_predicate;
+  join->join_predicates = conditions;
   return Operator(join);
+}
+
+
+hash_t PhysicalInnerNLJoin::Hash() const {
+  hash_t hash = BaseOperatorNode::Hash();
+  for (auto& pred : join_predicates)
+    hash = HashUtil::CombineHashes(hash, pred->Hash());
+  return hash;
+}
+
+bool PhysicalInnerNLJoin::operator==(const BaseOperatorNode &r) {
+  if (r.type() != OpType::InnerNLJoin) return false;
+  const PhysicalInnerNLJoin &node =
+      *static_cast<const PhysicalInnerNLJoin *>(&r);
+  if (join_predicates.size() != node.join_predicates.size())
+    return false;
+  for (size_t i = 0; i<join_predicates.size(); i++) {
+    if (!join_predicates[i]->Equals(node.join_predicates[i].get()))
+      return false;
+  }
+  return true;
 }
 
 //===--------------------------------------------------------------------===//
@@ -433,11 +453,31 @@ Operator PhysicalOuterNLJoin::make(
 //===--------------------------------------------------------------------===//
 // InnerHashJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalInnerHashJoin::make(
-    std::shared_ptr<expression::AbstractExpression> join_predicate) {
+Operator PhysicalInnerHashJoin::make(std::vector<std::shared_ptr<expression::AbstractExpression>> conditions) {
   PhysicalInnerHashJoin *join = new PhysicalInnerHashJoin();
-  join->join_predicate = join_predicate;
+  join->join_predicates = conditions;
   return Operator(join);
+}
+
+
+hash_t PhysicalInnerHashJoin::Hash() const {
+  hash_t hash = BaseOperatorNode::Hash();
+  for (auto& pred : join_predicates)
+    hash = HashUtil::CombineHashes(hash, pred->Hash());
+  return hash;
+}
+
+bool PhysicalInnerHashJoin::operator==(const BaseOperatorNode &r) {
+  if (r.type() != OpType::InnerHashJoin) return false;
+  const PhysicalInnerHashJoin &node =
+      *static_cast<const PhysicalInnerHashJoin *>(&r);
+  if (join_predicates.size() != node.join_predicates.size())
+    return false;
+  for (size_t i = 0; i<join_predicates.size(); i++) {
+    if (!join_predicates[i]->Equals(node.join_predicates[i].get()))
+      return false;
+  }
+  return true;
 }
 
 //===--------------------------------------------------------------------===//

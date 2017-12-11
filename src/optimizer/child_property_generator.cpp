@@ -356,14 +356,16 @@ void ChildPropertyGenerator::AggregateHelper(const BaseOperatorNode *op) {
 }
 
 void ChildPropertyGenerator::JoinHelper(const BaseOperatorNode *op) {
+  (void)op;
+  /*
   vector<PropertySet> child_input_propertys;
   PropertySet provided_property;
 
   expression::AbstractExpression *join_cond = nullptr;
   if (op->type() == OpType::InnerHashJoin)
-    join_cond = ((PhysicalInnerHashJoin *)op)->join_predicate.get();
+    join_cond = ((PhysicalInnerHashJoin *)op)->join_predicates;
   else if (op->type() == OpType::InnerNLJoin)
-    join_cond = ((PhysicalInnerNLJoin *)op)->join_predicate.get();
+    join_cond = ((PhysicalInnerNLJoin *)op)->join_predicates;
 
   ExprSet child_cols;
   ExprSet provided_cols;
@@ -460,6 +462,7 @@ void ChildPropertyGenerator::JoinHelper(const BaseOperatorNode *op) {
   child_input_propertys.emplace_back(r_property_set);
 
   output_.push_back(make_pair(provided_property, child_input_propertys));
+   */
 }
 }  // namespace optimizer
 }  // namespace peloton
