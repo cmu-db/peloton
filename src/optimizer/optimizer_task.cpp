@@ -153,7 +153,7 @@ void ApplyRule::execute() {
   if (group_expr_->HasRuleExplored(rule_))
     return;
 
-  GroupExprBindingIterator iterator(nullptr, group_expr_, rule_->GetMatchPattern());
+  GroupExprBindingIterator iterator(GetMemo(), group_expr_, rule_->GetMatchPattern());
   while (iterator.HasNext()) {
     auto before = iterator.Next();
     if (!rule_->Check(before, &GetMemo()))
@@ -284,7 +284,7 @@ void OptimizeInputs::execute() {
 
           // Update hash tables for group and group expression
           memo_enforced_expr->SetLocalHashTable(extended_prop_set, {pre_output_prop_set}, cur_total_cost_);
-         cur_group->SetExpressionCost(memo_enforced_expr, cur_total_cost_, output_prop);
+          cur_group->SetExpressionCost(memo_enforced_expr, cur_total_cost_, output_prop);
         }
       }
 
@@ -326,7 +326,7 @@ void RewriteExpression::execute() {
 
   // Construct valid transformation rules from rule set
   ConstructValidRules(cur_group_expr, context_.get(),
-                      GetRuleSet().GetImplementationRules(), valid_rules);
+                      GetRuleSet().GetRewriteRules(), valid_rules);
 
   std::sort(valid_rules.begin(), valid_rules.end());
 
@@ -357,7 +357,7 @@ void ApplyRewriteRule::execute() {
   if (cur_group_expr->HasRuleExplored(rule_))
     return;
 
-  GroupExprBindingIterator iterator(nullptr, cur_group_expr, rule_->GetMatchPattern());
+  GroupExprBindingIterator iterator(GetMemo(), cur_group_expr, rule_->GetMatchPattern());
   while (iterator.HasNext()) {
     auto before = iterator.Next();
     if (!rule_->Check(before, &GetMemo()))
@@ -372,6 +372,8 @@ void ApplyRewriteRule::execute() {
         GetMemo().RemoveParExpressionForRewirte(parent_group_expr_);
         parent_group_expr_->SetChildGroupID(parent_group_offset_, new_gexpr->GetGroupID());
         GetMemo().AddParExpressionForRewrite(parent_group_expr_);
+
+        cur_group->RemoveLogicalExpression(0);
 
         PushTask(
             new RewriteExpression(parent_group_expr_, parent_group_offset_, context_));

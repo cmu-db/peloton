@@ -1304,7 +1304,7 @@ enum class RuleType : uint32_t {
 
 
   // Place holder to generate number of rules compile time
-  NUM_RULES_PLUS_TWO
+  NUM_RULES
 
 
 

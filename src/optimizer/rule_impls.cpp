@@ -528,7 +528,7 @@ void PushFilterThroughJoin::Transform(std::shared_ptr<OperatorExpression> input,
     output->PushChild(join_op_expr->Children()[0]);
 
   // Construct left filter if any
-  if (!left_predicates.empty()) {
+  if (!right_predicates.empty()) {
     auto right_filter = std::make_shared<OperatorExpression>(LogicalFilter::make(right_predicates));
     right_filter->PushChild(join_op_expr->Children()[1]);
     output->PushChild(right_filter);

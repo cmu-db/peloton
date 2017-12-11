@@ -1,3 +1,4 @@
+#include <include/binder/bind_node_visitor.h>
 #include "common/harness.h"
 
 #define private public
@@ -256,6 +257,49 @@ TEST_F(OptimizerTests, PredicatePushDownTest) {
   auto constant = dynamic_cast<expression::ConstantValueExpression*>(test1_predicate->GetModifiableChild(1));
   EXPECT_TRUE(constant != nullptr);
   EXPECT_EQ(22, constant->GetValue().GetAs<int>());
+}
+
+TEST_F(OptimizerTests, PushFilterThroughJoinTest) {
+  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+
+  TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE test(a INT PRIMARY KEY, b INT, c INT);");
+  TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE test1(a INT PRIMARY KEY, b INT, c INT);");
+
+  auto& peloton_parser = parser::PostgresParser::GetInstance();
+  auto stmt = peloton_parser.BuildParseTree(
+      "SELECT * FROM test, test1 WHERE test.a = test1.a AND test1.b = 22");
+  auto parse_tree = stmt->GetStatements().at(0).get();
+
+  optimizer::Optimizer optimizer;
+  txn = txn_manager.BeginTransaction();
+
+  auto bind_node_visitor =
+      std::make_shared<binder::BindNodeVisitor>(txn, DEFAULT_DB_NAME);
+  bind_node_visitor->BindNameToNode(parse_tree);
+
+  std::shared_ptr<GroupExpression> gexpr = optimizer.InsertQueryTree(parse_tree, txn);
+  std::vector<GroupID> child_groups = {gexpr->GetGroupID()};
+
+  std::shared_ptr<GroupExpression> head_gexpr = std::make_shared<GroupExpression>(Operator(), child_groups);
+
+
+  std::shared_ptr<OptimizeContext> root_context = std::make_shared<OptimizeContext>(
+      &(optimizer.metadata_), nullptr);
+  auto task_stack = std::make_unique<OptimizerTaskStack>();
+  optimizer.metadata_.SetTaskPool(task_stack.get());
+  task_stack->Push(new RewriteExpression(head_gexpr.get(), 0, root_context));
+
+  // TODO: Add timer for early stop
+  while (!task_stack->Empty()) {
+    auto task = task_stack->Pop();
+    task->execute();
+  }
+
+  txn_manager.CommitTransaction(txn);
+
 }
 
 }  // namespace test

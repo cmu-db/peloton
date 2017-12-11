@@ -39,6 +39,10 @@ class Group {
   // which will not be enumerated during OptimizeExpression
   void AddExpression(std::shared_ptr<GroupExpression> expr, bool enforced);
 
+  void RemoveLogicalExpression(size_t idx) {
+    logical_expressions_.erase(logical_expressions_.begin() + idx);
+  }
+
   bool SetExpressionCost(GroupExpression* expr, double cost,
                          std::shared_ptr<PropertySet>& properties);
 

@@ -31,7 +31,7 @@ class Memo;
 //===--------------------------------------------------------------------===//
 class BindingIterator {
  public:
-  BindingIterator(Optimizer *optimizer);
+  BindingIterator(Memo& memo) : memo_(memo) {}
 
   virtual ~BindingIterator(){};
 
@@ -40,13 +40,12 @@ class BindingIterator {
   virtual std::shared_ptr<OperatorExpression> Next() = 0;
 
  protected:
-  Optimizer *optimizer_;
   Memo &memo_;
 };
 
 class GroupBindingIterator : public BindingIterator {
  public:
-  GroupBindingIterator(Optimizer *optimizer, GroupID id,
+  GroupBindingIterator(Memo& memo, GroupID id,
                        std::shared_ptr<Pattern> pattern);
 
   bool HasNext() override;
@@ -65,7 +64,7 @@ class GroupBindingIterator : public BindingIterator {
 
 class GroupExprBindingIterator : public BindingIterator {
  public:
-  GroupExprBindingIterator(Optimizer *optimizer,
+  GroupExprBindingIterator(Memo& memo,
                       GroupExpression *gexpr,
                       std::shared_ptr<Pattern> pattern);
 

@@ -56,7 +56,7 @@ void QueryToOperatorTransformer::Visit(parser::SelectStatement *op) {
     std::vector<AnnotatedExpression> predicates;
     util::ExtractPredicates(op->where_clause.get(), predicates);
     auto filter_expr = std::make_shared<OperatorExpression>(LogicalFilter::make(predicates));
-    filter_expr->PushChild(filter_expr);
+    filter_expr->PushChild(output_expr_);
     output_expr_ = filter_expr;
   }
 

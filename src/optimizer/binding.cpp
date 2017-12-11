@@ -19,18 +19,13 @@
 namespace peloton {
 namespace optimizer {
 
-//===--------------------------------------------------------------------===//
-// Base Binding Iterator
-//===--------------------------------------------------------------------===//
-BindingIterator::BindingIterator(Optimizer *optimizer)
-    : optimizer_(optimizer), memo_(optimizer->metadata_.memo) {}
 
 //===--------------------------------------------------------------------===//
 // Group Binding Iterator
 //===--------------------------------------------------------------------===//
-GroupBindingIterator::GroupBindingIterator(Optimizer *optimizer, GroupID id,
+GroupBindingIterator::GroupBindingIterator(Memo& memo, GroupID id,
                                            std::shared_ptr<Pattern> pattern)
-    : BindingIterator(optimizer),
+    : BindingIterator(memo),
       group_id_(id),
       pattern_(pattern),
       target_group_(memo_.GetGroupByID(id)),
@@ -57,7 +52,7 @@ bool GroupBindingIterator::HasNext() {
     // Keep checking item iterators until we find a match
     while (current_item_index_ < num_group_items_) {
       current_iterator_.reset(new GroupExprBindingIterator(
-          optimizer_, target_group_->GetLogicalExpressions()[current_item_index_].get(),
+          memo_, target_group_->GetLogicalExpressions()[current_item_index_].get(),
           pattern_));
 
       if (current_iterator_->HasNext()) {
@@ -83,10 +78,10 @@ std::shared_ptr<OperatorExpression> GroupBindingIterator::Next() {
 //===--------------------------------------------------------------------===//
 // Item Binding Iterator
 //===--------------------------------------------------------------------===//
-GroupExprBindingIterator::GroupExprBindingIterator(Optimizer *optimizer,
+GroupExprBindingIterator::GroupExprBindingIterator(Memo& memo,
                                          GroupExpression *gexpr,
                                          std::shared_ptr<Pattern> pattern)
-    : BindingIterator(optimizer),
+    : BindingIterator(memo),
       gexpr_(gexpr),
       pattern_(pattern),
       first_(true),
@@ -109,7 +104,7 @@ GroupExprBindingIterator::GroupExprBindingIterator(Optimizer *optimizer,
     // Try to find a match in the given group
     std::vector<std::shared_ptr<OperatorExpression>> &child_bindings =
         children_bindings_[i];
-    GroupBindingIterator iterator(optimizer, child_groups[i],
+    GroupBindingIterator iterator(memo_, child_groups[i],
                                   child_patterns[i]);
 
     // Get all bindings
@@ -136,8 +131,6 @@ bool GroupExprBindingIterator::HasNext() {
     size_t size = children_bindings_pos_.size();
     size_t i;
     for (i = 0; i < size; ++i) {
-      current_binding_->PopChild();
-
       const std::vector<std::shared_ptr<OperatorExpression>> &child_binding =
           children_bindings_[size - 1 - i];
 
@@ -153,6 +146,8 @@ bool GroupExprBindingIterator::HasNext() {
       // We have explored all combinations of the child bindings
       has_next_ = false;
     } else {
+      for (size_t j = 0; j<i; j++)
+        current_binding_->PopChild();
       // Replay to end
       size_t offset = size - 1 - i;
       for (size_t j = 0; j < i + 1; ++j) {
