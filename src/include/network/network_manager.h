@@ -117,7 +117,7 @@ class NetworkManager {
 
   static void SSLLockingFunction(int mode, int n, const char* file, int line);
 
-  static void SSLIdFunction(CRYPTO_THREADID *id);
+  static unsigned long SSLIdFunction(void);
 
   static int SSLMutexSetup(void);
 
