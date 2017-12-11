@@ -75,7 +75,7 @@ int NetworkManager::SSLMutexSetup(void) {
   for (i = 0; i < CRYPTO_num_locks(); i++)
     MUTEX_SETUP(ssl_mutex_buf_[i]);
   //register the callback to record the currently-executing thread's identifier
-  CRYPTO_THREADID_set_callback(SSLIdFunction);
+  CRYPTO_set_id_callback(SSLIdFunction);
   //register the callback to perform locking/unlocking
   CRYPTO_set_locking_callback(SSLLockingFunction);
   return 1;
@@ -106,8 +106,8 @@ void NetworkManager::SSLLockingFunction(int mode, int n, UNUSED_ATTRIBUTE const 
   }
 }
 
-void NetworkManager::SSLIdFunction(CRYPTO_THREADID *id) {
-  CRYPTO_THREADID_set_numeric(id, (unsigned long)THREAD_ID);
+unsigned long NetworkManager::SSLIdFunction(void) {
+  return ((unsigned long)THREAD_ID);
 }
 
 void NetworkManager::LoadSSLFileSettings() {
