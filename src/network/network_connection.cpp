@@ -203,6 +203,7 @@ ReadState NetworkConnection::FillReadBuffer() {
         SetReadBlocked(false);
         bytes_read = SSL_read(conn_SSL_context, rbuf_.GetPtr(rbuf_.buf_size),
                               rbuf_.GetMaxSize() - rbuf_.buf_size);
+        LOG_DEBUG("SSL read successfully");
         int err = SSL_get_error(conn_SSL_context, bytes_read);
         unsigned long ecode = (err != SSL_ERROR_NONE || bytes_read < 0) ? ERR_get_error() : 0;
         switch (err) {
