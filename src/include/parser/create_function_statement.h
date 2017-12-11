@@ -107,13 +107,13 @@ class CreateFunctionStatement : public SQLStatement {
     delete func_parameters;
   }
 
-  virtual void Accept(SqlNodeVisitor* v) override { v->Visit(this); }
+  virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
   PLType language;
   ASclause as_type;
   std::vector<std::string> function_body;
-  ReturnType* return_type;
-  std::vector<FuncParameter*>* func_parameters;
+  ReturnType *return_type;
+  std::vector<FuncParameter *> *func_parameters;
   std::string function_name;
   bool replace = false;
 

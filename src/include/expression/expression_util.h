@@ -27,6 +27,7 @@
 #include "expression/operator_expression.h"
 #include "expression/parameter_value_expression.h"
 #include "expression/tuple_value_expression.h"
+#include "include/function/string_functions.h"
 #include "index/index.h"
 
 namespace peloton {
@@ -385,8 +386,8 @@ class ExpressionUtil {
 
  public:
   /**
-  * Generate a set of table alias included in an expression
-  */
+   * Generate a set of table alias included in an expression
+   */
   static void GenerateTableAliasSet(
       const AbstractExpression *expr,
       std::unordered_set<std::string> &table_alias_set) {
@@ -544,14 +545,13 @@ class ExpressionUtil {
       LOG_INFO("Function %s found in the catalog",
                func_data.func_name_.c_str());
       LOG_INFO("Argument num: %ld", func_data.argument_types_.size());
-      if(!func_data.isUDF_) {
-        func_expr->SetBuiltinFunctionExpressionParameters(func_data.func_,
-                                          func_data.return_type_,
-                                          func_data.argument_types_);
+      if (!func_data.isUDF_) {
+        func_expr->SetBuiltinFunctionExpressionParameters(
+            func_data.func_, func_data.return_type_, func_data.argument_types_);
       } else {
-        func_expr->SetUDFFunctionExpressionParameters(func_data.func_context_,
-                                          func_data.return_type_,
-                                          func_data.argument_types_);
+        func_expr->SetUDFFunctionExpressionParameters(
+            func_data.func_context_, func_data.return_type_,
+            func_data.argument_types_);
       }
     } else if (expr->GetExpressionType() ==
                ExpressionType::OPERATOR_CASE_EXPR) {
@@ -916,5 +916,5 @@ class ExpressionUtil {
 
 
 };
-}
-}
+}  // namespace expression
+}  // namespace peloton

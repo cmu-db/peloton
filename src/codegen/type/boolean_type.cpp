@@ -12,10 +12,10 @@
 
 #include "codegen/type/boolean_type.h"
 
-#include "codegen/value.h"
 #include "codegen/proxy/values_runtime_proxy.h"
 #include "codegen/type/integer_type.h"
 #include "codegen/type/varchar_type.h"
+#include "codegen/value.h"
 #include "common/exception.h"
 #include "type/limits.h"
 
@@ -53,19 +53,20 @@ struct CastBooleanToInteger : public TypeSystem::CastHandleNull {
   }
 };
 
-struct CastBooleanToDecimal : public TypeSystem::Cast {
+struct CastBooleanToDecimal : public TypeSystem::CastHandleNull {
   bool SupportsTypes(const Type &from_type,
                      const Type &to_type) const override {
     return from_type.type_id == peloton::type::TypeId::BOOLEAN &&
            to_type.type_id == peloton::type::TypeId::DECIMAL;
   }
 
-  Value DoCast(CodeGen &codegen, const Value &value,
-               const Type &to_type) const override {
+  Value Impl(CodeGen &codegen, const Value &value,
+             const Type &to_type) const override {
     PL_ASSERT(SupportsTypes(value.GetType(), to_type));
 
     // Converts True to 1.0 and False to 0.0
-    auto *raw_val = codegen->CreateUIToFP(value.GetValue(), codegen.DoubleType());
+    auto *raw_val =
+        codegen->CreateUIToFP(value.GetValue(), codegen.DoubleType());
     return Value{to_type, raw_val, nullptr, nullptr};
   }
 };
@@ -259,7 +260,7 @@ std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {
      kBooleanToInteger},
     {peloton::type::TypeId::BOOLEAN, peloton::type::TypeId::VARCHAR,
      kBooleanToVarchar},
-     {peloton::type::TypeId::BOOLEAN, peloton::type::TypeId::DECIMAL,
+    {peloton::type::TypeId::BOOLEAN, peloton::type::TypeId::DECIMAL,
      kBooleanToDecimal}};
 
 // Comparison operations

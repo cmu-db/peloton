@@ -65,9 +65,7 @@ class FunctionExpression : public AbstractExpression {
 
   const function::BuiltInFuncType &GetFunc() const { return func_; }
 
-  codegen::CodeContext *GetFuncContext() const {
-    return func_context_;
-  }
+  codegen::CodeContext *GetFuncContext() const { return func_context_; }
 
   bool isUDF() const { return isUDF_; }
 

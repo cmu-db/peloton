@@ -32,15 +32,15 @@ BuiltInFuncType BuiltInFunctions::GetFuncByName(const std::string &func_name) {
 }
 
 // PL/pgSQL UDF map
-std::unordered_map<oid_t,
-      peloton::codegen::CodeContext *> PlpgsqlFunctions::kFuncMap;
+std::unordered_map<oid_t, peloton::codegen::CodeContext *>
+    PlpgsqlFunctions::kFuncMap;
 
-void PlpgsqlFunctions::AddFunction(const oid_t oid,
-                        peloton::codegen::CodeContext *func_context) {
+void PlpgsqlFunctions::AddFunction(
+    const oid_t oid, peloton::codegen::CodeContext *func_context) {
   kFuncMap.emplace(oid, func_context);
 }
 
-peloton::codegen::CodeContext *PlpgsqlFunctions::GetFuncContextByOid( 
+peloton::codegen::CodeContext *PlpgsqlFunctions::GetFuncContextByOid(
     const oid_t oid) {
   auto func = kFuncMap.find(oid);
   if (func == kFuncMap.end()) {
@@ -48,7 +48,6 @@ peloton::codegen::CodeContext *PlpgsqlFunctions::GetFuncContextByOid(
   }
   return func->second;
 }
-
 
 }  // namespace function
 }  // namespace peloton

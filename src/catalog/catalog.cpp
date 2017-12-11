@@ -829,27 +829,26 @@ void Catalog::AddBuiltinFunction(
  * @param   code_context  the code_context that holds the generated LLVM
  *                        query code
  */
-void Catalog::AddPlpgsqlFunction( const std::string &name,
-    const std::vector<type::TypeId> &argument_types,
-    const type::TypeId return_type, oid_t prolang,
-    const std::string &func_src,
+void Catalog::AddPlpgsqlFunction(
+    const std::string &name, const std::vector<type::TypeId> &argument_types,
+    const type::TypeId return_type, oid_t prolang, const std::string &func_src,
     peloton::codegen::CodeContext *code_context,
     concurrency::Transaction *txn) {
-  //Check if UDF already exists
+  // Check if UDF already exists
   auto proc_catalog_obj =
-    ProcCatalog::GetInstance().GetProcByName(name, argument_types, txn);
+      ProcCatalog::GetInstance().GetProcByName(name, argument_types, txn);
 
-  if(proc_catalog_obj == nullptr) {
-    if (!ProcCatalog::GetInstance().InsertProc(name, return_type, argument_types,
-                                             prolang, func_src, pool_.get(),
-                                             txn)) {
-    throw CatalogException("Failed to add function " + name);
+  if (proc_catalog_obj == nullptr) {
+    if (!ProcCatalog::GetInstance().InsertProc(name, return_type,
+                                               argument_types, prolang,
+                                               func_src, pool_.get(), txn)) {
+      throw CatalogException("Failed to add function " + name);
     }
     proc_catalog_obj =
-    ProcCatalog::GetInstance().GetProcByName(name, argument_types, txn);
+        ProcCatalog::GetInstance().GetProcByName(name, argument_types, txn);
     // Insert UDF into Catalog
     function::PlpgsqlFunctions::AddFunction(proc_catalog_obj->GetOid(),
-    code_context);
+                                            code_context);
   }
 }
 
@@ -870,29 +869,30 @@ const FunctionData Catalog::GetFunction(
   auto lang_catalog_obj = proc_catalog_obj->GetLanguage();
   if (lang_catalog_obj == nullptr ||
       (lang_catalog_obj->GetName() != "internal" &&
-      lang_catalog_obj->GetName() != "plpgsql")) {
+       lang_catalog_obj->GetName() != "plpgsql")) {
     txn_manager.AbortTransaction(txn);
     throw CatalogException(
         "Peloton currently only supports internal functions and plpgsql UDFs. \
-        Function " + name + " has language '" +
-        lang_catalog_obj->GetName() + "'");
+        Function " +
+        name + " has language '" + lang_catalog_obj->GetName() + "'");
   }
 
   FunctionData result;
   result.argument_types_ = argument_types;
   result.func_name_ = proc_catalog_obj->GetSrc();
   result.return_type_ = proc_catalog_obj->GetRetType();
-  if(lang_catalog_obj->GetName() == "internal") {
+  if (lang_catalog_obj->GetName() == "internal") {
     // If the function is "internal", perform the lookup in our built-in
     // functions map (i.e., function::BuiltInFunctions) to get the function
     result.func_ = function::BuiltInFunctions::GetFuncByName(result.func_name_);
     result.isUDF_ = false;
     if (result.func_.impl == nullptr) {
       txn_manager.AbortTransaction(txn);
-      throw CatalogException("Function " + name +
-                        " is internal, but doesn't have a function address");
+      throw CatalogException(
+          "Function " + name +
+          " is internal, but doesn't have a function address");
     }
-  } else if(lang_catalog_obj->GetName() == "plpgsql") {
+  } else if (lang_catalog_obj->GetName() == "plpgsql") {
     // If the function is a "plpgsql" udf, perform the lookup in the plpgsql
     // functions map (i.e., function::PlpgsqlFunctions) to get the function
     // code_context
@@ -902,8 +902,9 @@ const FunctionData Catalog::GetFunction(
 
     if (result.func_context_->GetUDF() == nullptr) {
       txn_manager.AbortTransaction(txn);
-      throw CatalogException("Function " + name +
-                        " is plpgsql, but doesn't have a function address");
+      throw CatalogException(
+          "Function " + name +
+          " is plpgsql, but doesn't have a function address");
     }
   }
 
@@ -923,8 +924,8 @@ void Catalog::InitializeLanguages() {
       throw CatalogException("Failed to add language 'internal'");
     }
     // Add "plpgsql" language
-    if (!LanguageCatalog::GetInstance().
-        InsertLanguage("plpgsql", pool_.get(), txn)) {
+    if (!LanguageCatalog::GetInstance().InsertLanguage("plpgsql", pool_.get(),
+                                                       txn)) {
       txn_manager.AbortTransaction(txn);
       throw CatalogException("Failed to add language 'plpgsql'");
     }
@@ -1062,8 +1063,9 @@ void Catalog::InitializeFunctions() {
           txn);
       AddBuiltinFunction(
           "sqrt", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL, internal_lang,
-          "Sqrt", function::BuiltInFuncType{OperatorId::Sqrt,
-                                            function::DecimalFunctions::Sqrt},
+          "Sqrt",
+          function::BuiltInFuncType{OperatorId::Sqrt,
+                                    function::DecimalFunctions::Sqrt},
           txn);
       AddBuiltinFunction(
           "floor", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL,

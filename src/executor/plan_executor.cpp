@@ -13,10 +13,16 @@
 #include "executor/plan_executor.h"
 
 #include "codegen/buffering_consumer.h"
+#include "codegen/query.h"
 #include "codegen/query_cache.h"
 #include "concurrency/transaction_manager_factory.h"
+#include "codegen/query_compiler.h"
+#include "common/logger.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "executor/executor_context.h"
 #include "executor/executors.h"
 #include "settings/settings_manager.h"
+#include "storage/tuple_iterator.h"
 
 namespace peloton {
 namespace executor {
@@ -305,7 +311,8 @@ executor::AbstractExecutor *BuildExecutorTree(
       break;
 
     case PlanNodeType::CREATE_FUNC:
-      child_executor = new executor::CreateFunctionExecutor(plan, executor_context);
+      child_executor =
+          new executor::CreateFunctionExecutor(plan, executor_context);
       break;
 
     case PlanNodeType::COPY:

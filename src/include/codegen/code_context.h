@@ -68,14 +68,10 @@ class CodeContext {
 
   // Returns the function pointer for UDF that has been registered in this
   // context
-  llvm::Function *GetUDF() const {
-    return udf_func_ptr_;
-  }
+  llvm::Function *GetUDF() const { return udf_func_ptr_; }
 
   // Sets UDF function ptr
-  void SetUDF(llvm::Function *func_ptr) {
-    udf_func_ptr_ = func_ptr;
-  }
+  void SetUDF(llvm::Function *func_ptr) { udf_func_ptr_ = func_ptr; }
 
   /// Compile all the code contained in this context
   bool Compile();
@@ -173,5 +169,5 @@ class CodeContext {
   DISALLOW_COPY_AND_MOVE(CodeContext);
 };
 
-}  // namespace peloton
+}  // namespace codegen
 }  // namespace peloton

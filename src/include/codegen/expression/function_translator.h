@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "codegen/expression/expression_translator.h"
 #include "codegen/compilation_context.h"
+#include "codegen/expression/expression_translator.h"
 #include "type/type.h"
 
 namespace peloton {

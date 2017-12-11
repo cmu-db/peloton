@@ -634,8 +634,8 @@ template<class E> class EnumHash {
 //===--------------------------------------------------------------------===//
 
 enum class PLType {
-   PL_PGSQL=0,                // UDF language: Pl_PGSQL
-   PL_C=1                     // UDF language: PL_C
+  PL_PGSQL = 0,  // UDF language: Pl_PGSQL
+  PL_C = 1       // UDF language: PL_C
 };
 
 //===--------------------------------------------------------------------===//

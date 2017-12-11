@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "common/sql_node_visitor.h"
 #include "binder/binder_context.h"
+#include "common/sql_node_visitor.h"
 #include "parser/statements.h"
 #include "common/internal_types.h"
 

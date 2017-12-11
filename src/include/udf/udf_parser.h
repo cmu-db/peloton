@@ -20,16 +20,15 @@ namespace udf {
 
 class UDFParser {
  public:
+  UDFParser(UNUSED_ATTRIBUTE concurrency::Transaction *txn);
 
-  UDFParser(UNUSED_ATTRIBUTE concurrency::Transaction* txn);
-
-  void ParseUDF( codegen::CodeGen &cg, codegen::FunctionBuilder &fb,
-    std::string func_body, std::string func_name,
-    std::vector<arg_type> args_type);
+  void ParseUDF(codegen::CodeGen &cg, codegen::FunctionBuilder &fb,
+                std::string func_body, std::string func_name,
+                std::vector<arg_type> args_type);
 
  private:
   std::string identifier_str_;  // Filled in if tok_identifier
-  int num_val_;              // Filled in if tok_number
+  int num_val_;                 // Filled in if tok_number
   std::string func_body_string_;
   std::string func_name_;
   std::vector<arg_type> args_type_;
@@ -76,7 +75,6 @@ class UDFParser {
   std::unique_ptr<FunctionAST> ParseDefinition();
   std::unique_ptr<ExprAST> ParsePrimary();
   std::unique_ptr<ExprAST> ParseIfExpr();
-
 };
 
 }  // namespace udf

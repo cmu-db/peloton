@@ -1,9 +1,9 @@
 #include "udf/ast_nodes.h"
+#include <iostream>  ////TODO(PP) Remove
+#include "catalog/catalog.h"
+#include "codegen/lang/if.h"
 #include "codegen/type/type.h"
 #include "type/types.h"
-#include "codegen/lang/if.h"
-#include "catalog/catalog.h"
-#include <iostream> ////TODO(PP) Remove
 
 namespace peloton {
 namespace udf {
@@ -33,9 +33,7 @@ peloton::codegen::Value VariableExprAST::Codegen(
 
 // Codegen for BinaryExprAST
 peloton::codegen::Value BinaryExprAST::Codegen(
-    peloton::codegen::CodeGen &codegen,
-    peloton::codegen::FunctionBuilder &fb) {
-
+    peloton::codegen::CodeGen &codegen, peloton::codegen::FunctionBuilder &fb) {
   peloton::codegen::Value left = lhs->Codegen(codegen, fb);
   peloton::codegen::Value right = rhs->Codegen(codegen, fb);
   if (left.GetValue() == 0 || right.GetValue() == 0) {
@@ -43,30 +41,24 @@ peloton::codegen::Value BinaryExprAST::Codegen(
   }
 
   switch (op) {
-    case '+':
-    {
+    case '+': {
       return left.Add(codegen, right);
     }
-    case '-':
-    {
+    case '-': {
       return left.Sub(codegen, right);
     }
-    case '*':
-    {
+    case '*': {
       return left.Mul(codegen, right);
     }
-    case '/':
-    {
+    case '/': {
       return left.Div(codegen, right);
     }
-    case '<':
-    {
+    case '<': {
       auto val = left.CompareLt(codegen, right);
       codegen::type::Type valType(peloton::type::TypeId::DECIMAL, false);
       return val.CastTo(codegen, valType);
     }
-    case '>':
-    {
+    case '>': {
       auto val = left.CompareGt(codegen, right);
       codegen::type::Type valType(peloton::type::TypeId::DECIMAL, false);
       return val.CastTo(codegen, valType);
@@ -78,9 +70,7 @@ peloton::codegen::Value BinaryExprAST::Codegen(
 
 // Codegen for CallExprAST
 peloton::codegen::Value CallExprAST::Codegen(
-    peloton::codegen::CodeGen &codegen,
-    peloton::codegen::FunctionBuilder &fb) {
-
+    peloton::codegen::CodeGen &codegen, peloton::codegen::FunctionBuilder &fb) {
   // Check if present in the current code context
   // Else, check the catalog and get it
   auto *callee_func = fb.GetFunction();
@@ -111,9 +101,7 @@ peloton::codegen::Value CallExprAST::Codegen(
 }
 
 peloton::codegen::Value IfExprAST::Codegen(
-    peloton::codegen::CodeGen &codegen,
-    peloton::codegen::FunctionBuilder &fb) {
-
+    peloton::codegen::CodeGen &codegen, peloton::codegen::FunctionBuilder &fb) {
   auto compare_value = peloton::codegen::Value(
       peloton::codegen::type::Type(type::TypeId::DECIMAL, false),
       codegen.ConstDouble(1.0));
@@ -123,10 +111,10 @@ peloton::codegen::Value IfExprAST::Codegen(
   peloton::codegen::Value else_result;
 
   // Codegen If condition expression
-  codegen::lang::If entry_cond{codegen,
-    cond_expr_value.CompareEq(codegen, compare_value), "entry_cond"};
+  codegen::lang::If entry_cond{
+      codegen, cond_expr_value.CompareEq(codegen, compare_value), "entry_cond"};
   {
-    //Codegen the then statements
+    // Codegen the then statements
     if_result = then_stmt->Codegen(codegen, fb);
   }
   entry_cond.ElseBlock("multipleValue");
@@ -139,8 +127,7 @@ peloton::codegen::Value IfExprAST::Codegen(
   auto *val1 = if_result.GetValue();
   auto *val2 = else_result.GetValue();
 
-  auto *final_result =
-      entry_cond.BuildPHI(val1, val2);
+  auto *final_result = entry_cond.BuildPHI(val1, val2);
 
   auto return_val = peloton::codegen::Value(
       peloton::codegen::type::Type(type::TypeId::DECIMAL, false), final_result);
@@ -148,14 +135,11 @@ peloton::codegen::Value IfExprAST::Codegen(
   std::cout << "Completed codegening IF\n";
 
   return return_val;
-
 }
 
 // Codegen for FunctionAST
-llvm::Function *FunctionAST::Codegen(
-    peloton::codegen::CodeGen &codegen,
-    peloton::codegen::FunctionBuilder &fb) {
-
+llvm::Function *FunctionAST::Codegen(peloton::codegen::CodeGen &codegen,
+                                     peloton::codegen::FunctionBuilder &fb) {
   peloton::codegen::Value ret = body->Codegen(codegen, fb);
 
   fb.ReturnAndFinish(ret.GetValue());

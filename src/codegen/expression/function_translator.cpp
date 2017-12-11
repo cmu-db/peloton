@@ -12,10 +12,10 @@
 
 #include "codegen/expression/function_translator.h"
 
+#include "codegen/type/decimal_type.h"
 #include "codegen/type/sql_type.h"
 #include "codegen/type/type_system.h"
 #include "expression/function_expression.h"
-#include "codegen/type/decimal_type.h"
 #include "udf/udf_handler.h"
 
 namespace peloton {
@@ -25,10 +25,10 @@ FunctionTranslator::FunctionTranslator(
     const expression::FunctionExpression &func_expr,
     CompilationContext &context)
     : ExpressionTranslator(func_expr, context) {
-  if(!func_expr.isUDF()) {
-  // Prepare each of the child expressions
-  for (uint32_t i = 0; i < func_expr.GetChildrenSize(); i++) {
-    context.Prepare(*func_expr.GetChild(i));
+  if (!func_expr.isUDF()) {
+    // Prepare each of the child expressions
+    for (uint32_t i = 0; i < func_expr.GetChildrenSize(); i++) {
+      context.Prepare(*func_expr.GetChild(i));
     }
   }
 }
@@ -94,18 +94,18 @@ codegen::Value FunctionTranslator::DeriveValue(CodeGen &codegen,
     }
 
     std::unique_ptr<peloton::udf::UDFHandler> udf_handler(
-      new peloton::udf::UDFHandler());
-    
+        new peloton::udf::UDFHandler());
+
     // Register function prototype in current context
     auto *func_ptr = udf_handler->RegisterExternalFunction(codegen, func_expr);
 
     auto call_ret = codegen.CallFunc(func_ptr, raw_args);
 
     // TODO(PP): Should be changed to accomodate any return type
-    return codegen::Value{
-      type::Decimal::Instance(), call_ret, nullptr, nullptr};
-    }
+    return codegen::Value{type::Decimal::Instance(), call_ret, nullptr,
+                          nullptr};
   }
+}
 
 }  // namespace codegen
 }  // namespace peloton

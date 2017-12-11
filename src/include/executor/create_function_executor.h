@@ -12,15 +12,15 @@ namespace executor {
 
 class CreateFunctionExecutor : public AbstractExecutor {
  public:
-	CreateFunctionExecutor(const CreateFunctionExecutor &) = delete;
-	CreateFunctionExecutor &operator=(const CreateFunctionExecutor &) = delete;
-	CreateFunctionExecutor(CreateFunctionExecutor &&) = delete;
-	CreateFunctionExecutor &operator=(CreateFunctionExecutor &&) = delete;
+  CreateFunctionExecutor(const CreateFunctionExecutor &) = delete;
+  CreateFunctionExecutor &operator=(const CreateFunctionExecutor &) = delete;
+  CreateFunctionExecutor(CreateFunctionExecutor &&) = delete;
+  CreateFunctionExecutor &operator=(CreateFunctionExecutor &&) = delete;
 
-	CreateFunctionExecutor(const planner::AbstractPlan *node,
-                 ExecutorContext *executor_context);
+  CreateFunctionExecutor(const planner::AbstractPlan *node,
+                         ExecutorContext *executor_context);
 
-  	~CreateFunctionExecutor() {}
+  ~CreateFunctionExecutor() {}
 
  protected:
   bool DInit();
@@ -29,7 +29,6 @@ class CreateFunctionExecutor : public AbstractExecutor {
 
  private:
   ExecutorContext *context;
-
 };
 
 }  // namespace executor

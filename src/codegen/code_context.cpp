@@ -16,8 +16,8 @@
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Verifier.h"
-#include "llvm/Support/raw_os_ostream.h"
 #include "llvm/Support/TargetSelect.h"
+#include "llvm/Support/raw_os_ostream.h"
 #include "llvm/Transforms/Scalar.h"
 #if LLVM_VERSION_GE(3, 9)
 #include "llvm/Transforms/Scalar/GVN.h"
@@ -119,7 +119,7 @@ CodeContext::CodeContext()
   engine_.reset(llvm::EngineBuilder(std::move(m))
                     .setEngineKind(llvm::EngineKind::JIT)
                     .setMCJITMemoryManager(
-                         llvm::make_unique<PelotonMM>(function_symbols_))
+                        llvm::make_unique<PelotonMM>(function_symbols_))
                     .setMCPU(llvm::sys::getHostCPUName())
                     .setErrorStr(&err_str_)
                     .create());
@@ -159,8 +159,8 @@ void CodeContext::RegisterFunction(llvm::Function *func) {
   functions_.emplace_back(func, nullptr);
 }
 
-void CodeContext::RegisterExternalFunction(
-    llvm::Function *func_decl, CodeContext::FuncPtr func_impl) {
+void CodeContext::RegisterExternalFunction(llvm::Function *func_decl,
+                                           CodeContext::FuncPtr func_impl) {
   PL_ASSERT(func_decl->isDeclaration() &&
             "The first argument must be a function declaration");
   PL_ASSERT(func_impl != nullptr && "The function pointer cannot be NULL");

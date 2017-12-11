@@ -15,9 +15,9 @@
 #include <unordered_map>
 #include <vector>
 
-#include "type/value.h"
 #include "codegen/code_context.h"
 #include "codegen/value.h"
+#include "type/value.h"
 
 namespace peloton {
 namespace function {
@@ -48,14 +48,13 @@ class BuiltInFunctions {
 typedef uint32_t oid_t;
 
 class PlpgsqlFunctions {
-  private:
-    static std::unordered_map<oid_t, codegen::CodeContext *> kFuncMap;
+ private:
+  static std::unordered_map<oid_t, codegen::CodeContext *> kFuncMap;
 
-  public:
-    static void AddFunction(const oid_t oid,
-      codegen::CodeContext *func_context);
+ public:
+  static void AddFunction(const oid_t oid, codegen::CodeContext *func_context);
 
-    static codegen::CodeContext *GetFuncContextByOid(const oid_t oid);
+  static codegen::CodeContext *GetFuncContextByOid(const oid_t oid);
 };
 
 }  // namespace function

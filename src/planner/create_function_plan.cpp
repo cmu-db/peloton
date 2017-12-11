@@ -16,30 +16,26 @@
 namespace peloton {
 namespace planner {
 
-CreateFunctionPlan::CreateFunctionPlan(UNUSED_ATTRIBUTE std::string func) {
-}
+CreateFunctionPlan::CreateFunctionPlan(UNUSED_ATTRIBUTE std::string func) {}
 
-CreateFunctionPlan::CreateFunctionPlan(parser::CreateFunctionStatement *parse_tree) {
-
+CreateFunctionPlan::CreateFunctionPlan(
+    parser::CreateFunctionStatement *parse_tree) {
   language = parse_tree->language;
   function_body = parse_tree->function_body;
   is_replace = parse_tree->replace;
   function_name = parse_tree->function_name;
 
-
   for (auto col : *(parse_tree->func_parameters)) {
-    //Adds the function names
+    // Adds the function names
     function_param_names.push_back(col->name);
     param_count++;
-    //Adds the function types
+    // Adds the function types
     function_param_types.push_back(col->GetValueType(col->type));
   }
 
   auto ret_type_obj = *(parse_tree->return_type);
   return_type = ret_type_obj.GetValueType(ret_type_obj.type);
-
 }
 
 }  // namespace planner
 }  // namespace peloton
-

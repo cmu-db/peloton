@@ -14,7 +14,8 @@ UDFParser::UDFParser(UNUSED_ATTRIBUTE concurrency::Transaction *txn) {
 }
 
 void UDFParser::ParseUDF(codegen::CodeGen &cg, codegen::FunctionBuilder &fb,
-    std::string func_body, std::string func_name, std::vector<arg_type> args_type) {
+                         std::string func_body, std::string func_name,
+                         std::vector<arg_type> args_type) {
   func_name_ = func_name;
   func_body_string_ = func_body;
   args_type_ = args_type;
@@ -64,7 +65,6 @@ int UDFParser::GetTokPrecedence() {
 }
 
 int UDFParser::GetTok() {
-
   // Skip any whitespace.
   while (isspace(last_char_)) {
     last_char_ = GetNextChar();
@@ -78,21 +78,16 @@ int UDFParser::GetTok() {
     }
 
     if (identifier_str_ == "BEGIN" || identifier_str_ == "begin") {
-     return tok_begin;
-    }
-    else if(identifier_str_ == "IF" || identifier_str_ == "if") {
+      return tok_begin;
+    } else if (identifier_str_ == "IF" || identifier_str_ == "if") {
       return tok_if;
-    }
-    else if(identifier_str_ == "THEN" || identifier_str_ == "then") {
+    } else if (identifier_str_ == "THEN" || identifier_str_ == "then") {
       return tok_then;
-    }
-    else if(identifier_str_ == "ELSE" || identifier_str_ == "else") {
+    } else if (identifier_str_ == "ELSE" || identifier_str_ == "else") {
       return tok_else;
-    }
-    else if (identifier_str_ == "END" || identifier_str_ == "end") {
-     return tok_end;
-    }
-    else if (identifier_str_ == "RETURN" || identifier_str_ == "return") {
+    } else if (identifier_str_ == "END" || identifier_str_ == "end") {
+      return tok_end;
+    } else if (identifier_str_ == "RETURN" || identifier_str_ == "return") {
       return tok_return;
     }
     return tok_identifier;
@@ -135,7 +130,7 @@ int UDFParser::GetTok() {
       } while (last_char_ != EOF && last_char_ != '\n' && last_char_ != '\r');
 
       if (last_char_ != EOF) {
-       return GetTok();
+        return GetTok();
       }
     }
   }
@@ -151,9 +146,7 @@ int UDFParser::GetTok() {
   return this_char;
 }
 
-int UDFParser::GetNextToken() {
- return cur_tok_ = GetTok();
-}
+int UDFParser::GetNextToken() { return cur_tok_ = GetTok(); }
 
 std::unique_ptr<ExprAST> UDFParser::ParseNumberExpr() {
   auto result = llvm::make_unique<NumberExprAST>(num_val_);
@@ -174,7 +167,7 @@ std::unique_ptr<ExprAST> UDFParser::ParseParenExpr() {
   }
 
   if (cur_tok_ != ')') {
-   return LogError("expected ')'");
+    return LogError("expected ')'");
   }
 
   GetNextToken();  // eat ).
@@ -236,7 +229,8 @@ std::unique_ptr<ExprAST> UDFParser::ParseIdentifierExpr() {
     GetNextToken();
   }
 
-  return llvm::make_unique<CallExprAST>(id_name, std::move(args), func_name_, args_type_);
+  return llvm::make_unique<CallExprAST>(id_name, std::move(args), func_name_,
+                                        args_type_);
 }
 
 /// ifexpr ::= 'if' expression 'then' expression 'else' expression
@@ -246,31 +240,26 @@ std::unique_ptr<ExprAST> UDFParser::ParseIfExpr() {
   std::cout << "parsing IF condition\n";
   // condition.
   auto if_cond = ParseExpression();
-  if (!if_cond)
-    return nullptr;
+  if (!if_cond) return nullptr;
 
   std::cout << "completed parsing IF condition\n";
 
   std::cout << "parsing then condition\n";
-  if (cur_tok_ != tok_then)
-    return LogError("expected then");
+  if (cur_tok_ != tok_then) return LogError("expected then");
   GetNextToken();  // eat the then
 
   auto then_stmt = ParseExpression();
-  if (!then_stmt)
-    return nullptr;
+  if (!then_stmt) return nullptr;
 
   std::cout << "completed parsing then condition\n";
 
-  if (cur_tok_ != tok_else)
-    return LogError("expected else");
+  if (cur_tok_ != tok_else) return LogError("expected else");
 
   GetNextToken();
 
   std::cout << "parsing else condition\n";
   auto else_stmt = ParseExpression();
-  if (!else_stmt)
-    return nullptr;
+  if (!else_stmt) return nullptr;
 
   std::cout << "completed parsing else condition\n";
   std::cout << "parsed IF expr\n";
@@ -312,7 +301,7 @@ std::unique_ptr<ExprAST> UDFParser::ParsePrimary() {
 /// binoprhs
 ///   ::= ('+' primary)*
 std::unique_ptr<ExprAST> UDFParser::ParseBinOpRHS(
-  int expr_prec, std::unique_ptr<ExprAST> lhs) {
+    int expr_prec, std::unique_ptr<ExprAST> lhs) {
   std::cout << "Inside ParseBin Ops\n";
   // If this is a binop, find its precedence.
   while (true) {
@@ -349,7 +338,7 @@ std::unique_ptr<ExprAST> UDFParser::ParseBinOpRHS(
 
     // Merge lhs/rhs.
     lhs = llvm::make_unique<BinaryExprAST>(bin_op, std::move(lhs),
-            std::move(rhs));
+                                           std::move(rhs));
   }
 }
 

@@ -12,9 +12,9 @@
 
 #pragma once
 
-#include "planner/abstract_plan.h"
 #include "parser/create_function_statement.h"
- 
+#include "planner/abstract_plan.h"
+
 namespace peloton {
 
 namespace parser {
@@ -23,7 +23,7 @@ class CreateFunctionStatement;
 
 namespace planner {
 class CreateFunctionPlan : public AbstractPlan {
-  public:
+ public:
   CreateFunctionPlan() = delete;
 
   // Temporary fix to handle Copy()
@@ -31,33 +31,41 @@ class CreateFunctionPlan : public AbstractPlan {
 
   explicit CreateFunctionPlan(parser::CreateFunctionStatement *parse_tree);
 
-  inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::CREATE_FUNC; }
+  inline PlanNodeType GetPlanNodeType() const {
+    return PlanNodeType::CREATE_FUNC;
+  }
 
   const std::string GetInfo() const { return "Get Create Function Plan"; }
 
   std::unique_ptr<AbstractPlan> Copy() const {
-    return std::unique_ptr<AbstractPlan>(new CreateFunctionPlan("UDF function"));
+    return std::unique_ptr<AbstractPlan>(
+        new CreateFunctionPlan("UDF function"));
   }
 
   inline std::string GetFunctionName() const { return function_name; }
 
   inline PLType GetUDFLanguage() const { return language; }
 
-  inline std::vector<std::string> GetFunctionBody() const { return function_body; }
+  inline std::vector<std::string> GetFunctionBody() const {
+    return function_body;
+  }
 
-  inline std::vector<std::string> GetFunctionParameterNames() const { return function_param_names; }
+  inline std::vector<std::string> GetFunctionParameterNames() const {
+    return function_param_names;
+  }
 
-  inline std::vector<type::TypeId> GetFunctionParameterTypes() const { return function_param_types; }
+  inline std::vector<type::TypeId> GetFunctionParameterTypes() const {
+    return function_param_types;
+  }
 
   inline type::TypeId GetReturnType() const { return return_type; }
 
   inline bool IsReplace() const { return is_replace; }
- 
-  inline int GetNumParams() const {return param_count;}
 
-  private:
+  inline int GetNumParams() const { return param_count; }
 
-  //Indicates the UDF language type
+ private:
+  // Indicates the UDF language type
   PLType language;
 
   // Function parameters names passed to the UDF
@@ -79,8 +87,6 @@ class CreateFunctionPlan : public AbstractPlan {
   type::TypeId return_type;
 
   int param_count = 0;
-
 };
-}
-}
-
+}  // namespace planner
+}  // namespace peloton
