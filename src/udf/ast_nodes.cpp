@@ -132,8 +132,6 @@ peloton::codegen::Value IfExprAST::Codegen(
   auto return_val = peloton::codegen::Value(
       peloton::codegen::type::Type(type::TypeId::DECIMAL, false), final_result);
 
-  std::cout << "Completed codegening IF\n";
-
   return return_val;
 }
 
