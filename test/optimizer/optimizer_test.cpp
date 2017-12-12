@@ -22,6 +22,7 @@
 #include "planner/hash_join_plan.h"
 #include "traffic_cop/traffic_cop.h"
 #include "expression/tuple_value_expression.h"
+#include "optimizer/operators.h"
 
 namespace peloton {
 namespace test {
@@ -32,7 +33,14 @@ namespace test {
 
 using namespace optimizer;
 
-class OptimizerTests : public PelotonTest {};
+class OptimizerTests : public PelotonTest {
+ protected:
+  GroupExpression* GetSingleGroupExpression(Memo& memo, GroupExpression* expr, int child_group_idx) {
+    auto group = memo.GetGroupByID(expr->GetChildGroupId(child_group_idx));
+    EXPECT_EQ(1, group->logical_expressions_.size());
+    return group->logical_expressions_[0].get();
+  }
+};
 
 // Test whether update stament will use index scan plan
 // TODO: Split the tests into separate test cases.
@@ -272,6 +280,9 @@ TEST_F(OptimizerTests, PushFilterThroughJoinTest) {
   auto stmt = peloton_parser.BuildParseTree(
       "SELECT * FROM test, test1 WHERE test.a = test1.a AND test1.b = 22");
   auto parse_tree = stmt->GetStatements().at(0).get();
+  auto predicates = std::vector<expression::AbstractExpression*>();
+  optimizer::util::SplitPredicates(
+      reinterpret_cast<parser::SelectStatement*>(parse_tree)->where_clause.get(), predicates);
 
   optimizer::Optimizer optimizer;
   txn = txn_manager.BeginTransaction();
@@ -285,18 +296,45 @@ TEST_F(OptimizerTests, PushFilterThroughJoinTest) {
 
   std::shared_ptr<GroupExpression> head_gexpr = std::make_shared<GroupExpression>(Operator(), child_groups);
 
-
   std::shared_ptr<OptimizeContext> root_context = std::make_shared<OptimizeContext>(
       &(optimizer.metadata_), nullptr);
   auto task_stack = std::make_unique<OptimizerTaskStack>();
   optimizer.metadata_.SetTaskPool(task_stack.get());
   task_stack->Push(new RewriteExpression(head_gexpr.get(), 0, root_context));
 
-  // TODO: Add timer for early stop
   while (!task_stack->Empty()) {
     auto task = task_stack->Pop();
     task->execute();
   }
+
+  auto& memo = optimizer.metadata_.memo;
+
+  // Check join in the root
+  auto group_expr = GetSingleGroupExpression(memo, head_gexpr.get(), 0);
+  EXPECT_EQ(OpType::InnerJoin, group_expr->Op().type());
+  auto join_op = group_expr->Op().As<LogicalInnerJoin>();
+  EXPECT_EQ(1, join_op->join_predicates.size());
+  EXPECT_TRUE(join_op->join_predicates[0]->Equals(predicates[0]));
+
+  // Check left get
+  auto l_group_expr = GetSingleGroupExpression(memo, group_expr, 0);
+  EXPECT_EQ(OpType::Get, l_group_expr->Op().type());
+  auto get_op = l_group_expr->Op().As<LogicalGet>();
+  EXPECT_EQ(nullptr, get_op->predicate);
+
+  // Check right filter
+  auto r_group_expr = GetSingleGroupExpression(memo, group_expr, 1);
+  EXPECT_EQ(OpType::LogicalFilter, r_group_expr->Op().type());
+  auto filter_op = r_group_expr->Op().As<LogicalFilter>();
+  EXPECT_EQ(1, filter_op->predicates.size());
+  EXPECT_TRUE(filter_op->predicates[0].expr->Equals(predicates[1]));
+
+  // Check get below filter
+  group_expr = GetSingleGroupExpression(memo, r_group_expr, 0);
+  EXPECT_EQ(OpType::Get, l_group_expr->Op().type());
+  get_op = group_expr->Op().As<LogicalGet>();
+  EXPECT_EQ(nullptr, get_op->predicate);
+
 
   txn_manager.CommitTransaction(txn);
 
