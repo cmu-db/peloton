@@ -63,6 +63,8 @@ class QueryToOperatorTransformer : public SqlNodeVisitor {
 
   inline oid_t GetAndIncreaseGetId() { return get_id++; }
 
+  void CollectPredicates(expression::AbstractExpression* expr);
+
   static bool RequireAggregation(const parser::SelectStatement* op);
 
  private:
@@ -72,6 +74,8 @@ class QueryToOperatorTransformer : public SqlNodeVisitor {
   // identifier for get operators
   oid_t get_id;
   bool enable_predicate_push_down_;
+
+  std::vector<AnnotatedExpression> predicates_;
 
 
 };

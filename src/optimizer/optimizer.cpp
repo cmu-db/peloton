@@ -113,17 +113,6 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
 
   OptimizeLoop(root_id, query_info.physical_props);
 
-  /*
-  // Explore the logically equivalent plans from the root group
-  ExploreGroup(root_id);
-
-  // Implement all the physical operators
-  ImplementGroup(root_id);
-
-  // Find least cost plan for root group
-  OptimizeGroup(root_id, properties);
-  */
-
   try {
     ExprMap output_expr_map;
     auto best_plan = ChooseBestPlan(root_id, query_info.physical_props, &output_expr_map);

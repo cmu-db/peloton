@@ -115,8 +115,15 @@ class LogicalProjection: public OperatorNode<LogicalProjection> {
 //===--------------------------------------------------------------------===//
 class LogicalDependentJoin: public OperatorNode<LogicalDependentJoin> {
  public:
-  static Operator make(expression::AbstractExpression *condition = nullptr);
-  std::shared_ptr<expression::AbstractExpression> join_predicate;
+  static Operator make();
+
+  static Operator make(std::vector<AnnotatedExpression>& conditions);
+
+  bool operator==(const BaseOperatorNode &r) override;
+
+  hash_t Hash() const override;
+
+  std::vector<AnnotatedExpression> join_predicates;
 };
 
 //===--------------------------------------------------------------------===//
@@ -124,8 +131,15 @@ class LogicalDependentJoin: public OperatorNode<LogicalDependentJoin> {
 //===--------------------------------------------------------------------===//
 class LogicalMarkJoin: public OperatorNode<LogicalMarkJoin> {
  public:
-  static Operator make(expression::AbstractExpression *condition = nullptr);
-  std::shared_ptr<expression::AbstractExpression> join_predicate;
+  static Operator make();
+
+  static Operator make(std::vector<AnnotatedExpression>& conditions);
+
+  bool operator==(const BaseOperatorNode &r) override;
+
+  hash_t Hash() const override;
+
+  std::vector<AnnotatedExpression> join_predicates;
 };
 
 

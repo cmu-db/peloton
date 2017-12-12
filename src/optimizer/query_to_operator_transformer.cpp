@@ -53,9 +53,8 @@ void QueryToOperatorTransformer::Visit(parser::SelectStatement *op) {
   }
 
   if (op->where_clause != nullptr) {
-    std::vector<AnnotatedExpression> predicates;
-    util::ExtractPredicates(op->where_clause.get(), predicates);
-    auto filter_expr = std::make_shared<OperatorExpression>(LogicalFilter::make(predicates));
+    CollectPredicates(op->where_clause.get());
+    auto filter_expr = std::make_shared<OperatorExpression>(LogicalFilter::make(predicates_));
     filter_expr->PushChild(output_expr_);
     output_expr_ = filter_expr;
   }
@@ -78,6 +77,8 @@ void QueryToOperatorTransformer::Visit(parser::SelectStatement *op) {
     agg_expr->PushChild(output_expr_);
     output_expr_ = agg_expr;
   }
+
+  predicates_.clear();
 }
 void QueryToOperatorTransformer::Visit(parser::JoinDefinition *node) {
   // Get left operator
@@ -92,9 +93,8 @@ void QueryToOperatorTransformer::Visit(parser::JoinDefinition *node) {
   std::shared_ptr<OperatorExpression> join_expr;
   switch (node->type) {
     case JoinType::INNER: {
-      std::vector<AnnotatedExpression> join_condition;
-      util::ExtractPredicates(node->condition.get(), join_condition);
-      join_expr = std::make_shared<OperatorExpression>(LogicalInnerJoin::make(join_condition));
+      CollectPredicates(node->condition.get());
+      join_expr = std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
       break;
     }
     case JoinType::OUTER: {
@@ -288,6 +288,10 @@ bool QueryToOperatorTransformer::RequireAggregation(const parser::SelectStatemen
         "Non aggregation expression must appear in the GROUP BY "
             "clause or be used in an aggregate function");
   return has_aggregation;
+}
+
+void QueryToOperatorTransformer::CollectPredicates(expression::AbstractExpression *expr) {
+  util::ExtractPredicates(expr, predicates_);
 }
 
 }  // namespace optimizer

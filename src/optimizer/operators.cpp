@@ -134,21 +134,71 @@ Operator LogicalProjection::make(std::vector<std::shared_ptr<expression::Abstrac
 //===--------------------------------------------------------------------===//
 // DependentJoin
 //===--------------------------------------------------------------------===//
-Operator LogicalDependentJoin::make(expression::AbstractExpression *condition) {
-  LogicalDependentJoin *join = new LogicalDependentJoin;
-  join->join_predicate =
-      std::shared_ptr<expression::AbstractExpression>(condition);
+Operator LogicalDependentJoin::make() {
+  LogicalInnerJoin *join = new LogicalInnerJoin;
+  join->join_predicates = {};
   return Operator(join);
+}
+
+Operator LogicalDependentJoin::make(std::vector<AnnotatedExpression>& conditions) {
+  LogicalDependentJoin* join = new LogicalDependentJoin;
+  join->join_predicates = std::move(conditions);
+  return Operator(join);
+}
+
+hash_t LogicalDependentJoin::Hash() const {
+  hash_t hash = BaseOperatorNode::Hash();
+  for (auto& pred : join_predicates)
+    hash = HashUtil::CombineHashes(hash, pred.expr->Hash());
+  return hash;
+}
+
+bool LogicalDependentJoin::operator==(const BaseOperatorNode &r) {
+  if (r.type() != OpType::LogicalDependentJoin) return false;
+  const LogicalDependentJoin &node =
+      *static_cast<const LogicalDependentJoin *>(&r);
+  if (join_predicates.size() != node.join_predicates.size())
+    return false;
+  for (size_t i = 0; i<join_predicates.size(); i++) {
+    if (!join_predicates[i].expr->Equals(node.join_predicates[i].expr.get()))
+      return false;
+  }
+  return true;
 }
 
 //===--------------------------------------------------------------------===//
 // MarkJoin
 //===--------------------------------------------------------------------===//
-Operator LogicalMarkJoin::make(expression::AbstractExpression *condition) {
+Operator LogicalMarkJoin::make() {
   LogicalMarkJoin *join = new LogicalMarkJoin;
-  join->join_predicate =
-      std::shared_ptr<expression::AbstractExpression>(condition);
+  join->join_predicates = {};
   return Operator(join);
+}
+
+Operator LogicalMarkJoin::make(std::vector<AnnotatedExpression>& conditions) {
+  LogicalInnerJoin *join = new LogicalInnerJoin;
+  join->join_predicates = std::move(conditions);
+  return Operator(join);
+}
+
+hash_t LogicalMarkJoin::Hash() const {
+  hash_t hash = BaseOperatorNode::Hash();
+  for (auto& pred : join_predicates)
+    hash = HashUtil::CombineHashes(hash, pred.expr->Hash());
+  return hash;
+}
+
+bool LogicalMarkJoin::operator==(const BaseOperatorNode &r) {
+  if (r.type() != OpType::LogicalMarkJoin) return false;
+  const LogicalMarkJoin &node =
+      *static_cast<const LogicalMarkJoin *>(&r);
+  if (join_predicates.size() != node.join_predicates.size())
+    return false;
+  for (size_t i = 0; i<join_predicates.size(); i++) {
+    if (!join_predicates[i].expr->Equals(node.join_predicates[i].expr.get()))
+      return false;
+  }
+  return true;
 }
 
 //===--------------------------------------------------------------------===//
