@@ -334,16 +334,13 @@ void RewriteExpression::execute() {
   // Apply rule
   for (auto &r : valid_rules) {
     PushTask(new ApplyRewriteRule(parent_group_expr_, parent_group_offset_, r.rule, context_));
-    int child_group_idx = 0;
-    for (auto &child_pattern : r.rule->GetMatchPattern()->Children()) {
-      // Only need to explore non-leaf children before applying rule to the current group
-      // this condition is important for early-pruning
-      if (child_pattern->GetChildPatternsSize() > 0) {
-        PushTask(
-            new RewriteExpression(cur_group_expr, child_group_idx, context_));
-      }
-      child_group_idx++;
-    }
+  }
+
+
+  for (int child_group_idx = 0; child_group_idx < (int)cur_group_expr->GetChildrenGroupsSize(); child_group_idx++) {
+    // Need to rewrite all sub trees first
+    PushTask(
+        new RewriteExpression(cur_group_expr, child_group_idx, context_));
   }
 }
 

@@ -92,9 +92,8 @@ void QueryToOperatorTransformer::Visit(parser::JoinDefinition *node) {
   std::shared_ptr<OperatorExpression> join_expr;
   switch (node->type) {
     case JoinType::INNER: {
-      auto join_condition =  std::vector<std::shared_ptr<expression::AbstractExpression>>{
-          std::shared_ptr<expression::AbstractExpression>(node->condition->Copy())
-      };
+      std::vector<AnnotatedExpression> join_condition;
+      util::ExtractPredicates(node->condition.get(), join_condition);
       join_expr = std::make_shared<OperatorExpression>(LogicalInnerJoin::make(join_condition));
       break;
     }
@@ -185,7 +184,7 @@ void QueryToOperatorTransformer::Visit(parser::TableRef *node) {
     std::string table_alias =
         StringUtil::Lower(std::string(node->GetTableAlias()));
     output_expr_ = std::make_shared<OperatorExpression>(LogicalGet::make(
-        GetAndIncreaseGetId(), target_table, node->GetTableAlias()));
+        GetAndIncreaseGetId(), {}, target_table, node->GetTableAlias()));
   }
 }
 
@@ -216,13 +215,15 @@ void QueryToOperatorTransformer::Visit(parser::DeleteStatement *op) {
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
       op->GetDatabaseName(), op->GetTableName(), txn_);
   std::shared_ptr<OperatorExpression> table_scan;
-  if (op->expr != nullptr)
+  if (op->expr != nullptr) {
+    std::vector<AnnotatedExpression> predicates;
+    util::ExtractPredicates(op->expr.get(), predicates);
     table_scan = std::make_shared<OperatorExpression>(LogicalGet::make(
-        GetAndIncreaseGetId(), target_table, op->GetTableName(),
-        std::shared_ptr<expression::AbstractExpression>(op->expr->Copy())));
+        GetAndIncreaseGetId(), predicates, target_table, op->GetTableName()));
+  }
   else
     table_scan = std::make_shared<OperatorExpression>(LogicalGet::make(
-        GetAndIncreaseGetId(), target_table, op->GetTableName()));
+        GetAndIncreaseGetId(), {}, target_table, op->GetTableName()));
   auto delete_expr =
       std::make_shared<OperatorExpression>(LogicalDelete::make(target_table));
   delete_expr->PushChild(table_scan);
@@ -245,15 +246,16 @@ void QueryToOperatorTransformer::Visit(parser::UpdateStatement *op) {
   auto update_expr = std::make_shared<OperatorExpression>(
       LogicalUpdate::make(target_table, &op->updates));
 
-  if (op->where != nullptr)
+  if (op->where != nullptr) {
+    std::vector<AnnotatedExpression> predicates;
+    util::ExtractPredicates(op->where.get(), predicates);
     table_scan = std::make_shared<OperatorExpression>(LogicalGet::make(
-        GetAndIncreaseGetId(), target_table, op->table->GetTableName(),
-        std::shared_ptr<expression::AbstractExpression>(op->where->Copy()),
-        true));
+        GetAndIncreaseGetId(), predicates, target_table, op->table->GetTableName(), true));
+  }
   else
     table_scan = std::make_shared<OperatorExpression>(
-        LogicalGet::make(GetAndIncreaseGetId(), target_table,
-                         op->table->GetTableName(), nullptr, true));
+        LogicalGet::make(GetAndIncreaseGetId(), {}, target_table,
+                         op->table->GetTableName(), true));
 
   update_expr->PushChild(table_scan);
 

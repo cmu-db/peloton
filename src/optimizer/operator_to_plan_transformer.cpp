@@ -67,6 +67,8 @@ void OperatorToPlanTransformer::Visit(const DummyScan *) {
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalSeqScan *op) {
+  (void)op;
+  /*
   // Generate column ids to pass into scan plan and generate output expr map
   auto column_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
                          ->As<PropertyColumns>();
@@ -80,9 +82,12 @@ void OperatorToPlanTransformer::Visit(const PhysicalSeqScan *op) {
   unique_ptr<planner::AbstractPlan> seq_scan_plan(
       new planner::SeqScanPlan(op->table_, predicate, column_ids));
   output_plan_ = move(seq_scan_plan);
+  */
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalIndexScan *op) {
+  (void)op;
+  /*
   expression::AbstractExpression *predicate =
       GeneratePredicateForScan(op->predicate, op->table_alias, op->table_);
   vector<oid_t> key_column_ids;
@@ -120,6 +125,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalIndexScan *op) {
                                  index_scan_desc, false));
 
   output_plan_ = move(index_scan_plan);
+  */
 }
 
 void OperatorToPlanTransformer::Visit(const QueryDerivedScan *op) {

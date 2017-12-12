@@ -71,6 +71,9 @@ void SplitPredicates(expression::AbstractExpression* expr,
 expression::AbstractExpression* CombinePredicates(
     std::vector<std::shared_ptr<expression::AbstractExpression>> predicates);
 
+expression::AbstractExpression* CombinePredicates(
+    std::vector<AnnotatedExpression> predicates);
+
 void ExtractPredicates(expression::AbstractExpression* expr,
                        std::vector<AnnotatedExpression>& annotated_predicates);
 

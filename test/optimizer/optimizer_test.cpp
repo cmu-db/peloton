@@ -23,6 +23,7 @@
 #include "traffic_cop/traffic_cop.h"
 #include "expression/tuple_value_expression.h"
 #include "optimizer/operators.h"
+#include "optimizer/rule_impls.h"
 
 namespace peloton {
 namespace test {
@@ -285,6 +286,9 @@ TEST_F(OptimizerTests, PushFilterThroughJoinTest) {
       reinterpret_cast<parser::SelectStatement*>(parse_tree)->where_clause.get(), predicates);
 
   optimizer::Optimizer optimizer;
+  // Only include PushFilterThroughJoin rewrite rule
+  optimizer.metadata_.rule_set.GetRewriteRules().clear();
+  optimizer.metadata_.rule_set.GetRewriteRules().emplace_back(new PushFilterThroughJoin());
   txn = txn_manager.BeginTransaction();
 
   auto bind_node_visitor =
@@ -314,13 +318,13 @@ TEST_F(OptimizerTests, PushFilterThroughJoinTest) {
   EXPECT_EQ(OpType::InnerJoin, group_expr->Op().type());
   auto join_op = group_expr->Op().As<LogicalInnerJoin>();
   EXPECT_EQ(1, join_op->join_predicates.size());
-  EXPECT_TRUE(join_op->join_predicates[0]->Equals(predicates[0]));
+  EXPECT_TRUE(join_op->join_predicates[0].expr->Equals(predicates[0]));
 
   // Check left get
   auto l_group_expr = GetSingleGroupExpression(memo, group_expr, 0);
   EXPECT_EQ(OpType::Get, l_group_expr->Op().type());
   auto get_op = l_group_expr->Op().As<LogicalGet>();
-  EXPECT_EQ(nullptr, get_op->predicate);
+  EXPECT_TRUE(get_op->predicates.empty());
 
   // Check right filter
   auto r_group_expr = GetSingleGroupExpression(memo, group_expr, 1);
@@ -333,7 +337,81 @@ TEST_F(OptimizerTests, PushFilterThroughJoinTest) {
   group_expr = GetSingleGroupExpression(memo, r_group_expr, 0);
   EXPECT_EQ(OpType::Get, l_group_expr->Op().type());
   get_op = group_expr->Op().As<LogicalGet>();
-  EXPECT_EQ(nullptr, get_op->predicate);
+  EXPECT_TRUE(get_op->predicates.empty());
+
+
+  txn_manager.CommitTransaction(txn);
+}
+
+
+TEST_F(OptimizerTests, PredicatePushDownRewriteTest) {
+  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+
+  TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE test(a INT PRIMARY KEY, b INT, c INT);");
+  TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE test1(a INT PRIMARY KEY, b INT, c INT);");
+
+  auto& peloton_parser = parser::PostgresParser::GetInstance();
+  auto stmt = peloton_parser.BuildParseTree(
+      "SELECT * FROM test, test1 WHERE test.a = test1.a AND test1.b = 22");
+  auto parse_tree = stmt->GetStatements().at(0).get();
+  auto predicates = std::vector<expression::AbstractExpression*>();
+  optimizer::util::SplitPredicates(
+      reinterpret_cast<parser::SelectStatement*>(parse_tree)->where_clause.get(), predicates);
+
+  optimizer::Optimizer optimizer;
+  // Only include PushFilterThroughJoin rewrite rule
+  optimizer.metadata_.rule_set.GetRewriteRules().clear();
+  optimizer.metadata_.rule_set.GetRewriteRules().emplace_back(new PushFilterThroughJoin());
+  optimizer.metadata_.rule_set.GetRewriteRules().emplace_back(new CombineConsecutiveFilter());
+  optimizer.metadata_.rule_set.GetRewriteRules().emplace_back(new EmbedFilterIntoGet());
+
+  txn = txn_manager.BeginTransaction();
+
+  auto bind_node_visitor =
+      std::make_shared<binder::BindNodeVisitor>(txn, DEFAULT_DB_NAME);
+  bind_node_visitor->BindNameToNode(parse_tree);
+
+  std::shared_ptr<GroupExpression> gexpr = optimizer.InsertQueryTree(parse_tree, txn);
+  std::vector<GroupID> child_groups = {gexpr->GetGroupID()};
+
+  std::shared_ptr<GroupExpression> head_gexpr = std::make_shared<GroupExpression>(Operator(), child_groups);
+
+  std::shared_ptr<OptimizeContext> root_context = std::make_shared<OptimizeContext>(
+      &(optimizer.metadata_), nullptr);
+  auto task_stack = std::make_unique<OptimizerTaskStack>();
+  optimizer.metadata_.SetTaskPool(task_stack.get());
+  task_stack->Push(new RewriteExpression(head_gexpr.get(), 0, root_context));
+
+  while (!task_stack->Empty()) {
+    auto task = task_stack->Pop();
+    task->execute();
+  }
+
+  auto& memo = optimizer.metadata_.memo;
+
+  // Check join in the root
+  auto group_expr = GetSingleGroupExpression(memo, head_gexpr.get(), 0);
+  EXPECT_EQ(OpType::InnerJoin, group_expr->Op().type());
+  auto join_op = group_expr->Op().As<LogicalInnerJoin>();
+  EXPECT_EQ(1, join_op->join_predicates.size());
+  EXPECT_TRUE(join_op->join_predicates[0].expr->Equals(predicates[0]));
+
+  // Check left get
+  auto l_group_expr = GetSingleGroupExpression(memo, group_expr, 0);
+  EXPECT_EQ(OpType::Get, l_group_expr->Op().type());
+  auto get_op = l_group_expr->Op().As<LogicalGet>();
+  EXPECT_TRUE(get_op->predicates.empty());
+
+  // Check right filter
+  auto r_group_expr = GetSingleGroupExpression(memo, group_expr, 1);
+  EXPECT_EQ(OpType::Get, r_group_expr->Op().type());
+  get_op = r_group_expr->Op().As<LogicalGet>();
+  EXPECT_EQ(1, get_op->predicates.size());
+  EXPECT_TRUE(get_op->predicates[0].expr->Equals(predicates[1]));
+
 
 
   txn_manager.CommitTransaction(txn);

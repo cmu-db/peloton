@@ -189,7 +189,8 @@ void CostAndStatsCalculator::Visit(const PhysicalSeqScan *op) {
       output_properties_->GetPropertyOfType(PropertyType::COLUMNS)
           ->As<PropertyColumns>();
   auto output_stats = generateOutputStat(table_stats, columns_prop);
-  auto predicate = op->predicate;
+  auto predicate = std::shared_ptr<expression::AbstractExpression>(
+      util::CombinePredicates(op->predicates));
   if (predicate == nullptr) {
     output_cost_ += Cost::NoConditionSeqScanCost(table_stats);
     output_stats_ = output_stats;
@@ -217,7 +218,8 @@ void CostAndStatsCalculator::Visit(const PhysicalIndexScan *op) {
   std::vector<type::Value> values;
   oid_t index_id = 0;
 
-  expression::AbstractExpression *predicate = op->predicate.get();
+  expression::AbstractExpression *predicate = std::shared_ptr<expression::AbstractExpression>(
+      util::CombinePredicates(op->predicates)).get();
   bool index_searchable =
       predicate == nullptr ? false : util::CheckIndexSearchable(
           op->table_, predicate, key_column_ids,

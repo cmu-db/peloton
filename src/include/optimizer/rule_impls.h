@@ -200,6 +200,9 @@ class InnerJoinToInnerHashJoin : public Rule {
 //===--------------------------------------------------------------------===//
 // Rewrite rules
 //===--------------------------------------------------------------------===//
+
+///////////////////////////////////////////////////////////////////////////////
+/// PushFilterThroughJoin
 class PushFilterThroughJoin : public Rule {
  public:
   PushFilterThroughJoin();
@@ -209,12 +212,33 @@ class PushFilterThroughJoin : public Rule {
   void Transform(std::shared_ptr<OperatorExpression> input,
                  std::vector<std::shared_ptr<OperatorExpression>> &transformed, Memo* memo)
   const override;
-
- private:
-  std::unordered_set<std::string> left_group_table_alias_;
-  std::unordered_set<std::string> right_group_table_alias_;
 };
 
+///////////////////////////////////////////////////////////////////////////////
+/// CombineConsecutiveFilter
+class CombineConsecutiveFilter : public Rule {
+ public:
+  CombineConsecutiveFilter();
+
+  bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
+
+  void Transform(std::shared_ptr<OperatorExpression> input,
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed, Memo* memo)
+  const override;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// EmbedFilterIntoGet
+class EmbedFilterIntoGet : public Rule {
+ public:
+  EmbedFilterIntoGet();
+
+  bool Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const override;
+
+  void Transform(std::shared_ptr<OperatorExpression> input,
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed, Memo* memo)
+  const override;
+};
 
 } // namespace optimizer
 } // namespace peloton

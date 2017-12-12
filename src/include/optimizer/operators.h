@@ -51,9 +51,9 @@ class LeafOperator : OperatorNode<LeafOperator> {
 class LogicalGet : public OperatorNode<LogicalGet> {
  public:
   static Operator make(oid_t get_id = 0,
+                       std::vector<AnnotatedExpression> predicates = {},
                        storage::DataTable *table = nullptr,
                        std::string alias = "",
-                       std::shared_ptr<expression::AbstractExpression> predicate = nullptr,
                        bool update = false);
 
   bool operator==(const BaseOperatorNode &r) override;
@@ -62,7 +62,7 @@ class LogicalGet : public OperatorNode<LogicalGet> {
 
   // identifier for all get operators
   oid_t get_id;
-  std::shared_ptr<expression::AbstractExpression> predicate;
+  std::vector<AnnotatedExpression> predicates;
   storage::DataTable *table;
   std::string table_alias;
   bool is_for_update;
@@ -95,6 +95,10 @@ class LogicalFilter : public OperatorNode<LogicalFilter> {
  public:
   static Operator make(std::vector<AnnotatedExpression>& filter);
   std::vector<AnnotatedExpression> predicates;
+
+  bool operator==(const BaseOperatorNode &r) override;
+
+  hash_t Hash() const override;
 };
 
 //===--------------------------------------------------------------------===//
@@ -132,13 +136,13 @@ class LogicalInnerJoin : public OperatorNode<LogicalInnerJoin> {
  public:
   static Operator make();
 
-  static Operator make(std::vector<std::shared_ptr<expression::AbstractExpression>>& conditions);
+  static Operator make(std::vector<AnnotatedExpression>& conditions);
 
   bool operator==(const BaseOperatorNode &r) override;
 
   hash_t Hash() const override;
 
-  std::vector<std::shared_ptr<expression::AbstractExpression>> join_predicates;
+  std::vector<AnnotatedExpression> join_predicates;
 };
 
 //===--------------------------------------------------------------------===//
@@ -262,7 +266,7 @@ class DummyScan : public OperatorNode<DummyScan> {
 class PhysicalSeqScan : public OperatorNode<PhysicalSeqScan> {
  public:
   static Operator make(oid_t get_id, storage::DataTable *table, std::string alias,
-                       std::shared_ptr<expression::AbstractExpression> predicate,
+                       std::vector<AnnotatedExpression> predicates,
                        bool update);
 
   bool operator==(const BaseOperatorNode &r) override;
@@ -271,7 +275,7 @@ class PhysicalSeqScan : public OperatorNode<PhysicalSeqScan> {
 
   // identifier for all get operators
   oid_t get_id;
-  std::shared_ptr<expression::AbstractExpression> predicate;
+  std::vector<AnnotatedExpression> predicates;
   std::string table_alias;
   bool is_for_update;
   storage::DataTable *table_;
@@ -283,7 +287,7 @@ class PhysicalSeqScan : public OperatorNode<PhysicalSeqScan> {
 class PhysicalIndexScan : public OperatorNode<PhysicalIndexScan> {
  public:
   static Operator make(oid_t get_id, storage::DataTable *table, std::string alias,
-                       std::shared_ptr<expression::AbstractExpression> predicate,
+                       std::vector<AnnotatedExpression> predicates,
                        bool update);
 
   bool operator==(const BaseOperatorNode &r) override;
@@ -292,7 +296,7 @@ class PhysicalIndexScan : public OperatorNode<PhysicalIndexScan> {
 
   // identifier for all get operators
   oid_t get_id;
-  std::shared_ptr<expression::AbstractExpression> predicate;
+  std::vector<AnnotatedExpression> predicates;
   std::string table_alias;
   bool is_for_update;
   storage::DataTable *table_;
@@ -355,13 +359,13 @@ class PhysicalFilter : public OperatorNode<PhysicalFilter> {
 //===--------------------------------------------------------------------===//
 class PhysicalInnerNLJoin : public OperatorNode<PhysicalInnerNLJoin> {
  public:
-  static Operator make(std::vector<std::shared_ptr<expression::AbstractExpression>> conditions);
+  static Operator make(std::vector<AnnotatedExpression> conditions);
 
   bool operator==(const BaseOperatorNode &r) override;
 
   hash_t Hash() const override;
 
-  std::vector<std::shared_ptr<expression::AbstractExpression>> join_predicates;
+  std::vector<AnnotatedExpression> join_predicates;
 };
 
 //===--------------------------------------------------------------------===//
@@ -396,13 +400,13 @@ class PhysicalOuterNLJoin : public OperatorNode<PhysicalOuterNLJoin> {
 //===--------------------------------------------------------------------===//
 class PhysicalInnerHashJoin : public OperatorNode<PhysicalInnerHashJoin> {
  public:
-  static Operator make(std::vector<std::shared_ptr<expression::AbstractExpression>> conditions);
+  static Operator make(std::vector<AnnotatedExpression> conditions);
 
   bool operator==(const BaseOperatorNode &r) override;
 
   hash_t Hash() const override;
 
-  std::vector<std::shared_ptr<expression::AbstractExpression>> join_predicates;
+  std::vector<AnnotatedExpression> join_predicates;
 };
 
 //===--------------------------------------------------------------------===//

@@ -108,7 +108,7 @@ void GetToSeqScan::Transform(
 
   auto result_plan = std::make_shared<OperatorExpression>(
       PhysicalSeqScan::make(get->get_id, get->table, get->table_alias,
-                            get->predicate, get->is_for_update));
+                            get->predicates, get->is_for_update));
 
   UNUSED_ATTRIBUTE std::vector<std::shared_ptr<OperatorExpression>> children =
       input->Children();
@@ -145,7 +145,7 @@ void GetToIndexScan::Transform(
 
   auto result_plan = std::make_shared<OperatorExpression>(
       PhysicalIndexScan::make(get->get_id, get->table, get->table_alias,
-                              get->predicate, get->is_for_update));
+                              get->predicates, get->is_for_update));
 
   UNUSED_ATTRIBUTE std::vector<std::shared_ptr<OperatorExpression>> children =
       input->Children();
@@ -426,7 +426,7 @@ bool InnerJoinToInnerHashJoin::Check(std::shared_ptr<OperatorExpression> plan,
   auto predicates = plan->Op().As<LogicalInnerJoin>()->join_predicates;
 
   for (auto& expr : predicates) {
-    if (util::ContainsJoinColumns(left_group_alias, right_group_alias, expr.get()))
+    if (util::ContainsJoinColumns(left_group_alias, right_group_alias, expr.expr.get()))
       return true;
   }
   return false;
@@ -454,6 +454,9 @@ void InnerJoinToInnerHashJoin::Transform(
 //===--------------------------------------------------------------------===//
 // Rewrite rules
 //===--------------------------------------------------------------------===//
+
+///////////////////////////////////////////////////////////////////////////////
+/// PushFilterThroughJoin
 PushFilterThroughJoin::PushFilterThroughJoin() {
   type_ = RuleType::PUSH_FILTER_THROUGH_JOIN;
 
@@ -497,7 +500,7 @@ void PushFilterThroughJoin::Transform(std::shared_ptr<OperatorExpression> input,
   auto& predicates = input->Op().As<LogicalFilter>()->predicates;
   std::vector<AnnotatedExpression> left_predicates;
   std::vector<AnnotatedExpression> right_predicates;
-  std::vector<std::shared_ptr<expression::AbstractExpression>> join_predicates;
+  std::vector<AnnotatedExpression> join_predicates;
 
   for (auto& predicate : predicates) {
     if (util::IsSubset(left_group_alias, predicate.table_alias_set))
@@ -505,7 +508,7 @@ void PushFilterThroughJoin::Transform(std::shared_ptr<OperatorExpression> input,
     else if (util::IsSubset(right_group_alias, predicate.table_alias_set))
       right_predicates.emplace_back(predicate);
     else
-      join_predicates.emplace_back(predicate.expr);
+      join_predicates.emplace_back(predicate);
   }
 
   std::shared_ptr<OperatorExpression> output;
@@ -535,6 +538,88 @@ void PushFilterThroughJoin::Transform(std::shared_ptr<OperatorExpression> input,
   }
   else
     output->PushChild(join_op_expr->Children()[1]);
+
+  transformed.push_back(output);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/// CombineConsecutiveFilter
+CombineConsecutiveFilter::CombineConsecutiveFilter() {
+  type_ = RuleType::COMBINE_CONSECUTIVE_FILTER;
+
+  match_pattern = std::make_shared<Pattern>(OpType::LogicalFilter);
+  std::shared_ptr<Pattern> child(std::make_shared<Pattern>(OpType::LogicalFilter));
+  child->AddChild(std::make_shared<Pattern>(OpType::Leaf));
+
+  match_pattern->AddChild(child);
+}
+
+bool CombineConsecutiveFilter::Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const {
+  (void)memo;
+  (void)plan;
+
+  auto& children = plan->Children();
+  PL_ASSERT(children.size() == 1);
+  auto& filter = children.at(0);
+  PL_ASSERT(filter->Children().size() == 1);
+
+  return true;
+}
+
+void CombineConsecutiveFilter::Transform(std::shared_ptr<OperatorExpression> input,
+                                      std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+                                      UNUSED_ATTRIBUTE Memo* memo) const {
+  auto child_filter = input->Children()[0];
+
+  auto root_predicates = input->Op().As<LogicalFilter>()->predicates;
+  auto& child_predicates = child_filter->Op().As<LogicalFilter>()->predicates;
+
+  root_predicates.insert(root_predicates.end(), child_predicates.begin(), child_predicates.end());
+
+
+  std::shared_ptr<OperatorExpression> output = std::make_shared<OperatorExpression>(
+      LogicalFilter::make(root_predicates));
+
+  output->PushChild(child_filter->Children()[0]);
+
+  transformed.push_back(output);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+/// EmbedFilterIntoGet
+EmbedFilterIntoGet::EmbedFilterIntoGet() {
+  type_ = RuleType::EMBED_FILTER_INTO_GET;
+
+  match_pattern = std::make_shared<Pattern>(OpType::LogicalFilter);
+  std::shared_ptr<Pattern> child(std::make_shared<Pattern>(OpType::Get));
+
+  match_pattern->AddChild(child);
+}
+
+bool EmbedFilterIntoGet::Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const {
+  (void)memo;
+  (void)plan;
+
+  auto& children = plan->Children();
+  PL_ASSERT(children.size() == 1);
+  auto& get = children.at(0);
+  PL_ASSERT(get->Children().size() == 0);
+
+  return true;
+}
+
+void EmbedFilterIntoGet::Transform(std::shared_ptr<OperatorExpression> input,
+                                         std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+                                         UNUSED_ATTRIBUTE Memo* memo) const {
+  auto get = input->Children()[0]->Op().As<LogicalGet>();
+
+  auto predicates = input->Op().As<LogicalFilter>()->predicates;
+
+
+  std::shared_ptr<OperatorExpression> output = std::make_shared<OperatorExpression>(
+      LogicalGet::make(get->get_id, predicates, get->table, get->table_alias, get->is_for_update));
+
 
   transformed.push_back(output);
 }

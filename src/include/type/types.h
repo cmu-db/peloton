@@ -1301,6 +1301,8 @@ enum class RuleType : uint32_t {
 
   // Rewrite rules (logical -> logical)
   PUSH_FILTER_THROUGH_JOIN,
+  COMBINE_CONSECUTIVE_FILTER,
+  EMBED_FILTER_INTO_GET,
 
 
   // Place holder to generate number of rules compile time

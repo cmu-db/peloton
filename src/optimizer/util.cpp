@@ -266,6 +266,25 @@ expression::AbstractExpression* CombinePredicates(
 }
 
 /**
+ * Combine a vector of expressions with AND
+ */
+expression::AbstractExpression* CombinePredicates(
+    std::vector<AnnotatedExpression> predicates) {
+  if (predicates.empty()) return nullptr;
+
+  if (predicates.size() == 1) return predicates[0].expr->Copy();
+
+  auto conjunction = new expression::ConjunctionExpression(
+      ExpressionType::CONJUNCTION_AND, predicates[0].expr->Copy(),
+      predicates[1].expr->Copy());
+  for (size_t i = 2; i < predicates.size(); i++) {
+    conjunction = new expression::ConjunctionExpression(
+        ExpressionType::CONJUNCTION_AND, conjunction, predicates[i].expr->Copy());
+  }
+  return conjunction;
+}
+
+/**
  * Check if there are any join columns in the join expression
  * For example, expr = (expr_1) AND (expr_2) AND (expr_3)
  * we only extract expr_i that have the format (l_table.a = r_table.b)
