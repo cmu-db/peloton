@@ -26,6 +26,9 @@ FunctionTranslator::FunctionTranslator(
     CompilationContext &context)
     : ExpressionTranslator(func_expr, context) {
   if (!func_expr.isUDF()) {
+    PL_ASSERT(func_expr.GetFunc().op_id != OperatorId::Invalid);
+    PL_ASSERT(func_expr.GetFunc().impl != nullptr);
+
     // Prepare each of the child expressions
     for (uint32_t i = 0; i < func_expr.GetChildrenSize(); i++) {
       context.Prepare(*func_expr.GetChild(i));

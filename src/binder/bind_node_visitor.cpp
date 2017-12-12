@@ -281,6 +281,7 @@ void BindNodeVisitor::Visit(expression::FunctionExpression *expr) {
       catalog_->GetFunction(expr->GetFuncName(), argtypes);
   LOG_DEBUG("Function %s found in the catalog", func_data.func_name_.c_str());
   LOG_DEBUG("Argument num: %ld", func_data.argument_types_.size());
+  LOG_DEBUG("Is UDF %d", func_data.isUDF_);
 
   if (!func_data.isUDF_) {
     expr->SetBuiltinFunctionExpressionParameters(
@@ -297,11 +298,12 @@ void BindNodeVisitor::Visit(expression::FunctionExpression *expr) {
       // Test whether the first argument is a correct DatePartType
       StringToDatePartType(
           date_part->Evaluate(nullptr, nullptr, nullptr).ToString());
-    } else {
+      }
+    }
+    else {
       expr->SetUDFFunctionExpressionParameters(func_data.func_context_,
                                                func_data.return_type_,
                                                func_data.argument_types_);
-    }
   }
 }
 
