@@ -12,6 +12,7 @@
 
 #include "optimizer/child_property_deriver.h"
 #include "optimizer/properties.h"
+#include "optimizer/group_expression.h"
 #include "optimizer/property_set.h"
 #include "optimizer/memo.h"
 #include "storage/data_table.h"

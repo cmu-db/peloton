@@ -64,7 +64,17 @@ void Optimizer::OptimizeLoop(int root_group_id, std::shared_ptr<PropertySet> req
   std::shared_ptr<OptimizeContext> root_context = std::make_shared<OptimizeContext>(&metadata_, required_props);
   auto task_stack = std::make_unique<OptimizerTaskStack>();
   metadata_.SetTaskPool(task_stack.get());
+
+  // Head group expression with the root group as its only child.
+  // This object is only used for simplified the logics for the rewrite phase
+  std::vector<GroupID> head_child_groups = { root_group_id };
+  std::shared_ptr<GroupExpression> head_gexpr =
+      std::make_shared<GroupExpression>(Operator(), head_child_groups);
+
+  // Perform optimization after the rewrite
   task_stack->Push(new OptimizeGroup(metadata_.memo.GetGroupByID(root_group_id), root_context));
+  // Perform rewrite first
+  task_stack->Push(new RewriteExpression(head_gexpr.get(), 0, root_context));
 
   // TODO: Add timer for early stop
   while (!task_stack->Empty()) {
