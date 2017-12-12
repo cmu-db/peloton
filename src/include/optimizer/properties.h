@@ -114,7 +114,7 @@ class PropertyLimit : public Property {
 class PropertySort : public Property {
  public:
   PropertySort(
-      std::vector<std::shared_ptr<expression::AbstractExpression>> sort_columns,
+      std::vector<expression::AbstractExpression*> sort_columns,
       std::vector<bool> sort_ascending);
 
   PropertyType Type() const override;
@@ -129,7 +129,7 @@ class PropertySort : public Property {
 
   inline size_t GetSortColumnSize() const { return sort_columns_.size(); }
 
-  inline std::shared_ptr<expression::AbstractExpression> GetSortColumn(
+  inline expression::AbstractExpression* GetSortColumn(
       size_t idx) const {
     return sort_columns_[idx];
   }
@@ -137,7 +137,7 @@ class PropertySort : public Property {
   inline bool GetSortAscending(int idx) const { return sort_ascending_[idx]; }
 
  private:
-  std::vector<std::shared_ptr<expression::AbstractExpression>> sort_columns_;
+  std::vector<expression::AbstractExpression*> sort_columns_;
   std::vector<bool> sort_ascending_;
 };
 

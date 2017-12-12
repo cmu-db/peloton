@@ -298,7 +298,7 @@ void CostAndStatsCalculator::Visit(const PhysicalOrderBy *) {
     auto expr = sort_prop->GetSortColumn(i);
     // TODO: Deal with complex expressions like a+b, a+30
     if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
-      auto column = std::dynamic_pointer_cast<expression::TupleValueExpression>(
+      auto column = reinterpret_cast<expression::TupleValueExpression*>(
           sort_prop->GetSortColumn(i))
           ->GetColumnName();
 

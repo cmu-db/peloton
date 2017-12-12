@@ -27,7 +27,7 @@ using std::make_shared;
 
 namespace peloton {
 namespace optimizer {
-
+/*
 vector<pair<PropertySet, vector<PropertySet>>>
 ChildPropertyGenerator::GetProperties(shared_ptr<GroupExpression> gexpr,
                                       PropertySet requirements, Memo *memo) {
@@ -95,12 +95,12 @@ void ChildPropertyGenerator::Visit(const QueryDerivedScan *op) {
   output_.push_back(make_pair(provided_property, move(child_input_properties)));
 }
 
-/**
- * Note:
- * Fulfill the entire projection property in the aggregation. Should
- * enumerate different combination of the aggregation functions and other
- * projection.
- */
+///
+//  Note:
+//  Fulfill the entire projection property in the aggregation. Should
+//  enumerate different combination of the aggregation functions and other
+//  projection.
+//
 void ChildPropertyGenerator::Visit(const PhysicalHashGroupBy *op) {
   AggregateHelper(op);
 }
@@ -156,7 +156,7 @@ void ChildPropertyGenerator::Visit(const DummyScan *) {
   output_.push_back(make_pair(PropertySet(), vector<PropertySet>()));
 }
 
-/************************ Private helper Functions ****************************/
+//Private helper Functions
 
 void ChildPropertyGenerator::ScanHelper() {
   PropertySet provided_property;
@@ -357,7 +357,6 @@ void ChildPropertyGenerator::AggregateHelper(const BaseOperatorNode *op) {
 
 void ChildPropertyGenerator::JoinHelper(const BaseOperatorNode *op) {
   (void)op;
-  /*
   vector<PropertySet> child_input_propertys;
   PropertySet provided_property;
 
@@ -462,7 +461,9 @@ void ChildPropertyGenerator::JoinHelper(const BaseOperatorNode *op) {
   child_input_propertys.emplace_back(r_property_set);
 
   output_.push_back(make_pair(provided_property, child_input_propertys));
-   */
+
 }
+*/
+
 }  // namespace optimizer
 }  // namespace peloton

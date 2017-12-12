@@ -39,6 +39,16 @@ class Transaction;
 
 namespace optimizer {
 
+struct QueryInfo {
+  QueryInfo(
+      std::vector<expression::AbstractExpression*>& exprs,
+      std::shared_ptr<PropertySet>& props)
+      : output_exprs(std::move(exprs)), physical_props(props) {}
+
+  std::vector<expression::AbstractExpression*> output_exprs;
+  std::shared_ptr<PropertySet> physical_props;
+};
+
 //===--------------------------------------------------------------------===//
 // Optimizer
 //===--------------------------------------------------------------------===//
@@ -90,7 +100,7 @@ class Optimizer : public AbstractOptimizer {
    * tree: a peloton query tree representing a select query
    * return: the set of required physical properties for the query
    */
-  std::shared_ptr<PropertySet> GetQueryRequiredProperties(parser::SQLStatement *tree);
+  QueryInfo GetQueryInfo(parser::SQLStatement *tree);
 
   /* OptimizerPlanToPlannerPlan - convert a tree of physical operators to
    *     a Peloton planner plan for execution.

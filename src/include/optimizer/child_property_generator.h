@@ -21,7 +21,7 @@ class Memo;
 }
 
 namespace optimizer {
-
+/*
 // Generate child property requirements for physical operators
 class ChildPropertyGenerator : public OperatorVisitor {
  public:
@@ -55,7 +55,6 @@ class ChildPropertyGenerator : public OperatorVisitor {
   void Visit(const PhysicalAggregate *) override;
 
  private:
-  /***** Helper functions *****/
   // Since the ChildPropertyGenerator have similar
   // behaviour for different implementation of the same
   // logical operator, we apply helper functions to
@@ -72,6 +71,6 @@ class ChildPropertyGenerator : public OperatorVisitor {
   std::vector<Group *> child_groups_;
   std::vector<std::pair<PropertySet, std::vector<PropertySet>>> output_;
 };
-
+*/
 }  // namespace optimizer
 }  // namespace peloton

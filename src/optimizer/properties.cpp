@@ -181,7 +181,7 @@ std::string PropertyLimit::ToString() const {
 /*************** PropertySort *****************/
 
 PropertySort::PropertySort(
-    std::vector<std::shared_ptr<expression::AbstractExpression>> sort_columns,
+    std::vector<expression::AbstractExpression*> sort_columns,
     std::vector<bool> sort_ascending)
     : sort_columns_(std::move(sort_columns)),
       sort_ascending_(std::move(sort_ascending)) {}
@@ -203,7 +203,7 @@ bool PropertySort::operator>=(const Property &r) const {
        ++r_sort_col_idx) {
     while (l_sort_col_idx < l_num_sort_columns &&
            !sort_columns_[l_sort_col_idx]->Equals(
-               r_sort.sort_columns_[r_sort_col_idx].get())) {
+               r_sort.sort_columns_[r_sort_col_idx])) {
       ++l_sort_col_idx;
     }
     if (l_sort_col_idx == l_num_sort_columns ||

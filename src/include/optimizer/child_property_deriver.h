@@ -22,6 +22,7 @@ class Memo;
 
 namespace optimizer {
 
+
 // Generate child property requirements for physical operators, return pairs of
 // possible input output properties pairs.
 // This is the new version of ChildPropertyGenerator, as the old version should

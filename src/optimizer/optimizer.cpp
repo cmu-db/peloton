@@ -25,7 +25,6 @@
 #include "optimizer/operator_visitor.h"
 #include "optimizer/properties.h"
 #include "optimizer/property_enforcer.h"
-#include "optimizer/query_property_extractor.h"
 #include "optimizer/query_to_operator_transformer.h"
 #include "optimizer/rule_impls.h"
 #include "optimizer/optimizer_task_pool.h"
@@ -110,9 +109,9 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   shared_ptr<GroupExpression> gexpr = InsertQueryTree(parse_tree, txn);
   GroupID root_id = gexpr->GetGroupID();
   // Get the physical properties the final plan must output
-  auto properties = GetQueryRequiredProperties(parse_tree);
+  auto query_info = GetQueryInfo(parse_tree);
 
-  OptimizeLoop(root_id, properties);
+  OptimizeLoop(root_id, query_info.physical_props);
 
   /*
   // Explore the logically equivalent plans from the root group
@@ -127,7 +126,7 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
 
   try {
     ExprMap output_expr_map;
-    auto best_plan = ChooseBestPlan(root_id, properties, &output_expr_map);
+    auto best_plan = ChooseBestPlan(root_id, query_info.physical_props, &output_expr_map);
     if (best_plan == nullptr) return nullptr;
     // Reset memo after finishing the optimization
     Reset();
@@ -231,9 +230,50 @@ shared_ptr<GroupExpression> Optimizer::InsertQueryTree(
   return gexpr;
 }
 
-std::shared_ptr<PropertySet> Optimizer::GetQueryRequiredProperties(parser::SQLStatement *tree) {
-  QueryPropertyExtractor converter;
-  return converter.GetProperties(tree);
+QueryInfo Optimizer::GetQueryInfo(parser::SQLStatement *tree) {
+  auto GetQueryInfoHelper = [](
+      std::vector<unique_ptr<expression::AbstractExpression>>& select_list,
+      std::unique_ptr<parser::OrderDescription>& order_info,
+      std::vector<expression::AbstractExpression*>& output_exprs,
+      std::shared_ptr<PropertySet>& physical_props) {
+    // Extract output column
+    for (auto &expr : select_list)
+      output_exprs.push_back(expr.get());
+
+    // Extract sort property
+    if (order_info != nullptr) {
+      std::vector<expression::AbstractExpression *> sort_exprs;
+      std::vector<bool> sort_ascending;
+      for (auto &expr : order_info->exprs) {
+        sort_exprs.push_back(expr.get());
+      }
+      for (auto &type : order_info->types) {
+        sort_ascending.push_back(type == parser::kOrderAsc);
+      }
+      if (!sort_exprs.empty())
+        physical_props->AddProperty(std::make_shared<PropertySort>(sort_exprs, sort_ascending));
+    }
+  };
+
+  std::vector<expression::AbstractExpression*> output_exprs;
+  std::shared_ptr<PropertySet> physical_props;
+  switch(tree->GetType()) {
+    case StatementType::SELECT: {
+      auto select = reinterpret_cast<parser::SelectStatement *>(tree);
+      GetQueryInfoHelper(select->select_list, select->order, output_exprs, physical_props);
+      break;
+    }
+    case StatementType::INSERT: {
+      auto insert = reinterpret_cast<parser::InsertStatement *>(tree);
+      if (insert->select != nullptr)
+        GetQueryInfoHelper(insert->select->select_list, insert->select->order,
+                           output_exprs, physical_props);
+      break;
+    }
+    default:;
+  }
+
+  return QueryInfo(output_exprs, physical_props);
 }
 
 unique_ptr<planner::AbstractPlan> Optimizer::OptimizerPlanToPlannerPlan(

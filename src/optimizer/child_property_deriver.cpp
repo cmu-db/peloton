@@ -62,7 +62,7 @@ void ChildPropertyDeriver::Visit(const PhysicalIndexScan *op) {
         break;
       }
       auto tv_expr = reinterpret_cast<expression::TupleValueExpression *>(
-          sort_prop->GetSortColumn(0).get());
+          sort_prop->GetSortColumn(0));
       // TODO(boweic): add assert to ensure the table oid is correct,
       auto obj_id = tv_expr->GetBoundOid();
       oid_t col_id = std::get<2>(obj_id);
@@ -103,8 +103,11 @@ void ChildPropertyDeriver::Visit(const PhysicalHashGroupBy *) {
 void ChildPropertyDeriver::Visit(const PhysicalSortGroupBy *op) {
   // Child must provide sort for Groupby columns
   vector<bool> sort_acsending(op->columns.size(), true);
+  vector<expression::AbstractExpression*> sort_cols;
+  for (auto &col : op->columns)
+    sort_cols.push_back(col.get());
   shared_ptr<Property> sort_prop(
-      new PropertySort(op->columns, move(sort_acsending)));
+      new PropertySort(sort_cols, move(sort_acsending)));
   shared_ptr<PropertySet> prop_set =
       make_shared<PropertySet>(vector<shared_ptr<Property>>{sort_prop});
   output_.push_back(
@@ -179,7 +182,7 @@ void ChildPropertyDeriver::DeriveForJoin() {
       for (size_t idx = 0; idx < sort_col_size; ++idx) {
         ExprSet tuples;
         expression::ExpressionUtil::GetTupleValueExprs(
-            tuples, sort_prop->GetSortColumn(idx).get());
+            tuples, sort_prop->GetSortColumn(idx));
         for (auto &expr : tuples) {
           auto tv_expr =
               reinterpret_cast<expression::TupleValueExpression *>(expr.get());

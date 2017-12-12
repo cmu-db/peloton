@@ -244,6 +244,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalLimit *) {
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *) {
+  /*
   ExprMap &child_expr_map = children_expr_map_[0];
 
   auto cols_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
@@ -288,6 +289,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *) {
       new planner::OrderByPlan(sort_col_ids, sort_flags, column_ids));
   order_by_plan->AddChild(move(children_plans_[0]));
   output_plan_ = move(order_by_plan);
+   */
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalHashGroupBy *op) {
