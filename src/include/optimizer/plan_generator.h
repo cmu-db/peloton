@@ -42,7 +42,7 @@ class PlanGenerator : public OperatorVisitor {
       std::vector<expression::AbstractExpression *> required_cols,
       std::vector<expression::AbstractExpression *> output_cols,
       std::vector<std::unique_ptr<planner::AbstractPlan>> &children_plans,
-      std::vector<ExprMap *> children_expr_map);
+      std::vector<ExprMap> children_expr_map);
 
   void Visit(const DummyScan *) override;
 
@@ -99,7 +99,7 @@ class PlanGenerator : public OperatorVisitor {
   std::vector<expression::AbstractExpression *> required_cols_;
   std::vector<expression::AbstractExpression *> output_cols_;
   std::vector<std::unique_ptr<planner::AbstractPlan>> children_plans_;
-  std::vector<ExprMap *> children_expr_map_;
+  std::vector<ExprMap> children_expr_map_;
   std::unique_ptr<planner::AbstractPlan> output_plan_;
 };
 

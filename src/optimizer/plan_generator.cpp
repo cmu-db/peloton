@@ -49,12 +49,12 @@ unique_ptr<planner::AbstractPlan> PlanGenerator::ConvertOpExpression(
     vector<expression::AbstractExpression *> required_cols,
     vector<expression::AbstractExpression *> output_cols,
     vector<unique_ptr<planner::AbstractPlan>> &children_plans,
-    vector<ExprMap *> children_expr_map) {
+    vector<ExprMap> children_expr_map) {
   required_props_ = required_props;
   required_cols_ = required_cols;
   output_cols_ = output_cols;
   children_plans_ = move(children_plans);
-  children_expr_map_ = children_expr_map;
+  children_expr_map_ = move(children_expr_map);
   op->Op().Accept(this);
   return move(output_plan_);
 }

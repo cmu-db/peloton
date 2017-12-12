@@ -861,11 +861,7 @@ enum class FKConstrActionType {
   SETDEFAULT = 4
 };
 
-enum class FKConstrMatchType {
-  SIMPLE = 0,
-  PARTIAL = 1,
-  FULL = 2
-};
+enum class FKConstrMatchType { SIMPLE = 0, PARTIAL = 1, FULL = 2 };
 
 //===--------------------------------------------------------------------===//
 // Set Operation Types
@@ -937,49 +933,48 @@ typedef enum LayoutType {
 //===--------------------------------------------------------------------===//
 
 enum class TriggerType {
-  BEFORE_INSERT_ROW       = TRIGGER_TYPE_BEFORE | TRIGGER_TYPE_INSERT |
-                            TRIGGER_TYPE_ROW,
-  BEFORE_INSERT_STATEMENT = TRIGGER_TYPE_BEFORE | TRIGGER_TYPE_INSERT |
-                            TRIGGER_TYPE_STATEMENT,
-  BEFORE_UPDATE_ROW       = TRIGGER_TYPE_BEFORE | TRIGGER_TYPE_UPDATE |
-                            TRIGGER_TYPE_ROW,
-  BEFORE_UPDATE_STATEMENT = TRIGGER_TYPE_BEFORE | TRIGGER_TYPE_UPDATE |
-                            TRIGGER_TYPE_STATEMENT,
-  BEFORE_DELETE_ROW       = TRIGGER_TYPE_BEFORE | TRIGGER_TYPE_DELETE |
-                            TRIGGER_TYPE_ROW,
-  BEFORE_DELETE_STATEMENT = TRIGGER_TYPE_BEFORE | TRIGGER_TYPE_DELETE |
-                            TRIGGER_TYPE_STATEMENT,
-  AFTER_INSERT_ROW        = TRIGGER_TYPE_AFTER | TRIGGER_TYPE_INSERT |
-                            TRIGGER_TYPE_ROW,
-  AFTER_INSERT_STATEMENT  = TRIGGER_TYPE_AFTER | TRIGGER_TYPE_INSERT |
-                            TRIGGER_TYPE_STATEMENT,
-  AFTER_UPDATE_ROW        = TRIGGER_TYPE_AFTER | TRIGGER_TYPE_UPDATE |
-                            TRIGGER_TYPE_ROW,
-  AFTER_UPDATE_STATEMENT  = TRIGGER_TYPE_AFTER | TRIGGER_TYPE_UPDATE |
-                            TRIGGER_TYPE_STATEMENT,
-  AFTER_DELETE_ROW        = TRIGGER_TYPE_AFTER | TRIGGER_TYPE_DELETE |
-                            TRIGGER_TYPE_ROW,
-  AFTER_DELETE_STATEMENT  = TRIGGER_TYPE_AFTER | TRIGGER_TYPE_DELETE |
-                            TRIGGER_TYPE_STATEMENT,
-  ON_COMMIT_INSERT_ROW        = TRIGGER_TYPE_COMMIT | TRIGGER_TYPE_INSERT |
-                                TRIGGER_TYPE_ROW,
-  ON_COMMIT_INSERT_STATEMENT  = TRIGGER_TYPE_COMMIT | TRIGGER_TYPE_INSERT |
-                                TRIGGER_TYPE_STATEMENT,
-  ON_COMMIT_UPDATE_ROW        = TRIGGER_TYPE_COMMIT | TRIGGER_TYPE_UPDATE |
-                                TRIGGER_TYPE_ROW,
-  ON_COMMIT_UPDATE_STATEMENT  = TRIGGER_TYPE_COMMIT | TRIGGER_TYPE_UPDATE |
-                                TRIGGER_TYPE_STATEMENT,
-  ON_COMMIT_DELETE_ROW        = TRIGGER_TYPE_COMMIT | TRIGGER_TYPE_DELETE |
-                                TRIGGER_TYPE_ROW,
-  ON_COMMIT_DELETE_STATEMENT  = TRIGGER_TYPE_COMMIT | TRIGGER_TYPE_DELETE |
-                                TRIGGER_TYPE_STATEMENT,
+  BEFORE_INSERT_ROW =
+      TRIGGER_TYPE_BEFORE | TRIGGER_TYPE_INSERT | TRIGGER_TYPE_ROW,
+  BEFORE_INSERT_STATEMENT =
+      TRIGGER_TYPE_BEFORE | TRIGGER_TYPE_INSERT | TRIGGER_TYPE_STATEMENT,
+  BEFORE_UPDATE_ROW =
+      TRIGGER_TYPE_BEFORE | TRIGGER_TYPE_UPDATE | TRIGGER_TYPE_ROW,
+  BEFORE_UPDATE_STATEMENT =
+      TRIGGER_TYPE_BEFORE | TRIGGER_TYPE_UPDATE | TRIGGER_TYPE_STATEMENT,
+  BEFORE_DELETE_ROW =
+      TRIGGER_TYPE_BEFORE | TRIGGER_TYPE_DELETE | TRIGGER_TYPE_ROW,
+  BEFORE_DELETE_STATEMENT =
+      TRIGGER_TYPE_BEFORE | TRIGGER_TYPE_DELETE | TRIGGER_TYPE_STATEMENT,
+  AFTER_INSERT_ROW =
+      TRIGGER_TYPE_AFTER | TRIGGER_TYPE_INSERT | TRIGGER_TYPE_ROW,
+  AFTER_INSERT_STATEMENT =
+      TRIGGER_TYPE_AFTER | TRIGGER_TYPE_INSERT | TRIGGER_TYPE_STATEMENT,
+  AFTER_UPDATE_ROW =
+      TRIGGER_TYPE_AFTER | TRIGGER_TYPE_UPDATE | TRIGGER_TYPE_ROW,
+  AFTER_UPDATE_STATEMENT =
+      TRIGGER_TYPE_AFTER | TRIGGER_TYPE_UPDATE | TRIGGER_TYPE_STATEMENT,
+  AFTER_DELETE_ROW =
+      TRIGGER_TYPE_AFTER | TRIGGER_TYPE_DELETE | TRIGGER_TYPE_ROW,
+  AFTER_DELETE_STATEMENT =
+      TRIGGER_TYPE_AFTER | TRIGGER_TYPE_DELETE | TRIGGER_TYPE_STATEMENT,
+  ON_COMMIT_INSERT_ROW =
+      TRIGGER_TYPE_COMMIT | TRIGGER_TYPE_INSERT | TRIGGER_TYPE_ROW,
+  ON_COMMIT_INSERT_STATEMENT =
+      TRIGGER_TYPE_COMMIT | TRIGGER_TYPE_INSERT | TRIGGER_TYPE_STATEMENT,
+  ON_COMMIT_UPDATE_ROW =
+      TRIGGER_TYPE_COMMIT | TRIGGER_TYPE_UPDATE | TRIGGER_TYPE_ROW,
+  ON_COMMIT_UPDATE_STATEMENT =
+      TRIGGER_TYPE_COMMIT | TRIGGER_TYPE_UPDATE | TRIGGER_TYPE_STATEMENT,
+  ON_COMMIT_DELETE_ROW =
+      TRIGGER_TYPE_COMMIT | TRIGGER_TYPE_DELETE | TRIGGER_TYPE_ROW,
+  ON_COMMIT_DELETE_STATEMENT =
+      TRIGGER_TYPE_COMMIT | TRIGGER_TYPE_DELETE | TRIGGER_TYPE_STATEMENT,
 };
 
 const int TRIGGER_TYPE_MAX = TRIGGER_TYPE_ROW | TRIGGER_TYPE_STATEMENT |
                              TRIGGER_TYPE_BEFORE | TRIGGER_TYPE_AFTER |
-                             TRIGGER_TYPE_COMMIT |
-                             TRIGGER_TYPE_INSERT | TRIGGER_TYPE_DELETE |
-                             TRIGGER_TYPE_UPDATE;
+                             TRIGGER_TYPE_COMMIT | TRIGGER_TYPE_INSERT |
+                             TRIGGER_TYPE_DELETE | TRIGGER_TYPE_UPDATE;
 
 //===--------------------------------------------------------------------===//
 // Statistics Types
@@ -1304,11 +1299,8 @@ enum class RuleType : uint32_t {
   COMBINE_CONSECUTIVE_FILTER,
   EMBED_FILTER_INTO_GET,
 
-
   // Place holder to generate number of rules compile time
   NUM_RULES
-
-
 
 };
 
@@ -1320,20 +1312,21 @@ class ExprEqualCmp;
 
 // Augment abstract expression with a table alias set
 struct AnnotatedExpression {
-  AnnotatedExpression(
-      std::shared_ptr<expression::AbstractExpression> i_expr,
-      std::unordered_set<std::string>& i_set)
+  AnnotatedExpression(std::shared_ptr<expression::AbstractExpression> i_expr,
+                      std::unordered_set<std::string> &i_set)
       : expr(i_expr), table_alias_set(i_set) {}
-  AnnotatedExpression(const AnnotatedExpression& mt_expr)
+  AnnotatedExpression(const AnnotatedExpression &mt_expr)
       : expr(mt_expr.expr), table_alias_set(mt_expr.table_alias_set) {}
   std::shared_ptr<expression::AbstractExpression> expr;
   std::unordered_set<std::string> table_alias_set;
 };
 
 typedef std::vector<AnnotatedExpression> MultiTablePredicates;
-typedef std::unordered_map<std::string,
-                           std::vector<std::shared_ptr<expression::AbstractExpression>>> SingleTablePredicatesMap;
+typedef std::unordered_map<
+    std::string, std::vector<std::shared_ptr<expression::AbstractExpression>>>
+    SingleTablePredicatesMap;
 
+// TODO(boweic): use raw ptr
 // Mapping of Expression -> Column Offset created by operator
 typedef std::unordered_map<std::shared_ptr<expression::AbstractExpression>,
                            unsigned, expression::ExprHasher,
@@ -1342,8 +1335,6 @@ typedef std::unordered_map<std::shared_ptr<expression::AbstractExpression>,
 typedef std::unordered_set<std::shared_ptr<expression::AbstractExpression>,
                            expression::ExprHasher,
                            expression::ExprEqualCmp> ExprSet;
-
-
 
 //===--------------------------------------------------------------------===//
 // Wire protocol typedefs

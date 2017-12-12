@@ -40,12 +40,11 @@ class Transaction;
 namespace optimizer {
 
 struct QueryInfo {
-  QueryInfo(
-      std::vector<expression::AbstractExpression*>& exprs,
-      std::shared_ptr<PropertySet>& props)
+  QueryInfo(std::vector<expression::AbstractExpression *> &exprs,
+            std::shared_ptr<PropertySet> &props)
       : output_exprs(std::move(exprs)), physical_props(props) {}
 
-  std::vector<expression::AbstractExpression*> output_exprs;
+  std::vector<expression::AbstractExpression *> output_exprs;
   std::shared_ptr<PropertySet> physical_props;
 };
 
@@ -69,7 +68,8 @@ class Optimizer : public AbstractOptimizer {
       const std::string default_database_name,
       concurrency::Transaction *txn) override;
 
-  void OptimizeLoop(int root_group_id, std::shared_ptr<PropertySet> required_props);
+  void OptimizeLoop(int root_group_id,
+                    std::shared_ptr<PropertySet> required_props);
 
   void Reset() override;
 
@@ -109,7 +109,8 @@ class Optimizer : public AbstractOptimizer {
    * return: the corresponding planner plan
    */
   std::unique_ptr<planner::AbstractPlan> OptimizerPlanToPlannerPlan(
-      std::shared_ptr<OperatorExpression> plan, std::shared_ptr<PropertySet> &requirements,
+      std::shared_ptr<OperatorExpression> plan,
+      std::shared_ptr<PropertySet> &requirements,
       std::vector<std::shared_ptr<PropertySet>> &required_input_props,
       std::vector<std::unique_ptr<planner::AbstractPlan>> &children_plans,
       std::vector<ExprMap> &children_expr_map, ExprMap *output_expr_map);
@@ -125,8 +126,8 @@ class Optimizer : public AbstractOptimizer {
    * return: the lowest cost tree of physical plan nodes
    */
   std::unique_ptr<planner::AbstractPlan> ChooseBestPlan(
-      GroupID id, std::shared_ptr<PropertySet> requirements, ExprMap *output_expr_map);
-
+      GroupID id, std::shared_ptr<PropertySet> required_props,
+      std::vector<expression::AbstractExpression *> required_cols);
 
   /* OptimizeGroup - explore the space of plans for the group to produce the
    *     most optimal physical operator tree and place it in the memo. After
@@ -137,7 +138,7 @@ class Optimizer : public AbstractOptimizer {
    * requirements: the set of requirements the optimal physical operator tree
    *     must fulfill
    */
-//  void OptimizeGroup(GroupID id, PropertySet requirements);
+  //  void OptimizeGroup(GroupID id, PropertySet requirements);
 
   /* OptimizeExpression - produce all equivalent logical and physical
    *     operators for this expression by applying transformation rules that
@@ -150,25 +151,26 @@ class Optimizer : public AbstractOptimizer {
    * requirements: the set of requirements the most optimal expression produced
    *     must fulfill
    */
-//  void OptimizeExpression(std::shared_ptr<GroupExpression> gexpr,
-//                          PropertySet requirements);
+  //  void OptimizeExpression(std::shared_ptr<GroupExpression> gexpr,
+  //                          PropertySet requirements);
 
   /*
    * Get alternatives of the <output properties, input child property list> pair
    */
-//  std::vector<std::pair<PropertySet, std::vector<PropertySet>>>
-//  DeriveChildProperties(std::shared_ptr<GroupExpression> gexpr,
-//                        PropertySet requirements);
+  //  std::vector<std::pair<PropertySet, std::vector<PropertySet>>>
+  //  DeriveChildProperties(std::shared_ptr<GroupExpression> gexpr,
+  //                        PropertySet requirements);
 
   /*
    * Derive the cost and stats for a group expression given the input/output
    * properties and the children's stats and costs
    */
-//  void DeriveCostAndStats(std::shared_ptr<GroupExpression> gexpr,
-//                          const PropertySet &output_properties,
-//                          const std::vector<PropertySet> &input_properties_list,
-//                          std::vector<std::shared_ptr<Stats>> child_stats,
-//                          std::vector<double> child_costs);
+  //  void DeriveCostAndStats(std::shared_ptr<GroupExpression> gexpr,
+  //                          const PropertySet &output_properties,
+  //                          const std::vector<PropertySet>
+  //                          &input_properties_list,
+  //                          std::vector<std::shared_ptr<Stats>> child_stats,
+  //                          std::vector<double> child_costs);
 
   /* EnforceProperty - Enforce a physical property to a gruop expression.
    * Typically this will lead to adding another physical operator on top of the
@@ -179,15 +181,16 @@ class Optimizer : public AbstractOptimizer {
    *
    * return: the new group expression that has the enforced property
    */
-//  std::shared_ptr<GroupExpression> EnforceProperty(
-//      std::shared_ptr<GroupExpression> gexpr, PropertySet &output_properties,
-//      const std::shared_ptr<Property> property, PropertySet &requirements);
+  //  std::shared_ptr<GroupExpression> EnforceProperty(
+  //      std::shared_ptr<GroupExpression> gexpr, PropertySet
+  //      &output_properties,
+  //      const std::shared_ptr<Property> property, PropertySet &requirements);
 
   /* ExploreGroup - exploration equivalent of OptimizeGroup.
    *
    * id: the group to explore
    */
-//  void ExploreGroup(GroupID id);
+  //  void ExploreGroup(GroupID id);
 
   /* ExploreExpression - similar to OptimizeExpression except that it does not
    *     cost new physical operator expressions. The purpose of exploration is
@@ -196,45 +199,46 @@ class Optimizer : public AbstractOptimizer {
    *
    * gexpr: the group expression to apply rules to
    */
-//  void ExploreExpression(std::shared_ptr<GroupExpression> gexpr);
+  //  void ExploreExpression(std::shared_ptr<GroupExpression> gexpr);
 
   /* ImplementGroup - Implement physical operators of a group
    *
    * id: the group to explore
    */
-//  void ImplementGroup(GroupID id);
+  //  void ImplementGroup(GroupID id);
 
   /* ImplementExpression - Implement physical operators of a group expression
    *
    * gexpr: the group expression to apply rules to
    */
-//  void ImplementExpression(std::shared_ptr<GroupExpression> gexpr);
+  //  void ImplementExpression(std::shared_ptr<GroupExpression> gexpr);
 
   //////////////////////////////////////////////////////////////////////////////
   /// Rule application
-//  std::vector<std::shared_ptr<GroupExpression>> TransformExpression(
-//      std::shared_ptr<GroupExpression> gexpr, const Rule &rule);
+  //  std::vector<std::shared_ptr<GroupExpression>> TransformExpression(
+  //      std::shared_ptr<GroupExpression> gexpr, const Rule &rule);
 
   //////////////////////////////////////////////////////////////////////////////
   /// Memo insertion
-//  std::shared_ptr<GroupExpression> MakeGroupExpression(
-//      std::shared_ptr<OperatorExpression> expr);
+  //  std::shared_ptr<GroupExpression> MakeGroupExpression(
+  //      std::shared_ptr<OperatorExpression> expr);
 
-//  std::vector<GroupID> MemoTransformedChildren(
-//      std::shared_ptr<OperatorExpression> expr);
+  //  std::vector<GroupID> MemoTransformedChildren(
+  //      std::shared_ptr<OperatorExpression> expr);
 
-//  GroupID MemoTransformedExpression(std::shared_ptr<OperatorExpression> expr);
+  //  GroupID MemoTransformedExpression(std::shared_ptr<OperatorExpression>
+  //  expr);
 
-//  bool RecordTransformedExpression(std::shared_ptr<OperatorExpression> expr,
-//                                   std::shared_ptr<GroupExpression> &gexpr);
+  //  bool RecordTransformedExpression(std::shared_ptr<OperatorExpression> expr,
+  //                                   std::shared_ptr<GroupExpression> &gexpr);
 
-//  bool RecordTransformedExpression(std::shared_ptr<OperatorExpression> expr,
-//                                   std::shared_ptr<GroupExpression> &gexpr,
-//                                   GroupID target_group);
+  //  bool RecordTransformedExpression(std::shared_ptr<OperatorExpression> expr,
+  //                                   std::shared_ptr<GroupExpression> &gexpr,
+  //                                   GroupID target_group);
 
   //////////////////////////////////////////////////////////////////////////////
   /// Other Helper functions
-//  Property *GenerateNewPropertyCols(PropertySet requirements);
+  //  Property *GenerateNewPropertyCols(PropertySet requirements);
 
   //////////////////////////////////////////////////////////////////////////////
   /// Metadata

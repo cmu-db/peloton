@@ -41,7 +41,7 @@ class InputColumnDeriver : public OperatorVisitor {
             std::vector<std::vector<expression::AbstractExpression *>>>
   DeriveInputColumns(
       GroupExpression *gexpr,
-      std::vector<expression::AbstractExpression *> required_cols_, Memo *memo);
+      std::vector<expression::AbstractExpression *> required_cols, Memo *memo);
 
   void Visit(const DummyScan *) override;
 

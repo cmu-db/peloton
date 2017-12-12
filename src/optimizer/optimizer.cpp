@@ -26,6 +26,8 @@
 #include "optimizer/properties.h"
 #include "optimizer/property_enforcer.h"
 #include "optimizer/query_to_operator_transformer.h"
+#include "optimizer/input_column_deriver.h"
+#include "optimizer/plan_generator.h"
 #include "optimizer/rule_impls.h"
 #include "optimizer/optimizer_task_pool.h"
 #include "optimizer/optimize_context.h"
@@ -59,19 +61,22 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 Optimizer::Optimizer() {}
 
-void Optimizer::OptimizeLoop(int root_group_id, std::shared_ptr<PropertySet> required_props) {
-  std::shared_ptr<OptimizeContext> root_context = std::make_shared<OptimizeContext>(&metadata_, required_props);
+void Optimizer::OptimizeLoop(int root_group_id,
+                             std::shared_ptr<PropertySet> required_props) {
+  std::shared_ptr<OptimizeContext> root_context =
+      std::make_shared<OptimizeContext>(&metadata_, required_props);
   auto task_stack = std::make_unique<OptimizerTaskStack>();
   metadata_.SetTaskPool(task_stack.get());
 
   // Head group expression with the root group as its only child.
   // This object is only used for simplified the logics for the rewrite phase
-  std::vector<GroupID> head_child_groups = { root_group_id };
+  std::vector<GroupID> head_child_groups = {root_group_id};
   std::shared_ptr<GroupExpression> head_gexpr =
       std::make_shared<GroupExpression>(Operator(), head_child_groups);
 
   // Perform optimization after the rewrite
-  task_stack->Push(new OptimizeGroup(metadata_.memo.GetGroupByID(root_group_id), root_context));
+  task_stack->Push(new OptimizeGroup(metadata_.memo.GetGroupByID(root_group_id),
+                                     root_context));
   // Perform rewrite first
   task_stack->Push(new RewriteExpression(head_gexpr.get(), 0, root_context));
 
@@ -80,7 +85,6 @@ void Optimizer::OptimizeLoop(int root_group_id, std::shared_ptr<PropertySet> req
     auto task = task_stack->Pop();
     task->execute();
   }
-
 }
 
 shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
@@ -114,8 +118,8 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   OptimizeLoop(root_id, query_info.physical_props);
 
   try {
-    ExprMap output_expr_map;
-    auto best_plan = ChooseBestPlan(root_id, query_info.physical_props, &output_expr_map);
+    auto best_plan = ChooseBestPlan(root_id, query_info.physical_props,
+                                    query_info.output_exprs);
     if (best_plan == nullptr) return nullptr;
     // Reset memo after finishing the optimization
     Reset();
@@ -220,36 +224,37 @@ shared_ptr<GroupExpression> Optimizer::InsertQueryTree(
 }
 
 QueryInfo Optimizer::GetQueryInfo(parser::SQLStatement *tree) {
-  auto GetQueryInfoHelper = [](
-      std::vector<unique_ptr<expression::AbstractExpression>>& select_list,
-      std::unique_ptr<parser::OrderDescription>& order_info,
-      std::vector<expression::AbstractExpression*>& output_exprs,
-      std::shared_ptr<PropertySet>& physical_props) {
-    // Extract output column
-    for (auto &expr : select_list)
-      output_exprs.push_back(expr.get());
+  auto GetQueryInfoHelper =
+      [](std::vector<unique_ptr<expression::AbstractExpression>> &select_list,
+         std::unique_ptr<parser::OrderDescription> &order_info,
+         std::vector<expression::AbstractExpression *> &output_exprs,
+         std::shared_ptr<PropertySet> &physical_props) {
+        // Extract output column
+        for (auto &expr : select_list) output_exprs.push_back(expr.get());
 
-    // Extract sort property
-    if (order_info != nullptr) {
-      std::vector<expression::AbstractExpression *> sort_exprs;
-      std::vector<bool> sort_ascending;
-      for (auto &expr : order_info->exprs) {
-        sort_exprs.push_back(expr.get());
-      }
-      for (auto &type : order_info->types) {
-        sort_ascending.push_back(type == parser::kOrderAsc);
-      }
-      if (!sort_exprs.empty())
-        physical_props->AddProperty(std::make_shared<PropertySort>(sort_exprs, sort_ascending));
-    }
-  };
+        // Extract sort property
+        if (order_info != nullptr) {
+          std::vector<expression::AbstractExpression *> sort_exprs;
+          std::vector<bool> sort_ascending;
+          for (auto &expr : order_info->exprs) {
+            sort_exprs.push_back(expr.get());
+          }
+          for (auto &type : order_info->types) {
+            sort_ascending.push_back(type == parser::kOrderAsc);
+          }
+          if (!sort_exprs.empty())
+            physical_props->AddProperty(
+                std::make_shared<PropertySort>(sort_exprs, sort_ascending));
+        }
+      };
 
-  std::vector<expression::AbstractExpression*> output_exprs;
+  std::vector<expression::AbstractExpression *> output_exprs;
   std::shared_ptr<PropertySet> physical_props;
-  switch(tree->GetType()) {
+  switch (tree->GetType()) {
     case StatementType::SELECT: {
       auto select = reinterpret_cast<parser::SelectStatement *>(tree);
-      GetQueryInfoHelper(select->select_list, select->order, output_exprs, physical_props);
+      GetQueryInfoHelper(select->select_list, select->order, output_exprs,
+                         physical_props);
       break;
     }
     case StatementType::INSERT: {
@@ -259,14 +264,16 @@ QueryInfo Optimizer::GetQueryInfo(parser::SQLStatement *tree) {
                            output_exprs, physical_props);
       break;
     }
-    default:;
+    default:
+      ;
   }
 
   return QueryInfo(output_exprs, physical_props);
 }
 
 unique_ptr<planner::AbstractPlan> Optimizer::OptimizerPlanToPlannerPlan(
-    shared_ptr<OperatorExpression> plan, std::shared_ptr<PropertySet> &requirements,
+    shared_ptr<OperatorExpression> plan,
+    std::shared_ptr<PropertySet> &requirements,
     vector<std::shared_ptr<PropertySet>> &required_input_props,
     vector<unique_ptr<planner::AbstractPlan>> &children_plans,
     vector<ExprMap> &children_expr_map, ExprMap *output_expr_map) {
@@ -277,16 +284,24 @@ unique_ptr<planner::AbstractPlan> Optimizer::OptimizerPlanToPlannerPlan(
 }
 
 unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
-    GroupID id, std::shared_ptr<PropertySet> requirements, ExprMap *output_expr_map) {
+    GroupID id, std::shared_ptr<PropertySet> required_props,
+    std::vector<expression::AbstractExpression *> required_cols) {
   Group *group = metadata_.memo.GetGroupByID(id);
-  auto gexpr = group->GetBestExpression(requirements);
+  auto gexpr = group->GetBestExpression(required_props);
 
   LOG_TRACE("Choosing best plan for group %d with op %s", gexpr->GetGroupID(),
             gexpr->Op().name().c_str());
 
   vector<GroupID> child_groups = gexpr->GetChildGroupIDs();
-  auto required_input_props = gexpr->GetInputProperties(requirements);
+  auto required_input_props = gexpr->GetInputProperties(required_props);
   PL_ASSERT(required_input_props.size() == child_groups.size());
+  // Firstly derive input/output columns
+  InputColumnDeriver deriver;
+  auto output_input_cols_pair =
+      deriver.DeriveInputColumns(gexpr, required_cols, &metadata_.memo);
+  auto &output_cols = output_input_cols_pair.first;
+  auto &input_cols = output_input_cols_pair.second;
+  PL_ASSERT(input_cols.size() == required_input_props.size());
 
   // Derive chidren plans first because they are useful in the derivation of
   // root plan. Also keep propagate expression to column offset mapping
@@ -294,21 +309,26 @@ unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
   vector<ExprMap> children_expr_map;
   for (size_t i = 0; i < child_groups.size(); ++i) {
     ExprMap child_expr_map;
-    auto child_plan = ChooseBestPlan(child_groups[i], required_input_props[i],
-                                     &child_expr_map);
-    if (child_plan) {
-      children_plans.push_back(move(child_plan));
-      children_expr_map.push_back(move(child_expr_map));
+    for (unsigned offset = 0; offset < input_cols[i].size(); ++offset) {
+      // TODO(boweic) : use raw ptr
+      child_expr_map[shared_ptr<expression::AbstractExpression>(
+          input_cols[i][offset])] = offset;
     }
+    auto child_plan =
+        ChooseBestPlan(child_groups[i], required_input_props[i], input_cols[i]);
+    children_expr_map.push_back(move(child_expr_map));
+    PL_ASSERT(child_plan != nullptr);
+    children_plans.push_back(move(child_plan));
   }
 
   // Derive root plan
   shared_ptr<OperatorExpression> op =
       make_shared<OperatorExpression>(gexpr->Op());
 
-  auto plan = OptimizerPlanToPlannerPlan(op, requirements, required_input_props,
-                                         children_plans, children_expr_map,
-                                         output_expr_map);
+  PlanGenerator generator;
+  auto plan = generator.ConvertOpExpression(op, required_props, required_cols,
+                                            output_cols, children_plans,
+                                            children_expr_map);
 
   LOG_TRACE("Finish Choosing best plan for group %d", id);
   return plan;
