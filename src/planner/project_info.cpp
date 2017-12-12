@@ -140,6 +140,9 @@ void ProjectInfo::PerformRebinding(
     // Setup the result type of the derived attribute
     derived_attribute.attribute_info.type = expr->ResultType();
 
+    // Setup the attribute id of the derived attribute
+    derived_attribute.attribute_info.attribute_id = dest_col_id;
+
     const auto *dest_ai = &derived_attribute.attribute_info;
     LOG_DEBUG("Target: Dest col %u is bound to AI %p", dest_col_id, dest_ai);
     output_context.BindNew(dest_col_id, dest_ai);
@@ -173,6 +176,97 @@ std::string ProjectInfo::Debug() const {
   }
 
   return (buffer.str());
+}
+
+hash_t ProjectInfo::Hash(const planner::DerivedAttribute &attribute) const {
+  hash_t hash = HashUtil::Hash(&attribute.attribute_info.type.type_id);
+
+  hash = HashUtil::CombineHashes(hash,
+      HashUtil::Hash(&attribute.attribute_info.attribute_id));
+
+  return HashUtil::CombineHashes(hash, attribute.expr->Hash());
+}
+
+hash_t ProjectInfo::Hash() const {
+  hash_t hash = 0;
+
+  for (size_t i = 0; i < target_list_.size(); i++) {
+    Target t = target_list_[i];
+
+    hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&t.first));
+    hash = HashUtil::CombineHashes(hash, Hash(t.second));
+  }
+
+  for (size_t i = 0; i < direct_map_list_.size(); i++) {
+    DirectMap dm = direct_map_list_[i];
+
+    hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&dm.first));
+    hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&dm.second.first));
+    hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&dm.second.second));
+  }
+
+  return hash;
+}
+
+bool ProjectInfo::AreEqual(const planner::DerivedAttribute &A,
+                           const planner::DerivedAttribute &B) const {
+  if (A.attribute_info.type != B.attribute_info.type)
+    return false;
+
+  if (A.attribute_info.attribute_id != B.attribute_info.attribute_id)
+    return false;
+
+  return *A.expr == *B.expr;
+}
+
+bool ProjectInfo::operator==(const ProjectInfo &rhs) const {
+  // TargetList
+  size_t tl_size = target_list_.size();
+  if (tl_size != rhs.GetTargetList().size())
+    return false;
+
+  for (size_t i = 0; i < tl_size; i++) {
+    Target t = target_list_[i];
+    Target other_t = rhs.GetTargetList()[i];
+    if (t.first != other_t.first)
+      return false;
+    if (!AreEqual(t.second, other_t.second))
+      return false;
+  }
+
+  // DirectMapList
+  size_t dml_size = direct_map_list_.size();
+  if (dml_size != rhs.GetDirectMapList().size())
+    return false;
+
+  for (size_t i = 0; i < dml_size; i++) {
+    DirectMap dm = direct_map_list_[i];
+    DirectMap other_dm = rhs.GetDirectMapList()[i];
+    if (dm.first != other_dm.first)
+      return false;
+    else if (dm.second.first != other_dm.second.first)
+      return false;
+    else if (dm.second.second != other_dm.second.second)
+      return false;
+  }
+
+  return true;
+}
+
+void ProjectInfo::VisitParameters(
+    codegen::QueryParametersMap &map, std::vector<peloton::type::Value> &values,
+    const std::vector<peloton::type::Value> &values_from_user) {
+  if (isNonTrivial()) {
+
+    for (auto &target : GetTargetList()) {
+      const auto &derived_attribute = target.second;
+      PL_ASSERT(derived_attribute.expr != nullptr);
+
+      auto *expr =
+          const_cast<expression::AbstractExpression *>(derived_attribute.expr);
+      expr->VisitParameters(map, values, values_from_user);
+    }
+  }
 }
 
 }  // namespace planner

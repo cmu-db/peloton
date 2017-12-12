@@ -32,7 +32,7 @@
 namespace peloton {
 namespace tcop {
 
-TrafficCop::TrafficCop():is_queuing_(false) {
+TrafficCop::TrafficCop():is_queuing_(false), rows_affected_(0) {
   LOG_TRACE("Starting a new TrafficCop");
   optimizer_.reset(new optimizer::Optimizer);
 //  result_ = ResultType::QUEUING;
@@ -48,6 +48,9 @@ void TrafficCop::Reset() {
   // clear out the stack
   swap(tcop_txn_state_, new_tcop_txn_state);
   optimizer_->Reset();
+  results_.clear();
+  param_values_.clear();
+  setRowsAffected(0);
 //  result_ = ResultType::QUEUING;
 }
 
@@ -134,60 +137,16 @@ ResultType TrafficCop::AbortQueryHelper() {
   }
 }
 
-ResultType TrafficCop::ExecuteStatement(
-    const std::shared_ptr<Statement> &statement,
-    const std::vector<type::Value> &params, UNUSED_ATTRIBUTE const bool unnamed,
-    std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
-    const std::vector<int> &result_format, std::vector<StatementResult> &result,
-    int &rows_changed, UNUSED_ATTRIBUTE std::string &error_message,
-    const size_t thread_id UNUSED_ATTRIBUTE) {
-  if (settings::SettingsManager::GetInt(settings::SettingId::stats_mode) !=
-      STATS_TYPE_INVALID) {
-    stats::BackendStatsContext::GetInstance()->InitQueryMetric(statement,
-                                                               param_stats);
-  }
-  LOG_TRACE("Execute Statement of name: %s",
-            statement->GetStatementName().c_str());
-  LOG_TRACE("Execute Statement of query: %s",
-            statement->GetQueryString().c_str());
-  LOG_TRACE("Execute Statement Plan:\n%s",
-            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
-  LOG_TRACE("Execute Statement Query Type: %s", statement->GetQueryTypeString().c_str());
-  LOG_TRACE("----QueryType: %d--------", (int)statement->GetQueryType());
-  try {
-    switch (statement->GetQueryType()) {
-      case QueryType::QUERY_BEGIN:
-        LOG_TRACE("QUERY_BEGIN");
-        return BeginQueryHelper(thread_id);
-      case QueryType::QUERY_COMMIT:
-        return CommitQueryHelper();
-      case QueryType::QUERY_ROLLBACK:
-        return AbortQueryHelper();
-      default:
-        ExecuteStatementPlan(statement->GetPlanTree(), params, result,
-                             result_format, thread_id);
-        if (is_queuing_) {
-          return ResultType::QUEUING;
-        }
-        // if in ExecuteStatementPlan, these is no need to queue task, like 'BEGIN', directly return result
-        return ExecuteStatementGetResult(rows_changed);
-    }
-  } catch (Exception &e) {
-    error_message = e.what();
-    return ResultType::FAILURE;
-  }
-}
-
-ResultType TrafficCop::ExecuteStatementGetResult(int &rows_changed) {
+ResultType TrafficCop::ExecuteStatementGetResult() {
   LOG_TRACE("Statement executed. Result: %s",
             ResultTypeToString(p_status_.m_result).c_str());
-  rows_changed = p_status_.m_processed;
-  LOG_TRACE("rows_changed %d", rows_changed);
+  setRowsAffected(p_status_.m_processed);
+  LOG_TRACE("rows_changed %d", p_status_.m_processed);
   is_queuing_ = false;
   return p_status_.m_result;
 }
 
-executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
+executor::ExecuteResult TrafficCop::ExecuteHelper(
     std::shared_ptr<planner::AbstractPlan> plan,
     const std::vector<type::Value> &params,
     std::vector<StatementResult> &result, const std::vector<int> &result_format,
@@ -196,7 +155,7 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
 
   auto &curr_state = GetCurrentTxnState();
   // check and begin txn here, partly because tests directly call
-  // ExecuteStatementPlan
+  // ExecuteHelper
   if (tcop_txn_state_.empty()) {
     // no active txn, single-statement txn
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -227,7 +186,7 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
     // otherwise, we have already aborted
     p_status_.m_result = ResultType::ABORTED;
   }
-  LOG_TRACE("Check Tcop_txn_state Size After ExecuteStatementPlan %lu", tcop_txn_state_.size());
+  LOG_TRACE("Check Tcop_txn_state Size After ExecuteHelper %lu", tcop_txn_state_.size());
   return p_status_;
 }
 
@@ -279,6 +238,139 @@ void TrafficCop::ExecuteStatementPlanGetResult() {
         }
     }
   }
+}
+
+void TrafficCop::GetDataTables(
+    parser::TableRef *from_table,
+    std::vector<storage::DataTable *> &target_tables) {
+  if (from_table == nullptr) return;
+
+  if (from_table->list.empty()) {
+    if (from_table->join == NULL) {
+      auto *target_table = catalog::Catalog::GetInstance()->GetTableWithName(
+          from_table->GetDatabaseName(), from_table->GetTableName(),
+          GetCurrentTxnState().first);
+      target_tables.push_back(target_table);
+    } else {
+      GetDataTables(from_table->join->left.get(), target_tables);
+      GetDataTables(from_table->join->right.get(), target_tables);
+    }
+  }
+
+  // Query has multiple tables. Recursively add all tables
+  else {
+    for (auto& table : from_table->list) {
+      GetDataTables(table.get(), target_tables);
+    }
+  }
+}
+
+std::vector<FieldInfo> TrafficCop::GenerateTupleDescriptor(
+    parser::SQLStatement *sql_stmt) {
+  std::vector<FieldInfo> tuple_descriptor;
+  if (sql_stmt->GetType() != StatementType::SELECT) return tuple_descriptor;
+  auto select_stmt = (parser::SelectStatement *)sql_stmt;
+
+  // TODO: this is a hack which I don't have time to fix now
+  // but it replaces a worse hack that was here before
+  // What should happen here is that plan nodes should store
+  // the schema of their expected results and here we should just read
+  // it and put it in the tuple descriptor
+
+  // Get the columns information and set up
+  // the columns description for the returned results
+  // Set up the table
+  std::vector<storage::DataTable *> target_tables;
+
+  // Check if query only has one Table
+  // Example : SELECT * FROM A;
+  GetDataTables(select_stmt->from_table.get(), target_tables);
+
+  int count = 0;
+  for (auto& expr : select_stmt->select_list) {
+    count++;
+    if (expr->GetExpressionType() == ExpressionType::STAR) {
+      for (auto target_table : target_tables) {
+        // Get the columns of the table
+        auto &table_columns = target_table->GetSchema()->GetColumns();
+        for (auto column : table_columns) {
+          tuple_descriptor.push_back(
+              GetColumnFieldForValueType(column.GetName(), column.GetType()));
+        }
+      }
+    } else {
+      std::string col_name;
+      if (expr->alias.empty()) {
+        col_name = expr->expr_name_.empty()
+                       ? std::string("expr") + std::to_string(count)
+                       : expr->expr_name_;
+      } else {
+        col_name = expr->alias;
+      }
+      tuple_descriptor.push_back(
+          GetColumnFieldForValueType(col_name, expr->GetValueType()));
+    }
+  }
+
+  return tuple_descriptor;
+}
+// TODO: move it to postgres_protocal_handler.cpp
+FieldInfo TrafficCop::GetColumnFieldForValueType(std::string column_name,
+                                                 type::TypeId column_type) {
+  PostgresValueType field_type;
+  size_t field_size;
+  switch (column_type) {
+    case type::TypeId::BOOLEAN:
+    case type::TypeId::TINYINT: {
+      field_type = PostgresValueType::BOOLEAN;
+      field_size = 1;
+      break;
+    }
+    case type::TypeId::SMALLINT: {
+      field_type = PostgresValueType::SMALLINT;
+      field_size = 2;
+      break;
+    }
+    case type::TypeId::INTEGER: {
+      field_type = PostgresValueType::INTEGER;
+      field_size = 4;
+      break;
+    }
+    case type::TypeId::BIGINT: {
+      field_type = PostgresValueType::BIGINT;
+      field_size = 8;
+      break;
+    }
+    case type::TypeId::DECIMAL: {
+      field_type = PostgresValueType::DOUBLE;
+      field_size = 8;
+      break;
+    }
+    case type::TypeId::VARCHAR:
+    case type::TypeId::VARBINARY: {
+      field_type = PostgresValueType::TEXT;
+      field_size = 255;
+      break;
+    }
+    case type::TypeId::TIMESTAMP: {
+      field_type = PostgresValueType::TIMESTAMPS;
+      field_size = 64;  // FIXME: Bytes???
+      break;
+    }
+    default: {
+      // Type not Identified
+      LOG_ERROR("Unrecognized field type '%s' for field '%s'",
+                TypeIdToString(column_type).c_str(),
+                column_name.c_str());
+      field_type = PostgresValueType::TEXT;
+      field_size = 255;
+      break;
+    }
+  }
+  // HACK: Convert the type into a oid_t
+  // This ugly and I don't like it one bit...
+  return std::make_tuple(column_name, static_cast<oid_t>(field_type),
+                         field_size);
 }
 
 std::shared_ptr<Statement> TrafficCop::PrepareStatement(
@@ -373,179 +465,48 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   }
 }
 
-void TrafficCop::GetDataTables(
-    parser::TableRef *from_table,
-    std::vector<storage::DataTable *> &target_tables) {
-  if (from_table == nullptr) return;
-
-  if (from_table->list.empty()) {
-    if (from_table->join == NULL) {
-      auto *target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-          from_table->GetDatabaseName(), from_table->GetTableName(),
-          GetCurrentTxnState().first);
-      target_tables.push_back(target_table);
-    } else {
-      GetDataTables(from_table->join->left.get(), target_tables);
-      GetDataTables(from_table->join->right.get(), target_tables);
-    }
+ResultType TrafficCop::ExecuteStatement(
+    const std::shared_ptr<Statement> &statement,
+    const std::vector<type::Value> &params, UNUSED_ATTRIBUTE const bool unnamed,
+    std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
+    const std::vector<int> &result_format, std::vector<StatementResult> &result,
+    UNUSED_ATTRIBUTE std::string &error_message,
+    const size_t thread_id UNUSED_ATTRIBUTE) {
+  if (settings::SettingsManager::GetInt(settings::SettingId::stats_mode) !=
+      STATS_TYPE_INVALID) {
+    stats::BackendStatsContext::GetInstance()->InitQueryMetric(statement,
+                                                               param_stats);
   }
-
-  // Query has multiple tables. Recursively add all tables
-  else {
-    for (auto& table : from_table->list) {
-      GetDataTables(table.get(), target_tables);
-    }
-  }
-}
-
-std::vector<FieldInfo> TrafficCop::GenerateTupleDescriptor(
-    parser::SQLStatement *sql_stmt) {
-  std::vector<FieldInfo> tuple_descriptor;
-  if (sql_stmt->GetType() != StatementType::SELECT) return tuple_descriptor;
-  auto select_stmt = (parser::SelectStatement *)sql_stmt;
-
-  // TODO: this is a hack which I don't have time to fix now
-  // but it replaces a worse hack that was here before
-  // What should happen here is that plan nodes should store
-  // the schema of their expected results and here we should just read
-  // it and put it in the tuple descriptor
-
-  // Get the columns information and set up
-  // the columns description for the returned results
-  // Set up the table
-  std::vector<storage::DataTable *> target_tables;
-
-  // Check if query only has one Table
-  // Example : SELECT * FROM A;
-  GetDataTables(select_stmt->from_table.get(), target_tables);
-
-  int count = 0;
-  for (auto& expr : select_stmt->select_list) {
-    count++;
-    if (expr->GetExpressionType() == ExpressionType::STAR) {
-      for (auto target_table : target_tables) {
-        // Get the columns of the table
-        auto &table_columns = target_table->GetSchema()->GetColumns();
-        for (auto column : table_columns) {
-          tuple_descriptor.push_back(
-              GetColumnFieldForValueType(column.GetName(), column.GetType()));
+  LOG_TRACE("Execute Statement of name: %s",
+            statement->GetStatementName().c_str());
+  LOG_TRACE("Execute Statement of query: %s",
+            statement->GetQueryString().c_str());
+  LOG_TRACE("Execute Statement Plan:\n%s",
+            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
+  LOG_TRACE("Execute Statement Query Type: %s", statement->GetQueryTypeString().c_str());
+  LOG_TRACE("----QueryType: %d--------", (int)statement->GetQueryType());
+  try {
+    switch (statement->GetQueryType()) {
+      case QueryType::QUERY_BEGIN:
+        LOG_TRACE("QUERY_BEGIN");
+        return BeginQueryHelper(thread_id);
+      case QueryType::QUERY_COMMIT:
+        return CommitQueryHelper();
+      case QueryType::QUERY_ROLLBACK:
+        return AbortQueryHelper();
+      default:
+        ExecuteHelper(statement->GetPlanTree(), params, result,
+                      result_format, thread_id);
+        if (is_queuing_) {
+          return ResultType::QUEUING;
         }
-      }
-    } else {
-      std::string col_name;
-      if (expr->alias.empty()) {
-        col_name = expr->expr_name_.empty()
-                       ? std::string("expr") + std::to_string(count)
-                       : expr->expr_name_;
-      } else {
-        col_name = expr->alias;
-      }
-      tuple_descriptor.push_back(
-          GetColumnFieldForValueType(col_name, expr->GetValueType()));
+        // if in ExecuteHelper, these is no need to queue task, like 'BEGIN', directly return result
+        return ExecuteStatementGetResult();
     }
+  } catch (Exception &e) {
+    error_message = e.what();
+    return ResultType::FAILURE;
   }
-
-  return tuple_descriptor;
-}
-
-FieldInfo TrafficCop::GetColumnFieldForValueType(std::string column_name,
-                                                 type::TypeId column_type) {
-  PostgresValueType field_type;
-  size_t field_size;
-  switch (column_type) {
-    case type::TypeId::BOOLEAN:
-    case type::TypeId::TINYINT: {
-      field_type = PostgresValueType::BOOLEAN;
-      field_size = 1;
-      break;
-    }
-    case type::TypeId::SMALLINT: {
-      field_type = PostgresValueType::SMALLINT;
-      field_size = 2;
-      break;
-    }
-    case type::TypeId::INTEGER: {
-      field_type = PostgresValueType::INTEGER;
-      field_size = 4;
-      break;
-    }
-    case type::TypeId::BIGINT: {
-      field_type = PostgresValueType::BIGINT;
-      field_size = 8;
-      break;
-    }
-    case type::TypeId::DECIMAL: {
-      field_type = PostgresValueType::DOUBLE;
-      field_size = 8;
-      break;
-    }
-    case type::TypeId::VARCHAR:
-    case type::TypeId::VARBINARY: {
-      field_type = PostgresValueType::TEXT;
-      field_size = 255;
-      break;
-    }
-    case type::TypeId::TIMESTAMP: {
-      field_type = PostgresValueType::TIMESTAMPS;
-      field_size = 64;  // FIXME: Bytes???
-      break;
-    }
-    default: {
-      // Type not Identified
-      LOG_ERROR("Unrecognized field type '%s' for field '%s'",
-                TypeIdToString(column_type).c_str(),
-                column_name.c_str());
-      field_type = PostgresValueType::TEXT;
-      field_size = 255;
-      break;
-    }
-  }
-  // HACK: Convert the type into a oid_t
-  // This ugly and I don't like it one bit...
-  return std::make_tuple(column_name, static_cast<oid_t>(field_type),
-                         field_size);
-}
-
-FieldInfo TrafficCop::GetColumnFieldForAggregates(std::string name,
-                                                  ExpressionType expr_type) {
-  // For now we only return INT for (MAX , MIN)
-  // TODO: Check if column type is DOUBLE and return it for (MAX. MIN)
-
-  PostgresValueType field_type;
-  size_t field_size;
-  std::string field_name;
-
-  // Check the expression type and return the corresponding description
-  switch (expr_type) {
-    case ExpressionType::AGGREGATE_MAX:
-    case ExpressionType::AGGREGATE_MIN:
-    case ExpressionType::AGGREGATE_COUNT: {
-      field_type = PostgresValueType::INTEGER;
-      field_size = 4;
-      field_name = name;
-      break;
-    }
-    // Return a DOUBLE if the functiob is AVG
-    case ExpressionType::AGGREGATE_AVG: {
-      field_type = PostgresValueType::DOUBLE;
-      field_size = 8;
-      field_name = name;
-      break;
-    }
-    case ExpressionType::AGGREGATE_COUNT_STAR: {
-      field_type = PostgresValueType::INTEGER;
-      field_size = 4;
-      field_name = "COUNT(*)";
-      break;
-    }
-    default: {
-      field_type = PostgresValueType::TEXT;
-      field_size = 255;
-      field_name = name;
-    }
-  }  // SWITCH
-  return std::make_tuple(field_name, static_cast<oid_t>(field_type),
-                         field_size);
 }
 
 }  // namespace tcop

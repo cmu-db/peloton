@@ -13,16 +13,17 @@
 #pragma once
 
 #include "abstract_plan.h"
-#include "type/types.h"
 #include "expression/abstract_expression.h"
+#include "type/types.h"
 
 namespace peloton {
+
+namespace expression {
+class Parameter;
+}
+
 namespace planner {
 
-/**
- * @brief
- *
- */
 class HashPlan : public AbstractPlan {
  public:
   typedef const expression::AbstractExpression HashKeyType;
@@ -50,6 +51,17 @@ class HashPlan : public AbstractPlan {
     }
     return std::unique_ptr<AbstractPlan>(new HashPlan(copied_hash_keys));
   }
+
+  hash_t Hash() const override;
+
+  bool operator==(const AbstractPlan &rhs) const override;
+  bool operator!=(const AbstractPlan &rhs) const override {
+    return !(*this == rhs);
+  }
+
+  virtual void VisitParameters(codegen::QueryParametersMap &map,
+      std::vector<peloton::type::Value> &values,
+      const std::vector<peloton::type::Value> &values_from_user) override;
 
  private:
   std::vector<HashKeyPtrType> hash_keys_;

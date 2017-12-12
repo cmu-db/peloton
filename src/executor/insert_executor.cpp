@@ -161,32 +161,47 @@ bool InsertExecutor::DExecute() {
     auto schema = target_table->GetSchema();
     auto project_info = node.GetProjectInfo();
     auto tuple = node.GetTuple(0);
-    std::unique_ptr<storage::Tuple> project_tuple;
+    std::unique_ptr<storage::Tuple> storage_tuple;
 
     // Check if this is not a raw tuple
-    if (tuple == nullptr) {
+    if (project_info) {
       // Otherwise, there must exist a project info
       PL_ASSERT(project_info);
       // There should be no direct maps
       PL_ASSERT(project_info->GetDirectMapList().size() == 0);
 
-      project_tuple.reset(new storage::Tuple(schema, true));
+      storage_tuple.reset(new storage::Tuple(schema, true));
 
       for (auto target : project_info->GetTargetList()) {
         auto value =
             target.second.expr->Evaluate(nullptr, nullptr, executor_context_);
-        project_tuple->SetValue(target.first, value, executor_pool);
+        storage_tuple->SetValue(target.first, value, executor_pool);
       }
 
       // Set tuple to point to temporary project tuple
-      tuple = project_tuple.get();
+      tuple = storage_tuple.get();
     }
 
     // Bulk Insert Mode
     for (oid_t insert_itr = 0; insert_itr < bulk_insert_count; insert_itr++) {
       // if we are doing a bulk insert from values not project_info
+
       if (!project_info) {
         tuple = node.GetTuple(insert_itr);
+
+        if (tuple == nullptr) {
+          storage_tuple.reset(new storage::Tuple(schema, true));
+
+          // read from values
+          uint32_t num_columns = schema->GetColumnCount();
+          for (uint32_t col_id = 0; col_id < num_columns; col_id++) {
+            auto value = node.GetValue(col_id + insert_itr * num_columns);
+            storage_tuple->SetValue(col_id, value, executor_pool);
+          }
+
+          // Set tuple to point to temporary project tuple
+          tuple = storage_tuple.get();
+        }
       }
 
       trigger::TriggerList *trigger_list = target_table->GetTriggerList();

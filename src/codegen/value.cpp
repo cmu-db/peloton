@@ -55,67 +55,54 @@ Value Value::CastTo(CodeGen &codegen, const type::Type &to_type) const {
     return *this;
   }
 
-  // Do the explicit cast
-  const auto *cast = type::TypeSystem::GetCast(GetType(), to_type);
-
-  if (IsNullable()) {
-    // We need to handle NULL's during casting
-    type::TypeSystem::CastWithNullPropagation null_aware_cast{*cast};
-    return null_aware_cast.DoCast(codegen, *this, to_type);
-  } else {
-    // No NULL, just do the cast
-    PL_ASSERT(!to_type.nullable);
-    return cast->DoCast(codegen, *this, to_type);
-  }
+  // Lookup the cast operation and execute it
+  const auto *cast_op = type::TypeSystem::GetCast(GetType(), to_type);
+  PL_ASSERT(cast_op != nullptr);
+  return cast_op->Eval(codegen, *this, to_type);
 }
 
-#define DO_COMPARE(OP)                                                     \
-  type::Type left_cast = GetType();                                        \
-  type::Type right_cast = other.GetType();                                 \
-                                                                           \
-  const auto *comparison = type::TypeSystem::GetComparison(                \
-      GetType(), left_cast, other.GetType(), right_cast);                  \
-                                                                           \
-  Value left = CastTo(codegen, left_cast);                                 \
-  Value right = other.CastTo(codegen, right_cast);                         \
-                                                                           \
-  if (!left.IsNullable() && !right.IsNullable()) {                         \
-    return comparison->Do##OP(codegen, left, right);                       \
-  } else {                                                                 \
-    type::TypeSystem::ComparisonWithNullPropagation null_aware_comparison{ \
-        *comparison};                                                      \
-    return null_aware_comparison.Do##OP(codegen, left, right);             \
-  }
+#define GEN_COMPARE(OP)                                     \
+  type::Type left_cast = GetType();                         \
+  type::Type right_cast = other.GetType();                  \
+                                                            \
+  const auto *comparison = type::TypeSystem::GetComparison( \
+      GetType(), left_cast, other.GetType(), right_cast);   \
+                                                            \
+  PL_ASSERT(comparison != nullptr);                         \
+  Value left = CastTo(codegen, left_cast);                  \
+  Value right = other.CastTo(codegen, right_cast);          \
+                                                            \
+  return comparison->Eval##OP(codegen, left, right);
 
 Value Value::CompareEq(CodeGen &codegen, const Value &other) const {
-  DO_COMPARE(CompareEq);
+  GEN_COMPARE(CompareEq);
 }
 
 Value Value::CompareNe(CodeGen &codegen, const Value &other) const {
-  DO_COMPARE(CompareNe);
+  GEN_COMPARE(CompareNe);
 }
 
 Value Value::CompareLt(CodeGen &codegen, const Value &other) const {
-  DO_COMPARE(CompareLt);
+  GEN_COMPARE(CompareLt);
 }
 
 Value Value::CompareLte(CodeGen &codegen, const Value &other) const {
-  DO_COMPARE(CompareLte);
+  GEN_COMPARE(CompareLte);
 }
 
 Value Value::CompareGt(CodeGen &codegen, const Value &other) const {
-  DO_COMPARE(CompareGt);
+  GEN_COMPARE(CompareGt);
 }
 
 Value Value::CompareGte(CodeGen &codegen, const Value &other) const {
-  DO_COMPARE(CompareGte);
+  GEN_COMPARE(CompareGte);
 }
 
 Value Value::CompareForSort(CodeGen &codegen, const Value &other) const {
-  DO_COMPARE(ComparisonForSort);
+  GEN_COMPARE(CompareForSort);
 }
 
-#undef DO_COMPARE
+#undef GEN_COMPARE
 
 // Check that all the values from the left and equal to all the values in right
 Value Value::TestEquality(CodeGen &codegen, const std::vector<Value> &lhs,
@@ -247,7 +234,7 @@ Value Value::ValueFromMaterialization(const type::Type &type, llvm::Value *val,
 Value Value::BuildPHI(
     CodeGen &codegen,
     const std::vector<std::pair<Value, llvm::BasicBlock *>> &vals) {
-  uint32_t num_entries = static_cast<uint32_t>(vals.size());
+  const auto num_entries = static_cast<uint32_t>(vals.size());
 
   // The SQL type of the values that we merge here
   // TODO: Need to make sure all incoming types are unifyable
@@ -286,13 +273,8 @@ Value Value::BuildPHI(
 
 Value Value::CallUnaryOp(CodeGen &codegen, OperatorId op_id) const {
   auto *unary_op = type::TypeSystem::GetUnaryOperator(op_id, GetType());
-  if (!IsNullable()) {
-    return unary_op->DoWork(codegen, *this);
-  } else {
-    type::TypeSystem::UnaryOperatorWithNullPropagation null_aware_unary_op{
-        *unary_op};
-    return null_aware_unary_op.DoWork(codegen, *this);
-  }
+  PL_ASSERT(unary_op != nullptr);
+  return unary_op->Eval(codegen, *this);
 }
 
 Value Value::CallBinaryOp(CodeGen &codegen, OperatorId op_id,
@@ -303,20 +285,13 @@ Value Value::CallBinaryOp(CodeGen &codegen, OperatorId op_id,
   auto *binary_op = type::TypeSystem::GetBinaryOperator(
       op_id, GetType(), left_target_type, other.GetType(), right_target_type);
 
+  PL_ASSERT(binary_op != nullptr);
+
   Value casted_left = CastTo(codegen, left_target_type);
   Value casted_right = other.CastTo(codegen, right_target_type);
 
-  // Check if we need to do a NULL-aware binary operation invocation
-  if (!casted_left.IsNullable() && !casted_right.IsNullable()) {
-    // Nope
-    return binary_op->DoWork(codegen, casted_left, casted_right, on_error);
-  } else {
-    // One of the inputs are NULL
-    type::TypeSystem::BinaryOperatorWithNullPropagation null_aware_bin_op{
-        *binary_op};
-    return null_aware_bin_op.DoWork(codegen, casted_left, casted_right,
-                                    on_error);
-  }
+  // Evaluate
+  return binary_op->Eval(codegen, casted_left, casted_right, on_error);
 }
 
 }  // namespace codegen

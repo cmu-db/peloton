@@ -10,11 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "codegen/compilation_context.h"
 #include "codegen/expression/constant_translator.h"
-
-#include "codegen/type/sql_type.h"
 #include "expression/constant_value_expression.h"
-#include "type/value_peeker.h"
 
 namespace peloton {
 namespace codegen {
@@ -22,61 +20,15 @@ namespace codegen {
 // Constructor
 ConstantTranslator::ConstantTranslator(
     const expression::ConstantValueExpression &exp, CompilationContext &ctx)
-    : ExpressionTranslator(exp, ctx) {}
+    : ExpressionTranslator(exp, ctx) {
+  index_ = ctx.GetParameterIdx(&exp);
+}
 
+// Return an LLVM value for our constant: values passed over at run time
 codegen::Value ConstantTranslator::DeriveValue(
-    CodeGen &codegen, UNUSED_ATTRIBUTE RowBatch::Row &row) const {
-  // Pull out the constant from the expression
-  const peloton::type::Value &constant =
-      GetExpressionAs<expression::ConstantValueExpression>().GetValue();
-
-  // Convert the constant into a codegen::Value
-  llvm::Value *val = nullptr;
-  llvm::Value *len = nullptr;
-  switch (constant.GetTypeId()) {
-    case peloton::type::TypeId::TINYINT: {
-      val = codegen.Const8(peloton::type::ValuePeeker::PeekTinyInt(constant));
-      break;
-    }
-    case peloton::type::TypeId::SMALLINT: {
-      val = codegen.Const16(peloton::type::ValuePeeker::PeekSmallInt(constant));
-      break;
-    }
-    case peloton::type::TypeId::INTEGER: {
-      val = codegen.Const32(peloton::type::ValuePeeker::PeekInteger(constant));
-      break;
-    }
-    case peloton::type::TypeId::BIGINT: {
-      val = codegen.Const64(peloton::type::ValuePeeker::PeekBigInt(constant));
-      break;
-    }
-    case peloton::type::TypeId::DECIMAL: {
-      val =
-          codegen.ConstDouble(peloton::type::ValuePeeker::PeekDouble(constant));
-      break;
-    }
-    case peloton::type::TypeId::DATE: {
-      val = codegen.Const32(peloton::type::ValuePeeker::PeekDate(constant));
-      break;
-    }
-    case peloton::type::TypeId::TIMESTAMP: {
-      val =
-          codegen.Const64(peloton::type::ValuePeeker::PeekTimestamp(constant));
-      break;
-    }
-    case peloton::type::TypeId::VARCHAR: {
-      std::string str = peloton::type::ValuePeeker::PeekVarchar(constant);
-      val = codegen.ConstStringPtr(str);
-      len = codegen.Const32(str.length() + 1); // length includes the null-terminator
-      break;
-    }
-    default: {
-      throw Exception{"Unknown constant value type " +
-                      TypeIdToString(constant.GetTypeId())};
-    }
-  }
-  return codegen::Value{type::SqlType::LookupType(constant.GetTypeId()), val,
-                        len, nullptr};
+    UNUSED_ATTRIBUTE CodeGen &codegen,
+    UNUSED_ATTRIBUTE RowBatch::Row &row) const {
+  return context_.GetParameterCache().GetValue(index_);
 }
 
 }  // namespace codegen

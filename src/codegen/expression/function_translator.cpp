@@ -62,9 +62,9 @@ codegen::Value FunctionTranslator::DeriveValue(CodeGen &codegen,
     PL_ASSERT(binary_op);
 
     // Invoke
-    return binary_op->DoWork(codegen, args[0].CastTo(codegen, left_type),
-                             args[1].CastTo(codegen, right_type),
-                             OnError::Exception);
+    return binary_op->Eval(codegen, args[0].CastTo(codegen, left_type),
+                           args[1].CastTo(codegen, right_type),
+                           OnError::Exception);
   } else {
     // It's an N-Ary function
 
@@ -77,7 +77,7 @@ codegen::Value FunctionTranslator::DeriveValue(CodeGen &codegen,
     // Lookup the function
     auto *nary_op = type::TypeSystem::GetNaryOperator(operator_id, arg_types);
     PL_ASSERT(nary_op != nullptr);
-    return nary_op->DoWork(codegen, args, OnError::Exception);
+    return nary_op->Eval(codegen, args, OnError::Exception);
   }
 }
 

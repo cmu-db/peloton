@@ -6,7 +6,7 @@
 //
 // Identification: src/include/planner/seq_scan_plan.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -18,12 +18,15 @@
 
 #include "abstract_scan_plan.h"
 #include "common/logger.h"
+#include "expression/abstract_expression.h"
 #include "type/serializer.h"
 #include "type/types.h"
-#include "expression/abstract_expression.h"
 
 namespace peloton {
 
+namespace expression {
+class Parameter;
+}
 namespace parser {
 class SelectStatement;
 }
@@ -46,28 +49,41 @@ class SeqScanPlan : public AbstractScan {
 
   SeqScanPlan() : AbstractScan() {}
 
-  inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::SEQSCAN; }
+  PlanNodeType GetPlanNodeType() const override {
+    return PlanNodeType::SEQSCAN;
+  }
 
-  const std::string GetInfo() const { return "SeqScan"; }
+  const std::string GetInfo() const override { return "SeqScan"; }
 
-  void SetParameterValues(std::vector<type::Value> *values);
+  void SetParameterValues(std::vector<type::Value> *values) override;
 
   //===--------------------------------------------------------------------===//
   // Serialization/Deserialization
   //===--------------------------------------------------------------------===//
-  bool SerializeTo(SerializeOutput &output) const ;
-  bool DeserializeFrom(SerializeInput &input);
+  bool SerializeTo(SerializeOutput &output) const override;
+  bool DeserializeFrom(SerializeInput &input) override;
 
   /* For init SerializeOutput */
-  int SerializeSize();
+  int SerializeSize() const override;
 
   oid_t GetColumnID(std::string col_name);
 
-  std::unique_ptr<AbstractPlan> Copy() const {
+  std::unique_ptr<AbstractPlan> Copy() const override {
     AbstractPlan *new_plan = new SeqScanPlan(
         this->GetTable(), this->GetPredicate()->Copy(), this->GetColumnIds());
     return std::unique_ptr<AbstractPlan>(new_plan);
   }
+
+  hash_t Hash() const override;
+
+  bool operator==(const AbstractPlan &rhs) const override;
+  bool operator!=(const AbstractPlan &rhs) const override {
+    return !(*this == rhs);
+  }
+
+  virtual void VisitParameters(codegen::QueryParametersMap &map,
+      std::vector<peloton::type::Value> &values,
+      const std::vector<peloton::type::Value> &values_from_user) override;
 
  private:
   DISALLOW_COPY_AND_MOVE(SeqScanPlan);

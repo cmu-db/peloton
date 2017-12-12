@@ -73,7 +73,7 @@ class OperatorTransformerTests : public PelotonTest {
     txn_manager.CommitTransaction(txn);
     LOG_INFO("Expected: %s", true_predicates.c_str());
     LOG_INFO("Actual: %s", predicate->GetInfo().c_str());
-    EXPECT_TRUE(predicate->Equals(ref_expr));
+    EXPECT_TRUE(predicate->ExactlyEquals(*ref_expr));
   }
 
   virtual void TearDown() override {

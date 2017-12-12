@@ -6,7 +6,7 @@
 //
 // Identification: src/include/planner/hash_join_plan.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -17,9 +17,12 @@
 #include "planner/abstract_join_plan.h"
 
 namespace peloton {
+
 namespace expression {
 class AbstractExpression;
+class Parameter;
 }
+
 namespace planner {
 
 class HashJoinPlan : public AbstractJoinPlan {
@@ -29,14 +32,15 @@ class HashJoinPlan : public AbstractJoinPlan {
       std::unique_ptr<const expression::AbstractExpression> &&predicate,
       std::unique_ptr<const ProjectInfo> &&proj_info,
       std::shared_ptr<const catalog::Schema> &proj_schema,
-      bool build_bloomfilter);
+      bool build_bloomfilter = false);
 
   HashJoinPlan(
       JoinType join_type,
       std::unique_ptr<const expression::AbstractExpression> &&predicate,
       std::unique_ptr<const ProjectInfo> &&proj_info,
       std::shared_ptr<const catalog::Schema> &proj_schema,
-      const std::vector<oid_t> &outer_hashkeys, bool build_bloomfilter);
+      const std::vector<oid_t> &outer_hashkeys,
+      bool build_bloomfilter = false);
 
   HashJoinPlan(
       JoinType join_type,
@@ -47,7 +51,7 @@ class HashJoinPlan : public AbstractJoinPlan {
           &left_hash_keys,
       std::vector<std::unique_ptr<const expression::AbstractExpression>>
           &right_hash_keys,
-      bool build_bloomfilter);
+      bool build_bloomfilter = false);
 
   void HandleSubplanBinding(bool is_left, const BindingContext &input) override;
 
@@ -93,6 +97,17 @@ class HashJoinPlan : public AbstractJoinPlan {
         schema_copy, outer_column_ids_, build_bloomfilter_);
     return std::unique_ptr<AbstractPlan>(new_plan);
   }
+
+  hash_t Hash() const override;
+
+  bool operator==(const AbstractPlan &rhs) const override;
+  bool operator!=(const AbstractPlan &rhs) const override {
+    return !(*this == rhs);
+  }
+
+  virtual void VisitParameters(codegen::QueryParametersMap &map,
+      std::vector<peloton::type::Value> &values,
+      const std::vector<peloton::type::Value> &values_from_user) override;
 
  private:
   std::vector<oid_t> outer_column_ids_;

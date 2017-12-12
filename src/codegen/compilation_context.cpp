@@ -16,6 +16,7 @@
 #include "codegen/proxy/catalog_proxy.h"
 #include "codegen/proxy/transaction_proxy.h"
 #include "codegen/proxy/executor_context_proxy.h"
+#include "codegen/proxy/query_parameters_proxy.h"
 #include "common/logger.h"
 #include "common/timer.h"
 
@@ -24,8 +25,10 @@ namespace codegen {
 
 // Constructor
 CompilationContext::CompilationContext(Query &query,
+                                       const QueryParametersMap &parameters_map,
                                        QueryResultConsumer &result_consumer)
-    : query_(query),
+    : query_(query), parameters_map_(parameters_map),
+      parameter_cache_(parameters_map_),
       result_consumer_(result_consumer),
       codegen_(query_.GetCodeContext()) {
   // Allocate a catalog and transaction instance in the runtime state
@@ -34,13 +37,19 @@ CompilationContext::CompilationContext(Query &query,
   auto *txn_type = TransactionProxy::GetType(codegen_)->getPointerTo();
   txn_state_id_ = runtime_state.RegisterState("transaction", txn_type);
 
-  auto *catalog_ptr_type = StorageManagerProxy::GetType(codegen_)->getPointerTo();
+  auto *catalog_ptr_type =
+      StorageManagerProxy::GetType(codegen_)->getPointerTo();
   catalog_state_id_ = runtime_state.RegisterState("catalog", catalog_ptr_type);
 
   auto *executor_context_type =
       ExecutorContextProxy::GetType(codegen_)->getPointerTo();
   executor_context_state_id_ =
       runtime_state.RegisterState("executorContext", executor_context_type);
+
+  auto *query_parameters_type =
+      QueryParametersProxy::GetType(codegen_)->getPointerTo();
+  query_parameters_state_id_ =
+      runtime_state.RegisterState("queryParameters", query_parameters_type);
 
   // Let the query consumer modify the runtime state object
   result_consumer_.Prepare(*this);
@@ -140,6 +149,10 @@ llvm::Value *CompilationContext::GetExecutorContextPtr() {
   return GetRuntimeState().LoadStateValue(codegen_, executor_context_state_id_);
 }
 
+llvm::Value *CompilationContext::GetQueryParametersPtr() {
+  return GetRuntimeState().LoadStateValue(codegen_, query_parameters_state_id_);
+}
+
 // Generate code for the init() function of the query
 llvm::Function *CompilationContext::GenerateInitFunction() {
   // Create function definition
@@ -185,6 +198,9 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
 
   // Create all local state
   runtime_state.CreateLocalState(codegen_);
+
+  // Load the query parameter values
+  parameter_cache_.Populate(codegen_, GetQueryParametersPtr());
 
   // Generate the primary plan logic
   Produce(root);
