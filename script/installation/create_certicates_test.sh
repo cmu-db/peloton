@@ -66,12 +66,4 @@ openssl ca -config openssl.cnf -extensions usr_cert -days 375 -notext -md sha256
 chmod 444 intermediate/certs/client.cert.pem
 openssl x509 -noout -text -in intermediate/certs/client.cert.pem
 
-# remove other files
-cp $DATA_DIR/intermediate/private/server.key.pem $DATA_DIR/peloton_insecure_server.key
-cp $DATA_DIR/intermediate/private/client.key.pem $DATA_DIR/peloton_insecure_client.key
-cp $DATA_DIR/intermediate/certs/ca-chain.cert.pem $DATA_DIR/peloton_insecure_root.crt
-cp $DATA_DIR/intermediate/certs/server.cert.pem $DATA_DIR/peloton_insecure_server.crt
-cp $DATA_DIR/intermediate/certs/client.cert.pem $DATA_DIR/peloton_insecure_client.crt
-cd $DATA_DIR
-shopt -s extglob
-rm -rf !(intermediate_openssl.cnf|openssl.cnf|peloton_insecure_server.key|peloton_insecure_client.key|peloton_insecure_root.crt|peloton_insecure_server.crt|peloton_insecure_client.crt)
+
