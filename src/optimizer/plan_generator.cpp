@@ -73,7 +73,8 @@ void PlanGenerator::Visit(const PhysicalSeqScan *op) {
       expression::ExpressionUtil::JoinAnnotatedExprs(op->predicates),
       op->table_alias, op->table_);
 
-  output_plan_.reset(new planner::SeqScanPlan(op->table_, predicate.release(), column_ids));
+  output_plan_.reset(
+      new planner::SeqScanPlan(op->table_, predicate.release(), column_ids));
 }
 
 void PlanGenerator::Visit(const PhysicalIndexScan *op) {
@@ -87,7 +88,8 @@ void PlanGenerator::Visit(const PhysicalIndexScan *op) {
 
   // Create index scan desc
   planner::IndexScanPlan::IndexScanDesc index_scan_desc(
-      index, op->key_column_id_list, op->expr_type_list, op->value_list, runtime_keys);
+      index, op->key_column_id_list, op->expr_type_list, op->value_list,
+      runtime_keys);
   output_plan_.reset(new planner::IndexScanPlan(
       op->table_, predicate.release(), column_ids, index_scan_desc, false));
 }
@@ -154,17 +156,17 @@ void PlanGenerator::Visit(const PhysicalRightHashJoin *) {}
 void PlanGenerator::Visit(const PhysicalOuterHashJoin *) {}
 
 void PlanGenerator::Visit(const PhysicalInsert *op) {
-   unique_ptr<planner::AbstractPlan> insert_plan(
-       new planner::InsertPlan(op->target_table, op->columns, op->values));
-   output_plan_ = move(insert_plan);
+  unique_ptr<planner::AbstractPlan> insert_plan(
+      new planner::InsertPlan(op->target_table, op->columns, op->values));
+  output_plan_ = move(insert_plan);
 }
 
 void PlanGenerator::Visit(const PhysicalInsertSelect *op) {
-   unique_ptr<planner::AbstractPlan> insert_plan(
-       new planner::InsertPlan(op->target_table));
-   // Add child
-   insert_plan->AddChild(move(children_plans_[0]));
-   output_plan_ = move(insert_plan);
+  unique_ptr<planner::AbstractPlan> insert_plan(
+      new planner::InsertPlan(op->target_table));
+  // Add child
+  insert_plan->AddChild(move(children_plans_[0]));
+  output_plan_ = move(insert_plan);
 }
 
 void PlanGenerator::Visit(const PhysicalDelete *op) {
@@ -262,6 +264,7 @@ PlanGenerator::GeneratePredicateForScan(
   ExprMap table_expr_map = GenerateTableExprMap(alias, table);
   unique_ptr<expression::AbstractExpression> predicate =
       std::unique_ptr<expression::AbstractExpression>(predicate_expr->Copy());
+  expression::ExpressionUtil::ConvertToTvExpr(col_copy, child_expr_map);
   expression::ExpressionUtil::EvaluateExpression({table_expr_map},
                                                  predicate.get());
   return predicate;
@@ -283,15 +286,46 @@ void PlanGenerator::BuildProjectionPlan() {
   if (no_projection) {
     return;
   }
-  // TODO Construct projection plan
-  // TODO(boweic): For now, we only produce tv exprs and aggregate expr as
-  // output column, but we should handle arbitary expressions in the future
-  // ExprMap output_cols_map;
-  // for (auto &col : output_cols_) {
-  //   PL_ASSERT(col->GetExpressionType() == ExpressionType::VALUE_TUPLE ||
-  //             col->GetExpressionType() == ExpressionType::AggregateType);
-  //
-  // }
+  vector<ExprMap> output_expr_maps = {ExprMap{}};
+  auto &child_expr_map = output_expr_maps[0];
+  for (size_t idx = 0; idx < output_cols_.size(); ++idx) {
+    auto &col = output_cols_[idx];
+    child_expr_map[col] = idx;
+  }
+  TargetList tl;
+  DirectMapList dml;
+  vector<catalog::Column> columns;
+  for (size_t idx = 0; idx < required_cols_.size(); ++idx) {
+    auto &col = required_cols_[idx];
+    if (child_expr_map.find(col) != child_expr_map.end()) {
+      dml.emplace_back(idx, make_pair(0, child_expr_map[col]));
+    } else {
+      // Copy then evaluate the expression and add to target list
+      auto col_copy = col->Copy();
+      expression::ExpressionUtil::ConvertToTvExpr(col_copy, child_expr_map);
+      expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
+                                                     col_copy);
+      planner::DerivedAttribute attribute{col_copy};
+      tl.emplace_back(idx, attribute);
+    }
+    columns.push_back(catalog::Column(
+        col->GetValueType(), type::Type::GetTypeSize(col->GetValueType()),
+        col->GetExpressionName()));
+  }
+
+  unique_ptr<planner::ProjectInfo> proj_info(
+      new planner::ProjectInfo(move(tl), move(dml)));
+  // TODO since the plan will own the schema, we may not want to use unique_ptr
+  // to initialize the plan
+  shared_ptr<catalog::Schema> schema_ptr(new catalog::Schema(columns));
+  unique_ptr<planner::AbstractPlan> project_plan(
+      new planner::ProjectionPlan(move(proj_info), schema_ptr));
+
+  PL_ASSERT(children_plans_.size() < 2);
+  if (!children_plans_.empty()) {
+    project_plan->AddChild(move(children_plans_[0]));
+  }
+  output_plan_ = move(project_plan);
 }
 
 }  // namespace optimizer

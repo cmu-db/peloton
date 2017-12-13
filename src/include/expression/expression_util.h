@@ -401,22 +401,34 @@ class ExpressionUtil {
   }
 
   /**
-   * Convert all aggregate expression in the child expression tree
-   * to tuple value expression with corresponding column offset
+   * TODO(boweic): this function may not be efficient, in the future we may want
+   * to add expressions to groups so that we do not need to walk through the
+   * expression tree when judging '==' each time
+   *
+   * Convert all expression in the current expression tree that is in
+   * child_expr_map to tuple value expression with corresponding column offset
    * of the input child tuple. This is used for handling projection
-   * on aggregate function (e.g. SELECT sum(a)+max(b) FROM ... GROUP BY ...)
+   * on situations like aggregate function (e.g. SELECT sum(a)+max(b) FROM ...
+   * GROUP BY ...) when input columns contain sum(a) and sum(b). We need to
+   * treat them as tuple value expression in the projection plan. This function
+   *should always be called before calling EvaluateExpression
+   *
+   * Please notice that this function should only apply to copied expression
+   *since it would modify the current expression. We do not want to modify the
+   *original expression since it may be referenced in other places
    */
-  static void ConvertAggExprToTvExpr(AbstractExpression *expr,
-                                     ExprMap &child_expr_map) {
+  static void ConvertToTvExpr(AbstractExpression *expr,
+                              ExprMap &child_expr_map) {
     for (size_t i = 0; i < expr->GetChildrenSize(); i++) {
       auto child_expr = expr->GetModifiableChild(i);
-      if (IsAggregateExpression(child_expr->GetExpressionType())) {
-        EvaluateExpression({child_expr_map}, child_expr);
+      if (child_expr_map.count(child_expr)) {
+        // EvaluateExpression({child_expr_map}, child_expr);
         expr->SetChild(i,
                        new TupleValueExpression(child_expr->GetValueType(), 0,
                                                 child_expr_map[child_expr]));
-      } else
-        ConvertAggExprToTvExpr(child_expr, child_expr_map);
+      } else {
+        ConvertToTvExpr(child_expr, child_expr_map);
+      }
     }
   }
 
