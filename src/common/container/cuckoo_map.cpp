@@ -31,6 +31,8 @@ class BackendStatsContext;
 class IndexMetric;
 }  // namespace stats
 
+class StatementCache;
+
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
 CUCKOO_MAP_TYPE::CuckooMap() {}
 

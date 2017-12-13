@@ -14,14 +14,33 @@
 
 #include <unordered_map>
 
-#include "cache.h"
+#include "statement.h"
+#include "container/lock_free_queue.h"
 #include "type/types.h"
 
 namespace peloton {
 // The statement cache that caches statement.
-// It would pop out statements when the cache hits limit
-// It would also replan the statement7
+// It would also mark statement if it need to replan
 class StatementCache {
+  typedef std::shared_ptr<Statement> StatementPtr;
+  typedef std::unordered_map<std::string, StatementPtr> \
+          NameMap;
+  typedef std::unordered_map<oid_t, std::vector<StatementPtr>> \
+          TableRef;
+  // Private members
+  
+  // StatementName -> Statement
+  // Note that we use unordered map instead of (LRU) Cache because
+  // (LRU) cache does not expose iterface that remove the popped out
+  // entries. This would make table_statement_cache_ not up-to-date.
+  NameMap statement_map_;
+  
+  // TableOid -> Statements
+  TableRef table_ref_;
+
+  // Queue to receive invalid table oids from executor
+  LockFreeQueue<oid_t> invalid_table_queue_;
+
  public:
   // Add a statement to the cache
   void AddStatement(std::shared_ptr<Statement> stmt);
@@ -31,25 +50,9 @@ class StatementCache {
 
   // Notify the Statement Cache a table id that is invalidated
   void NotifyInvalidTable(oid_t table_id);
-
- private:
-  // Private members
   
-  // StatementName -> Statement
-  Cache<std::string, Statement> statement_cache_;
-  
-  // TableOid -> Statements
-  std::unordered_map<oid_t, std::unordered_set<Statement *>> table_statement_cache_;
-
-  // Queue to receive invalid table oids from executor
-  LockFreeQueue<oid_t> invalid_table_queue_;
-
-
-  // Private functions
-
-  // Fetch the invalid table queue and mark all related plans in this cache
-  // to be invalid, also clear the queue.
+private:
   void UpdateFromInvalidTableQueue();
-  
+
 };
 }  // namespace peloton
