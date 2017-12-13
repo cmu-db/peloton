@@ -396,11 +396,9 @@ class ExpressionUtil {
       auto child_expr = expr->GetModifiableChild(i);
       if (IsAggregateExpression(child_expr->GetExpressionType())) {
         EvaluateExpression({child_expr_map}, child_expr);
-        std::shared_ptr<AbstractExpression> probe_expr(
-            std::shared_ptr<AbstractExpression>{}, child_expr);
         expr->SetChild(i,
                        new TupleValueExpression(child_expr->GetValueType(), 0,
-                                                child_expr_map[probe_expr]));
+                                                child_expr_map[child_expr]));
       } else
         ConvertAggExprToTvExpr(child_expr, child_expr_map);
     }
@@ -409,10 +407,9 @@ class ExpressionUtil {
   /**
    * Generate a vector to store expressions in output order
    */
-  static std::vector<std::shared_ptr<AbstractExpression>>
-  GenerateOrderedOutputExprs(ExprMap &expr_map) {
-    std::vector<std::shared_ptr<AbstractExpression>> ordered_expr(
-        expr_map.size());
+  static std::vector<AbstractExpression *> GenerateOrderedOutputExprs(
+      ExprMap &expr_map) {
+    std::vector<AbstractExpression *> ordered_expr(expr_map.size());
     for (auto iter : expr_map) ordered_expr[iter.second] = iter.first;
     return ordered_expr;
   }
@@ -496,11 +493,9 @@ class ExpressionUtil {
       // HACK: Need to construct shared_ptr for probing but not want the
       // shared_ptr to delete the object. Use alias constructor
       auto tup_expr = (TupleValueExpression *)expr;
-      std::shared_ptr<AbstractExpression> probe_expr(
-          std::shared_ptr<AbstractExpression>{}, tup_expr);
       size_t tuple_idx = 0;
       for (auto &expr_map : expr_maps) {
-        auto iter = expr_map.find(probe_expr);
+        auto iter = expr_map.find(expr);
         if (iter != expr_map.end()) {
           tup_expr->SetValueIdx(iter->second, tuple_idx);
           break;
@@ -509,10 +504,8 @@ class ExpressionUtil {
       }
     } else if (IsAggregateExpression(expr->GetExpressionType())) {
       auto aggr_expr = (AggregateExpression *)expr;
-      std::shared_ptr<AbstractExpression> probe_expr(
-          std::shared_ptr<AbstractExpression>{}, aggr_expr);
       auto &expr_map = expr_maps[0];
-      auto iter = expr_map.find(probe_expr);
+      auto iter = expr_map.find(expr);
       if (iter != expr_map.end()) aggr_expr->SetValueIdx(iter->second);
     } else if (expr->GetExpressionType() == ExpressionType::FUNCTION) {
       auto func_expr = (expression::FunctionExpression *)expr;
@@ -626,15 +619,15 @@ class ExpressionUtil {
    * ordered flag indicate whether the comparison should consider the order.
    * */
   static bool EqualExpressions(
-      const std::vector<std::shared_ptr<expression::AbstractExpression>> &l,
-      const std::vector<std::shared_ptr<expression::AbstractExpression>> &r,
+      const std::vector<expression::AbstractExpression *> &l,
+      const std::vector<expression::AbstractExpression *> &r,
       bool ordered = false) {
     if (l.size() != r.size()) return false;
     // Consider expression order in the comparison
     if (ordered) {
       size_t num_exprs = l.size();
       for (size_t i = 0; i < num_exprs; i++)
-        if (!l[i]->Equals(r[i].get())) return false;
+        if (!l[i]->Equals(r[i])) return false;
       return true;
     } else {
       ExprSet l_set, r_set;

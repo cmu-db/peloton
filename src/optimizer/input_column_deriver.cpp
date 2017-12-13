@@ -67,16 +67,14 @@ void InputColumnDeriver::Visit(const PhysicalOrderBy *) {
   ExprSet input_cols_set;
   size_t sort_col_size = sort_prop->GetSortColumnSize();
   for (size_t idx = 0; idx < sort_col_size; ++idx) {
-    // TODO(boweic): do not use shared_ptr
-    input_cols_set.insert(
-        shared_ptr<AbstractExpression>(sort_prop->GetSortColumn(idx)));
+    input_cols_set.insert(sort_prop->GetSortColumn(idx));
   }
   for (auto expr : required_cols_) {
     expression::ExpressionUtil::GetTupleValueExprs(input_cols_set, expr);
   }
   vector<AbstractExpression *> cols;
   for (auto &expr : input_cols_set) {
-    cols.push_back(expr.get());
+    cols.push_back(expr);
   }
   output_input_cols_ =
       pair<vector<AbstractExpression *>, vector<vector<AbstractExpression *>>>{
@@ -143,7 +141,7 @@ void InputColumnDeriver::ScanHelper() {
   }
   vector<AbstractExpression *> output_cols;
   for (auto &expr : output_cols_set) {
-    output_cols.push_back(expr.get());
+    output_cols.push_back(expr);
   }
   output_input_cols_ =
       pair<vector<AbstractExpression *>, vector<vector<AbstractExpression *>>>{
@@ -172,8 +170,8 @@ void InputColumnDeriver::AggregateHelper(const BaseOperatorNode *op) {
   vector<AbstractExpression *> input_cols;
   for (auto &col : input_cols_set) {
     // output all required columns so that we could perform projection later
-    output_cols.push_back(col.get());
-    input_cols.push_back(col.get());
+    output_cols.push_back(col);
+    input_cols.push_back(col);
   }
 
   output_input_cols_ =
@@ -211,8 +209,7 @@ void InputColumnDeriver::JoinHelper(const BaseOperatorNode *op) {
       memo_->GetGroupByID(gexpr_->GetChildGroupId(1))->GetTableAliases();
   for (auto &col : input_cols_set) {
     PL_ASSERT(col->GetExpressionType() == ExpressionType::VALUE_TUPLE);
-    auto tv_expr =
-        reinterpret_cast<expression::TupleValueExpression *>(col.get());
+    auto tv_expr = reinterpret_cast<expression::TupleValueExpression *>(col);
     if (build_table_aliases.count(tv_expr->GetTableName())) {
       build_table_cols_set.insert(col);
     } else {
@@ -222,15 +219,15 @@ void InputColumnDeriver::JoinHelper(const BaseOperatorNode *op) {
   }
   vector<AbstractExpression *> output_cols;
   for (auto &col : output_cols_set) {
-    output_cols.push_back(col.get());
+    output_cols.push_back(col);
   }
   vector<AbstractExpression *> build_cols;
   for (auto &col : build_table_cols_set) {
-    build_cols.push_back(col.get());
+    build_cols.push_back(col);
   }
   vector<AbstractExpression *> probe_cols;
   for (auto &col : probe_table_cols_set) {
-    probe_cols.push_back(col.get());
+    probe_cols.push_back(col);
   }
   output_input_cols_ =
       pair<vector<AbstractExpression *>, vector<vector<AbstractExpression *>>>{

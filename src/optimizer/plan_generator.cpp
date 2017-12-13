@@ -83,7 +83,7 @@ void PlanGenerator::Visit(const PhysicalIndexScan *op) {
       expression::ExpressionUtil::JoinAnnotatedExprs(op->predicates),
       op->table_alias, op->table_);
 
-  // TODO build index scan desc
+  // TODO build index scan plan
 }
 
 void PlanGenerator::Visit(const QueryDerivedScan *) {}
@@ -92,7 +92,27 @@ void PlanGenerator::Visit(const PhysicalProject *) {}
 
 void PlanGenerator::Visit(const PhysicalLimit *) {}
 
-void PlanGenerator::Visit(const PhysicalOrderBy *) {}
+void PlanGenerator::Visit(const PhysicalOrderBy *) {
+  vector<oid_t> column_ids;
+  PL_ASSERT(children_expr_map_.size() == 1);
+  auto &child_cols_map = children_expr_map_[0];
+  for (size_t i = 0; i < required_cols_.size(); ++i) {
+    column_ids.push_back(child_cols_map[required_cols_[i]]);
+  }
+
+  auto sort_prop = required_props_->GetPropertyOfType(PropertyType::SORT)
+                       ->As<PropertySort>();
+  auto sort_columns_size = sort_prop->GetSortColumnSize();
+  vector<oid_t> sort_col_ids;
+  vector<bool> sort_flags;
+  for (size_t i = 0; i < sort_columns_size; ++i) {
+    sort_col_ids.push_back(child_expr_map[sort_prop->GetSortColumn(i)]);
+    // planner use desc flag
+    sort_flags.push_back(!sort_prop->GetSortAscending(i));
+  }
+  output_plan_.reset(
+      new planner::OrderByPlan(sort_col_ids, sort_flags, column_ids));
+}
 
 void PlanGenerator::Visit(const PhysicalHashGroupBy *) {}
 
@@ -138,9 +158,9 @@ ExprMap PlanGenerator::GenerateTableExprMap(const std::string &alias,
   for (oid_t col_id = 0; col_id < num_col; ++col_id) {
     // Only bound_obj_id is needed for expr_map
     // TODO potential memory leak here?
-    auto col_expr = shared_ptr<expression::TupleValueExpression>(
+    expression::TupleValueExpression *col_expr =
         new expression::TupleValueExpression(cols[col_id].column_name.c_str(),
-                                             alias.c_str()));
+                                             alias.c_str());
     col_expr->SetValueType(table->GetSchema()->GetColumn(col_id).GetType());
     col_expr->SetBoundOid(db_id, table_id, col_id);
     expr_map[col_expr] = col_id;

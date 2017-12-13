@@ -311,9 +311,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
   for (size_t i = 0; i < child_groups.size(); ++i) {
     ExprMap child_expr_map;
     for (unsigned offset = 0; offset < input_cols[i].size(); ++offset) {
-      // TODO(boweic) : use raw ptr
-      child_expr_map[shared_ptr<expression::AbstractExpression>(
-          input_cols[i][offset])] = offset;
+      child_expr_map[input_cols[i][offset]] = offset;
     }
     auto child_plan =
         ChooseBestPlan(child_groups[i], required_input_props[i], input_cols[i]);

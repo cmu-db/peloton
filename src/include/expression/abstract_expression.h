@@ -199,16 +199,16 @@ class AbstractExpression : public Printable {
 // Equality Comparator class for Abstract Expression
 class ExprEqualCmp {
  public:
-  inline bool operator()(std::shared_ptr<AbstractExpression> expr1,
-                         std::shared_ptr<AbstractExpression> expr2) const {
-    return expr1->Equals(expr2.get());
+  inline bool operator()(AbstractExpression *expr1,
+                         AbstractExpression *expr2) const {
+    return expr1->Equals(expr2);
   }
 };
 
 // Hasher class for Abstract Expression
 class ExprHasher {
  public:
-  inline size_t operator()(std::shared_ptr<AbstractExpression> expr) const {
+  inline size_t operator()(AbstractExpression *expr) const {
     return expr->Hash();
   }
 };

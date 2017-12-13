@@ -1328,11 +1328,11 @@ typedef std::unordered_map<
 
 // TODO(boweic): use raw ptr
 // Mapping of Expression -> Column Offset created by operator
-typedef std::unordered_map<std::shared_ptr<expression::AbstractExpression>,
-                           unsigned, expression::ExprHasher,
+typedef std::unordered_map<expression::AbstractExpression *, unsigned,
+                           expression::ExprHasher,
                            expression::ExprEqualCmp> ExprMap;
 // Used in optimizer to speed up expression comparsion
-typedef std::unordered_set<std::shared_ptr<expression::AbstractExpression>,
+typedef std::unordered_set<expression::AbstractExpression *,
                            expression::ExprHasher,
                            expression::ExprEqualCmp> ExprSet;
 
