@@ -143,7 +143,8 @@ void InputColumnDeriver::ScanHelper() {
   for (auto expr : required_cols_) {
     expression::ExpressionUtil::GetTupleValueExprs(output_cols_map, expr);
   }
-  vector<AbstractExpression *> output_cols = vector<AbstractExpression*>(output_cols_map.size());
+  vector<AbstractExpression *> output_cols =
+      vector<AbstractExpression *>(output_cols_map.size());
   for (auto &entry : output_cols_map) {
     output_cols[entry.second] = entry.first;
   }
@@ -168,8 +169,7 @@ void InputColumnDeriver::AggregateHelper(const BaseOperatorNode *op) {
   vector<AbstractExpression *> output_cols;
   for (auto &groupby_col : groupby_cols) {
     output_cols.push_back(groupby_col.get());
-    expression::ExpressionUtil::GetTupleValueExprs(input_cols_set,
-                                                   groupby_col.get());
+    input_cols_set.insert(groupby_col.get());
   }
   vector<AbstractExpression *> input_cols;
   for (auto &col : input_cols_set) {

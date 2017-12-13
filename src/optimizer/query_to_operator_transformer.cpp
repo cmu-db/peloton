@@ -33,8 +33,10 @@ namespace peloton {
 namespace optimizer {
 QueryToOperatorTransformer::QueryToOperatorTransformer(
     concurrency::Transaction *txn)
-    : txn_(txn), get_id(0),
-      enable_predicate_push_down_(settings::SettingsManager::GetBool(settings::SettingId::predicate_push_down)) {}
+    : txn_(txn),
+      get_id(0),
+      enable_predicate_push_down_(settings::SettingsManager::GetBool(
+          settings::SettingId::predicate_push_down)) {}
 std::shared_ptr<OperatorExpression>
 QueryToOperatorTransformer::ConvertToOpExpression(parser::SQLStatement *op) {
   output_expr_ = nullptr;
@@ -43,7 +45,6 @@ QueryToOperatorTransformer::ConvertToOpExpression(parser::SQLStatement *op) {
 }
 
 void QueryToOperatorTransformer::Visit(parser::SelectStatement *op) {
-
   if (op->from_table != nullptr) {
     // SELECT with FROM
     op->from_table->Accept(this);
@@ -54,7 +55,8 @@ void QueryToOperatorTransformer::Visit(parser::SelectStatement *op) {
 
   if (op->where_clause != nullptr) {
     CollectPredicates(op->where_clause.get());
-    auto filter_expr = std::make_shared<OperatorExpression>(LogicalFilter::make(predicates_));
+    auto filter_expr =
+        std::make_shared<OperatorExpression>(LogicalFilter::make(predicates_));
     filter_expr->PushChild(output_expr_);
     output_expr_ = filter_expr;
   }
@@ -64,13 +66,16 @@ void QueryToOperatorTransformer::Visit(parser::SelectStatement *op) {
     std::shared_ptr<OperatorExpression> agg_expr;
     if (op->group_by == nullptr) {
       agg_expr = std::make_shared<OperatorExpression>(LogicalGroupBy::make());
-    }
-    else {
+    } else {
       size_t num_group_by_cols = op->group_by->columns.size();
-      auto group_by_cols = std::vector<std::shared_ptr<expression::AbstractExpression>>(num_group_by_cols);
+      auto group_by_cols =
+          std::vector<std::shared_ptr<expression::AbstractExpression>>(
+              num_group_by_cols);
       for (size_t i = 0; i < num_group_by_cols; i++)
-        group_by_cols[i] = std::shared_ptr<expression::AbstractExpression>(op->group_by->columns[i]->Copy());
-      auto having = std::shared_ptr<expression::AbstractExpression>(op->group_by->having->Copy());
+        group_by_cols[i] = std::shared_ptr<expression::AbstractExpression>(
+            op->group_by->columns[i]->Copy());
+      auto having = std::shared_ptr<expression::AbstractExpression>(
+          op->group_by->having->Copy());
       agg_expr = std::make_shared<OperatorExpression>(
           LogicalGroupBy::make(group_by_cols, having));
     }
@@ -79,7 +84,8 @@ void QueryToOperatorTransformer::Visit(parser::SelectStatement *op) {
   }
 
   if (op->select_distinct) {
-    auto distinct_expr = std::make_shared<OperatorExpression>(LogicalDistinct::make());
+    auto distinct_expr =
+        std::make_shared<OperatorExpression>(LogicalDistinct::make());
     distinct_expr->PushChild(output_expr_);
     output_expr_ = distinct_expr;
   }
@@ -107,7 +113,8 @@ void QueryToOperatorTransformer::Visit(parser::JoinDefinition *node) {
   switch (node->type) {
     case JoinType::INNER: {
       CollectPredicates(node->condition.get());
-      join_expr = std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
+      join_expr =
+          std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
       break;
     }
     case JoinType::OUTER: {
@@ -182,7 +189,8 @@ void QueryToOperatorTransformer::Visit(parser::TableRef *node) {
     for (size_t i = 2; i < node->list.size(); i++) {
       node->list.at(i)->Accept(this);
       auto old_join_expr = join_expr;
-      join_expr = std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
+      join_expr =
+          std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
       join_expr->PushChild(old_join_expr);
       join_expr->PushChild(output_expr_);
     }
@@ -233,8 +241,7 @@ void QueryToOperatorTransformer::Visit(parser::DeleteStatement *op) {
     util::ExtractPredicates(op->expr.get(), predicates);
     table_scan = std::make_shared<OperatorExpression>(LogicalGet::make(
         GetAndIncreaseGetId(), predicates, target_table, op->GetTableName()));
-  }
-  else
+  } else
     table_scan = std::make_shared<OperatorExpression>(LogicalGet::make(
         GetAndIncreaseGetId(), {}, target_table, op->GetTableName()));
   auto delete_expr =
@@ -262,10 +269,10 @@ void QueryToOperatorTransformer::Visit(parser::UpdateStatement *op) {
   if (op->where != nullptr) {
     std::vector<AnnotatedExpression> predicates;
     util::ExtractPredicates(op->where.get(), predicates);
-    table_scan = std::make_shared<OperatorExpression>(LogicalGet::make(
-        GetAndIncreaseGetId(), predicates, target_table, op->table->GetTableName(), true));
-  }
-  else
+    table_scan = std::make_shared<OperatorExpression>(
+        LogicalGet::make(GetAndIncreaseGetId(), predicates, target_table,
+                         op->table->GetTableName(), true));
+  } else
     table_scan = std::make_shared<OperatorExpression>(
         LogicalGet::make(GetAndIncreaseGetId(), {}, target_table,
                          op->table->GetTableName(), true));
@@ -279,14 +286,14 @@ void QueryToOperatorTransformer::Visit(
 void QueryToOperatorTransformer::Visit(
     UNUSED_ATTRIBUTE parser::AnalyzeStatement *op) {}
 
-
-bool QueryToOperatorTransformer::RequireAggregation(const parser::SelectStatement* op) {
+bool QueryToOperatorTransformer::RequireAggregation(
+    const parser::SelectStatement *op) {
   if (op->group_by != nullptr) return true;
   // Check plain aggregation
   bool has_aggregation = false;
   bool has_other_exprs = false;
-  for (auto& expr : op->getSelectList()) {
-    std::vector<std::shared_ptr<expression::AggregateExpression>> aggr_exprs;
+  for (auto &expr : op->getSelectList()) {
+    std::vector<expression::AggregateExpression *> aggr_exprs;
     expression::ExpressionUtil::GetAggregateExprs(aggr_exprs, expr.get());
     if (aggr_exprs.size() > 0)
       has_aggregation = true;
@@ -299,11 +306,12 @@ bool QueryToOperatorTransformer::RequireAggregation(const parser::SelectStatemen
   if (has_aggregation && has_other_exprs)
     throw SyntaxException(
         "Non aggregation expression must appear in the GROUP BY "
-            "clause or be used in an aggregate function");
+        "clause or be used in an aggregate function");
   return has_aggregation;
 }
 
-void QueryToOperatorTransformer::CollectPredicates(expression::AbstractExpression *expr) {
+void QueryToOperatorTransformer::CollectPredicates(
+    expression::AbstractExpression *expr) {
   util::ExtractPredicates(expr, predicates_);
 }
 
