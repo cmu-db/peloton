@@ -271,17 +271,18 @@ QueryInfo Optimizer::GetQueryInfo(parser::SQLStatement *tree) {
   return QueryInfo(output_exprs, physical_props);
 }
 
-unique_ptr<planner::AbstractPlan> Optimizer::OptimizerPlanToPlannerPlan(
-    shared_ptr<OperatorExpression> plan,
-    std::shared_ptr<PropertySet> &requirements,
-    vector<std::shared_ptr<PropertySet>> &required_input_props,
-    vector<unique_ptr<planner::AbstractPlan>> &children_plans,
-    vector<ExprMap> &children_expr_map, ExprMap *output_expr_map) {
-  OperatorToPlanTransformer transformer;
-  return transformer.ConvertOpExpression(plan, requirements,
-                                         &required_input_props, children_plans,
-                                         children_expr_map, output_expr_map);
-}
+// unique_ptr<planner::AbstractPlan> Optimizer::OptimizerPlanToPlannerPlan(
+//     shared_ptr<OperatorExpression> plan,
+//     std::shared_ptr<PropertySet> &requirements,
+//     vector<std::shared_ptr<PropertySet>> &required_input_props,
+//     vector<unique_ptr<planner::AbstractPlan>> &children_plans,
+//     vector<ExprMap> &children_expr_map, ExprMap *output_expr_map) {
+//   OperatorToPlanTransformer transformer;
+//   return transformer.ConvertOpExpression(plan, requirements,
+//                                          &required_input_props,
+//                                          children_plans,
+//                                          children_expr_map, output_expr_map);
+// }
 
 unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
     GroupID id, std::shared_ptr<PropertySet> required_props,
@@ -297,8 +298,8 @@ unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
   PL_ASSERT(required_input_props.size() == child_groups.size());
   // Firstly derive input/output columns
   InputColumnDeriver deriver;
-  auto output_input_cols_pair =
-      deriver.DeriveInputColumns(gexpr, required_cols, &metadata_.memo);
+  auto output_input_cols_pair = deriver.DeriveInputColumns(
+      gexpr, required_props, required_cols, &metadata_.memo);
   auto &output_cols = output_input_cols_pair.first;
   auto &input_cols = output_input_cols_pair.second;
   PL_ASSERT(input_cols.size() == required_input_props.size());

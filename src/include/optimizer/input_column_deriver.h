@@ -13,6 +13,7 @@
 #pragma once
 
 #include "optimizer/operator_visitor.h"
+
 #include "properties.h"
 #include "memo.h"
 
@@ -40,7 +41,7 @@ class InputColumnDeriver : public OperatorVisitor {
   std::pair<std::vector<expression::AbstractExpression *>,
             std::vector<std::vector<expression::AbstractExpression *>>>
   DeriveInputColumns(
-      GroupExpression *gexpr,
+      GroupExpression *gexpr, std::shared_ptr<PropertySet> properties,
       std::vector<expression::AbstractExpression *> required_cols, Memo *memo);
 
   void Visit(const DummyScan *) override;
@@ -94,6 +95,8 @@ class InputColumnDeriver : public OperatorVisitor {
  private:
   // Provide all tuple value expressions needed in the expression
   void ScanHelper();
+  void AggregateHelper(const BaseOperatorNode *);
+  void JoinHelper(const BaseOperatorNode *op);
   // Some operators, for example limit, directly pass down column property
   void Passdown();
   GroupExpression *gexpr_;
@@ -102,6 +105,7 @@ class InputColumnDeriver : public OperatorVisitor {
             std::vector<std::vector<expression::AbstractExpression *>>>
       output_input_cols_;
   std::vector<expression::AbstractExpression *> required_cols_;
+  std::shared_ptr<PropertySet> properties_;
 };
 
 }  // namespace optimizer
