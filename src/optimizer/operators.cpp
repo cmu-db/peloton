@@ -395,7 +395,7 @@ hash_t PhysicalSeqScan::Hash() const {
 //===--------------------------------------------------------------------===//
 Operator PhysicalIndexScan::make(
     oid_t get_id, storage::DataTable *table, std::string alias,
-    std::vector<AnnotatedExpression> predicates, bool update, oid_t index_id) {
+    std::vector<AnnotatedExpression> predicates, bool update) {
   assert(table != nullptr);
   PhysicalIndexScan *scan = new PhysicalIndexScan;
   scan->table_ = table;
@@ -412,8 +412,13 @@ bool PhysicalIndexScan::operator==(const BaseOperatorNode &r) {
   if (r.type() != OpType::IndexScan) return false;
   const PhysicalIndexScan &node =
       *static_cast<const PhysicalIndexScan *>(&r);
-  if (predicates.size() != node.predicates.size())
+  // TODO: Should also check value list
+  if (index_id != node.index_id ||
+      key_column_id_list != node.key_column_id_list ||
+      expr_type_list != node.expr_type_list ||
+      predicates.size() != node.predicates.size())
     return false;
+
   for (size_t i = 0; i<predicates.size(); i++) {
     if (!predicates[i].expr->Equals(node.predicates[i].expr.get()))
       return false;
@@ -423,6 +428,7 @@ bool PhysicalIndexScan::operator==(const BaseOperatorNode &r) {
 
 hash_t PhysicalIndexScan::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
+  hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&index_id));
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&get_id));
   for (auto& pred : predicates)
     hash = HashUtil::CombineHashes(hash, pred.expr->Hash());

@@ -302,7 +302,7 @@ class PhysicalIndexScan : public OperatorNode<PhysicalIndexScan> {
  public:
   static Operator make(oid_t get_id, storage::DataTable *table, std::string alias,
                        std::vector<AnnotatedExpression> predicates,
-                       bool update, oid_t index_id = -1);
+                       bool update);
 
   bool operator==(const BaseOperatorNode &r) override;
 
@@ -315,8 +315,14 @@ class PhysicalIndexScan : public OperatorNode<PhysicalIndexScan> {
   bool is_for_update;
   storage::DataTable *table_;
 
-  // Offset of the index being used (Offset in datatable->indexes_)
-  oid_t index_id;
+  // Index info.
+  // Match planner::IndexScanPlan::IndexScanDesc index_scan_desc(
+  //      index, key_column_ids, expr_types, values, runtime_keys)
+  oid_t index_id = -1;
+  std::shared_ptr<index::Index> index_obj;
+  std::vector<oid_t> key_column_id_list;
+  std::vector<ExpressionType> expr_type_list;
+  std::vector<type::Value> value_list;
 };
 
 //===--------------------------------------------------------------------===//
