@@ -93,8 +93,19 @@ class PlanGenerator : public OperatorVisitor {
   void Visit(const PhysicalAggregate *) override;
 
  private:
-  std::vector<std::shared_ptr<PropertySet>> *required_input_props_;
+  ExprMap GenerateTableExprMap(const std::string &alias,
+                               const storage::DataTable *table);
 
+  std::vector<oid_t> GenerateColumnsForScan();
+
+  std::unique_ptr<expression::AbstractExpression> GeneratePredicateForScan(
+      const std::shared_ptr<expression::AbstractExpression> predicate_expr,
+      const std::string &alias, const storage::DataTable *table);
+
+  // Check required columns and output_cols, see if we need to add projection on
+  // top of the current output plan, this should be done after the output plan
+  // produciing output columns is generated
+  void BuildProjectionPlan();
   std::shared_ptr<PropertySet> required_props_;
   std::vector<expression::AbstractExpression *> required_cols_;
   std::vector<expression::AbstractExpression *> output_cols_;

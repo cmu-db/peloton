@@ -56,6 +56,7 @@ unique_ptr<planner::AbstractPlan> PlanGenerator::ConvertOpExpression(
   children_plans_ = move(children_plans);
   children_expr_map_ = move(children_expr_map);
   op->Op().Accept(this);
+  BuildProjectionPlan();
   return move(output_plan_);
 }
 
@@ -66,9 +67,24 @@ void PlanGenerator::Visit(const DummyScan *) {
   output_plan_ = nullptr;
 }
 
-void PlanGenerator::Visit(const PhysicalSeqScan *) {}
+void PlanGenerator::Visit(const PhysicalSeqScan *op) {
+  vector<oid_t> column_ids = GenerateColumnsForScan();
+  auto predicate = GeneratePredicateForScan(
+      expression::ExpressionUtil::JoinAnnotatedExprs(op->predicates),
+      op->table_alias, op->table_);
 
-void PlanGenerator::Visit(const PhysicalIndexScan *) {}
+  output_plan_ = std::make_unique<planner::AbstractPlan>(
+      new planner::SeqScanPlan(op->table_, predicate.release(), column_ids));
+}
+
+void PlanGenerator::Visit(const PhysicalIndexScan *op) {
+  vector<oid_t> column_ids = GenerateColumnsForScan();
+  auto predicate = GeneratePredicateForScan(
+      expression::ExpressionUtil::JoinAnnotatedExprs(op->predicates),
+      op->table_alias, op->table_);
+
+  // TODO build index scan desc
+}
 
 void PlanGenerator::Visit(const QueryDerivedScan *) {}
 
@@ -111,6 +127,85 @@ void PlanGenerator::Visit(const PhysicalInsertSelect *) {}
 void PlanGenerator::Visit(const PhysicalDelete *) {}
 
 void PlanGenerator::Visit(const PhysicalUpdate *) {}
+
+ExprMap PlanGenerator::GenerateTableExprMap(const std::string &alias,
+                                            const storage::DataTable *table) {
+  ExprMap expr_map;
+  auto db_id = table->GetDatabaseOid();
+  oid_t table_id = table->GetOid();
+  auto cols = table->GetSchema()->GetColumns();
+  size_t num_col = cols.size();
+  for (oid_t col_id = 0; col_id < num_col; ++col_id) {
+    // Only bound_obj_id is needed for expr_map
+    // TODO potential memory leak here?
+    auto col_expr = shared_ptr<expression::TupleValueExpression>(
+        new expression::TupleValueExpression(cols[col_id].column_name.c_str(),
+                                             alias.c_str()));
+    col_expr->SetValueType(table->GetSchema()->GetColumn(col_id).GetType());
+    col_expr->SetBoundOid(db_id, table_id, col_id);
+    expr_map[col_expr] = col_id;
+  }
+  return expr_map;
+}
+// Generate columns for scan plan
+vector<oid_t> PlanGenerator::GenerateColumnsForScan() {
+  vector<oid_t> column_ids;
+  for (oid_t idx = 0; idx < output_cols_.size(); ++idx) {
+    auto &output_expr = output_cols_[idx];
+    PL_ASSERT(output_expr->GetExpressionType() == ExpressionType::VALUE_TUPLE);
+    auto output_tvexpr =
+        reinterpret_cast<expression::TupleValueExpression *>(output_expr);
+
+    // Set column offset
+    PL_ASSERT(output_tvexpr->GetIsBound() == true);
+    auto col_id = std::get<2>(output_tvexpr->GetBoundOid());
+    column_ids.push_back(col_id);
+  }
+
+  return column_ids;
+}
+
+std::unique_ptr<expression::AbstractExpression>
+PlanGenerator::GeneratePredicateForScan(
+    const std::shared_ptr<expression::AbstractExpression> predicate_expr,
+    const std::string &alias, const storage::DataTable *table) {
+  if (predicate_expr == nullptr) {
+    return nullptr;
+  }
+  ExprMap table_expr_map = GenerateTableExprMap(alias, table);
+  unique_ptr<expression::AbstractExpression> predicate =
+      std::make_unique<expression::AbstractExpression>(predicate_expr->Copy());
+  expression::ExpressionUtil::EvaluateExpression({table_expr_map},
+                                                 predicate.get());
+  return predicate;
+}
+
+void PlanGenerator::BuildProjectionPlan() {
+  bool no_projection = false;
+  if (output_cols_.size() == required_cols_.size()) {
+    no_projection = true;
+    size_t cols_size = output_cols_.size();
+    for (size_t idx = 0; idx < cols_size; ++idx) {
+      if (output_cols_[idx] != required_cols_[idx]) {
+        no_projection = false;
+        break;
+      }
+    }
+  }
+
+  if (no_projection) {
+    return;
+  }
+  // TODO Construct projection plan
+  // TODO(boweic): For now, we only produce tv exprs and aggregate expr as
+  // output column, but we should handle arbitary expressions in the future
+  // ExprMap output_cols_map;
+  // for (auto &col : output_cols_) {
+  //   PL_ASSERT(col->GetExpressionType() == ExpressionType::VALUE_TUPLE ||
+  //             col->GetExpressionType() == ExpressionType::AggregateType);
+  //
+  // }
+}
 
 }  // namespace optimizer
 }  // namespace peloton

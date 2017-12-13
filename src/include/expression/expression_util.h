@@ -644,6 +644,25 @@ class ExpressionUtil {
     }
   }
 
+  /*
+   * Join all Annotated Exprs in the vector by AND operators, return a copy */
+  static std::unique_ptr<expression::AbstractExpression> JoinAnnotatedExprs(
+      const std::vector<AnnotatedExpression> &exprs) {
+    if (exprs.empty()) {
+      return nullptr;
+    }
+    std::unique_ptr<expression::AbstractExpression> curr_expr(
+        exprs[0].expr->Copy());
+    for (size_t i = 1; i < exprs.size(); ++i) {
+      std::unique_ptr<expression::AbstractExpression> next_expr(
+          new expression::ConjunctionExpression(ExpressionType::CONJUNCTION_AND,
+                                                curr_expr.release(),
+                                                exprs[i].expr->Copy()));
+      curr_expr = std::move(next_expr);
+    }
+    return curr_expr;
+  }
+
   /* All following functions will be depracated when switch to new optimizer */
 
   /**
