@@ -67,7 +67,7 @@ class FunctionExpression : public AbstractExpression {
 
   codegen::CodeContext *GetFuncContext() const { return func_context_; }
 
-  bool isUDF() const { return isUDF_; }
+  bool IsUDF() const { return isUDF_; }
 
   const std::vector<type::TypeId> &GetArgTypes() const {
     return func_arg_types_;

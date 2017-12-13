@@ -110,6 +110,16 @@ TEST_F(FunctionsTests, FuncCallTest) {
   result = {"32"};
   TestingSQLUtil::ExecuteSQLQueryAndCheckResult("SELECT ASCII(s) FROM test;",
                                                 result, false);
+  
+
+  TestingSQLUtil::ExecuteSQLQuery(
+      "CREATE OR REPLACE FUNCTION"
+      " increment(e double) RETURNS double AS $$"
+      " BEGIN RETURN e + 1; END; $$ LANGUAGE plpgsql;");
+
+  result = {"5"};
+  TestingSQLUtil::ExecuteSQLQueryAndCheckResult("SELECT increment(e) FROM test;",
+                                                result, false);
 
   // free the database just created
   txn = txn_manager.BeginTransaction();

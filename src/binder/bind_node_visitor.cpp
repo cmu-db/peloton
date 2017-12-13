@@ -298,12 +298,11 @@ void BindNodeVisitor::Visit(expression::FunctionExpression *expr) {
       // Test whether the first argument is a correct DatePartType
       StringToDatePartType(
           date_part->Evaluate(nullptr, nullptr, nullptr).ToString());
-      }
     }
-    else {
-      expr->SetUDFFunctionExpressionParameters(func_data.func_context_,
-                                               func_data.return_type_,
-                                               func_data.argument_types_);
+  } else {
+    expr->SetUDFFunctionExpressionParameters(func_data.func_context_,
+                                             func_data.return_type_,
+                                             func_data.argument_types_);
   }
 }
 

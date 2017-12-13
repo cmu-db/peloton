@@ -1017,13 +1017,15 @@ TEST_F(PostgresParserTests, CreateTriggerTest) {
   EXPECT_EQ(ExpressionType::VALUE_TUPLE, left->GetExpressionType());
   EXPECT_EQ("old", static_cast<const expression::TupleValueExpression *>(left)
                        ->GetTableName());
-  EXPECT_EQ("balance", static_cast<const expression::TupleValueExpression *>(
-                           left)->GetColumnName());
+  EXPECT_EQ("balance",
+            static_cast<const expression::TupleValueExpression *>(left)
+                ->GetColumnName());
   EXPECT_EQ(ExpressionType::VALUE_TUPLE, right->GetExpressionType());
   EXPECT_EQ("new", static_cast<const expression::TupleValueExpression *>(right)
                        ->GetTableName());
-  EXPECT_EQ("balance", static_cast<const expression::TupleValueExpression *>(
-                           right)->GetColumnName());
+  EXPECT_EQ("balance",
+            static_cast<const expression::TupleValueExpression *>(right)
+                ->GetColumnName());
   // level
   // the level is for each row
   EXPECT_TRUE(TRIGGER_FOR_ROW(create_trigger_stmt->trigger_type));
@@ -1115,6 +1117,32 @@ TEST_F(PostgresParserTests, FuncCallTest) {
   EXPECT_TRUE(const_expr != nullptr);
   EXPECT_EQ(CmpBool::TRUE, const_expr->GetValue().CompareEquals(
                                type::ValueFactory::GetIntegerValue(2)));
+}
+
+TEST_F(PostgresParserTests, UDFFuncCallTest) {
+  std::string query = "SELECT increment(1,b) FROM TEST;";
+
+  auto parser = parser::PostgresParser::GetInstance();
+  std::unique_ptr<parser::SQLStatementList> stmt_list(
+      parser.BuildParseTree(query).release());
+  EXPECT_TRUE(stmt_list->is_valid);
+
+  auto select_stmt = (parser::SelectStatement *)stmt_list->GetStatement(0);
+  LOG_INFO("%s", stmt_list->GetInfo().c_str());
+
+  auto fun_expr =
+      (expression::FunctionExpression *)(select_stmt->select_list.at(0).get());
+  EXPECT_TRUE(fun_expr != nullptr);
+  EXPECT_EQ("increment", fun_expr->GetFuncName());
+  EXPECT_EQ(2, fun_expr->GetChildrenSize());
+  auto const_expr =
+      (expression::ConstantValueExpression *)fun_expr->GetChild(0);
+  EXPECT_TRUE(const_expr != nullptr);
+  EXPECT_TRUE(const_expr->GetValue().CompareEquals(
+      type::ValueFactory::GetIntegerValue(1)));
+  auto tv_expr = (expression::TupleValueExpression *)fun_expr->GetChild(1);
+  EXPECT_TRUE(tv_expr != nullptr);
+  EXPECT_EQ("b", tv_expr->GetColumnName());
 }
 
 TEST_F(PostgresParserTests, CaseTest) {

@@ -25,7 +25,7 @@ FunctionTranslator::FunctionTranslator(
     const expression::FunctionExpression &func_expr,
     CompilationContext &context)
     : ExpressionTranslator(func_expr, context) {
-  if (!func_expr.isUDF()) {
+  if (!func_expr.IsUDF()) {
     PL_ASSERT(func_expr.GetFunc().op_id != OperatorId::Invalid);
     PL_ASSERT(func_expr.GetFunc().impl != nullptr);
 
