@@ -88,16 +88,26 @@ bool CUCKOO_MAP_TYPE::IsEmpty() const{
   return cuckoo_map.empty();
 }
 
+CUCKOO_MAP_TEMPLATE_ARGUMENTS
+CUCKOO_MAP_ITERATOR_TYPE
+CUCKOO_MAP_TYPE::GetIterator() {
+  return cuckoo_map.lock_table();
+}
+
 // Explicit template instantiation
 template class CuckooMap<uint32_t, uint32_t>;
 
 template class CuckooMap<oid_t, std::shared_ptr<storage::TileGroup>>;
 
+// Used in Shared Pointer test and iterator test
 template class CuckooMap<oid_t, std::shared_ptr<oid_t>>;
 
 template class CuckooMap<std::thread::id,
                          std::shared_ptr<stats::BackendStatsContext>>;
 
 template class CuckooMap<oid_t, std::shared_ptr<stats::IndexMetric>>;
+
+// Used in SharedPointerKeyTest
+template class CuckooMap<std::shared_ptr<oid_t>, std::shared_ptr<oid_t>>;
 
 }  // namespace peloton
