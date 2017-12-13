@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <functional>
 #include <iostream>
 
@@ -18,6 +17,8 @@
 #include "common/logger.h"
 #include "common/macros.h"
 #include "common/internal_types.h"
+#include "container/cuckoo_map.h"
+#include "type/types.h"
 
 namespace peloton {
 
@@ -28,32 +29,29 @@ class TileGroup;
 namespace stats {
 class BackendStatsContext;
 class IndexMetric;
-}
+}  // namespace stats
 
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
-CUCKOO_MAP_TYPE::CuckooMap(){
-}
+CUCKOO_MAP_TYPE::CuckooMap() {}
 
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
-CUCKOO_MAP_TYPE::~CuckooMap(){
-}
+CUCKOO_MAP_TYPE::~CuckooMap() {}
 
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
-bool CUCKOO_MAP_TYPE::Insert(const KeyType &key, ValueType value){
+bool CUCKOO_MAP_TYPE::Insert(const KeyType &key, ValueType value) {
   auto status = cuckoo_map.insert(key, value);
   LOG_TRACE("insert status : %d", status);
   return status;
 }
 
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
-bool CUCKOO_MAP_TYPE::Update(const KeyType &key, ValueType value){
-  auto status =  cuckoo_map.update(key, value);
+bool CUCKOO_MAP_TYPE::Update(const KeyType &key, ValueType value) {
+  auto status = cuckoo_map.update(key, value);
   return status;
 }
 
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
-bool CUCKOO_MAP_TYPE::Erase(const KeyType &key){
-
+bool CUCKOO_MAP_TYPE::Erase(const KeyType &key) {
   auto status = cuckoo_map.erase(key);
   LOG_TRACE("erase status : %d", status);
 
@@ -62,37 +60,28 @@ bool CUCKOO_MAP_TYPE::Erase(const KeyType &key){
 
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
 bool CUCKOO_MAP_TYPE::Find(const KeyType &key, ValueType &value) const {
-
   auto status = cuckoo_map.find(key, value);
   LOG_TRACE("find status : %d", status);
   return status;
 }
 
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
-bool CUCKOO_MAP_TYPE::Contains(const KeyType &key){
+bool CUCKOO_MAP_TYPE::Contains(const KeyType &key) {
   return cuckoo_map.contains(key);
 }
 
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
-void CUCKOO_MAP_TYPE::Clear(){
-  cuckoo_map.clear();
-}
+void CUCKOO_MAP_TYPE::Clear() { cuckoo_map.clear(); }
 
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
-size_t CUCKOO_MAP_TYPE::GetSize() const{
-  return cuckoo_map.size();
-}
+size_t CUCKOO_MAP_TYPE::GetSize() const { return cuckoo_map.size(); }
 
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
-bool CUCKOO_MAP_TYPE::IsEmpty() const{
-  return cuckoo_map.empty();
-}
+bool CUCKOO_MAP_TYPE::IsEmpty() const { return cuckoo_map.empty(); }
 
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
 CUCKOO_MAP_ITERATOR_TYPE
-CUCKOO_MAP_TYPE::GetIterator() {
-  return cuckoo_map.lock_table();
-}
+CUCKOO_MAP_TYPE::GetIterator() { return cuckoo_map.lock_table(); }
 
 // Explicit template instantiation
 template class CuckooMap<uint32_t, uint32_t>;
@@ -109,5 +98,9 @@ template class CuckooMap<oid_t, std::shared_ptr<stats::IndexMetric>>;
 
 // Used in SharedPointerKeyTest
 template class CuckooMap<std::shared_ptr<oid_t>, std::shared_ptr<oid_t>>;
+
+// Used in StatementCacheManager
+template class CuckooMap<std::shared_ptr<StatementCache>,
+                         std::shared_ptr<StatementCache>>;
 
 }  // namespace peloton
