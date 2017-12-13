@@ -54,7 +54,7 @@ class CostCalculator : public OperatorVisitor {
   // when constructing the class
   GroupExpression* gexpr_;
   const PropertySet *output_properties_;
-  double output_cost_;
+  double output_cost_ = 0;
 };
 
 }  // namespace optimizer

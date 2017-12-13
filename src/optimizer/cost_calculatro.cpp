@@ -24,13 +24,17 @@ double CostCalculator::CalculatorCost(GroupExpression *gexpr, const PropertySet 
 
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const DummyScan *op) {}
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalSeqScan *op) {}
-void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalIndexScan *op) {}
+void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalIndexScan *op) {
+
+}
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const QueryDerivedScan *op) {}
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalProject *op) {}
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalOrderBy *op) {}
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalLimit *op) {}
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalFilter *op) {}
-void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalInnerNLJoin *op) {}
+void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalInnerNLJoin *op) {
+  output_cost_ = 1;
+}
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalLeftNLJoin *op) {}
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalRightNLJoin *op) {}
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalOuterNLJoin *op) {}

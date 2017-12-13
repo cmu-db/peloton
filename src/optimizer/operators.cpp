@@ -395,7 +395,7 @@ hash_t PhysicalSeqScan::Hash() const {
 //===--------------------------------------------------------------------===//
 Operator PhysicalIndexScan::make(
     oid_t get_id, storage::DataTable *table, std::string alias,
-    std::vector<AnnotatedExpression> predicates, bool update) {
+    std::vector<AnnotatedExpression> predicates, bool update, oid_t index_id) {
   assert(table != nullptr);
   PhysicalIndexScan *scan = new PhysicalIndexScan;
   scan->table_ = table;
@@ -403,6 +403,7 @@ Operator PhysicalIndexScan::make(
   scan->predicates = std::move(predicates);
   scan->table_alias = alias;
   scan->get_id = get_id;
+  scan->index_id = index_id;
 
   return Operator(scan);
 }
