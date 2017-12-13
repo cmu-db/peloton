@@ -554,9 +554,9 @@ bool WalRecovery::ReplayLogFile(FileHandle &file_handle) {
           ItemPointer p(tile_group->GetTileGroupId(), tuple_slot_id);
           auto txn = concurrency::TransactionManagerFactory::GetInstance()
                          .BeginTransaction(IsolationLevelType::SERIALIZABLE);
-          ItemPointer *i = new ItemPointer(tg, tuple_slot_id);
-          table->InsertInIndexes(t.get(), p, txn, &i);
-          tile_group->GetHeader()->SetIndirection(tuple_slot_id, i);
+          ItemPointer *ip = nullptr;
+          table->InsertInIndexes(t.get(), p, txn, &ip);
+          tile_group->GetHeader()->SetIndirection(tuple_slot_id, ip);
           concurrency::TransactionManagerFactory::GetInstance().CommitTransaction(
               txn);
 
