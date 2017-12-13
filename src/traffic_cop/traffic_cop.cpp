@@ -457,7 +457,7 @@ ResultType TrafficCop::ExecuteStatement(
     const std::vector<type::Value> &params, UNUSED_ATTRIBUTE bool unnamed,
     std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
     const std::vector<int> &result_format, std::vector<ResultValue> &result,
-    std::string &error_message, size_t thread_id) {
+    std::string &error_message, logging::WalLogManager* log_manager, size_t thread_id) {
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(
           settings::SettingId::stats_mode)) != StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()->InitQueryMetric(
@@ -481,7 +481,7 @@ ResultType TrafficCop::ExecuteStatement(
         return BeginQueryHelper(thread_id);
       }
       case QueryType::QUERY_COMMIT: {
-        return CommitQueryHelper();
+        return CommitQueryHelper(log_manager);
       }
       case QueryType::QUERY_ROLLBACK: {
         return AbortQueryHelper();

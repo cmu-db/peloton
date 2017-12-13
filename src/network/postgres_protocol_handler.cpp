@@ -328,7 +328,7 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(
 
         traffic_cop_->query_ = traffic_cop_->GetStatement()->GetQueryString();
         std::vector<int> result_format(traffic_cop_->GetStatement()->GetTupleDescriptor().size(), 0);
-                                       0);
+
         result_format_ = result_format;
 
         for (std::size_t idx = 2; idx < tokens.size(); idx++) {
@@ -350,8 +350,7 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(
                 traffic_cop_->ExecuteStatement(traffic_cop_->GetStatement(), traffic_cop_->GetParamVal(), unnamed, nullptr,
                                                result_format_, traffic_cop_->GetResult(),
                                                traffic_cop_->GetErrorMessage(), log_manager_, thread_id);
-                                           rows_affected_, error_message_,
-                                           log_manager_, thread_id);
+
 
         if (status == ResultType::QUEUING || status == ResultType::LOGGING) {
           return ProcessResult::PROCESSING;
@@ -376,16 +375,15 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(
         traffic_cop_->SetParamVal(param_values);
         bool unnamed = false;
         std::vector<int> result_format(traffic_cop_->GetStatement()->GetTupleDescriptor().size(), 0);
-                                       0);
+
         result_format_ = result_format;
         // should param_values and result_format be local variable?
         // should results_ be reset when PakcetManager.reset(), why results_
         // cannot be read?
-            traffic_cop_->ExecuteStatement(traffic_cop_->GetStatement(), traffic_cop_->GetParamVal(), unnamed, nullptr,
+        auto status = traffic_cop_->ExecuteStatement(traffic_cop_->GetStatement(), traffic_cop_->GetParamVal(), unnamed, nullptr,
                                            result_format_, traffic_cop_->GetResult(),
-             traffic_cop_->GetError(), log_manager_, thread_id);
+             traffic_cop_->GetErrorMessage(), log_manager_, thread_id);
         if (status == ResultType::QUEUING || status == ResultType::LOGGING) {
-        if (traffic_cop_->GetQueuing()) {
           return ProcessResult::PROCESSING;
         }
         ExecQueryMessageGetResult(status);
@@ -874,7 +872,6 @@ ProcessResult PostgresProtocolHandler::ExecExecuteMessage(
                                       skipped_query_type_string);
       // The response to ExecuteCommand is the query_type string token.
       CompleteCommand(skipped_query_type_string, skipped_query_type_, traffic_cop_->getRowsAffected());
-                      rows_affected_);
     }
     skipped_stmt_ = false;
     return ProcessResult::COMPLETE;
@@ -945,9 +942,9 @@ void PostgresProtocolHandler::GetResult() {
   traffic_cop_->ExecuteStatementPlanGetResult(log_manager_);
   auto status = traffic_cop_->ExecuteStatementGetResult();
   if(status == ResultType::LOGGING)
-      traffic_cop_->is_logging_ = true;
+      traffic_cop_->SetLogging(true);
   else
-      traffic_cop_->is_logging_ = false;
+      traffic_cop_->SetLogging(false);
   switch (protocol_type_) {
     case NetworkProtocolType::POSTGRES_JDBC:
       LOG_TRACE("JDBC result");

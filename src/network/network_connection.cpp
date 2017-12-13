@@ -783,7 +783,7 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
           PL_ASSERT(false);
         }
         conn->protocol_handler_->GetResult();
-        if (conn->traffic_cop_.is_logging_) {
+        if (conn->traffic_cop_.GetLogging()) {
             done = true;
         }
         conn->TransitState(ConnState::CONN_WRITE);
