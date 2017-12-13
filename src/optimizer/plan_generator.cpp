@@ -99,11 +99,10 @@ void PlanGenerator::Visit(const QueryDerivedScan *) {}
 void PlanGenerator::Visit(const PhysicalProject *) {}
 
 void PlanGenerator::Visit(const PhysicalLimit *op) {
-
-   unique_ptr<planner::AbstractPlan> limit_plan(
-       new planner::LimitPlan(op->limit, op->offset));
-   limit_plan->AddChild(move(children_plans_[0]));
-   output_plan_ = move(limit_plan);
+  unique_ptr<planner::AbstractPlan> limit_plan(
+      new planner::LimitPlan(op->limit, op->offset));
+  limit_plan->AddChild(move(children_plans_[0]));
+  output_plan_ = move(limit_plan);
 }
 
 void PlanGenerator::Visit(const PhysicalOrderBy *) {
@@ -170,49 +169,49 @@ void PlanGenerator::Visit(const PhysicalInsertSelect *op) {
 }
 
 void PlanGenerator::Visit(const PhysicalDelete *op) {
-   unique_ptr<planner::AbstractPlan> delete_plan(
-       new planner::DeletePlan(op->target_table));
+  unique_ptr<planner::AbstractPlan> delete_plan(
+      new planner::DeletePlan(op->target_table));
 
-   // Add child
-   delete_plan->AddChild(move(children_plans_[0]));
-   output_plan_ = move(delete_plan);
+  // Add child
+  delete_plan->AddChild(move(children_plans_[0]));
+  output_plan_ = move(delete_plan);
 }
 
 void PlanGenerator::Visit(const PhysicalUpdate *op) {
-   DirectMapList dml;
-   TargetList tl;
-   std::unordered_set<oid_t> update_col_ids;
-   auto schema = op->target_table->GetSchema();
-   auto table_alias = op->target_table->GetName();
+  DirectMapList dml;
+  TargetList tl;
+  std::unordered_set<oid_t> update_col_ids;
+  auto schema = op->target_table->GetSchema();
+  auto table_alias = op->target_table->GetName();
   ExprMap table_expr_map = GenerateTableExprMap(table_alias, op->target_table);
 
-   // Evaluate update expression and add to target list
-   for (auto &update : *(op->updates)) {
-     auto column = update->column;
-     auto col_id = schema->GetColumnID(column);
-     if (update_col_ids.find(col_id) != update_col_ids.end())
-       throw SyntaxException("Multiple assignments to same column " + column);
-     update_col_ids.insert(col_id);
-     expression::ExpressionUtil::EvaluateExpression({table_expr_map},
-                                                    update->value.get());
-     planner::DerivedAttribute attribute{update->value->Copy()};
-     tl.emplace_back(col_id, attribute);
-   }
+  // Evaluate update expression and add to target list
+  for (auto &update : *(op->updates)) {
+    auto column = update->column;
+    auto col_id = schema->GetColumnID(column);
+    if (update_col_ids.find(col_id) != update_col_ids.end())
+      throw SyntaxException("Multiple assignments to same column " + column);
+    update_col_ids.insert(col_id);
+    expression::ExpressionUtil::EvaluateExpression({table_expr_map},
+                                                   update->value.get());
+    planner::DerivedAttribute attribute{update->value->Copy()};
+    tl.emplace_back(col_id, attribute);
+  }
 
-   // Add other columns to direct map
-   auto col_size = schema->GetColumnCount();
-   for (size_t i = 0; i < col_size; i++) {
-     if (update_col_ids.find(i) == update_col_ids.end())
-       dml.emplace_back(i, std::pair<oid_t, oid_t>(0, i));
-   }
+  // Add other columns to direct map
+  auto col_size = schema->GetColumnCount();
+  for (size_t i = 0; i < col_size; i++) {
+    if (update_col_ids.find(i) == update_col_ids.end())
+      dml.emplace_back(i, std::pair<oid_t, oid_t>(0, i));
+  }
 
-   unique_ptr<const planner::ProjectInfo> proj_info(
-       new planner::ProjectInfo(move(tl), move(dml)));
+  unique_ptr<const planner::ProjectInfo> proj_info(
+      new planner::ProjectInfo(move(tl), move(dml)));
 
-   unique_ptr<planner::AbstractPlan> update_plan(
-       new planner::UpdatePlan(op->target_table, move(proj_info)));
-   update_plan->AddChild(move(children_plans_[0]));
-   output_plan_ = move(update_plan);
+  unique_ptr<planner::AbstractPlan> update_plan(
+      new planner::UpdatePlan(op->target_table, move(proj_info)));
+  update_plan->AddChild(move(children_plans_[0]));
+  output_plan_ = move(update_plan);
 }
 
 /************************* Private Functions *******************************/
@@ -264,7 +263,7 @@ PlanGenerator::GeneratePredicateForScan(
   ExprMap table_expr_map = GenerateTableExprMap(alias, table);
   unique_ptr<expression::AbstractExpression> predicate =
       std::unique_ptr<expression::AbstractExpression>(predicate_expr->Copy());
-  expression::ExpressionUtil::ConvertToTvExpr(col_copy, child_expr_map);
+  expression::ExpressionUtil::ConvertToTvExpr(predicate.get(), table_expr_map);
   expression::ExpressionUtil::EvaluateExpression({table_expr_map},
                                                  predicate.get());
   return predicate;
