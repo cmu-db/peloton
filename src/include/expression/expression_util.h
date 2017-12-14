@@ -459,14 +459,14 @@ class ExpressionUtil {
                                 std::vector<TupleValueExpression *> &tv_exprs,
                                 AbstractExpression *expr) {
     size_t children_size = expr->GetChildrenSize();
-    if (IsAggregateExpression(expr->GetExpressionType()))
-      aggr_exprs.emplace_back((AggregateExpression *)expr->Copy());
-    else if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE)
-      tv_exprs.emplace_back((TupleValueExpression *)expr->Copy());
-    else {
-      for (size_t i = 0; i < children_size; i++)
-        GetAggregateExprs(aggr_exprs, tv_exprs, expr->GetModifiableChild(i));
+    if (IsAggregateExpression(expr->GetExpressionType())) {
+      auto aggr_expr = reinterpret_cast<AggregateExpression *>(expr);
+      aggr_exprs.push_back(aggr_expr);
+    } else if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
+      tv_exprs.push_back((TupleValueExpression *)expr);
     }
+    for (size_t i = 0; i < children_size; i++)
+      GetAggregateExprs(aggr_exprs, tv_exprs, expr->GetModifiableChild(i));
   }
 
   /**

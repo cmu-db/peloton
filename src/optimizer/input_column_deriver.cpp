@@ -155,8 +155,28 @@ void InputColumnDeriver::ScanHelper() {
 
 void InputColumnDeriver::AggregateHelper(const BaseOperatorNode *op) {
   ExprSet input_cols_set;
-  for (auto expr : required_cols_) {
-    expression::ExpressionUtil::GetTupleValueExprs(input_cols_set, expr);
+  ExprMap output_cols_map;
+  oid_t output_col_idx = 0;
+  for (size_t idx = 0; idx < required_cols_.size(); ++idx) {
+    auto &expr = required_cols_[idx];
+    vector<expression::AggregateExpression *> aggr_exprs;
+    vector<expression::TupleValueExpression *> tv_exprs;
+    expression::ExpressionUtil::GetAggregateExprs(aggr_exprs, tv_exprs, expr);
+    for (auto &aggr_expr : aggr_exprs) {
+      if (!output_cols_map.count(aggr_expr)) {
+        output_cols_map[aggr_expr] = output_col_idx++;
+      }
+    }
+    for (auto &tv_expr : tv_exprs) {
+      if (!output_cols_map.count(tv_expr)) {
+        output_cols_map[tv_expr] = output_col_idx++;
+      }
+      input_cols_set.insert(tv_expr);
+    }
+  }
+  vector<AbstractExpression *> output_cols(output_col_idx, nullptr);
+  for (auto &expr_idx_pair : output_cols_map) {
+    output_cols[expr_idx_pair.second] = expr_idx_pair.first;
   }
 
   // TODO(boweic): do not use shared_ptr
@@ -166,15 +186,11 @@ void InputColumnDeriver::AggregateHelper(const BaseOperatorNode *op) {
   } else if (op->type() == OpType::SortGroupBy) {
     groupby_cols = reinterpret_cast<const PhysicalSortGroupBy *>(op)->columns;
   }
-  vector<AbstractExpression *> output_cols;
   for (auto &groupby_col : groupby_cols) {
-    output_cols.push_back(groupby_col.get());
     input_cols_set.insert(groupby_col.get());
   }
   vector<AbstractExpression *> input_cols;
   for (auto &col : input_cols_set) {
-    // output all required columns so that we could perform projection later
-    output_cols.push_back(col);
     input_cols.push_back(col);
   }
 

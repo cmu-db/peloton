@@ -29,9 +29,10 @@ Operator LeafOperator::make(GroupID group) {
 //===--------------------------------------------------------------------===//
 // Get
 //===--------------------------------------------------------------------===//
-Operator LogicalGet::make(
-    oid_t get_id, std::vector<AnnotatedExpression> predicates,
-    storage::DataTable *table, std::string alias, bool update) {
+Operator LogicalGet::make(oid_t get_id,
+                          std::vector<AnnotatedExpression> predicates,
+                          storage::DataTable *table, std::string alias,
+                          bool update) {
   LogicalGet *get = new LogicalGet;
   get->table = table;
   get->table_alias = alias;
@@ -42,22 +43,19 @@ Operator LogicalGet::make(
   return Operator(get);
 }
 
-
 hash_t LogicalGet::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&get_id));
-  for (auto& pred : predicates)
+  for (auto &pred : predicates)
     hash = HashUtil::CombineHashes(hash, pred.expr->Hash());
   return hash;
 }
 
 bool LogicalGet::operator==(const BaseOperatorNode &r) {
   if (r.type() != OpType::Get) return false;
-  const LogicalGet &node =
-      *static_cast<const LogicalGet *>(&r);
-  if (predicates.size() != node.predicates.size())
-    return false;
-  for (size_t i = 0; i<predicates.size(); i++) {
+  const LogicalGet &node = *static_cast<const LogicalGet *>(&r);
+  if (predicates.size() != node.predicates.size()) return false;
+  for (size_t i = 0; i < predicates.size(); i++) {
     if (!predicates[i].expr->Equals(node.predicates[i].expr.get()))
       return false;
   }
@@ -96,7 +94,7 @@ hash_t LogicalQueryDerivedGet::Hash() const {
 //===--------------------------------------------------------------------===//
 // Select
 //===--------------------------------------------------------------------===//
-Operator LogicalFilter::make(std::vector<AnnotatedExpression>& filter) {
+Operator LogicalFilter::make(std::vector<AnnotatedExpression> &filter) {
   LogicalFilter *select = new LogicalFilter;
   select->predicates = std::move(filter);
   return Operator(select);
@@ -104,18 +102,16 @@ Operator LogicalFilter::make(std::vector<AnnotatedExpression>& filter) {
 
 hash_t LogicalFilter::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
-  for (auto& pred : predicates)
+  for (auto &pred : predicates)
     hash = HashUtil::CombineHashes(hash, pred.expr->Hash());
   return hash;
 }
 
 bool LogicalFilter::operator==(const BaseOperatorNode &r) {
   if (r.type() != OpType::LogicalFilter) return false;
-  const LogicalFilter &node =
-      *static_cast<const LogicalFilter *>(&r);
-  if (predicates.size() != node.predicates.size())
-    return false;
-  for (size_t i = 0; i<predicates.size(); i++) {
+  const LogicalFilter &node = *static_cast<const LogicalFilter *>(&r);
+  if (predicates.size() != node.predicates.size()) return false;
+  for (size_t i = 0; i < predicates.size(); i++) {
     if (!predicates[i].expr->Equals(node.predicates[i].expr.get()))
       return false;
   }
@@ -124,12 +120,12 @@ bool LogicalFilter::operator==(const BaseOperatorNode &r) {
 //===--------------------------------------------------------------------===//
 // Project
 //===--------------------------------------------------------------------===//
-Operator LogicalProjection::make(std::vector<std::shared_ptr<expression::AbstractExpression>> &elements) {
+Operator LogicalProjection::make(
+    std::vector<std::shared_ptr<expression::AbstractExpression>> &elements) {
   LogicalProjection *projection = new LogicalProjection;
   projection->expressions = std::move(elements);
   return Operator(projection);
 }
-
 
 //===--------------------------------------------------------------------===//
 // DependentJoin
@@ -140,15 +136,16 @@ Operator LogicalDependentJoin::make() {
   return Operator(join);
 }
 
-Operator LogicalDependentJoin::make(std::vector<AnnotatedExpression>& conditions) {
-  LogicalDependentJoin* join = new LogicalDependentJoin;
+Operator LogicalDependentJoin::make(
+    std::vector<AnnotatedExpression> &conditions) {
+  LogicalDependentJoin *join = new LogicalDependentJoin;
   join->join_predicates = std::move(conditions);
   return Operator(join);
 }
 
 hash_t LogicalDependentJoin::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
-  for (auto& pred : join_predicates)
+  for (auto &pred : join_predicates)
     hash = HashUtil::CombineHashes(hash, pred.expr->Hash());
   return hash;
 }
@@ -157,9 +154,8 @@ bool LogicalDependentJoin::operator==(const BaseOperatorNode &r) {
   if (r.type() != OpType::LogicalDependentJoin) return false;
   const LogicalDependentJoin &node =
       *static_cast<const LogicalDependentJoin *>(&r);
-  if (join_predicates.size() != node.join_predicates.size())
-    return false;
-  for (size_t i = 0; i<join_predicates.size(); i++) {
+  if (join_predicates.size() != node.join_predicates.size()) return false;
+  for (size_t i = 0; i < join_predicates.size(); i++) {
     if (!join_predicates[i].expr->Equals(node.join_predicates[i].expr.get()))
       return false;
   }
@@ -175,7 +171,7 @@ Operator LogicalMarkJoin::make() {
   return Operator(join);
 }
 
-Operator LogicalMarkJoin::make(std::vector<AnnotatedExpression>& conditions) {
+Operator LogicalMarkJoin::make(std::vector<AnnotatedExpression> &conditions) {
   LogicalInnerJoin *join = new LogicalInnerJoin;
   join->join_predicates = std::move(conditions);
   return Operator(join);
@@ -183,18 +179,16 @@ Operator LogicalMarkJoin::make(std::vector<AnnotatedExpression>& conditions) {
 
 hash_t LogicalMarkJoin::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
-  for (auto& pred : join_predicates)
+  for (auto &pred : join_predicates)
     hash = HashUtil::CombineHashes(hash, pred.expr->Hash());
   return hash;
 }
 
 bool LogicalMarkJoin::operator==(const BaseOperatorNode &r) {
   if (r.type() != OpType::LogicalMarkJoin) return false;
-  const LogicalMarkJoin &node =
-      *static_cast<const LogicalMarkJoin *>(&r);
-  if (join_predicates.size() != node.join_predicates.size())
-    return false;
-  for (size_t i = 0; i<join_predicates.size(); i++) {
+  const LogicalMarkJoin &node = *static_cast<const LogicalMarkJoin *>(&r);
+  if (join_predicates.size() != node.join_predicates.size()) return false;
+  for (size_t i = 0; i < join_predicates.size(); i++) {
     if (!join_predicates[i].expr->Equals(node.join_predicates[i].expr.get()))
       return false;
   }
@@ -210,7 +204,7 @@ Operator LogicalInnerJoin::make() {
   return Operator(join);
 }
 
-Operator LogicalInnerJoin::make(std::vector<AnnotatedExpression>& conditions) {
+Operator LogicalInnerJoin::make(std::vector<AnnotatedExpression> &conditions) {
   LogicalInnerJoin *join = new LogicalInnerJoin;
   join->join_predicates = std::move(conditions);
   return Operator(join);
@@ -218,18 +212,16 @@ Operator LogicalInnerJoin::make(std::vector<AnnotatedExpression>& conditions) {
 
 hash_t LogicalInnerJoin::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
-  for (auto& pred : join_predicates)
+  for (auto &pred : join_predicates)
     hash = HashUtil::CombineHashes(hash, pred.expr->Hash());
   return hash;
 }
 
 bool LogicalInnerJoin::operator==(const BaseOperatorNode &r) {
   if (r.type() != OpType::InnerJoin) return false;
-  const LogicalInnerJoin &node =
-      *static_cast<const LogicalInnerJoin *>(&r);
-  if (join_predicates.size() != node.join_predicates.size())
-    return false;
-  for (size_t i = 0; i<join_predicates.size(); i++) {
+  const LogicalInnerJoin &node = *static_cast<const LogicalInnerJoin *>(&r);
+  if (join_predicates.size() != node.join_predicates.size()) return false;
+  for (size_t i = 0; i < join_predicates.size(); i++) {
     if (!join_predicates[i].expr->Equals(node.join_predicates[i].expr.get()))
       return false;
   }
@@ -294,8 +286,8 @@ Operator LogicalGroupBy::make() {
   return Operator(group_by);
 }
 Operator LogicalGroupBy::make(
-    std::vector<std::shared_ptr<expression::AbstractExpression>>& columns,
-    std::shared_ptr<expression::AbstractExpression>& having) {
+    std::vector<std::shared_ptr<expression::AbstractExpression>> &columns,
+    std::shared_ptr<expression::AbstractExpression> &having) {
   LogicalGroupBy *group_by = new LogicalGroupBy;
   group_by->columns = move(columns);
   group_by->having = having;
@@ -373,9 +365,10 @@ Operator DummyScan::make() {
 //===--------------------------------------------------------------------===//
 // SeqScan
 //===--------------------------------------------------------------------===//
-Operator PhysicalSeqScan::make(
-    oid_t get_id, storage::DataTable *table, std::string alias,
-    std::vector<AnnotatedExpression> predicates, bool update) {
+Operator PhysicalSeqScan::make(oid_t get_id, storage::DataTable *table,
+                               std::string alias,
+                               std::vector<AnnotatedExpression> predicates,
+                               bool update) {
   assert(table != nullptr);
   PhysicalSeqScan *scan = new PhysicalSeqScan;
   scan->table_ = table;
@@ -389,11 +382,9 @@ Operator PhysicalSeqScan::make(
 
 bool PhysicalSeqScan::operator==(const BaseOperatorNode &r) {
   if (r.type() != OpType::SeqScan) return false;
-  const PhysicalSeqScan &node =
-      *static_cast<const PhysicalSeqScan *>(&r);
-  if (predicates.size() != node.predicates.size())
-    return false;
-  for (size_t i = 0; i<predicates.size(); i++) {
+  const PhysicalSeqScan &node = *static_cast<const PhysicalSeqScan *>(&r);
+  if (predicates.size() != node.predicates.size()) return false;
+  for (size_t i = 0; i < predicates.size(); i++) {
     if (!predicates[i].expr->Equals(node.predicates[i].expr.get()))
       return false;
   }
@@ -403,7 +394,7 @@ bool PhysicalSeqScan::operator==(const BaseOperatorNode &r) {
 hash_t PhysicalSeqScan::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&get_id));
-  for (auto& pred : predicates)
+  for (auto &pred : predicates)
     hash = HashUtil::CombineHashes(hash, pred.expr->Hash());
   return hash;
 }
@@ -411,12 +402,13 @@ hash_t PhysicalSeqScan::Hash() const {
 //===--------------------------------------------------------------------===//
 // IndexScan
 //===--------------------------------------------------------------------===//
-Operator PhysicalIndexScan::make(
-    oid_t get_id, storage::DataTable *table, std::string alias,
-    std::vector<AnnotatedExpression> predicates,
-    bool update, oid_t index_id, std::vector<oid_t> key_column_id_list,
-    std::vector<ExpressionType> expr_type_list,
-    std::vector<type::Value> value_list) {
+Operator PhysicalIndexScan::make(oid_t get_id, storage::DataTable *table,
+                                 std::string alias,
+                                 std::vector<AnnotatedExpression> predicates,
+                                 bool update, oid_t index_id,
+                                 std::vector<oid_t> key_column_id_list,
+                                 std::vector<ExpressionType> expr_type_list,
+                                 std::vector<type::Value> value_list) {
   assert(table != nullptr);
   PhysicalIndexScan *scan = new PhysicalIndexScan;
   scan->table_ = table;
@@ -434,8 +426,7 @@ Operator PhysicalIndexScan::make(
 
 bool PhysicalIndexScan::operator==(const BaseOperatorNode &r) {
   if (r.type() != OpType::IndexScan) return false;
-  const PhysicalIndexScan &node =
-      *static_cast<const PhysicalIndexScan *>(&r);
+  const PhysicalIndexScan &node = *static_cast<const PhysicalIndexScan *>(&r);
   // TODO: Should also check value list
   if (index_id != node.index_id ||
       key_column_id_list != node.key_column_id_list ||
@@ -443,7 +434,7 @@ bool PhysicalIndexScan::operator==(const BaseOperatorNode &r) {
       predicates.size() != node.predicates.size())
     return false;
 
-  for (size_t i = 0; i<predicates.size(); i++) {
+  for (size_t i = 0; i < predicates.size(); i++) {
     if (!predicates[i].expr->Equals(node.predicates[i].expr.get()))
       return false;
   }
@@ -454,7 +445,7 @@ hash_t PhysicalIndexScan::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&index_id));
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&get_id));
-  for (auto& pred : predicates)
+  for (auto &pred : predicates)
     hash = HashUtil::CombineHashes(hash, pred.expr->Hash());
   return hash;
 }
@@ -525,9 +516,10 @@ Operator PhysicalFilter::make() {
 //===--------------------------------------------------------------------===//
 // InnerNLJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalInnerNLJoin::make(std::vector<AnnotatedExpression> conditions,
-                                   std::vector<std::shared_ptr<expression::AbstractExpression>> left_keys,
-                                   std::vector<std::shared_ptr<expression::AbstractExpression>> right_keys) {
+Operator PhysicalInnerNLJoin::make(
+    std::vector<AnnotatedExpression> conditions,
+    std::vector<std::shared_ptr<expression::AbstractExpression>> left_keys,
+    std::vector<std::shared_ptr<expression::AbstractExpression>> right_keys) {
   PhysicalInnerNLJoin *join = new PhysicalInnerNLJoin();
   join->join_predicates = std::move(conditions);
   join->left_keys = std::move(left_keys);
@@ -536,14 +528,13 @@ Operator PhysicalInnerNLJoin::make(std::vector<AnnotatedExpression> conditions,
   return Operator(join);
 }
 
-
 hash_t PhysicalInnerNLJoin::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
-  for (auto& expr : left_keys)
+  for (auto &expr : left_keys)
     hash = HashUtil::CombineHashes(hash, expr->Hash());
-  for (auto& expr : right_keys)
+  for (auto &expr : right_keys)
     hash = HashUtil::CombineHashes(hash, expr->Hash());
-  for (auto& pred : join_predicates)
+  for (auto &pred : join_predicates)
     hash = HashUtil::CombineHashes(hash, pred.expr->Hash());
   return hash;
 }
@@ -557,14 +548,12 @@ bool PhysicalInnerNLJoin::operator==(const BaseOperatorNode &r) {
       right_keys.size() != node.right_keys.size())
     return false;
   for (size_t i = 0; i < left_keys.size(); i++) {
-    if (!left_keys[i]->Equals(node.left_keys[i].get()))
-      return false;
+    if (!left_keys[i]->Equals(node.left_keys[i].get())) return false;
   }
   for (size_t i = 0; i < right_keys.size(); i++) {
-    if (!right_keys[i]->Equals(node.right_keys[i].get()))
-      return false;
+    if (!right_keys[i]->Equals(node.right_keys[i].get())) return false;
   }
-  for (size_t i = 0; i<join_predicates.size(); i++) {
+  for (size_t i = 0; i < join_predicates.size(); i++) {
     if (!join_predicates[i].expr->Equals(node.join_predicates[i].expr.get()))
       return false;
   }
@@ -604,9 +593,10 @@ Operator PhysicalOuterNLJoin::make(
 //===--------------------------------------------------------------------===//
 // InnerHashJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalInnerHashJoin::make(std::vector<AnnotatedExpression> conditions,
-                                     std::vector<std::shared_ptr<expression::AbstractExpression>> left_keys,
-                                     std::vector<std::shared_ptr<expression::AbstractExpression>> right_keys) {
+Operator PhysicalInnerHashJoin::make(
+    std::vector<AnnotatedExpression> conditions,
+    std::vector<std::shared_ptr<expression::AbstractExpression>> left_keys,
+    std::vector<std::shared_ptr<expression::AbstractExpression>> right_keys) {
   PhysicalInnerHashJoin *join = new PhysicalInnerHashJoin();
   join->join_predicates = std::move(conditions);
   join->left_keys = std::move(left_keys);
@@ -614,14 +604,13 @@ Operator PhysicalInnerHashJoin::make(std::vector<AnnotatedExpression> conditions
   return Operator(join);
 }
 
-
 hash_t PhysicalInnerHashJoin::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
-  for (auto& expr : left_keys)
+  for (auto &expr : left_keys)
     hash = HashUtil::CombineHashes(hash, expr->Hash());
-  for (auto& expr : right_keys)
+  for (auto &expr : right_keys)
     hash = HashUtil::CombineHashes(hash, expr->Hash());
-  for (auto& pred : join_predicates)
+  for (auto &pred : join_predicates)
     hash = HashUtil::CombineHashes(hash, pred.expr->Hash());
   return hash;
 }
@@ -635,12 +624,10 @@ bool PhysicalInnerHashJoin::operator==(const BaseOperatorNode &r) {
       right_keys.size() != node.right_keys.size())
     return false;
   for (size_t i = 0; i < left_keys.size(); i++) {
-    if (!left_keys[i]->Equals(node.left_keys[i].get()))
-      return false;
+    if (!left_keys[i]->Equals(node.left_keys[i].get())) return false;
   }
   for (size_t i = 0; i < right_keys.size(); i++) {
-    if (!right_keys[i]->Equals(node.right_keys[i].get()))
-      return false;
+    if (!right_keys[i]->Equals(node.right_keys[i].get())) return false;
   }
   for (size_t i = 0; i < join_predicates.size(); i++) {
     if (!join_predicates[i].expr->Equals(node.join_predicates[i].expr.get()))

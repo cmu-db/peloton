@@ -128,11 +128,17 @@ void PlanGenerator::Visit(const PhysicalOrderBy *) {
   output_plan_->AddChild(move(children_plans_[0]));
 }
 
-void PlanGenerator::Visit(const PhysicalHashGroupBy *) {}
+void PlanGenerator::Visit(const PhysicalHashGroupBy *op) {
+  BuildAggregatePlan(AggregateType::HASH, &op->columns, op->having);
+}
 
-void PlanGenerator::Visit(const PhysicalSortGroupBy *) {}
+void PlanGenerator::Visit(const PhysicalSortGroupBy *op) {
+  BuildAggregatePlan(AggregateType::HASH, &op->columns, op->having);
+}
 
-void PlanGenerator::Visit(const PhysicalAggregate *) {}
+void PlanGenerator::Visit(const PhysicalAggregate *) {
+  BuildAggregatePlan(AggregateType::PLAIN, nullptr, nullptr);
+}
 
 void PlanGenerator::Visit(const PhysicalDistinct *) {}
 
@@ -285,13 +291,13 @@ void PlanGenerator::BuildProjectionPlan() {
   vector<catalog::Column> columns;
   for (size_t idx = 0; idx < required_cols_.size(); ++idx) {
     auto &col = required_cols_[idx];
+    col->DeduceExpressionType();
     if (child_expr_map.find(col) != child_expr_map.end()) {
       dml.emplace_back(idx, make_pair(0, child_expr_map[col]));
-      col->DeduceExpressionType();
     } else {
       // Copy then evaluate the expression and add to target list
-      col->DeduceExpressionType();
       auto col_copy = col->Copy();
+      // TODO(boweic) : integrate the following two functions
       expression::ExpressionUtil::ConvertToTvExpr(col_copy, child_expr_map);
       expression::ExpressionUtil::EvaluateExpression(output_expr_maps,
                                                      col_copy);
@@ -305,18 +311,80 @@ void PlanGenerator::BuildProjectionPlan() {
 
   unique_ptr<planner::ProjectInfo> proj_info(
       new planner::ProjectInfo(move(tl), move(dml)));
-  // TODO since the plan will own the schema, we may not want to use unique_ptr
+  // TODO since the plan will own the schema, we may not want to use shared_ptr
   // to initialize the plan
   shared_ptr<catalog::Schema> schema_ptr(new catalog::Schema(columns));
   unique_ptr<planner::AbstractPlan> project_plan(
       new planner::ProjectionPlan(move(proj_info), schema_ptr));
 
-  PL_ASSERT(children_plans_.size() < 2);
   if (output_plan_ != nullptr) {
     project_plan->AddChild(move(output_plan_));
   }
   output_plan_ = move(project_plan);
 }
 
+void PlanGenerator::BuildAggregatePlan(
+    AggregateType aggr_type,
+    const std::vector<std::shared_ptr<expression::AbstractExpression>> *
+        groupby_cols,
+    expression::AbstractExpression *having) {
+  PL_ASSERT(children_expr_map_.size() == 0);
+
+  vector<planner::AggregatePlan::AggTerm> aggr_terms;
+  vector<catalog::Column> output_schema_columns;
+  DirectMapList dml;
+  TargetList tl;
+  PL_ASSERT(children_expr_map_.size() == 1);
+  auto &child_expr_map = children_expr_map_[0];
+
+  auto agg_id = 0;
+  for (size_t idx = 0; idx < output_cols_.size(); ++idx) {
+    auto expr = output_cols_[idx]->Copy();
+    expression::ExpressionUtil::EvaluateExpression(children_expr_map_, expr);
+    if (expression::ExpressionUtil::IsAggregateExpression(
+            expr->GetExpressionType())) {
+      auto agg_expr = reinterpret_cast<expression::AggregateExpression *>(expr);
+      auto agg_col = expr->GetModifiableChild(0);
+      // Maps the aggregate value in th right tuple to the output
+      // See aggregateor.cpp for more detail
+      dml.emplace_back(idx, make_pair(1, agg_id++));
+      planner::AggregatePlan::AggTerm(
+          agg_expr->GetExpressionType(),
+          agg_col == nullptr ? nullptr : agg_col->Copy(), agg_expr->distinct_);
+    } else if (child_expr_map.find(expr) != child_expr_map.end()) {
+      dml.emplace_back(idx, make_pair(0, child_expr_map[expr]));
+    } else {
+      planner::DerivedAttribute attribute{expr};
+      tl.emplace_back(idx, attribute);
+    }
+    output_schema_columns.push_back(catalog::Column(
+        expr->GetValueType(), type::Type::GetTypeSize(expr->GetValueType()),
+        expr->expr_name_));
+  }
+  // Generate group by ids
+  vector<oid_t> col_ids;
+  if (groupby_cols != nullptr) {
+    for (auto &col : *groupby_cols) {
+      col_ids.push_back(child_expr_map[col.get()]);
+    }
+  }
+  // Handle having clause
+  expression::AbstractExpression *having_predicate = nullptr;
+  if (having != nullptr) {
+    having_predicate = having->Copy();
+    expression::ExpressionUtil::EvaluateExpression(children_expr_map_, having);
+  }
+  // Generate the Aggregate Plan
+  unique_ptr<const planner::ProjectInfo> proj_info(
+      new planner::ProjectInfo(move(tl), move(dml)));
+  unique_ptr<const expression::AbstractExpression> predicate(having_predicate);
+  // TODO(boweic): Ditto, since the aggregate plan will own the schema, we may
+  // want make the parameter as unique_ptr
+  shared_ptr<const catalog::Schema> output_table_schema(
+      new catalog::Schema(output_schema_columns));
+  output_plan_.reset(new planner::AggregatePlan(
+      move(proj_info), move(predicate), move(aggr_terms), move(col_ids),
+      output_table_schema, aggr_type));
+}
 }  // namespace optimizer
 }  // namespace peloton

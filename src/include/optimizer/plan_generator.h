@@ -106,6 +106,11 @@ class PlanGenerator : public OperatorVisitor {
   // top of the current output plan, this should be done after the output plan
   // produciing output columns is generated
   void BuildProjectionPlan();
+  void BuildAggregatePlan(
+      AggregateType aggr_type,
+      const std::vector<std::shared_ptr<expression::AbstractExpression>> *
+          groupby_cols,
+      expression::AbstractExpression *having);
   std::shared_ptr<PropertySet> required_props_;
   std::vector<expression::AbstractExpression *> required_cols_;
   std::vector<expression::AbstractExpression *> output_cols_;
