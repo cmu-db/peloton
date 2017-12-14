@@ -118,6 +118,7 @@ void PlanGenerator::Visit(const PhysicalOrderBy *) {
   }
   output_plan_.reset(
       new planner::OrderByPlan(sort_col_ids, sort_flags, column_ids));
+  output_plan_->AddChild(move(children_plans_[0]));
 }
 
 void PlanGenerator::Visit(const PhysicalHashGroupBy *) {}
