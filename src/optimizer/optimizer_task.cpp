@@ -26,7 +26,8 @@ void OptimizerTask::ConstructValidRules(GroupExpression *group_expr, OptimizeCon
                                         std::vector<std::unique_ptr<Rule>> &rules,
                                         std::vector<RuleWithPromise> &valid_rules) {
   for (auto &rule : rules) {
-    if (group_expr->HasRuleExplored(rule.get()) ||     // Rule has been applied
+    if (group_expr->Op().type() != rule->GetMatchPattern()->Type() || // Root pattern type mismatch
+        group_expr->HasRuleExplored(rule.get()) ||     // Rule has been applied
         group_expr->GetChildrenGroupsSize()
             != rule->GetMatchPattern()->GetChildPatternsSize()) // Children size does not math
       continue;
@@ -156,11 +157,11 @@ void ApplyRule::execute() {
   GroupExprBindingIterator iterator(GetMemo(), group_expr_, rule_->GetMatchPattern());
   while (iterator.HasNext()) {
     auto before = iterator.Next();
-    if (!rule_->Check(before, &GetMemo()))
+    if (!rule_->Check(before, context_.get()))
       continue;
 
     std::vector<std::shared_ptr<OperatorExpression>> after;
-    rule_->Transform(before, after, &GetMemo());
+    rule_->Transform(before, after, context_.get());
     for (auto &new_expr : after) {
       std::shared_ptr<GroupExpression> new_gexpr;
       if (context_->metadata->RecordTransformedExpression(new_expr, new_gexpr, group_expr_->GetGroupID())) {
@@ -357,11 +358,11 @@ void ApplyRewriteRule::execute() {
   GroupExprBindingIterator iterator(GetMemo(), cur_group_expr, rule_->GetMatchPattern());
   while (iterator.HasNext()) {
     auto before = iterator.Next();
-    if (!rule_->Check(before, &GetMemo()))
+    if (!rule_->Check(before,context_.get()))
       continue;
 
     std::vector<std::shared_ptr<OperatorExpression>> after;
-    rule_->Transform(before, after, &GetMemo());
+    rule_->Transform(before, after, context_.get());
     for (auto &new_expr : after) {
       std::shared_ptr<GroupExpression> new_gexpr;
       if (context_->metadata->RecordTransformedExpression(new_expr, new_gexpr, cur_group_expr->GetGroupID())) {

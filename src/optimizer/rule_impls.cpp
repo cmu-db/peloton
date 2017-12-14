@@ -14,8 +14,10 @@
 #include "optimizer/util.h"
 #include "optimizer/operators.h"
 #include "storage/data_table.h"
+#include "optimizer/properties.h"
 
 #include <memory>
+#include <include/optimizer/optimizer_metadata.h>
 
 namespace peloton {
 namespace optimizer {
@@ -37,15 +39,15 @@ InnerJoinCommutativity::InnerJoinCommutativity() {
 }
 
 bool InnerJoinCommutativity::Check(std::shared_ptr<OperatorExpression> expr,
-                                   Memo *memo) const {
-  (void)memo;
+                                   OptimizeContext* context) const {
+  (void)context;
   (void)expr;
   return true;
 }
 
 void InnerJoinCommutativity::Transform(
     std::shared_ptr<OperatorExpression> input,
-    std::vector<std::shared_ptr<OperatorExpression>> &transformed, UNUSED_ATTRIBUTE Memo* memo) const {
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed, UNUSED_ATTRIBUTE OptimizeContext* context) const {
   auto result_plan =
       std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
   std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
@@ -72,15 +74,15 @@ GetToDummyScan::GetToDummyScan() {
 }
 
 bool GetToDummyScan::Check(std::shared_ptr<OperatorExpression> plan,
-                           Memo *memo) const {
-  (void)memo;
+                           OptimizeContext* context) const {
+  (void)context;
   const LogicalGet *get = plan->Op().As<LogicalGet>();
   return get->table == nullptr;
 }
 
 void GetToDummyScan::Transform(
     UNUSED_ATTRIBUTE std::shared_ptr<OperatorExpression> input,
-    std::vector<std::shared_ptr<OperatorExpression>> &transformed, UNUSED_ATTRIBUTE Memo* memo) const {
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed, UNUSED_ATTRIBUTE OptimizeContext* context) const {
   auto result_plan = std::make_shared<OperatorExpression>(DummyScan::make());
 
   transformed.push_back(result_plan);
@@ -95,15 +97,15 @@ GetToSeqScan::GetToSeqScan() {
 }
 
 bool GetToSeqScan::Check(std::shared_ptr<OperatorExpression> plan,
-                         Memo *memo) const {
-  (void)memo;
+                         OptimizeContext* context) const {
+  (void)context;
   const LogicalGet *get = plan->Op().As<LogicalGet>();
   return get->table != nullptr;
 }
 
 void GetToSeqScan::Transform(
     std::shared_ptr<OperatorExpression> input,
-    std::vector<std::shared_ptr<OperatorExpression>> &transformed, UNUSED_ATTRIBUTE Memo* memo) const {
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed, UNUSED_ATTRIBUTE OptimizeContext* context) const {
   const LogicalGet *get = input->Op().As<LogicalGet>();
 
   auto result_plan = std::make_shared<OperatorExpression>(
@@ -126,12 +128,12 @@ GetToIndexScan::GetToIndexScan() {
 }
 
 bool GetToIndexScan::Check(std::shared_ptr<OperatorExpression> plan,
-                           Memo *memo) const {
+                           OptimizeContext* context) const {
   // If there is a index for the table, return true,
   // else return false
-  (void)memo;
-  bool index_exist = false;
+  (void)context;
   const LogicalGet *get = plan->Op().As<LogicalGet>();
+  bool index_exist = false;
   if (get != nullptr && get->table != nullptr &&
       !get->table->GetIndexColumns().empty())
     index_exist = true;
@@ -140,18 +142,143 @@ bool GetToIndexScan::Check(std::shared_ptr<OperatorExpression> plan,
 
 void GetToIndexScan::Transform(
     std::shared_ptr<OperatorExpression> input,
-    std::vector<std::shared_ptr<OperatorExpression>> &transformed, UNUSED_ATTRIBUTE Memo* memo) const {
-  const LogicalGet *get = input->Op().As<LogicalGet>();
-
-  auto result_plan = std::make_shared<OperatorExpression>(
-      PhysicalIndexScan::make(get->get_id, get->table, get->table_alias,
-                              get->predicates, get->is_for_update));
-
-  UNUSED_ATTRIBUTE std::vector<std::shared_ptr<OperatorExpression>> children =
-      input->Children();
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed, UNUSED_ATTRIBUTE OptimizeContext* context) const {
+  UNUSED_ATTRIBUTE std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PL_ASSERT(children.size() == 0);
 
-  transformed.push_back(result_plan);
+  // Get sort columns if they are all base columns and all in asc order
+  auto sort_prop = context->required_prop->GetPropertyOfType(PropertyType::SORT)->As<PropertySort>();
+  bool sort_by_asc_base_column = true;
+  std::vector<oid_t> sort_col_ids;
+  if (sort_prop != nullptr) {
+    for (size_t i = 0; i<sort_prop->GetSortColumnSize(); i++) {
+      auto expr = sort_prop->GetSortColumn(i);
+      if (!sort_prop->GetSortAscending(i)
+          || expr->GetExpressionType() != ExpressionType::VALUE_TUPLE) {
+        sort_by_asc_base_column = false;
+        break;
+      }
+      auto bound_oids = reinterpret_cast<expression::TupleValueExpression*>(expr)->GetBoundOid();
+      sort_col_ids.push_back(std::get<2>(bound_oids));
+    }
+  }
+
+  const LogicalGet *get = input->Op().As<LogicalGet>();
+  size_t index_cnt = get->table->GetIndexCount();
+
+  // Check whether any index can fulfill sort property
+  if (sort_by_asc_base_column) {
+    for (oid_t index_id=0; index_id < index_cnt; index_id++) {
+      auto index = get->table->GetIndex(index_id);
+      auto& index_col_ids = index->GetMetadata()->GetKeyAttrs();
+      // We want to ensure that Sort(a, b, c, d, e) can fit Sort(a, c, e)
+      size_t l_num_sort_columns = index_col_ids.size();
+      size_t l_sort_col_idx = 0;
+      size_t r_num_sort_columns = sort_col_ids.size();
+      if (l_num_sort_columns < r_num_sort_columns)
+        continue;
+      bool index_matched = true;
+      for (size_t r_sort_col_idx = 0; r_sort_col_idx < r_num_sort_columns;
+           ++r_sort_col_idx) {
+        while (l_sort_col_idx < l_num_sort_columns &&
+            index_col_ids[l_sort_col_idx] != sort_col_ids[r_sort_col_idx]) {
+          ++l_sort_col_idx;
+        }
+        if (l_sort_col_idx == l_num_sort_columns) {
+          index_matched = false;
+          break;
+        }
+        ++l_sort_col_idx;
+      }
+      // Add transformed plan if found
+      if (index_matched) {
+        auto index_scan_op = PhysicalIndexScan::make(
+            get->get_id, get->table, get->table_alias, get->predicates, get->is_for_update,
+            index_id, index, {}, {}, {});
+        transformed.push_back(std::make_shared<OperatorExpression>(index_scan_op));
+      }
+    }
+  }
+
+  // Check whether any index can fulfill predicate predicate evaluation
+  if (!get->predicates.empty()) {
+    std::vector<oid_t> key_column_id_list;
+    std::vector<ExpressionType> expr_type_list;
+    std::vector<type::Value> value_list;
+    for (auto& pred : get->predicates) {
+      auto expr = pred.expr.get();
+      if (expr->GetChildrenSize() != 2)
+        continue;
+      auto expr_type = expr->GetExpressionType();
+      expression::AbstractExpression* tv_expr = nullptr;
+      expression::AbstractExpression* value_expr = nullptr;
+
+      // Fetch column reference and value
+      if (expr->GetChild(0)->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
+        auto r_type = expr->GetChild(1)->GetExpressionType();
+        if (r_type == ExpressionType::VALUE_CONSTANT || r_type == ExpressionType::VALUE_PARAMETER) {
+          tv_expr = expr->GetModifiableChild(0);
+          value_expr = expr->GetModifiableChild(1);
+        }
+      }
+      else if (expr->GetChild(1)->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
+        auto l_type = expr->GetChild(0)->GetExpressionType();
+        if (l_type == ExpressionType::VALUE_CONSTANT || l_type == ExpressionType::VALUE_PARAMETER) {
+          tv_expr = expr->GetModifiableChild(1);
+          value_expr = expr->GetModifiableChild(0);
+          expr_type = expression::ExpressionUtil::ReverseComparisonExpressionType(expr_type);
+        }
+      }
+
+      // If found valid tv_expr and value_expr, update col_id_list, expr_type_list and val_list
+      if (tv_expr != nullptr) {
+        auto schema = get->table->GetSchema();
+        auto column_ref = (expression::TupleValueExpression *) tv_expr;
+        std::string col_name(column_ref->GetColumnName());
+        LOG_TRACE("Column name: %s", col_name.c_str());
+        auto column_id = schema->GetColumnID(col_name);
+        key_column_id_list.push_back(column_id);
+        expr_type_list.push_back(expr_type);
+
+        if (value_expr->GetExpressionType() == ExpressionType::VALUE_CONSTANT) {
+          value_list.push_back(reinterpret_cast<expression::ConstantValueExpression *>(value_expr)->GetValue());
+          LOG_TRACE("Value Type: %d",
+                    reinterpret_cast<expression::ConstantValueExpression *>(
+                        expression->GetModifiableChild(1))->GetValueType());
+        } else {
+          value_list.push_back(
+              type::ValueFactory::GetParameterOffsetValue(
+                  reinterpret_cast<expression::ParameterValueExpression *>(value_expr)->GetValueIdx()).Copy());
+          LOG_TRACE("Parameter offset: %s", (*values.rbegin()).GetInfo().c_str());
+        }
+      }
+    } // Loop predicates end
+
+    // Find match index for the predicates
+    auto& index_cols = get->table->GetIndexColumns();
+    for (oid_t index_id=0; index_id < index_cnt; index_id++) {
+      auto index = get->table->GetIndex(index_id);
+      auto& index_col_set = index_cols[index_id];
+      std::vector<oid_t> index_key_column_id_list;
+      std::vector<ExpressionType> index_expr_type_list;
+      std::vector<type::Value> index_value_list;
+      for (size_t offset = 0; offset < key_column_id_list.size(); offset++) {
+        auto col_id = key_column_id_list[offset];
+        if (index_col_set.find(col_id) != index_col_set.end()) {
+          index_key_column_id_list.push_back(col_id);
+          index_expr_type_list.push_back(expr_type_list[offset]);
+          index_value_list.push_back(value_list[offset]);
+        }
+      }
+      // Add transformed plan
+      if (!index_key_column_id_list.empty()) {
+        auto index_scan_op = PhysicalIndexScan::make(
+            get->get_id, get->table, get->table_alias, get->predicates, get->is_for_update,
+            index_id, index, index_key_column_id_list, index_expr_type_list, index_value_list);
+        transformed.push_back(std::make_shared<OperatorExpression>(index_scan_op));
+      }
+    }
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -164,15 +291,15 @@ LogicalQueryDerivedGetToPhysical::LogicalQueryDerivedGetToPhysical() {
 }
 
 bool LogicalQueryDerivedGetToPhysical::Check(
-    std::shared_ptr<OperatorExpression> expr, Memo *memo) const {
-  (void)memo;
+    std::shared_ptr<OperatorExpression> expr, OptimizeContext* context) const {
+  (void)context;
   (void)expr;
   return true;
 }
 
 void LogicalQueryDerivedGetToPhysical::Transform(
     std::shared_ptr<OperatorExpression> input,
-    std::vector<std::shared_ptr<OperatorExpression>> &transformed, UNUSED_ATTRIBUTE Memo* memo) const {
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed, UNUSED_ATTRIBUTE OptimizeContext* context) const {
   const LogicalQueryDerivedGet *get = input->Op().As<LogicalQueryDerivedGet>();
 
   auto result_plan =
@@ -193,15 +320,15 @@ LogicalDeleteToPhysical::LogicalDeleteToPhysical() {
 }
 
 bool LogicalDeleteToPhysical::Check(std::shared_ptr<OperatorExpression> plan,
-                                    Memo *memo) const {
+                                    OptimizeContext* context) const {
   (void)plan;
-  (void)memo;
+  (void)context;
   return true;
 }
 
 void LogicalDeleteToPhysical::Transform(
     std::shared_ptr<OperatorExpression> input,
-    std::vector<std::shared_ptr<OperatorExpression>> &transformed, UNUSED_ATTRIBUTE Memo* memo) const {
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed, UNUSED_ATTRIBUTE OptimizeContext* context) const {
   const LogicalDelete *delete_op = input->Op().As<LogicalDelete>();
   auto result = std::make_shared<OperatorExpression>(
       PhysicalDelete::make(delete_op->target_table));
@@ -220,15 +347,15 @@ LogicalUpdateToPhysical::LogicalUpdateToPhysical() {
 }
 
 bool LogicalUpdateToPhysical::Check(std::shared_ptr<OperatorExpression> plan,
-                                    Memo *memo) const {
+                                    OptimizeContext* context) const {
   (void)plan;
-  (void)memo;
+  (void)context;
   return true;
 }
 
 void LogicalUpdateToPhysical::Transform(
     std::shared_ptr<OperatorExpression> input,
-    std::vector<std::shared_ptr<OperatorExpression>> &transformed, UNUSED_ATTRIBUTE Memo* memo) const {
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed, UNUSED_ATTRIBUTE OptimizeContext* context) const {
   const LogicalUpdate *update_op = input->Op().As<LogicalUpdate>();
   auto result = std::make_shared<OperatorExpression>(
       PhysicalUpdate::make(update_op->target_table, update_op->updates));
@@ -247,15 +374,15 @@ LogicalInsertToPhysical::LogicalInsertToPhysical() {
 }
 
 bool LogicalInsertToPhysical::Check(std::shared_ptr<OperatorExpression> plan,
-                                    Memo *memo) const {
+                                    OptimizeContext* context) const {
   (void)plan;
-  (void)memo;
+  (void)context;
   return true;
 }
 
 void LogicalInsertToPhysical::Transform(
     std::shared_ptr<OperatorExpression> input,
-    std::vector<std::shared_ptr<OperatorExpression>> &transformed, UNUSED_ATTRIBUTE Memo* memo) const {
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed, UNUSED_ATTRIBUTE OptimizeContext* context) const {
   const LogicalInsert *insert_op = input->Op().As<LogicalInsert>();
   auto result = std::make_shared<OperatorExpression>(PhysicalInsert::make(
       insert_op->target_table, insert_op->columns, insert_op->values));
@@ -274,15 +401,15 @@ LogicalInsertSelectToPhysical::LogicalInsertSelectToPhysical() {
 }
 
 bool LogicalInsertSelectToPhysical::Check(
-    std::shared_ptr<OperatorExpression> plan, Memo *memo) const {
+    std::shared_ptr<OperatorExpression> plan, OptimizeContext* context) const {
   (void)plan;
-  (void)memo;
+  (void)context;
   return true;
 }
 
 void LogicalInsertSelectToPhysical::Transform(
     std::shared_ptr<OperatorExpression> input,
-    std::vector<std::shared_ptr<OperatorExpression>> &transformed, UNUSED_ATTRIBUTE Memo* memo) const {
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed, UNUSED_ATTRIBUTE OptimizeContext* context) const {
   const LogicalInsertSelect *insert_op = input->Op().As<LogicalInsertSelect>();
   auto result = std::make_shared<OperatorExpression>(
       PhysicalInsertSelect::make(insert_op->target_table));
@@ -302,14 +429,14 @@ LogicalGroupByToHashGroupBy::LogicalGroupByToHashGroupBy() {
 
 bool LogicalGroupByToHashGroupBy::Check(
     UNUSED_ATTRIBUTE std::shared_ptr<OperatorExpression> plan,
-    Memo *memo) const {
-  (void)memo;
+    OptimizeContext* context) const {
+  (void)context;
   return true;
 }
 
 void LogicalGroupByToHashGroupBy::Transform(
     std::shared_ptr<OperatorExpression> input,
-    std::vector<std::shared_ptr<OperatorExpression>> &transformed, UNUSED_ATTRIBUTE Memo* memo) const {
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed, UNUSED_ATTRIBUTE OptimizeContext* context) const {
   const LogicalGroupBy *agg_op = input->Op().As<LogicalGroupBy>();
   auto result = std::make_shared<OperatorExpression>(
       PhysicalHashGroupBy::make(agg_op->columns, agg_op->having.get()));
@@ -329,14 +456,14 @@ LogicalAggregateToPhysical::LogicalAggregateToPhysical() {
 
 bool LogicalAggregateToPhysical::Check(
     UNUSED_ATTRIBUTE std::shared_ptr<OperatorExpression> plan,
-    Memo *memo) const {
-  (void)memo;
+    OptimizeContext* context) const {
+  (void)context;
   return true;
 }
 
 void LogicalAggregateToPhysical::Transform(
     std::shared_ptr<OperatorExpression> input,
-    std::vector<std::shared_ptr<OperatorExpression>> &transformed, UNUSED_ATTRIBUTE Memo* memo) const {
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed, UNUSED_ATTRIBUTE OptimizeContext* context) const {
   auto result = std::make_shared<OperatorExpression>(PhysicalAggregate::make());
   PL_ASSERT(input->Children().size() == 1);
   result->PushChild(input->Children().at(0));
@@ -363,15 +490,15 @@ InnerJoinToInnerNLJoin::InnerJoinToInnerNLJoin() {
 }
 
 bool InnerJoinToInnerNLJoin::Check(std::shared_ptr<OperatorExpression> plan,
-                                   Memo *memo) const {
-  (void)memo;
+                                   OptimizeContext* context) const {
+  (void)context;
   (void)plan;
   return true;
 }
 
 void InnerJoinToInnerNLJoin::Transform(
     std::shared_ptr<OperatorExpression> input,
-    std::vector<std::shared_ptr<OperatorExpression>> &transformed, UNUSED_ATTRIBUTE Memo* memo) const {
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed, UNUSED_ATTRIBUTE OptimizeContext* context) const {
   // first build an expression representing hash join
   const LogicalInnerJoin *inner_join = input->Op().As<LogicalInnerJoin>();
   auto result_plan = std::make_shared<OperatorExpression>(
@@ -409,9 +536,10 @@ InnerJoinToInnerHashJoin::InnerJoinToInnerHashJoin() {
 }
 
 bool InnerJoinToInnerHashJoin::Check(std::shared_ptr<OperatorExpression> plan,
-                                     Memo *memo) const {
-  (void)memo;
+                                     OptimizeContext* context) const {
+  (void)context;
   (void)plan;
+  auto& memo = context->metadata->memo;
   // TODO(abpoms): Figure out how to determine if the join condition is hashable
   // If join column != empty then hashable
   auto children = plan->Children();
@@ -419,9 +547,9 @@ bool InnerJoinToInnerHashJoin::Check(std::shared_ptr<OperatorExpression> plan,
   auto left_group_id = children[0]->Op().As<LeafOperator>()->origin_group;
   auto right_group_id = children[1]->Op().As<LeafOperator>()->origin_group;
   const auto &left_group_alias =
-      memo->GetGroupByID(left_group_id)->GetTableAliases();
+      memo.GetGroupByID(left_group_id)->GetTableAliases();
   const auto &right_group_alias =
-      memo->GetGroupByID(right_group_id)->GetTableAliases();
+      memo.GetGroupByID(right_group_id)->GetTableAliases();
 
   auto predicates = plan->Op().As<LogicalInnerJoin>()->join_predicates;
 
@@ -434,7 +562,7 @@ bool InnerJoinToInnerHashJoin::Check(std::shared_ptr<OperatorExpression> plan,
 
 void InnerJoinToInnerHashJoin::Transform(
     std::shared_ptr<OperatorExpression> input,
-    std::vector<std::shared_ptr<OperatorExpression>> &transformed, UNUSED_ATTRIBUTE Memo* memo) const {
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed, UNUSED_ATTRIBUTE OptimizeContext* context) const {
   // first build an expression representing hash join
   const LogicalInnerJoin *inner_join = input->Op().As<LogicalInnerJoin>();
   auto result_plan = std::make_shared<OperatorExpression>(
@@ -472,8 +600,8 @@ PushFilterThroughJoin::PushFilterThroughJoin() {
   match_pattern->AddChild(child);
 }
 
-bool PushFilterThroughJoin::Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const {
-  (void)memo;
+bool PushFilterThroughJoin::Check(std::shared_ptr<OperatorExpression> plan, OptimizeContext* context) const {
+  (void)context;
   (void)plan;
 
   auto& children = plan->Children();
@@ -487,15 +615,16 @@ bool PushFilterThroughJoin::Check(std::shared_ptr<OperatorExpression> plan, Memo
 
 void PushFilterThroughJoin::Transform(std::shared_ptr<OperatorExpression> input,
                                       std::vector<std::shared_ptr<OperatorExpression>> &transformed,
-                                      UNUSED_ATTRIBUTE Memo* memo) const {
+                                      UNUSED_ATTRIBUTE OptimizeContext* context) const {
+  auto& memo = context->metadata->memo;
   auto join_op_expr = input->Children().at(0);
   auto& join_children = join_op_expr->Children();
   auto left_group_id = join_children[0]->Op().As<LeafOperator>()->origin_group;
   auto right_group_id = join_children[1]->Op().As<LeafOperator>()->origin_group;
   const auto &left_group_alias =
-      memo->GetGroupByID(left_group_id)->GetTableAliases();
+      memo.GetGroupByID(left_group_id)->GetTableAliases();
   const auto &right_group_alias =
-      memo->GetGroupByID(right_group_id)->GetTableAliases();
+      memo.GetGroupByID(right_group_id)->GetTableAliases();
 
   auto& predicates = input->Op().As<LogicalFilter>()->predicates;
   std::vector<AnnotatedExpression> left_predicates;
@@ -554,8 +683,8 @@ CombineConsecutiveFilter::CombineConsecutiveFilter() {
   match_pattern->AddChild(child);
 }
 
-bool CombineConsecutiveFilter::Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const {
-  (void)memo;
+bool CombineConsecutiveFilter::Check(std::shared_ptr<OperatorExpression> plan, OptimizeContext* context) const {
+  (void)context;
   (void)plan;
 
   auto& children = plan->Children();
@@ -568,7 +697,7 @@ bool CombineConsecutiveFilter::Check(std::shared_ptr<OperatorExpression> plan, M
 
 void CombineConsecutiveFilter::Transform(std::shared_ptr<OperatorExpression> input,
                                       std::vector<std::shared_ptr<OperatorExpression>> &transformed,
-                                      UNUSED_ATTRIBUTE Memo* memo) const {
+                                      UNUSED_ATTRIBUTE OptimizeContext* context) const {
   auto child_filter = input->Children()[0];
 
   auto root_predicates = input->Op().As<LogicalFilter>()->predicates;
@@ -597,8 +726,8 @@ EmbedFilterIntoGet::EmbedFilterIntoGet() {
   match_pattern->AddChild(child);
 }
 
-bool EmbedFilterIntoGet::Check(std::shared_ptr<OperatorExpression> plan, Memo *memo) const {
-  (void)memo;
+bool EmbedFilterIntoGet::Check(std::shared_ptr<OperatorExpression> plan, OptimizeContext* context) const {
+  (void)context;
   (void)plan;
 
   auto& children = plan->Children();
@@ -611,7 +740,7 @@ bool EmbedFilterIntoGet::Check(std::shared_ptr<OperatorExpression> plan, Memo *m
 
 void EmbedFilterIntoGet::Transform(std::shared_ptr<OperatorExpression> input,
                                          std::vector<std::shared_ptr<OperatorExpression>> &transformed,
-                                         UNUSED_ATTRIBUTE Memo* memo) const {
+                                         UNUSED_ATTRIBUTE OptimizeContext* context) const {
   auto get = input->Children()[0]->Op().As<LogicalGet>();
 
   auto predicates = input->Op().As<LogicalFilter>()->predicates;

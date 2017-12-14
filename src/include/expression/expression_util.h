@@ -286,6 +286,22 @@ class ExpressionUtil {
     }
   }
 
+  inline static ExpressionType ReverseComparisonExpressionType(
+      ExpressionType type) {
+    switch (type) {
+      case ExpressionType::COMPARE_GREATERTHAN:
+        return ExpressionType::COMPARE_LESSTHANOREQUALTO;
+      case ExpressionType::COMPARE_GREATERTHANOREQUALTO:
+        return ExpressionType::COMPARE_LESSTHAN;
+      case ExpressionType::COMPARE_LESSTHAN:
+        return ExpressionType::COMPARE_GREATERTHANOREQUALTO;
+      case ExpressionType::COMPARE_LESSTHANOREQUALTO:
+        return ExpressionType::COMPARE_GREATERTHAN;
+      default:
+        return type;
+    }
+  }
+
   /**
    * Generate a pretty-printed string representation of the entire
    * Expresssion tree for the given root node

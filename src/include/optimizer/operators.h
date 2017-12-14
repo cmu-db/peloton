@@ -16,6 +16,7 @@
 #include "optimizer/column.h"
 #include "optimizer/group.h"
 #include "optimizer/operator_node.h"
+#include "type/types.h"
 
 #include <vector>
 
@@ -31,6 +32,10 @@ class UpdateClause;
 
 namespace storage {
 class DataTable;
+}
+
+namespace index {
+class Index;
 }
 
 namespace optimizer {
@@ -302,7 +307,10 @@ class PhysicalIndexScan : public OperatorNode<PhysicalIndexScan> {
  public:
   static Operator make(oid_t get_id, storage::DataTable *table, std::string alias,
                        std::vector<AnnotatedExpression> predicates,
-                       bool update);
+                       bool update, oid_t index_id, std::shared_ptr<index::Index> index_obj,
+                       std::vector<oid_t> key_column_id_list,
+                       std::vector<ExpressionType> expr_type_list,
+                       std::vector<type::Value> value_list);
 
   bool operator==(const BaseOperatorNode &r) override;
 

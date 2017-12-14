@@ -44,11 +44,11 @@ class Rule {
                       OptimizeContext* context) const;
 
   virtual bool Check(std::shared_ptr<OperatorExpression> expr,
-                     Memo* memo) const = 0;
+                     OptimizeContext* context) const = 0;
 
   virtual void Transform(
       std::shared_ptr<OperatorExpression> input,
-      std::vector<std::shared_ptr<OperatorExpression>>& transformed, Memo* memo) const = 0;
+      std::vector<std::shared_ptr<OperatorExpression>>& transformed, OptimizeContext* context) const = 0;
 
   inline RuleType GetType() { return type_; }
 
