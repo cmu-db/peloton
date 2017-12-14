@@ -249,7 +249,7 @@ QueryInfo Optimizer::GetQueryInfo(parser::SQLStatement *tree) {
       };
 
   std::vector<expression::AbstractExpression *> output_exprs;
-  std::shared_ptr<PropertySet> physical_props;
+  std::shared_ptr<PropertySet> physical_props = std::make_shared<PropertySet>();
   switch (tree->GetType()) {
     case StatementType::SELECT: {
       auto select = reinterpret_cast<parser::SelectStatement *>(tree);

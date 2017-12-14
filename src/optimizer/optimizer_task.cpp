@@ -82,7 +82,7 @@ void OptimizeExpression::execute() {
                       GetRuleSet().GetTransformationRules(), valid_rules);
   // Construct valid implementation rules from rule set
   ConstructValidRules(group_expr_, context_.get(),
-                      GetRuleSet().GetTransformationRules(), valid_rules);
+                      GetRuleSet().GetImplementationRules(), valid_rules);
 
   std::sort(valid_rules.begin(), valid_rules.end());
 
@@ -245,7 +245,7 @@ void OptimizeInputs::execute() {
 
     }
     // Check whether we successfully optimize all child group
-    if (cur_child_idx_ == (int)output_input_properties_.size()) {
+    if (cur_child_idx_ == (int)group_expr_->GetChildrenGroupsSize()) {
       // Not need to do pruning here because it has been done when we get the best expr from the child group
 
       // Add this group expression to group expression hash table

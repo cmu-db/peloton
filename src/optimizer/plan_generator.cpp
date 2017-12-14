@@ -146,9 +146,19 @@ void PlanGenerator::Visit(const PhysicalRightHashJoin *) {}
 
 void PlanGenerator::Visit(const PhysicalOuterHashJoin *) {}
 
-void PlanGenerator::Visit(const PhysicalInsert *) {}
+void PlanGenerator::Visit(const PhysicalInsert *op) {
+   unique_ptr<planner::AbstractPlan> insert_plan(
+       new planner::InsertPlan(op->target_table, op->columns, op->values));
+   output_plan_ = move(insert_plan);
+}
 
-void PlanGenerator::Visit(const PhysicalInsertSelect *) {}
+void PlanGenerator::Visit(const PhysicalInsertSelect *op) {
+   unique_ptr<planner::AbstractPlan> insert_plan(
+       new planner::InsertPlan(op->target_table));
+   // Add child
+   insert_plan->AddChild(move(children_plans_[0]));
+   output_plan_ = move(insert_plan);
+}
 
 void PlanGenerator::Visit(const PhysicalDelete *) {}
 

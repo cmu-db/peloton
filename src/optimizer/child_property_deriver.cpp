@@ -140,7 +140,12 @@ void ChildPropertyDeriver::Visit(const PhysicalInnerHashJoin *) {
 void ChildPropertyDeriver::Visit(const PhysicalLeftHashJoin *) {}
 void ChildPropertyDeriver::Visit(const PhysicalRightHashJoin *) {}
 void ChildPropertyDeriver::Visit(const PhysicalOuterHashJoin *) {}
-void ChildPropertyDeriver::Visit(const PhysicalInsert *) {}
+void ChildPropertyDeriver::Visit(const PhysicalInsert *) {
+  // Let child fulfil all the required properties
+  vector<shared_ptr<PropertySet>> child_input_properties;
+
+  output_.push_back(make_pair(requirements_, move(child_input_properties)));
+}
 void ChildPropertyDeriver::Visit(const PhysicalInsertSelect *) {
   // Let child fulfil all the required properties
   vector<shared_ptr<PropertySet>> child_input_properties{requirements_};

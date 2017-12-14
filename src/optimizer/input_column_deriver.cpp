@@ -113,7 +113,11 @@ void InputColumnDeriver::Visit(const PhysicalRightHashJoin *) {}
 
 void InputColumnDeriver::Visit(const PhysicalOuterHashJoin *) {}
 
-void InputColumnDeriver::Visit(const PhysicalInsert *) { Passdown(); }
+void InputColumnDeriver::Visit(const PhysicalInsert *) {
+  output_input_cols_ =
+      pair<vector<AbstractExpression *>, vector<vector<AbstractExpression *>>>{
+          required_cols_, {}};
+}
 
 void InputColumnDeriver::Visit(const PhysicalInsertSelect *) { Passdown(); }
 
