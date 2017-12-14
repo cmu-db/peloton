@@ -70,6 +70,8 @@ class OperatorVisitor {
   virtual void Visit(const LogicalInsertSelect *) {}
   virtual void Visit(const LogicalDelete *) {}
   virtual void Visit(const LogicalUpdate *) {}
+  virtual void Visit(const LogicalDistinct *) {}
+  virtual void Visit(const LogicalLimit *) {}
   
 };
 

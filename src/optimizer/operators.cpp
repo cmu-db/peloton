@@ -345,6 +345,24 @@ Operator LogicalUpdate::make(
 }
 
 //===--------------------------------------------------------------------===//
+// Distinct
+//===--------------------------------------------------------------------===//
+Operator LogicalDistinct::make() {
+  LogicalDistinct *distinct = new LogicalDistinct;
+  return Operator(distinct);
+}
+
+//===--------------------------------------------------------------------===//
+// Limit
+//===--------------------------------------------------------------------===//
+Operator LogicalLimit::make(int64_t offset, int64_t limit) {
+  LogicalLimit *limit_op = new LogicalLimit;
+  limit_op->offset = offset;
+  limit_op->limit = limit;
+  return Operator(limit_op);
+}
+
+//===--------------------------------------------------------------------===//
 // DummyScan
 //===--------------------------------------------------------------------===//
 Operator DummyScan::make() {
@@ -487,9 +505,14 @@ Operator PhysicalOrderBy::make() {
 }
 
 //===--------------------------------------------------------------------===//
-// Physical Limit
+// PhysicalLimit
 //===--------------------------------------------------------------------===//
-Operator PhysicalLimit::make() { return Operator(new PhysicalLimit); }
+Operator PhysicalLimit::make(int64_t offset, int64_t limit) {
+  PhysicalLimit *limit_op = new PhysicalLimit;
+  limit_op->offset = offset;
+  limit_op->limit = limit;
+  return Operator(limit_op);
+}
 
 //===--------------------------------------------------------------------===//
 // Filter
@@ -832,6 +855,10 @@ std::string OperatorNode<LogicalUpdate>::name_ = "LogicalUpdate";
 template <>
 std::string OperatorNode<LogicalDelete>::name_ = "LogicalDelete";
 template <>
+std::string OperatorNode<LogicalLimit>::name_ = "LogicalLimit";
+template <>
+std::string OperatorNode<LogicalDistinct>::name_ = "LogicalDistinct";
+template <>
 std::string OperatorNode<DummyScan>::name_ = "DummyScan";
 template <>
 std::string OperatorNode<PhysicalSeqScan>::name_ = "PhysicalSeqScan";
@@ -921,6 +948,10 @@ template <>
 OpType OperatorNode<LogicalUpdate>::type_ = OpType::LogicalUpdate;
 template <>
 OpType OperatorNode<LogicalDelete>::type_ = OpType::LogicalDelete;
+template <>
+OpType OperatorNode<LogicalDistinct>::type_ = OpType::LogicalDistinct;
+template <>
+OpType OperatorNode<LogicalLimit>::type_ = OpType::LogicalLimit;
 template <>
 OpType OperatorNode<DummyScan>::type_ = OpType::DummyScan;
 template <>

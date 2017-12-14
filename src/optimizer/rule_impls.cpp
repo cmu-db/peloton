@@ -578,6 +578,67 @@ void InnerJoinToInnerHashJoin::Transform(
   return;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+/// ImplementDistinct
+ImplementDistinct::ImplementDistinct() {
+  type_ = RuleType::IMPLEMENT_DISTINCT;
+
+  match_pattern = std::make_shared<Pattern>(OpType::LogicalDistinct);
+  match_pattern->AddChild(std::make_shared<Pattern>(OpType::Leaf));
+}
+
+bool ImplementDistinct::Check(std::shared_ptr<OperatorExpression> plan,
+                              OptimizeContext* context) const {
+  (void)context;
+  (void)plan;
+  return true;
+}
+
+void ImplementDistinct::Transform(std::shared_ptr<OperatorExpression> input,
+                                  std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+                                  OptimizeContext *context) const {
+  (void)context;
+  auto result_plan = std::make_shared<OperatorExpression>(PhysicalDistinct::make());
+  std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
+  PL_ASSERT(children.size() == 1);
+
+  result_plan->PushChild(children[0]);
+
+  transformed.push_back(result_plan);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+/// ImplementDistinct
+ImplementLimit::ImplementLimit() {
+  type_ = RuleType::IMPLEMENT_LIMIT;
+
+  match_pattern = std::make_shared<Pattern>(OpType::LogicalLimit);
+  match_pattern->AddChild(std::make_shared<Pattern>(OpType::Leaf));
+}
+
+bool ImplementLimit::Check(std::shared_ptr<OperatorExpression> plan,
+                              OptimizeContext* context) const {
+  (void)context;
+  (void)plan;
+  return true;
+}
+
+void ImplementLimit::Transform(std::shared_ptr<OperatorExpression> input,
+                                  std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+                                  OptimizeContext *context) const {
+  (void) context;
+  const LogicalLimit *limit_op = input->Op().As<LogicalLimit>();
+
+  auto result_plan = std::make_shared<OperatorExpression>(PhysicalLimit::make(limit_op->offset, limit_op->limit));
+  std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
+  PL_ASSERT(children.size() == 1);
+
+  result_plan->PushChild(children[0]);
+
+  transformed.push_back(result_plan);
+}
+
 //===--------------------------------------------------------------------===//
 // Rewrite rules
 //===--------------------------------------------------------------------===//

@@ -197,6 +197,32 @@ class InnerJoinToInnerHashJoin : public Rule {
       const override;
 };
 
+///////////////////////////////////////////////////////////////////////////////
+/// ImplementDistinct
+class ImplementDistinct : public Rule {
+ public:
+  ImplementDistinct();
+
+  bool Check(std::shared_ptr<OperatorExpression> plan, OptimizeContext* context) const override;
+
+  void Transform(std::shared_ptr<OperatorExpression> input,
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed, OptimizeContext* context)
+  const override;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// ImplementLimit
+class ImplementLimit : public Rule {
+ public:
+  ImplementLimit();
+
+  bool Check(std::shared_ptr<OperatorExpression> plan, OptimizeContext* context) const override;
+
+  void Transform(std::shared_ptr<OperatorExpression> input,
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed, OptimizeContext* context)
+  const override;
+};
+
 //===--------------------------------------------------------------------===//
 // Rewrite rules
 //===--------------------------------------------------------------------===//

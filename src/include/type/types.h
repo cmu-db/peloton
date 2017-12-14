@@ -1290,6 +1290,8 @@ enum class RuleType : uint32_t {
   AGGREGATE_TO_PLAIN_AGGREGATE,
   INNER_JOIN_TO_NL_JOIN,
   INNER_JOIN_TO_HASH_JOIN,
+  IMPLEMENT_DISTINCT,
+  IMPLEMENT_LIMIT,
 
   // Don't move this one
   RewriteDelimiter,

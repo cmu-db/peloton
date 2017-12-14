@@ -250,6 +250,24 @@ class LogicalInsertSelect : public OperatorNode<LogicalInsertSelect> {
 };
 
 //===--------------------------------------------------------------------===//
+// LogicalDistinct
+//===--------------------------------------------------------------------===//
+class LogicalDistinct : public OperatorNode<LogicalDistinct> {
+ public:
+  static Operator make();
+};
+
+//===--------------------------------------------------------------------===//
+// LogicalLimit
+//===--------------------------------------------------------------------===//
+class LogicalLimit : public OperatorNode<LogicalLimit> {
+ public:
+  static Operator make(int64_t offset, int64_t limit);
+  int64_t offset;
+  int64_t limit;
+};
+
+//===--------------------------------------------------------------------===//
 // Delete
 //===--------------------------------------------------------------------===//
 class LogicalDelete : public OperatorNode<LogicalDelete> {
@@ -373,7 +391,9 @@ class PhysicalOrderBy : public OperatorNode<PhysicalOrderBy> {
 //===--------------------------------------------------------------------===//
 class PhysicalLimit : public OperatorNode<PhysicalLimit> {
  public:
-  static Operator make();
+  static Operator make(int64_t offset, int64_t limit);
+  int64_t offset;
+  int64_t limit;
 };
 
 //===--------------------------------------------------------------------===//

@@ -78,6 +78,19 @@ void QueryToOperatorTransformer::Visit(parser::SelectStatement *op) {
     output_expr_ = agg_expr;
   }
 
+  if (op->select_distinct) {
+    auto distinct_expr = std::make_shared<OperatorExpression>(LogicalDistinct::make());
+    distinct_expr->PushChild(output_expr_);
+    output_expr_ = distinct_expr;
+  }
+
+  if (op->limit != nullptr) {
+    auto limit_expr = std::make_shared<OperatorExpression>(
+        LogicalLimit::make(op->limit->offset, op->limit->limit));
+    limit_expr->PushChild(output_expr_);
+    output_expr_ = limit_expr;
+  }
+
   predicates_.clear();
 }
 void QueryToOperatorTransformer::Visit(parser::JoinDefinition *node) {

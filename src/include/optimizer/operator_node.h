@@ -45,6 +45,8 @@ enum class OpType {
   LogicalInsertSelect,
   LogicalDelete,
   LogicalUpdate,
+  LogicalLimit,
+  LogicalDistinct,
   // Separate between logical and physical ops
   LogicalPhysicalDelimiter,
   // Physical ops
