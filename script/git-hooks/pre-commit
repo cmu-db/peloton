@@ -9,5 +9,10 @@
 #   ln -s ../../script/git-hooks/pre-commit .git/hooks/pre-commit
 
 files=$(git diff --name-only HEAD --cached --diff-filter=d | grep '\.\(cpp\|h\)$')
-python script/validators/source_validator.py --files $files
-exit $?
+echo $files
+if [ -n "$files" ]; then
+  python script/validators/source_validator.py --files $files
+  exit $?
+fi
+
+exit 0
