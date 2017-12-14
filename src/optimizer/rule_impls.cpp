@@ -146,11 +146,14 @@ void GetToIndexScan::Transform(
   UNUSED_ATTRIBUTE std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PL_ASSERT(children.size() == 0);
 
+  const LogicalGet *get = input->Op().As<LogicalGet>();
+  size_t index_cnt = get->table->GetIndexCount();
+
   // Get sort columns if they are all base columns and all in asc order
   auto sort_prop = context->required_prop->GetPropertyOfType(PropertyType::SORT)->As<PropertySort>();
-  bool sort_by_asc_base_column = true;
   std::vector<oid_t> sort_col_ids;
   if (sort_prop != nullptr) {
+    bool sort_by_asc_base_column = true;
     for (size_t i = 0; i<sort_prop->GetSortColumnSize(); i++) {
       auto expr = sort_prop->GetSortColumn(i);
       if (!sort_prop->GetSortAscending(i)
@@ -161,44 +164,41 @@ void GetToIndexScan::Transform(
       auto bound_oids = reinterpret_cast<expression::TupleValueExpression*>(expr)->GetBoundOid();
       sort_col_ids.push_back(std::get<2>(bound_oids));
     }
-  }
-
-  const LogicalGet *get = input->Op().As<LogicalGet>();
-  size_t index_cnt = get->table->GetIndexCount();
-
-  // Check whether any index can fulfill sort property
-  if (sort_by_asc_base_column) {
-    for (oid_t index_id=0; index_id < index_cnt; index_id++) {
-      auto index = get->table->GetIndex(index_id);
-      auto& index_col_ids = index->GetMetadata()->GetKeyAttrs();
-      // We want to ensure that Sort(a, b, c, d, e) can fit Sort(a, c, e)
-      size_t l_num_sort_columns = index_col_ids.size();
-      size_t l_sort_col_idx = 0;
-      size_t r_num_sort_columns = sort_col_ids.size();
-      if (l_num_sort_columns < r_num_sort_columns)
-        continue;
-      bool index_matched = true;
-      for (size_t r_sort_col_idx = 0; r_sort_col_idx < r_num_sort_columns;
-           ++r_sort_col_idx) {
-        while (l_sort_col_idx < l_num_sort_columns &&
-            index_col_ids[l_sort_col_idx] != sort_col_ids[r_sort_col_idx]) {
+    // Check whether any index can fulfill sort property
+    if (sort_by_asc_base_column) {
+      for (oid_t index_id=0; index_id < index_cnt; index_id++) {
+        auto index = get->table->GetIndex(index_id);
+        auto& index_col_ids = index->GetMetadata()->GetKeyAttrs();
+        // We want to ensure that Sort(a, b, c, d, e) can fit Sort(a, c, e)
+        size_t l_num_sort_columns = index_col_ids.size();
+        size_t l_sort_col_idx = 0;
+        size_t r_num_sort_columns = sort_col_ids.size();
+        if (l_num_sort_columns < r_num_sort_columns)
+          continue;
+        bool index_matched = true;
+        for (size_t r_sort_col_idx = 0; r_sort_col_idx < r_num_sort_columns;
+             ++r_sort_col_idx) {
+          while (l_sort_col_idx < l_num_sort_columns &&
+              index_col_ids[l_sort_col_idx] != sort_col_ids[r_sort_col_idx]) {
+            ++l_sort_col_idx;
+          }
+          if (l_sort_col_idx == l_num_sort_columns) {
+            index_matched = false;
+            break;
+          }
           ++l_sort_col_idx;
         }
-        if (l_sort_col_idx == l_num_sort_columns) {
-          index_matched = false;
-          break;
+        // Add transformed plan if found
+        if (index_matched) {
+          auto index_scan_op = PhysicalIndexScan::make(
+              get->get_id, get->table, get->table_alias, get->predicates, get->is_for_update,
+              index_id, {}, {}, {});
+          transformed.push_back(std::make_shared<OperatorExpression>(index_scan_op));
         }
-        ++l_sort_col_idx;
-      }
-      // Add transformed plan if found
-      if (index_matched) {
-        auto index_scan_op = PhysicalIndexScan::make(
-            get->get_id, get->table, get->table_alias, get->predicates, get->is_for_update,
-            index_id, {}, {}, {});
-        transformed.push_back(std::make_shared<OperatorExpression>(index_scan_op));
       }
     }
   }
+
 
   // Check whether any index can fulfill predicate predicate evaluation
   if (!get->predicates.empty()) {

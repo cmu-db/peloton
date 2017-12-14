@@ -164,5 +164,34 @@ bool BinderContext::CheckNestedTableColumn(
   return false;
 }
 
+void BinderContext::GenerateAllColumnExpressions(
+    std::vector<std::unique_ptr<expression::AbstractExpression>>& exprs) {
+  for (auto& entry : regular_table_alias_map_) {
+    auto& table_obj = entry.second;
+    auto col_cnt = table_obj->GetColumnObjects().size();
+    for (size_t i = 0; i<col_cnt; i++) {
+      auto col_obj = table_obj->GetColumnObject(i);
+      auto tv_expr = new expression::TupleValueExpression(
+          std::string(col_obj->column_name), std::string(entry.first));
+      tv_expr->SetValueType(col_obj->column_type);
+      tv_expr->DeduceExpressionName();
+      tv_expr->SetBoundOid(table_obj->database_oid, table_obj->table_oid, col_obj->column_id);
+      exprs.emplace_back(tv_expr);
+    }
+  }
+
+  for (auto& entry : nested_table_alias_map_) {
+    auto& table_alias = entry.first;
+    auto& cols = entry.second;
+    for (auto& col_entry : cols) {
+      auto tv_expr = new expression::TupleValueExpression(
+          std::string(col_entry.first), std::string(table_alias));
+      tv_expr->SetValueType(col_entry.second);
+      tv_expr->DeduceExpressionName();
+      exprs.emplace_back(tv_expr);
+    }
+  }
+}
+
 }  // namespace binder
 }  // namespace peloton

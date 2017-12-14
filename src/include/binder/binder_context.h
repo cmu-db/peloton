@@ -88,6 +88,9 @@ class BinderContext {
     upper_context_ = upper_context;
   }
 
+  void GenerateAllColumnExpressions(
+      std::vector<std::unique_ptr<expression::AbstractExpression>>& exprs);
+
  private:
   // Map table alias to table obj
   std::unordered_map<std::string, std::shared_ptr<catalog::TableCatalogObject>> regular_table_alias_map_;

@@ -12,6 +12,7 @@
 
 #include "expression/expression_util.h"
 #include "binder/bind_node_visitor.h"
+#include "expression/star_expression.h"
 
 #include "expression/case_expression.h"
 #include "expression/tuple_value_expression.h"
@@ -40,7 +41,14 @@ void BindNodeVisitor::Visit(parser::SelectStatement *node) {
   if (node->order != nullptr) node->order->Accept(this);
   if (node->limit != nullptr) node->limit->Accept(this);
   if (node->group_by != nullptr) node->group_by->Accept(this);
+
+  std::vector<std::unique_ptr<expression::AbstractExpression>> new_select_list;
   for (auto &select_element : node->select_list) {
+    if (select_element->GetExpressionType() == ExpressionType::STAR) {
+      context_->GenerateAllColumnExpressions(new_select_list);
+      continue;
+    }
+
     select_element->Accept(this);
 
     // Recursively deduce expression value type
@@ -48,7 +56,9 @@ void BindNodeVisitor::Visit(parser::SelectStatement *node) {
                                                    select_element.get());
     // Recursively deduce expression name
     select_element->DeduceExpressionName();
+    new_select_list.push_back(std::move(select_element));
   }
+  node->select_list = std::move(new_select_list);
 }
 
 // Some sub query nodes inside SelectStatement
