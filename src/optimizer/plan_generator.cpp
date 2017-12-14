@@ -82,7 +82,14 @@ void PlanGenerator::Visit(const PhysicalIndexScan *op) {
       expression::ExpressionUtil::JoinAnnotatedExprs(op->predicates),
       op->table_alias, op->table_);
 
-  // TODO build index scan plan
+  auto index = op->table_->GetIndex(op->index_id);
+  vector<expression::AbstractExpression *> runtime_keys;
+
+  // Create index scan desc
+  planner::IndexScanPlan::IndexScanDesc index_scan_desc(
+      index, op->key_column_id_list, op->expr_type_list, op->value_list, runtime_keys);
+  output_plan_.reset(new planner::IndexScanPlan(
+      op->table_, predicate.release(), column_ids, index_scan_desc, false));
 }
 
 void PlanGenerator::Visit(const QueryDerivedScan *) {}
