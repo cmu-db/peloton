@@ -185,7 +185,7 @@ void ChildPropertyDeriver::DeriveForJoin() {
             tuples, sort_prop->GetSortColumn(idx));
         for (auto &expr : tuples) {
           auto tv_expr =
-              reinterpret_cast<expression::TupleValueExpression *>(expr.get());
+              reinterpret_cast<expression::TupleValueExpression *>(expr);
           // If a column is not in the prob table, we cannot fulfill the sort
           // property in the requirement
           if (!probe_group->GetTableAliases().count(tv_expr->GetTableName())) {

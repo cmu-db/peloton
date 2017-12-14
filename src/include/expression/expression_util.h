@@ -470,8 +470,7 @@ class ExpressionUtil {
 
     // Here we need a deep copy to void double delete subtree
     if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE)
-      expr_map.emplace(std::shared_ptr<AbstractExpression>(expr->Copy()),
-                       expr_map.size());
+      expr_map.emplace(expr, expr_map.size());
   }
 
   /**
@@ -485,7 +484,7 @@ class ExpressionUtil {
 
     // Here we need a deep copy to void double delete subtree
     if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE)
-      expr_set.emplace(expr->Copy());
+      expr_set.emplace(expr);
   }
 
   /**
@@ -635,20 +634,20 @@ class ExpressionUtil {
    * ordered flag indicate whether the comparison should consider the order.
    * */
   static bool EqualExpressions(
-      const std::vector<expression::AbstractExpression *> &l,
-      const std::vector<expression::AbstractExpression *> &r,
+      const std::vector<std::shared_ptr<expression::AbstractExpression>> &l,
+      const std::vector<std::shared_ptr<expression::AbstractExpression>> &r,
       bool ordered = false) {
     if (l.size() != r.size()) return false;
     // Consider expression order in the comparison
     if (ordered) {
       size_t num_exprs = l.size();
       for (size_t i = 0; i < num_exprs; i++)
-        if (!l[i]->Equals(r[i])) return false;
+        if (!l[i]->Equals(r[i].get())) return false;
       return true;
     } else {
       ExprSet l_set, r_set;
-      for (auto expr : l) l_set.insert(expr);
-      for (auto expr : r) r_set.insert(expr);
+      for (auto expr : l) l_set.insert(expr.get());
+      for (auto expr : r) r_set.insert(expr.get());
       return l_set == r_set;
     }
   }

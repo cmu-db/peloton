@@ -73,8 +73,7 @@ void PlanGenerator::Visit(const PhysicalSeqScan *op) {
       expression::ExpressionUtil::JoinAnnotatedExprs(op->predicates),
       op->table_alias, op->table_);
 
-  output_plan_ = std::make_unique<planner::AbstractPlan>(
-      new planner::SeqScanPlan(op->table_, predicate.release(), column_ids));
+  output_plan_.reset(new planner::SeqScanPlan(op->table_, predicate.release(), column_ids));
 }
 
 void PlanGenerator::Visit(const PhysicalIndexScan *op) {
@@ -106,7 +105,7 @@ void PlanGenerator::Visit(const PhysicalOrderBy *) {
   vector<oid_t> sort_col_ids;
   vector<bool> sort_flags;
   for (size_t i = 0; i < sort_columns_size; ++i) {
-    sort_col_ids.push_back(child_expr_map[sort_prop->GetSortColumn(i)]);
+    sort_col_ids.push_back(child_cols_map[sort_prop->GetSortColumn(i)]);
     // planner use desc flag
     sort_flags.push_back(!sort_prop->GetSortAscending(i));
   }
@@ -194,7 +193,7 @@ PlanGenerator::GeneratePredicateForScan(
   }
   ExprMap table_expr_map = GenerateTableExprMap(alias, table);
   unique_ptr<expression::AbstractExpression> predicate =
-      std::make_unique<expression::AbstractExpression>(predicate_expr->Copy());
+      std::unique_ptr<expression::AbstractExpression>(predicate_expr->Copy());
   expression::ExpressionUtil::EvaluateExpression({table_expr_map},
                                                  predicate.get());
   return predicate;
