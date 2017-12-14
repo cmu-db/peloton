@@ -40,6 +40,9 @@ RuleSet::RuleSet() {
   implementation_rules_.emplace_back(new LogicalQueryDerivedGetToPhysical());
   implementation_rules_.emplace_back(new InnerJoinToInnerNLJoin());
   implementation_rules_.emplace_back(new InnerJoinToInnerHashJoin());
+  implementation_rules_.emplace_back(new ImplementDistinct());
+  implementation_rules_.emplace_back(new ImplementLimit());
+
   rewrite_rules_.emplace_back(new PushFilterThroughJoin());
   rewrite_rules_.emplace_back(new CombineConsecutiveFilter());
   rewrite_rules_.emplace_back(new EmbedFilterIntoGet());

@@ -609,7 +609,7 @@ void ImplementDistinct::Transform(std::shared_ptr<OperatorExpression> input,
 
 
 ///////////////////////////////////////////////////////////////////////////////
-/// ImplementDistinct
+/// ImplementLimit
 ImplementLimit::ImplementLimit() {
   type_ = RuleType::IMPLEMENT_LIMIT;
 
