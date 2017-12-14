@@ -139,13 +139,13 @@ void InputColumnDeriver::ScanHelper() {
       return;
     }
   }
-  ExprSet output_cols_set;
+  ExprMap output_cols_map;
   for (auto expr : required_cols_) {
-    expression::ExpressionUtil::GetTupleValueExprs(output_cols_set, expr);
+    expression::ExpressionUtil::GetTupleValueExprs(output_cols_map, expr);
   }
-  vector<AbstractExpression *> output_cols;
-  for (auto &expr : output_cols_set) {
-    output_cols.push_back(expr);
+  vector<AbstractExpression *> output_cols = vector<AbstractExpression*>(output_cols_map.size());
+  for (auto &entry : output_cols_map) {
+    output_cols[entry.second] = entry.first;
   }
   output_input_cols_ =
       pair<vector<AbstractExpression *>, vector<vector<AbstractExpression *>>>{
