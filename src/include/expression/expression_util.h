@@ -492,9 +492,8 @@ class ExpressionUtil {
     for (size_t i = 0; i < children_size; i++)
       GetTupleValueExprs(expr_set, expr->GetModifiableChild(i));
 
-    // Here we need a deep copy to void double delete subtree
     if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE)
-      expr_set.emplace(expr);
+      expr_set.insert(expr);
   }
 
   /**

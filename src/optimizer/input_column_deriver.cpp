@@ -63,14 +63,14 @@ void InputColumnDeriver::Visit(const PhysicalOrderBy *) {
   // we need to pass down both required columns and sort columns
   auto prop = properties_->GetPropertyOfType(PropertyType::SORT);
   PL_ASSERT(prop.get() != nullptr);
-  auto sort_prop = prop->As<PropertySort>();
   ExprSet input_cols_set;
+  for (auto expr : required_cols_) {
+    expression::ExpressionUtil::GetTupleValueExprs(input_cols_set, expr);
+  }
+  auto sort_prop = prop->As<PropertySort>();
   size_t sort_col_size = sort_prop->GetSortColumnSize();
   for (size_t idx = 0; idx < sort_col_size; ++idx) {
     input_cols_set.insert(sort_prop->GetSortColumn(idx));
-  }
-  for (auto expr : required_cols_) {
-    expression::ExpressionUtil::GetTupleValueExprs(input_cols_set, expr);
   }
   vector<AbstractExpression *> cols;
   for (auto &expr : input_cols_set) {

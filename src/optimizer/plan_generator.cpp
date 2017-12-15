@@ -270,21 +270,10 @@ PlanGenerator::GeneratePredicateForScan(
 }
 
 void PlanGenerator::BuildProjectionPlan() {
-  bool no_projection = false;
-  if (output_cols_.size() == required_cols_.size()) {
-    no_projection = true;
-    size_t cols_size = output_cols_.size();
-    for (size_t idx = 0; idx < cols_size; ++idx) {
-      if (output_cols_[idx] != required_cols_[idx]) {
-        no_projection = false;
-        break;
-      }
-    }
-  }
-
-  if (no_projection) {
+  if (output_cols_ == required_cols_) {
     return;
   }
+
   vector<ExprMap> output_expr_maps = {ExprMap{}};
   auto &child_expr_map = output_expr_maps[0];
   for (size_t idx = 0; idx < output_cols_.size(); ++idx) {
@@ -298,8 +287,10 @@ void PlanGenerator::BuildProjectionPlan() {
     auto &col = required_cols_[idx];
     if (child_expr_map.find(col) != child_expr_map.end()) {
       dml.emplace_back(idx, make_pair(0, child_expr_map[col]));
+      col->DeduceExpressionType();
     } else {
       // Copy then evaluate the expression and add to target list
+      col->DeduceExpressionType();
       auto col_copy = col->Copy();
       expression::ExpressionUtil::ConvertToTvExpr(col_copy, child_expr_map);
       expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
@@ -321,8 +312,8 @@ void PlanGenerator::BuildProjectionPlan() {
       new planner::ProjectionPlan(move(proj_info), schema_ptr));
 
   PL_ASSERT(children_plans_.size() < 2);
-  if (!children_plans_.empty()) {
-    project_plan->AddChild(move(children_plans_[0]));
+  if (output_plan_ != nullptr) {
+    project_plan->AddChild(move(output_plan_));
   }
   output_plan_ = move(project_plan);
 }
