@@ -109,8 +109,8 @@ void PlanGenerator::Visit(const PhysicalOrderBy *) {
   vector<oid_t> column_ids;
   PL_ASSERT(children_expr_map_.size() == 1);
   auto &child_cols_map = children_expr_map_[0];
-  for (size_t i = 0; i < required_cols_.size(); ++i) {
-    column_ids.push_back(child_cols_map[required_cols_[i]]);
+  for (size_t i = 0; i < output_cols_.size(); ++i) {
+    column_ids.push_back(child_cols_map[output_cols_[i]]);
   }
 
   auto sort_prop = required_props_->GetPropertyOfType(PropertyType::SORT)
@@ -293,7 +293,7 @@ void PlanGenerator::BuildProjectionPlan() {
       col->DeduceExpressionType();
       auto col_copy = col->Copy();
       expression::ExpressionUtil::ConvertToTvExpr(col_copy, child_expr_map);
-      expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
+      expression::ExpressionUtil::EvaluateExpression(output_expr_maps,
                                                      col_copy);
       planner::DerivedAttribute attribute{col_copy};
       tl.emplace_back(idx, attribute);
