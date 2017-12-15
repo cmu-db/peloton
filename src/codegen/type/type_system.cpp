@@ -13,8 +13,9 @@
 #include "codegen/type/type_system.h"
 
 #include "codegen/lang/if.h"
-#include "codegen/value.h"
 #include "codegen/type/boolean_type.h"
+#include "codegen/type/integer_type.h"
+#include "codegen/value.h"
 #include "common/exception.h"
 #include "util/string_util.h"
 
@@ -22,15 +23,52 @@ namespace peloton {
 namespace codegen {
 namespace type {
 
-bool TypeSystem::CastWithNullPropagation::SupportsTypes(
-    const Type &from_type, const Type &to_type) const {
-  return inner_cast_.SupportsTypes(from_type, to_type);
+namespace {
+
+Value GenerateBinaryHandleNull(
+    CodeGen &codegen, const SqlType &result_type, const Value &left,
+    const Value &right,
+    const std::function<Value(CodeGen &codegen, const Value &left,
+                              const Value &right)> &impl) {
+  if (!left.IsNullable() && !right.IsNullable()) {
+    // Neither input is NULLable, elide the NULL check
+    return impl(codegen, left, right);
+  }
+
+  // One of the inputs is nullable, compute the null bit first
+  auto *null = codegen->CreateOr(left.IsNull(codegen), right.IsNull(codegen));
+
+  Value null_val, ret_val;
+  lang::If is_null{codegen, null, "is_null"};
+  {
+    // If either value is null, the result of the operator is null
+    null_val = result_type.GetNullValue(codegen);
+  }
+  is_null.ElseBlock();
+  {
+    // If both values are not null, perform the non-null-aware operation
+    ret_val = impl(codegen, left, right);
+  }
+  is_null.EndIf();
+  return is_null.BuildPHI(null_val, ret_val);
 }
 
-Value TypeSystem::CastWithNullPropagation::DoCast(CodeGen &codegen,
-                                                  const Value &value,
-                                                  const Type &to_type) const {
-  PL_ASSERT(value.IsNullable());
+}  // anonymous namespace
+
+//===----------------------------------------------------------------------===//
+//
+// CastHandleNull
+//
+//===----------------------------------------------------------------------===//
+
+Value TypeSystem::CastHandleNull::Eval(CodeGen &codegen, const Value &value,
+                                       const Type &to_type) const {
+  if (!value.IsNullable()) {
+    // If the value isn't NULLable, avoid the NULL check and just invoke
+    return Impl(codegen, value, to_type);
+  }
+
+  // The value is NULLable, we need to perform a null check
 
   Value null_val, ret_val;
   lang::If is_null{codegen, value.IsNull(codegen), "is_null"};
@@ -41,7 +79,7 @@ Value TypeSystem::CastWithNullPropagation::DoCast(CodeGen &codegen,
   is_null.ElseBlock();
   {
     // If both values are not null, perform the non-null-aware operation
-    ret_val = inner_cast_.DoCast(codegen, value, to_type.AsNonNullable());
+    ret_val = Impl(codegen, value, to_type);
   }
   is_null.EndIf();
 
@@ -49,16 +87,16 @@ Value TypeSystem::CastWithNullPropagation::DoCast(CodeGen &codegen,
 }
 
 //===----------------------------------------------------------------------===//
-// ComparisonWithNullPropagation
 //
-// This is a wrapper around lower-level comparisons that are not null-aware.
-// This class computes the null-bit of the result of the comparison based on the
-// values being compared. It delegates to the wrapped comparison function to
-// perform the actual comparison. The null-bit and resulting value are combined.
+// SimpleComparisonHandleNull
+//
 //===----------------------------------------------------------------------===//
 
-#define DO_COMPARE(OP)                                                     \
-  PL_ASSERT(left.IsNullable() || right.IsNullable());                      \
+#define GEN_COMPARE(IMPL)                                                  \
+  if (!left.IsNullable() && !right.IsNullable()) {                         \
+    /* Neither left nor right are NULLable, elide the NULL check */        \
+    return (IMPL);                                                         \
+  }                                                                        \
   /* Determine the null bit based on the left and right values */          \
   llvm::Value *null = nullptr;                                             \
   if (left.IsNullable() && right.IsNullable()) {                           \
@@ -69,73 +107,127 @@ Value TypeSystem::CastWithNullPropagation::DoCast(CodeGen &codegen,
     null = right.IsNull(codegen);                                          \
   }                                                                        \
   /* Now perform the comparison using a non-null-aware comparison */       \
-  Value result = (OP);                                                     \
+  Value result = (IMPL);                                                   \
   /* Return the result with the computed null-bit */                       \
   return Value{result.GetType().AsNullable(), result.GetValue(), nullptr, null};
 
-bool TypeSystem::ComparisonWithNullPropagation::SupportsTypes(
-    const Type &left_type, const Type &right_type) const {
-  return inner_comparison_.SupportsTypes(left_type, right_type);
-}
-
-Value TypeSystem::ComparisonWithNullPropagation::DoCompareLt(
+Value TypeSystem::SimpleComparisonHandleNull::EvalCompareLt(
     CodeGen &codegen, const Value &left, const Value &right) const {
-  DO_COMPARE(inner_comparison_.DoCompareLt(codegen, left, right));
+  GEN_COMPARE(CompareLtImpl(codegen, left, right));
 }
 
-Value TypeSystem::ComparisonWithNullPropagation::DoCompareLte(
+Value TypeSystem::SimpleComparisonHandleNull::EvalCompareLte(
     CodeGen &codegen, const Value &left, const Value &right) const {
-  DO_COMPARE(inner_comparison_.DoCompareLte(codegen, left, right));
+  GEN_COMPARE(CompareLteImpl(codegen, left, right));
 }
 
-Value TypeSystem::ComparisonWithNullPropagation::DoCompareEq(
+Value TypeSystem::SimpleComparisonHandleNull::EvalCompareEq(
     CodeGen &codegen, const Value &left, const Value &right) const {
-  DO_COMPARE(inner_comparison_.DoCompareEq(codegen, left, right));
+  GEN_COMPARE(CompareEqImpl(codegen, left, right));
 }
 
-Value TypeSystem::ComparisonWithNullPropagation::DoCompareNe(
+Value TypeSystem::SimpleComparisonHandleNull::EvalCompareNe(
     CodeGen &codegen, const Value &left, const Value &right) const {
-  DO_COMPARE(inner_comparison_.DoCompareNe(codegen, left, right));
+  GEN_COMPARE(CompareNeImpl(codegen, left, right));
 }
 
-Value TypeSystem::ComparisonWithNullPropagation::DoCompareGt(
+Value TypeSystem::SimpleComparisonHandleNull::EvalCompareGt(
     CodeGen &codegen, const Value &left, const Value &right) const {
-  DO_COMPARE(inner_comparison_.DoCompareGt(codegen, left, right));
+  GEN_COMPARE(CompareGtImpl(codegen, left, right));
 }
 
-Value TypeSystem::ComparisonWithNullPropagation::DoCompareGte(
+Value TypeSystem::SimpleComparisonHandleNull::EvalCompareGte(
     CodeGen &codegen, const Value &left, const Value &right) const {
-  DO_COMPARE(inner_comparison_.DoCompareGte(codegen, left, right));
+  GEN_COMPARE(CompareGteImpl(codegen, left, right));
 }
 
-Value TypeSystem::ComparisonWithNullPropagation::DoComparisonForSort(
+Value TypeSystem::SimpleComparisonHandleNull::EvalCompareForSort(
     CodeGen &codegen, const Value &left, const Value &right) const {
-  DO_COMPARE(inner_comparison_.DoComparisonForSort(codegen, left, right));
+  GEN_COMPARE(CompareForSortImpl(codegen, left, right));
 }
 
-#undef DO_COMPARE
+#undef GEN_COMPARE
 
 //===----------------------------------------------------------------------===//
-// UnaryOperatorWithNullPropagation
 //
-// This is a wrapper around lower-level unary operators which are not
-// null-aware. This class properly computes the result of a unary operator in
-// the presence of null input values.
+// ExpensiveComparisonHandleNull
+//
 //===----------------------------------------------------------------------===//
 
-bool TypeSystem::UnaryOperatorWithNullPropagation::SupportsType(
-    const Type &type) const {
-  return inner_op_.SupportsType(type);
+Value TypeSystem::ExpensiveComparisonHandleNull::EvalCompareLt(
+    CodeGen &codegen, const Value &left, const Value &right) const {
+  auto impl = [this](CodeGen &codegen, const Value &left, const Value &right) {
+    return CompareLtImpl(codegen, left, right);
+  };
+  const auto &result_type = Boolean::Instance();
+  return GenerateBinaryHandleNull(codegen, result_type, left, right, impl);
 }
 
-Type TypeSystem::UnaryOperatorWithNullPropagation::ResultType(
-    const Type &val_type) const {
-  return inner_op_.ResultType(val_type).AsNullable();
+Value TypeSystem::ExpensiveComparisonHandleNull::EvalCompareLte(
+    CodeGen &codegen, const Value &left, const Value &right) const {
+  auto impl = [this](CodeGen &codegen, const Value &left, const Value &right) {
+    return CompareLteImpl(codegen, left, right);
+  };
+  const auto &result_type = Boolean::Instance();
+  return GenerateBinaryHandleNull(codegen, result_type, left, right, impl);
 }
 
-Value TypeSystem::UnaryOperatorWithNullPropagation::DoWork(
-    CodeGen &codegen, const Value &val) const {
-  PL_ASSERT(val.IsNullable());
+Value TypeSystem::ExpensiveComparisonHandleNull::EvalCompareEq(
+    CodeGen &codegen, const Value &left, const Value &right) const {
+  auto impl = [this](CodeGen &codegen, const Value &left, const Value &right) {
+    return CompareEqImpl(codegen, left, right);
+  };
+  const auto &result_type = Boolean::Instance();
+  return GenerateBinaryHandleNull(codegen, result_type, left, right, impl);
+}
+
+Value TypeSystem::ExpensiveComparisonHandleNull::EvalCompareNe(
+    CodeGen &codegen, const Value &left, const Value &right) const {
+  auto impl = [this](CodeGen &codegen, const Value &left, const Value &right) {
+    return CompareNeImpl(codegen, left, right);
+  };
+  const auto &result_type = Boolean::Instance();
+  return GenerateBinaryHandleNull(codegen, result_type, left, right, impl);
+}
+
+Value TypeSystem::ExpensiveComparisonHandleNull::EvalCompareGt(
+    CodeGen &codegen, const Value &left, const Value &right) const {
+  auto impl = [this](CodeGen &codegen, const Value &left, const Value &right) {
+    return CompareGtImpl(codegen, left, right);
+  };
+  const auto &result_type = Boolean::Instance();
+  return GenerateBinaryHandleNull(codegen, result_type, left, right, impl);
+}
+
+Value TypeSystem::ExpensiveComparisonHandleNull::EvalCompareGte(
+    CodeGen &codegen, const Value &left, const Value &right) const {
+  auto impl = [this](CodeGen &codegen, const Value &left, const Value &right) {
+    return CompareGteImpl(codegen, left, right);
+  };
+  const auto &result_type = Boolean::Instance();
+  return GenerateBinaryHandleNull(codegen, result_type, left, right, impl);
+}
+
+Value TypeSystem::ExpensiveComparisonHandleNull::EvalCompareForSort(
+    CodeGen &codegen, const Value &left, const Value &right) const {
+  auto impl = [this](CodeGen &codegen, const Value &left, const Value &right) {
+    return CompareForSortImpl(codegen, left, right);
+  };
+  const auto &result_type = Integer::Instance();
+  return GenerateBinaryHandleNull(codegen, result_type, left, right, impl);
+}
+
+//===----------------------------------------------------------------------===//
+//
+// UnaryOperatorHandleNull
+//
+//===----------------------------------------------------------------------===//
+Value TypeSystem::UnaryOperatorHandleNull::Eval(CodeGen &codegen,
+                                                const Value &val) const {
+  if (!val.IsNullable()) {
+    // If the input is not NULLable, elide the NULL check
+    return Impl(codegen, val);
+  }
 
   Value null_val, ret_val;
   lang::If is_null{codegen, val.IsNull(codegen), "is_null"};
@@ -146,7 +238,7 @@ Value TypeSystem::UnaryOperatorWithNullPropagation::DoWork(
   is_null.ElseBlock();
   {
     // If the input isn't NULL, perform the non-null-aware operation
-    ret_val = inner_op_.DoWork(codegen, val);
+    ret_val = Impl(codegen, val);
   }
   is_null.EndIf();
 
@@ -154,47 +246,28 @@ Value TypeSystem::UnaryOperatorWithNullPropagation::DoWork(
 }
 
 //===----------------------------------------------------------------------===//
-// BinaryOperatorWithNullPropagation
 //
-// This is a wrapper around lower-level binary operators which are not
-// null-aware. This class properly computes the result of a binary operator in
-// the presence of null input values.
+// BinaryOperatorHandleNull
+//
 //===----------------------------------------------------------------------===//
+Value TypeSystem::BinaryOperatorHandleNull::Eval(CodeGen &codegen,
+                                                 const Value &left,
+                                                 const Value &right,
+                                                 OnError on_error) const {
+  auto impl = [this, &on_error](CodeGen &codegen, const Value &left,
+                                const Value &right) {
+    return Impl(codegen, left, right, on_error);
+  };
 
-bool TypeSystem::BinaryOperatorWithNullPropagation::SupportsTypes(
-    const Type &left_type, const Type &right_type) const {
-  return inner_op_.SupportsTypes(left_type, right_type);
+  auto &result_type = ResultType(left.GetType(), right.GetType()).GetSqlType();
+  return GenerateBinaryHandleNull(codegen, result_type, left, right, impl);
 }
 
-Type TypeSystem::BinaryOperatorWithNullPropagation::ResultType(
-    const Type &left_type, const Type &right_type) const {
-  return inner_op_.ResultType(left_type, right_type).AsNullable();
-}
-
-Value TypeSystem::BinaryOperatorWithNullPropagation::DoWork(
-    CodeGen &codegen, const Value &left, const Value &right,
-    OnError on_error) const {
-  PL_ASSERT(left.IsNullable() || right.IsNullable());
-
-  // One of the inputs is nullable, compute the null bit first
-  auto *null = codegen->CreateOr(left.IsNull(codegen), right.IsNull(codegen));
-
-  Value null_val, ret_val;
-  lang::If is_null{codegen, null, "is_null"};
-  {
-    // If either value is null, the result of the operator is null
-    const auto &result_type = ResultType(left.GetType(), right.GetType());
-    null_val = result_type.GetSqlType().GetNullValue(codegen);
-  }
-  is_null.ElseBlock();
-  {
-    // If both values are not null, perform the non-null-aware operation
-    ret_val = inner_op_.DoWork(codegen, left, right, on_error);
-  }
-  is_null.EndIf();
-  return is_null.BuildPHI(null_val, ret_val);
-}
-
+//===----------------------------------------------------------------------===//
+//
+// TypeSystem
+//
+//===----------------------------------------------------------------------===//
 TypeSystem::TypeSystem(
     const std::vector<peloton::type::TypeId> &implicit_cast_table,
     const std::vector<TypeSystem::CastInfo> &explicit_cast_table,

@@ -1,13 +1,12 @@
-
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // nested_loop_join_plan.cpp
 //
 // Identification: /peloton/src/planner/nested_loop_join_plan.cpp
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -44,5 +43,6 @@ NestedLoopJoinPlan::NestedLoopJoinPlan(
   join_column_ids_left_ = join_column_ids_left;
   join_column_ids_right_ = join_column_ids_right;
 }
-}
-}
+
+}  // namespace planner
+}  // namespace peloton

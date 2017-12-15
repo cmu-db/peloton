@@ -16,6 +16,7 @@
 #include "common/macros.h"
 #include "common/printable.h"
 #include "type/type.h"
+#include "util/hash_util.h"
 
 namespace peloton {
 namespace catalog {
@@ -101,6 +102,11 @@ class Column : public Printable {
   }
 
   const std::vector<Constraint> &GetConstraints() const { return constraints; }
+
+  hash_t Hash() const {
+    hash_t hash = HashUtil::Hash(&column_type);
+    return HashUtil::CombineHashes(hash, HashUtil::Hash(&is_inlined));
+  }
 
   // Compare two column objects
   bool operator==(const Column &other) const {

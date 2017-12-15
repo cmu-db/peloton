@@ -110,8 +110,7 @@ class PostgresProtocolHandler: public ProtocolHandler {
   void PutTupleDescriptor(const std::vector<FieldInfo>& tuple_descriptor);
 
   // Send each row, one packet at a time, used by SELECT queries
-  void SendDataRows(std::vector<StatementResult>& results, int colcount,
-                    int& rows_affected);
+  void SendDataRows(std::vector<StatementResult>& results, int colcount);
 
   // Used to send a packet that indicates the completion of a query. Also has
   // txn state mgmt
@@ -197,26 +196,6 @@ class PostgresProtocolHandler: public ProtocolHandler {
   // in stat table is destroyed
   std::unordered_map<std::string, stats::QueryMetric::QueryParamBuf>
       statement_param_types_;
-
-  //TODO: should this stay in traffic_cop?
-  std::shared_ptr<Statement> statement_;
-
-  std::string error_message_;
-
-  //TODO: shoud this stay in traffic_cop?
-  std::vector<StatementResult> results_;
-
-  //TODO: should this stay in traffic_cop?
-  int rows_affected_ = 0;
-
-  //TODO: should this stay in traffic_cop?
-  std::vector<type::Value> param_values_;
-
-  //TODO: should this stay in traffic_cop?
-  QueryType query_type_;
-
-  //TODO: should this stay in traffic_cop?
-  std::string query_;
 
   //===--------------------------------------------------------------------===//
   // STATIC DATA

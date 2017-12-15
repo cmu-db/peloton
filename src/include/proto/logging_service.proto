@@ -1,0 +1,36 @@
+option cc_generic_services = true;
+
+package peloton.network.service;
+
+enum ResponseType {
+    // Everything is ok with the transaction and it is allowed
+    // to proceed to the next processing stage
+    SYNC = 0;
+    // Status code indicating the stored procedure executed successfully and was
+    // voluntarily aborted and rolled back by the stored procedure code
+    ASYNC = 1;
+    SEMISYNC = 2;
+}
+
+enum LoggingStatus{
+	REPLAY_COMPLETE = 0;
+	REPLAY_ERROR = 1;
+}
+
+message LogRecordReplayRequest{
+	required bytes log = 1;
+	required ResponseType sync_type = 2;
+	required int64 sequence_number = 3;
+}
+
+message LogRecordReplayResponse{
+	required int64 sequence_number = 1;
+}
+// -----------------------------------
+// SERVICE
+// -----------------------------------
+
+service PelotonLoggingService {
+    rpc LogRecordReplay (LogRecordReplayRequest) returns (LogRecordReplayResponse);
+    
+}

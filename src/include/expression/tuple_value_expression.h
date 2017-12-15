@@ -100,21 +100,34 @@ class TupleValueExpression : public AbstractExpression {
     return new TupleValueExpression(*this);
   }
 
-  virtual bool Equals(AbstractExpression *expr) const override {
-    if (exp_type_ != expr->GetExpressionType()) return false;
-    auto tup_expr = (TupleValueExpression *)expr;
+  virtual bool operator==(const AbstractExpression &rhs) const override {
+    return ExactlyEquals(rhs);
+  }
+
+  virtual bool operator!=(const AbstractExpression &rhs) const override {
+    return !(*this == rhs);
+  }
+
+  virtual bool ExactlyEquals(const AbstractExpression &rhs) const override {
+    if (exp_type_ != rhs.GetExpressionType())
+      return false;
+
+    auto &other = static_cast<const TupleValueExpression &>(rhs);
     // For query like SELECT A.id, B.id FROM test AS A, test AS B;
     // we need to know whether A.id is from A.id or B.id. In this case,
     // A.id and B.id have the same bound oids since they refer to the same table
     // but they have different table alias.
-    if (table_name_.empty() xor tup_expr->table_name_.empty()) return false;
-    bool res = bound_obj_id_ == tup_expr->bound_obj_id_;
-    if (!table_name_.empty() && !tup_expr->table_name_.empty())
-      res = table_name_ == tup_expr->table_name_ && res;
-    return res;
+    if (table_name_.empty() xor other.table_name_.empty())
+      return false;
+    bool are_equal = bound_obj_id_ == other.bound_obj_id_;
+    if (!table_name_.empty() && !other.table_name_.empty())
+      are_equal = (table_name_ == other.table_name_) && are_equal;
+    return are_equal;
   }
 
-  virtual hash_t Hash() const override;
+  virtual hash_t Hash() const override { return HashForExactMatch(); }
+
+  virtual hash_t HashForExactMatch() const override;
 
   const planner::AttributeInfo *GetAttributeRef() const { return ai_; }
 

@@ -2719,6 +2719,38 @@ std::string OperatorIdToString(OperatorId op_id) {
       return "LogicalAnd";
     case OperatorId::LogicalOr:
       return "LogicalOr";
+    case OperatorId::Ascii:
+      return "Ascii";
+    case OperatorId::Chr:
+      return "Chr";
+    case OperatorId::Concat:
+      return "Concat";
+    case OperatorId::Substr:
+      return "Substr";
+    case OperatorId::CharLength:
+      return "CharLength";
+    case OperatorId::OctetLength:
+      return "OctetLength";
+    case OperatorId::Length:
+      return "Length";
+    case OperatorId::Repeat:
+      return "Repeat";
+    case OperatorId::Replace:
+      return "Replace";
+    case OperatorId::LTrim:
+      return "LTrim";
+    case OperatorId::RTrim:
+      return "RTrim";
+    case OperatorId::BTrim:
+      return "BTrim";
+    case OperatorId::Sqrt:
+      return "Sqrt";
+    case OperatorId::Extract:
+      return "Extract";
+    case OperatorId::Floor:
+      return "Floor";
+    case OperatorId::Like:
+      return "Like";
     case OperatorId::DateTrunc:
       return "DateTrunc";
     default: {

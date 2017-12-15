@@ -19,18 +19,15 @@
 #include "network/network_manager.h"
 #include "settings/settings_manager.h"
 
+// For GFlag's built-in help message flag
 DECLARE_bool(help);
 
-// Peloton process begins execution here.
 int main(int argc, char *argv[]) {
   // Parse the command line flags
   ::google::ParseCommandLineNonHelpFlags(&argc, &argv, true);
 
   // If "-h" or "-help" is passed in, set up the help messages.
-  if (peloton::settings::SettingsManager::GetBool(
-          peloton::settings::SettingId::h) ||
-      FLAGS_help) {
-    FLAGS_help = true;
+  if (FLAGS_help) {
     ::google::SetUsageMessage("Usage Info: \n");
     ::google::HandleCommandLineHelpFlags();
   }

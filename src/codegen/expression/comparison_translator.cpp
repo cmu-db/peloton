@@ -48,14 +48,7 @@ codegen::Value ComparisonTranslator::DeriveValue(CodeGen &codegen,
     case ExpressionType::COMPARE_GREATERTHANOREQUALTO:
       return left.CompareGte(codegen, right);
     case ExpressionType::COMPARE_LIKE: {
-      type::Type left_type = left.GetType();
-      type::Type right_type = right.GetType();
-      auto *binary_op = type::TypeSystem::GetBinaryOperator(
-          OperatorId::Like, left_type, left_type, right_type, right_type);
-      PL_ASSERT(binary_op);
-
-      return binary_op->DoWork(codegen, left.CastTo(codegen, left_type),
-                               right.CastTo(codegen, right_type),
+      return left.CallBinaryOp(codegen, OperatorId::Like, right,
                                OnError::Exception);
     }
     default: {

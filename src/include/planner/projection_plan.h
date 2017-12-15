@@ -24,6 +24,11 @@ namespace catalog {
 class Schema;
 }
 
+namespace expression {
+class AbstractExpression;
+class Parameter;
+}
+
 namespace planner {
 
 class ProjectionPlan : public AbstractPlan {
@@ -65,6 +70,17 @@ class ProjectionPlan : public AbstractPlan {
     new_plan->column_ids_ = column_ids_;
     return std::unique_ptr<AbstractPlan>(new_plan);
   }
+
+  hash_t Hash() const override;
+
+  bool operator==(const AbstractPlan &rhs) const override;
+  bool operator!=(const AbstractPlan &rhs) const override {
+    return !(*this == rhs);
+  }
+
+  virtual void VisitParameters(codegen::QueryParametersMap &map,
+      std::vector<peloton::type::Value> &values,
+      const std::vector<peloton::type::Value> &values_from_user) override;
 
  private:
   /** @brief Projection Info.            */
