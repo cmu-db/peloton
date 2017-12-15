@@ -94,7 +94,7 @@ Value::Value(TypeId type, int8_t i) : Value(type) {
       std::string msg =
           StringUtil::Format("Invalid Type '%s' for 1-byte Value constructor",
                              TypeIdToString(type).c_str());
-      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE, msg);
+      throw Exception(ExceptionType::INCOMPATIBLE_TYPE, msg);
     }
   }
 }
@@ -137,7 +137,7 @@ Value::Value(TypeId type, int16_t i) : Value(type) {
       std::string msg =
           StringUtil::Format("Invalid Type '%s' for 2-byte Value constructor",
                              TypeIdToString(type).c_str());
-      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE, msg);
+      throw Exception(ExceptionType::INCOMPATIBLE_TYPE, msg);
     }
   }
 }
@@ -185,7 +185,7 @@ Value::Value(TypeId type, int32_t i) : Value(type) {
       std::string msg =
           StringUtil::Format("Invalid Type '%s' for 4-byte Value constructor",
                              TypeIdToString(type).c_str());
-      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE, msg);
+      throw Exception(ExceptionType::INCOMPATIBLE_TYPE, msg);
     }
   }
 }
@@ -228,7 +228,7 @@ Value::Value(TypeId type, int64_t i) : Value(type) {
       std::string msg =
           StringUtil::Format("Invalid Type '%s' for 8-byte Value constructor",
                              TypeIdToString(type).c_str());
-      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE, msg);
+      throw Exception(ExceptionType::INCOMPATIBLE_TYPE, msg);
     }
   }
 }
@@ -250,7 +250,7 @@ Value::Value(TypeId type, uint64_t i) : Value(type) {
       std::string msg = StringUtil::Format(
           "Invalid Type '%s' for unsigned 8-byte Value constructor",
           TypeIdToString(type).c_str());
-      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE, msg);
+      throw Exception(ExceptionType::INCOMPATIBLE_TYPE, msg);
     }
   }
 }
@@ -267,7 +267,7 @@ Value::Value(TypeId type, double d) : Value(type) {
       std::string msg =
           StringUtil::Format("Invalid Type '%s' for double Value constructor",
                              TypeIdToString(type).c_str());
-      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE, msg);
+      throw Exception(ExceptionType::INCOMPATIBLE_TYPE, msg);
     }
   }
 }
@@ -283,7 +283,7 @@ Value::Value(TypeId type, float f) : Value(type) {
       std::string msg =
           StringUtil::Format("Invalid Type '%s' for float Value constructor",
                              TypeIdToString(type).c_str());
-      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE, msg);
+      throw Exception(ExceptionType::INCOMPATIBLE_TYPE, msg);
     }
   }
 }
@@ -316,7 +316,7 @@ Value::Value(TypeId type, const char *data, uint32_t len, bool manage_data)
       std::string msg = StringUtil::Format(
           "Invalid Type '%s' for variable-length Value constructor",
           TypeIdToString(type).c_str());
-      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE, msg);
+      throw Exception(ExceptionType::INCOMPATIBLE_TYPE, msg);
     }
   }
 }
@@ -338,7 +338,7 @@ Value::Value(TypeId type, const std::string &data) : Value(type) {
       std::string msg =
           StringUtil::Format("Invalid Type '%s' for string Value constructor",
                              TypeIdToString(type).c_str());
-      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE, msg);
+      throw Exception(ExceptionType::INCOMPATIBLE_TYPE, msg);
     }
   }
 }

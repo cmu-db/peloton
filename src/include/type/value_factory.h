@@ -139,7 +139,7 @@ class ValueFactory {
         std::string msg =
             StringUtil::Format("Type '%s' does not have a NULL value",
                                TypeIdToString(type_id).c_str());
-        throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, msg);
+        throw Exception(ExceptionType::UNKNOWN_TYPE, msg);
       }
     }
     ret_value.size_.len = PELOTON_VALUE_NULL;
@@ -175,7 +175,7 @@ class ValueFactory {
     }
     std::string msg = StringUtil::Format(
         "Unknown Type '%d' for GetZeroValueByType", static_cast<int>(type_id));
-    throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, msg);
+    throw Exception(ExceptionType::UNKNOWN_TYPE, msg);
   }
 
   static inline Value CastAsBigInt(const Value &value) {
@@ -194,7 +194,7 @@ class ValueFactory {
         case TypeId::DECIMAL: {
           if (value.GetAs<double>() > (double)PELOTON_INT64_MAX ||
               value.GetAs<double>() < (double)PELOTON_INT64_MIN)
-            throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
+            throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
           return ValueFactory::GetBigIntValue((int64_t)value.GetAs<double>());
         }
@@ -204,11 +204,11 @@ class ValueFactory {
           try {
             bigint = stoll(str);
           } catch (std::out_of_range &e) {
-            throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
+            throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
           }
           if (bigint > PELOTON_INT64_MAX || bigint < PELOTON_INT64_MIN)
-            throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
+            throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
           return ValueFactory::GetBigIntValue(bigint);
         }
@@ -235,14 +235,14 @@ class ValueFactory {
         case TypeId::BIGINT: {
           if (value.GetAs<int64_t>() > (int64_t)PELOTON_INT32_MAX ||
               value.GetAs<int64_t>() < (int64_t)PELOTON_INT32_MIN)
-            throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
+            throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
           return ValueFactory::GetIntegerValue((int32_t)value.GetAs<int64_t>());
         }
         case TypeId::DECIMAL: {
           if (value.GetAs<double>() > (double)PELOTON_INT32_MAX ||
               value.GetAs<double>() < (double)PELOTON_INT32_MIN)
-            throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
+            throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
           return ValueFactory::GetIntegerValue((int32_t)value.GetAs<double>());
         }
@@ -252,11 +252,11 @@ class ValueFactory {
           try {
             integer = stoi(str);
           } catch (std::out_of_range &e) {
-            throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
+            throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
           }
           if (integer > PELOTON_INT32_MAX || integer < PELOTON_INT32_MIN)
-            throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
+            throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
           return ValueFactory::GetIntegerValue(integer);
         }
@@ -281,7 +281,7 @@ class ValueFactory {
         case TypeId::INTEGER: {
           if (value.GetAs<int32_t>() > (int32_t)PELOTON_INT16_MAX ||
               value.GetAs<int32_t>() < (int32_t)PELOTON_INT16_MIN)
-            throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
+            throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
           return ValueFactory::GetSmallIntValue(
               (int16_t)value.GetAs<int32_t>());
@@ -289,7 +289,7 @@ class ValueFactory {
         case TypeId::BIGINT: {
           if (value.GetAs<int64_t>() > (int64_t)PELOTON_INT16_MAX ||
               value.GetAs<int64_t>() < (int64_t)PELOTON_INT16_MIN)
-            throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
+            throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
           return ValueFactory::GetSmallIntValue(
               (int16_t)value.GetAs<int64_t>());
@@ -297,7 +297,7 @@ class ValueFactory {
         case TypeId::DECIMAL: {
           if (value.GetAs<double>() > (double)PELOTON_INT16_MAX ||
               value.GetAs<double>() < (double)PELOTON_INT16_MIN)
-            throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
+            throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
           return ValueFactory::GetSmallIntValue((int16_t)value.GetAs<double>());
         }
@@ -307,11 +307,11 @@ class ValueFactory {
           try {
             smallint = stoi(str);
           } catch (std::out_of_range &e) {
-            throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
+            throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
           }
           if (smallint < PELOTON_INT16_MIN)
-            throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
+            throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
           return ValueFactory::GetSmallIntValue(smallint);
         }
@@ -334,28 +334,28 @@ class ValueFactory {
         case TypeId::SMALLINT: {
           if (value.GetAs<int16_t>() > PELOTON_INT8_MAX ||
               value.GetAs<int16_t>() < PELOTON_INT8_MIN)
-            throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
+            throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
           return ValueFactory::GetTinyIntValue((int8_t)value.GetAs<int16_t>());
         }
         case TypeId::INTEGER: {
           if (value.GetAs<int32_t>() > (int32_t)PELOTON_INT8_MAX ||
               value.GetAs<int32_t>() < (int32_t)PELOTON_INT8_MIN)
-            throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
+            throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
           return ValueFactory::GetTinyIntValue((int8_t)value.GetAs<int32_t>());
         }
         case TypeId::BIGINT: {
           if (value.GetAs<int64_t>() > (int64_t)PELOTON_INT8_MAX ||
               value.GetAs<int64_t>() < (int64_t)PELOTON_INT8_MIN)
-            throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
+            throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
           return ValueFactory::GetTinyIntValue((int8_t)value.GetAs<int64_t>());
         }
         case TypeId::DECIMAL: {
           if (value.GetAs<double>() > (double)PELOTON_INT8_MAX ||
               value.GetAs<double>() < (double)PELOTON_INT8_MIN)
-            throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
+            throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
           return ValueFactory::GetTinyIntValue((int8_t)value.GetAs<double>());
         }
@@ -365,11 +365,11 @@ class ValueFactory {
           try {
             tinyint = stoi(str);
           } catch (std::out_of_range &e) {
-            throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
+            throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
           }
           if (tinyint < PELOTON_INT8_MIN)
-            throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
+            throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
           return ValueFactory::GetTinyIntValue(tinyint);
         }
@@ -403,11 +403,11 @@ class ValueFactory {
           try {
             res = stod(str);
           } catch (std::out_of_range &e) {
-            throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
+            throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
           }
           if (res > PELOTON_DECIMAL_MAX || res < PELOTON_DECIMAL_MIN)
-            throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
+            throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
           return ValueFactory::GetDecimalValue(res);
         }
@@ -479,7 +479,7 @@ class ValueFactory {
             throw Exception("Timestamp format error.");
           if (year > 9999 || month > 12 || day > 31 || hour > 23 || min > 59 ||
               sec > 59 || micro > 999999 || day == 0 || month == 0)
-            throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
+            throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Timestamp value out of range.");
           uint32_t max_day[13] = {0,  31, 28, 31, 30, 31, 30,
                                   31, 31, 30, 31, 30, 31};
@@ -487,10 +487,10 @@ class ValueFactory {
                                         31, 31, 30, 31, 30, 31};
           if ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0) {
             if (day > max_day_lunar[month])
-              throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
+              throw Exception(ExceptionType::OUT_OF_RANGE,
                               "Timestamp value out of range.");
           } else if (day > max_day[month])
-            throw Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
+            throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Timestamp value out of range.");
           uint32_t timezone = tz + 12;
           if (tz > 26) throw Exception("Timestamp format error.");
