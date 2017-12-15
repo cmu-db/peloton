@@ -65,7 +65,10 @@ void InputColumnDeriver::Visit(const PhysicalOrderBy *) {
   PL_ASSERT(prop.get() != nullptr);
   ExprSet input_cols_set;
   for (auto expr : required_cols_) {
-    expression::ExpressionUtil::GetTupleValueExprs(input_cols_set, expr);
+    if (expression::ExpressionUtil::IsAggregateExpression(expr))
+      input_cols_set.insert(expr);
+    else
+      expression::ExpressionUtil::GetTupleValueExprs(input_cols_set, expr);
   }
   auto sort_prop = prop->As<PropertySort>();
   size_t sort_col_size = sort_prop->GetSortColumnSize();
