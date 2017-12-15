@@ -525,15 +525,24 @@ Operator PhysicalFilter::make() {
 //===--------------------------------------------------------------------===//
 // InnerNLJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalInnerNLJoin::make(std::vector<AnnotatedExpression> conditions) {
+Operator PhysicalInnerNLJoin::make(std::vector<AnnotatedExpression> conditions,
+                                   std::vector<std::shared_ptr<expression::AbstractExpression>> left_keys,
+                                   std::vector<std::shared_ptr<expression::AbstractExpression>> right_keys) {
   PhysicalInnerNLJoin *join = new PhysicalInnerNLJoin();
   join->join_predicates = std::move(conditions);
+  join->left_keys = std::move(left_keys);
+  join->right_keys = std::move(right_keys);
+
   return Operator(join);
 }
 
 
 hash_t PhysicalInnerNLJoin::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
+  for (auto& expr : left_keys)
+    hash = HashUtil::CombineHashes(hash, expr->Hash());
+  for (auto& expr : right_keys)
+    hash = HashUtil::CombineHashes(hash, expr->Hash());
   for (auto& pred : join_predicates)
     hash = HashUtil::CombineHashes(hash, pred.expr->Hash());
   return hash;
@@ -543,8 +552,18 @@ bool PhysicalInnerNLJoin::operator==(const BaseOperatorNode &r) {
   if (r.type() != OpType::InnerNLJoin) return false;
   const PhysicalInnerNLJoin &node =
       *static_cast<const PhysicalInnerNLJoin *>(&r);
-  if (join_predicates.size() != node.join_predicates.size())
+  if (join_predicates.size() != node.join_predicates.size() ||
+      left_keys.size() != node.left_keys.size() ||
+      right_keys.size() != node.right_keys.size())
     return false;
+  for (size_t i = 0; i < left_keys.size(); i++) {
+    if (!left_keys[i]->Equals(node.left_keys[i].get()))
+      return false;
+  }
+  for (size_t i = 0; i < right_keys.size(); i++) {
+    if (!right_keys[i]->Equals(node.right_keys[i].get()))
+      return false;
+  }
   for (size_t i = 0; i<join_predicates.size(); i++) {
     if (!join_predicates[i].expr->Equals(node.join_predicates[i].expr.get()))
       return false;
@@ -585,15 +604,23 @@ Operator PhysicalOuterNLJoin::make(
 //===--------------------------------------------------------------------===//
 // InnerHashJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalInnerHashJoin::make(std::vector<AnnotatedExpression> conditions) {
+Operator PhysicalInnerHashJoin::make(std::vector<AnnotatedExpression> conditions,
+                                     std::vector<std::shared_ptr<expression::AbstractExpression>> left_keys,
+                                     std::vector<std::shared_ptr<expression::AbstractExpression>> right_keys) {
   PhysicalInnerHashJoin *join = new PhysicalInnerHashJoin();
   join->join_predicates = std::move(conditions);
+  join->left_keys = std::move(left_keys);
+  join->right_keys = std::move(right_keys);
   return Operator(join);
 }
 
 
 hash_t PhysicalInnerHashJoin::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
+  for (auto& expr : left_keys)
+    hash = HashUtil::CombineHashes(hash, expr->Hash());
+  for (auto& expr : right_keys)
+    hash = HashUtil::CombineHashes(hash, expr->Hash());
   for (auto& pred : join_predicates)
     hash = HashUtil::CombineHashes(hash, pred.expr->Hash());
   return hash;
@@ -603,9 +630,19 @@ bool PhysicalInnerHashJoin::operator==(const BaseOperatorNode &r) {
   if (r.type() != OpType::InnerHashJoin) return false;
   const PhysicalInnerHashJoin &node =
       *static_cast<const PhysicalInnerHashJoin *>(&r);
-  if (join_predicates.size() != node.join_predicates.size())
+  if (join_predicates.size() != node.join_predicates.size() ||
+      left_keys.size() != node.left_keys.size() ||
+      right_keys.size() != node.right_keys.size())
     return false;
-  for (size_t i = 0; i<join_predicates.size(); i++) {
+  for (size_t i = 0; i < left_keys.size(); i++) {
+    if (!left_keys[i]->Equals(node.left_keys[i].get()))
+      return false;
+  }
+  for (size_t i = 0; i < right_keys.size(); i++) {
+    if (!right_keys[i]->Equals(node.right_keys[i].get()))
+      return false;
+  }
+  for (size_t i = 0; i < join_predicates.size(); i++) {
     if (!join_predicates[i].expr->Equals(node.join_predicates[i].expr.get()))
       return false;
   }
