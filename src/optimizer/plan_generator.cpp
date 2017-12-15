@@ -156,7 +156,37 @@ void PlanGenerator::Visit(const PhysicalDistinct *) {
   output_plan_ = move(hash_plan);
 }
 
-void PlanGenerator::Visit(const PhysicalInnerNLJoin *) {}
+void PlanGenerator::Visit(const PhysicalInnerNLJoin *op) {
+  std::unique_ptr<const planner::ProjectInfo> proj_info;
+  std::shared_ptr<const catalog::Schema> proj_schema;
+  GenerateProjectionForJoin(proj_info, proj_schema);
+
+  auto join_predicate =
+      expression::ExpressionUtil::JoinAnnotatedExprs(op->join_predicates);
+  expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
+                                                 join_predicate.get());
+
+  vector<oid_t> left_keys;
+  vector<oid_t> right_keys;
+  for (auto &expr : op->left_keys) {
+    PL_ASSERT(children_expr_map_[0].find(expr.get()) !=
+              children_expr_map_[0].end());
+    left_keys.push_back(children_expr_map_[0][expr.get()]);
+  }
+  for (auto &expr : op->right_keys) {
+    PL_ASSERT(children_expr_map_[1].find(expr.get()) !=
+              children_expr_map_[1].end());
+    right_keys.emplace_back(children_expr_map_[1][expr.get()]);
+  }
+
+  auto join_plan =
+      unique_ptr<planner::AbstractPlan>(new planner::NestedLoopJoinPlan(
+          JoinType::INNER, move(join_predicate), move(proj_info), proj_schema,
+          left_keys, right_keys));
+
+  join_plan->AddChild(move(children_plans_[0]));
+  join_plan->AddChild(move(children_plans_[1]));
+}
 
 void PlanGenerator::Visit(const PhysicalLeftNLJoin *) {}
 
