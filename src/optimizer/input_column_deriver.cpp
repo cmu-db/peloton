@@ -96,7 +96,9 @@ void InputColumnDeriver::Visit(const PhysicalAggregate *op) {
 
 void InputColumnDeriver::Visit(const PhysicalDistinct *) { Passdown(); }
 
-void InputColumnDeriver::Visit(const PhysicalInnerNLJoin *op) { JoinHelper(op); }
+void InputColumnDeriver::Visit(const PhysicalInnerNLJoin *op) {
+  JoinHelper(op);
+}
 
 void InputColumnDeriver::Visit(const PhysicalLeftNLJoin *) {}
 
@@ -104,7 +106,9 @@ void InputColumnDeriver::Visit(const PhysicalRightNLJoin *) {}
 
 void InputColumnDeriver::Visit(const PhysicalOuterNLJoin *) {}
 
-void InputColumnDeriver::Visit(const PhysicalInnerHashJoin *op) { JoinHelper(op); }
+void InputColumnDeriver::Visit(const PhysicalInnerHashJoin *op) {
+  JoinHelper(op);
+}
 
 void InputColumnDeriver::Visit(const PhysicalLeftHashJoin *) {}
 
@@ -127,17 +131,6 @@ void InputColumnDeriver::Visit(const PhysicalUpdate *) { Passdown(); }
 void InputColumnDeriver::ScanHelper() {
   // Scan does not have input column, output columns should contain all tuple
   // value expressions needed
-  for (auto expr : required_cols_) {
-    // TODO(boweic): star expression should be eliminated in the binder
-    // If we need to select * just add it to the output, since it already
-    // contains all columns
-    if (expr->GetExpressionType() == ExpressionType::STAR) {
-      output_input_cols_ =
-          pair<vector<AbstractExpression *>,
-               vector<vector<AbstractExpression *>>>{{expr}, {}};
-      return;
-    }
-  }
   ExprMap output_cols_map;
   for (auto expr : required_cols_) {
     expression::ExpressionUtil::GetTupleValueExprs(output_cols_map, expr);
@@ -199,19 +192,20 @@ void InputColumnDeriver::AggregateHelper(const BaseOperatorNode *op) {
 }
 
 void InputColumnDeriver::JoinHelper(const BaseOperatorNode *op) {
-  const vector<AnnotatedExpression>* join_conds = nullptr;
-  const vector<unique_ptr<expression::AbstractExpression>>* left_keys = nullptr;
-  const vector<unique_ptr<expression::AbstractExpression>>* right_keys = nullptr;
+  const vector<AnnotatedExpression> *join_conds = nullptr;
+  const vector<unique_ptr<expression::AbstractExpression>> *left_keys = nullptr;
+  const vector<unique_ptr<expression::AbstractExpression>> *right_keys =
+      nullptr;
   if (op->type() == OpType::InnerHashJoin) {
     auto join_op = reinterpret_cast<const PhysicalInnerHashJoin *>(op);
     join_conds = &(join_op->join_predicates);
     left_keys = &(join_op->left_keys);
-    right_keys= &(join_op->right_keys);
+    right_keys = &(join_op->right_keys);
   } else if (op->type() == OpType::InnerNLJoin) {
     auto join_op = reinterpret_cast<const PhysicalInnerNLJoin *>(op);
     join_conds = &(join_op->join_predicates);
     left_keys = &(join_op->left_keys);
-    right_keys= &(join_op->right_keys);
+    right_keys = &(join_op->right_keys);
   }
 
   ExprSet input_cols_set;
@@ -220,20 +214,24 @@ void InputColumnDeriver::JoinHelper(const BaseOperatorNode *op) {
   PL_ASSERT(right_keys != nullptr);
   PL_ASSERT(join_conds != nullptr);
   for (auto &left_key : *left_keys) {
-    expression::ExpressionUtil::GetTupleValueExprs(input_cols_set, left_key.get());
+    expression::ExpressionUtil::GetTupleValueExprs(input_cols_set,
+                                                   left_key.get());
   }
   for (auto &right_key : *right_keys) {
-    expression::ExpressionUtil::GetTupleValueExprs(input_cols_set, right_key.get());
+    expression::ExpressionUtil::GetTupleValueExprs(input_cols_set,
+                                                   right_key.get());
   }
   for (auto &join_cond : *join_conds) {
     expression::ExpressionUtil::GetTupleValueExprs(input_cols_set,
                                                    join_cond.expr.get());
   }
-  ExprSet output_cols_set;
+  ExprMap output_cols_map;
   for (auto expr : required_cols_) {
-    expression::ExpressionUtil::GetTupleValueExprs(output_cols_set, expr);
+    expression::ExpressionUtil::GetTupleValueExprs(output_cols_map, expr);
   }
-  input_cols_set.insert(output_cols_set.begin(), output_cols_set.end());
+  for (auto &expr_idx_pair : output_cols_map) {
+    input_cols_set.insert(expr_idx_pair.first);
+  }
   // Construct input columns
   ExprSet build_table_cols_set;
   ExprSet probe_table_cols_set;
@@ -251,9 +249,9 @@ void InputColumnDeriver::JoinHelper(const BaseOperatorNode *op) {
       probe_table_cols_set.insert(col);
     }
   }
-  vector<AbstractExpression *> output_cols;
-  for (auto &col : output_cols_set) {
-    output_cols.push_back(col);
+  vector<AbstractExpression *> output_cols(output_cols_map.size(), nullptr);
+  for (auto &expr_idx_pair : output_cols_map) {
+    output_cols[expr_idx_pair.second] = expr_idx_pair.first;
   }
   vector<AbstractExpression *> build_cols;
   for (auto &col : build_table_cols_set) {

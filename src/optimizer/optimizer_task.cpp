@@ -220,8 +220,8 @@ void OptimizeInputs::execute() {
 
     // Derive output and input properties
     ChildPropertyDeriver prop_deriver;
-    output_input_properties_ = std::move(prop_deriver.GetProperties(
-        group_expr_, context_->required_prop, &context_->metadata->memo));
+    output_input_properties_ = prop_deriver.GetProperties(
+        group_expr_, context_->required_prop, &context_->metadata->memo);
     cur_child_idx_ = 0;
 
     // TODO: If later on we support properties that may not be enforced in some
