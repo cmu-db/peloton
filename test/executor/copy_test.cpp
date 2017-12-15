@@ -88,7 +88,6 @@ TEST_F(CopyTests, Copying) {
     std::vector<StatementResult> result;
 
     TestingSQLUtil::counter_.store(1);
-    LOG_DEBUG("-----here: %d", i);
     executor::ExecuteResult status = traffic_cop.ExecuteHelper(
         statement->GetPlanTree(), params, result, result_format);
 
@@ -103,26 +102,26 @@ TEST_F(CopyTests, Copying) {
     LOG_TRACE("Statement executed. Result: %s",
               ResultTypeToString(status.m_result).c_str());
   }
-  LOG_INFO("Tuples inserted!");
+  LOG_TRACE("Tuples inserted!");
   traffic_cop.CommitQueryHelper();
 
   // Now Copying end-to-end
-  LOG_INFO("Copying a table...");
+  LOG_TRACE("Copying a table...");
   std::string copy_sql =
       "COPY emp_db.department_table TO './copy_output.csv' DELIMITER ',';";
   txn = txn_manager.BeginTransaction();
-  LOG_INFO("Query: %s", copy_sql.c_str());
+  LOG_TRACE("Query: %s", copy_sql.c_str());
   std::unique_ptr<Statement> statement(new Statement("COPY", copy_sql));
 
-  LOG_INFO("Building parse tree...");
+  LOG_TRACE("Building parse tree...");
   auto& peloton_parser = parser::PostgresParser::GetInstance();
   auto copy_stmt = peloton_parser.BuildParseTree(copy_sql);
 
-  LOG_INFO("Building plan tree...");
+  LOG_TRACE("Building plan tree...");
   auto copy_plan = optimizer->BuildPelotonPlanTree(copy_stmt, DEFAULT_DB_NAME, txn);
   statement->SetPlanTree(copy_plan);
 
-  LOG_INFO("Building executor tree...");
+  LOG_TRACE("Building executor tree...");
   // Build executor tree
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -134,7 +133,7 @@ TEST_F(CopyTests, Copying) {
                                     context.get()));
   copy_executor->AddChild(seq_scan_executor.get());
 
-  LOG_INFO("Executing plan...");
+  LOG_TRACE("Executing plan...");
   // Initialize the executor tree
   auto status = root_executor->Init();
   EXPECT_EQ(status, true);
