@@ -22,7 +22,7 @@ namespace peloton {
 namespace optimizer {
 
 enum class OpType {
-  Undefined,
+  Undefined = 0,
   // Special match operators
   Leaf,
   // Logical ops
@@ -157,8 +157,8 @@ class Operator {
   std::shared_ptr<BaseOperatorNode> node;
 };
 
-} // namespace optimizer
-} // namespace peloton
+}  // namespace optimizer
+}  // namespace peloton
 
 namespace std {
 
@@ -169,4 +169,4 @@ struct hash<peloton::optimizer::BaseOperatorNode> {
   result_type operator()(argument_type const &s) const { return s.Hash(); }
 };
 
-} // namespace std
+}  // namespace std

@@ -177,26 +177,18 @@ void QueryToOperatorTransformer::Visit(parser::TableRef *node) {
   else if (node->list.size() > 1) {
     // Create a join operator between the first two tables
     node->list.at(0)->Accept(this);
-    auto left_expr = output_expr_;
-
-    node->list.at(1)->Accept(this);
-    auto right_expr = output_expr_;
-
-    auto join_expr =
-        std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
-    join_expr->PushChild(left_expr);
-    join_expr->PushChild(right_expr);
-
+    auto prev_expr = output_expr_;
     // Build a left deep join tree
-    for (size_t i = 2; i < node->list.size(); i++) {
+    for (size_t i = 1; i < node->list.size(); i++) {
       node->list.at(i)->Accept(this);
-      auto old_join_expr = join_expr;
-      join_expr =
+      auto join_expr =
           std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
-      join_expr->PushChild(old_join_expr);
+      join_expr->PushChild(prev_expr);
       join_expr->PushChild(output_expr_);
+      PL_ASSERT(join_expr->Children().size() == 2);
+      prev_expr = join_expr;
     }
-    output_expr_ = join_expr;
+    output_expr_ = prev_expr;
   }
   // Single table
   else {
