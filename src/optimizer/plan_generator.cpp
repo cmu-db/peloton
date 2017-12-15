@@ -164,7 +164,28 @@ void PlanGenerator::Visit(const PhysicalRightNLJoin *) {}
 
 void PlanGenerator::Visit(const PhysicalOuterNLJoin *) {}
 
-void PlanGenerator::Visit(const PhysicalInnerHashJoin *) {}
+void PlanGenerator::Visit(const PhysicalInnerHashJoin *op) {
+  std::unique_ptr<const planner::ProjectInfo> proj_info;
+  std::shared_ptr<const catalog::Schema> proj_schema;
+  GenerateProjectionForJoin(proj_info, proj_schema);
+
+  auto join_predicate = expression::ExpressionUtil::JoinAnnotatedExprs(op->join_predicates);
+  expression::ExpressionUtil::EvaluateExpression(children_expr_map_, join_predicate.get());
+
+  vector<unique_ptr<const expression::AbstractExpression>> hash_keys;
+  for (auto &expr : op->right_keys) hash_keys.emplace_back(expr->Copy());
+
+  unique_ptr<planner::HashPlan> hash_plan(new planner::HashPlan(hash_keys));
+  hash_plan->AddChild(move(children_plans_[1]));
+
+  auto join_plan = unique_ptr<planner::AbstractPlan>(new planner::HashJoinPlan(
+         JoinType::INNER, move(join_predicate), move(proj_info), proj_schema,
+         op->left_keys, op->right_keys,
+         settings::SettingsManager::GetBool(settings::SettingId::hash_join_bloom_filter)));
+
+     join_plan->AddChild(move(children_plans_[0]));
+     join_plan->AddChild(move(hash_plan));
+}
 
 void PlanGenerator::Visit(const PhysicalLeftHashJoin *) {}
 
@@ -400,6 +421,43 @@ void PlanGenerator::BuildAggregatePlan(
                                              output_table_schema, aggr_type);
   agg_plan->AddChild(move(children_plans_[0]));
   output_plan_.reset(agg_plan);
+}
+
+void PlanGenerator::GenerateProjectionForJoin(std::unique_ptr<const planner::ProjectInfo> &proj_info,
+                                              std::shared_ptr<const catalog::Schema> &proj_schema) {
+  PL_ASSERT(children_expr_map_.size() == 2);
+  PL_ASSERT(children_plans_.size() == 2);
+
+  TargetList tl = TargetList();
+  // columns which can be returned directly
+  DirectMapList dml = DirectMapList();
+  // schema of the projections output
+  vector<catalog::Column> columns;
+  size_t output_offset = 0;
+  auto& l_child_expr_map = children_expr_map_[0];
+  auto& r_child_expr_map = children_expr_map_[1];
+  for (auto &expr : output_cols_) {
+    auto expr_type = expr->GetExpressionType();
+    expression::ExpressionUtil::EvaluateExpression(children_expr_map_, expr);
+    if (l_child_expr_map.count(expr)) {
+      dml.emplace_back(output_offset, make_pair(0, l_child_expr_map[expr]));
+    } else if (r_child_expr_map.count(expr)) {
+        dml.emplace_back(output_offset, make_pair(1, r_child_expr_map[expr]));
+    } else {
+      // For more complex expression, we need to do evaluation in Executor
+
+      planner::DerivedAttribute attribute{expr->Copy()};
+      tl.emplace_back(output_offset, attribute);
+    }
+    columns.push_back(catalog::Column(
+        expr->GetValueType(), type::Type::GetTypeSize(expr->GetValueType()),
+        expr->GetExpressionName()));
+    output_offset++;
+  }
+
+  // build the projection plan node and insert above the join
+  proj_info = std::make_unique<planner::ProjectInfo>(move(tl), move(dml));
+  proj_schema = std::make_shared(new catalog::Schema(columns));
 }
 }  // namespace optimizer
 }  // namespace peloton
