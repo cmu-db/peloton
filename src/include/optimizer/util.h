@@ -96,10 +96,10 @@ TransformQueryDerivedTablePredicates(const std::unordered_map<std::string, std::
                                      expression::AbstractExpression* expr);
 
 // Extract equi-join keys from the join predicates (conjunction is already removed in each unit)
-void ExtractEquiJoinKeys(std::vector<AnnotatedExpression> join_predicates,
-    std::vector<std::shared_ptr<expression::AbstractExpression>>& left_keys,
-    std::vector<std::shared_ptr<expression::AbstractExpression>>& right_keys,
-    std::unordered_set<std::string>& left_alias, std::unordered_set<std::string>& right_alias);
+void ExtractEquiJoinKeys(const std::vector<AnnotatedExpression> join_predicates,
+                         std::vector<std::shared_ptr<expression::AbstractExpression>>& left_keys,
+                         std::vector<std::shared_ptr<expression::AbstractExpression>>& right_keys,
+                         const std::unordered_set<std::string>& left_alias, const std::unordered_set<std::string>& right_alias);
 
 }  // namespace util
 }  // namespace optimizer

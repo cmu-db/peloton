@@ -500,10 +500,24 @@ void InnerJoinToInnerNLJoin::Transform(
     std::vector<std::shared_ptr<OperatorExpression>> &transformed, UNUSED_ATTRIBUTE OptimizeContext* context) const {
   // first build an expression representing hash join
   const LogicalInnerJoin *inner_join = input->Op().As<LogicalInnerJoin>();
-  auto result_plan = std::make_shared<OperatorExpression>(
-      PhysicalInnerNLJoin::make(inner_join->join_predicates));
-  std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
+
+  auto children = input->Children();
   PL_ASSERT(children.size() == 2);
+  auto left_group_id = children[0]->Op().As<LeafOperator>()->origin_group;
+  auto right_group_id = children[1]->Op().As<LeafOperator>()->origin_group;
+  auto &left_group_alias =
+      context->metadata->memo.GetGroupByID(left_group_id)->GetTableAliases();
+  auto &right_group_alias =
+      context->metadata->memo.GetGroupByID(right_group_id)->GetTableAliases();
+  std::vector<std::shared_ptr<expression::AbstractExpression>> left_keys;
+  std::vector<std::shared_ptr<expression::AbstractExpression>> right_keys;
+
+  util::ExtractEquiJoinKeys(inner_join->join_predicates, left_keys, right_keys,
+                            left_group_alias, right_group_alias);
+
+  PL_ASSERT(right_keys.size() == left_keys.size());
+  auto result_plan = std::make_shared<OperatorExpression>(
+      PhysicalInnerNLJoin::make(inner_join->join_predicates, left_keys, right_keys));
 
   // Then push all children into the child list of the new operator
   result_plan->PushChild(children[0]);
@@ -538,25 +552,7 @@ bool InnerJoinToInnerHashJoin::Check(std::shared_ptr<OperatorExpression> plan,
                                      OptimizeContext* context) const {
   (void)context;
   (void)plan;
-  auto& memo = context->metadata->memo;
-  // TODO(abpoms): Figure out how to determine if the join condition is hashable
-  // If join column != empty then hashable
-  auto children = plan->Children();
-  PL_ASSERT(children.size() == 2);
-  auto left_group_id = children[0]->Op().As<LeafOperator>()->origin_group;
-  auto right_group_id = children[1]->Op().As<LeafOperator>()->origin_group;
-  const auto &left_group_alias =
-      memo.GetGroupByID(left_group_id)->GetTableAliases();
-  const auto &right_group_alias =
-      memo.GetGroupByID(right_group_id)->GetTableAliases();
-
-  auto predicates = plan->Op().As<LogicalInnerJoin>()->join_predicates;
-
-  for (auto& expr : predicates) {
-    if (util::ContainsJoinColumns(left_group_alias, right_group_alias, expr.expr.get()))
-      return true;
-  }
-  return false;
+  return true;
 }
 
 void InnerJoinToInnerHashJoin::Transform(
@@ -564,18 +560,34 @@ void InnerJoinToInnerHashJoin::Transform(
     std::vector<std::shared_ptr<OperatorExpression>> &transformed, UNUSED_ATTRIBUTE OptimizeContext* context) const {
   // first build an expression representing hash join
   const LogicalInnerJoin *inner_join = input->Op().As<LogicalInnerJoin>();
-  auto result_plan = std::make_shared<OperatorExpression>(
-      PhysicalInnerHashJoin::make(inner_join->join_predicates));
-  std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
+
+
+  auto children = input->Children();
   PL_ASSERT(children.size() == 2);
+  auto left_group_id = children[0]->Op().As<LeafOperator>()->origin_group;
+  auto right_group_id = children[1]->Op().As<LeafOperator>()->origin_group;
+  auto &left_group_alias =
+      context->metadata->memo.GetGroupByID(left_group_id)->GetTableAliases();
+  auto &right_group_alias =
+      context->metadata->memo.GetGroupByID(right_group_id)->GetTableAliases();
+  std::vector<std::shared_ptr<expression::AbstractExpression>> left_keys;
+  std::vector<std::shared_ptr<expression::AbstractExpression>> right_keys;
 
-  // Then push all children into the child list of the new operator
-  result_plan->PushChild(children[0]);
-  result_plan->PushChild(children[1]);
+  util::ExtractEquiJoinKeys(inner_join->join_predicates, left_keys, right_keys,
+                            left_group_alias, right_group_alias);
 
-  transformed.push_back(result_plan);
+  PL_ASSERT(right_keys.size() == left_keys.size());
+  if (!left_keys.empty()) {
+    auto result_plan = std::make_shared<OperatorExpression>(
+        PhysicalInnerHashJoin::make(inner_join->join_predicates, left_keys, right_keys));
 
-  return;
+    // Then push all children into the child list of the new operator
+    result_plan->PushChild(children[0]);
+    result_plan->PushChild(children[1]);
+
+    transformed.push_back(result_plan);
+  }
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////

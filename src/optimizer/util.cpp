@@ -403,11 +403,11 @@ expression::AbstractExpression* TransformQueryDerivedTablePredicates(
   return expr;
 }
 
-void ExtractEquiJoinKeys(std::vector<AnnotatedExpression> join_predicates,
+void ExtractEquiJoinKeys(const std::vector<AnnotatedExpression> join_predicates,
                          std::vector<std::shared_ptr<expression::AbstractExpression>> &left_keys,
                          std::vector<std::shared_ptr<expression::AbstractExpression>> &right_keys,
-                         std::unordered_set<std::string> &left_alias,
-                         std::unordered_set<std::string> &right_alias) {
+                         const std::unordered_set<std::string> &left_alias,
+                         const std::unordered_set<std::string> &right_alias) {
   for (auto& expr_unit : join_predicates) {
     if (expr_unit.expr->GetExpressionType() == ExpressionType::COMPARE_EQUAL) {
       auto l_expr = expr_unit.expr->GetChild(0);
