@@ -98,8 +98,9 @@ class PlanGenerator : public OperatorVisitor {
       const std::shared_ptr<expression::AbstractExpression> predicate_expr,
       const std::string &alias, const storage::DataTable *table);
 
-  void GenerateProjectionForJoin(std::unique_ptr<const ProjectInfo> &proj_info,
-                                 std::shared_ptr<const catalog::Schema> &proj_schema);
+  void GenerateProjectionForJoin(
+      std::unique_ptr<const planner::ProjectInfo> &proj_info,
+      std::shared_ptr<const catalog::Schema> &proj_schema);
 
   // Check required columns and output_cols, see if we need to add projection on
   // top of the current output plan, this should be done after the output plan

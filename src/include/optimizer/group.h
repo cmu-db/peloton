@@ -72,6 +72,7 @@ class Group {
 
   // Return the raw Stats pointer, caller should not own the Stats
   Stats* GetStats() { return stats_.get(); }
+  inline GroupID GetID() { return id_; }
 
  private:
   GroupID id_;

@@ -78,10 +78,11 @@ bool PropertySet::operator==(const PropertySet &r) const {
 }
 
 std::string PropertySet::ToString() const {
-  std::string str = "PropertySet:\n";
+  std::string str = "PropertySet(";
   for (auto &property : properties_) {
-    str += property->ToString();
+    str += property->ToString() + ",";
   }
+  str += ")\n";
   return str;
 }
 

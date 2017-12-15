@@ -23,14 +23,13 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 Memo::Memo() {}
 
-GroupExpression* Memo::InsertExpression(
-    std::shared_ptr<GroupExpression> gexpr, bool enforced) {
+GroupExpression *Memo::InsertExpression(std::shared_ptr<GroupExpression> gexpr,
+                                        bool enforced) {
   return InsertExpression(gexpr, UNDEFINED_GROUP, enforced);
 }
 
-GroupExpression* Memo::InsertExpression(
-    std::shared_ptr<GroupExpression> gexpr, GroupID target_group,
-    bool enforced) {
+GroupExpression *Memo::InsertExpression(std::shared_ptr<GroupExpression> gexpr,
+                                        GroupID target_group, bool enforced) {
   // If leaf, then just return
   if (gexpr->Op().type() == OpType::Leaf) {
     const LeafOperator *leaf = gexpr->Op().As<LeafOperator>();
@@ -96,7 +95,8 @@ GroupID Memo::AddNewGroup(std::shared_ptr<GroupExpression> gexpr) {
   StatsCalculator stats_calculator;
   auto stats = stats_calculator.CalculateStats(gexpr);
 
-  groups_.emplace_back(new Group(new_group_id, std::move(table_aliases), stats));
+  groups_.emplace_back(
+      new Group(new_group_id, std::move(table_aliases), stats));
   return new_group_id;
 }
 

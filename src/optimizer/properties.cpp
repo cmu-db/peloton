@@ -181,7 +181,7 @@ std::string PropertyLimit::ToString() const {
 /*************** PropertySort *****************/
 
 PropertySort::PropertySort(
-    std::vector<expression::AbstractExpression*> sort_columns,
+    std::vector<expression::AbstractExpression *> sort_columns,
     std::vector<bool> sort_ascending)
     : sort_columns_(std::move(sort_columns)),
       sort_ascending_(std::move(sort_ascending)) {}
@@ -234,7 +234,13 @@ void PropertySort::Accept(PropertyVisitor *v) const {
 }
 
 std::string PropertySort::ToString() const {
-  return PropertyTypeToString(Type()) + "\n";
+  std::string str = PropertyTypeToString(Type()) + ":(";
+  size_t num_sort_columns = sort_columns_.size();
+  for (size_t i = 0; i < num_sort_columns; ++i) {
+    str += sort_columns_[i]->GetInfo() + ", " +
+           (sort_ascending_[i] ? "asc" : "dsc");
+  }
+  return str + ")";
 }
 
 }  // namespace optimizer

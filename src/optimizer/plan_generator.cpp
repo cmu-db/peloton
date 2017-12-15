@@ -143,17 +143,17 @@ void PlanGenerator::Visit(const PhysicalDistinct *) {
   // distinct on all output columns
   PL_ASSERT(children_expr_map_.size() == 1);
   PL_ASSERT(children_plans_.size() == 1);
-  auto& child_expr_map = children_expr_map_[0];
-   std::vector<std::unique_ptr<const expression::AbstractExpression>> hash_keys;
-  for (auto& col : output_cols_) {
+  auto &child_expr_map = children_expr_map_[0];
+  std::vector<std::unique_ptr<const expression::AbstractExpression>> hash_keys;
+  for (auto &col : output_cols_) {
     PL_ASSERT(child_expr_map.count(col) > 0);
-    auto& column_offset = child_expr_map[col];
-    hash_keys.emplace_back(
-        new expression::TupleValueExpression(col->GetValueType(), 0, column_offset));
+    auto &column_offset = child_expr_map[col];
+    hash_keys.emplace_back(new expression::TupleValueExpression(
+        col->GetValueType(), 0, column_offset));
   }
-   unique_ptr<planner::HashPlan> hash_plan(new planner::HashPlan(hash_keys));
-   hash_plan->AddChild(move(children_plans_[0]));
-   output_plan_ = move(hash_plan);
+  unique_ptr<planner::HashPlan> hash_plan(new planner::HashPlan(hash_keys));
+  hash_plan->AddChild(move(children_plans_[0]));
+  output_plan_ = move(hash_plan);
 }
 
 void PlanGenerator::Visit(const PhysicalInnerNLJoin *) {}
@@ -169,22 +169,44 @@ void PlanGenerator::Visit(const PhysicalInnerHashJoin *op) {
   std::shared_ptr<const catalog::Schema> proj_schema;
   GenerateProjectionForJoin(proj_info, proj_schema);
 
-  auto join_predicate = expression::ExpressionUtil::JoinAnnotatedExprs(op->join_predicates);
-  expression::ExpressionUtil::EvaluateExpression(children_expr_map_, join_predicate.get());
+  auto join_predicate =
+      expression::ExpressionUtil::JoinAnnotatedExprs(op->join_predicates);
+  expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
+                                                 join_predicate.get());
 
+  vector<unique_ptr<const expression::AbstractExpression>> left_keys;
+  vector<unique_ptr<const expression::AbstractExpression>> right_keys;
+  for (auto &expr : op->left_keys) {
+    auto left_key = expr->Copy();
+    expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
+                                                   left_key);
+    left_keys.emplace_back(left_key);
+  }
+  for (auto &expr : op->right_keys) {
+    auto right_key = expr->Copy();
+    expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
+                                                   right_key);
+    right_keys.emplace_back(right_key);
+  }
+  // Evaluate Expr for hash plan
+  vector<ExprMap> hash_children_map{move(children_expr_map_[1])};
   vector<unique_ptr<const expression::AbstractExpression>> hash_keys;
-  for (auto &expr : op->right_keys) hash_keys.emplace_back(expr->Copy());
+  for (auto &expr : op->right_keys) {
+    auto hash_key = expr->Copy();
+    expression::ExpressionUtil::EvaluateExpression(hash_children_map, hash_key);
+    hash_keys.emplace_back(hash_key);
+  }
 
   unique_ptr<planner::HashPlan> hash_plan(new planner::HashPlan(hash_keys));
   hash_plan->AddChild(move(children_plans_[1]));
 
   auto join_plan = unique_ptr<planner::AbstractPlan>(new planner::HashJoinPlan(
-         JoinType::INNER, move(join_predicate), move(proj_info), proj_schema,
-         op->left_keys, op->right_keys,
-         settings::SettingsManager::GetBool(settings::SettingId::hash_join_bloom_filter)));
+      JoinType::INNER, move(join_predicate), move(proj_info), proj_schema,
+      left_keys, right_keys, settings::SettingsManager::GetBool(
+                                 settings::SettingId::hash_join_bloom_filter)));
 
-     join_plan->AddChild(move(children_plans_[0]));
-     join_plan->AddChild(move(hash_plan));
+  join_plan->AddChild(move(children_plans_[0]));
+  join_plan->AddChild(move(hash_plan));
 }
 
 void PlanGenerator::Visit(const PhysicalLeftHashJoin *) {}
@@ -423,8 +445,9 @@ void PlanGenerator::BuildAggregatePlan(
   output_plan_.reset(agg_plan);
 }
 
-void PlanGenerator::GenerateProjectionForJoin(std::unique_ptr<const planner::ProjectInfo> &proj_info,
-                                              std::shared_ptr<const catalog::Schema> &proj_schema) {
+void PlanGenerator::GenerateProjectionForJoin(
+    std::unique_ptr<const planner::ProjectInfo> &proj_info,
+    std::shared_ptr<const catalog::Schema> &proj_schema) {
   PL_ASSERT(children_expr_map_.size() == 2);
   PL_ASSERT(children_plans_.size() == 2);
 
@@ -434,15 +457,15 @@ void PlanGenerator::GenerateProjectionForJoin(std::unique_ptr<const planner::Pro
   // schema of the projections output
   vector<catalog::Column> columns;
   size_t output_offset = 0;
-  auto& l_child_expr_map = children_expr_map_[0];
-  auto& r_child_expr_map = children_expr_map_[1];
+  auto &l_child_expr_map = children_expr_map_[0];
+  auto &r_child_expr_map = children_expr_map_[1];
   for (auto &expr : output_cols_) {
-    auto expr_type = expr->GetExpressionType();
+    // auto expr_type = expr->GetExpressionType();
     expression::ExpressionUtil::EvaluateExpression(children_expr_map_, expr);
     if (l_child_expr_map.count(expr)) {
       dml.emplace_back(output_offset, make_pair(0, l_child_expr_map[expr]));
     } else if (r_child_expr_map.count(expr)) {
-        dml.emplace_back(output_offset, make_pair(1, r_child_expr_map[expr]));
+      dml.emplace_back(output_offset, make_pair(1, r_child_expr_map[expr]));
     } else {
       // For more complex expression, we need to do evaluation in Executor
 
@@ -457,7 +480,7 @@ void PlanGenerator::GenerateProjectionForJoin(std::unique_ptr<const planner::Pro
 
   // build the projection plan node and insert above the join
   proj_info = std::make_unique<planner::ProjectInfo>(move(tl), move(dml));
-  proj_schema = std::make_shared(new catalog::Schema(columns));
+  proj_schema = std::make_shared<const catalog::Schema>(columns);
 }
 }  // namespace optimizer
 }  // namespace peloton
