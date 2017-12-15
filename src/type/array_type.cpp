@@ -66,7 +66,7 @@ Value ArrayType::GetElementAt(const Value &val, uint64_t idx) const {
     default:
       break;
   }
-  throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Element type is invalid.");
+  throw Exception(ExceptionType::UNKNOWN_TYPE, "Element type is invalid.");
 }
 
 // Does this value exist in this array?
@@ -157,7 +157,7 @@ Value ArrayType::InList(const Value &list, const Value &object) const {
     default:
       break;
   }
-  throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Element type is invalid.");
+  throw Exception(ExceptionType::UNKNOWN_TYPE, "Element type is invalid.");
 }
 
 CmpBool ArrayType::CompareEquals(const Value &left, const Value &right) const {
@@ -167,7 +167,7 @@ CmpBool ArrayType::CompareEquals(const Value &left, const Value &right) const {
     std::string msg = Type::GetInstance(right.GetElementType())->ToString() +
                       " mismatch with " +
                       Type::GetInstance(left.GetElementType())->ToString();
-    throw Exception(EXCEPTION_TYPE_MISMATCH_TYPE, msg);
+    throw Exception(ExceptionType::MISMATCH_TYPE, msg);
   }
   switch (left.GetElementType()) {
     case TypeId::BOOLEAN: {
@@ -227,7 +227,7 @@ CmpBool ArrayType::CompareEquals(const Value &left, const Value &right) const {
     default:
       break;
   }
-  throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Element type is invalid.");
+  throw Exception(ExceptionType::UNKNOWN_TYPE, "Element type is invalid.");
 }
 
 CmpBool ArrayType::CompareNotEquals(const Value &left, const Value &right) const {
@@ -237,7 +237,7 @@ CmpBool ArrayType::CompareNotEquals(const Value &left, const Value &right) const
     std::string msg = Type::GetInstance(right.GetElementType())->ToString() +
                       " mismatch with " +
                       Type::GetInstance(left.GetElementType())->ToString();
-    throw Exception(EXCEPTION_TYPE_MISMATCH_TYPE, msg);
+    throw Exception(ExceptionType::MISMATCH_TYPE, msg);
   }
   switch (left.GetElementType()) {
     case TypeId::BOOLEAN: {
@@ -297,7 +297,7 @@ CmpBool ArrayType::CompareNotEquals(const Value &left, const Value &right) const
     default:
       break;
   }
-  throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Element type is invalid.");
+  throw Exception(ExceptionType::UNKNOWN_TYPE, "Element type is invalid.");
 }
 
 CmpBool ArrayType::CompareLessThan(const Value &left, const Value &right) const {
@@ -307,7 +307,7 @@ CmpBool ArrayType::CompareLessThan(const Value &left, const Value &right) const 
     std::string msg = Type::GetInstance(right.GetElementType())->ToString() +
                       " mismatch with " +
                       Type::GetInstance(left.GetElementType())->ToString();
-    throw Exception(EXCEPTION_TYPE_MISMATCH_TYPE, msg);
+    throw Exception(ExceptionType::MISMATCH_TYPE, msg);
   }
   switch (left.GetElementType()) {
     case TypeId::BOOLEAN: {
@@ -367,7 +367,7 @@ CmpBool ArrayType::CompareLessThan(const Value &left, const Value &right) const 
     default:
       break;
   }
-  throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Element type is invalid.");
+  throw Exception(ExceptionType::UNKNOWN_TYPE, "Element type is invalid.");
 }
 
 CmpBool ArrayType::CompareLessThanEquals(const Value &left,
@@ -378,7 +378,7 @@ CmpBool ArrayType::CompareLessThanEquals(const Value &left,
     std::string msg = Type::GetInstance(right.GetElementType())->ToString() +
                       " mismatch with " +
                       Type::GetInstance(left.GetElementType())->ToString();
-    throw Exception(EXCEPTION_TYPE_MISMATCH_TYPE, msg);
+    throw Exception(ExceptionType::MISMATCH_TYPE, msg);
   }
   switch (left.GetElementType()) {
     case TypeId::BOOLEAN: {
@@ -438,7 +438,7 @@ CmpBool ArrayType::CompareLessThanEquals(const Value &left,
     default:
       break;
   }
-  throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Element type is invalid.");
+  throw Exception(ExceptionType::UNKNOWN_TYPE, "Element type is invalid.");
 }
 
 CmpBool ArrayType::CompareGreaterThan(const Value &left,
@@ -449,7 +449,7 @@ CmpBool ArrayType::CompareGreaterThan(const Value &left,
     std::string msg = Type::GetInstance(right.GetElementType())->ToString() +
                       " mismatch with " +
                       Type::GetInstance(left.GetElementType())->ToString();
-    throw Exception(EXCEPTION_TYPE_MISMATCH_TYPE, msg);
+    throw Exception(ExceptionType::MISMATCH_TYPE, msg);
   }
   switch (left.GetElementType()) {
     case TypeId::BOOLEAN: {
@@ -509,7 +509,7 @@ CmpBool ArrayType::CompareGreaterThan(const Value &left,
     default:
       break;
   }
-  throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Element type is invalid.");
+  throw Exception(ExceptionType::UNKNOWN_TYPE, "Element type is invalid.");
 }
 
 CmpBool ArrayType::CompareGreaterThanEquals(const Value &left,
@@ -520,7 +520,7 @@ CmpBool ArrayType::CompareGreaterThanEquals(const Value &left,
     std::string msg = Type::GetInstance(right.GetElementType())->ToString() +
                       " mismatch with " +
                       Type::GetInstance(left.GetElementType())->ToString();
-    throw Exception(EXCEPTION_TYPE_MISMATCH_TYPE, msg);
+    throw Exception(ExceptionType::MISMATCH_TYPE, msg);
   }
   switch (left.GetElementType()) {
     case TypeId::BOOLEAN: {
@@ -580,13 +580,13 @@ CmpBool ArrayType::CompareGreaterThanEquals(const Value &left,
     default:
       break;
   }
-  throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Element type is invalid.");
+  throw Exception(ExceptionType::UNKNOWN_TYPE, "Element type is invalid.");
 }
 
 Value ArrayType::CastAs(const Value &val UNUSED_ATTRIBUTE,
                         UNUSED_ATTRIBUTE const TypeId type_id) const {
   PL_ASSERT(false);
-  throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
+  throw Exception(ExceptionType::INCOMPATIBLE_TYPE,
                   "Cannot cast array values.");
 }
 
