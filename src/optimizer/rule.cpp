@@ -27,7 +27,7 @@ int Rule::Promise(GroupExpression *group_expr, OptimizeContext *context) const {
 }
 
 RuleSet::RuleSet() {
-//  transformation_rules_.emplace_back(new InnerJoinCommutativity());
+  //  transformation_rules_.emplace_back(new InnerJoinCommutativity());
   implementation_rules_.emplace_back(new LogicalDeleteToPhysical());
   implementation_rules_.emplace_back(new LogicalUpdateToPhysical());
   implementation_rules_.emplace_back(new LogicalInsertToPhysical());
@@ -46,7 +46,6 @@ RuleSet::RuleSet() {
   rewrite_rules_.emplace_back(new PushFilterThroughJoin());
   rewrite_rules_.emplace_back(new CombineConsecutiveFilter());
   rewrite_rules_.emplace_back(new EmbedFilterIntoGet());
-
 }
 
 }  // namespace optimizer

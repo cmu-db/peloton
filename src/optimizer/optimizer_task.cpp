@@ -26,7 +26,7 @@ void OptimizerTask::ConstructValidRules(
     GroupExpression *group_expr, OptimizeContext *context,
     std::vector<std::unique_ptr<Rule>> &rules,
     std::vector<RuleWithPromise> &valid_rules) {
-//  LOG_DEBUG("Child size %lu", group_expr->GetChildrenGroupsSize());
+  //  LOG_DEBUG("Child size %lu", group_expr->GetChildrenGroupsSize());
   for (auto &rule : rules) {
     // LOG_DEBUG("Op %d, Pattern Op %d",
     // static_cast<int>(group_expr->Op().type()),
@@ -58,7 +58,7 @@ RuleSet &OptimizerTask::GetRuleSet() const {
 // OptimizeGroup
 //===--------------------------------------------------------------------===//
 void OptimizeGroup::execute() {
-  LOG_DEBUG("OptimizeGroup::Execute() group %d", group_->GetID());
+  // LOG_DEBUG("OptimizeGroup::Execute() group %d", group_->GetID());
   if (group_->GetCostLB() > context_->cost_upper_bound ||  // Cost LB > Cost UB
       group_->GetBestExpression(context_->required_prop) !=
           nullptr)  // Has optimized given the context
@@ -94,8 +94,8 @@ void OptimizeExpression::execute() {
                       GetRuleSet().GetImplementationRules(), valid_rules);
 
   std::sort(valid_rules.begin(), valid_rules.end());
-  LOG_DEBUG("OptimizeExpression::execute() op %d, valid rules : %lu",
-            static_cast<int>(group_expr_->Op().type()), valid_rules.size());
+  // LOG_DEBUG("OptimizeExpression::execute() op %d, valid rules : %lu",
+  //           static_cast<int>(group_expr_->Op().type()), valid_rules.size());
 
   // Apply rule
   for (auto &r : valid_rules) {
@@ -168,7 +168,7 @@ void ExploreExpression::execute() {
 // ApplyRule
 //===--------------------------------------------------------------------===//
 void ApplyRule::execute() {
-  LOG_DEBUG("ApplyRule::execute() ");
+  // LOG_DEBUG("ApplyRule::execute() ");
   if (group_expr_->HasRuleExplored(rule_)) return;
 
   GroupExprBindingIterator iterator(GetMemo(), group_expr_,
@@ -207,7 +207,7 @@ void ApplyRule::execute() {
 //===--------------------------------------------------------------------===//
 void OptimizeInputs::execute() {
   // Init logic: only run once per task
-  LOG_DEBUG("OptimizeInputs::execute() ");
+  // LOG_DEBUG("OptimizeInputs::execute() ");
   if (cur_child_idx_ == -1) {
     // TODO(patrick):
     // 1. We can init input cost using non-zero value for pruning
