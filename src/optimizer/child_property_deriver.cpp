@@ -130,9 +130,7 @@ void ChildPropertyDeriver::Visit(const PhysicalLimit *) {
 }
 
 void ChildPropertyDeriver::Visit(const PhysicalDistinct *) {}
-void ChildPropertyDeriver::Visit(const PhysicalProject *) {}
 void ChildPropertyDeriver::Visit(const PhysicalOrderBy *) {}
-void ChildPropertyDeriver::Visit(const PhysicalFilter *) {}
 void ChildPropertyDeriver::Visit(const PhysicalInnerNLJoin *) {
   DeriveForJoin();
 }

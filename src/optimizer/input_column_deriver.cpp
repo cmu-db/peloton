@@ -54,8 +54,6 @@ void InputColumnDeriver::Visit(const PhysicalSeqScan *) { ScanHelper(); }
 void InputColumnDeriver::Visit(const PhysicalIndexScan *) { ScanHelper(); }
 // TODO QueryDerivedScan should be deprecated
 void InputColumnDeriver::Visit(const QueryDerivedScan *) { PL_ASSERT(false); }
-// project should be added after this step
-void InputColumnDeriver::Visit(const PhysicalProject *) { PL_ASSERT(false); }
 
 void InputColumnDeriver::Visit(const PhysicalLimit *) { Passdown(); }
 
@@ -97,8 +95,6 @@ void InputColumnDeriver::Visit(const PhysicalAggregate *op) {
 }
 
 void InputColumnDeriver::Visit(const PhysicalDistinct *) { Passdown(); }
-
-void InputColumnDeriver::Visit(const PhysicalFilter *) { PL_ASSERT(false); }
 
 void InputColumnDeriver::Visit(const PhysicalInnerNLJoin *) {}
 

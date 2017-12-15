@@ -28,10 +28,8 @@ void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalIndexScan *op) {
 
 }
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const QueryDerivedScan *op) {}
-void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalProject *op) {}
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalOrderBy *op) {}
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalLimit *op) {}
-void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalFilter *op) {}
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalInnerNLJoin *op) {
   output_cost_ = 1;
 }

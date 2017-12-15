@@ -430,7 +430,8 @@ bool LogicalGroupByToHashGroupBy::Check(
     UNUSED_ATTRIBUTE std::shared_ptr<OperatorExpression> plan,
     OptimizeContext* context) const {
   (void)context;
-  return true;
+  const LogicalGroupBy *agg_op = plan->Op().As<LogicalGroupBy>();
+  return !agg_op->columns.empty();
 }
 
 void LogicalGroupByToHashGroupBy::Transform(
@@ -448,7 +449,7 @@ void LogicalGroupByToHashGroupBy::Transform(
 /// LogicalAggregateToPhysical
 LogicalAggregateToPhysical::LogicalAggregateToPhysical() {
   type_ = RuleType::AGGREGATE_TO_PLAIN_AGGREGATE;
-  match_pattern = std::make_shared<Pattern>(OpType::LogicalAggregate);
+  match_pattern = std::make_shared<Pattern>(OpType::LogicalGroupBy);
   std::shared_ptr<Pattern> child(std::make_shared<Pattern>(OpType::Leaf));
   match_pattern->AddChild(child);
 }
@@ -457,7 +458,8 @@ bool LogicalAggregateToPhysical::Check(
     UNUSED_ATTRIBUTE std::shared_ptr<OperatorExpression> plan,
     OptimizeContext* context) const {
   (void)context;
-  return true;
+  const LogicalGroupBy *agg_op = plan->Op().As<LogicalGroupBy>();
+  return agg_op->columns.empty();
 }
 
 void LogicalAggregateToPhysical::Transform(

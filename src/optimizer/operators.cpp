@@ -271,14 +271,6 @@ Operator LogicalSemiJoin::make(expression::AbstractExpression *condition) {
 //===--------------------------------------------------------------------===//
 // Aggregate
 //===--------------------------------------------------------------------===//
-Operator LogicalAggregate::make() {
-  LogicalAggregate *agg = new LogicalAggregate;
-  return Operator(agg);
-}
-
-//===--------------------------------------------------------------------===//
-// Aggregate
-//===--------------------------------------------------------------------===//
 Operator LogicalGroupBy::make() {
   LogicalGroupBy *group_by = new LogicalGroupBy;
   group_by->columns = {};
@@ -479,14 +471,6 @@ hash_t QueryDerivedScan::Hash() const {
 }
 
 //===--------------------------------------------------------------------===//
-// Project
-//===--------------------------------------------------------------------===//
-Operator PhysicalProject::make() {
-  PhysicalProject *project = new PhysicalProject;
-  return Operator(project);
-}
-
-//===--------------------------------------------------------------------===//
 // OrderBy
 //===--------------------------------------------------------------------===//
 Operator PhysicalOrderBy::make() {
@@ -503,14 +487,6 @@ Operator PhysicalLimit::make(int64_t offset, int64_t limit) {
   limit_op->offset = offset;
   limit_op->limit = limit;
   return Operator(limit_op);
-}
-
-//===--------------------------------------------------------------------===//
-// Filter
-//===--------------------------------------------------------------------===//
-Operator PhysicalFilter::make() {
-  PhysicalFilter *filter = new PhysicalFilter;
-  return Operator(filter);
 }
 
 //===--------------------------------------------------------------------===//
@@ -791,55 +767,6 @@ void OperatorNode<T>::Accept(OperatorVisitor *v) const {
   v->Visit((const T *)this);
 }
 
-// We don't need to visit logical operators for driving child properties,
-// costing plans, etc.
-template <>
-void OperatorNode<LeafOperator>::Accept(
-    UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
-template <>
-void OperatorNode<LogicalGet>::Accept(
-    UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
-template <>
-void OperatorNode<LogicalFilter>::Accept(
-    UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
-template <>
-void OperatorNode<LogicalInnerJoin>::Accept(
-    UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
-template <>
-void OperatorNode<LogicalLeftJoin>::Accept(
-    UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
-template <>
-void OperatorNode<LogicalRightJoin>::Accept(
-    UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
-template <>
-void OperatorNode<LogicalOuterJoin>::Accept(
-    UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
-template <>
-void OperatorNode<LogicalAggregate>::Accept(
-    UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
-template <>
-void OperatorNode<LogicalGroupBy>::Accept(
-    UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
-template <>
-void OperatorNode<LogicalSemiJoin>::Accept(
-    UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
-template <>
-void OperatorNode<LogicalInsert>::Accept(
-    UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
-template <>
-void OperatorNode<LogicalInsertSelect>::Accept(
-    UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
-template <>
-void OperatorNode<LogicalDelete>::Accept(
-    UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
-template <>
-void OperatorNode<LogicalUpdate>::Accept(
-    UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
-
-template <>
-void OperatorNode<LogicalQueryDerivedGet>::Accept(
-    UNUSED_ATTRIBUTE OperatorVisitor *v) const {}
-
 //===--------------------------------------------------------------------===//
 template <>
 std::string OperatorNode<LeafOperator>::name_ = "LeafOperator";
@@ -867,8 +794,6 @@ std::string OperatorNode<LogicalOuterJoin>::name_ = "LogicalOuterJoin";
 template <>
 std::string OperatorNode<LogicalSemiJoin>::name_ = "LogicalSemiJoin";
 template <>
-std::string OperatorNode<LogicalAggregate>::name_ = "LogicalAggregate";
-template <>
 std::string OperatorNode<LogicalGroupBy>::name_ = "LogicalGroupBy";
 template <>
 std::string OperatorNode<LogicalInsert>::name_ = "LogicalInsert";
@@ -891,13 +816,9 @@ std::string OperatorNode<PhysicalIndexScan>::name_ = "PhysicalIndexScan";
 template <>
 std::string OperatorNode<QueryDerivedScan>::name_ = "QueryDerivedScan";
 template <>
-std::string OperatorNode<PhysicalProject>::name_ = "PhysicalProject";
-template <>
 std::string OperatorNode<PhysicalOrderBy>::name_ = "PhysicalOrderBy";
 template <>
 std::string OperatorNode<PhysicalLimit>::name_ = "PhysicalLimit";
-template <>
-std::string OperatorNode<PhysicalFilter>::name_ = "PhysicalFilter";
 template <>
 std::string OperatorNode<PhysicalInnerNLJoin>::name_ = "PhysicalInnerNLJoin";
 template <>
@@ -961,8 +882,6 @@ OpType OperatorNode<LogicalOuterJoin>::type_ = OpType::OuterJoin;
 template <>
 OpType OperatorNode<LogicalSemiJoin>::type_ = OpType::SemiJoin;
 template <>
-OpType OperatorNode<LogicalAggregate>::type_ = OpType::LogicalAggregate;
-template <>
 OpType OperatorNode<LogicalGroupBy>::type_ = OpType::LogicalGroupBy;
 template <>
 OpType OperatorNode<LogicalInsert>::type_ = OpType::LogicalInsert;
@@ -985,15 +904,11 @@ OpType OperatorNode<PhysicalIndexScan>::type_ = OpType::IndexScan;
 template <>
 OpType OperatorNode<QueryDerivedScan>::type_ = OpType::QueryDerivedScan;
 template <>
-OpType OperatorNode<PhysicalProject>::type_ = OpType::Project;
-template <>
 OpType OperatorNode<PhysicalOrderBy>::type_ = OpType::OrderBy;
 template <>
 OpType OperatorNode<PhysicalDistinct>::type_ = OpType::Distinct;
 template <>
 OpType OperatorNode<PhysicalLimit>::type_ = OpType::PhysicalLimit;
-template <>
-OpType OperatorNode<PhysicalFilter>::type_ = OpType::Filter;
 template <>
 OpType OperatorNode<PhysicalInnerNLJoin>::type_ = OpType::InnerNLJoin;
 template <>

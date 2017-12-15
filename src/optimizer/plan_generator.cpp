@@ -96,8 +96,6 @@ void PlanGenerator::Visit(const PhysicalIndexScan *op) {
 
 void PlanGenerator::Visit(const QueryDerivedScan *) {}
 
-void PlanGenerator::Visit(const PhysicalProject *) {}
-
 void PlanGenerator::Visit(const PhysicalLimit *op) {
   unique_ptr<planner::AbstractPlan> limit_plan(
       new planner::LimitPlan(op->limit, op->offset));
@@ -141,8 +139,6 @@ void PlanGenerator::Visit(const PhysicalAggregate *) {
 }
 
 void PlanGenerator::Visit(const PhysicalDistinct *) {}
-
-void PlanGenerator::Visit(const PhysicalFilter *) {}
 
 void PlanGenerator::Visit(const PhysicalInnerNLJoin *) {}
 

@@ -253,28 +253,28 @@ void CostAndStatsCalculator::Visit(const PhysicalIndexScan *op) {
   }
   output_stats_ = output_stats;
 }
-
-void CostAndStatsCalculator::Visit(const PhysicalProject *) {
-  // TODO: Replace with more accurate cost
-  output_cost_ = getCostOfChildren(child_costs_);
-  PL_ASSERT(child_stats_.size() == 1);
-  auto table_stats_ptr =
-      std::dynamic_pointer_cast<TableStats>(child_stats_.at(0));
-  if (table_stats_ptr == nullptr || table_stats_ptr->GetColumnCount() == 0) {
-    output_stats_.reset(new Stats(nullptr));
-    output_cost_ = 0;
-    return;
-  }
-  auto columns_prop =
-      output_properties_->GetPropertyOfType(PropertyType::COLUMNS)
-          ->As<PropertyColumns>();
-  auto output_stats = generateOutputStat(table_stats_ptr, columns_prop);
-
-  output_cost_ += Cost::ProjectCost(
-      std::dynamic_pointer_cast<TableStats>(child_stats_.at(0)),
-      std::vector<oid_t>(), output_stats);
-  output_stats_ = output_stats;
-}
+//
+//void CostAndStatsCalculator::Visit(const PhysicalProject *) {
+//  // TODO: Replace with more accurate cost
+//  output_cost_ = getCostOfChildren(child_costs_);
+//  PL_ASSERT(child_stats_.size() == 1);
+//  auto table_stats_ptr =
+//      std::dynamic_pointer_cast<TableStats>(child_stats_.at(0));
+//  if (table_stats_ptr == nullptr || table_stats_ptr->GetColumnCount() == 0) {
+//    output_stats_.reset(new Stats(nullptr));
+//    output_cost_ = 0;
+//    return;
+//  }
+//  auto columns_prop =
+//      output_properties_->GetPropertyOfType(PropertyType::COLUMNS)
+//          ->As<PropertyColumns>();
+//  auto output_stats = generateOutputStat(table_stats_ptr, columns_prop);
+//
+//  output_cost_ += Cost::ProjectCost(
+//      std::dynamic_pointer_cast<TableStats>(child_stats_.at(0)),
+//      std::vector<oid_t>(), output_stats);
+//  output_stats_ = output_stats;
+//}
 void CostAndStatsCalculator::Visit(const PhysicalOrderBy *) {
   // TODO: Replace with more accurate cost
   PL_ASSERT(child_stats_.size() == 1);
@@ -345,7 +345,6 @@ void CostAndStatsCalculator::Visit(const PhysicalLimit *) {
                       limit, output_stats);
   output_stats_ = output_stats;
 }
-void CostAndStatsCalculator::Visit(const PhysicalFilter *){};
 void CostAndStatsCalculator::Visit(const PhysicalInnerNLJoin *) {
   // TODO: Replace with more accurate cost
   output_cost_ = 1;

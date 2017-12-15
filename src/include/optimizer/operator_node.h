@@ -37,10 +37,7 @@ enum class OpType {
   RightJoin,
   OuterJoin,
   SemiJoin,
-  LogicalAggregate,
   LogicalGroupBy,
-  LogicalHash,
-  Limit,
   LogicalInsert,
   LogicalInsertSelect,
   LogicalDelete,
@@ -54,12 +51,9 @@ enum class OpType {
   SeqScan,
   IndexScan,
   QueryDerivedScan,
-  Project,
   OrderBy,
   PhysicalLimit,
   Distinct,
-  ComputeExprs,
-  Filter,
   InnerNLJoin,
   LeftNLJoin,
   RightNLJoin,
@@ -114,8 +108,6 @@ struct BaseOperatorNode {
 // Curiously recurring template pattern
 template <typename T>
 struct OperatorNode : public BaseOperatorNode {
-  // Right now only accept physical operators, Accept() of logical operators
-  // will be specialized to empty function.
   void Accept(OperatorVisitor *v) const;
 
   std::string name() const { return name_; }

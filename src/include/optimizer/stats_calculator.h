@@ -31,7 +31,6 @@ class StatsCalculator : public OperatorVisitor {
   void Visit(const LogicalRightJoin *) override;
   void Visit(const LogicalOuterJoin *) override;
   void Visit(const LogicalSemiJoin *) override;
-  void Visit(const LogicalAggregate *) override;
   void Visit(const LogicalGroupBy *) override;
   void Visit(const LogicalInsert *) override;
   void Visit(const LogicalInsertSelect *) override;

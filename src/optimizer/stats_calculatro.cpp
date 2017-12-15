@@ -30,7 +30,6 @@ void StatsCalculator::Visit(UNUSED_ATTRIBUTE const LogicalLeftJoin *op) {}
 void StatsCalculator::Visit(UNUSED_ATTRIBUTE const LogicalRightJoin *op) {}
 void StatsCalculator::Visit(UNUSED_ATTRIBUTE const LogicalOuterJoin *op) {}
 void StatsCalculator::Visit(UNUSED_ATTRIBUTE const LogicalSemiJoin *op) {}
-void StatsCalculator::Visit(UNUSED_ATTRIBUTE const LogicalAggregate *op) {}
 void StatsCalculator::Visit(UNUSED_ATTRIBUTE const LogicalGroupBy *op) {}
 void StatsCalculator::Visit(UNUSED_ATTRIBUTE const LogicalInsert *op) {}
 void StatsCalculator::Visit(UNUSED_ATTRIBUTE const LogicalInsertSelect *op) {}

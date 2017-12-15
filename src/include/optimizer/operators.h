@@ -207,14 +207,6 @@ class LogicalSemiJoin : public OperatorNode<LogicalSemiJoin> {
 };
 
 //===--------------------------------------------------------------------===//
-// Aggregate
-//===--------------------------------------------------------------------===//
-class LogicalAggregate : public OperatorNode<LogicalAggregate> {
- public:
-  static Operator make();
-};
-
-//===--------------------------------------------------------------------===//
 // GroupBy
 //===--------------------------------------------------------------------===//
 class LogicalGroupBy : public OperatorNode<LogicalGroupBy> {
@@ -379,14 +371,6 @@ class QueryDerivedScan : public OperatorNode<QueryDerivedScan> {
 };
 
 //===--------------------------------------------------------------------===//
-// PhysicalProject
-//===--------------------------------------------------------------------===//
-class PhysicalProject : public OperatorNode<PhysicalProject> {
- public:
-  static Operator make();
-};
-
-//===--------------------------------------------------------------------===//
 // PhysicalOrderBy
 //===--------------------------------------------------------------------===//
 class PhysicalOrderBy : public OperatorNode<PhysicalOrderBy> {
@@ -402,14 +386,6 @@ class PhysicalLimit : public OperatorNode<PhysicalLimit> {
   static Operator make(int64_t offset, int64_t limit);
   int64_t offset;
   int64_t limit;
-};
-
-//===--------------------------------------------------------------------===//
-// Filter
-//===--------------------------------------------------------------------===//
-class PhysicalFilter : public OperatorNode<PhysicalFilter> {
- public:
-  static Operator make();
 };
 
 //===--------------------------------------------------------------------===//

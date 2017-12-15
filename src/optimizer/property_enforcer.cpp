@@ -27,10 +27,7 @@ std::shared_ptr<GroupExpression> PropertyEnforcer::EnforceProperty(
 }
 
 void PropertyEnforcer::Visit(const PropertyColumns *) {
-  std::vector<GroupID> child_groups(1, input_gexpr_->GetGroupID());
 
-  output_gexpr_ =
-      std::make_shared<GroupExpression>(PhysicalProject::make(), child_groups);
 }
 
 void PropertyEnforcer::Visit(const PropertySort *) {

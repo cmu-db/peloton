@@ -172,7 +172,7 @@ void OperatorToPlanTransformer::Visit(const QueryDerivedScan *op) {
   // output_plan_ = std::move(children_plans_[0]);
 }
 
-void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
+//void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
   // auto cols_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
   //                      ->As<PropertyColumns>();
   // size_t col_size = cols_prop->GetSize();
@@ -235,7 +235,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
   //   project_plan->AddChild(move(children_plans_[0]));
   //
   // output_plan_ = move(project_plan);
-}
+//}
 
 void OperatorToPlanTransformer::Visit(const PhysicalLimit *) {
   // PL_ASSERT(children_plans_.size() == 1);
@@ -385,8 +385,6 @@ void OperatorToPlanTransformer::Visit(const PhysicalDistinct *) {
   // // Hash does not change the layout of the column mapping
   // *output_expr_map_ = move(child_expr_map);
 }
-
-void OperatorToPlanTransformer::Visit(const PhysicalFilter *) {}
 
 void OperatorToPlanTransformer::Visit(const PhysicalInnerNLJoin *op) {
   (void)op;

@@ -50,13 +50,9 @@ class OperatorToPlanTransformer : public OperatorVisitor {
 
   void Visit(const QueryDerivedScan *op) override;
 
-  void Visit(const PhysicalProject *) override;
-
   void Visit(const PhysicalOrderBy *) override;
 
   void Visit(const PhysicalLimit *) override;
-
-  void Visit(const PhysicalFilter *) override;
 
   void Visit(const PhysicalInnerNLJoin *) override;
 

@@ -30,10 +30,8 @@ class OperatorVisitor {
   virtual void Visit(const PhysicalSeqScan *) {}
   virtual void Visit(const PhysicalIndexScan *) {}
   virtual void Visit(const QueryDerivedScan* ) {}
-  virtual void Visit(const PhysicalProject *) {}
   virtual void Visit(const PhysicalOrderBy *) {}
   virtual void Visit(const PhysicalLimit *) {}
-  virtual void Visit(const PhysicalFilter *) {}
   virtual void Visit(const PhysicalInnerNLJoin *) {}
   virtual void Visit(const PhysicalLeftNLJoin *) {}
   virtual void Visit(const PhysicalRightNLJoin *) {}
@@ -50,7 +48,7 @@ class OperatorVisitor {
   virtual void Visit(const PhysicalSortGroupBy *) {}
   virtual void Visit(const PhysicalDistinct *) {}
   virtual void Visit(const PhysicalAggregate *) {}
-  
+
   // Logical operator
   virtual void Visit(const LeafOperator *) {}
   virtual void Visit(const LogicalGet *) {}
@@ -64,7 +62,6 @@ class OperatorVisitor {
   virtual void Visit(const LogicalRightJoin *) {}
   virtual void Visit(const LogicalOuterJoin *) {}
   virtual void Visit(const LogicalSemiJoin *) {}
-  virtual void Visit(const LogicalAggregate *) {}
   virtual void Visit(const LogicalGroupBy *) {}
   virtual void Visit(const LogicalInsert *) {}
   virtual void Visit(const LogicalInsertSelect *) {}
