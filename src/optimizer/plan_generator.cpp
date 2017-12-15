@@ -138,7 +138,23 @@ void PlanGenerator::Visit(const PhysicalAggregate *) {
   BuildAggregatePlan(AggregateType::PLAIN, nullptr, nullptr);
 }
 
-void PlanGenerator::Visit(const PhysicalDistinct *) {}
+void PlanGenerator::Visit(const PhysicalDistinct *) {
+  // Now distinct is a flag in the parser, so we only support
+  // distinct on all output columns
+  PL_ASSERT(children_expr_map_.size() == 1);
+  PL_ASSERT(children_plans_.size() == 1);
+  auto& child_expr_map = children_expr_map_[0];
+   std::vector<std::unique_ptr<const expression::AbstractExpression>> hash_keys;
+  for (auto& col : output_cols_) {
+    PL_ASSERT(child_expr_map.count(col) > 0);
+    auto& column_offset = child_expr_map[col];
+    hash_keys.emplace_back(
+        new expression::TupleValueExpression(col->GetValueType(), 0, column_offset));
+  }
+   unique_ptr<planner::HashPlan> hash_plan(new planner::HashPlan(hash_keys));
+   hash_plan->AddChild(move(children_plans_[0]));
+   output_plan_ = move(hash_plan);
+}
 
 void PlanGenerator::Visit(const PhysicalInnerNLJoin *) {}
 

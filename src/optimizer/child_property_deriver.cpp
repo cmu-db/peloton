@@ -129,7 +129,12 @@ void ChildPropertyDeriver::Visit(const PhysicalLimit *) {
   output_.push_back(make_pair(requirements_, move(child_input_properties)));
 }
 
-void ChildPropertyDeriver::Visit(const PhysicalDistinct *) {}
+void ChildPropertyDeriver::Visit(const PhysicalDistinct *) {
+  // Let child fulfil all the required properties
+  vector<shared_ptr<PropertySet>> child_input_properties{requirements_};
+
+  output_.push_back(make_pair(requirements_, move(child_input_properties)));
+}
 void ChildPropertyDeriver::Visit(const PhysicalOrderBy *) {}
 void ChildPropertyDeriver::Visit(const PhysicalInnerNLJoin *) {
   DeriveForJoin();
