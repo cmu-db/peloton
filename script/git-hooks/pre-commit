@@ -9,10 +9,13 @@
 #   ln -s ../../script/git-hooks/pre-commit .git/hooks/pre-commit
 
 files=$(git diff --name-only HEAD --cached --diff-filter=d | grep '\.\(cpp\|h\)$')
-echo $files
 if [ -n "$files" ]; then
   python script/validators/source_validator.py --files $files
-  exit $?
+  result=$?
+  if [ $result -ne 0 ]; then
+    echo "Use `./script/formatter/formatter.py -c -f` to format all staged files or `--no-verify` to temporarily bypass the pre-commit hook. Be aware that changed files have to be staged again!"
+  fi
+  exit $result
 fi
 
 exit 0

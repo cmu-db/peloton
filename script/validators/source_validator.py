@@ -39,7 +39,7 @@ LOG.setLevel(logging.INFO)
 CODE_SOURCE_DIR = os.path.abspath(os.path.dirname(__file__))
 PELOTON_DIR = os.path.abspath(reduce(os.path.join, [CODE_SOURCE_DIR, os.path.pardir, os.path.pardir]))
 
-CLANG_FORMAT = "clang-format-3.6"
+CLANG_FORMAT = "clang-format"
 CLANG_FORMAT_FILE = os.path.join(PELOTON_DIR, ".clang-format")
 
 # Other directory paths used are relative to PELOTON_DIR
@@ -119,20 +119,23 @@ def check_format(file_path):
         return True
 
     # Run clang-format on the file
-    clang_format_cmd = [CLANG_FORMAT, "-style=file", file_path]
-    formatted_src = subprocess.check_output(clang_format_cmd).splitlines(True)
+    try:
+        clang_format_cmd = [CLANG_FORMAT, "-style=file", file_path]
+        formatted_src = subprocess.check_output(clang_format_cmd).splitlines(True)
+        # Load source file
+        file = open(file_path, "r")
+        src = file.readlines()
 
-    # Load source file
-    file = open(file_path, "r")
-    src = file.readlines()
-
-    # Do the diff
-    diff = difflib.unified_diff(src, formatted_src)
-    for line in diff:
-        LOG.info("Invalid formatting in file : " + file_path)
-        return False
-    
-    return True
+        # Do the diff
+        diff = difflib.unified_diff(src, formatted_src)
+        for line in diff:
+            LOG.info("Invalid formatting in file : " + file_path)
+            return False
+        
+        return True
+    except OSError as e:
+        LOG.error("clang-format seems not installed")
+        exit("clang-format seems not installed")
 
 VALIDATORS = [ 
     check_common_patterns,
