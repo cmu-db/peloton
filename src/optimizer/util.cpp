@@ -403,6 +403,35 @@ expression::AbstractExpression* TransformQueryDerivedTablePredicates(
   return expr;
 }
 
+void ExtractEquiJoinKeys(std::vector<AnnotatedExpression> join_predicates,
+                         std::vector<std::shared_ptr<expression::AbstractExpression>> &left_keys,
+                         std::vector<std::shared_ptr<expression::AbstractExpression>> &right_keys,
+                         std::unordered_set<std::string> &left_alias,
+                         std::unordered_set<std::string> &right_alias) {
+  for (auto& expr_unit : join_predicates) {
+    if (expr_unit.expr->GetExpressionType() == ExpressionType::COMPARE_EQUAL) {
+      auto l_expr = expr_unit.expr->GetChild(0);
+      auto r_expr = expr_unit.expr->GetChild(1);
+      if (l_expr->GetExpressionType() == ExpressionType::VALUE_TUPLE &&
+          r_expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
+        auto l_tv_expr =
+            reinterpret_cast<const expression::TupleValueExpression *>(l_expr);
+        auto r_tv_expr =
+            reinterpret_cast<const expression::TupleValueExpression *>(r_expr);
+        if (left_alias.find(l_tv_expr->GetTableName()) != left_alias.end() &&
+            right_alias.find(r_tv_expr->GetTableName()) != right_alias.end()) {
+          left_keys.emplace_back(l_tv_expr->Copy());
+          right_keys.emplace_back(r_tv_expr->Copy());
+        } else if (left_alias.find(r_tv_expr->GetTableName()) != left_alias.end() &&
+            right_alias.find(l_tv_expr->GetTableName()) != right_alias.end()) {
+          left_keys.emplace_back(r_tv_expr->Copy());
+          right_keys.emplace_back(l_tv_expr->Copy());
+        }
+      }
+    }
+  }
+}
+
 }  // namespace util
 }  // namespace optimizer
 }  // namespace peloton
