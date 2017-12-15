@@ -394,15 +394,15 @@ class PhysicalLimit : public OperatorNode<PhysicalLimit> {
 class PhysicalInnerNLJoin : public OperatorNode<PhysicalInnerNLJoin> {
  public:
   static Operator make(std::vector<AnnotatedExpression> conditions,
-                       std::vector<std::shared_ptr<expression::AbstractExpression>> left_keys = {},
-                       std::vector<std::shared_ptr<expression::AbstractExpression>> right_keys = {});
+                       std::vector<std::unique_ptr<expression::AbstractExpression>>& left_keys,
+                       std::vector<std::unique_ptr<expression::AbstractExpression>>& right_keys);
 
   bool operator==(const BaseOperatorNode &r) override;
 
   hash_t Hash() const override;
 
-  std::vector<std::shared_ptr<expression::AbstractExpression>> left_keys;
-  std::vector<std::shared_ptr<expression::AbstractExpression>> right_keys;
+  std::vector<std::unique_ptr<expression::AbstractExpression>> left_keys;
+  std::vector<std::unique_ptr<expression::AbstractExpression>> right_keys;
 
   std::vector<AnnotatedExpression> join_predicates;
 };
@@ -443,15 +443,15 @@ class PhysicalOuterNLJoin : public OperatorNode<PhysicalOuterNLJoin> {
 class PhysicalInnerHashJoin : public OperatorNode<PhysicalInnerHashJoin> {
  public:
   static Operator make(std::vector<AnnotatedExpression> conditions,
-                       std::vector<std::shared_ptr<expression::AbstractExpression>> left_keys = {},
-                       std::vector<std::shared_ptr<expression::AbstractExpression>> right_keys = {});
+                       std::vector<std::unique_ptr<expression::AbstractExpression>>& left_keys,
+                       std::vector<std::unique_ptr<expression::AbstractExpression>>& right_keys);
 
   bool operator==(const BaseOperatorNode &r) override;
 
   hash_t Hash() const override;
 
-  std::vector<std::shared_ptr<expression::AbstractExpression>> left_keys;
-  std::vector<std::shared_ptr<expression::AbstractExpression>> right_keys;
+  std::vector<std::unique_ptr<expression::AbstractExpression>> left_keys;
+  std::vector<std::unique_ptr<expression::AbstractExpression>> right_keys;
 
   std::vector<AnnotatedExpression> join_predicates;
 };

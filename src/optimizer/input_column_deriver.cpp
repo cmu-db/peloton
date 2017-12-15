@@ -96,7 +96,7 @@ void InputColumnDeriver::Visit(const PhysicalAggregate *op) {
 
 void InputColumnDeriver::Visit(const PhysicalDistinct *) { Passdown(); }
 
-void InputColumnDeriver::Visit(const PhysicalInnerNLJoin *) {}
+void InputColumnDeriver::Visit(const PhysicalInnerNLJoin *op) { JoinHelper(op); }
 
 void InputColumnDeriver::Visit(const PhysicalLeftNLJoin *) {}
 
@@ -104,7 +104,7 @@ void InputColumnDeriver::Visit(const PhysicalRightNLJoin *) {}
 
 void InputColumnDeriver::Visit(const PhysicalOuterNLJoin *) {}
 
-void InputColumnDeriver::Visit(const PhysicalInnerHashJoin *) {}
+void InputColumnDeriver::Visit(const PhysicalInnerHashJoin *op) { JoinHelper(op); }
 
 void InputColumnDeriver::Visit(const PhysicalLeftHashJoin *) {}
 
@@ -199,18 +199,33 @@ void InputColumnDeriver::AggregateHelper(const BaseOperatorNode *op) {
 }
 
 void InputColumnDeriver::JoinHelper(const BaseOperatorNode *op) {
-  vector<AnnotatedExpression> join_conds;
+  const vector<AnnotatedExpression>* join_conds = nullptr;
+  const vector<unique_ptr<expression::AbstractExpression>>* left_keys = nullptr;
+  const vector<unique_ptr<expression::AbstractExpression>>* right_keys = nullptr;
   if (op->type() == OpType::InnerHashJoin) {
-    join_conds =
-        reinterpret_cast<const PhysicalInnerHashJoin *>(op)->join_predicates;
+    auto join_op = reinterpret_cast<const PhysicalInnerHashJoin *>(op);
+    join_conds = &(join_op->join_predicates);
+    left_keys = &(join_op->left_keys);
+    right_keys= &(join_op->right_keys);
   } else if (op->type() == OpType::InnerNLJoin) {
-    join_conds =
-        reinterpret_cast<const PhysicalInnerNLJoin *>(op)->join_predicates;
+    auto join_op = reinterpret_cast<const PhysicalInnerNLJoin *>(op);
+    join_conds = &(join_op->join_predicates);
+    left_keys = &(join_op->left_keys);
+    right_keys= &(join_op->right_keys);
   }
 
   ExprSet input_cols_set;
 
-  for (auto &join_cond : join_conds) {
+  PL_ASSERT(left_keys != nullptr);
+  PL_ASSERT(right_keys != nullptr);
+  PL_ASSERT(join_conds != nullptr);
+  for (auto &left_key : *left_keys) {
+    expression::ExpressionUtil::GetTupleValueExprs(input_cols_set, left_key.get());
+  }
+  for (auto &right_key : *right_keys) {
+    expression::ExpressionUtil::GetTupleValueExprs(input_cols_set, right_key.get());
+  }
+  for (auto &join_cond : *join_conds) {
     expression::ExpressionUtil::GetTupleValueExprs(input_cols_set,
                                                    join_cond.expr.get());
   }

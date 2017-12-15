@@ -511,8 +511,8 @@ void InnerJoinToInnerNLJoin::Transform(
       context->metadata->memo.GetGroupByID(left_group_id)->GetTableAliases();
   auto &right_group_alias =
       context->metadata->memo.GetGroupByID(right_group_id)->GetTableAliases();
-  std::vector<std::shared_ptr<expression::AbstractExpression>> left_keys;
-  std::vector<std::shared_ptr<expression::AbstractExpression>> right_keys;
+  std::vector<std::unique_ptr<expression::AbstractExpression>> left_keys;
+  std::vector<std::unique_ptr<expression::AbstractExpression>> right_keys;
 
   util::ExtractEquiJoinKeys(inner_join->join_predicates, left_keys, right_keys,
                             left_group_alias, right_group_alias);
@@ -572,8 +572,8 @@ void InnerJoinToInnerHashJoin::Transform(
       context->metadata->memo.GetGroupByID(left_group_id)->GetTableAliases();
   auto &right_group_alias =
       context->metadata->memo.GetGroupByID(right_group_id)->GetTableAliases();
-  std::vector<std::shared_ptr<expression::AbstractExpression>> left_keys;
-  std::vector<std::shared_ptr<expression::AbstractExpression>> right_keys;
+  std::vector<std::unique_ptr<expression::AbstractExpression>> left_keys;
+  std::vector<std::unique_ptr<expression::AbstractExpression>> right_keys;
 
   util::ExtractEquiJoinKeys(inner_join->join_predicates, left_keys, right_keys,
                             left_group_alias, right_group_alias);

@@ -494,8 +494,8 @@ Operator PhysicalLimit::make(int64_t offset, int64_t limit) {
 //===--------------------------------------------------------------------===//
 Operator PhysicalInnerNLJoin::make(
     std::vector<AnnotatedExpression> conditions,
-    std::vector<std::shared_ptr<expression::AbstractExpression>> left_keys,
-    std::vector<std::shared_ptr<expression::AbstractExpression>> right_keys) {
+    std::vector<std::unique_ptr<expression::AbstractExpression>>& left_keys,
+    std::vector<std::unique_ptr<expression::AbstractExpression>>& right_keys) {
   PhysicalInnerNLJoin *join = new PhysicalInnerNLJoin();
   join->join_predicates = std::move(conditions);
   join->left_keys = std::move(left_keys);
@@ -571,8 +571,8 @@ Operator PhysicalOuterNLJoin::make(
 //===--------------------------------------------------------------------===//
 Operator PhysicalInnerHashJoin::make(
     std::vector<AnnotatedExpression> conditions,
-    std::vector<std::shared_ptr<expression::AbstractExpression>> left_keys,
-    std::vector<std::shared_ptr<expression::AbstractExpression>> right_keys) {
+    std::vector<std::unique_ptr<expression::AbstractExpression>>& left_keys,
+    std::vector<std::unique_ptr<expression::AbstractExpression>>& right_keys) {
   PhysicalInnerHashJoin *join = new PhysicalInnerHashJoin();
   join->join_predicates = std::move(conditions);
   join->left_keys = std::move(left_keys);
