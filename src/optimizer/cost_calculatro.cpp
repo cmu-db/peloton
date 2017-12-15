@@ -47,7 +47,9 @@ void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalInsertSelect *op) {}
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalDelete *op) {}
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalUpdate *op) {}
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalHashGroupBy *op) {}
-void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalSortGroupBy *op) {}
+void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalSortGroupBy *op) {
+  output_cost_ = 1;
+}
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalDistinct *op) {}
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalAggregate *op) {}
 

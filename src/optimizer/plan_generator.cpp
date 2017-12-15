@@ -328,7 +328,6 @@ void PlanGenerator::BuildAggregatePlan(
     const std::vector<std::shared_ptr<expression::AbstractExpression>> *
         groupby_cols,
     expression::AbstractExpression *having) {
-  PL_ASSERT(children_expr_map_.size() == 0);
 
   vector<planner::AggregatePlan::AggTerm> aggr_terms;
   vector<catalog::Column> output_schema_columns;
@@ -348,7 +347,7 @@ void PlanGenerator::BuildAggregatePlan(
       // Maps the aggregate value in th right tuple to the output
       // See aggregateor.cpp for more detail
       dml.emplace_back(idx, make_pair(1, agg_id++));
-      planner::AggregatePlan::AggTerm(
+      aggr_terms.emplace_back(
           agg_expr->GetExpressionType(),
           agg_col == nullptr ? nullptr : agg_col->Copy(), agg_expr->distinct_);
     } else if (child_expr_map.find(expr) != child_expr_map.end()) {
@@ -371,8 +370,8 @@ void PlanGenerator::BuildAggregatePlan(
   // Handle having clause
   expression::AbstractExpression *having_predicate = nullptr;
   if (having != nullptr) {
-    having_predicate = having->Copy();
     expression::ExpressionUtil::EvaluateExpression(children_expr_map_, having);
+    having_predicate = having->Copy();
   }
   // Generate the Aggregate Plan
   unique_ptr<const planner::ProjectInfo> proj_info(
@@ -382,9 +381,12 @@ void PlanGenerator::BuildAggregatePlan(
   // want make the parameter as unique_ptr
   shared_ptr<const catalog::Schema> output_table_schema(
       new catalog::Schema(output_schema_columns));
-  output_plan_.reset(new planner::AggregatePlan(
+
+  auto agg_plan = new planner::AggregatePlan(
       move(proj_info), move(predicate), move(aggr_terms), move(col_ids),
-      output_table_schema, aggr_type));
+      output_table_schema, aggr_type);
+  agg_plan->AddChild(move(children_plans_[0]));
+  output_plan_.reset(agg_plan);
 }
 }  // namespace optimizer
 }  // namespace peloton

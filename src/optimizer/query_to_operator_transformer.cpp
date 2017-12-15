@@ -74,8 +74,10 @@ void QueryToOperatorTransformer::Visit(parser::SelectStatement *op) {
       for (size_t i = 0; i < num_group_by_cols; i++)
         group_by_cols[i] = std::shared_ptr<expression::AbstractExpression>(
             op->group_by->columns[i]->Copy());
-      auto having = std::shared_ptr<expression::AbstractExpression>(
-          op->group_by->having->Copy());
+      std::shared_ptr<expression::AbstractExpression> having = nullptr;
+      if (op->group_by->having != nullptr)
+        having = std::shared_ptr<expression::AbstractExpression>(
+            op->group_by->having->Copy());
       agg_expr = std::make_shared<OperatorExpression>(
           LogicalGroupBy::make(group_by_cols, having));
     }
