@@ -54,9 +54,9 @@ TEST_F(BrainUtilTests, LoadIndexStatisticsFileTest) {
 
   std::map<std::string, brain::Sample> expected;
   expected.insert(std::map<std::string, brain::Sample>::value_type(
-      "table_x", brain::Sample(cols0, 888, brain::SAMPLE_TYPE_ACCESS)));
+      "table_x", brain::Sample(cols0, 888, brain::SampleType::ACCESS)));
   expected.insert(std::map<std::string, brain::Sample>::value_type(
-      "table_y", brain::Sample(cols1, 999, brain::SAMPLE_TYPE_ACCESS)));
+      "table_y", brain::Sample(cols1, 999, brain::SampleType::ACCESS)));
   EXPECT_FALSE(expected.empty());
 
   // Serialize them to a string and write them out to a temp file

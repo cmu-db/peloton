@@ -161,13 +161,13 @@ double IndexTuner::ComputeWorkloadWriteRatio(
 
   // Go over all samples
   for (auto sample : samples) {
-    if (sample.GetSampleType() == SAMPLE_TYPE_ACCESS) {
+    if (sample.GetSampleType() == SampleType::ACCESS) {
       total_read_duration += sample.GetWeight();
-    } else if (sample.GetSampleType() == SAMPLE_TYPE_UPDATE) {
+    } else if (sample.GetSampleType() == SampleType::UPDATE) {
       total_write_duration += sample.GetWeight();
     } else {
       throw Exception("Unknown sample type : " +
-                      std::to_string(sample.GetSampleType()));
+                      std::to_string(static_cast<int>(sample.GetSampleType())));
     }
   }
 
@@ -204,17 +204,17 @@ std::vector<sample_frequency_map_entry> GetFrequentSamples(
 
   // Go over all samples
   for (auto sample : samples) {
-    if (sample.GetSampleType() == SAMPLE_TYPE_ACCESS) {
+    if (sample.GetSampleType() == SampleType::ACCESS) {
       // Update sample count
       sample_frequency_map[sample] += sample.GetWeight();
       total_weight += sample.GetWeight();
-    } else if (sample.GetSampleType() == SAMPLE_TYPE_UPDATE) {
+    } else if (sample.GetSampleType() == SampleType::UPDATE) {
       // Update sample count
       sample_frequency_map[sample] += sample.GetWeight();
       total_weight += sample.GetWeight();
     } else {
       throw Exception("Unknown sample type : " +
-                      std::to_string(sample.GetSampleType()));
+                      std::to_string(static_cast<int>(sample.GetSampleType())));
     }
   }
 
