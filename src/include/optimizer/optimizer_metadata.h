@@ -25,9 +25,11 @@ class OptimizerMetadata {
  public:
   Memo memo;
   RuleSet rule_set;
-  OptimizerTaskPool* task_pool;
+  OptimizerTaskPool *task_pool;
 
-  void SetTaskPool(OptimizerTaskPool* task_pool) { this->task_pool = task_pool; }
+  void SetTaskPool(OptimizerTaskPool *task_pool) {
+    this->task_pool = task_pool;
+  }
 
   std::shared_ptr<GroupExpression> MakeGroupExpression(
       std::shared_ptr<OperatorExpression> expr) {
@@ -51,6 +53,13 @@ class OptimizerMetadata {
                                    GroupID target_group) {
     gexpr = MakeGroupExpression(expr);
     return (memo.InsertExpression(gexpr, target_group, false) == gexpr.get());
+  }
+
+  // TODO(boweic): check if we really need to use shared_ptr
+  void ReplaceRewritedExpression(std::shared_ptr<OperatorExpression> expr,
+                                 GroupID target_group) {
+    memo.EraseExpression(target_group);
+    memo.InsertExpression(MakeGroupExpression(expr), target_group, false);
   }
 };
 

@@ -74,6 +74,22 @@ class Group {
   Stats* GetStats() { return stats_.get(); }
   inline GroupID GetID() { return id_; }
 
+  // This is called in rewrite phase to erase the only logical expression in the
+  // group
+  inline void EraseLogicalExpression() {
+    PL_ASSERT(logical_expressions_.size() == 1);
+    PL_ASSERT(physical_expressions_.size() == 0);
+    logical_expressions_.clear();
+  }
+
+  // This should only be called in rewrite phase to retrieve the only logical
+  // expr in the group
+  inline GroupExpression* GetLogicalExpression() {
+    PL_ASSERT(logical_expressions_.size() == 1);
+    PL_ASSERT(physical_expressions_.size() == 0);
+    return logical_expressions_[0].get();
+  }
+
  private:
   GroupID id_;
   // All the table alias this group represents. This will not change once create
@@ -90,8 +106,6 @@ class Group {
   std::vector<std::shared_ptr<GroupExpression>> physical_expressions_;
   std::vector<std::shared_ptr<GroupExpression>> enforced_exprs_;
 
-  // TODO(boweic): we need to add some fileds that indicate the logical property
-  // of the given group, e.g. output schema, stats and cost
   std::shared_ptr<Stats> stats_;
   double cost_lower_bound_ = -1;
 };

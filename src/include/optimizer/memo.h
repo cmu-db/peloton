@@ -23,9 +23,7 @@ namespace peloton {
 namespace optimizer {
 
 struct GExprPtrHash {
-  std::size_t operator()(GroupExpression* const& s) const {
-    return s->Hash();
-  }
+  std::size_t operator()(GroupExpression* const& s) const { return s->Hash(); }
 };
 
 struct GExprPtrEq {
@@ -50,13 +48,11 @@ class Memo {
    * target_group: an optional target group to insert expression into
    * return: existing expression if found. Otherwise, return the new expr
    */
-  GroupExpression* InsertExpression(
-      std::shared_ptr<GroupExpression> gexpr, bool enforced);
+  GroupExpression* InsertExpression(std::shared_ptr<GroupExpression> gexpr,
+                                    bool enforced);
 
-  GroupExpression* InsertExpression(
-      std::shared_ptr<GroupExpression> gexpr, GroupID target_group,
-      bool enforced);
-
+  GroupExpression* InsertExpression(std::shared_ptr<GroupExpression> gexpr,
+                                    GroupID target_group, bool enforced);
 
   const std::vector<std::unique_ptr<Group>>& Groups() const;
 
@@ -74,6 +70,14 @@ class Memo {
   }
   void AddParExpressionForRewrite(GroupExpression* gexpr) {
     group_expressions_.insert(gexpr);
+  }
+  // When a rewrite rule is applied, we need to replace the original gexpr with
+  // a new one, which reqires us to first remove the original gexpr from the
+  // memo
+  void EraseExpression(GroupID group_id) {
+    auto gexpr = groups_[group_id]->GetLogicalExpression();
+    group_expressions_.erase(gexpr);
+    groups_[group_id]->EraseLogicalExpression();
   }
 
  private:

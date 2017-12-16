@@ -33,7 +33,8 @@ class Rule {
   std::shared_ptr<Pattern> GetMatchPattern() const { return match_pattern; }
 
   bool IsPhysical() const {
-    return type_ > RuleType::LogicalPhysicalDelimiter && type_ < RuleType::RewriteDelimiter;
+    return type_ > RuleType::LogicalPhysicalDelimiter &&
+           type_ < RuleType::RewriteDelimiter;
   }
 
   bool IsLogical() const { return type_ < RuleType::LogicalPhysicalDelimiter; }
@@ -48,10 +49,10 @@ class Rule {
 
   virtual void Transform(
       std::shared_ptr<OperatorExpression> input,
-      std::vector<std::shared_ptr<OperatorExpression>>& transformed, OptimizeContext* context) const = 0;
+      std::vector<std::shared_ptr<OperatorExpression>>& transformed,
+      OptimizeContext* context) const = 0;
 
   inline RuleType GetType() { return type_; }
-
 
   inline uint32_t GetRuleIdx() { return static_cast<uint32_t>(type_); }
 
@@ -66,25 +67,40 @@ struct RuleWithPromise {
   Rule* rule;
   int promise;
 
-  bool operator<(const RuleWithPromise& r) const {
-    return promise < r.promise;
-  }
+  bool operator<(const RuleWithPromise& r) const { return promise < r.promise; }
 };
+
+enum class RewriteRuleSetName { PREDICATE_PUSH_DOWN };
 
 class RuleSet {
  public:
   // RuleSet will take the ownership of the rule object
   RuleSet();
 
-  std::vector<std::unique_ptr<Rule>>& GetTransformationRules() { return transformation_rules_; }
-  std::vector<std::unique_ptr<Rule>>& GetImplementationRules() { return implementation_rules_; }
-  std::vector<std::unique_ptr<Rule>>& GetRewriteRules() { return rewrite_rules_; }
+  std::vector<std::unique_ptr<Rule>>& GetTransformationRules() {
+    return transformation_rules_;
+  }
+  std::vector<std::unique_ptr<Rule>>& GetImplementationRules() {
+    return implementation_rules_;
+  }
+  std::vector<std::unique_ptr<Rule>>& GetRewriteRules() {
+    return rewrite_rules_;
+  }
+  std::vector<std::unique_ptr<Rule>>& GetRewriteRulesByName(
+      RewriteRuleSetName set) {
+    switch (set) {
+      case (RewriteRuleSetName::PREDICATE_PUSH_DOWN): {
+        return predicate_push_down_rules_;
+      }
+    }
+    return predicate_push_down_rules_;
+  }
 
  private:
   std::vector<std::unique_ptr<Rule>> transformation_rules_;
   std::vector<std::unique_ptr<Rule>> implementation_rules_;
   std::vector<std::unique_ptr<Rule>> rewrite_rules_;
-
+  std::vector<std::unique_ptr<Rule>> predicate_push_down_rules_;
 };
 
 }  // namespace optimizer

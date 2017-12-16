@@ -28,6 +28,7 @@
 #include "optimizer/query_to_operator_transformer.h"
 #include "optimizer/input_column_deriver.h"
 #include "optimizer/plan_generator.h"
+#include "optimizer/rule.h"
 #include "optimizer/rule_impls.h"
 #include "optimizer/optimizer_task_pool.h"
 #include "optimizer/optimize_context.h"
@@ -70,15 +71,17 @@ void Optimizer::OptimizeLoop(int root_group_id,
 
   // Head group expression with the root group as its only child.
   // This object is only used for simplified the logics for the rewrite phase
-  std::vector<GroupID> head_child_groups = {root_group_id};
-  std::shared_ptr<GroupExpression> head_gexpr =
-      std::make_shared<GroupExpression>(Operator(), head_child_groups);
+  // std::vector<GroupID> head_child_groups = {root_group_id};
+  // std::shared_ptr<GroupExpression> head_gexpr =
+  //     std::make_shared<GroupExpression>(Operator(), head_child_groups);
 
   // Perform optimization after the rewrite
   task_stack->Push(new OptimizeGroup(metadata_.memo.GetGroupByID(root_group_id),
                                      root_context));
   // Perform rewrite first
-  task_stack->Push(new RewriteExpression(head_gexpr.get(), 0, root_context));
+  // task_stack->Push(new RewriteExpression(head_gexpr.get(), 0, root_context));
+  task_stack->Push(new TopDownRewrite(root_group_id, root_context,
+                                      RewriteRuleSetName::PREDICATE_PUSH_DOWN));
 
   // TODO: Add timer for early stop
   while (!task_stack->Empty()) {

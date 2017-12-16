@@ -46,6 +46,10 @@ RuleSet::RuleSet() {
   rewrite_rules_.emplace_back(new PushFilterThroughJoin());
   rewrite_rules_.emplace_back(new CombineConsecutiveFilter());
   rewrite_rules_.emplace_back(new EmbedFilterIntoGet());
+
+  predicate_push_down_rules_.emplace_back(new PushFilterThroughJoin());
+  predicate_push_down_rules_.emplace_back(new CombineConsecutiveFilter());
+  predicate_push_down_rules_.emplace_back(new EmbedFilterIntoGet());
 }
 
 }  // namespace optimizer

@@ -15,18 +15,21 @@
 #include <memory>
 #include <vector>
 
+#include "include/optimizer/group.h"
+
 namespace peloton {
 namespace optimizer {
 
 class OptimizeContext;
 class Memo;
 class Rule;
-class RuleWithPromise;
+struct RuleWithPromise;
 class RuleSet;
 class Group;
 class GroupExpression;
 class OptimizerMetadata;
 class PropertySet;
+enum class RewriteRuleSetName;
 
 enum class OptimizerTaskType {
   OPTIMIZE_GROUP,
@@ -37,6 +40,8 @@ enum class OptimizerTaskType {
   OPTIMIZE_INPUTS,
   REWRITE_EXPR,
   APPLY_REWIRE_RULE,
+  TOP_DOWN_REWRITE,
+  BOTTOM_UP_REWRITE
 };
 
 class OptimizerTask {
@@ -45,7 +50,8 @@ class OptimizerTask {
                 OptimizerTaskType type)
       : type_(type), context_(context) {}
 
-  static void ConstructValidRules(GroupExpression* group_expr, OptimizeContext* context,
+  static void ConstructValidRules(GroupExpression* group_expr,
+                                  OptimizeContext* context,
                                   std::vector<std::unique_ptr<Rule>>& rules,
                                   std::vector<RuleWithPromise>& valid_rules);
 
@@ -56,7 +62,6 @@ class OptimizerTask {
   inline Memo& GetMemo() const;
 
   inline RuleSet& GetRuleSet() const;
-
 
  protected:
   OptimizerTaskType type_;
@@ -115,7 +120,8 @@ class ApplyRule : public OptimizerTask {
             std::shared_ptr<OptimizeContext> context, bool explore = false)
       : OptimizerTask(context, OptimizerTaskType::APPLY_RULE),
         group_expr_(group_expr),
-        rule_(rule), explore_only(explore) {}
+        rule_(rule),
+        explore_only(explore) {}
   virtual void execute() override;
 
  private:
@@ -134,7 +140,8 @@ class OptimizeInputs : public OptimizerTask {
   OptimizeInputs(OptimizeInputs* task)
       : OptimizerTask(task->context_, OptimizerTaskType::OPTIMIZE_INPUTS),
         output_input_properties_(std::move(task->output_input_properties_)),
-        group_expr_(task->group_expr_), cur_total_cost_(task->cur_total_cost_),
+        group_expr_(task->group_expr_),
+        cur_total_cost_(task->cur_total_cost_),
         cur_child_idx_(task->cur_child_idx_),
         cur_prop_pair_idx_(task->cur_prop_pair_idx_) {}
 
@@ -142,7 +149,8 @@ class OptimizeInputs : public OptimizerTask {
 
  private:
   std::vector<std::pair<std::shared_ptr<PropertySet>,
-                        std::vector<std::shared_ptr<PropertySet>>>> output_input_properties_;
+                        std::vector<std::shared_ptr<PropertySet>>>>
+      output_input_properties_;
   GroupExpression* group_expr_;
   double cur_total_cost_;
   int cur_child_idx_ = -1;
@@ -152,7 +160,8 @@ class OptimizeInputs : public OptimizerTask {
 
 class RewriteExpression : public OptimizerTask {
  public:
-  RewriteExpression(GroupExpression* parent_group_expr, int parent_group_offset_,
+  RewriteExpression(GroupExpression* parent_group_expr,
+                    int parent_group_offset_,
                     std::shared_ptr<OptimizeContext> context)
       : OptimizerTask(context, OptimizerTaskType::REWRITE_EXPR),
         parent_group_expr_(parent_group_expr),
@@ -180,5 +189,18 @@ class ApplyRewriteRule : public OptimizerTask {
   Rule* rule_;
 };
 
+class TopDownRewrite : public OptimizerTask {
+ public:
+  TopDownRewrite(GroupID group_id, std::shared_ptr<OptimizeContext> context,
+                 RewriteRuleSetName rule_set_name)
+      : OptimizerTask(context, OptimizerTaskType::TOP_DOWN_REWRITE),
+        group_id_(group_id),
+        rule_set_name_(rule_set_name) {}
+  virtual void execute() override;
+
+ private:
+  GroupID group_id_;
+  RewriteRuleSetName rule_set_name_;
+};
 }  // namespace optimizer
 }  // namespace peloton
