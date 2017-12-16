@@ -52,8 +52,37 @@ void InputColumnDeriver::Visit(const DummyScan *) {}
 void InputColumnDeriver::Visit(const PhysicalSeqScan *) { ScanHelper(); }
 
 void InputColumnDeriver::Visit(const PhysicalIndexScan *) { ScanHelper(); }
-// TODO QueryDerivedScan should be deprecated
-void InputColumnDeriver::Visit(const QueryDerivedScan *) { PL_ASSERT(false); }
+
+void InputColumnDeriver::Visit(const QueryDerivedScan *op) {
+  // QueryDerivedScan should only be a renaming layer
+  ExprMap output_cols_map;
+  for (auto expr : required_cols_) {
+    expression::ExpressionUtil::GetTupleValueExprs(output_cols_map, expr);
+  }
+  vector<AbstractExpression *> output_cols =
+      vector<AbstractExpression *>(output_cols_map.size());
+  ExprMap input_cols_map;
+  size_t input_cols_idx = 0;
+  for (auto &entry : output_cols_map) {
+    auto tv_expr =
+        reinterpret_cast<expression::TupleValueExpression *>(entry.first);
+    output_cols[entry.second] = tv_expr;
+    // Get the actual expression
+    auto input_col = const_cast<QueryDerivedScan *>(op)
+                         ->alias_to_expr_map[tv_expr->GetColumnName()]
+                         .get();
+    if (!input_cols_map.count(input_col)) {
+      input_cols_map[input_col] = input_cols_idx++;
+    }
+  }
+  vector<AbstractExpression *> input_cols_(output_cols_map.size());
+  for (auto &entry : input_cols_map) {
+    input_cols_[entry.second] = entry.first;
+  }
+  output_input_cols_ =
+      pair<vector<AbstractExpression *>, vector<vector<AbstractExpression *>>>{
+          output_cols, {output_cols}};
+}
 
 void InputColumnDeriver::Visit(const PhysicalLimit *) { Passdown(); }
 

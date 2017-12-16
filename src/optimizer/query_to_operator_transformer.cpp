@@ -123,8 +123,8 @@ void QueryToOperatorTransformer::Visit(parser::JoinDefinition *node) {
   switch (node->type) {
     case JoinType::INNER: {
       CollectPredicates(node->condition.get());
-      join_expr = std::make_shared<OperatorExpression>(
-          LogicalInnerJoin::make());
+      join_expr =
+          std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
       break;
     }
     case JoinType::OUTER: {
@@ -291,7 +291,7 @@ void QueryToOperatorTransformer::Visit(
 void QueryToOperatorTransformer::Visit(expression::ComparisonExpression *expr) {
   auto expr_type = expr->GetExpressionType();
   if (expr->GetExpressionType() == ExpressionType::COMPARE_IN) {
-    std::vector<expression::AbstractExpression*> select_list;
+    std::vector<expression::AbstractExpression *> select_list;
     if (GenerateSubquerytree(expr->GetModifiableChild(1), select_list)) {
       if (select_list.size() != 1)
         throw Exception("Array in predicates not supported");
@@ -302,11 +302,11 @@ void QueryToOperatorTransformer::Visit(expression::ComparisonExpression *expr) {
     }
 
   } else if (expr_type == ExpressionType::COMPARE_EQUAL ||
-      expr_type == ExpressionType::COMPARE_GREATERTHAN ||
-      expr_type == ExpressionType::COMPARE_GREATERTHANOREQUALTO ||
-      expr_type == ExpressionType::COMPARE_LESSTHAN ||
-      expr_type == ExpressionType::COMPARE_LESSTHANOREQUALTO) {
-    std::vector<expression::AbstractExpression*> select_list;
+             expr_type == ExpressionType::COMPARE_GREATERTHAN ||
+             expr_type == ExpressionType::COMPARE_GREATERTHANOREQUALTO ||
+             expr_type == ExpressionType::COMPARE_LESSTHAN ||
+             expr_type == ExpressionType::COMPARE_LESSTHANOREQUALTO) {
+    std::vector<expression::AbstractExpression *> select_list;
     if (GenerateSubquerytree(expr->GetModifiableChild(0), select_list, true)) {
       if (select_list.size() != 1)
         throw Exception("Array in predicates not supported");
@@ -326,10 +326,9 @@ void QueryToOperatorTransformer::Visit(expression::ComparisonExpression *expr) {
   expr->AcceptChildren(this);
 }
 
-
 void QueryToOperatorTransformer::Visit(expression::OperatorExpression *expr) {
   if (expr->GetExpressionType() == ExpressionType::OPERATOR_EXISTS) {
-    std::vector<expression::AbstractExpression*> select_list;
+    std::vector<expression::AbstractExpression *> select_list;
     if (GenerateSubquerytree(expr->GetModifiableChild(0), select_list)) {
       PL_ASSERT(!select_list.empty());
 
@@ -350,7 +349,7 @@ bool QueryToOperatorTransformer::RequireAggregation(
   for (auto &expr : op->getSelectList()) {
     std::vector<expression::AggregateExpression *> aggr_exprs;
     expression::ExpressionUtil::GetAggregateExprs(aggr_exprs, expr.get());
-    if (aggr_exprs.size() > 0)
+    if (!aggr_exprs.empty())
       has_aggregation = true;
     else
       has_other_exprs = true;
@@ -371,16 +370,15 @@ void QueryToOperatorTransformer::CollectPredicates(
   util::ExtractPredicates(expr, predicates_);
 }
 
-bool QueryToOperatorTransformer::GenerateSubquerytree(expression::AbstractExpression* expr,
-                                                      std::vector<expression::AbstractExpression*>& select_list,
-                                                      bool single_join) {
-  if (expr->GetExpressionType() != ExpressionType::ROW_SUBQUERY)
-    return false;
+bool QueryToOperatorTransformer::GenerateSubquerytree(
+    expression::AbstractExpression *expr,
+    std::vector<expression::AbstractExpression *> &select_list,
+    bool single_join) {
+  if (expr->GetExpressionType() != ExpressionType::ROW_SUBQUERY) return false;
   auto subquery_expr = dynamic_cast<expression::SubqueryExpression *>(expr);
   auto sub_select = subquery_expr->GetSubSelect();
 
-  for (auto &ele : sub_select->select_list)
-    select_list.push_back(ele.get());
+  for (auto &ele : sub_select->select_list) select_list.push_back(ele.get());
 
   // Construct join
   std::shared_ptr<OperatorExpression> op_expr;

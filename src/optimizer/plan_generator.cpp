@@ -94,7 +94,10 @@ void PlanGenerator::Visit(const PhysicalIndexScan *op) {
       op->table_, predicate.release(), column_ids, index_scan_desc, false));
 }
 
-void PlanGenerator::Visit(const QueryDerivedScan *) {}
+void PlanGenerator::Visit(const QueryDerivedScan *) {
+  PL_ASSERT(children_plans_.size() == 1);
+  output_plan_ = move(children_plans_[0]);
+}
 
 void PlanGenerator::Visit(const PhysicalLimit *op) {
   unique_ptr<planner::AbstractPlan> limit_plan(
@@ -211,14 +214,12 @@ void PlanGenerator::Visit(const PhysicalInnerHashJoin *op) {
   vector<ExprMap> r_child_map{move(children_expr_map_[1])};
   for (auto &expr : op->left_keys) {
     auto left_key = expr->Copy();
-    expression::ExpressionUtil::EvaluateExpression(l_child_map,
-                                                   left_key);
+    expression::ExpressionUtil::EvaluateExpression(l_child_map, left_key);
     left_keys.emplace_back(left_key);
   }
   for (auto &expr : op->right_keys) {
     auto right_key = expr->Copy();
-    expression::ExpressionUtil::EvaluateExpression(r_child_map,
-                                                   right_key);
+    expression::ExpressionUtil::EvaluateExpression(r_child_map, right_key);
     right_keys.emplace_back(right_key);
   }
   // Evaluate Expr for hash plan
@@ -339,6 +340,7 @@ vector<oid_t> PlanGenerator::GenerateColumnsForScan() {
         reinterpret_cast<expression::TupleValueExpression *>(output_expr);
 
     // Set column offset
+    LOG_DEBUG("col %s", output_tvexpr->GetColumnName().c_str());
     PL_ASSERT(output_tvexpr->GetIsBound() == true);
     auto col_id = std::get<2>(output_tvexpr->GetBoundOid());
     column_ids.push_back(col_id);

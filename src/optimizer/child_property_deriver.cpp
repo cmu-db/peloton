@@ -82,8 +82,6 @@ void ChildPropertyDeriver::Visit(const PhysicalIndexScan *op) {
 }
 
 void ChildPropertyDeriver::Visit(const QueryDerivedScan *) {
-  // TODO(boweic): QueryDerivedScan should be deprecated when we added schema
-  // for logical groups
   output_.push_back(
       make_pair(requirements_, vector<shared_ptr<PropertySet>>{requirements_}));
 }
@@ -103,9 +101,8 @@ void ChildPropertyDeriver::Visit(const PhysicalHashGroupBy *) {
 void ChildPropertyDeriver::Visit(const PhysicalSortGroupBy *op) {
   // Child must provide sort for Groupby columns
   vector<bool> sort_acsending(op->columns.size(), true);
-  vector<expression::AbstractExpression*> sort_cols;
-  for (auto &col : op->columns)
-    sort_cols.push_back(col.get());
+  vector<expression::AbstractExpression *> sort_cols;
+  for (auto &col : op->columns) sort_cols.push_back(col.get());
   shared_ptr<Property> sort_prop(
       new PropertySort(sort_cols, move(sort_acsending)));
   shared_ptr<PropertySet> prop_set =
