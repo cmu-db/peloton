@@ -80,7 +80,7 @@ if(UNIX OR APPLE)
 endif()
 
 # ---[ Warnings
-peloton_warnings_disable(CMAKE_CXX_FLAGS -Wno-strict-aliasing)
+peloton_warnings_disable(CMAKE_CXX_FLAGS -Wno-strict-aliasing -Wno-implicit-fallthrough)
 
 # Turn on sanitizers if necessary.
 if(USE_SANITIZER)
