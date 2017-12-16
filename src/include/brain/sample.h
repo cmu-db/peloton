@@ -25,11 +25,10 @@ namespace brain {
 #define DEFAULT_COLUMN_VALUE 0.5
 #define DEFAULT_METRIC_VALUE 0
 
-enum SampleType {
-  SAMPLE_TYPE_INVALID = 0,
-
-  SAMPLE_TYPE_ACCESS = 1,  // accessed attributes
-  SAMPLE_TYPE_UPDATE = 2   // updated attributes
+enum class SampleType {
+  INVALID = 0,
+  ACCESS = 1,  // accessed attributes
+  UPDATE = 2   // updated attributes
 };
 
 //===--------------------------------------------------------------------===//
@@ -42,11 +41,11 @@ class Sample : public Printable {
       : columns_accessed_(
             std::vector<double>(column_count, DEFAULT_COLUMN_VALUE)),
         weight_(DEFAULT_SAMPLE_WEIGHT),
-        sample_type_(SAMPLE_TYPE_ACCESS) {}
+        sample_type_(SampleType::ACCESS) {}
 
   Sample(const std::vector<double> &columns_accessed,
          double weight = DEFAULT_SAMPLE_WEIGHT,
-         SampleType sample_type = SAMPLE_TYPE_ACCESS)
+         SampleType sample_type = SampleType::ACCESS)
       : columns_accessed_(columns_accessed),
         weight_(weight),
         sample_type_(sample_type) {}
