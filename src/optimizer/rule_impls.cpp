@@ -714,15 +714,10 @@ void PushFilterThroughJoin::Transform(std::shared_ptr<OperatorExpression> input,
       join_predicates.emplace_back(predicate);
   }
 
-  std::shared_ptr<OperatorExpression> output;
   // Construct join operator
-  if (join_predicates.empty())
-    output = join_op_expr;
-  else {
-    auto pre_join_predicate = join_op_expr->Op().As<LogicalInnerJoin>()->join_predicates;
-    join_predicates.insert(join_predicates.end(), pre_join_predicate.begin(), pre_join_predicate.end());
-    output = std::make_shared<OperatorExpression>(LogicalInnerJoin::make(join_predicates));
-  }
+  auto pre_join_predicate = join_op_expr->Op().As<LogicalInnerJoin>()->join_predicates;
+  join_predicates.insert(join_predicates.end(), pre_join_predicate.begin(), pre_join_predicate.end());
+  std::shared_ptr<OperatorExpression> output = std::make_shared<OperatorExpression>(LogicalInnerJoin::make(join_predicates));
 
   // Construct left filter if any
   if (!left_predicates.empty()) {
@@ -741,6 +736,8 @@ void PushFilterThroughJoin::Transform(std::shared_ptr<OperatorExpression> input,
   }
   else
     output->PushChild(join_op_expr->Children()[1]);
+
+  PL_ASSERT(output->Children().size() == 2);
 
   transformed.push_back(output);
 }
