@@ -53,6 +53,7 @@
 #ifdef BWTREE_PELOTON
 
 #include "index/index.h"
+#include "util/global.h"
 
 #endif
 
@@ -4358,6 +4359,7 @@ abort_traverse:
           bwt_printf("ERROR: Observed LeafRemoveNode in delta chain\n");
 
           assert(false);
+          PELOTON_FALLTHROUGH;
         } // case LeafRemoveType
         case NodeType::LeafMergeType: {
           bwt_printf("Observed a merge node on leaf delta chain\n");
@@ -4543,6 +4545,7 @@ abort_traverse:
           bwt_printf("ERROR: Observed LeafRemoveNode in delta chain\n");
 
           assert(false);
+          PELOTON_FALLTHROUGH;
         } // case LeafRemoveType
         case NodeType::LeafMergeType: {
           bwt_printf("Observed a merge node on leaf delta chain\n");
@@ -4743,6 +4746,7 @@ abort_traverse:
           bwt_printf("ERROR: Observed LeafRemoveNode in delta chain\n");
 
           assert(false);
+          PELOTON_FALLTHROUGH;
         } // case LeafRemoveType
         case NodeType::LeafMergeType: {
           bwt_printf("Observed a merge node on leaf delta chain\n");
@@ -5074,6 +5078,7 @@ abort_traverse:
           bwt_printf("ERROR: LeafRemoveNode not allowed\n");
 
           assert(false);
+          PELOTON_FALLTHROUGH;
         } // case LeafRemoveType
         case NodeType::LeafSplitType: {
           const LeafSplitNode *split_node_p = \
@@ -5960,11 +5965,10 @@ before_switch:
 
           return;
         } // if ret == true
-
         //
         // FALL THROUGH IF POSTING MERGE DELTA SUCCEEDS
         //
-
+        PELOTON_FALLTHROUGH;
       } // case Inner/LeafRemoveType
       case NodeType::InnerMergeType:
       case NodeType::LeafMergeType: {
