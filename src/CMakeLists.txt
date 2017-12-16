@@ -9,6 +9,7 @@ peloton_protobuf_generate_cpp_py(${proto_gen_folder} proto_srcs proto_hdrs proto
 
 # include python files either to force generation
 add_library(peloton-proto STATIC ${proto_hdrs} ${proto_srcs} ${proto_python})
+target_compile_options(peloton-proto PRIVATE "-Wno-unused-parameter")
 set(Peloton_LINKER_LIBS peloton-proto ${Peloton_LINKER_LIBS}) # note, crucial to prepend!
 peloton_default_properties(peloton-proto)
 
