@@ -185,13 +185,15 @@ void CheckMath1(T1 x, T2 y, type::TypeId xtype, type::TypeId ytype) {
     EXPECT_THROW(type::Value(xtype, x).Add(type::Value(ytype, y)),
       peloton::Exception);
   else if (sizeof(x) >= sizeof(y)) {
-    if ((x > 0 && y > 0 && sum1 < 0) || (x < 0 && y < 0 && sum1 > 0))
+    if ((x > 0 && y > 0 && sum1 < 0) || (x < 0 && y < 0 && sum1 > 0)) {
       EXPECT_THROW(type::Value(xtype, x).Add(type::Value(ytype, y)),
         peloton::Exception);
+    }
   }
-  else if ((x > 0 && y > 0 && sum2 < 0) || (x < 0 && y < 0 && sum2 > 0))
+  else if ((x > 0 && y > 0 && sum2 < 0) || (x < 0 && y < 0 && sum2 > 0)) {
     EXPECT_THROW(type::Value(xtype, x).Add(type::Value(ytype, y)),
       peloton::Exception);
+  }
   else {
     v1 = type::Value(xtype, x).Add(type::Value(ytype, y));
     CheckEqual(v1, v2);
@@ -201,17 +203,20 @@ void CheckMath1(T1 x, T2 y, type::TypeId xtype, type::TypeId ytype) {
   T1 diff1 = (T1)(x - y);
   T2 diff2 = (T2)(x - y);
   // Out of range detection
-  if ((x - y) != diff1 && (x - y) != diff2)
+  if ((x - y) != diff1 && (x - y) != diff2) {
     EXPECT_THROW(type::Value(xtype, x).Subtract(type::Value(ytype, y)),
       peloton::Exception);
+  }
   else if (sizeof(x) >= sizeof(y)) {
-    if ((x > 0 && y < 0 && diff1 < 0) || (x < 0 && y > 0 && diff1 > 0))
+    if ((x > 0 && y < 0 && diff1 < 0) || (x < 0 && y > 0 && diff1 > 0)) {
       EXPECT_THROW(type::Value(xtype, x).Subtract(type::Value(ytype, y)),
         peloton::Exception);
+    }
   }
-  else if ((x > 0 && y < 0 && diff2 < 0) || (x < 0 && y > 0 && diff2 > 0))
+  else if ((x > 0 && y < 0 && diff2 < 0) || (x < 0 && y > 0 && diff2 > 0)) {
     EXPECT_THROW(type::Value(xtype, x).Subtract(type::Value(ytype, y)),
       peloton::Exception);
+  }
   else {
     v1 = type::Value(xtype, x).Subtract(type::Value(ytype, y));
     CheckEqual(v1, v2);
@@ -222,17 +227,20 @@ void CheckMath1(T1 x, T2 y, type::TypeId xtype, type::TypeId ytype) {
   T1 prod1 = (T1)(x * y);
   T2 prod2 = (T2)(x * y);
   // Out of range detection
-  if ((x * y) != prod1 && (x * y) != prod2)
+  if ((x * y) != prod1 && (x * y) != prod2) {
     EXPECT_THROW(type::Value(xtype, x).Multiply(type::Value(ytype, y)),
       peloton::Exception);
+  }
   else if (sizeof(x) >= sizeof(y)) {
-    if (y != 0 && prod1 / y != x)
+    if (y != 0 && prod1 / y != x) {
       EXPECT_THROW(type::Value(xtype, x).Multiply(type::Value(ytype, y)),
         peloton::Exception);
+    }
   }
-  else if (y != 0 && prod2 / y != x)
+  else if (y != 0 && prod2 / y != x) {
     EXPECT_THROW(type::Value(xtype, x).Multiply(type::Value(ytype, y)),
       peloton::Exception);
+  }
   else {
     v1 = type::Value(xtype, x).Multiply(type::Value(ytype, y));
     CheckEqual(v1, v2);
@@ -240,9 +248,10 @@ void CheckMath1(T1 x, T2 y, type::TypeId xtype, type::TypeId ytype) {
 
   // Test x / y
   // Divide by zero detection
-  if (y == 0)
+  if (y == 0) {
     EXPECT_THROW(type::Value(xtype, x).Divide(type::Value(ytype, y)),
       peloton::Exception);
+  }
   else {
     v1 = type::Value(xtype, x).Divide(type::Value(ytype, y));
     v2 = type::Value(maxtype, x / y);
@@ -251,9 +260,10 @@ void CheckMath1(T1 x, T2 y, type::TypeId xtype, type::TypeId ytype) {
 
   // Test x % y
   // Divide by zero detection
-  if (y == 0)
+  if (y == 0) {
     EXPECT_THROW(type::Value(xtype, x).Modulo(type::Value(ytype, y)),
       peloton::Exception);
+  }
   else {
     v1 = type::Value(xtype, x).Modulo(type::Value(ytype, y));
     v2 = type::Value(maxtype, x % y);
@@ -261,9 +271,10 @@ void CheckMath1(T1 x, T2 y, type::TypeId xtype, type::TypeId ytype) {
   }
 
   // Test sqrt(x)
-  if (x < 0)
+  if (x < 0) {
     EXPECT_THROW(type::Value(xtype, x).Sqrt(),
       peloton::Exception);
+  }
   else {
     v1 = type::Value(xtype, x).Sqrt();
     v2 = type::ValueFactory::GetDecimalValue(sqrt(x));
