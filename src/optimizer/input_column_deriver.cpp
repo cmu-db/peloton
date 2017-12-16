@@ -81,7 +81,7 @@ void InputColumnDeriver::Visit(const QueryDerivedScan *op) {
   }
   output_input_cols_ =
       pair<vector<AbstractExpression *>, vector<vector<AbstractExpression *>>>{
-          output_cols, {output_cols}};
+          output_cols, {input_cols_}};
 }
 
 void InputColumnDeriver::Visit(const PhysicalLimit *) { Passdown(); }

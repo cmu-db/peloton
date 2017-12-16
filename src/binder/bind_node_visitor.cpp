@@ -21,11 +21,9 @@
 namespace peloton {
 namespace binder {
 
-BindNodeVisitor::BindNodeVisitor(
-    concurrency::Transaction *txn,
-    std::string default_database_name)
-    : txn_(txn),
-      default_database_name_(default_database_name) {
+BindNodeVisitor::BindNodeVisitor(concurrency::Transaction *txn,
+                                 std::string default_database_name)
+    : txn_(txn), default_database_name_(default_database_name) {
   context_ = nullptr;
 }
 
@@ -72,7 +70,7 @@ void BindNodeVisitor::Visit(parser::SelectStatement *node) {
   }
   node->select_list = std::move(new_select_list);
   // Temporarily discard const to update the depth
-  const_cast<parser::SelectStatement*>(node)->depth = context_->GetDepth();
+  const_cast<parser::SelectStatement *>(node)->depth = context_->GetDepth();
 }
 
 // Some sub query nodes inside SelectStatement
@@ -111,13 +109,13 @@ void BindNodeVisitor::Visit(parser::TableRef *node) {
 }
 
 void BindNodeVisitor::Visit(parser::GroupByDescription *node) {
-  for (auto& col : node->columns) {
+  for (auto &col : node->columns) {
     col->Accept(this);
   }
   if (node->having != nullptr) node->having->Accept(this);
 }
 void BindNodeVisitor::Visit(parser::OrderDescription *node) {
-  for (auto& expr : node->exprs)
+  for (auto &expr : node->exprs)
     if (expr != nullptr) expr->Accept(this);
 }
 
@@ -195,17 +193,19 @@ void BindNodeVisitor::Visit(expression::TupleValueExpression *expr) {
     // Table name is present
     else {
       // Regular table
-      if (BinderContext::GetRegularTableObj(context_, table_name, table_obj, depth)) {
+      if (BinderContext::GetRegularTableObj(context_, table_name, table_obj,
+                                            depth)) {
         if (!BinderContext::GetColumnPosTuple(col_name, table_obj,
                                               col_pos_tuple, value_type)) {
           throw Exception("Cannot find column " + col_name);
         }
       }
       // Nested table
-      else if (!BinderContext::CheckNestedTableColumn(context_, table_name,
-                                                      col_name, value_type, depth))
+      else if (!BinderContext::CheckNestedTableColumn(
+                   context_, table_name, col_name, value_type, depth))
         throw Exception("Invalid table reference " + expr->GetTableName());
     }
+    PL_ASSERT(!expr->GetIsBound());
     expr->SetDepth(depth);
     expr->SetColName(col_name);
     expr->SetValueType(value_type);

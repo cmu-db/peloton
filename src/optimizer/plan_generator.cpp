@@ -340,9 +340,10 @@ vector<oid_t> PlanGenerator::GenerateColumnsForScan() {
         reinterpret_cast<expression::TupleValueExpression *>(output_expr);
 
     // Set column offset
-    LOG_DEBUG("col %s", output_tvexpr->GetColumnName().c_str());
     PL_ASSERT(output_tvexpr->GetIsBound() == true);
     auto col_id = std::get<2>(output_tvexpr->GetBoundOid());
+    LOG_DEBUG("col %s, bind tuple %u", output_tvexpr->GetColumnName().c_str(),
+              col_id);
     column_ids.push_back(col_id);
   }
 

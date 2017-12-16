@@ -206,7 +206,8 @@ void ExtractPredicates(expression::AbstractExpression* expr,
                                                       table_alias_set);
     // Deep copy expression to avoid memory leak
     annotated_predicates.emplace_back(AnnotatedExpression(
-        std::shared_ptr<expression::AbstractExpression>(predicate->Copy()), table_alias_set));
+        std::shared_ptr<expression::AbstractExpression>(predicate->Copy()),
+        table_alias_set));
   }
 }
 
@@ -279,7 +280,8 @@ expression::AbstractExpression* CombinePredicates(
       predicates[1].expr->Copy());
   for (size_t i = 2; i < predicates.size(); i++) {
     conjunction = new expression::ConjunctionExpression(
-        ExpressionType::CONJUNCTION_AND, conjunction, predicates[i].expr->Copy());
+        ExpressionType::CONJUNCTION_AND, conjunction,
+        predicates[i].expr->Copy());
   }
   return conjunction;
 }
@@ -374,6 +376,8 @@ ConstructSelectElementMap(
     } else if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
       auto tv_expr =
           reinterpret_cast<expression::TupleValueExpression*>(expr.get());
+      LOG_DEBUG("col %s, tuple %u", tv_expr->GetColumnName().c_str(),
+                std::get<2>(tv_expr->GetBoundOid()));
       alias = tv_expr->GetColumnName();
     } else
       continue;
@@ -392,7 +396,8 @@ expression::AbstractExpression* TransformQueryDerivedTablePredicates(
     auto new_expr =
         alias_to_expr_map
             .find(reinterpret_cast<expression::TupleValueExpression*>(expr)
-                      ->GetColumnName())->second;
+                      ->GetColumnName())
+            ->second;
     return new_expr->Copy();
   }
   auto child_size = expr->GetChildrenSize();
@@ -403,11 +408,12 @@ expression::AbstractExpression* TransformQueryDerivedTablePredicates(
   return expr;
 }
 
-void ExtractEquiJoinKeys(const std::vector<AnnotatedExpression> join_predicates,
-                         std::vector<std::unique_ptr<expression::AbstractExpression>> &left_keys,
-                         std::vector<std::unique_ptr<expression::AbstractExpression>> &right_keys,
-                         const std::unordered_set<std::string> &left_alias,
-                         const std::unordered_set<std::string> &right_alias) {
+void ExtractEquiJoinKeys(
+    const std::vector<AnnotatedExpression> join_predicates,
+    std::vector<std::unique_ptr<expression::AbstractExpression>>& left_keys,
+    std::vector<std::unique_ptr<expression::AbstractExpression>>& right_keys,
+    const std::unordered_set<std::string>& left_alias,
+    const std::unordered_set<std::string>& right_alias) {
   for (auto& expr_unit : join_predicates) {
     if (expr_unit.expr->GetExpressionType() == ExpressionType::COMPARE_EQUAL) {
       auto l_expr = expr_unit.expr->GetChild(0);
@@ -415,15 +421,17 @@ void ExtractEquiJoinKeys(const std::vector<AnnotatedExpression> join_predicates,
       if (l_expr->GetExpressionType() == ExpressionType::VALUE_TUPLE &&
           r_expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
         auto l_tv_expr =
-            reinterpret_cast<const expression::TupleValueExpression *>(l_expr);
+            reinterpret_cast<const expression::TupleValueExpression*>(l_expr);
         auto r_tv_expr =
-            reinterpret_cast<const expression::TupleValueExpression *>(r_expr);
+            reinterpret_cast<const expression::TupleValueExpression*>(r_expr);
         if (left_alias.find(l_tv_expr->GetTableName()) != left_alias.end() &&
             right_alias.find(r_tv_expr->GetTableName()) != right_alias.end()) {
           left_keys.emplace_back(l_tv_expr->Copy());
           right_keys.emplace_back(r_tv_expr->Copy());
-        } else if (left_alias.find(r_tv_expr->GetTableName()) != left_alias.end() &&
-            right_alias.find(l_tv_expr->GetTableName()) != right_alias.end()) {
+        } else if (left_alias.find(r_tv_expr->GetTableName()) !=
+                       left_alias.end() &&
+                   right_alias.find(l_tv_expr->GetTableName()) !=
+                       right_alias.end()) {
           left_keys.emplace_back(r_tv_expr->Copy());
           right_keys.emplace_back(l_tv_expr->Copy());
         }
