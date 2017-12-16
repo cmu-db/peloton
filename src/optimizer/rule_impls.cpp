@@ -48,8 +48,11 @@ bool InnerJoinCommutativity::Check(std::shared_ptr<OperatorExpression> expr,
 void InnerJoinCommutativity::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed, UNUSED_ATTRIBUTE OptimizeContext* context) const {
+  auto join_op = input->Op().As<LogicalInnerJoin>();
+  auto join_predicates =
+      std::vector<AnnotatedExpression>(join_op->join_predicates);
   auto result_plan =
-      std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
+      std::make_shared<OperatorExpression>(LogicalInnerJoin::make(join_predicates));
   std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PL_ASSERT(children.size() == 2);
   LOG_TRACE(
