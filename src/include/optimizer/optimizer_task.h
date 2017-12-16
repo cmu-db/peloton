@@ -202,5 +202,21 @@ class TopDownRewrite : public OptimizerTask {
   GroupID group_id_;
   RewriteRuleSetName rule_set_name_;
 };
+
+class BottomUpRewrite : public OptimizerTask {
+ public:
+  BottomUpRewrite(GroupID group_id, std::shared_ptr<OptimizeContext> context,
+                  RewriteRuleSetName rule_set_name, bool has_optimized_child)
+      : OptimizerTask(context, OptimizerTaskType::BOTTOM_UP_REWRITE),
+        group_id_(group_id),
+        rule_set_name_(rule_set_name),
+        has_optimized_child_(has_optimized_child) {}
+  virtual void execute() override;
+
+ private:
+  GroupID group_id_;
+  RewriteRuleSetName rule_set_name_;
+  bool has_optimized_child_;
+};
 }  // namespace optimizer
 }  // namespace peloton
