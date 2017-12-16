@@ -14,7 +14,7 @@
 #include <include/settings/settings_manager.h>
 
 #include "expression/expression_util.h"
-
+#include "expression/subquery_expression.h"
 #include "optimizer/operator_expression.h"
 #include "optimizer/operators.h"
 #include "optimizer/query_node_visitor.h"
@@ -45,6 +45,10 @@ QueryToOperatorTransformer::ConvertToOpExpression(parser::SQLStatement *op) {
 }
 
 void QueryToOperatorTransformer::Visit(parser::SelectStatement *op) {
+  auto pre_predicates = std::move(predicates_);
+  auto pre_depth = depth_;
+  depth_ = op->depth;
+
   if (op->from_table != nullptr) {
     // SELECT with FROM
     op->from_table->Accept(this);
@@ -102,7 +106,8 @@ void QueryToOperatorTransformer::Visit(parser::SelectStatement *op) {
     output_expr_ = limit_expr;
   }
 
-  predicates_.clear();
+  predicates_ = std::move(pre_predicates);
+  depth_ = pre_depth;
 }
 void QueryToOperatorTransformer::Visit(parser::JoinDefinition *node) {
   // Get left operator
@@ -283,6 +288,59 @@ void QueryToOperatorTransformer::Visit(
 void QueryToOperatorTransformer::Visit(
     UNUSED_ATTRIBUTE parser::AnalyzeStatement *op) {}
 
+void QueryToOperatorTransformer::Visit(expression::ComparisonExpression *expr) {
+  auto expr_type = expr->GetExpressionType();
+  if (expr->GetExpressionType() == ExpressionType::COMPARE_IN) {
+    std::vector<expression::AbstractExpression*> select_list;
+    if (GenerateSubquerytree(expr->GetModifiableChild(1), select_list)) {
+      if (select_list.size() != 1)
+        throw Exception("Array in predicates not supported");
+
+      // Set the right child as the output of the subquery
+      expr->SetChild(1, select_list.at(0)->Copy());
+      expr->SetExpressionType(ExpressionType::COMPARE_EQUAL);
+    }
+
+  } else if (expr_type == ExpressionType::COMPARE_EQUAL ||
+      expr_type == ExpressionType::COMPARE_GREATERTHAN ||
+      expr_type == ExpressionType::COMPARE_GREATERTHANOREQUALTO ||
+      expr_type == ExpressionType::COMPARE_LESSTHAN ||
+      expr_type == ExpressionType::COMPARE_LESSTHANOREQUALTO) {
+    std::vector<expression::AbstractExpression*> select_list;
+    if (GenerateSubquerytree(expr->GetModifiableChild(0), select_list, true)) {
+      if (select_list.size() != 1)
+        throw Exception("Array in predicates not supported");
+
+      // Set the left child as the output of the subquery
+      expr->SetChild(0, select_list.at(0)->Copy());
+    }
+    select_list.clear();
+    if (GenerateSubquerytree(expr->GetModifiableChild(1), select_list, true)) {
+      if (select_list.size() != 1)
+        throw Exception("Array in predicates not supported");
+
+      // Set the right child as the output of the subquery
+      expr->SetChild(1, select_list.at(0)->Copy());
+    }
+  }
+  expr->AcceptChildren(this);
+}
+
+
+void QueryToOperatorTransformer::Visit(expression::OperatorExpression *expr) {
+  if (expr->GetExpressionType() == ExpressionType::OPERATOR_EXISTS) {
+    std::vector<expression::AbstractExpression*> select_list;
+    if (GenerateSubquerytree(expr->GetModifiableChild(0), select_list)) {
+      PL_ASSERT(!select_list.empty());
+
+      // Set the right child as the output of the subquery
+      expr->SetChild(0, select_list.at(0)->Copy());
+    }
+  }
+
+  expr->AcceptChildren(this);
+}
+
 bool QueryToOperatorTransformer::RequireAggregation(
     const parser::SelectStatement *op) {
   if (op->group_by != nullptr) return true;
@@ -309,7 +367,36 @@ bool QueryToOperatorTransformer::RequireAggregation(
 
 void QueryToOperatorTransformer::CollectPredicates(
     expression::AbstractExpression *expr) {
+  expr->Accept(this);
   util::ExtractPredicates(expr, predicates_);
+}
+
+bool QueryToOperatorTransformer::GenerateSubquerytree(expression::AbstractExpression* expr,
+                                                      std::vector<expression::AbstractExpression*>& select_list,
+                                                      bool single_join) {
+  if (expr->GetExpressionType() != ExpressionType::ROW_SUBQUERY)
+    return false;
+  auto subquery_expr = dynamic_cast<expression::SubqueryExpression *>(expr);
+  auto sub_select = subquery_expr->GetSubSelect();
+
+  for (auto &ele : sub_select->select_list)
+    select_list.push_back(ele.get());
+
+  // Construct join
+  std::shared_ptr<OperatorExpression> op_expr;
+  if (single_join)
+    op_expr = std::make_shared<OperatorExpression>(LogicalSingleJoin::make());
+  else
+    op_expr = std::make_shared<OperatorExpression>(LogicalMarkJoin::make());
+
+  // Push previous output
+  op_expr->PushChild(output_expr_);
+
+  sub_select->Accept(this);
+
+  // Push subquery output
+  op_expr->PushChild(output_expr_);
+  return true;
 }
 
 }  // namespace optimizer

@@ -15,6 +15,7 @@
 #include "expression/abstract_expression.h"
 #include "common/sql_node_visitor.h"
 #include "type/value_factory.h"
+#include "type/value.h"
 
 
 namespace peloton {
@@ -47,6 +48,14 @@ class OperatorExpression : public AbstractExpression {
       else
         return (
             type::ValueFactory::GetBooleanValue(type::PELOTON_BOOLEAN_NULL));
+    }
+    if (exp_type_ == ExpressionType::OPERATOR_EXISTS) {
+      PL_ASSERT(children_.size() == 1);
+      type::Value vl = children_[0]->Evaluate(tuple1, tuple2, context);
+      if (vl.IsNull())
+        return (type::ValueFactory::GetBooleanValue(false));
+      else
+        return (type::ValueFactory::GetBooleanValue(true));
     }
     PL_ASSERT(children_.size() == 2);
     type::Value vl = children_[0]->Evaluate(tuple1, tuple2, context);

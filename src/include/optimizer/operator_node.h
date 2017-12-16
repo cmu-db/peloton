@@ -32,6 +32,7 @@ enum class OpType {
   LogicalFilter,
   LogicalMarkJoin,
   LogicalDependentJoin,
+  LogicalSingleJoin,
   InnerJoin,
   LeftJoin,
   RightJoin,

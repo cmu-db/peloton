@@ -131,7 +131,7 @@ Operator LogicalProjection::make(
 // DependentJoin
 //===--------------------------------------------------------------------===//
 Operator LogicalDependentJoin::make() {
-  LogicalInnerJoin *join = new LogicalInnerJoin;
+  LogicalDependentJoin *join = new LogicalDependentJoin;
   join->join_predicates = {};
   return Operator(join);
 }
@@ -172,7 +172,7 @@ Operator LogicalMarkJoin::make() {
 }
 
 Operator LogicalMarkJoin::make(std::vector<AnnotatedExpression> &conditions) {
-  LogicalInnerJoin *join = new LogicalInnerJoin;
+  LogicalMarkJoin *join = new LogicalMarkJoin;
   join->join_predicates = std::move(conditions);
   return Operator(join);
 }
@@ -187,6 +187,40 @@ hash_t LogicalMarkJoin::Hash() const {
 bool LogicalMarkJoin::operator==(const BaseOperatorNode &r) {
   if (r.type() != OpType::LogicalMarkJoin) return false;
   const LogicalMarkJoin &node = *static_cast<const LogicalMarkJoin *>(&r);
+  if (join_predicates.size() != node.join_predicates.size()) return false;
+  for (size_t i = 0; i < join_predicates.size(); i++) {
+    if (!join_predicates[i].expr->Equals(node.join_predicates[i].expr.get()))
+      return false;
+  }
+  return true;
+}
+
+
+//===--------------------------------------------------------------------===//
+// SingleJoin
+//===--------------------------------------------------------------------===//
+Operator LogicalSingleJoin::make() {
+  LogicalMarkJoin *join = new LogicalMarkJoin;
+  join->join_predicates = {};
+  return Operator(join);
+}
+
+Operator LogicalSingleJoin::make(std::vector<AnnotatedExpression> &conditions) {
+  LogicalSingleJoin *join = new LogicalSingleJoin;
+  join->join_predicates = std::move(conditions);
+  return Operator(join);
+}
+
+hash_t LogicalSingleJoin::Hash() const {
+  hash_t hash = BaseOperatorNode::Hash();
+  for (auto &pred : join_predicates)
+    hash = HashUtil::CombineHashes(hash, pred.expr->Hash());
+  return hash;
+}
+
+bool LogicalSingleJoin::operator==(const BaseOperatorNode &r) {
+  if (r.type() != OpType::LogicalSingleJoin) return false;
+  const LogicalSingleJoin &node = *static_cast<const LogicalSingleJoin *>(&r);
   if (join_predicates.size() != node.join_predicates.size()) return false;
   for (size_t i = 0; i < join_predicates.size(); i++) {
     if (!join_predicates[i].expr->Equals(node.join_predicates[i].expr.get()))
@@ -782,6 +816,8 @@ std::string OperatorNode<LogicalProjection>::name_ = "LogicalProjection";
 template <>
 std::string OperatorNode<LogicalMarkJoin>::name_ = "LogicalMarkJoin";
 template <>
+std::string OperatorNode<LogicalSingleJoin>::name_ = "LogicalSingleJoin";
+template <>
 std::string OperatorNode<LogicalDependentJoin>::name_ = "LogicalDependentJoin";
 template <>
 std::string OperatorNode<LogicalInnerJoin>::name_ = "LogicalInnerJoin";
@@ -869,6 +905,8 @@ template <>
 OpType OperatorNode<LogicalProjection>::type_ = OpType::LogicalProjection;
 template <>
 OpType OperatorNode<LogicalMarkJoin>::type_ = OpType::LogicalMarkJoin;
+template <>
+OpType OperatorNode<LogicalSingleJoin>::type_ = OpType::LogicalSingleJoin;
 template <>
 OpType OperatorNode<LogicalDependentJoin>::type_ = OpType::LogicalDependentJoin;
 template <>

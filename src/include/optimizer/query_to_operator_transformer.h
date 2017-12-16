@@ -60,10 +60,17 @@ class QueryToOperatorTransformer : public SqlNodeVisitor {
   void Visit(parser::UpdateStatement *op) override;
   void Visit(parser::CopyStatement *op) override;
   void Visit(parser::AnalyzeStatement *op) override;
+  void Visit(expression::ComparisonExpression *expr) override;
+  void Visit(expression::OperatorExpression *expr) override;
 
-  inline oid_t GetAndIncreaseGetId() { return get_id++; }
+  inline oid_t GetAndIncreaseGetId() { return get_id++;}
 
   void CollectPredicates(expression::AbstractExpression* expr);
+
+  bool GenerateSubquerytree(expression::AbstractExpression* expr,
+                            std::vector<expression::AbstractExpression*>& select_list,
+                            bool single_join = false);
+
 
   static bool RequireAggregation(const parser::SelectStatement* op);
 
@@ -75,8 +82,8 @@ class QueryToOperatorTransformer : public SqlNodeVisitor {
   oid_t get_id;
   bool enable_predicate_push_down_;
 
+  int depth_;
   std::vector<AnnotatedExpression> predicates_;
-
 
 };
 

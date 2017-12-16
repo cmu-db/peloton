@@ -94,6 +94,8 @@ class AbstractExpression : public Printable {
     children_[index].reset(expr);
   }
 
+  void SetExpressionType(ExpressionType type) { exp_type_ = type; }
+
   /** accessors */
 
   ExpressionType GetExpressionType() const { return exp_type_; }

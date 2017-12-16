@@ -151,6 +151,22 @@ class LogicalMarkJoin : public OperatorNode<LogicalMarkJoin> {
 };
 
 //===--------------------------------------------------------------------===//
+// SingleJoin
+//===--------------------------------------------------------------------===//
+class LogicalSingleJoin : public OperatorNode<LogicalSingleJoin> {
+ public:
+  static Operator make();
+
+  static Operator make(std::vector<AnnotatedExpression> &conditions);
+
+  bool operator==(const BaseOperatorNode &r) override;
+
+  hash_t Hash() const override;
+
+  std::vector<AnnotatedExpression> join_predicates;
+};
+
+//===--------------------------------------------------------------------===//
 // InnerJoin
 //===--------------------------------------------------------------------===//
 class LogicalInnerJoin : public OperatorNode<LogicalInnerJoin> {
