@@ -26,7 +26,7 @@ void OptimizerTask::ConstructValidRules(
     GroupExpression *group_expr, OptimizeContext *context,
     std::vector<std::unique_ptr<Rule>> &rules,
     std::vector<RuleWithPromise> &valid_rules) {
-  LOG_DEBUG("Child size %lu", group_expr->GetChildrenGroupsSize());
+//  LOG_DEBUG("Child size %lu", group_expr->GetChildrenGroupsSize());
   for (auto &rule : rules) {
     // LOG_DEBUG("Op %d, Pattern Op %d",
     // static_cast<int>(group_expr->Op().type()),
@@ -354,7 +354,6 @@ void OptimizeInputs::execute() {
 void RewriteExpression::execute() {
   // LOG_DEBUG("RewriteExpression::execute(), with group %d",
   //           parent_group_expr_->GetChildGroupId(parent_group_offset_));
-  LOG_DEBUG("Parent group offset in RewriteExpr is %d", parent_group_offset_);
 
   std::vector<RuleWithPromise> valid_rules;
 
@@ -392,7 +391,6 @@ void RewriteExpression::execute() {
 void ApplyRewriteRule::execute() {
   // LOG_DEBUG("ApplyRewriteRule::execute(), with group %d",
   //           parent_group_expr_->GetChildGroupId(parent_group_offset_));
-  LOG_DEBUG("Parent group offset in ApplyRewrite is %d", parent_group_offset_);
   auto cur_group = GetMemo().GetGroupByID(
       parent_group_expr_->GetChildGroupId(parent_group_offset_));
   auto cur_group_expr = cur_group->GetLogicalExpressions().at(0).get();

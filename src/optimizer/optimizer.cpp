@@ -288,7 +288,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
     GroupID id, std::shared_ptr<PropertySet> required_props,
     std::vector<expression::AbstractExpression *> required_cols) {
   Group *group = metadata_.memo.GetGroupByID(id);
-  LOG_DEBUG("Choosing with property : %s", required_props->ToString().c_str());
+  LOG_TRACE("Choosing with property : %s", required_props->ToString().c_str());
   auto gexpr = group->GetBestExpression(required_props);
 
   LOG_TRACE("Choosing best plan for group %d with op %s", gexpr->GetGroupID(),

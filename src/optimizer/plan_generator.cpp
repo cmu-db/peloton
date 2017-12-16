@@ -207,24 +207,25 @@ void PlanGenerator::Visit(const PhysicalInnerHashJoin *op) {
 
   vector<unique_ptr<const expression::AbstractExpression>> left_keys;
   vector<unique_ptr<const expression::AbstractExpression>> right_keys;
+  vector<ExprMap> l_child_map{move(children_expr_map_[0])};
+  vector<ExprMap> r_child_map{move(children_expr_map_[1])};
   for (auto &expr : op->left_keys) {
     auto left_key = expr->Copy();
-    expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
+    expression::ExpressionUtil::EvaluateExpression(l_child_map,
                                                    left_key);
     left_keys.emplace_back(left_key);
   }
   for (auto &expr : op->right_keys) {
     auto right_key = expr->Copy();
-    expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
+    expression::ExpressionUtil::EvaluateExpression(r_child_map,
                                                    right_key);
     right_keys.emplace_back(right_key);
   }
   // Evaluate Expr for hash plan
-  vector<ExprMap> hash_children_map{move(children_expr_map_[1])};
   vector<unique_ptr<const expression::AbstractExpression>> hash_keys;
   for (auto &expr : op->right_keys) {
     auto hash_key = expr->Copy();
-    expression::ExpressionUtil::EvaluateExpression(hash_children_map, hash_key);
+    expression::ExpressionUtil::EvaluateExpression(r_child_map, hash_key);
     hash_keys.emplace_back(hash_key);
   }
 
