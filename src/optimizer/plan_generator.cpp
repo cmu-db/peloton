@@ -186,6 +186,7 @@ void PlanGenerator::Visit(const PhysicalInnerNLJoin *op) {
 
   join_plan->AddChild(move(children_plans_[0]));
   join_plan->AddChild(move(children_plans_[1]));
+  output_plan_ = move(join_plan);
 }
 
 void PlanGenerator::Visit(const PhysicalLeftNLJoin *) {}
@@ -237,6 +238,7 @@ void PlanGenerator::Visit(const PhysicalInnerHashJoin *op) {
 
   join_plan->AddChild(move(children_plans_[0]));
   join_plan->AddChild(move(hash_plan));
+  output_plan_ = move(join_plan);
 }
 
 void PlanGenerator::Visit(const PhysicalLeftHashJoin *) {}
