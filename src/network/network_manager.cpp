@@ -120,7 +120,12 @@ void NetworkManager::StartServer() {
     SSL_load_error_strings();
     SSL_library_init();
 
-    if ((ssl_context = SSL_CTX_new(TLSv1_server_method())) == nullptr)
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+    ssl_context = SSL_CTX_new(TLS_server_method());
+#else
+    ssl_context = SSL_CTX_new(SSLv23_server_method());
+#endif
+    if (ssl_context == nullptr)
     {
       throw ConnectionException("Error creating SSL context.");
     }
