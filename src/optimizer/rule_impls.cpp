@@ -717,7 +717,8 @@ void PushFilterThroughJoin::Transform(std::shared_ptr<OperatorExpression> input,
   // Construct join operator
   auto pre_join_predicate = join_op_expr->Op().As<LogicalInnerJoin>()->join_predicates;
   join_predicates.insert(join_predicates.end(), pre_join_predicate.begin(), pre_join_predicate.end());
-  std::shared_ptr<OperatorExpression> output = std::make_shared<OperatorExpression>(LogicalInnerJoin::make(join_predicates));
+  std::shared_ptr<OperatorExpression> output =
+      std::make_shared<OperatorExpression>(LogicalInnerJoin::make(join_predicates));
 
   // Construct left filter if any
   if (!left_predicates.empty()) {

@@ -55,6 +55,9 @@ void QueryToOperatorTransformer::Visit(parser::SelectStatement *op) {
 
   if (op->where_clause != nullptr) {
     CollectPredicates(op->where_clause.get());
+  }
+
+  if (!predicates_.empty()) {
     auto filter_expr =
         std::make_shared<OperatorExpression>(LogicalFilter::make(predicates_));
     filter_expr->PushChild(output_expr_);
@@ -116,7 +119,7 @@ void QueryToOperatorTransformer::Visit(parser::JoinDefinition *node) {
     case JoinType::INNER: {
       CollectPredicates(node->condition.get());
       join_expr = std::make_shared<OperatorExpression>(
-          LogicalInnerJoin::make(predicates_));
+          LogicalInnerJoin::make());
       break;
     }
     case JoinType::OUTER: {
