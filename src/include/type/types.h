@@ -1041,11 +1041,13 @@ enum class OperatorId : uint32_t {
   RTrim,
   BTrim,
   Sqrt,
+  Ceil,
   Round,
   Extract,
   Floor,
   DateTrunc,
   Like,
+
 
   // Add more operators here, before the last "Invalid" entry
   Invalid
