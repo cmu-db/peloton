@@ -64,12 +64,12 @@ class TrafficCop {
       const std::vector<type::Value> &params, const bool unnamed,
       std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
       const std::vector<int> &result_format,
-      std::vector<StatementResult> &result, int &rows_change,
+      std::vector<StatementResult> &result,
       std::string &error_message, const size_t thread_id = 0);
 
   // ExecutePrepStmt - Helper to handle txn-specifics for the plan-tree of a
   // statement
-  executor::ExecuteResult ExecuteStatementPlan(
+  executor::ExecuteResult ExecuteHelper(
       std::shared_ptr<planner::AbstractPlan> plan,
       const std::vector<type::Value> &params,
       std::vector<StatementResult> &result,
@@ -101,7 +101,7 @@ class TrafficCop {
 
   void ExecuteStatementPlanGetResult();
 
-  ResultType ExecuteStatementGetResult(int &rows_changed);
+  ResultType ExecuteStatementGetResult();
 
   static void ExecutePlanWrapper(void *arg_ptr);
 
@@ -110,19 +110,85 @@ class TrafficCop {
     task_callback_arg_ = task_callback_arg;
   }
 
-  executor::ExecuteResult p_status_;
+  void setRowsAffected(int rows_affected) {
+    rows_affected_ = rows_affected;
+  }
 
-  bool is_queuing_;
+  int getRowsAffected() {
+    return rows_affected_;
+  }
+
+  void SetStatement(std::shared_ptr<Statement> statement) {
+    statement_ = statement;
+  }
+
+  std::shared_ptr<Statement> GetStatement() {
+    return statement_;
+  }
+
+  void SetResult(std::vector<StatementResult> result) {
+    result_ = result;
+  }
+
+  std::vector<StatementResult>& GetResult() {
+    return result_;
+  }
+
+  void SetParamVal(std::vector<type::Value> param_values) {
+    param_values_ = param_values;
+  }
+
+  std::vector<type::Value>& GetParamVal() {
+    return param_values_;
+  }
+
+  void SetErrorMessage(std::string error_message) {
+    error_message_ = error_message;
+  }
+
+  std::string& GetErrorMessage() {
+    return error_message_;
+  }
+
+  void SetQueuing(bool is_queuing) {
+    is_queuing_ = is_queuing;
+  }
+
+  bool GetQueuing() {
+    return is_queuing_;
+  }
+
+  executor::ExecuteResult p_status_;
   
   inline void SetDefaultDatabaseName(std::string default_database_name) {
     default_database_name_ = default_database_name;
   }
 
+  //TODO: I leave this variable here to remind that after parser part finished,
+  //TODO: don't forget move query to statement_ according to the way of query_type_
+  // QueryType query_type_;
+
+  //TODO: this member variable should be in statement_ after parser part finished
+  std::string query_;
+
 //  struct event* event_;
  private:
 
+  bool is_queuing_;
+
+  std::string error_message_;
+
+  std::vector<type::Value> param_values_;
+
+  std::vector<StatementResult> results_;
+
+  // This save currnet statement in the traffic cop
+  std::shared_ptr<Statement> statement_;
+
   // Default database name
   std::string default_database_name_ = DEFAULT_DB_NAME;
+  
+  int rows_affected_;
 
   // The optimizer used for this connection
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer_;

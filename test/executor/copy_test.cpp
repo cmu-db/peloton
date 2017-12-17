@@ -89,14 +89,14 @@ TEST_F(CopyTests, Copying) {
 
     TestingSQLUtil::counter_.store(1);
     LOG_DEBUG("-----here: %d", i);
-    executor::ExecuteResult status = traffic_cop.ExecuteStatementPlan(
+    executor::ExecuteResult status = traffic_cop.ExecuteHelper(
         statement->GetPlanTree(), params, result, result_format);
 
-    if (traffic_cop.is_queuing_) {
+    if (traffic_cop.GetQueuing()) {
       TestingSQLUtil::ContinueAfterComplete();
       traffic_cop.ExecuteStatementPlanGetResult();
       status = traffic_cop.p_status_;
-      traffic_cop.is_queuing_ = false;
+      traffic_cop.SetQueuing(false);
     }
 
     EXPECT_EQ(status.m_result, peloton::ResultType::SUCCESS);

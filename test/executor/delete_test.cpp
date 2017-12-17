@@ -73,13 +73,13 @@ void ShowTable(std::string database_name, std::string table_name) {
       (parser::SelectStatement*)select_stmt->GetStatement(0));
   result_format = std::vector<int>(tuple_descriptor.size(), 0);
   TestingSQLUtil::counter_.store(1);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
-                                            params, result, result_format);
-  if (traffic_cop.is_queuing_) {
+  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(),
+                                     params, result, result_format);
+  if (traffic_cop.GetQueuing()) {
     TestingSQLUtil::ContinueAfterComplete();
     traffic_cop.ExecuteStatementPlanGetResult();
     status = traffic_cop.p_status_;
-    traffic_cop.is_queuing_ = false;
+    traffic_cop.SetQueuing(false);
   }
   traffic_cop.CommitQueryHelper();
 }
@@ -149,13 +149,13 @@ TEST_F(DeleteTests, VariousOperations) {
   std::vector<int> result_format;
   result_format = std::vector<int>(0, 0);
   TestingSQLUtil::counter_.store(1);
-  executor::ExecuteResult status = traffic_cop.ExecuteStatementPlan(
+  executor::ExecuteResult status = traffic_cop.ExecuteHelper(
       statement->GetPlanTree(), params, result, result_format);
-  if (traffic_cop.is_queuing_) {
+  if (traffic_cop.GetQueuing()) {
     TestingSQLUtil::ContinueAfterComplete();
     traffic_cop.ExecuteStatementPlanGetResult();
     status = traffic_cop.p_status_;
-    traffic_cop.is_queuing_ = false;
+    traffic_cop.SetQueuing(false);
   }
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
@@ -183,13 +183,13 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("Executing plan...");
   result_format = std::vector<int>(0, 0);
   TestingSQLUtil::counter_.store(1);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
-                                            params, result, result_format);
-  if (traffic_cop.is_queuing_) {
+  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(),
+                                     params, result, result_format);
+  if (traffic_cop.GetQueuing()) {
     TestingSQLUtil::ContinueAfterComplete();
     traffic_cop.ExecuteStatementPlanGetResult();
     status = traffic_cop.p_status_;
-    traffic_cop.is_queuing_ = false;
+    traffic_cop.SetQueuing(false);
   }
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
@@ -217,13 +217,13 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("Executing plan...");
   result_format = std::vector<int>(0, 0);
   TestingSQLUtil::counter_.store(1);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
-                                            params, result, result_format);
-  if (traffic_cop.is_queuing_) {
+  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(),
+                                     params, result, result_format);
+  if (traffic_cop.GetQueuing()) {
     TestingSQLUtil::ContinueAfterComplete();
     traffic_cop.ExecuteStatementPlanGetResult();
     status = traffic_cop.p_status_;
-    traffic_cop.is_queuing_ = false;
+    traffic_cop.SetQueuing(false);
   }
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
@@ -253,13 +253,13 @@ TEST_F(DeleteTests, VariousOperations) {
       traffic_cop.GenerateTupleDescriptor(select_stmt->GetStatement(0));
   result_format = std::vector<int>(tuple_descriptor.size(), 0);
   TestingSQLUtil::counter_.store(1);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
-                                            params, result, result_format);
-  if (traffic_cop.is_queuing_) {
+  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(),
+                                     params, result, result_format);
+  if (traffic_cop.GetQueuing()) {
     TestingSQLUtil::ContinueAfterComplete();
     traffic_cop.ExecuteStatementPlanGetResult();
     status = traffic_cop.p_status_;
-    traffic_cop.is_queuing_ = false;
+    traffic_cop.SetQueuing(false);
   }
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
@@ -284,13 +284,13 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("Executing plan...");
   result_format = std::vector<int>(0, 0);
   TestingSQLUtil::counter_.store(1);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
-                                            params, result, result_format);
-  if (traffic_cop.is_queuing_) {
+  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(),
+                                     params, result, result_format);
+  if (traffic_cop.GetQueuing()) {
     TestingSQLUtil::ContinueAfterComplete();
     traffic_cop.ExecuteStatementPlanGetResult();
     status = traffic_cop.p_status_;
-    traffic_cop.is_queuing_ = false;
+    traffic_cop.SetQueuing(false);
   }
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
@@ -317,13 +317,13 @@ TEST_F(DeleteTests, VariousOperations) {
   LOG_INFO("Executing plan...");
   result_format = std::vector<int>(0, 0);
   TestingSQLUtil::counter_.store(1);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
-                                            params, result, result_format);
-  if (traffic_cop.is_queuing_) {
+  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(),
+                                     params, result, result_format);
+  if (traffic_cop.GetQueuing()) {
     TestingSQLUtil::ContinueAfterComplete();
     traffic_cop.ExecuteStatementPlanGetResult();
     status = traffic_cop.p_status_;
-    traffic_cop.is_queuing_ = false;
+    traffic_cop.SetQueuing(false);
   }
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
