@@ -200,7 +200,7 @@ struct Round : public TypeSystem::UnaryOperatorHandleNull {
 };
 
 // Ceiling
-struct Ceil : public TypeSystem::UnaryOperator {
+struct Ceil : public TypeSystem::UnaryOperatorHandleNull {
   bool SupportsType(const Type &type) const override {
     return type.GetSqlType() == Decimal::Instance();
   }
@@ -209,7 +209,7 @@ struct Ceil : public TypeSystem::UnaryOperator {
     return Type{Decimal::Instance()};
   }
 
-  Value DoWork(CodeGen &codegen, const Value &val) const override {
+  Value Impl(CodeGen &codegen, const Value &val) const override {
     PL_ASSERT(SupportsType(val.GetType()));
 
     llvm::Value *result = codegen.Call(DecimalFunctionsProxy::Ceil,

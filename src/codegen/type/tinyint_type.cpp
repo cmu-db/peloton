@@ -176,7 +176,7 @@ struct Negate : public TypeSystem::UnaryOperatorHandleNull {
 };
 
 // Ceiling
-struct Ceil : public TypeSystem::UnaryOperator {
+struct Ceil : public TypeSystem::UnaryOperatorHandleNull {
   bool SupportsType(const Type &type) const override {
     return type.GetSqlType() == TinyInt::Instance();
   }
@@ -185,7 +185,7 @@ struct Ceil : public TypeSystem::UnaryOperator {
     return Type{TinyInt::Instance()};
   }
 
-  Value DoWork(UNUSED_ATTRIBUTE CodeGen &codegen,
+  Value Impl(UNUSED_ATTRIBUTE CodeGen &codegen,
                const Value &val) const override {
     PL_ASSERT(SupportsType(val.GetType()));
     return val;
