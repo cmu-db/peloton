@@ -472,8 +472,8 @@ ResultType TrafficCop::ExecuteStatement(
     const std::vector<int> &result_format, std::vector<StatementResult> &result,
     UNUSED_ATTRIBUTE std::string &error_message,
     const size_t thread_id UNUSED_ATTRIBUTE) {
-  if (settings::SettingsManager::GetInt(settings::SettingId::stats_mode) !=
-      STATS_TYPE_INVALID) {
+  if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
+      StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()->InitQueryMetric(statement,
                                                                param_stats);
   }

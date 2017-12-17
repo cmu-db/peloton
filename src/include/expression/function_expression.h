@@ -72,7 +72,7 @@ class FunctionExpression : public AbstractExpression {
     // TODO: Checking this every time is not necessary, but it prevents crashing
     if (ret.GetElementType() != return_value_type_) {
       throw Exception(
-          EXCEPTION_TYPE_EXPRESSION,
+          ExceptionType::EXPRESSION,
           "function " + func_name_ + " returned an unexpected type.");
     }
 
@@ -113,7 +113,7 @@ class FunctionExpression : public AbstractExpression {
       const std::vector<std::unique_ptr<AbstractExpression>> &children,
       const std::string &func_name) {
     if (func_arg_types_.size() != children.size()) {
-      throw Exception(EXCEPTION_TYPE_EXPRESSION,
+      throw Exception(ExceptionType::EXPRESSION,
                       "Unexpected number of arguments to function: " +
                           func_name + ". Expected: " +
                           std::to_string(func_arg_types_.size()) + " Actual: " +
@@ -122,7 +122,7 @@ class FunctionExpression : public AbstractExpression {
     // check that the types are correct
     for (size_t i = 0; i < func_arg_types_.size(); i++) {
       if (children[i]->GetValueType() != func_arg_types_[i]) {
-        throw Exception(EXCEPTION_TYPE_EXPRESSION,
+        throw Exception(ExceptionType::EXPRESSION,
                         "Incorrect argument type to function: " + func_name +
                             ". Argument " + std::to_string(i) +
                             " expected type " +
