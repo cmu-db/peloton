@@ -78,13 +78,20 @@ llvm::Value *CodeGen::ConstStringPtr(const std::string &s) const {
 
 llvm::Value *CodeGen::AllocateVariable(llvm::Type *type,
                                        const std::string &name) {
+  // To allocate a variable, a function must be under construction
   PL_ASSERT(code_context_.GetCurrentFunction() != nullptr);
 
-  // Variable allocations must go into the functions entry block
-  auto *entry_block = code_context_.GetCurrentFunction()->GetEntryBlock();
+  // All variable allocations go into the current function's "entry" block. By
+  // convention, we insert the allocation instruction before the first
+  // instruction in the "entry" block. If the "entry" block is empty, it doesn't
+  // matter where we insert it.
 
-  // The allocation
-  return new llvm::AllocaInst(type, name, &entry_block->front());
+  auto *entry_block = code_context_.GetCurrentFunction()->GetEntryBlock();
+  if (entry_block->empty()) {
+    return new llvm::AllocaInst(type, name, entry_block);
+  } else {
+    return new llvm::AllocaInst(type, name, &entry_block->front());
+  }
 }
 
 llvm::Value *CodeGen::AllocateBuffer(llvm::Type *element_type,
