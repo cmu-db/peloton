@@ -65,11 +65,11 @@ void TableScanTranslator::Produce() const {
   LOG_TRACE("TableScan on [%u] starting to produce tuples ...", table.GetOid());
 
   // Get the table instance from the database
-  llvm::Value *catalog_ptr = GetCatalogPtr();
+  llvm::Value *storage_manager_ptr = GetStorageManagerPtr();
   llvm::Value *db_oid = codegen.Const32(table.GetDatabaseOid());
   llvm::Value *table_oid = codegen.Const32(table.GetOid());
   llvm::Value *table_ptr = codegen.Call(StorageManagerProxy::GetTableWithOid,
-                                        {catalog_ptr, db_oid, table_oid});
+                                        {storage_manager_ptr, db_oid, table_oid});
 
   // The selection vector for the scan
   Vector sel_vec{LoadStateValue(selection_vector_id_),

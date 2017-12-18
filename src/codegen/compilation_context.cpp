@@ -31,15 +31,16 @@ CompilationContext::CompilationContext(Query &query,
       parameter_cache_(parameters_map_),
       result_consumer_(result_consumer),
       codegen_(query_.GetCodeContext()) {
-  // Allocate a catalog and transaction instance in the runtime state
+  // Allocate a storagand transaction instance in the runtime state
   auto &runtime_state = GetRuntimeState();
 
   auto *txn_type = TransactionProxy::GetType(codegen_)->getPointerTo();
   txn_state_id_ = runtime_state.RegisterState("transaction", txn_type);
 
-  auto *catalog_ptr_type =
+  auto *storage_manager_ptr_type =
       StorageManagerProxy::GetType(codegen_)->getPointerTo();
-  catalog_state_id_ = runtime_state.RegisterState("catalog", catalog_ptr_type);
+  storage_manager_state_id_ =
+      runtime_state.RegisterState("storageManager", storage_manager_ptr_type);
 
   auto *executor_context_type =
       ExecutorContextProxy::GetType(codegen_)->getPointerTo();
@@ -135,9 +136,9 @@ void CompilationContext::GenerateHelperFunctions() {
   }
 }
 
-// Get the catalog pointer from the runtime state
-llvm::Value *CompilationContext::GetCatalogPtr() {
-  return GetRuntimeState().LoadStateValue(codegen_, catalog_state_id_);
+// Get the storage manager pointer from the runtime state
+llvm::Value *CompilationContext::GetStorageManagerPtr() {
+  return GetRuntimeState().LoadStateValue(codegen_, storage_manager_state_id_);
 }
 
 // Get the transaction pointer from the runtime state
