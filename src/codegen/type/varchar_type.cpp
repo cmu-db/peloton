@@ -221,7 +221,7 @@ struct Trim : public TypeSystem::UnaryOperator {
     return Varchar::Instance();
   }
 
-  Value DoWork(CodeGen &codegen, const Value &val) const override {
+  Value Eval(CodeGen &codegen, const Value &val) const override {
     llvm::Value *ret = codegen.Call(StringFunctionsProxy::Trim,
                                     {val.GetValue(), val.GetLength()});
 
@@ -243,7 +243,7 @@ struct BTrim : public TypeSystem::BinaryOperator {
     return Varchar::Instance();
   }
 
-  Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
+  Value Eval(CodeGen &codegen, const Value &left, const Value &right,
                UNUSED_ATTRIBUTE OnError on_error) const override {
     llvm::Value *ret = codegen.Call(StringFunctionsProxy::BTrim,
                                     {left.GetValue(), left.GetLength(),
@@ -267,7 +267,7 @@ struct LTrim : public TypeSystem::BinaryOperator {
     return Varchar::Instance();
   }
 
-  Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
+  Value Eval(CodeGen &codegen, const Value &left, const Value &right,
                UNUSED_ATTRIBUTE OnError on_error) const override {
     llvm::Value *ret = codegen.Call(StringFunctionsProxy::LTrim,
                                     {left.GetValue(), left.GetLength(),
@@ -291,7 +291,7 @@ struct RTrim : public TypeSystem::BinaryOperator {
     return Varchar::Instance();
   }
 
-  Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
+  Value Eval(CodeGen &codegen, const Value &left, const Value &right,
                UNUSED_ATTRIBUTE OnError on_error) const override {
     llvm::Value *ret = codegen.Call(StringFunctionsProxy::RTrim,
                                     {left.GetValue(), left.GetLength(),
