@@ -31,7 +31,7 @@ CompilationContext::CompilationContext(Query &query,
       parameter_cache_(parameters_map_),
       result_consumer_(result_consumer),
       codegen_(query_.GetCodeContext()) {
-  // Allocate a storagand transaction instance in the runtime state
+  // Allocate a storage manager and transaction instance in the runtime state
   auto &runtime_state = GetRuntimeState();
 
   auto *txn_type = TransactionProxy::GetType(codegen_)->getPointerTo();
