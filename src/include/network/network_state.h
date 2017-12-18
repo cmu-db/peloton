@@ -40,5 +40,17 @@ enum class WriteState {
   WRITE_ERROR,      // Some error happened
 };
 
+enum class Transition {
+  NONE,
+  WAKEUP,
+  PROCEED,
+  NEED_DATA,
+  // TODO(tianyu) generalize this symbol, this is currently only used in process
+  GET_RESULT,
+  // TODO(tianyu) replace this with exceptions
+  ERROR
+};
+
+
 }
 }
