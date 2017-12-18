@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "codegen/lang/if.h"
-#include "codegen/proxy/catalog_proxy.h"
+#include "codegen/proxy/storage_manager_proxy.h"
 #include "codegen/proxy/target_proxy.h"
 #include "codegen/proxy/updater_proxy.h"
 #include "codegen/operator/update_translator.h"

@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// catalog_proxy.h
+// storage_manager_proxy.h
 //
-// Identification: src/include/codegen/proxy/catalog_proxy.h
+// Identification: src/include/codegen/proxy/storage_manager_proxy.h
 //
 // Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
