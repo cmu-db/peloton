@@ -17,10 +17,10 @@
 #include <event2/event.h>
 #include <event2/listener.h>
 
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <csignal>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <vector>
 
 #include <arpa/inet.h>
@@ -32,10 +32,10 @@
 #include "common/internal_types.h"
 
 #include "network_thread.h"
-#include "network_master_thread.h"
 #include "protocol_handler.h"
 #include "marshal.h"
 #include "network_state.h"
+#include "network/connection_handle.h"
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -50,14 +50,14 @@ namespace network {
 class NetworkConnection {
  public:
   int thread_id;
-  int sock_fd;                    // socket file descriptor
+  int sock_fd_;                    // socket file descriptor
   struct event *network_event = nullptr;  // something to read from network
   struct event *workpool_event = nullptr; // worker thread done the job
   short event_flags;              // event flags mask
 
   SSL* conn_SSL_context = nullptr;          // SSL context for the connection
 
-  NetworkThread *thread;          // reference to the network thread
+  NetworkThread *thread_;          // reference to the network thread
   std::unique_ptr<ProtocolHandler> protocol_handler_;       // Stores state for this socket
   ConnState state = ConnState::CONN_INVALID;  // Initial state of connection
   tcop::TrafficCop traffic_cop_;
@@ -66,6 +66,9 @@ class NetworkConnection {
   Buffer wbuf_;                     // Socket's write buffer
   unsigned int next_response_ = 0;  // The next response in the response buffer
   Client client_;
+  
+  ConnectionHandleStateMachine state_machine_;
+  
   bool ssl_handshake_ = false;
   bool finish_startup_packet_ = false;
   InputPacket initial_packet;
@@ -91,7 +94,7 @@ class NetworkConnection {
   /* refill_read_buffer - Used to repopulate read buffer with a fresh
    * batch of data from the socket
    */
-  ReadState FillReadBuffer();
+  Transition FillReadBuffer();
 
   // Transit to the target state
   void TransitState(ConnState next_state);
@@ -103,7 +106,7 @@ class NetworkConnection {
 
   std::string WriteBufferToString();
 
-  void CloseSocket();
+  Transition CloseSocket();
 
   void Reset();
 
@@ -127,6 +130,16 @@ class NetworkConnection {
 
   /* Runs the state machine for the protocol. Invoked by event handler callback */
   static void StateMachine(NetworkConnection *conn);
+
+  inline void TriggerStateMachine() { state_machine_.Accept(Transition::WAKEUP, *this); }
+
+  /* State Machine Actions*/
+  // TODO(tianyu) Maybe move them to their own class
+  Transition HandleConnListening();
+  Transition Wait();
+  Transition Process();
+  Transition ProcessWrite();
+  Transition GetResult();
 
  private:
 
@@ -159,7 +172,6 @@ class NetworkConnection {
     int one = 1;
     setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof one);
   }
-
 };
 
 }

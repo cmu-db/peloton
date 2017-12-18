@@ -13,10 +13,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "network/network_callback_util.h"
+#include "network/network_manager.h"
 
 namespace peloton {
 namespace network {
-class NetworkManager;
 
 void CallbackUtil::WorkerHandleNewConn(evutil_socket_t new_conn_recv_fd,
                          UNUSED_ATTRIBUTE short ev_flags, void *arg) {
@@ -73,9 +73,9 @@ void CallbackUtil::EventHandler(UNUSED_ATTRIBUTE evutil_socket_t connfd,
 
 #ifdef LOG_DEBUG_ENABLED
   if (ev_flags == EV_READ)
-    assert(connfd == conn->sock_fd);
+    assert(connfd == conn->sock_fd_);
 #endif
-  NetworkConnection::StateMachine(conn);
+  conn->TriggerStateMachine();
 }
 
 /**
