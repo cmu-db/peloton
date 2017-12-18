@@ -14,16 +14,7 @@
 #include "common/statement.h"
 #include "common/statement_cache_manager.h"
 
-#include "binder/bind_node_visitor.h"
-#include "catalog/catalog.h"
 #include "common/harness.h"
-#include "common/statement.h"
-#include "concurrency/transaction_manager_factory.h"
-#include "expression/function_expression.h"
-#include "expression/tuple_value_expression.h"
-#include "include/traffic_cop/traffic_cop.h"
-#include "optimizer/optimizer.h"
-#include "parser/postgresparser.h"
 
 namespace peloton {
 namespace test {
