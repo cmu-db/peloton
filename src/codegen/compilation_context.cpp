@@ -13,7 +13,7 @@
 #include "codegen/compilation_context.h"
 
 #include "codegen/function_builder.h"
-#include "codegen/proxy/catalog_proxy.h"
+#include "codegen/proxy/storage_manager_proxy.h"
 #include "codegen/proxy/transaction_proxy.h"
 #include "codegen/proxy/executor_context_proxy.h"
 #include "codegen/proxy/query_parameters_proxy.h"
