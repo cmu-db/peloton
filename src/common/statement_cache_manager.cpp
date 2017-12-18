@@ -26,6 +26,7 @@ void StatementCacheManager::InvalidateTableOid(oid_t table_id) {
   // Lock the table by grabing the iterator
   auto iterator = statement_caches_.GetIterator();
 
+  // Iterate each plan cache
   for (auto &iter : iterator) {
     iter.first->NotifyInvalidTable(table_id);
   }
