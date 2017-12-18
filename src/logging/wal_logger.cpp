@@ -54,7 +54,7 @@ CopySerializeOutput *WalLogger::WriteRecordToBuffer(LogRecord &record) {
 
   LogRecordType type = record.GetType();
   output_buffer->WriteEnumInSingleByte(
-      static_cast<std::underlying_type_t<LogRecordType>>(type));
+      static_cast<int>(type));
 
   output_buffer->WriteLong(record.GetEpochId());
   output_buffer->WriteLong(record.GetCommitId());
