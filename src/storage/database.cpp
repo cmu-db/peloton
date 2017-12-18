@@ -13,6 +13,7 @@
 #include <sstream>
 
 #include "catalog/foreign_key.h"
+#include "codegen/query_cache.h"
 #include "common/exception.h"
 #include "common/logger.h"
 #include "gc/gc_manager_factory.h"
@@ -60,7 +61,7 @@ storage::DataTable *Database::GetTableWithOid(const oid_t table_oid) const {
     }
   }
 
-  // Table now found
+  // Table not found
   throw CatalogException("Table with oid = " + std::to_string(table_oid) +
                          " is not found");
   return nullptr;
@@ -80,8 +81,11 @@ void Database::DropTableWithOid(const oid_t table_oid) {
 
     // Deregister table from GC manager.
     auto *gc_manager = &gc::GCManagerFactory::GetInstance();
-    assert(gc_manager != nullptr);
+    PL_ASSERT(gc_manager != nullptr);
     gc_manager->DeregisterTable(table_oid);
+
+    // Deregister table from Query Cache manager
+    codegen::QueryCache::Instance().Remove(table_oid);
 
     oid_t table_offset = 0;
     for (auto table : tables) {

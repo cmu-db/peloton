@@ -80,13 +80,13 @@ void SetupTables(std::string database_name) {
     statement->SetPlanTree(
         optimizer.BuildPelotonPlanTree(parse_tree, database_name, txn));
     TestingSQLUtil::counter_.store(1);
-    auto status = traffic_cop.ExecuteStatementPlan(
+    auto status = traffic_cop.ExecuteHelper(
         statement->GetPlanTree(), params, result, result_format);
-    if (traffic_cop.is_queuing_) {
+    if (traffic_cop.GetQueuing()) {
       TestingSQLUtil::ContinueAfterComplete();
       traffic_cop.ExecuteStatementPlanGetResult();
       status = traffic_cop.p_status_;
-      traffic_cop.is_queuing_ = false;
+      traffic_cop.SetQueuing(false);
     }
     LOG_INFO("Table create result: %s",
              ResultTypeToString(status.m_result).c_str());

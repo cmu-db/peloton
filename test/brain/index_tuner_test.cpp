@@ -89,7 +89,7 @@ TEST_F(IndexTunerTests, BasicTest) {
     // Indicates the columns present in predicate, query weight, and selectivity
     brain::Sample sample(columns_accessed,
                          sample_weight,
-                         brain::SAMPLE_TYPE_ACCESS);
+                         brain::SampleType::ACCESS);
 
     // Collect index sample in table
     data_table->RecordIndexSample(sample);

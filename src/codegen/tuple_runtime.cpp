@@ -11,20 +11,19 @@
 //===----------------------------------------------------------------------===//
 
 #include "codegen/tuple_runtime.h"
-#include "common/macros.h"
 #include "type/abstract_pool.h"
 
 namespace peloton {
 namespace codegen {
 
 void TupleRuntime::CreateVarlen(char *data, uint32_t len, char *buf,
-                                 peloton::type::AbstractPool *pool) {
+                                peloton::type::AbstractPool *pool) {
   struct varlen_t {
     uint32_t len;
-    char data[];
+    char data[0];
   };
 
-  varlen_t *area =
+  auto *area =
       reinterpret_cast<varlen_t *>(pool->Allocate(sizeof(uint32_t) + len));
   area->len = len;
   PL_MEMCPY(area->data, data, len);

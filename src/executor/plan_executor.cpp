@@ -14,6 +14,7 @@
 #include <cinttypes>
 
 #include "codegen/buffering_consumer.h"
+#include "codegen/query_cache.h"
 #include "codegen/query_compiler.h"
 #include "codegen/query.h"
 #include "concurrency/transaction_manager_factory.h"
@@ -44,8 +45,7 @@ void PlanExecutor::ExecutePlan(
     std::shared_ptr<planner::AbstractPlan> plan,
     concurrency::Transaction *txn, const std::vector<type::Value> &params,
     std::vector<StatementResult> &result,
-    const std::vector<int> &result_format,
-    executor::ExecuteResult &p_status) {
+    const std::vector<int> &result_format, executor::ExecuteResult &p_status) {
   PL_ASSERT(plan != nullptr && txn != nullptr);
   LOG_TRACE("PlanExecutor Start (Txn ID=%" PRId64")", txn->GetTransactionId());
 
@@ -107,11 +107,23 @@ void PlanExecutor::ExecutePlan(
   plan->GetOutputColumns(columns);
   codegen::BufferingConsumer consumer{columns, context};
 
-  // Compile & execute the query
-  codegen::QueryCompiler compiler;
-  auto query = compiler.Compile(*plan, consumer);
-  query->Execute(*txn, executor_context.get(),
-                 reinterpret_cast<char *>(consumer.GetState()));
+  // Prepare parameter: TODO Combine with executor context when legacy is gone
+  codegen::QueryParameters parameters{*plan, params};
+
+  // Compile and execute the query
+  codegen::Query *query = codegen::QueryCache::Instance().Find(plan);
+  if (query == nullptr) {
+    codegen::QueryCompiler compiler;
+    auto compiled_query =
+        compiler.Compile(*plan, parameters.GetQueryParametersMap(), consumer);
+
+    compiled_query->Execute(*executor_context.get(), parameters,
+                            reinterpret_cast<char *>(consumer.GetState()));
+    codegen::QueryCache::Instance().Add(plan, std::move(compiled_query));
+  } else {
+    query->Execute(*executor_context.get(), parameters,
+                   reinterpret_cast<char *>(consumer.GetState()));
+  }
 
   // Iterate over results
   const auto &results = consumer.GetOutputTuples();

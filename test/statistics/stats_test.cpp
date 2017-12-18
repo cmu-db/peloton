@@ -45,7 +45,7 @@ class StatsTests : public PelotonTest {};
 // Launch the aggregator thread manually
 void LaunchAggregator(int64_t stat_interval) {
   settings::SettingsManager::SetInt(settings::SettingId::stats_mode,
-                                    STATS_TYPE_ENABLE);
+                                    static_cast<int>(StatsType::ENABLE));
 
   auto &aggregator =
       peloton::stats::StatsAggregator::GetInstance(stat_interval);
@@ -393,7 +393,7 @@ TEST_F(StatsTests, MultiThreadStatsTest) {
 //  std::vector<type::Value> params;
 //  std::vector<StatementResult> result;
 //  std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
-//  executor::ExecuteResult status = traffic_cop.ExecuteStatementPlan(
+//  executor::ExecuteResult status = traffic_cop.ExecuteHelper(
 //      statement->GetPlanTree().get(), params, result, result_format);
 //  LOG_TRACE("Statement executed. Result: %s",
 //            ResultTypeToString(status.m_result).c_str());
@@ -409,7 +409,7 @@ TEST_F(StatsTests, MultiThreadStatsTest) {
 //  result.clear();
 //  result_format =
 //      std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
-//  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
+//  status = traffic_cop.ExecuteHelper(statement->GetPlanTree().get(),
 //                                            params, result, result_format);
 //  LOG_TRACE("Statement executed. Result: %s",
 //            ResultTypeToString(status.m_result).c_str());
@@ -425,7 +425,7 @@ TEST_F(StatsTests, MultiThreadStatsTest) {
 //  result.clear();
 //  result_format =
 //      std::move(std::vector<int>(statement->GetTupleDescriptor().size(), 0));
-//  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree().get(),
+//  status = traffic_cop.ExecuteHelper(statement->GetPlanTree().get(),
 //                                            params, result, result_format);
 //  LOG_TRACE("Statement executed. Result: %s",
 //            ResultTypeToString(status.m_result).c_str());

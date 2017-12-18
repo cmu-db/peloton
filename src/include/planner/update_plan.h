@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include "expression/parameter.h"
 #include "parser/update_statement.h"
 #include "planner/abstract_plan.h"
 #include "planner/project_info.h"
@@ -58,6 +59,17 @@ class UpdatePlan : public AbstractPlan {
   const std::vector<const AttributeInfo *> &GetAttributeInfos() const {
     return ais_;
   }
+
+  hash_t Hash() const override;
+
+  bool operator==(const AbstractPlan &rhs) const override;
+  bool operator!=(const AbstractPlan &rhs) const override {
+    return !(*this == rhs);
+  }
+
+  virtual void VisitParameters(codegen::QueryParametersMap &map,
+      std::vector<peloton::type::Value> &values,
+      const std::vector<peloton::type::Value> &values_from_user) override;
 
  private:
   storage::DataTable *target_table_;

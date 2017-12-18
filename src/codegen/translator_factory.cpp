@@ -20,6 +20,7 @@
 #include "codegen/expression/function_translator.h"
 #include "codegen/expression/negation_translator.h"
 #include "codegen/expression/null_check_translator.h"
+#include "codegen/expression/parameter_translator.h"
 #include "codegen/expression/tuple_value_translator.h"
 #include "codegen/operator/delete_translator.h"
 #include "codegen/operator/global_group_by_translator.h"
@@ -35,7 +36,6 @@
 #include "expression/case_expression.h"
 #include "expression/comparison_expression.h"
 #include "expression/conjunction_expression.h"
-#include "expression/constant_value_expression.h"
 #include "expression/function_expression.h"
 #include "expression/operator_expression.h"
 #include "expression/tuple_value_expression.h"
@@ -133,6 +133,12 @@ std::unique_ptr<ExpressionTranslator> TranslatorFactory::CreateTranslator(
     CompilationContext &context) const {
   ExpressionTranslator *translator = nullptr;
   switch (exp.GetExpressionType()) {
+    case ExpressionType::VALUE_PARAMETER: {
+      auto &param_exp =
+          static_cast<const expression::ParameterValueExpression &>(exp);
+      translator = new ParameterTranslator(param_exp, context);
+      break;
+    }
     case ExpressionType::VALUE_CONSTANT: {
       auto &const_exp =
           static_cast<const expression::ConstantValueExpression &>(exp);

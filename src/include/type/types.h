@@ -262,7 +262,7 @@ ExpressionType ParserExpressionNameToExpressionType(const std::string &str);
 
 // Note that we have some duplicate DatePartTypes with the 's' suffix
 // They have to have the same value in order for it to work.
-enum class DatePartType {
+enum class DatePartType : uint32_t {
   INVALID = INVALID_TYPE_ID,
   CENTURY = 1,
   DAY = 2,
@@ -984,11 +984,12 @@ const int TRIGGER_TYPE_MAX = TRIGGER_TYPE_ROW | TRIGGER_TYPE_STATEMENT |
 
 // Statistics Collection Type
 // Disable or enable
-enum StatsType {
+// TODO: This should probably be a collection level and not a boolean (enable/disable)
+enum class StatsType {
   // Disable statistics collection
-  STATS_TYPE_INVALID = INVALID_TYPE_ID,
+  INVALID = INVALID_TYPE_ID,
   // Enable statistics collection
-  STATS_TYPE_ENABLE = 1,
+  ENABLE = 1,
 };
 
 enum MetricType {
@@ -1040,11 +1041,15 @@ enum class OperatorId : uint32_t {
   RTrim,
   BTrim,
   Sqrt,
+  Ceil,
+  Round,
   Extract,
   Floor,
+  DateTrunc,
+  Like,
+
 
   // Add more operators here, before the last "Invalid" entry
-  Like,
   Invalid
 };
 std::string OperatorIdToString(OperatorId op_id);

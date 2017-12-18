@@ -10,12 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "function/date_functions.h"
 
 #include <date/date.h>
-#include <inttypes.h>
 #include <date/iso_week.h>
+#include <inttypes.h>
 
 #include "common/logger.h"
 #include "type/types.h"

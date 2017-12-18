@@ -17,8 +17,14 @@
 
 #include "expression/abstract_expression.h"
 #include "storage/tuple.h"
+#include "util/hash_util.h"
 
 namespace peloton {
+
+namespace expression {
+class Parameter;
+}
+
 namespace planner {
 
 /**
@@ -95,6 +101,21 @@ class ProjectInfo {
     return std::unique_ptr<ProjectInfo>(
         new ProjectInfo(std::move(new_target_list), std::move(new_map_list)));
   }
+
+  hash_t Hash() const;
+
+  bool operator==(const ProjectInfo &rhs) const;
+  bool operator!=(const ProjectInfo &rhs) const { return !(*this == rhs); }
+
+  virtual void VisitParameters(codegen::QueryParametersMap &map,
+      std::vector<peloton::type::Value> &values,
+      const std::vector<peloton::type::Value> &values_from_user);
+
+ private:
+  bool AreEqual(const planner::DerivedAttribute &A,
+                const planner::DerivedAttribute &B) const;
+
+  hash_t Hash(const planner::DerivedAttribute &attribute) const;
 
  private:
   TargetList target_list_;

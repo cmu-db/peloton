@@ -114,7 +114,7 @@ void Aggregation::Setup(
             "Unexpected aggregate type [%s] when preparing aggregator",
             ExpressionTypeToString(agg_term.aggtype).c_str());
         LOG_ERROR("%s", message.c_str());
-        throw Exception{EXCEPTION_TYPE_UNKNOWN_TYPE, message};
+        throw Exception{ExceptionType::UNKNOWN_TYPE, message};
       }
     }
   }
@@ -248,7 +248,7 @@ void Aggregation::CreateInitialValues(
             "Unexpected aggregate type [%s] when creating initial values",
             ExpressionTypeToString(agg_info.aggregate_type).c_str());
         LOG_ERROR("%s", message.c_str());
-        throw Exception{EXCEPTION_TYPE_UNKNOWN_TYPE, message};
+        throw Exception{ExceptionType::UNKNOWN_TYPE, message};
       }
     }
 
@@ -318,7 +318,7 @@ void Aggregation::DoInitializeValue(
           "Unexpected aggregate type [%s] when creating initial values",
           ExpressionTypeToString(type).c_str());
       LOG_ERROR("%s", message.c_str());
-      throw Exception{EXCEPTION_TYPE_UNKNOWN_TYPE, message};
+      throw Exception{ExceptionType::UNKNOWN_TYPE, message};
     }
   }
 }
@@ -373,7 +373,7 @@ void Aggregation::DoAdvanceValue(CodeGen &codegen, llvm::Value *space,
           "Unexpected aggregate type [%s] when advancing aggregator",
           ExpressionTypeToString(type).c_str());
       LOG_ERROR("%s", message.c_str());
-      throw Exception{EXCEPTION_TYPE_UNKNOWN_TYPE, message};
+      throw Exception{ExceptionType::UNKNOWN_TYPE, message};
     }
   }
 
@@ -492,7 +492,7 @@ void Aggregation::AdvanceValue(
           "Unexpected aggregate type [%s] when advancing aggregator",
           ExpressionTypeToString(aggregate_info.aggregate_type).c_str());
       LOG_ERROR("%s", message.c_str());
-      throw Exception{EXCEPTION_TYPE_UNKNOWN_TYPE, message};
+      throw Exception{ExceptionType::UNKNOWN_TYPE, message};
     }
   }  // switch
 }
@@ -651,7 +651,7 @@ void Aggregation::FinalizeValues(
             "Unexpected aggregate type [%s] when finalizing aggregator",
             ExpressionTypeToString(agg_type).c_str());
         LOG_ERROR("%s", message.c_str());
-        throw Exception{EXCEPTION_TYPE_UNKNOWN_TYPE, message};
+        throw Exception{ExceptionType::UNKNOWN_TYPE, message};
       }
     }
   }

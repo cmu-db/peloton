@@ -38,6 +38,7 @@ class InsertPlan : public AbstractPlan {
   }
 
   // Construct with a project info
+  // This can only be handled by the interpreted exeuctor
   InsertPlan(storage::DataTable *table,
              std::unique_ptr<const planner::ProjectInfo> &&project_info,
              oid_t bulk_insert_count = 1)
@@ -47,6 +48,7 @@ class InsertPlan : public AbstractPlan {
   }
 
   // Construct with a tuple
+  // This can only be handled by the interpreted exeuctor
   InsertPlan(storage::DataTable *table,
              std::unique_ptr<storage::Tuple> &&tuple,
              oid_t bulk_insert_count = 1)
@@ -73,6 +75,8 @@ class InsertPlan : public AbstractPlan {
     return project_info_.get();
   }
 
+  type::Value GetValue(uint32_t idx) const { return values_.at(idx); }
+
   oid_t GetBulkInsertCount() const { return bulk_insert_count_; }
 
   const storage::Tuple *GetTuple(int tuple_idx) const {
@@ -93,18 +97,33 @@ class InsertPlan : public AbstractPlan {
   // WARNING - Not Implemented
   std::unique_ptr<AbstractPlan> Copy() const override {
     LOG_INFO("InsertPlan Copy() not implemented");
+    // TODO: Add copying mechanism
     std::unique_ptr<AbstractPlan> dummy;
     return dummy;
   }
+
+  hash_t Hash() const override;
+
+  bool operator==(const AbstractPlan &rhs) const override;
+  bool operator!=(const AbstractPlan &rhs) const override {
+    return !(*this == rhs);
+  }
+
+  virtual void VisitParameters(codegen::QueryParametersMap &map,
+      std::vector<peloton::type::Value> &values,
+      const std::vector<peloton::type::Value> &values_from_user) override;
 
  private:
   // Target table
   storage::DataTable *target_table_ = nullptr;
 
+  // Values
+  std::vector<type::Value> values_;
+
   // Projection Info
   std::unique_ptr<const planner::ProjectInfo> project_info_;
 
-  // Tuple
+  // Tuple : To be deprecated after the interpreted execution disappears
   std::vector<std::unique_ptr<storage::Tuple>> tuples_;
 
   // Parameter Information <tuple_index, tuple_column_index, parameter_index>

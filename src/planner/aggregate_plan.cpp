@@ -121,5 +121,141 @@ void AggregatePlan::PerformBinding(BindingContext &binding_context) {
   }
 }
 
+hash_t AggregatePlan::Hash(
+    const std::vector<planner::AggregatePlan::AggTerm> &agg_terms) const {
+  hash_t hash = 0;
+
+  for (auto &agg_term : agg_terms) {
+    hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&agg_term.aggtype));
+
+    if (agg_term.expression != nullptr)
+      hash = HashUtil::CombineHashes(hash, agg_term.expression->Hash());
+
+    hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&agg_term.distinct));
+  }
+  return hash;
+}
+
+hash_t AggregatePlan::Hash() const {
+  auto type = GetPlanNodeType();
+  hash_t hash = HashUtil::Hash(&type);
+
+  if (GetPredicate() != nullptr) {
+    hash = HashUtil::CombineHashes(hash, GetPredicate()->Hash());
+  }
+
+  hash = HashUtil::CombineHashes(hash, Hash(GetUniqueAggTerms()));
+
+  if (GetProjectInfo() != nullptr) {
+    hash = HashUtil::CombineHashes(hash, GetProjectInfo()->Hash());
+  }
+
+  for (const oid_t gb_col_id : GetGroupbyColIds()) {
+    hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&gb_col_id));
+  }
+
+  hash = HashUtil::CombineHashes(hash, GetOutputSchema()->Hash());
+
+  auto agg_strategy = GetAggregateStrategy();
+  hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&agg_strategy));
+
+  return HashUtil::CombineHashes(hash, AbstractPlan::Hash());
+}
+
+bool AggregatePlan::AreEqual(
+    const std::vector<planner::AggregatePlan::AggTerm> &A,
+    const std::vector<planner::AggregatePlan::AggTerm> &B) const {
+  if (A.size() != B.size())
+    return false;
+
+  for (size_t i = 0; i < A.size(); i++) {
+    if (A[i].aggtype != B[i].aggtype)
+      return false;
+
+    auto *expr = A[i].expression;
+
+    if (expr && (*expr != *B[i].expression))
+      return false;
+
+    if (A[i].distinct != B[i].distinct)
+      return false;
+  }
+  return true;
+}
+
+bool AggregatePlan::operator==(const AbstractPlan &rhs) const {
+  if (GetPlanNodeType() != rhs.GetPlanNodeType())
+    return false;
+
+  auto &other = static_cast<const planner::AggregatePlan &>(rhs);
+
+  // Predicate
+  auto *pred = GetPredicate();
+  auto *other_pred = other.GetPredicate();
+  if ((pred == nullptr && other_pred != nullptr) ||
+      (pred != nullptr && other_pred == nullptr))
+    return false;
+  if (pred && *pred != *other_pred)
+    return false;
+
+  // UniqueAggTerms
+  if (!AreEqual(GetUniqueAggTerms(), other.GetUniqueAggTerms()))
+    return false;
+
+  // Project Info
+  auto *proj_info = GetProjectInfo();
+  auto *other_proj_info = other.GetProjectInfo();
+  if ((proj_info == nullptr && other_proj_info != nullptr) ||
+      (proj_info != nullptr && other_proj_info == nullptr))
+    return false;
+  if (proj_info && *proj_info != *other_proj_info)
+    return false;
+
+  // Group by
+  size_t group_by_col_ids_count = GetGroupbyColIds().size();
+  if (group_by_col_ids_count != other.GetGroupbyColIds().size())
+    return false;
+
+  for (size_t i = 0; i < group_by_col_ids_count; i++) {
+    if (GetGroupbyColIds()[i] != other.GetGroupbyColIds()[i])
+      return false;
+  }
+
+  if (*GetOutputSchema() != *other.GetOutputSchema())
+    return false;
+
+  if (GetAggregateStrategy() != other.GetAggregateStrategy())
+    return false;
+
+  return (AbstractPlan::operator==(rhs));
+}
+
+void AggregatePlan::VisitParameters(
+    codegen::QueryParametersMap &map, std::vector<peloton::type::Value> &values,
+    const std::vector<peloton::type::Value> &values_from_user) {
+  AbstractPlan::VisitParameters(map, values, values_from_user);
+
+  for (const auto &agg_term : GetUniqueAggTerms()) {
+    if (agg_term.expression != nullptr) {
+      auto *expr =
+          const_cast<expression::AbstractExpression *>(agg_term.expression);
+      expr->VisitParameters(map, values, values_from_user);
+    }
+  }
+
+  if (GetGroupbyColIds().size() > 0) {
+    auto *predicate =
+        const_cast<expression::AbstractExpression *>(GetPredicate());
+    if (predicate != nullptr) {
+      predicate->VisitParameters(map, values, values_from_user);
+    }
+
+    auto *proj_info = const_cast<planner::ProjectInfo *>(GetProjectInfo());
+    if (proj_info != nullptr) {
+      proj_info->VisitParameters(map, values, values_from_user);
+    }
+  }
+}
+
 }  // namespace planner
 }  // namespace peloton

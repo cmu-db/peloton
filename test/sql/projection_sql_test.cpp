@@ -13,51 +13,78 @@
 #include <memory>
 
 #include "sql/testing_sql_util.h"
+
 #include "catalog/catalog.h"
 #include "common/harness.h"
 #include "concurrency/transaction_manager_factory.h"
-#include "executor/create_executor.h"
-#include "planner/create_plan.h"
 
 namespace peloton {
 namespace test {
 
-class ProjectionSQLTests : public PelotonTest {};
+class ProjectionSQLTests : public PelotonTest {
+ public:
+  ProjectionSQLTests() {
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto *txn = txn_manager.BeginTransaction();
+    catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+    txn_manager.CommitTransaction(txn);
+
+    SetupTestTable();
+  }
+
+  ~ProjectionSQLTests() {
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto *txn = txn_manager.BeginTransaction();
+    catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+    txn_manager.CommitTransaction(txn);
+  }
+
+  void SetupTestTable() {
+    TestingSQLUtil::ExecuteSQLQuery(
+        "CREATE TABLE test(a TINYINT, b SMALLINT, c INT, d BIGINT, e "
+        "DECIMAL);");
+
+    // Insert tuples into table
+    TestingSQLUtil::ExecuteSQLQuery(
+        "INSERT INTO test VALUES (1, 2, 3, 4, 5.0);");
+  }
+};
+
+TEST_F(ProjectionSQLTests, SimpleProjectionSQLTest) {
+  // Test TINYINT
+  std::string sql = "SELECT a+a, a-a, a*a, a/a, a+b, a+c, a+d, a+e FROM test";
+  std::vector<std::string> expected = {"2|0|1|1|3|4|5|6"};
+  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(sql, expected, false);
+
+  // Test SMALLINT
+  sql = "SELECT b+b, b-b, b*b, b/b, b+a, b+c, b+d, b+e FROM test";
+  expected = {"4|0|4|1|3|5|6|7"};
+  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(sql, expected, false);
+
+  // Test INT
+  sql = "SELECT c+c, c-c, c*c, c/c, c+a, c+b, c+d, c+e FROM test";
+  expected = {"6|0|9|1|4|5|7|8"};
+  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(sql, expected, false);
+
+  // Test BIGINT
+  sql = "SELECT d+d, d-d, d*d, d/d, d+a, d+b, d+c, d+e FROM test";
+  expected = {"8|0|16|1|5|6|7|9"};
+  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(sql, expected, false);
+
+  // Test DECIMAL
+  sql = "SELECT e+e, e-e, e*e, e/e, e+a, e+b, e+c, e+d FROM test";
+  expected = {"10|0|25|1|6|7|8|9"};
+  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(sql, expected, false);
+}
 
 TEST_F(ProjectionSQLTests, ProjectionSQLTest) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
-  txn_manager.CommitTransaction(txn);
+  std::string sql = "SELECT a*5+b, -1+c, 6, a from test";
+  std::vector<std::string> expected = {"7|2|6|1"};
+  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(sql, expected, false);
 
-  // Create a table first
-  TestingSQLUtil::ExecuteSQLQuery(
-      "CREATE TABLE test(a INT PRIMARY KEY, b INT, c INT);");
-
-  // Insert tuples into table
-  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 10, 100);");
-
-  std::vector<StatementResult> result;
-  std::vector<FieldInfo> tuple_descriptor;
-  std::string error_message;
-  int rows_affected;
-
-  // test small int
-  TestingSQLUtil::ExecuteSQLQuery("SELECT a*5+b, -1+c, 6, a from test", result,
-                                  tuple_descriptor, rows_affected,
-                                  error_message);
-  // Check the return value
-  EXPECT_EQ(result[0].second[0], '1');
-  EXPECT_EQ(result[0].second[1], '5');
-  EXPECT_EQ(result[1].second[0], '9');
-  EXPECT_EQ(result[1].second[1], '9');
-  EXPECT_EQ(result[2].second[0], '6');
-  EXPECT_EQ(result[3].second[0], '1');
-
-  // free the database just created
-  txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
-  txn_manager.CommitTransaction(txn);
+  sql = "SELECT d+e*2.0, e, e+(2*c) from test";
+  expected = {"14|5|11"};
+  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(sql, expected, false);
 }
 
 }  // namespace test

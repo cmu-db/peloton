@@ -32,11 +32,14 @@ struct BuiltInFuncType {
 
 class BuiltInFunctions {
  private:
+  // Map the function name in C++ source (should be unique) to the actual
+  // function implementation
   static std::unordered_map<std::string, BuiltInFuncType> kFuncMap;
 
  public:
   static void AddFunction(const std::string &func_name, BuiltInFuncType func);
 
+  // Get the function from the name in C++ source code
   static BuiltInFuncType GetFuncByName(const std::string &func_name);
 };
 

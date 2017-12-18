@@ -72,7 +72,7 @@ uint64_t Type::GetTypeSize(const TypeId type_id) {
     default:
       break;
   }
-  throw Exception(EXCEPTION_TYPE_UNKNOWN_TYPE, "Unknown type.");
+  throw Exception(ExceptionType::UNKNOWN_TYPE, "Unknown type.");
 }
 
 // Is this type coercable from the other type
@@ -150,7 +150,7 @@ Value Type::GetMinValue(TypeId type_id) {
     default:
       break;
   }
-  throw Exception(EXCEPTION_TYPE_MISMATCH_TYPE, "Cannot get minimal value.");
+  throw Exception(ExceptionType::MISMATCH_TYPE, "Cannot get minimal value.");
 }
 
 Value Type::GetMaxValue(TypeId type_id) {
@@ -178,7 +178,7 @@ Value Type::GetMaxValue(TypeId type_id) {
     default:
       break;
   }
-  throw Exception(EXCEPTION_TYPE_MISMATCH_TYPE, "Cannot get maximal value.");
+  throw Exception(ExceptionType::MISMATCH_TYPE, "Cannot get maximal value.");
 }
 
 CmpBool Type::CompareEquals(const Value& left UNUSED_ATTRIBUTE,
