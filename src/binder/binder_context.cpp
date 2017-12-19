@@ -22,9 +22,9 @@
 namespace peloton {
 namespace binder {
 
-void BinderContext::AddRegularTable(parser::TableRef *table_ref,
+void BinderContext::AddRegularTable(parser::TableRef* table_ref,
                                     const std::string default_database_name,
-                                    concurrency::Transaction *txn) {
+                                    concurrency::Transaction* txn) {
   table_ref->TryBindDatabaseName(default_database_name);
   auto table_alias = table_ref->GetTableAlias();
   AddRegularTable(table_ref->GetDatabaseName(), table_ref->GetTableName(),
@@ -175,13 +175,14 @@ void BinderContext::GenerateAllColumnExpressions(
   for (auto& entry : regular_table_alias_map_) {
     auto& table_obj = entry.second;
     auto col_cnt = table_obj->GetColumnObjects().size();
-    for (size_t i = 0; i<col_cnt; i++) {
+    for (size_t i = 0; i < col_cnt; i++) {
       auto col_obj = table_obj->GetColumnObject(i);
       auto tv_expr = new expression::TupleValueExpression(
           std::string(col_obj->column_name), std::string(entry.first));
       tv_expr->SetValueType(col_obj->column_type);
       tv_expr->DeduceExpressionName();
-      tv_expr->SetBoundOid(table_obj->database_oid, table_obj->table_oid, col_obj->column_id);
+      tv_expr->SetBoundOid(table_obj->database_oid, table_obj->table_oid,
+                           col_obj->column_id);
       exprs.emplace_back(tv_expr);
     }
   }
@@ -194,6 +195,10 @@ void BinderContext::GenerateAllColumnExpressions(
           std::string(col_entry.first), std::string(table_alias));
       tv_expr->SetValueType(col_entry.second);
       tv_expr->DeduceExpressionName();
+      // TODO(boweic): set this to make query derived table work, but this is
+      // not correct we should use (table_alias_id, tuple_id) to represent all
+      // tuple including tuples in nested select
+      tv_expr->SetBoundOid(0, 0, 0);
       exprs.emplace_back(tv_expr);
     }
   }

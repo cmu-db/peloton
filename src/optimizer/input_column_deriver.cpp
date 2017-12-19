@@ -75,7 +75,7 @@ void InputColumnDeriver::Visit(const QueryDerivedScan *op) {
       input_cols_map[input_col] = input_cols_idx++;
     }
   }
-  vector<AbstractExpression *> input_cols_(output_cols_map.size());
+  vector<AbstractExpression *> input_cols_(input_cols_map.size());
   for (auto &entry : input_cols_map) {
     input_cols_[entry.second] = entry.first;
   }

@@ -376,8 +376,6 @@ ConstructSelectElementMap(
     } else if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
       auto tv_expr =
           reinterpret_cast<expression::TupleValueExpression*>(expr.get());
-      LOG_DEBUG("col %s, tuple %u", tv_expr->GetColumnName().c_str(),
-                std::get<2>(tv_expr->GetBoundOid()));
       alias = tv_expr->GetColumnName();
     } else
       continue;

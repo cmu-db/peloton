@@ -495,6 +495,8 @@ void PlanGenerator::GenerateProjectionForJoin(
   size_t output_offset = 0;
   auto &l_child_expr_map = children_expr_map_[0];
   auto &r_child_expr_map = children_expr_map_[1];
+  LOG_DEBUG("l size %lu, r size %lu", l_child_expr_map.size(),
+            r_child_expr_map.size());
   for (auto &expr : output_cols_) {
     // auto expr_type = expr->GetExpressionType();
     expression::ExpressionUtil::EvaluateExpression(children_expr_map_, expr);
