@@ -60,11 +60,8 @@ public:
     }
   };
 
-  // TODO(tianyu) Encapsulate this
-  inline struct event_base *GetEventBase() { return base_; }
-
   // TODO(tianyu) Rename this since it is not an actual thread id
-  inline int GetThreadID() const { return task_id_; }
+  inline int Id() const { return task_id_; }
 
   virtual ~NotifiableTask() {
       for (struct event *event : events_)
@@ -81,10 +78,6 @@ public:
   bool GetThreadIsClosed() { return is_closed; }
 
   void SetThreadIsClosed(bool is_closed) { this->is_closed = is_closed; }
-
-  int GetThreadSockFd() { return sock_fd; }
-
-  void SetThreadSockFd(int fd) { this->sock_fd = fd; }
 
   /**
    * @brief Register an event with the event base associated with this notifiable task.
@@ -105,7 +98,7 @@ public:
    * @param timeout the maximum amount of time to wait for an event, defaults to null which will wait forever
    * @return pointer to the allocated event.
    */
-  struct event *RegisterEvent(evutil_socket_t fd,
+  struct event *RegisterEvent(int fd,
                               short flags,
                               event_callback_fn callback,
                               void *arg,
@@ -114,6 +107,46 @@ public:
     events_.insert(event);
     event_add(event, timeout);
     return event;
+  }
+
+  /**
+   * @brief Register a signal event. This is a wrapper around RegisterEvent()
+   *
+   * @see RegisterEvent(), UnregisterEvent()
+   *
+   * @param signal Signal number to listen on
+   * @param callback callback function to be invoked when the event happens
+   * @param arg an argument to be passed to the callback function
+   * @param timeout the maximum amount of time to wait for an event, defaults to null which will wait forever
+   * @return pointer to the allocated event.
+   */
+  struct event *RegisterSignalEvent(int signal,
+                                    event_callback_fn callback,
+                                    void *arg,
+                                    const struct timeval *timeout = nullptr) {
+    return RegisterEvent(signal, EV_SIGNAL|EV_PERSIST, callback, arg, timeout);
+  }
+
+  /**
+   * @brief Register an event that fires periodically based on the given time interval.
+   * This is a wrapper around RegisterEvent()
+   *
+   * @see RegisterEvent(), UnregisterEvent()
+   *
+   * @param timeout period of wait between each firing of this event
+   * @param callback callback function to be invoked when the event happens
+   * @param arg an argument to be passed to the callback function
+   * @return pointer to the allocated event.
+   */
+  struct event *RegisterPeriodicEvent(const struct timeval *timeout,
+                                      event_callback_fn callback,
+                                      void *arg) {
+    return RegisterEvent(-1, EV_TIMEOUT|EV_PERSIST, callback, arg, timeout);
+  }
+
+
+  struct event *RegisterManualEvent(event_callback_fn callback, void *arg) {
+    return RegisterEvent(-1, EV_PERSIST, callback, arg);
   }
 
   /**
@@ -128,15 +161,28 @@ public:
   void UnregisterEvent(struct event *event) {
     auto it = events_.find(event);
     if (it == events_.end()) return;
+    if (event_del(event) == -1) {
+      LOG_ERROR("Failed to delete event");
+      return;
+    }
     event_free(event);
     events_.erase(event);
   }
 
   /**
-   * @brief Constant method for getting the time interval of one second to be used in register event
-   * @return a pointer to a time interval of one second
+   * In a loop, make this notifiable task wait and respond to incoming events
    */
-  static const struct timeval *OneSecond() const { return &one_second; }
+  void EventLoop() {
+    LOG_TRACE("stop");
+    event_base_dispatch(base_);
+  }
+
+  /**
+   * Exits the event loop
+   */
+  void Break() {
+    event_base_loopexit(base_, nullptr);
+  }
 
 private:
   // The connection thread id
@@ -148,7 +194,6 @@ private:
 
   // For deallocation
   std::unordered_set<struct event *> events_;
-  static const struct timeval one_second = {1, 0};
 };
 
 }  // namespace network

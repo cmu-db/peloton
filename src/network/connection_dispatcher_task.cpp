@@ -12,8 +12,9 @@
 
 
 #include "network/connection_dispatcher_task.h"
+#include "network/network_callback_util.h"
 
-#define MASTER_THREAD_ID -1
+#define MASTER_THREAD_ID (-1)
 
 namespace peloton {
 namespace network {
@@ -21,29 +22,32 @@ namespace network {
  * Get the vector of Network worker threads
  */
 std::vector<std::shared_ptr<ConnectionHandlerTask>> &
-ConnectionDispatcherTask::GetWorkerThreads() {
-  static std::vector<std::shared_ptr<ConnectionHandlerTask>> worker_threads;
-  return worker_threads;
+ConnectionDispatcherTask::GetHandlers() {
+  static std::vector<std::shared_ptr<ConnectionHandlerTask>> handlers;
+  return handlers;
 }
 
 /*
  * The Network master thread initialize num_threads worker threads on
  * constructor.
  */
-ConnectionDispatcherTask::ConnectionDispatcherTask(const int num_threads,
-                                           struct event_base *libevent_base)
-    : NotifiableTask(MASTER_THREAD_ID, libevent_base),
+ConnectionDispatcherTask::ConnectionDispatcherTask(int num_threads)
+    : NotifiableTask(MASTER_THREAD_ID),
       num_threads_(num_threads),
-      next_thread_id_(0) {
-  auto &threads = GetWorkerThreads();
-  threads.clear();
+      next_handler(0) {
+  // TODO(tianyu): huh?
+  auto &handlers = GetHandlers();
+  handlers.clear();
+
+  RegisterSignalEvent(SIGHUP, CallbackUtil::OnSighup, this);
 }
 
 /*
  * Start the threads
  */
+// TODO(tianyu) Rename and write better
 void ConnectionDispatcherTask::Start() {
-  auto &threads = GetWorkerThreads();
+  auto &threads = GetHandlers();
 
   // register thread to epoch manager.
   if (concurrency::EpochManagerFactory::GetEpochType() ==
@@ -55,9 +59,8 @@ void ConnectionDispatcherTask::Start() {
 
   // create worker threads.
   for (int thread_id = 0; thread_id < num_threads_; thread_id++) {
-    threads.push_back(std::shared_ptr<ConnectionHandlerTask>(
-        new ConnectionHandlerTask(thread_id)));
-    thread_pool.SubmitDedicatedTask(ConnectionDispatcherTask::StartWorker,
+    threads.push_back(std::make_shared<ConnectionHandlerTask>(thread_id));
+    thread_pool.SubmitDedicatedTask(ConnectionDispatcherTask::StartHandler,
                                     threads[thread_id].get());
   }
 
@@ -73,16 +76,16 @@ void ConnectionDispatcherTask::Start() {
  * Stop the threads
  */
 void ConnectionDispatcherTask::Stop() {
-  auto &threads = GetWorkerThreads();
+  auto &handlers = GetHandlers();
 
-  for (int thread_id = 0; thread_id < num_threads_; thread_id++) {
-    threads[thread_id].get()->SetThreadIsClosed(true);
+  for (int handler_id = 0; handler_id < num_threads_; handler_id++) {
+    handlers[handler_id].get()->SetThreadIsClosed(true);
   }
 
   // When a thread exit loop, the is_closed flag will be set to false
   // Wait for all threads exit loops
-  for (int thread_id = 0; thread_id < num_threads_; thread_id++) {
-    while (threads[thread_id].get()->GetThreadIsClosed()) {
+  for (int handler_id = 0; handler_id < num_threads_; handler_id++) {
+    while (handlers[handler_id].get()->GetThreadIsClosed()) {
       sleep(1);
     }
   }
@@ -91,50 +94,39 @@ void ConnectionDispatcherTask::Stop() {
 /*
  * Start with worker event loop
  */
-void ConnectionDispatcherTask::StartWorker(ConnectionHandlerTask *worker_thread) {
-  event_base_loop(worker_thread->GetEventBase(), 0);
+void ConnectionDispatcherTask::StartHandler(ConnectionHandlerTask *handler) {
+  handler->EventLoop();
+  // TODO(tianyu): Is it just me or does this flag means the fucking opposite of what it says?
   // Set worker thread's close flag to false to indicate loop has exited
-  worker_thread->SetThreadIsClosed(false);
-
-  // Free events and event base
-  if (worker_thread->GetThreadSockFd() != -1) {
-    NetworkConnection *connection =
-        NetworkManager::GetConnection(worker_thread->GetThreadSockFd());
-
-    event_free(connection->network_event);
-    event_free(connection->workpool_event);
-  }
-  event_free(worker_thread->GetNewConnEvent());
-  event_free(worker_thread->GetTimeoutEvent());
-  event_base_free(worker_thread->GetEventBase());
+  handler->SetThreadIsClosed(false);
 }
 
 /*
 * Dispatch a new connection event to a random worker thread by
 * writing to the worker's pipe
 */
-void ConnectionDispatcherTask::DispatchConnection(int new_conn_fd,
-                                              short event_flags) {
-  char buf[1];
-  buf[0] = 'c';
-  auto &threads = GetWorkerThreads();
+void ConnectionDispatcherTask::DispatchConnection(int fd) {
+  struct sockaddr_storage addr;
+  socklen_t addrlen = sizeof(addr);
+
+  int new_conn_fd =
+      accept(fd, (struct sockaddr *)&addr, &addrlen);
+  if (new_conn_fd == -1) {
+    LOG_ERROR("Failed to accept");
+  }
+
+  auto &handlers = GetHandlers();
 
   // Dispatch by rand number
-  int thread_id = next_thread_id_;
+  int handler_id = next_handler;
 
   // update next threadID
-  next_thread_id_ = (next_thread_id_ + 1) % num_threads_;
+  next_handler = (next_handler + 1) % num_threads_;
 
-  std::shared_ptr<ConnectionHandlerTask> worker_thread = threads[thread_id];
-  LOG_DEBUG("Dispatching connection to worker %d", thread_id);
+  std::shared_ptr<ConnectionHandlerTask> handler = handlers[handler_id];
+  LOG_DEBUG("Dispatching connection to worker %d", handler_id);
 
-  std::shared_ptr<NewConnQueueItem> item(
-      new NewConnQueueItem(new_conn_fd, event_flags, ConnState::CONN_READ));
-  worker_thread->new_conn_queue.Enqueue(item);
-
-  if (write(worker_thread->GetNewConnSendFd(), buf, 1) != 1) {
-    LOG_ERROR("Failed to write to thread notify pipe");
-  }
+  handler->Notify(fd);
 }
 
 }  // namespace network

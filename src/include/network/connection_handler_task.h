@@ -23,7 +23,6 @@
 #include "common/logger.h"
 #include "container/lock_free_queue.h"
 #include "notifiable_task.h"
-#include "network_callback_util.h"
 
 #define QUEUE_SIZE 100
 
@@ -32,37 +31,18 @@ namespace network {
 
 class ConnectionHandlerTask : public NotifiableTask {
  private:
-  // New connection event
-  struct event *new_conn_event_;
-
-  // Timeout event
-  struct event *ev_timeout_;
-
   // Notify new connection pipe(send end)
-  int new_conn_send_fd_;
-
-  // Notify new connection pipe(receive end)
-  int new_conn_receive_fd_;
-
-
+  int new_conn_send_fd_, new_conn_receive_fd;
 
  public:
   /* The queue for new connection requests */
   LockFreeQueue<std::shared_ptr<NewConnQueueItem>> new_conn_queue;
 
  public:
-  ConnectionHandlerTask(const int thread_id);
+  explicit ConnectionHandlerTask(int task_id);
 
-  // Getters and setters
-  event *GetNewConnEvent() { return this->new_conn_event_; }
-
-  event *GetTimeoutEvent() { return this->ev_timeout_; }
-
-  int GetNewConnSendFd() { return this->new_conn_send_fd_; }
-
-  int GetNewConnReceiveFd() { return this->new_conn_receive_fd_; }
-
-
+  // TODO(tianyu): see if we need any additional options
+  void Notify(int conn_fd);
 };
 
 }  // namespace network

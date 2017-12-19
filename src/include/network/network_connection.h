@@ -45,31 +45,9 @@ namespace network {
 
 /*
  * NetworkConnection - Wrapper for managing socket.
- * 	B is the STL container type used as the protocol's buffer.
  */
 class NetworkConnection {
- public:
-  int thread_id;
-  int sock_fd_;                    // socket file descriptor
-  struct event *network_event = nullptr;  // something to read from network
-  struct event *workpool_event = nullptr; // worker thread done the job
-  short event_flags;              // event flags mask
-
-  SSL* conn_SSL_context = nullptr;          // SSL context for the connection
-
-  NotifiableTask *thread_;          // reference to the network thread
-  std::unique_ptr<ProtocolHandler> protocol_handler_;       // Stores state for this socket
-  tcop::TrafficCop traffic_cop_;
- private:
-  Buffer rbuf_;                     // Socket's read buffer
-  Buffer wbuf_;                     // Socket's write buffer
-  unsigned int next_response_ = 0;  // The next response in the response buffer
-  Client client_;
-  bool ssl_sent_ = false;
-  ConnectionHandleStateMachine state_machine_;
-
-
- public:
+public:
   inline NetworkConnection(int sock_fd, short event_flags, NotifiableTask *thread,
                         ConnState init_state)
       : sock_fd_(sock_fd), state_machine_{init_state} {
@@ -79,7 +57,7 @@ class NetworkConnection {
   /* Reuse this object for a new connection. We could be assigned to a
    * new thread, change thread reference.
    */
-  void Init(short event_flags, NotifiableTask *thread, ConnState init_state);
+  void Init(short event_flags, NotifiableTask *handler, ConnState init_state);
 
   /* refill_read_buffer - Used to repopulate read buffer with a fresh
    * batch of data from the socket
@@ -101,9 +79,12 @@ class NetworkConnection {
 
   inline void TriggerStateMachine() { state_machine_.Accept(Transition::WAKEUP, *this); }
 
+  const std::unique_ptr<ProtocolHandler> &GetProtocolHandler() const {
+    return protocol_handler_;
+  }
+
   /* State Machine Actions*/
   // TODO(tianyu) Maybe move them to their own class
-  Transition HandleConnListening();
   Transition Wait();
   Transition Process();
   Transition ProcessWrite();
@@ -149,6 +130,24 @@ class NetworkConnection {
     int one = 1;
     setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof one);
   }
+
+  int sock_fd_;                    // socket file descriptor
+  struct event *network_event = nullptr;  // something to read from network
+  struct event *workpool_event = nullptr; // worker thread done the job
+
+  SSL* conn_SSL_context = nullptr;          // SSL context for the connection
+
+  NotifiableTask *handler;          // reference to the network thread
+  std::unique_ptr<ProtocolHandler> protocol_handler_;       // Stores state for this socket
+  tcop::TrafficCop traffic_cop_;
+
+  Buffer rbuf_;                     // Socket's read buffer
+  Buffer wbuf_;                     // Socket's write buffer
+  unsigned int next_response_ = 0;  // The next response in the response buffer
+  Client client_;
+  bool ssl_sent_ = false;
+  ConnectionHandleStateMachine state_machine_;
+
 };
 
 }

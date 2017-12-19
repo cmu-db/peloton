@@ -58,7 +58,7 @@ void *SelectAllTest(int port) {
             peloton::network::NetworkManager::recent_connfd);
 
     network::PostgresProtocolHandler *handler =
-        dynamic_cast<network::PostgresProtocolHandler *>(conn->protocol_handler_.get());
+        dynamic_cast<network::PostgresProtocolHandler *>(conn->GetProtocolHandler().get());
     EXPECT_NE(handler, nullptr);
 
     // create table and insert some data
