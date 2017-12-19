@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "network/network_worker_thread.h"
+#include "network/connection_handler_task.h"
 
 namespace peloton {
 namespace network {
@@ -19,8 +19,8 @@ namespace network {
 * The worker thread creates a pipe for master-worker communication on
 * constructor.
 */
-NetworkWorkerThread::NetworkWorkerThread(const int thread_id)
-    : NetworkThread(thread_id, event_base_new()), new_conn_queue(QUEUE_SIZE) {
+ConnectionHandlerTask::ConnectionHandlerTask(const int thread_id)
+    : NotifiableTask(thread_id, event_base_new()), new_conn_queue(QUEUE_SIZE) {
   int fds[2];
   if (pipe(fds)) {
     LOG_ERROR("Can't create notify pipe to accept connections");
