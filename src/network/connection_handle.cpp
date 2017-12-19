@@ -28,9 +28,9 @@ namespace network {
  *  To use these macros, follow the examples given. Or, here is a syntax chart:
  *
  *  x list ::= x... (separated by new lines)
- *  graph ::= (DEF_TRANSITION_GRAPH
+ *  graph ::= DEF_TRANSITION_GRAPH
  *              state_list
- *            END_DEF)
+ *            END_DEF
 
  *  state ::= DEFINE_STATE(ConnState)
  *             transition_list
