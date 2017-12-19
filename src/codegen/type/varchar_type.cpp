@@ -32,7 +32,7 @@ struct CompareVarchar : public TypeSystem::ExpensiveComparisonHandleNull {
   bool SupportsTypes(const type::Type &left_type,
                      const type::Type &right_type) const override {
     return left_type.GetSqlType() == Varchar::Instance() &&
-        left_type == right_type;
+           left_type == right_type;
   }
 
   // Call ValuesRuntime::CompareStrings(). This function behaves like strcmp(),
@@ -145,7 +145,7 @@ struct Like : public TypeSystem::BinaryOperator {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type.GetSqlType() == Varchar::Instance() &&
-        left_type == right_type;
+           left_type == right_type;
   }
 
   Type ResultType(UNUSED_ATTRIBUTE const Type &left_type,
@@ -194,7 +194,7 @@ struct DateTrunc : public TypeSystem::BinaryOperatorHandleNull {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type.GetSqlType() == Varchar::Instance() &&
-        right_type.GetSqlType() == Timestamp::Instance();
+           right_type.GetSqlType() == Timestamp::Instance();
   }
 
   Type ResultType(UNUSED_ATTRIBUTE const Type &left_type,
@@ -235,7 +235,7 @@ struct BTrim : public TypeSystem::BinaryOperatorHandleNull {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type.GetSqlType() == Varchar::Instance() &&
-        right_type.GetSqlType() == Varchar::Instance();
+           right_type.GetSqlType() == Varchar::Instance();
   }
 
   Type ResultType(UNUSED_ATTRIBUTE const Type &left_type,
@@ -259,7 +259,7 @@ struct LTrim : public TypeSystem::BinaryOperatorHandleNull {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type.GetSqlType() == Varchar::Instance() &&
-        right_type.GetSqlType() == Varchar::Instance();
+           right_type.GetSqlType() == Varchar::Instance();
   }
 
   Type ResultType(UNUSED_ATTRIBUTE const Type &left_type,
@@ -283,7 +283,7 @@ struct RTrim : public TypeSystem::BinaryOperatorHandleNull {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type.GetSqlType() == Varchar::Instance() &&
-        right_type.GetSqlType() == Varchar::Instance();
+           right_type.GetSqlType() == Varchar::Instance();
   }
 
   Type ResultType(UNUSED_ATTRIBUTE const Type &left_type,
