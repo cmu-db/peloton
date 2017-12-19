@@ -170,7 +170,10 @@ def check_namespaces(file_path):
 
 VALIDATORS = [
     check_common_patterns,
-    check_namespaces, 
+
+    # Uncomment the below validator once the namespace refactoring is done
+    #check_namespaces, 
+    
     # Uncomment the below validator when all files are clang-format-compliant
     #check_format
 ]
