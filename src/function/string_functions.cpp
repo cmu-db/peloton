@@ -200,7 +200,7 @@ StringFunctions::StrWithLen StringFunctions::LTrim(const char *str,
                                                    uint32_t str_len,
                                                    const char *from,
                                                    UNUSED_ATTRIBUTE uint32_t
-                                                   from_len) {
+                                                       from_len) {
   PL_ASSERT(str != nullptr && from != nullptr);
   // llvm expects the len to include the terminating '\0'
   if (str_len == 1) {
@@ -210,7 +210,7 @@ StringFunctions::StrWithLen StringFunctions::LTrim(const char *str,
   str_len -= 1;
   int tail = str_len - 1, head = 0;
 
-  while (head < (int) str_len && strchr(from, str[head]) != NULL) head++;
+  while (head < (int)str_len && strchr(from, str[head]) != NULL) head++;
 
   return StringFunctions::StrWithLen(str + head,
                                      std::max(tail - head + 1, 0) + 1);
@@ -236,7 +236,7 @@ StringFunctions::StrWithLen StringFunctions::RTrim(const char *str,
                                                    uint32_t str_len,
                                                    const char *from,
                                                    UNUSED_ATTRIBUTE uint32_t
-                                                   from_len) {
+                                                       from_len) {
   PL_ASSERT(str != nullptr && from != nullptr);
   // llvm expects the len to include the terminating '\0'
   if (str_len == 1) {
@@ -283,7 +283,7 @@ StringFunctions::StrWithLen StringFunctions::BTrim(const char *str,
                                                    uint32_t str_len,
                                                    const char *from,
                                                    UNUSED_ATTRIBUTE uint32_t
-                                                   from_len) {
+                                                       from_len) {
   PL_ASSERT(str != nullptr && from != nullptr);
 
   str_len--;  // skip the tailing 0
@@ -295,7 +295,7 @@ StringFunctions::StrWithLen StringFunctions::BTrim(const char *str,
   int tail = str_len - 1, head = 0;
   while (tail >= 0 && strchr(from, str[tail]) != NULL) tail--;
 
-  while (head < (int) str_len && strchr(from, str[head]) != NULL) head++;
+  while (head < (int)str_len && strchr(from, str[head]) != NULL) head++;
 
   return StringFunctions::StrWithLen(str + head,
                                      std::max(tail - head + 1, 0) + 1);
