@@ -2,7 +2,7 @@
 # encoding: utf-8
 
 ## ==============================================
-## GOAL : Format code, Add/Strip headers
+## GOAL : Format code, Update headers
 ## ==============================================
 
 import argparse
@@ -11,6 +11,7 @@ import os
 import re
 import sys
 import datetime
+import subprocess
 
 ## ==============================================
 ## CONFIGURATION
@@ -77,7 +78,7 @@ LOG.setLevel(logging.INFO)
 ## ==============================================
 
 #format the file passed as argument
-def format_file(file_path, add_header, strip_header, clang_format_code):
+def format_file(file_path, update_header, clang_format_code):
 
     file_name = os.path.basename(file_path)
     abs_path = os.path.abspath(file_path)
@@ -86,43 +87,33 @@ def format_file(file_path, add_header, strip_header, clang_format_code):
     with open(file_path, "r+") as fd:
         file_data = fd.read()
 
-        if add_header:
+        if update_header:
+            # strip old header if it exists
+            header_match = header_regex.match(file_data)
+            if not header_match is None:
+              LOG.info("Strip header from %s", file_name)
+              header_comment = header_match.group()
+              LOG.debug("Header comment : %s", header_comment)
+              file_data = file_data.replace(header_comment,"")
+            
+            # add new header
+            LOG.info("Add header to %s", file_name)
             header_comment_2 = header_comment_line_3 + file_name + "\n"
             header_comment_4 = header_comment_line_5 + rel_path_from_peloton_dir + "\n"
             header_comment = header_comment_1 + header_comment_2 + header_comment_3 \
                         + header_comment_4 + header_comment_5
             #print header_comment
 
-            new_file_data = header_comment + file_data
+            file_data = header_comment + file_data
 
             fd.seek(0,0)
             fd.truncate()
-            fd.write(new_file_data)
-
-        elif strip_header:
-
-            LOG.info("Strip %s", file_name)
-            
-            header_match = header_regex.match(file_data)
-            if header_match is None:
-              return
-
-            LOG.debug("Header match ")
-
-            header_comment = header_match.group()
-            
-            LOG.debug("Header comment : %s", header_comment)
-        
-            new_file_data = file_data.replace(header_comment,"")
-
-            fd.seek(0,0)
-            fd.truncate()
-            fd.write(new_file_data)
+            fd.write(file_data)
 
         elif clang_format_code:
             formatting_command = CLANG_FORMAT + " -style=file " + " -i " + file_path
             LOG.info(formatting_command)
-            os.system(formatting_command)
+            subprocess.call([CLANG_FORMAT, "-style=file", "-i", file_path])
 
     #END WITH
 
@@ -131,14 +122,14 @@ def format_file(file_path, add_header, strip_header, clang_format_code):
 
 
 #format all the files in the dir passed as argument
-def format_dir(dir_path, add_header, strip_header, clang_format_code):
+def format_dir(dir_path, update_header, clang_format_code):
     for subdir, dirs, files in os.walk(dir_path):
         for file in files:
             #print os.path.join(subdir, file)
             file_path = subdir + os.path.sep + file
 
             if file_path.endswith(".h") or file_path.endswith(".cpp"):
-                format_file(file_path, add_header, strip_header, clang_format_code)
+                format_file(file_path, update_header, clang_format_code)
             #END IF
         #END FOR [file]
     #END FOR [os.walk]
@@ -150,31 +141,34 @@ def format_dir(dir_path, add_header, strip_header, clang_format_code):
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(description='Add/delete headers and/or format source code')
+    parser = argparse.ArgumentParser(description='Update headers and/or format source code')
 
-    parser.add_argument("-a", "--add-header", help='Action: Add suitable header(s)', action='store_true')
-    parser.add_argument("-s", "--strip-header", help='Action: Strip existing header(s)', action='store_true')
+    parser.add_argument("-u", "--update-header", help='Action: Update existing headers or add new ones', action='store_true')
     parser.add_argument("-c", "--clang-format-code", help='Action: Apply clang-format to source code', action='store_true')
-    parser.add_argument('paths', metavar='PATH', type=str, nargs='+',
+    parser.add_argument("-f", "--staged-files", help='Action: Apply the selected action(s) to all staged files (git)', action='store_true')
+    parser.add_argument('paths', metavar='PATH', type=str, nargs='*',
                         help='Files or directories to (recursively) apply the actions to')
     
     args = parser.parse_args()
 
-    # SOME SANITY CHECKS
-    if args.add_header and args.strip_header:
-        LOG.error("adding and stripping headers cannot be done together -- exiting")
-        sys.exit("adding and stripping headers cannot be done together")
-
-    # If there are no paths given, then we will scan the defaults
-    # PAVLO 2017-07-09: ^^^ The above logic seems like a bad idea
-    targets = DEFAULT_DIRS if not args.paths else args.paths
+    if args.staged_files:
+        targets = [os.path.abspath(os.path.join(PELOTON_DIR, f)) for f in subprocess.check_output(["git", "diff", "--name-only", "HEAD", "--cached", "--diff-filter=d"]).split()]
+        if not targets:
+            LOG.error("no staged files or not calling from a repository -- exiting")
+            sys.exit("no staged files or not calling from a repository")
+    elif not args.paths:
+        LOG.error("no files or directories given -- exiting")
+        sys.exit("no files or directories given")
+    else:
+        targets = args.paths
+    
     for x in targets:
         if os.path.isfile(x):
             LOG.info("Scanning file: " + x)
-            format_file(x, args.add_header, args.strip_header, args.clang_format_code)
+            format_file(x, args.update_header, args.clang_format_code)
         elif os.path.isdir(x):
             LOG.info("Scanning directory " + x)
-            format_dir(x, args.add_header, args.strip_header, args.clang_format_code)
+            format_dir(x, args.update_header, args.clang_format_code)
     ## FOR
 ## IF
         

@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "codegen/lang/if.h"
-#include "codegen/proxy/catalog_proxy.h"
+#include "codegen/proxy/storage_manager_proxy.h"
 #include "codegen/proxy/target_proxy.h"
 #include "codegen/proxy/updater_proxy.h"
 #include "codegen/operator/update_translator.h"
@@ -59,7 +59,7 @@ void UpdateTranslator::InitializeState() {
   // Get the table object pointer
   storage::DataTable *table = update_plan_.GetTable();
   llvm::Value *table_ptr = codegen.Call(StorageManagerProxy::GetTableWithOid,
-      {GetCatalogPtr(), codegen.Const32(table->GetDatabaseOid()),
+      {GetStorageManagerPtr(), codegen.Const32(table->GetDatabaseOid()),
        codegen.Const32(table->GetOid())});
 
   // Get the target list's raw vectors and their sizes
