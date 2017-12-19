@@ -63,10 +63,7 @@ class NetworkManager {
   static SSLLevel ssl_level_;
   static pthread_mutex_t *ssl_mutex_buf_;
 
-  struct event *ev_stop_;     // libevent stop event
-  struct event *ev_timeout_;  // libevent timeout event
-  std::shared_ptr<ConnectionDispatcherTask> master_thread_;
-  struct event_base *base_;  // libevent event_base
+  std::shared_ptr<ConnectionDispatcherTask> dispatcher_task;
 
   // Flags for controlling server start/close status
   bool is_started_ = false;
@@ -90,6 +87,8 @@ class NetworkManager {
 
   void StartServer();
 
+  void Break();
+
   void CloseServer();
 
   void SetPort(int new_port);
@@ -103,7 +102,6 @@ class NetworkManager {
 
   void SetIsClosed(bool is_closed) { this->is_closed_ = is_closed; }
 
-  event_base *GetEventBase() { return base_; }
 
   static int verify_callback(int ok, X509_STORE_CTX *store);
 

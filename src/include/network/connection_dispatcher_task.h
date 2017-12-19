@@ -25,24 +25,24 @@ class ConnectionHandlerTask;
 
 // a master thread contains multiple worker threads.
 class ConnectionDispatcherTask : public NotifiableTask {
- private:
-  const int num_threads_;
-
-  // TODO: have a smarter dispatch scheduler
-  std::atomic<int> next_thread_id_;  // next thread we dispatched to
-
- public:
-  ConnectionDispatcherTask(const int num_threads, struct event_base *libevent_base);
+public:
+  ConnectionDispatcherTask(int num_threads);
 
   void Start();
 
   void Stop();
 
-  void DispatchConnection(int new_conn_fd, short event_flags);
+  void DispatchConnection(int fd);
 
-  std::vector<std::shared_ptr<ConnectionHandlerTask>> &GetWorkerThreads();
+  std::vector<std::shared_ptr<ConnectionHandlerTask>> &GetHandlers();
 
-  static void StartWorker(peloton::network::ConnectionHandlerTask *worker_thread);
+  static void StartHandler(peloton::network::ConnectionHandlerTask *handler);
+
+private:
+  const int num_threads_;
+
+  // TODO: have a smarter dispatch scheduler
+  std::atomic<int> next_handler;  // next thread we dispatched to
 };
 
 }  // namespace network
