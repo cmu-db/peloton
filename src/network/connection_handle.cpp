@@ -60,7 +60,7 @@ namespace peloton {
         DEFINE_STATE (CONN_PROCESS)
           ON (PROCEED) SET_STATE_TO (CONN_WRITE) AND_INVOKE (ProcessWrite),
           ON (NEED_DATA) SET_STATE_TO (CONN_WAIT) AND_INVOKE (Wait),
-          ON (GET_RESULT) SET_STATE_TO (CONN_GET_RESULT) AND_INVOKE (GetResult),
+          ON (GET_RESULT) SET_STATE_TO (CONN_GET_RESULT) AND_WAIT,
           ON (ERROR) SET_STATE_TO (CONN_CLOSING) AND_INVOKE (CloseSocket)
         END_DEF,
 
@@ -71,6 +71,7 @@ namespace peloton {
         END_DEF,
 
         DEFINE_STATE (CONN_GET_RESULT)
+          ON (WAKEUP) SET_STATE_TO (CONN_GET_RESULT) AND_INVOKE (GetResult),
           ON (PROCEED) SET_STATE_TO (CONN_WRITE) AND_INVOKE (ProcessWrite)
         END_DEF
     };
