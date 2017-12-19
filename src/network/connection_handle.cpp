@@ -12,7 +12,7 @@
 
 #include "network/connection_handle.h"
 #include "network/network_connection.h"
-#include "common/logger.h"
+
 
 namespace peloton {
   namespace network {
@@ -65,6 +65,7 @@ namespace peloton {
         END_DEF,
 
         DEFINE_STATE (CONN_WRITE)
+          ON (WAKEUP) SET_STATE_TO (CONN_WRITE) AND_INVOKE (ProcessWrite),
           ON (PROCEED) SET_STATE_TO (CONN_PROCESS) AND_INVOKE (Process),
           ON (ERROR) SET_STATE_TO (CONN_CLOSING) AND_INVOKE(CloseSocket)
         END_DEF,
@@ -73,17 +74,6 @@ namespace peloton {
           ON (PROCEED) SET_STATE_TO (CONN_WRITE) AND_INVOKE (ProcessWrite)
         END_DEF
     };
-
-    void ConnectionHandleStateMachine::Accept(Transition action, NetworkConnection &connection) {
-      PL_ASSERT(!(delta_.find(current_state_) == delta_.end())
-                && !(delta_[current_state_].find(action) == delta_[current_state_].end()));
-      Transition next = action;
-      while (next != Transition::NONE) {
-        transition_result result = delta_[current_state_][next];
-        current_state_ = result.first;
-        next = result.second(connection);
-      }
-    }
 
   }
 }

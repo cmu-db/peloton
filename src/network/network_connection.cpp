@@ -33,7 +33,6 @@ void NetworkConnection::Init(short event_flags, NetworkThread *thread,
 
   this->event_flags = event_flags;
   this->thread_ = thread;
-  this->state = init_state;
 
   this->thread_id = thread->GetThreadID();
 
@@ -82,14 +81,9 @@ void NetworkConnection::Init(short event_flags, NetworkThread *thread,
     struct event* event = static_cast<struct event*>(arg);
     event_active(event, EV_WRITE, 0);
   }, workpool_event);
-}
 
-void NetworkConnection::TransitState(ConnState next_state) {
-#ifdef LOG_TRACE_ENABLED
-  if (next_state != state)
-  LOG_TRACE("conn %d transit to state %d", sock_fd, (int)next_state);
-#endif
-  state = next_state;
+  state_machine_ = ConnectionHandleStateMachine(init_state);
+
 }
 
 // Update event
@@ -150,7 +144,7 @@ WriteState NetworkConnection::WritePackets() {
 }
 
 Transition NetworkConnection::FillReadBuffer() {
-  Transition result = Transition::NONE;
+  Transition result = Transition::NEED_DATA;
   ssize_t bytes_read = 0;
   bool done = false;
 
@@ -592,7 +586,6 @@ Transition NetworkConnection::CloseSocket() {
   event_del(network_event);
   event_del(workpool_event);
   // event_free(event);
-  TransitState(ConnState::CONN_CLOSED);
   Reset();
   for (;;) {
     int status = close(sock_fd_);
@@ -616,7 +609,6 @@ void NetworkConnection::Reset() {
   if (protocol_handler_ != nullptr) {
     protocol_handler_->Reset();
   }
-  state = ConnState::CONN_INVALID;
   traffic_cop_.Reset();
   next_response_ = 0;
   ssl_sent_ = false;

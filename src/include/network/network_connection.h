@@ -59,7 +59,6 @@ class NetworkConnection {
 
   NetworkThread *thread_;          // reference to the network thread
   std::unique_ptr<ProtocolHandler> protocol_handler_;       // Stores state for this socket
-  ConnState state = ConnState::CONN_INVALID;  // Initial state of connection
   tcop::TrafficCop traffic_cop_;
  private:
   Buffer rbuf_;                     // Socket's read buffer
@@ -73,7 +72,7 @@ class NetworkConnection {
  public:
   inline NetworkConnection(int sock_fd, short event_flags, NetworkThread *thread,
                         ConnState init_state)
-      : sock_fd_(sock_fd) {
+      : sock_fd_(sock_fd), state_machine_{init_state} {
     Init(event_flags, thread, init_state);
   }
 
@@ -88,7 +87,6 @@ class NetworkConnection {
   Transition FillReadBuffer();
 
   // Transit to the target state
-  void TransitState(ConnState next_state);
 
   // Update the existing event to listen to the passed flags
   bool UpdateEvent(short flags);
