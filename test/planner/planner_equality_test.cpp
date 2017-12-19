@@ -82,7 +82,7 @@ class PlannerEqualityTest : public PelotonTest {
 
  protected:
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer;
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;

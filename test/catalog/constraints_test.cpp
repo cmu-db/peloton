@@ -138,7 +138,7 @@ TEST_F(ConstraintsTests, DEFAULTTEST) {
   TestingConstraintsUtil::CreateAndPopulateTable(constraints, multi_constraints);
 
   // Bootstrap
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_affected;
@@ -158,7 +158,6 @@ TEST_F(ConstraintsTests, DEFAULTTEST) {
   status = TestingSQLUtil::ExecuteSQLQuery(
       sql, result, tuple_descriptor, rows_affected, error_message);
   EXPECT_EQ(ResultType::SUCCESS, status);
-  // EXPECT_EQ(result[0].second[0], '1');
   std::string resultStr = TestingSQLUtil::GetResultValueAsString(result, 0);
   LOG_INFO("OUTPUT:\n%s", resultStr.c_str());
 }
