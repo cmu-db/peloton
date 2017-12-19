@@ -49,7 +49,8 @@ class TempTable : public AbstractTable {
  public:
   // Table constructor
   TempTable(const oid_t &table_oid, catalog::Schema *schema,
-            const bool own_schema);
+            const bool own_schema,
+            const peloton::LayoutType layout_type = peloton::LAYOUT_TYPE_ROW);
 
   ~TempTable();
 
