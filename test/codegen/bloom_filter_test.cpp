@@ -336,7 +336,8 @@ void BloomFilterCodegenTest::CreateTable(std::string table_name, int tuple_size,
   }
   auto *catalog = catalog::Catalog::GetInstance();
   catalog->CreateTable(DEFAULT_DB_NAME, table_name,
-                       std::make_unique<catalog::Schema>(cols), txn);
+                       std::unique_ptr<catalog::Schema>(new catalog::Schema(cols)),
+                       txn);
 }
 
 // Insert a tuple to specific table
