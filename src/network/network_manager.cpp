@@ -41,7 +41,7 @@ NetworkConnection *NetworkManager::GetConnection(const int &connfd) {
 }
 
 void NetworkManager::CreateNewConnection(const int &connfd, short ev_flags,
-                                         NetworkThread *thread,
+                                         NotifiableTask *thread,
                                          ConnState init_state) {
   auto &global_socket_list = GetGlobalSocketList();
   recent_connfd = connfd;
@@ -76,7 +76,7 @@ NetworkManager::NetworkManager() {
 
   // a master thread is responsible for coordinating worker threads.
   master_thread_ =
-      std::make_shared<NetworkMasterThread>(CONNECTION_THREAD_COUNT, base_);
+      std::make_shared<ConnectionDispatcherTask>(CONNECTION_THREAD_COUNT, base_);
 
   port_ = settings::SettingsManager::GetInt(settings::SettingId::port);
   max_connections_ = settings::SettingsManager::GetInt(settings::SettingId::max_connections);

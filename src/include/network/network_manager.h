@@ -31,8 +31,8 @@
 #include "common/exception.h"
 #include "common/logger.h"
 #include "container/lock_free_queue.h"
-#include "network_thread.h"
-#include "network_master_thread.h"
+#include "notifiable_task.h"
+#include "connection_dispatcher_task.h"
 #include "protocol_handler.h"
 #include "network_connection.h"
 #include "network_state.h"
@@ -44,8 +44,8 @@ namespace peloton {
 namespace network {
 
 // Forward Declarations
-class NetworkThread;
-class NetworkMasterThread;
+class NotifiableTask;
+class ConnectionDispatcherTask;
 class NetworkConnection;
 
 class NetworkManager {
@@ -61,7 +61,7 @@ class NetworkManager {
 
   struct event *ev_stop_;     // libevent stop event
   struct event *ev_timeout_;  // libevent timeout event
-  std::shared_ptr<NetworkMasterThread> master_thread_;
+  std::shared_ptr<ConnectionDispatcherTask> master_thread_;
   struct event_base *base_;  // libevent event_base
 
   // Flags for controlling server start/close status
@@ -78,7 +78,7 @@ class NetworkManager {
   static NetworkConnection *GetConnection(const int &connfd);
 
   static void CreateNewConnection(const int &connfd, short ev_flags,
-                                  NetworkThread *thread, ConnState init_state);
+                                  NotifiableTask *thread, ConnState init_state);
 
   void StartServer();
 

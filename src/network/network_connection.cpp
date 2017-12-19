@@ -15,7 +15,7 @@
 #include "network/network_connection.h"
 #include "network/protocol_handler_factory.h"
 #include "network/network_callback_util.h"
-#include "network/network_master_thread.h"
+#include "network/connection_dispatcher_task.h"
 #include "network/connection_handle.h"
 
 #define SSL_MESSAGE_VERNO 80877103
@@ -24,7 +24,7 @@
 namespace peloton {
 namespace network {
 
-void NetworkConnection::Init(short event_flags, NetworkThread *thread,
+void NetworkConnection::Init(short event_flags, NotifiableTask *thread,
                           ConnState init_state) {
   SetNonBlocking(sock_fd_);
   SetTCPNoDelay(sock_fd_);
@@ -624,7 +624,7 @@ Transition NetworkConnection::HandleConnListening() {
     LOG_ERROR("Failed to accept");
   }
 
-  (static_cast<NetworkMasterThread *>(thread_))
+  (static_cast<ConnectionDispatcherTask *>(thread_))
       ->DispatchConnection(new_conn_fd, EV_READ | EV_PERSIST);
 
   return Transition::NONE;

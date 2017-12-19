@@ -24,7 +24,7 @@ void CallbackUtil::WorkerHandleNewConn(evutil_socket_t new_conn_recv_fd,
   char m_buf[1];
   std::shared_ptr<NewConnQueueItem> item;
   NetworkConnection *conn;
-  NetworkWorkerThread *thread = static_cast<NetworkWorkerThread *>(arg);
+  ConnectionHandlerTask *thread = static_cast<ConnectionHandlerTask *>(arg);
 
   // pipe fds should match
   PL_ASSERT(new_conn_recv_fd == thread->GetNewConnReceiveFd());
@@ -45,13 +45,13 @@ void CallbackUtil::WorkerHandleNewConn(evutil_socket_t new_conn_recv_fd,
         LOG_DEBUG("Creating new socket fd:%d", item->new_conn_fd);
         /* create a new connection object */
         NetworkManager::CreateNewConnection(item->new_conn_fd, item->event_flags,
-                                            static_cast<NetworkThread *>(thread),
+                                            static_cast<NotifiableTask *>(thread),
                                             ConnState::CONN_READ);
       } else {
         LOG_DEBUG("Reusing socket fd:%d", item->new_conn_fd);
         /* otherwise reset and reuse the existing conn object */
         conn->Reset();
-        conn->Init(item->event_flags, static_cast<NetworkThread *>(thread),
+        conn->Init(item->event_flags, static_cast<NotifiableTask *>(thread),
                    ConnState::CONN_READ);
       }
       break;
@@ -107,7 +107,7 @@ void CallbackUtil::ThreadControl_Callback(UNUSED_ATTRIBUTE evutil_socket_t
                                                  fd,
                                              UNUSED_ATTRIBUTE short what,
                                              void *arg) {
-  NetworkWorkerThread *thread = static_cast<NetworkWorkerThread *>(arg);
+  ConnectionHandlerTask *thread = static_cast<ConnectionHandlerTask *>(arg);
   if (!thread->GetThreadIsStarted()) {
     thread->SetThreadIsStarted(true);
   }

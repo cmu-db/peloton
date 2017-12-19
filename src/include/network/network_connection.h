@@ -31,7 +31,7 @@
 #include "common/logger.h"
 #include "type/types.h"
 
-#include "network_thread.h"
+#include "notifiable_task.h"
 #include "protocol_handler.h"
 #include "marshal.h"
 #include "network_state.h"
@@ -57,7 +57,7 @@ class NetworkConnection {
 
   SSL* conn_SSL_context = nullptr;          // SSL context for the connection
 
-  NetworkThread *thread_;          // reference to the network thread
+  NotifiableTask *thread_;          // reference to the network thread
   std::unique_ptr<ProtocolHandler> protocol_handler_;       // Stores state for this socket
   tcop::TrafficCop traffic_cop_;
  private:
@@ -70,7 +70,7 @@ class NetworkConnection {
 
 
  public:
-  inline NetworkConnection(int sock_fd, short event_flags, NetworkThread *thread,
+  inline NetworkConnection(int sock_fd, short event_flags, NotifiableTask *thread,
                         ConnState init_state)
       : sock_fd_(sock_fd), state_machine_{init_state} {
     Init(event_flags, thread, init_state);
@@ -79,7 +79,7 @@ class NetworkConnection {
   /* Reuse this object for a new connection. We could be assigned to a
    * new thread, change thread reference.
    */
-  void Init(short event_flags, NetworkThread *thread, ConnState init_state);
+  void Init(short event_flags, NotifiableTask *thread, ConnState init_state);
 
   /* refill_read_buffer - Used to repopulate read buffer with a fresh
    * batch of data from the socket

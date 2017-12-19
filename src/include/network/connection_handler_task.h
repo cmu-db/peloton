@@ -22,7 +22,7 @@
 #include "common/exception.h"
 #include "common/logger.h"
 #include "container/lock_free_queue.h"
-#include "network_thread.h"
+#include "notifiable_task.h"
 #include "network_callback_util.h"
 
 #define QUEUE_SIZE 100
@@ -30,7 +30,7 @@
 namespace peloton {
 namespace network {
 
-class NetworkWorkerThread : public NetworkThread {
+class ConnectionHandlerTask : public NotifiableTask {
  private:
   // New connection event
   struct event *new_conn_event_;
@@ -44,12 +44,14 @@ class NetworkWorkerThread : public NetworkThread {
   // Notify new connection pipe(receive end)
   int new_conn_receive_fd_;
 
+
+
  public:
   /* The queue for new connection requests */
   LockFreeQueue<std::shared_ptr<NewConnQueueItem>> new_conn_queue;
 
  public:
-  NetworkWorkerThread(const int thread_id);
+  ConnectionHandlerTask(const int thread_id);
 
   // Getters and setters
   event *GetNewConnEvent() { return this->new_conn_event_; }
@@ -59,6 +61,8 @@ class NetworkWorkerThread : public NetworkThread {
   int GetNewConnSendFd() { return this->new_conn_send_fd_; }
 
   int GetNewConnReceiveFd() { return this->new_conn_receive_fd_; }
+
+
 };
 
 }  // namespace network
