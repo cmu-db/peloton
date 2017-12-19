@@ -286,7 +286,8 @@ class ExpressionUtil {
     }
   }
 
-  inline static ExpressionType ReverseComparisonExpressionType(ExpressionType type) {
+  inline static ExpressionType ReverseComparisonExpressionType(
+      ExpressionType type) {
     switch (type) {
       case ExpressionType::COMPARE_GREATERTHAN:
         return ExpressionType::COMPARE_LESSTHANOREQUALTO;
@@ -463,9 +464,10 @@ class ExpressionUtil {
       aggr_exprs.push_back(aggr_expr);
     } else if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
       tv_exprs.push_back((TupleValueExpression *)expr);
+    } else {
+      for (size_t i = 0; i < children_size; i++)
+        GetAggregateExprs(aggr_exprs, tv_exprs, expr->GetModifiableChild(i));
     }
-    for (size_t i = 0; i < children_size; i++)
-      GetAggregateExprs(aggr_exprs, tv_exprs, expr->GetModifiableChild(i));
   }
 
   /**

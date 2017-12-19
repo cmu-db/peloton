@@ -62,7 +62,7 @@ void InputColumnDeriver::Visit(const QueryDerivedScan *op) {
   vector<AbstractExpression *> output_cols =
       vector<AbstractExpression *>(output_cols_map.size());
   ExprMap input_cols_map;
-  size_t input_cols_idx = 0;
+  vector<AbstractExpression *> input_cols(output_cols.size(), nullptr);
   for (auto &entry : output_cols_map) {
     auto tv_expr =
         reinterpret_cast<expression::TupleValueExpression *>(entry.first);
@@ -71,17 +71,13 @@ void InputColumnDeriver::Visit(const QueryDerivedScan *op) {
     auto input_col = const_cast<QueryDerivedScan *>(op)
                          ->alias_to_expr_map[tv_expr->GetColumnName()]
                          .get();
-    if (!input_cols_map.count(input_col)) {
-      input_cols_map[input_col] = input_cols_idx++;
-    }
-  }
-  vector<AbstractExpression *> input_cols_(input_cols_map.size());
-  for (auto &entry : input_cols_map) {
-    input_cols_[entry.second] = entry.first;
+    // QueryDerivedScan only modify the column name to be a tv_expr, does not
+    // change the mapping
+    input_cols[entry.second] = input_col;
   }
   output_input_cols_ =
       pair<vector<AbstractExpression *>, vector<vector<AbstractExpression *>>>{
-          output_cols, {input_cols_}};
+          output_cols, {input_cols}};
 }
 
 void InputColumnDeriver::Visit(const PhysicalLimit *) { Passdown(); }
@@ -186,13 +182,20 @@ void InputColumnDeriver::AggregateHelper(const BaseOperatorNode *op) {
     for (auto &aggr_expr : aggr_exprs) {
       if (!output_cols_map.count(aggr_expr)) {
         output_cols_map[aggr_expr] = output_col_idx++;
+        size_t child_size = aggr_expr->GetChildrenSize();
+        for (size_t idx = 0; idx < child_size; ++idx) {
+          expression::ExpressionUtil::GetTupleValueExprs(
+              input_cols_set, aggr_expr->GetModifiableChild(idx));
+        }
       }
     }
+    // TV expr not in aggregation (must be in grouby, so we do not need to add
+    // to add to input columns
     for (auto &tv_expr : tv_exprs) {
       if (!output_cols_map.count(tv_expr)) {
         output_cols_map[tv_expr] = output_col_idx++;
       }
-      input_cols_set.insert(tv_expr);
+      // input_cols_set.insert(tv_expr);
     }
   }
   vector<AbstractExpression *> output_cols(output_col_idx, nullptr);

@@ -371,6 +371,8 @@ TEST_F(OptimizerSQLTests, GroupByTest) {
            false);
 
   // Test Aggregate function: COUNT(*)
+  TestUtil("SELECT COUNT(*) FROM test ", {"6"}, false);
+  // Test Aggregate function: COUNT(*)
   TestUtil("SELECT COUNT(*) FROM test GROUP BY b", {"1", "1", "2", "2"}, false);
 
   // Test Aggregate function: COUNT(a)
@@ -667,17 +669,17 @@ TEST_F(OptimizerSQLTests, QueryDerivedTableTest) {
            {"22", "22", "11", "11", "33", "33","0", "0"}, false);
   TestUtil("select * from (select b from test) as A, (select b from test) as B where A.b = B.b",
            {"22", "22", "11", "11", "33", "33","0", "0"}, false);
-  TestUtil("select A.a, B.c from (select count(*) as a from test) as A, (select avg(a) as C from test2) as B",
-           {"4", "2.75"}, false);
   TestUtil("select * from (select a+b as a, c from test) as A, (select a+b as a, c as c from test2) as B where A.a=B.a",
            {"13","0","13","2nd","23","333","23","1st","36","444","36","3rd"}, false);
   TestUtil("select A.c, B.c from (select a+b as a, c from test) as A, (select a+b as a, c as c from test2) as B where A.a=B.a order by A.a",
            {"0", "2nd","333","1st","444","3rd"}, true);
+  TestUtil("select A.a, B.c from (select count(*) as a from test) as A, (select avg(a) as C from test2) as B",
+           {"4", "2.75"}, false);
 }
 
 // WIP
 TEST_F(OptimizerSQLTests, NestedQueryTest) {
-  TestUtil("select * from test as B where exists (select b as a from test where a = B.a);", {"22"}, false);
+  // TestUtil("select * from test as B where exists (select b as a from test where a = B.a);", {"22"}, false);
 //  TestUtil("select (select b as a from test where a = B.a) from test as B;", {"22"}, false);
 //  TestUtil("select * from test where a in (select * from test)", {}, false);
 

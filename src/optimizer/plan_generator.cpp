@@ -342,8 +342,6 @@ vector<oid_t> PlanGenerator::GenerateColumnsForScan() {
     // Set column offset
     PL_ASSERT(output_tvexpr->GetIsBound() == true);
     auto col_id = std::get<2>(output_tvexpr->GetBoundOid());
-    LOG_DEBUG("col %s, bind tuple %u", output_tvexpr->GetColumnName().c_str(),
-              col_id);
     column_ids.push_back(col_id);
   }
 
@@ -495,8 +493,6 @@ void PlanGenerator::GenerateProjectionForJoin(
   size_t output_offset = 0;
   auto &l_child_expr_map = children_expr_map_[0];
   auto &r_child_expr_map = children_expr_map_[1];
-  LOG_DEBUG("l size %lu, r size %lu", l_child_expr_map.size(),
-            r_child_expr_map.size());
   for (auto &expr : output_cols_) {
     // auto expr_type = expr->GetExpressionType();
     expression::ExpressionUtil::EvaluateExpression(children_expr_map_, expr);

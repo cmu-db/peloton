@@ -314,7 +314,6 @@ unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
   vector<ExprMap> children_expr_map;
   for (size_t i = 0; i < child_groups.size(); ++i) {
     ExprMap child_expr_map;
-    LOG_DEBUG("child %lu, size = %lu", i, input_cols[i].size());
     for (unsigned offset = 0; offset < input_cols[i].size(); ++offset) {
       PL_ASSERT(input_cols[i][offset] != nullptr);
       child_expr_map[input_cols[i][offset]] = offset;
