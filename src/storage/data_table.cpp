@@ -222,7 +222,6 @@ bool DataTable::CheckConstraints(const AbstractTuple *tuple) const {
 // however, when performing insert, we have to copy data immediately,
 // and the argument cannot be set to nullptr.
 ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple) {
-
   //=============== garbage collection==================
   // check if there are recycled tuple slots
   auto &gc_manager = gc::GCManagerFactory::GetInstance();
@@ -308,6 +307,11 @@ bool DataTable::InstallVersion(const AbstractTuple *tuple,
                                const TargetList *targets_ptr,
                                concurrency::Transaction *transaction,
                                ItemPointer *index_entry_ptr) {
+  if (CheckConstraints(tuple) == false) {
+    LOG_TRACE("InsertVersion(): Constraint violated");
+    return false;
+  }
+
   // Index checks and updates
   if (InsertInSecondaryIndexes(tuple, targets_ptr, transaction,
                                index_entry_ptr) == false) {
@@ -336,10 +340,8 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
 bool DataTable::InsertTuple(const AbstractTuple *tuple,
     ItemPointer location, concurrency::Transaction *transaction,
     ItemPointer **index_entry_ptr) {
-
-  auto result = CheckConstraints(tuple);
-  if (result == false) {
-    LOG_TRACE("Constraint violated");
+  if (CheckConstraints(tuple) == false) {
+    LOG_TRACE("InsertTuple(): Constraint violated");
     return false;
   }
 
