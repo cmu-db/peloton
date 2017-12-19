@@ -12,8 +12,6 @@
 
 #pragma once
 #include <unordered_map>
-#include <utility>
-#include <functional>
 
 #include "network_state.h"
 #include "common/logger.h"
@@ -34,9 +32,8 @@ namespace peloton{
        * defined as functions (lambdas, or closures, in various other languages) and is promised to be invoked by the
        * state machine after each transition if registered in the transition graph.
        */
-      typedef Transition (*action)(NetworkConnection &);
-      typedef std::pair<ConnState, action> transition_result;
-      typedef std::unordered_map<ConnState, std::unordered_map<Transition, transition_result>> transition_graph;
+      using action = Transition (*)(NetworkConnection &);
+      using transition_result = std::pair<ConnState, action>;
 
       explicit ConnectionHandleStateMachine(ConnState state): current_state_(state) {}
 
@@ -54,25 +51,14 @@ namespace peloton{
        * @param action starting symbol
        * @param connection the network connection object to apply actions to
        */
-      void Accept(Transition action, NetworkConnection &connection)  {
-        if (delta_.find(current_state_) == delta_.end()
-                  || delta_[current_state_].find(action) == delta_[current_state_].end()) {
-          LOG_ERROR("Undefined state transition");
-        }
-        Transition next = action;
-        while (next != Transition::NONE) {
-          transition_result result = delta_[current_state_][next];
-          current_state_ = result.first;
-          next = result.second(connection);
-        }
-      }
+      void Accept(Transition action, NetworkConnection &connection);
 
     private:
       /**
        * delta is the transition function that defines, for each state, its behavior and the
        * next state it should go to.
        */
-      static transition_graph delta_;
+      static transition_result Delta_(ConnState state, Transition transition);
       ConnState current_state_;
     };
 

@@ -672,28 +672,32 @@ Transition NetworkConnection::Process() {
       case ProcessResult::TERMINATE:
         return Transition::ERROR;
       default: // PROCESSING is impossible to happens in initial packets
-        break;
+        LOG_ERROR("Unexpected ProcessResult");
+        return Transition::ERROR;
+    }
+  } else {
+    ProcessResult status = protocol_handler_->Process(rbuf_, (size_t) thread_id);
+    switch (status) {
+      case ProcessResult::MORE_DATA_REQUIRED:
+        return Transition::NEED_DATA;
+      case ProcessResult::COMPLETE:
+        return Transition::PROCEED;
+      case ProcessResult::PROCESSING: {
+        if (event_del(network_event) == -1) {
+          //TODO: There may be better way to handle this error
+          LOG_ERROR("Failed to delete event");
+          PL_ASSERT(false);
+        }
+        LOG_TRACE("ProcessResult: queueing");
+        return Transition::GET_RESULT;
+      }
+      case ProcessResult::TERMINATE:
+        return Transition::ERROR;
     }
   }
 
-  ProcessResult status = protocol_handler_->Process(rbuf_, (size_t) thread_id);
-  switch (status) {
-    case ProcessResult::MORE_DATA_REQUIRED:
-      return Transition::NEED_DATA;
-    case ProcessResult::TERMINATE:
-      return Transition::ERROR;
-    case ProcessResult::COMPLETE:
-      return Transition::PROCEED;
-    case ProcessResult::PROCESSING: {
-      if (event_del(network_event) == -1) {
-        //TODO: There may be better way to handle this error
-        LOG_ERROR("Failed to delete event");
-        PL_ASSERT(false);
-      }
-      LOG_TRACE("ProcessResult: queueing");
-      return Transition::GET_RESULT;
-    }
-  }
+  // Should not be here
+  return Transition::ERROR;
 }
 
 Transition NetworkConnection::ProcessWrite() {
@@ -711,9 +715,12 @@ Transition NetworkConnection::ProcessWrite() {
       return Transition::NONE;
 
     case WriteState::WRITE_ERROR:
-    LOG_ERROR("Error during write, closing connection");
+      LOG_ERROR("Error during write, closing connection");
       return Transition::ERROR;
   }
+
+  // Should not be here
+  return Transition::ERROR;
 }
 
 Transition NetworkConnection::GetResult() {
