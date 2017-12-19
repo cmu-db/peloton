@@ -21,6 +21,8 @@ namespace codegen {
 DEFINE_METHOD(peloton::function, StringFunctions, Ascii);
 DEFINE_METHOD(peloton::function, StringFunctions, Like);
 DEFINE_METHOD(peloton::function, StringFunctions, Length);
+
+// Trim-related functions
 DEFINE_METHOD(peloton::function, StringFunctions, BTrim);
 DEFINE_METHOD(peloton::function, StringFunctions, Trim);
 DEFINE_METHOD(peloton::function, StringFunctions, LTrim);
