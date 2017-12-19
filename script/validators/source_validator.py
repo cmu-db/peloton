@@ -13,6 +13,7 @@ import sys
 import pprint
 import subprocess
 import difflib
+import mmap
 
 ## ==============================================
 ## LOGGING CONFIGURATION
@@ -99,6 +100,7 @@ def check_common_patterns(file_path):
 
     file = open(file_path, "r")
 
+    status = True
     line_ctr = 1
     for line in file:
 
@@ -107,16 +109,18 @@ def check_common_patterns(file_path):
             if re.search(validator_pattern, line):
                 LOG.info("Invalid pattern -- " + validator_pattern + " -- found in : " + file_path)
                 LOG.info("Line #%d :: %s" % (line_ctr, line))
-                return False
+                status = False
         line_ctr += 1
     file.close()
-    return True
+    return status
 
 def check_format(file_path):
     rel_path_from_peloton_dir = os.path.relpath(file_path, PELOTON_DIR)
 
     if rel_path_from_peloton_dir in FORMATTING_FILE_WHITELIST:
         return True
+
+    status = True
 
     # Run clang-format on the file
     try:
@@ -130,15 +134,43 @@ def check_format(file_path):
         diff = difflib.unified_diff(src, formatted_src)
         for line in diff:
             LOG.info("Invalid formatting in file : " + file_path)
-            return False
-        
-        return True
+            status = False
+
+        return status
     except OSError as e:
         LOG.error("clang-format seems not installed")
         exit("clang-format seems not installed")
 
-VALIDATORS = [ 
+def check_namespaces(file_path):
+    # only check for src files
+    if file_path.startswith(DEFAULT_DIRS[0]) == False:
+        return True
+    
+    # get required namespaces from path
+    required_namespaces = ['peloton'] + file_path.replace(DEFAULT_DIRS[0] + "/", "").split("/")
+    
+    # for the include files, remove the include item in the list
+    if 'include' in required_namespaces:
+        required_namespaces.remove('include')
+        
+    # cut off the file name at the end of the list
+    required_namespaces = required_namespaces[:-1]
+
+    status = True
+    with open(file_path, 'r') as file:
+        data = mmap.mmap(file.fileno(), 0, prot=mmap.PROT_READ)
+        
+        for namespace in required_namespaces:
+            if re.search(r'^ *namespace ' + namespace, data, flags=re.MULTILINE) is None:
+                LOG.info("Missing namespace '" + namespace + "' -- in " + file_path)
+                status = False
+    
+    return status
+
+
+VALIDATORS = [
     check_common_patterns,
+    check_namespaces, 
     # Uncomment the below validator when all files are clang-format-compliant
     #check_format
 ]
@@ -148,23 +180,24 @@ def validate_file(file_path):
     if file_path.endswith(".h") == False and file_path.endswith(".cpp") == False:
         return True
 
+    status = True
     for validator in VALIDATORS:
-        status = validator(file_path)
-        if status == False:
-            return False
+        if validator(file_path) == False:
+            status = False
 
-    return True
+    return status
 
 # Validate all the files in the dir passed as argument
 def validate_dir(dir_path):
 
+    status = True
     for subdir, dirs, files in os.walk(dir_path):
         for file in files:
             file_path = subdir + os.path.sep + file
 
-            status = validate_file(file_path)
-            if status == False:
-                return False
+            if validate_file(file_path) == False:
+                status = False
+    return status
 
             #END IF
         #END FOR [file]
@@ -189,7 +222,7 @@ if __name__ == '__main__':
         VALIDATORS.append(check_format)  # In this mode, we perform explicit clang-format checks
         for file in args.files:
             file = os.path.abspath(file.lower())
-            
+
             # Fail if the file isn't really a file
             if os.path.isfile(file) == False:
                 LOG.info("ERROR: " + file + " isn't a file")
