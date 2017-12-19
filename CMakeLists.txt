@@ -50,7 +50,7 @@ else()
     message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++1Y support. Please use a different C++ compiler.")
 endif()
 
-# Create a new pre-processor macro __PELOTONFILE__ that has a truncated
+# Create a new pre-processor macro __PELOTONFILE__ that has a truncated 
 # path to reduce the size of the debug log messages.
 # Source: http://stackoverflow.com/a/16658858
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__PELOTONFILE__='\"$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"'")
@@ -62,7 +62,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fcolor-diagnostics")
 endif()
 
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" AND
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" AND 
   (CMAKE_CXX_COMPILER_VERSION VERSION_EQUAL 4.9 OR CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 4.9))
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fdiagnostics-color=auto")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color=auto")

@@ -71,32 +71,32 @@ add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} ${CTEST_FLAGS} --verbose)
 
 foreach(test_src ${test_srcs} )
     #message("test_src = " ${test_src})
-
+    
     # get test file name
-	get_filename_component(test_bare_name ${test_src} NAME)
+	get_filename_component(test_bare_name ${test_src} NAME)	
 	string(REPLACE ".cpp" "" test_bare_name_without_extension ${test_bare_name})
     string(REPLACE "\"" "" test_name ${test_bare_name_without_extension})
-
+     
     # create executable
     add_executable(${test_name} EXCLUDE_FROM_ALL ${test_src})
     add_dependencies(check ${test_name})
-
+    
     #message("Correctness test: "  ${test_name})
-
+    
     # link libraries
-    target_link_libraries(${test_name} peloton peloton-test-common)
+    target_link_libraries(${test_name} peloton peloton-test-common)    
 
-	# set target properties
+	# set target properties    
 	set_target_properties(${test_name}
 	    PROPERTIES
 	    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/test"
 	    COMMAND ${test_name}
-	)
-
+	)   
+	
 	# add test
   add_test(${test_name} ${CMAKE_BINARY_DIR}/test/${test_name} --gtest_color=yes
            --gtest_output=xml:${CMAKE_BINARY_DIR}/test/${test_name}.xml)
-
+	
 endforeach(test_src ${test_srcs})
 
 ##################################################################################
@@ -107,32 +107,32 @@ endforeach(test_src ${test_srcs})
 
 foreach(perf_src ${perf_srcs} )
     list(REMOVE_ITEM test_srcs ${perf_src})
-
+    
     #message("test_srcs = " ${test_srcs})
     #message("perf_src = " ${perf_src})
-
-    get_filename_component(perf_bare_name ${perf_src} NAME)
+    
+    get_filename_component(perf_bare_name ${perf_src} NAME)	
 	string(REPLACE ".cpp" "" perf_bare_name_without_extension ${perf_bare_name})
     string(REPLACE "\"" "" perf_name ${perf_bare_name_without_extension})
-
+     
     # create executable
     add_executable(${perf_name} EXCLUDE_FROM_ALL ${perf_src})
     add_dependencies(check ${perf_name})
-
+    
     #message("Performance test: "  ${perf_name})
-
+    
     # link libraries
-    target_link_libraries(${perf_name} peloton peloton-test-common)
+    target_link_libraries(${perf_name} peloton peloton-test-common)    
 
-	# set target properties
+	# set target properties    
 	set_target_properties(${perf_name}
 	    PROPERTIES
 	    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/test"
 	    COMMAND ${perf_name}
-	)
-
+	)   
+	
 	# add test
 	add_test(${perf_name} ${CMAKE_BINARY_DIR}/test/${perf_name} --gtest_color=yes
            --gtest_output=xml:${CMAKE_BINARY_DIR}/test/${perf_name}.xml)
-
+	
 endforeach(perf_src ${perf_srcs})

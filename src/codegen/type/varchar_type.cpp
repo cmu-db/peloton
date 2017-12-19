@@ -244,7 +244,7 @@ struct BTrim : public TypeSystem::BinaryOperator {
   }
 
   Value Eval(CodeGen &codegen, const Value &left, const Value &right,
-               UNUSED_ATTRIBUTE OnError on_error) const override {
+             UNUSED_ATTRIBUTE OnError on_error) const override {
     llvm::Value *ret = codegen.Call(StringFunctionsProxy::BTrim,
                                     {left.GetValue(), left.GetLength(),
                                      right.GetValue(), right.GetLength()});
@@ -268,7 +268,7 @@ struct LTrim : public TypeSystem::BinaryOperator {
   }
 
   Value Eval(CodeGen &codegen, const Value &left, const Value &right,
-               UNUSED_ATTRIBUTE OnError on_error) const override {
+             UNUSED_ATTRIBUTE OnError on_error) const override {
     llvm::Value *ret = codegen.Call(StringFunctionsProxy::LTrim,
                                     {left.GetValue(), left.GetLength(),
                                      right.GetValue(), right.GetLength()});
@@ -292,7 +292,7 @@ struct RTrim : public TypeSystem::BinaryOperator {
   }
 
   Value Eval(CodeGen &codegen, const Value &left, const Value &right,
-               UNUSED_ATTRIBUTE OnError on_error) const override {
+             UNUSED_ATTRIBUTE OnError on_error) const override {
     llvm::Value *ret = codegen.Call(StringFunctionsProxy::RTrim,
                                     {left.GetValue(), left.GetLength(),
                                      right.GetValue(), right.GetLength()});
@@ -324,7 +324,8 @@ static Ascii kAscii;
 static Length kLength;
 static Trim kTrim;
 static std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {
-    {OperatorId::Ascii, kAscii}, {OperatorId::Length, kLength},
+    {OperatorId::Ascii, kAscii},
+    {OperatorId::Length, kLength},
     {OperatorId::Trim, kTrim}};
 
 // Binary operations
@@ -334,8 +335,10 @@ static BTrim kBTrim;
 static LTrim kLTrim;
 static RTrim kRTrim;
 static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
-    {OperatorId::Like, kLike}, {OperatorId::DateTrunc, kDateTrunc},
-    {OperatorId::BTrim, kBTrim}, {OperatorId::LTrim, kLTrim},
+    {OperatorId::Like, kLike},
+    {OperatorId::DateTrunc, kDateTrunc},
+    {OperatorId::BTrim, kBTrim},
+    {OperatorId::LTrim, kLTrim},
     {OperatorId::RTrim, kRTrim}};
 
 // Nary operations
