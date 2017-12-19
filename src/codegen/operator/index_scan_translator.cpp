@@ -14,7 +14,7 @@
 #include "codegen/operator/index_scan_translator.h"
 
 #include "codegen/lang/if.h"
-#include "codegen/proxy/catalog_proxy.h"
+#include "codegen/proxy/storage_manager_proxy.h"
 #include "codegen/proxy/transaction_runtime_proxy.h"
 #include "codegen/type/boolean_type.h"
 #include "planner/index_scan_plan.h"
@@ -77,16 +77,16 @@ void IndexScanTranslator::Produce() const {
 
   // get pointer to data table and pointer to index
   storage::DataTable &table = *index_scan_.GetTable();
-  llvm::Value *catalog_ptr = GetCatalogPtr();
+  llvm::Value *storage_manager_ptr = GetStorageManagerPtr();
   llvm::Value *db_oid = codegen.Const32(table.GetDatabaseOid());
   llvm::Value *table_oid = codegen.Const32(table.GetOid());
   llvm::Value *table_ptr = codegen.Call(StorageManagerProxy::GetTableWithOid,
-                                        {catalog_ptr, db_oid, table_oid});
+                                        {storage_manager_ptr, db_oid, table_oid});
   llvm::Value *index_oid = codegen.Const32(index_scan_.GetIndex()->GetOid());
 
   llvm::Value *index_ptr =
       codegen.Call(StorageManagerProxy::GetIndexWithOid,
-                   {catalog_ptr, db_oid, table_oid, index_oid});
+                   {storage_manager_ptr, db_oid, table_oid, index_oid});
 
   Vector sel_vec{LoadStateValue(selection_vector_id_),
                  Vector::kDefaultVectorSize, codegen.Int32Type()};
