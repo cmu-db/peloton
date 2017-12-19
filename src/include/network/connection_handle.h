@@ -16,6 +16,7 @@
 #include <functional>
 
 #include "network_state.h"
+#include "common/logger.h"
 
 namespace peloton{
   namespace network {
@@ -37,6 +38,8 @@ namespace peloton{
       typedef std::pair<ConnState, action> transition_result;
       typedef std::unordered_map<ConnState, std::unordered_map<Transition, transition_result>> transition_graph;
 
+      explicit ConnectionHandleStateMachine(ConnState state): current_state_(state) {}
+
       /**
        * Runs the internal state machine, starting from the symbol given, until no more
        * symbols are available.
@@ -51,7 +54,18 @@ namespace peloton{
        * @param action starting symbol
        * @param connection the network connection object to apply actions to
        */
-      void Accept(Transition action, NetworkConnection &connection);
+      void Accept(Transition action, NetworkConnection &connection)  {
+        if (delta_.find(current_state_) == delta_.end()
+                  || delta_[current_state_].find(action) == delta_[current_state_].end()) {
+          LOG_ERROR("Undefined state transition");
+        }
+        Transition next = action;
+        while (next != Transition::NONE) {
+          transition_result result = delta_[current_state_][next];
+          current_state_ = result.first;
+          next = result.second(connection);
+        }
+      }
 
     private:
       /**
