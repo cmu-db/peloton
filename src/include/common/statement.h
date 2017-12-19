@@ -25,8 +25,10 @@ namespace planner {
 class AbstractPlan;
 }
 
-// Contains the value of a coulmn in a tuple of the result set.
+// Contains the value of a column in a tuple of the result set.
 // std::string since the result is sent to the client over the network.
+// Previously it used to be StatementResult of type
+// std::pair<std::vector<unsigned char>, std::vector<unsigned char>>.
 typedef std::vector<unsigned char> ResultValue;
 
 // FIELD INFO TYPE : field name, oid (data type), size
