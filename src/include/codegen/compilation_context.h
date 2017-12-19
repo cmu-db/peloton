@@ -82,8 +82,8 @@ class CompilationContext {
 
   QueryResultConsumer &GetQueryResultConsumer() const { return result_consumer_; }
 
-  // Get a pointer to the catalog object from the runtime state
-  llvm::Value *GetCatalogPtr();
+  // Get a pointer to the storage manager object from the runtime state
+  llvm::Value *GetStorageManagerPtr();
 
   // Get a pointer to the transaction object from runtime state
   llvm::Value *GetTransactionPtr();
@@ -142,7 +142,7 @@ class CompilationContext {
 
   // The runtime state IDs
   RuntimeState::StateID txn_state_id_;
-  RuntimeState::StateID catalog_state_id_;
+  RuntimeState::StateID storage_manager_state_id_;
   RuntimeState::StateID executor_context_state_id_;
   RuntimeState::StateID query_parameters_state_id_;
 
