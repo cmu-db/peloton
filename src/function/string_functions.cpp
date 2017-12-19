@@ -10,9 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <algorithm>
 #include <cctype>
 #include <string>
-#include <algorithm>
 
 #include "function/string_functions.h"
 #include "type/value_factory.h"
@@ -196,10 +196,11 @@ type::Value StringFunctions::Replace(const std::vector<type::Value> &args) {
   return (type::ValueFactory::GetVarcharValue(str));
 }
 
-StringFunctions::StrWithLen StringFunctions::LTrim(
-    const char *str, uint32_t str_len, const char *from,
-    UNUSED_ATTRIBUTE uint32_t from_len)
-{
+StringFunctions::StrWithLen StringFunctions::LTrim(const char *str,
+                                                   uint32_t str_len,
+                                                   const char *from,
+                                                   UNUSED_ATTRIBUTE uint32_t
+                                                   from_len) {
   PL_ASSERT(str != nullptr && from != nullptr);
   // llvm expects the len to include the terminating '\0'
   if (str_len == 1) {
@@ -209,9 +210,10 @@ StringFunctions::StrWithLen StringFunctions::LTrim(
   str_len -= 1;
   int tail = str_len - 1, head = 0;
 
-  while (head < (int)str_len && strchr(from, str[head]) != NULL) head++;
+  while (head < (int) str_len && strchr(from, str[head]) != NULL) head++;
 
-  return StringFunctions::StrWithLen(str + head, std::max(tail - head + 1, 0) + 1);
+  return StringFunctions::StrWithLen(str + head,
+                                     std::max(tail - head + 1, 0) + 1);
 }
 
 // Remove the longest string containing only characters from characters
@@ -222,17 +224,19 @@ type::Value StringFunctions::_LTrim(const std::vector<type::Value> &args) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
   }
 
-  StrWithLen ret = LTrim(args.at(0).GetData(), strlen(args.at(0).GetData()) + 1,
-                         args.at(1).GetData(), strlen(args.at(1).GetData()) + 1);
+  StrWithLen ret =
+      LTrim(args.at(0).GetData(), strlen(args.at(0).GetData()) + 1,
+            args.at(1).GetData(), strlen(args.at(1).GetData()) + 1);
 
   std::string str(ret.str, ret.length - 1);
   return type::ValueFactory::GetVarcharValue(str);
 }
 
-StringFunctions::StrWithLen StringFunctions::RTrim(
-    const char *str, uint32_t str_len, const char *from,
-    UNUSED_ATTRIBUTE uint32_t from_len)
-{
+StringFunctions::StrWithLen StringFunctions::RTrim(const char *str,
+                                                   uint32_t str_len,
+                                                   const char *from,
+                                                   UNUSED_ATTRIBUTE uint32_t
+                                                   from_len) {
   PL_ASSERT(str != nullptr && from != nullptr);
   // llvm expects the len to include the terminating '\0'
   if (str_len == 1) {
@@ -243,7 +247,8 @@ StringFunctions::StrWithLen StringFunctions::RTrim(
   int tail = str_len - 1, head = 0;
   while (tail >= 0 && strchr(from, str[tail]) != NULL) tail--;
 
-  return StringFunctions::StrWithLen(str + head, std::max(tail - head + 1, 0) + 1);
+  return StringFunctions::StrWithLen(str + head,
+                                     std::max(tail - head + 1, 0) + 1);
 }
 
 // Remove the longest string containing only characters from characters
@@ -254,15 +259,16 @@ type::Value StringFunctions::_RTrim(const std::vector<type::Value> &args) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
   }
 
-  StrWithLen ret = RTrim(args.at(0).GetData(), strlen(args.at(0).GetData()) + 1,
-                         args.at(1).GetData(), strlen(args.at(1).GetData()) + 1);
+  StrWithLen ret =
+      RTrim(args.at(0).GetData(), strlen(args.at(0).GetData()) + 1,
+            args.at(1).GetData(), strlen(args.at(1).GetData()) + 1);
 
   std::string str(ret.str, ret.length - 1);
   return type::ValueFactory::GetVarcharValue(str);
 }
 
-StringFunctions::StrWithLen StringFunctions::Trim(
-    const char *str, uint32_t str_len) {
+StringFunctions::StrWithLen StringFunctions::Trim(const char *str,
+                                                  uint32_t str_len) {
   return BTrim(str, str_len, " ", 2);
 }
 
@@ -273,9 +279,11 @@ type::Value StringFunctions::_Trim(const std::vector<type::Value> &args) {
 
 // Remove the longest string consisting only of characters in characters
 // from the start and end of string
-StringFunctions::StrWithLen StringFunctions::BTrim(
-    const char *str, uint32_t str_len, const char *from,
-    UNUSED_ATTRIBUTE uint32_t from_len) {
+StringFunctions::StrWithLen StringFunctions::BTrim(const char *str,
+                                                   uint32_t str_len,
+                                                   const char *from,
+                                                   UNUSED_ATTRIBUTE uint32_t
+                                                   from_len) {
   PL_ASSERT(str != nullptr && from != nullptr);
 
   str_len--;  // skip the tailing 0
@@ -287,9 +295,10 @@ StringFunctions::StrWithLen StringFunctions::BTrim(
   int tail = str_len - 1, head = 0;
   while (tail >= 0 && strchr(from, str[tail]) != NULL) tail--;
 
-  while (head < (int)str_len && strchr(from, str[head]) != NULL) head++;
+  while (head < (int) str_len && strchr(from, str[head]) != NULL) head++;
 
-  return StringFunctions::StrWithLen(str + head, std::max(tail - head + 1, 0) + 1);
+  return StringFunctions::StrWithLen(str + head,
+                                     std::max(tail - head + 1, 0) + 1);
 }
 
 type::Value StringFunctions::_BTrim(const std::vector<type::Value> &args) {
@@ -298,8 +307,9 @@ type::Value StringFunctions::_BTrim(const std::vector<type::Value> &args) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
   }
 
-  StrWithLen ret = BTrim(args.at(0).GetData(), strlen(args.at(0).GetData()) + 1,
-                         args.at(1).GetData(), strlen(args.at(1).GetData()) + 1);
+  StrWithLen ret =
+      BTrim(args.at(0).GetData(), strlen(args.at(0).GetData()) + 1,
+            args.at(1).GetData(), strlen(args.at(1).GetData()) + 1);
 
   std::string str(ret.str, ret.length - 1);
   return type::ValueFactory::GetVarcharValue(str);
