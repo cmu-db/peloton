@@ -17,11 +17,11 @@
 
 #include "codegen/code_context.h"
 #include "codegen/codegen.h"
-#include "codegen/runtime_state.h"
 #include "codegen/expression/expression_translator.h"
 #include "codegen/operator/operator_translator.h"
-#include "codegen/query_compiler.h"
 #include "codegen/query.h"
+#include "codegen/query_compiler.h"
+#include "codegen/runtime_state.h"
 #include "codegen/translator_factory.h"
 
 namespace peloton {
@@ -72,21 +72,18 @@ class CompilationContext {
 
   RuntimeState &GetRuntimeState() const { return query_.GetRuntimeState(); }
 
-//  const QueryParameters &GetQueryParameters() const {
-//    return parameters_;
-//  }
+  //  const QueryParameters &GetQueryParameters() const {
+  //    return parameters_;
+  //  }
 
-  const ParameterCache &GetParameterCache() const {
-    return parameter_cache_;
+  const ParameterCache &GetParameterCache() const { return parameter_cache_; }
+
+  QueryResultConsumer &GetQueryResultConsumer() const {
+    return result_consumer_;
   }
-
-  QueryResultConsumer &GetQueryResultConsumer() const { return result_consumer_; }
 
   // Get a pointer to the storage manager object from the runtime state
   llvm::Value *GetStorageManagerPtr();
-
-  // Get a pointer to the transaction object from runtime state
-  llvm::Value *GetTransactionPtr();
 
   // Get a pointer to the executor context instance
   llvm::Value *GetExecutorContextPtr();
@@ -95,8 +92,8 @@ class CompilationContext {
   llvm::Value *GetQueryParametersPtr();
 
   // Get the parameter index to be used to get value for the given expression
-  size_t GetParameterIdx(const expression::AbstractExpression *expression)
-      const {
+  size_t GetParameterIdx(
+      const expression::AbstractExpression *expression) const {
     return parameters_map_.GetIndex(expression);
   }
 
@@ -141,18 +138,19 @@ class CompilationContext {
   TranslatorFactory translator_factory_;
 
   // The runtime state IDs
-  RuntimeState::StateID txn_state_id_;
   RuntimeState::StateID storage_manager_state_id_;
   RuntimeState::StateID executor_context_state_id_;
   RuntimeState::StateID query_parameters_state_id_;
 
   // The mapping of an operator in the tree to its translator
   std::unordered_map<const planner::AbstractPlan *,
-                     std::unique_ptr<OperatorTranslator>> op_translators_;
+                     std::unique_ptr<OperatorTranslator>>
+      op_translators_;
 
   // The mapping of an expression somewhere in the tree to its translator
   std::unordered_map<const expression::AbstractExpression *,
-                     std::unique_ptr<ExpressionTranslator>> exp_translators_;
+                     std::unique_ptr<ExpressionTranslator>>
+      exp_translators_;
 };
 
 }  // namespace codegen

@@ -13,6 +13,7 @@
 #include "codegen/operator/table_scan_translator.h"
 
 #include "codegen/lang/if.h"
+#include "codegen/proxy/executor_context_proxy.h"
 #include "codegen/proxy/storage_manager_proxy.h"
 #include "codegen/proxy/transaction_runtime_proxy.h"
 #include "codegen/type/boolean_type.h"
@@ -68,8 +69,9 @@ void TableScanTranslator::Produce() const {
   llvm::Value *storage_manager_ptr = GetStorageManagerPtr();
   llvm::Value *db_oid = codegen.Const32(table.GetDatabaseOid());
   llvm::Value *table_oid = codegen.Const32(table.GetOid());
-  llvm::Value *table_ptr = codegen.Call(StorageManagerProxy::GetTableWithOid,
-                                        {storage_manager_ptr, db_oid, table_oid});
+  llvm::Value *table_ptr =
+      codegen.Call(StorageManagerProxy::GetTableWithOid,
+                   {storage_manager_ptr, db_oid, table_oid});
 
   // The selection vector for the scan
   Vector sel_vec{LoadStateValue(selection_vector_id_),
@@ -125,8 +127,12 @@ void TableScanTranslator::ScanConsumer::ProcessTuples(
   }
 
   // 3. Setup the (filtered) row batch and setup attribute accessors
-  RowBatch batch{translator_.GetCompilationContext(), tile_group_id_, tid_start,
-                 tid_end, selection_vector_, true};
+  RowBatch batch{translator_.GetCompilationContext(),
+                 tile_group_id_,
+                 tid_start,
+                 tid_end,
+                 selection_vector_,
+                 true};
 
   std::vector<TableScanTranslator::AttributeAccess> attribute_accesses;
   SetupRowBatch(batch, tile_group_access, attribute_accesses);
@@ -166,7 +172,10 @@ void TableScanTranslator::ScanConsumer::SetupRowBatch(
 void TableScanTranslator::ScanConsumer::FilterRowsByVisibility(
     CodeGen &codegen, llvm::Value *tid_start, llvm::Value *tid_end,
     Vector &selection_vector) const {
-  llvm::Value *txn = translator_.GetCompilationContext().GetTransactionPtr();
+  llvm::Value *executor_context_ptr =
+      translator_.GetCompilationContext().GetExecutorContextPtr();
+  llvm::Value *txn = codegen.Call(ExecutorContextProxy::GetTransaction,
+                                  {executor_context_ptr});
   llvm::Value *raw_sel_vec = selection_vector.GetVectorPtr();
 
   // Invoke TransactionRuntime::PerformRead(...)
