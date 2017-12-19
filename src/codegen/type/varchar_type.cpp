@@ -32,7 +32,7 @@ struct CompareVarchar : public TypeSystem::ExpensiveComparisonHandleNull {
   bool SupportsTypes(const type::Type &left_type,
                      const type::Type &right_type) const override {
     return left_type.GetSqlType() == Varchar::Instance() &&
-           left_type == right_type;
+        left_type == right_type;
   }
 
   // Call ValuesRuntime::CompareStrings(). This function behaves like strcmp(),
@@ -145,7 +145,7 @@ struct Like : public TypeSystem::BinaryOperator {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type.GetSqlType() == Varchar::Instance() &&
-           left_type == right_type;
+        left_type == right_type;
   }
 
   Type ResultType(UNUSED_ATTRIBUTE const Type &left_type,
@@ -194,7 +194,7 @@ struct DateTrunc : public TypeSystem::BinaryOperatorHandleNull {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type.GetSqlType() == Varchar::Instance() &&
-           right_type.GetSqlType() == Timestamp::Instance();
+        right_type.GetSqlType() == Timestamp::Instance();
   }
 
   Type ResultType(UNUSED_ATTRIBUTE const Type &left_type,
@@ -212,7 +212,7 @@ struct DateTrunc : public TypeSystem::BinaryOperatorHandleNull {
   }
 };
 
-struct Trim : public TypeSystem::UnaryOperator {
+struct Trim : public TypeSystem::UnaryOperatorHandleNull {
   bool SupportsType(const Type &type) const override {
     return type.GetSqlType() == Varchar::Instance();
   }
@@ -221,7 +221,7 @@ struct Trim : public TypeSystem::UnaryOperator {
     return Varchar::Instance();
   }
 
-  Value Eval(CodeGen &codegen, const Value &val) const override {
+  Value Impl(CodeGen &codegen, const Value &val) const override {
     llvm::Value *ret = codegen.Call(StringFunctionsProxy::Trim,
                                     {val.GetValue(), val.GetLength()});
 
@@ -231,11 +231,11 @@ struct Trim : public TypeSystem::UnaryOperator {
   }
 };
 
-struct BTrim : public TypeSystem::BinaryOperator {
+struct BTrim : public TypeSystem::BinaryOperatorHandleNull {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type.GetSqlType() == Varchar::Instance() &&
-           right_type.GetSqlType() == Varchar::Instance();
+        right_type.GetSqlType() == Varchar::Instance();
   }
 
   Type ResultType(UNUSED_ATTRIBUTE const Type &left_type,
@@ -243,7 +243,7 @@ struct BTrim : public TypeSystem::BinaryOperator {
     return Varchar::Instance();
   }
 
-  Value Eval(CodeGen &codegen, const Value &left, const Value &right,
+  Value Impl(CodeGen &codegen, const Value &left, const Value &right,
              UNUSED_ATTRIBUTE OnError on_error) const override {
     llvm::Value *ret = codegen.Call(StringFunctionsProxy::BTrim,
                                     {left.GetValue(), left.GetLength(),
@@ -255,11 +255,11 @@ struct BTrim : public TypeSystem::BinaryOperator {
   }
 };
 
-struct LTrim : public TypeSystem::BinaryOperator {
+struct LTrim : public TypeSystem::BinaryOperatorHandleNull {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type.GetSqlType() == Varchar::Instance() &&
-           right_type.GetSqlType() == Varchar::Instance();
+        right_type.GetSqlType() == Varchar::Instance();
   }
 
   Type ResultType(UNUSED_ATTRIBUTE const Type &left_type,
@@ -267,7 +267,7 @@ struct LTrim : public TypeSystem::BinaryOperator {
     return Varchar::Instance();
   }
 
-  Value Eval(CodeGen &codegen, const Value &left, const Value &right,
+  Value Impl(CodeGen &codegen, const Value &left, const Value &right,
              UNUSED_ATTRIBUTE OnError on_error) const override {
     llvm::Value *ret = codegen.Call(StringFunctionsProxy::LTrim,
                                     {left.GetValue(), left.GetLength(),
@@ -279,11 +279,11 @@ struct LTrim : public TypeSystem::BinaryOperator {
   }
 };
 
-struct RTrim : public TypeSystem::BinaryOperator {
+struct RTrim : public TypeSystem::BinaryOperatorHandleNull {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
     return left_type.GetSqlType() == Varchar::Instance() &&
-           right_type.GetSqlType() == Varchar::Instance();
+        right_type.GetSqlType() == Varchar::Instance();
   }
 
   Type ResultType(UNUSED_ATTRIBUTE const Type &left_type,
@@ -291,7 +291,7 @@ struct RTrim : public TypeSystem::BinaryOperator {
     return Varchar::Instance();
   }
 
-  Value Eval(CodeGen &codegen, const Value &left, const Value &right,
+  Value Impl(CodeGen &codegen, const Value &left, const Value &right,
              UNUSED_ATTRIBUTE OnError on_error) const override {
     llvm::Value *ret = codegen.Call(StringFunctionsProxy::RTrim,
                                     {left.GetValue(), left.GetLength(),
