@@ -10,11 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/proxy/catalog_proxy.h"
 #include "codegen/proxy/inserter_proxy.h"
+#include "codegen/proxy/query_parameters_proxy.h"
+#include "codegen/proxy/storage_manager_proxy.h"
 #include "codegen/proxy/transaction_runtime_proxy.h"
 #include "codegen/proxy/tuple_proxy.h"
-#include "codegen/proxy/query_parameters_proxy.h"
 #include "codegen/operator/insert_translator.h"
 #include "planner/insert_plan.h"
 #include "storage/data_table.h"
@@ -45,7 +45,8 @@ void InsertTranslator::InitializeState() {
   storage::DataTable *table = insert_plan_.GetTable();
   llvm::Value *table_ptr =
       codegen.Call(StorageManagerProxy::GetTableWithOid,
-                   {GetCatalogPtr(), codegen.Const32(table->GetDatabaseOid()),
+                   {GetStorageManagerPtr(),
+                    codegen.Const32(table->GetDatabaseOid()),
                     codegen.Const32(table->GetOid())});
 
   llvm::Value *executor_ptr = context.GetExecutorContextPtr();
