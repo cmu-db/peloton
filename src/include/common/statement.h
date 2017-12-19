@@ -25,9 +25,9 @@ namespace planner {
 class AbstractPlan;
 }
 
-// TODO: Somebody needs to define what the hell this is???
-typedef std::pair<std::vector<unsigned char>, std::vector<unsigned char>>
-    StatementResult;
+// Contains the value of a coulmn in a tuple of the result set.
+// std::string since the result is sent to the client over the network.
+typedef std::vector<unsigned char> ResultValue;
 
 // FIELD INFO TYPE : field name, oid (data type), size
 typedef std::tuple<std::string, oid_t, size_t> FieldInfo;

@@ -43,7 +43,7 @@ TEST_F(UpdateSecondaryIndexSQLTests, UpdateSecondaryIndexTest) {
 
   TestingSQLUtil::ShowTable(DEFAULT_DB_NAME, "test");
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_affected;
@@ -53,7 +53,7 @@ TEST_F(UpdateSecondaryIndexSQLTests, UpdateSecondaryIndexTest) {
                                   tuple_descriptor, rows_affected,
                                   error_message);
   // Check the return value
-  EXPECT_EQ(result[6].second[0], '3');
+  EXPECT_EQ(result[6][0], '3');
 
   // Perform update
   TestingSQLUtil::ExecuteSQLQuery("UPDATE test SET b=1000 WHERE c=200", result,
@@ -65,7 +65,7 @@ TEST_F(UpdateSecondaryIndexSQLTests, UpdateSecondaryIndexTest) {
                                   tuple_descriptor, rows_affected,
                                   error_message);
   // Check the return value
-  EXPECT_EQ(result[0].second[0], '2');
+  EXPECT_EQ(result[0][0], '2');
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
