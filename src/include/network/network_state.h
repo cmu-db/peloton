@@ -22,10 +22,7 @@ enum class ConnState {
   CONN_WAIT,       // State for waiting for some event to happen
   CONN_PROCESS,    // State that runs the network protocol on received data
   CONN_CLOSING,    // State for closing the client connection
-  CONN_CLOSED,     // State for closed connection
-  CONN_INVALID,    // Invalid STate
   CONN_GET_RESULT, // State when triggered by worker thread that completes the task.
-  CONN_PROCESS_INITIAL// State to process initial packets and detemine protocols
 };
 
 enum class ReadState {
