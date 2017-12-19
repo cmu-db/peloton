@@ -27,7 +27,8 @@ namespace codegen {
 CompilationContext::CompilationContext(Query &query,
                                        const QueryParametersMap &parameters_map,
                                        QueryResultConsumer &result_consumer)
-    : query_(query), parameters_map_(parameters_map),
+    : query_(query),
+      parameters_map_(parameters_map),
       parameter_cache_(parameters_map_),
       result_consumer_(result_consumer),
       codegen_(query_.GetCodeContext()) {
