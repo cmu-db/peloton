@@ -12,19 +12,19 @@
 
 #pragma once
 
-#include "network_thread.h"
+#include "notifiable_task.h"
 #include "network_state.h"
 #include "concurrency/epoch_manager_factory.h"
-#include "network_worker_thread.h"
+#include "connection_handler_task.h"
 #include "network_manager.h"
 namespace peloton {
 namespace network {
 
 // Forward Declarations
-class NetworkWorkerThread;
+class ConnectionHandlerTask;
 
 // a master thread contains multiple worker threads.
-class NetworkMasterThread : public NetworkThread {
+class ConnectionDispatcherTask : public NotifiableTask {
  private:
   const int num_threads_;
 
@@ -32,7 +32,7 @@ class NetworkMasterThread : public NetworkThread {
   std::atomic<int> next_thread_id_;  // next thread we dispatched to
 
  public:
-  NetworkMasterThread(const int num_threads, struct event_base *libevent_base);
+  ConnectionDispatcherTask(const int num_threads, struct event_base *libevent_base);
 
   void Start();
 
@@ -40,9 +40,9 @@ class NetworkMasterThread : public NetworkThread {
 
   void DispatchConnection(int new_conn_fd, short event_flags);
 
-  std::vector<std::shared_ptr<NetworkWorkerThread>> &GetWorkerThreads();
+  std::vector<std::shared_ptr<ConnectionHandlerTask>> &GetWorkerThreads();
 
-  static void StartWorker(peloton::network::NetworkWorkerThread *worker_thread);
+  static void StartWorker(peloton::network::ConnectionHandlerTask *worker_thread);
 };
 
 }  // namespace network

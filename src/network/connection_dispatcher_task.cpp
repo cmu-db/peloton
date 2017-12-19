@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 
-#include "network/network_master_thread.h"
+#include "network/connection_dispatcher_task.h"
 
 #define MASTER_THREAD_ID -1
 
@@ -20,9 +20,9 @@ namespace network {
 /*
  * Get the vector of Network worker threads
  */
-std::vector<std::shared_ptr<NetworkWorkerThread>> &
-NetworkMasterThread::GetWorkerThreads() {
-  static std::vector<std::shared_ptr<NetworkWorkerThread>> worker_threads;
+std::vector<std::shared_ptr<ConnectionHandlerTask>> &
+ConnectionDispatcherTask::GetWorkerThreads() {
+  static std::vector<std::shared_ptr<ConnectionHandlerTask>> worker_threads;
   return worker_threads;
 }
 
@@ -30,9 +30,9 @@ NetworkMasterThread::GetWorkerThreads() {
  * The Network master thread initialize num_threads worker threads on
  * constructor.
  */
-NetworkMasterThread::NetworkMasterThread(const int num_threads,
+ConnectionDispatcherTask::ConnectionDispatcherTask(const int num_threads,
                                            struct event_base *libevent_base)
-    : NetworkThread(MASTER_THREAD_ID, libevent_base),
+    : NotifiableTask(MASTER_THREAD_ID, libevent_base),
       num_threads_(num_threads),
       next_thread_id_(0) {
   auto &threads = GetWorkerThreads();
@@ -42,7 +42,7 @@ NetworkMasterThread::NetworkMasterThread(const int num_threads,
 /*
  * Start the threads
  */
-void NetworkMasterThread::Start() {
+void ConnectionDispatcherTask::Start() {
   auto &threads = GetWorkerThreads();
 
   // register thread to epoch manager.
@@ -55,9 +55,9 @@ void NetworkMasterThread::Start() {
 
   // create worker threads.
   for (int thread_id = 0; thread_id < num_threads_; thread_id++) {
-    threads.push_back(std::shared_ptr<NetworkWorkerThread>(
-        new NetworkWorkerThread(thread_id)));
-    thread_pool.SubmitDedicatedTask(NetworkMasterThread::StartWorker,
+    threads.push_back(std::shared_ptr<ConnectionHandlerTask>(
+        new ConnectionHandlerTask(thread_id)));
+    thread_pool.SubmitDedicatedTask(ConnectionDispatcherTask::StartWorker,
                                     threads[thread_id].get());
   }
 
@@ -72,7 +72,7 @@ void NetworkMasterThread::Start() {
 /*
  * Stop the threads
  */
-void NetworkMasterThread::Stop() {
+void ConnectionDispatcherTask::Stop() {
   auto &threads = GetWorkerThreads();
 
   for (int thread_id = 0; thread_id < num_threads_; thread_id++) {
@@ -91,7 +91,7 @@ void NetworkMasterThread::Stop() {
 /*
  * Start with worker event loop
  */
-void NetworkMasterThread::StartWorker(NetworkWorkerThread *worker_thread) {
+void ConnectionDispatcherTask::StartWorker(ConnectionHandlerTask *worker_thread) {
   event_base_loop(worker_thread->GetEventBase(), 0);
   // Set worker thread's close flag to false to indicate loop has exited
   worker_thread->SetThreadIsClosed(false);
@@ -113,7 +113,7 @@ void NetworkMasterThread::StartWorker(NetworkWorkerThread *worker_thread) {
 * Dispatch a new connection event to a random worker thread by
 * writing to the worker's pipe
 */
-void NetworkMasterThread::DispatchConnection(int new_conn_fd,
+void ConnectionDispatcherTask::DispatchConnection(int new_conn_fd,
                                               short event_flags) {
   char buf[1];
   buf[0] = 'c';
@@ -125,7 +125,7 @@ void NetworkMasterThread::DispatchConnection(int new_conn_fd,
   // update next threadID
   next_thread_id_ = (next_thread_id_ + 1) % num_threads_;
 
-  std::shared_ptr<NetworkWorkerThread> worker_thread = threads[thread_id];
+  std::shared_ptr<ConnectionHandlerTask> worker_thread = threads[thread_id];
   LOG_DEBUG("Dispatching connection to worker %d", thread_id);
 
   std::shared_ptr<NewConnQueueItem> item(

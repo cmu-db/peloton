@@ -20,7 +20,7 @@
 #include "common/logger.h"
 #include "common/exception.h"
 #include "network_state.h"
-#include "network_worker_thread.h"
+#include "connection_handler_task.h"
 #include "network_connection.h"
 
 namespace peloton {
