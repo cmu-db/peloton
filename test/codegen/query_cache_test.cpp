@@ -196,8 +196,7 @@ TEST_F(QueryCacheTest, SimpleCache) {
   // Execute a new query
   codegen::BufferingConsumer buffer_1{{0}, context_1};
   bool cached;
-  CompileAndExecuteCache(scan1, buffer_1,
-                         reinterpret_cast<char*>(buffer_1.GetState()), cached);
+  CompileAndExecuteCache(scan1, buffer_1, cached);
   const auto& results_1 = buffer_1.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable() - 4, results_1.size());
   EXPECT_FALSE(cached);
@@ -205,8 +204,7 @@ TEST_F(QueryCacheTest, SimpleCache) {
 
   // Execute a query cached
   codegen::BufferingConsumer buffer_2{{0}, context_2};
-  CompileAndExecuteCache(scan2, buffer_2,
-                         reinterpret_cast<char*>(buffer_2.GetState()), cached);
+  CompileAndExecuteCache(scan2, buffer_2, cached);
   const auto& results_2 = buffer_2.GetOutputTuples();
   EXPECT_TRUE(cached);
   EXPECT_EQ(NumRowsInTestTable() - 4, results_2.size());
@@ -240,8 +238,7 @@ TEST_F(QueryCacheTest, CacheSeqScanPlan) {
   codegen::BufferingConsumer buffer_1{{0, 1, 2}, context_1};
 
   bool cached;
-  CompileAndExecuteCache(scan1, buffer_1,
-                         reinterpret_cast<char*>(buffer_1.GetState()), cached);
+  CompileAndExecuteCache(scan1, buffer_1, cached);
 
   // Check that we got all the results
   const auto& results_1 = buffer_1.GetOutputTuples();
@@ -253,8 +250,7 @@ TEST_F(QueryCacheTest, CacheSeqScanPlan) {
   EXPECT_FALSE(cached);
 
   codegen::BufferingConsumer buffer_2{{0, 1, 2}, context_2};
-  CompileAndExecuteCache(scan2, buffer_2,
-                         reinterpret_cast<char*>(buffer_2.GetState()), cached);
+  CompileAndExecuteCache(scan2, buffer_2, cached);
 
   const auto& results_2 = buffer_2.GetOutputTuples();
   EXPECT_EQ(1, results_2.size());
@@ -290,8 +286,7 @@ TEST_F(QueryCacheTest, CacheHashJoinPlan) {
   codegen::BufferingConsumer buffer_1{{0, 1, 2, 3}, context_1};
 
   bool cached;
-  CompileAndExecuteCache(hj_plan1, buffer_1,
-                         reinterpret_cast<char*>(buffer_1.GetState()), cached);
+  CompileAndExecuteCache(hj_plan1, buffer_1, cached);
 
   // Check results
   const auto& results_1 = buffer_1.GetOutputTuples();
@@ -309,9 +304,7 @@ TEST_F(QueryCacheTest, CacheHashJoinPlan) {
 
   // We collect the results of the query into an in-memory buffer
   codegen::BufferingConsumer buffer_2{{0, 1, 2, 3}, context_2};
-
-  CompileAndExecuteCache(hj_plan_2, buffer_2,
-                         reinterpret_cast<char*>(buffer_2.GetState()), cached);
+  CompileAndExecuteCache(hj_plan_2, buffer_2, cached);
   EXPECT_TRUE(cached);
   // Check results
   const auto& results_2 = buffer_2.GetOutputTuples();
@@ -376,8 +369,7 @@ TEST_F(QueryCacheTest, CacheOrderByPlan) {
   codegen::BufferingConsumer buffer_2{{0, 1}, context_2};
 
   bool cached;
-  CompileAndExecuteCache(order_by_plan_1, buffer_1,
-                         reinterpret_cast<char*>(buffer_1.GetState()), cached);
+  CompileAndExecuteCache(order_by_plan_1, buffer_1, cached);
   EXPECT_FALSE(cached);
   auto& results_1 = buffer_1.GetOutputTuples();
   EXPECT_EQ(results_1.size(), NumRowsInTestTable());
@@ -388,8 +380,7 @@ TEST_F(QueryCacheTest, CacheOrderByPlan) {
         return is_gte == type::CmpBool::TRUE;
       }));
 
-  CompileAndExecuteCache(order_by_plan_2, buffer_2,
-                         reinterpret_cast<char*>(buffer_2.GetState()), cached);
+  CompileAndExecuteCache(order_by_plan_2, buffer_2, cached);
   EXPECT_TRUE(cached);
   auto& results_2 = buffer_2.GetOutputTuples();
   EXPECT_EQ(results_2.size(), NumRowsInTestTable());
@@ -433,8 +424,7 @@ TEST_F(QueryCacheTest, CacheAggregatePlan) {
 
   // Compile and execute
   bool cached;
-  CompileAndExecuteCache(agg_plan1, buffer_1,
-                         reinterpret_cast<char*>(buffer_1.GetState()), cached);
+  CompileAndExecuteCache(agg_plan1, buffer_1, cached);
   // Check results
   const auto& results_1 = buffer_1.GetOutputTuples();
   EXPECT_EQ(results_1.size(), 59);
@@ -442,8 +432,7 @@ TEST_F(QueryCacheTest, CacheAggregatePlan) {
   EXPECT_EQ(1, codegen::QueryCache::Instance().GetCount());
 
   // Compile and execute with the cached query
-  CompileAndExecuteCache(agg_plan_2, buffer_2,
-                         reinterpret_cast<char*>(buffer_2.GetState()), cached);
+  CompileAndExecuteCache(agg_plan_2, buffer_2, cached);
 
   const auto& results_2 = buffer_2.GetOutputTuples();
   EXPECT_EQ(results_2.size(), 59);
@@ -476,8 +465,7 @@ TEST_F(QueryCacheTest, PerformanceBenchmark) {
     // We collect the results of the query into an in-memory buffer
     codegen::BufferingConsumer buffer{{0, 1, 2, 3}, context};
     // COMPILE and run without cache
-    CompileAndExecute(*plan, buffer,
-                      reinterpret_cast<char*>(buffer.GetState()));
+    CompileAndExecute(*plan, buffer);
   }
   timer1.Stop();
 
@@ -494,8 +482,7 @@ TEST_F(QueryCacheTest, PerformanceBenchmark) {
     // We collect the results of the query into an in-memory buffer
     codegen::BufferingConsumer buffer{{0, 1, 2, 3}, context};
     // COMPILE and execute with cache
-    CompileAndExecuteCache(plan, buffer,
-                           reinterpret_cast<char*>(buffer.GetState()), cached);
+    CompileAndExecuteCache(plan, buffer, cached);
     if (i == 0) {
       EXPECT_FALSE(cached);
     } else {

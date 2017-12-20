@@ -87,8 +87,7 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithAConstant) {
   codegen::BufferingConsumer buffer{{}, context};
 
   // COMPILE and execute
-  CompileAndExecute(*update_plan, buffer,
-                    reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(*update_plan, buffer);
 
   LOG_DEBUG("Table has %zu tuples", table->GetTupleCount());
   LOG_DEBUG("%s", table->GetInfo().c_str());
@@ -109,8 +108,7 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithAConstant) {
   codegen::BufferingConsumer buffer_1{{0, 1, 2, 3}, context_1};
 
   // COMPILE and execute
-  CompileAndExecute(*scan_plan_1, buffer_1,
-                    reinterpret_cast<char*>(buffer_1.GetState()));
+  CompileAndExecute(*scan_plan_1, buffer_1);
 
   // Check that we got all the results
   auto &results_1 = buffer_1.GetOutputTuples();
@@ -179,8 +177,7 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithAConstantAndPredicate) {
   codegen::BufferingConsumer buffer{{}, context};
 
   // COMPILE and execute
-  CompileAndExecute(*update_plan, buffer,
-                    reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(*update_plan, buffer);
 
   LOG_DEBUG("Table has %zu tuples", table->GetTupleCount());
   LOG_DEBUG("%s", table->GetInfo().c_str());
@@ -203,8 +200,7 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithAConstantAndPredicate) {
   codegen::BufferingConsumer buffer_1{{0, 1, 2, 3}, context_1};
 
   // COMPILE and execute
-  CompileAndExecute(*scan_plan_2, buffer_1,
-                    reinterpret_cast<char*>(buffer_1.GetState()));
+  CompileAndExecute(*scan_plan_2, buffer_1);
 
   // Check that we got all the results
   auto &results_1 = buffer_1.GetOutputTuples();
@@ -274,8 +270,7 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithAnOperatorExpression) {
   codegen::BufferingConsumer buffer{{}, context};
 
   // COMPILE and execute
-  CompileAndExecute(*update_plan, buffer,
-                    reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(*update_plan, buffer);
 
   LOG_DEBUG("Table has %zu tuples", table->GetTupleCount());
   LOG_DEBUG("%s", table->GetInfo().c_str());
@@ -298,8 +293,7 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithAnOperatorExpression) {
   codegen::BufferingConsumer buffer_1{{0, 1, 2, 3}, context_1};
 
   // COMPILE and execute
-  CompileAndExecute(*scan_plan_2, buffer_1,
-                    reinterpret_cast<char*>(buffer_1.GetState()));
+  CompileAndExecute(*scan_plan_2, buffer_1);
 
   // Check that we got all the results
   auto &results_1 = buffer_1.GetOutputTuples();
@@ -380,8 +374,7 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithAnOperatorExpressionComplex) {
   codegen::BufferingConsumer buffer{{}, context};
 
   // COMPILE and execute
-  CompileAndExecute(*update_plan, buffer,
-                    reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(*update_plan, buffer);
 
   LOG_DEBUG("Table has %zu tuples", table->GetTupleCount());
   LOG_DEBUG("%s", table->GetInfo().c_str());
@@ -404,8 +397,7 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithAnOperatorExpressionComplex) {
   codegen::BufferingConsumer buffer_1{{0, 1, 2, 3}, context_1};
 
   // COMPILE and execute
-  CompileAndExecute(*scan_plan_2, buffer_1,
-                    reinterpret_cast<char*>(buffer_1.GetState()));
+  CompileAndExecute(*scan_plan_2, buffer_1);
 
   // Check that we got all the results
   auto &results_1 = buffer_1.GetOutputTuples();
@@ -468,8 +460,7 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithAConstantPrimary) {
   codegen::BufferingConsumer buffer{{}, context};
 
   // COMPILE and execute
-  CompileAndExecute(*update_plan, buffer,
-                    reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(*update_plan, buffer);
 
   LOG_DEBUG("Table has %zu tuples", table->GetTupleCount());
   LOG_DEBUG("%s", table->GetInfo().c_str());
@@ -492,8 +483,7 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithAConstantPrimary) {
   codegen::BufferingConsumer buffer_5{{0, 1, 2, 3}, context_1};
 
   // COMPILE and execute
-  CompileAndExecute(*scan_plan_5, buffer_5,
-                    reinterpret_cast<char*>(buffer_5.GetState()));
+  CompileAndExecute(*scan_plan_5, buffer_5);
 
   // Check that we got all the results
   auto &results_5 = buffer_5.GetOutputTuples();
@@ -553,8 +543,7 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithCast) {
   codegen::BufferingConsumer buffer{{}, context};
 
   // COMPILE and execute
-  CompileAndExecute(*update_plan, buffer,
-                    reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(*update_plan, buffer);
 
   LOG_DEBUG("Table has %zu tuples", table->GetTupleCount());
   LOG_DEBUG("%s", table->GetInfo().c_str());
@@ -577,8 +566,7 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithCast) {
   codegen::BufferingConsumer buffer_1{{0, 1, 2, 3}, context_1};
 
   // COMPILE and execute
-  CompileAndExecute(*scan_plan_1, buffer_1,
-                    reinterpret_cast<char*>(buffer_1.GetState()));
+  CompileAndExecute(*scan_plan_1, buffer_1);
 
   // Check that we got all the results
   auto &results_1 = buffer_1.GetOutputTuples();
@@ -626,8 +614,7 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithCast) {
   codegen::BufferingConsumer buffer_2{{}, context_2};
 
   // COMPILE and execute
-  CompileAndExecute(*update_plan_2, buffer_2,
-                    reinterpret_cast<char *>(buffer_2.GetState()));
+  CompileAndExecute(*update_plan_2, buffer_2);
 
   LOG_DEBUG("Table has %zu tuples", table->GetTupleCount());
   LOG_DEBUG("%s", table->GetInfo().c_str());
@@ -649,8 +636,7 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithCast) {
   // Printing consumer
   codegen::BufferingConsumer buffer_3{{0, 1, 2, 3}, context_3};
 
-  CompileAndExecute(*scan_plan_3, buffer_3,
-                    reinterpret_cast<char*>(buffer_3.GetState()));
+  CompileAndExecute(*scan_plan_3, buffer_3);
 
   // Check that we got all the results
   auto &results_3 = buffer_3.GetOutputTuples();

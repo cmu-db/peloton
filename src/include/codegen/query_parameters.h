@@ -25,18 +25,42 @@ class Value;
 }
 
 namespace codegen {
+
 class QueryParameters {
  public:
-  // Constructor
+  QueryParameters() = default;
+
+  // OBSOLETE: This is for the legacy interpreted execution engine!
+  // This is not marked as explicit, because we want implicit casting from
+  // vector of values.
+  QueryParameters(std::vector<peloton::type::Value> values)
+      : parameters_map_(), parameters_values_(std::move(values)) {}
+
   QueryParameters(planner::AbstractPlan &plan,
                   const std::vector<peloton::type::Value> &values) {
     // Extract Parameters information and set value type for all the PVE
     plan.VisitParameters(parameters_map_, parameters_values_, values);
   }
 
+  DISALLOW_COPY(QueryParameters);
+
+  QueryParameters(QueryParameters &&other) noexcept
+      : parameters_map_(std::move(other.parameters_map_)),
+        parameters_values_(std::move(other.parameters_values_)) {}
+
+  QueryParameters &operator=(QueryParameters &&other) noexcept {
+    parameters_map_ = std::move(other.parameters_map_);
+    parameters_values_ = std::move(other.parameters_values_);
+    return *this;
+  }
+
   // Set the values from the user's query parameters
-  const QueryParametersMap &GetQueryParametersMap() {
+  const QueryParametersMap &GetQueryParametersMap() const {
     return parameters_map_;
+  }
+
+  const std::vector<peloton::type::Value> &GetParameterValues() const {
+    return parameters_values_;
   }
 
   uint32_t GetParameterIdx(

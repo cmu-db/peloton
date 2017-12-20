@@ -36,7 +36,7 @@ class ParameterValueExpression : public AbstractExpression {
   type::Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
                        UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
                        executor::ExecutorContext *context) const override {
-    return context->GetParams().at(value_idx_);
+    return context->GetParamValues().at(value_idx_);
   }
 
   AbstractExpression *Copy() const override {

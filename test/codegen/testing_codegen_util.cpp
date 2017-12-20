@@ -17,6 +17,7 @@
 #include "codegen/proxy/value_proxy.h"
 #include "codegen/proxy/values_runtime_proxy.h"
 #include "concurrency/transaction_manager_factory.h"
+#include "executor/plan_executor.h"
 #include "executor/executor_context.h"
 #include "expression/comparison_expression.h"
 #include "expression/tuple_value_expression.h"
@@ -155,67 +156,82 @@ void PelotonCodeGenTest::LoadTestTable(oid_t table_id, uint32_t num_rows,
   txn_manager.CommitTransaction(txn);
 }
 
+void PelotonCodeGenTest::ExecuteSync(
+    codegen::Query &query,
+    std::unique_ptr<executor::ExecutorContext> executor_context,
+    codegen::QueryResultConsumer &consumer) {
+  std::mutex mu;
+  std::condition_variable cond;
+  bool finished = false;
+  query.Execute(
+      std::move(executor_context),
+      consumer,
+      [&](executor::ExecuteResult) {
+        std::unique_lock<decltype(mu)> lock(mu);
+        finished = true;
+        cond.notify_one();
+      });
+
+  std::unique_lock<decltype(mu)> lock(mu);
+  cond.wait(lock, [&] { return finished; });
+}
+
 codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecute(
-    planner::AbstractPlan &plan, codegen::QueryResultConsumer &consumer,
-    char *consumer_state, std::vector<type::Value> *params) {
-  // Start a transaction
+    planner::AbstractPlan &plan, codegen::QueryResultConsumer &consumer) {
+  codegen::QueryParameters parameters(plan, {});
+
+  // Start a transaction.
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto *txn = txn_manager.BeginTransaction();
 
-  // Compile
+  // Compile the query.
   codegen::QueryCompiler::CompileStats stats;
-  codegen::QueryCompiler compiler;
-  std::unique_ptr<executor::ExecutorContext> executor_context;
-  if (params != nullptr) {
-    executor_context.reset(new executor::ExecutorContext{txn, *params});
-  } else {
-    executor_context.reset(new executor::ExecutorContext{txn});
-  }
-  codegen::QueryParameters parameters{plan, executor_context->GetParams()};
+  auto compiled_query = codegen::QueryCompiler().Compile(
+      plan, parameters.GetQueryParametersMap(), consumer, &stats);
 
-  auto compiled_query = compiler.Compile(plan,
-      parameters.GetQueryParametersMap(), consumer, &stats);
-  // Run
-  compiled_query->Execute(*executor_context.get(), parameters,
-                          consumer_state);
+  // Execute the query.
+  ExecuteSync(*compiled_query,
+              std::unique_ptr<executor::ExecutorContext>(
+                  new executor::ExecutorContext(txn, std::move(parameters))),
+              consumer);
+
+  // Commit the transaction.
   txn_manager.CommitTransaction(txn);
+
   return stats;
 }
 
 codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecuteCache(
     std::shared_ptr<planner::AbstractPlan> plan,
-    codegen::QueryResultConsumer &consumer, char *consumer_state, bool &cached,
-    std::vector<type::Value> *params) {
+    codegen::QueryResultConsumer &consumer, bool &cached,
+    std::vector<type::Value> params) {
+
   // Start a transaction
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto *txn = txn_manager.BeginTransaction();
 
+  std::unique_ptr<executor::ExecutorContext> executor_context(
+      new executor::ExecutorContext(txn,
+                                    codegen::QueryParameters(*plan, params)));
+
   // Compile
   codegen::QueryCompiler::CompileStats stats;
-  codegen::QueryCompiler compiler;
-
-  std::unique_ptr<executor::ExecutorContext> executor_context;
-  if (params != nullptr) {
-    executor_context.reset(new executor::ExecutorContext{txn, *params});
-  } else {
-    executor_context.reset(new executor::ExecutorContext{txn});
-  }
-  codegen::QueryParameters parameters{*plan.get(),
-                                      executor_context->GetParams()};
-
   codegen::Query *query = codegen::QueryCache::Instance().Find(plan);
+  cached = (query != nullptr);
   if (query == nullptr) {
-    auto compiled_query = compiler.Compile(*plan,
-                                           parameters.GetQueryParametersMap(),
-                                           consumer, &stats);
-    compiled_query->Execute(*executor_context.get(), parameters,
-                            consumer_state);
+    codegen::QueryCompiler compiler;
+    auto compiled_query = compiler.Compile(
+        *plan,
+        executor_context->GetParams().GetQueryParametersMap(),
+        consumer);
+    query = compiled_query.get();
     codegen::QueryCache::Instance().Add(plan, std::move(compiled_query));
-    cached = false;
-  } else {
-    query->Execute(*executor_context.get(), parameters, consumer_state);
-    cached = true;
   }
+
+  // Execute the query.
+  ExecuteSync(*query, std::move(executor_context), consumer);
+
+  // Commit the transaction.
   txn_manager.CommitTransaction(txn);
 
   return stats;
@@ -330,34 +346,6 @@ void Printer::ConsumeResult(codegen::ConsumerContext &ctx,
 
   // Make the printf call
   codegen.CallPrintf(format, cols);
-}
-
-//===----------------------------------------------------------------------===//
-// COUNTING CONSUMER
-//===----------------------------------------------------------------------===//
-
-void CountingConsumer::Prepare(codegen::CompilationContext &ctx) {
-  auto &codegen = ctx.GetCodeGen();
-  auto &runtime_state = ctx.GetRuntimeState();
-  counter_state_id_ =
-      runtime_state.RegisterState("consumerState", codegen.Int64Type());
-}
-
-void CountingConsumer::InitializeState(codegen::CompilationContext &context) {
-  auto &codegen = context.GetCodeGen();
-  auto *state_ptr = GetCounter(codegen, context.GetRuntimeState());
-  codegen->CreateStore(codegen.Const64(0), state_ptr);
-}
-
-// Increment the counter
-void CountingConsumer::ConsumeResult(codegen::ConsumerContext &context,
-                                     codegen::RowBatch::Row &) const {
-  auto &codegen = context.GetCodeGen();
-
-  auto *counter_ptr = GetCounter(context);
-  auto *new_count =
-      codegen->CreateAdd(codegen->CreateLoad(counter_ptr), codegen.Const64(1));
-  codegen->CreateStore(new_count, counter_ptr);
 }
 
 }  // namespace test

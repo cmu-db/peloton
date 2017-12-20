@@ -81,8 +81,7 @@ TEST_F(GroupByTranslatorTest, SingleColumnGrouping) {
   codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // Compile and run
-  CompileAndExecute(*agg_plan, buffer,
-                    reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(*agg_plan, buffer);
 
   // Check results
   const auto &results = buffer.GetOutputTuples();
@@ -142,8 +141,7 @@ TEST_F(GroupByTranslatorTest, MultiColumnGrouping) {
   codegen::BufferingConsumer buffer{{0, 1, 2}, context};
 
   // Compile it all
-  CompileAndExecute(*agg_plan, buffer,
-                    reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(*agg_plan, buffer);
 
   // Check results
   const auto &results = buffer.GetOutputTuples();
@@ -202,8 +200,7 @@ TEST_F(GroupByTranslatorTest, AverageAggregation) {
   codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // Compile it all
-  CompileAndExecute(*agg_plan, buffer,
-                    reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(*agg_plan, buffer);
 
   // Check results
   const auto &results = buffer.GetOutputTuples();
@@ -264,8 +261,7 @@ TEST_F(GroupByTranslatorTest, AggregationWithOutputPredicate) {
   codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // Compile it all
-  CompileAndExecute(*agg_plan, buffer,
-                    reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(*agg_plan, buffer);
 
   // Check results
   const auto &results = buffer.GetOutputTuples();
@@ -324,8 +320,7 @@ TEST_F(GroupByTranslatorTest, AggregationWithInputPredciate) {
   codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // Compile it all
-  CompileAndExecute(*agg_plan, buffer,
-                    reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(*agg_plan, buffer);
 
   // Check results. We expect four because the "A" col increases by 10 for each
   // row. For 10 rows, the four rows with A = 60, 70, 80, 90 are valid.
@@ -378,8 +373,7 @@ TEST_F(GroupByTranslatorTest, SingleCountStar) {
   codegen::BufferingConsumer buffer{{0}, context};
 
   // Compile it all
-  CompileAndExecute(*agg_plan, buffer,
-                    reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(*agg_plan, buffer);
 
   // Check results
   const auto &results = buffer.GetOutputTuples();
@@ -436,8 +430,7 @@ TEST_F(GroupByTranslatorTest, MinAndMax) {
   codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // Compile it all
-  CompileAndExecute(*agg_plan, buffer,
-                    reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(*agg_plan, buffer);
 
   // There should only be a single output row
   const auto &results = buffer.GetOutputTuples();

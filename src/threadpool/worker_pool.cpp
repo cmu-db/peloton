@@ -15,23 +15,22 @@
 namespace peloton {
 namespace threadpool {
 
-WorkerPool::WorkerPool(size_t num_workers, TaskQueue *task_queue) :
-  num_workers_(num_workers), task_queue_(task_queue) {}
+void WorkerFunc(std::atomic_bool *should_shutdown, TaskQueue *task_queue) {
+  constexpr auto kMinPauseTime = std::chrono::microseconds(1);
+  constexpr auto kMaxPauseTime = std::chrono::microseconds(1000);
 
-void WorkerPool::Startup() {
-  for (size_t i = 0; i < num_workers_; i++) {
-    // start thread on construction
-    std::unique_ptr<Worker> worker(new Worker());
-    worker->Start(task_queue_);
-    workers_.push_back(std::move(worker));
+  auto pause_time = kMinPauseTime;
+  while (!should_shutdown->load() || !task_queue->IsEmpty()) {
+    std::function<void()> task;
+    if (!task_queue->Dequeue(task)) {
+      // Polling with exponential backoff
+      std::this_thread::sleep_for(pause_time);
+      pause_time = std::min(pause_time * 2, kMaxPauseTime);
+    } else {
+      task();
+      pause_time = kMinPauseTime;
+    }
   }
-}
-
-void WorkerPool::Shutdown() {
-  for (auto &worker: workers_) {
-    worker->Stop();
-  }
-  workers_.clear();
 }
 
 }  // namespace threadpool

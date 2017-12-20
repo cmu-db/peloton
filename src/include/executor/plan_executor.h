@@ -28,30 +28,22 @@ namespace executor {
 // Plan Executor
 //===----------------------------------------------------------------------===//
 
-typedef struct ExecuteResult {
-  peloton::ResultType m_result;
-  int *m_result_slots;
+struct ExecuteResult {
+  ResultType m_result;
 
   // number of tuples processed
   uint32_t m_processed;
 
   ExecuteResult() {
     m_processed = 0;
-    m_result = peloton::ResultType::SUCCESS;
-    m_result_slots = nullptr;
+    m_result = ResultType::SUCCESS;
   }
-
-  //===--------------------------------------------------------------------===//
-  // Serialization/Deserialization
-  //===--------------------------------------------------------------------===//
-  bool SerializeTo(peloton::SerializeOutput &output);
-  bool DeserializeFrom(peloton::SerializeInput &input);
-
-} ExecuteResult;
+};
 
 class PlanExecutor {
  public:
-  PlanExecutor(){};
+  PlanExecutor() = default;
+  DISALLOW_COPY_AND_MOVE(PlanExecutor);
 
   /*
    * @brief Use std::vector<type::Value> as params to make it more elegant
@@ -59,12 +51,14 @@ class PlanExecutor {
    * Before ExecutePlan, a node first receives value list, so we should
    * pass value list directly rather than passing Postgres's ParamListInfo
    */
-  static void ExecutePlan(std::shared_ptr<planner::AbstractPlan> plan,
-                                   concurrency::TransactionContext* txn,
-                                   const std::vector<type::Value> &params,
-                                   std::vector<ResultValue> &result,
-                                   const std::vector<int> &result_format,
-                                   executor::ExecuteResult &p_status);
+  static void ExecutePlan(
+      std::shared_ptr<planner::AbstractPlan> plan,
+      concurrency::TransactionContext *txn,
+      const std::vector<type::Value> &params,
+      const std::vector<int> &result_format,
+      std::function<void(executor::ExecuteResult,
+                         std::vector<ResultValue> &&)> on_complete
+  );
 
   /*
    * @brief When a peloton node recvs a query plan, this function is invoked
@@ -75,9 +69,6 @@ class PlanExecutor {
   static int ExecutePlan(
       const planner::AbstractPlan *plan, const std::vector<type::Value> &params,
       std::vector<std::unique_ptr<executor::LogicalTile>> &logical_tile_list);
-
- private:
-  DISALLOW_COPY_AND_MOVE(PlanExecutor);
 };
 
 }  // namespace executor

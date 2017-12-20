@@ -51,8 +51,7 @@ TEST_F(OrderByTranslatorTest, SingleIntColAscTest) {
   codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // COMPILE and execute
-  CompileAndExecute(*order_by_plan, buffer,
-                    reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(*order_by_plan, buffer);
 
   // The results should be sorted in ascending order
   auto &results = buffer.GetOutputTuples();
@@ -89,8 +88,7 @@ TEST_F(OrderByTranslatorTest, SingleIntColDescTest) {
   codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // COMPILE and execute
-  CompileAndExecute(*order_by_plan, buffer,
-                    reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(*order_by_plan, buffer);
 
   // The results should be sorted in descending order
   auto &results = buffer.GetOutputTuples();
@@ -127,8 +125,7 @@ TEST_F(OrderByTranslatorTest, MultiIntColAscTest) {
   codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // COMPILE and execute
-  CompileAndExecute(*order_by_plan, buffer,
-                    reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(*order_by_plan, buffer);
 
   // The results should be sorted in ascending order
   auto &results = buffer.GetOutputTuples();
@@ -173,8 +170,7 @@ TEST_F(OrderByTranslatorTest, MultiIntColMixedTest) {
   codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // COMPILE and execute
-  CompileAndExecute(*order_by_plan, buffer,
-                    reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(*order_by_plan, buffer);
 
   // The results should be sorted in ascending order
   auto &results = buffer.GetOutputTuples();

@@ -62,12 +62,6 @@ class AbstractExecutor {
 
   const planner::AbstractPlan *GetRawNode() const { return node_; }
 
-  // set the context
-  void SetContext(type::Value &value);
-
-  // clear the context
-  void ClearContext();
-
   // Update the predicate in runtime. This is used in Nested Loop Join. Since
   // some executor do not need this function, we set it to empty function.
   virtual void UpdatePredicate(

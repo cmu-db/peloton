@@ -94,11 +94,5 @@ bool AbstractExecutor::Execute() {
   return status;
 }
 
-void AbstractExecutor::SetContext(type::Value &value) {
-  executor_context_->SetParams(value);
-}
-
-void AbstractExecutor::ClearContext() { executor_context_->ClearParams(); }
-
 }  // namespace executor
 }  // namespace peloton

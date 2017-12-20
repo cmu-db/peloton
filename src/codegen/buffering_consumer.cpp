@@ -53,7 +53,7 @@ DEFINE_METHOD(peloton::codegen, BufferingConsumer, BufferTuple);
 //===----------------------------------------------------------------------===//
 
 BufferingConsumer::BufferingConsumer(const std::vector<oid_t> &cols,
-                                     planner::BindingContext &context) {
+                                     const planner::BindingContext &context) {
   for (oid_t col_id : cols) {
     output_ais_.push_back(context.Find(col_id));
   }

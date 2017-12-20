@@ -23,7 +23,7 @@ class BindingContext {
  public:
   const AttributeInfo* Find(oid_t col_id) const {
     auto iter = mapping_.find(col_id);
-    return iter == mapping_.end() ? nullptr : iter->second;
+    return (iter == mapping_.cend()) ? nullptr : iter->second;
   }
 
   bool Bind(oid_t col_id, const AttributeInfo* attribute_info) {
