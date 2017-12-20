@@ -303,7 +303,7 @@ class BwTreeBase {
    * This function must be called when the garbage pool is empty
    */
   void DestroyThreadLocal() {
-    LOG_TRACE("Destroy %lu thread local slots\n", thread_num);
+    LOG_TRACE("Destroy %lu thread local slots", thread_num);
 
     // There must already be metadata allocated
     PL_ASSERT(original_p != nullptr);
@@ -327,7 +327,7 @@ class BwTreeBase {
    * This function uses thread_num to initialize number of threads
    */
   void PrepareThreadLocal() {
-    LOG_TRACE("Preparing %lu thread local slots\n", thread_num);
+    LOG_TRACE("Preparing %lu thread local slots", thread_num);
 
     // This is the unaligned base address
     // We allocate one more element than requested as the buffer
@@ -387,7 +387,7 @@ class BwTreeBase {
     // Frees all metadata
     DestroyThreadLocal();
 
-    LOG_TRACE("Finished destroying class BwTreeBase\n")
+    LOG_TRACE("Finished destroying class BwTreeBase")
 
     return;
   }
@@ -2470,23 +2470,23 @@ class BwTree : public BwTreeBase {
         epoch_manager{this} {
     LOG_TRACE(
         "Bw-Tree Constructor called. "
-        "Setting up execution environment...\n");
+        "Setting up execution environment...");
 
     InitMappingTable();
     InitNodeLayout();
 
-    LOG_TRACE("sizeof(NodeMetaData) = %lu is the overhead for each node\n",
+    LOG_TRACE("sizeof(NodeMetaData) = %lu is the overhead for each node",
               sizeof(NodeMetaData));
-    LOG_TRACE("sizeof(KeyType) = %lu is the size of key\n", sizeof(KeyType));
+    LOG_TRACE("sizeof(KeyType) = %lu is the size of key", sizeof(KeyType));
 
     // We could choose not to start GC thread inside the BwTree
     // in that case GC must be done by calling the interface
     if (start_gc_thread == true) {
-      LOG_TRACE("Starting epoch manager thread...\n");
+      LOG_TRACE("Starting epoch manager thread...");
       epoch_manager.StartThread();
     }
 
-    dummy("Call it here to avoid compiler warning\n");
+    dummy("Call it here to avoid compiler warning");
 
     return;
   }
@@ -2499,8 +2499,8 @@ class BwTree : public BwTreeBase {
    * has been called before we free the whole tree
    */
   ~BwTree() {
-    LOG_TRACE("Next node ID at exit: %lu\n", next_unused_node_id.load());
-    LOG_TRACE("Destructor: Free tree nodes\n");
+    LOG_TRACE("Next node ID at exit: %lu", next_unused_node_id.load());
+    LOG_TRACE("Destructor: Free tree nodes");
 
     // Clear all garbage nodes awaiting cleaning
     // First of all it should set all last active epoch counter to -1
@@ -2509,7 +2509,7 @@ class BwTree : public BwTreeBase {
     // Free all nodes recursively
     size_t node_count = FreeNodeByNodeID(root_id.load());
 
-    LOG_TRACE("Freed %lu tree nodes\n", node_count);
+    LOG_TRACE("Freed %lu tree nodes", node_count);
 
     return;
   }
@@ -2548,7 +2548,7 @@ class BwTree : public BwTreeBase {
    * the new number of threads we want to support here for doing experiments
    */
   void UpdateThreadLocal(size_t p_thread_num) {
-    LOG_TRACE("Updating thread-local array to length %lu......\n",
+    LOG_TRACE("Updating thread-local array to length %lu......",
               p_thread_num);
 
     // 1. Frees all pending memory chunks
@@ -2764,7 +2764,7 @@ class BwTree : public BwTreeBase {
           // they are supposed to be removed as part of any operation on
           // the tree (i.e. they could not be left behind once a operation
           // has been finished)
-          LOG_DEBUG("Unknown node type: %d\n", (int)type);
+          LOG_DEBUG("Unknown node type: %d", (int)type);
 
           PL_ASSERT(false);
           return 0;
@@ -2782,7 +2782,7 @@ class BwTree : public BwTreeBase {
    * to guide the first operation to the right place
    */
   void InitNodeLayout() {
-    LOG_TRACE("Initializing node layout for root and first page...\n");
+    LOG_TRACE("Initializing node layout for root and first page...");
 
     root_id = GetNextNodeID();
     PL_ASSERT(root_id == 1UL);
@@ -2827,7 +2827,7 @@ class BwTree : public BwTreeBase {
 
     root_node_p->PushBack(first_sep);
 
-    LOG_TRACE("root id = %lu; first leaf id = %lu\n", root_id.load(),
+    LOG_TRACE("root id = %lu; first leaf id = %lu", root_id.load(),
               first_leaf_id);
 
     InstallNewNode(root_id, root_node_p);
@@ -2868,9 +2868,9 @@ class BwTree : public BwTreeBase {
    * the mapping table rather than CAS with nullptr
    */
   void InitMappingTable() {
-    LOG_TRACE("Initializing mapping table.... size = %lu\n",
+    LOG_TRACE("Initializing mapping table.... size = %lu",
               MAPPING_TABLE_SIZE);
-    LOG_TRACE("Fast initialization: Do not set to zero\n");
+    LOG_TRACE("Fast initialization: Do not set to zero");
 
     return;
   }
@@ -3022,7 +3022,7 @@ class BwTree : public BwTreeBase {
       goto abort_traverse;
     }
 
-    LOG_TRACE("Successfully loading root node ID\n");
+    LOG_TRACE("Successfully loading root node ID");
 
     while (1) {
       NodeID child_node_id = NavigateInnerNode(context_p);
@@ -3030,7 +3030,7 @@ class BwTree : public BwTreeBase {
       // Navigate could abort since it might go to another NodeID
       // if there is a split delta and the key is >= split key
       if (context_p->abort_flag == true) {
-        LOG_DEBUG("Navigate Inner Node abort. ABORT\n");
+        LOG_DEBUG("Navigate Inner Node abort. ABORT");
 
         // If NavigateInnerNode() aborts then it retrns INVALID_NODE_ID
         // as a double check
@@ -3048,7 +3048,7 @@ class BwTree : public BwTreeBase {
       LoadNodeID(child_node_id, context_p);
 
       if (context_p->abort_flag == true) {
-        LOG_DEBUG("LoadNodeID aborted. ABORT\n");
+        LOG_DEBUG("LoadNodeID aborted. ABORT");
 
         goto abort_traverse;
       }
@@ -3057,7 +3057,7 @@ class BwTree : public BwTreeBase {
       NodeSnapshot *snapshot_p = GetLatestNodeSnapshot(context_p);
 
       if (snapshot_p->IsLeaf() == true) {
-        LOG_TRACE("The next node is a leaf\n");
+        LOG_TRACE("The next node is a leaf");
 
         break;
       }
@@ -3081,14 +3081,14 @@ class BwTree : public BwTreeBase {
     if (context_p->abort_flag == true) {
       LOG_DEBUG(
           "NavigateLeafNode() or NavigateSiblingChain()"
-          " aborts. ABORT\n");
+          " aborts. ABORT");
 
       goto abort_traverse;
     }
 
 #ifdef BWTREE_DEBUG
 
-    LOG_TRACE("Found leaf node. Abort count = %d, level = %d\n",
+    LOG_TRACE("Found leaf node. Abort count = %d, level = %d",
               context_p->abort_counter, context_p->current_level);
 
 #endif
@@ -3160,13 +3160,13 @@ class BwTree : public BwTreeBase {
           (KeyCmpGreaterEqual(context_p->search_key, node_p->GetHighKey()))) {
         LOG_TRACE(
             "Bounds checking failed (id = %lu) - "
-            "Go right.\n",
+            "Go right.",
             snapshot_p->node_id);
 
         JumpToNodeID(node_p->GetNextNodeID(), context_p);
 
         if (context_p->abort_flag == true) {
-          LOG_DEBUG("JumpToNodeID aborts(). ABORT\n");
+          LOG_DEBUG("JumpToNodeID aborts(). ABORT");
 
           return;
         }
@@ -3195,12 +3195,12 @@ class BwTree : public BwTreeBase {
           (KeyCmpGreater(context_p->search_key, node_p->GetHighKey()))) {
         LOG_TRACE(
             "Bounds checking for BI failed (id = %lu) - "
-            "Go right.\n",
+            "Go right.",
             snapshot_p->node_id);
 
         JumpToNodeID(node_p->GetNextNodeID(), context_p);
         if (context_p->abort_flag == true) {
-          LOG_DEBUG("JumpToNodeID() aborts for BI. ABORT\n");
+          LOG_DEBUG("JumpToNodeID() aborts for BI. ABORT");
           return;
         }
       } else {
@@ -3337,7 +3337,7 @@ class BwTree : public BwTreeBase {
     // it has reached a leaf node
     PL_ASSERT(snapshot_p->node_id != INVALID_NODE_ID);
 
-    LOG_TRACE("Navigating inner node delta chain...\n");
+    LOG_TRACE("Navigating inner node delta chain...");
 
     // Always start with the first element
     const KeyNodeIDPair *start_p =
@@ -3360,7 +3360,7 @@ class BwTree : public BwTreeBase {
           NodeID target_id =
               LocateSeparatorByKey(search_key, inner_node_p, start_p, end_p);
 
-          LOG_TRACE("Found child in inner node; child ID = %lu\n", target_id);
+          LOG_TRACE("Found child in inner node; child ID = %lu", target_id);
 
           return target_id;
         }  // case InnerType
@@ -3378,7 +3378,7 @@ class BwTree : public BwTreeBase {
           if (KeyCmpGreaterEqual(search_key, insert_item.first)) {
             if ((next_item.second == INVALID_NODE_ID) ||
                 (KeyCmpLess(search_key, next_item.first))) {
-              LOG_TRACE("Find target ID = %lu in insert delta\n",
+              LOG_TRACE("Find target ID = %lu in insert delta",
                         insert_item.second);
 
               return insert_item.second;
@@ -3415,7 +3415,7 @@ class BwTree : public BwTreeBase {
             // then +Inf
             if ((next_item.second == INVALID_NODE_ID) ||
                 (KeyCmpLess(search_key, next_item.first))) {
-              LOG_TRACE("Find target ID = %lu in delete delta\n",
+              LOG_TRACE("Find target ID = %lu in delete delta",
                         prev_item.second);
 
               return prev_item.second;
@@ -3447,12 +3447,12 @@ class BwTree : public BwTreeBase {
           // high key does not need to be updated
           // Since we still could not know the high key
           if (KeyCmpGreaterEqual(search_key, merge_key)) {
-            LOG_TRACE("Take merge right branch (ID = %lu)\n",
+            LOG_TRACE("Take merge right branch (ID = %lu)",
                       snapshot_p->node_id);
 
             node_p = merge_node_p->right_merge_p;
           } else {
-            LOG_TRACE("Take merge left branch (ID = %lu)\n",
+            LOG_TRACE("Take merge left branch (ID = %lu)",
                       snapshot_p->node_id);
 
             node_p = merge_node_p->child_node_p;
@@ -3509,7 +3509,7 @@ class BwTree : public BwTreeBase {
 
     PL_ASSERT(snapshot_p->IsLeaf() == false);
     PL_ASSERT(snapshot_p->node_p != nullptr);
-    LOG_TRACE("Navigating inner node delta chain for BI...\n");
+    LOG_TRACE("Navigating inner node delta chain for BI...");
 
     while (1) {
       NodeType type = node_p->GetType();
@@ -3519,7 +3519,7 @@ class BwTree : public BwTreeBase {
           NodeID target_id = LocateSeparatorByKeyBI(
               search_key, static_cast<const InnerNode *>(node_p));
 
-          LOG_TRACE("Found child in inner node (BI); child ID = %lu\n",
+          LOG_TRACE("Found child in inner node (BI); child ID = %lu",
                     target_id);
 
           return target_id;
@@ -3537,7 +3537,7 @@ class BwTree : public BwTreeBase {
             // *********************************************
 
             if (KeyCmpGreater(search_key, insert_item.first)) {
-              LOG_TRACE("Find target ID = %lu in insert delta (BI)\n",
+              LOG_TRACE("Find target ID = %lu in insert delta (BI)",
                         insert_item.second);
 
               return insert_item.second;
@@ -3563,7 +3563,7 @@ class BwTree : public BwTreeBase {
               (KeyCmpGreater(search_key, prev_item.first))) {
             if ((next_item.second == INVALID_NODE_ID) ||
                 (KeyCmpLess(search_key, next_item.first))) {
-              LOG_TRACE("Find target ID = %lu in delete delta (BI)\n",
+              LOG_TRACE("Find target ID = %lu in delete delta (BI)",
                         prev_item.second);
 
               return prev_item.second;
@@ -3589,12 +3589,12 @@ class BwTree : public BwTreeBase {
           // ************************************************
 
           if (KeyCmpGreater(search_key, merge_key)) {
-            LOG_TRACE("Take merge right branch (ID = %lu) for BI\n",
+            LOG_TRACE("Take merge right branch (ID = %lu) for BI",
                       snapshot_p->node_id);
 
             node_p = merge_node_p->right_merge_p;
           } else {
-            LOG_TRACE("Take merge left branch (ID = %lu) for BI\n",
+            LOG_TRACE("Take merge left branch (ID = %lu) for BI",
                       snapshot_p->node_id);
 
             node_p = merge_node_p->child_node_p;
@@ -3769,13 +3769,13 @@ class BwTree : public BwTreeBase {
           // This points to the first element >= high key
           sss_end_it++;
 
-          // printf("%ld\n", sss.GetSize());
+          // printf("%ld", sss.GetSize());
 
           while (1) {
             bool sss_end_flag = (sss.GetBegin() == sss_end_it);
             bool array_end_flag = (copy_start_it == copy_end_it);
 
-            // printf("sss_end_flag = %d; array_end_flag = %d\n", sss_end_flag,
+            // printf("sss_end_flag = %d; array_end_flag = %d", sss_end_flag,
             // array_end_flag);
 
             if (sss_end_flag == true && array_end_flag == true) {
@@ -3857,7 +3857,7 @@ class BwTree : public BwTreeBase {
           return;
         }  // case InnerType
         case NodeType::InnerRemoveType: {
-          LOG_ERROR("ERROR: InnerRemoveNode not allowed\n");
+          LOG_ERROR("ERROR: InnerRemoveNode not allowed");
 
           PL_ASSERT(false);
           return;
@@ -3923,7 +3923,7 @@ class BwTree : public BwTreeBase {
           return;
         }  // case InnerMergeType
         default: {
-          LOG_ERROR("ERROR: Unknown inner node type = %d\n",
+          LOG_ERROR("ERROR: Unknown inner node type = %d",
                     static_cast<int>(type));
 
           PL_ASSERT(false);
@@ -4103,12 +4103,12 @@ class BwTree : public BwTreeBase {
           break;
         }  // case LeafDeleteType
         case NodeType::LeafRemoveType: {
-          LOG_ERROR("ERROR: Observed LeafRemoveNode in delta chain\n");
+          LOG_ERROR("ERROR: Observed LeafRemoveNode in delta chain");
 
           PL_ASSERT(false);
         }  // case LeafRemoveType
         case NodeType::LeafMergeType: {
-          LOG_TRACE("Observed a merge node on leaf delta chain\n");
+          LOG_TRACE("Observed a merge node on leaf delta chain");
 
           const LeafMergeNode *merge_node_p =
               static_cast<const LeafMergeNode *>(node_p);
@@ -4116,11 +4116,11 @@ class BwTree : public BwTreeBase {
           // Decide which side we should choose
           // Using >= for separator key
           if (KeyCmpGreaterEqual(search_key, merge_node_p->delete_item.first)) {
-            LOG_TRACE("Take leaf merge right branch\n");
+            LOG_TRACE("Take leaf merge right branch");
 
             node_p = merge_node_p->right_merge_p;
           } else {
-            LOG_TRACE("Take leaf merge left branch\n");
+            LOG_TRACE("Take leaf merge left branch");
 
             node_p = merge_node_p->child_node_p;
           }
@@ -4128,7 +4128,7 @@ class BwTree : public BwTreeBase {
           break;
         }  // case LeafMergeType
         case NodeType::LeafSplitType: {
-          LOG_TRACE("Observed a split node on leaf delta chain\n");
+          LOG_TRACE("Observed a split node on leaf delta chain");
 
           const LeafSplitNode *split_node_p =
               static_cast<const LeafSplitNode *>(node_p);
@@ -4141,7 +4141,7 @@ class BwTree : public BwTreeBase {
           break;
         }  // case LeafSplitType
         default: {
-          LOG_ERROR("ERROR: Unknown leaf delta node type: %d\n",
+          LOG_ERROR("ERROR: Unknown leaf delta node type: %d",
                     static_cast<int>(node_p->GetType()));
 
           PL_ASSERT(false);
@@ -4281,12 +4281,12 @@ class BwTree : public BwTreeBase {
           break;
         }  // case LeafDeleteType
         case NodeType::LeafRemoveType: {
-          LOG_ERROR("ERROR: Observed LeafRemoveNode in delta chain\n");
+          LOG_ERROR("ERROR: Observed LeafRemoveNode in delta chain");
 
           PL_ASSERT(false);
         }  // case LeafRemoveType
         case NodeType::LeafMergeType: {
-          LOG_TRACE("Observed a merge node on leaf delta chain\n");
+          LOG_TRACE("Observed a merge node on leaf delta chain");
 
           const LeafMergeNode *merge_node_p =
               static_cast<const LeafMergeNode *>(node_p);
@@ -4294,11 +4294,11 @@ class BwTree : public BwTreeBase {
           // Decide which side we should choose
           // Using >= for separator key
           if (KeyCmpGreaterEqual(search_key, merge_node_p->delete_item.first)) {
-            LOG_TRACE("Take leaf merge right branch\n");
+            LOG_TRACE("Take leaf merge right branch");
 
             node_p = merge_node_p->right_merge_p;
           } else {
-            LOG_TRACE("Take leaf merge left branch\n");
+            LOG_TRACE("Take leaf merge left branch");
 
             node_p = merge_node_p->child_node_p;
           }
@@ -4306,7 +4306,7 @@ class BwTree : public BwTreeBase {
           break;
         }  // case LeafMergeType
         case NodeType::LeafSplitType: {
-          LOG_TRACE("Observed a split node on leaf delta chain\n");
+          LOG_TRACE("Observed a split node on leaf delta chain");
 
           const LeafSplitNode *split_node_p =
               static_cast<const LeafSplitNode *>(node_p);
@@ -4316,7 +4316,7 @@ class BwTree : public BwTreeBase {
           break;
         }  // case LeafSplitType
         default: {
-          LOG_ERROR("ERROR: Unknown leaf delta node type: %d\n",
+          LOG_ERROR("ERROR: Unknown leaf delta node type: %d",
                     static_cast<int>(node_p->GetType()));
 
           PL_ASSERT(false);
@@ -4470,22 +4470,22 @@ class BwTree : public BwTreeBase {
           break;
         }  // case LeafDeleteType
         case NodeType::LeafRemoveType: {
-          LOG_ERROR("ERROR: Observed LeafRemoveNode in delta chain\n");
+          LOG_ERROR("ERROR: Observed LeafRemoveNode in delta chain");
 
           PL_ASSERT(false);
         }  // case LeafRemoveType
         case NodeType::LeafMergeType: {
-          LOG_TRACE("Observed a merge node on leaf delta chain\n");
+          LOG_TRACE("Observed a merge node on leaf delta chain");
 
           const LeafMergeNode *merge_node_p =
               static_cast<const LeafMergeNode *>(node_p);
 
           if (KeyCmpGreaterEqual(search_key, merge_node_p->delete_item.first)) {
-            LOG_TRACE("Take leaf merge right branch\n");
+            LOG_TRACE("Take leaf merge right branch");
 
             node_p = merge_node_p->right_merge_p;
           } else {
-            LOG_TRACE("Take leaf merge left branch\n");
+            LOG_TRACE("Take leaf merge left branch");
 
             node_p = merge_node_p->child_node_p;
           }
@@ -4493,7 +4493,7 @@ class BwTree : public BwTreeBase {
           break;
         }  // case LeafMergeType
         case NodeType::LeafSplitType: {
-          LOG_TRACE("Observed a split node on leaf delta chain\n");
+          LOG_TRACE("Observed a split node on leaf delta chain");
 
           const LeafSplitNode *split_node_p =
               static_cast<const LeafSplitNode *>(node_p);
@@ -4503,7 +4503,7 @@ class BwTree : public BwTreeBase {
           break;
         }  // case LeafSplitType
         default: {
-          LOG_ERROR("ERROR: Unknown leaf delta node type: %d\n",
+          LOG_ERROR("ERROR: Unknown leaf delta node type: %d",
                     static_cast<int>(node_p->GetType()));
 
           PL_ASSERT(false);
@@ -4791,7 +4791,7 @@ class BwTree : public BwTreeBase {
           break;
         }  // case LeafDeleteType
         case NodeType::LeafRemoveType: {
-          LOG_ERROR("ERROR: LeafRemoveNode not allowed\n");
+          LOG_ERROR("ERROR: LeafRemoveNode not allowed");
 
           PL_ASSERT(false);
         }  // case LeafRemoveType
@@ -4817,7 +4817,7 @@ class BwTree : public BwTreeBase {
           return;
         }  // case LeafMergeType
         default: {
-          LOG_ERROR("ERROR: Unknown node type: %d\n", static_cast<int>(type));
+          LOG_ERROR("ERROR: Unknown node type: %d", static_cast<int>(type));
 
           PL_ASSERT(false);
         }  // default
@@ -4902,7 +4902,7 @@ class BwTree : public BwTreeBase {
    * decisions
    */
   void JumpToLeftSibling(Context *context_p) {
-    LOG_TRACE("Jumping to the left sibling\n");
+    LOG_TRACE("Jumping to the left sibling");
 
     PL_ASSERT(context_p->HasParentNode());
 
@@ -4918,8 +4918,8 @@ class BwTree : public BwTreeBase {
     // then this no longer holds
     if (IsOnLeftMostChild(context_p)) {
       LOG_TRACE(
-          "Observed a remove node on left most child.\n"
-          "  Parent node must have been merged. ABORT\n");
+          "Observed a remove node on left most child."
+          "  Parent node must have been merged. ABORT");
 
       context_p->abort_flag = true;
 
@@ -4949,7 +4949,7 @@ class BwTree : public BwTreeBase {
     if (parent_snapshot_p->node_p != GetNode(parent_snapshot_p->node_id)) {
       LOG_TRACE(
           "Inconsistent parent node snapshot and "
-          "current parent node. ABORT\n");
+          "current parent node. ABORT");
 
       context_p->abort_flag = true;
 
@@ -4964,7 +4964,7 @@ class BwTree : public BwTreeBase {
     JumpToNodeID(left_sibling_id, context_p);
 
     if (context_p->abort_flag == true) {
-      LOG_TRACE("JumpToLeftSibling()'s call to JumpToNodeID() ABORT\n")
+      LOG_TRACE("JumpToLeftSibling()'s call to JumpToNodeID() ABORT")
 
       return;
     }
@@ -4982,7 +4982,7 @@ class BwTree : public BwTreeBase {
     if (removed_node_id != snapshot_p->node_p->GetNextNodeID()) {
       LOG_TRACE(
           "Left sibling's next node ID does not match removed NodeID."
-          " ABORT\n");
+          " ABORT");
 
       context_p->abort_flag = true;
 
@@ -5004,7 +5004,7 @@ class BwTree : public BwTreeBase {
   void TakeNodeSnapshot(NodeID node_id, Context *context_p) {
     const BaseNode *node_p = GetNode(node_id);
 
-    LOG_TRACE("Is leaf node? - %d\n", node_p->IsOnLeafDeltaChain());
+    LOG_TRACE("Is leaf node? - %d", node_p->IsOnLeafDeltaChain());
 
 #ifdef BWTREE_DEBUG
 
@@ -5089,7 +5089,7 @@ class BwTree : public BwTreeBase {
    * (3) Check current_level == 0 to determine whether we are on a root node
    */
   void LoadNodeID(NodeID node_id, Context *context_p) {
-    LOG_TRACE("Loading NodeID = %lu\n", node_id);
+    LOG_TRACE("Loading NodeID = %lu", node_id);
 
     // This pushes a new snapshot into stack
     TakeNodeSnapshot(node_id, context_p);
@@ -5122,7 +5122,7 @@ class BwTree : public BwTreeBase {
    * we need to check whether the target node is the left most child
    */
   void JumpToNodeID(NodeID node_id, Context *context_p) {
-    LOG_TRACE("Jumping to node ID = %lu\n", node_id);
+    LOG_TRACE("Jumping to node ID = %lu", node_id);
 
     // This updates the current snapshot in the stack
     UpdateNodeSnapshot(node_id, context_p);
@@ -5161,7 +5161,7 @@ class BwTree : public BwTreeBase {
   before_switch:
     switch (snapshot_p->node_p->GetType()) {
       case NodeType::InnerAbortType: {
-        LOG_TRACE("Observed Inner Abort Node; Continue\n");
+        LOG_TRACE("Observed Inner Abort Node; Continue");
 
         snapshot_p->node_p =
             (static_cast<const DeltaNode *>(snapshot_p->node_p))->child_node_p;
@@ -5170,7 +5170,7 @@ class BwTree : public BwTreeBase {
       }
       case NodeType::LeafRemoveType:
       case NodeType::InnerRemoveType: {
-        LOG_TRACE("Observed remove node; abort\n");
+        LOG_TRACE("Observed remove node; abort");
 
         // Since remove node is just a temporary measure, and if
         // a thread proceeds to do its own job it must finish the remove
@@ -5199,7 +5199,7 @@ class BwTree : public BwTreeBase {
                                             Context *context_p) {
     const BaseNode *node_p = GetNode(node_id);
 
-    LOG_TRACE("Is leaf node (RO)? - %d\n", node_p->IsOnLeafDeltaChain());
+    LOG_TRACE("Is leaf node (RO)? - %d", node_p->IsOnLeafDeltaChain());
 
 #ifdef BWTREE_DEBUG
 
@@ -5227,7 +5227,7 @@ class BwTree : public BwTreeBase {
    * so we still need to check abort flag after this function returns
    */
   inline void LoadNodeIDReadOptimized(NodeID node_id, Context *context_p) {
-    LOG_TRACE("Loading NodeID (RO) = %lu\n", node_id);
+    LOG_TRACE("Loading NodeID (RO) = %lu", node_id);
 
     // This pushes a new snapshot into stack
     TakeNodeSnapshotReadOptimized(node_id, context_p);
@@ -5257,31 +5257,31 @@ class BwTree : public BwTreeBase {
       goto abort_traverse;
     }
 
-    LOG_TRACE("Successfully loading root node ID for BI\n");
+    LOG_TRACE("Successfully loading root node ID for BI");
 
     while (1) {
       NodeID child_node_id = NavigateInnerNodeBI(context_p);
       if (context_p->abort_flag == true) {
-        LOG_DEBUG("Navigate Inner Node abort (BI). ABORT\n");
+        LOG_DEBUG("Navigate Inner Node abort (BI). ABORT");
         PL_ASSERT(child_node_id == INVALID_NODE_ID);
         goto abort_traverse;
       }
 
       LoadNodeID(child_node_id, context_p);
       if (context_p->abort_flag == true) {
-        LOG_DEBUG("LoadNodeID aborted (BI). ABORT\n");
+        LOG_DEBUG("LoadNodeID aborted (BI). ABORT");
         goto abort_traverse;
       }
 
       NodeSnapshot *snapshot_p = GetLatestNodeSnapshot(context_p);
       if (snapshot_p->IsLeaf() == true) {
-        LOG_TRACE("The next node is a leaf (BI)\n");
+        LOG_TRACE("The next node is a leaf (BI)");
 
         // After reaching leaf level just traverse the sibling chain
         // and stop before the search key
         NavigateSiblingChainBI(context_p);
         if (context_p->abort_flag == true) {
-          LOG_DEBUG("NavigateSiblingChainBI() inside TraverseBI() aborts\n");
+          LOG_DEBUG("NavigateSiblingChainBI() inside TraverseBI() aborts");
 
           goto abort_traverse;
         }
@@ -5318,12 +5318,12 @@ class BwTree : public BwTreeBase {
     LoadNodeIDReadOptimized(child_node_id, context_p);
 
     if (context_p->abort_flag == true) {
-      LOG_TRACE("LoadNodeID aborted on loading root (RO)\n");
+      LOG_TRACE("LoadNodeID aborted on loading root (RO)");
 
       goto abort_traverse;
     }
 
-    LOG_TRACE("Successfully loading root node ID (RO)\n");
+    LOG_TRACE("Successfully loading root node ID (RO)");
 
     while (1) {
       child_node_id = NavigateInnerNode(context_p);
@@ -5331,7 +5331,7 @@ class BwTree : public BwTreeBase {
       // Navigate could abort since it might go to another NodeID
       // if there is a split delta and the key is >= split key
       if (context_p->abort_flag == true) {
-        LOG_DEBUG("Navigate Inner Node abort (RO)\n");
+        LOG_DEBUG("Navigate Inner Node abort (RO)");
 
         // If NavigateInnerNode() aborts then it retrns INVALID_NODE_ID
         // as a double check
@@ -5351,7 +5351,7 @@ class BwTree : public BwTreeBase {
       LoadNodeIDReadOptimized(child_node_id, context_p);
 
       if (context_p->abort_flag == true) {
-        LOG_DEBUG("LoadNodeID aborted (RO). ABORT\n");
+        LOG_DEBUG("LoadNodeID aborted (RO). ABORT");
 
         goto abort_traverse;
       }
@@ -5360,19 +5360,19 @@ class BwTree : public BwTreeBase {
       NodeSnapshot *snapshot_p = GetLatestNodeSnapshot(context_p);
 
       if (snapshot_p->IsLeaf() == true) {
-        LOG_TRACE("The next node is a leaf (RO)\n");
+        LOG_TRACE("The next node is a leaf (RO)");
 
         NavigateLeafNode(context_p, *value_list_p);
 
         if (context_p->abort_flag == true) {
-          LOG_DEBUG("NavigateLeafNode aborts (RO). ABORT\n");
+          LOG_DEBUG("NavigateLeafNode aborts (RO). ABORT");
 
           goto abort_traverse;
         }
 
 #ifdef BWTREE_DEBUG
 
-        LOG_TRACE("Found leaf node (RO). Abort count = %d, level = %d\n",
+        LOG_TRACE("Found leaf node (RO). Abort count = %d, level = %d",
                   context_p->abort_counter, context_p->current_level);
 
 #endif
@@ -5440,7 +5440,7 @@ class BwTree : public BwTreeBase {
                                     parent_snapshot_p->node_p);
 
     if (ret == true) {
-      LOG_TRACE("Index term insert (from %lu to %lu) delta CAS succeeds\n",
+      LOG_TRACE("Index term insert (from %lu to %lu) delta CAS succeeds",
                 GetLatestNodeSnapshot(context_p)->node_id, insert_item.second);
 
       // Update parent node pointer to reflect the fact that it has been
@@ -5453,7 +5453,7 @@ class BwTree : public BwTreeBase {
     } else {
       LOG_DEBUG(
           "Index term insert (from %lu to %lu) delta CAS failed. "
-          "ABORT\n",
+          "ABORT",
           GetLatestNodeSnapshot(context_p)->node_id, insert_item.second);
 
       // Set abort, and remove the newly created node
@@ -5505,7 +5505,7 @@ class BwTree : public BwTreeBase {
     // and also recycle the deleted NodeID since now no new thread
     // could access that NodeID until it is reused
     if (ret == true) {
-      LOG_TRACE("Index term delete delta installed, ID = %lu; ABORT\n",
+      LOG_TRACE("Index term delete delta installed, ID = %lu; ABORT",
                 parent_snapshot_p->node_id);
 
       // The deleted node ID must resolve to a RemoveNode of either
@@ -5536,7 +5536,7 @@ class BwTree : public BwTreeBase {
 
       return true;
     } else {
-      LOG_TRACE("Index term delete delta install failed. ABORT\n");
+      LOG_TRACE("Index term delete delta install failed. ABORT");
 
       // DO NOT FORGET TO DELETE THIS
       delete_node_p->~InnerDeleteNode();
@@ -5579,7 +5579,7 @@ class BwTree : public BwTreeBase {
   before_switch:
     switch (snapshot_p->node_p->GetType()) {
       case NodeType::InnerAbortType: {
-        LOG_TRACE("Observed Inner Abort Node; ABORT\n");
+        LOG_TRACE("Observed Inner Abort Node; ABORT");
 
         // This is an optimization - when seeing an ABORT
         // node, we continue but set the physical pointer to be ABORT's
@@ -5592,7 +5592,7 @@ class BwTree : public BwTreeBase {
       }
       case NodeType::LeafRemoveType:
       case NodeType::InnerRemoveType: {
-        LOG_TRACE("Helping along remove node...\n");
+        LOG_TRACE("Helping along remove node...");
 
         // The right branch for merging is the child node under remove node
         const BaseNode *merge_right_branch =
@@ -5607,7 +5607,7 @@ class BwTree : public BwTreeBase {
 
         // If this aborts then we propagate this to the state machine driver
         if (context_p->abort_flag == true) {
-          LOG_TRACE("Jump to left sibling in Remove help along ABORT\n");
+          LOG_TRACE("Jump to left sibling in Remove help along ABORT");
 
           // Here we are uncertain about the current status (it might have
           // jumped and observed an inconsistent next node ID, or it has not
@@ -5647,7 +5647,7 @@ class BwTree : public BwTreeBase {
         if (ret == true) {
           LOG_TRACE(
               "Merge delta CAS succeeds. "
-              "Continue to finish merge SMO\n");
+              "Continue to finish merge SMO");
 
           left_snapshot_p->node_p = merge_node_p;
 
@@ -5655,7 +5655,7 @@ class BwTree : public BwTreeBase {
           // after this point
           // Also snapshot_p has been to left_snapshot_p above
         } else {
-          LOG_TRACE("Merge delta CAS fails. ABORT\n");
+          LOG_TRACE("Merge delta CAS fails. ABORT");
 
           context_p->abort_flag = true;
 
@@ -5669,7 +5669,7 @@ class BwTree : public BwTreeBase {
       }  // case Inner/LeafRemoveType
       case NodeType::InnerMergeType:
       case NodeType::LeafMergeType: {
-        LOG_TRACE("Helping along merge delta\n");
+        LOG_TRACE("Helping along merge delta");
 
         // First consolidate parent node and find the left/right
         // sep pair plus left node ID
@@ -5709,7 +5709,7 @@ class BwTree : public BwTreeBase {
           delete_item_p = &merge_node_p->delete_item;
           right_merge_p = merge_node_p->right_merge_p;
         } else {
-          LOG_ERROR("ERROR: Illegal node type: %d\n", static_cast<int>(type));
+          LOG_ERROR("ERROR: Illegal node type: %d", static_cast<int>(type));
 
           PL_ASSERT(false);
         }  // If on type of merge node
@@ -5749,7 +5749,7 @@ class BwTree : public BwTreeBase {
       }  // case Inner/LeafMergeNode
       case NodeType::InnerSplitType:
       case NodeType::LeafSplitType: {
-        LOG_TRACE("Helping along split node\n");
+        LOG_TRACE("Helping along split node");
 
         // These two will be stored inside InnerInsertNode
         // The insert item is just the split item inside InnerSplitNode
@@ -5786,7 +5786,7 @@ class BwTree : public BwTreeBase {
           /***********************************************************
            * Root splits (don't have to consolidate parent node)
            ***********************************************************/
-          LOG_TRACE("Root splits!\n");
+          LOG_TRACE("Root splits!");
 
           // Allocate a new node ID for the newly created node
           // If CAS fails we need to free the root ID
@@ -5836,7 +5836,7 @@ class BwTree : public BwTreeBase {
           bool ret = InstallRootNode(snapshot_p->node_id, new_root_id);
 
           if (ret == true) {
-            LOG_TRACE("Install root CAS succeeds\n");
+            LOG_TRACE("Install root CAS succeeds");
 
             // After installing new root we abort in order to load
             // the new root
@@ -5844,7 +5844,7 @@ class BwTree : public BwTreeBase {
 
             return;
           } else {
-            LOG_TRACE("Install root CAS failed. ABORT\n");
+            LOG_TRACE("Install root CAS failed. ABORT");
 
             // We need to make a new remove node and send it into EpochManager
             // for recycling the NodeID
@@ -5892,7 +5892,7 @@ class BwTree : public BwTreeBase {
                                   parent_snapshot_p->node_p->GetHighKey()))) {
             LOG_TRACE(
                 "Bounds check failed on parent node"
-                " - item key >= high key\n");
+                " - item key >= high key");
 
             return;
           }
@@ -6128,7 +6128,7 @@ class BwTree : public BwTreeBase {
 
       // Perform corresponding action based on node size
       if (node_size >= LEAF_NODE_SIZE_UPPER_THRESHOLD) {
-        LOG_TRACE("Node size >= leaf upper threshold. Split\n");
+        LOG_TRACE("Node size >= leaf upper threshold. Split");
 
         // Note: This function takes this as argument since it will
         // do key comparison
@@ -6146,7 +6146,7 @@ class BwTree : public BwTreeBase {
         if (new_leaf_node_p == nullptr) {
           LOG_TRACE(
               "LeafNode size exceeds overhead, "
-              "but could not find split point\n");
+              "but could not find split point");
 
           return;
         }
@@ -6177,7 +6177,7 @@ class BwTree : public BwTreeBase {
         bool ret = InstallNodeToReplace(node_id, split_node_p, node_p);
 
         if (ret == true) {
-          LOG_TRACE("Leaf split delta (from %lu to %lu) CAS succeeds. ABORT\n",
+          LOG_TRACE("Leaf split delta (from %lu to %lu) CAS succeeds. ABORT",
                     node_id, new_node_id);
 
           // TODO: WE ABORT HERE TO AVOID THIS THREAD POSTING ANYTHING
@@ -6187,7 +6187,7 @@ class BwTree : public BwTreeBase {
 
           return;
         } else {
-          LOG_TRACE("Leaf split delta CAS fails\n");
+          LOG_TRACE("Leaf split delta CAS fails");
 
           // Need to use the epoch manager to recycle NodeID
           // Note that this node must not be created on new_leaf_node_p
@@ -6212,14 +6212,14 @@ class BwTree : public BwTreeBase {
         // This might yield a false positive of left child
         // but correctness is not affected - sometimes the merge is delayed
         if (IsOnLeftMostChild(context_p) == true) {
-          LOG_TRACE("Left most leaf node cannot be removed\n");
+          LOG_TRACE("Left most leaf node cannot be removed");
 
           return;
         }
 
         // After this point we decide to remove leaf node
 
-        LOG_TRACE("Node size <= leaf lower threshold. Remove\n");
+        LOG_TRACE("Node size <= leaf lower threshold. Remove");
 
         // Install an abort node on parent
         const BaseNode *abort_node_p;
@@ -6232,11 +6232,11 @@ class BwTree : public BwTreeBase {
         // If we could not block the parent then the parent has changed
         // (splitted, etc.)
         if (abort_node_ret == true) {
-          LOG_TRACE("Blocked parent node (current node is leaf)\n");
+          LOG_TRACE("Blocked parent node (current node is leaf)");
         } else {
           LOG_TRACE(
               "Unable to block parent node "
-              "(current node is leaf). ABORT\n");
+              "(current node is leaf). ABORT");
 
           // ABORT and return
           context_p->abort_flag = true;
@@ -6249,7 +6249,7 @@ class BwTree : public BwTreeBase {
 
         bool ret = InstallNodeToReplace(node_id, remove_node_p, node_p);
         if (ret == true) {
-          LOG_TRACE("LeafRemoveNode CAS succeeds. ABORT.\n");
+          LOG_TRACE("LeafRemoveNode CAS succeeds. ABORT.");
 
           context_p->abort_flag = true;
 
@@ -6257,7 +6257,7 @@ class BwTree : public BwTreeBase {
 
           return;
         } else {
-          LOG_TRACE("LeafRemoveNode CAS failed\n");
+          LOG_TRACE("LeafRemoveNode CAS failed");
 
           delete remove_node_p;
 
@@ -6274,7 +6274,7 @@ class BwTree : public BwTreeBase {
       size_t node_size = inner_node_p->GetSize();
 
       if (node_size >= INNER_NODE_SIZE_UPPER_THRESHOLD) {
-        LOG_TRACE("Node size >= inner upper threshold. Split\n");
+        LOG_TRACE("Node size >= inner upper threshold. Split");
 
         const InnerNode *new_inner_node_p = inner_node_p->GetSplitSibling();
 
@@ -6302,7 +6302,7 @@ class BwTree : public BwTreeBase {
         // If the type is remove then we just continue without abort
         // If we abort then it might introduce deadlock
         if (split_key_child_node_p->IsRemoveNode()) {
-          LOG_TRACE("Found a removed node on split key child. CONTINUE \n");
+          LOG_TRACE("Found a removed node on split key child. CONTINUE ");
 
           // Put the new inner node into GC chain
           // Although it is not entirely necessary it is good for us to
@@ -6327,7 +6327,7 @@ class BwTree : public BwTreeBase {
         if (ret == true) {
           LOG_TRACE(
               "Inner split delta (from %lu to %lu) CAS succeeds."
-              " ABORT\n",
+              " ABORT",
               node_id, new_node_id);
 
           // Same reason as in leaf node
@@ -6335,7 +6335,7 @@ class BwTree : public BwTreeBase {
 
           return;
         } else {
-          LOG_TRACE("Inner split delta CAS fails\n");
+          LOG_TRACE("Inner split delta CAS fails");
 
           // Use the epoch manager to recycle NodeID in single threaded
           // environment
@@ -6355,7 +6355,7 @@ class BwTree : public BwTreeBase {
         }  // if CAS fails
       } else if (node_size <= INNER_NODE_SIZE_LOWER_THRESHOLD) {
         if (context_p->IsOnRootNode() == true) {
-          LOG_TRACE("Root underflow - let it be\n");
+          LOG_TRACE("Root underflow - let it be");
 
           return;
         }
@@ -6367,14 +6367,14 @@ class BwTree : public BwTreeBase {
 
         // We could not remove leftmost node
         if (IsOnLeftMostChild(context_p) == true) {
-          LOG_TRACE("Left most inner node cannot be removed\n");
+          LOG_TRACE("Left most inner node cannot be removed");
 
           return;
         }
 
         // After this point we decide to remove
 
-        LOG_TRACE("Node size <= inner lower threshold. Remove\n");
+        LOG_TRACE("Node size <= inner lower threshold. Remove");
 
         // Then we abort its parent node
         // These two are used to hold abort node and its previous child
@@ -6388,11 +6388,11 @@ class BwTree : public BwTreeBase {
         // If we could not block the parent then the parent has changed
         // (splitted, etc.)
         if (abort_node_ret == true) {
-          LOG_TRACE("Blocked parent node (current node is inner)\n");
+          LOG_TRACE("Blocked parent node (current node is inner)");
         } else {
           LOG_TRACE(
               "Unable to block parent node "
-              "(current node is inner). ABORT\n");
+              "(current node is inner). ABORT");
 
           // ABORT and return
           context_p->abort_flag = true;
@@ -6405,7 +6405,7 @@ class BwTree : public BwTreeBase {
 
         bool ret = InstallNodeToReplace(node_id, remove_node_p, node_p);
         if (ret == true) {
-          LOG_TRACE("InnerRemoveNode CAS succeeds. ABORT\n");
+          LOG_TRACE("InnerRemoveNode CAS succeeds. ABORT");
 
           // We abort after installing a node remove delta
           context_p->abort_flag = true;
@@ -6417,7 +6417,7 @@ class BwTree : public BwTreeBase {
 
           return;
         } else {
-          LOG_TRACE("InnerRemoveNode CAS failed\n");
+          LOG_TRACE("InnerRemoveNode CAS failed");
 
           delete remove_node_p;
 
@@ -6444,7 +6444,7 @@ class BwTree : public BwTreeBase {
    */
   void RemoveAbortOnParent(NodeID parent_node_id, const BaseNode *abort_node_p,
                            const BaseNode *abort_child_node_p) {
-    LOG_TRACE("Remove abort on parent node\n");
+    LOG_TRACE("Remove abort on parent node");
 
     // We switch back to the child node (so it is the target)
     bool ret =
@@ -6506,13 +6506,13 @@ class BwTree : public BwTreeBase {
         InstallNodeToReplace(parent_node_id, abort_node_p, parent_node_p);
 
     if (ret == true) {
-      LOG_TRACE("Inner Abort node CAS succeeds\n");
+      LOG_TRACE("Inner Abort node CAS succeeds");
 
       // Copy the new node to caller since after posting remove delta we will
       // remove this abort node to enable accessing again
       *abort_node_p_p = abort_node_p;
     } else {
-      LOG_TRACE("Inner Abort node CAS failed\n");
+      LOG_TRACE("Inner Abort node CAS failed");
 
       delete abort_node_p;
     }
@@ -6861,7 +6861,7 @@ class BwTree : public BwTreeBase {
         case NodeType::InnerMergeType: {
           LOG_TRACE(
               "Found merge node. "
-              "Need consolidation to find left sibling\n");
+              "Need consolidation to find left sibling");
 
           // Since we could not deal with merge delta, if there is
           // a merge delta on the path, the only solution is to
@@ -6983,7 +6983,7 @@ class BwTree : public BwTreeBase {
    * If CAS fails this function retries until it succeeds
    */
   bool Insert(const KeyType &key, const ValueType &value) {
-    LOG_TRACE("Insert called\n");
+    LOG_TRACE("Insert called");
 
 #ifdef BWTREE_DEBUG
     insert_op_count.fetch_add(1);
@@ -7019,13 +7019,13 @@ class BwTree : public BwTreeBase {
 
       bool ret = InstallNodeToReplace(node_id, insert_node_p, node_p);
       if (ret == true) {
-        LOG_TRACE("Leaf Insert delta CAS succeed\n");
+        LOG_TRACE("Leaf Insert delta CAS succeed");
 
         // If install is a success then just break from the loop
         // and return
         break;
       } else {
-        LOG_TRACE("Leaf insert delta CAS failed\n");
+        LOG_TRACE("Leaf insert delta CAS failed");
 
 #ifdef BWTREE_DEBUG
 
@@ -7049,7 +7049,7 @@ class BwTree : public BwTreeBase {
 #endif
 
       // We reach here only because CAS failed
-      LOG_TRACE("Retry installing leaf insert delta from the root\n");
+      LOG_TRACE("Retry installing leaf insert delta from the root");
     }
 
     epoch_manager.LeaveEpoch(epoch_node_p);
@@ -7074,7 +7074,7 @@ class BwTree : public BwTreeBase {
   bool ConditionalInsert(const KeyType &key, const ValueType &value,
                          std::function<bool(const void *)> predicate,
                          bool *predicate_satisfied) {
-    LOG_TRACE("Insert (cond.) called\n");
+    LOG_TRACE("Insert (cond.) called");
 
 #ifdef BWTREE_DEBUG
     insert_op_count.fetch_add(1);
@@ -7124,13 +7124,13 @@ class BwTree : public BwTreeBase {
 
       bool ret = InstallNodeToReplace(node_id, insert_node_p, node_p);
       if (ret == true) {
-        LOG_TRACE("Leaf Insert (cond.) delta CAS succeed\n");
+        LOG_TRACE("Leaf Insert (cond.) delta CAS succeed");
 
         // If install is a success then just break from the loop
         // and return
         break;
       } else {
-        LOG_TRACE("Leaf insert (cond.) delta CAS failed\n");
+        LOG_TRACE("Leaf insert (cond.) delta CAS failed");
 
 #ifdef BWTREE_DEBUG
 
@@ -7147,7 +7147,7 @@ class BwTree : public BwTreeBase {
 
 #endif
 
-      LOG_TRACE("Retry installing leaf insert (cond.) delta from the root\n");
+      LOG_TRACE("Retry installing leaf insert (cond.) delta from the root");
     }
 
     epoch_manager.LeaveEpoch(epoch_node_p);
@@ -7166,7 +7166,7 @@ class BwTree : public BwTreeBase {
    * This functions shares a same structure with the Insert() one
    */
   bool Delete(const KeyType &key, const ValueType &value) {
-    LOG_TRACE("Delete called\n");
+    LOG_TRACE("Delete called");
 
 #ifdef BWTREE_DEBUG
     delete_op_count.fetch_add(1);
@@ -7199,13 +7199,13 @@ class BwTree : public BwTreeBase {
 
       bool ret = InstallNodeToReplace(node_id, delete_node_p, node_p);
       if (ret == true) {
-        LOG_TRACE("Leaf Delete delta CAS succeed\n");
+        LOG_TRACE("Leaf Delete delta CAS succeed");
 
         // If install is a success then just break from the loop
         // and return
         break;
       } else {
-        LOG_TRACE("Leaf Delete delta CAS failed\n");
+        LOG_TRACE("Leaf Delete delta CAS failed");
 
         delete_node_p->~LeafDeleteNode();
 
@@ -7223,7 +7223,7 @@ class BwTree : public BwTreeBase {
 #endif
 
       // We reach here only because CAS failed
-      LOG_TRACE("Retry installing leaf delete delta from the root\n");
+      LOG_TRACE("Retry installing leaf delete delta from the root");
     }
 
     epoch_manager.LeaveEpoch(epoch_node_p);
@@ -7241,7 +7241,7 @@ class BwTree : public BwTreeBase {
    * is empty or not
    */
   void GetValue(const KeyType &search_key, std::vector<ValueType> &value_list) {
-    LOG_TRACE("GetValue()\n");
+    LOG_TRACE("GetValue()");
 
     EpochNode *epoch_node_p = epoch_manager.JoinEpoch();
 
@@ -7261,7 +7261,7 @@ class BwTree : public BwTreeBase {
    * remove this method
    */
   ValueSet GetValue(const KeyType &search_key) {
-    LOG_TRACE("GetValue()\n");
+    LOG_TRACE("GetValue()");
 
     EpochNode *epoch_node_p = epoch_manager.JoinEpoch();
 
@@ -7536,14 +7536,14 @@ class BwTree : public BwTreeBase {
       //
       // If the external thread calls ThreadFunc() then it is safe
       if (thread_p != nullptr) {
-        LOG_TRACE("Waiting for thread\n");
+        LOG_TRACE("Waiting for thread");
 
         thread_p->join();
 
         // Free memory
         delete thread_p;
 
-        LOG_TRACE("Thread stops\n");
+        LOG_TRACE("Thread stops");
       }
 
       // So that in the following function the comparison
@@ -7558,32 +7558,32 @@ class BwTree : public BwTreeBase {
       // measure just force cleaning all epoches no matter whether they
       // are cleared or not
       if (head_epoch_p != nullptr) {
-        LOG_DEBUG("ERROR: After cleanup there is still epoch left\n");
-        LOG_DEBUG("==============================================\n");
-        LOG_DEBUG("DUMP\n");
+        LOG_DEBUG("ERROR: After cleanup there is still epoch left");
+        LOG_DEBUG("==============================================");
+        LOG_DEBUG("DUMP");
 
         for (EpochNode *epoch_node_p = head_epoch_p; epoch_node_p != nullptr;
              epoch_node_p = epoch_node_p->next_p) {
-          LOG_DEBUG("Active thread count: %d\n",
+          LOG_DEBUG("Active thread count: %d",
                     epoch_node_p->active_thread_count.load());
           epoch_node_p->active_thread_count = 0;
         }
 
-        LOG_DEBUG("RETRY CLEANING...\n");
+        LOG_DEBUG("RETRY CLEANING...");
         ClearEpoch();
       }
 
       PL_ASSERT(head_epoch_p == nullptr);
-      LOG_TRACE("Garbage Collector has finished freeing all garbage nodes\n");
+      LOG_TRACE("Garbage Collector has finished freeing all garbage nodes");
 
 #ifdef BWTREE_DEBUG
-      LOG_TRACE("Stat: Freed %lu nodes and %lu NodeID by epoch manager\n",
+      LOG_TRACE("Stat: Freed %lu nodes and %lu NodeID by epoch manager",
                 freed_count, freed_id_count);
 
-      LOG_TRACE("      Epoch created = %lu; epoch freed = %lu\n", epoch_created,
+      LOG_TRACE("      Epoch created = %lu; epoch freed = %lu", epoch_created,
                 epoch_freed);
 
-      LOG_TRACE("      Epoch join = %lu; epoch leave = %lu\n",
+      LOG_TRACE("      Epoch join = %lu; epoch leave = %lu",
                 epoch_join.load(), epoch_leave.load());
 #endif
 
@@ -7596,7 +7596,7 @@ class BwTree : public BwTreeBase {
      * This functions does not have to consider race conditions
      */
     void CreateNewEpoch() {
-      LOG_TRACE("Creating new epoch...\n");
+      LOG_TRACE("Creating new epoch...");
 
       EpochNode *epoch_node_p = new EpochNode{};
 
@@ -7657,7 +7657,7 @@ class BwTree : public BwTreeBase {
         if (ret == true) {
           break;
         } else {
-          LOG_TRACE("Add garbage node CAS failed. Retry\n");
+          LOG_TRACE("Add garbage node CAS failed. Retry");
         }
       }  // while 1
 
@@ -7944,7 +7944,7 @@ class BwTree : public BwTreeBase {
             return;
           default:
             // This does not include INNER ABORT node
-            LOG_DEBUG("Unknown node type: %d\n", (int)type);
+            LOG_ERROR("Unknown node type: %d", (int)type);
 
             PL_ASSERT(false);
             return;
@@ -7964,12 +7964,12 @@ class BwTree : public BwTreeBase {
      * only called by the cleaner thread
      */
     void ClearEpoch() {
-      LOG_TRACE("Start to clear epoch\n");
+      LOG_TRACE("Start to clear epoch");
 
       while (1) {
         // Even if current_epoch_p is nullptr, this should work
         if (head_epoch_p == current_epoch_p) {
-          LOG_TRACE("Current epoch is head epoch. Do not clean\n");
+          LOG_TRACE("Current epoch is head epoch. Do not clean");
 
           break;
         }
@@ -7982,7 +7982,7 @@ class BwTree : public BwTreeBase {
         // If we have seen an epoch whose count is not zero then all
         // epochs after that are protected and we stop
         if (active_thread_count != 0) {
-          LOG_TRACE("Head epoch is not empty. Return\n");
+          LOG_TRACE("Head epoch is not empty. Return");
 
           break;
         }
@@ -7995,7 +7995,7 @@ class BwTree : public BwTreeBase {
         if (head_epoch_p->active_thread_count.fetch_sub(MAX_THREAD_COUNT) > 0) {
           LOG_TRACE(
               "Some thread sneaks in after we have decided"
-              " to clean. Return\n");
+              " to clean. Return");
 
           // Must add it back to let the next round of cleaning correctly
           // identify empty epoch
@@ -8060,7 +8060,7 @@ class BwTree : public BwTreeBase {
       // since even if we missed one we could always
       // hit the correct value on next try
       while (exited_flag.load() == false) {
-        // printf("Start new epoch cycle\n");
+        // printf("Start new epoch cycle");
         PerformGarbageCollection();
 
         // Sleep for 50 ms
@@ -8068,7 +8068,7 @@ class BwTree : public BwTreeBase {
         std::this_thread::sleep_for(duration);
       }
 
-      LOG_TRACE("exit flag is true; thread return\n");
+      LOG_TRACE("exit flag is true; thread return");
 
       return;
     }
