@@ -234,15 +234,23 @@ class TileGroupHeader : public Printable {
                                         transaction_id);
   }
 
+  /*
+  The following method use Compare and Swap to set the tilegroup's
+  immutable flag to be true. 
+  */
   inline bool SetImmutability() {
-    return __sync_bool_compare_and_swap(&immutability, false, true);
+    return __sync_bool_compare_and_swap(&immutable, false, true);
   }
-
+  
+  /*
+  The following method use Compare and Swap to set the tilegroup's
+  immutable flag to be false. 
+  */
   inline bool ResetImmutability() {
-    return __sync_bool_compare_and_swap(&immutability, true, false);
+    return __sync_bool_compare_and_swap(&immutable, true, false);
   }
 
-  inline bool GetImmutability() const { return immutability; }
+  inline bool GetImmutability() const { return immutable; }
 
   void PrintVisibility(txn_id_t txn_id, cid_t at_cid);
 
@@ -303,9 +311,9 @@ class TileGroupHeader : public Printable {
 
   Spinlock tile_header_lock;
 
-  // Immmutability Flag. Should be set by the brain to be true.
+  // Immmutable Flag. Should be set by the brain to be true.
   // By default it will be set to false.
-  bool immutability;
+  bool immutable;
 };
 
 }  // namespace storage

@@ -65,13 +65,13 @@ bool ZoneMapCatalog::InsertColumnStatistics(
   auto val_maximum = type::ValueFactory::GetVarcharValue(maximum);
   auto val_type = type::ValueFactory::GetVarcharValue(type);
 
-  tuple->SetValue(ColumnId::DATABASE_ID, val_db_id, nullptr);
-  tuple->SetValue(ColumnId::TABLE_ID, val_table_id, nullptr);
-  tuple->SetValue(ColumnId::TILE_GROUP_ID, val_tile_group_id, nullptr);
-  tuple->SetValue(ColumnId::COLUMN_ID, val_column_id, nullptr);
-  tuple->SetValue(ColumnId::MINIMUM, val_minimum, pool);
-  tuple->SetValue(ColumnId::MAXIMUM, val_maximum, pool);
-  tuple->SetValue(ColumnId::TYPE, val_type, pool);
+  tuple->SetValue(static_cast<int>(ColumnId::DATABASE_ID), val_db_id, nullptr);
+  tuple->SetValue(static_cast<int>(ColumnId::TABLE_ID), val_table_id, nullptr);
+  tuple->SetValue(static_cast<int>(ColumnId::TILE_GROUP_ID), val_tile_group_id, nullptr);
+  tuple->SetValue(static_cast<int>(ColumnId::COLUMN_ID), val_column_id, nullptr);
+  tuple->SetValue(static_cast<int>(ColumnId::MINIMUM), val_minimum, pool);
+  tuple->SetValue(static_cast<int>(ColumnId::MAXIMUM), val_maximum, pool);
+  tuple->SetValue(static_cast<int>(ColumnId::TYPE), val_type, pool);
 
   bool return_val = InsertTuple(std::move(tuple), txn);
   return return_val;
@@ -81,12 +81,13 @@ bool ZoneMapCatalog::DeleteColumnStatistics(oid_t database_id, oid_t table_id,
                                             oid_t tile_group_id,
                                             oid_t column_id,
                                             concurrency::Transaction *txn) {
-  oid_t index_offset = IndexId::SECONDARY_KEY_0;
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(database_id).Copy());
-  values.push_back(type::ValueFactory::GetIntegerValue(table_id).Copy());
-  values.push_back(type::ValueFactory::GetIntegerValue(tile_group_id).Copy());
-  values.push_back(type::ValueFactory::GetIntegerValue(column_id).Copy());
+  oid_t index_offset = static_cast<int>(IndexId::SECONDARY_KEY_0);
+  std::vector<type::Value> values(
+    type::ValueFactory::GetIntegerValue(database_id),
+    type::ValueFactory::GetIntegerValue(table_id),
+    type::ValueFactory::GetIntegerValue(tile_group_id),
+    type::ValueFactory::GetIntegerValue(column_id)
+  )
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 
@@ -94,15 +95,18 @@ std::unique_ptr<std::vector<type::Value>> ZoneMapCatalog::GetColumnStatistics(
     oid_t database_id, oid_t table_id, oid_t tile_group_id, oid_t column_id,
     concurrency::Transaction *txn) {
   std::vector<oid_t> column_ids(
-      {ColumnId::MINIMUM, ColumnId::MAXIMUM, ColumnId::TYPE});
+      {static_cast<int>(ColumnId::MINIMUM), 
+       static_cast<int>(ColumnId::MAXIMUM), 
+       static_cast<int>(ColumnId::TYPE)});
 
-  oid_t index_offset = IndexId::SECONDARY_KEY_0;
+  oid_t index_offset = static_cast<int>(IndexId::SECONDARY_KEY_0);
 
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(database_id).Copy());
-  values.push_back(type::ValueFactory::GetIntegerValue(table_id).Copy());
-  values.push_back(type::ValueFactory::GetIntegerValue(tile_group_id).Copy());
-  values.push_back(type::ValueFactory::GetIntegerValue(column_id).Copy());
+  std::vector<type::Value> values(
+    type::ValueFactory::GetIntegerValue(database_id),
+    type::ValueFactory::GetIntegerValue(table_id),
+    type::ValueFactory::GetIntegerValue(tile_group_id),
+    type::ValueFactory::GetIntegerValue(column_id)
+  )
 
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
@@ -120,9 +124,9 @@ std::unique_ptr<std::vector<type::Value>> ZoneMapCatalog::GetColumnStatistics(
   }
 
   type::Value min, max, actual_type;
-  min = tile->GetValue(0, ZoneMapOffset::MINIMUM_OFF);
-  max = tile->GetValue(0, ZoneMapOffset::MAXIMUM_OFF);
-  actual_type = tile->GetValue(0, ZoneMapOffset::TYPE_OFF);
+  min = tile->GetValue(0, static_cast<int>(ZoneMapOffset::MINIMUM_OFF));
+  max = tile->GetValue(0, static_cast<int>(ZoneMapOffset::MAXIMUM_OFF));
+  actual_type = tile->GetValue(0, static_cast<int>(ZoneMapOffset::TYPE_OFF));
 
   // min and max are stored as VARCHARs and should be convertd to their
   // original types.

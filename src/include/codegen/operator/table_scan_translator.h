@@ -164,7 +164,7 @@ class TableScanTranslator : public OperatorTranslator {
   llvm::Value *predicate_array;
 
   // Existence of Zone Map Table
-  bool zone_map_table;
+  bool zone_map_table_exists;
 };
 
 }  // namespace codegen

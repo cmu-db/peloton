@@ -60,8 +60,8 @@ TileGroupHeader::TileGroupHeader(const BackendType &backend_type,
     SetPrevItemPointer(tuple_slot_id, INVALID_ITEMPOINTER);
   }
 
-  // Initially immutability to false initially.
-  immutability = false;
+  // Initially immutabile flag to false initially.
+  immutable = false;
 }
 
 TileGroupHeader::~TileGroupHeader() {
@@ -83,7 +83,7 @@ const std::string TileGroupHeader::GetInfo() const {
   os << "Address:" << this << ", ";
   os << "NumActiveTuples:";
   os << GetActiveTupleCount() << ", ";
-  os << "Immutability: " << GetImmutability();
+  os << "Immutable: " << GetImmutability();
   os << ")";
   os << std::endl;
 

@@ -63,7 +63,7 @@ TableScanTranslator::TableScanTranslator(const planner::SeqScanPlan &scan,
 
   storage::ZoneMapManager *zone_map_manager =
       storage::ZoneMapManager::GetInstance();
-  zone_map_table = zone_map_manager->ZoneMapTableExists();
+  zone_map_table_exists = zone_map_manager->ZoneMapTableExists();
   LOG_DEBUG("Finished constructing TableScanTranslator ...");
 }
 
@@ -92,7 +92,7 @@ void TableScanTranslator::Produce() const {
       AbstractExpressionProxy::GetType(codegen)->getPointerTo());
   size_t num_preds = 0;
 
-  if ((predicate != nullptr) && (zone_map_table)) {
+  if ((predicate != nullptr) && (zone_map_table_exists)) {
     if (predicate->IsZoneMappable()) {
       num_preds = predicate->GetNumberofParsedPredicates();
     }

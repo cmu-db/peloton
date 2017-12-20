@@ -6,7 +6,7 @@
 //
 // Identification :
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2016-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -54,13 +54,13 @@ class ZoneMapManager {
                                          size_t num_columns,
                                          concurrency::Transaction *txn);
 
-  void CreateOrUpdateZoneMapinCatalog(oid_t database_id, oid_t table_id,
+  void CreateOrUpdateZoneMapInCatalog(oid_t database_id, oid_t table_id,
                                       oid_t tile_group_id, oid_t col_itr,
                                       std::string min, std::string max,
                                       std::string type,
                                       concurrency::Transaction *txn);
 
-  std::shared_ptr<ZoneMapManager::ColumnStatistics> GetZoneMapFromCatalog(
+  std::unique_ptr<ZoneMapManager::ColumnStatistics> GetZoneMapFromCatalog(
       oid_t database_id, oid_t table_id, oid_t tile_group_id, oid_t col_itr);
 
   bool ComparePredicateAgainstZoneMap(storage::PredicateInfo *parsed_predicates,
@@ -81,7 +81,7 @@ class ZoneMapManager {
     return val.CastAs(type_id);
   }
 
-  std::shared_ptr<ZoneMapManager::ColumnStatistics> GetResultVectorAsZoneMap(
+  std::unique_ptr<ZoneMapManager::ColumnStatistics> GetResultVectorAsZoneMap(
       std::unique_ptr<std::vector<type::Value>> &result_vector);
 
   bool checkEqual(type::Value predicateVal, ColumnStatistics *stats) {
@@ -111,7 +111,7 @@ class ZoneMapManager {
   //===--------------------------------------------------------------------===//
   std::unique_ptr<type::AbstractPool> pool_;
 
-  bool zone_map_table;
+  bool zone_map_table_exists;
 };
 }
 }
