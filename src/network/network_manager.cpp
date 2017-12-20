@@ -56,8 +56,7 @@ NetworkConnection *NetworkManager::GetConnection(const int &connfd) {
 }
 
 void NetworkManager::CreateNewConnection(const int &connfd, short ev_flags,
-                                         NotifiableTask *thread,
-                                         ConnState init_state) {
+                                         NotifiableTask *thread) {
   auto &global_socket_list = GetGlobalSocketList();
   recent_connfd = connfd;
   if (global_socket_list.find(connfd) == global_socket_list.end()) {

@@ -77,17 +77,17 @@ class NetworkConnection {
   bool write_blocked_on_read_ = false;
   bool read_blocked_ = false;
   bool write_blocked_ = false;
- public:
+public:
   inline NetworkConnection(int sock_fd, short event_flags, NotifiableTask *thread,
-                        ConnState init_state, bool ssl_able)
-      : sock_fd_(sock_fd),  ssl_able_(ssl_able), state_machine_{init_state} {
-    Init(event_flags, thread, init_state);
+                         bool ssl_able)
+      : sock_fd_(sock_fd), ssl_able_(ssl_able), state_machine_(ConnState::CONN_READ) {
+    Init(event_flags, thread);
   }
 
   /* Reuse this object for a new connection. We could be assigned to a
    * new thread, change thread reference.
    */
-  void Init(short event_flags, NotifiableTask *handler, ConnState init_state);
+  void Init(short event_flags, NotifiableTask *handler);
 
   /* refill_read_buffer - Used to repopulate read buffer with a fresh
    * batch of data from the socket

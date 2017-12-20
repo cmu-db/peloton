@@ -23,8 +23,7 @@
 namespace peloton {
 namespace network {
 
-void NetworkConnection::Init(short event_flags, NotifiableTask *handler,
-                          ConnState init_state) {
+void NetworkConnection::Init(short event_flags, NotifiableTask *handler) {
   SetNonBlocking(sock_fd_);
   SetTCPNoDelay(sock_fd_);
 
@@ -45,8 +44,7 @@ void NetworkConnection::Init(short event_flags, NotifiableTask *handler,
     event_active(event, EV_WRITE, 0);
   }, workpool_event);
 
-  state_machine_ = ConnectionHandleStateMachine(init_state);
-
+  state_machine_ = ConnectionHandleStateMachine(ConnState::CONN_READ);
 }
 
 // Update event
@@ -57,11 +55,9 @@ bool NetworkConnection::UpdateEvent(short flags) {
   return true;
 }
 
-
 /**
  * Public Functions
  */
-
 WriteState NetworkConnection::WritePackets() {
   // If I have data left in SSL buffer, before moving data into the local buffer,
   // send out the data in SSL buffer first.
