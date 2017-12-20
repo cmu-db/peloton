@@ -23,8 +23,19 @@ class Value;
 namespace codegen {
 class QueryParametersMap {
  public:
-  // Constructor
-  QueryParametersMap() {}
+  QueryParametersMap() = default;
+
+  DISALLOW_COPY(QueryParametersMap);
+
+  QueryParametersMap(QueryParametersMap &&other)
+      : map_(std::move(other.map_)),
+        parameters_(std::move(other.parameters_)) {}
+
+  QueryParametersMap &operator=(QueryParametersMap &&other) noexcept {
+    map_ = std::move(other.map_);
+    parameters_ = std::move(other.parameters_);
+    return *this;
+  }
 
   void Insert(expression::Parameter parameter, 
               expression::AbstractExpression *expression) {

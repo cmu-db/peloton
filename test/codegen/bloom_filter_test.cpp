@@ -304,16 +304,14 @@ double BloomFilterCodegenTest::ExecuteJoin(std::string query,
     codegen::Query::RuntimeStats stats;
     std::unique_ptr<executor::ExecutorContext> executor_context(
         new executor::ExecutorContext{txn});
-    std::unique_ptr<codegen::QueryParameters> parameters(
-        new codegen::QueryParameters(*plan.get(),
-                                     executor_context->GetParams()));
+    auto compiled_query = compiler.Compile(
+        *plan,
+        executor_context->GetParams().GetQueryParametersMap(),
+        consumer);
 
-    auto compiled_query = compiler.Compile(*plan.get(),
-                                           parameters->GetQueryParametersMap(),
-                                           consumer);
     // Run
-    compiled_query->Execute(*executor_context.get(), *parameters.get(),
-                            consumer.GetCountAsState(), &stats);
+    PelotonCodeGenTest::ExecuteSync(*compiled_query,
+                                    std::move(executor_context), consumer);
 
     LOG_INFO("Execution Time: %0.0f ms", stats.plan_ms);
     total_runtime += stats.plan_ms;

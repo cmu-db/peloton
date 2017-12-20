@@ -72,8 +72,7 @@ TEST_F(InsertTranslatorTest, InsertOneTuple) {
   codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // Compile and execute
-  CompileAndExecute(*insert_plan, buffer,
-                    reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(*insert_plan, buffer);
 
   // Check the post-condition, i.e. verify the result
   num_tuples = table->GetTupleCount();
@@ -91,8 +90,7 @@ TEST_F(InsertTranslatorTest, InsertOneTuple) {
   codegen::BufferingConsumer buffer_table1{{0, 1, 2, 3}, context1};
 
   // COMPILE and execute
-  CompileAndExecute(*seq_scan_plan_table1, buffer_table1,
-                    reinterpret_cast<char*>(buffer_table1.GetState()));
+  CompileAndExecute(*seq_scan_plan_table1, buffer_table1);
 
   // Check that we got all the results
   auto &results_table1 = buffer_table1.GetOutputTuples();
@@ -133,8 +131,7 @@ TEST_F(InsertTranslatorTest, InsertScanTranslator) {
   codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // COMPILE and execute
-  CompileAndExecute(*insert_plan, buffer,
-                    reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(*insert_plan, buffer);
   auto &results = buffer.GetOutputTuples();
   (void)results;
 
@@ -152,8 +149,7 @@ TEST_F(InsertTranslatorTest, InsertScanTranslator) {
   codegen::BufferingConsumer buffer_table1{{0, 1, 2, 3}, context1};
 
   // COMPILE and execute
-  CompileAndExecute(*seq_scan_plan_table1, buffer_table1,
-                    reinterpret_cast<char*>(buffer_table1.GetState()));
+  CompileAndExecute(*seq_scan_plan_table1, buffer_table1);
 
   // Check that we got all the results
   auto &results_table1 = buffer_table1.GetOutputTuples();
@@ -202,8 +198,7 @@ TEST_F(InsertTranslatorTest, InsertScanTranslatorWithNull) {
   codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // COMPILE and execute
-  CompileAndExecute(*insert_plan, buffer,
-                    reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(*insert_plan, buffer);
   auto &results = buffer.GetOutputTuples();
   (void)results;
 
@@ -221,8 +216,7 @@ TEST_F(InsertTranslatorTest, InsertScanTranslatorWithNull) {
   codegen::BufferingConsumer buffer_table1{{0, 1, 2, 3}, context1};
 
   // COMPILE and execute
-  CompileAndExecute(*seq_scan_plan_table1, buffer_table1,
-                    reinterpret_cast<char*>(buffer_table1.GetState()));
+  CompileAndExecute(*seq_scan_plan_table1, buffer_table1);
 
   // Check that we got all the results
   auto &results_table1 = buffer_table1.GetOutputTuples();
@@ -268,8 +262,7 @@ TEST_F(InsertTranslatorTest, InsertScanColumnTranslator) {
   codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // COMPILE and execute
-  CompileAndExecute(*insert_plan, buffer,
-                    reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(*insert_plan, buffer);
   auto &results = buffer.GetOutputTuples();
   (void)results;
 
@@ -287,8 +280,7 @@ TEST_F(InsertTranslatorTest, InsertScanColumnTranslator) {
   codegen::BufferingConsumer buffer_table1{{0, 1, 2, 3}, context1};
 
   // COMPILE and execute
-  CompileAndExecute(*seq_scan_plan_table1, buffer_table1,
-                    reinterpret_cast<char*>(buffer_table1.GetState()));
+  CompileAndExecute(*seq_scan_plan_table1, buffer_table1);
 
   // Check that we got all the results
   auto &results_table1 = buffer_table1.GetOutputTuples();

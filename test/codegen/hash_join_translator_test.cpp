@@ -109,8 +109,7 @@ TEST_F(HashJoinTranslatorTest, SingleHashJoinColumnTest) {
   codegen::BufferingConsumer buffer{{0, 1, 2, 3}, context};
 
   // COMPILE and run
-  CompileAndExecute(*hj_plan, buffer,
-                    reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(*hj_plan, buffer);
 
   // Check results
   const auto &results = buffer.GetOutputTuples();

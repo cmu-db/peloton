@@ -83,8 +83,7 @@ TEST_F(CaseTranslatorTest, SimpleCase) {
   codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // Compile and execute
-  CompileAndExecute(projection, buffer,
-                    reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(projection, buffer);
 
   // Check that we got all the results
   const auto &results = buffer.GetOutputTuples();
@@ -149,8 +148,7 @@ TEST_F(CaseTranslatorTest, SimpleCaseMoreWhen) {
   codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // Compile and execute
-  CompileAndExecute(projection, buffer,
-                    reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(projection, buffer);
 
   // Check that we got all the results
   const auto &results = buffer.GetOutputTuples();

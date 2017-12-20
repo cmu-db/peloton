@@ -114,7 +114,7 @@ TEST_F(TableScanTranslatorTest, AllColumnsScan) {
   codegen::BufferingConsumer buffer{{0, 1, 2}, context};
 
   // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(scan, buffer);
 
   // Check that we got all the results
   const auto &results = buffer.GetOutputTuples();
@@ -141,7 +141,7 @@ TEST_F(TableScanTranslatorTest, AllColumnsScanWithNulls) {
   codegen::BufferingConsumer buffer{all_col_ids, context};
 
   // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(scan, buffer);
 
   // Check that we got all the results
   const auto &results = buffer.GetOutputTuples();
@@ -177,7 +177,7 @@ TEST_F(TableScanTranslatorTest, SimplePredicate) {
   codegen::BufferingConsumer buffer{{0, 1, 2}, context};
 
   // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(scan, buffer);
 
   // Check output results
   const auto &results = buffer.GetOutputTuples();
@@ -209,7 +209,7 @@ TEST_F(TableScanTranslatorTest, SimplePredicateWithNull) {
   codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(scan, buffer);
 
   // Check output results
   const auto &results = buffer.GetOutputTuples();
@@ -253,7 +253,7 @@ TEST_F(TableScanTranslatorTest, PredicateOnNonOutputColumn) {
   codegen::BufferingConsumer buffer{{0}, context};
 
   // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(scan, buffer);
 
   // Check output results
   const auto &results = buffer.GetOutputTuples();
@@ -290,7 +290,7 @@ TEST_F(TableScanTranslatorTest, ScanWithConjunctionPredicate) {
   codegen::BufferingConsumer buffer{{0, 1, 2}, context};
 
   // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(scan, buffer);
 
   // Check output results
   const auto &results = buffer.GetOutputTuples();
@@ -334,7 +334,7 @@ TEST_F(TableScanTranslatorTest, ScanWithAddPredicate) {
   codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(scan, buffer);
 
   // Check output results
   const auto &results = buffer.GetOutputTuples();
@@ -375,7 +375,7 @@ TEST_F(TableScanTranslatorTest, ScanWithAddColumnsPredicate) {
   codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(scan, buffer);
 
   // Check output results
   const auto &results = buffer.GetOutputTuples();
@@ -415,7 +415,7 @@ TEST_F(TableScanTranslatorTest, ScanWithSubtractPredicate) {
   codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(scan, buffer);
 
   // Check output results
   const auto &results = buffer.GetOutputTuples();
@@ -456,7 +456,7 @@ TEST_F(TableScanTranslatorTest, ScanWithSubtractColumnsPredicate) {
   codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(scan, buffer);
 
   // Check output results
   const auto &results = buffer.GetOutputTuples();
@@ -497,7 +497,7 @@ TEST_F(TableScanTranslatorTest, ScanWithDividePredicate) {
 
   // COMPILE and execute
   // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(scan, buffer);
 
   // Check output results - only one output tuple (with a == 0)
   const auto &results = buffer.GetOutputTuples();
@@ -538,7 +538,7 @@ TEST_F(TableScanTranslatorTest, ScanWithMultiplyPredicate) {
   codegen::BufferingConsumer buffer{{0, 1, 2}, context};
 
   // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(scan, buffer);
 
   // Check output results
   const auto &results = buffer.GetOutputTuples();
@@ -578,7 +578,7 @@ TEST_F(TableScanTranslatorTest, ScanWithModuloPredicate) {
   codegen::BufferingConsumer buffer{{0, 1, 2}, context};
 
   // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(scan, buffer);
 
   // Check output results
   const auto &results = buffer.GetOutputTuples();

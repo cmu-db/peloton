@@ -70,15 +70,19 @@ class PelotonCodeGenTest : public PelotonTest {
   void LoadTestTable(oid_t table_id, uint32_t num_rows,
                      bool insert_nulls = false);
 
+  static void ExecuteSync(
+      codegen::Query &query,
+      std::unique_ptr<executor::ExecutorContext> executor_context,
+      codegen::QueryResultConsumer &consumer);
+
   // Compile and execute the given plan
   codegen::QueryCompiler::CompileStats CompileAndExecute(
-      planner::AbstractPlan &plan, codegen::QueryResultConsumer &consumer,
-      char *consumer_state, std::vector<type::Value> *params = nullptr);
+      planner::AbstractPlan &plan, codegen::QueryResultConsumer &consumer);
 
   codegen::QueryCompiler::CompileStats CompileAndExecuteCache(
       std::shared_ptr<planner::AbstractPlan> plan,
-      codegen::QueryResultConsumer &consumer, char *consumer_state,
-      bool &cached, std::vector<type::Value> *params = nullptr);
+      codegen::QueryResultConsumer &consumer,
+      bool &cached, std::vector<type::Value> params = {});
 
   //===--------------------------------------------------------------------===//
   // Helpers
@@ -135,35 +139,6 @@ class Printer : public codegen::QueryResultConsumer {
 
  private:
   std::vector<const planner::AttributeInfo *> ais_;
-};
-
-//===----------------------------------------------------------------------===//
-// A consumer that just counts the number of results
-//===----------------------------------------------------------------------===//
-class CountingConsumer : public codegen::QueryResultConsumer {
- public:
-  void Prepare(codegen::CompilationContext &compilation_context) override;
-  void InitializeState(codegen::CompilationContext &context) override;
-  void ConsumeResult(codegen::ConsumerContext &context,
-                     codegen::RowBatch::Row &row) const override;
-  void TearDownState(codegen::CompilationContext &) override {}
-
-  uint64_t GetCount() const { return counter_; }
-
- private:
-  llvm::Value *GetCounter(codegen::CodeGen &codegen,
-                          codegen::RuntimeState &runtime_state) const {
-    return runtime_state.LoadStateValue(codegen, counter_state_id_);
-  }
-
-  llvm::Value *GetCounter(codegen::ConsumerContext &ctx) const {
-    return GetCounter(ctx.GetCodeGen(), ctx.GetRuntimeState());
-  }
-
- private:
-  uint64_t counter_;
-  // The slot in the runtime state to find our state context
-  codegen::RuntimeState::StateID counter_state_id_;
 };
 
 }  // namespace test

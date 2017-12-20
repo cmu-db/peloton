@@ -57,7 +57,7 @@ class BufferingConsumer : public QueryResultConsumer {
 
   // Constructor
   BufferingConsumer(const std::vector<oid_t> &cols,
-                    planner::BindingContext &context);
+                    const planner::BindingContext &context);
 
   void Prepare(CompilationContext &compilation_context) override;
   void InitializeState(CompilationContext &) override {}
@@ -77,7 +77,7 @@ class BufferingConsumer : public QueryResultConsumer {
   // ACCESSORS
   //===--------------------------------------------------------------------===//
 
-  BufferingState *GetState() { return &state; }
+  char *GetConsumerState() final { return reinterpret_cast<char *>(&state); }
 
   const std::vector<WrappedTuple> &GetOutputTuples() const { return tuples_; }
 

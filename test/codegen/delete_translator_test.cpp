@@ -33,7 +33,7 @@ class DeleteTranslatorTest : public PelotonCodeGenTest {
     scan.PerformBinding(context);
 
     codegen::BufferingConsumer buffer{{0, 1}, context};
-    CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
+    CompileAndExecute(scan, buffer);
     return buffer.GetOutputTuples().size();
   }
 
@@ -68,8 +68,7 @@ TEST_F(DeleteTranslatorTest, DeleteAllTuples) {
   delete_plan->PerformBinding(deleteContext);
 
   codegen::BufferingConsumer buffer{{0, 1}, deleteContext};
-  CompileAndExecute(*delete_plan, buffer,
-                    reinterpret_cast<char*>(buffer.GetState()));
+  CompileAndExecute(*delete_plan, buffer);
   EXPECT_EQ(0, GetCurrentTableSize(TestTableId1()));
 }
 
@@ -100,8 +99,7 @@ TEST_F(DeleteTranslatorTest, DeleteWithSimplePredicate) {
   codegen::BufferingConsumer buffer{{0, 1, 2}, context};
 
   // COMPILE and execute
-  CompileAndExecute(*delete_plan, buffer,
-                    reinterpret_cast<char*>(buffer.GetState()));
+  CompileAndExecute(*delete_plan, buffer);
 
   EXPECT_EQ(4, GetCurrentTableSize(TestTableId2()));
 }
@@ -141,8 +139,7 @@ TEST_F(DeleteTranslatorTest, DeleteWithCompositePredicate) {
   codegen::BufferingConsumer buffer{{0, 1, 2}, context};
 
   // COMPILE and execute
-  CompileAndExecute(*delete_plan, buffer,
-                    reinterpret_cast<char*>(buffer.GetState()));
+  CompileAndExecute(*delete_plan, buffer);
 
   EXPECT_EQ(NumRowsInTestTable() - 1, GetCurrentTableSize(TestTableId3()));
 }
@@ -180,8 +177,7 @@ TEST_F(DeleteTranslatorTest, DeleteWithModuloPredicate) {
   codegen::BufferingConsumer buffer{{0, 1, 2}, context};
 
   // COMPILE and execute
-  CompileAndExecute(*delete_plan, buffer,
-                    reinterpret_cast<char*>(buffer.GetState()));
+  CompileAndExecute(*delete_plan, buffer);
 
   EXPECT_EQ(NumRowsInTestTable() - 1, GetCurrentTableSize(TestTableId4()));
 }
