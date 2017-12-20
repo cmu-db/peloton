@@ -5,6 +5,7 @@
 #include "parser/postgresparser.h"
 #include "parser/sql_statement.h"
 #include "binder/bind_node_visitor.h"
+#include "expression/expression_util.h"
 #include "optimizer/operators.h"
 #include "optimizer/query_to_operator_transformer.h"
 #include "optimizer/operator_expression.h"
@@ -56,7 +57,7 @@ class OperatorTransformerTests : public PelotonTest {
     return result;
   }
 
-  void CheckPredicate(expression::AbstractExpression* predicate,
+  void CheckPredicate(std::vector<AnnotatedExpression> predicates,
                 std::string table_names,
                 std::string true_predicates) {
     auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -72,6 +73,7 @@ class OperatorTransformerTests : public PelotonTest {
     auto ref_expr = ((parser::SelectStatement*)ref_stmt)->select_list.at(0).get();
     txn_manager.CommitTransaction(txn);
     LOG_INFO("Expected: %s", true_predicates.c_str());
+    auto predicate = expression::ExpressionUtil::JoinAnnotatedExprs(predicates);
     LOG_INFO("Actual: %s", predicate->GetInfo().c_str());
     EXPECT_TRUE(predicate->ExactlyEquals(*ref_expr));
   }
@@ -95,7 +97,8 @@ TEST_F(OperatorTransformerTests, JoinTransformationTest) {
   auto op_expr = TransformToOpExpression("SELECT * FROM test, test2 WHERE test.a = test2.a2", stmt_list);
   // Check Join Predicates
   auto op = op_expr->Op().As<LogicalInnerJoin>();
-  CheckPredicate(op->join_predicate.get(), "test, test2", "test.a = test2.a2");
+  
+  CheckPredicate(op->join_predicates, "test, test2", "test.a = test2.a2");
 
 
   // Test WHERE combined with JOIN ON
@@ -105,7 +108,7 @@ TEST_F(OperatorTransformerTests, JoinTransformationTest) {
   op = op_expr->Op().As<LogicalInnerJoin>();
   // Check Join Predicates
   EXPECT_TRUE(op != nullptr);
-  CheckPredicate(op->join_predicate.get(),
+  CheckPredicate(op->join_predicates,
                  "test, test2", "test.a = test2.a2 AND test.b = test2.b2");
 
   // Test remaining expression in WHERE
@@ -116,12 +119,12 @@ TEST_F(OperatorTransformerTests, JoinTransformationTest) {
   // Check Where
   EXPECT_TRUE(op != nullptr);
   // Check Join Predicates
-  CheckPredicate(op->join_predicate.get(),
+  CheckPredicate(op->join_predicates,
                  "test as A, test as B, test as C", "A.a = B.b OR B.b = C.c");
   auto childern = op_expr->Children();
   auto left_op = childern[0]->Op().As<LogicalInnerJoin>();
   EXPECT_TRUE(left_op != nullptr);
-  CheckPredicate(left_op->join_predicate.get(),
+  CheckPredicate(left_op->join_predicates,
                  "test as A, test as B, test as C", "A.c = B.b");
 
 
@@ -140,13 +143,13 @@ TEST_F(OperatorTransformerTests, JoinTransformationTest) {
   op = op_expr->Op().As<LogicalInnerJoin>();
   // Check Join Predicates
   EXPECT_TRUE(op != nullptr);
-  CheckPredicate(op->join_predicate.get(),
+  CheckPredicate(op->join_predicates,
                  "test as A, test as B, test as C",
                  "B.c = C.c AND A.a = C.a");
   childern = op_expr->Children();
   left_op = childern[0]->Op().As<LogicalInnerJoin>();
   EXPECT_TRUE(left_op != nullptr);
-  CheckPredicate(left_op->join_predicate.get(),
+  CheckPredicate(left_op->join_predicates,
                  "test as A, test as B, test as C",
                  "A.b = B.b");
 }
