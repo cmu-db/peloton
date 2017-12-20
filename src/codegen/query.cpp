@@ -49,7 +49,7 @@ void Query::Execute(executor::ExecutorContext &executor_context,
 
   // We use this handy class to avoid complex casting and pointer manipulation
   struct FunctionArguments {
-    concurrency::Transaction *txn;
+    concurrency::TransactionContext *txn;
     storage::StorageManager *storage_manager;
     executor::ExecutorContext *executor_context;
     QueryParameters *query_parameters;

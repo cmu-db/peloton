@@ -17,7 +17,7 @@ namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
-// Serializable Transaction Tests
+// Serializable TransactionContext Tests
 //===--------------------------------------------------------------------===//
 
 class SerializableTransactionTests : public PelotonTest {};

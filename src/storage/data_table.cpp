@@ -21,7 +21,7 @@
 #include "common/exception.h"
 #include "common/logger.h"
 #include "common/platform.h"
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "gc/gc_manager_factory.h"
 #include "index/index.h"
@@ -305,7 +305,7 @@ ItemPointer DataTable::AcquireVersion() {
 
 bool DataTable::InstallVersion(const AbstractTuple *tuple,
                                const TargetList *targets_ptr,
-                               concurrency::Transaction *transaction,
+                               concurrency::TransactionContext *transaction,
                                ItemPointer *index_entry_ptr) {
   if (CheckConstraints(tuple) == false) {
     LOG_TRACE("InsertVersion(): Constraint violated");
@@ -322,7 +322,7 @@ bool DataTable::InstallVersion(const AbstractTuple *tuple,
 }
 
 ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
-                                   concurrency::Transaction *transaction,
+                                   concurrency::TransactionContext *transaction,
                                    ItemPointer **index_entry_ptr) {
   ItemPointer location = GetEmptyTupleSlot(tuple);
   if (location.block == INVALID_OID) {
@@ -338,7 +338,7 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
 }
 
 bool DataTable::InsertTuple(const AbstractTuple *tuple,
-    ItemPointer location, concurrency::Transaction *transaction,
+    ItemPointer location, concurrency::TransactionContext *transaction,
     ItemPointer **index_entry_ptr) {
   if (CheckConstraints(tuple) == false) {
     LOG_TRACE("InsertTuple(): Constraint violated");
@@ -408,7 +408,7 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
  */
 bool DataTable::InsertInIndexes(const AbstractTuple *tuple,
                                 ItemPointer location,
-                                concurrency::Transaction *transaction,
+                                concurrency::TransactionContext *transaction,
                                 ItemPointer **index_entry_ptr) {
   int index_count = GetIndexCount();
 
@@ -488,7 +488,7 @@ bool DataTable::InsertInIndexes(const AbstractTuple *tuple,
 
 bool DataTable::InsertInSecondaryIndexes(const AbstractTuple *tuple,
                                          const TargetList *targets_ptr,
-                                         concurrency::Transaction *transaction,
+                                         concurrency::TransactionContext *transaction,
                                          ItemPointer *index_entry_ptr) {
   int index_count = GetIndexCount();
   // Transform the target list into a hash set
@@ -1204,7 +1204,7 @@ trigger::TriggerList *DataTable::GetTriggerList() {
   return trigger_list_.get();
 }
 
-void DataTable::UpdateTriggerListFromCatalog(concurrency::Transaction *txn) {
+void DataTable::UpdateTriggerListFromCatalog(concurrency::TransactionContext *txn) {
   trigger_list_ =
       catalog::TriggerCatalog::GetInstance().GetTriggers(table_oid, txn);
 }

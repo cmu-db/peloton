@@ -31,7 +31,7 @@ using std::shared_ptr;
 namespace peloton {
 namespace optimizer {
 QueryToOperatorTransformer::QueryToOperatorTransformer(
-  concurrency::Transaction *txn)
+  concurrency::TransactionContext *txn)
   : txn_(txn) {}
 
 

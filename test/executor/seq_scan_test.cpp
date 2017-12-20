@@ -22,7 +22,7 @@
 #include "type/types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/abstract_executor.h"
 #include "executor/executor_context.h"

@@ -141,7 +141,7 @@ executor::ExecuteResult TrafficCop::ExecuteHelper(
     const std::vector<int> &result_format, size_t thread_id) {
   auto &curr_state = GetCurrentTxnState();
 
-  concurrency::Transaction *txn;
+  concurrency::TransactionContext *txn;
   if (!tcop_txn_state_.empty()) {
     txn = curr_state.first;
   } else {
@@ -207,7 +207,7 @@ void TrafficCop::ExecuteStatementPlanGetResult() {
     switch (txn_result) {
       case ResultType::SUCCESS:
         // Commit single statement
-        LOG_TRACE("Commit Transaction");
+        LOG_TRACE("Commit TransactionContext");
         p_status_.m_result = CommitQueryHelper();
         break;
 

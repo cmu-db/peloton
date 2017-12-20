@@ -34,20 +34,20 @@ class TriggerData;
 namespace concurrency {
 
 //===--------------------------------------------------------------------===//
-// Transaction
+// TransactionContext
 //===--------------------------------------------------------------------===//
 
-class Transaction : public Printable {
-  Transaction(Transaction const &) = delete;
+class TransactionContext : public Printable {
+  TransactionContext(TransactionContext const &) = delete;
 
  public:
-  Transaction(const size_t thread_id, const IsolationLevelType isolation,
+  TransactionContext(const size_t thread_id, const IsolationLevelType isolation,
               const cid_t &read_id);
 
-  Transaction(const size_t thread_id, const IsolationLevelType isolation,
+  TransactionContext(const size_t thread_id, const IsolationLevelType isolation,
               const cid_t &read_id, const cid_t &commit_id);
 
-  ~Transaction();
+  ~TransactionContext();
 
  private:
   void Init(const size_t thread_id, const IsolationLevelType isolation,

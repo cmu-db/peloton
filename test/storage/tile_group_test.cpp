@@ -14,7 +14,7 @@
 #include "common/harness.h"
 
 #include "type/value_factory.h"
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "storage/tile_group.h"
 #include "storage/tile_group_factory.h"

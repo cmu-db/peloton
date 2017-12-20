@@ -34,7 +34,7 @@ CompilationContext::CompilationContext(Query &query,
   // Allocate a storage manager and transaction instance in the runtime state
   auto &runtime_state = GetRuntimeState();
 
-  auto *txn_type = TransactionProxy::GetType(codegen_)->getPointerTo();
+  auto *txn_type = TransactionContextProxy::GetType(codegen_)->getPointerTo();
   txn_state_id_ = runtime_state.RegisterState("transaction", txn_type);
 
   auto *storage_manager_ptr_type =
