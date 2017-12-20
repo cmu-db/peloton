@@ -388,7 +388,7 @@ class BwTreeBase {
     // Frees all metadata
     DestroyThreadLocal();
 
-    LOG_TRACE("Finished destroying class BwTreeBase")
+    LOG_TRACE("Finished destroying class BwTreeBase");
 
     return;
   }
@@ -2510,6 +2510,7 @@ class BwTree : public BwTreeBase {
     // Free all nodes recursively
     size_t node_count = FreeNodeByNodeID(root_id.load());
 
+    (void)node_count;
     LOG_TRACE("Freed %lu tree nodes", node_count);
 
     return;
@@ -4969,7 +4970,7 @@ class BwTree : public BwTreeBase {
     JumpToNodeID(left_sibling_id, context_p);
 
     if (context_p->abort_flag == true) {
-      LOG_TRACE("JumpToLeftSibling()'s call to JumpToNodeID() ABORT")
+      LOG_TRACE("JumpToLeftSibling()'s call to JumpToNodeID() ABORT");
 
       return;
     }
