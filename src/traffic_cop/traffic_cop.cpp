@@ -162,7 +162,7 @@ executor::ExecuteResult TrafficCop::ExecuteHelper(
 
   struct ExecutePlanArg {
     std::shared_ptr<planner::AbstractPlan> plan_;
-    concurrency::Transaction *txn_;
+    concurrency::TransactionContext *txn_;
     const std::vector<type::Value> &params_;
     std::vector<ResultValue> &result_;
     const std::vector<int> &result_format_;
@@ -207,7 +207,7 @@ void TrafficCop::ExecuteStatementPlanGetResult() {
     switch (txn_result) {
       case ResultType::SUCCESS:
         // Commit single statement
-        LOG_TRACE("Commit TransactionContext");
+        LOG_TRACE("Commit Transaction");
         p_status_.m_result = CommitQueryHelper();
         break;
 

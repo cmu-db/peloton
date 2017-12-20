@@ -335,7 +335,7 @@ bool TimestampOrderingTransactionManager::PerformRead(
         } else {
           // if the tuple has been owned by some concurrent transactions,
           // then read fails.
-          LOG_TRACE("TransactionContext read failed");
+          LOG_TRACE("Transaction read failed");
           return false;
         }
 
@@ -433,7 +433,7 @@ bool TimestampOrderingTransactionManager::PerformRead(
         } else {
           // if the tuple has been owned by some concurrent transactions,
           // then read fails.
-          LOG_TRACE("TransactionContext read failed");
+          LOG_TRACE("Transaction read failed");
           return false;
         }
 

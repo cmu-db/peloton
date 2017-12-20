@@ -193,7 +193,7 @@ bool IndexCatalog::DeleteIndex(oid_t index_oid, concurrency::TransactionContext 
 std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
     oid_t index_oid, concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
-    throw CatalogException("TransactionContext is invalid!");
+    throw CatalogException("Transaction is invalid!");
   }
   // try get from cache
   auto index_object = txn->catalog_cache.GetCachedIndexObject(index_oid);
@@ -230,7 +230,7 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
 std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
     const std::string &index_name, concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
-    throw CatalogException("TransactionContext is invalid!");
+    throw CatalogException("Transaction is invalid!");
   }
   // try get from cache
   auto index_object = txn->catalog_cache.GetCachedIndexObject(index_name);
@@ -275,7 +275,7 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
 const std::unordered_map<oid_t, std::shared_ptr<IndexCatalogObject>>
 IndexCatalog::GetIndexObjects(oid_t table_oid, concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
-    throw CatalogException("TransactionContext is invalid!");
+    throw CatalogException("Transaction is invalid!");
   }
   // try get from cache
   auto table_object =

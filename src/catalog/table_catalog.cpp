@@ -402,7 +402,7 @@ bool TableCatalog::DeleteTable(oid_t table_oid, concurrency::TransactionContext 
 std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
     oid_t table_oid, concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
-    throw CatalogException("TransactionContext is invalid!");
+    throw CatalogException("Transaction is invalid!");
   }
   // try get from cache
   auto table_object = txn->catalog_cache.GetCachedTableObject(table_oid);
@@ -447,7 +447,7 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
     const std::string &table_name, oid_t database_oid,
     concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
-    throw CatalogException("TransactionContext is invalid!");
+    throw CatalogException("Transaction is invalid!");
   }
   // try get from cache
   auto database_object = txn->catalog_cache.GetDatabaseObject(database_oid);
@@ -494,7 +494,7 @@ std::unordered_map<oid_t, std::shared_ptr<TableCatalogObject>>
 TableCatalog::GetTableObjects(oid_t database_oid,
                               concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
-    throw CatalogException("TransactionContext is invalid!");
+    throw CatalogException("Transaction is invalid!");
   }
   // try get from cache
   auto database_object =

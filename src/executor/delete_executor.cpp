@@ -90,7 +90,7 @@ bool DeleteExecutor::DExecute() {
 
   LOG_TRACE("Source tile info: %s", source_tile->GetInfo().c_str());
 
-  LOG_TRACE("TransactionContext ID: %" PRId64,
+  LOG_TRACE("Transaction ID: %" PRId64,
             executor_context_->GetTransaction()->GetTransactionId());
 
   auto executor_pool = executor_context_->GetPool();
