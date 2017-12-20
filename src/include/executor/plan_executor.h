@@ -74,7 +74,7 @@ class PlanExecutor {
   static void ExecutePlan(std::shared_ptr<planner::AbstractPlan> plan,
                                    concurrency::Transaction* txn,
                                    const std::vector<type::Value> &params,
-                                   std::vector<StatementResult> &result,
+                                   std::vector<ResultValue> &result,
                                    const std::vector<int> &result_format,
                                    executor::ExecuteResult &p_status);
 

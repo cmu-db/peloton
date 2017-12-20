@@ -85,7 +85,7 @@ TEST_F(CopyTests, Copying) {
     auto statement = TestingStatsUtil::GetInsertStmt(12345, insert_str);
     std::vector<type::Value> params;
     std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
-    std::vector<StatementResult> result;
+    std::vector<ResultValue> result;
 
     TestingSQLUtil::counter_.store(1);
     executor::ExecuteResult status = traffic_cop.ExecuteHelper(

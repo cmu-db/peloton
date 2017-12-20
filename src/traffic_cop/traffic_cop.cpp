@@ -149,7 +149,7 @@ ResultType TrafficCop::ExecuteStatementGetResult() {
 executor::ExecuteResult TrafficCop::ExecuteHelper(
     std::shared_ptr<planner::AbstractPlan> plan,
     const std::vector<type::Value> &params,
-    std::vector<StatementResult> &result, const std::vector<int> &result_format,
+    std::vector<ResultValue> &result, const std::vector<int> &result_format,
     const size_t thread_id) {
   concurrency::Transaction *txn;
 
@@ -469,7 +469,7 @@ ResultType TrafficCop::ExecuteStatement(
     const std::shared_ptr<Statement> &statement,
     const std::vector<type::Value> &params, UNUSED_ATTRIBUTE const bool unnamed,
     std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
-    const std::vector<int> &result_format, std::vector<StatementResult> &result,
+    const std::vector<int> &result_format, std::vector<ResultValue> &result,
     UNUSED_ATTRIBUTE std::string &error_message,
     const size_t thread_id UNUSED_ATTRIBUTE) {
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=

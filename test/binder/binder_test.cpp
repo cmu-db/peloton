@@ -73,7 +73,7 @@ void SetupTables(std::string database_name) {
     traffic_cop.SetTcopTxnState(txn);
 
     vector<type::Value> params;
-    vector<StatementResult> result;
+    vector<ResultValue> result;
     vector<int> result_format;
     unique_ptr<Statement> statement(new Statement("CREATE", sql));
     auto parse_tree = parser.BuildParseTree(sql);

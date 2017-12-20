@@ -52,7 +52,7 @@ class DecimalFunctionsSQLTest : public PelotonTest {};
 
     txn_manager.CommitTransaction(txn);
     // Fetch values from the table
-    std::vector<StatementResult> result;
+    std::vector<ResultValue> result;
     std::vector<FieldInfo> tuple_descriptor;
     std::string error_message;
     int rows_affected;
@@ -107,7 +107,7 @@ class DecimalFunctionsSQLTest : public PelotonTest {};
 
     txn_manager.CommitTransaction(txn);
     // Fetch values from the table
-    std::vector<StatementResult> result;
+    std::vector<ResultValue> result;
     std::vector<FieldInfo> tuple_descriptor;
     std::string error_message;
     int rows_affected;

@@ -54,7 +54,7 @@ class TrafficCop {
 
   // PortalExec - Execute query string
 //  ResultType ExecuteStatement(const std::string &query,
-//                              std::vector<StatementResult> &result,
+//                              std::vector<ResultValue> &result,
 //                              std::vector<FieldInfo> &tuple_descriptor,
 //                              int &rows_changed, std::string &error_message,
 //                              const size_t thread_id = 0);
@@ -64,7 +64,7 @@ class TrafficCop {
       const std::vector<type::Value> &params, const bool unnamed,
       std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
       const std::vector<int> &result_format,
-      std::vector<StatementResult> &result,
+      std::vector<ResultValue> &result,
       std::string &error_message, const size_t thread_id = 0);
 
   // ExecutePrepStmt - Helper to handle txn-specifics for the plan-tree of a
@@ -72,7 +72,7 @@ class TrafficCop {
   executor::ExecuteResult ExecuteHelper(
       std::shared_ptr<planner::AbstractPlan> plan,
       const std::vector<type::Value> &params,
-      std::vector<StatementResult> &result,
+      std::vector<ResultValue> &result,
       const std::vector<int> &result_format, const size_t thread_id = 0);
 
   // InitBindPrepStmt - Prepare and bind a query from a query string
@@ -126,11 +126,11 @@ class TrafficCop {
     return statement_;
   }
 
-  void SetResult(std::vector<StatementResult> result) {
+  void SetResult(std::vector<ResultValue> result) {
     result_ = result;
   }
 
-  std::vector<StatementResult>& GetResult() {
+  std::vector<ResultValue>& GetResult() {
     return result_;
   }
 
@@ -180,7 +180,7 @@ class TrafficCop {
 
   std::vector<type::Value> param_values_;
 
-  std::vector<StatementResult> results_;
+  std::vector<ResultValue> results_;
 
   // This save currnet statement in the traffic cop
   std::shared_ptr<Statement> statement_;
@@ -199,7 +199,7 @@ class TrafficCop {
   // flag of psql protocol
   // executePlan arguments
 
-  std::vector<StatementResult> result_;
+  std::vector<ResultValue> result_;
   void(* task_callback_)(void *);
   void * task_callback_arg_;
 //  IOTrigger io_trigger_;
@@ -228,7 +228,7 @@ class TrafficCop {
 //  const std::vector<type::Value> params_;
 //  UNUSED_ATTRIBUTE const bool unnamed;
 //  std::shared_ptr<stats::QueryMetric::QueryParams> param_stats_;
-//  const std::vector<int> &result_format, std::vector<StatementResult> result;
+//  const std::vector<int> &result_format, std::vector<ResultValue> result;
 //  int &rows_changed, UNUSED_ATTRIBUTE std::string error_message;
 //  const size_t thread_id UNUSED_ATTRIBUTE;
 };
@@ -240,7 +240,7 @@ struct ExecutePlanArg {
   inline ExecutePlanArg(const std::shared_ptr<planner::AbstractPlan> plan,
                         concurrency::Transaction *txn,
                         const std::vector<type::Value> &params,
-                        std::vector<StatementResult> &result,
+                        std::vector<ResultValue> &result,
                         const std::vector<int> &result_format,
                         executor::ExecuteResult &p_status) :
       plan_(plan),
@@ -256,7 +256,7 @@ struct ExecutePlanArg {
   std::shared_ptr<planner::AbstractPlan> plan_;
   concurrency::Transaction *txn_;
   const std::vector<type::Value> &params_;
-  std::vector<StatementResult> &result_;
+  std::vector<ResultValue> &result_;
   const std::vector<int> &result_format_;
   executor::ExecuteResult &p_status_;
 //  struct event* event_;
