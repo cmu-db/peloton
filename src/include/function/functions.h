@@ -49,12 +49,17 @@ typedef uint32_t oid_t;
 
 class PlpgsqlFunctions {
  private:
-  static std::unordered_map<oid_t, codegen::CodeContext *> kFuncMap;
+  static std::unordered_map<oid_t,
+                            std::shared_ptr<peloton::codegen::CodeContext>>
+      kFuncMap;
 
  public:
-  static void AddFunction(const oid_t oid, codegen::CodeContext *func_context);
+  static void AddFunction(
+      const oid_t oid,
+      std::shared_ptr<peloton::codegen::CodeContext> code_context);
 
-  static codegen::CodeContext *GetFuncContextByOid(const oid_t oid);
+  static std::shared_ptr<peloton::codegen::CodeContext> GetFuncContextByOid(
+      const oid_t oid);
 };
 
 }  // namespace function

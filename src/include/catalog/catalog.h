@@ -64,7 +64,7 @@ struct FunctionData {
   // indicates if PL/pgSQL udf
   bool isUDF_;
   // pointer to the function code_context (populated if UDF)
-  peloton::codegen::CodeContext *func_context_;
+  std::shared_ptr<peloton::codegen::CodeContext> func_context_;
   // pointer to the function (populated if built-in)
   function::BuiltInFuncType func_;
 };
@@ -190,12 +190,12 @@ class Catalog {
 
   void InitializeFunctions();
 
-  void AddPlpgsqlFunction(const std::string &name,
-                          const std::vector<type::TypeId> &argument_types,
-                          const type::TypeId return_type, oid_t prolang,
-                          const std::string &func_src,
-                          peloton::codegen::CodeContext *code_context,
-                          concurrency::Transaction *txn);
+  void AddPlpgsqlFunction(
+      const std::string &name, const std::vector<type::TypeId> &argument_types,
+      const type::TypeId return_type, oid_t prolang,
+      const std::string &func_src,
+      std::shared_ptr<peloton::codegen::CodeContext> code_context,
+      concurrency::Transaction *txn);
 
   void AddBuiltinFunction(const std::string &name,
                           const std::vector<type::TypeId> &argument_types,

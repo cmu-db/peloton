@@ -65,7 +65,9 @@ class FunctionExpression : public AbstractExpression {
 
   const function::BuiltInFuncType &GetFunc() const { return func_; }
 
-  codegen::CodeContext *GetFuncContext() const { return func_context_; }
+  std::shared_ptr<peloton::codegen::CodeContext> GetFuncContext() const {
+    return func_context_;
+  }
 
   bool IsUDF() const { return isUDF_; }
 

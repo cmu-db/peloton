@@ -832,7 +832,7 @@ void Catalog::AddBuiltinFunction(
 void Catalog::AddPlpgsqlFunction(
     const std::string &name, const std::vector<type::TypeId> &argument_types,
     const type::TypeId return_type, oid_t prolang, const std::string &func_src,
-    peloton::codegen::CodeContext *code_context,
+    std::shared_ptr<peloton::codegen::CodeContext> code_context,
     concurrency::Transaction *txn) {
   // Check if UDF already exists
   auto proc_catalog_obj =

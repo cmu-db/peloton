@@ -5,7 +5,7 @@ namespace udf {
 
 UDFHandler::UDFHandler() {}
 
-peloton::codegen::CodeContext *UDFHandler::Execute(
+std::shared_ptr<codegen::CodeContext> UDFHandler::Execute(
     UNUSED_ATTRIBUTE concurrency::Transaction *txn, std::string func_name,
     std::string func_body, UNUSED_ATTRIBUTE std::vector<std::string> args_name,
     UNUSED_ATTRIBUTE std::vector<arg_type> args_type,
@@ -17,7 +17,7 @@ llvm::Function *UDFHandler::RegisterExternalFunction(
     peloton::codegen::CodeGen &codegen,
     const expression::FunctionExpression &func_expr) {
   // The code_context associated with the UDF
-  auto *func_context = func_expr.GetFuncContext();
+  auto func_context = func_expr.GetFuncContext();
 
   // Construct the new functionType in this context
   llvm::Type *llvm_ret_type =
@@ -49,12 +49,13 @@ llvm::Function *UDFHandler::RegisterExternalFunction(
   return func_ptr;
 }
 
-codegen::CodeContext *UDFHandler::Compile(
+std::shared_ptr<codegen::CodeContext> UDFHandler::Compile(
     UNUSED_ATTRIBUTE concurrency::Transaction *txn, std::string func_name,
     std::string func_body, std::vector<std::string> args_name,
     std::vector<arg_type> args_type, arg_type ret_type) {
   // To contain the context of the UDF
-  codegen::CodeContext *code_context = new codegen::CodeContext();
+  auto code_context = std::make_shared<codegen::CodeContext>();
+  // codegen::CodeContext *code_context = new codegen::CodeContext();
   codegen::CodeGen cg{*code_context};
 
   llvm::Type *llvm_ret_type = GetCodegenParamType(ret_type, cg);

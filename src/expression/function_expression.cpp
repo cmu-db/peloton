@@ -19,7 +19,8 @@ expression::FunctionExpression::FunctionExpression(
     const char *func_name, const std::vector<AbstractExpression *> &children)
     : AbstractExpression(ExpressionType::FUNCTION),
       func_name_(func_name),
-      func_(OperatorId::Invalid, nullptr) {
+      func_(OperatorId::Invalid, nullptr),
+      isUDF_(false) {
   for (auto &child : children) {
     children_.push_back(std::unique_ptr<AbstractExpression>(child));
   }
@@ -31,7 +32,8 @@ expression::FunctionExpression::FunctionExpression(
     const std::vector<AbstractExpression *> &children)
     : AbstractExpression(ExpressionType::FUNCTION, return_type),
       func_(func_ptr),
-      func_arg_types_(arg_types) {
+      func_arg_types_(arg_types),
+      isUDF_(false) {
   for (auto &child : children) {
     children_.push_back(std::unique_ptr<AbstractExpression>(child));
   }
@@ -39,32 +41,45 @@ expression::FunctionExpression::FunctionExpression(
 }
 
 type::Value FunctionExpression::Evaluate(
-    const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-    executor::ExecutorContext *context) const {
-  std::vector<type::Value> child_values;
-  PL_ASSERT(func_.impl != nullptr);
-  for (auto &child : children_) {
-    child_values.push_back(child->Evaluate(tuple1, tuple2, context));
+      const AbstractTuple *tuple1, const AbstractTuple *tuple2,
+      UNUSED_ATTRIBUTE executor::ExecutorContext *context) const override {
+    std::vector<type::Value> child_values;
+
+    PL_ASSERT(func_.impl != nullptr);
+    for (auto &child : children_) {
+      child_values.push_back(child->Evaluate(tuple1, tuple2, context));
+    }
+
+    type::Value ret = func_.impl(child_values);
+
+    // TODO: Checking this every time is not necessary, but it prevents crashing
+    if (ret.GetElementType() != return_value_type_) {
+      throw Exception(
+          EXCEPTION_TYPE_EXPRESSION,
+          "function " + func_name_ + " returned an unexpected type.");
+    }
+
+    return ret;
   }
 
-  type::Value ret = func_.impl(child_values);
-
-  // TODO: Checking this every time is not necessary, but it prevents crashing
-  if (ret.GetElementType() != return_value_type_) {
-    throw Exception(ExceptionType::EXPRESSION,
-                    "function " + func_name_ + " returned an unexpected type.");
-  }
-
-  return ret;
-}
-
-void FunctionExpression::SetFunctionExpressionParameters(
+void FunctionExpression::SetBuiltinFunctionExpressionParameters(
     function::BuiltInFuncType func_ptr, type::TypeId val_type,
     const std::vector<type::TypeId> &arg_types) {
+  isUDF_ = false;
   func_ = func_ptr;
   return_value_type_ = val_type;
   func_arg_types_ = arg_types;
-  CheckChildrenTypes();
+  CheckChildrenTypes(children_, func_name_);
+}
+
+void FunctionExpression::SetUDFFunctionExpressionParameters(
+    peloton::codegen::CodeContext *func_context, type::TypeId val_type,
+    const std::vector<type::TypeId> &arg_types) {
+  isUDF_ = true;
+  func_context_ = func_context;
+  return_value_type_ = val_type;
+  func_arg_types_ = arg_types;
+  CheckChildrenTypes(children_, func_name_);
 }
 
 const std::string FunctionExpression::GetInfo(int num_indent) const {

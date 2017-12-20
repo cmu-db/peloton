@@ -61,8 +61,9 @@ bool CreateFunctionExecutor::DExecute() {
   std::unique_ptr<peloton::udf::UDFHandler> udf_handler(
       new peloton::udf::UDFHandler());
 
-  peloton::codegen::CodeContext *code_context = udf_handler->Execute(
-      current_txn, proname, prosrc, proargnames, proargtypes, prorettype);
+  std::shared_ptr<peloton::codegen::CodeContext> code_context =
+      udf_handler->Execute(current_txn, proname, prosrc, proargnames,
+                           proargtypes, prorettype);
 
   // Get LLVM Function Pointer for the compiled UDF
   auto func_ptr = code_context->GetUDF();
