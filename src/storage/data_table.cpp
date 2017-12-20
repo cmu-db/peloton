@@ -57,8 +57,9 @@ size_t DataTable::default_active_indirection_array_count_ = 1;
 DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
                      const oid_t &database_oid, const oid_t &table_oid,
                      const size_t &tuples_per_tilegroup, const bool own_schema,
-                     const bool adapt_table, const bool is_catalog)
-    : AbstractTable(table_oid, schema, own_schema),
+                     const bool adapt_table, const bool is_catalog,
+                     const peloton::LayoutType layout_type)
+    : AbstractTable(table_oid, schema, own_schema, layout_type),
       database_oid(database_oid),
       table_name(table_name),
       tuples_per_tilegroup_(tuples_per_tilegroup),
@@ -702,7 +703,7 @@ oid_t DataTable::AddDefaultTileGroup(const size_t &active_tile_group_id) {
   oid_t tile_group_id = INVALID_OID;
 
   // Figure out the partitioning for given tilegroup layout
-  column_map = GetTileGroupLayout((LayoutType)peloton_layout_mode);
+  column_map = GetTileGroupLayout();
 
   // Create a tile group with that partitioning
   std::shared_ptr<TileGroup> tile_group(GetTileGroupWithLayout(column_map));

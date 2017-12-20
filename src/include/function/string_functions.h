@@ -21,13 +21,18 @@ namespace function {
 
 class StringFunctions {
  public:
+  struct StrWithLen {
+    StrWithLen(const char *str, uint32_t length) : str(str), length(length) {}
+    const char *str;
+    uint32_t length;
+  };
+
   // ASCII code of the first character of the argument.
   static uint32_t Ascii(const char *str, uint32_t length);
   static type::Value _Ascii(const std::vector<type::Value> &args);
 
   // Like
-  static bool Like(const char *t, uint32_t tlen,
-                   const char *p, uint32_t plen);
+  static bool Like(const char *t, uint32_t tlen, const char *p, uint32_t plen);
   static type::Value _Like(const std::vector<type::Value> &args);
 
   // Get Character from integer
@@ -53,15 +58,24 @@ class StringFunctions {
 
   // Remove the longest string containing only characters from characters
   // from the start of string
-  static type::Value LTrim(const std::vector<type::Value> &args);
+  static StrWithLen LTrim(const char *str, uint32_t str_len, const char *from,
+                          uint32_t from_len);
+  static type::Value _LTrim(const std::vector<type::Value> &args);
 
   // Remove the longest string containing only characters from characters
   // from the end of string
-  static type::Value RTrim(const std::vector<type::Value> &args);
+  static StrWithLen RTrim(const char *str, uint32_t str_len, const char *from,
+                          uint32_t from_len);
+  static type::Value _RTrim(const std::vector<type::Value> &args);
+
+  static StrWithLen Trim(const char *str, uint32_t str_len);
+  static type::Value _Trim(const std::vector<type::Value> &args);
 
   // Remove the longest string consisting only of characters in characters
   // from the start and end of string
-  static type::Value BTrim(const std::vector<type::Value> &args);
+  static StrWithLen BTrim(const char *str, uint32_t str_len, const char *from,
+                          uint32_t from_len);
+  static type::Value _BTrim(const std::vector<type::Value> &args);
 
   // This function is used by LLVM engine
   // Length will return the number of characters in the given string
