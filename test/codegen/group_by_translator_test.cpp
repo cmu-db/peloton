@@ -443,7 +443,7 @@ TEST_F(GroupByTranslatorTest, MinAndMax) {
   const auto &results = buffer.GetOutputTuples();
   EXPECT_EQ(1, results.size());
 
-  LOG_INFO("max: %s, min: %s\n",
+  LOG_INFO("max: %s, min: %s",
           results[0].GetValue(0).ToString().c_str(),
           results[0].GetValue(1).ToString().c_str());
 
