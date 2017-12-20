@@ -515,6 +515,28 @@ class ValueFactory {
                     " is not coercable to TIMESTAMP.");
   }
 
+  static Value CastAsDate(const Value &value) {
+    if (Type::GetInstance(TypeId::DATE)
+            ->IsCoercableFrom(value.GetTypeId())) {
+      if (value.IsNull())
+        return ValueFactory::GetDateValue(PELOTON_DATE_NULL);
+      switch (value.GetTypeId()) {
+        case TypeId::DATE:
+          return ValueFactory::GetDateValue(value.GetAs<uint32_t>());
+        case TypeId::VARCHAR: {
+          std::string str = value.ToString();
+          uint32_t res = 0;
+          // TODO: convert string according to certain formate to DATE type
+          return ValueFactory::GetDateValue(res);
+        }
+        default:
+          break;
+      }
+    }
+    throw Exception(Type::GetInstance(value.GetTypeId())->ToString() +
+                    " is not coercable to DATE.");
+  }
+
   static inline Value CastAsBoolean(const Value &value) {
     if (Type::GetInstance(TypeId::BOOLEAN)
             ->IsCoercableFrom(value.GetTypeId())) {

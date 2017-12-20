@@ -145,6 +145,9 @@ class PostgresParser {
   // transform helper for constant values
   static expression::AbstractExpression* ConstTransform(A_Const* root);
 
+  // transform helper for cast expressions
+  static expression::AbstractExpression* TypeCastTransform(TypeCast* root);
+
   // transform helper for function calls
   static expression::AbstractExpression* FuncCallTransform(FuncCall* root);
 

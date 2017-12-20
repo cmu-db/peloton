@@ -449,6 +449,14 @@ typedef struct A_Const {
   int location; /* token location, or -1 if unknown */
 } A_Const;
 
+typedef struct TypeCast
+{
+  NodeTag   type;
+  Node     *arg;      /* the expression being casted */
+  TypeName   *typeName;   /* the target type */
+  int     location;   /* token location, or -1 if unknown */
+} TypeCast;
+
 typedef struct WindowDef {
   NodeTag type;
   char *name;            /* window's own name */

@@ -390,5 +390,53 @@ TEST_F(ParserTests, CopyTest) {
     LOG_TRACE("%d : %s", ++ii, result->GetInfo().c_str());
   }
 }
+
+TEST_F(ParserTests, DateTypeTest) {
+  std::vector<std::string> queries;
+  queries.push_back("INSERT INTO test_table VALUES (1, 2, '2017-01-01'::DATE);");
+  queries.push_back(
+      "CREATE TABLE students (name TEXT, student_number INTEGER, city TEXT, "
+      "graduation DATE)");
+  // Parsing
+  UNUSED_ATTRIBUTE int ii = 0;
+  for (auto query : queries) {
+    std::unique_ptr<parser::SQLStatementList> result(
+        parser::PostgresParser::ParseSQLString(query.c_str()));
+
+    if (result->is_valid == false) {
+      LOG_ERROR("Message: %s, line: %d, col: %d", result->parser_msg,
+                result->error_line, result->error_col);
+    }
+    EXPECT_EQ(result->is_valid, true);
+
+    LOG_TRACE("%d : %s", ++ii, result->GetInfo().c_str());
+  }
+}
+
+TEST_F(ParserTests, TypeCastTest) {
+  std::vector<std::string> queries;
+  queries.push_back("INSERT INTO test_table VALUES (1, 2, '2017'::INTEGER);");
+  queries.push_back("INSERT INTO test_table VALUES (1, 2, '2017'::FLOAT);");
+  queries.push_back("INSERT INTO test_table VALUES (1, 2, '2017'::DECIMAL);");
+  queries.push_back("INSERT INTO test_table VALUES (1, 2, '2017'::TEXT);");
+  queries.push_back("INSERT INTO test_table VALUES (1, 2, '2017'::VARCHAR);");
+  queries.push_back("INSERT INTO test_table VALUES (1, 2, '2017'::TIMESTAMP);");
+  queries.push_back("INSERT INTO test_table VALUES (1, 2, '2017'::DATE);");
+  // Parsing
+  UNUSED_ATTRIBUTE int ii = 0;
+  for (auto query : queries) {
+    std::unique_ptr<parser::SQLStatementList> result(
+        parser::PostgresParser::ParseSQLString(query.c_str()));
+
+    if (result->is_valid == false) {
+      LOG_ERROR("Message: %s, line: %d, col: %d", result->parser_msg,
+                result->error_line, result->error_col);
+    }
+    EXPECT_EQ(result->is_valid, true);
+
+    LOG_TRACE("%d : %s", ++ii, result->GetInfo().c_str());
+  }
+}
+
 }  // namespace test
 }  // namespace peloton
