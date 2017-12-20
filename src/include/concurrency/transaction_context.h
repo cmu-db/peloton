@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// transaction.h
+// transaction_context.h
 //
-// Identification: src/include/concurrency/transaction.h
+// Identification: src/include/concurrency/transaction_context.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
