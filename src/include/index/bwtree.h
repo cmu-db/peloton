@@ -101,9 +101,6 @@ namespace wangziqi2013 {
 namespace bwtree {
 #endif
 
-// This needs to be always here
-static void dummy(const char *, ...) {}
-
 // This could not be set as a macro since we will change the flag inside
 // the testing framework
 extern bool print_flag;
@@ -2487,8 +2484,6 @@ class BwTree : public BwTreeBase {
       epoch_manager.StartThread();
     }
 
-    dummy("Call it here to avoid compiler warning");
-
     return;
   }
 
@@ -2550,8 +2545,7 @@ class BwTree : public BwTreeBase {
    * the new number of threads we want to support here for doing experiments
    */
   void UpdateThreadLocal(size_t p_thread_num) {
-    LOG_TRACE("Updating thread-local array to length %lu......",
-              p_thread_num);
+    LOG_TRACE("Updating thread-local array to length %lu......", p_thread_num);
 
     // 1. Frees all pending memory chunks
     // 2. Frees the thread local array
@@ -2870,8 +2864,7 @@ class BwTree : public BwTreeBase {
    * the mapping table rather than CAS with nullptr
    */
   void InitMappingTable() {
-    LOG_TRACE("Initializing mapping table.... size = %lu",
-              MAPPING_TABLE_SIZE);
+    LOG_TRACE("Initializing mapping table.... size = %lu", MAPPING_TABLE_SIZE);
     LOG_TRACE("Fast initialization: Do not set to zero");
 
     return;
@@ -2999,7 +2992,9 @@ class BwTree : public BwTreeBase {
 
   retry_traverse:
     PL_ASSERT(context_p->abort_flag == false);
+#ifdef BWTREE_DEBUG
     PL_ASSERT(context_p->current_level == -1);
+#endif
 
     // This is the serialization point for reading/writing root node
     NodeID start_node_id = root_id.load();
@@ -3454,8 +3449,7 @@ class BwTree : public BwTreeBase {
 
             node_p = merge_node_p->right_merge_p;
           } else {
-            LOG_TRACE("Take merge left branch (ID = %lu)",
-                      snapshot_p->node_id);
+            LOG_TRACE("Take merge left branch (ID = %lu)", snapshot_p->node_id);
 
             node_p = merge_node_p->child_node_p;
           }
@@ -4847,7 +4841,9 @@ class BwTree : public BwTreeBase {
    * which also freed up the logical node object
    */
   static inline NodeSnapshot *GetLatestNodeSnapshot(Context *context_p) {
+#ifdef BWTREE_DEBUG
     PL_ASSERT(context_p->current_level >= 0);
+#endif
 
     return &context_p->current_snapshot;
   }
@@ -4863,9 +4859,10 @@ class BwTree : public BwTreeBase {
    * snapshots out of the stack
    */
   inline NodeSnapshot *GetLatestParentNodeSnapshot(Context *context_p) {
+#ifdef BWTREE_DEBUG
     // Make sure the current node has a parent
     PL_ASSERT(context_p->current_level >= 1);
-
+#endif
     // This is the address of the parent node
     return &context_p->parent_snapshot;
   }
@@ -4881,7 +4878,9 @@ class BwTree : public BwTreeBase {
    * since root node does not have any parent node
    */
   inline bool IsOnLeftMostChild(Context *context_p) {
+#ifdef BWTREE_DEBUG
     PL_ASSERT(context_p->current_level >= 1);
+#endif
 
     return GetLatestParentNodeSnapshot(context_p)->node_p->GetLowKeyNodeID() ==
            GetLatestNodeSnapshot(context_p)->node_id;
@@ -4910,7 +4909,9 @@ class BwTree : public BwTreeBase {
   void JumpToLeftSibling(Context *context_p) {
     LOG_TRACE("Jumping to the left sibling");
 
+#ifdef BWTREE_DEBUG
     PL_ASSERT(context_p->HasParentNode());
+#endif
 
     // Get last record which is the current node's context
     // and we must make sure the current node is not left mode node
@@ -5254,7 +5255,9 @@ class BwTree : public BwTreeBase {
   void TraverseBI(Context *context_p) {
   retry_traverse:
     PL_ASSERT(context_p->abort_flag == false);
+#ifdef BWTREE_DEBUG
     PL_ASSERT(context_p->current_level == -1);
+#endif
 
     NodeID start_node_id = root_id.load();
     context_p->current_snapshot.node_id = INVALID_NODE_ID;
@@ -5785,7 +5788,9 @@ class BwTree : public BwTreeBase {
           next_item_p = &split_node_p->child_node_p->GetHighKeyPair();
         }
 
+#ifdef BWTREE_DEBUG
         PL_ASSERT(context_p->current_level >= 0);
+#endif
 
         // If the parent snapshot has an invalid node ID then it must be the
         // root node.
@@ -7590,8 +7595,8 @@ class BwTree : public BwTreeBase {
       LOG_TRACE("      Epoch created = %lu; epoch freed = %lu", epoch_created,
                 epoch_freed);
 
-      LOG_TRACE("      Epoch join = %lu; epoch leave = %lu",
-                epoch_join.load(), epoch_leave.load());
+      LOG_TRACE("      Epoch join = %lu; epoch leave = %lu", epoch_join.load(),
+                epoch_leave.load());
 #endif
 
       return;
