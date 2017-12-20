@@ -69,12 +69,13 @@ void *SelectAllTest(int port) {
     pqxx::work txn2(C);
     for (int i = 0; i < 2000; i++) {
       std::string s = "INSERT INTO template VALUES (" + std::to_string(i) + ")";
+      LOG_INFO("Start sending query");
       txn2.exec(s);
     }
 
     pqxx::result R = txn2.exec("SELECT * from template;");
     txn2.commit();
-
+s
     EXPECT_EQ(R.size(), 2000);
   } catch (const std::exception &e) {
     LOG_INFO("[SelectAllTest] Exception occurred: %s", e.what());

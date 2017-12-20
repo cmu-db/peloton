@@ -19,7 +19,7 @@ namespace peloton {
 namespace network {
 
 void CallbackUtil::OnNewConnection(evutil_socket_t fd, short, void *arg) {
-  (static_cast<ConnectionDispatcherTask *>(arg))->DispatchConnection(fd);
+  static_cast<ConnectionDispatcherTask *>(arg)->DispatchConnection(fd);
 }
 
 void CallbackUtil::OnNewConnectionDispatch(evutil_socket_t new_conn_recv_fd,
@@ -62,10 +62,7 @@ void CallbackUtil::OnNewConnectionDispatch(evutil_socket_t new_conn_recv_fd,
 }
 
 void CallbackUtil::OnNetworkEvent(evutil_socket_t, short, void *arg) {
-  LOG_TRACE("Event callback fired for connfd: %d", conn_fd);
-  auto *conn = static_cast<NetworkConnection *>(arg);
-  PL_ASSERT(conn != nullptr);
-  conn->TriggerStateMachine();
+  static_cast<NetworkConnection *>(arg)->TriggerStateMachine();
 }
 
 /**
