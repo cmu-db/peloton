@@ -2,6 +2,20 @@
 # SRC CMAKELISTS
 ##################################################################################
 
+# --[ Cap'nProto library
+
+file(GLOB capnp_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} include/capnp/*.capnp)
+# the output folder for the compiled capnp headers and srouces
+set(CAPNPC_OUTPUT_DIR "${PROJECT_BINARY_DIR}/include/peloton/capnp")
+file(MAKE_DIRECTORY ${CAPNPC_OUTPUT_DIR})
+capnp_generate_cpp(capnp_srcs capnp_hdrs ${capnp_files})
+
+add_library(peloton-capnp STATIC ${capnp_hdrs} ${capnp_srcs})
+set(Peloton_LINKER_LIBS peloton-capnp ${Peloton_LINKER_LIBS}) # note, crucial to prepend!
+peloton_default_properties(peloton-capnp)
+
+##################################################################################
+
 # --[ Proto library
 
 file(GLOB proto_files include/proto/*.proto)
@@ -32,7 +46,8 @@ peloton_pickup_peloton_sources(${PROJECT_SOURCE_DIR})
 
 add_library(peloton SHARED ${srcs})
 add_dependencies(peloton libpg_query)
-target_link_libraries(peloton ${Peloton_LINKER_LIBS} peloton-proto ${PROJECT_SOURCE_DIR}/third_party/libpg_query/libpg_query.a)
+target_link_libraries(peloton ${Peloton_LINKER_LIBS} peloton-capnp peloton-proto
+    ${PROJECT_SOURCE_DIR}/third_party/libpg_query/libpg_query.a)
 
 peloton_default_properties(peloton)
 set_target_properties(peloton PROPERTIES

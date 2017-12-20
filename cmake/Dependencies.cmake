@@ -21,6 +21,13 @@ include("cmake/External/gflags.cmake")
 include_directories(SYSTEM ${GFLAGS_INCLUDE_DIRS})
 list(APPEND Peloton_LINKER_LIBS ${GFLAGS_LIBRARIES})
 
+# ---[ Cap'nProto
+include("cmake/External/capnproto.cmake")
+include_directories(SYSTEM ${CAPNP_INCLUDE_DIRS})
+list(APPEND Peloton_LINKER_LIBS ${CAPNP_LIBRARIES})
+# To include the CAPNP_GENERATE_CPP function from the capnproto installation
+include(cmake/CapnProtoMacros.cmake)
+
 # ---[ Google-protobuf
 include(cmake/ProtoBuf.cmake)
 
