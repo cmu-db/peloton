@@ -106,10 +106,12 @@ class TransactionLevelGCManager : public GCManager {
     }
   };
 
-  virtual void StopGC() override {
-    LOG_TRACE("Stopping GC");
-    this->is_running_ = false;
-  }
+  /**
+   * @brief This stops the Garbage Collector when Peloton shuts down
+   *
+   * @return No return value.
+   */
+  virtual void StopGC() override;
 
   virtual void RecycleTransaction(std::shared_ptr<GCSet> gc_set,
                                   std::shared_ptr<GCObjectSet> gc_object_set,
@@ -145,6 +147,12 @@ class TransactionLevelGCManager : public GCManager {
     return (unsigned int)thread_id % gc_thread_count_;
   }
 
+  /**
+   * @brief Unlink and reclaim the tuples remained in a garbage collection
+   * thread when the Garbage Collector stops.
+   *
+   * @return No return value.
+   */
   void ClearGarbage(int thread_id);
 
   void Running(const int &thread_id);
@@ -170,9 +178,8 @@ class TransactionLevelGCManager : public GCManager {
 
   // queues for to-be-unlinked tuples.
   // # unlink_queues == # gc_threads
-  std::vector<
-      std::shared_ptr<peloton::LockFreeQueue<std::shared_ptr<GarbageContext>>>>
-      unlink_queues_;
+  std::vector<std::shared_ptr<
+      peloton::LockFreeQueue<std::shared_ptr<GarbageContext>>>> unlink_queues_;
 
   // local queues for to-be-unlinked tuples.
   // # local_unlink_queues == # gc_threads
