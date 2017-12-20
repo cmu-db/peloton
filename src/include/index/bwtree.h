@@ -5316,8 +5316,9 @@ class BwTree : public BwTreeBase {
                              std::vector<ValueType> *value_list_p) {
   retry_traverse:
     PL_ASSERT(context_p->abort_flag == false);
+#ifdef BWTREE_DEBUG
     PL_ASSERT(context_p->current_level == -1);
-
+#endif
     // This is the serialization point for reading/writing root node
     NodeID child_node_id = root_id.load();
 
