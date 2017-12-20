@@ -111,5 +111,17 @@ void IndexScanPlan::SetParameterValues(std::vector<type::Value> *values) {
   }
 }
 
+void IndexScanPlan::VisitParameters(
+  codegen::QueryParametersMap &map, std::vector<peloton::type::Value> &values,
+  const std::vector<peloton::type::Value> &values_from_user) {
+  AbstractPlan::VisitParameters(map, values, values_from_user);
+
+  auto *predicate =
+    const_cast<expression::AbstractExpression *>(GetPredicate());
+  if (predicate != nullptr) {
+    predicate->VisitParameters(map, values, values_from_user);
+  }
+}
+
 }  // namespace planner
 }  // namespace peloton
