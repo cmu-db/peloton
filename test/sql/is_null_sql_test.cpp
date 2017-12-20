@@ -65,7 +65,7 @@ TEST_F(IsNullSqlTests, InsertNullTest) {
   LOG_TRACE("Test insert null...");
   LOG_TRACE("Query: select * from a");
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_affected;
@@ -98,7 +98,7 @@ TEST_F(IsNullSqlTests, IsNullWhereTest) {
   LOG_TRACE("Test is null in where clause...");
   LOG_TRACE("Query: select * from a where value is null");
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_affected;
@@ -138,7 +138,7 @@ TEST_F(IsNullSqlTests, IsNotNullWhereTest) {
   LOG_TRACE("Test is not null in where clause...");
   LOG_TRACE("Query: select * from a where value is not null");
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_affected;

@@ -46,7 +46,7 @@ TEST_F(DropSQLTests, DropTableTest) {
   txn_manager.CommitTransaction(txn);
   EXPECT_NE(table, nullptr);
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_affected;
@@ -58,7 +58,7 @@ TEST_F(DropSQLTests, DropTableTest) {
   TestingSQLUtil::ExecuteSQLQuery("SELECT * FROM test;", result,
                                   tuple_descriptor, rows_affected,
                                   error_message);
-  EXPECT_EQ(result[0].second[0], '1');
+  EXPECT_EQ(result[0][0], '1');
 
   // Drop the table
   EXPECT_EQ(TestingSQLUtil::ExecuteSQLQuery("DROP TABLE test;"),

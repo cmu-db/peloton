@@ -139,7 +139,7 @@ void PostgresProtocolHandler::PutTupleDescriptor(
   responses.push_back(std::move(pkt));
 }
 
-void PostgresProtocolHandler::SendDataRows(std::vector<StatementResult> &results,
+void PostgresProtocolHandler::SendDataRows(std::vector<ResultValue> &results,
                                  int colcount) {
   if (results.empty() || colcount == 0) return;
 
@@ -151,7 +151,7 @@ void PostgresProtocolHandler::SendDataRows(std::vector<StatementResult> &results
     pkt->msg_type = NetworkMessageType::DATA_ROW;
     PacketPutInt(pkt.get(), colcount, 2);
     for (int j = 0; j < colcount; j++) {
-      auto content = results[i * colcount + j].second;
+      auto content = results[i * colcount + j];
       if (content.size() == 0) {
         // content is NULL
         PacketPutInt(pkt.get(), NULL_CONTENT_SIZE, 4);
@@ -255,7 +255,7 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
   protocol_type_ = NetworkProtocolType::POSTGRES_PSQL;
 
   if (!query.empty()) {
-    std::vector<StatementResult> result;
+    std::vector<ResultValue> result;
     std::vector<FieldInfo> tuple_descriptor;
     std::string error_message;
 

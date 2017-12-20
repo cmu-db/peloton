@@ -75,7 +75,7 @@ class OperatorTranslator {
   CodeGen &GetCodeGen() const;
 
   // Get the pointer to the Manager from the runtime state parameter
-  llvm::Value *GetCatalogPtr() const;
+  llvm::Value *GetStorageManagerPtr() const;
 
   // Retrieve a parameter from the runtime state
   llvm::Value *LoadStatePtr(const RuntimeState::StateID &state_id) const;

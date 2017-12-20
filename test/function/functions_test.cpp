@@ -100,7 +100,7 @@ TEST_F(FunctionsTests, FuncCallTest) {
 
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (4.0, 'abc');");
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_affected;
@@ -108,18 +108,18 @@ TEST_F(FunctionsTests, FuncCallTest) {
   TestingSQLUtil::ExecuteSQLQuery("SELECT SQRT(a), SUBSTR(s,1,2) FROM test;",
                                   result, tuple_descriptor, rows_affected,
                                   error_message);
-  EXPECT_EQ(1, result[0].second.size());
-  EXPECT_EQ('2', result[0].second[0]);
-  EXPECT_EQ(2, result[1].second.size());
-  EXPECT_EQ(result[1].second[0], 'a');
-  EXPECT_EQ(result[1].second[1], 'b');
+  EXPECT_EQ(1, result[0].size());
+  EXPECT_EQ('2', result[0][0]);
+  EXPECT_EQ(2, result[1].size());
+  EXPECT_EQ(result[1][0], 'a');
+  EXPECT_EQ(result[1][1], 'b');
 
   TestingSQLUtil::ExecuteSQLQuery("SELECT ASCII(s) FROM test;", result,
                                   tuple_descriptor, rows_affected,
                                   error_message);
-  EXPECT_EQ(2, result[0].second.size());
-  EXPECT_EQ('9', result[0].second[0]);
-  EXPECT_EQ('7', result[0].second[1]);
+  EXPECT_EQ(2, result[0].size());
+  EXPECT_EQ('9', result[0][0]);
+  EXPECT_EQ('7', result[0][1]);
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
