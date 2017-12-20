@@ -32,12 +32,14 @@ void NetworkConnection::Init(short event_flags, NotifiableTask *handler) {
   this->handler = handler;
 
   if (network_event != nullptr)
-    handler->UnregisterEvent(network_event);
-  network_event = handler->RegisterEvent(sock_fd_, event_flags, CallbackUtil::OnNetworkEvent, this);
+    handler->UpdateEvent(network_event, sock_fd_, event_flags, CallbackUtil::OnNetworkEvent, this);
+  else
+    network_event = handler->RegisterEvent(sock_fd_, event_flags, CallbackUtil::OnNetworkEvent, this);
 
   if (workpool_event != nullptr)
-    handler->UnregisterEvent(workpool_event);
-  workpool_event = handler->RegisterManualEvent(CallbackUtil::OnNetworkEvent, this);
+    handler->UpdateManualEvent(workpool_event, CallbackUtil::OnNetworkEvent, this);
+  else
+    workpool_event = handler->RegisterManualEvent(CallbackUtil::OnNetworkEvent, this);
 
   //TODO:: should put the initialization else where.. check correctness first.
   traffic_cop_.SetTaskCallback([](void *arg) {
@@ -50,8 +52,7 @@ void NetworkConnection::Init(short event_flags, NotifiableTask *handler) {
 
 // Update event
 bool NetworkConnection::UpdateEvent(short flags) {
-  handler->UnregisterEvent(network_event);
-  network_event = handler->RegisterEvent(sock_fd_, flags, CallbackUtil::OnNetworkEvent, this);
+  handler->UpdateEvent(network_event, sock_fd_, flags, CallbackUtil::OnNetworkEvent, this);
   // TODO(tianyu) Not propagate error since we will change to exceptions anyway.
   return true;
 }

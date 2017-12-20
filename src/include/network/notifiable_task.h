@@ -122,9 +122,8 @@ public:
    */
   struct event *RegisterSignalEvent(int signal,
                                     event_callback_fn callback,
-                                    void *arg,
-                                    const struct timeval *timeout = nullptr) {
-    return RegisterEvent(signal, EV_SIGNAL|EV_PERSIST, callback, arg, timeout);
+                                    void *arg) {
+    return RegisterEvent(signal, EV_SIGNAL|EV_PERSIST, callback, arg);
   }
 
   /**
@@ -147,6 +146,46 @@ public:
 
   struct event *RegisterManualEvent(event_callback_fn callback, void *arg) {
     return RegisterEvent(-1, EV_PERSIST, callback, arg);
+  }
+
+  // TODO(tianyu): Perhaps we can automatically reuse events?
+  /**
+   * // TODO(tianyu) Write documentation
+   * @param event
+   * @param fd
+   * @param flags
+   * @param callback
+   * @param arg
+   * @param timeout
+   */
+  void UpdateEvent(struct event *event,
+                   int fd,
+                   short flags,
+                   event_callback_fn callback,
+                   void *arg,
+                   const struct timeval *timeout = nullptr) {
+    PL_ASSERT(!(events_.find(event) == events_.end()));
+    if (event_del(event) == -1) {
+      LOG_ERROR("Failed to delete event");
+      PL_ASSERT(false);
+    }
+    auto result = event_assign(event, base_, fd,
+                               flags, callback, arg);
+    if (result != 0) {
+      LOG_ERROR("Failed to update workpool event");
+      PL_ASSERT(false);
+    }
+    event_add(event, timeout);
+  }
+
+  /**
+   * // TODO(tianyu) Write documentation
+   * @param event
+   * @param callback
+   * @param arg
+   */
+  void UpdateManualEvent(struct event *event, event_callback_fn callback, void *arg) {
+    UpdateEvent(event, -1, EV_PERSIST, callback, arg);
   }
 
   /**
@@ -190,9 +229,8 @@ private:
   struct event_base *base_;
   bool is_started = false;
   bool is_closed = false;
-  int sock_fd = -1;
 
-  // For deallocation
+  // struct event management
   std::unordered_set<struct event *> events_;
 };
 
