@@ -75,7 +75,7 @@ class NetworkManager {
   static NetworkConnection *GetConnection(const int &connfd);
 
   static void CreateNewConnection(const int &connfd, short ev_flags,
-                                  NotifiableTask *thread, ConnState init_state);
+                                  NotifiableTask *thread);
 
   void StartServer();
 

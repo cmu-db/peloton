@@ -46,14 +46,12 @@ void CallbackUtil::OnNewConnectionDispatch(evutil_socket_t new_conn_recv_fd,
         LOG_DEBUG("Creating new socket fd:%d", item->new_conn_fd);
         /* create a new connection object */
         NetworkManager::CreateNewConnection(item->new_conn_fd, item->event_flags,
-                                            static_cast<NotifiableTask *>(handler),
-                                            ConnState::CONN_READ);
+                                            static_cast<NotifiableTask *>(handler));
       } else {
         LOG_DEBUG("Reusing socket fd:%d", item->new_conn_fd);
         /* otherwise reset and reuse the existing conn object */
         conn->Reset();
-        conn->Init(item->event_flags, static_cast<NotifiableTask *>(handler),
-                   ConnState::CONN_READ);
+        conn->Init(item->event_flags, static_cast<NotifiableTask *>(handler));
       }
       break;
     }

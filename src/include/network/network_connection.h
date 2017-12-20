@@ -48,16 +48,15 @@ namespace network {
  */
 class NetworkConnection {
 public:
-  inline NetworkConnection(int sock_fd, short event_flags, NotifiableTask *thread,
-                        ConnState init_state)
-      : sock_fd_(sock_fd), state_machine_{init_state} {
-    Init(event_flags, thread, init_state);
+  inline NetworkConnection(int sock_fd, short event_flags, NotifiableTask *thread)
+      : sock_fd_(sock_fd), state_machine_(ConnState::CONN_READ) {
+    Init(event_flags, thread);
   }
 
   /* Reuse this object for a new connection. We could be assigned to a
    * new thread, change thread reference.
    */
-  void Init(short event_flags, NotifiableTask *handler, ConnState init_state);
+  void Init(short event_flags, NotifiableTask *handler);
 
   /* refill_read_buffer - Used to repopulate read buffer with a fresh
    * batch of data from the socket
