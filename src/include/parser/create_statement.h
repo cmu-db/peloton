@@ -48,7 +48,9 @@ struct ColumnDefinition {
     TEXT,
 
     VARCHAR,
-    VARBINARY
+    VARBINARY,
+
+    DATE
   };
 
   ColumnDefinition(DataType type) : type(type) {
@@ -64,6 +66,77 @@ struct ColumnDefinition {
   }
 
   virtual ~ColumnDefinition() {}
+
+  static DataType StrToDataType(char* str) {
+    DataType data_type;
+    // Transform column type
+    if ((strcmp(str, "int") == 0) || (strcmp(str, "int4") == 0)) {
+      data_type = ColumnDefinition::DataType::INT;
+    } else if (strcmp(str, "varchar") == 0) {
+      data_type = ColumnDefinition::DataType::VARCHAR;
+    } else if (strcmp(str, "int8") == 0) {
+      data_type = ColumnDefinition::DataType::BIGINT;
+    } else if (strcmp(str, "int2") == 0) {
+      data_type = ColumnDefinition::DataType::SMALLINT;
+    } else if (strcmp(str, "timestamp") == 0) {
+      data_type = ColumnDefinition::DataType::TIMESTAMP;
+    } else if (strcmp(str, "bool") == 0) {
+      data_type = ColumnDefinition::DataType::BOOLEAN;
+    } else if (strcmp(str, "bpchar") == 0) {
+      data_type = ColumnDefinition::DataType::CHAR;
+    } else if ((strcmp(str, "double") == 0) || (strcmp(str, "float8") == 0)) {
+      data_type = ColumnDefinition::DataType::DOUBLE;
+    } else if ((strcmp(str, "real") == 0) || (strcmp(str, "float4") == 0)) {
+      data_type = ColumnDefinition::DataType::FLOAT;
+    } else if (strcmp(str, "numeric") == 0) {
+      data_type = ColumnDefinition::DataType::DECIMAL;
+    } else if (strcmp(str, "text") == 0) {
+      data_type = ColumnDefinition::DataType::TEXT;
+    } else if (strcmp(str, "tinyint") == 0) {
+      data_type = ColumnDefinition::DataType::TINYINT;
+    } else if (strcmp(str, "varbinary") == 0) {
+      data_type = ColumnDefinition::DataType::VARBINARY;
+    } else if (strcmp(str, "date") == 0) {
+      data_type = ColumnDefinition::DataType::DATE;
+    } else {
+      throw NotImplementedException(
+          StringUtil::Format("DataType %s not supported yet...\n", str));
+    }
+    return data_type;
+  }
+
+  static type::TypeId StrToValueType(char* str) {
+    type::TypeId value_type;
+    // Transform column type
+    if ((strcmp(str, "int") == 0) || (strcmp(str, "int4") == 0)) {
+      value_type = type::TypeId::INTEGER;
+    } else if ((strcmp(str, "varchar") == 0) || (strcmp(str, "bpchar") == 0) ||
+               (strcmp(str, "text") == 0)) {
+      value_type = type::TypeId::VARCHAR;
+    } else if (strcmp(str, "int8") == 0) {
+      value_type = type::TypeId::BIGINT;
+    } else if (strcmp(str, "int2") == 0) {
+      value_type = type::TypeId::SMALLINT;
+    } else if (strcmp(str, "timestamp") == 0) {
+      value_type = type::TypeId::TIMESTAMP;
+    } else if (strcmp(str, "bool") == 0) {
+      value_type = type::TypeId::BOOLEAN;
+    } else if ((strcmp(str, "double") == 0) || (strcmp(str, "float8") == 0) ||
+               (strcmp(str, "real") == 0) || (strcmp(str, "float4") == 0) ||
+               (strcmp(str, "numeric") == 0)) {
+      value_type = type::TypeId::DECIMAL;
+    } else if (strcmp(str, "tinyint") == 0) {
+      value_type = type::TypeId::TINYINT;
+    } else if (strcmp(str, "varbinary") == 0) {
+      value_type = type::TypeId::VARBINARY;
+    } else if (strcmp(str, "date") == 0) {
+      value_type = type::TypeId::DATE;
+    } else {
+      throw NotImplementedException(
+          StringUtil::Format("DataType %s not supported yet...\n", str));
+    }
+    return value_type;
+  }
 
   static type::TypeId GetValueType(DataType type) {
     switch (type) {
@@ -98,6 +171,9 @@ struct ColumnDefinition {
 
       case DataType::VARBINARY:
         return type::TypeId::VARBINARY;
+
+      case DataType::DATE:
+        return type::TypeId::DATE;
 
       case DataType::INVALID:
       case DataType::PRIMARY:

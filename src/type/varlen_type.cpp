@@ -228,6 +228,8 @@ Value VarlenType::CastAs(const Value &val, const TypeId type_id) const {
       return ValueFactory::CastAsDecimal(val);
     case TypeId::TIMESTAMP:
       return ValueFactory::CastAsTimestamp(val);
+    case TypeId::DATE:
+      return ValueFactory::CastAsDate(val);
     case TypeId::VARCHAR:
     case TypeId::VARBINARY:
       return val.Copy();

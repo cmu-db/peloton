@@ -475,6 +475,34 @@ expression::AbstractExpression* PostgresParser::ConstTransform(A_Const* root) {
   return ValueTransform(root->val);
 }
 
+expression::AbstractExpression* PostgresParser::TypeCastTransform(TypeCast* root) {
+  expression::AbstractExpression* result = nullptr;
+  type::Value source_value;
+  switch (root->arg->type) {
+    case T_A_Const: {
+      std::unique_ptr<expression::ConstantValueExpression> source_expr_ptr(
+        reinterpret_cast<expression::ConstantValueExpression*>(
+          ConstTransform(reinterpret_cast<A_Const*>(root->arg))));
+      source_value = source_expr_ptr.get()->GetValue();
+      break;
+    }
+    default:
+      throw NotImplementedException(StringUtil::Format(
+          "TypeCast Source of type %d not supported yet...\n",
+          root->arg->type));
+  }
+
+  TypeName* type_name = root->typeName;
+  char* name = (reinterpret_cast<value*>(type_name->names->tail->data.ptr_value)
+                    ->val.str);
+  LOG_INFO("name is: %s", name);
+  type::VarlenType temp(StringToTypeId("INVALID"));
+  result = new expression::ConstantValueExpression(
+                temp.CastAs(source_value,
+                            ColumnDefinition::StrToValueType(name)));
+  return result;
+}
+
 expression::AbstractExpression* PostgresParser::FuncCallTransform(
     FuncCall* root) {
   expression::AbstractExpression* result = nullptr;
@@ -791,43 +819,13 @@ expression::AbstractExpression* PostgresParser::WhenTransform(Node* root) {
 // This helper function takes in a Postgres ColumnDef object and transforms
 // it into a Peloton ColumnDefinition object
 parser::ColumnDefinition* PostgresParser::ColumnDefTransform(ColumnDef* root) {
-  parser::ColumnDefinition::DataType data_type;
   TypeName* type_name = root->typeName;
   char* name = (reinterpret_cast<value*>(type_name->names->tail->data.ptr_value)
                     ->val.str);
   parser::ColumnDefinition* result = nullptr;
 
-  // Transform column type
-  if ((strcmp(name, "int") == 0) || (strcmp(name, "int4") == 0)) {
-    data_type = ColumnDefinition::DataType::INT;
-  } else if (strcmp(name, "varchar") == 0) {
-    data_type = ColumnDefinition::DataType::VARCHAR;
-  } else if (strcmp(name, "int8") == 0) {
-    data_type = ColumnDefinition::DataType::BIGINT;
-  } else if (strcmp(name, "int2") == 0) {
-    data_type = ColumnDefinition::DataType::SMALLINT;
-  } else if (strcmp(name, "timestamp") == 0) {
-    data_type = ColumnDefinition::DataType::TIMESTAMP;
-  } else if (strcmp(name, "bool") == 0) {
-    data_type = ColumnDefinition::DataType::BOOLEAN;
-  } else if (strcmp(name, "bpchar") == 0) {
-    data_type = ColumnDefinition::DataType::CHAR;
-  } else if ((strcmp(name, "double") == 0) || (strcmp(name, "float8") == 0)) {
-    data_type = ColumnDefinition::DataType::DOUBLE;
-  } else if ((strcmp(name, "real") == 0) || (strcmp(name, "float4") == 0)) {
-    data_type = ColumnDefinition::DataType::FLOAT;
-  } else if (strcmp(name, "numeric") == 0) {
-    data_type = ColumnDefinition::DataType::DECIMAL;
-  } else if (strcmp(name, "text") == 0) {
-    data_type = ColumnDefinition::DataType::TEXT;
-  } else if (strcmp(name, "tinyint") == 0) {
-    data_type = ColumnDefinition::DataType::TINYINT;
-  } else if (strcmp(name, "varbinary") == 0) {
-    data_type = ColumnDefinition::DataType::VARBINARY;
-  } else {
-    throw NotImplementedException(
-        StringUtil::Format("Column DataType %s not supported yet...\n", name));
-  }
+  parser::ColumnDefinition::DataType data_type =
+    parser::ColumnDefinition::StrToDataType(name);
 
   // Transform Varchar len
   result = new ColumnDefinition(root->colname, data_type);
@@ -1208,6 +1206,9 @@ PostgresParser::ValueListsTransform(List* root) {
       else if (expr->type == T_A_Const)
         cur_result.push_back(std::unique_ptr<expression::AbstractExpression>(
             ConstTransform((A_Const*)expr)));
+      else if (expr->type == T_TypeCast)
+        cur_result.push_back(std::unique_ptr<expression::AbstractExpression>(
+            TypeCastTransform((TypeCast*)expr)));
       else if (expr->type == T_SetToDefault) {
         // TODO handle default type
         // add corresponding expression for
