@@ -44,13 +44,12 @@ struct ColumnDefinition {
     DECIMAL,
     BOOLEAN,
     ADDRESS,
+    DATE,
     TIMESTAMP,
     TEXT,
 
     VARCHAR,
-    VARBINARY,
-
-    DATE
+    VARBINARY
   };
 
   ColumnDefinition(DataType type) : type(type) {
