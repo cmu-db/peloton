@@ -81,9 +81,7 @@ void PlanExecutor::ExecutePlan(
         // Construct the returned results
         for (auto &tuple : tuples) {
           for (unsigned int i = 0; i < tile->GetColumnCount(); i++) {
-            auto res = ResultValue();
-            PlanExecutor::copyFromTo(tuple[i], res);
-            result.push_back(std::move(res));
+            result.push_back(std::move(tuple[i]));
             LOG_TRACE("column content: %s",
                       tuple[i].c_str() != nullptr ?  tuple[i].c_str() : "-emptry-");
           }
@@ -129,12 +127,10 @@ void PlanExecutor::ExecutePlan(
   const auto &results = consumer.GetOutputTuples();
   for (const auto &tuple : results) {
     for (uint32_t i = 0; i < tuple.tuple_.size(); i++) {
-      auto res = ResultValue();
       auto column_val = tuple.GetValue(i);
       auto str = column_val.IsNull() ? "" : column_val.ToString();
-      PlanExecutor::copyFromTo(str, res);
       LOG_TRACE("column content: [%s]", str.c_str());
-      result.push_back(std::move(res));
+      result.push_back(std::move(str));
     }
   }
   p_status.m_processed = executor_context->num_processed;

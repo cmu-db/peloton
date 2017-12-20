@@ -53,18 +53,6 @@ class PlanExecutor {
  public:
   PlanExecutor(){};
 
-  // Copy From
-  static inline void copyFromTo(const std::string &src,
-                                std::vector<unsigned char> &dst) {
-    if (src.c_str() == nullptr) {
-      return;
-    }
-    size_t len = src.size();
-    for (unsigned int i = 0; i < len; i++) {
-      dst.push_back((unsigned char)src[i]);
-    }
-  }
-
   /*
    * @brief Use std::vector<type::Value> as params to make it more elegant
    * for network
