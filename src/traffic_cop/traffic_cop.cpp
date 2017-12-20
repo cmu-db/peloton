@@ -130,54 +130,6 @@ ResultType TrafficCop::AbortQueryHelper() {
   }
 }
 
-ResultType TrafficCop::ExecuteStatement(
-    const std::shared_ptr<Statement> &statement,
-    const std::vector<type::Value> &params, UNUSED_ATTRIBUTE const bool unnamed,
-    std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
-    const std::vector<int> &result_format, std::vector<StatementResult> &result,
-    int &rows_changed, UNUSED_ATTRIBUTE std::string &error_message,
-    const size_t thread_id UNUSED_ATTRIBUTE) {
-  if (settings::SettingsManager::GetInt(settings::SettingId::stats_mode) !=
-      STATS_TYPE_INVALID) {
-    stats::BackendStatsContext::GetInstance()->InitQueryMetric(statement,
-                                                               param_stats);
-  }
-  LOG_TRACE("Execute Statement of name: %s",
-            statement->GetStatementName().c_str());
-  LOG_TRACE("Execute Statement of query: %s",
-            statement->GetQueryString().c_str());
-  LOG_TRACE("Execute Statement Plan:\n%s",
-            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
-  LOG_TRACE("Execute Statement Query Type: %s",
-            statement->GetQueryTypeString().c_str());
-  LOG_TRACE("----QueryType: %d--------", (int)statement->GetQueryType());
-  try {
-    switch (statement->GetQueryType()) {
-      case QueryType::QUERY_BEGIN:
-        LOG_TRACE("QUERY_BEGIN");
-        return BeginQueryHelper(thread_id);
-      case QueryType::QUERY_COMMIT:
-        return CommitQueryHelper();
-      case QueryType::QUERY_ROLLBACK:
-        return AbortQueryHelper();
-      default:
-        LOG_TRACE("1");
-        ExecuteStatementPlan(statement->GetPlanTree(), params, result,
-                             result_format, thread_id);
-        LOG_TRACE("2");
-        if (is_queuing_) {
-          return ResultType::QUEUING;
-        }
-        // if in ExecuteStatementPlan, these is no need to queue task, like
-        // 'BEGIN', directly return result
-        return ExecuteStatementGetResult(rows_changed);
-    }
-  } catch (Exception &e) {
-    error_message = e.what();
-    return ResultType::FAILURE;
-  }
-}
-
 ResultType TrafficCop::ExecuteStatementGetResult() {
   LOG_TRACE("Statement executed. Result: %s",
             ResultTypeToString(p_status_.m_result).c_str());
@@ -214,8 +166,13 @@ executor::ExecuteResult TrafficCop::ExecuteHelper(
     PL_ASSERT(task_callback_arg_);
     ExecutePlanArg *arg =
         new ExecutePlanArg(plan, txn, params, result, result_format, p_status_);
-    threadpool::MonoQueuePool::GetInstance().SubmitTask(
-        ExecutePlanWrapper, arg, task_callback_, task_callback_arg_);
+    threadpool::MonoQueuePool::GetInstance().SubmitTask([](void *arg_ptr) {
+      auto arg = reinterpret_cast<ExecutePlanArg *>(arg_ptr);
+      executor::PlanExecutor::ExecutePlan(arg->plan_, arg->txn_, arg->params_,
+                                          arg->result_, arg->result_format_,
+                                          arg->p_status_);
+      delete (arg);
+    }, arg, task_callback_, task_callback_arg_);
     LOG_TRACE("Submit Task into MonoQueuePool");
 
     is_queuing_ = true;
@@ -229,20 +186,6 @@ executor::ExecuteResult TrafficCop::ExecuteHelper(
   LOG_TRACE("Check Tcop_txn_state Size After ExecuteStatementPlan %lu",
             tcop_txn_state_.size());
   return p_status_;
-}
-
-void TrafficCop::ExecutePlanWrapper(void *arg_ptr) {
-  LOG_TRACE("Entering ExecutePlanWrapper");
-  PL_ASSERT(arg_ptr);
-  ExecutePlanArg *arg = (ExecutePlanArg *)arg_ptr;
-  PL_ASSERT(arg->plan_);
-  PL_ASSERT(arg->txn_);
-  //  PL_ASSERT(&arg->result_);
-  PL_ASSERT(&arg->params_);
-  executor::PlanExecutor::ExecutePlan(arg->plan_, arg->txn_, arg->params_,
-                                      arg->result_, arg->result_format_,
-                                      arg->p_status_);
-  delete (arg);
 }
 
 void TrafficCop::ExecuteStatementPlanGetResult() {
@@ -278,98 +221,6 @@ void TrafficCop::ExecuteStatementPlanGetResult() {
           p_status_.m_result = ResultType::ABORTED;
         }
     }
-  }
-}
-
-std::shared_ptr<Statement> TrafficCop::PrepareStatement(
-    const std::string &statement_name, const std::string &query_string,
-    UNUSED_ATTRIBUTE std::string &error_message,
-    const size_t thread_id UNUSED_ATTRIBUTE) {
-  LOG_TRACE("Prepare Statement name: %s", statement_name.c_str());
-  LOG_TRACE("Prepare Statement query: %s", query_string.c_str());
-
-  std::shared_ptr<Statement> statement(
-      new Statement(statement_name, query_string));
-  // We can learn transaction's states, BEGIN, COMMIT, ABORT, or ROLLBACK from
-  // member variables, tcop_txn_state_. We can also get single-statement txn or
-  // multi-statement txn from member variable single_statement_txn_
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  // --multi-statements except BEGIN in a transaction
-  if (!tcop_txn_state_.empty()) {
-    single_statement_txn_ = false;
-    // multi-statment txn has been aborted, just skip this query,
-    // and do not need to parse or execute this query anymore.
-    // Do not return nullptr in case that 'COMMIT' cannot be execute,
-    // because nullptr will directly return ResultType::FAILURE to
-    // packet_manager
-    if (tcop_txn_state_.top().second == ResultType::ABORTED) {
-      return statement;
-    }
-  } else {
-    // Begin new transaction when received single-statement query or "BEGIN"
-    // from multi-statement query
-    if (statement->GetQueryType() ==
-        QueryType::QUERY_BEGIN) {  // only begin a new transaction
-      // note this transaction is not single-statement transaction
-      LOG_TRACE("BEGIN");
-      single_statement_txn_ = false;
-    } else {
-      // single statement
-      LOG_TRACE("SINGLE TXN");
-      single_statement_txn_ = true;
-    }
-    auto txn = txn_manager.BeginTransaction(thread_id);
-    // this shouldn't happen
-    if (txn == nullptr) {
-      LOG_TRACE("Begin txn failed");
-    }
-    // initialize the current result as success
-    tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
-  }
-
-  try {
-    auto &peloton_parser = parser::PostgresParser::GetInstance();
-    auto sql_stmt = peloton_parser.BuildParseTree(query_string);
-    if (sql_stmt->is_valid == false) {
-      throw ParserException("Error parsing SQL statement");
-    }
-    LOG_DEBUG("Optimizer Build Peloton Plan Tree...");
-    auto plan = optimizer_->BuildPelotonPlanTree(
-        sql_stmt, default_database_name_, tcop_txn_state_.top().first);
-    statement->SetPlanTree(plan);
-    // Get the tables that our plan references so that we know how to
-    // invalidate it at a later point when the catalog changes
-    const std::set<oid_t> table_oids =
-        planner::PlanUtil::GetTablesReferenced(plan.get());
-    statement->SetReferencedTables(table_oids);
-
-    for (auto &stmt : sql_stmt->GetStatements()) {
-      LOG_TRACE("SQLStatement: %s", stmt->GetInfo().c_str());
-      if (stmt->GetType() == StatementType::SELECT) {
-        auto tuple_descriptor = GenerateTupleDescriptor(stmt.get());
-        statement->SetTupleDescriptor(tuple_descriptor);
-      }
-      break;
-    }
-
-    if (statement->GetPlanTree().get() != nullptr) {
-      LOG_TRACE("Statement Prepared: %s", statement->GetInfo().c_str());
-      LOG_INFO("%s", planner::PlanUtil::GetInfo(statement->GetPlanTree().get())
-          .c_str());
-    }
-
-    return statement;
-  } catch (Exception &e) {
-    error_message = e.what();
-    if (single_statement_txn_) {
-      LOG_DEBUG("SINGLE ABORT!");
-      AbortQueryHelper();
-    } else {  // multi-statment txn
-      if (tcop_txn_state_.top().second != ResultType::ABORTED) {
-        tcop_txn_state_.top().second = ResultType::ABORTED;
-      }
-    }
-    return nullptr;
   }
 }
 

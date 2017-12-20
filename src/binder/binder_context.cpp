@@ -84,7 +84,8 @@ bool BinderContext::GetColumnPosTuple(
 
     oid_t col_pos = column_object->GetColumnId();
     col_pos_tuple =
-        std::make_tuple(table_obj->database_oid, table_obj->table_oid, col_pos);
+        std::make_tuple(table_obj->GetDatabaseOid(), table_obj->GetTableOid(), 
+                        col_pos);
     value_type = column_object->GetColumnType();
     return true;
   } catch (CatalogException& e) {
@@ -178,11 +179,11 @@ void BinderContext::GenerateAllColumnExpressions(
     for (size_t i = 0; i < col_cnt; i++) {
       auto col_obj = table_obj->GetColumnObject(i);
       auto tv_expr = new expression::TupleValueExpression(
-          std::string(col_obj->column_name), std::string(entry.first));
-      tv_expr->SetValueType(col_obj->column_type);
+          std::string(col_obj->GetColumnName()), std::string(entry.first));
+      tv_expr->SetValueType(col_obj->GetColumnType());
       tv_expr->DeduceExpressionName();
-      tv_expr->SetBoundOid(table_obj->database_oid, table_obj->table_oid,
-                           col_obj->column_id);
+      tv_expr->SetBoundOid(table_obj->GetDatabaseOid(), table_obj->GetTableOid(),
+                           col_obj->GetColumnId());
       exprs.emplace_back(tv_expr);
     }
   }

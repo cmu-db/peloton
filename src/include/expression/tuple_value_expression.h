@@ -117,14 +117,14 @@ class TupleValueExpression : public AbstractExpression {
     // we need to know whether A.id is from A.id or B.id. In this case,
     // A.id and B.id have the same bound oids since they refer to the same table
     // but they have different table alias.
-    if ((table_name_.empty() xor tup_expr->table_name_.empty()) ||
-        col_name_.empty() xor tup_expr->col_name_.empty())
+    if ((table_name_.empty() xor other.table_name_.empty()) ||
+        col_name_.empty() xor other.col_name_.empty())
       return false;
-    bool res = bound_obj_id_ == tup_expr->bound_obj_id_;
-    if (!table_name_.empty() && !tup_expr->table_name_.empty())
-      res = table_name_ == tup_expr->table_name_ && res;
-    if (!col_name_.empty() && !tup_expr->col_name_.empty())
-      res = col_name_ == tup_expr->col_name_ && res;
+    bool res = bound_obj_id_ == other.bound_obj_id_;
+    if (!table_name_.empty() && !other.table_name_.empty())
+      res = table_name_ == other.table_name_ && res;
+    if (!col_name_.empty() && !other.col_name_.empty())
+      res = col_name_ == other.col_name_ && res;
     return res;
   }
 

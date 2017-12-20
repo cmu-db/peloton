@@ -56,7 +56,7 @@ bool LogicalGet::operator==(const BaseOperatorNode &r) {
   const LogicalGet &node = *static_cast<const LogicalGet *>(&r);
   if (predicates.size() != node.predicates.size()) return false;
   for (size_t i = 0; i < predicates.size(); i++) {
-    if (!predicates[i].expr->Equals(node.predicates[i].expr.get()))
+    if (!predicates[i].expr->ExactlyEquals(*node.predicates[i].expr.get()))
       return false;
   }
   return get_id == node.get_id;
@@ -112,7 +112,7 @@ bool LogicalFilter::operator==(const BaseOperatorNode &r) {
   const LogicalFilter &node = *static_cast<const LogicalFilter *>(&r);
   if (predicates.size() != node.predicates.size()) return false;
   for (size_t i = 0; i < predicates.size(); i++) {
-    if (!predicates[i].expr->Equals(node.predicates[i].expr.get()))
+    if (!predicates[i].expr->ExactlyEquals(*node.predicates[i].expr.get()))
       return false;
   }
   return true;
@@ -156,7 +156,7 @@ bool LogicalDependentJoin::operator==(const BaseOperatorNode &r) {
       *static_cast<const LogicalDependentJoin *>(&r);
   if (join_predicates.size() != node.join_predicates.size()) return false;
   for (size_t i = 0; i < join_predicates.size(); i++) {
-    if (!join_predicates[i].expr->Equals(node.join_predicates[i].expr.get()))
+    if (!join_predicates[i].expr->ExactlyEquals(*node.join_predicates[i].expr.get()))
       return false;
   }
   return true;
@@ -189,7 +189,7 @@ bool LogicalMarkJoin::operator==(const BaseOperatorNode &r) {
   const LogicalMarkJoin &node = *static_cast<const LogicalMarkJoin *>(&r);
   if (join_predicates.size() != node.join_predicates.size()) return false;
   for (size_t i = 0; i < join_predicates.size(); i++) {
-    if (!join_predicates[i].expr->Equals(node.join_predicates[i].expr.get()))
+    if (!join_predicates[i].expr->ExactlyEquals(*node.join_predicates[i].expr.get()))
       return false;
   }
   return true;
@@ -223,7 +223,7 @@ bool LogicalSingleJoin::operator==(const BaseOperatorNode &r) {
   const LogicalSingleJoin &node = *static_cast<const LogicalSingleJoin *>(&r);
   if (join_predicates.size() != node.join_predicates.size()) return false;
   for (size_t i = 0; i < join_predicates.size(); i++) {
-    if (!join_predicates[i].expr->Equals(node.join_predicates[i].expr.get()))
+    if (!join_predicates[i].expr->ExactlyEquals(*node.join_predicates[i].expr.get()))
       return false;
   }
   return true;
@@ -256,7 +256,7 @@ bool LogicalInnerJoin::operator==(const BaseOperatorNode &r) {
   const LogicalInnerJoin &node = *static_cast<const LogicalInnerJoin *>(&r);
   if (join_predicates.size() != node.join_predicates.size()) return false;
   for (size_t i = 0; i < join_predicates.size(); i++) {
-    if (!join_predicates[i].expr->Equals(node.join_predicates[i].expr.get()))
+    if (!join_predicates[i].expr->ExactlyEquals(*node.join_predicates[i].expr.get()))
       return false;
   }
   return true;
@@ -411,7 +411,7 @@ bool PhysicalSeqScan::operator==(const BaseOperatorNode &r) {
   const PhysicalSeqScan &node = *static_cast<const PhysicalSeqScan *>(&r);
   if (predicates.size() != node.predicates.size()) return false;
   for (size_t i = 0; i < predicates.size(); i++) {
-    if (!predicates[i].expr->Equals(node.predicates[i].expr.get()))
+    if (!predicates[i].expr->ExactlyEquals(*node.predicates[i].expr.get()))
       return false;
   }
   return get_id == node.get_id;
@@ -461,7 +461,7 @@ bool PhysicalIndexScan::operator==(const BaseOperatorNode &r) {
     return false;
 
   for (size_t i = 0; i < predicates.size(); i++) {
-    if (!predicates[i].expr->Equals(node.predicates[i].expr.get()))
+    if (!predicates[i].expr->ExactlyEquals(*node.predicates[i].expr.get()))
       return false;
   }
   return get_id == node.get_id;
@@ -558,13 +558,14 @@ bool PhysicalInnerNLJoin::operator==(const BaseOperatorNode &r) {
       right_keys.size() != node.right_keys.size())
     return false;
   for (size_t i = 0; i < left_keys.size(); i++) {
-    if (!left_keys[i]->Equals(node.left_keys[i].get())) return false;
+    if (!left_keys[i]->ExactlyEquals(*node.left_keys[i].get())) return false;
   }
   for (size_t i = 0; i < right_keys.size(); i++) {
-    if (!right_keys[i]->Equals(node.right_keys[i].get())) return false;
+    if (!right_keys[i]->ExactlyEquals(*node.right_keys[i].get())) return false;
   }
   for (size_t i = 0; i < join_predicates.size(); i++) {
-    if (!join_predicates[i].expr->Equals(node.join_predicates[i].expr.get()))
+    if (!join_predicates[i].expr->
+        ExactlyEquals(*node.join_predicates[i].expr.get()))
       return false;
   }
   return true;
@@ -634,13 +635,14 @@ bool PhysicalInnerHashJoin::operator==(const BaseOperatorNode &r) {
       right_keys.size() != node.right_keys.size())
     return false;
   for (size_t i = 0; i < left_keys.size(); i++) {
-    if (!left_keys[i]->Equals(node.left_keys[i].get())) return false;
+    if (!left_keys[i]->ExactlyEquals(*node.left_keys[i].get())) return false;
   }
   for (size_t i = 0; i < right_keys.size(); i++) {
-    if (!right_keys[i]->Equals(node.right_keys[i].get())) return false;
+    if (!right_keys[i]->ExactlyEquals(*node.right_keys[i].get())) return false;
   }
   for (size_t i = 0; i < join_predicates.size(); i++) {
-    if (!join_predicates[i].expr->Equals(node.join_predicates[i].expr.get()))
+    if (!join_predicates[i].expr->
+        ExactlyEquals(*node.join_predicates[i].expr.get()))
       return false;
   }
   return true;

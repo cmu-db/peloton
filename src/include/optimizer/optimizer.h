@@ -102,19 +102,6 @@ class Optimizer : public AbstractOptimizer {
    */
   QueryInfo GetQueryInfo(parser::SQLStatement *tree);
 
-  /* OptimizerPlanToPlannerPlan - convert a tree of physical operators to
-   *     a Peloton planner plan for execution.
-   *
-   * plan: an optimizer plan composed soley of physical operators
-   * return: the corresponding planner plan
-   */
-  // std::unique_ptr<planner::AbstractPlan> OptimizerPlanToPlannerPlan(
-  //     std::shared_ptr<OperatorExpression> plan,
-  //     std::shared_ptr<PropertySet> &requirements,
-  //     std::vector<std::shared_ptr<PropertySet>> &required_input_props,
-  //     std::vector<std::unique_ptr<planner::AbstractPlan>> &children_plans,
-  //     std::vector<ExprMap> &children_expr_map, ExprMap *output_expr_map);
-
   /* ChooseBestPlan - retrieve the lowest cost tree of physical operators for
    *     the given properties
    *
@@ -128,117 +115,6 @@ class Optimizer : public AbstractOptimizer {
   std::unique_ptr<planner::AbstractPlan> ChooseBestPlan(
       GroupID id, std::shared_ptr<PropertySet> required_props,
       std::vector<expression::AbstractExpression *> required_cols);
-
-  /* OptimizeGroup - explore the space of plans for the group to produce the
-   *     most optimal physical operator tree and place it in the memo. After
-   *     invoking this method, a call to ChooseBestPlan with the same
-   *     PropertySet will retreive the optimal plan for the group.
-   *
-   * id: the group to optimize
-   * requirements: the set of requirements the optimal physical operator tree
-   *     must fulfill
-   */
-  //  void OptimizeGroup(GroupID id, PropertySet requirements);
-
-  /* OptimizeExpression - produce all equivalent logical and physical
-   *     operators for this expression by applying transformation rules that
-   *     match the expression. If a new logical operator is produced as a result
-   *     of a transformation rule, that expression will also be optimized with
-   *     the same set of requirements. If a new physical operator is produced,
-   *     then the new expression will be costed.
-   *
-   * gexpr: the group expression to optimize
-   * requirements: the set of requirements the most optimal expression produced
-   *     must fulfill
-   */
-  //  void OptimizeExpression(std::shared_ptr<GroupExpression> gexpr,
-  //                          PropertySet requirements);
-
-  /*
-   * Get alternatives of the <output properties, input child property list> pair
-   */
-  //  std::vector<std::pair<PropertySet, std::vector<PropertySet>>>
-  //  DeriveChildProperties(std::shared_ptr<GroupExpression> gexpr,
-  //                        PropertySet requirements);
-
-  /*
-   * Derive the cost and stats for a group expression given the input/output
-   * properties and the children's stats and costs
-   */
-  //  void DeriveCostAndStats(std::shared_ptr<GroupExpression> gexpr,
-  //                          const PropertySet &output_properties,
-  //                          const std::vector<PropertySet>
-  //                          &input_properties_list,
-  //                          std::vector<std::shared_ptr<Stats>> child_stats,
-  //                          std::vector<double> child_costs);
-
-  /* EnforceProperty - Enforce a physical property to a gruop expression.
-   * Typically this will lead to adding another physical operator on top of the
-   * current group expression.
-   *
-   * gexpr: the group expression to enforce property on
-   * property: the required property
-   *
-   * return: the new group expression that has the enforced property
-   */
-  //  std::shared_ptr<GroupExpression> EnforceProperty(
-  //      std::shared_ptr<GroupExpression> gexpr, PropertySet
-  //      &output_properties,
-  //      const std::shared_ptr<Property> property, PropertySet &requirements);
-
-  /* ExploreGroup - exploration equivalent of OptimizeGroup.
-   *
-   * id: the group to explore
-   */
-  //  void ExploreGroup(GroupID id);
-
-  /* ExploreExpression - similar to OptimizeExpression except that it does not
-   *     cost new physical operator expressions. The purpose of exploration is
-   *     to produce logical expressions for child groups that can be used to
-   *     match rules being applied on a parent group.
-   *
-   * gexpr: the group expression to apply rules to
-   */
-  //  void ExploreExpression(std::shared_ptr<GroupExpression> gexpr);
-
-  /* ImplementGroup - Implement physical operators of a group
-   *
-   * id: the group to explore
-   */
-  //  void ImplementGroup(GroupID id);
-
-  /* ImplementExpression - Implement physical operators of a group expression
-   *
-   * gexpr: the group expression to apply rules to
-   */
-  //  void ImplementExpression(std::shared_ptr<GroupExpression> gexpr);
-
-  //////////////////////////////////////////////////////////////////////////////
-  /// Rule application
-  //  std::vector<std::shared_ptr<GroupExpression>> TransformExpression(
-  //      std::shared_ptr<GroupExpression> gexpr, const Rule &rule);
-
-  //////////////////////////////////////////////////////////////////////////////
-  /// Memo insertion
-  //  std::shared_ptr<GroupExpression> MakeGroupExpression(
-  //      std::shared_ptr<OperatorExpression> expr);
-
-  //  std::vector<GroupID> MemoTransformedChildren(
-  //      std::shared_ptr<OperatorExpression> expr);
-
-  //  GroupID MemoTransformedExpression(std::shared_ptr<OperatorExpression>
-  //  expr);
-
-  //  bool RecordTransformedExpression(std::shared_ptr<OperatorExpression> expr,
-  //                                   std::shared_ptr<GroupExpression> &gexpr);
-
-  //  bool RecordTransformedExpression(std::shared_ptr<OperatorExpression> expr,
-  //                                   std::shared_ptr<GroupExpression> &gexpr,
-  //                                   GroupID target_group);
-
-  //////////////////////////////////////////////////////////////////////////////
-  /// Other Helper functions
-  //  Property *GenerateNewPropertyCols(PropertySet requirements);
 
   //////////////////////////////////////////////////////////////////////////////
   /// Metadata

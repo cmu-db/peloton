@@ -59,8 +59,9 @@ class BinderContext {
 
   static bool HasTables(std::shared_ptr<BinderContext> current_context) {
     if (current_context == nullptr) return false;
-    if (!current_context->table_alias_map.empty()) return true;
-    return HasTables(current_context->upper_context);
+    if (!current_context->regular_table_alias_map_.empty() || 
+        !current_context->nested_table_alias_map_.empty()) return true;
+    return false;
   }
 
   // Construct the column position tuple given column name and the

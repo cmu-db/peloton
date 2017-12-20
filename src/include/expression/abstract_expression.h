@@ -257,7 +257,7 @@ class ExprEqualCmp {
  public:
   inline bool operator()(AbstractExpression *expr1,
                          AbstractExpression *expr2) const {
-    return expr1->Equals(expr2);
+    return expr1->ExactlyEquals(*expr2);
   }
 };
 

@@ -42,8 +42,8 @@ bool PropertySort::operator>=(const Property &r) const {
   for (size_t r_sort_col_idx = 0; r_sort_col_idx < r_num_sort_columns;
        ++r_sort_col_idx) {
     while (l_sort_col_idx < l_num_sort_columns &&
-           !sort_columns_[l_sort_col_idx]->Equals(
-               r_sort.sort_columns_[r_sort_col_idx])) {
+           !sort_columns_[l_sort_col_idx]->ExactlyEquals(
+               *r_sort.sort_columns_[r_sort_col_idx])) {
       ++l_sort_col_idx;
     }
     if (l_sort_col_idx == l_num_sort_columns ||
