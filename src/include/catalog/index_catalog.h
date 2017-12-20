@@ -75,7 +75,7 @@ class IndexCatalog : public AbstractCatalog {
   // Global Singleton, only the first call requires passing parameters.
   static IndexCatalog *GetInstance(storage::Database *pg_catalog = nullptr,
                                    type::AbstractPool *pool = nullptr,
-                                   concurrency::Transaction *txn = nullptr);
+                                   concurrency::TransactionContext *txn = nullptr);
 
   inline oid_t GetNextOid() { return oid_++ | INDEX_OID_MASK; }
 
@@ -86,23 +86,23 @@ class IndexCatalog : public AbstractCatalog {
                    oid_t table_oid, IndexType index_type,
                    IndexConstraintType index_constraint, bool unique_keys,
                    std::vector<oid_t> indekeys, type::AbstractPool *pool,
-                   concurrency::Transaction *txn);
-  bool DeleteIndex(oid_t index_oid, concurrency::Transaction *txn);
+                   concurrency::TransactionContext *txn);
+  bool DeleteIndex(oid_t index_oid, concurrency::TransactionContext *txn);
 
  private:
   //===--------------------------------------------------------------------===//
   // Read Related API
   //===--------------------------------------------------------------------===//
   std::shared_ptr<IndexCatalogObject> GetIndexObject(
-      oid_t index_oid, concurrency::Transaction *txn);
+      oid_t index_oid, concurrency::TransactionContext *txn);
   std::shared_ptr<IndexCatalogObject> GetIndexObject(
-      const std::string &index_name, concurrency::Transaction *txn);
+      const std::string &index_name, concurrency::TransactionContext *txn);
   const std::unordered_map<oid_t, std::shared_ptr<IndexCatalogObject>>
-  GetIndexObjects(oid_t table_oid, concurrency::Transaction *txn);
+  GetIndexObjects(oid_t table_oid, concurrency::TransactionContext *txn);
 
  private:
   IndexCatalog(storage::Database *pg_catalog, type::AbstractPool *pool,
-               concurrency::Transaction *txn);
+               concurrency::TransactionContext *txn);
 
   std::unique_ptr<catalog::Schema> InitializeSchema();
 

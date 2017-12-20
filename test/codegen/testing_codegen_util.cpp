@@ -87,7 +87,7 @@ std::unique_ptr<catalog::Schema> PelotonCodeGenTest::CreateTestSchema(
 }
 
 // Create all the test tables, but don't load any data
-void PelotonCodeGenTest::CreateTestTables(concurrency::Transaction *txn) {
+void PelotonCodeGenTest::CreateTestTables(concurrency::TransactionContext *txn) {
   auto *catalog = catalog::Catalog::GetInstance();
 
   for (int i = 0; i < 4; i++) {

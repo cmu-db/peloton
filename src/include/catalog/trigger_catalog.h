@@ -50,7 +50,7 @@ class TriggerCatalog : public AbstractCatalog {
   ~TriggerCatalog();
 
   // Global Singleton
-  static TriggerCatalog &GetInstance(concurrency::Transaction *txn = nullptr);
+  static TriggerCatalog &GetInstance(concurrency::TransactionContext *txn = nullptr);
 
   //===--------------------------------------------------------------------===//
   // write Related API
@@ -59,31 +59,31 @@ class TriggerCatalog : public AbstractCatalog {
                      int16_t trigger_type, std::string proc_oid,
                      std::string function_arguments, type::Value fire_condition,
                      type::Value timestamp, type::AbstractPool *pool,
-                     concurrency::Transaction *txn);
+                     concurrency::TransactionContext *txn);
 
   ResultType DropTrigger(const std::string &database_name,
                          const std::string &table_name,
                          const std::string &trigger_name,
-                         concurrency::Transaction *txn);
+                         concurrency::TransactionContext *txn);
 
   bool DeleteTriggerByName(const std::string &trigger_name, oid_t table_oid,
-                           concurrency::Transaction *txn);
+                           concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
   // get triggers for a specific table; one table may have multiple triggers
   // of the same type
   //===--------------------------------------------------------------------===//
   std::unique_ptr<trigger::TriggerList> GetTriggersByType(
-      oid_t table_oid, int16_t trigger_type, concurrency::Transaction *txn);
+      oid_t table_oid, int16_t trigger_type, concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
   // get all types of triggers for a specific table
   //===--------------------------------------------------------------------===//
   std::unique_ptr<trigger::TriggerList> GetTriggers(
-      oid_t table_oid, concurrency::Transaction *txn);
+      oid_t table_oid, concurrency::TransactionContext *txn);
 
   oid_t GetTriggerOid(std::string trigger_name, oid_t table_oid,
-                      concurrency::Transaction *txn);
+                      concurrency::TransactionContext *txn);
 
   enum ColumnId {
     TRIGGER_OID = 0,
@@ -97,7 +97,7 @@ class TriggerCatalog : public AbstractCatalog {
   };
 
  private:
-  TriggerCatalog(concurrency::Transaction *txn);
+  TriggerCatalog(concurrency::TransactionContext *txn);
 
   oid_t GetNextOid() { return oid_++ | TRIGGER_OID_MASK; }
 

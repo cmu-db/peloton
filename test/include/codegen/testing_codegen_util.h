@@ -62,7 +62,7 @@ class PelotonCodeGenTest : public PelotonTest {
       const;
 
   // Create the test tables
-  void CreateTestTables(concurrency::Transaction *txn);
+  void CreateTestTables(concurrency::TransactionContext *txn);
 
   // Load the given table with the given number of rows
   void LoadTestTable(oid_t table_id, uint32_t num_rows,

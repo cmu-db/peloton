@@ -18,7 +18,7 @@
 
 #include "catalog/manager.h"
 #include "catalog/schema.h"
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/logical_tile.h"
 

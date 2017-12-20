@@ -14,17 +14,17 @@
 
 #include "codegen/proxy/proxy.h"
 #include "codegen/proxy/type_builder.h"
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 
 namespace peloton {
 namespace codegen {
 
-PROXY(Transaction) {
-  DECLARE_MEMBER(0, char[sizeof(concurrency::Transaction)], opaque);
+PROXY(TransactionContext) {
+  DECLARE_MEMBER(0, char[sizeof(concurrency::TransactionContext)], opaque);
   DECLARE_TYPE;
 };
 
-TYPE_BUILDER(Transaction, concurrency::Transaction);
+TYPE_BUILDER(TransactionContext, concurrency::TransactionContext);
 
 }  // namespace codegen
 }  // namespace peloton

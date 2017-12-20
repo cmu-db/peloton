@@ -22,7 +22,7 @@ namespace binder {
 
 void BinderContext::AddTable(parser::TableRef* table_ref,
                              const std::string default_database_name,
-                             concurrency::Transaction* txn) {
+                             concurrency::TransactionContext* txn) {
   // using catalog object to retrieve meta-data
   table_ref->TryBindDatabaseName(default_database_name);
   auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
@@ -41,7 +41,7 @@ void BinderContext::AddTable(parser::TableRef* table_ref,
 
 void BinderContext::AddTable(const std::string db_name,
                              const std::string table_name,
-                             concurrency::Transaction* txn) {
+                             concurrency::TransactionContext* txn) {
   // using catalog object to retrieve meta-data
   auto table_object =
       catalog::Catalog::GetInstance()->GetTableObject(db_name, table_name, txn);
@@ -58,7 +58,7 @@ void BinderContext::AddTable(const std::string db_name,
 bool BinderContext::GetColumnPosTuple(
     std::string& col_name, std::tuple<oid_t, oid_t>& table_id_tuple,
     std::tuple<oid_t, oid_t, oid_t>& col_pos_tuple, type::TypeId& value_type,
-    concurrency::Transaction* txn) {
+    concurrency::TransactionContext* txn) {
   try {
     auto db_oid = std::get<0>(table_id_tuple);
     auto table_oid = std::get<1>(table_id_tuple);
@@ -82,7 +82,7 @@ bool BinderContext::GetColumnPosTuple(
 bool BinderContext::GetColumnPosTuple(
     std::shared_ptr<BinderContext> current_context, std::string& col_name,
     std::tuple<oid_t, oid_t, oid_t>& col_pos_tuple, std::string& table_alias,
-    type::TypeId& value_type, concurrency::Transaction* txn) {
+    type::TypeId& value_type, concurrency::TransactionContext* txn) {
   bool find_matched = false;
   while (current_context != nullptr && !find_matched) {
     for (auto entry : current_context->table_alias_map) {

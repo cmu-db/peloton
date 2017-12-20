@@ -36,7 +36,7 @@ namespace binder {
 
 class BindNodeVisitor : public SqlNodeVisitor {
  public:
-  BindNodeVisitor(concurrency::Transaction *txn,
+  BindNodeVisitor(concurrency::TransactionContext *txn,
                   std::string default_database_name);
 
   void BindNameToNode(parser::SQLStatement *tree);
@@ -69,11 +69,11 @@ class BindNodeVisitor : public SqlNodeVisitor {
   void Visit(expression::OperatorExpression *expr) override;
   void Visit(expression::AggregateExpression *expr) override;
 
-  void SetTxn(concurrency::Transaction *txn) { this->txn_ = txn; }
+  void SetTxn(concurrency::TransactionContext *txn) { this->txn_ = txn; }
 
  private:
   std::shared_ptr<BinderContext> context_;
-  concurrency::Transaction *txn_;
+  concurrency::TransactionContext *txn_;
   std::string default_database_name_;
 };
 

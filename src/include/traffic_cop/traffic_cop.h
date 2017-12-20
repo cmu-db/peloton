@@ -20,7 +20,7 @@
 
 #include "common/portal.h"
 #include "common/statement.h"
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "executor/plan_executor.h"
 #include "optimizer/abstract_optimizer.h"
 #include "parser/sql_statement.h"
@@ -93,7 +93,7 @@ class TrafficCop {
   int BindParameters(std::vector<std::pair<int, std::string>> &parameters,
                      Statement **stmt, std::string &error_message);
 
-  void SetTcopTxnState(concurrency::Transaction * txn) {
+  void SetTcopTxnState(concurrency::TransactionContext * txn) {
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
 
@@ -206,7 +206,7 @@ class TrafficCop {
 
   // pair of txn ptr and the result so-far for that txn
   // use a stack to support nested-txns
-  typedef std::pair<concurrency::Transaction *, ResultType> TcopTxnState;
+  typedef std::pair<concurrency::TransactionContext *, ResultType> TcopTxnState;
 
   std::stack<TcopTxnState> tcop_txn_state_;
 
@@ -238,7 +238,7 @@ class TrafficCop {
 //===--------------------------------------------------------------------===//
 struct ExecutePlanArg {
   inline ExecutePlanArg(const std::shared_ptr<planner::AbstractPlan> plan,
-                        concurrency::Transaction *txn,
+                        concurrency::TransactionContext *txn,
                         const std::vector<type::Value> &params,
                         std::vector<StatementResult> &result,
                         const std::vector<int> &result_format,
@@ -254,7 +254,7 @@ struct ExecutePlanArg {
 
 
   std::shared_ptr<planner::AbstractPlan> plan_;
-  concurrency::Transaction *txn_;
+  concurrency::TransactionContext *txn_;
   const std::vector<type::Value> &params_;
   std::vector<StatementResult> &result_;
   const std::vector<int> &result_format_;

@@ -78,7 +78,7 @@ void TupleSamplesStorage::AddSamplesTable(
 }
 
 ResultType TupleSamplesStorage::DeleteSamplesTable(
-    oid_t database_id, oid_t table_id, concurrency::Transaction *txn) {
+    oid_t database_id, oid_t table_id, concurrency::TransactionContext *txn) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   bool single_statement_txn = false;
   if (txn == nullptr) {
@@ -114,7 +114,7 @@ ResultType TupleSamplesStorage::DeleteSamplesTable(
 
 bool TupleSamplesStorage::InsertSampleTuple(
     storage::DataTable *samples_table, std::unique_ptr<storage::Tuple> tuple,
-    concurrency::Transaction *txn) {
+    concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     return false;
   }
@@ -130,7 +130,7 @@ bool TupleSamplesStorage::InsertSampleTuple(
 }
 
 ResultType TupleSamplesStorage::CollectSamplesForTable(
-    storage::DataTable *data_table, concurrency::Transaction *txn) {
+    storage::DataTable *data_table, concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     LOG_TRACE("Do not have transaction to collect samples for table: %s",
               data_table->GetName().c_str());
@@ -146,7 +146,7 @@ ResultType TupleSamplesStorage::CollectSamplesForTable(
 std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
 TupleSamplesStorage::GetTuplesWithSeqScan(storage::DataTable *data_table,
                                           std::vector<oid_t> column_offsets,
-                                          concurrency::Transaction *txn) {
+                                          concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     LOG_TRACE("Do not have transaction to perform the sequential scan");
     return nullptr;

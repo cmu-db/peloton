@@ -98,7 +98,7 @@ class Exception : public std::runtime_error {
       case ExceptionType::SERIALIZATION:
         return "Serialization";
       case ExceptionType::TRANSACTION:
-        return "Transaction";
+        return "TransactionContext";
       case ExceptionType::NOT_IMPLEMENTED:
         return "Not implemented";
       case ExceptionType::EXPRESSION:

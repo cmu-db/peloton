@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "planner/abstract_plan.h"
 
 namespace peloton {

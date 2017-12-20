@@ -34,7 +34,7 @@ namespace peloton {
 typedef std::map<oid_t, std::pair<oid_t, oid_t>> column_map_type;
 
 namespace concurrency {
-class Transaction;
+class TransactionContext;
 }
 
 namespace catalog {
@@ -66,7 +66,7 @@ class AbstractTable : public Printable {
   // insert tuple in table. the pointer to the index entry is returned as
   // index_entry_ptr.
   virtual ItemPointer InsertTuple(const Tuple *tuple,
-                                  concurrency::Transaction *transaction,
+                                  concurrency::TransactionContext *transaction,
                                   ItemPointer **index_entry_ptr = nullptr) = 0;
 
   // designed for tables without primary key. e.g., output table used by

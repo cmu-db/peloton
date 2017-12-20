@@ -12,7 +12,7 @@
 
 #include "codegen/testing_codegen_util.h"
 #include "common/harness.h"
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager.h"
 #include "planner/insert_plan.h"
 #include "planner/seq_scan_plan.h"

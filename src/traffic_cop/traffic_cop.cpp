@@ -151,7 +151,7 @@ executor::ExecuteResult TrafficCop::ExecuteHelper(
     const std::vector<type::Value> &params,
     std::vector<StatementResult> &result, const std::vector<int> &result_format,
     const size_t thread_id) {
-  concurrency::Transaction *txn;
+  concurrency::TransactionContext *txn;
 
   auto &curr_state = GetCurrentTxnState();
   // check and begin txn here, partly because tests directly call
@@ -221,14 +221,14 @@ void TrafficCop::ExecuteStatementPlanGetResult() {
     switch (txn_result) {
       case ResultType::SUCCESS:
         // Commit single statement
-        LOG_TRACE("Commit Transaction");
+        LOG_TRACE("Commit TransactionContext");
         p_status_.m_result = CommitQueryHelper();
         break;
 
       case ResultType::FAILURE:
       default:
         // Abort
-        LOG_TRACE("Abort Transaction");
+        LOG_TRACE("Abort TransactionContext");
         if (single_statement_txn_ == true) {
           LOG_TRACE("Tcop_txn_state size: %lu", tcop_txn_state_.size());
           p_status_.m_result = AbortQueryHelper();
