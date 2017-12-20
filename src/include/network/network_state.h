@@ -22,10 +22,7 @@ enum class ConnState {
   CONN_WAIT,       // State for waiting for some event to happen
   CONN_PROCESS,    // State that runs the network protocol on received data
   CONN_CLOSING,    // State for closing the client connection
-  CONN_CLOSED,     // State for closed connection
-  CONN_INVALID,    // Invalid STate
   CONN_GET_RESULT, // State when triggered by worker thread that completes the task.
-  CONN_PROCESS_INITIAL// State to process initial packets and detemine protocols
 };
 
 enum class ReadState {
@@ -39,6 +36,18 @@ enum class WriteState {
   WRITE_NOT_READY,  // Socket not ready to write
   WRITE_ERROR,      // Some error happened
 };
+
+enum class Transition {
+  NONE,
+  WAKEUP,
+  PROCEED,
+  NEED_DATA,
+  // TODO(tianyu) generalize this symbol, this is currently only used in process
+  GET_RESULT,
+  // TODO(tianyu) replace this with exceptions
+  ERROR
+};
+
 
 }
 }

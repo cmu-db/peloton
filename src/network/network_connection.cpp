@@ -14,6 +14,9 @@
 #include <include/network/postgres_protocol_handler.h>
 #include "network/network_connection.h"
 #include "network/protocol_handler_factory.h"
+#include "network/network_callback_util.h"
+#include "network/network_master_thread.h"
+#include "network/connection_handle.h"
 
 #define SSL_MESSAGE_VERNO 80877103
 #define PROTO_MAJOR_VERSION(x) x >> 16
@@ -23,20 +26,19 @@ namespace network {
 
 void NetworkConnection::Init(short event_flags, NetworkThread *thread,
                           ConnState init_state) {
-  SetNonBlocking(sock_fd);
-  SetTCPNoDelay(sock_fd);
+  SetNonBlocking(sock_fd_);
+  SetTCPNoDelay(sock_fd_);
 
   protocol_handler_ = nullptr;
 
   this->event_flags = event_flags;
-  this->thread = thread;
-  this->state = init_state;
+  this->thread_ = thread;
 
   this->thread_id = thread->GetThreadID();
 
   // clear out packet
   if (network_event == nullptr) {
-    network_event = event_new(thread->GetEventBase(), sock_fd, event_flags,
+    network_event = event_new(thread->GetEventBase(), sock_fd_, event_flags,
                       CallbackUtil::EventHandler, this);
   } else {
     // Reuse the event object if already initialized
@@ -45,7 +47,7 @@ void NetworkConnection::Init(short event_flags, NetworkThread *thread,
       PL_ASSERT(false);
     }
 
-    auto result = event_assign(network_event, thread->GetEventBase(), sock_fd,
+    auto result = event_assign(network_event, thread->GetEventBase(), sock_fd_,
                                event_flags,
                                CallbackUtil::EventHandler, this);
 
@@ -75,31 +77,24 @@ void NetworkConnection::Init(short event_flags, NetworkThread *thread,
   event_add(workpool_event, nullptr);
 
   //TODO:: should put the initialization else where.. check correctness first.
-  traffic_cop_.SetTaskCallback(TriggerStateMachine, workpool_event);
-}
+  traffic_cop_.SetTaskCallback([](void *arg) {
+    struct event* event = static_cast<struct event*>(arg);
+    event_active(event, EV_WRITE, 0);
+  }, workpool_event);
 
-void NetworkConnection::TriggerStateMachine(void* arg) {
-  struct event* event = static_cast<struct event*>(arg);
-  event_active(event, EV_WRITE, 0);
-}
+  state_machine_ = ConnectionHandleStateMachine(init_state);
 
-void NetworkConnection::TransitState(ConnState next_state) {
-#ifdef LOG_TRACE_ENABLED
-  if (next_state != state)
-  LOG_TRACE("conn %d transit to state %d", sock_fd, (int)next_state);
-#endif
-  state = next_state;
 }
 
 // Update event
 bool NetworkConnection::UpdateEvent(short flags) {
-  auto base = thread->GetEventBase();
+  auto base = thread_->GetEventBase();
   if (event_del(network_event) == -1) {
     LOG_ERROR("Failed to delete event");
     return false;
   }
   auto result =
-      event_assign(network_event, base, sock_fd, flags,
+      event_assign(network_event, base, sock_fd_, flags,
                    CallbackUtil::EventHandler, (void *)this);
 
   if (result != 0) {
@@ -148,8 +143,8 @@ WriteState NetworkConnection::WritePackets() {
   return WriteState::WRITE_COMPLETE;
 }
 
-ReadState NetworkConnection::FillReadBuffer() {
-  ReadState result = ReadState::READ_NO_DATA_RECEIVED;
+Transition NetworkConnection::FillReadBuffer() {
+  Transition result = Transition::NEED_DATA;
   ssize_t bytes_read = 0;
   bool done = false;
 
@@ -187,7 +182,7 @@ ReadState NetworkConnection::FillReadBuffer() {
                                 rbuf_.GetMaxSize() - rbuf_.buf_size);
       }
       else {
-        bytes_read = read(sock_fd, rbuf_.GetPtr(rbuf_.buf_size),
+        bytes_read = read(sock_fd_, rbuf_.GetPtr(rbuf_.buf_size),
                         rbuf_.GetMaxSize() - rbuf_.buf_size);
         LOG_TRACE("When filling read buffer, read %ld bytes", bytes_read);
       }
@@ -195,10 +190,10 @@ ReadState NetworkConnection::FillReadBuffer() {
       if (bytes_read > 0) {
         // read succeeded, update buffer size
         rbuf_.buf_size += bytes_read;
-        result = ReadState::READ_DATA_RECEIVED;
+        result = Transition::PROCEED;
       } else if (bytes_read == 0) {
         // Read failed
-        return ReadState::READ_ERROR;
+        return Transition::ERROR;
       } else if (bytes_read < 0) {
         // related to non-blocking?
         if (errno == EAGAIN || errno == EWOULDBLOCK) {
@@ -243,7 +238,7 @@ ReadState NetworkConnection::FillReadBuffer() {
               LOG_TRACE("Error Reading: UNKNOWN");
           }
           // some other error occured
-          return ReadState::READ_ERROR;
+          return Transition::ERROR;
         }
       }
     }
@@ -263,7 +258,7 @@ WriteState NetworkConnection::FlushWriteBuffer() {
       }
       else {
         written_bytes =
-           write(sock_fd, &wbuf_.buf[wbuf_.buf_flush_ptr], wbuf_.buf_size);
+           write(sock_fd_, &wbuf_.buf[wbuf_.buf_flush_ptr], wbuf_.buf_size);
       }
       // Write failed
       if (written_bytes < 0) {
@@ -585,16 +580,15 @@ WriteState NetworkConnection::BufferWriteBytesContent(OutputPacket *pkt) {
   return WriteState::WRITE_COMPLETE;
 }
 
-void NetworkConnection::CloseSocket() {
-  LOG_DEBUG("Attempt to close the connection %d", sock_fd);
+Transition NetworkConnection::CloseSocket() {
+  LOG_DEBUG("Attempt to close the connection %d", sock_fd_);
   // Remove listening event
   event_del(network_event);
   event_del(workpool_event);
   // event_free(event);
-  TransitState(ConnState::CONN_CLOSED);
   Reset();
   for (;;) {
-    int status = close(sock_fd);
+    int status = close(sock_fd_);
     if (status < 0) {
       // failed close
       if (errno == EINTR) {
@@ -602,8 +596,8 @@ void NetworkConnection::CloseSocket() {
         continue;
       }
     }
-    LOG_DEBUG("Already Closed the connection %d", sock_fd);
-    return;
+    LOG_DEBUG("Already Closed the connection %d", sock_fd_);
+    return Transition::NONE;
   }
 }
 
@@ -615,202 +609,132 @@ void NetworkConnection::Reset() {
   if (protocol_handler_ != nullptr) {
     protocol_handler_->Reset();
   }
-  state = ConnState::CONN_INVALID;
   traffic_cop_.Reset();
   next_response_ = 0;
   ssl_sent_ = false;
 }
 
-void NetworkConnection::StateMachine(NetworkConnection *conn) {
-  bool done = false;
+Transition NetworkConnection::HandleConnListening() {
+  struct sockaddr_storage addr;
+  socklen_t addrlen = sizeof(addr);
 
-  while (done == false) {
-    LOG_TRACE("current state: %d", (int)conn->state);
-    switch (conn->state) {
-      case ConnState::CONN_LISTENING: {
-        struct sockaddr_storage addr;
-        socklen_t addrlen = sizeof(addr);
-        int new_conn_fd =
-            accept(conn->sock_fd, (struct sockaddr *)&addr, &addrlen);
-        if (new_conn_fd == -1) {
-          LOG_ERROR("Failed to accept");
-        }
-        (static_cast<NetworkMasterThread *>(conn->thread))
-            ->DispatchConnection(new_conn_fd, EV_READ | EV_PERSIST);
-        done = true;
-        break;
+  int new_conn_fd =
+      accept(sock_fd_, (struct sockaddr *)&addr, &addrlen);
+  if (new_conn_fd == -1) {
+    LOG_ERROR("Failed to accept");
+  }
+
+  (static_cast<NetworkMasterThread *>(thread_))
+      ->DispatchConnection(new_conn_fd, EV_READ | EV_PERSIST);
+
+  return Transition::NONE;
+}
+
+Transition NetworkConnection::Wait() {
+  // TODO(tianyu): Maybe we don't need this state? Also, this name is terrible
+  if (UpdateEvent(EV_READ | EV_PERSIST) == false) {
+    LOG_ERROR("Failed to update event, closing");
+    return Transition::ERROR;
+  }
+  return Transition::PROCEED;
+}
+
+Transition NetworkConnection::Process() {
+  // TODO(tianyu): further simplify this logic
+  if (protocol_handler_ == nullptr) {
+    // Process initial
+    if (ssl_sent_) {
+      // start SSL handshake
+      // TODO: consider free conn_SSL_context
+      conn_SSL_context = SSL_new(NetworkManager::ssl_context);
+      if (SSL_set_fd(conn_SSL_context, sock_fd_) == 0) {
+        LOG_ERROR("Failed to set SSL fd");
+        PL_ASSERT(false);
       }
-
-      case ConnState::CONN_READ: {
-        auto res = conn->FillReadBuffer();
-        switch (res) {
-          case ReadState::READ_DATA_RECEIVED:
-            // wait for some other event
-            if (conn->protocol_handler_ == nullptr) {
-              conn->TransitState(ConnState::CONN_PROCESS_INITIAL);
-            }
-            else {
-              conn->TransitState(ConnState::CONN_PROCESS);
-            }
-            break;
-
-          case ReadState::READ_NO_DATA_RECEIVED:
-            // process what we read
-            conn->TransitState(ConnState::CONN_WAIT);
-            break;
-
-          case ReadState::READ_ERROR:
-            // fatal error for the connection
-            conn->TransitState(ConnState::CONN_CLOSING);
-            break;
-        }
-        break;
+      int ssl_accept_ret;
+      if ((ssl_accept_ret = SSL_accept(conn_SSL_context)) <= 0) {
+        LOG_ERROR("Failed to accept (handshake) client SSL context.");
+        LOG_ERROR("ssl error: %d", SSL_get_error(conn_SSL_context, ssl_accept_ret));
+        // TODO: consider more about proper action
+        PL_ASSERT(false);
+        return Transition::ERROR;
       }
+      LOG_ERROR("SSL handshake completed");
+      ssl_sent_ = false;
+    }
 
-      case ConnState::CONN_WAIT: {
-        if (conn->UpdateEvent(EV_READ | EV_PERSIST) == false) {
-          LOG_ERROR("Failed to update event, closing");
-          conn->TransitState(ConnState::CONN_CLOSING);
-          break;
-        }
-
-        conn->TransitState(ConnState::CONN_READ);
-        done = true;
-        break;
-      }
-
-      case ConnState::CONN_PROCESS_INITIAL: {
-        if (conn->ssl_sent_) {
-          // start SSL handshake
-          // TODO: consider free conn_SSL_context
-          conn->conn_SSL_context = SSL_new(NetworkManager::ssl_context);
-          if (SSL_set_fd(conn->conn_SSL_context, conn->sock_fd) == 0) {
-            LOG_ERROR("Failed to set SSL fd");
-            PL_ASSERT(false);
-          }
-          int ssl_accept_ret;
-          if ((ssl_accept_ret = SSL_accept(conn->conn_SSL_context)) <= 0) {
-            LOG_ERROR("Failed to accept (handshake) client SSL context.");
-            LOG_ERROR("ssl error: %d", SSL_get_error(conn->conn_SSL_context, ssl_accept_ret));
-            // TODO: consider more about proper action
-            PL_ASSERT(false);
-            conn->TransitState(ConnState::CONN_CLOSED);
-          }
-          LOG_ERROR("SSL handshake completed");
-          conn->ssl_sent_ = false;
-        }
-
-        switch (conn->ProcessInitial()) {
-          case ProcessResult::COMPLETE: {
-            conn->TransitState(ConnState::CONN_WRITE);
-            break;
-          }
-          case ProcessResult::MORE_DATA_REQUIRED: {
-            conn->TransitState(ConnState::CONN_WAIT);
-            break;
-          }
-          case ProcessResult::TERMINATE: {
-            conn->TransitState(ConnState::CONN_CLOSING);
-            break;
-          }
-          default: // PROCESSING is impossible to happens in initial packets
-            break;
-        }
-        break;
-      }
-
-      case ConnState::CONN_PROCESS: {
-        ProcessResult status;
-
-        status = conn->protocol_handler_->Process(conn->rbuf_,
-                                                        (size_t) conn->thread_id);
-
-        switch (status) {
-          case ProcessResult::MORE_DATA_REQUIRED:
-            conn->TransitState(ConnState::CONN_WAIT);
-            break;
-          case ProcessResult::TERMINATE:
-            // packet processing can't proceed further
-            conn->TransitState(ConnState::CONN_CLOSING);
-            break;
-          case ProcessResult::COMPLETE:
-            // We should have responses ready to send
-            conn->TransitState(ConnState::CONN_WRITE);
-            break;
-          case ProcessResult::PROCESSING: {
-            if (event_del(conn->network_event) == -1) {
-              //TODO: There may be better way to handle this error
-              LOG_ERROR("Failed to delete event");
-              PL_ASSERT(false);
-            }
-            LOG_TRACE("ProcessResult: queueing");
-            conn->TransitState(ConnState::CONN_GET_RESULT);
-            done = true;
-            break;
-          }
-        }
-
-        break;
-      }
-
-      case ConnState::CONN_GET_RESULT: {
-        if (event_add(conn->network_event, nullptr) < 0) {
-          LOG_ERROR("Failed to add event");
+    switch (ProcessInitial()) {
+      // TODO(tianyu): Should convert to use Transition in the top level method
+      case ProcessResult::COMPLETE:
+        return Transition::PROCEED;
+      case ProcessResult::MORE_DATA_REQUIRED:
+        return Transition::NEED_DATA;
+      case ProcessResult::TERMINATE:
+        return Transition::ERROR;
+      default: // PROCESSING is impossible to happens in initial packets
+        LOG_ERROR("Unexpected ProcessResult");
+        return Transition::ERROR;
+    }
+  } else {
+    ProcessResult status = protocol_handler_->Process(rbuf_, (size_t) thread_id);
+    switch (status) {
+      case ProcessResult::MORE_DATA_REQUIRED:
+        return Transition::NEED_DATA;
+      case ProcessResult::COMPLETE:
+        return Transition::PROCEED;
+      case ProcessResult::PROCESSING: {
+        if (event_del(network_event) == -1) {
+          //TODO: There may be better way to handle this error
+          LOG_ERROR("Failed to delete event");
           PL_ASSERT(false);
         }
-        conn->protocol_handler_->GetResult();
-        conn->traffic_cop_.SetQueuing(false);
-        conn->TransitState(ConnState::CONN_WRITE);
-        break;
+        LOG_TRACE("ProcessResult: queueing");
+        return Transition::GET_RESULT;
       }
-
-      case ConnState::CONN_WRITE: {
-        // examine write packets result
-        switch (conn->WritePackets()) {
-          case WriteState::WRITE_COMPLETE: {
-            if (!conn->UpdateEvent(EV_READ | EV_PERSIST)) {
-              LOG_ERROR("Failed to update event, closing");
-              conn->TransitState(ConnState::CONN_CLOSING);
-              break;
-            }
-            conn->TransitState(ConnState::CONN_PROCESS);
-            break;
-          }
-
-          case WriteState::WRITE_NOT_READY: {
-            // we can't write right now. Exit state machine
-            // and wait for next callback
-            done = true;
-            break;
-          }
-
-          case WriteState::WRITE_ERROR: {
-            LOG_ERROR("Error during write, closing connection");
-            conn->TransitState(ConnState::CONN_CLOSING);
-            break;
-          }
-        }
-        break;
-      }
-
-      case ConnState::CONN_CLOSING: {
-        conn->CloseSocket();
-        done = true;
-        break;
-      }
-
-      case ConnState::CONN_CLOSED: {
-        done = true;
-        break;
-      }
-
-      case ConnState::CONN_INVALID: {
-        PL_ASSERT(false);
-        break;
-      }
+      case ProcessResult::TERMINATE:
+        return Transition::ERROR;
     }
   }
-  LOG_TRACE("END of while loop");
+
+  // Should not be here
+  return Transition::ERROR;
 }
+
+Transition NetworkConnection::ProcessWrite() {
+  // TODO(tianyu): Should convert to use Transition in the top level method
+  switch (WritePackets()) {
+    case WriteState::WRITE_COMPLETE: {
+      if (!UpdateEvent(EV_READ | EV_PERSIST)) {
+        LOG_ERROR("Failed to update event, closing");
+        return Transition::ERROR;
+      }
+      return Transition::PROCEED;
+    }
+
+    case WriteState::WRITE_NOT_READY:
+      return Transition::NONE;
+
+    case WriteState::WRITE_ERROR:
+      LOG_ERROR("Error during write, closing connection");
+      return Transition::ERROR;
+  }
+
+  // Should not be here
+  return Transition::ERROR;
+}
+
+Transition NetworkConnection::GetResult() {
+  // TODO(tianyu) We probably can collapse this state with some other state.
+  if (event_add(network_event, nullptr) < 0) {
+    LOG_ERROR("Failed to add event");
+    PL_ASSERT(false);
+  }
+  protocol_handler_->GetResult();
+  traffic_cop_.SetQueuing(false);
+  return Transition::PROCEED;
+}
+
+
+
 }  // namespace network
 }  // namespace peloton
