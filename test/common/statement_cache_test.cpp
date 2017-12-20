@@ -12,13 +12,12 @@
 
 #include "common/statement_cache.h"
 #include "common/statement.h"
-#include "common/statement_cache_manager.h"
 
 #include "common/harness.h"
 
 namespace peloton {
 namespace test {
-// Tests for both statement cache and statement cache manager
+// Tests for both statement cache
 class StatementCacheTests : public PelotonTest {};
 
 // Test statementCache add and get statement
