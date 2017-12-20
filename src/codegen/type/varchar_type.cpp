@@ -315,8 +315,8 @@ struct Substr : public TypeSystem::NaryOperator {
     return Varchar::Instance();
   }
 
-  Value DoWork(CodeGen &codegen, const std::vector<Value> &input_args,
-               UNUSED_ATTRIBUTE OnError on_error) const override {
+  Value Eval(CodeGen &codegen, const std::vector<Value> &input_args,
+             UNUSED_ATTRIBUTE OnError on_error) const override {
     llvm::Value *ret =
         codegen.Call(StringFunctionsProxy::Substr,
                      {
