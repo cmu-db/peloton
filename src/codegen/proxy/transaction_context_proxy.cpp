@@ -2,15 +2,15 @@
 //
 //                         Peloton
 //
-// transaction_proxy.cpp
+// transaction_context_proxy.cpp
 //
-// Identification: src/codegen/proxy/transaction_proxy.cpp
+// Identification: src/codegen/proxy/transaction_context_proxy.cpp
 //
 // Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/proxy/transaction_proxy.h"
+#include "codegen/proxy/transaction_context_proxy.h"
 
 namespace peloton {
 namespace codegen {
