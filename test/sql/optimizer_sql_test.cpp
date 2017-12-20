@@ -43,7 +43,7 @@ class OptimizerSQLTests : public PelotonTest {
 
   virtual void TearDown() override {
     // Destroy test database
-    auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
     catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
     txn_manager.CommitTransaction(txn);
@@ -55,7 +55,7 @@ class OptimizerSQLTests : public PelotonTest {
   /*** Helper functions **/
   void CreateAndLoadTable() {
     // Create database
-    auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
     catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
     txn_manager.CommitTransaction(txn);
@@ -79,7 +79,7 @@ class OptimizerSQLTests : public PelotonTest {
 
     // Check Plan Nodes are correct if provided
     if (expected_plans.size() > 0) {
-      auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+      auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
       auto txn = txn_manager.BeginTransaction();
       auto plan =
           TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn);
@@ -112,7 +112,7 @@ class OptimizerSQLTests : public PelotonTest {
     } else {
       // If non-deterministic, make sure they have the same set of value
       unordered_set<string> ref_set(ref_result.begin(), ref_result.end());
-      for (auto& result_str : actual_result) {
+      for (auto &result_str : actual_result) {
         if (ref_set.count(result_str) == 0) {
           // Test Failed. Print both actual results and ref results
           EXPECT_EQ(ref_result, actual_result);
@@ -132,16 +132,15 @@ class OptimizerSQLTests : public PelotonTest {
 
 TEST_F(OptimizerSQLTests, SimpleSelectTest) {
   // Testing select star expression
-  TestUtil(
-      "SELECT * from test",
-      {"333", "22", "1", "2", "11", "0", "3", "33", "444", "4", "0", "555"},
-      false);
+  TestUtil("SELECT * from test", {"333", "22", "1", "2", "11", "0", "3", "33",
+                                  "444", "4", "0", "555"},
+           false);
 
   // Something wrong with column property.
   string query = "SELECT b from test order by c";
 
   // check for plan node type
-  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto select_plan =
       TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn);
@@ -230,10 +229,9 @@ TEST_F(OptimizerSQLTests, SelectOrderByTest) {
       true);
 
   // Testing order by * expression
-  TestUtil(
-      "SELECT * from test order by a",
-      {"1", "22", "333", "2", "11", "0", "3", "33", "444", "4", "0", "555"},
-      true);
+  TestUtil("SELECT * from test order by a", {"1", "22", "333", "2", "11", "0",
+                                             "3", "33", "444", "4", "0", "555"},
+           true);
 }
 
 TEST_F(OptimizerSQLTests, SelectLimitTest) {
@@ -328,7 +326,7 @@ TEST_F(OptimizerSQLTests, DDLSqlTest) {
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
       optimizer, query, result, tuple_descriptor, rows_changed, error_message);
 
-  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   // using transaction to get table from catalog
   auto table = catalog::Catalog::GetInstance()->GetTableWithName(
@@ -568,14 +566,12 @@ TEST_F(OptimizerSQLTests, JoinTest) {
   // This one test NLJoin.
   // Currently cannot support this query because
   // the interpreted hash join is broken.
-   TestUtil(
-       "SELECT test.a, test.b, test1.b, test2.c FROM test, test1, test2 "
-       "WHERE test.b = test2.b AND test2.c = test1.c",
-       {"1", "22", "11", "0",
-        "2", "11", "22", "333",
-        "2", "11", "0", "333",
-        "4", "0", "11", "0"},
-       false);
+  TestUtil(
+      "SELECT test.a, test.b, test1.b, test2.c FROM test, test1, test2 "
+      "WHERE test.b = test2.b AND test2.c = test1.c",
+      {"1", "22", "11", "0", "2", "11", "22", "333", "2", "11", "0", "333", "4",
+       "0", "11", "0"},
+      false);
 
   // 2 table join with where clause and predicate
   TestUtil(
@@ -616,10 +612,11 @@ TEST_F(OptimizerSQLTests, JoinTest) {
       {"1", "44", "2", "22", "3", "55", "4", "0"}, false);
 
   // Test order by, limit, projection with join
-   TestUtil("SELECT test.a, test.b+test2.b FROM TEST, TEST2 "
-               "WHERE test.a = test2.a "
-               "ORDER BY test.c+test2.c LIMIT 3",
-           {"1", "44", "2", "22", "4", "0"}, true);
+  TestUtil(
+      "SELECT test.a, test.b+test2.b FROM TEST, TEST2 "
+      "WHERE test.a = test2.a "
+      "ORDER BY test.c+test2.c LIMIT 3",
+      {"1", "44", "2", "22", "4", "0"}, true);
 
   // Test group by with join
   TestUtil(
@@ -652,37 +649,59 @@ TEST_F(OptimizerSQLTests, IndexTest) {
 
 TEST_F(OptimizerSQLTests, QueryDerivedTableTest) {
   // Create extra table
-  TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE test2(a int primary key, b int, c varchar(32))");
+  TestingSQLUtil::ExecuteSQLQuery(
+      "CREATE TABLE test2(a int primary key, b int, c varchar(32))");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test2 VALUES (1, 22, '1st');");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test2 VALUES (2, 11, '2nd');");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test2 VALUES (3, 33, '3rd');");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test2 VALUES (5, 00, '4th');");
-  TestUtil("select A.b from (select b from test where a = 1) as A", {"22"}, false);
-  TestUtil("select * from (select b from test where a = 1) as A", {"22"}, false);
-  TestUtil("select A.b, B.b from (select b from test where a = 1) as A, (select b from test as t where a=2) as B",
-           {"22", "11"}, false);
-  TestUtil("select B.b from (select b from test where a = 1) as A, (select b from test as t where a=2) as B",
-           {"11"}, false);
-  TestUtil("select * from (select b from test where a = 1) as A, (select b from test as t where a=2) as B",
-           {"22", "11"}, false);
-  TestUtil("select * from (select b from test) as A, (select b from test as t) as B where A.b = B.b",
-           {"22", "22", "11", "11", "33", "33","0", "0"}, false);
-  TestUtil("select * from (select b from test) as A, (select b from test) as B where A.b = B.b",
-           {"22", "22", "11", "11", "33", "33","0", "0"}, false);
-  TestUtil("select * from (select a+b as a, c from test) as A, (select a+b as a, c as c from test2) as B where A.a=B.a",
-           {"13","0","13","2nd","23","333","23","1st","36","444","36","3rd"}, false);
-  TestUtil("select A.c, B.c from (select a+b as a, c from test) as A, (select a+b as a, c as c from test2) as B where A.a=B.a order by A.a",
-           {"0", "2nd","333","1st","444","3rd"}, true);
-  TestUtil("select A.a, B.c from (select count(*) as a from test) as A, (select avg(a) as C from test2) as B",
-           {"4", "2.75"}, false);
+  TestUtil("select A.b from (select b from test where a = 1) as A", {"22"},
+           false);
+  TestUtil("select * from (select b from test where a = 1) as A", {"22"},
+           false);
+  TestUtil(
+      "select A.b, B.b from (select b from test where a = 1) as A, (select b "
+      "from test as t where a=2) as B",
+      {"22", "11"}, false);
+  TestUtil(
+      "select B.b from (select b from test where a = 1) as A, (select b from "
+      "test as t where a=2) as B",
+      {"11"}, false);
+  TestUtil(
+      "select * from (select b from test where a = 1) as A, (select b from "
+      "test as t where a=2) as B",
+      {"22", "11"}, false);
+  TestUtil(
+      "select * from (select b from test) as A, (select b from test as t) as B "
+      "where A.b = B.b",
+      {"22", "22", "11", "11", "33", "33", "0", "0"}, false);
+  TestUtil(
+      "select * from (select b from test) as A, (select b from test) as B "
+      "where A.b = B.b",
+      {"22", "22", "11", "11", "33", "33", "0", "0"}, false);
+  TestUtil(
+      "select * from (select a+b as a, c from test) as A, (select a+b as a, c "
+      "as c from test2) as B where A.a=B.a",
+      {"13", "0", "13", "2nd", "23", "333", "23", "1st", "36", "444", "36",
+       "3rd"},
+      false);
+  TestUtil(
+      "select A.c, B.c from (select a+b as a, c from test) as A, (select a+b "
+      "as a, c as c from test2) as B where A.a=B.a order by A.a",
+      {"0", "2nd", "333", "1st", "444", "3rd"}, true);
+  TestUtil(
+      "select A.a, B.c from (select count(*) as a from test) as A, (select "
+      "avg(a) as C from test2) as B",
+      {"4", "2.75"}, false);
 }
 
 // WIP
 TEST_F(OptimizerSQLTests, NestedQueryTest) {
-  // TestUtil("select * from test as B where exists (select b as a from test where a = B.a);", {"22"}, false);
-//  TestUtil("select (select b as a from test where a = B.a) from test as B;", {"22"}, false);
-//  TestUtil("select * from test where a in (select * from test)", {}, false);
-
+  // TestUtil("select * from test as B where exists (select b as a from test
+  // where a = B.a);", {"22"}, false);
+  //  TestUtil("select (select b as a from test where a = B.a) from test as B;",
+  //  {"22"}, false);
+  //  TestUtil("select * from test where a in (select * from test)", {}, false);
 }
 
 }  // namespace test
