@@ -126,7 +126,7 @@ void ConnectionDispatcherTask::DispatchConnection(int fd) {
   std::shared_ptr<ConnectionHandlerTask> handler = handlers[handler_id];
   LOG_DEBUG("Dispatching connection to worker %d", handler_id);
 
-  handler->Notify(fd);
+  handler->Notify(new_conn_fd);
 }
 
 }  // namespace network
