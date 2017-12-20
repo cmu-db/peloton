@@ -1,15 +1,19 @@
 #language: c++
 matrix:
+    fast_finish: true
+
     include:
         # Mac build
         - os: osx
           osx_image: xcode8.3
           compiler: clang
           env:
+            # NAME has no actual use, just to make the travis jobs overview more clear
+            - NAME="clang Debug"
             - PELOTON_BUILD_TYPE=Debug
             - COVERALLS=Off
 
-        # Linux builds
+        # Linux builds for gcc 4.8
         - os: linux
           sudo: required
           dist: trusty
@@ -20,44 +24,30 @@ matrix:
                       - llvm-toolchain-precise-3.7
                       - ubuntu-toolchain-r-test
                   packages:
-                    - g++-4.9
-          env: 
-            - CXX=g++-4.9
+                    - g++-4.8
+          env:
+            # NAME has no actual use, just to make the travis jobs overview more clear
+            - NAME="gcc4.8 Debug (Coveralls)"
+            - CXX=g++-4.8
+            - CC=gcc-4.8
             - PELOTON_BUILD_TYPE=Debug
-            - COVERALLS=Off
-
-        - os: linux
-          sudo: required
-          dist: trusty
-          compiler: gcc
-          addons:
-              apt:
-                  sources:
-                      - llvm-toolchain-precise-3.7
-                      - ubuntu-toolchain-r-test
-                  packages:
-                    - g++-4.9
-          env: 
-            - CXX=g++-4.9
-            - PELOTON_BUILD_TYPE=Release
-            - COVERALLS=Off
-        
-        #Job where coveralls is executed
-        - os: linux
-          sudo: required
-          dist: trusty
-          compiler: gcc
-          addons:
-              apt:
-                  sources:
-                      - llvm-toolchain-precise-3.7
-                      - ubuntu-toolchain-r-test
-                  packages:
-                    - g++-5
-          env: 
-            - CXX=g++-5
-            - PELOTON_BUILD_TYPE=Debug
+            # COVERALLS: we run coveralls only for one compiler
             - COVERALLS=On
+          # only run tests if the build itself succeeded
+          after_success:
+            # run tests
+            - if [[ $TRAVIS_OS_NAME != 'osx' ]]; then make check -j4; fi
+            - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then ASAN_OPTIONS=detect_container_overflow=0 make check -j4; fi
+            # build benchmarks
+            - make benchmark -j4
+            # install peloton
+            - make install
+            # run psql tests
+            - bash ../script/testing/psql/psql_test.sh
+            # run jdbc tests
+            - python ../script/validators/jdbc_validator.py
+            # upload coverage info
+            - make coveralls
 
         - os: linux
           sudo: required
@@ -69,20 +59,77 @@ matrix:
                       - llvm-toolchain-precise-3.7
                       - ubuntu-toolchain-r-test
                   packages:
-                    - g++-5
-          env: 
-            - CXX=g++-5
+                    - g++-4.8
+          env:
+            # NAME has no actual use, just to make the travis jobs overview more clear
+            - NAME="gcc4.8 Release"
+            - CXX=g++-4.8
+            - CC=gcc-4.8
+            - PELOTON_BUILD_TYPE=Release
+            - COVERALLS=Off
+          # only run tests if the build itself succeeded
+          after_success:
+            # run tests
+            - if [[ $TRAVIS_OS_NAME != 'osx' ]]; then make check -j4; fi
+            - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then ASAN_OPTIONS=detect_container_overflow=0 make check -j4; fi
+            # build benchmarks
+            - make benchmark -j4
+            # install peloton
+            - make install
+            # run psql tests
+            - bash ../script/testing/psql/psql_test.sh
+            # run jdbc tests
+            - python ../script/validators/jdbc_validator.py
+
+        # Linux builds for clang 3.7
+        - os: linux
+          sudo: required
+          dist: trusty
+          compiler: clang
+          addons:
+              apt:
+                  sources:
+                      - llvm-toolchain-precise-3.7
+                      - ubuntu-toolchain-r-test
+                  packages:
+                    - clang-3.7
+          env:
+            # NAME has no actual use, just to make the travis jobs overview more clear
+            - NAME="clang3.7 Debug"
+            - CXX=clang-3.7
+            - CC=clang-3.7
+            - PELOTON_BUILD_TYPE=Debug
+            - COVERALLS=Off
+
+        - os: linux
+          sudo: required
+          dist: trusty
+          compiler: clang
+          addons:
+              apt:
+                  sources:
+                      - llvm-toolchain-precise-3.7
+                      - ubuntu-toolchain-r-test
+                  packages:
+                    - clang-3.7
+          env:
+            # NAME has no actual use, just to make the travis jobs overview more clear
+            - NAME="clang3.7 Release"
+            - CXX=clang-3.7
+            - CC=clang-3.7
             - PELOTON_BUILD_TYPE=Release
             - COVERALLS=Off
 
-before_script:
+install:
     # setup environment
     - ./script/installation/packages.sh
     - if [[ $TRAVIS_OS_NAME == 'linux' ]]; then pip install --user cpp-coveralls; fi
 
-script:
+before_script:
     # first, run source_validator
     - python ./script/validators/source_validator.py
+
+script:
     # create build directory
     - mkdir build
     - cd build
@@ -90,16 +137,3 @@ script:
     - PATH=/usr/lib/llvm-3.7/bin:/usr/bin:$PATH cmake -DCOVERALLS=$COVERALLS -DCMAKE_PREFIX_PATH=`llvm-config-3.7 --prefix` -DCMAKE_BUILD_TYPE=$PELOTON_BUILD_TYPE -DUSE_SANITIZER=Address ..
     # build
     - make -j4
-    # run tests
-    - if [[ $TRAVIS_OS_NAME != 'osx' ]]; then make check -j4; fi
-    - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then ASAN_OPTIONS=detect_container_overflow=0 make check -j4; fi
-    # build benchmarks
-    - make benchmark -j4
-    # install peloton
-    - make install
-    # run psql tests
-    - bash ../script/testing/psql/psql_test.sh
-    # run jdbc tests
-    - python ../script/validators/jdbc_validator.py
-    # upload coverage info
-    - bash -c "if [ $(echo $COVERALLS | tr "[:lower:]" "[:upper:]") = 'ON' ] ; then make coveralls; fi"
