@@ -10,11 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <include/parser/pg_list.h>
+#include <include/parser/pg_query.h>
 #include <iostream>
 #include <string>
 #include <unordered_set>
-#include <include/parser/pg_list.h>
-#include <include/parser/pg_query.h>
 
 #include "common/exception.h"
 #include "expression/aggregate_expression.h"
@@ -27,11 +27,12 @@
 #include "expression/star_expression.h"
 #include "expression/tuple_value_expression.h"
 #include "expression/subquery_expression.h"
+#include "parser/pg_list.h"
 #include "parser/pg_query.h"
 #include "parser/pg_trigger.h"
-#include "parser/pg_list.h"
 #include "parser/postgresparser.h"
 #include "type/types.h"
+#include "type/value.h"
 #include "type/value_factory.h"
 
 namespace peloton {
@@ -221,17 +222,7 @@ parser::TableRef* PostgresParser::FromTransform(SelectStmt* select_root) {
   /* Statement like 'SELECT *;' cannot detect by postgres parser and would lead
    * to
    * a null list of from clause*/
-  if (root == nullptr) {
-    auto target_list = select_root->targetList;
-    // The only valid situation of a null 'from list' is that all targets are
-    // constant
-    LOG_TRACE("size is : %d", target_list->length);
-    // print_pg_parse_tree(target_list);
-    if (IsTargetListWithVariable(target_list)) {
-      throw ParserException("Error parsing SQL statement");
-    }
-    return nullptr;
-  }
+  if (root == nullptr) return nullptr;
 
   parser::TableRef* result = nullptr;
   Node* node;
@@ -302,8 +293,9 @@ expression::AbstractExpression* PostgresParser::ColumnRefTransform(
             (reinterpret_cast<value*>(fields->head->data.ptr_value))->val.str));
       } else {
         result = new expression::TupleValueExpression(
-            std::string((reinterpret_cast<value*>(
-                             fields->head->next->data.ptr_value))->val.str),
+            std::string(
+                (reinterpret_cast<value*>(fields->head->next->data.ptr_value))
+                    ->val.str),
             std::string((reinterpret_cast<value*>(fields->head->data.ptr_value))
                             ->val.str));
       }
@@ -504,7 +496,7 @@ expression::AbstractExpression* PostgresParser::FuncCallTransform(
           child_expr = ExprTransform(expr_node);
         } catch (NotImplementedException e) {
           throw NotImplementedException(StringUtil::Format(
-                "Exception thrown in function expr:\n%s", e.what()));
+              "Exception thrown in function expr:\n%s", e.what()));
         }
         children.push_back(child_expr);
       }
@@ -649,6 +641,10 @@ expression::AbstractExpression* PostgresParser::ExprTransform(Node* node) {
       expr = SubqueryExprTransform(reinterpret_cast<SubLink*>(node));
       break;
     }
+    case T_NullTest: {
+      expr = NullTestTransform(reinterpret_cast<NullTest*>(node));
+      break;
+    }
     default: {
       throw NotImplementedException(StringUtil::Format(
           "Expr of type %d not supported yet...\n", node->type));
@@ -745,6 +741,50 @@ expression::AbstractExpression* PostgresParser::SubqueryExprTransform(SubLink *n
     }
   }
   return expr;
+}
+
+// This function takes in a Postgres NullTest primnode and transfers
+// it into Peloton AbstractExpression.
+expression::AbstractExpression* PostgresParser::NullTestTransform(
+    NullTest* root) {
+  if (root == nullptr) {
+    return nullptr;
+  }
+
+  expression::AbstractExpression* result = nullptr;
+  ExpressionType target_type = ExpressionType::OPERATOR_IS_NULL;
+  if (root->nulltesttype == IS_NULL) {
+    target_type = ExpressionType::OPERATOR_IS_NULL;
+  } else if (root->nulltesttype == IS_NOT_NULL) {
+    target_type = ExpressionType::OPERATOR_IS_NOT_NULL;
+  }
+
+  expression::AbstractExpression* arg_expr = nullptr;
+  switch (root->arg->type) {
+    case T_ColumnRef: {
+      arg_expr = ColumnRefTransform(reinterpret_cast<ColumnRef*>(root->arg));
+      break;
+    }
+    case T_A_Const: {
+      arg_expr = ConstTransform(reinterpret_cast<A_Const*>(root->arg));
+      break;
+    }
+    case T_A_Expr: {
+      arg_expr = AExprTransform(reinterpret_cast<A_Expr*>(root->arg));
+      break;
+    }
+    case T_ParamRef: {
+      arg_expr = ParamRefTransform(reinterpret_cast<ParamRef*>(root->arg));
+      break;
+    }
+    default: {
+      throw NotImplementedException(StringUtil::Format(
+          "Arg expr of type %d not supported yet...\n", root->arg->type));
+    }
+  }
+  result = new expression::OperatorExpression(
+      target_type, type::TypeId::BOOLEAN, arg_expr, nullptr);
+  return result;
 }
 
 // This function takes in the whereClause part of a Postgres SelectStmt
@@ -1497,5 +1537,5 @@ std::unique_ptr<parser::SQLStatementList> PostgresParser::BuildParseTree(
   return sql_stmt;
 }
 
-}  // namespace pgparser
+}  // namespace parser
 }  // namespace peloton

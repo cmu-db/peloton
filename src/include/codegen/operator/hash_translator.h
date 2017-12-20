@@ -65,7 +65,7 @@ class HashTranslator : public OperatorTranslator {
 
  private:
   //===--------------------------------------------------------------------===//
-  // The callback used when we probe the hash table and the already exists.
+  // The callback used when we probe the hash table and the key already exists.
   // It's a dummy class that just drops the row and does nothing.
   //===--------------------------------------------------------------------===//
   class ConsumerProbe : public HashTable::ProbeCallback {

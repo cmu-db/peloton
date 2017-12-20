@@ -49,8 +49,11 @@ list(APPEND Peloton_LINKER_LIBS ${PQXX_LIBRARIES})
 list(APPEND Peloton_LINKER_LIBS "-lssl")
 
 # --[ LLVM 3.7+
-find_package(LLVM 3.7 REQUIRED CONFIG)
+find_package(LLVM REQUIRED CONFIG)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+if (${LLVM_PACKAGE_VERSION} VERSION_LESS "3.7")
+    message( FATAL_ERROR "LLVM 3.7 or newer is required." )
+endif()
 llvm_map_components_to_libnames(LLVM_LIBRARIES core mcjit nativecodegen native)
 include_directories(SYSTEM ${LLVM_INCLUDE_DIRS})
 list(APPEND Peloton_LINKER_LIBS ${LLVM_LIBRARIES})

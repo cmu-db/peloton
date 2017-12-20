@@ -553,10 +553,6 @@ class ExpressionUtil {
         EvaluateExpression(expr_maps, case_expr->GetWhenClauseCond(i));
       }
     }
-
-    // Decude the expression type for Non-TupleValueExpressions
-    if (expr->GetExpressionType() != ExpressionType::VALUE_TUPLE)
-      expr->DeduceExpressionType();
   }
 
   /**
@@ -652,7 +648,7 @@ class ExpressionUtil {
     if (ordered) {
       size_t num_exprs = l.size();
       for (size_t i = 0; i < num_exprs; i++)
-        if (!l[i]->Equals(r[i].get())) return false;
+        if (*l[i].get() == *r[i].get()) return false;
       return true;
     } else {
       ExprSet l_set, r_set;

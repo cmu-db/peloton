@@ -13,7 +13,7 @@
 #include "codegen/operator/table_scan_translator.h"
 
 #include "codegen/lang/if.h"
-#include "codegen/proxy/catalog_proxy.h"
+#include "codegen/proxy/storage_manager_proxy.h"
 #include "codegen/proxy/transaction_runtime_proxy.h"
 #include "codegen/type/boolean_type.h"
 #include "planner/seq_scan_plan.h"
@@ -33,7 +33,7 @@ TableScanTranslator::TableScanTranslator(const planner::SeqScanPlan &scan,
     : OperatorTranslator(context, pipeline),
       scan_(scan),
       table_(*scan_.GetTable()) {
-  LOG_DEBUG("Constructing TableScanTranslator ...");
+  LOG_TRACE("Constructing TableScanTranslator ...");
 
   // The restriction, if one exists
   const auto *predicate = GetScanPlan().GetPredicate();
@@ -54,7 +54,7 @@ TableScanTranslator::TableScanTranslator(const planner::SeqScanPlan &scan,
       "scanSelVec",
       codegen.ArrayType(codegen.Int32Type(), Vector::kDefaultVectorSize), true);
 
-  LOG_DEBUG("Finished constructing TableScanTranslator ...");
+  LOG_TRACE("Finished constructing TableScanTranslator ...");
 }
 
 // Produce!
@@ -62,14 +62,14 @@ void TableScanTranslator::Produce() const {
   auto &codegen = GetCodeGen();
   auto &table = GetTable();
 
-  LOG_DEBUG("TableScan on [%u] starting to produce tuples ...", table.GetOid());
+  LOG_TRACE("TableScan on [%u] starting to produce tuples ...", table.GetOid());
 
   // Get the table instance from the database
-  llvm::Value *catalog_ptr = GetCatalogPtr();
+  llvm::Value *storage_manager_ptr = GetStorageManagerPtr();
   llvm::Value *db_oid = codegen.Const32(table.GetDatabaseOid());
   llvm::Value *table_oid = codegen.Const32(table.GetOid());
   llvm::Value *table_ptr = codegen.Call(StorageManagerProxy::GetTableWithOid,
-                                        {catalog_ptr, db_oid, table_oid});
+                                        {storage_manager_ptr, db_oid, table_oid});
 
   // The selection vector for the scan
   Vector sel_vec{LoadStateValue(selection_vector_id_),
@@ -79,7 +79,7 @@ void TableScanTranslator::Produce() const {
   ScanConsumer scan_consumer{*this, sel_vec};
   table_.GenerateScan(codegen, table_ptr, sel_vec.GetCapacity(), scan_consumer);
 
-  LOG_DEBUG("TableScan on [%u] finished producing tuples ...", table.GetOid());
+  LOG_TRACE("TableScan on [%u] finished producing tuples ...", table.GetOid());
 }
 
 // Get the stringified name of this scan
@@ -156,7 +156,7 @@ void TableScanTranslator::ScanConsumer::SetupRowBatch(
   // 2. Add the attribute accessors into the row batch
   for (oid_t col_idx = 0; col_idx < output_col_ids.size(); col_idx++) {
     auto *attribute = ais[output_col_ids[col_idx]];
-    LOG_DEBUG("Adding attribute '%s.%s' (%p) into row batch",
+    LOG_TRACE("Adding attribute '%s.%s' (%p) into row batch",
               scan_plan.GetTable()->GetName().c_str(), attribute->name.c_str(),
               attribute);
     batch.AddAttribute(attribute, &access[col_idx]);

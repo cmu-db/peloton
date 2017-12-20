@@ -12,9 +12,12 @@
 
 #include "codegen/transaction_runtime.h"
 
+#include "catalog/manager.h"
+#include "common/container_tuple.h"
 #include "concurrency/transaction.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/executor_context.h"
+#include "storage/tile_group.h"
 
 namespace peloton {
 namespace codegen {
@@ -63,71 +66,53 @@ uint32_t TransactionRuntime::PerformVectorizedRead(
   return out_idx;
 }
 
-bool TransactionRuntime::PerformDelete(concurrency::Transaction &txn,
-                                       storage::DataTable &table,
-                                       uint32_t tile_group_id,
-                                       uint32_t tuple_offset) {
+bool TransactionRuntime::IsOwner(concurrency::Transaction &txn,
+                                 storage::TileGroupHeader *tile_group_header,
+                                 uint32_t tuple_offset) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-
-  auto tile_group = table.GetTileGroupById(tile_group_id);
-  ItemPointer old_location(tile_group_id, tuple_offset);
-
-  auto *tile_group_header = tile_group->GetHeader();
-
   bool is_owner = txn_manager.IsOwner(&txn, tile_group_header, tuple_offset);
-  bool is_written =
-      txn_manager.IsWritten(&txn, tile_group_header, tuple_offset);
-
-  if (is_owner && is_written) {
-    LOG_TRACE("I am the owner of the tuple");
-    txn_manager.PerformDelete(&txn, old_location);
+  bool is_written = txn_manager.IsWritten(&txn, tile_group_header,
+                                          tuple_offset);
+  PL_ASSERT((is_owner == false && is_written == true) == false);
+  if (is_owner == true && is_written == true)
     return true;
-  }
+  return false;
+}
 
-  bool is_ownable =
-      is_owner || txn_manager.IsOwnable(&txn, tile_group_header, tuple_offset);
-  if (!is_ownable) {
+bool TransactionRuntime::AcquireOwnership(concurrency::Transaction &txn,
+    storage::TileGroupHeader *tile_group_header, uint32_t tuple_offset) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  bool is_owner = txn_manager.IsOwner(&txn, tile_group_header, tuple_offset);
+  bool is_ownable = is_owner ||
+                    txn_manager.IsOwnable(&txn, tile_group_header,
+                                          tuple_offset);
+  if (is_ownable == false) {
     // transaction should be aborted as we cannot update the latest version.
-    LOG_TRACE("Fail to delete tuple.");
-    txn_manager.SetTransactionResult(&txn, ResultType::FAILURE);
-    return false;
-  }
-  LOG_TRACE("I am NOT the owner, but it is visible");
-
-  bool acquired_ownership =
-      is_owner ||
-      txn_manager.AcquireOwnership(&txn, tile_group_header, tuple_offset);
-  if (!acquired_ownership) {
+    LOG_TRACE("Not ownable. Fail to update tuple. Txn failure.");
     txn_manager.SetTransactionResult(&txn, ResultType::FAILURE);
     return false;
   }
 
-  LOG_TRACE("Ownership is acquired");
-  // if it is the latest version and not locked by other threads, then
-  // insert an empty version.
-  ItemPointer new_location = table.InsertEmptyVersion();
-
-  // PerformDelete() will not be executed if the insertion failed.
-  if (new_location.IsNull()) {
-    LOG_TRACE("Fail to insert a new tuple version and so fail to delete");
-    // this means we acquired ownership from AcquireOwnership
-    if (!is_owner) {
-      // A write lock is acquired when inserted, but it is not in the write set,
-      // because we haven't yet put it into the write set.
-      // The acquired lock is not released when the txn gets aborted, and
-      // YieldOwnership() will help us release the acquired write lock.
-      txn_manager.YieldOwnership(&txn, tile_group_header, tuple_offset);
-    }
+  // If the tuple is not owned by any other txn and is ownable to me
+  bool acquired = is_owner ||
+                  txn_manager.AcquireOwnership(&txn, tile_group_header,
+                                               tuple_offset);
+  if (acquired == false) {
+    LOG_TRACE("Cannot acquire ownership. Fail to update tuple. Txn failure.");
     txn_manager.SetTransactionResult(&txn, ResultType::FAILURE);
     return false;
   }
-  txn_manager.PerformDelete(&txn, old_location, new_location);
   return true;
 }
 
-void TransactionRuntime::IncreaseNumProcessed(
-    executor::ExecutorContext *executor_context) {
-  executor_context->num_processed++;
+void TransactionRuntime::YieldOwnership(concurrency::Transaction &txn,
+    storage::TileGroupHeader *tile_group_header, uint32_t tuple_offset) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  bool is_owner = txn_manager.IsOwner(&txn, tile_group_header, tuple_offset);
+  if (is_owner == false) {
+      txn_manager.YieldOwnership(&txn, tile_group_header, tuple_offset);
+  }
+  txn_manager.SetTransactionResult(&txn, ResultType::FAILURE);
 }
 
 }  // namespace codegen

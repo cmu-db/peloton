@@ -19,33 +19,35 @@
 #include "codegen/expression/constant_translator.h"
 #include "codegen/expression/function_translator.h"
 #include "codegen/expression/negation_translator.h"
+#include "codegen/expression/null_check_translator.h"
+#include "codegen/expression/parameter_translator.h"
+#include "codegen/expression/tuple_value_translator.h"
 #include "codegen/operator/delete_translator.h"
 #include "codegen/operator/global_group_by_translator.h"
 #include "codegen/operator/hash_group_by_translator.h"
 #include "codegen/operator/hash_join_translator.h"
 #include "codegen/operator/hash_translator.h"
 #include "codegen/operator/insert_translator.h"
-#include "codegen/expression/negation_translator.h"
 #include "codegen/operator/order_by_translator.h"
 #include "codegen/operator/projection_translator.h"
 #include "codegen/operator/table_scan_translator.h"
-#include "codegen/expression/tuple_value_translator.h"
+#include "codegen/operator/update_translator.h"
+#include "expression/aggregate_expression.h"
 #include "expression/case_expression.h"
 #include "expression/comparison_expression.h"
 #include "expression/conjunction_expression.h"
 #include "expression/function_expression.h"
-#include "expression/constant_value_expression.h"
 #include "expression/operator_expression.h"
 #include "expression/tuple_value_expression.h"
-#include "expression/aggregate_expression.h"
 #include "planner/aggregate_plan.h"
-#include "planner/hash_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/hash_join_plan.h"
+#include "planner/hash_plan.h"
 #include "planner/insert_plan.h"
 #include "planner/order_by_plan.h"
 #include "planner/projection_plan.h"
 #include "planner/seq_scan_plan.h"
+#include "planner/update_plan.h"
 
 namespace peloton {
 namespace codegen {
@@ -109,6 +111,11 @@ std::unique_ptr<OperatorTranslator> TranslatorFactory::CreateTranslator(
       translator = new InsertTranslator(insert_plan, context, pipeline);
       break;
     }
+    case PlanNodeType::UPDATE: {
+      auto &update_plan = static_cast<const planner::UpdatePlan &>(plan_node);
+      translator = new UpdateTranslator(update_plan, context, pipeline);
+      break;
+    }
     default: {
       throw Exception{"We don't have a translator for plan node type: " +
                       PlanNodeTypeToString(plan_node.GetPlanNodeType())};
@@ -126,6 +133,12 @@ std::unique_ptr<ExpressionTranslator> TranslatorFactory::CreateTranslator(
     CompilationContext &context) const {
   ExpressionTranslator *translator = nullptr;
   switch (exp.GetExpressionType()) {
+    case ExpressionType::VALUE_PARAMETER: {
+      auto &param_exp =
+          static_cast<const expression::ParameterValueExpression &>(exp);
+      translator = new ParameterTranslator(param_exp, context);
+      break;
+    }
     case ExpressionType::VALUE_CONSTANT: {
       auto &const_exp =
           static_cast<const expression::ConstantValueExpression &>(exp);
@@ -143,7 +156,8 @@ std::unique_ptr<ExpressionTranslator> TranslatorFactory::CreateTranslator(
     case ExpressionType::COMPARE_LESSTHAN:
     case ExpressionType::COMPARE_GREATERTHAN:
     case ExpressionType::COMPARE_LESSTHANOREQUALTO:
-    case ExpressionType::COMPARE_GREATERTHANOREQUALTO: {
+    case ExpressionType::COMPARE_GREATERTHANOREQUALTO:
+    case ExpressionType::COMPARE_LIKE: {
       const auto &cmp_exp =
           static_cast<const expression::ComparisonExpression &>(exp);
       translator = new ComparisonTranslator(cmp_exp, context);
@@ -170,6 +184,13 @@ std::unique_ptr<ExpressionTranslator> TranslatorFactory::CreateTranslator(
       auto &negation_exp =
           static_cast<const expression::OperatorUnaryMinusExpression &>(exp);
       translator = new NegationTranslator(negation_exp, context);
+      break;
+    }
+    case ExpressionType::OPERATOR_IS_NULL:
+    case ExpressionType::OPERATOR_IS_NOT_NULL: {
+      auto &null_check_exp =
+          static_cast<const expression::OperatorExpression &>(exp);
+      translator = new NullCheckTranslator(null_check_exp, context);
       break;
     }
     case ExpressionType::OPERATOR_CASE_EXPR: {

@@ -80,6 +80,7 @@ class Schema : public Printable {
       const std::vector<std::vector<oid_t>> &subsets);
 
   // Compare two schemas
+  hash_t Hash() const;
   bool operator==(const Schema &other) const;
   bool operator!=(const Schema &other) const;
 

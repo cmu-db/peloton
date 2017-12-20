@@ -67,20 +67,20 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(create_stmt, DEFAULT_DB_NAME, txn));
 
   std::vector<type::Value> params;
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   LOG_TRACE("Query Plan:\n%s",
             planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   std::vector<int> result_format;
   result_format =
       std::vector<int>(statement->GetTupleDescriptor().size(), 0);
   TestingSQLUtil::counter_.store(1);
-  executor::ExecuteResult status = traffic_cop.ExecuteStatementPlan(
+  executor::ExecuteResult status = traffic_cop.ExecuteHelper(
       statement->GetPlanTree(), params, result, result_format);
-  if (traffic_cop.is_queuing_) {
+  if (traffic_cop.GetQueuing()) {
     TestingSQLUtil::ContinueAfterComplete();
     traffic_cop.ExecuteStatementPlanGetResult();
     status = traffic_cop.p_status_;
-    traffic_cop.is_queuing_ = false;
+    traffic_cop.SetQueuing(false);
   }
   LOG_TRACE("Statement executed. Result: %s",
             ResultTypeToString(status.m_result).c_str());
@@ -113,13 +113,13 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
   result_format =
       std::vector<int>(statement->GetTupleDescriptor().size(), 0);
   TestingSQLUtil::counter_.store(1);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
-                                            params, result, result_format);
-  if (traffic_cop.is_queuing_) {
+  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(),
+                                     params, result, result_format);
+  if (traffic_cop.GetQueuing()) {
     TestingSQLUtil::ContinueAfterComplete();
     traffic_cop.ExecuteStatementPlanGetResult();
     status = traffic_cop.p_status_;
-    traffic_cop.is_queuing_ = false;
+    traffic_cop.SetQueuing(false);
   }
   LOG_TRACE("Statement executed. Result: %s",
             ResultTypeToString(status.m_result).c_str());
@@ -142,13 +142,13 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
   result_format =
       std::vector<int>(statement->GetTupleDescriptor().size(), 0);
   TestingSQLUtil::counter_.store(1);
-  status = traffic_cop.ExecuteStatementPlan(statement->GetPlanTree(),
-                                            params, result, result_format);
-  if (traffic_cop.is_queuing_) {
+  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(),
+                                     params, result, result_format);
+  if (traffic_cop.GetQueuing()) {
     TestingSQLUtil::ContinueAfterComplete();
     traffic_cop.ExecuteStatementPlanGetResult();
     status = traffic_cop.p_status_;
-    traffic_cop.is_queuing_ = false;
+    traffic_cop.SetQueuing(false);
   }
   LOG_TRACE("Statement executed. Result: %s",
             ResultTypeToString(status.m_result).c_str());

@@ -26,13 +26,13 @@ QueryCompiler::QueryCompiler() : next_id_(0) {}
 
 // Compile the given query statement
 std::unique_ptr<Query> QueryCompiler::Compile(
-    const planner::AbstractPlan &root, QueryResultConsumer &result_consumer,
-    CompileStats *stats) {
+    const planner::AbstractPlan &root, const QueryParametersMap &parameters_map,
+    QueryResultConsumer &result_consumer, CompileStats *stats) {
   // The query statement we compile
   std::unique_ptr<Query> query{new Query(root)};
 
   // Set up the compilation context
-  CompilationContext context{*query, result_consumer};
+  CompilationContext context{*query, parameters_map, result_consumer};
 
   // Perform the compilation
   context.GeneratePlan(stats);
@@ -48,6 +48,7 @@ bool QueryCompiler::IsSupported(const planner::AbstractPlan &plan) {
     case PlanNodeType::ORDERBY:
     case PlanNodeType::DELETE:
     case PlanNodeType::INSERT:
+    case PlanNodeType::UPDATE:
     case PlanNodeType::AGGREGATE_V2: {
       break;
     }

@@ -12,11 +12,11 @@
 
 #pragma once
 
-#include "expression/abstract_expression.h"
 #include "common/sql_node_visitor.h"
+#include "expression/abstract_expression.h"
+#include "parser/postgresparser.h"
 #include "type/value_factory.h"
 #include "type/value.h"
-
 
 namespace peloton {
 namespace expression {
@@ -57,6 +57,16 @@ class OperatorExpression : public AbstractExpression {
       else
         return (type::ValueFactory::GetBooleanValue(true));
     }
+    if (exp_type_ == ExpressionType::OPERATOR_IS_NULL ||
+        exp_type_ == ExpressionType::OPERATOR_IS_NOT_NULL) {
+      PL_ASSERT(children_.size() == 1);
+      type::Value vl = children_[0]->Evaluate(tuple1, tuple2, context);
+      if (exp_type_ == ExpressionType::OPERATOR_IS_NULL) {
+        return type::ValueFactory::GetBooleanValue(vl.IsNull());
+      } else if (exp_type_ == ExpressionType::OPERATOR_IS_NOT_NULL) {
+        return type::ValueFactory::GetBooleanValue(!vl.IsNull());
+      }
+    }
     PL_ASSERT(children_.size() == 2);
     type::Value vl = children_[0]->Evaluate(tuple1, tuple2, context);
     type::Value vr = children_[1]->Evaluate(tuple1, tuple2, context);
@@ -81,11 +91,13 @@ class OperatorExpression : public AbstractExpression {
     // if we are a decimal or int we should take the highest type id of both
     // children
     // This relies on a particular order in types.h
-    if (exp_type_ == ExpressionType::OPERATOR_NOT) {
+    if (exp_type_ == ExpressionType::OPERATOR_NOT ||
+        exp_type_ == ExpressionType::OPERATOR_IS_NULL ||
+        exp_type_ == ExpressionType::OPERATOR_IS_NOT_NULL) {
       return_value_type_ = type::TypeId::BOOLEAN;
       return;
     }
-      auto type =
+    auto type =
         std::max(children_[0]->GetValueType(), children_[1]->GetValueType());
     PL_ASSERT(type <= type::TypeId::DECIMAL);
     return_value_type_ = type;

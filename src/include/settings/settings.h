@@ -83,7 +83,7 @@ SETTING_bool(display_settings,
 // Enable or disable statistics collection
 SETTING_int(stats_mode,
            "Enable statistics collection (default: 0)",
-           peloton::STATS_TYPE_INVALID,
+           static_cast<int>(peloton::StatsType::INVALID),
            true, true)
 
 //===----------------------------------------------------------------------===//
@@ -129,10 +129,5 @@ SETTING_bool(hash_join_bloom_filter,
 // GENERAL
 //===----------------------------------------------------------------------===//
 
-// Both for showing the help info
-SETTING_bool(h,
-            "Show help",
-            false,
-            false, false)
 
 

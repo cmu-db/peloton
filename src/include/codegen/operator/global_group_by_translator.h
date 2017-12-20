@@ -37,7 +37,7 @@ class GlobalGroupByTranslator : public OperatorTranslator {
                           CompilationContext &context, Pipeline &pipeline);
 
   // Nothing to initialize
-  void InitializeState() override {}
+  void InitializeState() override;
 
   // No helper functions
   void DefineAuxiliaryFunctions() override {}
@@ -49,7 +49,7 @@ class GlobalGroupByTranslator : public OperatorTranslator {
   void Consume(ConsumerContext &context, RowBatch::Row &row) const override;
 
   // No state to tear down
-  void TearDownState() override {}
+  void TearDownState() override;
 
   std::string GetName() const override;
 

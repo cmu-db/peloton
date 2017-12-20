@@ -44,29 +44,27 @@ namespace codegen {
 class Inserter {
  public:
   // Initializes the instance
-  void Init(concurrency::Transaction *txn, storage::DataTable *table,
+  void Init(storage::DataTable *table,
             executor::ExecutorContext *executor_context);
 
-  // Get the storage area that is to be reserved
-  char *ReserveTupleStorage();
+  // Allocate the storage area that is to be reserved
+  char *AllocateTupleStorage();
 
   // Get the pool address
   peloton::type::AbstractPool *GetPool();
 
-  // Insert the tuple instance
-  void InsertReserved();
-
   // Insert a tuple
-  void Insert(const storage::Tuple *tuple);
+  void Insert();
+
+  // Finalize the instance
+  void TearDown();
 
  private:
   // No external constructor
-  Inserter(): txn_(nullptr), table_(nullptr), executor_context_(nullptr),
-              tile_(nullptr) {}
+  Inserter(): table_(nullptr), executor_context_(nullptr), tile_(nullptr) {}
 
  private:
   // Provided by its insert translator
-  concurrency::Transaction *txn_;
   storage::DataTable *table_;
   executor::ExecutorContext *executor_context_;
 

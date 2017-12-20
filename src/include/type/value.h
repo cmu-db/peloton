@@ -239,7 +239,7 @@ class Value : public Printable {
         return Type::GetInstance(type_id)->GetData(storage);
       }
       default:
-        throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
+        throw Exception(ExceptionType::INCOMPATIBLE_TYPE,
                         "Invalid Type for getting raw data pointer");
     }
   }
@@ -356,7 +356,7 @@ Value::Value(TypeId type, const std::vector<T> &vals, TypeId element_type)
       std::string msg =
           StringUtil::Format("Invalid Type '%d' for Array Value constructor",
                              static_cast<int>(type));
-      throw Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE, msg);
+      throw Exception(ExceptionType::INCOMPATIBLE_TYPE, msg);
     }
   }
 }

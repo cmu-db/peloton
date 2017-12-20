@@ -13,8 +13,14 @@
 #include "expression/expression_util.h"
 #include "binder/bind_node_visitor.h"
 #include "expression/star_expression.h"
+#include "catalog/catalog.h"
+#include "type/type_id.h"
 
+#include "expression/aggregate_expression.h"
 #include "expression/case_expression.h"
+#include "expression/function_expression.h"
+#include "expression/operator_expression.h"
+#include "expression/star_expression.h"
 #include "expression/tuple_value_expression.h"
 #include "expression/subquery_expression.h"
 
@@ -228,6 +234,53 @@ void BindNodeVisitor::Visit(expression::SubqueryExpression *expr) {
 
   LOG_INFO("Bind subquery: context restore...");
   context_ = context_->GetUpperContext();
+}
+
+void BindNodeVisitor::Visit(expression::StarExpression *expr) {
+  if (!BinderContext::HasTables(context_))
+    throw BinderException("Invalid expression" + expr->GetInfo());
+}
+
+// Deduce value type for these expressions
+void BindNodeVisitor::Visit(expression::OperatorExpression *expr) {
+  SqlNodeVisitor::Visit(expr);
+  expr->DeduceExpressionType();
+}
+void BindNodeVisitor::Visit(expression::AggregateExpression *expr) {
+  SqlNodeVisitor::Visit(expr);
+  expr->DeduceExpressionType();
+}
+
+void BindNodeVisitor::Visit(expression::FunctionExpression *expr) {
+  // Visit the subtree first
+  SqlNodeVisitor::Visit(expr);
+
+  // Check catalog and bind function
+  std::vector<type::TypeId> argtypes;
+  for (size_t i = 0; i < expr->GetChildrenSize(); i++)
+    argtypes.push_back(expr->GetChild(i)->GetValueType());
+  // Check and set the function ptr
+  auto catalog = catalog::Catalog::GetInstance();
+  const catalog::FunctionData &func_data =
+      catalog->GetFunction(expr->GetFuncName(), argtypes);
+  LOG_DEBUG("Function %s found in the catalog", func_data.func_name_.c_str());
+  LOG_DEBUG("Argument num: %ld", func_data.argument_types_.size());
+  expr->SetFunctionExpressionParameters(func_data.func_, func_data.return_type_,
+                                        func_data.argument_types_);
+
+  // Look into the OperatorId for built-in functions to check the first argument
+  // for timestamp functions.
+  // TODO(LM): The OperatorId might need to be changed to global ID after we
+  // rewrite the function identification logic.
+  auto func_operator_id = func_data.func_.op_id;
+  if (func_operator_id == OperatorId::DateTrunc ||
+      func_operator_id == OperatorId::Extract) {
+    auto date_part = expr->GetChild(0);
+
+    // Test whether the first argument is a correct DatePartType
+    StringToDatePartType(
+        date_part->Evaluate(nullptr, nullptr, nullptr).ToString());
+  }
 }
 
 }  // namespace binder

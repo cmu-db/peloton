@@ -21,6 +21,7 @@
 #include "expression/comparison_expression.h"
 #include "expression/tuple_value_expression.h"
 #include "storage/table_factory.h"
+#include "codegen/query_cache.h"
 
 namespace peloton {
 namespace test {
@@ -51,10 +52,12 @@ PelotonCodeGenTest::~PelotonCodeGenTest() {
   auto result = catalog->DropDatabaseWithName(test_db_name, txn);
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(ResultType::SUCCESS, result);
+  codegen::QueryCache::Instance().Clear();
 }
 
 // Create the test schema for all the tables
-std::unique_ptr<catalog::Schema> PelotonCodeGenTest::CreateTestSchema() const {
+std::unique_ptr<catalog::Schema> PelotonCodeGenTest::CreateTestSchema(
+    bool add_primary) const {
   bool is_inlined = true;
 
   // Create the columns
@@ -71,6 +74,9 @@ std::unique_ptr<catalog::Schema> PelotonCodeGenTest::CreateTestSchema() const {
   // Add NOT NULL constraints on COL_A, COL_C, COL_D
   cols[0].AddConstraint(
       catalog::Constraint{ConstraintType::NOTNULL, "not_null"});
+  if (add_primary == true)
+    cols[0].AddConstraint(
+        catalog::Constraint{ConstraintType::PRIMARY, "con_primary"});
   cols[2].AddConstraint(
       catalog::Constraint{ConstraintType::NOTNULL, "not_null"});
   cols[3].AddConstraint(
@@ -90,7 +96,15 @@ void PelotonCodeGenTest::CreateTestTables(concurrency::Transaction *txn) {
                          std::move(table_schema), txn);
     test_table_oids.push_back(catalog->GetTableObject(test_db_name,
                                                       test_table_names[i],
-                                                      txn)->table_oid);
+                                                      txn)->GetTableOid());
+  }
+  for (int i = 4; i < 5; i++) {
+    auto table_schema = CreateTestSchema(true);
+    catalog->CreateTable(test_db_name, test_table_names[i],
+                         std::move(table_schema), txn);
+    test_table_oids.push_back(catalog->GetTableObject(test_db_name,
+                                                      test_table_names[i],
+                                                      txn)->GetTableOid());
   }
 }
 
@@ -140,8 +154,8 @@ void PelotonCodeGenTest::LoadTestTable(oid_t table_id, uint32_t num_rows,
 }
 
 codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecute(
-    const planner::AbstractPlan &plan, codegen::QueryResultConsumer &consumer,
-    char *consumer_state) {
+    planner::AbstractPlan &plan, codegen::QueryResultConsumer &consumer,
+    char *consumer_state, std::vector<type::Value> *params) {
   // Start a transaction
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto *txn = txn_manager.BeginTransaction();
@@ -149,14 +163,59 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecute(
   // Compile
   codegen::QueryCompiler::CompileStats stats;
   codegen::QueryCompiler compiler;
-  auto compiled_query = compiler.Compile(plan, consumer, &stats);
+  std::unique_ptr<executor::ExecutorContext> executor_context;
+  if (params != nullptr) {
+    executor_context.reset(new executor::ExecutorContext{txn, *params});
+  } else {
+    executor_context.reset(new executor::ExecutorContext{txn});
+  }
+  codegen::QueryParameters parameters{plan, executor_context->GetParams()};
 
+  auto compiled_query = compiler.Compile(plan,
+      parameters.GetQueryParametersMap(), consumer, &stats);
   // Run
-  compiled_query->Execute(*txn, std::unique_ptr<executor::ExecutorContext>(
-                                    new executor::ExecutorContext{txn}).get(),
+  compiled_query->Execute(*executor_context.get(), parameters,
                           consumer_state);
-
   txn_manager.CommitTransaction(txn);
+  return stats;
+}
+
+codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecuteCache(
+    std::shared_ptr<planner::AbstractPlan> plan,
+    codegen::QueryResultConsumer &consumer, char *consumer_state, bool &cached,
+    std::vector<type::Value> *params) {
+  // Start a transaction
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto *txn = txn_manager.BeginTransaction();
+
+  // Compile
+  codegen::QueryCompiler::CompileStats stats;
+  codegen::QueryCompiler compiler;
+
+  std::unique_ptr<executor::ExecutorContext> executor_context;
+  if (params != nullptr) {
+    executor_context.reset(new executor::ExecutorContext{txn, *params});
+  } else {
+    executor_context.reset(new executor::ExecutorContext{txn});
+  }
+  codegen::QueryParameters parameters{*plan.get(),
+                                      executor_context->GetParams()};
+
+  codegen::Query *query = codegen::QueryCache::Instance().Find(plan);
+  if (query == nullptr) {
+    auto compiled_query = compiler.Compile(*plan,
+                                           parameters.GetQueryParametersMap(),
+                                           consumer, &stats);
+    compiled_query->Execute(*executor_context.get(), parameters,
+                            consumer_state);
+    codegen::QueryCache::Instance().Add(plan, std::move(compiled_query));
+    cached = false;
+  } else {
+    query->Execute(*executor_context.get(), parameters, consumer_state);
+    cached = true;
+  }
+  txn_manager.CommitTransaction(txn);
+
   return stats;
 }
 

@@ -274,8 +274,9 @@ void OAHashTable::Resize(HashEntry **entry_p_p) {
   // Make it an assertion to prevent potential bugs
   PL_ASSERT(NeedsResize());
 
-  LOG_DEBUG("Resizing hash-table from %llu buckets to %llu", (unsigned long long) num_buckets_,
-            (unsigned long long) num_buckets_ << 1);
+  LOG_DEBUG("Resizing hash-table from %llu buckets to %llu",
+            (unsigned long long)num_buckets_,
+            (unsigned long long)num_buckets_ << 1);
 
   // Double the size of the array
   num_buckets_ <<= 1;
@@ -364,7 +365,8 @@ void OAHashTable::Resize(HashEntry **entry_p_p) {
 // them, and then delete the entire array.
 //===----------------------------------------------------------------------===//
 void OAHashTable::Destroy() {
-  LOG_DEBUG("Cleaning up hash table with %llu entries ...", (unsigned long long) num_entries_);
+  LOG_DEBUG("Cleaning up hash table with %llu entries ...",
+            (unsigned long long)num_entries_);
 
   uint64_t processed_count = 0;
   char *current_entry_char_p = reinterpret_cast<char *>(buckets_);

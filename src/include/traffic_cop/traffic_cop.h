@@ -12,8 +12,6 @@
 
 #pragma once
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <mutex>
 #include <stack>
 #include <vector>
@@ -30,57 +28,55 @@
 #include "event.h"
 
 namespace peloton {
-//void ExecutePlanWrapper(void *arg_ptr);
 namespace tcop {
 
 //===--------------------------------------------------------------------===//
 // TRAFFIC COP
+// Helpers for executing statements.
+//
+// Usage in unit tests:
+//   auto &traffic_cop = tcop::TrafficCop::GetInstance();
+//   traffic_cop.SetTaskCallback(<callback>, <arg>);
+//   txn = txn_manager.BeginTransaction();
+//   traffic_cop.SetTcopTxnState(txn);
+//   std::shared_ptr<AbstractPlan> plan = <set up a plan>;
+//   traffic_cop.ExecuteHelper(plan, <params>, <result>, <result_format>);
+//   <wait>
+//   traffic_cop.CommitQueryHelper();
 //===--------------------------------------------------------------------===//
 
 class TrafficCop {
-  TrafficCop(TrafficCop const &) = delete;
-
  public:
   TrafficCop();
-  TrafficCop(void(* task_callback)(void *), void *task_callback_arg);
-
+  TrafficCop(void (*task_callback)(void *), void *task_callback_arg);
   ~TrafficCop();
+  DISALLOW_COPY_AND_MOVE(TrafficCop);
 
-  // static singleton method used by tests
+  // Static singleton used by unit tests.
   static TrafficCop &GetInstance();
 
-  // reset this object
+  // Reset this object.
   void Reset();
 
-  // PortalExec - Execute query string
-//  ResultType ExecuteStatement(const std::string &query,
-//                              std::vector<StatementResult> &result,
-//                              std::vector<FieldInfo> &tuple_descriptor,
-//                              int &rows_changed, std::string &error_message,
-//                              const size_t thread_id = 0);
-
-  // ExecPrepStmt - Execute a statement from a prepared and bound statement
+  // Execute a statement from a prepared and bound statement.
   ResultType ExecuteStatement(
       const std::shared_ptr<Statement> &statement,
-      const std::vector<type::Value> &params, const bool unnamed,
+      const std::vector<type::Value> &params, bool unnamed,
       std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
-      const std::vector<int> &result_format,
-      std::vector<StatementResult> &result, int &rows_change,
-      std::string &error_message, const size_t thread_id = 0);
+      const std::vector<int> &result_format, std::vector<ResultValue> &result,
+      std::string &error_message, size_t thread_id = 0);
 
-  // ExecutePrepStmt - Helper to handle txn-specifics for the plan-tree of a
-  // statement
-  executor::ExecuteResult ExecuteStatementPlan(
+  // Helper to handle txn-specifics for the plan-tree of a statement.
+  executor::ExecuteResult ExecuteHelper(
       std::shared_ptr<planner::AbstractPlan> plan,
-      const std::vector<type::Value> &params,
-      std::vector<StatementResult> &result,
-      const std::vector<int> &result_format, const size_t thread_id = 0);
+      const std::vector<type::Value> &params, std::vector<ResultValue> &result,
+      const std::vector<int> &result_format, size_t thread_id = 0);
 
-  // InitBindPrepStmt - Prepare and bind a query from a query string
+  // Prepare and bind a query from a query string
   std::shared_ptr<Statement> PrepareStatement(const std::string &statement_name,
                                               const std::string &query_string,
                                               std::string &error_message,
-                                              const size_t thread_id = 0);
+                                              size_t thread_id = 0);
 
   std::vector<FieldInfo> GenerateTupleDescriptor(
       parser::SQLStatement *select_stmt);
@@ -88,13 +84,7 @@ class TrafficCop {
   FieldInfo GetColumnFieldForValueType(std::string column_name,
                                        type::TypeId column_type);
 
-  FieldInfo GetColumnFieldForAggregates(std::string name,
-                                        ExpressionType expr_type);
-
-  int BindParameters(std::vector<std::pair<int, std::string>> &parameters,
-                     Statement **stmt, std::string &error_message);
-
-  void SetTcopTxnState(concurrency::Transaction * txn) {
+  void SetTcopTxnState(concurrency::Transaction *txn) {
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
 
@@ -102,54 +92,94 @@ class TrafficCop {
 
   void ExecuteStatementPlanGetResult();
 
-  ResultType ExecuteStatementGetResult(int &rows_changed);
+  ResultType ExecuteStatementGetResult();
 
-  static void ExecutePlanWrapper(void *arg_ptr);
-
-  void SetTaskCallback(void(* task_callback)(void*), void *task_callback_arg) {
+  void SetTaskCallback(void (*task_callback)(void *), void *task_callback_arg) {
     task_callback_ = task_callback;
     task_callback_arg_ = task_callback_arg;
   }
 
-  executor::ExecuteResult p_status_;
+  void setRowsAffected(int rows_affected) { rows_affected_ = rows_affected; }
 
-  bool is_queuing_;
-  
-  inline void SetDefaultDatabaseName(std::string default_database_name) {
-    default_database_name_ = default_database_name;
+  int getRowsAffected() { return rows_affected_; }
+
+  void SetStatement(std::shared_ptr<Statement> statement) {
+    statement_ = std::move(statement);
   }
 
-//  struct event* event_;
+  std::shared_ptr<Statement> GetStatement() { return statement_; }
+
+  void SetResult(std::vector<ResultValue> result) {
+    result_ = std::move(result);
+  }
+
+  std::vector<ResultValue> &GetResult() { return result_; }
+
+  void SetParamVal(std::vector<type::Value> param_values) {
+    param_values_ = std::move(param_values);
+  }
+
+  std::vector<type::Value> &GetParamVal() { return param_values_; }
+
+  void SetErrorMessage(std::string error_message) {
+    error_message_ = std::move(error_message);
+  }
+
+  std::string &GetErrorMessage() { return error_message_; }
+
+  void SetQueuing(bool is_queuing) { is_queuing_ = is_queuing; }
+
+  bool GetQueuing() { return is_queuing_; }
+
+  executor::ExecuteResult p_status_;
+
+  void SetDefaultDatabaseName(std::string default_database_name) {
+    default_database_name_ = std::move(default_database_name);
+  }
+
+  // TODO: this member variable should be in statement_ after parser part
+  // finished
+  std::string query_;
+
  private:
+  bool is_queuing_;
+
+  std::string error_message_;
+
+  std::vector<type::Value> param_values_;
+
+  std::vector<ResultValue> results_;
+
+  // This save currnet statement in the traffic cop
+  std::shared_ptr<Statement> statement_;
 
   // Default database name
   std::string default_database_name_ = DEFAULT_DB_NAME;
+
+  int rows_affected_;
 
   // The optimizer used for this connection
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer_;
 
   // flag of single statement txn
-  bool single_statement_txn_;
+  bool is_single_statement_txn_;
 
-  // flag of psql protocol
-  // executePlan arguments
+  std::vector<ResultValue> result_;
 
-  std::vector<StatementResult> result_;
-  void(* task_callback_)(void *);
-  void * task_callback_arg_;
-//  IOTrigger io_trigger_;
+  // The current callback to be invoked after execution completes.
+  void (*task_callback_)(void *);
+  void *task_callback_arg_;
 
   // pair of txn ptr and the result so-far for that txn
   // use a stack to support nested-txns
-  typedef std::pair<concurrency::Transaction *, ResultType> TcopTxnState;
-
+  using TcopTxnState = std::pair<concurrency::Transaction *, ResultType>;
   std::stack<TcopTxnState> tcop_txn_state_;
 
   static TcopTxnState &GetDefaultTxnState();
 
   TcopTxnState &GetCurrentTxnState();
 
-  ResultType BeginQueryHelper(const size_t thread_id);
+  ResultType BeginQueryHelper(size_t thread_id);
 
   ResultType AbortQueryHelper();
 

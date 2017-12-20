@@ -11,12 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "codegen/operator/delete_translator.h"
-
-#include "codegen/deleter.h"
-#include "codegen/proxy/catalog_proxy.h"
 #include "codegen/proxy/deleter_proxy.h"
-#include "codegen/proxy/executor_context_proxy.h"
-#include "codegen/proxy/transaction_runtime_proxy.h"
+#include "codegen/proxy/storage_manager_proxy.h"
 #include "planner/delete_plan.h"
 #include "storage/data_table.h"
 
@@ -40,21 +36,19 @@ DeleteTranslator::DeleteTranslator(const planner::DeletePlan &delete_plan,
 void DeleteTranslator::InitializeState() {
   auto &codegen = GetCodeGen();
 
-  // The transaction pointer
-  llvm::Value *txn_ptr = GetCompilationContext().GetTransactionPtr();
-
   // Get the table pointer
   storage::DataTable *table = delete_plan_.GetTable();
   llvm::Value *table_ptr =
       codegen.Call(StorageManagerProxy::GetTableWithOid,
-                   {GetCatalogPtr(), codegen.Const32(table->GetDatabaseOid()),
+                   {GetStorageManagerPtr(),
+                    codegen.Const32(table->GetDatabaseOid()),
                     codegen.Const32(table->GetOid())});
 
   llvm::Value *executor_ptr = GetCompilationContext().GetExecutorContextPtr();
 
   // Call Deleter.Init(txn, table)
   llvm::Value *deleter = LoadStatePtr(deleter_state_id_);
-  codegen.Call(DeleterProxy::Init, {deleter, txn_ptr, table_ptr, executor_ptr});
+  codegen.Call(DeleterProxy::Init, {deleter, table_ptr, executor_ptr});
 }
 
 void DeleteTranslator::Produce() const {

@@ -83,7 +83,7 @@ void Loop::CollectFinalLoopVariables(std::vector<llvm::Value *> &loop_vals) {
   for (auto *phi_node : phi_nodes_) {
     llvm::PHINode *end_phi =
         cg_->CreatePHI(phi_node->getType(), 2 + break_bbs_.size(),
-                       phi_node->getName() + "End");
+                       phi_node->getName() + ".Phi");
     end_phi->addIncoming(phi_node->getIncomingValue(0), pre_loop_bb_);
     end_phi->addIncoming(phi_node->getIncomingValue(1), last_loop_bb_);
     for (auto &break_bb : break_bbs_) {

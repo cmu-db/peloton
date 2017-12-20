@@ -82,10 +82,10 @@ bool BinderContext::GetColumnPosTuple(
     auto column_object = table_obj->GetColumnObject(col_name);
     if (column_object == nullptr) return false;
 
-    oid_t col_pos = column_object->column_id;
+    oid_t col_pos = column_object->GetColumnId();
     col_pos_tuple =
         std::make_tuple(table_obj->database_oid, table_obj->table_oid, col_pos);
-    value_type = column_object->column_type;
+    value_type = column_object->GetColumnType();
     return true;
   } catch (CatalogException& e) {
     LOG_TRACE("Can't find table %d! Return false", std::get<1>(table_id_tuple));

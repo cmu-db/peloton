@@ -42,7 +42,7 @@ class PelotonCodeGenTest : public PelotonTest {
  public:
   std::string test_db_name = "PELOTON_CODEGEN";
   std::vector<std::string> test_table_names = {"table1", "table2", "table3",
-                                               "table4"};
+                                               "table4", "table5"};
   std::vector<oid_t> test_table_oids;
 
   PelotonCodeGenTest();
@@ -58,7 +58,8 @@ class PelotonCodeGenTest : public PelotonTest {
   }
 
   // Create the schema (common among all tables)
-  std::unique_ptr<catalog::Schema> CreateTestSchema() const;
+  std::unique_ptr<catalog::Schema> CreateTestSchema(bool add_primary = false)
+      const;
 
   // Create the test tables
   void CreateTestTables(concurrency::Transaction *txn);
@@ -69,8 +70,13 @@ class PelotonCodeGenTest : public PelotonTest {
 
   // Compile and execute the given plan
   codegen::QueryCompiler::CompileStats CompileAndExecute(
-      const planner::AbstractPlan &plan, codegen::QueryResultConsumer &consumer,
-      char *consumer_state);
+      planner::AbstractPlan &plan, codegen::QueryResultConsumer &consumer,
+      char *consumer_state, std::vector<type::Value> *params = nullptr);
+
+  codegen::QueryCompiler::CompileStats CompileAndExecuteCache(
+      std::shared_ptr<planner::AbstractPlan> plan,
+      codegen::QueryResultConsumer &consumer, char *consumer_state,
+      bool &cached, std::vector<type::Value> *params = nullptr);
 
   //===--------------------------------------------------------------------===//
   // Helpers

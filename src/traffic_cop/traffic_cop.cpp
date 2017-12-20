@@ -10,18 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "include/traffic_cop/traffic_cop.h"
+#include "traffic_cop/traffic_cop.h"
 
 #include "catalog/catalog.h"
-#include "common/abstract_tuple.h"
-#include "common/exception.h"
-#include "common/logger.h"
-#include "common/macros.h"
 #include "concurrency/transaction_manager_factory.h"
-#include "executor/plan_executor.h"
 #include "expression/expression_util.h"
 #include "optimizer/optimizer.h"
-#include "parser/postgresparser.h"
 #include "planner/plan_util.h"
 #include "settings/settings_manager.h"
 
@@ -32,10 +26,10 @@
 namespace peloton {
 namespace tcop {
 
-TrafficCop::TrafficCop() : is_queuing_(false) {
+
+TrafficCop::TrafficCop() : is_queuing_(false), rows_affected_(0) {
   LOG_TRACE("Starting a new TrafficCop");
   optimizer_.reset(new optimizer::Optimizer);
-  //  result_ = ResultType::QUEUING;
 }
 
 TrafficCop::TrafficCop(void (*task_callback)(void *), void *task_callback_arg)
@@ -48,12 +42,14 @@ void TrafficCop::Reset() {
   // clear out the stack
   swap(tcop_txn_state_, new_tcop_txn_state);
   optimizer_->Reset();
-  //  result_ = ResultType::QUEUING;
+  results_.clear();
+  param_values_.clear();
+  setRowsAffected(0);
 }
 
 TrafficCop::~TrafficCop() {
   // Abort all running transactions
-  while (tcop_txn_state_.empty() == false) {
+  while (!tcop_txn_state_.empty()) {
     AbortQueryHelper();
   }
 }
@@ -80,7 +76,7 @@ TrafficCop::TcopTxnState &TrafficCop::GetCurrentTxnState() {
   return tcop_txn_state_.top();
 }
 
-ResultType TrafficCop::BeginQueryHelper(const size_t thread_id) {
+ResultType TrafficCop::BeginQueryHelper(size_t thread_id) {
   if (tcop_txn_state_.empty()) {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction(thread_id);
@@ -182,36 +178,32 @@ ResultType TrafficCop::ExecuteStatement(
   }
 }
 
-ResultType TrafficCop::ExecuteStatementGetResult(int &rows_changed) {
+ResultType TrafficCop::ExecuteStatementGetResult() {
   LOG_TRACE("Statement executed. Result: %s",
             ResultTypeToString(p_status_.m_result).c_str());
-  rows_changed = p_status_.m_processed;
-  LOG_TRACE("rows_changed %d", rows_changed);
+  setRowsAffected(p_status_.m_processed);
+  LOG_TRACE("rows_changed %d", p_status_.m_processed);
   is_queuing_ = false;
   return p_status_.m_result;
 }
 
-executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
+executor::ExecuteResult TrafficCop::ExecuteHelper(
     std::shared_ptr<planner::AbstractPlan> plan,
-    const std::vector<type::Value> &params,
-    std::vector<StatementResult> &result, const std::vector<int> &result_format,
-    const size_t thread_id) {
-  concurrency::Transaction *txn;
-
+    const std::vector<type::Value> &params, std::vector<ResultValue> &result,
+    const std::vector<int> &result_format, size_t thread_id) {
   auto &curr_state = GetCurrentTxnState();
-  // check and begin txn here, partly because tests directly call
-  // ExecuteStatementPlan
-  if (tcop_txn_state_.empty()) {
-    // no active txn, single-statement txn
+
+  concurrency::Transaction *txn;
+  if (!tcop_txn_state_.empty()) {
+    txn = curr_state.first;
+  } else {
+    // No active txn, single-statement txn
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     // new txn, reset result status
     curr_state.second = ResultType::SUCCESS;
+    is_single_statement_txn_ = true;
     txn = txn_manager.BeginTransaction(thread_id);
-    single_statement_txn_ = true;
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
-  } else {
-    // get ptr to current active txn
-    txn = curr_state.first;
   }
 
   // skip if already aborted
@@ -232,6 +224,7 @@ executor::ExecuteResult TrafficCop::ExecuteStatementPlan(
   } else {
     // otherwise, we have already aborted
     p_status_.m_result = ResultType::ABORTED;
+    return p_status_;
   }
   LOG_TRACE("Check Tcop_txn_state Size After ExecuteStatementPlan %lu",
             tcop_txn_state_.size());
@@ -260,11 +253,11 @@ void TrafficCop::ExecuteStatementPlanGetResult() {
   }
 
   auto txn_result = GetCurrentTxnState().first->GetResult();
-  if (single_statement_txn_ == true || init_failure == true ||
+  if (is_single_statement_txn_ || init_failure ||
       txn_result == ResultType::FAILURE) {
     LOG_TRACE(
         "About to commit: single stmt: %d, init_failure: %d, txn_result: %s",
-        single_statement_txn_, init_failure,
+        is_single_statement_txn_, init_failure,
         ResultTypeToString(txn_result).c_str());
     switch (txn_result) {
       case ResultType::SUCCESS:
@@ -277,7 +270,7 @@ void TrafficCop::ExecuteStatementPlanGetResult() {
       default:
         // Abort
         LOG_TRACE("Abort Transaction");
-        if (single_statement_txn_ == true) {
+        if (is_single_statement_txn_) {
           LOG_TRACE("Tcop_txn_state size: %lu", tcop_txn_state_.size());
           p_status_.m_result = AbortQueryHelper();
         } else {
@@ -463,6 +456,7 @@ std::vector<FieldInfo> TrafficCop::GenerateTupleDescriptor(
   return tuple_descriptor;
 }
 
+// TODO: move it to postgres_protocal_handler.cpp
 FieldInfo TrafficCop::GetColumnFieldForValueType(std::string column_name,
                                                  type::TypeId column_type) {
   PostgresValueType field_type;
@@ -520,46 +514,149 @@ FieldInfo TrafficCop::GetColumnFieldForValueType(std::string column_name,
                          field_size);
 }
 
-FieldInfo TrafficCop::GetColumnFieldForAggregates(std::string name,
-                                                  ExpressionType expr_type) {
-  // For now we only return INT for (MAX , MIN)
-  // TODO: Check if column type is DOUBLE and return it for (MAX. MIN)
+std::shared_ptr<Statement> TrafficCop::PrepareStatement(
+    const std::string &statement_name, const std::string &query_string,
+    UNUSED_ATTRIBUTE std::string &error_message,
+    UNUSED_ATTRIBUTE size_t thread_id) {
+  LOG_TRACE("Prepare Statement name: %s", statement_name.c_str());
+  LOG_TRACE("Prepare Statement query: %s", query_string.c_str());
 
-  PostgresValueType field_type;
-  size_t field_size;
-  std::string field_name;
+  std::shared_ptr<Statement> statement(
+      new Statement(statement_name, query_string));
+  // We can learn transaction's states, BEGIN, COMMIT, ABORT, or ROLLBACK from
+  // member variables, tcop_txn_state_. We can also get single-statement txn or
+  // multi-statement txn from member variable is_single_statement_txn_
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  // --multi-statements except BEGIN in a transaction
+  if (!tcop_txn_state_.empty()) {
+    is_single_statement_txn_ = false;
+    // multi-statment txn has been aborted, just skip this query,
+    // and do not need to parse or execute this query anymore.
+    // Do not return nullptr in case that 'COMMIT' cannot be execute,
+    // because nullptr will directly return ResultType::FAILURE to
+    // packet_manager
+    if (tcop_txn_state_.top().second == ResultType::ABORTED) {
+      return statement;
+    }
+  } else {
+    // Begin new transaction when received single-statement query or "BEGIN"
+    // from multi-statement query
+    if (statement->GetQueryType() ==
+        QueryType::QUERY_BEGIN) {  // only begin a new transaction
+      // note this transaction is not single-statement transaction
+      LOG_TRACE("BEGIN");
+      is_single_statement_txn_ = false;
+    } else {
+      // single statement
+      LOG_TRACE("SINGLE TXN");
+      is_single_statement_txn_ = true;
+    }
+    auto txn = txn_manager.BeginTransaction(thread_id);
+    // this shouldn't happen
+    if (txn == nullptr) {
+      LOG_TRACE("Begin txn failed");
+    }
+    // initialize the current result as success
+    tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+  }
 
-  // Check the expression type and return the corresponding description
-  switch (expr_type) {
-    case ExpressionType::AGGREGATE_MAX:
-    case ExpressionType::AGGREGATE_MIN:
-    case ExpressionType::AGGREGATE_COUNT: {
-      field_type = PostgresValueType::INTEGER;
-      field_size = 4;
-      field_name = name;
+  try {
+    auto &peloton_parser = parser::PostgresParser::GetInstance();
+    auto sql_stmt = peloton_parser.BuildParseTree(query_string);
+    if (!sql_stmt->is_valid) {
+      throw ParserException("Error parsing SQL statement");
+    }
+    LOG_TRACE("Optimizer Build Peloton Plan Tree...");
+    auto plan = optimizer_->BuildPelotonPlanTree(
+        sql_stmt, default_database_name_, tcop_txn_state_.top().first);
+    statement->SetPlanTree(plan);
+    // Get the tables that our plan references so that we know how to
+    // invalidate it at a later point when the catalog changes
+    const std::set<oid_t> table_oids =
+        planner::PlanUtil::GetTablesReferenced(plan.get());
+    statement->SetReferencedTables(table_oids);
+
+    for (auto &stmt : sql_stmt->GetStatements()) {
+      LOG_TRACE("SQLStatement: %s", stmt->GetInfo().c_str());
+      if (stmt->GetType() == StatementType::SELECT) {
+        auto tuple_descriptor = GenerateTupleDescriptor(stmt.get());
+        statement->SetTupleDescriptor(tuple_descriptor);
+      }
       break;
     }
-    // Return a DOUBLE if the functiob is AVG
-    case ExpressionType::AGGREGATE_AVG: {
-      field_type = PostgresValueType::DOUBLE;
-      field_size = 8;
-      field_name = name;
-      break;
+
+#ifdef LOG_DEBUG_ENABLED
+    if (statement->GetPlanTree() != nullptr) {
+      LOG_TRACE("Statement Prepared: %s", statement->GetInfo().c_str());
+      LOG_TRACE("%s", statement->GetPlanTree().get()->GetInfo().c_str());
     }
-    case ExpressionType::AGGREGATE_COUNT_STAR: {
-      field_type = PostgresValueType::INTEGER;
-      field_size = 4;
-      field_name = "COUNT(*)";
-      break;
+#endif
+    return statement;
+  } catch (Exception &e) {
+    error_message = e.what();
+    if (is_single_statement_txn_) {
+      LOG_DEBUG("SINGLE ABORT!");
+      AbortQueryHelper();
+    } else {  // multi-statment txn
+      if (tcop_txn_state_.top().second != ResultType::ABORTED) {
+        tcop_txn_state_.top().second = ResultType::ABORTED;
+      }
     }
-    default: {
-      field_type = PostgresValueType::TEXT;
-      field_size = 255;
-      field_name = name;
+    return nullptr;
+  }
+}
+
+ResultType TrafficCop::ExecuteStatement(
+    const std::shared_ptr<Statement> &statement,
+    const std::vector<type::Value> &params, UNUSED_ATTRIBUTE bool unnamed,
+    std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
+    const std::vector<int> &result_format, std::vector<ResultValue> &result,
+    std::string &error_message, size_t thread_id) {
+  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+          settings::SettingId::stats_mode)) != StatsType::INVALID) {
+    stats::BackendStatsContext::GetInstance()->InitQueryMetric(
+        statement, std::move(param_stats));
+  }
+
+  LOG_TRACE("Execute Statement of name: %s",
+            statement->GetStatementName().c_str());
+  LOG_TRACE("Execute Statement of query: %s",
+            statement->GetQueryString().c_str());
+  LOG_TRACE("Execute Statement Plan:\n%s",
+            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
+  LOG_TRACE("Execute Statement Query Type: %s",
+            statement->GetQueryTypeString().c_str());
+  LOG_TRACE("----QueryType: %d--------",
+            static_cast<int>(statement->GetQueryType()));
+
+  try {
+    switch (statement->GetQueryType()) {
+      case QueryType::QUERY_BEGIN: {
+        return BeginQueryHelper(thread_id);
+      }
+      case QueryType::QUERY_COMMIT: {
+        return CommitQueryHelper();
+      }
+      case QueryType::QUERY_ROLLBACK: {
+        return AbortQueryHelper();
+      }
+      default: {
+        ExecuteHelper(statement->GetPlanTree(), params, result, result_format,
+                      thread_id);
+
+        // ExecuteHelper decides whether it is needed to queue task.
+        if (is_queuing_) {
+          return ResultType::QUEUING;
+        } else {
+          return ExecuteStatementGetResult();
+        }
+      }
     }
-  }  // SWITCH
-  return std::make_tuple(field_name, static_cast<oid_t>(field_type),
-                         field_size);
+
+  } catch (Exception &e) {
+    error_message = e.what();
+    return ResultType::FAILURE;
+  }
 }
 
 }  // namespace tcop

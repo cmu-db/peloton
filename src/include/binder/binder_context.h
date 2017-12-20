@@ -57,6 +57,12 @@ class BinderContext {
   // Update the nested table alias map
   void AddNestedTable(const std::string table_alias, std::vector<std::unique_ptr<expression::AbstractExpression>>& select_list);
 
+  static bool HasTables(std::shared_ptr<BinderContext> current_context) {
+    if (current_context == nullptr) return false;
+    if (!current_context->table_alias_map.empty()) return true;
+    return HasTables(current_context->upper_context);
+  }
+
   // Construct the column position tuple given column name and the
   // corresponding table obj. Also set the value type
   // Note that this is just a helper function and it is independent of

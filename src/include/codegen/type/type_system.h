@@ -42,36 +42,47 @@ class Type;
 class TypeSystem {
  public:
   //===--------------------------------------------------------------------===//
-  // Casting operator
+  //
+  // Casting operation
+  //
   //===--------------------------------------------------------------------===//
-  struct Cast {
-    // Virtual destructor
-    virtual ~Cast() {}
+  class Cast {
+   public:
+    virtual ~Cast() = default;
 
     // Does this cast support casting from the given type to the given type?
     virtual bool SupportsTypes(const Type &from_type,
                                const Type &to_type) const = 0;
 
-    // Perform the cast on the given value to the provided type
-    virtual Value DoCast(CodeGen &codegen, const Value &value,
-                         const Type &to_type) const = 0;
+    // Cast the given value to the provided type
+    virtual Value Eval(CodeGen &codegen, const Value &value,
+                       const Type &to_type) const = 0;
   };
 
-  class CastWithNullPropagation : public Cast {
+  //===--------------------------------------------------------------------===//
+  //
+  // CastHandleNull
+  //
+  // An abstract base class for cast operations. This class performs common,
+  // generic NULL checking logic for most cast operations. Derived classes
+  // implement Impl() and assume non-null inputs.
+  //
+  // If the input is not NULL-able, no NULL check is performs, and the derived
+  // classes implementation is invoked.
+  //
+  // If the input is NULLable, an if-then-else construct is generated to perform
+  // the NULL check. Derived classes are invoked in the non-null branch.
+  //
+  //===--------------------------------------------------------------------===//
+  class CastHandleNull : public TypeSystem::Cast {
    public:
-    CastWithNullPropagation(const TypeSystem::Cast &inner_cast)
-        : inner_cast_(inner_cast) {}
+    Value Eval(CodeGen &codegen, const Value &value,
+               const Type &to_type) const override;
 
-    // Does this cast support casting from the given type to the given type?
-    bool SupportsTypes(const Type &from_type,
-                       const Type &to_type) const override;
-
-    // Perform the cast on the given value to the provided type
-    Value DoCast(CodeGen &codegen, const Value &value,
-                 const Type &to_type) const override;
-
-   private:
-    const TypeSystem::Cast &inner_cast_;
+   protected:
+    // Perform the cast assuming the input is not NULLable
+    virtual Value Impl(CodeGen &codegen, const Value &value,
+                       const Type &to_type) const = 0;
   };
 
   struct CastInfo {
@@ -81,11 +92,14 @@ class TypeSystem {
   };
 
   //===--------------------------------------------------------------------===//
+  //
   // The generic comparison interface for all comparisons between all types
+  //
   //===--------------------------------------------------------------------===//
-  struct Comparison {
+  class Comparison {
+   public:
     // Virtual destructor
-    virtual ~Comparison() {}
+    virtual ~Comparison() = default;
 
     // Does this instance support comparison of the values of the given left and
     // right SQL types?
@@ -93,71 +107,124 @@ class TypeSystem {
                                const Type &right_type) const = 0;
 
     // Main comparison operators
-    virtual Value DoCompareLt(CodeGen &codegen, const Value &left,
-                              const Value &right) const = 0;
-
-    virtual Value DoCompareLte(CodeGen &codegen, const Value &left,
-                               const Value &right) const = 0;
-
-    virtual Value DoCompareEq(CodeGen &codegen, const Value &left,
-                              const Value &right) const = 0;
-
-    virtual Value DoCompareNe(CodeGen &codegen, const Value &left,
-                              const Value &right) const = 0;
-
-    virtual Value DoCompareGt(CodeGen &codegen, const Value &left,
-                              const Value &right) const = 0;
-
-    virtual Value DoCompareGte(CodeGen &codegen, const Value &left,
-                               const Value &right) const = 0;
+    virtual Value EvalCompareLt(CodeGen &codegen, const Value &left,
+                                const Value &right) const = 0;
+    virtual Value EvalCompareLte(CodeGen &codegen, const Value &left,
+                                 const Value &right) const = 0;
+    virtual Value EvalCompareEq(CodeGen &codegen, const Value &left,
+                                const Value &right) const = 0;
+    virtual Value EvalCompareNe(CodeGen &codegen, const Value &left,
+                                const Value &right) const = 0;
+    virtual Value EvalCompareGt(CodeGen &codegen, const Value &left,
+                                const Value &right) const = 0;
+    virtual Value EvalCompareGte(CodeGen &codegen, const Value &left,
+                                 const Value &right) const = 0;
 
     // Perform a comparison used for sorting. We need a stable and transitive
     // sorting comparison operator here. The operator returns:
     //  < 0 - if the left value comes before the right value when sorted
     //  = 0 - if the left value is equivalent to the right element
     //  > 0 - if the left value comes after the right value when sorted
-    virtual Value DoComparisonForSort(CodeGen &codegen, const Value &left,
-                                      const Value &right) const = 0;
+    virtual Value EvalCompareForSort(CodeGen &codegen, const Value &left,
+                                     const Value &right) const = 0;
   };
 
-  class ComparisonWithNullPropagation : public Comparison {
+  //===--------------------------------------------------------------------===//
+  //
+  // SimpleComparisonHandleNull
+  //
+  // An abstract base class for comparison operations. This class computes the
+  // NULL bit based on arguments and **always** invokes the derived
+  // implementation to perform the comparison. This means that derived classes
+  // may operate on SQL NULL values. For simple comparisons, i.e., numeric
+  // comparisons, this is safe since the values will always be valid, though
+  // potentially garbage). The resulting boolean value is still marked with the
+  // correct NULL bit, thus hiding the (potentially) garbage comparison.
+  //
+  // This class isn't safe for string comparisons since strings  For string
+  // comparisons, this is not safe because the string can take on C/C++ NULL,
+  // and SEGFAULT.
+  //
+  //===--------------------------------------------------------------------===//
+  class SimpleComparisonHandleNull : public Comparison {
    public:
-    ComparisonWithNullPropagation(
-        const TypeSystem::Comparison &inner_comparison)
-        : inner_comparison_(inner_comparison) {}
+    Value EvalCompareLt(CodeGen &codegen, const Value &left,
+                        const Value &right) const override;
+    Value EvalCompareLte(CodeGen &codegen, const Value &left,
+                         const Value &right) const override;
+    Value EvalCompareEq(CodeGen &codegen, const Value &left,
+                        const Value &right) const override;
+    Value EvalCompareNe(CodeGen &codegen, const Value &left,
+                        const Value &right) const override;
+    Value EvalCompareGt(CodeGen &codegen, const Value &left,
+                        const Value &right) const override;
+    Value EvalCompareGte(CodeGen &codegen, const Value &left,
+                         const Value &right) const override;
+    Value EvalCompareForSort(CodeGen &codegen, const Value &left,
+                             const Value &right) const override;
 
-    bool SupportsTypes(const Type &left_type,
-                       const Type &right_type) const override;
+   protected:
+    // The non-null comparison implementations
+    virtual Value CompareLtImpl(CodeGen &codegen, const Value &left,
+                                const Value &right) const = 0;
+    virtual Value CompareLteImpl(CodeGen &codegen, const Value &left,
+                                 const Value &right) const = 0;
+    virtual Value CompareEqImpl(CodeGen &codegen, const Value &left,
+                                const Value &right) const = 0;
+    virtual Value CompareNeImpl(CodeGen &codegen, const Value &left,
+                                const Value &right) const = 0;
+    virtual Value CompareGtImpl(CodeGen &codegen, const Value &left,
+                                const Value &right) const = 0;
+    virtual Value CompareGteImpl(CodeGen &codegen, const Value &left,
+                                 const Value &right) const = 0;
+    virtual Value CompareForSortImpl(CodeGen &codegen, const Value &left,
+                                     const Value &right) const = 0;
+  };
 
-    // Main comparison operators
-    Value DoCompareLt(CodeGen &codegen, const Value &left,
-                      const Value &right) const override;
+  //===--------------------------------------------------------------------===//
+  //
+  // ExpensiveComparisonHandleNull
+  //
+  // An abstract base class for comparison operations. This class correctly
+  // computes the NULL bit, but generates a full-blown if-then-else clause
+  // (hence the "expensive" part) to perform the NULL check. Thus, derived
+  // comparison implementations are assured that arguments are not NULL-able.
+  // If the arguments are non-NULL-able, then the NULL check is elided.
+  //
+  //===--------------------------------------------------------------------===//
+  class ExpensiveComparisonHandleNull : public Comparison {
+   public:
+    Value EvalCompareLt(CodeGen &codegen, const Value &left,
+                        const Value &right) const override;
+    Value EvalCompareLte(CodeGen &codegen, const Value &left,
+                         const Value &right) const override;
+    Value EvalCompareEq(CodeGen &codegen, const Value &left,
+                        const Value &right) const override;
+    Value EvalCompareNe(CodeGen &codegen, const Value &left,
+                        const Value &right) const override;
+    Value EvalCompareGt(CodeGen &codegen, const Value &left,
+                        const Value &right) const override;
+    Value EvalCompareGte(CodeGen &codegen, const Value &left,
+                         const Value &right) const override;
+    Value EvalCompareForSort(CodeGen &codegen, const Value &left,
+                             const Value &right) const override;
 
-    Value DoCompareLte(CodeGen &codegen, const Value &left,
-                       const Value &right) const override;
-
-    Value DoCompareEq(CodeGen &codegen, const Value &left,
-                      const Value &right) const override;
-
-    Value DoCompareNe(CodeGen &codegen, const Value &left,
-                      const Value &right) const override;
-
-    Value DoCompareGt(CodeGen &codegen, const Value &left,
-                      const Value &right) const override;
-
-    Value DoCompareGte(CodeGen &codegen, const Value &left,
-                       const Value &right) const override;
-
-    // Perform a comparison used for sorting. We need a stable and transitive
-    // sorting comparison operator here. The operator returns:
-    //  < 0 - if the left value comes before the right value when sorted
-    //  = 0 - if the left value is equivalent to the right element
-    //  > 0 - if the left value comes after the right value when sorted
-    Value DoComparisonForSort(CodeGen &codegen, const Value &left,
-                              const Value &right) const override;
-
-   private:
-    const Comparison &inner_comparison_;
+   protected:
+    // The non-null comparison implementations
+    virtual Value CompareLtImpl(CodeGen &codegen, const Value &left,
+                                const Value &right) const = 0;
+    virtual Value CompareLteImpl(CodeGen &codegen, const Value &left,
+                                 const Value &right) const = 0;
+    virtual Value CompareEqImpl(CodeGen &codegen, const Value &left,
+                                const Value &right) const = 0;
+    virtual Value CompareNeImpl(CodeGen &codegen, const Value &left,
+                                const Value &right) const = 0;
+    virtual Value CompareGtImpl(CodeGen &codegen, const Value &left,
+                                const Value &right) const = 0;
+    virtual Value CompareGteImpl(CodeGen &codegen, const Value &left,
+                                 const Value &right) const = 0;
+    virtual Value CompareForSortImpl(CodeGen &codegen, const Value &left,
+                                     const Value &right) const = 0;
   };
 
   struct ComparisonInfo {
@@ -166,41 +233,50 @@ class TypeSystem {
   };
 
   //===--------------------------------------------------------------------===//
+  //
   // A unary operator (i.e., an operator that accepts a single argument)
+  //
   //===--------------------------------------------------------------------===//
-  struct UnaryOperator {
-    virtual ~UnaryOperator() {}
+  class UnaryOperator {
+   public:
+    virtual ~UnaryOperator() = default;
 
-    // Does this unary operator support values of the given type?
+    // Is this input type supported by this operator?
     virtual bool SupportsType(const Type &type) const = 0;
 
-    // What is the SQL type of the result of applying the unary operator on a
-    // value of the provided type?
+    // The result type of the operator
     virtual Type ResultType(const Type &val_type) const = 0;
 
     // Apply the operator on the given value
-    virtual Value DoWork(CodeGen &codegen, const Value &val) const = 0;
+    virtual Value Eval(CodeGen &codegen, const Value &val) const = 0;
   };
 
-  class UnaryOperatorWithNullPropagation : public UnaryOperator {
+  //===--------------------------------------------------------------------===//
+  //
+  // UnaryOperatorHandleNull
+  //
+  // An abstract base class for unary operators that returns NULL if the input
+  // is NULL. If the input is not NULL, derived implementations are invoked to
+  // execute the operator logic.
+  //
+  // If the input is not NULL-able, no NULL check is performed.
+  //
+  // If the input is NULL-able, an if-then-else clause is created, and derived
+  // implementations are called in the non-NULL branch.
+  //
+  //===--------------------------------------------------------------------===//
+  class UnaryOperatorHandleNull : public UnaryOperator {
    public:
-    UnaryOperatorWithNullPropagation(const UnaryOperator &inner_op)
-        : inner_op_(inner_op) {}
+    Value Eval(CodeGen &codegen, const Value &val) const override;
 
-    // Does this unary operator support values of the given type?
-    bool SupportsType(const Type &type) const override;
-
-    // What is the SQL type of the result of applying the unary operator on a
-    // value of the provided type?
-    Type ResultType(const Type &val_type) const override;
-
-    // Apply the operator on the given value
-    Value DoWork(CodeGen &codegen, const Value &val) const override;
-
-   private:
-    const UnaryOperator &inner_op_;
+   protected:
+    // The actual implementation assuming non-NULL input
+    virtual Value Impl(CodeGen &codegen, const Value &val) const = 0;
   };
 
+  //===--------------------------------------------------------------------===//
+  // Metadata structure capturing an operator ID and an instance
+  //===--------------------------------------------------------------------===//
   struct UnaryOpInfo {
     // The ID of the operation
     OperatorId op_id;
@@ -210,42 +286,52 @@ class TypeSystem {
   };
 
   //===--------------------------------------------------------------------===//
+  //
+  // BinaryOperator
+  //
   // A binary operator (i.e., an operator that accepts two arguments)
+  //
   //===--------------------------------------------------------------------===//
-  struct BinaryOperator {
-    virtual ~BinaryOperator() {}
+  class BinaryOperator {
+   public:
+    virtual ~BinaryOperator() = default;
 
-    // Does this binary operator support the two provided input types?
+    // Are these input types supported by this operator?
     virtual bool SupportsTypes(const Type &left_type,
                                const Type &right_type) const = 0;
 
-    // What is the SQL type of the result of applying the binary operator on the
-    // provided left and right value types?
+    // The SQL type of the result of this operator
     virtual Type ResultType(const Type &left_type,
                             const Type &right_type) const = 0;
 
     // Execute the actual operator
-    virtual Value DoWork(CodeGen &codegen, const Value &left,
-                         const Value &right, OnError on_error) const = 0;
+    virtual Value Eval(CodeGen &codegen, const Value &left, const Value &right,
+                       OnError on_error) const = 0;
   };
 
-  struct BinaryOperatorWithNullPropagation : public BinaryOperator {
+  //===--------------------------------------------------------------------===//
+  //
+  // BinaryOperatorHandleNull
+  //
+  // An abstract base class for binary operators that returns NULL if either
+  // input argument is NULL. If neither input is NULL, derived implementations
+  // are called (through Impl()) to execute operator logic.
+  //
+  // If the input is not NULL-able, no NULL check is performed.
+  //
+  // If the input is NULL-able, an if-then-else clause is created, and derived
+  // implementations are called in the non-NULL branch.
+  //
+  //===--------------------------------------------------------------------===//
+  struct BinaryOperatorHandleNull : public BinaryOperator {
    public:
-    BinaryOperatorWithNullPropagation(
-        const TypeSystem::BinaryOperator &inner_op)
-        : inner_op_(inner_op) {}
+    Value Eval(CodeGen &codegen, const Value &left, const Value &right,
+               OnError on_error) const override;
 
-    bool SupportsTypes(const Type &left_type,
-                       const Type &right_type) const override;
-
-    Type ResultType(const Type &left_type,
-                    const Type &right_type) const override;
-
-    Value DoWork(CodeGen &codegen, const Value &left, const Value &right,
-                 OnError on_error) const override;
-
-   private:
-    const BinaryOperator &inner_op_;
+   protected:
+    // The implementation assuming non-nullable types
+    virtual Value Impl(CodeGen &codegen, const Value &left, const Value &right,
+                       OnError on_error) const = 0;
   };
 
   struct BinaryOpInfo {
@@ -257,8 +343,9 @@ class TypeSystem {
   };
 
   // An n-ary function
-  struct NaryOperator {
-    virtual ~NaryOperator() {}
+  class NaryOperator {
+   public:
+    virtual ~NaryOperator() = default;
 
     // Does this operator support the provided input argument types?
     virtual bool SupportsTypes(const std::vector<Type> &arg_types) const = 0;
@@ -267,8 +354,8 @@ class TypeSystem {
     virtual Type ResultType(const std::vector<Type> &arg_types) const = 0;
 
     // Execute the actual operator
-    virtual Value DoWork(CodeGen &codegen, const std::vector<Value> &input_args,
-                         OnError on_error) const = 0;
+    virtual Value Eval(CodeGen &codegen, const std::vector<Value> &input_args,
+                       OnError on_error) const = 0;
   };
 
   struct NaryOpInfo {

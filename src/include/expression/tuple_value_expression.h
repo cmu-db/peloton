@@ -100,9 +100,19 @@ class TupleValueExpression : public AbstractExpression {
     return new TupleValueExpression(*this);
   }
 
-  virtual bool Equals(AbstractExpression *expr) const override {
-    if (exp_type_ != expr->GetExpressionType()) return false;
-    auto tup_expr = (TupleValueExpression *)expr;
+  virtual bool operator==(const AbstractExpression &rhs) const override {
+    return ExactlyEquals(rhs);
+  }
+
+  virtual bool operator!=(const AbstractExpression &rhs) const override {
+    return !(*this == rhs);
+  }
+
+  virtual bool ExactlyEquals(const AbstractExpression &rhs) const override {
+    if (exp_type_ != rhs.GetExpressionType())
+      return false;
+
+    auto &other = static_cast<const TupleValueExpression &>(rhs);
     // For query like SELECT A.id, B.id FROM test AS A, test AS B;
     // we need to know whether A.id is from A.id or B.id. In this case,
     // A.id and B.id have the same bound oids since they refer to the same table
@@ -118,7 +128,9 @@ class TupleValueExpression : public AbstractExpression {
     return res;
   }
 
-  virtual hash_t Hash() const override;
+  virtual hash_t Hash() const override { return HashForExactMatch(); }
+
+  virtual hash_t HashForExactMatch() const override;
 
   const planner::AttributeInfo *GetAttributeRef() const { return ai_; }
 

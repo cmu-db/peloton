@@ -32,36 +32,7 @@ namespace peloton {
 
 namespace test {
 
-typedef std::unique_ptr<expression::AbstractExpression> ExpPtr;
-
 class ExpressionTests : public PelotonTest {};
-
-// A simple test to make sure function expressions are filled in correctly
-TEST_F(ExpressionTests, FunctionExpressionTest) {
-  auto catalog = catalog::Catalog::GetInstance();
-  catalog->Bootstrap();
-  // these will be gc'd by substr
-  auto str = expression::ExpressionUtil::ConstantValueFactory(
-      type::ValueFactory::GetVarcharValue("test123"));
-  auto from = expression::ExpressionUtil::ConstantValueFactory(
-      type::ValueFactory::GetIntegerValue(2));
-  auto to = expression::ExpressionUtil::ConstantValueFactory(
-      type::ValueFactory::GetIntegerValue(3));
-  // these need unique ptrs to clean them
-  auto substr =
-      ExpPtr(new expression::FunctionExpression("substr", {str, from, to}));
-  auto not_found = ExpPtr(new expression::FunctionExpression("", {}));
-  // throw an exception when we cannot find a function
-  EXPECT_THROW(
-      expression::ExpressionUtil::TransformExpression(nullptr, not_found.get()),
-      peloton::CatalogException);
-  expression::ExpressionUtil::TransformExpression(nullptr, substr.get());
-  // do a lookup (we pass null schema because there are no tuple value
-  // expressions
-  EXPECT_TRUE(substr->Evaluate(nullptr, nullptr, nullptr)
-                  .CompareEquals(type::ValueFactory::GetVarcharValue("est")) ==
-              type::CMP_TRUE);
-}
 
 TEST_F(ExpressionTests, EqualityTest) {
   // First tree operator_expr(-) -> (tup_expr(A.a), const_expr(2))
@@ -82,7 +53,7 @@ TEST_F(ExpressionTests, EqualityTest) {
   std::unique_ptr<expression::OperatorExpression> root2(
       new expression::OperatorExpression(
       ExpressionType::OPERATOR_MINUS, type::TypeId::INVALID, left2, right2));
-  EXPECT_FALSE(root1->Equals(root2.get()));
+  EXPECT_TRUE(*root1.get() != *root2.get());
 
   // Third tree operator_expr(-) -> (tup_expr(a.a), const_expr(2))
   auto left3 = new expression::TupleValueExpression("a", "a");
@@ -92,7 +63,7 @@ TEST_F(ExpressionTests, EqualityTest) {
   std::unique_ptr<expression::OperatorExpression> root3(
       new expression::OperatorExpression(
       ExpressionType::OPERATOR_MINUS, type::TypeId::INVALID, left3, right3));
-  EXPECT_TRUE(root1->Equals(root3.get()));
+  EXPECT_TRUE(*root1.get() == *root3.get());
 }
 
 

@@ -37,6 +37,12 @@ class HashTable {
     virtual void ProcessEntry(CodeGen &codegen, llvm::Value *value) const = 0;
   };
 
+  // No-op ProbeCallback
+  struct NoOpProbeCallback : ProbeCallback {
+    void ProcessEntry(UNUSED_ATTRIBUTE CodeGen &codegen,
+                      UNUSED_ATTRIBUTE llvm::Value *value) const override {}
+  };
+
   //===--------------------------------------------------------------------===//
   // A callback used when inserting insert a new entry into the hash table. The
   // caller implements the StoreValue() method to perform the insertion.  The
@@ -53,6 +59,16 @@ class HashTable {
 
     // Called to determine the size of the payload the caller wants to store
     virtual llvm::Value *GetValueSize(CodeGen &codegen) const = 0;
+  };
+
+  // No-op InsertCallback
+  struct NoOpInsertCallback : InsertCallback {
+    void StoreValue(UNUSED_ATTRIBUTE CodeGen &codegen,
+                    UNUSED_ATTRIBUTE llvm::Value *space) const override {}
+    llvm::Value *GetValueSize(
+        UNUSED_ATTRIBUTE CodeGen &codegen) const override {
+      return nullptr;
+    }
   };
 
   //===--------------------------------------------------------------------===//
@@ -106,6 +122,17 @@ class HashTable {
                                      llvm::Value *index) const = 0;
   };
 
+  //===--------------------------------------------------------------------===//
+  // Return type for ProbeOrInsert
+  //===--------------------------------------------------------------------===//
+  struct ProbeResult {
+    // Actual probe result (bool), if the key alredy exists in the hast table
+    llvm::Value *key_exists;
+
+    // Data pointer (u8*), either to the existing data or to the new empty entry
+    llvm::Value *data_ptr;
+  };
+
   // Destructor
   virtual ~HashTable() {}
 
@@ -118,6 +145,12 @@ class HashTable {
                              const std::vector<codegen::Value> &key,
                              ProbeCallback &probe_callback,
                              InsertCallback &insert_callback) const = 0;
+
+  // Probe the hash table and insert a new slot if needed, returning both the
+  // result and the data pointer
+  virtual ProbeResult ProbeOrInsert(
+      CodeGen &codegen, llvm::Value *ht_ptr, llvm::Value *hash,
+      const std::vector<codegen::Value> &key) const = 0;
 
   // Insert a new entry into the hash table with the given keys, but don't
   // perform any key matching or merging

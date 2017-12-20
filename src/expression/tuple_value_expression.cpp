@@ -31,7 +31,7 @@ type::Value TupleValueExpression::Evaluate(
   }
 }
 
-hash_t TupleValueExpression::Hash() const {
+hash_t TupleValueExpression::HashForExactMatch() const {
   hash_t hash = HashUtil::Hash(&exp_type_);
   if (!table_name_.empty())
     hash = HashUtil::CombineHashes(

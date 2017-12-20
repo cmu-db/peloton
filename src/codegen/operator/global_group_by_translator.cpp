@@ -26,8 +26,11 @@ GlobalGroupByTranslator::GlobalGroupByTranslator(
     Pipeline &pipeline)
     : OperatorTranslator(context, pipeline),
       plan_(plan),
-      child_pipeline_(this) {
+      child_pipeline_(this),
+      aggregation_(context.GetRuntimeState()) {
   LOG_DEBUG("Constructing GlobalGroupByTranslator ...");
+
+  auto &codegen = context.GetCodeGen();
 
   // Prepare the child in the new child pipeline
   context.Prepare(*plan_.GetChild(0), child_pipeline_);
@@ -41,10 +44,9 @@ GlobalGroupByTranslator::GlobalGroupByTranslator(
   }
 
   // Setup the aggregation handler with the terms we use for aggregation
-  aggregation_.Setup(context.GetCodeGen(), aggregates, true);
+  aggregation_.Setup(codegen, aggregates, true);
 
   // Create the materialization buffer where we aggregate things
-  auto &codegen = GetCodeGen();
   auto *aggregate_storage = aggregation_.GetAggregateStorage().GetStorageType();
   PL_ASSERT(aggregate_storage->isStructTy());
 
@@ -60,6 +62,11 @@ GlobalGroupByTranslator::GlobalGroupByTranslator(
       "ggbSelVec", codegen.ArrayType(codegen.Int32Type(), 1), true);
 
   LOG_DEBUG("Finished constructing GlobalGroupByTranslator ...");
+}
+
+// Initialize the hash table instance
+void GlobalGroupByTranslator::InitializeState() {
+  aggregation_.InitializeState(GetCodeGen());
 }
 
 void GlobalGroupByTranslator::Produce() const {
@@ -114,6 +121,11 @@ void GlobalGroupByTranslator::Consume(ConsumerContext &,
   // Just advance each of the aggregates in the buffer with the provided
   // new values
   aggregation_.AdvanceValues(GetCodeGen(), LoadStatePtr(mat_buffer_id_), vals);
+}
+
+// Cleanup by destroying the aggregation hash-table
+void GlobalGroupByTranslator::TearDownState() {
+  aggregation_.TearDownState(GetCodeGen());
 }
 
 //===----------------------------------------------------------------------===//

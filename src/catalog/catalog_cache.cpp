@@ -26,28 +26,28 @@ namespace catalog {
 */
 bool CatalogCache::InsertDatabaseObject(
     std::shared_ptr<DatabaseCatalogObject> database_object) {
-  if (!database_object || database_object->database_oid == INVALID_OID) {
+  if (!database_object || database_object->GetDatabaseOid() == INVALID_OID) {
     return false;  // invalid object
   }
 
   // check if already in cache
-  if (database_objects_cache.find(database_object->database_oid) !=
+  if (database_objects_cache.find(database_object->GetDatabaseOid()) !=
       database_objects_cache.end()) {
     LOG_DEBUG("Database %u already exists in cache!",
-              database_object->database_oid);
+              database_object->GetDatabaseOid());
     return false;
   }
-  if (database_name_cache.find(database_object->database_name) !=
+  if (database_name_cache.find(database_object->GetDatabaseName()) !=
       database_name_cache.end()) {
     LOG_DEBUG("Database %s already exists in cache!",
-              database_object->database_name.c_str());
+              database_object->GetDatabaseName().c_str());
     return false;
   }
 
   database_objects_cache.insert(
-      std::make_pair(database_object->database_oid, database_object));
+      std::make_pair(database_object->GetDatabaseOid(), database_object));
   database_name_cache.insert(
-      std::make_pair(database_object->database_name, database_object));
+      std::make_pair(database_object->GetDatabaseName(), database_object));
   return true;
 }
 
@@ -64,7 +64,7 @@ bool CatalogCache::EvictDatabaseObject(oid_t database_oid) {
   auto database_object = it->second;
   PL_ASSERT(database_object);
   database_objects_cache.erase(it);
-  database_name_cache.erase(database_object->database_name);
+  database_name_cache.erase(database_object->GetDatabaseName());
   return true;
 }
 
@@ -81,7 +81,7 @@ bool CatalogCache::EvictDatabaseObject(const std::string &database_name) {
   auto database_object = it->second;
   PL_ASSERT(database_object);
   database_name_cache.erase(it);
-  database_objects_cache.erase(database_object->database_oid);
+  database_objects_cache.erase(database_object->GetDatabaseOid());
   return true;
 }
 

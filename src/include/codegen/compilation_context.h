@@ -49,7 +49,8 @@ class CompilationContext {
 
  public:
   // Constructor
-  CompilationContext(Query &query, QueryResultConsumer &result_consumer);
+  CompilationContext(Query &query, const QueryParametersMap &parameters_map,
+                     QueryResultConsumer &result_consumer);
 
   // Prepare a translator in this context
   void Prepare(const planner::AbstractPlan &op, Pipeline &pipeline);
@@ -71,18 +72,33 @@ class CompilationContext {
 
   RuntimeState &GetRuntimeState() const { return query_.GetRuntimeState(); }
 
-  QueryResultConsumer &GetQueryResultConsumer() const {
-    return result_consumer_;
+//  const QueryParameters &GetQueryParameters() const {
+//    return parameters_;
+//  }
+
+  const ParameterCache &GetParameterCache() const {
+    return parameter_cache_;
   }
 
-  // Get a pointer to the catalog object from the runtime state
-  llvm::Value *GetCatalogPtr();
+  QueryResultConsumer &GetQueryResultConsumer() const { return result_consumer_; }
+
+  // Get a pointer to the storage manager object from the runtime state
+  llvm::Value *GetStorageManagerPtr();
 
   // Get a pointer to the transaction object from runtime state
   llvm::Value *GetTransactionPtr();
 
   // Get a pointer to the executor context instance
   llvm::Value *GetExecutorContextPtr();
+
+  // Get a pointer to the query parameter instance
+  llvm::Value *GetQueryParametersPtr();
+
+  // Get the parameter index to be used to get value for the given expression
+  size_t GetParameterIdx(const expression::AbstractExpression *expression)
+      const {
+    return parameters_map_.GetIndex(expression);
+  }
 
  private:
   // Generate any auxiliary helper functions that the query needs
@@ -106,6 +122,12 @@ class CompilationContext {
   // The query we'll compile
   Query &query_;
 
+  // The parameters and mapping for expression and parameter ids to
+  const QueryParametersMap &parameters_map_;
+
+  // The parameter value cache of the query
+  ParameterCache parameter_cache_;
+
   // The consumer of the results of the query
   QueryResultConsumer &result_consumer_;
 
@@ -120,8 +142,9 @@ class CompilationContext {
 
   // The runtime state IDs
   RuntimeState::StateID txn_state_id_;
-  RuntimeState::StateID catalog_state_id_;
+  RuntimeState::StateID storage_manager_state_id_;
   RuntimeState::StateID executor_context_state_id_;
+  RuntimeState::StateID query_parameters_state_id_;
 
   // The mapping of an operator in the tree to its translator
   std::unordered_map<const planner::AbstractPlan *,

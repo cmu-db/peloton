@@ -18,6 +18,7 @@
 #include "codegen/codegen.h"
 #include "codegen/counting_consumer.h"
 #include "codegen/function_builder.h"
+#include "codegen/query_parameters.h"
 #include "codegen/lang/if.h"
 #include "codegen/lang/loop.h"
 #include "codegen/proxy/bloom_filter_proxy.h"
@@ -300,12 +301,18 @@ double BloomFilterCodegenTest::ExecuteJoin(std::string query,
     codegen::CountingConsumer consumer;
     // Compile the query
     codegen::QueryCompiler compiler;
-    auto compiled_query = compiler.Compile(*plan, consumer);
-    // Run and collect runtime stats
     codegen::Query::RuntimeStats stats;
     std::unique_ptr<executor::ExecutorContext> executor_context(
         new executor::ExecutorContext{txn});
-    compiled_query->Execute(*txn, executor_context.get(),
+    std::unique_ptr<codegen::QueryParameters> parameters(
+        new codegen::QueryParameters(*plan.get(),
+                                     executor_context->GetParams()));
+
+    auto compiled_query = compiler.Compile(*plan.get(),
+                                           parameters->GetQueryParametersMap(),
+                                           consumer);
+    // Run
+    compiled_query->Execute(*executor_context.get(), *parameters.get(),
                             consumer.GetCountAsState(), &stats);
 
     LOG_INFO("Execution Time: %0.0f ms", stats.plan_ms);
@@ -329,7 +336,8 @@ void BloomFilterCodegenTest::CreateTable(std::string table_name, int tuple_size,
   }
   auto *catalog = catalog::Catalog::GetInstance();
   catalog->CreateTable(DEFAULT_DB_NAME, table_name,
-                       std::make_unique<catalog::Schema>(cols), txn);
+                       std::unique_ptr<catalog::Schema>(new catalog::Schema(cols)),
+                       txn);
 }
 
 // Insert a tuple to specific table

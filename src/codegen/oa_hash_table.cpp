@@ -13,6 +13,7 @@
 #include "codegen/oa_hash_table.h"
 
 #include <llvm/IR/Intrinsics.h>
+#include <llvm/IR/CFG.h>
 
 #include "codegen/hash.h"
 #include "codegen/lang/if.h"
@@ -201,7 +202,7 @@ std::pair<llvm::Value *, llvm::Value *> OAHashTable::GetDataCountAndPointer(
                                  "singleValue"};
   {
     data_count_inline = codegen.Const64(1);
-    data_ptr_inline = AdvancePointer(codegen, after_key_p, (uint64_t) 0UL);
+    data_ptr_inline = AdvancePointer(codegen, after_key_p, (uint64_t)0UL);
   }
   is_entry_single_value.ElseBlock("multipleValue");
   {
@@ -234,17 +235,32 @@ std::pair<llvm::Value *, llvm::Value *> OAHashTable::GetDataCountAndPointer(
 // The invariance is that we do not manipulate uint64_t type pointer in this
 // function - they should all be handled inside helper routines and abstracted
 // away from this function
+//
+// Beware that returned struct will contain nullptr's if return_probe_result
+// is set to false!
 //===----------------------------------------------------------------------===//
-void OAHashTable::TranslateProbing(
+OAHashTable::ProbeResult OAHashTable::TranslateProbing(
     CodeGen &codegen, llvm::Value *hash_table, llvm::Value *hash,
     const std::vector<codegen::Value> &key,
     std::function<void(llvm::Value *)> key_found,
     std::function<void(llvm::Value *)> key_not_found, bool process_value,
-    bool process_only_one_value, bool create_key_if_missing) const {
+    bool process_only_one_value, bool create_key_if_missing,
+    bool return_probe_result) const {
   // This is the basic block that we go through if the key is found
   // or jumped when after the key is missing and the call back is invoked
   llvm::BasicBlock *key_found_or_inserted_bb =
       llvm::BasicBlock::Create(codegen.GetContext(), "cont");
+
+  // We later have to remember the basic block where the loop jumps out
+  llvm::BasicBlock *before_jump_out_bb;
+
+  // Create struct that will be returned
+  ProbeResult probe_result;
+
+  // Create the data_ptr values for both paths (for later use in the result
+  // struct)
+  llvm::Value *data_ptr;
+  llvm::Value *dump_data_ptr;
 
   // Compute the hash value for the key
   llvm::Value *hash_value = hash != nullptr ? hash : HashKey(codegen, key);
@@ -263,7 +279,7 @@ void OAHashTable::TranslateProbing(
   lang::Loop probe_loop{
       codegen,
       status_neq_zero,
-      {{"entry", entry_ptr}, {"index", index}, {"kvl", kv_p}}};
+      {{"Probe.entry", entry_ptr}, {"Probe.index", index}, {"Probe.kvl", kv_p}}};
   {
     entry_ptr = probe_loop.GetLoopVar(0);
     index = probe_loop.GetLoopVar(1);
@@ -279,23 +295,26 @@ void OAHashTable::TranslateProbing(
       // Load the key from the HashEntry *
       std::vector<codegen::Value> entry_key{};
       llvm::Value *key_ptr = GetKeyPtr(codegen, entry_ptr);
-      llvm::Value *data_ptr =
-          key_storage_.LoadValues(codegen, key_ptr, entry_key);
+      data_ptr = key_storage_.LoadValues(codegen, key_ptr, entry_key);
 
       // Check if the provided key matches what's in the HashEntry
       llvm::Value *is_key_match =
           Value::TestEquality(codegen, key, entry_key).GetValue();
       lang::If key_match_branch{codegen, is_key_match, "keyMatch"};
       {
+        // Set result value to true if key was found
+        probe_result.key_exists = codegen.ConstBool(true);
+
         if (process_value) {
           if (process_only_one_value) {
             // The client wants to ignore the value list and only use the key
             // and value stored inlined in the HashEntry. This branch is
             // prepared for ProbeOrInsert().
 
-            // Process datac
-            key_found(data_ptr);
-
+            // Process data
+            if (key_found != nullptr) {
+              key_found(data_ptr);
+            }
           } else {
             // The client wants to process all values in the hash entry. We
             // iterate through the value list one-by-one. This branch is
@@ -306,7 +325,7 @@ void OAHashTable::TranslateProbing(
                 GetDataCountAndPointer(codegen, kv_p, data_ptr);
 
             llvm::Value *data_count = data_count_ptr_pair.first;
-            llvm::Value *data_ptr = data_count_ptr_pair.second;
+            data_ptr = data_count_ptr_pair.second;
             llvm::Value *loop_counter = codegen.Const64(0);
 
             // Start a loop. Since we know at least one value exits, we build
@@ -314,14 +333,16 @@ void OAHashTable::TranslateProbing(
             lang::Loop value_loop{
                 codegen,
                 codegen.ConstBool(true),
-                {{"counter", loop_counter}, {"dataPtr", data_ptr}}};
+                {{"Probe.counter", loop_counter}, {"Probe.dataPtr", data_ptr}}};
             {
               // Loop variables
               loop_counter = value_loop.GetLoopVar(0);
               data_ptr = value_loop.GetLoopVar(1);
 
               // Process the data using its pointer
-              key_found(data_ptr);
+              if (key_found != nullptr) {
+                key_found(data_ptr);
+              }
 
               // Bump loop counter by one, and data pointer by value size
               loop_counter =
@@ -344,9 +365,16 @@ void OAHashTable::TranslateProbing(
                            {hash_table, entry_ptr, hash_value});
 
           // Call the callback with the pointer to dump data
-          key_not_found(dump_value_ptr);
+          if (key_not_found != nullptr) {
+            key_not_found(dump_value_ptr);
+          }
         }
       }
+
+      // Save the current basic block, because we need to identify it later
+      // (see generation of probe_result)
+      before_jump_out_bb = codegen->GetInsertBlock();
+
       // If a key is found, we jump out of the loop since probing is complete
       key_match_branch.EndIf(key_found_or_inserted_bb);
     }
@@ -381,11 +409,12 @@ void OAHashTable::TranslateProbing(
 
     // First store the keys into the region in hash entry. The pointer returned
     // is where the value goes.
-    llvm::Value *dump_data_ptr =
-        key_storage_.StoreValues(codegen, dump_key_ptr, key);
+    dump_data_ptr = key_storage_.StoreValues(codegen, dump_key_ptr, key);
 
     // Call the call back with the pointer to dump data
-    key_not_found(dump_data_ptr);
+    if (key_not_found != nullptr) {
+      key_not_found(dump_data_ptr);
+    }
   }
 
   codegen->CreateBr(key_found_or_inserted_bb);
@@ -396,6 +425,57 @@ void OAHashTable::TranslateProbing(
   codegen->GetInsertBlock()->getParent()->getBasicBlockList().push_back(
       key_found_or_inserted_bb);
   codegen->SetInsertPoint(key_found_or_inserted_bb);
+
+  // Check if probing result is requested
+  if (return_probe_result) {
+    // Create Phi for the boolean whether the key existed already
+
+    // TODO: find better way to get number of predecessors of basic block
+    // note: the iterator here can't be used for the for loop a few lines later
+    auto bb_pred = llvm::predecessors(key_found_or_inserted_bb);
+    auto bb_pred_num = std::distance(bb_pred.begin(), bb_pred.end());
+
+    // Create Phis
+    llvm::PHINode *key_exists_phi =
+        codegen->CreatePHI(codegen.BoolType(), bb_pred_num);
+    llvm::PHINode *data_ptr_phi = nullptr;
+
+    if (create_key_if_missing) {
+      data_ptr_phi = codegen->CreatePHI(data_ptr->getType(), bb_pred_num);
+    }
+
+    // This value needs special treatment, because one path is from the early
+    // loop drop out,
+    // and there can be numerous other paths that have been created from the
+    // given functions,
+    // that all end at the key_found_or_inserted_bb basic block
+    for (llvm::BasicBlock *pred :
+         llvm::predecessors(key_found_or_inserted_bb)) {
+      if (pred == before_jump_out_bb) {
+        key_exists_phi->addIncoming(codegen.ConstBool(true), pred);
+
+        if (create_key_if_missing) {
+          data_ptr_phi->addIncoming(data_ptr, pred);
+        }
+      } else {
+        key_exists_phi->addIncoming(codegen.ConstBool(false), pred);
+
+        if (create_key_if_missing) {
+          data_ptr_phi->addIncoming(dump_data_ptr, pred);
+        }
+      }
+    }
+
+    probe_result.key_exists = key_exists_phi;
+
+    if (create_key_if_missing) {
+      probe_result.data_ptr = data_ptr_phi;
+    } else {
+      probe_result.data_ptr = data_ptr;
+    }
+  }
+
+  return probe_result;
 }
 
 void OAHashTable::Init(CodeGen &codegen, llvm::Value *ht_ptr) const {
@@ -420,12 +500,25 @@ void OAHashTable::ProbeOrInsert(CodeGen &codegen, llvm::Value *ht_ptr,
     insert_callback.StoreValue(codegen, data_ptr);
   };
 
-  TranslateProbing(codegen, ht_ptr, hash, key,
-                   key_found,      // Key found then process it and break
-                   key_not_found,  // Key not found then create entry
-                   true,           // process value
-                   true,           // process only one value
-                   true);          // If key is missing create it in empty slot
+  TranslateProbing(codegen, ht_ptr, hash, key, key_found, key_not_found, true,
+                   true,
+                   true,  // If key is missing create it in empty slot
+                   false);
+}
+
+// Probe the hash table and insert a new slot if needed, returning both the
+// result and the data pointer
+OAHashTable::ProbeResult OAHashTable::ProbeOrInsert(
+    CodeGen &codegen, llvm::Value *ht_ptr, llvm::Value *hash,
+    const std::vector<codegen::Value> &key) const {
+  ProbeResult probe_result;
+
+  probe_result =
+      TranslateProbing(codegen, ht_ptr, hash, key, nullptr, nullptr, true, true,
+                       true,  // If key is missing create it in empty slot
+                       true);
+
+  return probe_result;
 }
 
 void OAHashTable::Insert(CodeGen &codegen, llvm::Value *ht_ptr,
@@ -440,12 +533,10 @@ void OAHashTable::Insert(CodeGen &codegen, llvm::Value *ht_ptr,
     insert_callback.StoreValue(codegen, data_ptr);
   };
 
-  TranslateProbing(codegen, ht_ptr, hash, key,
-                   key_found,      // Key found then process it and break
-                   key_not_found,  // Key not found then create entry
-                   false,          // process value
-                   false,          // process only one value
-                   true);          // If key is missing create it in empty slot
+  TranslateProbing(codegen, ht_ptr, hash, key, key_found, key_not_found, false,
+                   false,
+                   true,  // If key is missing create it in empty slot
+                   false);
 }
 
 void OAHashTable::Iterate(CodeGen &codegen, llvm::Value *hash_table,
@@ -472,7 +563,7 @@ void OAHashTable::Iterate(CodeGen &codegen, llvm::Value *hash_table,
   lang::Loop bucket_loop{
       codegen,
       bucket_cond,
-      {{"entryIndex", entry_index}, {"entryPtr", entry_ptr}}};
+      {{"Iterate.entryIndex", entry_index}, {"Iterate.entryPtr", entry_ptr}}};
   {
     entry_index = bucket_loop.GetLoopVar(0);
     entry_ptr = bucket_loop.GetLoopVar(1);
@@ -503,7 +594,7 @@ void OAHashTable::Iterate(CodeGen &codegen, llvm::Value *hash_table,
       lang::Loop read_value_loop{
           codegen,
           codegen.ConstBool(true),  // Always pass
-          {{"counter", val_index}, {"dataPtr", data_ptr}}};
+          {{"Iterate.counter", val_index}, {"Iterate.dataPtr", data_ptr}}};
       {
         val_index = read_value_loop.GetLoopVar(0);
         data_ptr = read_value_loop.GetLoopVar(1);
@@ -555,9 +646,9 @@ void OAHashTable::VectorizedIterate(
 
     // Initial filter loop
     std::vector<lang::Loop::LoopVariable> loop_vars = {
-        {"pos", start},
-        {"selPos", codegen.Const32(0)},
-        {"currEntryPtr", entry_ptr}};
+        {"VectorizedIterate.pos", start},
+        {"VectorizedIterate.selPos", codegen.Const32(0)},
+        {"VectorizedIterate.currEntryPtr", entry_ptr}};
     lang::Loop filter_loop{codegen, codegen.ConstBool(true), loop_vars};
     {
       llvm::Value *pos = filter_loop.GetLoopVar(0);
@@ -607,12 +698,10 @@ void OAHashTable::FindAll(CodeGen &codegen, llvm::Value *ht_ptr,
   // It does not do anything for a key that is not found
   auto key_not_found = [](llvm::Value *data_ptr) { (void)data_ptr; };
 
-  TranslateProbing(codegen, ht_ptr, nullptr, key,
-                   key_found,      // Key found then process it and break
-                   key_not_found,  // Key not found then do nothing
-                   true,           // process value
-                   false,          // process only one value
-                   false);         // If key is missing create it in empty slot
+  TranslateProbing(codegen, ht_ptr, nullptr, key, key_found, key_not_found,
+                   true, false,
+                   false,  // If key is missing create it in empty slot
+                   false);
 }
 
 void OAHashTable::Destroy(CodeGen &codegen, llvm::Value *ht_ptr) const {

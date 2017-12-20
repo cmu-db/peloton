@@ -14,6 +14,7 @@
 #include <cinttypes>
 
 #include "codegen/buffering_consumer.h"
+#include "codegen/query_cache.h"
 #include "codegen/query_compiler.h"
 #include "codegen/query.h"
 #include "concurrency/transaction_manager_factory.h"
@@ -43,9 +44,8 @@ void CleanExecutorTree(executor::AbstractExecutor *root);
 void PlanExecutor::ExecutePlan(
     std::shared_ptr<planner::AbstractPlan> plan,
     concurrency::Transaction *txn, const std::vector<type::Value> &params,
-    std::vector<StatementResult> &result,
-    const std::vector<int> &result_format,
-    executor::ExecuteResult &p_status) {
+    std::vector<ResultValue> &result,
+    const std::vector<int> &result_format, executor::ExecuteResult &p_status) {
   PL_ASSERT(plan != nullptr && txn != nullptr);
   LOG_TRACE("PlanExecutor Start (Txn ID=%" PRId64")", txn->GetTransactionId());
 
@@ -81,8 +81,8 @@ void PlanExecutor::ExecutePlan(
         // Construct the returned results
         for (auto &tuple : tuples) {
           for (unsigned int i = 0; i < tile->GetColumnCount(); i++) {
-            auto res = StatementResult();
-            PlanExecutor::copyFromTo(tuple[i], res.second);
+            auto res = ResultValue();
+            PlanExecutor::copyFromTo(tuple[i], res);
             result.push_back(std::move(res));
             LOG_TRACE("column content: %s",
                       tuple[i].c_str() != nullptr ?  tuple[i].c_str() : "-emptry-");
@@ -107,20 +107,32 @@ void PlanExecutor::ExecutePlan(
   plan->GetOutputColumns(columns);
   codegen::BufferingConsumer consumer{columns, context};
 
-  // Compile & execute the query
-  codegen::QueryCompiler compiler;
-  auto query = compiler.Compile(*plan, consumer);
-  query->Execute(*txn, executor_context.get(),
-                 reinterpret_cast<char *>(consumer.GetState()));
+  // Prepare parameter: TODO Combine with executor context when legacy is gone
+  codegen::QueryParameters parameters{*plan, params};
+
+  // Compile and execute the query
+  codegen::Query *query = codegen::QueryCache::Instance().Find(plan);
+  if (query == nullptr) {
+    codegen::QueryCompiler compiler;
+    auto compiled_query =
+        compiler.Compile(*plan, parameters.GetQueryParametersMap(), consumer);
+
+    compiled_query->Execute(*executor_context.get(), parameters,
+                            reinterpret_cast<char *>(consumer.GetState()));
+    codegen::QueryCache::Instance().Add(plan, std::move(compiled_query));
+  } else {
+    query->Execute(*executor_context.get(), parameters,
+                   reinterpret_cast<char *>(consumer.GetState()));
+  }
 
   // Iterate over results
   const auto &results = consumer.GetOutputTuples();
   for (const auto &tuple : results) {
     for (uint32_t i = 0; i < tuple.tuple_.size(); i++) {
-      auto res = StatementResult();
+      auto res = ResultValue();
       auto column_val = tuple.GetValue(i);
       auto str = column_val.IsNull() ? "" : column_val.ToString();
-      PlanExecutor::copyFromTo(str, res.second);
+      PlanExecutor::copyFromTo(str, res);
       LOG_TRACE("column content: [%s]", str.c_str());
       result.push_back(std::move(res));
     }

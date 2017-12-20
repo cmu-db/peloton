@@ -16,6 +16,8 @@
 
 #include "common/printable.h"
 #include "planner/attribute_info.h"
+#include "expression/parameter.h"
+#include "codegen/query_parameters_map.h"
 #include "type/types.h"
 
 namespace peloton {
@@ -34,15 +36,15 @@ class Type;
 
 namespace executor {
 class ExecutorContext;
-}
+}  // namespace executor
 
 namespace planner {
 class BindingContext;
-}
+}  // namespace planner
 
 namespace type {
 class Value;
-}
+}  // namespace type
 
 namespace expression {
 
@@ -129,9 +131,24 @@ class AbstractExpression : public Printable {
 
   const std::string GetInfo() const;
 
-  virtual bool Equals(AbstractExpression *expr) const;
-
+  // Equlity checks without actual values
+  virtual bool operator==(const AbstractExpression &rhs) const;
+  virtual bool operator!=(const AbstractExpression &rhs) const {
+    return !(*this == rhs);
+  }
   virtual hash_t Hash() const;
+
+  // Exact match including value equality
+  virtual bool ExactlyEquals(const AbstractExpression &other) const;
+  virtual hash_t HashForExactMatch() const;
+
+  virtual void VisitParameters(codegen::QueryParametersMap &map,
+      std::vector<peloton::type::Value> &values,
+      const std::vector<peloton::type::Value> &values_from_user) {
+    for (auto &child : children_) {
+      child->VisitParameters(map, values, values_from_user);
+    }
+  };
 
   virtual AbstractExpression *Copy() const = 0;
 

@@ -109,7 +109,7 @@ Value TinyintType::Divide(const Value& left, const Value &right) const {
     return left.OperateNull(right);
 
   if (right.IsZero()) {
-    throw Exception(EXCEPTION_TYPE_DIVIDE_BY_ZERO,
+    throw Exception(ExceptionType::DIVIDE_BY_ZERO,
                     "Division by zero on right-hand side");
   }
 
@@ -125,7 +125,7 @@ Value TinyintType::Modulo(const Value& left, const Value &right) const {
     return left.OperateNull(right);
 
   if (right.IsZero()) {
-    throw Exception(EXCEPTION_TYPE_DIVIDE_BY_ZERO,
+    throw Exception(ExceptionType::DIVIDE_BY_ZERO,
                     "Division by zero on right-hand side");
   }
 
@@ -159,7 +159,7 @@ Value TinyintType::Sqrt(const Value& val) const {
     return ValueFactory::GetDecimalValue(PELOTON_DECIMAL_NULL);
 
   if (val.value_.tinyint < 0) {
-    throw Exception(EXCEPTION_TYPE_DECIMAL,
+    throw Exception(ExceptionType::DECIMAL,
         "Cannot take square root of a negative number.");
   }
   return ValueFactory::GetDecimalValue(sqrt(val.value_.tinyint));

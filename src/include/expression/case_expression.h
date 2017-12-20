@@ -15,6 +15,7 @@
 #include "expression/abstract_expression.h"
 #include "expression/comparison_expression.h"
 #include "common/sql_node_visitor.h"
+#include "util/hash_util.h"
 
 namespace peloton {
 namespace expression {
@@ -102,6 +103,61 @@ class CaseExpression : public AbstractExpression {
       default_expr_->PerformBinding(binding_contexts);
     }
   }
+
+  bool operator==(const AbstractExpression &rhs) const override {
+    if (exp_type_ != rhs.GetExpressionType())
+      return false;
+
+    auto &other = static_cast<const expression::CaseExpression &>(rhs);
+    auto clause_size = GetWhenClauseSize();
+    if (clause_size != other.GetWhenClauseSize())
+      return false;
+
+    for (size_t i = 0; i < clause_size; i++) {
+      if (*GetWhenClauseCond(i) != *other.GetWhenClauseCond(i))
+        return false;
+
+      if (*GetWhenClauseResult(i) != *other.GetWhenClauseResult(i))
+        return false;
+    }
+
+    auto *default_exp = GetDefault();
+    auto *other_default_exp = other.GetDefault();
+    if ((default_exp != nullptr && other_default_exp == nullptr) ||
+        (default_exp == nullptr && other_default_exp != nullptr))
+      return false;
+    if (default_exp == nullptr && other_default_exp == nullptr)
+      return true;
+    return (*default_exp == *other_default_exp);
+  }
+
+  bool operator!=(const AbstractExpression &rhs) const override {
+    return !(*this == rhs);
+  }
+
+  hash_t Hash() const override {
+    hash_t hash = HashUtil::Hash(&exp_type_);
+    for (auto &clause : clauses_) {
+      hash = HashUtil::CombineHashes(hash, clause.first->Hash());
+      hash = HashUtil::CombineHashes(hash, clause.second->Hash());
+    }
+    if (default_expr_ != nullptr)
+      hash = HashUtil::CombineHashes(hash, default_expr_->Hash());
+    return hash;
+  }
+
+  virtual void VisitParameters(codegen::QueryParametersMap &map,
+      std::vector<peloton::type::Value> &values,
+      const std::vector<peloton::type::Value> &values_from_user) override {
+    for (const auto &clause : clauses_) {
+      clause.first->VisitParameters(map, values, values_from_user);
+      clause.second->VisitParameters(map, values, values_from_user);
+    }
+
+    if (GetDefault() != nullptr) {
+      default_expr_->VisitParameters(map, values, values_from_user);
+    }
+  };
 
  private:
   // The list of case-when clauses

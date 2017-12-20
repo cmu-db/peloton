@@ -23,12 +23,12 @@
 #include <unordered_set>
 #include <vector>
 
-#include "type/type_id.h"
 #include "parser/pg_trigger.h"
+#include "type/type_id.h"
 
-#include "unistd.h"
 #include "common/logger.h"
 #include "common/macros.h"
+#include "unistd.h"
 namespace peloton {
 
 // For all of the enums defined in this header, we will
@@ -147,8 +147,10 @@ enum class ExpressionType {
   OPERATOR_CAST = 7,
   // logical not operator
   OPERATOR_NOT = 8,
-  // is null test.
-  OPERATOR_IS_NULL = 9,
+  // is null operator
+  OPERATOR_IS_NULL = 21,
+  // is not null operator
+  OPERATOR_IS_NOT_NULL = 22,
   // exists test.
   OPERATOR_EXISTS = 18,
   OPERATOR_UNARY_MINUS = 60,
@@ -260,7 +262,7 @@ ExpressionType ParserExpressionNameToExpressionType(const std::string &str);
 
 // Note that we have some duplicate DatePartTypes with the 's' suffix
 // They have to have the same value in order for it to work.
-enum class DatePartType {
+enum class DatePartType : uint32_t {
   INVALID = INVALID_TYPE_ID,
   CENTURY = 1,
   DAY = 2,
@@ -982,11 +984,12 @@ const int TRIGGER_TYPE_MAX = TRIGGER_TYPE_ROW | TRIGGER_TYPE_STATEMENT |
 
 // Statistics Collection Type
 // Disable or enable
-enum StatsType {
+// TODO: This should probably be a collection level and not a boolean (enable/disable)
+enum class StatsType {
   // Disable statistics collection
-  STATS_TYPE_INVALID = INVALID_TYPE_ID,
+  INVALID = INVALID_TYPE_ID,
   // Enable statistics collection
-  STATS_TYPE_ENABLE = 1,
+  ENABLE = 1,
 };
 
 enum MetricType {
@@ -1031,17 +1034,22 @@ enum class OperatorId : uint32_t {
   Substr,
   CharLength,
   OctetLength,
+  Length,
   Repeat,
   Replace,
   LTrim,
   RTrim,
   BTrim,
   Sqrt,
+  Ceil,
+  Round,
   Extract,
   Floor,
+  DateTrunc,
+  Like,
+
 
   // Add more operators here, before the last "Invalid" entry
-
   Invalid
 };
 std::string OperatorIdToString(OperatorId op_id);

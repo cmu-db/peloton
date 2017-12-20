@@ -138,9 +138,13 @@ WriteState NetworkConnection::WritePackets() {
   protocol_handler_->responses.clear();
   next_response_ = 0;
 
-  if (protocol_handler_->force_flush == true) {
+  if (protocol_handler_->GetFlushFlag()) {
     return FlushWriteBuffer();
   }
+
+  // we have flushed, disable force flush now
+  protocol_handler_->SetFlushFlag(false);
+
   return WriteState::WRITE_COMPLETE;
 }
 
@@ -336,9 +340,6 @@ WriteState NetworkConnection::FlushWriteBuffer() {
   // buffer is empty
   wbuf_.Reset();
 
-  // we have flushed, disable force flush now
-  protocol_handler_->force_flush = false;
-
   // we are ok
   return WriteState::WRITE_COMPLETE;
 }
@@ -440,7 +441,7 @@ bool NetworkConnection::ProcessSSLRequestPacket(InputPacket *pkt) {
   // TODO: consider more about a proper response
   response->msg_type = NetworkMessageType::SSL_YES;
   protocol_handler_->responses.push_back(std::move(response));
-  protocol_handler_->force_flush = true;
+  protocol_handler_->SetFlushFlag(true);
   ssl_sent_ = true;
   return true;
 }
@@ -758,7 +759,7 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
           PL_ASSERT(false);
         }
         conn->protocol_handler_->GetResult();
-        conn->traffic_cop_.is_queuing_ = false;
+        conn->traffic_cop_.SetQueuing(false);
         conn->TransitState(ConnState::CONN_WRITE);
         break;
       }

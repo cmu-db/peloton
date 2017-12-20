@@ -1,9 +1,9 @@
 <a href="http://pelotondb.org/"><img src="http://db.cs.cmu.edu/wordpress/wp-content/uploads/2016/07/peloton.jpg" alt="Peloton Logo"></a>
 -----------------
 [![GitHub license](https://img.shields.io/badge/license-apache-green.svg?style=flat)](https://www.apache.org/licenses/LICENSE-2.0)
-[![Version](https://img.shields.io/badge/version-0.0.5-red.svg)](http://pelotondb.org/)
+[![Version](https://img.shields.io/badge/version-0.0.5-red.svg?style=flat)](http://pelotondb.org)
 [![Travis Status](https://travis-ci.org/cmu-db/peloton.svg?branch=master)](https://travis-ci.org/cmu-db/peloton)
-[![Jenkins Status](http://jenkins.db.cs.cmu.edu:8080/job/Peloton/badge/icon)](http://jenkins.db.cs.cmu.edu:8080/job/Peloton/)
+[![Jenkins Status](http://jenkins.db.cs.cmu.edu:8080/job/peloton/job/master/badge/icon)](http://jenkins.db.cs.cmu.edu:8080/job/peloton/)
 [![Coverage Status](https://coveralls.io/repos/github/cmu-db/peloton/badge.svg?branch=master)](https://coveralls.io/github/cmu-db/peloton?branch=master)
 
 ## What Is Peloton?

@@ -173,7 +173,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
             throw CatalogException(
                 "Some columns are missing when create index " +
                 std::string(create_stmt->index_name));
-          oid_t col_pos = column_object->column_id;
+          oid_t col_pos = column_object->GetColumnId();
           column_ids.push_back(col_pos);
         }
         // Create a plan to retrieve data

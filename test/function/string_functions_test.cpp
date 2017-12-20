@@ -30,6 +30,42 @@ namespace test {
 
 class StringFunctionsTests : public PelotonTest {};
 
+TEST_F(StringFunctionsTests, LikeTest) {
+  //-------------- match ---------------- //
+  std::string s1 = "forbes \\avenue";  // "forbes \avenue"
+  std::string p1 = "%b_s \\\\avenue";  // "%b_s \\avenue"
+  EXPECT_TRUE(function::StringFunctions::Like(s1.c_str(), s1.size(), p1.c_str(),
+                                              p1.size()));
+
+  std::string s2 = "for%bes avenue%";    // "for%bes avenue%"
+  std::string p2 = "for%bes a_enue\\%";  // "for%bes a_enue%"
+  EXPECT_TRUE(function::StringFunctions::Like(s2.c_str(), s2.size(), p2.c_str(),
+                                              p2.size()));
+
+  std::string s3 = "Allison";  // "Allison"
+  std::string p3 = "%lison";   // "%lison"
+  EXPECT_TRUE(function::StringFunctions::Like(s3.c_str(), s3.size(), p3.c_str(),
+                                              p3.size()));
+
+  //----------Exact Match------------//
+  std::string s5 = "Allison";  // "Allison"
+  std::string p5 = "Allison";  // "Allison"
+  EXPECT_TRUE(function::StringFunctions::Like(s5.c_str(), s5.size(), p5.c_str(),
+                                              p5.size()));
+
+  //----------Exact Match------------//
+  std::string s6 = "Allison";   // "Allison"
+  std::string p6 = "A%llison";  // "A%llison"
+  EXPECT_TRUE(function::StringFunctions::Like(s6.c_str(), s6.size(), p6.c_str(),
+                                              p6.size()));
+
+  //-------------- not match ----------------//
+  std::string s4 = "forbes avenue";  // "forbes avenue"
+  std::string p4 = "f_bes avenue";   // "f_bes avenue"
+  EXPECT_FALSE(function::StringFunctions::Like(s4.c_str(), s4.size(),
+                                               p4.c_str(), p4.size()));
+}
+
 TEST_F(StringFunctionsTests, AsciiTest) {
   const char column_char = 'A';
   for (int i = 0; i < 52; i++) {
@@ -243,6 +279,27 @@ TEST_F(StringFunctionsTests, BTrimTest) {
     auto result = function::StringFunctions::BTrim(nullargs);
     EXPECT_TRUE(result.IsNull());
   }
+}
+
+TEST_F(StringFunctionsTests, LengthTest) {
+  const char column_char = 'A';
+  int expected = 1;
+  std::string str = "";
+  for (int i = 0; i < 52; i++) {
+    str += (char)(column_char + i);
+    expected++;
+
+    std::vector<type::Value> args = {type::ValueFactory::GetVarcharValue(str)};
+
+    auto result = function::StringFunctions::_Length(args);
+    EXPECT_FALSE(result.IsNull());
+    EXPECT_EQ(expected, result.GetAs<int>());
+  }
+  // NULL CHECK
+  std::vector<type::Value> args = {
+      type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR)};
+  auto result = function::StringFunctions::_Length(args);
+  EXPECT_TRUE(result.IsNull());
 }
 
 }  // namespace test

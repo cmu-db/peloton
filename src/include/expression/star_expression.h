@@ -12,7 +12,6 @@
 
 #pragma once
 
-#include "expression/star_expression.h"
 #include "common/sql_node_visitor.h"
 
 namespace peloton {
@@ -33,7 +32,9 @@ class StarExpression : public AbstractExpression {
     return type::ValueFactory::GetBooleanValue(true);
   }
 
-  AbstractExpression *Copy() const override { return new StarExpression(*this); }
+  AbstractExpression *Copy() const override {
+    return new StarExpression(*this);
+  }
 
   virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
