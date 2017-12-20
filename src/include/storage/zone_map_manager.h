@@ -48,11 +48,9 @@ class ZoneMapManager {
   void CreateZoneMapsForTable(storage::DataTable *table,
                               concurrency::Transaction *txn);
 
-  void CreateOrUpdateZoneMapForTileGroup(oid_t database_id, oid_t table_id,
-                                         oid_t tile_group_id,
-                                         storage::TileGroup *tile_group,
-                                         size_t num_columns,
-                                         concurrency::Transaction *txn);
+  void CreateOrUpdateZoneMapForTileGroup(storage::DataTable *table, 
+                                         oid_t tile_group_idx,
+                                        concurrency::Transaction *txn);
 
   void CreateOrUpdateZoneMapInCatalog(oid_t database_id, oid_t table_id,
                                       oid_t tile_group_id, oid_t col_itr,

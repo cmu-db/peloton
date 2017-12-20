@@ -33,6 +33,8 @@ ZoneMapManager::ZoneMapManager() {
   pool_.reset(new type::EphemeralPool());
 }
 
+/*@brief   The function creates the zone map table in catalog 
+*/
 void ZoneMapManager::CreateZoneMapTableInCatalog() {
   LOG_DEBUG("Create the Zone Map table");
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -42,16 +44,13 @@ void ZoneMapManager::CreateZoneMapTableInCatalog() {
   zone_map_table_exists = true;
 }
 
+/*@brief   The function creates zone maps for all tile groups for a 
+*          given table
+* @param   table ptr and a transaction handle
+*/
 void ZoneMapManager::CreateZoneMapsForTable(storage::DataTable *table,
                                             concurrency::Transaction *txn) {
   PL_ASSERT(table != nullptr);
-  oid_t database_id = table->GetDatabaseOid();
-  oid_t table_id = table->GetOid();
-  auto schema = table->GetSchema();
-  PL_ASSERT(schema != nullptr);
-  size_t num_columns = schema->GetColumnCount();
-  LOG_DEBUG("Begin Creating Zone Maps for Table : %u in Database : %u",
-            table_id, database_id);
   // Scan over the tile groups, check for immutable flag to be true
   // and keep adding to the zone map catalog
   size_t num_tile_groups = table->GetTileGroupCount();
@@ -63,18 +62,26 @@ void ZoneMapManager::CreateZoneMapsForTable(storage::DataTable *table,
     PL_ASSERT(tile_group_header != nullptr);
     bool immutable = tile_group_header->GetImmutability();
     if (immutable) {
-      CreateOrUpdateZoneMapForTileGroup(database_id, table_id, i,
-                                        tile_group_ptr, num_columns, txn);
+      CreateOrUpdateZoneMapForTileGroup(table, i, txn);
     }
   }
 }
 
+/*@brief   The function creates zone maps for a given tile group. If it
+*          already exists it is deleted and replaced with the updated values.
+* @param   table_ptr, tile_group_index and transaction_ptr
+*/
 void ZoneMapManager::CreateOrUpdateZoneMapForTileGroup(
-    oid_t database_id, oid_t table_id, oid_t tile_group_id,
-    storage::TileGroup *tile_group, size_t num_columns,
+    storage::DataTable *table, oid_t tile_group_idx,
     concurrency::Transaction *txn) {
-  PL_ASSERT(tile_group->GetTileGroupId() = tile_group_id);
-  LOG_DEBUG("Creating Zone Maps for TileGroupId : %u", tile_group_id);
+  LOG_DEBUG("Creating Zone Maps for TileGroupId : %u", tile_group_idx);
+  
+  oid_t database_id = table->GetDatabaseOid();
+  oid_t table_id = table->GetOid();
+  auto schema = table->GetSchema();
+  size_t num_columns = schema->GetColumnCount();
+  auto tile_group = table->GetTileGroup(tile_group_idx);
+
   for (oid_t col_itr = 0; col_itr < num_columns; col_itr++) {
     // Set temp min and temp max as the first value.
     type::Value min = tile_group->GetValue(0, col_itr);
@@ -95,14 +102,18 @@ void ZoneMapManager::CreateOrUpdateZoneMapForTileGroup(
     std::string converted_max = max.ToString();
     std::string converted_type = TypeIdToString(val_type);
 
-    CreateOrUpdateZoneMapinCatalog(database_id, table_id, tile_group_id,
+    CreateOrUpdateZoneMapInCatalog(database_id, table_id, tile_group_idx,
                                    col_itr, converted_min, converted_max,
                                    converted_type, txn);
   }
 }
 
+/*@brief   The function inserts the catalog keys and values in the zone map table
+*          present in catalog
+* @param   database_id, table_id, tile_group_index, column_id, min, max and type
+*/
 void ZoneMapManager::CreateOrUpdateZoneMapInCatalog(
-    oid_t database_id, oid_t table_id, oid_t tile_group_id, oid_t column_id,
+    oid_t database_id, oid_t table_id, oid_t tile_group_idx, oid_t column_id,
     std::string min, std::string max, std::string type,
     concurrency::Transaction *txn) {
   auto stats_catalog = catalog::ZoneMapCatalog::GetInstance(nullptr);
@@ -113,10 +124,10 @@ void ZoneMapManager::CreateOrUpdateZoneMapInCatalog(
     single_statement_txn = true;
     txn = txn_manager.BeginTransaction();
   }
-  stats_catalog->DeleteColumnStatistics(database_id, table_id, tile_group_id,
+  stats_catalog->DeleteColumnStatistics(database_id, table_id, tile_group_idx,
                                         column_id, txn);
 
-  stats_catalog->InsertColumnStatistics(database_id, table_id, tile_group_id,
+  stats_catalog->InsertColumnStatistics(database_id, table_id, tile_group_idx,
                                         column_id, min, max, type, pool_.get(),
                                         txn);
 
@@ -125,14 +136,18 @@ void ZoneMapManager::CreateOrUpdateZoneMapInCatalog(
   }
 }
 
+/*@brief   The function gets the column statistics given the catalog keys
+* @param   database_id, table_id, tile_group_index, column_id
+* @return  unique pointer to the column statistics for a given column
+*/
 std::unique_ptr<ZoneMapManager::ColumnStatistics>
 ZoneMapManager::GetZoneMapFromCatalog(oid_t database_id, oid_t table_id,
-                                      oid_t tile_group_id, oid_t column_id) {
+                                      oid_t tile_group_idx, oid_t column_id) {
   auto stats_catalog = catalog::ZoneMapCatalog::GetInstance(nullptr);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto result_vector = stats_catalog->GetColumnStatistics(
-      database_id, table_id, tile_group_id, column_id, txn);
+      database_id, table_id, tile_group_idx, column_id, txn);
   txn_manager.CommitTransaction(txn);
 
   if (result_vector == nullptr) {
@@ -141,28 +156,39 @@ ZoneMapManager::GetZoneMapFromCatalog(oid_t database_id, oid_t table_id,
   return GetResultVectorAsZoneMap(result_vector);
 }
 
+/*@brief   The function performs deserialization back from VARCHAR
+* @param   the result tile obtained from catalog after lookup
+* @return  unique pointer to the column statistics for a given column
+*/
 std::unique_ptr<ZoneMapManager::ColumnStatistics>
 ZoneMapManager::GetResultVectorAsZoneMap(
     std::unique_ptr<std::vector<type::Value>> &result_vector) {
   type::Value min_varchar =
-      (*result_vector)[catalog::ZoneMapCatalog::MINIMUM_OFF];
+      (*result_vector)[static_cast<int>(
+        catalog::ZoneMapCatalog::ZoneMapOffset::MINIMUM_OFF)];
   type::Value max_varchar =
-      (*result_vector)[catalog::ZoneMapCatalog::MAXIMUM_OFF];
+      (*result_vector)[static_cast<int>(
+        catalog::ZoneMapCatalog::ZoneMapOffset::MAXIMUM_OFF)];
   type::Value type_varchar =
-      (*result_vector)[catalog::ZoneMapCatalog::TYPE_OFF];
+      (*result_vector)[static_cast<int>(
+        catalog::ZoneMapCatalog::ZoneMapOffset::TYPE_OFF)];
 
-  // ZoneMapManager::ColumnStatistics stats = {
-  //     GetValueAsOriginal(min_varchar, type_varchar),
-  //     GetValueAsOriginal(max_varchar, type_varchar)};
   return std::unique_ptr<ZoneMapManager::ColumnStatistics>(
     new ZoneMapManager::ColumnStatistics(
-      GetValueAsOriginal(min_varchar, type_varchar),
-      GetValueAsOriginal(max_varchar, type_varchar)));
+      {GetValueAsOriginal(min_varchar, type_varchar),
+      GetValueAsOriginal(max_varchar, type_varchar)}));
 }
 
+/*@brief   The function compares the predicate against the zone map for
+*          the column present in catalog
+* @param   parsed predicates array, number of predicates, table_ptr and 
+*          tile_group_index
+* @return  True if tile group needs to be scanned.
+*          False if tile group can be skipped.
+*/
 bool ZoneMapManager::ComparePredicateAgainstZoneMap(
     storage::PredicateInfo *parsed_predicates, int32_t num_predicates,
-    storage::DataTable *table, int64_t tile_group_id) {
+    storage::DataTable *table, int64_t tile_group_idx) {
   for (int32_t i = 0; i < num_predicates; i++) {
     // Extract the col_id, operator and predicate_value
     int col_id = parsed_predicates[i].col_id;
@@ -173,7 +199,7 @@ bool ZoneMapManager::ComparePredicateAgainstZoneMap(
     oid_t table_id = table->GetOid();
 
     std::unique_ptr<ZoneMapManager::ColumnStatistics> stats =
-        GetZoneMapFromCatalog(database_id, table_id, tile_group_id, col_id);
+        GetZoneMapFromCatalog(database_id, table_id, tile_group_idx, col_id);
 
     if (stats == nullptr) {
       return true;
@@ -210,7 +236,10 @@ bool ZoneMapManager::ComparePredicateAgainstZoneMap(
   return true;
 }
 
+/*@brief   Checks whether a zone map table in catalog was created.
+* @return  True if the zone map table in catalog exists and vice versa
+*/
 bool ZoneMapManager::ZoneMapTableExists() { return zone_map_table_exists; }
 
-}  // namespace optimizer
+}  // namespace storage
 }  // namespace peloton

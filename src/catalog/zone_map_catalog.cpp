@@ -82,12 +82,12 @@ bool ZoneMapCatalog::DeleteColumnStatistics(oid_t database_id, oid_t table_id,
                                             oid_t column_id,
                                             concurrency::Transaction *txn) {
   oid_t index_offset = static_cast<int>(IndexId::SECONDARY_KEY_0);
-  std::vector<type::Value> values(
+  std::vector<type::Value> values({
     type::ValueFactory::GetIntegerValue(database_id),
     type::ValueFactory::GetIntegerValue(table_id),
     type::ValueFactory::GetIntegerValue(tile_group_id),
     type::ValueFactory::GetIntegerValue(column_id)
-  )
+  });
   return DeleteWithIndexScan(index_offset, values, txn);
 }
 
@@ -101,12 +101,12 @@ std::unique_ptr<std::vector<type::Value>> ZoneMapCatalog::GetColumnStatistics(
 
   oid_t index_offset = static_cast<int>(IndexId::SECONDARY_KEY_0);
 
-  std::vector<type::Value> values(
+  std::vector<type::Value> values({
     type::ValueFactory::GetIntegerValue(database_id),
     type::ValueFactory::GetIntegerValue(table_id),
     type::ValueFactory::GetIntegerValue(tile_group_id),
     type::ValueFactory::GetIntegerValue(column_id)
-  )
+  });
 
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
