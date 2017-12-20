@@ -75,7 +75,7 @@ void *SelectAllTest(int port) {
 
     pqxx::result R = txn2.exec("SELECT * from template;");
     txn2.commit();
-s
+
     EXPECT_EQ(R.size(), 2000);
   } catch (const std::exception &e) {
     LOG_INFO("[SelectAllTest] Exception occurred: %s", e.what());
