@@ -182,7 +182,7 @@ extern void PacketPutInt(OutputPacket *pkt, int n, int base);
 extern void PacketPutCbytes(OutputPacket *pkt, const uchar *b, int len);
 
 /* packet_put_bytes - used to write a uchar vector into a packet */
-extern void PacketPutBytes(OutputPacket *pkt, const std::vector<uchar> &data);
+extern void PacketPutBytes(OutputPacket *pkt, const std::string &data);
 
 /*
 * Unmarshallers
