@@ -39,7 +39,7 @@ class DistinctSQLTests : public PelotonTest {
   }
 
   void ExecuteSQLQueryAndCheckUnorderedResult(std::string query, std::unordered_set<std::string> ref_result) {
-    std::vector<StatementResult> result;
+    std::vector<ResultValue> result;
     std::vector<FieldInfo> tuple_descriptor;
     std::string error_message;
     int rows_changed;

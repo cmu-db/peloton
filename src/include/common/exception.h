@@ -31,38 +31,38 @@ namespace peloton {
 // Exception Types
 //===--------------------------------------------------------------------===//
 
-enum ExceptionType {
-  EXCEPTION_TYPE_INVALID = 0,            // invalid type
-  EXCEPTION_TYPE_OUT_OF_RANGE = 1,       // value out of range error
-  EXCEPTION_TYPE_CONVERSION = 2,         // conversion/casting error
-  EXCEPTION_TYPE_UNKNOWN_TYPE = 3,       // unknown type
-  EXCEPTION_TYPE_DECIMAL = 4,            // decimal related
-  EXCEPTION_TYPE_MISMATCH_TYPE = 5,      // type mismatch
-  EXCEPTION_TYPE_DIVIDE_BY_ZERO = 6,     // divide by 0
-  EXCEPTION_TYPE_OBJECT_SIZE = 7,        // object size exceeded
-  EXCEPTION_TYPE_INCOMPATIBLE_TYPE = 8,  // incompatible for operation
-  EXCEPTION_TYPE_SERIALIZATION = 9,      // serialization
-  EXCEPTION_TYPE_TRANSACTION = 10,       // transaction management
-  EXCEPTION_TYPE_NOT_IMPLEMENTED = 11,   // method not implemented
-  EXCEPTION_TYPE_EXPRESSION = 12,        // expression parsing
-  EXCEPTION_TYPE_CATALOG = 13,           // catalog related
-  EXCEPTION_TYPE_PARSER = 14,            // parser related
-  EXCEPTION_TYPE_PLANNER = 15,           // planner related
-  EXCEPTION_TYPE_SCHEDULER = 16,         // scheduler related
-  EXCEPTION_TYPE_EXECUTOR = 17,          // executor related
-  EXCEPTION_TYPE_CONSTRAINT = 18,        // constraint related
-  EXCEPTION_TYPE_INDEX = 19,             // index related
-  EXCEPTION_TYPE_STAT = 20,              // stat related
-  EXCEPTION_TYPE_CONNECTION = 21,        // connection related
-  EXCEPTION_TYPE_SYNTAX = 22,            // syntax related
-  EXCEPTION_TYPE_SETTINGS = 23,          // settings related
-  EXCEPTION_TYPE_BINDER = 24             // settings related
+enum class ExceptionType {
+  INVALID = 0,            // invalid type
+  OUT_OF_RANGE = 1,       // value out of range error
+  CONVERSION = 2,         // conversion/casting error
+  UNKNOWN_TYPE = 3,       // unknown type
+  DECIMAL = 4,            // decimal related
+  MISMATCH_TYPE = 5,      // type mismatch
+  DIVIDE_BY_ZERO = 6,     // divide by 0
+  OBJECT_SIZE = 7,        // object size exceeded
+  INCOMPATIBLE_TYPE = 8,  // incompatible for operation
+  SERIALIZATION = 9,      // serialization
+  TRANSACTION = 10,       // transaction management
+  NOT_IMPLEMENTED = 11,   // method not implemented
+  EXPRESSION = 12,        // expression parsing
+  CATALOG = 13,           // catalog related
+  PARSER = 14,            // parser related
+  PLANNER = 15,           // planner related
+  SCHEDULER = 16,         // scheduler related
+  EXECUTOR = 17,          // executor related
+  CONSTRAINT = 18,        // constraint related
+  INDEX = 19,             // index related
+  STAT = 20,              // stat related
+  CONNECTION = 21,        // connection related
+  SYNTAX = 22,            // syntax related
+  SETTINGS = 23,          // settings related
+  BINDER = 24             // settings related
 };
 
 class Exception : public std::runtime_error {
  public:
   Exception(std::string message)
-      : std::runtime_error(message), type(EXCEPTION_TYPE_INVALID) {
+      : std::runtime_error(message), type(ExceptionType::INVALID) {
     std::string exception_message = "Message :: " + message + "\n";
     std::cerr << exception_message;
   }
@@ -77,53 +77,53 @@ class Exception : public std::runtime_error {
 
   std::string ExpectionTypeToString(ExceptionType type) {
     switch (type) {
-      case EXCEPTION_TYPE_INVALID:
+      case ExceptionType::INVALID:
         return "Invalid";
-      case EXCEPTION_TYPE_OUT_OF_RANGE:
+      case ExceptionType::OUT_OF_RANGE:
         return "Out of Range";
-      case EXCEPTION_TYPE_CONVERSION:
+      case ExceptionType::CONVERSION:
         return "Conversion";
-      case EXCEPTION_TYPE_UNKNOWN_TYPE:
+      case ExceptionType::UNKNOWN_TYPE:
         return "Unknown Type";
-      case EXCEPTION_TYPE_DECIMAL:
+      case ExceptionType::DECIMAL:
         return "Decimal";
-      case EXCEPTION_TYPE_MISMATCH_TYPE:
+      case ExceptionType::MISMATCH_TYPE:
         return "Mismatch Type";
-      case EXCEPTION_TYPE_DIVIDE_BY_ZERO:
+      case ExceptionType::DIVIDE_BY_ZERO:
         return "Divide by Zero";
-      case EXCEPTION_TYPE_OBJECT_SIZE:
+      case ExceptionType::OBJECT_SIZE:
         return "Object Size";
-      case EXCEPTION_TYPE_INCOMPATIBLE_TYPE:
+      case ExceptionType::INCOMPATIBLE_TYPE:
         return "Incompatible type";
-      case EXCEPTION_TYPE_SERIALIZATION:
+      case ExceptionType::SERIALIZATION:
         return "Serialization";
-      case EXCEPTION_TYPE_TRANSACTION:
+      case ExceptionType::TRANSACTION:
         return "Transaction";
-      case EXCEPTION_TYPE_NOT_IMPLEMENTED:
+      case ExceptionType::NOT_IMPLEMENTED:
         return "Not implemented";
-      case EXCEPTION_TYPE_EXPRESSION:
+      case ExceptionType::EXPRESSION:
         return "Expression";
-      case EXCEPTION_TYPE_CATALOG:
+      case ExceptionType::CATALOG:
         return "Catalog";
-      case EXCEPTION_TYPE_PARSER:
+      case ExceptionType::PARSER:
         return "Parser";
-      case EXCEPTION_TYPE_PLANNER:
+      case ExceptionType::PLANNER:
         return "Planner";
-      case EXCEPTION_TYPE_SCHEDULER:
+      case ExceptionType::SCHEDULER:
         return "Scheduler";
-      case EXCEPTION_TYPE_EXECUTOR:
+      case ExceptionType::EXECUTOR:
         return "Executor";
-      case EXCEPTION_TYPE_CONSTRAINT:
+      case ExceptionType::CONSTRAINT:
         return "Constraint";
-      case EXCEPTION_TYPE_INDEX:
+      case ExceptionType::INDEX:
         return "Index";
-      case EXCEPTION_TYPE_STAT:
+      case ExceptionType::STAT:
         return "Stat";
-      case EXCEPTION_TYPE_CONNECTION:
+      case ExceptionType::CONNECTION:
         return "Connection";
-      case EXCEPTION_TYPE_SYNTAX:
+      case ExceptionType::SYNTAX:
         return "Syntax";
-      case EXCEPTION_TYPE_SETTINGS:
+      case ExceptionType::SETTINGS:
         return "Settings";
       default:
         return "Unknown";
@@ -213,7 +213,7 @@ class CastException : public Exception {
 
  public:
   CastException(const type::TypeId origType, const type::TypeId newType)
-      : Exception(EXCEPTION_TYPE_CONVERSION,
+      : Exception(ExceptionType::CONVERSION,
                   "Type " + TypeIdToString(origType) + " can't be cast as " +
                       TypeIdToString(newType)) {}
 };
@@ -224,7 +224,7 @@ class ValueOutOfRangeException : public Exception {
  public:
   ValueOutOfRangeException(const int64_t value, const type::TypeId origType,
                            const type::TypeId newType)
-      : Exception(EXCEPTION_TYPE_CONVERSION,
+      : Exception(ExceptionType::CONVERSION,
                   "Type " + TypeIdToString(origType) + " with value " +
                       std::to_string((intmax_t)value) +
                       " can't be cast as %s because the value is out of range "
@@ -233,14 +233,14 @@ class ValueOutOfRangeException : public Exception {
 
   ValueOutOfRangeException(const double value, const type::TypeId origType,
                            const type::TypeId newType)
-      : Exception(EXCEPTION_TYPE_CONVERSION,
+      : Exception(ExceptionType::CONVERSION,
                   "Type " + TypeIdToString(origType) + " with value " +
                       std::to_string(value) +
                       " can't be cast as %s because the value is out of range "
                       "for the destination type " +
                       TypeIdToString(newType)) {}
   ValueOutOfRangeException(const type::TypeId varType, const size_t length)
-      : Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
+      : Exception(ExceptionType::OUT_OF_RANGE,
                   "The value is too long to fit into type " +
                       TypeIdToString(varType) + "(" + std::to_string(length) +
                       ")"){};
@@ -251,7 +251,7 @@ class ConversionException : public Exception {
 
  public:
   ConversionException(std::string msg)
-      : Exception(EXCEPTION_TYPE_CONVERSION, msg) {}
+      : Exception(ExceptionType::CONVERSION, msg) {}
 };
 
 class UnknownTypeException : public Exception {
@@ -259,7 +259,7 @@ class UnknownTypeException : public Exception {
 
  public:
   UnknownTypeException(int type, std::string msg)
-      : Exception(EXCEPTION_TYPE_UNKNOWN_TYPE,
+      : Exception(ExceptionType::UNKNOWN_TYPE,
                   "unknown type " + std::to_string(type) + msg) {}
 };
 
@@ -267,7 +267,7 @@ class DecimalException : public Exception {
   DecimalException() = delete;
 
  public:
-  DecimalException(std::string msg) : Exception(EXCEPTION_TYPE_DECIMAL, msg) {}
+  DecimalException(std::string msg) : Exception(ExceptionType::DECIMAL, msg) {}
 };
 
 class TypeMismatchException : public Exception {
@@ -276,7 +276,7 @@ class TypeMismatchException : public Exception {
  public:
   TypeMismatchException(std::string msg, const type::TypeId type_1,
                         const type::TypeId type_2)
-      : Exception(EXCEPTION_TYPE_MISMATCH_TYPE,
+      : Exception(ExceptionType::MISMATCH_TYPE,
                   "Type " + TypeIdToString(type_1) + " does not match with " +
                       TypeIdToString(type_2) + msg) {}
 };
@@ -290,7 +290,7 @@ class NumericValueOutOfRangeException : public Exception {
   static const int TYPE_OVERFLOW = 2;
 
   NumericValueOutOfRangeException(std::string msg, int type)
-      : Exception(EXCEPTION_TYPE_OUT_OF_RANGE,
+      : Exception(ExceptionType::OUT_OF_RANGE,
                   msg + " " + std::to_string(type)) {}
 };
 
@@ -299,7 +299,7 @@ class DivideByZeroException : public Exception {
 
  public:
   DivideByZeroException(std::string msg)
-      : Exception(EXCEPTION_TYPE_DIVIDE_BY_ZERO, msg) {}
+      : Exception(ExceptionType::DIVIDE_BY_ZERO, msg) {}
 };
 
 class ObjectSizeException : public Exception {
@@ -307,7 +307,7 @@ class ObjectSizeException : public Exception {
 
  public:
   ObjectSizeException(std::string msg)
-      : Exception(EXCEPTION_TYPE_OBJECT_SIZE, msg) {}
+      : Exception(ExceptionType::OBJECT_SIZE, msg) {}
 };
 
 class IncompatibleTypeException : public Exception {
@@ -315,7 +315,7 @@ class IncompatibleTypeException : public Exception {
 
  public:
   IncompatibleTypeException(int type, std::string msg)
-      : Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
+      : Exception(ExceptionType::INCOMPATIBLE_TYPE,
                   "Incompatible type " +
                       TypeIdToString(static_cast<type::TypeId>(type)) + msg) {}
 };
@@ -325,7 +325,7 @@ class SerializationException : public Exception {
 
  public:
   SerializationException(std::string msg)
-      : Exception(EXCEPTION_TYPE_SERIALIZATION, msg) {}
+      : Exception(ExceptionType::SERIALIZATION, msg) {}
 };
 
 class TransactionException : public Exception {
@@ -333,7 +333,7 @@ class TransactionException : public Exception {
 
  public:
   TransactionException(std::string msg)
-      : Exception(EXCEPTION_TYPE_TRANSACTION, msg) {}
+      : Exception(ExceptionType::TRANSACTION, msg) {}
 };
 
 class NotImplementedException : public Exception {
@@ -341,7 +341,7 @@ class NotImplementedException : public Exception {
 
  public:
   NotImplementedException(std::string msg)
-      : Exception(EXCEPTION_TYPE_NOT_IMPLEMENTED, msg) {}
+      : Exception(ExceptionType::NOT_IMPLEMENTED, msg) {}
 };
 
 class ExpressionException : public Exception {
@@ -349,28 +349,28 @@ class ExpressionException : public Exception {
 
  public:
   ExpressionException(std::string msg)
-      : Exception(EXCEPTION_TYPE_EXPRESSION, msg) {}
+      : Exception(ExceptionType::EXPRESSION, msg) {}
 };
 
 class CatalogException : public Exception {
   CatalogException() = delete;
 
  public:
-  CatalogException(std::string msg) : Exception(EXCEPTION_TYPE_CATALOG, msg) {}
+  CatalogException(std::string msg) : Exception(ExceptionType::CATALOG, msg) {}
 };
 
 class ParserException : public Exception {
   ParserException() = delete;
 
  public:
-  ParserException(std::string msg) : Exception(EXCEPTION_TYPE_PARSER, msg) {}
+  ParserException(std::string msg) : Exception(ExceptionType::PARSER, msg) {}
 };
 
 class PlannerException : public Exception {
   PlannerException() = delete;
 
  public:
-  PlannerException(std::string msg) : Exception(EXCEPTION_TYPE_PLANNER, msg) {}
+  PlannerException(std::string msg) : Exception(ExceptionType::PLANNER, msg) {}
 };
 
 class SchedulerException : public Exception {
@@ -378,7 +378,7 @@ class SchedulerException : public Exception {
 
  public:
   SchedulerException(std::string msg)
-      : Exception(EXCEPTION_TYPE_SCHEDULER, msg) {}
+      : Exception(ExceptionType::SCHEDULER, msg) {}
 };
 
 class ExecutorException : public Exception {
@@ -386,14 +386,14 @@ class ExecutorException : public Exception {
 
  public:
   ExecutorException(std::string msg)
-      : Exception(EXCEPTION_TYPE_EXECUTOR, msg) {}
+      : Exception(ExceptionType::EXECUTOR, msg) {}
 };
 
 class SyntaxException : public Exception {
   SyntaxException() = delete;
 
  public:
-  SyntaxException(std::string msg) : Exception(EXCEPTION_TYPE_SYNTAX, msg) {}
+  SyntaxException(std::string msg) : Exception(ExceptionType::SYNTAX, msg) {}
 };
 
 class ConstraintException : public Exception {
@@ -401,21 +401,21 @@ class ConstraintException : public Exception {
 
  public:
   ConstraintException(std::string msg)
-      : Exception(EXCEPTION_TYPE_CONSTRAINT, msg) {}
+      : Exception(ExceptionType::CONSTRAINT, msg) {}
 };
 
 class IndexException : public Exception {
   IndexException() = delete;
 
  public:
-  IndexException(std::string msg) : Exception(EXCEPTION_TYPE_INDEX, msg) {}
+  IndexException(std::string msg) : Exception(ExceptionType::INDEX, msg) {}
 };
 
 class StatException : public Exception {
   StatException() = delete;
 
  public:
-  StatException(std::string msg) : Exception(EXCEPTION_TYPE_STAT, msg) {}
+  StatException(std::string msg) : Exception(ExceptionType::STAT, msg) {}
 };
 
 class ConnectionException : public Exception {
@@ -423,7 +423,7 @@ class ConnectionException : public Exception {
 
  public:
   ConnectionException(std::string msg)
-      : Exception(EXCEPTION_TYPE_CONNECTION, msg) {}
+      : Exception(ExceptionType::CONNECTION, msg) {}
 };
 
 class SettingsException : public Exception {
@@ -431,14 +431,14 @@ class SettingsException : public Exception {
 
  public:
   SettingsException(std::string msg)
-      : Exception(EXCEPTION_TYPE_SETTINGS, msg) {}
+      : Exception(ExceptionType::SETTINGS, msg) {}
 };
 
 class BinderException : public Exception {
   BinderException() = delete;
 
  public:
-  BinderException(std::string msg) : Exception(EXCEPTION_TYPE_BINDER, msg) {}
+  BinderException(std::string msg) : Exception(ExceptionType::BINDER, msg) {}
 };
 
 }  // namespace peloton

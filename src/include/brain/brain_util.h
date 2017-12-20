@@ -61,7 +61,7 @@ class BrainUtil {
       }
       std::transform(name.begin(), name.end(), name.begin(), ::tolower);
 
-      brain::Sample sample(columns, weight, brain::SAMPLE_TYPE_ACCESS);
+      brain::Sample sample(columns, weight, brain::SampleType::ACCESS);
       samples[name].push_back(sample);
 
     }  // WHILE

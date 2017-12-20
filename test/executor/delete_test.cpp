@@ -52,7 +52,7 @@ void ShowTable(std::string database_name, std::string table_name) {
   auto& peloton_parser = parser::PostgresParser::GetInstance();
   executor::ExecuteResult status;
   std::vector<type::Value> params;
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
 
   optimizer::Optimizer optimizer;
 
@@ -143,7 +143,7 @@ TEST_F(DeleteTests, VariousOperations) {
   statement->SetPlanTree(optimizer->BuildPelotonPlanTree(insert_stmt, DEFAULT_DB_NAME, txn));
   LOG_INFO("Building plan tree completed!");
   std::vector<type::Value> params;
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   std::vector<int> result_format;

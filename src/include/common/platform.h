@@ -112,11 +112,11 @@ struct PelotonWriteLock {
 // Spinlock
 //===--------------------------------------------------------------------===//
 
-enum LockState : bool { Unlocked = 0, Locked };
+enum class LockState : bool { Unlocked = 0, Locked };
 
 class Spinlock {
  public:
-  Spinlock() : spin_lock_state(Unlocked) {}
+  Spinlock() : spin_lock_state(LockState::Unlocked) {}
 
   inline void Lock() {
     while (!TryLock()) {
@@ -124,17 +124,17 @@ class Spinlock {
     }
   }
 
-  bool IsLocked() { return spin_lock_state.load() == Locked; }
+  bool IsLocked() { return spin_lock_state.load() == LockState::Locked; }
 
   inline bool TryLock() {
     // exchange returns the value before locking, thus we need
     // to make sure the lock wasn't already in Locked state before
-    return spin_lock_state.exchange(Locked, std::memory_order_acquire) !=
-           Locked;
+    return spin_lock_state.exchange(LockState::Locked, std::memory_order_acquire) !=
+        LockState::Locked;
   }
 
   inline void Unlock() {
-    spin_lock_state.store(Unlocked, std::memory_order_release);
+    spin_lock_state.store(LockState::Unlocked, std::memory_order_release);
   }
 
  private:

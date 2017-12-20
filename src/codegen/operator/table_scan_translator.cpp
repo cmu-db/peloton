@@ -13,7 +13,7 @@
 #include "codegen/operator/table_scan_translator.h"
 
 #include "codegen/lang/if.h"
-#include "codegen/proxy/catalog_proxy.h"
+#include "codegen/proxy/storage_manager_proxy.h"
 #include "codegen/proxy/transaction_runtime_proxy.h"
 #include "codegen/proxy/runtime_functions_proxy.h"
 #include "codegen/type/boolean_type.h"
@@ -75,13 +75,11 @@ void TableScanTranslator::Produce() const {
   LOG_DEBUG("TableScan on [%u] starting to produce tuples ...", table.GetOid());
 
   // Get the table instance from the database
-  llvm::Value *catalog_ptr = GetCatalogPtr();
+  llvm::Value *storage_manager_ptr = GetStorageManagerPtr();
   llvm::Value *db_oid = codegen.Const32(table.GetDatabaseOid());
   llvm::Value *table_oid = codegen.Const32(table.GetOid());
   llvm::Value *table_ptr = codegen.Call(StorageManagerProxy::GetTableWithOid,
-                                        {catalog_ptr, db_oid, table_oid});
-  codegen.Call(RuntimeFunctionsProxy::GetTileGroup,
-               {table_ptr, codegen.Const64(0)});
+                                        {storage_manager_ptr, db_oid, table_oid});
 
   // The selection vector for the scan
   Vector sel_vec{LoadStateValue(selection_vector_id_),

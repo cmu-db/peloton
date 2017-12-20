@@ -984,11 +984,12 @@ const int TRIGGER_TYPE_MAX = TRIGGER_TYPE_ROW | TRIGGER_TYPE_STATEMENT |
 
 // Statistics Collection Type
 // Disable or enable
-enum StatsType {
+// TODO: This should probably be a collection level and not a boolean (enable/disable)
+enum class StatsType {
   // Disable statistics collection
-  STATS_TYPE_INVALID = INVALID_TYPE_ID,
+  INVALID = INVALID_TYPE_ID,
   // Enable statistics collection
-  STATS_TYPE_ENABLE = 1,
+  ENABLE = 1,
 };
 
 enum MetricType {
@@ -1040,11 +1041,13 @@ enum class OperatorId : uint32_t {
   RTrim,
   BTrim,
   Sqrt,
+  Ceil,
   Round,
   Extract,
   Floor,
   DateTrunc,
   Like,
+
 
   // Add more operators here, before the last "Invalid" entry
   Invalid

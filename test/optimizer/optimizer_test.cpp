@@ -60,7 +60,7 @@ TEST_F(OptimizerTests, HashJoinTest) {
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(create_stmt, DEFAULT_DB_NAME, txn));
 
   std::vector<type::Value> params;
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<int> result_format;
   result_format =
       std::vector<int>(statement->GetTupleDescriptor().size(), 0);
