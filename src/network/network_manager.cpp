@@ -139,7 +139,7 @@ void NetworkManager::StartServer() {
     // TODO(tianyu) Move this after we change the way we shut down our server
     struct timeval one_second = {1, 0};
     dispatcher_task->RegisterPeriodicEvent(&one_second, CallbackUtil::ServerControl_Callback, this);
-    dispatcher_task->RegisterEvent(listen_fd, EV_READ|EV_PERSIST, CallbackUtil::OnNewConnection, &dispatcher_task);
+    dispatcher_task->RegisterEvent(listen_fd, EV_READ|EV_PERSIST, CallbackUtil::OnNewConnection, dispatcher_task.get());
 
     LOG_INFO("Listening on port %llu", (unsigned long long) port_);
     dispatcher_task->EventLoop();
