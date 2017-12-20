@@ -99,5 +99,6 @@ void ConnectionHandleStateMachine::Accept(Transition action, NetworkConnection &
     next = result.second(connection);
   }
 }
+
 }
 }
