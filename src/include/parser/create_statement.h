@@ -55,19 +55,17 @@ struct ColumnDefinition {
 
   ColumnDefinition(DataType type) : type(type) {
     // Set varlen to TEXT_MAX_LENGTH if the data type is TEXT
-    if (type == DataType::TEXT)
-      varlen = type::PELOTON_TEXT_MAX_LEN;
+    if (type == DataType::TEXT) varlen = type::PELOTON_TEXT_MAX_LEN;
   }
 
-  ColumnDefinition(char* name, DataType type) : name(name), type(type) {
+  ColumnDefinition(char *name, DataType type) : name(name), type(type) {
     // Set varlen to TEXT_MAX_LENGTH if the data type is TEXT
-    if (type == DataType::TEXT)
-      varlen = type::PELOTON_TEXT_MAX_LEN;
+    if (type == DataType::TEXT) varlen = type::PELOTON_TEXT_MAX_LEN;
   }
 
   virtual ~ColumnDefinition() {}
 
-  static DataType StrToDataType(char* str) {
+  static DataType StrToDataType(char *str) {
     DataType data_type;
     // Transform column type
     if ((strcmp(str, "int") == 0) || (strcmp(str, "int4") == 0)) {
@@ -105,7 +103,7 @@ struct ColumnDefinition {
     return data_type;
   }
 
-  static type::TypeId StrToValueType(char* str) {
+  static type::TypeId StrToValueType(char *str) {
     type::TypeId value_type;
     // Transform column type
     if ((strcmp(str, "int") == 0) || (strcmp(str, "int4") == 0)) {
@@ -221,11 +219,11 @@ class CreateStatement : public TableRefStatement {
   CreateStatement(CreateType type)
       : TableRefStatement(StatementType::CREATE),
         type(type),
-        if_not_exists(false) {};
+        if_not_exists(false){};
 
   virtual ~CreateStatement() {}
 
-  virtual void Accept(SqlNodeVisitor* v) override { v->Visit(this); }
+  virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
   CreateType type;
   bool if_not_exists;

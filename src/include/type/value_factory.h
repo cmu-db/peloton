@@ -516,17 +516,46 @@ class ValueFactory {
   }
 
   static Value CastAsDate(const Value &value) {
-    if (Type::GetInstance(TypeId::DATE)
-            ->IsCoercableFrom(value.GetTypeId())) {
-      if (value.IsNull())
-        return ValueFactory::GetDateValue(PELOTON_DATE_NULL);
+    if (Type::GetInstance(TypeId::DATE)->IsCoercableFrom(value.GetTypeId())) {
+      if (value.IsNull()) return ValueFactory::GetDateValue(PELOTON_DATE_NULL);
       switch (value.GetTypeId()) {
         case TypeId::DATE:
           return ValueFactory::GetDateValue(value.GetAs<uint32_t>());
         case TypeId::VARCHAR: {
           std::string str = value.ToString();
+          if (str.length() != 10) throw Exception("Date format error.");
           uint32_t res = 0;
-          // TODO: convert string according to certain formate to DATE type
+          // Format: YYYY-MM-DD
+          uint32_t year = 0;
+          uint32_t month = 0;
+          uint32_t day = 0;
+          if (sscanf(str.c_str(), "%4u-%2u-%2u", &year, &month, &day) != 3)
+            throw Exception("Date format error.");
+          if (year > 9999 || month > 12 || day > 31 || day == 0 || month == 0)
+            throw Exception(ExceptionType::OUT_OF_RANGE,
+                            "Date value out of range.");
+          uint32_t max_day[13] = {0,  31, 28, 31, 30, 31, 30,
+                                  31, 31, 30, 31, 30, 31};
+          uint32_t max_day_lunar[13] = {0,  31, 29, 31, 30, 31, 30,
+                                        31, 31, 30, 31, 30, 31};
+
+          if ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0) {
+            if (day > max_day_lunar[month])
+              throw Exception(ExceptionType::OUT_OF_RANGE,
+                              "Date value out of range.");
+          } else if (day > max_day[month])
+            throw Exception(ExceptionType::OUT_OF_RANGE,
+                            "Date value out of range.");
+          bool isDigit[10] = {1, 1, 1, 1, 0, 1, 1, 0, 1, 1};
+          for (int i = 0; i < 10; i++) {
+            if (isDigit[i])
+              if (str[i] < '0' || str[i] > '9')
+                throw Exception("Date format error.");
+          }
+          res += year;
+          res *= 10000;
+          res += month * 100;
+          res += day;
           return ValueFactory::GetDateValue(res);
         }
         default:
