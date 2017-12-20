@@ -513,7 +513,8 @@ void PlanGenerator::GenerateProjectionForJoin(
   }
 
   // build the projection plan node and insert above the join
-  proj_info = std::make_unique<planner::ProjectInfo>(move(tl), move(dml));
+  proj_info = std::unique_ptr<planner::ProjectInfo>(
+      new planner::ProjectInfo(move(tl), move(dml)));
   proj_schema = std::make_shared<const catalog::Schema>(columns);
 }
 }  // namespace optimizer

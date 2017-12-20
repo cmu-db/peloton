@@ -19,9 +19,7 @@
 #include "catalog/table_catalog.h"
 
 #include "optimizer/binding.h"
-#include "optimizer/child_property_generator.h"
 #include "optimizer/cost_and_stats_calculator.h"
-#include "optimizer/operator_to_plan_transformer.h"
 #include "optimizer/operator_visitor.h"
 #include "optimizer/properties.h"
 #include "optimizer/property_enforcer.h"
@@ -66,7 +64,7 @@ void Optimizer::OptimizeLoop(int root_group_id,
                              std::shared_ptr<PropertySet> required_props) {
   std::shared_ptr<OptimizeContext> root_context =
       std::make_shared<OptimizeContext>(&metadata_, required_props);
-  auto task_stack = std::make_unique<OptimizerTaskStack>();
+  auto task_stack = std::unique_ptr<OptimizerTaskStack>(new OptimizerTaskStack());
   metadata_.SetTaskPool(task_stack.get());
 
   // Head group expression with the root group as its only child.
