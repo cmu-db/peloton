@@ -60,19 +60,18 @@ enum class ExceptionType {
 };
 
 class Exception : public std::runtime_error {
+  std::string exception_message;
  public:
   Exception(std::string message)
       : std::runtime_error(message), type(ExceptionType::INVALID) {
-    std::string exception_message = "Message :: " + message + "\n";
-    std::cerr << exception_message;
+    exception_message = "Message :: " + message + "\n";
   }
 
   Exception(ExceptionType exception_type, std::string message)
       : std::runtime_error(message), type(exception_type) {
-    std::string exception_message = "Exception Type :: " +
+    exception_message = "Exception Type :: " +
                                     ExpectionTypeToString(exception_type) +
                                     "\nMessage :: " + message + "\n";
-    std::cerr << exception_message;
   }
 
   std::string ExpectionTypeToString(ExceptionType type) {
@@ -198,6 +197,8 @@ class Exception : public std::runtime_error {
       }
     }
   }
+
+  friend std::ostream& operator<<(std::ostream& os, const Exception& e);
 
  private:
   // type

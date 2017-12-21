@@ -29,7 +29,7 @@ add_custom_target(libpg_query ALL
 # creates 'srcs' lists
 peloton_pickup_peloton_sources(${PROJECT_SOURCE_DIR})
 
-add_library(peloton SHARED ${srcs})
+add_library(peloton SHARED ${srcs} common/exception.cpp)
 
 target_link_libraries(peloton ${Peloton_LINKER_LIBS} peloton-proto ${PROJECT_SOURCE_DIR}/third_party/libpg_query/libpg_query.a)
 
