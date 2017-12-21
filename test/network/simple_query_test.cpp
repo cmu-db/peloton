@@ -30,11 +30,11 @@ namespace test {
 
 class SimpleQueryTests : public PelotonTest {};
 
-static void *LaunchServer(peloton::network::NetworkManager network_manager,
+static void *LaunchServer(peloton::network::NetworkManager *network_manager,
                           int port) {
   try {
-    network_manager.SetPort(port);
-    network_manager.StartServer();
+    network_manager->SetPort(port);
+    network_manager->StartServer();
   } catch (peloton::ConnectionException &exception) {
     LOG_INFO("[LaunchServer] exception in thread");
   }
@@ -56,7 +56,7 @@ void *SimpleQueryTest(int port) {
             peloton::network::NetworkManager::recent_connfd);
 
     network::PostgresProtocolHandler *handler =
-        dynamic_cast<network::PostgresProtocolHandler*>(conn->protocol_handler_.get());
+        dynamic_cast<network::PostgresProtocolHandler*>(conn->GetProtocolHandler().get());
     EXPECT_NE(handler, nullptr);
 
     // EXPECT_EQ(conn->state, peloton::network::CONN_READ);
@@ -99,7 +99,7 @@ void *RollbackTest(int port) {
         peloton::network::NetworkManager::GetConnection(
             peloton::network::NetworkManager::recent_connfd);
 
-    EXPECT_EQ(conn->protocol_handler_.is_started, true);
+    EXPECT_TRUE(conn->protocol_handler_.is_started);
     // EXPECT_EQ(conn->state, peloton::network::CONN_READ);
     // create table and insert some data
     W.exec("DROP TABLE IF EXISTS employee;");
@@ -163,7 +163,7 @@ TEST_F(SimpleQueryTests, SimpleQueryTest) {
   peloton::network::NetworkManager network_manager;
 
   int port = 15721;
-  std::thread serverThread(LaunchServer, network_manager, port);
+  std::thread serverThread(LaunchServer, &network_manager, port);
   while (!network_manager.GetIsStarted()) {
     sleep(1);
   }

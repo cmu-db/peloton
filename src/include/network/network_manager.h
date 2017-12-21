@@ -31,8 +31,8 @@
 #include "common/exception.h"
 #include "common/logger.h"
 #include "container/lock_free_queue.h"
-#include "network_thread.h"
-#include "network_master_thread.h"
+#include "notifiable_task.h"
+#include "connection_dispatcher_task.h"
 #include "protocol_handler.h"
 #include "network_connection.h"
 #include "network_state.h"
@@ -44,8 +44,8 @@ namespace peloton {
 namespace network {
 
 // Forward Declarations
-class NetworkThread;
-class NetworkMasterThread;
+class NotifiableTask;
+class ConnectionDispatcherTask;
 class NetworkConnection;
 
 class NetworkManager {
@@ -59,10 +59,7 @@ class NetworkManager {
   std::string private_key_file_;
   std::string certificate_file_;
 
-  struct event *ev_stop_;     // libevent stop event
-  struct event *ev_timeout_;  // libevent timeout event
-  std::shared_ptr<NetworkMasterThread> master_thread_;
-  struct event_base *base_;  // libevent event_base
+  std::shared_ptr<ConnectionDispatcherTask> dispatcher_task;
 
   // Flags for controlling server start/close status
   bool is_started_ = false;
@@ -78,9 +75,11 @@ class NetworkManager {
   static NetworkConnection *GetConnection(const int &connfd);
 
   static void CreateNewConnection(const int &connfd, short ev_flags,
-                                  NetworkThread *thread, ConnState init_state);
+                                  NotifiableTask *thread);
 
   void StartServer();
+
+  void Break();
 
   void CloseServer();
 
@@ -95,7 +94,6 @@ class NetworkManager {
 
   void SetIsClosed(bool is_closed) { this->is_closed_ = is_closed; }
 
-  event_base *GetEventBase() { return base_; }
 
  private:
   /* Maintain a global list of connections.
