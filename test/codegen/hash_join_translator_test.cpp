@@ -124,7 +124,7 @@ TEST_F(HashJoinTranslatorTest, SingleHashJoinColumnTest) {
     LOG_DEBUG("=====> Output: %s", tuple.GetInfo().c_str());
 
     // Check that the joins keys are actually equal
-    EXPECT_EQ(type::CMP_TRUE,
+    EXPECT_EQ(type::CmpBool::TRUE,
               tuple.GetValue(0).CompareEquals(tuple.GetValue(1)));
   }
 }
