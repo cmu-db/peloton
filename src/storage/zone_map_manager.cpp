@@ -21,8 +21,9 @@
 
 namespace peloton {
 namespace storage {
-
-// Get instance of the global zone map manager
+  
+/*@brief   Get instance of the global zone map manager
+*/
 ZoneMapManager *ZoneMapManager::GetInstance() {
   static ZoneMapManager global_zone_map_manager;
   return &global_zone_map_manager;

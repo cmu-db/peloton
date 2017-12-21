@@ -16,16 +16,16 @@
 #include "codegen/proxy/storage_manager_proxy.h"
 #include "codegen/proxy/transaction_runtime_proxy.h"
 #include "codegen/proxy/runtime_functions_proxy.h"
+#include "codegen/proxy/zone_map_proxy.h"
 #include "codegen/type/boolean_type.h"
+#include "expression/abstract_expression.h"
+#include "expression/constant_value_expression.h"
+#include "expression/expression_util.h"
+#include "expression/tuple_value_expression.h"
 #include "planner/seq_scan_plan.h"
 #include "storage/data_table.h"
 #include "storage/zone_map_manager.h"
-#include "expression/abstract_expression.h"
-#include "expression/constant_value_expression.h"
-#include "expression/tuple_value_expression.h"
-#include "expression/expression_util.h"
 #include "type/value.h"
-#include "codegen/proxy/zone_map_proxy.h"
 
 namespace peloton {
 namespace codegen {
@@ -72,7 +72,7 @@ void TableScanTranslator::Produce() const {
   auto &codegen = GetCodeGen();
   auto &table = GetTable();
 
-  LOG_DEBUG("TableScan on [%u] starting to produce tuples ...", table.GetOid());
+  LOG_TRACE("TableScan on [%u] starting to produce tuples ...", table.GetOid());
 
   // Get the table instance from the database
   llvm::Value *storage_manager_ptr = GetStorageManagerPtr();
@@ -92,7 +92,7 @@ void TableScanTranslator::Produce() const {
       AbstractExpressionProxy::GetType(codegen)->getPointerTo());
   size_t num_preds = 0;
 
-  if ((predicate != nullptr) && (zone_map_table_exists)) {
+  if (predicate != nullptr && zone_map_table_exists) {
     if (predicate->IsZoneMappable()) {
       num_preds = predicate->GetNumberofParsedPredicates();
     }
@@ -100,7 +100,7 @@ void TableScanTranslator::Produce() const {
   ScanConsumer scan_consumer{*this, sel_vec};
   table_.GenerateScan(codegen, table_ptr, sel_vec.GetCapacity(), scan_consumer,
                       predicate_ptr, num_preds);
-  LOG_DEBUG("TableScan on [%u] finished producing tuples ...", table.GetOid());
+  LOG_TRACE("TableScan on [%u] finished producing tuples ...", table.GetOid());
 }
 
 // Get the stringified name of this scan
@@ -181,7 +181,7 @@ void TableScanTranslator::ScanConsumer::SetupRowBatch(
   // 2. Add the attribute accessors into the row batch
   for (oid_t col_idx = 0; col_idx < output_col_ids.size(); col_idx++) {
     auto *attribute = ais[output_col_ids[col_idx]];
-    LOG_DEBUG("Adding attribute '%s.%s' (%p) into row batch",
+    LOG_TRACE("Adding attribute '%s.%s' (%p) into row batch",
               scan_plan.GetTable()->GetName().c_str(), attribute->name.c_str(),
               attribute);
     batch.AddAttribute(attribute, &access[col_idx]);

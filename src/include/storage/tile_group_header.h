@@ -51,23 +51,17 @@ class TileGroup;
  *  TxnID: serve as a write lock on the tuple version.
  *  BeginTimeStamp: the lower bound of the version visibility range.
  *  EndTimeStamp: the upper bound of the version visibility range.
- *  NextItemPointer: the pointer pointing to the next (older) version in the
- * version chain.
- *  PrevItemPointer: the pointer pointing to the prev (newer) version in the
- * version chain.
- *  Indirection: the pointer pointing to the index entry that holds the address
- * of the version chain header.
+ *  NextItemPointer: the pointer pointing to the next (older) version in the version chain.
+ *  PrevItemPointer: the pointer pointing to the prev (newer) version in the version chain.
+ *  Indirection: the pointer pointing to the index entry that holds the address of the version chain header.
  *  ReservedField: unused space for future usage.
  *
  *  STATUS:
  *  ===================
- *  TxnID == INITIAL_TXN_ID, BeginTS == MAX_CID, EndTS == MAX_CID --> empty
- * version
+ *  TxnID == INITIAL_TXN_ID, BeginTS == MAX_CID, EndTS == MAX_CID --> empty version
  *  TxnID != INITIAL_TXN_ID, BeginTS != MAX_CID --> to-be-updated old version
- *  TxnID != INITIAL_TXN_ID, BeginTS == MAX_CID, EndTS == MAX_CID -->
- * to-be-installed new version
- *  TxnID != INITIAL_TXN_ID, BeginTS == MAX_CID, EndTS == INVALID_CID -->
- * to-be-installed deleted version
+ *  TxnID != INITIAL_TXN_ID, BeginTS == MAX_CID, EndTS == MAX_CID --> to-be-installed new version
+ *  TxnID != INITIAL_TXN_ID, BeginTS == MAX_CID, EndTS == INVALID_CID --> to-be-installed deleted version
  */
 
 #define TUPLE_HEADER_LOCATION data + (tuple_slot_id * header_entry_size)
@@ -235,7 +229,7 @@ class TileGroupHeader : public Printable {
   }
 
   /*
-  The following method use Compare and Swap to set the tilegroup's
+  * @brief The following method use Compare and Swap to set the tilegroup's
   immutable flag to be true. 
   */
   inline bool SetImmutability() {
@@ -243,7 +237,7 @@ class TileGroupHeader : public Printable {
   }
   
   /*
-  The following method use Compare and Swap to set the tilegroup's
+  * @brief The following method use Compare and Swap to set the tilegroup's
   immutable flag to be false. 
   */
   inline bool ResetImmutability() {

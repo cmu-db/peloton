@@ -12,12 +12,12 @@
 
 #pragma once
 
+#include <vector>
+#include <memory>
 #include "codegen/proxy/proxy.h"
 #include "codegen/proxy/type_builder.h"
 #include "codegen/runtime_functions.h"
 #include "expression/abstract_expression.h"
-#include <vector>
-#include <memory>
 
 namespace peloton {
 namespace codegen {

@@ -16,12 +16,12 @@
 
 #include "common/exception.h"
 #include "common/logger.h"
+#include "expression/abstract_expression.h"
+#include "expression/expression_util.h"
 #include "storage/data_table.h"
 #include "storage/tile_group.h"
 #include "storage/tile.h"
 #include "storage/zone_map_manager.h"
-#include "expression/abstract_expression.h"
-#include "expression/expression_util.h"
 #include "type/value_factory.h"
 
 namespace peloton {
@@ -80,6 +80,8 @@ storage::ZoneMapManager *RuntimeFunctions::GetZoneMapManager() {
 
 //===----------------------------------------------------------------------===//
 // Fills in the Predicate Array for the Zone Map to compare against.
+// Predicates are converted into an array of struct.
+// Each struct contains the column id, operator id and predicate value.
 //===----------------------------------------------------------------------===//
 void RuntimeFunctions::FillPredicateArray(
     const expression::AbstractExpression *expr,
