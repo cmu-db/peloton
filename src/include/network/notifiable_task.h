@@ -26,6 +26,7 @@
 #include <unordered_set>
 
 #include <sys/file.h>
+#include <event2/thread.h>
 
 #include "common/exception.h"
 #include "common/logger.h"
@@ -58,6 +59,7 @@ public:
       LOG_ERROR("Can't allocate event base\n");
       exit(1);
     }
+    evthread_make_base_notifiable(base_);
   };
 
   // TODO(tianyu) Rename this since it is not an actual thread id
@@ -222,6 +224,8 @@ public:
   void Break() {
     event_base_loopexit(base_, nullptr);
   }
+
+  struct event_base *GetEventBase() { return base_; }
 
 private:
   // The connection thread id

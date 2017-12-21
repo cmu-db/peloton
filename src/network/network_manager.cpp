@@ -73,6 +73,8 @@ NetworkManager::NetworkManager() {
 }
 
 void NetworkManager::StartServer() {
+  // This line is critical to performance for some reason
+  evthread_use_pthreads();
   dispatcher_task = std::make_shared<ConnectionDispatcherTask>(CONNECTION_THREAD_COUNT);
 
   if (settings::SettingsManager::GetString(settings::SettingId::socket_family) == "AF_INET") {
