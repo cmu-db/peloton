@@ -54,7 +54,7 @@ void ZoneMapManager::CreateZoneMapTableInCatalog() {
  * @param   table ptr and a transaction handle
  */
 void ZoneMapManager::CreateZoneMapsForTable(storage::DataTable *table,
-                                            concurrency::Transaction *txn) {
+                                            concurrency::TransactionContext *txn) {
   PL_ASSERT(table != nullptr);
   // Scan over the tile groups, check for immutable flag to be true
   // and keep adding to the zone map catalog
@@ -79,7 +79,7 @@ void ZoneMapManager::CreateZoneMapsForTable(storage::DataTable *table,
  */
 void ZoneMapManager::CreateOrUpdateZoneMapForTileGroup(
     storage::DataTable *table, oid_t tile_group_idx,
-    concurrency::Transaction *txn) {
+    concurrency::TransactionContext *txn) {
   LOG_DEBUG("Creating Zone Maps for TileGroupId : %u", tile_group_idx);
   
   oid_t database_id = table->GetDatabaseOid();
@@ -122,7 +122,7 @@ void ZoneMapManager::CreateOrUpdateZoneMapForTileGroup(
 void ZoneMapManager::CreateOrUpdateZoneMapInCatalog(
     oid_t database_id, oid_t table_id, oid_t tile_group_idx, oid_t column_id,
     std::string min, std::string max, std::string type,
-    concurrency::Transaction *txn) {
+    concurrency::TransactionContext *txn) {
   auto stats_catalog = catalog::ZoneMapCatalog::GetInstance(nullptr);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   // Delete and update in a single commit.
