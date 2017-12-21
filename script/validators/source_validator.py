@@ -67,7 +67,8 @@ VALIDATOR_PATTERNS = [re.compile(patt) for patt in [
     " \:\:memcpy\(",
     " std\:\:memset\(",
     " std\:\:memcpy\(",
-    "\_\_attribute\_\_\(\(unused\)\)"
+    "\_\_attribute\_\_\(\(unused\)\)",
+    r'^#include "include/'
     ]
 ]
 
@@ -102,18 +103,18 @@ def check_common_patterns(file_path):
         return True
 
     with open(file_path, 'r') as file:
-        status = True
-        line_ctr = 1
-        for line in file:
+    status = True
+    line_ctr = 1
+    for line in file:
 
-            for validator_pattern in VALIDATOR_PATTERNS:
-                # Check for patterns one at a time
+        for validator_pattern in VALIDATOR_PATTERNS:
+            # Check for patterns one at a time
                 if validator_pattern.search(line):
                     if status:
                         LOG.info("Invalid pattern -- " + validator_pattern.pattern + " -- found in : " + file_path)
-                    LOG.info("Line #%d :: %s" % (line_ctr, line))
-                    status = False
-            line_ctr += 1
+                LOG.info("Line #%d :: %s" % (line_ctr, line))
+                status = False
+        line_ctr += 1
 
     return status
 
@@ -131,7 +132,7 @@ def check_format(file_path):
         formatted_src = subprocess.check_output(clang_format_cmd).splitlines(True)
         # Load source file
         with open(file_path, "r") as file:
-            src = file.readlines()
+        src = file.readlines()
 
         # Do the diff
         d = difflib.Differ()
@@ -143,9 +144,10 @@ def check_format(file_path):
                 line_num += 1
             if code == '- ':
                 if status:
-                    LOG.info("Invalid formatting in file: " + file_path)
+            LOG.info("Invalid formatting in file : " + file_path)
                 LOG.info("Line %d: %s" % (line_num, line[2:].strip()))
-                status = False
+            status = False
+
         return status
     except OSError as e:
         LOG.error("clang-format seems not installed")
@@ -162,7 +164,7 @@ def check_namespaces(file_path):
     # for the include files, remove the include item in the list
     if 'include' in required_namespaces:
         required_namespaces.remove('include')
-
+        
     # cut off the file name at the end of the list
     required_namespaces = required_namespaces[:-1]
 
@@ -174,7 +176,10 @@ def check_namespaces(file_path):
             if re.search(r'^ *namespace ' + namespace, data, flags=re.MULTILINE) is None:
                 LOG.info("Missing namespace '" + namespace + "' -- in " + file_path)
                 status = False
-
+            elif re.search(r'^ *} +\/\/ namespace ' + namespace, data, flags=re.MULTILINE) is None:
+                LOG.info("Closing comment for namespace '" + namespace + "' is invalid/missing-- in " + file_path)
+                status = False
+    
     return status
 
 
