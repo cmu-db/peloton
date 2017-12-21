@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// network_thread.h
+// notifiable_task.h
 //
-// Identification: src/include/network/network_thread.h
+// Identification: src/include/network/notifiable_task.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -36,22 +36,18 @@
 namespace peloton {
 namespace network {
 
-// Forward Declarations
-struct NewConnQueueItem {
-  int new_conn_fd;
-  short event_flags;
-  ConnState init_state;
-
-  inline NewConnQueueItem(int new_conn_fd, short event_flags,
-                          ConnState init_state)
-      : new_conn_fd(new_conn_fd),
-        event_flags(event_flags),
-        init_state(init_state) {}
-};
-
+/**
+ * @brief NotifiableTasks can be configured to handle events with callbacks, and executes within an event loop
+ *
+ * More specifically, NotifiableTasks are backed by libevent, and takes care of memory management with the library.
+ */
 class NotifiableTask {
 public:
-  NotifiableTask(const int task_id)
+  /**
+   * Constructs a new NotifiableTask instance.
+   * @param task_id a unique id assigned to this task
+   */
+  explicit NotifiableTask(const int task_id)
       : task_id_(task_id) {
     base_ = event_base_new();
     // TODO(tianyu) Error handling here can be better perhaps?
@@ -59,19 +55,27 @@ public:
       LOG_ERROR("Can't allocate event base\n");
       exit(1);
     }
-    evthread_make_base_notifiable(base_);
+    // TODO(tianyu) Determine whether we actually need this line. Tianyi says we need it, libevent documentation says no
+    // evthread_make_base_notifiable(base_);
   };
 
-  // TODO(tianyu) Rename this since it is not an actual thread id
+  /**
+   *
+   * @return unique id assigned to this task
+   */
   inline int Id() const { return task_id_; }
 
   virtual ~NotifiableTask() {
-      for (struct event *event : events_)
+
+      for (struct event *event : events_) {
+        event_del(event);
         event_free(event);
+      }
+
       event_base_free(base_);
   }
 
-  // TODO(tianyu) We can probably get rid of these flags
+  // TODO(tianyu) We can probably get rid of these flags eventually
   // Getter and setter for flags
   bool GetThreadIsStarted() { return is_started; }
 
@@ -146,49 +150,43 @@ public:
   }
 
 
+  /**
+   * @brief Register an event that can only be fired if someone calls event_active on it manually.
+   * This is a wrapper around RegisterEvent()
+   *
+   * @see RegisterEvent(), UnregisterEvent()
+   *
+   * @param callback callback function to be invoked when the event happens
+   * @param arg an argument to be passed to the callback function
+   * @return pointer to the allocated event.
+   */
   struct event *RegisterManualEvent(event_callback_fn callback, void *arg) {
     return RegisterEvent(-1, EV_PERSIST, callback, arg);
   }
 
-  // TODO(tianyu): Perhaps we can automatically reuse events?
-  /**
-   * // TODO(tianyu) Write documentation
-   * @param event
-   * @param fd
-   * @param flags
-   * @param callback
-   * @param arg
-   * @param timeout
-   */
-  void UpdateEvent(struct event *event,
-                   int fd,
-                   short flags,
-                   event_callback_fn callback,
-                   void *arg,
-                   const struct timeval *timeout = nullptr) {
-    PL_ASSERT(!(events_.find(event) == events_.end()));
-    if (event_del(event) == -1) {
-      LOG_ERROR("Failed to delete event");
-      PL_ASSERT(false);
-    }
-    auto result = event_assign(event, base_, fd,
-                               flags, callback, arg);
-    if (result != 0) {
-      LOG_ERROR("Failed to update workpool event");
-      PL_ASSERT(false);
-    }
-    event_add(event, timeout);
-  }
-
-  /**
-   * // TODO(tianyu) Write documentation
-   * @param event
-   * @param callback
-   * @param arg
-   */
-  void UpdateManualEvent(struct event *event, event_callback_fn callback, void *arg) {
-    UpdateEvent(event, -1, EV_PERSIST, callback, arg);
-  }
+    // TODO(tianyu): The original network code seems to do this as an optimization. I am leaving this out until we get numbers
+//  void UpdateEvent(struct event *event,
+//                   int fd,
+//                   short flags,
+//                   event_callback_fn callback,
+//                   void *arg,
+//                   const struct timeval *timeout = nullptr) {
+//    PL_ASSERT(!(events_.find(event) == events_.end()));
+//    if (event_del(event) == -1) {
+//      LOG_ERROR("Failed to delete event");
+//      PL_ASSERT(false);
+//    }
+//    auto result = event_assign(event, base_, fd,
+//                               flags, callback, arg);
+//    if (result != 0) {
+//      LOG_ERROR("Failed to update event");
+//      PL_ASSERT(false);
+//    }
+//    event_add(event, timeout);
+//  }
+//  void UpdateManualEvent(struct event *event, event_callback_fn callback, void *arg) {
+//    UpdateEvent(event, -1, EV_PERSIST, callback, arg);
+//  }
 
   /**
    * @brief Unregister the event given. The event is no longer active and its memory is freed
@@ -225,10 +223,8 @@ public:
     event_base_loopexit(base_, nullptr);
   }
 
-  struct event_base *GetEventBase() { return base_; }
 
 private:
-  // The connection thread id
   const int task_id_;
   struct event_base *base_;
   bool is_started = false;

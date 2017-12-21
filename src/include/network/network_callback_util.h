@@ -50,7 +50,9 @@ class CallbackUtil {
   static void OnNetworkEvent(UNUSED_ATTRIBUTE evutil_socket_t connfd,
                              short ev_flags, void *arg);
 
-  /* Used to handle signals */
+  /**
+   * Used to handle SIGHUP
+   */
   static void OnSighup(UNUSED_ATTRIBUTE evutil_socket_t fd,
                        UNUSED_ATTRIBUTE short what, void *arg);
 
