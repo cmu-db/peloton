@@ -617,6 +617,7 @@ Transition NetworkConnection::Process() {
     }
   } else {
     ProcessResult status = protocol_handler_->Process(rbuf_, (size_t) handler->Id());
+    
     switch (status) {
       case ProcessResult::MORE_DATA_REQUIRED:
         return Transition::NEED_DATA;
@@ -673,7 +674,6 @@ Transition NetworkConnection::GetResult() {
   traffic_cop_.SetQueuing(false);
   return Transition::PROCEED;
 }
-
 
 }  // namespace network
 }  // namespace peloton
