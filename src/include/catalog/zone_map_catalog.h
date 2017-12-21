@@ -6,22 +6,10 @@
 //
 // Identification: src/include/catalog/zone_map_catalog.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
-//
-// Schema: (column offset: column_name)
-// 0: database_id (pkey)
-// 1: table_id (pkey)
-// 2: tile_group_id (pkey)
-// 3: column_id (pkey)
-// 4: minimum
-// 5: maximum
-// 6: type
-//
-//===----------------------------------------------------------------------===//
 
 #pragma once
 

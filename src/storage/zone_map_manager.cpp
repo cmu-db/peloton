@@ -2,13 +2,14 @@
 //
 //                         Peloton
 //
-//
+// zone_map_manager.cpp
 //
 // Identification: src/storage/zone_map_manager.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 
 #include "catalog/catalog.h"
 #include "catalog/zone_map_catalog.h"
