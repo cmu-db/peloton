@@ -208,8 +208,8 @@ ResultType Catalog::CreateDatabase(const std::string &database_name,
 ResultType Catalog::CreateTable(const std::string &database_name,
                                 const std::string &table_name,
                                 std::unique_ptr<catalog::Schema> schema,
-                                concurrency::Transaction *txn,
-                                bool is_catalog) {
+                                concurrency::Transaction *txn, bool is_catalog,
+                                oid_t tuples_per_tilegroup) {
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to create table " +
                            table_name);
@@ -251,8 +251,7 @@ ResultType Catalog::CreateTable(const std::string &database_name,
   bool adapt_table = false;
   auto table = storage::TableFactory::GetDataTable(
       database_object->GetDatabaseOid(), table_oid, schema.release(),
-      table_name, DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table,
-      is_catalog);
+      table_name, tuples_per_tilegroup, own_schema, adapt_table, is_catalog);
   database->AddTable(table, is_catalog);
   // put data table object into rw_object_set
   txn->RecordCreate(database_object->GetDatabaseOid(), table_oid, INVALID_OID);
@@ -953,19 +952,26 @@ void Catalog::InitializeFunctions() {
           "ltrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
           type::TypeId::VARCHAR, internal_lang, "LTrim",
           function::BuiltInFuncType{OperatorId::LTrim,
-                                    function::StringFunctions::LTrim},
+                                    function::StringFunctions::_LTrim},
           txn);
       AddBuiltinFunction(
           "rtrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
           type::TypeId::VARCHAR, internal_lang, "RTrim",
           function::BuiltInFuncType{OperatorId::RTrim,
-                                    function::StringFunctions::RTrim},
+                                    function::StringFunctions::_RTrim},
           txn);
       AddBuiltinFunction(
           "btrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
           type::TypeId::VARCHAR, internal_lang, "btrim",
           function::BuiltInFuncType{OperatorId::BTrim,
-                                    function::StringFunctions::BTrim},
+                                    function::StringFunctions::_BTrim},
+          txn);
+      // Trim
+      AddBuiltinFunction(
+          "btrim", {type::TypeId::VARCHAR},
+          type::TypeId::VARCHAR, internal_lang, "trim",
+          function::BuiltInFuncType{OperatorId::Trim,
+                                    function::StringFunctions::_Trim},
           txn);
       AddBuiltinFunction(
           "like", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
