@@ -285,7 +285,7 @@ TEST_F(StringFunctionsTests, BTrimTest) {
     EXPECT_TRUE(result.IsNull());
   }
 }
-  
+
 TEST_F(StringFunctionsTests, LengthTest) {
   const char column_char = 'A';
   int expected = 1;
