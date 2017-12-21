@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "codegen/type/varchar_type.h"
+
 #include "codegen/lang/if.h"
 #include "codegen/proxy/string_functions_proxy.h"
 #include "codegen/proxy/values_runtime_proxy.h"
@@ -211,7 +212,6 @@ struct DateTrunc : public TypeSystem::BinaryOperatorHandleNull {
   }
 };
 
-
 struct Trim : public TypeSystem::UnaryOperatorHandleNull {
   bool SupportsType(const Type &type) const override {
     return type.GetSqlType() == Varchar::Instance();
@@ -304,6 +304,9 @@ struct RTrim : public TypeSystem::BinaryOperatorHandleNull {
 };
 
 struct Substr : public TypeSystem::NaryOperator {
+  // The first argument is the original string
+  // The second argument is the starting offset of the substring
+  // The third argument is the length of the substring
   bool SupportsTypes(const std::vector<Type> &arg_types) const override {
     return arg_types[0].GetSqlType() == Varchar::Instance() &&
            arg_types[1].GetSqlType() == Integer::Instance() &&

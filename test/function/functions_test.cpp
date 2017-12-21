@@ -9,6 +9,7 @@
 // Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 #include "catalog/catalog.h"
 #include "catalog/language_catalog.h"
 #include "catalog/proc_catalog.h"
@@ -17,6 +18,7 @@
 #include "sql/testing_sql_util.h"
 #include "type/ephemeral_pool.h"
 #include "type/value_factory.h"
+
 namespace peloton {
 namespace test {
 
@@ -102,14 +104,14 @@ TEST_F(FunctionsTests, FuncCallTest) {
   std::string error_message;
   int rows_affected;
 
-//  TestingSQLUtil::ExecuteSQLQuery("SELECT SQRT(a), SUBSTR(s,1,2) FROM test;",
-//                                  result, tuple_descriptor, rows_affected,
-//                                  error_message);
-//  EXPECT_EQ(1, result[0].size());
-//  EXPECT_EQ('2', result[0][0]);
-//  EXPECT_EQ(2, result[1].size());
-//  EXPECT_EQ(result[1][0], 'a');
-//  EXPECT_EQ(result[1][1], 'b');
+  TestingSQLUtil::ExecuteSQLQuery("SELECT SQRT(a), SUBSTR(s,1,2) FROM test;",
+                                  result, tuple_descriptor, rows_affected,
+                                  error_message);
+  EXPECT_EQ(1, result[0].size());
+  EXPECT_EQ('2', result[0][0]);
+  EXPECT_EQ(2, result[1].size());
+  EXPECT_EQ(result[1][0], 'a');
+  EXPECT_EQ(result[1][1], 'b');
 
   TestingSQLUtil::ExecuteSQLQuery("SELECT ASCII(s) FROM test;", result,
                                   tuple_descriptor, rows_affected,
@@ -148,22 +150,6 @@ TEST_F(FunctionsTests, SubstrFuncCallTest) {
                                   error_message);
   EXPECT_EQ(1, result.size());
   EXPECT_EQ("7", std::string(result[0].begin(), result[0].begin() + 1));
-
-  //  TestingSQLUtil::ExecuteSQLQuery("SELECT SUBSTR(s,-2,4) FROM test;",
-  //  result,
-  //                                  tuple_descriptor, rows_affected,
-  //                                  error_message);
-  //  EXPECT_EQ(1, result.size());
-  //  res = TestingSQLUtil::GetResultValueAsString(result, 0);
-  //  EXPECT_EQ("1", res);
-  //
-  //  TestingSQLUtil::ExecuteSQLQuery("SELECT SUBSTR(s,-2,2) FROM test;",
-  //  result,
-  //                                  tuple_descriptor, rows_affected,
-  //                                  error_message);
-  //  EXPECT_EQ(1, result.size());
-  //  res = TestingSQLUtil::GetResultValueAsString(result, 0);
-  //  EXPECT_EQ("", res);
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
