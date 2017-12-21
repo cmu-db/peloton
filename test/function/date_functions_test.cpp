@@ -55,7 +55,7 @@ void ExtractTestHelper(DatePartType part, std::string &date,
   // Then check that it equals our expected value
   LOG_TRACE("COMPARE: %s = %s\n", expected.ToString().c_str(),
             result.ToString().c_str());
-  EXPECT_EQ(type::CmpBool::CMP_TRUE, expected.CompareEquals(result));
+  EXPECT_EQ(type::CmpBool::TRUE, expected.CompareEquals(result));
 }
 
 // Invoke DateFunctions::Extract(NULL)
