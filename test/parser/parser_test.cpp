@@ -273,7 +273,7 @@ TEST_F(ParserTests, CreateTest) {
     if (result->is_valid == false) {
       LOG_ERROR("Parsing failed: %s (%s)\n", query.c_str(), result->parser_msg);
     }
-    EXPECT_EQ(result->is_valid, true);
+    EXPECT_TRUE(result->is_valid);
 
     LOG_TRACE("%d : %s", ++ii, result->GetInfo().c_str());
   }
@@ -327,7 +327,7 @@ TEST_F(ParserTests, TM1Test) {
     if (result->is_valid == false) {
       LOG_ERROR("Parsing failed: %s (%s)\n", query.c_str(), result->parser_msg);
     }
-    EXPECT_EQ(result->is_valid, true);
+    EXPECT_TRUE(result->is_valid);
 
     LOG_TRACE("%d : %s", ++ii, result->GetInfo().c_str());
   }
@@ -357,7 +357,7 @@ TEST_F(ParserTests, IndexTest) {
     if (result->is_valid == false) {
       LOG_ERROR("Parsing failed: %s (%s)\n", query.c_str(), result->parser_msg);
     }
-    EXPECT_EQ(result->is_valid, true);
+    EXPECT_TRUE(result->is_valid);
 
     LOG_TRACE("%d : %s", ++ii, result->GetInfo().c_str());
   }
@@ -379,7 +379,7 @@ TEST_F(ParserTests, CopyTest) {
       LOG_ERROR("Message: %s, line: %d, col: %d", result->parser_msg,
                 result->error_line, result->error_col);
     }
-    EXPECT_EQ(result->is_valid, true);
+    EXPECT_TRUE(result->is_valid);
 
     parser::CopyStatement* copy_stmt =
         static_cast<parser::CopyStatement*>(result->GetStatement(0));

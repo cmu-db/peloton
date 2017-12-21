@@ -25,16 +25,15 @@ namespace peloton {
 namespace storage {
 
 AbstractTable::AbstractTable(oid_t table_oid, catalog::Schema *schema,
-                             bool own_schema)
-    : table_oid(table_oid), schema(schema), own_schema_(own_schema) {}
+                             bool own_schema, peloton::LayoutType layout_type)
+    : table_oid(table_oid), schema(schema), own_schema_(own_schema), layout_type(layout_type) {}
 
 AbstractTable::~AbstractTable() {
   // clean up schema
   if (own_schema_) delete schema;
 }
 
-column_map_type AbstractTable::GetTileGroupLayout(
-    LayoutType layout_type) const {
+column_map_type AbstractTable::GetTileGroupLayout() const {
   column_map_type column_map;
 
   auto col_count = schema->GetColumnCount();
