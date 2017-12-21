@@ -120,8 +120,9 @@ class TestingTransactionUtil {
   // when created
   static storage::DataTable *CreateTable(
       int num_key = 10, std::string table_name = "TEST_TABLE",
-      oid_t database_id = CATALOG_DATABASE_OID, oid_t relation_id = TEST_TABLE_OID,
-      oid_t index_oid = 1234, bool need_primary_index = false);
+      oid_t database_id = CATALOG_DATABASE_OID,
+      oid_t relation_id = TEST_TABLE_OID, oid_t index_oid = 1234,
+      bool need_primary_index = false, size_t tuples_per_tilegroup = 100);
 
   // Create the same table as CreateTable with primary key constraints on id and
   // unique key constraints on value

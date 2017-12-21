@@ -13,7 +13,6 @@
 #pragma once
 
 #include <stdint.h>
-
 #include "type/types.h"
 
 namespace peloton {
@@ -21,10 +20,16 @@ namespace peloton {
 namespace storage {
 class DataTable;
 class TileGroup;
+class ZoneMap;
+class ZoneMapManager;
+struct PredicateInfo;
+}  // namespace storage
+
+namespace expression {
+class AbstractExpression;
 }  // namespace storage
 
 namespace codegen {
-
 //===----------------------------------------------------------------------===//
 // Various common functions that are called from compiled query plans
 //===----------------------------------------------------------------------===//
@@ -41,6 +46,9 @@ class RuntimeFunctions {
   // the version in DataTable because we need to strip off the shared_ptr
   static storage::TileGroup *GetTileGroup(storage::DataTable *table,
                                           uint64_t tile_group_index);
+
+  static void FillPredicateArray(const expression::AbstractExpression *expr,
+                                 storage::PredicateInfo *predicate_array);
 
   // This struct represents the layout (or configuration) of a column in a
   // tile group. A configuration is characterized by two properties: its

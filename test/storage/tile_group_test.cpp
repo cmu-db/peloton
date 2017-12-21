@@ -528,7 +528,7 @@ TEST_F(TileGroupTests, TileCopyTest) {
   }
 
   // At the end of all the checks, intended_behavior is expected to be true
-  EXPECT_EQ(true, intended_behavior);
+  EXPECT_TRUE(intended_behavior);
 }
 
 }  // namespace test

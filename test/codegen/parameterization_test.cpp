@@ -64,7 +64,7 @@ TEST_F(ParameterizationTest, ConstParameterVarchar) {
                          reinterpret_cast<char *>(buffer.GetState()), cached);
   const auto &results = buffer.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable(), results.size());
-  EXPECT_EQ(false, cached);
+  EXPECT_FALSE(cached);
 
   // SELECT d FROM table where d != "test";
   auto *d_col_exp_2 =
@@ -87,7 +87,7 @@ TEST_F(ParameterizationTest, ConstParameterVarchar) {
 
   const auto &results_2 = buffer_2.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable(), results_2.size());
-  EXPECT_EQ(true, cached);
+  EXPECT_TRUE(cached);
 }
 
 // Tests whether parameterization works for varchar type in Parameter Value Expr
@@ -122,7 +122,7 @@ TEST_F(ParameterizationTest, ParamParameterVarchar) {
 
   const auto &results = buffer.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable(), results.size());
-  EXPECT_EQ(false, cached);
+  EXPECT_FALSE(cached);
 
   // SELECT d FROM table where d != ?, with ? = "empty";
   auto *d_col_exp2 =
@@ -148,7 +148,7 @@ TEST_F(ParameterizationTest, ParamParameterVarchar) {
 
   const auto &results2 = buffer_2.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable(), results2.size());
-  EXPECT_EQ(true, cached);
+  EXPECT_TRUE(cached);
 
   // SELECT d FROM table where d != "empty";
   auto *d_col_exp_3 =
@@ -172,7 +172,7 @@ TEST_F(ParameterizationTest, ParamParameterVarchar) {
 
   const auto &results_3 = buffer_3.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable(), results_3.size());
-  EXPECT_EQ(true, cached);
+  EXPECT_TRUE(cached);
 }
 
 // Tests whether parameterization works for conjuction with Const Value Exprs
@@ -253,7 +253,7 @@ TEST_F(ParameterizationTest, ConstParameterWithConjunction) {
                                 type::ValueFactory::GetIntegerValue(31)));
   EXPECT_EQ(type::CMP_TRUE, results_2[0].GetValue(2).CompareEquals(
                                 type::ValueFactory::GetDecimalValue(32)));
-  EXPECT_EQ(true, cached);
+  EXPECT_TRUE(cached);
 
   // SELECT a, b, c FROM table where a >= 30 and b = null;
   auto *a_col_exp_3 =
@@ -286,7 +286,7 @@ TEST_F(ParameterizationTest, ConstParameterWithConjunction) {
 
   const auto &results_3 = buffer_3.GetOutputTuples();
   ASSERT_EQ(0, results_3.size());
-  EXPECT_EQ(false, cached);
+  EXPECT_FALSE(cached);
 }
 
 // Tests whether parameterization works for conjuction with Param Value Exprs
@@ -332,7 +332,7 @@ TEST_F(ParameterizationTest, ParamParameterWithConjunction) {
                                 type::ValueFactory::GetIntegerValue(20)));
   EXPECT_EQ(type::CMP_FALSE, results[0].GetValue(3).CompareEquals(
                                  type::ValueFactory::GetVarcharValue("")));
-  EXPECT_EQ(false, cached);
+  EXPECT_FALSE(cached);
 
   // SELECT a, b, c FROM table where a >= 30 and d != "empty";
   auto *a_col_exp_2 =
@@ -372,7 +372,7 @@ TEST_F(ParameterizationTest, ParamParameterWithConjunction) {
                                 type::ValueFactory::GetIntegerValue(30)));
   EXPECT_EQ(type::CMP_FALSE, results_2[0].GetValue(3).CompareEquals(
                                  type::ValueFactory::GetVarcharValue("empty")));
-  EXPECT_EQ(true, cached);
+  EXPECT_TRUE(cached);
 
   // SELECT a, b, c FROM table where a >= 30 and d != "empty";
   auto *a_col_exp_3 =
@@ -412,7 +412,7 @@ TEST_F(ParameterizationTest, ParamParameterWithConjunction) {
                                 type::ValueFactory::GetIntegerValue(30)));
   EXPECT_EQ(type::CMP_FALSE, results_3[0].GetValue(3).CompareEquals(
                                  type::ValueFactory::GetVarcharValue("empty")));
-  EXPECT_EQ(true, cached);
+  EXPECT_TRUE(cached);
 
   // SELECT a, b, c FROM table where a >= ? and d != "empty";
   auto *d_col_exp_4 =
@@ -452,7 +452,7 @@ TEST_F(ParameterizationTest, ParamParameterWithConjunction) {
                                 type::ValueFactory::GetIntegerValue(30)));
   EXPECT_EQ(type::CMP_FALSE, results_4[0].GetValue(3).CompareEquals(
                                  type::ValueFactory::GetVarcharValue("empty")));
-  EXPECT_EQ(true, cached);
+  EXPECT_TRUE(cached);
 }
 
 // (1) Check to use a Parameter Value Expression
@@ -492,7 +492,7 @@ TEST_F(ParameterizationTest, ParamParameterWithOperators) {
 
   const auto &results = buffer.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable(), results.size());
-  EXPECT_EQ(false, cached);
+  EXPECT_FALSE(cached);
 
   // (2) Set a different value on the cached query
   auto *a_col_exp_2 =
@@ -524,7 +524,7 @@ TEST_F(ParameterizationTest, ParamParameterWithOperators) {
 
   const auto &results_2 = buffer_2.GetOutputTuples();
   EXPECT_EQ(0, results_2.size());
-  EXPECT_EQ(true, cached);
+  EXPECT_TRUE(cached);
 
   // (3) Query a similar one, but with a different operator expression
   // a = b - 1
@@ -555,7 +555,7 @@ TEST_F(ParameterizationTest, ParamParameterWithOperators) {
                          cached, &params_3);
   const auto &results_3 = buffer_3.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable(), results_3.size());
-  EXPECT_EQ(false, cached);
+  EXPECT_FALSE(cached);
 }
 
 TEST_F(ParameterizationTest, ParamParameterWithOperatersLeftHand) {
@@ -592,7 +592,7 @@ TEST_F(ParameterizationTest, ParamParameterWithOperatersLeftHand) {
 
   const auto &results = buffer.GetOutputTuples();
   EXPECT_EQ(1, results.size());
-  EXPECT_EQ(false, cached);
+  EXPECT_FALSE(cached);
 
   // SELECT a, b, c FROM table where a * ? = a * b; with ? = 1
   auto *a_lhs_col_exp_2 =
@@ -628,7 +628,7 @@ TEST_F(ParameterizationTest, ParamParameterWithOperatersLeftHand) {
 
   const auto &results_2 = buffer_2.GetOutputTuples();
   EXPECT_EQ(1, results_2.size());
-  EXPECT_EQ(true, cached);
+  EXPECT_TRUE(cached);
 }
 
 }  // namespace test
