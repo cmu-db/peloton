@@ -35,6 +35,7 @@ PROXY(ZoneMapManager) {
   DECLARE_MEMBER(0, char[sizeof(storage::ZoneMapManager)], opaque);
   DECLARE_TYPE;
   DECLARE_METHOD(ComparePredicateAgainstZoneMap);
+  DECLARE_METHOD(GetInstance);
 };
 
 TYPE_BUILDER(PredicateInfo, storage::PredicateInfo);

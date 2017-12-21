@@ -28,7 +28,6 @@ DEFINE_TYPE(AbstractExpression, "peloton::expression::AbstractExpression",
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, HashCrc64);
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, GetTileGroup);
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, GetTileGroupLayout);
-DEFINE_METHOD(peloton::codegen, RuntimeFunctions, GetZoneMapManager);
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, FillPredicateArray);
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, ThrowDivideByZeroException);
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, ThrowOverflowException);

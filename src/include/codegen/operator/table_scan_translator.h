@@ -156,9 +156,6 @@ class TableScanTranslator : public OperatorTranslator {
 
   // The code-generating table instance
   codegen::Table table_;
-
-  // Existence of Zone Map Table
-  bool zone_map_table_exists;
 };
 
 }  // namespace codegen

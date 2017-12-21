@@ -72,13 +72,6 @@ storage::TileGroup *RuntimeFunctions::GetTileGroup(storage::DataTable *table,
 }
 
 //===----------------------------------------------------------------------===//
-// Get the Zone Map Manager Instance
-//===----------------------------------------------------------------------===//
-storage::ZoneMapManager *RuntimeFunctions::GetZoneMapManager() {
-  return storage::ZoneMapManager::GetInstance();
-}
-
-//===----------------------------------------------------------------------===//
 // Fills in the Predicate Array for the Zone Map to compare against.
 // Predicates are converted into an array of struct.
 // Each struct contains the column id, operator id and predicate value.

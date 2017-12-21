@@ -41,10 +41,9 @@ llvm::Value *Table::GetTileGroup(CodeGen &codegen, llvm::Value *table_ptr,
   return codegen.Call(RuntimeFunctionsProxy::GetTileGroup,
                       {table_ptr, tile_group_id});
 }
-// We acquire a Zone Map manager instance by calling 
-// RuntimeFunctions::GetZoneMapManager
+// We acquire a Zone Map manager instance
 llvm::Value *Table::GetZoneMapManager(CodeGen &codegen) const {
-  return codegen.Call(RuntimeFunctionsProxy::GetZoneMapManager, {});
+  return codegen.Call(ZoneMapManagerProxy::GetInstance, {});
 }
 
 // Generate a scan over all tile groups.

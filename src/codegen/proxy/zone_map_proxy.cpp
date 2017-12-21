@@ -20,6 +20,7 @@ DEFINE_TYPE(PredicateInfo, "peloton::storage::PredicateInfo", MEMBER(col_id),
 DEFINE_TYPE(ZoneMapManager, "peloton::storage::ZoneMapManager", MEMBER(opaque));
 
 DEFINE_METHOD(peloton::storage, ZoneMapManager, ComparePredicateAgainstZoneMap);
+DEFINE_METHOD(peloton::storage, ZoneMapManager, GetInstance);
 
 }  // namespace codegen
 }  // namespace peloton

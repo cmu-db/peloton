@@ -21,8 +21,9 @@
 
 namespace peloton {
 namespace storage {
-  
-/*@brief   Get instance of the global zone map manager
+
+/**
+* @brief   Get instance of the global zone map manager
 */
 ZoneMapManager *ZoneMapManager::GetInstance() {
   static ZoneMapManager global_zone_map_manager;
@@ -34,7 +35,8 @@ ZoneMapManager::ZoneMapManager() {
   pool_.reset(new type::EphemeralPool());
 }
 
-/*@brief   The function creates the zone map table in catalog 
+/**
+* @brief   The function creates the zone map table in catalog 
 */
 void ZoneMapManager::CreateZoneMapTableInCatalog() {
   LOG_DEBUG("Create the Zone Map table");
@@ -45,7 +47,8 @@ void ZoneMapManager::CreateZoneMapTableInCatalog() {
   zone_map_table_exists = true;
 }
 
-/*@brief   The function creates zone maps for all tile groups for a 
+/**
+* @brief   The function creates zone maps for all tile groups for a 
 *          given table
 * @param   table ptr and a transaction handle
 */
@@ -68,7 +71,8 @@ void ZoneMapManager::CreateZoneMapsForTable(storage::DataTable *table,
   }
 }
 
-/*@brief   The function creates zone maps for a given tile group. If it
+/**
+* @brief   The function creates zone maps for a given tile group. If it
 *          already exists it is deleted and replaced with the updated values.
 * @param   table_ptr, tile_group_index and transaction_ptr
 */
@@ -109,7 +113,8 @@ void ZoneMapManager::CreateOrUpdateZoneMapForTileGroup(
   }
 }
 
-/*@brief   The function inserts the catalog keys and values in the zone map table
+/**
+* @brief  The function inserts the catalog keys and values in the zone map table
 *          present in catalog
 * @param   database_id, table_id, tile_group_index, column_id, min, max and type
 */
@@ -137,7 +142,8 @@ void ZoneMapManager::CreateOrUpdateZoneMapInCatalog(
   }
 }
 
-/*@brief   The function gets the column statistics given the catalog keys
+/**
+* @brief   The function gets the column statistics given the catalog keys
 * @param   database_id, table_id, tile_group_index, column_id
 * @return  unique pointer to the column statistics for a given column
 */
@@ -157,7 +163,8 @@ ZoneMapManager::GetZoneMapFromCatalog(oid_t database_id, oid_t table_id,
   return GetResultVectorAsZoneMap(result_vector);
 }
 
-/*@brief   The function performs deserialization back from VARCHAR
+/**
+* @brief   The function performs deserialization back from VARCHAR
 * @param   the result tile obtained from catalog after lookup
 * @return  unique pointer to the column statistics for a given column
 */
@@ -180,7 +187,8 @@ ZoneMapManager::GetResultVectorAsZoneMap(
       GetValueAsOriginal(max_varchar, type_varchar)}));
 }
 
-/*@brief   The function compares the predicate against the zone map for
+/**
+* @brief   The function compares the predicate against the zone map for
 *          the column present in catalog
 * @param   parsed predicates array, number of predicates, table_ptr and 
 *          tile_group_index
@@ -237,7 +245,8 @@ bool ZoneMapManager::ComparePredicateAgainstZoneMap(
   return true;
 }
 
-/*@brief   Checks whether a zone map table in catalog was created.
+/**
+* @brief   Checks whether a zone map table in catalog was created.
 * @return  True if the zone map table in catalog exists and vice versa
 */
 bool ZoneMapManager::ZoneMapTableExists() { return zone_map_table_exists; }

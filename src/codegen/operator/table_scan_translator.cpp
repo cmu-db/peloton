@@ -61,9 +61,6 @@ TableScanTranslator::TableScanTranslator(const planner::SeqScanPlan &scan,
       "scanSelVec",
       codegen.ArrayType(codegen.Int32Type(), Vector::kDefaultVectorSize), true);
 
-  storage::ZoneMapManager *zone_map_manager =
-      storage::ZoneMapManager::GetInstance();
-  zone_map_table_exists = zone_map_manager->ZoneMapTableExists();
   LOG_DEBUG("Finished constructing TableScanTranslator ...");
 }
 
@@ -85,8 +82,12 @@ void TableScanTranslator::Produce() const {
   Vector sel_vec{LoadStateValue(selection_vector_id_),
                  Vector::kDefaultVectorSize, codegen.Int32Type()};
 
+  storage::ZoneMapManager *zone_map_manager =
+      storage::ZoneMapManager::GetInstance();
+  bool zone_map_table_exists = zone_map_manager->ZoneMapTableExists();
+
   auto predicate =
-      (expression::AbstractExpression *)GetScanPlan().GetPredicate();
+      const_cast<expression::AbstractExpression *>(GetScanPlan().GetPredicate());
   llvm::Value *predicate_ptr = codegen->CreateIntToPtr(
       codegen.Const64((int64_t)predicate),
       AbstractExpressionProxy::GetType(codegen)->getPointerTo());
