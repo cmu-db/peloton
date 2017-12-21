@@ -173,7 +173,8 @@ struct Client {
 extern void PacketPutByte(OutputPacket *pkt, const uchar c);
 
 /* packet_put_string - used to write a string into a packet */
-extern void PacketPutString(OutputPacket *pkt, const std::string &str);
+extern void PacketPutStringWithTerminator(OutputPacket *pkt,
+                                          const std::string &str);
 
 /* packet_put_int - used to write a single int into a packet */
 extern void PacketPutInt(OutputPacket *pkt, int n, int base);
@@ -182,7 +183,7 @@ extern void PacketPutInt(OutputPacket *pkt, int n, int base);
 extern void PacketPutCbytes(OutputPacket *pkt, const uchar *b, int len);
 
 /* packet_put_bytes - used to write a uchar vector into a packet */
-extern void PacketPutBytes(OutputPacket *pkt, const std::string &data);
+extern void PacketPutString(OutputPacket *pkt, const std::string &data);
 
 /*
 * Unmarshallers
