@@ -85,7 +85,7 @@ class TableMetric : public AbstractMetric {
   std::string table_name_;
 
   // The number of tuple accesses
-  AccessMetric table_access_{ACCESS_METRIC};
+  AccessMetric table_access_{MetricType::ACCESS};
 };
 
 }  // namespace stats
