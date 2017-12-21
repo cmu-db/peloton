@@ -195,7 +195,7 @@ ZoneMapManager::GetResultVectorAsZoneMap(
  * @return  True if tile group needs to be scanned.
  *          False if tile group can be skipped.
  */
-bool ZoneMapManager::ComparePredicateAgainstZoneMap(
+bool ZoneMapManager::ShouldScanTileGroup(
     storage::PredicateInfo *parsed_predicates, int32_t num_predicates,
     storage::DataTable *table, int64_t tile_group_idx) {
   for (int32_t i = 0; i < num_predicates; i++) {

@@ -58,7 +58,7 @@ llvm::Value *Table::GetZoneMapManager(CodeGen &codegen) const {
 // num_tile_groups = GetTileGroupCount(table_ptr)
 //
 // for (; tile_group_idx < num_tile_groups; ++tile_group_idx) {
-//   if (ComparePredicateAgainstZoneMaps(predicate_array, tile_group_idx) == true) {
+//   if (ShouldScanTileGroup(predicate_array, tile_group_idx) == true) {
 //      tile_group_ptr := GetTileGroup(table_ptr, tile_group_idx)
 //      consumer.TileGroupStart(tile_group_ptr);
 //      tile_group.TidScan(tile_group_ptr, column_layouts, vector_size, consumer);
@@ -107,7 +107,7 @@ void Table::GenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
     codegen::lang::If cond{
         codegen,
         codegen.Call(
-            ZoneMapManagerProxy::ComparePredicateAgainstZoneMap,
+            ZoneMapManagerProxy::ShouldScanTileGroup,
             {zone_map_manager, predicate_array, codegen.Const32(num_predicates),
              table_ptr, tile_group_idx})};
     {
