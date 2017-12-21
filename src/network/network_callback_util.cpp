@@ -61,6 +61,7 @@ void CallbackUtil::OnNewConnectionDispatch(evutil_socket_t new_conn_recv_fd,
   }
 }
 
+
 void CallbackUtil::OnNetworkEvent(evutil_socket_t, short, void *arg) {
   static_cast<NetworkConnection *>(arg)->TriggerStateMachine();
 }
