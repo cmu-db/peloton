@@ -15,7 +15,7 @@
 #include "network/network_connection.h"
 #include "network/protocol_handler_factory.h"
 #include "network/network_callback_util.h"
-#include "network/network_master_thread.h"
+#include "network/connection_dispatcher_task.h"
 #include "network/connection_handle.h"
 
 #define SSL_MESSAGE_VERNO 80877103
@@ -24,57 +24,32 @@
 namespace peloton {
 namespace network {
 
-void NetworkConnection::Init(short event_flags, NetworkThread *thread,
-                          ConnState init_state) {
+// TODO(tianyu): General comment: We only ever call this with one argument, so maybe we don't need the event_flag arg?
+void NetworkConnection::Init(short event_flags, NotifiableTask *handler) {
   SetNonBlocking(sock_fd_);
   SetTCPNoDelay(sock_fd_);
 
   protocol_handler_ = nullptr;
+  this->handler = handler;
 
-  this->event_flags = event_flags;
-  this->thread_ = thread;
+//  TODO(tianyu): The original network code seems to do this as an optimization. I am leaving this out until we get numbers
+//  if (network_event != nullptr)
+//    handler->UpdateEvent(network_event, sock_fd_, event_flags, CallbackUtil::OnNetworkEvent, this);
+//  else
+//    network_event = handler->RegisterEvent(sock_fd_, event_flags, CallbackUtil::OnNetworkEvent, this);
+//
+//  if (workpool_event != nullptr)
+//    handler->UpdateManualEvent(workpool_event, CallbackUtil::OnNetworkEvent, this);
+//  else
+//    workpool_event = handler->RegisterManualEvent(CallbackUtil::OnNetworkEvent, this);
 
-  this->thread_id = thread->GetThreadID();
+  if (network_event != nullptr)
+    handler->UnregisterEvent(network_event);
+  network_event = handler->RegisterEvent(sock_fd_, event_flags, CallbackUtil::OnNetworkEvent, this);
 
-  // clear out packet
-  if (network_event == nullptr) {
-    network_event = event_new(thread->GetEventBase(), sock_fd_, event_flags,
-                      CallbackUtil::EventHandler, this);
-  } else {
-    // Reuse the event object if already initialized
-    if (event_del(network_event) == -1) {
-      LOG_ERROR("Failed to delete network event");
-      PL_ASSERT(false);
-    }
-
-    auto result = event_assign(network_event, thread->GetEventBase(), sock_fd_,
-                               event_flags,
-                               CallbackUtil::EventHandler, this);
-
-    if (result != 0) {
-      LOG_ERROR("Failed to update network event");
-      PL_ASSERT(false);
-    }
-  }
-
-  if (workpool_event == nullptr) {
-    workpool_event = event_new(thread->GetEventBase(), -1, EV_PERSIST,
-    CallbackUtil::EventHandler, this);
-  } else {
-    if (event_del(workpool_event) == -1) {
-      LOG_ERROR("Failed to delete event");
-      PL_ASSERT(false);
-    }
-    auto result = event_assign(workpool_event, thread->GetEventBase(), -1,
-                                EV_PERSIST, CallbackUtil::EventHandler, this);
-    if (result != 0) {
-      LOG_ERROR("Failed to update workpool event");
-      PL_ASSERT(false);
-    }
-  }
-
-  event_add(network_event, nullptr);
-  event_add(workpool_event, nullptr);
+  if (workpool_event != nullptr)
+    handler->UnregisterEvent(workpool_event);
+  workpool_event = handler->RegisterManualEvent(CallbackUtil::OnNetworkEvent, this);
 
   //TODO:: should put the initialization else where.. check correctness first.
   traffic_cop_.SetTaskCallback([](void *arg) {
@@ -82,41 +57,22 @@ void NetworkConnection::Init(short event_flags, NetworkThread *thread,
     event_active(event, EV_WRITE, 0);
   }, workpool_event);
 
-  state_machine_ = ConnectionHandleStateMachine(init_state);
-
+  state_machine_ = ConnectionHandleStateMachine(ConnState::CONN_READ);
 }
 
 // Update event
 bool NetworkConnection::UpdateEvent(short flags) {
-  auto base = thread_->GetEventBase();
-  if (event_del(network_event) == -1) {
-    LOG_ERROR("Failed to delete event");
-    return false;
-  }
-  auto result =
-      event_assign(network_event, base, sock_fd_, flags,
-                   CallbackUtil::EventHandler, (void *)this);
-
-  if (result != 0) {
-    LOG_ERROR("Failed to update event");
-    return false;
-  }
-
-  event_flags = flags;
-
-  if (event_add(network_event, nullptr) == -1) {
-    LOG_ERROR("Failed to add event");
-    return false;
-  }
-
+  // TODO(tianyu): The original network code seems to do this as an optimization. I am leaving this out until we get numbers
+  // handler->UpdateEvent(network_event, sock_fd_, flags, CallbackUtil::OnNetworkEvent, this);
+  handler->UnregisterEvent(network_event);
+  network_event = handler->RegisterEvent(sock_fd_, flags, CallbackUtil::OnNetworkEvent, this);
+  // TODO(tianyu) Not propagate error since we will change to exceptions anyway.
   return true;
 }
-
 
 /**
  * Public Functions
  */
-
 WriteState NetworkConnection::WritePackets() {
   // iterate through all the packets
   for (; next_response_ < protocol_handler_->responses.size(); next_response_++) {
@@ -614,25 +570,9 @@ void NetworkConnection::Reset() {
   ssl_sent_ = false;
 }
 
-Transition NetworkConnection::HandleConnListening() {
-  struct sockaddr_storage addr;
-  socklen_t addrlen = sizeof(addr);
-
-  int new_conn_fd =
-      accept(sock_fd_, (struct sockaddr *)&addr, &addrlen);
-  if (new_conn_fd == -1) {
-    LOG_ERROR("Failed to accept");
-  }
-
-  (static_cast<NetworkMasterThread *>(thread_))
-      ->DispatchConnection(new_conn_fd, EV_READ | EV_PERSIST);
-
-  return Transition::NONE;
-}
-
 Transition NetworkConnection::Wait() {
   // TODO(tianyu): Maybe we don't need this state? Also, this name is terrible
-  if (UpdateEvent(EV_READ | EV_PERSIST) == false) {
+  if (!UpdateEvent(EV_READ | EV_PERSIST)) {
     LOG_ERROR("Failed to update event, closing");
     return Transition::ERROR;
   }
@@ -676,7 +616,7 @@ Transition NetworkConnection::Process() {
         return Transition::ERROR;
     }
   } else {
-    ProcessResult status = protocol_handler_->Process(rbuf_, (size_t) thread_id);
+    ProcessResult status = protocol_handler_->Process(rbuf_, (size_t) handler->Id());
     switch (status) {
       case ProcessResult::MORE_DATA_REQUIRED:
         return Transition::NEED_DATA;
@@ -733,7 +673,6 @@ Transition NetworkConnection::GetResult() {
   traffic_cop_.SetQueuing(false);
   return Transition::PROCEED;
 }
-
 
 
 }  // namespace network

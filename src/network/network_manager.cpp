@@ -13,7 +13,7 @@
 #include <fstream>
 
 #include "network/network_manager.h"
-
+#include "network/network_callback_util.h"
 #include "settings/settings_manager.h"
 
 namespace peloton {
@@ -22,6 +22,8 @@ namespace network {
 int NetworkManager::recent_connfd = -1;
 SSL_CTX *NetworkManager::ssl_context = nullptr;
 
+// TODO(tianyu): This chunk of code to reuse NetworkConnection is wrong on multiple levels.
+// Mark to refactor into some factory class.
 std::unordered_map<int, std::unique_ptr<NetworkConnection>> &
 NetworkManager::GetGlobalSocketList() {
   // mapping from socket id to socket object.
@@ -41,43 +43,17 @@ NetworkConnection *NetworkManager::GetConnection(const int &connfd) {
 }
 
 void NetworkManager::CreateNewConnection(const int &connfd, short ev_flags,
-                                         NetworkThread *thread,
-                                         ConnState init_state) {
+                                         NotifiableTask *thread) {
   auto &global_socket_list = GetGlobalSocketList();
   recent_connfd = connfd;
   if (global_socket_list.find(connfd) == global_socket_list.end()) {
     LOG_INFO("create new connection: id = %d", connfd);
   }
   global_socket_list[connfd].reset(
-      new NetworkConnection(connfd, ev_flags, thread, init_state));
-  thread->SetThreadSockFd(connfd);
+      new NetworkConnection(connfd, ev_flags, thread));
 }
 
 NetworkManager::NetworkManager() {
-  evthread_use_pthreads();
-  base_ = event_base_new();
-  evthread_make_base_notifiable(base_);
-
-  // Create our event base
-  if (!base_) {
-    throw ConnectionException("Couldn't open event base");
-  }
-
-  // Add hang up signal event
-  ev_stop_ =
-      evsignal_new(base_, SIGHUP, CallbackUtil::Signal_Callback, base_);
-  evsignal_add(ev_stop_, NULL);
-
-  // Add timeout event to check server's start/close flag every one second
-  struct timeval one_seconds = {1, 0};
-  ev_timeout_ = event_new(base_, -1, EV_TIMEOUT | EV_PERSIST,
-                          CallbackUtil::ServerControl_Callback, this);
-  event_add(ev_timeout_, &one_seconds);
-
-  // a master thread is responsible for coordinating worker threads.
-  master_thread_ =
-      std::make_shared<NetworkMasterThread>(CONNECTION_THREAD_COUNT, base_);
-
   port_ = settings::SettingsManager::GetInt(settings::SettingId::port);
   max_connections_ = settings::SettingsManager::GetInt(settings::SettingId::max_connections);
   private_key_file_ = settings::SettingsManager::GetString(settings::SettingId::private_key_file);
@@ -97,6 +73,10 @@ NetworkManager::NetworkManager() {
 }
 
 void NetworkManager::StartServer() {
+  // This line is critical to performance for some reason
+  evthread_use_pthreads();
+  dispatcher_task = std::make_shared<ConnectionDispatcherTask>(CONNECTION_THREAD_COUNT);
+
   if (settings::SettingsManager::GetString(settings::SettingId::socket_family) == "AF_INET") {
     struct sockaddr_in sin;
     PL_MEMSET(&sin, 0, sizeof(sin));
@@ -157,24 +137,22 @@ void NetworkManager::StartServer() {
       throw ConnectionException("Error listening onsocket.");
     }
 
-    master_thread_->Start();
-
-    NetworkManager::CreateNewConnection(listen_fd, EV_READ | EV_PERSIST,
-                                        master_thread_.get(), ConnState::CONN_LISTENING);
+    // TODO(tianyu) Move this after we change the way we shut down our server
+    struct timeval one_second = {1, 0};
+    dispatcher_task->RegisterPeriodicEvent(&one_second, CallbackUtil::ServerControl_Callback, this);
+    dispatcher_task->RegisterEvent(listen_fd, EV_READ|EV_PERSIST, CallbackUtil::OnNewConnection, dispatcher_task.get());
 
     LOG_INFO("Listening on port %llu", (unsigned long long) port_);
-    event_base_dispatch(base_);
+    dispatcher_task->EventLoop();
+
     LOG_INFO("Closing server");
-    NetworkManager::GetConnection(listen_fd)->CloseSocket();
+    int status;
+    do {
+      status = close(listen_fd);
+    } while (status < 0 && errno == EINTR);
+    LOG_DEBUG("Already Closed the connection %d", listen_fd);
 
-    // Free events and event base
-    event_free(NetworkManager::GetConnection(listen_fd)->network_event);
-    event_free(NetworkManager::GetConnection(listen_fd)->workpool_event);
-    event_free(ev_stop_);
-    event_free(ev_timeout_);
-    event_base_free(base_);
-
-    master_thread_->Stop();
+    dispatcher_task->Stop();
     LOG_INFO("Server Closed");
   }
 
@@ -187,6 +165,10 @@ void NetworkManager::StartServer() {
 void NetworkManager::CloseServer() {
   LOG_INFO("Begin to stop server");
   this->SetIsClosed(true);
+}
+
+void NetworkManager::Break() {
+  dispatcher_task->Break();
 }
 
 /**

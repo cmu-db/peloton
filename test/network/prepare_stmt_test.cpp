@@ -29,11 +29,11 @@ namespace test {
 
 class PrepareStmtTests : public PelotonTest {};
 
-static void *LaunchServer(peloton::network::NetworkManager network_manager,
+static void *LaunchServer(peloton::network::NetworkManager *network_manager,
                           int port) {
   try {
-    network_manager.SetPort(port);
-    network_manager.StartServer();
+    network_manager->SetPort(port);
+    network_manager->StartServer();
   } catch (peloton::ConnectionException exception) {
     LOG_INFO("[LaunchServer] exception in thread");
   }
@@ -59,7 +59,7 @@ void *PrepareStatementTest(int port) {
 
     //Check type of protocol handler
     network::PostgresProtocolHandler* handler =
-        dynamic_cast<network::PostgresProtocolHandler*>(conn->protocol_handler_.get());
+        dynamic_cast<network::PostgresProtocolHandler*>(conn->GetProtocolHandler().get());
 
     EXPECT_NE(handler, nullptr);
 
@@ -98,7 +98,7 @@ TEST_F(PrepareStmtTests, PrepareStatementTest) {
   LOG_INFO("Server initialized");
   peloton::network::NetworkManager network_manager;
   int port = 15721;
-  std::thread serverThread(LaunchServer, network_manager, port);
+  std::thread serverThread(LaunchServer, &network_manager, port);
   while (!network_manager.GetIsStarted()) {
     sleep(1);
   }

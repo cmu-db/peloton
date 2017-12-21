@@ -30,11 +30,11 @@ namespace test {
 
 class SelectAllTests : public PelotonTest {};
 
-static void *LaunchServer(peloton::network::NetworkManager network_manager,
+static void *LaunchServer(peloton::network::NetworkManager *network_manager,
                           int port) {
   try {
-    network_manager.SetPort(port);
-    network_manager.StartServer();
+    network_manager->SetPort(port);
+    network_manager->StartServer();
   } catch (peloton::ConnectionException &exception) {
     LOG_INFO("[LaunchServer] exception in thread");
   }
@@ -58,7 +58,7 @@ void *SelectAllTest(int port) {
             peloton::network::NetworkManager::recent_connfd);
 
     network::PostgresProtocolHandler *handler =
-        dynamic_cast<network::PostgresProtocolHandler *>(conn->protocol_handler_.get());
+        dynamic_cast<network::PostgresProtocolHandler *>(conn->GetProtocolHandler().get());
     EXPECT_NE(handler, nullptr);
 
     // create table and insert some data
@@ -67,15 +67,16 @@ void *SelectAllTest(int port) {
     txn1.commit();
 
     pqxx::work txn2(C);
-    for (int i = 0; i < 2000; i++) {
+    for (int i = 0; i < 20; i++) {
       std::string s = "INSERT INTO template VALUES (" + std::to_string(i) + ")";
+      LOG_INFO("Start sending query");
       txn2.exec(s);
     }
 
     pqxx::result R = txn2.exec("SELECT * from template;");
     txn2.commit();
 
-    EXPECT_EQ(R.size(), 2000);
+    EXPECT_EQ(R.size(), 20);
   } catch (const std::exception &e) {
     LOG_INFO("[SelectAllTest] Exception occurred: %s", e.what());
     EXPECT_TRUE(false);
@@ -91,7 +92,7 @@ TEST_F(SelectAllTests, SelectAllTest) {
   peloton::network::NetworkManager network_manager;
 
   int port = 15721;
-  std::thread serverThread(LaunchServer, network_manager, port);
+  std::thread serverThread(LaunchServer, &network_manager, port);
   while (!network_manager.GetIsStarted()) {
     sleep(1);
   }
