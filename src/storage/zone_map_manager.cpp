@@ -23,8 +23,8 @@ namespace peloton {
 namespace storage {
 
 /**
-* @brief   Get instance of the global zone map manager
-*/
+ * @brief   Get instance of the global zone map manager
+ */
 ZoneMapManager *ZoneMapManager::GetInstance() {
   static ZoneMapManager global_zone_map_manager;
   return &global_zone_map_manager;
@@ -36,8 +36,8 @@ ZoneMapManager::ZoneMapManager() {
 }
 
 /**
-* @brief   The function creates the zone map table in catalog 
-*/
+ * @brief   The function creates the zone map table in catalog 
+ */
 void ZoneMapManager::CreateZoneMapTableInCatalog() {
   LOG_DEBUG("Create the Zone Map table");
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -48,10 +48,10 @@ void ZoneMapManager::CreateZoneMapTableInCatalog() {
 }
 
 /**
-* @brief   The function creates zone maps for all tile groups for a 
-*          given table
-* @param   table ptr and a transaction handle
-*/
+ * @brief   The function creates zone maps for all tile groups for a 
+ *          given table
+ * @param   table ptr and a transaction handle
+ */
 void ZoneMapManager::CreateZoneMapsForTable(storage::DataTable *table,
                                             concurrency::Transaction *txn) {
   PL_ASSERT(table != nullptr);
@@ -72,10 +72,10 @@ void ZoneMapManager::CreateZoneMapsForTable(storage::DataTable *table,
 }
 
 /**
-* @brief   The function creates zone maps for a given tile group. If it
-*          already exists it is deleted and replaced with the updated values.
-* @param   table_ptr, tile_group_index and transaction_ptr
-*/
+ * @brief   The function creates zone maps for a given tile group. If it
+ *          already exists it is deleted and replaced with the updated values.
+ * @param   table_ptr, tile_group_index and transaction_ptr
+ */
 void ZoneMapManager::CreateOrUpdateZoneMapForTileGroup(
     storage::DataTable *table, oid_t tile_group_idx,
     concurrency::Transaction *txn) {
@@ -114,10 +114,10 @@ void ZoneMapManager::CreateOrUpdateZoneMapForTileGroup(
 }
 
 /**
-* @brief  The function inserts the catalog keys and values in the zone map table
-*          present in catalog
-* @param   database_id, table_id, tile_group_index, column_id, min, max and type
-*/
+ * @brief  The function inserts the catalog keys and values in the zone map table
+ *          present in catalog
+ * @param   database_id, table_id, tile_group_index, column_id, min, max and type
+ */
 void ZoneMapManager::CreateOrUpdateZoneMapInCatalog(
     oid_t database_id, oid_t table_id, oid_t tile_group_idx, oid_t column_id,
     std::string min, std::string max, std::string type,
@@ -143,10 +143,10 @@ void ZoneMapManager::CreateOrUpdateZoneMapInCatalog(
 }
 
 /**
-* @brief   The function gets the column statistics given the catalog keys
-* @param   database_id, table_id, tile_group_index, column_id
-* @return  unique pointer to the column statistics for a given column
-*/
+ * @brief   The function gets the column statistics given the catalog keys
+ * @param   database_id, table_id, tile_group_index, column_id
+ * @return  unique pointer to the column statistics for a given column
+ */
 std::unique_ptr<ZoneMapManager::ColumnStatistics>
 ZoneMapManager::GetZoneMapFromCatalog(oid_t database_id, oid_t table_id,
                                       oid_t tile_group_idx, oid_t column_id) {
@@ -164,10 +164,10 @@ ZoneMapManager::GetZoneMapFromCatalog(oid_t database_id, oid_t table_id,
 }
 
 /**
-* @brief   The function performs deserialization back from VARCHAR
-* @param   the result tile obtained from catalog after lookup
-* @return  unique pointer to the column statistics for a given column
-*/
+ * @brief   The function performs deserialization back from VARCHAR
+ * @param   the result tile obtained from catalog after lookup
+ * @return  unique pointer to the column statistics for a given column
+ */
 std::unique_ptr<ZoneMapManager::ColumnStatistics>
 ZoneMapManager::GetResultVectorAsZoneMap(
     std::unique_ptr<std::vector<type::Value>> &result_vector) {
@@ -188,13 +188,13 @@ ZoneMapManager::GetResultVectorAsZoneMap(
 }
 
 /**
-* @brief   The function compares the predicate against the zone map for
-*          the column present in catalog
-* @param   parsed predicates array, number of predicates, table_ptr and 
-*          tile_group_index
-* @return  True if tile group needs to be scanned.
-*          False if tile group can be skipped.
-*/
+ * @brief   The function compares the predicate against the zone map for
+ *          the column present in catalog
+ * @param   parsed predicates array, number of predicates, table_ptr and 
+ *          tile_group_index
+ * @return  True if tile group needs to be scanned.
+ *          False if tile group can be skipped.
+ */
 bool ZoneMapManager::ComparePredicateAgainstZoneMap(
     storage::PredicateInfo *parsed_predicates, int32_t num_predicates,
     storage::DataTable *table, int64_t tile_group_idx) {
@@ -246,9 +246,9 @@ bool ZoneMapManager::ComparePredicateAgainstZoneMap(
 }
 
 /**
-* @brief   Checks whether a zone map table in catalog was created.
-* @return  True if the zone map table in catalog exists and vice versa
-*/
+ * @brief   Checks whether a zone map table in catalog was created.
+ * @return  True if the zone map table in catalog exists and vice versa
+ */
 bool ZoneMapManager::ZoneMapTableExists() { return zone_map_table_exists; }
 
 }  // namespace storage
