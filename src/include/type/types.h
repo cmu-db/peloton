@@ -354,7 +354,7 @@ enum class NetworkTransactionStateType : unsigned char {
   FAIL = 'E',
 };
 
-enum SqlStateErrorCode {
+enum class SqlStateErrorCode {
   SERIALIZATION_ERROR = '1',
 };
 
@@ -992,29 +992,29 @@ enum class StatsType {
   ENABLE = 1,
 };
 
-enum MetricType {
+enum class MetricType {
   // Metric type is invalid
-  INVALID_METRIC = INVALID_TYPE_ID,
+  INVALID = INVALID_TYPE_ID,
   // Metric to count a number
-  COUNTER_METRIC = 1,
+  COUNTER = 1,
   // Access information, e.g., # tuples read, inserted, updated, deleted
-  ACCESS_METRIC = 2,
+  ACCESS = 2,
   // Life time of a object
-  LIFETIME_METRIC = 3,
+  LIFETIME = 3,
   // Statistics for a specific database
-  DATABASE_METRIC = 4,
+  DATABASE = 4,
   // Statistics for a specific table
-  TABLE_METRIC = 5,
+  TABLE = 5,
   // Statistics for a specific index
-  INDEX_METRIC = 6,
+  INDEX = 6,
   // Latency of transactions
-  LATENCY_METRIC = 7,
+  LATENCY = 7,
   // Timestamp, e.g., creation time of a table/index
-  TEMPORAL_METRIC = 8,
+  TEMPORAL = 8,
   // Statistics for a specific table
-  QUERY_METRIC = 9,
+  QUERY = 9,
   // Statistics for CPU
-  PROCESSOR_METRIC = 10,
+  PROCESSOR = 10,
 };
 
 // All builtin operators we currently support
@@ -1080,12 +1080,6 @@ enum class EntityType {
 std::string EntityTypeToString(EntityType type);
 EntityType StringToEntityType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const EntityType &type);
-
-// ------------------------------------------------------------------
-// Endianess
-// ------------------------------------------------------------------
-
-enum Endianess { BYTE_ORDER_BIG_ENDIAN = 0, BYTE_ORDER_LITTLE_ENDIAN = 1 };
 
 //===--------------------------------------------------------------------===//
 // Type definitions.

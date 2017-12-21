@@ -2692,7 +2692,7 @@ std::ostream &operator<<(std::ostream &os, const PropertyType &type) {
 //===--------------------------------------------------------------------===//
 std::string SqlStateErrorCodeToString(SqlStateErrorCode code) {
   switch (code) {
-    case SERIALIZATION_ERROR:
+    case SqlStateErrorCode::SERIALIZATION_ERROR:
       return "40001";
     default:
       return "INVALID";

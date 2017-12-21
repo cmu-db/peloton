@@ -36,7 +36,7 @@ IndexMetric::IndexMetric(MetricType type, oid_t database_id, oid_t table_id,
 }
 
 void IndexMetric::Aggregate(AbstractMetric& source) {
-  assert(source.GetType() == INDEX_METRIC);
+  assert(source.GetType() == MetricType::INDEX);
 
   IndexMetric& index_metric = static_cast<IndexMetric&>(source);
   index_access_.Aggregate(index_metric.GetIndexAccess());

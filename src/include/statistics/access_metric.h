@@ -131,10 +131,10 @@ class AccessMetric : public AbstractMetric {
 
   // Vector containing all access types
   std::vector<CounterMetric> access_counters_{
-      CounterMetric(COUNTER_METRIC),  // READ_COUNTER
-      CounterMetric(COUNTER_METRIC),  // UPDATE_COUNTER
-      CounterMetric(COUNTER_METRIC),  // INSERT_COUNTER
-      CounterMetric(COUNTER_METRIC)   // DELETE_COUNTER
+      CounterMetric(MetricType::COUNTER),  // READ_COUNTER
+      CounterMetric(MetricType::COUNTER),  // UPDATE_COUNTER
+      CounterMetric(MetricType::COUNTER),  // INSERT_COUNTER
+      CounterMetric(MetricType::COUNTER)   // DELETE_COUNTER
   };
 
   // The different types of accesses. These also

@@ -91,7 +91,7 @@ class IndexMetric : public AbstractMetric {
   std::string index_name_;
 
   // Counts the number of index entries accessed
-  AccessMetric index_access_{ACCESS_METRIC};
+  AccessMetric index_access_{MetricType::ACCESS};
 };
 
 }  // namespace stats
