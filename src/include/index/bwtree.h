@@ -3027,7 +3027,7 @@ class BwTree : public BwTreeBase {
       // Navigate could abort since it might go to another NodeID
       // if there is a split delta and the key is >= split key
       if (context_p->abort_flag == true) {
-        LOG_DEBUG("Navigate Inner Node abort. ABORT");
+        LOG_TRACE("Navigate Inner Node abort. ABORT");
 
         // If NavigateInnerNode() aborts then it retrns INVALID_NODE_ID
         // as a double check
@@ -3045,7 +3045,7 @@ class BwTree : public BwTreeBase {
       LoadNodeID(child_node_id, context_p);
 
       if (context_p->abort_flag == true) {
-        LOG_DEBUG("LoadNodeID aborted. ABORT");
+        LOG_TRACE("LoadNodeID aborted. ABORT");
 
         goto abort_traverse;
       }
@@ -3076,7 +3076,7 @@ class BwTree : public BwTreeBase {
     }
 
     if (context_p->abort_flag == true) {
-      LOG_DEBUG(
+      LOG_TRACE(
           "NavigateLeafNode() or NavigateSiblingChain()"
           " aborts. ABORT");
 
@@ -3163,7 +3163,7 @@ class BwTree : public BwTreeBase {
         JumpToNodeID(node_p->GetNextNodeID(), context_p);
 
         if (context_p->abort_flag == true) {
-          LOG_DEBUG("JumpToNodeID aborts(). ABORT");
+          LOG_TRACE("JumpToNodeID aborts(). ABORT");
 
           return;
         }
@@ -3197,7 +3197,7 @@ class BwTree : public BwTreeBase {
 
         JumpToNodeID(node_p->GetNextNodeID(), context_p);
         if (context_p->abort_flag == true) {
-          LOG_DEBUG("JumpToNodeID() aborts for BI. ABORT");
+          LOG_TRACE("JumpToNodeID() aborts for BI. ABORT");
           return;
         }
       } else {
@@ -5267,14 +5267,14 @@ class BwTree : public BwTreeBase {
     while (1) {
       NodeID child_node_id = NavigateInnerNodeBI(context_p);
       if (context_p->abort_flag == true) {
-        LOG_DEBUG("Navigate Inner Node abort (BI). ABORT");
+        LOG_TRACE("Navigate Inner Node abort (BI). ABORT");
         PL_ASSERT(child_node_id == INVALID_NODE_ID);
         goto abort_traverse;
       }
 
       LoadNodeID(child_node_id, context_p);
       if (context_p->abort_flag == true) {
-        LOG_DEBUG("LoadNodeID aborted (BI). ABORT");
+        LOG_TRACE("LoadNodeID aborted (BI). ABORT");
         goto abort_traverse;
       }
 
@@ -5286,7 +5286,7 @@ class BwTree : public BwTreeBase {
         // and stop before the search key
         NavigateSiblingChainBI(context_p);
         if (context_p->abort_flag == true) {
-          LOG_DEBUG("NavigateSiblingChainBI() inside TraverseBI() aborts");
+          LOG_TRACE("NavigateSiblingChainBI() inside TraverseBI() aborts");
 
           goto abort_traverse;
         }
@@ -5337,7 +5337,7 @@ class BwTree : public BwTreeBase {
       // Navigate could abort since it might go to another NodeID
       // if there is a split delta and the key is >= split key
       if (context_p->abort_flag == true) {
-        LOG_DEBUG("Navigate Inner Node abort (RO)");
+        LOG_TRACE("Navigate Inner Node abort (RO)");
 
         // If NavigateInnerNode() aborts then it retrns INVALID_NODE_ID
         // as a double check
@@ -5357,7 +5357,7 @@ class BwTree : public BwTreeBase {
       LoadNodeIDReadOptimized(child_node_id, context_p);
 
       if (context_p->abort_flag == true) {
-        LOG_DEBUG("LoadNodeID aborted (RO). ABORT");
+        LOG_TRACE("LoadNodeID aborted (RO). ABORT");
 
         goto abort_traverse;
       }
@@ -5371,7 +5371,7 @@ class BwTree : public BwTreeBase {
         NavigateLeafNode(context_p, *value_list_p);
 
         if (context_p->abort_flag == true) {
-          LOG_DEBUG("NavigateLeafNode aborts (RO). ABORT");
+          LOG_TRACE("NavigateLeafNode aborts (RO). ABORT");
 
           goto abort_traverse;
         }
@@ -5457,7 +5457,7 @@ class BwTree : public BwTreeBase {
 
       return true;
     } else {
-      LOG_DEBUG(
+      LOG_TRACE(
           "Index term insert (from %" PRIu64 " to %" PRIu64 ") delta CAS failed. "
           "ABORT",
           GetLatestNodeSnapshot(context_p)->node_id, insert_item.second);
