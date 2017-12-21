@@ -421,7 +421,8 @@ class ExpressionUtil {
                               ExprMap &child_expr_map) {
     for (size_t i = 0; i < expr->GetChildrenSize(); i++) {
       auto child_expr = expr->GetModifiableChild(i);
-      if (child_expr_map.count(child_expr)) {
+      if (child_expr->GetExpressionType() != ExpressionType::VALUE_TUPLE &&
+          child_expr_map.count(child_expr)) {
         // EvaluateExpression({child_expr_map}, child_expr);
         expr->SetChild(i,
                        new TupleValueExpression(child_expr->GetValueType(), 0,
@@ -567,10 +568,10 @@ class ExpressionUtil {
    */
 
   static expression::AbstractExpression *ExtractJoinColumns(
-      std::vector<std::unique_ptr<const expression::AbstractExpression>> &
-          l_column_exprs,
-      std::vector<std::unique_ptr<const expression::AbstractExpression>> &
-          r_column_exprs,
+      std::vector<std::unique_ptr<const expression::AbstractExpression>>
+          &l_column_exprs,
+      std::vector<std::unique_ptr<const expression::AbstractExpression>>
+          &r_column_exprs,
       const expression::AbstractExpression *expr) {
     if (expr == nullptr) return nullptr;
     if (expr->GetExpressionType() == ExpressionType::CONJUNCTION_AND) {

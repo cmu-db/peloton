@@ -274,8 +274,8 @@ TEST_F(OptimizerTests, PredicatePushDownTest) {
   auto tv = dynamic_cast<expression::TupleValueExpression *>(
       test1_predicate->GetModifiableChild(0));
   EXPECT_TRUE(tv != nullptr);
-  // EXPECT_EQ("test1", tv->GetTableName());
-  // EXPECT_EQ("b", tv->GetColumnName());
+  EXPECT_EQ("test1", tv->GetTableName());
+  EXPECT_EQ("b", tv->GetColumnName());
   auto constant = dynamic_cast<expression::ConstantValueExpression *>(
       test1_predicate->GetModifiableChild(1));
   EXPECT_TRUE(constant != nullptr);

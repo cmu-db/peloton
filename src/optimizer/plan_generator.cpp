@@ -408,7 +408,8 @@ void PlanGenerator::BuildProjectionPlan() {
 
   unique_ptr<planner::ProjectInfo> proj_info(
       new planner::ProjectInfo(move(tl), move(dml)));
-  // TODO since the plan will own the schema, we may not want to use shared_ptr
+  // TODO since the plan will own the schema, we may not want to use
+  // shared_ptr
   // to initialize the plan
   shared_ptr<catalog::Schema> schema_ptr(new catalog::Schema(columns));
   unique_ptr<planner::AbstractPlan> project_plan(
