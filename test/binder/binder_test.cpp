@@ -280,7 +280,8 @@ TEST_F(BinderCorrectnessTest, DeleteStatementTest) {
 }
 
 TEST_F(BinderCorrectnessTest, BindDepthTest) {
-  SetupTables(DEFAULT_DB_NAME);
+  std::string default_database_name = "TEST_DB";
+  SetupTables(default_database_name);
   auto &parser = parser::PostgresParser::GetInstance();
 
   // Test regular table name
@@ -289,7 +290,7 @@ TEST_F(BinderCorrectnessTest, BindDepthTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   unique_ptr<binder::BindNodeVisitor> binder(
-      new binder::BindNodeVisitor(txn, DEFAULT_DB_NAME));
+      new binder::BindNodeVisitor(txn, default_database_name));
   string selectSQL =
       "SELECT A.a1 FROM A WHERE A.a1 IN (SELECT b1 FROM B WHERE b1 = 2 AND b2 "
       "> (SELECT a1 FROM A WHERE a2 > 0)) "
@@ -361,6 +362,11 @@ TEST_F(BinderCorrectnessTest, BindDepthTest) {
   EXPECT_EQ(2, in_sub_expr_select_where_right_sub_select->depth);
   EXPECT_EQ(2, in_sub_expr_select_where_right_sub_select_where->GetDepth());
   EXPECT_EQ(2, in_sub_expr_select_where_right_sub_select_ele->GetDepth());
+  // Delete the test database
+  catalog::Catalog *catalog_ptr = catalog::Catalog::GetInstance();
+  txn = txn_manager.BeginTransaction();
+  catalog_ptr->DropDatabaseWithName(default_database_name, txn);
+  txn_manager.CommitTransaction(txn);
 }
 
 TEST_F(BinderCorrectnessTest, FunctionExpressionTest) {
@@ -373,7 +379,7 @@ TEST_F(BinderCorrectnessTest, FunctionExpressionTest) {
   auto stmt = parse_tree->GetStatement(0);
   unique_ptr<binder::BindNodeVisitor> binder(
       new binder::BindNodeVisitor(txn, DEFAULT_DB_NAME));
-  EXPECT_THROW(binder->BindNameToNode(stmt), peloton::BinderException);
+  EXPECT_THROW(binder->BindNameToNode(stmt), peloton::Exception);
 
   function_sql = "SELECT substr('test123', 2, 3)";
   auto parse_tree2 = parser.BuildParseTree(function_sql);

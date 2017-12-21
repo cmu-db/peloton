@@ -89,8 +89,9 @@ class PlanGenerator : public OperatorVisitor {
   void Visit(const PhysicalAggregate *) override;
 
  private:
-  ExprMap GenerateTableExprMap(const std::string &alias,
-                               const storage::DataTable *table);
+  std::vector<std::unique_ptr<expression::AbstractExpression>>
+  GenerateTableTVExprs(const std::string &alias,
+                       const storage::DataTable *table);
 
   std::vector<oid_t> GenerateColumnsForScan();
 
@@ -108,8 +109,8 @@ class PlanGenerator : public OperatorVisitor {
   void BuildProjectionPlan();
   void BuildAggregatePlan(
       AggregateType aggr_type,
-      const std::vector<std::shared_ptr<expression::AbstractExpression>> *
-          groupby_cols,
+      const std::vector<std::shared_ptr<expression::AbstractExpression>>
+          *groupby_cols,
       expression::AbstractExpression *having);
   std::shared_ptr<PropertySet> required_props_;
   std::vector<expression::AbstractExpression *> required_cols_;

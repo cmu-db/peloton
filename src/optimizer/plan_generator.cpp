@@ -278,8 +278,11 @@ void PlanGenerator::Visit(const PhysicalUpdate *op) {
   std::unordered_set<oid_t> update_col_ids;
   auto schema = op->target_table->GetSchema();
   auto table_alias = op->target_table->GetName();
-  ExprMap table_expr_map = GenerateTableExprMap(table_alias, op->target_table);
-
+  auto exprs = GenerateTableTVExprs(table_alias, op->target_table);
+  ExprMap table_expr_map;
+  for (oid_t idx = 0; idx < exprs.size(); ++idx) {
+    table_expr_map[exprs[idx].get()] = idx;
+  }
   // Evaluate update expression and add to target list
   for (auto &update : *(op->updates)) {
     auto column = update->column;
@@ -310,9 +313,10 @@ void PlanGenerator::Visit(const PhysicalUpdate *op) {
 }
 
 /************************* Private Functions *******************************/
-ExprMap PlanGenerator::GenerateTableExprMap(const std::string &alias,
-                                            const storage::DataTable *table) {
-  ExprMap expr_map;
+vector<unique_ptr<expression::AbstractExpression>>
+PlanGenerator::GenerateTableTVExprs(const std::string &alias,
+                                    const storage::DataTable *table) {
+  vector<unique_ptr<expression::AbstractExpression>> exprs;
   auto db_id = table->GetDatabaseOid();
   oid_t table_id = table->GetOid();
   auto cols = table->GetSchema()->GetColumns();
@@ -325,9 +329,9 @@ ExprMap PlanGenerator::GenerateTableExprMap(const std::string &alias,
                                              alias.c_str());
     col_expr->SetValueType(table->GetSchema()->GetColumn(col_id).GetType());
     col_expr->SetBoundOid(db_id, table_id, col_id);
-    expr_map[col_expr] = col_id;
+    exprs.emplace_back(col_expr);
   }
-  return expr_map;
+  return exprs;
 }
 
 // Generate columns for scan plan
@@ -355,7 +359,11 @@ PlanGenerator::GeneratePredicateForScan(
   if (predicate_expr == nullptr) {
     return nullptr;
   }
-  ExprMap table_expr_map = GenerateTableExprMap(alias, table);
+  auto exprs = GenerateTableTVExprs(alias, table);
+  ExprMap table_expr_map;
+  for (oid_t idx = 0; idx < exprs.size(); ++idx) {
+    table_expr_map[exprs[idx].get()] = idx;
+  }
   unique_ptr<expression::AbstractExpression> predicate =
       std::unique_ptr<expression::AbstractExpression>(predicate_expr->Copy());
   expression::ExpressionUtil::ConvertToTvExpr(predicate.get(), table_expr_map);
@@ -414,8 +422,8 @@ void PlanGenerator::BuildProjectionPlan() {
 
 void PlanGenerator::BuildAggregatePlan(
     AggregateType aggr_type,
-    const std::vector<std::shared_ptr<expression::AbstractExpression>> *
-        groupby_cols,
+    const std::vector<std::shared_ptr<expression::AbstractExpression>>
+        *groupby_cols,
     expression::AbstractExpression *having) {
   vector<planner::AggregatePlan::AggTerm> aggr_terms;
   vector<catalog::Column> output_schema_columns;

@@ -804,12 +804,6 @@ EmbedFilterIntoGet::EmbedFilterIntoGet() {
 bool EmbedFilterIntoGet::Check(std::shared_ptr<OperatorExpression> plan, OptimizeContext* context) const {
   (void)context;
   (void)plan;
-
-  auto& children = plan->Children();
-  PL_ASSERT(children.size() == 1);
-  auto& get = children.at(0);
-  PL_ASSERT(get->Children().size() == 0);
-
   return true;
 }
 
