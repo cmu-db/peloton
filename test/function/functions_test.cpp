@@ -117,7 +117,7 @@ TEST_F(FunctionsTests, FuncCallTest) {
       " increment(e double) RETURNS double AS $$"
       " BEGIN RETURN e + 1; END; $$ LANGUAGE plpgsql;");
 
-  result = {"5"};
+  result = {"26"};
   TestingSQLUtil::ExecuteSQLQueryAndCheckResult("SELECT increment(e) FROM test;",
                                                 result, false);
 
