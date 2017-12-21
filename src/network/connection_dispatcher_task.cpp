@@ -34,7 +34,7 @@ ConnectionDispatcherTask::ConnectionDispatcherTask(int num_handlers)
   // register thread to epoch manager.
   if (concurrency::EpochManagerFactory::GetEpochType() ==
       EpochType::DECENTRALIZED_EPOCH) {
-    for (size_t task_id = 0; task_id < num_handlers; task_id++) {
+    for (size_t task_id = 0; task_id < (size_t) num_handlers; task_id++) {
       concurrency::EpochManagerFactory::GetInstance().RegisterThread(task_id);
     }
   }
