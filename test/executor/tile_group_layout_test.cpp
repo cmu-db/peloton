@@ -87,9 +87,10 @@ void ExecuteTileGroupTest(peloton::LayoutType layout_type) {
 
   bool own_schema = true;
   bool adapt_table = true;
+  bool is_catalog = false;
   std::unique_ptr<storage::DataTable> table(storage::TableFactory::GetDataTable(
       INVALID_OID, INVALID_OID, table_schema, table_name,
-      tuples_per_tilegroup_count, own_schema, adapt_table, layout_type));
+      tuples_per_tilegroup_count, own_schema, adapt_table, is_catalog, layout_type));
 
   // PRIMARY INDEX
   if (indexes == true) {
