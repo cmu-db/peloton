@@ -84,7 +84,7 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   LOG_INFO("Building plan tree completed!");
 
   std::vector<type::Value> params;
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   std::vector<int> result_format;

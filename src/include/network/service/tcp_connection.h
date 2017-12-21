@@ -43,9 +43,10 @@ namespace service {
 #define HEADERLEN 4  // the length should be equal with sizeof uint32_t
 #define OPCODELEN 8  // the length should be equal with sizeof uint64_t
 #define TYPELEN 2    // the length should be equal with sizeof uint16_t
-                     /*
-                      * Connection is thread-safe
-                      */
+
+/*
+ * Connection is thread-safe
+ */
 class Connection {
   typedef enum {
     INIT,

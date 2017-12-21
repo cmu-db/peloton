@@ -45,7 +45,7 @@ class StatsTests : public PelotonTest {};
 // Launch the aggregator thread manually
 void LaunchAggregator(int64_t stat_interval) {
   settings::SettingsManager::SetInt(settings::SettingId::stats_mode,
-                                    STATS_TYPE_ENABLE);
+                                    static_cast<int>(StatsType::ENABLE));
 
   auto &aggregator =
       peloton::stats::StatsAggregator::GetInstance(stat_interval);
@@ -391,7 +391,7 @@ TEST_F(StatsTests, MultiThreadStatsTest) {
 //
 //  // Execute insert
 //  std::vector<type::Value> params;
-//  std::vector<StatementResult> result;
+//  std::vector<ResultValue> result;
 //  std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
 //  executor::ExecuteResult status = traffic_cop.ExecuteHelper(
 //      statement->GetPlanTree().get(), params, result, result_format);

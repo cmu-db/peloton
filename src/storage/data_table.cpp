@@ -57,8 +57,9 @@ size_t DataTable::default_active_indirection_array_count_ = 1;
 DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
                      const oid_t &database_oid, const oid_t &table_oid,
                      const size_t &tuples_per_tilegroup, const bool own_schema,
-                     const bool adapt_table, const bool is_catalog)
-    : AbstractTable(table_oid, schema, own_schema),
+                     const bool adapt_table, const bool is_catalog,
+                     const peloton::LayoutType layout_type)
+    : AbstractTable(table_oid, schema, own_schema, layout_type),
       database_oid(database_oid),
       table_name(table_name),
       tuples_per_tilegroup_(tuples_per_tilegroup),
@@ -222,7 +223,6 @@ bool DataTable::CheckConstraints(const AbstractTuple *tuple) const {
 // however, when performing insert, we have to copy data immediately,
 // and the argument cannot be set to nullptr.
 ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple) {
-
   //=============== garbage collection==================
   // check if there are recycled tuple slots
   auto &gc_manager = gc::GCManagerFactory::GetInstance();
@@ -308,6 +308,11 @@ bool DataTable::InstallVersion(const AbstractTuple *tuple,
                                const TargetList *targets_ptr,
                                concurrency::Transaction *transaction,
                                ItemPointer *index_entry_ptr) {
+  if (CheckConstraints(tuple) == false) {
+    LOG_TRACE("InsertVersion(): Constraint violated");
+    return false;
+  }
+
   // Index checks and updates
   if (InsertInSecondaryIndexes(tuple, targets_ptr, transaction,
                                index_entry_ptr) == false) {
@@ -336,10 +341,8 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
 bool DataTable::InsertTuple(const AbstractTuple *tuple,
     ItemPointer location, concurrency::Transaction *transaction,
     ItemPointer **index_entry_ptr) {
-
-  auto result = CheckConstraints(tuple);
-  if (result == false) {
-    LOG_TRACE("Constraint violated");
+  if (CheckConstraints(tuple) == false) {
+    LOG_TRACE("InsertTuple(): Constraint violated");
     return false;
   }
 
@@ -700,7 +703,7 @@ oid_t DataTable::AddDefaultTileGroup(const size_t &active_tile_group_id) {
   oid_t tile_group_id = INVALID_OID;
 
   // Figure out the partitioning for given tilegroup layout
-  column_map = GetTileGroupLayout((LayoutType)peloton_layout_mode);
+  column_map = GetTileGroupLayout();
 
   // Create a tile group with that partitioning
   std::shared_ptr<TileGroup> tile_group(GetTileGroupWithLayout(column_map));

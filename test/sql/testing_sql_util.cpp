@@ -52,7 +52,7 @@ void TestingSQLUtil::ShowTable(std::string database_name,
 
 // Execute a SQL query end-to-end
 ResultType TestingSQLUtil::ExecuteSQLQuery(
-    const std::string query, std::vector<StatementResult> &result,
+    const std::string query, std::vector<ResultValue> &result,
     std::vector<FieldInfo> &tuple_descriptor, int &rows_changed,
     std::string &error_message) {
   LOG_INFO("Query: %s", query.c_str());
@@ -92,7 +92,7 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
 // Execute a SQL query end-to-end with the specific optimizer
 ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
     std::unique_ptr<optimizer::AbstractOptimizer> &optimizer,
-    const std::string query, std::vector<StatementResult> &result,
+    const std::string query, std::vector<ResultValue> &result,
     std::vector<FieldInfo> &tuple_descriptor, int &rows_changed,
     std::string &error_message) {
   auto &peloton_parser = parser::PostgresParser::GetInstance();
@@ -143,7 +143,7 @@ TestingSQLUtil::GeneratePlanWithOptimizer(
 }
 
 ResultType TestingSQLUtil::ExecuteSQLQuery(
-    const std::string query, std::vector<StatementResult> &result) {
+    const std::string query, std::vector<ResultValue> &result) {
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
 
@@ -177,7 +177,7 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
 }
 
 ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
 
@@ -217,7 +217,7 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
 // {"1|string1", "2|strin2", "3|string3"}
 void TestingSQLUtil::ExecuteSQLQueryAndCheckResult(
     std::string query, std::vector<std::string> ref_result, bool ordered) {
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;

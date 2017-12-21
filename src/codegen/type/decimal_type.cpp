@@ -199,6 +199,26 @@ struct Round : public TypeSystem::UnaryOperatorHandleNull {
   }
 };
 
+// Ceiling
+struct Ceil : public TypeSystem::UnaryOperatorHandleNull {
+  bool SupportsType(const Type &type) const override {
+    return type.GetSqlType() == Decimal::Instance();
+  }
+
+  Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
+    return Type{Decimal::Instance()};
+  }
+
+  Value Impl(CodeGen &codegen, const Value &val) const override {
+    PL_ASSERT(SupportsType(val.GetType()));
+
+    llvm::Value *result = codegen.Call(DecimalFunctionsProxy::Ceil,
+                                       {val.GetValue()});
+    // Return result
+    return Value{Decimal::Instance(), result};
+  }
+};
+
 // Addition
 struct Add : public TypeSystem::BinaryOperatorHandleNull {
   bool SupportsTypes(const Type &left_type,
@@ -409,10 +429,13 @@ static std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {
 static Negate kNegOp;
 static Floor kFloorOp;
 static Round kRound;
+static Ceil kCeilOp;
 static std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {
     {OperatorId::Negation, kNegOp},
     {OperatorId::Floor, kFloorOp},
-    {OperatorId::Round, kRound}};
+    {OperatorId::Round, kRound},
+    {OperatorId::Ceil, kCeilOp}};
+
 
 // Binary operations
 static Add kAddOp;
