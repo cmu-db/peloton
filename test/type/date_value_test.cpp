@@ -155,7 +155,7 @@ TEST_F(DateValueTests, CopyTest) {
   type::Value val0 =
       type::ValueFactory::GetDateValue(static_cast<int32_t>(1000000));
   type::Value val1 = val0.Copy();
-  EXPECT_EQ(val0.CompareEquals(val1) == type::CMP_TRUE, true);
+  EXPECT_TRUE(val0.CompareEquals(val1) == type::CMP_TRUE);
 }
 
 TEST_F(DateValueTests, CastTest) {
@@ -166,12 +166,12 @@ TEST_F(DateValueTests, CastTest) {
 
   result = val_null.CastAs(type::TypeId::DATE);
   EXPECT_TRUE(result.IsNull());
-  EXPECT_EQ(result.CompareEquals(val_null) == type::CMP_NULL, true);
+  EXPECT_TRUE(result.CompareEquals(val_null) == type::CMP_NULL);
   EXPECT_EQ(result.GetTypeId(), val_null.GetTypeId());
 
   result = val_null.CastAs(type::TypeId::VARCHAR);
   EXPECT_TRUE(result.IsNull());
-  EXPECT_EQ(result.CompareEquals(str_null) == type::CMP_NULL, true);
+  EXPECT_TRUE(result.CompareEquals(str_null) == type::CMP_NULL);
   EXPECT_EQ(result.GetTypeId(), str_null.GetTypeId());
 
   EXPECT_THROW(val_null.CastAs(type::TypeId::BOOLEAN), peloton::Exception);
