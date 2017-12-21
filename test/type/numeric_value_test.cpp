@@ -47,7 +47,7 @@ int32_t RANDOM32() {
 
 int64_t RANDOM64() {
   int64_t ret = (((size_t)(rand()) << 33) | ((size_t)(rand()) << 2) |
-      ((size_t)(rand()) & 0x3));
+                 ((size_t)(rand()) & 0x3));
   if (ret != type::PELOTON_INT64_NULL)
     return ret;
   return 1;
@@ -183,7 +183,7 @@ void CheckMath1(T1 x, T2 y, type::TypeId xtype, type::TypeId ytype) {
   // Out of range detection
   if ((x + y) != sum1 && (x + y) != sum2)
     EXPECT_THROW(type::Value(xtype, x).Add(type::Value(ytype, y)),
-                 peloton::Exception);
+      peloton::Exception);
   else if (sizeof(x) >= sizeof(y)) {
     if ((x > 0 && y > 0 && sum1 < 0) || (x < 0 && y < 0 && sum1 > 0)) {
       EXPECT_THROW(type::Value(xtype, x).Add(type::Value(ytype, y)),
@@ -210,7 +210,7 @@ void CheckMath1(T1 x, T2 y, type::TypeId xtype, type::TypeId ytype) {
   else if (sizeof(x) >= sizeof(y)) {
     if ((x > 0 && y < 0 && diff1 < 0) || (x < 0 && y > 0 && diff1 > 0)) {
       EXPECT_THROW(type::Value(xtype, x).Subtract(type::Value(ytype, y)),
-                   peloton::Exception);
+        peloton::Exception);
   }
   else if ((x > 0 && y < 0 && diff2 < 0) || (x < 0 && y > 0 && diff2 > 0)) {
     EXPECT_THROW(type::Value(xtype, x).Subtract(type::Value(ytype, y)),
@@ -300,7 +300,7 @@ void CheckMath2(T x, double y, type::TypeId xtype) {
   // Divide by zero detection
   if (y == 0)
     EXPECT_THROW(type::Value(xtype, x).Divide(type::ValueFactory::GetDecimalValue(y)),
-                 peloton::Exception);
+      peloton::Exception);
   else {
     v1 = type::Value(xtype, x).Divide(type::ValueFactory::GetDecimalValue(y));
     v2 = type::ValueFactory::GetDecimalValue(x / y);
@@ -310,7 +310,7 @@ void CheckMath2(T x, double y, type::TypeId xtype) {
   // Divide by zero detection
   if (y == 0)
     EXPECT_THROW(type::Value(xtype, x).Modulo(type::ValueFactory::GetDecimalValue(y)),
-                 peloton::Exception);
+      peloton::Exception);
   else {
     v1 = type::Value(xtype, x).Modulo(type::ValueFactory::GetDecimalValue(y));
     v2 = type::ValueFactory::GetDecimalValue(ValMod(x, y));
@@ -337,8 +337,8 @@ void CheckMath3(double x, T y, type::TypeId ytype) {
 
   // Divide by zero detection
   if (y == 0)
-    EXPECT_THROW(type::ValueFactory::GetDecimalValue(x).Divide(type::Value(ytype, y)),
-                 peloton::Exception);
+   EXPECT_THROW(type::ValueFactory::GetDecimalValue(x).Divide(type::Value(ytype, y)),
+      peloton::Exception);
   else {
     v1 = type::ValueFactory::GetDecimalValue(x).Divide(type::Value(ytype, y));
     v2 = type::ValueFactory::GetDecimalValue(x / y);
@@ -347,8 +347,8 @@ void CheckMath3(double x, T y, type::TypeId ytype) {
 
   // Divide by zero detection
   if (y == 0)
-    EXPECT_THROW(type::ValueFactory::GetDecimalValue(x).Modulo(type::Value(ytype, y)),
-                 peloton::Exception);
+   EXPECT_THROW(type::ValueFactory::GetDecimalValue(x).Modulo(type::Value(ytype, y)),
+      peloton::Exception);
   else {
     v1 = type::ValueFactory::GetDecimalValue(x).Modulo(type::Value(ytype, y));
     v2 = type::ValueFactory::GetDecimalValue(ValMod(x, y));
@@ -374,8 +374,8 @@ void CheckMath4(double x, double y) {
 
   // Divide by zero detection
   if (y == 0)
-    EXPECT_THROW(type::ValueFactory::GetDecimalValue(x).Divide(type::ValueFactory::GetDecimalValue(y)),
-                 peloton::Exception);
+   EXPECT_THROW(type::ValueFactory::GetDecimalValue(x).Divide(type::ValueFactory::GetDecimalValue(y)),
+      peloton::Exception);
   else {
     v1 = type::ValueFactory::GetDecimalValue(x).Divide(type::ValueFactory::GetDecimalValue(y));
     v2 = type::ValueFactory::GetDecimalValue(x / y);
@@ -384,17 +384,17 @@ void CheckMath4(double x, double y) {
 
   // Divide by zero detection
   if (y == 0)
-    EXPECT_THROW(type::ValueFactory::GetDecimalValue(x).Modulo(type::ValueFactory::GetDecimalValue(y)),
-                 peloton::Exception);
+   EXPECT_THROW(type::ValueFactory::GetDecimalValue(x).Modulo(type::ValueFactory::GetDecimalValue(y)),
+      peloton::Exception);
   else {
     v1 = type::ValueFactory::GetDecimalValue(x).Modulo(type::ValueFactory::GetDecimalValue(y));
     v2 = type::ValueFactory::GetDecimalValue(ValMod(x, y));
     CheckEqual(v1, v2);
   }
-
+  
   if (x < 0)
-    EXPECT_THROW(type::ValueFactory::GetDecimalValue(x).Sqrt(),
-                 peloton::Exception);
+   EXPECT_THROW(type::ValueFactory::GetDecimalValue(x).Sqrt(),
+      peloton::Exception);
   else {
     v1 = type::ValueFactory::GetDecimalValue(x).Sqrt();
     v2 = type::ValueFactory::GetDecimalValue(sqrt(x));
@@ -605,10 +605,10 @@ TEST_F(NumericValueTests, CastAsTest) {
           break;
         case type::TypeId::VARCHAR:
           v1 = type::ValueFactory::GetVarcharValue(
-              type::ValueFactory::GetSmallIntValue(i).ToString());
+                    type::ValueFactory::GetSmallIntValue(i).ToString());
           break;
         default:
-        LOG_ERROR("Unexpected type!");
+          LOG_ERROR("Unexpected type!");
           ASSERT_FALSE(true);
       }
       EXPECT_FALSE(v1.IsNull());
@@ -664,29 +664,29 @@ TEST_F(NumericValueTests, NullValueTest) {
 
   // Compare null
   bool_result[0] = type::ValueFactory::GetIntegerValue(rand()).CompareEquals(
-      type::ValueFactory::GetTinyIntValue((int8_t)type::PELOTON_INT8_NULL));
+    type::ValueFactory::GetTinyIntValue((int8_t)type::PELOTON_INT8_NULL));
   bool_result[1] = type::ValueFactory::GetIntegerValue(rand()).CompareEquals(
-      type::ValueFactory::GetSmallIntValue((int16_t)type::PELOTON_INT16_NULL));
+    type::ValueFactory::GetSmallIntValue((int16_t)type::PELOTON_INT16_NULL));
   bool_result[2] = type::ValueFactory::GetIntegerValue(rand()).CompareEquals(
-      type::ValueFactory::GetIntegerValue((int32_t)type::PELOTON_INT32_NULL));
+    type::ValueFactory::GetIntegerValue((int32_t)type::PELOTON_INT32_NULL));
   bool_result[3] = type::ValueFactory::GetIntegerValue(rand()).CompareEquals(
-      type::ValueFactory::GetBigIntValue((int64_t)type::PELOTON_INT64_NULL));
+    type::ValueFactory::GetBigIntValue((int64_t)type::PELOTON_INT64_NULL));
   bool_result[4] = type::ValueFactory::GetIntegerValue(rand()).CompareEquals(
-      type::ValueFactory::GetDecimalValue((double)type::PELOTON_DECIMAL_NULL));
+    type::ValueFactory::GetDecimalValue((double)type::PELOTON_DECIMAL_NULL));
   for (int i = 0; i < 5; i++) {
     EXPECT_TRUE(bool_result[i] == type::CmpBool::NULL_);
   }
 
   bool_result[0] = type::ValueFactory::GetTinyIntValue((int8_t)type::PELOTON_INT8_NULL).CompareEquals(
-      type::ValueFactory::GetIntegerValue(rand()));
+    type::ValueFactory::GetIntegerValue(rand()));
   bool_result[1] = type::ValueFactory::GetSmallIntValue((int16_t)type::PELOTON_INT16_NULL).CompareEquals(
-      type::ValueFactory::GetIntegerValue(rand()));
+    type::ValueFactory::GetIntegerValue(rand()));
   bool_result[2] = type::ValueFactory::GetIntegerValue((int32_t)type::PELOTON_INT32_NULL).CompareEquals(
-      type::ValueFactory::GetIntegerValue(rand()));
+    type::ValueFactory::GetIntegerValue(rand()));
   bool_result[3] = type::ValueFactory::GetBigIntValue((int64_t)type::PELOTON_INT64_NULL).CompareEquals(
-      type::ValueFactory::GetIntegerValue(rand()));
+    type::ValueFactory::GetIntegerValue(rand()));
   bool_result[4] = type::ValueFactory::GetDecimalValue((double)type::PELOTON_DECIMAL_NULL).CompareEquals(
-      type::ValueFactory::GetIntegerValue(rand()));
+    type::ValueFactory::GetIntegerValue(rand()));
   for (int i = 0; i < 5; i++) {
     EXPECT_TRUE(bool_result[i] == type::CmpBool::NULL_);
   }
@@ -696,29 +696,29 @@ TEST_F(NumericValueTests, NullValueTest) {
 
   // Operate null
   result[0] = type::ValueFactory::GetIntegerValue(rand()).Add(
-      type::ValueFactory::GetTinyIntValue((int8_t)type::PELOTON_INT8_NULL));
+    type::ValueFactory::GetTinyIntValue((int8_t)type::PELOTON_INT8_NULL));
   result[1] = type::ValueFactory::GetIntegerValue(rand()).Add(
-      type::ValueFactory::GetSmallIntValue((int16_t)type::PELOTON_INT16_NULL));
+    type::ValueFactory::GetSmallIntValue((int16_t)type::PELOTON_INT16_NULL));
   result[2] = type::ValueFactory::GetIntegerValue(rand()).Add(
-      type::ValueFactory::GetIntegerValue((int32_t)type::PELOTON_INT32_NULL));
+    type::ValueFactory::GetIntegerValue((int32_t)type::PELOTON_INT32_NULL));
   result[3] = type::ValueFactory::GetIntegerValue(rand()).Add(
-      type::ValueFactory::GetBigIntValue((int64_t)type::PELOTON_INT64_NULL));
+    type::ValueFactory::GetBigIntValue((int64_t)type::PELOTON_INT64_NULL));
   result[4] = type::ValueFactory::GetIntegerValue(rand()).Add(
-      type::ValueFactory::GetDecimalValue((double)type::PELOTON_DECIMAL_NULL));
+    type::ValueFactory::GetDecimalValue((double)type::PELOTON_DECIMAL_NULL));
   for (int i = 0; i < 5; i++) {
     EXPECT_TRUE(result[i].IsNull());
   }
 
   result[0] = type::ValueFactory::GetIntegerValue(rand()).Subtract(
-      type::ValueFactory::GetTinyIntValue((int8_t)type::PELOTON_INT8_NULL));
+    type::ValueFactory::GetTinyIntValue((int8_t)type::PELOTON_INT8_NULL));
   result[1] = type::ValueFactory::GetIntegerValue(rand()).Subtract(
-      type::ValueFactory::GetSmallIntValue((int16_t)type::PELOTON_INT16_NULL));
+    type::ValueFactory::GetSmallIntValue((int16_t)type::PELOTON_INT16_NULL));
   result[2] = type::ValueFactory::GetIntegerValue(rand()).Subtract(
-      type::ValueFactory::GetIntegerValue((int32_t)type::PELOTON_INT32_NULL));
+    type::ValueFactory::GetIntegerValue((int32_t)type::PELOTON_INT32_NULL));
   result[3] = type::ValueFactory::GetIntegerValue(rand()).Subtract(
-      type::ValueFactory::GetBigIntValue((int64_t)type::PELOTON_INT64_NULL));
+    type::ValueFactory::GetBigIntValue((int64_t)type::PELOTON_INT64_NULL));
   result[4] = type::ValueFactory::GetIntegerValue(rand()).Subtract(
-      type::ValueFactory::GetDecimalValue((double)type::PELOTON_DECIMAL_NULL));
+    type::ValueFactory::GetDecimalValue((double)type::PELOTON_DECIMAL_NULL));
   for (int i = 0; i < 5; i++) {
     EXPECT_TRUE(result[i].IsNull());
   }
@@ -726,113 +726,113 @@ TEST_F(NumericValueTests, NullValueTest) {
 
 
   result[0] = type::ValueFactory::GetIntegerValue(rand()).Multiply(
-      type::ValueFactory::GetTinyIntValue((int8_t)type::PELOTON_INT8_NULL));
+    type::ValueFactory::GetTinyIntValue((int8_t)type::PELOTON_INT8_NULL));
   result[1] = type::ValueFactory::GetIntegerValue(rand()).Multiply(
-      type::ValueFactory::GetSmallIntValue((int16_t)type::PELOTON_INT16_NULL));
+    type::ValueFactory::GetSmallIntValue((int16_t)type::PELOTON_INT16_NULL));
   result[2] = type::ValueFactory::GetIntegerValue(rand()).Multiply(
-      type::ValueFactory::GetIntegerValue((int32_t)type::PELOTON_INT32_NULL));
+    type::ValueFactory::GetIntegerValue((int32_t)type::PELOTON_INT32_NULL));
   result[3] = type::ValueFactory::GetIntegerValue(rand()).Multiply(
-      type::ValueFactory::GetBigIntValue((int64_t)type::PELOTON_INT64_NULL));
+    type::ValueFactory::GetBigIntValue((int64_t)type::PELOTON_INT64_NULL));
   result[4] = type::ValueFactory::GetIntegerValue(rand()).Multiply(
-      type::ValueFactory::GetDecimalValue((double)type::PELOTON_DECIMAL_NULL));
+    type::ValueFactory::GetDecimalValue((double)type::PELOTON_DECIMAL_NULL));
   for (int i = 0; i < 5; i++) {
     EXPECT_TRUE(result[i].IsNull());
   }
 
   result[0] = type::ValueFactory::GetIntegerValue(rand()).Divide(
-      type::ValueFactory::GetTinyIntValue((int8_t)type::PELOTON_INT8_NULL));
+    type::ValueFactory::GetTinyIntValue((int8_t)type::PELOTON_INT8_NULL));
   result[1] = type::ValueFactory::GetIntegerValue(rand()).Divide(
-      type::ValueFactory::GetSmallIntValue((int16_t)type::PELOTON_INT16_NULL));
+    type::ValueFactory::GetSmallIntValue((int16_t)type::PELOTON_INT16_NULL));
   result[2] = type::ValueFactory::GetIntegerValue(rand()).Divide(
-      type::ValueFactory::GetIntegerValue((int32_t)type::PELOTON_INT32_NULL));
+    type::ValueFactory::GetIntegerValue((int32_t)type::PELOTON_INT32_NULL));
   result[3] = type::ValueFactory::GetIntegerValue(rand()).Divide(
-      type::ValueFactory::GetBigIntValue((int64_t)type::PELOTON_INT64_NULL));
+    type::ValueFactory::GetBigIntValue((int64_t)type::PELOTON_INT64_NULL));
   result[4] = type::ValueFactory::GetIntegerValue(rand()).Divide(
-      type::ValueFactory::GetDecimalValue((double)type::PELOTON_DECIMAL_NULL));
+    type::ValueFactory::GetDecimalValue((double)type::PELOTON_DECIMAL_NULL));
   for (int i = 0; i < 5; i++) {
     EXPECT_TRUE(result[i].IsNull());
   }
 
   result[0] = type::ValueFactory::GetIntegerValue(rand()).Modulo(
-      type::ValueFactory::GetTinyIntValue((int8_t)type::PELOTON_INT8_NULL));
+    type::ValueFactory::GetTinyIntValue((int8_t)type::PELOTON_INT8_NULL));
   result[1] = type::ValueFactory::GetIntegerValue(rand()).Modulo(
-      type::ValueFactory::GetSmallIntValue((int16_t)type::PELOTON_INT16_NULL));
+    type::ValueFactory::GetSmallIntValue((int16_t)type::PELOTON_INT16_NULL));
   result[2] = type::ValueFactory::GetIntegerValue(rand()).Modulo(
-      type::ValueFactory::GetIntegerValue((int32_t)type::PELOTON_INT32_NULL));
+    type::ValueFactory::GetIntegerValue((int32_t)type::PELOTON_INT32_NULL));
   result[3] = type::ValueFactory::GetIntegerValue(rand()).Modulo(
-      type::ValueFactory::GetBigIntValue((int64_t)type::PELOTON_INT64_NULL));
+    type::ValueFactory::GetBigIntValue((int64_t)type::PELOTON_INT64_NULL));
   result[4] = type::ValueFactory::GetIntegerValue(rand()).Modulo(
-      type::ValueFactory::GetDecimalValue((double)type::PELOTON_DECIMAL_NULL));
+    type::ValueFactory::GetDecimalValue((double)type::PELOTON_DECIMAL_NULL));
   for (int i = 0; i < 5; i++) {
     EXPECT_TRUE(result[i].IsNull());
   }
 
   result[0] = type::ValueFactory::GetTinyIntValue((int8_t)type::PELOTON_INT8_NULL).Add(
-      type::ValueFactory::GetIntegerValue(rand()));
+    type::ValueFactory::GetIntegerValue(rand()));
   result[1] = type::ValueFactory::GetSmallIntValue((int16_t)type::PELOTON_INT16_NULL).Add(
-      type::ValueFactory::GetIntegerValue(rand()));
+    type::ValueFactory::GetIntegerValue(rand()));
   result[2] = type::ValueFactory::GetIntegerValue((int32_t)type::PELOTON_INT32_NULL).Add(
-      type::ValueFactory::GetIntegerValue(rand()));
+    type::ValueFactory::GetIntegerValue(rand()));
   result[3] = type::ValueFactory::GetBigIntValue((int64_t)type::PELOTON_INT64_NULL).Add(
-      type::ValueFactory::GetIntegerValue(rand()));
+    type::ValueFactory::GetIntegerValue(rand()));
   result[4] = type::ValueFactory::GetDecimalValue((double)type::PELOTON_DECIMAL_NULL).Add(
-      type::ValueFactory::GetIntegerValue(rand()));
+    type::ValueFactory::GetIntegerValue(rand()));
   for (int i = 0; i < 5; i++) {
     EXPECT_TRUE(result[i].IsNull());
   }
 
   result[0] = type::ValueFactory::GetTinyIntValue((int8_t)type::PELOTON_INT8_NULL).Subtract(
-      type::ValueFactory::GetIntegerValue(rand()));
+    type::ValueFactory::GetIntegerValue(rand()));
   result[1] = type::ValueFactory::GetSmallIntValue((int16_t)type::PELOTON_INT16_NULL).Subtract(
-      type::ValueFactory::GetIntegerValue(rand()));
+    type::ValueFactory::GetIntegerValue(rand()));
   result[2] = type::ValueFactory::GetIntegerValue((int32_t)type::PELOTON_INT32_NULL).Subtract(
-      type::ValueFactory::GetIntegerValue(rand()));
+    type::ValueFactory::GetIntegerValue(rand()));
   result[3] = type::ValueFactory::GetBigIntValue((int64_t)type::PELOTON_INT64_NULL).Subtract(
-      type::ValueFactory::GetIntegerValue(rand()));
+    type::ValueFactory::GetIntegerValue(rand()));
   result[4] = type::ValueFactory::GetDecimalValue((double)type::PELOTON_DECIMAL_NULL).Subtract(
-      type::ValueFactory::GetIntegerValue(rand()));
+    type::ValueFactory::GetIntegerValue(rand()));
   for (int i = 0; i < 5; i++) {
     EXPECT_TRUE(result[i].IsNull());
   }
 
   result[0] = type::ValueFactory::GetTinyIntValue((int8_t)type::PELOTON_INT8_NULL).Multiply(
-      type::ValueFactory::GetIntegerValue(rand()));
+    type::ValueFactory::GetIntegerValue(rand()));
   result[1] = type::ValueFactory::GetSmallIntValue((int16_t)type::PELOTON_INT16_NULL).Multiply(
-      type::ValueFactory::GetIntegerValue(rand()));
+    type::ValueFactory::GetIntegerValue(rand()));
   result[2] = type::ValueFactory::GetIntegerValue((int32_t)type::PELOTON_INT32_NULL).Multiply(
-      type::ValueFactory::GetIntegerValue(rand()));
+    type::ValueFactory::GetIntegerValue(rand()));
   result[3] = type::ValueFactory::GetBigIntValue((int64_t)type::PELOTON_INT64_NULL).Multiply(
-      type::ValueFactory::GetIntegerValue(rand()));
+    type::ValueFactory::GetIntegerValue(rand()));
   result[4] = type::ValueFactory::GetDecimalValue((double)type::PELOTON_DECIMAL_NULL).Multiply(
-      type::ValueFactory::GetIntegerValue(rand()));
+    type::ValueFactory::GetIntegerValue(rand()));
   for (int i = 0; i < 5; i++) {
     EXPECT_TRUE(result[i].IsNull());
   }
 
   result[0] = type::ValueFactory::GetTinyIntValue((int8_t)type::PELOTON_INT8_NULL).Divide(
-      type::ValueFactory::GetIntegerValue(rand()));
+    type::ValueFactory::GetIntegerValue(rand()));
   result[1] = type::ValueFactory::GetSmallIntValue((int16_t)type::PELOTON_INT16_NULL).Divide(
-      type::ValueFactory::GetIntegerValue(rand()));
+    type::ValueFactory::GetIntegerValue(rand()));
   result[2] = type::ValueFactory::GetIntegerValue((int32_t)type::PELOTON_INT32_NULL).Divide(
-      type::ValueFactory::GetIntegerValue(rand()));
+    type::ValueFactory::GetIntegerValue(rand()));
   result[3] = type::ValueFactory::GetBigIntValue((int64_t)type::PELOTON_INT64_NULL).Divide(
-      type::ValueFactory::GetIntegerValue(rand()));
+    type::ValueFactory::GetIntegerValue(rand()));
   result[4] = type::ValueFactory::GetDecimalValue((double)type::PELOTON_DECIMAL_NULL).Divide(
-      type::ValueFactory::GetIntegerValue(rand()));
+    type::ValueFactory::GetIntegerValue(rand()));
   for (int i = 0; i < 5; i++) {
     EXPECT_TRUE(result[i].IsNull());
   }
 
   result[0] = type::ValueFactory::GetTinyIntValue((int8_t)type::PELOTON_INT8_NULL).Modulo(
-      type::ValueFactory::GetIntegerValue(rand()));
+    type::ValueFactory::GetIntegerValue(rand()));
   result[1] = type::ValueFactory::GetSmallIntValue((int16_t)type::PELOTON_INT16_NULL).Modulo(
-      type::ValueFactory::GetIntegerValue(rand()));
+    type::ValueFactory::GetIntegerValue(rand()));
   result[2] = type::ValueFactory::GetIntegerValue((int32_t)type::PELOTON_INT32_NULL).Modulo(
-      type::ValueFactory::GetIntegerValue(rand()));
+    type::ValueFactory::GetIntegerValue(rand()));
   result[3] = type::ValueFactory::GetBigIntValue((int64_t)type::PELOTON_INT64_NULL).Modulo(
-      type::ValueFactory::GetIntegerValue(rand()));
+    type::ValueFactory::GetIntegerValue(rand()));
   result[4] = type::ValueFactory::GetDecimalValue((double)type::PELOTON_DECIMAL_NULL).Modulo(
-      type::ValueFactory::GetIntegerValue(rand()));
+    type::ValueFactory::GetIntegerValue(rand()));
   for (int i = 0; i < 5; i++) {
     EXPECT_TRUE(result[i].IsNull());
   }
