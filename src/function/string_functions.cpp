@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <algorithm>
 #include <cctype>
 #include <string>
 
@@ -195,72 +196,123 @@ type::Value StringFunctions::Replace(const std::vector<type::Value> &args) {
   return (type::ValueFactory::GetVarcharValue(str));
 }
 
+StringFunctions::StrWithLen StringFunctions::LTrim(const char *str,
+                                                   uint32_t str_len,
+                                                   const char *from,
+                                                   UNUSED_ATTRIBUTE uint32_t
+                                                       from_len) {
+  PL_ASSERT(str != nullptr && from != nullptr);
+  // llvm expects the len to include the terminating '\0'
+  if (str_len == 1) {
+    return StringFunctions::StrWithLen(nullptr, 1);
+  }
+
+  str_len -= 1;
+  int tail = str_len - 1, head = 0;
+
+  while (head < (int)str_len && strchr(from, str[head]) != NULL) head++;
+
+  return StringFunctions::StrWithLen(str + head,
+                                     std::max(tail - head + 1, 0) + 1);
+}
+
 // Remove the longest string containing only characters from characters
 // from the start of string
-type::Value StringFunctions::LTrim(const std::vector<type::Value> &args) {
+type::Value StringFunctions::_LTrim(const std::vector<type::Value> &args) {
   PL_ASSERT(args.size() == 2);
   if (args[0].IsNull() || args[1].IsNull()) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
   }
-  std::string str = args[0].ToString();
-  std::string from = args[1].ToString();
-  size_t pos = 0;
-  bool erase = 0;
-  while (from.find(str[pos]) != std::string::npos) {
-    erase = 1;
-    pos++;
+
+  StrWithLen ret =
+      LTrim(args.at(0).GetData(), strlen(args.at(0).GetData()) + 1,
+            args.at(1).GetData(), strlen(args.at(1).GetData()) + 1);
+
+  std::string str(ret.str, ret.length - 1);
+  return type::ValueFactory::GetVarcharValue(str);
+}
+
+StringFunctions::StrWithLen StringFunctions::RTrim(const char *str,
+                                                   uint32_t str_len,
+                                                   const char *from,
+                                                   UNUSED_ATTRIBUTE uint32_t
+                                                       from_len) {
+  PL_ASSERT(str != nullptr && from != nullptr);
+  // llvm expects the len to include the terminating '\0'
+  if (str_len == 1) {
+    return StringFunctions::StrWithLen(nullptr, 1);
   }
-  if (erase) str.erase(0, pos);
-  return (type::ValueFactory::GetVarcharValue(str));
+
+  str_len -= 1;
+  int tail = str_len - 1, head = 0;
+  while (tail >= 0 && strchr(from, str[tail]) != NULL) tail--;
+
+  return StringFunctions::StrWithLen(str + head,
+                                     std::max(tail - head + 1, 0) + 1);
 }
 
 // Remove the longest string containing only characters from characters
 // from the end of string
-type::Value StringFunctions::RTrim(const std::vector<type::Value> &args) {
+type::Value StringFunctions::_RTrim(const std::vector<type::Value> &args) {
   PL_ASSERT(args.size() == 2);
   if (args[0].IsNull() || args[1].IsNull()) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
   }
-  std::string str = args.at(0).ToString();
-  std::string from = args.at(1).ToString();
-  if (str.length() == 0) return (type::ValueFactory::GetVarcharValue(""));
-  size_t pos = str.length() - 1;
-  bool erase = 0;
-  while (from.find(str[pos]) != std::string::npos) {
-    erase = 1;
-    pos--;
-  }
-  if (erase) str.erase(pos + 1, str.length() - pos - 1);
-  return (type::ValueFactory::GetVarcharValue(str));
+
+  StrWithLen ret =
+      RTrim(args.at(0).GetData(), strlen(args.at(0).GetData()) + 1,
+            args.at(1).GetData(), strlen(args.at(1).GetData()) + 1);
+
+  std::string str(ret.str, ret.length - 1);
+  return type::ValueFactory::GetVarcharValue(str);
+}
+
+StringFunctions::StrWithLen StringFunctions::Trim(const char *str,
+                                                  uint32_t str_len) {
+  return BTrim(str, str_len, " ", 2);
+}
+
+type::Value StringFunctions::_Trim(const std::vector<type::Value> &args) {
+  PL_ASSERT(args.size() == 1);
+  return _BTrim({args[0], type::ValueFactory::GetVarcharValue(" ")});
 }
 
 // Remove the longest string consisting only of characters in characters
 // from the start and end of string
-type::Value StringFunctions::BTrim(const std::vector<type::Value> &args) {
+StringFunctions::StrWithLen StringFunctions::BTrim(const char *str,
+                                                   uint32_t str_len,
+                                                   const char *from,
+                                                   UNUSED_ATTRIBUTE uint32_t
+                                                       from_len) {
+  PL_ASSERT(str != nullptr && from != nullptr);
+
+  str_len--;  // skip the tailing 0
+
+  if (str_len == 0) {
+    return StringFunctions::StrWithLen(str, 1);
+  }
+
+  int tail = str_len - 1, head = 0;
+  while (tail >= 0 && strchr(from, str[tail]) != NULL) tail--;
+
+  while (head < (int)str_len && strchr(from, str[head]) != NULL) head++;
+
+  return StringFunctions::StrWithLen(str + head,
+                                     std::max(tail - head + 1, 0) + 1);
+}
+
+type::Value StringFunctions::_BTrim(const std::vector<type::Value> &args) {
   PL_ASSERT(args.size() == 2);
   if (args[0].IsNull() || args[1].IsNull()) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
   }
-  std::string str = args.at(0).ToString();
-  std::string from = args.at(1).ToString();
-  if (str.length() == 0) return (type::ValueFactory::GetVarcharValue(""));
 
-  size_t pos = str.length() - 1;
-  bool erase = 0;
-  while (from.find(str[pos]) != std::string::npos) {
-    erase = 1;
-    pos--;
-  }
-  if (erase) str.erase(pos + 1, str.length() - pos - 1);
+  StrWithLen ret =
+      BTrim(args.at(0).GetData(), strlen(args.at(0).GetData()) + 1,
+            args.at(1).GetData(), strlen(args.at(1).GetData()) + 1);
 
-  pos = 0;
-  erase = 0;
-  while (from.find(str[pos]) != std::string::npos) {
-    erase = 1;
-    pos++;
-  }
-  if (erase) str.erase(0, pos);
-  return (type::ValueFactory::GetVarcharValue(str));
+  std::string str(ret.str, ret.length - 1);
+  return type::ValueFactory::GetVarcharValue(str);
 }
 
 uint32_t StringFunctions::Length(UNUSED_ATTRIBUTE const char *str,

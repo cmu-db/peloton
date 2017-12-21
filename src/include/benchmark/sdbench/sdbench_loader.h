@@ -23,7 +23,7 @@ extern configuration state;
 
 extern std::unique_ptr<storage::DataTable> sdbench_table;
 
-void CreateTable();
+void CreateTable(peloton::LayoutType layout_type);
 
 void LoadTable();
 
