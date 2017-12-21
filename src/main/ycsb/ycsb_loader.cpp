@@ -199,7 +199,7 @@ void LoadYCSBDatabase() {
   double diff = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
   LOG_INFO("database table loading time = %lf ms", diff);
 
-  LOG_INFO("============TABLE SIZES==========");
+  LOG_INFO("%sTABLE SIZES%s", peloton::GETINFO_HALF_THICK_LINE, peloton::GETINFO_HALF_THICK_LINE);
   LOG_INFO("user count = %lu", user_table->GetTupleCount());
 
 }

@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <include/util/string_util.h>
 #include "codegen/pipeline.h"
 
 #include "codegen/operator/operator_translator.h"

@@ -19,6 +19,7 @@
 #include "brain/clusterer.h"
 #include "common/logger.h"
 #include "common/macros.h"
+#include "util/string_util.h"
 
 namespace peloton {
 namespace brain {
@@ -150,9 +151,10 @@ const std::string Clusterer::GetInfo() const {
   cluster_count = GetClusterCount();
   for (cluster_itr = 0; cluster_itr < cluster_count; cluster_itr++)
     os << cluster_itr << " : " << GetFraction(cluster_itr)
-       << " :: " << GetCluster(cluster_itr);
-
-  return os.str();
+       << " :: " << GetCluster(cluster_itr) << std::endl;
+  std::string info = os.str();
+  peloton::StringUtil::RTrim(info);
+  return info;
 }
 
 }  // namespace brain

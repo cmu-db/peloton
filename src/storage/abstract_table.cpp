@@ -103,8 +103,8 @@ const std::string AbstractTable::GetInfo() const {
     auto tile_tuple_count = tile_group->GetNextTupleSlot();
 
     std::string tileData = tile_group->GetInfo();
-    inner << peloton::StringUtil::Prefix(peloton::StringBoxUtil::Box(tileData),
-                                         GETINFO_SPACER);
+
+    inner << tileData;
     tuple_count += tile_tuple_count;
   }
 

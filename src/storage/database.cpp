@@ -118,7 +118,7 @@ oid_t Database::GetTableCount() const { return tables.size(); }
 const std::string Database::GetInfo() const {
   std::ostringstream os;
 
-  os << "=====================================================\n";
+  os << peloton::GETINFO_THICK_LINE << "\n";
   os << "DATABASE(" << GetOid() << ") : \n";
 
   oid_t table_count = GetTableCount();
@@ -171,7 +171,7 @@ const std::string Database::GetInfo() const {
     }
   }
 
-  os << "=====================================================\n";
+  os << peloton::GETINFO_THICK_LINE;
 
   return os.str();
 }

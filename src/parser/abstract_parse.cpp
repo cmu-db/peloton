@@ -16,6 +16,7 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <util/string_util.h>
 
 #include "type/types.h"
 #include "common/logger.h"
@@ -50,14 +51,15 @@ const std::string AbstractParse::GetInfo() const {
   os << GetInfo();
 
   // Traverse the tree
-  std::string child_spacer = "  ";
   for (int ctr = 0, cnt = static_cast<int>(children_.size()); ctr < cnt;
        ctr++) {
-    os << child_spacer << children_[ctr].get()->GetParseNodeType() << "\n";
-    os << children_[ctr].get()->GetInfo();
+    os << peloton::GETINFO_SPACER << children_[ctr].get()->GetParseNodeType() << "\n";
+    os << peloton::GETINFO_SPACER << children_[ctr].get()->GetParseNodeType() << "\n";
+    os << children_[ctr].get()->GetInfo() << "\n";
   }
-
-  return os.str();
+  std::string info = os.str();
+  StringUtil::RTrim(info);
+  return info;
 }
 
 std::string AbstractParse::GetTableName() { return "NoTable"; }

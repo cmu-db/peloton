@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <include/util/string_util.h>
 #include "statistics/database_metric.h"
 #include "common/macros.h"
 
@@ -29,15 +30,11 @@ void DatabaseMetric::Aggregate(AbstractMetric& source) {
 
 const std::string DatabaseMetric::GetInfo() const {
   std::stringstream ss;
-  ss << "//"
-        "===-----------------------------------------------------------------"
-        "---===//" << std::endl;
+  ss << peloton::GETINFO_THICK_LINE << std::endl;
   ss << "// DATABASE_ID " << database_id_ << std::endl;
-  ss << "//"
-        "===-----------------------------------------------------------------"
-        "---===//" << std::endl;
+  ss << peloton::GETINFO_THICK_LINE << std::endl;
   ss << "# transactions committed: " << txn_committed_.GetInfo() << std::endl;
-  ss << "# transactions aborted:   " << txn_aborted_.GetInfo() << std::endl;
+  ss << "# transactions aborted:   " << txn_aborted_.GetInfo();
   return ss.str();
 }
 

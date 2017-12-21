@@ -7956,7 +7956,7 @@ before_switch:
       // are cleared or not
       if(head_epoch_p != nullptr) {
         bwt_printf("ERROR: After cleanup there is still epoch left\n");
-        bwt_printf("==============================================\n");
+        bwt_printf("%s\n", peloton::GETINFO_THICK_LINE.c_str());
         bwt_printf("DUMP\n");
 
         for(EpochNode *epoch_node_p = head_epoch_p;
