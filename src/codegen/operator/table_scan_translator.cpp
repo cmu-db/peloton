@@ -127,12 +127,8 @@ void TableScanTranslator::ScanConsumer::ProcessTuples(
   }
 
   // 3. Setup the (filtered) row batch and setup attribute accessors
-  RowBatch batch{translator_.GetCompilationContext(),
-                 tile_group_id_,
-                 tid_start,
-                 tid_end,
-                 selection_vector_,
-                 true};
+  RowBatch batch{translator_.GetCompilationContext(), tile_group_id_, tid_start,
+                 tid_end, selection_vector_, true};
 
   std::vector<TableScanTranslator::AttributeAccess> attribute_accesses;
   SetupRowBatch(batch, tile_group_access, attribute_accesses);
