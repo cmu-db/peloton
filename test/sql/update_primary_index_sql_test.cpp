@@ -41,7 +41,7 @@ TEST_F(UpdatePrimaryIndexSQLTests, UpdatePrimaryIndexTest) {
 
   TestingSQLUtil::ShowTable(DEFAULT_DB_NAME, "test");
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_affected;
@@ -51,7 +51,7 @@ TEST_F(UpdatePrimaryIndexSQLTests, UpdatePrimaryIndexTest) {
                                   tuple_descriptor, rows_affected,
                                   error_message);
   // Check the return value
-  EXPECT_EQ(result[6].second[0], '3');
+  EXPECT_EQ(result[6][0], '3');
 
   // Perform primary key update
   TestingSQLUtil::ExecuteSQLQuery("UPDATE test SET a=2 WHERE c=300", result,
@@ -63,7 +63,7 @@ TEST_F(UpdatePrimaryIndexSQLTests, UpdatePrimaryIndexTest) {
                                   tuple_descriptor, rows_affected,
                                   error_message);
   // Check the return value, it should not be changed
-  EXPECT_EQ(result[6].second[0], '3');
+  EXPECT_EQ(result[6][0], '3');
 
   // Perform another primary key update
   TestingSQLUtil::ExecuteSQLQuery("UPDATE test SET a=5 WHERE c=300", result,
@@ -75,7 +75,7 @@ TEST_F(UpdatePrimaryIndexSQLTests, UpdatePrimaryIndexTest) {
                                   tuple_descriptor, rows_affected,
                                   error_message);
   // Check the return value, it should not be changed
-  EXPECT_EQ(result[6].second[0], '5');
+  EXPECT_EQ(result[6][0], '5');
 
   // Perform normal update
   TestingSQLUtil::ExecuteSQLQuery("UPDATE test SET b=2000 WHERE c=200", result,
@@ -87,7 +87,7 @@ TEST_F(UpdatePrimaryIndexSQLTests, UpdatePrimaryIndexTest) {
                                   tuple_descriptor, rows_affected,
                                   error_message);
   // Check the return value
-  EXPECT_EQ(result[0].second[0], '2');
+  EXPECT_EQ(result[0][0], '2');
 
   // free the database just created
   txn = txn_manager.BeginTransaction();

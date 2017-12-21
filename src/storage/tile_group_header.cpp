@@ -24,6 +24,8 @@
 #include "logging/log_manager.h"
 #include "storage/backend_manager.h"
 #include "storage/tile_group_header.h"
+#include "type/value.h"
+#include "storage/tuple.h"
 
 namespace peloton {
 namespace storage {
@@ -57,6 +59,9 @@ TileGroupHeader::TileGroupHeader(const BackendType &backend_type,
     SetNextItemPointer(tuple_slot_id, INVALID_ITEMPOINTER);
     SetPrevItemPointer(tuple_slot_id, INVALID_ITEMPOINTER);
   }
+
+  // Initially immutabile flag to false initially.
+  immutable = false;
 }
 
 TileGroupHeader::~TileGroupHeader() {
@@ -77,7 +82,8 @@ const std::string TileGroupHeader::GetInfo() const {
   os << "TILE GROUP HEADER (";
   os << "Address:" << this << ", ";
   os << "NumActiveTuples:";
-  os << GetActiveTupleCount();
+  os << GetActiveTupleCount() << ", ";
+  os << "Immutable: " << GetImmutability();
   os << ")";
   os << std::endl;
 

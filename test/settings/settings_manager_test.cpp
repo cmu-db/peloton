@@ -92,7 +92,7 @@ TEST_F(SettingsManagerTests, ModificationTest) {
   txn = txn_manager.BeginTransaction();
   bool value7 = settings::SettingsManager::GetBool(settings::SettingId::index_tuner);
   bool value8 = ("true" == settings_catalog.GetSettingValue("index_tuner", txn));
-  EXPECT_EQ(value7, true);
+  EXPECT_TRUE(value7);
   EXPECT_EQ(value7, value8);
   txn_manager.CommitTransaction(txn);
 

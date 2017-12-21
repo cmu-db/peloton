@@ -133,7 +133,7 @@
 //   logging::LoggingUtil::RemoveDirectory(dir_name.c_str(), false);
 
 //   auto status = logging::LoggingUtil::CreateDirectory(dir_name.c_str(), 0700);
-//   EXPECT_EQ(status, true);
+//   EXPECT_TRUE(status);
 //   logging::LogManager::GetInstance().SetLogDirectoryName("./");
 
 //   for (int i = 0; i < num_files; i++) {
@@ -272,7 +272,7 @@
 //   EXPECT_EQ(wal_fel.GetLogFileCounter(), num_files + 2);
 
 //   status = logging::LoggingUtil::RemoveDirectory(dir_name.c_str(), false);
-//   EXPECT_EQ(status, true);
+//   EXPECT_TRUE(status);
 
 //   auto txn = txn_manager.BeginTransaction();
 //   catalog->DropDatabaseWithOid(DEFAULT_DB_ID, txn);

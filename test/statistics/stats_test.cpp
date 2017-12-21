@@ -391,7 +391,7 @@ TEST_F(StatsTests, MultiThreadStatsTest) {
 //
 //  // Execute insert
 //  std::vector<type::Value> params;
-//  std::vector<StatementResult> result;
+//  std::vector<ResultValue> result;
 //  std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
 //  executor::ExecuteResult status = traffic_cop.ExecuteHelper(
 //      statement->GetPlanTree().get(), params, result, result_format);

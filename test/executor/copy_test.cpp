@@ -85,7 +85,7 @@ TEST_F(CopyTests, Copying) {
     auto statement = TestingStatsUtil::GetInsertStmt(12345, insert_str);
     std::vector<type::Value> params;
     std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
-    std::vector<StatementResult> result;
+    std::vector<ResultValue> result;
 
     TestingSQLUtil::counter_.store(1);
     executor::ExecuteResult status = traffic_cop.ExecuteHelper(
@@ -136,7 +136,7 @@ TEST_F(CopyTests, Copying) {
   LOG_TRACE("Executing plan...");
   // Initialize the executor tree
   auto status = root_executor->Init();
-  EXPECT_EQ(status, true);
+  EXPECT_TRUE(status);
   // Execute the tree until we get result tiles from root node
   while (status == true) {
     status = root_executor->Execute();
