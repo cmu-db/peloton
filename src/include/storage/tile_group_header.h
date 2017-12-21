@@ -22,7 +22,6 @@
 #include "storage/tuple.h"
 #include "type/types.h"
 #include "type/value.h"
-#include <map>
 
 namespace peloton {
 namespace storage {

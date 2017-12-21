@@ -17,8 +17,6 @@
 #include "codegen/operator/operator_translator.h"
 #include "codegen/scan_callback.h"
 #include "codegen/table.h"
-#include "type/value.h"
-#include "codegen/proxy/runtime_functions_proxy.h"
 
 namespace peloton {
 
