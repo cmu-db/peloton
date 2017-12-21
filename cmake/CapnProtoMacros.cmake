@@ -16,17 +16,15 @@
 #   CAPNPC_IMPORT_DIRS
 #       List of additional include directories for the schema compiler.
 #       (CMAKE_CURRENT_SOURCE_DIR and CAPNP_INCLUDE_DIRECTORY are always included.)
-#   CAPNPC_SRC_PREFIX
-#       Schema file source prefix (default: CMAKE_CURRENT_SOURCE_DIR).
 #   CAPNPC_FLAGS
 #       Additional flags to pass to the schema compiler.
 #
 # TODO: convert to cmake_parse_arguments
 
+# We have costimized and simplified the output path specification for the Peloton build
+# I'd rather not modify this code but the original logic was really impossible to put the
+# files to the position we want...
 function(CAPNP_GENERATE_CPP SOURCES HEADERS)
-  if(NOT ARGN)
-    message(SEND_ERROR "CAPNP_GENERATE_CPP() called without any source files.")
-  endif()
   set(tool_depends ${EMPTY_STRING})
   #Use cmake targets available
   if(TARGET capnp_tool)
@@ -63,43 +61,34 @@ function(CAPNP_GENERATE_CPP SOURCES HEADERS)
     set(output_dir ":.")
   endif()
 
-  if(NOT DEFINED CAPNPC_SRC_PREFIX)
-    set(CAPNPC_SRC_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}")
-  endif()
-  get_filename_component(CAPNPC_SRC_PREFIX "${CAPNPC_SRC_PREFIX}" ABSOLUTE)
-
   set(${SOURCES})
   set(${HEADERS})
   foreach(schema_file ${ARGN})
-    MESSAGE("prefix:" ${CAPNPC_SRC_PREFIX})
-    MESSAGE("schema:" ${schema_file})
-    if(NOT EXISTS "${CAPNPC_SRC_PREFIX}/${schema_file}")
-      message(FATAL_ERROR "Cap'n Proto schema file '${CAPNPC_SRC_PREFIX}/${schema_file}' does not exist!")
+    if(NOT EXISTS "${schema_file}")
+      message(FATAL_ERROR "Cap'n Proto schema file '${schema_file}' does not exist!")
     endif()
     get_filename_component(file_path "${schema_file}" ABSOLUTE)
-    get_filename_component(file_dir "${file_path}" PATH)
+    get_filename_component(file_name "${schema_file}" NAME)
+    get_filename_component(file_dir "${schema_file}" DIRECTORY)
 
     # Figure out where the output files will go
     if (NOT DEFINED CAPNPC_OUTPUT_DIR)
       set(CAPNPC_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/")
     endif()
-    # Output files are placed in CAPNPC_OUTPUT_DIR, at a location as if they were
-    # relative to CAPNPC_SRC_PREFIX.
-    string(LENGTH "${CAPNPC_SRC_PREFIX}" prefix_len)
-    string(SUBSTRING "${file_path}" 0 ${prefix_len} output_prefix)
-    if(NOT "${CAPNPC_SRC_PREFIX}" STREQUAL "${output_prefix}")
-      message(SEND_ERROR "Could not determine output path for '${schema_file}' ('${file_path}') with source prefix '${CAPNPC_SRC_PREFIX}' into '${CAPNPC_OUTPUT_DIR}'.")
-    endif()
 
-    string(SUBSTRING "${file_path}" ${prefix_len} -1 output_path)
-    set(output_base "${CAPNPC_OUTPUT_DIR}${output_path}")
+    set(output_base "${CAPNPC_OUTPUT_DIR}/${file_name}")
 
+    # The capnpc output directory specification is fucking wierd...
+    # It extracts src-prefix from the input path, and then append that behind
+    # output_dir. If there's no src-prefix, the it will directly generate
+    # the output files into the input directory.
     add_custom_command(
       OUTPUT "${output_base}.c++" "${output_base}.h"
+      COMMAND ${CMAKE_COMMAND} -E make_directory "${CAPNPC_OUTPUT_DIR}"
       COMMAND "${CAPNP_EXECUTABLE}"
       ARGS compile
           -o ${CAPNPC_CXX_EXECUTABLE}${output_dir}
-          --src-prefix ${CAPNPC_SRC_PREFIX}
+          --src-prefix ${file_dir}
           ${include_path}
           ${CAPNPC_FLAGS}
           ${file_path}

@@ -4,10 +4,9 @@
 
 # --[ Cap'nProto library
 
-file(GLOB capnp_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} include/capnp/*.capnp)
+file(GLOB capnp_files include/capnp/*.capnp)
 # the output folder for the compiled capnp headers and srouces
-set(CAPNPC_OUTPUT_DIR "${PROJECT_BINARY_DIR}/include/peloton/capnp")
-file(MAKE_DIRECTORY ${CAPNPC_OUTPUT_DIR})
+set(CAPNPC_OUTPUT_DIR ${PROJECT_BINARY_DIR}/include/peloton/capnp)
 capnp_generate_cpp(capnp_srcs capnp_hdrs ${capnp_files})
 
 add_library(peloton-capnp STATIC ${capnp_hdrs} ${capnp_srcs})
