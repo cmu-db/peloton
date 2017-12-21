@@ -56,6 +56,7 @@
 #endif
 
 // This must be declared before all include directives
+#include <inttypes.h>
 using NodeID = uint64_t;
 
 #include "sorted_small_set.h"
@@ -2494,7 +2495,7 @@ class BwTree : public BwTreeBase {
    * has been called before we free the whole tree
    */
   ~BwTree() {
-    LOG_TRACE("Next node ID at exit: %lu", next_unused_node_id.load());
+    LOG_TRACE("Next node ID at exit: %" PRIu64 "", next_unused_node_id.load());
     LOG_TRACE("Destructor: Free tree nodes");
 
     // Clear all garbage nodes awaiting cleaning
@@ -2822,7 +2823,7 @@ class BwTree : public BwTreeBase {
 
     root_node_p->PushBack(first_sep);
 
-    LOG_TRACE("root id = %lu; first leaf id = %lu", root_id.load(),
+    LOG_TRACE("root id = %" PRIu64 "; first leaf id = %" PRIu64 "", root_id.load(),
               first_leaf_id);
 
     InstallNewNode(root_id, root_node_p);
@@ -3155,7 +3156,7 @@ class BwTree : public BwTreeBase {
       if ((node_p->GetNextNodeID() != INVALID_NODE_ID) &&
           (KeyCmpGreaterEqual(context_p->search_key, node_p->GetHighKey()))) {
         LOG_TRACE(
-            "Bounds checking failed (id = %lu) - "
+            "Bounds checking failed (id = %" PRIu64 ") - "
             "Go right.",
             snapshot_p->node_id);
 
@@ -3190,7 +3191,7 @@ class BwTree : public BwTreeBase {
       if ((node_p->GetNextNodeID() != INVALID_NODE_ID) &&
           (KeyCmpGreater(context_p->search_key, node_p->GetHighKey()))) {
         LOG_TRACE(
-            "Bounds checking for BI failed (id = %lu) - "
+            "Bounds checking for BI failed (id = %" PRIu64 ") - "
             "Go right.",
             snapshot_p->node_id);
 
@@ -3356,7 +3357,7 @@ class BwTree : public BwTreeBase {
           NodeID target_id =
               LocateSeparatorByKey(search_key, inner_node_p, start_p, end_p);
 
-          LOG_TRACE("Found child in inner node; child ID = %lu", target_id);
+          LOG_TRACE("Found child in inner node; child ID = %" PRIu64 "", target_id);
 
           return target_id;
         }  // case InnerType
@@ -3374,7 +3375,7 @@ class BwTree : public BwTreeBase {
           if (KeyCmpGreaterEqual(search_key, insert_item.first)) {
             if ((next_item.second == INVALID_NODE_ID) ||
                 (KeyCmpLess(search_key, next_item.first))) {
-              LOG_TRACE("Find target ID = %lu in insert delta",
+              LOG_TRACE("Find target ID = %" PRIu64 " in insert delta",
                         insert_item.second);
 
               return insert_item.second;
@@ -3411,7 +3412,7 @@ class BwTree : public BwTreeBase {
             // then +Inf
             if ((next_item.second == INVALID_NODE_ID) ||
                 (KeyCmpLess(search_key, next_item.first))) {
-              LOG_TRACE("Find target ID = %lu in delete delta",
+              LOG_TRACE("Find target ID = %" PRIu64 " in delete delta",
                         prev_item.second);
 
               return prev_item.second;
@@ -3443,12 +3444,12 @@ class BwTree : public BwTreeBase {
           // high key does not need to be updated
           // Since we still could not know the high key
           if (KeyCmpGreaterEqual(search_key, merge_key)) {
-            LOG_TRACE("Take merge right branch (ID = %lu)",
+            LOG_TRACE("Take merge right branch (ID = %" PRIu64 ")",
                       snapshot_p->node_id);
 
             node_p = merge_node_p->right_merge_p;
           } else {
-            LOG_TRACE("Take merge left branch (ID = %lu)", snapshot_p->node_id);
+            LOG_TRACE("Take merge left branch (ID = %" PRIu64 ")", snapshot_p->node_id);
 
             node_p = merge_node_p->child_node_p;
           }
@@ -3514,7 +3515,7 @@ class BwTree : public BwTreeBase {
           NodeID target_id = LocateSeparatorByKeyBI(
               search_key, static_cast<const InnerNode *>(node_p));
 
-          LOG_TRACE("Found child in inner node (BI); child ID = %lu",
+          LOG_TRACE("Found child in inner node (BI); child ID = %" PRIu64 "",
                     target_id);
 
           return target_id;
@@ -3532,7 +3533,7 @@ class BwTree : public BwTreeBase {
             // *********************************************
 
             if (KeyCmpGreater(search_key, insert_item.first)) {
-              LOG_TRACE("Find target ID = %lu in insert delta (BI)",
+              LOG_TRACE("Find target ID = %" PRIu64 " in insert delta (BI)",
                         insert_item.second);
 
               return insert_item.second;
@@ -3558,7 +3559,7 @@ class BwTree : public BwTreeBase {
               (KeyCmpGreater(search_key, prev_item.first))) {
             if ((next_item.second == INVALID_NODE_ID) ||
                 (KeyCmpLess(search_key, next_item.first))) {
-              LOG_TRACE("Find target ID = %lu in delete delta (BI)",
+              LOG_TRACE("Find target ID = %" PRIu64 " in delete delta (BI)",
                         prev_item.second);
 
               return prev_item.second;
@@ -3584,12 +3585,12 @@ class BwTree : public BwTreeBase {
           // ************************************************
 
           if (KeyCmpGreater(search_key, merge_key)) {
-            LOG_TRACE("Take merge right branch (ID = %lu) for BI",
+            LOG_TRACE("Take merge right branch (ID = %" PRIu64 ") for BI",
                       snapshot_p->node_id);
 
             node_p = merge_node_p->right_merge_p;
           } else {
-            LOG_TRACE("Take merge left branch (ID = %lu) for BI",
+            LOG_TRACE("Take merge left branch (ID = %" PRIu64 ") for BI",
                       snapshot_p->node_id);
 
             node_p = merge_node_p->child_node_p;
@@ -5091,7 +5092,7 @@ class BwTree : public BwTreeBase {
    * (3) Check current_level == 0 to determine whether we are on a root node
    */
   void LoadNodeID(NodeID node_id, Context *context_p) {
-    LOG_TRACE("Loading NodeID = %lu", node_id);
+    LOG_TRACE("Loading NodeID = %" PRIu64 "", node_id);
 
     // This pushes a new snapshot into stack
     TakeNodeSnapshot(node_id, context_p);
@@ -5124,7 +5125,7 @@ class BwTree : public BwTreeBase {
    * we need to check whether the target node is the left most child
    */
   void JumpToNodeID(NodeID node_id, Context *context_p) {
-    LOG_TRACE("Jumping to node ID = %lu", node_id);
+    LOG_TRACE("Jumping to node ID = %" PRIu64 "", node_id);
 
     // This updates the current snapshot in the stack
     UpdateNodeSnapshot(node_id, context_p);
@@ -5229,7 +5230,7 @@ class BwTree : public BwTreeBase {
    * so we still need to check abort flag after this function returns
    */
   inline void LoadNodeIDReadOptimized(NodeID node_id, Context *context_p) {
-    LOG_TRACE("Loading NodeID (RO) = %lu", node_id);
+    LOG_TRACE("Loading NodeID (RO) = %" PRIu64 "", node_id);
 
     // This pushes a new snapshot into stack
     TakeNodeSnapshotReadOptimized(node_id, context_p);
@@ -5445,7 +5446,7 @@ class BwTree : public BwTreeBase {
                                     parent_snapshot_p->node_p);
 
     if (ret == true) {
-      LOG_TRACE("Index term insert (from %lu to %lu) delta CAS succeeds",
+      LOG_TRACE("Index term insert (from %" PRIu64 " to %" PRIu64 ") delta CAS succeeds",
                 GetLatestNodeSnapshot(context_p)->node_id, insert_item.second);
 
       // Update parent node pointer to reflect the fact that it has been
@@ -5457,7 +5458,7 @@ class BwTree : public BwTreeBase {
       return true;
     } else {
       LOG_DEBUG(
-          "Index term insert (from %lu to %lu) delta CAS failed. "
+          "Index term insert (from %" PRIu64 " to %" PRIu64 ") delta CAS failed. "
           "ABORT",
           GetLatestNodeSnapshot(context_p)->node_id, insert_item.second);
 
@@ -5510,7 +5511,7 @@ class BwTree : public BwTreeBase {
     // and also recycle the deleted NodeID since now no new thread
     // could access that NodeID until it is reused
     if (ret == true) {
-      LOG_TRACE("Index term delete delta installed, ID = %lu; ABORT",
+      LOG_TRACE("Index term delete delta installed, ID = %" PRIu64 "; ABORT",
                 parent_snapshot_p->node_id);
 
       // The deleted node ID must resolve to a RemoveNode of either
@@ -6184,7 +6185,7 @@ class BwTree : public BwTreeBase {
         bool ret = InstallNodeToReplace(node_id, split_node_p, node_p);
 
         if (ret == true) {
-          LOG_TRACE("Leaf split delta (from %lu to %lu) CAS succeeds. ABORT",
+          LOG_TRACE("Leaf split delta (from %" PRIu64 " to %" PRIu64 ") CAS succeeds. ABORT",
                     node_id, new_node_id);
 
           // TODO: WE ABORT HERE TO AVOID THIS THREAD POSTING ANYTHING
@@ -6333,7 +6334,7 @@ class BwTree : public BwTreeBase {
 
         if (ret == true) {
           LOG_TRACE(
-              "Inner split delta (from %lu to %lu) CAS succeeds."
+              "Inner split delta (from %" PRIu64 " to %" PRIu64 ") CAS succeeds."
               " ABORT",
               node_id, new_node_id);
 
@@ -7584,13 +7585,13 @@ class BwTree : public BwTreeBase {
       LOG_TRACE("Garbage Collector has finished freeing all garbage nodes");
 
 #ifdef BWTREE_DEBUG
-      LOG_TRACE("Stat: Freed %lu nodes and %lu NodeID by epoch manager",
+      LOG_TRACE("Stat: Freed %" PRIu64 " nodes and %" PRIu64 " NodeID by epoch manager",
                 freed_count, freed_id_count);
 
-      LOG_TRACE("      Epoch created = %lu; epoch freed = %lu", epoch_created,
+      LOG_TRACE("      Epoch created = %" PRIu64 "; epoch freed = %" PRIu64 "", epoch_created,
                 epoch_freed);
 
-      LOG_TRACE("      Epoch join = %lu; epoch leave = %lu", epoch_join.load(),
+      LOG_TRACE("      Epoch join = %" PRIu64 "; epoch leave = %" PRIu64 "", epoch_join.load(),
                 epoch_leave.load());
 #endif
 
