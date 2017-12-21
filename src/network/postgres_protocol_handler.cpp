@@ -107,8 +107,8 @@ void PostgresProtocolHandler::MakeHardcodedParameterStatus(
     const std::pair<std::string, std::string> &kv) {
   std::unique_ptr<OutputPacket> response(new OutputPacket());
   response->msg_type = NetworkMessageType::PARAMETER_STATUS;
-  PacketPutString(response.get(), kv.first);
-  PacketPutString(response.get(), kv.second);
+  PacketPutStringWithTerminator(response.get(), kv.first);
+  PacketPutStringWithTerminator(response.get(), kv.second);
   responses.push_back(std::move(response));
 }
 
@@ -122,7 +122,7 @@ void PostgresProtocolHandler::PutTupleDescriptor(
   PacketPutInt(pkt.get(), tuple_descriptor.size(), 2);
 
   for (auto col : tuple_descriptor) {
-    PacketPutString(pkt.get(), std::get<0>(col));
+    PacketPutStringWithTerminator(pkt.get(), std::get<0>(col));
     // TODO: Table Oid (int32)
     PacketPutInt(pkt.get(), 0, 4);
     // TODO: Attr id of column (int16)
@@ -160,7 +160,7 @@ void PostgresProtocolHandler::SendDataRows(std::vector<ResultValue> &results,
         // length of the row attribute
         PacketPutInt(pkt.get(), content.size(), 4);
         // contents of the row attribute
-        PacketPutBytes(pkt.get(), content);
+        PacketPutString(pkt.get(), content);
       }
     }
     responses.push_back(std::move(pkt));
@@ -199,7 +199,7 @@ void PostgresProtocolHandler::CompleteCommand(const std::string &query, const Qu
     default:
       tag += " " + std::to_string(rows);
    }
-   PacketPutString(pkt.get(), tag);
+  PacketPutStringWithTerminator(pkt.get(), tag);
    responses.push_back(std::move(pkt));
 }
 
@@ -1151,7 +1151,7 @@ void PostgresProtocolHandler::SendErrorResponse(
 
   for (auto entry : error_status) {
     PacketPutByte(pkt.get(), static_cast<unsigned char>(entry.first));
-    PacketPutString(pkt.get(), entry.second);
+    PacketPutStringWithTerminator(pkt.get(), entry.second);
   }
 
   // put null terminator
