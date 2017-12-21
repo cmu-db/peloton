@@ -24,6 +24,7 @@
 namespace peloton {
 namespace network {
 
+// TODO(tianyu): General comment: We only ever call this with one argument, so maybe we don't need the event_flag arg?
 void NetworkConnection::Init(short event_flags, NotifiableTask *handler) {
   SetNonBlocking(sock_fd_);
   SetTCPNoDelay(sock_fd_);
@@ -31,15 +32,24 @@ void NetworkConnection::Init(short event_flags, NotifiableTask *handler) {
   protocol_handler_ = nullptr;
   this->handler = handler;
 
+//  TODO(tianyu): The original network code seems to do this as an optimization. I am leaving this out until we get numbers
+//  if (network_event != nullptr)
+//    handler->UpdateEvent(network_event, sock_fd_, event_flags, CallbackUtil::OnNetworkEvent, this);
+//  else
+//    network_event = handler->RegisterEvent(sock_fd_, event_flags, CallbackUtil::OnNetworkEvent, this);
+//
+//  if (workpool_event != nullptr)
+//    handler->UpdateManualEvent(workpool_event, CallbackUtil::OnNetworkEvent, this);
+//  else
+//    workpool_event = handler->RegisterManualEvent(CallbackUtil::OnNetworkEvent, this);
+
   if (network_event != nullptr)
-    handler->UpdateEvent(network_event, sock_fd_, event_flags, CallbackUtil::OnNetworkEvent, this);
-  else
-    network_event = handler->RegisterEvent(sock_fd_, event_flags, CallbackUtil::OnNetworkEvent, this);
+    handler->UnregisterEvent(network_event);
+  network_event = handler->RegisterEvent(sock_fd_, event_flags, CallbackUtil::OnNetworkEvent, this);
 
   if (workpool_event != nullptr)
-    handler->UpdateManualEvent(workpool_event, CallbackUtil::OnNetworkEvent, this);
-  else
-    workpool_event = handler->RegisterManualEvent(CallbackUtil::OnNetworkEvent, this);
+    handler->UnregisterEvent(workpool_event);
+  workpool_event = handler->RegisterManualEvent(CallbackUtil::OnNetworkEvent, this);
 
   //TODO:: should put the initialization else where.. check correctness first.
   traffic_cop_.SetTaskCallback([](void *arg) {
@@ -52,7 +62,10 @@ void NetworkConnection::Init(short event_flags, NotifiableTask *handler) {
 
 // Update event
 bool NetworkConnection::UpdateEvent(short flags) {
-  handler->UpdateEvent(network_event, sock_fd_, flags, CallbackUtil::OnNetworkEvent, this);
+  // TODO(tianyu): The original network code seems to do this as an optimization. I am leaving this out until we get numbers
+  // handler->UpdateEvent(network_event, sock_fd_, flags, CallbackUtil::OnNetworkEvent, this);
+  handler->UnregisterEvent(network_event);
+  network_event = handler->RegisterEvent(sock_fd_, flags, CallbackUtil::OnNetworkEvent, this);
   // TODO(tianyu) Not propagate error since we will change to exceptions anyway.
   return true;
 }

@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// network_master_thread.h
+// connection_dispatcher_task.h
 //
-// Identification: src/include/network/network_thread.h
+// Identification: src/include/network/connection_dispatcher_task.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -17,32 +17,36 @@
 #include "concurrency/epoch_manager_factory.h"
 #include "connection_handler_task.h"
 #include "network_manager.h"
+
 namespace peloton {
 namespace network {
-
-// Forward Declarations
-class ConnectionHandlerTask;
 
 // a master thread contains multiple worker threads.
 class ConnectionDispatcherTask : public NotifiableTask {
 public:
-  ConnectionDispatcherTask(int num_threads);
+  /**
+   * Creates a new ConnecitonDispatcherTask, spawning the specified number of handlers, each running on their own thread.
+   * @param num_handlers the number of handler tasks to spawn
+   */
+  explicit ConnectionDispatcherTask(int num_handlers);
 
-  void Start();
-
+  // TODO(tianyu) Maybe do this at destruction time?
   void Stop();
 
+  /**
+   * @brief Dispatches the client connection at fd to a handler.
+   * Currently, the dispatch uses round-robin, and thread communication is achieved
+   * through channels. The dispatch writes a symbol to the fd that the handler is configured
+   * to receive updates on.
+   *
+   * @param fd the socket fd of the client connection being dispatched
+   */
   void DispatchConnection(int fd);
 
-  std::vector<std::shared_ptr<ConnectionHandlerTask>> &GetHandlers();
-
-  static void StartHandler(peloton::network::ConnectionHandlerTask *handler);
-
 private:
-  const int num_threads_;
-
-  // TODO: have a smarter dispatch scheduler
-  std::atomic<int> next_handler;  // next thread we dispatched to
+  std::vector<std::shared_ptr<ConnectionHandlerTask>> handlers_;
+  // TODO: have a smarter dispatch scheduler, we currently use round-robin
+  std::atomic<int> next_handler_;  // next thread we dispatched to
 };
 
 }  // namespace network

@@ -18,88 +18,64 @@
 
 namespace peloton {
 namespace network {
-/*
- * Get the vector of Network worker threads
- */
-std::vector<std::shared_ptr<ConnectionHandlerTask>> &
-ConnectionDispatcherTask::GetHandlers() {
-  static std::vector<std::shared_ptr<ConnectionHandlerTask>> handlers;
-  return handlers;
-}
 
 /*
  * The Network master thread initialize num_threads worker threads on
  * constructor.
  */
-ConnectionDispatcherTask::ConnectionDispatcherTask(int num_threads)
+ConnectionDispatcherTask::ConnectionDispatcherTask(int num_handlers)
     : NotifiableTask(MASTER_THREAD_ID),
-      num_threads_(num_threads),
-      next_handler(0) {
-  // TODO(tianyu): huh?
-  auto &handlers = GetHandlers();
-  handlers.clear();
+      next_handler_(0) {
 
   RegisterSignalEvent(SIGHUP, CallbackUtil::OnSighup, this);
-}
 
-/*
- * Start the threads
- */
-// TODO(tianyu) Rename and write better
-void ConnectionDispatcherTask::Start() {
-  auto &threads = GetHandlers();
 
+  // TODO(tianyu) Figure out what this initialization logic is doing and potentially rewrite
   // register thread to epoch manager.
   if (concurrency::EpochManagerFactory::GetEpochType() ==
       EpochType::DECENTRALIZED_EPOCH) {
-    for (int thread_id = 0; thread_id < num_threads_; thread_id++) {
-      concurrency::EpochManagerFactory::GetInstance().RegisterThread(thread_id);
+    for (size_t task_id = 0; task_id < num_handlers; task_id++) {
+      concurrency::EpochManagerFactory::GetInstance().RegisterThread(task_id);
     }
   }
 
   // create worker threads.
-  for (int thread_id = 0; thread_id < num_threads_; thread_id++) {
-    threads.push_back(std::make_shared<ConnectionHandlerTask>(thread_id));
-    thread_pool.SubmitDedicatedTask(ConnectionDispatcherTask::StartHandler,
-                                    threads[thread_id].get());
+  for (int task_id = 0; task_id < num_handlers; task_id++) {
+    auto handler = std::make_shared<ConnectionHandlerTask>(task_id);
+    handlers_.push_back(handler);
+    thread_pool.SubmitDedicatedTask([=] {
+      handler->EventLoop();
+      // TODO(tianyu) WTF is this?
+      // Set worker thread's close flag to false to indicate loop has exited
+      handler->SetThreadIsClosed(false);
+    });
   }
 
   // Wait for all threads ready to work
-  for (int thread_id = 0; thread_id < num_threads_; thread_id++) {
-    while (!threads[thread_id].get()->GetThreadIsStarted()) {
+  for (int task_id = 0; task_id < num_handlers; task_id++) {
+    while (!handlers_[task_id]->GetThreadIsStarted()) {
       sleep(1);
     }
   }
 }
+
 
 /*
  * Stop the threads
  */
 void ConnectionDispatcherTask::Stop() {
-  auto &handlers = GetHandlers();
 
-  for (int handler_id = 0; handler_id < num_threads_; handler_id++) {
-    handlers[handler_id].get()->SetThreadIsClosed(true);
+  for (auto &handler : handlers_) {
+    handler->SetThreadIsClosed(true);
   }
 
   // When a thread exit loop, the is_closed flag will be set to false
   // Wait for all threads exit loops
-  for (int handler_id = 0; handler_id < num_threads_; handler_id++) {
-    while (handlers[handler_id].get()->GetThreadIsClosed()) {
-      sleep(1);
-    }
+  for (auto &handler : handlers_) {
+    while (handler->GetThreadIsClosed()) sleep(1);
   }
 }
 
-/*
- * Start with worker event loop
- */
-void ConnectionDispatcherTask::StartHandler(ConnectionHandlerTask *handler) {
-  handler->EventLoop();
-  // TODO(tianyu): Is it just me or does this flag means the fucking opposite of what it says?
-  // Set worker thread's close flag to false to indicate loop has exited
-  handler->SetThreadIsClosed(false);
-}
 
 /*
 * Dispatch a new connection event to a random worker thread by
@@ -115,15 +91,13 @@ void ConnectionDispatcherTask::DispatchConnection(int fd) {
     LOG_ERROR("Failed to accept");
   }
 
-  auto &handlers = GetHandlers();
-
   // Dispatch by rand number
-  int handler_id = next_handler;
+  int handler_id = next_handler_;
 
   // update next threadID
-  next_handler = (next_handler + 1) % num_threads_;
+  next_handler_ = (next_handler_ + 1) % handlers_.size();
 
-  std::shared_ptr<ConnectionHandlerTask> handler = handlers[handler_id];
+  std::shared_ptr<ConnectionHandlerTask> handler = handlers_[handler_id];
   LOG_DEBUG("Dispatching connection to worker %d", handler_id);
 
   handler->Notify(new_conn_fd);

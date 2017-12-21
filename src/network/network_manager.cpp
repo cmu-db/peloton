@@ -137,7 +137,6 @@ void NetworkManager::StartServer() {
       throw ConnectionException("Error listening onsocket.");
     }
 
-    dispatcher_task->Start();
     // TODO(tianyu) Move this after we change the way we shut down our server
     struct timeval one_second = {1, 0};
     dispatcher_task->RegisterPeriodicEvent(&one_second, CallbackUtil::ServerControl_Callback, this);

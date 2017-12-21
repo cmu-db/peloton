@@ -26,9 +26,9 @@ void CallbackUtil::OnNewConnectionDispatch(evutil_socket_t new_conn_recv_fd,
                                            UNUSED_ATTRIBUTE short ev_flags, void *arg) {
   // buffer used to receive messages from the main thread
   char m_buf[1];
-  std::shared_ptr<NewConnQueueItem> item;
+  int client_fd;
   NetworkConnection *conn;
-  ConnectionHandlerTask *handler = static_cast<ConnectionHandlerTask *>(arg);
+  auto *handler = static_cast<ConnectionHandlerTask *>(arg);
 
   // read the operation that needs to be performed
   if (read(new_conn_recv_fd, m_buf, 1) != 1) {
@@ -40,18 +40,18 @@ void CallbackUtil::OnNewConnectionDispatch(evutil_socket_t new_conn_recv_fd,
     /* new connection case */
     case 'c': {
       // fetch the new connection fd from the queue
-      handler->new_conn_queue.Dequeue(item);
-      conn = NetworkManager::GetConnection(item->new_conn_fd);
+      handler->new_conn_queue_.Dequeue(client_fd);
+      conn = NetworkManager::GetConnection(client_fd);
       if (conn == nullptr) {
-        LOG_DEBUG("Creating new socket fd:%d", item->new_conn_fd);
+        LOG_DEBUG("Creating new socket fd:%d", client_fd);
         /* create a new connection object */
-        NetworkManager::CreateNewConnection(item->new_conn_fd, item->event_flags,
+        NetworkManager::CreateNewConnection(client_fd, EV_READ|EV_PERSIST,
                                             static_cast<NotifiableTask *>(handler));
       } else {
-        LOG_DEBUG("Reusing socket fd:%d", item->new_conn_fd);
+        LOG_DEBUG("Reusing socket fd:%d", client_fd);
         /* otherwise reset and reuse the existing conn object */
         conn->Reset();
-        conn->Init(item->event_flags, static_cast<NotifiableTask *>(handler));
+        conn->Init(EV_READ|EV_PERSIST, static_cast<NotifiableTask *>(handler));
       }
       break;
     }
