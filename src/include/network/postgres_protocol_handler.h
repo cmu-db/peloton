@@ -21,6 +21,7 @@
 #include "common/cache.h"
 #include "common/portal.h"
 #include "common/statement.h"
+#include "common/statement_cache.h"
 #include "traffic_cop/traffic_cop.h"
 #include "protocol_handler.h"
 #include "common/internal_types.h"
@@ -184,13 +185,7 @@ class PostgresProtocolHandler: public ProtocolHandler {
   QueryType skipped_query_type_;
 
   // Statement cache
-  // StatementName -> Statement
-  Cache<std::string, Statement> statement_cache_;
-  // TableOid -> Statements
-  // FIXME: This table statement cache is not in sync with the other cache.
-  // That means if something gets thrown out of the statement cache it is not
-  // automatically evicted from this cache.
-  std::unordered_map<oid_t, std::vector<Statement*>> table_statement_cache_;
+  std::shared_ptr<StatementCache> statement_cache_;
 
   //  Portals
   std::unordered_map<std::string, std::shared_ptr<Portal>> portals_;
