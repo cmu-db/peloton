@@ -56,6 +56,13 @@ void AbstractExpression::GetUsedAttributes(
   }
 }
 
+void AbstractExpression::GetUsedAttributesInPredicateOrder(
+  std::vector<const planner::AttributeInfo *> &attributes) const {
+  for (uint32_t i = 0; i < GetChildrenSize(); i++) {
+    children_[i]->GetUsedAttributesInPredicateOrder(attributes);
+  }
+}
+
 codegen::type::Type AbstractExpression::ResultType() const {
   return codegen::type::Type{GetValueType(), IsNullable()};
 }

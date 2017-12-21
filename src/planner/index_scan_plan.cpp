@@ -81,7 +81,6 @@ IndexScanPlan::IndexScanPlan(storage::DataTable *table,
  * 2. Only fields specified by the constructor could be modofied
  */
 void IndexScanPlan::SetParameterValues(std::vector<type::Value> *values) {
-  printf("[SetParameterValues] indexScanPlan\n");
   LOG_TRACE("Setting parameter values in Index Scans");
 
   // Destroy the values of the last plan and copy the original values over for
@@ -110,11 +109,6 @@ void IndexScanPlan::SetParameterValues(std::vector<type::Value> *values) {
   for (auto &child_plan : GetChildren()) {
     child_plan->SetParameterValues(values);
   }
-
-  printf("[SetParameterValues after] indexScanPlan, size of values = %lu\n", (*values).size());
-  for (unsigned long i = 0; i < (*values).size(); i++) {
-    printf("%s\n", (*values)[i].GetInfo().c_str());
-  }
 }
 
 hash_t IndexScanPlan::Hash() const {
@@ -140,7 +134,6 @@ hash_t IndexScanPlan::Hash() const {
   auto is_update = IsForUpdate();
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&is_update));
 
-  printf("hash value of this indexScanPlan = %lu\n", HashUtil::CombineHashes(hash, AbstractPlan::Hash()));
   return HashUtil::CombineHashes(hash, AbstractPlan::Hash());
 }
 
@@ -192,40 +185,12 @@ bool IndexScanPlan::operator==(const AbstractPlan &rhs) const {
 void IndexScanPlan::VisitParameters(
   codegen::QueryParametersMap &map, std::vector<peloton::type::Value> &values,
   const std::vector<peloton::type::Value> &values_from_user) {
-  printf("[VisitParameters] indexScanPlan: size of values=%lu\n", values.size());
-  for (unsigned long i = 0; i < values.size(); i++) {
-    printf("%s\n", values[i].GetInfo().c_str());
-  }
-  printf("[VisitParameters] indexScanPlan: size of values_from_user=%lu\n", values_from_user.size());
-  for (unsigned long i = 0; i < values_from_user.size(); i++) {
-    printf("%s\n", values_from_user[i].GetInfo().c_str());
-  }
   AbstractPlan::VisitParameters(map, values, values_from_user);
 
   auto *predicate =
     const_cast<expression::AbstractExpression *>(GetPredicate());
   if (predicate != nullptr) {
     predicate->VisitParameters(map, values, values_from_user);
-  }
-
-  printf("[VisitParameters] after indexScanPlan: size of values=%lu\n", values.size());
-  for (unsigned long i = 0; i < values.size(); i++) {
-    printf("%s\n", values[i].GetInfo().c_str());
-  }
-  printf("[VisitParameters] after indexScanPlan: size of values_from_user=%lu\n", values_from_user.size());
-  for (unsigned long i = 0; i < values_from_user.size(); i++) {
-    printf("%s\n", values_from_user[i].GetInfo().c_str());
-  }
-
-
-  // key column debug!
-  printf("[VisitParameters] after indexScanPlan: size of columns id=%lu\n", column_ids_.size());
-  for (unsigned long i = 0; i < column_ids_.size(); i++) {
-    printf("%d\n", column_ids_[i]);
-  }
-  printf("[VisitParameters] after indexScanPlan: size of key_column_ids_=%lu\n", key_column_ids_.size());
-  for (unsigned long i = 0; i < key_column_ids_.size(); i++) {
-    printf("%d\n", key_column_ids_[i]);
   }
 }
 

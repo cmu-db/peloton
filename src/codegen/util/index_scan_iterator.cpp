@@ -12,6 +12,9 @@
 
 #include "codegen/util/index_scan_iterator.h"
 #include "common/logger.h"
+#include "type/value_factory.h"
+#include "storage/tuple.h"
+#include <string.h>
 
 namespace peloton {
 namespace codegen {
@@ -112,6 +115,24 @@ bool IndexScanIterator::RowOffsetInResult(uint64_t distinct_tile_index,
   }
   return false;
 }
+
+void IndexScanIterator::UpdateTupleWithInteger(int value, UNUSED_ATTRIBUTE int attribute_id, char* attribute_name) {
+  const std::vector<catalog::Column> &columns = point_key_p_->GetSchema()->GetColumns();
+  if (is_point_query_) {
+    // point query
+    for (unsigned int i = 0; i < columns.size(); i++) {
+      if (strcmp(columns[i].GetName().c_str(), attribute_name) == 0) {
+        point_key_p_->SetValue(i, peloton::type::ValueFactory::GetIntegerValue(value));
+        break;
+      }
+    }
+  } else if (!is_full_scan_) {
+    // range scan
+    // TODO
+  }
+}
+
+
 }
 }
 }

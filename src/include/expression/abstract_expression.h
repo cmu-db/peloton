@@ -157,6 +157,9 @@ class AbstractExpression : public Printable {
   virtual void GetUsedAttributes(
       std::unordered_set<const planner::AttributeInfo *> &attributes) const;
 
+  virtual void GetUsedAttributesInPredicateOrder(
+    std::vector<const planner::AttributeInfo *> &attributes) const;
+
   virtual void DeduceExpressionType() {}
 
   // Walks the expressoin trees and generate the correct expression name

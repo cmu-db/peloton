@@ -107,6 +107,32 @@ void IndexScanTranslator::Produce() const {
   llvm::Value *iterator_ptr =
       codegen.Call(RuntimeFunctionsProxy::GetIterator,
                    {index_ptr, point_key, low_key, high_key});
+
+  // before doing scan, update the tuple with parameter cache!
+  std::vector<const planner::AttributeInfo *> where_clause_attributes;
+  const auto *predicate = index_scan_.GetPredicate();
+  if (predicate != nullptr) {
+    auto &context = GetCompilationContext();
+    const auto &parameter_cache = context.GetParameterCache();
+    predicate->GetUsedAttributesInPredicateOrder(where_clause_attributes);
+    for (unsigned int i = 0; i < where_clause_attributes.size(); i++) {
+      const auto *ai = where_clause_attributes[i];
+      llvm::Value *attribute_id = codegen.Const32(ai->attribute_id);
+      llvm::Value *attribute_name = codegen.ConstStringPtr(ai->name);
+
+      switch (ai->type.type_id) {
+        case peloton::type::TypeId::INTEGER:
+        {
+          codegen.Call(IndexScanIteratorProxy::UpdateTupleWithInteger, {iterator_ptr, parameter_cache.GetValue(i).GetValue(), attribute_id, attribute_name});
+          break;
+        }
+        default:
+          //TODO
+          break;
+      }
+    }
+  }
+
   // the iterator makes function call to the index
   codegen.Call(IndexScanIteratorProxy::DoScan, {iterator_ptr});
 
@@ -141,7 +167,6 @@ void IndexScanTranslator::Produce() const {
     // Collect <start, stride, is_columnar> triplets of all columns
     std::vector<TileGroup::ColumnLayout> col_layouts;
     auto *layout_type = ColumnLayoutInfoProxy::GetType(codegen);
-    printf("num_columns = %d\n", num_columns);
     for (uint32_t col_id = 0; col_id < num_columns; col_id++) {
       auto *start = codegen->CreateLoad(codegen->CreateConstInBoundsGEP2_32(
           layout_type, column_layouts, col_id, 0));
@@ -175,18 +200,15 @@ void IndexScanTranslator::Produce() const {
       // Determine the attributes the predicate needs
       std::unordered_set<const planner::AttributeInfo *> used_attributes;
       predicate->GetUsedAttributes(used_attributes);
-      printf("used_attributes size = %lu\n", used_attributes.size());
 
 
       // Setup the row batch with attribute accessors for the predicate
       std::vector<TableScanTranslator::AttributeAccess> attribute_accessors;
       for (const auto *ai : used_attributes) {
-        printf("used attributed name = %s\n", ai->name.c_str());
         attribute_accessors.emplace_back(tile_group_access, ai);
       }
       for (uint32_t i = 0; i < attribute_accessors.size(); i++) {
         auto &accessor = attribute_accessors[i];
-        printf("attribute accessor name = %s\n", accessor.GetAttributeRef()->name.c_str());
         batch.AddAttribute(accessor.GetAttributeRef(), &accessor);
       }
 
@@ -203,7 +225,6 @@ void IndexScanTranslator::Produce() const {
         row.SetValidity(codegen, bool_val);
       });
     }
-    printf("good after filtering by predicate\n");
 
     // construct the final row batch
     // one tuple per row batch
@@ -213,7 +234,6 @@ void IndexScanTranslator::Produce() const {
     std::vector<TableScanTranslator::AttributeAccess> final_attribute_accesses;
     std::vector<const planner::AttributeInfo *> final_ais;
     index_scan_.GetAttributes(final_ais);
-    printf("final_ais size = %lud\n", final_ais.size());
     std::vector<oid_t> output_col_ids;
     if (index_scan_.GetColumnIds().size() != 0) {
       output_col_ids = index_scan_.GetColumnIds();
@@ -223,7 +243,6 @@ void IndexScanTranslator::Produce() const {
     }
 //    const auto &output_col_ids = index_scan_.GetColumnIds();
 
-    printf("output column size = %lu\n", output_col_ids.size());
     for (oid_t col_idx = 0; col_idx < output_col_ids.size(); col_idx++) {
       final_attribute_accesses.emplace_back(tile_group_access,
                                             final_ais[output_col_ids[col_idx]]);
