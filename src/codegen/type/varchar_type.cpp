@@ -14,11 +14,11 @@
 
 #include "codegen/lang/if.h"
 #include "codegen/proxy/string_functions_proxy.h"
+#include "codegen/proxy/timestamp_functions_proxy.h"
 #include "codegen/proxy/values_runtime_proxy.h"
 #include "codegen/type/boolean_type.h"
 #include "codegen/type/integer_type.h"
 #include "codegen/type/timestamp_type.h"
-#include "codegen/proxy/timestamp_functions_proxy.h"
 #include "codegen/value.h"
 
 namespace peloton {
