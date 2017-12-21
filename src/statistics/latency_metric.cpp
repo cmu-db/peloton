@@ -62,7 +62,7 @@ const std::string LatencyMetric::GetInfo() const {
   ss << ", 75th-%-tile=" << latency_measurements_.perc_75th_;
   ss << ", 99th-%-tile=" << latency_measurements_.perc_99th_;
   ss << ", max=" << latency_measurements_.max_;
-  ss << " ]" << std::endl;
+  ss << " ]";
   return ss.str();
 }
 

@@ -40,8 +40,6 @@ public:
                        const expression::AbstractExpression* expr,
                        uint num_indent);
   static std::string GetTableRefInfo(const TableRef* table, uint num_indent);
-private:
-  static std::string indent(uint num_indent);
 };
 
 }  // namespace parser

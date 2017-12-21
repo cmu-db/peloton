@@ -71,13 +71,14 @@ const std::string SQLStatementList::GetInfo() const {
 
   if (is_valid) {
     for (auto& stmt : statements) {
-      os << stmt->GetInfo();
+      os << stmt->GetInfo() << "\n";
     }
   } else {
-    os << "Invalid statement list \n";
+    os << "Invalid statement list";
   }
-
-  return os.str();
+  std::string info = os.str();
+  StringUtil::RTrim(info);
+  return info;
 }
 
 }  // namespace parser

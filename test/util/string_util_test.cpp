@@ -98,7 +98,7 @@ TEST_F(StringUtilTests, PrefixTest) {
     EXPECT_FALSE(result.empty());
     LOG_TRACE("[PREFIX=%s]\n%s\n=======\n", prefix.c_str(), result.c_str());
 
-    std::vector<std::string> lines = StringUtil::Split(result);
+    std::vector<std::string> lines = StringUtil::Split(result, '\n');
     for (std::string line : lines) {
       std::string substr = line.substr(0, prefix.size());
       EXPECT_EQ(prefix, substr);

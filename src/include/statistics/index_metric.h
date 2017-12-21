@@ -19,6 +19,7 @@
 #include "type/types.h"
 #include "statistics/abstract_metric.h"
 #include "statistics/access_metric.h"
+#include "util/string_util.h"
 
 namespace peloton {
 namespace stats {
@@ -69,7 +70,7 @@ class IndexMetric : public AbstractMetric {
     std::stringstream ss;
     ss << "INDEXES: " << std::endl;
     ss << index_name_ << "(OID=" << index_id_ << "): ";
-    ss << index_access_.GetInfo() << std::endl;
+    ss << index_access_.GetInfo();
     return ss.str();
   }
 
