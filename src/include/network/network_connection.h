@@ -47,12 +47,10 @@ namespace network {
  * NetworkConnection - Wrapper for managing socket.
  */
 class NetworkConnection {
-
 public:
   inline NetworkConnection(int sock_fd, short event_flags, NotifiableTask *thread)
       : sock_fd_(sock_fd), state_machine_(ConnState::CONN_READ) {
     Init(event_flags, thread);
-
   }
 
   /* Reuse this object for a new connection. We could be assigned to a
@@ -80,6 +78,7 @@ public:
 
   inline void TriggerStateMachine() { state_machine_.Accept(Transition::WAKEUP, *this); }
 
+  // Exposed for testing
   const std::unique_ptr<ProtocolHandler> &GetProtocolHandler() const {
     return protocol_handler_;
   }
