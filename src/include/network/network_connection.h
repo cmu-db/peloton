@@ -130,6 +130,7 @@ public:
 
   inline void TriggerStateMachine() { state_machine_.Accept(Transition::WAKEUP, *this); }
 
+  // Exposed for testing
   const std::unique_ptr<ProtocolHandler> &GetProtocolHandler() const {
     return protocol_handler_;
   }
