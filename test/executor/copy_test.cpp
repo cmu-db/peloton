@@ -136,7 +136,7 @@ TEST_F(CopyTests, Copying) {
   LOG_TRACE("Executing plan...");
   // Initialize the executor tree
   auto status = root_executor->Init();
-  EXPECT_EQ(status, true);
+  EXPECT_TRUE(status);
   // Execute the tree until we get result tiles from root node
   while (status == true) {
     status = root_executor->Execute();
