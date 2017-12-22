@@ -324,9 +324,7 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
       std::vector<int> result_format(traffic_cop_->GetStatement()->GetTupleDescriptor().size(), 0);
       result_format_ = result_format;
 
-      //TODO(Yuchen): We assume it's only constant value expression
-      // If we have a table: foo(id integer),
-      // we should support query like: insert into foo values(1+2);
+      //TODO(Yuchen): We may need helper function to check param type and bind params.
       for (const std::unique_ptr<expression::AbstractExpression>& param : exec_stmt->parameters) {
         param_values.push_back(((expression::ConstantValueExpression*) param.get())->GetValue());
       }
