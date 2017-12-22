@@ -47,6 +47,9 @@ class IndexScanTranslator : public OperatorTranslator {
   // The method that produces new tuples
   void Produce() const override;
 
+  // Update the tuples stored in index scan plan with new parameters
+  void UpdateTupleWithParameterCache(CodeGen &codegen, llvm::Value *iterator_ptr) const;
+
   // Scans are leaves in the query plan and, hence, do not consume tuples
   void Consume(ConsumerContext &, RowBatch &) const override {}
   void Consume(ConsumerContext &, RowBatch::Row &) const override {}

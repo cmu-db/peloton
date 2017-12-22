@@ -28,5 +28,6 @@ DEFINE_METHOD(peloton::codegen::util, IndexScanIterator, UpdateTupleWithInteger)
 DEFINE_METHOD(peloton::codegen::util, IndexScanIterator, UpdateTupleWithBigInteger);
 DEFINE_METHOD(peloton::codegen::util, IndexScanIterator, UpdateTupleWithDouble);
 DEFINE_METHOD(peloton::codegen::util, IndexScanIterator, UpdateTupleWithVarchar);
+DEFINE_METHOD(peloton::codegen::util, IndexScanIterator, UpdateTupleWithBoolean);
 }
 }
