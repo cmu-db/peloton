@@ -81,36 +81,16 @@ void TransactionManager::EndTransaction(TransactionContext *current_txn) {
     current_txn->ExecOnCommitTriggers();
   }
 
-  auto &epoch_manager = EpochManagerFactory::GetInstance();
-
-  epoch_manager.ExitEpoch(current_txn->GetThreadId(),
-                          current_txn->GetEpochId());
-
-  if (current_txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY) {
-    if (current_txn->GetResult() == ResultType::SUCCESS) {
-      if (current_txn->IsGCSetEmpty() != true) {
-        gc::GCManagerFactory::GetInstance().RecycleTransaction(
-            current_txn->GetGCSetPtr(), current_txn->GetGCObjectSetPtr(),
-            current_txn->GetEpochId(), current_txn->GetThreadId());
-      }
-    } else {
-      if (current_txn->IsGCSetEmpty() != true) {
-        // consider what parameter we should use.
-        gc::GCManagerFactory::GetInstance().RecycleTransaction(
-            current_txn->GetGCSetPtr(), current_txn->GetGCObjectSetPtr(),
-            epoch_manager.GetNextEpochId(), current_txn->GetThreadId());
-      }
-    }
-  }
-
-  delete current_txn;
+  gc::GCManagerFactory::GetInstance().RecycleTransaction(current_txn);
   current_txn = nullptr;
 
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
       StatsType::INVALID) {
+
     stats::BackendStatsContext::GetInstance()
         ->GetTxnLatencyMetric()
         .RecordLatency();
+
   }
 }
 
