@@ -212,8 +212,8 @@ public:
    * In a loop, make this notifiable task wait and respond to incoming events
    */
   void EventLoop() {
-    LOG_TRACE("stop");
     event_base_dispatch(base_);
+    LOG_TRACE("stop");
   }
 
   /**

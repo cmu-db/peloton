@@ -25,7 +25,7 @@ namespace network {
 class ConnectionDispatcherTask : public NotifiableTask {
 public:
   /**
-   * Creates a new ConnecitonDispatcherTask, spawning the specified number of handlers, each running on their own thread.
+   * Creates a new ConnectionDispatcherTask, spawning the specified number of handlers, each running on their own thread.
    * @param num_handlers the number of handler tasks to spawn
    */
   explicit ConnectionDispatcherTask(int num_handlers);
