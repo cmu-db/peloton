@@ -23,7 +23,6 @@
 #include "storage/tile.h"
 #include "storage/zone_map_manager.h"
 #include "type/value_factory.h"
-#include "codegen/proxy/result_and_key_proxy.h"
 #include "codegen/util/index_scan_iterator.h"
 #include "storage/tuple.h"
 

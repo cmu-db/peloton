@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "codegen/proxy/runtime_functions_proxy.h"
+#include "codegen/proxy/executor_context_proxy.h"
 #include "codegen/operator/index_scan_translator.h"
 
 #include "codegen/lang/if.h"
@@ -161,7 +162,8 @@ void IndexScanTranslator::Produce() const {
     TileGroup::TileGroupAccess tile_group_access{tileGroup, col_layouts};
 
     // visibility
-    llvm::Value *txn = this->GetCompilationContext().GetTransactionPtr();
+    llvm::Value *executor_context_ptr = this->GetCompilationContext().GetExecutorContextPtr();
+    llvm::Value *txn = codegen.Call(ExecutorContextProxy::GetTransaction, {executor_context_ptr});
     llvm::Value *raw_sel_vec = sel_vec.GetVectorPtr();
     // Invoke TransactionRuntime::PerformRead(...)
     llvm::Value *out_idx =
