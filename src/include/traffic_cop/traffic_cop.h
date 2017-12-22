@@ -104,8 +104,6 @@ class TrafficCop {
 
   void ProcessInvalidStatement();
 
-  void ProcessInvalidStatement();
-
   int getRowsAffected() { return rows_affected_; }
 
   void SetStatement(std::shared_ptr<Statement> statement) {
@@ -174,7 +172,6 @@ class TrafficCop {
   // The current callback to be invoked after execution completes.
   void (*task_callback_)(void *);
   void *task_callback_arg_;
-  std::vector<StatementResult> result_;
 
   // pair of txn ptr and the result so-far for that txn
   // use a stack to support nested-txns
