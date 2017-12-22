@@ -22,10 +22,9 @@
  *-------------------------------------------------------------------------
  */
 
-#include "parser/sql_statement.h"
-
 #include <sstream>
 
+#include "parser/sql_statement.h"
 #include "parser/parser_utils.h"
 
 namespace peloton {
@@ -71,7 +70,7 @@ const std::string SQLStatementList::GetInfo() const {
 
   if (is_valid) {
     for (auto& stmt : statements) {
-      os << stmt->GetInfo() << "\n";
+      os << stmt->GetInfo() << std::endl;
     }
   } else {
     os << "Invalid statement list";
