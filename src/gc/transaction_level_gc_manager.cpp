@@ -136,18 +136,9 @@ int TransactionLevelGCManager::Unlink(const int &thread_id,
     // involve any garbage collection
     if (garbage_ctx->GetIsolationLevel() != IsolationLevelType::READ_ONLY) {
 
-      if (garbage_ctx->GetResult() == ResultType::SUCCESS) {
-
-        if (garbage_ctx->IsGCSetEmpty()) {
-          delete garbage_ctx;
-          continue;
-        }
-      } else {
-
-        if (garbage_ctx->IsGCSetEmpty()) {
-          delete garbage_ctx;
-          continue;
-        }
+      if (garbage_ctx->IsGCSetEmpty()) {
+        delete garbage_ctx;
+        continue;
       }
     } else {
       delete garbage_ctx;
@@ -223,6 +214,7 @@ void TransactionLevelGCManager::AddToRecycleMap(
     // During the resetting, a table may be deconstructed because of the DROP
     // TABLE request
     if (tile_group == nullptr) {
+      delete garbage_ctx;
       return;
     }
 
