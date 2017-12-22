@@ -18,6 +18,7 @@
 #include "util/string_util.h"
 #include <pqxx/pqxx> /* libpqxx is used to instantiate C++ client */
 #include <include/network/postgres_protocol_handler.h>
+#include "network/connection_handle_factory.h"
 
 #define NUM_THREADS 1
 
@@ -51,15 +52,15 @@ void *SimpleQueryTest(int port) {
         "host=127.0.0.1 port=%d user=postgres sslmode=disable application_name=psql", port));
     pqxx::work txn1(C);
 
-    peloton::network::NetworkConnection *conn =
-        peloton::network::NetworkManager::GetConnection(
-            peloton::network::NetworkManager::recent_connfd);
+    peloton::network::ConnectionHandle *conn =
+        peloton::network::ConnectionHandleFactory::GetInstance().ConnectionHandleAt(
+            peloton::network::NetworkManager::recent_connfd).get();
 
     network::PostgresProtocolHandler *handler =
         dynamic_cast<network::PostgresProtocolHandler*>(conn->GetProtocolHandler().get());
     EXPECT_NE(handler, nullptr);
 
-    // EXPECT_EQ(conn->state, peloton::network::CONN_READ);
+    // EXPECT_EQ(conn->state, peloton::network::READ);
     // create table and insert some data
     txn1.exec("DROP TABLE IF EXISTS employee;");
     txn1.exec("CREATE TABLE employee(id INT, name VARCHAR(100));");
@@ -95,12 +96,12 @@ void *RollbackTest(int port) {
     LOG_INFO("[RollbackTest] Connected to %s", C.dbname());
     pqxx::work W(C);
 
-    peloton::network::NetworkConnection *conn =
+    peloton::network::ClientSocketWrapper *conn =
         peloton::network::NetworkManager::GetConnection(
             peloton::network::NetworkManager::recent_connfd);
 
     EXPECT_TRUE(conn->protocol_handler_.is_started);
-    // EXPECT_EQ(conn->state, peloton::network::CONN_READ);
+    // EXPECT_EQ(conn->state, peloton::network::READ);
     // create table and insert some data
     W.exec("DROP TABLE IF EXISTS employee;");
     W.exec("CREATE TABLE employee(id INT, name VARCHAR(100));");

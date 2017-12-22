@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "network/network_callback_util.h"
-#include "network/network_manager.h"
+#include "network/connection_handle_factory.h"
 
 namespace peloton {
 namespace network {
@@ -27,7 +27,7 @@ void CallbackUtil::OnNewConnectionDispatch(evutil_socket_t new_conn_recv_fd,
   // buffer used to receive messages from the main thread
   char m_buf[1];
   int client_fd;
-  NetworkConnection *conn;
+  std::shared_ptr<ConnectionHandle> conn;
   auto *handler = static_cast<ConnectionHandlerTask *>(arg);
 
   // read the operation that needs to be performed
@@ -41,18 +41,7 @@ void CallbackUtil::OnNewConnectionDispatch(evutil_socket_t new_conn_recv_fd,
     case 'c': {
       // fetch the new connection fd from the queue
       handler->new_conn_queue_.Dequeue(client_fd);
-      conn = NetworkManager::GetConnection(client_fd);
-      if (conn == nullptr) {
-        LOG_DEBUG("Creating new socket fd:%d", client_fd);
-        /* create a new connection object */
-        NetworkManager::CreateNewConnection(client_fd, EV_READ|EV_PERSIST,
-                                            static_cast<NotifiableTask *>(handler));
-      } else {
-        LOG_DEBUG("Reusing socket fd:%d", client_fd);
-        /* otherwise reset and reuse the existing conn object */
-        conn->Reset();
-        conn->Init(EV_READ|EV_PERSIST, static_cast<NotifiableTask *>(handler));
-      }
+      conn = ConnectionHandleFactory::GetInstance().GetConnectionHandle(client_fd, handler);
       break;
     }
 
@@ -63,7 +52,7 @@ void CallbackUtil::OnNewConnectionDispatch(evutil_socket_t new_conn_recv_fd,
 
 
 void CallbackUtil::OnNetworkEvent(evutil_socket_t, short, void *arg) {
-  static_cast<NetworkConnection *>(arg)->TriggerStateMachine();
+  static_cast<ConnectionHandle *>(arg)->TriggerStateMachine();
 }
 
 /**

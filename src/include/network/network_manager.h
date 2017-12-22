@@ -34,7 +34,6 @@
 #include "notifiable_task.h"
 #include "connection_dispatcher_task.h"
 #include "protocol_handler.h"
-#include "network_connection.h"
 #include "network_state.h"
 
 #include <openssl/ssl.h>
@@ -43,10 +42,6 @@
 namespace peloton {
 namespace network {
 
-// Forward Declarations
-class NotifiableTask;
-class ConnectionDispatcherTask;
-class NetworkConnection;
 
 class NetworkManager {
  private:
@@ -72,11 +67,6 @@ class NetworkManager {
  public:
   NetworkManager();
 
-  static NetworkConnection *GetConnection(const int &connfd);
-
-  static void CreateNewConnection(const int &connfd, short ev_flags,
-                                  NotifiableTask *thread);
-
   void StartServer();
 
   void Break();
@@ -93,14 +83,6 @@ class NetworkManager {
   bool GetIsClosed() { return is_closed_; }
 
   void SetIsClosed(bool is_closed) { this->is_closed_ = is_closed; }
-
-
- private:
-  /* Maintain a global list of connections.
-   * Helps reuse connection objects when possible
-   */
-  static std::unordered_map<int, std::unique_ptr<NetworkConnection>> &
-  GetGlobalSocketList();
 };
 
 

@@ -15,6 +15,7 @@
 #include "common/logger.h"
 #include "network/network_manager.h"
 #include "network/protocol_handler_factory.h"
+#include "network/connection_handle_factory.h"
 #include "util/string_util.h"
 #include <pqxx/pqxx> /* libpqxx is used to instantiate C++ client */
 #include <include/network/postgres_protocol_handler.h>
@@ -52,10 +53,9 @@ void *SelectAllTest(int port) {
     pqxx::connection C(StringUtil::Format(
         "host=127.0.0.1 port=%d user=postgres sslmode=disable application_name=psql", port));
     pqxx::work txn1(C);
-
-    peloton::network::NetworkConnection *conn =
-        peloton::network::NetworkManager::GetConnection(
-            peloton::network::NetworkManager::recent_connfd);
+    peloton::network::ConnectionHandle *conn =
+        peloton::network::ConnectionHandleFactory::GetInstance().ConnectionHandleAt(
+            peloton::network::NetworkManager::recent_connfd).get();
 
     network::PostgresProtocolHandler *handler =
         dynamic_cast<network::PostgresProtocolHandler *>(conn->GetProtocolHandler().get());

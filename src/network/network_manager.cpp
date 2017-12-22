@@ -22,37 +22,6 @@ namespace network {
 int NetworkManager::recent_connfd = -1;
 SSL_CTX *NetworkManager::ssl_context = nullptr;
 
-// TODO(tianyu): This chunk of code to reuse NetworkConnection is wrong on multiple levels.
-// Mark to refactor into some factory class.
-std::unordered_map<int, std::unique_ptr<NetworkConnection>> &
-NetworkManager::GetGlobalSocketList() {
-  // mapping from socket id to socket object.
-  static std::unordered_map<int, std::unique_ptr<NetworkConnection>>
-      global_socket_list;
-
-  return global_socket_list;
-}
-
-NetworkConnection *NetworkManager::GetConnection(const int &connfd) {
-  auto &global_socket_list = GetGlobalSocketList();
-  if (global_socket_list.find(connfd) != global_socket_list.end()) {
-    return global_socket_list.at(connfd).get();
-  } else {
-    return nullptr;
-  }
-}
-
-void NetworkManager::CreateNewConnection(const int &connfd, short ev_flags,
-                                         NotifiableTask *thread) {
-  auto &global_socket_list = GetGlobalSocketList();
-  recent_connfd = connfd;
-  if (global_socket_list.find(connfd) == global_socket_list.end()) {
-    LOG_INFO("create new connection: id = %d", connfd);
-  }
-  global_socket_list[connfd].reset(
-      new NetworkConnection(connfd, ev_flags, thread));
-}
-
 NetworkManager::NetworkManager() {
   port_ = settings::SettingsManager::GetInt(settings::SettingId::port);
   max_connections_ = settings::SettingsManager::GetInt(settings::SettingId::max_connections);
