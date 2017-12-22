@@ -923,12 +923,14 @@ CheckpointingType StringToCheckpointingType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const CheckpointingType &type);
 
 /* Possible values for peloton_tilegroup_layout GUC */
-typedef enum LayoutType {
-  LAYOUT_TYPE_INVALID = INVALID_TYPE_ID,
-  LAYOUT_TYPE_ROW = 1,    /* Pure row layout */
-  LAYOUT_TYPE_COLUMN = 2, /* Pure column layout */
-  LAYOUT_TYPE_HYBRID = 3  /* Hybrid layout */
-} LayoutType;
+enum class LayoutType {
+  INVALID = INVALID_TYPE_ID,
+  ROW = 1,    /* Pure row layout */
+  COLUMN = 2, /* Pure column layout */
+  HYBRID = 3  /* Hybrid layout */
+};
+std::string LayoutTypeToString(LayoutType type);
+std::ostream &operator<<(std::ostream &os, const LayoutType &type);
 
 //===--------------------------------------------------------------------===//
 // Trigger Types
@@ -1063,7 +1065,10 @@ static const int INVALID_FILE_DESCRIPTOR = -1;
 // Tuple serialization formats
 // ------------------------------------------------------------------
 
-enum class TupleSerializationFormat { NATIVE = 0, DR = 1 };
+enum class TupleSerializationFormat {
+  NATIVE = 0,
+  DR = 1
+};
 
 // ------------------------------------------------------------------
 // Entity types

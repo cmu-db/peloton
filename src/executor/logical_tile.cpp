@@ -555,13 +555,13 @@ void LogicalTile::MaterializeByTiles(
     const peloton::LayoutType peloton_layout_mode) {
   bool row_wise_materialization = true;
 
-  if (peloton_layout_mode == LAYOUT_TYPE_COLUMN)
+  if (peloton_layout_mode == LayoutType::COLUMN)
     row_wise_materialization = false;
 
   // TODO: Make this a parameter
   auto dest_tile_column_count = dest_tile->GetColumnCount();
   oid_t column_count_threshold = 20;
-  if (peloton_layout_mode == LAYOUT_TYPE_HYBRID &&
+  if (peloton_layout_mode == LayoutType::HYBRID &&
       dest_tile_column_count <= column_count_threshold)
     row_wise_materialization = false;
 

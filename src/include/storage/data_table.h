@@ -88,7 +88,7 @@ class DataTable : public AbstractTable {
             const oid_t &database_oid, const oid_t &table_oid,
             const size_t &tuples_per_tilegroup, const bool own_schema,
             const bool adapt_table, const bool is_catalog = false,
-            const peloton::LayoutType layout_type = peloton::LAYOUT_TYPE_ROW);
+            const peloton::LayoutType layout_type = peloton::LayoutType::ROW);
 
   ~DataTable();
 

@@ -96,10 +96,10 @@ void ZoneMapManager::CreateOrUpdateZoneMapForTileGroup(
     oid_t num_tuple_slots = tile_group->GetAllocatedTupleCount();
     for (oid_t tuple_itr = 0; tuple_itr < num_tuple_slots; tuple_itr++) {
       type::Value current_val = tile_group->GetValue(tuple_itr, col_itr);
-      if (current_val.CompareGreaterThan(max)) {
+      if (current_val.CompareGreaterThan(max) == type::CmpBool::TRUE) {
         max = current_val;
       }
-      if (current_val.CompareLessThan(min)) {
+      if (current_val.CompareLessThan(min) == type::CmpBool::TRUE) {
         min = current_val;
       }
     }
