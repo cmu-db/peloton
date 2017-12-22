@@ -129,6 +129,19 @@ void IndexScanIterator::UpdateTupleWithInteger(int value, UNUSED_ATTRIBUTE int a
   }
 }
 
+void IndexScanIterator::UpdateTupleWithBigInteger(int64_t value, UNUSED_ATTRIBUTE int attribute_id, char* attribute_name, bool is_lower_key) {
+  if (is_full_scan_) return;
+
+  storage::Tuple *update_tuple = (is_point_query_) ? point_key_p_ : ((is_lower_key) ? low_key_p_ : high_key_p_);
+  const std::vector<catalog::Column> &columns = update_tuple->GetSchema()->GetColumns();
+  for (unsigned int i = 0; i < columns.size(); i++) {
+    if (strcmp(columns[i].GetName().c_str(), attribute_name) == 0) {
+      update_tuple->SetValue(i, peloton::type::ValueFactory::GetBigIntValue(value));
+      break;
+    }
+  }
+}
+
 
 }
 }

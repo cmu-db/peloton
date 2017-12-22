@@ -128,9 +128,16 @@ void IndexScanTranslator::Produce() const {
       llvm::Value *is_lower = codegen.ConstBool(is_lower_key);
 
       switch (ai->type.type_id) {
+        case peloton::type::TypeId::TINYINT:
+        case peloton::type::TypeId::SMALLINT:
         case peloton::type::TypeId::INTEGER:
         {
           codegen.Call(IndexScanIteratorProxy::UpdateTupleWithInteger, {iterator_ptr, parameter_cache.GetValue(i).GetValue(), attribute_id, attribute_name, is_lower});
+          break;
+        }
+        case peloton::type::TypeId::BIGINT:
+        {
+          codegen.Call(IndexScanIteratorProxy::UpdateTupleWithBigInteger, {iterator_ptr, codegen->CreateSExt(parameter_cache.GetValue(i).GetValue(), codegen.Int64Type()), attribute_id, attribute_name, is_lower});
           break;
         }
         default:

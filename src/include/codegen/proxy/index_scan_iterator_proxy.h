@@ -30,6 +30,7 @@ PROXY(IndexScanIterator) {
   DECLARE_METHOD(GetResultSize);
   DECLARE_METHOD(GetTileGroupOffset);
   DECLARE_METHOD(UpdateTupleWithInteger);
+  DECLARE_METHOD(UpdateTupleWithBigInteger);
 };
 
 TYPE_BUILDER(IndexScanIterator, util::IndexScanIterator);

@@ -52,6 +52,7 @@ class IndexScanIterator {
   uint64_t GetResultSize() { return (uint64_t)result_.size(); }
 
   void UpdateTupleWithInteger(int value, int attribute_id, char* attribute_name, bool is_lower_key);
+  void UpdateTupleWithBigInteger(int64_t value, int attribute_id, char* attribute_name, bool is_lower_key);
 };
 }
 }
