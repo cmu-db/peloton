@@ -57,14 +57,6 @@ class PostgresProtocolHandler: public ProtocolHandler {
   // Ugh... this should not be here but we have no choice...
   void ReplanPreparedStatement(Statement* statement);
 
-  // Check existence of statement in cache by name
-  // Return true if exists
-  bool ExistCachedStatement(std::string statement_name) {
-    auto statement_cache_itr = statement_cache_.find(statement_name);
-    return statement_cache_itr != statement_cache_.end();
-  }
-
-
   void GetResult();
 
   //===--------------------------------------------------------------------===//
@@ -171,7 +163,6 @@ class PostgresProtocolHandler: public ProtocolHandler {
   NetworkProtocolType protocol_type_;
 
   // Manage standalone queries
-  std::shared_ptr<Statement> unnamed_statement_;
 
   // The result-column format code
   std::vector<int> result_format_;
@@ -185,7 +176,7 @@ class PostgresProtocolHandler: public ProtocolHandler {
   QueryType skipped_query_type_;
 
   // Statement cache
-  std::shared_ptr<StatementCache> statement_cache_;
+  StatementCache statement_cache_;
 
   //  Portals
   std::unordered_map<std::string, std::shared_ptr<Portal>> portals_;
