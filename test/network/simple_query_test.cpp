@@ -13,7 +13,7 @@
 #include "common/harness.h"
 #include "gtest/gtest.h"
 #include "common/logger.h"
-#include "network/network_manager.h"
+#include "network/peloton_server.h"
 #include "network/protocol_handler_factory.h"
 #include "util/string_util.h"
 #include <pqxx/pqxx> /* libpqxx is used to instantiate C++ client */
@@ -31,17 +31,6 @@ namespace test {
 
 class SimpleQueryTests : public PelotonTest {};
 
-static void *LaunchServer(peloton::network::NetworkManager *network_manager,
-                          int port) {
-  try {
-    network_manager->SetPort(port);
-    network_manager->StartServer();
-  } catch (peloton::ConnectionException &exception) {
-    LOG_INFO("[LaunchServer] exception in thread");
-  }
-  return NULL;
-}
-
 /**
  * Simple select query test
  */
@@ -54,7 +43,7 @@ void *SimpleQueryTest(int port) {
 
     peloton::network::ConnectionHandle *conn =
         peloton::network::ConnectionHandleFactory::GetInstance().ConnectionHandleAt(
-            peloton::network::NetworkManager::recent_connfd).get();
+            peloton::network::PelotonServer::recent_connfd).get();
 
     network::PostgresProtocolHandler *handler =
         dynamic_cast<network::PostgresProtocolHandler*>(conn->GetProtocolHandler().get());
@@ -161,18 +150,21 @@ TEST_F(PacketManagerTests, RollbackTest) {
 TEST_F(SimpleQueryTests, SimpleQueryTest) {
   peloton::PelotonInit::Initialize();
   LOG_INFO("Server initialized");
-  peloton::network::NetworkManager network_manager;
+  peloton::network::PelotonServer server;
 
   int port = 15721;
-  std::thread serverThread(LaunchServer, &network_manager, port);
-  while (!network_manager.GetIsStarted()) {
-    sleep(1);
+  try {
+    server.SetPort(port);
+    server.SetupServer();
+  } catch (peloton::ConnectionException &exception) {
+    LOG_INFO("[LaunchServer] exception when launching server");
   }
+  std::thread serverThread([&]() { server.ServerLoop(); });
 
   // server & client running correctly
   SimpleQueryTest(port);
 
-  network_manager.CloseServer();
+  server.Close();
   serverThread.join();
   LOG_INFO("Peloton is shutting down");
   peloton::PelotonInit::Shutdown();

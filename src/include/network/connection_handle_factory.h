@@ -13,7 +13,7 @@
 #pragma once
 
 #include "network/connection_handle.h"
-#include "network_manager.h"
+#include "peloton_server.h"
 
 namespace peloton {
 namespace network {
@@ -23,7 +23,7 @@ public:
   std::shared_ptr<ConnectionHandle> GetConnectionHandle(int conn_fd, ConnectionHandlerTask *handler) {
     // TODO(tianyu): The use of a static variable here for testing purpose is VILE. Fix this in a later refactor
     // (probably also to-do: beat up the person who wrote this)
-    NetworkManager::recent_connfd = conn_fd;
+    PelotonServer::recent_connfd = conn_fd;
     auto it = reusable_handles_.find(conn_fd);
     if (it == reusable_handles_.end()){
       auto handle = std::make_shared<ConnectionHandle>(conn_fd, handler);

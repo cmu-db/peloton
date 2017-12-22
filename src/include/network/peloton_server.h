@@ -20,10 +20,10 @@
 #include <arpa/inet.h>
 #include <netinet/tcp.h>
 
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <csignal>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <vector>
 
 #include <sys/file.h>
@@ -43,12 +43,28 @@ namespace peloton {
 namespace network {
 
 
-class NetworkManager {
- private:
+class PelotonServer {
+public:
+
+  PelotonServer();
+
+  PelotonServer &SetupServer();
+
+  void ServerLoop();
+
+  void Close();
+
+  void SetPort(int new_port);
+
+  static int recent_connfd;
+  static SSL_CTX *ssl_context;
+
+private:
   // For logging purposes
   // static void LogCallback(int severity, const char *msg);
 
   uint64_t port_;             // port number
+  int listen_fd_ = -1;         // server socket fd that PelotonServer is listening on
   size_t max_connections_;    // maximum number of connections
 
   std::string private_key_file_;
@@ -56,35 +72,9 @@ class NetworkManager {
 
   std::shared_ptr<ConnectionDispatcherTask> dispatcher_task;
 
-  // Flags for controlling server start/close status
-  bool is_started_ = false;
-  bool is_closed_ = false;
-
- public:
-  static int recent_connfd;
-  static SSL_CTX *ssl_context;
-
- public:
-  NetworkManager();
-
-  void StartServer();
-
-  void Break();
-
-  void CloseServer();
-
-  void SetPort(int new_port);
-
-  // Getter and setter for flags
-  bool GetIsStarted() { return is_started_; }
-
-  void SetIsStarted(bool is_started) { this->is_started_ = is_started; }
-
-  bool GetIsClosed() { return is_closed_; }
-
-  void SetIsClosed(bool is_closed) { this->is_closed_ = is_closed; }
+  // For testing purposes
+  bool started;
 };
-
 
 }
 }
