@@ -17,6 +17,7 @@
 #include "network/network_manager.h"
 #include "network/postgres_protocol_handler.h"
 #include "util/string_util.h"
+#include "network/connection_handle_factory.h"
 
 #define NUM_THREADS 1
 
@@ -53,9 +54,9 @@ void *PrepareStatementTest(int port) {
     LOG_INFO("[PrepareStatementTest] Connected to %s", C.dbname());
     pqxx::work txn1(C);
 
-    peloton::network::NetworkConnection *conn =
-        peloton::network::NetworkManager::GetConnection(
-            peloton::network::NetworkManager::recent_connfd);
+    peloton::network::ConnectionHandle *conn =
+        peloton::network::ConnectionHandleFactory::GetInstance().ConnectionHandleAt(
+            peloton::network::NetworkManager::recent_connfd).get();
 
     //Check type of protocol handler
     network::PostgresProtocolHandler* handler =
