@@ -82,7 +82,7 @@ void TransactionLevelGCManager::Running(const int &thread_id) {
 }
 
 void TransactionLevelGCManager::RecycleTransaction(
-    concurrency::Transaction *txn) {
+    concurrency::TransactionContext *txn) {
   auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
 
   epoch_manager.ExitEpoch(txn->GetThreadId(),
@@ -108,12 +108,12 @@ int TransactionLevelGCManager::Unlink(const int &thread_id,
 
   // check if any garbage can be unlinked from indexes.
   // every time we garbage collect at most MAX_ATTEMPT_COUNT tuples.
-  std::vector<concurrency::Transaction* > garbages;
+  std::vector<concurrency::TransactionContext* > garbages;
 
   // First iterate the local unlink queue
   local_unlink_queues_[thread_id].remove_if(
       [&garbages, &tuple_counter, expired_eid,
-       this](concurrency::Transaction *garbage_ctx) -> bool {
+       this](concurrency::TransactionContext *garbage_ctx) -> bool {
         bool res = garbage_ctx->GetEpochId() <= expired_eid;
         if (res == true) {
           // unlink versions from version chain and indexes
@@ -126,7 +126,7 @@ int TransactionLevelGCManager::Unlink(const int &thread_id,
       });
 
   for (size_t i = 0; i < MAX_ATTEMPT_COUNT; ++i) {
-    concurrency::Transaction *garbage_ctx;
+    concurrency::TransactionContext *garbage_ctx;
     // if there's no more tuples in the queue, then break.
     if (unlink_queues_[thread_id]->Dequeue(garbage_ctx) == false) {
       break;
@@ -215,7 +215,7 @@ int TransactionLevelGCManager::Reclaim(const int &thread_id,
 
 // Multiple GC thread share the same recycle map
 void TransactionLevelGCManager::AddToRecycleMap(
-    concurrency::Transaction* garbage_ctx) {
+    concurrency::TransactionContext* garbage_ctx) {
   for (auto &entry : *(garbage_ctx->GetGCSetPtr().get())) {
     auto &manager = catalog::Manager::GetInstance();
     auto tile_group = manager.GetTileGroup(entry.first);
@@ -323,7 +323,7 @@ void TransactionLevelGCManager::StopGC() {
 }
 
 void TransactionLevelGCManager::UnlinkVersions(
-    concurrency::Transaction *garbage_ctx) {
+    concurrency::TransactionContext *garbage_ctx) {
   for (auto entry : *(garbage_ctx->GetGCSetPtr().get())) {
     for (auto &element : entry.second) {
       UnlinkVersion(ItemPointer(entry.first, element.first), element.second);

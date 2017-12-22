@@ -65,8 +65,8 @@ TransactionContext *TransactionManager::BeginTransaction(
     txn = new TransactionContext(thread_id, type, read_id);
   }
 
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
-      StatsType::INVALID) {
+  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+      settings::SettingId::stats_mode)) != StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()
         ->GetTxnLatencyMetric()
         .StartTimer();
@@ -84,9 +84,8 @@ void TransactionManager::EndTransaction(TransactionContext *current_txn) {
   gc::GCManagerFactory::GetInstance().RecycleTransaction(current_txn);
   current_txn = nullptr;
 
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
-      StatsType::INVALID) {
-
+  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+      settings::SettingId::stats_mode)) != StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()
         ->GetTxnLatencyMetric()
         .RecordLatency();

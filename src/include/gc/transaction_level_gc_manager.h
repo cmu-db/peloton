@@ -101,7 +101,8 @@ class TransactionLevelGCManager : public GCManager {
    */
   virtual void StopGC() override;
 
-  virtual void RecycleTransaction(concurrency::Transaction *txn) override;
+  virtual void RecycleTransaction(
+      concurrency::TransactionContext *txn) override;
 
   virtual ItemPointer ReturnFreeSlot(const oid_t &table_id) override;
 
@@ -142,14 +143,14 @@ class TransactionLevelGCManager : public GCManager {
 
   void Running(const int &thread_id);
 
-  void AddToRecycleMap(concurrency::Transaction *txn_ctx);
+  void AddToRecycleMap(concurrency::TransactionContext *txn_ctx);
 
   bool ResetTuple(const ItemPointer &);
 
   // this function iterates the gc context and unlinks every version
   // from the indexes.
   // this function will call the UnlinkVersion() function.
-  void UnlinkVersions(concurrency::Transaction *txn_ctx);
+  void UnlinkVersions(concurrency::TransactionContext *txn_ctx);
 
   // this function unlinks a specified version from the index.
   void UnlinkVersion(const ItemPointer location, const GCVersionType type);
@@ -163,13 +164,14 @@ class TransactionLevelGCManager : public GCManager {
 
   // queues for to-be-unlinked tuples.
   // # unlink_queues == # gc_threads
-  std::vector<
-      std::shared_ptr<peloton::LockFreeQueue<concurrency::TransactionContext* >>>
+  std::vector<std::shared_ptr<
+      peloton::LockFreeQueue<concurrency::TransactionContext* >>>
       unlink_queues_;
 
   // local queues for to-be-unlinked tuples.
   // # local_unlink_queues == # gc_threads
-  std::vector<std::list<concurrency::TransactionContext* >> local_unlink_queues_;
+  std::vector<
+      std::list<concurrency::TransactionContext* >> local_unlink_queues_;
 
   // multimaps for to-be-reclaimed tuples.
   // The key is the timestamp when the garbage is identified, value is the

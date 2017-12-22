@@ -20,6 +20,7 @@
 #include "common/logger.h"
 #include "common/macros.h"
 #include "common/internal_types.h"
+#include "concurrency/transaction_context.h"
 
 namespace peloton {
 
@@ -72,7 +73,7 @@ class GCManager {
   virtual size_t GetTableCount() { return 0; }
 
   virtual void RecycleTransaction(
-                            concurrency::Transaction *txn UNUSED_ATTRIBUTE) {}
+                      concurrency::TransactionContext *txn UNUSED_ATTRIBUTE) {}
 
  protected:
   void CheckAndReclaimVarlenColumns(storage::TileGroup *tg, oid_t tuple_id);
