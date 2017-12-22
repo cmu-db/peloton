@@ -157,7 +157,7 @@ executor::ExecuteResult TrafficCop::ExecuteHelper(
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     // new txn, reset result status
     curr_state.second = ResultType::SUCCESS;
-    is_single_statement_txn_ = true;
+    single_statement_txn_ = true;
     txn = txn_manager.BeginTransaction(thread_id);
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
@@ -200,7 +200,7 @@ void TrafficCop::ExecuteStatementPlanGetResult() {
   }
 
   auto txn_result = GetCurrentTxnState().first->GetResult();
-  if (is_single_statement_txn_ || init_failure ||
+  if (single_statement_txn_ || init_failure ||
       txn_result == ResultType::FAILURE) {
     LOG_TRACE(
         "About to commit: single stmt: %d, init_failure: %d, txn_result: %s",
@@ -217,7 +217,7 @@ void TrafficCop::ExecuteStatementPlanGetResult() {
       default:
         // Abort
         LOG_TRACE("Abort Transaction");
-        if (is_single_statement_txn_) {
+        if (single_statement_txn_) {
           LOG_TRACE("Tcop_txn_state size: %lu", tcop_txn_state_.size());
           p_status_.m_result = AbortQueryHelper();
         } else {
@@ -230,13 +230,12 @@ void TrafficCop::ExecuteStatementPlanGetResult() {
 
 /*
  * Prepare a statement based on parse tree. Begin a transaction if necessary.
- * If the query is not issued in a transaction (when the query type is not 'BEGIN'
- * and the tcop_txn_state is empty), Peloton will wrap it in a transaction and
- * begin a transaction here. It is a single_stmt transaction.
- * Otherwise, the query is issued inside a transaction by the client. It is a multi_stmt transaction.
+ * If the query is not issued in a transaction (if txn_stack is empty and it's not
+ * BEGIN query), Peloton will create a new transation for it. single_stmt transaction.
+ * Otherwise, it's a multi_stmt transaction.
  * TODO(Yuchen): We do not need a query string to prepare a statement and the query string may
  * contain the information of multiple statements rather than the single one. Hack here. We store
- * the query string inside Statement objects for the purpose of printing info.
+ * the query string inside Statement objects for printing infomation.
  */
 std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     const std::string &stmt_name, const std::string &query_string,
