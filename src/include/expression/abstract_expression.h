@@ -160,6 +160,9 @@ class AbstractExpression : public Printable {
   virtual void GetUsedAttributesInPredicateOrder(
     std::vector<const planner::AttributeInfo *> &attributes) const;
 
+  virtual void GetComparisonTypeInPredicateOrder(
+    std::vector<ExpressionType> &comparison_type) const;
+
   virtual void DeduceExpressionType() {}
 
   // Walks the expressoin trees and generate the correct expression name

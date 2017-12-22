@@ -918,6 +918,28 @@ ExpressionType StringToExpressionType(const std::string &str) {
   return ExpressionType::INVALID;
 }
 
+bool IsComparisonExpressionType(ExpressionType type) {
+  switch (type) {
+    case ExpressionType::COMPARE_LESSTHANOREQUALTO:
+    case ExpressionType::COMPARE_LESSTHAN:
+    case ExpressionType::COMPARE_EQUAL:
+    case ExpressionType::COMPARE_NOTEQUAL:
+    case ExpressionType::COMPARE_GREATERTHAN:
+    case ExpressionType::COMPARE_GREATERTHANOREQUALTO:
+    case ExpressionType::COMPARE_LIKE:
+    case ExpressionType::COMPARE_NOTLIKE:
+    case ExpressionType::COMPARE_IN:
+    case ExpressionType::COMPARE_DISTINCT_FROM:
+    {
+      return true;
+    }
+    default:
+    {
+      return false;
+    }
+  }
+}
+
 std::ostream &operator<<(std::ostream &os, const ExpressionType &type) {
   os << ExpressionTypeToString(type);
   return os;

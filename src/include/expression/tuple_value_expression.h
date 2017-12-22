@@ -99,6 +99,8 @@ class TupleValueExpression : public AbstractExpression {
     attributes.push_back(GetAttributeRef());
   }
 
+  void GetComparisonTypeInPredicateOrder(UNUSED_ATTRIBUTE std::vector<ExpressionType> &comparison_type) const override {}
+
   AbstractExpression *Copy() const override {
     return new TupleValueExpression(*this);
   }

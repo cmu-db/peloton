@@ -110,20 +110,27 @@ void IndexScanTranslator::Produce() const {
 
   // before doing scan, update the tuple with parameter cache!
   std::vector<const planner::AttributeInfo *> where_clause_attributes;
+  std::vector<ExpressionType> comparison_type;
   const auto *predicate = index_scan_.GetPredicate();
   if (predicate != nullptr) {
     auto &context = GetCompilationContext();
     const auto &parameter_cache = context.GetParameterCache();
     predicate->GetUsedAttributesInPredicateOrder(where_clause_attributes);
+    predicate->GetComparisonTypeInPredicateOrder(comparison_type);
     for (unsigned int i = 0; i < where_clause_attributes.size(); i++) {
       const auto *ai = where_clause_attributes[i];
       llvm::Value *attribute_id = codegen.Const32(ai->attribute_id);
       llvm::Value *attribute_name = codegen.ConstStringPtr(ai->name);
+      bool is_lower_key = false;
+      if (comparison_type[i] == peloton::ExpressionType::COMPARE_GREATERTHAN || comparison_type[i] == peloton::ExpressionType::COMPARE_GREATERTHANOREQUALTO) {
+        is_lower_key = true;
+      }
+      llvm::Value *is_lower = codegen.ConstBool(is_lower_key);
 
       switch (ai->type.type_id) {
         case peloton::type::TypeId::INTEGER:
         {
-          codegen.Call(IndexScanIteratorProxy::UpdateTupleWithInteger, {iterator_ptr, parameter_cache.GetValue(i).GetValue(), attribute_id, attribute_name});
+          codegen.Call(IndexScanIteratorProxy::UpdateTupleWithInteger, {iterator_ptr, parameter_cache.GetValue(i).GetValue(), attribute_id, attribute_name, is_lower});
           break;
         }
         default:
