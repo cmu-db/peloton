@@ -894,26 +894,45 @@ parser::ColumnDefinition *PostgresParser::ColumnDefTransform(ColumnDef *root) {
       else if (constraint->contype == CONSTR_UNIQUE)
         result->unique = true;
       else if (constraint->contype == CONSTR_FOREIGN) {
-        result->table_info_.reset(new TableInfo());
         // Transform foreign key attributes
         // Reference table
-        result->table_info_->table_name = constraint->pktable->relname;
-        // Reference column
+
+        // TODO: put it as a special ColumnDefinition, just like handling 
+        // multi-column fk constraint
+        delete result;
+        result = new ColumnDefinition(ColumnDefinition::DataType::FOREIGN);
+
+        result->foreign_key_source.emplace_back(root->colname);
         if (constraint->pk_attrs != nullptr)
-          for (auto attr_cell = constraint->pk_attrs->head;
-               attr_cell != nullptr; attr_cell = attr_cell->next) {
-            value *attr_val =
-                reinterpret_cast<value *>(attr_cell->data.ptr_value);
-            result->foreign_key_sink.push_back(std::string(attr_val->val.str));
-          }
+        {
+          auto attr_cell = constraint->pk_attrs->head;
+          value* attr_val =
+                reinterpret_cast<value*>(attr_cell->data.ptr_value);
+          result->foreign_key_sink.emplace_back(attr_val->val.str);
+
+          LOG_ERROR("PK attr: %s\n", attr_val->val.str);
+        }
+        else
+        {
+          // TODO: Default to the primary key of the sink table
+
+        }
+
+        // Update Reference Table
+        result->fk_sink_table_name = constraint->pktable->relname;
         // Action type
         result->foreign_key_delete_action =
             CharToActionType(constraint->fk_del_action);
         result->foreign_key_update_action =
             CharToActionType(constraint->fk_upd_action);
         // Match type
-        result->foreign_key_match_type =
-            CharToMatchType(constraint->fk_matchtype);
+        result->foreign_key_match_type = CharToMatchType(constraint->fk_matchtype);
+
+        LOG_ERROR("PK table name: %s.\n", result->fk_sink_table_name.c_str());
+        LOG_ERROR("delete action: %c\n", constraint->fk_del_action);
+        LOG_ERROR("update action: %c\n", constraint->fk_upd_action);
+        LOG_ERROR("fk match type: %c\n", constraint->fk_matchtype);
+
       } else if (constraint->contype == CONSTR_DEFAULT) {
         try {
           result->default_value.reset(ExprTransform(constraint->raw_expr));
@@ -978,8 +997,10 @@ parser::SQLStatement *PostgresParser::CreateTransform(CreateStmt *root) {
               reinterpret_cast<value *>(key_cell->data.ptr_value)->val.str);
         }
       } else if (constraint->contype == CONSTR_FOREIGN) {
+        // TODO: this routine will crash the program
+        // Handle multi-column fk constraints here
+
         auto col = new ColumnDefinition(ColumnDefinition::DataType::FOREIGN);
-        col->table_info_.reset(new TableInfo());
         // Transform foreign key attributes
         for (auto attr_cell = constraint->fk_attrs->head; attr_cell != nullptr;
              attr_cell = attr_cell->next) {
@@ -995,7 +1016,7 @@ parser::SQLStatement *PostgresParser::CreateTransform(CreateStmt *root) {
           col->foreign_key_sink.push_back(std::string(attr_val->val.str));
         }
         // Update Reference Table
-        col->table_info_->table_name = constraint->pktable->relname;
+        col->fk_sink_table_name = constraint->pktable->relname;
         // Action type
         col->foreign_key_delete_action =
             CharToActionType(constraint->fk_del_action);
