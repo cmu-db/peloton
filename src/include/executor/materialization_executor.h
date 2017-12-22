@@ -59,7 +59,8 @@ class MaterializationExecutor : public AbstractExecutor {
       const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
       const std::unordered_map<storage::Tile *, std::vector<oid_t>> &
           tile_to_cols,
-      storage::Tile *dest_tile);
+      storage::Tile *dest_tile,
+      const peloton::LayoutType peloton_layout_mode = peloton::LayoutType::ROW);
 
   LogicalTile *Physify(LogicalTile *source_tile);
   std::unordered_map<oid_t, oid_t> BuildIdentityMapping(

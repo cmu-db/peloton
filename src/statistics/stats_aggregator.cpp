@@ -130,10 +130,10 @@ void StatsAggregator::Aggregate(int64_t &interval_cnt, double &alpha,
 }
 
 void StatsAggregator::UpdateQueryMetrics(int64_t time_stamp,
-                                         concurrency::Transaction *txn) {
+                                         concurrency::TransactionContext *txn) {
   // Get the target query metrics table
   LOG_TRACE("Inserting Query Metric Tuples");
-  // auto query_metrics_table = GetMetricTable(QUERY_METRIC_NAME);
+  // auto query_metrics_table = GetMetricTable(MetricType::QUERY_NAME);
 
   std::shared_ptr<QueryMetric> query_metric;
   auto &completed_query_metrics = aggregated_stats_.GetCompletedQueryMetrics();
@@ -221,7 +221,7 @@ void StatsAggregator::UpdateMetrics() {
 
 void StatsAggregator::UpdateTableMetrics(storage::Database *database,
                                          int64_t time_stamp,
-                                         concurrency::Transaction *txn) {
+                                         concurrency::TransactionContext *txn) {
   // Update table metrics table for each of the indices
   auto database_oid = database->GetOid();
   auto table_count = database->GetTableCount();
@@ -248,7 +248,7 @@ void StatsAggregator::UpdateTableMetrics(storage::Database *database,
 void StatsAggregator::UpdateIndexMetrics(storage::Database *database,
                                          storage::DataTable *table,
                                          int64_t time_stamp,
-                                         concurrency::Transaction *txn) {
+                                         concurrency::TransactionContext *txn) {
   // Update index metrics table for each of the indices
   auto database_oid = database->GetOid();
   auto table_oid = table->GetOid();

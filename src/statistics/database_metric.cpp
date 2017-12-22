@@ -20,7 +20,7 @@ DatabaseMetric::DatabaseMetric(MetricType type, oid_t database_id)
     : AbstractMetric(type), database_id_(database_id) {}
 
 void DatabaseMetric::Aggregate(AbstractMetric& source) {
-  PL_ASSERT(source.GetType() == DATABASE_METRIC);
+  PL_ASSERT(source.GetType() == MetricType::DATABASE);
 
   DatabaseMetric& db_metric = static_cast<DatabaseMetric&>(source);
   txn_committed_.Aggregate(db_metric.GetTxnCommitted());

@@ -182,12 +182,10 @@ void CostAndStatsCalculator::Visit(const PhysicalSeqScan *op) {
   }
 
   auto columns_prop =
-      output_properties_->GetPropertyOfType(PropertyType::COLUMNS)
-          ->As<PropertyColumns>();
+      output_properties_->GetPropertyOfTypeAs<PropertyColumns>(PropertyType::COLUMNS);
   auto output_stats = generateOutputStat(table_stats, columns_prop);
   auto predicate_prop =
-      output_properties_->GetPropertyOfType(PropertyType::PREDICATE)
-          ->As<PropertyPredicate>();
+      output_properties_->GetPropertyOfTypeAs<PropertyPredicate>(PropertyType::PREDICATE);
   if (predicate_prop == nullptr) {
     output_cost_ += Cost::NoConditionSeqScanCost(table_stats);
     output_stats_ = output_stats;
@@ -206,9 +204,7 @@ void CostAndStatsCalculator::Visit(const PhysicalIndexScan *op) {
   // TODO : Replace with more accurate cost
   output_cost_ = getCostOfChildren(child_costs_);
   auto predicate_prop =
-      output_properties_->GetPropertyOfType(PropertyType::PREDICATE)
-          ->As<PropertyPredicate>();
-
+      output_properties_->GetPropertyOfTypeAs<PropertyPredicate>(PropertyType::PREDICATE);
   auto stats_storage = StatsStorage::GetInstance();
   auto table_stats =
       std::dynamic_pointer_cast<TableStats>(stats_storage->GetTableStats(
@@ -237,8 +233,7 @@ void CostAndStatsCalculator::Visit(const PhysicalIndexScan *op) {
   }
 
   auto columns_prop =
-      output_properties_->GetPropertyOfType(PropertyType::COLUMNS)
-          ->As<PropertyColumns>();
+      output_properties_->GetPropertyOfTypeAs<PropertyColumns>(PropertyType::COLUMNS);
   auto output_stats = generateOutputStat(table_stats, columns_prop);
 
   if (predicate_prop == nullptr) {
@@ -267,8 +262,7 @@ void CostAndStatsCalculator::Visit(const PhysicalProject *) {
     return;
   }
   auto columns_prop =
-      output_properties_->GetPropertyOfType(PropertyType::COLUMNS)
-          ->As<PropertyColumns>();
+      output_properties_->GetPropertyOfTypeAs<PropertyColumns>(PropertyType::COLUMNS);
   auto output_stats = generateOutputStat(table_stats_ptr, columns_prop);
 
   output_cost_ += Cost::ProjectCost(
@@ -288,8 +282,7 @@ void CostAndStatsCalculator::Visit(const PhysicalOrderBy *) {
   }
 
   auto columns_prop =
-      output_properties_->GetPropertyOfType(PropertyType::COLUMNS)
-          ->As<PropertyColumns>();
+      output_properties_->GetPropertyOfTypeAs<PropertyColumns>(PropertyType::COLUMNS);
   auto output_stats = generateOutputStat(table_stats_ptr, columns_prop);
   auto sort_prop = std::dynamic_pointer_cast<PropertySort>(
       output_properties_->GetPropertyOfType(PropertyType::SORT));
@@ -334,8 +327,7 @@ void CostAndStatsCalculator::Visit(const PhysicalLimit *) {
     return;
   }
   auto columns_prop =
-      output_properties_->GetPropertyOfType(PropertyType::COLUMNS)
-          ->As<PropertyColumns>();
+      output_properties_->GetPropertyOfTypeAs<PropertyColumns>(PropertyType::COLUMNS);
   auto output_stats = generateOutputStat(table_stats_ptr, columns_prop);
 
   size_t limit = (size_t)std::dynamic_pointer_cast<PropertyLimit>(
@@ -388,8 +380,7 @@ void CostAndStatsCalculator::Visit(const PhysicalHashGroupBy *op) {
   }
 
   auto columns_prop =
-      output_properties_->GetPropertyOfType(PropertyType::COLUMNS)
-          ->As<PropertyColumns>();
+      output_properties_->GetPropertyOfTypeAs<PropertyColumns>(PropertyType::COLUMNS);
   auto output_stats = generateOutputStat(table_stats_ptr, columns_prop);
 
   std::vector<oid_t> column_ids;
@@ -417,8 +408,7 @@ void CostAndStatsCalculator::Visit(const PhysicalSortGroupBy *op) {
   }
 
   auto columns_prop =
-      output_properties_->GetPropertyOfType(PropertyType::COLUMNS)
-          ->As<PropertyColumns>();
+      output_properties_->GetPropertyOfTypeAs<PropertyColumns>(PropertyType::COLUMNS);
   auto output_stats = generateOutputStat(table_stats_ptr, columns_prop);
 
   std::vector<oid_t> column_ids;
@@ -458,14 +448,11 @@ void CostAndStatsCalculator::Visit(const PhysicalDistinct *) {
     return;
   }
   auto columns_prop =
-      output_properties_->GetPropertyOfType(PropertyType::COLUMNS)
-          ->As<PropertyColumns>();
+      output_properties_->GetPropertyOfTypeAs<PropertyColumns>(PropertyType::COLUMNS);
   auto output_stats = generateOutputStat(table_stats_ptr, columns_prop);
 
   auto distinct_prop =
-      output_properties_->GetPropertyOfType(PropertyType::DISTINCT)
-          ->As<PropertyDistinct>();
-
+      output_properties_->GetPropertyOfTypeAs<PropertyDistinct>(PropertyType::DISTINCT);
   // TODO: Deal with complex situations like distinct with multiple columns or
   // with complex expressions
   if (distinct_prop->GetSize() == 1 &&

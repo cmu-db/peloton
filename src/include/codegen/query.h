@@ -20,7 +20,7 @@
 namespace peloton {
 
 namespace concurrency {
-class Transaction;
+class TransactionContext;
 }  // namespace concurrency
 
 namespace executor {
@@ -55,7 +55,7 @@ class Query {
   // this query.
   bool Prepare(const QueryFunctions &funcs);
 
-  // Execute th e query given the catalog manager and runtime/consumer state
+  // Execute the query given the storage manager and runtime/consumer state
   // that is passed along to the query execution code.
   void Execute(executor::ExecutorContext &executor_context,
                QueryParameters &parameters, char *consumer_arg,

@@ -98,7 +98,7 @@
 // //   checkpointer->DoCheckpoint();
 
 // //   auto most_recent_checkpoint_cid = checkpointer->GetMostRecentCheckpointCid();
-// //   EXPECT_EQ(most_recent_checkpoint_cid != INVALID_CID, true);
+// //   EXPECT_TRUE(most_recent_checkpoint_cid != INVALID_CID);
 
 // //   // destroy and restart
 // //   checkpoint_manager.DestroyCheckpointers();

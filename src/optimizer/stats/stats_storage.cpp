@@ -56,7 +56,7 @@ void StatsStorage::CreateStatsTableInCatalog() {
  */
 void StatsStorage::InsertOrUpdateTableStats(
     storage::DataTable *table, TableStatsCollector *table_stats_collector,
-    concurrency::Transaction *txn) {
+    concurrency::TransactionContext *txn) {
   // Add or update column stats sequentially.
   oid_t database_id = table->GetDatabaseOid();
   oid_t table_id = table->GetOid();
@@ -104,7 +104,7 @@ void StatsStorage::InsertOrUpdateColumnStats(
     oid_t database_id, oid_t table_id, oid_t column_id, int num_rows,
     double cardinality, double frac_null, std::string most_common_vals,
     std::string most_common_freqs, std::string histogram_bounds,
-    std::string column_name, bool has_index, concurrency::Transaction *txn) {
+    std::string column_name, bool has_index, concurrency::TransactionContext *txn) {
   LOG_TRACE("InsertOrUpdateColumnStats, %d, %lf, %lf, %s, %s, %s", num_rows,
             cardinality, frac_null, most_common_vals.c_str(),
             most_common_freqs.c_str(), histogram_bounds.c_str());
@@ -267,7 +267,7 @@ std::shared_ptr<TableStats> StatsStorage::GetTableStats(
  * datatables to collect their stats and store them in the column_stats_catalog.
  */
 ResultType StatsStorage::AnalyzeStatsForAllTables(
-    concurrency::Transaction *txn) {
+    concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     LOG_TRACE("Do not have transaction to analyze all tables' stats.");
     return ResultType::FAILURE;
@@ -300,7 +300,7 @@ ResultType StatsStorage::AnalyzeStatsForAllTables(
  * sotre the stats in column_stats_catalog.
  */
 ResultType StatsStorage::AnalyzeStatsForTable(storage::DataTable *table,
-                                              concurrency::Transaction *txn) {
+                                              concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     LOG_TRACE("Do not have transaction to analyze the table stats: %s",
               table->GetName().c_str());

@@ -43,7 +43,7 @@ class DatabaseCatalogObject {
 
  public:
   DatabaseCatalogObject(executor::LogicalTile *tile,
-                        concurrency::Transaction *txn);
+                        concurrency::TransactionContext *txn);
 
   void EvictAllTableObjects();
   std::shared_ptr<TableCatalogObject> GetTableObject(oid_t table_oid,
@@ -85,7 +85,7 @@ class DatabaseCatalogObject {
 
   // Pointer to its corresponding transaction
   // This object is only visible during this transaction
-  concurrency::Transaction *txn;
+  concurrency::TransactionContext *txn;
 };
 
 class DatabaseCatalog : public AbstractCatalog {
@@ -100,7 +100,7 @@ class DatabaseCatalog : public AbstractCatalog {
   // Global Singleton, only the first call requires passing parameters.
   static DatabaseCatalog *GetInstance(storage::Database *pg_catalog = nullptr,
                                       type::AbstractPool *pool = nullptr,
-                                      concurrency::Transaction *txn = nullptr);
+                                      concurrency::TransactionContext *txn = nullptr);
 
   inline oid_t GetNextOid() { return oid_++ | DATABASE_OID_MASK; }
 
@@ -108,21 +108,21 @@ class DatabaseCatalog : public AbstractCatalog {
   // write Related API
   //===--------------------------------------------------------------------===//
   bool InsertDatabase(oid_t database_oid, const std::string &database_name,
-                      type::AbstractPool *pool, concurrency::Transaction *txn);
-  bool DeleteDatabase(oid_t database_oid, concurrency::Transaction *txn);
+                      type::AbstractPool *pool, concurrency::TransactionContext *txn);
+  bool DeleteDatabase(oid_t database_oid, concurrency::TransactionContext *txn);
 
  private:
   //===--------------------------------------------------------------------===//
   // Read Related API
   //===--------------------------------------------------------------------===//
   std::shared_ptr<DatabaseCatalogObject> GetDatabaseObject(
-      oid_t database_oid, concurrency::Transaction *txn);
+      oid_t database_oid, concurrency::TransactionContext *txn);
   std::shared_ptr<DatabaseCatalogObject> GetDatabaseObject(
-      const std::string &database_name, concurrency::Transaction *txn);
+      const std::string &database_name, concurrency::TransactionContext *txn);
 
  private:
   DatabaseCatalog(storage::Database *pg_catalog, type::AbstractPool *pool,
-                  concurrency::Transaction *txn);
+                  concurrency::TransactionContext *txn);
 
   std::unique_ptr<catalog::Schema> InitializeSchema();
 

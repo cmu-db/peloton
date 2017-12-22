@@ -23,6 +23,9 @@ PROXY(ExecutorContext) {
   /// We don't need access to internal fields, so use an opaque byte array
   DECLARE_MEMBER(0, char[sizeof(executor::ExecutorContext)], opaque);
   DECLARE_TYPE;
+
+  /// Proxy peloton::executor::ExecutorContext::GetTransaction()
+  DECLARE_METHOD(GetTransaction);
 };
 
 TYPE_BUILDER(ExecutorContext, executor::ExecutorContext);

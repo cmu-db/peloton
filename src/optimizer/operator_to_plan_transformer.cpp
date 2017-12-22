@@ -67,14 +67,12 @@ void OperatorToPlanTransformer::Visit(const DummyScan *) {
 
 void OperatorToPlanTransformer::Visit(const PhysicalSeqScan *op) {
   // Generate column ids to pass into scan plan and generate output expr map
-  auto column_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
-                         ->As<PropertyColumns>();
+  auto column_prop = requirements_->GetPropertyOfTypeAs<PropertyColumns>(PropertyType::COLUMNS);
   vector<oid_t> column_ids =
       GenerateColumnsForScan(column_prop, op->table_alias, op->table_);
   // Add Scan Predicates
   auto predicate_prop =
-      requirements_->GetPropertyOfType(PropertyType::PREDICATE)
-          ->As<PropertyPredicate>();
+      requirements_->GetPropertyOfTypeAs<PropertyPredicate>(PropertyType::PREDICATE);
   expression::AbstractExpression *predicate =
       GeneratePredicateForScan(predicate_prop, op->table_alias, op->table_);
 
@@ -86,9 +84,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalSeqScan *op) {
 
 void OperatorToPlanTransformer::Visit(const PhysicalIndexScan *op) {
   auto predicate_prop =
-      requirements_->GetPropertyOfType(PropertyType::PREDICATE)
-          ->As<PropertyPredicate>();
-
+      requirements_->GetPropertyOfTypeAs<PropertyPredicate>(PropertyType::PREDICATE);
   expression::AbstractExpression *predicate =
       GeneratePredicateForScan(predicate_prop, op->table_alias, op->table_);
   vector<oid_t> key_column_ids;
@@ -107,8 +103,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalIndexScan *op) {
   }
 
   // Generate column ids to pass into scan plan and generate output expr map
-  auto column_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
-                         ->As<PropertyColumns>();
+  auto column_prop = requirements_->GetPropertyOfTypeAs<PropertyColumns>(PropertyType::COLUMNS);
   vector<oid_t> column_ids =
       GenerateColumnsForScan(column_prop, op->table_alias, op->table_);
 
@@ -129,9 +124,8 @@ void OperatorToPlanTransformer::Visit(const PhysicalIndexScan *op) {
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
-  auto cols_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
-                       ->As<PropertyColumns>();
-  size_t col_size = cols_prop->GetSize();
+  auto cols_prop = requirements_->GetPropertyOfTypeAs<PropertyColumns>(PropertyType::COLUMNS);
+  size_t col_size = cols_prop ? cols_prop->GetSize() : 0;
   ExprMap &child_expr_map = children_expr_map_[0];
 
   // first expand the star expression to include all exprs beneath
@@ -193,8 +187,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalProject *) {
 void OperatorToPlanTransformer::Visit(const PhysicalLimit *) {
   PL_ASSERT(children_plans_.size() == 1);
 
-  auto limit_prop = requirements_->GetPropertyOfType(PropertyType::LIMIT)
-                        ->As<PropertyLimit>();
+  auto limit_prop = requirements_->GetPropertyOfTypeAs<PropertyLimit>(PropertyType::LIMIT);
 
   // Limit Operator does not change the column mapping
   *output_expr_map_ = children_expr_map_[0];
@@ -208,10 +201,12 @@ void OperatorToPlanTransformer::Visit(const PhysicalLimit *) {
 void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *) {
   ExprMap &child_expr_map = children_expr_map_[0];
 
-  auto cols_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
-                       ->As<PropertyColumns>();
-  auto sort_prop =
-      requirements_->GetPropertyOfType(PropertyType::SORT)->As<PropertySort>();
+  auto cols_prop = requirements_->GetPropertyOfTypeAs<PropertyColumns>(PropertyType::COLUMNS);
+  auto sort_prop = requirements_->GetPropertyOfTypeAs<PropertySort>(PropertyType::SORT);
+
+  PL_ASSERT(cols_prop != nullptr);
+  PL_ASSERT(sort_prop != nullptr);
+
   auto sort_columns_size = sort_prop->GetSortColumnSize();
 
   vector<shared_ptr<expression::AbstractExpression>> ordered_exprs =
@@ -253,8 +248,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalOrderBy *) {
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalHashGroupBy *op) {
-  auto col_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
-                      ->As<PropertyColumns>();
+  auto col_prop = requirements_->GetPropertyOfTypeAs<PropertyColumns>(PropertyType::COLUMNS);
 
   PL_ASSERT(col_prop != nullptr);
 
@@ -263,8 +257,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalHashGroupBy *op) {
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalSortGroupBy *op) {
-  auto col_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
-                      ->As<PropertyColumns>();
+  auto col_prop = requirements_->GetPropertyOfTypeAs<PropertyColumns>(PropertyType::COLUMNS);
 
   PL_ASSERT(col_prop != nullptr);
 
@@ -273,8 +266,7 @@ void OperatorToPlanTransformer::Visit(const PhysicalSortGroupBy *op) {
 }
 
 void OperatorToPlanTransformer::Visit(const PhysicalAggregate *) {
-  auto col_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
-                      ->As<PropertyColumns>();
+  auto col_prop = requirements_->GetPropertyOfTypeAs<PropertyColumns>(PropertyType::COLUMNS);
 
   PL_ASSERT(col_prop != nullptr);
 
@@ -284,8 +276,9 @@ void OperatorToPlanTransformer::Visit(const PhysicalAggregate *) {
 void OperatorToPlanTransformer::Visit(const PhysicalDistinct *) {
   ExprMap &child_expr_map = children_expr_map_[0];
 
-  auto prop_distinct = requirements_->GetPropertyOfType(PropertyType::DISTINCT)
-                           ->As<PropertyDistinct>();
+  auto prop_distinct = requirements_->GetPropertyOfTypeAs<PropertyDistinct>(PropertyType::DISTINCT);
+
+  PL_ASSERT(prop_distinct != nullptr);
 
   std::vector<std::unique_ptr<const expression::AbstractExpression>> hash_keys;
   auto distinct_column_size = prop_distinct->GetSize();
@@ -438,13 +431,13 @@ vector<oid_t> OperatorToPlanTransformer::GenerateColumnsForScan(
     const PropertyColumns *column_prop, const std::string &alias,
     const storage::DataTable *table) {
   vector<oid_t> column_ids;
-  if (column_prop->HasStarExpression()) {
+  if (column_prop && column_prop->HasStarExpression()) {
     size_t num_col = table->GetSchema()->GetColumnCount();
     for (oid_t col_id = 0; col_id < num_col; ++col_id)
       column_ids.push_back(col_id);
     GenerateTableExprMap(*output_expr_map_, alias, table);
     auto t = *output_expr_map_;
-  } else {
+  } else if (column_prop) {
     auto output_column_size = column_prop->GetSize();
     for (oid_t idx = 0; idx < output_column_size; ++idx) {
       auto output_expr = column_prop->GetColumn(idx);
@@ -555,8 +548,7 @@ OperatorToPlanTransformer::GenerateAggregatePlan(
 unique_ptr<planner::AbstractPlan> OperatorToPlanTransformer::GenerateJoinPlan(
     expression::AbstractExpression *join_predicate, JoinType join_type,
     bool is_hash) {
-  auto cols_prop = requirements_->GetPropertyOfType(PropertyType::COLUMNS)
-                       ->As<PropertyColumns>();
+  auto cols_prop = requirements_->GetPropertyOfTypeAs<PropertyColumns>(PropertyType::COLUMNS);
 
   PL_ASSERT(children_expr_map_.size() == 2);
   auto &l_child_map = children_expr_map_[0];
@@ -564,7 +556,7 @@ unique_ptr<planner::AbstractPlan> OperatorToPlanTransformer::GenerateJoinPlan(
 
   // Retrive output columns
   vector<shared_ptr<expression::AbstractExpression>> output_exprs;
-  size_t col_size = cols_prop->GetSize();
+  size_t col_size = cols_prop ? cols_prop->GetSize() : 0;
   for (size_t curr_col_offset = 0; curr_col_offset < col_size;
        ++curr_col_offset) {
     auto expr = cols_prop->GetColumn(curr_col_offset);
@@ -592,7 +584,7 @@ unique_ptr<planner::AbstractPlan> OperatorToPlanTransformer::GenerateJoinPlan(
   // schema of the projections output
   vector<catalog::Column> columns;
   size_t output_size = output_exprs.size();
-  for (size_t output_offset = 0; output_offset<output_size; output_offset++) {
+  for (size_t output_offset = 0; output_offset < output_size; output_offset++) {
     auto expr = output_exprs[output_offset];
     auto expr_type = expr->GetExpressionType();
 
@@ -626,8 +618,7 @@ unique_ptr<planner::AbstractPlan> OperatorToPlanTransformer::GenerateJoinPlan(
   // But hash plan currently only have one predicate
   vector<expression::AbstractExpression *> predicates;
   auto predicate_prop =
-      requirements_->GetPropertyOfType(PropertyType::PREDICATE)
-          ->As<PropertyPredicate>();
+      requirements_->GetPropertyOfTypeAs<PropertyPredicate>(PropertyType::PREDICATE);
 
   if (predicate_prop != nullptr) {
     auto where_predicate = predicate_prop->GetPredicate()->Copy();

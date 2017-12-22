@@ -21,55 +21,55 @@ DateType::DateType() : Type(TypeId::DATE) {}
 
 CmpBool DateType::CompareEquals(const Value& left, const Value& right) const {
   PL_ASSERT(left.CheckComparable(right));
-  if (left.IsNull() || right.IsNull()) return CMP_NULL;
+  if (left.IsNull() || right.IsNull()) return CmpBool::NULL_;
   return GetCmpBool(left.GetAs<int32_t>() == right.GetAs<int32_t>());
 }
 
 CmpBool DateType::CompareNotEquals(const Value& left,
                                    const Value& right) const {
   PL_ASSERT(left.CheckComparable(right));
-  if (right.IsNull()) return CMP_NULL;
+  if (right.IsNull()) return CmpBool::NULL_;
   return GetCmpBool(left.GetAs<int32_t>() != right.GetAs<int32_t>());
 }
 
 CmpBool DateType::CompareLessThan(const Value& left, const Value& right) const {
   PL_ASSERT(left.CheckComparable(right));
-  if (left.IsNull() || right.IsNull()) return CMP_NULL;
+  if (left.IsNull() || right.IsNull()) return CmpBool::NULL_;
   return GetCmpBool(left.GetAs<int32_t>() < right.GetAs<int32_t>());
 }
 
 CmpBool DateType::CompareLessThanEquals(const Value& left,
                                         const Value& right) const {
   PL_ASSERT(left.CheckComparable(right));
-  if (left.IsNull() || right.IsNull()) return CMP_NULL;
+  if (left.IsNull() || right.IsNull()) return CmpBool::NULL_;
   return GetCmpBool(left.GetAs<int32_t>() <= right.GetAs<int32_t>());
 }
 
 CmpBool DateType::CompareGreaterThan(const Value& left,
                                      const Value& right) const {
   PL_ASSERT(left.CheckComparable(right));
-  if (left.IsNull() || right.IsNull()) return CMP_NULL;
+  if (left.IsNull() || right.IsNull()) return CmpBool::NULL_;
   return GetCmpBool(left.GetAs<int32_t>() > right.GetAs<int32_t>());
 }
 
 CmpBool DateType::CompareGreaterThanEquals(const Value& left,
                                            const Value& right) const {
   PL_ASSERT(left.CheckComparable(right));
-  if (left.IsNull() || right.IsNull()) return CMP_NULL;
+  if (left.IsNull() || right.IsNull()) return CmpBool::NULL_;
   return GetCmpBool(left.GetAs<int32_t>() >= right.GetAs<int32_t>());
 }
 
 Value DateType::Min(const Value& left, const Value& right) const {
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return left.OperateNull(right);
-  if (left.CompareLessThan(right) == CMP_TRUE) return left.Copy();
+  if (left.CompareLessThan(right) == CmpBool::TRUE) return left.Copy();
   return right.Copy();
 }
 
 Value DateType::Max(const Value& left, const Value& right) const {
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return left.OperateNull(right);
-  if (left.CompareGreaterThan(right) == CMP_TRUE) return left.Copy();
+  if (left.CompareGreaterThan(right) == CmpBool::TRUE) return left.Copy();
   return right.Copy();
 }
 

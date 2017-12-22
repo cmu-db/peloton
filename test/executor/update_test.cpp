@@ -20,7 +20,7 @@
 #include "catalog/schema.h"
 #include "common/logger.h"
 #include "common/statement.h"
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/abstract_executor.h"
 #include "executor/create_executor.h"
@@ -212,7 +212,7 @@ TEST_F(UpdateTests, UpdatingOld) {
   statement->SetPlanTree(optimizer->BuildPelotonPlanTree(insert_stmt, DEFAULT_DB_NAME, txn));
   LOG_INFO("Building plan tree completed!");
   std::vector<type::Value> params;
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
 

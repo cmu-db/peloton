@@ -52,6 +52,7 @@
 #ifdef BWTREE_PELOTON
 
 #include "index/index.h"
+#include "util/global.h"
 
 #endif
 
@@ -4102,7 +4103,8 @@ class BwTree : public BwTreeBase {
           LOG_ERROR("ERROR: Observed LeafRemoveNode in delta chain");
 
           PL_ASSERT(false);
-        }  // case LeafRemoveType
+          PELOTON_FALLTHROUGH;
+        } // case LeafRemoveType
         case NodeType::LeafMergeType: {
           LOG_TRACE("Observed a merge node on leaf delta chain");
 
@@ -4280,7 +4282,9 @@ class BwTree : public BwTreeBase {
           LOG_ERROR("ERROR: Observed LeafRemoveNode in delta chain");
 
           PL_ASSERT(false);
-        }  // case LeafRemoveType
+          assert(false);
+          PELOTON_FALLTHROUGH;
+        } // case LeafRemoveType
         case NodeType::LeafMergeType: {
           LOG_TRACE("Observed a merge node on leaf delta chain");
 
@@ -4469,7 +4473,8 @@ class BwTree : public BwTreeBase {
           LOG_ERROR("ERROR: Observed LeafRemoveNode in delta chain");
 
           PL_ASSERT(false);
-        }  // case LeafRemoveType
+          PELOTON_FALLTHROUGH;
+        } // case LeafRemoveType
         case NodeType::LeafMergeType: {
           LOG_TRACE("Observed a merge node on leaf delta chain");
 
@@ -4790,7 +4795,8 @@ class BwTree : public BwTreeBase {
           LOG_ERROR("ERROR: LeafRemoveNode not allowed");
 
           PL_ASSERT(false);
-        }  // case LeafRemoveType
+          PELOTON_FALLTHROUGH;
+        } // case LeafRemoveType
         case NodeType::LeafSplitType: {
           const LeafSplitNode *split_node_p =
               static_cast<const LeafSplitNode *>(node_p);
@@ -5666,14 +5672,13 @@ class BwTree : public BwTreeBase {
           context_p->abort_flag = true;
 
           return;
-        }  // if ret == true
-
+        } // if ret == true
         //
         // FALL THROUGH IF POSTING MERGE DELTA SUCCEEDS
         //
-
-      }  // case Inner/LeafRemoveType
-      case NodeType::InnerMergeType:
+        PELOTON_FALLTHROUGH;
+      } // case Inner/LeafRemoveType
+1      case NodeType::InnerMergeType:
       case NodeType::LeafMergeType: {
         LOG_TRACE("Helping along merge delta");
 

@@ -78,7 +78,8 @@ elif [[ "$DISTRO" == *"FEDORA"* ]]; then
         llvm-devel \
         llvm-static \
         libedit-devel \
-        postgresql
+        postgresql \
+        libatomic
 
 ## ------------------------------------------------
 ## REDHAT

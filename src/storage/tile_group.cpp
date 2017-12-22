@@ -92,6 +92,7 @@ oid_t TileGroup::GetActiveTupleCount() const {
   return tile_group_header->GetActiveTupleCount();
 }
 
+
 //===--------------------------------------------------------------------===//
 // Operations
 //===--------------------------------------------------------------------===//
@@ -159,7 +160,6 @@ oid_t TileGroup::InsertTuple(const Tuple *tuple) {
             INVALID_TXN_ID);
   PL_ASSERT(tile_group_header->GetBeginCommitId(tuple_slot_id) == MAX_CID);
   PL_ASSERT(tile_group_header->GetEndCommitId(tuple_slot_id) == MAX_CID);
-
   return tuple_slot_id;
 }
 

@@ -20,12 +20,12 @@ namespace peloton {
 namespace catalog {
 
 IndexMetricsCatalog *IndexMetricsCatalog::GetInstance(
-    concurrency::Transaction *txn) {
+    concurrency::TransactionContext *txn) {
   static IndexMetricsCatalog index_metrics_catalog{txn};
   return &index_metrics_catalog;
 }
 
-IndexMetricsCatalog::IndexMetricsCatalog(concurrency::Transaction *txn)
+IndexMetricsCatalog::IndexMetricsCatalog(concurrency::TransactionContext *txn)
     : AbstractCatalog("CREATE TABLE " CATALOG_DATABASE_NAME
                       "." INDEX_METRICS_CATALOG_NAME
                       " ("
@@ -45,7 +45,7 @@ IndexMetricsCatalog::~IndexMetricsCatalog() {}
 bool IndexMetricsCatalog::InsertIndexMetrics(
     oid_t database_oid, oid_t table_oid, oid_t index_oid, int64_t reads,
     int64_t deletes, int64_t inserts, int64_t time_stamp,
-    type::AbstractPool *pool, concurrency::Transaction *txn) {
+    type::AbstractPool *pool, concurrency::TransactionContext *txn) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
@@ -70,7 +70,7 @@ bool IndexMetricsCatalog::InsertIndexMetrics(
 }
 
 bool IndexMetricsCatalog::DeleteIndexMetrics(oid_t index_oid,
-                                             concurrency::Transaction *txn) {
+                                             concurrency::TransactionContext *txn) {
   oid_t index_offset = IndexId::PRIMARY_KEY;  // Primary key index
 
   std::vector<type::Value> values;

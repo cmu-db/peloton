@@ -43,8 +43,8 @@ void CleanExecutorTree(executor::AbstractExecutor *root);
  */
 void PlanExecutor::ExecutePlan(
     std::shared_ptr<planner::AbstractPlan> plan,
-    concurrency::Transaction *txn, const std::vector<type::Value> &params,
-    std::vector<StatementResult> &result,
+    concurrency::TransactionContext *txn, const std::vector<type::Value> &params,
+    std::vector<ResultValue> &result,
     const std::vector<int> &result_format, executor::ExecuteResult &p_status) {
   PL_ASSERT(plan != nullptr && txn != nullptr);
   LOG_TRACE("PlanExecutor Start (Txn ID=%" PRId64")", txn->GetTransactionId());
@@ -81,9 +81,7 @@ void PlanExecutor::ExecutePlan(
         // Construct the returned results
         for (auto &tuple : tuples) {
           for (unsigned int i = 0; i < tile->GetColumnCount(); i++) {
-            auto res = StatementResult();
-            PlanExecutor::copyFromTo(tuple[i], res.second);
-            result.push_back(std::move(res));
+            result.push_back(std::move(tuple[i]));
             LOG_TRACE("column content: %s",
                       tuple[i].c_str() != nullptr ?  tuple[i].c_str() : "-emptry-");
           }
@@ -129,12 +127,10 @@ void PlanExecutor::ExecutePlan(
   const auto &results = consumer.GetOutputTuples();
   for (const auto &tuple : results) {
     for (uint32_t i = 0; i < tuple.tuple_.size(); i++) {
-      auto res = StatementResult();
       auto column_val = tuple.GetValue(i);
       auto str = column_val.IsNull() ? "" : column_val.ToString();
-      PlanExecutor::copyFromTo(str, res.second);
       LOG_TRACE("column content: [%s]", str.c_str());
-      result.push_back(std::move(res));
+      result.push_back(std::move(str));
     }
   }
   p_status.m_processed = executor_context->num_processed;

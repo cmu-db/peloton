@@ -154,7 +154,7 @@
 //   total_length += len;
 //   auto success = log_buffer.WriteRecord(&record);
 //   EXPECT_EQ(log_buffer.GetSize(), total_length);
-//   EXPECT_EQ(success, true);
+//   EXPECT_TRUE(success);
 // }
 
 // TEST_F(BufferPoolTests, BufferPoolConcurrentTest) {

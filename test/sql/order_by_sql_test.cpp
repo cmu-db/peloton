@@ -68,7 +68,7 @@ TEST_F(OrderBySQLTests, PerformanceTest) {
 
   TestingSQLUtil::ShowTable(DEFAULT_DB_NAME, "test");
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_affected;
@@ -120,7 +120,7 @@ TEST_F(OrderBySQLTests, OrderByWithColumnsTest) {
 
   CreateAndLoadTable();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -150,7 +150,7 @@ TEST_F(OrderBySQLTests, OrderByWithColumnsDescTest) {
 
   CreateAndLoadTable();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -180,7 +180,7 @@ TEST_F(OrderBySQLTests, OrderByWithoutColumnsTest) {
 
   CreateAndLoadTable();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -210,7 +210,7 @@ TEST_F(OrderBySQLTests, OrderByWithoutColumnsDescTest) {
 
   CreateAndLoadTable();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -240,7 +240,7 @@ TEST_F(OrderBySQLTests, OrderByWithColumnsAndLimitTest) {
 
   CreateAndLoadTable();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -271,7 +271,7 @@ TEST_F(OrderBySQLTests, OrderByWithColumnsAndLimitDescTest) {
 
   CreateAndLoadTable();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -302,7 +302,7 @@ TEST_F(OrderBySQLTests, OrderByWithoutColumnsAndLimitTest) {
 
   CreateAndLoadTable();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -333,7 +333,7 @@ TEST_F(OrderBySQLTests, OrderByWithoutColumnsAndLimitDescTest) {
 
   CreateAndLoadTable();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -364,7 +364,7 @@ TEST_F(OrderBySQLTests, OrderByStar) {
 
   CreateAndLoadTable();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -397,7 +397,7 @@ TEST_F(OrderBySQLTests, OrderByStarDesc) {
 
   CreateAndLoadTable();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -430,7 +430,7 @@ TEST_F(OrderBySQLTests, OrderByStarWithLimit) {
 
   CreateAndLoadTable();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -462,7 +462,7 @@ TEST_F(OrderBySQLTests, OrderByStarWithLimitDesc) {
 
   CreateAndLoadTable();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -494,7 +494,7 @@ TEST_F(OrderBySQLTests, OrderByWithProjectionTest) {
 
   CreateAndLoadTable();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -528,7 +528,7 @@ TEST_F(OrderBySQLTests, OrderByWithProjectionDescTest) {
 
   CreateAndLoadTable();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -562,7 +562,7 @@ TEST_F(OrderBySQLTests, OrderByWithProjectionLimitTest) {
 
   CreateAndLoadTable();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -598,7 +598,7 @@ TEST_F(OrderBySQLTests, OrderByWithProjectionLimitDescTest) {
 
   CreateAndLoadTable();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
