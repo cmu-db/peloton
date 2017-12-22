@@ -13,7 +13,12 @@ if [ -n "$files" ]; then
   python script/validators/source_validator.py --files $files
   result=$?
   if [ $result -ne 0 ]; then
-    echo "Use './script/formatter/formatter.py -c -f' to format all staged files or '--no-verify' to temporarily bypass the pre-commit hook. Be aware that changed files have to be staged again!"
+    echo "*******************************"
+    echo "*** Peloton Pre-Commit Hook ***"
+    echo "*******************************"
+    echo "Use \"./script/formatting/formatter.py -c -f\" to format all staged files or \"--no-verify\" to temporarily bypass the pre-commit hook."
+    echo "Be aware that changed files have to be staged again!"
+    echo "*******************************"
   fi
   exit $result
 fi
