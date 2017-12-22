@@ -38,9 +38,7 @@ void BindNodeVisitor::BindNameToNode(parser::SQLStatement *tree) {
 }
 
 void BindNodeVisitor::Visit(parser::SelectStatement *node) {
-  context_ = std::make_shared<BinderContext>();
-  // Upper context should be set outside (e.g. when where contains subquery)
-  //  context_->SetUpperContext(pre_context);
+  context_ = std::make_shared<BinderContext>(context_);
   if (node->from_table != nullptr) node->from_table->Accept(this);
   if (node->where_clause != nullptr) {
     node->where_clause->Accept(this);
@@ -77,6 +75,7 @@ void BindNodeVisitor::Visit(parser::SelectStatement *node) {
   node->select_list = std::move(new_select_list);
   // Temporarily discard const to update the depth
   const_cast<parser::SelectStatement *>(node)->depth = context_->GetDepth();
+  context_ = context_->GetUpperContext();
 }
 
 // Some sub query nodes inside SelectStatement
@@ -226,14 +225,7 @@ void BindNodeVisitor::Visit(expression::CaseExpression *expr) {
 }
 
 void BindNodeVisitor::Visit(expression::SubqueryExpression *expr) {
-  LOG_INFO("Bind subquery: context switch...");
-  context_ = std::make_shared<BinderContext>(context_);
-  PL_ASSERT(context_->GetUpperContext() != nullptr);
-
   expr->GetSubSelect()->Accept(this);
-
-  LOG_INFO("Bind subquery: context restore...");
-  context_ = context_->GetUpperContext();
 }
 
 void BindNodeVisitor::Visit(expression::StarExpression *expr) {

@@ -294,7 +294,7 @@ TEST_F(BinderCorrectnessTest, BindDepthTest) {
   string selectSQL =
       "SELECT A.a1 FROM A WHERE A.a1 IN (SELECT b1 FROM B WHERE b1 = 2 AND b2 "
       "> (SELECT a1 FROM A WHERE a2 > 0)) "
-      "AND EXISTS (SELECT * FROM B WHERE B.b1 = A.a1)";
+      "AND EXISTS (SELECT b1 FROM B WHERE B.b1 = A.a1)";
 
   auto parse_tree = parser.BuildParseTree(selectSQL);
   auto selectStmt = dynamic_cast<parser::SelectStatement *>(

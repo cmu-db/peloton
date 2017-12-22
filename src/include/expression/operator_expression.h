@@ -93,7 +93,8 @@ class OperatorExpression : public AbstractExpression {
     // This relies on a particular order in types.h
     if (exp_type_ == ExpressionType::OPERATOR_NOT ||
         exp_type_ == ExpressionType::OPERATOR_IS_NULL ||
-        exp_type_ == ExpressionType::OPERATOR_IS_NOT_NULL) {
+        exp_type_ == ExpressionType::OPERATOR_IS_NOT_NULL ||
+        exp_type_ == ExpressionType::OPERATOR_EXISTS) {
       return_value_type_ = type::TypeId::BOOLEAN;
       return;
     }

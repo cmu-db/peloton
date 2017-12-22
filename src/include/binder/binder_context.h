@@ -110,7 +110,7 @@ class BinderContext {
   std::unordered_map<std::string, std::shared_ptr<catalog::TableCatalogObject>> regular_table_alias_map_;
   std::unordered_map<std::string, std::unordered_map<std::string, type::TypeId>> nested_table_alias_map_;
   std::shared_ptr<BinderContext> upper_context_;
-  int depth_ = -1;
+  int depth_ = 0;
 };
 
 }  // namespace binder
