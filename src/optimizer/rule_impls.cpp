@@ -684,6 +684,7 @@ bool PushFilterThroughJoin::Check(std::shared_ptr<OperatorExpression> plan, Opti
   auto& children = plan->Children();
   PL_ASSERT(children.size() == 1);
   auto& join = children.at(0);
+  (void) join;
   PL_ASSERT(join->Op().type() == OpType::InnerJoin);
   PL_ASSERT(join->Children().size() == 2);
 
@@ -763,8 +764,10 @@ bool CombineConsecutiveFilter::Check(std::shared_ptr<OperatorExpression> plan, O
   (void)plan;
 
   auto& children = plan->Children();
+  (void) children;
   PL_ASSERT(children.size() == 1);
   auto& filter = children.at(0);
+  (void) filter;
   PL_ASSERT(filter->Children().size() == 1);
 
   return true;

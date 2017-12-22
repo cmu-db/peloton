@@ -435,7 +435,7 @@ void PlanGenerator::BuildAggregatePlan(
 
   auto agg_id = 0;
   for (size_t idx = 0; idx < output_cols_.size(); ++idx) {
-    auto expr = output_cols_[idx]->Copy();
+    auto expr = output_cols_[idx];
     expr->DeduceExpressionType();
     expression::ExpressionUtil::EvaluateExpression(children_expr_map_, expr);
     if (expression::ExpressionUtil::IsAggregateExpression(
