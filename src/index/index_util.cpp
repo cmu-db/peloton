@@ -300,7 +300,7 @@ void IndexUtil::FindMaxMinInColumns(oid_t leading_column_id,
             type::ValueFactory::GetNullValueByType(type))));
       //  non_leading_columns[column_id] = *range;
       // delete range;
-      LOG_TRACE("Insert a init bounds    left size %lu     right description %s\n",
+      LOG_TRACE("Insert a init bounds, left size: %lu, right description: %s\n",
                 non_leading_columns[column_id].first.GetInfo().size(),
                 non_leading_columns[column_id].second.GetInfo().c_str());
     }

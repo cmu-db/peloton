@@ -54,7 +54,6 @@ const std::string AbstractParse::GetInfo() const {
   for (int ctr = 0, cnt = static_cast<int>(children_.size()); ctr < cnt;
        ctr++) {
     os << peloton::GETINFO_SPACER << children_[ctr].get()->GetParseNodeType() << "\n";
-    os << peloton::GETINFO_SPACER << children_[ctr].get()->GetParseNodeType() << "\n";
     os << children_[ctr].get()->GetInfo() << "\n";
   }
   std::string info = os.str();
