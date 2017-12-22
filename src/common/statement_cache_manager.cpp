@@ -14,11 +14,11 @@
 
 namespace peloton {
 
-void StatementCacheManager::RegisterStatementCache(StmtCachePtr stmt_cache) {
+void StatementCacheManager::RegisterStatementCache(StatementCache *stmt_cache) {
   statement_caches_.Insert(stmt_cache, stmt_cache);
 }
 
-void StatementCacheManager::UnRegisterStatementCache(StmtCachePtr stmt_cache) {
+void StatementCacheManager::UnRegisterStatementCache(StatementCache *stmt_cache) {
   statement_caches_.Erase(stmt_cache);
 }
 

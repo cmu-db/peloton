@@ -102,7 +102,6 @@ template class CuckooMap<oid_t, std::shared_ptr<stats::IndexMetric>>;
 template class CuckooMap<std::shared_ptr<oid_t>, std::shared_ptr<oid_t>>;
 
 // Used in StatementCacheManager
-template class CuckooMap<std::shared_ptr<StatementCache>,
-                         std::shared_ptr<StatementCache>>;
+template class CuckooMap<StatementCache*, StatementCache*>;
 
 }  // namespace peloton

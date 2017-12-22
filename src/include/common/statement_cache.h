@@ -27,7 +27,8 @@ namespace peloton {
 class StatementCache {
   typedef std::shared_ptr<Statement> StatementPtr;
   typedef std::unordered_map<std::string, StatementPtr> NameMap;
-  typedef std::unordered_map<oid_t, std::vector<StatementPtr>> TableRef;
+  typedef std::unordered_map<oid_t, std::unordered_set<StatementPtr>> TableRef;
+
 
   // Private members
 
@@ -54,8 +55,14 @@ class StatementCache {
   // Get the statement by its name;
   std::shared_ptr<Statement> GetStatement(std::string name);
 
+  // Delete the statement
+  void DeleteStatement(std::string name);
+
   // Notify the Statement Cache a table id that is invalidated
   void NotifyInvalidTable(oid_t table_id);
+
+  // Clear the cache
+  void Clear();
 
  private:
   void UpdateFromInvalidTableQueue();

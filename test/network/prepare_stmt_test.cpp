@@ -84,8 +84,6 @@ void *PrepareStatementTest(int port) {
     // %d",conn->protocol_handler_.ExistCachedStatement("searchstmt"));
     EXPECT_EQ(R.size(), 1);
 
-    EXPECT_TRUE(handler->ExistCachedStatement("searchstmt"));
-
   } catch (const std::exception &e) {
     LOG_INFO("[PrepareStatementTest] Exception occurred: %s", e.what());
     EXPECT_TRUE(false);
@@ -104,11 +102,11 @@ TEST_F(PrepareStmtTests, PrepareStatementTest) {
   }
 
   PrepareStatementTest(port);
-
+  LOG_DEBUG("Server Closing");
   network_manager.CloseServer();
   serverThread.join();
   peloton::PelotonInit::Shutdown();
-  LOG_INFO("Peloton has shut down");
+  LOG_DEBUG("Peloton has shut down");
 }
 
 }  // namespace test
