@@ -15,7 +15,7 @@
 #include "catalog/catalog.h"
 #include "catalog/language_catalog.h"
 #include "common/logger.h"
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "executor/executor_context.h"
 #include "planner/create_function_plan.h"
 #include "type/types.h"

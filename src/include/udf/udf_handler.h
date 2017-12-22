@@ -5,7 +5,7 @@
 namespace peloton {
 
 namespace concurrency {
-class Transaction;
+class TransactionContext;
 }
 
 namespace udf {
@@ -17,7 +17,7 @@ class UDFHandler {
   UDFHandler();
 
   std::shared_ptr<codegen::CodeContext> Execute(
-      concurrency::Transaction *txn, std::string func_name,
+      concurrency::TransactionContext *txn, std::string func_name,
       std::string func_body, std::vector<std::string> args_name,
       std::vector<arg_type> args_type, arg_type ret_type);
   llvm::Function *RegisterExternalFunction(
@@ -26,7 +26,7 @@ class UDFHandler {
 
  private:
   std::shared_ptr<codegen::CodeContext> Compile(
-      concurrency::Transaction *txn, std::string func_name,
+      concurrency::TransactionContext *txn, std::string func_name,
       std::string func_body, std::vector<std::string> args_name,
       std::vector<arg_type> args_type, arg_type ret_type);
 

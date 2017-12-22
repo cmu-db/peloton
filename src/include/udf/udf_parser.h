@@ -13,14 +13,14 @@
 namespace peloton {
 
 namespace concurrency {
-class Transaction;
+class TransactionContext;
 }
 
 namespace udf {
 
 class UDFParser {
  public:
-  UDFParser(UNUSED_ATTRIBUTE concurrency::Transaction *txn);
+  UDFParser(UNUSED_ATTRIBUTE concurrency::TransactionContext *txn);
 
   void ParseUDF(codegen::CodeGen &cg, codegen::FunctionBuilder &fb,
                 std::string func_body, std::string func_name,

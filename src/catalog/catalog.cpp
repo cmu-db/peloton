@@ -208,8 +208,8 @@ ResultType Catalog::CreateDatabase(const std::string &database_name,
 ResultType Catalog::CreateTable(const std::string &database_name,
                                 const std::string &table_name,
                                 std::unique_ptr<catalog::Schema> schema,
-                                concurrency::TransactionContext *txn, bool is_catalog,
-                                oid_t tuples_per_tilegroup) {
+                                concurrency::TransactionContext *txn,
+                                bool is_catalog, oid_t tuples_per_tilegroup) {
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to create table " +
                            table_name);
@@ -395,13 +395,11 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
   return success;
 }
 
-ResultType Catalog::CreateIndex(oid_t database_oid, oid_t table_oid,
-                                const std::vector<oid_t> &key_attrs,
-                                const std::string &index_name,
-                                IndexType index_type,
-                                IndexConstraintType index_constraint,
-                                bool unique_keys, concurrency::TransactionContext *txn,
-                                bool is_catalog) {
+ResultType Catalog::CreateIndex(
+    oid_t database_oid, oid_t table_oid, const std::vector<oid_t> &key_attrs,
+    const std::string &index_name, IndexType index_type,
+    IndexConstraintType index_constraint, bool unique_keys,
+    concurrency::TransactionContext *txn, bool is_catalog) {
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to create index " +
                            index_name);
@@ -572,7 +570,8 @@ ResultType Catalog::DropTable(oid_t database_oid, oid_t table_oid,
  * @param   txn            TransactionContext
  * @return  TransactionContext ResultType(SUCCESS or FAILURE)
  */
-ResultType Catalog::DropIndex(oid_t index_oid, concurrency::TransactionContext *txn) {
+ResultType Catalog::DropIndex(oid_t index_oid,
+                              concurrency::TransactionContext *txn) {
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to drop index " +
                            std::to_string(index_oid));
@@ -616,7 +615,8 @@ ResultType Catalog::DropIndex(oid_t index_oid, concurrency::TransactionContext *
  * throw exception and abort txn if not exists/invisible
  * */
 storage::Database *Catalog::GetDatabaseWithName(
-    const std::string &database_name, concurrency::TransactionContext *txn) const {
+    const std::string &database_name,
+    concurrency::TransactionContext *txn) const {
   PL_ASSERT(txn != nullptr);
 
   // Check in pg_database using txn
@@ -635,9 +635,9 @@ storage::Database *Catalog::GetDatabaseWithName(
  * get it from storage layer using table_oid,
  * throw exception and abort txn if not exists/invisible
  * */
-storage::DataTable *Catalog::GetTableWithName(const std::string &database_name,
-                                              const std::string &table_name,
-                                              concurrency::TransactionContext *txn) {
+storage::DataTable *Catalog::GetTableWithName(
+    const std::string &database_name, const std::string &table_name,
+    concurrency::TransactionContext *txn) {
   PL_ASSERT(txn != nullptr);
 
   LOG_TRACE("Looking for table %s in database %s", table_name.c_str(),
@@ -833,7 +833,7 @@ void Catalog::AddPlpgsqlFunction(
     const std::string &name, const std::vector<type::TypeId> &argument_types,
     const type::TypeId return_type, oid_t prolang, const std::string &func_src,
     std::shared_ptr<peloton::codegen::CodeContext> code_context,
-    concurrency::Transaction *txn) {
+    concurrency::TransactionContext *txn) {
   // Check if UDF already exists
   auto proc_catalog_obj =
       ProcCatalog::GetInstance().GetProcByName(name, argument_types, txn);
@@ -1026,8 +1026,8 @@ void Catalog::InitializeFunctions() {
           txn);
       // Trim
       AddBuiltinFunction(
-          "btrim", {type::TypeId::VARCHAR},
-          type::TypeId::VARCHAR, internal_lang, "trim",
+          "btrim", {type::TypeId::VARCHAR}, type::TypeId::VARCHAR,
+          internal_lang, "trim",
           function::BuiltInFuncType{OperatorId::Trim,
                                     function::StringFunctions::_Trim},
           txn);
@@ -1123,8 +1123,8 @@ void Catalog::InitializeFunctions() {
           txn);
 
       AddBuiltinFunction(
-          "ceil", {type::TypeId::SMALLINT}, type::TypeId::DECIMAL, internal_lang,
-          "Ceil",
+          "ceil", {type::TypeId::SMALLINT}, type::TypeId::DECIMAL,
+          internal_lang, "Ceil",
           function::BuiltInFuncType{OperatorId::Ceil,
                                     function::DecimalFunctions::_Ceil},
           txn);
@@ -1139,6 +1139,41 @@ void Catalog::InitializeFunctions() {
       AddBuiltinFunction(
           "ceil", {type::TypeId::BIGINT}, type::TypeId::DECIMAL, internal_lang,
           "Ceil",
+          function::BuiltInFuncType{OperatorId::Ceil,
+                                    function::DecimalFunctions::_Ceil},
+          txn);
+
+      AddBuiltinFunction(
+          "ceiling", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL,
+          internal_lang, "Ceil",
+          function::BuiltInFuncType{OperatorId::Ceil,
+                                    function::DecimalFunctions::_Ceil},
+          txn);
+
+      AddBuiltinFunction(
+          "ceiling", {type::TypeId::TINYINT}, type::TypeId::DECIMAL,
+          internal_lang, "Ceil",
+          function::BuiltInFuncType{OperatorId::Ceil,
+                                    function::DecimalFunctions::_Ceil},
+          txn);
+
+      AddBuiltinFunction(
+          "ceiling", {type::TypeId::SMALLINT}, type::TypeId::DECIMAL,
+          internal_lang, "Ceil",
+          function::BuiltInFuncType{OperatorId::Ceil,
+                                    function::DecimalFunctions::_Ceil},
+          txn);
+
+      AddBuiltinFunction(
+          "ceiling", {type::TypeId::INTEGER}, type::TypeId::DECIMAL,
+          internal_lang, "Ceil",
+          function::BuiltInFuncType{OperatorId::Ceil,
+                                    function::DecimalFunctions::_Ceil},
+          txn);
+
+      AddBuiltinFunction(
+          "ceiling", {type::TypeId::BIGINT}, type::TypeId::DECIMAL,
+          internal_lang, "Ceil",
           function::BuiltInFuncType{OperatorId::Ceil,
                                     function::DecimalFunctions::_Ceil},
           txn);

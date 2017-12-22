@@ -3,7 +3,7 @@
 namespace peloton {
 namespace udf {
 
-UDFParser::UDFParser(UNUSED_ATTRIBUTE concurrency::Transaction *txn) {
+UDFParser::UDFParser(UNUSED_ATTRIBUTE concurrency::TransactionContext *txn) {
   // Install the binary operator priorities
   binop_precedence_['<'] = 10;
   binop_precedence_['>'] = 10;
