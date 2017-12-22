@@ -43,10 +43,18 @@
 namespace peloton{
 namespace network {
 
+// TODO(tianyu) This class is not refactored in full as rewriting the logic is not cost-effective. However, readability
+// improvement and other changes may become desirable in the future. Other than code clutter, responsibility assignment
+// is not well thought-out in this class. Abstracting out some type of socket wrapper would be nice.
+/**
+ * @brief A ConnectionHandle encapsulates all information about a client connection for its entire duration.
+ * One should not use the constructor to construct a new ConnectionHandle instance every time as it is expensive
+ * to allocate buffers. Instead, use the ConnectionHandleFactory.
+ *
+ * @see ConnectionHandleFactory
+ */
 class ConnectionHandle {
 public:
-
-  ConnectionHandle(int sock_fd, ConnectionHandlerTask *handler);
 
   /**
    * refill_read_buffer - Used to repopulate read buffer with a fresh
@@ -79,22 +87,20 @@ public:
   Transition GetResult();
 
 private:
+  /**
+   * A state machine is defined to be a set of states, a set of symbols it supports, and a function mapping each
+   * state and symbol pair to the state it should transition to. i.e. transition_graph = state * symbol -> state
+   *
+   * In addition to the transition system, our network state machine also needs to perform actions. Actions are
+   * defined as functions (lambdas, or closures, in various other languages) and is promised to be invoked by the
+   * state machine after each transition if registered in the transition graph.
+   *
+   * So the transition graph overall has type transition_graph = state * symbol -> state * action
+   */
   class StateMachine {
   public:
-    /**
-     * A state machine is defined to be a set of states, a set of symbols it supports, and a function mapping each
-     * state and symbol pair to the state it should transition to. i.e. transition_graph = state * symbol -> state
-     *
-     * In addition to the transition system, our network state machine also needs to perform actions. Actions are
-     * defined as functions (lambdas, or closures, in various other languages) and is promised to be invoked by the
-     * state machine after each transition if registered in the transition graph.
-     *
-     * So the transition graph overall has type transition_graph = state * symbol -> state * action
-     */
     using action = Transition (*)(ConnectionHandle &);
     using transition_result = std::pair<ConnState, action>;
-
-
     /**
      * Runs the internal state machine, starting from the symbol given, until no more
      * symbols are available.
@@ -122,6 +128,8 @@ private:
 
   friend class StateMachine;
   friend class ConnectionHandleFactory;
+
+  ConnectionHandle(int sock_fd, ConnectionHandlerTask *handler);
 
   ProcessResult ProcessInitial();
 
