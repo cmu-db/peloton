@@ -46,7 +46,7 @@ TEST_F(IndexScanSQLTests, CreateIndexAfterInsertTest) {
 
   CreateAndLoadTable();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -77,7 +77,7 @@ TEST_F(IndexScanSQLTests, CreateIndexAfterInsertOnMultipleColumnsTest) {
 
   CreateAndLoadTable();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -115,7 +115,7 @@ TEST_F(IndexScanSQLTests, SQLTest) {
       "VARCHAR);");
   LOG_INFO("Table created!");
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   // Inserting a tuple end-to-end
   LOG_INFO("Inserting a tuple...");
   TestingSQLUtil::ExecuteSQLQuery(

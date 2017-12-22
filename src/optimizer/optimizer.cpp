@@ -81,7 +81,7 @@ Optimizer::Optimizer() {
 
 shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
     const unique_ptr<parser::SQLStatementList> &parse_tree_list,
-    const std::string default_database_name, concurrency::Transaction *txn) {
+    const std::string default_database_name, concurrency::TransactionContext *txn) {
   // Base Case
   if (parse_tree_list->GetStatements().size() == 0) return nullptr;
 
@@ -137,7 +137,7 @@ void Optimizer::Reset() {
 
 unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
     parser::SQLStatement *tree, bool &is_ddl_stmt,
-    concurrency::Transaction *txn) {
+    concurrency::TransactionContext *txn) {
   unique_ptr<planner::AbstractPlan> ddl_plan = nullptr;
   is_ddl_stmt = true;
   auto stmt_type = tree->GetType();
@@ -216,7 +216,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
 }
 
 shared_ptr<GroupExpression> Optimizer::InsertQueryTree(
-    parser::SQLStatement *tree, concurrency::Transaction *txn) {
+    parser::SQLStatement *tree, concurrency::TransactionContext *txn) {
   QueryToOperatorTransformer converter(txn);
   shared_ptr<OperatorExpression> initial =
       converter.ConvertToOpExpression(tree);
@@ -380,10 +380,11 @@ void Optimizer::OptimizeExpression(shared_ptr<GroupExpression> gexpr,
 }
 
 Property *Optimizer::GenerateNewPropertyCols(PropertySet requirements) {
-  auto cols_prop = requirements.GetPropertyOfType(PropertyType::COLUMNS)
-                       ->As<PropertyColumns>();
-  auto sort_prop =
-      requirements.GetPropertyOfType(PropertyType::SORT)->As<PropertySort>();
+  auto cols_prop = requirements.GetPropertyOfTypeAs<PropertyColumns>(PropertyType::COLUMNS);
+  auto sort_prop = requirements.GetPropertyOfTypeAs<PropertySort>(PropertyType::SORT);
+
+  PL_ASSERT(cols_prop != nullptr);
+  PL_ASSERT(sort_prop != nullptr);
 
   // Check if there is any missing columns from orderby need to be added
   ExprSet columns_set;

@@ -20,7 +20,7 @@ namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
-// Transaction Tests
+// TransactionContext Tests
 //===--------------------------------------------------------------------===//
 
 class MVCCTests : public PelotonTest {};

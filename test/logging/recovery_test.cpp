@@ -133,7 +133,7 @@
 //   logging::LoggingUtil::RemoveDirectory(dir_name.c_str(), false);
 
 //   auto status = logging::LoggingUtil::CreateDirectory(dir_name.c_str(), 0700);
-//   EXPECT_EQ(status, true);
+//   EXPECT_TRUE(status);
 //   logging::LogManager::GetInstance().SetLogDirectoryName("./");
 
 //   for (int i = 0; i < num_files; i++) {
@@ -272,7 +272,7 @@
 //   EXPECT_EQ(wal_fel.GetLogFileCounter(), num_files + 2);
 
 //   status = logging::LoggingUtil::RemoveDirectory(dir_name.c_str(), false);
-//   EXPECT_EQ(status, true);
+//   EXPECT_TRUE(status);
 
 //   auto txn = txn_manager.BeginTransaction();
 //   catalog->DropDatabaseWithOid(DEFAULT_DB_ID, txn);
@@ -311,16 +311,16 @@
 
 //   type::Value rval0 = (recovery_table->GetTileGroupById(100)->GetValue(5, 0));
 //   type::CmpBool cmp0 = (val0.CompareEquals(rval0));
-//   EXPECT_TRUE(cmp0 == type::CMP_TRUE);
+//   EXPECT_TRUE(cmp0 == type::CmpBool::TRUE);
 //   type::Value rval1 = (recovery_table->GetTileGroupById(100)->GetValue(5, 1));
 //   type::CmpBool cmp1 = (val1.CompareEquals(rval1));
-//   EXPECT_TRUE(cmp1 == type::CMP_TRUE);
+//   EXPECT_TRUE(cmp1 == type::CmpBool::TRUE);
 //   type::Value rval2 = (recovery_table->GetTileGroupById(100)->GetValue(5, 2));
 //   type::CmpBool cmp2 = (val2.CompareEquals(rval2));
-//   EXPECT_TRUE(cmp2 == type::CMP_TRUE);
+//   EXPECT_TRUE(cmp2 == type::CmpBool::TRUE);
 //   type::Value rval3 = (recovery_table->GetTileGroupById(100)->GetValue(5, 3));
 //   type::CmpBool cmp3 = (val3.CompareEquals(rval3));
-//   EXPECT_TRUE(cmp3 == type::CMP_TRUE);
+//   EXPECT_TRUE(cmp3 == type::CmpBool::TRUE);
 
 //   EXPECT_EQ(recovery_table->GetTupleCount(), 1);
 //   EXPECT_EQ(recovery_table->GetTileGroupCount(), 2);
@@ -365,16 +365,16 @@
 
 //   type::Value rval0 = (recovery_table->GetTileGroupById(100)->GetValue(5, 0));
 //   type::CmpBool cmp0 = (val0.CompareEquals(rval0));
-//   EXPECT_TRUE(cmp0 == type::CMP_TRUE);
+//   EXPECT_TRUE(cmp0 == type::CmpBool::TRUE);
 //   type::Value rval1 = (recovery_table->GetTileGroupById(100)->GetValue(5, 1));
 //   type::CmpBool cmp1 = (val1.CompareEquals(rval1));
-//   EXPECT_TRUE(cmp1 == type::CMP_TRUE);
+//   EXPECT_TRUE(cmp1 == type::CmpBool::TRUE);
 //   type::Value rval2 = (recovery_table->GetTileGroupById(100)->GetValue(5, 2));
 //   type::CmpBool cmp2 = (val2.CompareEquals(rval2));
-//   EXPECT_TRUE(cmp2 == type::CMP_TRUE);
+//   EXPECT_TRUE(cmp2 == type::CmpBool::TRUE);
 //   type::Value rval3 = (recovery_table->GetTileGroupById(100)->GetValue(5, 3));
 //   type::CmpBool cmp3 = (val3.CompareEquals(rval3));
-//   EXPECT_TRUE(cmp3 == type::CMP_TRUE);
+//   EXPECT_TRUE(cmp3 == type::CmpBool::TRUE);
 
 //   EXPECT_EQ(recovery_table->GetTupleCount(), 0);
 //   EXPECT_EQ(recovery_table->GetTileGroupCount(), 2);

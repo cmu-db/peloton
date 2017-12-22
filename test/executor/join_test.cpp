@@ -84,7 +84,7 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, JoinType join_type,
 void ExecuteNestedLoopJoinTest(JoinType join_type, bool IndexScan = false);
 
 void PopulateTable(storage::DataTable *table, int num_rows, bool random,
-                   concurrency::Transaction *current_txn);
+                   concurrency::TransactionContext *current_txn);
 
 oid_t CountTuplesWithNullFields(executor::LogicalTile *logical_tile);
 
@@ -224,7 +224,7 @@ TEST_F(JoinTests, BasicNestedLoopTest) {
 }
 
 void PopulateTable(storage::DataTable *table, int num_rows, bool random,
-                   concurrency::Transaction *current_txn) {
+                   concurrency::TransactionContext *current_txn) {
   // Random values
   if (random) std::srand(std::time(nullptr));
 

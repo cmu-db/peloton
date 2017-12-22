@@ -36,7 +36,7 @@ class OperatorExpression;
 }
 
 namespace concurrency {
-class Transaction;
+class TransactionContext;
 }
 
 namespace optimizer {
@@ -59,7 +59,7 @@ class Optimizer : public AbstractOptimizer {
   std::shared_ptr<planner::AbstractPlan> BuildPelotonPlanTree(
       const std::unique_ptr<parser::SQLStatementList> &parse_tree,
       const std::string default_database_name,
-      concurrency::Transaction *txn) override;
+      concurrency::TransactionContext *txn) override;
 
   void Reset() override;
 
@@ -72,7 +72,7 @@ class Optimizer : public AbstractOptimizer {
    * return: the DDL plan if it is a DDL statement
    */
   std::unique_ptr<planner::AbstractPlan> HandleDDLStatement(
-      parser::SQLStatement *tree, bool &is_ddl_stmt, concurrency::Transaction *txn);
+      parser::SQLStatement *tree, bool &is_ddl_stmt, concurrency::TransactionContext *txn);
 
   /* TransformQueryTree - create an initial operator tree for the given query
    * to be used in performing optimization.
@@ -81,7 +81,7 @@ class Optimizer : public AbstractOptimizer {
    * return: the root group expression for the inserted query
    */
   std::shared_ptr<GroupExpression> InsertQueryTree(parser::SQLStatement *tree,
-                                                   concurrency::Transaction *txn);
+                                                   concurrency::TransactionContext *txn);
 
   /* GetQueryTreeRequiredProperties - get the required physical properties for
    * a peloton query tree.

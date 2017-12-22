@@ -26,7 +26,7 @@
 #include "common/item_pointer.h"
 #include "common/logger.h"
 #include "common/macros.h"
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/abstract_executor.h"
 #include "executor/insert_executor.h"
@@ -47,7 +47,7 @@ namespace sdbench {
 
 std::unique_ptr<storage::DataTable> sdbench_table;
 
-void CreateTable() {
+void CreateTable(UNUSED_ATTRIBUTE peloton::LayoutType layout_type) {
   const oid_t col_count = state.attribute_count + 1;
   const bool is_inlined = true;
 
@@ -120,10 +120,8 @@ void LoadTable() {
 }
 
 void CreateAndLoadTable(LayoutType layout_type) {
-  // Initialize settings
-  peloton_layout_mode = layout_type;
 
-  CreateTable();
+  CreateTable(layout_type);
 
   LoadTable();
 }

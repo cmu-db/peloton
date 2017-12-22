@@ -22,7 +22,7 @@ struct TableRef;
 }
 
 namespace concurrency {
-class Transaction;
+class TransactionContext;
 }
 
 namespace binder {
@@ -43,11 +43,11 @@ class BinderContext {
   // Update the table alias map given a table reference (in the from clause)
   void AddTable(parser::TableRef* table_ref,
                 const std::string default_database_name,
-                concurrency::Transaction* txn);
+                concurrency::TransactionContext* txn);
 
   // Update the table alias map given a table reference (in the from clause)
   void AddTable(const std::string db_name, const std::string table_name,
-                concurrency::Transaction* txn);
+                concurrency::TransactionContext* txn);
 
   static bool HasTables(std::shared_ptr<BinderContext> current_context) {
     if (current_context == nullptr) return false;
@@ -63,7 +63,7 @@ class BinderContext {
                                 std::tuple<oid_t, oid_t>& table_id_tuple,
                                 std::tuple<oid_t, oid_t, oid_t>& col_pos_tuple,
                                 type::TypeId& value_type,
-                                concurrency::Transaction* txn);
+                                concurrency::TransactionContext* txn);
 
   // Construct the column position tuple given only the column name and the
   // context. Also set the value type based on column type
@@ -74,7 +74,7 @@ class BinderContext {
                                 std::tuple<oid_t, oid_t, oid_t>& col_pos_tuple,
                                 std::string& table_alias,
                                 type::TypeId& value_type,
-                                concurrency::Transaction* txn);
+                                concurrency::TransactionContext* txn);
 
   // Construct the table id tuple given the table alias
   static bool GetTableIdTuple(std::shared_ptr<BinderContext> current_context,

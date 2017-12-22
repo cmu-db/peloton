@@ -24,14 +24,14 @@ LanguageCatalogObject::LanguageCatalogObject(executor::LogicalTile *tuple)
     : lang_oid_(tuple->GetValue(0, 0).GetAs<oid_t>()),
       lang_name_(tuple->GetValue(0, 1).GetAs<const char *>()) {}
 
-LanguageCatalog &LanguageCatalog::GetInstance(concurrency::Transaction *txn) {
+LanguageCatalog &LanguageCatalog::GetInstance(concurrency::TransactionContext *txn) {
   static LanguageCatalog language_catalog{txn};
   return language_catalog;
 }
 
 LanguageCatalog::~LanguageCatalog(){};
 
-LanguageCatalog::LanguageCatalog(concurrency::Transaction *txn)
+LanguageCatalog::LanguageCatalog(concurrency::TransactionContext *txn)
     : AbstractCatalog("CREATE TABLE " CATALOG_DATABASE_NAME
                       "." LANGUAGE_CATALOG_NAME
                       " ("
@@ -46,7 +46,7 @@ LanguageCatalog::LanguageCatalog(concurrency::Transaction *txn)
 // insert a new language by name
 bool LanguageCatalog::InsertLanguage(const std::string &lanname,
                                      type::AbstractPool *pool,
-                                     concurrency::Transaction *txn) {
+                                     concurrency::TransactionContext *txn) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
@@ -63,7 +63,7 @@ bool LanguageCatalog::InsertLanguage(const std::string &lanname,
 
 // delete a language by name
 bool LanguageCatalog::DeleteLanguage(const std::string &lanname,
-                                     concurrency::Transaction *txn) {
+                                     concurrency::TransactionContext *txn) {
   oid_t index_offset = IndexId::SECONDARY_KEY_0;
 
   std::vector<type::Value> values;
@@ -74,7 +74,7 @@ bool LanguageCatalog::DeleteLanguage(const std::string &lanname,
 }
 
 std::unique_ptr<LanguageCatalogObject> LanguageCatalog::GetLanguageByOid(
-    oid_t lang_oid, concurrency::Transaction *txn) const {
+    oid_t lang_oid, concurrency::TransactionContext *txn) const {
   std::vector<oid_t> column_ids(all_column_ids);
   oid_t index_offset = IndexId::PRIMARY_KEY;
   std::vector<type::Value> values;
@@ -94,7 +94,7 @@ std::unique_ptr<LanguageCatalogObject> LanguageCatalog::GetLanguageByOid(
 }
 
 std::unique_ptr<LanguageCatalogObject> LanguageCatalog::GetLanguageByName(
-    const std::string &lang_name, concurrency::Transaction *txn) const {
+    const std::string &lang_name, concurrency::TransactionContext *txn) const {
   std::vector<oid_t> column_ids(all_column_ids);
   oid_t index_offset = IndexId::SECONDARY_KEY_0;
   std::vector<type::Value> values;

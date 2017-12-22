@@ -73,7 +73,7 @@ void SetupTables(std::string database_name) {
     traffic_cop.SetTcopTxnState(txn);
 
     vector<type::Value> params;
-    vector<StatementResult> result;
+    vector<ResultValue> result;
     vector<int> result_format;
     unique_ptr<Statement> statement(new Statement("CREATE", sql));
     auto parse_tree = parser.BuildParseTree(sql);
@@ -299,7 +299,7 @@ TEST_F(BinderCorrectnessTest, FunctionExpressionTest) {
       dynamic_cast<parser::SelectStatement*>(stmt)->select_list[0].get());
   EXPECT_TRUE(funct_expr->Evaluate(nullptr, nullptr, nullptr)
                   .CompareEquals(type::ValueFactory::GetVarcharValue("est")) ==
-              type::CMP_TRUE);
+              type::CmpBool::TRUE);
 
   txn_manager.CommitTransaction(txn);
 }

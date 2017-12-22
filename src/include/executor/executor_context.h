@@ -20,7 +20,7 @@ namespace peloton {
 //class Value;
 
 namespace concurrency{
-class Transaction;
+class TransactionContext;
 }
 
 namespace executor {
@@ -36,14 +36,14 @@ class ExecutorContext {
   ExecutorContext(ExecutorContext &&) = delete;
   ExecutorContext &operator=(ExecutorContext &&) = delete;
 
-  ExecutorContext(concurrency::Transaction *transaction);
+  ExecutorContext(concurrency::TransactionContext *transaction);
 
-  ExecutorContext(concurrency::Transaction *transaction,
+  ExecutorContext(concurrency::TransactionContext *transaction,
                   const std::vector<type::Value> &params);
 
   ~ExecutorContext();
 
-  concurrency::Transaction *GetTransaction() const;
+  concurrency::TransactionContext *GetTransaction() const;
 
   const std::vector<type::Value> &GetParams() const;
 
@@ -63,7 +63,7 @@ class ExecutorContext {
   //===--------------------------------------------------------------------===//
 
   // transaction
-  concurrency::Transaction *transaction_;
+  concurrency::TransactionContext *transaction_;
 
   // params
   std::vector<type::Value> params_;

@@ -17,7 +17,7 @@
 #include "executor/logical_tile.h"
 #include "executor/executor_context.h"
 #include "common/container_tuple.h"
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "storage/data_table.h"
 #include "storage/tile_group_header.h"

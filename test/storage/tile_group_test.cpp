@@ -14,7 +14,7 @@
 #include "common/harness.h"
 
 #include "type/value_factory.h"
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "storage/tile_group.h"
 #include "storage/tile_group_factory.h"
@@ -528,7 +528,7 @@ TEST_F(TileGroupTests, TileCopyTest) {
   }
 
   // At the end of all the checks, intended_behavior is expected to be true
-  EXPECT_EQ(true, intended_behavior);
+  EXPECT_TRUE(intended_behavior);
 }
 
 }  // namespace test

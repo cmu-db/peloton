@@ -40,7 +40,7 @@ void TestingStatsUtil::ShowTable(std::string database_name,
   auto &traffic_cop = tcop::TrafficCop::GetInstance();
 
   std::vector<type::Value> params;
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::string sql = "SELECT * FROM " + database_name + "." + table_name;
   statement.reset(new Statement("SELECT", sql));
   // using transaction to optimize

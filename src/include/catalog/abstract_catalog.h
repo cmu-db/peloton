@@ -20,7 +20,7 @@
 namespace peloton {
 
 namespace concurrency {
-class Transaction;
+class TransactionContext;
 }
 
 namespace executor {
@@ -51,26 +51,26 @@ class AbstractCatalog {
 
   /* For other catalogs */
   AbstractCatalog(const std::string &catalog_table_ddl,
-                  concurrency::Transaction *txn);
+                  concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
   // Helper Functions
   //===--------------------------------------------------------------------===//
   bool InsertTuple(std::unique_ptr<storage::Tuple> tuple,
-                   concurrency::Transaction *txn);
+                   concurrency::TransactionContext *txn);
 
   bool DeleteWithIndexScan(oid_t index_offset, std::vector<type::Value> values,
-                           concurrency::Transaction *txn);
+                           concurrency::TransactionContext *txn);
 
   std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
   GetResultWithIndexScan(std::vector<oid_t> column_offsets, oid_t index_offset,
                          std::vector<type::Value> values,
-                         concurrency::Transaction *txn) const;
+                         concurrency::TransactionContext *txn) const;
 
   std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
   GetResultWithSeqScan(std::vector<oid_t> column_offsets,
                        expression::AbstractExpression *predicate,
-                       concurrency::Transaction *txn);
+                       concurrency::TransactionContext *txn);
 
   void AddIndex(const std::vector<oid_t> &key_attrs, oid_t index_oid,
                 const std::string &index_name,

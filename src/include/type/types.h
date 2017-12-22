@@ -354,7 +354,7 @@ enum class NetworkTransactionStateType : unsigned char {
   FAIL = 'E',
 };
 
-enum SqlStateErrorCode {
+enum class SqlStateErrorCode {
   SERIALIZATION_ERROR = '1',
 };
 
@@ -896,7 +896,7 @@ std::ostream &operator<<(std::ostream &os, const LoggingType &type);
 enum class LogRecordType {
   INVALID = INVALID_TYPE_ID,
 
-  // Transaction-related records
+  // TransactionContext-related records
   TRANSACTION_BEGIN = 1,
   TRANSACTION_COMMIT = 2,
 
@@ -923,12 +923,14 @@ CheckpointingType StringToCheckpointingType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const CheckpointingType &type);
 
 /* Possible values for peloton_tilegroup_layout GUC */
-typedef enum LayoutType {
-  LAYOUT_TYPE_INVALID = INVALID_TYPE_ID,
-  LAYOUT_TYPE_ROW = 1,    /* Pure row layout */
-  LAYOUT_TYPE_COLUMN = 2, /* Pure column layout */
-  LAYOUT_TYPE_HYBRID = 3  /* Hybrid layout */
-} LayoutType;
+enum class LayoutType {
+  INVALID = INVALID_TYPE_ID,
+  ROW = 1,    /* Pure row layout */
+  COLUMN = 2, /* Pure column layout */
+  HYBRID = 3  /* Hybrid layout */
+};
+std::string LayoutTypeToString(LayoutType type);
+std::ostream &operator<<(std::ostream &os, const LayoutType &type);
 
 //===--------------------------------------------------------------------===//
 // Trigger Types
@@ -992,29 +994,29 @@ enum class StatsType {
   ENABLE = 1,
 };
 
-enum MetricType {
+enum class MetricType {
   // Metric type is invalid
-  INVALID_METRIC = INVALID_TYPE_ID,
+  INVALID = INVALID_TYPE_ID,
   // Metric to count a number
-  COUNTER_METRIC = 1,
+  COUNTER = 1,
   // Access information, e.g., # tuples read, inserted, updated, deleted
-  ACCESS_METRIC = 2,
+  ACCESS = 2,
   // Life time of a object
-  LIFETIME_METRIC = 3,
+  LIFETIME = 3,
   // Statistics for a specific database
-  DATABASE_METRIC = 4,
+  DATABASE = 4,
   // Statistics for a specific table
-  TABLE_METRIC = 5,
+  TABLE = 5,
   // Statistics for a specific index
-  INDEX_METRIC = 6,
+  INDEX = 6,
   // Latency of transactions
-  LATENCY_METRIC = 7,
+  LATENCY = 7,
   // Timestamp, e.g., creation time of a table/index
-  TEMPORAL_METRIC = 8,
+  TEMPORAL = 8,
   // Statistics for a specific table
-  QUERY_METRIC = 9,
+  QUERY = 9,
   // Statistics for CPU
-  PROCESSOR_METRIC = 10,
+  PROCESSOR = 10,
 };
 
 // All builtin operators we currently support
@@ -1040,6 +1042,7 @@ enum class OperatorId : uint32_t {
   LTrim,
   RTrim,
   BTrim,
+  Trim,
   Sqrt,
   Ceil,
   Round,
@@ -1062,7 +1065,10 @@ static const int INVALID_FILE_DESCRIPTOR = -1;
 // Tuple serialization formats
 // ------------------------------------------------------------------
 
-enum class TupleSerializationFormat { NATIVE = 0, DR = 1 };
+enum class TupleSerializationFormat {
+  NATIVE = 0,
+  DR = 1
+};
 
 // ------------------------------------------------------------------
 // Entity types
@@ -1079,12 +1085,6 @@ enum class EntityType {
 std::string EntityTypeToString(EntityType type);
 EntityType StringToEntityType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const EntityType &type);
-
-// ------------------------------------------------------------------
-// Endianess
-// ------------------------------------------------------------------
-
-enum Endianess { BYTE_ORDER_BIG_ENDIAN = 0, BYTE_ORDER_LITTLE_ENDIAN = 1 };
 
 //===--------------------------------------------------------------------===//
 // Type definitions.

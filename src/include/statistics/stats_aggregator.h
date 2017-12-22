@@ -25,7 +25,7 @@
 #include "statistics/backend_stats_context.h"
 #include "storage/database.h"
 #include "storage/data_table.h"
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
@@ -154,15 +154,15 @@ class StatsAggregator {
 
   // Update the table metrics with a given database
   void UpdateTableMetrics(storage::Database *database, int64_t time_stamp,
-                          concurrency::Transaction *txn);
+                          concurrency::TransactionContext *txn);
 
   // Update the index metrics with a given table
   void UpdateIndexMetrics(storage::Database *database,
                           storage::DataTable *table, int64_t time_stamp,
-                          concurrency::Transaction *txn);
+                          concurrency::TransactionContext *txn);
 
   // Write all query metrics to a metric table
-  void UpdateQueryMetrics(int64_t time_stamp, concurrency::Transaction *txn);
+  void UpdateQueryMetrics(int64_t time_stamp, concurrency::TransactionContext *txn);
 
   // Aggregate stats periodically
   void RunAggregator();

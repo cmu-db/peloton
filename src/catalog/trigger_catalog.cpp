@@ -21,12 +21,12 @@
 namespace peloton {
 namespace catalog {
 
-TriggerCatalog &TriggerCatalog::GetInstance(concurrency::Transaction *txn) {
+TriggerCatalog &TriggerCatalog::GetInstance(concurrency::TransactionContext *txn) {
   static TriggerCatalog trigger_catalog{txn};
   return trigger_catalog;
 }
 
-TriggerCatalog::TriggerCatalog(concurrency::Transaction *txn)
+TriggerCatalog::TriggerCatalog(concurrency::TransactionContext *txn)
     : AbstractCatalog("CREATE TABLE " CATALOG_DATABASE_NAME
                       "." TRIGGER_CATALOG_NAME
                       " ("
@@ -63,7 +63,7 @@ bool TriggerCatalog::InsertTrigger(oid_t table_oid, std::string trigger_name,
                                    type::Value fire_condition,
                                    type::Value timestamp,
                                    type::AbstractPool *pool,
-                                   concurrency::Transaction *txn) {
+                                   concurrency::TransactionContext *txn) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
@@ -94,7 +94,7 @@ bool TriggerCatalog::InsertTrigger(oid_t table_oid, std::string trigger_name,
 ResultType TriggerCatalog::DropTrigger(const std::string &database_name,
                                        const std::string &table_name,
                                        const std::string &trigger_name,
-                                       concurrency::Transaction *txn) {
+                                       concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     LOG_TRACE("Do not have transaction to drop trigger: %s",
               table_name.c_str());
@@ -130,7 +130,7 @@ ResultType TriggerCatalog::DropTrigger(const std::string &database_name,
 }
 
 oid_t TriggerCatalog::GetTriggerOid(std::string trigger_name, oid_t table_oid,
-                                    concurrency::Transaction *txn) {
+                                    concurrency::TransactionContext *txn) {
   std::vector<oid_t> column_ids({ColumnId::TRIGGER_OID});
   oid_t index_offset = IndexId::NAME_TABLE_KEY_2;
   std::vector<type::Value> values;
@@ -155,7 +155,7 @@ oid_t TriggerCatalog::GetTriggerOid(std::string trigger_name, oid_t table_oid,
 
 bool TriggerCatalog::DeleteTriggerByName(const std::string &trigger_name,
                                          oid_t table_oid,
-                                         concurrency::Transaction *txn) {
+                                         concurrency::TransactionContext *txn) {
   oid_t index_offset = IndexId::NAME_TABLE_KEY_2;
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetVarcharValue(trigger_name).Copy());
@@ -165,7 +165,7 @@ bool TriggerCatalog::DeleteTriggerByName(const std::string &trigger_name,
 }
 
 std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggersByType(
-    oid_t table_oid, int16_t trigger_type, concurrency::Transaction *txn) {
+    oid_t table_oid, int16_t trigger_type, concurrency::TransactionContext *txn) {
   LOG_INFO("Get triggers for table %d", table_oid);
   // select trigger_name, fire condition, function_name, function_args
   std::vector<oid_t> column_ids(
@@ -207,7 +207,7 @@ std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggersByType(
 }
 
 std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggers(
-    oid_t table_oid, concurrency::Transaction *txn) {
+    oid_t table_oid, concurrency::TransactionContext *txn) {
   LOG_DEBUG("Get triggers for table %d", table_oid);
   // select trigger_name, fire condition, function_name, function_args
   std::vector<oid_t> column_ids(

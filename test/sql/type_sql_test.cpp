@@ -105,7 +105,7 @@ TEST_F(TypeSQLTests, TypeLimitSQLTest) {
   }
 }
 
-void CheckQueryResult(std::vector<StatementResult> result,
+void CheckQueryResult(std::vector<ResultValue> result,
                       std::vector<std::string> expected,
                       size_t tuple_descriptor_size) {
   EXPECT_EQ(result.size(), expected.size());
@@ -113,7 +113,7 @@ void CheckQueryResult(std::vector<StatementResult> result,
     for (size_t j = 0; j < tuple_descriptor_size; j++) {
       int idx = i * tuple_descriptor_size + j;
       std::string s =
-          std::string(result[idx].second.begin(), result[idx].second.end());
+          std::string(result[idx].begin(), result[idx].end());
       EXPECT_EQ(s, expected[i]);
     }
   }
@@ -131,7 +131,7 @@ TEST_F(TypeSQLTests, VarcharTest) {
   // NULL for good measure
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO foo VALUES (NULL);");
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;

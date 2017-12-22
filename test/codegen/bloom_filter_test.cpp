@@ -57,12 +57,12 @@ class BloomFilterCodegenTest : public PelotonTest {
   int UpDivide(int num1, int num2) { return (num1 + num2 - 1) / num2; }
 
   void InsertTuple(const std::vector<int> &vals, storage::DataTable *table,
-                   concurrency::Transaction *txn);
+                   concurrency::TransactionContext *txn);
 
   void CreateTable(std::string table_name, int tuple_size,
-                   concurrency::Transaction *txn);
+                   concurrency::TransactionContext *txn);
 
-  double ExecuteJoin(std::string query, concurrency::Transaction *txn,
+  double ExecuteJoin(std::string query, concurrency::TransactionContext *txn,
                      int num_iter, unsigned inner_table_cardinality,
                      bool enable_bloom_filter);
 
@@ -275,7 +275,7 @@ TEST_F(BloomFilterCodegenTest, PerformanceTest) {
 }
 
 double BloomFilterCodegenTest::ExecuteJoin(std::string query,
-                                           concurrency::Transaction *txn,
+                                           concurrency::TransactionContext *txn,
                                            int num_iter,
                                            unsigned inner_table_cardinality,
                                            bool enable_bloom_filter) {
@@ -324,7 +324,7 @@ double BloomFilterCodegenTest::ExecuteJoin(std::string query,
 // Create a table where all the columns are BIGINT and each tuple has desired
 // tuple size
 void BloomFilterCodegenTest::CreateTable(std::string table_name, int tuple_size,
-                                         concurrency::Transaction *txn) {
+                                         concurrency::TransactionContext *txn) {
   int curr_size = 0;
   size_t bigint_size = type::Type::GetTypeSize(type::TypeId::BIGINT);
   std::vector<catalog::Column> cols;
@@ -343,7 +343,7 @@ void BloomFilterCodegenTest::CreateTable(std::string table_name, int tuple_size,
 // Insert a tuple to specific table
 void BloomFilterCodegenTest::InsertTuple(const std::vector<int> &vals,
                                          storage::DataTable *table,
-                                         concurrency::Transaction *txn) {
+                                         concurrency::TransactionContext *txn) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   storage::Tuple tuple{table->GetSchema(), true};
   for (unsigned i = 0; i < vals.size(); i++) {

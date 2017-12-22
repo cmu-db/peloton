@@ -112,7 +112,7 @@ TEST_F(InsertSQLTests, InsertOneValue) {
 
   CreateAndLoadTable();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -155,7 +155,7 @@ TEST_F(InsertSQLTests, InsertMultipleValues) {
 
   CreateAndLoadTable();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -207,7 +207,7 @@ TEST_F(InsertSQLTests, InsertSpecifyColumns) {
 
   CreateAndLoadTable();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -250,7 +250,7 @@ TEST_F(InsertSQLTests, InsertTooLargeVarchar) {
 
   CreateAndLoadTable3();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -294,7 +294,7 @@ TEST_F(InsertSQLTests, InsertIntoSelectSimple) {
   CreateAndLoadTable();
   CreateAndLoadTable2();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -369,7 +369,7 @@ TEST_F(InsertSQLTests, InsertIntoSelectSimpleAllType) {
   CreateAndLoadTable4();
   CreateAndLoadTable5();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -457,7 +457,7 @@ TEST_F(InsertSQLTests, InsertIntoSelectColumn) {
   CreateAndLoadTable6();
   CreateAndLoadTable7();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;

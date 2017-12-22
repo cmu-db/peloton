@@ -40,7 +40,7 @@ class DatabaseMetricsCatalog : public AbstractCatalog {
 
   // Global Singleton
   static DatabaseMetricsCatalog *GetInstance(
-      concurrency::Transaction *txn = nullptr);
+      concurrency::TransactionContext *txn = nullptr);
 
   //===--------------------------------------------------------------------===//
   // write Related API
@@ -48,13 +48,13 @@ class DatabaseMetricsCatalog : public AbstractCatalog {
   bool InsertDatabaseMetrics(oid_t database_oid, oid_t txn_committed,
                              oid_t txn_aborted, oid_t time_stamp,
                              type::AbstractPool *pool,
-                             concurrency::Transaction *txn);
-  bool DeleteDatabaseMetrics(oid_t database_oid, concurrency::Transaction *txn);
+                             concurrency::TransactionContext *txn);
+  bool DeleteDatabaseMetrics(oid_t database_oid, concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
   // Read-only Related API
   //===--------------------------------------------------------------------===//
-  oid_t GetTimeStamp(oid_t database_oid, concurrency::Transaction *txn);
+  oid_t GetTimeStamp(oid_t database_oid, concurrency::TransactionContext *txn);
   // TODO: add more if needed
 
   enum ColumnId {
@@ -66,7 +66,7 @@ class DatabaseMetricsCatalog : public AbstractCatalog {
   };
 
  private:
-  DatabaseMetricsCatalog(concurrency::Transaction *txn);
+  DatabaseMetricsCatalog(concurrency::TransactionContext *txn);
 
   enum IndexId {
     PRIMARY_KEY = 0,
