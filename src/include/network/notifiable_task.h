@@ -62,20 +62,20 @@ public:
   };
 
   /**
-   *
+ * Destructs this NotifiableTask. All events currently registered to its base are also deleted and freed.
+ */
+  virtual ~NotifiableTask() {
+    for (struct event *event : events_) {
+      event_del(event);
+      event_free(event);
+    }
+    event_base_free(base_);
+  }
+
+  /**
    * @return unique id assigned to this task
    */
   inline int Id() const { return task_id_; }
-
-  virtual ~NotifiableTask() {
-
-      for (struct event *event : events_) {
-        event_del(event);
-        event_free(event);
-      }
-
-      event_base_free(base_);
-  }
 
   /**
    * @brief Register an event with the event base associated with this notifiable task.
@@ -215,15 +215,9 @@ public:
     event_base_loopexit(base_, nullptr);
   }
 
-  void Break(int, short) {
-    Break();
-  }
-
 private:
   const int task_id_;
   struct event_base *base_;
-  bool is_started = false;
-  bool is_closed = false;
 
   // struct event management
   std::unordered_set<struct event *> events_;
