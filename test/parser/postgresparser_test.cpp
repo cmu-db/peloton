@@ -1138,8 +1138,9 @@ TEST_F(PostgresParserTests, UDFFuncCallTest) {
   auto const_expr =
       (expression::ConstantValueExpression *)fun_expr->GetChild(0);
   EXPECT_TRUE(const_expr != nullptr);
-  EXPECT_TRUE(const_expr->GetValue().CompareEquals(
-      type::ValueFactory::GetIntegerValue(1)));
+  EXPECT_EQ(type::CmpBool::TRUE, const_expr->GetValue().CompareEquals(
+                                     type::ValueFactory::GetIntegerValue(1)));
+
   auto tv_expr = (expression::TupleValueExpression *)fun_expr->GetChild(1);
   EXPECT_TRUE(tv_expr != nullptr);
   EXPECT_EQ("b", tv_expr->GetColumnName());
