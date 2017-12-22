@@ -13,7 +13,7 @@
 #include "codegen/proxy/inserter_proxy.h"
 
 #include "codegen/proxy/data_table_proxy.h"
-#include "codegen/proxy/transaction_proxy.h"
+#include "codegen/proxy/transaction_context_proxy.h"
 #include "codegen/proxy/executor_context_proxy.h"
 #include "codegen/proxy/tuple_proxy.h"
 #include "codegen/proxy/pool_proxy.h"

@@ -16,9 +16,9 @@
 #include "codegen/proxy/proxy.h"
 #include "codegen/proxy/type_builder.h"
 #include "storage/zone_map_manager.h"
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "codegen/proxy/value_proxy.h"
-#include "codegen/proxy/transaction_proxy.h"
+#include "codegen/proxy/transaction_context_proxy.h"
 #include "codegen/proxy/data_table_proxy.h"
 #include "type/value.h"
 

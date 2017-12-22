@@ -18,7 +18,7 @@
 #include <stack>
 #include <unordered_map>
 
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "concurrency/epoch_manager.h"
 #include "logging/log_buffer.h"
 #include "logging/log_record.h"

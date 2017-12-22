@@ -27,12 +27,12 @@ namespace catalog {
 // but #796 is still not merged when I am writing this code and I really
 // am sorry to do this. When PelotonMain() becomes a reality, I will
 // fix this for sure.
-ZoneMapCatalog *ZoneMapCatalog::GetInstance(concurrency::Transaction *txn) {
+ZoneMapCatalog *ZoneMapCatalog::GetInstance(concurrency::TransactionContext *txn) {
   static ZoneMapCatalog zone_map_catalog{txn};
   return &zone_map_catalog;
 }
 
-ZoneMapCatalog::ZoneMapCatalog(concurrency::Transaction *txn)
+ZoneMapCatalog::ZoneMapCatalog(concurrency::TransactionContext *txn)
     : AbstractCatalog("CREATE TABLE " CATALOG_DATABASE_NAME
                       "." ZONE_MAP_CATALOG_NAME
                       " ("
@@ -54,7 +54,7 @@ ZoneMapCatalog::~ZoneMapCatalog() {}
 bool ZoneMapCatalog::InsertColumnStatistics(
     oid_t database_id, oid_t table_id, oid_t tile_group_id, oid_t column_id,
     std::string minimum, std::string maximum, std::string type,
-    type::AbstractPool *pool, concurrency::Transaction *txn) {
+    type::AbstractPool *pool, concurrency::TransactionContext *txn) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
@@ -81,7 +81,7 @@ bool ZoneMapCatalog::InsertColumnStatistics(
 bool ZoneMapCatalog::DeleteColumnStatistics(oid_t database_id, oid_t table_id,
                                             oid_t tile_group_id,
                                             oid_t column_id,
-                                            concurrency::Transaction *txn) {
+                                            concurrency::TransactionContext *txn) {
   oid_t index_offset = static_cast<int>(IndexId::SECONDARY_KEY_0);
   std::vector<type::Value> values({
     type::ValueFactory::GetIntegerValue(database_id),
@@ -94,7 +94,7 @@ bool ZoneMapCatalog::DeleteColumnStatistics(oid_t database_id, oid_t table_id,
 
 std::unique_ptr<std::vector<type::Value>> ZoneMapCatalog::GetColumnStatistics(
     oid_t database_id, oid_t table_id, oid_t tile_group_id, oid_t column_id,
-    concurrency::Transaction *txn) {
+    concurrency::TransactionContext *txn) {
   std::vector<oid_t> column_ids(
       {static_cast<int>(ColumnId::MINIMUM), 
        static_cast<int>(ColumnId::MAXIMUM), 

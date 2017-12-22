@@ -55,7 +55,7 @@ void CreateAndLoadTable() {
 }
 
 std::shared_ptr<TableStats> GetTableStatsWithName(
-    std::string table_name, concurrency::Transaction *txn) {
+    std::string table_name, concurrency::TransactionContext *txn) {
   auto catalog = catalog::Catalog::GetInstance();
   auto database = catalog->GetDatabaseWithName(DEFAULT_DB_NAME, txn);
   auto table = catalog->GetTableWithName(DEFAULT_DB_NAME, table_name, txn);

@@ -63,7 +63,7 @@ class PelotonCodeGenTest : public PelotonTest {
 
   // Create the test tables
   void CreateTestTables(
-      concurrency::Transaction *txn,
+      concurrency::TransactionContext *txn,
       oid_t tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP);
 
   // Load the given table with the given number of rows

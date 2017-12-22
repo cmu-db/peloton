@@ -18,7 +18,7 @@
 #include "common/macros.h"
 #include "type/types.h"
 #include "type/value_factory.h"
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 namespace peloton {
 namespace storage {
 
@@ -47,17 +47,17 @@ class ZoneMapManager {
   void CreateZoneMapTableInCatalog();
 
   void CreateZoneMapsForTable(storage::DataTable *table,
-                              concurrency::Transaction *txn);
+                              concurrency::TransactionContext *txn);
 
   void CreateOrUpdateZoneMapForTileGroup(storage::DataTable *table, 
                                          oid_t tile_group_idx,
-                                        concurrency::Transaction *txn);
+                                        concurrency::TransactionContext *txn);
 
   void CreateOrUpdateZoneMapInCatalog(oid_t database_id, oid_t table_id,
                                       oid_t tile_group_id, oid_t col_itr,
                                       std::string min, std::string max,
                                       std::string type,
-                                      concurrency::Transaction *txn);
+                                      concurrency::TransactionContext *txn);
 
   std::unique_ptr<ZoneMapManager::ColumnStatistics> GetZoneMapFromCatalog(
       oid_t database_id, oid_t table_id, oid_t tile_group_id, oid_t col_itr);

@@ -31,7 +31,7 @@ class ZoneMapCatalog : public AbstractCatalog {
   // am sorry to do this. When PelotonMain() becomes a reality, I will
   // fix this for sure.
 
-  static ZoneMapCatalog *GetInstance(concurrency::Transaction *txn = nullptr);
+  static ZoneMapCatalog *GetInstance(concurrency::TransactionContext *txn = nullptr);
 
   //===--------------------------------------------------------------------===//
   // write Related API
@@ -40,11 +40,11 @@ class ZoneMapCatalog : public AbstractCatalog {
                               oid_t tile_group_id, oid_t column_id,
                               std::string minimum, std::string maximum,
                               std::string type, type::AbstractPool *pool,
-                              concurrency::Transaction *txn);
+                              concurrency::TransactionContext *txn);
 
   bool DeleteColumnStatistics(oid_t database_id, oid_t table_id,
                               oid_t tile_group_id, oid_t column_id,
-                              concurrency::Transaction *txn);
+                              concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
   // Read-only Related API
@@ -52,7 +52,7 @@ class ZoneMapCatalog : public AbstractCatalog {
 
   std::unique_ptr<std::vector<type::Value>> GetColumnStatistics(
       oid_t database_id, oid_t table_id, oid_t tile_group_id, oid_t column_id,
-      concurrency::Transaction *txn);
+      concurrency::TransactionContext *txn);
 
   enum class ColumnId {
     DATABASE_ID = 0,
@@ -71,7 +71,7 @@ class ZoneMapCatalog : public AbstractCatalog {
   };
 
  private:
-  ZoneMapCatalog(concurrency::Transaction *txn);
+  ZoneMapCatalog(concurrency::TransactionContext *txn);
 
   enum class IndexId {
     SECONDARY_KEY_0 = 0,

@@ -54,26 +54,26 @@ class LanguageCatalog : public AbstractCatalog {
   ~LanguageCatalog();
 
   // Global Singleton
-  static LanguageCatalog &GetInstance(concurrency::Transaction *txn = nullptr);
+  static LanguageCatalog &GetInstance(concurrency::TransactionContext *txn = nullptr);
 
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//
   bool InsertLanguage(const std::string &lanname, type::AbstractPool *pool,
-                      concurrency::Transaction *txn);
+                      concurrency::TransactionContext *txn);
 
   bool DeleteLanguage(const std::string &lanname,
-                      concurrency::Transaction *txn);
+                      concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
   // Read-only Related API
   //===--------------------------------------------------------------------===//
 
   std::unique_ptr<LanguageCatalogObject> GetLanguageByOid(
-      oid_t lang_oid, concurrency::Transaction *txn) const;
+      oid_t lang_oid, concurrency::TransactionContext *txn) const;
 
   std::unique_ptr<LanguageCatalogObject> GetLanguageByName(
-      const std::string &lang_name, concurrency::Transaction *txn) const;
+      const std::string &lang_name, concurrency::TransactionContext *txn) const;
 
   enum ColumnId {
     OID = 0,
@@ -83,7 +83,7 @@ class LanguageCatalog : public AbstractCatalog {
   std::vector<oid_t> all_column_ids = {0, 1};
 
  private:
-  LanguageCatalog(concurrency::Transaction *txn);
+  LanguageCatalog(concurrency::TransactionContext *txn);
 
   oid_t GetNextOid() { return oid_++ | LANGUAGE_OID_MASK; }
 

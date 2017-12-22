@@ -896,7 +896,7 @@ std::ostream &operator<<(std::ostream &os, const LoggingType &type);
 enum class LogRecordType {
   INVALID = INVALID_TYPE_ID,
 
-  // Transaction-related records
+  // TransactionContext-related records
   TRANSACTION_BEGIN = 1,
   TRANSACTION_COMMIT = 2,
 

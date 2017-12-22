@@ -72,7 +72,7 @@ class ColumnCatalog : public AbstractCatalog {
   // Global Singleton, only the first call requires passing parameters.
   static ColumnCatalog *GetInstance(storage::Database *pg_catalog = nullptr,
                                     type::AbstractPool *pool = nullptr,
-                                    concurrency::Transaction *txn = nullptr);
+                                    concurrency::TransactionContext *txn = nullptr);
 
   ~ColumnCatalog();
 
@@ -86,20 +86,20 @@ class ColumnCatalog : public AbstractCatalog {
                     oid_t column_id, oid_t column_offset,
                     type::TypeId column_type, bool is_inlined,
                     const std::vector<Constraint> &constraints,
-                    type::AbstractPool *pool, concurrency::Transaction *txn);
+                    type::AbstractPool *pool, concurrency::TransactionContext *txn);
   bool DeleteColumn(oid_t table_oid, const std::string &column_name,
-                    concurrency::Transaction *txn);
-  bool DeleteColumns(oid_t table_oid, concurrency::Transaction *txn);
+                    concurrency::TransactionContext *txn);
+  bool DeleteColumns(oid_t table_oid, concurrency::TransactionContext *txn);
 
  private:
   //===--------------------------------------------------------------------===//
   // Read Related API(only called within table catalog object)
   //===--------------------------------------------------------------------===//
   const std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogObject>>
-  GetColumnObjects(oid_t table_oid, concurrency::Transaction *txn);
+  GetColumnObjects(oid_t table_oid, concurrency::TransactionContext *txn);
 
   ColumnCatalog(storage::Database *pg_catalog, type::AbstractPool *pool,
-                concurrency::Transaction *txn);
+                concurrency::TransactionContext *txn);
 
   std::unique_ptr<catalog::Schema> InitializeSchema();
 

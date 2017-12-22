@@ -61,7 +61,7 @@ class TempTable : public AbstractTable {
   // insert tuple in table. the pointer to the index entry is returned as
   // index_entry_ptr.
   ItemPointer InsertTuple(const Tuple *tuple,
-                          concurrency::Transaction *transaction,
+                          concurrency::TransactionContext *transaction,
                           ItemPointer **index_entry_ptr = nullptr) override;
 
   // designed for tables without primary key. e.g., output table used by

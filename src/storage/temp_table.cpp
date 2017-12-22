@@ -37,7 +37,7 @@ TempTable::~TempTable() {
 }
 
 ItemPointer TempTable::InsertTuple(
-    const Tuple *tuple, UNUSED_ATTRIBUTE concurrency::Transaction *transaction,
+    const Tuple *tuple, UNUSED_ATTRIBUTE concurrency::TransactionContext *transaction,
     UNUSED_ATTRIBUTE ItemPointer **index_entry_ptr) {
   PL_ASSERT(tuple != nullptr);
   PL_ASSERT(transaction == nullptr);

@@ -17,7 +17,7 @@
 #include "catalog/trigger_catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/table_catalog.h"
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "executor/executor_context.h"
 #include "planner/create_plan.h"
 #include "storage/database.h"
