@@ -20,10 +20,16 @@
 namespace peloton {
 namespace network {
 
+/**
+ * @brief A ConnectionDispatcherTask on the main server thread and dispatches incoming connections to handler threads.
+ *
+ * On construction, the dispatcher also spawns a number of handlers running on their own threads. The dispatcher is
+ * then responsible for maintain, and when shutting down, shutting down the spawned handlers also.
+ */
 class ConnectionDispatcherTask : public NotifiableTask {
 public:
   /**
-   * Creates a new ConnectionDispatcherTask, spawning the specified number of handlers, each running on their own thread.
+   * Creates a new ConnectionDispatcherTask, spawning the specified number of handlers, each running on their own threads.
    *
    * @param num_handlers The number of handler tasks to spawn.
    * @param listen_fd The server socket fd to listen on.
@@ -41,6 +47,9 @@ public:
    */
   void DispatchConnection(int fd, short flags);
 
+  /**
+   * Breaks the dispatcher and managed handlers from their event loops.
+   */
   void Break() override;
 
 private:

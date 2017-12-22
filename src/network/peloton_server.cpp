@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// network_manager.cpp
+// peloton_server.cpp
 //
-// Identification: src/network/network_manager.cpp
+// Identification: src/network/peloton_server.cpp
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -29,6 +29,7 @@ PelotonServer::PelotonServer() {
 
   // For logging purposes
   //  event_enable_debug_mode();
+
   //  event_set_log_callback(LogCallback);
 
   // Commented because it's not in the libevent version we're using

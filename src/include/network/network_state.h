@@ -14,7 +14,10 @@
 
 namespace peloton {
 namespace network {
-// Network Thread States
+/**
+ * States used by ConnectionHandle::StateMachine.
+ * @see ConnectionHandle::StateMachine
+ */
 enum class ConnState {
   READ,       // State that reads data from the network
   WRITE,      // State the writes data to the network
@@ -31,6 +34,10 @@ enum class WriteState {
   WRITE_ERROR,      // Some error happened
 };
 
+/**
+ * A transition is used to signal the result of an action to ConnectionHandle::StateMachine
+ * @see ConnectionHandle::StateMachine
+ */
 enum class Transition {
   NONE,
   WAKEUP,

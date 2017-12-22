@@ -42,18 +42,49 @@
 namespace peloton {
 namespace network {
 
-
+/**
+ * PelotonServer is the entry point of the network layer
+ */
 class PelotonServer {
 public:
 
+  /**
+   * @brief Constructs a new PelotonServer instance.
+   *
+   * Note that SettingsManager must already be initialized when this constructor is called.
+   */
   PelotonServer();
 
+  /**
+   * @brief Configure the server to spin up all its threads and start listening on the configured port.
+   *
+   * This is separated from the main loop primarily for testing purposes, as we need to wait for the server
+   * to start listening on the port before the rest of the test. All event-related settings are also performed
+   * here. Since libevent reacts to events fired before the event loop as well, all interactions to the server
+   * after this function returns is guaranteed to be handled. For non-testing purposes, you can chain the functions,
+   * e.g.:
+   *
+   *   server.SetupServer().ServerLoop();
+   *
+   * @return self-reference for chaining
+   */
   PelotonServer &SetupServer();
 
+  /**
+   * @brief In a loop, handles incoming connection and block the current thread until closed.
+   *
+   * The loop will exit when either Close() is explicitly called or when there are no more events pending or
+   * active (we currently register all events to be persistent.)
+   */
   void ServerLoop();
 
+  /**
+   * Break from the server loop and exit all network handling threads.
+   */
   void Close();
 
+
+  // TODO(tianyu): This is VILE. Fix this when we refactor testing.
   void SetPort(int new_port);
 
   static int recent_connfd;

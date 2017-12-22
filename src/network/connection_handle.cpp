@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// network_state_machine.cpp
+// connection_handle.cpp
 //
-// Identification: src/include/network/network_state_machine.cpp
+// Identification: src/include/network/connection_handle.cpp
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -16,7 +16,6 @@
 #include <include/network/postgres_protocol_handler.h>
 #include "network/protocol_handler_factory.h"
 #include "network/connection_dispatcher_task.h"
-#include "network/connection_handle.h"
 #include "network/peloton_server.h"
 
 #define SSL_MESSAGE_VERNO 80877103
