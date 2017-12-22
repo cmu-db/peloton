@@ -45,7 +45,6 @@ IndexScanTranslator::IndexScanTranslator(
 //  ,
 //    index_(*index_scan_.GetIndex().get())
 {
-  LOG_DEBUG("Constructing IndexScanTranslator ...");
 
   // The restriction, if one exists
   const auto *predicate = index_scan_.GetPredicate();
@@ -66,12 +65,10 @@ IndexScanTranslator::IndexScanTranslator(
       "scanSelVec",
       codegen.ArrayType(codegen.Int32Type(), Vector::kDefaultVectorSize), true);
 
-  LOG_DEBUG("Finished constructing IndexScanTranslator ...");
 }
 
 // Produce!
 void IndexScanTranslator::Produce() const {
-  LOG_INFO("IndexScanTranslator %s start producing\n", GetName().c_str());
   auto &codegen = GetCodeGen();
 
   const index::ConjunctionScanPredicate *csp =
