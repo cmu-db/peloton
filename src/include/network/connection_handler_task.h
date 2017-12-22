@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// network_worker_thread.h
+// network_handler_task.h
 //
-// Identification: src/include/network/network_worker_thread.h
+// Identification: src/include/network/network_handler_task.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -38,11 +38,6 @@ namespace network {
  * same ConnectionHandlerTask thread for the enitre lifetime of the connection.
  */
 class ConnectionHandlerTask : public NotifiableTask {
-  // TODO(tianyu) Maybe we don't need the callback on the CallbackUtil.
-  // From an OOP perspective, the callback should be encapsulated in this class, and
-  // we should only put callbacks with no clear owner in CallbackUtil
-  friend class CallbackUtil;
-
 public:
   /**
    * Constructs a new ConnectionHandlerTask instance.
@@ -59,6 +54,12 @@ public:
    * @param conn_fd the client connection socket fd.
    */
   void Notify(int conn_fd);
+
+  void HandleDispatch(int new_conn_recv_fd, short flags);
+
+
+  // TODO(tianyu): When we stop this handler, do we need to kick all clients off and close the socket?
+  // I don't think we did this before.
 
 private:
   // Notify new connection pipe(send end)

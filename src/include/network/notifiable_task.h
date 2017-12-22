@@ -36,6 +36,8 @@
 namespace peloton {
 namespace network {
 
+#define METHOD_AS_CALLBACK(type, method) [](int fd, short flags, void *arg) {static_cast<type *>(arg)->method(fd, flags);}
+
 /**
  * @brief NotifiableTasks can be configured to handle events with callbacks, and executes within an event loop
  *
@@ -74,16 +76,6 @@ public:
 
       event_base_free(base_);
   }
-
-  // TODO(tianyu) We can probably get rid of these flags eventually
-  // Getter and setter for flags
-  bool GetThreadIsStarted() { return is_started; }
-
-  void SetThreadIsStarted(bool is_started) { this->is_started = is_started; }
-
-  bool GetThreadIsClosed() { return is_closed; }
-
-  void SetThreadIsClosed(bool is_closed) { this->is_closed = is_closed; }
 
   /**
    * @brief Register an event with the event base associated with this notifiable task.
@@ -219,10 +211,13 @@ public:
   /**
    * Exits the event loop
    */
-  void Break() {
+  virtual void Break() {
     event_base_loopexit(base_, nullptr);
   }
 
+  void Break(int, short) {
+    Break();
+  }
 
 private:
   const int task_id_;

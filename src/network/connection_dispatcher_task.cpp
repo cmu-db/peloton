@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// network_master_thread.cpp
+// connection_dispatcher_task.cpp
 //
-// Identification: src/include/network/network_master_thread.cpp
+// Identification: src/include/network/connection_dispatcher_task.cpp
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -12,23 +12,19 @@
 
 
 #include "network/connection_dispatcher_task.h"
-#include "network/network_callback_util.h"
 
 #define MASTER_THREAD_ID (-1)
 
 namespace peloton {
 namespace network {
 
-/*
- * The Network master thread initialize num_threads worker threads on
- * constructor.
- */
-ConnectionDispatcherTask::ConnectionDispatcherTask(int num_handlers)
+ConnectionDispatcherTask::ConnectionDispatcherTask(int num_handlers, int listen_fd)
     : NotifiableTask(MASTER_THREAD_ID),
       next_handler_(0) {
 
-  RegisterSignalEvent(SIGHUP, CallbackUtil::OnSighup, this);
-
+  RegisterEvent(listen_fd, EV_READ|EV_PERSIST,
+                METHOD_AS_CALLBACK(ConnectionDispatcherTask, DispatchConnection), this);
+  RegisterSignalEvent(SIGHUP, METHOD_AS_CALLBACK(NotifiableTask, Break), this);
 
   // TODO(tianyu) Figure out what this initialization logic is doing and potentially rewrite
   // register thread to epoch manager.
@@ -45,43 +41,12 @@ ConnectionDispatcherTask::ConnectionDispatcherTask(int num_handlers)
     handlers_.push_back(handler);
     thread_pool.SubmitDedicatedTask([=] {
       handler->EventLoop();
-      // TODO(tianyu) WTF is this?
-      // Set worker thread's close flag to false to indicate loop has exited
-      handler->SetThreadIsClosed(false);
     });
   }
-
-  // Wait for all threads ready to work
-  for (int task_id = 0; task_id < num_handlers; task_id++) {
-    while (!handlers_[task_id]->GetThreadIsStarted()) {
-      sleep(1);
-    }
-  }
 }
 
 
-/*
- * Stop the threads
- */
-void ConnectionDispatcherTask::Stop() {
-
-  for (auto &handler : handlers_) {
-    handler->SetThreadIsClosed(true);
-  }
-
-  // When a thread exit loop, the is_closed flag will be set to false
-  // Wait for all threads exit loops
-  for (auto &handler : handlers_) {
-    while (handler->GetThreadIsClosed()) sleep(1);
-  }
-}
-
-
-/*
-* Dispatch a new connection event to a random worker thread by
-* writing to the worker's pipe
-*/
-void ConnectionDispatcherTask::DispatchConnection(int fd) {
+void ConnectionDispatcherTask::DispatchConnection(int fd, short) {
   struct sockaddr_storage addr;
   socklen_t addrlen = sizeof(addr);
 
@@ -101,6 +66,11 @@ void ConnectionDispatcherTask::DispatchConnection(int fd) {
   LOG_DEBUG("Dispatching connection to worker %d", handler_id);
 
   handler->Notify(new_conn_fd);
+}
+
+void ConnectionDispatcherTask::Break() {
+  NotifiableTask::Break();
+  for (auto &handler : handlers_) handler->Break();
 }
 
 }  // namespace network

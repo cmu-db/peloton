@@ -13,7 +13,6 @@
 #include <fstream>
 
 #include "network/network_manager.h"
-#include "network/network_callback_util.h"
 #include "settings/settings_manager.h"
 
 namespace peloton {
@@ -44,7 +43,6 @@ NetworkManager::NetworkManager() {
 void NetworkManager::StartServer() {
   // This line is critical to performance for some reason
   evthread_use_pthreads();
-  dispatcher_task = std::make_shared<ConnectionDispatcherTask>(CONNECTION_THREAD_COUNT);
 
   if (settings::SettingsManager::GetString(settings::SettingId::socket_family) == "AF_INET") {
     struct sockaddr_in sin;
@@ -106,14 +104,10 @@ void NetworkManager::StartServer() {
       throw ConnectionException("Error listening onsocket.");
     }
 
-    // TODO(tianyu) Move this after we change the way we shut down our server
-    struct timeval one_second = {1, 0};
-    dispatcher_task->RegisterPeriodicEvent(&one_second, CallbackUtil::ServerControl_Callback, this);
-    dispatcher_task->RegisterEvent(listen_fd, EV_READ|EV_PERSIST, CallbackUtil::OnNewConnection, dispatcher_task.get());
+    dispatcher_task = std::make_shared<ConnectionDispatcherTask>(CONNECTION_THREAD_COUNT, listen_fd);
 
     LOG_INFO("Listening on port %llu", (unsigned long long) port_);
     dispatcher_task->EventLoop();
-
     LOG_INFO("Closing server");
     int status;
     do {
@@ -121,7 +115,6 @@ void NetworkManager::StartServer() {
     } while (status < 0 && errno == EINTR);
     LOG_DEBUG("Already Closed the connection %d", listen_fd);
 
-    dispatcher_task->Stop();
     LOG_INFO("Server Closed");
   }
 
@@ -133,10 +126,6 @@ void NetworkManager::StartServer() {
 
 void NetworkManager::CloseServer() {
   LOG_INFO("Begin to stop server");
-  this->SetIsClosed(true);
-}
-
-void NetworkManager::Break() {
   dispatcher_task->Break();
 }
 
