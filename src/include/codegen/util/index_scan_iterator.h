@@ -51,11 +51,16 @@ class IndexScanIterator {
   bool RowOffsetInResult(uint64_t distinct_tile_index, uint32_t row_offset);
   uint64_t GetResultSize() { return (uint64_t)result_.size(); }
 
-  void UpdateTupleWithInteger(int value, int attribute_id, char* attribute_name, bool is_lower_key);
-  void UpdateTupleWithBigInteger(int64_t value, int attribute_id, char* attribute_name, bool is_lower_key);
-  void UpdateTupleWithDouble(double value, int attribute_id, char* attribute_name, bool is_lower_key);
-  void UpdateTupleWithVarchar(char* value, int attribute_id, char* attribute_name, bool is_lower_key);
-  void UpdateTupleWithBoolean(bool value, int attribute_id, char* attribute_name, bool is_lower_key);
+  void UpdateTupleWithInteger(int value, int attribute_id, char *attribute_name,
+                              bool is_lower_key);
+  void UpdateTupleWithBigInteger(int64_t value, int attribute_id,
+                                 char *attribute_name, bool is_lower_key);
+  void UpdateTupleWithDouble(double value, int attribute_id,
+                             char *attribute_name, bool is_lower_key);
+  void UpdateTupleWithVarchar(char *value, int attribute_id,
+                              char *attribute_name, bool is_lower_key);
+  void UpdateTupleWithBoolean(bool value, int attribute_id,
+                              char *attribute_name, bool is_lower_key);
 };
 }
 }

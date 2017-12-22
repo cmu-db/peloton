@@ -82,8 +82,9 @@ void IndexScanTranslator::Produce() const {
   llvm::Value *storage_manager_ptr = GetStorageManagerPtr();
   llvm::Value *db_oid = codegen.Const32(table.GetDatabaseOid());
   llvm::Value *table_oid = codegen.Const32(table.GetOid());
-  llvm::Value *table_ptr = codegen.Call(StorageManagerProxy::GetTableWithOid,
-                                        {storage_manager_ptr, db_oid, table_oid});
+  llvm::Value *table_ptr =
+      codegen.Call(StorageManagerProxy::GetTableWithOid,
+                   {storage_manager_ptr, db_oid, table_oid});
   llvm::Value *index_oid = codegen.Const32(index_scan_.GetIndex()->GetOid());
 
   llvm::Value *index_ptr =
@@ -162,8 +163,10 @@ void IndexScanTranslator::Produce() const {
     TileGroup::TileGroupAccess tile_group_access{tileGroup, col_layouts};
 
     // visibility
-    llvm::Value *executor_context_ptr = this->GetCompilationContext().GetExecutorContextPtr();
-    llvm::Value *txn = codegen.Call(ExecutorContextProxy::GetTransaction, {executor_context_ptr});
+    llvm::Value *executor_context_ptr =
+        this->GetCompilationContext().GetExecutorContextPtr();
+    llvm::Value *txn = codegen.Call(ExecutorContextProxy::GetTransaction,
+                                    {executor_context_ptr});
     llvm::Value *raw_sel_vec = sel_vec.GetVectorPtr();
     // Invoke TransactionRuntime::PerformRead(...)
     llvm::Value *out_idx =
@@ -177,11 +180,10 @@ void IndexScanTranslator::Produce() const {
     const auto *predicate = index_scan_.GetPredicate();
     if (predicate != nullptr) {
       RowBatch batch{this->GetCompilationContext(), tile_group_id,
-                           codegen.Const32(0), codegen.Const32(1), sel_vec, true};
+                     codegen.Const32(0), codegen.Const32(1), sel_vec, true};
       // Determine the attributes the predicate needs
       std::unordered_set<const planner::AttributeInfo *> used_attributes;
       predicate->GetUsedAttributes(used_attributes);
-
 
       // Setup the row batch with attribute accessors for the predicate
       std::vector<TableScanTranslator::AttributeAccess> attribute_accessors;
@@ -199,8 +201,10 @@ void IndexScanTranslator::Produce() const {
         codegen::Value valid_row = row.DeriveValue(codegen, *predicate);
 
         // Reify the boolean value since it may be NULL
-        PL_ASSERT(valid_row.GetType().GetSqlType() == type::Boolean::Instance());
-        llvm::Value *bool_val = type::Boolean::Instance().Reify(codegen, valid_row);
+        PL_ASSERT(valid_row.GetType().GetSqlType() ==
+                  type::Boolean::Instance());
+        llvm::Value *bool_val =
+            type::Boolean::Instance().Reify(codegen, valid_row);
 
         // Set the validity of the row
         row.SetValidity(codegen, bool_val);
@@ -222,7 +226,7 @@ void IndexScanTranslator::Produce() const {
       output_col_ids.resize(table.GetSchema()->GetColumnCount());
       std::iota(output_col_ids.begin(), output_col_ids.end(), 0);
     }
-//    const auto &output_col_ids = index_scan_.GetColumnIds();
+    //    const auto &output_col_ids = index_scan_.GetColumnIds();
 
     for (oid_t col_idx = 0; col_idx < output_col_ids.size(); col_idx++) {
       final_attribute_accesses.emplace_back(tile_group_access,
@@ -232,7 +236,6 @@ void IndexScanTranslator::Produce() const {
       auto *attribute = final_ais[output_col_ids[col_idx]];
       final_batch.AddAttribute(attribute, &final_attribute_accesses[col_idx]);
     }
-
 
     ConsumerContext context{this->GetCompilationContext(), this->GetPipeline()};
     context.Consume(final_batch);
@@ -263,7 +266,8 @@ const index::Index &IndexScanTranslator::GetIndex() const {
   return dynamic_cast<index::Index &>(*index_scan_.GetIndex().get());
 }
 
-void IndexScanTranslator::UpdateTupleWithParameterCache(CodeGen &codegen, llvm::Value *iterator_ptr) const {
+void IndexScanTranslator::UpdateTupleWithParameterCache(
+    CodeGen &codegen, llvm::Value *iterator_ptr) const {
   std::vector<const planner::AttributeInfo *> where_clause_attributes;
   std::vector<ExpressionType> comparison_type;
   const auto *predicate = index_scan_.GetPredicate();
@@ -277,7 +281,9 @@ void IndexScanTranslator::UpdateTupleWithParameterCache(CodeGen &codegen, llvm::
       llvm::Value *attribute_id = codegen.Const32(ai->attribute_id);
       llvm::Value *attribute_name = codegen.ConstStringPtr(ai->name);
       bool is_lower_key = false;
-      if (comparison_type[i] == peloton::ExpressionType::COMPARE_GREATERTHAN || comparison_type[i] == peloton::ExpressionType::COMPARE_GREATERTHANOREQUALTO) {
+      if (comparison_type[i] == peloton::ExpressionType::COMPARE_GREATERTHAN ||
+          comparison_type[i] ==
+              peloton::ExpressionType::COMPARE_GREATERTHANOREQUALTO) {
         is_lower_key = true;
       }
       llvm::Value *is_lower = codegen.ConstBool(is_lower_key);
@@ -286,45 +292,55 @@ void IndexScanTranslator::UpdateTupleWithParameterCache(CodeGen &codegen, llvm::
       switch (ai->type.type_id) {
         case peloton::type::TypeId::TINYINT:
         case peloton::type::TypeId::SMALLINT:
-        case peloton::type::TypeId::INTEGER:
-        {
-          codegen.Call(IndexScanIteratorProxy::UpdateTupleWithInteger, {iterator_ptr, parameter_value, attribute_id, attribute_name, is_lower});
+        case peloton::type::TypeId::INTEGER: {
+          codegen.Call(IndexScanIteratorProxy::UpdateTupleWithInteger,
+                       {iterator_ptr, parameter_value, attribute_id,
+                        attribute_name, is_lower});
           break;
         }
         case peloton::type::TypeId::TIMESTAMP:
-        case peloton::type::TypeId::BIGINT:
-        {
-          codegen.Call(IndexScanIteratorProxy::UpdateTupleWithBigInteger, {iterator_ptr, codegen->CreateSExt(parameter_value, codegen.Int64Type()), attribute_id, attribute_name, is_lower});
+        case peloton::type::TypeId::BIGINT: {
+          codegen.Call(IndexScanIteratorProxy::UpdateTupleWithBigInteger,
+                       {iterator_ptr, codegen->CreateSExt(parameter_value,
+                                                          codegen.Int64Type()),
+                        attribute_id, attribute_name, is_lower});
           break;
         }
-        case peloton::type::TypeId::DECIMAL:
-        {
+        case peloton::type::TypeId::DECIMAL: {
           if (parameter_value->getType() != codegen.DoubleType()) {
-            codegen.Call(IndexScanIteratorProxy::UpdateTupleWithDouble, {iterator_ptr, codegen->CreateSIToFP(parameter_value, codegen.DoubleType()), attribute_id, attribute_name, is_lower});
+            codegen.Call(
+                IndexScanIteratorProxy::UpdateTupleWithDouble,
+                {iterator_ptr,
+                 codegen->CreateSIToFP(parameter_value, codegen.DoubleType()),
+                 attribute_id, attribute_name, is_lower});
           } else {
-            codegen.Call(IndexScanIteratorProxy::UpdateTupleWithDouble, {iterator_ptr, parameter_value, attribute_id, attribute_name, is_lower});
+            codegen.Call(IndexScanIteratorProxy::UpdateTupleWithDouble,
+                         {iterator_ptr, parameter_value, attribute_id,
+                          attribute_name, is_lower});
           }
           break;
         }
         case peloton::type::TypeId::VARBINARY:
-        case peloton::type::TypeId::VARCHAR:
-        {
-          codegen.Call(IndexScanIteratorProxy::UpdateTupleWithVarchar, {iterator_ptr, parameter_value, attribute_id, attribute_name, is_lower});
+        case peloton::type::TypeId::VARCHAR: {
+          codegen.Call(IndexScanIteratorProxy::UpdateTupleWithVarchar,
+                       {iterator_ptr, parameter_value, attribute_id,
+                        attribute_name, is_lower});
           break;
         }
-        case peloton::type::TypeId::BOOLEAN:
-        {
-          codegen.Call(IndexScanIteratorProxy::UpdateTupleWithBoolean, {iterator_ptr, parameter_value, attribute_id, attribute_name, is_lower});
+        case peloton::type::TypeId::BOOLEAN: {
+          codegen.Call(IndexScanIteratorProxy::UpdateTupleWithBoolean,
+                       {iterator_ptr, parameter_value, attribute_id,
+                        attribute_name, is_lower});
           break;
         }
-        default:
-        {
-          throw new Exception("Type" + peloton::TypeIdToString(ai->type.type_id) + " is not supported in codegen yet");
+        default: {
+          throw new Exception("Type" +
+                              peloton::TypeIdToString(ai->type.type_id) +
+                              " is not supported in codegen yet");
         }
       }
     }
   }
 }
-
 }
 }
