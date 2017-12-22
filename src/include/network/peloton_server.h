@@ -20,10 +20,10 @@
 #include <arpa/inet.h>
 #include <netinet/tcp.h>
 
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <csignal>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <vector>
 #include <pthread.h>
 #include <sys/file.h>
@@ -46,24 +46,21 @@ namespace peloton {
 namespace network {
 
 
-class NetworkManager {
- private:
-  // For logging purposes
-  // static void LogCallback(int severity, const char *msg);
+class PelotonServer {
+public:
 
-  uint64_t port_;             // port number
-  size_t max_connections_;    // maximum number of connections
+  PelotonServer();
 
 
   static SSLLevel ssl_level_;
   static pthread_mutex_t *ssl_mutex_buf_;
+  PelotonServer &SetupServer();
 
-  std::shared_ptr<ConnectionDispatcherTask> dispatcher_task;
+  void ServerLoop();
 
-  // Flags for controlling server start/close status
-  bool is_started_ = false;
-  bool is_closed_ = false;
+  void Close();
 
+  void SetPort(int new_port);
 
  public:
   static int recent_connfd;
@@ -72,23 +69,18 @@ class NetworkManager {
   static std::string certificate_file_;
   static std::string root_cert_file_;
 
- public:
-  NetworkManager();
+private:
+  // For logging purposes
+  // static void LogCallback(int severity, const char *msg);
 
-  void StartServer();
+  uint64_t port_;             // port number
+  int listen_fd_ = -1;         // server socket fd that PelotonServer is listening on
+  size_t max_connections_;    // maximum number of connections
 
-  void Break();
+  std::string private_key_file_;
+  std::string certificate_file_;
 
-  void CloseServer();
-
-  void SetPort(int new_port);
-
-  // Getter and setter for flags
-  bool GetIsStarted() { return is_started_; }
-
-  void SetIsStarted(bool is_started) { this->is_started_ = is_started; }
-
-  bool GetIsClosed() { return is_closed_; }
+  std::shared_ptr<ConnectionDispatcherTask> dispatcher_task;
 
   void SetIsClosed(bool is_closed) { this->is_closed_ = is_closed; }
 
@@ -115,13 +107,9 @@ class NetworkManager {
 
   template<typename... Ts> void try_do(int(*func)(Ts...), Ts... arg);
 
-  /* Maintain a global list of connections.
-   * Helps reuse connection objects when possible
-   */
-  static std::unordered_map<int, std::unique_ptr<NetworkConnection>> &
-  GetGlobalSocketList();
+  // For testing purposes
+  bool started;
 };
-
 
 }
 }

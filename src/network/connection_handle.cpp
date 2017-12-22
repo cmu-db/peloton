@@ -17,7 +17,7 @@
 #include "network/protocol_handler_factory.h"
 #include "network/connection_dispatcher_task.h"
 #include "network/connection_handle.h"
-#include "network/network_manager.h"
+#include "network/peloton_server.h"
 
 #define SSL_MESSAGE_VERNO 80877103
 #define PROTO_MAJOR_VERSION(x) ((x) >> 16)
@@ -638,7 +638,7 @@ Transition ConnectionHandle::Process() {
     if (ssl_sent_) {
       // start SSL handshake
       // TODO: consider free conn_SSL_context
-      conn_SSL_context = SSL_new(NetworkManager::ssl_context);
+      conn_SSL_context = SSL_new(PelotonServer::ssl_context);
       if (SSL_set_fd(conn_SSL_context, sock_fd_) == 0) {
         LOG_ERROR("Failed to set SSL fd");
         PL_ASSERT(false);
