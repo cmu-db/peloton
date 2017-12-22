@@ -60,18 +60,17 @@ enum class ExceptionType {
 };
 
 class Exception : public std::runtime_error {
-  std::string exception_message;
  public:
   Exception(std::string message)
       : std::runtime_error(message), type(ExceptionType::INVALID) {
-    exception_message = "Message :: " + message + "\n";
+    exception_message_ = "Message :: " + message;
   }
 
   Exception(ExceptionType exception_type, std::string message)
       : std::runtime_error(message), type(exception_type) {
-    exception_message = "Exception Type :: " +
+    exception_message_ = "Exception Type :: " +
                                     ExpectionTypeToString(exception_type) +
-                                    "\nMessage :: " + message + "\n";
+                                    "\nMessage :: " + message;
   }
 
   std::string ExpectionTypeToString(ExceptionType type) {
@@ -203,6 +202,7 @@ class Exception : public std::runtime_error {
  private:
   // type
   ExceptionType type;
+  std::string exception_message_;
 };
 
 //===--------------------------------------------------------------------===//
