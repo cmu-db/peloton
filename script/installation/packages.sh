@@ -46,6 +46,8 @@ if [ "$DISTRO" = "UBUNTU" ]; then
         libboost-thread-dev \
         libboost-filesystem-dev \
         libjemalloc-dev \
+        libunwind8-dev \
+        liblzma-dev \
         valgrind \
         lcov \
         libpqxx-dev \
@@ -90,7 +92,7 @@ elif [[ "$DISTRO" == *"REDHAT"* ]] && [[ "${DISTRO_VER%.*}" == "7" ]]; then
             echo "The download path is required."
             exit 1
         fi
-    
+
         pushd $TMPDIR
         wget -nc --no-check-certificate "$1"
         tpath=$(basename "$1")
