@@ -82,45 +82,45 @@ matrix:
             - python ../script/validators/jdbc_validator.py
 
         # Linux builds for gcc 5
-                - os: linux
-                  sudo: required
-                  dist: trusty
-                  compiler: gcc
-                  addons:
-                      apt:
-                          sources:
-                              - llvm-toolchain-precise-3.7
-                              - ubuntu-toolchain-r-test
-                          packages:
-                            - g++-5
-                  env:
-                    # NAME has no actual use, just to make the travis jobs overview more clear
-                    - NAME="gcc5 Debug"
-                    - CXX=g++-5
-                    - CC=gcc-5
-                    - PELOTON_BUILD_TYPE=Debug
-                    - COVERALLS=Off
+        - os: linux
+          sudo: required
+          dist: trusty
+          compiler: gcc
+          addons:
+              apt:
+                  sources:
+                      - llvm-toolchain-precise-3.7
+                      - ubuntu-toolchain-r-test
+                  packages:
+                    - g++-5
+          env:
+            # NAME has no actual use, just to make the travis jobs overview more clear
+            - NAME="gcc5 Debug"
+            - CXX=g++-5
+            - CC=gcc-5
+            - PELOTON_BUILD_TYPE=Debug
+            - COVERALLS=Off
 
-                - os: linux
-                  sudo: required
-                  dist: trusty
-                  compiler: gcc
-                  addons:
-                      apt:
-                          sources:
-                              - llvm-toolchain-precise-3.7
-                              - ubuntu-toolchain-r-test
-                          packages:
-                            - g++-5
-                  env:
-                    # NAME has no actual use, just to make the travis jobs overview more clear
-                    - NAME="gcc5 Release"
-                    - CXX=g++-5
-                    - CC=gcc-5
-                    - PELOTON_BUILD_TYPE=Release
-                    - COVERALLS=Off
+        - os: linux
+          sudo: required
+          dist: trusty
+          compiler: gcc
+          addons:
+              apt:
+                  sources:
+                      - llvm-toolchain-precise-3.7
+                      - ubuntu-toolchain-r-test
+                  packages:
+                    - g++-5
+          env:
+            # NAME has no actual use, just to make the travis jobs overview more clear
+            - NAME="gcc5 Release"
+            - CXX=g++-5
+            - CC=gcc-5
+            - PELOTON_BUILD_TYPE=Release
+            - COVERALLS=Off
 
-        # Linux builds for clang 3.7
+        # Linux builds for clang 3.9
         - os: linux
           sudo: required
           dist: trusty
@@ -131,12 +131,12 @@ matrix:
                       - llvm-toolchain-precise-3.7
                       - ubuntu-toolchain-r-test
                   packages:
-                    - clang-3.7
+                    - clang-3.9
           env:
             # NAME has no actual use, just to make the travis jobs overview more clear
-            - NAME="clang3.7 Debug"
-            - CXX=clang-3.7
-            - CC=clang-3.7
+            - NAME="clang3.9 Debug"
+            - CXX=clang-3.9
+            - CC=clang-3.9
             - PELOTON_BUILD_TYPE=Debug
             - COVERALLS=Off
 
@@ -150,12 +150,12 @@ matrix:
                       - llvm-toolchain-precise-3.7
                       - ubuntu-toolchain-r-test
                   packages:
-                    - clang-3.7
+                    - clang-3.9
           env:
             # NAME has no actual use, just to make the travis jobs overview more clear
-            - NAME="clang3.7 Release"
-            - CXX=clang-3.7
-            - CC=clang-3.7
+            - NAME="clang3.9 Release"
+            - CXX=clang-3.9
+            - CC=clang-3.9
             - PELOTON_BUILD_TYPE=Release
             - COVERALLS=Off
 
