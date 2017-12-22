@@ -24,7 +24,7 @@ namespace binder {
 
 void BinderContext::AddRegularTable(parser::TableRef* table_ref,
                                     const std::string default_database_name,
-                                    concurrency::Transaction* txn) {
+                                    concurrency::TransactionContext* txn) {
   table_ref->TryBindDatabaseName(default_database_name);
   auto table_alias = table_ref->GetTableAlias();
   AddRegularTable(table_ref->GetDatabaseName(), table_ref->GetTableName(),
@@ -34,7 +34,7 @@ void BinderContext::AddRegularTable(parser::TableRef* table_ref,
 void BinderContext::AddRegularTable(const std::string db_name,
                                     const std::string table_name,
                                     const std::string table_alias,
-                                    concurrency::Transaction* txn) {
+                                    concurrency::TransactionContext* txn) {
   // using catalog object to retrieve meta-data
   auto table_object =
       catalog::Catalog::GetInstance()->GetTableObject(db_name, table_name, txn);

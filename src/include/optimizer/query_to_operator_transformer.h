@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include <memory>
 #include <unordered_set>
 #include "common/sql_node_visitor.h"
 
@@ -77,7 +78,7 @@ class QueryToOperatorTransformer : public SqlNodeVisitor {
  private:
   std::shared_ptr<OperatorExpression> output_expr_;
 
-  concurrency::Transaction *txn_;
+  concurrency::TransactionContext *txn_;
   // identifier for get operators
   oid_t get_id;
   bool enable_predicate_push_down_;

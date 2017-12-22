@@ -159,30 +159,11 @@ executor::ExecuteResult TrafficCop::ExecuteHelper(
   }
 
   // skip if already aborted
-  if (curr_state.second != ResultType::ABORTED) {
-    PL_ASSERT(txn);
-    PL_ASSERT(plan);
-    PL_ASSERT(task_callback_);
-    PL_ASSERT(task_callback_arg_);
-    ExecutePlanArg *arg =
-        new ExecutePlanArg(plan, txn, params, result, result_format, p_status_);
-    threadpool::MonoQueuePool::GetInstance().SubmitTask([](void *arg_ptr) {
-      auto arg = reinterpret_cast<ExecutePlanArg *>(arg_ptr);
-      executor::PlanExecutor::ExecutePlan(arg->plan_, arg->txn_, arg->params_,
-                                          arg->result_, arg->result_format_,
-                                          arg->p_status_);
-      delete (arg);
-    }, arg, task_callback_, task_callback_arg_);
-    LOG_TRACE("Submit Task into MonoQueuePool");
-
-    is_queuing_ = true;
-    return p_status_;
-
-  } else {
-    // otherwise, we have already aborted
+  if (curr_state.second == ResultType::ABORTED) {
     p_status_.m_result = ResultType::ABORTED;
     return p_status_;
-  }
+
+  } 
 
   struct ExecutePlanArg {
     std::shared_ptr<planner::AbstractPlan> plan_;

@@ -46,13 +46,13 @@ class BinderContext {
   // Update the table alias map given a table reference (in the from clause)
   void AddRegularTable(parser::TableRef *table_ref,
                        const std::string default_database_name,
-                       concurrency::Transaction *txn);
+                       concurrency::TransactionContext *txn);
 
   // Update the table alias map given a table reference (in the from clause)
   void AddRegularTable(const std::string db_name,
                        const std::string table_name,
                        const std::string table_alias,
-                       concurrency::Transaction *txn);
+                       concurrency::TransactionContext *txn);
 
   // Update the nested table alias map
   void AddNestedTable(const std::string table_alias, std::vector<std::unique_ptr<expression::AbstractExpression>>& select_list);
