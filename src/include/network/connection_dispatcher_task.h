@@ -16,7 +16,6 @@
 #include "network_state.h"
 #include "concurrency/epoch_manager_factory.h"
 #include "connection_handler_task.h"
-#include "network_manager.h"
 
 namespace peloton {
 namespace network {

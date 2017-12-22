@@ -34,7 +34,6 @@
 #include "notifiable_task.h"
 #include "connection_dispatcher_task.h"
 #include "protocol_handler.h"
-#include "network_connection.h"
 #include "network_state.h"
 
 #include <openssl/ssl.h>
@@ -46,10 +45,6 @@
 namespace peloton {
 namespace network {
 
-// Forward Declarations
-class NotifiableTask;
-class ConnectionDispatcherTask;
-class NetworkConnection;
 
 class NetworkManager {
  private:
@@ -79,11 +74,6 @@ class NetworkManager {
 
  public:
   NetworkManager();
-
-  static NetworkConnection *GetConnection(const int &connfd);
-
-  static void CreateNewConnection(const int &connfd, short ev_flags,
-                                  NotifiableTask *thread);
 
   void StartServer();
 

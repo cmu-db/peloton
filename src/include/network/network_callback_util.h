@@ -22,7 +22,6 @@
 #include "network_state.h"
 #include "connection_handler_task.h"
 #include "connection_dispatcher_task.h"
-#include "network_connection.h"
 
 namespace peloton {
 namespace network {
