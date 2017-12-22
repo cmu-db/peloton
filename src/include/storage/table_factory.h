@@ -34,8 +34,8 @@ class TableFactory {
                                  catalog::Schema *schema,
                                  std::string table_name,
                                  size_t tuples_per_tile_group_count,
-                                 bool own_schema, bool adapt_table,
-                                 bool is_catalog = false);
+                                 bool own_schema, bool adapt_table, bool is_catalog = false,
+                                 peloton::LayoutType layout_type = peloton::LayoutType::ROW);
 
   static TempTable *GetTempTable(catalog::Schema *schema, bool own_schema);
 
