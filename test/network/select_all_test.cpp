@@ -67,7 +67,7 @@ void *SelectAllTest(int port) {
     txn1.commit();
 
     pqxx::work txn2(C);
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < 2000; i++) {
       std::string s = "INSERT INTO template VALUES (" + std::to_string(i) + ")";
       LOG_INFO("Start sending query");
       txn2.exec(s);
@@ -75,13 +75,7 @@ void *SelectAllTest(int port) {
 
     pqxx::result R = txn2.exec("SELECT * from template;");
     txn2.commit();
-<<<<<<< HEAD
-s
     EXPECT_EQ(R.size(), 2000);
-=======
-
-    EXPECT_EQ(R.size(), 20);
->>>>>>> Fix performance bug where evthread_use_pthreads() was not called
   } catch (const std::exception &e) {
     LOG_INFO("[SelectAllTest] Exception occurred: %s", e.what());
     EXPECT_TRUE(false);

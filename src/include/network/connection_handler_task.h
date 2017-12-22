@@ -45,7 +45,7 @@ class ConnectionHandlerTask : public NotifiableTask {
 
 public:
   /**
-   * Constructs a new ConnecitonHandlerTask instance.
+   * Constructs a new ConnectionHandlerTask instance.
    * @param task_id task_id a unique id assigned to this task.
    */
   explicit ConnectionHandlerTask(int task_id);
