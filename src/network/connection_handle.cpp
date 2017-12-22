@@ -15,7 +15,6 @@
 #include "network/connection_handle.h"
 #include <include/network/postgres_protocol_handler.h>
 #include "network/protocol_handler_factory.h"
-#include "network/network_callback_util.h"
 #include "network/connection_dispatcher_task.h"
 #include "network/connection_handle.h"
 #include "network/network_manager.h"
@@ -114,17 +113,20 @@ ConnectionHandle::ConnectionHandle(int sock_fd, ConnectionHandlerTask *handler)
 
 //  TODO(tianyu): The original network code seems to do this as an optimization. I am leaving this out until we get numbers
 //  if (network_event != nullptr)
-//    handler->UpdateEvent(network_event, sock_fd_, event_flags, CallbackUtil::OnNetworkEvent, this);
+//    handler->UpdateEvent(network_event, sock_fd_, event_flags,
+//                         METHOD_AS_CALLBACK(ConnectionHandle, HandleEvent), this);
 //  else
-//    network_event = handler->RegisterEvent(sock_fd_, event_flags, CallbackUtil::OnNetworkEvent, this);
+//    network_event = handler->RegisterEvent(sock_fd_, event_flags,
+//                                           METHOD_AS_CALLBACK(ConnectionHandle, HandleEvent), this);
 //
 //  if (workpool_event != nullptr)
-//    handler->UpdateManualEvent(workpool_event, CallbackUtil::OnNetworkEvent, this);
+//    handler->UpdateManualEvent(workpool_event, METHOD_AS_CALLBACK(ConnectionHandle, HandleEvent), this);
 //  else
-//    workpool_event = handler->RegisterManualEvent(CallbackUtil::OnNetworkEvent, this);
+//    workpool_event = handler->RegisterManualEvent(METHOD_AS_CALLBACK(ConnectionHandle, HandleEvent), this);
 
-  network_event = handler->RegisterEvent(sock_fd_, EV_READ|EV_PERSIST, CallbackUtil::OnNetworkEvent, this);
-  workpool_event = handler->RegisterManualEvent(CallbackUtil::OnNetworkEvent, this);
+  network_event = handler->RegisterEvent(sock_fd_, EV_READ|EV_PERSIST,
+                                         METHOD_AS_CALLBACK(ConnectionHandle, HandleEvent), this);
+  workpool_event = handler->RegisterManualEvent(METHOD_AS_CALLBACK(ConnectionHandle, HandleEvent), this);
 
   //TODO:: should put the initialization else where.. check correctness first.
   traffic_cop_.SetTaskCallback([](void *arg) {
@@ -134,11 +136,11 @@ ConnectionHandle::ConnectionHandle(int sock_fd, ConnectionHandlerTask *handler)
 
 }
 
-bool ConnectionHandle::UpdateEvent(short flags) {
+bool ConnectionHandle::UpdateEventFlags(short flags) {
   // TODO(tianyu): The original network code seems to do this as an optimization. I am leaving this out until we get numbers
-  // handler->UpdateEvent(network_event, sock_fd_, flags, CallbackUtil::OnNetworkEvent, this);
+  // handler->UpdateEvent(network_event, sock_fd_, flags, METHOD_AS_CALLBACK(ConnectionHandle, HandleEvent), this);
   handler_->UnregisterEvent(network_event);
-  network_event = handler_->RegisterEvent(sock_fd_, flags, CallbackUtil::OnNetworkEvent, this);
+  network_event = handler_->RegisterEvent(sock_fd_, flags, METHOD_AS_CALLBACK(ConnectionHandle, HandleEvent), this);
   // TODO(tianyu) Not propagate error since we will change to exceptions anyway.
   return true;
 }
@@ -333,7 +335,7 @@ WriteState ConnectionHandle::FlushWriteBuffer() {
           // in blocking mode. Wait till it's readable
         } else if (errno == EAGAIN || errno == EWOULDBLOCK) {
           // Listen for socket being enabled for write
-          if (!UpdateEvent(EV_WRITE | EV_PERSIST)) {
+          if (!UpdateEventFlags(EV_WRITE | EV_PERSIST)) {
             return WriteState::WRITE_ERROR;
           }
           // We should go to WRITE state
@@ -622,7 +624,7 @@ Transition ConnectionHandle::CloseSocket() {
 
 Transition ConnectionHandle::Wait() {
   // TODO(tianyu): Maybe we don't need this state? Also, this name is terrible
-  if (!UpdateEvent(EV_READ | EV_PERSIST)) {
+  if (!UpdateEventFlags(EV_READ | EV_PERSIST)) {
     LOG_ERROR("Failed to update event, closing");
     return Transition::ERROR;
   }
@@ -695,7 +697,7 @@ Transition ConnectionHandle::ProcessWrite() {
   // TODO(tianyu): Should convert to use Transition in the top level method
   switch (WritePackets()) {
     case WriteState::WRITE_COMPLETE: {
-      if (!UpdateEvent(EV_READ | EV_PERSIST)) {
+      if (!UpdateEventFlags(EV_READ | EV_PERSIST)) {
         LOG_ERROR("Failed to update event, closing");
         return Transition::ERROR;
       }

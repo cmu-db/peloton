@@ -57,7 +57,7 @@ public:
   /**
    * Update the existing event to listen to the passed flags
    */
-  bool UpdateEvent(short flags);
+  bool UpdateEventFlags(short flags);
 
   WriteState WritePackets();
 
@@ -65,9 +65,7 @@ public:
 
   Transition CloseSocket();
 
-  void Reset();
-
-  inline void TriggerStateMachine() { state_machine_.Accept(Transition::WAKEUP, *this); }
+  inline void HandleEvent(int, short) { state_machine_.Accept(Transition::WAKEUP, *this); }
 
   // Exposed for testing
   const std::unique_ptr<ProtocolHandler> &GetProtocolHandler() const {

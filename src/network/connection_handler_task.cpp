@@ -11,7 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "network/connection_handler_task.h"
-#include "network/network_callback_util.h"
+#include "network/connection_handle.h"
+#include "network/connection_handle_factory.h"
 
 namespace peloton {
 namespace network {
@@ -24,9 +25,9 @@ ConnectionHandlerTask::ConnectionHandlerTask(const int task_id)
     exit(1);
   }
   new_conn_send_fd_ = fds[1];
-  RegisterEvent(fds[0], EV_READ|EV_PERSIST, CallbackUtil::OnNewConnectionDispatch, this);
-  struct timeval one_second = {1, 0};
-  RegisterPeriodicEvent(&one_second, CallbackUtil::ThreadControl_Callback, this);
+  RegisterEvent(fds[0], EV_READ|EV_PERSIST,
+                METHOD_AS_CALLBACK(ConnectionHandlerTask, HandleDispatch),
+                this);
 }
 
 void ConnectionHandlerTask::Notify(int conn_fd) {
@@ -35,6 +36,32 @@ void ConnectionHandlerTask::Notify(int conn_fd) {
   buf[0] = 'c';
   if (write(new_conn_send_fd_, buf, 1) != 1) {
     LOG_ERROR("Failed to write to thread notify pipe");
+  }
+}
+
+void ConnectionHandlerTask::HandleDispatch(int new_conn_recv_fd, short) {
+  // buffer used to receive messages from the main thread
+  char m_buf[1];
+  int client_fd;
+  std::shared_ptr<ConnectionHandle> conn;
+
+  // read the operation that needs to be performed
+  if (read(new_conn_recv_fd, m_buf, 1) != 1) {
+    LOG_ERROR("Can't read from the libevent pipe");
+    return;
+  }
+
+  switch (m_buf[0]) {
+    /* new connection case */
+    case 'c': {
+      // fetch the new connection fd from the queue
+      new_conn_queue_.Dequeue(client_fd);
+      conn = ConnectionHandleFactory::GetInstance().GetConnectionHandle(client_fd, this);
+      break;
+    }
+
+    default:
+    LOG_ERROR("Unexpected message. Shouldn't reach here");
   }
 }
 
