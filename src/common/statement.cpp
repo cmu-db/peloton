@@ -10,13 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "common/statement.h"
 
 #include <cstdio>
 #include <sstream>
-#include <include/parser/postgresparser.h>
 
 #include "common/logger.h"
+#include "common/statement.h"
+#include "parser/postgresparser.h"
 #include "planner/abstract_plan.h"
 
 namespace peloton {

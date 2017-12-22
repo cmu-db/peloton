@@ -10,20 +10,19 @@
 //
 //===----------------------------------------------------------------------===//
 
-
-#include "common/internal_types.h"
-
 #include <algorithm>
 #include <cstring>
 #include <sstream>
 
 #include "common/exception.h"
+#include "common/internal_types.h"
 #include "common/logger.h"
 #include "common/macros.h"
+#include "type/types.h"
 #include "type/value_factory.h"
-#include "util/string_util.h"
 #include "parser/sql_statement.h"
 #include "parser/statements.h"
+#include "util/string_util.h"
 
 namespace peloton {
 

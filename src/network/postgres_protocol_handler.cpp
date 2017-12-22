@@ -9,26 +9,28 @@
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-#include "network/postgres_protocol_handler.h"
 
 #include <boost/algorithm/string.hpp>
 #include <cstdio>
 #include <unordered_map>
-#include <include/parser/postgresparser.h>
 
 #include "common/cache.h"
 #include "common/macros.h"
 #include "common/portal.h"
+#include "network/marshal.h"
+#include "network/postgres_protocol_handler.h"
+#include "parser/postgresparser.h"
 #include "planner/abstract_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"
 #include "planner/update_plan.h"
-#include "include/traffic_cop/traffic_cop.h"
+#include "traffic_cop/traffic_cop.h"
 #include "common/internal_types.h"
+#include "settings/settings_manager.h"
+#include "traffic_cop/traffic_cop.h"
 #include "type/value.h"
 #include "type/value_factory.h"
-#include "network/marshal.h"
-#include "settings/settings_manager.h"
+
 
 namespace peloton {
 namespace network {

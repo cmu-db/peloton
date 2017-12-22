@@ -10,15 +10,17 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <pqxx/pqxx> /* libpqxx is used to instantiate C++ client */
+#include <pqxx/except.hxx>
+
 #include "common/harness.h"
-#include "gtest/gtest.h"
 #include "common/logger.h"
+#include "gtest/gtest.h"
 #include "network/network_manager.h"
 #include "network/protocol_handler_factory.h"
+#include "network/postgres_protocol_handler.h"
 #include "util/string_util.h"
-#include <pqxx/pqxx> /* libpqxx is used to instantiate C++ client */
-#include <include/network/postgres_protocol_handler.h>
-#include <pqxx/except.hxx>
+
 #define NUM_THREADS 1
 
 namespace peloton {
@@ -78,9 +80,6 @@ void *ParserExceptionTest(int port) {
     // CREATE query
     pqxx::work txn2(C);
     try {
-      // TODO(Yuchen): If the query is 'CREATE TABLE employee(id ITN)', postgres parser will generate a valid parse tree
-      // but when doing the node transform, Peloton recognize the type error. It throws exception but it has
-      // memory leak in postgresparser.cpp: CreateTransform
       txn2.exec("CREATE TABEL employee(id ITN, name VARCHAR(100));");
       txn2.commit();
     } catch (const pqxx::pqxx_exception &e) {
