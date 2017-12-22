@@ -127,17 +127,27 @@ void IndexScanTranslator::Produce() const {
       }
       llvm::Value *is_lower = codegen.ConstBool(is_lower_key);
 
+      llvm::Value *parameter_value = parameter_cache.GetValue(i).GetValue();
       switch (ai->type.type_id) {
         case peloton::type::TypeId::TINYINT:
         case peloton::type::TypeId::SMALLINT:
         case peloton::type::TypeId::INTEGER:
         {
-          codegen.Call(IndexScanIteratorProxy::UpdateTupleWithInteger, {iterator_ptr, parameter_cache.GetValue(i).GetValue(), attribute_id, attribute_name, is_lower});
+          codegen.Call(IndexScanIteratorProxy::UpdateTupleWithInteger, {iterator_ptr, parameter_value, attribute_id, attribute_name, is_lower});
           break;
         }
         case peloton::type::TypeId::BIGINT:
         {
-          codegen.Call(IndexScanIteratorProxy::UpdateTupleWithBigInteger, {iterator_ptr, codegen->CreateSExt(parameter_cache.GetValue(i).GetValue(), codegen.Int64Type()), attribute_id, attribute_name, is_lower});
+          codegen.Call(IndexScanIteratorProxy::UpdateTupleWithBigInteger, {iterator_ptr, codegen->CreateSExt(parameter_value, codegen.Int64Type()), attribute_id, attribute_name, is_lower});
+          break;
+        }
+        case peloton::type::TypeId::DECIMAL:
+        {
+          if (parameter_value->getType() != codegen.DoubleType()) {
+            codegen.Call(IndexScanIteratorProxy::UpdateTupleWithDouble, {iterator_ptr, codegen->CreateSIToFP(parameter_value, codegen.DoubleType()), attribute_id, attribute_name, is_lower});
+          } else {
+            codegen.Call(IndexScanIteratorProxy::UpdateTupleWithDouble, {iterator_ptr, parameter_value, attribute_id, attribute_name, is_lower});
+          }
           break;
         }
         default:
