@@ -210,11 +210,11 @@ TEST_F(ParameterizationTest, ConstParameterWithConjunction) {
 
   const auto &results = buffer.GetOutputTuples();
   ASSERT_EQ(1, results.size());
-  EXPECT_EQ(type::CMP_TRUE, results[0].GetValue(0).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results[0].GetValue(0).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(20)));
-  EXPECT_EQ(type::CMP_TRUE, results[0].GetValue(1).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results[0].GetValue(1).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(21)));
-  EXPECT_EQ(type::CMP_TRUE, results[0].GetValue(2).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results[0].GetValue(2).CompareEquals(
                                 type::ValueFactory::GetDecimalValue(22)));
 
   // SELECT a, b, c FROM table where a >= 30 and b = 31;
@@ -247,11 +247,11 @@ TEST_F(ParameterizationTest, ConstParameterWithConjunction) {
 
   const auto &results_2 = buffer_2.GetOutputTuples();
   ASSERT_EQ(1, results_2.size());
-  EXPECT_EQ(type::CMP_TRUE, results_2[0].GetValue(0).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results_2[0].GetValue(0).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(30)));
-  EXPECT_EQ(type::CMP_TRUE, results_2[0].GetValue(1).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results_2[0].GetValue(1).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(31)));
-  EXPECT_EQ(type::CMP_TRUE, results_2[0].GetValue(2).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results_2[0].GetValue(2).CompareEquals(
                                 type::ValueFactory::GetDecimalValue(32)));
   EXPECT_TRUE(cached);
 
@@ -328,9 +328,9 @@ TEST_F(ParameterizationTest, ParamParameterWithConjunction) {
 
   const auto &results = buffer.GetOutputTuples();
   ASSERT_EQ(NumRowsInTestTable() - 2, results.size());
-  EXPECT_EQ(type::CMP_TRUE, results[0].GetValue(0).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results[0].GetValue(0).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(20)));
-  EXPECT_EQ(type::CMP_FALSE, results[0].GetValue(3).CompareEquals(
+  EXPECT_EQ(type::CmpBool::FALSE, results[0].GetValue(3).CompareEquals(
                                  type::ValueFactory::GetVarcharValue("")));
   EXPECT_FALSE(cached);
 
@@ -368,9 +368,9 @@ TEST_F(ParameterizationTest, ParamParameterWithConjunction) {
 
   const auto &results_2 = buffer_2.GetOutputTuples();
   ASSERT_EQ(NumRowsInTestTable() - 3, results_2.size());
-  EXPECT_EQ(type::CMP_TRUE, results_2[0].GetValue(0).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results_2[0].GetValue(0).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(30)));
-  EXPECT_EQ(type::CMP_FALSE, results_2[0].GetValue(3).CompareEquals(
+  EXPECT_EQ(type::CmpBool::FALSE, results_2[0].GetValue(3).CompareEquals(
                                  type::ValueFactory::GetVarcharValue("empty")));
   EXPECT_TRUE(cached);
 
@@ -408,9 +408,9 @@ TEST_F(ParameterizationTest, ParamParameterWithConjunction) {
 
   const auto &results_3 = buffer_3.GetOutputTuples();
   ASSERT_EQ(NumRowsInTestTable() - 3, results_3.size());
-  EXPECT_EQ(type::CMP_TRUE, results_3[0].GetValue(0).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results_3[0].GetValue(0).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(30)));
-  EXPECT_EQ(type::CMP_FALSE, results_3[0].GetValue(3).CompareEquals(
+  EXPECT_EQ(type::CmpBool::FALSE, results_3[0].GetValue(3).CompareEquals(
                                  type::ValueFactory::GetVarcharValue("empty")));
   EXPECT_TRUE(cached);
 
@@ -448,9 +448,9 @@ TEST_F(ParameterizationTest, ParamParameterWithConjunction) {
 
   const auto &results_4 = buffer_4.GetOutputTuples();
   ASSERT_EQ(NumRowsInTestTable() - 3, results_3.size());
-  EXPECT_EQ(type::CMP_TRUE, results_4[0].GetValue(0).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results_4[0].GetValue(0).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(30)));
-  EXPECT_EQ(type::CMP_FALSE, results_4[0].GetValue(3).CompareEquals(
+  EXPECT_EQ(type::CmpBool::FALSE, results_4[0].GetValue(3).CompareEquals(
                                  type::ValueFactory::GetVarcharValue("empty")));
   EXPECT_TRUE(cached);
 }

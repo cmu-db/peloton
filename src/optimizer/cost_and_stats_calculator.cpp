@@ -64,13 +64,13 @@ namespace optimizer {
 //     const expression::AbstractExpression *expr,
 //     std::shared_ptr<TableStats> &output_stats, bool enable_index) {
 //   if (expr->GetChild(LEFT_CHILD_INDEX)->GetExpressionType() ==
-//       ExpressionType::VALUE_TUPLE ||
+//           ExpressionType::VALUE_TUPLE ||
 //       expr->GetChild(RIGHT_CHILD_INDEX)->GetExpressionType() ==
 //           ExpressionType::VALUE_TUPLE) {
 //     int right_index =
 //         expr->GetChild(0)->GetExpressionType() == ExpressionType::VALUE_TUPLE
-//         ? 1
-//         : 0;
+//             ? 1
+//             : 0;
 //     auto left_expr = reinterpret_cast<const expression::TupleValueExpression *>(
 //         right_index == 1 ? expr->GetChild(0) : expr->GetChild(1));
 //
@@ -99,14 +99,14 @@ namespace optimizer {
 //     if (expr->GetChild(right_index)->GetExpressionType() ==
 //         ExpressionType::VALUE_CONSTANT) {
 //       value = reinterpret_cast<expression::ConstantValueExpression *>(
-//           expr->GetModifiableChild(right_index))
-//           ->GetValue();
+//                   expr->GetModifiableChild(right_index))
+//                   ->GetValue();
 //     } else {
 //       value = type::ValueFactory::GetParameterOffsetValue(
-//           reinterpret_cast<expression::ParameterValueExpression *>(
-//               expr->GetModifiableChild(right_index))
-//               ->GetValueIdx())
-//           .Copy();
+//                   reinterpret_cast<expression::ParameterValueExpression *>(
+//                       expr->GetModifiableChild(right_index))
+//                       ->GetValueIdx())
+//                   .Copy();
 //     }
 //     ValueCondition condition(column_id, expr_type, value);
 //     if (enable_index) {
@@ -165,10 +165,6 @@ namespace optimizer {
 //   output_cost_ = 0;
 // }
 //
-// void CostAndStatsCalculator::Visit(const QueryDerivedScan *) {
-//   output_cost_ = child_costs_[0];
-// }
-//
 // void CostAndStatsCalculator::Visit(const PhysicalSeqScan *op) {
 //   // TODO : Replace with more accurate cost
 //   // retrieve table_stats from catalog by db_id and table_id
@@ -186,18 +182,18 @@ namespace optimizer {
 //   }
 //
 //   auto columns_prop =
-//       output_properties_->GetPropertyOfType(PropertyType::COLUMNS)
-//           ->As<PropertyColumns>();
+//       output_properties_->GetPropertyOfTypeAs<PropertyColumns>(PropertyType::COLUMNS);
 //   auto output_stats = generateOutputStat(table_stats, columns_prop);
-//   auto predicate = std::shared_ptr<expression::AbstractExpression>(
-//       util::CombinePredicates(op->predicates));
-//   if (predicate == nullptr) {
+//   auto predicate_prop =
+//       output_properties_->GetPropertyOfTypeAs<PropertyPredicate>(PropertyType::PREDICATE);
+//   if (predicate_prop == nullptr) {
 //     output_cost_ += Cost::NoConditionSeqScanCost(table_stats);
 //     output_stats_ = output_stats;
 //     return;
 //   }
 //
-//   output_cost_ += updateMultipleConjuctionStats(table_stats, predicate.get(),
+//   expression::AbstractExpression *predicate = predicate_prop->GetPredicate();
+//   output_cost_ += updateMultipleConjuctionStats(table_stats, predicate,
 //                                                 output_stats, false);
 //   output_stats_ = output_stats;
 // };
@@ -207,7 +203,8 @@ namespace optimizer {
 //   // indexSearchable ? Index : SeqScan
 //   // TODO : Replace with more accurate cost
 //   output_cost_ = getCostOfChildren(child_costs_);
-//
+//   auto predicate_prop =
+//       output_properties_->GetPropertyOfTypeAs<PropertyPredicate>(PropertyType::PREDICATE);
 //   auto stats_storage = StatsStorage::GetInstance();
 //   auto table_stats =
 //       std::dynamic_pointer_cast<TableStats>(stats_storage->GetTableStats(
@@ -218,12 +215,12 @@ namespace optimizer {
 //   std::vector<type::Value> values;
 //   oid_t index_id = 0;
 //
-//   expression::AbstractExpression *predicate = std::shared_ptr<expression::AbstractExpression>(
-//       util::CombinePredicates(op->predicates)).get();
+//   expression::AbstractExpression *predicate =
+//       predicate_prop == nullptr ? nullptr : predicate_prop->GetPredicate();
 //   bool index_searchable =
 //       predicate == nullptr ? false : util::CheckIndexSearchable(
-//           op->table_, predicate, key_column_ids,
-//           expr_types, values, index_id);
+//                                          op->table_, predicate, key_column_ids,
+//                                          expr_types, values, index_id);
 //   // No table stats available
 //   if (table_stats->GetColumnCount() == 0) {
 //     output_stats_.reset(new Stats(nullptr));
@@ -236,11 +233,10 @@ namespace optimizer {
 //   }
 //
 //   auto columns_prop =
-//       output_properties_->GetPropertyOfType(PropertyType::COLUMNS)
-//           ->As<PropertyColumns>();
+//       output_properties_->GetPropertyOfTypeAs<PropertyColumns>(PropertyType::COLUMNS);
 //   auto output_stats = generateOutputStat(table_stats, columns_prop);
 //
-//   if (predicate == nullptr) {
+//   if (predicate_prop == nullptr) {
 //     output_cost_ += Cost::NoConditionSeqScanCost(table_stats);
 //   } else {
 //     if (index_searchable) {
@@ -253,28 +249,27 @@ namespace optimizer {
 //   }
 //   output_stats_ = output_stats;
 // }
-// //
-// //void CostAndStatsCalculator::Visit(const PhysicalProject *) {
-// //  // TODO: Replace with more accurate cost
-// //  output_cost_ = getCostOfChildren(child_costs_);
-// //  PL_ASSERT(child_stats_.size() == 1);
-// //  auto table_stats_ptr =
-// //      std::dynamic_pointer_cast<TableStats>(child_stats_.at(0));
-// //  if (table_stats_ptr == nullptr || table_stats_ptr->GetColumnCount() == 0) {
-// //    output_stats_.reset(new Stats(nullptr));
-// //    output_cost_ = 0;
-// //    return;
-// //  }
-// //  auto columns_prop =
-// //      output_properties_->GetPropertyOfType(PropertyType::COLUMNS)
-// //          ->As<PropertyColumns>();
-// //  auto output_stats = generateOutputStat(table_stats_ptr, columns_prop);
-// //
-// //  output_cost_ += Cost::ProjectCost(
-// //      std::dynamic_pointer_cast<TableStats>(child_stats_.at(0)),
-// //      std::vector<oid_t>(), output_stats);
-// //  output_stats_ = output_stats;
-// //}
+//
+// void CostAndStatsCalculator::Visit(const PhysicalProject *) {
+//   // TODO: Replace with more accurate cost
+//   output_cost_ = getCostOfChildren(child_costs_);
+//   PL_ASSERT(child_stats_.size() == 1);
+//   auto table_stats_ptr =
+//       std::dynamic_pointer_cast<TableStats>(child_stats_.at(0));
+//   if (table_stats_ptr == nullptr || table_stats_ptr->GetColumnCount() == 0) {
+//     output_stats_.reset(new Stats(nullptr));
+//     output_cost_ = 0;
+//     return;
+//   }
+//   auto columns_prop =
+//       output_properties_->GetPropertyOfTypeAs<PropertyColumns>(PropertyType::COLUMNS);
+//   auto output_stats = generateOutputStat(table_stats_ptr, columns_prop);
+//
+//   output_cost_ += Cost::ProjectCost(
+//       std::dynamic_pointer_cast<TableStats>(child_stats_.at(0)),
+//       std::vector<oid_t>(), output_stats);
+//   output_stats_ = output_stats;
+// }
 // void CostAndStatsCalculator::Visit(const PhysicalOrderBy *) {
 //   // TODO: Replace with more accurate cost
 //   PL_ASSERT(child_stats_.size() == 1);
@@ -287,8 +282,7 @@ namespace optimizer {
 //   }
 //
 //   auto columns_prop =
-//       output_properties_->GetPropertyOfType(PropertyType::COLUMNS)
-//           ->As<PropertyColumns>();
+//       output_properties_->GetPropertyOfTypeAs<PropertyColumns>(PropertyType::COLUMNS);
 //   auto output_stats = generateOutputStat(table_stats_ptr, columns_prop);
 //   auto sort_prop = std::dynamic_pointer_cast<PropertySort>(
 //       output_properties_->GetPropertyOfType(PropertyType::SORT));
@@ -298,9 +292,9 @@ namespace optimizer {
 //     auto expr = sort_prop->GetSortColumn(i);
 //     // TODO: Deal with complex expressions like a+b, a+30
 //     if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
-//       auto column = reinterpret_cast<expression::TupleValueExpression*>(
-//           sort_prop->GetSortColumn(i))
-//           ->GetColumnName();
+//       auto column = std::dynamic_pointer_cast<expression::TupleValueExpression>(
+//                         sort_prop->GetSortColumn(i))
+//                         ->GetColumnName();
 //
 //       // In case the first column is not a tuple expression which is ignored
 //       // previously
@@ -333,18 +327,18 @@ namespace optimizer {
 //     return;
 //   }
 //   auto columns_prop =
-//       output_properties_->GetPropertyOfType(PropertyType::COLUMNS)
-//           ->As<PropertyColumns>();
+//       output_properties_->GetPropertyOfTypeAs<PropertyColumns>(PropertyType::COLUMNS);
 //   auto output_stats = generateOutputStat(table_stats_ptr, columns_prop);
 //
 //   size_t limit = (size_t)std::dynamic_pointer_cast<PropertyLimit>(
-//       output_properties_->GetPropertyOfType(PropertyType::LIMIT))
-//       ->GetLimit();
+//                      output_properties_->GetPropertyOfType(PropertyType::LIMIT))
+//                      ->GetLimit();
 //   output_cost_ +=
 //       Cost::LimitCost(std::dynamic_pointer_cast<TableStats>(child_stats_.at(0)),
 //                       limit, output_stats);
 //   output_stats_ = output_stats;
 // }
+// void CostAndStatsCalculator::Visit(const PhysicalFilter *){};
 // void CostAndStatsCalculator::Visit(const PhysicalInnerNLJoin *) {
 //   // TODO: Replace with more accurate cost
 //   output_cost_ = 1;
@@ -386,8 +380,7 @@ namespace optimizer {
 //   }
 //
 //   auto columns_prop =
-//       output_properties_->GetPropertyOfType(PropertyType::COLUMNS)
-//           ->As<PropertyColumns>();
+//       output_properties_->GetPropertyOfTypeAs<PropertyColumns>(PropertyType::COLUMNS);
 //   auto output_stats = generateOutputStat(table_stats_ptr, columns_prop);
 //
 //   std::vector<oid_t> column_ids;
@@ -415,8 +408,7 @@ namespace optimizer {
 //   }
 //
 //   auto columns_prop =
-//       output_properties_->GetPropertyOfType(PropertyType::COLUMNS)
-//           ->As<PropertyColumns>();
+//       output_properties_->GetPropertyOfTypeAs<PropertyColumns>(PropertyType::COLUMNS);
 //   auto output_stats = generateOutputStat(table_stats_ptr, columns_prop);
 //
 //   std::vector<oid_t> column_ids;
@@ -456,14 +448,11 @@ namespace optimizer {
 //     return;
 //   }
 //   auto columns_prop =
-//       output_properties_->GetPropertyOfType(PropertyType::COLUMNS)
-//           ->As<PropertyColumns>();
+//       output_properties_->GetPropertyOfTypeAs<PropertyColumns>(PropertyType::COLUMNS);
 //   auto output_stats = generateOutputStat(table_stats_ptr, columns_prop);
 //
 //   auto distinct_prop =
-//       output_properties_->GetPropertyOfType(PropertyType::DISTINCT)
-//           ->As<PropertyDistinct>();
-//
+//       output_properties_->GetPropertyOfTypeAs<PropertyDistinct>(PropertyType::DISTINCT);
 //   // TODO: Deal with complex situations like distinct with multiple columns or
 //   // with complex expressions
 //   if (distinct_prop->GetSize() == 1 &&

@@ -9,6 +9,7 @@ peloton_protobuf_generate_cpp_py(${proto_gen_folder} proto_srcs proto_hdrs proto
 
 # include python files either to force generation
 add_library(peloton-proto STATIC ${proto_hdrs} ${proto_srcs} ${proto_python})
+target_compile_options(peloton-proto PRIVATE "-Wno-unused-parameter")
 set(Peloton_LINKER_LIBS peloton-proto ${Peloton_LINKER_LIBS}) # note, crucial to prepend!
 peloton_default_properties(peloton-proto)
 
@@ -30,7 +31,7 @@ add_custom_target(libpg_query ALL
 peloton_pickup_peloton_sources(${PROJECT_SOURCE_DIR})
 
 add_library(peloton SHARED ${srcs})
-
+add_dependencies(peloton libpg_query)
 target_link_libraries(peloton ${Peloton_LINKER_LIBS} peloton-proto ${PROJECT_SOURCE_DIR}/third_party/libpg_query/libpg_query.a)
 
 peloton_default_properties(peloton)

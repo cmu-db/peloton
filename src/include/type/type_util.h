@@ -55,50 +55,50 @@ class TypeUtil {
    */
   static CmpBool CompareEqualsRaw(type::Type type, const char* left,
                                   const char* right, bool inlined) {
-    CmpBool result = CmpBool::CMP_NULL;
+    CmpBool result = CmpBool::NULL_;
     switch (type.GetTypeId()) {
       case TypeId::BOOLEAN:
       case TypeId::TINYINT: {
         result = (*reinterpret_cast<const int8_t*>(left) ==
                           *reinterpret_cast<const int8_t*>(right)
-                      ? CmpBool::CMP_TRUE
-                      : CmpBool::CMP_FALSE);
+                      ? CmpBool::TRUE
+                      : CmpBool::FALSE);
         break;
       }
       case TypeId::SMALLINT: {
         result = (*reinterpret_cast<const int16_t*>(left) ==
                           *reinterpret_cast<const int16_t*>(right)
-                      ? CmpBool::CMP_TRUE
-                      : CmpBool::CMP_FALSE);
+                      ? CmpBool::TRUE
+                      : CmpBool::FALSE);
         break;
       }
       case TypeId::INTEGER: {
         result = (*reinterpret_cast<const int32_t*>(left) ==
                           *reinterpret_cast<const int32_t*>(right)
-                      ? CmpBool::CMP_TRUE
-                      : CmpBool::CMP_FALSE);
+                      ? CmpBool::TRUE
+                      : CmpBool::FALSE);
         break;
       }
       case TypeId::BIGINT: {
         result = (*reinterpret_cast<const int64_t*>(left) ==
                           *reinterpret_cast<const int64_t*>(right)
-                      ? CmpBool::CMP_TRUE
-                      : CmpBool::CMP_FALSE);
+                      ? CmpBool::TRUE
+                      : CmpBool::FALSE);
         break;
       }
       case TypeId::DECIMAL: {
         result = (*reinterpret_cast<const double*>(left) ==
                           *reinterpret_cast<const double*>(right)
-                      ? CmpBool::CMP_TRUE
-                      : CmpBool::CMP_FALSE);
+                      ? CmpBool::TRUE
+                      : CmpBool::FALSE);
         break;
       }
       case TypeId::TIMESTAMP:
       case TypeId::DATE: {
         result = (*reinterpret_cast<const uint64_t*>(left) ==
                           *reinterpret_cast<const uint64_t*>(right)
-                      ? CmpBool::CMP_TRUE
-                      : CmpBool::CMP_FALSE);
+                      ? CmpBool::TRUE
+                      : CmpBool::FALSE);
         break;
       }
       case TypeId::VARCHAR:
@@ -110,7 +110,7 @@ class TypeUtil {
           rightPtr = *reinterpret_cast<const char* const*>(right);
         }
         if (leftPtr == nullptr || rightPtr == nullptr) {
-          result = CmpBool::CMP_FALSE;
+          result = CmpBool::FALSE;
           break;
         }
         uint32_t leftLen = *reinterpret_cast<const uint32_t*>(leftPtr);
@@ -134,50 +134,50 @@ class TypeUtil {
    */
   static CmpBool CompareLessThanRaw(const type::Type type, const char* left,
                                     const char* right, bool inlined) {
-    CmpBool result = CmpBool::CMP_NULL;
+    CmpBool result = CmpBool::NULL_;
     switch (type.GetTypeId()) {
       case TypeId::BOOLEAN:
       case TypeId::TINYINT: {
         result = (*reinterpret_cast<const int8_t*>(left) <
                           *reinterpret_cast<const int8_t*>(right)
-                      ? CmpBool::CMP_TRUE
-                      : CmpBool::CMP_FALSE);
+                      ? CmpBool::TRUE
+                      : CmpBool::FALSE);
         break;
       }
       case TypeId::SMALLINT: {
         result = (*reinterpret_cast<const int16_t*>(left) <
                           *reinterpret_cast<const int16_t*>(right)
-                      ? CmpBool::CMP_TRUE
-                      : CmpBool::CMP_FALSE);
+                      ? CmpBool::TRUE
+                      : CmpBool::FALSE);
         break;
       }
       case TypeId::INTEGER: {
         result = (*reinterpret_cast<const int32_t*>(left) <
                           *reinterpret_cast<const int32_t*>(right)
-                      ? CmpBool::CMP_TRUE
-                      : CmpBool::CMP_FALSE);
+                      ? CmpBool::TRUE
+                      : CmpBool::FALSE);
         break;
       }
       case TypeId::BIGINT: {
         result = (*reinterpret_cast<const int64_t*>(left) <
                           *reinterpret_cast<const int64_t*>(right)
-                      ? CmpBool::CMP_TRUE
-                      : CmpBool::CMP_FALSE);
+                      ? CmpBool::TRUE
+                      : CmpBool::FALSE);
         break;
       }
       case TypeId::DECIMAL: {
         result = (*reinterpret_cast<const double*>(left) <
                           *reinterpret_cast<const double*>(right)
-                      ? CmpBool::CMP_TRUE
-                      : CmpBool::CMP_FALSE);
+                      ? CmpBool::TRUE
+                      : CmpBool::FALSE);
         break;
       }
       case TypeId::TIMESTAMP:
       case TypeId::DATE: {
         result = (*reinterpret_cast<const uint64_t*>(left) <
                           *reinterpret_cast<const uint64_t*>(right)
-                      ? CmpBool::CMP_TRUE
-                      : CmpBool::CMP_FALSE);
+                      ? CmpBool::TRUE
+                      : CmpBool::FALSE);
         break;
       }
       case TypeId::VARCHAR:
@@ -189,7 +189,7 @@ class TypeUtil {
           rightPtr = *reinterpret_cast<const char* const*>(right);
         }
         if (leftPtr == nullptr || rightPtr == nullptr) {
-          result = CmpBool::CMP_FALSE;
+          result = CmpBool::FALSE;
           break;
         }
         uint32_t leftLen = *reinterpret_cast<const uint32_t*>(leftPtr);
@@ -213,50 +213,50 @@ class TypeUtil {
    */
   static CmpBool CompareGreaterThanRaw(const type::Type type, const char* left,
                                        const char* right, bool inlined) {
-    CmpBool result = CmpBool::CMP_NULL;
+    CmpBool result = CmpBool::NULL_;
     switch (type.GetTypeId()) {
       case TypeId::BOOLEAN:
       case TypeId::TINYINT: {
         result = (*reinterpret_cast<const int8_t*>(left) >
                           *reinterpret_cast<const int8_t*>(right)
-                      ? CmpBool::CMP_TRUE
-                      : CmpBool::CMP_FALSE);
+                      ? CmpBool::TRUE
+                      : CmpBool::FALSE);
         break;
       }
       case TypeId::SMALLINT: {
         result = (*reinterpret_cast<const int16_t*>(left) >
                           *reinterpret_cast<const int16_t*>(right)
-                      ? CmpBool::CMP_TRUE
-                      : CmpBool::CMP_FALSE);
+                      ? CmpBool::TRUE
+                      : CmpBool::FALSE);
         break;
       }
       case TypeId::INTEGER: {
         result = (*reinterpret_cast<const int32_t*>(left) >
                           *reinterpret_cast<const int32_t*>(right)
-                      ? CmpBool::CMP_TRUE
-                      : CmpBool::CMP_FALSE);
+                      ? CmpBool::TRUE
+                      : CmpBool::FALSE);
         break;
       }
       case TypeId::BIGINT: {
         result = (*reinterpret_cast<const int64_t*>(left) >
                           *reinterpret_cast<const int64_t*>(right)
-                      ? CmpBool::CMP_TRUE
-                      : CmpBool::CMP_FALSE);
+                      ? CmpBool::TRUE
+                      : CmpBool::FALSE);
         break;
       }
       case TypeId::DECIMAL: {
         result = (*reinterpret_cast<const double*>(left) >
                           *reinterpret_cast<const double*>(right)
-                      ? CmpBool::CMP_TRUE
-                      : CmpBool::CMP_FALSE);
+                      ? CmpBool::TRUE
+                      : CmpBool::FALSE);
         break;
       }
       case TypeId::TIMESTAMP:
       case TypeId::DATE: {
         result = (*reinterpret_cast<const uint64_t*>(left) >
                           *reinterpret_cast<const uint64_t*>(right)
-                      ? CmpBool::CMP_TRUE
-                      : CmpBool::CMP_FALSE);
+                      ? CmpBool::TRUE
+                      : CmpBool::FALSE);
         break;
       }
       case TypeId::VARCHAR:
@@ -268,7 +268,7 @@ class TypeUtil {
           rightPtr = *reinterpret_cast<const char* const*>(right);
         }
         if (leftPtr == nullptr || rightPtr == nullptr) {
-          result = CmpBool::CMP_FALSE;
+          result = CmpBool::FALSE;
           break;
         }
         uint32_t leftLen = *reinterpret_cast<const uint32_t*>(leftPtr);

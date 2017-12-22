@@ -133,7 +133,7 @@ void StatsAggregator::UpdateQueryMetrics(int64_t time_stamp,
                                          concurrency::TransactionContext *txn) {
   // Get the target query metrics table
   LOG_TRACE("Inserting Query Metric Tuples");
-  // auto query_metrics_table = GetMetricTable(QUERY_METRIC_NAME);
+  // auto query_metrics_table = GetMetricTable(MetricType::QUERY_NAME);
 
   std::shared_ptr<QueryMetric> query_metric;
   auto &completed_query_metrics = aggregated_stats_.GetCompletedQueryMetrics();

@@ -2352,6 +2352,37 @@ std::ostream &operator<<(std::ostream &os, const CheckpointingType &type) {
   return os;
 }
 
+std::string LayoutTypeToString(LayoutType type) {
+  switch (type) {
+    case LayoutType::INVALID: {
+      return "INVALID";
+    }
+    case LayoutType::ROW: {
+      return "ROW";
+    }
+    case LayoutType::COLUMN: {
+      return "COLUMN";
+    }
+    case LayoutType::HYBRID: {
+      return "HYBRID";
+    }
+    default: {
+      throw ConversionException(StringUtil::Format(
+          "No string conversion for LayoutType value '%d'",
+          static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+std::ostream &operator<<(std::ostream &os, const LayoutType &type) {
+  os << LayoutTypeToString(type);
+  return os;
+}
+
+
+
+
 type::TypeId PostgresValueTypeToPelotonValueType(PostgresValueType type) {
   switch (type) {
     case PostgresValueType::BOOLEAN:
@@ -2687,7 +2718,7 @@ std::ostream &operator<<(std::ostream &os, const PropertyType &type) {
 //===--------------------------------------------------------------------===//
 std::string SqlStateErrorCodeToString(SqlStateErrorCode code) {
   switch (code) {
-    case SERIALIZATION_ERROR:
+    case SqlStateErrorCode::SERIALIZATION_ERROR:
       return "40001";
     default:
       return "INVALID";

@@ -35,6 +35,13 @@ class PropertySet {
 
   const std::shared_ptr<Property> GetPropertyOfType(PropertyType type) const;
 
+  template <typename T>
+  const T *GetPropertyOfTypeAs(PropertyType type) const {
+    auto property = GetPropertyOfType(type);
+    if (property) return property->As<T>();
+    return nullptr;
+  }
+
   hash_t Hash() const;
 
   // whether this property set contains a specific property
