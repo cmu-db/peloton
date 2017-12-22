@@ -47,7 +47,7 @@ namespace sdbench {
 
 std::unique_ptr<storage::DataTable> sdbench_table;
 
-void CreateTable(peloton::LayoutType layout_type) {
+void CreateTable(UNUSED_ATTRIBUTE peloton::LayoutType layout_type) {
   const oid_t col_count = state.attribute_count + 1;
   const bool is_inlined = true;
 
@@ -73,7 +73,7 @@ void CreateTable(peloton::LayoutType layout_type) {
   bool adapt_table = true;
   sdbench_table.reset(storage::TableFactory::GetDataTable(
       INVALID_OID, INVALID_OID, table_schema, table_name,
-      state.tuples_per_tilegroup, own_schema, adapt_table, layout_type));
+      state.tuples_per_tilegroup, own_schema, adapt_table));
 }
 
 void LoadTable() {
