@@ -178,7 +178,7 @@ struct Floor : public TypeSystem::UnaryOperatorHandleNull {
   Value Impl(CodeGen &codegen, const Value &val) const override {
     llvm::Value *raw_ret =
         codegen.Call(DecimalFunctionsProxy::Floor, {val.GetValue()});
-    return Value{Integer::Instance(), raw_ret};
+    return Value{Decimal::Instance(), raw_ret};
   }
 };
 
