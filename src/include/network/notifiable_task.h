@@ -36,6 +36,16 @@
 namespace peloton {
 namespace network {
 
+/**
+ * Convenient MACRO to use a method as a libevent callback function. Example usage:
+ *
+ * (..., METHOD_AS_CALLBACK(ConnectionDispatcherTask, DispatchConnection), obj)
+ *
+ * Would call DispatchConnection method on ConnectionDispatcherTask. obj must be an instance
+ * of ConnectionDispatcherTask. The method being invoked must have signature void(int, short),
+ * where int is the fd and short is the flags supplied by libevent.
+ *
+ */
 #define METHOD_AS_CALLBACK(type, method) [](int fd, short flags, void *arg) {static_cast<type *>(arg)->method(fd, flags);}
 
 /**
@@ -213,6 +223,13 @@ public:
    */
   virtual void Break() {
     event_base_loopexit(base_, nullptr);
+  }
+
+  /**
+   * Wrapper around Break() to conform to libevent callback signature
+   */
+  void Break(int, short) {
+    Break();
   }
 
 private:

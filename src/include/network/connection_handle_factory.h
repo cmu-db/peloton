@@ -39,7 +39,7 @@ public:
     if (it == reusable_handles_.end()){
       // We are not using std::make_shared here because we want to keep ConnectionHandle constructor
       // private to avoid unintentional use.
-      auto handle = std::shared_ptr(new ConnectionHandle(conn_fd, handler));
+      auto handle = std::shared_ptr<ConnectionHandle>(new ConnectionHandle(conn_fd, handler));
       reusable_handles_[conn_fd] = handle;
       return handle;
     }
