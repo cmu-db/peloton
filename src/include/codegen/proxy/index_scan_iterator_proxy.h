@@ -32,6 +32,7 @@ PROXY(IndexScanIterator) {
   DECLARE_METHOD(UpdateTupleWithInteger);
   DECLARE_METHOD(UpdateTupleWithBigInteger);
   DECLARE_METHOD(UpdateTupleWithDouble);
+  DECLARE_METHOD(UpdateTupleWithVarchar);
 };
 
 TYPE_BUILDER(IndexScanIterator, util::IndexScanIterator);

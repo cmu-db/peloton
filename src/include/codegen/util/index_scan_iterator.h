@@ -54,6 +54,7 @@ class IndexScanIterator {
   void UpdateTupleWithInteger(int value, int attribute_id, char* attribute_name, bool is_lower_key);
   void UpdateTupleWithBigInteger(int64_t value, int attribute_id, char* attribute_name, bool is_lower_key);
   void UpdateTupleWithDouble(double value, int attribute_id, char* attribute_name, bool is_lower_key);
+  void UpdateTupleWithVarchar(char* value, int attribute_id, char* attribute_name, bool is_lower_key);
 };
 }
 }

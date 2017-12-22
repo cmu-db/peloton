@@ -150,6 +150,12 @@ void IndexScanTranslator::Produce() const {
           }
           break;
         }
+        case peloton::type::TypeId::VARBINARY:
+        case peloton::type::TypeId::VARCHAR:
+        {
+          codegen.Call(IndexScanIteratorProxy::UpdateTupleWithVarchar, {iterator_ptr, parameter_value, attribute_id, attribute_name, is_lower});
+          break;
+        }
         default:
           //TODO
           break;
