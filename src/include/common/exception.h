@@ -74,7 +74,7 @@ class Exception : public std::runtime_error {
         "\nMessage :: " + message + "\n";
     std::cerr << exception_message;
 
-    PrintStackTrace();
+    // PrintStackTrace();
   }
 
   std::string ExpectionTypeToString(ExceptionType type) {
@@ -132,7 +132,7 @@ class Exception : public std::runtime_error {
     }
   }
 
-  static void PrintStackTrace(FILE* out = ::stderr) {
+  static void PrintStackTrace(FILE *out = ::stderr) {
     unw_cursor_t cursor;
     unw_context_t context;
 
@@ -150,10 +150,10 @@ class Exception : public std::runtime_error {
 
       char sym[256] = "Unknown";
       if (unw_get_proc_name(&cursor, sym, sizeof(sym), &off) == 0) {
-        char* nameptr = sym;
+        char *nameptr = sym;
         int status;
         // demangle c++ function name
-        char* demangled = abi::__cxa_demangle(sym, nullptr, nullptr, &status);
+        char *demangled = abi::__cxa_demangle(sym, nullptr, nullptr, &status);
         if (status == 0) {
           nameptr = demangled;
         }
