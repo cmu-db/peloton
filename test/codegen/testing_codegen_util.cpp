@@ -30,7 +30,7 @@ namespace test {
 // PELOTON CODEGEN TEST
 //===----------------------------------------------------------------------===//
 
-PelotonCodeGenTest::PelotonCodeGenTest() {
+PelotonCodeGenTest::PelotonCodeGenTest(oid_t tuples_per_tilegroup) {
   auto *catalog = catalog::Catalog::GetInstance();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -38,9 +38,8 @@ PelotonCodeGenTest::PelotonCodeGenTest() {
   // create test db
   catalog->CreateDatabase(test_db_name, txn);
   test_db = catalog->GetDatabaseWithName(test_db_name, txn);
-
   // Create test table
-  CreateTestTables(txn);
+  CreateTestTables(txn, tuples_per_tilegroup);
 
   txn_manager.CommitTransaction(txn);
 }
@@ -87,24 +86,26 @@ std::unique_ptr<catalog::Schema> PelotonCodeGenTest::CreateTestSchema(
 }
 
 // Create all the test tables, but don't load any data
-void PelotonCodeGenTest::CreateTestTables(concurrency::Transaction *txn) {
+void PelotonCodeGenTest::CreateTestTables(concurrency::TransactionContext *txn,
+                                          oid_t tuples_per_tilegroup) {
   auto *catalog = catalog::Catalog::GetInstance();
-
   for (int i = 0; i < 4; i++) {
     auto table_schema = CreateTestSchema();
     catalog->CreateTable(test_db_name, test_table_names[i],
-                         std::move(table_schema), txn);
-    test_table_oids.push_back(catalog->GetTableObject(test_db_name,
-                                                      test_table_names[i],
-                                                      txn)->GetTableOid());
+                         std::move(table_schema), txn, false,
+                         tuples_per_tilegroup);
+    test_table_oids.push_back(
+        catalog->GetTableObject(test_db_name, test_table_names[i], txn)
+            ->GetTableOid());
   }
   for (int i = 4; i < 5; i++) {
     auto table_schema = CreateTestSchema(true);
     catalog->CreateTable(test_db_name, test_table_names[i],
-                         std::move(table_schema), txn);
-    test_table_oids.push_back(catalog->GetTableObject(test_db_name,
-                                                      test_table_names[i],
-                                                      txn)->GetTableOid());
+                         std::move(table_schema), txn, false,
+                         tuples_per_tilegroup);
+    test_table_oids.push_back(
+        catalog->GetTableObject(test_db_name, test_table_names[i], txn)
+            ->GetTableOid());
   }
 }
 
@@ -117,8 +118,9 @@ void PelotonCodeGenTest::LoadTestTable(oid_t table_id, uint32_t num_rows,
   auto *table_schema = test_table.GetSchema();
   size_t curr_size = test_table.GetTupleCount();
 
-  auto col_val =
-      [](uint32_t tuple_id, uint32_t col_id) { return 10 * tuple_id + col_id; };
+  auto col_val = [](uint32_t tuple_id, uint32_t col_id) {
+    return 10 * tuple_id + col_id;
+  };
 
   const bool allocate = true;
   auto testing_pool = TestingHarness::GetInstance().GetTestingPool();

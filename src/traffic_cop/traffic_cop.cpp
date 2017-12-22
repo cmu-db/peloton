@@ -145,7 +145,7 @@ executor::ExecuteResult TrafficCop::ExecuteHelper(
     const std::vector<int> &result_format, size_t thread_id) {
   auto &curr_state = GetCurrentTxnState();
 
-  concurrency::Transaction *txn;
+  concurrency::TransactionContext *txn;
   if (!tcop_txn_state_.empty()) {
     txn = curr_state.first;
   } else {
@@ -183,7 +183,33 @@ executor::ExecuteResult TrafficCop::ExecuteHelper(
     p_status_.m_result = ResultType::ABORTED;
     return p_status_;
   }
-  LOG_TRACE("Check Tcop_txn_state Size After ExecuteStatementPlan %lu",
+
+  struct ExecutePlanArg {
+    std::shared_ptr<planner::AbstractPlan> plan_;
+    concurrency::TransactionContext *txn_;
+    const std::vector<type::Value> &params_;
+    std::vector<ResultValue> &result_;
+    const std::vector<int> &result_format_;
+    executor::ExecuteResult &p_status_;
+  };
+  auto exec_plan_arg = new ExecutePlanArg{.plan_ = std::move(plan),
+                                          .txn_ = txn,
+                                          .params_ = params,
+                                          .result_ = result,
+                                          .result_format_ = result_format,
+                                          .p_status_ = p_status_};
+
+  threadpool::MonoQueuePool::GetInstance().SubmitTask([](void *arg_ptr) {
+    auto arg = reinterpret_cast<ExecutePlanArg *>(arg_ptr);
+    executor::PlanExecutor::ExecutePlan(arg->plan_, arg->txn_, arg->params_,
+                                        arg->result_, arg->result_format_,
+                                        arg->p_status_);
+    delete (arg);
+  }, exec_plan_arg, task_callback_, task_callback_arg_);
+
+  is_queuing_ = true;
+
+  LOG_TRACE("Check Tcop_txn_state Size After ExecuteHelper %lu",
             tcop_txn_state_.size());
   return p_status_;
 }

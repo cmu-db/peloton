@@ -32,7 +32,7 @@
 #include "common/logger.h"
 #include "common/macros.h"
 #include "common/timer.h"
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "type/types.h"
 #include "type/value.h"

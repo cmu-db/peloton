@@ -60,7 +60,7 @@ class PlannerEqualityTest : public PelotonTest {
 
   std::shared_ptr<planner::AbstractPlan> GeneratePlanWithOptimizer(
       std::unique_ptr<optimizer::AbstractOptimizer> &optimizer,
-      const std::string query, concurrency::Transaction *txn) {
+      const std::string query, concurrency::TransactionContext *txn) {
     auto &peloton_parser = parser::PostgresParser::GetInstance();
 
     auto parsed_stmt = peloton_parser.BuildParseTree(query);

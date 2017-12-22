@@ -83,7 +83,7 @@ TEST_F(RpcClientTests, BasicTest) {
     std::string methodname2 =
     rpc_server.FindMethod(opcode)->method_->full_name();
     bool comp = (methodname == methodname2);
-    EXPECT_EQ(comp, true);
+    EXPECT_TRUE(comp);
   */
 }
 }

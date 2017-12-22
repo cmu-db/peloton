@@ -22,7 +22,7 @@ struct TableRef;
 }
 
 namespace concurrency {
-class Transaction;
+class TransactionContext;
 }
 
 namespace catalog{

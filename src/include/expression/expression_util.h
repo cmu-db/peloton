@@ -637,6 +637,61 @@ class ExpressionUtil {
   }
 
   /*
+   * Recursively call on each child and fill in the predicate array.
+   * Returns true for zone mappable predicate. 
+   * */
+  static bool GetPredicateForZoneMap(
+      std::vector<storage::PredicateInfo> &predicate_restrictions,
+      const expression::AbstractExpression *expr) {
+    if (expr == nullptr) {
+      return false;
+    }
+    auto expr_type = expr->GetExpressionType();
+    // If its and, split children and parse again
+    if (expr_type == ExpressionType::CONJUNCTION_AND) {
+      bool left_expr =
+          GetPredicateForZoneMap(predicate_restrictions, expr->GetChild(0));
+      bool right_expr =
+          GetPredicateForZoneMap(predicate_restrictions, expr->GetChild(1));
+
+      if ((!left_expr) || (!right_expr)) {
+        return false;
+      }
+      return true;
+
+    } else if (expr_type == ExpressionType::COMPARE_EQUAL ||
+               expr_type == ExpressionType::COMPARE_LESSTHAN ||
+               expr_type == ExpressionType::COMPARE_LESSTHANOREQUALTO ||
+               expr_type == ExpressionType::COMPARE_GREATERTHAN ||
+               expr_type == ExpressionType::COMPARE_GREATERTHANOREQUALTO) {
+      // The right child should be a constant.
+      auto right_child = expr->GetModifiableChild(1);
+
+      if (right_child->GetExpressionType() == ExpressionType::VALUE_CONSTANT) {
+        auto right_exp = (const expression::ConstantValueExpression
+                              *)(expr->GetModifiableChild(1));
+        auto predicate_val = right_exp->GetValue();
+        // Get the column id for this predicate
+        auto left_exp =
+            (const expression::TupleValueExpression *)(expr->GetModifiableChild(
+                0));
+        int col_id = left_exp->GetColumnId();
+
+        auto comparison_operator = (int)expr->GetExpressionType();
+        storage::PredicateInfo p_info;
+
+        p_info.col_id = col_id;
+        p_info.comparison_operator = comparison_operator;
+        p_info.predicate_value = predicate_val;
+
+        predicate_restrictions.push_back(p_info);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /*
    * Check whether two vectors of expression equal to each other.
    * ordered flag indicate whether the comparison should consider the order.
    * */

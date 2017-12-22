@@ -19,6 +19,7 @@
 #include "expression/parameter.h"
 #include "codegen/query_parameters_map.h"
 #include "type/types.h"
+#include "storage/zone_map_manager.h"
 
 namespace peloton {
 
@@ -98,6 +99,24 @@ class AbstractExpression : public Printable {
 
   void SetExpressionType(ExpressionType type) { exp_type_ = type; }
 
+  //===----------------------------------------------------------------------===//
+  // Utilities and members for Zone Map consumption.
+  //===----------------------------------------------------------------------===//
+  bool IsZoneMappable();
+
+  size_t GetNumberofParsedPredicates() const {
+    return parsed_predicates.size();
+  }
+
+  const std::vector<storage::PredicateInfo> *GetParsedPredicates() const {
+    return &parsed_predicates;
+  }
+
+  void ClearParsedPredicates() { parsed_predicates.clear(); }
+
+  std::vector<storage::PredicateInfo> parsed_predicates;
+  //===----------------------------------------------------------------------===//
+  
   /** accessors */
 
   ExpressionType GetExpressionType() const { return exp_type_; }

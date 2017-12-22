@@ -29,7 +29,7 @@ TEST_F(RpcServerTests, BasicTest) {
     network::service::PelotonService service;
 
     bool status = rpc_server.RegisterService(&service);
-    EXPECT_EQ(status, true);
+    EXPECT_TRUE(status);
 
     auto ptr = rpc_server.FindMethod(1);
     EXPECT_EQ(ptr, nullptr);

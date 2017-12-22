@@ -20,7 +20,7 @@
 #include "catalog/schema.h"
 #include "common/logger.h"
 #include "common/statement.h"
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/abstract_executor.h"
 #include "executor/create_executor.h"

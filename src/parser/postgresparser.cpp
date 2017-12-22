@@ -923,6 +923,7 @@ parser::ColumnDefinition* PostgresParser::ColumnDefTransform(ColumnDef* root) {
         try {
           result->default_value.reset(ExprTransform(constraint->raw_expr));
         } catch (NotImplementedException e) {
+          delete result;
           throw NotImplementedException(StringUtil::Format(
               "Exception thrown in default expr:\n%s", e.what()));
         }
@@ -930,6 +931,7 @@ parser::ColumnDefinition* PostgresParser::ColumnDefTransform(ColumnDef* root) {
         try {
           result->check_expression.reset(ExprTransform(constraint->raw_expr));
         } catch (NotImplementedException e) {
+          delete result;
           throw NotImplementedException(StringUtil::Format(
               "Exception thrown in check expr:\n%s", e.what()));
         }
@@ -963,8 +965,13 @@ parser::SQLStatement* PostgresParser::CreateTransform(CreateStmt* root) {
     Node* node = reinterpret_cast<Node*>(cell->data.ptr_value);
     if ((node->type) == T_ColumnDef) {
       // Transform Regular Column
-      ColumnDefinition* temp =
-          ColumnDefTransform(reinterpret_cast<ColumnDef*>(node));
+      ColumnDefinition* temp = nullptr;
+      try {
+        temp = ColumnDefTransform(reinterpret_cast<ColumnDef*>(node));
+      } catch (NotImplementedException e) {
+        delete result;
+        throw e;
+      }
       result->columns.push_back(std::unique_ptr<ColumnDefinition>(temp));
     } else if (node->type == T_Constraint) {
       // Transform Constraints
@@ -1002,6 +1009,7 @@ parser::SQLStatement* PostgresParser::CreateTransform(CreateStmt* root) {
 
         result->columns.push_back(std::unique_ptr<ColumnDefinition>(col));
       } else {
+        delete result;
         throw NotImplementedException(StringUtil::Format(
             "Constraint of type %d not supported yet", node->type));
       }
@@ -1450,6 +1458,9 @@ parser::SQLStatementList* PostgresParser::ListTransform(List* root) {
       result->AddStatement(NodeTransform((Node*)cell->data.ptr_value));
     }
   } catch (ParserException& e) {
+    delete result;
+    throw e;
+  } catch (NotImplementedException e) {
     delete result;
     throw e;
   }

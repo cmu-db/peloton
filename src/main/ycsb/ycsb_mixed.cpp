@@ -40,7 +40,7 @@
 #include "common/timer.h"
 #include "common/generator.h"
 
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager_factory.h"
 
 #include "executor/executor_context.h"
@@ -81,7 +81,7 @@ bool RunMixed(const size_t thread_id, ZipfDistribution &zipf, FastRandom &rng) {
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
-  concurrency::Transaction *txn = txn_manager.BeginTransaction(thread_id);
+  concurrency::TransactionContext *txn = txn_manager.BeginTransaction(thread_id);
 
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));

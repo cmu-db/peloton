@@ -14,7 +14,7 @@
 #include "common/harness.h"
 
 #include "type/ephemeral_pool.h"
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager_factory.h"
 
 namespace peloton {

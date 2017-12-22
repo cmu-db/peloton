@@ -135,7 +135,7 @@ void PacketPutByte(OutputPacket *pkt, const uchar c) {
   pkt->len++;
 }
 
-void PacketPutString(OutputPacket *pkt, const std::string &str) {
+void PacketPutStringWithTerminator(OutputPacket *pkt, const std::string &str) {
   pkt->buf.insert(std::end(pkt->buf), std::begin(str), std::end(str));
   // add null character
   pkt->buf.push_back(0);
@@ -143,7 +143,7 @@ void PacketPutString(OutputPacket *pkt, const std::string &str) {
   pkt->len += str.size() + 1;
 }
 
-void PacketPutBytes(OutputPacket *pkt, const std::vector<uchar> &data) {
+void PacketPutString(OutputPacket *pkt, const std::string &data) {
   pkt->buf.insert(std::end(pkt->buf), std::begin(data), std::end(data));
   pkt->len += data.size();
 }

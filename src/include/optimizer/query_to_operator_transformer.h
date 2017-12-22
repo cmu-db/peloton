@@ -22,7 +22,7 @@ class SQLStatement;
 }  // namespace parser
 
 namespace concurrency {
-class Transaction;
+class TransactionContext;
 }
 
 namespace expression {
@@ -37,7 +37,7 @@ class ColumnManager;
 // Transform a query from parsed statement to operator expressions.
 class QueryToOperatorTransformer : public SqlNodeVisitor {
  public:
-  QueryToOperatorTransformer(concurrency::Transaction *txn);
+  QueryToOperatorTransformer(concurrency::TransactionContext *txn);
 
   std::shared_ptr<OperatorExpression> ConvertToOpExpression(
       parser::SQLStatement *op);

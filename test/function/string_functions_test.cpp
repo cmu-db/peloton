@@ -219,7 +219,7 @@ TEST_F(StringFunctionsTests, LTrimTest) {
   const std::string expected = message + spaces;
   std::vector<type::Value> args = {type::ValueFactory::GetVarcharValue(origStr),
                                    type::ValueFactory::GetVarcharValue(" ")};
-  auto result = function::StringFunctions::LTrim(args);
+  auto result = function::StringFunctions::_LTrim(args);
   EXPECT_FALSE(result.IsNull());
   EXPECT_EQ(expected, result.ToString());
 
@@ -230,7 +230,7 @@ TEST_F(StringFunctionsTests, LTrimTest) {
         type::ValueFactory::GetVarcharValue("bbb"),
     };
     nullargs[i] = type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
-    auto result = function::StringFunctions::LTrim(nullargs);
+    auto result = function::StringFunctions::_LTrim(nullargs);
     EXPECT_TRUE(result.IsNull());
   }
 }
@@ -242,7 +242,7 @@ TEST_F(StringFunctionsTests, RTrimTest) {
   const std::string expected = spaces + message;
   std::vector<type::Value> args = {type::ValueFactory::GetVarcharValue(origStr),
                                    type::ValueFactory::GetVarcharValue(" ")};
-  auto result = function::StringFunctions::RTrim(args);
+  auto result = function::StringFunctions::_RTrim(args);
   EXPECT_FALSE(result.IsNull());
   EXPECT_EQ(expected, result.ToString());
 
@@ -253,7 +253,7 @@ TEST_F(StringFunctionsTests, RTrimTest) {
         type::ValueFactory::GetVarcharValue("bbb"),
     };
     nullargs[i] = type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
-    auto result = function::StringFunctions::RTrim(nullargs);
+    auto result = function::StringFunctions::_RTrim(nullargs);
     EXPECT_TRUE(result.IsNull());
   }
 }
@@ -265,7 +265,12 @@ TEST_F(StringFunctionsTests, BTrimTest) {
   const std::string expected = message;
   std::vector<type::Value> args = {type::ValueFactory::GetVarcharValue(origStr),
                                    type::ValueFactory::GetVarcharValue(" ")};
-  auto result = function::StringFunctions::BTrim(args);
+  auto result = function::StringFunctions::_BTrim(args);
+  EXPECT_FALSE(result.IsNull());
+  EXPECT_EQ(expected, result.ToString());
+
+  result = function::StringFunctions::_Trim(
+      {type::ValueFactory::GetVarcharValue(origStr)});
   EXPECT_FALSE(result.IsNull());
   EXPECT_EQ(expected, result.ToString());
 
@@ -276,7 +281,7 @@ TEST_F(StringFunctionsTests, BTrimTest) {
         type::ValueFactory::GetVarcharValue("bbb"),
     };
     nullargs[i] = type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
-    auto result = function::StringFunctions::BTrim(nullargs);
+    auto result = function::StringFunctions::_BTrim(nullargs);
     EXPECT_TRUE(result.IsNull());
   }
 }

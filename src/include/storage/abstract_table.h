@@ -27,14 +27,12 @@
 // GUC Variables
 //===--------------------------------------------------------------------===//
 
-extern peloton::LayoutType peloton_layout_mode;
-
 namespace peloton {
 
 typedef std::map<oid_t, std::pair<oid_t, oid_t>> column_map_type;
 
 namespace concurrency {
-class Transaction;
+class TransactionContext;
 }
 
 namespace catalog {
@@ -56,7 +54,8 @@ class AbstractTable : public Printable {
 
  protected:
   // Table constructor
-  AbstractTable(oid_t table_oid, catalog::Schema *schema, bool own_schema);
+  AbstractTable(oid_t table_oid, catalog::Schema *schema, bool own_schema,
+               peloton::LayoutType layout_type = peloton::LAYOUT_TYPE_ROW);
 
  public:
   //===--------------------------------------------------------------------===//
@@ -66,13 +65,24 @@ class AbstractTable : public Printable {
   // insert tuple in table. the pointer to the index entry is returned as
   // index_entry_ptr.
   virtual ItemPointer InsertTuple(const Tuple *tuple,
-                                  concurrency::Transaction *transaction,
+                                  concurrency::TransactionContext *transaction,
                                   ItemPointer **index_entry_ptr = nullptr) = 0;
 
   // designed for tables without primary key. e.g., output table used by
   // aggregate_executor.
   virtual ItemPointer InsertTuple(const Tuple *tuple) = 0;
 
+  //===--------------------------------------------------------------------===//
+  // LAYOUT TYPE 
+  //===--------------------------------------------------------------------===//
+
+  void SetLayoutType(peloton::LayoutType layout) {
+    layout_type = layout;
+  }
+
+  peloton::LayoutType GetLayoutType() {
+    return layout_type;
+  }
   //===--------------------------------------------------------------------===//
   // TILE GROUP
   //===--------------------------------------------------------------------===//
@@ -134,7 +144,7 @@ class AbstractTable : public Printable {
                                     const column_map_type &partitioning,
                                     const size_t num_tuples);
 
-  column_map_type GetTileGroupLayout(LayoutType layout_type) const;
+  column_map_type GetTileGroupLayout() const;
 
   //===--------------------------------------------------------------------===//
   // MEMBERS
@@ -152,6 +162,8 @@ class AbstractTable : public Printable {
    * where the scheme may live longer.
    */
   bool own_schema_;
+
+  peloton::LayoutType layout_type;
 };
 
 }  // namespace storage

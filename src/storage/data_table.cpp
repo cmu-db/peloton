@@ -21,7 +21,7 @@
 #include "common/exception.h"
 #include "common/logger.h"
 #include "common/platform.h"
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "gc/gc_manager_factory.h"
 #include "index/index.h"
@@ -57,13 +57,15 @@ size_t DataTable::default_active_indirection_array_count_ = 1;
 DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
                      const oid_t &database_oid, const oid_t &table_oid,
                      const size_t &tuples_per_tilegroup, const bool own_schema,
-                     const bool adapt_table, const bool is_catalog)
-    : AbstractTable(table_oid, schema, own_schema),
+                     const bool adapt_table, const bool is_catalog,
+                     const peloton::LayoutType layout_type)
+    : AbstractTable(table_oid, schema, own_schema, layout_type),
       database_oid(database_oid),
       table_name(table_name),
       tuples_per_tilegroup_(tuples_per_tilegroup),
       adapt_table_(adapt_table),
       trigger_list_(new trigger::TriggerList()) {
+
   // Init default partition
   auto col_count = schema->GetColumnCount();
   for (oid_t col_itr = 0; col_itr < col_count; col_itr++) {
@@ -305,7 +307,7 @@ ItemPointer DataTable::AcquireVersion() {
 
 bool DataTable::InstallVersion(const AbstractTuple *tuple,
                                const TargetList *targets_ptr,
-                               concurrency::Transaction *transaction,
+                               concurrency::TransactionContext *transaction,
                                ItemPointer *index_entry_ptr) {
   if (CheckConstraints(tuple) == false) {
     LOG_TRACE("InsertVersion(): Constraint violated");
@@ -322,7 +324,7 @@ bool DataTable::InstallVersion(const AbstractTuple *tuple,
 }
 
 ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
-                                   concurrency::Transaction *transaction,
+                                   concurrency::TransactionContext *transaction,
                                    ItemPointer **index_entry_ptr) {
   ItemPointer location = GetEmptyTupleSlot(tuple);
   if (location.block == INVALID_OID) {
@@ -338,7 +340,7 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
 }
 
 bool DataTable::InsertTuple(const AbstractTuple *tuple,
-    ItemPointer location, concurrency::Transaction *transaction,
+    ItemPointer location, concurrency::TransactionContext *transaction,
     ItemPointer **index_entry_ptr) {
   if (CheckConstraints(tuple) == false) {
     LOG_TRACE("InsertTuple(): Constraint violated");
@@ -408,7 +410,7 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple) {
  */
 bool DataTable::InsertInIndexes(const AbstractTuple *tuple,
                                 ItemPointer location,
-                                concurrency::Transaction *transaction,
+                                concurrency::TransactionContext *transaction,
                                 ItemPointer **index_entry_ptr) {
   int index_count = GetIndexCount();
 
@@ -488,7 +490,7 @@ bool DataTable::InsertInIndexes(const AbstractTuple *tuple,
 
 bool DataTable::InsertInSecondaryIndexes(const AbstractTuple *tuple,
                                          const TargetList *targets_ptr,
-                                         concurrency::Transaction *transaction,
+                                         concurrency::TransactionContext *transaction,
                                          ItemPointer *index_entry_ptr) {
   int index_count = GetIndexCount();
   // Transform the target list into a hash set
@@ -702,7 +704,7 @@ oid_t DataTable::AddDefaultTileGroup(const size_t &active_tile_group_id) {
   oid_t tile_group_id = INVALID_OID;
 
   // Figure out the partitioning for given tilegroup layout
-  column_map = GetTileGroupLayout((LayoutType)peloton_layout_mode);
+  column_map = GetTileGroupLayout();
 
   // Create a tile group with that partitioning
   std::shared_ptr<TileGroup> tile_group(GetTileGroupWithLayout(column_map));
@@ -1204,7 +1206,7 @@ trigger::TriggerList *DataTable::GetTriggerList() {
   return trigger_list_.get();
 }
 
-void DataTable::UpdateTriggerListFromCatalog(concurrency::Transaction *txn) {
+void DataTable::UpdateTriggerListFromCatalog(concurrency::TransactionContext *txn) {
   trigger_list_ =
       catalog::TriggerCatalog::GetInstance().GetTriggers(table_oid, txn);
 }

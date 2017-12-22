@@ -18,7 +18,7 @@
 
 #include "common/portal.h"
 #include "common/statement.h"
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "executor/plan_executor.h"
 #include "optimizer/abstract_optimizer.h"
 #include "parser/sql_statement.h"
@@ -84,7 +84,7 @@ class TrafficCop {
   FieldInfo GetColumnFieldForValueType(std::string column_name,
                                        type::TypeId column_type);
 
-  void SetTcopTxnState(concurrency::Transaction *txn) {
+  void SetTcopTxnState(concurrency::TransactionContext * txn) {
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
 
@@ -172,7 +172,7 @@ class TrafficCop {
 
   // pair of txn ptr and the result so-far for that txn
   // use a stack to support nested-txns
-  using TcopTxnState = std::pair<concurrency::Transaction *, ResultType>;
+  using TcopTxnState = std::pair<concurrency::TransactionContext *, ResultType>;
   std::stack<TcopTxnState> tcop_txn_state_;
 
   static TcopTxnState &GetDefaultTxnState();
