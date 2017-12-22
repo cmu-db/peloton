@@ -927,9 +927,9 @@ parser::SQLStatement *PostgresParser::CreateTransform(CreateStmt *root) {
     Node *node = reinterpret_cast<Node *>(cell->data.ptr_value);
     if ((node->type) == T_ColumnDef) {
       // Transform Regular Column
-      ColumnDefinition* temp = nullptr;
+      ColumnDefinition *temp = nullptr;
       try {
-        temp = ColumnDefTransform(reinterpret_cast<ColumnDef*>(node));
+        temp = ColumnDefTransform(reinterpret_cast<ColumnDef *>(node));
       } catch (NotImplementedException e) {
         delete result;
         throw e;
@@ -1211,8 +1211,13 @@ PostgresParser::ValueListsTransform(List *root) {
         cur_result.push_back(std::unique_ptr<expression::AbstractExpression>(
             ConstTransform((A_Const *)expr)));
       else if (expr->type == T_TypeCast)
-        cur_result.push_back(std::unique_ptr<expression::AbstractExpression>(
-            TypeCastTransform((TypeCast *)expr)));
+        try {
+          cur_result.push_back(std::unique_ptr<expression::AbstractExpression>(
+              TypeCastTransform((TypeCast *)expr)));
+        } catch (Exception e) {
+          delete result;
+          throw e;
+        }
       else if (expr->type == T_SetToDefault) {
         // TODO handle default type
         // add corresponding expression for
@@ -1265,7 +1270,14 @@ parser::SQLStatement *PostgresParser::InsertTransform(InsertStmt *root) {
     result = new parser::InsertStatement(InsertType::VALUES);
 
     PL_ASSERT(select_stmt->valuesLists != NULL);
-    auto insert_values = ValueListsTransform(select_stmt->valuesLists);
+    std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>> *
+        insert_values = nullptr;
+    try {
+      insert_values = ValueListsTransform(select_stmt->valuesLists);
+    } catch (Exception e) {
+      delete result;
+      throw e;
+    }
     result->insert_values = std::move(*insert_values);
     delete insert_values;
   }
@@ -1429,6 +1441,9 @@ parser::SQLStatementList *PostgresParser::ListTransform(List *root) {
     delete result;
     throw e;
   } catch (NotImplementedException e) {
+    delete result;
+    throw e;
+  } catch (Exception e) {
     delete result;
     throw e;
   }
