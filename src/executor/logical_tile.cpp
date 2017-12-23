@@ -511,8 +511,9 @@ const std::string LogicalTile::GetInfo() const {
     }
     os << std::endl;
   }
-
-  return os.str();
+  std::string info = os.str();
+  StringUtil::RTrim(info);
+  return info;
 }
 
 /**

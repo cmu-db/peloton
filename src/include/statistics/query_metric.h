@@ -20,6 +20,7 @@
 #include "statistics/access_metric.h"
 #include "statistics/latency_metric.h"
 #include "statistics/processor_metric.h"
+#include "util/string_util.h"
 
 namespace peloton {
 
@@ -94,10 +95,10 @@ class QueryMetric : public AbstractMetric {
 
   inline const std::string GetInfo() const {
     std::stringstream ss;
-    ss << "-----------------------------" << std::endl;
+    ss << peloton::GETINFO_SINGLE_LINE << std::endl;
     ss << "  QUERY " << query_name_ << std::endl;
-    ss << "-----------------------------" << std::endl;
-    ss << query_access_.GetInfo() << std::endl;
+    ss << peloton::GETINFO_SINGLE_LINE << std::endl;
+    ss << query_access_.GetInfo();
     return ss.str();
   }
 

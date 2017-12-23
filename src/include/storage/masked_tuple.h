@@ -60,7 +60,7 @@ class MaskedTuple : public AbstractTuple {
 
   const std::string GetInfo() const {
     std::stringstream os;
-    os << "***MaskedTuple*** ";
+    os << "**MaskedTuple** ";
     os << tuple_->GetInfo();
     return os.str();
   }

@@ -246,8 +246,9 @@ const std::string Tile::GetInfo() const {
     os << tuple;
   }
   tuple.SetNull();
-
-  return os.str();
+  std::string info = os.str();
+  StringUtil::RTrim(info);
+  return info;
 }
 
 //===--------------------------------------------------------------------===//
