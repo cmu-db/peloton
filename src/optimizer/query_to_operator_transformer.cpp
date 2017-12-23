@@ -159,7 +159,6 @@ void QueryToOperatorTransformer::Visit(parser::JoinDefinition *node) {
   output_expr_ = join_expr;
 }
 void QueryToOperatorTransformer::Visit(parser::TableRef *node) {
-  // Nested select. Not supported in the current executors
   if (node->select != nullptr) {
     // Store previous context
 
@@ -294,7 +293,8 @@ void QueryToOperatorTransformer::Visit(expression::ComparisonExpression *expr) {
   auto expr_type = expr->GetExpressionType();
   if (expr->GetExpressionType() == ExpressionType::COMPARE_IN) {
     std::vector<expression::AbstractExpression *> select_list;
-    if (GenerateSubquerytree(expr->GetModifiableChild(1), select_list)) {
+    if (GenerateSubquerytree(expr->GetModifiableChild(1), select_list) ==
+        true) {
       if (select_list.size() != 1) {
         throw Exception("Array in predicates not supported");
       }
@@ -310,7 +310,8 @@ void QueryToOperatorTransformer::Visit(expression::ComparisonExpression *expr) {
              expr_type == ExpressionType::COMPARE_LESSTHAN ||
              expr_type == ExpressionType::COMPARE_LESSTHANOREQUALTO) {
     std::vector<expression::AbstractExpression *> select_list;
-    if (GenerateSubquerytree(expr->GetModifiableChild(0), select_list, true)) {
+    if (GenerateSubquerytree(expr->GetModifiableChild(0), select_list, true) ==
+        true) {
       if (select_list.size() != 1) {
         throw Exception("Array in predicates not supported");
       }
@@ -319,7 +320,8 @@ void QueryToOperatorTransformer::Visit(expression::ComparisonExpression *expr) {
       expr->SetChild(0, select_list.at(0)->Copy());
     }
     select_list.clear();
-    if (GenerateSubquerytree(expr->GetModifiableChild(1), select_list, true)) {
+    if (GenerateSubquerytree(expr->GetModifiableChild(1), select_list, true) ==
+        true) {
       if (select_list.size() != 1) {
         throw Exception("Array in predicates not supported");
       }
@@ -334,10 +336,11 @@ void QueryToOperatorTransformer::Visit(expression::ComparisonExpression *expr) {
 void QueryToOperatorTransformer::Visit(expression::OperatorExpression *expr) {
   if (expr->GetExpressionType() == ExpressionType::OPERATOR_EXISTS) {
     std::vector<expression::AbstractExpression *> select_list;
-    if (GenerateSubquerytree(expr->GetModifiableChild(0), select_list)) {
+    if (GenerateSubquerytree(expr->GetModifiableChild(0), select_list) ==
+        true) {
       PL_ASSERT(!select_list.empty());
 
-      // Set the right child as the output of the subquery
+      // Set the left child as the output of the subquery
       expr->SetChild(0, select_list.at(0)->Copy());
     }
   }
@@ -347,7 +350,7 @@ void QueryToOperatorTransformer::Visit(expression::OperatorExpression *expr) {
 
 bool QueryToOperatorTransformer::RequireAggregation(
     const parser::SelectStatement *op) {
-  if (op->group_by != nullptr) { 
+  if (op->group_by != nullptr) {
     return true;
   }
   // Check plain aggregation
