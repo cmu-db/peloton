@@ -200,6 +200,11 @@ class AbstractExpression : public Printable {
     }
   }
 
+  /**
+   * @brief Derive the sub-query depth level of the current expression
+   *
+   * @return the derived depth 
+   */
   virtual int DeriveDepth() {
     if (depth_ < 0) {
       for (auto &child : children_) {
@@ -211,12 +216,32 @@ class AbstractExpression : public Printable {
     return depth_;
   }
 
+  /**
+   * @brief Set the sub-query depth level of the current expression
+   *
+   * @param depth The depth to set
+   */
   void SetDepth(int depth) { depth_ = depth; }
 
+  /**
+   * @brief Get the sub-query depth level of the current expression
+   *
+   * @return The sub-query depth level
+   */
   int GetDepth() const { return depth_; }
 
+  /**
+   * @brief Tell if the current expression contain a sub-query
+   *
+   * @return The sub-query flag
+   */
   bool HasSubquery() const { return has_subquery_; }
 
+  /**
+   * @brief Derive if there's sub-query in the current expression
+   *
+   * @return If there is sub-query, then return true, otherwise return false
+   */
   virtual bool DeriveSubqueryFlag() {
     if (exp_type_ == ExpressionType::ROW_SUBQUERY ||
         exp_type_ == ExpressionType::SELECT_SUBQUERY) {
