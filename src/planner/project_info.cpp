@@ -174,8 +174,9 @@ std::string ProjectInfo::Debug() const {
     buffer << "<" << dmap.first << ", <" << dmap.second.first << ", "
            << dmap.second.second << "> >\n";
   }
-
-  return (buffer.str());
+  std::string info = buffer.str();
+  StringUtil::RTrim(info);
+  return info;
 }
 
 hash_t ProjectInfo::Hash(const planner::DerivedAttribute &attribute) const {

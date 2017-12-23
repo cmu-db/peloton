@@ -225,12 +225,12 @@ TEST_F(MutateTests, StressTests) {
   LaunchParallelTest(1, InsertTuple, table.get(), testing_pool);
   LOG_TRACE("%s", table->GetInfo().c_str());
 
-  LOG_TRACE("---------------------------------------------");
+  LOG_TRACE("%s", peloton::GETINFO_SINGLE_LINE.c_str());
 
   // LaunchParallelTest(1, UpdateTuple, table);
   // LOG_TRACE(table->GetInfo().c_str());
 
-  LOG_TRACE("---------------------------------------------");
+  LOG_TRACE("%s", peloton::GETINFO_SINGLE_LINE.c_str());
 
   LaunchParallelTest(1, DeleteTuple, table.get());
 

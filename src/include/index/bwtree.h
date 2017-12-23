@@ -7573,6 +7573,7 @@ class BwTree : public BwTreeBase {
       if (head_epoch_p != nullptr) {
         LOG_DEBUG("ERROR: After cleanup there is still epoch left");
         LOG_DEBUG("==============================================");
+        LOG_DEBUG("%s", peloton::GETINFO_THICK_LINE.c_str());
         LOG_DEBUG("DUMP");
 
         for (EpochNode *epoch_node_p = head_epoch_p; epoch_node_p != nullptr;
