@@ -97,6 +97,10 @@ class InputColumnDeriver : public OperatorVisitor {
   void Passdown();
   GroupExpression *gexpr_;
   Memo *memo_;
+  /**
+   * @brief The derived output columns and input columns, note that the current
+   *  operator may have more than one children
+   */
   std::pair<std::vector<expression::AbstractExpression *>,
             std::vector<std::vector<expression::AbstractExpression *>>>
       output_input_cols_;

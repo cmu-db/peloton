@@ -185,12 +185,13 @@ void ApplyRule::execute() {
               new_expr, new_gexpr, group_expr_->GetGroupID())) {
         // A new group expression is generated
         if (new_gexpr->Op().IsLogical()) {
-          if (explore_only)
+          if (explore_only) {
             // Explore this logical expression
             PushTask(new ExploreExpression(new_gexpr.get(), context_));
-          else
+          } else {
             // Optimize this logical expression
             PushTask(new OptimizeExpression(new_gexpr.get(), context_));
+          }
         } else {
           // Cost this physical expression and optimize its inputs
           PushTask(new OptimizeInputs(new_gexpr.get(), context_));

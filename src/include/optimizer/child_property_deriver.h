@@ -22,14 +22,15 @@ class Memo;
 
 namespace optimizer {
 
-
-// Generate child property requirements for physical operators, return pairs of
-// possible input output properties pairs.
-// This is the new version of ChildPropertyGenerator, as the old version should
-// be eventually deprecated
 // TODO(boweic): Currently we only represent sort as property, later we may want
 // to add group, data compression and data distribution(if we go distributed) as
 // property
+/**
+ * @brief Generate child property requirements for physical operators, return pairs of
+ *  possible input output properties pairs.
+ *  This is the new version of ChildPropertyGenerator, as the old version should
+ *  be eventually deprecated
+ */
 class ChildPropertyDeriver : public OperatorVisitor {
  public:
   std::vector<std::pair<std::shared_ptr<PropertySet>,
@@ -63,10 +64,16 @@ class ChildPropertyDeriver : public OperatorVisitor {
  private:
   void DeriveForJoin();
   std::shared_ptr<PropertySet> requirements_;
+  /**
+   * @brief The derived output property set and input property sets, note that a
+   *  operator may have more than one children
+   */
   std::vector<std::pair<std::shared_ptr<PropertySet>,
                         std::vector<std::shared_ptr<PropertySet>>>> output_;
-  // We need the memo and gexpr because some property may depend on child's
-  // schema
+  /**
+   * @brief We need the memo and gexpr because some property may depend on
+   *  child's schema
+   */
   Memo *memo_;
   GroupExpression *gexpr_;
 };

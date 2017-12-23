@@ -18,19 +18,22 @@
 
 namespace peloton {
 namespace optimizer {
-//===--------------------------------------------------------------------===//
-// Base task pool class
-//===--------------------------------------------------------------------===//
+/**
+ * @brief The base class of a task pool, which needs to support adding tasks and
+ *  getting available tasks from the pool. Note that a single-threaded task pool
+ *  is identical to a stack but we may need to implement a different data
+ *  structure for multi-threaded optimization
+ */
 class OptimizerTaskPool {
  public:
   virtual std::unique_ptr<OptimizerTask> Pop() = 0;
-  virtual void Push(OptimizerTask* task) = 0;
+  virtual void Push(OptimizerTask *task) = 0;
   virtual bool Empty() = 0;
 };
 
-//===--------------------------------------------------------------------===//
-// Task stack
-//===--------------------------------------------------------------------===//
+/**
+ * @brief Stack implementation of the task pool
+ */
 class OptimizerTaskStack : public OptimizerTaskPool {
  public:
   virtual std::unique_ptr<OptimizerTask> Pop() {
@@ -39,7 +42,7 @@ class OptimizerTaskStack : public OptimizerTaskPool {
     return task;
   }
 
-  virtual void Push(OptimizerTask* task) {
+  virtual void Push(OptimizerTask *task) {
     task_stack_.push(std::unique_ptr<OptimizerTask>(task));
   }
 
