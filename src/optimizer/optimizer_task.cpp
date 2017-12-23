@@ -385,6 +385,7 @@ void TopDownRewrite::execute() {
         return;
       }
     }
+    cur_group_expr->SetRuleExplored(r.rule);
   }
 
   for (size_t child_group_idx = 0;
@@ -404,6 +405,8 @@ void BottomUpRewrite::execute() {
   auto cur_group_expr = cur_group->GetLogicalExpression();
 
   if (!has_optimized_child_) {
+    PushTask(
+        new BottomUpRewrite(group_id_, context_, rule_set_name_, true));
     for (size_t child_group_idx = 0;
          child_group_idx < cur_group_expr->GetChildrenGroupsSize();
          child_group_idx++) {
@@ -412,6 +415,7 @@ void BottomUpRewrite::execute() {
           new BottomUpRewrite(cur_group_expr->GetChildGroupId(child_group_idx),
                               context_, rule_set_name_, false));
     }
+    return;
   }
   // Construct valid transformation rules from rule set
   ConstructValidRules(cur_group_expr, context_.get(),
@@ -442,6 +446,7 @@ void BottomUpRewrite::execute() {
         return;
       }
     }
+    cur_group_expr->SetRuleExplored(r.rule);
   }
 }
 }  // namespace optimizer
