@@ -204,7 +204,7 @@ TEST_F(OAHashTableTest, MicroBenchmark) {
     }
   }
 
-  fprintf(stderr, "Avg OA_HT: %.2lf, Avg std::unordered_map: %.2lf\n",
+  LOG_INFO("Avg OA_HT: %.2lf, Avg std::unordered_map: %.2lf",
           avg_oaht / (double)num_runs, avg_map / (double)num_runs);
 }
 

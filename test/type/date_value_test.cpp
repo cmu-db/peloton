@@ -97,7 +97,9 @@ TEST_F(DateValueTests, ComparisonTest) {
         }  // SWITCH
         LOG_TRACE("%s %s %s => %d | %d\n", val0.ToString().c_str(),
                   ExpressionTypeToString(etype).c_str(),
-                  val1.ToString().c_str(), expected, result);
+                  val1.ToString().c_str(),
+                  static_cast<int>(expected),
+                  static_cast<int>(result));
 
         if (expected_null) {
           EXPECT_EQ(expected_null, result == type::CmpBool::NULL_);
