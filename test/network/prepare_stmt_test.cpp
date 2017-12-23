@@ -96,7 +96,8 @@ TEST_F(PrepareStmtTests, PrepareStatementTest) {
   }
   std::thread serverThread([&]() { server.ServerLoop(); });
 
-  PrepareStatementTest(port);
+  for (int i = 0; i < 100; i++)
+    PrepareStatementTest(port);
   server.Close();
   serverThread.join();
   peloton::PelotonInit::Shutdown();

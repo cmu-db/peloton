@@ -42,7 +42,7 @@ void ConnectionHandlerTask::Notify(int conn_fd) {
 void ConnectionHandlerTask::HandleDispatch(int new_conn_recv_fd, short) {
   // buffer used to receive messages from the main thread
   char m_buf[1];
-  int client_fd;
+  int client_fd = -1;
   std::shared_ptr<ConnectionHandle> conn;
 
   // read the operation that needs to be performed

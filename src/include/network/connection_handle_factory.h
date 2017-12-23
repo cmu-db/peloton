@@ -45,6 +45,8 @@ public:
       return handle;
     }
 
+    it->second->rbuf_->Reset();
+    it->second->wbuf_->Reset();
     std::shared_ptr<ConnectionHandle> new_handle(
         new ConnectionHandle(conn_fd, handler, it->second->rbuf_, it->second->wbuf_));
     reusable_handles_[conn_fd] = new_handle;
