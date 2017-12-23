@@ -124,7 +124,7 @@ void PelotonServer::ServerLoop() {
 
 void PelotonServer::Close() {
   LOG_INFO("Begin to stop server");
-  dispatcher_task->Break();
+  dispatcher_task->ExitLoop();
 }
 
 /**

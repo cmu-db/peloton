@@ -59,7 +59,7 @@ public:
    * Constructs a new NotifiableTask instance.
    * @param task_id a unique id assigned to this task
    */
-  explicit NotifiableTask(const int task_id)
+  explicit NotifiableTask(int task_id)
       : task_id_(task_id) {
     base_ = event_base_new();
     // TODO(tianyu) Error handling here can be better perhaps?
@@ -69,6 +69,11 @@ public:
     }
     // TODO(tianyu) Determine whether we actually need this line. Tianyi says we need it, libevent documentation says no
     // evthread_make_base_notifiable(base_);
+
+    // For exiting a loop
+    terminate_ = RegisterManualEvent([](int, short, void *arg) {
+      event_base_loopexit((struct event_base *) arg, nullptr);
+    }, base_);
   };
 
   /**
@@ -221,22 +226,23 @@ public:
   /**
    * Exits the event loop
    */
-  virtual void Break() {
-    event_base_loopexit(base_, nullptr);
+  virtual void ExitLoop() {
+    event_active(terminate_, 0, 0);
   }
 
   /**
-   * Wrapper around Break() to conform to libevent callback signature
+   * Wrapper around ExitLoop() to conform to libevent callback signature
    */
-  void Break(int, short) {
-    Break();
+  void ExitLoop(int, short) {
+    ExitLoop();
   }
 
 private:
   const int task_id_;
   struct event_base *base_;
 
-  // struct event management
+  // struct event and lifecycle management
+  struct event *terminate_;
   std::unordered_set<struct event *> events_;
 };
 

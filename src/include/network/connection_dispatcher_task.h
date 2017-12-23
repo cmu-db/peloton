@@ -50,7 +50,7 @@ public:
   /**
    * Breaks the dispatcher and managed handlers from their event loops.
    */
-  void Break() override;
+  void ExitLoop() override;
 
 private:
   std::vector<std::shared_ptr<ConnectionHandlerTask>> handlers_;

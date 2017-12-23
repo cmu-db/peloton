@@ -24,7 +24,7 @@ ConnectionDispatcherTask::ConnectionDispatcherTask(int num_handlers, int listen_
 
   RegisterEvent(listen_fd, EV_READ|EV_PERSIST,
                 METHOD_AS_CALLBACK(ConnectionDispatcherTask, DispatchConnection), this);
-  RegisterSignalEvent(SIGHUP, METHOD_AS_CALLBACK(NotifiableTask, Break), this);
+  RegisterSignalEvent(SIGHUP, METHOD_AS_CALLBACK(NotifiableTask, ExitLoop), this);
 
   // TODO(tianyu) Figure out what this initialization logic is doing and potentially rewrite
   // register thread to epoch manager.
@@ -68,9 +68,9 @@ void ConnectionDispatcherTask::DispatchConnection(int fd, short) {
   handler->Notify(new_conn_fd);
 }
 
-void ConnectionDispatcherTask::Break() {
-  NotifiableTask::Break();
-  for (auto &handler : handlers_) handler->Break();
+void ConnectionDispatcherTask::ExitLoop() {
+  NotifiableTask::ExitLoop();
+  for (auto &handler : handlers_) handler->ExitLoop();
 }
 
 }  // namespace network
