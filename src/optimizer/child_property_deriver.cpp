@@ -63,7 +63,6 @@ void ChildPropertyDeriver::Visit(const PhysicalIndexScan *op) {
       }
       auto tv_expr = reinterpret_cast<expression::TupleValueExpression *>(
           sort_prop->GetSortColumn(0));
-      // TODO(boweic): add assert to ensure the table oid is correct,
       auto obj_id = tv_expr->GetBoundOid();
       oid_t col_id = std::get<2>(obj_id);
       for (auto &column_set : target_table->GetIndexColumns()) {
@@ -112,8 +111,6 @@ void ChildPropertyDeriver::Visit(const PhysicalSortGroupBy *op) {
 }
 
 void ChildPropertyDeriver::Visit(const PhysicalAggregate *) {
-  // output_.push_back(make_pair(requirements_,
-  // vector<PropertySet>{requirements_});
   output_.push_back(
       make_pair(make_shared<PropertySet>(),
                 vector<shared_ptr<PropertySet>>{make_shared<PropertySet>()}));

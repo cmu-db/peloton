@@ -116,7 +116,7 @@ class AbstractExpression : public Printable {
 
   std::vector<storage::PredicateInfo> parsed_predicates;
   //===----------------------------------------------------------------------===//
-  
+
   /** accessors */
 
   ExpressionType GetExpressionType() const { return exp_type_; }
@@ -161,7 +161,8 @@ class AbstractExpression : public Printable {
   virtual bool ExactlyEquals(const AbstractExpression &other) const;
   virtual hash_t HashForExactMatch() const;
 
-  virtual void VisitParameters(codegen::QueryParametersMap &map,
+  virtual void VisitParameters(
+      codegen::QueryParametersMap &map,
       std::vector<peloton::type::Value> &values,
       const std::vector<peloton::type::Value> &values_from_user) {
     for (auto &child : children_) {
@@ -203,7 +204,7 @@ class AbstractExpression : public Printable {
   /**
    * @brief Derive the sub-query depth level of the current expression
    *
-   * @return the derived depth 
+   * @return the derived depth
    */
   virtual int DeriveDepth() {
     if (depth_ < 0) {
@@ -278,7 +279,7 @@ class AbstractExpression : public Printable {
         exp_type_(other.exp_type_),
         return_value_type_(other.return_value_type_),
         has_parameter_(other.has_parameter_),
-        depth_(other.depth_){
+        depth_(other.depth_) {
     for (auto &child : other.children_) {
       children_.push_back(std::unique_ptr<AbstractExpression>(child->Copy()));
     }
@@ -291,8 +292,15 @@ class AbstractExpression : public Printable {
 
   bool has_parameter_ = false;
 
+  /**
+   * @brief The current sub-query depth level in the current expression, -1
+   *  stands for not derived
+   */
   int depth_ = -1;
 
+  /**
+   * @brief The flag indicating if there's sub-query in the current expression
+   */
   bool has_subquery_ = false;
 };
 

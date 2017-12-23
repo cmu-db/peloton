@@ -89,14 +89,20 @@ class InputColumnDeriver : public OperatorVisitor {
   void Visit(const PhysicalAggregate *) override;
 
  private:
-  // Provide all tuple value expressions needed in the expression
+  /**
+   * @brief Provide all tuple value expressions needed in the expression
+   */
   void ScanHelper();
   void AggregateHelper(const BaseOperatorNode *);
   void JoinHelper(const BaseOperatorNode *op);
-  // Some operators, for example limit, directly pass down column property
+
+  /**
+   * @brief Some operators, for example limit, directly pass down column property
+   */
   void Passdown();
   GroupExpression *gexpr_;
   Memo *memo_;
+
   /**
    * @brief The derived output columns and input columns, note that the current
    *  operator may have more than one children
@@ -104,7 +110,15 @@ class InputColumnDeriver : public OperatorVisitor {
   std::pair<std::vector<expression::AbstractExpression *>,
             std::vector<std::vector<expression::AbstractExpression *>>>
       output_input_cols_;
+
+  /**
+   * @brief The required columns 
+   */
   std::vector<expression::AbstractExpression *> required_cols_;
+
+  /**
+   * @brief The required physical property
+   */
   std::shared_ptr<PropertySet> properties_;
 };
 
