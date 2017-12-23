@@ -39,16 +39,24 @@ void BindNodeVisitor::BindNameToNode(parser::SQLStatement *tree) {
 
 void BindNodeVisitor::Visit(parser::SelectStatement *node) {
   context_ = std::make_shared<BinderContext>(context_);
-  if (node->from_table != nullptr) node->from_table->Accept(this);
+  if (node->from_table != nullptr) {
+    node->from_table->Accept(this);
+  }
   if (node->where_clause != nullptr) {
     node->where_clause->Accept(this);
     // Derive depth for all exprs in the where clause
     node->where_clause->DeriveDepth();
     node->where_clause->DeriveSubqueryFlag();
   }
-  if (node->order != nullptr) node->order->Accept(this);
-  if (node->limit != nullptr) node->limit->Accept(this);
-  if (node->group_by != nullptr) node->group_by->Accept(this);
+  if (node->order != nullptr) {
+    node->order->Accept(this);
+  }
+  if (node->limit != nullptr) {
+    node->limit->Accept(this);
+  }
+  if (node->group_by != nullptr) {
+    node->group_by->Accept(this);
+  }
 
   std::vector<std::unique_ptr<expression::AbstractExpression>> new_select_list;
   for (auto &select_element : node->select_list) {
@@ -59,10 +67,11 @@ void BindNodeVisitor::Visit(parser::SelectStatement *node) {
 
     select_element->Accept(this);
     // Derive depth for all exprs in the select clause
-    if (select_element->GetExpressionType() == ExpressionType::STAR)
+    if (select_element->GetExpressionType() == ExpressionType::STAR) {
       select_element->SetDepth(context_->GetDepth());
-    else
+    } else {
       select_element->DeriveDepth();
+    }
     select_element->DeriveSubqueryFlag();
 
     // Recursively deduce expression value type
@@ -87,10 +96,10 @@ void BindNodeVisitor::Visit(parser::JoinDefinition *node) {
 }
 
 void BindNodeVisitor::Visit(parser::TableRef *node) {
-  // Nested select. Not supported in the current executors
   if (node->select != nullptr) {
-    if (node->alias.empty())
+    if (node->alias.empty()) {
       throw Exception("Alias not found for query derived table");
+    }
 
     // Save the previous context
     auto pre_context = context_;
@@ -101,10 +110,10 @@ void BindNodeVisitor::Visit(parser::TableRef *node) {
     context_->AddNestedTable(node->alias, node->select->select_list);
   }
   // Join
-  else if (node->join != nullptr)
+  else if (node->join != nullptr) {
     node->join->Accept(this);
   // Multiple tables
-  else if (!node->list.empty()) {
+  } else if (!node->list.empty()) {
     for (auto &table : node->list) table->Accept(this);
   }
   // Single table
@@ -117,11 +126,16 @@ void BindNodeVisitor::Visit(parser::GroupByDescription *node) {
   for (auto &col : node->columns) {
     col->Accept(this);
   }
-  if (node->having != nullptr) node->having->Accept(this);
+  if (node->having != nullptr) {
+    node->having->Accept(this);
+  }
 }
 void BindNodeVisitor::Visit(parser::OrderDescription *node) {
-  for (auto &expr : node->exprs)
-    if (expr != nullptr) expr->Accept(this);
+  for (auto &expr : node->exprs) {
+    if (expr != nullptr) {
+      expr->Accept(this);
+    }
+  }
 }
 
 void BindNodeVisitor::Visit(parser::UpdateStatement *node) {
@@ -145,7 +159,9 @@ void BindNodeVisitor::Visit(parser::DeleteStatement *node) {
   context_->AddRegularTable(node->GetDatabaseName(), node->GetTableName(),
                             node->GetTableName(), txn_);
 
-  if (node->expr != nullptr) node->expr->Accept(this);
+  if (node->expr != nullptr) {
+    node->expr->Accept(this);
+  }
 
   context_ = nullptr;
 }
@@ -157,7 +173,9 @@ void BindNodeVisitor::Visit(parser::CreateStatement *node) {
 }
 void BindNodeVisitor::Visit(parser::InsertStatement *node) {
   node->TryBindDatabaseName(default_database_name_);
-  if (node->select != nullptr) node->select->Accept(this);
+  if (node->select != nullptr) {
+    node->select->Accept(this);
+  }
   context_ = nullptr;
 }
 void BindNodeVisitor::Visit(parser::DropStatement *) {}
@@ -229,8 +247,9 @@ void BindNodeVisitor::Visit(expression::SubqueryExpression *expr) {
 }
 
 void BindNodeVisitor::Visit(expression::StarExpression *expr) {
-  if (!BinderContext::HasTables(context_))
+  if (!BinderContext::HasTables(context_)) {
     throw BinderException("Invalid expression" + expr->GetInfo());
+  }
 }
 
 // Deduce value type for these expressions
