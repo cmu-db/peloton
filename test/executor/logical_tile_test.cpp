@@ -87,8 +87,8 @@ TEST_F(LogicalTileTests, TempTableTest) {
 
     LOG_INFO("GetActiveTupleCount() = %d",
              (int)tile_group->GetActiveTupleCount());
-    LOG_INFO("%s", tile_group->GetInfo().c_str());
-    LOG_INFO("*****************************************");
+    LOG_INFO("\n%s", tile_group->GetInfo().c_str());
+    LOG_INFO("%s", peloton::GETINFO_THICK_LINE.c_str());
     LOG_INFO("%s", logical_tile->GetInfo().c_str());
   }
 }

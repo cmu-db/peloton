@@ -355,8 +355,9 @@ std::string BackendStatsContext::ToString() const {
       ss << std::endl;
     }
   }
-
-  return ss.str();
+  std::string info = ss.str();
+  StringUtil::RTrim(info);
+  return info;
 }
 
 void BackendStatsContext::CompleteQueryMetric() {

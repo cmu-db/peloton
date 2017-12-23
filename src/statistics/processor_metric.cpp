@@ -69,7 +69,7 @@ const std::string ProcessorMetric::GetInfo() const {
   ss << "Query CPU Time (ms): [ ";
   ss << "system time=" << GetSystemDuration();
   ss << ", user time=" << GetUserDuration();
-  ss << " ]" << std::endl;
+  ss << " ]";
   return ss.str();
 }
 

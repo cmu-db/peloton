@@ -92,10 +92,10 @@ void AbstractExpression::DeduceExpressionName() {
 const std::string AbstractExpression::GetInfo() const {
   std::ostringstream os;
 
-  os << "\tExpression :: "
+  os << "Expression ::"
      << " expression type = " << GetExpressionType() << ","
      << " value type = " << type::Type::GetInstance(GetValueType())->ToString()
-     << "," << std::endl;
+     << ",";
 
   return os.str();
 }

@@ -444,14 +444,14 @@ TEST_F(TileGroupTests, TileCopyTest) {
 
   txn_manager.CommitTransaction(txn);
 
-  LOG_INFO("\t Original Tile Details ...");
+  LOG_INFO(" Original Tile Details ...");
   LOG_INFO("%s", tile->GetInfo().c_str());
 
   const catalog::Schema *old_schema = tile->GetSchema();
   const catalog::Schema *new_schema = old_schema;
   std::unique_ptr<storage::Tile> new_tile(tile->CopyTile(BackendType::MM));
 
-  LOG_INFO("\t Copied Tile Details ...");
+  LOG_INFO(" Copied Tile Details ...");
   LOG_INFO("%s", new_tile->GetInfo().c_str());
 
   /*

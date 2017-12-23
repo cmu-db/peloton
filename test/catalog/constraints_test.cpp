@@ -179,7 +179,7 @@ TEST_F(ConstraintsTests, CHECKTest) {
   type::Value tmp_value = type::ValueFactory::GetIntegerValue(0);
   constraints.AddCheck(ExpressionType::COMPARE_GREATERTHAN, tmp_value);
   column1.AddConstraint(constraints);
-  LOG_DEBUG("**** %s", constraints.GetInfo().c_str());
+  LOG_DEBUG("%s %s", peloton::DOUBLE_STAR.c_str(), constraints.GetInfo().c_str());
   catalog::Schema *table_schema = new catalog::Schema({column1});
   std::string table_name("TEST_TABLE");
   bool own_schema = true;
@@ -230,7 +230,7 @@ TEST_F(ConstraintsTests, UNIQUETest) {
 
   auto constraints = catalog::Constraint(ConstraintType::UNIQUE, "unique1");
   column1.AddConstraint(constraints);
-  LOG_DEBUG("**** %s", constraints.GetInfo().c_str());
+  LOG_DEBUG("%s %s", peloton::DOUBLE_STAR.c_str(), constraints.GetInfo().c_str());
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({column1, column2}));
   std::string table_name("TEST_TABLE");
@@ -305,7 +305,8 @@ TEST_F(ConstraintsTests, UNIQUETest) {
 //  columns.push_back(column2);
 //  columns.push_back(column3);
 //  auto mc = catalog::MultiConstraint(ConstraintType::UNIQUE, "c1", cols);
-//  LOG_DEBUG("**** MULTI CONSTRAINTS **** %s", mc.GetInfo().c_str());
+//  LOG_DEBUG("%s MULTI CONSTRAINTS %s %s", peloton::DOUBLE_STAR.c_str(),
+// peloton::DOUBLE_STAR.c_str(), mc.GetInfo().c_str());
 //
 //  std::unique_ptr<catalog::Schema> table_schema(new catalog::Schema(columns));
 //  table_schema->AddMultiConstraints(mc);
@@ -392,7 +393,7 @@ TEST_F(ConstraintsTests, UNIQUETest) {
 //
 //  auto constraints = catalog::Constraint(ConstraintType::PRIMARY, "primary1");
 //  column1.AddConstraint(constraints);
-//  LOG_DEBUG("**** %s", constraints.GetInfo().c_str());
+//  LOG_DEBUG("%s %s", peloton::DOUBLE_STAR.c_str(), constraints.GetInfo().c_str());
 //  std::unique_ptr<catalog::Schema> tableA_schema(
 //      new catalog::Schema({column1, column2}));
 //
@@ -498,7 +499,8 @@ TEST_F(ConstraintsTests, UNIQUETest) {
 //  cols.push_back(1);
 //  auto mc =
 //      catalog::MultiConstraint(ConstraintType::PRIMARY, "multiprimary1", cols);
-//  LOG_DEBUG("**** MULTI CONSTRAINTS **** %s", mc.GetInfo().c_str());
+//  LOG_DEBUG("%s MULTI CONSTRAINTS %s %s", peloton::DOUBLE_STAR.c_str(),
+// peloton::DOUBLE_STAR.c_str(), mc.GetInfo().c_str());
 //
 //  // TABLE B
 //  catalog::Schema *table_schema = new catalog::Schema({column3, column4});

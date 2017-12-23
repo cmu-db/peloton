@@ -109,7 +109,7 @@ ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
   auto result_format = std::vector<int>(tuple_descriptor.size(), 0);
 
   try {
-    LOG_DEBUG("%s", planner::PlanUtil::GetInfo(plan.get()).c_str());
+    LOG_DEBUG("\n%s", planner::PlanUtil::GetInfo(plan.get()).c_str());
     // SetTrafficCopCounter();
     counter_.store(1);
     auto status =

@@ -176,7 +176,7 @@ void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
   oid_t active_tuple_slots = GetCurrentNextTupleSlot();
   std::stringstream os;
 
-  os << "\t-----------------------------------------------------------\n";
+  os << peloton::GETINFO_SINGLE_LINE << "\n";
 
   for (oid_t header_itr = 0; header_itr < active_tuple_slots; header_itr++) {
     bool own = (txn_id == GetTransactionId(header_itr));
@@ -189,7 +189,7 @@ void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
 
     int width = 10;
 
-    os << "\tslot :: " << std::setw(width) << header_itr;
+    os << " slot :: " << std::setw(width) << header_itr;
 
     os << " txn id : ";
     if (txn_id == MAX_TXN_ID)
@@ -220,12 +220,12 @@ void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
     // Visible iff past Insert || Own Insert
     if ((!own && activated && !invalidated) ||
         (own && !activated && !invalidated))
-      os << "\t\t[ true  ]\n";
+      os << "  [ true  ]\n";
     else
-      os << "\t\t[ false ]\n";
+      os << "  [ false ]\n";
   }
 
-  os << "\t-----------------------------------------------------------\n";
+  os << peloton::GETINFO_SINGLE_LINE << "\n";
 
   LOG_TRACE("%s", os.str().c_str());
 }

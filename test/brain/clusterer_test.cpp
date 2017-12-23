@@ -19,6 +19,8 @@
 
 #include "brain/clusterer.h"
 #include "common/generator.h"
+#include "util/string_util.h"
+#include "util/stringtable_util.h"
 
 namespace peloton {
 namespace test {
@@ -64,23 +66,26 @@ TEST_F(ClustererTests, BasicTest) {
     clusterer.ProcessSample(sample);
   }
 
-  LOG_INFO("%s", clusterer.GetInfo().c_str());
+  LOG_INFO("\n%s", clusterer.GetInfo().c_str());
 
   auto partitioning1 = clusterer.GetPartitioning(2);
 
-  LOG_INFO("COLUMN \t TILE");
+  std::ostringstream os;
+  os << "COLUMN\tTILE\n";
   for (UNUSED_ATTRIBUTE auto entry : partitioning1) {
-    LOG_INFO("%u \t %u : %u", entry.first, entry.second.first,
-             entry.second.second);
+    os << entry.first << "\t" << entry.second.first << " : " << entry.second.second << "\n";
   }
+  LOG_INFO("\n%s", peloton::StringUtil::Prefix(peloton::StringTableUtil::Table(os.str(), true),
+                                               GETINFO_SPACER).c_str());
 
+  os.str("");
   auto partitioning2 = clusterer.GetPartitioning(4);
-  LOG_INFO("COLUMN \t TILE");
+  os << "COLUMN\tTILE\n";
   for (UNUSED_ATTRIBUTE auto entry : partitioning2) {
-    LOG_INFO("%u \t %u : %u", entry.first, entry.second.first,
-             entry.second.second);
+    os << entry.first << "\t" << entry.second.first << " : " << entry.second.second << "\n";
   }
-
+  LOG_INFO("\n%s", peloton::StringUtil::Prefix(peloton::StringTableUtil::Table(os.str(), true),
+                                             GETINFO_SPACER).c_str());
 }
 
 }  // namespace test
