@@ -129,7 +129,8 @@ private:
   friend class StateMachine;
   friend class ConnectionHandleFactory;
 
-  ConnectionHandle(int sock_fd, ConnectionHandlerTask *handler);
+  ConnectionHandle(int sock_fd, ConnectionHandlerTask *handler,
+                    std::shared_ptr<Buffer> rbuf, std::shared_ptr<Buffer> wbuf);
 
   ProcessResult ProcessInitial();
 
@@ -199,8 +200,8 @@ private:
   std::unique_ptr<ProtocolHandler> protocol_handler_;       // Stores state for this socket
   tcop::TrafficCop traffic_cop_;
 
-  Buffer rbuf_;                     // Socket's read buffer
-  Buffer wbuf_;                     // Socket's write buffer
+  std::shared_ptr<Buffer> rbuf_;                     // Socket's read buffer
+  std::shared_ptr<Buffer> wbuf_;                     // Socket's write buffer
   unsigned int next_response_ = 0;  // The next response in the response buffer
   Client client_;
   bool ssl_sent_ = false;
