@@ -181,9 +181,10 @@ void CheckMath1(T1 x, T2 y, type::TypeId xtype, type::TypeId ytype) {
   T1 sum1 = (T1)(x + y);
   T2 sum2 = (T2)(x + y);
   // Out of range detection
-  if ((x + y) != sum1 && (x + y) != sum2)
+  if ((x + y) != sum1 && (x + y) != sum2) {
     EXPECT_THROW(type::Value(xtype, x).Add(type::Value(ytype, y)),
-      peloton::Exception);
+                 peloton::Exception);
+  }
   else if (sizeof(x) >= sizeof(y)) {
     if ((x > 0 && y > 0 && sum1 < 0) || (x < 0 && y < 0 && sum1 > 0)) {
       EXPECT_THROW(type::Value(xtype, x).Add(type::Value(ytype, y)),
@@ -210,7 +211,8 @@ void CheckMath1(T1 x, T2 y, type::TypeId xtype, type::TypeId ytype) {
   else if (sizeof(x) >= sizeof(y)) {
     if ((x > 0 && y < 0 && diff1 < 0) || (x < 0 && y > 0 && diff1 > 0)) {
       EXPECT_THROW(type::Value(xtype, x).Subtract(type::Value(ytype, y)),
-        peloton::Exception);
+                   peloton::Exception);
+    }
   }
   else if ((x > 0 && y < 0 && diff2 < 0) || (x < 0 && y > 0 && diff2 > 0)) {
     EXPECT_THROW(type::Value(xtype, x).Subtract(type::Value(ytype, y)),
