@@ -103,10 +103,13 @@ void ConnectionHandle::StateMachine::Accept(Transition action, ConnectionHandle 
   }
 }
 
-ConnectionHandle::ConnectionHandle(int sock_fd, ConnectionHandlerTask *handler)
+ConnectionHandle::ConnectionHandle(int sock_fd, ConnectionHandlerTask *handler,
+                                   std::shared_ptr<Buffer> rbuf, std::shared_ptr<Buffer> wbuf)
     : sock_fd_(sock_fd),
       handler_(handler),
-      protocol_handler_(nullptr) {
+      protocol_handler_(nullptr),
+      rbuf_(rbuf),
+      wbuf_(wbuf){
   SetNonBlocking(sock_fd_);
   SetTCPNoDelay(sock_fd_);
 
@@ -176,28 +179,28 @@ Transition ConnectionHandle::FillReadBuffer() {
   bool done = false;
 
   // reset buffer if all the contents have been read
-  if (rbuf_.buf_ptr == rbuf_.buf_size) rbuf_.Reset();
+  if (rbuf_->buf_ptr == rbuf_->buf_size) rbuf_->Reset();
 
   // buf_ptr shouldn't overflow
-  PL_ASSERT(rbuf_.buf_ptr <= rbuf_.buf_size);
+  PL_ASSERT(rbuf_->buf_ptr <= rbuf_->buf_size);
 
   /* Do we have leftover data and are we at the end of the buffer?
    * Move the data to the head of the buffer and clear out all the old data
    * Note: The assumption here is that all the packets/headers till
-   *  rbuf_.buf_ptr have been fully processed
+   *  rbuf_->buf_ptr have been fully processed
    */
-  if (rbuf_.buf_ptr < rbuf_.buf_size && rbuf_.buf_size == rbuf_.GetMaxSize()) {
-    auto unprocessed_len = rbuf_.buf_size - rbuf_.buf_ptr;
+  if (rbuf_->buf_ptr < rbuf_->buf_size && rbuf_->buf_size == rbuf_->GetMaxSize()) {
+    auto unprocessed_len = rbuf_->buf_size - rbuf_->buf_ptr;
     // Move this data to the head of rbuf_1
-    std::memmove(rbuf_.GetPtr(0), rbuf_.GetPtr(rbuf_.buf_ptr), unprocessed_len);
+    std::memmove(rbuf_->GetPtr(0), rbuf_->GetPtr(rbuf_->buf_ptr), unprocessed_len);
     // update pointers
-    rbuf_.buf_ptr = 0;
-    rbuf_.buf_size = unprocessed_len;
+    rbuf_->buf_ptr = 0;
+    rbuf_->buf_size = unprocessed_len;
   }
 
   // return explicitly
   while (done == false) {
-    if (rbuf_.buf_size == rbuf_.GetMaxSize()) {
+    if (rbuf_->buf_size == rbuf_->GetMaxSize()) {
       // we have filled the whole buffer, exit loop
       done = true;
     } else {
@@ -205,18 +208,18 @@ Transition ConnectionHandle::FillReadBuffer() {
       // if the connection is a SSL connection, we use SSL_read, otherwise
       // we use general read function
       if (conn_SSL_context != nullptr) {
-        bytes_read = SSL_read(conn_SSL_context, rbuf_.GetPtr(rbuf_.buf_size),
-                              rbuf_.GetMaxSize() - rbuf_.buf_size);
+        bytes_read = SSL_read(conn_SSL_context, rbuf_->GetPtr(rbuf_->buf_size),
+                              rbuf_->GetMaxSize() - rbuf_->buf_size);
       }
       else {
-        bytes_read = read(sock_fd_, rbuf_.GetPtr(rbuf_.buf_size),
-                          rbuf_.GetMaxSize() - rbuf_.buf_size);
+        bytes_read = read(sock_fd_, rbuf_->GetPtr(rbuf_->buf_size),
+                          rbuf_->GetMaxSize() - rbuf_->buf_size);
         LOG_TRACE("When filling read buffer, read %ld bytes", bytes_read);
       }
 
       if (bytes_read > 0) {
         // read succeeded, update buffer size
-        rbuf_.buf_size += bytes_read;
+        rbuf_->buf_size += bytes_read;
         result = Transition::PROCEED;
       } else if (bytes_read == 0) {
         // Read failed
@@ -276,16 +279,16 @@ Transition ConnectionHandle::FillReadBuffer() {
 WriteState ConnectionHandle::FlushWriteBuffer() {
   ssize_t written_bytes = 0;
   // while we still have outstanding bytes to write
-  while (wbuf_.buf_size > 0) {
+  while (wbuf_->buf_size > 0) {
     written_bytes = 0;
     while (written_bytes <= 0) {
       if (conn_SSL_context != nullptr) {
         written_bytes =
-            SSL_write(conn_SSL_context, &wbuf_.buf[wbuf_.buf_flush_ptr], wbuf_.buf_size);
+            SSL_write(conn_SSL_context, &wbuf_->buf[wbuf_->buf_flush_ptr], wbuf_->buf_size);
       }
       else {
         written_bytes =
-            write(sock_fd_, &wbuf_.buf[wbuf_.buf_flush_ptr], wbuf_.buf_size);
+            write(sock_fd_, &wbuf_->buf[wbuf_->buf_flush_ptr], wbuf_->buf_size);
       }
       // Write failed
       if (written_bytes < 0) {
@@ -348,19 +351,19 @@ WriteState ConnectionHandle::FlushWriteBuffer() {
       }
 
       // weird edge case?
-      if (written_bytes == 0 && wbuf_.buf_size != 0) {
+      if (written_bytes == 0 && wbuf_->buf_size != 0) {
         LOG_DEBUG("Not all data is written");
         continue;
       }
     }
 
     // update book keeping
-    wbuf_.buf_flush_ptr += written_bytes;
-    wbuf_.buf_size -= written_bytes;
+    wbuf_->buf_flush_ptr += written_bytes;
+    wbuf_->buf_size -= written_bytes;
   }
 
   // buffer is empty
-  wbuf_.Reset();
+  wbuf_->Reset();
 
   // we are ok
   return WriteState::WRITE_COMPLETE;
@@ -370,12 +373,12 @@ std::string ConnectionHandle::WriteBufferToString() {
 #ifdef LOG_TRACE_ENABLED
   LOG_TRACE("Write Buffer:");
 
-for (size_t i = 0; i < wbuf_.buf_size; ++i) {
-  LOG_TRACE("%u", wbuf_.buf[i]);
+for (size_t i = 0; i < wbuf_->buf_size; ++i) {
+  LOG_TRACE("%u", wbuf_->buf[i]);
 }
 #endif
 
-  return std::string(wbuf_.buf.begin(), wbuf_.buf.end());
+  return std::string(wbuf_->buf.begin(), wbuf_->buf.end());
 }
 
 ProcessResult ConnectionHandle::ProcessInitial() {
@@ -384,7 +387,7 @@ ProcessResult ConnectionHandle::ProcessInitial() {
 
   if (rpkt.header_parsed == false) {
     // parse out the header first
-    if (ReadStartupPacketHeader(rbuf_, rpkt) == false) {
+    if (ReadStartupPacketHeader(*rbuf_, rpkt) == false) {
       // need more data
       return ProcessResult::MORE_DATA_REQUIRED;
     }
@@ -394,7 +397,7 @@ ProcessResult ConnectionHandle::ProcessInitial() {
   if (rpkt.is_initialized == false) {
     // packet needs to be initialized with rest of the contents
     //TODO: If other protocols are added, this need to be changed
-    if (PostgresProtocolHandler::ReadPacket(rbuf_, rpkt) == false) {
+    if (PostgresProtocolHandler::ReadPacket(*rbuf_, rpkt) == false) {
       // need more data
       return ProcessResult::MORE_DATA_REQUIRED;
     }
@@ -519,7 +522,7 @@ WriteState ConnectionHandle::BufferWriteBytesHeader(OutputPacket *pkt) {
   int len_nb;  // length in network byte order
 
   // check if we have enough space in the buffer
-  if (wbuf_.GetMaxSize() - wbuf_.buf_ptr < 1 + sizeof(int32_t)) {
+  if (wbuf_->GetMaxSize() - wbuf_->buf_ptr < 1 + sizeof(int32_t)) {
     // buffer needs to be flushed before adding header
     auto result = FlushWriteBuffer();
     if (result == WriteState::WRITE_NOT_READY || result == WriteState::WRITE_ERROR) {
@@ -531,7 +534,7 @@ WriteState ConnectionHandle::BufferWriteBytesHeader(OutputPacket *pkt) {
   // assuming wbuf is now large enough to fit type and size fields in one go
   if (type != 0) {
     // type shouldn't be ignored
-    wbuf_.buf[wbuf_.buf_ptr++] = type;
+    wbuf_->buf[wbuf_->buf_ptr++] = type;
   }
 
   // make len include its field size as well
@@ -540,11 +543,11 @@ WriteState ConnectionHandle::BufferWriteBytesHeader(OutputPacket *pkt) {
   // append the bytes of this integer in network-byte order
   std::copy(reinterpret_cast<uchar *>(&len_nb),
             reinterpret_cast<uchar *>(&len_nb) + 4,
-            std::begin(wbuf_.buf) + wbuf_.buf_ptr);
+            std::begin(wbuf_->buf) + wbuf_->buf_ptr);
 
   // move the write buffer pointer and update size of the socket buffer
-  wbuf_.buf_ptr += sizeof(int32_t);
-  wbuf_.buf_size = wbuf_.buf_ptr;
+  wbuf_->buf_ptr += sizeof(int32_t);
+  wbuf_->buf_size = wbuf_->buf_ptr;
 
   // Header is written to socket buf. No need to write it in the future
   pkt->skip_header_write = true;
@@ -564,16 +567,16 @@ WriteState ConnectionHandle::BufferWriteBytesContent(OutputPacket *pkt) {
   // fill the contents
   while (len) {
     // calculate the remaining space in wbuf
-    window = wbuf_.GetMaxSize() - wbuf_.buf_ptr;
+    window = wbuf_->GetMaxSize() - wbuf_->buf_ptr;
     if (len <= window) {
       // contents fit in the window, range copy "len" bytes
       std::copy(std::begin(pkt_buf) + pkt->write_ptr,
                 std::begin(pkt_buf) + pkt->write_ptr + len,
-                std::begin(wbuf_.buf) + wbuf_.buf_ptr);
+                std::begin(wbuf_->buf) + wbuf_->buf_ptr);
 
       // Move the cursor and update size of socket buffer
-      wbuf_.buf_ptr += len;
-      wbuf_.buf_size = wbuf_.buf_ptr;
+      wbuf_->buf_ptr += len;
+      wbuf_->buf_size = wbuf_->buf_ptr;
       LOG_TRACE("Content fit in window. Write content successful");
       return WriteState::WRITE_COMPLETE;
     } else {
@@ -582,13 +585,13 @@ WriteState ConnectionHandle::BufferWriteBytesContent(OutputPacket *pkt) {
 
       std::copy(std::begin(pkt_buf) + pkt->write_ptr,
                 std::begin(pkt_buf) + pkt->write_ptr + window,
-                std::begin(wbuf_.buf) + wbuf_.buf_ptr);
+                std::begin(wbuf_->buf) + wbuf_->buf_ptr);
 
       // move the packet's cursor
       pkt->write_ptr += window;
       len -= window;
       // Now the wbuf is full
-      wbuf_.buf_size = wbuf_.GetMaxSize();
+      wbuf_->buf_size = wbuf_->GetMaxSize();
 
       LOG_TRACE("Content doesn't fit in window. Try flushing");
       auto result = FlushWriteBuffer();
@@ -667,7 +670,7 @@ Transition ConnectionHandle::Process() {
         return Transition::ERROR;
     }
   } else {
-    ProcessResult status = protocol_handler_->Process(rbuf_, (size_t) handler_->Id());
+    ProcessResult status = protocol_handler_->Process(*rbuf_, (size_t) handler_->Id());
 
     switch (status) {
       case ProcessResult::MORE_DATA_REQUIRED:

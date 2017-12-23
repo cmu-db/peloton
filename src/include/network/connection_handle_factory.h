@@ -16,7 +16,7 @@
 #include "peloton_server.h"
 
 namespace peloton {
-namespace network {
+  namespace network {
 
 /**
  * @brief Factory class for constructing ConnectionHandles
@@ -36,14 +36,19 @@ public:
     // (probably also to-do: beat up the person who wrote this)
     PelotonServer::recent_connfd = conn_fd;
     auto it = reusable_handles_.find(conn_fd);
-    if (it == reusable_handles_.end()){
+    if (it == reusable_handles_.end()) {
       // We are not using std::make_shared here because we want to keep ConnectionHandle constructor
       // private to avoid unintentional use.
-      auto handle = std::shared_ptr<ConnectionHandle>(new ConnectionHandle(conn_fd, handler));
+      auto handle = std::shared_ptr<ConnectionHandle>(
+          new ConnectionHandle(conn_fd, handler, std::make_shared<Buffer>(), std::make_shared<Buffer>()));
       reusable_handles_[conn_fd] = handle;
       return handle;
     }
-    return Reset(it->second);
+
+    std::shared_ptr<ConnectionHandle> new_handle(
+        new ConnectionHandle(conn_fd, handler, it->second->rbuf_, it->second->wbuf_));
+    reusable_handles_[conn_fd] = new_handle;
+    return new_handle;
   }
 
   // TODO(tianyu) Again, this is VILE. Fix this in a later refactor.
@@ -65,24 +70,8 @@ public:
   }
 
 private:
-
-  std::shared_ptr<ConnectionHandle> &Reset(std::shared_ptr<ConnectionHandle> &handle) {
-    handle->client_.Reset();
-    handle->rbuf_.Reset();
-    handle->wbuf_.Reset();
-    handle->protocol_handler_->Reset();
-    handle->traffic_cop_.Reset();
-    handle->next_response_ = 0;
-    handle->ssl_sent_ = false;
-    if (handle->network_event != nullptr)
-      handle->handler_->UnregisterEvent(handle->network_event);
-    if (handle->workpool_event != nullptr)
-      handle->handler_->UnregisterEvent(handle->workpool_event);
-    return handle;
-  }
-
   std::unordered_map<int, std::shared_ptr<ConnectionHandle>> reusable_handles_;
 };
-  
+
 }
 }
