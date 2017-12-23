@@ -175,7 +175,9 @@ void ApplyRule::execute() {
                                     rule_->GetMatchPattern());
   while (iterator.HasNext()) {
     auto before = iterator.Next();
-    if (!rule_->Check(before, context_.get())) continue;
+    if (!rule_->Check(before, context_.get())) {
+      continue;
+    }
 
     std::vector<std::shared_ptr<OperatorExpression>> after;
     rule_->Transform(before, after, context_.get());

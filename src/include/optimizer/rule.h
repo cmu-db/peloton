@@ -26,6 +26,9 @@ class GroupExpression;
 #define PHYS_PROMISE 3
 #define LOG_PROMISE 1
 
+/**
+ * @brief The base class of all rules
+ */
 class Rule {
  public:
   virtual ~Rule(){};
@@ -41,16 +44,50 @@ class Rule {
 
   bool IsRewrite() const { return type_ > RuleType::RewriteDelimiter; }
 
-  virtual int Promise(GroupExpression* group_expr,
-                      OptimizeContext* context) const;
+  /**
+   * @brief Get the promise of the current rule for a expression in the current
+   *  context. Currently we only differentiate physical and logical rules.
+   *  Physical rules have higher promise, and will be applied before logical
+   *  rules. If the rule is not applicable because the pattern does not match,
+   *  the promise should be 0, which indicates that we should not apply this
+   *  rule
+   *
+   * @param group_expr The current group expression to apply the rule
+   * @param context The current context for the optimization
+   *
+   * @return The promise, the higher the promise, the rule should be applied
+   *  sooner
+   */
+  virtual int Promise(GroupExpression *group_expr,
+                      OptimizeContext *context) const;
 
+  /**
+   * @brief Check if the rule is applicable for the operator expression. The
+   *  input operator expression should have the required "before" pattern, but
+   *  other conditions may prevent us from applying the rule. For example, if
+   * the
+   *  logical join does not specify a join key, we could not transform it into a
+   *  hash join because we need the join key to build the hash table
+   *
+   * @param expr The "before" operator expression
+   * @param context The current context for the optimization
+   *
+   * @return If the rule is applicable, return true, otherwise return false
+   */
   virtual bool Check(std::shared_ptr<OperatorExpression> expr,
-                     OptimizeContext* context) const = 0;
+                     OptimizeContext *context) const = 0;
 
+  /**
+   * @brief Convert a "before" operator tree to an "after" operator tree
+   *
+   * @param input The "before" operator tree
+   * @param transformed The "after" operator tree
+   * @param context The current optimization context
+   */
   virtual void Transform(
       std::shared_ptr<OperatorExpression> input,
-      std::vector<std::shared_ptr<OperatorExpression>>& transformed,
-      OptimizeContext* context) const = 0;
+      std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+      OptimizeContext *context) const = 0;
 
   inline RuleType GetType() { return type_; }
 
@@ -61,32 +98,39 @@ class Rule {
   RuleType type_;
 };
 
+/**
+ * @brief A struct to store a rule together with its promise
+ */
 struct RuleWithPromise {
-  RuleWithPromise(Rule* rule, int promise) : rule(rule), promise(promise) {}
+  RuleWithPromise(Rule *rule, int promise) : rule(rule), promise(promise) {}
 
-  Rule* rule;
+  Rule *rule;
   int promise;
 
-  bool operator<(const RuleWithPromise& r) const { return promise < r.promise; }
+  bool operator<(const RuleWithPromise &r) const { return promise < r.promise; }
 };
 
 enum class RewriteRuleSetName { PREDICATE_PUSH_DOWN };
 
+/**
+ * @brief All the rule sets, including logical transformation rules, physical
+ *  implementation rules and rewrite rules
+ */
 class RuleSet {
  public:
   // RuleSet will take the ownership of the rule object
   RuleSet();
 
-  std::vector<std::unique_ptr<Rule>>& GetTransformationRules() {
+  std::vector<std::unique_ptr<Rule>> &GetTransformationRules() {
     return transformation_rules_;
   }
-  std::vector<std::unique_ptr<Rule>>& GetImplementationRules() {
+  std::vector<std::unique_ptr<Rule>> &GetImplementationRules() {
     return implementation_rules_;
   }
-  std::vector<std::unique_ptr<Rule>>& GetRewriteRules() {
+  std::vector<std::unique_ptr<Rule>> &GetRewriteRules() {
     return rewrite_rules_;
   }
-  std::vector<std::unique_ptr<Rule>>& GetRewriteRulesByName(
+  std::vector<std::unique_ptr<Rule>> &GetRewriteRulesByName(
       RewriteRuleSetName set) {
     switch (set) {
       case (RewriteRuleSetName::PREDICATE_PUSH_DOWN): {

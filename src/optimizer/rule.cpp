@@ -20,8 +20,9 @@ int Rule::Promise(GroupExpression *group_expr, OptimizeContext *context) const {
   (void)context;
   auto root_type = match_pattern->Type();
   // This rule is not applicable
-  if (root_type != OpType::Leaf && root_type != group_expr->Op().type())
+  if (root_type != OpType::Leaf && root_type != group_expr->Op().type()) {
     return 0;
+  }
   if (IsPhysical()) return PHYS_PROMISE;
   return LOG_PROMISE;
 }
