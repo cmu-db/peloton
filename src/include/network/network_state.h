@@ -31,7 +31,6 @@ enum class ConnState {
 enum class WriteState {
   WRITE_COMPLETE,   // Write completed
   WRITE_NOT_READY,  // Socket not ready to write
-  WRITE_ERROR,      // Some error happened
 };
 
 /**
@@ -45,8 +44,7 @@ enum class Transition {
   NEED_DATA,
   // TODO(tianyu) generalize this symbol, this is currently only used in process
   GET_RESULT,
-  // TODO(tianyu) replace this with exceptions
-  ERROR
+  FINISH
 };
 
 
