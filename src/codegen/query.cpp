@@ -25,7 +25,7 @@ Query::Query(const planner::AbstractPlan &query_plan)
 
 void Query::Execute(std::unique_ptr<executor::ExecutorContext> executor_context,
                     QueryResultConsumer &consumer,
-                    std::function<void(executor::ExecuteResult)> on_complete,
+                    std::function<void(executor::ExecutionResult)> on_complete,
                     RuntimeStats *stats) {
   CodeGen codegen{GetCodeContext()};
 
@@ -104,7 +104,7 @@ void Query::Execute(std::unique_ptr<executor::ExecutorContext> executor_context,
     stats->tear_down_ms = timer.GetDuration();
   }
 
-  executor::ExecuteResult result;
+  executor::ExecutionResult result;
   result.m_result = ResultType::SUCCESS;
   result.m_processed = executor_context->num_processed;
   on_complete(result);

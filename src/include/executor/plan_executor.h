@@ -28,13 +28,13 @@ namespace executor {
 // Plan Executor
 //===----------------------------------------------------------------------===//
 
-struct ExecuteResult {
+struct ExecutionResult {
   ResultType m_result;
 
   // number of tuples processed
   uint32_t m_processed;
 
-  ExecuteResult() {
+  ExecutionResult() {
     m_processed = 0;
     m_result = ResultType::SUCCESS;
   }
@@ -56,9 +56,8 @@ class PlanExecutor {
       concurrency::TransactionContext *txn,
       const std::vector<type::Value> &params,
       const std::vector<int> &result_format,
-      std::function<void(executor::ExecuteResult,
-                         std::vector<ResultValue> &&)> on_complete
-  );
+      std::function<void(executor::ExecutionResult,
+                         std::vector<ResultValue> &&)> on_complete);
 
   /*
    * @brief When a peloton node recvs a query plan, this function is invoked

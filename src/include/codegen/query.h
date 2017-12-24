@@ -26,7 +26,7 @@ class TransactionContext;
 
 namespace executor {
 class ExecutorContext;
-struct ExecuteResult;
+struct ExecutionResult;
 }  // namespace executor
 
 namespace planner {
@@ -73,7 +73,7 @@ class Query {
    */
   void Execute(std::unique_ptr<executor::ExecutorContext> executor_context,
                QueryResultConsumer &consumer,
-               std::function<void(executor::ExecuteResult)> on_complete,
+               std::function<void(executor::ExecutionResult)> on_complete,
                RuntimeStats *stats = nullptr);
 
   // Return the query plan

@@ -21,8 +21,7 @@ namespace executor {
 
 ExecutorContext::ExecutorContext(concurrency::TransactionContext *transaction,
                                  codegen::QueryParameters parameters)
-    : transaction_(transaction),
-      parameters_(std::move(parameters)) {}
+    : transaction_(transaction), parameters_(std::move(parameters)) {}
 
 concurrency::TransactionContext *ExecutorContext::GetTransaction() const {
   return transaction_;
@@ -32,12 +31,9 @@ const std::vector<type::Value> &ExecutorContext::GetParamValues() const {
   return parameters_.GetParameterValues();
 }
 
-codegen::QueryParameters &ExecutorContext::GetParams() {
-  return parameters_;
-}
+codegen::QueryParameters &ExecutorContext::GetParams() { return parameters_; }
 
 type::EphemeralPool *ExecutorContext::GetPool() {
-
   // construct pool if needed
   if (pool_ == nullptr) {
     pool_.reset(new type::EphemeralPool());

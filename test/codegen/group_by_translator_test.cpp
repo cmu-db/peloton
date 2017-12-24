@@ -90,7 +90,8 @@ TEST_F(GroupByTranslatorTest, SingleColumnGrouping) {
   // Each group should have a count of one (since the grouping column is unique)
   type::Value const_one = type::ValueFactory::GetIntegerValue(1);
   for (const auto &tuple : results) {
-    EXPECT_TRUE(tuple.GetValue(1).CompareEquals(const_one) == type::CmpBool::TRUE);
+    EXPECT_TRUE(tuple.GetValue(1).CompareEquals(const_one) ==
+                type::CmpBool::TRUE);
   }
 }
 
@@ -379,7 +380,8 @@ TEST_F(GroupByTranslatorTest, SingleCountStar) {
   const auto &results = buffer.GetOutputTuples();
   EXPECT_EQ(1, results.size());
   EXPECT_TRUE(results[0].GetValue(0).CompareEquals(
-                  type::ValueFactory::GetBigIntValue(10)) == type::CmpBool::TRUE);
+                  type::ValueFactory::GetBigIntValue(10)) ==
+              type::CmpBool::TRUE);
 }
 
 TEST_F(GroupByTranslatorTest, MinAndMax) {
@@ -436,20 +438,21 @@ TEST_F(GroupByTranslatorTest, MinAndMax) {
   const auto &results = buffer.GetOutputTuples();
   EXPECT_EQ(1, results.size());
 
-  LOG_INFO("max: %s, min: %s",
-          results[0].GetValue(0).ToString().c_str(),
-          results[0].GetValue(1).ToString().c_str());
+  LOG_INFO("max: %s, min: %s", results[0].GetValue(0).ToString().c_str(),
+           results[0].GetValue(1).ToString().c_str());
 
   // The values of column 'a' are equal to the (zero-indexed) row ID * 10. The
   // maximum row ID is equal to # inserted - 1. Therefore:
   // MAX(a) = (# inserted - 1) * 10 = (10 - 1) * 10 = 9 * 10 = 90
   EXPECT_TRUE(results[0].GetValue(0).CompareEquals(
-                  type::ValueFactory::GetBigIntValue(90)) == type::CmpBool::TRUE);
+                  type::ValueFactory::GetBigIntValue(90)) ==
+              type::CmpBool::TRUE);
 
   // The values of 'b' are equal to the (zero-indexed) row ID * 10 + 1. The
   // minimum row ID is 0. Therefore: MIN(b) = 0 * 10 + 1 = 1
   EXPECT_TRUE(results[0].GetValue(1).CompareEquals(
-                  type::ValueFactory::GetBigIntValue(1)) == type::CmpBool::TRUE);
+                  type::ValueFactory::GetBigIntValue(1)) ==
+              type::CmpBool::TRUE);
 }
 
 }  // namespace test

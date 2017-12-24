@@ -58,7 +58,6 @@ class ExecutorContext {
 
   // OBSOLETE: This is for the interpreted engine.
   std::unique_ptr<type::EphemeralPool> pool_;
-
 };
 
 }  // namespace executor

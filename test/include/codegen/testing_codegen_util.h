@@ -81,8 +81,8 @@ class PelotonCodeGenTest : public PelotonTest {
 
   codegen::QueryCompiler::CompileStats CompileAndExecuteCache(
       std::shared_ptr<planner::AbstractPlan> plan,
-      codegen::QueryResultConsumer &consumer,
-      bool &cached, std::vector<type::Value> params = {});
+      codegen::QueryResultConsumer &consumer, bool &cached,
+      std::vector<type::Value> params = {});
 
   //===--------------------------------------------------------------------===//
   // Helpers

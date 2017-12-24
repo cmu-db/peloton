@@ -37,7 +37,7 @@ class QueryParametersMap {
     return *this;
   }
 
-  void Insert(expression::Parameter parameter, 
+  void Insert(expression::Parameter parameter,
               expression::AbstractExpression *expression) {
     parameters_.push_back(parameter);
     map_[expression] = parameters_.size() - 1;
@@ -58,8 +58,8 @@ class QueryParametersMap {
   std::unordered_map<const expression::AbstractExpression *, uint32_t> map_;
 
   // Parameter meta information
-  std::vector<expression::Parameter> parameters_; 
+  std::vector<expression::Parameter> parameters_;
 };
 
 }  // namespace codegen
-}  // namespace peloton 
+}  // namespace peloton

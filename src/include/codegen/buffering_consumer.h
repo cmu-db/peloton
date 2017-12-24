@@ -30,8 +30,7 @@ namespace codegen {
 //===----------------------------------------------------------------------===//
 // A wrapped class for output tuples
 //===----------------------------------------------------------------------===//
-class WrappedTuple
-    : public ContainerTuple<std::vector<peloton::type::Value>> {
+class WrappedTuple : public ContainerTuple<std::vector<peloton::type::Value>> {
  public:
   // Basic Constructor
   WrappedTuple(peloton::type::Value *vals, uint32_t num_vals);

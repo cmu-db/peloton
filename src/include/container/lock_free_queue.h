@@ -28,26 +28,17 @@ class LockFreeQueue {
 
   DISALLOW_COPY(LockFreeQueue);
 
-  void Enqueue(T &&item) {
-    queue_.enqueue(std::move(item));
-  }
+  void Enqueue(T &&item) { queue_.enqueue(std::move(item)); }
 
-  void Enqueue(const T &item) {
-    queue_.enqueue(item);
-  }
+  void Enqueue(const T &item) { queue_.enqueue(item); }
 
   // Dequeues one item, returning true if an item was found
   // or false if the queue appeared empty
-  bool Dequeue(T &item) {
-    return queue_.try_dequeue(item);
-  }
+  bool Dequeue(T &item) { return queue_.try_dequeue(item); }
 
-  bool IsEmpty() {
-    return queue_.size_approx() == 0;
-  }
+  bool IsEmpty() { return queue_.size_approx() == 0; }
 
  private:
-
   // Underlying moodycamel's concurrent queue
   moodycamel::ConcurrentQueue<T> queue_;
 };

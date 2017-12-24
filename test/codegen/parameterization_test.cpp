@@ -202,11 +202,11 @@ TEST_F(ParameterizationTest, ConstParameterWithConjunction) {
   const auto &results = buffer.GetOutputTuples();
   ASSERT_EQ(1, results.size());
   EXPECT_EQ(type::CmpBool::TRUE, results[0].GetValue(0).CompareEquals(
-                                type::ValueFactory::GetIntegerValue(20)));
+                                     type::ValueFactory::GetIntegerValue(20)));
   EXPECT_EQ(type::CmpBool::TRUE, results[0].GetValue(1).CompareEquals(
-                                type::ValueFactory::GetIntegerValue(21)));
+                                     type::ValueFactory::GetIntegerValue(21)));
   EXPECT_EQ(type::CmpBool::TRUE, results[0].GetValue(2).CompareEquals(
-                                type::ValueFactory::GetDecimalValue(22)));
+                                     type::ValueFactory::GetDecimalValue(22)));
 
   // SELECT a, b, c FROM table where a >= 30 and b = 31;
   auto *a_col_exp_2 =
@@ -214,7 +214,8 @@ TEST_F(ParameterizationTest, ConstParameterWithConjunction) {
   auto *const_30_exp_2 = new expression::ConstantValueExpression(
       type::ValueFactory::GetIntegerValue(30));
   auto *a_gt_30_2 = new expression::ComparisonExpression(
-      ExpressionType::COMPARE_GREATERTHANOREQUALTO, a_col_exp_2, const_30_exp_2);
+      ExpressionType::COMPARE_GREATERTHANOREQUALTO, a_col_exp_2,
+      const_30_exp_2);
 
   auto *b_col_exp_2 =
       new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 1);
@@ -238,11 +239,11 @@ TEST_F(ParameterizationTest, ConstParameterWithConjunction) {
   const auto &results_2 = buffer_2.GetOutputTuples();
   ASSERT_EQ(1, results_2.size());
   EXPECT_EQ(type::CmpBool::TRUE, results_2[0].GetValue(0).CompareEquals(
-                                type::ValueFactory::GetIntegerValue(30)));
+                                     type::ValueFactory::GetIntegerValue(30)));
   EXPECT_EQ(type::CmpBool::TRUE, results_2[0].GetValue(1).CompareEquals(
-                                type::ValueFactory::GetIntegerValue(31)));
+                                     type::ValueFactory::GetIntegerValue(31)));
   EXPECT_EQ(type::CmpBool::TRUE, results_2[0].GetValue(2).CompareEquals(
-                                type::ValueFactory::GetDecimalValue(32)));
+                                     type::ValueFactory::GetDecimalValue(32)));
   EXPECT_TRUE(cached);
 
   // SELECT a, b, c FROM table where a >= 30 and b = null;
@@ -316,9 +317,9 @@ TEST_F(ParameterizationTest, ParamParameterWithConjunction) {
   const auto &results = buffer.GetOutputTuples();
   ASSERT_EQ(NumRowsInTestTable() - 2, results.size());
   EXPECT_EQ(type::CmpBool::TRUE, results[0].GetValue(0).CompareEquals(
-                                type::ValueFactory::GetIntegerValue(20)));
+                                     type::ValueFactory::GetIntegerValue(20)));
   EXPECT_EQ(type::CmpBool::FALSE, results[0].GetValue(3).CompareEquals(
-                                 type::ValueFactory::GetVarcharValue("")));
+                                      type::ValueFactory::GetVarcharValue("")));
   EXPECT_FALSE(cached);
 
   // SELECT a, b, c FROM table where a >= 30 and d != "empty";
@@ -354,9 +355,10 @@ TEST_F(ParameterizationTest, ParamParameterWithConjunction) {
   const auto &results_2 = buffer_2.GetOutputTuples();
   ASSERT_EQ(NumRowsInTestTable() - 3, results_2.size());
   EXPECT_EQ(type::CmpBool::TRUE, results_2[0].GetValue(0).CompareEquals(
-                                type::ValueFactory::GetIntegerValue(30)));
-  EXPECT_EQ(type::CmpBool::FALSE, results_2[0].GetValue(3).CompareEquals(
-                                 type::ValueFactory::GetVarcharValue("empty")));
+                                     type::ValueFactory::GetIntegerValue(30)));
+  EXPECT_EQ(type::CmpBool::FALSE,
+            results_2[0].GetValue(3).CompareEquals(
+                type::ValueFactory::GetVarcharValue("empty")));
   EXPECT_TRUE(cached);
 
   // SELECT a, b, c FROM table where a >= 30 and d != "empty";
@@ -392,9 +394,10 @@ TEST_F(ParameterizationTest, ParamParameterWithConjunction) {
   const auto &results_3 = buffer_3.GetOutputTuples();
   ASSERT_EQ(NumRowsInTestTable() - 3, results_3.size());
   EXPECT_EQ(type::CmpBool::TRUE, results_3[0].GetValue(0).CompareEquals(
-                                type::ValueFactory::GetIntegerValue(30)));
-  EXPECT_EQ(type::CmpBool::FALSE, results_3[0].GetValue(3).CompareEquals(
-                                 type::ValueFactory::GetVarcharValue("empty")));
+                                     type::ValueFactory::GetIntegerValue(30)));
+  EXPECT_EQ(type::CmpBool::FALSE,
+            results_3[0].GetValue(3).CompareEquals(
+                type::ValueFactory::GetVarcharValue("empty")));
   EXPECT_TRUE(cached);
 
   // SELECT a, b, c FROM table where a >= ? and d != "empty";
@@ -430,9 +433,10 @@ TEST_F(ParameterizationTest, ParamParameterWithConjunction) {
   const auto &results_4 = buffer_4.GetOutputTuples();
   ASSERT_EQ(NumRowsInTestTable() - 3, results_3.size());
   EXPECT_EQ(type::CmpBool::TRUE, results_4[0].GetValue(0).CompareEquals(
-                                type::ValueFactory::GetIntegerValue(30)));
-  EXPECT_EQ(type::CmpBool::FALSE, results_4[0].GetValue(3).CompareEquals(
-                                 type::ValueFactory::GetVarcharValue("empty")));
+                                     type::ValueFactory::GetIntegerValue(30)));
+  EXPECT_EQ(type::CmpBool::FALSE,
+            results_4[0].GetValue(3).CompareEquals(
+                type::ValueFactory::GetVarcharValue("empty")));
   EXPECT_TRUE(cached);
 }
 
@@ -540,16 +544,16 @@ TEST_F(ParameterizationTest, ParamParameterWithOperatersLeftHand) {
   auto *const_1_exp = new expression::ConstantValueExpression(
       type::ValueFactory::GetIntegerValue(1));
   auto *a_mul_param = new expression::OperatorExpression(
-      ExpressionType::OPERATOR_MULTIPLY, type::TypeId::BIGINT,
-      a_lhs_col_exp, const_1_exp);
+      ExpressionType::OPERATOR_MULTIPLY, type::TypeId::BIGINT, a_lhs_col_exp,
+      const_1_exp);
 
   auto *a_rhs_col_exp =
       new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
   auto *b_col_exp =
       new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 1);
   auto *a_mul_b = new expression::OperatorExpression(
-      ExpressionType::OPERATOR_MULTIPLY, type::TypeId::BIGINT,
-      a_rhs_col_exp, b_col_exp);
+      ExpressionType::OPERATOR_MULTIPLY, type::TypeId::BIGINT, a_rhs_col_exp,
+      b_col_exp);
 
   auto *a_mul_param_eq_a_mul_b = new expression::ComparisonExpression(
       ExpressionType::COMPARE_EQUAL, a_mul_param, a_mul_b);
@@ -573,16 +577,16 @@ TEST_F(ParameterizationTest, ParamParameterWithOperatersLeftHand) {
   auto *param_1_exp_2 = new expression::ParameterValueExpression(0);
   type::Value param_a_2 = type::ValueFactory::GetIntegerValue(1);
   auto *a_mul_param_2 = new expression::OperatorExpression(
-      ExpressionType::OPERATOR_MULTIPLY, type::TypeId::BIGINT,
-      a_lhs_col_exp_2, param_1_exp_2);
+      ExpressionType::OPERATOR_MULTIPLY, type::TypeId::BIGINT, a_lhs_col_exp_2,
+      param_1_exp_2);
 
   auto *a_rhs_col_exp_2 =
       new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0);
   auto *b_col_exp_2 =
       new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 1);
   auto *a_mul_b_2 = new expression::OperatorExpression(
-      ExpressionType::OPERATOR_MULTIPLY, type::TypeId::BIGINT,
-      a_rhs_col_exp_2, b_col_exp_2);
+      ExpressionType::OPERATOR_MULTIPLY, type::TypeId::BIGINT, a_rhs_col_exp_2,
+      b_col_exp_2);
 
   auto *a_mul_param_eq_a_mul_b_2 = new expression::ComparisonExpression(
       ExpressionType::COMPARE_EQUAL, a_mul_param_2, a_mul_b_2);

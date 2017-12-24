@@ -137,7 +137,7 @@ ResultType TrafficCop::ExecuteStatementGetResult() {
   return p_status_.m_result;
 }
 
-executor::ExecuteResult TrafficCop::ExecuteHelper(
+executor::ExecutionResult TrafficCop::ExecuteHelper(
     std::shared_ptr<planner::AbstractPlan> plan,
     const std::vector<type::Value> &params, std::vector<ResultValue> &result,
     const std::vector<int> &result_format, size_t thread_id) {
@@ -162,8 +162,8 @@ executor::ExecuteResult TrafficCop::ExecuteHelper(
     return p_status_;
   }
 
-  auto on_complete = [&result, this](executor::ExecuteResult p_status,
-                                          std::vector<ResultValue> &&values) {
+  auto on_complete = [&result, this](executor::ExecutionResult p_status,
+                                     std::vector<ResultValue> &&values) {
     this->p_status_ = p_status;
     result = std::move(values);
     task_callback_(task_callback_arg_);
@@ -351,8 +351,7 @@ FieldInfo TrafficCop::GetColumnFieldForValueType(std::string column_name,
 
 std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     const std::string &statement_name, const std::string &query_string,
-    std::string &error_message,
-    size_t thread_id) {
+    std::string &error_message, size_t thread_id) {
   LOG_TRACE("Prepare Statement name: %s", statement_name.c_str());
   LOG_TRACE("Prepare Statement query: %s", query_string.c_str());
 

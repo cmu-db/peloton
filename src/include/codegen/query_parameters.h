@@ -152,4 +152,4 @@ class QueryParameters {
 };
 
 }  // namespace codegen
-}  // namespace peloton 
+}  // namespace peloton

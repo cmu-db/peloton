@@ -30,7 +30,8 @@ void WorkerFunc(std::atomic_bool *should_shutdown, TaskQueue *task_queue);
 class WorkerPool {
  public:
   WorkerPool(size_t num_workers, TaskQueue *task_queue)
-      : num_workers_(num_workers), should_shutdown_(false),
+      : num_workers_(num_workers),
+        should_shutdown_(false),
         task_queue_(task_queue) {}
 
   void Startup() {
@@ -51,7 +52,7 @@ class WorkerPool {
   std::vector<std::thread> workers_;
   size_t num_workers_;
   std::atomic_bool should_shutdown_;
-  TaskQueue* task_queue_;
+  TaskQueue *task_queue_;
 };
 
 }  // namespace threadpool
