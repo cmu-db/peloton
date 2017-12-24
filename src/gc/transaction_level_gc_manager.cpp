@@ -278,6 +278,15 @@ void TransactionLevelGCManager::ClearGarbage(int thread_id) {
   return;
 }
 
+void TransactionLevelGCManager::StopGC() {
+  LOG_TRACE("Stopping GC");
+  this->is_running_ = false;
+  // clear the garbage in each GC thread
+  for (int thread_id = 0; thread_id < gc_thread_count_; ++thread_id) {
+    ClearGarbage(thread_id);
+  }
+}
+
 void TransactionLevelGCManager::UnlinkVersions(
     const std::shared_ptr<GarbageContext> &garbage_ctx) {
   for (auto entry : *(garbage_ctx->gc_set_.get())) {

@@ -48,7 +48,7 @@ class Property {
 
   template <typename T>
   const T *As() const {
-    if (this != nullptr && typeid(*this) == typeid(T)) {
+    if (typeid(*this) == typeid(T)) {
       return reinterpret_cast<const T *>(this);
     }
     return nullptr;

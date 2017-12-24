@@ -187,7 +187,7 @@ CmpBool BigintType::CompareEquals(const Value& left, const Value &right) const {
   PL_ASSERT(left.CheckComparable(right));
 
   if (left.IsNull() || right.IsNull())
-    return CMP_NULL;
+    return CmpBool::NULL_;
 
   BIGINT_COMPARE_FUNC(==);
 
@@ -199,7 +199,7 @@ CmpBool BigintType::CompareNotEquals(const Value& left,
   PL_ASSERT(left.CheckInteger());
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
-    return CMP_NULL;
+    return CmpBool::NULL_;
 
   BIGINT_COMPARE_FUNC(!=);
 
@@ -211,7 +211,7 @@ CmpBool BigintType::CompareLessThan(const Value& left,
   PL_ASSERT(left.CheckInteger());
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
-    return CMP_NULL;
+    return CmpBool::NULL_;
 
   BIGINT_COMPARE_FUNC(<);
 
@@ -223,7 +223,7 @@ CmpBool BigintType::CompareLessThanEquals(const Value& left,
   PL_ASSERT(left.CheckInteger());
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
-    return CMP_NULL;
+    return CmpBool::NULL_;
 
   BIGINT_COMPARE_FUNC(<=);
 
@@ -235,7 +235,7 @@ CmpBool BigintType::CompareGreaterThan(const Value& left,
   PL_ASSERT(left.CheckInteger());
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
-    return CMP_NULL;
+    return CmpBool::NULL_;
 
   BIGINT_COMPARE_FUNC(>);
 
@@ -247,7 +247,7 @@ CmpBool BigintType::CompareGreaterThanEquals(const Value& left,
   PL_ASSERT(left.CheckInteger());
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
-    return CMP_NULL;
+    return CmpBool::NULL_;
 
   BIGINT_COMPARE_FUNC(>=);
 

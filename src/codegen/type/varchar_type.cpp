@@ -14,11 +14,11 @@
 
 #include "codegen/lang/if.h"
 #include "codegen/proxy/string_functions_proxy.h"
+#include "codegen/proxy/timestamp_functions_proxy.h"
 #include "codegen/proxy/values_runtime_proxy.h"
 #include "codegen/type/boolean_type.h"
 #include "codegen/type/integer_type.h"
 #include "codegen/type/timestamp_type.h"
-#include "codegen/proxy/timestamp_functions_proxy.h"
 #include "codegen/value.h"
 
 namespace peloton {
@@ -303,6 +303,35 @@ struct RTrim : public TypeSystem::BinaryOperatorHandleNull {
   }
 };
 
+struct Substr : public TypeSystem::NaryOperator {
+  // The first argument is the original string
+  // The second argument is the starting offset of the substring
+  // The third argument is the length of the substring
+  bool SupportsTypes(const std::vector<Type> &arg_types) const override {
+    return arg_types[0].GetSqlType() == Varchar::Instance() &&
+           arg_types[1].GetSqlType() == Integer::Instance() &&
+           arg_types[2].GetSqlType() == Integer::Instance();
+  }
+
+  Type ResultType(
+      UNUSED_ATTRIBUTE const std::vector<Type> &arg_types) const override {
+    return Varchar::Instance();
+  }
+
+  Value Eval(CodeGen &codegen, const std::vector<Value> &input_args,
+             UNUSED_ATTRIBUTE OnError on_error) const override {
+    llvm::Value *ret =
+        codegen.Call(StringFunctionsProxy::Substr,
+                     {
+                         input_args[0].GetValue(), input_args[0].GetLength(),
+                         input_args[1].GetValue(), input_args[2].GetValue(),
+                     });
+    llvm::Value *str_ptr = codegen->CreateExtractValue(ret, 0);
+    llvm::Value *str_len = codegen->CreateExtractValue(ret, 1);
+    return Value(Varchar::Instance(), str_ptr, str_len);
+  }
+};
+
 //===----------------------------------------------------------------------===//
 // TYPE SYSTEM CONSTRUCTION
 //===----------------------------------------------------------------------===//
@@ -342,7 +371,9 @@ static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
     {OperatorId::RTrim, kRTrim}};
 
 // Nary operations
-static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
+static Substr kSubstr;
+static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {
+    {OperatorId::Substr, kSubstr}};
 
 }  // anonymous namespace
 

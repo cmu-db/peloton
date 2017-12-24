@@ -26,7 +26,11 @@ class AbstractPool;
 class Value;
 class ValueFactory;
 
-enum CmpBool { CMP_FALSE = 0, CMP_TRUE = 1, CMP_NULL = 2 };
+enum class CmpBool {
+  FALSE = 0,
+  TRUE = 1,
+  NULL_ = 2
+};
 
 class Type {
  public:

@@ -90,17 +90,17 @@ TEST_F(CaseTranslatorTest, SimpleCase) {
   const auto &results = buffer.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable(), results.size());
   EXPECT_TRUE(results[0].GetValue(0).CompareEquals(
-                  type::ValueFactory::GetBigIntValue(0)) == type::CMP_TRUE);
+                  type::ValueFactory::GetBigIntValue(0)) == type::CmpBool::TRUE);
   EXPECT_TRUE(results[0].GetValue(1).CompareEquals(
-                  type::ValueFactory::GetBigIntValue(0)) == type::CMP_TRUE);
+                  type::ValueFactory::GetBigIntValue(0)) == type::CmpBool::TRUE);
   EXPECT_TRUE(results[1].GetValue(0).CompareEquals(
-                  type::ValueFactory::GetBigIntValue(10)) == type::CMP_TRUE);
+                  type::ValueFactory::GetBigIntValue(10)) == type::CmpBool::TRUE);
   EXPECT_TRUE(results[1].GetValue(1).CompareEquals(
-                  type::ValueFactory::GetBigIntValue(1)) == type::CMP_TRUE);
+                  type::ValueFactory::GetBigIntValue(1)) == type::CmpBool::TRUE);
 
   for (uint32_t i = 2; i < NumRowsInTestTable(); i++) {
     EXPECT_TRUE(results[i].GetValue(1).CompareEquals(
-                    type::ValueFactory::GetBigIntValue(0)) == type::CMP_TRUE);
+                    type::ValueFactory::GetBigIntValue(0)) == type::CmpBool::TRUE);
   }
 }
 
@@ -156,17 +156,17 @@ TEST_F(CaseTranslatorTest, SimpleCaseMoreWhen) {
   const auto &results = buffer.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable(), results.size());
   EXPECT_TRUE(results[0].GetValue(0).CompareEquals(
-                  type::ValueFactory::GetBigIntValue(0)) == type::CMP_TRUE);
+                  type::ValueFactory::GetBigIntValue(0)) == type::CmpBool::TRUE);
   EXPECT_TRUE(results[0].GetValue(1).CompareEquals(
-                  type::ValueFactory::GetBigIntValue(0)) == type::CMP_TRUE);
+                  type::ValueFactory::GetBigIntValue(0)) == type::CmpBool::TRUE);
   EXPECT_TRUE(results[1].GetValue(0).CompareEquals(
-                  type::ValueFactory::GetBigIntValue(10)) == type::CMP_TRUE);
+                  type::ValueFactory::GetBigIntValue(10)) == type::CmpBool::TRUE);
   EXPECT_TRUE(results[1].GetValue(1).CompareEquals(
-                  type::ValueFactory::GetBigIntValue(1)) == type::CMP_TRUE);
+                  type::ValueFactory::GetBigIntValue(1)) == type::CmpBool::TRUE);
   EXPECT_TRUE(results[2].GetValue(0).CompareEquals(
-                  type::ValueFactory::GetBigIntValue(20)) == type::CMP_TRUE);
+                  type::ValueFactory::GetBigIntValue(20)) == type::CmpBool::TRUE);
   EXPECT_TRUE(results[2].GetValue(1).CompareEquals(
-                  type::ValueFactory::GetBigIntValue(2)) == type::CMP_TRUE);
+                  type::ValueFactory::GetBigIntValue(2)) == type::CmpBool::TRUE);
 }
 
 }  // namespace test

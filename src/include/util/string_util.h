@@ -23,26 +23,23 @@ namespace peloton {
  */
 static const std::string GETINFO_SPACER = "  ";
 
-/**
- *
- */
+static const std::string GETINFO_DOUBLE_STAR = "**";
+
+static const std::string GETINFO_LONG_ARROW = "====>";
+
 static const std::string GETINFO_SINGLE_LINE =
     "-------------------------------------------------------------";
 
-/**
- *
- */
 static const std::string GETINFO_THICK_LINE =
     "=============================================================";
 
-/**
- *
- */
+static const std::string GETINFO_HALF_THICK_LINE =
+    "===========================";
+
+static const int ARROW_INDENT = 3;
+
 static const int TUPLE_ID_WIDTH = 6;
 
-/**
- *
- */
 static const int TXN_ID_WIDTH = 10;
 
 /**
@@ -77,7 +74,7 @@ class StringUtil {
   /**
    * Split the input string based on newline char
    */
-  static std::vector<std::string> Split(const std::string &str);
+  static std::vector<std::string> Split(const std::string &str, char delimiter);
 
   /**
    * Append the prefix to the beginning of each line in str
@@ -122,6 +119,13 @@ class StringUtil {
    */
   static std::vector<std::string> Split(const std::string &input,
                                         const std::string &split);
+
+  /**
+   * Remove the whitespace char in the right end of the string
+   */
+  static void RTrim(std::string &str);
+
+  static std::string Indent(const int num_indent);
 };
 
 }  // namespace peloton

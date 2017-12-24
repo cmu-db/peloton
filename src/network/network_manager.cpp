@@ -46,7 +46,7 @@ void NetworkManager::CreateNewConnection(const int &connfd, short ev_flags,
   auto &global_socket_list = GetGlobalSocketList();
   recent_connfd = connfd;
   if (global_socket_list.find(connfd) == global_socket_list.end()) {
-    LOG_INFO("create new connection: id = %d", connfd);
+    LOG_INFO("Create new connection: id = %d", connfd);
   }
   global_socket_list[connfd].reset(
       new NetworkConnection(connfd, ev_flags, thread, init_state));
@@ -120,12 +120,16 @@ void NetworkManager::StartServer() {
     SSL_load_error_strings();
     SSL_library_init();
 
-    if ((ssl_context = SSL_CTX_new(TLSv1_server_method())) == nullptr)
-    {
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+    ssl_context = SSL_CTX_new(TLS_server_method());
+#else
+    ssl_context = SSL_CTX_new(SSLv23_server_method());
+#endif
+    if (ssl_context == nullptr) {
       throw ConnectionException("Error creating SSL context.");
     }
 
-    LOG_INFO("private key file path %s", private_key_file_.c_str());
+    LOG_DEBUG("private key file path %s", private_key_file_.c_str());
     /*
      * Temporarily commented to pass tests START
     // register private key
@@ -145,14 +149,12 @@ void NetworkManager::StartServer() {
     }
     * Temporarily commented to pass tests END
     */
-    if (bind(listen_fd, (struct sockaddr *) &sin, sizeof(sin)) < 0)
-    {
+    if (bind(listen_fd, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
       SSL_CTX_free(ssl_context);
       throw ConnectionException("Failed binding socket.");
     }
 
-    if (listen(listen_fd, conn_backlog) < 0)
-    {
+    if (listen(listen_fd, conn_backlog) < 0) {
       SSL_CTX_free(ssl_context);
       throw ConnectionException("Error listening onsocket.");
     }

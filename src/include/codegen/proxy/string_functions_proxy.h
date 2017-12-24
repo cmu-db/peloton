@@ -13,6 +13,8 @@
 #pragma once
 
 #include "codegen/proxy/proxy.h"
+#include "codegen/proxy/type_builder.h"
+#include "function/string_functions.h"
 
 #include "codegen/proxy/type_builder.h"
 #include "function/string_functions.h"
@@ -29,6 +31,7 @@ PROXY(StringFunctions) {
   DECLARE_METHOD(Trim);
   DECLARE_METHOD(LTrim);
   DECLARE_METHOD(RTrim);
+  DECLARE_METHOD(Substr);
 };
 
 PROXY(StrWithLen) {

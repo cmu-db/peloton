@@ -115,21 +115,21 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithAConstant) {
   // Check that we got all the results
   auto &results_1 = buffer_1.GetOutputTuples();
 
-  EXPECT_EQ(type::CMP_TRUE, results_1[0].GetValue(0).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results_1[0].GetValue(0).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(1)));
-  EXPECT_EQ(type::CMP_TRUE, results_1[0].GetValue(1).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results_1[0].GetValue(1).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(1)));
-  EXPECT_EQ(type::CMP_TRUE, results_1[0].GetValue(2).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results_1[0].GetValue(2).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(2)));
-  EXPECT_EQ(type::CMP_TRUE, results_1[0].GetValue(3).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results_1[0].GetValue(3).CompareEquals(
                                 type::ValueFactory::GetVarcharValue("3")));
-  EXPECT_EQ(type::CMP_TRUE, results_1[9].GetValue(0).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results_1[9].GetValue(0).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(1)));
-  EXPECT_EQ(type::CMP_TRUE, results_1[9].GetValue(1).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results_1[9].GetValue(1).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(91)));
-  EXPECT_EQ(type::CMP_TRUE, results_1[9].GetValue(2).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results_1[9].GetValue(2).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(92)));
-  EXPECT_EQ(type::CMP_TRUE, results_1[9].GetValue(3).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results_1[9].GetValue(3).CompareEquals(
                                 type::ValueFactory::GetVarcharValue("93")));
 }
 
@@ -209,13 +209,13 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithAConstantAndPredicate) {
   // Check that we got all the results
   auto &results_1 = buffer_1.GetOutputTuples();
 
-  EXPECT_EQ(type::CMP_TRUE, results_1[0].GetValue(0).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results_1[0].GetValue(0).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(40)));
-  EXPECT_EQ(type::CMP_TRUE, results_1[0].GetValue(1).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results_1[0].GetValue(1).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(49)));
-  EXPECT_EQ(type::CMP_TRUE, results_1[0].GetValue(2).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results_1[0].GetValue(2).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(42)));
-  EXPECT_EQ(type::CMP_TRUE, results_1[0].GetValue(3).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results_1[0].GetValue(3).CompareEquals(
                                 type::ValueFactory::GetVarcharValue("43")));
 
 }
@@ -304,13 +304,13 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithAnOperatorExpression) {
   // Check that we got all the results
   auto &results_1 = buffer_1.GetOutputTuples();
 
-  EXPECT_EQ(type::CMP_TRUE, results_1[0].GetValue(0).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results_1[0].GetValue(0).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(40)));
-  EXPECT_EQ(type::CMP_TRUE, results_1[0].GetValue(1).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results_1[0].GetValue(1).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(49)));
-  EXPECT_EQ(type::CMP_TRUE, results_1[0].GetValue(2).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results_1[0].GetValue(2).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(42)));
-  EXPECT_EQ(type::CMP_TRUE, results_1[0].GetValue(3).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results_1[0].GetValue(3).CompareEquals(
                                 type::ValueFactory::GetVarcharValue("43")));
 
 }
@@ -410,13 +410,13 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithAnOperatorExpressionComplex) {
   // Check that we got all the results
   auto &results_1 = buffer_1.GetOutputTuples();
 
-  EXPECT_EQ(type::CMP_TRUE, results_1[0].GetValue(0).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results_1[0].GetValue(0).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(41)));
-  EXPECT_EQ(type::CMP_TRUE, results_1[0].GetValue(1).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results_1[0].GetValue(1).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(81)));
-  EXPECT_EQ(type::CMP_TRUE, results_1[0].GetValue(2).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results_1[0].GetValue(2).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(42)));
-  EXPECT_EQ(type::CMP_TRUE, results_1[0].GetValue(3).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results_1[0].GetValue(3).CompareEquals(
                                 type::ValueFactory::GetVarcharValue("43")));
 
 }
@@ -498,13 +498,13 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithAConstantPrimary) {
   // Check that we got all the results
   auto &results_5 = buffer_5.GetOutputTuples();
 
-  EXPECT_EQ(type::CMP_TRUE, results_5[0].GetValue(0).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results_5[0].GetValue(0).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(1)));
-  EXPECT_EQ(type::CMP_TRUE, results_5[0].GetValue(1).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results_5[0].GetValue(1).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(11)));
-  EXPECT_EQ(type::CMP_TRUE, results_5[0].GetValue(2).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results_5[0].GetValue(2).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(12)));
-  EXPECT_EQ(type::CMP_TRUE, results_5[0].GetValue(3).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results_5[0].GetValue(3).CompareEquals(
                                 type::ValueFactory::GetVarcharValue("13")));
 }
 
@@ -583,13 +583,13 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithCast) {
   // Check that we got all the results
   auto &results_1 = buffer_1.GetOutputTuples();
 
-  EXPECT_EQ(type::CMP_TRUE, results_1[0].GetValue(0).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results_1[0].GetValue(0).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(10)));
-  EXPECT_EQ(type::CMP_TRUE, results_1[0].GetValue(1).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results_1[0].GetValue(1).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(11)));
-  EXPECT_EQ(type::CMP_TRUE, results_1[0].GetValue(2).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results_1[0].GetValue(2).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(2)));
-  EXPECT_EQ(type::CMP_TRUE, results_1[0].GetValue(3).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results_1[0].GetValue(3).CompareEquals(
                                 type::ValueFactory::GetVarcharValue("13")));
 
   // Get the scan plan without a predicate with four columns
@@ -655,13 +655,13 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithCast) {
   // Check that we got all the results
   auto &results_3 = buffer_3.GetOutputTuples();
 
-  EXPECT_EQ(type::CMP_TRUE, results_3[0].GetValue(0).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results_3[0].GetValue(0).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(10)));
-  EXPECT_EQ(type::CMP_TRUE, results_3[0].GetValue(1).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results_3[0].GetValue(1).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(11)));
-  EXPECT_EQ(type::CMP_TRUE, results_3[0].GetValue(2).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results_3[0].GetValue(2).CompareEquals(
                                 type::ValueFactory::GetIntegerValue(3)));
-  EXPECT_EQ(type::CMP_TRUE, results_3[0].GetValue(3).CompareEquals(
+  EXPECT_EQ(type::CmpBool::TRUE, results_3[0].GetValue(3).CompareEquals(
                                 type::ValueFactory::GetVarcharValue("13")));
 }
 
