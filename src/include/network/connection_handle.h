@@ -143,17 +143,17 @@ private:
   /**
    * Routine to deal with the first packet from the client
    */
-  bool ProcessInitialPacket(InputPacket* pkt);
+  void ProcessInitialPacket(InputPacket *pkt);
 
   /**
    * Routine to deal with general Startup message
    */
-  bool ProcessStartupPacket(InputPacket* pkt, int32_t proto_version);
+  void ProcessStartupPacket(InputPacket *pkt, int32_t proto_version);
 
   /**
    * Routine to deal with SSL request message
    */
-  bool ProcessSSLRequestPacket(InputPacket *pkt);
+  void ProcessSSLRequestPacket(InputPacket *pkt);
 
   /**
    * Writes a packet's header (type, size) into the write buffer

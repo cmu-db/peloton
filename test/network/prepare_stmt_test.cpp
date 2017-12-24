@@ -95,9 +95,7 @@ TEST_F(PrepareStmtTests, PrepareStatementTest) {
     LOG_INFO("[LaunchServer] exception when launching server");
   }
   std::thread serverThread([&]() { server.ServerLoop(); });
-
-  for (int i = 0; i < 100; i++)
-    PrepareStatementTest(port);
+  PrepareStatementTest(port);
   server.Close();
   serverThread.join();
   peloton::PelotonInit::Shutdown();
