@@ -123,7 +123,7 @@ TEST_F(DeleteTranslatorTest, DeleteWithCompositePredicate) {
       CmpEqExpr(ColRefExpr(type::TypeId::INTEGER, 1), ConstIntExpr(21));
 
   // a >= 20 AND b = 21
-  auto* conj_eq = new expression::ConjunctionExpression(
+  auto *conj_eq = new expression::ConjunctionExpression(
       ExpressionType::CONJUNCTION_AND, b_eq_21.release(), a_gt_20.release());
 
   std::unique_ptr<planner::DeletePlan> delete_plan{

@@ -30,9 +30,7 @@ AbstractExecutor::AbstractExecutor(const planner::AbstractPlan *node,
 void AbstractExecutor::SetOutput(LogicalTile *table) { output.reset(table); }
 
 // Transfers ownership
-LogicalTile *AbstractExecutor::GetOutput() {
-  return output.release();
-}
+LogicalTile *AbstractExecutor::GetOutput() { return output.release(); }
 
 /**
  * @brief Add child executor to this executor node.

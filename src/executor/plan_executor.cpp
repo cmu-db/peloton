@@ -11,20 +11,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "executor/plan_executor.h"
-#include <cinttypes>
 
 #include "codegen/buffering_consumer.h"
 #include "codegen/query_cache.h"
-#include "codegen/query_compiler.h"
-#include "codegen/query.h"
 #include "concurrency/transaction_manager_factory.h"
-#include "common/logger.h"
-#include "executor/executor_context.h"
 #include "executor/executors.h"
-#include "storage/tuple_iterator.h"
 #include "settings/settings_manager.h"
-#include "threadpool/mono_queue_pool.h"
-#include "container/lock_free_queue.h"
 
 namespace peloton {
 namespace executor {
@@ -39,7 +31,7 @@ static void CompileAndExecutePlan(
     std::shared_ptr<planner::AbstractPlan> plan,
     concurrency::TransactionContext *txn,
     const std::vector<type::Value> &params,
-    std::function<void(executor::ExecuteResult, std::vector<ResultValue> &&)>
+    std::function<void(executor::ExecutionResult, std::vector<ResultValue> &&)>
         on_complete) {
   LOG_TRACE("Compiling and executing query ...");
 
@@ -66,18 +58,19 @@ static void CompileAndExecutePlan(
     codegen::QueryCache::Instance().Add(plan, std::move(compiled_query));
   }
 
-  auto on_query_result = [&on_complete, &consumer](executor::ExecuteResult result) {
-    std::vector<ResultValue> values;
-    for (const auto &tuple : consumer.GetOutputTuples()) {
-      for (uint32_t i = 0; i < tuple.tuple_.size(); i++) {
-        auto column_val = tuple.GetValue(i);
-        auto str = column_val.IsNull() ? "" : column_val.ToString();
-        LOG_TRACE("column content: [%s]", str.c_str());
-        values.push_back(std::move(str));
-      }
-    }
-    on_complete(result, std::move(values));
-  };
+  auto on_query_result =
+      [&on_complete, &consumer](executor::ExecutionResult result) {
+        std::vector<ResultValue> values;
+        for (const auto &tuple : consumer.GetOutputTuples()) {
+          for (uint32_t i = 0; i < tuple.tuple_.size(); i++) {
+            auto column_val = tuple.GetValue(i);
+            auto str = column_val.IsNull() ? "" : column_val.ToString();
+            LOG_TRACE("column content: [%s]", str.c_str());
+            values.push_back(std::move(str));
+          }
+        }
+        on_complete(result, std::move(values));
+      };
 
   query->Execute(std::move(executor_context), consumer, on_query_result);
 }
@@ -87,9 +80,9 @@ static void InterpretPlan(
     concurrency::TransactionContext *txn,
     const std::vector<type::Value> &params,
     const std::vector<int> &result_format,
-    std::function<void(executor::ExecuteResult, std::vector<ResultValue> &&)>
-    on_complete) {
-  executor::ExecuteResult result;
+    std::function<void(executor::ExecutionResult, std::vector<ResultValue> &&)>
+        on_complete) {
+  executor::ExecutionResult result;
   std::vector<ResultValue> values;
 
   std::unique_ptr<executor::ExecutorContext> executor_context(
@@ -121,9 +114,8 @@ static void InterpretPlan(
       // Construct the returned results
       for (auto &tuple : tuples) {
         for (unsigned int i = 0; i < tile->GetColumnCount(); i++) {
-          LOG_TRACE("column content: %s", tuple[i].c_str() != nullptr
-                                              ? tuple[i].c_str()
-                                              : "-empty-");
+          LOG_TRACE("column content: %s",
+                    tuple[i].c_str() != nullptr ? tuple[i].c_str() : "-empty-");
           values.push_back(std::move(tuple[i]));
         }
       }
@@ -141,13 +133,13 @@ void PlanExecutor::ExecutePlan(
     concurrency::TransactionContext *txn,
     const std::vector<type::Value> &params,
     const std::vector<int> &result_format,
-    std::function<void(executor::ExecuteResult, std::vector<ResultValue> &&)>
+    std::function<void(executor::ExecutionResult, std::vector<ResultValue> &&)>
         on_complete) {
   PL_ASSERT(plan != nullptr && txn != nullptr);
   LOG_TRACE("PlanExecutor Start (Txn ID=%" PRId64 ")", txn->GetTransactionId());
 
-  bool codegen_enabled = settings::SettingsManager::GetBool(
-      settings::SettingId::codegen);
+  bool codegen_enabled =
+      settings::SettingsManager::GetBool(settings::SettingId::codegen);
   if (codegen_enabled && codegen::QueryCompiler::IsSupported(*plan)) {
     CompileAndExecutePlan(plan, txn, params, std::move(on_complete));
   } else {

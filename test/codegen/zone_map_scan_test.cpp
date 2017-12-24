@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <include/storage/storage_manager.h>
 #include "catalog/catalog.h"
 #include "codegen/query_compiler.h"
@@ -147,9 +146,9 @@ TEST_F(ZoneMapScanTest, ScanwithConjunctionPredicate) {
   const auto &results = buffer.GetOutputTuples();
   ASSERT_EQ(1, results.size());
   EXPECT_EQ(type::CmpBool::TRUE, results[0].GetValue(0).CompareEquals(
-                                type::ValueFactory::GetIntegerValue(20)));
+                                     type::ValueFactory::GetIntegerValue(20)));
   EXPECT_EQ(type::CmpBool::TRUE, results[0].GetValue(1).CompareEquals(
-                                type::ValueFactory::GetIntegerValue(21)));
+                                     type::ValueFactory::GetIntegerValue(21)));
 }
 }
 }

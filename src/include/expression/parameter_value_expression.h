@@ -29,7 +29,8 @@ class ParameterValueExpression : public AbstractExpression {
   ParameterValueExpression(int value_idx)
       : AbstractExpression(ExpressionType::VALUE_PARAMETER,
                            type::TypeId::PARAMETER_OFFSET),
-        value_idx_(value_idx), is_nullable_(false) {}
+        value_idx_(value_idx),
+        is_nullable_(false) {}
 
   int GetValueIdx() const { return value_idx_; }
 
@@ -77,7 +78,8 @@ class ParameterValueExpression : public AbstractExpression {
 
   bool IsNullable() const override { return is_nullable_; }
 
-  virtual void VisitParameters(codegen::QueryParametersMap &map,
+  virtual void VisitParameters(
+      codegen::QueryParametersMap &map,
       std::vector<peloton::type::Value> &values,
       const std::vector<peloton::type::Value> &values_from_user) override {
     // Add a new parameter object for a parameter

@@ -33,15 +33,16 @@ class OptimizerTests : public PelotonTest {};
 // TODO: Split the tests into separate test cases.
 TEST_F(OptimizerTests, HashJoinTest) {
   LOG_INFO("Bootstrapping...");
-  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
   LOG_INFO("Bootstrapping completed!");
 
   optimizer::Optimizer optimizer;
-  auto& traffic_cop = tcop::TrafficCop::GetInstance();
-  traffic_cop.SetTaskCallback(TestingSQLUtil::UtilTestTaskCallback, &TestingSQLUtil::counter_);
+  auto &traffic_cop = tcop::TrafficCop::GetInstance();
+  traffic_cop.SetTaskCallback(TestingSQLUtil::UtilTestTaskCallback,
+                              &TestingSQLUtil::counter_);
 
   // Create a table first
   txn = txn_manager.BeginTransaction();
@@ -52,20 +53,20 @@ TEST_F(OptimizerTests, HashJoinTest) {
   statement.reset(new Statement(
       "CREATE", "CREATE TABLE table_a(aid INT PRIMARY KEY,value INT);"));
 
-  auto& peloton_parser = parser::PostgresParser::GetInstance();
+  auto &peloton_parser = parser::PostgresParser::GetInstance();
 
   auto create_stmt = peloton_parser.BuildParseTree(
       "CREATE TABLE table_a(aid INT PRIMARY KEY,value INT);");
 
-  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(create_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(
+      optimizer.BuildPelotonPlanTree(create_stmt, DEFAULT_DB_NAME, txn));
 
   std::vector<type::Value> params;
   std::vector<ResultValue> result;
   std::vector<int> result_format;
-  result_format =
-      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
   TestingSQLUtil::counter_.store(1);
-  executor::ExecuteResult status = traffic_cop.ExecuteHelper(
+  executor::ExecutionResult status = traffic_cop.ExecuteHelper(
       statement->GetPlanTree(), params, result, result_format);
   if (traffic_cop.GetQueuing()) {
     TestingSQLUtil::ContinueAfterComplete();
@@ -93,13 +94,13 @@ TEST_F(OptimizerTests, HashJoinTest) {
   create_stmt = peloton_parser.BuildParseTree(
       "CREATE TABLE table_b(bid INT PRIMARY KEY,value INT);");
 
-  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(create_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(
+      optimizer.BuildPelotonPlanTree(create_stmt, DEFAULT_DB_NAME, txn));
 
-  result_format =
-      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
   TestingSQLUtil::counter_.store(1);
-  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(),
-                                     params, result, result_format);
+  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(), params, result,
+                                     result_format);
   if (traffic_cop.GetQueuing()) {
     TestingSQLUtil::ContinueAfterComplete();
     traffic_cop.ExecuteStatementPlanGetResult();
@@ -127,13 +128,13 @@ TEST_F(OptimizerTests, HashJoinTest) {
   auto insert_stmt = peloton_parser.BuildParseTree(
       "INSERT INTO table_a(aid, value) VALUES (1, 1);");
 
-  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(insert_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(
+      optimizer.BuildPelotonPlanTree(insert_stmt, DEFAULT_DB_NAME, txn));
 
-  result_format =
-      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
   TestingSQLUtil::counter_.store(1);
-  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(),
-                                     params, result, result_format);
+  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(), params, result,
+                                     result_format);
   if (traffic_cop.GetQueuing()) {
     TestingSQLUtil::ContinueAfterComplete();
     traffic_cop.ExecuteStatementPlanGetResult();
@@ -156,13 +157,13 @@ TEST_F(OptimizerTests, HashJoinTest) {
   insert_stmt = peloton_parser.BuildParseTree(
       "INSERT INTO table_b(bid, value) VALUES (1, 2);");
 
-  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(insert_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(
+      optimizer.BuildPelotonPlanTree(insert_stmt, DEFAULT_DB_NAME, txn));
 
-  result_format =
-      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
   TestingSQLUtil::counter_.store(1);
-  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(),
-                                     params, result, result_format);
+  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(), params, result,
+                                     result_format);
   if (traffic_cop.GetQueuing()) {
     TestingSQLUtil::ContinueAfterComplete();
     traffic_cop.ExecuteStatementPlanGetResult();
@@ -184,12 +185,13 @@ TEST_F(OptimizerTests, HashJoinTest) {
   auto select_stmt = peloton_parser.BuildParseTree(
       "SELECT * FROM table_a INNER JOIN table_b ON aid = bid;");
 
-  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(select_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(
+      optimizer.BuildPelotonPlanTree(select_stmt, DEFAULT_DB_NAME, txn));
 
   result_format = std::vector<int>(4, 0);
   TestingSQLUtil::counter_.store(1);
-  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(),
-                                     params, result, result_format);
+  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(), params, result,
+                                     result_format);
   if (traffic_cop.GetQueuing()) {
     TestingSQLUtil::ContinueAfterComplete();
     traffic_cop.ExecuteStatementPlanGetResult();

@@ -27,9 +27,10 @@ constexpr static size_t kDefaultWorkerPoolSize = 4;
  */
 class MonoQueuePool {
  public:
-  MonoQueuePool() : task_queue_(kDefaultTaskQueueSize),
-                    worker_pool_(kDefaultWorkerPoolSize, &task_queue_),
-                    is_running_(false) {}
+  MonoQueuePool()
+      : task_queue_(kDefaultTaskQueueSize),
+        worker_pool_(kDefaultWorkerPoolSize, &task_queue_),
+        is_running_(false) {}
 
   ~MonoQueuePool() {
     if (is_running_) {

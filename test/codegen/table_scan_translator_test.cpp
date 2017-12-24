@@ -216,20 +216,16 @@ TEST_F(TableScanTranslatorTest, SimplePredicateWithNull) {
   EXPECT_EQ(2, results.size());
 
   // First tuple should be (0, 1)
-  EXPECT_EQ(type::CmpBool::TRUE,
-            results[0].GetValue(0).CompareEquals(
-                type::ValueFactory::GetIntegerValue(0)));
-  EXPECT_EQ(type::CmpBool::TRUE,
-            results[0].GetValue(1).CompareEquals(
-                type::ValueFactory::GetIntegerValue(1)));
+  EXPECT_EQ(type::CmpBool::TRUE, results[0].GetValue(0).CompareEquals(
+                                     type::ValueFactory::GetIntegerValue(0)));
+  EXPECT_EQ(type::CmpBool::TRUE, results[0].GetValue(1).CompareEquals(
+                                     type::ValueFactory::GetIntegerValue(1)));
 
   // Second tuple should be (10, 11)
-  EXPECT_EQ(type::CmpBool::TRUE,
-            results[1].GetValue(0).CompareEquals(
-                type::ValueFactory::GetIntegerValue(10)));
-  EXPECT_EQ(type::CmpBool::TRUE,
-            results[1].GetValue(1).CompareEquals(
-                type::ValueFactory::GetIntegerValue(11)));
+  EXPECT_EQ(type::CmpBool::TRUE, results[1].GetValue(0).CompareEquals(
+                                     type::ValueFactory::GetIntegerValue(10)));
+  EXPECT_EQ(type::CmpBool::TRUE, results[1].GetValue(1).CompareEquals(
+                                     type::ValueFactory::GetIntegerValue(11)));
 }
 
 TEST_F(TableScanTranslatorTest, PredicateOnNonOutputColumn) {
@@ -296,9 +292,9 @@ TEST_F(TableScanTranslatorTest, ScanWithConjunctionPredicate) {
   const auto &results = buffer.GetOutputTuples();
   ASSERT_EQ(1, results.size());
   EXPECT_EQ(type::CmpBool::TRUE, results[0].GetValue(0).CompareEquals(
-                                type::ValueFactory::GetIntegerValue(20)));
+                                     type::ValueFactory::GetIntegerValue(20)));
   EXPECT_EQ(type::CmpBool::TRUE, results[0].GetValue(1).CompareEquals(
-                                type::ValueFactory::GetIntegerValue(21)));
+                                     type::ValueFactory::GetIntegerValue(21)));
 }
 
 TEST_F(TableScanTranslatorTest, ScanWithAddPredicate) {
@@ -584,9 +580,9 @@ TEST_F(TableScanTranslatorTest, ScanWithModuloPredicate) {
   const auto &results = buffer.GetOutputTuples();
   ASSERT_EQ(1, results.size());
   EXPECT_EQ(type::CmpBool::TRUE, results[0].GetValue(0).CompareEquals(
-                                type::ValueFactory::GetIntegerValue(0)));
+                                     type::ValueFactory::GetIntegerValue(0)));
   EXPECT_EQ(type::CmpBool::TRUE, results[0].GetValue(1).CompareEquals(
-                                type::ValueFactory::GetIntegerValue(1)));
+                                     type::ValueFactory::GetIntegerValue(1)));
 }
 
 }  // namespace test
