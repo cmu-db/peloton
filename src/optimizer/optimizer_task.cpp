@@ -385,7 +385,7 @@ void TopDownRewrite::execute() {
         return;
       }
     }
-//    cur_group_expr->SetRuleExplored(r.rule);
+    cur_group_expr->SetRuleExplored(r.rule);
   }
 
   for (size_t child_group_idx = 0;
@@ -446,7 +446,7 @@ void BottomUpRewrite::execute() {
         return;
       }
     }
-//    cur_group_expr->SetRuleExplored(r.rule);
+    cur_group_expr->SetRuleExplored(r.rule);
   }
 }
 }  // namespace optimizer

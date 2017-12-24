@@ -308,16 +308,36 @@ Operator LogicalSemiJoin::make(expression::AbstractExpression *condition) {
 Operator LogicalGroupBy::make() {
   LogicalGroupBy *group_by = new LogicalGroupBy;
   group_by->columns = {};
-  group_by->having = nullptr;
   return Operator(group_by);
 }
 Operator LogicalGroupBy::make(
     std::vector<std::shared_ptr<expression::AbstractExpression>> &columns,
-    std::shared_ptr<expression::AbstractExpression> &having) {
+    std::vector<AnnotatedExpression> &having) {
   LogicalGroupBy *group_by = new LogicalGroupBy;
   group_by->columns = move(columns);
-  group_by->having = having;
+  group_by->having = move(having);
   return Operator(group_by);
+}
+
+bool LogicalGroupBy::operator==(const BaseOperatorNode &node) {
+  if (node.type() != OpType::LogicalGroupBy) return false;
+  const LogicalGroupBy &r =
+      *static_cast<const LogicalGroupBy *>(&node);
+  if (having.size() != r.having.size() || columns.size() != r.columns.size())
+    return false;
+  for (size_t i = 0; i < having.size(); i++) {
+    if (!having[i].expr->
+        ExactlyEquals(*r.having[i].expr.get()))
+      return false;
+  }
+  return expression::ExpressionUtil::EqualExpressions(columns, r.columns);
+}
+
+hash_t LogicalGroupBy::Hash() const {
+  hash_t hash = BaseOperatorNode::Hash();
+  for (auto &pred : having) hash = HashUtil::SumHashes(hash, pred.expr->Hash());
+  for (auto expr : columns) hash = HashUtil::SumHashes(hash, expr->Hash());
+  return hash;
 }
 
 //===--------------------------------------------------------------------===//
@@ -728,10 +748,10 @@ Operator PhysicalUpdate::make(
 //===--------------------------------------------------------------------===//
 Operator PhysicalHashGroupBy::make(
     std::vector<std::shared_ptr<expression::AbstractExpression>> columns,
-    expression::AbstractExpression *having) {
+    std::vector<AnnotatedExpression> having) {
   PhysicalHashGroupBy *agg = new PhysicalHashGroupBy;
   agg->columns = columns;
-  agg->having = having;
+  agg->having = move(having);
   return Operator(agg);
 }
 
@@ -739,15 +759,19 @@ bool PhysicalHashGroupBy::operator==(const BaseOperatorNode &node) {
   if (node.type() != OpType::HashGroupBy) return false;
   const PhysicalHashGroupBy &r =
       *static_cast<const PhysicalHashGroupBy *>(&node);
-  if ((having == nullptr && r.having != nullptr) ||
-      (r.having == nullptr && having != nullptr))
+  if (having.size() != r.having.size() || columns.size() != r.columns.size())
     return false;
+  for (size_t i = 0; i < having.size(); i++) {
+    if (!having[i].expr->
+        ExactlyEquals(*r.having[i].expr.get()))
+      return false;
+  }
   return expression::ExpressionUtil::EqualExpressions(columns, r.columns);
 }
 
 hash_t PhysicalHashGroupBy::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
-  if (having != nullptr) hash = HashUtil::SumHashes(hash, having->Hash());
+  for (auto &pred : having) hash = HashUtil::SumHashes(hash, pred.expr->Hash());
   for (auto expr : columns) hash = HashUtil::SumHashes(hash, expr->Hash());
   return hash;
 }
@@ -757,10 +781,10 @@ hash_t PhysicalHashGroupBy::Hash() const {
 //===--------------------------------------------------------------------===//
 Operator PhysicalSortGroupBy::make(
     std::vector<std::shared_ptr<expression::AbstractExpression>> columns,
-    expression::AbstractExpression *having) {
+    std::vector<AnnotatedExpression> having) {
   PhysicalSortGroupBy *agg = new PhysicalSortGroupBy;
   agg->columns = std::move(columns);
-  agg->having = having;
+  agg->having = move(having);
   return Operator(agg);
 }
 
@@ -768,15 +792,19 @@ bool PhysicalSortGroupBy::operator==(const BaseOperatorNode &node) {
   if (node.type() != OpType::SortGroupBy) return false;
   const PhysicalSortGroupBy &r =
       *static_cast<const PhysicalSortGroupBy *>(&node);
-  if ((having == nullptr && r.having != nullptr) ||
-      (r.having == nullptr && having != nullptr))
+  if (having.size() != r.having.size() || columns.size() != r.columns.size())
     return false;
+  for (size_t i = 0; i < having.size(); i++) {
+    if (!having[i].expr->
+        ExactlyEquals(*r.having[i].expr.get()))
+      return false;
+  }
   return expression::ExpressionUtil::EqualExpressions(columns, r.columns);
 }
 
 hash_t PhysicalSortGroupBy::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
-  if (having != nullptr) hash = HashUtil::SumHashes(hash, having->Hash());
+  for (auto &pred : having) hash = HashUtil::SumHashes(hash, pred.expr->Hash());
   for (auto expr : columns) hash = HashUtil::SumHashes(hash, expr->Hash());
   return hash;
 }

@@ -231,10 +231,13 @@ class LogicalGroupBy : public OperatorNode<LogicalGroupBy> {
 
   static Operator make(
       std::vector<std::shared_ptr<expression::AbstractExpression>> &columns,
-      std::shared_ptr<expression::AbstractExpression> &having);
+      std::vector<AnnotatedExpression> &having);
+
+  bool operator==(const BaseOperatorNode &r) override;
+  hash_t Hash() const override;
 
   std::vector<std::shared_ptr<expression::AbstractExpression>> columns;
-  std::shared_ptr<expression::AbstractExpression> having;
+  std::vector<AnnotatedExpression> having;
 };
 
 //===--------------------------------------------------------------------===//
@@ -554,13 +557,13 @@ class PhysicalHashGroupBy : public OperatorNode<PhysicalHashGroupBy> {
  public:
   static Operator make(
       std::vector<std::shared_ptr<expression::AbstractExpression>> columns,
-      expression::AbstractExpression *having);
+      std::vector<AnnotatedExpression> having);
 
   bool operator==(const BaseOperatorNode &r) override;
   hash_t Hash() const override;
 
   std::vector<std::shared_ptr<expression::AbstractExpression>> columns;
-  expression::AbstractExpression *having;
+  std::vector<AnnotatedExpression> having;
 };
 
 //===--------------------------------------------------------------------===//
@@ -570,13 +573,13 @@ class PhysicalSortGroupBy : public OperatorNode<PhysicalSortGroupBy> {
  public:
   static Operator make(
       std::vector<std::shared_ptr<expression::AbstractExpression>> columns,
-      expression::AbstractExpression *having);
+      std::vector<AnnotatedExpression> having);
 
   bool operator==(const BaseOperatorNode &r) override;
   hash_t Hash() const override;
   // TODO(boweic): use raw ptr
   std::vector<std::shared_ptr<expression::AbstractExpression>> columns;
-  expression::AbstractExpression *having;
+  std::vector<AnnotatedExpression> having;
 };
 
 //===--------------------------------------------------------------------===//

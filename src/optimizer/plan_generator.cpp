@@ -130,11 +130,15 @@ void PlanGenerator::Visit(const PhysicalOrderBy *) {
 }
 
 void PlanGenerator::Visit(const PhysicalHashGroupBy *op) {
-  BuildAggregatePlan(AggregateType::HASH, &op->columns, op->having);
+  auto having_predicates = expression::ExpressionUtil::JoinAnnotatedExprs(op->having);
+  expression::ExpressionUtil::EvaluateExpression(children_expr_map_, having_predicates.get());
+  BuildAggregatePlan(AggregateType::HASH, &op->columns, having_predicates.release());
 }
 
 void PlanGenerator::Visit(const PhysicalSortGroupBy *op) {
-  BuildAggregatePlan(AggregateType::HASH, &op->columns, op->having);
+  auto having_predicates = expression::ExpressionUtil::JoinAnnotatedExprs(op->having);
+  expression::ExpressionUtil::EvaluateExpression(children_expr_map_, having_predicates.get());
+  BuildAggregatePlan(AggregateType::HASH, &op->columns, having_predicates.release());
 }
 
 void PlanGenerator::Visit(const PhysicalAggregate *) {
@@ -425,7 +429,7 @@ void PlanGenerator::BuildAggregatePlan(
     AggregateType aggr_type,
     const std::vector<std::shared_ptr<expression::AbstractExpression>>
         *groupby_cols,
-    expression::AbstractExpression *having) {
+    expression::AbstractExpression* having_predicate) {
   vector<planner::AggregatePlan::AggTerm> aggr_terms;
   vector<catalog::Column> output_schema_columns;
   DirectMapList dml;
@@ -465,13 +469,7 @@ void PlanGenerator::BuildAggregatePlan(
       col_ids.push_back(child_expr_map[col.get()]);
     }
   }
-  // Handle having clause
-  expression::AbstractExpression *having_predicate = nullptr;
-  if (having != nullptr) {
-    having_predicate = having->Copy();
-    expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
-                                                   having_predicate);
-  }
+
   // Generate the Aggregate Plan
   unique_ptr<const planner::ProjectInfo> proj_info(
       new planner::ProjectInfo(move(tl), move(dml)));
