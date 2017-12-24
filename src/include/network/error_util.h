@@ -41,6 +41,9 @@ private:
   std::string error_msg_;
 };
 
+/**
+ * Static utility class for some common error handling code
+ */
 class ErrorUtil {
 public:
   ErrorUtil() = delete;
@@ -86,6 +89,14 @@ public:
   }
 };
 
+/**
+ * Static utility class with wrappers for libevent functions.
+ *
+ * Wrapper functions are functions with the same signature and return
+ * value as the c-style functions, but consist of an extra return value
+ * checking. An exception is thrown instead if something is wrong. Wrappers
+ * are great tools for using legacy code in a modern code base.
+ */
 class EventUtil {
 private:
   template <typename T>
