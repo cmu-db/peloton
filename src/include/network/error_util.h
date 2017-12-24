@@ -22,25 +22,10 @@
 #include <event2/listener.h>
 
 #include "common/logger.h"
+#include "common/exception.h"
 
 namespace peloton {
 namespace network {
-/**
- * Used to signal that something has gone wrong when processing network connections.
- *
- * More details should be included in the error message and accessed with what().
- */
-struct NetworkProcessException : public std::exception {
-public:
-  explicit NetworkProcessException(std::string error_msg): error_msg_(std::move(error_msg)) {}
-
-  const char *what() const _NOEXCEPT override {
-    return exception::what();
-  }
-private:
-  std::string error_msg_;
-};
-
 /**
  * Static utility class for some common error handling code
  */
