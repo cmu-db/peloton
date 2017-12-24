@@ -75,8 +75,8 @@ void Optimizer::OptimizeLoop(int root_group_id,
   task_stack->Push(new TopDownRewrite(root_group_id, root_context,
                                       RewriteRuleSetName::PREDICATE_PUSH_DOWN));
 
-  task_stack->Push(new TopDownRewrite(root_group_id, root_context,
-                                      RewriteRuleSetName::UNNEST_SUBQUERY));
+  task_stack->Push(new BottomUpRewrite(root_group_id, root_context,
+                                      RewriteRuleSetName::UNNEST_SUBQUERY, false));
 
   // TODO: Add timer for early stop
   while (!task_stack->Empty()) {

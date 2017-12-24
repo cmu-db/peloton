@@ -915,7 +915,10 @@ MarkJoinInnerJoinToInnerJoin::MarkJoinInnerJoinToInnerJoin() {
 
   match_pattern = std::make_shared<Pattern>(OpType::LogicalMarkJoin);
   match_pattern->AddChild(std::make_shared<Pattern>(OpType::Leaf));
-  match_pattern->AddChild(std::make_shared<Pattern>(OpType::InnerJoin));
+  auto inner_join = std::make_shared<Pattern>(OpType::InnerJoin);
+  inner_join->AddChild(std::make_shared<Pattern>(OpType::Leaf));
+  inner_join->AddChild(std::make_shared<Pattern>(OpType::Leaf));
+  match_pattern->AddChild(inner_join);
 }
 
 bool MarkJoinInnerJoinToInnerJoin::Check(std::shared_ptr<OperatorExpression> plan, OptimizeContext* context) const {
@@ -944,7 +947,6 @@ void MarkJoinInnerJoinToInnerJoin::Transform(std::shared_ptr<OperatorExpression>
 
   transformed.push_back(output);
 }
-
 
 ///////////////////////////////////////////////////////////////////////////////
 /// PullFilterThroughMarkJoin

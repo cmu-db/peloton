@@ -385,7 +385,7 @@ void TopDownRewrite::execute() {
         return;
       }
     }
-    cur_group_expr->SetRuleExplored(r.rule);
+//    cur_group_expr->SetRuleExplored(r.rule);
   }
 
   for (size_t child_group_idx = 0;
@@ -442,11 +442,11 @@ void BottomUpRewrite::execute() {
         auto &new_expr = after[0];
         context_->metadata->ReplaceRewritedExpression(new_expr, group_id_);
         PushTask(
-            new BottomUpRewrite(group_id_, context_, rule_set_name_, true));
+            new BottomUpRewrite(group_id_, context_, rule_set_name_, false));
         return;
       }
     }
-    cur_group_expr->SetRuleExplored(r.rule);
+//    cur_group_expr->SetRuleExplored(r.rule);
   }
 }
 }  // namespace optimizer

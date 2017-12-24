@@ -334,7 +334,6 @@ class MarkJoinInnerJoinToInnerJoin: public Rule {
   const override;
 };
 
-
 ///////////////////////////////////////////////////////////////////////////////
 /// PullFilterThroughMarkJoin
 class PullFilterThroughMarkJoin: public Rule {
