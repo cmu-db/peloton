@@ -608,7 +608,7 @@ Transition ConnectionHandle::ProcessWrite() {
     case WriteState::WRITE_NOT_READY:
       return Transition::NONE;
   }
-
+  throw NetworkProcessException("Unexpected write state");
 }
 
 Transition ConnectionHandle::GetResult() {
