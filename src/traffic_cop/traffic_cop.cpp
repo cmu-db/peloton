@@ -12,6 +12,7 @@
 
 #include <utility>
 
+#include "binder/bind_node_visitor.h"
 #include "catalog/catalog.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "expression/expression_util.h"
@@ -328,6 +329,40 @@ void TrafficCop::ProcessInvalidStatement() {
       tcop_txn_state_.top().second = ResultType::ABORTED;
     }
   }
+}
+
+bool TrafficCop::BindParamsForCachePlan(const std::vector<std::unique_ptr<expression::AbstractExpression>>& parameters,
+                                        std::string &error_message, const size_t thread_id UNUSED_ATTRIBUTE) {
+  if (tcop_txn_state_.empty()) {
+    single_statement_txn_ = true;
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto txn = txn_manager.BeginTransaction(thread_id);
+    // this shouldn't happen
+    if (txn == nullptr) {
+      LOG_ERROR("Begin txn failed");
+    }
+    // initialize the current result as success
+    tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+  }
+  // Run binder
+  auto bind_node_visitor =
+      std::make_shared<binder::BindNodeVisitor>(tcop_txn_state_.top().first, default_database_name_);
+
+  std::vector<type::Value> param_values;
+  for (const std::unique_ptr<expression::AbstractExpression>& param : parameters) {
+    if (!expression::ExpressionUtil::IsValidStaticExpression(param.get())) {
+      error_message = "Invalid Expression Type";
+      return false;
+    }
+    param->Accept(bind_node_visitor.get());
+    //TODO(Yuchen): need better check for nullptr argument
+    param_values.push_back(param->Evaluate(nullptr, nullptr, nullptr));
+  }
+  if (param_values.size() > 0) {
+    statement_->GetPlanTree()->SetParameterValues(&param_values);
+  }
+  SetParamVal(param_values);
+  return true;
 }
 
 void TrafficCop::GetDataTables(

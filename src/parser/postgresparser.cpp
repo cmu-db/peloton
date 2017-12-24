@@ -635,7 +635,6 @@ expression::AbstractExpression *PostgresParser::ExprTransform(Node *node) {
   if (node == nullptr) {
     return nullptr;
   }
-
   expression::AbstractExpression *expr = nullptr;
   switch (node->type) {
     case T_ColumnRef: {
