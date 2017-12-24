@@ -696,40 +696,100 @@ TEST_F(OptimizerSQLTests, QueryDerivedTableTest) {
 }
 
 TEST_F(OptimizerSQLTests, NestedQueryTest) {
-  TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE test2(a int primary key, b int, c varchar(32))");
+  // Create extra table
+  TestingSQLUtil::ExecuteSQLQuery(
+      "CREATE TABLE test2(a int primary key, b int, c varchar(32))");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test2 VALUES (1, 22, '1st');");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test2 VALUES (2, 11, '2nd');");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test2 VALUES (3, 33, '3rd');");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test2 VALUES (5, 00, '4th');");
   TestUtil(
       "select B.a from test as B where exists (select b as a from test where a "
-          "= B.a);",
+      "= B.a);",
       {"1", "2", "3", "4"}, false);
   TestUtil(
       "select b from test where a in (select a from test as t where a = "
-          "test.a)",
+      "test.a)",
       {"11", "22", "33", "0"}, false);
   TestUtil(
       "select B.a from test as B where exists (select b as a from test2 where "
-          "a = B.a) and "
-          "b in (select b from test where b > 22);",
+      "a = B.a) and "
+      "b in (select b from test where b > 22);",
       {"3"}, false);
   TestUtil(
       "select B.a from test as B where exists (select b as a from test2 where "
-          "a = B.a) and "
-          "b in (select b from test) and c > 0;",
+      "a = B.a) and "
+      "b in (select b from test) and c > 0;",
       {"1", "3"}, false);
   TestUtil(
       "select t1.a, t2.a from test as t1 join test as t2 on t1.a=t2.a "
-          "where t1.b+t2.b in (select 2*b from test2 where a > 2)",
+      "where t1.b+t2.b in (select 2*b from test2 where a > 2)",
       {"3", "3", "4", "4"}, false);
   TestUtil(
       "select B.a from test as B where exists (select b as a from test as T "
-          "where a "
-          "= B.a and exists (select c from test where T.c = c));",
+      "where a "
+      "= B.a and exists (select c from test where T.c = c));",
       {"1", "2", "3", "4"}, false);
-
 }
+
+/*
+TEST_F(OptimizerSQLTests, NestedQueryWithAggregationTest) {
+  // Nested with aggregation
+  TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE agg(a int, b int);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO agg VALUES (1, 2);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO agg VALUES (1, 3);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO agg VALUES (2, 3);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO agg VALUES (2, 4);");
+  TestUtil(
+      "select B.a from test as B where exists (select count(b) from test where "
+      "a "
+      "= B.a);",
+      {"1", "2", "3", "4"}, false);
+  TestUtil(
+      "select b from test where a in (select sum(a) from test as t where a = "
+      "test.a group by b)",
+      {"11", "22", "33", "0"}, false);
+  TestUtil(
+      "select b from test where a < (select avg(a)+10 from test as t where a = "
+      "test.a group by b);",
+      {"11", "22", "33", "0"}, false);
+  TestUtil(
+      "select b from test as t where b/10+2 in (select sum(b) from agg where b "
+      "< 4 and a = t.a group by a);",
+      {"11"}, false);
+  //  TestUtil(
+  //      "select b from test as t where exists (select sum(b) from agg where b
+  //      < 4 and a = t.a group by a);",
+  //      {"11", "22"}, false);
+
+  TestingSQLUtil::ExecuteSQLQuery(
+      "create table student(sid int primary key, name varchar(32));");
+  TestingSQLUtil::ExecuteSQLQuery(
+      "create table course(cid int, sid int, score double);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO student VALUES(1, 'Patrick');");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO student VALUES(2, 'David');");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO student VALUES(3, 'Alice');");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO student VALUES(4, 'Bob');");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO course VALUES(1, 1, 95);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO course VALUES(1, 2, 90.5);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO course VALUES(1, 3, 99);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO course VALUES(2, 1, 89);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO course VALUES(2, 2, 76);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO course VALUES(2, 3, 50);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO course VALUES(3, 1, 91);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO course VALUES(3, 2, 92.5);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO course VALUES(3, 3, 89);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO course VALUES(4, 1, 45);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO course VALUES(4, 2, 65);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO course VALUES(4, 3, 77);");
+  TestUtil(
+      "select s.name, c.cid from student as s join course as c on s.sid = "
+      "c.sid "
+      "where c.score = (select min(score) from course where sid = s.sid) and "
+      "s.sid < 4;",
+      {"Patrick", "4", "David", "4", "Alice", "2"}, false);
+}
+*/
 
 }  // namespace test
 }  // namespace peloton

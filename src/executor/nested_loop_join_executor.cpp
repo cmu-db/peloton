@@ -171,6 +171,7 @@ bool NestedLoopJoinExecutor::DExecute() {
           LOG_TRACE("result is : %s", GetOutputInfo()->GetInfo().c_str());
           return true;
         }
+        continue;
       }
       // Right table is finished for the current left tuple. move to the next
       else {
