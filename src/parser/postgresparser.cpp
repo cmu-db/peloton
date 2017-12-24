@@ -1128,7 +1128,12 @@ parser::ExecuteStatement *PostgresParser::ExecuteTransform(ExecuteStmt *root) {
   auto result = new ExecuteStatement();
   result->name = root->name;
   if (root->params != nullptr)
-    result->parameters = ParamListTransform(root->params);
+    try {
+      result->parameters = ParamListTransform(root->params);
+    } catch (NotImplementedException e) {
+      delete result;
+      throw e;
+    }
   return result;
 }
 
