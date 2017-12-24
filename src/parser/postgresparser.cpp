@@ -1096,8 +1096,20 @@ parser::DropStatement *PostgresParser::DropTransform(DropStmt *root) {
   }
 }
 
-parser::DropStatement *PostgresParser::DropTableTransform(DropStmt *root) {
-  auto result = new DropStatement(DropStatement::EntityType::kTable);
+// This function takes in a Postgres Dropdbstmt parsenode
+// and transfers into a Peloton CreateStatement parsenode.
+// Please refer to parser/parsenode.h for the definition of
+// Dropdbstmt parsenodes.
+parser::DropStatement* PostgresParser::DropDbTransform(DropdbStmt* root) {
+  parser::DropStatement* result = 
+      new parser::DropStatement(DropStatement::kDatabase);
+  result->database_name = root->dbname;
+  result->missing = root->missing_ok;
+  return result;
+}
+
+parser::DropStatement* PostgresParser::DropTableTransform(DropStmt* root) {
+  auto res = new DropStatement(DropStatement::EntityType::kTable);
   for (auto cell = root->objects->head; cell != nullptr; cell = cell->next) {
     result->missing = root->missing_ok;
     auto table_info = new TableInfo{};
@@ -1454,6 +1466,9 @@ parser::SQLStatement *PostgresParser::NodeTransform(Node *stmt) {
       break;
     case T_DropStmt:
       result = DropTransform((DropStmt *)stmt);
+      break;
+    case T_DropdbStmt:
+      result = DropDbTransform((DropdbStmt*)stmt);
       break;
     case T_TruncateStmt:
       result = TruncateTransform((TruncateStmt *)stmt);

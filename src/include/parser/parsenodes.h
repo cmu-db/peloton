@@ -573,8 +573,8 @@ typedef struct DropStmt {
 
 typedef struct DropdbStmt {
   NodeTag type;
-  char *dbname;  /* name of database to drop */
-  bool missing_ok; /* skip error if object is missing? */
+  char *dbname;          /* name of database to drop */
+  bool missing_ok;       /* skip error if object is missing? */
 } DropdbStmt;
 
 typedef struct TruncateStmt {
