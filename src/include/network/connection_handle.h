@@ -56,11 +56,7 @@ namespace network {
 class ConnectionHandle {
 public:
 
-  /**
-   * refill_read_buffer - Used to repopulate read buffer with a fresh
-   * batch of data from the socket
-   */
-  Transition FillReadBuffer();
+
 
   /**
    * Update the existing event to listen to the passed flags
@@ -71,8 +67,6 @@ public:
 
   std::string WriteBufferToString();
 
-  Transition CloseSocket();
-
   inline void HandleEvent(int, short) { state_machine_.Accept(Transition::WAKEUP, *this); }
 
   // Exposed for testing
@@ -81,10 +75,16 @@ public:
   }
 
   // State Machine actions
+  /**
+   * refill_read_buffer - Used to repopulate read buffer with a fresh
+   * batch of data from the socket
+   */
+  Transition FillReadBuffer();
   Transition Wait();
   Transition Process();
   Transition ProcessWrite();
   Transition GetResult();
+  Transition CloseSocket();
 
 private:
   /**
@@ -138,7 +138,6 @@ private:
    * Extracts the header of a Postgres start up packet from the read socket buffer
    */
   static bool ReadStartupPacketHeader(Buffer &rbuf, InputPacket &rpkt);
-
 
   /**
    * Routine to deal with the first packet from the client
