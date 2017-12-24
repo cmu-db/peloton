@@ -65,7 +65,7 @@ public:
   /**
    * Update the existing event to listen to the passed flags
    */
-  bool UpdateEventFlags(short flags);
+  void UpdateEventFlags(short flags);
 
   WriteState WritePackets();
 

@@ -108,8 +108,8 @@ ConnectionHandle::ConnectionHandle(int sock_fd, ConnectionHandlerTask *handler,
     : sock_fd_(sock_fd),
       handler_(handler),
       protocol_handler_(nullptr),
-      rbuf_(rbuf),
-      wbuf_(wbuf){
+      rbuf_(std::move(rbuf)),
+      wbuf_(std::move(wbuf)){
   SetNonBlocking(sock_fd_);
   SetTCPNoDelay(sock_fd_);
 
@@ -138,13 +138,11 @@ ConnectionHandle::ConnectionHandle(int sock_fd, ConnectionHandlerTask *handler,
 
 }
 
-bool ConnectionHandle::UpdateEventFlags(short flags) {
+void ConnectionHandle::UpdateEventFlags(short flags) {
   // TODO(tianyu): The original network code seems to do this as an optimization. I am leaving this out until we get numbers
   // handler->UpdateEvent(network_event, sock_fd_, flags, METHOD_AS_CALLBACK(ConnectionHandle, HandleEvent), this);
   handler_->UnregisterEvent(network_event);
   network_event = handler_->RegisterEvent(sock_fd_, flags, METHOD_AS_CALLBACK(ConnectionHandle, HandleEvent), this);
-  // TODO(tianyu) Not propagate error since we will change to exceptions anyway.
-  return true;
 }
 
 WriteState ConnectionHandle::WritePackets() {
@@ -337,9 +335,7 @@ WriteState ConnectionHandle::FlushWriteBuffer() {
           // in blocking mode. Wait till it's readable
         } else if (errno == EAGAIN || errno == EWOULDBLOCK) {
           // Listen for socket being enabled for write
-          if (!UpdateEventFlags(EV_WRITE | EV_PERSIST)) {
-            return WriteState::WRITE_ERROR;
-          }
+          UpdateEventFlags(EV_WRITE | EV_PERSIST);
           // We should go to WRITE state
           LOG_DEBUG("WRITE NOT READY");
           return WriteState::WRITE_NOT_READY;
@@ -626,10 +622,7 @@ Transition ConnectionHandle::CloseSocket() {
 
 Transition ConnectionHandle::Wait() {
   // TODO(tianyu): Maybe we don't need this state? Also, this name is terrible
-  if (!UpdateEventFlags(EV_READ | EV_PERSIST)) {
-    LOG_ERROR("Failed to update event, closing");
-    return Transition::ERROR;
-  }
+  UpdateEventFlags(EV_READ | EV_PERSIST);
   return Transition::PROCEED;
 }
 
@@ -699,10 +692,7 @@ Transition ConnectionHandle::ProcessWrite() {
   // TODO(tianyu): Should convert to use Transition in the top level method
   switch (WritePackets()) {
     case WriteState::WRITE_COMPLETE: {
-      if (!UpdateEventFlags(EV_READ | EV_PERSIST)) {
-        LOG_ERROR("Failed to update event, closing");
-        return Transition::ERROR;
-      }
+      UpdateEventFlags(EV_READ | EV_PERSIST);
       return Transition::PROCEED;
     }
 
