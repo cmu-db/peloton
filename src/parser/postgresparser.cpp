@@ -1079,7 +1079,8 @@ parser::SQLStatement *PostgresParser::CreateTriggerTransform(
 parser::SQLStatement *PostgresParser::CreateDbTransform(CreatedbStmt *root) {
   parser::CreateStatement *result =
       new parser::CreateStatement(CreateStatement::kDatabase);
-  result->database_name = root->dbname;
+  result->table_info_.reset(new parser::TableInfo());
+  result->table_info_->database_name = root->dbname;
   return result;
 }
 
