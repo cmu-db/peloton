@@ -107,6 +107,8 @@ TEST_F(ParserTests, BasicTest) {
       "PREPARE prep_inst AS INSERT INTO test VALUES ($1, $2, $3);");
   queries.push_back("EXECUTE prep_inst(1, 2, 3);");
   queries.push_back("EXECUTE prep;");
+  queries.push_back("EXECUTE prep(1+1);");
+  queries.push_back("EXECUTE prep(sqrt(1));");
 
   queries.push_back(
       "COPY pg_catalog.query_metric TO '/home/user/output.csv' DELIMITER ',';");
