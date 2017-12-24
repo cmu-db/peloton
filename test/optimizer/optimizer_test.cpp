@@ -306,8 +306,8 @@ TEST_F(OptimizerTests, PushFilterThroughJoinTest) {
 
   optimizer::Optimizer optimizer;
   // Only include PushFilterThroughJoin rewrite rule
-  optimizer.metadata_.rule_set.predicate_push_down_rules_.clear();
-  optimizer.metadata_.rule_set.predicate_push_down_rules_.emplace_back(
+  optimizer.metadata_.rule_set.rewrite_rules_map_.clear();
+  optimizer.metadata_.rule_set.AddRewriteRule(RewriteRuleSetName::PREDICATE_PUSH_DOWN,
       new PushFilterThroughJoin());
   txn = txn_manager.BeginTransaction();
 

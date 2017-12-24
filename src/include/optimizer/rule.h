@@ -110,7 +110,10 @@ struct RuleWithPromise {
   bool operator<(const RuleWithPromise &r) const { return promise < r.promise; }
 };
 
-enum class RewriteRuleSetName { PREDICATE_PUSH_DOWN };
+enum class RewriteRuleSetName : uint32_t {
+  PREDICATE_PUSH_DOWN = 0,
+  UNNEST_SUBQUERY
+};
 
 /**
  * @brief All the rule sets, including logical transformation rules, physical
@@ -121,29 +124,31 @@ class RuleSet {
   // RuleSet will take the ownership of the rule object
   RuleSet();
 
+  inline void AddTransformationRule(Rule* rule) { transformation_rules_.emplace_back(rule); }
+
+  inline void AddImplementationRule(Rule* rule) { transformation_rules_.emplace_back(rule); }
+
+  inline void AddRewriteRule(RewriteRuleSetName set, Rule* rule) {
+    rewrite_rules_map_[static_cast<uint32_t>(set)].emplace_back(rule);
+  }
+
   std::vector<std::unique_ptr<Rule>> &GetTransformationRules() {
     return transformation_rules_;
   }
+
   std::vector<std::unique_ptr<Rule>> &GetImplementationRules() {
     return implementation_rules_;
   }
-  std::vector<std::unique_ptr<Rule>> &GetRewriteRules() {
-    return rewrite_rules_;
-  }
+
   std::vector<std::unique_ptr<Rule>> &GetRewriteRulesByName(
       RewriteRuleSetName set) {
-    switch (set) {
-      case (RewriteRuleSetName::PREDICATE_PUSH_DOWN): {
-        return predicate_push_down_rules_;
-      }
-    }
-    return predicate_push_down_rules_;
+    return rewrite_rules_map_[static_cast<uint32_t>(set)];
   }
 
  private:
   std::vector<std::unique_ptr<Rule>> transformation_rules_;
   std::vector<std::unique_ptr<Rule>> implementation_rules_;
-  std::vector<std::unique_ptr<Rule>> rewrite_rules_;
+  std::unordered_map<uint32_t, std::vector<std::unique_ptr<Rule>>> rewrite_rules_map_;
   std::vector<std::unique_ptr<Rule>> predicate_push_down_rules_;
 };
 

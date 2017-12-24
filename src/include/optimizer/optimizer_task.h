@@ -29,7 +29,7 @@ class Group;
 class GroupExpression;
 class OptimizerMetadata;
 class PropertySet;
-enum class RewriteRuleSetName;
+enum class RewriteRuleSetName : uint32_t;
 
 enum class OptimizerTaskType {
   OPTIMIZE_GROUP,

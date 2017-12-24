@@ -340,7 +340,8 @@ void QueryToOperatorTransformer::Visit(expression::OperatorExpression *expr) {
         true) {
       PL_ASSERT(!select_list.empty());
 
-      // Set the left child as the output of the subquery
+      // Set the right child as the output of the subquery
+      expr->SetExpressionType(ExpressionType::OPERATOR_IS_NOT_NULL);
       expr->SetChild(0, select_list.at(0)->Copy());
     }
   }
@@ -411,6 +412,8 @@ bool QueryToOperatorTransformer::GenerateSubquerytree(
 
   // Push subquery output
   op_expr->PushChild(output_expr_);
+
+  output_expr_ = op_expr;
   return true;
 }
 

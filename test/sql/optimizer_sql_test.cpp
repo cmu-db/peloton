@@ -695,13 +695,40 @@ TEST_F(OptimizerSQLTests, QueryDerivedTableTest) {
       {"4", "2.75"}, false);
 }
 
-// WIP
 TEST_F(OptimizerSQLTests, NestedQueryTest) {
-  // TestUtil("select * from test as B where exists (select b as a from test
-  // where a = B.a);", {"22"}, false);
-  //  TestUtil("select (select b as a from test where a = B.a) from test as B;",
-  //  {"22"}, false);
-  //  TestUtil("select * from test where a in (select * from test)", {}, false);
+  TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE test2(a int primary key, b int, c varchar(32))");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test2 VALUES (1, 22, '1st');");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test2 VALUES (2, 11, '2nd');");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test2 VALUES (3, 33, '3rd');");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test2 VALUES (5, 00, '4th');");
+  TestUtil(
+      "select B.a from test as B where exists (select b as a from test where a "
+          "= B.a);",
+      {"1", "2", "3", "4"}, false);
+  TestUtil(
+      "select b from test where a in (select a from test as t where a = "
+          "test.a)",
+      {"11", "22", "33", "0"}, false);
+  TestUtil(
+      "select B.a from test as B where exists (select b as a from test2 where "
+          "a = B.a) and "
+          "b in (select b from test where b > 22);",
+      {"3"}, false);
+  TestUtil(
+      "select B.a from test as B where exists (select b as a from test2 where "
+          "a = B.a) and "
+          "b in (select b from test) and c > 0;",
+      {"1", "3"}, false);
+  TestUtil(
+      "select t1.a, t2.a from test as t1 join test as t2 on t1.a=t2.a "
+          "where t1.b+t2.b in (select 2*b from test2 where a > 2)",
+      {"3", "3", "4", "4"}, false);
+  TestUtil(
+      "select B.a from test as B where exists (select b as a from test as T "
+          "where a "
+          "= B.a and exists (select c from test where T.c = c));",
+      {"1", "2", "3", "4"}, false);
+
 }
 
 }  // namespace test

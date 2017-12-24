@@ -28,29 +28,31 @@ int Rule::Promise(GroupExpression *group_expr, OptimizeContext *context) const {
 }
 
 RuleSet::RuleSet() {
-  transformation_rules_.emplace_back(new InnerJoinCommutativity());
-  implementation_rules_.emplace_back(new LogicalDeleteToPhysical());
-  implementation_rules_.emplace_back(new LogicalUpdateToPhysical());
-  implementation_rules_.emplace_back(new LogicalInsertToPhysical());
-  implementation_rules_.emplace_back(new LogicalInsertSelectToPhysical());
-  implementation_rules_.emplace_back(new LogicalGroupByToHashGroupBy());
-  implementation_rules_.emplace_back(new LogicalAggregateToPhysical());
-  implementation_rules_.emplace_back(new GetToDummyScan());
-  implementation_rules_.emplace_back(new GetToSeqScan());
-  implementation_rules_.emplace_back(new GetToIndexScan());
-  implementation_rules_.emplace_back(new LogicalQueryDerivedGetToPhysical());
-  implementation_rules_.emplace_back(new InnerJoinToInnerNLJoin());
-  implementation_rules_.emplace_back(new InnerJoinToInnerHashJoin());
-  implementation_rules_.emplace_back(new ImplementDistinct());
-  implementation_rules_.emplace_back(new ImplementLimit());
+  AddTransformationRule(new InnerJoinCommutativity());
+  AddImplementationRule(new LogicalDeleteToPhysical());
+  AddImplementationRule(new LogicalUpdateToPhysical());
+  AddImplementationRule(new LogicalInsertToPhysical());
+  AddImplementationRule(new LogicalInsertSelectToPhysical());
+  AddImplementationRule(new LogicalGroupByToHashGroupBy());
+  AddImplementationRule(new LogicalAggregateToPhysical());
+  AddImplementationRule(new GetToDummyScan());
+  AddImplementationRule(new GetToSeqScan());
+  AddImplementationRule(new GetToIndexScan());
+  AddImplementationRule(new LogicalQueryDerivedGetToPhysical());
+  AddImplementationRule(new InnerJoinToInnerNLJoin());
+  AddImplementationRule(new InnerJoinToInnerHashJoin());
+  AddImplementationRule(new ImplementDistinct());
+  AddImplementationRule(new ImplementLimit());
 
-  rewrite_rules_.emplace_back(new PushFilterThroughJoin());
-  rewrite_rules_.emplace_back(new CombineConsecutiveFilter());
-  rewrite_rules_.emplace_back(new EmbedFilterIntoGet());
+  AddRewriteRule(RewriteRuleSetName::PREDICATE_PUSH_DOWN, new PushFilterThroughJoin());
+  AddRewriteRule(RewriteRuleSetName::PREDICATE_PUSH_DOWN, new CombineConsecutiveFilter());
+  AddRewriteRule(RewriteRuleSetName::PREDICATE_PUSH_DOWN, new EmbedFilterIntoGet());
 
-  predicate_push_down_rules_.emplace_back(new PushFilterThroughJoin());
-  predicate_push_down_rules_.emplace_back(new CombineConsecutiveFilter());
-  predicate_push_down_rules_.emplace_back(new EmbedFilterIntoGet());
+  AddRewriteRule(RewriteRuleSetName::UNNEST_SUBQUERY, new PullFilterThroughMarkJoin());
+  AddRewriteRule(RewriteRuleSetName::UNNEST_SUBQUERY, new MarkJoinInnerJoinToInnerJoin());
+  AddRewriteRule(RewriteRuleSetName::UNNEST_SUBQUERY, new MarkJoinGetToInnerJoin());
+
+
 }
 
 }  // namespace optimizer

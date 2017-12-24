@@ -158,10 +158,10 @@ void GetToIndexScan::Transform(
   size_t index_cnt = get->table->GetIndexCount();
 
   // Get sort columns if they are all base columns and all in asc order
-  auto sort_prop = context->required_prop->GetPropertyOfTypeAs<PropertySort>(
-      PropertyType::SORT);
+  auto sort = context->required_prop->GetPropertyOfType(PropertyType::SORT);
   std::vector<oid_t> sort_col_ids;
-  if (sort_prop != nullptr) {
+  if (sort != nullptr) {
+    auto sort_prop = sort->As<PropertySort>();
     bool sort_by_asc_base_column = true;
     for (size_t i = 0; i < sort_prop->GetSortColumnSize(); i++) {
       auto expr = sort_prop->GetSortColumn(i);
@@ -865,6 +865,130 @@ void EmbedFilterIntoGet::Transform(
       std::make_shared<OperatorExpression>(
           LogicalGet::make(get->get_id, predicates, get->table,
                            get->table_alias, get->is_for_update));
+
+  transformed.push_back(output);
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+/// MarkJoinGetToInnerJoin
+MarkJoinGetToInnerJoin::MarkJoinGetToInnerJoin() {
+  type_ = RuleType::MARK_JOIN_GET_TO_INNER_JOIN;
+
+  match_pattern = std::make_shared<Pattern>(OpType::LogicalMarkJoin);
+  match_pattern->AddChild(std::make_shared<Pattern>(OpType::Leaf));
+  match_pattern->AddChild(std::make_shared<Pattern>(OpType::Get));
+}
+
+bool MarkJoinGetToInnerJoin::Check(std::shared_ptr<OperatorExpression> plan, OptimizeContext* context) const {
+  (void)context;
+  (void)plan;
+
+  auto& children = plan->Children();
+  PL_ASSERT(children.size() == 2);
+
+  return true;
+}
+
+void MarkJoinGetToInnerJoin::Transform(std::shared_ptr<OperatorExpression> input,
+                                       std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+                                       UNUSED_ATTRIBUTE OptimizeContext* context) const {
+  auto mark_join = input->Op().As<LogicalMarkJoin>();
+  auto& join_children = input->Children();
+
+  PL_ASSERT(mark_join->join_predicates.empty());
+
+  std::shared_ptr<OperatorExpression> output = std::make_shared<OperatorExpression>(
+      LogicalInnerJoin::make());
+
+  output->PushChild(join_children[0]);
+  output->PushChild(join_children[1]);
+
+  transformed.push_back(output);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/// MarkJoinInnerJoinToInnerJoin
+MarkJoinInnerJoinToInnerJoin::MarkJoinInnerJoinToInnerJoin() {
+  type_ = RuleType::MARK_JOIN_INNER_JOIN_TO_INNER_JOIN;
+
+  match_pattern = std::make_shared<Pattern>(OpType::LogicalMarkJoin);
+  match_pattern->AddChild(std::make_shared<Pattern>(OpType::Leaf));
+  match_pattern->AddChild(std::make_shared<Pattern>(OpType::InnerJoin));
+}
+
+bool MarkJoinInnerJoinToInnerJoin::Check(std::shared_ptr<OperatorExpression> plan, OptimizeContext* context) const {
+  (void)context;
+  (void)plan;
+
+  auto& children = plan->Children();
+  PL_ASSERT(children.size() == 2);
+
+  return true;
+}
+
+void MarkJoinInnerJoinToInnerJoin::Transform(std::shared_ptr<OperatorExpression> input,
+                                             std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+                                             UNUSED_ATTRIBUTE OptimizeContext* context) const {
+  auto mark_join = input->Op().As<LogicalMarkJoin>();
+  auto& join_children = input->Children();
+
+  PL_ASSERT(mark_join->join_predicates.empty());
+
+  std::shared_ptr<OperatorExpression> output = std::make_shared<OperatorExpression>(
+      LogicalInnerJoin::make());
+
+  output->PushChild(join_children[0]);
+  output->PushChild(join_children[1]);
+
+  transformed.push_back(output);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+/// PullFilterThroughMarkJoin
+PullFilterThroughMarkJoin::PullFilterThroughMarkJoin() {
+  type_ = RuleType::PULL_FILTER_THROUGH_MARK_JOIN;
+
+  match_pattern = std::make_shared<Pattern>(OpType::LogicalMarkJoin);
+  match_pattern->AddChild(std::make_shared<Pattern>(OpType::Leaf));
+  auto filter = std::make_shared<Pattern>(OpType::LogicalFilter);
+  filter->AddChild(std::make_shared<Pattern>(OpType::Leaf));
+  match_pattern->AddChild(filter);
+
+}
+
+bool PullFilterThroughMarkJoin::Check(std::shared_ptr<OperatorExpression> plan, OptimizeContext* context) const {
+  (void)context;
+  (void)plan;
+
+  auto& children = plan->Children();
+  PL_ASSERT(children.size() == 2);
+  auto& r_grandchildren = children[1]->Children();
+  PL_ASSERT(r_grandchildren.size() == 1);
+
+  return true;
+}
+
+void PullFilterThroughMarkJoin::Transform(std::shared_ptr<OperatorExpression> input,
+                                          std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+                                          UNUSED_ATTRIBUTE OptimizeContext* context) const {
+  auto mark_join = input->Op().As<LogicalMarkJoin>();
+  auto& join_children = input->Children();
+  auto filter = join_children[1]->Op();
+  auto& filter_children = join_children[1]->Children();
+
+  PL_ASSERT(mark_join->join_predicates.empty());
+
+  std::shared_ptr<OperatorExpression> output = std::make_shared<OperatorExpression>(filter);
+
+  std::shared_ptr<OperatorExpression> join = std::make_shared<OperatorExpression>(input->Op());
+
+  join->PushChild(join_children[0]);
+  join->PushChild(filter_children[0]);
+
+  output->PushChild(join);
 
   transformed.push_back(output);
 }

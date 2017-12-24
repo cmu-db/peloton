@@ -722,7 +722,7 @@ expression::AbstractExpression* PostgresParser::SubqueryExprTransform(SubLink *n
   subquery_expr->SetSubSelect(reinterpret_cast<SelectStatement*>(select_stmt));
   switch (node->subLinkType) {
     case ANY_SUBLINK: {
-      auto col_expr = ColumnRefTransform(reinterpret_cast<ColumnRef*>(node->testexpr));
+      auto col_expr = ExprTransform(node->testexpr);
       expr = new expression::ComparisonExpression(ExpressionType::COMPARE_IN, col_expr, subquery_expr);
       break;
     }
