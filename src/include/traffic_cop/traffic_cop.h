@@ -79,6 +79,9 @@ class TrafficCop {
                                               std::string &error_message,
                                               size_t thread_id = 0);
 
+  bool BindParamsForCachePlan(const std::vector<std::unique_ptr<expression::AbstractExpression>>&,
+                              std::string &error_message, const size_t thread_id = 0);
+
   std::vector<FieldInfo> GenerateTupleDescriptor(
       parser::SQLStatement *select_stmt);
 

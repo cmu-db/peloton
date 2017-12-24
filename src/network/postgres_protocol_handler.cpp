@@ -17,6 +17,7 @@
 #include "common/cache.h"
 #include "common/macros.h"
 #include "common/portal.h"
+#include "expression/expression_util.h"
 #include "network/marshal.h"
 #include "network/postgres_protocol_handler.h"
 #include "parser/postgresparser.h"
@@ -30,6 +31,7 @@
 #include "traffic_cop/traffic_cop.h"
 #include "type/value.h"
 #include "type/value_factory.h"
+
 
 
 namespace peloton {
@@ -324,14 +326,14 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
       std::vector<int> result_format(traffic_cop_->GetStatement()->GetTupleDescriptor().size(), 0);
       result_format_ = result_format;
 
-      //TODO(Yuchen): We may need helper function to check param type and bind params.
-      for (const std::unique_ptr<expression::AbstractExpression>& param : exec_stmt->parameters) {
-        param_values.push_back(((expression::ConstantValueExpression*) param.get())->GetValue());
+      if (!traffic_cop_->BindParamsForCachePlan(exec_stmt->parameters, error_message)) {
+        traffic_cop_->ProcessInvalidStatement();
+        traffic_cop_->SetErrorMessage(error_message);
+        SendErrorResponse(
+            {{NetworkMessageType::HUMAN_READABLE_ERROR, traffic_cop_->GetErrorMessage()}});
+        SendReadyForQuery(NetworkTransactionStateType::IDLE);
+        return ProcessResult::COMPLETE;
       }
-      if (param_values.size() > 0) {
-        traffic_cop_->GetStatement()->GetPlanTree()->SetParameterValues(&param_values);
-      }
-      traffic_cop_->SetParamVal(param_values);
 
       bool unnamed = false;
       auto status =
