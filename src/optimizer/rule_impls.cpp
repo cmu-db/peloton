@@ -885,7 +885,7 @@ bool MarkJoinGetToInnerJoin::Check(std::shared_ptr<OperatorExpression> plan, Opt
   (void)context;
   (void)plan;
 
-  auto& children = plan->Children();
+  UNUSED_ATTRIBUTE auto& children = plan->Children();
   PL_ASSERT(children.size() == 2);
 
   return true;
@@ -894,7 +894,7 @@ bool MarkJoinGetToInnerJoin::Check(std::shared_ptr<OperatorExpression> plan, Opt
 void MarkJoinGetToInnerJoin::Transform(std::shared_ptr<OperatorExpression> input,
                                        std::vector<std::shared_ptr<OperatorExpression>> &transformed,
                                        UNUSED_ATTRIBUTE OptimizeContext* context) const {
-  auto mark_join = input->Op().As<LogicalMarkJoin>();
+  UNUSED_ATTRIBUTE auto mark_join = input->Op().As<LogicalMarkJoin>();
   auto& join_children = input->Children();
 
   PL_ASSERT(mark_join->join_predicates.empty());
@@ -925,7 +925,7 @@ bool MarkJoinInnerJoinToInnerJoin::Check(std::shared_ptr<OperatorExpression> pla
   (void)context;
   (void)plan;
 
-  auto& children = plan->Children();
+  UNUSED_ATTRIBUTE auto& children = plan->Children();
   PL_ASSERT(children.size() == 2);
 
   return true;
@@ -934,7 +934,7 @@ bool MarkJoinInnerJoinToInnerJoin::Check(std::shared_ptr<OperatorExpression> pla
 void MarkJoinInnerJoinToInnerJoin::Transform(std::shared_ptr<OperatorExpression> input,
                                              std::vector<std::shared_ptr<OperatorExpression>> &transformed,
                                              UNUSED_ATTRIBUTE OptimizeContext* context) const {
-  auto mark_join = input->Op().As<LogicalMarkJoin>();
+  UNUSED_ATTRIBUTE auto mark_join = input->Op().As<LogicalMarkJoin>();
   auto& join_children = input->Children();
 
   PL_ASSERT(mark_join->join_predicates.empty());
@@ -967,7 +967,7 @@ bool PullFilterThroughMarkJoin::Check(std::shared_ptr<OperatorExpression> plan, 
 
   auto& children = plan->Children();
   PL_ASSERT(children.size() == 2);
-  auto& r_grandchildren = children[1]->Children();
+  UNUSED_ATTRIBUTE auto& r_grandchildren = children[1]->Children();
   PL_ASSERT(r_grandchildren.size() == 1);
 
   return true;
@@ -976,7 +976,7 @@ bool PullFilterThroughMarkJoin::Check(std::shared_ptr<OperatorExpression> plan, 
 void PullFilterThroughMarkJoin::Transform(std::shared_ptr<OperatorExpression> input,
                                           std::vector<std::shared_ptr<OperatorExpression>> &transformed,
                                           UNUSED_ATTRIBUTE OptimizeContext* context) const {
-  auto mark_join = input->Op().As<LogicalMarkJoin>();
+  UNUSED_ATTRIBUTE auto mark_join = input->Op().As<LogicalMarkJoin>();
   auto& join_children = input->Children();
   auto filter = join_children[1]->Op();
   auto& filter_children = join_children[1]->Children();
