@@ -214,6 +214,9 @@ class PostgresParser {
   // transform helper for drop statement
   static parser::DropStatement *DropTransform(DropStmt *root);
 
+  // transform helper for drop database statement
+  static parser::DropStatement* DropDbTransform(DropdbStmt* root);
+  
   // transform helper for drop table statement
   static parser::DropStatement *DropTableTransform(DropStmt *root);
 
