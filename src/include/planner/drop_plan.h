@@ -60,8 +60,11 @@ class DropPlan : public AbstractPlan {
   DropType drop_type = DropType::TABLE;
 
   // Target Table
-  // storage::DataTable *target_table_ = nullptr;
   std::string table_name;
+
+  // Database Name
+  std::string database_name;
+
   std::string trigger_name;
   bool missing;
 

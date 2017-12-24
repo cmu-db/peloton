@@ -234,7 +234,6 @@ class CreateStatement : public TableRefStatement {
 
   std::string index_name;
   std::string trigger_name;
-  std::string database_name;
 
   bool unique = false;
 
