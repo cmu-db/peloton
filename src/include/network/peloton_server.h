@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// network_manager.h
+// peloton_server.h
 //
-// Identification: src/include/network/network_manager.h
+// Identification: src/include/network/peloton_server.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -101,10 +101,7 @@ private:
   std::string private_key_file_;
   std::string certificate_file_;
 
-  std::shared_ptr<ConnectionDispatcherTask> dispatcher_task;
-
-  // For testing purposes
-  bool started;
+  std::shared_ptr<ConnectionDispatcherTask> dispatcher_task_;
 };
 
 }

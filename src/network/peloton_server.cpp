@@ -104,14 +104,14 @@ PelotonServer &PelotonServer::SetupServer() {
     throw ConnectionException("Error listening onsocket.");
   }
 
-  dispatcher_task = std::make_shared<ConnectionDispatcherTask>(CONNECTION_THREAD_COUNT, listen_fd_);
+  dispatcher_task_ = std::make_shared<ConnectionDispatcherTask>(CONNECTION_THREAD_COUNT, listen_fd_);
 
   LOG_INFO("Listening on port %llu", (unsigned long long) port_);
   return *this;
 }
 
 void PelotonServer::ServerLoop() {
-  dispatcher_task->EventLoop();
+  dispatcher_task_->EventLoop();
   LOG_INFO("Closing server");
   int status;
   do {
@@ -124,7 +124,7 @@ void PelotonServer::ServerLoop() {
 
 void PelotonServer::Close() {
   LOG_INFO("Begin to stop server");
-  dispatcher_task->ExitLoop();
+  dispatcher_task_->ExitLoop();
 }
 
 /**

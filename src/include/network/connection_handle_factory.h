@@ -16,7 +16,7 @@
 #include "peloton_server.h"
 
 namespace peloton {
-  namespace network {
+namespace network {
 
 /**
  * @brief Factory class for constructing ConnectionHandles
