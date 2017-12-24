@@ -32,6 +32,7 @@
 #include "common/logger.h"
 #include "container/lock_free_queue.h"
 #include "network_state.h"
+#include "network/error_util.h"
 
 namespace peloton {
 namespace network {
@@ -59,20 +60,14 @@ public:
    * Constructs a new NotifiableTask instance.
    * @param task_id a unique id assigned to this task
    */
-  explicit NotifiableTask(int task_id)
-      : task_id_(task_id) {
-    base_ = event_base_new();
-    // TODO(tianyu) Error handling here can be better perhaps?
-    if (base_ == nullptr) {
-      LOG_ERROR("Can't allocate event base\n");
-      exit(1);
-    }
+  explicit NotifiableTask(int task_id) : task_id_(task_id) {
+    base_ = EventUtil::EventBaseNew();
     // TODO(tianyu) Determine whether we actually need this line. Tianyi says we need it, libevent documentation says no
     // evthread_make_base_notifiable(base_);
 
     // For exiting a loop
     terminate_ = RegisterManualEvent([](int, short, void *arg) {
-      event_base_loopexit((struct event_base *) arg, nullptr);
+      EventUtil::EventBaseLoopExit((struct event_base *) arg, nullptr);
     }, base_);
   };
 
@@ -81,7 +76,7 @@ public:
  */
   virtual ~NotifiableTask() {
     for (struct event *event : events_) {
-      event_del(event);
+      EventUtil::EventDel(event);
       event_free(event);
     }
     event_base_free(base_);
@@ -118,7 +113,7 @@ public:
                               const struct timeval *timeout = nullptr) {
     struct event *event = event_new(base_, fd, flags, callback, arg);
     events_.insert(event);
-    event_add(event, timeout);
+    EventUtil::EventAdd(event, timeout);
     return event;
   }
 
@@ -171,29 +166,21 @@ public:
     return RegisterEvent(-1, EV_PERSIST, callback, arg);
   }
 
-    // TODO(tianyu): The original network code seems to do this as an optimization. I am leaving this out until we get numbers
-//  void UpdateEvent(struct event *event,
-//                   int fd,
-//                   short flags,
-//                   event_callback_fn callback,
-//                   void *arg,
-//                   const struct timeval *timeout = nullptr) {
-//    PL_ASSERT(!(events_.find(event) == events_.end()));
-//    if (event_del(event) == -1) {
-//      LOG_ERROR("Failed to delete event");
-//      PL_ASSERT(false);
-//    }
-//    auto result = event_assign(event, base_, fd,
-//                               flags, callback, arg);
-//    if (result != 0) {
-//      LOG_ERROR("Failed to update event");
-//      PL_ASSERT(false);
-//    }
-//    event_add(event, timeout);
-//  }
-//  void UpdateManualEvent(struct event *event, event_callback_fn callback, void *arg) {
-//    UpdateEvent(event, -1, EV_PERSIST, callback, arg);
-//  }
+// TODO(tianyu): The original network code seems to do this as an optimization. I am leaving this out until we get numbers
+  void UpdateEvent(struct event *event,
+                   int fd,
+                   short flags,
+                   event_callback_fn callback,
+                   void *arg,
+                   const struct timeval *timeout = nullptr) {
+    PL_ASSERT(!(events_.find(event) == events_.end()));
+    EventUtil::EventDel(event);
+    EventUtil::EventAssign(event, base_, fd, flags, callback, arg);
+    EventUtil::EventAdd(event, timeout);
+  }
+  void UpdateManualEvent(struct event *event, event_callback_fn callback, void *arg) {
+    UpdateEvent(event, -1, EV_PERSIST, callback, arg);
+  }
 
   /**
    * @brief Unregister the event given. The event is no longer active and its memory is freed
@@ -219,7 +206,7 @@ public:
    * In a loop, make this notifiable task wait and respond to incoming events
    */
   void EventLoop() {
-    event_base_dispatch(base_);
+    EventUtil::EventBaseDispatch(base_);
     LOG_TRACE("stop");
   }
 
