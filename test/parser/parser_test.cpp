@@ -165,8 +165,8 @@ TEST_F(ParserTests, SelectParserTest) {
   EXPECT_EQ(list->GetNumStatements(), 1);
   EXPECT_EQ(list->GetStatement(0)->GetType(), StatementType::SELECT);
 
-  parser::SelectStatement* stmt =
-      (parser::SelectStatement*)list->GetStatement(0);
+  parser::SelectStatement *stmt =
+      (parser::SelectStatement *)list->GetStatement(0);
 
   EXPECT_NOTNULL(stmt->from_table);
   EXPECT_NOTNULL(stmt->group_by);
@@ -184,7 +184,7 @@ TEST_F(ParserTests, SelectParserTest) {
             ExpressionType::AGGREGATE_SUM);
 
   // Join Table
-  parser::JoinDefinition* join = stmt->from_table->join.get();
+  parser::JoinDefinition *join = stmt->from_table->join.get();
   EXPECT_EQ(stmt->from_table->type, TableReferenceType::JOIN);
   EXPECT_NOTNULL(join);
   EXPECT_STREQ(join->left->GetTableName().c_str(), "customers");
@@ -224,21 +224,21 @@ TEST_F(ParserTests, TransactionTest) {
 
   std::unique_ptr<parser::SQLStatementList> list(
       parser::PostgresParser::ParseSQLString(valid_queries[0].c_str()));
-  parser::TransactionStatement* stmt =
-      (parser::TransactionStatement*)list->GetStatement(0);
+  parser::TransactionStatement *stmt =
+      (parser::TransactionStatement *)list->GetStatement(0);
   EXPECT_EQ(list->GetStatement(0)->GetType(), StatementType::TRANSACTION);
   EXPECT_EQ(stmt->type, parser::TransactionStatement::kBegin);
 
   list.reset(parser::PostgresParser::ParseSQLString(valid_queries[1].c_str()));
-  stmt = (parser::TransactionStatement*)list->GetStatement(0);
+  stmt = (parser::TransactionStatement *)list->GetStatement(0);
   EXPECT_EQ(stmt->type, parser::TransactionStatement::kBegin);
 
   list.reset(parser::PostgresParser::ParseSQLString(valid_queries[2].c_str()));
-  stmt = (parser::TransactionStatement*)list->GetStatement(0);
+  stmt = (parser::TransactionStatement *)list->GetStatement(0);
   EXPECT_EQ(stmt->type, parser::TransactionStatement::kCommit);
 
   list.reset(parser::PostgresParser::ParseSQLString(valid_queries[3].c_str()));
-  stmt = (parser::TransactionStatement*)list->GetStatement(0);
+  stmt = (parser::TransactionStatement *)list->GetStatement(0);
   EXPECT_EQ(stmt->type, parser::TransactionStatement::kRollback);
 }
 
@@ -381,8 +381,8 @@ TEST_F(ParserTests, CopyTest) {
     }
     EXPECT_TRUE(result->is_valid);
 
-    parser::CopyStatement* copy_stmt =
-        static_cast<parser::CopyStatement*>(result->GetStatement(0));
+    parser::CopyStatement *copy_stmt =
+        static_cast<parser::CopyStatement *>(result->GetStatement(0));
 
     EXPECT_EQ(copy_stmt->delimiter, ',');
     EXPECT_STREQ(copy_stmt->file_path.c_str(), "/home/user/output.csv");
@@ -390,5 +390,6 @@ TEST_F(ParserTests, CopyTest) {
     LOG_TRACE("%d : %s", ++ii, result->GetInfo().c_str());
   }
 }
+
 }  // namespace test
 }  // namespace peloton

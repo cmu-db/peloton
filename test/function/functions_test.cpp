@@ -11,8 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "catalog/catalog.h"
-#include "catalog/proc_catalog.h"
 #include "catalog/language_catalog.h"
+#include "catalog/proc_catalog.h"
 #include "common/harness.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "sql/testing_sql_util.h"
@@ -29,15 +29,16 @@ class FunctionsTests : public PelotonTest {
     return type::ValueFactory::GetIntegerValue(0);
   }
 
-  virtual void SetUp() override {
+  virtual void SetUp() {
+    PelotonTest::SetUp();
     auto catalog = catalog::Catalog::GetInstance();
     catalog->Bootstrap();
   }
 };
 
 TEST_F(FunctionsTests, CatalogTest) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto catalog = catalog::Catalog::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto &pg_language = catalog::LanguageCatalog::GetInstance();
 
   // Test "internal" language
@@ -62,7 +63,6 @@ TEST_F(FunctionsTests, CatalogTest) {
   EXPECT_EQ(nullptr, inserted_lang);
 
   txn_manager.CommitTransaction(txn);
-
   auto &pg_proc = catalog::ProcCatalog::GetInstance();
 
   // test pg_proc
@@ -97,7 +97,6 @@ TEST_F(FunctionsTests, FuncCallTest) {
   txn_manager.CommitTransaction(txn);
 
   TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE test(a DECIMAL, s VARCHAR);");
-
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (4.0, 'abc');");
 
   std::vector<ResultValue> result;
@@ -120,6 +119,37 @@ TEST_F(FunctionsTests, FuncCallTest) {
   EXPECT_EQ(2, result[0].size());
   EXPECT_EQ('9', result[0][0]);
   EXPECT_EQ('7', result[0][1]);
+
+  // free the database just created
+  txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+}
+
+TEST_F(FunctionsTests, SubstrFuncCallTest) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+
+  TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE test(a DECIMAL, s VARCHAR);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (4.0, '1234567');");
+
+  std::vector<ResultValue> result;
+  std::vector<FieldInfo> tuple_descriptor;
+  std::string error_message;
+  int rows_affected;
+
+  TestingSQLUtil::ExecuteSQLQuery("SELECT SUBSTR(s,1,5) FROM test;", result,
+                                  tuple_descriptor, rows_affected,
+                                  error_message);
+  EXPECT_EQ(1, result.size());
+  EXPECT_EQ("12345", std::string(result[0].begin(), result[0].begin() + 5));
+  TestingSQLUtil::ExecuteSQLQuery("SELECT SUBSTR(s,7,1) FROM test;", result,
+                                  tuple_descriptor, rows_affected,
+                                  error_message);
+  EXPECT_EQ(1, result.size());
+  EXPECT_EQ("7", std::string(result[0].begin(), result[0].begin() + 1));
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
