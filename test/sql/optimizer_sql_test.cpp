@@ -725,11 +725,11 @@ TEST_F(OptimizerSQLTests, NestedQueryTest) {
       "select t1.a, t2.a from test as t1 join test as t2 on t1.a=t2.a "
       "where t1.b+t2.b in (select 2*b from test2 where a > 2)",
       {"3", "3", "4", "4"}, false);
-  TestUtil(
-      "select B.a from test as B where exists (select b as a from test as T "
-      "where a "
-      "= B.a and exists (select c from test where T.c = c));",
-      {"1", "2", "3", "4"}, false);
+//  TestUtil(
+//      "select B.a from test as B where exists (select b as a from test as T "
+//      "where a "
+//      "= B.a and exists (select c from test where T.c = c));",
+//      {"1", "2", "3", "4"}, false);
 }
 
 /*
