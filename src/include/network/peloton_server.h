@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// network_manager.h
+// peloton_server.h
 //
-// Identification: src/include/network/network_manager.h
+// Identification: src/include/network/peloton_server.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -58,11 +58,9 @@ public:
    */
   PelotonServer();
 
-<<<<<<< HEAD
 
   static SSLLevel ssl_level_;
   static pthread_mutex_t *ssl_mutex_buf_;
-=======
   /**
    * @brief Configure the server to spin up all its threads and start listening on the configured port.
    *
@@ -76,7 +74,6 @@ public:
    *
    * @return self-reference for chaining
    */
->>>>>>> Add documentation
   PelotonServer &SetupServer();
 
   /**
@@ -143,6 +140,7 @@ private:
 
   // For testing purposes
   bool started;
+  std::shared_ptr<ConnectionDispatcherTask> dispatcher_task_;
 };
 
 }
