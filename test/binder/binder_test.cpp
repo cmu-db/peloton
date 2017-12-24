@@ -320,7 +320,8 @@ TEST_F(BinderCorrectnessTest, BindDepthTest) {
       dynamic_cast<const expression::SubqueryExpression *>(exists_sub_expr)
           ->GetSubSelect();
   auto exists_sub_expr_select_where =
-      exists_sub_expr_select->where_clause->Copy();
+      std::unique_ptr<expression::AbstractExpression>(
+          exists_sub_expr_select->where_clause->Copy());
   auto exists_sub_expr_select_ele =
       exists_sub_expr_select->select_list[0].get();
   auto in_tv_expr = in_expr->GetChild(0);
@@ -328,7 +329,9 @@ TEST_F(BinderCorrectnessTest, BindDepthTest) {
   auto in_sub_expr_select =
       dynamic_cast<const expression::SubqueryExpression *>(in_sub_expr)
           ->GetSubSelect();
-  auto in_sub_expr_select_where = in_sub_expr_select->where_clause->Copy();
+  auto in_sub_expr_select_where =
+      std::unique_ptr<expression::AbstractExpression>(
+          in_sub_expr_select->where_clause->Copy());
   auto in_sub_expr_select_ele = in_sub_expr_select->select_list[0].get();
   auto in_sub_expr_select_where_left = in_sub_expr_select_where->GetChild(0);
   auto in_sub_expr_select_where_right = in_sub_expr_select_where->GetChild(1);
