@@ -1239,8 +1239,30 @@ PostgresParser::ParamListTransform(List *root) {
       std::vector<std::unique_ptr<expression::AbstractExpression>>();
 
   for (auto cell = root->head; cell != NULL; cell = cell->next) {
-    result.push_back(std::unique_ptr<expression::AbstractExpression>(
-        ConstTransform((A_Const *)(cell->data.ptr_value))));
+    auto param = reinterpret_cast<Node *>(cell->data.ptr_value);
+    switch (param->type) {
+      case T_A_Const: {
+        result.push_back(std::unique_ptr<expression::AbstractExpression>(
+          ConstTransform((A_Const *)(cell->data.ptr_value))));
+        break;
+      }
+      case T_A_Expr: {
+        result.push_back(std::unique_ptr<expression::AbstractExpression>(
+            AExprTransform((A_Expr *)(cell->data.ptr_value))));
+        break;
+      }
+      case T_FuncCall: {
+        result.push_back(std::unique_ptr<expression::AbstractExpression>(
+            FuncCallTransform((FuncCall *)(cell->data.ptr_value))));
+        break;
+      }
+      default:
+        throw NotImplementedException(
+          StringUtil::Format(
+            "Expression type %d not supported in ParamListTransform yet...",
+            param->type));
+    }
+
   }
 
   return result;
