@@ -48,14 +48,19 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree)
 
       create_type = CreateType::TABLE;
 
+      // The parser puts the Foreign Key information into an artificial
+      // ColumnDefinition.
+      for (auto &fk : parse_tree->foreign_keys) {
+        this->ProcessForeignKeyConstraint(table_name, fk.get());
+      }
+
       for (auto &col : parse_tree->columns) {
-        // The parser puts the Foreign Key information into an artificial
-        // ColumnDefinition.
-        if (col->type == parser::ColumnDefinition::DataType::FOREIGN) {
-          this->ProcessForeignKeyConstraint(table_name, col.get());
-          // XXX: Why should we always continue here?
-          continue;
-        }
+        
+        // if (col->type == parser::ColumnDefinition::DataType::FOREIGN) {
+        //   this->ProcessForeignKeyConstraint(table_name, col.get());
+        //   // XXX: Why should we always continue here?
+        //   continue;
+        // }
   
         type::TypeId val = col->GetValueType(col->type);
   
@@ -205,7 +210,7 @@ void CreatePlan::ProcessForeignKeyConstraint(const std::string &table_name,
   }
 
   // Extract table names
-  fkey_info.sink_table_name = col->table_info_->table_name;
+  fkey_info.sink_table_name = col->fk_sink_table_name;
 
   // Extract delete and update actions
   fkey_info.upd_action = col->foreign_key_update_action;
@@ -214,7 +219,7 @@ void CreatePlan::ProcessForeignKeyConstraint(const std::string &table_name,
   fkey_info.constraint_name =
       "FK_" + table_name + "->" + fkey_info.sink_table_name;
 
-  LOG_DEBUG("Added a foreign key constraint toward sink table %s",
+  LOG_ERROR("Added a foreign key constraint toward sink table %s",
             fkey_info.sink_table_name.c_str());
   foreign_keys.push_back(fkey_info);
 }

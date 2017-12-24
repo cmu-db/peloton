@@ -897,18 +897,18 @@ parser::ColumnDefinition *PostgresParser::ColumnDefTransform(ColumnDef *root) {
         // Transform foreign key attributes
         // Reference table
 
-        // TODO: put it as a special ColumnDefinition, just like handling 
-        // multi-column fk constraint
-        delete result;
-        result = new ColumnDefinition(ColumnDefinition::DataType::FOREIGN);
+        // TODO: the result ColumnDefinition should also be returned !!!
+        // additionally, add a special ColumnDefinition to the list!
+        // delete result; // No no no! You are losing this col !
+        auto col = new ColumnDefinition(ColumnDefinition::DataType::FOREIGN);
 
-        result->foreign_key_source.emplace_back(root->colname);
+        col->foreign_key_source.emplace_back(root->colname);
         if (constraint->pk_attrs != nullptr)
         {
           auto attr_cell = constraint->pk_attrs->head;
           value* attr_val =
                 reinterpret_cast<value*>(attr_cell->data.ptr_value);
-          result->foreign_key_sink.emplace_back(attr_val->val.str);
+          col->foreign_key_sink.emplace_back(attr_val->val.str);
 
           LOG_ERROR("PK attr: %s\n", attr_val->val.str);
         }
@@ -919,20 +919,21 @@ parser::ColumnDefinition *PostgresParser::ColumnDefTransform(ColumnDef *root) {
         }
 
         // Update Reference Table
-        result->fk_sink_table_name = constraint->pktable->relname;
+        col->fk_sink_table_name = constraint->pktable->relname;
         // Action type
-        result->foreign_key_delete_action =
+        col->foreign_key_delete_action =
             CharToActionType(constraint->fk_del_action);
-        result->foreign_key_update_action =
+        col->foreign_key_update_action =
             CharToActionType(constraint->fk_upd_action);
         // Match type
-        result->foreign_key_match_type = CharToMatchType(constraint->fk_matchtype);
+        col->foreign_key_match_type = CharToMatchType(constraint->fk_matchtype);
 
-        LOG_ERROR("PK table name: %s.\n", result->fk_sink_table_name.c_str());
+        LOG_ERROR("PK table name: %s.\n", col->fk_sink_table_name.c_str());
         LOG_ERROR("delete action: %c\n", constraint->fk_del_action);
         LOG_ERROR("update action: %c\n", constraint->fk_upd_action);
         LOG_ERROR("fk match type: %c\n", constraint->fk_matchtype);
 
+        stmt->foreign_keys.push_back(std::unique_ptr<ColumnDefinition>(col));
       } else if (constraint->contype == CONSTR_DEFAULT) {
         try {
           result->default_value.reset(ExprTransform(constraint->raw_expr));
@@ -953,7 +954,7 @@ parser::ColumnDefinition *PostgresParser::ColumnDefTransform(ColumnDef *root) {
     }
   }
 
-  return result;
+  stmt->columns.push_back(std::unique_ptr<ColumnDefinition>(result));
 }
 
 // This function takes in a Postgres CreateStmt parsenode
@@ -979,14 +980,14 @@ parser::SQLStatement *PostgresParser::CreateTransform(CreateStmt *root) {
     Node *node = reinterpret_cast<Node *>(cell->data.ptr_value);
     if ((node->type) == T_ColumnDef) {
       // Transform Regular Column
-      ColumnDefinition *temp = nullptr;
+      // ColumnDefinition* temp = nullptr;
       try {
-        temp = ColumnDefTransform(reinterpret_cast<ColumnDef *>(node));
+        ColumnDefTransform(reinterpret_cast<ColumnDef*>(node), result);
       } catch (NotImplementedException e) {
         delete result;
         throw e;
       }
-      result->columns.push_back(std::unique_ptr<ColumnDefinition>(temp));
+      // result->columns.push_back(std::unique_ptr<ColumnDefinition>(temp));
     } else if (node->type == T_Constraint) {
       // Transform Constraints
       auto constraint = reinterpret_cast<Constraint *>(node);
@@ -1025,7 +1026,7 @@ parser::SQLStatement *PostgresParser::CreateTransform(CreateStmt *root) {
         // Match type
         col->foreign_key_match_type = CharToMatchType(constraint->fk_matchtype);
 
-        result->columns.push_back(std::unique_ptr<ColumnDefinition>(col));
+        result->foreign_keys.push_back(std::unique_ptr<ColumnDefinition>(col));
       } else {
         delete result;
         throw NotImplementedException(StringUtil::Format(

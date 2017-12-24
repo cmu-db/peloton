@@ -115,6 +115,12 @@ DataTable::~DataTable() {
   for (auto foreign_key : foreign_keys_) {
     delete foreign_key;
   }
+  foreign_keys_.clear();
+
+  for (auto foreign_key_src : foreign_key_sources_) {
+    delete foreign_key_src;
+  }
+  foreign_key_sources_.clear();
 
   // drop all indirection arrays
   for (auto indirection_array : active_indirection_arrays_) {
@@ -978,23 +984,19 @@ void DataTable::DropForeignKey(const oid_t &key_offset) {
 size_t DataTable::GetForeignKeyCount() const { return foreign_keys_.size(); }
 
 // Adds to the list of tables for which this table's PK is the foreign key sink
-void DataTable::RegisterForeignKeySource(const std::string &source_table_name) {
+void DataTable::RegisterForeignKeySource(catalog::ForeignKey *key) {
   {
     std::lock_guard<std::mutex> lock(data_table_mutex_);
-    foreign_key_sources_.push_back(source_table_name);
+    foreign_key_sources_.push_back(key);
   }
 }
 
-// Remove a table for which this table's PK is the foreign key sink
-void DataTable::RemoveForeignKeySource(const std::string &source_table_name) {
-  {
-    std::lock_guard<std::mutex> lock(data_table_mutex_);
-    for (size_t i = 0; i < foreign_key_sources_.size(); i++) {
-      if (foreign_key_sources_[i] == source_table_name) {
-        foreign_key_sources_.erase(foreign_key_sources_.begin() + i);
-      }
-    }
-  }
+size_t DataTable::GetForeignKeySrcCount() const {
+  return foreign_key_sources_.size();
+}
+
+catalog::ForeignKey *DataTable::GetForeignKeySrc(const size_t offset) const {
+  return foreign_key_sources_[offset];
 }
 
 // Get the schema for the new transformed tile group

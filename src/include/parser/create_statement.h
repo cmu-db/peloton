@@ -234,6 +234,7 @@ class CreateStatement : public TableRefStatement {
   bool if_not_exists;
 
   std::vector<std::unique_ptr<ColumnDefinition>> columns;
+  std::vector<std::unique_ptr<ColumnDefinition>> foreign_keys;
 
   std::vector<std::string> index_attrs;
   IndexType index_type;
