@@ -64,17 +64,14 @@ void Optimizer::OptimizeLoop(int root_group_id,
                              std::shared_ptr<PropertySet> required_props) {
   std::shared_ptr<OptimizeContext> root_context =
       std::make_shared<OptimizeContext>(&metadata_, required_props);
-  auto task_stack = std::unique_ptr<OptimizerTaskStack>(new OptimizerTaskStack());
+  auto task_stack =
+      std::unique_ptr<OptimizerTaskStack>(new OptimizerTaskStack());
   metadata_.SetTaskPool(task_stack.get());
-
-  // Head group expression with the root group as its only child.
-  // This object is only used for simplified the logics for the rewrite phase
 
   // Perform optimization after the rewrite
   task_stack->Push(new OptimizeGroup(metadata_.memo.GetGroupByID(root_group_id),
                                      root_context));
   // Perform rewrite first
-  // task_stack->Push(new RewriteExpression(head_gexpr.get(), 0, root_context));
   task_stack->Push(new TopDownRewrite(root_group_id, root_context,
                                       RewriteRuleSetName::PREDICATE_PUSH_DOWN));
 
@@ -86,8 +83,10 @@ void Optimizer::OptimizeLoop(int root_group_id,
 }
 
 shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
+    catalog::Catalog *catalog,
     const unique_ptr<parser::SQLStatementList> &parse_tree_list,
-    const std::string default_database_name, concurrency::TransactionContext *txn) {
+    const std::string default_database_name,
+    concurrency::TransactionContext *txn) {
   // Base Case
   if (parse_tree_list->GetStatements().size() == 0) return nullptr;
 
@@ -100,6 +99,7 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
       make_shared<binder::BindNodeVisitor>(txn, default_database_name);
   bind_node_visitor->BindNameToNode(parse_tree);
 
+  metadata_.catalog = catalog;
   // Handle ddl statement
   bool is_ddl_stmt;
   auto ddl_plan = HandleDDLStatement(parse_tree, is_ddl_stmt, txn);
@@ -222,29 +222,29 @@ shared_ptr<GroupExpression> Optimizer::InsertQueryTree(
 }
 
 QueryInfo Optimizer::GetQueryInfo(parser::SQLStatement *tree) {
-  auto GetQueryInfoHelper =
-      [](std::vector<unique_ptr<expression::AbstractExpression>> &select_list,
-         std::unique_ptr<parser::OrderDescription> &order_info,
-         std::vector<expression::AbstractExpression *> &output_exprs,
-         std::shared_ptr<PropertySet> &physical_props) {
-        // Extract output column
-        for (auto &expr : select_list) output_exprs.push_back(expr.get());
+  auto GetQueryInfoHelper = [](
+      std::vector<unique_ptr<expression::AbstractExpression>> &select_list,
+      std::unique_ptr<parser::OrderDescription> &order_info,
+      std::vector<expression::AbstractExpression *> &output_exprs,
+      std::shared_ptr<PropertySet> &physical_props) {
+    // Extract output column
+    for (auto &expr : select_list) output_exprs.push_back(expr.get());
 
-        // Extract sort property
-        if (order_info != nullptr) {
-          std::vector<expression::AbstractExpression *> sort_exprs;
-          std::vector<bool> sort_ascending;
-          for (auto &expr : order_info->exprs) {
-            sort_exprs.push_back(expr.get());
-          }
-          for (auto &type : order_info->types) {
-            sort_ascending.push_back(type == parser::kOrderAsc);
-          }
-          if (!sort_exprs.empty())
-            physical_props->AddProperty(
-                std::make_shared<PropertySort>(sort_exprs, sort_ascending));
-        }
-      };
+    // Extract sort property
+    if (order_info != nullptr) {
+      std::vector<expression::AbstractExpression *> sort_exprs;
+      std::vector<bool> sort_ascending;
+      for (auto &expr : order_info->exprs) {
+        sort_exprs.push_back(expr.get());
+      }
+      for (auto &type : order_info->types) {
+        sort_ascending.push_back(type == parser::kOrderAsc);
+      }
+      if (!sort_exprs.empty())
+        physical_props->AddProperty(
+            std::make_shared<PropertySort>(sort_exprs, sort_ascending));
+    }
+  };
 
   std::vector<expression::AbstractExpression *> output_exprs;
   std::shared_ptr<PropertySet> physical_props = std::make_shared<PropertySet>();
@@ -262,8 +262,7 @@ QueryInfo Optimizer::GetQueryInfo(parser::SQLStatement *tree) {
                            output_exprs, physical_props);
       break;
     }
-    default:
-      ;
+    default:;
   }
 
   return QueryInfo(output_exprs, physical_props);

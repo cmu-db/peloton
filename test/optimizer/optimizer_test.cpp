@@ -84,8 +84,8 @@ TEST_F(OptimizerTests, HashJoinTest) {
   auto create_stmt = peloton_parser.BuildParseTree(
       "CREATE TABLE table_a(aid INT PRIMARY KEY,value INT);");
 
-  statement->SetPlanTree(
-      optimizer.BuildPelotonPlanTree(create_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(
+      catalog::Catalog::GetInstance(), create_stmt, DEFAULT_DB_NAME, txn));
 
   std::vector<type::Value> params;
   std::vector<ResultValue> result;
@@ -120,8 +120,8 @@ TEST_F(OptimizerTests, HashJoinTest) {
   create_stmt = peloton_parser.BuildParseTree(
       "CREATE TABLE table_b(bid INT PRIMARY KEY,value INT);");
 
-  statement->SetPlanTree(
-      optimizer.BuildPelotonPlanTree(create_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(
+      catalog::Catalog::GetInstance(), create_stmt, DEFAULT_DB_NAME, txn));
 
   result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
   TestingSQLUtil::counter_.store(1);
@@ -154,8 +154,8 @@ TEST_F(OptimizerTests, HashJoinTest) {
   auto insert_stmt = peloton_parser.BuildParseTree(
       "INSERT INTO table_a(aid, value) VALUES (1, 1);");
 
-  statement->SetPlanTree(
-      optimizer.BuildPelotonPlanTree(insert_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(
+      catalog::Catalog::GetInstance(), insert_stmt, DEFAULT_DB_NAME, txn));
 
   result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
   TestingSQLUtil::counter_.store(1);
@@ -183,8 +183,8 @@ TEST_F(OptimizerTests, HashJoinTest) {
   insert_stmt = peloton_parser.BuildParseTree(
       "INSERT INTO table_b(bid, value) VALUES (1, 2);");
 
-  statement->SetPlanTree(
-      optimizer.BuildPelotonPlanTree(insert_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(
+      catalog::Catalog::GetInstance(), insert_stmt, DEFAULT_DB_NAME, txn));
 
   result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
   TestingSQLUtil::counter_.store(1);
@@ -211,8 +211,8 @@ TEST_F(OptimizerTests, HashJoinTest) {
   auto select_stmt = peloton_parser.BuildParseTree(
       "SELECT * FROM table_a INNER JOIN table_b ON aid = bid;");
 
-  statement->SetPlanTree(
-      optimizer.BuildPelotonPlanTree(select_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(
+      catalog::Catalog::GetInstance(), select_stmt, DEFAULT_DB_NAME, txn));
 
   result_format = std::vector<int>(4, 0);
   TestingSQLUtil::counter_.store(1);
@@ -249,7 +249,8 @@ TEST_F(OptimizerTests, PredicatePushDownTest) {
 
   optimizer::Optimizer optimizer;
   txn = txn_manager.BeginTransaction();
-  auto plan = optimizer.BuildPelotonPlanTree(stmt, DEFAULT_DB_NAME, txn);
+  auto plan = optimizer.BuildPelotonPlanTree(catalog::Catalog::GetInstance(),
+                                             stmt, DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 
   auto &child_plan = plan->GetChildren();

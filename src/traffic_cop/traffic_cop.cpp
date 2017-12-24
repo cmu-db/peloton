@@ -26,7 +26,6 @@
 namespace peloton {
 namespace tcop {
 
-
 TrafficCop::TrafficCop() : is_queuing_(false), rows_affected_(0) {
   LOG_TRACE("Starting a new TrafficCop");
   optimizer_.reset(new optimizer::Optimizer);
@@ -162,8 +161,7 @@ executor::ExecuteResult TrafficCop::ExecuteHelper(
   if (curr_state.second == ResultType::ABORTED) {
     p_status_.m_result = ResultType::ABORTED;
     return p_status_;
-
-  } 
+  }
 
   struct ExecutePlanArg {
     std::shared_ptr<planner::AbstractPlan> plan_;
@@ -426,7 +424,8 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     }
     LOG_TRACE("Optimizer Build Peloton Plan Tree...");
     auto plan = optimizer_->BuildPelotonPlanTree(
-        sql_stmt, default_database_name_, tcop_txn_state_.top().first);
+        catalog::Catalog::GetInstance(), sql_stmt, default_database_name_,
+        tcop_txn_state_.top().first);
     statement->SetPlanTree(plan);
     // Get the tables that our plan references so that we know how to
     // invalidate it at a later point when the catalog changes

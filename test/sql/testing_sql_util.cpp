@@ -72,8 +72,8 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
   // SetTrafficCopCounter();
   counter_.store(1);
   auto status =
-      traffic_cop_.ExecuteStatement(statement, param_values, unnamed, nullptr, result_format,
-                                    result, error_message);
+      traffic_cop_.ExecuteStatement(statement, param_values, unnamed, nullptr,
+                                    result_format, result, error_message);
   if (traffic_cop_.GetQueuing()) {
     ContinueAfterComplete();
     traffic_cop_.ExecuteStatementPlanGetResult();
@@ -102,8 +102,8 @@ ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
   traffic_cop_.SetTcopTxnState(txn);
 
   auto parsed_stmt = peloton_parser.BuildParseTree(query);
-  auto plan =
-      optimizer->BuildPelotonPlanTree(parsed_stmt, DEFAULT_DB_NAME, txn);
+  auto plan = optimizer->BuildPelotonPlanTree(
+      catalog::Catalog::GetInstance(), parsed_stmt, DEFAULT_DB_NAME, txn);
   tuple_descriptor =
       traffic_cop_.GenerateTupleDescriptor(parsed_stmt->GetStatement(0));
   auto result_format = std::vector<int>(tuple_descriptor.size(), 0);
@@ -137,13 +137,13 @@ TestingSQLUtil::GeneratePlanWithOptimizer(
   auto &peloton_parser = parser::PostgresParser::GetInstance();
 
   auto parsed_stmt = peloton_parser.BuildParseTree(query);
-  auto return_value =
-      optimizer->BuildPelotonPlanTree(parsed_stmt, DEFAULT_DB_NAME, txn);
+  auto return_value = optimizer->BuildPelotonPlanTree(
+      catalog::Catalog::GetInstance(), parsed_stmt, DEFAULT_DB_NAME, txn);
   return return_value;
 }
 
-ResultType TestingSQLUtil::ExecuteSQLQuery(
-    const std::string query, std::vector<ResultValue> &result) {
+ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query,
+                                           std::vector<ResultValue> &result) {
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
 
@@ -162,8 +162,8 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
   // SetTrafficCopCounter();
   counter_.store(1);
   auto status =
-      traffic_cop_.ExecuteStatement(statement, param_values, unnamed, nullptr, result_format,
-                                    result, error_message);
+      traffic_cop_.ExecuteStatement(statement, param_values, unnamed, nullptr,
+                                    result_format, result, error_message);
   if (traffic_cop_.GetQueuing()) {
     ContinueAfterComplete();
     traffic_cop_.ExecuteStatementPlanGetResult();
@@ -197,8 +197,8 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
   // SetTrafficCopCounter();
   counter_.store(1);
   auto status =
-      traffic_cop_.ExecuteStatement(statement, param_values, unnamed, nullptr, result_format,
-                                    result,error_message);
+      traffic_cop_.ExecuteStatement(statement, param_values, unnamed, nullptr,
+                                    result_format, result, error_message);
   if (traffic_cop_.GetQueuing()) {
     ContinueAfterComplete();
     traffic_cop_.ExecuteStatementPlanGetResult();

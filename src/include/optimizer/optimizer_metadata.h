@@ -16,6 +16,9 @@
 #include "optimizer/rule.h"
 
 namespace peloton {
+namespace catalog {
+class Catalog;
+}
 namespace optimizer {
 
 class OptimizerTaskPool;
@@ -26,6 +29,7 @@ class OptimizerMetadata {
   Memo memo;
   RuleSet rule_set;
   OptimizerTaskPool *task_pool;
+  catalog::Catalog* catalog;
 
   void SetTaskPool(OptimizerTaskPool *task_pool) {
     this->task_pool = task_pool;

@@ -30,6 +30,10 @@ namespace concurrency {
 class TransactionContext;
 }
 
+namespace catalog {
+class Catalog;
+}
+
 namespace optimizer {
 
 //===--------------------------------------------------------------------===//
@@ -46,6 +50,7 @@ class AbstractOptimizer {
   virtual ~AbstractOptimizer();
 
   virtual std::shared_ptr<planner::AbstractPlan> BuildPelotonPlanTree(
+      catalog::Catalog* catalog,
       const std::unique_ptr<parser::SQLStatementList> &parse_tree, 
       const std::string default_database_name,
       concurrency::TransactionContext *txn) = 0;
