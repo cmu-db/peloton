@@ -14,7 +14,7 @@
 
 #include <sstream>
 
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "catalog/table_catalog.h"
 #include "catalog/column_catalog.h"
 #include "executor/logical_tile.h"
@@ -53,14 +53,14 @@ IndexCatalogObject::IndexCatalogObject(executor::LogicalTile *tile, int tupleId)
 
 IndexCatalog *IndexCatalog::GetInstance(storage::Database *pg_catalog,
                                         type::AbstractPool *pool,
-                                        concurrency::Transaction *txn) {
+                                        concurrency::TransactionContext *txn) {
   static IndexCatalog index_catalog{pg_catalog, pool, txn};
   return &index_catalog;
 }
 
 IndexCatalog::IndexCatalog(storage::Database *pg_catalog,
                            type::AbstractPool *pool,
-                           concurrency::Transaction *txn)
+                           concurrency::TransactionContext *txn)
     : AbstractCatalog(INDEX_CATALOG_OID, INDEX_CATALOG_NAME,
                       InitializeSchema().release(), pg_catalog) {
   // Add indexes for pg_index
@@ -146,7 +146,7 @@ bool IndexCatalog::InsertIndex(oid_t index_oid, const std::string &index_name,
                                IndexConstraintType index_constraint,
                                bool unique_keys, std::vector<oid_t> indekeys,
                                type::AbstractPool *pool,
-                               concurrency::Transaction *txn) {
+                               concurrency::TransactionContext *txn) {
   // Create the tuple first
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
@@ -175,7 +175,7 @@ bool IndexCatalog::InsertIndex(oid_t index_oid, const std::string &index_name,
   return InsertTuple(std::move(tuple), txn);
 }
 
-bool IndexCatalog::DeleteIndex(oid_t index_oid, concurrency::Transaction *txn) {
+bool IndexCatalog::DeleteIndex(oid_t index_oid, concurrency::TransactionContext *txn) {
   oid_t index_offset = IndexId::PRIMARY_KEY;  // Index of index_oid
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(index_oid).Copy());
@@ -191,7 +191,7 @@ bool IndexCatalog::DeleteIndex(oid_t index_oid, concurrency::Transaction *txn) {
 }
 
 std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
-    oid_t index_oid, concurrency::Transaction *txn) {
+    oid_t index_oid, concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
   }
@@ -228,7 +228,7 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
 }
 
 std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
-    const std::string &index_name, concurrency::Transaction *txn) {
+    const std::string &index_name, concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
   }
@@ -269,11 +269,11 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
 /*@brief   get all index records from the same table
  * this function may be useful when calling DropTable
  * @param   table_oid
- * @param   txn  Transaction
+ * @param   txn  TransactionContext
  * @return  a vector of index catalog objects
  */
 const std::unordered_map<oid_t, std::shared_ptr<IndexCatalogObject>>
-IndexCatalog::GetIndexObjects(oid_t table_oid, concurrency::Transaction *txn) {
+IndexCatalog::GetIndexObjects(oid_t table_oid, concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
   }

@@ -141,7 +141,7 @@ executor::ExecuteResult TrafficCop::ExecuteHelper(
     const std::vector<int> &result_format, size_t thread_id) {
   auto &curr_state = GetCurrentTxnState();
 
-  concurrency::Transaction *txn;
+  concurrency::TransactionContext *txn;
   if (!tcop_txn_state_.empty()) {
     txn = curr_state.first;
   } else {
@@ -162,7 +162,7 @@ executor::ExecuteResult TrafficCop::ExecuteHelper(
 
   struct ExecutePlanArg {
     std::shared_ptr<planner::AbstractPlan> plan_;
-    concurrency::Transaction *txn_;
+    concurrency::TransactionContext *txn_;
     const std::vector<type::Value> &params_;
     std::vector<ResultValue> &result_;
     const std::vector<int> &result_format_;

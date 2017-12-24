@@ -63,16 +63,14 @@ class Exception : public std::runtime_error {
  public:
   Exception(std::string message)
       : std::runtime_error(message), type(ExceptionType::INVALID) {
-    std::string exception_message = "Message :: " + message + "\n";
-    std::cerr << exception_message;
+    exception_message_ = "Message :: " + message;
   }
 
   Exception(ExceptionType exception_type, std::string message)
       : std::runtime_error(message), type(exception_type) {
-    std::string exception_message = "Exception Type :: " +
+    exception_message_ = "Exception Type :: " +
                                     ExpectionTypeToString(exception_type) +
-                                    "\nMessage :: " + message + "\n";
-    std::cerr << exception_message;
+                                    "\nMessage :: " + message;
   }
 
   std::string ExpectionTypeToString(ExceptionType type) {
@@ -98,7 +96,7 @@ class Exception : public std::runtime_error {
       case ExceptionType::SERIALIZATION:
         return "Serialization";
       case ExceptionType::TRANSACTION:
-        return "Transaction";
+        return "TransactionContext";
       case ExceptionType::NOT_IMPLEMENTED:
         return "Not implemented";
       case ExceptionType::EXPRESSION:
@@ -199,9 +197,12 @@ class Exception : public std::runtime_error {
     }
   }
 
+  friend std::ostream& operator<<(std::ostream& os, const Exception& e);
+
  private:
   // type
   ExceptionType type;
+  std::string exception_message_;
 };
 
 //===--------------------------------------------------------------------===//

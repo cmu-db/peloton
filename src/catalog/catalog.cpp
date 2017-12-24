@@ -163,7 +163,7 @@ void Catalog::Bootstrap() {
 //===----------------------------------------------------------------------===//
 
 ResultType Catalog::CreateDatabase(const std::string &database_name,
-                                   concurrency::Transaction *txn) {
+                                   concurrency::TransactionContext *txn) {
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to create database " +
                            database_name);
@@ -202,14 +202,14 @@ ResultType Catalog::CreateDatabase(const std::string &database_name,
  * @param   database_name    the database which the table belongs to
  * @param   table_name       name of the table to add index on
  * @param   schema           schema, a.k.a metadata of the table
- * @param   txn              Transaction
- * @return  Transaction ResultType(SUCCESS or FAILURE)
+ * @param   txn              TransactionContext
+ * @return  TransactionContext ResultType(SUCCESS or FAILURE)
  */
 ResultType Catalog::CreateTable(const std::string &database_name,
                                 const std::string &table_name,
                                 std::unique_ptr<catalog::Schema> schema,
-                                concurrency::Transaction *txn,
-                                bool is_catalog) {
+                                concurrency::TransactionContext *txn, bool is_catalog,
+                                oid_t tuples_per_tilegroup) {
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to create table " +
                            table_name);
@@ -251,8 +251,7 @@ ResultType Catalog::CreateTable(const std::string &database_name,
   bool adapt_table = false;
   auto table = storage::TableFactory::GetDataTable(
       database_object->GetDatabaseOid(), table_oid, schema.release(),
-      table_name, DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table,
-      is_catalog);
+      table_name, tuples_per_tilegroup, own_schema, adapt_table, is_catalog);
   database->AddTable(table, is_catalog);
   // put data table object into rw_object_set
   txn->RecordCreate(database_object->GetDatabaseOid(), table_oid, INVALID_OID);
@@ -287,11 +286,11 @@ ResultType Catalog::CreateTable(const std::string &database_name,
  * If you want to create index on table outside, call CreateIndex() instead
  * @param   database_oid     the database which the indexed table belongs to
  * @param   table_oid        oid of the table to add index on
- * @param   txn              Transaction
- * @return  Transaction ResultType(SUCCESS or FAILURE)
+ * @param   txn              TransactionContext
+ * @return  TransactionContext ResultType(SUCCESS or FAILURE)
  */
 ResultType Catalog::CreatePrimaryIndex(oid_t database_oid, oid_t table_oid,
-                                       concurrency::Transaction *txn) {
+                                       concurrency::TransactionContext *txn) {
   LOG_TRACE("Trying to create primary index for table %d", table_oid);
 
   auto storage_manager = storage::StorageManager::GetInstance();
@@ -355,17 +354,17 @@ ResultType Catalog::CreatePrimaryIndex(oid_t database_oid, oid_t table_oid,
  * @param   index_name       name of the table to add index on
  * @param   unique_keys      index supports duplicate key or not
  * @param   index_type       the type of index(default value is BWTREE)
- * @param   txn              Transaction
+ * @param   txn              TransactionContext
  * @param   is_catalog       index is built on catalog table or not(useful in
  * catalog table Initialization)
- * @return  Transaction ResultType(SUCCESS or FAILURE)
+ * @return  TransactionContext ResultType(SUCCESS or FAILURE)
  */
 ResultType Catalog::CreateIndex(const std::string &database_name,
                                 const std::string &table_name,
                                 const std::vector<oid_t> &key_attrs,
                                 const std::string &index_name, bool unique_keys,
                                 IndexType index_type,
-                                concurrency::Transaction *txn) {
+                                concurrency::TransactionContext *txn) {
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to create database " +
                            index_name);
@@ -401,7 +400,7 @@ ResultType Catalog::CreateIndex(oid_t database_oid, oid_t table_oid,
                                 const std::string &index_name,
                                 IndexType index_type,
                                 IndexConstraintType index_constraint,
-                                bool unique_keys, concurrency::Transaction *txn,
+                                bool unique_keys, concurrency::TransactionContext *txn,
                                 bool is_catalog) {
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to create index " +
@@ -463,7 +462,7 @@ ResultType Catalog::CreateIndex(oid_t database_oid, oid_t table_oid,
  * only for test purposes
  */
 ResultType Catalog::DropDatabaseWithName(const std::string &database_name,
-                                         concurrency::Transaction *txn) {
+                                         concurrency::TransactionContext *txn) {
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to drop database " +
                            database_name);
@@ -478,7 +477,7 @@ ResultType Catalog::DropDatabaseWithName(const std::string &database_name,
 }
 
 ResultType Catalog::DropDatabaseWithOid(oid_t database_oid,
-                                        concurrency::Transaction *txn) {
+                                        concurrency::TransactionContext *txn) {
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to drop database " +
                            std::to_string(database_oid));
@@ -511,12 +510,12 @@ ResultType Catalog::DropDatabaseWithOid(oid_t database_oid,
  * tile_groups
  * @param   database_name    the database which the dropped table belongs to
  * @param   table_name       the dropped table name
- * @param   txn              Transaction
- * @return  Transaction ResultType(SUCCESS or FAILURE)
+ * @param   txn              TransactionContext
+ * @return  TransactionContext ResultType(SUCCESS or FAILURE)
  */
 ResultType Catalog::DropTable(const std::string &database_name,
                               const std::string &table_name,
-                              concurrency::Transaction *txn) {
+                              concurrency::TransactionContext *txn) {
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to drop table " +
                            table_name);
@@ -547,11 +546,11 @@ ResultType Catalog::DropTable(const std::string &database_name,
  * tile_groups
  * @param   database_oid    the database which the dropped table belongs to
  * @param   table_oid       the dropped table name
- * @param   txn             Transaction
- * @return  Transaction ResultType(SUCCESS or FAILURE)
+ * @param   txn             TransactionContext
+ * @return  TransactionContext ResultType(SUCCESS or FAILURE)
  */
 ResultType Catalog::DropTable(oid_t database_oid, oid_t table_oid,
-                              concurrency::Transaction *txn) {
+                              concurrency::TransactionContext *txn) {
   LOG_TRACE("Dropping table %d from database %d", database_oid, table_oid);
   auto storage_manager = storage::StorageManager::GetInstance();
   auto database = storage_manager->GetDatabaseWithOid(database_oid);
@@ -573,10 +572,10 @@ ResultType Catalog::DropTable(oid_t database_oid, oid_t table_oid,
 
 /*@brief   Drop Index on table
  * @param   index_oid      the oid of the index to be dropped
- * @param   txn            Transaction
- * @return  Transaction ResultType(SUCCESS or FAILURE)
+ * @param   txn            TransactionContext
+ * @return  TransactionContext ResultType(SUCCESS or FAILURE)
  */
-ResultType Catalog::DropIndex(oid_t index_oid, concurrency::Transaction *txn) {
+ResultType Catalog::DropIndex(oid_t index_oid, concurrency::TransactionContext *txn) {
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to drop index " +
                            std::to_string(index_oid));
@@ -620,7 +619,7 @@ ResultType Catalog::DropIndex(oid_t index_oid, concurrency::Transaction *txn) {
  * throw exception and abort txn if not exists/invisible
  * */
 storage::Database *Catalog::GetDatabaseWithName(
-    const std::string &database_name, concurrency::Transaction *txn) const {
+    const std::string &database_name, concurrency::TransactionContext *txn) const {
   PL_ASSERT(txn != nullptr);
 
   // Check in pg_database using txn
@@ -641,7 +640,7 @@ storage::Database *Catalog::GetDatabaseWithName(
  * */
 storage::DataTable *Catalog::GetTableWithName(const std::string &database_name,
                                               const std::string &table_name,
-                                              concurrency::Transaction *txn) {
+                                              concurrency::TransactionContext *txn) {
   PL_ASSERT(txn != nullptr);
 
   LOG_TRACE("Looking for table %s in database %s", table_name.c_str(),
@@ -661,7 +660,7 @@ storage::DataTable *Catalog::GetTableWithName(const std::string &database_name,
  * throw exception and abort txn if not exists/invisible
  * */
 std::shared_ptr<DatabaseCatalogObject> Catalog::GetDatabaseObject(
-    const std::string &database_name, concurrency::Transaction *txn) {
+    const std::string &database_name, concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     throw CatalogException("Do not have transaction to get table object " +
                            database_name);
@@ -681,7 +680,7 @@ std::shared_ptr<DatabaseCatalogObject> Catalog::GetDatabaseObject(
 }
 
 std::shared_ptr<DatabaseCatalogObject> Catalog::GetDatabaseObject(
-    oid_t database_oid, concurrency::Transaction *txn) {
+    oid_t database_oid, concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     throw CatalogException("Do not have transaction to get database object " +
                            std::to_string(database_oid));
@@ -707,7 +706,7 @@ std::shared_ptr<DatabaseCatalogObject> Catalog::GetDatabaseObject(
  * */
 std::shared_ptr<TableCatalogObject> Catalog::GetTableObject(
     const std::string &database_name, const std::string &table_name,
-    concurrency::Transaction *txn) {
+    concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     throw CatalogException("Do not have transaction to get table object " +
                            database_name + "." + table_name);
@@ -739,7 +738,7 @@ std::shared_ptr<TableCatalogObject> Catalog::GetTableObject(
 }
 
 std::shared_ptr<TableCatalogObject> Catalog::GetTableObject(
-    oid_t database_oid, oid_t table_oid, concurrency::Transaction *txn) {
+    oid_t database_oid, oid_t table_oid, concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     throw CatalogException("Do not have transaction to get table object " +
                            std::to_string(database_oid) + "." +
@@ -811,7 +810,7 @@ Catalog::~Catalog() {
 void Catalog::AddBuiltinFunction(
     const std::string &name, const std::vector<type::TypeId> &argument_types,
     const type::TypeId return_type, oid_t prolang, const std::string &func_name,
-    function::BuiltInFuncType func, concurrency::Transaction *txn) {
+    function::BuiltInFuncType func, concurrency::TransactionContext *txn) {
   if (!ProcCatalog::GetInstance().InsertProc(name, return_type, argument_types,
                                              prolang, func_name, pool_.get(),
                                              txn)) {

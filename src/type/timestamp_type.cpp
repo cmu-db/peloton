@@ -26,56 +26,56 @@ TimestampType::TimestampType()
 CmpBool TimestampType::CompareEquals(const Value& left, const Value &right) const {
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
-    return CMP_NULL;
+    return CmpBool::NULL_;
   return GetCmpBool(left.GetAs<uint64_t>() == right.GetAs<uint64_t>());
 }
 
 CmpBool TimestampType::CompareNotEquals(const Value& left, const Value &right) const {
   PL_ASSERT(left.CheckComparable(right));
   if (right.IsNull())
-    return CMP_NULL;
+    return CmpBool::NULL_;
   return GetCmpBool(left.GetAs<uint64_t>() != right.GetAs<uint64_t>());
 }
 
 CmpBool TimestampType::CompareLessThan(const Value& left, const Value &right) const {
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
-    return CMP_NULL;
+    return CmpBool::NULL_;
   return GetCmpBool(left.GetAs<uint64_t>() < right.GetAs<uint64_t>());
 }
 
 CmpBool TimestampType::CompareLessThanEquals(const Value& left, const Value &right) const {
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
-    return CMP_NULL;
+    return CmpBool::NULL_;
   return GetCmpBool(left.GetAs<uint64_t>() <= right.GetAs<uint64_t>());
 }
 
 CmpBool TimestampType::CompareGreaterThan(const Value& left, const Value &right) const {
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
-    return CMP_NULL;
+    return CmpBool::NULL_;
   return GetCmpBool(left.GetAs<int64_t>() > right.GetAs<int64_t>());
 }
 
 CmpBool TimestampType::CompareGreaterThanEquals(const Value& left, const Value &right) const {
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
-    return CMP_NULL;
+    return CmpBool::NULL_;
   return GetCmpBool(left.GetAs<uint64_t>() >= right.GetAs<uint64_t>());
 }
 
 Value TimestampType::Min(const Value& left, const Value& right) const {
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return left.OperateNull(right);
-  if (left.CompareLessThan(right) == CMP_TRUE) return left.Copy();
+  if (left.CompareLessThan(right) == CmpBool::TRUE) return left.Copy();
   return right.Copy();
 }
 
 Value TimestampType::Max(const Value& left, const Value& right) const {
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return left.OperateNull(right);
-  if (left.CompareGreaterThanEquals(right) == CMP_TRUE) return left.Copy();
+  if (left.CompareGreaterThanEquals(right) == CmpBool::TRUE) return left.Copy();
   return right.Copy();
 }
 

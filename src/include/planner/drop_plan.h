@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "planner/abstract_plan.h"
 
 namespace peloton {
@@ -40,7 +40,7 @@ class DropPlan : public AbstractPlan {
 
   const std::string GetInfo() const {
     std::string returned_string = "DropPlan:\n";
-    returned_string += "\tTable name: " + table_name + "\n";
+    returned_string += " Table name: " + table_name;
     return returned_string;
   }
 

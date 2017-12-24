@@ -12,15 +12,15 @@
 
 #include "type/value.h"
 #include "executor/executor_context.h"
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 
 namespace peloton {
 namespace executor {
 
-ExecutorContext::ExecutorContext(concurrency::Transaction *transaction)
+ExecutorContext::ExecutorContext(concurrency::TransactionContext *transaction)
     : transaction_(transaction) {}
 
-ExecutorContext::ExecutorContext(concurrency::Transaction *transaction,
+ExecutorContext::ExecutorContext(concurrency::TransactionContext *transaction,
                                  const std::vector<type::Value> &params)
     : transaction_(transaction),
       params_(params) {}
@@ -29,7 +29,7 @@ ExecutorContext::~ExecutorContext() {
   // params will be freed automatically
 }
 
-concurrency::Transaction *ExecutorContext::GetTransaction() const {
+concurrency::TransactionContext *ExecutorContext::GetTransaction() const {
   return transaction_;
 }
 

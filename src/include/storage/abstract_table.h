@@ -32,7 +32,7 @@ namespace peloton {
 typedef std::map<oid_t, std::pair<oid_t, oid_t>> column_map_type;
 
 namespace concurrency {
-class Transaction;
+class TransactionContext;
 }
 
 namespace catalog {
@@ -55,7 +55,7 @@ class AbstractTable : public Printable {
  protected:
   // Table constructor
   AbstractTable(oid_t table_oid, catalog::Schema *schema, bool own_schema,
-               peloton::LayoutType layout_type = peloton::LAYOUT_TYPE_ROW);
+               peloton::LayoutType layout_type = peloton::LayoutType::ROW);
 
  public:
   //===--------------------------------------------------------------------===//
@@ -65,7 +65,7 @@ class AbstractTable : public Printable {
   // insert tuple in table. the pointer to the index entry is returned as
   // index_entry_ptr.
   virtual ItemPointer InsertTuple(const Tuple *tuple,
-                                  concurrency::Transaction *transaction,
+                                  concurrency::TransactionContext *transaction,
                                   ItemPointer **index_entry_ptr = nullptr) = 0;
 
   // designed for tables without primary key. e.g., output table used by

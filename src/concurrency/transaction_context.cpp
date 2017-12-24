@@ -2,15 +2,15 @@
 //
 //                         Peloton
 //
-// transaction.cpp
+// transaction_context.cpp
 //
-// Identification: src/concurrency/transaction.cpp
+// Identification: src/concurrency/transaction_context.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 
 #include <sstream>
 
@@ -27,7 +27,7 @@ namespace peloton {
 namespace concurrency {
 
 /*
- * Transaction state transition:
+ * TransactionContext state transition:
  *                r           r/ro            u/r/ro
  *              +--<--+     +---<--+        +---<--+
  *           r  |     |     |      |        |      |     d
@@ -48,21 +48,21 @@ namespace concurrency {
  *    i : insert
  */
 
-Transaction::Transaction(const size_t thread_id,
+TransactionContext::TransactionContext(const size_t thread_id,
                          const IsolationLevelType isolation,
                          const cid_t &read_id) {
   Init(thread_id, isolation, read_id);
 }
 
-Transaction::Transaction(const size_t thread_id,
+TransactionContext::TransactionContext(const size_t thread_id,
                          const IsolationLevelType isolation,
                          const cid_t &read_id, const cid_t &commit_id) {
   Init(thread_id, isolation, read_id, commit_id);
 }
 
-Transaction::~Transaction() {}
+TransactionContext::~TransactionContext() {}
 
-void Transaction::Init(const size_t thread_id,
+void TransactionContext::Init(const size_t thread_id,
                        const IsolationLevelType isolation, const cid_t &read_id,
                        const cid_t &commit_id) {
   read_id_ = read_id;
@@ -89,7 +89,7 @@ void Transaction::Init(const size_t thread_id,
   on_commit_triggers_.reset();
 }
 
-RWType Transaction::GetRWType(const ItemPointer &location) {
+RWType TransactionContext::GetRWType(const ItemPointer &location) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
   auto itr = rw_set_.find(tile_group_id);
@@ -105,7 +105,7 @@ RWType Transaction::GetRWType(const ItemPointer &location) {
   return inner_itr->second;
 }
 
-void Transaction::RecordRead(const ItemPointer &location) {
+void TransactionContext::RecordRead(const ItemPointer &location) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
@@ -118,7 +118,7 @@ void Transaction::RecordRead(const ItemPointer &location) {
   }
 }
 
-void Transaction::RecordReadOwn(const ItemPointer &location) {
+void TransactionContext::RecordReadOwn(const ItemPointer &location) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
@@ -135,7 +135,7 @@ void Transaction::RecordReadOwn(const ItemPointer &location) {
   }
 }
 
-void Transaction::RecordUpdate(const ItemPointer &location) {
+void TransactionContext::RecordUpdate(const ItemPointer &location) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
@@ -165,7 +165,7 @@ void Transaction::RecordUpdate(const ItemPointer &location) {
   }
 }
 
-void Transaction::RecordInsert(const ItemPointer &location) {
+void TransactionContext::RecordInsert(const ItemPointer &location) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
@@ -177,7 +177,7 @@ void Transaction::RecordInsert(const ItemPointer &location) {
   }
 }
 
-bool Transaction::RecordDelete(const ItemPointer &location) {
+bool TransactionContext::RecordDelete(const ItemPointer &location) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
@@ -212,10 +212,10 @@ bool Transaction::RecordDelete(const ItemPointer &location) {
   return false;
 }
 
-const std::string Transaction::GetInfo() const {
+const std::string TransactionContext::GetInfo() const {
   std::ostringstream os;
 
-  os << "\tTxn :: @" << this << " ID : " << std::setw(4) << txn_id_
+  os << " Txn :: @" << this << " ID : " << std::setw(4) << txn_id_
      << " Read ID : " << std::setw(4) << read_id_
      << " Commit ID : " << std::setw(4) << commit_id_
      << " Result : " << result_;
@@ -223,14 +223,14 @@ const std::string Transaction::GetInfo() const {
   return os.str();
 }
 
-void Transaction::AddOnCommitTrigger(trigger::TriggerData &trigger_data) {
+void TransactionContext::AddOnCommitTrigger(trigger::TriggerData &trigger_data) {
   if (on_commit_triggers_ == nullptr) {
     on_commit_triggers_.reset(new trigger::TriggerSet());
   }
   on_commit_triggers_->push_back(trigger_data);
 }
 
-void Transaction::ExecOnCommitTriggers() {
+void TransactionContext::ExecOnCommitTriggers() {
   if (on_commit_triggers_ != nullptr) {
     on_commit_triggers_->ExecTriggers();
   }

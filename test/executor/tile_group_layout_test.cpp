@@ -37,7 +37,7 @@
 #include "storage/tile.h"
 #include "storage/tile_group.h"
 #include "storage/data_table.h"
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/abstract_executor.h"
 #include "executor/seq_scan_executor.h"
@@ -60,7 +60,16 @@ namespace test {
 
 class TileGroupLayoutTests : public PelotonTest {};
 
-void ExecuteTileGroupTest(peloton::LayoutType layout_type) {
+// FIXME: PAVLO: 2017-12-21
+// I was going to through and changing LayoutType to be 
+// an 'enum class' instead of just an 'enum'. When I did that,
+// the invocation to TableFactory::GetDataTable() broke because
+// now it didn't like the LayoutType parameter. I looked into it
+// and found that the TableFactory doesn't even take in a LayoutType
+// parameter at all. It was only working because the LayoutType
+// was getting cast to a bool. So as it stands now, this test case
+// does *not* check whether we can have different layouts in a TileGroup. 
+void ExecuteTileGroupTest(UNUSED_ATTRIBUTE peloton::LayoutType layout_type) {
   const int tuples_per_tilegroup_count = 10;
   const int tile_group_count = 5;
   const int tuple_count = tuples_per_tilegroup_count * tile_group_count;
@@ -89,7 +98,7 @@ void ExecuteTileGroupTest(peloton::LayoutType layout_type) {
   bool adapt_table = true;
   std::unique_ptr<storage::DataTable> table(storage::TableFactory::GetDataTable(
       INVALID_OID, INVALID_OID, table_schema, table_name,
-      tuples_per_tilegroup_count, own_schema, adapt_table, layout_type));
+      tuples_per_tilegroup_count, own_schema, adapt_table));
 
   // PRIMARY INDEX
   if (indexes == true) {
@@ -209,11 +218,11 @@ void ExecuteTileGroupTest(peloton::LayoutType layout_type) {
 }
 
 TEST_F(TileGroupLayoutTests, RowLayout) {
-  ExecuteTileGroupTest(LAYOUT_TYPE_ROW);
+  ExecuteTileGroupTest(LayoutType::ROW);
 }
 
 TEST_F(TileGroupLayoutTests, ColumnLayout) {
-  ExecuteTileGroupTest(LAYOUT_TYPE_COLUMN);
+  ExecuteTileGroupTest(LayoutType::COLUMN);
 }
 
 }  // namespace test

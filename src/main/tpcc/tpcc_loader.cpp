@@ -24,7 +24,7 @@
 #include "benchmark/tpcc/tpcc_configuration.h"
 #include "catalog/catalog.h"
 #include "catalog/schema.h"
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/abstract_executor.h"
 #include "executor/insert_executor.h"
@@ -1743,7 +1743,7 @@ void LoadTPCCDatabase() {
   UNUSED_ATTRIBUTE double diff = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
   LOG_INFO("database loading time = %lf ms", diff);
 
-  LOG_INFO("============TABLE SIZES==========");
+  LOG_INFO("%sTABLE SIZES%s", peloton::GETINFO_HALF_THICK_LINE.c_str(), peloton::GETINFO_HALF_THICK_LINE.c_str());
   LOG_INFO("warehouse count = %lu", warehouse_table->GetTupleCount());
   LOG_INFO("district count  = %lu", district_table->GetTupleCount());
   LOG_INFO("item count = %lu", item_table->GetTupleCount());

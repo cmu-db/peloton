@@ -63,7 +63,7 @@ class TestingSQLUtil {
   // Generate the plan tree for a SQL query with the specific optimizer
   static std::shared_ptr<planner::AbstractPlan> GeneratePlanWithOptimizer(
       std::unique_ptr<optimizer::AbstractOptimizer> &optimizer,
-      const std::string query, concurrency::Transaction *txn);
+      const std::string query, concurrency::TransactionContext *txn);
 
   // A simpler wrapper around ExecuteSQLQuery
   static ResultType ExecuteSQLQuery(const std::string query,

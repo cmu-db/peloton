@@ -51,7 +51,7 @@ class ColumnStatsCatalog : public AbstractCatalog {
 
   // Global Singleton
   static ColumnStatsCatalog *GetInstance(
-      concurrency::Transaction *txn = nullptr);
+      concurrency::TransactionContext *txn = nullptr);
 
   //===--------------------------------------------------------------------===//
   // write Related API
@@ -62,19 +62,19 @@ class ColumnStatsCatalog : public AbstractCatalog {
                          std::string most_common_freqs,
                          std::string histogram_bounds, std::string column_name,
                          bool has_index, type::AbstractPool *pool,
-                         concurrency::Transaction *txn);
+                         concurrency::TransactionContext *txn);
   bool DeleteColumnStats(oid_t database_id, oid_t table_id, oid_t column_id,
-                         concurrency::Transaction *txn);
+                         concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
   // Read-only Related API
   //===--------------------------------------------------------------------===//
   std::unique_ptr<std::vector<type::Value>> GetColumnStats(
       oid_t database_id, oid_t table_id, oid_t column_id,
-      concurrency::Transaction *txn);
+      concurrency::TransactionContext *txn);
 
   size_t GetTableStats(
-      oid_t database_id, oid_t table_id, concurrency::Transaction *txn,
+      oid_t database_id, oid_t table_id, concurrency::TransactionContext *txn,
       std::map<oid_t, std::unique_ptr<std::vector<type::Value>>> &
           column_stats_map);
   // TODO: add more if needed
@@ -106,7 +106,7 @@ class ColumnStatsCatalog : public AbstractCatalog {
   };
 
  private:
-  ColumnStatsCatalog(concurrency::Transaction *txn);
+  ColumnStatsCatalog(concurrency::TransactionContext *txn);
 
   enum IndexId {
     SECONDARY_KEY_0 = 0,

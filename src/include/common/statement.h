@@ -29,7 +29,7 @@ class AbstractPlan;
 // std::string since the result is sent to the client over the network.
 // Previously it used to be StatementResult of type
 // std::pair<std::vector<unsigned char>, std::vector<unsigned char>>.
-typedef std::vector<unsigned char> ResultValue;
+using ResultValue = std::string;
 
 // FIELD INFO TYPE : field name, oid (data type), size
 typedef std::tuple<std::string, oid_t, size_t> FieldInfo;

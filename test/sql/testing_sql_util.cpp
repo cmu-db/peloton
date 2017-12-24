@@ -109,7 +109,7 @@ ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
   auto result_format = std::vector<int>(tuple_descriptor.size(), 0);
 
   try {
-    LOG_DEBUG("%s", planner::PlanUtil::GetInfo(plan.get()).c_str());
+    LOG_DEBUG("\n%s", planner::PlanUtil::GetInfo(plan.get()).c_str());
     // SetTrafficCopCounter();
     counter_.store(1);
     auto status =
@@ -133,7 +133,7 @@ ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
 std::shared_ptr<planner::AbstractPlan>
 TestingSQLUtil::GeneratePlanWithOptimizer(
     std::unique_ptr<optimizer::AbstractOptimizer> &optimizer,
-    const std::string query, concurrency::Transaction *txn) {
+    const std::string query, concurrency::TransactionContext *txn) {
   auto &peloton_parser = parser::PostgresParser::GetInstance();
 
   auto parsed_stmt = peloton_parser.BuildParseTree(query);

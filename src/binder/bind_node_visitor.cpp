@@ -24,7 +24,7 @@
 namespace peloton {
 namespace binder {
 
-BindNodeVisitor::BindNodeVisitor(concurrency::Transaction *txn,
+BindNodeVisitor::BindNodeVisitor(concurrency::TransactionContext *txn,
                                  std::string default_database_name)
     : txn_(txn), default_database_name_(default_database_name) {
   context_ = nullptr;

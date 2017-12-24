@@ -60,7 +60,7 @@ class ValueFactory {
 
   static inline Value GetBooleanValue(CmpBool value) {
     return Value(TypeId::BOOLEAN,
-                 value == CMP_NULL ? PELOTON_BOOLEAN_NULL : (int8_t)value);
+                 value == CmpBool::NULL_ ? PELOTON_BOOLEAN_NULL : (int8_t)value);
   }
 
   static inline Value GetBooleanValue(bool value) {
