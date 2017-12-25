@@ -320,9 +320,9 @@ expression::AbstractExpression *PostgresParser::ColumnRefTransform(
 expression::AbstractExpression *PostgresParser::ParamRefTransform(
     ParamRef *root) {
   //  LOG_INFO("Parameter number: %d", root->number);
-  expression::AbstractExpression *res =
+  expression::AbstractExpression *result =
       new expression::ParameterValueExpression(root->number - 1);
-  return res;
+  return result;
 }
 
 // This function takes in the Case Expression of a Postgres SelectStmt
@@ -812,7 +812,10 @@ expression::AbstractExpression *PostgresParser::WhenTransform(Node *root) {
       result = BoolExprTransform(reinterpret_cast<BoolExpr *>(root));
       break;
     }
-    default: { LOG_ERROR("WHEN of type %d not supported yet...", root->type); }
+    default: {
+      throw NotImplementedException(
+        StringUtil::Format("WHEN of type %d not supported yet...", root->type));
+    }
   }
   return result;
 }
@@ -1048,7 +1051,12 @@ parser::SQLStatement *PostgresParser::CreateTriggerTransform(
     }
   }
   // when
-  result->trigger_when.reset(WhenTransform(root->whenClause));
+  try {
+    result->trigger_when.reset(WhenTransform(root->whenClause));
+  } catch (NotImplementedException e) {
+    delete result;
+    throw e;
+  }
 
   int16_t &tgtype = result->trigger_type;
   TRIGGER_CLEAR_TYPE(tgtype);
@@ -1089,29 +1097,29 @@ parser::DropStatement *PostgresParser::DropTransform(DropStmt *root) {
 }
 
 parser::DropStatement *PostgresParser::DropTableTransform(DropStmt *root) {
-  auto res = new DropStatement(DropStatement::EntityType::kTable);
+  auto result = new DropStatement(DropStatement::EntityType::kTable);
   for (auto cell = root->objects->head; cell != nullptr; cell = cell->next) {
-    res->missing = root->missing_ok;
+    result->missing = root->missing_ok;
     auto table_info = new TableInfo{};
     auto table_list = reinterpret_cast<List *>(cell->data.ptr_value);
     LOG_TRACE("%d", ((Node *)(table_list->head->data.ptr_value))->type);
     table_info->table_name =
         reinterpret_cast<value *>(table_list->head->data.ptr_value)->val.str;
-    res->table_info_.reset(table_info);
+    result->table_info_.reset(table_info);
     break;
   }
-  return res;
+  return result;
 }
 
 parser::DropStatement *PostgresParser::DropTriggerTransform(DropStmt *root) {
-  auto res = new DropStatement(DropStatement::EntityType::kTrigger);
+  auto result = new DropStatement(DropStatement::EntityType::kTrigger);
   auto cell = root->objects->head;
   auto list = reinterpret_cast<List *>(cell->data.ptr_value);
-  res->table_name_of_trigger =
+  result->table_name_of_trigger =
       reinterpret_cast<value *>(list->head->data.ptr_value)->val.str;
-  res->trigger_name =
+  result->trigger_name =
       reinterpret_cast<value *>(list->head->next->data.ptr_value)->val.str;
-  return res;
+  return result;
 }
 
 parser::DeleteStatement *PostgresParser::TruncateTransform(TruncateStmt *root) {
@@ -1138,45 +1146,50 @@ parser::ExecuteStatement *PostgresParser::ExecuteTransform(ExecuteStmt *root) {
 }
 
 parser::PrepareStatement *PostgresParser::PrepareTransform(PrepareStmt *root) {
-  auto res = new PrepareStatement();
-  res->name = root->name;
+  auto result = new PrepareStatement();
+  result->name = root->name;
   auto stmt_list = new SQLStatementList();
-  stmt_list->statements.push_back(
-      std::unique_ptr<SQLStatement>(NodeTransform(root->query)));
-  res->query.reset(stmt_list);
-  return res;
+  try {
+    stmt_list->statements.push_back(
+        std::unique_ptr<SQLStatement>(NodeTransform(root->query)));
+  } catch (NotImplementedException e) {
+    delete stmt_list;
+    delete result;
+    throw e;
+  }
+  result->query.reset(stmt_list);
+  return result;
 }
 
 // TODO: Only support COPY TABLE TO FILE and DELIMITER option
 parser::CopyStatement *PostgresParser::CopyTransform(CopyStmt *root) {
-  auto res = new CopyStatement(peloton::CopyType::EXPORT_OTHER);
-  res->cpy_table.reset(RangeVarTransform(root->relation));
-  res->file_path = root->filename;
+  auto result = new CopyStatement(peloton::CopyType::EXPORT_OTHER);
+  result->cpy_table.reset(RangeVarTransform(root->relation));
+  result->file_path = root->filename;
   for (auto cell = root->options->head; cell != NULL; cell = cell->next) {
     auto def_elem = reinterpret_cast<DefElem *>(cell->data.ptr_value);
     if (strcmp(def_elem->defname, "delimiter") == 0) {
       auto delimiter = reinterpret_cast<value *>(def_elem->arg)->val.str;
-      res->delimiter = *delimiter;
+      result->delimiter = *delimiter;
       break;
     }
   }
-  return res;
+  return result;
 }
 
 // Analyze statment is parsed with vacuum statment.
 parser::AnalyzeStatement *PostgresParser::VacuumTransform(VacuumStmt *root) {
   if (root->options != VACOPT_ANALYZE) {
-    LOG_TRACE("Vacuum not supported.");
-    return nullptr;
+    throw NotImplementedException("Vacuum not supported.");
   }
-  auto res = new AnalyzeStatement();
+  auto result = new AnalyzeStatement();
   if (root->relation != NULL) {  // TOOD: check NULL vs nullptr
-    res->analyze_table.reset(RangeVarTransform(root->relation));
+    result->analyze_table.reset(RangeVarTransform(root->relation));
   }
   auto analyze_columns = ColumnNameTransform(root->va_cols);
-  res->analyze_columns = std::move(*analyze_columns);
+  result->analyze_columns = std::move(*analyze_columns);
   delete analyze_columns;
-  return res;
+  return result;
 }
 
 std::vector<std::string> *PostgresParser::ColumnNameTransform(List *root) {
@@ -1372,7 +1385,12 @@ parser::SQLStatement *PostgresParser::SelectTransform(SelectStmt *root) {
 parser::SQLStatement *PostgresParser::DeleteTransform(DeleteStmt *root) {
   parser::DeleteStatement *result = new parser::DeleteStatement();
   result->table_ref.reset(RangeVarTransform(root->relation));
-  result->expr.reset(WhereTransform(root->whereClause));
+  try {
+    result->expr.reset(WhereTransform(root->whereClause));
+  } catch (NotImplementedException e) {
+    delete result;
+    throw e;
+  }
   return (parser::SQLStatement *)result;
 }
 
@@ -1488,6 +1506,7 @@ PostgresParser::UpdateTargetTransform(List *root) {
     try {
       update_clause->value.reset(ExprTransform(target->val));
     } catch (NotImplementedException e) {
+      delete result;
       throw NotImplementedException(
           StringUtil::Format("Exception thrown in update expr:\n%s", e.what()));
     }
@@ -1502,10 +1521,20 @@ parser::UpdateStatement *PostgresParser::UpdateTransform(
     UpdateStmt *update_stmt) {
   auto result = new parser::UpdateStatement();
   result->table.reset(RangeVarTransform(update_stmt->relation));
-  result->where.reset(WhereTransform(update_stmt->whereClause));
-  auto clauses = UpdateTargetTransform(update_stmt->targetList);
-  result->updates = std::move(*clauses);
-  delete clauses;
+  try {
+    result->where.reset(WhereTransform(update_stmt->whereClause));
+  } catch (NotImplementedException e) {
+    delete result;
+    throw e;
+  }
+  try {
+    auto clauses = UpdateTargetTransform(update_stmt->targetList);
+    result->updates = std::move(*clauses);
+    delete clauses;
+  } catch (NotImplementedException e) {
+    delete result;
+    throw e;
+  }
   return result;
 }
 
