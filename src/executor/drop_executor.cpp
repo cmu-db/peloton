@@ -43,14 +43,40 @@ bool DropExecutor::DExecute() {
   const planner::DropPlan &node = GetPlanNode<planner::DropPlan>();
   DropType dropType = node.GetDropType();
   switch (dropType) {
+    case DropType::DB: {
+      auto database_name = node.GetDatabaseName();
+      auto current_txn = context_->GetTransaction();
+      if (node.IsMissing()) {
+        try {
+          auto database_object = catalog::Catalog::GetInstance()->GetDatabaseObject(
+              database_name, current_txn);
+        } catch (CatalogException &e) {
+          LOG_TRACE("Database %s does not exist.", database_name.c_str());
+          return false;
+        }
+      }
+
+      ResultType result = catalog::Catalog::GetInstance()->DropDatabaseWithName(
+          database_name, current_txn);
+      current_txn->SetResult(result);
+
+      if (current_txn->GetResult() == ResultType::SUCCESS) {
+        LOG_TRACE("Dropping database succeeded!");
+      } else {
+        LOG_TRACE("Result is: %s",
+                  ResultTypeToString(current_txn->GetResult()).c_str());
+      }
+      break;
+    }
     case DropType::TABLE: {
+      auto database_name = node.GetDatabaseName();
       auto table_name = node.GetTableName();
       auto current_txn = context_->GetTransaction();
 
       if (node.IsMissing()) {
         try {
           auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-              DEFAULT_DB_NAME, table_name, current_txn);
+              database_name, table_name, current_txn);
         } catch (CatalogException &e) {
           LOG_TRACE("Table %s does not exist.", table_name.c_str());
           return false;
@@ -58,7 +84,7 @@ bool DropExecutor::DExecute() {
       }
 
       ResultType result = catalog::Catalog::GetInstance()->DropTable(
-          DEFAULT_DB_NAME, table_name, current_txn);
+          database_name, table_name, current_txn);
       current_txn->SetResult(result);
 
       if (current_txn->GetResult() == ResultType::SUCCESS) {
@@ -70,13 +96,14 @@ bool DropExecutor::DExecute() {
       break;
     }
     case DropType::TRIGGER: {
+      auto database_name = node.GetDatabaseName();
       std::string table_name = node.GetTableName();
       std::string trigger_name = node.GetTriggerName();
 
       auto current_txn = context_->GetTransaction();
 
       ResultType result = catalog::TriggerCatalog::GetInstance().DropTrigger(
-          DEFAULT_DB_NAME, table_name, trigger_name, current_txn);
+          database_name, table_name, trigger_name, current_txn);
       current_txn->SetResult(result);
 
       if (current_txn->GetResult() == ResultType::SUCCESS) {

@@ -147,6 +147,9 @@ TEST_F(DropTests, DroppingTrigger) {
   parser::DropStatement drop_statement(
       parser::DropStatement::EntityType::kTrigger, "department_table",
       "update_dept_name");
+
+  drop_statement.TryBindDatabaseName(DEFAULT_DB_NAME);
+
   planner::DropPlan drop_plan(&drop_statement);
 
   // Execute the create trigger

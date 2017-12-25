@@ -50,7 +50,6 @@ class DropStatement : public TableRefStatement {
   }
 
   EntityType type;
-  std::string database_name;
   std::string index_name;
   std::string prep_stmt;
   bool missing;
