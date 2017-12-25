@@ -100,7 +100,7 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   // Run binder
   auto bind_node_visitor =
       make_shared<binder::BindNodeVisitor>(txn, default_database_name);
-  bind_node_visitor->BindNameToNode(parse_tree);
+  bind_node_visitor->BindNameToNode(parse_tree, catalog);
 
   metadata_.catalog = catalog;
   // Handle ddl statement

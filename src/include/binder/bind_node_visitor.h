@@ -32,6 +32,9 @@ class AggregateExpression;
 namespace parser {
 class SQLStatement;
 }  // namespace parser
+namespace catalog {
+class Catalog;
+}
 
 namespace binder {
 
@@ -40,7 +43,9 @@ class BindNodeVisitor : public SqlNodeVisitor {
   BindNodeVisitor(concurrency::TransactionContext *txn,
                   std::string default_database_name);
 
-  void BindNameToNode(parser::SQLStatement *tree);
+  void BindNameToNode(
+      parser::SQLStatement *tree,
+      catalog::Catalog *catalog = catalog::Catalog::GetInstance());
   void Visit(parser::SelectStatement *) override;
 
   // Some sub query nodes inside SelectStatement
@@ -79,6 +84,7 @@ class BindNodeVisitor : public SqlNodeVisitor {
   std::shared_ptr<BinderContext> context_;
   concurrency::TransactionContext *txn_;
   std::string default_database_name_;
+  catalog::Catalog *catalog_;
 };
 
 }  // namespace binder

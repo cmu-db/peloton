@@ -33,12 +33,15 @@ BindNodeVisitor::BindNodeVisitor(concurrency::TransactionContext *txn,
   context_ = nullptr;
 }
 
-void BindNodeVisitor::BindNameToNode(parser::SQLStatement *tree) {
+void BindNodeVisitor::BindNameToNode(
+    parser::SQLStatement *tree,
+    catalog::Catalog *catalog) {
+  catalog_ = catalog;
   tree->Accept(this);
 }
 
 void BindNodeVisitor::Visit(parser::SelectStatement *node) {
-  context_ = std::make_shared<BinderContext>(context_);
+  context_ = std::make_shared<BinderContext>(context_, catalog_);
   if (node->from_table != nullptr) {
     node->from_table->Accept(this);
   }
@@ -112,7 +115,7 @@ void BindNodeVisitor::Visit(parser::TableRef *node) {
   // Join
   else if (node->join != nullptr) {
     node->join->Accept(this);
-  // Multiple tables
+    // Multiple tables
   } else if (!node->list.empty()) {
     for (auto &table : node->list) table->Accept(this);
   }
@@ -139,7 +142,7 @@ void BindNodeVisitor::Visit(parser::OrderDescription *node) {
 }
 
 void BindNodeVisitor::Visit(parser::UpdateStatement *node) {
-  context_ = std::make_shared<BinderContext>();
+  context_ = std::make_shared<BinderContext>(nullptr, catalog_);
 
   node->table->Accept(this);
   if (node->where != nullptr) node->where->Accept(this);
@@ -154,7 +157,7 @@ void BindNodeVisitor::Visit(parser::UpdateStatement *node) {
 }
 
 void BindNodeVisitor::Visit(parser::DeleteStatement *node) {
-  context_ = std::make_shared<BinderContext>();
+  context_ = std::make_shared<BinderContext>(nullptr, catalog_);
   node->TryBindDatabaseName(default_database_name_);
   context_->AddRegularTable(node->GetDatabaseName(), node->GetTableName(),
                             node->GetTableName(), txn_);
@@ -271,9 +274,8 @@ void BindNodeVisitor::Visit(expression::FunctionExpression *expr) {
   for (size_t i = 0; i < expr->GetChildrenSize(); i++)
     argtypes.push_back(expr->GetChild(i)->GetValueType());
   // Check and set the function ptr
-  auto catalog = catalog::Catalog::GetInstance();
   const catalog::FunctionData &func_data =
-      catalog->GetFunction(expr->GetFuncName(), argtypes);
+      catalog_->GetFunction(expr->GetFuncName(), argtypes);
   LOG_DEBUG("Function %s found in the catalog", func_data.func_name_.c_str());
   LOG_DEBUG("Argument num: %ld", func_data.argument_types_.size());
   expr->SetFunctionExpressionParameters(func_data.func_, func_data.return_type_,

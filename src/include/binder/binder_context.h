@@ -14,6 +14,7 @@
 #include <unordered_map>
 
 #include "type/types.h"
+#include "catalog/catalog.h"
 
 namespace peloton {
 
@@ -39,8 +40,8 @@ namespace binder {
  */
 class BinderContext {
  public:
-  BinderContext(std::shared_ptr<BinderContext> upper_context = nullptr)
-      : upper_context_(upper_context) {
+  BinderContext(std::shared_ptr<BinderContext> upper_context = nullptr, catalog::Catalog* catalog = catalog::Catalog::GetInstance())
+      : upper_context_(upper_context), catalog_(catalog) {
     if (upper_context != nullptr) depth_ = upper_context->depth_ + 1;
   }
 
@@ -161,6 +162,7 @@ class BinderContext {
       nested_table_alias_map_;
   std::shared_ptr<BinderContext> upper_context_;
   int depth_ = 0;
+  catalog::Catalog* catalog_;
 };
 
 }  // namespace binder
