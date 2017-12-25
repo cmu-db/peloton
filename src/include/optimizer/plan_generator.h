@@ -13,7 +13,6 @@
 #pragma once
 
 #include "optimizer/operator_visitor.h"
-#include "properties.h"
 
 namespace peloton {
 
@@ -24,6 +23,7 @@ class NestedLoopJoinPlan;
 class ProjectionPlan;
 class SeqScanPlan;
 class AggregatePlan;
+class PropertySet;
 }
 
 namespace optimizer {

@@ -28,8 +28,6 @@ namespace optimizer {
 /**
  * @brief Generate child property requirements for physical operators, return pairs of
  *  possible input output properties pairs.
- *  This is the new version of ChildPropertyGenerator, as the old version should
- *  be eventually deprecated
  */
 class ChildPropertyDeriver : public OperatorVisitor {
  public:

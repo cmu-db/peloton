@@ -15,8 +15,6 @@
 #include <memory>
 #include <vector>
 
-#include "include/optimizer/group.h"
-
 namespace peloton {
 namespace optimizer {
 
@@ -30,6 +28,7 @@ class GroupExpression;
 class OptimizerMetadata;
 class PropertySet;
 enum class RewriteRuleSetName : uint32_t;
+using GroupID = int32_t;
 
 enum class OptimizerTaskType {
   OPTIMIZE_GROUP,

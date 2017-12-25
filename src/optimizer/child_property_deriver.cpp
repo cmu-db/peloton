@@ -51,7 +51,8 @@ void ChildPropertyDeriver::Visit(const PhysicalIndexScan *op) {
   storage::DataTable *target_table = op->table_;
   for (auto prop : requirements_->Properties()) {
     if (prop->Type() == PropertyType::SORT) {
-      // Walk through all indices in the table, check if
+      // Walk through all indices in the table, check if any of the index could
+      // provide the sort property
       // TODO(boweic) : for now we only consider index built on one column since
       // from the current interface we cannot know the order of column in the
       // index

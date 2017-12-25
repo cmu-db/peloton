@@ -14,9 +14,6 @@
 
 #include "optimizer/operator_visitor.h"
 
-#include "properties.h"
-#include "memo.h"
-
 namespace peloton {
 
 namespace planner {
@@ -30,10 +27,16 @@ class AggregatePlan;
 
 namespace optimizer {
 class OperatorExpression;
+class Memo;
 }
 
 namespace optimizer {
 
+/**
+ * @brief Generate input and output columns based on the required columns,
+ * required properties and the current group expression. We use the input/output
+ * columns to eventually generate plans
+ */
 class InputColumnDeriver : public OperatorVisitor {
  public:
   InputColumnDeriver();
@@ -97,7 +100,8 @@ class InputColumnDeriver : public OperatorVisitor {
   void JoinHelper(const BaseOperatorNode *op);
 
   /**
-   * @brief Some operators, for example limit, directly pass down column property
+   * @brief Some operators, for example limit, directly pass down column
+   * property
    */
   void Passdown();
   GroupExpression *gexpr_;
@@ -112,7 +116,7 @@ class InputColumnDeriver : public OperatorVisitor {
       output_input_cols_;
 
   /**
-   * @brief The required columns 
+   * @brief The required columns
    */
   std::vector<expression::AbstractExpression *> required_cols_;
 

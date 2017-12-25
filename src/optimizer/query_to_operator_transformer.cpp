@@ -45,6 +45,9 @@ QueryToOperatorTransformer::ConvertToOpExpression(parser::SQLStatement *op) {
 }
 
 void QueryToOperatorTransformer::Visit(parser::SelectStatement *op) {
+  // We do not visit the select list of a base table because the column
+  // information is derived before the plan generation, at this step we
+  // don't need to derive that
   auto pre_predicates = std::move(predicates_);
   auto pre_depth = depth_;
   depth_ = op->depth;
@@ -162,6 +165,9 @@ void QueryToOperatorTransformer::Visit(parser::TableRef *node) {
     // Store previous context
 
     // Construct query derived table predicates
+    // i.e. the mapping from column name to the underlying expression in the
+    // sub-query. This is needed to generate input/output information for
+    // subqueries
     auto table_alias = StringUtil::Lower(node->GetTableAlias());
     auto alias_to_expr_map =
         util::ConstructSelectElementMap(node->select->select_list);
