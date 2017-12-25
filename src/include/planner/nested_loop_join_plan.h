@@ -15,9 +15,11 @@
 #include "planner/abstract_join_plan.h"
 
 namespace peloton {
+
 namespace expression {
 class AbstractExpression;
-}
+}  // namespace expression
+
 namespace planner {
 
 class ProjectInfo;
@@ -28,42 +30,24 @@ class NestedLoopJoinPlan : public AbstractJoinPlan {
       JoinType join_type,
       std::unique_ptr<const expression::AbstractExpression> &&predicate,
       std::unique_ptr<const ProjectInfo> &&proj_info,
-      std::shared_ptr<const catalog::Schema> &proj_schema);
-
-  // This is added for passing the left and right join column ids
-  NestedLoopJoinPlan(
-      JoinType join_type,
-      std::unique_ptr<const expression::AbstractExpression> &&predicate,
-      std::unique_ptr<const ProjectInfo> &&proj_info,
       std::shared_ptr<const catalog::Schema> &proj_schema,
-      std::vector<oid_t> &join_column_ids_left,
-      std::vector<oid_t> &join_column_ids_right);
+      const std::vector<oid_t> &join_column_ids_left,
+      const std::vector<oid_t> &join_column_ids_right);
 
-  // Nested loops don't need to perform any attribute binding
-  void HandleSubplanBinding(UNUSED_ATTRIBUTE bool,
-                            UNUSED_ATTRIBUTE const BindingContext &) override {}
+  void HandleSubplanBinding(bool from_left, const BindingContext &ctx) override;
 
-  inline PlanNodeType GetPlanNodeType() const override { return PlanNodeType::NESTLOOP; }
+  PlanNodeType GetPlanNodeType() const override {
+    return PlanNodeType::NESTLOOP;
+  }
 
   const std::string GetInfo() const override { return "NestedLoopJoin"; }
 
-  std::unique_ptr<AbstractPlan> Copy() const override {
-    std::unique_ptr<const expression::AbstractExpression> predicate_copy(
-        GetPredicate()->Copy());
-
-    std::shared_ptr<const catalog::Schema> schema_copy(
-        catalog::Schema::CopySchema(GetSchema()));
-
-    NestedLoopJoinPlan *new_plan =
-        new NestedLoopJoinPlan(GetJoinType(), std::move(predicate_copy),
-                               GetProjInfo()->Copy(), schema_copy);
-
-    return std::unique_ptr<AbstractPlan>(new_plan);
-  }
+  std::unique_ptr<AbstractPlan> Copy() const override;
 
   const std::vector<oid_t> &GetJoinColumnsLeft() const {
     return join_column_ids_left_;
   }
+
   const std::vector<oid_t> &GetJoinColumnsRight() const {
     return join_column_ids_right_;
   }
