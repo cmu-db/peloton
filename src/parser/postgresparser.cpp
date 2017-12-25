@@ -1081,6 +1081,9 @@ parser::SQLStatement *PostgresParser::CreateDbTransform(CreatedbStmt *root) {
       new parser::CreateStatement(CreateStatement::kDatabase);
   result->table_info_.reset(new parser::TableInfo());
   result->table_info_->database_name = root->dbname;
+
+  // TODO(Tianyi) More options need to be converted
+
   return result;
 }
 
@@ -1104,7 +1107,9 @@ parser::DropStatement *PostgresParser::DropTransform(DropStmt *root) {
 parser::DropStatement* PostgresParser::DropDbTransform(DropdbStmt* root) {
   parser::DropStatement* result = 
       new parser::DropStatement(DropStatement::kDatabase);
-  result->database_name = root->dbname;
+  
+  result->table_info_.reset(new parser::TableInfo());
+  result->table_info_->database_name = root->dbname;
   result->missing = root->missing_ok;
   return result;
 }

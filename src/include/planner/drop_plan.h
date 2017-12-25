@@ -48,6 +48,8 @@ class DropPlan : public AbstractPlan {
     return std::unique_ptr<AbstractPlan>(new DropPlan(table_name));
   }
 
+  std::string GetDatabaseName() const { return database_name; }
+
   std::string GetTableName() const { return table_name; }
 
   std::string GetTriggerName() const { return trigger_name; }
