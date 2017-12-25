@@ -1114,6 +1114,8 @@ void Catalog::InitializeFunctions() {
           type::TypeId::TIMESTAMP, internal_lang, "DateTrunc",
           function::BuiltInFuncType{OperatorId::DateTrunc,
                                     function::TimestampFunctions::_DateTrunc},
+          txn);
+          
       // add now()
       AddBuiltinFunction(
           "now", {},
