@@ -47,6 +47,7 @@ set(TESTING_UTIL_TXN        ${PROJECT_SOURCE_DIR}/test/concurrency/testing_trans
 set(TESTING_UTIL_STATS      ${PROJECT_SOURCE_DIR}/test/statistics/testing_stats_util.cpp)
 set(TESTING_UTIL_SQL        ${PROJECT_SOURCE_DIR}/test/sql/testing_sql_util.cpp)
 set(TESTING_UTIL_INDEX      ${PROJECT_SOURCE_DIR}/test/index/testing_index_util.cpp)
+set(TESTING_UTIL_ART      ${PROJECT_SOURCE_DIR}/test/index/testing_art_util.cpp)
 set(TESTING_UTIL_CODEGEN ${PROJECT_SOURCE_DIR}/test/codegen/testing_codegen_util.cpp)
 
 add_library(peloton-test-common EXCLUDE_FROM_ALL ${gmock_srcs} ${HARNESS}
@@ -56,6 +57,7 @@ add_library(peloton-test-common EXCLUDE_FROM_ALL ${gmock_srcs} ${HARNESS}
             ${TESTING_UTIL_TXN}
             ${TESTING_UTIL_STATS}
             ${TESTING_UTIL_INDEX}
+            ${TESTING_UTIL_ART}
             ${TESTING_UTIL_SQL}
             ${TESTING_UTIL_CODEGEN}
 )

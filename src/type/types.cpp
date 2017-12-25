@@ -827,6 +827,9 @@ std::string IndexTypeToString(IndexType type) {
     case IndexType::SKIPLIST: {
       return "SKIPLIST";
     }
+    case IndexType::ART: {
+      return "ART";
+    }
     default: {
       throw ConversionException(
           StringUtil::Format("No string conversion for IndexType value '%d'",
@@ -846,6 +849,8 @@ IndexType StringToIndexType(const std::string &str) {
     return IndexType::HASH;
   } else if (upper_str == "SKIPLIST") {
     return IndexType::SKIPLIST;
+  } else if (upper_str == "ART") {
+    return IndexType::ART;
   } else {
     throw ConversionException(StringUtil::Format(
         "No IndexType conversion from string '%s'", upper_str.c_str()));

@@ -20,6 +20,7 @@
 #include "index/index_factory.h"
 #include "index/index_key.h"
 #include "index/skiplist_index.h"
+#include "index/art_index.h"
 
 namespace peloton {
 namespace index {
@@ -76,6 +77,11 @@ Index *IndexFactory::GetIndex(IndexMetadata *metadata) {
       index = IndexFactory::GetSkipListGenericKeyIndex(metadata);
     }
 
+    // ART
+  } else if (index_type == IndexType::ART) {
+    LOG_INFO("creating an art index!");
+    index = IndexFactory::GetARTIntsKeyIndex(metadata);
+
   // -----------------------
   // ERROR
   // -----------------------
@@ -84,6 +90,19 @@ Index *IndexFactory::GetIndex(IndexMetadata *metadata) {
   }
   PL_ASSERT(index != nullptr);
 
+  return (index);
+}
+
+
+Index *IndexFactory::GetARTIntsKeyIndex(IndexMetadata *metadata) {
+  // Our new Index!
+  Index *index = nullptr;
+
+  index = new ArtIndex(metadata);
+
+#ifdef LOG_TRACE_ENABLED
+  LOG_TRACE("%s", IndexFactory::GetInfo(metadata, comparatorType).c_str());
+#endif
   return (index);
 }
 
