@@ -14,6 +14,7 @@
 
 #include <string>
 #include <utility>
+#include <unordered_map>
 
 #include <event2/buffer.h>
 #include <event2/bufferevent.h>
@@ -25,54 +26,6 @@
 
 namespace peloton {
 namespace network {
-/**
- * Static utility class for some common error handling code
- */
-class ErrorUtil {
-public:
-  ErrorUtil() = delete;
-
-  static void LogErrno() {
-    switch (errno) {
-      case EINTR:
-        LOG_TRACE("Error Writing: EINTR");
-        break;
-      case EAGAIN:
-        LOG_TRACE("Error Writing: EAGAIN");
-        break;
-      case EBADF:
-        LOG_TRACE("Error Writing: EBADF");
-        break;
-      case EDESTADDRREQ:
-        LOG_TRACE("Error Writing: EDESTADDRREQ");
-        break;
-      case EDQUOT:
-        LOG_TRACE("Error Writing: EDQUOT");
-        break;
-      case EFAULT:
-        LOG_TRACE("Error Writing: EFAULT");
-        break;
-      case EFBIG:
-        LOG_TRACE("Error Writing: EFBIG");
-        break;
-      case EINVAL:
-        LOG_TRACE("Error Writing: EINVAL");
-        break;
-      case EIO:
-        LOG_TRACE("Error Writing: EIO");
-        break;
-      case ENOSPC:
-        LOG_TRACE("Error Writing: ENOSPC");
-        break;
-      case EPIPE:
-        LOG_TRACE("Error Writing: EPIPE");
-        break;
-      default:
-        LOG_TRACE("Error Writing: UNKNOWN");
-    }
-  }
-};
-
 /**
  * Static utility class with wrappers for libevent functions.
  *

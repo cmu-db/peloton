@@ -26,7 +26,7 @@
 #include "common/logger.h"
 #include "container/lock_free_queue.h"
 #include "network_state.h"
-#include "network/error_util.h"
+#include "error_util.h"
 
 namespace peloton {
 namespace network {
@@ -160,7 +160,7 @@ public:
     return RegisterEvent(-1, EV_PERSIST, callback, arg);
   }
 
-// TODO(tianyu): The original network code seems to do this as an optimization. I am leaving this out until we get numbers
+  // TODO(tianyu): The original network code seems to do this as an optimization. I am leaving this out until we get numbers
   void UpdateEvent(struct event *event,
                    int fd,
                    short flags,
@@ -172,6 +172,7 @@ public:
     EventUtil::EventAssign(event, base_, fd, flags, callback, arg);
     EventUtil::EventAdd(event, timeout);
   }
+
   void UpdateManualEvent(struct event *event, event_callback_fn callback, void *arg) {
     UpdateEvent(event, -1, EV_PERSIST, callback, arg);
   }

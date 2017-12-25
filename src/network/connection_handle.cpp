@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <unistd.h>
+#include <cstring>
 
 #include "network/connection_handle.h"
 #include <include/network/postgres_protocol_handler.h>
@@ -226,7 +227,7 @@ Transition ConnectionHandle::FillReadBuffer() {
       } else if (bytes_read == 0) {
         return Transition::FINISH;
       } else if (bytes_read < 0) {
-        ErrorUtil::LogErrno();
+        LOG_ERROR("Error writing: %s", strerror(errno));
         // related to non-blocking?
         if (errno == EAGAIN || errno == EWOULDBLOCK) {
           // return whatever results we have
@@ -260,7 +261,7 @@ WriteState ConnectionHandle::FlushWriteBuffer() {
       }
       // Write failed
       if (written_bytes < 0) {
-        ErrorUtil::LogErrno();
+        LOG_ERROR("Error writing: %s", strerror(errno));
         if (errno == EINTR) {
           // interrupts are ok, try again
           written_bytes = 0;
