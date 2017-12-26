@@ -84,7 +84,7 @@ TEST_F(ZoneMapScanTest, ScanNoPredicates) {
 TEST_F(ZoneMapScanTest, SimplePredicate) {
   // SELECT a, b, c FROM table where a >= 20;
   // 1) Setup the predicate
-  std::unique_ptr<expression::AbstractExpression> a_gt_20 =
+  ExpressionPtr a_gt_20 =
       CmpGteExpr(ColRefExpr(type::TypeId::INTEGER, 0), ConstIntExpr(20));
   // 2) Setup the scan plan node
   auto &table = GetTestTable(TestTableId());
@@ -104,7 +104,7 @@ TEST_F(ZoneMapScanTest, SimplePredicate) {
 TEST_F(ZoneMapScanTest, PredicateOnNonOutputColumn) {
   // SELECT b FROM table where a >= 40;
   // 1) Setup the predicate
-  std::unique_ptr<expression::AbstractExpression> a_gt_40 =
+  ExpressionPtr a_gt_40 =
       CmpGteExpr(ColRefExpr(type::TypeId::INTEGER, 0), ConstIntExpr(40));
   // 2) Setup the scan plan node
   auto &table = GetTestTable(TestTableId());
@@ -125,10 +125,10 @@ TEST_F(ZoneMapScanTest, ScanwithConjunctionPredicate) {
   // SELECT a, b, c FROM table where a >= 20 and b = 21;
   // 1) Construct the components of the predicate
   // a >= 20
-  std::unique_ptr<expression::AbstractExpression> a_gt_20 =
+  ExpressionPtr a_gt_20 =
       CmpGteExpr(ColRefExpr(type::TypeId::INTEGER, 0), ConstIntExpr(20));
   // b = 21
-  std::unique_ptr<expression::AbstractExpression> b_eq_21 =
+  ExpressionPtr b_eq_21 =
       CmpEqExpr(ColRefExpr(type::TypeId::INTEGER, 1), ConstIntExpr(21));
   // a >= 20 AND b = 21
   auto *conj_eq = new expression::ConjunctionExpression(

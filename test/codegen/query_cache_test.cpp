@@ -32,8 +32,6 @@
 namespace peloton {
 namespace test {
 
-typedef std::unique_ptr<const expression::AbstractExpression> AbstractExprPtr;
-
 class QueryCacheTest : public PelotonCodeGenTest {
  public:
   QueryCacheTest() : PelotonCodeGenTest(), num_rows_to_insert(64) {
@@ -96,15 +94,15 @@ class QueryCacheTest : public PelotonCodeGenTest {
                              TestingExecutorUtil::GetColumnInfo(1),
                              TestingExecutorUtil::GetColumnInfo(2)}));
     // Left and right hash keys
-    std::vector<AbstractExprPtr> left_hash_keys;
+    std::vector<ConstExpressionPtr> left_hash_keys;
     left_hash_keys.emplace_back(
         new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0));
 
-    std::vector<AbstractExprPtr> right_hash_keys;
+    std::vector<ConstExpressionPtr> right_hash_keys;
     right_hash_keys.emplace_back(
         new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0));
 
-    std::vector<AbstractExprPtr> hash_keys;
+    std::vector<ConstExpressionPtr> hash_keys;
     hash_keys.emplace_back(
         new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 0));
 

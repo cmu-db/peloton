@@ -155,10 +155,9 @@ TEST_F(DeleteTranslatorTest, DeleteWithModuloPredicate) {
 
   auto b_col_exp = ColRefExpr(type::TypeId::INTEGER, 1);
   auto const_1_exp = ConstIntExpr(1);
-  auto b_mod_1 = std::unique_ptr<expression::AbstractExpression>{
-      new expression::OperatorExpression(
-          ExpressionType::OPERATOR_MOD, type::TypeId::DECIMAL,
-          b_col_exp.release(), const_1_exp.release())};
+  auto b_mod_1 = ExpressionPtr{new expression::OperatorExpression(
+      ExpressionType::OPERATOR_MOD, type::TypeId::DECIMAL, b_col_exp.release(),
+      const_1_exp.release())};
 
   // a = b % 1
   auto a_eq_b_mod_1 =

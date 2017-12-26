@@ -33,6 +33,12 @@
 namespace peloton {
 namespace test {
 
+using ExpressionPtr = std::unique_ptr<expression::AbstractExpression>;
+using ConstExpressionPtr =
+    std::unique_ptr<const expression::AbstractExpression>;
+
+using AbstractPlanPtr = std::unique_ptr<planner::AbstractPlan>;
+
 //===----------------------------------------------------------------------===//
 // Common base class for all codegen tests. This class four test tables that all
 // the codegen components use. Their ID's are available through the oid_t
@@ -58,6 +64,8 @@ class PelotonCodeGenTest : public PelotonTest {
   }
 
   // Create the schema (common among all tables)
+  catalog::Column GetTestColumn(uint32_t col_id) const;
+
   std::unique_ptr<catalog::Schema> CreateTestSchema(
       bool add_primary = false) const;
 
@@ -87,32 +95,19 @@ class PelotonCodeGenTest : public PelotonTest {
   //===--------------------------------------------------------------------===//
   // Helpers
   //===--------------------------------------------------------------------===//
-  std::unique_ptr<expression::AbstractExpression> ConstIntExpr(int64_t val);
+  ExpressionPtr ConstIntExpr(int64_t val);
 
-  std::unique_ptr<expression::AbstractExpression> ConstDecimalExpr(double val);
+  ExpressionPtr ConstDecimalExpr(double val);
 
-  std::unique_ptr<expression::AbstractExpression> ColRefExpr(type::TypeId type,
-                                                             uint32_t col_id);
+  ExpressionPtr ColRefExpr(type::TypeId type, uint32_t col_id);
 
-  std::unique_ptr<expression::AbstractExpression> CmpExpr(
-      ExpressionType cmp_type,
-      std::unique_ptr<expression::AbstractExpression> &&left,
-      std::unique_ptr<expression::AbstractExpression> &&right);
+  ExpressionPtr CmpExpr(ExpressionType cmp_type, ExpressionPtr &&left,
+                        ExpressionPtr &&right);
 
-  std::unique_ptr<expression::AbstractExpression> CmpLtExpr(
-      std::unique_ptr<expression::AbstractExpression> &&left,
-      std::unique_ptr<expression::AbstractExpression> &&right);
-
-  std::unique_ptr<expression::AbstractExpression> CmpGtExpr(
-      std::unique_ptr<expression::AbstractExpression> &&left,
-      std::unique_ptr<expression::AbstractExpression> &&right);
-  std::unique_ptr<expression::AbstractExpression> CmpGteExpr(
-      std::unique_ptr<expression::AbstractExpression> &&left,
-      std::unique_ptr<expression::AbstractExpression> &&right);
-
-  std::unique_ptr<expression::AbstractExpression> CmpEqExpr(
-      std::unique_ptr<expression::AbstractExpression> &&left,
-      std::unique_ptr<expression::AbstractExpression> &&right);
+  ExpressionPtr CmpLtExpr(ExpressionPtr &&left, ExpressionPtr &&right);
+  ExpressionPtr CmpGtExpr(ExpressionPtr &&left, ExpressionPtr &&right);
+  ExpressionPtr CmpGteExpr(ExpressionPtr &&left, ExpressionPtr &&right);
+  ExpressionPtr CmpEqExpr(ExpressionPtr &&left, ExpressionPtr &&right);
 
  private:
   storage::Database *test_db;
