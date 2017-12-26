@@ -25,9 +25,6 @@ namespace expression {
 
 class ComparisonExpression : public AbstractExpression {
  public:
-  // TODO: Should we delete left and right if they are not nullptr?
-  ~ComparisonExpression() {}
-
   ComparisonExpression(ExpressionType type)
       : AbstractExpression(type, type::TypeId::BOOLEAN) {}
 

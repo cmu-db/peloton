@@ -55,28 +55,42 @@ PelotonCodeGenTest::~PelotonCodeGenTest() {
   codegen::QueryCache::Instance().Clear();
 }
 
+catalog::Column PelotonCodeGenTest::GetTestColumn(uint32_t col_id) const {
+  PL_ASSERT(col_id < 4);
+  static const uint64_t int_size =
+      type::Type::GetTypeSize(type::TypeId::INTEGER);
+  static const uint64_t dec_size =
+      type::Type::GetTypeSize(type::TypeId::DECIMAL);
+
+  bool is_inlined = true;
+  if (col_id == 0) {
+    return catalog::Column{type::TypeId::INTEGER, int_size, "COL_A",
+                           is_inlined};
+  } else if (col_id == 1) {
+    return catalog::Column{type::TypeId::INTEGER, int_size, "COL_B",
+                           is_inlined};
+  } else if (col_id == 2) {
+    return catalog::Column{type::TypeId::DECIMAL, dec_size, "COL_C",
+                           is_inlined};
+  } else {
+    return catalog::Column{type::TypeId::VARCHAR, 25, "COL_D", !is_inlined};
+  }
+}
+
 // Create the test schema for all the tables
 std::unique_ptr<catalog::Schema> PelotonCodeGenTest::CreateTestSchema(
     bool add_primary) const {
-  bool is_inlined = true;
-
   // Create the columns
-  static const uint32_t int_size =
-      type::Type::GetTypeSize(type::TypeId::INTEGER);
-  static const uint32_t dec_size =
-      type::Type::GetTypeSize(type::TypeId::DECIMAL);
-  std::vector<catalog::Column> cols = {
-      catalog::Column{type::TypeId::INTEGER, int_size, "COL_A", is_inlined},
-      catalog::Column{type::TypeId::INTEGER, int_size, "COL_B", is_inlined},
-      catalog::Column{type::TypeId::DECIMAL, dec_size, "COL_C", is_inlined},
-      catalog::Column{type::TypeId::VARCHAR, 25, "COL_D", !is_inlined}};
+  std::vector<catalog::Column> cols = {GetTestColumn(0), GetTestColumn(1),
+                                       GetTestColumn(2), GetTestColumn(3)};
 
   // Add NOT NULL constraints on COL_A, COL_C, COL_D
   cols[0].AddConstraint(
       catalog::Constraint{ConstraintType::NOTNULL, "not_null"});
-  if (add_primary == true)
+  if (add_primary) {
     cols[0].AddConstraint(
         catalog::Constraint{ConstraintType::PRIMARY, "con_primary"});
+  }
   cols[2].AddConstraint(
       catalog::Constraint{ConstraintType::NOTNULL, "not_null"});
   cols[3].AddConstraint(
@@ -231,59 +245,52 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecuteCache(
   return stats;
 }
 
-std::unique_ptr<expression::AbstractExpression>
-PelotonCodeGenTest::ConstIntExpr(int64_t val) {
+ExpressionPtr PelotonCodeGenTest::ConstIntExpr(int64_t val) {
   auto *expr = new expression::ConstantValueExpression(
       type::ValueFactory::GetIntegerValue(val));
-  return std::unique_ptr<expression::AbstractExpression>{expr};
+  return ExpressionPtr{expr};
 }
 
-std::unique_ptr<expression::AbstractExpression>
-PelotonCodeGenTest::ConstDecimalExpr(double val) {
+ExpressionPtr PelotonCodeGenTest::ConstDecimalExpr(double val) {
   auto *expr = new expression::ConstantValueExpression(
       type::ValueFactory::GetDecimalValue(val));
-  return std::unique_ptr<expression::AbstractExpression>{expr};
+  return ExpressionPtr{expr};
 }
 
-std::unique_ptr<expression::AbstractExpression> PelotonCodeGenTest::ColRefExpr(
-    type::TypeId type, uint32_t col_id) {
+ExpressionPtr PelotonCodeGenTest::ColRefExpr(type::TypeId type,
+                                             uint32_t col_id) {
   auto *expr = new expression::TupleValueExpression(type, 0, col_id);
-  return std::unique_ptr<expression::AbstractExpression>{expr};
+  return ExpressionPtr{expr};
 }
 
-std::unique_ptr<expression::AbstractExpression> PelotonCodeGenTest::CmpExpr(
-    ExpressionType cmp_type,
-    std::unique_ptr<expression::AbstractExpression> &&left,
-    std::unique_ptr<expression::AbstractExpression> &&right) {
+ExpressionPtr PelotonCodeGenTest::CmpExpr(ExpressionType cmp_type,
+                                          ExpressionPtr &&left,
+                                          ExpressionPtr &&right) {
   auto *expr = new expression::ComparisonExpression(cmp_type, left.release(),
                                                     right.release());
-  return std::unique_ptr<expression::AbstractExpression>{expr};
+  return ExpressionPtr{expr};
 }
 
-std::unique_ptr<expression::AbstractExpression> PelotonCodeGenTest::CmpLtExpr(
-    std::unique_ptr<expression::AbstractExpression> &&left,
-    std::unique_ptr<expression::AbstractExpression> &&right) {
+ExpressionPtr PelotonCodeGenTest::CmpLtExpr(ExpressionPtr &&left,
+                                            ExpressionPtr &&right) {
   return CmpExpr(ExpressionType::COMPARE_LESSTHAN, std::move(left),
                  std::move(right));
 }
 
-std::unique_ptr<expression::AbstractExpression> PelotonCodeGenTest::CmpGtExpr(
-    std::unique_ptr<expression::AbstractExpression> &&left,
-    std::unique_ptr<expression::AbstractExpression> &&right) {
+ExpressionPtr PelotonCodeGenTest::CmpGtExpr(ExpressionPtr &&left,
+                                            ExpressionPtr &&right) {
   return CmpExpr(ExpressionType::COMPARE_GREATERTHAN, std::move(left),
                  std::move(right));
 }
 
-std::unique_ptr<expression::AbstractExpression> PelotonCodeGenTest::CmpGteExpr(
-    std::unique_ptr<expression::AbstractExpression> &&left,
-    std::unique_ptr<expression::AbstractExpression> &&right) {
+ExpressionPtr PelotonCodeGenTest::CmpGteExpr(ExpressionPtr &&left,
+                                             ExpressionPtr &&right) {
   return CmpExpr(ExpressionType::COMPARE_GREATERTHANOREQUALTO, std::move(left),
                  std::move(right));
 }
 
-std::unique_ptr<expression::AbstractExpression> PelotonCodeGenTest::CmpEqExpr(
-    std::unique_ptr<expression::AbstractExpression> &&left,
-    std::unique_ptr<expression::AbstractExpression> &&right) {
+ExpressionPtr PelotonCodeGenTest::CmpEqExpr(ExpressionPtr &&left,
+                                            ExpressionPtr &&right) {
   return CmpExpr(ExpressionType::COMPARE_EQUAL, std::move(left),
                  std::move(right));
 }
