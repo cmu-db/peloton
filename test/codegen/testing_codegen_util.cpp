@@ -20,6 +20,7 @@
 #include "executor/plan_executor.h"
 #include "executor/executor_context.h"
 #include "expression/comparison_expression.h"
+#include "expression/operator_expression.h"
 #include "expression/tuple_value_expression.h"
 #include "storage/table_factory.h"
 #include "codegen/query_cache.h"
@@ -263,6 +264,12 @@ ExpressionPtr PelotonCodeGenTest::ColRefExpr(type::TypeId type,
   return ExpressionPtr{expr};
 }
 
+ExpressionPtr PelotonCodeGenTest::ColRefExpr(type::TypeId type, bool left,
+                                             uint32_t col_id) {
+  return ExpressionPtr{
+      new expression::TupleValueExpression(type, !left, col_id)};
+}
+
 ExpressionPtr PelotonCodeGenTest::CmpExpr(ExpressionType cmp_type,
                                           ExpressionPtr &&left,
                                           ExpressionPtr &&right) {
@@ -293,6 +300,26 @@ ExpressionPtr PelotonCodeGenTest::CmpEqExpr(ExpressionPtr &&left,
                                             ExpressionPtr &&right) {
   return CmpExpr(ExpressionType::COMPARE_EQUAL, std::move(left),
                  std::move(right));
+}
+
+ExpressionPtr PelotonCodeGenTest::OpExpr(ExpressionType op_type,
+                                         type::TypeId type,
+                                         ExpressionPtr &&left,
+                                         ExpressionPtr &&right) {
+  switch (op_type) {
+    case ExpressionType::OPERATOR_PLUS:
+    case ExpressionType::OPERATOR_MINUS:
+    case ExpressionType::OPERATOR_MULTIPLY:
+    case ExpressionType::OPERATOR_DIVIDE:
+    case ExpressionType::OPERATOR_MOD: {
+      return ExpressionPtr{new expression::OperatorExpression(
+          op_type, type, left.release(), right.release())};
+      break;
+    }
+    default: {
+      throw Exception{"OpExpr only supports (+, -, *, /, %) operations"};
+    }
+  }
 }
 
 //===----------------------------------------------------------------------===//

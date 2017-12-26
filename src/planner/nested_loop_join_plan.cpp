@@ -31,9 +31,22 @@ NestedLoopJoinPlan::NestedLoopJoinPlan(
   join_column_ids_right_ = join_column_ids_right;
 }
 
-void NestedLoopJoinPlan::HandleSubplanBinding(
-    UNUSED_ATTRIBUTE bool from_left,
-    UNUSED_ATTRIBUTE const BindingContext &ctx) {}
+void NestedLoopJoinPlan::HandleSubplanBinding(bool from_left,
+                                              const BindingContext &ctx) {
+  if (from_left) {
+    for (const auto left_col_id : join_column_ids_left_) {
+      const auto *ai = ctx.Find(left_col_id);
+      PL_ASSERT(ai != nullptr);
+      join_ais_left_.push_back(ai);
+    }
+  } else {
+    for (const auto right_col_id : join_column_ids_right_) {
+      const auto *ai = ctx.Find(right_col_id);
+      PL_ASSERT(ai != nullptr);
+      join_ais_right_.push_back(ai);
+    }
+  }
+}
 
 std::unique_ptr<AbstractPlan> NestedLoopJoinPlan::Copy() const {
   std::unique_ptr<const expression::AbstractExpression> predicate_copy(
