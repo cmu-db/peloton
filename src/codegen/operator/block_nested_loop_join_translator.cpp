@@ -21,6 +21,32 @@
 namespace peloton {
 namespace codegen {
 
+/// This class implemented a block-wise nested loop join. It does this by using
+/// a buffer (in our case, a Sorter instance) into which tuples are buffered
+/// from the left side. If this buffer is full, we call a second, generated
+/// function that joins the buffer with all tuples from the right side. This
+/// generated "joinBuffer" function implements the nested-loop portion. The
+/// psuedocode for an INNER join would be:
+///
+/// function main():
+///   Buffer b
+///   for r in R:
+///     b.insert(r)
+///     if b.isFull():
+///       call joinBuffer(b)
+///       b.reset()
+///
+/// function joinBuffer(Buffer b):
+///   for s in S:
+///     for r in b:
+///       if pred(r, s):
+///         emit(r, s)
+///
+///
+/// To facilitate this process, we **GENERATE** the "joinBuffer" function as an
+/// auxilliary function. Inside this function, we call Produce() on the right
+/// child, which the join processes inside Consume()
+
 BlockNestedLoopJoinTranslator::BlockNestedLoopJoinTranslator(
     const planner::NestedLoopJoinPlan &nlj_plan, CompilationContext &context,
     Pipeline &pipeline)
@@ -68,8 +94,8 @@ void BlockNestedLoopJoinTranslator::DefineAuxiliaryFunctions() {
   FunctionBuilder joinBuffer{codegen.GetCodeContext(), "joinBuffer",
                              codegen.VoidType(), args};
   {
-    // All this function does it call produce on the right child
-    GetCompilationContext().Produce(*nlj_plan_.GetChild(1));
+    // All this function does is call produce on the right child
+    GetCompilationContext().Produce(*GetPlan().GetChild(1));
   }
   joinBuffer.ReturnAndFinish();
   join_buffer_func_ = joinBuffer.GetFunction();
@@ -84,9 +110,10 @@ std::string BlockNestedLoopJoinTranslator::GetName() const {
 }
 
 void BlockNestedLoopJoinTranslator::Produce() const {
-  GetCompilationContext().Produce(*nlj_plan_.GetChild(0));
+  // Let the left child produce tuples we'll batch-process in Consume()
+  GetCompilationContext().Produce(*GetPlan().GetChild(0));
 
-  // Flush any remaining tuples in buffer
+  // Flush any remaining buffered tuples through the join
   auto &codegen = GetCodeGen();
   auto *num_buffered_tuples =
       sorter_.GetNumberOfStoredTuples(codegen, LoadStatePtr(sorter_id_));
@@ -119,10 +146,10 @@ void BlockNestedLoopJoinTranslator::ConsumeFromLeft(
 
   // Construct tuple
   std::vector<Value> tuple;
-  for (const auto &left_key_col : nlj_plan_.GetJoinAIsLeft()) {
+  for (const auto &left_key_col : GetPlan().GetJoinAIsLeft()) {
     tuple.push_back(row.DeriveValue(codegen, left_key_col));
   }
-  for (const auto &left_non_key_col : nlj_plan_.GetLeftAttributes()) {
+  for (const auto &left_non_key_col : GetPlan().GetLeftAttributes()) {
     tuple.push_back(row.DeriveValue(codegen, left_non_key_col));
   }
   // Append tuple to buffer
@@ -135,8 +162,9 @@ void BlockNestedLoopJoinTranslator::ConsumeFromLeft(
       codegen->CreateICmpUGE(buf_size, codegen.Const32(max_buf_rows_));
   lang::If flush_buffer{codegen, flush_buffer_cond};
   {
-    // Flush
+    // Flush & reset sorter
     codegen.CallFunc(join_buffer_func_, {codegen.GetState()});
+    sorter_.Reset(codegen, sorter_ptr);
   }
   flush_buffer.EndIf();
 }
@@ -200,7 +228,7 @@ void BlockNestedLoopJoinTranslator::ConsumeFromRight(ConsumerContext &context,
                                                      RowBatch::Row &row) const {
   // At this point, the sorter instance has a buffer full of tuples. Let's
   // generate an inner loop.
-  BufferedTupleCallback callback{nlj_plan_, context, row};
+  BufferedTupleCallback callback{GetPlan(), context, row};
   sorter_.Iterate(GetCodeGen(), LoadStatePtr(sorter_id_), callback);
 }
 
