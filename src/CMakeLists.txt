@@ -13,9 +13,6 @@ if (capnp_files)
   add_library(peloton-capnp STATIC ${capnp_hdrs} ${capnp_srcs})
   set(Peloton_LINKER_LIBS peloton-capnp ${Peloton_LINKER_LIBS}) # note, crucial to prepend!
   peloton_default_properties(peloton-capnp)
-else()
-  add_library(peloton-capnp)
-  set_target_properties(peloton-capnp PROPERTIES LINKER_LANGUAGE CXX)
 endif()
 
 ##################################################################################
@@ -50,7 +47,7 @@ peloton_pickup_peloton_sources(${PROJECT_SOURCE_DIR})
 
 add_library(peloton SHARED ${srcs})
 add_dependencies(peloton libpg_query)
-target_link_libraries(peloton ${Peloton_LINKER_LIBS} peloton-capnp peloton-proto
+target_link_libraries(peloton ${Peloton_LINKER_LIBS}
     ${PROJECT_SOURCE_DIR}/third_party/libpg_query/libpg_query.a)
 
 peloton_default_properties(peloton)
