@@ -56,8 +56,8 @@ function(peloton_generate_export_configs)
 
   # Add targets to the build-tree export set
   export(TARGETS peloton peloton-proto FILE "${PROJECT_BINARY_DIR}/PelotonTargets.cmake")
-  if (peloton-capnp)
-    export(TARGETS peloton-capnp)
+  if (TARGET peloton-capnp)
+    export(TARGETS peloton-capnp APPEND FILE "${PROJECT_BINARY_DIR}/PelotonTargets.cmake")
   endif()
   export(PACKAGE Peloton)
 
