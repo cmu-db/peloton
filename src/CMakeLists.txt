@@ -10,6 +10,7 @@ set(CAPNPC_OUTPUT_DIR ${PROJECT_BINARY_DIR}/include/peloton/capnp)
 capnp_generate_cpp(capnp_srcs capnp_hdrs ${capnp_files})
 
 add_library(peloton-capnp STATIC ${capnp_hdrs} ${capnp_srcs})
+set_target_properties(peloton-capnp PROPERTIES LINKER_LANGUAGE CXX)
 set(Peloton_LINKER_LIBS peloton-capnp ${Peloton_LINKER_LIBS}) # note, crucial to prepend!
 peloton_default_properties(peloton-capnp)
 
