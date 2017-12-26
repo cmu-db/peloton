@@ -22,6 +22,7 @@ namespace codegen {
 // "complete" the function when the user wants to.
 //===----------------------------------------------------------------------===//
 class FunctionBuilder {
+  friend class CodeGen;
  public:
   // Constructor
   FunctionBuilder(
@@ -36,17 +37,20 @@ class FunctionBuilder {
   llvm::Value *GetArgumentByPosition(uint32_t index);
   size_t GetNumArguments() const { return func_->arg_size(); }
 
-  // Get the basic block where the function throws an overflow exception
-  llvm::BasicBlock *GetOverflowBB();
-
-  // Get the basic block where the function throws a divide by zero exception
-  llvm::BasicBlock *GetDivideByZeroBB();
-
   // Finish the current function
   void ReturnAndFinish(llvm::Value *res = nullptr);
 
   // Return the function we created in the code context
   llvm::Function *GetFunction() const { return func_; }
+
+ private:
+  llvm::BasicBlock *GetEntryBlock() const { return entry_bb_; }
+
+  // Get the basic block where the function throws an overflow exception
+  llvm::BasicBlock *GetOverflowBB();
+
+  // Get the basic block where the function throws a divide by zero exception
+  llvm::BasicBlock *GetDivideByZeroBB();
 
  private:
   // Has this function finished construction
