@@ -48,8 +48,16 @@ class NestedLoopJoinPlan : public AbstractJoinPlan {
     return join_column_ids_left_;
   }
 
+  const std::vector<const planner::AttributeInfo *> GetJoinAIsLeft() const {
+    return join_ais_left_;
+  }
+
   const std::vector<oid_t> &GetJoinColumnsRight() const {
     return join_column_ids_right_;
+  }
+
+  const std::vector<const planner::AttributeInfo *> GetJoinAIsRight() const {
+    return join_ais_right_;
   }
 
  private:
@@ -58,6 +66,7 @@ class NestedLoopJoinPlan : public AbstractJoinPlan {
   // corresponding column id in the result is column 3, then the value should
   // be 3 in  join_column_ids_left. The is specified when creating the plan.
   std::vector<oid_t> join_column_ids_left_;
+  std::vector<const planner::AttributeInfo *> join_ais_left_;
 
   // columns in right table for join predicate. This is also the columns in the
   // result. For example, you wan to do i_id = s_id, s_id must be in the output
@@ -66,6 +75,7 @@ class NestedLoopJoinPlan : public AbstractJoinPlan {
   // physical column id and pass this physical column id to SetTupleColumnValue
   // to update the corresponding column in the index predicate
   std::vector<oid_t> join_column_ids_right_;
+  std::vector<const planner::AttributeInfo *> join_ais_right_;
 
  private:
   DISALLOW_COPY_AND_MOVE(NestedLoopJoinPlan);
