@@ -53,6 +53,9 @@ class BlockNestedLoopJoinTranslator : public OperatorTranslator {
   void ConsumeFromRight(ConsumerContext &context, RowBatch::Row &row) const;
 
  private:
+  const planner::NestedLoopJoinPlan &GetPlan() const { return nlj_plan_; }
+
+ private:
   // The plan
   const planner::NestedLoopJoinPlan &nlj_plan_;
 

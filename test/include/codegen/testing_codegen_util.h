@@ -37,7 +37,8 @@ using ExpressionPtr = std::unique_ptr<expression::AbstractExpression>;
 using ConstExpressionPtr =
     std::unique_ptr<const expression::AbstractExpression>;
 
-using AbstractPlanPtr = std::unique_ptr<planner::AbstractPlan>;
+using PlanPtr = std::unique_ptr<planner::AbstractPlan>;
+using ConstPlanPtr = std::unique_ptr<const planner::AbstractPlan>;
 
 //===----------------------------------------------------------------------===//
 // Common base class for all codegen tests. This class four test tables that all
