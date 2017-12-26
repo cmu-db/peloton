@@ -81,6 +81,10 @@ class CodeGen {
   /// Wrapper for pointer for constant string
   llvm::Value *ConstStringPtr(const std::string &s) const;
 
+  llvm::Value *AllocateVariable(llvm::Type *type, const std::string &name);
+  llvm::Value *AllocateBuffer(llvm::Type *element_type, uint32_t num_elems,
+                              const std::string &name);
+
   // /Generate a call to the function with the provided name and arguments
   llvm::Value *CallFunc(llvm::Value *fn,
                         std::initializer_list<llvm::Value *> args);

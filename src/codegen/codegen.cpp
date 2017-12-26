@@ -76,6 +76,35 @@ llvm::Value *CodeGen::ConstStringPtr(const std::string &s) const {
   return ir_builder.CreateConstInBoundsGEP2_32(nullptr, ConstString(s), 0, 0);
 }
 
+llvm::Value *CodeGen::AllocateVariable(llvm::Type *type,
+                                       const std::string &name) {
+  PL_ASSERT(code_context_.GetCurrentFunction() != nullptr);
+
+  // Variable allocations must go into the functions entry block
+  auto *entry_block = code_context_.GetCurrentFunction()->GetEntryBlock();
+
+  // The allocation
+  return new llvm::AllocaInst(type, name, &entry_block->front());
+}
+
+llvm::Value *CodeGen::AllocateBuffer(llvm::Type *element_type,
+                                     uint32_t num_elems,
+                                     const std::string &name) {
+  // Allocate the array
+  auto *arr_type = ArrayType(element_type, num_elems);
+  auto *alloc = AllocateVariable(arr_type, "");
+
+  // The 'alloca' instruction returns a pointer to the allocated type. Since we
+  // are allocating an array of 'element_type' (e.g., i32[4]), we get back a
+  // double pointer (e.g., a i32**). Therefore, we introduce a GEP into the
+  // buffer to strip off the first pointer reference.
+
+  auto *arr = llvm::GetElementPtrInst::CreateInBounds(
+      arr_type, alloc, {Const32(0), Const32(0)}, name);
+  arr->insertAfter(llvm::cast<llvm::AllocaInst>(alloc));
+  return arr;
+}
+
 llvm::Value *CodeGen::CallFunc(llvm::Value *fn,
                                std::initializer_list<llvm::Value *> args) {
   return GetBuilder().CreateCall(fn, args);
