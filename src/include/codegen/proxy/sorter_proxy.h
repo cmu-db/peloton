@@ -23,14 +23,16 @@ PROXY(Sorter) {
   DECLARE_MEMBER(0, char *, buffer_start);
   DECLARE_MEMBER(1, char *, buffer_pos);
   DECLARE_MEMBER(2, char *, buffer_end);
-  DECLARE_MEMBER(3, uint32_t, tuple_size);
-  DECLARE_MEMBER(4, char *, comp_fn);
+  DECLARE_MEMBER(3, uint32_t, num_tuples);
+  DECLARE_MEMBER(4, uint32_t, tuple_size);
+  DECLARE_MEMBER(5, char *, comp_fn);
   DECLARE_TYPE;
 
-  // Proxy Init(), StoreInputTuple(), Sort(), and Destroy()
+  // Proxy methods in util::Sorter
   DECLARE_METHOD(Init);
   DECLARE_METHOD(StoreInputTuple);
   DECLARE_METHOD(Sort);
+  DECLARE_METHOD(Clear);
   DECLARE_METHOD(Destroy);
 };
 
