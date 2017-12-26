@@ -5,14 +5,18 @@
 # --[ Cap'nProto library
 
 file(GLOB capnp_files include/capnp/*.capnp)
-# the output folder for the compiled capnp headers and srouces
-set(CAPNPC_OUTPUT_DIR ${PROJECT_BINARY_DIR}/include/peloton/capnp)
-capnp_generate_cpp(capnp_srcs capnp_hdrs ${capnp_files})
+if (capnp_files)
+  # the output folder for the compiled capnp headers and srouces
+  set(CAPNPC_OUTPUT_DIR ${PROJECT_BINARY_DIR}/include/peloton/capnp)
+  capnp_generate_cpp(capnp_srcs capnp_hdrs ${capnp_files})
 
-add_library(peloton-capnp STATIC ${capnp_hdrs} ${capnp_srcs})
-set_target_properties(peloton-capnp PROPERTIES LINKER_LANGUAGE CXX)
-set(Peloton_LINKER_LIBS peloton-capnp ${Peloton_LINKER_LIBS}) # note, crucial to prepend!
-peloton_default_properties(peloton-capnp)
+  add_library(peloton-capnp STATIC ${capnp_hdrs} ${capnp_srcs})
+  set(Peloton_LINKER_LIBS peloton-capnp ${Peloton_LINKER_LIBS}) # note, crucial to prepend!
+  peloton_default_properties(peloton-capnp)
+else()
+  add_library(peloton-capnp)
+  set_target_properties(peloton-capnp PROPERTIES LINKER_LANGUAGE CXX)
+endif()
 
 ##################################################################################
 
