@@ -92,9 +92,6 @@ class BufferingConsumer : public QueryResultConsumer {
 
   // The slot in the runtime state to find our state context
   RuntimeState::StateID consumer_state_id_;
-
-  // The ID of our output tuple buffer state
-  RuntimeState::StateID tuple_output_state_id_;
 };
 
 }  // namespace codegen

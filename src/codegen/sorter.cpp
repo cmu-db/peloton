@@ -173,6 +173,10 @@ llvm::Value *Sorter::GetEndPosition(CodeGen &codegen,
       codegen->CreateConstInBoundsGEP2_32(sorter_type, sorter_ptr, 0, 1));
 }
 
+llvm::Value *Sorter::GetTupleSize(CodeGen &codegen) const {
+  return codegen.Const32(storage_format_.GetStorageSize());
+}
+
 //===----------------------------------------------------------------------===//
 // SORTER ACCESS
 //===----------------------------------------------------------------------===//
