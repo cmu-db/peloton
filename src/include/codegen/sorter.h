@@ -122,8 +122,7 @@ class Sorter {
 
  private:
   //===--------------------------------------------------------------------===//
-  // SORTER INSTANCE ACCESSORS
-  //
+  // ACCESSORS
   // TODO: We should codify access to instance memory variables using templates
   //       to something like: codegen.LoadMember<SorterProxy::start_pos>(...)
   //===--------------------------------------------------------------------===//
@@ -132,10 +131,7 @@ class Sorter {
                                 llvm::Value *sorter_ptr) const;
   llvm::Value *GetEndPosition(CodeGen &codegen, llvm::Value *sorter_ptr) const;
 
-  llvm::Value *GetTupleSize(CodeGen &codegen) const {
-    // TODO: Why 64-bit?
-    return codegen.Const32(storage_format_.GetStorageSize());
-  }
+  llvm::Value *GetTupleSize(CodeGen &codegen) const;
 
  private:
   // Compact storage to materialize things

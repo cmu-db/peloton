@@ -195,12 +195,6 @@ class HashGroupByTranslator : public OperatorTranslator {
   // The hash table
   OAHashTable hash_table_;
 
-  // The ID of the output vector (for vectorized result production)
-  RuntimeState::StateID output_vector_id_;
-
-  // The ID of the group-prefetch vector, if we're prefetching
-  RuntimeState::StateID prefetch_vector_id_;
-
   // The aggregation handler
   Aggregation aggregation_;
 };
