@@ -851,7 +851,7 @@ expression::AbstractExpression *PostgresParser::WhenTransform(Node *root) {
 
 // This helper function takes in a Postgres ColumnDef object and transforms
 // it into a Peloton ColumnDefinition object
-parser::ColumnDefinition *PostgresParser::ColumnDefTransform(ColumnDef *root) {
+void PostgresParser::ColumnDefTransform(ColumnDef *root, parser::CreateStatement* stmt) {
   TypeName *type_name = root->typeName;
   char *name =
       (reinterpret_cast<value *>(type_name->names->tail->data.ptr_value)
