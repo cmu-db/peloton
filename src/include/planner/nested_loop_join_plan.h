@@ -36,6 +36,10 @@ class NestedLoopJoinPlan : public AbstractJoinPlan {
 
   void HandleSubplanBinding(bool from_left, const BindingContext &ctx) override;
 
+  hash_t Hash() const override;
+
+  bool operator==(const AbstractPlan &rhs) const override;
+
   PlanNodeType GetPlanNodeType() const override {
     return PlanNodeType::NESTLOOP;
   }

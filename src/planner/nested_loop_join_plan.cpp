@@ -62,5 +62,31 @@ std::unique_ptr<AbstractPlan> NestedLoopJoinPlan::Copy() const {
   return std::unique_ptr<AbstractPlan>(new_plan);
 }
 
+hash_t NestedLoopJoinPlan::Hash() const {
+  hash_t hash = AbstractJoinPlan::Hash();
+
+  // In addition to everything, hash the left and right join columns
+  for (const auto &left_col_id : GetJoinColumnsLeft()) {
+    hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&left_col_id));
+  }
+  for (const auto &right_col_id : GetJoinColumnsRight()) {
+    hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&right_col_id));
+  }
+
+  return HashUtil::CombineHashes(hash, AbstractPlan::Hash());
+}
+
+bool NestedLoopJoinPlan::operator==(const AbstractPlan &rhs) const {
+  if (!AbstractJoinPlan::operator==(rhs)) {
+    return false;
+  }
+
+  const auto &other = static_cast<const NestedLoopJoinPlan &>(rhs);
+
+  return GetJoinColumnsLeft() == other.GetJoinColumnsLeft() &&
+         GetJoinColumnsRight() == other.GetJoinColumnsRight() &&
+         AbstractPlan::operator==(rhs);
+}
+
 }  // namespace planner
 }  // namespace peloton

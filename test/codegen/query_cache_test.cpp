@@ -10,22 +10,19 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "codegen/testing_codegen_util.h"
+
 #include "codegen/query_cache.h"
-#include "common/timer.h"
-#include "catalog/catalog.h"
 #include "codegen/testing_codegen_util.h"
 #include "codegen/type/decimal_type.h"
-#include "codegen/query_compiler.h"
-#include "common/harness.h"
-#include "expression/abstract_expression.h"
-#include "expression/comparison_expression.h"
+#include "common/timer.h"
+#include "catalog/catalog.h"
 #include "expression/conjunction_expression.h"
 #include "expression/operator_expression.h"
-#include "expression/parameter_value_expression.h"
-#include "expression/tuple_value_expression.h"
 #include "planner/aggregate_plan.h"
 #include "planner/hash_plan.h"
 #include "planner/hash_join_plan.h"
+#include "planner/nested_loop_join_plan.h"
 #include "planner/order_by_plan.h"
 #include "planner/seq_scan_plan.h"
 
@@ -113,10 +110,10 @@ class QueryCacheTest : public PelotonCodeGenTest {
     std::unique_ptr<planner::HashPlan> hash_plan{
         new planner::HashPlan(hash_keys)};
 
-    std::unique_ptr<planner::AbstractPlan> left_scan{new planner::SeqScanPlan(
-        &GetTestTable(TestTableId()), nullptr, {0, 1, 2})};
-    std::unique_ptr<planner::AbstractPlan> right_scan{new planner::SeqScanPlan(
-        &GetTestTable(RightTableId()), nullptr, {0, 1, 2})};
+    PlanPtr left_scan{new planner::SeqScanPlan(&GetTestTable(TestTableId()),
+                                               nullptr, {0, 1, 2})};
+    PlanPtr right_scan{new planner::SeqScanPlan(&GetTestTable(RightTableId()),
+                                                nullptr, {0, 1, 2})};
 
     hash_plan->AddChild(std::move(right_scan));
     hj_plan->AddChild(std::move(left_scan));
@@ -161,11 +158,51 @@ class QueryCacheTest : public PelotonCodeGenTest {
         std::move(gb_cols), output_schema, AggregateType::HASH)};
 
     // 7) The scan that feeds the aggregation
-    std::unique_ptr<planner::AbstractPlan> scan_plan{new planner::SeqScanPlan(
-        &GetTestTable(TestTableId()), nullptr, {0, 1})};
+    PlanPtr scan_plan{new planner::SeqScanPlan(&GetTestTable(TestTableId()),
+                                               nullptr, {0, 1})};
 
     agg_plan->AddChild(std::move(scan_plan));
     return agg_plan;
+  }
+
+  std::shared_ptr<planner::NestedLoopJoinPlan> GetBlockNestedLoopJoinPlan() {
+    // Output all columns
+    DirectMapList direct_map_list = {{0, std::make_pair(0, 0)},
+                                     {1, std::make_pair(0, 1)},
+                                     {2, std::make_pair(0, 2)},
+                                     {3, std::make_pair(1, 0)},
+                                     {4, std::make_pair(1, 1)},
+                                     {5, std::make_pair(1, 2)}};
+    std::unique_ptr<planner::ProjectInfo> projection{
+        new planner::ProjectInfo(TargetList{}, std::move(direct_map_list))};
+
+    // Output schema
+    auto schema = std::shared_ptr<const catalog::Schema>(new catalog::Schema(
+        {GetTestColumn(0), GetTestColumn(1), GetTestColumn(2), GetTestColumn(0),
+         GetTestColumn(1), GetTestColumn(2)}));
+
+    bool left_side = true;
+    auto left_a_col = ColRefExpr(type::TypeId::INTEGER, left_side, 0);
+    auto right_a_col = ColRefExpr(type::TypeId::INTEGER, !left_side, 0);
+    auto left_a_eq_right_a =
+        CmpGtExpr(std::move(left_a_col), std::move(right_a_col));
+
+    std::vector<oid_t> left_join_cols = {0};
+    std::vector<oid_t> right_join_cols = {0};
+    std::shared_ptr<planner::NestedLoopJoinPlan> nlj_plan{
+        new planner::NestedLoopJoinPlan(
+            JoinType::INNER, std::move(left_a_eq_right_a),
+            std::move(projection), schema, left_join_cols, right_join_cols)};
+
+    PlanPtr left_scan{new planner::SeqScanPlan(&GetTestTable(TestTableId()),
+                                               nullptr, {0, 1, 2})};
+    PlanPtr right_scan{new planner::SeqScanPlan(&GetTestTable(RightTableId()),
+                                                nullptr, {0, 1, 2})};
+
+    nlj_plan->AddChild(std::move(left_scan));
+    nlj_plan->AddChild(std::move(right_scan));
+
+    return nlj_plan;
   }
 
  private:
@@ -443,6 +480,47 @@ TEST_F(QueryCacheTest, CacheAggregatePlan) {
   planner::BindingContext context_3;
   agg_plan_3->PerformBinding(context_3);
   auto found = (codegen::QueryCache::Instance().Find(agg_plan_3) != nullptr);
+  EXPECT_FALSE(found);
+}
+
+TEST_F(QueryCacheTest, CacheNestedLoopJoinPlan) {
+  auto nlj_plan_1 = GetBlockNestedLoopJoinPlan();
+  auto nlj_plan_2 = GetBlockNestedLoopJoinPlan();
+
+  planner::BindingContext context_1, context_2;
+  nlj_plan_1->PerformBinding(context_1);
+  nlj_plan_2->PerformBinding(context_2);
+
+  auto hash_equal = (nlj_plan_1->Hash() == nlj_plan_2->Hash());
+  EXPECT_TRUE(hash_equal);
+
+  auto is_equal = (*nlj_plan_1.get() == *nlj_plan_2.get());
+  EXPECT_TRUE(is_equal);
+  EXPECT_EQ(0, codegen::QueryCache::Instance().GetCount());
+
+  codegen::BufferingConsumer buffer_1{{0, 1}, context_1};
+  codegen::BufferingConsumer buffer_2{{0, 1}, context_2};
+
+  // Compile and execute
+  bool cached;
+  CompileAndExecuteCache(nlj_plan_1, buffer_1, cached);
+  EXPECT_FALSE(cached);
+  EXPECT_EQ(1, codegen::QueryCache::Instance().GetCount());
+
+  // Compile and execute with the cached query
+  CompileAndExecuteCache(nlj_plan_2, buffer_2, cached);
+  EXPECT_TRUE(cached);
+
+  // Clean the query cache and leaves only one query
+  EXPECT_EQ(1, codegen::QueryCache::Instance().GetCount());
+  codegen::QueryCache::Instance().Clear();
+  EXPECT_EQ(0, codegen::QueryCache::Instance().GetCount());
+
+  // Check the correctness of LRU
+  auto nlj_plan_3 = GetBlockNestedLoopJoinPlan();
+  planner::BindingContext context_3;
+  nlj_plan_3->PerformBinding(context_3);
+  auto found = (codegen::QueryCache::Instance().Find(nlj_plan_3) != nullptr);
   EXPECT_FALSE(found);
 }
 

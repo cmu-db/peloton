@@ -45,7 +45,13 @@ class AbstractJoinPlan : public AbstractPlan {
     // Fuck off!
   }
 
+  void GetOutputColumns(std::vector<oid_t> &columns) const override;
+
   void PerformBinding(BindingContext &context) override;
+
+  hash_t Hash() const override;
+
+  bool operator==(const AbstractPlan &rhs) const;
 
   void VisitParameters(
       codegen::QueryParametersMap &map,
