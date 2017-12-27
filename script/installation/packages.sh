@@ -35,7 +35,7 @@ if [ "$DISTRO" = "UBUNTU" ]; then
         git \
         g++ \
         clang-3.7 \
-        cmake \
+        cmake3 \
         libgflags-dev \
         libprotobuf-dev \
         protobuf-compiler \
