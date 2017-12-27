@@ -47,6 +47,11 @@ class AbstractJoinPlan : public AbstractPlan {
 
   void PerformBinding(BindingContext &context) override;
 
+  void VisitParameters(
+      codegen::QueryParametersMap &map,
+      std::vector<peloton::type::Value> &values,
+      const std::vector<peloton::type::Value> &values_from_user) override;
+
   //===--------------------------------------------------------------------===//
   // Accessors
   //===--------------------------------------------------------------------===//

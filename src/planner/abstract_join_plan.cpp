@@ -54,5 +54,26 @@ void AbstractJoinPlan::PerformBinding(BindingContext &context) {
   }
 }
 
+void AbstractJoinPlan::VisitParameters(
+    codegen::QueryParametersMap &map, std::vector<peloton::type::Value> &values,
+    const std::vector<peloton::type::Value> &values_from_user) {
+  AbstractPlan::VisitParameters(map, values, values_from_user);
+
+  auto *predicate =
+      const_cast<expression::AbstractExpression *>(GetPredicate());
+  if (predicate != nullptr) {
+    predicate->VisitParameters(map, values, values_from_user);
+  }
+
+  auto *projection = const_cast<planner::ProjectInfo *>(GetProjInfo());
+  if (projection != nullptr && projection->IsNonTrivial()) {
+    for (const auto &target : projection->GetTargetList()) {
+      auto *derived_attr_expr =
+          const_cast<expression::AbstractExpression *>(target.second.expr);
+      derived_attr_expr->VisitParameters(map, values, values_from_user);
+    }
+  }
+}
+
 }  // namespace planner
 }  // namespace peloton
