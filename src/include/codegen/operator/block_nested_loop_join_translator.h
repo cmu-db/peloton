@@ -62,6 +62,9 @@ class BlockNestedLoopJoinTranslator : public OperatorTranslator {
   // The pipeline the left subtree of the plan belongs to
   Pipeline left_pipeline_;
 
+  // All the attributes from the left side that are materialized
+  std::vector<const planner::AttributeInfo *> unique_left_attributes_;
+
   // The memory space we use to buffer left input tuples. We use a util::Sorter
   // instance because it provides a simple API to append tuples into a buffer.
   // We **DO NOT** actually sort the input at all.

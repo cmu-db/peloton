@@ -107,6 +107,7 @@ class PelotonCodeGenTest : public PelotonTest {
                         ExpressionPtr &&right);
 
   ExpressionPtr CmpLtExpr(ExpressionPtr &&left, ExpressionPtr &&right);
+  ExpressionPtr CmpLteExpr(ExpressionPtr &&left, ExpressionPtr &&right);
   ExpressionPtr CmpGtExpr(ExpressionPtr &&left, ExpressionPtr &&right);
   ExpressionPtr CmpGteExpr(ExpressionPtr &&left, ExpressionPtr &&right);
   ExpressionPtr CmpEqExpr(ExpressionPtr &&left, ExpressionPtr &&right);

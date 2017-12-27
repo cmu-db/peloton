@@ -284,6 +284,12 @@ ExpressionPtr PelotonCodeGenTest::CmpLtExpr(ExpressionPtr &&left,
                  std::move(right));
 }
 
+ExpressionPtr PelotonCodeGenTest::CmpLteExpr(ExpressionPtr &&left,
+                                             ExpressionPtr &&right) {
+  return CmpExpr(ExpressionType::COMPARE_LESSTHANOREQUALTO, std::move(left),
+                 std::move(right));
+}
+
 ExpressionPtr PelotonCodeGenTest::CmpGtExpr(ExpressionPtr &&left,
                                             ExpressionPtr &&right) {
   return CmpExpr(ExpressionType::COMPARE_GREATERTHAN, std::move(left),

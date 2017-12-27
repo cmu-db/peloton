@@ -15,13 +15,14 @@
 
 #include "codegen/compilation_context.h"
 #include "codegen/function_builder.h"
+#include "codegen/operator/projection_translator.h"
 #include "codegen/proxy/sorter_proxy.h"
 #include "planner/nested_loop_join_plan.h"
 
 namespace peloton {
 namespace codegen {
 
-/// This class implemented a block-wise nested loop join. It does this by using
+/// This class implements a block-wise nested loop join. It does this by using
 /// a buffer (in our case, a Sorter instance) into which tuples are buffered
 /// from the left side. If this buffer is full, we call a second, generated
 /// function that joins the buffer with all tuples from the right side. This
@@ -54,27 +55,47 @@ BlockNestedLoopJoinTranslator::BlockNestedLoopJoinTranslator(
       nlj_plan_(nlj_plan),
       left_pipeline_(this),
       max_buf_rows_(256) {
-  // Prepare children
   PL_ASSERT(nlj_plan.GetChildrenSize() == 2 &&
-            "NLJ must have only two children");
+            "NLJ must have exactly two children");
+
+  // Prepare children
   context.Prepare(*nlj_plan.GetChild(0), left_pipeline_);
   context.Prepare(*nlj_plan.GetChild(1), pipeline);
 
+  // Prepare join predicate
   auto *predicate = nlj_plan.GetPredicate();
   PL_ASSERT(predicate != nullptr && "NLJ predicate cannot be NULL");
   context.Prepare(*predicate);
 
+  // Prepare projection (if need be)
+  auto *projection = nlj_plan.GetProjInfo();
+  if (projection != nullptr) {
+    ProjectionTranslator::PrepareProjection(context, *projection);
+  }
+
+  // Allocate our sorter in runtime state
   auto &runtime_state = context.GetRuntimeState();
   sorter_id_ =
       runtime_state.RegisterState("sorter", SorterProxy::GetType(GetCodeGen()));
 
-  std::vector<type::Type> left_input_desc;
+  // Collect all unique attributes from the left side
   for (const auto *ai : nlj_plan.GetJoinAIsLeft()) {
-    left_input_desc.push_back(ai->type);
+    unique_left_attributes_.push_back(ai);
   }
   for (const auto *ai : nlj_plan.GetLeftAttributes()) {
+    if (std::find(unique_left_attributes_.begin(),
+                  unique_left_attributes_.end(),
+                  ai) == unique_left_attributes_.end()) {
+      unique_left_attributes_.push_back(ai);
+    }
+  }
+
+  // Construct the sorter
+  std::vector<type::Type> left_input_desc;
+  for (const auto *ai : unique_left_attributes_) {
     left_input_desc.push_back(ai->type);
   }
+
   sorter_ = Sorter{GetCodeGen(), left_input_desc};
 }
 
@@ -146,12 +167,10 @@ void BlockNestedLoopJoinTranslator::ConsumeFromLeft(
 
   // Construct tuple
   std::vector<Value> tuple;
-  for (const auto &left_key_col : GetPlan().GetJoinAIsLeft()) {
-    tuple.push_back(row.DeriveValue(codegen, left_key_col));
+  for (const auto &left_ai : unique_left_attributes_) {
+    tuple.push_back(row.DeriveValue(codegen, left_ai));
   }
-  for (const auto &left_non_key_col : GetPlan().GetLeftAttributes()) {
-    tuple.push_back(row.DeriveValue(codegen, left_non_key_col));
-  }
+
   // Append tuple to buffer
   auto *sorter_ptr = LoadStatePtr(sorter_id_);
   sorter_.Append(codegen, sorter_ptr, tuple);
@@ -174,8 +193,10 @@ namespace {
 class BufferedTupleCallback : public Sorter::IterateCallback {
  public:
   // Constructor
-  BufferedTupleCallback(const planner::NestedLoopJoinPlan &plan,
-                        ConsumerContext &ctx, RowBatch::Row &row);
+  BufferedTupleCallback(
+      const planner::NestedLoopJoinPlan &plan,
+      const std::vector<const planner::AttributeInfo *> &left_attributes,
+      ConsumerContext &ctx, RowBatch::Row &row);
 
   // The callback invoked for each tuple in the sorter/buffer
   void ProcessEntry(
@@ -185,6 +206,8 @@ class BufferedTupleCallback : public Sorter::IterateCallback {
  private:
   // The plan
   const planner::NestedLoopJoinPlan &plan_;
+  // The attributes produced by the left child
+  const std::vector<const planner::AttributeInfo *> &left_attributes_;
   // The consumer context
   ConsumerContext &ctx_;
   // The current "outer" row
@@ -192,31 +215,36 @@ class BufferedTupleCallback : public Sorter::IterateCallback {
 };
 
 inline BufferedTupleCallback::BufferedTupleCallback(
-    const planner::NestedLoopJoinPlan &plan, ConsumerContext &ctx,
-    RowBatch::Row &row)
-    : plan_(plan), ctx_(ctx), row_(row) {}
+    const planner::NestedLoopJoinPlan &plan,
+    const std::vector<const planner::AttributeInfo *> &left_attributes,
+    ConsumerContext &ctx, RowBatch::Row &row)
+    : plan_(plan), left_attributes_(left_attributes), ctx_(ctx), row_(row) {}
 
+// This function is called for each tuple in the BNLJ buffer.
 inline void BufferedTupleCallback::ProcessEntry(
     CodeGen &codegen, const std::vector<codegen::Value> &left_tuple) const {
-  const auto &left_join_key_cols = plan_.GetJoinAIsLeft();
-  const auto &left_non_key_cols = plan_.GetLeftAttributes();
-  PL_ASSERT(left_tuple.size() ==
-            (left_join_key_cols.size() + left_non_key_cols.size()));
+  PL_ASSERT(left_tuple.size() == left_attributes_.size());
 
-  // Add join keys to row first to check the predicate
-  for (size_t i = 0; i < left_join_key_cols.size(); i++) {
-    row_.RegisterAttributeValue(left_join_key_cols[i], left_tuple[i]);
+  // Add all the attributes from left tuple (from the sorter) into the row
+  // coming from the right input side. We need to do this in order to evaluate
+  // the predicate.
+  for (size_t i = 0; i < left_attributes_.size(); i++) {
+    row_.RegisterAttributeValue(left_attributes_[i], left_tuple[i]);
   }
 
   // Check if the predicate passes now
   const auto &valid = row_.DeriveValue(codegen, *plan_.GetPredicate());
   lang::If valid_match{codegen, valid};
   {
-    // We have a valid row, add the remaining non-join-key columns
-    for (uint32_t i = 0; i < left_non_key_cols.size(); i++) {
-      row_.RegisterAttributeValue(left_non_key_cols[i],
-                                  left_tuple[i + left_join_key_cols.size()]);
+    // First, compute all derived (projected/mapped) attributes
+    const auto *projection_info = plan_.GetProjInfo();
+    std::vector<RowBatch::ExpressionAccess> derived_attribute_access;
+    if (projection_info != nullptr) {
+      ProjectionTranslator::AddNonTrivialAttributes(
+          row_.GetBatch(), *projection_info, derived_attribute_access);
     }
+
+    // Let the parent process the row
     ctx_.Consume(row_);
   }
   valid_match.EndIf();
@@ -228,7 +256,8 @@ void BlockNestedLoopJoinTranslator::ConsumeFromRight(ConsumerContext &context,
                                                      RowBatch::Row &row) const {
   // At this point, the sorter instance has a buffer full of tuples. Let's
   // generate an inner loop.
-  BufferedTupleCallback callback{GetPlan(), context, row};
+  const auto &plan = GetPlan();
+  BufferedTupleCallback callback{plan, unique_left_attributes_, context, row};
   sorter_.Iterate(GetCodeGen(), LoadStatePtr(sorter_id_), callback);
 }
 
