@@ -2370,9 +2370,9 @@ std::string LayoutTypeToString(LayoutType type) {
       return "HYBRID";
     }
     default: {
-      throw ConversionException(StringUtil::Format(
-          "No string conversion for LayoutType value '%d'",
-          static_cast<int>(type)));
+      throw ConversionException(
+          StringUtil::Format("No string conversion for LayoutType value '%d'",
+                             static_cast<int>(type)));
     }
   }
   return "INVALID";
@@ -2382,9 +2382,6 @@ std::ostream &operator<<(std::ostream &os, const LayoutType &type) {
   os << LayoutTypeToString(type);
   return os;
 }
-
-
-
 
 type::TypeId PostgresValueTypeToPelotonValueType(PostgresValueType type) {
   switch (type) {

@@ -813,8 +813,8 @@ expression::AbstractExpression *PostgresParser::WhenTransform(Node *root) {
       break;
     }
     default: {
-      throw NotImplementedException(
-        StringUtil::Format("WHEN of type %d not supported yet...", root->type));
+      throw NotImplementedException(StringUtil::Format(
+          "WHEN of type %d not supported yet...", root->type));
     }
   }
   return result;
@@ -1152,8 +1152,7 @@ parser::DeleteStatement *PostgresParser::TruncateTransform(TruncateStmt *root) {
 parser::ExecuteStatement *PostgresParser::ExecuteTransform(ExecuteStmt *root) {
   auto result = new ExecuteStatement();
   result->name = root->name;
-  if (root->params != nullptr)
-    try {
+  if (root->params != nullptr) try {
       result->parameters = ParamListTransform(root->params);
     } catch (NotImplementedException e) {
       delete result;
@@ -1242,18 +1241,19 @@ PostgresParser::ValueListsTransform(List *root) {
       switch (expr->type) {
         case T_ParamRef: {
           cur_result.push_back(std::unique_ptr<expression::AbstractExpression>(
-            ParamRefTransform((ParamRef *)expr)));
+              ParamRefTransform((ParamRef *)expr)));
           break;
         }
         case T_A_Const: {
           cur_result.push_back(std::unique_ptr<expression::AbstractExpression>(
-            ConstTransform((A_Const *)expr)));
+              ConstTransform((A_Const *)expr)));
           break;
         }
         case T_TypeCast: {
           try {
-            cur_result.push_back(std::unique_ptr<expression::AbstractExpression>(
-                TypeCastTransform((TypeCast *)expr)));
+            cur_result.push_back(
+                std::unique_ptr<expression::AbstractExpression>(
+                    TypeCastTransform((TypeCast *)expr)));
           } catch (Exception e) {
             delete result;
             throw e;
@@ -1269,7 +1269,7 @@ PostgresParser::ValueListsTransform(List *root) {
         }
         default:
           throw NotImplementedException(StringUtil::Format(
-            "Value of type %d not supported yet...\n", expr->type));
+              "Value of type %d not supported yet...\n", expr->type));
       }
     }
     result->push_back(std::move(cur_result));
@@ -1290,7 +1290,7 @@ PostgresParser::ParamListTransform(List *root) {
     switch (param->type) {
       case T_A_Const: {
         result.push_back(std::unique_ptr<expression::AbstractExpression>(
-          ConstTransform((A_Const *)(cell->data.ptr_value))));
+            ConstTransform((A_Const *)(cell->data.ptr_value))));
         break;
       }
       case T_A_Expr: {
@@ -1304,12 +1304,10 @@ PostgresParser::ParamListTransform(List *root) {
         break;
       }
       default:
-        throw NotImplementedException(
-          StringUtil::Format(
+        throw NotImplementedException(StringUtil::Format(
             "Expression type %d not supported in ParamListTransform yet...",
             param->type));
     }
-
   }
 
   return result;
