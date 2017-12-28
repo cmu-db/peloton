@@ -24,16 +24,12 @@ namespace codegen {
 // This class captures all the state that a query plans' operators need. During
 // the compilation process, we pass this class around so that translators can
 // register operator-specific state. An example of state would be a hash-join
-// which requires a hash-table. State can be either global or local (i.e., on
-// the stack).
+// which requires a hash-table.
 //
 // In the end, all global state is combined into a dynamic struct type. This
 // struct is the only function argument to each of the three component functions
 // for the query. Operators must initialize any global state in the init()
 // function and must clean up and global state in the tearDown() function.
-//
-// Local state is guaranteed to be allocated once at the start of the plan()
-// function. All access to _any_ query state must go through this class.
 //
 // For note, the reason we construct a single struct type as the only function
 // argument to generated query functions is:
@@ -52,10 +48,8 @@ class RuntimeState {
   // Constructor
   RuntimeState();
 
-  // Register a parameter with the given name and type in this state. Callers
-  // can specify whether the state is local (i.e., on the stack) or global.
-  RuntimeState::StateID RegisterState(std::string name, llvm::Type *type,
-                                      bool is_on_stack = false);
+  // Register a parameter with the given name and type in this state.
+  RuntimeState::StateID RegisterState(std::string name, llvm::Type *type);
 
   // Get the pointer to the given state information with the given ID
   llvm::Value *LoadStatePtr(CodeGen &codegen,
@@ -68,9 +62,6 @@ class RuntimeState {
   // Construct the equivalent LLVM type that represents this runtime state
   llvm::Type *FinalizeType(CodeGen &codegen);
 
-  // Create/initialize all registered state that is stack-local
-  void CreateLocalState(CodeGen &codegen);
-
  private:
   // Little struct to track information of elements in the runtime state
   struct StateInfo {
@@ -78,14 +69,8 @@ class RuntimeState {
     std::string name;
     llvm::Type *type;
 
-    // Is this state allocated on the stack (local) or as a function parameter
-    bool local;
-
     // This is the index into the runtime state type that this state is stored
     uint32_t index;
-
-    // If the state is local, this is the current value of the state
-    llvm::Value *val;
   };
 
  private:

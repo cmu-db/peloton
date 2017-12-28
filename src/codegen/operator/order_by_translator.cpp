@@ -13,6 +13,7 @@
 #include "codegen/operator/order_by_translator.h"
 
 #include "codegen/function_builder.h"
+#include "codegen/lang/local_variable.h"
 #include "codegen/proxy/runtime_functions_proxy.h"
 #include "codegen/proxy/sorter_proxy.h"
 #include "codegen/type/integer_type.h"
@@ -98,11 +99,6 @@ OrderByTranslator::OrderByTranslator(const planner::OrderByPlan &plan,
 
   // Create the sorter
   sorter_ = Sorter{codegen, tuple_desc};
-
-  // Create the output selection vector
-  output_vector_id_ = runtime_state.RegisterState(
-      "obSelVec",
-      codegen.ArrayType(codegen.Int32Type(), Vector::kDefaultVectorSize), true);
 
   LOG_DEBUG("Finished constructing OrderByTranslator ...");
 }
@@ -233,7 +229,9 @@ void OrderByTranslator::Produce() const {
   LOG_DEBUG("OrderBy sort complete, iterating over results ...");
 
   // Now iterate over the sorted list
-  Vector selection_vector{LoadStateValue(output_vector_id_),
+  lang::LocalVariable output_vector(codegen, codegen.ArrayType(
+      codegen.Int32Type(), Vector::kDefaultVectorSize));
+  Vector selection_vector{output_vector.GetValue(),
                           Vector::kDefaultVectorSize, codegen.Int32Type()};
 
   ProduceResults callback{*this, selection_vector};

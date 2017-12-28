@@ -149,9 +149,6 @@ class TableScanTranslator : public OperatorTranslator {
   // The scan
   const planner::SeqScanPlan &scan_;
 
-  // The ID of the selection vector in runtime state
-  RuntimeState::StateID selection_vector_id_;
-
   // The code-generating table instance
   codegen::Table table_;
 };

@@ -98,9 +98,6 @@ class OrderByTranslator : public OperatorTranslator {
   // The comparison function
   llvm::Function *compare_func_;
 
-  // The ID of the output vector (for vectorized scans) in the runtime state
-  RuntimeState::StateID output_vector_id_;
-
   struct SortKeyInfo {
     // The sort key
     const planner::AttributeInfo *sort_key;

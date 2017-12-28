@@ -13,6 +13,7 @@
 #include "codegen/buffering_consumer.h"
 
 #include "codegen/lang/if.h"
+#include "codegen/lang/local_variable.h"
 #include "codegen/proxy/proxy.h"
 #include "codegen/proxy/value_proxy.h"
 #include "codegen/proxy/values_runtime_proxy.h"
@@ -76,11 +77,6 @@ void BufferingConsumer::Prepare(CompilationContext &ctx) {
   auto &runtime_state = ctx.GetRuntimeState();
   consumer_state_id_ =
       runtime_state.RegisterState("consumerState", codegen.CharPtrType());
-
-  // Introduce our output tuple buffer as local (on stack)
-  auto *value_type = ValueProxy::GetType(codegen);
-  tuple_output_state_id_ = runtime_state.RegisterState(
-      "output", codegen.ArrayType(value_type, output_ais_.size()), true);
 }
 
 // For each output attribute, we write out the attribute's value into the
@@ -89,9 +85,11 @@ void BufferingConsumer::Prepare(CompilationContext &ctx) {
 void BufferingConsumer::ConsumeResult(ConsumerContext &ctx,
                                       RowBatch::Row &row) const {
   auto &codegen = ctx.GetCodeGen();
-  auto *tuple_buffer_ = GetStateValue(ctx, tuple_output_state_id_);
-  tuple_buffer_ =
-      codegen->CreatePointerCast(tuple_buffer_, codegen.CharPtrType());
+
+  lang::LocalVariable tuple_buffer(codegen, codegen.ArrayType(
+      ValueProxy::GetType(codegen), output_ais_.size()));
+  auto *tuple_buffer_ = codegen->CreatePointerCast(tuple_buffer.GetValue(),
+                                                   codegen.CharPtrType());
 
   for (size_t i = 0; i < output_ais_.size(); i++) {
     // Derive the column's final value
