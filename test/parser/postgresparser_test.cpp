@@ -1100,5 +1100,36 @@ TEST_F(PostgresParserTests, TypeCastTest) {
   }
 }
 
+TEST_F(PostgresParserTests, IndexTypeTest) {
+  std::vector<std::string> queries;
+  queries.push_back("CREATE INDEX ii ON t USING SKIPLIST (col);");
+  queries.push_back("CREATE INDEX ii ON t USING HASH (col);");
+  queries.push_back("CREATE INDEX ii ON t USING BWTREE (col);");
+  queries.push_back("CREATE INDEX ii ON t USING BTREE (col);");
+  queries.push_back("CREATE INDEX ii ON t (col);");
+  // Parsing
+  UNUSED_ATTRIBUTE int ii = 0;
+  for (auto query : queries) {
+    std::unique_ptr<parser::SQLStatementList> result(
+        parser::PostgresParser::ParseSQLString(query.c_str()));
+
+    if (result->is_valid == false) {
+      LOG_ERROR("Message: %s, line: %d, col: %d", result->parser_msg,
+                result->error_line, result->error_col);
+    }
+    EXPECT_EQ(result->is_valid, true);
+
+    LOG_TRACE("%d : %s", ++ii, result->GetInfo().c_str());
+  }
+  std::vector<std::string> invalid_queries;
+  invalid_queries.push_back("CREATE INDEX ii ON t USING GIN (col);");
+  invalid_queries.push_back("CREATE INDEX ii ON t USING BRIN (col);");
+  for (auto query : invalid_queries) {
+    EXPECT_THROW(parser::PostgresParser::ParseSQLString(query.c_str()),
+                 peloton::Exception);
+    // parser::PostgresParser::ParseSQLString(query.c_str());
+  }
+}
+
 }  // namespace test
 }  // namespace peloton

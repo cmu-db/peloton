@@ -1013,7 +1013,12 @@ parser::SQLStatement *PostgresParser::CreateIndexTransform(IndexStmt *root) {
         reinterpret_cast<IndexElem *>(cell->data.ptr_value)->name;
     result->index_attrs.push_back(std::string(index_attr));
   }
-  result->index_type = IndexType::BWTREE;
+  try {
+    result->index_type = StringToIndexType(std::string(root->accessMethod));
+  } catch (ConversionException e) {
+    delete result;
+    throw e;
+  }
   result->table_info_.reset(new TableInfo());
   result->table_info_->table_name = root->relation->relname;
   result->index_name = root->idxname;
@@ -1514,6 +1519,9 @@ parser::SQLStatementList *PostgresParser::ListTransform(List *root) {
     delete result;
     throw e;
   } catch (NotImplementedException e) {
+    delete result;
+    throw e;
+  } catch (ConversionException e) {
     delete result;
     throw e;
   } catch (Exception e) {

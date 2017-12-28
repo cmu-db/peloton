@@ -193,6 +193,9 @@ std::string ParserUtils::GetCreateStatementInfo(CreateStatement* stmt,
        << " unique : " << stmt->unique << " attrs : ";
     for (auto &key : stmt->index_attrs) os << key << " ";
     os << "\n";
+    os << StringUtil::Indent(num_indent + 1) << "Type : "
+       << IndexTypeToString(stmt->index_type) << "\n";
+    os << "\n";
   } else if (stmt->type == CreateStatement::CreateType::kTable) {
     os << StringUtil::Indent(num_indent + 1) << stmt->GetTableName() << "\n";
   }
