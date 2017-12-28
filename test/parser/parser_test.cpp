@@ -283,7 +283,7 @@ TEST_F(ParserTests, CreateTest) {
 }
 
 TEST_F(ParserTests, DropTest) {
-  // Drop database
+  // Drop database test
   auto parser = parser::PostgresParser::GetInstance();
   std::string query = "DROP DATABASE test_db;";
   std::unique_ptr<parser::SQLStatementList> stmt_list(
