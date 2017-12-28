@@ -16,6 +16,7 @@
 #include "codegen/proxy/string_functions_proxy.h"
 #include "codegen/proxy/timestamp_functions_proxy.h"
 #include "codegen/proxy/values_runtime_proxy.h"
+#include "codegen/proxy/date_functions_proxy.h"
 #include "codegen/type/boolean_type.h"
 #include "codegen/type/integer_type.h"
 #include "codegen/type/timestamp_type.h"
@@ -375,6 +376,9 @@ static Substr kSubstr;
 static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {
     {OperatorId::Substr, kSubstr}};
 
+// NoArg operators
+static std::vector<TypeSystem::NoArgOpInfo> kNoArgOperatorTable = {};
+
 }  // anonymous namespace
 
 //===----------------------------------------------------------------------===//
@@ -386,7 +390,7 @@ Varchar::Varchar()
     : SqlType(peloton::type::TypeId::VARCHAR),
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
                    kComparisonTable, kUnaryOperatorTable, kBinaryOperatorTable,
-                   kNaryOperatorTable) {}
+                   kNaryOperatorTable, kNoArgOperatorTable) {}
 
 Value Varchar::GetMinValue(UNUSED_ATTRIBUTE CodeGen &codegen) const {
   throw Exception{"The VARCHAR type does not have a minimum value ..."};

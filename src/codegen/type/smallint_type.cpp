@@ -468,14 +468,18 @@ static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
 // Nary operations
 static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
 
+// NoArg operators
+static std::vector<TypeSystem::NoArgOpInfo> kNoArgOperatorTable = {};
+
 }  // anonymous namespace
 
 // Initialize the SMALLINT SQL type with the configured type system
 SmallInt::SmallInt()
     : SqlType(peloton::type::TypeId::SMALLINT),
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
-                   kComparisonTable, kUnaryOperatorTable, kBinaryOperatorTable,
-                   kNaryOperatorTable) {}
+                   kComparisonTable, kUnaryOperatorTable,
+                   kBinaryOperatorTable, kNaryOperatorTable, 
+                   kNoArgOperatorTable) {}
 
 Value SmallInt::GetMinValue(CodeGen &codegen) const {
   auto *raw_val = codegen.Const16(peloton::type::PELOTON_INT16_MIN);
