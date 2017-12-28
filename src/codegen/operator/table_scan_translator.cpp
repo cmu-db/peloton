@@ -12,6 +12,7 @@
 
 #include "codegen/operator/table_scan_translator.h"
 
+#include "codegen/function_builder.h"
 #include "codegen/lang/if.h"
 #include "codegen/proxy/executor_context_proxy.h"
 #include "codegen/proxy/storage_manager_proxy.h"
@@ -54,42 +55,61 @@ TableScanTranslator::TableScanTranslator(const planner::SeqScanPlan &scan,
 }
 
 // Produce!
-void TableScanTranslator::Produce() const {
+std::vector<CodeGenStage> TableScanTranslator::Produce() const {
   auto &codegen = GetCodeGen();
+  auto &code_context = codegen.GetCodeContext();
+  auto &compilation_context = GetCompilationContext();
+  auto &runtime_state = compilation_context.GetRuntimeState();
   auto &table = GetTable();
 
-  LOG_TRACE("TableScan on [%u] starting to produce tuples ...", table.GetOid());
+  FunctionBuilder function_builder{
+      code_context,
+      "table_scan",
+      codegen.VoidType(),
+      {{"runtime_state", runtime_state.FinalizeType(codegen)->getPointerTo()}}};
+  {
+    compilation_context.RefreshParameterCache();
+    LOG_TRACE("TableScan on [%u] starting to produce tuples ...",
+              table.GetOid());
 
-  // Get the table instance from the database
-  llvm::Value *storage_manager_ptr = GetStorageManagerPtr();
-  llvm::Value *db_oid = codegen.Const32(table.GetDatabaseOid());
-  llvm::Value *table_oid = codegen.Const32(table.GetOid());
-  llvm::Value *table_ptr =
-      codegen.Call(StorageManagerProxy::GetTableWithOid,
-                   {storage_manager_ptr, db_oid, table_oid});
+    // Get the table instance from the database
+    llvm::Value* storage_manager_ptr = GetStorageManagerPtr();
+    llvm::Value* db_oid = codegen.Const32(table.GetDatabaseOid());
+    llvm::Value* table_oid = codegen.Const32(table.GetOid());
+    llvm::Value* table_ptr =
+        codegen.Call(StorageManagerProxy::GetTableWithOid,
+                     {storage_manager_ptr, db_oid, table_oid});
 
-  // The selection vector for the scan
-  auto *raw_vec = codegen.AllocateBuffer(
-      codegen.Int32Type(), Vector::kDefaultVectorSize, "scanSelVector");
-  Vector sel_vec{raw_vec, Vector::kDefaultVectorSize, codegen.Int32Type()};
+    // The selection vector for the scan
+    auto* raw_vec = codegen.AllocateBuffer(
+        codegen.Int32Type(), Vector::kDefaultVectorSize, "scanSelVector");
+    Vector sel_vec{raw_vec, Vector::kDefaultVectorSize, codegen.Int32Type()};
 
-  auto predicate = const_cast<expression::AbstractExpression *>(
-      GetScanPlan().GetPredicate());
-  llvm::Value *predicate_ptr = codegen->CreateIntToPtr(
-      codegen.Const64((int64_t)predicate),
-      AbstractExpressionProxy::GetType(codegen)->getPointerTo());
-  size_t num_preds = 0;
+    auto predicate = const_cast<expression::AbstractExpression*>(
+        GetScanPlan().GetPredicate());
+    llvm::Value* predicate_ptr = codegen->CreateIntToPtr(
+        codegen.Const64((int64_t) predicate),
+        AbstractExpressionProxy::GetType(codegen)->getPointerTo());
+    size_t num_preds = 0;
 
-  auto *zone_map_manager = storage::ZoneMapManager::GetInstance();
-  if (predicate != nullptr && zone_map_manager->ZoneMapTableExists()) {
-    if (predicate->IsZoneMappable()) {
-      num_preds = predicate->GetNumberofParsedPredicates();
+    auto* zone_map_manager = storage::ZoneMapManager::GetInstance();
+    if (predicate != nullptr && zone_map_manager->ZoneMapTableExists()) {
+      if (predicate->IsZoneMappable()) {
+        num_preds = predicate->GetNumberofParsedPredicates();
+      }
     }
+    ScanConsumer scan_consumer{*this, sel_vec};
+    table_.GenerateScan(codegen, table_ptr, sel_vec.GetCapacity(),
+                        scan_consumer,
+                        predicate_ptr, num_preds);
+    LOG_TRACE("TableScan on [%u] finished producing tuples ...",
+              table.GetOid());
   }
-  ScanConsumer scan_consumer{*this, sel_vec};
-  table_.GenerateScan(codegen, table_ptr, sel_vec.GetCapacity(), scan_consumer,
-                      predicate_ptr, num_preds);
-  LOG_TRACE("TableScan on [%u] finished producing tuples ...", table.GetOid());
+  function_builder.ReturnAndFinish();
+  return {CodeGenStage{
+      .kind_ = StageKind::SINGLE_THREADED,
+      .llvm_func_ = function_builder.GetFunction(),
+  }};
 }
 
 // Get the stringified name of this scan

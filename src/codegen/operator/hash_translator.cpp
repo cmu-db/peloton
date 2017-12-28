@@ -63,13 +63,13 @@ void HashTranslator::InitializeState() {
 }
 
 // Produce!
-void HashTranslator::Produce() const {
-  auto &comp_ctx = GetCompilationContext();
-
-  // Let the child produce its tuples which we aggregate in our hash-table
-  comp_ctx.Produce(*hash_plan_.GetChild(0));
+std::vector<CodeGenStage> HashTranslator::Produce() const {
+  auto &compilation_context = GetCompilationContext();
 
   LOG_DEBUG("Hash starting to produce results ...");
+
+  // Let the child produce its tuples which we aggregate in our hash-table
+  return compilation_context.Produce(*hash_plan_.GetChild(0));
 }
 
 // Consume the tuples from the context, adding them to the hash table
