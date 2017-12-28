@@ -14,9 +14,10 @@
 #include <vector>
 
 #include "common/harness.h"
-#include "common/macros.h"
 #include "common/logger.h"
+#include "common/macros.h"
 #include "parser/postgresparser.h"
+#include "parser/drop_statement.h"
 
 namespace peloton {
 namespace test {
@@ -279,6 +280,20 @@ TEST_F(ParserTests, CreateTest) {
 
     LOG_TRACE("%d : %s", ++ii, result->GetInfo().c_str());
   }
+}
+
+TEST_F(ParserTests, DropTest) {
+  // Drop database test
+  auto parser = parser::PostgresParser::GetInstance();
+  std::string query = "DROP DATABASE test_db;";
+  std::unique_ptr<parser::SQLStatementList> stmt_list(
+      parser.BuildParseTree(query).release());
+  EXPECT_TRUE(stmt_list->is_valid);
+  auto stmt = stmt_list->GetStatement(0);
+  EXPECT_EQ(StatementType::DROP, stmt->GetType());
+  auto d_stmt = (parser::DropStatement*)stmt;
+  EXPECT_STREQ("test_db", d_stmt->GetDatabaseName().c_str());
+  EXPECT_EQ(parser::DropStatement::EntityType::kDatabase, d_stmt->type);
 }
 
 TEST_F(ParserTests, TM1Test) {
