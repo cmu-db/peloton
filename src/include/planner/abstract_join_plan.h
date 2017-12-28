@@ -51,7 +51,7 @@ class AbstractJoinPlan : public AbstractPlan {
 
   hash_t Hash() const override;
 
-  bool operator==(const AbstractPlan &rhs) const;
+  bool operator==(const AbstractPlan &rhs) const override;
 
   void VisitParameters(
       codegen::QueryParametersMap &map,
