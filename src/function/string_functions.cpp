@@ -187,8 +187,15 @@ type::Value StringFunctions::Repeat(const std::vector<type::Value> &args) {
   std::string str = args[0].ToString();
   int32_t num = args[1].GetAs<int32_t>();
   std::string ret = "";
-  while (num--) {
-    ret = ret + str;
+
+  while (num > 0) {
+    if (num % 2) {
+      ret += str;
+    }
+    if (num > 1) {
+      str += str;
+    }
+    num >>= 1;
   }
   return (type::ValueFactory::GetVarcharValue(ret));
 }
