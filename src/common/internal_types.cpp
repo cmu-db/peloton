@@ -841,6 +841,8 @@ IndexType StringToIndexType(const std::string &str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
     return IndexType::INVALID;
+  } else if (upper_str == "BTREE") {
+    return IndexType::BWTREE;
   } else if (upper_str == "BWTREE") {
     return IndexType::BWTREE;
   } else if (upper_str == "HASH") {
