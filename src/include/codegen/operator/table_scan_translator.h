@@ -45,7 +45,7 @@ class TableScanTranslator : public OperatorTranslator {
   void DefineAuxiliaryFunctions() override {}
 
   // The method that produces new tuples
-  void Produce() const override;
+  std::vector<CodeGenStage> Produce() const override;
 
   // Scans are leaves in the query plan and, hence, do not consume tuples
   void Consume(ConsumerContext &, RowBatch &) const override {}
