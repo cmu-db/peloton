@@ -211,33 +211,57 @@ void OrderByTranslator::DefineAuxiliaryFunctions() {
   compare_func_ = compare.GetFunction();
 }
 
-void OrderByTranslator::Produce() const {
+std::vector<CodeGenStage> OrderByTranslator::Produce() const {
   LOG_DEBUG("OrderBy requesting child to produce tuples ...");
 
   // Let the child produce the tuples we materialize into a buffer
-  GetCompilationContext().Produce(*plan_.GetChild(0));
-
-  LOG_DEBUG("OrderBy buffered tuples into sorter, going to sort ...");
+  std::vector<CodeGenStage> child_stages =
+      GetCompilationContext().Produce(*plan_.GetChild(0));
 
   auto &codegen = GetCodeGen();
-  auto *sorter_ptr = LoadStatePtr(sorter_id_);
+  auto &code_context = codegen.GetCodeContext();
+  auto &compilation_context = GetCompilationContext();
+  auto &runtime_state = compilation_context.GetRuntimeState();
 
-  // The tuples have been materialized into the buffer space, NOW SORT!!!
-  sorter_.Sort(codegen, sorter_ptr);
+  FunctionBuilder order_by_stage_builder{
+      code_context,
+      "order_by_stage",
+      codegen.VoidType(),
+      {{"runtime_state", runtime_state.FinalizeType(codegen)->getPointerTo()}}};
+  {
+    compilation_context.RefreshParameterCache();
 
-  LOG_DEBUG("OrderBy sort complete, iterating over results ...");
+    LOG_DEBUG("OrderBy buffered tuples into sorter, going to sort ...");
 
-  // Now iterate over the sorted list
-  auto *raw_vec = codegen.AllocateBuffer(
-      codegen.Int32Type(), Vector::kDefaultVectorSize, "orderBySelVec");
-  Vector selection_vector{raw_vec, Vector::kDefaultVectorSize,
-                          codegen.Int32Type()};
+    auto* sorter_ptr = LoadStatePtr(sorter_id_);
 
-  ProduceResults callback{*this, selection_vector};
-  sorter_.VectorizedIterate(codegen, sorter_ptr, selection_vector.GetCapacity(),
-                            callback);
+    // The tuples have been materialized into the buffer space, NOW SORT!!!
+    sorter_.Sort(codegen, sorter_ptr);
 
-  LOG_DEBUG("OrderBy completed producing tuples ...");
+    LOG_DEBUG("OrderBy sort complete, iterating over results ...");
+
+    // Now iterate over the sorted list
+    auto* raw_vec = codegen.AllocateBuffer(
+        codegen.Int32Type(), Vector::kDefaultVectorSize, "orderBySelVec");
+    Vector selection_vector{raw_vec, Vector::kDefaultVectorSize,
+                            codegen.Int32Type()};
+
+    ProduceResults callback{*this, selection_vector};
+    sorter_.VectorizedIterate(codegen, sorter_ptr,
+                              selection_vector.GetCapacity(),
+                              callback);
+
+    LOG_DEBUG("OrderBy completed producing tuples ...");
+  }
+  order_by_stage_builder.ReturnAndFinish();
+  CodeGenStage order_by_stage = {
+      .kind_ = StageKind::SINGLE_THREADED,
+      .llvm_func_ = order_by_stage_builder.GetFunction(),
+  };
+
+  std::vector<CodeGenStage> stages = std::move(child_stages);
+  stages.push_back(order_by_stage);
+  return stages;
 }
 
 void OrderByTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {

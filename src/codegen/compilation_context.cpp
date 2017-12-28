@@ -22,17 +22,6 @@
 namespace peloton {
 namespace codegen {
 
-namespace {
-
-// Reset the cache (if already loaded), the populate the cache
-void InitializeParameterCache(CodeGen &codegen, ParameterCache &cache,
-                              llvm::Value *runtime_query_parameters) {
-  cache.Reset();
-  cache.Populate(codegen, runtime_query_parameters);
-}
-
-}  // anonymous namespace
-
 // Constructor
 CompilationContext::CompilationContext(Query &query,
                                        const QueryParametersMap &parameters_map,
@@ -78,10 +67,10 @@ void CompilationContext::Prepare(const expression::AbstractExpression &exp) {
 }
 
 // Produce tuples for the given operator
-void CompilationContext::Produce(const planner::AbstractPlan &op) {
+std::vector<CodeGenStage> CompilationContext::Produce(const planner::AbstractPlan &op) {
   auto *translator = GetTranslator(op);
   PL_ASSERT(translator != nullptr);
-  translator->Produce();
+  return translator->Produce();
 }
 
 // Generate all plan functions for the given query
@@ -109,7 +98,7 @@ void CompilationContext::GeneratePlan(QueryCompiler::CompileStats *stats) {
   llvm::Function *init = GenerateInitFunction();
 
   // Generate the plan() function
-  llvm::Function *plan = GeneratePlanFunction(query_.GetPlan());
+  std::vector<CodeGenStage> stages = GeneratePlanFunction(query_.GetPlan());
 
   // Generate the  tearDown() function
   llvm::Function *tear_down = GenerateTearDownFunction();
@@ -122,7 +111,7 @@ void CompilationContext::GeneratePlan(QueryCompiler::CompileStats *stats) {
   }
 
   // Next, we prepare the query statement with the functions we've generated
-  Query::QueryFunctions funcs = {init, plan, tear_down};
+  Query::QueryFunctions funcs = {init, stages, tear_down};
   bool prepared = query_.Prepare(funcs);
   if (!prepared) {
     throw Exception{"There was an error preparing the compiled query"};
@@ -144,21 +133,11 @@ void CompilationContext::GenerateHelperFunctions() {
   }
 
   // Define each auxiliary producer function
-  auto &cc = query_.GetCodeContext();
   for (auto &iter : auxiliary_producers_) {
     const auto &plan = *iter.first;
-    const auto &function_declaration = iter.second;
-    FunctionBuilder func{cc, function_declaration};
-    {
-      // Don't try to optimize this by moving the cache population outside the
-      // function definition. We need the call to exist within the context of
-      // the function we're generating.
-      InitializeParameterCache(codegen_, parameter_cache_,
-                               GetQueryParametersPtr());
-      // Let the plan produce
-      Produce(plan);
-      // That's it
-      func.ReturnAndFinish();
+    auto stages = Produce(plan);
+    for (auto &stage : stages) {
+      iter.second->push_back(stage.llvm_func_);
     }
   }
 }
@@ -205,30 +184,12 @@ llvm::Function *CompilationContext::GenerateInitFunction() {
 }
 
 // Generate the code for the plan() function of the query
-llvm::Function *CompilationContext::GeneratePlanFunction(
+std::vector<CodeGenStage> CompilationContext::GeneratePlanFunction(
     const planner::AbstractPlan &root) {
-  // Create function definition
-  auto &code_context = query_.GetCodeContext();
-  auto &runtime_state = query_.GetRuntimeState();
+  // Generate the primary plan logic
+  std::vector<CodeGenStage> stages = Produce(root);
 
-  std::string name = StringUtil::Format("_%lu_plan", code_context.GetID());
-  std::vector<FunctionDeclaration::ArgumentInfo> args = {
-      {"runtimeState", runtime_state.FinalizeType(codegen_)->getPointerTo()}};
-  FunctionBuilder plan_func{code_context, name, codegen_.VoidType(), args};
-  {
-    // Load the query parameter values
-    InitializeParameterCache(codegen_, parameter_cache_,
-                             GetQueryParametersPtr());
-
-    // Generate the primary plan logic
-    Produce(root);
-
-    // Finish the function
-    plan_func.ReturnAndFinish();
-  }
-
-  // Get the function
-  return plan_func.GetFunction();
+  return stages;
 }
 
 // Generate the code for the tearDown() function of the query
@@ -272,37 +233,16 @@ OperatorTranslator *CompilationContext::GetTranslator(
   return iter == op_translators_.end() ? nullptr : iter->second.get();
 }
 
-AuxiliaryProducerFunction CompilationContext::DeclareAuxiliaryProducer(
-    const planner::AbstractPlan &plan, const std::string &provided_name) {
+std::vector<llvm::Function *> *CompilationContext::DeclareAuxiliaryProducer(
+    const planner::AbstractPlan &plan) {
   auto iter = auxiliary_producers_.find(&plan);
-  if (iter != auxiliary_producers_.end()) {
-    const auto &declaration = iter->second;
-    return AuxiliaryProducerFunction(declaration);
+  if (iter == auxiliary_producers_.end()) {
+    iter = auxiliary_producers_.emplace(
+        &plan,
+        std::unique_ptr<std::vector<llvm::Function *>>(
+            new std::vector<llvm::Function *>)).first;
   }
-
-  auto &cc = query_.GetCodeContext();
-  auto &runtime_state = query_.GetRuntimeState();
-
-  // Make the declaration for the caller to use
-
-  std::string fn_name;
-  if (!provided_name.empty()) {
-    fn_name = provided_name;
-  } else {
-    fn_name = StringUtil::Format("_%lu_auxPlanFunction", cc.GetID());
-  }
-
-  std::vector<FunctionDeclaration::ArgumentInfo> fn_args = {
-      {"runtimeState", runtime_state.FinalizeType(codegen_)->getPointerTo()}};
-
-  auto declaration = FunctionDeclaration::MakeDeclaration(
-      cc, fn_name, FunctionDeclaration::Visibility::Internal,
-      codegen_.VoidType(), fn_args);
-
-  // Save the function declaration for later definition
-  auxiliary_producers_.emplace(&plan, declaration);
-
-  return AuxiliaryProducerFunction(declaration);
+  return iter->second.get();
 }
 
 }  // namespace codegen

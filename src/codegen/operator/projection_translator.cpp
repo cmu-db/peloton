@@ -32,8 +32,8 @@ ProjectionTranslator::ProjectionTranslator(const planner::ProjectionPlan &plan,
   PrepareProjection(context, *projection_info);
 }
 
-void ProjectionTranslator::Produce() const {
-  GetCompilationContext().Produce(*plan_.GetChild(0));
+std::vector<CodeGenStage> ProjectionTranslator::Produce() const {
+  return GetCompilationContext().Produce(*plan_.GetChild(0));
 }
 
 void ProjectionTranslator::Consume(ConsumerContext &context,

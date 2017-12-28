@@ -39,7 +39,7 @@ class DeleteTranslator : public OperatorTranslator {
 
   std::string GetName() const override { return "Delete"; }
 
-  void Produce() const override;
+  std::vector<CodeGenStage> Produce() const override;
 
   void Consume(ConsumerContext &, RowBatch::Row &) const override;
 

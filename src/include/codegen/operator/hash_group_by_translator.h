@@ -44,7 +44,7 @@ class HashGroupByTranslator : public OperatorTranslator {
   void DefineAuxiliaryFunctions() override {}
 
   // The method that produces new tuples
-  void Produce() const override;
+  std::vector<CodeGenStage> Produce() const override;
 
   // The method that consumes tuples from child operators
   void Consume(ConsumerContext &context, RowBatch::Row &row) const override;

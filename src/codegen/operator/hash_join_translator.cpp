@@ -140,14 +140,19 @@ void HashJoinTranslator::InitializeState() {
 }
 
 // Produce!
-void HashJoinTranslator::Produce() const {
+std::vector<CodeGenStage> HashJoinTranslator::Produce() const {
   // Let the left child produce tuples which we materialize into the hash-table
-  GetCompilationContext().Produce(*join_.GetChild(0));
+  std::vector<CodeGenStage> left_stages =
+      GetCompilationContext().Produce(*join_.GetChild(0));
 
   // Let the right child produce tuples, which we use to probe the hash table
-  GetCompilationContext().Produce(*join_.GetChild(1)->GetChild(0));
+  std::vector<CodeGenStage> right_stages =
+      GetCompilationContext().Produce(*join_.GetChild(1)->GetChild(0));
 
   // That's it, we've produced all the tuples
+  std::vector<CodeGenStage> stages = std::move(left_stages);
+  stages.insert(stages.end(), right_stages.begin(), right_stages.end());
+  return stages;
 }
 
 void HashJoinTranslator::Consume(ConsumerContext &context,

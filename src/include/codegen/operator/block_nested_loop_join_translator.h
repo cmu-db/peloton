@@ -13,7 +13,6 @@
 
 #pragma once
 
-#include "codegen/auxiliary_producer_function.h"
 #include "codegen/operator/operator_translator.h"
 #include "codegen/sorter.h"
 
@@ -42,7 +41,7 @@ class BlockNestedLoopJoinTranslator : public OperatorTranslator {
 
   std::string GetName() const override;
 
-  void Produce() const override;
+  std::vector<CodeGenStage> Produce() const override;
 
   void Consume(ConsumerContext &context, RowBatch::Row &row) const override;
 
@@ -80,7 +79,7 @@ class BlockNestedLoopJoinTranslator : public OperatorTranslator {
 
   // This is the function called when enough tuples from the left side have been
   // buffered and we want to perform the BNLJ against the right input.
-  AuxiliaryProducerFunction join_buffer_func_;
+  std::vector<llvm::Function *> *join_buffer_func_;
 };
 
 }  // namespace codegen

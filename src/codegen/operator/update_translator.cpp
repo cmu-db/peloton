@@ -78,8 +78,8 @@ void UpdateTranslator::InitializeState() {
                                     target_vector_ptr, target_vector_size_ptr});
 }
 
-void UpdateTranslator::Produce() const {
-  GetCompilationContext().Produce(*update_plan_.GetChild(0));
+std::vector<CodeGenStage> UpdateTranslator::Produce() const {
+  return GetCompilationContext().Produce(*update_plan_.GetChild(0));
 }
 
 void UpdateTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {

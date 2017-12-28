@@ -56,7 +56,7 @@ class InsertTranslator : public OperatorTranslator {
   void DefineAuxiliaryFunctions() override {}
 
   // Codegen produce
-  void Produce() const override;
+  std::vector<CodeGenStage> Produce() const override;
 
   // Codegen consuming a row tuple from child operators
   void Consume(ConsumerContext &context, RowBatch::Row &row) const override;
