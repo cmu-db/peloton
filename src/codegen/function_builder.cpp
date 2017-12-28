@@ -22,8 +22,8 @@ namespace {
 
 llvm::Function *ConstructFunction(
     CodeContext &cc, const std::string &name,
-    FunctionSignature::Visibility visibility, llvm::Type *ret_type,
-    const std::vector<FunctionSignature::ArgumentInfo> &args) {
+    FunctionDeclaration::Visibility visibility, llvm::Type *ret_type,
+    const std::vector<FunctionDeclaration::ArgumentInfo> &args) {
   // Collect the function argument types
   std::vector<llvm::Type *> arg_types;
   for (auto &arg : args) {
@@ -33,13 +33,13 @@ llvm::Function *ConstructFunction(
   // Determine function visibility
   llvm::Function::LinkageTypes linkage;
   switch (visibility) {
-    case FunctionSignature::Visibility::External:
+    case FunctionDeclaration::Visibility::External:
       linkage = llvm::Function::LinkageTypes::ExternalLinkage;
       break;
-    case FunctionSignature::Visibility::ExternalAvailable:
+    case FunctionDeclaration::Visibility::ExternalAvailable:
       linkage = llvm::Function::LinkageTypes::AvailableExternallyLinkage;
       break;
-    case FunctionSignature::Visibility::Internal:
+    case FunctionDeclaration::Visibility::Internal:
       linkage = llvm::Function::LinkageTypes::InternalLinkage;
       break;
   }
@@ -63,30 +63,25 @@ llvm::Function *ConstructFunction(
 
 //===----------------------------------------------------------------------===//
 //
-// FunctionSignature
+// FunctionDeclaration
 //
 //===----------------------------------------------------------------------===//
 
-FunctionSignature::FunctionSignature(
-    const std::string &name, FunctionSignature::Visibility visibility,
-    llvm::Type *ret_type,
-    std::initializer_list<FunctionSignature::ArgumentInfo> args)
+FunctionDeclaration::FunctionDeclaration(
+    CodeContext &cc, const std::string &name,
+    FunctionDeclaration::Visibility visibility, llvm::Type *ret_type,
+    const std::vector<ArgumentInfo> &args)
     : name_(name),
       visibility_(visibility),
       ret_type_(ret_type),
-      args_info_(args) {}
+      args_info_(args),
+      func_decl_(ConstructFunction(cc, name, visibility, ret_type, args)) {}
 
-FunctionSignature::FunctionSignature(
-    const std::string &name, FunctionSignature::Visibility visibility,
-    llvm::Type *ret_type,
-    const std::vector<FunctionSignature::ArgumentInfo> &args)
-    : name_(name),
-      visibility_(visibility),
-      ret_type_(ret_type),
-      args_info_(args) {}
-
-llvm::Function *FunctionSignature::MakeDeclaration(CodeContext &cc) const {
-  return ConstructFunction(cc, name_, visibility_, ret_type_, args_info_);
+FunctionDeclaration FunctionDeclaration::MakeDeclaration(
+    CodeContext &cc, const std::string &name,
+    FunctionDeclaration::Visibility visibility, llvm::Type *ret_type,
+    const std::vector<ArgumentInfo> &args) {
+  return FunctionDeclaration(cc, name, visibility, ret_type, args);
 }
 
 //===----------------------------------------------------------------------===//
@@ -99,13 +94,12 @@ llvm::Function *FunctionSignature::MakeDeclaration(CodeContext &cc) const {
 // able to restore it after this function has been fully completed. Thus,
 // FunctionBuilders are nestable, allowing the definition of a function to begin
 // while in midst of defining another function.
-FunctionBuilder::FunctionBuilder(CodeContext &code_context,
-                                 const FunctionSignature &signature)
+FunctionBuilder::FunctionBuilder(CodeContext &cc, llvm::Function *func_decl)
     : finished_(false),
-      code_context_(code_context),
-      previous_function_(code_context_.GetCurrentFunction()),
-      previous_insert_point_(code_context_.GetBuilder().GetInsertBlock()),
-      func_(signature.MakeDeclaration(code_context)),
+      code_context_(cc),
+      previous_function_(cc.GetCurrentFunction()),
+      previous_insert_point_(cc.GetBuilder().GetInsertBlock()),
+      func_(func_decl),
       overflow_bb_(nullptr),
       divide_by_zero_bb_(nullptr) {
   // At this point, we've saved the current position during code generation and
@@ -126,13 +120,17 @@ FunctionBuilder::FunctionBuilder(CodeContext &code_context,
   code_context_.RegisterFunction(func_);
 }
 
+FunctionBuilder::FunctionBuilder(CodeContext &cc,
+                                 const FunctionDeclaration &declaration)
+    : FunctionBuilder(cc, declaration.GetDeclaredFunction()) {}
+
 FunctionBuilder::FunctionBuilder(
-    CodeContext &code_context, std::string name, llvm::Type *ret_type,
-    const std::vector<FunctionSignature::ArgumentInfo> &args)
+    CodeContext &cc, std::string name, llvm::Type *ret_type,
+    const std::vector<FunctionDeclaration::ArgumentInfo> &args)
     : FunctionBuilder(
-          code_context,
-          FunctionSignature{name, FunctionSignature::Visibility::External,
-                            ret_type, args}) {}
+          cc,
+          ConstructFunction(cc, name, FunctionDeclaration::Visibility::External,
+                            ret_type, args)) {}
 
 // When we destructing the FunctionBuilder, we just do a sanity check to ensure
 // that the user actually finished constructing the function. This is because we

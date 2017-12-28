@@ -67,6 +67,7 @@ bool QueryCompiler::IsSupported(const planner::AbstractPlan &plan) {
       }
       break;
     }
+    case PlanNodeType::NESTLOOP:
     case PlanNodeType::HASHJOIN: {
       const auto &join = static_cast<const planner::AbstractJoinPlan &>(plan);
       // Right now, only support inner joins

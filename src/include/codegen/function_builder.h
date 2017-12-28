@@ -19,15 +19,13 @@ namespace codegen {
 
 //===----------------------------------------------------------------------===//
 //
-// FunctionSignature
-//
-// A FunctionSignature fully identifies a function. A signature includes a name,
-// the return type of the function and all the arguments to the function.
-// Additionally, users can decide the visibility of the function, and define
-// attributes/properties on the arguments of the function.
+// A function declaration defines the signature of the function. A declaration
+// includes the function's name, return type, and all arguments. Additionally,
+// users can decide the visibility of the function, and define attributes on the
+// arguments of the function.
 //
 //===----------------------------------------------------------------------===//
-class FunctionSignature {
+class FunctionDeclaration {
  public:
   /// The visibility of the function
   enum class Visibility : uint8_t {
@@ -40,19 +38,21 @@ class FunctionSignature {
   struct ArgumentInfo {
     std::string name;
     llvm::Type *type;
+    ArgumentInfo(std::string _name, llvm::Type *_type)
+        : name(std::move(_name)), type(_type) {}
   };
 
-  /// Constructors
-  FunctionSignature(const std::string &name, Visibility visibility,
-                    llvm::Type *ret_type,
-                    std::initializer_list<ArgumentInfo> args);
+  /// Constructor
+  FunctionDeclaration(CodeContext &cc, const std::string &name,
+                      Visibility visibility, llvm::Type *ret_type,
+                      const std::vector<ArgumentInfo> &args);
 
-  FunctionSignature(const std::string &name, Visibility visibility,
-                    llvm::Type *ret_type,
-                    const std::vector<ArgumentInfo> &args);
+  llvm::Function *GetDeclaredFunction() const { return func_decl_; }
 
   /// Construct an LLVM function declaration from this signature
-  llvm::Function *MakeDeclaration(CodeContext &cc) const;
+  static FunctionDeclaration MakeDeclaration(
+      CodeContext &cc, const std::string &name, Visibility visibility,
+      llvm::Type *ret_type, const std::vector<ArgumentInfo> &args);
 
  private:
   // The name of the function
@@ -63,19 +63,19 @@ class FunctionSignature {
   llvm::Type *ret_type_;
   // The function arguments
   std::vector<ArgumentInfo> args_info_;
+  // The declaration
+  llvm::Function *func_decl_;
 };
 
 //===----------------------------------------------------------------------===//
 //
-// FunctionBuilder
-//
-// A handy class to construct a function. Creating an instance of this class
-// begins construction of a new function with the provided function signature.
-// After construction, code-generation shifts to the entry point of the
-// function, letting users generate the definition of the function. All function
-// arguments are accessible through the GetArgumentBy*(...) methods. Functions
-// complete upon a call to Finish(...). At this point, the function is fully
-// defined.
+// A handy class to build the definition of a function. This builder either
+// creates a new function or begins the definition of previously declared
+// function using the provided declaration. After instantiation, code-generation
+// shifts to the entry point of the function allowing users to defines its
+// logic. Arguments are accessible through the GetArgumentBy*(...) methods.
+// The user completes the construction of the function by calling Finish(...),
+// after which the function is fully defined.
 //
 // FunctionBuilders can safely nest. This enables construction of one function
 // while in the middle of construction of a different function. However, to do
@@ -87,12 +87,12 @@ class FunctionBuilder {
 
  public:
   // Constructor
-  FunctionBuilder(CodeContext &code_context,
-                  const FunctionSignature &signature);
+  FunctionBuilder(CodeContext &cc,
+                  const FunctionDeclaration &declaration);
 
-  FunctionBuilder(CodeContext &code_context, std::string name,
+  FunctionBuilder(CodeContext &cc, std::string name,
                   llvm::Type *ret_type,
-                  const std::vector<FunctionSignature::ArgumentInfo> &args);
+                  const std::vector<FunctionDeclaration::ArgumentInfo> &args);
 
   // Destructor
   ~FunctionBuilder();
@@ -109,6 +109,7 @@ class FunctionBuilder {
   llvm::Function *GetFunction() const { return func_; }
 
  private:
+  // Get the first basic block in this function
   llvm::BasicBlock *GetEntryBlock() const { return entry_bb_; }
 
   // Get the basic block where the function throws an overflow exception
@@ -118,6 +119,8 @@ class FunctionBuilder {
   llvm::BasicBlock *GetDivideByZeroBB();
 
  private:
+  FunctionBuilder(CodeContext &cc, llvm::Function *func_decl);
+
   // Has this function finished construction
   bool finished_;
 
