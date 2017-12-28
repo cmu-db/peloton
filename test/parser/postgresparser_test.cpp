@@ -391,9 +391,10 @@ TEST_F(PostgresParserTests, ExpressionUpdateTest) {
   // Test First Set Condition
   EXPECT_EQ(update_stmt->updates.at(0)->column, "s_quantity");
   auto constant =
-      (expression::ConstantValueExpression *)update_stmt->updates.at(0)->value.get();
-  EXPECT_EQ(CmpBool::TRUE, constant->GetValue().CompareEquals(
-      type::ValueFactory::GetDecimalValue(48)));
+      (expression::ConstantValueExpression *)update_stmt->updates.at(0)
+          ->value.get();
+  EXPECT_EQ(type::CmpBool::TRUE, constant->GetValue().CompareEquals(
+                                     type::ValueFactory::GetDecimalValue(48)));
 
   // Test Second Set Condition
   EXPECT_EQ(update_stmt->updates.at(1)->column, "s_ytd");
@@ -402,8 +403,8 @@ TEST_F(PostgresParserTests, ExpressionUpdateTest) {
   auto child1 = (expression::TupleValueExpression *)op_expr->GetChild(0);
   EXPECT_EQ(child1->GetColumnName(), "s_ytd");
   auto child2 = (expression::ConstantValueExpression *)op_expr->GetChild(1);
-  EXPECT_EQ(CmpBool::TRUE, 
-      child2->GetValue().CompareEquals(type::ValueFactory::GetIntegerValue(1)));
+  EXPECT_EQ(type::CmpBool::TRUE, child2->GetValue().CompareEquals(
+                                     type::ValueFactory::GetIntegerValue(1)));
 
   // Test Where clause
   auto where = (expression::OperatorExpression *)update_stmt->where.get();
@@ -413,15 +414,16 @@ TEST_F(PostgresParserTests, ExpressionUpdateTest) {
   auto column = (expression::TupleValueExpression *)cond1->GetChild(0);
   EXPECT_EQ(column->GetColumnName(), "s_i_id");
   constant = (expression::ConstantValueExpression *)cond1->GetChild(1);
-  EXPECT_EQ(CmpBool::TRUE, constant->GetValue().CompareEquals(
-      type::ValueFactory::GetIntegerValue(68999)));
+  EXPECT_EQ(type::CmpBool::TRUE,
+            constant->GetValue().CompareEquals(
+                type::ValueFactory::GetIntegerValue(68999)));
   auto cond2 = (expression::OperatorExpression *)where->GetChild(1);
   EXPECT_EQ(cond2->GetExpressionType(), ExpressionType::COMPARE_EQUAL);
   column = (expression::TupleValueExpression *)cond2->GetChild(0);
   EXPECT_EQ(column->GetColumnName(), "s_w_id");
   constant = (expression::ConstantValueExpression *)cond2->GetChild(1);
-  EXPECT_EQ(CmpBool::TRUE, constant->GetValue().CompareEquals(
-      type::ValueFactory::GetIntegerValue(4)));
+  EXPECT_EQ(type::CmpBool::TRUE, constant->GetValue().CompareEquals(
+                                     type::ValueFactory::GetIntegerValue(4)));
 }
 
 TEST_F(PostgresParserTests, StringUpdateTest) {
