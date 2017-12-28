@@ -14,7 +14,6 @@
 #pragma once
 
 #include "codegen/operator/operator_translator.h"
-#include "codegen/function_builder.h"
 #include "codegen/sorter.h"
 
 namespace peloton {
@@ -52,7 +51,8 @@ class BlockNestedLoopJoinTranslator : public OperatorTranslator {
   void ConsumeFromLeft(ConsumerContext &context, RowBatch::Row &row) const;
   void ConsumeFromRight(ConsumerContext &context, RowBatch::Row &row) const;
 
- private:
+  void FindMatchesForRow(ConsumerContext &ctx, RowBatch::Row &row) const;
+
   const planner::NestedLoopJoinPlan &GetPlan() const { return nlj_plan_; }
 
  private:

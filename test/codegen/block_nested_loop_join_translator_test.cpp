@@ -150,7 +150,6 @@ TEST_F(BlockNestedLoopJoinTranslatorTest, SingleColumnEqualityJoin) {
     EXPECT_EQ(0, results.size());
   }
 
-#if 0
   {
     //
     // Join condition: table1.A == table2.B + 1
@@ -159,11 +158,11 @@ TEST_F(BlockNestedLoopJoinTranslatorTest, SingleColumnEqualityJoin) {
     bool left_side = true;
     auto left_a_col = ColRefExpr(type::TypeId::INTEGER, left_side, 0);
     auto right_b_col = ColRefExpr(type::TypeId::INTEGER, !left_side, 1);
-    auto b_col_pl_1 =
-        OpExpr(ExpressionType::OPERATOR_PLUS, type::TypeId::INTEGER,
+    auto b_col_minus_1 =
+        OpExpr(ExpressionType::OPERATOR_MINUS, type::TypeId::INTEGER,
                std::move(right_b_col), std::move(ConstIntExpr(1)));
     auto left_a_eq_right_b =
-        CmpEqExpr(std::move(left_a_col), std::move(b_col_pl_1));
+        CmpEqExpr(std::move(left_a_col), std::move(b_col_minus_1));
 
     std::vector<codegen::WrappedTuple> results;
     PerformTest(std::move(left_a_eq_right_b), {0}, {1}, results);
@@ -171,7 +170,6 @@ TEST_F(BlockNestedLoopJoinTranslatorTest, SingleColumnEqualityJoin) {
     // Check results
     EXPECT_EQ(20, results.size());
   }
-#endif
 }
 
 TEST_F(BlockNestedLoopJoinTranslatorTest, NonEqualityJoin) {
