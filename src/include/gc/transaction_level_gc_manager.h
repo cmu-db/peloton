@@ -21,6 +21,7 @@
 #include "common/init.h"
 #include "common/logger.h"
 #include "common/thread_pool.h"
+#include "concurrency/transaction_context.h"
 #include "gc/gc_manager.h"
 #include "common/internal_types.h"
 
