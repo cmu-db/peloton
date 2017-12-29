@@ -60,7 +60,7 @@ TEST_F(OrderByTranslatorTest, SingleIntColAscTest) {
       results.begin(), results.end(),
       [](const codegen::WrappedTuple &t1, const codegen::WrappedTuple &t2) {
         auto is_lte = t1.GetValue(0).CompareLessThanEquals(t2.GetValue(0));
-        return is_lte == type::CmpBool::TRUE;
+        return is_lte == CmpBool::TRUE;
       }));
 }
 
@@ -97,7 +97,7 @@ TEST_F(OrderByTranslatorTest, SingleIntColDescTest) {
       results.begin(), results.end(),
       [](const codegen::WrappedTuple &t1, const codegen::WrappedTuple &t2) {
         auto is_gte = t1.GetValue(0).CompareGreaterThanEquals(t2.GetValue(0));
-        return is_gte == type::CmpBool::TRUE;
+        return is_gte == CmpBool::TRUE;
       }));
 }
 
@@ -135,14 +135,14 @@ TEST_F(OrderByTranslatorTest, MultiIntColAscTest) {
       results.begin(), results.end(),
       [](const codegen::WrappedTuple &t1, const codegen::WrappedTuple &t2) {
         if (t1.GetValue(1).CompareEquals(t2.GetValue(0)) ==
-            type::CmpBool::TRUE) {
+            CmpBool::TRUE) {
           // t1.b == t2.b => t1.a <= t2.a
           return t1.GetValue(0).CompareLessThanEquals(t2.GetValue(0)) ==
-                 type::CmpBool::TRUE;
+                 CmpBool::TRUE;
         } else {
           // t1.b != t2.b => t1.b < t2.b
           return t1.GetValue(1).CompareLessThan(t2.GetValue(1)) ==
-                 type::CmpBool::TRUE;
+                 CmpBool::TRUE;
         }
       }));
 }
@@ -181,14 +181,14 @@ TEST_F(OrderByTranslatorTest, MultiIntColMixedTest) {
       results.begin(), results.end(),
       [](const codegen::WrappedTuple &t1, const codegen::WrappedTuple &t2) {
         if (t1.GetValue(1).CompareEquals(t2.GetValue(1)) ==
-            type::CmpBool::TRUE) {
+            CmpBool::TRUE) {
           // t1.b == t2.b => t1.a <= t2.a
           return t1.GetValue(0).CompareLessThanEquals(t2.GetValue(0)) ==
-                 type::CmpBool::TRUE;
+                 CmpBool::TRUE;
         } else {
           // t1.b != t2.b => t1.b > t2.b
           return t1.GetValue(1).CompareGreaterThan(t2.GetValue(1)) ==
-                 type::CmpBool::TRUE;
+                 CmpBool::TRUE;
         }
       }));
 }

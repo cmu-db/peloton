@@ -241,9 +241,9 @@ TEST_F(QueryCacheTest, CacheSeqScanPlan) {
   // Check that we got all the results
   const auto &results_1 = buffer_1.GetOutputTuples();
   EXPECT_EQ(1, results_1.size());
-  EXPECT_EQ(type::CmpBool::TRUE, results_1[0].GetValue(0).CompareEquals(
+  EXPECT_EQ(CmpBool::TRUE, results_1[0].GetValue(0).CompareEquals(
                                      type::ValueFactory::GetIntegerValue(20)));
-  EXPECT_EQ(type::CmpBool::TRUE, results_1[0].GetValue(1).CompareEquals(
+  EXPECT_EQ(CmpBool::TRUE, results_1[0].GetValue(1).CompareEquals(
                                      type::ValueFactory::GetIntegerValue(21)));
   EXPECT_FALSE(cached);
 
@@ -252,9 +252,9 @@ TEST_F(QueryCacheTest, CacheSeqScanPlan) {
 
   const auto &results_2 = buffer_2.GetOutputTuples();
   EXPECT_EQ(1, results_2.size());
-  EXPECT_EQ(type::CmpBool::TRUE, results_2[0].GetValue(0).CompareEquals(
+  EXPECT_EQ(CmpBool::TRUE, results_2[0].GetValue(0).CompareEquals(
                                      type::ValueFactory::GetIntegerValue(20)));
-  EXPECT_EQ(type::CmpBool::TRUE, results_2[0].GetValue(1).CompareEquals(
+  EXPECT_EQ(CmpBool::TRUE, results_2[0].GetValue(1).CompareEquals(
                                      type::ValueFactory::GetIntegerValue(21)));
   EXPECT_TRUE(cached);
   EXPECT_EQ(1, codegen::QueryCache::Instance().GetCount());
@@ -297,7 +297,7 @@ TEST_F(QueryCacheTest, CacheHashJoinPlan) {
 
     // Check that the joins keys are actually equal
     EXPECT_EQ(tuple.GetValue(0).CompareEquals(tuple.GetValue(1)),
-              type::CmpBool::TRUE);
+              CmpBool::TRUE);
   }
 
   // We collect the results of the query into an in-memory buffer
@@ -313,7 +313,7 @@ TEST_F(QueryCacheTest, CacheHashJoinPlan) {
 
     // Check that the joins keys are actually equal
     EXPECT_EQ(tuple.GetValue(0).CompareEquals(tuple.GetValue(1)),
-              type::CmpBool::TRUE);
+              CmpBool::TRUE);
   }
   EXPECT_EQ(1, codegen::QueryCache::Instance().GetCount());
 
@@ -375,7 +375,7 @@ TEST_F(QueryCacheTest, CacheOrderByPlan) {
       results_1.begin(), results_1.end(),
       [](const codegen::WrappedTuple &t1, const codegen::WrappedTuple &t2) {
         auto is_gte = t1.GetValue(0).CompareGreaterThanEquals(t2.GetValue(0));
-        return is_gte == type::CmpBool::TRUE;
+        return is_gte == CmpBool::TRUE;
       }));
 
   CompileAndExecuteCache(order_by_plan_2, buffer_2, cached);
@@ -386,7 +386,7 @@ TEST_F(QueryCacheTest, CacheOrderByPlan) {
       results_2.begin(), results_2.end(),
       [](const codegen::WrappedTuple &t1, const codegen::WrappedTuple &t2) {
         auto is_gte = t1.GetValue(0).CompareGreaterThanEquals(t2.GetValue(0));
-        return is_gte == type::CmpBool::TRUE;
+        return is_gte == CmpBool::TRUE;
       }));
 
   auto found = (codegen::QueryCache::Instance().Find(
