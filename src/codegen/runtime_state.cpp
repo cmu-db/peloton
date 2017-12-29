@@ -53,11 +53,10 @@ llvm::Value *RuntimeState::LoadStatePtr(CodeGen &codegen,
 
 llvm::Value *RuntimeState::LoadStateValue(
     CodeGen &codegen, RuntimeState::StateID state_id) const {
-  auto &state_info = state_slots_[state_id];
-
   llvm::Value *state_ptr = LoadStatePtr(codegen, state_id);
   llvm::Value *state = codegen->CreateLoad(state_ptr);
 #ifndef NDEBUG
+  auto &state_info = state_slots_[state_id];
   PL_ASSERT(state->getType() == state_info.type);
   if (state->getType()->isStructTy()) {
     PL_ASSERT(state_info.type->isStructTy());
