@@ -4,9 +4,9 @@
 //
 // connection_manager.cpp
 //
-// Identification: src/network/connection_manager.cpp
+// Identification: src/network/service/connection_manager.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 

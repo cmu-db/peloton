@@ -4,9 +4,9 @@
 //
 // tcp_connection.cpp
 //
-// Identification: src/network/tcp_connection.cpp
+// Identification: src/network/service/tcp_connection.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
