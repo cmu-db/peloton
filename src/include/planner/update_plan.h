@@ -16,7 +16,7 @@
 #include "parser/update_statement.h"
 #include "planner/abstract_plan.h"
 #include "planner/project_info.h"
-#include "common/types.h"
+#include "common/internal_types.h"
 
 namespace peloton {
 

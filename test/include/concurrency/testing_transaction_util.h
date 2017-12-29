@@ -68,7 +68,7 @@
 #include "storage/tile_group_header.h"
 #include "storage/tuple.h"
 #include "catalog/catalog_defaults.h"
-#include "common/types.h"
+#include "common/internal_types.h"
 #pragma once
 
 namespace peloton {

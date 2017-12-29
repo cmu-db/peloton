@@ -14,7 +14,7 @@
 
 #include "expression/constant_value_expression.h"
 #include "storage/data_table.h"
-#include "common/types.h"
+#include "common/internal_types.h"
 #include "expression/abstract_expression.h"
 
 namespace peloton {

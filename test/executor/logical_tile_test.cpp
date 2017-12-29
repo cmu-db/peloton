@@ -28,7 +28,7 @@
 #include "storage/tile.h"
 #include "storage/tile_group.h"
 #include "storage/tuple.h"
-#include "common/types.h"
+#include "common/internal_types.h"
 #include "type/value_factory.h"
 
 

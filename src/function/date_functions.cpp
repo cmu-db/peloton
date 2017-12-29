@@ -19,7 +19,7 @@
 #include <sys/time.h>
 
 #include "common/logger.h"
-#include "common/types.h"
+#include "common/internal_types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
 

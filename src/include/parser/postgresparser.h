@@ -15,7 +15,7 @@
 #include "parser/parsenodes.h"
 #include "parser/pg_query.h"
 #include "parser/statements.h"
-#include "common/types.h"
+#include "common/internal_types.h"
 
 namespace peloton {
 namespace parser {

@@ -14,7 +14,7 @@
 
 #include "expression/abstract_expression.h"
 
-#include "common/types.h"
+#include "common/internal_types.h"
 #include "common/logger.h"
 #include "common/sql_node_visitor.h"
 #include "planner/binding_context.h"
@@ -79,15 +79,13 @@ class TupleValueExpression : public AbstractExpression {
     tuple_idx_ = tuple_idx;
   }
 
-  // Attribute binding
+  /**
+   * @brief Attribute binding
+   * @param binding_contexts
+   */
   void PerformBinding(const std::vector<const planner::BindingContext *> &
-                          binding_contexts) override {
-    const auto &context = binding_contexts[GetTupleId()];
-    ai_ = context->Find(GetColumnId());
-    PL_ASSERT(ai_ != nullptr);
-    LOG_DEBUG("TVE Column ID %u.%u binds to AI %p (%s)", GetTupleId(),
-              GetColumnId(), ai_, ai_->name.c_str());
-  }
+                          binding_contexts) override;
+
 
   // Return the attributes this expression uses
   void GetUsedAttributes(std::unordered_set<const planner::AttributeInfo *> &

@@ -20,7 +20,7 @@
 #include <sys/time.h>
 #include <iostream>
 
-#include "common/types.h"
+#include "common/internal_types.h"
 
 namespace peloton {
 namespace benchmark {

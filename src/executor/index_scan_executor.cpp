@@ -26,7 +26,7 @@
 #include "storage/masked_tuple.h"
 #include "storage/tile_group.h"
 #include "storage/tile_group_header.h"
-#include "common/types.h"
+#include "common/internal_types.h"
 #include "type/value.h"
 
 namespace peloton {

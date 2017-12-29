@@ -15,7 +15,7 @@
 #include <string>
 #include <sstream>
 
-#include "common/types.h"
+#include "common/internal_types.h"
 #include "statistics/abstract_metric.h"
 
 namespace peloton {

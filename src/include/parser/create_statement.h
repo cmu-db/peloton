@@ -16,7 +16,7 @@
 #include "common/sql_node_visitor.h"
 #include "expression/abstract_expression.h"
 #include "parser/sql_statement.h"
-#include "common/types.h"
+#include "common/internal_types.h"
 
 namespace peloton {
 namespace parser {

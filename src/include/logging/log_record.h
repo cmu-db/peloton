@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "common/types.h"
+#include "common/internal_types.h"
 #include "common/item_pointer.h"
 #include "common/macros.h"
 

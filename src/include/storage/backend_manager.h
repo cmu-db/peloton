@@ -15,7 +15,7 @@
 #include <mutex>
 
 #include "common/platform.h"
-#include "common/types.h"
+#include "common/internal_types.h"
 
 namespace peloton {
 namespace storage {

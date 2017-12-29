@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "catalog/multi_constraint.h"
-#include "common/types.h"
+#include "common/internal_types.h"
 
 #include <sstream>
 

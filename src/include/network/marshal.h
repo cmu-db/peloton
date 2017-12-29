@@ -17,7 +17,7 @@
 
 #include "common/logger.h"
 #include "common/macros.h"
-#include "common/types.h"
+#include "common/internal_types.h"
 
 #define BUFFER_INIT_SIZE 100
 

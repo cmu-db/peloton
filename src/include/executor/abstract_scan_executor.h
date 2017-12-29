@@ -14,7 +14,7 @@
 
 #include "executor/abstract_executor.h"
 #include "planner/abstract_scan_plan.h"
-#include "common/types.h"
+#include "common/internal_types.h"
 
 namespace peloton {
 namespace executor {

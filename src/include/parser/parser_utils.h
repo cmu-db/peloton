@@ -14,7 +14,7 @@
 
 #include "parser/statements.h"
 #include "expression/abstract_expression.h"
-#include "common/types.h"
+#include "common/internal_types.h"
 
 namespace peloton {
 namespace parser {

@@ -19,7 +19,7 @@
 #include "common/harness.h"
 
 #include "function/timestamp_functions.h"
-#include "common/types.h"
+#include "common/internal_types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
 

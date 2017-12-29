@@ -18,7 +18,7 @@
 #include <vector>
 
 #include "common/printable.h"
-#include "types.h"
+#include "internal_types.h"
 
 namespace peloton {
 namespace planner {

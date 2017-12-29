@@ -20,7 +20,7 @@
 #include "optimizer/properties.h"
 #include "optimizer/stats/table_stats.h"
 #include "sql/testing_sql_util.h"
-#include "common/types.h"
+#include "common/internal_types.h"
 
 namespace peloton {
 namespace test {

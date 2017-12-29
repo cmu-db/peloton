@@ -23,7 +23,7 @@
 #include "common/statement.h"
 #include "traffic_cop/traffic_cop.h"
 #include "protocol_handler.h"
-#include "common/types.h"
+#include "common/internal_types.h"
 
 // Packet content macros
 #define NULL_CONTENT_SIZE -1
