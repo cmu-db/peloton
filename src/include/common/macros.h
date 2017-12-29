@@ -147,4 +147,17 @@ namespace peloton {
 #define LLVM_VERSION_EQ(major, minor) \
   (LLVM_VERSION_MAJOR == (major) && LLVM_VERSION_MINOR == (minor))
 
+//===----------------------------------------------------------------------===//
+// switch statements
+//===----------------------------------------------------------------------===//
+
+#if defined __clang__
+#define PELOTON_FALLTHROUGH [[clang::fallthrough]]
+#elif defined __GNUC__ && __GNUC__ >= 7
+#define PELOTON_FALLTHROUGH [[fallthrough]]
+#else
+#define PELOTON_FALLTHROUGH
+#endif
+
+
 }  // namespace peloton
