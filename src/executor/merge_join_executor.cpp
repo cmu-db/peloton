@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "type/types.h"
+#include "common/types.h"
 #include "common/logger.h"
 #include "executor/logical_tile_factory.h"
 #include "executor/merge_join_executor.h"

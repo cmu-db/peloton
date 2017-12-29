@@ -17,7 +17,7 @@
 #include "common/harness.h"
 #include "common/logger.h"
 #include "common/statement.h"
-#include "type/types.h"
+#include "common/types.h"
 #include "type/value_factory.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/create_executor.h"

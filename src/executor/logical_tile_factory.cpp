@@ -17,7 +17,7 @@
 #include "storage/tile_group.h"
 #include "storage/data_table.h"
 #include "storage/tile_group_header.h"
-#include "type/types.h"
+#include "common/types.h"
 
 namespace peloton {
 namespace executor {

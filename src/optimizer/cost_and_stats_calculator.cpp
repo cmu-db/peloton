@@ -17,7 +17,7 @@
 #include "optimizer/stats/column_stats.h"
 #include "optimizer/stats/cost.h"
 #include "optimizer/stats/stats_storage.h"
-#include "type/types.h"
+#include "common/types.h"
 
 namespace peloton {
 namespace optimizer {

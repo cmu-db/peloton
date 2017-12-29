@@ -14,7 +14,7 @@
 #include "planner/abstract_scan_plan.h"
 #include "planner/project_info.h"
 #include "storage/data_table.h"
-#include "type/types.h"
+#include "common/types.h"
 
 namespace peloton {
 namespace planner {

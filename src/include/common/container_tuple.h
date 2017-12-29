@@ -22,7 +22,7 @@
 #include "common/macros.h"
 #include "storage/abstract_table.h"
 #include "storage/tile_group.h"
-#include "type/types.h"
+#include "types.h"
 #include "type/value.h"
 
 namespace peloton {

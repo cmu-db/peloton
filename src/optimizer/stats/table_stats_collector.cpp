@@ -17,7 +17,7 @@
 #include "common/macros.h"
 #include "storage/tile_group.h"
 #include "storage/tile_group_header.h"
-#include "type/types.h"
+#include "common/types.h"
 #include "type/value.h"
 
 namespace peloton {

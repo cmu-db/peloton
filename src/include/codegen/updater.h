@@ -14,7 +14,7 @@
 
 #include "common/item_pointer.h"
 #include "executor/executor_context.h"
-#include "type/types.h"
+#include "common/types.h"
 
 namespace peloton {
 

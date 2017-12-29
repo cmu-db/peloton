@@ -21,7 +21,7 @@
 
 #include "common/item_pointer.h"
 #include "common/printable.h"
-#include "type/types.h"
+#include "common/types.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables

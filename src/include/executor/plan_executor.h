@@ -14,7 +14,7 @@
 
 #include "common/statement.h"
 #include "executor/abstract_executor.h"
-#include "type/types.h"
+#include "common/types.h"
 
 namespace peloton {
 

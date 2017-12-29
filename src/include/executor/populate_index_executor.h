@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "type/types.h"
+#include "common/types.h"
 #include "executor/abstract_executor.h"
 #include "executor/logical_tile.h"
 #include "common/container_tuple.h"

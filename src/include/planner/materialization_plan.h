@@ -18,7 +18,7 @@
 #include <vector>
 
 #include "catalog/schema.h"
-#include "type/types.h"
+#include "common/types.h"
 #include "planner/abstract_plan.h"
 
 namespace peloton {

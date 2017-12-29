@@ -20,7 +20,7 @@
 #include <functional>
 #include <cstdint>
 
-#include "type/types.h"
+#include "common/types.h"
 #include "common/platform.h"
 
 namespace peloton {

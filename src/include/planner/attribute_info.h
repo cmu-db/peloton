@@ -15,7 +15,7 @@
 #include <string>
 
 #include "codegen/type/type.h"
-#include "type/types.h"
+#include "common/types.h"
 
 namespace peloton {
 namespace planner {

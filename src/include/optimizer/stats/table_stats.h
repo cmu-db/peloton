@@ -16,7 +16,7 @@
 
 #include "common/macros.h"
 #include "optimizer/stats.h"
-#include "type/types.h"
+#include "common/types.h"
 
 namespace peloton {
 namespace optimizer {

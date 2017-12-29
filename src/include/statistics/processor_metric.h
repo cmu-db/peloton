@@ -15,7 +15,7 @@
 #include <string>
 #include <sstream>
 
-#include "type/types.h"
+#include "common/types.h"
 #include "common/exception.h"
 #include "common/macros.h"
 

@@ -18,7 +18,7 @@
 
 #include "catalog/manager.h"
 #include "common/platform.h"
-#include "type/types.h"
+#include "common/types.h"
 #include "index/index.h"
 
 #include "index/skiplist.h"

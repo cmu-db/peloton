@@ -18,7 +18,7 @@
 #include <vector>
 
 #include "common/printable.h"
-#include "type/types.h"
+#include "common/types.h"
 #include "type/serializer.h"
 
 namespace peloton {

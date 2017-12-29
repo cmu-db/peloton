@@ -13,7 +13,7 @@
 
 #include "planner/populate_index_plan.h"
 
-#include "type/types.h"
+#include "common/types.h"
 #include "expression/abstract_expression.h"
 
 namespace peloton {

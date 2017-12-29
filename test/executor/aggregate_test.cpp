@@ -18,7 +18,7 @@
 #include "executor/testing_executor_util.h"
 #include "common/harness.h"
 
-#include "type/types.h"
+#include "common/types.h"
 #include "type/value.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/aggregate_executor.h"

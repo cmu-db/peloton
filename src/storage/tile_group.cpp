@@ -18,7 +18,7 @@
 #include "common/container_tuple.h"
 #include "common/logger.h"
 #include "common/platform.h"
-#include "type/types.h"
+#include "common/types.h"
 #include "storage/abstract_table.h"
 #include "storage/tile.h"
 #include "storage/tile_group_header.h"
