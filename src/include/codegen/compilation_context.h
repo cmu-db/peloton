@@ -15,6 +15,7 @@
 #include <memory>
 #include <unordered_map>
 
+#include "codegen/auxiliary_producer_function.h"
 #include "codegen/code_context.h"
 #include "codegen/codegen.h"
 #include "codegen/expression/expression_translator.h"
@@ -65,8 +66,10 @@ class CompilationContext {
   // the plan and prepare the provided query statement.
   void GeneratePlan(QueryCompiler::CompileStats *stats);
 
-  llvm::Function *DeclareAuxiliaryProducer(const planner::AbstractPlan &plan,
-                                           const std::string &provided_name);
+  // Declare an extra function that produces tuples outside of the main plan
+  // function. The primary producer in this function is the provided plan node.
+  AuxiliaryProducerFunction DeclareAuxiliaryProducer(
+      const planner::AbstractPlan &plan, const std::string &provided_name);
 
   //===--------------------------------------------------------------------===//
   // ACCESSORS

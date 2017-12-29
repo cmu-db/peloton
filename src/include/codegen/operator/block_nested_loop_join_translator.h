@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include "codegen/auxiliary_producer_function.h"
 #include "codegen/operator/operator_translator.h"
 #include "codegen/sorter.h"
 
@@ -25,7 +26,7 @@ class NestedLoopJoinPlan;
 namespace codegen {
 
 //===----------------------------------------------------------------------===//
-// The translator for a blockwise nested loop joins
+// The translator for a blockwise nested loop join
 //===----------------------------------------------------------------------===//
 class BlockNestedLoopJoinTranslator : public OperatorTranslator {
  public:
@@ -59,27 +60,27 @@ class BlockNestedLoopJoinTranslator : public OperatorTranslator {
   // The plan
   const planner::NestedLoopJoinPlan &nlj_plan_;
 
-  // The pipeline the left subtree of the plan belongs to
+  // The pipeline for the left subtree of the plan
   Pipeline left_pipeline_;
 
-  // All the attributes from the left side that are materialized
+  // All the attributes from the left input that are materialized
   std::vector<const planner::AttributeInfo *> unique_left_attributes_;
 
   // The memory space we use to buffer left input tuples. We use a util::Sorter
   // instance because it provides a simple API to append tuples into a buffer.
   // We **DO NOT** actually sort the input at all.
-  RuntimeState::StateID sorter_id_;
-  Sorter sorter_;
+  RuntimeState::StateID buffer_id_;
+  Sorter buffer_;
 
   // This controls the number of tuples we buffer before performing the nested
   // loop join. Ideally, we want the buffer to always be, at least, L2 cache
-  // resident. Knowing the tuple layout coming form the left child, we calculate
+  // resident. Knowing the tuple layout coming from the left child, we calculate
   // this value accurately.
   uint32_t max_buf_rows_;
 
   // This is the function called when enough tuples from the left side have been
   // buffered and we want to perform the BNLJ against the right input.
-  llvm::Function *join_buffer_func_;
+  AuxiliaryProducerFunction join_buffer_func_;
 };
 
 }  // namespace codegen

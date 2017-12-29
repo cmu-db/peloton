@@ -80,8 +80,8 @@ BlockNestedLoopJoinTranslator::BlockNestedLoopJoinTranslator(
 
   // Allocate our sorter in runtime state
   auto &runtime_state = context.GetRuntimeState();
-  sorter_id_ =
-      runtime_state.RegisterState("sorter", SorterProxy::GetType(GetCodeGen()));
+  buffer_id_ =
+      runtime_state.RegisterState("buffer", SorterProxy::GetType(GetCodeGen()));
 
   // Collect all unique attributes from the left side
   for (const auto *ai : nlj_plan.GetJoinAIsLeft()) {
@@ -95,20 +95,20 @@ BlockNestedLoopJoinTranslator::BlockNestedLoopJoinTranslator(
     }
   }
 
-  // Construct the sorter
+  // Construct the layout of tuples we store in our buffer
   std::vector<type::Type> left_input_desc;
   for (const auto *ai : unique_left_attributes_) {
     left_input_desc.push_back(ai->type);
   }
 
-  sorter_ = Sorter{GetCodeGen(), left_input_desc};
+  buffer_ = Sorter{GetCodeGen(), left_input_desc};
 }
 
 void BlockNestedLoopJoinTranslator::InitializeState() {
   auto &codegen = GetCodeGen();
   auto *null_func = codegen.Null(
       proxy::TypeBuilder<util::Sorter::ComparisonFunction>::GetType(codegen));
-  sorter_.Init(codegen, LoadStatePtr(sorter_id_), null_func);
+  buffer_.Init(codegen, LoadStatePtr(buffer_id_), null_func);
 }
 
 void BlockNestedLoopJoinTranslator::DefineAuxiliaryFunctions() {
@@ -119,7 +119,7 @@ void BlockNestedLoopJoinTranslator::DefineAuxiliaryFunctions() {
 }
 
 void BlockNestedLoopJoinTranslator::TearDownState() {
-  sorter_.Destroy(GetCodeGen(), LoadStatePtr(sorter_id_));
+  buffer_.Destroy(GetCodeGen(), LoadStatePtr(buffer_id_));
 }
 
 std::string BlockNestedLoopJoinTranslator::GetName() const {
@@ -132,13 +132,13 @@ void BlockNestedLoopJoinTranslator::Produce() const {
 
   // Flush any remaining buffered tuples through the join
   auto &codegen = GetCodeGen();
-  auto *num_buffered_tuples =
-      sorter_.GetNumberOfStoredTuples(codegen, LoadStatePtr(sorter_id_));
-  lang::If has_tuples{
-      codegen, codegen->CreateICmpUGT(num_buffered_tuples, codegen.Const32(0))};
+  auto *num_tuples =
+      buffer_.GetNumberOfStoredTuples(codegen, LoadStatePtr(buffer_id_));
+  lang::If has_tuples{codegen,
+                      codegen->CreateICmpUGT(num_tuples, codegen.Const32(0))};
   {
     // Flush remaining
-    codegen.CallFunc(join_buffer_func_, {codegen.GetState()});
+    join_buffer_func_.Call(codegen);
   }
   has_tuples.EndIf();
 }
@@ -159,18 +159,18 @@ void BlockNestedLoopJoinTranslator::ConsumeFromLeft(
   }
 
   // Append tuple to buffer
-  auto *sorter_ptr = LoadStatePtr(sorter_id_);
-  sorter_.Append(codegen, sorter_ptr, tuple);
+  auto *buffer_ptr = LoadStatePtr(buffer_id_);
+  buffer_.Append(codegen, buffer_ptr, tuple);
 
   // Check if we should process the filled buffer
-  auto *buf_size = sorter_.GetNumberOfStoredTuples(codegen, sorter_ptr);
+  auto *buf_size = buffer_.GetNumberOfStoredTuples(codegen, buffer_ptr);
   auto *flush_buffer_cond =
       codegen->CreateICmpUGE(buf_size, codegen.Const32(max_buf_rows_));
   lang::If flush_buffer{codegen, flush_buffer_cond};
   {
-    // Flush & reset sorter
-    codegen.CallFunc(join_buffer_func_, {codegen.GetState()});
-    sorter_.Reset(codegen, sorter_ptr);
+    // Process and reset buffer
+    join_buffer_func_.Call(codegen);
+    buffer_.Reset(codegen, buffer_ptr);
   }
   flush_buffer.EndIf();
 }
@@ -275,7 +275,7 @@ inline void BufferedTupleCallback::ProjectAndConsume() const {
 void BlockNestedLoopJoinTranslator::FindMatchesForRow(
     ConsumerContext &ctx, RowBatch::Row &row) const {
   BufferedTupleCallback callback{GetPlan(), unique_left_attributes_, ctx, row};
-  sorter_.Iterate(GetCodeGen(), LoadStatePtr(sorter_id_), callback);
+  buffer_.Iterate(GetCodeGen(), LoadStatePtr(buffer_id_), callback);
 }
 
 }  // namespace codegen

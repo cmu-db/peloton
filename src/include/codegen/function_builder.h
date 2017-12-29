@@ -86,12 +86,9 @@ class FunctionBuilder {
   friend class CodeGen;
 
  public:
-  // Constructor
-  FunctionBuilder(CodeContext &cc,
-                  const FunctionDeclaration &declaration);
+  FunctionBuilder(CodeContext &cc, const FunctionDeclaration &declaration);
 
-  FunctionBuilder(CodeContext &cc, std::string name,
-                  llvm::Type *ret_type,
+  FunctionBuilder(CodeContext &cc, std::string name, llvm::Type *ret_type,
                   const std::vector<FunctionDeclaration::ArgumentInfo> &args);
 
   // Destructor
