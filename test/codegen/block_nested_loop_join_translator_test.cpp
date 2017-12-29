@@ -160,7 +160,7 @@ TEST_F(BlockNestedLoopJoinTranslatorTest, SingleColumnEqualityJoin) {
     auto right_b_col = ColRefExpr(type::TypeId::INTEGER, !left_side, 1);
     auto b_col_minus_1 =
         OpExpr(ExpressionType::OPERATOR_MINUS, type::TypeId::INTEGER,
-               std::move(right_b_col), std::move(ConstIntExpr(1)));
+               std::move(right_b_col), ConstIntExpr(1));
     auto left_a_eq_right_b =
         CmpEqExpr(std::move(left_a_col), std::move(b_col_minus_1));
 
@@ -194,7 +194,7 @@ TEST_F(BlockNestedLoopJoinTranslatorTest, NonEqualityJoin) {
     //
     // The cross-product would have 20 x 80 = 1600 results total, but many are
     // removed by the join predicate. The first left tuple doesn't match with
-    // any tuples from the right side because it's A value is 0, less than all
+    // any tuples from the right side because its A value is 0, less than all
     // B values from the right side. The second left tuple matches only one -
     // the first tuple from the right side whose B value is 1. The # of matches
     // is thus: 0, 1, 2, 3, ... , n where n is the number of tuples in the left
