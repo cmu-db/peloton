@@ -1123,13 +1123,14 @@ TEST_F(PostgresParserTests, IndexTypeTest) {
 
     LOG_TRACE("%d : %s", ++ii, result->GetInfo().c_str());
   }
+
+  // Following queries are using index types that we do no currently support.
   std::vector<std::string> invalid_queries;
   invalid_queries.push_back("CREATE INDEX ii ON t USING GIN (col);");
   invalid_queries.push_back("CREATE INDEX ii ON t USING BRIN (col);");
   for (auto query : invalid_queries) {
     EXPECT_THROW(parser::PostgresParser::ParseSQLString(query.c_str()),
                  peloton::Exception);
-    // parser::PostgresParser::ParseSQLString(query.c_str());
   }
 }
 
