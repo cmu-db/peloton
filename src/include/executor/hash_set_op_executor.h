@@ -14,7 +14,7 @@
 
 #include <unordered_map>
 
-#include "common/types.h"
+#include "common/internal_types.h"
 #include "executor/abstract_executor.h"
 #include "executor/logical_tile.h"
 #include "common/container_tuple.h"

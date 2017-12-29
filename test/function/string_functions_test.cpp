@@ -17,7 +17,7 @@
 #include "common/harness.h"
 
 #include "function/string_functions.h"
-#include "common/types.h"
+#include "common/internal_types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
 #include "util/string_util.h"

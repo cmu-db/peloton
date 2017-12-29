@@ -15,7 +15,7 @@
 #include <string>
 
 #include "catalog/manager.h"
-#include "common/types.h"
+#include "common/internal_types.h"
 #include "storage/data_table.h"
 #include "storage/temp_table.h"
 

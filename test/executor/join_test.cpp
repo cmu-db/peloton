@@ -18,7 +18,7 @@
 
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
-#include "common/types.h"
+#include "common/internal_types.h"
 
 #include "executor/hash_executor.h"
 #include "executor/hash_join_executor.h"

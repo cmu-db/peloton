@@ -21,7 +21,7 @@
 #include "expression/tuple_value_expression.h"
 #include "parser/pg_trigger.h"
 #include "parser/postgresparser.h"
-#include "common/types.h"
+#include "common/internal_types.h"
 
 namespace peloton {
 namespace test {

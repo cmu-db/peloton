@@ -2,15 +2,16 @@
 //
 //                         Peloton
 //
-// types.cpp
+// internal_types.cpp
 //
-// Identification: src/common/types.cpp
+// Identification: src/common/internal_types.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "common/types.h"
+
+#include "common/internal_types.h"
 
 #include <algorithm>
 #include <cstring>

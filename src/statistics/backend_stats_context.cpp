@@ -14,7 +14,7 @@
 
 #include <map>
 
-#include "common/types.h"
+#include "common/internal_types.h"
 #include "common/statement.h"
 #include "catalog/catalog.h"
 #include "catalog/manager.h"

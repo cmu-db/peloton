@@ -15,7 +15,7 @@
 
 #include "catalog/testing_constraints_util.h"
 
-#include "common/types.h"
+#include "common/internal_types.h"
 #include "catalog/catalog.h"
 #include "concurrency/testing_transaction_util.h"
 #include "planner/plan_util.h"

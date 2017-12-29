@@ -2,11 +2,11 @@
 //
 //                         Peloton
 //
-// types.h
+// internal_types.h
 //
-// Identification: src/include/type/types.h
+// Identification: src/include/common/internal_types.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -22,13 +22,13 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+#include <unistd.h>
 
 #include "parser/pg_trigger.h"
 #include "type/type_id.h"
-
 #include "common/logger.h"
 #include "common/macros.h"
-#include "unistd.h"
+
 namespace peloton {
 
 // For all of the enums defined in this header, we will
@@ -208,18 +208,10 @@ enum class ExpressionType {
   HASH_RANGE = 200,
 
   // -----------------------------
-  // Internals added for Case When
+  // Operators
   // -----------------------------
   OPERATOR_CASE_EXPR = 302,
-
-  // -----------------------------
-  // Internals added for NULLIF
-  // -----------------------------
   OPERATOR_NULLIF = 304,
-
-  // -----------------------------
-  // Internals added for COALESCE
-  // -----------------------------
   OPERATOR_COALESCE = 305,
 
   // -----------------------------
@@ -228,18 +220,18 @@ enum class ExpressionType {
   ROW_SUBQUERY = 400,
   SELECT_SUBQUERY = 401,
 
-  //===--------------------------------------------------------------------===//
+  // -----------------------------
   // Parser
-  //===--------------------------------------------------------------------===//
+  // -----------------------------
   STAR = 500,
   PLACEHOLDER = 501,
   COLUMN_REF = 502,
   FUNCTION_REF = 503,
   TABLE_REF = 504,
 
-  //===--------------------------------------------------------------------===//
-  // Misc
-  //===--------------------------------------------------------------------===//
+  // -----------------------------
+  // Miscellaneous
+  // -----------------------------
   CAST = 600
 };
 

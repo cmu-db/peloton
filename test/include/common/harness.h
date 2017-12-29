@@ -22,7 +22,7 @@
 #include "common/macros.h"
 #include "common/logger.h"
 #include "common/init.h"
-#include "common/types.h"
+#include "common/internal_types.h"
 #include "gc/gc_manager_factory.h"
 
 #include "gmock/gmock.h"

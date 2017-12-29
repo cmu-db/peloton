@@ -14,7 +14,7 @@
 #pragma once
 
 #include <unordered_map>
-#include "common/types.h"
+#include "common/internal_types.h"
 #include "type/value.h"
 #include "common/exception.h"
 #include "common/printable.h"

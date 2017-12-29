@@ -15,7 +15,7 @@
 #include <string>
 #include <vector>
 
-#include "common/types.h"
+#include "common/internal_types.h"
 #include "type/value.h"
 
 namespace peloton {

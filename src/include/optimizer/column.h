@@ -14,7 +14,7 @@
 
 #include "catalog/column.h"
 
-#include "common/types.h"
+#include "common/internal_types.h"
 
 namespace peloton {
 namespace optimizer {

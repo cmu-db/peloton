@@ -22,7 +22,7 @@
 #include "common/logger.h"
 #include "common/thread_pool.h"
 #include "gc/gc_manager.h"
-#include "common/types.h"
+#include "common/internal_types.h"
 
 #include "container/lock_free_queue.h"
 

@@ -14,7 +14,7 @@
 
 #include <vector>
 
-#include "common/types.h"
+#include "common/internal_types.h"
 #include "common/macros.h"
 #include "common/platform.h"
 

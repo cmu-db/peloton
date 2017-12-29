@@ -18,7 +18,7 @@
 #include "planner/attribute_info.h"
 #include "expression/parameter.h"
 #include "codegen/query_parameters_map.h"
-#include "common/types.h"
+#include "common/internal_types.h"
 #include "storage/zone_map_manager.h"
 
 namespace peloton {

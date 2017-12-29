@@ -15,7 +15,7 @@
 #include "common/sql_node_visitor.h"
 #include "binder/binder_context.h"
 #include "parser/statements.h"
-#include "common/types.h"
+#include "common/internal_types.h"
 
 namespace peloton {
 
