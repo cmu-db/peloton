@@ -136,7 +136,6 @@ ResultType TrafficCop::ExecuteStatementGetResult() {
   return p_status_.m_result;
 }
 
-executor::ExecutionResult TrafficCop::ExecuteHelper(
 /*
  * Execute a statement that needs a plan(so, BEGIN, COMMIT, ROLLBACK does not come here).
  * Begin a new transaction if necessary.
@@ -144,7 +143,7 @@ executor::ExecutionResult TrafficCop::ExecuteHelper(
  * queries), directly return
  * Otherwise, call ExecutePlan()
  */
-executor::ExecuteResult TrafficCop::ExecuteHelper(
+executor::ExecutionResult TrafficCop::ExecuteHelper(
     std::shared_ptr<planner::AbstractPlan> plan,
     const std::vector<type::Value> &params, std::vector<ResultValue> &result,
     const std::vector<int> &result_format, size_t thread_id) {
