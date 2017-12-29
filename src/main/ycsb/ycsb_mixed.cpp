@@ -33,7 +33,7 @@
 #include "catalog/manager.h"
 #include "catalog/schema.h"
 
-#include "type/types.h"
+#include "common/types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
 #include "common/logger.h"

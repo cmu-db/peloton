@@ -12,7 +12,7 @@
 
 #include <vector>
 
-#include "type/types.h"
+#include "common/types.h"
 #include "common/logger.h"
 #include "common/exception.h"
 #include "executor/logical_tile_factory.h"

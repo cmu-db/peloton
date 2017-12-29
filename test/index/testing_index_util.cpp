@@ -21,7 +21,7 @@
 #include "index/index.h"
 #include "index/index_util.h"
 #include "storage/tuple.h"
-#include "type/types.h"
+#include "common/types.h"
 #include "type/value_factory.h"
 
 namespace peloton {

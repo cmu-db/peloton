@@ -13,7 +13,7 @@
 #include <string>
 #include <unordered_map>
 
-#include "type/types.h"
+#include "common/types.h"
 
 namespace peloton {
 

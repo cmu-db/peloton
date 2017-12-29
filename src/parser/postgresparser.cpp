@@ -30,7 +30,7 @@
 #include "parser/pg_query.h"
 #include "parser/pg_trigger.h"
 #include "parser/postgresparser.h"
-#include "type/types.h"
+#include "common/types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
 

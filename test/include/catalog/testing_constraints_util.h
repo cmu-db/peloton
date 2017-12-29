@@ -21,7 +21,7 @@
 #include "common/harness.h"
 #include "executor/mock_executor.h"
 
-#include "type/types.h"
+#include "common/types.h"
 #include "catalog/catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/schema.h"

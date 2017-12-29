@@ -29,7 +29,7 @@
 #include "optimizer/stats/table_stats.h"
 #include "optimizer/stats/value_condition.h"
 #include "sql/testing_sql_util.h"
-#include "type/types.h"
+#include "common/types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
 

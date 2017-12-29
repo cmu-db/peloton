@@ -15,7 +15,7 @@
 #include <string>
 #include <sstream>
 
-#include "type/types.h"
+#include "common/types.h"
 #include "statistics/abstract_metric.h"
 #include "statistics/access_metric.h"
 #include "util/string_util.h"

@@ -14,7 +14,7 @@
 
 #include "expression/abstract_expression.h"
 
-#include "type/types.h"
+#include "common/types.h"
 #include "common/logger.h"
 #include "common/sql_node_visitor.h"
 #include "planner/binding_context.h"

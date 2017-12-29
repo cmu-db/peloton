@@ -24,7 +24,7 @@
 #include "parser/sql_statement.h"
 #include "storage/data_table.h"
 #include "type/type.h"
-#include "type/types.h"
+#include "common/types.h"
 #include "event.h"
 
 namespace peloton {

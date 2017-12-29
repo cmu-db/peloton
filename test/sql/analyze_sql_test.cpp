@@ -20,7 +20,7 @@
 #include "executor/create_executor.h"
 #include "optimizer/stats/stats_storage.h"
 #include "planner/create_plan.h"
-#include "type/types.h"
+#include "common/types.h"
 
 namespace peloton {
 namespace test {

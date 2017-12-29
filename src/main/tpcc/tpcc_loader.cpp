@@ -38,7 +38,7 @@
 #include "storage/data_table.h"
 #include "storage/table_factory.h"
 #include "storage/database.h"
-#include "type/types.h"
+#include "common/types.h"
 
 
 // Logging mode

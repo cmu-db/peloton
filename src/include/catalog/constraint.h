@@ -17,7 +17,7 @@
 #include <vector>
 
 #include "common/printable.h"
-#include "type/types.h"
+#include "common/types.h"
 #include "type/value.h"
 
 namespace peloton {

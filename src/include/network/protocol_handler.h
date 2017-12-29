@@ -14,7 +14,7 @@
 
 #include "include/traffic_cop/traffic_cop.h"
 #include "marshal.h"
-#include "type/types.h"
+#include "common/types.h"
 // Packet content macros
 
 namespace peloton {

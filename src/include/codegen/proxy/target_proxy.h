@@ -14,7 +14,7 @@
 
 #include "codegen/proxy/proxy.h"
 #include "codegen/proxy/type_builder.h"
-#include "type/types.h"
+#include "common/types.h"
 #include "planner/project_info.h"
 
 namespace peloton {

@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "type/types.h"
+#include "common/types.h"
 
 #include <algorithm>
 #include <cstring>

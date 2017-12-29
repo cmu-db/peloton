@@ -13,7 +13,7 @@
 #pragma once
 
 #include <stdint.h>
-#include "type/types.h"
+#include "common/types.h"
 
 namespace peloton {
 

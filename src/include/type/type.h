@@ -18,7 +18,7 @@
 
 #include "type/serializeio.h"
 #include "type/type_id.h"
-#include "type/types.h"
+#include "common/types.h"
 
 namespace peloton {
 namespace type {

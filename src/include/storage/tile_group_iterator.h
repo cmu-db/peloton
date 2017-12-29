@@ -15,7 +15,7 @@
 
 #include <memory>
 
-#include "type/types.h"
+#include "common/types.h"
 #include "common/iterator.h"
 
 namespace peloton {

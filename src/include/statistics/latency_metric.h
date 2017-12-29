@@ -17,7 +17,7 @@
 
 #include "common/timer.h"
 #include "common/macros.h"
-#include "type/types.h"
+#include "common/types.h"
 #include "common/exception.h"
 #include "container/circular_buffer.h"
 #include "statistics/abstract_metric.h"

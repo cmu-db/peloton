@@ -16,7 +16,7 @@
 #include <vector>
 
 #include "common/macros.h"
-#include "type/types.h"
+#include "common/types.h"
 
 namespace peloton {
 namespace codegen {

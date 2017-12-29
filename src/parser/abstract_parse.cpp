@@ -18,7 +18,7 @@
 #include <utility>
 #include <util/string_util.h>
 
-#include "type/types.h"
+#include "common/types.h"
 #include "common/logger.h"
 
 namespace peloton {
