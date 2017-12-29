@@ -54,8 +54,7 @@ TableScanTranslator::TableScanTranslator(const planner::SeqScanPlan &scan,
   LOG_DEBUG("Finished constructing TableScanTranslator ...");
 }
 
-// Produce!
-std::vector<CodeGenStage> TableScanTranslator::Produce() const {
+std::vector<CodeGenStage> TableScanTranslator::ProduceSingleThreaded() const {
   auto &codegen = GetCodeGen();
   auto &code_context = codegen.GetCodeContext();
   auto &compilation_context = GetCompilationContext();
@@ -79,6 +78,7 @@ std::vector<CodeGenStage> TableScanTranslator::Produce() const {
     llvm::Value* table_ptr =
         codegen.Call(StorageManagerProxy::GetTableWithOid,
                      {storage_manager_ptr, db_oid, table_oid});
+    auto num_tile_groups = table_.GetTileGroupCount(codegen, table_ptr);
 
     // The selection vector for the scan
     auto* raw_vec = codegen.AllocateBuffer(
@@ -99,17 +99,106 @@ std::vector<CodeGenStage> TableScanTranslator::Produce() const {
       }
     }
     ScanConsumer scan_consumer{*this, sel_vec};
-    table_.GenerateScan(codegen, table_ptr, sel_vec.GetCapacity(),
-                        scan_consumer,
-                        predicate_ptr, num_preds);
+    table_.GenerateScan(codegen, codegen.Const64(0), table_ptr,
+                        codegen.Const64(0), num_tile_groups,
+                        sel_vec.GetCapacity(), scan_consumer, predicate_ptr,
+                        num_preds);
     LOG_TRACE("TableScan on [%u] finished producing tuples ...",
               table.GetOid());
   }
   function_builder.ReturnAndFinish();
-  return {CodeGenStage{
-      .kind_ = StageKind::SINGLE_THREADED,
-      .llvm_func_ = function_builder.GetFunction(),
-  }};
+  return {SingleThreadedCodeGenStage(function_builder.GetFunction())};
+}
+
+std::vector<CodeGenStage> TableScanTranslator::ProduceMultiThreaded() const {
+  auto &codegen = GetCodeGen();
+  auto &code_context = codegen.GetCodeContext();
+  auto &compilation_context = GetCompilationContext();
+  auto &runtime_state = compilation_context.GetRuntimeState();
+  auto &table = GetTable();
+
+  FunctionBuilder table_scan_init_builder{
+      code_context,
+      "table_scan_init",
+      codegen.VoidType(),
+      {{"runtime_state", runtime_state.FinalizeType(codegen)->getPointerTo()},
+       {"ntasks", codegen.Int64Type()}
+      }
+  };
+  {
+    ConsumerContext context{GetCompilationContext(), codegen.Const64(0),
+                            GetPipeline()};
+    context.NotifyNumTasks(table_scan_init_builder.GetArgumentByName("ntasks"));
+  }
+  table_scan_init_builder.ReturnAndFinish();
+
+  FunctionBuilder table_scan_builder{
+      code_context,
+      "table_scan",
+      codegen.VoidType(),
+      {{"runtime_state", runtime_state.FinalizeType(codegen)->getPointerTo()},
+       {"task_id", codegen.Int64Type()},
+       {"tile_group_beg", codegen.Int64Type()},
+       {"tile_group_end", codegen.Int64Type()}}};
+  {
+    compilation_context.RefreshParameterCache();
+
+    LOG_TRACE("TableScan on [%u] starting to produce tuples ...",
+              table.GetOid());
+
+    // Get the table instance from the database
+    llvm::Value *storage_manager_ptr = GetStorageManagerPtr();
+    llvm::Value *db_oid = codegen.Const32(table.GetDatabaseOid());
+    llvm::Value *table_oid = codegen.Const32(table.GetOid());
+    llvm::Value *table_ptr =
+        codegen.Call(StorageManagerProxy::GetTableWithOid,
+                     {storage_manager_ptr, db_oid, table_oid});
+
+    // The selection vector for the scan
+    auto* raw_vec = codegen.AllocateBuffer(
+        codegen.Int32Type(), Vector::kDefaultVectorSize, "scanSelVector");
+    Vector sel_vec{raw_vec, Vector::kDefaultVectorSize, codegen.Int32Type()};
+
+    auto predicate = const_cast<expression::AbstractExpression*>(
+        GetScanPlan().GetPredicate());
+    llvm::Value* predicate_ptr = codegen->CreateIntToPtr(
+        codegen.Const64((int64_t) predicate),
+        AbstractExpressionProxy::GetType(codegen)->getPointerTo());
+    size_t num_preds = 0;
+
+    auto* zone_map_manager = storage::ZoneMapManager::GetInstance();
+    if (predicate != nullptr && zone_map_manager->ZoneMapTableExists()) {
+      if (predicate->IsZoneMappable()) {
+        num_preds = predicate->GetNumberofParsedPredicates();
+      }
+    }
+    ScanConsumer scan_consumer{*this, sel_vec};
+    table_.GenerateScan(codegen,
+                        table_scan_builder.GetArgumentByName("task_id"),
+                        table_ptr,
+                        table_scan_builder.GetArgumentByName("tile_group_beg"),
+                        table_scan_builder.GetArgumentByName("tile_group_end"),
+                        sel_vec.GetCapacity(), scan_consumer, predicate_ptr,
+                        num_preds);
+    LOG_TRACE("TableScan on [%u] finished producing tuples ...",
+              table.GetOid());
+  }
+  table_scan_builder.ReturnAndFinish();
+
+  return {MultiThreadedSeqScanCodeGen(
+      table_scan_init_builder.GetFunction(),
+      table_scan_builder.GetFunction(),
+      &table)};
+}
+
+// Produce!
+std::vector<CodeGenStage> TableScanTranslator::Produce() const {
+  auto &compilation_context = GetCompilationContext();
+  if (compilation_context.Multithread()) {
+    return ProduceMultiThreaded();
+  } else {
+    return ProduceSingleThreaded();
+  }
 }
 
 // Get the stringified name of this scan
@@ -139,7 +228,8 @@ TableScanTranslator::ScanConsumer::ScanConsumer(
 
 // Generate the body of the vectorized scan
 void TableScanTranslator::ScanConsumer::ProcessTuples(
-    CodeGen &codegen, llvm::Value *tid_start, llvm::Value *tid_end,
+    CodeGen &codegen, llvm::Value *task_id,
+    llvm::Value *tid_start, llvm::Value *tid_end,
     TileGroup::TileGroupAccess &tile_group_access) {
   // TODO: Should visibility check be done here or in codegen::Table/TileGroup?
 
@@ -163,6 +253,7 @@ void TableScanTranslator::ScanConsumer::ProcessTuples(
 
   // 4. Push the batch into the pipeline
   ConsumerContext context{translator_.GetCompilationContext(),
+                          task_id,
                           translator_.GetPipeline()};
   context.Consume(batch);
 }

@@ -34,11 +34,39 @@ static void ExecuteStages(std::vector<Stage>::iterator begin,
   } else {
     auto &pool = threadpool::MonoQueuePool::GetInstance();
     switch (begin->kind_) {
-      case StageKind::SINGLE_THREADED: {
+      case StageKind::SINGLETHREADED: {
         pool.SubmitTask([&pool, begin, end, param, on_complete] {
-          begin->func_ptr_(param);
+          begin->singlethreaded_func_(param);
           ExecuteStages(begin + 1, end, param, on_complete);
         });
+        break;
+      }
+      case StageKind::MULTITHREADED_SEQSCAN: {
+        auto table = begin->table_;
+
+        auto ntuples = table->GetTupleCount();
+        auto ntile_groups = table->GetTileGroupCount();
+        auto ntasks = std::min(std::max(ntuples / 1, size_t(1)), ntile_groups);
+        auto ntile_groups_per_task = ntile_groups / ntasks;
+        auto count = new std::atomic_size_t(ntasks);
+
+        begin->multithreaded_seqscan_init_(param, ntasks);
+
+        for (size_t task = 0; task < ntasks; ++task) {
+          size_t tile_group_beg = ntile_groups_per_task * task;
+          size_t tile_group_end = (task + 1 == ntasks) ? ntile_groups :
+                                  ntile_groups_per_task * (task + 1);
+          LOG_DEBUG("Scanning [%zu, %zu)", tile_group_beg, tile_group_end);
+          pool.SubmitTask([&pool, task, begin, end, param, tile_group_beg,
+                              tile_group_end, count, on_complete] {
+            begin->multithreaded_seqscan_func_(param, task, tile_group_beg,
+                                               tile_group_end);
+            if (--(*count) == 0) {
+              delete count;
+              ExecuteStages(begin + 1, end, param, on_complete);
+            }
+          });
+        }
         break;
       }
     }
@@ -145,14 +173,40 @@ bool Query::Prepare(const QueryFunctions &query_funcs) {
       query_funcs.init_func);
   PL_ASSERT(init_func_ != nullptr);
 
-  for (auto &stage : query_funcs.stages) {
-    auto func_ptr = (compiled_function_t)code_context_.GetRawFunctionPointer(
-        stage.llvm_func_);
-    PL_ASSERT(func_ptr != nullptr);
-    stages_.push_back(Stage {
-        .kind_ = stage.kind_,
-        .func_ptr_ = func_ptr,
-    });
+  for (auto &codegen_stage : query_funcs.stages) {
+//    auto func_ptr = code_context_.GetRawFunctionPointer(
+//        codegen_stage.llvm_func_);
+//    PL_ASSERT(func_ptr != nullptr);
+
+    Stage stage;
+    stage.kind_ = codegen_stage.kind_;
+    switch (stage.kind_) {
+      case StageKind::SINGLETHREADED: {
+        auto func = code_context_.GetRawFunctionPointer(
+            codegen_stage.singlethreaded_func_);
+        stage.singlethreaded_func_ = (void (*)(char *))func;
+        break;
+      }
+      case StageKind::MULTITHREADED_SEQSCAN: {
+        auto init_func = code_context_.GetRawFunctionPointer(
+            codegen_stage.multithreaded_seqscan_init_);
+
+        auto scan_func = code_context_.GetRawFunctionPointer(
+            codegen_stage.multithreaded_seqscan_func_);
+
+        stage.multithreaded_seqscan_init_ =
+            (void (*)(char *, size_t))init_func;
+
+        stage.multithreaded_seqscan_func_ =
+            (void (*)(char *, size_t, size_t, size_t))scan_func;
+
+        stage.table_ = codegen_stage.table_;
+
+        break;
+      }
+    }
+
+    stages_.push_back(stage);
   }
 
   tear_down_func_ = (compiled_function_t)code_context_.GetRawFunctionPointer(

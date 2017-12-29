@@ -88,10 +88,7 @@ std::vector<CodeGenStage> GlobalGroupByTranslator::Produce() const {
     aggregation_.CreateInitialGlobalValues(codegen, mat_buffer);
   }
   init_builder.ReturnAndFinish();
-  CodeGenStage init_stage = {
-      .kind_ = StageKind::SINGLE_THREADED,
-      .llvm_func_ = init_builder.GetFunction(),
-  };
+  auto init_stage = SingleThreadedCodeGenStage(init_builder.GetFunction());
 
   // Let the child produce tuples that we'll aggregate
   std::vector<CodeGenStage> child_stages =
@@ -133,14 +130,13 @@ std::vector<CodeGenStage> GlobalGroupByTranslator::Produce() const {
 
     // Create a new consumer context, put the aggregates into the context and send
     // it all up to the parent operator
-    ConsumerContext context{GetCompilationContext(), GetPipeline()};
+    ConsumerContext context{GetCompilationContext(), codegen.Const64(0),
+                            GetPipeline()};
     context.Consume(batch);
   }
   aggregate_builder.ReturnAndFinish();
-  CodeGenStage aggregate_stage = {
-      .kind_ = StageKind::SINGLE_THREADED,
-      .llvm_func_ = aggregate_builder.GetFunction(),
-  };
+  auto aggregate_stage = SingleThreadedCodeGenStage(
+      aggregate_builder.GetFunction());
 
   std::vector<CodeGenStage> stages;
   stages.push_back(init_stage);

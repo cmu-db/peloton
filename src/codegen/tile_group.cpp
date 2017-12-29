@@ -44,7 +44,8 @@ TileGroup::TileGroup(const catalog::Schema &schema) : schema_(schema) {}
 // }
 // @endcode
 //
-void TileGroup::GenerateTidScan(CodeGen &codegen, llvm::Value *tile_group_ptr,
+void TileGroup::GenerateTidScan(CodeGen &codegen, llvm::Value *task_id,
+                                llvm::Value *tile_group_ptr,
                                 llvm::Value *column_layouts,
                                 uint32_t batch_size,
                                 ScanCallback &consumer) const {
@@ -58,7 +59,7 @@ void TileGroup::GenerateTidScan(CodeGen &codegen, llvm::Value *tile_group_ptr,
 
     // Pass the vector to the consumer
     TileGroupAccess tile_group_access{*this, col_layouts};
-    consumer.ProcessTuples(codegen, curr_range.start, curr_range.end,
+    consumer.ProcessTuples(codegen, task_id, curr_range.start, curr_range.end,
                            tile_group_access);
 
     loop.LoopEnd(codegen, {});

@@ -32,14 +32,18 @@ class QueryResultConsumer {
   virtual void InitializeState(CompilationContext &compilation_context) = 0;
 
   // Called during plan-generation to consume the results of the query
-  virtual void ConsumeResult(ConsumerContext &context,
+  virtual void ConsumeResult(ConsumerContext &context, llvm::Value *task_id,
                              RowBatch::Row &row) const = 0;
 
   virtual char *GetConsumerState() = 0;
 
-  void ConsumeResult(ConsumerContext &context, RowBatch &batch) const {
-    batch.Iterate(context.GetCodeGen(), [this, &context](RowBatch::Row &row) {
-      ConsumeResult(context, row);
+  virtual void CodeGenNotifyNumTasks(CompilationContext &context,
+                                     llvm::Value *ntasks) = 0;
+
+  void ConsumeResult(ConsumerContext &context, llvm::Value *task_id,
+                     RowBatch &batch) const {
+    batch.Iterate(context.GetCodeGen(), [this, &context, task_id](RowBatch::Row &row) {
+      ConsumeResult(context, task_id, row);
     });
   }
 

@@ -135,8 +135,14 @@ class Printer : public codegen::QueryResultConsumer {
   void InitializeState(codegen::CompilationContext &) override {}
   void TearDownState(codegen::CompilationContext &) override {}
   // Use
-  void ConsumeResult(codegen::ConsumerContext &ctx,
+  void ConsumeResult(codegen::ConsumerContext &ctx, llvm::Value *task_id,
                      codegen::RowBatch::Row &) const override;
+
+  void CodeGenNotifyNumTasks(
+      UNUSED_ATTRIBUTE codegen::CompilationContext &context,
+      UNUSED_ATTRIBUTE llvm::Value *ntasks) final {
+    PL_ASSERT(false && "Not Implemented");
+  }
 
  private:
   std::vector<const planner::AttributeInfo *> ais_;

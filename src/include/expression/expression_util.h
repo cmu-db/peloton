@@ -642,6 +642,48 @@ class ExpressionUtil {
     return expr->Copy();
   }
 
+  /**
+   * @brief Recursively fill in predicate array.
+   * If the predicate array is not empty at return, expr is zone-mappable.
+   */
+  static void GetPredicateForZoneMap(
+      const expression::AbstractExpression *expr,
+      std::vector<storage::PredicateInfo> *predicate_restrictions) {
+    PL_ASSERT(expr != nullptr);
+    PL_ASSERT(predicate_restrictions != nullptr);
+
+    switch (expr->GetExpressionType()) {
+      case ExpressionType::CONJUNCTION_AND: {
+        GetPredicateForZoneMap(expr->GetChild(0), predicate_restrictions);
+        GetPredicateForZoneMap(expr->GetChild(1), predicate_restrictions);
+        break;
+      }
+      case ExpressionType::COMPARE_EQUAL:
+      case ExpressionType::COMPARE_LESSTHAN:
+      case ExpressionType::COMPARE_LESSTHANOREQUALTO:
+      case ExpressionType::COMPARE_GREATERTHAN:
+      case ExpressionType::COMPARE_GREATERTHANOREQUALTO: {
+        if (expr->GetChild(1)->GetExpressionType()
+            == ExpressionType::VALUE_CONSTANT) {
+          PL_ASSERT(expr->GetChild(0)->GetExpressionType()
+                    == ExpressionType::VALUE_TUPLE);
+          auto lhs = static_cast<const expression::TupleValueExpression *>(
+              expr->GetChild(0));
+          auto rhs = static_cast<const expression::ConstantValueExpression *>(
+              expr->GetChild(1));
+          predicate_restrictions->push_back(storage::PredicateInfo{
+              .col_id = lhs->GetColumnId(),
+              .comparison_operator = int(expr->GetExpressionType()),
+              .predicate_value = rhs->GetValue()
+          });
+        }
+        break;
+      }
+      default:
+        break;
+    }
+  }
+
   /*
    * Recursively call on each child and fill in the predicate array.
    * Returns true for zone mappable predicate.
@@ -659,11 +701,7 @@ class ExpressionUtil {
           GetPredicateForZoneMap(predicate_restrictions, expr->GetChild(0));
       bool right_expr =
           GetPredicateForZoneMap(predicate_restrictions, expr->GetChild(1));
-
-      if ((!left_expr) || (!right_expr)) {
-        return false;
-      }
-      return true;
+      return left_expr && right_expr;
 
     } else if (expr_type == ExpressionType::COMPARE_EQUAL ||
                expr_type == ExpressionType::COMPARE_LESSTHAN ||

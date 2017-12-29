@@ -254,10 +254,8 @@ std::vector<CodeGenStage> OrderByTranslator::Produce() const {
     LOG_DEBUG("OrderBy completed producing tuples ...");
   }
   order_by_stage_builder.ReturnAndFinish();
-  CodeGenStage order_by_stage = {
-      .kind_ = StageKind::SINGLE_THREADED,
-      .llvm_func_ = order_by_stage_builder.GetFunction(),
-  };
+  auto order_by_stage = SingleThreadedCodeGenStage(
+      order_by_stage_builder.GetFunction());
 
   std::vector<CodeGenStage> stages = std::move(child_stages);
   stages.push_back(order_by_stage);
@@ -319,6 +317,7 @@ void OrderByTranslator::ProduceResults::ProcessEntries(
 
   // Create the context and send the batch up
   ConsumerContext context{translator_.GetCompilationContext(),
+                          translator_.GetCodeGen().Const64(0),
                           translator_.GetPipeline()};
   context.Consume(batch);
 }

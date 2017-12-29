@@ -128,10 +128,8 @@ std::vector<CodeGenStage> HashGroupByTranslator::Produce() const {
                                   selection_vec, producer);
   }
   function_builder.ReturnAndFinish();
-  CodeGenStage hash_group_by_stage = {
-      .kind_ = StageKind::SINGLE_THREADED,
-      .llvm_func_ = function_builder.GetFunction(),
-  };
+  auto hash_group_by_stage = SingleThreadedCodeGenStage(
+      function_builder.GetFunction());
 
   std::vector<CodeGenStage> stages = std::move(child_stages);
   stages.push_back(hash_group_by_stage);
@@ -381,6 +379,7 @@ void HashGroupByTranslator::ProduceResults::ProcessEntries(
 
   // Row batch is set up, send it up
   ConsumerContext context{translator_.GetCompilationContext(),
+                          translator_.GetCodeGen().Const64(0),
                           translator_.GetPipeline()};
 
   auto *predicate = group_by.GetPredicate();

@@ -102,10 +102,7 @@ std::vector<CodeGenStage> InsertTranslator::Produce() const {
       }
     }
     function_builder.ReturnAndFinish();
-    return {CodeGenStage{
-        .kind_ = StageKind::SINGLE_THREADED,
-        .llvm_func_ = function_builder.GetFunction(),
-    }};
+    return {SingleThreadedCodeGenStage(function_builder.GetFunction())};
   }
 }
 

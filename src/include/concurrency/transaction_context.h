@@ -21,6 +21,7 @@
 #include "catalog/catalog_cache.h"
 #include "common/exception.h"
 #include "common/item_pointer.h"
+#include "common/platform.h"
 #include "common/printable.h"
 #include "common/internal_types.h"
 
@@ -108,6 +109,12 @@ class TransactionContext : public Printable {
     oid_t tile_group_id = location.block;
     oid_t tuple_id = location.offset;
 
+    spinlock_.Lock();
+    struct ScopeGuard {
+      Spinlock *lock;
+      ~ScopeGuard() { lock->Unlock(); }
+    } guard = {.lock = &spinlock_};
+
     if (rw_set_.find(tile_group_id) != rw_set_.end() &&
         rw_set_.at(tile_group_id).find(tuple_id) !=
             rw_set_.at(tile_group_id).end()) {
@@ -190,6 +197,8 @@ class TransactionContext : public Printable {
   IsolationLevelType isolation_level_;
 
   std::unique_ptr<trigger::TriggerSet> on_commit_triggers_;
+
+  Spinlock spinlock_;
 };
 
 }  // namespace concurrency

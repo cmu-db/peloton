@@ -333,6 +333,7 @@ ExpressionPtr PelotonCodeGenTest::OpExpr(ExpressionType op_type,
 //===----------------------------------------------------------------------===//
 
 void Printer::ConsumeResult(codegen::ConsumerContext &ctx,
+                            UNUSED_ATTRIBUTE llvm::Value *task_id,
                             codegen::RowBatch::Row &row) const {
   codegen::CodeGen &codegen = ctx.GetCodeGen();
 

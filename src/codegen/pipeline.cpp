@@ -68,6 +68,14 @@ const OperatorTranslator *Pipeline::NextStep() {
   }
 }
 
+const OperatorTranslator *Pipeline::PeekNextStep() const {
+  if (pipeline_index_ > 0) {
+    return pipeline_[pipeline_index_];
+  } else {
+    return nullptr;
+  }
+}
+
 uint32_t Pipeline::GetNumStages() const {
   return static_cast<uint32_t>(stage_boundaries_.size()) + 1;
 }

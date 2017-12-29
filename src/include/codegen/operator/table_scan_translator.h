@@ -47,6 +47,10 @@ class TableScanTranslator : public OperatorTranslator {
   // The method that produces new tuples
   std::vector<CodeGenStage> Produce() const override;
 
+  std::vector<CodeGenStage> ProduceSingleThreaded() const;
+
+  std::vector<CodeGenStage> ProduceMultiThreaded() const;
+
   // Scans are leaves in the query plan and, hence, do not consume tuples
   void Consume(ConsumerContext &, RowBatch &) const override {}
   void Consume(ConsumerContext &, RowBatch::Row &) const override {}
@@ -96,8 +100,8 @@ class TableScanTranslator : public OperatorTranslator {
     }
 
     // The code that forms the body of the scan loop
-    void ProcessTuples(CodeGen &codegen, llvm::Value *tid_start,
-                       llvm::Value *tid_end,
+    void ProcessTuples(CodeGen &codegen, llvm::Value *task_id,
+                       llvm::Value *tid_start, llvm::Value *tid_end,
                        TileGroup::TileGroupAccess &tile_group_access) override;
 
     // The callback when finishing iteration over a tile group

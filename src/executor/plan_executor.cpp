@@ -67,12 +67,14 @@ static void CompileAndExecutePlan(
   auto on_query_result =
       [on_complete, consumer](executor::ExecutionResult result) {
         std::vector<ResultValue> values;
-        for (const auto &tuple : consumer->GetOutputTuples()) {
-          for (uint32_t i = 0; i < tuple.tuple_.size(); i++) {
-            auto column_val = tuple.GetValue(i);
-            auto str = column_val.IsNull() ? "" : column_val.ToString();
-            LOG_TRACE("column content: [%s]", str.c_str());
-            values.push_back(std::move(str));
+        for (const auto &partition : consumer->GetOutputPartitions()) {
+          for (const auto &tuple : partition) {
+            for (uint32_t i = 0; i < tuple.tuple_.size(); i++) {
+              auto column_val = tuple.GetValue(i);
+              auto str = column_val.IsNull() ? "" : column_val.ToString();
+              LOG_TRACE("column content: [%s]", str.c_str());
+              values.push_back(std::move(str));
+            }
           }
         }
         on_complete(result, std::move(values));

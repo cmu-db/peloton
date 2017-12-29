@@ -92,6 +92,13 @@ void TransactionContext::Init(const size_t thread_id,
 RWType TransactionContext::GetRWType(const ItemPointer &location) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
+
+  spinlock_.Lock();
+  struct ScopeGuard {
+    Spinlock *lock;
+    ~ScopeGuard() { lock->Unlock(); }
+  } guard = {.lock = &spinlock_};
+
   auto itr = rw_set_.find(tile_group_id);
   if (itr == rw_set_.end()) {
     return RWType::INVALID;
@@ -110,10 +117,20 @@ void TransactionContext::RecordRead(const ItemPointer &location) {
   oid_t tuple_id = location.offset;
 
   if (IsInRWSet(location)) {
+    spinlock_.Lock();
+    struct ScopeGuard {
+      Spinlock *lock;
+      ~ScopeGuard() { lock->Unlock(); }
+    } guard = {.lock = &spinlock_};
     PL_ASSERT(rw_set_.at(tile_group_id).at(tuple_id) != RWType::DELETE &&
               rw_set_.at(tile_group_id).at(tuple_id) != RWType::INS_DEL);
     return;
   } else {
+    spinlock_.Lock();
+    struct ScopeGuard {
+      Spinlock *lock;
+      ~ScopeGuard() { lock->Unlock(); }
+    } guard = {.lock = &spinlock_};
     rw_set_[tile_group_id][tuple_id] = RWType::READ;
   }
 }
@@ -123,6 +140,11 @@ void TransactionContext::RecordReadOwn(const ItemPointer &location) {
   oid_t tuple_id = location.offset;
 
   if (IsInRWSet(location)) {
+    spinlock_.Lock();
+    struct ScopeGuard {
+      Spinlock *lock;
+      ~ScopeGuard() { lock->Unlock(); }
+    } guard = {.lock = &spinlock_};
     RWType &type = rw_set_.at(tile_group_id).at(tuple_id);
     if (type == RWType::READ) {
       type = RWType::READ_OWN;
@@ -131,6 +153,11 @@ void TransactionContext::RecordReadOwn(const ItemPointer &location) {
     }
     PL_ASSERT(type != RWType::DELETE && type != RWType::INS_DEL);
   } else {
+    spinlock_.Lock();
+    struct ScopeGuard {
+      Spinlock *lock;
+      ~ScopeGuard() { lock->Unlock(); }
+    } guard = {.lock = &spinlock_};
     rw_set_[tile_group_id][tuple_id] = RWType::READ_OWN;
   }
 }
@@ -140,6 +167,11 @@ void TransactionContext::RecordUpdate(const ItemPointer &location) {
   oid_t tuple_id = location.offset;
 
   if (IsInRWSet(location)) {
+    spinlock_.Lock();
+    struct ScopeGuard {
+      Spinlock *lock;
+      ~ScopeGuard() { lock->Unlock(); }
+    } guard = {.lock = &spinlock_};
     RWType &type = rw_set_.at(tile_group_id).at(tuple_id);
     if (type == RWType::READ || type == RWType::READ_OWN) {
       type = RWType::UPDATE;
@@ -161,6 +193,11 @@ void TransactionContext::RecordUpdate(const ItemPointer &location) {
     PL_ASSERT(false);
   } else {
     // consider select_for_udpate case.
+    spinlock_.Lock();
+    struct ScopeGuard {
+      Spinlock *lock;
+      ~ScopeGuard() { lock->Unlock(); }
+    } guard = {.lock = &spinlock_};
     rw_set_[tile_group_id][tuple_id] = RWType::UPDATE;
   }
 }
@@ -172,6 +209,11 @@ void TransactionContext::RecordInsert(const ItemPointer &location) {
   if (IsInRWSet(location)) {
     PL_ASSERT(false);
   } else {
+    spinlock_.Lock();
+    struct ScopeGuard {
+      Spinlock *lock;
+      ~ScopeGuard() { lock->Unlock(); }
+    } guard = {.lock = &spinlock_};
     rw_set_[tile_group_id][tuple_id] = RWType::INSERT;
     ++insert_count_;
   }
@@ -182,6 +224,12 @@ bool TransactionContext::RecordDelete(const ItemPointer &location) {
   oid_t tuple_id = location.offset;
 
   if (IsInRWSet(location)) {
+    spinlock_.Lock();
+    struct ScopeGuard {
+      Spinlock *lock;
+      ~ScopeGuard() { lock->Unlock(); }
+    } guard = {.lock = &spinlock_};
+
     RWType &type = rw_set_.at(tile_group_id).at(tuple_id);
     if (type == RWType::READ || type == RWType::READ_OWN) {
       type = RWType::DELETE;
@@ -207,6 +255,11 @@ bool TransactionContext::RecordDelete(const ItemPointer &location) {
     }
     PL_ASSERT(false);
   } else {
+    spinlock_.Lock();
+    struct ScopeGuard {
+      Spinlock *lock;
+      ~ScopeGuard() { lock->Unlock(); }
+    } guard = {.lock = &spinlock_};
     rw_set_[tile_group_id][tuple_id] = RWType::DELETE;
   }
   return false;

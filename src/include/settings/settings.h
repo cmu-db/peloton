@@ -124,6 +124,10 @@ SETTING_bool(codegen,
             true,
             true, true)
 
+SETTING_bool(codegen_parallel,
+            "Enable parallel code-generation (default: true)",
+            true,
+            true, true)
 
 //===----------------------------------------------------------------------===//
 // Optimizer
@@ -141,6 +145,3 @@ SETTING_bool(hash_join_bloom_filter,
 //===----------------------------------------------------------------------===//
 // GENERAL
 //===----------------------------------------------------------------------===//
-
-
-

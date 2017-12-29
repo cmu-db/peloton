@@ -171,10 +171,7 @@ std::vector<CodeGenStage> BlockNestedLoopJoinTranslator::Produce() const {
     has_tuples.EndIf();
   }
   join_builder.ReturnAndFinish();
-  CodeGenStage join_stage = {
-      .kind_ = StageKind::SINGLE_THREADED,
-      .llvm_func_ = join_builder.GetFunction(),
-  };
+  auto join_stage = SingleThreadedCodeGenStage(join_builder.GetFunction());
 
   std::vector<CodeGenStage> stages = child_stages;
   stages.push_back(join_stage);

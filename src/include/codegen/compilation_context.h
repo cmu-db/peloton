@@ -104,6 +104,8 @@ class CompilationContext {
     return parameters_map_.GetIndex(expression);
   }
 
+  bool Multithread() const { return multithread_; }
+
  private:
   // Generate any auxiliary helper functions that the query needs
   void GenerateHelperFunctions();
@@ -156,13 +158,14 @@ class CompilationContext {
 
   // The mapping of an expression somewhere in the tree to its translator
   std::unordered_map<const expression::AbstractExpression *,
-                     std::unique_ptr<ExpressionTranslator>>
-      exp_translators_;
+                     std::unique_ptr<ExpressionTranslator>> exp_translators_;
 
   // Pre-declared producer functions and their root plan nodes
   std::unordered_map<const planner::AbstractPlan *,
                      std::unique_ptr<std::vector<llvm::Function *>>>
       auxiliary_producers_;
+
+  bool multithread_;
 };
 
 }  // namespace codegen

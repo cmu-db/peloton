@@ -31,6 +31,7 @@ void CountingConsumer::InitializeState(codegen::CompilationContext &context) {
 
 // Increment the counter
 void CountingConsumer::ConsumeResult(codegen::ConsumerContext &context,
+                                     UNUSED_ATTRIBUTE llvm::Value *task_id,
                                      codegen::RowBatch::Row &) const {
   auto &codegen = context.GetCodeGen();
 

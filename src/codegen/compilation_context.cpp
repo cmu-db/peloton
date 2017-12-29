@@ -18,9 +18,25 @@
 #include "codegen/proxy/storage_manager_proxy.h"
 #include "common/logger.h"
 #include "common/timer.h"
+#include "settings/settings_manager.h"
 
 namespace peloton {
 namespace codegen {
+
+static bool IsMultithreadSupported(const planner::AbstractPlan *plan) {
+  if (!settings::SettingsManager::GetBool(
+      settings::SettingId::codegen_parallel)) {
+    return false;
+  }
+
+  switch (plan->GetPlanNodeType()) {
+    case PlanNodeType::SEQSCAN:
+      PL_ASSERT(plan->GetChildrenSize() == 0);
+      return true;
+    default:
+      return false;
+  }
+}
 
 // Constructor
 CompilationContext::CompilationContext(Query &query,
@@ -30,7 +46,8 @@ CompilationContext::CompilationContext(Query &query,
       parameters_map_(parameters_map),
       parameter_cache_(parameters_map_),
       result_consumer_(result_consumer),
-      codegen_(query_.GetCodeContext()) {
+      codegen_(query_.GetCodeContext()),
+      multithread_(IsMultithreadSupported(&query.GetPlan())) {
   // Allocate a storage manager instance in the runtime state
   auto &runtime_state = GetRuntimeState();
 
@@ -137,7 +154,8 @@ void CompilationContext::GenerateHelperFunctions() {
     const auto &plan = *iter.first;
     auto stages = Produce(plan);
     for (auto &stage : stages) {
-      iter.second->push_back(stage.llvm_func_);
+      PL_ASSERT(stage.kind_ == StageKind::SINGLETHREADED);
+      iter.second->push_back(stage.singlethreaded_func_);
     }
   }
 }

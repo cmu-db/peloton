@@ -152,9 +152,9 @@ hash_t AbstractExpression::HashForExactMatch() const {
 }
 
 bool AbstractExpression::IsZoneMappable() {
-  bool is_zone_mappable =
-      ExpressionUtil::GetPredicateForZoneMap(parsed_predicates, this);
-  return is_zone_mappable;
+  parsed_predicates.clear();
+  ExpressionUtil::GetPredicateForZoneMap(this, &parsed_predicates);
+  return !parsed_predicates.empty();
 }
 
 }  // namespace expression

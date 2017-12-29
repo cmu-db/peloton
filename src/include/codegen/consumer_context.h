@@ -36,7 +36,9 @@ class CompilationContext;
 class ConsumerContext {
  public:
   // Constructor
-  ConsumerContext(CompilationContext &compilation_context, Pipeline &pipeline);
+  ConsumerContext(CompilationContext &compilation_context,
+                  llvm::Value *task_id,
+                  Pipeline &pipeline);
 
   // Pass this consumer context to the parent of the caller of consume()
   void Consume(RowBatch &batch);
@@ -51,12 +53,16 @@ class ConsumerContext {
   // Get the pipeline
   const Pipeline &GetPipeline() const { return pipeline_; }
 
+  void NotifyNumTasks(llvm::Value *ntasks);
+
  private:
   // The compilation context
   CompilationContext &compilation_context_;
 
   // The pipeline of operators that this context passes through
   Pipeline &pipeline_;
+
+  llvm::Value *task_id_;
 
  private:
   // This class cannot be copy or move-constructed

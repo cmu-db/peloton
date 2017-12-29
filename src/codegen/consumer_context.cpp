@@ -19,8 +19,10 @@ namespace codegen {
 
 // Constructor
 ConsumerContext::ConsumerContext(CompilationContext &compilation_context,
+                                 llvm::Value *task_id,
                                  Pipeline &pipeline)
-    : compilation_context_(compilation_context), pipeline_(pipeline) {}
+    : compilation_context_(compilation_context), pipeline_(pipeline),
+      task_id_(task_id) {}
 
 // Pass the row batch to the next operator in the pipeline
 void ConsumerContext::Consume(RowBatch &batch) {
@@ -29,7 +31,7 @@ void ConsumerContext::Consume(RowBatch &batch) {
     // We're at the end of the query pipeline, we now send the output tuples
     // to the result consumer configured in the compilation context
     auto &consumer = compilation_context_.GetQueryResultConsumer();
-    consumer.ConsumeResult(*this, batch);
+    consumer.ConsumeResult(*this, task_id_, batch);
   } else {
     // We're not at the end of the pipeline, push the batch through the stages
     do {
@@ -62,7 +64,20 @@ void ConsumerContext::Consume(RowBatch::Row &row) {
   // We're at the end of the query pipeline, we now send the output tuples
   // to the result consumer configured in the compilation context
   auto &consumer = compilation_context_.GetQueryResultConsumer();
-  consumer.ConsumeResult(*this, row);
+  consumer.ConsumeResult(*this, task_id_, row);
+}
+
+void ConsumerContext::NotifyNumTasks(llvm::Value *ntasks) {
+  if (pipeline_.AtStageBoundary()) {
+    PL_ASSERT(false && "Not Implemented");
+    return;
+  }
+  if (pipeline_.PeekNextStep() != nullptr) {
+    PL_ASSERT(false && "Not Implemented");
+  }
+
+  auto &consumer = compilation_context_.GetQueryResultConsumer();
+  consumer.CodeGenNotifyNumTasks(compilation_context_, ntasks);
 }
 
 CodeGen &ConsumerContext::GetCodeGen() const {
