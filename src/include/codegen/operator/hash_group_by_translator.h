@@ -13,8 +13,6 @@
 #pragma once
 
 #include "codegen/aggregation.h"
-#include "codegen/compilation_context.h"
-#include "codegen/consumer_context.h"
 #include "codegen/oa_hash_table.h"
 #include "codegen/operator/operator_translator.h"
 #include "codegen/updateable_storage.h"

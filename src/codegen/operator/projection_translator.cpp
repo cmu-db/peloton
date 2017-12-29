@@ -12,6 +12,7 @@
 
 #include "codegen/operator/projection_translator.h"
 
+#include "codegen/compilation_context.h"
 #include "common/logger.h"
 #include "planner/projection_plan.h"
 

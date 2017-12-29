@@ -13,7 +13,6 @@
 #pragma once
 
 #include "codegen/aggregation.h"
-#include "codegen/compilation_context.h"
 #include "codegen/operator/operator_translator.h"
 #include "codegen/pipeline.h"
 

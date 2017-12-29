@@ -12,6 +12,7 @@
 
 #include "codegen/operator/global_group_by_translator.h"
 
+#include "codegen/compilation_context.h"
 #include "codegen/lang/if.h"
 #include "common/logger.h"
 #include "planner/aggregate_plan.h"

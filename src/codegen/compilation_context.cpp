@@ -24,6 +24,7 @@ namespace codegen {
 
 namespace {
 
+// Reset the cache (if already loaded), the populate the cache
 void InitializeParameterCache(CodeGen &codegen, ParameterCache &cache,
                               llvm::Value *runtime_query_parameters) {
   cache.Reset();
@@ -271,12 +272,12 @@ OperatorTranslator *CompilationContext::GetTranslator(
   return iter == op_translators_.end() ? nullptr : iter->second.get();
 }
 
-llvm::Function *CompilationContext::DeclareAuxiliaryProducer(
+AuxiliaryProducerFunction CompilationContext::DeclareAuxiliaryProducer(
     const planner::AbstractPlan &plan, const std::string &provided_name) {
   auto iter = auxiliary_producers_.find(&plan);
   if (iter != auxiliary_producers_.end()) {
     const auto &declaration = iter->second;
-    return declaration.GetDeclaredFunction();
+    return AuxiliaryProducerFunction(declaration);
   }
 
   auto &cc = query_.GetCodeContext();
@@ -301,7 +302,7 @@ llvm::Function *CompilationContext::DeclareAuxiliaryProducer(
   // Save the function declaration for later definition
   auxiliary_producers_.emplace(&plan, declaration);
 
-  return declaration.GetDeclaredFunction();
+  return AuxiliaryProducerFunction(declaration);
 }
 
 }  // namespace codegen
