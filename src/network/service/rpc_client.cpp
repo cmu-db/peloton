@@ -4,9 +4,9 @@
 //
 // rpc_client.cpp
 //
-// Identification: src/network/rpc_client.cpp
+// Identification: src/network/service/rpc_client.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 

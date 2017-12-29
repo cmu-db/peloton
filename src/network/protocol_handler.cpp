@@ -2,6 +2,19 @@
 //
 //                         Peloton
 //
+// protocol_handler.cpp
+//
+// Identification: src/network/protocol_handler.cpp
+//
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
 // protocol_handler.h
 //
 // Identification: src/include/network/protocol_handler.h

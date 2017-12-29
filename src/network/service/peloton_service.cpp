@@ -4,11 +4,12 @@
 //
 // peloton_service.cpp
 //
-// Identification: src/network/peloton_service.cpp
+// Identification: src/network/service/peloton_service.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 
 #include "network/service/peloton_service.h"
 #include "network/service/peloton_endpoint.h"

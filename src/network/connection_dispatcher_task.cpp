@@ -4,9 +4,9 @@
 //
 // connection_dispatcher_task.cpp
 //
-// Identification: src/include/network/connection_dispatcher_task.cpp
+// Identification: src/network/connection_dispatcher_task.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
