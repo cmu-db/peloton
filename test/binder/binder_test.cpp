@@ -299,7 +299,7 @@ TEST_F(BinderCorrectnessTest, FunctionExpressionTest) {
       dynamic_cast<parser::SelectStatement*>(stmt)->select_list[0].get());
   EXPECT_TRUE(funct_expr->Evaluate(nullptr, nullptr, nullptr)
                   .CompareEquals(type::ValueFactory::GetVarcharValue("est")) ==
-              type::CmpBool::TRUE);
+              CmpBool::TRUE);
 
   txn_manager.CommitTransaction(txn);
 }

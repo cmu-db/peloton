@@ -36,9 +36,6 @@ namespace peloton {
 // I don't think it matters whether this is 0 or -1
 #define INVALID_TYPE_ID 0
 
-// forward declare
-// class Value;
-
 //===--------------------------------------------------------------------===//
 // NULL-related Constants
 //===--------------------------------------------------------------------===//
@@ -58,14 +55,6 @@ namespace peloton {
 extern int DEFAULT_TUPLES_PER_TILEGROUP;
 extern int TEST_TUPLES_PER_TILEGROUP;
 
-// TODO: Use ThreadLocalPool ?
-// This needs to be >= the VoltType.MAX_VALUE_LENGTH defined in java, currently
-// 1048576.
-// The rationale for making it any larger would be to allow calculating wider
-// "temp" values
-// for use in situations where they are not being stored as column values
-#define POOLED_MAX_VALUE_LENGTH 1048576
-
 //===--------------------------------------------------------------------===//
 // Other Constants
 //===--------------------------------------------------------------------===//
@@ -75,12 +64,14 @@ extern int TEST_TUPLES_PER_TILEGROUP;
 #define VARCHAR_LENGTH_LONG 4096
 
 //===--------------------------------------------------------------------===//
-// Port to OSX
-//===---------------------------
-#ifdef __APPLE__
-#define off64_t off_t
-#define MAP_ANONYMOUS MAP_ANON
-#endif
+// Comparison Result
+// This is used when comparing values with each other
+//===--------------------------------------------------------------------===//
+enum class CmpBool {
+  FALSE = 0,
+  TRUE = 1,
+  NULL_ = 2 // Note the underscore suffix
+};
 
 //===--------------------------------------------------------------------===//
 // Postgres Value Types
