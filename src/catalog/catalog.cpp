@@ -1064,41 +1064,6 @@ void Catalog::InitializeFunctions() {
                                     function::DecimalFunctions::_Ceil},
           txn);
 
-      AddBuiltinFunction(
-          "ceiling", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL, internal_lang,
-          "Ceil",
-          function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
-          txn);
-
-      AddBuiltinFunction(
-          "ceiling", {type::TypeId::TINYINT}, type::TypeId::DECIMAL, internal_lang,
-          "Ceil",
-          function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
-          txn);
-
-      AddBuiltinFunction(
-          "ceiling", {type::TypeId::SMALLINT}, type::TypeId::DECIMAL, internal_lang,
-          "Ceil",
-          function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
-          txn);
-
-      AddBuiltinFunction(
-          "ceiling", {type::TypeId::INTEGER}, type::TypeId::DECIMAL, internal_lang,
-          "Ceil",
-          function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
-          txn);
-
-      AddBuiltinFunction(
-          "ceiling", {type::TypeId::BIGINT}, type::TypeId::DECIMAL, internal_lang,
-          "Ceil",
-          function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
-          txn);
-
       /**
        * date functions
        */
