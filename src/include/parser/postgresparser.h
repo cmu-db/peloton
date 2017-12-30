@@ -178,8 +178,13 @@ class PostgresParser {
   // transform helper for create trigger statements
   static parser::SQLStatement *CreateTriggerTransform(CreateTrigStmt *root);
 
-  // transform helper for create db statement
-  static parser::SQLStatement *CreateDbTransform(CreatedbStmt *root);
+  /**
+   * @brief transform helper for create database statement
+   * 
+   * @param Postgres CreateDatabaseStmt parsenode
+   * @return a peloton CreateStatement node
+   */
+  static parser::SQLStatement *CreateDatabaseTransform(CreateDatabaseStmt *root);
 
   // transform helper for column name (for insert statement)
   static std::vector<std::string> *ColumnNameTransform(List *root);
@@ -214,8 +219,13 @@ class PostgresParser {
   // transform helper for drop statement
   static parser::DropStatement *DropTransform(DropStmt *root);
 
-  // transform helper for drop database statement
-  static parser::DropStatement* DropDbTransform(DropdbStmt* root);
+  /**
+   * @brief transform helper for drop database statement
+   * 
+   * @param Postgres DropDatabaseStmt parsenode
+   * @return a peloton DropStatement node
+   */
+  static parser::DropStatement* DropDatabaseTransform(DropDatabaseStmt* root);
   
   // transform helper for drop table statement
   static parser::DropStatement *DropTableTransform(DropStmt *root);

@@ -1072,11 +1072,7 @@ parser::SQLStatement *PostgresParser::CreateTriggerTransform(
   return result;
 }
 
-// This function takes in a Postgres CreatedbStmt parsenode
-// and transfers into a Peloton CreateStatement parsenode.
-// Please refer to parser/parsenode.h for the definition of
-// CreatedbStmt parsenodes.
-parser::SQLStatement *PostgresParser::CreateDbTransform(CreatedbStmt *root) {
+parser::SQLStatement *PostgresParser::CreateDatabaseTransform(CreateDatabaseStmt *root) {
   parser::CreateStatement *result =
       new parser::CreateStatement(CreateStatement::kDatabase);
   result->table_info_.reset(new parser::TableInfo());
@@ -1100,11 +1096,7 @@ parser::DropStatement *PostgresParser::DropTransform(DropStmt *root) {
   }
 }
 
-// This function takes in a Postgres Dropdbstmt parsenode
-// and transfers into a Peloton CreateStatement parsenode.
-// Please refer to parser/parsenode.h for the definition of
-// Dropdbstmt parsenodes.
-parser::DropStatement* PostgresParser::DropDbTransform(DropdbStmt* root) {
+parser::DropStatement* PostgresParser::DropDatabaseTransform(DropDatabaseStmt* root) {
   parser::DropStatement* result = 
       new parser::DropStatement(DropStatement::kDatabase);
   
@@ -1453,7 +1445,8 @@ parser::SQLStatement *PostgresParser::NodeTransform(Node *stmt) {
       result = CreateTransform(reinterpret_cast<CreateStmt *>(stmt));
       break;
     case T_CreatedbStmt:
-      result = CreateDbTransform(reinterpret_cast<CreatedbStmt *>(stmt));
+      result = 
+        CreateDatabaseTransform(reinterpret_cast<CreateDatabaseStmt *>(stmt));
       break;
     case T_IndexStmt:
       result = CreateIndexTransform(reinterpret_cast<IndexStmt *>(stmt));
@@ -1474,7 +1467,7 @@ parser::SQLStatement *PostgresParser::NodeTransform(Node *stmt) {
       result = DropTransform((DropStmt *)stmt);
       break;
     case T_DropdbStmt:
-      result = DropDbTransform((DropdbStmt*)stmt);
+      result = DropDatabaseTransform((DropDatabaseStmt*)stmt);
       break;
     case T_TruncateStmt:
       result = TruncateTransform((TruncateStmt *)stmt);
