@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <unistd.h>
 #include <cstring>
 
@@ -27,11 +26,13 @@ namespace peloton {
 namespace network {
 
 /*
- *  Here we are abusing macro expansion to allow for human readable definition of the
+ *  Here we are abusing macro expansion to allow for human readable definition
+ of the
  *  finite state machine's transition table. We put these macros in an anonymous
  *  namespace to avoid them confusing people elsewhere.
  *
- *  The macros merely compose a large function. Unless you know what you are doing, do not modify their
+ *  The macros merely compose a large function. Unless you know what you are
+ doing, do not modify their
  *  definitions.
  *
  *  To use these macros, follow the examples given. Or, here is a syntax chart:
@@ -45,56 +46,69 @@ namespace network {
  *             transition_list
  *            END_DEF
  *
- *  transition ::= ON (Transition) SET_STATE_TO (ConnState) AND_INVOKE (ClientSocketWrapper method)
+ *  transition ::= ON (Transition) SET_STATE_TO (ConnState) AND_INVOKE
+ (ClientSocketWrapper method)
  *
- *  Note that all the symbols used must be defined in ConnState, Transition and ClientSocketWrapper, respectively.
+ *  Note that all the symbols used must be defined in ConnState, Transition and
+ ClientSocketWrapper, respectively.
  */
 namespace {
-  // Underneath the hood these macro is defining the static method ConncetionHandle::StateMachine::Delta
-  // Together they compose a nested switch statement. Running the function on any undefined
-  // state or transition on said state will throw a runtime error.
-  #define DEF_TRANSITION_GRAPH \
-        ConnectionHandle::StateMachine::transition_result ConnectionHandle::StateMachine::Delta_(ConnState c, Transition t) { \
-          switch (c) {
-  #define DEFINE_STATE(s) case ConnState::s: { switch (t) {
-  #define END_DEF default: throw std::runtime_error("undefined transition"); }}
-  #define ON(t) case Transition::t: return
-  #define SET_STATE_TO(s) {ConnState::s,
-  #define AND_INVOKE(m) ([] (ConnectionHandle &w) { return w.m(); })};
-  #define AND_WAIT ([] (ConnectionHandle &){ return Transition::NONE; })};
+// Underneath the hood these macro is defining the static method
+// ConncetionHandle::StateMachine::Delta
+// Together they compose a nested switch statement. Running the function on any
+// undefined
+// state or transition on said state will throw a runtime error.
+#define DEF_TRANSITION_GRAPH                                          \
+  ConnectionHandle::StateMachine::transition_result                   \
+  ConnectionHandle::StateMachine::Delta_(ConnState c, Transition t) { \
+    switch (c) {
+#define DEFINE_STATE(s) \
+  case ConnState::s: {  \
+    switch (t) {
+#define END_DEF                                       \
+  default:                                            \
+    throw std::runtime_error("undefined transition"); \
+    }                                                 \
+    }
+#define ON(t)         \
+  case Transition::t: \
+    return
+#define SET_STATE_TO(s) \
+  {                     \
+  ConnState::s,
+#define AND_INVOKE(m)                         \
+  ([](ConnectionHandle &w) { return w.m(); }) \
+  }                                           \
+  ;
+#define AND_WAIT                                        \
+  ([](ConnectionHandle &) { return Transition::NONE; }) \
+  }                                                     \
+  ;
 }
 
 DEF_TRANSITION_GRAPH
-  DEFINE_STATE (READ)
-    ON (WAKEUP) SET_STATE_TO (READ) AND_INVOKE (FillReadBuffer)
-    ON (PROCEED) SET_STATE_TO (PROCESS) AND_INVOKE (Process)
-    ON (NEED_DATA) SET_STATE_TO (WAIT) AND_INVOKE (Wait)
-    ON (FINISH) SET_STATE_TO (CLOSING) AND_INVOKE (CloseSocket)
-  END_DEF
+DEFINE_STATE(READ)
+ON(WAKEUP)
+SET_STATE_TO(READ) AND_INVOKE(FillReadBuffer) ON(PROCEED) SET_STATE_TO(PROCESS)
+    AND_INVOKE(Process) ON(NEED_DATA) SET_STATE_TO(WAIT) AND_INVOKE(Wait)
+        ON(FINISH) SET_STATE_TO(CLOSING) AND_INVOKE(CloseSocket) END_DEF
 
-  DEFINE_STATE (WAIT)
-    ON (PROCEED) SET_STATE_TO (READ) AND_WAIT
-  END_DEF
+    DEFINE_STATE(WAIT) ON(PROCEED) SET_STATE_TO(READ) AND_WAIT END_DEF
 
-  DEFINE_STATE (PROCESS)
-    ON (PROCEED) SET_STATE_TO (WRITE) AND_INVOKE (ProcessWrite)
-    ON (NEED_DATA) SET_STATE_TO (WAIT) AND_INVOKE (Wait)
-    ON (GET_RESULT) SET_STATE_TO (GET_RESULT) AND_WAIT
-    ON (FINISH) SET_STATE_TO (CLOSING) AND_INVOKE (CloseSocket)
-  END_DEF
+    DEFINE_STATE(PROCESS) ON(PROCEED) SET_STATE_TO(WRITE)
+        AND_INVOKE(ProcessWrite) ON(NEED_DATA) SET_STATE_TO(WAIT)
+            AND_INVOKE(Wait) ON(GET_RESULT) SET_STATE_TO(GET_RESULT) AND_WAIT
+    ON(FINISH) SET_STATE_TO(CLOSING) AND_INVOKE(CloseSocket) END_DEF
 
-  DEFINE_STATE (WRITE)
-    ON (WAKEUP) SET_STATE_TO (WRITE) AND_INVOKE (ProcessWrite)
-    ON (PROCEED) SET_STATE_TO (PROCESS) AND_INVOKE (Process)
-  END_DEF
+    DEFINE_STATE(WRITE) ON(WAKEUP) SET_STATE_TO(WRITE) AND_INVOKE(ProcessWrite)
+        ON(PROCEED) SET_STATE_TO(PROCESS) AND_INVOKE(Process) END_DEF
 
-  DEFINE_STATE (GET_RESULT)
-    ON (WAKEUP) SET_STATE_TO (GET_RESULT) AND_INVOKE (GetResult)
-    ON (PROCEED) SET_STATE_TO (WRITE) AND_INVOKE (ProcessWrite)
-  END_DEF
-END_DEF
+    DEFINE_STATE(GET_RESULT) ON(WAKEUP) SET_STATE_TO(GET_RESULT)
+        AND_INVOKE(GetResult) ON(PROCEED) SET_STATE_TO(WRITE)
+            AND_INVOKE(ProcessWrite) END_DEF END_DEF
 
-void ConnectionHandle::StateMachine::Accept(Transition action, ConnectionHandle &connection)   {
+    void ConnectionHandle::StateMachine::Accept(Transition action,
+                                                ConnectionHandle &connection) {
   Transition next = action;
   while (next != Transition::NONE) {
     transition_result result = Delta_(current_state_, next);
@@ -110,50 +124,62 @@ void ConnectionHandle::StateMachine::Accept(Transition action, ConnectionHandle 
 }
 
 ConnectionHandle::ConnectionHandle(int sock_fd, ConnectionHandlerTask *handler,
-                                   std::shared_ptr<Buffer> rbuf, std::shared_ptr<Buffer> wbuf)
+                                   std::shared_ptr<Buffer> rbuf,
+                                   std::shared_ptr<Buffer> wbuf)
     : sock_fd_(sock_fd),
       handler_(handler),
       protocol_handler_(nullptr),
       rbuf_(std::move(rbuf)),
-      wbuf_(std::move(wbuf)){
+      wbuf_(std::move(wbuf)) {
   SetNonBlocking(sock_fd_);
   SetTCPNoDelay(sock_fd_);
 
-//  TODO(tianyu): The original network code seems to do this as an optimization. I am leaving this out until we get numbers
-//  if (network_event != nullptr)
-//    handler->UpdateEvent(network_event, sock_fd_, event_flags,
-//                         METHOD_AS_CALLBACK(ConnectionHandle, HandleEvent), this);
-//  else
-//    network_event = handler->RegisterEvent(sock_fd_, event_flags,
-//                                           METHOD_AS_CALLBACK(ConnectionHandle, HandleEvent), this);
-//
-//  if (workpool_event != nullptr)
-//    handler->UpdateManualEvent(workpool_event, METHOD_AS_CALLBACK(ConnectionHandle, HandleEvent), this);
-//  else
-//    workpool_event = handler->RegisterManualEvent(METHOD_AS_CALLBACK(ConnectionHandle, HandleEvent), this);
+  //  TODO(tianyu): The original network code seems to do this as an
+  //  optimization. I am leaving this out until we get numbers
+  //  if (network_event != nullptr)
+  //    handler->UpdateEvent(network_event, sock_fd_, event_flags,
+  //                         METHOD_AS_CALLBACK(ConnectionHandle, HandleEvent),
+  //                         this);
+  //  else
+  //    network_event = handler->RegisterEvent(sock_fd_, event_flags,
+  //                                           METHOD_AS_CALLBACK(ConnectionHandle,
+  //                                           HandleEvent), this);
+  //
+  //  if (workpool_event != nullptr)
+  //    handler->UpdateManualEvent(workpool_event,
+  //    METHOD_AS_CALLBACK(ConnectionHandle, HandleEvent), this);
+  //  else
+  //    workpool_event =
+  //    handler->RegisterManualEvent(METHOD_AS_CALLBACK(ConnectionHandle,
+  //    HandleEvent), this);
 
-  network_event = handler->RegisterEvent(sock_fd_, EV_READ|EV_PERSIST,
-                                         METHOD_AS_CALLBACK(ConnectionHandle, HandleEvent), this);
-  workpool_event = handler->RegisterManualEvent(METHOD_AS_CALLBACK(ConnectionHandle, HandleEvent), this);
+  network_event = handler->RegisterEvent(
+      sock_fd_, EV_READ | EV_PERSIST,
+      METHOD_AS_CALLBACK(ConnectionHandle, HandleEvent), this);
+  workpool_event = handler->RegisterManualEvent(
+      METHOD_AS_CALLBACK(ConnectionHandle, HandleEvent), this);
 
-  //TODO: should put the initialization else where.. check correctness first.
+  // TODO: should put the initialization else where.. check correctness first.
   traffic_cop_.SetTaskCallback([](void *arg) {
-    struct event* event = static_cast<struct event*>(arg);
+    struct event *event = static_cast<struct event *>(arg);
     event_active(event, EV_WRITE, 0);
   }, workpool_event);
-
 }
 
 void ConnectionHandle::UpdateEventFlags(short flags) {
-  // TODO(tianyu): The original network code seems to do this as an optimization. I am leaving this out until we get numbers
-  // handler->UpdateEvent(network_event, sock_fd_, flags, METHOD_AS_CALLBACK(ConnectionHandle, HandleEvent), this);
+  // TODO(tianyu): The original network code seems to do this as an
+  // optimization. I am leaving this out until we get numbers
+  // handler->UpdateEvent(network_event, sock_fd_, flags,
+  // METHOD_AS_CALLBACK(ConnectionHandle, HandleEvent), this);
   handler_->UnregisterEvent(network_event);
-  network_event = handler_->RegisterEvent(sock_fd_, flags, METHOD_AS_CALLBACK(ConnectionHandle, HandleEvent), this);
+  network_event = handler_->RegisterEvent(
+      sock_fd_, flags, METHOD_AS_CALLBACK(ConnectionHandle, HandleEvent), this);
 }
 
 WriteState ConnectionHandle::WritePackets() {
   // iterate through all the packets
-  for (; next_response_ < protocol_handler_->responses.size(); next_response_++) {
+  for (; next_response_ < protocol_handler_->responses.size();
+       next_response_++) {
     auto pkt = protocol_handler_->responses[next_response_].get();
     LOG_TRACE("To send packet with type: %c", static_cast<char>(pkt->msg_type));
     // write is not ready during write. transit to WRITE
@@ -193,10 +219,12 @@ Transition ConnectionHandle::FillReadBuffer() {
    * Note: The assumption here is that all the packets/headers till
    *  rbuf_->buf_ptr have been fully processed
    */
-  if (rbuf_->buf_ptr < rbuf_->buf_size && rbuf_->buf_size == rbuf_->GetMaxSize()) {
+  if (rbuf_->buf_ptr < rbuf_->buf_size &&
+      rbuf_->buf_size == rbuf_->GetMaxSize()) {
     auto unprocessed_len = rbuf_->buf_size - rbuf_->buf_ptr;
     // Move this data to the head of rbuf_1
-    std::memmove(rbuf_->GetPtr(0), rbuf_->GetPtr(rbuf_->buf_ptr), unprocessed_len);
+    std::memmove(rbuf_->GetPtr(0), rbuf_->GetPtr(rbuf_->buf_ptr),
+                 unprocessed_len);
     // update pointers
     rbuf_->buf_ptr = 0;
     rbuf_->buf_size = unprocessed_len;
@@ -214,8 +242,7 @@ Transition ConnectionHandle::FillReadBuffer() {
       if (conn_SSL_context != nullptr) {
         bytes_read = SSL_read(conn_SSL_context, rbuf_->GetPtr(rbuf_->buf_size),
                               rbuf_->GetMaxSize() - rbuf_->buf_size);
-      }
-      else {
+      } else {
         bytes_read = read(sock_fd_, rbuf_->GetPtr(rbuf_->buf_size),
                           rbuf_->GetMaxSize() - rbuf_->buf_size);
         LOG_TRACE("When filling read buffer, read %ld bytes", bytes_read);
@@ -238,7 +265,8 @@ Transition ConnectionHandle::FillReadBuffer() {
           continue;
         } else {
           // some other error occured
-          throw NetworkProcessException("Error when filling read buffer " + std::to_string(errno));
+          throw NetworkProcessException("Error when filling read buffer " +
+                                        std::to_string(errno));
         }
       }
     }
@@ -254,9 +282,9 @@ WriteState ConnectionHandle::FlushWriteBuffer() {
     while (written_bytes <= 0) {
       if (conn_SSL_context != nullptr) {
         written_bytes =
-            SSL_write(conn_SSL_context, &wbuf_->buf[wbuf_->buf_flush_ptr], wbuf_->buf_size);
-      }
-      else {
+            SSL_write(conn_SSL_context, &wbuf_->buf[wbuf_->buf_flush_ptr],
+                      wbuf_->buf_size);
+      } else {
         written_bytes =
             write(sock_fd_, &wbuf_->buf[wbuf_->buf_flush_ptr], wbuf_->buf_size);
       }
@@ -277,7 +305,8 @@ WriteState ConnectionHandle::FlushWriteBuffer() {
           return WriteState::WRITE_NOT_READY;
         } else {
           // fatal errors
-          throw NetworkProcessException("Fatal error during write, errno " + std::to_string(errno));
+          throw NetworkProcessException("Fatal error during write, errno " +
+                                        std::to_string(errno));
         }
       }
 
@@ -304,16 +333,16 @@ std::string ConnectionHandle::WriteBufferToString() {
 #ifdef LOG_TRACE_ENABLED
   LOG_TRACE("Write Buffer:");
 
-for (size_t i = 0; i < wbuf_->buf_size; ++i) {
-  LOG_TRACE("%u", wbuf_->buf[i]);
-}
+  for (size_t i = 0; i < wbuf_->buf_size; ++i) {
+    LOG_TRACE("%u", wbuf_->buf[i]);
+  }
 #endif
 
   return std::string(wbuf_->buf.begin(), wbuf_->buf.end());
 }
 
 ProcessResult ConnectionHandle::ProcessInitial() {
-  //TODO: this is a direct copy and we should get rid of it later;
+  // TODO: this is a direct copy and we should get rid of it later;
   InputPacket rpkt;
 
   if (rpkt.header_parsed == false) {
@@ -327,7 +356,7 @@ ProcessResult ConnectionHandle::ProcessInitial() {
 
   if (rpkt.is_initialized == false) {
     // packet needs to be initialized with rest of the contents
-    //TODO: If other protocols are added, this need to be changed
+    // TODO: If other protocols are added, this need to be changed
     if (PostgresProtocolHandler::ReadPacket(*rbuf_, rpkt) == false) {
       // need more data
       return ProcessResult::MORE_DATA_REQUIRED;
@@ -340,15 +369,16 @@ ProcessResult ConnectionHandle::ProcessInitial() {
 }
 
 // TODO: This function is now dedicated for postgres packet
-bool ConnectionHandle::ReadStartupPacketHeader(Buffer &rbuf, InputPacket &rpkt) {
+bool ConnectionHandle::ReadStartupPacketHeader(Buffer &rbuf,
+                                               InputPacket &rpkt) {
   size_t initial_read_size = sizeof(int32_t);
 
-  if (!rbuf.IsReadDataAvailable(initial_read_size)){
+  if (!rbuf.IsReadDataAvailable(initial_read_size)) {
     return false;
   }
 
   // extract packet contents size
-  //content lengths should exclude the length
+  // content lengths should exclude the length
   rpkt.len = rbuf.GetUInt32BigEndian() - sizeof(uint32_t);
 
   // do we need to use the extended buffer for this packet?
@@ -377,8 +407,7 @@ void ConnectionHandle::ProcessInitialPacket(InputPacket *pkt) {
   if (proto_version == SSL_MESSAGE_VERNO) {
     LOG_TRACE("process SSL MESSAGE");
     ProcessSSLRequestPacket(pkt);
-  }
-  else {
+  } else {
     LOG_TRACE("process startup packet");
     ProcessStartupPacket(pkt, proto_version);
   }
@@ -393,12 +422,14 @@ void ConnectionHandle::ProcessSSLRequestPacket(InputPacket *) {
   ssl_sent_ = true;
 }
 
-void ConnectionHandle::ProcessStartupPacket(InputPacket *pkt, int32_t proto_version) {
+void ConnectionHandle::ProcessStartupPacket(InputPacket *pkt,
+                                            int32_t proto_version) {
   std::string token, value;
 
   // Only protocol version 3 is supported
   if (PROTO_MAJOR_VERSION(proto_version) != 3)
-    throw NetworkProcessException("Protocol error: Only protocol version 3 is supported.");
+    throw NetworkProcessException(
+        "Protocol error: Only protocol version 3 is supported.");
 
   // TODO: check for more malformed cases
   // iterate till the end
@@ -416,17 +447,15 @@ void ConnectionHandle::ProcessStartupPacket(InputPacket *pkt, int32_t proto_vers
       // loop end?
       if (pkt->ptr >= pkt->len) break;
       GetStringToken(pkt, client_.user);
-    }
-    else {
+    } else {
       if (pkt->ptr >= pkt->len) break;
       GetStringToken(pkt, value);
       client_.cmdline_options[token] = value;
     }
   }
 
-  protocol_handler_ =
-      ProtocolHandlerFactory::CreateProtocolHandler(
-          ProtocolHandlerType::Postgres, &traffic_cop_);
+  protocol_handler_ = ProtocolHandlerFactory::CreateProtocolHandler(
+      ProtocolHandlerType::Postgres, &traffic_cop_);
 
   protocol_handler_->SendInitialResponse();
 }
@@ -567,7 +596,9 @@ Transition ConnectionHandle::Process() {
       int ssl_accept_ret;
       if ((ssl_accept_ret = SSL_accept(conn_SSL_context)) <= 0) {
         LOG_ERROR("Failed to accept (handshake) client SSL context.");
-        throw NetworkProcessException("ssl error: " + std::to_string(SSL_get_error(conn_SSL_context, ssl_accept_ret)));
+        throw NetworkProcessException(
+            "ssl error: " +
+            std::to_string(SSL_get_error(conn_SSL_context, ssl_accept_ret)));
       }
       LOG_ERROR("SSL handshake completed");
       ssl_sent_ = false;
@@ -583,7 +614,8 @@ Transition ConnectionHandle::Process() {
         throw NetworkProcessException("Unexpected Process Initial result");
     }
   } else {
-    ProcessResult status = protocol_handler_->Process(*rbuf_, (size_t) handler_->Id());
+    ProcessResult status =
+        protocol_handler_->Process(*rbuf_, (size_t)handler_->Id());
 
     switch (status) {
       case ProcessResult::MORE_DATA_REQUIRED:
@@ -623,6 +655,5 @@ Transition ConnectionHandle::GetResult() {
   traffic_cop_.SetQueuing(false);
   return Transition::PROCEED;
 }
-
 }
 }

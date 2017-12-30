@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "network/service/rpc_server.h"
 #include "network/service/rpc_controller.h"
 #include "network/service/connection_manager.h"

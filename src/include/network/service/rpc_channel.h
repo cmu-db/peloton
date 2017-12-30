@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <string>
@@ -29,16 +28,16 @@ namespace service {
 
 class RpcChannel : public google::protobuf::RpcChannel {
  public:
-  RpcChannel(const std::string& url);
+  RpcChannel(const std::string &url);
   // RpcChannel(const long ip, const int port);
 
   virtual ~RpcChannel();
 
-  virtual void CallMethod(const google::protobuf::MethodDescriptor* method,
-                          google::protobuf::RpcController* controller,
-                          const google::protobuf::Message* request,
-                          google::protobuf::Message* response,
-                          google::protobuf::Closure* done);
+  virtual void CallMethod(const google::protobuf::MethodDescriptor *method,
+                          google::protobuf::RpcController *controller,
+                          const google::protobuf::Message *request,
+                          google::protobuf::Message *response,
+                          google::protobuf::Closure *done);
 
   void Close();
 

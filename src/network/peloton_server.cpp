@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 //===----------------------------------------------------------------------===//
 //
 //                         Peloton
@@ -36,9 +35,12 @@ SSL_CTX *PelotonServer::ssl_context = nullptr;
 
 PelotonServer::PelotonServer() {
   port_ = settings::SettingsManager::GetInt(settings::SettingId::port);
-  max_connections_ = settings::SettingsManager::GetInt(settings::SettingId::max_connections);
-  private_key_file_ = settings::SettingsManager::GetString(settings::SettingId::private_key_file);
-  certificate_file_ = settings::SettingsManager::GetString(settings::SettingId::certificate_file);
+  max_connections_ =
+      settings::SettingsManager::GetInt(settings::SettingId::max_connections);
+  private_key_file_ = settings::SettingsManager::GetString(
+      settings::SettingId::private_key_file);
+  certificate_file_ = settings::SettingsManager::GetString(
+      settings::SettingId::certificate_file);
 
   // For logging purposes
   //  event_enable_debug_mode();
@@ -57,7 +59,8 @@ PelotonServer::PelotonServer() {
 PelotonServer &PelotonServer::SetupServer() {
   // This line is critical to performance for some reason
   evthread_use_pthreads();
-  if (settings::SettingsManager::GetString(settings::SettingId::socket_family) != "AF_INET")
+  if (settings::SettingsManager::GetString(
+          settings::SettingId::socket_family) != "AF_INET")
     throw ConnectionException("Unsupported socket family");
 
   struct sockaddr_in sin;
@@ -80,8 +83,7 @@ PelotonServer &PelotonServer::SetupServer() {
   SSL_load_error_strings();
   SSL_library_init();
 
-  if ((ssl_context = SSL_CTX_new(TLSv1_server_method())) == nullptr)
-  {
+  if ((ssl_context = SSL_CTX_new(TLSv1_server_method())) == nullptr) {
     throw ConnectionException("Error creating SSL context.");
   }
 
@@ -105,21 +107,20 @@ PelotonServer &PelotonServer::SetupServer() {
   }
   * Temporarily commented to pass tests END
   */
-  if (bind(listen_fd_, (struct sockaddr *) &sin, sizeof(sin)) < 0)
-  {
+  if (bind(listen_fd_, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
     SSL_CTX_free(ssl_context);
     throw ConnectionException("Failed binding socket.");
   }
 
-  if (listen(listen_fd_, conn_backlog) < 0)
-  {
+  if (listen(listen_fd_, conn_backlog) < 0) {
     SSL_CTX_free(ssl_context);
     throw ConnectionException("Error listening onsocket.");
   }
 
-  dispatcher_task_ = std::make_shared<ConnectionDispatcherTask>(CONNECTION_THREAD_COUNT, listen_fd_);
+  dispatcher_task_ = std::make_shared<ConnectionDispatcherTask>(
+      CONNECTION_THREAD_COUNT, listen_fd_);
 
-  LOG_INFO("Listening on port %llu", (unsigned long long) port_);
+  LOG_INFO("Listening on port %llu", (unsigned long long)port_);
   return *this;
 }
 

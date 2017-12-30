@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "network/service/tcp_listener.h"
 #include "network/service/tcp_connection.h"
 #include "network/service/rpc_type.h"

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "network/service/rpc_type.h"
 #include "network/service/rpc_client.h"
 #include "network/service/rpc_channel.h"
@@ -29,7 +28,7 @@ namespace peloton {
 namespace network {
 namespace service {
 
-RpcChannel::RpcChannel(const std::string& url) : addr_(url) {}
+RpcChannel::RpcChannel(const std::string &url) : addr_(url) {}
 
 RpcChannel::~RpcChannel() { Close(); }
 
@@ -47,11 +46,11 @@ RpcChannel::~RpcChannel() { Close(); }
  * request msg
  */
 void RpcChannel::CallMethod(
-    const google::protobuf::MethodDescriptor* method,
-    google::protobuf::RpcController* controller,
-    const google::protobuf::Message* request,
-    UNUSED_ATTRIBUTE google::protobuf::Message* response,
-    google::protobuf::Closure* done) {
+    const google::protobuf::MethodDescriptor *method,
+    google::protobuf::RpcController *controller,
+    const google::protobuf::Message *request,
+    UNUSED_ATTRIBUTE google::protobuf::Message *response,
+    google::protobuf::Closure *done) {
   PL_ASSERT(request != nullptr);
   /*  run call back function */
   if (done != NULL) {
@@ -98,7 +97,7 @@ void RpcChannel::CallMethod(
    * it will be returned. If not, a new connection will be created and connect
    * to server
    */
-  Connection* conn = ConnectionManager::GetInstance().CreateConn(
+  Connection *conn = ConnectionManager::GetInstance().CreateConn(
       addr_);  // CreateConn is used for self connect
   // Connection* conn = ConnectionManager::GetInstance().GetConnection(addr_);
 

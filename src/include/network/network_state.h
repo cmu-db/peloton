@@ -19,12 +19,12 @@ namespace network {
  * @see ConnectionHandle::StateMachine
  */
 enum class ConnState {
-  READ,       // State that reads data from the network
-  WRITE,      // State the writes data to the network
-  WAIT,       // State for waiting for some event to happen
-  PROCESS,    // State that runs the network protocol on received data
-  CLOSING,    // State for closing the client connection
-  GET_RESULT, // State when triggered by worker thread that completes the task.
+  READ,        // State that reads data from the network
+  WRITE,       // State the writes data to the network
+  WAIT,        // State for waiting for some event to happen
+  PROCESS,     // State that runs the network protocol on received data
+  CLOSING,     // State for closing the client connection
+  GET_RESULT,  // State when triggered by worker thread that completes the task.
 };
 
 // TODO(tianyu): Convert use cases of this to just return Transition
@@ -34,7 +34,8 @@ enum class WriteState {
 };
 
 /**
- * A transition is used to signal the result of an action to ConnectionHandle::StateMachine
+ * A transition is used to signal the result of an action to
+ * ConnectionHandle::StateMachine
  * @see ConnectionHandle::StateMachine
  */
 enum class Transition {
@@ -46,7 +47,5 @@ enum class Transition {
   GET_RESULT,
   FINISH
 };
-
-
 }
 }

@@ -20,35 +20,41 @@ namespace network {
 
 /**
  * @brief Factory class for constructing ConnectionHandles
- * The rationale behind using a factory is that buffers are expensive to allocate and allocating new
+ * The rationale behind using a factory is that buffers are expensive to
+ * allocate and allocating new
  * ones every time is a bottleneck for throughput.
  */
 class ConnectionHandleFactory {
-public:
+ public:
   /**
-   * Creates or repurpose a ConnectionHandle to be run on the given handler, handling connection from conn_fd
+   * Creates or repurpose a ConnectionHandle to be run on the given handler,
+   * handling connection from conn_fd
    * @param conn_fd Client connection fd.
    * @param handler The handler this ConnectionHandle is assigned to
    * @return
    */
-  std::shared_ptr<ConnectionHandle> GetConnectionHandle(int conn_fd, ConnectionHandlerTask *handler) {
-    // TODO(tianyu): The use of a static variable here for testing purpose is VILE. Fix this in a later refactor
+  std::shared_ptr<ConnectionHandle> GetConnectionHandle(
+      int conn_fd, ConnectionHandlerTask *handler) {
+    // TODO(tianyu): The use of a static variable here for testing purpose is
+    // VILE. Fix this in a later refactor
     // (probably also to-do: beat up the person who wrote this)
     PelotonServer::recent_connfd = conn_fd;
     auto it = reusable_handles_.find(conn_fd);
     if (it == reusable_handles_.end()) {
-      // We are not using std::make_shared here because we want to keep ConnectionHandle constructor
+      // We are not using std::make_shared here because we want to keep
+      // ConnectionHandle constructor
       // private to avoid unintentional use.
       auto handle = std::shared_ptr<ConnectionHandle>(
-          new ConnectionHandle(conn_fd, handler, std::make_shared<Buffer>(), std::make_shared<Buffer>()));
+          new ConnectionHandle(conn_fd, handler, std::make_shared<Buffer>(),
+                               std::make_shared<Buffer>()));
       reusable_handles_[conn_fd] = handle;
       return handle;
     }
 
     it->second->rbuf_->Reset();
     it->second->wbuf_->Reset();
-    std::shared_ptr<ConnectionHandle> new_handle(
-        new ConnectionHandle(conn_fd, handler, it->second->rbuf_, it->second->wbuf_));
+    std::shared_ptr<ConnectionHandle> new_handle(new ConnectionHandle(
+        conn_fd, handler, it->second->rbuf_, it->second->wbuf_));
     reusable_handles_[conn_fd] = new_handle;
     return new_handle;
   }
@@ -71,9 +77,8 @@ public:
     return factory;
   }
 
-private:
+ private:
   std::unordered_map<int, std::shared_ptr<ConnectionHandle>> reusable_handles_;
 };
-
 }
 }

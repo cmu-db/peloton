@@ -25,7 +25,6 @@ typedef std::vector<std::unique_ptr<OutputPacket>> ResponseBuffer;
 
 class ProtocolHandler {
  public:
-
   ProtocolHandler(tcop::TrafficCop *traffic_cop);
 
   virtual ~ProtocolHandler();
@@ -45,9 +44,9 @@ class ProtocolHandler {
 
   virtual void GetResult();
 
-  void SetFlushFlag(bool flush) {force_flush_ = flush;}
+  void SetFlushFlag(bool flush) { force_flush_ = flush; }
 
-  bool GetFlushFlag() {return force_flush_;}
+  bool GetFlushFlag() { return force_flush_; }
 
   bool force_flush_ = false;
 
@@ -55,11 +54,10 @@ class ProtocolHandler {
   // so that we don't have to new packet each time
   ResponseBuffer responses;
 
-  InputPacket request;                // Used for reading a single request
+  InputPacket request;  // Used for reading a single request
 
   // The traffic cop used for this connection
-  tcop::TrafficCop* traffic_cop_;
-
+  tcop::TrafficCop *traffic_cop_;
 };
 
 }  // namespace network

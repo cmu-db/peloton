@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "network/service/rpc_utils.h"
 #include "common/cast.h"
 
