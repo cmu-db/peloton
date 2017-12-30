@@ -26,7 +26,7 @@ DropPlan::DropPlan(const std::string &name) {
 
 DropPlan::DropPlan(parser::DropStatement *parse_tree) {
   switch (parse_tree->type) {
-    case parser::DropStatement::EntityType::kDatabase :{
+    case parser::DropStatement::EntityType::kDatabase: {
       database_name = parse_tree->GetDatabaseName();
       missing = parse_tree->missing;
       drop_type = DropType::DB;

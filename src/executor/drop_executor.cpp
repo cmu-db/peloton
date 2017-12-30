@@ -15,9 +15,7 @@
 #include "catalog/catalog.h"
 #include "catalog/trigger_catalog.h"
 #include "common/logger.h"
-#include "concurrency/transaction_context.h"
 #include "executor/executor_context.h"
-#include "planner/drop_plan.h"
 
 namespace peloton {
 namespace executor {
@@ -40,85 +38,21 @@ bool DropExecutor::DInit() {
 
 bool DropExecutor::DExecute() {
   LOG_TRACE("Executing Drop...");
+  bool result;
   const planner::DropPlan &node = GetPlanNode<planner::DropPlan>();
+  auto current_txn = context_->GetTransaction();
   DropType dropType = node.GetDropType();
   switch (dropType) {
     case DropType::DB: {
-      auto database_name = node.GetDatabaseName();
-      auto current_txn = context_->GetTransaction();
-      if (node.IsMissing()) {
-        try {
-          auto database_object = catalog::Catalog::GetInstance()->GetDatabaseObject(
-              database_name, current_txn);
-        } catch (CatalogException &e) {
-          LOG_TRACE("Database %s does not exist.", database_name.c_str());
-          return false;
-        }
-      }
-
-      ResultType result = catalog::Catalog::GetInstance()->DropDatabaseWithName(
-          database_name, current_txn);
-      current_txn->SetResult(result);
-
-      if (current_txn->GetResult() == ResultType::SUCCESS) {
-        LOG_TRACE("Dropping database succeeded!");
-      } else {
-        LOG_TRACE("Result is: %s",
-                  ResultTypeToString(current_txn->GetResult()).c_str());
-      }
+      result = DropDatabase(node, current_txn);
       break;
     }
     case DropType::TABLE: {
-      auto database_name = node.GetDatabaseName();
-      auto table_name = node.GetTableName();
-      auto current_txn = context_->GetTransaction();
-
-      if (node.IsMissing()) {
-        try {
-          auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-              database_name, table_name, current_txn);
-        } catch (CatalogException &e) {
-          LOG_TRACE("Table %s does not exist.", table_name.c_str());
-          return false;
-        }
-      }
-
-      ResultType result = catalog::Catalog::GetInstance()->DropTable(
-          database_name, table_name, current_txn);
-      current_txn->SetResult(result);
-
-      if (current_txn->GetResult() == ResultType::SUCCESS) {
-        LOG_TRACE("Dropping table succeeded!");
-      } else {
-        LOG_TRACE("Result is: %s",
-                  ResultTypeToString(current_txn->GetResult()).c_str());
-      }
+      result = DropTable(node, current_txn);
       break;
     }
     case DropType::TRIGGER: {
-      auto database_name = node.GetDatabaseName();
-      std::string table_name = node.GetTableName();
-      std::string trigger_name = node.GetTriggerName();
-
-      auto current_txn = context_->GetTransaction();
-
-      ResultType result = catalog::TriggerCatalog::GetInstance().DropTrigger(
-          database_name, table_name, trigger_name, current_txn);
-      current_txn->SetResult(result);
-
-      if (current_txn->GetResult() == ResultType::SUCCESS) {
-        LOG_TRACE("Dropping trigger succeeded!");
-      } else if (current_txn->GetResult() == ResultType::FAILURE &&
-                 node.IsMissing()) {
-        current_txn->SetResult(ResultType::SUCCESS);
-        LOG_TRACE("Dropping trigger Succeeded!");
-      } else if (current_txn->GetResult() == ResultType::FAILURE &&
-                 !node.IsMissing()) {
-        LOG_TRACE("Dropping trigger Failed!");
-      } else {
-        LOG_TRACE("Result is: %s",
-                  ResultTypeToString(current_txn->GetResult()).c_str());
-      }
+      result = DropTrigger(node, current_txn);
       break;
     }
     default: {
@@ -127,8 +61,83 @@ bool DropExecutor::DExecute() {
     }
   }
 
+  return result;
+}
+
+bool DropExecutor::DropDatabase(const planner::DropPlan &node,
+                                concurrency::TransactionContext *txn) {
+  auto database_name = node.GetDatabaseName();
+  if (node.IsMissing()) {
+    try {
+      auto database_object = catalog::Catalog::GetInstance()->GetDatabaseObject(
+          database_name, txn);
+    } catch (CatalogException &e) {
+      LOG_TRACE("Database %s does not exist.", database_name.c_str());
+      return false;
+    }
+  }
+
+  ResultType result =
+      catalog::Catalog::GetInstance()->DropDatabaseWithName(database_name, txn);
+  txn->SetResult(result);
+
+  if (txn->GetResult() == ResultType::SUCCESS) {
+    LOG_TRACE("Dropping database succeeded!");
+  } else {
+    LOG_TRACE("Result is: %s", ResultTypeToString(txn->GetResult()).c_str());
+  }
   return false;
 }
 
-}  // namespace executor
-}  // namespace peloton
+bool DropExecutor::DropTable(const planner::DropPlan &node,
+                             concurrency::TransactionContext *txn) {
+  auto database_name = node.GetDatabaseName();
+  auto table_name = node.GetTableName();
+
+  if (node.IsMissing()) {
+    try {
+      auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
+          database_name, table_name, txn);
+    } catch (CatalogException &e) {
+      LOG_TRACE("Table %s does not exist.", table_name.c_str());
+      return false;
+    }
+  }
+
+  ResultType result = catalog::Catalog::GetInstance()->DropTable(
+      database_name, table_name, txn);
+  txn->SetResult(result);
+
+  if (txn->GetResult() == ResultType::SUCCESS) {
+    LOG_TRACE("Dropping table succeeded!");
+  } else {
+    LOG_TRACE("Result is: %s", ResultTypeToString(txn->GetResult()).c_str());
+  }
+  return false;
+}
+
+bool DropExecutor::DropTrigger(const planner::DropPlan &node,
+                               concurrency::TransactionContext *txn) {
+  auto database_name = node.GetDatabaseName();
+  std::string table_name = node.GetTableName();
+  std::string trigger_name = node.GetTriggerName();
+
+  ResultType result = catalog::TriggerCatalog::GetInstance().DropTrigger(
+      database_name, table_name, trigger_name, txn);
+  txn->SetResult(result);
+
+  if (txn->GetResult() == ResultType::SUCCESS) {
+    LOG_TRACE("Dropping trigger succeeded!");
+  } else if (txn->GetResult() == ResultType::FAILURE && node.IsMissing()) {
+    txn->SetResult(ResultType::SUCCESS);
+    LOG_TRACE("Dropping trigger Succeeded!");
+  } else if (txn->GetResult() == ResultType::FAILURE && !node.IsMissing()) {
+    LOG_TRACE("Dropping trigger Failed!");
+  } else {
+    LOG_TRACE("Result is: %s", ResultTypeToString(txn->GetResult()).c_str());
+  }
+  return false;
+}
+
+} // namespace executor
+} // namespace peloton
