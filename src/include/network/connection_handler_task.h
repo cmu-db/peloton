@@ -60,11 +60,17 @@ class ConnectionHandlerTask : public NotifiableTask {
    */
   void Notify(int conn_fd);
 
+  /**
+   * @brief Handles a new client assigned to this handler by the dispatcher.
+   *
+   * This method will create the necessary data structure for the client and
+   * register its event base to receive updates with appropriate callbacks
+   * when the client writes to the socket.
+   *
+   * @param new_conn_recv_fd the socket fd of the new connection
+   * @param flags unused. For compliance with libevent callback interface.
+   */
   void HandleDispatch(int new_conn_recv_fd, short flags);
-
-  // TODO(tianyu): When we stop this handler, do we need to kick all clients off
-  // and close the socket?
-  // I don't think we did this before.
 
  private:
   // Notify new connection pipe(send end)

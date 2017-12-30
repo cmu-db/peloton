@@ -27,37 +27,35 @@ namespace network {
 
 /*
  *  Here we are abusing macro expansion to allow for human readable definition
- of the
- *  finite state machine's transition table. We put these macros in an anonymous
- *  namespace to avoid them confusing people elsewhere.
+ *  of the finite state machine's transition table. We put these macros in an
+ *  anonymous namespace to avoid them confusing people elsewhere.
  *
  *  The macros merely compose a large function. Unless you know what you are
- doing, do not modify their
- *  definitions.
+ *  doing, do not modify their definitions.
  *
  *  To use these macros, follow the examples given. Or, here is a syntax chart:
  *
- *  x list ::= x... (separated by new lines)
+ *  x list ::= x \n (x list) (each item of x separated by new lines)
  *  graph ::= DEF_TRANSITION_GRAPH
- *              state_list
- *            END_DEF
-
- *  state ::= DEFINE_STATE(ConnState)
- *             transition_list
+ *              state list
  *            END_DEF
  *
- *  transition ::= ON (Transition) SET_STATE_TO (ConnState) AND_INVOKE
- (ClientSocketWrapper method)
+ *  state ::= DEFINE_STATE(ConnState)
+ *             transition list
+ *            END_DEF
+ *
+ *  transition ::=
+ *  ON (Transition) SET_STATE_TO (ConnState) AND_INVOKE (ConnectionHandle
+ * method)
  *
  *  Note that all the symbols used must be defined in ConnState, Transition and
- ClientSocketWrapper, respectively.
+ *  ClientSocketWrapper, respectively.
  */
 namespace {
 // Underneath the hood these macro is defining the static method
-// ConncetionHandle::StateMachine::Delta
+// ConnectionHandle::StateMachine::Delta.
 // Together they compose a nested switch statement. Running the function on any
-// undefined
-// state or transition on said state will throw a runtime error.
+// undefined state or transition on said state will throw a runtime error.
 #define DEF_TRANSITION_GRAPH                                          \
   ConnectionHandle::StateMachine::transition_result                   \
   ConnectionHandle::StateMachine::Delta_(ConnState c, Transition t) { \
@@ -86,6 +84,8 @@ namespace {
   ;
 }
 
+// For readability sake, do not run clang-format on this macro block and follow
+// the style presented when editing.
 DEF_TRANSITION_GRAPH
 DEFINE_STATE(READ)
 ON(WAKEUP)
@@ -136,6 +136,7 @@ ConnectionHandle::ConnectionHandle(int sock_fd, ConnectionHandlerTask *handler,
 
   //  TODO(tianyu): The original network code seems to do this as an
   //  optimization. I am leaving this out until we get numbers
+
   //  if (network_event != nullptr)
   //    handler->UpdateEvent(network_event, sock_fd_, event_flags,
   //                         METHOD_AS_CALLBACK(ConnectionHandle, HandleEvent),
@@ -184,9 +185,9 @@ WriteState ConnectionHandle::WritePackets() {
     LOG_TRACE("To send packet with type: %c", static_cast<char>(pkt->msg_type));
     // write is not ready during write. transit to WRITE
     auto result = BufferWriteBytesHeader(pkt);
-    if (result == WriteState::WRITE_NOT_READY) return result;
+    if (result == WriteState::NOT_READY) return result;
     result = BufferWriteBytesContent(pkt);
-    if (result == WriteState::WRITE_NOT_READY) return result;
+    if (result == WriteState::NOT_READY) return result;
   }
 
   // Done writing all packets. clear packets
@@ -200,7 +201,7 @@ WriteState ConnectionHandle::WritePackets() {
   // we have flushed, disable force flush now
   protocol_handler_->SetFlushFlag(false);
 
-  return WriteState::WRITE_COMPLETE;
+  return WriteState::COMPLETE;
 }
 
 Transition ConnectionHandle::FillReadBuffer() {
@@ -302,7 +303,7 @@ WriteState ConnectionHandle::FlushWriteBuffer() {
           UpdateEventFlags(EV_WRITE | EV_PERSIST);
           // We should go to WRITE state
           LOG_DEBUG("WRITE NOT READY");
-          return WriteState::WRITE_NOT_READY;
+          return WriteState::NOT_READY;
         } else {
           // fatal errors
           throw NetworkProcessException("Fatal error during write, errno " +
@@ -326,7 +327,7 @@ WriteState ConnectionHandle::FlushWriteBuffer() {
   wbuf_->Reset();
 
   // we are ok
-  return WriteState::WRITE_COMPLETE;
+  return WriteState::COMPLETE;
 }
 
 std::string ConnectionHandle::WriteBufferToString() {
@@ -465,7 +466,7 @@ void ConnectionHandle::ProcessStartupPacket(InputPacket *pkt,
 WriteState ConnectionHandle::BufferWriteBytesHeader(OutputPacket *pkt) {
   // If we should not write
   if (pkt->skip_header_write) {
-    return WriteState::WRITE_COMPLETE;
+    return WriteState::COMPLETE;
   }
 
   size_t len = pkt->len;
@@ -476,7 +477,7 @@ WriteState ConnectionHandle::BufferWriteBytesHeader(OutputPacket *pkt) {
   if (wbuf_->GetMaxSize() - wbuf_->buf_ptr < 1 + sizeof(int32_t)) {
     // buffer needs to be flushed before adding header
     auto result = FlushWriteBuffer();
-    if (result == WriteState::WRITE_NOT_READY) {
+    if (result == WriteState::NOT_READY) {
       // Socket is not ready for write
       return result;
     }
@@ -502,7 +503,7 @@ WriteState ConnectionHandle::BufferWriteBytesHeader(OutputPacket *pkt) {
 
   // Header is written to socket buf. No need to write it in the future
   pkt->skip_header_write = true;
-  return WriteState::WRITE_COMPLETE;
+  return WriteState::COMPLETE;
 }
 
 // Writes a packet's content into the write buffer
@@ -516,7 +517,7 @@ WriteState ConnectionHandle::BufferWriteBytesContent(OutputPacket *pkt) {
   size_t window = 0;
 
   // fill the contents
-  while (len) {
+  while (len != 0) {
     // calculate the remaining space in wbuf
     window = wbuf_->GetMaxSize() - wbuf_->buf_ptr;
     if (len <= window) {
@@ -529,7 +530,7 @@ WriteState ConnectionHandle::BufferWriteBytesContent(OutputPacket *pkt) {
       wbuf_->buf_ptr += len;
       wbuf_->buf_size = wbuf_->buf_ptr;
       LOG_TRACE("Content fit in window. Write content successful");
-      return WriteState::WRITE_COMPLETE;
+      return WriteState::COMPLETE;
     } else {
       // contents longer than socket buffer size, fill up the socket buffer
       // with "window" bytes
@@ -547,13 +548,13 @@ WriteState ConnectionHandle::BufferWriteBytesContent(OutputPacket *pkt) {
       LOG_TRACE("Content doesn't fit in window. Try flushing");
       auto result = FlushWriteBuffer();
       // flush before write the remaining content
-      if (result == WriteState::WRITE_NOT_READY) {
+      if (result == WriteState::NOT_READY) {
         // need to retry or close connection
         return result;
       }
     }
   }
-  return WriteState::WRITE_COMPLETE;
+  return WriteState::COMPLETE;
 }
 
 Transition ConnectionHandle::CloseSocket() {
@@ -636,10 +637,10 @@ Transition ConnectionHandle::Process() {
 Transition ConnectionHandle::ProcessWrite() {
   // TODO(tianyu): Should convert to use Transition in the top level method
   switch (WritePackets()) {
-    case WriteState::WRITE_COMPLETE:
+    case WriteState::COMPLETE:
       UpdateEventFlags(EV_READ | EV_PERSIST);
       return Transition::PROCEED;
-    case WriteState::WRITE_NOT_READY:
+    case WriteState::NOT_READY:
       return Transition::NONE;
   }
   throw NetworkProcessException("Unexpected write state");

@@ -29,8 +29,8 @@ enum class ConnState {
 
 // TODO(tianyu): Convert use cases of this to just return Transition
 enum class WriteState {
-  WRITE_COMPLETE,   // Write completed
-  WRITE_NOT_READY,  // Socket not ready to write
+  COMPLETE,   // Write completed
+  NOT_READY,  // Socket not ready to write
 };
 
 /**
