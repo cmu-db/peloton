@@ -15,6 +15,7 @@
 #include "traffic_cop/traffic_cop.h"
 
 #include "catalog/catalog.h"
+#include "common/internal_types.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "expression/expression_util.h"
 #include "optimizer/optimizer.h"
@@ -23,7 +24,6 @@
 
 #include "threadpool/mono_queue_pool.h"
 #include "type/type.h"
-#include "type/types.h"
 
 namespace peloton {
 namespace tcop {

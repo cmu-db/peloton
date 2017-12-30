@@ -30,7 +30,7 @@ TEST_F(OperatorTests, OperatorHashAndEqualTest){
   }
 
   // Generate having
-  std::unique_ptr<expression::AbstractExpression> having(
+  std::shared_ptr<expression::AbstractExpression> having(
       new expression::ComparisonExpression(ExpressionType::COMPARE_EQUAL));
   auto col1 = new expression::TupleValueExpression("a");
   col1->SetBoundOid(0,0,1);
@@ -38,27 +38,30 @@ TEST_F(OperatorTests, OperatorHashAndEqualTest){
   col2->SetBoundOid(0,0,2);
   having->SetChild(0, col1);
   having->SetChild(1, col2);
+  std::vector<AnnotatedExpression> havings;
+  std::unordered_set<std::string> dummy_alias_set;
+  havings.emplace_back(having, dummy_alias_set);
 
   const size_t num_iter = 1000;
   // HashGroupBy
-  Operator l_group_by = PhysicalHashGroupBy::make(cols, having.get());
+  Operator l_group_by = PhysicalHashGroupBy::make(cols, havings);
   for (size_t i = 0; i<num_iter; i++) {
     std::random_shuffle(cols.begin(), cols.end());
 
-    Operator r_group_by = PhysicalHashGroupBy::make(cols, having.get());
+    Operator r_group_by = PhysicalHashGroupBy::make(cols, havings);
 
     EXPECT_EQ(l_group_by.Hash(), r_group_by.Hash());
     EXPECT_TRUE(l_group_by == r_group_by);
   }
 
   // SortGroupBy
-  l_group_by = PhysicalSortGroupBy::make(cols, having.get());
+  l_group_by = PhysicalSortGroupBy::make(cols, havings);
 
   for (size_t i = 0; i<num_iter; i++) {
     std::random_shuffle(cols.begin(), cols.end());
 
     Operator r_group_by =
-        PhysicalSortGroupBy::make(cols, having.get());
+        PhysicalSortGroupBy::make(cols, havings);
 
     EXPECT_EQ(l_group_by.Hash(), r_group_by.Hash());
     EXPECT_TRUE(l_group_by == r_group_by);

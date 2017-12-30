@@ -12,7 +12,9 @@
 
 #include "optimizer/plan_generator.h"
 
+#include "expression/expression_util.h"
 #include "optimizer/operator_expression.h"
+#include "optimizer/properties.h"
 #include "planner/aggregate_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/hash_join_plan.h"

@@ -16,7 +16,7 @@
 #include "optimizer/stats.h"
 #include "optimizer/util.h"
 #include "optimizer/property_set.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 
 #include <map>
 #include <tuple>

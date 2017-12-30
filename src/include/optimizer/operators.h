@@ -13,10 +13,10 @@
 
 #pragma once
 
+#include "common/internal_types.h"
 #include "optimizer/column.h"
 #include "optimizer/group.h"
 #include "optimizer/operator_node.h"
-#include "type/types.h"
 
 #include <vector>
 

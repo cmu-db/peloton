@@ -1,7 +1,7 @@
 
 #include "expression/abstract_expression.h"
 
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "common/logger.h"
 #include "common/sql_node_visitor.h"
 #include "common/exception.h"

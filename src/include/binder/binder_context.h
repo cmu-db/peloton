@@ -13,7 +13,6 @@
 #include <string>
 #include <unordered_map>
 
-#include "type/types.h"
 #include "catalog/catalog.h"
 #include "common/internal_types.h"
 

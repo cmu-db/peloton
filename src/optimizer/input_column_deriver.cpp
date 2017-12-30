@@ -10,10 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "expression/expression_util.h"
 #include "optimizer/input_column_deriver.h"
-
+#include "optimizer/memo.h"
 #include "optimizer/operator_expression.h"
 #include "optimizer/operators.h"
+#include "optimizer/properties.h"
 #include "storage/data_table.h"
 
 using std::vector;
