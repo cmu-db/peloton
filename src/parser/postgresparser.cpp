@@ -1079,7 +1079,9 @@ parser::SQLStatement *PostgresParser::CreateDatabaseTransform(CreateDatabaseStmt
   result->table_info_->database_name = root->dbname;
 
   // TODO(Tianyi) More options need to be converted
-
+  // See CreateDatabaseStmt definision in postgresparser.h
+  // One can refer to https://www.postgresql.org/docs/9.0/static/sql-createdatabase.html
+  // for the detail of the options.
   return result;
 }
 
