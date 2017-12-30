@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <google/protobuf/service.h>
@@ -41,7 +40,7 @@ class RpcController : public google::protobuf::RpcController {
   }
 
   // sever side
-  void SetFailed(const std::string& reason) {
+  void SetFailed(const std::string &reason) {
     is_failed_ = true;
     error_str_ = reason;
   }
@@ -52,7 +51,7 @@ class RpcController : public google::protobuf::RpcController {
   }
 
   // sever side
-  void NotifyOnCancel(google::protobuf::Closure* callback) {  // NOT IMPL
+  void NotifyOnCancel(google::protobuf::Closure *callback) {  // NOT IMPL
 
     if (callback) {
       callback->Run();

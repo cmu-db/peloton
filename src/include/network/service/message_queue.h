@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <queue>
@@ -26,8 +25,8 @@ template <typename T>
 class MessageQueue {
  public:
   MessageQueue() = default;
-  MessageQueue(const MessageQueue&) = delete;             // disable copying
-  MessageQueue& operator=(const MessageQueue&) = delete;  // disable assignment
+  MessageQueue(const MessageQueue &) = delete;             // disable copying
+  MessageQueue &operator=(const MessageQueue &) = delete;  // disable assignment
 
   T Pop() {
     std::unique_lock<std::mutex> mlock(mutex_);
@@ -39,7 +38,7 @@ class MessageQueue {
     return val;
   }
 
-  void Pop(T& item) {
+  void Pop(T &item) {
     std::unique_lock<std::mutex> mlock(mutex_);
 
     while (queue_.empty()) {
@@ -50,7 +49,7 @@ class MessageQueue {
     queue_.pop();
   }
 
-  void Push(const T& item) {
+  void Push(const T &item) {
     std::unique_lock<std::mutex> mlock(mutex_);
     queue_.push(item);
     mlock.unlock();

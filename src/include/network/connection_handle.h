@@ -39,25 +39,26 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
-
-namespace peloton{
+namespace peloton {
 namespace network {
 
-// TODO(tianyu) This class is not refactored in full as rewriting the logic is not cost-effective. However, readability
-// improvement and other changes may become desirable in the future. Other than code clutter, responsibility assignment
-// is not well thought-out in this class. Abstracting out some type of socket wrapper would be nice.
+// TODO(tianyu) This class is not refactored in full as rewriting the logic is
+// not cost-effective. However, readability
+// improvement and other changes may become desirable in the future. Other than
+// code clutter, responsibility assignment
+// is not well thought-out in this class. Abstracting out some type of socket
+// wrapper would be nice.
 /**
- * @brief A ConnectionHandle encapsulates all information about a client connection for its entire duration.
- * One should not use the constructor to construct a new ConnectionHandle instance every time as it is expensive
+ * @brief A ConnectionHandle encapsulates all information about a client
+ * connection for its entire duration.
+ * One should not use the constructor to construct a new ConnectionHandle
+ * instance every time as it is expensive
  * to allocate buffers. Instead, use the ConnectionHandleFactory.
  *
  * @see ConnectionHandleFactory
  */
 class ConnectionHandle {
-public:
-
-
-
+ public:
   /**
    * Update the existing event to listen to the passed flags
    */
@@ -67,7 +68,9 @@ public:
 
   std::string WriteBufferToString();
 
-  inline void HandleEvent(int, short) { state_machine_.Accept(Transition::WAKEUP, *this); }
+  inline void HandleEvent(int, short) {
+    state_machine_.Accept(Transition::WAKEUP, *this);
+  }
 
   // Exposed for testing
   const std::unique_ptr<ProtocolHandler> &GetProtocolHandler() const {
@@ -86,30 +89,41 @@ public:
   Transition GetResult();
   Transition CloseSocket();
 
-private:
+ private:
   /**
-   * A state machine is defined to be a set of states, a set of symbols it supports, and a function mapping each
-   * state and symbol pair to the state it should transition to. i.e. transition_graph = state * symbol -> state
+   * A state machine is defined to be a set of states, a set of symbols it
+   * supports, and a function mapping each
+   * state and symbol pair to the state it should transition to. i.e.
+   * transition_graph = state * symbol -> state
    *
-   * In addition to the transition system, our network state machine also needs to perform actions. Actions are
-   * defined as functions (lambdas, or closures, in various other languages) and is promised to be invoked by the
+   * In addition to the transition system, our network state machine also needs
+   * to perform actions. Actions are
+   * defined as functions (lambdas, or closures, in various other languages) and
+   * is promised to be invoked by the
    * state machine after each transition if registered in the transition graph.
    *
-   * So the transition graph overall has type transition_graph = state * symbol -> state * action
+   * So the transition graph overall has type transition_graph = state * symbol
+   * -> state * action
    */
   class StateMachine {
-  public:
+   public:
     using action = Transition (*)(ConnectionHandle &);
     using transition_result = std::pair<ConnState, action>;
     /**
-     * Runs the internal state machine, starting from the symbol given, until no more
+     * Runs the internal state machine, starting from the symbol given, until no
+     * more
      * symbols are available.
      *
-     * Each state of the state machine defines a map from a transition symbol to an action
-     * and the next state it should go to. The actions can either generate the next symbol,
-     * which means the state machine will continue to run on the generated symbol, or signal
-     * that there is no more symbols that can be generated, at which point the state machine
-     * will stop running and return, waiting for an external event (user interaction, or system event)
+     * Each state of the state machine defines a map from a transition symbol to
+     * an action
+     * and the next state it should go to. The actions can either generate the
+     * next symbol,
+     * which means the state machine will continue to run on the generated
+     * symbol, or signal
+     * that there is no more symbols that can be generated, at which point the
+     * state machine
+     * will stop running and return, waiting for an external event (user
+     * interaction, or system event)
      * to generate the next symbol.
      *
      * @param action starting symbol
@@ -117,9 +131,10 @@ private:
      */
     void Accept(Transition action, ConnectionHandle &connection);
 
-  private:
+   private:
     /**
-     * delta is the transition function that defines, for each state, its behavior and the
+     * delta is the transition function that defines, for each state, its
+     * behavior and the
      * next state it should go to.
      */
     static transition_result Delta_(ConnState state, Transition transition);
@@ -130,12 +145,13 @@ private:
   friend class ConnectionHandleFactory;
 
   ConnectionHandle(int sock_fd, ConnectionHandlerTask *handler,
-                    std::shared_ptr<Buffer> rbuf, std::shared_ptr<Buffer> wbuf);
+                   std::shared_ptr<Buffer> rbuf, std::shared_ptr<Buffer> wbuf);
 
   ProcessResult ProcessInitial();
 
   /**
-   * Extracts the header of a Postgres start up packet from the read socket buffer
+   * Extracts the header of a Postgres start up packet from the read socket
+   * buffer
    */
   static bool ReadStartupPacketHeader(Buffer &rbuf, InputPacket &rpkt);
 
@@ -189,24 +205,23 @@ private:
     setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof one);
   }
 
-  int sock_fd_;                    // socket file descriptor
-  struct event *network_event = nullptr;  // something to read from network
-  struct event *workpool_event = nullptr; // worker thread done the job
+  int sock_fd_;                            // socket file descriptor
+  struct event *network_event = nullptr;   // something to read from network
+  struct event *workpool_event = nullptr;  // worker thread done the job
 
-  SSL* conn_SSL_context = nullptr;          // SSL context for the connection
+  SSL *conn_SSL_context = nullptr;  // SSL context for the connection
 
-  ConnectionHandlerTask *handler_;          // reference to the network thread
-  std::unique_ptr<ProtocolHandler> protocol_handler_;       // Stores state for this socket
+  ConnectionHandlerTask *handler_;  // reference to the network thread
+  std::unique_ptr<ProtocolHandler>
+      protocol_handler_;  // Stores state for this socket
   tcop::TrafficCop traffic_cop_;
 
-  std::shared_ptr<Buffer> rbuf_;                     // Socket's read buffer
-  std::shared_ptr<Buffer> wbuf_;                     // Socket's write buffer
+  std::shared_ptr<Buffer> rbuf_;    // Socket's read buffer
+  std::shared_ptr<Buffer> wbuf_;    // Socket's write buffer
   unsigned int next_response_ = 0;  // The next response in the response buffer
   Client client_;
   bool ssl_sent_ = false;
   StateMachine state_machine_;
 };
-
-
 }
 }

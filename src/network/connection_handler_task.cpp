@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "network/connection_handler_task.h"
 #include "network/connection_handle.h"
 #include "network/connection_handle_factory.h"
@@ -26,7 +25,7 @@ ConnectionHandlerTask::ConnectionHandlerTask(const int task_id)
     exit(1);
   }
   new_conn_send_fd_ = fds[1];
-  RegisterEvent(fds[0], EV_READ|EV_PERSIST,
+  RegisterEvent(fds[0], EV_READ | EV_PERSIST,
                 METHOD_AS_CALLBACK(ConnectionHandlerTask, HandleDispatch),
                 this);
 }
@@ -57,12 +56,13 @@ void ConnectionHandlerTask::HandleDispatch(int new_conn_recv_fd, short) {
     case 'c': {
       // fetch the new connection fd from the queue
       new_conn_queue_.Dequeue(client_fd);
-      conn = ConnectionHandleFactory::GetInstance().GetConnectionHandle(client_fd, this);
+      conn = ConnectionHandleFactory::GetInstance().GetConnectionHandle(
+          client_fd, this);
       break;
     }
 
     default:
-    LOG_ERROR("Unexpected message. Shouldn't reach here");
+      LOG_ERROR("Unexpected message. Shouldn't reach here");
   }
 }
 

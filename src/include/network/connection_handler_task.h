@@ -31,14 +31,17 @@ namespace peloton {
 namespace network {
 
 /**
- * A ConnectionHandlerTask is responsible for interacting with a client connection.
+ * A ConnectionHandlerTask is responsible for interacting with a client
+ * connection.
  *
- * A client connection, once taken by the dispatch, is sent to a handler. Then all related
- * client events are registered in the handler task. All client interaction happens on the
+ * A client connection, once taken by the dispatch, is sent to a handler. Then
+ * all related
+ * client events are registered in the handler task. All client interaction
+ * happens on the
  * same ConnectionHandlerTask thread for the enitre lifetime of the connection.
  */
 class ConnectionHandlerTask : public NotifiableTask {
-public:
+ public:
   /**
    * Constructs a new ConnectionHandlerTask instance.
    * @param task_id task_id a unique id assigned to this task.
@@ -46,9 +49,11 @@ public:
   explicit ConnectionHandlerTask(int task_id);
 
   /**
-   * @brief Notifies this ConnectionHandlerTask that a new client connection should be handled at socket fd.
+   * @brief Notifies this ConnectionHandlerTask that a new client connection
+   * should be handled at socket fd.
    *
-   * This method is meant to be invoked on another thread (probably the dispatcher) to update
+   * This method is meant to be invoked on another thread (probably the
+   * dispatcher) to update
    * the necessary data structure so the handler thread is woken up.
    *
    * @param conn_fd the client connection socket fd.
@@ -57,16 +62,18 @@ public:
 
   void HandleDispatch(int new_conn_recv_fd, short flags);
 
-
-  // TODO(tianyu): When we stop this handler, do we need to kick all clients off and close the socket?
+  // TODO(tianyu): When we stop this handler, do we need to kick all clients off
+  // and close the socket?
   // I don't think we did this before.
 
-private:
+ private:
   // Notify new connection pipe(send end)
   int new_conn_send_fd_;
 
-  // TODO(tianyu) Do we really need this queue, now that we are only sending an int?
-  // The queue for new connection requests, elements represent the socket fd of new client connections
+  // TODO(tianyu) Do we really need this queue, now that we are only sending an
+  // int?
+  // The queue for new connection requests, elements represent the socket fd of
+  // new client connections
   LockFreeQueue<int> new_conn_queue_;
 };
 

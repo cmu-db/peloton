@@ -54,7 +54,7 @@ struct Buffer {
 
   inline size_t GetMaxSize() { return SOCKET_BUFFER_SIZE; }
 
-  //Get the 4 bytes Big endian uint32 and convert it to little endian
+  // Get the 4 bytes Big endian uint32 and convert it to little endian
   size_t GetUInt32BigEndian();
 
   // Is the requested amount of data available from the current position in
