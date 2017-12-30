@@ -571,11 +571,11 @@ typedef struct DropStmt {
   bool concurrent;       /* drop index concurrently? */
 } DropStmt;
 
-typedef struct DropdbStmt {
+typedef struct DropDatabaseStmt {
   NodeTag type;
   char *dbname;          /* name of database to drop */
   bool missing_ok;       /* skip error if object is missing? */
-} DropdbStmt;
+} DropDatabaseStmt;
 
 typedef struct TruncateStmt {
   NodeTag type;
@@ -625,11 +625,11 @@ typedef struct CopyStmt {
   List *options;      /* List of DefElem nodes */
 } CopyStmt;
 
-typedef struct CreatedbStmt {
+typedef struct CreateDatabaseStmt {
   NodeTag type;
   char *dbname;  /* name of database to create */
   List *options; /* List of DefElem nodes */
-} CreatedbStmt;
+} CreateDatabaseStmt;
 
 typedef struct ParamRef {
   NodeTag type;
