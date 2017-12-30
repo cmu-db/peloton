@@ -75,7 +75,8 @@ void QueryToOperatorTransformer::Visit(parser::SelectStatement *op) {
     // Plain aggregation
     std::shared_ptr<OperatorExpression> agg_expr;
     if (op->group_by == nullptr) {
-      agg_expr = std::make_shared<OperatorExpression>(LogicalGroupBy::make());
+      agg_expr = std::make_shared<OperatorExpression>(
+          LogicalAggregateAndGroupBy::make());
     } else {
       size_t num_group_by_cols = op->group_by->columns.size();
       auto group_by_cols =
@@ -90,7 +91,7 @@ void QueryToOperatorTransformer::Visit(parser::SelectStatement *op) {
         util::ExtractPredicates(op->group_by->having.get(), having);
       }
       agg_expr = std::make_shared<OperatorExpression>(
-          LogicalGroupBy::make(group_by_cols, having));
+          LogicalAggregateAndGroupBy::make(group_by_cols, having));
     }
     agg_expr->PushChild(output_expr_);
     output_expr_ = agg_expr;

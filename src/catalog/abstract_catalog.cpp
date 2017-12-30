@@ -59,7 +59,6 @@ AbstractCatalog::AbstractCatalog(const std::string &catalog_table_ddl,
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto create_plan = std::dynamic_pointer_cast<planner::CreatePlan>(
       optimizer::Optimizer().BuildPelotonPlanTree(
-          Catalog::GetInstance(),
           peloton_parser.BuildParseTree(catalog_table_ddl),
           DATABASE_CATALOG_NAME, txn));
   auto catalog_table_schema = create_plan->GetSchema();
@@ -110,9 +109,9 @@ bool AbstractCatalog::InsertTuple(std::unique_ptr<storage::Tuple> tuple,
 * @param   txn           TransactionContext
 * @return  Whether deletion is Successful
 */
-bool AbstractCatalog::DeleteWithIndexScan(oid_t index_offset,
-                                          std::vector<type::Value> values,
-                                          concurrency::TransactionContext *txn) {
+bool AbstractCatalog::DeleteWithIndexScan(
+    oid_t index_offset, std::vector<type::Value> values,
+    concurrency::TransactionContext *txn) {
   if (txn == nullptr)
     throw CatalogException("Delete tuple requires transaction");
 
@@ -161,10 +160,10 @@ bool AbstractCatalog::DeleteWithIndexScan(oid_t index_offset,
 * @return  Unique pointer of vector of logical tiles
 */
 std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
-AbstractCatalog::GetResultWithIndexScan(std::vector<oid_t> column_offsets,
-                                        oid_t index_offset,
-                                        std::vector<type::Value> values,
-                                        concurrency::TransactionContext *txn) const {
+AbstractCatalog::GetResultWithIndexScan(
+    std::vector<oid_t> column_offsets, oid_t index_offset,
+    std::vector<type::Value> values,
+    concurrency::TransactionContext *txn) const {
   if (txn == nullptr) throw CatalogException("Scan table requires transaction");
 
   // Index scan

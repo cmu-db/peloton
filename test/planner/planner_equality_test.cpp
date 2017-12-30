@@ -64,8 +64,8 @@ class PlannerEqualityTest : public PelotonTest {
     auto &peloton_parser = parser::PostgresParser::GetInstance();
 
     auto parsed_stmt = peloton_parser.BuildParseTree(query);
-    auto return_value = optimizer->BuildPelotonPlanTree(
-        catalog::Catalog::GetInstance(), parsed_stmt, DEFAULT_DB_NAME, txn);
+    auto return_value =
+        optimizer->BuildPelotonPlanTree(parsed_stmt, DEFAULT_DB_NAME, txn);
     return return_value;
   }
 

@@ -102,8 +102,8 @@ ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
   traffic_cop_.SetTcopTxnState(txn);
 
   auto parsed_stmt = peloton_parser.BuildParseTree(query);
-  auto plan = optimizer->BuildPelotonPlanTree(
-      catalog::Catalog::GetInstance(), parsed_stmt, DEFAULT_DB_NAME, txn);
+  auto plan =
+      optimizer->BuildPelotonPlanTree(parsed_stmt, DEFAULT_DB_NAME, txn);
   tuple_descriptor =
       traffic_cop_.GenerateTupleDescriptor(parsed_stmt->GetStatement(0));
   auto result_format = std::vector<int>(tuple_descriptor.size(), 0);
@@ -137,8 +137,8 @@ TestingSQLUtil::GeneratePlanWithOptimizer(
   auto &peloton_parser = parser::PostgresParser::GetInstance();
 
   auto parsed_stmt = peloton_parser.BuildParseTree(query);
-  auto return_value = optimizer->BuildPelotonPlanTree(
-      catalog::Catalog::GetInstance(), parsed_stmt, DEFAULT_DB_NAME, txn);
+  auto return_value =
+      optimizer->BuildPelotonPlanTree(parsed_stmt, DEFAULT_DB_NAME, txn);
   return return_value;
 }
 

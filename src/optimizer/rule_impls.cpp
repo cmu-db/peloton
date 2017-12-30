@@ -449,10 +449,10 @@ void LogicalInsertSelectToPhysical::Transform(
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/// LogicalGroupByToHashGroupBy
+/// LogicalAggregateAndGroupByToHashGroupBy
 LogicalGroupByToHashGroupBy::LogicalGroupByToHashGroupBy() {
   type_ = RuleType::AGGREGATE_TO_HASH_AGGREGATE;
-  match_pattern = std::make_shared<Pattern>(OpType::LogicalGroupBy);
+  match_pattern = std::make_shared<Pattern>(OpType::LogicalAggregateAndGroupBy);
   std::shared_ptr<Pattern> child(std::make_shared<Pattern>(OpType::Leaf));
   match_pattern->AddChild(child);
 }
@@ -461,7 +461,8 @@ bool LogicalGroupByToHashGroupBy::Check(
     UNUSED_ATTRIBUTE std::shared_ptr<OperatorExpression> plan,
     OptimizeContext *context) const {
   (void)context;
-  const LogicalGroupBy *agg_op = plan->Op().As<LogicalGroupBy>();
+  const LogicalAggregateAndGroupBy *agg_op =
+      plan->Op().As<LogicalAggregateAndGroupBy>();
   return !agg_op->columns.empty();
 }
 
@@ -469,7 +470,8 @@ void LogicalGroupByToHashGroupBy::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed,
     UNUSED_ATTRIBUTE OptimizeContext *context) const {
-  const LogicalGroupBy *agg_op = input->Op().As<LogicalGroupBy>();
+  const LogicalAggregateAndGroupBy *agg_op =
+      input->Op().As<LogicalAggregateAndGroupBy>();
   auto result = std::make_shared<OperatorExpression>(
       PhysicalHashGroupBy::make(agg_op->columns, agg_op->having));
   PL_ASSERT(input->Children().size() == 1);
@@ -481,7 +483,7 @@ void LogicalGroupByToHashGroupBy::Transform(
 /// LogicalAggregateToPhysical
 LogicalAggregateToPhysical::LogicalAggregateToPhysical() {
   type_ = RuleType::AGGREGATE_TO_PLAIN_AGGREGATE;
-  match_pattern = std::make_shared<Pattern>(OpType::LogicalGroupBy);
+  match_pattern = std::make_shared<Pattern>(OpType::LogicalAggregateAndGroupBy);
   std::shared_ptr<Pattern> child(std::make_shared<Pattern>(OpType::Leaf));
   match_pattern->AddChild(child);
 }
@@ -490,7 +492,8 @@ bool LogicalAggregateToPhysical::Check(
     UNUSED_ATTRIBUTE std::shared_ptr<OperatorExpression> plan,
     OptimizeContext *context) const {
   (void)context;
-  const LogicalGroupBy *agg_op = plan->Op().As<LogicalGroupBy>();
+  const LogicalAggregateAndGroupBy *agg_op =
+      plan->Op().As<LogicalAggregateAndGroupBy>();
   return agg_op->columns.empty();
 }
 
@@ -739,7 +742,7 @@ void PushFilterThroughJoin::Transform(
   // either the left child or the right child to be evaluated
   // All predicates in this loop follow conjunction relationship because we
   // already extract these predicates from the original.
-  // E.g. An expression (test.a = test1.b and test.a = 5) would become 
+  // E.g. An expression (test.a = test1.b and test.a = 5) would become
   // {test.a = test1.b, test.a = 5}
   for (auto &predicate : predicates) {
     if (util::IsSubset(left_group_aliases_set, predicate.table_alias_set))

@@ -415,8 +415,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     }
     LOG_TRACE("Optimizer Build Peloton Plan Tree...");
     auto plan = optimizer_->BuildPelotonPlanTree(
-        catalog::Catalog::GetInstance(), sql_stmt, default_database_name_,
-        tcop_txn_state_.top().first);
+        sql_stmt, default_database_name_, tcop_txn_state_.top().first);
     statement->SetPlanTree(plan);
     // Get the tables that our plan references so that we know how to
     // invalidate it at a later point when the catalog changes

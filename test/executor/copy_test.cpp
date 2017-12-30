@@ -120,8 +120,8 @@ TEST_F(CopyTests, Copying) {
   auto copy_stmt = peloton_parser.BuildParseTree(copy_sql);
 
   LOG_TRACE("Building plan tree...");
-  auto copy_plan = optimizer->BuildPelotonPlanTree(
-      catalog::Catalog::GetInstance(), copy_stmt, DEFAULT_DB_NAME, txn);
+  auto copy_plan =
+      optimizer->BuildPelotonPlanTree(copy_stmt, DEFAULT_DB_NAME, txn);
   statement->SetPlanTree(copy_plan);
 
   LOG_TRACE("Building executor tree...");

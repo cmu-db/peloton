@@ -14,6 +14,7 @@
 
 #include "catalog/catalog.h"
 #include "catalog/column_catalog.h"
+#include "catalog/database_catalog.h"
 #include "catalog/table_catalog.h"
 #include "parser/table_ref.h"
 #include "expression/tuple_value_expression.h"
@@ -36,8 +37,10 @@ void BinderContext::AddRegularTable(const std::string db_name,
                                     const std::string table_alias,
                                     concurrency::TransactionContext *txn) {
   // using catalog object to retrieve meta-data
+  // PL_ASSERT(txn->catalog_cache.GetDatabaseObject(db_name) != nullptr);
   auto table_object =
-      catalog_->GetTableObject(db_name, table_name, txn);
+    catalog::Catalog::GetInstance()->GetTableObject(db_name, table_name, txn);
+    // txn->catalog_cache.GetDatabaseObject(db_name)->GetTableObject(table_name, true);
 
   if (regular_table_alias_map_.find(table_alias) !=
           regular_table_alias_map_.end() ||

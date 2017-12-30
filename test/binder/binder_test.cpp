@@ -78,8 +78,8 @@ void SetupTables(std::string database_name) {
     vector<int> result_format;
     unique_ptr<Statement> statement(new Statement("CREATE", sql));
     auto parse_tree = parser.BuildParseTree(sql);
-    statement->SetPlanTree(optimizer.BuildPelotonPlanTree(
-        catalog::Catalog::GetInstance(), parse_tree, database_name, txn));
+    statement->SetPlanTree(
+        optimizer.BuildPelotonPlanTree(parse_tree, database_name, txn));
     TestingSQLUtil::counter_.store(1);
     auto status = traffic_cop.ExecuteHelper(statement->GetPlanTree(), params,
                                             result, result_format);

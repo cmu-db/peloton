@@ -86,7 +86,6 @@ void Optimizer::OptimizeLoop(int root_group_id,
 }
 
 shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
-    catalog::Catalog *catalog,
     const unique_ptr<parser::SQLStatementList> &parse_tree_list,
     const std::string default_database_name,
     concurrency::TransactionContext *txn) {
@@ -100,9 +99,9 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   // Run binder
   auto bind_node_visitor =
       make_shared<binder::BindNodeVisitor>(txn, default_database_name);
-  bind_node_visitor->BindNameToNode(parse_tree, catalog);
+  bind_node_visitor->BindNameToNode(parse_tree);
 
-  metadata_.catalog = catalog;
+  metadata_.catalog_cache = &txn->catalog_cache;
   // Handle ddl statement
   bool is_ddl_stmt;
   auto ddl_plan = HandleDDLStatement(parse_tree, is_ddl_stmt, txn);

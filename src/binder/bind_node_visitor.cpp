@@ -30,18 +30,16 @@ namespace binder {
 BindNodeVisitor::BindNodeVisitor(concurrency::TransactionContext *txn,
                                  std::string default_database_name)
     : txn_(txn), default_database_name_(default_database_name) {
+  catalog_ = catalog::Catalog::GetInstance();
   context_ = nullptr;
 }
 
-void BindNodeVisitor::BindNameToNode(
-    parser::SQLStatement *tree,
-    catalog::Catalog *catalog) {
-  catalog_ = catalog;
+void BindNodeVisitor::BindNameToNode(parser::SQLStatement *tree) {
   tree->Accept(this);
 }
 
 void BindNodeVisitor::Visit(parser::SelectStatement *node) {
-  context_ = std::make_shared<BinderContext>(context_, catalog_);
+  context_ = std::make_shared<BinderContext>(context_);
   if (node->from_table != nullptr) {
     node->from_table->Accept(this);
   }
@@ -142,7 +140,7 @@ void BindNodeVisitor::Visit(parser::OrderDescription *node) {
 }
 
 void BindNodeVisitor::Visit(parser::UpdateStatement *node) {
-  context_ = std::make_shared<BinderContext>(nullptr, catalog_);
+  context_ = std::make_shared<BinderContext>(nullptr);
 
   node->table->Accept(this);
   if (node->where != nullptr) node->where->Accept(this);
@@ -157,7 +155,7 @@ void BindNodeVisitor::Visit(parser::UpdateStatement *node) {
 }
 
 void BindNodeVisitor::Visit(parser::DeleteStatement *node) {
-  context_ = std::make_shared<BinderContext>(nullptr, catalog_);
+  context_ = std::make_shared<BinderContext>(nullptr);
   node->TryBindDatabaseName(default_database_name_);
   context_->AddRegularTable(node->GetDatabaseName(), node->GetTableName(),
                             node->GetTableName(), txn_);

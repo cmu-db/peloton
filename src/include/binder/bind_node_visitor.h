@@ -43,9 +43,7 @@ class BindNodeVisitor : public SqlNodeVisitor {
   BindNodeVisitor(concurrency::TransactionContext *txn,
                   std::string default_database_name);
 
-  void BindNameToNode(
-      parser::SQLStatement *tree,
-      catalog::Catalog *catalog = catalog::Catalog::GetInstance());
+  void BindNameToNode(parser::SQLStatement *tree);
   void Visit(parser::SelectStatement *) override;
 
   // Some sub query nodes inside SelectStatement

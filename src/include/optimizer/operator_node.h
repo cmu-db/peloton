@@ -38,7 +38,7 @@ enum class OpType {
   RightJoin,
   OuterJoin,
   SemiJoin,
-  LogicalGroupBy,
+  LogicalAggregateAndGroupBy,
   LogicalInsert,
   LogicalInsertSelect,
   LogicalDelete,

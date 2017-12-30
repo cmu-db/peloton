@@ -225,7 +225,8 @@ class LogicalSemiJoin : public OperatorNode<LogicalSemiJoin> {
 //===--------------------------------------------------------------------===//
 // GroupBy
 //===--------------------------------------------------------------------===//
-class LogicalGroupBy : public OperatorNode<LogicalGroupBy> {
+class LogicalAggregateAndGroupBy
+    : public OperatorNode<LogicalAggregateAndGroupBy> {
  public:
   static Operator make();
 
@@ -412,9 +413,10 @@ class PhysicalLimit : public OperatorNode<PhysicalLimit> {
 //===--------------------------------------------------------------------===//
 class PhysicalInnerNLJoin : public OperatorNode<PhysicalInnerNLJoin> {
  public:
-  static Operator make(std::vector<AnnotatedExpression> conditions,
-                       std::vector<std::unique_ptr<expression::AbstractExpression>>& left_keys,
-                       std::vector<std::unique_ptr<expression::AbstractExpression>>& right_keys);
+  static Operator make(
+      std::vector<AnnotatedExpression> conditions,
+      std::vector<std::unique_ptr<expression::AbstractExpression>> &left_keys,
+      std::vector<std::unique_ptr<expression::AbstractExpression>> &right_keys);
 
   bool operator==(const BaseOperatorNode &r) override;
 
@@ -461,9 +463,10 @@ class PhysicalOuterNLJoin : public OperatorNode<PhysicalOuterNLJoin> {
 //===--------------------------------------------------------------------===//
 class PhysicalInnerHashJoin : public OperatorNode<PhysicalInnerHashJoin> {
  public:
-  static Operator make(std::vector<AnnotatedExpression> conditions,
-                       std::vector<std::unique_ptr<expression::AbstractExpression>>& left_keys,
-                       std::vector<std::unique_ptr<expression::AbstractExpression>>& right_keys);
+  static Operator make(
+      std::vector<AnnotatedExpression> conditions,
+      std::vector<std::unique_ptr<expression::AbstractExpression>> &left_keys,
+      std::vector<std::unique_ptr<expression::AbstractExpression>> &right_keys);
 
   bool operator==(const BaseOperatorNode &r) override;
 

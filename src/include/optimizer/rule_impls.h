@@ -307,45 +307,47 @@ class EmbedFilterIntoGet : public Rule {
                  OptimizeContext *context) const override;
 };
 
-
 ///////////////////////////////////////////////////////////////////////////////
 /// MarkJoinGetToInnerJoin
-class MarkJoinGetToInnerJoin: public Rule {
+class MarkJoinGetToInnerJoin : public Rule {
  public:
   MarkJoinGetToInnerJoin();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan, OptimizeContext* context) const override;
+  bool Check(std::shared_ptr<OperatorExpression> plan,
+             OptimizeContext *context) const override;
 
   void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed, OptimizeContext* context)
-  const override;
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+                 OptimizeContext *context) const override;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// MarkJoinInnerJoinToInnerJoin
-class MarkJoinInnerJoinToInnerJoin: public Rule {
+class MarkJoinInnerJoinToInnerJoin : public Rule {
  public:
   MarkJoinInnerJoinToInnerJoin();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan, OptimizeContext* context) const override;
+  bool Check(std::shared_ptr<OperatorExpression> plan,
+             OptimizeContext *context) const override;
 
   void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed, OptimizeContext* context)
-  const override;
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+                 OptimizeContext *context) const override;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 /// PullFilterThroughMarkJoin
-class PullFilterThroughMarkJoin: public Rule {
+class PullFilterThroughMarkJoin : public Rule {
  public:
   PullFilterThroughMarkJoin();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan, OptimizeContext* context) const override;
+  bool Check(std::shared_ptr<OperatorExpression> plan,
+             OptimizeContext *context) const override;
 
   void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed, OptimizeContext* context)
-  const override;
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+                 OptimizeContext *context) const override;
 };
 
-} // namespace optimizer
-} // namespace peloton
+}  // namespace optimizer
+}  // namespace peloton

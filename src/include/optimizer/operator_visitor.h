@@ -29,7 +29,7 @@ class OperatorVisitor {
   virtual void Visit(const DummyScan *) {}
   virtual void Visit(const PhysicalSeqScan *) {}
   virtual void Visit(const PhysicalIndexScan *) {}
-  virtual void Visit(const QueryDerivedScan* ) {}
+  virtual void Visit(const QueryDerivedScan *) {}
   virtual void Visit(const PhysicalOrderBy *) {}
   virtual void Visit(const PhysicalLimit *) {}
   virtual void Visit(const PhysicalInnerNLJoin *) {}
@@ -63,15 +63,14 @@ class OperatorVisitor {
   virtual void Visit(const LogicalRightJoin *) {}
   virtual void Visit(const LogicalOuterJoin *) {}
   virtual void Visit(const LogicalSemiJoin *) {}
-  virtual void Visit(const LogicalGroupBy *) {}
+  virtual void Visit(const LogicalAggregateAndGroupBy *) {}
   virtual void Visit(const LogicalInsert *) {}
   virtual void Visit(const LogicalInsertSelect *) {}
   virtual void Visit(const LogicalDelete *) {}
   virtual void Visit(const LogicalUpdate *) {}
   virtual void Visit(const LogicalDistinct *) {}
   virtual void Visit(const LogicalLimit *) {}
-  
 };
 
-} // namespace optimizer
-} // namespace peloton
+}  // namespace optimizer
+}  // namespace peloton

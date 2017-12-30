@@ -29,7 +29,7 @@ class OptimizerMetadata {
   Memo memo;
   RuleSet rule_set;
   OptimizerTaskPool *task_pool;
-  catalog::Catalog* catalog;
+  catalog::CatalogCache* catalog_cache;
 
   void SetTaskPool(OptimizerTaskPool *task_pool) {
     this->task_pool = task_pool;

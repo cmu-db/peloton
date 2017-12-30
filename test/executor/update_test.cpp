@@ -210,8 +210,8 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
 
-  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(
-      catalog::Catalog::GetInstance(), insert_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(
+      optimizer->BuildPelotonPlanTree(insert_stmt, DEFAULT_DB_NAME, txn));
   LOG_INFO("Building plan tree completed!");
   std::vector<type::Value> params;
   std::vector<ResultValue> result;
@@ -252,8 +252,8 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
 
-  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(
-      catalog::Catalog::GetInstance(), update_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(
+      optimizer->BuildPelotonPlanTree(update_stmt, DEFAULT_DB_NAME, txn));
   LOG_INFO("Building plan tree completed!");
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
@@ -291,8 +291,8 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
 
-  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(
-      catalog::Catalog::GetInstance(), update_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(
+      optimizer->BuildPelotonPlanTree(update_stmt, DEFAULT_DB_NAME, txn));
   LOG_INFO("Building plan tree completed!");
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
@@ -324,8 +324,8 @@ TEST_F(UpdateTests, UpdatingOld) {
       "UPDATE department_table SET dept_id = 2 WHERE dept_id = 1");
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(
-      catalog::Catalog::GetInstance(), update_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(
+      optimizer->BuildPelotonPlanTree(update_stmt, DEFAULT_DB_NAME, txn));
   LOG_INFO("Building plan tree completed!");
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
@@ -360,8 +360,8 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
 
-  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(
-      catalog::Catalog::GetInstance(), delete_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(
+      optimizer->BuildPelotonPlanTree(delete_stmt, DEFAULT_DB_NAME, txn));
   LOG_INFO("Building plan tree completed!");
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());

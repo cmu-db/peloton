@@ -305,24 +305,24 @@ Operator LogicalSemiJoin::make(expression::AbstractExpression *condition) {
 //===--------------------------------------------------------------------===//
 // Aggregate
 //===--------------------------------------------------------------------===//
-Operator LogicalGroupBy::make() {
-  LogicalGroupBy *group_by = new LogicalGroupBy;
+Operator LogicalAggregateAndGroupBy::make() {
+  LogicalAggregateAndGroupBy *group_by = new LogicalAggregateAndGroupBy;
   group_by->columns = {};
   return Operator(group_by);
 }
-Operator LogicalGroupBy::make(
+Operator LogicalAggregateAndGroupBy::make(
     std::vector<std::shared_ptr<expression::AbstractExpression>> &columns,
     std::vector<AnnotatedExpression> &having) {
-  LogicalGroupBy *group_by = new LogicalGroupBy;
+  LogicalAggregateAndGroupBy *group_by = new LogicalAggregateAndGroupBy;
   group_by->columns = move(columns);
   group_by->having = move(having);
   return Operator(group_by);
 }
 
-bool LogicalGroupBy::operator==(const BaseOperatorNode &node) {
-  if (node.type() != OpType::LogicalGroupBy) return false;
-  const LogicalGroupBy &r =
-      *static_cast<const LogicalGroupBy *>(&node);
+bool LogicalAggregateAndGroupBy::operator==(const BaseOperatorNode &node) {
+  if (node.type() != OpType::LogicalAggregateAndGroupBy) return false;
+  const LogicalAggregateAndGroupBy &r =
+      *static_cast<const LogicalAggregateAndGroupBy *>(&node);
   if (having.size() != r.having.size() || columns.size() != r.columns.size())
     return false;
   for (size_t i = 0; i < having.size(); i++) {
@@ -333,7 +333,7 @@ bool LogicalGroupBy::operator==(const BaseOperatorNode &node) {
   return expression::ExpressionUtil::EqualExpressions(columns, r.columns);
 }
 
-hash_t LogicalGroupBy::Hash() const {
+hash_t LogicalAggregateAndGroupBy::Hash() const {
   hash_t hash = BaseOperatorNode::Hash();
   for (auto &pred : having) hash = HashUtil::SumHashes(hash, pred.expr->Hash());
   for (auto expr : columns) hash = HashUtil::SumHashes(hash, expr->Hash());
@@ -860,7 +860,7 @@ std::string OperatorNode<LogicalOuterJoin>::name_ = "LogicalOuterJoin";
 template <>
 std::string OperatorNode<LogicalSemiJoin>::name_ = "LogicalSemiJoin";
 template <>
-std::string OperatorNode<LogicalGroupBy>::name_ = "LogicalGroupBy";
+std::string OperatorNode<LogicalAggregateAndGroupBy>::name_ = "LogicalAggregateAndGroupBy";
 template <>
 std::string OperatorNode<LogicalInsert>::name_ = "LogicalInsert";
 template <>
@@ -950,7 +950,7 @@ OpType OperatorNode<LogicalOuterJoin>::type_ = OpType::OuterJoin;
 template <>
 OpType OperatorNode<LogicalSemiJoin>::type_ = OpType::SemiJoin;
 template <>
-OpType OperatorNode<LogicalGroupBy>::type_ = OpType::LogicalGroupBy;
+OpType OperatorNode<LogicalAggregateAndGroupBy>::type_ = OpType::LogicalAggregateAndGroupBy;
 template <>
 OpType OperatorNode<LogicalInsert>::type_ = OpType::LogicalInsert;
 template <>
