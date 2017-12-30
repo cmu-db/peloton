@@ -15,7 +15,7 @@
 #include <sstream>
 
 #include "common/macros.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "type/value_factory.h"
 
 #define SAMPLE_COUNT_PER_TABLE 100

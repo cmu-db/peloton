@@ -10,6 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <utility>
+
 #include "traffic_cop/traffic_cop.h"
 
 #include "catalog/catalog.h"
@@ -138,7 +140,7 @@ ResultType TrafficCop::ExecuteStatementGetResult() {
   return p_status_.m_result;
 }
 
-executor::ExecuteResult TrafficCop::ExecuteHelper(
+executor::ExecutionResult TrafficCop::ExecuteHelper(
     std::shared_ptr<planner::AbstractPlan> plan,
     const std::vector<type::Value> &params, std::vector<ResultValue> &result,
     const std::vector<int> &result_format, size_t thread_id) {
@@ -163,28 +165,18 @@ executor::ExecuteResult TrafficCop::ExecuteHelper(
     return p_status_;
   }
 
-  struct ExecutePlanArg {
-    std::shared_ptr<planner::AbstractPlan> plan_;
-    concurrency::TransactionContext *txn_;
-    const std::vector<type::Value> &params_;
-    std::vector<ResultValue> &result_;
-    const std::vector<int> &result_format_;
-    executor::ExecuteResult &p_status_;
+  auto on_complete = [&result, this](executor::ExecutionResult p_status,
+                                     std::vector<ResultValue> &&values) {
+    this->p_status_ = p_status;
+    result = std::move(values);
+    task_callback_(task_callback_arg_);
   };
-  auto exec_plan_arg = new ExecutePlanArg{.plan_ = std::move(plan),
-                                          .txn_ = txn,
-                                          .params_ = params,
-                                          .result_ = result,
-                                          .result_format_ = result_format,
-                                          .p_status_ = p_status_};
 
-  threadpool::MonoQueuePool::GetInstance().SubmitTask([](void *arg_ptr) {
-    auto arg = reinterpret_cast<ExecutePlanArg *>(arg_ptr);
-    executor::PlanExecutor::ExecutePlan(arg->plan_, arg->txn_, arg->params_,
-                                        arg->result_, arg->result_format_,
-                                        arg->p_status_);
-    delete (arg);
-  }, exec_plan_arg, task_callback_, task_callback_arg_);
+  auto &pool = threadpool::MonoQueuePool::GetInstance();
+  pool.SubmitTask([plan, txn, &params, &result, &result_format, on_complete] {
+    executor::PlanExecutor::ExecutePlan(plan, txn, params, result_format,
+                                        on_complete);
+  });
 
   is_queuing_ = true;
 
@@ -372,8 +364,7 @@ FieldInfo TrafficCop::GetColumnFieldForValueType(std::string column_name,
 
 std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     const std::string &statement_name, const std::string &query_string,
-    UNUSED_ATTRIBUTE std::string &error_message,
-    UNUSED_ATTRIBUTE size_t thread_id) {
+    std::string &error_message, size_t thread_id) {
   LOG_TRACE("Prepare Statement name: %s", statement_name.c_str());
   LOG_TRACE("Prepare Statement query: %s", query_string.c_str());
 

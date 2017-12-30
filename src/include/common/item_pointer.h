@@ -15,7 +15,7 @@
 
 #include <cstdint>
 
-#include "type/types.h"
+#include "internal_types.h"
 
 namespace peloton {
 

@@ -15,7 +15,7 @@
 #include <mutex>
 #include <unordered_map>
 
-#include "type/types.h"
+#include "common/internal_types.h"
 
 namespace peloton {
 namespace catalog {

@@ -14,7 +14,7 @@
 #include <string>
 
 #include "common/harness.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "type/value_factory.h"
 
 namespace peloton {

@@ -15,7 +15,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "executor/abstract_executor.h"
 
 namespace peloton {

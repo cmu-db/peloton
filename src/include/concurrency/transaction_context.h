@@ -22,7 +22,7 @@
 #include "common/exception.h"
 #include "common/item_pointer.h"
 #include "common/printable.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 
 namespace peloton {
 

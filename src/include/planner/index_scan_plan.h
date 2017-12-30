@@ -20,7 +20,7 @@
 #include "index/scan_optimizer.h"
 #include "planner/abstract_scan_plan.h"
 #include "storage/tuple.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 
 namespace peloton {
 

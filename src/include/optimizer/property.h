@@ -14,7 +14,7 @@
 
 #include <typeinfo>
 
-#include "type/types.h"
+#include "common/internal_types.h"
 
 namespace peloton {
 namespace optimizer {

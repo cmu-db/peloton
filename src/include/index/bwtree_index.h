@@ -18,7 +18,7 @@
 
 #include "catalog/manager.h"
 #include "common/platform.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "index/index.h"
 
 #include "index/bwtree.h"

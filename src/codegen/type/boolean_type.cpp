@@ -245,14 +245,18 @@ static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
 // Nary operations
 static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
 
+// No arg operations
+static std::vector<TypeSystem::NoArgOpInfo> kNoArgOperatorTable = {};
+
 }  // anonymous namespace
 
 // Initialize the BOOLEAN SQL type with the configured type system
 Boolean::Boolean()
     : SqlType(peloton::type::TypeId::BOOLEAN),
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
-                   kComparisonTable, kUnaryOperatorTable, kBinaryOperatorTable,
-                   kNaryOperatorTable) {}
+                   kComparisonTable, kUnaryOperatorTable,
+                   kBinaryOperatorTable, kNaryOperatorTable,
+                   kNoArgOperatorTable) {}
 
 Value Boolean::GetMinValue(CodeGen &codegen) const {
   auto *raw_val = codegen.ConstBool(peloton::type::PELOTON_BOOLEAN_MIN);

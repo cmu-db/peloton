@@ -17,7 +17,7 @@
 
 #include "catalog/schema.h"
 #include "common/abstract_tuple.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "type/value.h"
 
 namespace peloton {

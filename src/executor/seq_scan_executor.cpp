@@ -12,7 +12,7 @@
 
 #include "executor/seq_scan_executor.h"
 
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "type/value_factory.h"
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"

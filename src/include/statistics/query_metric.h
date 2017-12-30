@@ -15,7 +15,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "statistics/abstract_metric.h"
 #include "statistics/access_metric.h"
 #include "statistics/latency_metric.h"

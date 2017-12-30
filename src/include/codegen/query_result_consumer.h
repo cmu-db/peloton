@@ -23,7 +23,7 @@ namespace codegen {
 class QueryResultConsumer {
  public:
   // Destructor
-  virtual ~QueryResultConsumer() {}
+  virtual ~QueryResultConsumer() = default;
 
   // Let the consumer perform any initialization or state declarations here
   virtual void Prepare(CompilationContext &compilation_context) = 0;
@@ -34,6 +34,8 @@ class QueryResultConsumer {
   // Called during plan-generation to consume the results of the query
   virtual void ConsumeResult(ConsumerContext &context,
                              RowBatch::Row &row) const = 0;
+
+  virtual char *GetConsumerState() = 0;
 
   void ConsumeResult(ConsumerContext &context, RowBatch &batch) const {
     batch.Iterate(context.GetCodeGen(), [this, &context](RowBatch::Row &row) {

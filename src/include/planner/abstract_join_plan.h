@@ -21,7 +21,7 @@
 #include "expression/abstract_expression.h"
 #include "planner/attribute_info.h"
 #include "planner/project_info.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 
 namespace peloton {
 namespace planner {

@@ -18,7 +18,7 @@
 
 #include "common/macros.h"
 #include "common/printable.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "type/value.h"
 
 namespace peloton {

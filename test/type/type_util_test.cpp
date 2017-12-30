@@ -128,16 +128,16 @@ TEST_F(TypeUtilTests, CompareEqualsRawTest) {
 
   const int num_cols = (int)schema->GetColumnCount();
   for (int tuple_idx = 1; tuple_idx < 3; tuple_idx++) {
-    type::CmpBool expected = (tuple_idx == 2 ?
-                                type::CmpBool::TRUE :
-                                type::CmpBool::FALSE);
+    CmpBool expected = (tuple_idx == 2 ?
+                                CmpBool::TRUE :
+                                CmpBool::FALSE);
 
     for (int i = 0; i < num_cols; i++) {
       const char* val0 = tuples[0]->GetDataPtr(i);
       const char* val1 = tuples[tuple_idx]->GetDataPtr(i);
       auto type = schema->GetColumn(i).GetType();
       bool inlined = schema->IsInlined(i);
-      type::CmpBool result = type::TypeUtil::CompareEqualsRaw(type, val0, val1, inlined);
+      CmpBool result = type::TypeUtil::CompareEqualsRaw(type, val0, val1, inlined);
 
       LOG_TRACE(
           "'%s'=='%s' => Expected:%s / Result:%s",
@@ -166,12 +166,12 @@ TEST_F(TypeUtilTests, CompareLessThanRawTest) {
       const char* val1 = tuples[tuple_idx]->GetDataPtr(i);
       auto type = schema->GetColumn(i).GetType();
       bool inlined = schema->IsInlined(i);
-      type::CmpBool result =
+      CmpBool result =
           type::TypeUtil::CompareLessThanRaw(type, val0, val1, inlined);
 
       auto fullVal0 = tuples[0]->GetValue(i);
       auto fullVal1 = tuples[tuple_idx]->GetValue(i);
-      type::CmpBool expected = fullVal0.CompareLessThan(fullVal1);
+      CmpBool expected = fullVal0.CompareLessThan(fullVal1);
 
       EXPECT_EQ(expected, result);
     }  // FOR (columns)
@@ -193,12 +193,12 @@ TEST_F(TypeUtilTests, CompareGreaterThanRawTest) {
       const char* val1 = tuples[tuple_idx]->GetDataPtr(i);
       auto type = schema->GetColumn(i).GetType();
       bool inlined = schema->IsInlined(i);
-      type::CmpBool result =
+      CmpBool result =
           type::TypeUtil::CompareGreaterThanRaw(type, val0, val1, inlined);
 
       auto fullVal0 = tuples[0]->GetValue(i);
       auto fullVal1 = tuples[tuple_idx]->GetValue(i);
-      type::CmpBool expected = fullVal0.CompareGreaterThan(fullVal1);
+      CmpBool expected = fullVal0.CompareGreaterThan(fullVal1);
 
       EXPECT_EQ(expected, result);
     }  // FOR (columns)
@@ -226,13 +226,13 @@ TEST_F(TypeUtilTests, CompareStringsTest) {
             // str2 = StringUtil::Upper(str2);
           }
 
-          type::CmpBool result = type::GetCmpBool(
+          CmpBool result = type::GetCmpBool(
               type::TypeUtil::CompareStrings(str1.c_str(), i,
                                              str2.c_str(), j) < 0);
-          if (result != type::CmpBool::TRUE) {
+          if (result != CmpBool::TRUE) {
             LOG_ERROR("INVALID '%s' < '%s'", str1.c_str(), str2.c_str());
           }
-          EXPECT_EQ(type::CmpBool::TRUE, result);
+          EXPECT_EQ(CmpBool::TRUE, result);
         } // FOR (upper2)
       } // FOR (str2)
     } // FOR (upper1)

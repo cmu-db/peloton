@@ -34,9 +34,7 @@ typedef enum InhOption {
 
 typedef enum BoolExprType { AND_EXPR, OR_EXPR, NOT_EXPR } BoolExprType;
 
-typedef struct Expr {
-  NodeTag type;
-} Expr;
+typedef struct Expr { NodeTag type; } Expr;
 
 /*
 * SubLink
@@ -523,6 +521,13 @@ typedef struct A_Const {
   value val;    /* value (includes type info, see value.h) */
   int location; /* token location, or -1 if unknown */
 } A_Const;
+
+typedef struct TypeCast {
+  NodeTag type;
+  Node *arg;          /* the expression being casted */
+  TypeName *typeName; /* the target type */
+  int location;       /* token location, or -1 if unknown */
+} TypeCast;
 
 typedef struct WindowDef {
   NodeTag type;

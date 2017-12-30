@@ -12,7 +12,7 @@
 
 #include "../concurrency/testing_transaction_util.h"
 #include "common/harness.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
 #include "common/statement.h"

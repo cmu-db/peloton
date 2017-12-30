@@ -50,7 +50,7 @@ void ShowTable(std::string database_name, std::string table_name) {
   (void)database_name;
   std::unique_ptr<Statement> statement;
   auto &peloton_parser = parser::PostgresParser::GetInstance();
-  executor::ExecuteResult status;
+  executor::ExecutionResult status;
   std::vector<type::Value> params;
   std::vector<ResultValue> result;
 
@@ -153,7 +153,7 @@ TEST_F(DeleteTests, VariousOperations) {
   std::vector<int> result_format;
   result_format = std::vector<int>(0, 0);
   TestingSQLUtil::counter_.store(1);
-  executor::ExecuteResult status = traffic_cop.ExecuteHelper(
+  executor::ExecutionResult status = traffic_cop.ExecuteHelper(
       statement->GetPlanTree(), params, result, result_format);
   if (traffic_cop.GetQueuing()) {
     TestingSQLUtil::ContinueAfterComplete();

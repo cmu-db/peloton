@@ -24,7 +24,7 @@
 #include "parser/sql_statement.h"
 #include "storage/data_table.h"
 #include "type/type.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "event.h"
 
 namespace peloton {
@@ -67,7 +67,7 @@ class TrafficCop {
       std::string &error_message, size_t thread_id = 0);
 
   // Helper to handle txn-specifics for the plan-tree of a statement.
-  executor::ExecuteResult ExecuteHelper(
+  executor::ExecutionResult ExecuteHelper(
       std::shared_ptr<planner::AbstractPlan> plan,
       const std::vector<type::Value> &params, std::vector<ResultValue> &result,
       const std::vector<int> &result_format, size_t thread_id = 0);
@@ -84,7 +84,7 @@ class TrafficCop {
   FieldInfo GetColumnFieldForValueType(std::string column_name,
                                        type::TypeId column_type);
 
-  void SetTcopTxnState(concurrency::TransactionContext * txn) {
+  void SetTcopTxnState(concurrency::TransactionContext *txn) {
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
 
@@ -131,7 +131,7 @@ class TrafficCop {
 
   bool GetQueuing() { return is_queuing_; }
 
-  executor::ExecuteResult p_status_;
+  executor::ExecutionResult p_status_;
 
   void SetDefaultDatabaseName(std::string default_database_name) {
     default_database_name_ = std::move(default_database_name);

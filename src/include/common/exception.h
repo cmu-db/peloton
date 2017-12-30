@@ -23,7 +23,7 @@
 #include <stdexcept>
 
 #include "type/type.h"
-#include "type/types.h"
+#include "internal_types.h"
 
 namespace peloton {
 

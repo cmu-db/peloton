@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "parser/parser_utils.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "common/logger.h"
 #include "common/macros.h"
 #include "expression/tuple_value_expression.h"

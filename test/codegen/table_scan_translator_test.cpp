@@ -114,7 +114,7 @@ TEST_F(TableScanTranslatorTest, AllColumnsScan) {
   codegen::BufferingConsumer buffer{{0, 1, 2}, context};
 
   // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(scan, buffer);
 
   // Check that we got all the results
   const auto &results = buffer.GetOutputTuples();
@@ -141,7 +141,7 @@ TEST_F(TableScanTranslatorTest, AllColumnsScanWithNulls) {
   codegen::BufferingConsumer buffer{all_col_ids, context};
 
   // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(scan, buffer);
 
   // Check that we got all the results
   const auto &results = buffer.GetOutputTuples();
@@ -177,7 +177,7 @@ TEST_F(TableScanTranslatorTest, SimplePredicate) {
   codegen::BufferingConsumer buffer{{0, 1, 2}, context};
 
   // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(scan, buffer);
 
   // Check output results
   const auto &results = buffer.GetOutputTuples();
@@ -209,27 +209,23 @@ TEST_F(TableScanTranslatorTest, SimplePredicateWithNull) {
   codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(scan, buffer);
 
   // Check output results
   const auto &results = buffer.GetOutputTuples();
   EXPECT_EQ(2, results.size());
 
   // First tuple should be (0, 1)
-  EXPECT_EQ(type::CmpBool::TRUE,
-            results[0].GetValue(0).CompareEquals(
-                type::ValueFactory::GetIntegerValue(0)));
-  EXPECT_EQ(type::CmpBool::TRUE,
-            results[0].GetValue(1).CompareEquals(
-                type::ValueFactory::GetIntegerValue(1)));
+  EXPECT_EQ(CmpBool::TRUE, results[0].GetValue(0).CompareEquals(
+                                     type::ValueFactory::GetIntegerValue(0)));
+  EXPECT_EQ(CmpBool::TRUE, results[0].GetValue(1).CompareEquals(
+                                     type::ValueFactory::GetIntegerValue(1)));
 
   // Second tuple should be (10, 11)
-  EXPECT_EQ(type::CmpBool::TRUE,
-            results[1].GetValue(0).CompareEquals(
-                type::ValueFactory::GetIntegerValue(10)));
-  EXPECT_EQ(type::CmpBool::TRUE,
-            results[1].GetValue(1).CompareEquals(
-                type::ValueFactory::GetIntegerValue(11)));
+  EXPECT_EQ(CmpBool::TRUE, results[1].GetValue(0).CompareEquals(
+                                     type::ValueFactory::GetIntegerValue(10)));
+  EXPECT_EQ(CmpBool::TRUE, results[1].GetValue(1).CompareEquals(
+                                     type::ValueFactory::GetIntegerValue(11)));
 }
 
 TEST_F(TableScanTranslatorTest, PredicateOnNonOutputColumn) {
@@ -253,7 +249,7 @@ TEST_F(TableScanTranslatorTest, PredicateOnNonOutputColumn) {
   codegen::BufferingConsumer buffer{{0}, context};
 
   // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(scan, buffer);
 
   // Check output results
   const auto &results = buffer.GetOutputTuples();
@@ -290,15 +286,15 @@ TEST_F(TableScanTranslatorTest, ScanWithConjunctionPredicate) {
   codegen::BufferingConsumer buffer{{0, 1, 2}, context};
 
   // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(scan, buffer);
 
   // Check output results
   const auto &results = buffer.GetOutputTuples();
   ASSERT_EQ(1, results.size());
-  EXPECT_EQ(type::CmpBool::TRUE, results[0].GetValue(0).CompareEquals(
-                                type::ValueFactory::GetIntegerValue(20)));
-  EXPECT_EQ(type::CmpBool::TRUE, results[0].GetValue(1).CompareEquals(
-                                type::ValueFactory::GetIntegerValue(21)));
+  EXPECT_EQ(CmpBool::TRUE, results[0].GetValue(0).CompareEquals(
+                                     type::ValueFactory::GetIntegerValue(20)));
+  EXPECT_EQ(CmpBool::TRUE, results[0].GetValue(1).CompareEquals(
+                                     type::ValueFactory::GetIntegerValue(21)));
 }
 
 TEST_F(TableScanTranslatorTest, ScanWithAddPredicate) {
@@ -334,7 +330,7 @@ TEST_F(TableScanTranslatorTest, ScanWithAddPredicate) {
   codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(scan, buffer);
 
   // Check output results
   const auto &results = buffer.GetOutputTuples();
@@ -375,7 +371,7 @@ TEST_F(TableScanTranslatorTest, ScanWithAddColumnsPredicate) {
   codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(scan, buffer);
 
   // Check output results
   const auto &results = buffer.GetOutputTuples();
@@ -415,7 +411,7 @@ TEST_F(TableScanTranslatorTest, ScanWithSubtractPredicate) {
   codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(scan, buffer);
 
   // Check output results
   const auto &results = buffer.GetOutputTuples();
@@ -456,7 +452,7 @@ TEST_F(TableScanTranslatorTest, ScanWithSubtractColumnsPredicate) {
   codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(scan, buffer);
 
   // Check output results
   const auto &results = buffer.GetOutputTuples();
@@ -497,7 +493,7 @@ TEST_F(TableScanTranslatorTest, ScanWithDividePredicate) {
 
   // COMPILE and execute
   // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(scan, buffer);
 
   // Check output results - only one output tuple (with a == 0)
   const auto &results = buffer.GetOutputTuples();
@@ -538,7 +534,7 @@ TEST_F(TableScanTranslatorTest, ScanWithMultiplyPredicate) {
   codegen::BufferingConsumer buffer{{0, 1, 2}, context};
 
   // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(scan, buffer);
 
   // Check output results
   const auto &results = buffer.GetOutputTuples();
@@ -578,15 +574,15 @@ TEST_F(TableScanTranslatorTest, ScanWithModuloPredicate) {
   codegen::BufferingConsumer buffer{{0, 1, 2}, context};
 
   // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(scan, buffer);
 
   // Check output results
   const auto &results = buffer.GetOutputTuples();
   ASSERT_EQ(1, results.size());
-  EXPECT_EQ(type::CmpBool::TRUE, results[0].GetValue(0).CompareEquals(
-                                type::ValueFactory::GetIntegerValue(0)));
-  EXPECT_EQ(type::CmpBool::TRUE, results[0].GetValue(1).CompareEquals(
-                                type::ValueFactory::GetIntegerValue(1)));
+  EXPECT_EQ(CmpBool::TRUE, results[0].GetValue(0).CompareEquals(
+                                     type::ValueFactory::GetIntegerValue(0)));
+  EXPECT_EQ(CmpBool::TRUE, results[0].GetValue(1).CompareEquals(
+                                     type::ValueFactory::GetIntegerValue(1)));
 }
 
 }  // namespace test

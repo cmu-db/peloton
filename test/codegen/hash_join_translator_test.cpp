@@ -109,8 +109,7 @@ TEST_F(HashJoinTranslatorTest, SingleHashJoinColumnTest) {
   codegen::BufferingConsumer buffer{{0, 1, 2, 3}, context};
 
   // COMPILE and run
-  CompileAndExecute(*hj_plan, buffer,
-                    reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(*hj_plan, buffer);
 
   // Check results
   const auto &results = buffer.GetOutputTuples();
@@ -121,10 +120,11 @@ TEST_F(HashJoinTranslatorTest, SingleHashJoinColumnTest) {
     type::Value v0 = tuple.GetValue(0);
     EXPECT_EQ(type::TypeId::INTEGER, v0.GetTypeId());
 
-    LOG_DEBUG("%s Output: %s", peloton::GETINFO_LONG_ARROW.c_str(), tuple.GetInfo().c_str());
+    LOG_DEBUG("%s Output: %s", peloton::GETINFO_LONG_ARROW.c_str(),
+              tuple.GetInfo().c_str());
 
     // Check that the joins keys are actually equal
-    EXPECT_EQ(type::CmpBool::TRUE,
+    EXPECT_EQ(CmpBool::TRUE,
               tuple.GetValue(0).CompareEquals(tuple.GetValue(1)));
   }
 }

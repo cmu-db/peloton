@@ -48,7 +48,7 @@ class ConstantValueExpression : public AbstractExpression {
     if (exp_type_ != other.GetExpressionType())
       return false;
     auto const_expr = static_cast<const ConstantValueExpression &>(other);
-    return value_.CompareEquals(const_expr.value_) == type::CmpBool::TRUE;
+    return value_.CompareEquals(const_expr.value_) == CmpBool::TRUE;
   }
 
   virtual hash_t HashForExactMatch() const override {

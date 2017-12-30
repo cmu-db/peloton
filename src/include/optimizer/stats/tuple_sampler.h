@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "type/ephemeral_pool.h"
 
 namespace peloton {

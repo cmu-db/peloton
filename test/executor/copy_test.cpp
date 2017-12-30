@@ -90,7 +90,7 @@ TEST_F(CopyTests, Copying) {
     std::vector<ResultValue> result;
 
     TestingSQLUtil::counter_.store(1);
-    executor::ExecuteResult status = traffic_cop.ExecuteHelper(
+    executor::ExecutionResult status = traffic_cop.ExecuteHelper(
         statement->GetPlanTree(), params, result, result_format);
 
     if (traffic_cop.GetQueuing()) {

@@ -23,7 +23,7 @@
 #include "planner/insert_plan.h"
 #include "planner/update_plan.h"
 #include "include/traffic_cop/traffic_cop.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
 #include "network/marshal.h"

@@ -20,7 +20,7 @@
 #include "common/harness.h"
 
 #include "planner/order_by_plan.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "type/value.h"
 #include "executor/executor_context.h"
 #include "executor/logical_tile.h"

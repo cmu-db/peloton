@@ -52,7 +52,6 @@
 #ifdef BWTREE_PELOTON
 
 #include "index/index.h"
-#include "util/global.h"
 
 #endif
 

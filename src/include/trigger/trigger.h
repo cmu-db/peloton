@@ -20,7 +20,7 @@
 #include "expression/abstract_expression.h"
 #include "planner/create_plan.h"
 #include "storage/tuple.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "parser/pg_trigger.h"
 
 namespace peloton {

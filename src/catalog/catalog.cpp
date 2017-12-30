@@ -915,7 +915,7 @@ void Catalog::InitializeFunctions() {
           {type::TypeId::VARCHAR, type::TypeId::INTEGER, type::TypeId::INTEGER},
           type::TypeId::VARCHAR, internal_lang, "Substr",
           function::BuiltInFuncType{OperatorId::Substr,
-                                    function::StringFunctions::Substr},
+                                    function::StringFunctions::_Substr},
           txn);
       AddBuiltinFunction(
           "char_length", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
@@ -1115,6 +1115,15 @@ void Catalog::InitializeFunctions() {
           function::BuiltInFuncType{OperatorId::DateTrunc,
                                     function::TimestampFunctions::_DateTrunc},
           txn);
+          
+      // add now()
+      AddBuiltinFunction(
+          "now", {},
+          type::TypeId::TIMESTAMP, internal_lang, "Now",
+          function::BuiltInFuncType{OperatorId::Now,
+                                    function::DateFunctions::_Now},
+          txn);
+
     } catch (CatalogException &e) {
       txn_manager.AbortTransaction(txn);
       throw & e;

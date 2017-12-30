@@ -20,7 +20,7 @@
 #include <memory>
 
 #include "common/macros.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "container/lock_free_array.h"
 
 namespace peloton {

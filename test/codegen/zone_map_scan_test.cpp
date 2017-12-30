@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <include/storage/storage_manager.h>
 #include "catalog/catalog.h"
 #include "codegen/query_compiler.h"
@@ -77,7 +76,7 @@ TEST_F(ZoneMapScanTest, ScanNoPredicates) {
   scan.PerformBinding(context);
   codegen::BufferingConsumer buffer{{0, 1, 2}, context};
   // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(scan, buffer);
   const auto &results = buffer.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable(), results.size());
 }
@@ -96,7 +95,7 @@ TEST_F(ZoneMapScanTest, SimplePredicate) {
   // We collect the results of the query into an in-memory buffer
   codegen::BufferingConsumer buffer{{0, 1, 2}, context};
   // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(scan, buffer);
   // Check output results
   const auto &results = buffer.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable() - 2, results.size());
@@ -116,7 +115,7 @@ TEST_F(ZoneMapScanTest, PredicateOnNonOutputColumn) {
   // We collect the results of the query into an in-memory buffer
   codegen::BufferingConsumer buffer{{0}, context};
   // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(scan, buffer);
   // Check output results
   const auto &results = buffer.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable() - 4, results.size());
@@ -142,14 +141,14 @@ TEST_F(ZoneMapScanTest, ScanwithConjunctionPredicate) {
   // We collect the results of the query into an in-memory buffer
   codegen::BufferingConsumer buffer{{0, 1, 2}, context};
   // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(scan, buffer);
   // Check output results
   const auto &results = buffer.GetOutputTuples();
   ASSERT_EQ(1, results.size());
-  EXPECT_EQ(type::CmpBool::TRUE, results[0].GetValue(0).CompareEquals(
-                                type::ValueFactory::GetIntegerValue(20)));
-  EXPECT_EQ(type::CmpBool::TRUE, results[0].GetValue(1).CompareEquals(
-                                type::ValueFactory::GetIntegerValue(21)));
+  EXPECT_EQ(CmpBool::TRUE, results[0].GetValue(0).CompareEquals(
+                                     type::ValueFactory::GetIntegerValue(20)));
+  EXPECT_EQ(CmpBool::TRUE, results[0].GetValue(1).CompareEquals(
+                                     type::ValueFactory::GetIntegerValue(21)));
 }
 }
 }

@@ -18,7 +18,7 @@
 #include "common/abstract_tuple.h"
 #include "type/serializeio.h"
 #include "type/serializer.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "type/value.h"
 
 namespace peloton {

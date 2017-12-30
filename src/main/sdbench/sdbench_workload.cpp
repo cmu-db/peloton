@@ -34,7 +34,7 @@
 #include "common/timer.h"
 #include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager_factory.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
 

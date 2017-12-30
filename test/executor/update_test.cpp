@@ -45,7 +45,7 @@
 #include "storage/data_table.h"
 #include "storage/tile_group_factory.h"
 #include "include/traffic_cop/traffic_cop.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
 
@@ -137,7 +137,7 @@ TEST_F(UpdateTests, MultiColumnUpdates) {
   //      traffic_cop::TrafficCop::GetInstance().GenerateTupleDescriptor(
   //          select_stmt->GetStatement(0));
   //  result_format = std::move(std::vector<int>(tuple_descriptor.size(), 0));
-  //  UNUSED_ATTRIBUTE executor::ExecuteResult status =
+  //  UNUSED_ATTRIBUTE executor::ExecutionResult status =
   //      executor::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
   //      params,
   //                                        result, result_format);
@@ -221,7 +221,7 @@ TEST_F(UpdateTests, UpdatingOld) {
   std::vector<int> result_format;
   result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
   TestingSQLUtil::counter_.store(1);
-  executor::ExecuteResult status = traffic_cop.ExecuteHelper(
+  executor::ExecutionResult status = traffic_cop.ExecuteHelper(
       statement->GetPlanTree(), params, result, result_format);
   if (traffic_cop.GetQueuing()) {
     TestingSQLUtil::ContinueAfterComplete();

@@ -15,7 +15,7 @@
 #include "container/lock_free_array.h"
 #include "common/logger.h"
 #include "common/macros.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 
 namespace peloton {
 

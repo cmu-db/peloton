@@ -274,13 +274,15 @@ TypeSystem::TypeSystem(
     const std::vector<TypeSystem::ComparisonInfo> &comparison_table,
     const std::vector<TypeSystem::UnaryOpInfo> &unary_op_table,
     const std::vector<TypeSystem::BinaryOpInfo> &binary_op_table,
-    const std::vector<TypeSystem::NaryOpInfo> &nary_op_table)
+    const std::vector<TypeSystem::NaryOpInfo> &nary_op_table,
+    const std::vector<TypeSystem::NoArgOpInfo> &no_arg_op_table)
     : implicit_cast_table_(implicit_cast_table),
       explicit_cast_table_(explicit_cast_table),
       comparison_table_(comparison_table),
       unary_op_table_(unary_op_table),
       binary_op_table_(binary_op_table),
-      nary_op_table_(nary_op_table) {}
+      nary_op_table_(nary_op_table),
+      no_arg_op_table_(no_arg_op_table) {}
 
 bool TypeSystem::CanImplicitlyCastTo(const Type &from_type,
                                      const Type &to_type) {

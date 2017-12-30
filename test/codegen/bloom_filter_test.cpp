@@ -125,8 +125,8 @@ TEST_F(BloomFilterCodegenTest, FalsePositiveRateTest) {
       // Get numbers[i]
       llvm::Value *number = codegen->CreateLoad(
           codegen->CreateInBoundsGEP(codegen.Int32Type(), number_array, index));
-      codegen::Value number_val{codegen::type::Type(peloton::type::TypeId::INTEGER, false),
-                                number};
+      codegen::Value number_val{
+          codegen::type::Type(peloton::type::TypeId::INTEGER, false), number};
       // Insert numbers[i] into bloom filter
       bloom_filter_accessor.Add(codegen, bloom_filter, {number_val});
 
@@ -143,8 +143,8 @@ TEST_F(BloomFilterCodegenTest, FalsePositiveRateTest) {
       // Get numbers[i]
       llvm::Value *number = codegen->CreateLoad(
           codegen->CreateInBoundsGEP(codegen.Int32Type(), number_array, index));
-      codegen::Value number_val{codegen::type::Type(peloton::type::TypeId::INTEGER, false),
-                                number};
+      codegen::Value number_val{
+          codegen::type::Type(peloton::type::TypeId::INTEGER, false), number};
 
       // Test if numbers[i] is contained in bloom filter
       llvm::Value *contains =
@@ -167,7 +167,7 @@ TEST_F(BloomFilterCodegenTest, FalsePositiveRateTest) {
 
   ASSERT_TRUE(code_context.Compile());
 
-  typedef void (*ftype)(codegen::util::BloomFilter * bloom_filter, int *, int,
+  typedef void (*ftype)(codegen::util::BloomFilter *bloom_filter, int *, int,
                         int *);
   ftype f = (ftype)code_context.GetRawFunctionPointer(func.GetFunction());
 
@@ -304,16 +304,12 @@ double BloomFilterCodegenTest::ExecuteJoin(std::string query,
     codegen::Query::RuntimeStats stats;
     std::unique_ptr<executor::ExecutorContext> executor_context(
         new executor::ExecutorContext{txn});
-    std::unique_ptr<codegen::QueryParameters> parameters(
-        new codegen::QueryParameters(*plan.get(),
-                                     executor_context->GetParams()));
+    auto compiled_query = compiler.Compile(
+        *plan, executor_context->GetParams().GetQueryParametersMap(), consumer);
 
-    auto compiled_query = compiler.Compile(*plan.get(),
-                                           parameters->GetQueryParametersMap(),
-                                           consumer);
     // Run
-    compiled_query->Execute(*executor_context.get(), *parameters.get(),
-                            consumer.GetCountAsState(), &stats);
+    PelotonCodeGenTest::ExecuteSync(*compiled_query,
+                                    std::move(executor_context), consumer);
 
     LOG_INFO("Execution Time: %0.0f ms", stats.plan_ms);
     total_runtime += stats.plan_ms;
@@ -335,9 +331,9 @@ void BloomFilterCodegenTest::CreateTable(std::string table_name, int tuple_size,
     curr_size += bigint_size;
   }
   auto *catalog = catalog::Catalog::GetInstance();
-  catalog->CreateTable(DEFAULT_DB_NAME, table_name,
-                       std::unique_ptr<catalog::Schema>(new catalog::Schema(cols)),
-                       txn);
+  catalog->CreateTable(
+      DEFAULT_DB_NAME, table_name,
+      std::unique_ptr<catalog::Schema>(new catalog::Schema(cols)), txn);
 }
 
 // Insert a tuple to specific table
