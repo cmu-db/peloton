@@ -335,7 +335,8 @@ class DataTable : public AbstractTable {
                                 ItemPointer *index_entry_ptr);
 
   // check the foreign key constraints
-  bool CheckForeignKeyConstraints(const AbstractTuple *tuple);
+  bool CheckForeignKeyConstraints(const AbstractTuple *tuple,
+                                  concurrency::TransactionContext *transaction);
 
  public:
   static size_t default_active_tilegroup_count_;

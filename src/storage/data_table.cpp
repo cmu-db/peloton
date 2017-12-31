@@ -365,6 +365,10 @@ bool DataTable::InsertTuple(const AbstractTuple *tuple,
 
   auto index_count = GetIndexCount();
   if (index_count == 0) {
+    if (CheckForeignKeyConstraints(tuple, transaction) == false) {
+      LOG_TRACE("ForeignKey constraint violated");
+      return false;
+    }
     IncreaseTupleCount(1);
     return true;
   }
@@ -375,7 +379,7 @@ bool DataTable::InsertTuple(const AbstractTuple *tuple,
   }
 
   // ForeignKey checks
-  if (CheckForeignKeyConstraints(tuple) == false) {
+  if (CheckForeignKeyConstraints(tuple, transaction) == false) {
     LOG_TRACE("ForeignKey constraint violated");
     return false;
   }
@@ -577,7 +581,8 @@ bool DataTable::InsertInSecondaryIndexes(const AbstractTuple *tuple,
  * @returns True on success, false if any foreign key constraints fail
  */
 bool DataTable::CheckForeignKeyConstraints(
-    const AbstractTuple *tuple UNUSED_ATTRIBUTE) {
+    const AbstractTuple *tuple UNUSED_ATTRIBUTE,
+    concurrency::TransactionContext *transaction UNUSED_ATTRIBUTE) {
   for (auto foreign_key : foreign_keys_) {
     oid_t sink_table_id = foreign_key->GetSinkTableOid();
     storage::DataTable *ref_table = nullptr;
@@ -599,9 +604,9 @@ bool DataTable::CheckForeignKeyConstraints(
       if (index->GetIndexType() == IndexConstraintType::PRIMARY_KEY) {
         LOG_INFO("BEGIN checking referred table");
 
-        std::vector<oid_t> key_attrs = foreign_key->GetSourceColumnIds();
+        std::vector<oid_t> key_attrs = foreign_key->GetSinkColumnIds();
         std::unique_ptr<catalog::Schema> foreign_key_schema(
-            catalog::Schema::CopySchema(schema, key_attrs));
+            catalog::Schema::CopySchema(ref_table->schema, key_attrs));
         std::unique_ptr<storage::Tuple> key(
             new storage::Tuple(foreign_key_schema.get(), true));
         // FIXME: what is the 3rd arg should be?
@@ -614,6 +619,22 @@ bool DataTable::CheckForeignKeyConstraints(
 
         // if this key doesn't exist in the refered column
         if (location_ptrs.size() == 0) {
+          LOG_DEBUG("The key does not exist in the sink table!\n");
+          return false;
+        }
+
+        // Check the visibility of the result
+        auto tile_group = ref_table->GetTileGroupById(location_ptrs[0]->block);
+        auto tile_group_header = tile_group->GetHeader();
+
+        auto &transaction_manager =
+          concurrency::TransactionManagerFactory::GetInstance();
+        auto visibility = transaction_manager.IsVisible(
+          transaction, tile_group_header, location_ptrs[0]->offset,
+          VisibilityIdType::COMMIT_ID);
+
+        if (visibility != VisibilityType::OK) {
+          LOG_DEBUG("The tuple is not visible yet.\n");
           return false;
         }
 
