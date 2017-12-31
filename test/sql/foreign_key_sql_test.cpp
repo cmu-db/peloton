@@ -26,8 +26,14 @@ TEST_F(ForeignKeySQLTests, SimpleTest) {
   TestingSQLUtil::ExecuteSQLQuery(
       "CREATE TABLE tb2(num INT REFERENCES tb1(id));");
 
+  EXPECT_NE(TestingSQLUtil::ExecuteSQLQuery(
+            "INSERT INTO tb2 VALUES (1);"), ResultType::SUCCESS);
+
   TestingSQLUtil::ExecuteSQLQuery(
-      "INSERT INTO tb2 VALUES (1);");
+      "INSERT INTO tb1 VALUES (1);");
+
+  EXPECT_EQ(TestingSQLUtil::ExecuteSQLQuery(
+            "INSERT INTO tb2 VALUES (1);"), ResultType::SUCCESS);
 
   txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
