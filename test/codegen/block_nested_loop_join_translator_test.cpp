@@ -129,7 +129,7 @@ TEST_F(BlockNestedLoopJoinTranslatorTest, SingleColumnEqualityJoin) {
     for (const auto &t : results) {
       auto a1 = GetCol(t, JoinOutputColPos::Table1_ColA);
       auto a2 = GetCol(t, JoinOutputColPos::Table1_ColA);
-      EXPECT_TRUE(a1.CompareEquals(a2) == type::CmpBool::TRUE);
+      EXPECT_TRUE(a1.CompareEquals(a2) == CmpBool::TRUE);
     }
   }
 
@@ -204,7 +204,7 @@ TEST_F(BlockNestedLoopJoinTranslatorTest, NonEqualityJoin) {
     for (const auto &t : results) {
       auto a = GetCol(t, JoinOutputColPos::Table1_ColA);
       auto b = GetCol(t, JoinOutputColPos::Table2_ColB);
-      EXPECT_TRUE(a.CompareGreaterThan(b) == type::CmpBool::TRUE);
+      EXPECT_TRUE(a.CompareGreaterThan(b) == CmpBool::TRUE);
     }
   }
 
@@ -233,7 +233,7 @@ TEST_F(BlockNestedLoopJoinTranslatorTest, NonEqualityJoin) {
     for (const auto &t : results) {
       auto a = GetCol(t, JoinOutputColPos::Table1_ColA);
       auto b = GetCol(t, JoinOutputColPos::Table2_ColB);
-      EXPECT_TRUE(a.CompareLessThanEquals(b) == type::CmpBool::TRUE);
+      EXPECT_TRUE(a.CompareLessThanEquals(b) == CmpBool::TRUE);
     }
   }
 
@@ -263,7 +263,7 @@ TEST_F(BlockNestedLoopJoinTranslatorTest, NonEqualityJoin) {
       auto a1_pl_b1 = a1.Add(b1);
 
       auto a2 = GetCol(t, JoinOutputColPos::Table2_ColA);
-      EXPECT_TRUE(a1_pl_b1.CompareGreaterThan(a2) == type::CmpBool::TRUE);
+      EXPECT_TRUE(a1_pl_b1.CompareGreaterThan(a2) == CmpBool::TRUE);
     }
   }
 }
