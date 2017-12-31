@@ -32,23 +32,27 @@ llvm::Type *CodeGen::ArrayType(llvm::Type *type, uint32_t num_elements) const {
 
 /// Constant wrappers for bool, int8, int16, int32, int64, strings and NULL
 llvm::Constant *CodeGen::ConstBool(bool val) const {
-  return llvm::ConstantInt::get(BoolType(), val, true);
+  if (val) {
+    return llvm::ConstantInt::getTrue(GetContext());
+  } else {
+    return llvm::ConstantInt::getFalse(GetContext());
+  }
 }
 
-llvm::Constant *CodeGen::Const8(int8_t val) const {
-  return llvm::ConstantInt::get(Int8Type(), val, true);
+llvm::Constant *CodeGen::Const8(uint8_t val) const {
+  return llvm::ConstantInt::get(Int8Type(), val, false);
 }
 
-llvm::Constant *CodeGen::Const16(int16_t val) const {
-  return llvm::ConstantInt::get(Int16Type(), val, true);
+llvm::Constant *CodeGen::Const16(uint16_t val) const {
+  return llvm::ConstantInt::get(Int16Type(), val, false);
 }
 
-llvm::Constant *CodeGen::Const32(int32_t val) const {
-  return llvm::ConstantInt::get(Int32Type(), val, true);
+llvm::Constant *CodeGen::Const32(uint32_t val) const {
+  return llvm::ConstantInt::get(Int32Type(), val, false);
 }
 
-llvm::Constant *CodeGen::Const64(int64_t val) const {
-  return llvm::ConstantInt::get(Int64Type(), val, true);
+llvm::Constant *CodeGen::Const64(uint64_t val) const {
+  return llvm::ConstantInt::get(Int64Type(), val, false);
 }
 
 llvm::Constant *CodeGen::ConstDouble(double val) const {
@@ -109,6 +113,7 @@ llvm::Value *CodeGen::AllocateBuffer(llvm::Type *element_type,
   auto *arr = llvm::GetElementPtrInst::CreateInBounds(
       arr_type, alloc, {Const32(0), Const32(0)}, name);
   arr->insertAfter(llvm::cast<llvm::AllocaInst>(alloc));
+
   return arr;
 }
 
