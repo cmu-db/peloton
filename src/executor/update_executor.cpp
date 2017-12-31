@@ -22,6 +22,8 @@
 #include "storage/data_table.h"
 #include "storage/tile_group_header.h"
 #include "storage/tile.h"
+#include "storage/storage_manager.h"
+#include "catalog/foreign_key.h"
 
 namespace peloton {
 namespace executor {
@@ -110,6 +112,45 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(
     transaction_manager.SetTransactionResult(current_txn,
                                              peloton::ResultType::FAILURE);
     return false;
+  }
+
+  // Check the source table of any foreign key constraint
+  size_t fk_count = target_table_->GetForeignKeySrcCount();
+  if (fk_count > 0) {
+    for (size_t iter = 0; iter < fk_count; iter++) {
+      catalog::ForeignKey *fk = target_table_->GetForeignKeySrc(iter);
+      
+      // Check if any row in the source table references the current tuple
+      oid_t source_table_id = fk->GetSourceTableOid();
+      storage::DataTable *src_table = nullptr;
+      try {
+        src_table = (storage::DataTable *)storage::StorageManager::GetInstance()
+                        ->GetTableWithOid(target_table_->GetDatabaseOid(), source_table_id);
+      } catch (CatalogException &e) {
+        LOG_TRACE("Can't find table %d! Return false", source_table_id);
+        transaction_manager.SetTransactionResult(current_txn,
+                                                 peloton::ResultType::FAILURE);
+        return false;
+      }
+
+      int src_table_index_count = src_table->GetIndexCount();
+      for (int iter = 0; iter < src_table_index_count; iter++) {
+        auto index = src_table->GetIndex(iter);
+        if (index == nullptr) continue;
+
+        // Make sure this is the right index to search in
+        if (index->GetMetadata()->GetName().find("_FK_") != std::string::npos &&
+            index->GetMetadata()->GetKeyAttrs() == fk->GetSourceColumnIds())
+        {
+          LOG_DEBUG("asdasd\n"); 
+        }
+      }
+    }
+  }
+
+  // Check the sink tables of foreign key constraints
+  if (target_table_->GetForeignKeyCount() > 0) {
+    LOG_DEBUG("asdasdas\n");
   }
 
   transaction_manager.PerformInsert(current_txn, location, index_entry_ptr);

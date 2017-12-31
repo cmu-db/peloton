@@ -180,7 +180,8 @@ bool CreateExecutor::CreateTable(const planner::CreatePlan &node) {
           std::vector<std::string> source_col_names =
               fk.foreign_key_sources;
           std::string index_name =
-              source_table->GetName() + "_FK_" + std::to_string(count);
+              source_table->GetName() + "_FK_" + sink_table->GetName() + "_"
+              + std::to_string(count);
           catalog->CreateIndex(database_name, source_table->GetName(),
                                 source_col_ids, index_name, false,
                                 IndexType::BWTREE, current_txn);

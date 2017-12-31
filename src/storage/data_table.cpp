@@ -610,7 +610,7 @@ bool DataTable::CheckForeignKeyConstraints(
         std::unique_ptr<storage::Tuple> key(
             new storage::Tuple(foreign_key_schema.get(), true));
         // FIXME: what is the 3rd arg should be?
-        key->SetFromTuple(tuple, key_attrs, index->GetPool());
+        key->SetFromTuple(tuple, foreign_key->GetSourceColumnIds(), index->GetPool());
 
         LOG_TRACE("check key: %s", key->GetInfo().c_str());
 
