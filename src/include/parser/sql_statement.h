@@ -22,7 +22,7 @@
 #include "common/macros.h"
 #include "common/printable.h"
 #include "common/sql_node_visitor.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 
 namespace peloton {
 

@@ -1109,7 +1109,7 @@ parser::DropStatement* PostgresParser::DropDatabaseTransform(DropDatabaseStmt* r
 }
 
 parser::DropStatement* PostgresParser::DropTableTransform(DropStmt* root) {
-  auto res = new DropStatement(DropStatement::EntityType::kTable);
+  auto result = new DropStatement(DropStatement::EntityType::kTable);
   for (auto cell = root->objects->head; cell != nullptr; cell = cell->next) {
     result->missing = root->missing_ok;
     auto table_info = new TableInfo{};
