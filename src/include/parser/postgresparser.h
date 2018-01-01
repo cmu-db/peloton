@@ -243,6 +243,9 @@ class PostgresParser {
   // transform helper for drop schema statement
   static parser::DropStatement *DropSchemaTransform(DropStmt *root);
 
+  // tranform helper for drop index statement
+  static parser::DropStatement *DropIndexTransform(DropStmt *root);
+
   // transform helper for truncate statement
   static parser::DeleteStatement *TruncateTransform(TruncateStmt *root);
 
