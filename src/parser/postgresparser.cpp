@@ -1077,7 +1077,8 @@ parser::SQLStatement *PostgresParser::CreateTriggerTransform(
   return result;
 }
 
-parser::SQLStatement *PostgresParser::CreateDatabaseTransform(CreateDatabaseStmt *root) {
+parser::SQLStatement *PostgresParser::CreateDatabaseTransform(
+    CreateDatabaseStmt *root) {
   parser::CreateStatement *result =
       new parser::CreateStatement(CreateStatement::kDatabase);
   result->table_info_.reset(new parser::TableInfo());
@@ -1085,7 +1086,8 @@ parser::SQLStatement *PostgresParser::CreateDatabaseTransform(CreateDatabaseStmt
 
   // TODO(Tianyi) More options need to be converted
   // See CreateDatabaseStmt definision in postgresparser.h
-  // One can refer to https://www.postgresql.org/docs/9.0/static/sql-createdatabase.html
+  // One can refer to
+  // https://www.postgresql.org/docs/9.0/static/sql-createdatabase.html
   // for the detail of the options.
   return result;
 }
@@ -1096,6 +1098,8 @@ parser::DropStatement *PostgresParser::DropTransform(DropStmt *root) {
       return DropTableTransform(root);
     case ObjectType::OBJECT_TRIGGER:
       return DropTriggerTransform(root);
+    case ObjectType::OBJECT_SCHEMA:
+      return DropSchemaTransform(root);
     default: {
       throw NotImplementedException(StringUtil::Format(
           "Drop of ObjectType %d not supported yet...\n", root->removeType));
@@ -1103,20 +1107,21 @@ parser::DropStatement *PostgresParser::DropTransform(DropStmt *root) {
   }
 }
 
-parser::DropStatement* PostgresParser::DropDatabaseTransform(DropDatabaseStmt* root) {
-  parser::DropStatement* result = 
+parser::DropStatement *PostgresParser::DropDatabaseTransform(
+    DropDatabaseStmt *root) {
+  parser::DropStatement *result =
       new parser::DropStatement(DropStatement::kDatabase);
-  
+
   result->table_info_.reset(new parser::TableInfo());
   result->table_info_->database_name = root->dbname;
   result->missing = root->missing_ok;
   return result;
 }
 
-parser::DropStatement* PostgresParser::DropTableTransform(DropStmt* root) {
+parser::DropStatement *PostgresParser::DropTableTransform(DropStmt *root) {
   auto result = new DropStatement(DropStatement::EntityType::kTable);
+  result->missing = root->missing_ok;
   for (auto cell = root->objects->head; cell != nullptr; cell = cell->next) {
-    result->missing = root->missing_ok;
     auto table_info = new TableInfo{};
     auto table_list = reinterpret_cast<List *>(cell->data.ptr_value);
     LOG_TRACE("%d", ((Node *)(table_list->head->data.ptr_value))->type);
@@ -1136,6 +1141,19 @@ parser::DropStatement *PostgresParser::DropTriggerTransform(DropStmt *root) {
       reinterpret_cast<value *>(list->head->data.ptr_value)->val.str;
   result->trigger_name =
       reinterpret_cast<value *>(list->head->next->data.ptr_value)->val.str;
+  return result;
+}
+
+parser::DropStatement *PostgresParser::DropSchemaTransform(DropStmt *root) {
+  auto result = new DropStatement(DropStatement::EntityType::kSchema);
+  result->cascade = (root->behavior == DropBehavior::DROP_CASCADE);
+  result->missing = root->missing_ok;
+  for (auto cell = root->objects->head; cell != nullptr; cell = cell->next) {
+    auto table_list = reinterpret_cast<List *>(cell->data.ptr_value);
+    result->schema_name =
+        reinterpret_cast<value *>(table_list->head->data.ptr_value)->val.str;
+    break;
+  }
   return result;
 }
 
@@ -1450,8 +1468,8 @@ parser::SQLStatement *PostgresParser::NodeTransform(Node *stmt) {
       result = CreateTransform(reinterpret_cast<CreateStmt *>(stmt));
       break;
     case T_CreatedbStmt:
-      result = 
-        CreateDatabaseTransform(reinterpret_cast<CreateDatabaseStmt *>(stmt));
+      result =
+          CreateDatabaseTransform(reinterpret_cast<CreateDatabaseStmt *>(stmt));
       break;
     case T_IndexStmt:
       result = CreateIndexTransform(reinterpret_cast<IndexStmt *>(stmt));
@@ -1472,7 +1490,7 @@ parser::SQLStatement *PostgresParser::NodeTransform(Node *stmt) {
       result = DropTransform((DropStmt *)stmt);
       break;
     case T_DropdbStmt:
-      result = DropDatabaseTransform((DropDatabaseStmt*)stmt);
+      result = DropDatabaseTransform((DropDatabaseStmt *)stmt);
       break;
     case T_TruncateStmt:
       result = TruncateTransform((TruncateStmt *)stmt);
