@@ -1232,12 +1232,12 @@ parser::DropStatement *PostgresParser::DropIndexTransform(DropStmt *root) {
 }
 
 parser::DropStatement *PostgresParser::DropIndexTransform(DropStmt *root) {
-  auto res = new DropStatement(DropStatement::EntityType::kIndex);
+  auto result = new DropStatement(DropStatement::EntityType::kIndex);
   auto cell = root->objects->head;
   auto list = reinterpret_cast<List *>(cell->data.ptr_value);
-  res->index_name =
+  result->index_name =
           reinterpret_cast<value *>(list->head->data.ptr_value)->val.str;
-  return res;
+  return result;
 }
 
 parser::DeleteStatement *PostgresParser::TruncateTransform(TruncateStmt *root) {
