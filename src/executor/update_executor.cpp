@@ -65,6 +65,18 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(
 
   auto current_txn = executor_context_->GetTransaction();
 
+  auto target_table_schema = target_table_->GetSchema();
+
+  ContainerTuple<storage::TileGroup> old_tuple(tile_group, physical_tuple_id);
+  std::unique_ptr<storage::Tuple> prev_tuple(
+        new storage::Tuple(target_table_schema, true));
+
+  // Get a copy of the old tuple
+  for (oid_t column_itr = 0; column_itr < target_table_schema->GetColumnCount(); column_itr++) {
+    type::Value val = (old_tuple.GetValue(column_itr));
+    prev_tuple->SetValue(column_itr, val);
+  }
+
   ///////////////////////////////////////
   // Delete tuple/version chain
   ///////////////////////////////////////
@@ -93,11 +105,7 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(
   ////////////////////////////////////////////
   // Insert tuple rather than install version
   ////////////////////////////////////////////
-  auto target_table_schema = target_table_->GetSchema();
-
   storage::Tuple new_tuple(target_table_schema, true);
-
-  ContainerTuple<storage::TileGroup> old_tuple(tile_group, physical_tuple_id);
 
   project_info_->Evaluate(&new_tuple, &old_tuple, nullptr, executor_context_);
 
@@ -142,7 +150,61 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(
         if (index->GetMetadata()->GetName().find("_FK_") != std::string::npos &&
             index->GetMetadata()->GetKeyAttrs() == fk->GetSourceColumnIds())
         {
-          LOG_DEBUG("asdasd\n"); 
+          LOG_DEBUG("Searching in source tables's fk index...\n"); 
+
+          std::vector<oid_t> key_attrs = fk->GetSourceColumnIds();
+          std::unique_ptr<catalog::Schema> fk_schema(
+            catalog::Schema::CopySchema(src_table->GetSchema(), key_attrs));
+          std::unique_ptr<storage::Tuple> key(
+            new storage::Tuple(fk_schema.get(), true));
+          std::unique_ptr<storage::Tuple> new_key(
+            new storage::Tuple(fk_schema.get(), true));
+          
+          key->SetFromTuple(prev_tuple.get(), fk->GetSinkColumnIds(), index->GetPool());
+
+          new_key->SetFromTuple(&new_tuple, fk->GetSinkColumnIds(), index->GetPool());
+
+          if ((*key) == (*new_key)) {
+            LOG_DEBUG("Foreign key column(s) not changed\n");
+            break;
+          }
+          
+          std::vector<ItemPointer *> location_ptrs;
+          index->ScanKey(key.get(), location_ptrs);
+
+          if (location_ptrs.size() > 0) {
+            LOG_DEBUG("Something found in the source table!\n");
+
+            for (ItemPointer *ptr : location_ptrs) {
+              auto src_tile_group = src_table->GetTileGroupById(ptr->block);
+              auto src_tile_group_header = src_tile_group->GetHeader();
+
+              auto visibility = transaction_manager.IsVisible(
+                current_txn, src_tile_group_header, ptr->offset,
+                VisibilityIdType::COMMIT_ID);
+
+              if (visibility != VisibilityType::OK) continue;
+
+              switch (fk->GetUpdateAction()) {
+                // Currently NOACTION is the same as RESTRICT
+                case FKConstrActionType::NOACTION:
+                case FKConstrActionType::RESTRICT: {
+                  transaction_manager.SetTransactionResult(current_txn,
+                                                          peloton::ResultType::FAILURE);
+                  return false;
+                }
+                case FKConstrActionType::CASCADE: 
+                default: {
+                  // Update
+                  
+
+                  break;
+                }
+              }
+            }
+          }
+
+          break;
         }
       }
     }

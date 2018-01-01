@@ -175,8 +175,8 @@ bool CreateExecutor::CreateTable(const planner::CreatePlan &node) {
         sink_table->RegisterForeignKeySource(catalog_fk);
 
         // Add a non-unique index on the source table if needed
-        if (catalog_fk->GetUpdateAction() != FKConstrActionType::NOACTION ||
-            catalog_fk->GetDeleteAction() != FKConstrActionType::NOACTION) {
+        // if (catalog_fk->GetUpdateAction() != FKConstrActionType::NOACTION ||
+        //     catalog_fk->GetDeleteAction() != FKConstrActionType::NOACTION) {
           std::vector<std::string> source_col_names =
               fk.foreign_key_sources;
           std::string index_name =
@@ -197,7 +197,7 @@ bool CreateExecutor::CreateTable(const planner::CreatePlan &node) {
             LOG_DEBUG("FK sink col name: %s\n", c.c_str());
           }
 #endif
-        }
+        //}
       }
     }
   } else if (current_txn->GetResult() == ResultType::FAILURE) {
