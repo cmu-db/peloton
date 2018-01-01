@@ -1072,14 +1072,16 @@ parser::SQLStatement *PostgresParser::CreateTriggerTransform(
   return result;
 }
 
-// This function takes in a Postgres CreatedbStmt parsenode
-// and transfers into a Peloton CreateStatement parsenode.
-// Please refer to parser/parsenode.h for the definition of
-// CreatedbStmt parsenodes.
-parser::SQLStatement *PostgresParser::CreateDbTransform(CreatedbStmt *root) {
+parser::SQLStatement *PostgresParser::CreateDatabaseTransform(CreateDatabaseStmt *root) {
   parser::CreateStatement *result =
       new parser::CreateStatement(CreateStatement::kDatabase);
-  result->database_name = root->dbname;
+  result->table_info_.reset(new parser::TableInfo());
+  result->table_info_->database_name = root->dbname;
+
+  // TODO(Tianyi) More options need to be converted
+  // See CreateDatabaseStmt definision in postgresparser.h
+  // One can refer to https://www.postgresql.org/docs/9.0/static/sql-createdatabase.html
+  // for the detail of the options.
   return result;
 }
 
@@ -1098,7 +1100,17 @@ parser::DropStatement *PostgresParser::DropTransform(DropStmt *root) {
   }
 }
 
-parser::DropStatement *PostgresParser::DropTableTransform(DropStmt *root) {
+parser::DropStatement* PostgresParser::DropDatabaseTransform(DropDatabaseStmt* root) {
+  parser::DropStatement* result = 
+      new parser::DropStatement(DropStatement::kDatabase);
+  
+  result->table_info_.reset(new parser::TableInfo());
+  result->table_info_->database_name = root->dbname;
+  result->missing = root->missing_ok;
+  return result;
+}
+
+parser::DropStatement* PostgresParser::DropTableTransform(DropStmt* root) {
   auto result = new DropStatement(DropStatement::EntityType::kTable);
   for (auto cell = root->objects->head; cell != nullptr; cell = cell->next) {
     result->missing = root->missing_ok;
@@ -1446,7 +1458,8 @@ parser::SQLStatement *PostgresParser::NodeTransform(Node *stmt) {
       result = CreateTransform(reinterpret_cast<CreateStmt *>(stmt));
       break;
     case T_CreatedbStmt:
-      result = CreateDbTransform(reinterpret_cast<CreatedbStmt *>(stmt));
+      result = 
+        CreateDatabaseTransform(reinterpret_cast<CreateDatabaseStmt *>(stmt));
       break;
     case T_IndexStmt:
       result = CreateIndexTransform(reinterpret_cast<IndexStmt *>(stmt));
@@ -1465,6 +1478,9 @@ parser::SQLStatement *PostgresParser::NodeTransform(Node *stmt) {
       break;
     case T_DropStmt:
       result = DropTransform((DropStmt *)stmt);
+      break;
+    case T_DropdbStmt:
+      result = DropDatabaseTransform((DropDatabaseStmt*)stmt);
       break;
     case T_TruncateStmt:
       result = TruncateTransform((TruncateStmt *)stmt);

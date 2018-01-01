@@ -350,6 +350,8 @@ TEST_F(OptimizerSQLTests, DDLSqlTest) {
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
       optimizer, query, result, tuple_descriptor, rows_changed, error_message);
 
+  LOG_DEBUG("here");
+  
   txn = txn_manager.BeginTransaction();
   EXPECT_THROW(catalog::Catalog::GetInstance()->GetTableWithName(
                    DEFAULT_DB_NAME, "test2", txn),

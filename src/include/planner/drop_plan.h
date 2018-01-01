@@ -40,13 +40,16 @@ class DropPlan : public AbstractPlan {
 
   const std::string GetInfo() const {
     std::string returned_string = "DropPlan:\n";
-    returned_string += " Table name: " + table_name;
+    returned_string += " Table name:     " + table_name;
+    returned_string += " Database name : " + database_name;
     return returned_string;
   }
 
   std::unique_ptr<AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(new DropPlan(table_name));
   }
+
+  std::string GetDatabaseName() const { return database_name; }
 
   std::string GetTableName() const { return table_name; }
 
@@ -62,8 +65,11 @@ class DropPlan : public AbstractPlan {
   DropType drop_type = DropType::TABLE;
 
   // Target Table
-  // storage::DataTable *target_table_ = nullptr;
   std::string table_name;
+
+  // Database Name
+  std::string database_name;
+
   std::string trigger_name;
   std::string index_name;
   bool missing;
