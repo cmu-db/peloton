@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <include/catalog/index_catalog.h>
 #include "executor/drop_executor.h"
 
 #include "catalog/catalog.h"
@@ -91,6 +92,22 @@ bool DropExecutor::DExecute() {
       } else {
         LOG_TRACE("Result is: %s",
                   ResultTypeToString(current_txn->GetResult()).c_str());
+      }
+      break;
+    }
+    case DropType::INDEX: {
+      std::string index_name = node.GetIndexName();
+      auto current_txn = context_->GetTransaction();
+      auto index =  catalog::IndexCatalog::GetInstance()->GetIndexObject(index_name,current_txn);
+      bool result = catalog::IndexCatalog::GetInstance()->DeleteIndex(index->GetIndexOid(),current_txn);
+      if (result){
+        current_txn->SetResult(ResultType::SUCCESS);
+        LOG_TRACE("Dropping Index Succeeded!");
+      }
+      else {
+        current_txn->SetResult(ResultType::FAILURE);
+        LOG_TRACE("Dropping Index Failed!");
+
       }
       break;
     }
