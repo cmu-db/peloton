@@ -27,6 +27,8 @@
 namespace peloton {
 namespace test {
 
+#define TEST_DB_NAME "test_db"
+
 //===--------------------------------------------------------------------===//
 // Catalog Tests
 //===--------------------------------------------------------------------===//
@@ -40,17 +42,17 @@ TEST_F(DropTests, DroppingDatabase) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
-  catalog->CreateDatabase("test_db", txn);
+  catalog->CreateDatabase(TEST_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  EXPECT_TRUE(catalog->GetDatabaseObject("test_db", txn).get() != NULL);
+  EXPECT_TRUE(catalog->GetDatabaseObject(TEST_DB_NAME, txn).get() != NULL);
   txn_manager.CommitTransaction(txn);
 
   parser::DropStatement drop_statement(
       parser::DropStatement::EntityType::kDatabase);
 
-  drop_statement.TryBindDatabaseName("test_db");
+  drop_statement.TryBindDatabaseName(TEST_DB_NAME);
 
   planner::DropPlan drop_plan(&drop_statement);
 
@@ -66,7 +68,7 @@ TEST_F(DropTests, DroppingDatabase) {
   // The database should be deleted now
   txn = txn_manager.BeginTransaction();
   EXPECT_ANY_THROW(
-    catalog->GetDatabaseObject("test_db", txn);
+    catalog->GetDatabaseObject(TEST_DB_NAME, txn);
   );
   txn_manager.CommitTransaction(txn);
 
@@ -90,32 +92,32 @@ TEST_F(DropTests, DroppingTable) {
   std::unique_ptr<catalog::Schema> table_schema2(
       new catalog::Schema({id_column, name_column}));
 
-  catalog->CreateDatabase("test_db", txn);
+  catalog->CreateDatabase(TEST_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  catalog->CreateTable("test_db", "department_table", std::move(table_schema),
+  catalog->CreateTable(TEST_DB_NAME, "department_table", std::move(table_schema),
                        txn);
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  catalog->CreateTable("test_db", "department_table_2",
+  catalog->CreateTable(TEST_DB_NAME, "department_table_2",
                        std::move(table_schema2), txn);
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
   EXPECT_EQ(
-      (int)catalog->GetDatabaseObject("test_db", txn)->GetTableObjects().size(),
+      (int)catalog->GetDatabaseObject(TEST_DB_NAME, txn)->GetTableObjects().size(),
       2);
 
   // Now dropping the table using the executer
-  catalog->DropTable("test_db", "department_table", txn);
+  catalog->DropTable(TEST_DB_NAME, "department_table", txn);
   EXPECT_EQ(
-      (int)catalog->GetDatabaseObject("test_db", txn)->GetTableObjects().size(),
+      (int)catalog->GetDatabaseObject(TEST_DB_NAME, txn)->GetTableObjects().size(),
       1);
 
   // free the database just created
-  catalog->DropDatabaseWithName("test_db", txn);
+  catalog->DropDatabaseWithName(TEST_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
 
@@ -136,11 +138,11 @@ TEST_F(DropTests, DroppingTrigger) {
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
 
-  catalog->CreateDatabase("test_db", txn);
+  catalog->CreateDatabase(TEST_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  catalog->CreateTable("test_db", "department_table", std::move(table_schema),
+  catalog->CreateTable(TEST_DB_NAME, "department_table", std::move(table_schema),
                        txn);
   txn_manager.CommitTransaction(txn);
 
@@ -157,7 +159,7 @@ TEST_F(DropTests, DroppingTrigger) {
   auto create_trigger_stmt =
       static_cast<parser::CreateStatement *>(stmt_list->GetStatement(0));
 
-  create_trigger_stmt->TryBindDatabaseName("test_db");
+  create_trigger_stmt->TryBindDatabaseName(TEST_DB_NAME);
 
   // Create plans
   planner::CreatePlan plan(create_trigger_stmt);
@@ -172,7 +174,7 @@ TEST_F(DropTests, DroppingTrigger) {
   // Check the effect of creation
   storage::DataTable *target_table =
       catalog::Catalog::GetInstance()->GetTableWithName(
-          "test_db", "department_table", txn);
+          TEST_DB_NAME, "department_table", txn);
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(1, target_table->GetTriggerNumber());
   trigger::Trigger *new_trigger = target_table->GetTriggerByIndex(0);
@@ -185,7 +187,7 @@ TEST_F(DropTests, DroppingTrigger) {
       parser::DropStatement::EntityType::kTrigger, "department_table",
       "update_dept_name");
 
-  drop_statement.TryBindDatabaseName("test_db");
+  drop_statement.TryBindDatabaseName(TEST_DB_NAME);
 
   planner::DropPlan drop_plan(&drop_statement);
 
@@ -204,16 +206,16 @@ TEST_F(DropTests, DroppingTrigger) {
 
   // Now dropping the table using the executer
   txn = txn_manager.BeginTransaction();
-  catalog->DropTable("test_db", "department_table", txn);
+  catalog->DropTable(TEST_DB_NAME, "department_table", txn);
   EXPECT_EQ(0, (int)catalog::Catalog::GetInstance()
-                   ->GetDatabaseObject("test_db", txn)
+                   ->GetDatabaseObject(TEST_DB_NAME, txn)
                    ->GetTableObjects()
                    .size());
   txn_manager.CommitTransaction(txn);
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog->DropDatabaseWithName("test_db", txn);
+  catalog->DropDatabaseWithName(TEST_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
 
