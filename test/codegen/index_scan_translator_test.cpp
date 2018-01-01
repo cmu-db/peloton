@@ -205,7 +205,7 @@ TEST_F(IndexScanTranslatorTest, IndexPointQuery) {
   codegen::BufferingConsumer buffer{{0, 1, 2, 3}, context};
 
   // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(scan, buffer);
 
   // Check that we got all the results
   const auto &results = buffer.GetOutputTuples();
@@ -262,7 +262,7 @@ TEST_F(IndexScanTranslatorTest, IndexRangeScan) {
   codegen::BufferingConsumer buffer{{0, 1, 2, 3}, context};
 
   // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(scan, buffer);
 
   // Check that we got all the results
   const auto &results = buffer.GetOutputTuples();
@@ -303,7 +303,7 @@ TEST_F(IndexScanTranslatorTest, IndexFullScan) {
   codegen::BufferingConsumer buffer{{0, 1, 2, 3}, context};
 
   // COMPILE and execute
-  CompileAndExecute(scan, buffer, reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(scan, buffer);
 
   // Check that we got all the results
   const auto &results = buffer.GetOutputTuples();

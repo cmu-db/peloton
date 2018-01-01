@@ -27,7 +27,7 @@
 #include "codegen/proxy/index_scan_iterator_proxy.h"
 #include "codegen/proxy/tile_group_proxy.h"
 #include "codegen/lang/vectorized_loop.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 
 namespace peloton {
 namespace codegen {
