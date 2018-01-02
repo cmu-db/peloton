@@ -118,14 +118,16 @@ class DataTable : public AbstractTable {
   // index_entry_ptr.
   ItemPointer InsertTuple(const Tuple *tuple,
                           concurrency::TransactionContext *transaction,
-                          ItemPointer **index_entry_ptr = nullptr);
+                          ItemPointer **index_entry_ptr = nullptr,
+                          bool check_fk = true);
   // designed for tables without primary key. e.g., output table used by
   // aggregate_executor.
   ItemPointer InsertTuple(const Tuple *tuple);
 
   // Insert tuple with ItemPointer provided explicitly
   bool InsertTuple(const AbstractTuple *tuple, ItemPointer location,
-      concurrency::TransactionContext *transaction, ItemPointer **index_entry_ptr);
+      concurrency::TransactionContext *transaction, ItemPointer **index_entry_ptr,
+      bool check_fk = true);
 
   //===--------------------------------------------------------------------===//
   // TILE GROUP

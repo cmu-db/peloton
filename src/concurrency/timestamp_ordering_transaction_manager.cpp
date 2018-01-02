@@ -637,8 +637,8 @@ void TimestampOrderingTransactionManager::PerformDelete(
 
   auto transaction_id = current_txn->GetTransactionId();
 
-  PL_ASSERT(GetLastReaderCommitId(tile_group_header, old_location.offset) ==
-            current_txn->GetCommitId());
+  // PL_ASSERT(GetLastReaderCommitId(tile_group_header, old_location.offset) ==
+  //           current_txn->GetCommitId());
 
   // if we can perform delete, then we must have already locked the older
   // version.

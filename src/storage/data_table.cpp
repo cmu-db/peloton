@@ -331,14 +331,15 @@ bool DataTable::InstallVersion(const AbstractTuple *tuple,
 
 ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
                                    concurrency::TransactionContext *transaction,
-                                   ItemPointer **index_entry_ptr) {
+                                   ItemPointer **index_entry_ptr,
+                                   bool check_fk) {
   ItemPointer location = GetEmptyTupleSlot(tuple);
   if (location.block == INVALID_OID) {
     LOG_TRACE("Failed to get tuple slot.");
     return INVALID_ITEMPOINTER;
   }
 
-  auto result = InsertTuple(tuple, location, transaction, index_entry_ptr);
+  auto result = InsertTuple(tuple, location, transaction, index_entry_ptr, check_fk);
   if (result == false) {
     return INVALID_ITEMPOINTER;
   }
@@ -347,7 +348,7 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
 
 bool DataTable::InsertTuple(const AbstractTuple *tuple,
     ItemPointer location, concurrency::TransactionContext *transaction,
-    ItemPointer **index_entry_ptr) {
+    ItemPointer **index_entry_ptr, UNUSED_ATTRIBUTE bool check_fk) {
   if (CheckConstraints(tuple) == false) {
     LOG_TRACE("InsertTuple(): Constraint violated");
     return false;
@@ -365,7 +366,7 @@ bool DataTable::InsertTuple(const AbstractTuple *tuple,
 
   auto index_count = GetIndexCount();
   if (index_count == 0) {
-    if (CheckForeignKeyConstraints(tuple, transaction) == false) {
+    if (check_fk && CheckForeignKeyConstraints(tuple, transaction) == false) {
       LOG_TRACE("ForeignKey constraint violated");
       return false;
     }
@@ -379,7 +380,7 @@ bool DataTable::InsertTuple(const AbstractTuple *tuple,
   }
 
   // ForeignKey checks
-  if (CheckForeignKeyConstraints(tuple, transaction) == false) {
+  if (check_fk && CheckForeignKeyConstraints(tuple, transaction) == false) {
     LOG_TRACE("ForeignKey constraint violated");
     return false;
   }
@@ -631,7 +632,7 @@ bool DataTable::CheckForeignKeyConstraints(
           concurrency::TransactionManagerFactory::GetInstance();
         auto visibility = transaction_manager.IsVisible(
           transaction, tile_group_header, location_ptrs[0]->offset,
-          VisibilityIdType::COMMIT_ID);
+          VisibilityIdType::READ_ID);
 
         if (visibility != VisibilityType::OK) {
           LOG_DEBUG("The tuple is not visible yet.\n");

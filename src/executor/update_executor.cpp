@@ -68,13 +68,12 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(
   auto target_table_schema = target_table_->GetSchema();
 
   ContainerTuple<storage::TileGroup> old_tuple(tile_group, physical_tuple_id);
-  std::unique_ptr<storage::Tuple> prev_tuple(
-        new storage::Tuple(target_table_schema, true));
+  storage::Tuple prev_tuple(target_table_schema, true);
 
   // Get a copy of the old tuple
   for (oid_t column_itr = 0; column_itr < target_table_schema->GetColumnCount(); column_itr++) {
     type::Value val = (old_tuple.GetValue(column_itr));
-    prev_tuple->SetValue(column_itr, val);
+    prev_tuple.SetValue(column_itr, val, executor_context_->GetPool());
   }
 
   ///////////////////////////////////////
@@ -157,17 +156,18 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(
             catalog::Schema::CopySchema(src_table->GetSchema(), key_attrs));
           std::unique_ptr<storage::Tuple> key(
             new storage::Tuple(fk_schema.get(), true));
-          std::unique_ptr<storage::Tuple> new_key(
-            new storage::Tuple(fk_schema.get(), true));
+          // std::unique_ptr<storage::Tuple> new_key(
+          //   new storage::Tuple(fk_schema.get(), true));
           
-          key->SetFromTuple(prev_tuple.get(), fk->GetSinkColumnIds(), index->GetPool());
+          key->SetFromTuple(&prev_tuple, fk->GetSinkColumnIds(), index->GetPool());
 
-          new_key->SetFromTuple(&new_tuple, fk->GetSinkColumnIds(), index->GetPool());
+          // new_key->SetFromTuple(&new_tuple, fk->GetSinkColumnIds(), index->GetPool());
 
-          if ((*key) == (*new_key)) {
-            LOG_DEBUG("Foreign key column(s) not changed\n");
-            break;
-          }
+          // is this necessary ? 
+          // if ((*key) == (*new_key)) {
+          //   LOG_DEBUG("Foreign key column(s) not changed\n");
+          //   break;
+          // }
           
           std::vector<ItemPointer *> location_ptrs;
           index->ScanKey(key.get(), location_ptrs);
@@ -196,7 +196,92 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(
                 case FKConstrActionType::CASCADE: 
                 default: {
                   // Update
-                  
+                  bool src_is_owner = transaction_manager.IsOwner(current_txn,
+                      src_tile_group_header, ptr->offset);
+
+                  // if (src_is_owner == false) {
+                  //   bool is_ownable = transaction_manager.IsOwnable(
+                  //           current_txn, src_tile_group_header, ptr->offset);
+                    
+                  //   if (is_ownable) {
+                  //     bool try_result = transaction_manager.AcquireOwnership(current_txn, src_tile_group_header,
+                  //                                ptr->offset);
+                  //     if (try_result == false) {
+                  //       LOG_DEBUG("Failed to own the version in the fk src table\n");
+                  //       transaction_manager.SetTransactionResult(current_txn,
+                  //                                  ResultType::FAILURE);
+                  //       return false;
+                  //     }
+                  //   } else {
+                  //     LOG_DEBUG("Cannot own the version in the fk src table\n");
+                  //     transaction_manager.SetTransactionResult(current_txn,
+                  //                                         peloton::ResultType::FAILURE);
+                  //     return false;
+                  //   }
+                  // }
+
+                  // Read the referencing tuple, update the read timestamp so that we can
+                  // delete it later
+                  bool ret = transaction_manager.PerformRead(current_txn,
+                                                             *ptr,
+                                                             true);
+
+                  if (ret == false) {
+                    if (src_is_owner) {
+                      transaction_manager.YieldOwnership(current_txn, src_tile_group_header,
+                                                         ptr->offset);
+                    }
+                    transaction_manager.SetTransactionResult(current_txn,
+                                                             peloton::ResultType::FAILURE);
+                    return false;
+                  }
+
+                  ContainerTuple<storage::TileGroup> src_old_tuple(src_tile_group.get(), ptr->offset);
+                  storage::Tuple src_new_tuple(src_table->GetSchema(), true);
+
+                  for (oid_t col_itr = 0; col_itr < src_table->GetSchema()->GetColumnCount(); col_itr++)
+                  {
+                    type::Value val = src_old_tuple.GetValue(col_itr);
+                    src_new_tuple.SetValue(col_itr, val, executor_context_->GetPool());
+                  }
+
+                  // Set the primary key fields
+                  for (oid_t k = 0; k < key_attrs.size(); k++) {
+                    auto src_col_index = key_attrs[k];
+                    auto sink_col_index = fk->GetSinkColumnIds()[k];
+                    src_new_tuple.SetValue(src_col_index,
+                                            new_tuple.GetValue(sink_col_index),
+                                            executor_context_->GetPool());
+                  }
+
+                  ItemPointer new_loc = src_table->InsertEmptyVersion();
+
+                  if (new_loc.IsNull()) {
+                    if (src_is_owner == false) {
+                      transaction_manager.YieldOwnership(current_txn,
+                                                         src_tile_group_header,
+                                                         ptr->offset);
+                    }
+                    transaction_manager.SetTransactionResult(current_txn,
+                                                             peloton::ResultType::FAILURE);
+                    return false;
+                  }
+
+                  transaction_manager.PerformDelete(current_txn,
+                                                    *ptr,
+                                                    new_loc);
+
+                  ItemPointer *index_entry_ptr = nullptr;
+                  peloton::ItemPointer location =
+                      src_table->InsertTuple(&src_new_tuple, current_txn, &index_entry_ptr, false);
+
+                  if (location.block == INVALID_OID) {
+                    transaction_manager.SetTransactionResult(current_txn,
+                                                             peloton::ResultType::FAILURE);
+                    return false;
+                  }
+
+                  transaction_manager.PerformInsert(current_txn, location, index_entry_ptr);
 
                   break;
                 }
@@ -211,7 +296,8 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(
   }
 
   // Check the sink tables of foreign key constraints
-  if (target_table_->GetForeignKeyCount() > 0) {
+  fk_count = target_table_->GetForeignKeyCount();
+  if (fk_count > 0) {
     LOG_DEBUG("asdasdas\n");
   }
 
