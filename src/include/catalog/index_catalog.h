@@ -93,8 +93,6 @@ class IndexCatalog : public AbstractCatalog {
       const std::string &index_name, concurrency::TransactionContext *txn);
 
  private:
-  std::shared_ptr<IndexCatalogObject> GetIndexObject(
-      oid_t index_oid, concurrency::TransactionContext *txn);
 
   const std::unordered_map<oid_t, std::shared_ptr<IndexCatalogObject>>
   GetIndexObjects(oid_t table_oid, concurrency::TransactionContext *txn);

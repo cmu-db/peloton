@@ -49,17 +49,13 @@ DropPlan::DropPlan(parser::DropStatement *parse_tree) {
       break;
     }
     case parser::DropStatement::EntityType::kIndex: {
+      database_name = parse_tree->GetDatabaseName();
+      table_name = std::string(parse_tree->table_name_of_trigger);
       index_name = std::string(parse_tree->index_name);
       drop_type = DropType::INDEX;
       break;
     }
     default: { LOG_ERROR("Not supported Drop type"); }
-  }
-  else if (parse_tree->type == parser::DropStatement::EntityType::kIndex) {
-    // note parse_tree->table_name is different from parse_tree->GetTableName()
-    table_name = std::string(parse_tree->table_name_of_trigger);
-    index_name = std::string(parse_tree->index_name);
-    drop_type = DropType::INDEX;
   }
 }
 
