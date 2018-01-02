@@ -4,11 +4,12 @@
 //
 // rpc_controller.h
 //
-// Identification: src/include/network/rpc_controller.h
+// Identification: src/include/network/service/rpc_controller.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 
 #pragma once
 
