@@ -2,13 +2,14 @@
 //
 //                         Peloton
 //
-// tcp_address.h
+// network_address.h
 //
-// Identification: src/include/network/tcp_address.h
+// Identification: src/include/network/service/network_address.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 
 #pragma once
 
