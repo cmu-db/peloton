@@ -57,19 +57,7 @@ bool DropExecutor::DExecute() {
       break;
     }
     case DropType::INDEX: {
-      std::string index_name = node.GetIndexName();
-      auto current_txn = context_->GetTransaction();
-      auto index =  catalog::IndexCatalog::GetInstance()->GetIndexObject(index_name,current_txn);
-      bool result = catalog::IndexCatalog::GetInstance()->DeleteIndex(index->GetIndexOid(),current_txn);
-      if (result){
-        current_txn->SetResult(ResultType::SUCCESS);
-        LOG_TRACE("Dropping Index Succeeded!");
-      }
-      else {
-        current_txn->SetResult(ResultType::FAILURE);
-        LOG_TRACE("Dropping Index Failed!");
-
-      }
+      result = DropIndex(node, current_txn);
       break;
     }
     default: {
@@ -156,5 +144,21 @@ bool DropExecutor::DropTrigger(const planner::DropPlan &node,
   return false;
 }
 
-} // namespace executor
-} // namespace peloton
+bool DropExecutor::DropIndex(const planner::DropPlan &node,
+                             concurrency::TransactionContext *txn) {
+  std::string index_name = node.GetIndexName();
+  auto index_object =
+      catalog::IndexCatalog::GetInstance()->GetIndexObject(index_name, txn);
+  ResultType result = catalog::Catalog::GetInstance()->DropIndex(
+      index_object->GetIndexOid(), txn);
+  txn->SetResult(result);
+  if (txn->GetResult() == ResultType::SUCCESS) {
+    LOG_TRACE("Dropping Index Succeeded!");
+  } else {
+    LOG_TRACE("Dropping Index Failed!");
+  }
+  return false;
+}
+
+}  // namespace executor
+}  // namespace peloton
