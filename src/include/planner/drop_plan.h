@@ -53,11 +53,11 @@ class DropPlan : public AbstractPlan {
 
   std::string GetTableName() const { return table_name; }
 
-    std::string GetTriggerName() const { return trigger_name; }
+  std::string GetTriggerName() const { return trigger_name; }
 
-    std::string GetIndexName() const { return index_name; }
+  std::string GetIndexName() const { return index_name; }
 
-    DropType GetDropType() const { return drop_type; }
+  DropType GetDropType() const { return drop_type; }
 
   bool IsMissing() const { return missing; }
 

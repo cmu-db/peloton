@@ -1161,7 +1161,7 @@ parser::DropStatement *PostgresParser::DropTransform(DropStmt *root) {
     case ObjectType::OBJECT_TRIGGER:
       return DropTriggerTransform(root);
     case ObjectType::OBJECT_INDEX:
-        return DropIndexTransform(root);
+      return DropIndexTransform(root);
     case ObjectType::OBJECT_SCHEMA:
       return DropSchemaTransform(root);
     default: {
