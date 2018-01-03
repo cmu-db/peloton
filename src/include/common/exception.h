@@ -129,41 +129,40 @@ class Exception : public std::runtime_error {
   }
 
   static void PrintStackTrace(FILE *out = ::stderr) {
-    (void)out;
-    // unw_cursor_t cursor;
-    // unw_context_t context;
-    //
-    // unw_getcontext(&context);
-    // unw_init_local(&cursor, &context);
-    //
-    // int count = 0;
-    // while (unw_step(&cursor) && count < 8) {
-    //   unw_word_t ip, off;
-    //   // get program counter register info
-    //   unw_get_reg(&cursor, UNW_REG_IP, &ip);
-    //   if (ip == 0) {
-    //     break;
-    //   }
-    //
-    //   char sym[256] = "Unknown";
-    //   if (unw_get_proc_name(&cursor, sym, sizeof(sym), &off) == 0) {
-    //     char *nameptr = sym;
-    //     int status;
-    //     // demangle c++ function name
-    //     char *demangled = abi::__cxa_demangle(sym, nullptr, nullptr,
-    //     &status); if (status == 0) {
-    //       nameptr = demangled;
-    //     }
-    //     ::fprintf(out, "#%-2d pc = 0x%lx %s + 0x%lx\n", ++count,
-    //               static_cast<uintptr_t>(ip), nameptr,
-    //               static_cast<uintptr_t>(off));
-    //     std::free(demangled);
-    //   } else {
-    //     ::fprintf(out,
-    //               " -- error: unable to obtain symbol name for this
-    //               frame\n");
-    //   }
-    // }
+    unw_cursor_t cursor;
+    unw_context_t context;
+
+    unw_getcontext(&context);
+    unw_init_local(&cursor, &context);
+
+    int count = 0;
+    while (unw_step(&cursor) && count < 8) {
+      unw_word_t ip, off;
+      // get program counter register info
+      unw_get_reg(&cursor, UNW_REG_IP, &ip);
+      if (ip == 0) {
+        break;
+      }
+
+      char sym[256] = "Unknown";
+      if (unw_get_proc_name(&cursor, sym, sizeof(sym), &off) == 0) {
+        char *nameptr = sym;
+        int status;
+        // demangle c++ function name
+        char *demangled = abi::__cxa_demangle(sym, nullptr, nullptr, &status);
+        if (status == 0) {
+          nameptr = demangled;
+        }
+        ::fprintf(out, "#%-2d pc = 0x%lx %s + 0x%lx\n", ++count,
+                  static_cast<uintptr_t>(ip), nameptr,
+                  static_cast<uintptr_t>(off));
+        std::free(demangled);
+      } else {
+        ::fprintf(out,
+                  " -- error: unable to obtain symbol name for this
+                  frame\n");
+      }
+    }
   }
 
   friend std::ostream &operator<<(std::ostream &os, const Exception &e);
