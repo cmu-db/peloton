@@ -159,8 +159,7 @@ class Exception : public std::runtime_error {
         std::free(demangled);
       } else {
         ::fprintf(out,
-                  " -- error: unable to obtain symbol name for this
-                  frame\n");
+                  "-- error: unable to obtain symbol name for this frame\n");
       }
     }
   }
