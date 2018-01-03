@@ -195,20 +195,46 @@ std::string ParserUtils::GetCreateStatementInfo(CreateStatement *stmt,
                                                 uint num_indent) {
   std::ostringstream os;
   os << StringUtil::Indent(num_indent) << "CreateStatment\n";
-  os << StringUtil::Indent(num_indent + 1) << stmt->type << "\n";
+  os << StringUtil::Indent(num_indent + 1);
 
-  if (stmt->type == CreateStatement::CreateType::kIndex) {
-    os << StringUtil::Indent(num_indent + 1) << stmt->index_name << "\n";
-    os << StringUtil::Indent(num_indent + 1)
-       << "INDEX : table : " << stmt->GetTableName()
-       << " unique : " << stmt->unique << " attrs : ";
-    for (auto &key : stmt->index_attrs) os << key << " ";
-    os << "\n";
-    os << StringUtil::Indent(num_indent + 1)
-       << "Type : " << IndexTypeToString(stmt->index_type) << "\n";
-    os << "\n";
-  } else if (stmt->type == CreateStatement::CreateType::kTable) {
-    os << StringUtil::Indent(num_indent + 1) << stmt->GetTableName() << "\n";
+  switch (stmt->type) {
+    case CreateStatement::CreateType::kTable: {
+      os << "Create type: Table" << "\n";
+      os << StringUtil::Indent(num_indent + 1) << StringUtil::Format("IF NOT EXISTS: %s", (stmt->if_not_exists)? "True":"False") << "\n";
+      os << StringUtil::Indent(num_indent + 1) << StringUtil::Format("Table name: %s", stmt->GetTableName().c_str()) << "\n";
+      break;
+    }
+    case CreateStatement::CreateType::kDatabase: {
+      os << "Create type: Database" << "\n";
+      os << StringUtil::Indent(num_indent + 1) << StringUtil::Format("Database name: %s", stmt->GetDatabaseName().c_str()) << "\n";
+      break;
+    }
+    case CreateStatement::CreateType::kIndex: {
+      os << "Create type: Index" << "\n";
+      os << StringUtil::Indent(num_indent + 1) << stmt->index_name << "\n";
+      os << StringUtil::Indent(num_indent + 1)
+         << "INDEX : table : " << stmt->GetTableName()
+         << " unique : " << stmt->unique << " attrs : ";
+      for (auto &key : stmt->index_attrs) os << key << " ";
+      os << "\n";
+      os << StringUtil::Indent(num_indent + 1)
+         << "Type : " << IndexTypeToString(stmt->index_type) << "\n";
+      os << "\n";
+      break;
+    }
+    case CreateStatement::CreateType::kTrigger: {
+      os << "Create type: Trigger" << "\n";
+      break;
+    }
+    case CreateStatement::CreateType::kSchema: {
+      os << "Create type: Schema" << "\n";
+      os << StringUtil::Indent(num_indent + 1) << StringUtil::Format("Schema name: %s", stmt->schema_name.c_str()) << "\n";
+      break;
+    }
+    case CreateStatement::CreateType::kView: {
+      os << "Create type: View" << "\n";
+      break;
+    }
   }
 
   if (!stmt->columns.empty()) {

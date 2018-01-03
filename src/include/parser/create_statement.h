@@ -16,6 +16,7 @@
 #include "common/sql_node_visitor.h"
 #include "expression/abstract_expression.h"
 #include "parser/sql_statement.h"
+#include "parser/select_statement.h"
 #include "common/internal_types.h"
 
 namespace peloton {
@@ -213,7 +214,7 @@ struct ColumnDefinition {
  */
 class CreateStatement : public TableRefStatement {
  public:
-  enum CreateType { kTable, kDatabase, kIndex, kTrigger };
+  enum CreateType { kTable, kDatabase, kIndex, kTrigger, kSchema, kView };
 
   CreateStatement(CreateType type)
       : TableRefStatement(StatementType::CREATE),
@@ -228,12 +229,17 @@ class CreateStatement : public TableRefStatement {
   bool if_not_exists;
 
   std::vector<std::unique_ptr<ColumnDefinition>> columns;
+
   std::vector<std::string> index_attrs;
-
   IndexType index_type;
-
   std::string index_name;
+
   std::string trigger_name;
+
+  std::string schema_name;
+
+  std::string view_name;
+  std::unique_ptr<SelectStatement> view_query;
 
   bool unique = false;
 

@@ -67,10 +67,10 @@ class DropStatement : public TableRefStatement {
 
   // Type of DROP
   EntityType type;
-  // CASCADE or RESTRICT
-  bool cascade;
   // IF EXISTS
   bool missing;
+    // CASCADE or RESTRICT
+  bool cascade;
 
   // drop index
   std::string index_name;
