@@ -99,22 +99,10 @@ TEST_F(DropSQLTests, DropIndexTest) {
   TestingSQLUtil::ExecuteSQLQuery(
       "CREATE TABLE test(a INT PRIMARY KEY, b INT);");
 
-  // Check the table in catalog
-  storage::DataTable *table;
-  txn = txn_manager.BeginTransaction();
-  try {
-    table = catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
-                                                              "test", txn);
-  } catch (CatalogException &e) {
-    table = nullptr;
-  }
-  txn_manager.CommitTransaction(txn);
-  EXPECT_NE(table, nullptr);
-
   // Create a Index
   TestingSQLUtil::ExecuteSQLQuery("CREATE INDEX idx ON test(a);");
 
-  //    Check if the index is in catalog
+  // Check if the index is in catalog
   std::shared_ptr<catalog::IndexCatalogObject> index;
   txn = txn_manager.BeginTransaction();
   try {
