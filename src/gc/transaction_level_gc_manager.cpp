@@ -88,14 +88,9 @@ void TransactionLevelGCManager::RecycleTransaction(
   epoch_manager.ExitEpoch(txn->GetThreadId(),
                           txn->GetEpochId());
 
-  if (txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY) {
-
-    if (txn->GetResult() != ResultType::SUCCESS) {
-
-      if (txn->IsGCSetEmpty() != true) {
+  if (txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY && \
+      txn->GetResult() != ResultType::SUCCESS && txn->IsGCSetEmpty() != true) {
         txn->SetEpochId(epoch_manager.GetNextEpochId());
-      }
-    }
   }
 
   // Add the transaction context to the lock-free queue

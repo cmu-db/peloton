@@ -81,7 +81,12 @@ void TransactionManager::EndTransaction(TransactionContext *current_txn) {
     current_txn->ExecOnCommitTriggers();
   }
 
-  gc::GCManagerFactory::GetInstance().RecycleTransaction(current_txn);
+  if(gc::GCManagerFactory::GetGCType() == GarbageCollectionType::ON) {
+    gc::GCManagerFactory::GetInstance().RecycleTransaction(current_txn);
+  } else {
+    delete current_txn;
+  }
+
   current_txn = nullptr;
 
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(
