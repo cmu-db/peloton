@@ -34,7 +34,7 @@ if [ "$DISTRO" = "UBUNTU" ]; then
     # Fix for cmake3 name change in Ubuntu 15.x and 16.x plus --force-yes deprecation 
     CMAKE_NAME="cmake3"
     FORCE_Y="--force-yes"
-    MAJOR_VERSION=$(echo "$DISTRO_VER" | cut -d '.' -f 1)
+    MAJOR_VER=$(echo "$DISTRO_VER" | cut -d '.' -f 1)
     for version in "15" "16"
     do
        if [ "$MAJOR_VER" = "$version" ]
