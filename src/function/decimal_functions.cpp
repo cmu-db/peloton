@@ -25,6 +25,36 @@ type::Value DecimalFunctions::Sqrt(const std::vector<type::Value> &args) {
   return args[0].Sqrt();
 }
 
+// Get Abs of value
+type::Value DecimalFunctions::_Abs(const std::vector<type::Value> &args) {
+  PL_ASSERT(args.size() == 1);
+  if (args[0].IsNull()) {
+    return type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL);
+  }
+  double result;
+  switch (args[0].GetElementType()) {
+    case type::TypeId::DECIMAL:
+      result = Abs(args[0].GetAs<double>());
+      break;
+    case type::TypeId::INTEGER:
+      result = abs(args[0].GetAs<int32_t>());
+      break;
+    case type::TypeId::BIGINT:
+      result = abs(args[0].GetAs<int64_t>());
+      break;
+    case type::TypeId::SMALLINT:
+      result = abs(args[0].GetAs<int16_t>());
+      break;
+    case type::TypeId::TINYINT:
+      result = abs(args[0].GetAs<int8_t>());
+      break;
+    default:
+      return type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL);
+  }
+  return type::ValueFactory::GetDecimalValue(result);
+}
+
+double DecimalFunctions::Abs(const double args) { return fabs(args); }
 
 // Get ceiling of value
 type::Value DecimalFunctions::_Ceil(const std::vector<type::Value> &args) {

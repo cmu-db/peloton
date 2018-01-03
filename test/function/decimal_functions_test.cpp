@@ -105,6 +105,22 @@ TEST_F(DecimalFunctionsTests, RoundTest) {
   EXPECT_TRUE(result.IsNull());
 }
 
+TEST_F(DecimalFunctionsTests,AbsTest) {
+  std::vector<double> doubleTestInputs = {9.5, -2.5, -4.4, 0.0};
+  std::vector<type::Value> args;
+  for (double in : doubleTestInputs) {
+    args = {type::ValueFactory::GetDecimalValue(in)};
+    auto result = function::DecimalFunctions::_Abs(args);
+    EXPECT_FALSE(result.IsNull());
+    EXPECT_EQ(fabs(in), result.GetAs<double>());
+  }
+
+  // NULL CHECK
+  args = {type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL)};
+  auto result = function::DecimalFunctions::_Abs(args);
+  EXPECT_TRUE(result.IsNull());
+}
+
 TEST_F(DecimalFunctionsTests, CeilTestDouble) {
   std::vector<double> doubleTestInputs = {-36.0, -35.222, -0.7, -0.5, -0.2,
                                           0.0, 0.2, 0.5, 0.7, 35.2, 36.0,

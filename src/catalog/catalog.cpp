@@ -981,6 +981,11 @@ void Catalog::InitializeFunctions() {
        * decimal functions
        */
       AddBuiltinFunction(
+          "abs", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL, internal_lang,
+          "Abs", function::BuiltInFuncType{OperatorId::Abs,
+                                            function::DecimalFunctions::_Abs},
+          txn);
+      AddBuiltinFunction(
           "sqrt", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL, internal_lang,
           "Sqrt", function::BuiltInFuncType{OperatorId::Sqrt,
                                             function::DecimalFunctions::Sqrt},

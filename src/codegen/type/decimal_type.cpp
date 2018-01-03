@@ -164,6 +164,23 @@ struct Negate : public TypeSystem::UnaryOperatorHandleNull {
   }
 };
 
+// Abs
+struct Abs : public TypeSystem::UnaryOperatorHandleNull {
+  bool SupportsType(const Type &type) const override {
+    return type.GetSqlType() == Decimal::Instance();
+  }
+
+  Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
+    return Type{Decimal::Instance()};
+  }
+
+  Value Impl(CodeGen &codegen, const Value &val) const override {
+    llvm::Value *raw_ret =
+      codegen.Call(DecimalFunctionsProxy::Abs, {val.GetValue()});
+    return Value{Integer::Instance(), raw_ret};
+  }
+};
+
 // Floor
 struct Floor : public TypeSystem::UnaryOperatorHandleNull {
   bool SupportsType(const Type &type) const override {
@@ -426,11 +443,13 @@ static std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {
 
 // Unary operators
 static Negate kNegOp;
+static Abs kAbsOp;
 static Floor kFloorOp;
 static Round kRound;
 static Ceil kCeilOp;
 static std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {
     {OperatorId::Negation, kNegOp},
+    {OperatorId::Abs, kAbsOp},
     {OperatorId::Floor, kFloorOp},
     {OperatorId::Round, kRound},
     {OperatorId::Ceil, kCeilOp}};

@@ -21,6 +21,11 @@ namespace function {
 
 class DecimalFunctions {
  public:
+
+  // Abs
+  static double Abs(double arg);
+  static type::Value _Abs(const std::vector<type::Value>& args);
+
   // Sqrt
   static type::Value Sqrt(const std::vector<type::Value>& args);
 
