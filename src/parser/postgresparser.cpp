@@ -1104,7 +1104,8 @@ parser::SQLStatement *PostgresParser::CreateSchemaTransform(
     Node *authrole = reinterpret_cast<Node *>(root->authrole);
     if (authrole->type == T_RoleSpec) {
       RoleSpec *role = reinterpret_cast<RoleSpec *>(authrole);
-      // Peloton do not need the authrole, the only usage is when no schema name is specified
+      // Peloton do not need the authrole, the only usage is when no schema name
+      // is specified
       if (root->schemaname == nullptr) {
         result->schema_name = role->rolename;
       }
@@ -1121,7 +1122,7 @@ parser::SQLStatement *PostgresParser::CreateSchemaTransform(
         "CREATE SCHEMA does not support schema_element yet...\n");
   }
   for (auto cell = root->schemaElts->head; cell != nullptr; cell = cell->next) {
-    Node *node = reinterpret_cast<Node*>(cell->data.ptr_value);
+    Node *node = reinterpret_cast<Node *>(cell->data.ptr_value);
     switch (node->type) {
       case T_CreateStmt:
         // CreateTransform((CreateStmt *)node);
@@ -1139,16 +1140,17 @@ parser::SQLStatement *PostgresParser::CreateSchemaTransform(
   return result;
 }
 
-parser::SQLStatement *PostgresParser::CreateViewTransform(
-    ViewStmt *root) {
+parser::SQLStatement *PostgresParser::CreateViewTransform(ViewStmt *root) {
   parser::CreateStatement *result =
       new parser::CreateStatement(CreateStatement::kView);
   result->view_name = root->view->relname;
   if (root->query->type != T_SelectStmt) {
     delete result;
-    throw NotImplementedException("CREATE VIEW as query only supports SELECT query...\n");
+    throw NotImplementedException(
+        "CREATE VIEW as query only supports SELECT query...\n");
   }
-  result->view_query.reset(SelectTransform(reinterpret_cast<SelectStmt *>(root->query)));
+  result->view_query.reset(
+      SelectTransform(reinterpret_cast<SelectStmt *>(root->query)));
   return result;
 }
 
@@ -1538,7 +1540,8 @@ parser::SQLStatement *PostgresParser::NodeTransform(Node *stmt) {
       result = CreateTriggerTransform(reinterpret_cast<CreateTrigStmt *>(stmt));
       break;
     case T_CreateSchemaStmt:
-      result = CreateSchemaTransform(reinterpret_cast<CreateSchemaStmt *>(stmt));
+      result =
+          CreateSchemaTransform(reinterpret_cast<CreateSchemaStmt *>(stmt));
       break;
     case T_ViewStmt:
       result = CreateViewTransform(reinterpret_cast<ViewStmt *>(stmt));

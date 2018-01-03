@@ -199,18 +199,28 @@ std::string ParserUtils::GetCreateStatementInfo(CreateStatement *stmt,
 
   switch (stmt->type) {
     case CreateStatement::CreateType::kTable: {
-      os << "Create type: Table" << "\n";
-      os << StringUtil::Indent(num_indent + 1) << StringUtil::Format("IF NOT EXISTS: %s", (stmt->if_not_exists)? "True":"False") << "\n";
-      os << StringUtil::Indent(num_indent + 1) << StringUtil::Format("Table name: %s", stmt->GetTableName().c_str()) << "\n";
+      os << "Create type: Table"
+         << "\n";
+      os << StringUtil::Indent(num_indent + 1)
+         << StringUtil::Format("IF NOT EXISTS: %s",
+                               (stmt->if_not_exists) ? "True" : "False")
+         << "\n";
+      os << StringUtil::Indent(num_indent + 1)
+         << StringUtil::Format("Table name: %s", stmt->GetTableName().c_str())
+         << "\n";
       break;
     }
     case CreateStatement::CreateType::kDatabase: {
-      os << "Create type: Database" << "\n";
-      os << StringUtil::Indent(num_indent + 1) << StringUtil::Format("Database name: %s", stmt->GetDatabaseName().c_str()) << "\n";
+      os << "Create type: Database"
+         << "\n";
+      os << StringUtil::Indent(num_indent + 1)
+         << StringUtil::Format("Database name: %s",
+                               stmt->GetDatabaseName().c_str()) << "\n";
       break;
     }
     case CreateStatement::CreateType::kIndex: {
-      os << "Create type: Index" << "\n";
+      os << "Create type: Index"
+         << "\n";
       os << StringUtil::Indent(num_indent + 1) << stmt->index_name << "\n";
       os << StringUtil::Indent(num_indent + 1)
          << "INDEX : table : " << stmt->GetTableName()
@@ -223,19 +233,30 @@ std::string ParserUtils::GetCreateStatementInfo(CreateStatement *stmt,
       break;
     }
     case CreateStatement::CreateType::kTrigger: {
-      os << "Create type: Trigger" << "\n";
-      os << StringUtil::Indent(num_indent + 1) << StringUtil::Format("Trigger table name: %s", stmt->trigger_name.c_str()) << "\n";
-      os << StringUtil::Indent(num_indent + 1) << StringUtil::Format("Trigger name: %s", stmt->GetTableName().c_str()) << "\n";
+      os << "Create type: Trigger"
+         << "\n";
+      os << StringUtil::Indent(num_indent + 1)
+         << StringUtil::Format("Trigger table name: %s",
+                               stmt->trigger_name.c_str()) << "\n";
+      os << StringUtil::Indent(num_indent + 1)
+         << StringUtil::Format("Trigger name: %s", stmt->GetTableName().c_str())
+         << "\n";
       break;
     }
     case CreateStatement::CreateType::kSchema: {
-      os << "Create type: Schema" << "\n";
-      os << StringUtil::Indent(num_indent + 1) << StringUtil::Format("Schema name: %s", stmt->schema_name.c_str()) << "\n";
+      os << "Create type: Schema"
+         << "\n";
+      os << StringUtil::Indent(num_indent + 1)
+         << StringUtil::Format("Schema name: %s", stmt->schema_name.c_str())
+         << "\n";
       break;
     }
     case CreateStatement::CreateType::kView: {
-      os << "Create type: View" << "\n";
-      os << StringUtil::Indent(num_indent + 1) << StringUtil::Format("View name: %s", stmt->view_name.c_str()) << "\n";
+      os << "Create type: View"
+         << "\n";
+      os << StringUtil::Indent(num_indent + 1)
+         << StringUtil::Format("View name: %s", stmt->view_name.c_str())
+         << "\n";
       break;
     }
   }
