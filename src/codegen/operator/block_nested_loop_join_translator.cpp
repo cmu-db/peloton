@@ -18,6 +18,7 @@
 #include "codegen/operator/projection_translator.h"
 #include "codegen/proxy/sorter_proxy.h"
 #include "planner/nested_loop_join_plan.h"
+#include "settings/settings_manager.h"
 
 namespace peloton {
 namespace codegen {
@@ -57,8 +58,7 @@ BlockNestedLoopJoinTranslator::BlockNestedLoopJoinTranslator(
     Pipeline &pipeline)
     : OperatorTranslator(context, pipeline),
       nlj_plan_(nlj_plan),
-      left_pipeline_(this),
-      max_buf_rows_(256) {
+      left_pipeline_(this) {
   PL_ASSERT(nlj_plan.GetChildrenSize() == 2 &&
             "NLJ must have exactly two children");
 
@@ -78,11 +78,6 @@ BlockNestedLoopJoinTranslator::BlockNestedLoopJoinTranslator(
     ProjectionTranslator::PrepareProjection(context, *projection);
   }
 
-  // Allocate our sorter in runtime state
-  auto &runtime_state = context.GetRuntimeState();
-  buffer_id_ =
-      runtime_state.RegisterState("buffer", SorterProxy::GetType(GetCodeGen()));
-
   // Collect all unique attributes from the left side
   for (const auto *ai : nlj_plan.GetJoinAIsLeft()) {
     unique_left_attributes_.push_back(ai);
@@ -101,7 +96,23 @@ BlockNestedLoopJoinTranslator::BlockNestedLoopJoinTranslator(
     left_input_desc.push_back(ai->type);
   }
 
-  buffer_ = Sorter{GetCodeGen(), left_input_desc};
+  // Allocate buffer instance in runtime state and configure its accessor
+  auto &codegen = GetCodeGen();
+  auto &runtime_state = context.GetRuntimeState();
+  buffer_id_ =
+      runtime_state.RegisterState("buffer", SorterProxy::GetType(codegen));
+  buffer_ = Sorter{codegen, left_input_desc};
+
+  // Determine the number of rows to buffer before flushing it through the join
+  auto max_buffer_size = settings::SettingsManager::GetDouble(
+      settings::SettingId::bnlj_buffer_size);
+  auto row_size = buffer_.GetStorageFormat().GetStorageSize();
+  max_buf_rows_ =
+      static_cast<uint32_t>(std::max(1.0, max_buffer_size / row_size));
+
+  LOG_DEBUG(
+      "Buffer size: %.2lf bytes, row size: %u.0 bytes, max buffered rows: %u",
+      max_buffer_size, row_size, max_buf_rows_);
 }
 
 void BlockNestedLoopJoinTranslator::InitializeState() {
