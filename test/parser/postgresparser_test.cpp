@@ -788,7 +788,19 @@ TEST_F(PostgresParserTests, CreateViewTest) {
   UNUSED_ATTRIBUTE auto create_stmt = (parser::CreateStatement*)stmt_list->GetStatement(0);
   LOG_INFO("%s", stmt_list->GetInfo().c_str());
   // Check attributes
-  // EXPECT_EQ("comedies", create_stmt->view_name);
+  EXPECT_EQ("comedies", create_stmt->view_name);
+  EXPECT_TRUE(create_stmt->view_query.get() != nullptr);
+  auto view_query = create_stmt->view_query.get();
+  EXPECT_EQ("films", view_query->from_table.get()->GetTableName());
+  EXPECT_EQ(1, view_query->select_list.size());
+  EXPECT_TRUE(view_query->where_clause.get() != nullptr);
+  EXPECT_EQ(ExpressionType::COMPARE_EQUAL, view_query->where_clause.get()->GetExpressionType());
+  EXPECT_EQ(2, view_query->where_clause.get()->GetChildrenSize());
+  auto left_child = view_query->where_clause.get()->GetChild(0);
+  EXPECT_EQ(ExpressionType::VALUE_TUPLE, left_child->GetExpressionType());
+  EXPECT_EQ("kind", ((expression::TupleValueExpression *)left_child)->GetColumnName());
+  auto right_child = view_query->where_clause.get()->GetChild(1);
+  EXPECT_EQ(ExpressionType::VALUE_CONSTANT, right_child->GetExpressionType());
 }
 
 TEST_F(PostgresParserTests, DistinctFromTest) {

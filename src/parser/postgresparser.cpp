@@ -1143,7 +1143,7 @@ parser::SQLStatement *PostgresParser::CreateViewTransform(
     ViewStmt *root) {
   parser::CreateStatement *result =
       new parser::CreateStatement(CreateStatement::kView);
-  // result->table_info_.reset(RangeVarTransform(reinterpret_cast<RangeVar *>(root->view)));
+  result->view_name = root->view->relname;
   if (root->query->type != T_SelectStmt) {
     delete result;
     throw NotImplementedException("CREATE VIEW as query only supports SELECT query...\n");
