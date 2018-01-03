@@ -72,7 +72,7 @@ class TrafficCop {
         const std::vector<type::Value> &params, const bool unnamed,
         std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
         const std::vector<int> &result_format,
-        std::vector<StatementResult> &result,
+        std::vector<ResultValue> &result,
         std::string &error_message, const size_t thread_id = 0) {
       return ExecuteStatement(statement, params, unnamed, param_stats,
                               result_format, result, error_message,
@@ -149,6 +149,8 @@ class TrafficCop {
   void SetQueuing(bool is_queuing) { is_queuing_ = is_queuing; }
 
   bool GetQueuing() { return is_queuing_; }
+
+  executor::ExecutionResult p_status_;
 
   void SetLogging(bool is_logging) {
     is_logging_ = is_logging;

@@ -71,7 +71,7 @@ class TransactionManager {
                        const oid_t &tuple_id) = 0;
 
   // This method tests whether any other transaction has owned this version.
-  virtual bool IsOwned(Transaction *const current_txn,
+  virtual bool IsOwned(
       TransactionContext *const current_txn,
                        const storage::TileGroupHeader *const tile_group_header,
                        const oid_t &tuple_id) = 0;

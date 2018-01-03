@@ -16,7 +16,7 @@
 
 #include "logging/log_buffer.h"
 #include "logging/log_record.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "type/serializer.h"
 #include "container/lock_free_queue.h"
 #include "common/logger.h"

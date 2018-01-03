@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "common/logger.h"
 #include "storage/data_table.h"
 #include "type/serializer.h"

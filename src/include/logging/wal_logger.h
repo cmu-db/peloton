@@ -16,7 +16,7 @@
 #include "logging/log_record.h"
 #include "logging/wal_log_manager.h"
 #include "type/serializeio.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "common/logger.h"
 
 namespace peloton {

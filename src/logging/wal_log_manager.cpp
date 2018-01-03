@@ -24,19 +24,17 @@ namespace logging {
 
 // Method to enqueue the logging task
 ResultType WalLogManager::LogTransaction(std::vector<LogRecord> log_records) {
-  LogTransactionArg* arg = new LogTransactionArg(log_records);
-  threadpool::LoggerQueuePool::GetInstance().SubmitTask(
-      WalLogManager::WriteTransactionWrapper, arg, task_callback_,
-      task_callback_arg_);
+//  LogTransactionArg* arg = new LogTransactionArg(log_records);
+  auto on_complete = [this]() {
+    //this->p_status_ = p_status;
+    //result = std::move(values);
+    task_callback_(task_callback_arg_);
+  };
+  threadpool::LoggerQueuePool::GetInstance().SubmitTask([log_records, on_complete] {
+    WalLogManager::WriteTransaction(log_records);
+  });
   LOG_DEBUG("Submit Task into LogQueuePool");
   return ResultType::LOGGING;
-}
-
-// Static method that accepts void pointer
-void WalLogManager::WriteTransactionWrapper(void* arg_ptr) {
-  LogTransactionArg* arg = (LogTransactionArg*)arg_ptr;
-  WriteTransaction(arg->log_records_);
-  delete (arg);
 }
 
 // Actual method called by the logger thread

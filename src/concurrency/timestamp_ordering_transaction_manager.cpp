@@ -776,7 +776,7 @@ void TimestampOrderingTransactionManager::PerformDelete(
 
 // LogManager comes from above
 ResultType TimestampOrderingTransactionManager::CommitTransaction(
-    Transaction *const current_txn, logging::WalLogManager *log_manager) {
+    TransactionContext *const current_txn, logging::WalLogManager *log_manager) {
   LOG_TRACE("Committing peloton txn : %" PRId64,
             current_txn->GetTransactionId());
 
@@ -936,8 +936,8 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
   if (log_manager != nullptr && !current_txn->log_records_.empty()) {
     log_manager->LogTransaction(current_txn->log_records_);
     EndTransaction(current_txn);
-    if (settings::SettingsManager::GetInt(settings::SettingId::stats_mode) !=
-        STATS_TYPE_INVALID) {
+    if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
+    StatsType::INVALID) {
       stats::BackendStatsContext::GetInstance()->IncrementTxnCommitted(
           database_id);
     }
@@ -948,8 +948,8 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
   else {
     ResultType result = current_txn->GetResult();
     EndTransaction(current_txn);
-    if (settings::SettingsManager::GetInt(settings::SettingId::stats_mode) !=
-        STATS_TYPE_INVALID) {
+    if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
+    StatsType::INVALID) {
       stats::BackendStatsContext::GetInstance()->IncrementTxnCommitted(
           database_id);
     }

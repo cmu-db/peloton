@@ -88,7 +88,7 @@
     type::TypeId::INTEGER);
     delete new_file_handle;
     delete buf;
-    EXPECT_EQ(type::CMP_TRUE,value.CompareEquals(val));
+    EXPECT_EQ(CmpBool::TRUE,value.CompareEquals(val));
 
 }
 
@@ -131,7 +131,7 @@
     type::TypeId::VARCHAR);
     delete new_file_handle;
     delete buf;
-    EXPECT_EQ(type::CMP_TRUE,value.CompareEquals(val));
+    EXPECT_EQ(CmpBool::TRUE,value.CompareEquals(val));
 }
 
  TEST_F(SerializeTests, SerializeValuesToFileTest) {
@@ -158,11 +158,11 @@
     auto valuefinal3 = type::Value::DeserializeFrom(input_buffer,
     type::TypeId::BOOLEAN);
 
-    EXPECT_EQ(type::CMP_TRUE,value1.CompareEquals(valuefinal1));
+    EXPECT_EQ(CmpBool::TRUE,value1.CompareEquals(valuefinal1));
 
-    EXPECT_EQ(type::CMP_TRUE,value2.CompareEquals(valuefinal2));
+    EXPECT_EQ(CmpBool::TRUE,value2.CompareEquals(valuefinal2));
 
-    EXPECT_EQ(type::CMP_TRUE,value3.CompareEquals(valuefinal3));
+    EXPECT_EQ(CmpBool::TRUE,value3.CompareEquals(valuefinal3));
 }
 
  TEST_F(SerializeTests, SerializeTupleToFileTest) {

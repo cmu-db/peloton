@@ -493,7 +493,6 @@ void PostgresProtocolHandler::ExecParseMessage(InputPacket *pkt) {
 
   // Stat
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) != StatsType::INVALID) {
-      STATS_TYPE_INVALID) {
     // Make a copy of param types for stat collection
     stats::QueryMetric::QueryParamBuf query_type_buf;
     query_type_buf.len = type_buf_len;
