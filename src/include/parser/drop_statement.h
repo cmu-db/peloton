@@ -36,52 +36,87 @@ class DropStatement : public TableRefStatement {
 
   DropStatement(EntityType type)
       : TableRefStatement(StatementType::DROP),
-        type(type),
-        missing(false),
-        cascade(false) {}
+        type_(type),
+        missing_(false),
+        cascade_(false) {}
 
   DropStatement(EntityType type, std::string table_name_of_trigger,
                 std::string trigger_name)
       : TableRefStatement(StatementType::DROP),
-        type(type),
-        table_name_of_trigger(table_name_of_trigger),
-        trigger_name(trigger_name) {}
+        type_(type),
+        table_name_of_trigger_(table_name_of_trigger),
+        trigger_name_(trigger_name) {}
 
-  EntityType GetDropType() { return this->type; }
+  EntityType GetDropType() { return type_; }
 
-  bool GetMissing() { return this->missing; }
+  bool GetMissing() { return missing_; }
 
-  std::string GetIndexName() { return this->index_name; }
+  void SetMissing(bool missing) { missing_ = missing; }
 
-  std::string GetPrepStmt() { return this->prep_stmt; }
+  bool GetCascade() { return cascade_; }
 
-  std::string GetSchemaName() { return this->schema_name; }
+  void SetCascade(bool cascade) { cascade_ = cascade; }
 
-  std::string GetTriggerName() { return this->trigger_name; }
+  std::string& GetIndexName() { return index_name_; }
 
-  std::string GetTriggerTableName() { return this->table_name_of_trigger; }
+  void SetIndexName(std::string& index_name) { index_name_ = index_name; }
+
+  void SetIndexName(char *index_name) { index_name_ = index_name; }
+
+  std::string& GetPrepStmt() { return prep_stmt_; }
+
+  void SetPrepStmt(std::string& prep_stmt) { prep_stmt_ = prep_stmt; }
+
+  void SetPrepStmt(char *prep_stmt) { prep_stmt_ = prep_stmt; }
+
+  std::string& GetSchemaName() { return schema_name_; }
+
+  void SetSchemaName(std::string& schema_name) { schema_name_ = schema_name; }
+
+  void SetSchemaName(char *schema_name) { schema_name_ = schema_name; }
+
+  std::string& GetTriggerName() { return trigger_name_; }
+
+  void SetTriggerName(std::string& trigger_name) {
+    trigger_name_ = trigger_name;
+  }
+
+  void SetTriggerName(char* trigger_name) {
+    trigger_name_ = trigger_name;
+  }
+
+  std::string& GetTriggerTableName() { return table_name_of_trigger_; }
+
+  void SetTriggerTableName(std::string& table_name_of_trigger) {
+    table_name_of_trigger_ = table_name_of_trigger;
+  }
+
+  void SetTriggerTableName(char* table_name_of_trigger) {
+    table_name_of_trigger_ = table_name_of_trigger;
+  }
 
   virtual ~DropStatement() {}
 
   virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
+private:
   // Type of DROP
-  EntityType type;
+  EntityType type_;
   // IF EXISTS
-  bool missing;
-    // CASCADE or RESTRICT
-  bool cascade;
+  bool missing_;
+  // CASCADE or RESTRICT
+  bool cascade_;
 
   // drop index
-  std::string index_name;
-  std::string prep_stmt;
+  std::string index_name_;
+  std::string prep_stmt_;
 
   // drop trigger
-  std::string table_name_of_trigger;
-  std::string trigger_name;
+  std::string table_name_of_trigger_;
+  std::string trigger_name_;
 
   // drop schema
-  std::string schema_name;
+  std::string schema_name_;
 };
 
 }  // namespace parser

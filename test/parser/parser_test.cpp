@@ -293,8 +293,8 @@ TEST_F(ParserTests, DropTest) {
   EXPECT_EQ(StatementType::DROP, stmt->GetType());
   auto d_stmt = (parser::DropStatement *)stmt;
   EXPECT_STREQ("test_db", d_stmt->GetDatabaseName().c_str());
-  EXPECT_EQ(parser::DropStatement::EntityType::kDatabase, d_stmt->type);
-  EXPECT_FALSE(d_stmt->missing);
+  EXPECT_EQ(parser::DropStatement::EntityType::kDatabase, d_stmt->GetDropType());
+  EXPECT_FALSE(d_stmt->GetMissing());
 
   // Test with IF EXISTS clause
   query = "DROP DATABASE IF EXISTS test_db;";
@@ -305,8 +305,8 @@ TEST_F(ParserTests, DropTest) {
   EXPECT_EQ(StatementType::DROP, stmt->GetType());
   d_stmt = (parser::DropStatement *)stmt;
   EXPECT_STREQ("test_db", d_stmt->GetDatabaseName().c_str());
-  EXPECT_EQ(parser::DropStatement::EntityType::kDatabase, d_stmt->type);
-  EXPECT_TRUE(d_stmt->missing);
+  EXPECT_EQ(parser::DropStatement::EntityType::kDatabase, d_stmt->GetDropType());
+  EXPECT_TRUE(d_stmt->GetMissing());
 
   // Drop schema
   query = "DROP SCHEMA sche;";
@@ -316,8 +316,8 @@ TEST_F(ParserTests, DropTest) {
   EXPECT_EQ(StatementType::DROP, stmt->GetType());
   d_stmt = (parser::DropStatement *)stmt;
   EXPECT_STREQ("sche", d_stmt->GetSchemaName().c_str());
-  EXPECT_EQ(parser::DropStatement::EntityType::kSchema, d_stmt->type);
-  EXPECT_FALSE(d_stmt->missing);
+  EXPECT_EQ(parser::DropStatement::EntityType::kSchema, d_stmt->GetDropType());
+  EXPECT_FALSE(d_stmt->GetMissing());
 
   // Test with CASCADE clause
   query = "DROP SCHEMA sche CASCADE;";
@@ -327,9 +327,9 @@ TEST_F(ParserTests, DropTest) {
   EXPECT_EQ(StatementType::DROP, stmt->GetType());
   d_stmt = (parser::DropStatement *)stmt;
   EXPECT_STREQ("sche", d_stmt->GetSchemaName().c_str());
-  EXPECT_EQ(parser::DropStatement::EntityType::kSchema, d_stmt->type);
-  EXPECT_FALSE(d_stmt->missing);
-  EXPECT_TRUE(d_stmt->cascade);
+  EXPECT_EQ(parser::DropStatement::EntityType::kSchema, d_stmt->GetDropType());
+  EXPECT_FALSE(d_stmt->GetMissing());
+  EXPECT_TRUE(d_stmt->GetCascade());
 }
 
 TEST_F(ParserTests, TM1Test) {

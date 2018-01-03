@@ -1051,11 +1051,11 @@ TEST_F(PostgresParserTests, DropTriggerTest) {
       static_cast<parser::DropStatement *>(stmt_list->GetStatement(0));
   // drop type
   EXPECT_EQ(parser::DropStatement::EntityType::kTrigger,
-            drop_trigger_stmt->type);
+            drop_trigger_stmt->GetDropType());
   // trigger name
-  EXPECT_EQ("if_dist_exists", drop_trigger_stmt->trigger_name);
+  EXPECT_EQ("if_dist_exists", drop_trigger_stmt->GetTriggerName());
   // table name
-  EXPECT_EQ("films", drop_trigger_stmt->table_name_of_trigger);
+  EXPECT_EQ("films", drop_trigger_stmt->GetTriggerTableName());
 }
 
 TEST_F(PostgresParserTests, FuncCallTest) {
