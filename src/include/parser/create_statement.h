@@ -234,8 +234,6 @@ class CreateStatement : public TableRefStatement {
   IndexType index_type;
   std::string index_name;
 
-  std::string trigger_name;
-
   std::string schema_name;
 
   std::string view_name;
@@ -243,6 +241,7 @@ class CreateStatement : public TableRefStatement {
 
   bool unique = false;
 
+  std::string trigger_name;
   std::vector<std::string> trigger_funcname;
   std::vector<std::string> trigger_args;
   std::vector<std::string> trigger_columns;

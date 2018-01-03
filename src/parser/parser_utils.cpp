@@ -224,6 +224,8 @@ std::string ParserUtils::GetCreateStatementInfo(CreateStatement *stmt,
     }
     case CreateStatement::CreateType::kTrigger: {
       os << "Create type: Trigger" << "\n";
+      os << StringUtil::Indent(num_indent + 1) << StringUtil::Format("Trigger table name: %s", stmt->trigger_name.c_str()) << "\n";
+      os << StringUtil::Indent(num_indent + 1) << StringUtil::Format("Trigger name: %s", stmt->GetTableName().c_str()) << "\n";
       break;
     }
     case CreateStatement::CreateType::kSchema: {
@@ -233,6 +235,7 @@ std::string ParserUtils::GetCreateStatementInfo(CreateStatement *stmt,
     }
     case CreateStatement::CreateType::kView: {
       os << "Create type: View" << "\n";
+      os << StringUtil::Indent(num_indent + 1) << StringUtil::Format("View name: %s", stmt->view_name.c_str()) << "\n";
       break;
     }
   }
