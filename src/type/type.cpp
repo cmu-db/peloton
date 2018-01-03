@@ -43,7 +43,8 @@ Type* Type::kTypes[] = {
     new DateType(),  // not yet implemented
     new VarlenType(TypeId::VARCHAR),
     new VarlenType(TypeId::VARBINARY),
-    new ArrayType(),
+    new ArrayType(TypeId::INTEGERARRAY),
+    new ArrayType(TypeId::DECIMALARRAY),
     new Type(TypeId::UDT),  // not yet implemented
 };
 
@@ -67,7 +68,8 @@ uint64_t Type::GetTypeSize(const TypeId type_id) {
       return 8;
     case TypeId::VARCHAR:
     case TypeId::VARBINARY:
-    case TypeId::ARRAY:
+    case TypeId::INTEGERARRAY:
+    case TypeId::DECIMALARRAY:
       return 0;
     default:
       break;

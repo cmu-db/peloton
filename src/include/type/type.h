@@ -58,6 +58,10 @@ class Type {
   inline static Type* GetInstance(TypeId type_id) { return kTypes[static_cast<int>(type_id)]; }
 
   inline TypeId GetTypeId() const { return type_id_; }
+  
+  inline bool IsArrayType() const { 
+    return type_id_ == TypeId::INTEGERARRAY || type_id_ == TypeId::DECIMALARRAY; 
+  }
 
   // Comparison functions
   //
@@ -152,7 +156,7 @@ class Type {
   TypeId type_id_;
 
   // Singleton instances.
-  static Type* kTypes[14];
+  static Type* kTypes[15];
 };
 
 }  // namespace type

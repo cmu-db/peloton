@@ -450,9 +450,14 @@ std::vector<std::vector<std::string>> LogicalTile::GetAllValuesAsStrings(
 
       // LM: I put varchar here because we don't need to do endian conversion
       // for them, and assuming binary and text for a varchar are the same.
+      // array is also the same.
       if (result_format[column_itr] == 0 ||
           cp.base_tile->GetSchema()->GetType(cp.origin_column_id) ==
-              type::TypeId::VARCHAR) {
+          type::TypeId::VARCHAR || 
+          cp.base_tile->GetSchema()->GetType(cp.origin_column_id) == 
+          type::TypeId::INTEGERARRAY || 
+          cp.base_tile->GetSchema()->GetType(cp.origin_column_id) == 
+          type::TypeId::DECIMALARRAY) {
         // don't let to_string function decide what NULL value is
         if (use_to_string_null == false && val.IsNull() == true) {
           // materialize Null values as 0B string

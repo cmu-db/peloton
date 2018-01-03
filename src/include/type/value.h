@@ -44,13 +44,14 @@ class Value : public Printable {
  private:
 #endif
 
-  Value(const TypeId type) : manage_data_(false), type_id_(type) {
+  Value(const TypeId type) : manage_data_(false), manage_array_(false),
+        type_id_(type) {
     size_.len = PELOTON_VALUE_NULL;
   }
 
   // ARRAY values
   template <class T>
-  Value(TypeId type, const std::vector<T> &vals, TypeId element_type);
+  Value(TypeId type, const std::vector<T> &vals, bool manage_array);
 
   // BOOLEAN and TINYINT
   Value(TypeId type, int8_t val);
@@ -160,6 +161,11 @@ class Value : public Printable {
     return Type::GetInstance(type_id_)->IsZero(*this);
   }
 
+  inline bool IsArrayType() const {
+    return type_id_ == TypeId::INTEGERARRAY || 
+           type_id_ == TypeId::DECIMALARRAY;
+  }
+
   // Is the data inlined into this classes storage space, or must it be accessed
   // through an indirection/pointer?
   inline bool IsInlined() const {
@@ -167,7 +173,12 @@ class Value : public Printable {
   }
 
   // Is a value null?
-  inline bool IsNull() const { return size_.len == PELOTON_VALUE_NULL; }
+  inline bool IsNull() const { 
+    if(IsArrayType()) {
+      return GetLength() == 0;
+    }
+    return size_.len == PELOTON_VALUE_NULL;
+  }
 
   // Examine the type of this object.
   bool CheckInteger() const;
@@ -223,6 +234,14 @@ class Value : public Printable {
   inline static Value DeserializeFrom(SerializeInput &in, const TypeId type_id,
                                       AbstractPool *pool = nullptr) {
     return Type::GetInstance(type_id)->DeserializeFrom(in, pool);
+  }
+
+  inline int32_t GetInteger() const {
+    return value_.integer;
+  }
+
+  inline double GetDecimal() const {
+    return value_.decimal;
   }
 
   // Access the raw variable length data
@@ -333,10 +352,10 @@ class Value : public Printable {
 
   union {
     uint32_t len;
-    TypeId elem_type_id;
   } size_;
 
   bool manage_data_;
+  bool manage_array_;
   // TODO: Pack allocated flag with the type id
   // The data type
   TypeId type_id_;
@@ -345,12 +364,18 @@ class Value : public Printable {
 // ARRAY here to ease creation of templates
 // TODO: Fix the representation for a null array
 template <class T>
-Value::Value(TypeId type, const std::vector<T> &vals, TypeId element_type)
-    : Value(TypeId::ARRAY) {
+Value::Value(TypeId type, const std::vector<T> &vals, bool manage_array) : 
+             Value(type) {
+  manage_array_ = manage_array;
   switch (type) {
-    case TypeId::ARRAY:
-      value_.array = (char *)&vals;
-      size_.elem_type_id = element_type;
+    case TypeId::INTEGERARRAY:
+    case TypeId::DECIMALARRAY:
+      if(manage_array_) {
+        auto vec = new std::vector<T>(vals);
+        value_.array = (char *)vec;
+      } else {
+        value_.array = (char *)&vals;
+      }
       break;
     default: {
       std::string msg =

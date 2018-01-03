@@ -50,7 +50,10 @@ struct ColumnDefinition {
     TEXT,
 
     VARCHAR,
-    VARBINARY
+    VARBINARY,
+
+    INTEGERARRAY,
+    DECIMALARRAY
   };
 
   ColumnDefinition(DataType type) : type(type) {
@@ -170,8 +173,11 @@ struct ColumnDefinition {
       case DataType::VARBINARY:
         return type::TypeId::VARBINARY;
 
-      case DataType::DATE:
-        return type::TypeId::DATE;
+      case DataType::INTEGERARRAY:
+        return type::TypeId::INTEGERARRAY;
+
+      case DataType::DECIMALARRAY:
+        return type::TypeId::DECIMALARRAY;
 
       case DataType::INVALID:
       case DataType::PRIMARY:
