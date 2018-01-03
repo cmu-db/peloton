@@ -748,7 +748,7 @@ TEST_F(PostgresParserTests, CreateDbTest) {
   std::unique_ptr<parser::SQLStatementList> stmt_list(
       parser.BuildParseTree(query).release());
   EXPECT_TRUE(stmt_list->is_valid);
-  auto create_stmt = (parser::CreateStatement*)stmt_list->GetStatement(0);
+  auto create_stmt = (parser::CreateStatement *)stmt_list->GetStatement(0);
   LOG_INFO("%s", stmt_list->GetInfo().c_str());
   // TODO: Check attributes
   EXPECT_EQ("tt", create_stmt->GetDatabaseName());
@@ -761,7 +761,7 @@ TEST_F(PostgresParserTests, CreateSchemaTest) {
   std::unique_ptr<parser::SQLStatementList> stmt_list(
       parser.BuildParseTree(query).release());
   EXPECT_TRUE(stmt_list->is_valid);
-  auto create_stmt = (parser::CreateStatement*)stmt_list->GetStatement(0);
+  auto create_stmt = (parser::CreateStatement *)stmt_list->GetStatement(0);
   LOG_INFO("%s", stmt_list->GetInfo().c_str());
   // Check attributes
   EXPECT_EQ("tt", create_stmt->schema_name);
@@ -771,21 +771,23 @@ TEST_F(PostgresParserTests, CreateSchemaTest) {
 
   stmt_list.reset(parser.BuildParseTree(query).release());
   EXPECT_TRUE(stmt_list->is_valid);
-  create_stmt = (parser::CreateStatement*)stmt_list->GetStatement(0);
+  create_stmt = (parser::CreateStatement *)stmt_list->GetStatement(0);
   LOG_INFO("%s", stmt_list->GetInfo().c_str());
   // Check attributes
   EXPECT_EQ("joe", create_stmt->schema_name);
 }
 
 TEST_F(PostgresParserTests, CreateViewTest) {
-  std::string query = "CREATE VIEW comedies AS SELECT * FROM films "
-                      "WHERE kind = 'Comedy';";
+  std::string query =
+      "CREATE VIEW comedies AS SELECT * FROM films "
+      "WHERE kind = 'Comedy';";
 
   auto parser = parser::PostgresParser::GetInstance();
   std::unique_ptr<parser::SQLStatementList> stmt_list(
       parser.BuildParseTree(query).release());
   EXPECT_TRUE(stmt_list->is_valid);
-  UNUSED_ATTRIBUTE auto create_stmt = (parser::CreateStatement*)stmt_list->GetStatement(0);
+  UNUSED_ATTRIBUTE auto create_stmt =
+      (parser::CreateStatement *)stmt_list->GetStatement(0);
   LOG_INFO("%s", stmt_list->GetInfo().c_str());
   // Check attributes
   EXPECT_EQ("comedies", create_stmt->view_name);
@@ -794,11 +796,13 @@ TEST_F(PostgresParserTests, CreateViewTest) {
   EXPECT_EQ("films", view_query->from_table.get()->GetTableName());
   EXPECT_EQ(1, view_query->select_list.size());
   EXPECT_TRUE(view_query->where_clause.get() != nullptr);
-  EXPECT_EQ(ExpressionType::COMPARE_EQUAL, view_query->where_clause.get()->GetExpressionType());
+  EXPECT_EQ(ExpressionType::COMPARE_EQUAL,
+            view_query->where_clause.get()->GetExpressionType());
   EXPECT_EQ(2, view_query->where_clause.get()->GetChildrenSize());
   auto left_child = view_query->where_clause.get()->GetChild(0);
   EXPECT_EQ(ExpressionType::VALUE_TUPLE, left_child->GetExpressionType());
-  EXPECT_EQ("kind", ((expression::TupleValueExpression *)left_child)->GetColumnName());
+  EXPECT_EQ("kind",
+            ((expression::TupleValueExpression *)left_child)->GetColumnName());
   auto right_child = view_query->where_clause.get()->GetChild(1);
   EXPECT_EQ(ExpressionType::VALUE_CONSTANT, right_child->GetExpressionType());
 }
