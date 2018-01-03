@@ -10,9 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <include/catalog/index_catalog.h>
 #include "executor/drop_executor.h"
 
+#include "include/catalog/index_catalog.h"
 #include "catalog/catalog.h"
 #include "catalog/trigger_catalog.h"
 #include "common/logger.h"
