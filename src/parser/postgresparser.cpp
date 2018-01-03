@@ -1174,13 +1174,13 @@ parser::DropStatement *PostgresParser::DropDatabaseTransform(
 
   result->table_info_.reset(new parser::TableInfo());
   result->table_info_->database_name = root->dbname;
-  result->missing = root->missing_ok;
+  result->SetMissing(root->missing_ok);
   return result;
 }
 
 parser::DropStatement *PostgresParser::DropTableTransform(DropStmt *root) {
   auto result = new DropStatement(DropStatement::EntityType::kTable);
-  result->missing = root->missing_ok;
+  result->SetMissing(root->missing_ok);
   for (auto cell = root->objects->head; cell != nullptr; cell = cell->next) {
     auto table_info = new TableInfo{};
     auto table_list = reinterpret_cast<List *>(cell->data.ptr_value);
@@ -1197,21 +1197,21 @@ parser::DropStatement *PostgresParser::DropTriggerTransform(DropStmt *root) {
   auto result = new DropStatement(DropStatement::EntityType::kTrigger);
   auto cell = root->objects->head;
   auto list = reinterpret_cast<List *>(cell->data.ptr_value);
-  result->table_name_of_trigger =
-      reinterpret_cast<value *>(list->head->data.ptr_value)->val.str;
-  result->trigger_name =
-      reinterpret_cast<value *>(list->head->next->data.ptr_value)->val.str;
+  result->SetTriggerTableName(
+      reinterpret_cast<value *>(list->head->data.ptr_value)->val.str);
+  result->SetTriggerName(
+      reinterpret_cast<value *>(list->head->next->data.ptr_value)->val.str);
   return result;
 }
 
 parser::DropStatement *PostgresParser::DropSchemaTransform(DropStmt *root) {
   auto result = new DropStatement(DropStatement::EntityType::kSchema);
-  result->cascade = (root->behavior == DropBehavior::DROP_CASCADE);
-  result->missing = root->missing_ok;
+  result->SetCascade(root->behavior == DropBehavior::DROP_CASCADE);
+  result->SetMissing(root->missing_ok);
   for (auto cell = root->objects->head; cell != nullptr; cell = cell->next) {
     auto table_list = reinterpret_cast<List *>(cell->data.ptr_value);
-    result->schema_name =
-        reinterpret_cast<value *>(table_list->head->data.ptr_value)->val.str;
+    result->SetSchemaName(
+        reinterpret_cast<value *>(table_list->head->data.ptr_value)->val.str);
     break;
   }
   return result;
