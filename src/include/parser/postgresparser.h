@@ -184,8 +184,7 @@ class PostgresParser {
    * @param Postgres CreateDatabaseStmt parsenode
    * @return a peloton CreateStatement node
    */
-  static parser::SQLStatement *CreateDatabaseTransform(
-      CreateDatabaseStmt *root);
+  static parser::SQLStatement *CreateDatabaseTransform(CreateDatabaseStmt *root);
 
   // transform helper for column name (for insert statement)
   static std::vector<std::string> *ColumnNameTransform(List *root);

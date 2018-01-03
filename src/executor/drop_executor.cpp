@@ -153,7 +153,8 @@ bool DropExecutor::DropIndex(const planner::DropPlan &node,
       index_object->GetIndexOid(), txn);
   txn->SetResult(result);
   if (txn->GetResult() == ResultType::SUCCESS) {
-    LOG_TRACE("Dropping Index Succeeded!");
+    LOG_TRACE("Dropping Index Succeeded! Index oid: %d",
+              index_object->GetIndexOid());
   } else {
     LOG_TRACE("Dropping Index Failed!");
   }
