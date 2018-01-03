@@ -12,6 +12,7 @@
 
 #include <memory>
 
+#include "catalog/index_catalog.h"
 #include "sql/testing_sql_util.h"
 #include "catalog/catalog.h"
 #include "common/harness.h"
@@ -83,6 +84,59 @@ TEST_F(DropSQLTests, DropTableTest) {
   EXPECT_EQ(table, nullptr);
 
   // free the database just created
+  txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+}
+
+TEST_F(DropSQLTests, DropIndexTest) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+
+  // Create a table first
+  TestingSQLUtil::ExecuteSQLQuery(
+      "CREATE TABLE test(a INT PRIMARY KEY, b INT);");
+
+  // Check the table in catalog
+  storage::DataTable *table;
+  txn = txn_manager.BeginTransaction();
+  try {
+    table = catalog::Catalog::GetInstance()->GetTableWithName(DEFAULT_DB_NAME,
+                                                              "test", txn);
+  } catch (CatalogException &e) {
+    table = nullptr;
+  }
+  txn_manager.CommitTransaction(txn);
+  EXPECT_NE(table, nullptr);
+
+  // Create a Index
+  TestingSQLUtil::ExecuteSQLQuery("CREATE INDEX idx ON test(a);");
+
+  //    Check if the index is in catalog
+  std::shared_ptr<catalog::IndexCatalogObject> index;
+  txn = txn_manager.BeginTransaction();
+  try {
+    index = catalog::IndexCatalog::GetInstance()->GetIndexObject("idx", txn);
+
+  } catch (CatalogException &e) {
+    index = nullptr;
+  }
+  txn_manager.CommitTransaction(txn);
+  EXPECT_NE(index, nullptr);
+
+  // Drop the index
+  EXPECT_EQ(TestingSQLUtil::ExecuteSQLQuery("DROP INDEX idx;"),
+            ResultType::SUCCESS);
+
+  // Check if index is not in catalog
+  txn = txn_manager.BeginTransaction();
+  index = catalog::IndexCatalog::GetInstance()->GetIndexObject("idx", txn);
+  txn_manager.CommitTransaction(txn);
+  EXPECT_EQ(index, nullptr);
+
+  // Free the database just created
   txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
