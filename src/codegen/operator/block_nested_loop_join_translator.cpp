@@ -134,7 +134,10 @@ void BlockNestedLoopJoinTranslator::TearDownState() {
 }
 
 std::string BlockNestedLoopJoinTranslator::GetName() const {
-  return "BlockNestedLoopJoin";
+  auto max_buffer_size = settings::SettingsManager::GetDouble(
+      settings::SettingId::bnlj_buffer_size);
+  return StringUtil::Format("BlockNestedLoopJoin[buffer: %.2lf KB, # rows: %u]",
+                            (max_buffer_size / 1024.0), max_buf_rows_);
 }
 
 void BlockNestedLoopJoinTranslator::Produce() const {
@@ -232,7 +235,7 @@ class BufferedTupleCallback : public Sorter::IterateCallback {
   RowBatch::Row &right_row_;
 };
 
-inline BufferedTupleCallback::BufferedTupleCallback(
+BufferedTupleCallback::BufferedTupleCallback(
     const planner::NestedLoopJoinPlan &plan,
     const std::vector<const planner::AttributeInfo *> &left_attributes,
     ConsumerContext &ctx, RowBatch::Row &right_row)
@@ -242,7 +245,7 @@ inline BufferedTupleCallback::BufferedTupleCallback(
       right_row_(right_row) {}
 
 // This function is called for each tuple in the BNLJ buffer.
-inline void BufferedTupleCallback::ProcessEntry(
+void BufferedTupleCallback::ProcessEntry(
     CodeGen &codegen, const std::vector<codegen::Value> &left_row) const {
   PL_ASSERT(left_row.size() == left_attributes_.size());
 
@@ -269,7 +272,7 @@ inline void BufferedTupleCallback::ProcessEntry(
   }
 }
 
-inline void BufferedTupleCallback::ProjectAndConsume() const {
+void BufferedTupleCallback::ProjectAndConsume() const {
   const auto *projection_info = plan_.GetProjInfo();
   std::vector<RowBatch::ExpressionAccess> derived_attribute_access;
   if (projection_info != nullptr) {
