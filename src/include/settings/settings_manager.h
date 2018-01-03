@@ -29,6 +29,7 @@ namespace settings {
 class SettingsManager : public Printable {
  public:
   static int32_t GetInt(SettingId id);
+  static double GetDouble(SettingId id);
   static bool GetBool(SettingId id);
   static std::string GetString(SettingId id);
 
