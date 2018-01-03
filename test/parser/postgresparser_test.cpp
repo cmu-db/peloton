@@ -681,6 +681,34 @@ TEST_F(PostgresParserTests, CreateIndexTest) {
   EXPECT_TRUE(create_stmt->unique);
   EXPECT_EQ("o_w_id", create_stmt->index_attrs.at(0));
   EXPECT_EQ("o_d_id", create_stmt->index_attrs.at(1));
+
+  query = "CREATE INDEX ii ON t USING SKIPLIST (col);";
+  stmt_list.reset(parser.BuildParseTree(query).release());
+
+  EXPECT_TRUE(stmt_list->is_valid);
+  create_stmt = (parser::CreateStatement *)stmt_list->GetStatement(0);
+  LOG_INFO("%s", stmt_list->GetInfo().c_str());
+  // Check attributes
+  EXPECT_EQ(parser::CreateStatement::kIndex, create_stmt->type);
+  EXPECT_EQ(IndexType::SKIPLIST, create_stmt->index_type);
+  EXPECT_EQ("ii", create_stmt->index_name);
+  EXPECT_EQ("t", create_stmt->table_info_->table_name);
+
+  query = "CREATE INDEX ii ON t (col);";
+  stmt_list.reset(parser.BuildParseTree(query).release());
+
+  EXPECT_TRUE(stmt_list->is_valid);
+  create_stmt = (parser::CreateStatement *)stmt_list->GetStatement(0);
+  LOG_INFO("%s", stmt_list->GetInfo().c_str());
+  // Check attributes
+  EXPECT_EQ(parser::CreateStatement::kIndex, create_stmt->type);
+  EXPECT_EQ(IndexType::BWTREE, create_stmt->index_type);
+  EXPECT_EQ("ii", create_stmt->index_name);
+  EXPECT_EQ("t", create_stmt->table_info_->table_name);
+
+  query = "CREATE INDEX ii ON t USING GIN (col);";
+
+  EXPECT_THROW(parser.BuildParseTree(query), peloton::Exception);
 }
 
 TEST_F(PostgresParserTests, InsertIntoSelectTest) {
@@ -1101,38 +1129,6 @@ TEST_F(PostgresParserTests, TypeCastTest) {
     EXPECT_EQ(result->is_valid, true);
 
     LOG_TRACE("%d : %s", ++ii, result->GetInfo().c_str());
-  }
-}
-
-TEST_F(PostgresParserTests, IndexTypeTest) {
-  std::vector<std::string> queries;
-  queries.push_back("CREATE INDEX ii ON t USING SKIPLIST (col);");
-  queries.push_back("CREATE INDEX ii ON t USING HASH (col);");
-  queries.push_back("CREATE INDEX ii ON t USING BWTREE (col);");
-  queries.push_back("CREATE INDEX ii ON t USING BTREE (col);");
-  queries.push_back("CREATE INDEX ii ON t (col);");
-  // Parsing
-  UNUSED_ATTRIBUTE int ii = 0;
-  for (auto query : queries) {
-    std::unique_ptr<parser::SQLStatementList> result(
-        parser::PostgresParser::ParseSQLString(query.c_str()));
-
-    if (result->is_valid == false) {
-      LOG_ERROR("Message: %s, line: %d, col: %d", result->parser_msg,
-                result->error_line, result->error_col);
-    }
-    EXPECT_EQ(result->is_valid, true);
-
-    LOG_TRACE("%d : %s", ++ii, result->GetInfo().c_str());
-  }
-
-  // Following queries are using index types that we do no currently support.
-  std::vector<std::string> invalid_queries;
-  invalid_queries.push_back("CREATE INDEX ii ON t USING GIN (col);");
-  invalid_queries.push_back("CREATE INDEX ii ON t USING BRIN (col);");
-  for (auto query : invalid_queries) {
-    EXPECT_THROW(parser::PostgresParser::ParseSQLString(query.c_str()),
-                 peloton::Exception);
   }
 }
 
