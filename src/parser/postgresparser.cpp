@@ -294,12 +294,10 @@ expression::AbstractExpression *PostgresParser::ColumnRefTransform(
                 ->val.str));
       } else {
         result = new expression::TupleValueExpression(
-            std::string(
-                (reinterpret_cast<value *>(fields->head->next->data.ptr_value))
-                    ->val.str),
-            std::string(
-                (reinterpret_cast<value *>(fields->head->data.ptr_value))
-                    ->val.str));
+            std::string((reinterpret_cast<value *>(
+                             fields->head->next->data.ptr_value))->val.str),
+            std::string((reinterpret_cast<value *>(
+                             fields->head->data.ptr_value))->val.str));
       }
       break;
     }
@@ -1235,6 +1233,7 @@ parser::DropStatement *PostgresParser::DropIndexTransform(DropStmt *root) {
   return result;
 }
 
+// TODO: Implement other options for drop index
 parser::DropStatement *PostgresParser::DropIndexTransform(DropStmt *root) {
   auto result = new DropStatement(DropStatement::EntityType::kIndex);
   auto cell = root->objects->head;
