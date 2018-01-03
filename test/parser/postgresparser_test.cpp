@@ -748,8 +748,47 @@ TEST_F(PostgresParserTests, CreateDbTest) {
   std::unique_ptr<parser::SQLStatementList> stmt_list(
       parser.BuildParseTree(query).release());
   EXPECT_TRUE(stmt_list->is_valid);
-  //  auto create_stmt = (parser::CreateStatement*)stmt_list->GetStatement(0);
-  //  LOG_INFO("%s", stmt_list->GetInfo().c_str());
+  auto create_stmt = (parser::CreateStatement*)stmt_list->GetStatement(0);
+  LOG_INFO("%s", stmt_list->GetInfo().c_str());
+  // TODO: Check attributes
+  EXPECT_EQ("tt", create_stmt->GetDatabaseName());
+}
+
+TEST_F(PostgresParserTests, CreateSchemaTest) {
+  std::string query = "CREATE SCHEMA tt";
+
+  auto parser = parser::PostgresParser::GetInstance();
+  std::unique_ptr<parser::SQLStatementList> stmt_list(
+      parser.BuildParseTree(query).release());
+  EXPECT_TRUE(stmt_list->is_valid);
+  auto create_stmt = (parser::CreateStatement*)stmt_list->GetStatement(0);
+  LOG_INFO("%s", stmt_list->GetInfo().c_str());
+  // Check attributes
+  EXPECT_EQ("tt", create_stmt->schema_name);
+
+  // Test default schema name
+  query = "CREATE SCHEMA AUTHORIZATION joe";
+
+  stmt_list.reset(parser.BuildParseTree(query).release());
+  EXPECT_TRUE(stmt_list->is_valid);
+  create_stmt = (parser::CreateStatement*)stmt_list->GetStatement(0);
+  LOG_INFO("%s", stmt_list->GetInfo().c_str());
+  // Check attributes
+  EXPECT_EQ("joe", create_stmt->schema_name);
+}
+
+TEST_F(PostgresParserTests, CreateViewTest) {
+  std::string query = "CREATE VIEW comedies AS SELECT * FROM films "
+                      "WHERE kind = 'Comedy';";
+
+  auto parser = parser::PostgresParser::GetInstance();
+  std::unique_ptr<parser::SQLStatementList> stmt_list(
+      parser.BuildParseTree(query).release());
+  EXPECT_TRUE(stmt_list->is_valid);
+  UNUSED_ATTRIBUTE auto create_stmt = (parser::CreateStatement*)stmt_list->GetStatement(0);
+  LOG_INFO("%s", stmt_list->GetInfo().c_str());
+  // Check attributes
+  // EXPECT_EQ("comedies", create_stmt->view_name);
 }
 
 TEST_F(PostgresParserTests, DistinctFromTest) {

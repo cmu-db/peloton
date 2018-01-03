@@ -1092,6 +1092,66 @@ parser::SQLStatement *PostgresParser::CreateDatabaseTransform(
   return result;
 }
 
+parser::SQLStatement *PostgresParser::CreateSchemaTransform(
+    CreateSchemaStmt *root) {
+  parser::CreateStatement *result =
+      new parser::CreateStatement(CreateStatement::kSchema);
+  if (root->schemaname != nullptr) {
+    result->schema_name = root->schemaname;
+  }
+  result->if_not_exists = root->if_not_exists;
+  if (root->authrole != nullptr) {
+    Node *authrole = reinterpret_cast<Node *>(root->authrole);
+    if (authrole->type == T_RoleSpec) {
+      RoleSpec *role = reinterpret_cast<RoleSpec *>(authrole);
+      // Peloton do not need the authrole, the only usage is when no schema name is specified
+      if (root->schemaname == nullptr) {
+        result->schema_name = role->rolename;
+      }
+    } else {
+      delete result;
+      throw NotImplementedException(StringUtil::Format(
+          "authrole of type %d is not supported yet...", authrole->type));
+    }
+  }
+  if (root->schemaElts == nullptr) {
+    return result;
+  } else {
+    throw NotImplementedException(
+        "CREATE SCHEMA does not support schema_element yet...\n");
+  }
+  for (auto cell = root->schemaElts->head; cell != nullptr; cell = cell->next) {
+    Node *node = reinterpret_cast<Node*>(cell->data.ptr_value);
+    switch (node->type) {
+      case T_CreateStmt:
+        // CreateTransform((CreateStmt *)node);
+        break;
+      case T_ViewStmt:
+        // CreateViewTransform((ViewStmt *)node);
+        break;
+      default:
+        delete result;
+        throw NotImplementedException(StringUtil::Format(
+            "schemaElt of type %d not supported yet...", node->type));
+    }
+  }
+
+  return result;
+}
+
+parser::SQLStatement *PostgresParser::CreateViewTransform(
+    ViewStmt *root) {
+  parser::CreateStatement *result =
+      new parser::CreateStatement(CreateStatement::kView);
+  // result->table_info_.reset(RangeVarTransform(reinterpret_cast<RangeVar *>(root->view)));
+  if (root->query->type != T_SelectStmt) {
+    delete result;
+    throw NotImplementedException("CREATE VIEW as query only supports SELECT query...\n");
+  }
+  result->view_query.reset(SelectTransform(reinterpret_cast<SelectStmt *>(root->query)));
+  return result;
+}
+
 parser::DropStatement *PostgresParser::DropTransform(DropStmt *root) {
   switch (root->removeType) {
     case ObjectType::OBJECT_TABLE:
@@ -1381,7 +1441,7 @@ parser::SQLStatement *PostgresParser::InsertTransform(InsertStmt *root) {
 // and transfers into a Peloton SelectStatement parsenode.
 // Please refer to parser/parsenode.h for the definition of
 // SelectStmt parsenodes.
-parser::SQLStatement *PostgresParser::SelectTransform(SelectStmt *root) {
+parser::SelectStatement *PostgresParser::SelectTransform(SelectStmt *root) {
   parser::SelectStatement *result;
   switch (root->op) {
     case SETOP_NONE:
@@ -1420,7 +1480,7 @@ parser::SQLStatement *PostgresParser::SelectTransform(SelectStmt *root) {
           "Set operation %d not supported yet...\n", root->op));
   }
 
-  return reinterpret_cast<parser::SQLStatement *>(result);
+  return result;
 }
 
 // This function takes in a Postgres DeleteStmt parsenode
@@ -1476,6 +1536,12 @@ parser::SQLStatement *PostgresParser::NodeTransform(Node *stmt) {
       break;
     case T_CreateTrigStmt:
       result = CreateTriggerTransform(reinterpret_cast<CreateTrigStmt *>(stmt));
+      break;
+    case T_CreateSchemaStmt:
+      result = CreateSchemaTransform(reinterpret_cast<CreateSchemaStmt *>(stmt));
+      break;
+    case T_ViewStmt:
+      result = CreateViewTransform(reinterpret_cast<ViewStmt *>(stmt));
       break;
     case T_UpdateStmt:
       result = UpdateTransform((UpdateStmt *)stmt);
