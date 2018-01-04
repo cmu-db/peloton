@@ -51,20 +51,16 @@ class ArrayType : public Type {
   size_t Hash(const Value& val UNUSED_ATTRIBUTE) const override { return 0; }
   void HashCombine(const Value& val UNUSED_ATTRIBUTE, size_t &seed UNUSED_ATTRIBUTE) const override {}
 
-  void SerializeTo(const Value& val UNUSED_ATTRIBUTE, SerializeOutput &out UNUSED_ATTRIBUTE) const override {
-    throw Exception("Can't serialize array types to storage");
-  }
   // Serialize this value into the given storage space
   void SerializeTo(const Value& val, SerializeOutput &out) const override;
+  void SerializeTo(const Value& val, char *storage, bool inlined,
+                   AbstractPool *pool) const override;
 
-  void SerializeTo(const Value& val UNUSED_ATTRIBUTE, char *storage UNUSED_ATTRIBUTE,
-                   bool inlined UNUSED_ATTRIBUTE,
-                   AbstractPool *pool UNUSED_ATTRIBUTE) const override {
-    throw Exception("Can't serialize array types to storage");
-  }
   // Deserialize a value of the given type from the given storage space.
   Value DeserializeFrom(const char *storage,
                                 const bool inlined, AbstractPool *pool = nullptr) const override;
+  Value DeserializeFrom(SerializeInput &in,
+                                AbstractPool *pool = nullptr) const override;
 
   // Create a copy of this value
   Value Copy(const Value &val) const override;

@@ -615,6 +615,10 @@ Value ArrayType::CastAs(const Value &val UNUSED_ATTRIBUTE,
 // Create a copy of this value
 Value ArrayType::Copy(const Value& val) const { return Value(val); }
 
+void ArrayType::SerializeTo(const Value& val UNUSED_ATTRIBUTE, SerializeOutput &out UNUSED_ATTRIBUTE) const {
+  throw Exception("Can't serialize array types to storage");
+}
+
 void ArrayType::SerializeTo(const Value& val, char *storage,
                  bool inlined UNUSED_ATTRIBUTE,
                  AbstractPool *pool) const {
@@ -694,6 +698,11 @@ Value ArrayType::DeserializeFrom(const char *storage,
       throw Exception(ExceptionType::INCOMPATIBLE_TYPE, msg);
     }
   }
+}
+
+Value ArrayType::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,
+                                  AbstractPool *pool UNUSED_ATTRIBUTE) const {
+  throw Exception("Can't deserialize array types from storage");
 }
 
 std::string ArrayType::ToString(const Value &val) const {

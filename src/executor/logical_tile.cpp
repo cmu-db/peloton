@@ -453,11 +453,8 @@ std::vector<std::vector<std::string>> LogicalTile::GetAllValuesAsStrings(
       // array is also the same.
       if (result_format[column_itr] == 0 ||
           cp.base_tile->GetSchema()->GetType(cp.origin_column_id) ==
-          type::TypeId::VARCHAR || 
-          cp.base_tile->GetSchema()->GetType(cp.origin_column_id) == 
-          type::TypeId::INTEGERARRAY || 
-          cp.base_tile->GetSchema()->GetType(cp.origin_column_id) == 
-          type::TypeId::DECIMALARRAY) {
+          type::TypeId::VARCHAR) {
+        LOG_INFO("if type %d", cp.base_tile->GetSchema()->GetType(cp.origin_column_id));
         // don't let to_string function decide what NULL value is
         if (use_to_string_null == false && val.IsNull() == true) {
           // materialize Null values as 0B string
@@ -467,6 +464,8 @@ std::vector<std::vector<std::string>> LogicalTile::GetAllValuesAsStrings(
           row.push_back(val.ToString());
         }
       } else {
+        LOG_INFO("else type %d", cp.base_tile->GetSchema()->GetType(cp.origin_column_id));
+        // TODO:aa_ convert ARRAY into binary
         auto data_length =
             cp.base_tile->GetSchema()->GetLength(cp.origin_column_id);
         LOG_TRACE("data length: %ld", data_length);
