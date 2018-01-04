@@ -12,7 +12,6 @@
 
 #include "optimizer/operators.h"
 #include "optimizer/operator_visitor.h"
-#include "storage/data_table.h"
 #include "expression/expression_util.h"
 
 namespace peloton {
@@ -31,7 +30,7 @@ Operator LeafOperator::make(GroupID group) {
 //===--------------------------------------------------------------------===//
 Operator LogicalGet::make(oid_t get_id,
                           std::vector<AnnotatedExpression> predicates,
-                          storage::DataTable *table, std::string alias,
+                          std::shared_ptr<catalog::TableCatalogObject> table, std::string alias,
                           bool update) {
   LogicalGet *get = new LogicalGet;
   get->table = table;
@@ -344,7 +343,7 @@ hash_t LogicalAggregateAndGroupBy::Hash() const {
 // Insert
 //===--------------------------------------------------------------------===//
 Operator LogicalInsert::make(
-    storage::DataTable *target_table, const std::vector<std::string> *columns,
+    std::shared_ptr<catalog::TableCatalogObject> target_table, const std::vector<std::string> *columns,
     const std::vector<std::vector<
         std::unique_ptr<peloton::expression::AbstractExpression>>> *values) {
   LogicalInsert *insert_op = new LogicalInsert;
@@ -354,7 +353,7 @@ Operator LogicalInsert::make(
   return Operator(insert_op);
 }
 
-Operator LogicalInsertSelect::make(storage::DataTable *target_table) {
+Operator LogicalInsertSelect::make(std::shared_ptr<catalog::TableCatalogObject> target_table) {
   LogicalInsertSelect *insert_op = new LogicalInsertSelect;
   insert_op->target_table = target_table;
   return Operator(insert_op);
@@ -363,7 +362,7 @@ Operator LogicalInsertSelect::make(storage::DataTable *target_table) {
 //===--------------------------------------------------------------------===//
 // Delete
 //===--------------------------------------------------------------------===//
-Operator LogicalDelete::make(storage::DataTable *target_table) {
+Operator LogicalDelete::make(std::shared_ptr<catalog::TableCatalogObject> target_table) {
   LogicalDelete *delete_op = new LogicalDelete;
   delete_op->target_table = target_table;
   return Operator(delete_op);
@@ -373,7 +372,7 @@ Operator LogicalDelete::make(storage::DataTable *target_table) {
 // Update
 //===--------------------------------------------------------------------===//
 Operator LogicalUpdate::make(
-    storage::DataTable *target_table,
+    std::shared_ptr<catalog::TableCatalogObject> target_table,
     const std::vector<std::unique_ptr<peloton::parser::UpdateClause>> *
         updates) {
   LogicalUpdate *update_op = new LogicalUpdate;
@@ -411,7 +410,7 @@ Operator DummyScan::make() {
 //===--------------------------------------------------------------------===//
 // SeqScan
 //===--------------------------------------------------------------------===//
-Operator PhysicalSeqScan::make(oid_t get_id, storage::DataTable *table,
+Operator PhysicalSeqScan::make(oid_t get_id, std::shared_ptr<catalog::TableCatalogObject> table,
                                std::string alias,
                                std::vector<AnnotatedExpression> predicates,
                                bool update) {
@@ -448,7 +447,7 @@ hash_t PhysicalSeqScan::Hash() const {
 //===--------------------------------------------------------------------===//
 // IndexScan
 //===--------------------------------------------------------------------===//
-Operator PhysicalIndexScan::make(oid_t get_id, storage::DataTable *table,
+Operator PhysicalIndexScan::make(oid_t get_id, std::shared_ptr<catalog::TableCatalogObject> table,
                                  std::string alias,
                                  std::vector<AnnotatedExpression> predicates,
                                  bool update, oid_t index_id,
@@ -702,7 +701,7 @@ Operator PhysicalOuterHashJoin::make(
 // PhysicalInsert
 //===--------------------------------------------------------------------===//
 Operator PhysicalInsert::make(
-    storage::DataTable *target_table, const std::vector<std::string> *columns,
+    std::shared_ptr<catalog::TableCatalogObject> target_table, const std::vector<std::string> *columns,
     const std::vector<std::vector<
         std::unique_ptr<peloton::expression::AbstractExpression>>> *values) {
   PhysicalInsert *insert_op = new PhysicalInsert;
@@ -715,7 +714,7 @@ Operator PhysicalInsert::make(
 //===--------------------------------------------------------------------===//
 // PhysicalInsertSelect
 //===--------------------------------------------------------------------===//
-Operator PhysicalInsertSelect::make(storage::DataTable *target_table) {
+Operator PhysicalInsertSelect::make(std::shared_ptr<catalog::TableCatalogObject> target_table) {
   PhysicalInsertSelect *insert_op = new PhysicalInsertSelect;
   insert_op->target_table = target_table;
   return Operator(insert_op);
@@ -724,7 +723,7 @@ Operator PhysicalInsertSelect::make(storage::DataTable *target_table) {
 //===--------------------------------------------------------------------===//
 // PhysicalDelete
 //===--------------------------------------------------------------------===//
-Operator PhysicalDelete::make(storage::DataTable *target_table) {
+Operator PhysicalDelete::make(std::shared_ptr<catalog::TableCatalogObject> target_table) {
   PhysicalDelete *delete_op = new PhysicalDelete;
   delete_op->target_table = target_table;
   return Operator(delete_op);
@@ -734,7 +733,7 @@ Operator PhysicalDelete::make(storage::DataTable *target_table) {
 // PhysicalUpdate
 //===--------------------------------------------------------------------===//
 Operator PhysicalUpdate::make(
-    storage::DataTable *target_table,
+    std::shared_ptr<catalog::TableCatalogObject> target_table,
     const std::vector<std::unique_ptr<peloton::parser::UpdateClause>> *
         updates) {
   PhysicalUpdate *update = new PhysicalUpdate;

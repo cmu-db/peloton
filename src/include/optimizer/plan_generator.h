@@ -26,6 +26,10 @@ class AggregatePlan;
 class PropertySet;
 }
 
+namespace transaction {
+class TransactionContext;
+}
+
 namespace optimizer {
 class OperatorExpression;
 }
@@ -101,7 +105,7 @@ class PlanGenerator : public OperatorVisitor {
    */
   std::vector<std::unique_ptr<expression::AbstractExpression>>
   GenerateTableTVExprs(const std::string &alias,
-                       const storage::DataTable *table);
+                       std::shared_ptr<catalog::TableCatalogObject> table);
 
   /**
    * @brief Generate the column oids vector for a scan plan
@@ -122,7 +126,7 @@ class PlanGenerator : public OperatorVisitor {
    */
   std::unique_ptr<expression::AbstractExpression> GeneratePredicateForScan(
       const std::shared_ptr<expression::AbstractExpression> predicate_expr,
-      const std::string &alias, const storage::DataTable *table);
+      const std::string &alias, std::shared_ptr<catalog::TableCatalogObject> table);
 
   /**
    * @brief Generate projection info and projection schema for join
@@ -170,6 +174,8 @@ class PlanGenerator : public OperatorVisitor {
    * @brief The final output plan
    */
   std::unique_ptr<planner::AbstractPlan> output_plan_;
+
+  transaction::TransactionContext *txn_;
 };
 
 }  // namespace optimizer

@@ -30,12 +30,8 @@ namespace parser {
 class UpdateClause;
 }
 
-namespace storage {
-class DataTable;
-}
-
-namespace index {
-class Index;
+namespace catalog {
+  class TableCatalogObject;
 }
 
 namespace optimizer {
@@ -57,7 +53,7 @@ class LogicalGet : public OperatorNode<LogicalGet> {
  public:
   static Operator make(oid_t get_id = 0,
                        std::vector<AnnotatedExpression> predicates = {},
-                       storage::DataTable *table = nullptr,
+                       std::shared_ptr<catalog::TableCatalogObject> table = nullptr,
                        std::string alias = "", bool update = false);
 
   bool operator==(const BaseOperatorNode &r) override;
@@ -67,7 +63,7 @@ class LogicalGet : public OperatorNode<LogicalGet> {
   // identifier for all get operators
   oid_t get_id;
   std::vector<AnnotatedExpression> predicates;
-  storage::DataTable *table;
+  std::shared_ptr<catalog::TableCatalogObject> table;
   std::string table_alias;
   bool is_for_update;
 };
@@ -247,11 +243,11 @@ class LogicalAggregateAndGroupBy
 class LogicalInsert : public OperatorNode<LogicalInsert> {
  public:
   static Operator make(
-      storage::DataTable *target_table, const std::vector<std::string> *columns,
+      std::shared_ptr<catalog::TableCatalogObject> target_table, const std::vector<std::string> *columns,
       const std::vector<std::vector<
           std::unique_ptr<expression::AbstractExpression>>> *values);
 
-  storage::DataTable *target_table;
+  std::shared_ptr<catalog::TableCatalogObject> target_table;
   const std::vector<std::string> *columns;
   const std::vector<
       std::vector<std::unique_ptr<expression::AbstractExpression>>> *values;
@@ -259,9 +255,9 @@ class LogicalInsert : public OperatorNode<LogicalInsert> {
 
 class LogicalInsertSelect : public OperatorNode<LogicalInsertSelect> {
  public:
-  static Operator make(storage::DataTable *target_table);
+  static Operator make(std::shared_ptr<catalog::TableCatalogObject> target_table);
 
-  storage::DataTable *target_table;
+  std::shared_ptr<catalog::TableCatalogObject> target_table;
 };
 
 //===--------------------------------------------------------------------===//
@@ -287,9 +283,9 @@ class LogicalLimit : public OperatorNode<LogicalLimit> {
 //===--------------------------------------------------------------------===//
 class LogicalDelete : public OperatorNode<LogicalDelete> {
  public:
-  static Operator make(storage::DataTable *target_table);
+  static Operator make(std::shared_ptr<catalog::TableCatalogObject> target_table);
 
-  storage::DataTable *target_table;
+  std::shared_ptr<catalog::TableCatalogObject> target_table;
 };
 
 //===--------------------------------------------------------------------===//
@@ -298,10 +294,10 @@ class LogicalDelete : public OperatorNode<LogicalDelete> {
 class LogicalUpdate : public OperatorNode<LogicalUpdate> {
  public:
   static Operator make(
-      storage::DataTable *target_table,
+      std::shared_ptr<catalog::TableCatalogObject> target_table,
       const std::vector<std::unique_ptr<parser::UpdateClause>> *updates);
 
-  storage::DataTable *target_table;
+  std::shared_ptr<catalog::TableCatalogObject> target_table;
   const std::vector<std::unique_ptr<parser::UpdateClause>> *updates;
 };
 
@@ -318,7 +314,7 @@ class DummyScan : public OperatorNode<DummyScan> {
 //===--------------------------------------------------------------------===//
 class PhysicalSeqScan : public OperatorNode<PhysicalSeqScan> {
  public:
-  static Operator make(oid_t get_id, storage::DataTable *table,
+  static Operator make(oid_t get_id, std::shared_ptr<catalog::TableCatalogObject> table,
                        std::string alias,
                        std::vector<AnnotatedExpression> predicates,
                        bool update);
@@ -332,7 +328,7 @@ class PhysicalSeqScan : public OperatorNode<PhysicalSeqScan> {
   std::vector<AnnotatedExpression> predicates;
   std::string table_alias;
   bool is_for_update;
-  storage::DataTable *table_;
+  std::shared_ptr<catalog::TableCatalogObject> table_;
 };
 
 //===--------------------------------------------------------------------===//
@@ -340,7 +336,7 @@ class PhysicalSeqScan : public OperatorNode<PhysicalSeqScan> {
 //===--------------------------------------------------------------------===//
 class PhysicalIndexScan : public OperatorNode<PhysicalIndexScan> {
  public:
-  static Operator make(oid_t get_id, storage::DataTable *table,
+  static Operator make(oid_t get_id, std::shared_ptr<catalog::TableCatalogObject> table,
                        std::string alias,
                        std::vector<AnnotatedExpression> predicates, bool update,
                        oid_t index_id, std::vector<oid_t> key_column_id_list,
@@ -356,7 +352,7 @@ class PhysicalIndexScan : public OperatorNode<PhysicalIndexScan> {
   std::vector<AnnotatedExpression> predicates;
   std::string table_alias;
   bool is_for_update;
-  storage::DataTable *table_;
+  std::shared_ptr<catalog::TableCatalogObject> table_;
 
   // Index info.
   // Match planner::IndexScanPlan::IndexScanDesc index_scan_desc(
@@ -514,11 +510,11 @@ class PhysicalOuterHashJoin : public OperatorNode<PhysicalOuterHashJoin> {
 class PhysicalInsert : public OperatorNode<PhysicalInsert> {
  public:
   static Operator make(
-      storage::DataTable *target_table, const std::vector<std::string> *columns,
+      std::shared_ptr<catalog::TableCatalogObject> target_table, const std::vector<std::string> *columns,
       const std::vector<std::vector<
           std::unique_ptr<expression::AbstractExpression>>> *values);
 
-  storage::DataTable *target_table;
+  std::shared_ptr<catalog::TableCatalogObject> target_table;
   const std::vector<std::string> *columns;
   const std::vector<
       std::vector<std::unique_ptr<expression::AbstractExpression>>> *values;
@@ -526,9 +522,9 @@ class PhysicalInsert : public OperatorNode<PhysicalInsert> {
 
 class PhysicalInsertSelect : public OperatorNode<PhysicalInsertSelect> {
  public:
-  static Operator make(storage::DataTable *target_table);
+  static Operator make(std::shared_ptr<catalog::TableCatalogObject> target_table);
 
-  storage::DataTable *target_table;
+  std::shared_ptr<catalog::TableCatalogObject> target_table;
 };
 
 //===--------------------------------------------------------------------===//
@@ -536,8 +532,8 @@ class PhysicalInsertSelect : public OperatorNode<PhysicalInsertSelect> {
 //===--------------------------------------------------------------------===//
 class PhysicalDelete : public OperatorNode<PhysicalDelete> {
  public:
-  static Operator make(storage::DataTable *target_table);
-  storage::DataTable *target_table;
+  static Operator make(std::shared_ptr<catalog::TableCatalogObject> target_table);
+  std::shared_ptr<catalog::TableCatalogObject> target_table;
 };
 
 //===--------------------------------------------------------------------===//
@@ -546,10 +542,10 @@ class PhysicalDelete : public OperatorNode<PhysicalDelete> {
 class PhysicalUpdate : public OperatorNode<PhysicalUpdate> {
  public:
   static Operator make(
-      storage::DataTable *target_table,
+      std::shared_ptr<catalog::TableCatalogObject> target_table,
       const std::vector<std::unique_ptr<parser::UpdateClause>> *updates);
 
-  storage::DataTable *target_table;
+  std::shared_ptr<catalog::TableCatalogObject> target_table;
   const std::vector<std::unique_ptr<parser::UpdateClause>> *updates;
 };
 

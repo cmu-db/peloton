@@ -37,21 +37,14 @@ bool PropertySort::operator>=(const Property &r) const {
   size_t l_num_sort_columns = sort_columns_.size();
   size_t r_num_sort_columns = r_sort.sort_columns_.size();
   PL_ASSERT(r_num_sort_columns == r_sort.sort_ascending_.size());
-  size_t l_sort_col_idx = 0;
-  // We want to ensure that Sort(a, b, c, d, e) >= Sort(a, c, e)
-  for (size_t r_sort_col_idx = 0; r_sort_col_idx < r_num_sort_columns;
-       ++r_sort_col_idx) {
-    while (l_sort_col_idx < l_num_sort_columns &&
-           !sort_columns_[l_sort_col_idx]->ExactlyEquals(
-               *r_sort.sort_columns_[r_sort_col_idx])) {
-      ++l_sort_col_idx;
-    }
-    if (l_sort_col_idx == l_num_sort_columns ||
-        sort_ascending_[l_sort_col_idx] !=
-            r_sort.sort_ascending_[r_sort_col_idx]) {
+  // We want to ensure that Sort(a, b, c, d, e) >= Sort(a, b, c)
+  if (l_num_sort_columns < r_num_sort_columns) {
+    return false;
+  }
+  for (size_t idx = 0; idx < r_num_sort_columns; ++idx) {
+    if (!sort_columns_[idx]->ExactlyEquals(*r_sort.sort_columns_[idx])) {
       return false;
     }
-    ++l_sort_col_idx;
   }
   return true;
 }

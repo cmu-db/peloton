@@ -37,7 +37,8 @@ class CatalogCache {
   CatalogCache() {}
   CatalogCache(CatalogCache const &) = delete;
   CatalogCache &operator=(CatalogCache const &) = delete;
-  // Getters
+
+ private:
   std::shared_ptr<DatabaseCatalogObject> GetDatabaseObject(oid_t database_oid);
   std::shared_ptr<DatabaseCatalogObject> GetDatabaseObject(
       const std::string &name);
@@ -47,8 +48,6 @@ class CatalogCache {
   std::shared_ptr<IndexCatalogObject> GetCachedIndexObject(
       const std::string &index_name);
 
-
- private:
   // database catalog cache interface
   bool InsertDatabaseObject(
       std::shared_ptr<DatabaseCatalogObject> database_object);

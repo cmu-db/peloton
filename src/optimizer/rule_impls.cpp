@@ -12,6 +12,9 @@
 
 #include <memory>
 
+#include "catalog/index_catalog.h"
+#include "catalog/table_catalog.h"
+#include "catalog/column_catalog.h"
 #include "optimizer/rule_impls.h"
 #include "optimizer/util.h"
 #include "optimizer/operators.h"
@@ -141,8 +144,9 @@ bool GetToIndexScan::Check(std::shared_ptr<OperatorExpression> plan,
   const LogicalGet *get = plan->Op().As<LogicalGet>();
   bool index_exist = false;
   if (get != nullptr && get->table != nullptr &&
-      !get->table->GetIndexColumns().empty())
+      !get->table->GetIndexObjects().empty()) {
     index_exist = true;
+  }
   return index_exist;
 }
 
@@ -155,7 +159,6 @@ void GetToIndexScan::Transform(
   PL_ASSERT(children.size() == 0);
 
   const LogicalGet *get = input->Op().As<LogicalGet>();
-  size_t index_cnt = get->table->GetIndexCount();
 
   // Get sort columns if they are all base columns and all in asc order
   auto sort = context->required_prop->GetPropertyOfType(PropertyType::SORT);
@@ -177,30 +180,26 @@ void GetToIndexScan::Transform(
     }
     // Check whether any index can fulfill sort property
     if (sort_by_asc_base_column) {
-      for (oid_t index_id = 0; index_id < index_cnt; index_id++) {
-        auto index = get->table->GetIndex(index_id);
-        auto &index_col_ids = index->GetMetadata()->GetKeyAttrs();
-        // We want to ensure that Sort(a, b, c, d, e) can fit Sort(a, c, e)
+      for (auto &index_id_object_pair : get->table->GetIndexObjects()) {
+        auto &index_id = index_id_object_pair.first;
+        auto &index = index_id_object_pair.second;
+        auto &index_col_ids = index->GetKeyAttrs();
+        // We want to ensure that Sort(a, b, c, d, e) can fit Sort(a, b, c)
         size_t l_num_sort_columns = index_col_ids.size();
-        size_t l_sort_col_idx = 0;
         size_t r_num_sort_columns = sort_col_ids.size();
-        if (l_num_sort_columns < r_num_sort_columns) continue;
+        if (l_num_sort_columns < r_num_sort_columns) {
+          continue;
+        }
         bool index_matched = true;
-        for (size_t r_sort_col_idx = 0; r_sort_col_idx < r_num_sort_columns;
-             ++r_sort_col_idx) {
-          while (l_sort_col_idx < l_num_sort_columns &&
-                 index_col_ids[l_sort_col_idx] !=
-                     sort_col_ids[r_sort_col_idx]) {
-            ++l_sort_col_idx;
-          }
-          if (l_sort_col_idx == l_num_sort_columns) {
+        for (size_t idx = 0; idx < r_num_sort_columns; ++idx) {
+          if (index_col_ids[idx] != sort_col_ids[idx]) {
             index_matched = false;
             break;
           }
-          ++l_sort_col_idx;
         }
         // Add transformed plan if found
         if (index_matched) {
+          LOG_DEBUG("Index id :%u", index_id);
           auto index_scan_op = PhysicalIndexScan::make(
               get->get_id, get->table, get->table_alias, get->predicates,
               get->is_for_update, index_id, {}, {}, {});
@@ -248,11 +247,10 @@ void GetToIndexScan::Transform(
       // If found valid tv_expr and value_expr, update col_id_list,
       // expr_type_list and val_list
       if (tv_expr != nullptr) {
-        auto schema = get->table->GetSchema();
         auto column_ref = (expression::TupleValueExpression *)tv_expr;
         std::string col_name(column_ref->GetColumnName());
         LOG_TRACE("Column name: %s", col_name.c_str());
-        auto column_id = schema->GetColumnID(col_name);
+        auto column_id = get->table->GetColumnObject(col_name)->GetColumnId();
         key_column_id_list.push_back(column_id);
         expr_type_list.push_back(expr_type);
 
@@ -263,7 +261,7 @@ void GetToIndexScan::Transform(
                   ->GetValue());
           LOG_TRACE("Value Type: %d",
                     reinterpret_cast<expression::ConstantValueExpression *>(
-                        expression->GetModifiableChild(1))
+                        expr->GetModifiableChild(1))
                         ->GetValueType());
         } else {
           value_list.push_back(
@@ -279,12 +277,16 @@ void GetToIndexScan::Transform(
     }  // Loop predicates end
 
     // Find match index for the predicates
-    auto &index_cols = get->table->GetIndexColumns();
-    for (oid_t index_id = 0; index_id < index_cnt; index_id++) {
-      auto &index_col_set = index_cols[index_id];
+    auto index_objects = get->table->GetIndexObjects();
+    for (auto &index_id_object_pair : index_objects) {
+      auto &index_id = index_id_object_pair.first;
+      auto &index_object = index_id_object_pair.second;
       std::vector<oid_t> index_key_column_id_list;
       std::vector<ExpressionType> index_expr_type_list;
       std::vector<type::Value> index_value_list;
+      std::unordered_set<oid_t> index_col_set(
+          index_object->GetKeyAttrs().begin(),
+          index_object->GetKeyAttrs().end());
       for (size_t offset = 0; offset < key_column_id_list.size(); offset++) {
         auto col_id = key_column_id_list[offset];
         if (index_col_set.find(col_id) != index_col_set.end()) {

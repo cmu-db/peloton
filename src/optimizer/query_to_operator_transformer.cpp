@@ -13,6 +13,7 @@
 #include <cmath>
 #include <include/settings/settings_manager.h>
 
+#include "catalog/database_catalog.h"
 #include "expression/expression_util.h"
 #include "expression/subquery_expression.h"
 #include "optimizer/operator_expression.h"
@@ -208,8 +209,8 @@ void QueryToOperatorTransformer::Visit(parser::TableRef *node) {
   // Single table
   else {
     if (node->list.size() == 1) node = node->list.at(0).get();
-    storage::DataTable *target_table =
-        catalog::Catalog::GetInstance()->GetTableWithName(
+    std::shared_ptr<catalog::TableCatalogObject> target_table =
+        catalog::Catalog::GetInstance()->GetTableObject(
             node->GetDatabaseName(), node->GetTableName(), txn_);
     std::string table_alias =
         StringUtil::Lower(std::string(node->GetTableAlias()));
@@ -225,9 +226,10 @@ void QueryToOperatorTransformer::Visit(parser::LimitDescription *) {}
 void QueryToOperatorTransformer::Visit(
     UNUSED_ATTRIBUTE parser::CreateStatement *op) {}
 void QueryToOperatorTransformer::Visit(parser::InsertStatement *op) {
-  storage::DataTable *target_table =
-      catalog::Catalog::GetInstance()->GetTableWithName(
-          op->GetDatabaseName(), op->GetTableName(), txn_);
+  std::shared_ptr<catalog::TableCatalogObject> target_table =
+      catalog::Catalog::GetInstance()
+          ->GetDatabaseObject(op->GetDatabaseName(), txn_)
+          ->GetTableObject(op->GetTableName());
   if (op->type == InsertType::SELECT) {
     auto insert_expr = std::make_shared<OperatorExpression>(
         LogicalInsertSelect::make(target_table));
@@ -242,8 +244,9 @@ void QueryToOperatorTransformer::Visit(parser::InsertStatement *op) {
 }
 
 void QueryToOperatorTransformer::Visit(parser::DeleteStatement *op) {
-  auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-      op->GetDatabaseName(), op->GetTableName(), txn_);
+  auto target_table = catalog::Catalog::GetInstance()
+                          ->GetDatabaseObject(op->GetDatabaseName(), txn_)
+                          ->GetTableObject(op->GetTableName());
   std::shared_ptr<OperatorExpression> table_scan;
   if (op->expr != nullptr) {
     std::vector<AnnotatedExpression> predicates;
@@ -268,8 +271,10 @@ void QueryToOperatorTransformer::Visit(
 void QueryToOperatorTransformer::Visit(
     UNUSED_ATTRIBUTE parser::TransactionStatement *op) {}
 void QueryToOperatorTransformer::Visit(parser::UpdateStatement *op) {
-  auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-      op->table->GetDatabaseName(), op->table->GetTableName(), txn_);
+  auto target_table =
+      catalog::Catalog::GetInstance()
+          ->GetDatabaseObject(op->table->GetDatabaseName(), txn_)
+          ->GetTableObject(op->table->GetTableName());
   std::shared_ptr<OperatorExpression> table_scan;
 
   auto update_expr = std::make_shared<OperatorExpression>(

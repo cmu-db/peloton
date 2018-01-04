@@ -10,6 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "catalog/index_catalog.h"
+#include "catalog/table_catalog.h"
 #include "optimizer/child_property_deriver.h"
 #include "optimizer/properties.h"
 #include "optimizer/group_expression.h"
@@ -48,31 +50,42 @@ void ChildPropertyDeriver::Visit(const PhysicalSeqScan *) {
 
 void ChildPropertyDeriver::Visit(const PhysicalIndexScan *op) {
   auto provided_prop = make_shared<PropertySet>();
-  storage::DataTable *target_table = op->table_;
+  std::shared_ptr<catalog::TableCatalogObject> target_table = op->table_;
   for (auto prop : requirements_->Properties()) {
     if (prop->Type() == PropertyType::SORT) {
       // Walk through all indices in the table, check if any of the index could
       // provide the sort property
-      // TODO(boweic) : for now we only consider index built on one column since
-      // from the current interface we cannot know the order of column in the
-      // index
+      // TODO(boweic) : Now we only consider ascending sort property, since the
+      // index catalog interface does not support descending flag
       auto sort_prop = prop->As<PropertySort>();
-      if (sort_prop->GetSortColumnSize() > 1 ||
-          sort_prop->GetSortColumn(0)->GetExpressionType() !=
-              ExpressionType::VALUE_TUPLE) {
-        break;
-      }
-      auto tv_expr = reinterpret_cast<expression::TupleValueExpression *>(
-          sort_prop->GetSortColumn(0));
-      auto obj_id = tv_expr->GetBoundOid();
-      oid_t col_id = std::get<2>(obj_id);
-      for (auto &column_set : target_table->GetIndexColumns()) {
-        if (column_set.size() > 1) {
-          continue;
-        }
-        if (column_set.count(col_id)) {
-          provided_prop = requirements_;
+      auto sort_col_size = sort_prop->GetSortColumnSize();
+      auto can_fulfill = true;
+      for (size_t idx = 0; idx < sort_col_size; ++idx) {
+        if (!sort_prop->GetSortAscending(idx) ||
+            sort_prop->GetSortColumn(idx)->GetExpressionType() !=
+                ExpressionType::VALUE_TUPLE) {
+          can_fulfill = false;
           break;
+        }
+      }
+      if (!can_fulfill) break;
+      for (auto &index : target_table->GetIndexObjects()) {
+        auto key_oids = index.second->GetKeyAttrs();
+        // If the sort column size is larger, then can't be fulfill by the index
+        if (sort_col_size > key_oids.size()) {
+          break;
+        }
+        auto can_fulfill = true;
+        for (size_t idx = 0; idx < sort_col_size; ++idx) {
+          if (std::get<2>(reinterpret_cast<expression::TupleValueExpression *>(
+                              sort_prop->GetSortColumn(idx))
+                              ->GetBoundOid()) != key_oids[idx]) {
+            can_fulfill = false;
+            break;
+          }
+        }
+        if (can_fulfill) {
+          provided_prop = requirements_;
         }
       }
     }
@@ -179,7 +192,8 @@ void ChildPropertyDeriver::DeriveForJoin() {
       make_shared<PropertySet>(),
       vector<shared_ptr<PropertySet>>(2, make_shared<PropertySet>())));
 
-  // If there is sort property and all the sort columns are from the probe table
+  // If there is sort property and all the sort columns are from the probe
+  // table
   // (currently right table), we can push down the sort property
   for (auto prop : requirements_->Properties()) {
     if (prop->Type() == PropertyType::SORT) {

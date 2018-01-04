@@ -215,7 +215,6 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 #ifdef LOG_TRACE_ENABLED
     num_tuples_examined++;
 #endif
-
     // the following code traverses the version chain until a certain visible
     // version is found.
     // we should always find a visible version from a version chain.

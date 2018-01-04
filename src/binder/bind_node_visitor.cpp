@@ -272,6 +272,8 @@ void BindNodeVisitor::Visit(expression::FunctionExpression *expr) {
   for (size_t i = 0; i < expr->GetChildrenSize(); i++)
     argtypes.push_back(expr->GetChild(i)->GetValueType());
   // Check and set the function ptr
+  // TODO(boweic): Visit the catalog using the interface that is protected by
+  // transaction
   const catalog::FunctionData &func_data =
       catalog_->GetFunction(expr->GetFuncName(), argtypes);
   LOG_DEBUG("Function %s found in the catalog", func_data.func_name_.c_str());

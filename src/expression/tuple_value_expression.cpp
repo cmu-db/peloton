@@ -57,9 +57,7 @@ hash_t TupleValueExpression::HashForExactMatch() const {
   return hash;
 }
 
-bool TupleValueExpression::IsNullable() const {
-  return ai_->type.nullable;
-}
+bool TupleValueExpression::IsNullable() const { return ai_->type.nullable; }
 
 }  // namespace expression
 }  // namespace peloton
