@@ -25,17 +25,17 @@ DropPlan::DropPlan(const std::string &name) {
 }
 
 DropPlan::DropPlan(parser::DropStatement *parse_tree) {
-  switch (parse_tree->type) {
+  switch (parse_tree->GetDropType()) {
     case parser::DropStatement::EntityType::kDatabase: {
       database_name = parse_tree->GetDatabaseName();
-      missing = parse_tree->missing;
+      missing = parse_tree->GetMissing();
       drop_type = DropType::DB;
       break;
     }
     case parser::DropStatement::EntityType::kTable: {
       database_name = parse_tree->GetDatabaseName();
       table_name = parse_tree->GetTableName();
-      missing = parse_tree->missing;
+      missing = parse_tree->GetMissing();
       drop_type = DropType::TABLE;
       break;
     }
@@ -43,13 +43,13 @@ DropPlan::DropPlan(parser::DropStatement *parse_tree) {
       // note parse_tree->table_name is different from
       // parse_tree->GetTableName()
       database_name = parse_tree->GetDatabaseName();
-      table_name = std::string(parse_tree->table_name_of_trigger);
-      trigger_name = std::string(parse_tree->trigger_name);
+      table_name = std::string(parse_tree->GetTriggerTableName());
+      trigger_name = std::string(parse_tree->GetTriggerName());
       drop_type = DropType::TRIGGER;
       break;
     }
     case parser::DropStatement::EntityType::kIndex: {
-      index_name = std::string(parse_tree->index_name);
+      index_name = std::string(parse_tree->GetIndexName());
       drop_type = DropType::INDEX;
       break;
     }

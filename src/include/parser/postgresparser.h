@@ -118,8 +118,8 @@ class PostgresParser {
   static parser::TableRef *FromTransform(SelectStmt *root);
 
   // transform helper for select targets
-  static std::vector<std::unique_ptr<expression::AbstractExpression>>
-      *TargetTransform(List *root);
+  static std::vector<std::unique_ptr<expression::AbstractExpression>> *
+  TargetTransform(List *root);
 
   // transform helper for all expr nodes
   static expression::AbstractExpression *ExprTransform(Node *root);
@@ -184,7 +184,14 @@ class PostgresParser {
    * @param Postgres CreateDatabaseStmt parsenode
    * @return a peloton CreateStatement node
    */
-  static parser::SQLStatement *CreateDatabaseTransform(CreateDatabaseStmt *root);
+  static parser::SQLStatement *CreateDatabaseTransform(
+      CreateDatabaseStmt *root);
+
+  // transform helper for create schema statements
+  static parser::SQLStatement *CreateSchemaTransform(CreateSchemaStmt *root);
+
+  // transform helper for create view statements
+  static parser::SQLStatement *CreateViewTransform(ViewStmt *root);
 
   // transform helper for column name (for insert statement)
   static std::vector<std::string> *ColumnNameTransform(List *root);
@@ -198,7 +205,7 @@ class PostgresParser {
   static parser::SQLStatement *InsertTransform(InsertStmt *root);
 
   // transform helper for select statements
-  static parser::SQLStatement *SelectTransform(SelectStmt *root);
+  static parser::SelectStatement *SelectTransform(SelectStmt *root);
 
   // transform helper for delete statements
   static parser::SQLStatement *DeleteTransform(DeleteStmt *root);
@@ -213,8 +220,8 @@ class PostgresParser {
   static parser::UpdateStatement *UpdateTransform(UpdateStmt *update_stmt);
 
   // transform helper for update statement
-  static std::vector<std::unique_ptr<parser::UpdateClause>>
-      *UpdateTargetTransform(List *root);
+  static std::vector<std::unique_ptr<parser::UpdateClause>> *
+  UpdateTargetTransform(List *root);
 
   // transform helper for drop statement
   static parser::DropStatement *DropTransform(DropStmt *root);
@@ -235,6 +242,9 @@ class PostgresParser {
 
   // tranform helper for drop index statement
   static parser::DropStatement *DropIndexTransform(DropStmt *root);
+
+  // transform helper for drop schema statement
+  static parser::DropStatement *DropSchemaTransform(DropStmt *root);
 
   // transform helper for truncate statement
   static parser::DeleteStatement *TruncateTransform(TruncateStmt *root);

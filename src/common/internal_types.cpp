@@ -841,6 +841,8 @@ IndexType StringToIndexType(const std::string &str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
     return IndexType::INVALID;
+  } else if (upper_str == "BTREE") {
+    return IndexType::BWTREE;
   } else if (upper_str == "BWTREE") {
     return IndexType::BWTREE;
   } else if (upper_str == "HASH") {
@@ -2368,9 +2370,9 @@ std::string LayoutTypeToString(LayoutType type) {
       return "HYBRID";
     }
     default: {
-      throw ConversionException(StringUtil::Format(
-          "No string conversion for LayoutType value '%d'",
-          static_cast<int>(type)));
+      throw ConversionException(
+          StringUtil::Format("No string conversion for LayoutType value '%d'",
+                             static_cast<int>(type)));
     }
   }
   return "INVALID";
@@ -2380,9 +2382,6 @@ std::ostream &operator<<(std::ostream &os, const LayoutType &type) {
   os << LayoutTypeToString(type);
   return os;
 }
-
-
-
 
 type::TypeId PostgresValueTypeToPelotonValueType(PostgresValueType type) {
   switch (type) {
