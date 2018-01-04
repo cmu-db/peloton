@@ -291,10 +291,10 @@ TEST_F(ParserTests, DropTest) {
   EXPECT_TRUE(stmt_list->is_valid);
   auto stmt = stmt_list->GetStatement(0);
   EXPECT_EQ(StatementType::DROP, stmt->GetType());
-  auto d_stmt = (parser::DropStatement*)stmt;
+  auto d_stmt = (parser::DropStatement *)stmt;
   EXPECT_STREQ("test_db", d_stmt->GetDatabaseName().c_str());
-  EXPECT_EQ(parser::DropStatement::EntityType::kDatabase, d_stmt->type);
-  EXPECT_FALSE(d_stmt->missing);
+  EXPECT_EQ(parser::DropStatement::EntityType::kDatabase, d_stmt->GetDropType());
+  EXPECT_FALSE(d_stmt->GetMissing());
 
   // Test with IF EXISTS clause
   query = "DROP DATABASE IF EXISTS test_db;";
@@ -303,11 +303,33 @@ TEST_F(ParserTests, DropTest) {
   EXPECT_TRUE(exist_stmt_list->is_valid);
   stmt = exist_stmt_list->GetStatement(0);
   EXPECT_EQ(StatementType::DROP, stmt->GetType());
-  d_stmt = (parser::DropStatement*)stmt;
+  d_stmt = (parser::DropStatement *)stmt;
   EXPECT_STREQ("test_db", d_stmt->GetDatabaseName().c_str());
-  EXPECT_EQ(parser::DropStatement::EntityType::kDatabase, d_stmt->type);
-  EXPECT_TRUE(d_stmt->missing);
+  EXPECT_EQ(parser::DropStatement::EntityType::kDatabase, d_stmt->GetDropType());
+  EXPECT_TRUE(d_stmt->GetMissing());
 
+  // Drop schema
+  query = "DROP SCHEMA sche;";
+  stmt_list.reset(parser.BuildParseTree(query).release());
+  EXPECT_TRUE(stmt_list->is_valid);
+  stmt = stmt_list->GetStatement(0);
+  EXPECT_EQ(StatementType::DROP, stmt->GetType());
+  d_stmt = (parser::DropStatement *)stmt;
+  EXPECT_STREQ("sche", d_stmt->GetSchemaName().c_str());
+  EXPECT_EQ(parser::DropStatement::EntityType::kSchema, d_stmt->GetDropType());
+  EXPECT_FALSE(d_stmt->GetMissing());
+
+  // Test with CASCADE clause
+  query = "DROP SCHEMA sche CASCADE;";
+  stmt_list.reset(parser.BuildParseTree(query).release());
+  EXPECT_TRUE(stmt_list->is_valid);
+  stmt = stmt_list->GetStatement(0);
+  EXPECT_EQ(StatementType::DROP, stmt->GetType());
+  d_stmt = (parser::DropStatement *)stmt;
+  EXPECT_STREQ("sche", d_stmt->GetSchemaName().c_str());
+  EXPECT_EQ(parser::DropStatement::EntityType::kSchema, d_stmt->GetDropType());
+  EXPECT_FALSE(d_stmt->GetMissing());
+  EXPECT_TRUE(d_stmt->GetCascade());
 }
 
 TEST_F(ParserTests, TM1Test) {
