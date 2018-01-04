@@ -631,6 +631,49 @@ typedef struct CreateDatabaseStmt {
   List *options; /* List of DefElem nodes */
 } CreateDatabaseStmt;
 
+typedef struct CreateSchemaStmt
+{
+  NodeTag   type;
+  char     *schemaname;   /* the name of the schema to create */
+  Node     *authrole;   /* the owner of the created schema */
+  List     *schemaElts;   /* schema components (list of parsenodes) */
+  bool    if_not_exists;  /* just do nothing if schema already exists? */
+} CreateSchemaStmt;
+
+typedef enum RoleSpecType
+{
+  ROLESPEC_CSTRING,     /* role name is stored as a C string */
+  ROLESPEC_CURRENT_USER,    /* role spec is CURRENT_USER */
+  ROLESPEC_SESSION_USER,    /* role spec is SESSION_USER */
+  ROLESPEC_PUBLIC       /* role name is "public" */
+} RoleSpecType;
+
+typedef struct RoleSpec
+{
+  NodeTag   type;
+  RoleSpecType roletype;    /* Type of this rolespec */
+  char     *rolename;   /* filled only for ROLESPEC_CSTRING */
+  int     location;   /* token location, or -1 if unknown */
+} RoleSpec;
+
+typedef enum ViewCheckOption
+{
+  NO_CHECK_OPTION,
+  LOCAL_CHECK_OPTION,
+  CASCADED_CHECK_OPTION
+} ViewCheckOption;
+
+typedef struct ViewStmt
+{
+  NodeTag   type;
+  RangeVar   *view;     /* the view to be created */
+  List     *aliases;    /* target column names */
+  Node     *query;      /* the SELECT query */
+  bool    replace;    /* replace an existing view? */
+  List     *options;    /* options from WITH clause */
+  ViewCheckOption withCheckOption;  /* WITH CHECK OPTION */
+} ViewStmt;
+
 typedef struct ParamRef {
   NodeTag type;
   int number;   /* the number of the parameter */

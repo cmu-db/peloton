@@ -180,11 +180,18 @@ class PostgresParser {
 
   /**
    * @brief transform helper for create database statement
-   * 
+   *
    * @param Postgres CreateDatabaseStmt parsenode
    * @return a peloton CreateStatement node
    */
-  static parser::SQLStatement *CreateDatabaseTransform(CreateDatabaseStmt *root);
+  static parser::SQLStatement *CreateDatabaseTransform(
+      CreateDatabaseStmt *root);
+
+  // transform helper for create schema statements
+  static parser::SQLStatement *CreateSchemaTransform(CreateSchemaStmt *root);
+
+  // transform helper for create view statements
+  static parser::SQLStatement *CreateViewTransform(ViewStmt *root);
 
   // transform helper for column name (for insert statement)
   static std::vector<std::string> *ColumnNameTransform(List *root);
@@ -198,7 +205,7 @@ class PostgresParser {
   static parser::SQLStatement *InsertTransform(InsertStmt *root);
 
   // transform helper for select statements
-  static parser::SQLStatement *SelectTransform(SelectStmt *root);
+  static parser::SelectStatement *SelectTransform(SelectStmt *root);
 
   // transform helper for delete statements
   static parser::SQLStatement *DeleteTransform(DeleteStmt *root);
@@ -221,17 +228,20 @@ class PostgresParser {
 
   /**
    * @brief transform helper for drop database statement
-   * 
+   *
    * @param Postgres DropDatabaseStmt parsenode
    * @return a peloton DropStatement node
    */
-  static parser::DropStatement* DropDatabaseTransform(DropDatabaseStmt* root);
-  
+  static parser::DropStatement *DropDatabaseTransform(DropDatabaseStmt *root);
+
   // transform helper for drop table statement
   static parser::DropStatement *DropTableTransform(DropStmt *root);
 
   // transform helper for drop trigger statement
   static parser::DropStatement *DropTriggerTransform(DropStmt *root);
+
+  // transform helper for drop schema statement
+  static parser::DropStatement *DropSchemaTransform(DropStmt *root);
 
   // transform helper for truncate statement
   static parser::DeleteStatement *TruncateTransform(TruncateStmt *root);
