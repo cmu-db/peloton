@@ -18,7 +18,6 @@
 #include "common/internal_types.h"
 #include "common/logger.h"
 #include "common/macros.h"
-#include "type/types.h"
 #include "type/value_factory.h"
 #include "parser/sql_statement.h"
 #include "parser/statements.h"
@@ -533,6 +532,8 @@ std::string QueryTypeToString(QueryType query_type) {
     case QueryType::QUERY_CREATE_INDEX: return "CREATE INDEX";
     case QueryType::QUERY_CREATE_TABLE: return "CREATE TABLE";
     case QueryType::QUERY_CREATE_TRIGGER: return "CREATE TRIGGER";
+    case QueryType::QUERY_CREATE_SCHEMA: return "CREATE SCHEMA";
+    case QueryType::QUERY_CREATE_VIEW: return "CREATE VIEW";
     case QueryType::QUERY_DROP:return "DROP";
     case QueryType::QUERY_INSERT:return "INSERT";
     case QueryType::QUERY_SET: return "SET";
@@ -562,8 +563,8 @@ QueryType StringToQueryType(const std::string &str) {
       {"COPY", QueryType::QUERY_COPY}, {"ANALYZE", QueryType::QUERY_ANALYZE},
       {"RENAME", QueryType::QUERY_RENAME}, {"PREPARE", QueryType::QUERY_PREPARE},
       {"EXECUTE", QueryType::QUERY_EXECUTE}, {"SELECT", QueryType::QUERY_SELECT},
-      {"CREATE TRIGGER", QueryType::QUERY_CREATE_TRIGGER},
-      {"OTHER", QueryType::QUERY_OTHER},
+      {"CREATE TRIGGER", QueryType::QUERY_CREATE_TRIGGER}, {"CREATE SCHEMA", QueryType::QUERY_CREATE_SCHEMA},
+      {"CREATE VIEW", QueryType::QUERY_CREATE_VIEW}, {"OTHER", QueryType::QUERY_OTHER},
   };
   std::unordered_map<std::string, QueryType>::iterator it  = querytype_string_map.find(str);
   if (it != querytype_string_map.end()) {
@@ -614,6 +615,10 @@ QueryType StatementTypeToQueryType(StatementType stmt_type, const parser::SQLSta
           case parser::CreateStatement::CreateType::kTable:query_type = QueryType::QUERY_CREATE_TABLE;
             break;
           case parser::CreateStatement::CreateType::kTrigger:query_type = QueryType::QUERY_CREATE_TRIGGER;
+            break;
+          case parser::CreateStatement::CreateType::kSchema:query_type = QueryType::QUERY_CREATE_SCHEMA;
+            break;
+          case parser::CreateStatement::CreateType::kView:query_type = QueryType::QUERY_CREATE_VIEW;
             break;
         }
         break;
