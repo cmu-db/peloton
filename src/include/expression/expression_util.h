@@ -780,6 +780,24 @@ class ExpressionUtil {
                         needs_projection, true);
   }
 
+  /*
+   * Check whether an expression could be evaluated statically.
+   */
+  static bool IsValidStaticExpression(const AbstractExpression *expr) {
+    if (!(expr->GetExpressionType() == ExpressionType::VALUE_CONSTANT ||
+          IsOperatorExpression(expr->GetExpressionType()) ||
+          expr->GetExpressionType() == ExpressionType::FUNCTION)) {
+      return false;
+    }
+    size_t child_size = expr->GetChildrenSize();
+    for (size_t idx = 0; idx < child_size; ++idx) {
+      if (!IsValidStaticExpression(expr->GetChild(idx))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
  private:
   /**
    * this is a private function for transforming expressions as described
@@ -883,23 +901,6 @@ class ExpressionUtil {
     expr->DeduceExpressionType();
   }
 
-  /*
-   * Check whether an expression could be evaluated statically.
-   */
-  static bool IsValidStaticExpression(const AbstractExpression *expr) {
-    if (!(expr->GetExpressionType() == ExpressionType::VALUE_CONSTANT ||
-          IsOperatorExpression(expr->GetExpressionType()) ||
-          expr->GetExpressionType() == ExpressionType::FUNCTION)) {
-      return false;
-    }
-    size_t child_size = expr->GetChildrenSize();
-    for (size_t idx = 0; idx < child_size; ++idx) {
-      if (!IsValidStaticExpression(expr->GetChild(idx))) {
-        return false;
-      }
-    }
-    return true;
-  }
 };
 }
 }
