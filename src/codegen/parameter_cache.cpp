@@ -38,6 +38,10 @@ codegen::Value ParameterCache::GetValue(uint32_t index) const {
   return values_[index];
 }
 
+void ParameterCache::Reset() {
+  values_.clear();
+}
+
 codegen::Value ParameterCache::DeriveParameterValue(CodeGen &codegen,
     llvm::Value *query_parameters_ptr, uint32_t index,
     peloton::type::TypeId type_id, bool is_nullable) {
@@ -92,7 +96,10 @@ codegen::Value ParameterCache::DeriveParameterValue(CodeGen &codegen,
                       TypeIdToString(type_id)};
     }
   }
-  llvm::Value *is_null = codegen.Call(QueryParametersProxy::IsNull, args);
+  llvm::Value *is_null = nullptr;
+  if (is_nullable) {
+    is_null = codegen.Call(QueryParametersProxy::IsNull, args);
+  }
   return Value{type::Type{type_id, is_nullable}, val, len, is_null};
 }
 

@@ -12,7 +12,9 @@
 
 #pragma once
 
+#include "concurrency/transaction_context.h"
 #include "executor/abstract_executor.h"
+#include "planner/drop_plan.h"
 
 namespace peloton {
 
@@ -28,13 +30,13 @@ namespace executor {
 
 class DropExecutor : public AbstractExecutor {
  public:
-	DropExecutor(const DropExecutor &) = delete;
-	DropExecutor &operator=(const DropExecutor &) = delete;
-	DropExecutor(DropExecutor &&) = delete;
-	DropExecutor &operator=(DropExecutor &&) = delete;
+  DropExecutor(const DropExecutor &) = delete;
+  DropExecutor &operator=(const DropExecutor &) = delete;
+  DropExecutor(DropExecutor &&) = delete;
+  DropExecutor &operator=(DropExecutor &&) = delete;
 
-	DropExecutor(const planner::AbstractPlan *node,
-                 ExecutorContext *executor_context);
+  DropExecutor(const planner::AbstractPlan *node,
+               ExecutorContext *executor_context);
 
   ~DropExecutor() {}
 
@@ -43,9 +45,20 @@ class DropExecutor : public AbstractExecutor {
 
   bool DExecute();
 
+  bool DropDatabase(const planner::DropPlan &node,
+                    concurrency::TransactionContext *txn);
+
+  bool DropTable(const planner::DropPlan &node,
+                 concurrency::TransactionContext *txn);
+
+  bool DropTrigger(const planner::DropPlan &node,
+                   concurrency::TransactionContext *txn);
+
+  bool DropIndex(const planner::DropPlan &node,
+                 concurrency::TransactionContext *txn);
+
  private:
   ExecutorContext *context_;
-
 };
 
 }  // namespace executor

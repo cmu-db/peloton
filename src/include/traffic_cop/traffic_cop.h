@@ -58,10 +58,10 @@ class TrafficCop {
   // Reset this object.
   void Reset();
 
-  // Execute a statement from a prepared and bound statement.
+  // Execute a statement
   ResultType ExecuteStatement(
       const std::shared_ptr<Statement> &statement,
-      const std::vector<type::Value> &params, bool unnamed,
+      const std::vector<type::Value> &params, const bool unnamed,
       std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
       const std::vector<int> &result_format, std::vector<ResultValue> &result,
       std::string &error_message, size_t thread_id = 0);
@@ -72,11 +72,15 @@ class TrafficCop {
       const std::vector<type::Value> &params, std::vector<ResultValue> &result,
       const std::vector<int> &result_format, size_t thread_id = 0);
 
-  // Prepare and bind a query from a query string
+  // Prepare a statement using the parse tree
   std::shared_ptr<Statement> PrepareStatement(const std::string &statement_name,
                                               const std::string &query_string,
+                                              std::unique_ptr<parser::SQLStatementList> sql_stmt_list,
                                               std::string &error_message,
                                               size_t thread_id = 0);
+
+  bool BindParamsForCachePlan(const std::vector<std::unique_ptr<expression::AbstractExpression>>&,
+                              std::string &error_message, const size_t thread_id = 0);
 
   std::vector<FieldInfo> GenerateTupleDescriptor(
       parser::SQLStatement *select_stmt);
@@ -100,6 +104,8 @@ class TrafficCop {
   }
 
   void setRowsAffected(int rows_affected) { rows_affected_ = rows_affected; }
+
+  void ProcessInvalidStatement();
 
   int getRowsAffected() { return rows_affected_; }
 
@@ -162,7 +168,7 @@ class TrafficCop {
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer_;
 
   // flag of single statement txn
-  bool is_single_statement_txn_;
+  bool single_statement_txn_;
 
   std::vector<ResultValue> result_;
 

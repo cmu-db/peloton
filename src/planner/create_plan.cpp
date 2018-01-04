@@ -37,7 +37,7 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree)
   switch (parse_tree->type) {
     case parser::CreateStatement::CreateType::kDatabase: {
       create_type = CreateType::DB;
-      database_name = std::string(parse_tree->database_name);
+      database_name = std::string(parse_tree->GetDatabaseName());
       break;
     }
     case parser::CreateStatement::CreateType::kTable: {

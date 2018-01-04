@@ -58,8 +58,14 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
   LOG_INFO("Query: %s", query.c_str());
   // prepareStatement
   std::string unnamed_statement = "unnamed";
-  auto statement =
-      traffic_cop_.PrepareStatement(unnamed_statement, query, error_message);
+  auto &peloton_parser = parser::PostgresParser::GetInstance();
+  auto sql_stmt_list = peloton_parser.BuildParseTree(query);
+  PL_ASSERT(sql_stmt_list);
+  if (!sql_stmt_list -> is_valid) {
+    return ResultType::FAILURE;
+  }
+  auto statement = traffic_cop_.PrepareStatement(unnamed_statement, query, std::move(sql_stmt_list),
+                                                 error_message);
   if (statement.get() == nullptr) {
     traffic_cop_.setRowsAffected(0);
     rows_changed = 0;
@@ -149,8 +155,14 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query,
 
   // prepareStatement
   std::string unnamed_statement = "unnamed";
-  auto statement =
-      traffic_cop_.PrepareStatement(unnamed_statement, query, error_message);
+  auto &peloton_parser = parser::PostgresParser::GetInstance();
+  auto sql_stmt_list = peloton_parser.BuildParseTree(query);
+  PL_ASSERT(sql_stmt_list);
+  if (!sql_stmt_list -> is_valid) {
+    return ResultType::FAILURE;
+  }
+  auto statement = traffic_cop_.PrepareStatement(unnamed_statement, query, std::move(sql_stmt_list),
+                                                 error_message);
   if (statement.get() == nullptr) {
     traffic_cop_.setRowsAffected(0);
     return ResultType::FAILURE;
@@ -184,8 +196,14 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
   // execute the query using tcop
   // prepareStatement
   std::string unnamed_statement = "unnamed";
-  auto statement =
-      traffic_cop_.PrepareStatement(unnamed_statement, query, error_message);
+  auto &peloton_parser = parser::PostgresParser::GetInstance();
+  auto sql_stmt_list = peloton_parser.BuildParseTree(query);
+  PL_ASSERT(sql_stmt_list);
+  if (!sql_stmt_list -> is_valid) {
+    return ResultType::FAILURE;
+  }
+  auto statement = traffic_cop_.PrepareStatement(unnamed_statement, query, std::move(sql_stmt_list),
+                                                 error_message);
   if (statement.get() == nullptr) {
     traffic_cop_.setRowsAffected(0);
     return ResultType::FAILURE;

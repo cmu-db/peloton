@@ -118,8 +118,8 @@ class PostgresParser {
   static parser::TableRef *FromTransform(SelectStmt *root);
 
   // transform helper for select targets
-  static std::vector<std::unique_ptr<expression::AbstractExpression>> *
-  TargetTransform(List *root);
+  static std::vector<std::unique_ptr<expression::AbstractExpression>>
+      *TargetTransform(List *root);
 
   // transform helper for all expr nodes
   static expression::AbstractExpression *ExprTransform(Node *root);
@@ -178,22 +178,33 @@ class PostgresParser {
   // transform helper for create trigger statements
   static parser::SQLStatement *CreateTriggerTransform(CreateTrigStmt *root);
 
-  // transform helper for create db statement
-  static parser::SQLStatement *CreateDbTransform(CreatedbStmt *root);
+  /**
+   * @brief transform helper for create database statement
+   *
+   * @param Postgres CreateDatabaseStmt parsenode
+   * @return a peloton CreateStatement node
+   */
+  static parser::SQLStatement *CreateDatabaseTransform(CreateDatabaseStmt *root);
+
+  // transform helper for create schema statements
+  static parser::SQLStatement *CreateSchemaTransform(CreateSchemaStmt *root);
+
+  // transform helper for create view statements
+  static parser::SQLStatement *CreateViewTransform(ViewStmt *root);
 
   // transform helper for column name (for insert statement)
   static std::vector<std::string> *ColumnNameTransform(List *root);
 
   // transform helper for ListsTransform (insert multiple rows)
   static std::vector<
-      std::vector<std::unique_ptr<expression::AbstractExpression>>> *
-  ValueListsTransform(List *root);
+      std::vector<std::unique_ptr<expression::AbstractExpression>>>
+      *ValueListsTransform(List *root);
 
   // transform helper for insert statements
   static parser::SQLStatement *InsertTransform(InsertStmt *root);
 
   // transform helper for select statements
-  static parser::SQLStatement *SelectTransform(SelectStmt *root);
+  static parser::SelectStatement *SelectTransform(SelectStmt *root);
 
   // transform helper for delete statements
   static parser::SQLStatement *DeleteTransform(DeleteStmt *root);
@@ -208,17 +219,31 @@ class PostgresParser {
   static parser::UpdateStatement *UpdateTransform(UpdateStmt *update_stmt);
 
   // transform helper for update statement
-  static std::vector<std::unique_ptr<parser::UpdateClause>> *
-  UpdateTargetTransform(List *root);
+  static std::vector<std::unique_ptr<parser::UpdateClause>>
+      *UpdateTargetTransform(List *root);
 
   // transform helper for drop statement
   static parser::DropStatement *DropTransform(DropStmt *root);
+
+  /**
+   * @brief transform helper for drop database statement
+   *
+   * @param Postgres DropDatabaseStmt parsenode
+   * @return a peloton DropStatement node
+   */
+  static parser::DropStatement *DropDatabaseTransform(DropDatabaseStmt *root);
 
   // transform helper for drop table statement
   static parser::DropStatement *DropTableTransform(DropStmt *root);
 
   // transform helper for drop trigger statement
   static parser::DropStatement *DropTriggerTransform(DropStmt *root);
+
+  // transform helper for drop schema statement
+  static parser::DropStatement *DropSchemaTransform(DropStmt *root);
+
+  // tranform helper for drop index statement
+  static parser::DropStatement *DropIndexTransform(DropStmt *root);
 
   // transform helper for truncate statement
   static parser::DeleteStatement *TruncateTransform(TruncateStmt *root);
@@ -243,7 +268,9 @@ class PostgresParser {
   static parser::CopyStatement *CopyTransform(CopyStmt *root);
 
   // transform helper for analyze statement
-  static parser::AnalyzeStatement *VacuumTransform(VacuumStmt *root);
+  static parser::AnalyzeStatement *VacuumTransform(VacuumStmt* root);
+
+  static parser::VariableSetStatement *VariableSetTransform(VariableSetStmt* root);
 
   // transform helper for subquery expressions
   static expression::AbstractExpression *SubqueryExprTransform(SubLink *node);

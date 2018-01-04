@@ -257,7 +257,7 @@ bool ProjectInfo::operator==(const ProjectInfo &rhs) const {
 void ProjectInfo::VisitParameters(
     codegen::QueryParametersMap &map, std::vector<peloton::type::Value> &values,
     const std::vector<peloton::type::Value> &values_from_user) {
-  if (isNonTrivial()) {
+  if (IsNonTrivial()) {
 
     for (auto &target : GetTargetList()) {
       const auto &derived_attribute = target.second;

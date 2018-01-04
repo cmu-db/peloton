@@ -24,6 +24,7 @@
 
 #include "planner/create_plan.h"
 #include "planner/delete_plan.h"
+#include "planner/drop_plan.h"
 #include "planner/attribute_info.h"
 #include "planner/plan_util.h"
 #include "planner/project_info.h"
@@ -40,7 +41,6 @@ namespace test {
 class PlannerTest : public PelotonTest {};
 
 TEST_F(PlannerTest, CreateDatabasePlanTest) {
-
   auto& peloton_parser = parser::PostgresParser::GetInstance();
   auto parse_tree_list = peloton_parser.BuildParseTree("CREATE DATABASE pelotondb;");
   // There should be only one statement in the statement list
@@ -48,9 +48,24 @@ TEST_F(PlannerTest, CreateDatabasePlanTest) {
   auto &parse_tree = parse_tree_list->GetStatements().at(0);
 
   std::unique_ptr<planner::CreatePlan> create_DB_plan(
-    new planner::CreatePlan((parser::CreateStatement *)parse_tree.get()));
-  EXPECT_EQ(0, create_DB_plan->GetDatabaseName().compare("pelotondb"));
+    new planner::CreatePlan((parser::CreateStatement *)parse_tree.get())
+  );
+  EXPECT_STREQ("pelotondb", create_DB_plan->GetDatabaseName().c_str());
   EXPECT_EQ(CreateType::DB, create_DB_plan->GetCreateType());
+}
+
+TEST_F(PlannerTest, DropDatabasePlanTest) {
+  auto& peloton_parser = parser::PostgresParser::GetInstance();
+  auto parse_tree_list = peloton_parser.BuildParseTree("DROP DATABASE pelotondb;");
+  // There should be only one statement in the statement list
+  EXPECT_EQ(1, parse_tree_list->GetNumStatements());
+  auto &parse_tree = parse_tree_list->GetStatements().at(0);
+
+  std::unique_ptr<planner::DropPlan> drop_DB_plan(
+    new planner::DropPlan((parser::DropStatement *)parse_tree.get())
+  );
+  EXPECT_STREQ("pelotondb", drop_DB_plan->GetDatabaseName().c_str());
+  EXPECT_EQ(DropType::DB, drop_DB_plan->GetDropType());
 }
   
 TEST_F(PlannerTest, DeletePlanTestParameter) {

@@ -54,8 +54,7 @@ class RuntimeState {
 
   // Register a parameter with the given name and type in this state. Callers
   // can specify whether the state is local (i.e., on the stack) or global.
-  RuntimeState::StateID RegisterState(std::string name, llvm::Type *type,
-                                      bool is_on_stack = false);
+  RuntimeState::StateID RegisterState(std::string name, llvm::Type *type);
 
   // Get the pointer to the given state information with the given ID
   llvm::Value *LoadStatePtr(CodeGen &codegen,
@@ -68,18 +67,12 @@ class RuntimeState {
   // Construct the equivalent LLVM type that represents this runtime state
   llvm::Type *FinalizeType(CodeGen &codegen);
 
-  // Create/initialize all registered state that is stack-local
-  void CreateLocalState(CodeGen &codegen);
-
  private:
   // Little struct to track information of elements in the runtime state
   struct StateInfo {
     // The name and type of the variable
     std::string name;
     llvm::Type *type;
-
-    // Is this state allocated on the stack (local) or as a function parameter
-    bool local;
 
     // This is the index into the runtime state type that this state is stored
     uint32_t index;

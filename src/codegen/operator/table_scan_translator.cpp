@@ -19,14 +19,9 @@
 #include "codegen/proxy/runtime_functions_proxy.h"
 #include "codegen/proxy/zone_map_proxy.h"
 #include "codegen/type/boolean_type.h"
-#include "expression/abstract_expression.h"
-#include "expression/constant_value_expression.h"
-#include "expression/expression_util.h"
-#include "expression/tuple_value_expression.h"
 #include "planner/seq_scan_plan.h"
 #include "storage/data_table.h"
 #include "storage/zone_map_manager.h"
-#include "type/value.h"
 
 namespace peloton {
 namespace codegen {
@@ -46,8 +41,6 @@ TableScanTranslator::TableScanTranslator(const planner::SeqScanPlan &scan,
 
   // The restriction, if one exists
   const auto *predicate = GetScanPlan().GetPredicate();
-  auto &codegen = GetCodeGen();
-
   if (predicate != nullptr) {
     // If there is a predicate, prepare a translator for it
     context.Prepare(*predicate);
@@ -57,11 +50,6 @@ TableScanTranslator::TableScanTranslator(const planner::SeqScanPlan &scan,
       pipeline.InstallBoundaryAtOutput(this);
     }
   }
-  auto &runtime_state = context.GetRuntimeState();
-  selection_vector_id_ = runtime_state.RegisterState(
-      "scanSelVec",
-      codegen.ArrayType(codegen.Int32Type(), Vector::kDefaultVectorSize), true);
-
   LOG_DEBUG("Finished constructing TableScanTranslator ...");
 }
 
@@ -81,21 +69,19 @@ void TableScanTranslator::Produce() const {
                    {storage_manager_ptr, db_oid, table_oid});
 
   // The selection vector for the scan
-  Vector sel_vec{LoadStateValue(selection_vector_id_),
-                 Vector::kDefaultVectorSize, codegen.Int32Type()};
+  auto *raw_vec = codegen.AllocateBuffer(
+      codegen.Int32Type(), Vector::kDefaultVectorSize, "scanSelVector");
+  Vector sel_vec{raw_vec, Vector::kDefaultVectorSize, codegen.Int32Type()};
 
-  storage::ZoneMapManager *zone_map_manager =
-      storage::ZoneMapManager::GetInstance();
-  bool zone_map_table_exists = zone_map_manager->ZoneMapTableExists();
-
-  auto predicate =
-      const_cast<expression::AbstractExpression *>(GetScanPlan().GetPredicate());
+  auto predicate = const_cast<expression::AbstractExpression *>(
+      GetScanPlan().GetPredicate());
   llvm::Value *predicate_ptr = codegen->CreateIntToPtr(
       codegen.Const64((int64_t)predicate),
       AbstractExpressionProxy::GetType(codegen)->getPointerTo());
   size_t num_preds = 0;
 
-  if (predicate != nullptr && zone_map_table_exists) {
+  auto *zone_map_manager = storage::ZoneMapManager::GetInstance();
+  if (predicate != nullptr && zone_map_manager->ZoneMapTableExists()) {
     if (predicate->IsZoneMappable()) {
       num_preds = predicate->GetNumberofParsedPredicates();
     }
@@ -149,12 +135,8 @@ void TableScanTranslator::ScanConsumer::ProcessTuples(
   }
 
   // 3. Setup the (filtered) row batch and setup attribute accessors
-  RowBatch batch{translator_.GetCompilationContext(),
-                 tile_group_id_,
-                 tid_start,
-                 tid_end,
-                 selection_vector_,
-                 true};
+  RowBatch batch{translator_.GetCompilationContext(), tile_group_id_, tid_start,
+                 tid_end, selection_vector_, true};
 
   std::vector<TableScanTranslator::AttributeAccess> attribute_accesses;
   SetupRowBatch(batch, tile_group_access, attribute_accesses);

@@ -58,6 +58,11 @@ SETTING_string(certificate_file,
 // RESOURCE USAGE
 //===----------------------------------------------------------------------===//
 
+SETTING_double(bnlj_buffer_size,
+             "The default buffer size to use for blockwise nested loop joins (default: 1 MB)",
+             1.0 * 1024.0 * 1024.0,
+             true, true)
+
 //===----------------------------------------------------------------------===//
 // WRITE AHEAD LOG
 //===----------------------------------------------------------------------===//

@@ -13,7 +13,7 @@ if [ -n "$files" ]; then
   python script/validators/source_validator.py --files $files
   result=$?
   if [ $result -ne 0 ]; then
-    echo "Use `./script/formatter/formatter.py -c -f` to format all staged files or `--no-verify` to temporarily bypass the pre-commit hook. Be aware that changed files have to be staged again!"
+    echo "Use './script/formatter/formatter.py -c -f' to format all staged files or '--no-verify' to temporarily bypass the pre-commit hook. Be aware that changed files have to be staged again!"
   fi
   exit $result
 fi

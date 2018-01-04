@@ -99,11 +99,6 @@ OrderByTranslator::OrderByTranslator(const planner::OrderByPlan &plan,
   // Create the sorter
   sorter_ = Sorter{codegen, tuple_desc};
 
-  // Create the output selection vector
-  output_vector_id_ = runtime_state.RegisterState(
-      "obSelVec",
-      codegen.ArrayType(codegen.Int32Type(), Vector::kDefaultVectorSize), true);
-
   LOG_DEBUG("Finished constructing OrderByTranslator ...");
 }
 
@@ -143,7 +138,7 @@ void OrderByTranslator::DefineAuxiliaryFunctions() {
   auto &storage_format = sorter_.GetStorageFormat();
 
   // The comparison function builder
-  std::vector<std::pair<std::string, llvm::Type *>> args = {
+  std::vector<FunctionDeclaration::ArgumentInfo> args = {
       {"leftTuple", codegen.CharPtrType()},
       {"rightTuple", codegen.CharPtrType()}};
   FunctionBuilder compare{codegen.GetCodeContext(), "compare",
@@ -233,8 +228,10 @@ void OrderByTranslator::Produce() const {
   LOG_DEBUG("OrderBy sort complete, iterating over results ...");
 
   // Now iterate over the sorted list
-  Vector selection_vector{LoadStateValue(output_vector_id_),
-                          Vector::kDefaultVectorSize, codegen.Int32Type()};
+  auto *raw_vec = codegen.AllocateBuffer(
+      codegen.Int32Type(), Vector::kDefaultVectorSize, "orderBySelVec");
+  Vector selection_vector{raw_vec, Vector::kDefaultVectorSize,
+                          codegen.Int32Type()};
 
   ProduceResults callback{*this, selection_vector};
   sorter_.VectorizedIterate(codegen, sorter_ptr, selection_vector.GetCapacity(),

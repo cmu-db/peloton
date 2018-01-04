@@ -19,9 +19,9 @@
 
 #include <vector>
 
-#include "common/sql_node_visitor.h"
 #include "common/macros.h"
 #include "common/printable.h"
+#include "common/sql_node_visitor.h"
 #include "common/internal_types.h"
 
 namespace peloton {
@@ -51,7 +51,7 @@ class SQLStatement : public Printable {
   // Visitor Pattern used for the optimizer to access statements
   // This allows a facility outside the object itself to determine the type of
   // class using the built-in type system.
-  virtual void Accept(SqlNodeVisitor* v) = 0;
+  virtual void Accept(SqlNodeVisitor *v) = 0;
 
  private:
   StatementType stmt_type;
@@ -64,9 +64,12 @@ class TableRefStatement : public SQLStatement {
   virtual ~TableRefStatement() {}
 
   virtual inline void TryBindDatabaseName(std::string default_database_name) {
-    table_info_->database_name = default_database_name;
+    if (!table_info_) table_info_.reset(new parser::TableInfo());
+
+    if (table_info_->database_name.empty())
+      table_info_->database_name = default_database_name;
   }
-  
+
   virtual inline std::string GetTableName() const {
     return table_info_->table_name;
   }
@@ -86,17 +89,21 @@ class SQLStatementList : public Printable {
   SQLStatementList()
       : is_valid(true), parser_msg(nullptr), error_line(0), error_col(0){};
 
-  SQLStatementList(SQLStatement* stmt) : is_valid(true), parser_msg(nullptr) {
+  SQLStatementList(SQLStatement *stmt) : is_valid(true), parser_msg(nullptr) {
     AddStatement(stmt);
   };
 
-  virtual ~SQLStatementList() {
-    delete (char*)parser_msg;
+  virtual ~SQLStatementList() { delete (char *)parser_msg; }
+
+  void AddStatement(SQLStatement *stmt) {
+    statements.push_back(std::unique_ptr<SQLStatement>(stmt));
   }
 
-  void AddStatement(SQLStatement* stmt) { statements.push_back(std::unique_ptr<SQLStatement>(stmt)); }
+  SQLStatement *GetStatement(int id) const { return statements[id].get(); }
 
-  SQLStatement* GetStatement(int id) const { return statements[id].get(); }
+  std::unique_ptr<SQLStatement> PassOutStatement(int id) {return std::move(statements[id]);}
+
+  void PassInStatement(std::unique_ptr<SQLStatement> stmt) {statements.push_back(std::move(stmt));}
 
   const std::vector<std::unique_ptr<SQLStatement>>& GetStatements() const { return statements; }
 
@@ -107,7 +114,7 @@ class SQLStatementList : public Printable {
 
   std::vector<std::unique_ptr<SQLStatement>> statements;
   bool is_valid;
-  const char* parser_msg;
+  const char *parser_msg;
   int error_line;
   int error_col;
 };

@@ -12,9 +12,7 @@
 
 #pragma once
 
-#include "codegen/compilation_context.h"
 #include "codegen/operator/operator_translator.h"
-#include "codegen/consumer_context.h"
 #include "codegen/table.h"
 
 namespace peloton {

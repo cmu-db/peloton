@@ -458,9 +458,6 @@ ResultType Catalog::CreateIndex(oid_t database_oid, oid_t table_oid,
 // DROP FUNCTIONS
 //===----------------------------------------------------------------------===//
 
-/*
- * only for test purposes
- */
 ResultType Catalog::DropDatabaseWithName(const std::string &database_name,
                                          concurrency::TransactionContext *txn) {
   if (txn == nullptr)

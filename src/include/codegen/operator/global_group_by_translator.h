@@ -13,7 +13,6 @@
 #pragma once
 
 #include "codegen/aggregation.h"
-#include "codegen/compilation_context.h"
 #include "codegen/operator/operator_translator.h"
 #include "codegen/pipeline.h"
 
@@ -88,9 +87,6 @@ class GlobalGroupByTranslator : public OperatorTranslator {
 
   // The ID of our materialization buffer in the runtime state
   RuntimeState::StateID mat_buffer_id_;
-
-  // The ID of our output vector in the runtime state
-  RuntimeState::StateID output_vector_id_;
 };
 
 }  // namespace codegen

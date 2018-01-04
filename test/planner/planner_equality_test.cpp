@@ -89,6 +89,7 @@ TEST_F(PlannerEqualityTest, Select) {
   // set up optimizer for every test
   optimizer.reset(new optimizer::Optimizer());
 
+  // clang-format off
   std::vector<TestItem> items{
       {"SELECT * from test", "SELECT * from test", true, true},
       {"SELECT * from test", "SELECT * from test2", false, false},
@@ -119,6 +120,10 @@ TEST_F(PlannerEqualityTest, Select) {
        "SELECT a,b from test where b = null", false, false},
       {"SELECT a,b from test where b = $1", "SELECT a,b from test where b = 1",
        true, true},
+      {"SELECT a,b from test where b = $1", "SELECT a,b from test where b = $1", true, true},
+      {"SELECT a,b from test where b = $1",
+       "SELECT a,b from test where b = null", false, false},
+      {"SELECT a,b from test where b = $1", "SELECT a,b from test where b = 1", true, true},
       {"SELECT a,b from test where b = null",
        "SELECT a,b from test where b = 1", false, false},
       {"SELECT DISTINCT a from test where b = 1",
@@ -126,14 +131,19 @@ TEST_F(PlannerEqualityTest, Select) {
       {"SELECT 1 from test", "SELECT 1 from test", false, false},
       {"SELECT 1", "SELECT 2", false, false},
       {"SELECT * FROM test, test2 WHERE test.a = 1 AND test2.b = 0",
-       "SELECT * FROM test, test2 WHERE test.a = 1 AND test2.b = 0", true,
-       true},
+       "SELECT * FROM test, test2 WHERE test.a = 1 AND test2.b = 0", true, true},
       {"SELECT test.a, test.b, test3.b, test2.c FROM test2, test, test3 "
        "WHERE test.b = test2.b AND test2.c = test3.c",
        "SELECT test.a, test.b, test2.c, test3.b FROM test2, test, test3 "
-       "WHERE test.b = test2.b AND test2.c = test3.c",
-       false, false}};
-
+       "WHERE test.b = test2.b AND test2.c = test3.c", false, false},
+      {"SELECT * from test inner join test2 on test.a < test2.a",
+       "SELECT * from test inner join test2 on test.a < test2.a", true, true},
+      {"SELECT * from test inner join test2 on test.a < test2.a",
+       "SELECT * from test inner join test2 on test.a > test2.a", false, false},
+      {"SELECT * from test inner join test2 on test.a < 1 + test2.a",
+       "SELECT * from test inner join test2 on test.a > 1 - test2.a", false, false},
+  };
+  // clang-format on
   for (uint32_t i = 0; i < items.size(); i++) {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
