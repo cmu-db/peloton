@@ -1160,6 +1160,8 @@ parser::DropStatement *PostgresParser::DropTransform(DropStmt *root) {
       return DropTableTransform(root);
     case ObjectType::OBJECT_TRIGGER:
       return DropTriggerTransform(root);
+    case ObjectType::OBJECT_INDEX:
+      return DropIndexTransform(root);
     case ObjectType::OBJECT_SCHEMA:
       return DropSchemaTransform(root);
     default: {
@@ -1216,6 +1218,16 @@ parser::DropStatement *PostgresParser::DropSchemaTransform(DropStmt *root) {
         reinterpret_cast<value *>(table_list->head->data.ptr_value)->val.str);
     break;
   }
+  return result;
+}
+
+// TODO: Implement other options for drop index
+parser::DropStatement *PostgresParser::DropIndexTransform(DropStmt *root) {
+  auto result = new DropStatement(DropStatement::EntityType::kIndex);
+  auto cell = root->objects->head;
+  auto list = reinterpret_cast<List *>(cell->data.ptr_value);
+  result->SetIndexName(
+      reinterpret_cast<value *>(list->head->data.ptr_value)->val.str);
   return result;
 }
 

@@ -12,6 +12,7 @@
 
 #include "executor/drop_executor.h"
 
+#include "catalog/index_catalog.h"
 #include "catalog/catalog.h"
 #include "catalog/trigger_catalog.h"
 #include "common/logger.h"
@@ -53,6 +54,10 @@ bool DropExecutor::DExecute() {
     }
     case DropType::TRIGGER: {
       result = DropTrigger(node, current_txn);
+      break;
+    }
+    case DropType::INDEX: {
+      result = DropIndex(node, current_txn);
       break;
     }
     default: {
@@ -139,5 +144,22 @@ bool DropExecutor::DropTrigger(const planner::DropPlan &node,
   return false;
 }
 
-} // namespace executor
-} // namespace peloton
+bool DropExecutor::DropIndex(const planner::DropPlan &node,
+                             concurrency::TransactionContext *txn) {
+  std::string index_name = node.GetIndexName();
+  auto index_object =
+      catalog::IndexCatalog::GetInstance()->GetIndexObject(index_name, txn);
+  ResultType result = catalog::Catalog::GetInstance()->DropIndex(
+      index_object->GetIndexOid(), txn);
+  txn->SetResult(result);
+  if (txn->GetResult() == ResultType::SUCCESS) {
+    LOG_TRACE("Dropping Index Succeeded! Index oid: %d",
+              index_object->GetIndexOid());
+  } else {
+    LOG_TRACE("Dropping Index Failed!");
+  }
+  return false;
+}
+
+}  // namespace executor
+}  // namespace peloton
