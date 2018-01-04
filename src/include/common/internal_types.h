@@ -681,6 +681,8 @@ enum class QueryType {
   QUERY_OTHER = 19,
   QUERY_INVALID = 20,
   QUERY_CREATE_TRIGGER = 21,
+  QUERY_CREATE_SCHEMA = 22,
+  QUERY_CREATE_VIEW = 23
 };
 std::string QueryTypeToString(QueryType query_type);
 QueryType StringToQueryType(std::string str);
