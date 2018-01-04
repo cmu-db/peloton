@@ -32,13 +32,14 @@ class AbstractExpression;
 
 namespace index {
 class Index;
-}
+}  // namespace index
 
 namespace codegen {
 namespace util {
 class IndexScanIterator;
-}
-}
+
+}  // namespace util
+}  // namespace codegen
 
 namespace codegen {
 
@@ -62,7 +63,7 @@ class RuntimeFunctions {
   static void FillPredicateArray(const expression::AbstractExpression *expr,
                                  storage::PredicateInfo *predicate_array);
 
-  static storage::TileGroup *GetTileGroupByGlobalId(storage::DataTable *table,
+  static storage::TileGroup *GetTileGroupById(storage::DataTable *table,
                                                     uint32_t tile_group_id);
 
   // This struct represents the layout (or configuration) of a column in a

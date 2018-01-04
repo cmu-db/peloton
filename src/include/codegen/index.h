@@ -18,7 +18,7 @@
 namespace peloton {
 namespace index {
 class Index;
-}
+}  // namespace index
 
 namespace codegen {
 class Index {
@@ -28,5 +28,6 @@ class Index {
  private:
   index::Index &index_;
 };
-}
-}
+
+}  // namespace codegen
+}  // namespace peloton

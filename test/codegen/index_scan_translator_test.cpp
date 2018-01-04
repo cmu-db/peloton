@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// table_scan_translator_test.cpp
+// index_scan_translator_test.cpp
 //
 // Identification: test/codegen/index_scan_translator_test.cpp
 //

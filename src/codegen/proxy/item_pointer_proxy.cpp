@@ -15,5 +15,6 @@
 namespace peloton {
 namespace codegen {
 DEFINE_TYPE(ItemPointer, "ItemPointer", MEMBER(opaque));
-}
-}
+
+} // namespace codegen
+} // namespace peloton

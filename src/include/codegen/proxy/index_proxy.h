@@ -21,10 +21,9 @@ namespace codegen {
 PROXY(Index) {
   DECLARE_MEMBER(0, char[sizeof(index::Index)], opaque);
   DECLARE_TYPE;
-
-  //  DECLARE_METHOD(CodeGenScan);
 };
 
 TYPE_BUILDER(Index, index::Index);
-}
-}
+
+}  // namespace codegen
+}  // namespace peloton

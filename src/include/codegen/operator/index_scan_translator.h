@@ -74,9 +74,7 @@ class IndexScanTranslator : public OperatorTranslator {
 
   // The ID of the selection vector in runtime state
   RuntimeState::StateID selection_vector_id_;
-
-  // The code-generating table instance
-  //  codegen::ArtIndex index_;
 };
-}
-}
+
+}  // namespace codegen
+}  // namespace peloton

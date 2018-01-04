@@ -30,7 +30,7 @@ DEFINE_TYPE(AbstractExpression, "peloton::expression::AbstractExpression",
 
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, HashCrc64);
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, GetTileGroup);
-DEFINE_METHOD(peloton::codegen, RuntimeFunctions, GetTileGroupByGlobalId);
+DEFINE_METHOD(peloton::codegen, RuntimeFunctions, GetTileGroupById);
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, GetTileGroupLayout);
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, FillPredicateArray);
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, ThrowDivideByZeroException);

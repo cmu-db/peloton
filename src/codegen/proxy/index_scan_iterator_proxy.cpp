@@ -29,5 +29,6 @@ DEFINE_METHOD(peloton::codegen::util, IndexScanIterator, UpdateTupleWithBigInteg
 DEFINE_METHOD(peloton::codegen::util, IndexScanIterator, UpdateTupleWithDouble);
 DEFINE_METHOD(peloton::codegen::util, IndexScanIterator, UpdateTupleWithVarchar);
 DEFINE_METHOD(peloton::codegen::util, IndexScanIterator, UpdateTupleWithBoolean);
-}
-}
+
+} // namespace codegen
+} // namespace peloton

@@ -25,5 +25,6 @@ PROXY(ItemPointer) {
 };
 
 TYPE_BUILDER(ItemPointer, ItemPointer);
-}
-}
+
+}  // namespace codegen
+}  // namespace peloton

@@ -125,7 +125,8 @@ hash_t IndexScanPlan::Hash() const {
   }
 
   // hash the type of index scan
-  const index::ConjunctionScanPredicate *csp = &(index_predicate_.GetConjunctionList()[0]);
+  const index::ConjunctionScanPredicate *csp =
+      &(index_predicate_.GetConjunctionList()[0]);
   auto is_point_query = csp->IsPointQuery();
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&is_point_query));
   auto is_full_scan = csp->IsFullIndexScan();
@@ -138,15 +139,13 @@ hash_t IndexScanPlan::Hash() const {
 }
 
 bool IndexScanPlan::operator==(const AbstractPlan &rhs) const {
-  if (GetPlanNodeType() != rhs.GetPlanNodeType())
-    return false;
+  if (GetPlanNodeType() != rhs.GetPlanNodeType()) return false;
 
   auto &other = static_cast<const planner::IndexScanPlan &>(rhs);
   auto *table = GetTable();
   auto *other_table = other.GetTable();
   PL_ASSERT(table && other_table);
-  if (*table != *other_table)
-    return false;
+  if (*table != *other_table) return false;
 
   // Predicate
   auto *pred = GetPredicate();
@@ -154,21 +153,21 @@ bool IndexScanPlan::operator==(const AbstractPlan &rhs) const {
   if ((pred == nullptr && other_pred != nullptr) ||
       (pred != nullptr && other_pred == nullptr))
     return false;
-  if (pred && *pred != *other_pred)
-    return false;
+  if (pred && *pred != *other_pred) return false;
 
   // Column Ids
   size_t column_id_count = GetColumnIds().size();
-  if (column_id_count != other.GetColumnIds().size())
-    return false;
+  if (column_id_count != other.GetColumnIds().size()) return false;
   for (size_t i = 0; i < column_id_count; i++) {
     if (GetColumnIds()[i] != other.GetColumnIds()[i]) {
       return false;
     }
   }
 
-  const index::ConjunctionScanPredicate *csp = &(index_predicate_.GetConjunctionList()[0]);
-  const index::ConjunctionScanPredicate *other_csp = &(other.GetIndexPredicate().GetConjunctionList()[0]);
+  const index::ConjunctionScanPredicate *csp =
+      &(index_predicate_.GetConjunctionList()[0]);
+  const index::ConjunctionScanPredicate *other_csp =
+      &(other.GetIndexPredicate().GetConjunctionList()[0]);
   if (csp->IsPointQuery() != other_csp->IsPointQuery()) {
     return false;
   }
@@ -176,19 +175,18 @@ bool IndexScanPlan::operator==(const AbstractPlan &rhs) const {
     return false;
   }
 
-  if (IsForUpdate() != other.IsForUpdate())
-    return false;
+  if (IsForUpdate() != other.IsForUpdate()) return false;
 
   return AbstractPlan::operator==(rhs);
 }
 
 void IndexScanPlan::VisitParameters(
-  codegen::QueryParametersMap &map, std::vector<peloton::type::Value> &values,
-  const std::vector<peloton::type::Value> &values_from_user) {
+    codegen::QueryParametersMap &map, std::vector<peloton::type::Value> &values,
+    const std::vector<peloton::type::Value> &values_from_user) {
   AbstractPlan::VisitParameters(map, values, values_from_user);
 
   auto *predicate =
-    const_cast<expression::AbstractExpression *>(GetPredicate());
+      const_cast<expression::AbstractExpression *>(GetPredicate());
   if (predicate != nullptr) {
     predicate->VisitParameters(map, values, values_from_user);
   }

@@ -54,45 +54,15 @@ void IndexScanIterator::DoScan() {
   }
   LOG_TRACE("result size = %lu\n", result_.size());
 
-  // TODO: codes below might be useful for optimization
-  //  std::sort(result_.begin(), result_.end(), SortByTileId);
-
-  //  distinct_tile_group_num_ = 0;
-  //  if (result_.size() > 0) {
-  //    uint32_t previous_tile_group_id = result_[0]->block;
-  //    uint32_t tuple_sum = 0;
-  //    uint32_t iter = 0;
-  //    while (iter < result_)
-  //  }
-
-  //  // find all distinct tile group id and their start/end position in result
-  //  vector
-  //  distinct_tile_group_num_ = 0;
-  //  if (result_.size() > 0) {
-  //    uint32_t previous_tile_group_id = result_[0]->block;
-  //    uint32_t begin = 0, iter = 0;
-  //    while (iter < result_.size() && result_[iter]->block ==
-  //    previous_tile_group_id) {
-  //      ++iter;
-  //    }
-  //    while (iter < result_.size()) {
-  //      if (result_[iter]->block != previous_tile_group_id) {
-  //        result_metadata_.push_back(previous_tile_group_id);
-  //        result_metadata_.push_back(begin);
-  //        result_metadata_.push_back(iter);
-  //        distinct_tile_group_num_++;
-  //
-  //        previous_tile_group_id = result_[iter]->block;
-  //        begin = iter;
-  //      }
-  //      ++iter;
-  //    }
-  //    // don't forget the last one
-  //    result_metadata_.push_back(previous_tile_group_id);
-  //    result_metadata_.push_back(begin);
-  //    result_metadata_.push_back(iter);
-  //    distinct_tile_group_num_++;
-  //  }
+  // TODO:
+  // currently the RowBatch produced in the index scan only contains one
+  // tuple because 1.the tuples in RowBatch have to be in the same tile
+  // group 2.the result order of index scan has to follow the key order
+  // 3.in most cases, index is built on random data so the probability
+  // that two continuous result tuples are in the same tile group is low
+  // potential optimization: in the index scan results, find out the
+  // continuous result tuples that are in the same tile group (and have
+  // ascending tile group offset) and produce one RowBatch for these tuples
 }
 
 // binary search to check whether the target offset is in the results
@@ -212,6 +182,7 @@ void IndexScanIterator::UpdateTupleWithBoolean(
     }
   }
 }
-}
-}
-}
+
+}  // namespace util
+}  // namespace codegen
+}  // namespace peloton

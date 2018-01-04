@@ -37,5 +37,6 @@ PROXY(IndexScanIterator) {
 };
 
 TYPE_BUILDER(IndexScanIterator, util::IndexScanIterator);
-}
-}
+
+}  // namespace codegen
+}  // namespace peloton

@@ -42,8 +42,6 @@ IndexScanTranslator::IndexScanTranslator(
     Pipeline &pipeline)
     : OperatorTranslator(context, pipeline),
       index_scan_(index_scan)
-//  ,
-//    index_(*index_scan_.GetIndex().get())
 {
 
   // The restriction, if one exists
@@ -136,7 +134,7 @@ void IndexScanTranslator::Produce() const {
         codegen.Call(IndexScanIteratorProxy::GetTileGroupOffset,
                      {iterator_ptr, result_iter});
     llvm::Value *tile_group_ptr =
-        codegen.Call(RuntimeFunctionsProxy::GetTileGroupByGlobalId,
+        codegen.Call(RuntimeFunctionsProxy::GetTileGroupById,
                      {table_ptr, tile_group_id});
 
     codegen.Call(
@@ -339,5 +337,6 @@ void IndexScanTranslator::UpdateTupleWithParameterCache(
     }
   }
 }
-}
-}
+
+} // namespace codegen
+} // namespace peloton
