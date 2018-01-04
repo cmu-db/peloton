@@ -17,6 +17,11 @@
 namespace peloton {
 namespace executor {
 
+/**
+ * 2018-01-07: This is <b>deprecated</b>. Do not modify these classes.
+ * The old interpreted engine will be removed.
+ * @deprecated
+ */
 class NestedLoopJoinExecutor : public AbstractJoinExecutor {
   NestedLoopJoinExecutor(const NestedLoopJoinExecutor &) = delete;
   NestedLoopJoinExecutor &operator=(const NestedLoopJoinExecutor &) = delete;

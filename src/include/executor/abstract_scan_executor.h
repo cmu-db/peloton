@@ -23,6 +23,10 @@ namespace executor {
  * Super class for different kinds of scan executor.
  * It provides common codes for all kinds of scan:
  * evaluate generic predicates and simple projections.
+ *
+ * 2018-01-07: This is <b>deprecated</b>. Do not modify these classes.
+ * The old interpreted engine will be removed.
+ * @deprecated
  */
 class AbstractScanExecutor : public AbstractExecutor {
  public:

@@ -13,7 +13,7 @@
 #include <cstdio>
 
 #include "executor/testing_executor_util.h"
-#include <sql/testing_sql_util.h>
+#include "sql/testing_sql_util.h"
 #include "common/harness.h"
 
 #include "catalog/catalog.h"
@@ -44,7 +44,7 @@
 #include "planner/update_plan.h"
 #include "storage/data_table.h"
 #include "storage/tile_group_factory.h"
-#include "include/traffic_cop/traffic_cop.h"
+#include "traffic_cop/traffic_cop.h"
 #include "common/internal_types.h"
 #include "type/value.h"
 #include "type/value_factory.h"

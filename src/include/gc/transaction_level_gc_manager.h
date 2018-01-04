@@ -25,7 +25,7 @@
 #include "gc/gc_manager.h"
 #include "common/internal_types.h"
 
-#include "container/lock_free_queue.h"
+#include "common/container/lock_free_queue.h"
 
 namespace peloton {
 namespace gc {

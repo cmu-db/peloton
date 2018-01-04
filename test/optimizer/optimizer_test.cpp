@@ -24,6 +24,7 @@
 #include "expression/tuple_value_expression.h"
 #include "optimizer/operators.h"
 #include "optimizer/rule_impls.h"
+#include "traffic_cop/traffic_cop.h"
 
 namespace peloton {
 namespace test {

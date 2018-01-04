@@ -65,6 +65,20 @@ namespace expression {
 
 class AbstractExpression : public Printable {
  public:
+
+  /**
+   * @brief Apply the operator to the inputs and produce ouput
+   *
+   * This will be removed in the future and replaced by the
+   * the LLVM engine. You should not modify any Evaluate methods
+   * nor should you add new ones.
+   *
+   * @param tuple1
+   * @param tuple2
+   * @param context
+   * @return
+   * @deprecated
+   */
   virtual type::Value Evaluate(const AbstractTuple *tuple1,
                                const AbstractTuple *tuple2,
                                executor::ExecutorContext *context) const = 0;

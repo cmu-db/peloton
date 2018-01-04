@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "container/circular_buffer.h"
+#include "common/container/circular_buffer.h"
 
 namespace peloton {
 
