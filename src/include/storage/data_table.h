@@ -21,6 +21,7 @@
 #include "common/item_pointer.h"
 #include "common/platform.h"
 #include "common/container/lock_free_array.h"
+#include "executor/executor_context.h"
 #include "index/index.h"
 #include "storage/abstract_table.h"
 #include "storage/indirection_array.h"
@@ -194,6 +195,12 @@ class DataTable : public AbstractTable {
   //===--------------------------------------------------------------------===//
   // FOREIGN KEYS
   //===--------------------------------------------------------------------===//
+
+  bool CheckForeignKeySrcAndCascade(storage::Tuple *prev_tuple, 
+                                    storage::Tuple *new_tuple,
+                                    concurrency::TransactionContext *transaction,
+                                    executor::ExecutorContext *context,
+                                    bool is_update);
 
   void AddForeignKey(catalog::ForeignKey *key);
 

@@ -133,6 +133,9 @@ bool DeleteExecutor::DExecute() {
       physical_tuple_id = old_location.offset;
     }
 
+    // Check the foreign key source table
+    
+
     bool is_owner = transaction_manager.IsOwner(current_txn, tile_group_header,
                                                 physical_tuple_id);
 
