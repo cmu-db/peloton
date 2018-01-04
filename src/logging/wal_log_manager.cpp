@@ -31,17 +31,17 @@ ResultType WalLogManager::LogTransaction(std::vector<LogRecord> log_records) {
     task_callback_(task_callback_arg_);
   };
   threadpool::LoggerQueuePool::GetInstance().SubmitTask([log_records, on_complete] {
-    WalLogManager::WriteTransaction(log_records);
+    WalLogManager::WriteTransaction(log_records, on_complete);
   });
-  LOG_DEBUG("Submit Task into LogQueuePool");
   return ResultType::LOGGING;
 }
 
 // Actual method called by the logger thread
-void WalLogManager::WriteTransaction(std::vector<LogRecord> log_records) {
+void WalLogManager::WriteTransaction(std::vector<LogRecord> log_records, std::function<void()> on_complete) {
   WalLogger* wl = new WalLogger(0, settings::SettingsManager::GetString(settings::SettingId::log_directory));
   wl->WriteTransaction(log_records);
   delete wl;
+  on_complete();
 }
 
 void WalLogManager::SetDirectory(std::string logging_dir) {

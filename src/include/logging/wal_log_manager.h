@@ -57,7 +57,8 @@ class WalLogManager {
 
   static void WriteTransactionWrapper(void *args);
 
-  static void WriteTransaction(std::vector<LogRecord> log_records);
+  static void WriteTransaction(std::vector<LogRecord> log_records, std::function<void()>
+                               on_complete);
 
   // Logger side logic
   static void DoRecovery();
