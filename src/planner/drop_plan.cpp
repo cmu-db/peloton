@@ -49,7 +49,7 @@ DropPlan::DropPlan(parser::DropStatement *parse_tree) {
       break;
     }
     case parser::DropStatement::EntityType::kIndex: {
-      index_name = std::string(parse_tree->index_name);
+      index_name = std::string(parse_tree->GetIndexName());
       drop_type = DropType::INDEX;
       break;
     }

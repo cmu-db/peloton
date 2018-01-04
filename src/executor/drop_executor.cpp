@@ -60,22 +60,6 @@ bool DropExecutor::DExecute() {
       result = DropIndex(node, current_txn);
       break;
     }
-    case DropType::INDEX: {
-      std::string index_name = node.GetIndexName();
-      auto current_txn = context_->GetTransaction();
-      auto index =  catalog::IndexCatalog::GetInstance()->GetIndexObject(index_name,current_txn);
-      bool result = catalog::IndexCatalog::GetInstance()->DeleteIndex(index->GetIndexOid(),current_txn);
-      if (result){
-        current_txn->SetResult(ResultType::SUCCESS);
-        LOG_TRACE("Dropping Index Succeeded!");
-      }
-      else {
-        current_txn->SetResult(ResultType::FAILURE);
-        LOG_TRACE("Dropping Index Failed!");
-
-      }
-      break;
-    }
     default: {
       throw NotImplementedException(
           StringUtil::Format("Drop type %d not supported yet.\n", dropType));
