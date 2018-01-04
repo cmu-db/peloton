@@ -59,9 +59,11 @@ void Tuple::SetValue(const oid_t column_offset, const type::Value &value,
 
   // Skip casting if type is same
   if (type == value.GetTypeId()) {
-    if ((type == type::TypeId::VARCHAR || type == type::TypeId::VARBINARY)
-        && (column_length != 0 && value.GetLength() != type::PELOTON_VALUE_NULL)
-        && value.GetLength() > column_length + 1) {      // value.GetLength() == strlen(value) + 1 because of '\0'
+    if ((type == type::TypeId::VARCHAR || type == type::TypeId::VARBINARY) &&
+        (column_length != 0 && value.GetLength() != type::PELOTON_VALUE_NULL) &&
+        value.GetLength() >
+            column_length +
+                1) {  // value.GetLength() == strlen(value) + 1 because of '\0'
       throw peloton::ValueOutOfRangeException(type, column_length);
     }
     value.SerializeTo(value_location, is_inlined, data_pool);
@@ -220,7 +222,7 @@ void Tuple::DeserializeFrom(UNUSED_ATTRIBUTE SerializeInput &input,
 }
 
 void Tuple::DeserializeWithHeaderFrom(SerializeInput &input UNUSED_ATTRIBUTE) {
-  /*PL_ASSERT(tuple_schema_);
+  PL_ASSERT(tuple_schema_);
   PL_ASSERT(tuple_data_);
 
   input.ReadInt();  // Read in the tuple size, discard
@@ -228,16 +230,17 @@ void Tuple::DeserializeWithHeaderFrom(SerializeInput &input UNUSED_ATTRIBUTE) {
   const int column_count = tuple_schema_->GetColumnCount();
 
   for (int column_itr = 0; column_itr < column_count; column_itr++) {
-    const ValueType type = tuple_schema_->GetType(column_itr);
+    const type::TypeId tp = tuple_schema_->GetType(column_itr);
 
-    const bool is_inlined = tuple_schema_->IsInlined(column_itr);
-    char *data_ptr = GetDataPtr(column_itr);
-    const int32_t column_length = tuple_schema_->GetLength(column_itr);
+    // const bool is_inlined = tuple_schema_->IsInlined(column_itr);
+    // char *data_ptr = GetDataPtr(column_itr);
+    // const int32_t column_length = tuple_schema_->GetLength(column_itr);
 
-    // TODO: Not sure about arguments
-    const bool is_in_bytes = false;
-    Value::DeserializeFrom(input, NULL, data_ptr, type, is_inlined,
-                           column_length, is_in_bytes);*/
+    // const bool is_in_bytes = false;
+    SetValue(column_itr, type::Value::DeserializeFrom(input, tp));
+
+    // SetValue(column_itr,type::ValueFactory::GetIntegerValue(input.ReadInt()));
+  }
 }
 
 void Tuple::SerializeWithHeaderTo(SerializeOutput &output) {
@@ -267,7 +270,7 @@ void Tuple::SerializeTo(SerializeOutput &output) {
   const int column_count = tuple_schema_->GetColumnCount();
 
   for (int column_itr = 0; column_itr < column_count; column_itr++) {
-    type::Value value(GetValue(column_itr));
+    type::Value value(this->GetValue(column_itr));
     value.SerializeTo(output);
   }
 
@@ -445,6 +448,7 @@ const std::string Tuple::GetInfo() const {
   os << ")";
   return os.str();
 }
+
 
 }  // namespace storage
 }  // namespace peloton

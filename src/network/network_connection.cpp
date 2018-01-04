@@ -22,7 +22,7 @@ namespace peloton {
 namespace network {
 
 void NetworkConnection::Init(short event_flags, NetworkThread *thread,
-                          ConnState init_state) {
+                             ConnState init_state) {
   SetNonBlocking(sock_fd);
   SetTCPNoDelay(sock_fd);
 
@@ -37,7 +37,7 @@ void NetworkConnection::Init(short event_flags, NetworkThread *thread,
   // clear out packet
   if (network_event == nullptr) {
     network_event = event_new(thread->GetEventBase(), sock_fd, event_flags,
-                      CallbackUtil::EventHandler, this);
+                              CallbackUtil::EventHandler, this);
   } else {
     // Reuse the event object if already initialized
     if (event_del(network_event) == -1) {
@@ -46,8 +46,7 @@ void NetworkConnection::Init(short event_flags, NetworkThread *thread,
     }
 
     auto result = event_assign(network_event, thread->GetEventBase(), sock_fd,
-                               event_flags,
-                               CallbackUtil::EventHandler, this);
+                               event_flags, CallbackUtil::EventHandler, this);
 
     if (result != 0) {
       LOG_ERROR("Failed to update network event");
@@ -57,14 +56,30 @@ void NetworkConnection::Init(short event_flags, NetworkThread *thread,
 
   if (workpool_event == nullptr) {
     workpool_event = event_new(thread->GetEventBase(), -1, EV_PERSIST,
-    CallbackUtil::EventHandler, this);
+                               CallbackUtil::EventHandler, this);
   } else {
     if (event_del(workpool_event) == -1) {
       LOG_ERROR("Failed to delete event");
       PL_ASSERT(false);
     }
     auto result = event_assign(workpool_event, thread->GetEventBase(), -1,
-                                EV_PERSIST, CallbackUtil::EventHandler, this);
+                               EV_PERSIST, CallbackUtil::EventHandler, this);
+    if (result != 0) {
+      LOG_ERROR("Failed to update workpool event");
+      PL_ASSERT(false);
+    }
+  }
+  // Adding log event
+  if (logpool_event == nullptr) {
+    logpool_event = event_new(thread->GetEventBase(), -1, EV_PERSIST,
+                              CallbackUtil::EventHandler, this);
+  } else {
+    if (event_del(logpool_event) == -1) {
+      LOG_ERROR("Failed to delete event");
+      PL_ASSERT(false);
+    }
+    auto result = event_assign(logpool_event, thread->GetEventBase(), -1,
+                               EV_PERSIST, CallbackUtil::EventHandler, this);
     if (result != 0) {
       LOG_ERROR("Failed to update workpool event");
       PL_ASSERT(false);
@@ -73,20 +88,29 @@ void NetworkConnection::Init(short event_flags, NetworkThread *thread,
 
   event_add(network_event, nullptr);
   event_add(workpool_event, nullptr);
+  event_add(logpool_event, nullptr);
 
-  //TODO:: should put the initialization else where.. check correctness first.
+  // TODO:: should put the initialization else where.. check correctness first.
   traffic_cop_.SetTaskCallback(TriggerStateMachine, workpool_event);
+  // Registering the logger callback
+  log_manager_.SetTaskCallback(TriggerStateMachineLog, logpool_event);
 }
 
-void NetworkConnection::TriggerStateMachine(void* arg) {
-  struct event* event = static_cast<struct event*>(arg);
+void NetworkConnection::TriggerStateMachine(void *arg) {
+  struct event *event = static_cast<struct event *>(arg);
   event_active(event, EV_WRITE, 0);
 }
+
+void NetworkConnection::TriggerStateMachineLog(void *arg) {
+  struct event *event = static_cast<struct event *>(arg);
+  event_active(event, EV_WRITE, 0);
+}
+
 
 void NetworkConnection::TransitState(ConnState next_state) {
 #ifdef LOG_TRACE_ENABLED
   if (next_state != state)
-  LOG_TRACE("conn %d transit to state %d", sock_fd, (int)next_state);
+    LOG_TRACE("conn %d transit to state %d", sock_fd, (int)next_state);
 #endif
   state = next_state;
 }
@@ -98,9 +122,8 @@ bool NetworkConnection::UpdateEvent(short flags) {
     LOG_ERROR("Failed to delete event");
     return false;
   }
-  auto result =
-      event_assign(network_event, base, sock_fd, flags,
-                   CallbackUtil::EventHandler, (void *)this);
+  auto result = event_assign(network_event, base, sock_fd, flags,
+                             CallbackUtil::EventHandler, (void *)this);
 
   if (result != 0) {
     LOG_ERROR("Failed to update event");
@@ -117,21 +140,25 @@ bool NetworkConnection::UpdateEvent(short flags) {
   return true;
 }
 
-
 /**
  * Public Functions
  */
 
 WriteState NetworkConnection::WritePackets() {
   // iterate through all the packets
-  for (; next_response_ < protocol_handler_->responses.size(); next_response_++) {
+  for (; next_response_ < protocol_handler_->responses.size();
+       next_response_++) {
     auto pkt = protocol_handler_->responses[next_response_].get();
     LOG_TRACE("To send packet with type: %c", static_cast<char>(pkt->msg_type));
     // write is not ready during write. transit to CONN_WRITE
     auto result = BufferWriteBytesHeader(pkt);
-    if (result == WriteState::WRITE_NOT_READY || result == WriteState::WRITE_ERROR) return result;
+    if (result == WriteState::WRITE_NOT_READY ||
+        result == WriteState::WRITE_ERROR)
+      return result;
     result = BufferWriteBytesContent(pkt);
-    if (result == WriteState::WRITE_NOT_READY || result == WriteState::WRITE_ERROR) return result;
+    if (result == WriteState::WRITE_NOT_READY ||
+        result == WriteState::WRITE_ERROR)
+      return result;
   }
 
   // Done writing all packets. clear packets
@@ -184,11 +211,10 @@ ReadState NetworkConnection::FillReadBuffer() {
       // we use general read function
       if (conn_SSL_context != nullptr) {
         bytes_read = SSL_read(conn_SSL_context, rbuf_.GetPtr(rbuf_.buf_size),
-                                rbuf_.GetMaxSize() - rbuf_.buf_size);
-      }
-      else {
+                              rbuf_.GetMaxSize() - rbuf_.buf_size);
+      } else {
         bytes_read = read(sock_fd, rbuf_.GetPtr(rbuf_.buf_size),
-                        rbuf_.GetMaxSize() - rbuf_.buf_size);
+                          rbuf_.GetMaxSize() - rbuf_.buf_size);
         LOG_TRACE("When filling read buffer, read %ld bytes", bytes_read);
       }
 
@@ -258,12 +284,11 @@ WriteState NetworkConnection::FlushWriteBuffer() {
     written_bytes = 0;
     while (written_bytes <= 0) {
       if (conn_SSL_context != nullptr) {
+        written_bytes = SSL_write(
+            conn_SSL_context, &wbuf_.buf[wbuf_.buf_flush_ptr], wbuf_.buf_size);
+      } else {
         written_bytes =
-            SSL_write(conn_SSL_context, &wbuf_.buf[wbuf_.buf_flush_ptr], wbuf_.buf_size);
-      }
-      else {
-        written_bytes =
-           write(sock_fd, &wbuf_.buf[wbuf_.buf_flush_ptr], wbuf_.buf_size);
+            write(sock_fd, &wbuf_.buf[wbuf_.buf_flush_ptr], wbuf_.buf_size);
       }
       // Write failed
       if (written_bytes < 0) {
@@ -345,19 +370,19 @@ WriteState NetworkConnection::FlushWriteBuffer() {
 }
 
 std::string NetworkConnection::WriteBufferToString() {
-  #ifdef LOG_TRACE_ENABLED
-    LOG_TRACE("Write Buffer:");
+#ifdef LOG_TRACE_ENABLED
+  LOG_TRACE("Write Buffer:");
 
-    for (size_t i = 0; i < wbuf_.buf_size; ++i) {
-      LOG_TRACE("%u", wbuf_.buf[i]);
-    }
-  #endif
+  for (size_t i = 0; i < wbuf_.buf_size; ++i) {
+    LOG_TRACE("%u", wbuf_.buf[i]);
+  }
+#endif
 
   return std::string(wbuf_.buf.begin(), wbuf_.buf.end());
 }
 
 ProcessResult NetworkConnection::ProcessInitial() {
-  //TODO: this is a direct copy and we should get rid of it later;
+  // TODO: this is a direct copy and we should get rid of it later;
   InputPacket rpkt;
 
   if (rpkt.header_parsed == false) {
@@ -371,7 +396,7 @@ ProcessResult NetworkConnection::ProcessInitial() {
 
   if (rpkt.is_initialized == false) {
     // packet needs to be initialized with rest of the contents
-    //TODO: If other protocols are added, this need to be changed
+    // TODO: If other protocols are added, this need to be changed
     if (PostgresProtocolHandler::ReadPacket(rbuf_, rpkt) == false) {
       // need more data
       return ProcessResult::MORE_DATA_REQUIRED;
@@ -387,15 +412,16 @@ ProcessResult NetworkConnection::ProcessInitial() {
 }
 
 // TODO: This function is now dedicated for postgres packet
-bool NetworkConnection::ReadStartupPacketHeader(Buffer &rbuf, InputPacket &rpkt) {
+bool NetworkConnection::ReadStartupPacketHeader(Buffer &rbuf,
+                                                InputPacket &rpkt) {
   size_t initial_read_size = sizeof(int32_t);
 
-  if (!rbuf.IsReadDataAvailable(initial_read_size)){
+  if (!rbuf.IsReadDataAvailable(initial_read_size)) {
     return false;
   }
 
   // extract packet contents size
-  //content lengths should exclude the length
+  // content lengths should exclude the length
   rpkt.len = rbuf.GetUInt32BigEndian() - sizeof(uint32_t);
 
   // do we need to use the extended buffer for this packet?
@@ -428,8 +454,7 @@ bool NetworkConnection::ProcessInitialPacket(InputPacket *pkt) {
   if (proto_version == SSL_MESSAGE_VERNO) {
     LOG_TRACE("process SSL MESSAGE");
     return ProcessSSLRequestPacket(pkt);
-  }
-  else {
+  } else {
     LOG_TRACE("process startup packet");
     return ProcessStartupPacket(pkt, proto_version);
   }
@@ -446,9 +471,9 @@ bool NetworkConnection::ProcessSSLRequestPacket(InputPacket *pkt) {
   return true;
 }
 
-bool NetworkConnection::ProcessStartupPacket(InputPacket* pkt, int32_t proto_version) {
+bool NetworkConnection::ProcessStartupPacket(InputPacket *pkt,
+                                             int32_t proto_version) {
   std::string token, value;
-
 
   // Only protocol version 3 is supported
   if (PROTO_MAJOR_VERSION(proto_version) != 3) {
@@ -471,18 +496,15 @@ bool NetworkConnection::ProcessStartupPacket(InputPacket* pkt, int32_t proto_ver
       // loop end?
       if (pkt->ptr >= pkt->len) break;
       GetStringToken(pkt, client_.user);
-    }
-    else {
+    } else {
       if (pkt->ptr >= pkt->len) break;
       GetStringToken(pkt, value);
       client_.cmdline_options[token] = value;
     }
-
   }
 
-  protocol_handler_ =
-      ProtocolHandlerFactory::CreateProtocolHandler(
-          ProtocolHandlerType::Postgres, &traffic_cop_);
+  protocol_handler_ = ProtocolHandlerFactory::CreateProtocolHandler(
+      ProtocolHandlerType::Postgres, &traffic_cop_, &log_manager_);
 
   protocol_handler_->SendInitialResponse();
 
@@ -505,7 +527,8 @@ WriteState NetworkConnection::BufferWriteBytesHeader(OutputPacket *pkt) {
   if (wbuf_.GetMaxSize() - wbuf_.buf_ptr < 1 + sizeof(int32_t)) {
     // buffer needs to be flushed before adding header
     auto result = FlushWriteBuffer();
-    if (result == WriteState::WRITE_NOT_READY || result == WriteState::WRITE_ERROR) {
+    if (result == WriteState::WRITE_NOT_READY ||
+        result == WriteState::WRITE_ERROR) {
       // Socket is not ready for write
       return result;
     }
@@ -576,7 +599,8 @@ WriteState NetworkConnection::BufferWriteBytesContent(OutputPacket *pkt) {
       LOG_TRACE("Content doesn't fit in window. Try flushing");
       auto result = FlushWriteBuffer();
       // flush before write the remaining content
-      if (result == WriteState::WRITE_NOT_READY || result == WriteState::WRITE_ERROR) {
+      if (result == WriteState::WRITE_NOT_READY ||
+          result == WriteState::WRITE_ERROR) {
         // need to retry or close connection
         return result;
       }
@@ -590,6 +614,7 @@ void NetworkConnection::CloseSocket() {
   // Remove listening event
   event_del(network_event);
   event_del(workpool_event);
+  event_del(logpool_event);
   // event_free(event);
   TransitState(ConnState::CONN_CLOSED);
   Reset();
@@ -623,7 +648,6 @@ void NetworkConnection::Reset() {
 
 void NetworkConnection::StateMachine(NetworkConnection *conn) {
   bool done = false;
-
   while (done == false) {
     LOG_TRACE("current state: %d", (int)conn->state);
     switch (conn->state) {
@@ -648,8 +672,7 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
             // wait for some other event
             if (conn->protocol_handler_ == nullptr) {
               conn->TransitState(ConnState::CONN_PROCESS_INITIAL);
-            }
-            else {
+            } else {
               conn->TransitState(ConnState::CONN_PROCESS);
             }
             break;
@@ -691,7 +714,8 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
           int ssl_accept_ret;
           if ((ssl_accept_ret = SSL_accept(conn->conn_SSL_context)) <= 0) {
             LOG_ERROR("Failed to accept (handshake) client SSL context.");
-            LOG_ERROR("ssl error: %d", SSL_get_error(conn->conn_SSL_context, ssl_accept_ret));
+            LOG_ERROR("ssl error: %d",
+                      SSL_get_error(conn->conn_SSL_context, ssl_accept_ret));
             // TODO: consider more about proper action
             PL_ASSERT(false);
             conn->TransitState(ConnState::CONN_CLOSED);
@@ -713,7 +737,7 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
             conn->TransitState(ConnState::CONN_CLOSING);
             break;
           }
-          default: // PROCESSING is impossible to happens in initial packets
+          default:  // PROCESSING is impossible to happens in initial packets
             break;
         }
         break;
@@ -723,7 +747,7 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
         ProcessResult status;
 
         status = conn->protocol_handler_->Process(conn->rbuf_,
-                                                        (size_t) conn->thread_id);
+                                                  (size_t)conn->thread_id);
 
         switch (status) {
           case ProcessResult::MORE_DATA_REQUIRED:
@@ -739,7 +763,7 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
             break;
           case ProcessResult::PROCESSING: {
             if (event_del(conn->network_event) == -1) {
-              //TODO: There may be better way to handle this error
+              // TODO: There may be better way to handle this error
               LOG_ERROR("Failed to delete event");
               PL_ASSERT(false);
             }
@@ -759,7 +783,9 @@ void NetworkConnection::StateMachine(NetworkConnection *conn) {
           PL_ASSERT(false);
         }
         conn->protocol_handler_->GetResult();
-        conn->traffic_cop_.SetQueuing(false);
+        if (conn->traffic_cop_.GetLogging()) {
+            done = true;
+        }
         conn->TransitState(ConnState::CONN_WRITE);
         break;
       }

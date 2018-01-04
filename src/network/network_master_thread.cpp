@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "network/network_master_thread.h"
 
 #define MASTER_THREAD_ID -1
@@ -31,7 +30,7 @@ NetworkMasterThread::GetWorkerThreads() {
  * constructor.
  */
 NetworkMasterThread::NetworkMasterThread(const int num_threads,
-                                           struct event_base *libevent_base)
+                                         struct event_base *libevent_base)
     : NetworkThread(MASTER_THREAD_ID, libevent_base),
       num_threads_(num_threads),
       next_thread_id_(0) {
@@ -103,6 +102,7 @@ void NetworkMasterThread::StartWorker(NetworkWorkerThread *worker_thread) {
 
     event_free(connection->network_event);
     event_free(connection->workpool_event);
+    event_free(connection->logpool_event);
   }
   event_free(worker_thread->GetNewConnEvent());
   event_free(worker_thread->GetTimeoutEvent());
@@ -114,7 +114,7 @@ void NetworkMasterThread::StartWorker(NetworkWorkerThread *worker_thread) {
 * writing to the worker's pipe
 */
 void NetworkMasterThread::DispatchConnection(int new_conn_fd,
-                                              short event_flags) {
+                                             short event_flags) {
   char buf[1];
   buf[0] = 'c';
   auto &threads = GetWorkerThreads();

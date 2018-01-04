@@ -286,7 +286,7 @@ type::TypeId StringToTypeId(const std::string &str) {
   return type::TypeId::INVALID;
 }
 
-std::string TypeIdArrayToString(const std::vector<type::TypeId> &types) {
+std::string TypeIdArrayToString(const std::vector<type::TypeId>& types) {
   std::string result = "";
   for (auto type : types) {
     if (result != "") result.append(",");
@@ -297,7 +297,7 @@ std::string TypeIdArrayToString(const std::vector<type::TypeId> &types) {
 
 // Get argument type vector from its string representation
 // e.g. "integer,boolean" --> vector{TypeId::INTEGER, TypeId::BOOLEAN}
-std::vector<type::TypeId> StringToTypeArray(const std::string &types) {
+std::vector<type::TypeId> StringToTypeArray(const std::string& types) {
   std::vector<type::TypeId> result;
   std::istringstream stream(types);
   std::string type;
@@ -1326,7 +1326,7 @@ std::string AggregateTypeToString(AggregateType type) {
   return "INVALID";
 }
 
-AggregateType StringToAggregateType(const std::string &str) {
+AggregateType StringToAggregateType(const std::string& str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
     return AggregateType::INVALID;
@@ -1343,7 +1343,7 @@ AggregateType StringToAggregateType(const std::string &str) {
   return AggregateType::INVALID;
 }
 
-std::ostream &operator<<(std::ostream &os, const AggregateType &type) {
+std::ostream& operator<<(std::ostream& os, const AggregateType& type) {
   os << AggregateTypeToString(type);
   return os;
 }
@@ -1471,7 +1471,7 @@ std::string InsertTypeToString(InsertType type) {
   return "INVALID";
 }
 
-InsertType StringToInsertType(const std::string &str) {
+InsertType StringToInsertType(const std::string& str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
     return InsertType::INVALID;
@@ -1486,7 +1486,7 @@ InsertType StringToInsertType(const std::string &str) {
   return InsertType::INVALID;
 }
 
-std::ostream &operator<<(std::ostream &os, const InsertType &type) {
+std::ostream& operator<<(std::ostream& os, const InsertType& type) {
   os << InsertTypeToString(type);
   return os;
 }
@@ -1524,7 +1524,7 @@ std::string CopyTypeToString(CopyType type) {
   return "INVALID";
 }
 
-CopyType StringToCopyType(const std::string &str) {
+CopyType StringToCopyType(const std::string& str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
     return CopyType::INVALID;
@@ -1545,7 +1545,7 @@ CopyType StringToCopyType(const std::string &str) {
   return CopyType::INVALID;
 }
 
-std::ostream &operator<<(std::ostream &os, const CopyType &type) {
+std::ostream& operator<<(std::ostream& os, const CopyType& type) {
   os << CopyTypeToString(type);
   return os;
 }
@@ -1577,7 +1577,7 @@ std::string PayloadTypeToString(PayloadType type) {
   return "INVALID";
 }
 
-PayloadType StringToPayloadType(const std::string &str) {
+PayloadType StringToPayloadType(const std::string& str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
     return PayloadType::INVALID;
@@ -1594,7 +1594,7 @@ PayloadType StringToPayloadType(const std::string &str) {
   return PayloadType::INVALID;
 }
 
-std::ostream &operator<<(std::ostream &os, const PayloadType &type) {
+std::ostream& operator<<(std::ostream& os, const PayloadType& type) {
   os << PayloadTypeToString(type);
   return os;
 }
@@ -1700,7 +1700,17 @@ ResultType StringToResultType(const std::string &str) {
     return ResultType::UNKNOWN;
   } else if (upper_str == "QUEUING") {
     return ResultType::QUEUING;
+  } else if (upper_str == "LOGGING") {
+    return ResultType::QUEUING;
   } else {
+    throw ConversionException(StringUtil::Format(
+        "No ResultType conversion from string '%s'", upper_str.c_str()));
+  }
+  {
+    throw ConversionException(StringUtil::Format(
+        "No ResultType conversion from string '%s'", upper_str.c_str()));
+  }
+  {
     throw ConversionException(StringUtil::Format(
         "No ResultType conversion from string '%s'", upper_str.c_str()));
   }
@@ -1781,7 +1791,7 @@ ConstraintType StringToConstraintType(const std::string &str) {
   return ConstraintType::INVALID;
 }
 
-std::ostream &operator<<(std::ostream &os, const ConstraintType &type) {
+std::ostream& operator<<(std::ostream& os, const ConstraintType& type) {
   os << ConstraintTypeToString(type);
   return os;
 }
@@ -1861,7 +1871,7 @@ std::string ProtocolTypeToString(ProtocolType type) {
   return "INVALID";
 }
 
-ProtocolType StringToProtocolType(const std::string &str) {
+ProtocolType StringToProtocolType(const std::string& str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
     return ProtocolType::INVALID;
@@ -1874,7 +1884,7 @@ ProtocolType StringToProtocolType(const std::string &str) {
   return ProtocolType::INVALID;
 }
 
-std::ostream &operator<<(std::ostream &os, const ProtocolType &type) {
+std::ostream& operator<<(std::ostream& os, const ProtocolType& type) {
   os << ProtocolTypeToString(type);
   return os;
 }
@@ -1900,7 +1910,7 @@ std::string EpochTypeToString(EpochType type) {
   return "INVALID";
 }
 
-EpochType StringToEpochType(const std::string &str) {
+EpochType StringToEpochType(const std::string& str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
     return EpochType::INVALID;
@@ -1913,7 +1923,7 @@ EpochType StringToEpochType(const std::string &str) {
   return EpochType::INVALID;
 }
 
-std::ostream &operator<<(std::ostream &os, const EpochType &type) {
+std::ostream& operator<<(std::ostream& os, const EpochType& type) {
   os << EpochTypeToString(type);
   return os;
 }
@@ -1941,7 +1951,7 @@ std::string TimestampTypeToString(TimestampType type) {
   return "INVALID";
 }
 
-TimestampType StringToTimestampType(const std::string &str) {
+TimestampType StringToTimestampType(const std::string& str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
     return TimestampType::INVALID;
@@ -1958,7 +1968,7 @@ TimestampType StringToTimestampType(const std::string &str) {
   return TimestampType::INVALID;
 }
 
-std::ostream &operator<<(std::ostream &os, const TimestampType &type) {
+std::ostream& operator<<(std::ostream& os, const TimestampType& type) {
   os << TimestampTypeToString(type);
   return os;
 }
@@ -1990,7 +2000,7 @@ std::string VisibilityTypeToString(VisibilityType type) {
   return "INVALID";
 }
 
-VisibilityType StringToVisibilityType(const std::string &str) {
+VisibilityType StringToVisibilityType(const std::string& str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
     return VisibilityType::INVALID;
@@ -2007,7 +2017,7 @@ VisibilityType StringToVisibilityType(const std::string &str) {
   return VisibilityType::INVALID;
 }
 
-std::ostream &operator<<(std::ostream &os, const VisibilityType &type) {
+std::ostream& operator<<(std::ostream& os, const VisibilityType& type) {
   os << VisibilityTypeToString(type);
   return os;
 }
@@ -2032,7 +2042,7 @@ std::string VisibilityIdTypeToString(VisibilityIdType type) {
   return "INVALID";
 }
 
-VisibilityIdType StringToVisibilityIdType(const std::string &str) {
+VisibilityIdType StringToVisibilityIdType(const std::string& str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
     return VisibilityIdType::INVALID;
@@ -2047,7 +2057,7 @@ VisibilityIdType StringToVisibilityIdType(const std::string &str) {
   return VisibilityIdType::INVALID;
 }
 
-std::ostream &operator<<(std::ostream &os, const VisibilityIdType &type) {
+std::ostream& operator<<(std::ostream& os, const VisibilityIdType& type) {
   os << VisibilityIdTypeToString(type);
   return os;
 }
@@ -2085,7 +2095,7 @@ std::string IsolationLevelTypeToString(IsolationLevelType type) {
   return "INVALID";
 }
 
-IsolationLevelType StringToIsolationLevelType(const std::string &str) {
+IsolationLevelType StringToIsolationLevelType(const std::string& str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
     return IsolationLevelType::INVALID;
@@ -2107,7 +2117,7 @@ IsolationLevelType StringToIsolationLevelType(const std::string &str) {
   return IsolationLevelType::INVALID;
 }
 
-std::ostream &operator<<(std::ostream &os, const IsolationLevelType &type) {
+std::ostream& operator<<(std::ostream& os, const IsolationLevelType& type) {
   os << IsolationLevelTypeToString(type);
   return os;
 }
@@ -2136,7 +2146,7 @@ std::string ConflictAvoidanceTypeToString(ConflictAvoidanceType type) {
   return "INVALID";
 }
 
-ConflictAvoidanceType StringToConflictAvoidanceType(const std::string &str) {
+ConflictAvoidanceType StringToConflictAvoidanceType(const std::string& str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
     return ConflictAvoidanceType::INVALID;
@@ -2152,7 +2162,7 @@ ConflictAvoidanceType StringToConflictAvoidanceType(const std::string &str) {
   return ConflictAvoidanceType::INVALID;
 }
 
-std::ostream &operator<<(std::ostream &os, const ConflictAvoidanceType &type) {
+std::ostream& operator<<(std::ostream& os, const ConflictAvoidanceType& type) {
   os << ConflictAvoidanceTypeToString(type);
   return os;
 }
@@ -2181,7 +2191,7 @@ std::string GarbageCollectionTypeToString(GarbageCollectionType type) {
   return "INVALID";
 }
 
-GarbageCollectionType StringToGarbageCollectionType(const std::string &str) {
+GarbageCollectionType StringToGarbageCollectionType(const std::string& str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
     return GarbageCollectionType::INVALID;
@@ -2251,12 +2261,6 @@ std::string LogRecordTypeToString(LogRecordType type) {
     case LogRecordType::INVALID: {
       return "INVALID";
     }
-    case LogRecordType::TRANSACTION_BEGIN: {
-      return "TRANSACTION_BEGIN";
-    }
-    case LogRecordType::TRANSACTION_COMMIT: {
-      return "TRANSACTION_COMMIT";
-    }
     case LogRecordType::TUPLE_INSERT: {
       return "TUPLE_INSERT";
     }
@@ -2265,12 +2269,6 @@ std::string LogRecordTypeToString(LogRecordType type) {
     }
     case LogRecordType::TUPLE_UPDATE: {
       return "TUPLE_UPDATE";
-    }
-    case LogRecordType::EPOCH_BEGIN: {
-      return "EPOCH_BEGIN";
-    }
-    case LogRecordType::EPOCH_END: {
-      return "EPOCH_END";
     }
     default: {
       throw ConversionException(StringUtil::Format(
@@ -2285,20 +2283,12 @@ LogRecordType StringToLogRecordType(const std::string &str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
     return LogRecordType::INVALID;
-  } else if (upper_str == "TRANSACTION_BEGIN") {
-    return LogRecordType::TRANSACTION_BEGIN;
-  } else if (upper_str == "TRANSACTION_COMMIT") {
-    return LogRecordType::TRANSACTION_COMMIT;
   } else if (upper_str == "TUPLE_INSERT") {
     return LogRecordType::TUPLE_INSERT;
   } else if (upper_str == "TUPLE_DELETE") {
     return LogRecordType::TUPLE_DELETE;
   } else if (upper_str == "TUPLE_UPDATE") {
     return LogRecordType::TUPLE_UPDATE;
-  } else if (upper_str == "EPOCH_BEGIN") {
-    return LogRecordType::EPOCH_BEGIN;
-  } else if (upper_str == "EPOCH_END") {
-    return LogRecordType::EPOCH_END;
   } else {
     throw ConversionException(StringUtil::Format(
         "No LogRecordType conversion from string '%s'", upper_str.c_str()));
@@ -2308,50 +2298,6 @@ LogRecordType StringToLogRecordType(const std::string &str) {
 
 std::ostream &operator<<(std::ostream &os, const LogRecordType &type) {
   os << LogRecordTypeToString(type);
-  return os;
-}
-
-//===--------------------------------------------------------------------===//
-// CheckpointingType - String Utilities
-//===--------------------------------------------------------------------===//
-
-std::string CheckpointingTypeToString(CheckpointingType type) {
-  switch (type) {
-    case CheckpointingType::INVALID: {
-      return "INVALID";
-    }
-    case CheckpointingType::OFF: {
-      return "OFF";
-    }
-    case CheckpointingType::ON: {
-      return "ON";
-    }
-    default: {
-      throw ConversionException(StringUtil::Format(
-          "No string conversion for CheckpointingType value '%d'",
-          static_cast<int>(type)));
-    }
-  }
-  return "INVALID";
-}
-
-CheckpointingType StringToCheckpointingType(const std::string &str) {
-  std::string upper_str = StringUtil::Upper(str);
-  if (upper_str == "INVALID") {
-    return CheckpointingType::INVALID;
-  } else if (upper_str == "OFF") {
-    return CheckpointingType::OFF;
-  } else if (upper_str == "ON") {
-    return CheckpointingType::ON;
-  } else {
-    throw ConversionException(StringUtil::Format(
-        "No CheckpointingType conversion from string '%s'", upper_str.c_str()));
-  }
-  return CheckpointingType::INVALID;
-}
-
-std::ostream &operator<<(std::ostream &os, const CheckpointingType &type) {
-  os << CheckpointingTypeToString(type);
   return os;
 }
 

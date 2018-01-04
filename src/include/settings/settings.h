@@ -61,6 +61,16 @@ SETTING_string(certificate_file,
 //===----------------------------------------------------------------------===//
 // WRITE AHEAD LOG
 //===----------------------------------------------------------------------===//
+SETTING_string(log_directory,
+              "path to log files",
+              "/tmp/log",
+              false, false)
+
+SETTING_bool(recovery,
+            "Enable recovery (default: true)",
+            true,
+            true, true)
+
 
 //===----------------------------------------------------------------------===//
 // ERROR REPORTING AND LOGGING

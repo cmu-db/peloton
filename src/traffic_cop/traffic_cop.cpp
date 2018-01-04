@@ -91,9 +91,12 @@ ResultType TrafficCop::BeginQueryHelper(size_t thread_id) {
   return ResultType::SUCCESS;
 }
 
-ResultType TrafficCop::CommitQueryHelper() {
+// Pass the log manager to commit transaction
+ResultType TrafficCop::CommitQueryHelper(logging::WalLogManager* log_manager_) {
   // do nothing if we have no active txns
-  if (tcop_txn_state_.empty()) return ResultType::NOOP;
+  if (tcop_txn_state_.empty()) {
+    return ResultType::NOOP;
+  }
   auto &curr_state = tcop_txn_state_.top();
   tcop_txn_state_.pop();
   auto txn = curr_state.first;
@@ -104,7 +107,7 @@ ResultType TrafficCop::CommitQueryHelper() {
   // 'ROLLBACK' After receive 'COMMIT', see if it is rollback or really commit.
   if (curr_state.second != ResultType::ABORTED) {
     // txn committed
-    return txn_manager.CommitTransaction(txn);
+    return txn_manager.CommitTransaction(txn, log_manager_);
   } else {
     // otherwise, rollback
     return txn_manager.AbortTransaction(txn);
@@ -133,7 +136,7 @@ ResultType TrafficCop::ExecuteStatementGetResult() {
             ResultTypeToString(p_status_.m_result).c_str());
   setRowsAffected(p_status_.m_processed);
   LOG_TRACE("rows_changed %d", p_status_.m_processed);
-  is_queuing_ = false;
+ // is_queuing_ = false;
   return p_status_.m_result;
 }
 
@@ -182,40 +185,49 @@ executor::ExecutionResult TrafficCop::ExecuteHelper(
   return p_status_;
 }
 
-void TrafficCop::ExecuteStatementPlanGetResult() {
+// Pass log manager to CommitTransaction
+void TrafficCop::ExecuteStatementPlanGetResult(
+    logging::WalLogManager *log_manager) {
   bool init_failure = false;
   if (p_status_.m_result == ResultType::FAILURE) {
     // only possible if init failed
     init_failure = true;
   }
-
-  auto txn_result = GetCurrentTxnState().first->GetResult();
+  // If there is a single commit statement,
+  // the transaction has been killed when GetResult is called again.
+  if (GetCurrentTxnState().first != nullptr) {
+    auto txn_result = GetCurrentTxnState().first->GetResult();
   if (is_single_statement_txn_ || init_failure ||
-      txn_result == ResultType::FAILURE) {
-    LOG_TRACE(
-        "About to commit: single stmt: %d, init_failure: %d, txn_result: %s",
+        txn_result == ResultType::FAILURE) {
+      LOG_TRACE(
+          "About to commit: single stmt: %d, init_failure: %d, txn_result: %s",
         is_single_statement_txn_, init_failure,
-        ResultTypeToString(txn_result).c_str());
-    switch (txn_result) {
-      case ResultType::SUCCESS:
-        // Commit single statement
-        LOG_TRACE("Commit Transaction");
-        p_status_.m_result = CommitQueryHelper();
-        break;
+          ResultTypeToString(txn_result).c_str());
+      switch (txn_result) {
+        case ResultType::SUCCESS:
+          // Commit single statement
+          LOG_TRACE("Commit Transaction");
+          p_status_.m_result = CommitQueryHelper(log_manager);
+          break;
 
-      case ResultType::FAILURE:
-      default:
-        // Abort
-        LOG_TRACE("Abort Transaction");
+        case ResultType::FAILURE:
+        default:
+          // Abort
+          LOG_TRACE("Abort Transaction");
         if (is_single_statement_txn_) {
-          LOG_TRACE("Tcop_txn_state size: %lu", tcop_txn_state_.size());
-          p_status_.m_result = AbortQueryHelper();
-        } else {
-          tcop_txn_state_.top().second = ResultType::ABORTED;
-          p_status_.m_result = ResultType::ABORTED;
-        }
+            LOG_TRACE("Tcop_txn_state size: %lu", tcop_txn_state_.size());
+            p_status_.m_result = AbortQueryHelper();
+          } else {
+            tcop_txn_state_.top().second = ResultType::ABORTED;
+            p_status_.m_result = ResultType::ABORTED;
+          }
+      }
     }
-  }
+  } else {
+    // COMMIT; statement
+    p_status_.m_result = ResultType::QUEUING;
+    }
+
 }
 
 void TrafficCop::GetDataTables(
@@ -445,7 +457,7 @@ ResultType TrafficCop::ExecuteStatement(
     const std::vector<type::Value> &params, UNUSED_ATTRIBUTE bool unnamed,
     std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
     const std::vector<int> &result_format, std::vector<ResultValue> &result,
-    std::string &error_message, size_t thread_id) {
+    std::string &error_message, logging::WalLogManager* log_manager, size_t thread_id) {
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(
           settings::SettingId::stats_mode)) != StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()->InitQueryMetric(
@@ -469,7 +481,7 @@ ResultType TrafficCop::ExecuteStatement(
         return BeginQueryHelper(thread_id);
       }
       case QueryType::QUERY_COMMIT: {
-        return CommitQueryHelper();
+        return CommitQueryHelper(log_manager);
       }
       case QueryType::QUERY_ROLLBACK: {
         return AbortQueryHelper();

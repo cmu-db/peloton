@@ -1,3 +1,4 @@
+
 //===----------------------------------------------------------------------===//
 //
 //                         Peloton
@@ -10,22 +11,26 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <thread>
 #include <vector>
 
 #include "common/internal_types.h"
+#include "common/macros.h"
+#include "common/logger.h"
+#include "common/platform.h"
 
 namespace peloton {
 namespace concurrency {
 
 class EpochManager {
-  EpochManager(const EpochManager&) = delete;
+  EpochManager(const EpochManager &) = delete;
 
-public:
+ public:
   EpochManager() {}
+
+  static inline size_t GetEpochQueueCapacity() { return 40960; }
 
   // TODO: stop epoch threads before resetting epoch id.
   virtual void Reset() = 0;
@@ -47,7 +52,8 @@ public:
 
   virtual void DeregisterThread(const size_t thread_id) = 0;
 
-  virtual cid_t EnterEpoch(const size_t thread_id, const TimestampType timestamp_type) = 0;
+  virtual cid_t EnterEpoch(const size_t thread_id,
+                           const TimestampType timestamp_type) = 0;
 
   virtual void ExitEpoch(const size_t thread_id, const eid_t epoch_id) = 0;
 
@@ -55,12 +61,9 @@ public:
 
   virtual eid_t GetNextEpochId() = 0;
 
-  virtual eid_t GetCurrentEpochId() = 0;  
+  virtual eid_t GetCurrentEpochId() = 0;
 
   virtual cid_t GetExpiredCid() = 0;
-
 };
-
 }
 }
-

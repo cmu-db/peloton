@@ -798,7 +798,8 @@ enum class ResultType {
   ABORTED = 3,  // aborted
   NOOP = 4,     // no op
   UNKNOWN = 5,
-  QUEUING = 6
+  QUEUING = 6,
+  LOGGING = 7
 };
 std::string ResultTypeToString(ResultType type);
 ResultType StringToResultType(const std::string &str);
@@ -876,34 +877,29 @@ std::string LoggingTypeToString(LoggingType type);
 LoggingType StringToLoggingType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const LoggingType &type);
 
+enum CheckpointType {
+  CHECKPOINT_TYPE_INVALID = 0,
+  CHECKPOINT_TYPE_PHYLOG = 1,
+  CHECKPOINT_TYPE_PHYSICAL = 2,
+};
+
+enum TimerType {
+  TIMER_OFF = 0,
+  TIMER_SUMMARY,
+  TIMER_DISTRIBUTION,
+};
+
 enum class LogRecordType {
   INVALID = INVALID_TYPE_ID,
-
-  // TransactionContext-related records
-  TRANSACTION_BEGIN = 1,
-  TRANSACTION_COMMIT = 2,
 
   // Generic dml records
   TUPLE_INSERT = 11,
   TUPLE_DELETE = 12,
   TUPLE_UPDATE = 13,
-
-  // Epoch related records
-  EPOCH_BEGIN = 21,
-  EPOCH_END = 22,
 };
 std::string LogRecordTypeToString(LogRecordType type);
 LogRecordType StringToLogRecordType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const LogRecordType &type);
-
-enum class CheckpointingType {
-  INVALID = INVALID_TYPE_ID,
-  OFF = 1,  // turn off GC
-  ON = 2    // turn on GC
-};
-std::string CheckpointingTypeToString(CheckpointingType type);
-CheckpointingType StringToCheckpointingType(const std::string &str);
-std::ostream &operator<<(std::ostream &os, const CheckpointingType &type);
 
 /* Possible values for peloton_tilegroup_layout GUC */
 enum class LayoutType {

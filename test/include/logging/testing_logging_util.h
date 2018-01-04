@@ -1,4 +1,4 @@
-//===----------------------------------------------------------------------===//
+/*//===----------------------------------------------------------------------===//
 //
 //                         Peloton
 //
@@ -15,10 +15,10 @@
 
 #include "logging/log_manager.h"
 #include "common/logger.h"
-#include "logging/loggers/wal_frontend_logger.h"
-#include "logging/loggers/wal_backend_logger.h"
-#include "logging/records/tuple_record.h"
-#include "logging/records/transaction_record.h"
+//#include "logging/loggers/wal_frontend_logger.h"
+//#include "logging/loggers/wal_backend_logger.h"
+//#include "logging/records/tuple_record.h"
+//#include "logging/records/transaction_record.h"
 #include "storage/data_table.h"
 #include "storage/tile.h"
 #include <climits>
@@ -275,3 +275,5 @@ class LoggingScheduler {
 
 }  // namespace test
 }  // namespace peloton
+
+*/

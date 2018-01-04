@@ -64,8 +64,7 @@ NetworkManager::NetworkManager() {
   }
 
   // Add hang up signal event
-  ev_stop_ =
-      evsignal_new(base_, SIGHUP, CallbackUtil::Signal_Callback, base_);
+  ev_stop_ = evsignal_new(base_, SIGHUP, CallbackUtil::Signal_Callback, base_);
   evsignal_add(ev_stop_, NULL);
 
   // Add timeout event to check server's start/close flag every one second
@@ -79,9 +78,12 @@ NetworkManager::NetworkManager() {
       std::make_shared<NetworkMasterThread>(CONNECTION_THREAD_COUNT, base_);
 
   port_ = settings::SettingsManager::GetInt(settings::SettingId::port);
-  max_connections_ = settings::SettingsManager::GetInt(settings::SettingId::max_connections);
-  private_key_file_ = settings::SettingsManager::GetString(settings::SettingId::private_key_file);
-  certificate_file_ = settings::SettingsManager::GetString(settings::SettingId::certificate_file);
+  max_connections_ =
+      settings::SettingsManager::GetInt(settings::SettingId::max_connections);
+  private_key_file_ = settings::SettingsManager::GetString(
+      settings::SettingId::private_key_file);
+  certificate_file_ = settings::SettingsManager::GetString(
+      settings::SettingId::certificate_file);
 
   // For logging purposes
   //  event_enable_debug_mode();
@@ -97,7 +99,8 @@ NetworkManager::NetworkManager() {
 }
 
 void NetworkManager::StartServer() {
-  if (settings::SettingsManager::GetString(settings::SettingId::socket_family) == "AF_INET") {
+  if (settings::SettingsManager::GetString(
+          settings::SettingId::socket_family) == "AF_INET") {
     struct sockaddr_in sin;
     PL_MEMSET(&sin, 0, sizeof(sin));
     sin.sin_family = AF_INET;
@@ -162,9 +165,10 @@ void NetworkManager::StartServer() {
     master_thread_->Start();
 
     NetworkManager::CreateNewConnection(listen_fd, EV_READ | EV_PERSIST,
-                                        master_thread_.get(), ConnState::CONN_LISTENING);
+                                        master_thread_.get(),
+                                        ConnState::CONN_LISTENING);
 
-    LOG_INFO("Listening on port %llu", (unsigned long long) port_);
+    LOG_INFO("Listening on port %llu", (unsigned long long)port_);
     event_base_dispatch(base_);
     LOG_INFO("Closing server");
     NetworkManager::GetConnection(listen_fd)->CloseSocket();
@@ -172,6 +176,7 @@ void NetworkManager::StartServer() {
     // Free events and event base
     event_free(NetworkManager::GetConnection(listen_fd)->network_event);
     event_free(NetworkManager::GetConnection(listen_fd)->workpool_event);
+    event_free(NetworkManager::GetConnection(listen_fd)->logpool_event);
     event_free(ev_stop_);
     event_free(ev_timeout_);
     event_base_free(base_);

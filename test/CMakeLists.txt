@@ -15,6 +15,7 @@ file(GLOB perf_srcs ${PROJECT_SOURCE_DIR}/test/performance/*.cpp)
 
 set(test_srcs "")
 
+
 foreach(test_src_temp ${test_srcs_temp} )
     string(REPLACE "//" "/" test_src ${test_src_temp})
     list(APPEND test_srcs ${test_src})
@@ -64,6 +65,19 @@ add_library(peloton-test-common EXCLUDE_FROM_ALL ${gmock_srcs} ${HARNESS}
 
 set(CTEST_FLAGS "")
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} ${CTEST_FLAGS} --verbose)
+
+##################################################################################
+
+# --[ Logging Tests
+
+# Move log sample files to workspace
+set(LOGGING_SAMPLES_DIR ${CMAKE_SOURCE_DIR}/test/logging/samples)
+file(GLOB LOGGING_SAMPLES ${LOGGING_SAMPLES_DIR}/*)
+foreach(SAMPLE_PATH ${LOGGING_SAMPLES})
+    get_filename_component(SAMPLE_FILE ${SAMPLE_PATH} NAME_WE)
+    configure_file(${SAMPLE_PATH} ${CMAKE_CURRENT_BINARY_DIR}/logging_samples/${SAMPLE_FILE} COPYONLY)
+endforeach()
+
 
 ##################################################################################
 

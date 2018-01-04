@@ -25,7 +25,6 @@
 #include "concurrency/transaction_manager_factory.h"
 #include "gc/gc_manager_factory.h"
 #include "index/index.h"
-#include "logging/log_manager.h"
 #include "storage/abstract_table.h"
 #include "storage/data_table.h"
 #include "storage/database.h"
@@ -570,8 +569,8 @@ bool DataTable::InsertInSecondaryIndexes(const AbstractTuple *tuple,
  *
  * @returns True on success, false if any foreign key constraints fail
  */
-bool DataTable::CheckForeignKeyConstraints(
-    const AbstractTuple *tuple UNUSED_ATTRIBUTE) {
+bool DataTable::CheckForeignKeyConstraints(const AbstractTuple *tuple
+                                               UNUSED_ATTRIBUTE) {
   for (auto foreign_key : foreign_keys_) {
     oid_t sink_table_id = foreign_key->GetSinkTableOid();
     storage::DataTable *ref_table = nullptr;
@@ -759,6 +758,9 @@ void DataTable::AddTileGroupWithOidForRecovery(const oid_t &tile_group_id) {
 
     // add tile group metadata in locator
     catalog::Manager::GetInstance().AddTileGroup(tile_group_id, tile_group);
+    COMPILER_MEMORY_FENCE;
+    size_t active_tile_group_id = number_of_tuples_ % active_tilegroup_count_;
+    active_tile_groups_[active_tile_group_id] = tile_group;
 
     // we must guarantee that the compiler always add tile group before adding
     // tile_group_count_.

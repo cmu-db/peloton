@@ -48,7 +48,9 @@ void *SimpleQueryTest(int port) {
   try {
     // forcing the factory to generate psql protocol handler
     pqxx::connection C(StringUtil::Format(
-        "host=127.0.0.1 port=%d user=postgres sslmode=disable application_name=psql", port));
+        "host=127.0.0.1 port=%d user=postgres sslmode=disable "
+        "application_name=psql",
+        port));
     pqxx::work txn1(C);
 
     peloton::network::NetworkConnection *conn =
@@ -56,7 +58,8 @@ void *SimpleQueryTest(int port) {
             peloton::network::NetworkManager::recent_connfd);
 
     network::PostgresProtocolHandler *handler =
-        dynamic_cast<network::PostgresProtocolHandler*>(conn->protocol_handler_.get());
+        dynamic_cast<network::PostgresProtocolHandler *>(
+            conn->protocol_handler_.get());
     EXPECT_NE(handler, nullptr);
 
     // EXPECT_EQ(conn->state, peloton::network::CONN_READ);
@@ -78,7 +81,6 @@ void *SimpleQueryTest(int port) {
     LOG_INFO("[SimpleQueryTest] Exception occurred: %s", e.what());
     EXPECT_TRUE(false);
   }
-
   LOG_INFO("[SimpleQueryTest] Client has closed");
   return NULL;
 }
@@ -170,7 +172,6 @@ TEST_F(SimpleQueryTests, SimpleQueryTest) {
 
   // server & client running correctly
   SimpleQueryTest(port);
-
   network_manager.CloseServer();
   serverThread.join();
   LOG_INFO("Peloton is shutting down");
@@ -216,5 +217,5 @@ TEST_F(SimpleQueryTests, SimpleQueryTest) {
 //  LOG_INFO("[ScalabilityTest] Peloton has shut down");
 //}
 
-}  // namespace test
+} // namespace test
 }  // namespace peloton

@@ -486,31 +486,6 @@ TEST_F(TypesTests, LoggingTypeTest) {
                peloton::Exception);
 }
 
-TEST_F(TypesTests, CheckpointingTypeTest) {
-  std::vector<CheckpointingType> list = {
-      CheckpointingType::INVALID, CheckpointingType::OFF, CheckpointingType::ON
-  };
-
-  // Make sure that ToString and FromString work
-  for (auto val : list) {
-    std::string str = peloton::CheckpointingTypeToString(val);
-    EXPECT_TRUE(str.size() > 0);
-
-    auto newVal = peloton::StringToCheckpointingType(str);
-    EXPECT_EQ(val, newVal);
-
-    std::ostringstream os;
-    os << val;
-    EXPECT_EQ(str, os.str());
-  }
-
-  // Then make sure that we can't cast garbage
-  std::string invalid("WU TANG");
-  EXPECT_THROW(peloton::StringToCheckpointingType(invalid), peloton::Exception);
-  EXPECT_THROW(peloton::CheckpointingTypeToString(static_cast<CheckpointingType>(-99999)),
-               peloton::Exception);
-}
-
 TEST_F(TypesTests, GarbageCollectionTypeTest) {
   std::vector<GarbageCollectionType> list = {
       GarbageCollectionType::INVALID, GarbageCollectionType::OFF, GarbageCollectionType::ON
@@ -1048,13 +1023,9 @@ TEST_F(TypesTests, SetOpTypeTest) {
 TEST_F(TypesTests, LogRecordTypeTest) {
   std::vector<LogRecordType> list = {
       LogRecordType::INVALID,
-      LogRecordType::TRANSACTION_BEGIN,
-      LogRecordType::TRANSACTION_COMMIT,
       LogRecordType::TUPLE_INSERT,
       LogRecordType::TUPLE_DELETE,
-      LogRecordType::TUPLE_UPDATE,
-      LogRecordType::EPOCH_BEGIN,
-      LogRecordType::EPOCH_END,
+      LogRecordType::TUPLE_UPDATE
   };
 
   // Make sure that ToString and FromString work

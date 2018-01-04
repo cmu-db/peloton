@@ -109,8 +109,8 @@ class SerializeInput {
   const char* end_;
 
   // No implicit copies
-  SerializeInput(const SerializeInput&);
-  SerializeInput& operator=(const SerializeInput&);
+  //SerializeInput(const SerializeInput&);
+  //SerializeInput& operator=(const SerializeInput&);
 };
 
 /** Abstract class for writing to memory buffers. Subclasses may optionally support resizing. */

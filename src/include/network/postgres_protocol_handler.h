@@ -21,6 +21,7 @@
 #include "common/cache.h"
 #include "common/portal.h"
 #include "common/statement.h"
+#include "logging/wal_log_manager.h"
 #include "traffic_cop/traffic_cop.h"
 #include "protocol_handler.h"
 #include "common/internal_types.h"
@@ -34,14 +35,16 @@ namespace network {
 
 typedef std::vector<std::unique_ptr<OutputPacket>> ResponseBuffer;
 
-class PostgresProtocolHandler: public ProtocolHandler {
+class PostgresProtocolHandler : public ProtocolHandler {
  public:
   // TODO we need to somehow make this virtual?
-  PostgresProtocolHandler(tcop::TrafficCop *traffic_cop);
+    // Get the log_manager reference to pass below.
+    PostgresProtocolHandler(tcop::TrafficCop* traffic_cop,
+                              logging::WalLogManager* log_manager);
 
   ~PostgresProtocolHandler();
 
-  ProcessResult Process(Buffer &rbuf, const size_t thread_id);
+  ProcessResult Process(Buffer& rbuf, const size_t thread_id);
 
   /* Main switch case wrapper to process every packet apart from the startup
    * packet. Avoid flushing the response for extended protocols. */
@@ -52,7 +55,6 @@ class PostgresProtocolHandler: public ProtocolHandler {
   void SendInitialResponse();
   void Reset();
 
-
   // Ugh... this should not be here but we have no choice...
   void ReplanPreparedStatement(Statement* statement);
 
@@ -62,7 +64,6 @@ class PostgresProtocolHandler: public ProtocolHandler {
     auto statement_cache_itr = statement_cache_.find(statement_name);
     return statement_cache_itr != statement_cache_.end();
   }
-
 
   void GetResult();
 
@@ -84,22 +85,19 @@ class PostgresProtocolHandler: public ProtocolHandler {
       std::vector<std::pair<type::TypeId, std::string>>& bind_parameters,
       std::vector<type::Value>& param_values, std::vector<int16_t>& formats);
 
-
   // Packet Reading Function
   // Extracts the contents of Postgres packet from the read socket buffer
-  static bool ReadPacket(Buffer &rbuf, InputPacket &rpkt);
-
+  static bool ReadPacket(Buffer& rbuf, InputPacket& rpkt);
 
  private:
-
   // Packet Reading Function
   // Extracts the header of a Postgres packet from the read socket buffer
-  static bool ReadPacketHeader(Buffer &rbuf, InputPacket &rpkt);
+  static bool ReadPacketHeader(Buffer& rbuf, InputPacket& rpkt);
 
   //===--------------------------------------------------------------------===//
   // PROTOCOL HANDLING FUNCTIONS
   //===--------------------------------------------------------------------===//
-   // Generic error protocol packet
+  // Generic error protocol packet
   void SendErrorResponse(
       std::vector<std::pair<NetworkMessageType, std::string>> error_status);
 
@@ -114,7 +112,8 @@ class PostgresProtocolHandler: public ProtocolHandler {
 
   // Used to send a packet that indicates the completion of a query. Also has
   // txn state mgmt
-  void CompleteCommand(const std::string& query_type_string, const QueryType& query_type, int rows);
+  void CompleteCommand(const std::string& query_type_string,
+                       const QueryType& query_type, int rows);
 
   // Specific response for empty or NULL queries
   void SendEmptyQueryResponse();
@@ -203,7 +202,6 @@ class PostgresProtocolHandler: public ProtocolHandler {
 
   static const std::unordered_map<std::string, std::string>
       parameter_status_map_;
-
 };
 
 }  // namespace network

@@ -22,8 +22,8 @@
 #include "concurrency/transaction_manager_factory.h"
 #include "gc/gc_manager_factory.h"
 #include "settings/settings_manager.h"
+#include "logging/wal_log_manager.h"
 #include "threadpool/mono_queue_pool.h"
-
 namespace peloton {
 
 ThreadPool thread_pool;
@@ -67,6 +67,7 @@ void PelotonInit::Initialize() {
 
   // Initialize catalog
   auto pg_catalog = catalog::Catalog::GetInstance();
+
   pg_catalog->Bootstrap();  // Additional catalogs
   settings::SettingsManager::GetInstance().InitializeCatalog();
 
@@ -79,6 +80,12 @@ void PelotonInit::Initialize() {
   pg_catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
 
   txn_manager.CommitTransaction(txn);
+  //Change this to config-defined constant
+  logging::WalLogManager::SetDirectory(settings::SettingsManager::GetString(settings::SettingId::log_directory));
+  if (settings::SettingsManager::GetBool(settings::SettingId::recovery)) {
+    logging::WalLogManager::DoRecovery();
+  }
+
 }
 
 void PelotonInit::Shutdown() {

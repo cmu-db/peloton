@@ -57,9 +57,10 @@ void *PrepareStatementTest(int port) {
         peloton::network::NetworkManager::GetConnection(
             peloton::network::NetworkManager::recent_connfd);
 
-    //Check type of protocol handler
-    network::PostgresProtocolHandler* handler =
-        dynamic_cast<network::PostgresProtocolHandler*>(conn->protocol_handler_.get());
+    // Check type of protocol handler
+    network::PostgresProtocolHandler *handler =
+        dynamic_cast<network::PostgresProtocolHandler *>(
+            conn->protocol_handler_.get());
 
     EXPECT_NE(handler, nullptr);
 

@@ -36,6 +36,7 @@
 #include "protocol_handler.h"
 #include "marshal.h"
 #include "network_state.h"
+#include "logging/wal_log_manager.h"
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -50,17 +51,22 @@ namespace network {
 class NetworkConnection {
  public:
   int thread_id;
-  int sock_fd;                    // socket file descriptor
-  struct event *network_event = nullptr;  // something to read from network
-  struct event *workpool_event = nullptr; // worker thread done the job
-  short event_flags;              // event flags mask
+  int sock_fd;                             // socket file descriptor
+  struct event *network_event = nullptr;   // something to read from network
+  struct event *workpool_event = nullptr;  // worker thread done the job
+  struct event *logpool_event = nullptr;   // logger thread done the job
+  short event_flags;                       // event flags mask
+  bool is_logging_ = false;
 
-  SSL* conn_SSL_context = nullptr;          // SSL context for the connection
+  SSL *conn_SSL_context = nullptr;  // SSL context for the connection
 
-  NetworkThread *thread;          // reference to the network thread
-  std::unique_ptr<ProtocolHandler> protocol_handler_;       // Stores state for this socket
+  NetworkThread *thread;  // reference to the network thread
+  std::unique_ptr<ProtocolHandler>
+      protocol_handler_;                      // Stores state for this socket
   ConnState state = ConnState::CONN_INVALID;  // Initial state of connection
   tcop::TrafficCop traffic_cop_;
+  logging::WalLogManager log_manager_;
+
  private:
   Buffer rbuf_;                     // Socket's read buffer
   Buffer wbuf_;                     // Socket's write buffer
@@ -68,10 +74,9 @@ class NetworkConnection {
   Client client_;
   bool ssl_sent_ = false;
 
-
  public:
-  inline NetworkConnection(int sock_fd, short event_flags, NetworkThread *thread,
-                        ConnState init_state)
+  inline NetworkConnection(int sock_fd, short event_flags,
+                           NetworkThread *thread, ConnState init_state)
       : sock_fd(sock_fd) {
     Init(event_flags, thread, init_state);
   }
@@ -100,24 +105,25 @@ class NetworkConnection {
 
   void Reset();
 
-  static void TriggerStateMachine(void* arg);
+  static void TriggerStateMachine(void *arg);
+  static void TriggerStateMachineLog(void *arg);
 
-  /* Runs the state machine for the protocol. Invoked by event handler callback */
+  /* Runs the state machine for the protocol. Invoked by event handler callback
+   */
   static void StateMachine(NetworkConnection *conn);
 
-
  private:
-
   ProcessResult ProcessInitial();
 
-  // Extracts the header of a Postgres start up packet from the read socket buffer
+  // Extracts the header of a Postgres start up packet from the read socket
+  // buffer
   static bool ReadStartupPacketHeader(Buffer &rbuf, InputPacket &rpkt);
 
   /* Routine to deal with the first packet from the client */
-  bool ProcessInitialPacket(InputPacket* pkt);
+  bool ProcessInitialPacket(InputPacket *pkt);
 
   /* Routine to deal with general Startup message */
-  bool ProcessStartupPacket(InputPacket* pkt, int32_t proto_version);
+  bool ProcessStartupPacket(InputPacket *pkt, int32_t proto_version);
 
   /* Routine to deal with SSL request message */
   bool ProcessSSLRequestPacket(InputPacket *pkt);
@@ -146,8 +152,6 @@ class NetworkConnection {
     int one = 1;
     setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof one);
   }
-
 };
-
 }
 }

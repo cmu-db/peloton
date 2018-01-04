@@ -23,6 +23,7 @@
 #include "optimizer/abstract_optimizer.h"
 #include "parser/sql_statement.h"
 #include "storage/data_table.h"
+#include "logging/wal_log_manager.h"
 #include "type/type.h"
 #include "common/internal_types.h"
 #include "event.h"
@@ -64,7 +65,19 @@ class TrafficCop {
       const std::vector<type::Value> &params, bool unnamed,
       std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
       const std::vector<int> &result_format, std::vector<ResultValue> &result,
-      std::string &error_message, size_t thread_id = 0);
+      std::string &error_message, logging::WalLogManager *log_manager,
+      const size_t thread_id = 0);
+  ResultType ExecuteStatement(
+        const std::shared_ptr<Statement> &statement,
+        const std::vector<type::Value> &params, const bool unnamed,
+        std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
+        const std::vector<int> &result_format,
+        std::vector<ResultValue> &result,
+        std::string &error_message, const size_t thread_id = 0) {
+      return ExecuteStatement(statement, params, unnamed, param_stats,
+                              result_format, result, error_message,
+                              nullptr, thread_id);
+  }
 
   // Helper to handle txn-specifics for the plan-tree of a statement.
   executor::ExecutionResult ExecuteHelper(
@@ -88,11 +101,17 @@ class TrafficCop {
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
 
-  ResultType CommitQueryHelper();
+  ResultType CommitQueryHelper(logging::WalLogManager *log_manager);
 
-  void ExecuteStatementPlanGetResult();
+  void ExecuteStatementPlanGetResult(logging::WalLogManager *log_manager);
 
   ResultType ExecuteStatementGetResult();
+  ResultType CommitQueryHelper() { return CommitQueryHelper(nullptr); }
+  void ExecuteStatementPlanGetResult() {
+    ExecuteStatementPlanGetResult(nullptr);
+  }
+
+
 
   void SetTaskCallback(void (*task_callback)(void *), void *task_callback_arg) {
     task_callback_ = task_callback;
@@ -133,6 +152,15 @@ class TrafficCop {
 
   executor::ExecutionResult p_status_;
 
+  void SetLogging(bool is_logging) {
+    is_logging_ = is_logging;
+  }
+
+  bool GetLogging() {
+    return is_logging_;
+  }
+
+
   void SetDefaultDatabaseName(std::string default_database_name) {
     default_database_name_ = std::move(default_database_name);
   }
@@ -143,6 +171,8 @@ class TrafficCop {
 
  private:
   bool is_queuing_;
+
+  bool is_logging_;
 
   std::string error_message_;
 
