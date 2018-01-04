@@ -1226,8 +1226,8 @@ parser::DropStatement *PostgresParser::DropIndexTransform(DropStmt *root) {
   auto result = new DropStatement(DropStatement::EntityType::kIndex);
   auto cell = root->objects->head;
   auto list = reinterpret_cast<List *>(cell->data.ptr_value);
-  result->index_name =
-          reinterpret_cast<value *>(list->head->data.ptr_value)->val.str;
+  result->SetIndexName(
+      reinterpret_cast<value *>(list->head->data.ptr_value)->val.str);
   return result;
 }
 

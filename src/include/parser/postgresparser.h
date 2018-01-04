@@ -197,8 +197,8 @@ class PostgresParser {
 
   // transform helper for ListsTransform (insert multiple rows)
   static std::vector<
-      std::vector<std::unique_ptr<expression::AbstractExpression>>> *
-  ValueListsTransform(List *root);
+      std::vector<std::unique_ptr<expression::AbstractExpression>>>
+      *ValueListsTransform(List *root);
 
   // transform helper for insert statements
   static parser::SQLStatement *InsertTransform(InsertStmt *root);
@@ -238,6 +238,9 @@ class PostgresParser {
 
   // transform helper for drop trigger statement
   static parser::DropStatement *DropTriggerTransform(DropStmt *root);
+
+  // tranform helper for drop index statement
+  static parser::DropStatement *DropIndexTransform(DropStmt *root);
 
   // transform helper for drop schema statement
   static parser::DropStatement *DropSchemaTransform(DropStmt *root);
