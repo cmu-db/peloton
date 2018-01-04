@@ -239,8 +239,6 @@ class PostgresParser {
   // transform helper for drop trigger statement
   static parser::DropStatement *DropTriggerTransform(DropStmt *root);
 
-  // tranform helper for drop index statement
-  static parser::DropStatement *DropIndexTransform(DropStmt *root);
 
   // transform helper for drop schema statement
   static parser::DropStatement *DropSchemaTransform(DropStmt *root);
