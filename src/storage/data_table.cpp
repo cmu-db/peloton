@@ -677,19 +677,21 @@ bool DataTable::CheckForeignKeySrcAndCascade(storage::Tuple *prev_tuple,
                 ContainerTuple<storage::TileGroup> src_old_tuple(src_tile_group.get(), ptr->offset);
                 storage::Tuple src_new_tuple(src_table->GetSchema(), true);
 
-                for (oid_t col_itr = 0; col_itr < src_table->GetSchema()->GetColumnCount(); col_itr++)
-                {
-                  type::Value val = src_old_tuple.GetValue(col_itr);
-                  src_new_tuple.SetValue(col_itr, val, context->GetPool());
-                }
+                if (is_update) {
+                  for (oid_t col_itr = 0; col_itr < src_table->GetSchema()->GetColumnCount(); col_itr++)
+                  {
+                    type::Value val = src_old_tuple.GetValue(col_itr);
+                    src_new_tuple.SetValue(col_itr, val, context->GetPool());
+                  }
 
-                // Set the primary key fields
-                for (oid_t k = 0; k < key_attrs.size(); k++) {
-                  auto src_col_index = key_attrs[k];
-                  auto sink_col_index = fk->GetSinkColumnIds()[k];
-                  src_new_tuple.SetValue(src_col_index,
-                                         new_tuple->GetValue(sink_col_index),
-                                         context->GetPool());
+                  // Set the primary key fields
+                  for (oid_t k = 0; k < key_attrs.size(); k++) {
+                    auto src_col_index = key_attrs[k];
+                    auto sink_col_index = fk->GetSinkColumnIds()[k];
+                    src_new_tuple.SetValue(src_col_index,
+                                          new_tuple->GetValue(sink_col_index),
+                                          context->GetPool());
+                  }
                 }
 
                 ItemPointer new_loc = src_table->InsertEmptyVersion();
@@ -706,6 +708,11 @@ bool DataTable::CheckForeignKeySrcAndCascade(storage::Tuple *prev_tuple,
                 transaction_manager.PerformDelete(current_txn,
                                                   *ptr,
                                                   new_loc);
+
+                // For delete cascade, just stop here
+                if (is_update == false) {
+                  break;
+                }
 
                 ItemPointer *index_entry_ptr = nullptr;
                 peloton::ItemPointer location =
