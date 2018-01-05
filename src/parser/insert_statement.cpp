@@ -19,7 +19,7 @@ namespace parser {
 
 const std::string InsertStatement::GetInfo(int num_indent) const {
   std::ostringstream os;
-  os << StringUtil::Indent(num_indent) << "InsertStatment\n";
+  os << StringUtil::Indent(num_indent) << "InsertStatement\n";
   os << StringUtil::Indent(num_indent + 1) << GetTableName() << std::endl;
   if (!columns.empty()) {
     os << StringUtil::Indent(num_indent + 1) << "-> Columns\n";
@@ -34,7 +34,7 @@ const std::string InsertStatement::GetInfo(int num_indent) const {
         // TODO this is a debugging method which is currently unused.
         for (auto &expr : value_item) {
           // os << GetExpressionInfo(expr.get(), num_indent + 2) << std::endl;
-          os << expr.get()->GetInfo() << std::endl;
+          os << StringUtil::Indent(num_indent + 2) << expr.get()->GetInfo() << std::endl;
         }
       }
       break;

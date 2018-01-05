@@ -51,16 +51,26 @@ const std::string SQLStatement::GetInfo() const {
   return os.str();
 }
 
-const std::string SQLStatementList::GetInfo() const {
+const std::string SQLStatementList::GetInfo(int num_indent) const {
   std::ostringstream os;
 
   if (is_valid) {
     for (auto &stmt : statements) {
-      os << stmt->GetInfo() << std::endl;
+      os << stmt->GetInfo(num_indent) << std::endl;
     }
   } else {
     os << "Invalid statement list";
   }
+  std::string info = os.str();
+  StringUtil::RTrim(info);
+  return info;
+}
+
+const std::string SQLStatementList::GetInfo() const {
+  std::ostringstream os;
+
+  os << GetInfo(0);
+
   std::string info = os.str();
   StringUtil::RTrim(info);
   return info;

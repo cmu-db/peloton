@@ -58,7 +58,7 @@ class UpdateStatement : public SQLStatement {
 
   const std::string GetInfo(int num_indent) const {
     std::ostringstream os;
-    os << StringUtil::Indent(num_indent) << "UpdateStatment\n";
+    os << StringUtil::Indent(num_indent) << "UpdateStatement\n";
     os << table.get()->GetInfo(num_indent + 1) << std::endl;
     os << StringUtil::Indent(num_indent + 1) << "-> Updates :: \n";
     for (auto &update : updates) {

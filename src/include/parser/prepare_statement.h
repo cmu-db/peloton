@@ -64,6 +64,27 @@ class PrepareStatement : public SQLStatement {
     v->Visit(this);
   }
 
+  const std::string GetInfo(int num_indent) const {
+    std::ostringstream os;
+    os << StringUtil::Indent(num_indent) << "PrepareStatement\n";
+    os << StringUtil::Indent(num_indent + 1) << "Name: " << name << "\n";
+    os << query.get()->GetInfo(num_indent + 1) << "\n";
+    for (const auto& placeholder: placeholders) {
+      os << StringUtil::Indent(num_indent + 1) << placeholder.get()->GetInfo() << "\n";
+    }
+    return os.str();
+  }
+
+  const std::string GetInfo() const {
+    std::ostringstream os;
+
+    os << "SQLStatement[PREPARE]\n";
+
+    os << GetInfo(1);
+
+    return os.str();
+  }
+
   std::string name;
   std::unique_ptr<SQLStatementList> query;
   std::vector<std::unique_ptr<expression::ParameterValueExpression>>
