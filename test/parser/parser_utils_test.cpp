@@ -102,6 +102,8 @@ TEST_F(ParserUtilTests, BasicTest) {
 
   // DROP
   queries.push_back("DROP TABLE students;");
+  queries.push_back("DROP SCHEMA students;");
+  queries.push_back("DROP TRIGGER tri ON students;");
 
   // PREPARE
   queries.push_back(

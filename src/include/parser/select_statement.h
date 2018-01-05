@@ -99,7 +99,7 @@ class SelectStatement : public SQLStatement {
 
   const std::string GetInfo(int num_indent) const {
     std::ostringstream os;
-    os << StringUtil::Indent(num_indent) << "SelectStatement1\n";
+    os << StringUtil::Indent(num_indent) << "SelectStatement\n";
     os << StringUtil::Indent(num_indent + 1) << "-> Fields:\n";
     for (auto &expr : select_list) os << expr.get()->GetInfo() << std::endl;
 
