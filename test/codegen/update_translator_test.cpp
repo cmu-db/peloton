@@ -143,7 +143,7 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithAConstantAndPredicate) {
   // Pre-condition
   EXPECT_EQ(NumRowsInTestTable(), table->GetTupleCount());
 
-  std::unique_ptr<expression::AbstractExpression> b_eq_41 =
+  ExpressionPtr b_eq_41 =
       CmpEqExpr(ColRefExpr(type::TypeId::INTEGER, 1), ConstIntExpr(41));
 
   // Get the scan plan without a predicate with four columns
@@ -188,7 +188,7 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithAConstantAndPredicate) {
   EXPECT_EQ(NumRowsInTestTable() + 1, table->GetTupleCount());
 
   // Setup the scan plan node
-  std::unique_ptr<expression::AbstractExpression> b_eq_49 =
+  ExpressionPtr b_eq_49 =
       CmpEqExpr(ColRefExpr(type::TypeId::INTEGER, 1), ConstIntExpr(49));
   std::unique_ptr<planner::SeqScanPlan> scan_plan_2(new planner::SeqScanPlan(
       &GetTestTable(TestTableId2()), b_eq_49.release(), {0, 1, 2, 3}));
@@ -228,7 +228,7 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithAnOperatorExpression) {
   // Pre-condition
   EXPECT_EQ(NumRowsInTestTable(), table->GetTupleCount());
 
-  std::unique_ptr<expression::AbstractExpression> b_eq_41 =
+  ExpressionPtr b_eq_41 =
       CmpEqExpr(ColRefExpr(type::TypeId::INTEGER, 1), ConstIntExpr(41));
 
   // Get the scan plan without a predicate with four columns
@@ -280,7 +280,7 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithAnOperatorExpression) {
   EXPECT_EQ(NumRowsInTestTable() + 1, table->GetTupleCount());
 
   // Setup the scan plan node
-  std::unique_ptr<expression::AbstractExpression> b_eq_49 =
+  ExpressionPtr b_eq_49 =
       CmpEqExpr(ColRefExpr(type::TypeId::INTEGER, 1), ConstIntExpr(49));
   std::unique_ptr<planner::SeqScanPlan> scan_plan_2(new planner::SeqScanPlan(
       &GetTestTable(TestTableId2()), b_eq_49.release(), {0, 1, 2, 3}));
@@ -320,7 +320,7 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithAnOperatorExpressionComplex) {
   // Pre-condition
   EXPECT_EQ(NumRowsInTestTable(), table->GetTupleCount());
 
-  std::unique_ptr<expression::AbstractExpression> b_eq_41 =
+  ExpressionPtr b_eq_41 =
       CmpEqExpr(ColRefExpr(type::TypeId::INTEGER, 1), ConstIntExpr(41));
 
   // Get the scan plan without a predicate with four columns
@@ -382,7 +382,7 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithAnOperatorExpressionComplex) {
   EXPECT_EQ(NumRowsInTestTable() + 1, table->GetTupleCount());
 
   // Setup the scan plan node
-  std::unique_ptr<expression::AbstractExpression> a_eq_41 =
+  ExpressionPtr a_eq_41 =
       CmpEqExpr(ColRefExpr(type::TypeId::INTEGER, 0), ConstIntExpr(41));
   std::unique_ptr<planner::SeqScanPlan> scan_plan_2(new planner::SeqScanPlan(
       &GetTestTable(TestTableId2()), a_eq_41.release(), {0, 1, 2, 3}));
@@ -422,7 +422,7 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithAConstantPrimary) {
   // Pre-condition
   EXPECT_EQ(NumRowsInTestTable(), table->GetTupleCount());
 
-  std::unique_ptr<expression::AbstractExpression> a_eq_10 =
+  ExpressionPtr a_eq_10 =
       CmpEqExpr(ColRefExpr(type::TypeId::INTEGER, 0), ConstIntExpr(10));
 
   // Get the scan plan without a predicate with four columns
@@ -467,7 +467,7 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithAConstantPrimary) {
   EXPECT_EQ(NumRowsInTestTable() + 2, table->GetTupleCount());
 
   // Setup the scan plan node
-  std::unique_ptr<expression::AbstractExpression> a_eq_1 =
+  ExpressionPtr a_eq_1 =
       CmpEqExpr(ColRefExpr(type::TypeId::INTEGER, 0), ConstIntExpr(1));
   std::unique_ptr<planner::SeqScanPlan> scan_plan_5(new planner::SeqScanPlan(
       &GetTestTable(TestTableId5()), a_eq_1.release(), {0, 1, 2, 3}));
@@ -508,7 +508,7 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithCast) {
   EXPECT_EQ(NumRowsInTestTable(), table->GetTupleCount());
 
   // Get the scan plan without a predicate with four columns
-  std::unique_ptr<expression::AbstractExpression> a_eq_10 =
+  ExpressionPtr a_eq_10 =
       CmpEqExpr(ColRefExpr(type::TypeId::INTEGER, 0), ConstIntExpr(10));
   std::unique_ptr<planner::SeqScanPlan> scan_plan(new planner::SeqScanPlan(
       &GetTestTable(TestTableId1()), a_eq_10.release(), {0, 1, 2, 3}));
@@ -551,7 +551,7 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithCast) {
   EXPECT_EQ(NumRowsInTestTable() + 1, table->GetTupleCount());
 
   // Setup the scan plan node
-  std::unique_ptr<expression::AbstractExpression> a_eq_10_1 =
+  ExpressionPtr a_eq_10_1 =
       CmpEqExpr(ColRefExpr(type::TypeId::INTEGER, 0), ConstIntExpr(10));
   std::unique_ptr<planner::SeqScanPlan> scan_plan_1(new planner::SeqScanPlan(
       &GetTestTable(TestTableId1()), a_eq_10_1.release(), {0, 1, 2, 3}));
@@ -580,7 +580,7 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithCast) {
                 type::ValueFactory::GetVarcharValue("13")));
 
   // Get the scan plan without a predicate with four columns
-  std::unique_ptr<expression::AbstractExpression> a_eq_10_2 =
+  ExpressionPtr a_eq_10_2 =
       CmpEqExpr(ColRefExpr(type::TypeId::INTEGER, 0), ConstIntExpr(10));
   std::unique_ptr<planner::SeqScanPlan> scan_plan_2(new planner::SeqScanPlan(
       &GetTestTable(TestTableId1()), a_eq_10_2.release(), {0, 1, 2, 3}));
@@ -623,7 +623,7 @@ TEST_F(UpdateTranslatorTest, UpdateColumnsWithCast) {
   EXPECT_EQ(NumRowsInTestTable() + 2, table->GetTupleCount());
 
   // Setup the scan plan node
-  std::unique_ptr<expression::AbstractExpression> a_eq_10_3 =
+  ExpressionPtr a_eq_10_3 =
       CmpEqExpr(ColRefExpr(type::TypeId::INTEGER, 0), ConstIntExpr(10));
   std::unique_ptr<planner::SeqScanPlan> scan_plan_3(new planner::SeqScanPlan(
       &GetTestTable(TestTableId1()), a_eq_10_3.release(), {0, 1, 2, 3}));

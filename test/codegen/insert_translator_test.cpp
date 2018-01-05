@@ -45,19 +45,13 @@ TEST_F(InsertTranslatorTest, InsertOneTuple) {
       type::ValueFactory::GetDecimalValue(2));
   auto constant_expr_3 = new expression::ConstantValueExpression(
       type::ValueFactory::GetVarcharValue("Tuple1", true));
-  std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>>
-      tuples;
-  tuples.push_back(
-      std::vector<std::unique_ptr<expression::AbstractExpression>>());
+  std::vector<std::vector<ExpressionPtr>> tuples;
+  tuples.push_back(std::vector<ExpressionPtr>());
   auto &values = tuples[0];
-  values.push_back(
-      std::unique_ptr<expression::AbstractExpression>(constant_expr_0));
-  values.push_back(
-      std::unique_ptr<expression::AbstractExpression>(constant_expr_1));
-  values.push_back(
-      std::unique_ptr<expression::AbstractExpression>(constant_expr_2));
-  values.push_back(
-      std::unique_ptr<expression::AbstractExpression>(constant_expr_3));
+  values.push_back(ExpressionPtr(constant_expr_0));
+  values.push_back(ExpressionPtr(constant_expr_1));
+  values.push_back(ExpressionPtr(constant_expr_2));
+  values.push_back(ExpressionPtr(constant_expr_3));
 
   std::vector<std::string> columns;
   std::unique_ptr<planner::InsertPlan> insert_plan(

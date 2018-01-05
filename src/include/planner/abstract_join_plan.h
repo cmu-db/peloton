@@ -45,7 +45,18 @@ class AbstractJoinPlan : public AbstractPlan {
     // Fuck off!
   }
 
+  void GetOutputColumns(std::vector<oid_t> &columns) const override;
+
   void PerformBinding(BindingContext &context) override;
+
+  hash_t Hash() const override;
+
+  bool operator==(const AbstractPlan &rhs) const override;
+
+  void VisitParameters(
+      codegen::QueryParametersMap &map,
+      std::vector<peloton::type::Value> &values,
+      const std::vector<peloton::type::Value> &values_from_user) override;
 
   //===--------------------------------------------------------------------===//
   // Accessors

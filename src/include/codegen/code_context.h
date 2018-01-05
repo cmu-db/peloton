@@ -15,7 +15,7 @@
 #include <string>
 #include <unordered_map>
 
-#include <llvm/IR/IRBuilder.h>
+#include "llvm/IR/IRBuilder.h"
 
 #include "common/macros.h"
 

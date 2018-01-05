@@ -6,7 +6,7 @@
 //
 // Identification: src/codegen/translator_factory.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -22,6 +22,7 @@
 #include "codegen/expression/null_check_translator.h"
 #include "codegen/expression/parameter_translator.h"
 #include "codegen/expression/tuple_value_translator.h"
+#include "codegen/operator/block_nested_loop_join_translator.h"
 #include "codegen/operator/delete_translator.h"
 #include "codegen/operator/global_group_by_translator.h"
 #include "codegen/operator/hash_group_by_translator.h"
@@ -44,6 +45,7 @@
 #include "planner/hash_join_plan.h"
 #include "planner/hash_plan.h"
 #include "planner/insert_plan.h"
+#include "planner/nested_loop_join_plan.h"
 #include "planner/order_by_plan.h"
 #include "planner/projection_plan.h"
 #include "planner/seq_scan_plan.h"
@@ -74,6 +76,11 @@ std::unique_ptr<OperatorTranslator> TranslatorFactory::CreateTranslator(
     case PlanNodeType::HASHJOIN: {
       auto &join = static_cast<const planner::HashJoinPlan &>(plan_node);
       translator = new HashJoinTranslator(join, context, pipeline);
+      break;
+    }
+    case PlanNodeType::NESTLOOP: {
+      auto &join = static_cast<const planner::NestedLoopJoinPlan &>(plan_node);
+      translator = new BlockNestedLoopJoinTranslator(join, context, pipeline);
       break;
     }
     case PlanNodeType::HASH: {
