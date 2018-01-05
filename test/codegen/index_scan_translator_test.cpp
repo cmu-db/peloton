@@ -309,5 +309,6 @@ TEST_F(IndexScanTranslatorTest, IndexFullScan) {
   const auto &results = buffer.GetOutputTuples();
   EXPECT_EQ(GetTestTableSize(), results.size());
 }
-}
-}
+
+}  // namespace test
+}  // namespace peloton

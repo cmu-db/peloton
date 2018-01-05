@@ -2,32 +2,32 @@
 //
 //                         Peloton
 //
-// table_scan_translator.cpp
+// index_scan_translator.cpp
 //
-// Identification: src/codegen/operator/table_scan_translator.cpp
+// Identification: src/codegen/operator/index_scan_translator.cpp
 //
 // Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/proxy/runtime_functions_proxy.h"
-#include "codegen/proxy/executor_context_proxy.h"
 #include "codegen/operator/index_scan_translator.h"
 
 #include "codegen/lang/if.h"
+#include "codegen/lang/vectorized_loop.h"
+#include "codegen/proxy/data_table_proxy.h"
+#include "codegen/proxy/executor_context_proxy.h"
+#include "codegen/proxy/index_proxy.h"
+#include "codegen/proxy/index_scan_iterator_proxy.h"
+#include "codegen/proxy/runtime_functions_proxy.h"
 #include "codegen/proxy/storage_manager_proxy.h"
+#include "codegen/proxy/tile_group_proxy.h"
 #include "codegen/proxy/transaction_runtime_proxy.h"
+#include "codegen/operator/table_scan_translator.h"
 #include "codegen/type/boolean_type.h"
+#include "common/internal_types.h"
+#include "index/scan_optimizer.h"
 #include "planner/index_scan_plan.h"
 #include "storage/data_table.h"
-#include "codegen/proxy/data_table_proxy.h"
-#include "index/scan_optimizer.h"
-#include "codegen/proxy/index_proxy.h"
-#include "codegen/operator/table_scan_translator.h"
-#include "codegen/proxy/index_scan_iterator_proxy.h"
-#include "codegen/proxy/tile_group_proxy.h"
-#include "codegen/lang/vectorized_loop.h"
-#include "common/internal_types.h"
 
 namespace peloton {
 namespace codegen {
@@ -107,7 +107,7 @@ void IndexScanTranslator::Produce() const {
                    {index_ptr, point_key, low_key, high_key});
 
   // before doing scan, update the tuple with parameter cache!
-  UpdateTupleWithParameterCache(codegen, iterator_ptr);
+  SetIndexPredicate(codegen, iterator_ptr);
 
   // the iterator makes function call to the index
   codegen.Call(IndexScanIteratorProxy::DoScan, {iterator_ptr});
@@ -265,7 +265,7 @@ void IndexScanTranslator::FilterTuplesByPredicate(CodeGen &codegen, Vector &sel_
   }
 }
 
-void IndexScanTranslator::UpdateTupleWithParameterCache(
+void IndexScanTranslator::SetIndexPredicate(
     CodeGen &codegen, llvm::Value *iterator_ptr) const {
   std::vector<const planner::AttributeInfo *> where_clause_attributes;
   std::vector<ExpressionType> comparison_type;

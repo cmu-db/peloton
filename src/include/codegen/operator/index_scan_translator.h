@@ -47,12 +47,6 @@ class IndexScanTranslator : public OperatorTranslator {
   // The method that produces new tuples
   void Produce() const override;
 
-  // Update the tuples stored in index scan plan with new parameters
-  void UpdateTupleWithParameterCache(CodeGen &codegen,
-                                     llvm::Value *iterator_ptr) const;
-
-  void FilterTuplesByPredicate(CodeGen &codegen, Vector &sel_vec, TileGroup::TileGroupAccess &tile_group_access, llvm::Value *tile_group_id) const;
-
   // Scans are leaves in the query plan and, hence, do not consume tuples
   void Consume(ConsumerContext &, RowBatch &) const override {}
   void Consume(ConsumerContext &, RowBatch::Row &) const override {}
@@ -71,6 +65,11 @@ class IndexScanTranslator : public OperatorTranslator {
   const index::Index &GetIndex() const;
 
  private:
+  // Update the tuples stored in index scan plan with new parameters
+  void SetIndexPredicate(CodeGen &codegen, llvm::Value *iterator_ptr) const;
+
+  void FilterTuplesByPredicate(CodeGen &codegen, Vector &sel_vec, TileGroup::TileGroupAccess &tile_group_access, llvm::Value *tile_group_id) const;
+
   // The scan
   const planner::IndexScanPlan &index_scan_;
 
