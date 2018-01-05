@@ -20,9 +20,12 @@
 #include "common/logger.h"
 #include "common/macros.h"
 #include "common/internal_types.h"
-#include "concurrency/transaction_context.h"
 
 namespace peloton {
+
+namespace concurrency {
+class TransactionContext;
+}
 
 namespace storage {
 class TileGroup;
