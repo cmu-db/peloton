@@ -26,3 +26,4 @@
 #include "sql_statement.h"
 #include "transaction_statement.h"
 #include "update_statement.h"
+#include "variable_set_statement.h"

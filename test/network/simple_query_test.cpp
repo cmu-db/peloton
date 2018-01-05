@@ -72,8 +72,23 @@ void *SimpleQueryTest(int port) {
 
     pqxx::result R = txn2.exec("SELECT name FROM employee where id=1;");
     txn2.commit();
-
     EXPECT_EQ(R.size(), 1);
+
+    pqxx::work txn3(C);
+    txn3.exec("DROP TABLE IF EXISTS foo;");
+    txn3.exec("CREATE TABLE foo(length DECIMAL);");
+    txn3.commit();
+
+    pqxx::work txn4(C);
+    txn4.exec("PREPARE func AS INSERT INTO foo VALUES($1);");
+    txn4.exec("EXECUTE func(1);");
+    txn4.exec("EXECUTE func(1+1);");
+    txn4.exec("EXECUTE func(SQRT(9.0));");
+
+    pqxx::result R2 = txn4.exec("SELECT * FROM foo;");
+    txn4.commit();
+    EXPECT_EQ(R2.size(), 3);
+
   } catch (const std::exception &e) {
     LOG_INFO("[SimpleQueryTest] Exception occurred: %s", e.what());
     EXPECT_TRUE(false);

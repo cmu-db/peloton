@@ -15,9 +15,11 @@
 #include <memory>
 #include <unordered_map>
 
+#include "codegen/auxiliary_producer_function.h"
 #include "codegen/code_context.h"
 #include "codegen/codegen.h"
 #include "codegen/expression/expression_translator.h"
+#include "codegen/function_builder.h"
 #include "codegen/operator/operator_translator.h"
 #include "codegen/query.h"
 #include "codegen/query_compiler.h"
@@ -63,6 +65,11 @@ class CompilationContext {
   // construct a compilation context, then invoke this method to compile
   // the plan and prepare the provided query statement.
   void GeneratePlan(QueryCompiler::CompileStats *stats);
+
+  // Declare an extra function that produces tuples outside of the main plan
+  // function. The primary producer in this function is the provided plan node.
+  AuxiliaryProducerFunction DeclareAuxiliaryProducer(
+      const planner::AbstractPlan &plan, const std::string &provided_name);
 
   //===--------------------------------------------------------------------===//
   // ACCESSORS
@@ -140,11 +147,17 @@ class CompilationContext {
 
   // The mapping of an operator in the tree to its translator
   std::unordered_map<const planner::AbstractPlan *,
-                     std::unique_ptr<OperatorTranslator>> op_translators_;
+                     std::unique_ptr<OperatorTranslator>>
+      op_translators_;
 
   // The mapping of an expression somewhere in the tree to its translator
   std::unordered_map<const expression::AbstractExpression *,
-                     std::unique_ptr<ExpressionTranslator>> exp_translators_;
+                     std::unique_ptr<ExpressionTranslator>>
+      exp_translators_;
+
+  // Pre-declared producer functions and their root plan nodes
+  std::unordered_map<const planner::AbstractPlan *, FunctionDeclaration>
+      auxiliary_producers_;
 };
 
 }  // namespace codegen

@@ -26,6 +26,7 @@ class TransactionStatement;
 class UpdateStatement;
 class CopyStatement;
 class AnalyzeStatement;
+class VariableSetStatement;
 class JoinDefinition;
 struct TableRef;
 

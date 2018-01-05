@@ -605,7 +605,7 @@ class ExpressionUtil {
 
   /*
    * Recursively call on each child and fill in the predicate array.
-   * Returns true for zone mappable predicate. 
+   * Returns true for zone mappable predicate.
    * */
   static bool GetPredicateForZoneMap(
       std::vector<storage::PredicateInfo> &predicate_restrictions,
@@ -679,6 +679,24 @@ class ExpressionUtil {
       for (auto expr : r) r_set.insert(expr);
       return l_set == r_set;
     }
+  }
+
+  /*
+   * Check whether an expression could be evaluated statically.
+   */
+  static bool IsValidStaticExpression(const AbstractExpression *expr) {
+    if (!(expr->GetExpressionType() == ExpressionType::VALUE_CONSTANT ||
+          IsOperatorExpression(expr->GetExpressionType()) ||
+          expr->GetExpressionType() == ExpressionType::FUNCTION)) {
+      return false;
+    }
+    size_t child_size = expr->GetChildrenSize();
+    for (size_t idx = 0; idx < child_size; ++idx) {
+      if (!IsValidStaticExpression(expr->GetChild(idx))) {
+        return false;
+      }
+    }
+    return true;
   }
 };
 }

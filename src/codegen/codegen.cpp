@@ -32,23 +32,27 @@ llvm::Type *CodeGen::ArrayType(llvm::Type *type, uint32_t num_elements) const {
 
 /// Constant wrappers for bool, int8, int16, int32, int64, strings and NULL
 llvm::Constant *CodeGen::ConstBool(bool val) const {
-  return llvm::ConstantInt::get(BoolType(), val, true);
+  if (val) {
+    return llvm::ConstantInt::getTrue(GetContext());
+  } else {
+    return llvm::ConstantInt::getFalse(GetContext());
+  }
 }
 
-llvm::Constant *CodeGen::Const8(int8_t val) const {
-  return llvm::ConstantInt::get(Int8Type(), val, true);
+llvm::Constant *CodeGen::Const8(uint8_t val) const {
+  return llvm::ConstantInt::get(Int8Type(), val, false);
 }
 
-llvm::Constant *CodeGen::Const16(int16_t val) const {
-  return llvm::ConstantInt::get(Int16Type(), val, true);
+llvm::Constant *CodeGen::Const16(uint16_t val) const {
+  return llvm::ConstantInt::get(Int16Type(), val, false);
 }
 
-llvm::Constant *CodeGen::Const32(int32_t val) const {
-  return llvm::ConstantInt::get(Int32Type(), val, true);
+llvm::Constant *CodeGen::Const32(uint32_t val) const {
+  return llvm::ConstantInt::get(Int32Type(), val, false);
 }
 
-llvm::Constant *CodeGen::Const64(int64_t val) const {
-  return llvm::ConstantInt::get(Int64Type(), val, true);
+llvm::Constant *CodeGen::Const64(uint64_t val) const {
+  return llvm::ConstantInt::get(Int64Type(), val, false);
 }
 
 llvm::Constant *CodeGen::ConstDouble(double val) const {
@@ -74,6 +78,43 @@ llvm::Constant *CodeGen::NullPtr(llvm::PointerType *type) const {
 llvm::Value *CodeGen::ConstStringPtr(const std::string &s) const {
   auto &ir_builder = GetBuilder();
   return ir_builder.CreateConstInBoundsGEP2_32(nullptr, ConstString(s), 0, 0);
+}
+
+llvm::Value *CodeGen::AllocateVariable(llvm::Type *type,
+                                       const std::string &name) {
+  // To allocate a variable, a function must be under construction
+  PL_ASSERT(code_context_.GetCurrentFunction() != nullptr);
+
+  // All variable allocations go into the current function's "entry" block. By
+  // convention, we insert the allocation instruction before the first
+  // instruction in the "entry" block. If the "entry" block is empty, it doesn't
+  // matter where we insert it.
+
+  auto *entry_block = code_context_.GetCurrentFunction()->GetEntryBlock();
+  if (entry_block->empty()) {
+    return new llvm::AllocaInst(type, name, entry_block);
+  } else {
+    return new llvm::AllocaInst(type, name, &entry_block->front());
+  }
+}
+
+llvm::Value *CodeGen::AllocateBuffer(llvm::Type *element_type,
+                                     uint32_t num_elems,
+                                     const std::string &name) {
+  // Allocate the array
+  auto *arr_type = ArrayType(element_type, num_elems);
+  auto *alloc = AllocateVariable(arr_type, "");
+
+  // The 'alloca' instruction returns a pointer to the allocated type. Since we
+  // are allocating an array of 'element_type' (e.g., i32[4]), we get back a
+  // double pointer (e.g., a i32**). Therefore, we introduce a GEP into the
+  // buffer to strip off the first pointer reference.
+
+  auto *arr = llvm::GetElementPtrInst::CreateInBounds(
+      arr_type, alloc, {Const32(0), Const32(0)}, name);
+  arr->insertAfter(llvm::cast<llvm::AllocaInst>(alloc));
+
+  return arr;
 }
 
 llvm::Value *CodeGen::CallFunc(llvm::Value *fn,

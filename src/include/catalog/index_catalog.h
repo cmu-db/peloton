@@ -73,15 +73,14 @@ class IndexCatalog : public AbstractCatalog {
   ~IndexCatalog();
 
   // Global Singleton, only the first call requires passing parameters.
-  static IndexCatalog *GetInstance(storage::Database *pg_catalog = nullptr,
-                                   type::AbstractPool *pool = nullptr,
-                                   concurrency::TransactionContext *txn = nullptr);
+  static IndexCatalog *GetInstance(
+      storage::Database *pg_catalog = nullptr,
+      type::AbstractPool *pool = nullptr,
+      concurrency::TransactionContext *txn = nullptr);
 
   inline oid_t GetNextOid() { return oid_++ | INDEX_OID_MASK; }
 
-  //===--------------------------------------------------------------------===//
-  // write Related API
-  //===--------------------------------------------------------------------===//
+  /** Write Related API */
   bool InsertIndex(oid_t index_oid, const std::string &index_name,
                    oid_t table_oid, IndexType index_type,
                    IndexConstraintType index_constraint, bool unique_keys,
@@ -89,14 +88,14 @@ class IndexCatalog : public AbstractCatalog {
                    concurrency::TransactionContext *txn);
   bool DeleteIndex(oid_t index_oid, concurrency::TransactionContext *txn);
 
- private:
-  //===--------------------------------------------------------------------===//
-  // Read Related API
-  //===--------------------------------------------------------------------===//
-  std::shared_ptr<IndexCatalogObject> GetIndexObject(
-      oid_t index_oid, concurrency::TransactionContext *txn);
+  /** Read Related API */
   std::shared_ptr<IndexCatalogObject> GetIndexObject(
       const std::string &index_name, concurrency::TransactionContext *txn);
+
+ private:
+  std::shared_ptr<IndexCatalogObject> GetIndexObject(
+      oid_t index_oid, concurrency::TransactionContext *txn);
+
   const std::unordered_map<oid_t, std::shared_ptr<IndexCatalogObject>>
   GetIndexObjects(oid_t table_oid, concurrency::TransactionContext *txn);
 

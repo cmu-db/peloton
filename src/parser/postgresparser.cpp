@@ -496,8 +496,9 @@ expression::AbstractExpression *PostgresParser::TypeCastTransform(
   }
 
   TypeName *type_name = root->typeName;
-  char *name = (reinterpret_cast<value *>(
-                    type_name->names->tail->data.ptr_value)->val.str);
+  char *name =
+      (reinterpret_cast<value *>(type_name->names->tail->data.ptr_value)
+           ->val.str);
   type::VarlenType temp(StringToTypeId("INVALID"));
   result = new expression::ConstantValueExpression(
       temp.CastAs(source_value, ColumnDefinition::StrToValueType(name)));
@@ -563,8 +564,8 @@ expression::AbstractExpression *PostgresParser::FuncCallTransform(
 // This function takes in the whereClause part of a Postgres SelectStmt
 // parsenode and transfers it into the select_list of a Peloton SelectStatement.
 // It checks the type of each target and call the corresponding helpers.
-std::vector<std::unique_ptr<expression::AbstractExpression>> *
-PostgresParser::TargetTransform(List *root) {
+std::vector<std::unique_ptr<expression::AbstractExpression>>
+    *PostgresParser::TargetTransform(List *root) {
   // Statement like 'SELECT;' cannot detect by postgres parser and would lead to
   // null list
   if (root == nullptr) {
@@ -634,7 +635,6 @@ expression::AbstractExpression *PostgresParser::ExprTransform(Node *node) {
   if (node == nullptr) {
     return nullptr;
   }
-
   expression::AbstractExpression *expr = nullptr;
   switch (node->type) {
     case T_ColumnRef: {
@@ -824,8 +824,9 @@ expression::AbstractExpression *PostgresParser::WhenTransform(Node *root) {
 // it into a Peloton ColumnDefinition object
 parser::ColumnDefinition *PostgresParser::ColumnDefTransform(ColumnDef *root) {
   TypeName *type_name = root->typeName;
-  char *name = (reinterpret_cast<value *>(
-                    type_name->names->tail->data.ptr_value)->val.str);
+  char *name =
+      (reinterpret_cast<value *>(type_name->names->tail->data.ptr_value)
+           ->val.str);
   parser::ColumnDefinition *result = nullptr;
 
   parser::ColumnDefinition::DataType data_type =
@@ -1160,6 +1161,8 @@ parser::DropStatement *PostgresParser::DropTransform(DropStmt *root) {
       return DropTableTransform(root);
     case ObjectType::OBJECT_TRIGGER:
       return DropTriggerTransform(root);
+    case ObjectType::OBJECT_INDEX:
+      return DropIndexTransform(root);
     case ObjectType::OBJECT_SCHEMA:
       return DropSchemaTransform(root);
     default: {
@@ -1216,6 +1219,16 @@ parser::DropStatement *PostgresParser::DropSchemaTransform(DropStmt *root) {
         reinterpret_cast<value *>(table_list->head->data.ptr_value)->val.str);
     break;
   }
+  return result;
+}
+
+// TODO: Implement other options for drop index
+parser::DropStatement *PostgresParser::DropIndexTransform(DropStmt *root) {
+  auto result = new DropStatement(DropStatement::EntityType::kIndex);
+  auto cell = root->objects->head;
+  auto list = reinterpret_cast<List *>(cell->data.ptr_value);
+  result->SetIndexName(
+          reinterpret_cast<value *>(list->head->data.ptr_value)->val.str);
   return result;
 }
 
@@ -1288,7 +1301,12 @@ parser::AnalyzeStatement *PostgresParser::VacuumTransform(VacuumStmt *root) {
   return result;
 }
 
-std::vector<std::string> *PostgresParser::ColumnNameTransform(List *root) {
+parser::VariableSetStatement *PostgresParser::VariableSetTransform(UNUSED_ATTRIBUTE VariableSetStmt* root) {
+  VariableSetStatement* res = new VariableSetStatement();
+  return res;
+}
+
+std::vector<std::string>* PostgresParser::ColumnNameTransform(List* root) {
   auto result = new std::vector<std::string>();
 
   if (root == nullptr) return result;
@@ -1305,8 +1323,8 @@ std::vector<std::string> *PostgresParser::ColumnNameTransform(List *root) {
 // parsenode and transfers it into Peloton AbstractExpression.
 // This is a vector pointer of vector pointers because one InsertStmt can insert
 // multiple tuples.
-std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>> *
-PostgresParser::ValueListsTransform(List *root) {
+std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>>
+    *PostgresParser::ValueListsTransform(List *root) {
   auto result = new std::vector<
       std::vector<std::unique_ptr<expression::AbstractExpression>>>();
 
@@ -1417,8 +1435,8 @@ parser::SQLStatement *PostgresParser::InsertTransform(InsertStmt *root) {
     result = new parser::InsertStatement(InsertType::VALUES);
 
     PL_ASSERT(select_stmt->valuesLists != NULL);
-    std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>> *
-        insert_values = nullptr;
+    std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>>
+        *insert_values = nullptr;
     try {
       insert_values = ValueListsTransform(select_stmt->valuesLists);
     } catch (Exception e) {
@@ -1579,6 +1597,9 @@ parser::SQLStatement *PostgresParser::NodeTransform(Node *stmt) {
     case T_VacuumStmt:
       result = VacuumTransform((VacuumStmt *)stmt);
       break;
+    case T_VariableSetStmt:
+      result = VariableSetTransform((VariableSetStmt*)stmt);
+      break;
     default: {
       throw NotImplementedException(StringUtil::Format(
           "Statement of type %d not supported yet...\n", stmt->type));
@@ -1590,11 +1611,11 @@ parser::SQLStatement *PostgresParser::NodeTransform(Node *stmt) {
 // This function transfers a list of Postgres statements into
 // a Peloton SQLStatementList object. It traverses the parse list
 // and call the helper for singles nodes.
-parser::SQLStatementList *PostgresParser::ListTransform(List *root) {
-  auto result = new parser::SQLStatementList();
+parser::SQLStatementList* PostgresParser::ListTransform(List *root) {
   if (root == nullptr) {
     return nullptr;
   }
+  auto result = new parser::SQLStatementList();
   LOG_TRACE("%d statements in total\n", (root->length));
   try {
     for (auto cell = root->head; cell != nullptr; cell = cell->next) {
@@ -1617,8 +1638,8 @@ parser::SQLStatementList *PostgresParser::ListTransform(List *root) {
   return result;
 }
 
-std::vector<std::unique_ptr<parser::UpdateClause>> *
-PostgresParser::UpdateTargetTransform(List *root) {
+std::vector<std::unique_ptr<parser::UpdateClause>>
+    *PostgresParser::UpdateTargetTransform(List *root) {
   auto result = new std::vector<std::unique_ptr<parser::UpdateClause>>();
   for (auto cell = root->head; cell != NULL; cell = cell->next) {
     auto update_clause = new UpdateClause();
@@ -1702,7 +1723,9 @@ std::unique_ptr<parser::SQLStatementList> PostgresParser::BuildParseTree(
     const std::string &query_string) {
   auto stmt = PostgresParser::ParseSQLString(query_string);
 
-  LOG_TRACE("Number of statements: %lu", stmt->GetStatements().size());
+  if (stmt) {
+    LOG_TRACE("Number of statements: %lu", stmt->GetStatements().size());
+  }
 
   std::unique_ptr<parser::SQLStatementList> sql_stmt(stmt);
   return sql_stmt;
