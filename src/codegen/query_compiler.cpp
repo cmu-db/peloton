@@ -10,14 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "planner/index_scan_plan.h"
 #include "codegen/query_compiler.h"
 
 #include "codegen/compilation_context.h"
 #include "planner/aggregate_plan.h"
 #include "planner/hash_join_plan.h"
 #include "planner/projection_plan.h"
-#include "planner/seq_scan_plan.h"
+#include "planner/abstract_scan_plan.h"
 
 namespace peloton {
 namespace codegen {
@@ -86,14 +85,10 @@ bool QueryCompiler::IsSupported(const planner::AbstractPlan &plan) {
   // Check the predicate is compilable
   const expression::AbstractExpression *pred = nullptr;
   switch (plan.GetPlanNodeType()) {
-    case PlanNodeType::SEQSCAN: {
-      auto &scan_plan = static_cast<const planner::SeqScanPlan &>(plan);
-      pred = scan_plan.GetPredicate();
-      break;
-    }
+    case PlanNodeType::SEQSCAN:
     case PlanNodeType::INDEXSCAN: {
-      auto &index_scan_plan = static_cast<const planner::IndexScanPlan &>(plan);
-      pred = index_scan_plan.GetPredicate();
+      auto &scan_plan = static_cast<const planner::AbstractScan &>(plan);
+      pred = scan_plan.GetPredicate();
       break;
     }
     case PlanNodeType::AGGREGATE_V2: {
