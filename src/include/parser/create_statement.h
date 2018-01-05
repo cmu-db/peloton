@@ -227,7 +227,7 @@ class CreateStatement : public TableRefStatement {
 
   const std::string GetInfo(int num_indent) const {
     std::ostringstream os;
-    os << StringUtil::Indent(num_indent) << "CreateStatment\n";
+    os << StringUtil::Indent(num_indent) << "CreateStatement\n";
     os << StringUtil::Indent(num_indent + 1);
 
     switch (type) {

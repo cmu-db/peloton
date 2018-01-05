@@ -113,6 +113,9 @@ class SQLStatementList : public Printable {
   size_t GetNumStatements() const { return statements.size(); }
 
   // Get a string representation for debugging
+  const std::string GetInfo(int num_indent) const;
+
+  // Get a string representation for debugging
   const std::string GetInfo() const;
 
   std::vector<std::unique_ptr<SQLStatement>> statements;

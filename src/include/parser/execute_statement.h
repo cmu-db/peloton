@@ -33,6 +33,26 @@ class ExecuteStatement : public SQLStatement {
     v->Visit(this);
   }
 
+  const std::string GetInfo(int num_indent) const {
+    std::ostringstream os;
+    os << StringUtil::Indent(num_indent) << "ExecuteStatement\n";
+    os << StringUtil::Indent(num_indent + 1) << "Name: " << name << "\n";
+    for (const auto& parameter: parameters) {
+      os << StringUtil::Indent(num_indent + 1) << parameter.get()->GetInfo() << "\n";
+    }
+    return os.str();
+  }
+
+  const std::string GetInfo() const {
+    std::ostringstream os;
+
+    os << "SQLStatement[EXECUTE]\n";
+
+    os << GetInfo(1);
+
+    return os.str();
+  }
+
   std::string name;
   std::vector<std::unique_ptr<expression::AbstractExpression>> parameters;
 };

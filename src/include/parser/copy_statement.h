@@ -38,7 +38,7 @@ class CopyStatement : public SQLStatement {
 
   const std::string GetInfo(int num_indent) const {
     std::ostringstream os;
-    os << StringUtil::Indent(num_indent) << "CopyStatment\n";
+    os << StringUtil::Indent(num_indent) << "CopyStatement\n";
     os << StringUtil::Indent(num_indent + 1)
        << "-> Type :: " << CopyTypeToString(type) << "\n";
     os << cpy_table.get()->GetInfo(num_indent + 1) << std::endl;
