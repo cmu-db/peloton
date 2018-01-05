@@ -225,7 +225,7 @@ class CreateStatement : public TableRefStatement {
 
   virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
-  const std::string GetInfo(int num_indent) const {
+  const std::string GetInfo(int num_indent) const override {
     std::ostringstream os;
     os << StringUtil::Indent(num_indent) << "CreateStatement\n";
     os << StringUtil::Indent(num_indent + 1);
@@ -326,7 +326,7 @@ class CreateStatement : public TableRefStatement {
     return info;
   }
 
-  const std::string GetInfo() const {
+  const std::string GetInfo() const override {
     std::ostringstream os;
 
     os << "SQLStatement[CREATE]\n";

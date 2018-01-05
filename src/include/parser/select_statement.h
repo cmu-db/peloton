@@ -97,7 +97,7 @@ class SelectStatement : public SQLStatement {
 
   virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
-  const std::string GetInfo(int num_indent) const {
+  const std::string GetInfo(int num_indent) const override {
     std::ostringstream os;
     os << StringUtil::Indent(num_indent) << "SelectStatement\n";
     os << StringUtil::Indent(num_indent + 1) << "-> Fields:\n";
@@ -155,7 +155,7 @@ class SelectStatement : public SQLStatement {
     return info;
   }
 
-  const std::string GetInfo() const {
+  const std::string GetInfo() const override {
     std::ostringstream os;
 
     os << "SQLStatement[SELECT]\n";
