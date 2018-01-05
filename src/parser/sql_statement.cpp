@@ -34,34 +34,20 @@ namespace parser {
 // Utilities
 //===--------------------------------------------------------------------===//
 
+const std::string SQLStatement::GetInfo(int num_indent) const {
+  std::ostringstream os;
+  os << StringUtil::Indent(num_indent) << "GetInfo for statement type "
+     << StatementTypeToString(stmt_type) << " not implemented yet...\n";
+  return os.str();
+}
+
 const std::string SQLStatement::GetInfo() const {
   std::ostringstream os;
 
   os << "SQLStatement[" << StatementTypeToString(stmt_type) << "]\n";
 
   int indent = 1;
-  switch (stmt_type) {
-    case StatementType::SELECT:
-      os << ParserUtils::GetSelectStatementInfo((SelectStatement*)this, indent);
-      break;
-    case StatementType::INSERT:
-      os << ParserUtils::GetInsertStatementInfo((InsertStatement*)this, indent);
-      break;
-    case StatementType::CREATE:
-      os << ParserUtils::GetCreateStatementInfo((CreateStatement*)this, indent);
-      break;
-    case StatementType::DELETE:
-      os << ParserUtils::GetDeleteStatementInfo((DeleteStatement*)this, indent);
-      break;
-    case StatementType::COPY:
-      os << ParserUtils::GetCopyStatementInfo((CopyStatement*)this, indent);
-      break;
-    case StatementType::UPDATE:
-      os << ParserUtils::GetUpdateStatementInfo((UpdateStatement*)this, indent);
-      break;
-    default:
-      break;
-  }
+  os << GetInfo(indent) << "\n";
   return os.str();
 }
 
@@ -69,7 +55,7 @@ const std::string SQLStatementList::GetInfo() const {
   std::ostringstream os;
 
   if (is_valid) {
-    for (auto& stmt : statements) {
+    for (auto &stmt : statements) {
       os << stmt->GetInfo() << std::endl;
     }
   } else {

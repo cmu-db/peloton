@@ -15,6 +15,8 @@
 #include "common/sql_node_visitor.h"
 #include "parser/sql_statement.h"
 #include "parser/table_ref.h"
+#include "parser/parser_utils.h"
+#include "util/string_util.h"
 #include <vector>
 
 namespace peloton {
@@ -34,7 +36,7 @@ class OrderDescription {
 
   virtual ~OrderDescription() {}
 
-  void Accept(SqlNodeVisitor* v) { v->Visit(this); }
+  void Accept(SqlNodeVisitor *v) { v->Visit(this); }
 
   std::vector<OrderType> types;
   std::vector<std::unique_ptr<expression::AbstractExpression>> exprs;
@@ -51,7 +53,7 @@ class LimitDescription {
   LimitDescription(int64_t limit, int64_t offset)
       : limit(limit), offset(offset) {}
 
-  void Accept(SqlNodeVisitor* v) { v->Visit(this); }
+  void Accept(SqlNodeVisitor *v) { v->Visit(this); }
 
   int64_t limit;
   int64_t offset;
@@ -66,7 +68,7 @@ class GroupByDescription {
 
   ~GroupByDescription() {}
 
-  void Accept(SqlNodeVisitor* v) { v->Visit(this); }
+  void Accept(SqlNodeVisitor *v) { v->Visit(this); }
 
   std::vector<std::unique_ptr<expression::AbstractExpression>> columns;
   std::unique_ptr<expression::AbstractExpression> having;
@@ -93,8 +95,74 @@ class SelectStatement : public SQLStatement {
 
   virtual ~SelectStatement() {}
 
-  virtual void Accept(SqlNodeVisitor* v) override {
-    v->Visit(this);
+  virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
+
+  const std::string GetInfo(int num_indent) const {
+    std::ostringstream os;
+    os << StringUtil::Indent(num_indent) << "SelectStatement1\n";
+    os << StringUtil::Indent(num_indent + 1) << "-> Fields:\n";
+    for (auto &expr : select_list) os << expr.get()->GetInfo() << std::endl;
+
+    if (from_table != NULL) {
+      os << StringUtil::Indent(num_indent + 1) + "-> Sources:\n";
+      os << from_table.get()->GetInfo(num_indent + 2) << std::endl;
+    }
+
+    if (where_clause != NULL) {
+      os << StringUtil::Indent(num_indent + 1) << "-> Search Conditions:\n";
+      os << where_clause.get()->GetInfo() << std::endl;
+    }
+
+    if (union_select != NULL) {
+      os << StringUtil::Indent(num_indent + 1) << "-> Union:\n";
+      os << union_select.get()->GetInfo(num_indent + 2) << std::endl;
+    }
+
+    if (order != NULL) {
+      os << StringUtil::Indent(num_indent + 1) << "-> OrderBy:\n";
+      for (size_t idx = 0; idx < order->exprs.size(); idx++) {
+        auto &expr = order->exprs.at(idx);
+        auto &type = order->types.at(idx);
+        os << expr.get()->GetInfo() << std::endl;
+        if (type == kOrderAsc)
+          os << StringUtil::Indent(num_indent + 2) << "ascending\n";
+        else
+          os << StringUtil::Indent(num_indent + 2) << "descending\n";
+      }
+    }
+
+    if (group_by != NULL) {
+      os << StringUtil::Indent(num_indent + 1) << "-> GroupBy:\n";
+      for (auto &column : group_by->columns) {
+        os << StringUtil::Indent(num_indent + 2) << column->GetInfo()
+           << std::endl;
+      }
+      if (group_by->having) {
+        os << StringUtil::Indent(num_indent + 2) << group_by->having->GetInfo()
+           << std::endl;
+      }
+    }
+
+    if (limit != NULL) {
+      os << StringUtil::Indent(num_indent + 1) << "-> Limit:\n";
+      os << StringUtil::Indent(num_indent + 2) << std::to_string(limit->limit)
+         << "\n";
+      os << StringUtil::Indent(num_indent + 2) << std::to_string(limit->offset)
+         << "\n";
+    }
+    std::string info = os.str();
+    StringUtil::RTrim(info);
+    return info;
+  }
+
+  const std::string GetInfo() const {
+    std::ostringstream os;
+
+    os << "SQLStatement[SELECT]\n";
+
+    os << GetInfo(1);
+
+    return os.str();
   }
 
   std::unique_ptr<TableRef> from_table;
@@ -110,11 +178,12 @@ class SelectStatement : public SQLStatement {
   int depth = -1;
 
  public:
-  const std::vector<std::unique_ptr<expression::AbstractExpression>>& getSelectList() const {
+  const std::vector<std::unique_ptr<expression::AbstractExpression>> &
+  getSelectList() const {
     return select_list;
   }
 
-  void UpdateWhereClause(expression::AbstractExpression* expr) {
+  void UpdateWhereClause(expression::AbstractExpression *expr) {
     where_clause.reset(expr);
   }
 };
