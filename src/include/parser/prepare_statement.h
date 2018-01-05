@@ -29,8 +29,7 @@ namespace parser {
  */
 class PrepareStatement : public SQLStatement {
  public:
-  PrepareStatement()
-      : SQLStatement(StatementType::PREPARE), query(nullptr) {}
+  PrepareStatement() : SQLStatement(StatementType::PREPARE), query(nullptr) {}
 
   virtual ~PrepareStatement() {}
 
@@ -42,17 +41,17 @@ class PrepareStatement : public SQLStatement {
    * To ensure that, during parsing we store the character position use that to
    *sort the list here.
    */
-  void setPlaceholders(std::vector<void*> ph) {
-    for (void* e : ph) {
+  void setPlaceholders(std::vector<void *> ph) {
+    for (void *e : ph) {
       if (e != NULL)
         placeholders.push_back(
             std::unique_ptr<expression::ParameterValueExpression>(
-                (expression::ParameterValueExpression*)e));
+                (expression::ParameterValueExpression *)e));
     }
     // Sort by col-id
     std::sort(placeholders.begin(), placeholders.end(),
-              [](const std::unique_ptr<expression::ParameterValueExpression>& i,
-                 const std::unique_ptr<expression::ParameterValueExpression>& j)
+              [](const std::unique_ptr<expression::ParameterValueExpression> &i,
+                 const std::unique_ptr<expression::ParameterValueExpression> &j)
                   -> bool { return (i->ival_ < j->ival_); });
 
     // Set the placeholder id on the Expr. This replaces the previously stored
@@ -60,17 +59,16 @@ class PrepareStatement : public SQLStatement {
     for (uint i = 0; i < placeholders.size(); ++i) placeholders[i]->ival_ = i;
   }
 
-  virtual void Accept(SqlNodeVisitor* v) override {
-    v->Visit(this);
-  }
+  virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
   const std::string GetInfo(int num_indent) const {
     std::ostringstream os;
     os << StringUtil::Indent(num_indent) << "PrepareStatement\n";
     os << StringUtil::Indent(num_indent + 1) << "Name: " << name << "\n";
     os << query.get()->GetInfo(num_indent + 1) << "\n";
-    for (const auto& placeholder: placeholders) {
-      os << StringUtil::Indent(num_indent + 1) << placeholder.get()->GetInfo() << "\n";
+    for (const auto &placeholder : placeholders) {
+      os << StringUtil::Indent(num_indent + 1) << placeholder.get()->GetInfo()
+         << "\n";
     }
     return os.str();
   }
