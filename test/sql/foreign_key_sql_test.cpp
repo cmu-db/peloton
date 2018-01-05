@@ -74,21 +74,19 @@ TEST_F(ForeignKeySQLTests, CascadeTest) {
   EXPECT_EQ(TestingSQLUtil::ExecuteSQLQuery(
       "UPDATE tb1 SET id = 10 where id = 1;"), ResultType::SUCCESS);
 
-  TestingSQLUtil::ExecuteSQLQuery("SELECT * from tb1", result,
+  TestingSQLUtil::ExecuteSQLQuery("SELECT id from tb1;", result,
                                   tuple_descriptor, rows_affected,
                                   error_message);
 
-  EXPECT_EQ(rows_affected, 1);
-  EXPECT_EQ(result[0][0], 10);
+  EXPECT_EQ("10", result[0]);
 
   result.clear();
   tuple_descriptor.clear();
-  TestingSQLUtil::ExecuteSQLQuery("SELECT * from tb2", result,
+  TestingSQLUtil::ExecuteSQLQuery("SELECT num from tb2;", result,
                                   tuple_descriptor, rows_affected,
                                   error_message);
 
-  EXPECT_EQ(rows_affected, 1);
-  EXPECT_EQ(result[0][0], 10);
+  EXPECT_EQ("10", result[0]);
 
   txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
