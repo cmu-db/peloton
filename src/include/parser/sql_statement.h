@@ -46,7 +46,10 @@ class SQLStatement : public Printable {
   virtual StatementType GetType() { return stmt_type; }
 
   // Get a string representation for debugging
-  const std::string GetInfo() const;
+  virtual const std::string GetInfo(int num_indent) const;
+
+  // Get a string representation for debugging
+  virtual const std::string GetInfo() const;
 
   // Visitor Pattern used for the optimizer to access statements
   // This allows a facility outside the object itself to determine the type of

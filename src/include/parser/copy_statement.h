@@ -30,12 +30,33 @@ class CopyStatement : public SQLStatement {
       : SQLStatement(StatementType::COPY),
         cpy_table(nullptr),
         type(type),
-        delimiter(',') {};
+        delimiter(','){};
 
   virtual ~CopyStatement() {}
 
-  virtual void Accept(SqlNodeVisitor* v) override {
-    v->Visit(this);
+  virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
+
+  const std::string GetInfo(int num_indent) const {
+    std::ostringstream os;
+    os << StringUtil::Indent(num_indent) << "CopyStatment\n";
+    os << StringUtil::Indent(num_indent + 1)
+       << "-> Type :: " << CopyTypeToString(type) << "\n";
+    os << cpy_table.get()->GetInfo(num_indent + 1) << std::endl;
+
+    os << StringUtil::Indent(num_indent + 1) << "-> File Path :: " << file_path
+       << std::endl;
+    os << StringUtil::Indent(num_indent + 1) << "-> Delimiter :: " << delimiter;
+    return os.str();
+  }
+
+  const std::string GetInfo() const {
+    std::ostringstream os;
+
+    os << "SQLStatement[COPY]\n";
+
+    os << GetInfo(1);
+
+    return os.str();
   }
 
   std::unique_ptr<TableRef> cpy_table;

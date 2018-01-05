@@ -123,34 +123,8 @@ TEST_F(ParserUtilTests, BasicTest) {
                 stmt_list->error_line, stmt_list->error_col);
     }
     for (auto &stmt : stmt_list->statements) {
-      switch (stmt->GetType()) {
-        case StatementType::SELECT:
-          EXPECT_TRUE(parser::ParserUtils::GetSelectStatementInfo(
-                          (parser::SelectStatement*)stmt.get(), 0).size() > 0);
-          break;
-        case StatementType::INSERT:
-          EXPECT_TRUE(parser::ParserUtils::GetInsertStatementInfo(
-                          (parser::InsertStatement*)stmt.get(), 0).size() > 0);
-          break;
-        case StatementType::CREATE:
-          EXPECT_TRUE(parser::ParserUtils::GetCreateStatementInfo(
-                          (parser::CreateStatement*)stmt.get(), 0).size() > 0);
-          break;
-        case StatementType::DELETE:
-          EXPECT_TRUE(parser::ParserUtils::GetDeleteStatementInfo(
-                          (parser::DeleteStatement*)stmt.get(), 0).size() > 0);
-          break;
-        case StatementType::COPY:
-          EXPECT_TRUE(parser::ParserUtils::GetCopyStatementInfo(
-                          (parser::CopyStatement*)stmt.get(), 0).size() > 0);
-          break;
-        case StatementType::UPDATE:
-          EXPECT_TRUE(parser::ParserUtils::GetUpdateStatementInfo(
-                          (parser::UpdateStatement*)stmt.get(), 0).size() > 0);
-          break;
-        default:
-          break;
-      }
+      LOG_INFO("%s\n", stmt->GetInfo().c_str());
+      EXPECT_TRUE(stmt->GetInfo().size() > 0);
     }
   }
 }
