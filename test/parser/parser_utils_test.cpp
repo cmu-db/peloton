@@ -136,7 +136,7 @@ TEST_F(ParserUtilTests, BasicTest) {
                 stmt_list->error_line, stmt_list->error_col);
     }
     for (auto &stmt : stmt_list->statements) {
-      LOG_INFO("%s\n", stmt->GetInfo().c_str());
+      LOG_TRACE("%s\n", stmt->GetInfo().c_str());
       EXPECT_TRUE(stmt->GetInfo().size() > 0);
     }
   }

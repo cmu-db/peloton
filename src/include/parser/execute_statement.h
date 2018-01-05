@@ -30,7 +30,7 @@ class ExecuteStatement : public SQLStatement {
 
   virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
-  const std::string GetInfo(int num_indent) const {
+  const std::string GetInfo(int num_indent) const override {
     std::ostringstream os;
     os << StringUtil::Indent(num_indent) << "ExecuteStatement\n";
     os << StringUtil::Indent(num_indent + 1) << "Name: " << name << "\n";
@@ -41,7 +41,7 @@ class ExecuteStatement : public SQLStatement {
     return os.str();
   }
 
-  const std::string GetInfo() const {
+  const std::string GetInfo() const override {
     std::ostringstream os;
 
     os << "SQLStatement[EXECUTE]\n";

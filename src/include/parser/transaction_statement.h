@@ -35,10 +35,11 @@ class TransactionStatement : public SQLStatement {
 
   virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
-  const std::string GetInfo(int num_indent) const {
+  const std::string GetInfo(int num_indent) const override {
     std::ostringstream os;
     os << StringUtil::Indent(num_indent) << "TransactionStatement\n";
     os << StringUtil::Indent(num_indent + 1) << "Type: ";
+
     switch (type) {
       case kBegin:
         os << "Begin\n";
@@ -50,14 +51,13 @@ class TransactionStatement : public SQLStatement {
         os << "Rollback\n";
         break;
     }
+
     return os.str();
   }
 
-  const std::string GetInfo() const {
+  const std::string GetInfo() const override {
     std::ostringstream os;
-
     os << "SQLStatement[TRANSACTION]\n";
-
     os << GetInfo(1);
 
     return os.str();

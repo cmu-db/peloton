@@ -97,7 +97,7 @@ class DropStatement : public TableRefStatement {
 
   virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
-  const std::string GetInfo(int num_indent) const {
+  const std::string GetInfo(int num_indent) const override {
     std::ostringstream os;
     os << StringUtil::Indent(num_indent) << "DropStatement\n";
     os << StringUtil::Indent(num_indent + 1);
@@ -156,7 +156,7 @@ class DropStatement : public TableRefStatement {
     return os.str();
   }
 
-  const std::string GetInfo() const {
+  const std::string GetInfo() const override {
     std::ostringstream os;
 
     os << "SQLStatement[DROP]\n";

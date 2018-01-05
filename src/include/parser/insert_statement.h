@@ -43,9 +43,9 @@ class InsertStatement : SQLStatement {
     return table_ref_->GetDatabaseName();
   }
 
-  const std::string GetInfo(int num_indent) const;
+  const std::string GetInfo(int num_indent) const override;
 
-  const std::string GetInfo() const;
+  const std::string GetInfo() const override;
 
   InsertType type;
   std::vector<std::string> columns;
