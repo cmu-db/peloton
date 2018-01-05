@@ -51,6 +51,8 @@ class IndexScanTranslator : public OperatorTranslator {
   void UpdateTupleWithParameterCache(CodeGen &codegen,
                                      llvm::Value *iterator_ptr) const;
 
+  void FilterTuplesByPredicate(CodeGen &codegen, Vector &sel_vec, TileGroup::TileGroupAccess &tile_group_access, llvm::Value *tile_group_id) const;
+
   // Scans are leaves in the query plan and, hence, do not consume tuples
   void Consume(ConsumerContext &, RowBatch &) const override {}
   void Consume(ConsumerContext &, RowBatch::Row &) const override {}

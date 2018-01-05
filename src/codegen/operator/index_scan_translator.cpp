@@ -171,40 +171,7 @@ void IndexScanTranslator::Produce() const {
                       raw_sel_vec});
     sel_vec.SetNumElements(out_idx);
 
-    // filter by predicate
-    const auto *predicate = index_scan_.GetPredicate();
-    if (predicate != nullptr) {
-      RowBatch batch{this->GetCompilationContext(), tile_group_id,
-                     codegen.Const32(0), codegen.Const32(1), sel_vec, true};
-      // Determine the attributes the predicate needs
-      std::unordered_set<const planner::AttributeInfo *> used_attributes;
-      predicate->GetUsedAttributes(used_attributes);
-
-      // Setup the row batch with attribute accessors for the predicate
-      std::vector<TableScanTranslator::AttributeAccess> attribute_accessors;
-      for (const auto *ai : used_attributes) {
-        attribute_accessors.emplace_back(tile_group_access, ai);
-      }
-      for (uint32_t i = 0; i < attribute_accessors.size(); i++) {
-        auto &accessor = attribute_accessors[i];
-        batch.AddAttribute(accessor.GetAttributeRef(), &accessor);
-      }
-
-      // Iterate over the batch using a scalar loop
-      batch.Iterate(codegen, [&](RowBatch::Row &row) {
-        // Evaluate the predicate to determine row validity
-        codegen::Value valid_row = row.DeriveValue(codegen, *predicate);
-
-        // Reify the boolean value since it may be NULL
-        PL_ASSERT(valid_row.GetType().GetSqlType() ==
-                  type::Boolean::Instance());
-        llvm::Value *bool_val =
-            type::Boolean::Instance().Reify(codegen, valid_row);
-
-        // Set the validity of the row
-        row.SetValidity(codegen, bool_val);
-      });
-    }
+    FilterTuplesByPredicate(codegen, sel_vec, tile_group_access, tile_group_id);
 
     // construct the final row batch
     // one tuple per row batch
@@ -259,6 +226,43 @@ std::string IndexScanTranslator::GetName() const {
 // Index accessor
 const index::Index &IndexScanTranslator::GetIndex() const {
   return dynamic_cast<index::Index &>(*index_scan_.GetIndex().get());
+}
+
+void IndexScanTranslator::FilterTuplesByPredicate(CodeGen &codegen, Vector &sel_vec, TileGroup::TileGroupAccess &tile_group_access, llvm::Value *tile_group_id) const {
+  // filter by predicate
+  const auto *predicate = index_scan_.GetPredicate();
+  if (predicate != nullptr) {
+    RowBatch batch{this->GetCompilationContext(), tile_group_id,
+                   codegen.Const32(0), codegen.Const32(1), sel_vec, true};
+    // Determine the attributes the predicate needs
+    std::unordered_set<const planner::AttributeInfo *> used_attributes;
+    predicate->GetUsedAttributes(used_attributes);
+
+    // Setup the row batch with attribute accessors for the predicate
+    std::vector<TableScanTranslator::AttributeAccess> attribute_accessors;
+    for (const auto *ai : used_attributes) {
+      attribute_accessors.emplace_back(tile_group_access, ai);
+    }
+    for (uint32_t i = 0; i < attribute_accessors.size(); i++) {
+      auto &accessor = attribute_accessors[i];
+      batch.AddAttribute(accessor.GetAttributeRef(), &accessor);
+    }
+
+    // Iterate over the batch using a scalar loop
+    batch.Iterate(codegen, [&](RowBatch::Row &row) {
+      // Evaluate the predicate to determine row validity
+      codegen::Value valid_row = row.DeriveValue(codegen, *predicate);
+
+      // Reify the boolean value since it may be NULL
+      PL_ASSERT(valid_row.GetType().GetSqlType() ==
+                type::Boolean::Instance());
+      llvm::Value *bool_val =
+        type::Boolean::Instance().Reify(codegen, valid_row);
+
+      // Set the validity of the row
+      row.SetValidity(codegen, bool_val);
+    });
+  }
 }
 
 void IndexScanTranslator::UpdateTupleWithParameterCache(
