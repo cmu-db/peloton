@@ -147,7 +147,8 @@ class CompilationContext {
 
   // The mapping of an operator in the tree to its translator
   std::unordered_map<const planner::AbstractPlan *,
-                     std::unique_ptr<OperatorTranslator>> op_translators_;
+                     std::unique_ptr<OperatorTranslator>>
+      op_translators_;
 
   // The mapping of an expression somewhere in the tree to its translator
   std::unordered_map<const expression::AbstractExpression *,
@@ -156,6 +157,7 @@ class CompilationContext {
   // Pre-declared producer functions and their root plan nodes
   std::unordered_map<const planner::AbstractPlan *, FunctionDeclaration>
       auxiliary_producers_;
+
 };
 
 }  // namespace codegen

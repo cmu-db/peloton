@@ -635,7 +635,6 @@ expression::AbstractExpression *PostgresParser::ExprTransform(Node *node) {
   if (node == nullptr) {
     return nullptr;
   }
-
   expression::AbstractExpression *expr = nullptr;
   switch (node->type) {
     case T_ColumnRef: {
@@ -1302,7 +1301,12 @@ parser::AnalyzeStatement *PostgresParser::VacuumTransform(VacuumStmt *root) {
   return result;
 }
 
-std::vector<std::string> *PostgresParser::ColumnNameTransform(List *root) {
+parser::VariableSetStatement *PostgresParser::VariableSetTransform(UNUSED_ATTRIBUTE VariableSetStmt* root) {
+  VariableSetStatement* res = new VariableSetStatement();
+  return res;
+}
+
+std::vector<std::string>* PostgresParser::ColumnNameTransform(List* root) {
   auto result = new std::vector<std::string>();
 
   if (root == nullptr) return result;
@@ -1593,6 +1597,9 @@ parser::SQLStatement *PostgresParser::NodeTransform(Node *stmt) {
     case T_VacuumStmt:
       result = VacuumTransform((VacuumStmt *)stmt);
       break;
+    case T_VariableSetStmt:
+      result = VariableSetTransform((VariableSetStmt*)stmt);
+      break;
     default: {
       throw NotImplementedException(StringUtil::Format(
           "Statement of type %d not supported yet...\n", stmt->type));
@@ -1604,11 +1611,11 @@ parser::SQLStatement *PostgresParser::NodeTransform(Node *stmt) {
 // This function transfers a list of Postgres statements into
 // a Peloton SQLStatementList object. It traverses the parse list
 // and call the helper for singles nodes.
-parser::SQLStatementList *PostgresParser::ListTransform(List *root) {
-  auto result = new parser::SQLStatementList();
+parser::SQLStatementList* PostgresParser::ListTransform(List *root) {
   if (root == nullptr) {
     return nullptr;
   }
+  auto result = new parser::SQLStatementList();
   LOG_TRACE("%d statements in total\n", (root->length));
   try {
     for (auto cell = root->head; cell != nullptr; cell = cell->next) {
@@ -1716,7 +1723,9 @@ std::unique_ptr<parser::SQLStatementList> PostgresParser::BuildParseTree(
     const std::string &query_string) {
   auto stmt = PostgresParser::ParseSQLString(query_string);
 
-  LOG_TRACE("Number of statements: %lu", stmt->GetStatements().size());
+  if (stmt) {
+    LOG_TRACE("Number of statements: %lu", stmt->GetStatements().size());
+  }
 
   std::unique_ptr<parser::SQLStatementList> sql_stmt(stmt);
   return sql_stmt;

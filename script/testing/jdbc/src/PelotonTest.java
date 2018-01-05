@@ -125,6 +125,12 @@ public class PelotonTest {
 
   private final String UNSUPPORTED_SELECT_FOR_UPDATE_SQL = "SELECT id FROM A FOR UPDATE where A.id = 1;";
 
+  private final String INVALID_CREATE_SQL = "CREATE TABEL foo (id); ";
+
+  private final String INVALID_PREPARE_SQL = "PREPARE func INSERT INTO foo(id int);";
+
+  private final String EMPTY_SQL = ";;";
+
   public PelotonTest() throws SQLException {
     try {
       Class.forName("org.postgresql.Driver");
@@ -650,7 +656,15 @@ public class PelotonTest {
     System.out.println("Copy finished");
   }
 
-
+  public void Empty_SQL() throws SQLException {
+    conn.setAutoCommit(true);
+    Statement stmt = conn.createStatement();
+    try {
+      stmt.execute(EMPTY_SQL);
+    } catch (Exception e) {
+      throw new SQLException("Empty query should be valid");
+    }
+  }
 
 
   public void Invalid_SQL() throws SQLException {
@@ -658,14 +672,16 @@ public class PelotonTest {
     Statement stmt = conn.createStatement();
 
     int validQueryIndex = -1;
-    String statements[] = new String[6];
+    String statements[] = new String[8];
     statements[0] = INVALID_TABLE_SQL;
     statements[1] = INVALID_DB_SQL;
     statements[2] = INVALID_SYNTAX_SQL;
     statements[3] = UNSUPPORTED_JOIN_SQL;
     statements[4] = UNSUPPORTED_INNER_JOIN_SQL;
     statements[5] = UNSUPPORTED_SELECT_FOR_UPDATE_SQL;
-    for (int i = 0; i < 6; i++) {
+    statements[6] = INVALID_CREATE_SQL;
+    statements[7] = INVALID_PREPARE_SQL;
+    for (int i = 0; i < 8; i++) {
       try {
         stmt.execute(statements[i]);
         validQueryIndex = i;
@@ -805,6 +821,7 @@ public class PelotonTest {
     pt.Batch_Update();
     pt.Batch_Delete();
     pt.Invalid_SQL();
+    pt.Empty_SQL();
     pt.BlobTest();
     pt.Close();
   }
