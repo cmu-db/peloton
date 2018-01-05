@@ -19,11 +19,6 @@
 #include "type/value_peeker.h"
 
 namespace peloton {
-
-namespace type {
-class Value;
-}
-
 namespace codegen {
 
 class QueryParameters {
@@ -78,62 +73,50 @@ class QueryParameters {
     return parameters_map_.GetParameters();
   }
 
-  // Get the boolean value for the index
   bool GetBoolean(uint32_t index) const {
     return peloton::type::ValuePeeker::PeekBoolean(parameters_values_[index]);
   }
 
-  // Get the tinyint value for the index
   int8_t GetTinyInt(uint32_t index) const {
     return peloton::type::ValuePeeker::PeekTinyInt(parameters_values_[index]);
   }
 
-  // Get the smallint value for the index
   int16_t GetSmallInt(uint32_t index) const {
     return peloton::type::ValuePeeker::PeekSmallInt(parameters_values_[index]);
   }
 
-  // Get the integer value for the index
   int32_t GetInteger(uint32_t index) const {
     return peloton::type::ValuePeeker::PeekInteger(parameters_values_[index]);
   }
 
-  // Get the bigint value for the index
   int64_t GetBigInt(uint32_t index) const {
     return peloton::type::ValuePeeker::PeekBigInt(parameters_values_[index]);
   }
 
-  // Get the double value for the index
   double GetDouble(uint32_t index) const {
     return peloton::type::ValuePeeker::PeekDouble(parameters_values_[index]);
   }
 
-  // Get the date value for the index
   int32_t GetDate(uint32_t index) const {
     return peloton::type::ValuePeeker::PeekDate(parameters_values_[index]);
   }
 
-  // Get the timestamp value for the index
   uint64_t GetTimestamp(uint32_t index) const {
     return peloton::type::ValuePeeker::PeekTimestamp(parameters_values_[index]);
   }
 
-  // Get the valrchar value for the index
   const char *GetVarcharVal(uint32_t index) const {
     return peloton::type::ValuePeeker::PeekVarchar(parameters_values_[index]);
   }
 
-  // Get the valrchar length for the index
   uint32_t GetVarcharLen(uint32_t index) const {
     return parameters_values_[index].GetLength();
   }
 
-  // Get the valrbinary value for the index
   const char *GetVarbinaryVal(uint32_t index) const {
     return peloton::type::ValuePeeker::PeekVarbinary(parameters_values_[index]);
   }
 
-  // Get the valrbinary length for the index
   uint32_t GetVarbinaryLen(uint32_t index) const {
     return parameters_values_[index].GetLength();
   }

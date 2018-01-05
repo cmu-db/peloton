@@ -162,7 +162,7 @@ TEST_F(TableScanTranslatorTest, SimplePredicate) {
   //
 
   // Setup the predicate
-  std::unique_ptr<expression::AbstractExpression> a_gt_20 =
+  ExpressionPtr a_gt_20 =
       CmpGteExpr(ColRefExpr(type::TypeId::INTEGER, 0), ConstIntExpr(20));
 
   // Setup the scan plan node
@@ -194,7 +194,7 @@ TEST_F(TableScanTranslatorTest, SimplePredicateWithNull) {
   //
 
   // Setup the predicate
-  std::unique_ptr<expression::AbstractExpression> b_lt_20 =
+  ExpressionPtr b_lt_20 =
       CmpLtExpr(ColRefExpr(type::TypeId::INTEGER, 1), ConstIntExpr(20));
 
   // Setup the scan plan node
@@ -234,7 +234,7 @@ TEST_F(TableScanTranslatorTest, PredicateOnNonOutputColumn) {
   //
 
   // 1) Setup the predicate
-  std::unique_ptr<expression::AbstractExpression> a_gt_40 =
+  ExpressionPtr a_gt_40 =
       CmpGteExpr(ColRefExpr(type::TypeId::INTEGER, 0), ConstIntExpr(40));
 
   // 2) Setup the scan plan node
@@ -264,11 +264,11 @@ TEST_F(TableScanTranslatorTest, ScanWithConjunctionPredicate) {
   // 1) Construct the components of the predicate
 
   // a >= 20
-  std::unique_ptr<expression::AbstractExpression> a_gt_20 =
+  ExpressionPtr a_gt_20 =
       CmpGteExpr(ColRefExpr(type::TypeId::INTEGER, 0), ConstIntExpr(20));
 
   // b = 21
-  std::unique_ptr<expression::AbstractExpression> b_eq_21 =
+  ExpressionPtr b_eq_21 =
       CmpEqExpr(ColRefExpr(type::TypeId::INTEGER, 1), ConstIntExpr(21));
 
   // a >= 20 AND b = 21

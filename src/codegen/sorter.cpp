@@ -68,6 +68,10 @@ void Sorter::Sort(CodeGen &codegen, llvm::Value *sorter_ptr) const {
   codegen.Call(SorterProxy::Sort, {sorter_ptr});
 }
 
+void Sorter::Reset(CodeGen &codegen, llvm::Value *sorter_ptr) const {
+  codegen.Call(SorterProxy::Clear, {sorter_ptr});
+}
+
 void Sorter::Iterate(CodeGen &codegen, llvm::Value *sorter_ptr,
                      Sorter::IterateCallback &callback) const {
   struct TaatIterateCallback : VectorizedIterateCallback {
@@ -112,18 +116,10 @@ void Sorter::VectorizedIterate(
     CodeGen &codegen, llvm::Value *sorter_ptr, uint32_t vector_size,
     Sorter::VectorizedIterateCallback &callback) const {
   llvm::Value *start_pos = GetStartPosition(codegen, sorter_ptr);
-
   llvm::Value *num_tuples = GetNumberOfStoredTuples(codegen, sorter_ptr);
-
-  // Determine the number of bytes to skip per vector
-  llvm::Value *vec_sz = codegen.Const32(vector_size);
-  llvm::Value *tuple_size = GetTupleSize(codegen);
-  llvm::Value *skip = codegen->CreateMul(vec_sz, tuple_size);
-
-  lang::VectorizedLoop loop{
-      codegen, num_tuples, vector_size, {{"pos", start_pos}}};
+  lang::VectorizedLoop loop{codegen, num_tuples, vector_size, {}};
   {
-    llvm::Value *curr_pos = loop.GetLoopVar(0);
+    // Current loop range
     auto curr_range = loop.GetCurrentRange();
 
     // Provide an accessor into the sorted space
@@ -133,9 +129,8 @@ void Sorter::VectorizedIterate(
     callback.ProcessEntries(codegen, curr_range.start, curr_range.end,
                             sorter_access);
 
-    // Bump the pointer by the size of a tuple
-    llvm::Value *next_pos = codegen->CreateInBoundsGEP(curr_pos, skip);
-    loop.LoopEnd(codegen, {next_pos});
+    // That's it
+    loop.LoopEnd(codegen, {});
   }
 }
 
@@ -146,15 +141,9 @@ void Sorter::Destroy(CodeGen &codegen, llvm::Value *sorter_ptr) const {
 
 llvm::Value *Sorter::GetNumberOfStoredTuples(CodeGen &codegen,
                                              llvm::Value *sorter_ptr) const {
-  // TODO: util::Sorter has a function to handle this ...
-  llvm::Value *start_pos = GetStartPosition(codegen, sorter_ptr);
-  llvm::Value *end_pos = GetEndPosition(codegen, sorter_ptr);
-  llvm::Value *tuple_size =
-      codegen->CreateZExt(GetTupleSize(codegen), codegen.Int64Type());
-
-  llvm::Value *diff_bytes = codegen->CreatePtrDiff(end_pos, start_pos);
-  llvm::Value *num_tuples = codegen->CreateUDiv(diff_bytes, tuple_size);
-  return codegen->CreateTruncOrBitCast(num_tuples, codegen.Int32Type());
+  auto *sorter_type = SorterProxy::GetType(codegen);
+  return codegen->CreateLoad(
+      codegen->CreateConstInBoundsGEP2_32(sorter_type, sorter_ptr, 0, 3));
 }
 
 // Pull out the 'start_pos_' instance member from the provided Sorter instance
@@ -165,12 +154,8 @@ llvm::Value *Sorter::GetStartPosition(CodeGen &codegen,
       codegen->CreateConstInBoundsGEP2_32(sorter_type, sorter_ptr, 0, 0));
 }
 
-// Pull out the 'end_pos_' instance member from the provided Sorter instance
-llvm::Value *Sorter::GetEndPosition(CodeGen &codegen,
-                                    llvm::Value *sorter_ptr) const {
-  auto *sorter_type = SorterProxy::GetType(codegen);
-  return codegen->CreateLoad(
-      codegen->CreateConstInBoundsGEP2_32(sorter_type, sorter_ptr, 0, 1));
+llvm::Value *Sorter::GetTupleSize(CodeGen &codegen) const {
+  return codegen.Const32(storage_format_.GetStorageSize());
 }
 
 //===----------------------------------------------------------------------===//

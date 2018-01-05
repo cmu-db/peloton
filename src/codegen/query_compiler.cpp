@@ -67,10 +67,11 @@ bool QueryCompiler::IsSupported(const planner::AbstractPlan &plan) {
       }
       break;
     }
+    case PlanNodeType::NESTLOOP:
     case PlanNodeType::HASHJOIN: {
-      const auto &hjp = static_cast<const planner::HashJoinPlan &>(plan);
+      const auto &join = static_cast<const planner::AbstractJoinPlan &>(plan);
       // Right now, only support inner joins
-      if (hjp.GetJoinType() == JoinType::INNER) {
+      if (join.GetJoinType() == JoinType::INNER) {
         break;
       }
     }

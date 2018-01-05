@@ -745,7 +745,8 @@ static void JoinQueryHelper(
   std::shared_ptr<const catalog::Schema> schema(nullptr);
 
   planner::NestedLoopJoinPlan nested_loop_join_node(
-      join_type, std::move(join_predicate), std::move(project_info), schema);
+      join_type, std::move(join_predicate), std::move(project_info), schema,
+      {left_table_join_column}, {right_table_join_column});
 
   // Run the nested loop join executor
   executor::NestedLoopJoinExecutor nested_loop_join_executor(

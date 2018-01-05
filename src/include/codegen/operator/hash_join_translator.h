@@ -161,9 +161,6 @@ class HashJoinTranslator : public OperatorTranslator {
   // The storage format used to store build-attributes in hash-table
   CompactStorage left_value_storage_;
 
-  // The ID of the prefetch vector, if we're prefetching
-  RuntimeState::StateID prefetch_vector_id_;
-
   // Does this join need an output vector
   bool needs_output_vector_;
 };

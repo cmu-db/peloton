@@ -21,51 +21,40 @@ namespace peloton {
 namespace expression {
 class AbstractExpression;
 class Parameter;
-}
+}  // namespace expression
 
 namespace planner {
 
 class HashJoinPlan : public AbstractJoinPlan {
+  using ExpressionPtr = std::unique_ptr<const expression::AbstractExpression>;
+
  public:
-  HashJoinPlan(
-      JoinType join_type,
-      std::unique_ptr<const expression::AbstractExpression> &&predicate,
-      std::unique_ptr<const ProjectInfo> &&proj_info,
-      std::shared_ptr<const catalog::Schema> &proj_schema,
-      bool build_bloomfilter = false);
+  HashJoinPlan(JoinType join_type, ExpressionPtr &&predicate,
+               std::unique_ptr<const ProjectInfo> &&proj_info,
+               std::shared_ptr<const catalog::Schema> &proj_schema,
+               bool build_bloomfilter = false);
 
-  HashJoinPlan(
-      JoinType join_type,
-      std::unique_ptr<const expression::AbstractExpression> &&predicate,
-      std::unique_ptr<const ProjectInfo> &&proj_info,
-      std::shared_ptr<const catalog::Schema> &proj_schema,
-      const std::vector<oid_t> &outer_hashkeys,
-      bool build_bloomfilter = false);
+  HashJoinPlan(JoinType join_type, ExpressionPtr &&predicate,
+               std::unique_ptr<const ProjectInfo> &&proj_info,
+               std::shared_ptr<const catalog::Schema> &proj_schema,
+               const std::vector<oid_t> &outer_hashkeys,
+               bool build_bloomfilter = false);
 
-  HashJoinPlan(
-      JoinType join_type,
-      std::unique_ptr<const expression::AbstractExpression> &&predicate,
-      std::unique_ptr<const ProjectInfo> &&proj_info,
-      std::shared_ptr<const catalog::Schema> &proj_schema,
-      std::vector<std::unique_ptr<const expression::AbstractExpression>>
-          &left_hash_keys,
-      std::vector<std::unique_ptr<const expression::AbstractExpression>>
-          &right_hash_keys,
-      bool build_bloomfilter = false);
+  HashJoinPlan(JoinType join_type, ExpressionPtr &&predicate,
+               std::unique_ptr<const ProjectInfo> &&proj_info,
+               std::shared_ptr<const catalog::Schema> &proj_schema,
+               std::vector<ExpressionPtr> &left_hash_keys,
+               std::vector<ExpressionPtr> &right_hash_keys,
+               bool build_bloomfilter = false);
 
   void HandleSubplanBinding(bool is_left, const BindingContext &input) override;
 
-  inline PlanNodeType GetPlanNodeType() const override {
+  PlanNodeType GetPlanNodeType() const override {
     return PlanNodeType::HASHJOIN;
   }
 
-  void GetOutputColumns(std::vector<oid_t> &columns) const override {
-    columns.resize(GetSchema()->GetColumnCount());
-    std::iota(columns.begin(), columns.end(), 0);
-  }
-
   bool IsBloomFilterEnabled() const { return build_bloomfilter_; }
-  
+
   void SetBloomFilterFlag(bool flag) { build_bloomfilter_ = flag; }
 
   const std::string GetInfo() const override { return "HashJoin"; }
@@ -89,7 +78,8 @@ class HashJoinPlan : public AbstractJoinPlan {
   }
 
   std::unique_ptr<AbstractPlan> Copy() const override {
-    std::unique_ptr<const expression::AbstractExpression> predicate_copy(GetPredicate() ? GetPredicate()->Copy() : nullptr);
+    ExpressionPtr predicate_copy(GetPredicate() ? GetPredicate()->Copy()
+                                                : nullptr);
     std::shared_ptr<const catalog::Schema> schema_copy(
         catalog::Schema::CopySchema(GetSchema()));
     HashJoinPlan *new_plan = new HashJoinPlan(
@@ -101,23 +91,19 @@ class HashJoinPlan : public AbstractJoinPlan {
   hash_t Hash() const override;
 
   bool operator==(const AbstractPlan &rhs) const override;
-  bool operator!=(const AbstractPlan &rhs) const override {
-    return !(*this == rhs);
-  }
 
-  virtual void VisitParameters(codegen::QueryParametersMap &map,
+  void VisitParameters(
+      codegen::QueryParametersMap &map,
       std::vector<peloton::type::Value> &values,
       const std::vector<peloton::type::Value> &values_from_user) override;
 
  private:
   std::vector<oid_t> outer_column_ids_;
 
-  std::vector<std::unique_ptr<const expression::AbstractExpression>>
-      left_hash_keys_;
-  
-  std::vector<std::unique_ptr<const expression::AbstractExpression>>
-      right_hash_keys_;
-  
+  std::vector<ExpressionPtr> left_hash_keys_;
+
+  std::vector<ExpressionPtr> right_hash_keys_;
+
   bool build_bloomfilter_;
 
  private:
