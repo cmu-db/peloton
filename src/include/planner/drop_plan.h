@@ -55,6 +55,8 @@ class DropPlan : public AbstractPlan {
 
   std::string GetTriggerName() const { return trigger_name; }
 
+  std::string GetIndexName() const { return index_name; }
+
   DropType GetDropType() const { return drop_type; }
 
   bool IsMissing() const { return missing; }
@@ -69,6 +71,7 @@ class DropPlan : public AbstractPlan {
   std::string database_name;
 
   std::string trigger_name;
+  std::string index_name;
   bool missing;
 
  private:
