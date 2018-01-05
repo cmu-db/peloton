@@ -104,11 +104,17 @@ class SQLStatementList : public Printable {
 
   SQLStatement *GetStatement(int id) const { return statements[id].get(); }
 
-  std::unique_ptr<SQLStatement> PassOutStatement(int id) {return std::move(statements[id]);}
+  std::unique_ptr<SQLStatement> PassOutStatement(int id) {
+    return std::move(statements[id]);
+  }
 
-  void PassInStatement(std::unique_ptr<SQLStatement> stmt) {statements.push_back(std::move(stmt));}
+  void PassInStatement(std::unique_ptr<SQLStatement> stmt) {
+    statements.push_back(std::move(stmt));
+  }
 
-  const std::vector<std::unique_ptr<SQLStatement>>& GetStatements() const { return statements; }
+  const std::vector<std::unique_ptr<SQLStatement>> &GetStatements() const {
+    return statements;
+  }
 
   size_t GetNumStatements() const { return statements.size(); }
 

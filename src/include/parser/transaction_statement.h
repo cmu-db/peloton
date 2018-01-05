@@ -33,8 +33,34 @@ class TransactionStatement : public SQLStatement {
   TransactionStatement(CommandType type)
       : SQLStatement(StatementType::TRANSACTION), type(type) {}
 
-  virtual void Accept(SqlNodeVisitor* v) override {
-    v->Visit(this);
+  virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
+
+  const std::string GetInfo(int num_indent) const {
+    std::ostringstream os;
+    os << StringUtil::Indent(num_indent) << "TransactionStatement\n";
+    os << StringUtil::Indent(num_indent + 1) << "Type: ";
+    switch (type) {
+      case kBegin:
+        os << "Begin\n";
+        break;
+      case kCommit:
+        os << "Commit\n";
+        break;
+      case kRollback:
+        os << "Rollback\n";
+        break;
+    }
+    return os.str();
+  }
+
+  const std::string GetInfo() const {
+    std::ostringstream os;
+
+    os << "SQLStatement[TRANSACTION]\n";
+
+    os << GetInfo(1);
+
+    return os.str();
   }
 
   CommandType type;

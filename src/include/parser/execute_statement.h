@@ -24,21 +24,19 @@ namespace parser {
  */
 class ExecuteStatement : public SQLStatement {
  public:
-  ExecuteStatement()
-      : SQLStatement(StatementType::EXECUTE) {}
+  ExecuteStatement() : SQLStatement(StatementType::EXECUTE) {}
 
   virtual ~ExecuteStatement() {}
 
-  virtual void Accept(SqlNodeVisitor* v) override {
-    v->Visit(this);
-  }
+  virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
   const std::string GetInfo(int num_indent) const {
     std::ostringstream os;
     os << StringUtil::Indent(num_indent) << "ExecuteStatement\n";
     os << StringUtil::Indent(num_indent + 1) << "Name: " << name << "\n";
-    for (const auto& parameter: parameters) {
-      os << StringUtil::Indent(num_indent + 1) << parameter.get()->GetInfo() << "\n";
+    for (const auto &parameter : parameters) {
+      os << StringUtil::Indent(num_indent + 1) << parameter.get()->GetInfo()
+         << "\n";
     }
     return os.str();
   }

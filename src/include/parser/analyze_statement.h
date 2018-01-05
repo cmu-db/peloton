@@ -25,8 +25,7 @@ namespace parser {
 class AnalyzeStatement : public SQLStatement {
  public:
   AnalyzeStatement()
-      : SQLStatement(StatementType::ANALYZE),
-        analyze_table(nullptr) {};
+      : SQLStatement(StatementType::ANALYZE), analyze_table(nullptr){};
 
   virtual ~AnalyzeStatement() {}
 
@@ -37,7 +36,7 @@ class AnalyzeStatement : public SQLStatement {
     return analyze_table->GetTableName();
   }
 
-  const std::vector<std::string>& GetColumnNames() const {
+  const std::vector<std::string> &GetColumnNames() const {
     return analyze_columns;
   }
 
@@ -53,8 +52,29 @@ class AnalyzeStatement : public SQLStatement {
     return analyze_table->GetDatabaseName();
   }
 
-  virtual void Accept(SqlNodeVisitor* v) override {
-    v->Visit(this);
+  virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
+
+  const std::string GetInfo(int num_indent) const {
+    std::ostringstream os;
+    os << StringUtil::Indent(num_indent) << "AnalyzeStatement\n";
+    os << analyze_table.get()->GetInfo(num_indent + 1);
+    if (analyze_columns.size() > 0) {
+      os << StringUtil::Indent(num_indent + 1) << "Columns: \n";
+    }
+    for (const auto &col : analyze_columns) {
+      os << StringUtil::Indent(num_indent + 2) << col << "\n";
+    }
+    return os.str();
+  }
+
+  const std::string GetInfo() const {
+    std::ostringstream os;
+
+    os << "SQLStatement[ANALYZE]\n";
+
+    os << GetInfo(1);
+
+    return os.str();
   }
 
   std::unique_ptr<parser::TableRef> analyze_table;

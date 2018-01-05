@@ -114,6 +114,17 @@ TEST_F(ParserUtilTests, BasicTest) {
   queries.push_back(
       "COPY pg_catalog.query_metric TO '/home/user/output.csv' DELIMITER ',';");
 
+  // ANALYZE
+  queries.push_back("ANALYZE t ( col1, col2, col3 );");
+
+  // EXECUTE
+  queries.push_back("EXECUTE fooplan(1, 'Hunter Valley', 't', 200.00);");
+
+  // TRANSACTION
+  queries.push_back("BEGIN TRANSACTION;");
+  queries.push_back("COMMIT TRANSACTION;");
+  queries.push_back("ROLLBACK TRANSACTION;");
+
   // Parsing
   UNUSED_ATTRIBUTE int ii = 0;
   for (auto query : queries) {
