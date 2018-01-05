@@ -13,6 +13,7 @@
 #include "codegen/operator/table_scan_translator.h"
 
 #include "codegen/lang/if.h"
+#include "codegen/lang/local_variable.h"
 #include "codegen/proxy/executor_context_proxy.h"
 #include "codegen/proxy/storage_manager_proxy.h"
 #include "codegen/proxy/transaction_runtime_proxy.h"
@@ -46,7 +47,6 @@ TableScanTranslator::TableScanTranslator(const planner::SeqScanPlan &scan,
 
   // The restriction, if one exists
   const auto *predicate = GetScanPlan().GetPredicate();
-  auto &codegen = GetCodeGen();
 
   if (predicate != nullptr) {
     // If there is a predicate, prepare a translator for it
@@ -57,10 +57,6 @@ TableScanTranslator::TableScanTranslator(const planner::SeqScanPlan &scan,
       pipeline.InstallBoundaryAtOutput(this);
     }
   }
-  auto &runtime_state = context.GetRuntimeState();
-  selection_vector_id_ = runtime_state.RegisterState(
-      "scanSelVec",
-      codegen.ArrayType(codegen.Int32Type(), Vector::kDefaultVectorSize), true);
 
   LOG_DEBUG("Finished constructing TableScanTranslator ...");
 }
@@ -81,7 +77,9 @@ void TableScanTranslator::Produce() const {
                    {storage_manager_ptr, db_oid, table_oid});
 
   // The selection vector for the scan
-  Vector sel_vec{LoadStateValue(selection_vector_id_),
+  lang::LocalVariable selection_vector(codegen, codegen.ArrayType(
+      codegen.Int32Type(), Vector::kDefaultVectorSize));
+  Vector sel_vec{selection_vector.GetValue(),
                  Vector::kDefaultVectorSize, codegen.Int32Type()};
 
   storage::ZoneMapManager *zone_map_manager =

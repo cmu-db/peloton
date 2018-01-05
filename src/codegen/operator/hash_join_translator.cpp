@@ -13,6 +13,7 @@
 #include "codegen/operator/hash_join_translator.h"
 
 #include "codegen/expression/tuple_value_translator.h"
+#include "codegen/lang/local_variable.h"
 #include "codegen/lang/vectorized_loop.h"
 #include "codegen/proxy/bloom_filter_proxy.h"
 #include "codegen/proxy/oa_hash_table_proxy.h"
@@ -44,12 +45,6 @@ HashJoinTranslator::HashJoinTranslator(const planner::HashJoinPlan &join,
   if (UsePrefetching()) {
     left_pipeline_.InstallBoundaryAtInput(this);
     pipeline.InstallBoundaryAtInput(this);
-
-    // Allocate slot for prefetch array
-    prefetch_vector_id_ = runtime_state.RegisterState(
-        "hjPFVec", codegen.ArrayType(codegen.Int64Type(),
-                                     OAHashTable::kDefaultGroupPrefetchSize),
-        true);
   }
 
   // Allocate state for our hash table and bloom filter
@@ -169,7 +164,9 @@ void HashJoinTranslator::Consume(ConsumerContext &context,
   auto &codegen = GetCodeGen();
 
   // The vector holding the hash values for the group
-  Vector hashes{LoadStateValue(prefetch_vector_id_),
+  lang::LocalVariable prefetch_vector(codegen, codegen.ArrayType(
+      codegen.Int64Type(), OAHashTable::kDefaultGroupPrefetchSize));
+  Vector hashes{prefetch_vector.GetValue(),
                 OAHashTable::kDefaultGroupPrefetchSize, codegen.Int64Type()};
 
   auto group_prefetch = [&](

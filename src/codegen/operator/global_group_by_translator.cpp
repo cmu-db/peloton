@@ -13,6 +13,7 @@
 #include "codegen/operator/global_group_by_translator.h"
 
 #include "codegen/lang/if.h"
+#include "codegen/lang/local_variable.h"
 #include "common/logger.h"
 #include "planner/aggregate_plan.h"
 
@@ -58,8 +59,6 @@ GlobalGroupByTranslator::GlobalGroupByTranslator(
   // Allocate state in the function argument for our materialization buffer
   auto &runtime_state = context.GetRuntimeState();
   mat_buffer_id_ = runtime_state.RegisterState("buf", mat_buffer_type);
-  output_vector_id_ = runtime_state.RegisterState(
-      "ggbSelVec", codegen.ArrayType(codegen.Int32Type(), 1), true);
 
   LOG_DEBUG("Finished constructing GlobalGroupByTranslator ...");
 }
@@ -92,7 +91,9 @@ void GlobalGroupByTranslator::Produce() const {
   }
 
   // Create a row-batch of one row, place all the attributes into the row
-  Vector v{LoadStateValue(output_vector_id_), 1, codegen.Int32Type()};
+  lang::LocalVariable output_vector(codegen,
+                                    codegen.ArrayType(codegen.Int32Type(), 1));
+  Vector v{output_vector.GetValue(), 1, codegen.Int32Type()};
   RowBatch batch{GetCompilationContext(), codegen.Const32(0),
                  codegen.Const32(1), v, false};
 

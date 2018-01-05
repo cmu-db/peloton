@@ -189,9 +189,6 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
       codegen_.VoidType(),
       {{"runtimeState", runtime_state.FinalizeType(codegen_)->getPointerTo()}}};
 
-  // Create all local state
-  runtime_state.CreateLocalState(codegen_);
-
   // Load the query parameter values
   parameter_cache_.Populate(codegen_, GetQueryParametersPtr());
 

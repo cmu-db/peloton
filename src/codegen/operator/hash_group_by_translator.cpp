@@ -12,6 +12,7 @@
 
 #include "codegen/operator/hash_group_by_translator.h"
 
+#include "codegen/lang/local_variable.h"
 #include "codegen/proxy/oa_hash_table_proxy.h"
 #include "codegen/operator/projection_translator.h"
 #include "codegen/lang/vectorized_loop.h"
@@ -45,19 +46,7 @@ HashGroupByTranslator::HashGroupByTranslator(
   // of input tuples
   if (UsePrefetching()) {
     child_pipeline_.InstallBoundaryAtInput(this);
-
-    // Allocate slot for prefetch array
-    prefetch_vector_id_ = runtime_state.RegisterState(
-        "gpPrefetchVec",
-        codegen.ArrayType(codegen.Int64Type(),
-                          OAHashTable::kDefaultGroupPrefetchSize),
-        true);
   }
-
-  // Allocate local stage for the output vector we produce
-  output_vector_id_ = runtime_state.RegisterState(
-      "hgbSelVec",
-      codegen.ArrayType(codegen.Int32Type(), Vector::kDefaultVectorSize), true);
 
   // Register the hash-table instance in the runtime state
   hash_table_id_ = runtime_state.RegisterState(
@@ -111,6 +100,7 @@ void HashGroupByTranslator::InitializeState() {
 // Produce!
 void HashGroupByTranslator::Produce() const {
   auto &comp_ctx = GetCompilationContext();
+  auto &codegen = comp_ctx.GetCodeGen();
 
   // Let the child produce its tuples which we aggregate in our hash-table
   comp_ctx.Produce(*group_by_.GetChild(0));
@@ -118,7 +108,9 @@ void HashGroupByTranslator::Produce() const {
   LOG_DEBUG("HashGroupBy starting to produce results ...");
 
   // Iterate over the hash table, sending tuples up the tree
-  Vector selection_vec{LoadStateValue(output_vector_id_),
+  lang::LocalVariable output_vector(codegen, codegen.ArrayType(
+      codegen.Int32Type(), Vector::kDefaultVectorSize));
+  Vector selection_vec{output_vector.GetValue(),
                        Vector::kDefaultVectorSize, GetCodeGen().Int32Type()};
   ProduceResults producer{*this};
   hash_table_.VectorizedIterate(GetCodeGen(), LoadStatePtr(hash_table_id_),
@@ -137,7 +129,9 @@ void HashGroupByTranslator::Consume(ConsumerContext &context,
   auto &codegen = GetCodeGen();
 
   // The vector holding the hash values for the group
-  Vector hashes{LoadStateValue(prefetch_vector_id_),
+  lang::LocalVariable prefetch_vector(codegen, codegen.ArrayType(
+      codegen.Int64Type(), OAHashTable::kDefaultGroupPrefetchSize));
+  Vector hashes{prefetch_vector.GetValue(),
                 OAHashTable::kDefaultGroupPrefetchSize, codegen.Int64Type()};
 
   auto group_prefetch = [&](

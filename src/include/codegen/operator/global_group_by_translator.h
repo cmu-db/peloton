@@ -88,9 +88,6 @@ class GlobalGroupByTranslator : public OperatorTranslator {
 
   // The ID of our materialization buffer in the runtime state
   RuntimeState::StateID mat_buffer_id_;
-
-  // The ID of our output vector in the runtime state
-  RuntimeState::StateID output_vector_id_;
 };
 
 }  // namespace codegen
