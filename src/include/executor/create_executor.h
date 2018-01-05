@@ -22,18 +22,23 @@ class DataTable;
 
 namespace planner {
 class AbstractPlan;
+class CreatePlan;
+}
+
+namespace concurrency {
+class TransactionContext;
 }
 
 namespace executor {
 
 class CreateExecutor : public AbstractExecutor {
  public:
-	CreateExecutor(const CreateExecutor &) = delete;
-	CreateExecutor &operator=(const CreateExecutor &) = delete;
-	CreateExecutor(CreateExecutor &&) = delete;
-	CreateExecutor &operator=(CreateExecutor &&) = delete;
+  CreateExecutor(const CreateExecutor &) = delete;
+  CreateExecutor &operator=(const CreateExecutor &) = delete;
+  CreateExecutor(CreateExecutor &&) = delete;
+  CreateExecutor &operator=(CreateExecutor &&) = delete;
 
-	CreateExecutor(const planner::AbstractPlan *node,
+  CreateExecutor(const planner::AbstractPlan *node,
                  ExecutorContext *executor_context);
 
   ~CreateExecutor() {}
@@ -43,12 +48,23 @@ class CreateExecutor : public AbstractExecutor {
 
   bool DExecute();
 
+  bool CreateDatabase(const planner::CreatePlan &node,
+                      concurrency::TransactionContext *txn);
+
+  bool CreateTable(const planner::CreatePlan &node,
+                   concurrency::TransactionContext *txn);
+
+  bool CreateIndex(const planner::CreatePlan &node,
+                   concurrency::TransactionContext *txn);
+
+  bool CreateTrigger(const planner::CreatePlan &node,
+                     concurrency::TransactionContext *txn);
+
  private:
   ExecutorContext *context_;
 
   // Abstract Pool to hold strings
   std::unique_ptr<type::AbstractPool> pool_;
-
 };
 
 }  // namespace executor
