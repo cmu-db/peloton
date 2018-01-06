@@ -833,7 +833,6 @@ expression::AbstractExpression* PostgresParser::ArrayExprTransform(
 
   auto int32_vec = new std::vector<int32_t>();
   auto double_vec = new std::vector<double>();
-  auto varchar_vec = new std::vector<char *>();
 
   for (auto elem = root->elements->head; elem != nullptr; elem = elem->next) {
     Node* node = reinterpret_cast<Node*>(elem->data.ptr_value);
