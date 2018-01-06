@@ -38,7 +38,9 @@ LOG.setLevel(logging.INFO)
 # directory structure: peloton/scripts/formatting/<this_file>
 # PELOTON_DIR needs to be redefined if the directory structure is changed
 CODE_SOURCE_DIR = os.path.abspath(os.path.dirname(__file__))
-PELOTON_DIR = os.path.abspath(reduce(os.path.join, [CODE_SOURCE_DIR, os.path.pardir, os.path.pardir]))
+PELOTON_DIR = os.path.abspath(
+    reduce(os.path.join, [CODE_SOURCE_DIR, os.path.pardir, os.path.pardir])
+    )
 
 CLANG_FORMAT = "clang-format"
 CLANG_FORMAT_FILE = os.path.join(PELOTON_DIR, ".clang-format")
@@ -53,7 +55,7 @@ EXIT_SUCCESS = 0
 EXIT_FAILURE = -1
 
 # Source patterns to check for
-VALIDATOR_PATTERNS = [
+VALIDATOR_PATTERNS = [re.compile(patt) for patt in [
     "std\:\:cout",
     " printf\(",
     "cout",
@@ -66,6 +68,7 @@ VALIDATOR_PATTERNS = [
     " std\:\:memset\(",
     " std\:\:memcpy\(",
     "\_\_attribute\_\_\(\(unused\)\)"
+    ]
 ]
 
 # Files that should not be checked
@@ -98,20 +101,19 @@ def check_common_patterns(file_path):
     if rel_path_from_peloton_dir in SKIP_FILES_LIST:
         return True
 
-    file = open(file_path, "r")
+    with open(file_path, 'r') as file:
+        status = True
+        line_ctr = 1
+        for line in file:
 
-    status = True
-    line_ctr = 1
-    for line in file:
+            for validator_pattern in VALIDATOR_PATTERNS:
+                # Check for patterns one at a time
+                if validator_pattern.search(line):
+                    LOG.info("Invalid pattern -- " + validator_pattern.pattern + " -- found in : " + file_path)
+                    LOG.info("Line #%d :: %s" % (line_ctr, line))
+                    status = False
+            line_ctr += 1
 
-        for validator_pattern in VALIDATOR_PATTERNS:
-            # Check for patterns one at a time
-            if re.search(validator_pattern, line):
-                LOG.info("Invalid pattern -- " + validator_pattern + " -- found in : " + file_path)
-                LOG.info("Line #%d :: %s" % (line_ctr, line))
-                status = False
-        line_ctr += 1
-    file.close()
     return status
 
 def check_format(file_path):
@@ -127,19 +129,25 @@ def check_format(file_path):
         clang_format_cmd = [CLANG_FORMAT, "-style=file", file_path]
         formatted_src = subprocess.check_output(clang_format_cmd).splitlines(True)
         # Load source file
-        file = open(file_path, "r")
-        src = file.readlines()
+        with open(file_path, "r") as file:
+            src = file.readlines()
 
         # Do the diff
-        diff = difflib.unified_diff(src, formatted_src)
+        d = difflib.Differ()
+        diff = d.compare(src, formatted_src)
+        line_num = 0
         for line in diff:
-            LOG.info("Invalid formatting in file : " + file_path)
-            status = False
-
+            code = line[:2]
+            if code in ("  ", "- "):
+                line_num += 1
+            if code == '- ':
+                LOG.info("Invalid formatting in file: " + file_path)
+                LOG.info("Line %d: %s" % (line_num, line[2:]))
+                status = False
         return status
     except OSError as e:
         LOG.error("clang-format seems not installed")
-        exit("clang-format seems not installed")
+        exit()
 
 def check_namespaces(file_path):
     # only check for src files
@@ -152,7 +160,7 @@ def check_namespaces(file_path):
     # for the include files, remove the include item in the list
     if 'include' in required_namespaces:
         required_namespaces.remove('include')
-        
+
     # cut off the file name at the end of the list
     required_namespaces = required_namespaces[:-1]
 
@@ -164,7 +172,7 @@ def check_namespaces(file_path):
             if re.search(r'^ *namespace ' + namespace, data, flags=re.MULTILINE) is None:
                 LOG.info("Missing namespace '" + namespace + "' -- in " + file_path)
                 status = False
-    
+
     return status
 
 
