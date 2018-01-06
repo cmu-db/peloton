@@ -72,7 +72,7 @@ void *ParserExceptionTest(int port) {
     } catch (const pqxx::pqxx_exception &e) {
       const pqxx::sql_error *s = dynamic_cast<const pqxx::sql_error*>(&e.base());
       if (s) {
-        LOG_INFO("Invalid Drop Query: %s", e.base().what());
+        LOG_TRACE("Invalid Drop Query: %s", e.base().what());
         exception_count += 1;
       }
     }
@@ -85,7 +85,7 @@ void *ParserExceptionTest(int port) {
     } catch (const pqxx::pqxx_exception &e) {
       const pqxx::sql_error *s = dynamic_cast<const pqxx::sql_error*>(&e.base());
       if (s) {
-        LOG_INFO("Invalid Create Query: %s", e.base().what());
+        LOG_TRACE("Invalid Create Query: %s", e.base().what());
         exception_count += 1;
       }
     }
@@ -102,7 +102,7 @@ void *ParserExceptionTest(int port) {
     } catch (const pqxx::pqxx_exception &e) {
       const pqxx::sql_error *s = dynamic_cast<const pqxx::sql_error*>(&e.base());
       if (s) {
-        LOG_INFO("Invalid Select Query: %s", e.base().what());
+        LOG_TRACE("Invalid Select Query: %s", e.base().what());
         exception_count += 1;
       }
     }
@@ -115,7 +115,7 @@ void *ParserExceptionTest(int port) {
     } catch (const pqxx::pqxx_exception &e) {
       const pqxx::sql_error *s = dynamic_cast<const pqxx::sql_error*>(&e.base());
       if (s) {
-        LOG_INFO("Invalid Select Query: %s", e.base().what());
+        LOG_TRACE("Invalid Select Query: %s", e.base().what());
         exception_count += 1;
       }
     }
@@ -128,7 +128,7 @@ void *ParserExceptionTest(int port) {
     } catch (const pqxx::pqxx_exception &e) {
       const pqxx::sql_error *s = dynamic_cast<const pqxx::sql_error*>(&e.base());
       if (s) {
-        LOG_INFO("Invalid Prepare Query: %s", e.base().what());
+        LOG_TRACE("Invalid Prepare Query: %s", e.base().what());
         exception_count += 1;
       }
     }
@@ -142,7 +142,7 @@ void *ParserExceptionTest(int port) {
     } catch (const pqxx::pqxx_exception &e) {
       const pqxx::sql_error *s = dynamic_cast<const pqxx::sql_error*>(&e.base());
       if (s) {
-        LOG_INFO("Invalid Execute Query: %s", e.base().what());
+        LOG_TRACE("Invalid Execute Query: %s", e.base().what());
         exception_count += 1;
       }
     }
@@ -155,7 +155,7 @@ void *ParserExceptionTest(int port) {
     } catch (const pqxx::pqxx_exception &e) {
       const pqxx::sql_error *s = dynamic_cast<const pqxx::sql_error*>(&e.base());
       if (s) {
-        LOG_INFO("Empty Query: %s", e.base().what());
+        LOG_TRACE("Empty Query: %s", e.base().what());
         EXPECT_TRUE(false);
       }
     }
@@ -164,7 +164,7 @@ void *ParserExceptionTest(int port) {
     EXPECT_EQ(exception_count, total);
 
   } catch (const std::exception &e) {
-    LOG_INFO("[ExceptionTest] Exception occurred: %s", e.what());
+    LOG_ERROR("[ExceptionTest] Exception occurred: %s", e.what());
     EXPECT_TRUE(false);
   }
 
