@@ -13,6 +13,7 @@
 
 #include "catalog/schema.h"
 #include "common/internal_types.h"
+#include "concurrency/transaction_context.h"
 #include "type/value.h"
 #include "type/abstract_pool.h"
 #include "storage/tile.h"
