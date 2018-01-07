@@ -23,6 +23,10 @@ namespace executor {
  * @brief Append executor.
  * Trivially concatenate input tiles from the children.
  * No check on the schemas of children.
+ *
+ * 2018-01-07: This is <b>deprecated</b>. Do not modify these classes.
+ * The old interpreted engine will be removed.
+ * @deprecated
  */
 class AppendExecutor : public AbstractExecutor {
  public:
