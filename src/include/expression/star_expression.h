@@ -38,6 +38,22 @@ class StarExpression : public AbstractExpression {
 
   virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
+  const std::string GetInfo(int num_indent) const override {
+    std::ostringstream os;
+
+    os << StringUtil::Indent(num_indent) << "Expression ::\n"
+       << StringUtil::Indent(num_indent + 1) << "expression type = Star,\n";
+
+    return os.str();
+  }
+
+  const std::string GetInfo() const override {
+    std::ostringstream os;
+    os << GetInfo(0);
+
+    return os.str();
+  }
+
  protected:
   StarExpression(const AbstractExpression &other) : AbstractExpression(other) {}
 

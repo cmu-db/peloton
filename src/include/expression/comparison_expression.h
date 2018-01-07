@@ -55,6 +55,29 @@ class ComparisonExpression : public AbstractExpression {
   AbstractExpression *Copy() const override;
 
   void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
+
+  const std::string GetInfo(int num_indent) const override {
+    std::ostringstream os;
+
+    os << StringUtil::Indent(num_indent) << "Expression ::\n"
+       << StringUtil::Indent(num_indent + 1)
+       << "expression type = Comparison,\n"
+       << StringUtil::Indent(num_indent + 1)
+       << "comparison type = " << ExpressionTypeToString(exp_type_) << "\n";
+
+    for (const auto &child : children_) {
+      os << child.get()->GetInfo(num_indent + 2);
+    }
+
+    return os.str();
+  }
+
+  const std::string GetInfo() const override {
+    std::ostringstream os;
+    os << GetInfo(0);
+
+    return os.str();
+  }
 };
 
 ////////////////////////////////////////////////////////////////////////////////

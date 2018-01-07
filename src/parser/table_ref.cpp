@@ -36,8 +36,7 @@ const std::string TableRef::GetInfo(int num_indent) const {
       os << StringUtil::Indent(num_indent + 1) << "-> Right\n";
       os << join->right.get()->GetInfo(num_indent + 2) << "\n";
       os << StringUtil::Indent(num_indent + 1) << "-> Join Condition\n";
-      os << join->condition.get()->GetInfo()  // num_indent + 2)
-         << "\n";
+      os << join->condition.get()->GetInfo(num_indent + 2) << "\n";
       break;
 
     case TableReferenceType::CROSS_PRODUCT:

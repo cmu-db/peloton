@@ -66,6 +66,25 @@ class ConstantValueExpression : public AbstractExpression {
   // is null or not.
   bool IsNullable() const override { return value_.IsNull(); }
 
+  const std::string GetInfo(int num_indent) const override {
+    std::ostringstream os;
+
+    os << StringUtil::Indent(num_indent) << "Expression ::\n"
+       << StringUtil::Indent(num_indent + 1)
+       << "expression type = Constant Value,\n"
+       << StringUtil::Indent(num_indent + 1) << "value: " << value_.GetInfo()
+       << "\n";
+
+    return os.str();
+  }
+
+  const std::string GetInfo() const override {
+    std::ostringstream os;
+    os << GetInfo(0);
+
+    return os.str();
+  }
+
  private:
   // The constant
   type::Value value_;
@@ -146,7 +165,7 @@ inline void ConstantValueExpression::VisitParameters(
   values.push_back(value_);
 }
 
-inline AbstractExpression* ConstantValueExpression::Copy() const {
+inline AbstractExpression *ConstantValueExpression::Copy() const {
   return new ConstantValueExpression(GetValue());
 }
 

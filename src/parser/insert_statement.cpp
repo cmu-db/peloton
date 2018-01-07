@@ -33,8 +33,7 @@ const std::string InsertStatement::GetInfo(int num_indent) const {
       for (auto &value_item : insert_values) {
         // TODO this is a debugging method which is currently unused.
         for (auto &expr : value_item) {
-          // os << GetExpressionInfo(expr.get(), num_indent + 2) << std::endl;
-          os << StringUtil::Indent(num_indent + 2) << expr.get()->GetInfo() << std::endl;
+          os << expr.get()->GetInfo(num_indent + 2) << std::endl;
         }
       }
       break;

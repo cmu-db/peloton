@@ -67,8 +67,7 @@ class PrepareStatement : public SQLStatement {
     os << StringUtil::Indent(num_indent + 1) << "Name: " << name << "\n";
     os << query.get()->GetInfo(num_indent + 1) << "\n";
     for (const auto &placeholder : placeholders) {
-      os << StringUtil::Indent(num_indent + 1) << placeholder.get()->GetInfo()
-         << "\n";
+      os << placeholder.get()->GetInfo(num_indent + 1) << "\n";
     }
     return os.str();
   }

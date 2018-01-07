@@ -33,7 +33,10 @@ TEST_F(ParserUtilTests, BasicTest) {
 
   // SELECT statement
   queries.push_back("SELECT * FROM orders;");
+  queries.push_back("SELECT MAX(*) FROM orders;");
+  queries.push_back("SELECT MAX(price) FROM orders;");
   queries.push_back("SELECT a FROM orders;");
+  queries.push_back("SELECT orders.a FROM orders;");
   queries.push_back(
       "SELECT a FROM foo WHERE a > 12 OR b > 3 AND NOT c LIMIT 10");
   queries.push_back(
@@ -108,8 +111,6 @@ TEST_F(ParserUtilTests, BasicTest) {
   // PREPARE
   queries.push_back(
       "PREPARE prep_inst AS INSERT INTO test VALUES ($1, $2, $3);");
-  queries.push_back("EXECUTE prep_inst(1, 2, 3);");
-  queries.push_back("EXECUTE prep;");
 
   queries.push_back(
       "COPY pg_catalog.query_metric TO '/home/user/output.csv' DELIMITER ',';");
@@ -119,6 +120,8 @@ TEST_F(ParserUtilTests, BasicTest) {
 
   // EXECUTE
   queries.push_back("EXECUTE fooplan(1, 'Hunter Valley', 't', 200.00);");
+  queries.push_back("EXECUTE prep_inst(1, 2, 3);");
+  queries.push_back("EXECUTE prep;");
 
   // TRANSACTION
   queries.push_back("BEGIN TRANSACTION;");
