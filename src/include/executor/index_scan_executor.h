@@ -29,6 +29,11 @@ class AbstractTable;
 
 namespace executor {
 
+/**
+ * 2018-01-07: This is <b>deprecated</b>. Do not modify these classes.
+ * The old interpreted engine will be removed.
+ * @deprecated
+ */
 class IndexScanExecutor : public AbstractScanExecutor {
   IndexScanExecutor(const IndexScanExecutor &) = delete;
   IndexScanExecutor &operator=(const IndexScanExecutor &) = delete;
