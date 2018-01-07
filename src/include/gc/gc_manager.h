@@ -23,6 +23,10 @@
 
 namespace peloton {
 
+namespace concurrency {
+class TransactionContext;
+}
+
 namespace storage {
 class TileGroup;
 }
@@ -72,10 +76,7 @@ class GCManager {
   virtual size_t GetTableCount() { return 0; }
 
   virtual void RecycleTransaction(
-      std::shared_ptr<GCSet> gc_set UNUSED_ATTRIBUTE,
-      std::shared_ptr<GCObjectSet> gc_object_set UNUSED_ATTRIBUTE,
-      const eid_t &epoch_id UNUSED_ATTRIBUTE,
-      const size_t &thread_id UNUSED_ATTRIBUTE) {}
+                      concurrency::TransactionContext *txn UNUSED_ATTRIBUTE) {}
 
  protected:
   void CheckAndReclaimVarlenColumns(storage::TileGroup *tg, oid_t tuple_id);
