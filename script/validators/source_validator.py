@@ -142,8 +142,9 @@ def check_format(file_path):
             if code in ("  ", "- "):
                 line_num += 1
             if code == '- ':
-                LOG.info("Invalid formatting in file: " + file_path)
-                LOG.info("Line %d: %s" % (line_num, line[2:]))
+                if status:
+                    LOG.info("Invalid formatting in file: " + file_path)
+                LOG.info("Line %d: %s" % (line_num, line[2:].strip()))
                 status = False
         return status
     except OSError as e:
