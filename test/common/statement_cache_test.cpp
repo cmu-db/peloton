@@ -23,7 +23,7 @@ class StatementCacheTests : public PelotonTest {};
 // Test statementCache add and get statement
 TEST_F(StatementCacheTests, AddGetTest) {
   std::string string_name = "foo";
-  std::string query = "bar";
+  std::string query = "SELECT * FROM TEST";
   auto statement = std::make_shared<Statement>(string_name, query);
   EXPECT_EQ(string_name, statement->GetStatementName());
   EXPECT_EQ(query, statement->GetQueryString());
@@ -39,7 +39,7 @@ TEST_F(StatementCacheTests, AddGetTest) {
 TEST_F(StatementCacheTests, UnnamedStatementTest) {
   // An empty string for name of unnamed statement
   std::string unname;
-  std::string query = "bar";
+  std::string query = "SELECT * FROM TEST";
   auto statement = std::make_shared<Statement>(unname, query);
 
   auto statement_cache = std::make_shared<StatementCache>();
@@ -55,7 +55,7 @@ TEST_F(StatementCacheTests, DisableTableTest) {
 
   std::vector<std::shared_ptr<Statement>> statements;
   std::set<oid_t> ref_table = {0, 1, 2, 3};
-  std::string query = "foo";
+  std::string query = "SELECT * FROM TEST";
   // Prepare the 4 statements
   for (size_t i = 0; i < 4; i++) {
     std::string name("" + i);

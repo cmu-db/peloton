@@ -14,9 +14,9 @@
 
 #include <unordered_map>
 
+#include "common/internal_types.h"
 #include "container/lock_free_queue.h"
 #include "statement.h"
-#include "type/types.h"
 
 namespace peloton {
 
@@ -28,7 +28,6 @@ class StatementCache {
   typedef std::shared_ptr<Statement> StatementPtr;
   typedef std::unordered_map<std::string, StatementPtr> NameMap;
   typedef std::unordered_map<oid_t, std::unordered_set<StatementPtr>> TableRef;
-
 
   // Private members
 
@@ -46,8 +45,7 @@ class StatementCache {
 
  public:
   StatementCache()
-      : invalid_table_queue_(DEFAULT_STATEMENT_CACHE_INVALID_QUEUE_SIZE)
-      {}
+      : invalid_table_queue_(DEFAULT_STATEMENT_CACHE_INVALID_QUEUE_SIZE) {}
 
   // Add a statement to the cache
   void AddStatement(std::shared_ptr<Statement> stmt);
