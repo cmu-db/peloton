@@ -63,7 +63,7 @@ void StatementCache::UpdateFromInvalidTableQueue() {
 void StatementCache::Clear() {
   statement_map_.clear();
   table_ref_.clear();
-  while (invalid_table_queue_.IsEmpty()) {
+  while (!invalid_table_queue_.IsEmpty()) {
     oid_t dummy;
     invalid_table_queue_.Dequeue(dummy);
   }

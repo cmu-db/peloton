@@ -31,7 +31,7 @@ class StatementCacheTests : public PelotonTest {};
     std::set<oid_t> ref_table = {0};
 
     std::string string_name = "foo";
-    std::string query = "bar";
+    std::string query = "SELECT * FROM TEST";
     auto statement = std::make_shared<Statement>(string_name, query);
     statement->SetReferencedTables(ref_table);
 
