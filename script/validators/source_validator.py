@@ -109,7 +109,8 @@ def check_common_patterns(file_path):
             for validator_pattern in VALIDATOR_PATTERNS:
                 # Check for patterns one at a time
                 if validator_pattern.search(line):
-                    LOG.info("Invalid pattern -- " + validator_pattern.pattern + " -- found in : " + file_path)
+                    if status:
+                        LOG.info("Invalid pattern -- " + validator_pattern.pattern + " -- found in : " + file_path)
                     LOG.info("Line #%d :: %s" % (line_ctr, line))
                     status = False
             line_ctr += 1
