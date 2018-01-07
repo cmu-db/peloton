@@ -104,13 +104,14 @@ TEST_F(TypesTests, BackendTypeTest) {
 
 TEST_F(TypesTests, TypeIdTest) {
   std::vector<type::TypeId> list = {
-      type::TypeId::INVALID,   type::TypeId::PARAMETER_OFFSET,
-      type::TypeId::BOOLEAN,   type::TypeId::TINYINT,
-      type::TypeId::SMALLINT,  type::TypeId::INTEGER,
-      type::TypeId::BIGINT,    type::TypeId::DECIMAL,
-      type::TypeId::TIMESTAMP, type::TypeId::DATE,
-      type::TypeId::VARCHAR,   type::TypeId::VARBINARY,
-      type::TypeId::ARRAY,     type::TypeId::UDT};
+      type::TypeId::INVALID,      type::TypeId::PARAMETER_OFFSET,
+      type::TypeId::BOOLEAN,      type::TypeId::TINYINT,
+      type::TypeId::SMALLINT,     type::TypeId::INTEGER,
+      type::TypeId::BIGINT,       type::TypeId::DECIMAL,
+      type::TypeId::TIMESTAMP,    type::TypeId::DATE,
+      type::TypeId::VARCHAR,      type::TypeId::VARBINARY,
+      type::TypeId::INTEGERARRAY, type::TypeId::DECIMALARRAY,
+      type::TypeId::UDT};
 
   // Make sure that ToString and FromString work
   for (auto val : list) {
