@@ -64,14 +64,11 @@ class UpdateStatement : public SQLStatement {
     for (auto &update : updates) {
       os << StringUtil::Indent(num_indent + 2) << "Column: " << update->column
          << std::endl;
-      // os << GetExpressionInfo(update->value.get(), num_indent + 3) <<
-      // std::endl;
-      os << update->value.get()->GetInfo() << std::endl;
+      os << update->value.get()->GetInfo(num_indent + 3) << std::endl;
     }
     if (where != nullptr) {
       os << StringUtil::Indent(num_indent + 1) << "-> Where :: \n"
-         // << GetExpressionInfo(where.get(), num_indent + 2);
-         << where.get()->GetInfo() << std::endl;
+         << where.get()->GetInfo(num_indent + 2) << std::endl;
     }
 
     return os.str();

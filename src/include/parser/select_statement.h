@@ -101,7 +101,9 @@ class SelectStatement : public SQLStatement {
     std::ostringstream os;
     os << StringUtil::Indent(num_indent) << "SelectStatement\n";
     os << StringUtil::Indent(num_indent + 1) << "-> Fields:\n";
-    for (auto &expr : select_list) os << expr.get()->GetInfo() << std::endl;
+    for (auto &expr : select_list) {
+      os << expr.get()->GetInfo(num_indent + 2) << std::endl;
+    }
 
     if (from_table != NULL) {
       os << StringUtil::Indent(num_indent + 1) + "-> Sources:\n";
@@ -110,7 +112,7 @@ class SelectStatement : public SQLStatement {
 
     if (where_clause != NULL) {
       os << StringUtil::Indent(num_indent + 1) << "-> Search Conditions:\n";
-      os << where_clause.get()->GetInfo() << std::endl;
+      os << where_clause.get()->GetInfo(num_indent + 1) << std::endl;
     }
 
     if (union_select != NULL) {
@@ -123,7 +125,7 @@ class SelectStatement : public SQLStatement {
       for (size_t idx = 0; idx < order->exprs.size(); idx++) {
         auto &expr = order->exprs.at(idx);
         auto &type = order->types.at(idx);
-        os << expr.get()->GetInfo() << std::endl;
+        os << expr.get()->GetInfo(num_indent + 2) << std::endl;
         if (type == kOrderAsc)
           os << StringUtil::Indent(num_indent + 2) << "ascending\n";
         else
@@ -134,21 +136,19 @@ class SelectStatement : public SQLStatement {
     if (group_by != NULL) {
       os << StringUtil::Indent(num_indent + 1) << "-> GroupBy:\n";
       for (auto &column : group_by->columns) {
-        os << StringUtil::Indent(num_indent + 2) << column->GetInfo()
-           << std::endl;
+        os << column->GetInfo(num_indent + 2) << std::endl;
       }
       if (group_by->having) {
-        os << StringUtil::Indent(num_indent + 2) << group_by->having->GetInfo()
-           << std::endl;
+        os << group_by->having->GetInfo(num_indent + 2) << std::endl;
       }
     }
 
     if (limit != NULL) {
       os << StringUtil::Indent(num_indent + 1) << "-> Limit:\n";
-      os << StringUtil::Indent(num_indent + 2) << std::to_string(limit->limit)
-         << "\n";
-      os << StringUtil::Indent(num_indent + 2) << std::to_string(limit->offset)
-         << "\n";
+      os << StringUtil::Indent(num_indent + 2)
+         << "limit: " << std::to_string(limit->limit) << "\n";
+      os << StringUtil::Indent(num_indent + 2)
+         << "offset: " << std::to_string(limit->offset) << "\n";
     }
     std::string info = os.str();
     StringUtil::RTrim(info);

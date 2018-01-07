@@ -86,7 +86,6 @@ class TupleValueExpression : public AbstractExpression {
   void PerformBinding(const std::vector<const planner::BindingContext *> &
                           binding_contexts) override;
 
-
   // Return the attributes this expression uses
   void GetUsedAttributes(std::unordered_set<const planner::AttributeInfo *> &
                              attributes) const override {
@@ -107,8 +106,7 @@ class TupleValueExpression : public AbstractExpression {
   }
 
   virtual bool ExactlyEquals(const AbstractExpression &rhs) const override {
-    if (exp_type_ != rhs.GetExpressionType())
-      return false;
+    if (exp_type_ != rhs.GetExpressionType()) return false;
 
     auto &other = static_cast<const TupleValueExpression &>(rhs);
     // For query like SELECT A.id, B.id FROM test AS A, test AS B;
@@ -165,6 +163,32 @@ class TupleValueExpression : public AbstractExpression {
   }
 
   virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
+
+  const std::string GetInfo(int num_indent) const override {
+    std::ostringstream os;
+
+    os << StringUtil::Indent(num_indent) << "Expression ::\n"
+       << StringUtil::Indent(num_indent + 1)
+       << "expression type = Tuple Value,\n";
+    if (table_name_.size() > 0) {
+      os << StringUtil::Indent(num_indent + 1) << "table name: " << table_name_
+         << "\n";
+    }
+
+    if (col_name_.size() > 0) {
+      os << StringUtil::Indent(num_indent + 1) << "column name: " << col_name_
+         << "\n";
+    }
+
+    return os.str();
+  }
+
+  const std::string GetInfo() const override {
+    std::ostringstream os;
+    os << GetInfo(0);
+
+    return os.str();
+  }
 
   bool IsNullable() const override;
 

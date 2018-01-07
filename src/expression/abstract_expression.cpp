@@ -16,6 +16,7 @@
 
 #include "codegen/type/type.h"
 #include "util/hash_util.h"
+#include "util/string_util.h"
 #include "expression/expression_util.h"
 
 namespace peloton {
@@ -89,13 +90,22 @@ void AbstractExpression::DeduceExpressionName() {
   }
 }
 
-const std::string AbstractExpression::GetInfo() const {
+const std::string AbstractExpression::GetInfo(int num_indent) const {
   std::ostringstream os;
 
-  os << "Expression ::"
-     << " expression type = " << GetExpressionType() << ","
-     << " value type = " << type::Type::GetInstance(GetValueType())->ToString()
-     << ",";
+  os << StringUtil::Indent(num_indent) << "Expression ::\n"
+     << StringUtil::Indent(num_indent + 1)
+     << "expression type = " << GetExpressionType() << ",\n"
+     << StringUtil::Indent(num_indent + 1)
+     << "value type = " << type::Type::GetInstance(GetValueType())->ToString()
+     << ",\n";
+
+  return os.str();
+}
+
+const std::string AbstractExpression::GetInfo() const {
+  std::ostringstream os;
+  os << GetInfo(0);
 
   return os.str();
 }
@@ -105,8 +115,7 @@ bool AbstractExpression::operator==(const AbstractExpression &rhs) const {
     return false;
 
   for (unsigned i = 0; i < children_.size(); i++) {
-    if (*children_[i].get() != *rhs.children_[i].get())
-      return false;
+    if (*children_[i].get() != *rhs.children_[i].get()) return false;
   }
 
   return true;
@@ -123,14 +132,12 @@ hash_t AbstractExpression::Hash() const {
   return hash;
 }
 
-bool AbstractExpression::ExactlyEquals(const AbstractExpression &other)
-    const{
+bool AbstractExpression::ExactlyEquals(const AbstractExpression &other) const {
   if (exp_type_ != other.exp_type_ ||
       children_.size() != other.children_.size())
     return false;
   for (unsigned i = 0; i < children_.size(); i++) {
-    if (!children_[i]->ExactlyEquals(*other.children_[i].get()))
-      return false;
+    if (!children_[i]->ExactlyEquals(*other.children_[i].get())) return false;
   }
   return true;
 }

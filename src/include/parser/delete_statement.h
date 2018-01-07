@@ -49,7 +49,7 @@ class DeleteStatement : public SQLStatement {
     std::ostringstream os;
     os << StringUtil::Indent(num_indent) << "DeleteStatement\n";
     os << StringUtil::Indent(num_indent + 1) << GetTableName();
-    if (expr != nullptr) os << expr.get()->GetInfo() << std::endl;
+    if (expr != nullptr) os << expr.get()->GetInfo(num_indent + 1) << std::endl;
     return os.str();
   }
 

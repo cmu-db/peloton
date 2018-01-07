@@ -35,8 +35,7 @@ class ExecuteStatement : public SQLStatement {
     os << StringUtil::Indent(num_indent) << "ExecuteStatement\n";
     os << StringUtil::Indent(num_indent + 1) << "Name: " << name << "\n";
     for (const auto &parameter : parameters) {
-      os << StringUtil::Indent(num_indent + 1) << parameter.get()->GetInfo()
-         << "\n";
+      os << parameter.get()->GetInfo(num_indent + 1) << "\n";
     }
     return os.str();
   }
