@@ -40,10 +40,7 @@ namespace codegen {
 IndexScanTranslator::IndexScanTranslator(
     const planner::IndexScanPlan &index_scan, CompilationContext &context,
     Pipeline &pipeline)
-    : OperatorTranslator(context, pipeline),
-      index_scan_(index_scan)
-{
-
+    : OperatorTranslator(context, pipeline), index_scan_(index_scan) {
   // The restriction, if one exists
   const auto *predicate = index_scan_.GetPredicate();
 
@@ -62,7 +59,6 @@ IndexScanTranslator::IndexScanTranslator(
   selection_vector_id_ = runtime_state.RegisterState(
       "scanSelVec",
       codegen.ArrayType(codegen.Int32Type(), Vector::kDefaultVectorSize), true);
-
 }
 
 // Produce!
@@ -133,9 +129,8 @@ void IndexScanTranslator::Produce() const {
     llvm::Value *tile_group_offset =
         codegen.Call(IndexScanIteratorProxy::GetTileGroupOffset,
                      {iterator_ptr, result_iter});
-    llvm::Value *tile_group_ptr =
-        codegen.Call(RuntimeFunctionsProxy::GetTileGroupById,
-                     {table_ptr, tile_group_id});
+    llvm::Value *tile_group_ptr = codegen.Call(
+        RuntimeFunctionsProxy::GetTileGroupById, {table_ptr, tile_group_id});
 
     codegen.Call(
         RuntimeFunctionsProxy::GetTileGroupLayout,
@@ -228,7 +223,10 @@ const index::Index &IndexScanTranslator::GetIndex() const {
   return dynamic_cast<index::Index &>(*index_scan_.GetIndex().get());
 }
 
-void IndexScanTranslator::FilterTuplesByPredicate(CodeGen &codegen, Vector &sel_vec, TileGroup::TileGroupAccess &tile_group_access, llvm::Value *tile_group_id) const {
+void IndexScanTranslator::FilterTuplesByPredicate(
+    CodeGen &codegen, Vector &sel_vec,
+    TileGroup::TileGroupAccess &tile_group_access,
+    llvm::Value *tile_group_id) const {
   // filter by predicate
   const auto *predicate = index_scan_.GetPredicate();
   if (predicate != nullptr) {
@@ -254,10 +252,9 @@ void IndexScanTranslator::FilterTuplesByPredicate(CodeGen &codegen, Vector &sel_
       codegen::Value valid_row = row.DeriveValue(codegen, *predicate);
 
       // Reify the boolean value since it may be NULL
-      PL_ASSERT(valid_row.GetType().GetSqlType() ==
-                type::Boolean::Instance());
+      PL_ASSERT(valid_row.GetType().GetSqlType() == type::Boolean::Instance());
       llvm::Value *bool_val =
-        type::Boolean::Instance().Reify(codegen, valid_row);
+          type::Boolean::Instance().Reify(codegen, valid_row);
 
       // Set the validity of the row
       row.SetValidity(codegen, bool_val);
@@ -265,8 +262,8 @@ void IndexScanTranslator::FilterTuplesByPredicate(CodeGen &codegen, Vector &sel_
   }
 }
 
-void IndexScanTranslator::SetIndexPredicate(
-    CodeGen &codegen, llvm::Value *iterator_ptr) const {
+void IndexScanTranslator::SetIndexPredicate(CodeGen &codegen,
+                                            llvm::Value *iterator_ptr) const {
   std::vector<const planner::AttributeInfo *> where_clause_attributes;
   std::vector<ExpressionType> comparison_type;
   const auto *predicate = index_scan_.GetPredicate();
@@ -342,5 +339,5 @@ void IndexScanTranslator::SetIndexPredicate(
   }
 }
 
-} // namespace codegen
-} // namespace peloton
+}  // namespace codegen
+}  // namespace peloton

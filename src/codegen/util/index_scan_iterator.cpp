@@ -156,9 +156,9 @@ void IndexScanIterator::UpdateTupleWithVarchar(
       update_tuple->GetSchema()->GetColumns();
   for (unsigned int i = 0; i < columns.size(); i++) {
     if (strcmp(columns[i].GetName().c_str(), attribute_name) == 0) {
-      update_tuple->SetValue(
-          i, peloton::type::ValueFactory::GetVarcharValue(value, false,
-          index_->GetPool()), index_->GetPool());
+      update_tuple->SetValue(i, peloton::type::ValueFactory::GetVarcharValue(
+                                    value, false, index_->GetPool()),
+                             index_->GetPool());
       break;
     }
   }

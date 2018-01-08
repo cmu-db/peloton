@@ -181,9 +181,10 @@ class IndexScanPlan : public AbstractScan {
     return !(*this == rhs);
   }
 
-  virtual void VisitParameters(codegen::QueryParametersMap &map,
-                               std::vector<peloton::type::Value> &values,
-                               const std::vector<peloton::type::Value> &values_from_user) override;
+  virtual void VisitParameters(
+      codegen::QueryParametersMap &map,
+      std::vector<peloton::type::Value> &values,
+      const std::vector<peloton::type::Value> &values_from_user) override;
 
  private:
   /** @brief index associated with index scan. */
