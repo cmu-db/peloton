@@ -16,7 +16,7 @@
 #include "planner/insert_plan.h"
 #include "planner/update_plan.h"
 #include <sql/testing_sql_util.h>
-#include "include/traffic_cop/traffic_cop.h"
+#include "traffic_cop/traffic_cop.h"
 
 namespace peloton {
 namespace test {

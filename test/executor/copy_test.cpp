@@ -23,7 +23,7 @@
 #include "optimizer/rule.h"
 #include "parser/postgresparser.h"
 #include "planner/seq_scan_plan.h"
-#include "include/traffic_cop/traffic_cop.h"
+#include "traffic_cop/traffic_cop.h"
 
 #include "gtest/gtest.h"
 #include "statistics/testing_stats_util.h"
