@@ -25,7 +25,7 @@
 #include <sstream>
 
 #include "parser/sql_statement.h"
-#include "parser/parser_utils.h"
+#include "util/string_util.h"
 
 namespace peloton {
 namespace parser {
