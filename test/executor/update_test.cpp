@@ -13,7 +13,7 @@
 #include <cstdio>
 
 #include "executor/testing_executor_util.h"
-#include <sql/testing_sql_util.h>
+#include "sql/testing_sql_util.h"
 #include "common/harness.h"
 
 #include "catalog/catalog.h"
