@@ -61,26 +61,9 @@ class PrepareStatement : public SQLStatement {
 
   virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
-  const std::string GetInfo(int num_indent) const override {
-    std::ostringstream os;
-    os << StringUtil::Indent(num_indent) << "PrepareStatement\n";
-    os << StringUtil::Indent(num_indent + 1) << "Name: " << name << "\n";
-    os << query.get()->GetInfo(num_indent + 1) << "\n";
-    for (const auto &placeholder : placeholders) {
-      os << placeholder.get()->GetInfo(num_indent + 1) << "\n";
-    }
-    return os.str();
-  }
+  const std::string GetInfo(int num_indent) const override;
 
-  const std::string GetInfo() const override {
-    std::ostringstream os;
-
-    os << "SQLStatement[PREPARE]\n";
-
-    os << GetInfo(1);
-
-    return os.str();
-  }
+  const std::string GetInfo() const override;
 
   std::string name;
   std::unique_ptr<SQLStatementList> query;

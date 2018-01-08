@@ -54,28 +54,9 @@ class AnalyzeStatement : public SQLStatement {
 
   virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
-  const std::string GetInfo(int num_indent) const override {
-    std::ostringstream os;
-    os << StringUtil::Indent(num_indent) << "AnalyzeStatement\n";
-    os << analyze_table.get()->GetInfo(num_indent + 1);
-    if (analyze_columns.size() > 0) {
-      os << StringUtil::Indent(num_indent + 1) << "Columns: \n";
-    }
-    for (const auto &col : analyze_columns) {
-      os << StringUtil::Indent(num_indent + 2) << col << "\n";
-    }
-    return os.str();
-  }
+  const std::string GetInfo(int num_indent) const override;
 
-  const std::string GetInfo() const override {
-    std::ostringstream os;
-
-    os << "SQLStatement[ANALYZE]\n";
-
-    os << GetInfo(1);
-
-    return os.str();
-  }
+  const std::string GetInfo() const override;
 
   std::unique_ptr<parser::TableRef> analyze_table;
   std::vector<std::string> analyze_columns;
