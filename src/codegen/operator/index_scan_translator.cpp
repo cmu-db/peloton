@@ -53,12 +53,6 @@ IndexScanTranslator::IndexScanTranslator(
       pipeline.InstallBoundaryAtOutput(this);
     }
   }
-
-  auto &codegen = GetCodeGen();
-  auto &runtime_state = context.GetRuntimeState();
-  selection_vector_id_ = runtime_state.RegisterState(
-      "scanSelVec",
-      codegen.ArrayType(codegen.Int32Type(), Vector::kDefaultVectorSize), true);
 }
 
 // Produce!
@@ -82,8 +76,10 @@ void IndexScanTranslator::Produce() const {
       codegen.Call(StorageManagerProxy::GetIndexWithOid,
                    {storage_manager_ptr, db_oid, table_oid, index_oid});
 
-  Vector sel_vec{LoadStateValue(selection_vector_id_),
-                 Vector::kDefaultVectorSize, codegen.Int32Type()};
+  // The selection vector for the scan
+  auto *raw_vec = codegen.AllocateBuffer(
+    codegen.Int32Type(), Vector::kDefaultVectorSize, "scanSelVector");
+  Vector sel_vec{raw_vec, Vector::kDefaultVectorSize, codegen.Int32Type()};
 
   // get query keys in the ConjunctionScanPredicate in index scan plan node
   llvm::Value *point_key = codegen.Const64(0);
