@@ -108,6 +108,7 @@ class PelotonTest : public ::testing::Test {
   virtual void SetUp() {
 
     // turn off gc under test mode
+    gc::GCManagerFactory::GetInstance().StopGC();
     gc::GCManagerFactory::Configure(0);
 
   }
