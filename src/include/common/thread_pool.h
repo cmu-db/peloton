@@ -26,6 +26,7 @@
 namespace peloton {
 // a wrapper for boost worker thread pool.
 class ThreadPool {
+
  public:
   ThreadPool() : pool_size_(0), 
                  dedicated_thread_count_(0),
@@ -75,6 +76,8 @@ class ThreadPool {
     // assign task to dedicated thread.
     dedicated_threads_[thread_id].reset(new std::thread(std::thread(func, params...)));
   }
+
+
 
  private:
   ThreadPool(const ThreadPool &);

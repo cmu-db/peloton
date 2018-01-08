@@ -18,7 +18,7 @@ namespace peloton {
 namespace network {
 
 ConnectionHandlerTask::ConnectionHandlerTask(const int task_id)
-    : NotifiableTask(task_id), new_conn_queue_(QUEUE_SIZE) {
+    : NotifiableTask(task_id) {
   int fds[2];
   if (pipe(fds)) {
     LOG_ERROR("Can't create notify pipe to accept connections");
@@ -31,39 +31,30 @@ ConnectionHandlerTask::ConnectionHandlerTask(const int task_id)
 }
 
 void ConnectionHandlerTask::Notify(int conn_fd) {
-  new_conn_queue_.Enqueue(conn_fd);
-  char buf[1];
-  buf[0] = 'c';
-  if (write(new_conn_send_fd_, buf, 1) != 1) {
+  int buf[1];
+  buf[0] = conn_fd;
+  if (write(new_conn_send_fd_, buf, sizeof(int)) != 1) {
     LOG_ERROR("Failed to write to thread notify pipe");
   }
 }
 
 void ConnectionHandlerTask::HandleDispatch(int new_conn_recv_fd, short) {
   // buffer used to receive messages from the main thread
-  char m_buf[1];
-  int client_fd = -1;
+  char client_fd[sizeof(int)];
   std::shared_ptr<ConnectionHandle> conn;
+  size_t bytes_read = 0;
 
-  // read the operation that needs to be performed
-  if (read(new_conn_recv_fd, m_buf, 1) != 1) {
-    LOG_ERROR("Can't read from the libevent pipe");
-    return;
+  // read fully
+  while (bytes_read < sizeof(int)) {
+    ssize_t result = read(new_conn_recv_fd,
+                       client_fd + bytes_read,
+                       sizeof(int) - bytes_read);
+    if (result < 0) LOG_ERROR("Error when reading from dispatch");
+    bytes_read += (size_t) result;
   }
 
-  switch (m_buf[0]) {
-    /* new connection case */
-    case 'c': {
-      // fetch the new connection fd from the queue
-      new_conn_queue_.Dequeue(client_fd);
-      conn = ConnectionHandleFactory::GetInstance().GetConnectionHandle(
-          client_fd, this);
-      break;
-    }
-
-    default:
-      LOG_ERROR("Unexpected message. Shouldn't reach here");
-  }
+  conn = ConnectionHandleFactory::GetInstance().GetConnectionHandle(
+      *((int *) client_fd), this);
 }
 
 }  // namespace network
