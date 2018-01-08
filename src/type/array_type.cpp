@@ -733,6 +733,7 @@ uint32_t ArrayType::GetLength(const Value &val) const {
       std::vector<double> *double_vec = 
           reinterpret_cast<std::vector<double> *>(val.value_.array);
       len = double_vec->size();
+      break;
     }
     default: {
       std::string msg =

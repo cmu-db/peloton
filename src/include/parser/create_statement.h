@@ -173,6 +173,9 @@ struct ColumnDefinition {
       case DataType::VARBINARY:
         return type::TypeId::VARBINARY;
 
+      case DataType::DATE:
+        return type::TypeId::DATE;
+
       case DataType::INTEGERARRAY:
         return type::TypeId::INTEGERARRAY;
 
