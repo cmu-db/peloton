@@ -189,6 +189,23 @@ struct Floor : public TypeSystem::UnaryOperatorHandleNull {
   }
 };
 
+// Abs
+struct Abs : public TypeSystem::UnaryOperatorHandleNull {
+  bool SupportsType(const Type &type) const override {
+    return type.GetSqlType() == Integer::Instance();
+  }
+
+  Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
+    return Type{Integer::Instance()};
+  }
+
+  Value Impl(UNUSED_ATTRIBUTE CodeGen &codegen,
+               const Value &val) const override {
+    PL_ASSERT(SupportsType(val.GetType()));
+    return val;
+  }
+};
+
 // Ceiling
 struct Ceil : public TypeSystem::UnaryOperatorHandleNull {
   bool SupportsType(const Type &type) const override {
@@ -443,10 +460,12 @@ static std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {
 
 // Unary operators
 static Negate kNegOp;
+static Abs kAbsOp;
 static Ceil kCeilOp;
 static Floor kFloorOp;
 static std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {
     {OperatorId::Negation, kNegOp},
+    {OperatorId::Abs, kAbsOp},
     {OperatorId::Ceil, kCeilOp},
     {OperatorId::Floor, kFloorOp}};
 

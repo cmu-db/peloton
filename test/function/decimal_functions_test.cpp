@@ -105,7 +105,7 @@ TEST_F(DecimalFunctionsTests, RoundTest) {
   EXPECT_TRUE(result.IsNull());
 }
 
-TEST_F(DecimalFunctionsTests,AbsTest) {
+TEST_F(DecimalFunctionsTests,AbsTestDouble) {
   std::vector<double> doubleTestInputs = {9.5, -2.5, -4.4, 0.0};
   std::vector<type::Value> args;
   for (double in : doubleTestInputs) {
@@ -119,6 +119,43 @@ TEST_F(DecimalFunctionsTests,AbsTest) {
   args = {type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL)};
   auto result = function::DecimalFunctions::_Abs(args);
   EXPECT_TRUE(result.IsNull());
+}
+
+TEST_F(DecimalFunctionsTests, AbsTestInt) {
+  std::vector<int64_t> bigIntTestInputs = {-20, -15, -10, 0, 10, 20};
+  std::vector<int32_t> intTestInputs = {-20, -15, -10, 0, 10, 20};
+  std::vector<int16_t> smallIntTestInputs = {-20, -15, -10, 0, 10, 20};
+  std::vector<int8_t> tinyIntTestInputs = {-20, -15, -10, 0, 10, 20};
+
+  std::vector<type::Value> args;
+  // Testing Abs with Integer Types
+  for (int64_t in: bigIntTestInputs) {
+    args = {type::ValueFactory::GetIntegerValue(in)};
+    auto result = function::DecimalFunctions::_Abs(args);
+    EXPECT_FALSE(result.IsNull());
+    EXPECT_EQ(abs(in), result.GetAs<double>());
+  }
+
+  for (int in: intTestInputs) {
+    args = {type::ValueFactory::GetIntegerValue(in)};
+    auto result = function::DecimalFunctions::_Abs(args);
+    EXPECT_FALSE(result.IsNull());
+    EXPECT_EQ(abs(in), result.GetAs<double>());
+  }
+
+  for (int in: smallIntTestInputs) {
+    args = {type::ValueFactory::GetIntegerValue(in)};
+    auto result = function::DecimalFunctions::_Abs(args);
+    EXPECT_FALSE(result.IsNull());
+    EXPECT_EQ(abs(in), result.GetAs<double>());
+  }
+
+  for (int in: tinyIntTestInputs) {
+    args = {type::ValueFactory::GetIntegerValue(in)};
+    auto result = function::DecimalFunctions::_Abs(args);
+    EXPECT_FALSE(result.IsNull());
+    EXPECT_EQ(abs(in), result.GetAs<double>());
+  }
 }
 
 TEST_F(DecimalFunctionsTests, CeilTestDouble) {

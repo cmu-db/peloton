@@ -1001,6 +1001,34 @@ void Catalog::InitializeFunctions() {
        * integer functions
        */
       AddBuiltinFunction(
+          "abs", {type::TypeId::TINYINT}, type::TypeId::DECIMAL, internal_lang,
+          "Abs",
+          function::BuiltInFuncType{OperatorId::Abs,
+                                    function::DecimalFunctions::_Abs},
+          txn);
+
+      AddBuiltinFunction(
+          "abs", {type::TypeId::SMALLINT}, type::TypeId::DECIMAL, internal_lang,
+          "Abs",
+          function::BuiltInFuncType{OperatorId::Abs,
+                                    function::DecimalFunctions::_Abs},
+          txn);
+
+      AddBuiltinFunction(
+          "abs", {type::TypeId::INTEGER}, type::TypeId::DECIMAL, internal_lang,
+          "Abs",
+          function::BuiltInFuncType{OperatorId::Abs,
+                                    function::DecimalFunctions::_Abs},
+          txn);
+
+      AddBuiltinFunction(
+          "abs", {type::TypeId::BIGINT}, type::TypeId::DECIMAL, internal_lang,
+          "Abs",
+          function::BuiltInFuncType{OperatorId::Abs,
+                                    function::DecimalFunctions::_Abs},
+          txn);
+
+      AddBuiltinFunction(
           "floor", {type::TypeId::INTEGER}, type::TypeId::DECIMAL,
           internal_lang, "Floor",
           function::BuiltInFuncType{OperatorId::Floor,
