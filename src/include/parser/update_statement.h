@@ -56,33 +56,9 @@ class UpdateStatement : public SQLStatement {
 
   virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
-  const std::string GetInfo(int num_indent) const override {
-    std::ostringstream os;
-    os << StringUtil::Indent(num_indent) << "UpdateStatement\n";
-    os << table.get()->GetInfo(num_indent + 1) << std::endl;
-    os << StringUtil::Indent(num_indent + 1) << "-> Updates :: \n";
-    for (auto &update : updates) {
-      os << StringUtil::Indent(num_indent + 2) << "Column: " << update->column
-         << std::endl;
-      os << update->value.get()->GetInfo(num_indent + 3) << std::endl;
-    }
-    if (where != nullptr) {
-      os << StringUtil::Indent(num_indent + 1) << "-> Where :: \n"
-         << where.get()->GetInfo(num_indent + 2) << std::endl;
-    }
+  const std::string GetInfo(int num_indent) const override;
 
-    return os.str();
-  }
-
-  const std::string GetInfo() const override {
-    std::ostringstream os;
-
-    os << "SQLStatement[UPDATE]\n";
-
-    os << GetInfo(1);
-
-    return os.str();
-  }
+  const std::string GetInfo() const override;
 
   // TODO: switch to char* instead of TableRef
   std::unique_ptr<TableRef> table;

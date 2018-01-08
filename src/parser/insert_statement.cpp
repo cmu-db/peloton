@@ -12,7 +12,6 @@
 
 #include "parser/insert_statement.h"
 #include "parser/select_statement.h"
-#include "util/string_util.h"
 
 namespace peloton {
 namespace parser {
