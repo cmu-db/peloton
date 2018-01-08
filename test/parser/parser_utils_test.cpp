@@ -53,6 +53,10 @@ TEST_F(ParserUtilTests, BasicTest) {
   queries.push_back(
       "SELECT * FROM \"table\" LIMIT 10 OFFSET 10; SELECT * FROM second;");
   queries.push_back("SELECT * FROM t1 UNION SELECT * FROM t2 ORDER BY col1;");
+  queries.push_back("SELECT player_name, year, "
+                    "CASE WHEN year = 'SR' THEN 'yes' "
+                    "ELSE NULL END AS is_a_senior "
+                    "FROM benn.college_football_players");
 
   // JOIN
   queries.push_back(
