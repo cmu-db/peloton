@@ -92,6 +92,7 @@ void CompilationContext::GeneratePlan(QueryCompiler::CompileStats *stats) {
 
   // First we prepare the translators for all the operators in the tree
   Prepare(query_.GetPlan(), main_pipeline_);
+
   if (stats != nullptr) {
     timer.Stop();
     stats->setup_ms = timer.GetDuration();

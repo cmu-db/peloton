@@ -38,6 +38,7 @@ static void CompileAndExecutePlan(
   // Perform binding
   planner::BindingContext context;
   plan->PerformBinding(context);
+
   // Prepare output buffer
   std::vector<oid_t> columns;
   plan->GetOutputColumns(columns);
