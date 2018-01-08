@@ -12,7 +12,7 @@
 
 #include <include/traffic_cop/traffic_cop.h>
 #include <cstdio>
-#include <sql/testing_sql_util.h>
+#include "sql/testing_sql_util.h"
 
 #include "catalog/catalog.h"
 #include "common/harness.h"
