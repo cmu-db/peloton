@@ -31,7 +31,7 @@
 #include "planner/insert_plan.h"
 #include "planner/plan_util.h"
 #include "planner/update_plan.h"
-#include "include/traffic_cop/traffic_cop.h"
+#include "traffic_cop/traffic_cop.h"
 
 #include "gtest/gtest.h"
 

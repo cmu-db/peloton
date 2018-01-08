@@ -26,7 +26,7 @@
 #include "expression/function_expression.h"
 #include "expression/operator_expression.h"
 #include "expression/parameter_value_expression.h"
-#include "include/function/string_functions.h"
+#include "function/string_functions.h"
 #include "expression/tuple_value_expression.h"
 #include "index/index.h"
 
