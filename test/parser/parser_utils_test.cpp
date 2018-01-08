@@ -17,7 +17,6 @@
 #include "common/macros.h"
 #include "common/logger.h"
 #include "parser/postgresparser.h"
-#include "parser/parser_utils.h"
 
 namespace peloton {
 namespace test {

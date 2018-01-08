@@ -15,7 +15,6 @@
 #include "common/sql_node_visitor.h"
 #include "parser/sql_statement.h"
 #include "parser/table_ref.h"
-#include "parser/parser_utils.h"
 #include "util/string_util.h"
 #include <vector>
 
