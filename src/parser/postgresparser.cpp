@@ -1472,16 +1472,27 @@ std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>>
             ConstTransform((A_Const *)expr)));
           break;
         }
-        case T_SetToDefault: {
-          // TODO handle default type
-          // add corresponding expression for
-          // default to cur_result
-          cur_result.push_back(nullptr);
+        case T_TypeCast: {
+          try {
+            cur_result.push_back(
+                std::unique_ptr<expression::AbstractExpression>(
+                    TypeCastTransform((TypeCast *)expr)));
+          } catch (Exception e) {
+            delete result;
+            throw e;
+          }
           break;
         }
         case T_A_ArrayExpr: {
           cur_result.push_back(std::unique_ptr<expression::AbstractExpression>(
             ArrayExprTransform((A_ArrayExpr *)expr)));
+          break;
+        }
+        case T_SetToDefault: {
+          // TODO handle default type
+          // add corresponding expression for
+          // default to cur_result
+          cur_result.push_back(nullptr);
           break;
         }
         default:
