@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <event2/buffer.h>
@@ -24,9 +23,6 @@
 #include "common/logger.h"
 #include "common/container/lock_free_queue.h"
 #include "network/notifiable_task.h"
-
-// TODO(tianyu) Do we really want to hard code this?
-#define QUEUE_SIZE 100
 
 namespace peloton {
 namespace network {
@@ -76,12 +72,6 @@ class ConnectionHandlerTask : public NotifiableTask {
  private:
   // Notify new connection pipe(send end)
   int new_conn_send_fd_;
-
-  // TODO(tianyu) Do we really need this queue, now that we are only sending an
-  // int?
-  // The queue for new connection requests, elements represent the socket fd of
-  // new client connections
-  LockFreeQueue<int> new_conn_queue_;
 };
 
 }  // namespace network
