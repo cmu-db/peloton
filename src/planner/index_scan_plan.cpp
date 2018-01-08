@@ -124,6 +124,10 @@ hash_t IndexScanPlan::Hash() const {
     hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&column_id));
   }
 
+  // hash the index oid
+  auto index_oid = index_->GetOid();
+  hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&index_oid));
+
   // hash the type of index scan
   const index::ConjunctionScanPredicate *csp =
       &(index_predicate_.GetConjunctionList()[0]);
@@ -146,6 +150,8 @@ bool IndexScanPlan::operator==(const AbstractPlan &rhs) const {
   auto *other_table = other.GetTable();
   PL_ASSERT(table && other_table);
   if (*table != *other_table) return false;
+
+  if (GetIndex()->GetOid() != other.GetIndex()->GetOid()) return false;
 
   // Predicate
   auto *pred = GetPredicate();
