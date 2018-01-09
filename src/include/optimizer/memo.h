@@ -23,14 +23,12 @@ namespace peloton {
 namespace optimizer {
 
 struct GExprPtrHash {
-  std::size_t operator()(std::shared_ptr<GroupExpression> const& s) const {
-    return s->Hash();
-  }
+  std::size_t operator()(GroupExpression* const& s) const { return s->Hash(); }
 };
 
 struct GExprPtrEq {
-  bool operator()(std::shared_ptr<GroupExpression> const& t1,
-                  std::shared_ptr<GroupExpression> const& t2) const {
+  bool operator()(GroupExpression* const& t1,
+                  GroupExpression* const& t2) const {
     return *t1 == *t2;
   }
 };
@@ -50,24 +48,47 @@ class Memo {
    * target_group: an optional target group to insert expression into
    * return: existing expression if found. Otherwise, return the new expr
    */
-  std::shared_ptr<GroupExpression> InsertExpression(
-      std::shared_ptr<GroupExpression> gexpr, bool enforced);
+  GroupExpression* InsertExpression(std::shared_ptr<GroupExpression> gexpr,
+                                    bool enforced);
 
-  std::shared_ptr<GroupExpression> InsertExpression(
-      std::shared_ptr<GroupExpression> gexpr, GroupID target_group,
-      bool enforced);
+  GroupExpression* InsertExpression(std::shared_ptr<GroupExpression> gexpr,
+                                    GroupID target_group, bool enforced);
 
-  const std::vector<Group>& Groups() const;
+  const std::vector<std::unique_ptr<Group>>& Groups() const;
 
   Group* GetGroupByID(GroupID id);
+
+  inline void SetRuleSetSize(size_t rule_set_size) {
+    rule_set_size_ = rule_set_size;
+  }
+
+  //===--------------------------------------------------------------------===//
+  // For rewrite phase: remove and add expression directly for the set
+  //===--------------------------------------------------------------------===//
+  void RemoveParExpressionForRewirte(GroupExpression* gexpr) {
+    group_expressions_.erase(gexpr);
+  }
+  void AddParExpressionForRewrite(GroupExpression* gexpr) {
+    group_expressions_.insert(gexpr);
+  }
+  // When a rewrite rule is applied, we need to replace the original gexpr with
+  // a new one, which reqires us to first remove the original gexpr from the
+  // memo
+  void EraseExpression(GroupID group_id) {
+    auto gexpr = groups_[group_id]->GetLogicalExpression();
+    group_expressions_.erase(gexpr);
+    groups_[group_id]->EraseLogicalExpression();
+  }
 
  private:
   GroupID AddNewGroup(std::shared_ptr<GroupExpression> gexpr);
 
-  std::unordered_set<std::shared_ptr<GroupExpression>, GExprPtrHash, GExprPtrEq>
+  // The group owns the group expressions, not the memo
+  std::unordered_set<GroupExpression*, GExprPtrHash, GExprPtrEq>
       group_expressions_;
-  std::vector<Group> groups_;
+  std::vector<std::unique_ptr<Group>> groups_;
+  size_t rule_set_size_;
 };
 
-} // namespace optimizer
-} // namespace peloton
+}  // namespace optimizer
+}  // namespace peloton

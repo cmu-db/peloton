@@ -14,6 +14,7 @@
 
 #include "binder/bind_node_visitor.h"
 #include "catalog/catalog.h"
+#include "common/internal_types.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "expression/expression_util.h"
 #include "optimizer/optimizer.h"
@@ -21,6 +22,7 @@
 #include "settings/settings_manager.h"
 #include "traffic_cop/traffic_cop.h"
 #include "threadpool/mono_queue_pool.h"
+#include "type/type.h"
 
 namespace peloton {
 namespace tcop {
@@ -162,7 +164,7 @@ executor::ExecutionResult TrafficCop::ExecuteHelper(
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
 
-  // Skip if already aborted.
+  // skip if already aborted
   if (curr_state.second == ResultType::ABORTED) {
     // If the transaction state is ABORTED, the transaction should be aborted
     // but Peloton didn't explicitly abort it yet since it didn't receive a COMMIT/ROLLBACK.
@@ -364,25 +366,39 @@ bool TrafficCop::BindParamsForCachePlan(const std::vector<std::unique_ptr<expres
   return true;
 }
 
-void TrafficCop::GetDataTables(
-    parser::TableRef *from_table,
-    std::vector<storage::DataTable *> &target_tables) {
+void TrafficCop::GetTableColumns(parser::TableRef *from_table,
+                                 std::vector<catalog::Column> &target_columns) {
   if (from_table == nullptr) return;
 
-  if (from_table->list.empty()) {
-    if (from_table->join == nullptr) {
-      auto *target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-          from_table->GetDatabaseName(), from_table->GetTableName(),
-          GetCurrentTxnState().first);
-      target_tables.push_back(target_table);
-    } else {
-      GetDataTables(from_table->join->left.get(), target_tables);
-      GetDataTables(from_table->join->right.get(), target_tables);
+  // Query derived table
+  if (from_table->select != NULL) {
+    for (auto &expr : from_table->select->select_list) {
+      if (expr->GetExpressionType() == ExpressionType::STAR)
+        GetTableColumns(from_table->select->from_table.get(), target_columns);
+      else
+        target_columns.push_back(catalog::Column(expr->GetValueType(), 0,
+                                                 expr->GetExpressionName()));
     }
-  } else {
-    // Query has multiple tables. Recursively add all tables
+  } else if (from_table->list.empty()) {
+    if (from_table->join == NULL) {
+      auto columns =
+          static_cast<storage::DataTable *>(
+              catalog::Catalog::GetInstance()->GetTableWithName(
+                  from_table->GetDatabaseName(), from_table->GetTableName(),
+                  GetCurrentTxnState().first))
+              ->GetSchema()
+              ->GetColumns();
+      target_columns.insert(target_columns.end(), columns.begin(),
+                            columns.end());
+    } else {
+      GetTableColumns(from_table->join->left.get(), target_columns);
+      GetTableColumns(from_table->join->right.get(), target_columns);
+    }
+  }
+  // Query has multiple tables. Recursively add all tables
+  else {
     for (auto &table : from_table->list) {
-      GetDataTables(table.get(), target_tables);
+      GetTableColumns(table.get(), target_columns);
     }
   }
 }
@@ -402,23 +418,19 @@ std::vector<FieldInfo> TrafficCop::GenerateTupleDescriptor(
   // Get the columns information and set up
   // the columns description for the returned results
   // Set up the table
-  std::vector<storage::DataTable *> target_tables;
+  std::vector<catalog::Column> all_columns;
 
   // Check if query only has one Table
   // Example : SELECT * FROM A;
-  GetDataTables(select_stmt->from_table.get(), target_tables);
+  GetTableColumns(select_stmt->from_table.get(), all_columns);
 
   int count = 0;
   for (auto &expr : select_stmt->select_list) {
     count++;
     if (expr->GetExpressionType() == ExpressionType::STAR) {
-      for (auto target_table : target_tables) {
-        // Get the columns of the table
-        auto &table_columns = target_table->GetSchema()->GetColumns();
-        for (auto &column : table_columns) {
-          tuple_descriptor.push_back(
-              GetColumnFieldForValueType(column.GetName(), column.GetType()));
-        }
+      for (auto column : all_columns) {
+        tuple_descriptor.push_back(
+            GetColumnFieldForValueType(column.GetName(), column.GetType()));
       }
     } else {
       std::string col_name;

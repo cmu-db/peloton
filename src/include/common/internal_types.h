@@ -1278,7 +1278,6 @@ typedef std::vector<DirectMap> DirectMapList;
 
 enum class PropertyType {
   INVALID = INVALID_TYPE_ID,
-  PREDICATE,
   COLUMNS,
   DISTINCT,
   SORT,
@@ -1288,6 +1287,46 @@ std::string PropertyTypeToString(PropertyType type);
 PropertyType StringToPropertyType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const PropertyType &type);
 
+enum class RuleType : uint32_t {
+  // Transformation rules (logical -> logical)
+  INNER_JOIN_COMMUTE = 0,
+
+  // Don't move this one
+  LogicalPhysicalDelimiter,
+
+  // Implementation rules (logical -> physical)
+  GET_TO_DUMMY_SCAN,
+  GET_TO_SEQ_SCAN,
+  GET_TO_INDEX_SCAN,
+  QUERY_DERIVED_GET_TO_PHYSICAL,
+  DELETE_TO_PHYSICAL,
+  UPDATE_TO_PHYSICAL,
+  INSERT_TO_PHYSICAL,
+  INSERT_SELECT_TO_PHYSICAL,
+  AGGREGATE_TO_HASH_AGGREGATE,
+  AGGREGATE_TO_PLAIN_AGGREGATE,
+  INNER_JOIN_TO_NL_JOIN,
+  INNER_JOIN_TO_HASH_JOIN,
+  IMPLEMENT_DISTINCT,
+  IMPLEMENT_LIMIT,
+
+  // Don't move this one
+  RewriteDelimiter,
+
+  // Rewrite rules (logical -> logical)
+  PUSH_FILTER_THROUGH_JOIN,
+  COMBINE_CONSECUTIVE_FILTER,
+  EMBED_FILTER_INTO_GET,
+  MARK_JOIN_GET_TO_INNER_JOIN,
+  MARK_JOIN_INNER_JOIN_TO_INNER_JOIN,
+  MARK_JOIN_FILTER_TO_INNER_JOIN,
+  PULL_FILTER_THROUGH_MARK_JOIN,
+
+  // Place holder to generate number of rules compile time
+  NUM_RULES
+
+};
+
 namespace expression {
 class AbstractExpression;
 class ExprHasher;
@@ -1295,25 +1334,28 @@ class ExprEqualCmp;
 }  // namespace expression
 
 // Augment abstract expression with a table alias set
-struct MultiTableExpression {
-  MultiTableExpression(expression::AbstractExpression *i_expr,
-                       std::unordered_set<std::string> &i_set)
+struct AnnotatedExpression {
+  AnnotatedExpression(std::shared_ptr<expression::AbstractExpression> i_expr,
+                      std::unordered_set<std::string> &i_set)
       : expr(i_expr), table_alias_set(i_set) {}
-  MultiTableExpression(const MultiTableExpression &mt_expr)
+  AnnotatedExpression(const AnnotatedExpression &mt_expr)
       : expr(mt_expr.expr), table_alias_set(mt_expr.table_alias_set) {}
-  expression::AbstractExpression *expr;
+  std::shared_ptr<expression::AbstractExpression> expr;
   std::unordered_set<std::string> table_alias_set;
 };
 
-typedef std::vector<expression::AbstractExpression *> SingleTablePredicates;
-typedef std::vector<MultiTableExpression> MultiTablePredicates;
+typedef std::vector<AnnotatedExpression> MultiTablePredicates;
+typedef std::unordered_map<
+    std::string, std::vector<std::shared_ptr<expression::AbstractExpression>>>
+    SingleTablePredicatesMap;
 
+// TODO(boweic): use raw ptr
 // Mapping of Expression -> Column Offset created by operator
-typedef std::unordered_map<std::shared_ptr<expression::AbstractExpression>,
-                           unsigned, expression::ExprHasher,
+typedef std::unordered_map<expression::AbstractExpression *, unsigned,
+                           expression::ExprHasher,
                            expression::ExprEqualCmp> ExprMap;
 // Used in optimizer to speed up expression comparsion
-typedef std::unordered_set<std::shared_ptr<expression::AbstractExpression>,
+typedef std::unordered_set<expression::AbstractExpression *,
                            expression::ExprHasher,
                            expression::ExprEqualCmp> ExprSet;
 

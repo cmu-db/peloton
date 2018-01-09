@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// convert_query_to_op.h
+// cost_and_stats_calculator.h
 //
-// Identification: src/include/optimizer/child_property_generator.h
+// Identification: src/include/optimizer/cost_calculator.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -15,30 +15,21 @@
 #include "optimizer/operator_visitor.h"
 
 namespace peloton {
-
-namespace optimizer {
-class ColumnManager;
-class Memo;
-}
-
 namespace optimizer {
 
-// Generate child property requirements for physical operators
-class ChildPropertyGenerator : public OperatorVisitor {
+// Derive cost for a physical group expressionh
+class CostCalculator : public OperatorVisitor {
  public:
-  ChildPropertyGenerator(ColumnManager &manager) : manager_(manager) {}
-
-  std::vector<std::pair<PropertySet, std::vector<PropertySet>>> GetProperties(
-      std::shared_ptr<GroupExpression> gexpr, PropertySet requirements,
-      Memo *memo);
+  double CalculatorCost(
+      GroupExpression* gexpr,
+      const PropertySet *output_properties);
 
   void Visit(const DummyScan *) override;
   void Visit(const PhysicalSeqScan *) override;
   void Visit(const PhysicalIndexScan *) override;
-  void Visit(const PhysicalProject *) override;
+  void Visit(const QueryDerivedScan *) override;
   void Visit(const PhysicalOrderBy *) override;
   void Visit(const PhysicalLimit *) override;
-  void Visit(const PhysicalFilter *) override;
   void Visit(const PhysicalInnerNLJoin *) override;
   void Visit(const PhysicalLeftNLJoin *) override;
   void Visit(const PhysicalRightNLJoin *) override;
@@ -57,24 +48,12 @@ class ChildPropertyGenerator : public OperatorVisitor {
   void Visit(const PhysicalAggregate *) override;
 
  private:
-  /***** Helper functions *****/
-  // Since the ChildPropertyGenerator have similar
-  // behaviour for different implementation of the same
-  // logical operator, we apply helper functions to
-  // reduce duplicate code
-  void AggregateHelper(const BaseOperatorNode *op);
-  void ScanHelper();
-  void JoinHelper(const BaseOperatorNode *op);
-
- private:
-  ColumnManager &manager_;
-  PropertySet requirements_;
-  // Each child group contains the base table in that group
-  // when deriving column properties for join,
-  // we need to assign column to the correct child
-  std::vector<Group *> child_groups_;
-  std::vector<std::pair<PropertySet, std::vector<PropertySet>>> output_;
+  // We cannot use reference here because otherwise we have to initialize them
+  // when constructing the class
+  GroupExpression* gexpr_;
+  const PropertySet *output_properties_;
+  double output_cost_ = 0;
 };
 
-} // namespace optimizer
-} // namespace peloton
+}  // namespace optimizer
+}  // namespace peloton

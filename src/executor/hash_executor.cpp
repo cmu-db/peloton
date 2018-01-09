@@ -81,37 +81,34 @@ bool HashExecutor::DExecute() {
       auto tile = child_tiles_[child_tile_itr].get();
 
       // Go over all tuples in the logical tile
-      for (oid_t tuple_id : *tile) {
-        // Key : container tuple with a subset of tuple attributes
-        // Value : < child_tile offset, tuple offset >
-        auto key = HashMapType::key_type(tile, tuple_id, &column_ids_);
-        if (hash_table_.find(key) != hash_table_.end()){
-           //If data is already present, remove from output
-           //but leave data for hash joins.
-           tile->RemoveVisibility(tuple_id);
+      if (tile->GetTupleCount() > 0) {
+        output_tile_itrs_.emplace_back(child_tile_itr);
+        for (oid_t tuple_id : *tile) {
+          // Key : container tuple with a subset of tuple attributes
+          // Value : < child_tile offset, tuple offset >
+          auto key = HashMapType::key_type(tile, tuple_id, &column_ids_);
+          if (hash_table_.find(key) != hash_table_.end()) {
+            //If data is already present, remove from output
+            //but leave data for hash joins.
+            tile->RemoveVisibility(tuple_id);
+          }
+          hash_table_[key].insert(
+              std::make_pair(output_tile_itrs_.size()-1, tuple_id));
         }
-        hash_table_[key].insert(
-                    std::make_pair(child_tile_itr, tuple_id));
       }
     }
 
     done_ = true;
   }
 
-  // Return logical tiles one at a time
-  while (result_itr < child_tiles_.size()) {
-    if (child_tiles_[result_itr]->GetTupleCount() == 0) {
-      result_itr++;
-      continue;
-    } else {
-      SetOutput(child_tiles_[result_itr++].release());
-      LOG_TRACE("Hash Executor : true -- return tile one at a time ");
-      return true;
-    }
+  if (result_itr < output_tile_itrs_.size()) {
+    SetOutput(child_tiles_[output_tile_itrs_[result_itr++]].release());
+    LOG_TRACE("Hash Executor : true -- return tile one at a time ");
+    return true;
+  } else {
+    LOG_TRACE("Hash Executor : false -- done ");
+    return false;
   }
-
-  LOG_TRACE("Hash Executor : false -- done ");
-  return false;
 }
 
 }  // namespace executor

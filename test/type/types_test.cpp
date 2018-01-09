@@ -1080,7 +1080,6 @@ TEST_F(TypesTests, LogRecordTypeTest) {
 TEST_F(TypesTests, PropertyTypeTest) {
   std::vector<PropertyType> list = {
       PropertyType::INVALID,
-      PropertyType::PREDICATE,
       PropertyType::COLUMNS,
       PropertyType::DISTINCT,
       PropertyType::SORT,

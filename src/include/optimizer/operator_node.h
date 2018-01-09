@@ -22,38 +22,39 @@ namespace peloton {
 namespace optimizer {
 
 enum class OpType {
-  Undefined,
+  Undefined = 0,
   // Special match operators
   Leaf,
   // Logical ops
   Get,
-  LogicalProject,
+  LogicalQueryDerivedGet,
+  LogicalProjection,
   LogicalFilter,
+  LogicalMarkJoin,
+  LogicalDependentJoin,
+  LogicalSingleJoin,
   InnerJoin,
   LeftJoin,
   RightJoin,
   OuterJoin,
   SemiJoin,
-  LogicalAggregate,
-  LogicalGroupBy,
-  LogicalHash,
-  Limit,
+  LogicalAggregateAndGroupBy,
   LogicalInsert,
   LogicalInsertSelect,
   LogicalDelete,
   LogicalUpdate,
+  LogicalLimit,
+  LogicalDistinct,
   // Separate between logical and physical ops
   LogicalPhysicalDelimiter,
   // Physical ops
   DummyScan, /* Dummy Physical Op for SELECT without FROM*/
   SeqScan,
   IndexScan,
-  Project,
+  QueryDerivedScan,
   OrderBy,
   PhysicalLimit,
   Distinct,
-  ComputeExprs,
-  Filter,
   InnerNLJoin,
   LeftNLJoin,
   RightNLJoin,
@@ -108,8 +109,6 @@ struct BaseOperatorNode {
 // Curiously recurring template pattern
 template <typename T>
 struct OperatorNode : public BaseOperatorNode {
-  // Right now only accept physical operators, Accept() of logical operators
-  // will be specialized to empty function.
   void Accept(OperatorVisitor *v) const;
 
   std::string name() const { return name_; }
@@ -159,8 +158,8 @@ class Operator {
   std::shared_ptr<BaseOperatorNode> node;
 };
 
-} // namespace optimizer
-} // namespace peloton
+}  // namespace optimizer
+}  // namespace peloton
 
 namespace std {
 
@@ -171,4 +170,4 @@ struct hash<peloton::optimizer::BaseOperatorNode> {
   result_type operator()(argument_type const &s) const { return s.Hash(); }
 };
 
-} // namespace std
+}  // namespace std

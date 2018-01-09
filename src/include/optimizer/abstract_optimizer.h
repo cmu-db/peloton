@@ -30,6 +30,10 @@ namespace concurrency {
 class TransactionContext;
 }
 
+namespace catalog {
+class Catalog;
+}
+
 namespace optimizer {
 
 //===--------------------------------------------------------------------===//

@@ -69,6 +69,8 @@ class HashExecutor : public AbstractExecutor {
 
   std::vector<oid_t> column_ids_;
 
+  std::vector<oid_t> output_tile_itrs_;
+
   bool done_ = false;
 
   size_t result_itr = 0;
