@@ -15,6 +15,7 @@
 #include "codegen/lang/if.h"
 #include "codegen/proxy/values_runtime_proxy.h"
 #include "codegen/type/boolean_type.h"
+#include "codegen/type/decimal_type.h"
 #include "codegen/value.h"
 #include "common/exception.h"
 #include "type/limits.h"
@@ -158,7 +159,9 @@ struct Negate : public TypeSystem::UnaryOperatorHandleNull {
     return Type{Integer::Instance()};
   }
 
-  Value Impl(CodeGen &codegen, const Value &val) const override {
+  Value Impl(CodeGen &codegen, const Value &val,
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+      const override {
     PL_ASSERT(SupportsType(val.GetType()));
 
     llvm::Value *overflow_bit = nullptr;
@@ -174,35 +177,41 @@ struct Negate : public TypeSystem::UnaryOperatorHandleNull {
 
 // Floor
 struct Floor : public TypeSystem::UnaryOperatorHandleNull {
+  CastInteger cast;
+
   bool SupportsType(const Type &type) const override {
     return type.GetSqlType() == Integer::Instance();
   }
 
   Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
-    return Type{Integer::Instance()};
+    return Type{Decimal::Instance()};
   }
 
-  Value Impl(UNUSED_ATTRIBUTE CodeGen &codegen,
-             const Value &val) const override {
+  Value Impl(CodeGen &codegen, const Value &val,
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+      const override {
     PL_ASSERT(SupportsType(val.GetType()));
-    return val;
+    return cast.Impl(codegen, val, Decimal::Instance());
   }
 };
 
 // Ceiling
 struct Ceil : public TypeSystem::UnaryOperatorHandleNull {
+  CastInteger cast;
+  
   bool SupportsType(const Type &type) const override {
     return type.GetSqlType() == Integer::Instance();
   }
 
   Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
-    return Type{Integer::Instance()};
+    return Type{Decimal::Instance()};
   }
 
-  Value Impl(UNUSED_ATTRIBUTE CodeGen &codegen,
-               const Value &val) const override {
+  Value Impl(CodeGen &codegen, const Value &val,
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+      const override {
     PL_ASSERT(SupportsType(val.GetType()));
-    return val;
+    return cast.Impl(codegen, val, Decimal::Instance());
   }
 };
 
@@ -411,18 +420,20 @@ struct Modulo : public TypeSystem::BinaryOperatorHandleNull {
   }
 };
 
-//===----------------------------------------------------------------------===//
-// TYPE SYSTEM CONSTRUCTION
-//===----------------------------------------------------------------------===//
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Function tables
+///
+////////////////////////////////////////////////////////////////////////////////
 
-// The list of types a SQL integer type can be implicitly casted to
-const std::vector<peloton::type::TypeId> kImplicitCastingTable = {
+// Implicit casts
+std::vector<peloton::type::TypeId> kImplicitCastingTable = {
     peloton::type::TypeId::INTEGER, peloton::type::TypeId::BIGINT,
     peloton::type::TypeId::DECIMAL};
 
 // Explicit casting rules
-static CastInteger kCastInteger;
-static std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {
+CastInteger kCastInteger;
+std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {
     {peloton::type::TypeId::INTEGER, peloton::type::TypeId::BOOLEAN,
      kCastInteger},
     {peloton::type::TypeId::INTEGER, peloton::type::TypeId::TINYINT,
@@ -437,26 +448,26 @@ static std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {
      kCastInteger}};
 
 // Comparison operations
-static CompareInteger kCompareInteger;
-static std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {
+CompareInteger kCompareInteger;
+std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {
     {kCompareInteger}};
 
 // Unary operators
-static Negate kNegOp;
-static Ceil kCeilOp;
-static Floor kFloorOp;
-static std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {
+Negate kNegOp;
+Ceil kCeilOp;
+Floor kFloorOp;
+std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {
     {OperatorId::Negation, kNegOp},
     {OperatorId::Ceil, kCeilOp},
     {OperatorId::Floor, kFloorOp}};
 
 // Binary operations
-static Add kAddOp;
-static Sub kSubOp;
-static Mul kMulOp;
-static Div kDivOp;
-static Modulo kModuloOp;
-static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
+Add kAddOp;
+Sub kSubOp;
+Mul kMulOp;
+Div kDivOp;
+Modulo kModuloOp;
+std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
     {OperatorId::Add, kAddOp},
     {OperatorId::Sub, kSubOp},
     {OperatorId::Mul, kMulOp},
@@ -465,24 +476,24 @@ static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
 };
 
 // Nary operations
-static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
+std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
 
 // No arg operations
-static std::vector<TypeSystem::NoArgOpInfo> kNoArgOperatorTable = {};
+std::vector<TypeSystem::NoArgOpInfo> kNoArgOperatorTable = {};
 
 }  // anonymous namespace
 
-//===----------------------------------------------------------------------===//
-// INTEGER TYPE CONFIGURATION
-//===----------------------------------------------------------------------===//
+////////////////////////////////////////////////////////////////////////////////
+///
+/// INTEGER type initialization and configuration
+///
+////////////////////////////////////////////////////////////////////////////////
 
-// Initialize the INTEGER SQL type with the configured type system
 Integer::Integer()
     : SqlType(peloton::type::TypeId::INTEGER),
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
-                   kComparisonTable, kUnaryOperatorTable,
-                   kBinaryOperatorTable, kNaryOperatorTable,
-                   kNoArgOperatorTable) {}
+                   kComparisonTable, kUnaryOperatorTable, kBinaryOperatorTable,
+                   kNaryOperatorTable, kNoArgOperatorTable) {}
 
 Value Integer::GetMinValue(CodeGen &codegen) const {
   auto *raw_val = codegen.Const32(peloton::type::PELOTON_INT32_MIN);

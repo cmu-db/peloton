@@ -22,6 +22,7 @@ namespace peloton {
 namespace codegen {
 
 class CodeGen;
+class RuntimeState;
 class Value;
 
 namespace type {
@@ -232,11 +233,17 @@ class TypeSystem {
     const Comparison &comparison;
   };
 
+  // Every operator invocation carries this context to provide additional
+  // contextual information to the function.
+  struct InvocationContext {
+    // TODO(pmenon): Fill me
+  };
+
   //===--------------------------------------------------------------------===//
   // An operator with no argument
   //===--------------------------------------------------------------------===//
   struct NoArgOperator {
-    virtual ~NoArgOperator() {}
+    virtual ~NoArgOperator() = default;
 
     // Does this unary operator support values of the given type?
     bool SupportsType(const UNUSED_ATTRIBUTE Type &type) const { return false; }
@@ -246,18 +253,19 @@ class TypeSystem {
     virtual Type ResultType(const Type &val_type) const = 0;
 
     // Apply the operator on the given value
-    virtual Value DoWork(CodeGen &codegen) const = 0;
+    virtual Value Eval(CodeGen &codegen,
+                       const InvocationContext &ctx) const = 0;
   };
 
   struct NoArgOpInfo {
     // The ID of the operation
     OperatorId op_id;
-
     // The operation
     const NoArgOperator &no_arg_operation;
   };
 
   //===--------------------------------------------------------------------===//
+  //
   // A unary operator (i.e., an operator that accepts a single argument)
   //
   //===--------------------------------------------------------------------===//
@@ -272,7 +280,8 @@ class TypeSystem {
     virtual Type ResultType(const Type &val_type) const = 0;
 
     // Apply the operator on the given value
-    virtual Value Eval(CodeGen &codegen, const Value &val) const = 0;
+    virtual Value Eval(CodeGen &codegen, const Value &val,
+                       const InvocationContext &ctx) const = 0;
   };
 
   //===--------------------------------------------------------------------===//
@@ -291,11 +300,13 @@ class TypeSystem {
   //===--------------------------------------------------------------------===//
   class UnaryOperatorHandleNull : public UnaryOperator {
    public:
-    Value Eval(CodeGen &codegen, const Value &val) const override;
+    Value Eval(CodeGen &codegen, const Value &val,
+               const InvocationContext &ctx) const override;
 
    protected:
     // The actual implementation assuming non-NULL input
-    virtual Value Impl(CodeGen &codegen, const Value &val) const = 0;
+    virtual Value Impl(CodeGen &codegen, const Value &val,
+                       const InvocationContext &ctx) const = 0;
   };
 
   //===--------------------------------------------------------------------===//
@@ -304,14 +315,11 @@ class TypeSystem {
   struct UnaryOpInfo {
     // The ID of the operation
     OperatorId op_id;
-
     // The operation
     const UnaryOperator &unary_operation;
   };
 
   //===--------------------------------------------------------------------===//
-  //
-  // BinaryOperator
   //
   // A binary operator (i.e., an operator that accepts two arguments)
   //
@@ -334,8 +342,6 @@ class TypeSystem {
   };
 
   //===--------------------------------------------------------------------===//
-  //
-  // BinaryOperatorHandleNull
   //
   // An abstract base class for binary operators that returns NULL if either
   // input argument is NULL. If neither input is NULL, derived implementations

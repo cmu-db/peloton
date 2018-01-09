@@ -27,6 +27,12 @@ namespace type {
 
 namespace {
 
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Casting rules
+///
+////////////////////////////////////////////////////////////////////////////////
+
 //===----------------------------------------------------------------------===//
 // Date casting rules
 //
@@ -57,6 +63,12 @@ struct CastDateToTimestamp : public TypeSystem::CastHandleNull {
     return Value{to_type, timestamp, nullptr, null};
   }
 };
+
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Comparisons
+///
+////////////////////////////////////////////////////////////////////////////////
 
 // Comparison
 struct CompareDate : public TypeSystem::SimpleComparisonHandleNull {
@@ -112,37 +124,51 @@ struct CompareDate : public TypeSystem::SimpleComparisonHandleNull {
   }
 };
 
-// The list of types a SQL date type can be implicitly casted to
-const std::vector<peloton::type::TypeId> kImplicitCastingTable = {
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Function tables
+///
+////////////////////////////////////////////////////////////////////////////////
+
+// Implicit casts
+std::vector<peloton::type::TypeId> kImplicitCastingTable = {
     peloton::type::TypeId::DATE, peloton::type::TypeId::TIMESTAMP};
 
-static CastDateToTimestamp kDateToTimestamp;
-static std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {
+// Explicit casts
+CastDateToTimestamp kDateToTimestamp;
+std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {
     {peloton::type::TypeId::DATE, peloton::type::TypeId::TIMESTAMP,
      kDateToTimestamp}};
 
-static CompareDate kCompareDate;
-static std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {
-    {kCompareDate}};
+// Comparison operations
+CompareDate kCompareDate;
+std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {{kCompareDate}};
 
-static std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {};
-static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {};
+// Unary operations
+std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {};
+
+// Binary operations
+std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {};
 
 // Nary operations
-static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
+std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
 
 // No arg operations
-static std::vector<TypeSystem::NoArgOpInfo> kNoArgOperatorTable = {};
+std::vector<TypeSystem::NoArgOpInfo> kNoArgOperatorTable = {};
 
 }  // anonymous namespace
 
-// Initialize the DATE SQL type with the configured type system
+////////////////////////////////////////////////////////////////////////////////
+///
+/// DATE type initialization and configuration
+///
+////////////////////////////////////////////////////////////////////////////////
+
 Date::Date()
     : SqlType(peloton::type::TypeId::DATE),
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
-                   kComparisonTable, kUnaryOperatorTable,
-                   kBinaryOperatorTable, kNaryOperatorTable,
-                   kNoArgOperatorTable) {}
+                   kComparisonTable, kUnaryOperatorTable, kBinaryOperatorTable,
+                   kNaryOperatorTable, kNoArgOperatorTable) {}
 
 Value Date::GetMinValue(CodeGen &codegen) const {
   auto *raw_val = codegen.Const32(peloton::type::PELOTON_DATE_MIN);

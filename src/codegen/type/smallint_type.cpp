@@ -16,6 +16,7 @@
 #include "codegen/value.h"
 #include "codegen/proxy/values_runtime_proxy.h"
 #include "codegen/type/boolean_type.h"
+#include "codegen/type/decimal_type.h"
 #include "codegen/type/integer_type.h"
 #include "common/exception.h"
 #include "type/limits.h"
@@ -173,7 +174,9 @@ struct Negate : public TypeSystem::UnaryOperatorHandleNull {
     return Type{SmallInt::Instance()};
   }
 
-  Value Impl(CodeGen &codegen, const Value &val) const override {
+  Value Impl(CodeGen &codegen, const Value &val,
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+      const override {
     PL_ASSERT(SupportsType(val.GetType()));
 
     llvm::Value *overflow_bit = nullptr;
@@ -189,35 +192,41 @@ struct Negate : public TypeSystem::UnaryOperatorHandleNull {
 
 // Floor
 struct Floor : public TypeSystem::UnaryOperatorHandleNull {
+  CastSmallInt cast;
+
   bool SupportsType(const Type &type) const override {
     return type.GetSqlType() == SmallInt::Instance();
   }
 
   Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
-    return Type{SmallInt::Instance()};
+    return Type{Decimal::Instance()};
   }
 
-  Value Impl(UNUSED_ATTRIBUTE CodeGen &codegen,
-             const Value &val) const override {
+  Value Impl(CodeGen &codegen, const Value &val,
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+      const override {
     PL_ASSERT(SupportsType(val.GetType()));
-    return val;
+    return cast.Impl(codegen, val, Decimal::Instance());
   }
 };
 
 // Ceiling
 struct Ceil : public TypeSystem::UnaryOperatorHandleNull {
+  CastSmallInt cast;
+
   bool SupportsType(const Type &type) const override {
     return type.GetSqlType() == SmallInt::Instance();
   }
 
   Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
-    return Type{SmallInt::Instance()};
+    return Type{Decimal::Instance()};
   }
 
-  Value Impl(UNUSED_ATTRIBUTE CodeGen &codegen,
-               const Value &val) const override {
+  Value Impl(CodeGen &codegen, const Value &val,
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+      const override {
     PL_ASSERT(SupportsType(val.GetType()));
-    return val;
+    return cast.Impl(codegen, val, Decimal::Instance());
   }
 };
 
@@ -432,18 +441,20 @@ struct Modulo : public TypeSystem::BinaryOperatorHandleNull {
   }
 };
 
-//===----------------------------------------------------------------------===//
-// TYPE SYSTEM CONSTRUCTION
-//===----------------------------------------------------------------------===//
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Function tables
+///
+////////////////////////////////////////////////////////////////////////////////
 
-// The list of types a SQL smallint type can be implicitly casted to
-const std::vector<peloton::type::TypeId> kImplicitCastingTable = {
+// Implicit casts
+std::vector<peloton::type::TypeId> kImplicitCastingTable = {
     peloton::type::TypeId::SMALLINT, peloton::type::TypeId::INTEGER,
     peloton::type::TypeId::BIGINT, peloton::type::TypeId::DECIMAL};
 
 // Explicit casting rules
-static CastSmallInt kCastSmallInt;
-static std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {
+CastSmallInt kCastSmallInt;
+std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {
     {peloton::type::TypeId::SMALLINT, peloton::type::TypeId::BOOLEAN,
      kCastSmallInt},
     {peloton::type::TypeId::SMALLINT, peloton::type::TypeId::TINYINT,
@@ -458,26 +469,25 @@ static std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {
      kCastSmallInt}};
 
 // Comparison operations
-static CompareSmallInt kCompareSmallInt;
-static std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {
-    {kCompareSmallInt}};
+CompareSmallInt kCompareSmallInt;
+std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {{kCompareSmallInt}};
 
 // Unary operators
-static Negate kNegOp;
-static Ceil kCeilOp;
-static Floor kFloorOp;
-static std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {
+Negate kNegOp;
+Ceil kCeilOp;
+Floor kFloorOp;
+std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {
     {OperatorId::Negation, kNegOp},
     {OperatorId::Ceil, kCeilOp},
     {OperatorId::Floor, kFloorOp}};
 
 // Binary operations
-static Add kAddOp;
-static Sub kSubOp;
-static Mul kMulOp;
-static Div kDivOp;
-static Modulo kModuloOp;
-static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
+Add kAddOp;
+Sub kSubOp;
+Mul kMulOp;
+Div kDivOp;
+Modulo kModuloOp;
+std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
     {OperatorId::Add, kAddOp},
     {OperatorId::Sub, kSubOp},
     {OperatorId::Mul, kMulOp},
@@ -485,20 +495,24 @@ static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
     {OperatorId::Mod, kModuloOp}};
 
 // Nary operations
-static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
+std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
 
 // NoArg operators
-static std::vector<TypeSystem::NoArgOpInfo> kNoArgOperatorTable = {};
+std::vector<TypeSystem::NoArgOpInfo> kNoArgOperatorTable = {};
 
 }  // anonymous namespace
 
-// Initialize the SMALLINT SQL type with the configured type system
+////////////////////////////////////////////////////////////////////////////////
+///
+/// SMALLINT type initialization and configuration
+///
+////////////////////////////////////////////////////////////////////////////////
+
 SmallInt::SmallInt()
     : SqlType(peloton::type::TypeId::SMALLINT),
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
-                   kComparisonTable, kUnaryOperatorTable,
-                   kBinaryOperatorTable, kNaryOperatorTable, 
-                   kNoArgOperatorTable) {}
+                   kComparisonTable, kUnaryOperatorTable, kBinaryOperatorTable,
+                   kNaryOperatorTable, kNoArgOperatorTable) {}
 
 Value SmallInt::GetMinValue(CodeGen &codegen) const {
   auto *raw_val = codegen.Const16(peloton::type::PELOTON_INT16_MIN);
