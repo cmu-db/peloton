@@ -32,11 +32,11 @@ const std::string FunctionExpression::GetInfo(int num_indent) const {
 }
 
 const std::string FunctionExpression::GetInfo() const {
-    std::ostringstream os;
-    os << GetInfo(0);
+  std::ostringstream os;
+  os << GetInfo(0);
 
-    return os.str();
-  }
+  return os.str();
+}
 
 }  // namespace expression
 }  // namespace peloton
