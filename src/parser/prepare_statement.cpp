@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// table_ref.cpp
+// prepare_statement.cpp
 //
 // Identification: src/parser/prepare_statement.cpp
 //
@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "parser/prepare_statement.h"
+#include <iostream>
 
 namespace peloton {
 namespace parser {
@@ -18,10 +19,10 @@ namespace parser {
 const std::string PrepareStatement::GetInfo(int num_indent) const {
   std::ostringstream os;
   os << StringUtil::Indent(num_indent) << "PrepareStatement\n";
-  os << StringUtil::Indent(num_indent + 1) << "Name: " << name << "\n";
-  os << query.get()->GetInfo(num_indent + 1) << "\n";
+  os << StringUtil::Indent(num_indent + 1) << "Name: " << name << std::endl;
+  os << query.get()->GetInfo(num_indent + 1) << std::endl;
   for (const auto &placeholder : placeholders) {
-    os << placeholder.get()->GetInfo(num_indent + 1) << "\n";
+    os << placeholder.get()->GetInfo(num_indent + 1) << std::endl;
   }
   return os.str();
 }

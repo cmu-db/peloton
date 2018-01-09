@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// table_ref.cpp
+// copy_statement.cpp
 //
 // Identification: src/parser/copy_statement.cpp
 //
@@ -25,6 +25,7 @@ const std::string CopyStatement::GetInfo(int num_indent) const {
   os << StringUtil::Indent(num_indent + 1) << "-> File Path :: " << file_path
      << std::endl;
   os << StringUtil::Indent(num_indent + 1) << "-> Delimiter :: " << delimiter;
+  os << std::endl;
   return os.str();
 }
 

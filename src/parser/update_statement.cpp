@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// table_ref.cpp
+// update_statement.cpp
 //
 // Identification: src/parser/update_statement.cpp
 //
@@ -10,9 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <sstream>
 #include "parser/update_statement.h"
 #include "util/string_util.h"
+#include <sstream>
 
 namespace peloton {
 namespace parser {
@@ -21,14 +21,14 @@ const std::string UpdateStatement::GetInfo(int num_indent) const {
   std::ostringstream os;
   os << StringUtil::Indent(num_indent) << "UpdateStatement\n";
   os << table.get()->GetInfo(num_indent + 1) << std::endl;
-  os << StringUtil::Indent(num_indent + 1) << "-> Updates :: \n";
+  os << StringUtil::Indent(num_indent + 1) << "-> Updates :: " << std::endl;
   for (auto &update : updates) {
     os << StringUtil::Indent(num_indent + 2) << "Column: " << update->column
        << std::endl;
     os << update->value.get()->GetInfo(num_indent + 3) << std::endl;
   }
   if (where != nullptr) {
-    os << StringUtil::Indent(num_indent + 1) << "-> Where :: \n"
+    os << StringUtil::Indent(num_indent + 1) << "-> Where :: " << std::endl
        << where.get()->GetInfo(num_indent + 2) << std::endl;
   }
 

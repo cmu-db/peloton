@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// table_ref.cpp
+// delete_statement.cpp
 //
 // Identification: src/parser/delete_statement.cpp
 //
@@ -10,9 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <sstream>
 #include "parser/delete_statement.h"
 #include "util/string_util.h"
+#include <sstream>
 
 namespace peloton {
 namespace parser {
@@ -21,7 +21,7 @@ const std::string DeleteStatement::GetInfo(int num_indent) const {
   std::ostringstream os;
   os << StringUtil::Indent(num_indent) << "DeleteStatement\n";
   os << StringUtil::Indent(num_indent + 1) << GetTableName();
-  if (expr != nullptr) os << expr.get()->GetInfo(num_indent + 1) << "\n";
+  if (expr != nullptr) os << expr.get()->GetInfo(num_indent + 1) << std::endl;
   return os.str();
 }
 

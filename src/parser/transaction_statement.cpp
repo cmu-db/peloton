@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// table_ref.cpp
+// transaction_statement.cpp
 //
 // Identification: src/parser/transaction_statement.cpp
 //
@@ -10,9 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <sstream>
 #include "parser/transaction_statement.h"
 #include "util/string_util.h"
+#include <sstream>
 
 namespace peloton {
 namespace parser {
@@ -24,15 +24,16 @@ const std::string TransactionStatement::GetInfo(int num_indent) const {
 
   switch (type) {
     case kBegin:
-      os << "Begin\n";
+      os << "Begin";
       break;
     case kCommit:
-      os << "Commit\n";
+      os << "Commit";
       break;
     case kRollback:
-      os << "Rollback\n";
+      os << "Rollback";
       break;
   }
+  os << std::endl;
 
   return os.str();
 }
