@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// operator_expression.h
+// star_expression.h
 //
-// Identification: src/include/expression/function_expression.h
+// Identification: src/include/expression/star_expression.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -13,6 +13,8 @@
 #pragma once
 
 #include "common/sql_node_visitor.h"
+#include "expression/abstract_expression.h"
+#include <string>
 
 namespace peloton {
 namespace expression {
@@ -38,21 +40,9 @@ class StarExpression : public AbstractExpression {
 
   virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
-  const std::string GetInfo(int num_indent) const override {
-    std::ostringstream os;
+  const std::string GetInfo(int num_indent) const override;
 
-    os << StringUtil::Indent(num_indent) << "Expression ::\n"
-       << StringUtil::Indent(num_indent + 1) << "expression type = Star,\n";
-
-    return os.str();
-  }
-
-  const std::string GetInfo() const override {
-    std::ostringstream os;
-    os << GetInfo(0);
-
-    return os.str();
-  }
+  const std::string GetInfo() const override;
 
  protected:
   StarExpression(const AbstractExpression &other) : AbstractExpression(other) {}
