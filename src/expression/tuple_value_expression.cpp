@@ -67,12 +67,12 @@ const std::string TupleValueExpression::GetInfo(int num_indent) const {
      << "expression type = Tuple Value,\n";
   if (table_name_.size() > 0) {
     os << StringUtil::Indent(num_indent + 1) << "table name: " << table_name_
-       << "\n";
+       << std::endl;
   }
 
   if (col_name_.size() > 0) {
     os << StringUtil::Indent(num_indent + 1) << "column name: " << col_name_
-       << "\n";
+       << std::endl;
   }
 
   return os.str();
