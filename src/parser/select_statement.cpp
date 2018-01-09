@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// table_ref.cpp
+// select_statement.cpp
 //
 // Identification: src/parser/select_statement.cpp
 //
@@ -64,9 +64,9 @@ const std::string SelectStatement::GetInfo(int num_indent) const {
   if (limit != NULL) {
     os << StringUtil::Indent(num_indent + 1) << "-> Limit:\n";
     os << StringUtil::Indent(num_indent + 2)
-       << "limit: " << std::to_string(limit->limit) << "\n";
+       << "limit: " << std::to_string(limit->limit) << std::endl;
     os << StringUtil::Indent(num_indent + 2)
-       << "offset: " << std::to_string(limit->offset) << "\n";
+       << "offset: " << std::to_string(limit->offset) << std::endl;
   }
   std::string info = os.str();
   StringUtil::RTrim(info);

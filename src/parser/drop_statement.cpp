@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// table_ref.cpp
+// drop_statement.cpp
 //
 // Identification: src/parser/drop_statement.cpp
 //
@@ -10,9 +10,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <sstream>
 #include "parser/drop_statement.h"
 #include "util/string_util.h"
+#include <sstream>
+#include <iostream>
 
 namespace peloton {
 namespace parser {
@@ -25,54 +26,54 @@ const std::string DropStatement::GetInfo(int num_indent) const {
     case kDatabase: {
       os << "DropType: Database\n";
       os << StringUtil::Indent(num_indent + 1)
-         << "Database name: " << GetDatabaseName() << "\n";
+         << "Database name: " << GetDatabaseName();
       break;
     }
     case kTable: {
       os << "DropType: Table\n";
       os << StringUtil::Indent(num_indent + 1)
-         << "Table name: " << GetTableName() << "\n";
+         << "Table name: " << GetTableName();
       break;
     }
     case kSchema: {
       os << "DropType: Schema\n";
       os << StringUtil::Indent(num_indent + 1)
-         << "Schema name: " << schema_name_ << "\n";
+         << "Schema name: " << schema_name_;
       break;
     }
     case kIndex: {
       os << "DropType: Index\n";
-      os << StringUtil::Indent(num_indent + 1) << "Index name: " << index_name_
-         << "\n";
+      os << StringUtil::Indent(num_indent + 1) << "Index name: " << index_name_;
       break;
     }
     case kView: {
       os << "DropType: View\n";
       os << StringUtil::Indent(num_indent + 1)
-         << "Drop view is not implemented yet...\n";
+         << "Drop view is not implemented yet...";
       break;
     }
     case kPreparedStatement: {
       os << "DropType: PreparedStatement\n";
       os << StringUtil::Indent(num_indent + 1)
-         << "Prepared statement: " << prep_stmt_ << "\n";
+         << "Prepared statement: " << prep_stmt_;
       break;
     }
     case kTrigger: {
       os << "DropType: Trigger\n";
       os << StringUtil::Indent(num_indent + 1)
-         << "Trigger table name: " << table_name_of_trigger_ << "\n";
+         << "Trigger table name: " << table_name_of_trigger_ << std::endl;
       os << StringUtil::Indent(num_indent + 1)
-         << "Trigger name: " << trigger_name_ << "\n";
+         << "Trigger name: " << trigger_name_;
       break;
     }
   }
+  os << std::endl;
   os << StringUtil::Indent(num_indent + 1)
-     << "IF EXISTS: " << ((missing_) ? "True\n" : "False\n");
+     << "IF EXISTS: " << ((missing_) ? "True" : "False") << std::endl;
   os << StringUtil::Indent(num_indent + 1)
-     << "CASCADE: " << ((cascade_) ? "True\n" : "False\n");
+     << "CASCADE: " << ((cascade_) ? "True" : "False") << std::endl;
   os << StringUtil::Indent(num_indent + 1)
-     << "RESTRICT: " << ((cascade_) ? "False\n" : "True\n");
+     << "RESTRICT: " << ((cascade_) ? "False" : "True") << std::endl;
   return os.str();
 }
 

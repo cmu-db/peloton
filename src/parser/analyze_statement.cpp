@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// table_ref.cpp
+// analyze_statement.cpp
 //
 // Identification: src/parser/analyze_statement.cpp
 //

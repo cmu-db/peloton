@@ -47,7 +47,7 @@ const std::string SQLStatement::GetInfo() const {
   os << "SQLStatement[" << StatementTypeToString(stmt_type) << "]\n";
 
   int indent = 1;
-  os << GetInfo(indent) << "\n";
+  os << GetInfo(indent) << std::endl;
   return os.str();
 }
 

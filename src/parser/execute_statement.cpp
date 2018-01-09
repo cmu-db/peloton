@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// table_ref.cpp
+// execute_statement.cpp
 //
 // Identification: src/parser/execute_statement.cpp
 //
@@ -10,9 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <sstream>
 #include "parser/execute_statement.h"
 #include "util/string_util.h"
+#include <sstream>
 
 namespace peloton {
 namespace parser {
@@ -20,7 +20,7 @@ namespace parser {
 const std::string ExecuteStatement::GetInfo(int num_indent) const {
   std::ostringstream os;
   os << StringUtil::Indent(num_indent) << "ExecuteStatement\n";
-  os << StringUtil::Indent(num_indent + 1) << "Name: " << name << "\n";
+  os << StringUtil::Indent(num_indent + 1) << "Name: " << name << std::endl;
   for (const auto &parameter : parameters) {
     os << parameter.get()->GetInfo(num_indent + 1);
   }
