@@ -19,8 +19,7 @@ const std::string ComparisonExpression::GetInfo(int num_indent) const {
   std::ostringstream os;
 
   os << StringUtil::Indent(num_indent) << "Expression ::\n"
-     << StringUtil::Indent(num_indent + 1)
-     << "expression type = Comparison,\n"
+     << StringUtil::Indent(num_indent + 1) << "expression type = Comparison,\n"
      << StringUtil::Indent(num_indent + 1)
      << "comparison type = " << ExpressionTypeToString(exp_type_) << "\n";
 
