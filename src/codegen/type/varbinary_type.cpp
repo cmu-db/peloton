@@ -25,14 +25,16 @@ namespace type {
 
 namespace {
 
-///===--------------------------------------------------------------------===///
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Comparisons
 ///
 /// All right, this VARBINARY type is a giant hack. I admit it. It's copy-pasta
 /// of VARCHAR. But, we don't have much support for it in the system overall, so
 /// I'll leave the minimum required functionality here. When we start
 /// implementing VARBINARY stuff, we will need to modify this.
 ///
-///===--------------------------------------------------------------------===///
+////////////////////////////////////////////////////////////////////////////////
 
 // Comparison
 struct CompareVarbinary : public TypeSystem::ExpensiveComparisonHandleNull {

@@ -51,6 +51,7 @@ codegen::Value FunctionTranslator::DeriveValue(CodeGen &codegen,
 
   // The context for the function invocation
   type::TypeSystem::InvocationContext ctx{};
+  ctx.on_error = OnError::Exception;
 
   if (args.size() == 1) {
     // Lookup unary operation
@@ -69,8 +70,7 @@ codegen::Value FunctionTranslator::DeriveValue(CodeGen &codegen,
 
     // Invoke
     return binary_op->Eval(codegen, args[0].CastTo(codegen, left_type),
-                           args[1].CastTo(codegen, right_type),
-                           OnError::Exception);
+                           args[1].CastTo(codegen, right_type), ctx);
   } else {
     // It's an N-Ary function
 

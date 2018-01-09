@@ -28,11 +28,13 @@ namespace type {
 
 namespace {
 
-//===----------------------------------------------------------------------===//
-// CASTING RULES
-//
-// We do SMALLINT -> {INTEGRAL_TYPE, DECIMAL, VARCHAR, BOOLEAN}
-//===----------------------------------------------------------------------===//
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Function tables
+///
+/// We do SMALLINT -> {INTEGRAL_TYPE, DECIMAL, VARCHAR, BOOLEAN}
+///
+////////////////////////////////////////////////////////////////////////////////
 
 struct CastSmallInt : public TypeSystem::CastHandleNull {
   bool SupportsTypes(const Type &from_type,
@@ -102,11 +104,12 @@ struct CastSmallInt : public TypeSystem::CastHandleNull {
   }
 };
 
-//===----------------------------------------------------------------------===//
-// COMPARISON
-//===----------------------------------------------------------------------===//
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Comparisons
+///
+////////////////////////////////////////////////////////////////////////////////
 
-// Comparison
 struct CompareSmallInt : public TypeSystem::SimpleComparisonHandleNull {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
@@ -160,9 +163,11 @@ struct CompareSmallInt : public TypeSystem::SimpleComparisonHandleNull {
   }
 };
 
-//===----------------------------------------------------------------------===//
-// UNARY OPERATIONS
-//===----------------------------------------------------------------------===//
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Unary operations
+///
+////////////////////////////////////////////////////////////////////////////////
 
 // Negation
 struct Negate : public TypeSystem::UnaryOperatorHandleNull {
@@ -230,9 +235,11 @@ struct Ceil : public TypeSystem::UnaryOperatorHandleNull {
   }
 };
 
-//===----------------------------------------------------------------------===//
-// BINARY OPERATIONS
-//===----------------------------------------------------------------------===//
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Binary operations
+///
+////////////////////////////////////////////////////////////////////////////////
 
 // Addition
 struct Add : public TypeSystem::BinaryOperatorHandleNull {
@@ -248,7 +255,7 @@ struct Add : public TypeSystem::BinaryOperatorHandleNull {
   }
 
   Value Impl(CodeGen &codegen, const Value &left, const Value &right,
-             OnError on_error) const override {
+             const TypeSystem::InvocationContext &ctx) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // Do addition
@@ -256,7 +263,7 @@ struct Add : public TypeSystem::BinaryOperatorHandleNull {
     llvm::Value *result = codegen.CallAddWithOverflow(
         left.GetValue(), right.GetValue(), overflow_bit);
 
-    if (on_error == OnError::Exception) {
+    if (ctx.on_error == OnError::Exception) {
       codegen.ThrowIfOverflow(overflow_bit);
     }
 
@@ -279,7 +286,7 @@ struct Sub : public TypeSystem::BinaryOperatorHandleNull {
   }
 
   Value Impl(CodeGen &codegen, const Value &left, const Value &right,
-             OnError on_error) const override {
+             const TypeSystem::InvocationContext &ctx) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // Do subtraction
@@ -287,7 +294,7 @@ struct Sub : public TypeSystem::BinaryOperatorHandleNull {
     llvm::Value *result = codegen.CallSubWithOverflow(
         left.GetValue(), right.GetValue(), overflow_bit);
 
-    if (on_error == OnError::Exception) {
+    if (ctx.on_error == OnError::Exception) {
       codegen.ThrowIfOverflow(overflow_bit);
     }
 
@@ -310,7 +317,7 @@ struct Mul : public TypeSystem::BinaryOperatorHandleNull {
   }
 
   Value Impl(CodeGen &codegen, const Value &left, const Value &right,
-             OnError on_error) const override {
+             const TypeSystem::InvocationContext &ctx) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // Do multiplication
@@ -318,7 +325,7 @@ struct Mul : public TypeSystem::BinaryOperatorHandleNull {
     llvm::Value *result = codegen.CallMulWithOverflow(
         left.GetValue(), right.GetValue(), overflow_bit);
 
-    if (on_error == OnError::Exception) {
+    if (ctx.on_error == OnError::Exception) {
       codegen.ThrowIfOverflow(overflow_bit);
     }
 
@@ -341,7 +348,7 @@ struct Div : public TypeSystem::BinaryOperatorHandleNull {
   }
 
   Value Impl(CodeGen &codegen, const Value &left, const Value &right,
-             OnError on_error) const override {
+             const TypeSystem::InvocationContext &ctx) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // First, check if the divisor is zero
@@ -351,7 +358,7 @@ struct Div : public TypeSystem::BinaryOperatorHandleNull {
 
     auto result = Value{SmallInt::Instance()};
 
-    if (on_error == OnError::ReturnNull) {
+    if (ctx.on_error == OnError::ReturnNull) {
       Value default_val, division_result;
       lang::If is_div0{codegen, div0, "div0"};
       {
@@ -370,7 +377,7 @@ struct Div : public TypeSystem::BinaryOperatorHandleNull {
       // Build PHI
       result = is_div0.BuildPHI(default_val, division_result);
 
-    } else if (on_error == OnError::Exception) {
+    } else if (ctx.on_error == OnError::Exception) {
       // If the caller **does** care about the error, generate the exception
       codegen.ThrowIfDivideByZero(div0);
 
@@ -398,7 +405,7 @@ struct Modulo : public TypeSystem::BinaryOperatorHandleNull {
   }
 
   Value Impl(CodeGen &codegen, const Value &left, const Value &right,
-             OnError on_error) const override {
+             const TypeSystem::InvocationContext &ctx) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // First, check if the divisor is zero
@@ -408,7 +415,7 @@ struct Modulo : public TypeSystem::BinaryOperatorHandleNull {
 
     auto result = Value{SmallInt::Instance()};
 
-    if (on_error == OnError::ReturnNull) {
+    if (ctx.on_error == OnError::ReturnNull) {
       Value default_val, division_result;
       lang::If is_div0{codegen, div0, "div0"};
       {
@@ -427,7 +434,7 @@ struct Modulo : public TypeSystem::BinaryOperatorHandleNull {
       // Build PHI
       result = is_div0.BuildPHI(default_val, division_result);
 
-    } else if (on_error == OnError::Exception) {
+    } else if (ctx.on_error == OnError::Exception) {
       // If the caller **does** care about the error, generate the exception
       codegen.ThrowIfDivideByZero(div0);
 

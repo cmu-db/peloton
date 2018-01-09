@@ -288,16 +288,21 @@ Value Value::CallBinaryOp(CodeGen &codegen, OperatorId op_id,
   type::Type left_target_type = GetType();
   type::Type right_target_type = other.GetType();
 
+  // Lookup the operation in the type system
   auto *binary_op = type::TypeSystem::GetBinaryOperator(
       op_id, GetType(), left_target_type, other.GetType(), right_target_type);
-
   PL_ASSERT(binary_op != nullptr);
 
+  // Cast input types as need be
   Value casted_left = CastTo(codegen, left_target_type);
   Value casted_right = other.CastTo(codegen, right_target_type);
 
-  // Evaluate
-  return binary_op->Eval(codegen, casted_left, casted_right, on_error);
+  // Setup the invocation context
+  type::TypeSystem::InvocationContext ctx{};
+  ctx.on_error = on_error;
+
+  // Invoke
+  return binary_op->Eval(codegen, casted_left, casted_right, ctx);
 }
 
 }  // namespace codegen
