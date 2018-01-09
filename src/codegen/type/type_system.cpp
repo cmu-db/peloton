@@ -222,11 +222,11 @@ Value TypeSystem::ExpensiveComparisonHandleNull::EvalCompareForSort(
 // UnaryOperatorHandleNull
 //
 //===----------------------------------------------------------------------===//
-Value TypeSystem::UnaryOperatorHandleNull::Eval(CodeGen &codegen,
-                                                const Value &val) const {
+Value TypeSystem::UnaryOperatorHandleNull::Eval(
+    CodeGen &codegen, const Value &val, const InvocationContext &ctx) const {
   if (!val.IsNullable()) {
     // If the input is not NULLable, elide the NULL check
-    return Impl(codegen, val);
+    return Impl(codegen, val, ctx);
   }
 
   Value null_val, ret_val;
@@ -238,7 +238,7 @@ Value TypeSystem::UnaryOperatorHandleNull::Eval(CodeGen &codegen,
   is_null.ElseBlock();
   {
     // If the input isn't NULL, perform the non-null-aware operation
-    ret_val = Impl(codegen, val);
+    ret_val = Impl(codegen, val, ctx);
   }
   is_null.EndIf();
 

@@ -272,9 +272,15 @@ Value Value::BuildPHI(
 }
 
 Value Value::CallUnaryOp(CodeGen &codegen, OperatorId op_id) const {
+  // Lookup the operation in the value's type system
   auto *unary_op = type::TypeSystem::GetUnaryOperator(op_id, GetType());
   PL_ASSERT(unary_op != nullptr);
-  return unary_op->Eval(codegen, *this);
+
+  // Setup the invocation context
+  type::TypeSystem::InvocationContext ctx{};
+
+  // Invoke
+  return unary_op->Eval(codegen, *this, ctx);
 }
 
 Value Value::CallBinaryOp(CodeGen &codegen, OperatorId op_id,

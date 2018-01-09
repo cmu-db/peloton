@@ -117,48 +117,62 @@ struct Now : public TypeSystem::NoArgOperator {
     return Timestamp::Instance();
   }
 
-  Value DoWork(CodeGen &codegen) const override {
-    std::vector<llvm::Value *> dummy;
-    llvm::Value *raw_ret = codegen.Call(DateFunctionsProxy::Now, dummy);
+  Value Eval(CodeGen &codegen,
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+      const override {
+    auto *raw_ret = codegen.Call(DateFunctionsProxy::Now, {});
     return Value{Timestamp::Instance(), raw_ret};
   }
 };
 
-// The list of types a SQL timestamp type can be implicitly casted to
-const std::vector<peloton::type::TypeId> kImplicitCastingTable = {
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Function tables
+///
+////////////////////////////////////////////////////////////////////////////////
+
+// Implicit casts
+std::vector<peloton::type::TypeId> kImplicitCastingTable = {
     peloton::type::TypeId::DATE, peloton::type::TypeId::TIMESTAMP};
 
-static CastTimestampToDate kTimestampToDate;
-static std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {
+// Explicit casts
+CastTimestampToDate kTimestampToDate;
+std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {
     {peloton::type::TypeId::TIMESTAMP, peloton::type::TypeId::DATE,
      kTimestampToDate}};
 
-static CompareTimestamp kCompareTimestamp;
-static std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {
+// Comparisons
+CompareTimestamp kCompareTimestamp;
+std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {
     {kCompareTimestamp}};
 
-static std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {};
+// Unary operations
+std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {};
 
-static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {};
+// Binary operations
+std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {};
 
 // Nary operations
-static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
+std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
 
-// NoArg operators
-static Now kNow;
-static std::vector<TypeSystem::NoArgOpInfo> kNoArgOperatorTable = {
-  {OperatorId::Now, kNow}
-};
+// No-arg operations
+Now kNow;
+std::vector<TypeSystem::NoArgOpInfo> kNoArgOperatorTable = {
+    {OperatorId::Now, kNow}};
 
 }  // anonymous namespace
 
-// Initialize the TIMESTAMP SQL type with the configured type system
+////////////////////////////////////////////////////////////////////////////////
+///
+/// TIMESTAMP type initialization and configuration
+///
+////////////////////////////////////////////////////////////////////////////////
+
 Timestamp::Timestamp()
     : SqlType(peloton::type::TypeId::TIMESTAMP),
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
-                   kComparisonTable, kUnaryOperatorTable,
-                   kBinaryOperatorTable, kNaryOperatorTable,
-                   kNoArgOperatorTable) {}
+                   kComparisonTable, kUnaryOperatorTable, kBinaryOperatorTable,
+                   kNaryOperatorTable, kNoArgOperatorTable) {}
 
 Value Timestamp::GetMinValue(CodeGen &codegen) const {
   auto *raw_val = codegen.Const64(peloton::type::PELOTON_TIMESTAMP_MIN);
