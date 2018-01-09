@@ -237,6 +237,8 @@ class TypeSystem {
   // contextual information to the function.
   struct InvocationContext {
     // TODO(pmenon): Fill me
+    // What to do if an error occurs during execution?
+    OnError on_error;
   };
 
   //===--------------------------------------------------------------------===//
@@ -338,7 +340,7 @@ class TypeSystem {
 
     // Execute the actual operator
     virtual Value Eval(CodeGen &codegen, const Value &left, const Value &right,
-                       OnError on_error) const = 0;
+                       const InvocationContext &ctx) const = 0;
   };
 
   //===--------------------------------------------------------------------===//
@@ -356,12 +358,12 @@ class TypeSystem {
   struct BinaryOperatorHandleNull : public BinaryOperator {
    public:
     Value Eval(CodeGen &codegen, const Value &left, const Value &right,
-               OnError on_error) const override;
+               const InvocationContext &ctx) const override;
 
    protected:
     // The implementation assuming non-nullable types
     virtual Value Impl(CodeGen &codegen, const Value &left, const Value &right,
-                       OnError on_error) const = 0;
+                       const InvocationContext &ctx) const = 0;
   };
 
   struct BinaryOpInfo {

@@ -250,14 +250,13 @@ Value TypeSystem::UnaryOperatorHandleNull::Eval(
 // BinaryOperatorHandleNull
 //
 //===----------------------------------------------------------------------===//
-Value TypeSystem::BinaryOperatorHandleNull::Eval(CodeGen &codegen,
-                                                 const Value &left,
-                                                 const Value &right,
-                                                 OnError on_error) const {
-  auto impl = [this, &on_error](CodeGen &codegen, const Value &left,
-                                const Value &right) {
-    return Impl(codegen, left, right, on_error);
-  };
+Value TypeSystem::BinaryOperatorHandleNull::Eval(
+    CodeGen &codegen, const Value &left, const Value &right,
+    const InvocationContext &ctx) const {
+  auto impl =
+      [this, &ctx](CodeGen &codegen, const Value &left, const Value &right) {
+        return Impl(codegen, left, right, ctx);
+      };
 
   auto &result_type = ResultType(left.GetType(), right.GetType()).GetSqlType();
   return GenerateBinaryHandleNull(codegen, result_type, left, right, impl);

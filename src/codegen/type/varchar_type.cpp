@@ -171,7 +171,7 @@ struct Trim : public TypeSystem::UnaryOperatorHandleNull {
 
   Value Impl(CodeGen &codegen, const Value &val,
              UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
-  const override {
+      const override {
     llvm::Value *ret = codegen.Call(StringFunctionsProxy::Trim,
                                     {val.GetValue(), val.GetLength()});
 
@@ -209,7 +209,8 @@ struct Like : public TypeSystem::BinaryOperator {
   }
 
   Value Eval(CodeGen &codegen, const Value &left, const Value &right,
-             UNUSED_ATTRIBUTE OnError on_error) const override {
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+      const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // Pre-condition: Left value is the input string; right value is the pattern
@@ -249,7 +250,8 @@ struct DateTrunc : public TypeSystem::BinaryOperatorHandleNull {
   }
 
   Value Impl(CodeGen &codegen, const Value &left, const Value &right,
-             UNUSED_ATTRIBUTE OnError on_error) const override {
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+      const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     llvm::Value *raw_ret = codegen.Call(TimestampFunctionsProxy::DateTrunc,
@@ -271,7 +273,8 @@ struct BTrim : public TypeSystem::BinaryOperatorHandleNull {
   }
 
   Value Impl(CodeGen &codegen, const Value &left, const Value &right,
-             UNUSED_ATTRIBUTE OnError on_error) const override {
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+      const override {
     llvm::Value *ret = codegen.Call(StringFunctionsProxy::BTrim,
                                     {left.GetValue(), left.GetLength(),
                                      right.GetValue(), right.GetLength()});
@@ -295,7 +298,8 @@ struct LTrim : public TypeSystem::BinaryOperatorHandleNull {
   }
 
   Value Impl(CodeGen &codegen, const Value &left, const Value &right,
-             UNUSED_ATTRIBUTE OnError on_error) const override {
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+      const override {
     llvm::Value *ret = codegen.Call(StringFunctionsProxy::LTrim,
                                     {left.GetValue(), left.GetLength(),
                                      right.GetValue(), right.GetLength()});
@@ -319,7 +323,8 @@ struct RTrim : public TypeSystem::BinaryOperatorHandleNull {
   }
 
   Value Impl(CodeGen &codegen, const Value &left, const Value &right,
-             UNUSED_ATTRIBUTE OnError on_error) const override {
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+      const override {
     llvm::Value *ret = codegen.Call(StringFunctionsProxy::RTrim,
                                     {left.GetValue(), left.GetLength(),
                                      right.GetValue(), right.GetLength()});
@@ -332,7 +337,7 @@ struct RTrim : public TypeSystem::BinaryOperatorHandleNull {
 
 ////////////////////////////////////////////////////////////////////////////////
 ///
-/// Unary operators
+/// N-ary operators
 ///
 ////////////////////////////////////////////////////////////////////////////////
 

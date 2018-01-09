@@ -31,13 +31,9 @@ namespace {
 ///
 /// Casting rules
 ///
+/// We do DATE -> {TIMESTAMP, VARCHAR}
+///
 ////////////////////////////////////////////////////////////////////////////////
-
-//===----------------------------------------------------------------------===//
-// Date casting rules
-//
-// We do DATE -> {TIMESTAMP, VARCHAR}
-//===----------------------------------------------------------------------===//
 
 struct CastDateToTimestamp : public TypeSystem::CastHandleNull {
   bool SupportsTypes(const type::Type &from_type,

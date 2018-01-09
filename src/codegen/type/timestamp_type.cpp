@@ -26,11 +26,13 @@ namespace type {
 
 namespace {
 
-//===----------------------------------------------------------------------===//
-// Date casting rules
-//
-// We do DATE -> {TIMESTAMP, VARCHAR}
-//===----------------------------------------------------------------------===//
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Casting
+///
+/// We do TIMESTAMP -> {TIMESTAMP, VARCHAR}
+///
+////////////////////////////////////////////////////////////////////////////////
 
 struct CastTimestampToDate : public TypeSystem::CastHandleNull {
   bool SupportsTypes(const type::Type &from_type,
@@ -58,7 +60,12 @@ struct CastTimestampToDate : public TypeSystem::CastHandleNull {
   }
 };
 
-// Comparison
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Comparisons
+///
+////////////////////////////////////////////////////////////////////////////////
+
 struct CompareTimestamp : public TypeSystem::SimpleComparisonHandleNull {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
@@ -111,6 +118,12 @@ struct CompareTimestamp : public TypeSystem::SimpleComparisonHandleNull {
                  nullptr};
   }
 };
+
+////////////////////////////////////////////////////////////////////////////////
+///
+/// No-argument operations
+///
+////////////////////////////////////////////////////////////////////////////////
 
 struct Now : public TypeSystem::NoArgOperator {
   Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
