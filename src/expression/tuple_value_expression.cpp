@@ -59,5 +59,31 @@ hash_t TupleValueExpression::HashForExactMatch() const {
 
 bool TupleValueExpression::IsNullable() const { return ai_->type.nullable; }
 
+const std::string TupleValueExpression::GetInfo(int num_indent) const {
+  std::ostringstream os;
+
+  os << StringUtil::Indent(num_indent) << "Expression ::\n"
+     << StringUtil::Indent(num_indent + 1)
+     << "expression type = Tuple Value,\n";
+  if (table_name_.size() > 0) {
+    os << StringUtil::Indent(num_indent + 1) << "table name: " << table_name_
+       << "\n";
+  }
+
+  if (col_name_.size() > 0) {
+    os << StringUtil::Indent(num_indent + 1) << "column name: " << col_name_
+       << "\n";
+  }
+
+  return os.str();
+}
+
+const std::string TupleValueExpression::GetInfo() const {
+  std::ostringstream os;
+  os << GetInfo(0);
+
+  return os.str();
+}
+
 }  // namespace expression
 }  // namespace peloton

@@ -164,31 +164,9 @@ class TupleValueExpression : public AbstractExpression {
 
   virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
-  const std::string GetInfo(int num_indent) const override {
-    std::ostringstream os;
+  const std::string GetInfo(int num_indent) const override;
 
-    os << StringUtil::Indent(num_indent) << "Expression ::\n"
-       << StringUtil::Indent(num_indent + 1)
-       << "expression type = Tuple Value,\n";
-    if (table_name_.size() > 0) {
-      os << StringUtil::Indent(num_indent + 1) << "table name: " << table_name_
-         << "\n";
-    }
-
-    if (col_name_.size() > 0) {
-      os << StringUtil::Indent(num_indent + 1) << "column name: " << col_name_
-         << "\n";
-    }
-
-    return os.str();
-  }
-
-  const std::string GetInfo() const override {
-    std::ostringstream os;
-    os << GetInfo(0);
-
-    return os.str();
-  }
+  const std::string GetInfo() const override;
 
   bool IsNullable() const override;
 

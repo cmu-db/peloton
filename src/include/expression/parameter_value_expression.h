@@ -93,26 +93,9 @@ class ParameterValueExpression : public AbstractExpression {
     return_value_type_ = value.GetTypeId();
   };
 
-  const std::string GetInfo(int num_indent) const override {
-    std::ostringstream os;
+  const std::string GetInfo(int num_indent) const override;
 
-    os << StringUtil::Indent(num_indent) << "Expression ::\n"
-       << StringUtil::Indent(num_indent + 1)
-       << "expression type = Parameter Value,\n"
-       << StringUtil::Indent(num_indent + 1)
-       << "value index: " << std::to_string(value_idx_)
-       << StringUtil::Indent(num_indent + 1)
-       << "nullable: " << ((is_nullable_) ? "True" : "False");
-
-    return os.str();
-  }
-
-  const std::string GetInfo() const override {
-    std::ostringstream os;
-    os << GetInfo(0);
-
-    return os.str();
-  }
+  const std::string GetInfo() const override;
 
  protected:
   // Index of the value in the value vectors coming in from the user
