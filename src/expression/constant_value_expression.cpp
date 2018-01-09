@@ -22,7 +22,7 @@ const std::string ConstantValueExpression::GetInfo(int num_indent) const {
      << StringUtil::Indent(num_indent + 1)
      << "expression type = Constant Value,\n"
      << StringUtil::Indent(num_indent + 1) << "value: " << value_.GetInfo()
-     << "\n";
+     << std::endl;
 
   return os.str();
 }

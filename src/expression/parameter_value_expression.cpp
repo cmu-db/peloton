@@ -24,7 +24,7 @@ const std::string ParameterValueExpression::GetInfo(int num_indent) const {
      << StringUtil::Indent(num_indent + 1)
      << "value index: " << std::to_string(value_idx_)
      << StringUtil::Indent(num_indent + 1)
-     << "nullable: " << ((is_nullable_) ? "True" : "False");
+     << "nullable: " << ((is_nullable_) ? "True" : "False") << std::endl;
 
   return os.str();
 }
