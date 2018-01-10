@@ -44,14 +44,13 @@ class Value : public Printable {
  private:
 #endif
 
-  Value(const TypeId type) : manage_data_(false), manage_array_(false),
-        type_id_(type) {
+  Value(const TypeId type) : manage_data_(false), type_id_(type) {
     size_.len = PELOTON_VALUE_NULL;
   }
 
   // ARRAY values
   template <class T>
-  Value(TypeId type, const std::vector<T> &vals, bool manage_array);
+  Value(TypeId type, const std::vector<T> *vals, bool manage_data);
 
   // BOOLEAN and TINYINT
   Value(TypeId type, int8_t val);
@@ -355,7 +354,6 @@ class Value : public Printable {
   } size_;
 
   bool manage_data_;
-  bool manage_array_;
   // TODO: Pack allocated flag with the type id
   // The data type
   TypeId type_id_;
@@ -364,17 +362,17 @@ class Value : public Printable {
 // ARRAY here to ease creation of templates
 // TODO: Fix the representation for a null array
 template <class T>
-Value::Value(TypeId type, const std::vector<T> &vals, bool manage_array) : 
+Value::Value(TypeId type, const std::vector<T> *vals, bool manage_data) : 
              Value(type) {
-  manage_array_ = manage_array;
+  manage_data_ = manage_data;
   switch (type) {
     case TypeId::INTEGERARRAY:
     case TypeId::DECIMALARRAY:
-      if(manage_array_) {
-        auto vec = new std::vector<T>(vals);
-        value_.array = (char *)vec;
+      if (manage_data_) {
+        auto vec = new std::vector<T>(*vals);
+        value_.array = reinterpret_cast<char *>(vec);
       } else {
-        value_.array = (char *)&vals;
+        value_.array = const_cast<char *>(reinterpret_cast<const char *>(vals));
       }
       break;
     default: {

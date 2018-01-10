@@ -28,7 +28,6 @@ Value::Value(const Value &other) {
   type_id_ = other.type_id_;
   size_ = other.size_;
   manage_data_ = other.manage_data_;
-  manage_array_ = other.manage_array_;
   switch (type_id_) {
     case TypeId::VARCHAR:
     case TypeId::VARBINARY:
@@ -45,7 +44,7 @@ Value::Value(const Value &other) {
       break;
     case TypeId::INTEGERARRAY:
     case TypeId::DECIMALARRAY:
-        if (manage_array_) {
+        if (manage_data_) {
           switch (type_id_) {
             case TypeId::INTEGERARRAY: {
               auto vec_ptr = (std::vector<int32_t> *)other.value_.array;
@@ -384,9 +383,7 @@ Value::~Value() {
       break;
     case TypeId::INTEGERARRAY:
     case TypeId::DECIMALARRAY:
-      if (manage_array_) {
-        // TODO:aa_ delete the vector
-      }
+      delete value_.array;
       break;
     default:
       break;
