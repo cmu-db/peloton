@@ -298,8 +298,7 @@ Value Value::CallBinaryOp(CodeGen &codegen, OperatorId op_id,
   Value casted_right = other.CastTo(codegen, right_target_type);
 
   // Setup the invocation context
-  type::TypeSystem::InvocationContext ctx{};
-  ctx.on_error = on_error;
+  type::TypeSystem::InvocationContext ctx{.on_error = on_error};
 
   // Invoke
   return binary_op->Eval(codegen, casted_left, casted_right, ctx);
