@@ -540,9 +540,8 @@ enum class PlanNodeType {
   INVALID = INVALID_TYPE_ID,  // invalid plan node type
 
   // Scan Nodes
-  ABSTRACT_SCAN = 10,
-  SEQSCAN = 11,
-  INDEXSCAN = 12,
+  SEQSCAN = 10,
+  INDEXSCAN = 11,
 
   // Join Nodes
   NESTLOOP = 20,
