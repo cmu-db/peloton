@@ -277,7 +277,7 @@ Value Value::CallUnaryOp(CodeGen &codegen, OperatorId op_id) const {
   PL_ASSERT(unary_op != nullptr);
 
   // Setup the invocation context
-  type::TypeSystem::InvocationContext ctx{};
+  type::TypeSystem::InvocationContext ctx{.on_error = OnError::Exception};
 
   // Invoke
   return unary_op->Eval(codegen, *this, ctx);
