@@ -182,9 +182,9 @@ executor::ExecutionResult TrafficCop::ExecuteHelper(
   };
 
   auto &pool = threadpool::MonoQueuePool::GetInstance();
-  pool.SubmitTask([plan, txn, &params, &result, &result_format, on_complete] {
+  pool.SubmitTask([plan, txn, &params, &result, &result_format, this, on_complete] {
     executor::PlanExecutor::ExecutePlan(plan, txn, params, result_format,
-                                        on_complete);
+                                        error_message_, on_complete);
   });
 
   is_queuing_ = true;

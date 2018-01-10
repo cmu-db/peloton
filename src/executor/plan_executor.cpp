@@ -31,6 +31,7 @@ static void CompileAndExecutePlan(
     std::shared_ptr<planner::AbstractPlan> plan,
     concurrency::TransactionContext *txn,
     const std::vector<type::Value> &params,
+    std::string &error_message,
     std::function<void(executor::ExecutionResult, std::vector<ResultValue> &&)>
         on_complete) {
   LOG_TRACE("Compiling and executing query ...");
@@ -59,21 +60,23 @@ static void CompileAndExecutePlan(
   }
 
   auto on_query_result =
-      [on_complete, consumer](executor::ExecutionResult result) {
+      [on_complete, consumer](executor::ExecutionResult result, bool succeed) {
         std::vector<ResultValue> values;
-        for (const auto &tuple : consumer->GetOutputTuples()) {
-          for (uint32_t i = 0; i < tuple.tuple_.size(); i++) {
-            auto column_val = tuple.GetValue(i);
-            auto str = column_val.IsNull() ? "" : column_val.ToString();
-            LOG_TRACE("column content: [%s]", str.c_str());
-            values.push_back(std::move(str));
+        if (succeed) {
+          for (const auto &tuple : consumer->GetOutputTuples()) {
+            for (uint32_t i = 0; i < tuple.tuple_.size(); i++) {
+              auto column_val = tuple.GetValue(i);
+              auto str = column_val.IsNull() ? "" : column_val.ToString();
+              LOG_TRACE("column content: [%s]", str.c_str());
+              values.push_back(std::move(str));
+            }
           }
         }
         on_complete(result, std::move(values));
         delete consumer;
       };
 
-  query->Execute(std::move(executor_context), *consumer, on_query_result);
+  query->Execute(std::move(executor_context), *consumer, on_query_result, error_message);
 }
 
 static void InterpretPlan(
@@ -81,6 +84,7 @@ static void InterpretPlan(
     concurrency::TransactionContext *txn,
     const std::vector<type::Value> &params,
     const std::vector<int> &result_format,
+    std::string &error_message,
     std::function<void(executor::ExecutionResult, std::vector<ResultValue> &&)>
         on_complete) {
   executor::ExecutionResult result;
@@ -93,38 +97,43 @@ static void InterpretPlan(
   std::unique_ptr<executor::AbstractExecutor> executor_tree(
       BuildExecutorTree(nullptr, plan.get(), executor_context.get()));
 
-  status = executor_tree->Init();
-  if (status != true) {
-    result.m_result = ResultType::FAILURE;
-    CleanExecutorTree(executor_tree.get());
-    on_complete(result, std::move(values));
-    return;
-  }
+  try {
+    status = executor_tree->Init();
+    if (status != true) {
+      result.m_result = ResultType::FAILURE;
+      CleanExecutorTree(executor_tree.get());
+      on_complete(result, std::move(values));
+      return;
+    }
 
-  // Execute the tree until we get values tiles from root node
-  while (status == true) {
-    status = executor_tree->Execute();
-    std::unique_ptr<executor::LogicalTile> tile(executor_tree->GetOutput());
+    // Execute the tree until we get values tiles from root node
+    while (status == true) {
+      status = executor_tree->Execute();
+      std::unique_ptr<executor::LogicalTile> tile(executor_tree->GetOutput());
 
-    // Some executors don't return logical tiles (e.g., Update).
-    if (tile.get() != nullptr) {
-      LOG_TRACE("Final Answer: %s", tile->GetInfo().c_str());
-      std::vector<std::vector<std::string>> tuples;
-      tuples = tile->GetAllValuesAsStrings(result_format, false);
+      // Some executors don't return logical tiles (e.g., Update).
+      if (tile.get() != nullptr) {
+        LOG_TRACE("Final Answer: %s", tile->GetInfo().c_str());
+        std::vector<std::vector<std::string>> tuples;
+        tuples = tile->GetAllValuesAsStrings(result_format, false);
 
-      // Construct the returned results
-      for (auto &tuple : tuples) {
-        for (unsigned int i = 0; i < tile->GetColumnCount(); i++) {
-          LOG_TRACE("column content: %s",
-                    tuple[i].c_str() != nullptr ? tuple[i].c_str() : "-empty-");
-          values.push_back(std::move(tuple[i]));
+        // Construct the returned results
+        for (auto &tuple : tuples) {
+          for (unsigned int i = 0; i < tile->GetColumnCount(); i++) {
+            LOG_TRACE("column content: %s",
+                      tuple[i].c_str() != nullptr ? tuple[i].c_str() : "-empty-");
+            values.push_back(std::move(tuple[i]));
+          }
         }
       }
     }
+    result.m_result = ResultType::SUCCESS;
+    result.m_processed = executor_context->num_processed;
+  } catch(Exception e) {
+    result.m_result = ResultType::FAILURE;
+    txn->SetResult(ResultType::FAILURE);
+    error_message = e.what();
   }
-
-  result.m_processed = executor_context->num_processed;
-  result.m_result = ResultType::SUCCESS;
   CleanExecutorTree(executor_tree.get());
   on_complete(result, std::move(values));
 }
@@ -134,6 +143,7 @@ void PlanExecutor::ExecutePlan(
     concurrency::TransactionContext *txn,
     const std::vector<type::Value> &params,
     const std::vector<int> &result_format,
+    std::string &error_message,
     std::function<void(executor::ExecutionResult, std::vector<ResultValue> &&)>
         on_complete) {
   PL_ASSERT(plan != nullptr && txn != nullptr);
@@ -142,9 +152,9 @@ void PlanExecutor::ExecutePlan(
   bool codegen_enabled =
       settings::SettingsManager::GetBool(settings::SettingId::codegen);
   if (codegen_enabled && codegen::QueryCompiler::IsSupported(*plan)) {
-    CompileAndExecutePlan(plan, txn, params, std::move(on_complete));
+    CompileAndExecutePlan(plan, txn, params, error_message, std::move(on_complete));
   } else {
-    InterpretPlan(plan, txn, params, result_format, std::move(on_complete));
+    InterpretPlan(plan, txn, params, result_format, error_message, std::move(on_complete));
   }
 }
 

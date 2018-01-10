@@ -375,7 +375,7 @@ void PostgresProtocolHandler::ExecQueryMessageGetResult(ResultType status) {
   std::vector<FieldInfo> tuple_descriptor;
   if (status == ResultType::SUCCESS) {
     tuple_descriptor = traffic_cop_->GetStatement()->GetTupleDescriptor();
-  } else if (status == ResultType::FAILURE) { // check status
+  } else if (status == ResultType::FAILURE || status == ResultType::ABORTED) { // check status
     SendErrorResponse(
         {{NetworkMessageType::HUMAN_READABLE_ERROR, traffic_cop_->GetErrorMessage()}});
     SendReadyForQuery(NetworkTransactionStateType::IDLE);

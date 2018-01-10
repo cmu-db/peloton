@@ -15,6 +15,7 @@
 #include "codegen/query.h"
 #include "codegen/query_result_consumer.h"
 #include "common/timer.h"
+#include "concurrency/transaction_context.h"
 #include "executor/plan_executor.h"
 #include "storage/storage_manager.h"
 
@@ -28,16 +29,23 @@ Query::Query(const planner::AbstractPlan &query_plan)
 static void ExecuteStages(std::vector<Stage>::iterator begin,
                           std::vector<Stage>::iterator end,
                           char *param,
-                          std::function<void()> on_complete) {
+                          std::string &error_message,
+                          std::function<void(bool succeed)> on_complete) {
   if (begin == end) {
-    on_complete();
+    on_complete(true);
   } else {
     auto &pool = threadpool::MonoQueuePool::GetInstance();
     switch (begin->kind_) {
       case StageKind::SINGLE_THREADED: {
-        pool.SubmitTask([&pool, begin, end, param, on_complete] {
-          begin->func_ptr_(param);
-          ExecuteStages(begin + 1, end, param, on_complete);
+        pool.SubmitTask([&pool, begin, end, param, &error_message, on_complete] {
+          try {
+            begin->func_ptr_(param);
+          } catch (Exception e) {
+            error_message = e.what();
+            on_complete(false);
+            return;
+          }
+          ExecuteStages(begin + 1, end, param, error_message, on_complete);
         });
         break;
       }
@@ -47,8 +55,8 @@ static void ExecuteStages(std::vector<Stage>::iterator begin,
 
 void Query::Execute(std::unique_ptr<executor::ExecutorContext> executor_context,
                     QueryResultConsumer &consumer,
-                    std::function<void(executor::ExecutionResult)> on_complete,
-                    RuntimeStats *stats) {
+                    std::function<void(executor::ExecutionResult, bool succeed)> on_complete,
+                    std::string &error_message, RuntimeStats *stats) {
   executor::ExecutorContext *context = executor_context.release();
   CodeGen codegen{GetCodeContext()};
 
@@ -98,7 +106,7 @@ void Query::Execute(std::unique_ptr<executor::ExecutorContext> executor_context,
     timer->Start();
   }
 
-  auto on_execute_stages_complete = [this, param, context, timer, stats, on_complete] {
+  auto on_execute_stages_complete = [this, param, context, timer, stats, on_complete](bool succeed) {
     // Timer plan execution
     if (stats != nullptr) {
       timer->Stop();
@@ -118,16 +126,21 @@ void Query::Execute(std::unique_ptr<executor::ExecutorContext> executor_context,
     }
 
     executor::ExecutionResult result;
-    result.m_result = ResultType::SUCCESS;
+    if (succeed) {
+      result.m_result = ResultType::SUCCESS;
+    } else {
+      result.m_result = ResultType::SUCCESS;
+      context->GetTransaction()->SetResult(ResultType::FAILURE);
+    }
     result.m_processed = context->num_processed;
-    on_complete(result);
+    on_complete(result, succeed);
 
     delete[] param;
     delete context;
     delete timer;
   };
 
-  ExecuteStages(stages_.begin(), stages_.end(), param, on_execute_stages_complete);
+  ExecuteStages(stages_.begin(), stages_.end(), param, error_message, on_execute_stages_complete);
 }
 
 bool Query::Prepare(const QueryFunctions &query_funcs) {

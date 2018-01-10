@@ -74,7 +74,8 @@ class Query {
    */
   void Execute(std::unique_ptr<executor::ExecutorContext> executor_context,
                QueryResultConsumer &consumer,
-               std::function<void(executor::ExecutionResult)> on_complete,
+               std::function<void(executor::ExecutionResult, bool succeed)> on_complete,
+               std::string &error_message,
                RuntimeStats *stats = nullptr);
 
   // Return the query plan
