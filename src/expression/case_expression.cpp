@@ -4,7 +4,7 @@
 //
 // case_expression.cpp
 //
-// Identification: /peloton/src/expression/case_expression.cpp
+// Identification: src/expression/case_expression.cpp
 //
 // Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //

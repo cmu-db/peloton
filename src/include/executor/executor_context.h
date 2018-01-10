@@ -6,7 +6,7 @@
 //
 // Identification: src/include/executor/executor_context.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -20,7 +20,7 @@ namespace peloton {
 
 namespace concurrency {
 class TransactionContext;
-}
+}  // namespace concurrency
 
 namespace executor {
 
@@ -42,21 +42,17 @@ class ExecutorContext {
 
   codegen::QueryParameters &GetParams();
 
-  // OBSOLETE: This is for the interpreted engine.
   type::EphemeralPool *GetPool();
 
-  // num of tuple processed
+  // Number of processed tuples during execution
   uint32_t num_processed = 0;
 
  private:
-  //===--------------------------------------------------------------------===//
-  // MEMBERS
-  //===--------------------------------------------------------------------===//
-
+  // The transaction context
   concurrency::TransactionContext *transaction_;
+  // All query parameters
   codegen::QueryParameters parameters_;
-
-  // OBSOLETE: This is for the interpreted engine.
+  // Temporary memory pool for allocations done during execution
   std::unique_ptr<type::EphemeralPool> pool_;
 };
 
