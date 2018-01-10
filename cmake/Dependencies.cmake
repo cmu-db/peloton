@@ -71,6 +71,10 @@ llvm_map_components_to_libnames(LLVM_LIBRARIES core mcjit nativecodegen native)
 include_directories(SYSTEM ${LLVM_INCLUDE_DIRS})
 list(APPEND Peloton_LINKER_LIBS ${LLVM_LIBRARIES})
 
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS")
+endif()
+
 # --[ IWYU
 
 # Generate clang compilation database
