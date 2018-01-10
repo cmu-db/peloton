@@ -672,23 +672,23 @@ Value ArrayType::DeserializeFrom(const char *storage,
     case TypeId::INTEGERARRAY:
       if(len == 0) {
         auto int32_vec = new std::vector<int32_t>();
-        return Value(type_id_, *int32_vec, false);
+        return Value(type_id_, int32_vec, false);
       } else {
         const int32_t *int32_begin = reinterpret_cast<const int32_t *>(ptr + 
             sizeof(uint32_t));
         auto int32_vec = new std::vector<int32_t>(int32_begin, int32_begin + len);
-        return Value(type_id_, *int32_vec, false);
+        return Value(type_id_, int32_vec, false);
       }
       break;
     case TypeId::DECIMALARRAY:
       if(len == 0) {
         auto double_vec = new std::vector<double>();
-        return Value(type_id_, *double_vec, false);
+        return Value(type_id_, double_vec, false);
       } else {
         const double *double_begin = reinterpret_cast<const double *>(ptr + 
             sizeof(uint32_t));
         auto double_vec = new std::vector<double>(double_begin, double_begin + len);
-        return Value(type_id_, *double_vec, false);
+        return Value(type_id_, double_vec, false);
       }
       break;
     default: {

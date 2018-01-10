@@ -100,7 +100,7 @@ TEST_F(ArrayValueTests, GetElementTest) {
   for (size_t i = 0; i < n; i++) {
     vec_integer.push_back(RANDOM32());
   }
-  type::Value array_integer = type::Value(type::TypeId::INTEGERARRAY, vec_integer, false);
+  type::Value array_integer = type::Value(type::TypeId::INTEGERARRAY, &vec_integer, true);
   for (size_t i = 0; i < n; i++) {
     type::Value ele = array_integer.GetElementAt(i);
     EXPECT_EQ(ele.GetAs<int32_t>(), vec_integer[i]);
@@ -122,7 +122,7 @@ TEST_F(ArrayValueTests, GetElementTest) {
   for (size_t i = 0; i < n; i++) {
     vec_decimal.push_back(RANDOM_DECIMAL());
   }
-  type::Value array_decimal = type::Value(type::TypeId::DECIMALARRAY, vec_decimal, false);
+  type::Value array_decimal = type::Value(type::TypeId::DECIMALARRAY, &vec_decimal, true);
   for (size_t i = 0; i < n; i++) {
     type::Value ele = array_decimal.GetElementAt(i);
     EXPECT_EQ(ele.GetAs<double>(), vec_decimal[i]);
@@ -203,7 +203,7 @@ TEST_F(ArrayValueTests, InListTest) {
   for (size_t i = 0; i < n; i++) {
     vec_integer.push_back(RANDOM32());
   }
-  type::Value array_integer = type::Value(type::TypeId::INTEGERARRAY, vec_integer, false);
+  type::Value array_integer = type::Value(type::TypeId::INTEGERARRAY, &vec_integer, true);
   for (size_t i = 0; i < n; i++) {
     type::Value in_list =
         array_integer.InList(type::ValueFactory::GetIntegerValue(vec_integer[i]));
@@ -245,7 +245,7 @@ TEST_F(ArrayValueTests, InListTest) {
   for (size_t i = 0; i < n; i++) {
     vec_decimal.push_back(RANDOM64());
   }
-  type::Value array_decimal = type::Value(type::TypeId::DECIMALARRAY, vec_decimal, false);
+  type::Value array_decimal = type::Value(type::TypeId::DECIMALARRAY, &vec_decimal, true);
   for (size_t i = 0; i < n; i++) {
     type::Value in_list =
         array_decimal.InList(type::ValueFactory::GetDecimalValue(vec_decimal[i]));

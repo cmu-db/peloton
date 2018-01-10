@@ -868,12 +868,12 @@ expression::AbstractExpression *PostgresParser::ArrayExprTransform(
   switch (element_type) {
     case type::TypeId::INTEGER: {
       result = new expression::ArrayExpression(expr_array,
-        type::ValueFactory::GetArrayValue<int32_t>(*int32_vec, element_type));
+        type::ValueFactory::GetArrayValue<int32_t>(int32_vec, element_type));
       break;
     }
     case type::TypeId::DECIMAL: {
       result = new expression::ArrayExpression(expr_array,
-        type::ValueFactory::GetArrayValue<double>(*double_vec, element_type));
+        type::ValueFactory::GetArrayValue<double>(double_vec, element_type));
       break;
     }
     default:

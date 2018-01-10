@@ -104,7 +104,7 @@ class ValueFactory {
 
   template <class T>
   static inline Value GetArrayValue(
-      const std::vector<T> &vals, TypeId type_id) {
+      const std::vector<T> *vals, TypeId type_id) {
     switch (type_id) {
       case TypeId::INTEGER:
         return Value(TypeId::INTEGERARRAY, vals, false);
