@@ -819,39 +819,38 @@ expression::AbstractExpression *PostgresParser::NullTestTransform(
 
 // This function takes in a Postgres ArrayExpr primnode and transfers
 // it into Peloton AbstractExpression.
-expression::AbstractExpression* PostgresParser::ArrayExprTransform(
-    A_ArrayExpr* root) {
+expression::AbstractExpression *PostgresParser::ArrayExprTransform(
+    A_ArrayExpr *root) {
 
   if (root == nullptr) {
     return nullptr;
   }
 
-  auto expr_array = std::vector<expression::AbstractExpression*>();
-  expression::AbstractExpression* expr = nullptr;
-  expression::AbstractExpression* result = nullptr;
+  auto expr_array = std::vector<expression::AbstractExpression *>();
+  expression::AbstractExpression *expr, *result;
   type::TypeId element_type = type::TypeId::INVALID;
 
   auto int32_vec = new std::vector<int32_t>();
   auto double_vec = new std::vector<double>();
 
   for (auto elem = root->elements->head; elem != nullptr; elem = elem->next) {
-    Node* node = reinterpret_cast<Node*>(elem->data.ptr_value);
+    Node *node = reinterpret_cast<Node *>(elem->data.ptr_value);
     switch (node->type) {
       case T_A_Const: {
-        expr = ConstTransform((A_Const *)node);
-        if(element_type == type::TypeId::INVALID){
+        expr = ConstTransform(reinterpret_cast<A_Const *>(node));
+        if(element_type == type::TypeId::INVALID) {
           element_type = expr->GetValueType();
         }
         expr_array.push_back(expr);
         switch (element_type) {
           case type::TypeId::INTEGER: {
             int32_vec->push_back(
-              ((expression::ConstantValueExpression *)expr)->GetValue().GetInteger());
+              (reinterpret_cast<expression::ConstantValueExpression *>(expr))->GetValue().GetInteger());
             break;
           }
           case type::TypeId::DECIMAL: {
             double_vec->push_back(
-              ((expression::ConstantValueExpression *)expr)->GetValue().GetDecimal());
+              (reinterpret_cast<expression::ConstantValueExpression *>(expr))->GetValue().GetDecimal());
             break;
           }
           default:
@@ -1426,12 +1425,12 @@ parser::AnalyzeStatement *PostgresParser::VacuumTransform(VacuumStmt *root) {
   return result;
 }
 
-parser::VariableSetStatement *PostgresParser::VariableSetTransform(UNUSED_ATTRIBUTE VariableSetStmt* root) {
-  VariableSetStatement* res = new VariableSetStatement();
+parser::VariableSetStatement *PostgresParser::VariableSetTransform(UNUSED_ATTRIBUTE VariableSetStmt *root) {
+  VariableSetStatement *res = new VariableSetStatement();
   return res;
 }
 
-std::vector<std::string>* PostgresParser::ColumnNameTransform(List* root) {
+std::vector<std::string> *PostgresParser::ColumnNameTransform(List *root) {
   auto result = new std::vector<std::string>();
 
   if (root == nullptr) return result;
@@ -1741,7 +1740,7 @@ parser::SQLStatement *PostgresParser::NodeTransform(Node *stmt) {
 // This function transfers a list of Postgres statements into
 // a Peloton SQLStatementList object. It traverses the parse list
 // and call the helper for singles nodes.
-parser::SQLStatementList* PostgresParser::ListTransform(List *root) {
+parser::SQLStatementList *PostgresParser::ListTransform(List *root) {
   if (root == nullptr) {
     return nullptr;
   }
