@@ -107,6 +107,10 @@ enum class PostgresValueType {
   FLOADT4_ARRAY = 1021,  // FLOADT4ARRAYOID in postgres code
   DECIMAL = 1700
 };
+std::string PostgresValueTypeToString(PostgresValueType type);
+PostgresValueType StringToPostgresValueType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const PostgresValueType &type);
+
 
 //===--------------------------------------------------------------------===//
 // Predicate Expression Operation Types

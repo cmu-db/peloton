@@ -735,7 +735,30 @@ size_t PostgresProtocolHandler::ReadParamValue(
         PL_ASSERT(param_values[param_idx].GetTypeId() != type::TypeId::INVALID);
       } else {
         // BINARY mode
-        switch (static_cast<PostgresValueType>(param_types[param_idx])) {
+        PostgresValueType pg_value_type = static_cast<PostgresValueType>(param_types[param_idx]);
+        switch (pg_value_type) {
+          case PostgresValueType::TINYINT: {
+            int int_val = 0;
+            for (size_t i = 0; i < sizeof(int); ++i) {
+              int_val = (int_val << 8) | param[i];
+            }
+            bind_parameters[param_idx] =
+                std::make_pair(type::TypeId::TINYINT, std::to_string(int_val));
+            param_values[param_idx] =
+                type::ValueFactory::GetTinyIntValue(int_val).Copy();
+            break;
+          }
+          case PostgresValueType::SMALLINT: {
+            int int_val = 0;
+            for (size_t i = 0; i < sizeof(int); ++i) {
+              int_val = (int_val << 8) | param[i];
+            }
+            bind_parameters[param_idx] =
+                std::make_pair(type::TypeId::SMALLINT, std::to_string(int_val));
+            param_values[param_idx] =
+                type::ValueFactory::GetSmallIntValue(int_val).Copy();
+            break;
+          }
           case PostgresValueType::INTEGER: {
             int int_val = 0;
             for (size_t i = 0; i < sizeof(int); ++i) {
@@ -779,7 +802,9 @@ size_t PostgresProtocolHandler::ReadParamValue(
             break;
           }
           default: {
-            LOG_ERROR("Do not support data type: %d", param_types[param_idx]);
+            LOG_ERROR("Binary Postgres protocol does not support data type '%s' [%d]",
+                      PostgresValueTypeToString(pg_value_type).c_str(),
+                      param_types[param_idx]);
             break;
           }
         }
