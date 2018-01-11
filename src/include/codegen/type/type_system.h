@@ -6,7 +6,7 @@
 //
 // Identification: src/include/codegen/type/type_system.h
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -393,7 +393,7 @@ class TypeSystem {
 
     // Execute the actual operator
     virtual Value Eval(CodeGen &codegen, const std::vector<Value> &input_args,
-                       OnError on_error) const = 0;
+                       const InvocationContext &ctx) const = 0;
   };
 
   struct NaryOpInfo {
@@ -460,7 +460,7 @@ class TypeSystem {
   // The table of builtin nary operators
   const std::vector<NaryOpInfo> &nary_op_table_;
 
-  // The table of builti no-arg operators
+  // The table of builtin no-arg operators
   const std::vector<NoArgOpInfo> &no_arg_op_table_;
 
  private:

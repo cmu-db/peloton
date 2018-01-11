@@ -6,7 +6,7 @@
 //
 // Identification: src/codegen/expression/function_translator.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -86,7 +86,7 @@ codegen::Value FunctionTranslator::DeriveValue(CodeGen &codegen,
     PL_ASSERT(nary_op != nullptr);
 
     // Invoke
-    return nary_op->Eval(codegen, args, OnError::Exception);
+    return nary_op->Eval(codegen, args, ctx);
   }
 }
 
