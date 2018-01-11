@@ -31,7 +31,7 @@ if [ "$DISTRO" = "UBUNTU" ]; then
         sudo apt-get update -qq
     fi
 
-    # Fix for cmake3 name change in Ubuntu 15.x and 16.x plus --force-yes deprecation 
+    # Fix for cmake3 name change in Ubuntu 15.x and 16.x plus --force-yes deprecation
     CMAKE_NAME="cmake3"
     FORCE_Y="--force-yes"
     MAJOR_VER=$(echo "$DISTRO_VER" | cut -d '.' -f 1)
@@ -189,6 +189,7 @@ elif [ "$DISTRO" = "DARWIN" ]; then
     brew install libedit
     brew install llvm@3.7
     brew install postgresql
+    brew install libunwind-headers
 
 ## ------------------------------------------------
 ## UNKNOWN
