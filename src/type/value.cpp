@@ -382,8 +382,10 @@ Value::~Value() {
       }
       break;
     case TypeId::INTEGERARRAY:
+      delete reinterpret_cast<std::vector<int32_t> *>(value_.array);
+      break;
     case TypeId::DECIMALARRAY:
-      delete value_.array;
+      delete reinterpret_cast<std::vector<double> *>(value_.array);
       break;
     default:
       break;
