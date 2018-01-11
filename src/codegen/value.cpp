@@ -277,7 +277,8 @@ Value Value::CallUnaryOp(CodeGen &codegen, OperatorId op_id) const {
   PL_ASSERT(unary_op != nullptr);
 
   // Setup the invocation context
-  type::TypeSystem::InvocationContext ctx{.on_error = OnError::Exception};
+  type::TypeSystem::InvocationContext ctx{.on_error = OnError::Exception,
+                                          .executor_context = nullptr};
 
   // Invoke
   return unary_op->Eval(codegen, *this, ctx);
@@ -298,7 +299,8 @@ Value Value::CallBinaryOp(CodeGen &codegen, OperatorId op_id,
   Value casted_right = other.CastTo(codegen, right_target_type);
 
   // Setup the invocation context
-  type::TypeSystem::InvocationContext ctx{.on_error = on_error};
+  type::TypeSystem::InvocationContext ctx{.on_error = on_error,
+                                          .executor_context = nullptr};
 
   // Invoke
   return binary_op->Eval(codegen, casted_left, casted_right, ctx);

@@ -50,7 +50,9 @@ codegen::Value FunctionTranslator::DeriveValue(CodeGen &codegen,
   OperatorId operator_id = func_expr.GetFunc().op_id;
 
   // The context for the function invocation
-  type::TypeSystem::InvocationContext ctx{.on_error = OnError::Exception};
+  type::TypeSystem::InvocationContext ctx{
+      .on_error = OnError::Exception,
+      .executor_context = context_.GetExecutorContextPtr()};
 
   if (args.size() == 1) {
     // Lookup unary operation

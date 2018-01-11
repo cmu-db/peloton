@@ -18,6 +18,10 @@
 #include "common/macros.h"
 #include "common/internal_types.h"
 
+namespace llvm {
+class Value;
+}  // namespace llvm
+
 namespace peloton {
 namespace codegen {
 
@@ -239,6 +243,8 @@ class TypeSystem {
     // TODO(pmenon): Fill me
     // What to do if an error occurs during execution?
     OnError on_error;
+    // The execution context
+    llvm::Value *executor_context;
   };
 
   //===--------------------------------------------------------------------===//
