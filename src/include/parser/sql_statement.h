@@ -46,7 +46,10 @@ class SQLStatement : public Printable {
   virtual StatementType GetType() { return stmt_type; }
 
   // Get a string representation for debugging
-  const std::string GetInfo() const;
+  virtual const std::string GetInfo(int num_indent) const;
+
+  // Get a string representation for debugging
+  virtual const std::string GetInfo() const;
 
   // Visitor Pattern used for the optimizer to access statements
   // This allows a facility outside the object itself to determine the type of
@@ -101,13 +104,22 @@ class SQLStatementList : public Printable {
 
   SQLStatement *GetStatement(int id) const { return statements[id].get(); }
 
-  std::unique_ptr<SQLStatement> PassOutStatement(int id) {return std::move(statements[id]);}
+  std::unique_ptr<SQLStatement> PassOutStatement(int id) {
+    return std::move(statements[id]);
+  }
 
-  void PassInStatement(std::unique_ptr<SQLStatement> stmt) {statements.push_back(std::move(stmt));}
+  void PassInStatement(std::unique_ptr<SQLStatement> stmt) {
+    statements.push_back(std::move(stmt));
+  }
 
-  const std::vector<std::unique_ptr<SQLStatement>>& GetStatements() const { return statements; }
+  const std::vector<std::unique_ptr<SQLStatement>> &GetStatements() const {
+    return statements;
+  }
 
   size_t GetNumStatements() const { return statements.size(); }
+
+  // Get a string representation for debugging
+  const std::string GetInfo(int num_indent) const;
 
   // Get a string representation for debugging
   const std::string GetInfo() const;

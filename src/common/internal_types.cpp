@@ -2781,9 +2781,6 @@ std::string PropertyTypeToString(PropertyType type) {
     case PropertyType::INVALID: {
       return "INVALID";
     }
-    case PropertyType::PREDICATE: {
-      return "PREDICATE";
-    }
     case PropertyType::COLUMNS: {
       return "COLUMNS";
     }
@@ -2809,8 +2806,6 @@ PropertyType StringToPropertyType(const std::string &str) {
   std::string upper_str = StringUtil::Upper(str);
   if (upper_str == "INVALID") {
     return PropertyType::INVALID;
-  } else if (upper_str == "PREDICATE") {
-    return PropertyType::PREDICATE;
   } else if (upper_str == "COLUMNS") {
     return PropertyType::COLUMNS;
   } else if (upper_str == "DISTINCT") {

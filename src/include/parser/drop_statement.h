@@ -57,41 +57,39 @@ class DropStatement : public TableRefStatement {
 
   void SetCascade(bool cascade) { cascade_ = cascade; }
 
-  std::string& GetIndexName() { return index_name_; }
+  std::string &GetIndexName() { return index_name_; }
 
-  void SetIndexName(std::string& index_name) { index_name_ = index_name; }
+  void SetIndexName(std::string &index_name) { index_name_ = index_name; }
 
   void SetIndexName(char *index_name) { index_name_ = index_name; }
 
-  std::string& GetPrepStmt() { return prep_stmt_; }
+  std::string &GetPrepStmt() { return prep_stmt_; }
 
-  void SetPrepStmt(std::string& prep_stmt) { prep_stmt_ = prep_stmt; }
+  void SetPrepStmt(std::string &prep_stmt) { prep_stmt_ = prep_stmt; }
 
   void SetPrepStmt(char *prep_stmt) { prep_stmt_ = prep_stmt; }
 
-  std::string& GetSchemaName() { return schema_name_; }
+  std::string &GetSchemaName() { return schema_name_; }
 
-  void SetSchemaName(std::string& schema_name) { schema_name_ = schema_name; }
+  void SetSchemaName(std::string &schema_name) { schema_name_ = schema_name; }
 
   void SetSchemaName(char *schema_name) { schema_name_ = schema_name; }
 
-  std::string& GetTriggerName() { return trigger_name_; }
+  std::string &GetTriggerName() { return trigger_name_; }
 
-  void SetTriggerName(std::string& trigger_name) {
+  void SetTriggerName(std::string &trigger_name) {
     trigger_name_ = trigger_name;
   }
 
-  void SetTriggerName(char* trigger_name) {
-    trigger_name_ = trigger_name;
-  }
+  void SetTriggerName(char *trigger_name) { trigger_name_ = trigger_name; }
 
-  std::string& GetTriggerTableName() { return table_name_of_trigger_; }
+  std::string &GetTriggerTableName() { return table_name_of_trigger_; }
 
-  void SetTriggerTableName(std::string& table_name_of_trigger) {
+  void SetTriggerTableName(std::string &table_name_of_trigger) {
     table_name_of_trigger_ = table_name_of_trigger;
   }
 
-  void SetTriggerTableName(char* table_name_of_trigger) {
+  void SetTriggerTableName(char *table_name_of_trigger) {
     table_name_of_trigger_ = table_name_of_trigger;
   }
 
@@ -99,7 +97,11 @@ class DropStatement : public TableRefStatement {
 
   virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
-private:
+  const std::string GetInfo(int num_indent) const override;
+
+  const std::string GetInfo() const override;
+
+ private:
   // Type of DROP
   EntityType type_;
   // IF EXISTS
@@ -109,6 +111,8 @@ private:
 
   // drop index
   std::string index_name_;
+
+  // drop prepared statement
   std::string prep_stmt_;
 
   // drop trigger

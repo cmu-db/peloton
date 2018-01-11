@@ -225,6 +225,10 @@ class CreateStatement : public TableRefStatement {
 
   virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
+  const std::string GetInfo(int num_indent) const override;
+
+  const std::string GetInfo() const override;
+
   CreateType type;
   bool if_not_exists;
 

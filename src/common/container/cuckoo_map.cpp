@@ -14,7 +14,7 @@
 #include <functional>
 #include <iostream>
 
-#include "container/cuckoo_map.h"
+#include "common/container/cuckoo_map.h"
 #include "common/logger.h"
 #include "common/macros.h"
 #include "common/internal_types.h"

@@ -91,6 +91,10 @@ class FunctionExpression : public AbstractExpression {
     return func_arg_types_;
   }
 
+  const std::string GetInfo(int num_indent) const override;
+
+  const std::string GetInfo() const override;
+
  private:
   std::string func_name_;
 

@@ -14,7 +14,9 @@
 
 #include "common/logger.h"
 #include "common/sql_node_visitor.h"
+#include "expression/abstract_expression.h"
 #include "parser/sql_statement.h"
+#include "parser/table_ref.h"
 
 namespace peloton {
 namespace parser {
@@ -29,26 +31,25 @@ class DeleteStatement : public SQLStatement {
  public:
   DeleteStatement()
       : SQLStatement(StatementType::DELETE),
-        table_ref(nullptr), expr(nullptr) {};
+        table_ref(nullptr),
+        expr(nullptr){};
 
   virtual ~DeleteStatement() {}
 
-  std::string GetTableName() const {
-    return table_ref->GetTableName();
-  }
-  
+  std::string GetTableName() const { return table_ref->GetTableName(); }
+
   inline void TryBindDatabaseName(std::string default_database_name) {
     if (table_ref != nullptr)
       table_ref->TryBindDatabaseName(default_database_name);
   }
 
-  std::string GetDatabaseName() const {
-    return table_ref->GetDatabaseName();
-  }
+  std::string GetDatabaseName() const { return table_ref->GetDatabaseName(); }
 
-  virtual void Accept(SqlNodeVisitor* v) override {
-    v->Visit(this);
-  }
+  virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
+
+  const std::string GetInfo(int num_indent) const override;
+
+  const std::string GetInfo() const override;
 
   std::unique_ptr<parser::TableRef> table_ref;
   std::unique_ptr<expression::AbstractExpression> expr;

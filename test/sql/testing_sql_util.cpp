@@ -15,11 +15,11 @@
 #include "common/logger.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/plan_executor.h"
+#include "gmock/gtest/gtest.h"
 #include "optimizer/optimizer.h"
 #include "optimizer/rule.h"
 #include "parser/postgresparser.h"
 #include "planner/plan_util.h"
-#include "gmock/gtest/gtest.h"
 #include "traffic_cop/traffic_cop.h"
 
 namespace peloton {
@@ -78,8 +78,8 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
   // SetTrafficCopCounter();
   counter_.store(1);
   auto status =
-      traffic_cop_.ExecuteStatement(statement, param_values, unnamed, nullptr, result_format,
-                                    result, error_message);
+      traffic_cop_.ExecuteStatement(statement, param_values, unnamed, nullptr,
+                                    result_format, result, error_message);
   if (traffic_cop_.GetQueuing()) {
     ContinueAfterComplete();
     traffic_cop_.ExecuteStatementPlanGetResult();
@@ -148,8 +148,8 @@ TestingSQLUtil::GeneratePlanWithOptimizer(
   return return_value;
 }
 
-ResultType TestingSQLUtil::ExecuteSQLQuery(
-    const std::string query, std::vector<ResultValue> &result) {
+ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query,
+                                           std::vector<ResultValue> &result) {
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
 
@@ -174,8 +174,8 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
   // SetTrafficCopCounter();
   counter_.store(1);
   auto status =
-      traffic_cop_.ExecuteStatement(statement, param_values, unnamed, nullptr, result_format,
-                                    result, error_message);
+      traffic_cop_.ExecuteStatement(statement, param_values, unnamed, nullptr,
+                                    result_format, result, error_message);
   if (traffic_cop_.GetQueuing()) {
     ContinueAfterComplete();
     traffic_cop_.ExecuteStatementPlanGetResult();
@@ -215,8 +215,8 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
   // SetTrafficCopCounter();
   counter_.store(1);
   auto status =
-      traffic_cop_.ExecuteStatement(statement, param_values, unnamed, nullptr, result_format,
-                                    result,error_message);
+      traffic_cop_.ExecuteStatement(statement, param_values, unnamed, nullptr,
+                                    result_format, result, error_message);
   if (traffic_cop_.GetQueuing()) {
     ContinueAfterComplete();
     traffic_cop_.ExecuteStatementPlanGetResult();

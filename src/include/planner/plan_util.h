@@ -97,7 +97,7 @@ class PlanUtil {
       }
       case PlanNodeType::POPULATE_INDEX: {
         const planner::PopulateIndexPlan *populate_index_node =
-                reinterpret_cast<const planner::PopulateIndexPlan *>(plan);
+            reinterpret_cast<const planner::PopulateIndexPlan *>(plan);
         table_ids.insert(populate_index_node->GetTable()->GetOid());
         break;
       }

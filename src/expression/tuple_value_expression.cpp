@@ -45,6 +45,9 @@ hash_t TupleValueExpression::HashForExactMatch() const {
   if (!table_name_.empty())
     hash = HashUtil::CombineHashes(
         hash, HashUtil::HashBytes(table_name_.c_str(), table_name_.length()));
+  if (!col_name_.empty())
+    hash = HashUtil::CombineHashes(
+        hash, HashUtil::HashBytes(col_name_.c_str(), col_name_.length()));
   hash = HashUtil::CombineHashes(hash,
                                  HashUtil::Hash(&(std::get<0>(bound_obj_id_))));
   hash = HashUtil::CombineHashes(hash,
@@ -54,8 +57,32 @@ hash_t TupleValueExpression::HashForExactMatch() const {
   return hash;
 }
 
-bool TupleValueExpression::IsNullable() const {
-  return ai_->type.nullable;
+bool TupleValueExpression::IsNullable() const { return ai_->type.nullable; }
+
+const std::string TupleValueExpression::GetInfo(int num_indent) const {
+  std::ostringstream os;
+
+  os << StringUtil::Indent(num_indent) << "Expression ::\n"
+     << StringUtil::Indent(num_indent + 1)
+     << "expression type = Tuple Value,\n";
+  if (table_name_.size() > 0) {
+    os << StringUtil::Indent(num_indent + 1) << "table name: " << table_name_
+       << std::endl;
+  }
+
+  if (col_name_.size() > 0) {
+    os << StringUtil::Indent(num_indent + 1) << "column name: " << col_name_
+       << std::endl;
+  }
+
+  return os.str();
+}
+
+const std::string TupleValueExpression::GetInfo() const {
+  std::ostringstream os;
+  os << GetInfo(0);
+
+  return os.str();
 }
 
 }  // namespace expression

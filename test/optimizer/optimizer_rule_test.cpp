@@ -60,7 +60,7 @@ TEST_F(OptimizerRuleTests, SimpleRuleApplyTest) {
   EXPECT_TRUE(rule.Check(join, nullptr));
 
   std::vector<std::shared_ptr<OperatorExpression>> outputs;
-  rule.Transform(join, outputs);
+  rule.Transform(join, outputs, nullptr);
   EXPECT_EQ(outputs.size(), 1);
 }
 

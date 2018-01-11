@@ -25,7 +25,27 @@ Another measure of the function is the number of local variables.  They shouldn'
 
 **PLAFORM-SPECIFIC CODE** Add platform-specific code only to `common/platform.h`.
 
-**THE INLINE DISEASE** Don't use `inline` unless you know what you are doing. A reasonable rule of thumb is to not put inline at functions that have more than 3 lines of code in them. Abundant use of the inline keyword leads to a much bigger binary, which in turn slows the system as a whole down, due to a bigger `icache footprint` for the CPU and simply because there is less memory available for the `buffer cache`. 
+**THE INLINE DISEASE** Don't use `inline` unless you know what you are doing.  Overuse use of `inline` can lead to larger binaries, can cause `I-cache` thrashing, and can negatively impact `D-cache` behaviour if the inlined function accesses large amounts of data and appears in a hot loop. The decision to inline is usually best left up to the compiler. The only reason you should use the `inline` function is to adhere to the `one-definition-rule`, i.e., if you want to have method definitions in the header file. For more details, see [here](https://isocpp.org/wiki/faq/inline-functions#where-to-put-inline-keyword)
+
+**INLINE MEMBER FUNCTIONS**
+While inline-defined member functions are convenient, they can obscure the publically visible interface of the class, thus making it difficult to use. By rule of thumb, member accessor definitions that are one line can appear within the class. All other definitions must exist outside the class body. Example:
+
+```c++
+class Foo {
+ public:  
+  // Inline definition okay
+  void GetBar() const { return bar_; }
+  
+  // Externally definition
+  void Bar2() const;
+};
+
+inline void Foo::Bar2() const {
+  ... implentation ...
+}
+```
+
+The example above illustrates a valid use of the `inline` keyword for the definition of `Foo::Bar2()`. For more details, see [here](https://isocpp.org/wiki/faq/inline-functions#where-to-put-inline-keyword)
 
 **CONDITIONAL COMPILATION** Wherever possible, don't use preprocessor conditionals (#if, #ifdef) in .cpp files; doing so makes code harder to read and logic harder to follow.  Instead, use such conditionals in a header file defining functions for use in those .cpp files, providing no-op stub versions in the #else case, and then call those functions unconditionally from .cpp files.  The compiler will avoid generating any code for the stub calls, producing identical results, but the logic will remain easy to follow.
 

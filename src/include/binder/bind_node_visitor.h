@@ -23,6 +23,7 @@ namespace expression {
 class CaseExpression;
 class ConstantExpression;
 class TupleValueExpression;
+class SubqueryExpression;
 class StarExpression;
 class OperatorExpression;
 class AggregateExpression;
@@ -31,6 +32,9 @@ class AggregateExpression;
 namespace parser {
 class SQLStatement;
 }  // namespace parser
+namespace catalog {
+class Catalog;
+}
 
 namespace binder {
 
@@ -61,6 +65,9 @@ class BindNodeVisitor : public SqlNodeVisitor {
   void Visit(parser::AnalyzeStatement *) override;
 
   void Visit(expression::CaseExpression *expr) override;
+  void Visit(expression::SubqueryExpression *expr) override;
+
+  // void Visit(const expression::ConstantValueExpression *expr) override;
   void Visit(expression::TupleValueExpression *expr) override;
   void Visit(expression::StarExpression *expr) override;
   void Visit(expression::FunctionExpression *expr) override;
@@ -75,6 +82,7 @@ class BindNodeVisitor : public SqlNodeVisitor {
   std::shared_ptr<BinderContext> context_;
   concurrency::TransactionContext *txn_;
   std::string default_database_name_;
+  catalog::Catalog *catalog_;
 };
 
 }  // namespace binder

@@ -93,6 +93,10 @@ class ParameterValueExpression : public AbstractExpression {
     return_value_type_ = value.GetTypeId();
   };
 
+  const std::string GetInfo(int num_indent) const override;
+
+  const std::string GetInfo() const override;
+
  protected:
   // Index of the value in the value vectors coming in from the user
   int value_idx_;

@@ -25,30 +25,52 @@ class OperatorVisitor {
  public:
   virtual ~OperatorVisitor(){};
 
-  virtual void Visit(const DummyScan *) = 0;
-  virtual void Visit(const PhysicalSeqScan *) = 0;
-  virtual void Visit(const PhysicalIndexScan *) = 0;
-  virtual void Visit(const PhysicalProject *) = 0;
-  virtual void Visit(const PhysicalOrderBy *) = 0;
-  virtual void Visit(const PhysicalLimit *) = 0;
-  virtual void Visit(const PhysicalFilter *) = 0;
-  virtual void Visit(const PhysicalInnerNLJoin *) = 0;
-  virtual void Visit(const PhysicalLeftNLJoin *) = 0;
-  virtual void Visit(const PhysicalRightNLJoin *) = 0;
-  virtual void Visit(const PhysicalOuterNLJoin *) = 0;
-  virtual void Visit(const PhysicalInnerHashJoin *) = 0;
-  virtual void Visit(const PhysicalLeftHashJoin *) = 0;
-  virtual void Visit(const PhysicalRightHashJoin *) = 0;
-  virtual void Visit(const PhysicalOuterHashJoin *) = 0;
-  virtual void Visit(const PhysicalInsert *) = 0;
-  virtual void Visit(const PhysicalInsertSelect *) = 0;
-  virtual void Visit(const PhysicalDelete *) = 0;
-  virtual void Visit(const PhysicalUpdate *) = 0;
-  virtual void Visit(const PhysicalHashGroupBy *) = 0;
-  virtual void Visit(const PhysicalSortGroupBy *) = 0;
-  virtual void Visit(const PhysicalDistinct *) = 0;
-  virtual void Visit(const PhysicalAggregate *) = 0;
+  // Physical operator
+  virtual void Visit(const DummyScan *) {}
+  virtual void Visit(const PhysicalSeqScan *) {}
+  virtual void Visit(const PhysicalIndexScan *) {}
+  virtual void Visit(const QueryDerivedScan *) {}
+  virtual void Visit(const PhysicalOrderBy *) {}
+  virtual void Visit(const PhysicalLimit *) {}
+  virtual void Visit(const PhysicalInnerNLJoin *) {}
+  virtual void Visit(const PhysicalLeftNLJoin *) {}
+  virtual void Visit(const PhysicalRightNLJoin *) {}
+  virtual void Visit(const PhysicalOuterNLJoin *) {}
+  virtual void Visit(const PhysicalInnerHashJoin *) {}
+  virtual void Visit(const PhysicalLeftHashJoin *) {}
+  virtual void Visit(const PhysicalRightHashJoin *) {}
+  virtual void Visit(const PhysicalOuterHashJoin *) {}
+  virtual void Visit(const PhysicalInsert *) {}
+  virtual void Visit(const PhysicalInsertSelect *) {}
+  virtual void Visit(const PhysicalDelete *) {}
+  virtual void Visit(const PhysicalUpdate *) {}
+  virtual void Visit(const PhysicalHashGroupBy *) {}
+  virtual void Visit(const PhysicalSortGroupBy *) {}
+  virtual void Visit(const PhysicalDistinct *) {}
+  virtual void Visit(const PhysicalAggregate *) {}
+
+  // Logical operator
+  virtual void Visit(const LeafOperator *) {}
+  virtual void Visit(const LogicalGet *) {}
+  virtual void Visit(const LogicalQueryDerivedGet *) {}
+  virtual void Visit(const LogicalFilter *) {}
+  virtual void Visit(const LogicalProjection *) {}
+  virtual void Visit(const LogicalMarkJoin *) {}
+  virtual void Visit(const LogicalSingleJoin *) {}
+  virtual void Visit(const LogicalDependentJoin *) {}
+  virtual void Visit(const LogicalInnerJoin *) {}
+  virtual void Visit(const LogicalLeftJoin *) {}
+  virtual void Visit(const LogicalRightJoin *) {}
+  virtual void Visit(const LogicalOuterJoin *) {}
+  virtual void Visit(const LogicalSemiJoin *) {}
+  virtual void Visit(const LogicalAggregateAndGroupBy *) {}
+  virtual void Visit(const LogicalInsert *) {}
+  virtual void Visit(const LogicalInsertSelect *) {}
+  virtual void Visit(const LogicalDelete *) {}
+  virtual void Visit(const LogicalUpdate *) {}
+  virtual void Visit(const LogicalDistinct *) {}
+  virtual void Visit(const LogicalLimit *) {}
 };
 
-} // namespace optimizer
-} // namespace peloton
+}  // namespace optimizer
+}  // namespace peloton
