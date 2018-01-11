@@ -141,6 +141,10 @@ class CodeGen {
 
   CodeContext &GetCodeContext() const { return code_context_; }
 
+  FunctionBuilder *GetCurrentFunction() const {
+    return code_context_.GetCurrentFunction();
+  }
+
  private:
   friend class Hash;
   friend class Value;
