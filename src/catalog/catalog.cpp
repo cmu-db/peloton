@@ -1180,10 +1180,10 @@ void Catalog::InitializeFunctions() {
        * date functions
        */
       AddBuiltinFunction(
-          "extract", {type::TypeId::INTEGER, type::TypeId::TIMESTAMP},
-          type::TypeId::DECIMAL, internal_lang, "Extract",
-          function::BuiltInFuncType{OperatorId::Extract,
-                                    function::DateFunctions::Extract},
+          "date_part", {type::TypeId::VARCHAR, type::TypeId::TIMESTAMP},
+          type::TypeId::DECIMAL, internal_lang, "DatePart",
+          function::BuiltInFuncType{OperatorId::DatePart,
+                                    function::TimestampFunctions::_DatePart},
           txn);
 
       AddBuiltinFunction(

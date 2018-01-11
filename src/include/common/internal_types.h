@@ -1065,7 +1065,7 @@ enum class OperatorId : uint32_t {
   Sqrt,
   Ceil,
   Round,
-  Extract,
+  DatePart,
   Floor,
   DateTrunc,
   Like,

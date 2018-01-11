@@ -37,6 +37,9 @@ class TimestampFunctions {
   // SELECT date_trunc('hour', TIMESTAMP '2001-02-16 20:38:40');
   static uint64_t DateTrunc(const char *date_part_type, uint64_t value);
   static type::Value _DateTrunc(const std::vector<type::Value> &args);
+
+  static double DatePart(const char *date_part_type, uint64_t value);
+  static type::Value _DatePart(const std::vector<type::Value> &args);
 };
 
 }  // namespace function
