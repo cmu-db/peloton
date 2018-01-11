@@ -31,27 +31,45 @@ type::Value DecimalFunctions::_Abs(const std::vector<type::Value> &args) {
   if (args[0].IsNull()) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL);
   }
-  double result;
   switch (args[0].GetElementType()) {
     case type::TypeId::DECIMAL:
-      result = Abs(args[0].GetAs<double>());
+      {
+        double result;
+        result = Abs(args[0].GetAs<double>());
+        return type::ValueFactory::GetDecimalValue(result);
+      }
       break;
     case type::TypeId::INTEGER:
-      result = abs(args[0].GetAs<int32_t>());
-      break;
+      {
+        int32_t result;
+        result = abs(args[0].GetAs<int32_t>());
+        return type::ValueFactory::GetIntegerValue(result);
+        break;
+      }
     case type::TypeId::BIGINT:
-      result = abs(args[0].GetAs<int64_t>());
+      {
+        int64_t result;
+        result = std::abs(args[0].GetAs<int64_t>());
+        return type::ValueFactory::GetBigIntValue(result);
+      }
       break;
     case type::TypeId::SMALLINT:
-      result = abs(args[0].GetAs<int16_t>());
+      {
+        int16_t result;
+        result = abs(args[0].GetAs<int16_t>());
+        return type::ValueFactory::GetSmallIntValue(result);
+      }
       break;
     case type::TypeId::TINYINT:
-      result = abs(args[0].GetAs<int8_t>());
+      {
+        int8_t result;
+        result = abs(args[0].GetAs<int8_t>());
+        return type::ValueFactory::GetTinyIntValue(result);
+      }
       break;
     default:
       return type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL);
   }
-  return type::ValueFactory::GetDecimalValue(result);
 }
 
 double DecimalFunctions::Abs(const double args) { return fabs(args); }

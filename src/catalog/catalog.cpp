@@ -1001,29 +1001,29 @@ void Catalog::InitializeFunctions() {
        * integer functions
        */
       AddBuiltinFunction(
-          "abs", {type::TypeId::TINYINT}, type::TypeId::DECIMAL, internal_lang,
-          "Abs",
+          "abs", {type::TypeId::TINYINT}, type::TypeId::TINYINT, 
+          internal_lang, "Abs",
           function::BuiltInFuncType{OperatorId::Abs,
                                     function::DecimalFunctions::_Abs},
           txn);
 
       AddBuiltinFunction(
-          "abs", {type::TypeId::SMALLINT}, type::TypeId::DECIMAL, internal_lang,
-          "Abs",
+          "abs", {type::TypeId::SMALLINT}, type::TypeId::SMALLINT, 
+          internal_lang, "Abs",
           function::BuiltInFuncType{OperatorId::Abs,
                                     function::DecimalFunctions::_Abs},
           txn);
 
       AddBuiltinFunction(
-          "abs", {type::TypeId::INTEGER}, type::TypeId::DECIMAL, internal_lang,
-          "Abs",
+          "abs", {type::TypeId::INTEGER}, type::TypeId::INTEGER, 
+          internal_lang, "Abs",
           function::BuiltInFuncType{OperatorId::Abs,
                                     function::DecimalFunctions::_Abs},
           txn);
 
       AddBuiltinFunction(
-          "abs", {type::TypeId::BIGINT}, type::TypeId::DECIMAL, internal_lang,
-          "Abs",
+          "abs", {type::TypeId::BIGINT}, type::TypeId::BIGINT, 
+          internal_lang, "Abs",
           function::BuiltInFuncType{OperatorId::Abs,
                                     function::DecimalFunctions::_Abs},
           txn);

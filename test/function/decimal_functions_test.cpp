@@ -133,28 +133,28 @@ TEST_F(DecimalFunctionsTests, AbsTestInt) {
     args = {type::ValueFactory::GetIntegerValue(in)};
     auto result = function::DecimalFunctions::_Abs(args);
     EXPECT_FALSE(result.IsNull());
-    EXPECT_EQ(abs(in), result.GetAs<double>());
+    EXPECT_EQ(abs(in), result.GetAs<int64_t>());
   }
 
-  for (int in: intTestInputs) {
+  for (int32_t in: intTestInputs) {
     args = {type::ValueFactory::GetIntegerValue(in)};
     auto result = function::DecimalFunctions::_Abs(args);
     EXPECT_FALSE(result.IsNull());
-    EXPECT_EQ(abs(in), result.GetAs<double>());
+    EXPECT_EQ(abs(in), result.GetAs<int32_t>());
   }
 
-  for (int in: smallIntTestInputs) {
+  for (int16_t in: smallIntTestInputs) {
     args = {type::ValueFactory::GetIntegerValue(in)};
     auto result = function::DecimalFunctions::_Abs(args);
     EXPECT_FALSE(result.IsNull());
-    EXPECT_EQ(abs(in), result.GetAs<double>());
+    EXPECT_EQ(abs(in), result.GetAs<int16_t>());
   }
 
-  for (int in: tinyIntTestInputs) {
+  for (int8_t in: tinyIntTestInputs) {
     args = {type::ValueFactory::GetIntegerValue(in)};
     auto result = function::DecimalFunctions::_Abs(args);
     EXPECT_FALSE(result.IsNull());
-    EXPECT_EQ(abs(in), result.GetAs<double>());
+    EXPECT_EQ(abs(in), result.GetAs<int8_t>());
   }
 }
 
