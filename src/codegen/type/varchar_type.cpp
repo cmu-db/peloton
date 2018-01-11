@@ -6,7 +6,7 @@
 //
 // Identification: src/codegen/type/varchar_type.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -30,7 +30,7 @@ namespace {
 
 ////////////////////////////////////////////////////////////////////////////////
 ///
-/// Comaprisons
+/// Comparisons
 ///
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -357,7 +357,8 @@ struct Substr : public TypeSystem::NaryOperator {
   }
 
   Value Eval(CodeGen &codegen, const std::vector<Value> &input_args,
-             UNUSED_ATTRIBUTE OnError on_error) const override {
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+      const override {
     llvm::Value *ret =
         codegen.Call(StringFunctionsProxy::Substr,
                      {
