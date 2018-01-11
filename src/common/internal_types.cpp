@@ -3028,8 +3028,8 @@ std::string OperatorIdToString(OperatorId op_id) {
       return "BTrim";
     case OperatorId::Sqrt:
       return "Sqrt";
-    case OperatorId::Extract:
-      return "Extract";
+    case OperatorId::DatePart:
+      return "DatePart";
     case OperatorId::Floor:
       return "Floor";
     case OperatorId::Like:

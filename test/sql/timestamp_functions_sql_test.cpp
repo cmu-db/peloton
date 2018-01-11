@@ -86,5 +86,97 @@ TEST_F(TimestampFunctionsSQLTest, DateTruncTest) {
   txn_manager.CommitTransaction(txn);
 }
 
+TEST_F(TimestampFunctionsSQLTest, DatePartTest) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->Bootstrap();
+  txn_manager.CommitTransaction(txn);
+  // Create a t
+  txn = txn_manager.BeginTransaction();
+
+  TestingSQLUtil::ExecuteSQLQuery(
+      "CREATE TABLE foo(id integer, value timestamp);");
+  // Add in a testing timestamp
+  TestingSQLUtil::ExecuteSQLQuery(
+      "insert into foo values(3, '2016-12-07 13:26:02.123456-05');");
+
+  txn_manager.CommitTransaction(txn);
+
+  // Fetch values from the table
+  std::vector<ResultValue> result;
+  std::vector<FieldInfo> tuple_descriptor;
+  std::string error_message;
+  int rows_affected;
+
+  // wrong argument type
+  std::string test_query = "select date_part('123', value) from foo;";
+  TestingSQLUtil::ExecuteSQLQuery(test_query.c_str(), result, tuple_descriptor,
+                                  rows_affected, error_message);
+  EXPECT_EQ(result.size(), 0);
+
+  // wrong DatePartType
+  test_query = "select date_part('abc', value) from foo;";
+  TestingSQLUtil::ExecuteSQLQuery(test_query.c_str(), result, tuple_descriptor,
+                                  rows_affected, error_message);
+  EXPECT_EQ(result.size(), 0);
+
+  test_query = "select extract(abc from value) from foo;";
+  TestingSQLUtil::ExecuteSQLQuery(test_query.c_str(), result, tuple_descriptor,
+                                  rows_affected, error_message);
+  EXPECT_EQ(result.size(), 0);
+
+  // Test a few end-to-end DatePartType strings. The correctness of the function
+  // is already tested in the unit tests.
+  test_query = "select date_part('minute', value) from foo;";
+  std::string expected = "26";
+  TestingSQLUtil::ExecuteSQLQuery(test_query.c_str(), result, tuple_descriptor,
+                                  rows_affected, error_message);
+  auto query_result = TestingSQLUtil::GetResultValueAsString(result, 0);
+  EXPECT_EQ(query_result, expected);
+
+  test_query = "select extract(minute from value) from foo;";
+  expected = "26";
+  TestingSQLUtil::ExecuteSQLQuery(test_query.c_str(), result, tuple_descriptor,
+                                  rows_affected, error_message);
+  query_result = TestingSQLUtil::GetResultValueAsString(result, 0);
+  EXPECT_EQ(query_result, expected);
+
+
+  test_query = "select date_part('DAY', value) from foo;";
+  expected = "7";
+  TestingSQLUtil::ExecuteSQLQuery(test_query.c_str(), result, tuple_descriptor,
+                                  rows_affected, error_message);
+  query_result = TestingSQLUtil::GetResultValueAsString(result, 0);
+  EXPECT_EQ(query_result, expected);
+
+  test_query = "select extract(DAY from value) from foo;";
+  expected = "7";
+  TestingSQLUtil::ExecuteSQLQuery(test_query.c_str(), result, tuple_descriptor,
+                                  rows_affected, error_message);
+  query_result = TestingSQLUtil::GetResultValueAsString(result, 0);
+  EXPECT_EQ(query_result, expected);
+
+
+  test_query = "select date_part('CenTuRy', value) from foo;";
+  expected = "21";
+  TestingSQLUtil::ExecuteSQLQuery(test_query.c_str(), result, tuple_descriptor,
+                                  rows_affected, error_message);
+  query_result = TestingSQLUtil::GetResultValueAsString(result, 0);
+  EXPECT_EQ(query_result, expected);
+
+  test_query = "select extract(CenTuRy from value) from foo;";
+  expected = "21";
+  TestingSQLUtil::ExecuteSQLQuery(test_query.c_str(), result, tuple_descriptor,
+                                  rows_affected, error_message);
+  query_result = TestingSQLUtil::GetResultValueAsString(result, 0);
+  EXPECT_EQ(query_result, expected);
+
+  // free the database just created
+  txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+}
+
 }  // namespace test
 }  // namespace peloton

@@ -286,13 +286,14 @@ void BindNodeVisitor::Visit(expression::FunctionExpression *expr) {
   if (!func_data.is_udf_) {
     expr->SetBuiltinFunctionExpressionParameters(
         func_data.func_, func_data.return_type_, func_data.argument_types_);
+    
     // Look into the OperatorId for built-in functions to check the first
     // argument for timestamp functions.
     // TODO(LM): The OperatorId might need to be changed to global ID after we
     // rewrite the function identification logic.
     auto func_operator_id = func_data.func_.op_id;
     if (func_operator_id == OperatorId::DateTrunc ||
-        func_operator_id == OperatorId::Extract) {
+        func_operator_id == OperatorId::DatePart) {
       auto date_part = expr->GetChild(0);
 
       // Test whether the first argument is a correct DatePartType
