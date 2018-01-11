@@ -18,7 +18,7 @@
 
 #include "common/macros.h"
 #include "common/printable.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "type/value.h"
 
 namespace peloton {
@@ -318,7 +318,7 @@ class LogicalTile : public Printable {
       const std::unordered_map<storage::Tile *, std::vector<oid_t>>
           &tile_to_cols,
       storage::Tile *dest_tile,
-      const peloton::LayoutType peloton_layout_mode = peloton::LAYOUT_TYPE_ROW);
+      const peloton::LayoutType peloton_layout_mode = peloton::LayoutType::ROW);
 
   /**
    * @brief Generates map from each base tile to columns originally from that

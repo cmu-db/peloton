@@ -215,7 +215,7 @@ bool TransactionContext::RecordDelete(const ItemPointer &location) {
 const std::string TransactionContext::GetInfo() const {
   std::ostringstream os;
 
-  os << "\tTxn :: @" << this << " ID : " << std::setw(4) << txn_id_
+  os << " Txn :: @" << this << " ID : " << std::setw(4) << txn_id_
      << " Read ID : " << std::setw(4) << read_id_
      << " Commit ID : " << std::setw(4) << commit_id_
      << " Result : " << result_;

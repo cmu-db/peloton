@@ -20,7 +20,7 @@
 #include "common/logger.h"
 #include "expression/abstract_expression.h"
 #include "type/serializer.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 
 namespace peloton {
 

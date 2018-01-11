@@ -81,8 +81,7 @@ TEST_F(GroupByTranslatorTest, SingleColumnGrouping) {
   codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // Compile and run
-  CompileAndExecute(*agg_plan, buffer,
-                    reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(*agg_plan, buffer);
 
   // Check results
   const auto &results = buffer.GetOutputTuples();
@@ -91,7 +90,8 @@ TEST_F(GroupByTranslatorTest, SingleColumnGrouping) {
   // Each group should have a count of one (since the grouping column is unique)
   type::Value const_one = type::ValueFactory::GetIntegerValue(1);
   for (const auto &tuple : results) {
-    EXPECT_TRUE(tuple.GetValue(1).CompareEquals(const_one) == type::CMP_TRUE);
+    EXPECT_TRUE(tuple.GetValue(1).CompareEquals(const_one) ==
+                CmpBool::TRUE);
   }
 }
 
@@ -142,8 +142,7 @@ TEST_F(GroupByTranslatorTest, MultiColumnGrouping) {
   codegen::BufferingConsumer buffer{{0, 1, 2}, context};
 
   // Compile it all
-  CompileAndExecute(*agg_plan, buffer,
-                    reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(*agg_plan, buffer);
 
   // Check results
   const auto &results = buffer.GetOutputTuples();
@@ -153,7 +152,7 @@ TEST_F(GroupByTranslatorTest, MultiColumnGrouping) {
   type::Value const_one = type::ValueFactory::GetIntegerValue(1);
   for (const auto &tuple : results) {
     type::Value group_count = tuple.GetValue(2);
-    EXPECT_TRUE(group_count.CompareEquals(const_one) == type::CMP_TRUE);
+    EXPECT_TRUE(group_count.CompareEquals(const_one) == CmpBool::TRUE);
   }
 }
 
@@ -202,8 +201,7 @@ TEST_F(GroupByTranslatorTest, AverageAggregation) {
   codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // Compile it all
-  CompileAndExecute(*agg_plan, buffer,
-                    reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(*agg_plan, buffer);
 
   // Check results
   const auto &results = buffer.GetOutputTuples();
@@ -241,7 +239,7 @@ TEST_F(GroupByTranslatorTest, AggregationWithOutputPredicate) {
       new expression::TupleValueExpression(type::TypeId::DECIMAL, 1, 0);
   auto *const_50 = new expression::ConstantValueExpression(
       type::ValueFactory::GetDecimalValue(50.0));
-  std::unique_ptr<expression::AbstractExpression> x_gt_50{
+  ExpressionPtr x_gt_50{
       new expression::ComparisonExpression(ExpressionType::COMPARE_GREATERTHAN,
                                            x_exp, const_50)};
 
@@ -264,8 +262,7 @@ TEST_F(GroupByTranslatorTest, AggregationWithOutputPredicate) {
   codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // Compile it all
-  CompileAndExecute(*agg_plan, buffer,
-                    reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(*agg_plan, buffer);
 
   // Check results
   const auto &results = buffer.GetOutputTuples();
@@ -324,8 +321,7 @@ TEST_F(GroupByTranslatorTest, AggregationWithInputPredciate) {
   codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // Compile it all
-  CompileAndExecute(*agg_plan, buffer,
-                    reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(*agg_plan, buffer);
 
   // Check results. We expect four because the "A" col increases by 10 for each
   // row. For 10 rows, the four rows with A = 60, 70, 80, 90 are valid.
@@ -378,14 +374,14 @@ TEST_F(GroupByTranslatorTest, SingleCountStar) {
   codegen::BufferingConsumer buffer{{0}, context};
 
   // Compile it all
-  CompileAndExecute(*agg_plan, buffer,
-                    reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(*agg_plan, buffer);
 
   // Check results
   const auto &results = buffer.GetOutputTuples();
   EXPECT_EQ(1, results.size());
   EXPECT_TRUE(results[0].GetValue(0).CompareEquals(
-                  type::ValueFactory::GetBigIntValue(10)) == type::CMP_TRUE);
+                  type::ValueFactory::GetBigIntValue(10)) ==
+              CmpBool::TRUE);
 }
 
 TEST_F(GroupByTranslatorTest, MinAndMax) {
@@ -436,27 +432,27 @@ TEST_F(GroupByTranslatorTest, MinAndMax) {
   codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // Compile it all
-  CompileAndExecute(*agg_plan, buffer,
-                    reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(*agg_plan, buffer);
 
   // There should only be a single output row
   const auto &results = buffer.GetOutputTuples();
   EXPECT_EQ(1, results.size());
 
-  fprintf(stderr, "max: %s, min: %s\n",
-          results[0].GetValue(0).ToString().c_str(),
-          results[0].GetValue(1).ToString().c_str());
+  LOG_INFO("max: %s, min: %s", results[0].GetValue(0).ToString().c_str(),
+           results[0].GetValue(1).ToString().c_str());
 
   // The values of column 'a' are equal to the (zero-indexed) row ID * 10. The
   // maximum row ID is equal to # inserted - 1. Therefore:
   // MAX(a) = (# inserted - 1) * 10 = (10 - 1) * 10 = 9 * 10 = 90
   EXPECT_TRUE(results[0].GetValue(0).CompareEquals(
-                  type::ValueFactory::GetBigIntValue(90)) == type::CMP_TRUE);
+                  type::ValueFactory::GetBigIntValue(90)) ==
+              CmpBool::TRUE);
 
   // The values of 'b' are equal to the (zero-indexed) row ID * 10 + 1. The
   // minimum row ID is 0. Therefore: MIN(b) = 0 * 10 + 1 = 1
   EXPECT_TRUE(results[0].GetValue(1).CompareEquals(
-                  type::ValueFactory::GetBigIntValue(1)) == type::CMP_TRUE);
+                  type::ValueFactory::GetBigIntValue(1)) ==
+              CmpBool::TRUE);
 }
 
 }  // namespace test

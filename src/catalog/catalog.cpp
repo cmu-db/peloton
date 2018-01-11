@@ -458,9 +458,6 @@ ResultType Catalog::CreateIndex(oid_t database_oid, oid_t table_oid,
 // DROP FUNCTIONS
 //===----------------------------------------------------------------------===//
 
-/*
- * only for test purposes
- */
 ResultType Catalog::DropDatabaseWithName(const std::string &database_name,
                                          concurrency::TransactionContext *txn) {
   if (txn == nullptr)
@@ -915,7 +912,7 @@ void Catalog::InitializeFunctions() {
           {type::TypeId::VARCHAR, type::TypeId::INTEGER, type::TypeId::INTEGER},
           type::TypeId::VARCHAR, internal_lang, "Substr",
           function::BuiltInFuncType{OperatorId::Substr,
-                                    function::StringFunctions::Substr},
+                                    function::StringFunctions::_Substr},
           txn);
       AddBuiltinFunction(
           "char_length", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
@@ -1064,41 +1061,6 @@ void Catalog::InitializeFunctions() {
                                     function::DecimalFunctions::_Ceil},
           txn);
 
-      AddBuiltinFunction(
-          "ceiling", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL, internal_lang,
-          "Ceil",
-          function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
-          txn);
-
-      AddBuiltinFunction(
-          "ceiling", {type::TypeId::TINYINT}, type::TypeId::DECIMAL, internal_lang,
-          "Ceil",
-          function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
-          txn);
-
-      AddBuiltinFunction(
-          "ceiling", {type::TypeId::SMALLINT}, type::TypeId::DECIMAL, internal_lang,
-          "Ceil",
-          function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
-          txn);
-
-      AddBuiltinFunction(
-          "ceiling", {type::TypeId::INTEGER}, type::TypeId::DECIMAL, internal_lang,
-          "Ceil",
-          function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
-          txn);
-
-      AddBuiltinFunction(
-          "ceiling", {type::TypeId::BIGINT}, type::TypeId::DECIMAL, internal_lang,
-          "Ceil",
-          function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
-          txn);
-
       /**
        * date functions
        */
@@ -1115,6 +1077,15 @@ void Catalog::InitializeFunctions() {
           function::BuiltInFuncType{OperatorId::DateTrunc,
                                     function::TimestampFunctions::_DateTrunc},
           txn);
+          
+      // add now()
+      AddBuiltinFunction(
+          "now", {},
+          type::TypeId::TIMESTAMP, internal_lang, "Now",
+          function::BuiltInFuncType{OperatorId::Now,
+                                    function::DateFunctions::_Now},
+          txn);
+
     } catch (CatalogException &e) {
       txn_manager.AbortTransaction(txn);
       throw & e;

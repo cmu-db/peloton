@@ -53,7 +53,7 @@ DEFINE_METHOD(peloton::codegen, BufferingConsumer, BufferTuple);
 //===----------------------------------------------------------------------===//
 
 BufferingConsumer::BufferingConsumer(const std::vector<oid_t> &cols,
-                                     planner::BindingContext &context) {
+                                     const planner::BindingContext &context) {
   for (oid_t col_id : cols) {
     output_ais_.push_back(context.Find(col_id));
   }
@@ -76,11 +76,6 @@ void BufferingConsumer::Prepare(CompilationContext &ctx) {
   auto &runtime_state = ctx.GetRuntimeState();
   consumer_state_id_ =
       runtime_state.RegisterState("consumerState", codegen.CharPtrType());
-
-  // Introduce our output tuple buffer as local (on stack)
-  auto *value_type = ValueProxy::GetType(codegen);
-  tuple_output_state_id_ = runtime_state.RegisterState(
-      "output", codegen.ArrayType(value_type, output_ais_.size()), true);
 }
 
 // For each output attribute, we write out the attribute's value into the
@@ -89,7 +84,9 @@ void BufferingConsumer::Prepare(CompilationContext &ctx) {
 void BufferingConsumer::ConsumeResult(ConsumerContext &ctx,
                                       RowBatch::Row &row) const {
   auto &codegen = ctx.GetCodeGen();
-  auto *tuple_buffer_ = GetStateValue(ctx, tuple_output_state_id_);
+  auto *tuple_buffer_ = codegen.AllocateBuffer(
+      ValueProxy::GetType(codegen), static_cast<uint32_t>(output_ais_.size()),
+      "output");
   tuple_buffer_ =
       codegen->CreatePointerCast(tuple_buffer_, codegen.CharPtrType());
 

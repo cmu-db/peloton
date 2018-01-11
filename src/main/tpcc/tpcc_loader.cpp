@@ -38,7 +38,7 @@
 #include "storage/data_table.h"
 #include "storage/table_factory.h"
 #include "storage/database.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 
 
 // Logging mode
@@ -1743,7 +1743,7 @@ void LoadTPCCDatabase() {
   UNUSED_ATTRIBUTE double diff = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
   LOG_INFO("database loading time = %lf ms", diff);
 
-  LOG_INFO("============TABLE SIZES==========");
+  LOG_INFO("%sTABLE SIZES%s", peloton::GETINFO_HALF_THICK_LINE.c_str(), peloton::GETINFO_HALF_THICK_LINE.c_str());
   LOG_INFO("warehouse count = %lu", warehouse_table->GetTupleCount());
   LOG_INFO("district count  = %lu", district_table->GetTupleCount());
   LOG_INFO("item count = %lu", item_table->GetTupleCount());

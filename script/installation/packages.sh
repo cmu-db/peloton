@@ -31,11 +31,25 @@ if [ "$DISTRO" = "UBUNTU" ]; then
         sudo apt-get update -qq
     fi
 
-    sudo apt-get -qq --force-yes --ignore-missing -y install \
+    # Fix for cmake3 name change in Ubuntu 15.x and 16.x plus --force-yes deprecation 
+    CMAKE_NAME="cmake3"
+    FORCE_Y="--force-yes"
+    MAJOR_VER=$(echo "$DISTRO_VER" | cut -d '.' -f 1)
+    for version in "15" "16"
+    do
+       if [ "$MAJOR_VER" = "$version" ]
+       then
+          FORCE_Y=""
+          CMAKE_NAME="cmake"
+          break
+       fi
+    done
+
+    sudo apt-get -qq $FORCE_Y --ignore-missing -y install \
         git \
         g++ \
         clang-3.7 \
-        cmake \
+        $CMAKE_NAME \
         libgflags-dev \
         libprotobuf-dev \
         protobuf-compiler \
@@ -78,7 +92,8 @@ elif [[ "$DISTRO" == *"FEDORA"* ]]; then
         llvm-devel \
         llvm-static \
         libedit-devel \
-        postgresql
+        postgresql \
+        libatomic
 
 ## ------------------------------------------------
 ## REDHAT

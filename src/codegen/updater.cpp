@@ -21,7 +21,7 @@
 #include "storage/tile.h"
 #include "storage/tuple.h"
 #include "type/abstract_pool.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "type/value.h"
 
 namespace peloton {

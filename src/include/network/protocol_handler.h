@@ -12,9 +12,9 @@
 
 #pragma once
 
-#include "include/traffic_cop/traffic_cop.h"
+#include "traffic_cop/traffic_cop.h"
 #include "marshal.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 // Packet content macros
 
 namespace peloton {

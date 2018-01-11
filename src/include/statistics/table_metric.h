@@ -15,9 +15,10 @@
 #include <string>
 #include <sstream>
 
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "statistics/abstract_metric.h"
 #include "statistics/access_metric.h"
+#include "util/string_util.h"
 
 namespace peloton {
 namespace stats {
@@ -61,12 +62,12 @@ class TableMetric : public AbstractMetric {
 
   inline const std::string GetInfo() const {
     std::stringstream ss;
-    ss << "-----------------------------" << std::endl;
+    ss << peloton::GETINFO_SINGLE_LINE << std::endl;
     ss << "  TABLE " << table_name_ << "(OID=";
     ss << table_id_ << ")" << std::endl;
     ;
-    ss << "-----------------------------" << std::endl;
-    ss << table_access_.GetInfo() << std::endl;
+    ss << peloton::GETINFO_SINGLE_LINE << std::endl;
+    ss << table_access_.GetInfo();
     return ss.str();
   }
 
@@ -85,7 +86,7 @@ class TableMetric : public AbstractMetric {
   std::string table_name_;
 
   // The number of tuple accesses
-  AccessMetric table_access_{ACCESS_METRIC};
+  AccessMetric table_access_{MetricType::ACCESS};
 };
 
 }  // namespace stats

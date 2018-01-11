@@ -18,7 +18,7 @@
 #include "executor/testing_executor_util.h"
 #include "common/harness.h"
 
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "type/value.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/aggregate_executor.h"
@@ -124,18 +124,18 @@ TEST_F(AggregateTests, SortedDistinctTest) {
   ASSERT_TRUE(result_tile->GetTupleCount() > 0);
 
   type::Value val = (result_tile->GetValue(0, 2));
-  type::CmpBool cmp =
+  CmpBool cmp =
       (val.CompareEquals(type::ValueFactory::GetIntegerValue(1)));
-  EXPECT_TRUE(cmp == type::CMP_TRUE);
+  EXPECT_TRUE(cmp == CmpBool::TRUE);
   val = (result_tile->GetValue(0, 3));
   cmp = (val.CompareEquals(type::ValueFactory::GetDecimalValue(2)));
-  EXPECT_TRUE(cmp == type::CMP_TRUE);
+  EXPECT_TRUE(cmp == CmpBool::TRUE);
   val = (result_tile->GetValue(5, 2));
   cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(51)));
-  EXPECT_TRUE(cmp == type::CMP_TRUE);
+  EXPECT_TRUE(cmp == CmpBool::TRUE);
   val = (result_tile->GetValue(5, 3));
   cmp = (val.CompareEquals(type::ValueFactory::GetDecimalValue(52)));
-  EXPECT_TRUE(cmp == type::CMP_TRUE);
+  EXPECT_TRUE(cmp == CmpBool::TRUE);
 }
 
 TEST_F(AggregateTests, SortedSumGroupByTest) {
@@ -225,18 +225,18 @@ TEST_F(AggregateTests, SortedSumGroupByTest) {
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
   EXPECT_TRUE(result_tile.get() != nullptr);
   type::Value val = (result_tile->GetValue(0, 0));
-  type::CmpBool cmp =
+  CmpBool cmp =
       (val.CompareEquals(type::ValueFactory::GetIntegerValue(0)));
-  EXPECT_TRUE(cmp == type::CMP_TRUE);
+  EXPECT_TRUE(cmp == CmpBool::TRUE);
   val = (result_tile->GetValue(0, 1));
   cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(105)));
-  EXPECT_TRUE(cmp == type::CMP_TRUE);
+  EXPECT_TRUE(cmp == CmpBool::TRUE);
   val = (result_tile->GetValue(1, 0));
   cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(10)));
-  EXPECT_TRUE(cmp == type::CMP_TRUE);
+  EXPECT_TRUE(cmp == CmpBool::TRUE);
   val = (result_tile->GetValue(1, 1));
   cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(355)));
-  EXPECT_TRUE(cmp == type::CMP_TRUE);
+  EXPECT_TRUE(cmp == CmpBool::TRUE);
 }
 
 TEST_F(AggregateTests, SortedSumMaxGroupByTest) {
@@ -331,18 +331,18 @@ TEST_F(AggregateTests, SortedSumMaxGroupByTest) {
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
   EXPECT_TRUE(result_tile.get() != nullptr);
   type::Value val = (result_tile->GetValue(0, 0));
-  type::CmpBool cmp =
+  CmpBool cmp =
       (val.CompareEquals(type::ValueFactory::GetIntegerValue(0)));
-  EXPECT_TRUE(cmp == type::CMP_TRUE);
+  EXPECT_TRUE(cmp == CmpBool::TRUE);
   val = (result_tile->GetValue(0, 1));
   cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(105)));
-  EXPECT_TRUE(cmp == type::CMP_TRUE);
+  EXPECT_TRUE(cmp == CmpBool::TRUE);
   val = (result_tile->GetValue(0, 2));
   cmp = (val.CompareEquals(type::ValueFactory::GetDecimalValue(42)));
-  EXPECT_TRUE(cmp == type::CMP_TRUE);
+  EXPECT_TRUE(cmp == CmpBool::TRUE);
   val = (result_tile->GetValue(1, 0));
   cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(10)));
-  EXPECT_TRUE(cmp == type::CMP_TRUE);
+  EXPECT_TRUE(cmp == CmpBool::TRUE);
 }
 
 TEST_F(AggregateTests, MinMaxTest) {
@@ -452,18 +452,18 @@ TEST_F(AggregateTests, MinMaxTest) {
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
   EXPECT_TRUE(result_tile.get() != nullptr);
   type::Value val = (result_tile->GetValue(0, 0));
-  type::CmpBool cmp =
+  CmpBool cmp =
       (val.CompareEquals(type::ValueFactory::GetIntegerValue(1)));
-  EXPECT_TRUE(cmp == type::CMP_TRUE);
+  EXPECT_TRUE(cmp == CmpBool::TRUE);
   val = (result_tile->GetValue(0, 1));
   cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(91)));
-  EXPECT_TRUE(cmp == type::CMP_TRUE);
+  EXPECT_TRUE(cmp == CmpBool::TRUE);
   val = (result_tile->GetValue(0, 2));
   cmp = (val.CompareEquals(type::ValueFactory::GetDecimalValue(2)));
-  EXPECT_TRUE(cmp == type::CMP_TRUE);
+  EXPECT_TRUE(cmp == CmpBool::TRUE);
   val = (result_tile->GetValue(0, 3));
   cmp = (val.CompareEquals(type::ValueFactory::GetDecimalValue(92)));
-  EXPECT_TRUE(cmp == type::CMP_TRUE);
+  EXPECT_TRUE(cmp == CmpBool::TRUE);
 }
 
 TEST_F(AggregateTests, HashDistinctTest) {
@@ -737,19 +737,19 @@ TEST_F(AggregateTests, HashCountDistinctGroupByTest) {
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
   EXPECT_TRUE(result_tile.get() != nullptr);
   type::Value val = (result_tile->GetValue(0, 0));
-  type::CmpBool cmp =
+  CmpBool cmp =
       (val.CompareEquals(type::ValueFactory::GetIntegerValue(0)));
-  type::CmpBool cmp1 =
+  CmpBool cmp1 =
       (val.CompareEquals(type::ValueFactory::GetIntegerValue(10)));
-  EXPECT_TRUE(cmp == type::CMP_TRUE || cmp1 == type::CMP_TRUE);
+  EXPECT_TRUE(cmp == CmpBool::TRUE || cmp1 == CmpBool::TRUE);
 
   val = (result_tile->GetValue(0, 1));
   cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(5)));
-  EXPECT_TRUE(cmp == type::CMP_TRUE);
+  EXPECT_TRUE(cmp == CmpBool::TRUE);
 
   val = (result_tile->GetValue(0, 2));
   cmp = (val.CompareLessThanEquals(type::ValueFactory::GetIntegerValue(3)));
-  EXPECT_TRUE(cmp == type::CMP_TRUE);
+  EXPECT_TRUE(cmp == CmpBool::TRUE);
 }
 
 TEST_F(AggregateTests, PlainSumCountDistinctTest) {
@@ -852,15 +852,15 @@ TEST_F(AggregateTests, PlainSumCountDistinctTest) {
   std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
   EXPECT_TRUE(result_tile.get() != nullptr);
   type::Value val = (result_tile->GetValue(0, 0));
-  type::CmpBool cmp =
+  CmpBool cmp =
       (val.CompareEquals(type::ValueFactory::GetIntegerValue(50)));
-  EXPECT_TRUE(cmp == type::CMP_TRUE);
+  EXPECT_TRUE(cmp == CmpBool::TRUE);
   val = (result_tile->GetValue(0, 1));
   cmp = (val.CompareEquals(type::ValueFactory::GetIntegerValue(10)));
-  EXPECT_TRUE(cmp == type::CMP_TRUE);
+  EXPECT_TRUE(cmp == CmpBool::TRUE);
   val = (result_tile->GetValue(0, 2));
   cmp = (val.CompareLessThanEquals(type::ValueFactory::GetIntegerValue(3)));
-  EXPECT_TRUE(cmp == type::CMP_TRUE);
+  EXPECT_TRUE(cmp == CmpBool::TRUE);
 }
 
 }  // namespace test

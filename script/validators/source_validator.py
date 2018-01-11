@@ -38,7 +38,9 @@ LOG.setLevel(logging.INFO)
 # directory structure: peloton/scripts/formatting/<this_file>
 # PELOTON_DIR needs to be redefined if the directory structure is changed
 CODE_SOURCE_DIR = os.path.abspath(os.path.dirname(__file__))
-PELOTON_DIR = os.path.abspath(reduce(os.path.join, [CODE_SOURCE_DIR, os.path.pardir, os.path.pardir]))
+PELOTON_DIR = os.path.abspath(
+    reduce(os.path.join, [CODE_SOURCE_DIR, os.path.pardir, os.path.pardir])
+    )
 
 CLANG_FORMAT = "clang-format"
 CLANG_FORMAT_FILE = os.path.join(PELOTON_DIR, ".clang-format")
@@ -53,7 +55,7 @@ EXIT_SUCCESS = 0
 EXIT_FAILURE = -1
 
 # Source patterns to check for
-VALIDATOR_PATTERNS = [
+VALIDATOR_PATTERNS = [re.compile(patt) for patt in [
     "std\:\:cout",
     " printf\(",
     "cout",
@@ -65,7 +67,9 @@ VALIDATOR_PATTERNS = [
     " \:\:memcpy\(",
     " std\:\:memset\(",
     " std\:\:memcpy\(",
-    "\_\_attribute\_\_\(\(unused\)\)"
+    "\_\_attribute\_\_\(\(unused\)\)",
+    r'^#include "include/'
+    ]
 ]
 
 # Files that should not be checked
@@ -98,20 +102,20 @@ def check_common_patterns(file_path):
     if rel_path_from_peloton_dir in SKIP_FILES_LIST:
         return True
 
-    file = open(file_path, "r")
+    with open(file_path, 'r') as file:
+        status = True
+        line_ctr = 1
+        for line in file:
 
-    status = True
-    line_ctr = 1
-    for line in file:
+            for validator_pattern in VALIDATOR_PATTERNS:
+                # Check for patterns one at a time
+                if validator_pattern.search(line):
+                    if status:
+                        LOG.info("Invalid pattern -- " + validator_pattern.pattern + " -- found in : " + file_path)
+                    LOG.info("  Line #%d :: %s" % (line_ctr, line))
+                    status = False
+            line_ctr += 1
 
-        for validator_pattern in VALIDATOR_PATTERNS:
-            # Check for patterns one at a time
-            if re.search(validator_pattern, line):
-                LOG.info("Invalid pattern -- " + validator_pattern + " -- found in : " + file_path)
-                LOG.info("Line #%d :: %s" % (line_ctr, line))
-                status = False
-        line_ctr += 1
-    file.close()
     return status
 
 def check_format(file_path):
@@ -127,19 +131,27 @@ def check_format(file_path):
         clang_format_cmd = [CLANG_FORMAT, "-style=file", file_path]
         formatted_src = subprocess.check_output(clang_format_cmd).splitlines(True)
         # Load source file
-        file = open(file_path, "r")
-        src = file.readlines()
+        with open(file_path, "r") as file:
+            src = file.readlines()
 
-        # Do the diff
-        diff = difflib.unified_diff(src, formatted_src)
-        for line in diff:
-            LOG.info("Invalid formatting in file : " + file_path)
-            status = False
+            # Do the diff
+            d = difflib.Differ()
+            diff = d.compare(src, formatted_src)
+            line_num = 0
+            for line in diff:
+                code = line[:2]
+                if code in ("  ", "- "):
+                    line_num += 1
+                if code == '- ':
+                    if status:
+                        LOG.info("Invalid formatting in file : " + file_path)
+                    LOG.info("  Line %d: %s" % (line_num, line[2:].strip()))
+                    status = False
 
-        return status
+            return status
     except OSError as e:
         LOG.error("clang-format seems not installed")
-        exit("clang-format seems not installed")
+        exit()
 
 def check_namespaces(file_path):
     # only check for src files
@@ -156,14 +168,53 @@ def check_namespaces(file_path):
     # cut off the file name at the end of the list
     required_namespaces = required_namespaces[:-1]
 
-    status = True
     with open(file_path, 'r') as file:
         data = mmap.mmap(file.fileno(), 0, prot=mmap.PROT_READ)
         
-        for namespace in required_namespaces:
-            if re.search(r'^ *namespace ' + namespace, data, flags=re.MULTILINE) is None:
-                LOG.info("Missing namespace '" + namespace + "' -- in " + file_path)
-                status = False
+        # scan for all namespace openings and closings
+        matches = re.findall(r'^ *namespace ([a-z_-]+) {$|^ *} +\/\/ namespace ([a-z_-]+)$', data, flags=re.MULTILINE)
+
+        open_namespaces = list()
+        namespace_errors = list()
+
+        for match in matches:
+            # assert the match is either an opening or a closing
+            assert match[0] or match[1]
+
+            # 1. namespace opening
+            if match[0]:
+                # add to list of open namespaces
+                open_namespaces.append(match[0])
+
+                # remove from list of required namespaces
+                if required_namespaces and required_namespaces[0] == match[0]:
+                    required_namespaces.pop(0)
+
+            # 2. namespace closing
+            else:
+                # check if correct order
+                if open_namespaces and open_namespaces[-1] != match[1]:
+                    namespace_errors.append("This namespace was closed in wrong order: '" + match[1] + "' -- in " + file_path)
+                # check if present at all
+                if not match[1] in open_namespaces:
+                    namespace_errors.append("This namespace was closed, but is missing a correct opening: '" + match[1] + "' -- in " + file_path)
+                else:
+                    # remove from open list
+                    open_namespaces.remove(match[1])
+
+        if required_namespaces:
+            namespace_errors.append("Required namespaces are missing or in wrong order: " + str(required_namespaces) + " -- in " + file_path)
+
+        if open_namespaces:
+            namespace_errors.append("These namespaces were not closed properly: " + str(open_namespaces) + " -- in " + file_path)
+
+        if namespace_errors:
+            LOG.info("Invalid namespace style -- in " + file_path)
+            for error in namespace_errors:
+                LOG.info("  " + error)
+            return False
+        else:
+            return True
     
     return status
 

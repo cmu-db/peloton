@@ -13,7 +13,7 @@
 #pragma once
 
 #include "common/printable.h"
-#include "type/types.h"
+#include "internal_types.h"
 #include "type/value.h"
 
 namespace peloton {

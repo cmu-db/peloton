@@ -19,7 +19,6 @@ namespace optimizer {
 class PropertyColumns;
 class PropertyProjection;
 class PropertySort;
-class PropertyPredicate;
 class PropertyDistinct;
 class PropertyLimit;
 
@@ -34,7 +33,6 @@ class PropertyVisitor {
 
   virtual void Visit(const PropertyColumns *) = 0;
   virtual void Visit(const PropertySort *) = 0;
-  virtual void Visit(const PropertyPredicate *) = 0;
   virtual void Visit(const PropertyDistinct *) = 0;
   virtual void Visit(const PropertyLimit *) = 0;
 };

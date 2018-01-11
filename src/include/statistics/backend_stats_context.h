@@ -23,8 +23,8 @@
 #include "statistics/latency_metric.h"
 #include "statistics/database_metric.h"
 #include "statistics/query_metric.h"
-#include "container/cuckoo_map.h"
-#include "container/lock_free_queue.h"
+#include "common/container/cuckoo_map.h"
+#include "common/container/lock_free_queue.h"
 
 #define QUERY_METRIC_QUEUE_SIZE 100000
 

@@ -24,7 +24,7 @@
 #include "parser/sql_statement.h"
 #include "storage/data_table.h"
 #include "type/type.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "event.h"
 
 namespace peloton {
@@ -58,25 +58,29 @@ class TrafficCop {
   // Reset this object.
   void Reset();
 
-  // Execute a statement from a prepared and bound statement.
+  // Execute a statement
   ResultType ExecuteStatement(
       const std::shared_ptr<Statement> &statement,
-      const std::vector<type::Value> &params, bool unnamed,
+      const std::vector<type::Value> &params, const bool unnamed,
       std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
       const std::vector<int> &result_format, std::vector<ResultValue> &result,
       std::string &error_message, size_t thread_id = 0);
 
   // Helper to handle txn-specifics for the plan-tree of a statement.
-  executor::ExecuteResult ExecuteHelper(
+  executor::ExecutionResult ExecuteHelper(
       std::shared_ptr<planner::AbstractPlan> plan,
       const std::vector<type::Value> &params, std::vector<ResultValue> &result,
       const std::vector<int> &result_format, size_t thread_id = 0);
 
-  // Prepare and bind a query from a query string
+  // Prepare a statement using the parse tree
   std::shared_ptr<Statement> PrepareStatement(const std::string &statement_name,
                                               const std::string &query_string,
+                                              std::unique_ptr<parser::SQLStatementList> sql_stmt_list,
                                               std::string &error_message,
                                               size_t thread_id = 0);
+
+  bool BindParamsForCachePlan(const std::vector<std::unique_ptr<expression::AbstractExpression>>&,
+                              std::string &error_message, const size_t thread_id = 0);
 
   std::vector<FieldInfo> GenerateTupleDescriptor(
       parser::SQLStatement *select_stmt);
@@ -84,7 +88,7 @@ class TrafficCop {
   FieldInfo GetColumnFieldForValueType(std::string column_name,
                                        type::TypeId column_type);
 
-  void SetTcopTxnState(concurrency::TransactionContext * txn) {
+  void SetTcopTxnState(concurrency::TransactionContext *txn) {
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
 
@@ -100,6 +104,8 @@ class TrafficCop {
   }
 
   void setRowsAffected(int rows_affected) { rows_affected_ = rows_affected; }
+
+  void ProcessInvalidStatement();
 
   int getRowsAffected() { return rows_affected_; }
 
@@ -131,7 +137,7 @@ class TrafficCop {
 
   bool GetQueuing() { return is_queuing_; }
 
-  executor::ExecuteResult p_status_;
+  executor::ExecutionResult p_status_;
 
   void SetDefaultDatabaseName(std::string default_database_name) {
     default_database_name_ = std::move(default_database_name);
@@ -162,7 +168,7 @@ class TrafficCop {
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer_;
 
   // flag of single statement txn
-  bool is_single_statement_txn_;
+  bool single_statement_txn_;
 
   std::vector<ResultValue> result_;
 
@@ -186,8 +192,16 @@ class TrafficCop {
   // Get all data tables from a TableRef.
   // For multi-way join
   // still a HACK
-  void GetDataTables(parser::TableRef *from_table,
-                     std::vector<storage::DataTable *> &target_tables);
+  void GetTableColumns(parser::TableRef *from_table,
+                       std::vector<catalog::Column> &target_tables);
+
+//  const std::shared_ptr<Statement> statement_;
+//  const std::vector<type::Value> params_;
+//  UNUSED_ATTRIBUTE const bool unnamed;
+//  std::shared_ptr<stats::QueryMetric::QueryParams> param_stats_;
+//  const std::vector<int> &result_format, std::vector<StatementResult> result;
+//  int &rows_changed, UNUSED_ATTRIBUTE std::string error_message;
+//  const size_t thread_id UNUSED_ATTRIBUTE;
 };
 
 }  // namespace tcop

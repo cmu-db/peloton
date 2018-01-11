@@ -14,7 +14,7 @@
 
 #include <numeric>
 
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "planner/abstract_plan.h"
 #include "planner/project_info.h"
 

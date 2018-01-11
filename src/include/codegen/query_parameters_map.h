@@ -23,10 +23,21 @@ class Value;
 namespace codegen {
 class QueryParametersMap {
  public:
-  // Constructor
-  QueryParametersMap() {}
+  QueryParametersMap() = default;
 
-  void Insert(expression::Parameter parameter, 
+  DISALLOW_COPY(QueryParametersMap);
+
+  QueryParametersMap(QueryParametersMap &&other)
+      : map_(std::move(other.map_)),
+        parameters_(std::move(other.parameters_)) {}
+
+  QueryParametersMap &operator=(QueryParametersMap &&other) noexcept {
+    map_ = std::move(other.map_);
+    parameters_ = std::move(other.parameters_);
+    return *this;
+  }
+
+  void Insert(expression::Parameter parameter,
               expression::AbstractExpression *expression) {
     parameters_.push_back(parameter);
     map_[expression] = parameters_.size() - 1;
@@ -47,8 +58,8 @@ class QueryParametersMap {
   std::unordered_map<const expression::AbstractExpression *, uint32_t> map_;
 
   // Parameter meta information
-  std::vector<expression::Parameter> parameters_; 
+  std::vector<expression::Parameter> parameters_;
 };
 
 }  // namespace codegen
-}  // namespace peloton 
+}  // namespace peloton

@@ -13,7 +13,7 @@
 #include "common/harness.h"
 #include "gtest/gtest.h"
 
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "index/testing_index_util.h"
 
 namespace peloton {

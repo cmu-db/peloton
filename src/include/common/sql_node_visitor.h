@@ -26,6 +26,7 @@ class TransactionStatement;
 class UpdateStatement;
 class CopyStatement;
 class AnalyzeStatement;
+class VariableSetStatement;
 class JoinDefinition;
 struct TableRef;
 
@@ -47,6 +48,7 @@ class TupleValueExpression;
 class FunctionExpression;
 class OperatorUnaryMinusExpression;
 class CaseExpression;
+class SubqueryExpression;
 }
 
 //===--------------------------------------------------------------------===//
@@ -88,6 +90,7 @@ class SqlNodeVisitor {
   virtual void Visit(expression::ParameterValueExpression *expr);
   virtual void Visit(expression::StarExpression *expr);
   virtual void Visit(expression::TupleValueExpression *expr);
+  virtual void Visit(expression::SubqueryExpression *expr);
 
 };
 

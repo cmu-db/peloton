@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// worker.h
+// worker_pool.h
 //
-// Identification: src/threadpool/worker.h
+// Identification: src/threadpool/worker_pool.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -12,37 +12,47 @@
 
 #pragma once
 
+#include <functional>
 #include <vector>
-#include <unistd.h>
 
-#include "threadpool/task_queue.h"
-#include "threadpool/worker.h"
+#include "common/container/lock_free_queue.h"
 
-namespace peloton{
-namespace threadpool{
+namespace peloton {
+namespace threadpool {
+
+using TaskQueue = peloton::LockFreeQueue<std::function<void()>>;
+
+void WorkerFunc(std::atomic_bool *should_shutdown, TaskQueue *task_queue);
 
 /**
- * @class WorkerPool
- * @brief A worker pool that maintains a group to worker thread
+ * @brief A worker pool that maintains a group of worker threads.
  */
 class WorkerPool {
  public:
-  // submit a threadpool for asynchronous execution.
-  WorkerPool(const size_t num_workers, TaskQueue *task_queue);
+  WorkerPool(size_t num_workers, TaskQueue *task_queue)
+      : num_workers_(num_workers),
+        should_shutdown_(false),
+        task_queue_(task_queue) {}
 
-  // explicitly start up the pool
-  void Startup();
+  void Startup() {
+    for (size_t i = 0; i < num_workers_; i++) {
+      workers_.emplace_back(WorkerFunc, &should_shutdown_, task_queue_);
+    }
+  }
 
-  // explicitly shut down the pool
-  void Shutdown();
+  void Shutdown() {
+    should_shutdown_ = true;
+    for (auto &worker : workers_) {
+      worker.join();
+    }
+    workers_.clear();
+  }
 
  private:
-  friend class Worker;
-
-  std::vector<std::unique_ptr<Worker>> workers_;
-
+  std::vector<std::thread> workers_;
   size_t num_workers_;
-  TaskQueue* task_queue_;
+  std::atomic_bool should_shutdown_;
+  TaskQueue *task_queue_;
 };
 
 }  // namespace threadpool

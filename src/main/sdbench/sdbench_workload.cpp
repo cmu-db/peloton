@@ -34,7 +34,7 @@
 #include "common/timer.h"
 #include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager_factory.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
 
@@ -745,7 +745,8 @@ static void JoinQueryHelper(
   std::shared_ptr<const catalog::Schema> schema(nullptr);
 
   planner::NestedLoopJoinPlan nested_loop_join_node(
-      join_type, std::move(join_predicate), std::move(project_info), schema);
+      join_type, std::move(join_predicate), std::move(project_info), schema,
+      {left_table_join_column}, {right_table_join_column});
 
   // Run the nested loop join executor
   executor::NestedLoopJoinExecutor nested_loop_join_executor(
@@ -1389,7 +1390,7 @@ void BenchmarkPrepare() {
   }
 
   // Start layout tuner
-  if (state.layout_mode == LAYOUT_TYPE_HYBRID) {
+  if (state.layout_mode == LayoutType::HYBRID) {
     layout_tuner.AddTable(sdbench_table.get());
 
     // Start layout tuner
@@ -1407,7 +1408,7 @@ void BenchmarkCleanUp() {
     index_tuner.ClearTables();
   }
 
-  if (state.layout_mode == LAYOUT_TYPE_HYBRID) {
+  if (state.layout_mode == LayoutType::HYBRID) {
     layout_tuner.Stop();
     layout_tuner.ClearTables();
   }

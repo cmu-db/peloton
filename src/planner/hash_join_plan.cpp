@@ -16,45 +16,39 @@
 
 #include "expression/abstract_expression.h"
 #include "planner/project_info.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 
 #include "planner/hash_join_plan.h"
 
 namespace peloton {
 namespace planner {
 
-HashJoinPlan::HashJoinPlan(
-    JoinType join_type,
-    std::unique_ptr<const expression::AbstractExpression> &&predicate,
-    std::unique_ptr<const ProjectInfo> &&proj_info,
-    std::shared_ptr<const catalog::Schema> &proj_schema, bool build_bloomfilter)
+HashJoinPlan::HashJoinPlan(JoinType join_type, ExpressionPtr &&predicate,
+                           std::unique_ptr<const ProjectInfo> &&proj_info,
+                           std::shared_ptr<const catalog::Schema> &proj_schema,
+                           bool build_bloomfilter)
     : AbstractJoinPlan(join_type, std::move(predicate), std::move(proj_info),
                        proj_schema),
       build_bloomfilter_(build_bloomfilter) {}
 
 // outer_hashkeys is added for IN-subquery
-HashJoinPlan::HashJoinPlan(
-    JoinType join_type,
-    std::unique_ptr<const expression::AbstractExpression> &&predicate,
-    std::unique_ptr<const ProjectInfo> &&proj_info,
-    std::shared_ptr<const catalog::Schema> &proj_schema,
-    const std::vector<oid_t> &outer_hashkeys, bool build_bloomfilter)
+HashJoinPlan::HashJoinPlan(JoinType join_type, ExpressionPtr &&predicate,
+                           std::unique_ptr<const ProjectInfo> &&proj_info,
+                           std::shared_ptr<const catalog::Schema> &proj_schema,
+                           const std::vector<oid_t> &outer_hashkeys,
+                           bool build_bloomfilter)
     : AbstractJoinPlan(join_type, std::move(predicate), std::move(proj_info),
                        proj_schema),
       build_bloomfilter_(build_bloomfilter) {
   outer_column_ids_ = outer_hashkeys;  // added for IN-subquery
 }
 
-HashJoinPlan::HashJoinPlan(
-    JoinType join_type,
-    std::unique_ptr<const expression::AbstractExpression> &&predicate,
-    std::unique_ptr<const ProjectInfo> &&proj_info,
-    std::shared_ptr<const catalog::Schema> &proj_schema,
-    std::vector<std::unique_ptr<const expression::AbstractExpression>>
-        &left_hash_keys,
-    std::vector<std::unique_ptr<const expression::AbstractExpression>>
-        &right_hash_keys,
-    bool build_bloomfilter)
+HashJoinPlan::HashJoinPlan(JoinType join_type, ExpressionPtr &&predicate,
+                           std::unique_ptr<const ProjectInfo> &&proj_info,
+                           std::shared_ptr<const catalog::Schema> &proj_schema,
+                           std::vector<ExpressionPtr> &left_hash_keys,
+                           std::vector<ExpressionPtr> &right_hash_keys,
+                           bool build_bloomfilter)
     : AbstractJoinPlan(join_type, std::move(predicate), std::move(proj_info),
                        proj_schema),
       left_hash_keys_(std::move(left_hash_keys)),
@@ -71,19 +65,7 @@ void HashJoinPlan::HandleSubplanBinding(bool is_left,
 }
 
 hash_t HashJoinPlan::Hash() const {
-  auto type = GetPlanNodeType();
-  hash_t hash = HashUtil::Hash(&type);
-
-  auto join_type = GetJoinType();
-  hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&join_type));
-
-  if (GetPredicate() != nullptr) {
-    hash = HashUtil::CombineHashes(hash, GetPredicate()->Hash());
-  }
-
-  if (GetProjInfo() != nullptr) {
-    hash = HashUtil::CombineHashes(hash, GetProjInfo()->Hash());
-  }
+  hash_t hash = AbstractJoinPlan::Hash();
 
   std::vector<const expression::AbstractExpression *> keys;
   GetLeftHashKeys(keys);
@@ -101,30 +83,11 @@ hash_t HashJoinPlan::Hash() const {
 }
 
 bool HashJoinPlan::operator==(const AbstractPlan &rhs) const {
-  if (GetPlanNodeType() != rhs.GetPlanNodeType())
+  if (!AbstractJoinPlan::operator==(rhs)) {
     return false;
+  }
 
-  auto &other = static_cast<const planner::HashJoinPlan &>(rhs);
-  if (GetJoinType() != other.GetJoinType())
-    return false;
-
-  // Prodicate
-  auto *pred = GetPredicate();
-  auto *other_pred = other.GetPredicate();
-  if ((pred == nullptr && other_pred != nullptr) ||
-      (pred != nullptr && other_pred == nullptr))
-    return false;
-  if (pred && *pred != *other_pred)
-    return false;
-
-  // Project Info
-  auto *proj_info = GetProjInfo();
-  auto *other_proj_info = other.GetProjInfo();
-  if ((proj_info == nullptr && other_proj_info != nullptr) ||
-      (proj_info != nullptr && other_proj_info == nullptr))
-    return false;
-  if (proj_info && *proj_info != *other_proj_info)
-    return false;
+  const auto &other = static_cast<const HashJoinPlan &>(rhs);
 
   std::vector<const expression::AbstractExpression *> keys, other_keys;
 
@@ -132,12 +95,14 @@ bool HashJoinPlan::operator==(const AbstractPlan &rhs) const {
   GetLeftHashKeys(keys);
   other.GetLeftHashKeys(other_keys);
   size_t keys_count = keys.size();
-  if (keys_count != other_keys.size())
+  if (keys_count != other_keys.size()) {
     return false;
+  }
 
   for (size_t i = 0; i < keys_count; i++) {
-    if (*keys[i] != *other_keys[i])
+    if (*keys[i] != *other_keys[i]) {
       return false;
+    }
   }
 
   keys.clear();
@@ -147,12 +112,14 @@ bool HashJoinPlan::operator==(const AbstractPlan &rhs) const {
   GetRightHashKeys(keys);
   other.GetRightHashKeys(other_keys);
   keys_count = keys.size();
-  if (keys_count != other_keys.size())
+  if (keys_count != other_keys.size()) {
     return false;
+  }
 
   for (size_t i = 0; i < keys_count; i++) {
-    if (*keys[i] != *other_keys[i])
+    if (*keys[i] != *other_keys[i]) {
       return false;
+    }
   }
 
   return AbstractPlan::operator==(rhs);

@@ -17,7 +17,7 @@
 
 #include "catalog/schema.h"
 #include "common/abstract_tuple.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "type/value.h"
 
 namespace peloton {
@@ -60,7 +60,7 @@ class MaskedTuple : public AbstractTuple {
 
   const std::string GetInfo() const {
     std::stringstream os;
-    os << "***MaskedTuple*** ";
+    os << "**MaskedTuple** ";
     os << tuple_->GetInfo();
     return os.str();
   }

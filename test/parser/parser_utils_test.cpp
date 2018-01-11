@@ -17,7 +17,6 @@
 #include "common/macros.h"
 #include "common/logger.h"
 #include "parser/postgresparser.h"
-#include "parser/parser_utils.h"
 
 namespace peloton {
 namespace test {
@@ -33,7 +32,10 @@ TEST_F(ParserUtilTests, BasicTest) {
 
   // SELECT statement
   queries.push_back("SELECT * FROM orders;");
+  queries.push_back("SELECT MAX(*) FROM orders;");
+  queries.push_back("SELECT MAX(price) FROM orders;");
   queries.push_back("SELECT a FROM orders;");
+  queries.push_back("SELECT orders.a FROM orders;");
   queries.push_back(
       "SELECT a FROM foo WHERE a > 12 OR b > 3 AND NOT c LIMIT 10");
   queries.push_back(
@@ -51,6 +53,11 @@ TEST_F(ParserUtilTests, BasicTest) {
   queries.push_back(
       "SELECT * FROM \"table\" LIMIT 10 OFFSET 10; SELECT * FROM second;");
   queries.push_back("SELECT * FROM t1 UNION SELECT * FROM t2 ORDER BY col1;");
+  queries.push_back(
+      "SELECT player_name, year, "
+      "CASE WHEN year = 'SR' THEN 'yes' "
+      "ELSE NULL END AS is_a_senior "
+      "FROM benn.college_football_players");
 
   // JOIN
   queries.push_back(
@@ -102,15 +109,28 @@ TEST_F(ParserUtilTests, BasicTest) {
 
   // DROP
   queries.push_back("DROP TABLE students;");
+  queries.push_back("DROP SCHEMA students;");
+  queries.push_back("DROP TRIGGER tri ON students;");
 
   // PREPARE
   queries.push_back(
       "PREPARE prep_inst AS INSERT INTO test VALUES ($1, $2, $3);");
-  queries.push_back("EXECUTE prep_inst(1, 2, 3);");
-  queries.push_back("EXECUTE prep;");
 
   queries.push_back(
       "COPY pg_catalog.query_metric TO '/home/user/output.csv' DELIMITER ',';");
+
+  // ANALYZE
+  queries.push_back("ANALYZE t ( col1, col2, col3 );");
+
+  // EXECUTE
+  queries.push_back("EXECUTE fooplan(1, 'Hunter Valley', 't', 200.00);");
+  queries.push_back("EXECUTE prep_inst(1, 2, 3);");
+  queries.push_back("EXECUTE prep;");
+
+  // TRANSACTION
+  queries.push_back("BEGIN TRANSACTION;");
+  queries.push_back("COMMIT TRANSACTION;");
+  queries.push_back("ROLLBACK TRANSACTION;");
 
   // Parsing
   UNUSED_ATTRIBUTE int ii = 0;
@@ -123,34 +143,8 @@ TEST_F(ParserUtilTests, BasicTest) {
                 stmt_list->error_line, stmt_list->error_col);
     }
     for (auto &stmt : stmt_list->statements) {
-      switch (stmt->GetType()) {
-        case StatementType::SELECT:
-          EXPECT_TRUE(parser::ParserUtils::GetSelectStatementInfo(
-                          (parser::SelectStatement*)stmt.get(), 0).size() > 0);
-          break;
-        case StatementType::INSERT:
-          EXPECT_TRUE(parser::ParserUtils::GetInsertStatementInfo(
-                          (parser::InsertStatement*)stmt.get(), 0).size() > 0);
-          break;
-        case StatementType::CREATE:
-          EXPECT_TRUE(parser::ParserUtils::GetCreateStatementInfo(
-                          (parser::CreateStatement*)stmt.get(), 0).size() > 0);
-          break;
-        case StatementType::DELETE:
-          EXPECT_TRUE(parser::ParserUtils::GetDeleteStatementInfo(
-                          (parser::DeleteStatement*)stmt.get(), 0).size() > 0);
-          break;
-        case StatementType::COPY:
-          EXPECT_TRUE(parser::ParserUtils::GetCopyStatementInfo(
-                          (parser::CopyStatement*)stmt.get(), 0).size() > 0);
-          break;
-        case StatementType::UPDATE:
-          EXPECT_TRUE(parser::ParserUtils::GetUpdateStatementInfo(
-                          (parser::UpdateStatement*)stmt.get(), 0).size() > 0);
-          break;
-        default:
-          break;
-      }
+      LOG_TRACE("%s\n", stmt->GetInfo().c_str());
+      EXPECT_TRUE(stmt->GetInfo().size() > 0);
     }
   }
 }

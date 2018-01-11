@@ -163,7 +163,7 @@ Value DecimalType::Min(const Value& left, const Value &right) const {
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
-  if (left.CompareLessThanEquals(right) == CMP_TRUE)
+  if (left.CompareLessThanEquals(right) == CmpBool::TRUE)
     return left.Copy();
   return right.Copy();
 }
@@ -174,7 +174,7 @@ Value DecimalType::Max(const Value& left, const Value &right) const {
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
-  if (left.CompareGreaterThanEquals(right) == CMP_TRUE)
+  if (left.CompareGreaterThanEquals(right) == CmpBool::TRUE)
     return left.Copy();
   return right.Copy();
 }
@@ -198,7 +198,7 @@ CmpBool DecimalType::CompareEquals(const Value& left, const Value &right) const 
   PL_ASSERT(GetTypeId() == TypeId::DECIMAL);
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
-    return CMP_NULL;
+    return CmpBool::NULL_;
     
   DECIMAL_COMPARE_FUNC(==);
 
@@ -209,7 +209,7 @@ CmpBool DecimalType::CompareNotEquals(const Value& left, const Value &right) con
   PL_ASSERT(GetTypeId() == TypeId::DECIMAL);
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
-    return CMP_NULL;
+    return CmpBool::NULL_;
 
   DECIMAL_COMPARE_FUNC(!=);
 
@@ -220,7 +220,7 @@ CmpBool DecimalType::CompareLessThan(const Value& left, const Value &right) cons
   PL_ASSERT(GetTypeId() == TypeId::DECIMAL);
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
-    return CMP_NULL;
+    return CmpBool::NULL_;
 
   DECIMAL_COMPARE_FUNC(<);
 
@@ -231,7 +231,7 @@ CmpBool DecimalType::CompareLessThanEquals(const Value& left, const Value &right
   PL_ASSERT(GetTypeId() == TypeId::DECIMAL);
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
-    return CMP_NULL;
+    return CmpBool::NULL_;
 
   DECIMAL_COMPARE_FUNC(<=);
 
@@ -242,7 +242,7 @@ CmpBool DecimalType::CompareGreaterThan(const Value& left, const Value &right) c
   PL_ASSERT(GetTypeId() == TypeId::DECIMAL);
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
-    return CMP_NULL;
+    return CmpBool::NULL_;
 
   DECIMAL_COMPARE_FUNC(>);
 
@@ -253,7 +253,7 @@ CmpBool DecimalType::CompareGreaterThanEquals(const Value& left, const Value &ri
   PL_ASSERT(GetTypeId() == TypeId::DECIMAL);
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
-    return CMP_NULL;
+    return CmpBool::NULL_;
 
   DECIMAL_COMPARE_FUNC(>=);
 

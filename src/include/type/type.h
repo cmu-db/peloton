@@ -18,6 +18,7 @@
 
 #include "type/serializeio.h"
 #include "type/type_id.h"
+#include "common/internal_types.h"
 
 namespace peloton {
 namespace type {
@@ -25,8 +26,6 @@ namespace type {
 class AbstractPool;
 class Value;
 class ValueFactory;
-
-enum CmpBool { CMP_FALSE = 0, CMP_TRUE = 1, CMP_NULL = 2 };
 
 class Type {
  public:

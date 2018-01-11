@@ -121,7 +121,7 @@ void ProjectInfo::PerformRebinding(
 
     const BindingContext *src_context = input_contexts[dm.second.first];
     const auto *dest_ai = src_context->Find(src_col_id);
-    LOG_DEBUG("Direct: Dest col %u is bound to AI %p", dest_col_id, dest_ai);
+    LOG_TRACE("Direct: Dest col %u is bound to AI %p", dest_col_id, dest_ai);
     output_context.BindNew(dest_col_id, dest_ai);
   }
 
@@ -132,7 +132,7 @@ void ProjectInfo::PerformRebinding(
 
     PL_ASSERT(derived_attribute.expr != nullptr);
 
-    LOG_DEBUG("Binding target-list expressions ...");
+    LOG_TRACE("Binding target-list expressions ...");
     auto *expr =
         const_cast<expression::AbstractExpression *>(derived_attribute.expr);
     expr->PerformBinding(input_contexts);
@@ -144,7 +144,7 @@ void ProjectInfo::PerformRebinding(
     derived_attribute.attribute_info.attribute_id = dest_col_id;
 
     const auto *dest_ai = &derived_attribute.attribute_info;
-    LOG_DEBUG("Target: Dest col %u is bound to AI %p", dest_col_id, dest_ai);
+    LOG_TRACE("Target: Dest col %u is bound to AI %p", dest_col_id, dest_ai);
     output_context.BindNew(dest_col_id, dest_ai);
   }
 }
@@ -174,8 +174,9 @@ std::string ProjectInfo::Debug() const {
     buffer << "<" << dmap.first << ", <" << dmap.second.first << ", "
            << dmap.second.second << "> >\n";
   }
-
-  return (buffer.str());
+  std::string info = buffer.str();
+  StringUtil::RTrim(info);
+  return info;
 }
 
 hash_t ProjectInfo::Hash(const planner::DerivedAttribute &attribute) const {
@@ -256,7 +257,7 @@ bool ProjectInfo::operator==(const ProjectInfo &rhs) const {
 void ProjectInfo::VisitParameters(
     codegen::QueryParametersMap &map, std::vector<peloton::type::Value> &values,
     const std::vector<peloton::type::Value> &values_from_user) {
-  if (isNonTrivial()) {
+  if (IsNonTrivial()) {
 
     for (auto &target : GetTargetList()) {
       const auto &derived_attribute = target.second;

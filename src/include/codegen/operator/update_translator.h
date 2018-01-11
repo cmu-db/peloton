@@ -6,7 +6,7 @@
 //
 // Identification: src/include/codegen/update_translator.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-18, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -18,9 +18,13 @@
 #include "codegen/runtime_state.h"
 #include "codegen/table.h"
 #include "codegen/table_storage.h"
-#include "planner/update_plan.h"
 
 namespace peloton {
+
+namespace planner {
+class UpdatePlan;
+}  // namespace planner
+
 namespace codegen {
 
 class UpdateTranslator : public OperatorTranslator {

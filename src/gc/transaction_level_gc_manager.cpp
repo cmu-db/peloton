@@ -62,7 +62,6 @@ void TransactionLevelGCManager::Running(const int &thread_id) {
     }
 
     int reclaimed_count = Reclaim(thread_id, expired_eid);
-
     int unlinked_count = Unlink(thread_id, expired_eid);
 
     if (is_running_ == false) {
@@ -83,12 +82,19 @@ void TransactionLevelGCManager::Running(const int &thread_id) {
 }
 
 void TransactionLevelGCManager::RecycleTransaction(
-    std::shared_ptr<GCSet> gc_set, std::shared_ptr<GCObjectSet> gc_object_set,
-    const eid_t &epoch_id, const size_t &thread_id) {
-  // Add the garbage context to the lock-free queue
-  std::shared_ptr<GarbageContext> gc_context(
-      new GarbageContext(gc_set, gc_object_set, epoch_id));
-  unlink_queues_[HashToThread(thread_id)]->Enqueue(gc_context);
+    concurrency::TransactionContext *txn) {
+  auto &epoch_manager = concurrency::EpochManagerFactory::GetInstance();
+
+  epoch_manager.ExitEpoch(txn->GetThreadId(),
+                          txn->GetEpochId());
+
+  if (txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY && \
+      txn->GetResult() != ResultType::SUCCESS && txn->IsGCSetEmpty() != true) {
+        txn->SetEpochId(epoch_manager.GetNextEpochId());
+  }
+
+  // Add the transaction context to the lock-free queue
+  unlink_queues_[HashToThread(txn->GetThreadId())]->Enqueue(txn);
 }
 
 int TransactionLevelGCManager::Unlink(const int &thread_id,
@@ -97,45 +103,53 @@ int TransactionLevelGCManager::Unlink(const int &thread_id,
 
   // check if any garbage can be unlinked from indexes.
   // every time we garbage collect at most MAX_ATTEMPT_COUNT tuples.
-  std::vector<std::shared_ptr<GarbageContext>> garbages;
+  std::vector<concurrency::TransactionContext* > garbages;
 
   // First iterate the local unlink queue
   local_unlink_queues_[thread_id].remove_if(
       [&garbages, &tuple_counter, expired_eid,
-       this](const std::shared_ptr<GarbageContext> &garbage_ctx) -> bool {
-        bool res = garbage_ctx->epoch_id_ <= expired_eid;
+       this](concurrency::TransactionContext *txn_ctx) -> bool {
+        bool res = txn_ctx->GetEpochId() <= expired_eid;
         if (res == true) {
           // unlink versions from version chain and indexes
-          UnlinkVersions(garbage_ctx);
+          UnlinkVersions(txn_ctx);
           // Add to the garbage map
-          garbages.push_back(garbage_ctx);
+          garbages.push_back(txn_ctx);
           tuple_counter++;
         }
         return res;
       });
 
   for (size_t i = 0; i < MAX_ATTEMPT_COUNT; ++i) {
-    std::shared_ptr<GarbageContext> garbage_ctx;
+    concurrency::TransactionContext *txn_ctx;
     // if there's no more tuples in the queue, then break.
-    if (unlink_queues_[thread_id]->Dequeue(garbage_ctx) == false) {
+    if (unlink_queues_[thread_id]->Dequeue(txn_ctx) == false) {
       break;
     }
 
-    if (garbage_ctx->epoch_id_ <= expired_eid) {
+    // Deallocate the Transaction Context of transactions that don't involve
+    // any garbage collection
+    if (txn_ctx->GetIsolationLevel() == IsolationLevelType::READ_ONLY || \
+        txn_ctx->IsGCSetEmpty()) {
+      delete txn_ctx;
+      continue;
+    }
+
+    if (txn_ctx->GetEpochId() <= expired_eid) {
       // as the global expired epoch id is no less than the garbage version's
       // epoch id, it means that no active transactions can read the version. As
       // a result, we can delete all the tuples from the indexes to which it
       // belongs.
 
       // unlink versions from version chain and indexes
-      UnlinkVersions(garbage_ctx);
+      UnlinkVersions(txn_ctx);
       // Add to the garbage map
-      garbages.push_back(garbage_ctx);
+      garbages.push_back(txn_ctx);
       tuple_counter++;
 
     } else {
       // if a tuple cannot be reclaimed, then add it back to the list.
-      local_unlink_queues_[thread_id].push_back(garbage_ctx);
+      local_unlink_queues_[thread_id].push_back(txn_ctx);
     }
   }  // end for
 
@@ -161,12 +175,12 @@ int TransactionLevelGCManager::Reclaim(const int &thread_id,
   auto garbage_ctx_entry = reclaim_maps_[thread_id].begin();
   while (garbage_ctx_entry != reclaim_maps_[thread_id].end()) {
     const eid_t garbage_eid = garbage_ctx_entry->first;
-    auto garbage_ctx = garbage_ctx_entry->second;
+    auto txn_ctx = garbage_ctx_entry->second;
 
     // if the global expired epoch id is no less than the garbage version's
     // epoch id, then recycle the garbage version
     if (garbage_eid <= expired_eid) {
-      AddToRecycleMap(garbage_ctx);
+      AddToRecycleMap(txn_ctx);
 
       // Remove from the original map
       garbage_ctx_entry = reclaim_maps_[thread_id].erase(garbage_ctx_entry);
@@ -182,14 +196,15 @@ int TransactionLevelGCManager::Reclaim(const int &thread_id,
 
 // Multiple GC thread share the same recycle map
 void TransactionLevelGCManager::AddToRecycleMap(
-    std::shared_ptr<GarbageContext> garbage_ctx) {
-  for (auto &entry : *(garbage_ctx->gc_set_.get())) {
+    concurrency::TransactionContext* txn_ctx) {
+  for (auto &entry : *(txn_ctx->GetGCSetPtr().get())) {
     auto &manager = catalog::Manager::GetInstance();
     auto tile_group = manager.GetTileGroup(entry.first);
 
     // During the resetting, a table may be deconstructed because of the DROP
     // TABLE request
     if (tile_group == nullptr) {
+      delete txn_ctx;
       return;
     }
 
@@ -222,7 +237,7 @@ void TransactionLevelGCManager::AddToRecycleMap(
   }
 
   auto storage_manager = storage::StorageManager::GetInstance();
-  for (auto &entry : *(garbage_ctx->gc_object_set_.get())) {
+  for (auto &entry : *(txn_ctx->GetGCObjectSetPtr().get())) {
     oid_t database_oid = std::get<0>(entry);
     oid_t table_oid = std::get<1>(entry);
     oid_t index_oid = std::get<2>(entry);
@@ -244,6 +259,8 @@ void TransactionLevelGCManager::AddToRecycleMap(
     PL_ASSERT(index != nullptr);
     table->DropIndexWithOid(index_oid);
   }
+
+  delete txn_ctx;
 }
 
 // this function returns a free tuple slot, if one exists
@@ -278,9 +295,18 @@ void TransactionLevelGCManager::ClearGarbage(int thread_id) {
   return;
 }
 
+void TransactionLevelGCManager::StopGC() {
+  LOG_TRACE("Stopping GC");
+  this->is_running_ = false;
+  // clear the garbage in each GC thread
+  for (int thread_id = 0; thread_id < gc_thread_count_; ++thread_id) {
+    ClearGarbage(thread_id);
+  }
+}
+
 void TransactionLevelGCManager::UnlinkVersions(
-    const std::shared_ptr<GarbageContext> &garbage_ctx) {
-  for (auto entry : *(garbage_ctx->gc_set_.get())) {
+    concurrency::TransactionContext *txn_ctx) {
+  for (auto entry : *(txn_ctx->GetGCSetPtr().get())) {
     for (auto &element : entry.second) {
       UnlinkVersion(ItemPointer(entry.first, element.first), element.second);
     }

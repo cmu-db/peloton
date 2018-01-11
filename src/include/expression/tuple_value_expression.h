@@ -14,7 +14,7 @@
 
 #include "expression/abstract_expression.h"
 
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "common/logger.h"
 #include "common/sql_node_visitor.h"
 #include "planner/binding_context.h"
@@ -33,7 +33,7 @@ class TupleValueExpression : public AbstractExpression {
       : AbstractExpression(ExpressionType::VALUE_TUPLE, type::TypeId::INVALID),
         value_idx_(-1),
         tuple_idx_(-1),
-        col_name_(col_name),
+        col_name_(StringUtil::Lower(col_name)),
         ai_(nullptr) {}
 
   TupleValueExpression(std::string &&col_name, std::string &&table_name)
@@ -41,7 +41,7 @@ class TupleValueExpression : public AbstractExpression {
         value_idx_(-1),
         tuple_idx_(-1),
         table_name_(StringUtil::Lower(table_name)),
-        col_name_(col_name),
+        col_name_(StringUtil::Lower(col_name)),
         ai_(nullptr) {}
 
   TupleValueExpression(type::TypeId type_id, const int tuple_idx,
@@ -69,7 +69,7 @@ class TupleValueExpression : public AbstractExpression {
     value_idx_ = value_idx;
     tuple_idx_ = tuple_idx;
   }
-  
+
   inline void SetValueType(type::TypeId type_id) {
     return_value_type_ = type_id;
   }
@@ -79,15 +79,12 @@ class TupleValueExpression : public AbstractExpression {
     tuple_idx_ = tuple_idx;
   }
 
-  // Attribute binding
+  /**
+   * @brief Attribute binding
+   * @param binding_contexts
+   */
   void PerformBinding(const std::vector<const planner::BindingContext *> &
-                          binding_contexts) override {
-    const auto &context = binding_contexts[GetTupleId()];
-    ai_ = context->Find(GetColumnId());
-    PL_ASSERT(ai_ != nullptr);
-    LOG_DEBUG("TVE Column ID %u.%u binds to AI %p (%s)", GetTupleId(),
-              GetColumnId(), ai_, ai_->name.c_str());
-  }
+                          binding_contexts) override;
 
   // Return the attributes this expression uses
   void GetUsedAttributes(std::unordered_set<const planner::AttributeInfo *> &
@@ -109,20 +106,22 @@ class TupleValueExpression : public AbstractExpression {
   }
 
   virtual bool ExactlyEquals(const AbstractExpression &rhs) const override {
-    if (exp_type_ != rhs.GetExpressionType())
-      return false;
+    if (exp_type_ != rhs.GetExpressionType()) return false;
 
     auto &other = static_cast<const TupleValueExpression &>(rhs);
     // For query like SELECT A.id, B.id FROM test AS A, test AS B;
     // we need to know whether A.id is from A.id or B.id. In this case,
     // A.id and B.id have the same bound oids since they refer to the same table
     // but they have different table alias.
-    if (table_name_.empty() xor other.table_name_.empty())
+    if ((table_name_.empty() xor other.table_name_.empty()) ||
+        col_name_.empty() xor other.col_name_.empty())
       return false;
-    bool are_equal = bound_obj_id_ == other.bound_obj_id_;
+    bool res = bound_obj_id_ == other.bound_obj_id_;
     if (!table_name_.empty() && !other.table_name_.empty())
-      are_equal = (table_name_ == other.table_name_) && are_equal;
-    return are_equal;
+      res = table_name_ == other.table_name_ && res;
+    if (!col_name_.empty() && !other.col_name_.empty())
+      res = col_name_ == other.col_name_ && res;
+    return res;
   }
 
   virtual hash_t Hash() const override { return HashForExactMatch(); }
@@ -141,6 +140,8 @@ class TupleValueExpression : public AbstractExpression {
 
   void SetTableName(std::string table_alias) { table_name_ = table_alias; }
 
+  void SetColName(std::string col_name) { col_name_ = col_name; }
+
   bool GetIsBound() const { return is_bound_; }
 
   const std::tuple<oid_t, oid_t, oid_t> &GetBoundOid() const {
@@ -156,7 +157,16 @@ class TupleValueExpression : public AbstractExpression {
     is_bound_ = true;
   }
 
+  std::tuple<oid_t, oid_t, oid_t> GetBoundOid() {
+    PL_ASSERT(is_bound_);
+    return bound_obj_id_;
+  }
+
   virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
+
+  const std::string GetInfo(int num_indent) const override;
+
+  const std::string GetInfo() const override;
 
   bool IsNullable() const override;
 

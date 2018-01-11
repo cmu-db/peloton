@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "common/logger.h"
 #include "executor/logical_tile_factory.h"
 #include "executor/merge_join_executor.h"
@@ -146,7 +146,7 @@ bool MergeJoinExecutor::DExecute() {
           clause.right_->Evaluate(&left_tuple, &right_tuple, nullptr);
 
       // Left key < Right key, advance left
-      if (left_value.CompareLessThan(right_value) == type::CMP_TRUE) {
+      if (left_value.CompareLessThan(right_value) == CmpBool::TRUE) {
         LOG_TRACE("left < right, advance left ");
         left_start_row = left_end_row;
         left_end_row = Advance(left_tile, left_start_row, true);
@@ -154,7 +154,7 @@ bool MergeJoinExecutor::DExecute() {
         break;
       }
       // Left key > Right key, advance right
-      else if (left_value.CompareGreaterThan(right_value) == type::CMP_TRUE) {
+      else if (left_value.CompareGreaterThan(right_value) == CmpBool::TRUE) {
         LOG_TRACE("left > right, advance right ");
         right_start_row = right_end_row;
         right_end_row = Advance(right_tile, right_start_row, false);
@@ -260,7 +260,7 @@ size_t MergeJoinExecutor::Advance(LogicalTile *tile, size_t start_row,
       auto next_value =
           expr->Evaluate(&next_tuple, &next_tuple, executor_context_);
 
-      if (!(this_value.CompareEquals(next_value) == type::CMP_TRUE)) {
+      if (!(this_value.CompareEquals(next_value) == CmpBool::TRUE)) {
         diff = true;
         break;
       }

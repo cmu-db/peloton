@@ -35,6 +35,13 @@ class PropertySet {
 
   const std::shared_ptr<Property> GetPropertyOfType(PropertyType type) const;
 
+  template <typename T>
+  const T *GetPropertyOfTypeAs(PropertyType type) const {
+    auto property = GetPropertyOfType(type);
+    if (property) return property->As<T>();
+    return nullptr;
+  }
+
   hash_t Hash() const;
 
   // whether this property set contains a specific property
@@ -48,6 +55,19 @@ class PropertySet {
 
  private:
   std::vector<std::shared_ptr<Property>> properties_;
+};
+
+struct PropSetPtrHash {
+  std::size_t operator()(std::shared_ptr<PropertySet> const& s) const {
+    return s->Hash();
+  }
+};
+
+struct PropSetPtrEq {
+  bool operator()(std::shared_ptr<PropertySet> const& t1,
+                  std::shared_ptr<PropertySet> const& t2) const {
+    return *t1 == *t2;
+  }
 };
 
 } // namespace optimizer 

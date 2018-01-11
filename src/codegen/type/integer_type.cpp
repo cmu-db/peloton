@@ -172,6 +172,23 @@ struct Negate : public TypeSystem::UnaryOperatorHandleNull {
   }
 };
 
+// Floor
+struct Floor : public TypeSystem::UnaryOperatorHandleNull {
+  bool SupportsType(const Type &type) const override {
+    return type.GetSqlType() == Integer::Instance();
+  }
+
+  Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
+    return Type{Integer::Instance()};
+  }
+
+  Value Impl(UNUSED_ATTRIBUTE CodeGen &codegen,
+             const Value &val) const override {
+    PL_ASSERT(SupportsType(val.GetType()));
+    return val;
+  }
+};
+
 // Ceiling
 struct Ceil : public TypeSystem::UnaryOperatorHandleNull {
   bool SupportsType(const Type &type) const override {
@@ -427,9 +444,11 @@ static std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {
 // Unary operators
 static Negate kNegOp;
 static Ceil kCeilOp;
+static Floor kFloorOp;
 static std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {
     {OperatorId::Negation, kNegOp},
-    {OperatorId::Ceil, kCeilOp}};
+    {OperatorId::Ceil, kCeilOp},
+    {OperatorId::Floor, kFloorOp}};
 
 // Binary operations
 static Add kAddOp;
@@ -448,6 +467,9 @@ static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
 // Nary operations
 static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
 
+// No arg operations
+static std::vector<TypeSystem::NoArgOpInfo> kNoArgOperatorTable = {};
+
 }  // anonymous namespace
 
 //===----------------------------------------------------------------------===//
@@ -458,8 +480,9 @@ static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
 Integer::Integer()
     : SqlType(peloton::type::TypeId::INTEGER),
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
-                   kComparisonTable, kUnaryOperatorTable, kBinaryOperatorTable,
-                   kNaryOperatorTable) {}
+                   kComparisonTable, kUnaryOperatorTable,
+                   kBinaryOperatorTable, kNaryOperatorTable,
+                   kNoArgOperatorTable) {}
 
 Value Integer::GetMinValue(CodeGen &codegen) const {
   auto *raw_val = codegen.Const32(peloton::type::PELOTON_INT32_MIN);

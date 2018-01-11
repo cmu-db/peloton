@@ -13,8 +13,6 @@
 #pragma once
 
 #include "codegen/aggregation.h"
-#include "codegen/compilation_context.h"
-#include "codegen/consumer_context.h"
 #include "codegen/oa_hash_table.h"
 #include "codegen/operator/operator_translator.h"
 #include "codegen/updateable_storage.h"
@@ -194,12 +192,6 @@ class HashGroupByTranslator : public OperatorTranslator {
 
   // The hash table
   OAHashTable hash_table_;
-
-  // The ID of the output vector (for vectorized result production)
-  RuntimeState::StateID output_vector_id_;
-
-  // The ID of the group-prefetch vector, if we're prefetching
-  RuntimeState::StateID prefetch_vector_id_;
 
   // The aggregation handler
   Aggregation aggregation_;

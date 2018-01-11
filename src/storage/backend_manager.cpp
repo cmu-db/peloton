@@ -27,7 +27,7 @@
 #include "common/exception.h"
 #include "common/logger.h"
 #include "common/macros.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 // #include "logging/logging_util.h"
 #include "storage/backend_manager.h"
 

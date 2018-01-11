@@ -21,10 +21,11 @@
 #include "common/init.h"
 #include "common/logger.h"
 #include "common/thread_pool.h"
+#include "concurrency/transaction_context.h"
 #include "gc/gc_manager.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 
-#include "container/lock_free_queue.h"
+#include "common/container/lock_free_queue.h"
 
 namespace peloton {
 namespace gc {
@@ -32,26 +33,14 @@ namespace gc {
 #define MAX_QUEUE_LENGTH 100000
 #define MAX_ATTEMPT_COUNT 100000
 
-struct GarbageContext {
-  GarbageContext() : epoch_id_(INVALID_EID) {}
-  GarbageContext(std::shared_ptr<GCSet> gc_set,
-                 std::shared_ptr<GCObjectSet> gc_object_set,
-                 const eid_t &epoch_id)
-      : gc_set_(gc_set), gc_object_set_(gc_object_set), epoch_id_(epoch_id) {}
-
-  std::shared_ptr<GCSet> gc_set_;
-  std::shared_ptr<GCObjectSet> gc_object_set_;
-  eid_t epoch_id_;
-};
-
 class TransactionLevelGCManager : public GCManager {
  public:
   TransactionLevelGCManager(const int thread_count)
       : gc_thread_count_(thread_count), reclaim_maps_(thread_count) {
     unlink_queues_.reserve(thread_count);
     for (int i = 0; i < gc_thread_count_; ++i) {
-      std::shared_ptr<LockFreeQueue<std::shared_ptr<GarbageContext>>>
-          unlink_queue(new LockFreeQueue<std::shared_ptr<GarbageContext>>(
+      std::shared_ptr<LockFreeQueue<concurrency::TransactionContext* >>
+          unlink_queue(new LockFreeQueue<concurrency::TransactionContext* >(
               MAX_QUEUE_LENGTH));
       unlink_queues_.push_back(unlink_queue);
       local_unlink_queues_.emplace_back();
@@ -67,8 +56,8 @@ class TransactionLevelGCManager : public GCManager {
 
     unlink_queues_.reserve(gc_thread_count_);
     for (int i = 0; i < gc_thread_count_; ++i) {
-      std::shared_ptr<LockFreeQueue<std::shared_ptr<GarbageContext>>>
-          unlink_queue(new LockFreeQueue<std::shared_ptr<GarbageContext>>(
+      std::shared_ptr<LockFreeQueue<concurrency::TransactionContext* >>
+          unlink_queue(new LockFreeQueue<concurrency::TransactionContext* >(
               MAX_QUEUE_LENGTH));
       unlink_queues_.push_back(unlink_queue);
       local_unlink_queues_.emplace_back();
@@ -106,15 +95,15 @@ class TransactionLevelGCManager : public GCManager {
     }
   };
 
-  virtual void StopGC() override {
-    LOG_TRACE("Stopping GC");
-    this->is_running_ = false;
-  }
+  /**
+   * @brief This stops the Garbage Collector when Peloton shuts down
+   *
+   * @return No return value.
+   */
+  virtual void StopGC() override;
 
-  virtual void RecycleTransaction(std::shared_ptr<GCSet> gc_set,
-                                  std::shared_ptr<GCObjectSet> gc_object_set,
-                                  const eid_t &epoch_id,
-                                  const size_t &thread_id) override;
+  virtual void RecycleTransaction(
+      concurrency::TransactionContext *txn) override;
 
   virtual ItemPointer ReturnFreeSlot(const oid_t &table_id) override;
 
@@ -145,18 +134,24 @@ class TransactionLevelGCManager : public GCManager {
     return (unsigned int)thread_id % gc_thread_count_;
   }
 
+  /**
+   * @brief Unlink and reclaim the tuples remained in a garbage collection
+   * thread when the Garbage Collector stops.
+   *
+   * @return No return value.
+   */
   void ClearGarbage(int thread_id);
 
   void Running(const int &thread_id);
 
-  void AddToRecycleMap(std::shared_ptr<GarbageContext> gc_ctx);
+  void AddToRecycleMap(concurrency::TransactionContext *txn_ctx);
 
   bool ResetTuple(const ItemPointer &);
 
   // this function iterates the gc context and unlinks every version
   // from the indexes.
   // this function will call the UnlinkVersion() function.
-  void UnlinkVersions(const std::shared_ptr<GarbageContext> &garbage_ctx);
+  void UnlinkVersions(concurrency::TransactionContext *txn_ctx);
 
   // this function unlinks a specified version from the index.
   void UnlinkVersion(const ItemPointer location, const GCVersionType type);
@@ -170,19 +165,20 @@ class TransactionLevelGCManager : public GCManager {
 
   // queues for to-be-unlinked tuples.
   // # unlink_queues == # gc_threads
-  std::vector<
-      std::shared_ptr<peloton::LockFreeQueue<std::shared_ptr<GarbageContext>>>>
+  std::vector<std::shared_ptr<
+      peloton::LockFreeQueue<concurrency::TransactionContext* >>>
       unlink_queues_;
 
   // local queues for to-be-unlinked tuples.
   // # local_unlink_queues == # gc_threads
-  std::vector<std::list<std::shared_ptr<GarbageContext>>> local_unlink_queues_;
+  std::vector<
+      std::list<concurrency::TransactionContext* >> local_unlink_queues_;
 
   // multimaps for to-be-reclaimed tuples.
   // The key is the timestamp when the garbage is identified, value is the
   // metadata of the garbage.
   // # reclaim_maps == # gc_threads
-  std::vector<std::multimap<cid_t, std::shared_ptr<GarbageContext>>>
+  std::vector<std::multimap<cid_t, concurrency::TransactionContext* >>
       reclaim_maps_;
 
   // queues for to-be-reused tuples.

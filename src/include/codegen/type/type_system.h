@@ -16,7 +16,7 @@
 #include <vector>
 
 #include "common/macros.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 
 namespace peloton {
 namespace codegen {
@@ -233,7 +233,31 @@ class TypeSystem {
   };
 
   //===--------------------------------------------------------------------===//
-  //
+  // An operator with no argument
+  //===--------------------------------------------------------------------===//
+  struct NoArgOperator {
+    virtual ~NoArgOperator() {}
+
+    // Does this unary operator support values of the given type?
+    bool SupportsType(const UNUSED_ATTRIBUTE Type &type) const { return false; }
+
+    // What is the SQL type of the result of applying the unary operator on a
+    // value of the provided type?
+    virtual Type ResultType(const Type &val_type) const = 0;
+
+    // Apply the operator on the given value
+    virtual Value DoWork(CodeGen &codegen) const = 0;
+  };
+
+  struct NoArgOpInfo {
+    // The ID of the operation
+    OperatorId op_id;
+
+    // The operation
+    const NoArgOperator &no_arg_operation;
+  };
+
+  //===--------------------------------------------------------------------===//
   // A unary operator (i.e., an operator that accepts a single argument)
   //
   //===--------------------------------------------------------------------===//
@@ -372,7 +396,8 @@ class TypeSystem {
              const std::vector<ComparisonInfo> &comparison_table,
              const std::vector<UnaryOpInfo> &unary_op_table,
              const std::vector<BinaryOpInfo> &binary_op_table,
-             const std::vector<NaryOpInfo> &nary_op_table);
+             const std::vector<NaryOpInfo> &nary_op_table,
+             const std::vector<NoArgOpInfo> &no_arg_op_table);
 
   // Can values of the provided type be implicitly casted into a value of the
   // other provided type?
@@ -420,6 +445,9 @@ class TypeSystem {
 
   // The table of builtin nary operators
   const std::vector<NaryOpInfo> &nary_op_table_;
+
+  // The table of builti no-arg operators
+  const std::vector<NoArgOpInfo> &no_arg_op_table_;
 
  private:
   DISALLOW_COPY_AND_MOVE(TypeSystem);

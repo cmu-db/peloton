@@ -18,7 +18,7 @@
 #include <vector>
 
 #include "brain/clusterer.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "common/timer.h"
 
 namespace peloton {

@@ -22,7 +22,7 @@
 #include "common/exception.h"
 #include "common/item_pointer.h"
 #include "common/printable.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 
 namespace peloton {
 
@@ -74,6 +74,8 @@ class TransactionContext : public Printable {
   inline eid_t GetEpochId() const { return epoch_id_; }
 
   inline void SetCommitId(const cid_t commit_id) { commit_id_ = commit_id; }
+
+  inline void SetEpochId(const eid_t epoch_id) { epoch_id_ = epoch_id; }
 
   void RecordCreate(oid_t database_oid, oid_t table_oid, oid_t index_oid) {
     rw_object_set_.emplace_back(database_oid, table_oid, index_oid,

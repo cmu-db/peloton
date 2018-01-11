@@ -17,7 +17,7 @@
 #include "common/harness.h"
 #include "common/logger.h"
 #include "common/statement.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "type/value_factory.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/create_executor.h"
@@ -33,7 +33,7 @@
 #include "planner/index_scan_plan.h"
 #include "planner/insert_plan.h"
 #include "storage/data_table.h"
-#include "include/traffic_cop/traffic_cop.h"
+#include "traffic_cop/traffic_cop.h"
 
 
 using ::testing::NotNull;

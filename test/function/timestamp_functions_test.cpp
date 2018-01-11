@@ -19,7 +19,7 @@
 #include "common/harness.h"
 
 #include "function/timestamp_functions.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
 
@@ -64,8 +64,9 @@ void DateTruncTestHelper(DatePartType part, std::string &date,
   // Check that result is *not* null
   EXPECT_NE(result, type::PELOTON_TIMESTAMP_NULL);
   // Then check that it equals our expected value
-  LOG_TRACE("COMPARE: %s = %s\n", expected.ToString().c_str(),
-            result.ToString().c_str());
+  LOG_TRACE("COMPARE: %s = %" PRId64 "\n",
+            expected.c_str(),
+            static_cast<long>(result));
   EXPECT_EQ(result, int_expected);
 }
 

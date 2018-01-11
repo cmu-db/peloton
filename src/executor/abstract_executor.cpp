@@ -30,9 +30,7 @@ AbstractExecutor::AbstractExecutor(const planner::AbstractPlan *node,
 void AbstractExecutor::SetOutput(LogicalTile *table) { output.reset(table); }
 
 // Transfers ownership
-LogicalTile *AbstractExecutor::GetOutput() {
-  return output.release();
-}
+LogicalTile *AbstractExecutor::GetOutput() { return output.release(); }
 
 /**
  * @brief Add child executor to this executor node.
@@ -93,12 +91,6 @@ bool AbstractExecutor::Execute() {
 
   return status;
 }
-
-void AbstractExecutor::SetContext(type::Value &value) {
-  executor_context_->SetParams(value);
-}
-
-void AbstractExecutor::ClearContext() { executor_context_->ClearParams(); }
 
 }  // namespace executor
 }  // namespace peloton

@@ -6,7 +6,7 @@
 //
 // Identification: src/include/planner/abstract_plan.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-18, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -22,25 +22,25 @@
 #include "planner/binding_context.h"
 #include "type/serializeio.h"
 #include "type/serializer.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "type/value.h"
 #include "util/hash_util.h"
 
 namespace peloton {
 
+namespace catalog {
+class Schema;
+}  // namespace catalog
+
 namespace executor {
 class AbstractExecutor;
 class LogicalTile;
-}
-
-namespace catalog {
-class Schema;
-}
+}  // namespace executor
 
 namespace expression {
 class AbstractExpression;
 class Parameter;
-}
+}  // namespace expression
 
 namespace planner {
 
@@ -79,7 +79,7 @@ class AbstractPlan : public Printable {
   // Setting values of the parameters in the prepare statement
   virtual void SetParameterValues(std::vector<type::Value> *values);
   
-  // Get the estimated cardinalities of this plan
+  // Get the estimated cardinality of this plan
   int GetCardinality() const { return estimated_cardinality_; }
   
   // TODO: This is only for testing now. When the optimizer is ready, we should
@@ -101,10 +101,10 @@ class AbstractPlan : public Printable {
   }
 
   virtual void GetOutputColumns(std::vector<oid_t> &columns UNUSED_ATTRIBUTE)
-      const { return; }
+      const { }
 
   // Get a string representation for debugging
-  const std::string GetInfo() const;
+  const std::string GetInfo() const override;
 
   virtual std::unique_ptr<AbstractPlan> Copy() const = 0;
 

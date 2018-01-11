@@ -21,7 +21,7 @@
 #include "expression/expression_util.h"
 #include "storage/data_table.h"
 #include "storage/storage_manager.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 
 namespace peloton {
 namespace planner {

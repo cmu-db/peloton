@@ -24,7 +24,7 @@
 #include "executor/insert_executor.h"
 #include "statistics/backend_stats_context.h"
 #include "statistics/stats_aggregator.h"
-#include "include/traffic_cop/traffic_cop.h"
+#include "traffic_cop/traffic_cop.h"
 
 #define NUM_ITERATION 50
 #define NUM_TABLE_INSERT 1
@@ -393,7 +393,7 @@ TEST_F(StatsTests, MultiThreadStatsTest) {
 //  std::vector<type::Value> params;
 //  std::vector<ResultValue> result;
 //  std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
-//  executor::ExecuteResult status = traffic_cop.ExecuteHelper(
+//  executor::ExecutionResult status = traffic_cop.ExecuteHelper(
 //      statement->GetPlanTree().get(), params, result, result_format);
 //  LOG_TRACE("Statement executed. Result: %s",
 //            ResultTypeToString(status.m_result).c_str());

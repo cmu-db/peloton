@@ -30,16 +30,16 @@ namespace planner {
 /**
  * @brief A class for representing projection information.
  *
- * The information is stored in two parts.
+ * The information is stored in two parts:
  * 1) A target_list stores non-trivial projections that can be calculated from
- *expressions.
+ *    expressions.
  * 2) A direct_map_list stores projections that is simply reorder of attributes
- *in the input.
+ *    in the input.
  *
  * We separate it in this way for two reasons:
- * i) Postgres does the same thing;
+ * i)  Postgres does the same thing;
  * ii) It makes it possible to use a more efficient executor to handle pure
- * direct map projections.
+ *     direct map projections.
  *
  * NB: in case of a constant-valued projection, it is still under the umbrella
  * of \b target_list, though it sounds simple enough.
@@ -72,7 +72,7 @@ class ProjectInfo {
 
   const DirectMapList &GetDirectMapList() const { return direct_map_list_; }
 
-  bool isNonTrivial() const { return target_list_.size() > 0; };
+  bool IsNonTrivial() const { return !target_list_.empty(); };
 
   bool Evaluate(storage::Tuple *dest, const AbstractTuple *tuple1,
                 const AbstractTuple *tuple2,

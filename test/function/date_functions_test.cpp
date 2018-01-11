@@ -19,7 +19,7 @@
 #include "common/harness.h"
 
 #include "function/date_functions.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
 
@@ -55,9 +55,15 @@ void ExtractTestHelper(DatePartType part, std::string &date,
   // Then check that it equals our expected value
   LOG_TRACE("COMPARE: %s = %s\n", expected.ToString().c_str(),
             result.ToString().c_str());
-  EXPECT_EQ(type::CmpBool::CMP_TRUE, expected.CompareEquals(result));
+  EXPECT_EQ(CmpBool::TRUE, expected.CompareEquals(result));
 }
-
+// Invoke DateFunctions::Now()
+TEST_F(DateFunctionsTests, NowTest) {
+  auto result1 = function::DateFunctions::Now();
+  sleep(1);
+  auto result2 = function::DateFunctions::Now();
+  EXPECT_GT(result2, result1);
+}
 // Invoke DateFunctions::Extract(NULL)
 TEST_F(DateFunctionsTests, NullExtractTest) {
   std::vector<type::Value> args = {

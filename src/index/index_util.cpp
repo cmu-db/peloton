@@ -191,12 +191,12 @@ bool IndexUtil::ValuePairComparator(const std::pair<type::Value, int> &i,
                                     const std::pair<type::Value, int> &j) {
 
   // If first elements are equal then compare the second element
-  if (i.first.CompareEquals(j.first) == type::CMP_TRUE) {
+  if (i.first.CompareEquals(j.first) == CmpBool::TRUE) {
     return i.second < j.second;
   }
   
   // Otherwise compare the first element for "<" or ">"
-  return i.first.CompareLessThan(j.first) == type::CMP_TRUE;
+  return i.first.CompareLessThan(j.first) == CmpBool::TRUE;
 }
 
 void IndexUtil::ConstructIntervals(oid_t leading_column_id,
@@ -300,7 +300,7 @@ void IndexUtil::FindMaxMinInColumns(oid_t leading_column_id,
             type::ValueFactory::GetNullValueByType(type))));
       //  non_leading_columns[column_id] = *range;
       // delete range;
-      LOG_TRACE("Insert a init bounds\tleft size %lu\t right description %s\n",
+      LOG_TRACE("Insert a init bounds, left size: %lu, right description: %s\n",
                 non_leading_columns[column_id].first.GetInfo().size(),
                 non_leading_columns[column_id].second.GetInfo().c_str());
     }
@@ -312,7 +312,7 @@ void IndexUtil::FindMaxMinInColumns(oid_t leading_column_id,
                 values[i].GetInfo().c_str());
       if (non_leading_columns[column_id].first.IsNull() ||
           non_leading_columns[column_id].first
-            .CompareGreaterThan(values[i]) == type::CMP_TRUE) {
+            .CompareGreaterThan(values[i]) == CmpBool::TRUE) {
         LOG_TRACE("Update min\n");
         non_leading_columns[column_id].first = values[i].Copy();
       }
@@ -325,7 +325,7 @@ void IndexUtil::FindMaxMinInColumns(oid_t leading_column_id,
                 values[i].GetInfo().c_str());
       if (non_leading_columns[column_id].first.IsNull() ||
           non_leading_columns[column_id].second.
-            CompareLessThan(values[i]) == type::CMP_TRUE) {
+            CompareLessThan(values[i]) == CmpBool::TRUE) {
         LOG_TRACE("Update max\n");
         non_leading_columns[column_id].second = values[i].Copy();
       }

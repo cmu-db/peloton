@@ -12,9 +12,9 @@
 
 #pragma once
 
+#include <sstream>
 #include <string>
 #include <vector>
-#include <sstream>
 
 #include "catalog/catalog.h"
 #include "catalog/schema.h"
@@ -26,7 +26,7 @@
 #include "expression/function_expression.h"
 #include "expression/operator_expression.h"
 #include "expression/parameter_value_expression.h"
-#include "include/function/string_functions.h"
+#include "function/string_functions.h"
 #include "expression/tuple_value_expression.h"
 #include "index/index.h"
 
@@ -286,6 +286,22 @@ class ExpressionUtil {
     }
   }
 
+  inline static ExpressionType ReverseComparisonExpressionType(
+      ExpressionType type) {
+    switch (type) {
+      case ExpressionType::COMPARE_GREATERTHAN:
+        return ExpressionType::COMPARE_LESSTHANOREQUALTO;
+      case ExpressionType::COMPARE_GREATERTHANOREQUALTO:
+        return ExpressionType::COMPARE_LESSTHAN;
+      case ExpressionType::COMPARE_LESSTHAN:
+        return ExpressionType::COMPARE_GREATERTHANOREQUALTO;
+      case ExpressionType::COMPARE_LESSTHANOREQUALTO:
+        return ExpressionType::COMPARE_GREATERTHAN;
+      default:
+        return type;
+    }
+  }
+
   /**
    * Generate a pretty-printed string representation of the entire
    * Expresssion tree for the given root node
@@ -378,41 +394,51 @@ class ExpressionUtil {
     if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
       table_alias_set.insert(
           reinterpret_cast<const TupleValueExpression *>(expr)->GetTableName());
-      return;
+    } else {
+      for (size_t i = 0; i < expr->GetChildrenSize(); i++)
+        GenerateTableAliasSet(expr->GetChild(i), table_alias_set);
     }
-    for (size_t i = 0; i < expr->GetChildrenSize(); i++)
-      GenerateTableAliasSet(expr->GetChild(i), table_alias_set);
   }
 
   /**
-   * Convert all aggregate expression in the child expression tree
-   * to tuple value expression with corresponding column offset
+   * TODO(boweic): this function may not be efficient, in the future we may want
+   * to add expressions to groups so that we do not need to walk through the
+   * expression tree when judging '==' each time
+   *
+   * Convert all expression in the current expression tree that is in
+   * child_expr_map to tuple value expression with corresponding column offset
    * of the input child tuple. This is used for handling projection
-   * on aggregate function (e.g. SELECT sum(a)+max(b) FROM ... GROUP BY ...)
+   * on situations like aggregate function (e.g. SELECT sum(a)+max(b) FROM ...
+   * GROUP BY ...) when input columns contain sum(a) and sum(b). We need to
+   * treat them as tuple value expression in the projection plan. This function
+   *should always be called before calling EvaluateExpression
+   *
+   * Please notice that this function should only apply to copied expression
+   *since it would modify the current expression. We do not want to modify the
+   *original expression since it may be referenced in other places
    */
-  static void ConvertAggExprToTvExpr(AbstractExpression *expr,
-                                     ExprMap &child_expr_map) {
+  static void ConvertToTvExpr(AbstractExpression *expr,
+                              ExprMap &child_expr_map) {
     for (size_t i = 0; i < expr->GetChildrenSize(); i++) {
       auto child_expr = expr->GetModifiableChild(i);
-      if (IsAggregateExpression(child_expr->GetExpressionType())) {
-        EvaluateExpression({child_expr_map}, child_expr);
-        std::shared_ptr<AbstractExpression> probe_expr(
-            std::shared_ptr<AbstractExpression>{}, child_expr);
+      if (child_expr->GetExpressionType() != ExpressionType::VALUE_TUPLE &&
+          child_expr_map.count(child_expr)) {
+        // EvaluateExpression({child_expr_map}, child_expr);
         expr->SetChild(i,
                        new TupleValueExpression(child_expr->GetValueType(), 0,
-                                                child_expr_map[probe_expr]));
-      } else
-        ConvertAggExprToTvExpr(child_expr, child_expr_map);
+                                                child_expr_map[child_expr]));
+      } else {
+        ConvertToTvExpr(child_expr, child_expr_map);
+      }
     }
   }
 
   /**
    * Generate a vector to store expressions in output order
    */
-  static std::vector<std::shared_ptr<AbstractExpression>>
-  GenerateOrderedOutputExprs(ExprMap &expr_map) {
-    std::vector<std::shared_ptr<AbstractExpression>> ordered_expr(
-        expr_map.size());
+  static std::vector<AbstractExpression *> GenerateOrderedOutputExprs(
+      ExprMap &expr_map) {
+    std::vector<AbstractExpression *> ordered_expr(expr_map.size());
     for (auto iter : expr_map) ordered_expr[iter.second] = iter.first;
     return ordered_expr;
   }
@@ -420,10 +446,9 @@ class ExpressionUtil {
   /**
    * Walks an expression trees and find all AggregationExprs subtrees.
    */
-  static void GetAggregateExprs(
-      std::vector<std::shared_ptr<AggregateExpression>> &aggr_exprs,
-      AbstractExpression *expr) {
-    std::vector<std::shared_ptr<TupleValueExpression>> dummy_tv_exprs;
+  static void GetAggregateExprs(std::vector<AggregateExpression *> &aggr_exprs,
+                                AbstractExpression *expr) {
+    std::vector<TupleValueExpression *> dummy_tv_exprs;
     GetAggregateExprs(aggr_exprs, dummy_tv_exprs, expr);
   }
 
@@ -431,16 +456,16 @@ class ExpressionUtil {
    * Walks an expression trees and find all AggregationExprs and TupleValueExprs
    * subtrees.
    */
-  static void GetAggregateExprs(
-      std::vector<std::shared_ptr<AggregateExpression>> &aggr_exprs,
-      std::vector<std::shared_ptr<TupleValueExpression>> &tv_exprs,
-      AbstractExpression *expr) {
+  static void GetAggregateExprs(std::vector<AggregateExpression *> &aggr_exprs,
+                                std::vector<TupleValueExpression *> &tv_exprs,
+                                AbstractExpression *expr) {
     size_t children_size = expr->GetChildrenSize();
-    if (IsAggregateExpression(expr->GetExpressionType()))
-      aggr_exprs.emplace_back((AggregateExpression *)expr->Copy());
-    else if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE)
-      tv_exprs.emplace_back((TupleValueExpression *)expr->Copy());
-    else {
+    if (IsAggregateExpression(expr->GetExpressionType())) {
+      auto aggr_expr = reinterpret_cast<AggregateExpression *>(expr);
+      aggr_exprs.push_back(aggr_expr);
+    } else if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
+      tv_exprs.push_back((TupleValueExpression *)expr);
+    } else {
       for (size_t i = 0; i < children_size; i++)
         GetAggregateExprs(aggr_exprs, tv_exprs, expr->GetModifiableChild(i));
     }
@@ -457,8 +482,7 @@ class ExpressionUtil {
 
     // Here we need a deep copy to void double delete subtree
     if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE)
-      expr_map.emplace(std::shared_ptr<AbstractExpression>(expr->Copy()),
-                       expr_map.size());
+      expr_map.emplace(expr, expr_map.size());
   }
 
   /**
@@ -470,9 +494,8 @@ class ExpressionUtil {
     for (size_t i = 0; i < children_size; i++)
       GetTupleValueExprs(expr_set, expr->GetModifiableChild(i));
 
-    // Here we need a deep copy to void double delete subtree
     if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE)
-      expr_set.emplace(expr->Copy());
+      expr_set.insert(expr);
   }
 
   /**
@@ -496,11 +519,9 @@ class ExpressionUtil {
       // HACK: Need to construct shared_ptr for probing but not want the
       // shared_ptr to delete the object. Use alias constructor
       auto tup_expr = (TupleValueExpression *)expr;
-      std::shared_ptr<AbstractExpression> probe_expr(
-          std::shared_ptr<AbstractExpression>{}, tup_expr);
       size_t tuple_idx = 0;
       for (auto &expr_map : expr_maps) {
-        auto iter = expr_map.find(probe_expr);
+        auto iter = expr_map.find(expr);
         if (iter != expr_map.end()) {
           tup_expr->SetValueIdx(iter->second, tuple_idx);
           break;
@@ -509,11 +530,23 @@ class ExpressionUtil {
       }
     } else if (IsAggregateExpression(expr->GetExpressionType())) {
       auto aggr_expr = (AggregateExpression *)expr;
-      std::shared_ptr<AbstractExpression> probe_expr(
-          std::shared_ptr<AbstractExpression>{}, aggr_expr);
       auto &expr_map = expr_maps[0];
-      auto iter = expr_map.find(probe_expr);
+      auto iter = expr_map.find(expr);
       if (iter != expr_map.end()) aggr_expr->SetValueIdx(iter->second);
+    } else if (expr->GetExpressionType() == ExpressionType::FUNCTION) {
+      auto func_expr = (expression::FunctionExpression *)expr;
+      std::vector<type::TypeId> argtypes;
+      for (size_t i = 0; i < children_size; i++)
+        argtypes.push_back(expr->GetChild(i)->GetValueType());
+      // Check and set the function ptr
+      auto catalog = catalog::Catalog::GetInstance();
+      const catalog::FunctionData &func_data =
+          catalog->GetFunction(func_expr->GetFuncName(), argtypes);
+      LOG_INFO("Function %s found in the catalog",
+               func_data.func_name_.c_str());
+      LOG_INFO("Argument num: %ld", func_data.argument_types_.size());
+      func_expr->SetFunctionExpressionParameters(
+          func_data.func_, func_data.return_type_, func_data.argument_types_);
     } else if (expr->GetExpressionType() ==
                ExpressionType::OPERATOR_CASE_EXPR) {
       auto case_expr = reinterpret_cast<expression::CaseExpression *>(expr);
@@ -605,7 +638,7 @@ class ExpressionUtil {
 
   /*
    * Recursively call on each child and fill in the predicate array.
-   * Returns true for zone mappable predicate. 
+   * Returns true for zone mappable predicate.
    * */
   static bool GetPredicateForZoneMap(
       std::vector<storage::PredicateInfo> &predicate_restrictions,
@@ -675,11 +708,199 @@ class ExpressionUtil {
       return true;
     } else {
       ExprSet l_set, r_set;
-      for (auto expr : l) l_set.insert(expr);
-      for (auto expr : r) r_set.insert(expr);
+      for (auto expr : l) l_set.insert(expr.get());
+      for (auto expr : r) r_set.insert(expr.get());
       return l_set == r_set;
     }
   }
+
+  /*
+   * Join all Annotated Exprs in the vector by AND operators, return a copy */
+  static std::unique_ptr<expression::AbstractExpression> JoinAnnotatedExprs(
+      const std::vector<AnnotatedExpression> &exprs) {
+    if (exprs.empty()) {
+      return nullptr;
+    }
+    std::unique_ptr<expression::AbstractExpression> curr_expr(
+        exprs[0].expr->Copy());
+    for (size_t i = 1; i < exprs.size(); ++i) {
+      std::unique_ptr<expression::AbstractExpression> next_expr(
+          new expression::ConjunctionExpression(ExpressionType::CONJUNCTION_AND,
+                                                curr_expr.release(),
+                                                exprs[i].expr->Copy()));
+      curr_expr = std::move(next_expr);
+    }
+    return curr_expr;
+  }
+
+  /* All following functions will be depracated when switch to new optimizer */
+
+  /**
+   * Walks an expression tree and fills in information about
+   * columns and functions in their respective objects given a
+   * set of schemas.
+   */
+  static void TransformExpression(std::vector<const catalog::Schema *> &schemas,
+                                  AbstractExpression *expr) {
+    bool dummy;
+    TransformExpression(nullptr, nullptr, expr, schemas, dummy, false);
+  }
+
+  /**
+   * Walks an expression tree and fills in information about
+   * columns and functions in their respective objects given a
+   * schema
+   */
+  static void TransformExpression(const catalog::Schema *schema,
+                                  AbstractExpression *expr) {
+    bool dummy;
+    std::vector<const catalog::Schema *> schemas = {schema};
+    TransformExpression(nullptr, nullptr, expr, schemas, dummy, false);
+  }
+
+  /**
+   * This function walks an expression tree and fills in information about
+   * columns and functions. Also generates a list of column ids we need to
+   * fetch
+   * from the base tile groups. Simultaneously generates a mapping of the
+   * original column
+   * id to the id in the logical tiles returned by the base tile groups
+   *
+   * This function is useful in determining information used by projection
+   * plans
+   */
+  static void TransformExpression(std::vector<oid_t> &column_ids,
+                                  AbstractExpression *expr,
+                                  const catalog::Schema &schema,
+                                  bool &needs_projection) {
+    std::vector<std::unordered_map<oid_t, oid_t>> column_mapping = {
+        std::unordered_map<oid_t, oid_t>()};
+    std::vector<const catalog::Schema *> schemas = {&schema};
+    TransformExpression(&column_mapping, &column_ids, expr, schemas,
+                        needs_projection, true);
+  }
+
+  /*
+   * Check whether an expression could be evaluated statically.
+   */
+  static bool IsValidStaticExpression(const AbstractExpression *expr) {
+    if (!(expr->GetExpressionType() == ExpressionType::VALUE_CONSTANT ||
+          IsOperatorExpression(expr->GetExpressionType()) ||
+          expr->GetExpressionType() == ExpressionType::FUNCTION)) {
+      return false;
+    }
+    size_t child_size = expr->GetChildrenSize();
+    for (size_t idx = 0; idx < child_size; ++idx) {
+      if (!IsValidStaticExpression(expr->GetChild(idx))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+ private:
+  /**
+   * this is a private function for transforming expressions as described
+   * above
+   *
+   * find columns determines if we are building a column_mapping and
+   * column_ids
+   * or we are just transforming
+   * the expressions
+   */
+  static void TransformExpression(
+      std::vector<std::unordered_map<oid_t, oid_t>> *column_mapping,
+      std::vector<oid_t> *column_ids, AbstractExpression *expr,
+      std::vector<const catalog::Schema *> &schemas, bool &needs_projection,
+      bool find_columns) {
+    if (expr == nullptr) {
+      return;
+    }
+    size_t num_children = expr->GetChildrenSize();
+    // do dfs to transform all children
+    for (size_t child = 0; child < num_children; child++) {
+      TransformExpression(column_mapping, column_ids,
+                          expr->GetModifiableChild(child), schemas,
+                          needs_projection, find_columns);
+    }
+    // if this is a column, we need to find if it is exists in the schema
+    if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE &&
+        expr->GetValueType() == type::TypeId::INVALID) {
+      auto val_expr = (expression::TupleValueExpression *)expr;
+      oid_t col_id = -1;
+      oid_t index = -1;
+      catalog::Column column;
+      for (int i = 0; i < (int)schemas.size(); i++) {
+        auto &schema = schemas[i];
+        col_id = schema->GetColumnID(val_expr->GetColumnName());
+        if (col_id != (oid_t)-1) {
+          index = i;
+          column = schema->GetColumn(col_id);
+          break;
+        }
+      }
+      // exception if we can't find the requested column by name
+      if (col_id == (oid_t)-1) {
+        throw Exception("Column " + val_expr->GetColumnName() + " not found");
+      }
+      // make sure the column we need is returned from the scan
+      // and we know where it is (for projection)
+      size_t mapped_position;
+      if (find_columns) {
+        if ((*column_mapping)[index].count(col_id) == 0) {
+          mapped_position = column_ids->size();
+          column_ids->push_back(col_id);
+          (*column_mapping)[index][col_id] = mapped_position;
+        } else {
+          mapped_position = (*column_mapping)[index][col_id];
+        }
+      } else {
+        mapped_position = col_id;
+      }
+      auto type = column.GetType();
+      // set the expression name to the alias if we have one
+      if (val_expr->alias.size() > 0) {
+        val_expr->expr_name_ = val_expr->alias;
+      } else {
+        val_expr->expr_name_ = val_expr->GetColumnName();
+      }
+      // point to the correct column returned in the logical tuple underneath
+      val_expr->SetTupleValueExpressionParams(type, mapped_position, 0);
+    }
+    // if we have any expression besides column expressions and star, we
+    // need to add a projection node
+    else if (expr->GetExpressionType() != ExpressionType::STAR) {
+      needs_projection = true;
+    }
+    // if the expression is a function, do a lookup and make sure it exists
+    if (expr->GetExpressionType() == ExpressionType::FUNCTION) {
+      auto func_expr = (expression::FunctionExpression *)expr;
+      std::vector<type::TypeId> argtypes;
+      size_t children_size = expr->GetChildrenSize();
+      for (size_t i = 0; i < children_size; i++)
+        argtypes.push_back(expr->GetChild(i)->GetValueType());
+      auto catalog = catalog::Catalog::GetInstance();
+      const catalog::FunctionData &func_data =
+          catalog->GetFunction(func_expr->GetFuncName(), argtypes);
+      func_expr->SetFunctionExpressionParameters(
+          func_data.func_, func_data.return_type_, func_data.argument_types_);
+    }
+
+    // Handle case expressions
+    if (expr->GetExpressionType() == ExpressionType::OPERATOR_CASE_EXPR) {
+      auto case_expr = (expression::CaseExpression *)expr;
+      for (int i = 0; i < (int)case_expr->GetWhenClauseSize(); i++) {
+        TransformExpression(column_mapping, column_ids,
+                            case_expr->GetWhenClauseCond(i), schemas,
+                            needs_projection, find_columns);
+      }
+    }
+
+    // make sure the return types for expressions are set correctly
+    // this is useful in operator expressions
+    expr->DeduceExpressionType();
+  }
+
 };
 }
 }

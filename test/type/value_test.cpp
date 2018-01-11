@@ -45,7 +45,7 @@ TEST_F(ValueTests, HashTest) {
               max_val.ToString().c_str(), min_val.ToString().c_str());
 
     // They should not be equal
-    EXPECT_EQ(type::CmpBool::CMP_FALSE, max_val.CompareEquals(min_val));
+    EXPECT_EQ(CmpBool::FALSE, max_val.CompareEquals(min_val));
 
     // Nor should their hash values be equal
     auto max_hash = max_val.Hash();
@@ -55,7 +55,7 @@ TEST_F(ValueTests, HashTest) {
     // But if I copy the first value then the hashes should be the same
     auto copyVal = max_val.Copy();
     auto copyHash = copyVal.Hash();
-    EXPECT_EQ(type::CmpBool::CMP_TRUE, max_val.CompareEquals(copyVal));
+    EXPECT_EQ(CmpBool::TRUE, max_val.CompareEquals(copyVal));
     EXPECT_EQ(max_hash, copyHash);
   }  // FOR
 }
@@ -69,8 +69,8 @@ TEST_F(ValueTests, MinMaxTest) {
     if (col_type == type::TypeId::VARCHAR) {
       max_val = type::ValueFactory::GetVarcharValue(std::string("AAA"), nullptr);
       min_val = type::ValueFactory::GetVarcharValue(std::string("ZZZ"), nullptr);
-      EXPECT_EQ(type::CMP_FALSE, min_val.CompareLessThan(max_val));
-      EXPECT_EQ(type::CMP_FALSE, max_val.CompareGreaterThan(min_val));
+      EXPECT_EQ(CmpBool::FALSE, min_val.CompareLessThan(max_val));
+      EXPECT_EQ(CmpBool::FALSE, max_val.CompareGreaterThan(min_val));
     }
 
     // FIXME: Broken types!!!
@@ -78,14 +78,14 @@ TEST_F(ValueTests, MinMaxTest) {
     LOG_DEBUG("MinMax: %s", TypeIdToString(col_type).c_str());
 
     // Check that we always get the correct MIN value
-    EXPECT_EQ(type::CMP_TRUE, min_val.Min(min_val).CompareEquals(min_val));
-    EXPECT_EQ(type::CMP_TRUE, min_val.Min(max_val).CompareEquals(min_val));
-    EXPECT_EQ(type::CMP_TRUE, min_val.Min(min_val).CompareEquals(min_val));
+    EXPECT_EQ(CmpBool::TRUE, min_val.Min(min_val).CompareEquals(min_val));
+    EXPECT_EQ(CmpBool::TRUE, min_val.Min(max_val).CompareEquals(min_val));
+    EXPECT_EQ(CmpBool::TRUE, min_val.Min(min_val).CompareEquals(min_val));
 
     // Check that we always get the correct MAX value
-    EXPECT_EQ(type::CMP_TRUE, max_val.Max(min_val).CompareEquals(max_val));
-    EXPECT_EQ(type::CMP_TRUE, min_val.Max(max_val).CompareEquals(max_val));
-    EXPECT_EQ(type::CMP_TRUE, max_val.Max(min_val).CompareEquals(max_val));
+    EXPECT_EQ(CmpBool::TRUE, max_val.Max(min_val).CompareEquals(max_val));
+    EXPECT_EQ(CmpBool::TRUE, min_val.Max(max_val).CompareEquals(max_val));
+    EXPECT_EQ(CmpBool::TRUE, max_val.Max(min_val).CompareEquals(max_val));
   } // FOR
 }
 
@@ -106,7 +106,7 @@ TEST_F(ValueTests, VarcharCopyTest) {
 
     // But their underlying data should be equal
     auto result = val1.CompareEquals(val2);
-    EXPECT_EQ(type::CmpBool::CMP_TRUE, result);
+    EXPECT_EQ(CmpBool::TRUE, result);
   }  // FOR
 }
 }

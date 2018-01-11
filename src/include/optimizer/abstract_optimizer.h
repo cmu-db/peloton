@@ -14,7 +14,7 @@
 
 #include <memory>
 
-#include "type/types.h"
+#include "common/internal_types.h"
 
 namespace peloton {
 namespace planner {
@@ -28,6 +28,10 @@ class SQLStatementList;
 
 namespace concurrency {
 class TransactionContext;
+}
+
+namespace catalog {
+class Catalog;
 }
 
 namespace optimizer {

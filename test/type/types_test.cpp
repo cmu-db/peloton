@@ -14,7 +14,7 @@
 #include <string>
 
 #include "common/harness.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "type/value_factory.h"
 
 namespace peloton {
@@ -1080,7 +1080,6 @@ TEST_F(TypesTests, LogRecordTypeTest) {
 TEST_F(TypesTests, PropertyTypeTest) {
   std::vector<PropertyType> list = {
       PropertyType::INVALID,
-      PropertyType::PREDICATE,
       PropertyType::COLUMNS,
       PropertyType::DISTINCT,
       PropertyType::SORT,

@@ -20,7 +20,7 @@
 
 #include "common/item_pointer.h"
 #include "common/platform.h"
-#include "container/lock_free_array.h"
+#include "common/container/lock_free_array.h"
 #include "index/index.h"
 #include "storage/abstract_table.h"
 #include "storage/indirection_array.h"
@@ -88,7 +88,7 @@ class DataTable : public AbstractTable {
             const oid_t &database_oid, const oid_t &table_oid,
             const size_t &tuples_per_tilegroup, const bool own_schema,
             const bool adapt_table, const bool is_catalog = false,
-            const peloton::LayoutType layout_type = peloton::LAYOUT_TYPE_ROW);
+            const peloton::LayoutType layout_type = peloton::LayoutType::ROW);
 
   ~DataTable();
 

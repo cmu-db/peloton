@@ -15,7 +15,7 @@
 #include "common/macros.h"
 #include "index/index_factory.h"
 #include "storage/tuple.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 
 namespace peloton {
 namespace test {

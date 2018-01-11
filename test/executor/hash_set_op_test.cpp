@@ -22,7 +22,7 @@
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
 #include "storage/data_table.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 
 #include "executor/mock_executor.h"
 

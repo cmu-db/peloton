@@ -33,7 +33,7 @@ Value::Value(const type::Type &type, llvm::Value *val, llvm::Value *length,
 // Return a boolean value indicating whether this value is NULL
 llvm::Value *Value::IsNull(CodeGen &codegen) const {
   if (IsNullable()) {
-    PL_ASSERT(null_ != nullptr);
+    PL_ASSERT(null_ != nullptr && null_->getType() == codegen.BoolType());
     return null_;
   } else {
     return codegen.ConstBool(false);

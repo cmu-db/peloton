@@ -75,9 +75,9 @@ class GenericComparator {
       const type::Value lhs_value = (lhs.ToValue(schema, col_itr));
       const type::Value rhs_value = (rhs.ToValue(schema, col_itr));
 
-      if (lhs_value.CompareLessThan(rhs_value) == type::CMP_TRUE) return true;
+      if (lhs_value.CompareLessThan(rhs_value) == CmpBool::TRUE) return true;
 
-      if (lhs_value.CompareGreaterThan(rhs_value) == type::CMP_TRUE)
+      if (lhs_value.CompareGreaterThan(rhs_value) == CmpBool::TRUE)
         return false;
     }
 
@@ -108,10 +108,10 @@ class FastGenericComparator {
       bool inlined = schema->IsInlined(col_itr);
 
       if (type::TypeUtil::CompareLessThanRaw(type, lhs_data, rhs_data,
-                                             inlined) == type::CMP_TRUE)
+                                             inlined) == CmpBool::TRUE)
         return true;
       else if (type::TypeUtil::CompareGreaterThanRaw(type, lhs_data, rhs_data,
-                                                     inlined) == type::CMP_TRUE)
+                                                     inlined) == CmpBool::TRUE)
         return false;
     }
 
@@ -137,10 +137,10 @@ class GenericComparatorRaw {
       const type::Value lhs_value = (lhs.ToValue(schema, column_itr));
       const type::Value rhs_value = (rhs.ToValue(schema, column_itr));
 
-      if (lhs_value.CompareLessThan(rhs_value) == type::CMP_TRUE)
+      if (lhs_value.CompareLessThan(rhs_value) == CmpBool::TRUE)
         return VALUE_COMPARE_LESSTHAN;
 
-      if (lhs_value.CompareGreaterThan(rhs_value) == type::CMP_TRUE)
+      if (lhs_value.CompareGreaterThan(rhs_value) == CmpBool::TRUE)
         return VALUE_COMPARE_GREATERTHAN;
     }
 

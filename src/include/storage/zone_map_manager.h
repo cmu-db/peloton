@@ -16,7 +16,7 @@
 #include <sstream>
 
 #include "common/macros.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "type/value_factory.h"
 #include "concurrency/transaction_context.h"
 namespace peloton {
@@ -84,25 +84,25 @@ class ZoneMapManager {
       std::unique_ptr<std::vector<type::Value>> &result_vector);
 
   bool checkEqual(type::Value predicateVal, ColumnStatistics *stats) {
-    return ((stats->min).CompareLessThanEquals(predicateVal)) &&
-           ((stats->max).CompareGreaterThanEquals(predicateVal));
+    return ((stats->min).CompareLessThanEquals(predicateVal)) == CmpBool::TRUE &&
+           ((stats->max).CompareGreaterThanEquals(predicateVal) == CmpBool::TRUE);
   }
 
   bool checkLessThan(type::Value predicateVal, ColumnStatistics *stats) {
-    return predicateVal.CompareGreaterThan(stats->min);
+    return (predicateVal.CompareGreaterThan(stats->min) == CmpBool::TRUE);
   }
 
   bool checkLessThanEquals(type::Value predicateVal, ColumnStatistics *stats) {
-    return predicateVal.CompareGreaterThanEquals(stats->min);
+    return (predicateVal.CompareGreaterThanEquals(stats->min) == CmpBool::TRUE);
   }
 
   bool checkGreaterThan(type::Value predicateVal, ColumnStatistics *stats) {
-    return predicateVal.CompareLessThan(stats->max);
+    return (predicateVal.CompareLessThan(stats->max) == CmpBool::TRUE);
   }
 
   bool checkGreaterThanEquals(type::Value predicateVal,
                               ColumnStatistics *stats) {
-    return predicateVal.CompareLessThanEquals(stats->max);
+    return (predicateVal.CompareLessThanEquals(stats->max) == CmpBool::TRUE);
   }
 
   //===--------------------------------------------------------------------===//

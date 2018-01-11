@@ -27,17 +27,13 @@ namespace parser {
 class InsertStatement : SQLStatement {
  public:
   InsertStatement(InsertType type)
-      : SQLStatement(StatementType::INSERT),
-        type(type),
-        select(nullptr) {}
+      : SQLStatement(StatementType::INSERT), type(type), select(nullptr) {}
 
   virtual ~InsertStatement() {}
 
-  virtual void Accept(SqlNodeVisitor* v) override { v->Visit(this); }
+  virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
-  inline std::string GetTableName() const {
-    return table_ref_->GetTableName();
-  }
+  inline std::string GetTableName() const { return table_ref_->GetTableName(); }
 
   inline void TryBindDatabaseName(std::string default_database_name) {
     table_ref_->TryBindDatabaseName(default_database_name);
@@ -46,6 +42,10 @@ class InsertStatement : SQLStatement {
   inline std::string GetDatabaseName() const {
     return table_ref_->GetDatabaseName();
   }
+
+  const std::string GetInfo(int num_indent) const override;
+
+  const std::string GetInfo() const override;
 
   InsertType type;
   std::vector<std::string> columns;

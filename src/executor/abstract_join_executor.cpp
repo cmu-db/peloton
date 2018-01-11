@@ -12,7 +12,7 @@
 
 #include <vector>
 
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "common/logger.h"
 #include "common/exception.h"
 #include "executor/logical_tile_factory.h"
@@ -68,7 +68,7 @@ std::vector<LogicalTile::ColumnInfo> AbstractJoinExecutor::BuildSchema(
     schema.assign(left.begin(), left.end());
     schema.insert(schema.end(), right.begin(), right.end());
   } else {
-    PL_ASSERT(!proj_info_->isNonTrivial());
+    PL_ASSERT(!proj_info_->IsNonTrivial());
     auto &direct_map_list = proj_info_->GetDirectMapList();
     schema.resize(direct_map_list.size());
 
@@ -113,7 +113,7 @@ AbstractJoinExecutor::BuildSchemaFromLeftTile(
     }
   } else {
     // non trivial projection. construct from direct map list
-    PL_ASSERT(!proj_info_->isNonTrivial());
+    PL_ASSERT(!proj_info_->IsNonTrivial());
     auto &direct_map_list = proj_info_->GetDirectMapList();
     schema.resize(direct_map_list.size());
 
@@ -163,7 +163,7 @@ AbstractJoinExecutor::BuildSchemaFromRightTile(
     schema.insert(schema.end(), right_schema->begin(), right_schema->end());
   } else {
     // non trivial projection. construct from direct map list
-    PL_ASSERT(!proj_info_->isNonTrivial());
+    PL_ASSERT(!proj_info_->IsNonTrivial());
     auto &direct_map_list = proj_info_->GetDirectMapList();
     schema.resize(direct_map_list.size());
 

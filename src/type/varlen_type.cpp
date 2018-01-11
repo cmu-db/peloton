@@ -21,23 +21,21 @@
 namespace peloton {
 namespace type {
 
-#define VARLEN_COMPARE_FUNC(OP) \
-  const char *str1 = left.GetData(); \
-  uint32_t len1 = GetLength(left) - 1; \
-  const char *str2; \
-  uint32_t len2; \
-  if (right.GetTypeId() == TypeId::VARCHAR) { \
-    str2 = right.GetData(); \
-    len2 = GetLength(right) - 1; \
-    return GetCmpBool(TypeUtil::CompareStrings(str1, len1, \
-                                               str2, len2) OP 0); \
-  } else { \
-    auto r_value = right.CastAs(TypeId::VARCHAR); \
-    str2 = r_value.GetData(); \
-    len2 = GetLength(r_value) - 1; \
-    return GetCmpBool(TypeUtil::CompareStrings(str1, len1, \
-                                               str2, len2) OP 0); \
-  } \
+#define VARLEN_COMPARE_FUNC(OP)                                               \
+  const char *str1 = left.GetData();                                          \
+  uint32_t len1 = GetLength(left) - 1;                                        \
+  const char *str2;                                                           \
+  uint32_t len2;                                                              \
+  if (right.GetTypeId() == TypeId::VARCHAR) {                                 \
+    str2 = right.GetData();                                                   \
+    len2 = GetLength(right) - 1;                                              \
+    return GetCmpBool(TypeUtil::CompareStrings(str1, len1, str2, len2) OP 0); \
+  } else {                                                                    \
+    auto r_value = right.CastAs(TypeId::VARCHAR);                             \
+    str2 = r_value.GetData();                                                 \
+    len2 = GetLength(r_value) - 1;                                            \
+    return GetCmpBool(TypeUtil::CompareStrings(str1, len1, str2, len2) OP 0); \
+  }
 
 VarlenType::VarlenType(TypeId type) : Type(type) {}
 
@@ -59,86 +57,86 @@ char *VarlenType::GetData(char *storage) {
 
 CmpBool VarlenType::CompareEquals(const Value &left, const Value &right) const {
   PL_ASSERT(left.CheckComparable(right));
-  if (left.IsNull() || right.IsNull()) return CMP_NULL;
+  if (left.IsNull() || right.IsNull()) return CmpBool::NULL_;
   if (GetLength(left) == PELOTON_VARCHAR_MAX_LEN ||
       GetLength(right) == PELOTON_VARCHAR_MAX_LEN) {
     return GetCmpBool(GetLength(left) == GetLength(right));
   }
 
-  VARLEN_COMPARE_FUNC(==);
+  VARLEN_COMPARE_FUNC(== );
 }
 
 CmpBool VarlenType::CompareNotEquals(const Value &left,
                                      const Value &right) const {
   PL_ASSERT(left.CheckComparable(right));
-  if (left.IsNull() || right.IsNull()) return CMP_NULL;
+  if (left.IsNull() || right.IsNull()) return CmpBool::NULL_;
   if (GetLength(left) == PELOTON_VARCHAR_MAX_LEN ||
       GetLength(right) == PELOTON_VARCHAR_MAX_LEN) {
     return GetCmpBool(GetLength(left) != GetLength(right));
   }
 
-  VARLEN_COMPARE_FUNC(!=);
+  VARLEN_COMPARE_FUNC(!= );
 }
 
 CmpBool VarlenType::CompareLessThan(const Value &left,
                                     const Value &right) const {
   PL_ASSERT(left.CheckComparable(right));
-  if (left.IsNull() || right.IsNull()) return CMP_NULL;
+  if (left.IsNull() || right.IsNull()) return CmpBool::NULL_;
   if (GetLength(left) == PELOTON_VARCHAR_MAX_LEN ||
       GetLength(right) == PELOTON_VARCHAR_MAX_LEN) {
     return GetCmpBool(GetLength(left) < GetLength(right));
   }
 
-  VARLEN_COMPARE_FUNC(<);
+  VARLEN_COMPARE_FUNC(< );
 }
 
 CmpBool VarlenType::CompareLessThanEquals(const Value &left,
                                           const Value &right) const {
   PL_ASSERT(left.CheckComparable(right));
-  if (left.IsNull() || right.IsNull()) return CMP_NULL;
+  if (left.IsNull() || right.IsNull()) return CmpBool::NULL_;
   if (GetLength(left) == PELOTON_VARCHAR_MAX_LEN ||
       GetLength(right) == PELOTON_VARCHAR_MAX_LEN) {
     return GetCmpBool(GetLength(left) <= GetLength(right));
   }
 
-  VARLEN_COMPARE_FUNC(<=);
+  VARLEN_COMPARE_FUNC(<= );
 }
 
 CmpBool VarlenType::CompareGreaterThan(const Value &left,
                                        const Value &right) const {
   PL_ASSERT(left.CheckComparable(right));
-  if (left.IsNull() || right.IsNull()) return CMP_NULL;
+  if (left.IsNull() || right.IsNull()) return CmpBool::NULL_;
   if (GetLength(left) == PELOTON_VARCHAR_MAX_LEN ||
       GetLength(right) == PELOTON_VARCHAR_MAX_LEN) {
     return GetCmpBool(GetLength(left) > GetLength(right));
   }
 
-  VARLEN_COMPARE_FUNC(>);
+  VARLEN_COMPARE_FUNC(> );
 }
 
 CmpBool VarlenType::CompareGreaterThanEquals(const Value &left,
                                              const Value &right) const {
   PL_ASSERT(left.CheckComparable(right));
-  if (left.IsNull() || right.IsNull()) return CMP_NULL;
+  if (left.IsNull() || right.IsNull()) return CmpBool::NULL_;
   if (GetLength(left) == PELOTON_VARCHAR_MAX_LEN ||
       GetLength(right) == PELOTON_VARCHAR_MAX_LEN) {
     return GetCmpBool(GetLength(left) >= GetLength(right));
   }
 
-  VARLEN_COMPARE_FUNC(>=);
+  VARLEN_COMPARE_FUNC(>= );
 }
 
-Value VarlenType::Min(const Value& left, const Value& right) const {
+Value VarlenType::Min(const Value &left, const Value &right) const {
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return left.OperateNull(right);
-  if (left.CompareLessThan(right) == CMP_TRUE) return left.Copy();
+  if (left.CompareLessThan(right) == CmpBool::TRUE) return left.Copy();
   return right.Copy();
 }
 
-Value VarlenType::Max(const Value& left, const Value& right) const {
+Value VarlenType::Max(const Value &left, const Value &right) const {
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return left.OperateNull(right);
-  if (left.CompareGreaterThanEquals(right) == CMP_TRUE) return left.Copy();
+  if (left.CompareGreaterThanEquals(right) == CmpBool::TRUE) return left.Copy();
   return right.Copy();
 }
 
@@ -228,6 +226,8 @@ Value VarlenType::CastAs(const Value &val, const TypeId type_id) const {
       return ValueFactory::CastAsDecimal(val);
     case TypeId::TIMESTAMP:
       return ValueFactory::CastAsTimestamp(val);
+    case TypeId::DATE:
+      return ValueFactory::CastAsDate(val);
     case TypeId::VARCHAR:
     case TypeId::VARBINARY:
       return val.Copy();

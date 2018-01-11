@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "executor/abstract_executor.h"
 #include "storage/tuple.h"
 
@@ -26,6 +26,10 @@ namespace executor {
  * until this executor is destroyed, which is sometimes necessary.
  * But can we let it release the RAM earlier as long as the executor
  * is not needed any more (e.g., with a LIMIT sitting on top)?
+ *
+ * 2018-01-07: This is <b>deprecated</b>. Do not modify these classes.
+ * The old interpreted engine will be removed.
+ * @deprecated
  */
 class OrderByExecutor : public AbstractExecutor {
  public:

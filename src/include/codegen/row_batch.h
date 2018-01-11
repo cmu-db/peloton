@@ -96,7 +96,7 @@ class RowBatch {
 
     // Register the temporary availability of an attribute in this row
     void RegisterAttributeValue(const planner::AttributeInfo *ai,
-                                codegen::Value &val);
+                                const codegen::Value &val);
 
     RowBatch &GetBatch() const { return batch_; }
 

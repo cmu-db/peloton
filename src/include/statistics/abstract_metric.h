@@ -14,7 +14,7 @@
 
 #include <string>
 
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "common/printable.h"
 
 namespace peloton {

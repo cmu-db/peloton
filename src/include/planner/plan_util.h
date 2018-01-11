@@ -34,29 +34,31 @@ class PlanUtil {
    */
   static std::string GetInfo(const planner::AbstractPlan *plan) {
     std::ostringstream os;
-    std::string spacer("");
+    int num_indent = 0;
 
     if (plan == nullptr) {
       os << "<NULL>";
     } else {
-      PlanUtil::GetInfo(plan, os, spacer);
+      os << peloton::GETINFO_SINGLE_LINE << std::endl;
+      PlanUtil::GetInfo(plan, os, num_indent);
+      os << peloton::GETINFO_SINGLE_LINE;
     }
-    return (os.str());
+    std::string info = os.str();
+    StringUtil::RTrim(info);
+    return info;
   }
 
  private:
   static void GetInfo(const planner::AbstractPlan *plan, std::ostringstream &os,
-                      std::string prefix) {
-    prefix += "  ";
-    os << "Plan Type: " << PlanNodeTypeToString(plan->GetPlanNodeType())
+                      int num_indent) {
+    os << StringUtil::Indent(num_indent) << "-> Plan Type: " << PlanNodeTypeToString(plan->GetPlanNodeType())
        << std::endl;
-    os << prefix << plan->GetInfo() << std::endl;
+    os << StringUtil::Indent(num_indent + peloton::ARROW_INDENT) << "Info: " << plan->GetInfo() << std::endl;
 
     auto &children = plan->GetChildren();
-    os << "NumChildren: " << children.size();
-
+    os << StringUtil::Indent(num_indent + peloton::ARROW_INDENT) << "NumChildren: " << children.size() << std::endl;
     for (auto &child : children) {
-      GetInfo(child.get(), os, prefix);
+      GetInfo(child.get(), os, num_indent + peloton::ARROW_INDENT);
     }
   }
 
@@ -95,7 +97,7 @@ class PlanUtil {
       }
       case PlanNodeType::POPULATE_INDEX: {
         const planner::PopulateIndexPlan *populate_index_node =
-                reinterpret_cast<const planner::PopulateIndexPlan *>(plan);
+            reinterpret_cast<const planner::PopulateIndexPlan *>(plan);
         table_ids.insert(populate_index_node->GetTable()->GetOid());
         break;
       }

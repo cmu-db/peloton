@@ -29,7 +29,7 @@
 
 #include "common/exception.h"
 #include "common/logger.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 
 #include "network_thread.h"
 #include "network_master_thread.h"

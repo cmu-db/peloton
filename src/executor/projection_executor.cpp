@@ -14,7 +14,7 @@
 
 #include "planner/projection_plan.h"
 #include "common/logger.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
 #include "common/container_tuple.h"

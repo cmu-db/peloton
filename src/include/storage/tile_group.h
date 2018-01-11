@@ -22,7 +22,7 @@
 #include "common/printable.h"
 #include "planner/project_info.h"
 #include "type/abstract_pool.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "type/value.h"
 
 namespace peloton {

@@ -26,7 +26,7 @@
 #include "storage/masked_tuple.h"
 #include "storage/tile_group.h"
 #include "storage/tile_group_header.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "type/value.h"
 
 namespace peloton {
@@ -215,7 +215,6 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
 #ifdef LOG_TRACE_ENABLED
     num_tuples_examined++;
 #endif
-
     // the following code traverses the version chain until a certain visible
     // version is found.
     // we should always find a visible version from a version chain.
@@ -677,7 +676,7 @@ bool IndexScanExecutor::CheckKeyConditions(const ItemPointer &tuple_location) {
     }
 
     LOG_TRACE("Difference : %d ", diff);*/
-    if (lhs.CompareEquals(rhs) == type::CMP_TRUE) {
+    if (lhs.CompareEquals(rhs) == CmpBool::TRUE) {
       switch (expr_type) {
         case ExpressionType::COMPARE_EQUAL:
         case ExpressionType::COMPARE_LESSTHANOREQUALTO:
@@ -695,7 +694,7 @@ bool IndexScanExecutor::CheckKeyConditions(const ItemPointer &tuple_location) {
                                ExpressionTypeToString(expr_type));
       }
     } else {
-      if (lhs.CompareLessThan(rhs) == type::CMP_TRUE) {
+      if (lhs.CompareLessThan(rhs) == CmpBool::TRUE) {
         switch (expr_type) {
           case ExpressionType::COMPARE_NOTEQUAL:
           case ExpressionType::COMPARE_LESSTHAN:
@@ -713,7 +712,7 @@ bool IndexScanExecutor::CheckKeyConditions(const ItemPointer &tuple_location) {
                                  ExpressionTypeToString(expr_type));
         }
       } else {
-        if (lhs.CompareGreaterThan(rhs) == type::CMP_TRUE) {
+        if (lhs.CompareGreaterThan(rhs) == CmpBool::TRUE) {
           switch (expr_type) {
             case ExpressionType::COMPARE_NOTEQUAL:
             case ExpressionType::COMPARE_GREATERTHAN:

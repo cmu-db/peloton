@@ -26,7 +26,7 @@
 
 #include "catalog/manager.h"
 #include "catalog/schema.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
 #include "common/timer.h"
@@ -87,9 +87,10 @@ void ExecuteTileGroupTest(peloton::LayoutType layout_type) {
 
   bool own_schema = true;
   bool adapt_table = true;
+  bool is_catalog = false;
   std::unique_ptr<storage::DataTable> table(storage::TableFactory::GetDataTable(
       INVALID_OID, INVALID_OID, table_schema, table_name,
-      tuples_per_tilegroup_count, own_schema, adapt_table, layout_type));
+      tuples_per_tilegroup_count, own_schema, adapt_table, is_catalog, layout_type));
 
   // PRIMARY INDEX
   if (indexes == true) {
@@ -209,11 +210,11 @@ void ExecuteTileGroupTest(peloton::LayoutType layout_type) {
 }
 
 TEST_F(TileGroupLayoutTests, RowLayout) {
-  ExecuteTileGroupTest(LAYOUT_TYPE_ROW);
+  ExecuteTileGroupTest(LayoutType::ROW);
 }
 
 TEST_F(TileGroupLayoutTests, ColumnLayout) {
-  ExecuteTileGroupTest(LAYOUT_TYPE_COLUMN);
+  ExecuteTileGroupTest(LayoutType::COLUMN);
 }
 
 }  // namespace test

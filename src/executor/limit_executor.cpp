@@ -14,7 +14,7 @@
 
 #include "planner/limit_plan.h"
 #include "common/logger.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "executor/logical_tile.h"
 
 namespace peloton {

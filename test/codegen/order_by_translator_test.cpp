@@ -51,8 +51,7 @@ TEST_F(OrderByTranslatorTest, SingleIntColAscTest) {
   codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // COMPILE and execute
-  CompileAndExecute(*order_by_plan, buffer,
-                    reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(*order_by_plan, buffer);
 
   // The results should be sorted in ascending order
   auto &results = buffer.GetOutputTuples();
@@ -61,7 +60,7 @@ TEST_F(OrderByTranslatorTest, SingleIntColAscTest) {
       results.begin(), results.end(),
       [](const codegen::WrappedTuple &t1, const codegen::WrappedTuple &t2) {
         auto is_lte = t1.GetValue(0).CompareLessThanEquals(t2.GetValue(0));
-        return is_lte == type::CMP_TRUE;
+        return is_lte == CmpBool::TRUE;
       }));
 }
 
@@ -89,8 +88,7 @@ TEST_F(OrderByTranslatorTest, SingleIntColDescTest) {
   codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // COMPILE and execute
-  CompileAndExecute(*order_by_plan, buffer,
-                    reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(*order_by_plan, buffer);
 
   // The results should be sorted in descending order
   auto &results = buffer.GetOutputTuples();
@@ -99,7 +97,7 @@ TEST_F(OrderByTranslatorTest, SingleIntColDescTest) {
       results.begin(), results.end(),
       [](const codegen::WrappedTuple &t1, const codegen::WrappedTuple &t2) {
         auto is_gte = t1.GetValue(0).CompareGreaterThanEquals(t2.GetValue(0));
-        return is_gte == type::CMP_TRUE;
+        return is_gte == CmpBool::TRUE;
       }));
 }
 
@@ -127,8 +125,7 @@ TEST_F(OrderByTranslatorTest, MultiIntColAscTest) {
   codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // COMPILE and execute
-  CompileAndExecute(*order_by_plan, buffer,
-                    reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(*order_by_plan, buffer);
 
   // The results should be sorted in ascending order
   auto &results = buffer.GetOutputTuples();
@@ -137,14 +134,15 @@ TEST_F(OrderByTranslatorTest, MultiIntColAscTest) {
   EXPECT_TRUE(std::is_sorted(
       results.begin(), results.end(),
       [](const codegen::WrappedTuple &t1, const codegen::WrappedTuple &t2) {
-        if (t1.GetValue(1).CompareEquals(t2.GetValue(0)) == type::CMP_TRUE) {
+        if (t1.GetValue(1).CompareEquals(t2.GetValue(0)) ==
+            CmpBool::TRUE) {
           // t1.b == t2.b => t1.a <= t2.a
           return t1.GetValue(0).CompareLessThanEquals(t2.GetValue(0)) ==
-                 type::CMP_TRUE;
+                 CmpBool::TRUE;
         } else {
           // t1.b != t2.b => t1.b < t2.b
           return t1.GetValue(1).CompareLessThan(t2.GetValue(1)) ==
-                 type::CMP_TRUE;
+                 CmpBool::TRUE;
         }
       }));
 }
@@ -173,8 +171,7 @@ TEST_F(OrderByTranslatorTest, MultiIntColMixedTest) {
   codegen::BufferingConsumer buffer{{0, 1}, context};
 
   // COMPILE and execute
-  CompileAndExecute(*order_by_plan, buffer,
-                    reinterpret_cast<char *>(buffer.GetState()));
+  CompileAndExecute(*order_by_plan, buffer);
 
   // The results should be sorted in ascending order
   auto &results = buffer.GetOutputTuples();
@@ -183,14 +180,15 @@ TEST_F(OrderByTranslatorTest, MultiIntColMixedTest) {
   EXPECT_TRUE(std::is_sorted(
       results.begin(), results.end(),
       [](const codegen::WrappedTuple &t1, const codegen::WrappedTuple &t2) {
-        if (t1.GetValue(1).CompareEquals(t2.GetValue(1)) == type::CMP_TRUE) {
+        if (t1.GetValue(1).CompareEquals(t2.GetValue(1)) ==
+            CmpBool::TRUE) {
           // t1.b == t2.b => t1.a <= t2.a
           return t1.GetValue(0).CompareLessThanEquals(t2.GetValue(0)) ==
-                 type::CMP_TRUE;
+                 CmpBool::TRUE;
         } else {
           // t1.b != t2.b => t1.b > t2.b
           return t1.GetValue(1).CompareGreaterThan(t2.GetValue(1)) ==
-                 type::CMP_TRUE;
+                 CmpBool::TRUE;
         }
       }));
 }

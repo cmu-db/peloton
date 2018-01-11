@@ -16,7 +16,7 @@
 #include <cstring>
 #include <string>
 
-#include "type/types.h"
+#include "common/internal_types.h"
 
 namespace peloton {
 namespace benchmark {

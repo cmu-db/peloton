@@ -21,7 +21,7 @@
 
 #include "common/item_pointer.h"
 #include "common/printable.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables
@@ -55,7 +55,7 @@ class AbstractTable : public Printable {
  protected:
   // Table constructor
   AbstractTable(oid_t table_oid, catalog::Schema *schema, bool own_schema,
-               peloton::LayoutType layout_type = peloton::LAYOUT_TYPE_ROW);
+               peloton::LayoutType layout_type = peloton::LayoutType::ROW);
 
  public:
   //===--------------------------------------------------------------------===//

@@ -17,7 +17,7 @@
 #include "common/exception.h"
 #include "common/macros.h"
 #include "type/serializer.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "type/ephemeral_pool.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "storage/backend_manager.h"
@@ -246,8 +246,9 @@ const std::string Tile::GetInfo() const {
     os << tuple;
   }
   tuple.SetNull();
-
-  return os.str();
+  std::string info = os.str();
+  StringUtil::RTrim(info);
+  return info;
 }
 
 //===--------------------------------------------------------------------===//

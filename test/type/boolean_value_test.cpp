@@ -52,7 +52,7 @@ TEST_F(BooleanValueTests, ComparisonTest) {
 
   int values[] = {true, false, type::PELOTON_BOOLEAN_NULL};
 
-  type::CmpBool result;
+  CmpBool result;
   type::Value val0;
   type::Value val1;
 
@@ -111,13 +111,15 @@ TEST_F(BooleanValueTests, ComparisonTest) {
         }  // SWITCH
         LOG_TRACE("%s %s %s => %d | %d\n", val0.ToString().c_str(),
                   ExpressionTypeToString(etype).c_str(),
-                  val1.ToString().c_str(), expected, result);
+                  val1.ToString().c_str(),
+                  static_cast<int>(expected),
+                  static_cast<int>(result));
 
         if (expected_null) expected = false;
 
-        EXPECT_EQ(expected, result == type::CMP_TRUE);
-        EXPECT_EQ(!expected, result == type::CMP_FALSE);
-        EXPECT_EQ(expected_null, result == type::CMP_NULL);
+        EXPECT_EQ(expected, result == CmpBool::TRUE);
+        EXPECT_EQ(!expected, result == CmpBool::FALSE);
+        EXPECT_EQ(expected_null, result == CmpBool::NULL_);
       }
     }
   }
@@ -145,7 +147,7 @@ TEST_F(BooleanValueTests, ToStringTest) {
 TEST_F(BooleanValueTests, HashTest) {
   int values[] = {true, false, type::PELOTON_BOOLEAN_NULL};
 
-  type::CmpBool result;
+  CmpBool result;
   type::Value val0;
   type::Value val1;
 
@@ -167,7 +169,7 @@ TEST_F(BooleanValueTests, HashTest) {
       auto hash0 = val0.Hash();
       auto hash1 = val1.Hash();
 
-      if (result == type::CMP_TRUE) {
+      if (result == CmpBool::TRUE) {
         EXPECT_EQ(hash0, hash1);
       } else {
         EXPECT_NE(hash0, hash1);

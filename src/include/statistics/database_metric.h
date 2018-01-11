@@ -15,7 +15,7 @@
 #include <string>
 #include <sstream>
 
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "statistics/counter_metric.h"
 #include "statistics/abstract_metric.h"
 
@@ -75,10 +75,10 @@ class DatabaseMetric : public AbstractMetric {
   oid_t database_id_;
 
   // Count of the number of transactions committed
-  CounterMetric txn_committed_{MetricType::COUNTER_METRIC};
+  CounterMetric txn_committed_{MetricType::COUNTER};
 
   // Count of the number of transactions aborted
-  CounterMetric txn_aborted_{MetricType::COUNTER_METRIC};
+  CounterMetric txn_aborted_{MetricType::COUNTER};
 };
 
 }  // namespace stats
