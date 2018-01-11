@@ -173,7 +173,8 @@ void PelotonCodeGenTest::LoadTestTable(oid_t table_id, uint32_t num_rows,
 void PelotonCodeGenTest::ExecuteSync(
     codegen::Query &query,
     std::unique_ptr<executor::ExecutorContext> executor_context,
-    codegen::QueryResultConsumer &consumer) {
+    codegen::QueryResultConsumer &consumer,
+    codegen::Query::RuntimeStats *stats) {
   std::mutex mu;
   std::condition_variable cond;
   bool finished = false;
@@ -182,14 +183,16 @@ void PelotonCodeGenTest::ExecuteSync(
                   std::unique_lock<decltype(mu)> lock(mu);
                   finished = true;
                   cond.notify_one();
-                });
+                },
+                stats);
 
   std::unique_lock<decltype(mu)> lock(mu);
   cond.wait(lock, [&] { return finished; });
 }
 
 codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecute(
-    planner::AbstractPlan &plan, codegen::QueryResultConsumer &consumer) {
+    planner::AbstractPlan &plan, codegen::QueryResultConsumer &consumer,
+    codegen::Query::RuntimeStats *runtime_stats) {
   codegen::QueryParameters parameters(plan, {});
 
   // Start a transaction.
@@ -205,7 +208,8 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecute(
   ExecuteSync(*compiled_query,
               std::unique_ptr<executor::ExecutorContext>(
                   new executor::ExecutorContext(txn, std::move(parameters))),
-              consumer);
+              consumer,
+              runtime_stats);
 
   // Commit the transaction.
   txn_manager.CommitTransaction(txn);

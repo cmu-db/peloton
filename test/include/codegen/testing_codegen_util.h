@@ -82,11 +82,13 @@ class PelotonCodeGenTest : public PelotonTest {
   static void ExecuteSync(
       codegen::Query &query,
       std::unique_ptr<executor::ExecutorContext> executor_context,
-      codegen::QueryResultConsumer &consumer);
+      codegen::QueryResultConsumer &consumer,
+      codegen::Query::RuntimeStats *stats = nullptr);
 
   // Compile and execute the given plan
   codegen::QueryCompiler::CompileStats CompileAndExecute(
-      planner::AbstractPlan &plan, codegen::QueryResultConsumer &consumer);
+      planner::AbstractPlan &plan, codegen::QueryResultConsumer &consumer,
+      codegen::Query::RuntimeStats *stats = nullptr);
 
   codegen::QueryCompiler::CompileStats CompileAndExecuteCache(
       std::shared_ptr<planner::AbstractPlan> plan,

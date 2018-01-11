@@ -38,7 +38,12 @@ uint32_t TransactionRuntime::PerformVectorizedRead(
   // visible tuple IDs in the provided selection vector
   uint32_t out_idx = 0;
   for (uint32_t i = tid_start; i < tid_end; i++) {
+    (void)txn;
+    (void)txn_manager;
+    (void)tile_group_header;
+
     // Perform the visibility check
+    // auto visibility = VisibilityType::OK;
     auto visibility = txn_manager.IsVisible(&txn, tile_group_header, i);
 
     // Update the output position
@@ -56,6 +61,7 @@ uint32_t TransactionRuntime::PerformVectorizedRead(
     ItemPointer location{tile_group_idx, selection_vector[idx]};
 
     // Perform the read
+    // bool can_read = true;
     bool can_read = txn_manager.PerformRead(&txn, location);
 
     // Update the selection vector and output position

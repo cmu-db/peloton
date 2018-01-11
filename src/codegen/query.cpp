@@ -43,10 +43,9 @@ static void ExecuteStages(std::vector<Stage>::iterator begin,
       }
       case StageKind::MULTITHREADED_SEQSCAN: {
         auto table = begin->table_;
-
-        auto ntuples = table->GetTupleCount();
         auto ntile_groups = table->GetTileGroupCount();
-        auto ntasks = std::min(std::max(ntuples / 1, size_t(1)), ntile_groups);
+        size_t ntasks = std::min(threadpool::kDefaultWorkerPoolSize,
+                                 ntile_groups);
         auto ntile_groups_per_task = ntile_groups / ntasks;
         auto count = new std::atomic_size_t(ntasks);
 
@@ -58,7 +57,7 @@ static void ExecuteStages(std::vector<Stage>::iterator begin,
                                   ntile_groups_per_task * (task + 1);
           LOG_DEBUG("Scanning [%zu, %zu)", tile_group_beg, tile_group_end);
           pool.SubmitTask([&pool, task, begin, end, param, tile_group_beg,
-                              tile_group_end, count, on_complete] {
+                           tile_group_end, count, on_complete] {
             begin->multithreaded_seqscan_func_(param, task, tile_group_beg,
                                                tile_group_end);
             if (--(*count) == 0) {
