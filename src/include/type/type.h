@@ -55,9 +55,13 @@ class Type {
   static Value GetMinValue(TypeId type_id);
   static Value GetMaxValue(TypeId type_id);
 
-  inline static Type* GetInstance(TypeId type_id) { return kTypes[static_cast<int>(type_id)]; }
+  inline static Type *GetInstance(TypeId type_id) { return kTypes[static_cast<int>(type_id)]; }
 
   inline TypeId GetTypeId() const { return type_id_; }
+  
+  inline bool IsArrayType() const { 
+    return type_id_ == TypeId::INTEGERARRAY || type_id_ == TypeId::DECIMALARRAY; 
+  }
 
   // Comparison functions
   //
@@ -115,15 +119,15 @@ class Type {
   // space, or whether we must store only a reference to this value. If inlined
   // is false, we may use the provided data pool to allocate space for this
   // value, storing a reference into the allocated pool space in the storage.
-  virtual void SerializeTo(const Value& val, char* storage, bool inlined,
-                           AbstractPool* pool) const;
+  virtual void SerializeTo(const Value& val, char *storage, bool inlined,
+                           AbstractPool *pool) const;
   virtual void SerializeTo(const Value& val, SerializeOutput& out) const;
 
   // Deserialize a value of the given type from the given storage space.
-  virtual Value DeserializeFrom(const char* storage, const bool inlined,
-                                AbstractPool* pool = nullptr) const;
+  virtual Value DeserializeFrom(const char *storage, const bool inlined,
+                                AbstractPool *pool = nullptr) const;
   virtual Value DeserializeFrom(SerializeInput& in,
-                                AbstractPool* pool = nullptr) const;
+                                AbstractPool *pool = nullptr) const;
 
   // Create a copy of this value
   virtual Value Copy(const Value& val) const;
@@ -131,7 +135,7 @@ class Type {
   virtual Value CastAs(const Value& val, const TypeId type_id) const;
 
   // Access the raw variable length data
-  virtual const char* GetData(const Value& val) const;
+  virtual const char *GetData(const Value& val) const;
 
   // Get the length of the variable length data
   virtual uint32_t GetLength(const Value& val) const;
@@ -152,7 +156,7 @@ class Type {
   TypeId type_id_;
 
   // Singleton instances.
-  static Type* kTypes[14];
+  static Type *kTypes[15];
 };
 
 }  // namespace type

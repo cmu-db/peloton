@@ -51,8 +51,9 @@ static std::vector<TypeSystem::NoArgOpInfo> kNoArgOperatorTable = {};
 }  // anonymous namespace
 
 // Initialize the ARRAY SQL type with the configured type system
+// TODO:aa_ Support ARRAY for codegen
 Array::Array()
-    : SqlType(peloton::type::TypeId::ARRAY),
+    : SqlType(peloton::type::TypeId::INTEGERARRAY),
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
                    kComparisonTable, kUnaryOperatorTable,
                    kBinaryOperatorTable, kNaryOperatorTable,

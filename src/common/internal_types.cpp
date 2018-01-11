@@ -236,8 +236,10 @@ std::string TypeIdToString(type::TypeId type) {
       return "VARCHAR";
     case type::TypeId::VARBINARY:
       return "VARBINARY";
-    case type::TypeId::ARRAY:
-      return "ARRAY";
+    case type::TypeId::INTEGERARRAY:
+      return "INTEGERARRAY";
+    case type::TypeId::DECIMALARRAY:
+      return "DECIMALARRAY";
     case type::TypeId::UDT:
       return "UDT";
     default: {
@@ -275,8 +277,10 @@ type::TypeId StringToTypeId(const std::string &str) {
     return type::TypeId::VARCHAR;
   } else if (upper_str == "VARBINARY") {
     return type::TypeId::VARBINARY;
-  } else if (upper_str == "ARRAY") {
-    return type::TypeId::ARRAY;
+  } else if (upper_str == "INTEGERARRAY") {
+    return type::TypeId::INTEGERARRAY;
+  } else if (upper_str == "DECIMALARRAY") {
+    return type::TypeId::DECIMALARRAY;
   } else if (upper_str == "UDT") {
     return type::TypeId::UDT;
   } else {

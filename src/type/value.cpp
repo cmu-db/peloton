@@ -42,6 +42,34 @@ Value::Value(const Value &other) {
         }
       }
       break;
+    case TypeId::INTEGERARRAY:
+    case TypeId::DECIMALARRAY:
+        if (manage_data_) {
+          switch (type_id_) {
+            case TypeId::INTEGERARRAY: {
+              auto vec_ptr = (std::vector<int32_t> *)other.value_.array;
+              auto vec = new std::vector<int32_t>(*vec_ptr);
+              value_.array = (char *)vec;
+              break;
+            }
+            case TypeId::DECIMALARRAY: {
+              auto vec_ptr = (std::vector<double> *)other.value_.array;
+              auto vec = new std::vector<double>(*vec_ptr);
+              value_.array = (char *)vec;
+              break;
+            }
+            default: {
+              std::string msg =
+                  StringUtil::Format(
+                    "Invalid Type '%d' for Array Value constructor",
+                    static_cast<int>(type_id_));
+              throw Exception(ExceptionType::INCOMPATIBLE_TYPE, msg);
+            }
+          }
+        } else {
+          value_ = other.value_;
+        }
+      break;
     default:
       value_ = other.value_;
   }
@@ -353,6 +381,12 @@ Value::~Value() {
         delete[] value_.varlen;
       }
       break;
+    case TypeId::INTEGERARRAY:
+      delete reinterpret_cast<std::vector<int32_t> *>(value_.array);
+      break;
+    case TypeId::DECIMALARRAY:
+      delete reinterpret_cast<std::vector<double> *>(value_.array);
+      break;
     default:
       break;
   }
@@ -361,9 +395,11 @@ Value::~Value() {
 const std::string Value::GetInfo() const {
   std::ostringstream os;
   os << TypeIdToString(type_id_);
-  if (type_id_ == TypeId::VARBINARY || type_id_ == TypeId::VARCHAR) {
+  if (type_id_ == TypeId::VARBINARY || type_id_ == TypeId::VARCHAR 
+      || type_id_ == TypeId::INTEGERARRAY || type_id_ == TypeId::DECIMALARRAY) {
     os << "[" << GetLength() << "]";
   }
+
   os << "(" << ToString() << ")";
   return os.str();
 }

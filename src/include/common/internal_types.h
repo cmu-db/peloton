@@ -228,6 +228,7 @@ enum class ExpressionType {
   COLUMN_REF = 502,
   FUNCTION_REF = 503,
   TABLE_REF = 504,
+  ARRAY = 505,
 
   // -----------------------------
   // Miscellaneous

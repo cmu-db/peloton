@@ -29,7 +29,8 @@ enum class TypeId {
   DATE,
   VARCHAR,
   VARBINARY,
-  ARRAY,
+  INTEGERARRAY,
+  DECIMALARRAY,
   UDT
 };
 

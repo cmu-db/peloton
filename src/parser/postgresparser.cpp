@@ -17,6 +17,7 @@
 #include <unordered_set>
 
 #include "common/exception.h"
+#include "expression/array_expression.h"
 #include "expression/aggregate_expression.h"
 #include "expression/case_expression.h"
 #include "expression/comparison_expression.h"
@@ -816,6 +817,72 @@ expression::AbstractExpression *PostgresParser::NullTestTransform(
   return result;
 }
 
+// This function takes in a Postgres ArrayExpr primnode and transfers
+// it into Peloton AbstractExpression.
+expression::AbstractExpression *PostgresParser::ArrayExprTransform(
+    A_ArrayExpr *root) {
+
+  if (root == nullptr) {
+    return nullptr;
+  }
+
+  auto expr_array = std::vector<expression::AbstractExpression *>();
+  expression::AbstractExpression *expr, *result;
+  type::TypeId element_type = type::TypeId::INVALID;
+
+  auto int32_vec = new std::vector<int32_t>();
+  auto double_vec = new std::vector<double>();
+
+  for (auto elem = root->elements->head; elem != nullptr; elem = elem->next) {
+    Node *node = reinterpret_cast<Node *>(elem->data.ptr_value);
+    switch (node->type) {
+      case T_A_Const: {
+        expr = ConstTransform(reinterpret_cast<A_Const *>(node));
+        if(element_type == type::TypeId::INVALID) {
+          element_type = expr->GetValueType();
+        }
+        expr_array.push_back(expr);
+        switch (element_type) {
+          case type::TypeId::INTEGER: {
+            int32_vec->push_back(
+              (reinterpret_cast<expression::ConstantValueExpression *>(expr))->GetValue().GetInteger());
+            break;
+          }
+          case type::TypeId::DECIMAL: {
+            double_vec->push_back(
+              (reinterpret_cast<expression::ConstantValueExpression *>(expr))->GetValue().GetDecimal());
+            break;
+          }
+          default:
+            throw NotImplementedException(StringUtil::Format(
+              "Array element value type %d not supported yet...", element_type));
+        }
+        break;
+      }
+      default:
+        throw NotImplementedException(StringUtil::Format(
+          "Array element of type %d not supported yet...", node->type));
+    }
+  }
+
+  switch (element_type) {
+    case type::TypeId::INTEGER: {
+      result = new expression::ArrayExpression(expr_array,
+        type::ValueFactory::GetArrayValue<int32_t>(int32_vec, element_type));
+      break;
+    }
+    case type::TypeId::DECIMAL: {
+      result = new expression::ArrayExpression(expr_array,
+        type::ValueFactory::GetArrayValue<double>(double_vec, element_type));
+      break;
+    }
+    default:
+      throw NotImplementedException(StringUtil::Format(
+        "Array element value type %d not supported yet...", element_type));
+  }
+  return result;
+}
+
 // This function takes in the whereClause part of a Postgres SelectStmt
 // parsenode and transfers it into Peloton AbstractExpression.
 expression::AbstractExpression *PostgresParser::WhereTransform(Node *root) {
@@ -869,8 +936,28 @@ parser::ColumnDefinition *PostgresParser::ColumnDefTransform(ColumnDef *root) {
   parser::ColumnDefinition::DataType data_type =
       parser::ColumnDefinition::StrToDataType(name);
 
+  if (type_name->arrayBounds) {
+    // TODO: Mark corresponding fields in ColumnDefinition class to denote
+    // an array column
+    switch (data_type) {
+      case ColumnDefinition::DataType::INT:
+        result = new ColumnDefinition(root->colname, 
+                                      ColumnDefinition::DataType::INTEGERARRAY);
+        break;
+      case ColumnDefinition::DataType::DECIMAL:
+        result = new ColumnDefinition(root->colname, 
+                                      ColumnDefinition::DataType::DECIMALARRAY);
+        break;
+      default: {
+        throw NotImplementedException(StringUtil::Format(
+            "Column Array DataType %d not supported yet...\n", data_type));
+      }
+    }
+  } else {
+    result = new ColumnDefinition(root->colname, data_type);
+  }
+
   // Transform Varchar len
-  result = new ColumnDefinition(root->colname, data_type);
   if (type_name->typmods) {
     Node *node =
         reinterpret_cast<Node *>(type_name->typmods->head->data.ptr_value);
@@ -1338,12 +1425,12 @@ parser::AnalyzeStatement *PostgresParser::VacuumTransform(VacuumStmt *root) {
   return result;
 }
 
-parser::VariableSetStatement *PostgresParser::VariableSetTransform(UNUSED_ATTRIBUTE VariableSetStmt* root) {
-  VariableSetStatement* res = new VariableSetStatement();
+parser::VariableSetStatement *PostgresParser::VariableSetTransform(UNUSED_ATTRIBUTE VariableSetStmt *root) {
+  VariableSetStatement *res = new VariableSetStatement();
   return res;
 }
 
-std::vector<std::string>* PostgresParser::ColumnNameTransform(List* root) {
+std::vector<std::string> *PostgresParser::ColumnNameTransform(List *root) {
   auto result = new std::vector<std::string>();
 
   if (root == nullptr) return result;
@@ -1376,12 +1463,12 @@ std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>>
       switch (expr->type) {
         case T_ParamRef: {
           cur_result.push_back(std::unique_ptr<expression::AbstractExpression>(
-              ParamRefTransform((ParamRef *)expr)));
+            ParamRefTransform((ParamRef *)expr)));
           break;
         }
         case T_A_Const: {
           cur_result.push_back(std::unique_ptr<expression::AbstractExpression>(
-              ConstTransform((A_Const *)expr)));
+            ConstTransform((A_Const *)expr)));
           break;
         }
         case T_TypeCast: {
@@ -1395,6 +1482,11 @@ std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>>
           }
           break;
         }
+        case T_A_ArrayExpr: {
+          cur_result.push_back(std::unique_ptr<expression::AbstractExpression>(
+            ArrayExprTransform((A_ArrayExpr *)expr)));
+          break;
+        }
         case T_SetToDefault: {
           // TODO handle default type
           // add corresponding expression for
@@ -1404,7 +1496,7 @@ std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>>
         }
         default:
           throw NotImplementedException(StringUtil::Format(
-              "Value of type %d not supported yet...\n", expr->type));
+            "Value of type %d not supported yet...\n", expr->type));
       }
     }
     result->push_back(std::move(cur_result));
@@ -1648,7 +1740,7 @@ parser::SQLStatement *PostgresParser::NodeTransform(Node *stmt) {
 // This function transfers a list of Postgres statements into
 // a Peloton SQLStatementList object. It traverses the parse list
 // and call the helper for singles nodes.
-parser::SQLStatementList* PostgresParser::ListTransform(List *root) {
+parser::SQLStatementList *PostgresParser::ListTransform(List *root) {
   if (root == nullptr) {
     return nullptr;
   }
