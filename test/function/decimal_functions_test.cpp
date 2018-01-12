@@ -133,7 +133,7 @@ TEST_F(DecimalFunctionsTests, AbsTestInt) {
     args = {type::ValueFactory::GetIntegerValue(in)};
     auto result = function::DecimalFunctions::_Abs(args);
     EXPECT_FALSE(result.IsNull());
-    EXPECT_EQ(abs(in), result.GetAs<int64_t>());
+    EXPECT_EQ(std::abs(in), result.GetAs<int64_t>());
   }
 
   for (int32_t in: intTestInputs) {

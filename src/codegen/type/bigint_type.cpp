@@ -191,22 +191,7 @@ struct Floor : public TypeSystem::UnaryOperatorHandleNull {
   }
 };
 
-// Abs
-struct Abs : public TypeSystem::UnaryOperatorHandleNull {
-  bool SupportsType(const Type &type) const override {
-    return type.GetSqlType() == BigInt::Instance();
-  }
 
-  Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
-    return Type{BigInt::Instance()};
-  }
-
-  Value Impl(UNUSED_ATTRIBUTE CodeGen &codegen,
-               const Value &val) const override {
-    PL_ASSERT(SupportsType(val.GetType()));
-    return val;
-  }
-};
 
 // Ceiling
 struct Ceil : public TypeSystem::UnaryOperatorHandleNull {
@@ -427,6 +412,31 @@ struct Modulo : public TypeSystem::BinaryOperatorHandleNull {
 
     // Return result
     return result;
+  }
+};
+
+// Abs
+struct Abs : public TypeSystem::UnaryOperatorHandleNull {
+  bool SupportsType(const Type &type) const override {
+    return type.GetSqlType() == BigInt::Instance();
+  }
+
+  Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
+    return Type{BigInt::Instance()};
+  }
+
+  Value Impl(CodeGen &codegen, const Value &val) const override {
+    PL_ASSERT(SupportsType(val.GetType()));
+    // The BigInt subtraction implementation
+    Sub sub;
+    // Zero place-holder
+    auto zero = codegen::Value{type::BigInt::Instance(), codegen.Const64(0)};
+
+    // We want: raw_ret = (val < 0 ? 0 - val : val)
+    auto sub_result = sub.Impl(codegen, zero, val, OnError::Exception);
+    auto *lt_zero = codegen->CreateICmpSLT(val.GetValue(), zero.GetValue());
+    auto *raw_ret = codegen->CreateSelect(lt_zero, sub_result.GetValue(), val.GetValue());
+    return Value{BigInt::Instance(), raw_ret};
   }
 };
 
