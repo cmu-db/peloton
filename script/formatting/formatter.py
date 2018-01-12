@@ -32,7 +32,7 @@ DEFAULT_DIRS = []
 DEFAULT_DIRS.append(PELOTON_SRC_DIR)
 DEFAULT_DIRS.append(PELOTON_TESTS_DIR)
 
-CLANG_FORMAT = "clang-format"
+CLANG_FORMAT = "clang-format-3.6"
 CLANG_FORMAT_FILE = os.path.join(PELOTON_DIR, ".clang-format")
 
 ## ==============================================
