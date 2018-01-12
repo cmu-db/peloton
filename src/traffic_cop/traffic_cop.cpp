@@ -298,6 +298,8 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
 
+  // TODO(Tianyi) Move Statement Planing into Statement's method
+  // to increase coherence
   try {
     auto plan = optimizer_->BuildPelotonPlanTree(
         statement->GetStmtParseTreeList(), default_database_name_,
@@ -561,8 +563,18 @@ ResultType TrafficCop::ExecuteStatement(
         return AbortQueryHelper();
       }
       default:
-        ExecuteHelper(statement->GetPlanTree(), params, result, result_format,
-                      thread_id);
+        // The statement may be out of date
+        // It needs to be replan
+        if (statement->GetNeedsPlan()) {
+          // TODO(Tianyi) Move Statement Replan into Statement's method
+          // to increase coherence
+          auto plan =
+              optimizer_->BuildPelotonPlanTree(statement->GetStmtParseTreeList(), default_database_name_, tcop_txn_state_.top().first);
+          statement->SetPlanTree(plan);
+        }
+        
+        ExecuteHelper(statement->GetPlanTree(), params, result,
+                      result_format, thread_id);
         if (GetQueuing()) {
           return ResultType::QUEUING;
         } else {

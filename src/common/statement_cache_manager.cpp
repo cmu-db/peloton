@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// statement.h
+// statement_cache_manager.cpp
 //
 // Identification: src/include/common/statement_cache_manager.cpp
 //
@@ -29,6 +29,21 @@ void StatementCacheManager::InvalidateTableOid(oid_t table_id) {
   // Iterate each plan cache
   for (auto &iter : iterator) {
     iter.first->NotifyInvalidTable(table_id);
+  }
+  // Automatically release the table;
+}
+
+void StatementCacheManager::InvalidateTableOids(std::set<oid_t> &table_ids) {
+  if (table_ids.empty())
+    return;
+
+  // Lock the table by grabing the iterator
+  auto iterator = statement_caches_.GetIterator();
+
+  // Iterate each plan cache
+  for (auto &iter : iterator) {
+    for (auto &table_id : table_ids)
+      iter.first->NotifyInvalidTable(table_id);
   }
   // Automatically release the table;
 }

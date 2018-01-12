@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// statement.h
+// statement_cache.h
 //
 // Identification: src/include/common/statement_cache.h
 //
