@@ -17,6 +17,7 @@
 #include "common/timer.h"
 #include "executor/plan_executor.h"
 #include "storage/storage_manager.h"
+#include "storage/tile_group.h"
 
 namespace peloton {
 namespace codegen {
@@ -25,7 +26,8 @@ namespace codegen {
 Query::Query(const planner::AbstractPlan &query_plan)
     : query_plan_(query_plan) {}
 
-static void ExecuteStages(std::vector<Stage>::iterator begin,
+static void ExecuteStages(concurrency::TransactionContext *txn,
+                          std::vector<Stage>::iterator begin,
                           std::vector<Stage>::iterator end,
                           char *param,
                           std::function<void()> on_complete) {
@@ -35,15 +37,21 @@ static void ExecuteStages(std::vector<Stage>::iterator begin,
     auto &pool = threadpool::MonoQueuePool::GetInstance();
     switch (begin->kind_) {
       case StageKind::SINGLETHREADED: {
-        pool.SubmitTask([&pool, begin, end, param, on_complete] {
+        pool.SubmitTask([&pool, txn, begin, end, param, on_complete] {
           begin->singlethreaded_func_(param);
-          ExecuteStages(begin + 1, end, param, on_complete);
+          ExecuteStages(txn, begin + 1, end, param, on_complete);
         });
         break;
       }
       case StageKind::MULTITHREADED_SEQSCAN: {
         auto table = begin->table_;
         auto ntile_groups = table->GetTileGroupCount();
+        
+        for (size_t i = 0; i < ntile_groups; ++i) {
+          auto tilegroup = table->GetTileGroup(i);
+          txn->RecordTouchTileGroup(tilegroup->GetTileGroupId());
+        }
+
         size_t ntasks = std::min(threadpool::kDefaultWorkerPoolSize,
                                  ntile_groups);
         auto ntile_groups_per_task = ntile_groups / ntasks;
@@ -51,20 +59,25 @@ static void ExecuteStages(std::vector<Stage>::iterator begin,
 
         begin->multithreaded_seqscan_init_(param, ntasks);
 
-        for (size_t task = 0; task < ntasks; ++task) {
-          size_t tile_group_beg = ntile_groups_per_task * task;
-          size_t tile_group_end = (task + 1 == ntasks) ? ntile_groups :
-                                  ntile_groups_per_task * (task + 1);
-          LOG_DEBUG("Scanning [%zu, %zu)", tile_group_beg, tile_group_end);
-          pool.SubmitTask([&pool, task, begin, end, param, tile_group_beg,
-                           tile_group_end, count, on_complete] {
-            begin->multithreaded_seqscan_func_(param, task, tile_group_beg,
-                                               tile_group_end);
-            if (--(*count) == 0) {
-              delete count;
-              ExecuteStages(begin + 1, end, param, on_complete);
-            }
-          });
+        if (ntasks == 1) {
+          begin->multithreaded_seqscan_func_(param, 0, 0, ntile_groups);
+          ExecuteStages(txn, begin + 1, end, param, on_complete);
+        } else {
+          for (size_t task = 0; task < ntasks; ++task) {
+            size_t tile_group_beg = ntile_groups_per_task * task;
+            size_t tile_group_end = (task + 1 == ntasks) ? ntile_groups :
+                                    ntile_groups_per_task * (task + 1);
+            LOG_DEBUG("Scanning [%zu, %zu)", tile_group_beg, tile_group_end);
+            pool.SubmitTask([&pool, txn, task, begin, end, param, tile_group_beg,
+                            tile_group_end, count, on_complete] {
+              begin->multithreaded_seqscan_func_(param, task, tile_group_beg,
+                                                tile_group_end);
+              if (--(*count) == 0) {
+                delete count;
+                ExecuteStages(txn, begin + 1, end, param, on_complete);
+              }
+            });
+          }
         }
         break;
       }
@@ -154,7 +167,8 @@ void Query::Execute(std::unique_ptr<executor::ExecutorContext> executor_context,
     delete timer;
   };
 
-  ExecuteStages(stages_.begin(), stages_.end(), param, on_execute_stages_complete);
+  ExecuteStages(context->GetTransaction(), stages_.begin(), stages_.end(),
+                param, on_execute_stages_complete);
 }
 
 bool Query::Prepare(const QueryFunctions &query_funcs) {
