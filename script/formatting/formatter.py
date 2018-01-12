@@ -33,6 +33,7 @@ DEFAULT_DIRS.append(PELOTON_SRC_DIR)
 DEFAULT_DIRS.append(PELOTON_TESTS_DIR)
 
 CLANG_FORMAT = "clang-format-3.6"
+CLANG_FORMAT_FILE = os.path.join(PELOTON_DIR, ".clang-format")
 
 ## ==============================================
 ##             HEADER CONFIGURATION
@@ -111,9 +112,13 @@ def format_file(file_path, update_header, clang_format_code):
             fd.write(file_data)
 
         elif clang_format_code:
-            formatting_command = CLANG_FORMAT + " -style=file " + " -i " + file_path
-            LOG.info(formatting_command)
-            subprocess.call([CLANG_FORMAT, "-style=file", "-i", file_path])
+            try:
+                formatting_command = CLANG_FORMAT + " -style=file -i " + file_path
+                LOG.info(formatting_command)
+                subprocess.call([CLANG_FORMAT, "-style=file", "-i", file_path])
+            except OSError as e:
+                LOG.error("clang-format seems not installed")
+                exit("clang-format seems not installed")
 
     #END WITH
 
