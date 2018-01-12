@@ -190,7 +190,9 @@ struct Abs : public TypeSystem::UnaryOperatorHandleNull {
     return Type{Decimal::Instance()};
   }
 
-  Value Impl(CodeGen &codegen, const Value &val) const override {
+  Value Impl(CodeGen &codegen, const Value &val,
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+    const override {
     llvm::Value *raw_ret =
       codegen.Call(DecimalFunctionsProxy::Abs, {val.GetValue()});
     return Value{Integer::Instance(), raw_ret};

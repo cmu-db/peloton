@@ -439,7 +439,6 @@ struct Modulo : public TypeSystem::BinaryOperatorHandleNull {
   }
 };
 
-<<<<<<< HEAD
 // Abs
 struct Abs : public TypeSystem::UnaryOperatorHandleNull {
   bool SupportsType(const Type &type) const override {
@@ -450,14 +449,16 @@ struct Abs : public TypeSystem::UnaryOperatorHandleNull {
     return Type{Integer::Instance()};
   }
 
-  Value Impl(CodeGen &codegen, const Value &val) const override {
+  Value Impl(CodeGen &codegen, const Value &val,
+             const TypeSystem::InvocationContext &ctx)
+    const override {
     // The integer subtraction implementation
     Sub sub;
     // Zero place-holder
     auto zero = codegen::Value{type::Integer::Instance(), codegen.Const32(0)};
 
     // We want: raw_ret = (val < 0 ? 0 - val : val)
-    auto sub_result = sub.Impl(codegen, zero, val, OnError::Exception);
+    auto sub_result = sub.Impl(codegen, zero, val, ctx);
     auto *lt_zero = codegen->CreateICmpSLT(val.GetValue(), zero.GetValue());
     auto *raw_ret = codegen->CreateSelect(lt_zero, sub_result.GetValue(), val.GetValue());
     return Value{Integer::Instance(), raw_ret};
