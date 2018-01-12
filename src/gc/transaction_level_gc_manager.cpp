@@ -13,6 +13,7 @@
 #include "gc/transaction_level_gc_manager.h"
 
 #include "catalog/manager.h"
+#include "catalog/query_history_catalog.h"
 #include "common/container_tuple.h"
 #include "concurrency/epoch_manager_factory.h"
 #include "concurrency/transaction_manager_factory.h"
@@ -125,6 +126,23 @@ int TransactionLevelGCManager::Unlink(const int &thread_id,
     // if there's no more tuples in the queue, then break.
     if (unlink_queues_[thread_id]->Dequeue(txn_ctx) == false) {
       break;
+    }
+
+    // TODO[Siva]: Add to the lockfree queue of the brain thread pool
+    // Log the query into query_history_catalog
+
+    std::string query_string = txn_ctx->GetQueryString();
+    if(query_string != "") {
+      std::string fingerprint = "fingerprint";
+      uint64_t timestamp = 123;
+
+      auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+      auto txn = txn_manager.BeginTransaction();
+
+      catalog::QueryHistoryCatalog::GetInstance()->InsertQueryHistory(
+          query_string, fingerprint, timestamp, nullptr, txn);
+
+      txn_manager.CommitTransaction(txn);
     }
 
     // Deallocate the Transaction Context of transactions that don't involve

@@ -19,6 +19,7 @@
 #include "catalog/index_metrics_catalog.h"
 #include "catalog/language_catalog.h"
 #include "catalog/proc_catalog.h"
+#include "catalog/query_history_catalog.h"
 #include "catalog/query_metrics_catalog.h"
 #include "catalog/settings_catalog.h"
 #include "catalog/table_catalog.h"
@@ -147,6 +148,7 @@ void Catalog::Bootstrap() {
   TableMetricsCatalog::GetInstance(txn);
   IndexMetricsCatalog::GetInstance(txn);
   QueryMetricsCatalog::GetInstance(txn);
+  QueryHistoryCatalog::GetInstance(txn);
   SettingsCatalog::GetInstance(txn);
   TriggerCatalog::GetInstance(txn);
   LanguageCatalog::GetInstance(txn);
