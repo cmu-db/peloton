@@ -73,9 +73,15 @@ class TransactionContext : public Printable {
 
   inline eid_t GetEpochId() const { return epoch_id_; }
 
+  inline std::string GetQueryString() const { return query_string_; }
+
   inline void SetCommitId(const cid_t commit_id) { commit_id_ = commit_id; }
 
   inline void SetEpochId(const eid_t epoch_id) { epoch_id_ = epoch_id; }
+
+  inline void SetQueryString(const char* query_string) {
+    query_string_ = std::string(query_string);
+  }
 
   void RecordCreate(oid_t database_oid, oid_t table_oid, oid_t index_oid) {
     rw_object_set_.emplace_back(database_oid, table_oid, index_oid,
@@ -173,6 +179,9 @@ class TransactionContext : public Printable {
   // epoch id can be extracted from read id.
   // GC manager uses this id to check whether a version is still visible.
   eid_t epoch_id_;
+
+  // string to log at the end of the transaction
+  std::string query_string_;
 
   ReadWriteSet rw_set_;
   CreateDropSet rw_object_set_;
