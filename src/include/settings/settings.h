@@ -71,6 +71,16 @@ SETTING_double(bnlj_buffer_size,
              1.0 * 1024.0 * 1024.0,
              true, true)
 
+SETTING_int(mono_queue_pool_num_workers,
+           "The default number of worker threads in MonoQueuePool",
+           4,
+           true, true)
+
+SETTING_int(mono_queue_pool_num_tasks,
+           "The default size of the task queue in MonoQueuePool",
+           32,
+           true, true)
+
 //===----------------------------------------------------------------------===//
 // WRITE AHEAD LOG
 //===----------------------------------------------------------------------===//

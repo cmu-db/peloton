@@ -67,25 +67,28 @@ BufferingConsumer::BufferingConsumer(const std::vector<oid_t> &cols,
 
 // Append the array of values (i.e., a tuple) into the consumer's buffer of
 // output tuples.
-void BufferingConsumer::BufferTuple(char *state, char *tuple,
-                                    uint32_t num_cols, uint64_t task_id) {
+void BufferingConsumer::BufferTuple(char *state, char *tuple, uint32_t num_cols,
+                                    uint64_t task_id) {
   auto buffer_state = reinterpret_cast<BufferingState *>(state);
-  buffer_state->outputs->at(task_id).emplace_back(
-      reinterpret_cast<peloton::type::Value *>(tuple), num_cols);
+  buffer_state->outputs->at(task_id)
+      .emplace_back(reinterpret_cast<peloton::type::Value *>(tuple), num_cols);
 }
 
+// When we know the number of tasks, initialize per-task buffer.
 void BufferingConsumer::NotifyNumTasks(char *state, size_t ntasks) {
   auto buffer_state = reinterpret_cast<BufferingState *>(state);
   buffer_state->outputs->resize(ntasks);
 }
 
+// Generate code that notifies the number of tasks.
 void BufferingConsumer::CodeGenNotifyNumTasks(CompilationContext &context,
                                               llvm::Value *ntasks) {
   auto &codegen = context.GetCodeGen();
   auto &runtime_state = context.GetRuntimeState();
 
-  codegen.Call(BufferingConsumerProxy::NotifyNumTasks, {
-      runtime_state.LoadStateValue(codegen, consumer_state_id_), ntasks});
+  codegen.Call(
+      BufferingConsumerProxy::NotifyNumTasks,
+      {runtime_state.LoadStateValue(codegen, consumer_state_id_), ntasks});
 }
 
 // Create two pieces of state: a pointer to the output tuple vector and an

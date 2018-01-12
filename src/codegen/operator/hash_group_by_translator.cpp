@@ -100,39 +100,27 @@ void HashGroupByTranslator::InitializeState() {
 
 // Produce!
 std::vector<CodeGenStage> HashGroupByTranslator::Produce() const {
-  auto &compilation_context = GetCompilationContext();
-  auto &runtime_state = compilation_context.GetRuntimeState();
+  auto &cmp_ctx = GetCompilationContext();
   auto &codegen = GetCodeGen();
-  auto &code_context = codegen.GetCodeContext();
 
-  // Let the child produce its tuples which we aggregate in our hash-table
-  std::vector<CodeGenStage> child_stages =
-      compilation_context.Produce(*group_by_.GetChild(0));
+  // Let the child produce its tuples which we aggregate in the hash table.
+  std::vector<CodeGenStage> stages = cmp_ctx.Produce(*group_by_.GetChild(0));
 
-  FunctionBuilder function_builder{
-      code_context,
-      "hash_group_by_stage",
-      codegen.VoidType(),
-      {{"runtime_state", runtime_state.FinalizeType(codegen)->getPointerTo()}}};
-  {
-    compilation_context.RefreshParameterCache();
+  // Iterate over the hash table to group elements.
+  stages.push_back(cmp_ctx.SingleThreadedStage("HashGroupBy", [&] {
     LOG_DEBUG("HashGroupBy starting to produce results ...");
 
     // Iterate over the hash table, sending tuples up the tree
-    auto *raw_vec = codegen.AllocateBuffer(
-        codegen.Int32Type(), Vector::kDefaultVectorSize, "hashGroupBySelVector");
+    auto *raw_vec =
+        codegen.AllocateBuffer(codegen.Int32Type(), Vector::kDefaultVectorSize,
+                               "hashGroupBySelVector");
     Vector selection_vec{raw_vec, Vector::kDefaultVectorSize,
                          GetCodeGen().Int32Type()};
     ProduceResults producer{*this};
     hash_table_.VectorizedIterate(GetCodeGen(), LoadStatePtr(hash_table_id_),
                                   selection_vec, producer);
-  }
-  function_builder.ReturnAndFinish();
-  auto hash_group_by_stage = SingleThreadedCodeGenStage(
-      function_builder.GetFunction());
+  }));
 
-  std::vector<CodeGenStage> stages = std::move(child_stages);
-  stages.push_back(hash_group_by_stage);
   return stages;
 }
 

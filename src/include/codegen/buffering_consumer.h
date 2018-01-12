@@ -74,6 +74,7 @@ class BufferingConsumer : public QueryResultConsumer {
   static void BufferTuple(char *state, char *tuple, uint32_t num_cols,
                           uint64_t task_id);
 
+  // Called from compiled query code to prepare per-task buffer
   static void NotifyNumTasks(char *state, size_t ntasks);
 
   void CodeGenNotifyNumTasks(CompilationContext &context,

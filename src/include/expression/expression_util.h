@@ -574,10 +574,10 @@ class ExpressionUtil {
    */
 
   static expression::AbstractExpression *ExtractJoinColumns(
-      std::vector<std::unique_ptr<const expression::AbstractExpression>>
-          &l_column_exprs,
-      std::vector<std::unique_ptr<const expression::AbstractExpression>>
-          &r_column_exprs,
+      std::vector<std::unique_ptr<const expression::AbstractExpression>> &
+          l_column_exprs,
+      std::vector<std::unique_ptr<const expression::AbstractExpression>> &
+          r_column_exprs,
       const expression::AbstractExpression *expr) {
     if (expr == nullptr) return nullptr;
     if (expr->GetExpressionType() == ExpressionType::CONJUNCTION_AND) {
@@ -663,10 +663,10 @@ class ExpressionUtil {
       case ExpressionType::COMPARE_LESSTHANOREQUALTO:
       case ExpressionType::COMPARE_GREATERTHAN:
       case ExpressionType::COMPARE_GREATERTHANOREQUALTO: {
-        if (expr->GetChild(1)->GetExpressionType()
-            == ExpressionType::VALUE_CONSTANT) {
-          PL_ASSERT(expr->GetChild(0)->GetExpressionType()
-                    == ExpressionType::VALUE_TUPLE);
+        if (expr->GetChild(1)->GetExpressionType() ==
+            ExpressionType::VALUE_CONSTANT) {
+          PL_ASSERT(expr->GetChild(0)->GetExpressionType() ==
+                    ExpressionType::VALUE_TUPLE);
           auto lhs = static_cast<const expression::TupleValueExpression *>(
               expr->GetChild(0));
           auto rhs = static_cast<const expression::ConstantValueExpression *>(
@@ -674,65 +674,13 @@ class ExpressionUtil {
           predicate_restrictions->push_back(storage::PredicateInfo{
               .col_id = lhs->GetColumnId(),
               .comparison_operator = int(expr->GetExpressionType()),
-              .predicate_value = rhs->GetValue()
-          });
+              .predicate_value = rhs->GetValue()});
         }
         break;
       }
       default:
         break;
     }
-  }
-
-  /*
-   * Recursively call on each child and fill in the predicate array.
-   * Returns true for zone mappable predicate.
-   * */
-  static bool GetPredicateForZoneMap(
-      std::vector<storage::PredicateInfo> &predicate_restrictions,
-      const expression::AbstractExpression *expr) {
-    if (expr == nullptr) {
-      return false;
-    }
-    auto expr_type = expr->GetExpressionType();
-    // If its and, split children and parse again
-    if (expr_type == ExpressionType::CONJUNCTION_AND) {
-      bool left_expr =
-          GetPredicateForZoneMap(predicate_restrictions, expr->GetChild(0));
-      bool right_expr =
-          GetPredicateForZoneMap(predicate_restrictions, expr->GetChild(1));
-      return left_expr && right_expr;
-
-    } else if (expr_type == ExpressionType::COMPARE_EQUAL ||
-               expr_type == ExpressionType::COMPARE_LESSTHAN ||
-               expr_type == ExpressionType::COMPARE_LESSTHANOREQUALTO ||
-               expr_type == ExpressionType::COMPARE_GREATERTHAN ||
-               expr_type == ExpressionType::COMPARE_GREATERTHANOREQUALTO) {
-      // The right child should be a constant.
-      auto right_child = expr->GetModifiableChild(1);
-
-      if (right_child->GetExpressionType() == ExpressionType::VALUE_CONSTANT) {
-        auto right_exp = (const expression::ConstantValueExpression
-                              *)(expr->GetModifiableChild(1));
-        auto predicate_val = right_exp->GetValue();
-        // Get the column id for this predicate
-        auto left_exp =
-            (const expression::TupleValueExpression *)(expr->GetModifiableChild(
-                0));
-        int col_id = left_exp->GetColumnId();
-
-        auto comparison_operator = (int)expr->GetExpressionType();
-        storage::PredicateInfo p_info;
-
-        p_info.col_id = col_id;
-        p_info.comparison_operator = comparison_operator;
-        p_info.predicate_value = predicate_val;
-
-        predicate_restrictions.push_back(p_info);
-        return true;
-      }
-    }
-    return false;
   }
 
   /*

@@ -19,9 +19,9 @@ namespace codegen {
 
 // Constructor
 ConsumerContext::ConsumerContext(CompilationContext &compilation_context,
-                                 llvm::Value *task_id,
-                                 Pipeline &pipeline)
-    : compilation_context_(compilation_context), pipeline_(pipeline),
+                                 llvm::Value *task_id, Pipeline &pipeline)
+    : compilation_context_(compilation_context),
+      pipeline_(pipeline),
       task_id_(task_id) {}
 
 // Pass the row batch to the next operator in the pipeline

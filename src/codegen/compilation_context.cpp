@@ -23,9 +23,10 @@
 namespace peloton {
 namespace codegen {
 
+// Whether this plan can be compiled to be executed in parallel
 static bool IsMultithreadSupported(const planner::AbstractPlan *plan) {
   if (!settings::SettingsManager::GetBool(
-      settings::SettingId::codegen_parallel)) {
+          settings::SettingId::codegen_parallel)) {
     return false;
   }
 
@@ -84,7 +85,8 @@ void CompilationContext::Prepare(const expression::AbstractExpression &exp) {
 }
 
 // Produce tuples for the given operator
-std::vector<CodeGenStage> CompilationContext::Produce(const planner::AbstractPlan &op) {
+std::vector<CodeGenStage> CompilationContext::Produce(
+    const planner::AbstractPlan &op) {
   auto *translator = GetTranslator(op);
   PL_ASSERT(translator != nullptr);
   return translator->Produce();
@@ -255,12 +257,33 @@ std::vector<llvm::Function *> *CompilationContext::DeclareAuxiliaryProducer(
     const planner::AbstractPlan &plan) {
   auto iter = auxiliary_producers_.find(&plan);
   if (iter == auxiliary_producers_.end()) {
-    iter = auxiliary_producers_.emplace(
-        &plan,
-        std::unique_ptr<std::vector<llvm::Function *>>(
-            new std::vector<llvm::Function *>)).first;
+    iter =
+        auxiliary_producers_.emplace(
+                                 &plan,
+                                 std::unique_ptr<std::vector<llvm::Function *>>(
+                                     new std::vector<llvm::Function *>)).first;
   }
   return iter->second.get();
+}
+
+CodeGenStage CompilationContext::SingleThreadedStage(
+    const std::string &stage_name, const std::function<void()> &body) {
+
+  auto &runtime_state = GetRuntimeState();
+  auto &codegen = GetCodeGen();
+  auto &code_context = codegen.GetCodeContext();
+
+  FunctionBuilder stage_function_builder{
+      code_context,
+      stage_name,
+      codegen.VoidType(),
+      {{"runtime_state", runtime_state.FinalizeType(codegen)->getPointerTo()}}};
+  {
+    RefreshParameterCache();
+    body();
+    stage_function_builder.ReturnAndFinish();
+  }
+  return SingleThreadedCodeGenStage(stage_function_builder.GetFunction());
 }
 
 }  // namespace codegen

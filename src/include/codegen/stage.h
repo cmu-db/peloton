@@ -18,10 +18,7 @@
 namespace peloton {
 namespace codegen {
 
-enum class StageKind {
-  SINGLETHREADED,
-  MULTITHREADED_SEQSCAN
-};
+enum class StageKind { SINGLETHREADED, MULTITHREADED_SEQSCAN };
 
 struct CodeGenStage {
   StageKind kind_;

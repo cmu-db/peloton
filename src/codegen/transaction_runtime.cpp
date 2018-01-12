@@ -38,12 +38,7 @@ uint32_t TransactionRuntime::PerformVectorizedRead(
   // visible tuple IDs in the provided selection vector
   uint32_t out_idx = 0;
   for (uint32_t i = tid_start; i < tid_end; i++) {
-    (void)txn;
-    (void)txn_manager;
-    (void)tile_group_header;
-
     // Perform the visibility check
-    // auto visibility = VisibilityType::OK;
     auto visibility = txn_manager.IsVisible(&txn, tile_group_header, i);
 
     // Update the output position
@@ -61,7 +56,6 @@ uint32_t TransactionRuntime::PerformVectorizedRead(
     ItemPointer location{tile_group_idx, selection_vector[idx]};
 
     // Perform the read
-    // bool can_read = true;
     bool can_read = txn_manager.PerformRead(&txn, location);
 
     // Update the selection vector and output position
@@ -77,21 +71,20 @@ bool TransactionRuntime::IsOwner(concurrency::TransactionContext &txn,
                                  uint32_t tuple_offset) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   bool is_owner = txn_manager.IsOwner(&txn, tile_group_header, tuple_offset);
-  bool is_written = txn_manager.IsWritten(&txn, tile_group_header,
-                                          tuple_offset);
+  bool is_written =
+      txn_manager.IsWritten(&txn, tile_group_header, tuple_offset);
   PL_ASSERT((is_owner == false && is_written == true) == false);
-  if (is_owner == true && is_written == true)
-    return true;
+  if (is_owner == true && is_written == true) return true;
   return false;
 }
 
-bool TransactionRuntime::AcquireOwnership(concurrency::TransactionContext &txn,
+bool TransactionRuntime::AcquireOwnership(
+    concurrency::TransactionContext &txn,
     storage::TileGroupHeader *tile_group_header, uint32_t tuple_offset) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   bool is_owner = txn_manager.IsOwner(&txn, tile_group_header, tuple_offset);
-  bool is_ownable = is_owner ||
-                    txn_manager.IsOwnable(&txn, tile_group_header,
-                                          tuple_offset);
+  bool is_ownable =
+      is_owner || txn_manager.IsOwnable(&txn, tile_group_header, tuple_offset);
   if (is_ownable == false) {
     // transaction should be aborted as we cannot update the latest version.
     LOG_TRACE("Not ownable. Fail to update tuple. Txn failure.");
@@ -100,9 +93,9 @@ bool TransactionRuntime::AcquireOwnership(concurrency::TransactionContext &txn,
   }
 
   // If the tuple is not owned by any other txn and is ownable to me
-  bool acquired = is_owner ||
-                  txn_manager.AcquireOwnership(&txn, tile_group_header,
-                                               tuple_offset);
+  bool acquired =
+      is_owner ||
+      txn_manager.AcquireOwnership(&txn, tile_group_header, tuple_offset);
   if (acquired == false) {
     LOG_TRACE("Cannot acquire ownership. Fail to update tuple. Txn failure.");
     txn_manager.SetTransactionResult(&txn, ResultType::FAILURE);
@@ -111,12 +104,13 @@ bool TransactionRuntime::AcquireOwnership(concurrency::TransactionContext &txn,
   return true;
 }
 
-void TransactionRuntime::YieldOwnership(concurrency::TransactionContext &txn,
+void TransactionRuntime::YieldOwnership(
+    concurrency::TransactionContext &txn,
     storage::TileGroupHeader *tile_group_header, uint32_t tuple_offset) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   bool is_owner = txn_manager.IsOwner(&txn, tile_group_header, tuple_offset);
   if (is_owner == false) {
-      txn_manager.YieldOwnership(&txn, tile_group_header, tuple_offset);
+    txn_manager.YieldOwnership(&txn, tile_group_header, tuple_offset);
   }
   txn_manager.SetTransactionResult(&txn, ResultType::FAILURE);
 }

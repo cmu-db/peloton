@@ -70,37 +70,23 @@ void GlobalGroupByTranslator::InitializeState() {
 }
 
 std::vector<CodeGenStage> GlobalGroupByTranslator::Produce() const {
-  auto &codegen = GetCodeGen();
-  auto &code_context = codegen.GetCodeContext();
-  auto &compilation_context = GetCompilationContext();
-  auto &runtime_state = compilation_context.GetRuntimeState();
+  auto &cmp_ctx = GetCompilationContext();
 
-  FunctionBuilder init_builder{
-      code_context,
-      "global_group_by_init",
-      codegen.VoidType(),
-      {{"runtime_state", runtime_state.FinalizeType(codegen)->getPointerTo()}}};
-  {
-    compilation_context.RefreshParameterCache();
+  std::vector<CodeGenStage> stages;
 
-    // Initialize aggregation for global aggregation
+  // Initialize aggregation for global aggregation
+  stages.push_back(cmp_ctx.SingleThreadedStage("GlobalGroupByInit", [this] {
+    auto &codegen = GetCodeGen();
     auto *mat_buffer = LoadStatePtr(mat_buffer_id_);
     aggregation_.CreateInitialGlobalValues(codegen, mat_buffer);
-  }
-  init_builder.ReturnAndFinish();
-  auto init_stage = SingleThreadedCodeGenStage(init_builder.GetFunction());
+  }));
 
   // Let the child produce tuples that we'll aggregate
-  std::vector<CodeGenStage> child_stages =
-      GetCompilationContext().Produce(*plan_.GetChild(0));
+  std::vector<CodeGenStage> child_stages = cmp_ctx.Produce(*plan_.GetChild(0));
+  stages.insert(stages.end(), child_stages.begin(), child_stages.end());
 
-  FunctionBuilder aggregate_builder{
-      code_context,
-      "global_group_by_aggregate",
-      codegen.VoidType(),
-      {{"runtime_state", runtime_state.FinalizeType(codegen)->getPointerTo()}}};
-  {
-    compilation_context.RefreshParameterCache();
+  stages.push_back(cmp_ctx.SingleThreadedStage("GlobalGroupBy", [this] {
+    auto &codegen = GetCodeGen();
 
     // Deserialize the finalized aggregate attribute values from the buffer
     std::vector<codegen::Value> aggregate_vals;
@@ -116,8 +102,8 @@ std::vector<CodeGenStage> GlobalGroupByTranslator::Produce() const {
     }
 
     // Create a row-batch of one row, place all the attributes into the row
-    auto *raw_vec =
-        codegen.AllocateBuffer(codegen.Int32Type(), 1, "globalGroupBySelVector");
+    auto *raw_vec = codegen.AllocateBuffer(codegen.Int32Type(), 1,
+                                           "globalGroupBySelVector");
     Vector selection_vector{raw_vec, 1, codegen.Int32Type()};
     selection_vector.SetValue(codegen, codegen.Const32(0), codegen.Const32(0));
 
@@ -128,20 +114,13 @@ std::vector<CodeGenStage> GlobalGroupByTranslator::Produce() const {
       batch.AddAttribute(&agg_terms[i].agg_ai, &buffer_accessors[i]);
     }
 
-    // Create a new consumer context, put the aggregates into the context and send
-    // it all up to the parent operator
+    // Create a new consumer context, put the aggregates into the context and
+    // send it all up to the parent operator
     ConsumerContext context{GetCompilationContext(), codegen.Const64(0),
                             GetPipeline()};
     context.Consume(batch);
-  }
-  aggregate_builder.ReturnAndFinish();
-  auto aggregate_stage = SingleThreadedCodeGenStage(
-      aggregate_builder.GetFunction());
+  }));
 
-  std::vector<CodeGenStage> stages;
-  stages.push_back(init_stage);
-  stages.insert(stages.end(), child_stages.begin(), child_stages.end());
-  stages.push_back(aggregate_stage);
   return stages;
 }
 

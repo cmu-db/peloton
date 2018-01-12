@@ -214,26 +214,17 @@ void OrderByTranslator::DefineAuxiliaryFunctions() {
 std::vector<CodeGenStage> OrderByTranslator::Produce() const {
   LOG_DEBUG("OrderBy requesting child to produce tuples ...");
 
+  auto &cmp_ctx = GetCompilationContext();
+
   // Let the child produce the tuples we materialize into a buffer
-  std::vector<CodeGenStage> child_stages =
-      GetCompilationContext().Produce(*plan_.GetChild(0));
+  std::vector<CodeGenStage> stages = cmp_ctx.Produce(*plan_.GetChild(0));
 
-  auto &codegen = GetCodeGen();
-  auto &code_context = codegen.GetCodeContext();
-  auto &compilation_context = GetCompilationContext();
-  auto &runtime_state = compilation_context.GetRuntimeState();
-
-  FunctionBuilder order_by_stage_builder{
-      code_context,
-      "order_by_stage",
-      codegen.VoidType(),
-      {{"runtime_state", runtime_state.FinalizeType(codegen)->getPointerTo()}}};
-  {
-    compilation_context.RefreshParameterCache();
+  stages.push_back(cmp_ctx.SingleThreadedStage("OrderBy", [this] {
+    auto &codegen = GetCodeGen();
 
     LOG_DEBUG("OrderBy buffered tuples into sorter, going to sort ...");
 
-    auto* sorter_ptr = LoadStatePtr(sorter_id_);
+    auto *sorter_ptr = LoadStatePtr(sorter_id_);
 
     // The tuples have been materialized into the buffer space, NOW SORT!!!
     sorter_.Sort(codegen, sorter_ptr);
@@ -241,24 +232,18 @@ std::vector<CodeGenStage> OrderByTranslator::Produce() const {
     LOG_DEBUG("OrderBy sort complete, iterating over results ...");
 
     // Now iterate over the sorted list
-    auto* raw_vec = codegen.AllocateBuffer(
+    auto *raw_vec = codegen.AllocateBuffer(
         codegen.Int32Type(), Vector::kDefaultVectorSize, "orderBySelVec");
     Vector selection_vector{raw_vec, Vector::kDefaultVectorSize,
                             codegen.Int32Type()};
 
     ProduceResults callback{*this, selection_vector};
     sorter_.VectorizedIterate(codegen, sorter_ptr,
-                              selection_vector.GetCapacity(),
-                              callback);
+                              selection_vector.GetCapacity(), callback);
 
     LOG_DEBUG("OrderBy completed producing tuples ...");
-  }
-  order_by_stage_builder.ReturnAndFinish();
-  auto order_by_stage = SingleThreadedCodeGenStage(
-      order_by_stage_builder.GetFunction());
+  }));
 
-  std::vector<CodeGenStage> stages = std::move(child_stages);
-  stages.push_back(order_by_stage);
   return stages;
 }
 

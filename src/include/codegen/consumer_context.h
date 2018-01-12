@@ -36,8 +36,7 @@ class CompilationContext;
 class ConsumerContext {
  public:
   // Constructor
-  ConsumerContext(CompilationContext &compilation_context,
-                  llvm::Value *task_id,
+  ConsumerContext(CompilationContext &compilation_context, llvm::Value *task_id,
                   Pipeline &pipeline);
 
   // Pass this consumer context to the parent of the caller of consume()

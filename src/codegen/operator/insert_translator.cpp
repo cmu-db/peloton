@@ -44,11 +44,10 @@ void InsertTranslator::InitializeState() {
   auto &context = GetCompilationContext();
 
   storage::DataTable *table = insert_plan_.GetTable();
-  llvm::Value *table_ptr =
-      codegen.Call(StorageManagerProxy::GetTableWithOid,
-                   {GetStorageManagerPtr(),
-                    codegen.Const32(table->GetDatabaseOid()),
-                    codegen.Const32(table->GetOid())});
+  llvm::Value *table_ptr = codegen.Call(
+      StorageManagerProxy::GetTableWithOid,
+      {GetStorageManagerPtr(), codegen.Const32(table->GetDatabaseOid()),
+       codegen.Const32(table->GetOid())});
 
   llvm::Value *executor_ptr = context.GetExecutorContextPtr();
 
@@ -58,37 +57,29 @@ void InsertTranslator::InitializeState() {
 }
 
 std::vector<CodeGenStage> InsertTranslator::Produce() const {
-  auto &compilation_context = GetCompilationContext();
+  auto &cmp_ctx = GetCompilationContext();
   if (insert_plan_.GetChildrenSize() != 0) {
     // The insert has a child (a scan); it's an insert-from-select. Let the
     // child produce the tuples we'll insert in Consume()
-    return compilation_context.Produce(*insert_plan_.GetChild(0));
+    return cmp_ctx.Produce(*insert_plan_.GetChild(0));
   } else {
     // Regular insert with constants
-    auto &codegen = GetCodeGen();
-    auto &code_context = codegen.GetCodeContext();
-    auto &runtime_state = compilation_context.GetRuntimeState();
-
-    FunctionBuilder function_builder{
-        code_context,
-        "insert_stage",
-        codegen.VoidType(),
-        {{"runtime_state", runtime_state.FinalizeType(codegen)->getPointerTo()}}};
-    {
-      compilation_context.RefreshParameterCache();
-      auto* inserter = LoadStatePtr(inserter_state_id_);
+    return {cmp_ctx.SingleThreadedStage("Insert", [this, &cmp_ctx] {
+      auto &codegen = GetCodeGen();
+      auto *inserter = LoadStatePtr(inserter_state_id_);
 
       auto num_tuples = insert_plan_.GetBulkInsertCount();
       auto num_columns = insert_plan_.GetTable()->GetSchema()->GetColumnCount();
 
       // Read tuple data from the parameter storage and insert
-      const auto& parameter_cache = compilation_context.GetParameterCache();
+      const auto &parameter_cache = cmp_ctx.GetParameterCache();
       for (uint32_t tuple_idx = 0; tuple_idx < num_tuples; tuple_idx++) {
-        auto* tuple_ptr =
+        auto *tuple_ptr =
             codegen.Call(InserterProxy::AllocateTupleStorage, {inserter});
-        auto* pool = codegen.Call(InserterProxy::GetPool, {inserter});
+        auto *pool = codegen.Call(InserterProxy::GetPool, {inserter});
 
-        // Transform into the codegen values and store values in the tuple storage
+        // Transform into the codegen values and store values in the tuple
+        // storage
         std::vector<codegen::Value> values;
         for (uint32_t column_id = 0; column_id < num_columns; column_id++) {
           auto value =
@@ -100,9 +91,7 @@ std::vector<CodeGenStage> InsertTranslator::Produce() const {
         // Complete the insertion
         codegen.Call(InserterProxy::Insert, {inserter});
       }
-    }
-    function_builder.ReturnAndFinish();
-    return {SingleThreadedCodeGenStage(function_builder.GetFunction())};
+    })};
   }
 }
 

@@ -48,46 +48,20 @@ namespace concurrency {
  *    i : insert
  */
 
-TransactionContext::TransactionContext(const size_t thread_id,
-                         const IsolationLevelType isolation,
-                         const cid_t &read_id) {
-  Init(thread_id, isolation, read_id);
-}
+TransactionContext::TransactionContext(size_t thread_id,
+                                       IsolationLevelType isolation,
+                                       cid_t read_id)
+    : TransactionContext(thread_id, isolation, read_id, read_id) {}
 
-TransactionContext::TransactionContext(const size_t thread_id,
-                         const IsolationLevelType isolation,
-                         const cid_t &read_id, const cid_t &commit_id) {
-  Init(thread_id, isolation, read_id, commit_id);
-}
-
-TransactionContext::~TransactionContext() {}
-
-void TransactionContext::Init(const size_t thread_id,
-                       const IsolationLevelType isolation, const cid_t &read_id,
-                       const cid_t &commit_id) {
-  read_id_ = read_id;
-
-  // commit id can be set at a transaction's commit phase.
-  commit_id_ = commit_id;
-
-  // set txn_id to commit_id.
-  txn_id_ = commit_id_;
-
-  epoch_id_ = read_id_ >> 32;
-
-  thread_id_ = thread_id;
-
-  isolation_level_ = isolation;
-
-  is_written_ = false;
-
-  insert_count_ = 0;
-
-  gc_set_.reset(new GCSet());
-  gc_object_set_.reset(new GCObjectSet());
-
-  on_commit_triggers_.reset();
-}
+TransactionContext::TransactionContext(size_t thread_id,
+                                       IsolationLevelType isolation,
+                                       cid_t read_id,
+                                       cid_t commit_id)
+    : txn_id_(commit_id), thread_id_(thread_id), read_id_(read_id),
+      commit_id_(commit_id), epoch_id_(read_id >> 32), rw_set_(),
+      rw_object_set_(), gc_set_(new GCSet()), gc_object_set_(new GCObjectSet()),
+      result_(ResultType::SUCCESS), is_written_(false), insert_count_(0),
+      isolation_level_(isolation), on_commit_triggers_(nullptr) {}
 
 RWType TransactionContext::GetRWType(const ItemPointer &location) {
   oid_t tile_group_id = location.block;
@@ -224,7 +198,8 @@ const std::string TransactionContext::GetInfo() const {
   return os.str();
 }
 
-void TransactionContext::AddOnCommitTrigger(trigger::TriggerData &trigger_data) {
+void TransactionContext::AddOnCommitTrigger(
+    trigger::TriggerData &trigger_data) {
   if (on_commit_triggers_ == nullptr) {
     on_commit_triggers_.reset(new trigger::TriggerSet());
   }

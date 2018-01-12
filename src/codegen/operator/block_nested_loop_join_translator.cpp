@@ -125,8 +125,8 @@ void BlockNestedLoopJoinTranslator::InitializeState() {
 void BlockNestedLoopJoinTranslator::DefineAuxiliaryFunctions() {
   const auto &right_producer = *GetPlan().GetChild(1);
   auto &compilation_context = GetCompilationContext();
-  join_buffer_func_ = compilation_context.DeclareAuxiliaryProducer(
-      right_producer);
+  join_buffer_func_ =
+      compilation_context.DeclareAuxiliaryProducer(right_producer);
 }
 
 void BlockNestedLoopJoinTranslator::TearDownState() {
@@ -141,24 +141,15 @@ std::string BlockNestedLoopJoinTranslator::GetName() const {
 }
 
 std::vector<CodeGenStage> BlockNestedLoopJoinTranslator::Produce() const {
-  auto &codegen = GetCodeGen();
-  auto &code_context = codegen.GetCodeContext();
-  auto &compilation_context = GetCompilationContext();
-  auto &runtime_state = compilation_context.GetRuntimeState();
+  auto &cmp_ctx = GetCompilationContext();
 
-  std::vector<CodeGenStage> child_stages =
-      GetCompilationContext().Produce(*GetPlan().GetChild(0));
+  std::vector<CodeGenStage> stages = cmp_ctx.Produce(*GetPlan().GetChild(0));
 
-  FunctionBuilder join_builder{
-      code_context,
-      "block_nested_loop_join_join",
-      codegen.VoidType(),
-      {{"runtime_state", runtime_state.FinalizeType(codegen)->getPointerTo()}}};
-  {
-    compilation_context.RefreshParameterCache();
+  stages.push_back(cmp_ctx.SingleThreadedStage("BNLJ", [this] {
+    auto &codegen = GetCodeGen();
 
     // Flush any remaining buffered tuples through the join
-    auto* num_tuples =
+    auto *num_tuples =
         buffer_.GetNumberOfStoredTuples(codegen, LoadStatePtr(buffer_id_));
     lang::If has_tuples{codegen,
                         codegen->CreateICmpUGT(num_tuples, codegen.Const32(0))};
@@ -169,12 +160,8 @@ std::vector<CodeGenStage> BlockNestedLoopJoinTranslator::Produce() const {
       }
     }
     has_tuples.EndIf();
-  }
-  join_builder.ReturnAndFinish();
-  auto join_stage = SingleThreadedCodeGenStage(join_builder.GetFunction());
+  }));
 
-  std::vector<CodeGenStage> stages = child_stages;
-  stages.push_back(join_stage);
   return stages;
 }
 

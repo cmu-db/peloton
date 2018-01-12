@@ -28,8 +28,7 @@ Query::Query(const planner::AbstractPlan &query_plan)
 
 static void ExecuteStages(concurrency::TransactionContext *txn,
                           std::vector<Stage>::iterator begin,
-                          std::vector<Stage>::iterator end,
-                          char *param,
+                          std::vector<Stage>::iterator end, char *param,
                           std::function<void()> on_complete) {
   if (begin == end) {
     on_complete();
@@ -46,37 +45,38 @@ static void ExecuteStages(concurrency::TransactionContext *txn,
       case StageKind::MULTITHREADED_SEQSCAN: {
         auto table = begin->table_;
         auto ntile_groups = table->GetTileGroupCount();
-        
+
         for (size_t i = 0; i < ntile_groups; ++i) {
           auto tilegroup = table->GetTileGroup(i);
           txn->RecordTouchTileGroup(tilegroup->GetTileGroupId());
         }
 
-        size_t ntasks = std::min(threadpool::kDefaultWorkerPoolSize,
-                                 ntile_groups);
+        size_t ntasks = std::min(pool.NumWorkers(), ntile_groups);
         auto ntile_groups_per_task = ntile_groups / ntasks;
         auto count = new std::atomic_size_t(ntasks);
 
         begin->multithreaded_seqscan_init_(param, ntasks);
 
-        if (ntasks == 1) {
+        if (ntasks == 0) {
           begin->multithreaded_seqscan_func_(param, 0, 0, ntile_groups);
           ExecuteStages(txn, begin + 1, end, param, on_complete);
         } else {
           for (size_t task = 0; task < ntasks; ++task) {
             size_t tile_group_beg = ntile_groups_per_task * task;
-            size_t tile_group_end = (task + 1 == ntasks) ? ntile_groups :
-                                    ntile_groups_per_task * (task + 1);
+            size_t tile_group_end = (task + 1 == ntasks)
+                                        ? ntile_groups
+                                        : ntile_groups_per_task * (task + 1);
             LOG_DEBUG("Scanning [%zu, %zu)", tile_group_beg, tile_group_end);
-            pool.SubmitTask([&pool, txn, task, begin, end, param, tile_group_beg,
-                            tile_group_end, count, on_complete] {
-              begin->multithreaded_seqscan_func_(param, task, tile_group_beg,
-                                                tile_group_end);
-              if (--(*count) == 0) {
-                delete count;
-                ExecuteStages(txn, begin + 1, end, param, on_complete);
-              }
-            });
+            pool.SubmitTask(
+                [&pool, txn, task, begin, end, param, tile_group_beg,
+                 tile_group_end, count, on_complete] {
+                  begin->multithreaded_seqscan_func_(
+                      param, task, tile_group_beg, tile_group_end);
+                  if (--(*count) == 0) {
+                    delete count;
+                    ExecuteStages(txn, begin + 1, end, param, on_complete);
+                  }
+                });
           }
         }
         break;
@@ -138,34 +138,35 @@ void Query::Execute(std::unique_ptr<executor::ExecutorContext> executor_context,
     timer->Start();
   }
 
-  auto on_execute_stages_complete = [this, param, context, timer, stats, on_complete] {
-    // Timer plan execution
-    if (stats != nullptr) {
-      timer->Stop();
-      stats->plan_ms = timer->GetDuration();
-      timer->Reset();
-      timer->Start();
-    }
+  auto on_execute_stages_complete =
+      [this, param, context, timer, stats, on_complete] {
+        // Timer plan execution
+        if (stats != nullptr) {
+          timer->Stop();
+          stats->plan_ms = timer->GetDuration();
+          timer->Reset();
+          timer->Start();
+        }
 
-    // Clean up
-    LOG_TRACE("Calling query's tearDown() ...");
-    tear_down_func_(param);
+        // Clean up
+        LOG_TRACE("Calling query's tearDown() ...");
+        tear_down_func_(param);
 
-    // No need to cleanup if we get an exception while cleaning up...
-    if (stats != nullptr) {
-      timer->Stop();
-      stats->tear_down_ms = timer->GetDuration();
-    }
+        // No need to cleanup if we get an exception while cleaning up...
+        if (stats != nullptr) {
+          timer->Stop();
+          stats->tear_down_ms = timer->GetDuration();
+        }
 
-    executor::ExecutionResult result;
-    result.m_result = ResultType::SUCCESS;
-    result.m_processed = context->num_processed;
-    on_complete(result);
+        executor::ExecutionResult result;
+        result.m_result = ResultType::SUCCESS;
+        result.m_processed = context->num_processed;
+        on_complete(result);
 
-    delete[] param;
-    delete context;
-    delete timer;
-  };
+        delete[] param;
+        delete context;
+        delete timer;
+      };
 
   ExecuteStages(context->GetTransaction(), stages_.begin(), stages_.end(),
                 param, on_execute_stages_complete);
@@ -187,10 +188,6 @@ bool Query::Prepare(const QueryFunctions &query_funcs) {
   PL_ASSERT(init_func_ != nullptr);
 
   for (auto &codegen_stage : query_funcs.stages) {
-//    auto func_ptr = code_context_.GetRawFunctionPointer(
-//        codegen_stage.llvm_func_);
-//    PL_ASSERT(func_ptr != nullptr);
-
     Stage stage;
     stage.kind_ = codegen_stage.kind_;
     switch (stage.kind_) {
@@ -207,8 +204,7 @@ bool Query::Prepare(const QueryFunctions &query_funcs) {
         auto scan_func = code_context_.GetRawFunctionPointer(
             codegen_stage.multithreaded_seqscan_func_);
 
-        stage.multithreaded_seqscan_init_ =
-            (void (*)(char *, size_t))init_func;
+        stage.multithreaded_seqscan_init_ = (void (*)(char *, size_t))init_func;
 
         stage.multithreaded_seqscan_func_ =
             (void (*)(char *, size_t, size_t, size_t))scan_func;

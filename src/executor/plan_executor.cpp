@@ -59,7 +59,8 @@ static void CompileAndExecutePlan(
   if (query == nullptr) {
     codegen::QueryCompiler compiler;
     auto compiled_query = compiler.Compile(
-        *plan, executor_context->GetParams().GetQueryParametersMap(), *consumer);
+        *plan, executor_context->GetParams().GetQueryParametersMap(),
+        *consumer);
     query = compiled_query.get();
     codegen::QueryCache::Instance().Add(plan, std::move(compiled_query));
   }

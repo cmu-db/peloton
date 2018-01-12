@@ -70,6 +70,11 @@ class CompilationContext {
   std::vector<llvm::Function *> *DeclareAuxiliaryProducer(
       const planner::AbstractPlan &plan);
 
+  // Generate a single threaded stage. This stage has one function that takes
+  // one argument: the runtime state.
+  CodeGenStage SingleThreadedStage(const std::string &stage_name,
+                                   const std::function<void()> &body);
+
   void RefreshParameterCache() {
     parameter_cache_.Reset();
     parameter_cache_.Populate(codegen_, GetQueryParametersPtr());
@@ -114,7 +119,8 @@ class CompilationContext {
   llvm::Function *GenerateInitFunction();
 
   // Generate the produce() function of the query
-  std::vector<CodeGenStage> GeneratePlanFunction(const planner::AbstractPlan &root);
+  std::vector<CodeGenStage> GeneratePlanFunction(
+      const planner::AbstractPlan &root);
 
   // Generate the tearDown() function of the query
   llvm::Function *GenerateTearDownFunction();
@@ -153,8 +159,7 @@ class CompilationContext {
 
   // The mapping of an operator in the tree to its translator
   std::unordered_map<const planner::AbstractPlan *,
-                     std::unique_ptr<OperatorTranslator>>
-      op_translators_;
+                     std::unique_ptr<OperatorTranslator>> op_translators_;
 
   // The mapping of an expression somewhere in the tree to its translator
   std::unordered_map<const expression::AbstractExpression *,

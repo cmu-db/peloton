@@ -178,13 +178,12 @@ void PelotonCodeGenTest::ExecuteSync(
   std::mutex mu;
   std::condition_variable cond;
   bool finished = false;
-  query.Execute(std::move(executor_context), consumer,
-                [&](executor::ExecutionResult) {
+  query.Execute(std::move(executor_context),
+                consumer, [&](executor::ExecutionResult) {
                   std::unique_lock<decltype(mu)> lock(mu);
                   finished = true;
                   cond.notify_one();
-                },
-                stats);
+                }, stats);
 
   std::unique_lock<decltype(mu)> lock(mu);
   cond.wait(lock, [&] { return finished; });
@@ -208,8 +207,7 @@ codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecute(
   ExecuteSync(*compiled_query,
               std::unique_ptr<executor::ExecutorContext>(
                   new executor::ExecutorContext(txn, std::move(parameters))),
-              consumer,
-              runtime_stats);
+              consumer, runtime_stats);
 
   // Commit the transaction.
   txn_manager.CommitTransaction(txn);
