@@ -10,32 +10,34 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "traffic_cop/traffic_cop.h"
+
 #include <utility>
 
 #include "binder/bind_node_visitor.h"
-#include "catalog/catalog.h"
-#include "common/internal_types.h"
+#include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager_factory.h"
+#include "common/internal_types.h"
 #include "expression/expression_util.h"
 #include "optimizer/optimizer.h"
 #include "planner/plan_util.h"
 #include "settings/settings_manager.h"
-#include "traffic_cop/traffic_cop.h"
 #include "threadpool/mono_queue_pool.h"
-#include "type/type.h"
 
 namespace peloton {
 namespace tcop {
 
-TrafficCop::TrafficCop() : is_queuing_(false), rows_affected_(0), single_statement_txn_(true) {
-  LOG_TRACE("Starting a new TrafficCop");
-  optimizer_.reset(new optimizer::Optimizer);
-}
+TrafficCop::TrafficCop()
+    : is_queuing_(false),
+      rows_affected_(0),
+      optimizer_(new optimizer::Optimizer()),
+      single_statement_txn_(true) {}
 
 TrafficCop::TrafficCop(void (*task_callback)(void *), void *task_callback_arg)
-    : single_statement_txn_(true), task_callback_(task_callback), task_callback_arg_(task_callback_arg) {
-  optimizer_.reset(new optimizer::Optimizer);
-}
+    : optimizer_(new optimizer::Optimizer()),
+      single_statement_txn_(true),
+      task_callback_(task_callback),
+      task_callback_arg_(task_callback_arg) {}
 
 void TrafficCop::Reset() {
   std::stack<TcopTxnState> new_tcop_txn_state;
@@ -139,9 +141,11 @@ ResultType TrafficCop::ExecuteStatementGetResult() {
 }
 
 /*
- * Execute a statement that needs a plan(so, BEGIN, COMMIT, ROLLBACK does not come here).
+ * Execute a statement that needs a plan(so, BEGIN, COMMIT, ROLLBACK does not
+ * come here).
  * Begin a new transaction if necessary.
- * If the current transaction is already broken(for example due to previous invalid
+ * If the current transaction is already broken(for example due to previous
+ * invalid
  * queries), directly return
  * Otherwise, call ExecutePlan()
  */
@@ -167,8 +171,10 @@ executor::ExecutionResult TrafficCop::ExecuteHelper(
   // skip if already aborted
   if (curr_state.second == ResultType::ABORTED) {
     // If the transaction state is ABORTED, the transaction should be aborted
-    // but Peloton didn't explicitly abort it yet since it didn't receive a COMMIT/ROLLBACK.
-    // Here, it receive queries other than COMMIT/ROLLBACK in an broken transaction,
+    // but Peloton didn't explicitly abort it yet since it didn't receive a
+    // COMMIT/ROLLBACK.
+    // Here, it receive queries other than COMMIT/ROLLBACK in an broken
+    // transaction,
     // it should tell the client that these queries will not be executed.
     p_status_.m_result = ResultType::TO_ABORT;
     return p_status_;
@@ -232,22 +238,28 @@ void TrafficCop::ExecuteStatementPlanGetResult() {
 
 /*
  * Prepare a statement based on parse tree. Begin a transaction if necessary.
- * If the query is not issued in a transaction (if txn_stack is empty and it's not
- * BEGIN query), Peloton will create a new transation for it. single_stmt transaction.
+ * If the query is not issued in a transaction (if txn_stack is empty and it's
+ * not
+ * BEGIN query), Peloton will create a new transation for it. single_stmt
+ * transaction.
  * Otherwise, it's a multi_stmt transaction.
- * TODO(Yuchen): We do not need a query string to prepare a statement and the query string may
- * contain the information of multiple statements rather than the single one. Hack here. We store
+ * TODO(Yuchen): We do not need a query string to prepare a statement and the
+ * query string may
+ * contain the information of multiple statements rather than the single one.
+ * Hack here. We store
  * the query string inside Statement objects for printing infomation.
  */
 std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     const std::string &stmt_name, const std::string &query_string,
-    std::unique_ptr<parser::SQLStatementList> sql_stmt_list, UNUSED_ATTRIBUTE std::string &error_message,
+    std::unique_ptr<parser::SQLStatementList> sql_stmt_list,
+    UNUSED_ATTRIBUTE std::string &error_message,
     const size_t thread_id UNUSED_ATTRIBUTE) {
-
   LOG_TRACE("Prepare Statement query: %s", query_string.c_str());
   StatementType stmt_type = sql_stmt_list->GetStatement(0)->GetType();
-  QueryType query_type = StatementTypeToQueryType(stmt_type, sql_stmt_list->GetStatement(0));
-  std::shared_ptr<Statement> statement = std::make_shared<Statement>(stmt_name, query_type, query_string, std::move(sql_stmt_list));
+  QueryType query_type =
+      StatementTypeToQueryType(stmt_type, sql_stmt_list->GetStatement(0));
+  std::shared_ptr<Statement> statement = std::make_shared<Statement>(
+      stmt_name, query_type, query_string, std::move(sql_stmt_list));
 
   // We can learn transaction's states, BEGIN, COMMIT, ABORT, or ROLLBACK from
   // member variables, tcop_txn_state_. We can also get single-statement txn or
@@ -267,7 +279,8 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   } else {
     // Begin new transaction when received single-statement query or "BEGIN"
     // from multi-statement query
-    if (statement->GetQueryType() == QueryType::QUERY_BEGIN) {  // only begin a new transaction
+    if (statement->GetQueryType() ==
+        QueryType::QUERY_BEGIN) {  // only begin a new transaction
       // note this transaction is not single-statement transaction
       LOG_TRACE("BEGIN");
       single_statement_txn_ = false;
@@ -286,8 +299,9 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   }
 
   try {
-    auto plan =
-        optimizer_->BuildPelotonPlanTree(statement->GetStmtParseTreeList(), default_database_name_, tcop_txn_state_.top().first);
+    auto plan = optimizer_->BuildPelotonPlanTree(
+        statement->GetStmtParseTreeList(), default_database_name_,
+        tcop_txn_state_.top().first);
     statement->SetPlanTree(plan);
     // Get the tables that our plan references so that we know how to
     // invalidate it at a later point when the catalog changes
@@ -296,11 +310,12 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     statement->SetReferencedTables(table_oids);
 
     if (query_type == QueryType::QUERY_SELECT) {
-      auto tuple_descriptor = GenerateTupleDescriptor(statement->GetStmtParseTreeList()->GetStatement(0));
+      auto tuple_descriptor = GenerateTupleDescriptor(
+          statement->GetStmtParseTreeList()->GetStatement(0));
       statement->SetTupleDescriptor(tuple_descriptor);
       LOG_TRACE("select query, finish setting");
     }
-  } catch(Exception &e) {
+  } catch (Exception &e) {
     error_message = e.what();
     ProcessInvalidStatement();
     return nullptr;
@@ -319,7 +334,8 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
  * Do nothing if there is no active transaction;
  * If single-stmt transaction, abort it;
  * If multi-stmt transaction, just set transaction state to 'ABORTED'.
- * The multi-stmt txn will be explicitly aborted when receiving 'Commit' or 'Rollback'.
+ * The multi-stmt txn will be explicitly aborted when receiving 'Commit' or
+ * 'Rollback'.
  */
 void TrafficCop::ProcessInvalidStatement() {
   if (single_statement_txn_) {
@@ -332,8 +348,10 @@ void TrafficCop::ProcessInvalidStatement() {
   }
 }
 
-bool TrafficCop::BindParamsForCachePlan(const std::vector<std::unique_ptr<expression::AbstractExpression>>& parameters,
-                                        std::string &error_message, const size_t thread_id UNUSED_ATTRIBUTE) {
+bool TrafficCop::BindParamsForCachePlan(
+    const std::vector<std::unique_ptr<expression::AbstractExpression>> &
+        parameters,
+    std::string &error_message, const size_t thread_id UNUSED_ATTRIBUTE) {
   if (tcop_txn_state_.empty()) {
     single_statement_txn_ = true;
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -346,17 +364,18 @@ bool TrafficCop::BindParamsForCachePlan(const std::vector<std::unique_ptr<expres
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
   // Run binder
-  auto bind_node_visitor =
-      std::make_shared<binder::BindNodeVisitor>(tcop_txn_state_.top().first, default_database_name_);
+  auto bind_node_visitor = std::make_shared<binder::BindNodeVisitor>(
+      tcop_txn_state_.top().first, default_database_name_);
 
   std::vector<type::Value> param_values;
-  for (const std::unique_ptr<expression::AbstractExpression>& param : parameters) {
+  for (const std::unique_ptr<expression::AbstractExpression> &param :
+       parameters) {
     if (!expression::ExpressionUtil::IsValidStaticExpression(param.get())) {
       error_message = "Invalid Expression Type";
       return false;
     }
     param->Accept(bind_node_visitor.get());
-    //TODO(Yuchen): need better check for nullptr argument
+    // TODO(Yuchen): need better check for nullptr argument
     param_values.push_back(param->Evaluate(nullptr, nullptr, nullptr));
   }
   if (param_values.size() > 0) {
@@ -540,15 +559,15 @@ ResultType TrafficCop::ExecuteStatement(
       }
       case QueryType::QUERY_ROLLBACK: {
         return AbortQueryHelper();
+      }
       default:
-        ExecuteHelper(statement->GetPlanTree(), params, result,
-                      result_format, thread_id);
+        ExecuteHelper(statement->GetPlanTree(), params, result, result_format,
+                      thread_id);
         if (GetQueuing()) {
           return ResultType::QUEUING;
         } else {
           return ExecuteStatementGetResult();
         }
-      }
     }
 
   } catch (Exception &e) {

@@ -25,9 +25,11 @@ namespace type {
 
 namespace {
 
-//===----------------------------------------------------------------------===//
-// CASTING OPERATIONS
-//===----------------------------------------------------------------------===//
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Casting
+///
+////////////////////////////////////////////////////////////////////////////////
 
 struct CastBooleanToInteger : public TypeSystem::CastHandleNull {
   bool SupportsTypes(const Type &from_type,
@@ -74,11 +76,12 @@ struct CastBooleanToVarchar : public TypeSystem::CastHandleNull {
   }
 };
 
-//===----------------------------------------------------------------------===//
-// COMPARISON
-//===----------------------------------------------------------------------===//
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Comparisons
+///
+////////////////////////////////////////////////////////////////////////////////
 
-// Comparison functions
 struct CompareBoolean : public TypeSystem::SimpleComparisonHandleNull {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
@@ -171,9 +174,11 @@ struct CompareBoolean : public TypeSystem::SimpleComparisonHandleNull {
   }
 };
 
-//===----------------------------------------------------------------------===//
-// BINARY OPERATIONS
-//===----------------------------------------------------------------------===//
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Binary operations
+///
+////////////////////////////////////////////////////////////////////////////////
 
 // Logical AND
 struct LogicalAnd : public TypeSystem::BinaryOperatorHandleNull {
@@ -189,7 +194,8 @@ struct LogicalAnd : public TypeSystem::BinaryOperatorHandleNull {
   }
 
   Value Impl(CodeGen &codegen, const Value &left, const Value &right,
-             UNUSED_ATTRIBUTE OnError on_error) const override {
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+      const override {
     auto *raw_val = codegen->CreateAnd(left.GetValue(), right.GetValue());
     return Value{Boolean::Instance(), raw_val, nullptr, nullptr};
   }
@@ -209,54 +215,64 @@ struct LogicalOr : public TypeSystem::BinaryOperatorHandleNull {
   }
 
   Value Impl(CodeGen &codegen, const Value &left, const Value &right,
-             UNUSED_ATTRIBUTE OnError on_error) const override {
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+      const override {
     auto *raw_val = codegen->CreateOr(left.GetValue(), right.GetValue());
     return Value{Boolean::Instance(), raw_val, nullptr, nullptr};
   }
 };
 
-//===----------------------------------------------------------------------===//
-// TYPE SYSTEM CONSTRUCTION
-//===----------------------------------------------------------------------===//
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Function tables
+///
+////////////////////////////////////////////////////////////////////////////////
 
-// The list of types a SQL boolean type can be implicitly casted to
-const std::vector<peloton::type::TypeId> kImplicitCastingTable = {
+// Implicit casts
+std::vector<peloton::type::TypeId> kImplicitCastingTable = {
     peloton::type::TypeId::BOOLEAN};
 
-static CastBooleanToInteger kBooleanToInteger;
-static CastBooleanToVarchar kBooleanToVarchar;
-static std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {
+// Explicit casts
+CastBooleanToInteger kBooleanToInteger;
+CastBooleanToVarchar kBooleanToVarchar;
+std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {
     {peloton::type::TypeId::BOOLEAN, peloton::type::TypeId::INTEGER,
      kBooleanToInteger},
     {peloton::type::TypeId::BOOLEAN, peloton::type::TypeId::VARCHAR,
      kBooleanToVarchar}};
 
-static CompareBoolean kCompareBoolean;
-static std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {
-    {kCompareBoolean}};
+// Comparison operations
+CompareBoolean kCompareBoolean;
+std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {{kCompareBoolean}};
 
-static std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {};
+// Unary operations
+std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {};
 
-static LogicalAnd kLogicalAnd;
-static LogicalOr kLogicalOr;
-static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
+// Binary operations
+LogicalAnd kLogicalAnd;
+LogicalOr kLogicalOr;
+std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
     {OperatorId::LogicalAnd, kLogicalAnd}, {OperatorId::LogicalOr, kLogicalOr}};
 
 // Nary operations
-static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
+std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
 
 // No arg operations
-static std::vector<TypeSystem::NoArgOpInfo> kNoArgOperatorTable = {};
+std::vector<TypeSystem::NoArgOpInfo> kNoArgOperatorTable = {};
 
 }  // anonymous namespace
 
-// Initialize the BOOLEAN SQL type with the configured type system
+////////////////////////////////////////////////////////////////////////////////
+///
+/// BOOLEAN type initialization and configuration
+///
+////////////////////////////////////////////////////////////////////////////////
+
 Boolean::Boolean()
     : SqlType(peloton::type::TypeId::BOOLEAN),
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
-                   kComparisonTable, kUnaryOperatorTable,
-                   kBinaryOperatorTable, kNaryOperatorTable,
-                   kNoArgOperatorTable) {}
+                   kComparisonTable, kUnaryOperatorTable, kBinaryOperatorTable,
+                   kNaryOperatorTable, kNoArgOperatorTable) {}
 
 Value Boolean::GetMinValue(CodeGen &codegen) const {
   auto *raw_val = codegen.ConstBool(peloton::type::PELOTON_BOOLEAN_MIN);

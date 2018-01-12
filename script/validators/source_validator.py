@@ -42,7 +42,7 @@ PELOTON_DIR = os.path.abspath(
     reduce(os.path.join, [CODE_SOURCE_DIR, os.path.pardir, os.path.pardir])
     )
 
-CLANG_FORMAT = "clang-format"
+CLANG_FORMAT = "clang-format-3.6"
 CLANG_FORMAT_FILE = os.path.join(PELOTON_DIR, ".clang-format")
 
 # Other directory paths used are relative to PELOTON_DIR

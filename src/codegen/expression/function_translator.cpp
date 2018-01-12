@@ -6,7 +6,7 @@
 //
 // Identification: src/codegen/expression/function_translator.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -45,16 +45,24 @@ codegen::Value FunctionTranslator::DeriveValue(CodeGen &codegen,
   }
 
   // TODO(pmenon): Don't assume builtin
-  // ASSUMING BUILTIN
 
-  auto operator_id = func_expr.GetFunc().op_id;
+  // The ID of the operator we're calling
+  OperatorId operator_id = func_expr.GetFunc().op_id;
+
+  // The context for the function invocation
+  type::TypeSystem::InvocationContext ctx{
+      .on_error = OnError::Exception,
+      .executor_context = context_.GetExecutorContextPtr()};
 
   if (args.size() == 1) {
-    // Call unary operator
-    return args[0].CallUnaryOp(codegen, operator_id);
-  } else if (args.size() == 2) {
-    // It's a binary function
+    // Lookup unary operation
+    auto *unary_op =
+        type::TypeSystem::GetUnaryOperator(operator_id, args[0].GetType());
+    PL_ASSERT(unary_op != nullptr);
 
+    // Invoke
+    return unary_op->Eval(codegen, args[0], ctx);
+  } else if (args.size() == 2) {
     // Lookup the function
     type::Type left_type = args[0].GetType(), right_type = args[1].GetType();
     auto *binary_op = type::TypeSystem::GetBinaryOperator(
@@ -63,8 +71,7 @@ codegen::Value FunctionTranslator::DeriveValue(CodeGen &codegen,
 
     // Invoke
     return binary_op->Eval(codegen, args[0].CastTo(codegen, left_type),
-                           args[1].CastTo(codegen, right_type),
-                           OnError::Exception);
+                           args[1].CastTo(codegen, right_type), ctx);
   } else {
     // It's an N-Ary function
 
@@ -77,7 +84,9 @@ codegen::Value FunctionTranslator::DeriveValue(CodeGen &codegen,
     // Lookup the function
     auto *nary_op = type::TypeSystem::GetNaryOperator(operator_id, arg_types);
     PL_ASSERT(nary_op != nullptr);
-    return nary_op->Eval(codegen, args, OnError::Exception);
+
+    // Invoke
+    return nary_op->Eval(codegen, args, ctx);
   }
 }
 

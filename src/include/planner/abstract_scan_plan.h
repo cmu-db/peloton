@@ -17,15 +17,15 @@
 #include <string>
 #include <vector>
 
-#include "abstract_plan.h"
 #include "common/internal_types.h"
 #include "expression/abstract_expression.h"
+#include "planner/abstract_plan.h"
 
 namespace peloton {
 
 namespace storage {
 class DataTable;
-}
+}  // namespace storage
 
 namespace planner {
 
@@ -39,24 +39,18 @@ class AbstractScan : public AbstractPlan {
   // We should add an empty constructor to support an empty object
   AbstractScan() : target_table_(nullptr), predicate_(nullptr) {}
 
-  inline const expression::AbstractExpression *GetPredicate() const {
+  const expression::AbstractExpression *GetPredicate() const {
     return predicate_.get();
   }
 
-  inline const std::vector<oid_t> &GetColumnIds() const { return column_ids_; }
-
-  inline PlanNodeType GetPlanNodeType() const override {
-    return PlanNodeType::ABSTRACT_SCAN;
-  }
+  const std::vector<oid_t> &GetColumnIds() const { return column_ids_; }
 
   void GetOutputColumns(std::vector<oid_t> &columns) const override {
     columns.resize(GetColumnIds().size());
     std::iota(columns.begin(), columns.end(), 0);
   }
 
-  inline const std::string GetInfo() const override { return "AbstractScan"; }
-
-  inline storage::DataTable *GetTable() const { return target_table_; }
+  storage::DataTable *GetTable() const { return target_table_; }
 
   void GetAttributes(std::vector<const AttributeInfo *> &ais) const {
     for (const auto &ai : attributes_) {
@@ -64,9 +58,7 @@ class AbstractScan : public AbstractPlan {
     }
   }
 
-  inline bool IsForUpdate() const {
-    return is_for_update;
-  }
+  bool IsForUpdate() const { return is_for_update; }
 
   // Attribute binding
   void PerformBinding(BindingContext &binding_context) override;
@@ -83,14 +75,13 @@ class AbstractScan : public AbstractPlan {
   void SetForUpdateFlag(bool flag) { is_for_update = flag; }
 
  private:
-  /** @brief Pointer to table to scan from. */
+  // Pointer to table to scan from
   storage::DataTable *target_table_ = nullptr;
 
-  /** @brief Selection predicate. We remove const to make it used when
-   * deserialization*/
+  // Selection predicate. We remove const to make it used when deserialization
   std::unique_ptr<expression::AbstractExpression> predicate_;
 
-  /** @brief Columns from tile group to be added to logical tile output. */
+  // Columns from tile group to be added to logical tile output
   std::vector<oid_t> column_ids_;
 
   std::vector<AttributeInfo> attributes_;
