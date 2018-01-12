@@ -6,7 +6,7 @@
 //
 // Identification: src/codegen/type/varchar_type.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -28,7 +28,12 @@ namespace type {
 
 namespace {
 
-// Comparison
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Comparisons
+///
+////////////////////////////////////////////////////////////////////////////////
+
 struct CompareVarchar : public TypeSystem::ExpensiveComparisonHandleNull {
   bool SupportsTypes(const type::Type &left_type,
                      const type::Type &right_type) const override {
@@ -110,6 +115,13 @@ struct CompareVarchar : public TypeSystem::ExpensiveComparisonHandleNull {
   }
 };
 
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Unary operators
+///
+////////////////////////////////////////////////////////////////////////////////
+
+// ASCII
 struct Ascii : public TypeSystem::UnaryOperatorHandleNull {
   bool SupportsType(const Type &type) const override {
     return type.GetSqlType() == Varchar::Instance();
@@ -119,13 +131,16 @@ struct Ascii : public TypeSystem::UnaryOperatorHandleNull {
     return Integer::Instance();
   }
 
-  Value Impl(CodeGen &codegen, const Value &val) const override {
+  Value Impl(CodeGen &codegen, const Value &val,
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+      const override {
     llvm::Value *raw_ret = codegen.Call(StringFunctionsProxy::Ascii,
                                         {val.GetValue(), val.GetLength()});
     return Value{Integer::Instance(), raw_ret};
   }
 };
 
+// Length
 struct Length : public TypeSystem::UnaryOperatorHandleNull {
   bool SupportsType(const Type &type) const override {
     return type.GetSqlType() == Varchar::Instance();
@@ -135,12 +150,42 @@ struct Length : public TypeSystem::UnaryOperatorHandleNull {
     return Integer::Instance();
   }
 
-  Value Impl(CodeGen &codegen, const Value &val) const override {
+  Value Impl(CodeGen &codegen, const Value &val,
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+      const override {
     llvm::Value *raw_ret = codegen.Call(StringFunctionsProxy::Length,
                                         {val.GetValue(), val.GetLength()});
     return Value{Integer::Instance(), raw_ret};
   }
 };
+
+// Trim
+struct Trim : public TypeSystem::UnaryOperatorHandleNull {
+  bool SupportsType(const Type &type) const override {
+    return type.GetSqlType() == Varchar::Instance();
+  }
+
+  Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
+    return Varchar::Instance();
+  }
+
+  Value Impl(CodeGen &codegen, const Value &val,
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+      const override {
+    llvm::Value *ret = codegen.Call(StringFunctionsProxy::Trim,
+                                    {val.GetValue(), val.GetLength()});
+
+    llvm::Value *str_ptr = codegen->CreateExtractValue(ret, 0);
+    llvm::Value *str_len = codegen->CreateExtractValue(ret, 1);
+    return Value{Varchar::Instance(), str_ptr, str_len};
+  }
+};
+
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Binary operators
+///
+////////////////////////////////////////////////////////////////////////////////
 
 struct Like : public TypeSystem::BinaryOperator {
   bool SupportsTypes(const Type &left_type,
@@ -164,7 +209,8 @@ struct Like : public TypeSystem::BinaryOperator {
   }
 
   Value Eval(CodeGen &codegen, const Value &left, const Value &right,
-             UNUSED_ATTRIBUTE OnError on_error) const override {
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+      const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // Pre-condition: Left value is the input string; right value is the pattern
@@ -204,31 +250,13 @@ struct DateTrunc : public TypeSystem::BinaryOperatorHandleNull {
   }
 
   Value Impl(CodeGen &codegen, const Value &left, const Value &right,
-             UNUSED_ATTRIBUTE OnError on_error) const override {
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+      const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     llvm::Value *raw_ret = codegen.Call(TimestampFunctionsProxy::DateTrunc,
                                         {left.GetValue(), right.GetValue()});
     return Value{Timestamp::Instance(), raw_ret};
-  }
-};
-
-struct Trim : public TypeSystem::UnaryOperatorHandleNull {
-  bool SupportsType(const Type &type) const override {
-    return type.GetSqlType() == Varchar::Instance();
-  }
-
-  Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
-    return Varchar::Instance();
-  }
-
-  Value Impl(CodeGen &codegen, const Value &val) const override {
-    llvm::Value *ret = codegen.Call(StringFunctionsProxy::Trim,
-                                    {val.GetValue(), val.GetLength()});
-
-    llvm::Value *str_ptr = codegen->CreateExtractValue(ret, 0);
-    llvm::Value *str_len = codegen->CreateExtractValue(ret, 1);
-    return Value(Varchar::Instance(), str_ptr, str_len);
   }
 };
 
@@ -245,14 +273,15 @@ struct BTrim : public TypeSystem::BinaryOperatorHandleNull {
   }
 
   Value Impl(CodeGen &codegen, const Value &left, const Value &right,
-             UNUSED_ATTRIBUTE OnError on_error) const override {
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+      const override {
     llvm::Value *ret = codegen.Call(StringFunctionsProxy::BTrim,
                                     {left.GetValue(), left.GetLength(),
                                      right.GetValue(), right.GetLength()});
 
     llvm::Value *str_ptr = codegen->CreateExtractValue(ret, 0);
     llvm::Value *str_len = codegen->CreateExtractValue(ret, 1);
-    return Value(Varchar::Instance(), str_ptr, str_len);
+    return Value{Varchar::Instance(), str_ptr, str_len};
   }
 };
 
@@ -269,14 +298,15 @@ struct LTrim : public TypeSystem::BinaryOperatorHandleNull {
   }
 
   Value Impl(CodeGen &codegen, const Value &left, const Value &right,
-             UNUSED_ATTRIBUTE OnError on_error) const override {
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+      const override {
     llvm::Value *ret = codegen.Call(StringFunctionsProxy::LTrim,
                                     {left.GetValue(), left.GetLength(),
                                      right.GetValue(), right.GetLength()});
 
     llvm::Value *str_ptr = codegen->CreateExtractValue(ret, 0);
     llvm::Value *str_len = codegen->CreateExtractValue(ret, 1);
-    return Value(Varchar::Instance(), str_ptr, str_len);
+    return Value{Varchar::Instance(), str_ptr, str_len};
   }
 };
 
@@ -293,16 +323,23 @@ struct RTrim : public TypeSystem::BinaryOperatorHandleNull {
   }
 
   Value Impl(CodeGen &codegen, const Value &left, const Value &right,
-             UNUSED_ATTRIBUTE OnError on_error) const override {
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+      const override {
     llvm::Value *ret = codegen.Call(StringFunctionsProxy::RTrim,
                                     {left.GetValue(), left.GetLength(),
                                      right.GetValue(), right.GetLength()});
 
     llvm::Value *str_ptr = codegen->CreateExtractValue(ret, 0);
     llvm::Value *str_len = codegen->CreateExtractValue(ret, 1);
-    return Value(Varchar::Instance(), str_ptr, str_len);
+    return Value{Varchar::Instance(), str_ptr, str_len};
   }
 };
+
+////////////////////////////////////////////////////////////////////////////////
+///
+/// N-ary operators
+///
+////////////////////////////////////////////////////////////////////////////////
 
 struct Substr : public TypeSystem::NaryOperator {
   // The first argument is the original string
@@ -320,51 +357,53 @@ struct Substr : public TypeSystem::NaryOperator {
   }
 
   Value Eval(CodeGen &codegen, const std::vector<Value> &input_args,
-             UNUSED_ATTRIBUTE OnError on_error) const override {
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+      const override {
     llvm::Value *ret =
         codegen.Call(StringFunctionsProxy::Substr,
                      {
-                         input_args[0].GetValue(), input_args[0].GetLength(),
-                         input_args[1].GetValue(), input_args[2].GetValue(),
+                      input_args[0].GetValue(), input_args[0].GetLength(),
+                      input_args[1].GetValue(), input_args[2].GetValue(),
                      });
     llvm::Value *str_ptr = codegen->CreateExtractValue(ret, 0);
     llvm::Value *str_len = codegen->CreateExtractValue(ret, 1);
-    return Value(Varchar::Instance(), str_ptr, str_len);
+    return Value{Varchar::Instance(), str_ptr, str_len};
   }
 };
 
-//===----------------------------------------------------------------------===//
-// TYPE SYSTEM CONSTRUCTION
-//===----------------------------------------------------------------------===//
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Function tables
+///
+////////////////////////////////////////////////////////////////////////////////
 
 // The list of types a SQL varchar type can be implicitly casted to
-const std::vector<peloton::type::TypeId> kImplicitCastingTable = {
+std::vector<peloton::type::TypeId> kImplicitCastingTable = {
     peloton::type::TypeId::VARCHAR};
 
 // Explicit casting rules
-static std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {};
+std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {};
 
 // Comparison operations
-static CompareVarchar kCompareVarchar;
-static std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {
-    {kCompareVarchar}};
+CompareVarchar kCompareVarchar;
+std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {{kCompareVarchar}};
 
 // Unary operators
-static Ascii kAscii;
-static Length kLength;
-static Trim kTrim;
-static std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {
+Ascii kAscii;
+Length kLength;
+Trim kTrim;
+std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {
     {OperatorId::Ascii, kAscii},
     {OperatorId::Length, kLength},
     {OperatorId::Trim, kTrim}};
 
 // Binary operations
-static Like kLike;
-static DateTrunc kDateTrunc;
-static BTrim kBTrim;
-static LTrim kLTrim;
-static RTrim kRTrim;
-static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
+Like kLike;
+DateTrunc kDateTrunc;
+BTrim kBTrim;
+LTrim kLTrim;
+RTrim kRTrim;
+std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
     {OperatorId::Like, kLike},
     {OperatorId::DateTrunc, kDateTrunc},
     {OperatorId::BTrim, kBTrim},
@@ -372,20 +411,21 @@ static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
     {OperatorId::RTrim, kRTrim}};
 
 // Nary operations
-static Substr kSubstr;
-static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {
+Substr kSubstr;
+std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {
     {OperatorId::Substr, kSubstr}};
 
 // NoArg operators
-static std::vector<TypeSystem::NoArgOpInfo> kNoArgOperatorTable = {};
+std::vector<TypeSystem::NoArgOpInfo> kNoArgOperatorTable = {};
 
 }  // anonymous namespace
 
-//===----------------------------------------------------------------------===//
-// TINYINT TYPE CONFIGURATION
-//===----------------------------------------------------------------------===//
+////////////////////////////////////////////////////////////////////////////////
+///
+/// VARCHAR type initialization and configuration
+///
+////////////////////////////////////////////////////////////////////////////////
 
-// Initialize the VARCHAR SQL type with the configured type system
 Varchar::Varchar()
     : SqlType(peloton::type::TypeId::VARCHAR),
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
