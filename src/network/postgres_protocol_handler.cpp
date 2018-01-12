@@ -63,31 +63,6 @@ PostgresProtocolHandler::PostgresProtocolHandler(tcop::TrafficCop *traffic_cop)
 
 PostgresProtocolHandler::~PostgresProtocolHandler() {}
 
-// TODO: This function is used when txn cache is done
-void PostgresProtocolHandler::ReplanPreparedStatement(Statement *statement) {
-  std::string error_message;
-  auto new_statement = traffic_cop_->PrepareStatement(
-      statement->GetStatementName(), statement->GetQueryString(),
-      statement->PassStmtParseTreeList(), error_message);
-  // But then rip out its query plan and stick it in our old statement
-  if (new_statement.get() == nullptr) {
-    LOG_ERROR(
-        "Failed to generate a new query plan for PreparedStatement '%s'\n%s",
-        statement->GetStatementName().c_str(), error_message.c_str());
-  } else {
-    LOG_DEBUG("Generating new plan for PreparedStatement '%s'",
-              statement->GetStatementName().c_str());
-
-    auto old_plan = statement->GetPlanTree();
-    auto new_plan = new_statement->GetPlanTree();
-    statement->SetPlanTree(new_plan);
-    new_statement->SetPlanTree(old_plan);
-    statement->SetNeedsPlan(false);
-
-    // TODO: We may need to delete the old plan and new statement here
-  }
-}
-
 void PostgresProtocolHandler::SendInitialResponse() {
   std::unique_ptr<OutputPacket> response(new OutputPacket());
 
@@ -577,12 +552,6 @@ void PostgresProtocolHandler::ExecBindMessage(InputPacket *pkt) {
     response->msg_type = NetworkMessageType::BIND_COMPLETE;
     responses.push_back(std::move(response));
     return;
-  }
-
-  // Check whether somebody wants us to generate a new query plan
-  // for this prepared statement
-  if (statement->GetNeedsPlan()) {
-    ReplanPreparedStatement(statement.get());
   }
 
   // Group the parameter types and the parameters in this vector

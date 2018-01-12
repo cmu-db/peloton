@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// statement.h
+// statement_cache_manager.h
 //
 // Identification: src/include/common/statement_cache_manager.h
 //
@@ -12,53 +12,86 @@
 
 #pragma once
 
-#include "container/cuckoo_map.h"
 #include "common/statement_cache.h"
+#include "container/cuckoo_map.h"
 
 namespace peloton {
 
+// TODO(Tianyi) remove this singleton
 class StatementCacheManager;
-
+// Singleton statement_cache_manager
 static std::shared_ptr<StatementCacheManager> statement_cache_manager;
 
+/**
+ * The manager that stores all the registered statement caches.
+ * Those registered statement caches would be notify when some
+ * table is no longer valid.
+ */
 class StatementCacheManager {
-
  public:
-  // Register a statement cache to this statement manager
-  // Called by protocol handler when building up a connection
+  /**
+   * @brief Register a statement cache to this statement manager
+   *  Called by protocol handler when building up a connection
+   * @param stmt_cache the statement cache to be registered
+   */
   void RegisterStatementCache(StatementCache *stmt_cache);
 
-  // Remove the statement cache from this statement manager
-  // Called by protocol handler when tearing down a connection
+  /**
+   * @brief Remove the statement cache from this statement manager
+   *  Called by protocol handler when tearing down a connection
+   * @param stmt_cache the statement cache to be unregister
+   */
   void UnRegisterStatementCache(StatementCache *stmt_cache);
 
-  // Notify the manager that the table schema or index 
-  // is changed now.
-  // Called in executor
-  // WARNING: 
-  // Be conservative to call this function as it would block
-  // the whole statement caches map and prevent them from register
-  // and unregister to the manager. It would therefore block new 
-  // connections coming in and old connection tearing down. 
-  // However, current connections can still retrieve updated plans from their plan cache.
+
+  /* WARNING:
+   * Be conservative to call the following functions:
+   * InvalidateTableOid()  InvalidateTableOids()
+   * as they would block the whole statement caches map and prevent them 
+   * from register and unregister to the manager. It would therefore block new
+   * connections coming in and old connection tearing down.
+   * However, current connections can still retrieve updated plans from their
+   * plan cache.
+   */
+
+  /**
+   * @brief Notify the manager that the statements with table id is no longer
+   * valid now
+   * 
+   * @param table_id The table that is no longer valid
+   */
   void InvalidateTableOid(oid_t table_id);
 
-  // TODO (Tianyi) : remove this singloton to peloton instance
-  // Initialize an statement cache manager instance
-  inline static void Init(){
+  /**
+   * @brief Notify the manager that the statements with table ids is no longer
+   * valid now
+   * 
+   * @param table_ids The tables that are no longer valid
+   */
+  void InvalidateTableOids(std::set<oid_t> &table_ids);
+
+  // TODO (Tianyi) : remove this singleton to peloton instance
+  /**
+   *  Initialize an statement cache manager instance
+   */
+  inline static void Init() {
     statement_cache_manager = std::make_shared<StatementCacheManager>();
   }
 
-  // Get the instance of statement cache manager
+  // TODO (Tianyi) : move this singleton to peloton instance
+  /**
+   * Get the instance of statement cache manager
+   * @return the statement cache manager instance
+   */
   inline static std::shared_ptr<StatementCacheManager> GetStmtCacheManager() {
     return statement_cache_manager;
   }
 
-private:
-  // A lock free hash map
-  CuckooMap<StatementCache*, StatementCache*> statement_caches_;
-
-  // Instance of statement cache manager
+ private:
+  /**
+   * The registered statement caches
+   */
+  CuckooMap<StatementCache *, StatementCache *> statement_caches_;
 };
 
 }  // namespace peloton

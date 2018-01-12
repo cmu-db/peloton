@@ -53,10 +53,6 @@ class PostgresProtocolHandler: public ProtocolHandler {
   void SendInitialResponse();
   void Reset();
 
-
-  // Ugh... this should not be here but we have no choice...
-  void ReplanPreparedStatement(Statement* statement);
-
   void GetResult();
 
   //===--------------------------------------------------------------------===//

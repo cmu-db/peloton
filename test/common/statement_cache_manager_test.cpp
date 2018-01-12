@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// statement_cache_test.cpp
+// statement_cache_manager_test.cpp
 //
 // Identification: test/common/statement_cache_manager_test.cpp
 //
@@ -39,7 +39,7 @@ class StatementCacheTests : public PelotonTest {};
     statement_cache.AddStatement(statement);
 
     // Invalidate table oid 0
-    statement_cache_manager->InvalidateTableOid(0);
+    statement_cache_manager->InvalidateTableOids(ref_table);
 
     // The plan need to replan now
     statement = statement_cache.GetStatement(string_name);
@@ -48,7 +48,7 @@ class StatementCacheTests : public PelotonTest {};
     // Unregister the statement cache and invalidate again
     statement->SetNeedsPlan(false);
     statement_cache_manager->UnRegisterStatementCache(&statement_cache);
-    statement_cache_manager->InvalidateTableOid(0);
+    statement_cache_manager->InvalidateTableOids(ref_table);
     statement = statement_cache.GetStatement(string_name);
     // This one should not be affected, since the cache is already un-registered
     EXPECT_TRUE(!statement->GetNeedsPlan());
