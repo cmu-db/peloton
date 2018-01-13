@@ -101,6 +101,7 @@ class CodeGen {
   //===--------------------------------------------------------------------===//
   llvm::Value *CallPrintf(const std::string &format,
                           const std::vector<llvm::Value *> &args);
+  llvm::Value *Sqrt(llvm::Value *val);
 
   //===--------------------------------------------------------------------===//
   // Arithmetic with overflow logic - These methods perform the desired math op,
