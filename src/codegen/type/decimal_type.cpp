@@ -239,6 +239,25 @@ struct Ceil : public TypeSystem::UnaryOperatorHandleNull {
   }
 };
 
+// Sqrt
+struct Sqrt : public TypeSystem::UnaryOperatorHandleNull {
+  bool SupportsType(const Type &type) const override {
+    return type.GetSqlType() == Decimal::Instance();
+  }
+
+  Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
+    return Decimal::Instance();
+  }
+
+ protected:
+  Value Impl(CodeGen &codegen, const Value &val,
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+      const override {
+    auto *raw_ret = codegen.Sqrt(val.GetValue());
+    return Value{Decimal::Instance(), raw_ret};
+  }
+};
+
 ////////////////////////////////////////////////////////////////////////////////
 ///
 /// Binary operations
@@ -460,11 +479,13 @@ Negate kNegOp;
 Floor kFloorOp;
 Round kRound;
 Ceil kCeilOp;
+Sqrt kSqrt;
 std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {
     {OperatorId::Negation, kNegOp},
     {OperatorId::Floor, kFloorOp},
     {OperatorId::Round, kRound},
-    {OperatorId::Ceil, kCeilOp}};
+    {OperatorId::Ceil, kCeilOp},
+    {OperatorId::Sqrt, kSqrt}};
 
 // Binary operations
 Add kAddOp;
