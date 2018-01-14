@@ -62,19 +62,19 @@ void DateTruncTestHelper(DatePartType part, std::string &date,
   // time zone 'est';
 
   // Check that result is *not* null
-  EXPECT_NE(result, type::PELOTON_TIMESTAMP_NULL);
+  EXPECT_NE(type::PELOTON_TIMESTAMP_NULL, result);
   // Then check that it equals our expected value
   LOG_TRACE("COMPARE: %s = %" PRId64 "\n",
             expected.c_str(),
             static_cast<long>(result));
-  EXPECT_EQ(result, int_expected);
+  EXPECT_EQ(int_expected, result);
 }
 
 // Invoke TimestampFunctions::DateTrunc(NULL)
 TEST_F(TimestampFunctionsTests, NullDateTruncTest) {
   auto result = function::TimestampFunctions::DateTrunc(
       "hour", type::PELOTON_TIMESTAMP_NULL);
-  EXPECT_EQ(result, type::PELOTON_TIMESTAMP_NULL);
+  EXPECT_EQ(type::PELOTON_TIMESTAMP_NULL, result);
 }
 
 TEST_F(TimestampFunctionsTests, DateTruncCenturyTest) {
@@ -197,20 +197,20 @@ void DatePartTestHelper(DatePartType part, std::string &date,
         result);
 
   // Check that result is *not* null
-  EXPECT_NE(result, type::PELOTON_DECIMAL_NULL);
+  EXPECT_NE(type::PELOTON_DECIMAL_NULL, result);
 
   // Then check that it equals our expected value
   LOG_TRACE("COMPARE: %s = %f \n",
             expected.c_str(),
             result);
-  EXPECT_DOUBLE_EQ(result, double_expected);
+  EXPECT_DOUBLE_EQ(double_expected, result);
 }
 
 // Invoke TimestampFunctions::DateTrunc(NULL)
 TEST_F(TimestampFunctionsTests, NullDatePartTest) {
   auto result = function::TimestampFunctions::DatePart(
       "hour", type::PELOTON_TIMESTAMP_NULL);
-  EXPECT_EQ(result, type::PELOTON_DECIMAL_NULL);
+  EXPECT_EQ(type::PELOTON_DECIMAL_NULL, result);
 }
 
 TEST_F(TimestampFunctionsTests, DatePartCenturyTest) {
