@@ -14,6 +14,7 @@ import pprint
 import subprocess
 import difflib
 import mmap
+import glob
 
 ## ==============================================
 ## LOGGING CONFIGURATION
@@ -50,6 +51,9 @@ DEFAULT_DIRS = [
     os.path.join(PELOTON_DIR, "src"),
     os.path.join(PELOTON_DIR, "test")
 ]
+
+# To be used in check_includes.
+PATHS = set([path.lstrip('src/include') for path in glob.glob('src/include/**/*.h')])
 
 EXIT_SUCCESS = 0
 EXIT_FAILURE = -1
@@ -219,8 +223,31 @@ def check_namespaces(file_path):
     return status
 
 
+def check_includes(file_path):
+    """Checks whether local includes are done via #include<...>"""
+    with open(file_path, "r") as f:
+        path_pattern = re.compile(r'^#include <(.*?)>')
+        includes = os.listdir('src/include')
+        linenum = 0
+        status = True
+        for line in f:
+            linenum += 1
+            res = path_pattern.match(line)
+            if res:
+                path = res.groups()[0].lstrip("include/")
+                if path in PATHS:
+                    if status:
+                        LOG.info("Invalid include in %s" % file_path)
+                    status = False
+                    LOG.info("Line %s: %s" % (linenum, line))
+        if not status:
+            LOG.info('includes for peloton header files have must not have brackets')
+    return status
+
+
 VALIDATORS = [
     check_common_patterns,
+    check_includes,
 
     # Uncomment the below validator once the namespace refactoring is done
     #check_namespaces, 
