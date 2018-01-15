@@ -32,11 +32,11 @@ class AbstractTuple;
 
 namespace catalog {
 class Schema;
-}
+}  // namespace catalog
 
 namespace storage {
 class Tuple;
-}
+}  // namespace storage
 
 namespace index {
 
@@ -69,78 +69,56 @@ class IndexMetadata : public Printable {
 
   const std::string &GetName() const { return name_; }
 
-  inline oid_t GetOid() { return index_oid; }
+  oid_t GetOid() { return index_oid; }
 
-  inline oid_t GetTableOid() { return table_oid; }
+  oid_t GetTableOid() { return table_oid; }
 
-  inline oid_t GetDatabaseOid() { return database_oid; }
+  oid_t GetDatabaseOid() { return database_oid; }
 
-  inline IndexType GetIndexType() { return index_type_; }
+  IndexType GetIndexType() { return index_type_; }
 
   IndexConstraintType GetIndexConstraintType() {
     return index_constraint_type_;
   }
 
-  /*
-   * Returns a schema object pointer that represents
-   * the schema of indexed columns, from leading column
-   * to the least important columns
-   */
-  inline const catalog::Schema *GetKeySchema() const { return key_schema; }
+  // Returns a schema object pointer that represents the schema of indexed
+  // columns, from leading column to the least important columns.
+  const catalog::Schema *GetKeySchema() const { return key_schema; }
 
-  /*
-   * Returns a schema object pointer that represents
-   * the schema of the underlying table
-   */
-  inline const catalog::Schema *GetTupleSchema() const { return tuple_schema; }
+  // Returns a schema object that represents the schema of the underlying table
+  const catalog::Schema *GetTupleSchema() const { return tuple_schema; }
 
   // Return the number of columns inside index key (not in tuple key)
-  //
-  // Note that this must be defined inside the cpp source file
-  // because it uses the member of catalog::Schema which is not known here
   oid_t GetColumnCount() const;
 
   bool HasUniqueKeys() const { return unique_keys; }
 
-  /*
-   * GetKeyAttrs() - Returns the mapping relation between indexed columns
-   *                 and base table columns
-   *
-   * The return value is a const vector reference
-   *
-   * The entry whose value is j on index i means the i-th column in the
-   * key is mapped to the j-th column in the base table tuple
-   */
-  inline const std::vector<oid_t> &GetKeyAttrs() const { return key_attrs; }
+  // Returns the mapping relation between indexed columns and base table columns
+  // The entry whose value is j on index i means the i-th column in the key is
+  // mapped to the j-th column in the base table tuple
+  const std::vector<oid_t> &GetKeyAttrs() const { return key_attrs; }
 
-  /*
-   * GetTupleToIndexMapping() - Returns the mapping relation between tuple key
-   *                            column and index key columns
-   */
-  inline const std::vector<oid_t> &GetTupleToIndexMapping() const {
+  // Returns the mapping relation between tuple key column and index key columns
+  const std::vector<oid_t> &GetTupleToIndexMapping() const {
     return tuple_attrs;
   }
 
-  inline double GetUtility() const { return utility_ratio; }
+  double GetUtility() const { return utility_ratio; }
 
-  inline void SetUtility(double p_utility_ratio) {
-    utility_ratio = p_utility_ratio;
-  }
+  void SetUtility(double p_utility_ratio) { utility_ratio = p_utility_ratio; }
 
-  inline bool GetVisibility() const { return (visible_); }
+  bool GetVisibility() const { return (visible_); }
 
-  inline void SetVisibility(bool visibile) { visible_ = visibile; }
+  void SetVisibility(bool visible) { visible_ = visible; }
 
-  /*
-   * GetInfo() - Get a string representation for debugging
-   */
-  const std::string GetInfo() const;
+  // Get a string representation for debugging
+  const std::string GetInfo() const override;
 
   //===--------------------------------------------------------------------===//
   // STATIC HELPERS
   //===--------------------------------------------------------------------===//
 
-  static inline void SetDefaultVisibleFlag(bool flag) {
+  static void SetDefaultVisibleFlag(bool flag) {
     LOG_DEBUG("Set IndexMetadata visible flag to '%s'",
               (flag ? "true" : "false"));
     index_default_visibility = flag;
@@ -336,9 +314,9 @@ class Index : public Printable {
   virtual void ScanKey(const storage::Tuple *key,
                        std::vector<ItemPointer *> &result) = 0;
 
-  ///////////////////////////////////////////////////////////////////
-  // Garbage Collection
-  ///////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
+  /// Garbage Collection
+  //////////////////////////////////////////////////////////////////////////////
 
   // This gives a hint on whether GC is needed on the index
   // For those that do not need GC this always return false
@@ -348,17 +326,9 @@ class Index : public Printable {
   // For those that do not need GC this should return immediately
   virtual void PerformGC() = 0;
 
-  // The following two are used to perform GC in a
-  // fast manner
-  // Because if we register for epoch for every operation then
-  // essentially we are synchronizing on each operation which does
-  // not scale at all
-  // virtual void *JoinEpoch() = 0;
-  // virtual void LeaveEpoch(void *) = 0;
-
-  //===--------------------------------------------------------------------===//
-  // STATS
-  //===--------------------------------------------------------------------===//
+  //////////////////////////////////////////////////////////////////////////////
+  /// Stats
+  //////////////////////////////////////////////////////////////////////////////
 
   void IncreaseNumberOfTuplesBy(const size_t amount);
 
@@ -372,9 +342,9 @@ class Index : public Printable {
 
   void ResetDirty();
 
-  //===--------------------------------------------------------------------===//
-  // Utilities
-  //===--------------------------------------------------------------------===//
+  //////////////////////////////////////////////////////////////////////////////
+  /// Utilities
+  //////////////////////////////////////////////////////////////////////////////
 
   virtual std::string GetTypeName() const = 0;
 
@@ -392,6 +362,8 @@ class Index : public Printable {
   const catalog::Schema *GetKeySchema() const {
     return metadata->GetKeySchema();
   }
+
+  IndexType GetIndexMethodType() const { return metadata->GetIndexType(); }
 
   IndexConstraintType GetIndexType() const {
     return metadata->GetIndexConstraintType();
@@ -420,8 +392,6 @@ class Index : public Printable {
 
   virtual void IncrementIndexedTileGroupOffset() {
     indexed_tile_group_offset++;
-
-    return;
   }
 
  protected:
