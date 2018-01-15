@@ -9,6 +9,7 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+#include "storage/backend_manager.h"
 
 #include <cpuid.h>
 #include <errno.h>
@@ -28,8 +29,6 @@
 #include "common/logger.h"
 #include "common/macros.h"
 #include "common/internal_types.h"
-// #include "logging/logging_util.h"
-#include "storage/backend_manager.h"
 
 //===--------------------------------------------------------------------===//
 // GUC Variables

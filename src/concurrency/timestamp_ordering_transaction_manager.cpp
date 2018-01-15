@@ -27,11 +27,11 @@ namespace concurrency {
 
 // timestamp ordering requires a spinlock field for protecting the atomic access
 // to txn_id field and last_reader_cid field.
-Spinlock *TimestampOrderingTransactionManager::GetSpinlockField(
+common::synchronization::Spinlock *TimestampOrderingTransactionManager::GetSpinlockField(
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tuple_id) {
-  return (Spinlock *)(tile_group_header->GetReservedFieldRef(tuple_id) +
-                      LOCK_OFFSET);
+  return (common::synchronization::Spinlock *)
+            (tile_group_header->GetReservedFieldRef(tuple_id) + LOCK_OFFSET);
 }
 
 // in timestamp ordering, the last_reader_cid records the timestamp of the last
@@ -79,7 +79,7 @@ void TimestampOrderingTransactionManager::InitTupleReserved(
     const oid_t tuple_id) {
   auto reserved_area = tile_group_header->GetReservedFieldRef(tuple_id);
 
-  new ((reserved_area + LOCK_OFFSET)) Spinlock();
+  new ((reserved_area + LOCK_OFFSET)) common::synchronization::Spinlock();
   *(cid_t *)(reserved_area + LAST_READER_OFFSET) = 0;
 }
 
