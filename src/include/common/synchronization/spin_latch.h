@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// spin_lock.h
+// spin_latch.h
 //
-// Identification: src/include/common/synchronization/spin_lock.h
+// Identification: src/include/common/synchronization/spin_latch.h
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
@@ -18,18 +18,18 @@
 #include "common/macros.h"
 
 //===--------------------------------------------------------------------===//
-// Cheap & Easy Spin Lock
+// Cheap & Easy Spin Latch
 //===--------------------------------------------------------------------===//
 
 namespace peloton {
 namespace common {
 namespace synchronization {
 
-enum class LockState : bool { Unlocked = 0, Locked };
+enum class LatchState : bool { Unlocked = 0, Locked };
 
-class Spinlock {
+class SpinLatch {
  public:
-  Spinlock() : spin_lock_state(LockState::Unlocked) {}
+  SpinLatch() : state_(LatchState::Unlocked) {}
 
   void Lock() {
     while (!TryLock()) {
@@ -37,23 +37,24 @@ class Spinlock {
     }
   }
 
-  bool IsLocked() { return spin_lock_state.load() == LockState::Locked; }
+  bool IsLocked() { return state_.load() == LatchState::Locked; }
 
   bool TryLock() {
     // exchange returns the value before locking, thus we need
     // to make sure the lock wasn't already in Locked state before
-    return spin_lock_state.exchange(LockState::Locked, std::memory_order_acquire) !=
-        LockState::Locked;
+    return state_.exchange(LatchState::Locked,
+                                    std::memory_order_acquire) !=
+           LatchState::Locked;
   }
 
   void Unlock() {
-    spin_lock_state.store(LockState::Unlocked, std::memory_order_release);
+    state_.store(LatchState::Unlocked, std::memory_order_release);
   }
 
  private:
   /*the exchange method on this atomic is compiled to a lockfree xchgl
    * instruction*/
-  std::atomic<LockState> spin_lock_state;
+  std::atomic<LatchState> state_;
 };
 
 }  // namespace synchronization

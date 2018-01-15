@@ -20,7 +20,7 @@
 #include "common/platform.h"
 #include "common/container/cuckoo_map.h"
 #include "common/container/lock_free_queue.h"
-#include "common/synchronization/spin_lock.h"
+#include "common/synchronization/spin_latch.h"
 #include "statistics/table_metric.h"
 #include "statistics/index_metric.h"
 #include "statistics/latency_metric.h"
@@ -177,7 +177,7 @@ class BackendStatsContext {
   oid_t aggregated_query_count_ = 0;
 
   // Index oid spin lock
-  common::synchronization::Spinlock index_id_lock;
+  common::synchronization::SpinLatch index_id_lock;
 
   //===--------------------------------------------------------------------===//
   // HELPER FUNCTIONS

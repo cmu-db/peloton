@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// readwrite_lock.h
+// readwrite_latch.h
 //
-// Identification: src/include/common/synchronization/readwrite_lock.h
+// Identification: src/include/common/synchronization/readwrite_latch.h
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
@@ -19,7 +19,7 @@
 #include "common/macros.h"
 
 //===--------------------------------------------------------------------===//
-// Read-Write Lock
+// Read-Write Latch
 //===--------------------------------------------------------------------===//
 
 namespace peloton {
@@ -28,14 +28,14 @@ namespace synchronization {
 
 // Wrapper around pthread_rwlock_t
 
-class RWLock {
+class ReadWriteLatch {
  public:
-  RWLock(RWLock const &) = delete;
-  RWLock &operator=(RWLock const &) = delete;
+  ReadWriteLatch(ReadWriteLatch const &) = delete;
+  ReadWriteLatch &operator=(ReadWriteLatch const &) = delete;
 
-  RWLock() { pthread_rwlock_init(&rw_lock_, nullptr); }
+  ReadWriteLatch() { pthread_rwlock_init(&rw_lock_, nullptr); }
 
-  ~RWLock() { pthread_rwlock_destroy(&rw_lock_); }
+  ~ReadWriteLatch() { pthread_rwlock_destroy(&rw_lock_); }
 
   void ReadLock() const { pthread_rwlock_rdlock(&rw_lock_); }
 
