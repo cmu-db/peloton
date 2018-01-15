@@ -131,7 +131,7 @@ private:
 
     // The spin lock to protect the worker map.
     // We only update this map when creating/terminating a new worker
-    common::synchronization::Spinlock worker_map_lock_;
+    common::synchronization::SpinLatch worker_map_lock_;
 
     // map from worker id to the worker's context.
     std::unordered_map<oid_t, std::shared_ptr<WorkerContext>> worker_map_;

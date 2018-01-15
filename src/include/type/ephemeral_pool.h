@@ -18,7 +18,7 @@
 #include <unordered_set>
 
 #include "common/macros.h"
-#include "common/synchronization/spin_lock.h"
+#include "common/synchronization/spin_latch.h"
 #include "type/abstract_pool.h"
 
 namespace peloton {
@@ -71,7 +71,7 @@ public:
   std::unordered_set<char*> locations_;
 
   // Spin lock protecting location list
-  common::synchronization::Spinlock pool_lock_;
+  common::synchronization::SpinLatch pool_lock_;
 
 };
 

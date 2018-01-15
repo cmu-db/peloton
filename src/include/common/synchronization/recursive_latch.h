@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// recursive_lock.h
+// recursive_latch.h
 //
-// Identification: src/include/common/synchronization/recursive_lock.h
+// Identification: src/include/common/synchronization/recursive_latch.h
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
@@ -19,25 +19,25 @@
 #include "common/macros.h"
 
 //===--------------------------------------------------------------------===//
-// Recursive Lock
+// Recursive Latch
 //===--------------------------------------------------------------------===//
 
 namespace peloton {
 namespace common {
 namespace synchronization {
 
-class RecursiveLock {
+class RecursiveLatch {
  public:
-  RecursiveLock(RecursiveLock const &) = delete;
-  RecursiveLock &operator=(RecursiveLock const &) = delete;
+  RecursiveLatch(RecursiveLatch const &) = delete;
+  RecursiveLatch &operator=(RecursiveLatch const &) = delete;
 
-  RecursiveLock() {
+  RecursiveLatch() {
     pthread_mutexmutexattr__init(&mutexattr_);
     pthread_mutexmutexattr__settype(&mutexattr_, PTHREAD_MUTEX_RECURSIVE);
     pthread_mutex_init(&mutex_, &mutexattr_);
   }
 
-  ~RecursiveLock() { pthread_mutex_destroy(&mutex_); }
+  ~RecursiveLatch() { pthread_mutex_destroy(&mutex_); }
 
   void Lock() const { pthread_mutex_lock(&mutex_); }
 

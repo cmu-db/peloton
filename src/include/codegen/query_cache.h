@@ -15,7 +15,7 @@
 #include <list>
 
 #include "codegen/query.h"
-#include "common/synchronization/readwrite_lock.h"
+#include "common/synchronization/readwrite_latch.h"
 #include "common/singleton.h"
 #include "planner/abstract_plan.h"
 
@@ -75,7 +75,7 @@ class QueryCache : public Singleton<QueryCache> {
                      decltype(query_list_.begin()), planner::Hash,
                      planner::Equal> cache_map_;
 
-  common::synchronization::RWLock cache_lock_;
+  common::synchronization::ReadWriteLatch cache_lock_;
 
   size_t capacity_ = 0;
 };

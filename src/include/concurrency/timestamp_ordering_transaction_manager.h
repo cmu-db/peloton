@@ -16,7 +16,7 @@
 #include "concurrency/transaction_manager.h"
 #include "storage/tile_group.h"
 #include "statistics/stats_aggregator.h"
-#include "common/synchronization/spin_lock.h"
+#include "common/synchronization/spin_latch.h"
 
 namespace peloton {
 namespace concurrency {
@@ -106,7 +106,7 @@ private:
   static const int LOCK_OFFSET = 0;
   static const int LAST_READER_OFFSET = (LOCK_OFFSET + 8);
 
-  common::synchronization::Spinlock *GetSpinlockField(
+  common::synchronization::SpinLatch *GetSpinLatchField(
       const storage::TileGroupHeader *const tile_group_header,
       const oid_t &tuple_id);
 

@@ -14,7 +14,7 @@
 
 #include <mutex>
 
-#include "common/synchronization/spin_lock.h"
+#include "common/synchronization/spin_latch.h"
 #include "common/internal_types.h"
 
 namespace peloton {
@@ -61,7 +61,7 @@ class BackendManager {
   void *data_file_address;
 
   // data file lock
-  common::synchronization::Spinlock data_file_spinlock;
+  common::synchronization::SpinLatch data_file_spinlock;
 
   // data file len
   size_t data_file_len;
