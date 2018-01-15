@@ -42,8 +42,7 @@ class SpinLatch {
   bool TryLock() {
     // exchange returns the value before locking, thus we need
     // to make sure the lock wasn't already in Locked state before
-    return state_.exchange(LatchState::Locked,
-                                    std::memory_order_acquire) !=
+    return state_.exchange(LatchState::Locked, std::memory_order_acquire) !=
            LatchState::Locked;
   }
 
