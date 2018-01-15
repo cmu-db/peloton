@@ -12,7 +12,7 @@
 #include "brain/index_tuner.h"
 
 #include <algorithm>
-#include <include/brain/brain_util.h>
+#include "brain/brain_util.h"
 
 #include "concurrency/transaction_manager_factory.h"
 #include "brain/clusterer.h"
