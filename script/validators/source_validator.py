@@ -53,7 +53,7 @@ DEFAULT_DIRS = [
 ]
 
 # To be used in check_includes.
-PATHS = set([path.lstrip('src/include') for path in glob.glob('src/include/**/*.h')])
+PATHS = set([path.replace('src/include/', '') for path in glob.glob('src/include/**/*.h')])
 
 EXIT_SUCCESS = 0
 EXIT_FAILURE = -1
@@ -226,20 +226,19 @@ def check_namespaces(file_path):
 def check_includes(file_path):
     """Checks whether local includes are done via #include<...>"""
     with open(file_path, "r") as f:
-        path_pattern = re.compile(r'^#include <(.*?)>')
-        includes = os.listdir('src/include')
+        path_pattern = re.compile(r'^#include <(include/)?(.*?)>')
         linenum = 0
         status = True
         for line in f:
             linenum += 1
             res = path_pattern.match(line)
             if res:
-                path = res.groups()[0].lstrip("include/")
+                path = res.groups()[1]
                 if path in PATHS:
                     if status:
                         LOG.info("Invalid include in %s" % file_path)
                     status = False
-                    LOG.info("Line %s: %s" % (linenum, line))
+                    LOG.info("Line %s: %s" % (linenum, line.strip()))
         if not status:
             LOG.info('includes for peloton header files have must not have brackets')
     return status
