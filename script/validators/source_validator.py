@@ -15,6 +15,7 @@ import subprocess
 import difflib
 import mmap
 import glob
+import functools
 
 ## ==============================================
 ## LOGGING CONFIGURATION
@@ -40,7 +41,7 @@ LOG.setLevel(logging.INFO)
 # PELOTON_DIR needs to be redefined if the directory structure is changed
 CODE_SOURCE_DIR = os.path.abspath(os.path.dirname(__file__))
 PELOTON_DIR = os.path.abspath(
-    reduce(os.path.join, [CODE_SOURCE_DIR, os.path.pardir, os.path.pardir])
+    functools.reduce(os.path.join, [CODE_SOURCE_DIR, os.path.pardir, os.path.pardir])
     )
 
 CLANG_FORMAT = "clang-format-3.6"
