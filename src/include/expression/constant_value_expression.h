@@ -51,6 +51,12 @@ class ConstantValueExpression : public AbstractExpression {
       std::vector<peloton::type::Value> &values,
       const std::vector<peloton::type::Value> &values_from_user) override;
 
+  void GetUsedAttributesInPredicateOrder(
+    UNUSED_ATTRIBUTE std::vector<const planner::AttributeInfo *> &attributes,
+    std::vector<const AbstractExpression *> &constant_value_expressions) const override {
+    constant_value_expressions.push_back(this);
+  }
+
   // Copy this constant expression
   AbstractExpression *Copy() const override;
 

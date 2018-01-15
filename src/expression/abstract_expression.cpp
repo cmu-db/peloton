@@ -57,9 +57,10 @@ void AbstractExpression::GetUsedAttributes(
 }
 
 void AbstractExpression::GetUsedAttributesInPredicateOrder(
-  std::vector<const planner::AttributeInfo *> &attributes) const {
+  std::vector<const planner::AttributeInfo *> &attributes,
+  std::vector<const AbstractExpression *> &constant_value_expressions) const {
   for (uint32_t i = 0; i < GetChildrenSize(); i++) {
-    children_[i]->GetUsedAttributesInPredicateOrder(attributes);
+    children_[i]->GetUsedAttributesInPredicateOrder(attributes, constant_value_expressions);
   }
 }
 

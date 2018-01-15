@@ -94,7 +94,8 @@ class TupleValueExpression : public AbstractExpression {
   }
 
   void GetUsedAttributesInPredicateOrder(
-      std::vector<const planner::AttributeInfo *> &attributes) const override {
+      std::vector<const planner::AttributeInfo *> &attributes,
+      UNUSED_ATTRIBUTE std::vector<const AbstractExpression *> &constant_value_expressions) const override {
     PL_ASSERT(GetAttributeRef() != nullptr);
     attributes.push_back(GetAttributeRef());
   }
