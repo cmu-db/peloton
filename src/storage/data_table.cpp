@@ -344,7 +344,7 @@ bool DataTable::InsertTuple(const AbstractTuple *tuple,
     ItemPointer **index_entry_ptr) {
   if (CheckConstraints(tuple) == false) {
     LOG_TRACE("InsertTuple(): Constraint violated");
-    return false;
+    throw Exception("Constraint violated");
   }
 
   // the upper layer may not pass a index_entry_ptr (default value: nullptr)
@@ -364,14 +364,14 @@ bool DataTable::InsertTuple(const AbstractTuple *tuple,
   }
   // Index checks and updates
   if (InsertInIndexes(tuple, location, transaction, index_entry_ptr) == false) {
-    LOG_TRACE("Index constraint violated");
-    return false;
+    LOG_TRACE("Constraint violated");
+    throw Exception("Constraint violated");
   }
 
   // ForeignKey checks
   if (CheckForeignKeyConstraints(tuple) == false) {
     LOG_TRACE("ForeignKey constraint violated");
-    return false;
+    throw Exception("Constraint violated");
   }
 
   PL_ASSERT((*index_entry_ptr)->block == location.block &&
