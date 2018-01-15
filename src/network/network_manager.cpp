@@ -129,10 +129,10 @@ void NetworkManager::StartServer() {
       throw ConnectionException("Error creating SSL context.");
     }
 
-    LOG_DEBUG("private key file path %s", private_key_file_.c_str());
     /*
      * Temporarily commented to pass tests START
     // register private key
+    LOG_DEBUG("private key file path %s", private_key_file_.c_str());
     if (SSL_CTX_use_PrivateKey_file(ssl_context, private_key_file_.c_str(),
                                     SSL_FILETYPE_PEM) == 0)
     {

@@ -12,15 +12,14 @@
 
 #pragma once
 
-#include "common/macros.h"
-#include "type/abstract_pool.h"
-
 #include <stdint.h>
 #include <stdlib.h>
 #include <vector>
 #include <unordered_set>
 
-#include "common/platform.h"
+#include "common/macros.h"
+#include "common/synchronization/spin_lock.h"
+#include "type/abstract_pool.h"
 
 namespace peloton {
 namespace type {
@@ -72,7 +71,7 @@ public:
   std::unordered_set<char*> locations_;
 
   // Spin lock protecting location list
-  Spinlock pool_lock_;
+  common::synchronization::Spinlock pool_lock_;
 
 };
 

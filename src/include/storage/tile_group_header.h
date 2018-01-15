@@ -17,7 +17,7 @@
 
 #include "common/item_pointer.h"
 #include "common/macros.h"
-#include "common/platform.h"
+#include "common/synchronization/spin_lock.h"
 #include "common/printable.h"
 #include "storage/tuple.h"
 #include "common/internal_types.h"
@@ -248,7 +248,7 @@ class TileGroupHeader : public Printable {
   void PrintVisibility(txn_id_t txn_id, cid_t at_cid);
 
   // Getter for spin lock
-  Spinlock &GetHeaderLock() { return tile_header_lock; }
+  common::synchronization::Spinlock &GetHeaderLock() { return tile_header_lock; }
 
   // Sync the contents
   void Sync();
@@ -302,7 +302,7 @@ class TileGroupHeader : public Printable {
   // IT MAY OUT OF BOUNDARY! ALWAYS CHECK IF IT EXCEEDS num_tuple_slots
   std::atomic<oid_t> next_tuple_slot;
 
-  Spinlock tile_header_lock;
+  common::synchronization::Spinlock tile_header_lock;
 
   // Immmutable Flag. Should be set by the brain to be true.
   // By default it will be set to false.
