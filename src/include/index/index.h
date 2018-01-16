@@ -15,14 +15,12 @@
 #include <atomic>
 #include <functional>
 #include <memory>
-#include <set>
 #include <string>
 #include <vector>
 
 #include "common/item_pointer.h"
 #include "common/logger.h"
 #include "common/printable.h"
-#include "type/abstract_pool.h"
 #include "common/internal_types.h"
 #include "type/value.h"
 
@@ -37,6 +35,10 @@ class Schema;
 namespace storage {
 class Tuple;
 }  // namespace storage
+
+namespace type {
+class AbstractPool;
+}  // namespace type
 
 namespace index {
 
@@ -69,15 +71,15 @@ class IndexMetadata : public Printable {
 
   const std::string &GetName() const { return name_; }
 
-  oid_t GetOid() { return index_oid; }
+  oid_t GetOid() const { return index_oid; }
 
-  oid_t GetTableOid() { return table_oid; }
+  oid_t GetTableOid() const { return table_oid; }
 
-  oid_t GetDatabaseOid() { return database_oid; }
+  oid_t GetDatabaseOid() const { return database_oid; }
 
-  IndexType GetIndexType() { return index_type_; }
+  IndexType GetIndexType() const { return index_type_; }
 
-  IndexConstraintType GetIndexConstraintType() {
+  IndexConstraintType GetIndexConstraintType() const {
     return index_constraint_type_;
   }
 
@@ -192,40 +194,62 @@ class Index : public Printable {
   friend class IndexFactory;
 
  public:
-  /*
-   * GetOid() - Returns the object identifier of the index
+  virtual ~Index();
+
+  /**
+   * @brief Returns the object identifier of the index
    *
-   * Note that there is also an index oid stored inside the metadata. These
-   * two must remain the same and actually the one stored in index object
-   * is copied from the index metadata
+   * @return The object ID of the index
    */
   oid_t GetOid() const { return index_oid; }
 
-  // Return the metadata object associated with the index
+  /**
+   * @brief Return the metadata object associated with the index
+   *
+   * @return The metadata object
+   */
   IndexMetadata *GetMetadata() const { return metadata; }
 
-  // Convert table column ID to index column ID
+  /**
+   * @brief Convert table column ID to index column ID
+   *
+   * @return The position of the tuple in the index key
+   */
   oid_t TupleColumnToKeyColumn(oid_t tuple_column_id) const;
 
-  virtual ~Index();
-
-  ///////////////////////////////////////////////////////////////////
-  // Point Modification
-  ///////////////////////////////////////////////////////////////////
-
-  // designed for secondary indexes.
+  /**
+   * Insert the given key-value pair into the index. This is designed for
+   * secondary indexes.
+   *
+   * @param key The key we want to insert into the index
+   * @param value The value we want to insert into the index
+   * @return True on successful insertion
+   */
   virtual bool InsertEntry(const storage::Tuple *key,
                            ItemPointer *location_ptr) = 0;
 
-  // delete the index entry linked to given tuple and location
+  /**
+   * Delete the given key-value pair from the index
+   *
+   * @return True on successful deletion
+   */
   virtual bool DeleteEntry(const storage::Tuple *key,
                            ItemPointer *location_ptr) = 0;
 
-  // First retrieve all Key-Value pairs of the given key
-  // Return false if any of those k-v pairs satisfy the predicate
-  // If not any of those k-v pair satisfy the predicate, insert the k-v pair
-  // into the index and return true.
-  // This function should be called for all primary/unique index insert
+  /**
+   * Insert the given key-value pair into the index, but only if no existing
+   * values for the given key satisfy the provided predicate. In other words,
+   * only perform the insert if the predicate returns false for all existing
+   * values associated with the provided key.
+   *
+   * This function should be called for all primary/unique index insertions
+   *
+   * @param key The key we want to insert into the index
+   * @param value The value we want to insert into the index
+   * @param predicate The predicate to check on all existing values for the key
+   * before performing the insertion
+   * @return True on successful insertion
+   */
   virtual bool CondInsertEntry(const storage::Tuple *key, ItemPointer *location,
                                std::function<bool(const void *)> predicate) = 0;
 
@@ -234,39 +258,42 @@ class Index : public Printable {
   ///////////////////////////////////////////////////////////////////
 
   /**
-   * Scans a range inside the index and returns all elements
-   * in the result vector. The type of scan to perform is
-   * specified by the given scan predicate (csp_p).
-   * Whether to perform a forward or backward scan is
+   * Scans a range inside the index and returns all elements in the result
+   * vector. The type of scan to perform is specified by the given scan
+   * predicate (csp_p). Whether to perform a forward or backward scan is
    * determined by the given scan_direction.
    *
-   * @param value_list
-   * @param tuple_column_id_list
-   * @param expr_list
-   * @param scan_direction
-   * @param result
-   * @param csp_p
+   * @param value_list A list of bound key column values
+   * @param tuple_column_id_list A list of column IDs to bind values to
+   * @param expr_list A list of expressions used to when performing the
+   * comparison of the key column and the value from the provided list
+   * @param scan_direction The direction to perform the scan, either forward or
+   * backward
+   * @param[out] result Where the results of the scan are stored
+   * @param scan_predicate The only predicate that's actually used.
    */
   virtual void Scan(const std::vector<type::Value> &value_list,
                     const std::vector<oid_t> &tuple_column_id_list,
                     const std::vector<ExpressionType> &expr_list,
                     ScanDirectionType scan_direction,
                     std::vector<ItemPointer *> &result,
-                    const ConjunctionScanPredicate *csp_p) = 0;
+                    const ConjunctionScanPredicate *scan_predicate) = 0;
 
   /**
    * The ScanLimit function has the same behavior as the Scan function
    * except that the scan stops after it reads offset + limit elements.
    * Therefore, maximum of limit elements are returned in the result vector.
    *
-   * @param value_list
-   * @param tuple_column_id_list
-   * @param expr_list
-   * @param scan_direction
-   * @param result
-   * @param csp_p
-   * @param limit
-   * @param offset
+   * @param value_list A list of bound key column values
+   * @param tuple_column_id_list A list of column IDs to bind values to
+   * @param expr_list A list of expressions used to when performing the
+   * comparison of the key column and the value from the provided list
+   * @param scan_direction The direction to perform the scan, either forward or
+   * backward
+   * @param[out] result Where the results of the scan are stored
+   * @param scan_predicate A list of conjuncts to perform additional filtering
+   * @param limit How many results to actually return
+   * @param offset How many items to exclude from the results
    */
   virtual void ScanLimit(const std::vector<type::Value> &value_list,
                          const std::vector<oid_t> &tuple_column_id_list,
@@ -277,16 +304,12 @@ class Index : public Printable {
                          uint64_t offset) = 0;
 
   /**
-   * This is the version used to test the basic scan operation.
-   * Since it does a scan planning every time it is invoked, it will
-   * be slower than the regular scan.
-   * This should <b>only</b> be used for correctness testing.
+   * This is the version used to test the basic scan operation. Since it does a
+   * scan planning every time it is invoked, it will be slower than the regular
+   * scan. This should <b>only</b> be used for correctness testing.
    *
-   * @param value_list
-   * @param tuple_column_id_list
-   * @param expr_list
-   * @param scan_direction
-   * @param result
+   * @copydoc Index::Scan()
+   *
    */
   virtual void ScanTest(const std::vector<type::Value> &value_list,
                         const std::vector<oid_t> &tuple_column_id_list,
@@ -295,21 +318,20 @@ class Index : public Printable {
                         std::vector<ItemPointer *> &result);
 
   /**
-   * Scan all of the keys in the index and store their values
-   * in the result vector.
+   * Scan all of the keys in the index and store their values in the result
+   * vector.
    *
-   * @param result
+   * @param[out] result Where the results of the scan are stored
    */
   virtual void ScanAllKeys(std::vector<ItemPointer *> &result) = 0;
 
   /**
-   * Finds all of the values in the index for the given key and
-   * return them in the result vector.
-   * If the index is not configured to store duplicate keys,
+   * Finds all of the values in the index for the given key and return them in
+   * the result vector. If the index is not configured to store duplicate keys,
    * then at most one value will be returned.
    *
    * @param key
-   * @param result
+   * @param[out] result Where the results of the scan are stored
    */
   virtual void ScanKey(const storage::Tuple *key,
                        std::vector<ItemPointer *> &result) = 0;
@@ -318,40 +340,65 @@ class Index : public Printable {
   /// Garbage Collection
   //////////////////////////////////////////////////////////////////////////////
 
-  // This gives a hint on whether GC is needed on the index
-  // For those that do not need GC this always return false
+  /**
+   * @brief Determine if this index needs to perform any internal garbage
+   * collection
+   *
+   * @return True if the index needs to perform GC
+   */
   virtual bool NeedGC() = 0;
 
-  // This function performs one round of GC
-  // For those that do not need GC this should return immediately
+  /**
+   * @brief Performs one round of GC, allowing the index to clean up internal
+   * data structures and reclaim unused memory.
+   */
   virtual void PerformGC() = 0;
 
   //////////////////////////////////////////////////////////////////////////////
   /// Stats
   //////////////////////////////////////////////////////////////////////////////
 
-  void IncreaseNumberOfTuplesBy(const size_t amount);
+  /**
+   * @brief Increase the number of tuples in the index by the provided amount
+   */
+  void IncreaseNumberOfTuplesBy(size_t amount);
 
-  void DecreaseNumberOfTuplesBy(const size_t amount);
+  /**
+   * @brief Decrease the number of tuples in the index by the provided amount
+   */
+  void DecreaseNumberOfTuplesBy(size_t amount);
 
-  void SetNumberOfTuples(const size_t num_tuples);
+  /**
+   * @brief Set the number of tuples in the index
+   */
+  void SetNumberOfTuples(size_t num_tuples);
 
+  /**
+   * @brief Return the number of tuples in the index
+   */
   size_t GetNumberOfTuples() const;
 
+  /**
+   * @brief Returns if the index is dirty. WTF that means is unknown.
+   */
   bool IsDirty() const;
 
+  /**
+   * @brief No idea. Reset some dirty flag?
+   */
   void ResetDirty();
 
   //////////////////////////////////////////////////////////////////////////////
   /// Utilities
   //////////////////////////////////////////////////////////////////////////////
 
+  /**
+   * @brief Return a string representation for the type of this index
+   */
   virtual std::string GetTypeName() const = 0;
 
   /**
-   * Currently, UniqueIndex is just an index with additional checks.
-   * We might have to make a different class in future for maximizing
-   * performance of UniqueIndex.
+   * @brief Returns if this index only has unique keys
    */
   bool HasUniqueKeys() const { return metadata->HasUniqueKeys(); }
 
@@ -369,8 +416,7 @@ class Index : public Printable {
     return metadata->GetIndexConstraintType();
   }
 
-  // Get a string representation for debugging
-  const std::string GetInfo() const;
+  const std::string GetInfo() const override;
 
   // Generic key comparator between index key and given arbitrary key
   //
@@ -382,7 +428,11 @@ class Index : public Printable {
 
   type::AbstractPool *GetPool() const { return pool; }
 
-  // Get the memory footprint
+  /**
+   * @brief Calculate the total number of bytes used by this index
+   *
+   * @return The number of bytes this index occupies
+   */
   virtual size_t GetMemoryFootprint() = 0;
 
   // Get the indexed tile group offset
@@ -395,7 +445,7 @@ class Index : public Printable {
   }
 
  protected:
-  Index(IndexMetadata *schema);
+  explicit Index(IndexMetadata *schema);
 
   //===--------------------------------------------------------------------===//
   //  Data members
