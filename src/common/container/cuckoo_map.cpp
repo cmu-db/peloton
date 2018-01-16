@@ -17,7 +17,6 @@
 #include "common/internal_types.h"
 #include "common/logger.h"
 #include "common/macros.h"
-#include "container/cuckoo_map.h"
 
 namespace peloton {
 
