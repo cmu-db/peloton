@@ -29,6 +29,9 @@ class ProjectionSQLTests : public PelotonTest {
     catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
     txn_manager.CommitTransaction(txn);
 
+    auto catalog = catalog::Catalog::GetInstance();
+    catalog->Bootstrap();
+
     SetupTestTable();
   }
 
