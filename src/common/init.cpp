@@ -23,6 +23,7 @@
 #include "gc/gc_manager_factory.h"
 #include "settings/settings_manager.h"
 #include "threadpool/mono_queue_pool.h"
+#include "threadpool/brain_thread_pool.h"
 
 namespace peloton {
 
@@ -40,6 +41,8 @@ void PelotonInit::Initialize() {
 
   // start worker pool
   threadpool::MonoQueuePool::GetInstance().Startup();
+  threadpool::BrainThreadPool::GetInstance().Startup();
+
 
   int parallelism = (std::thread::hardware_concurrency() + 3) / 4;
   storage::DataTable::SetActiveTileGroupCount(parallelism);
@@ -102,6 +105,8 @@ void PelotonInit::Shutdown() {
 
   // stop worker pool
   threadpool::MonoQueuePool::GetInstance().Shutdown();
+  threadpool::BrainThreadPool::GetInstance().Shutdown();
+
 
   thread_pool.Shutdown();
 

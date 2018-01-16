@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// mono_queue_pool.h
+// brain_thread_pool.h
 //
-// Identification: src/include/threadpool/mono_queue_pool.h
+// Identification: src/include/threadpool/brain_thread_pool.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -17,22 +17,22 @@
 namespace peloton {
 namespace threadpool {
 
-// TODO: tune these variables
-constexpr static size_t kDefaultTaskQueueSize = 32;
-constexpr static size_t kDefaultWorkerPoolSize = 4;
+constexpr static size_t kDefaultBrainTaskQueueSize = 32;
+constexpr static size_t kDefaultBrainWorkerPoolSize = 2;
+
 
 /**
  * @brief Wrapper class for single queue and single pool.
  * One should use this if possible.
  */
-class MonoQueuePool {
+class BrainThreadPool {
  public:
-  MonoQueuePool()
-      : task_queue_(kDefaultTaskQueueSize),
-        worker_pool_(kDefaultWorkerPoolSize, &task_queue_),
+	BrainThreadPool()
+      : task_queue_(kDefaultBrainTaskQueueSize),
+        worker_pool_(kDefaultBrainWorkerPoolSize, &task_queue_),
         is_running_(false) {}
 
-  ~MonoQueuePool() {
+  ~BrainThreadPool() {
     if (is_running_) {
       Shutdown();
     }
@@ -55,9 +55,9 @@ class MonoQueuePool {
     task_queue_.Enqueue(std::move(func));
   }
 
-  static MonoQueuePool &GetInstance() {
-    static MonoQueuePool mono_queue_pool;
-    return mono_queue_pool;
+  static BrainThreadPool &GetInstance() {
+    static BrainThreadPool brain_thread_pool;
+    return brain_thread_pool;
   }
 
  private:
