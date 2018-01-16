@@ -38,11 +38,11 @@ QueryHistoryCatalog::QueryHistoryCatalog(concurrency::TransactionContext *txn)
 QueryHistoryCatalog::~QueryHistoryCatalog() {}
 
 bool QueryHistoryCatalog::InsertQueryHistory(const std::string &query_string, 
-                                        std::string &fingerprint,
                                         int64_t timestamp,
                                         type::AbstractPool *pool, 
                                         concurrency::TransactionContext *txn) {
-
+  LOG_INFO("From insert query history\n");
+  std::string fingerprint = "fingerprint";
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 

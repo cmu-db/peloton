@@ -21,6 +21,8 @@
 #include "storage/tile_group.h"
 #include "storage/tuple.h"
 #include "storage/storage_manager.h"
+#include "threadpool/brain_thread_pool.h"
+
 
 namespace peloton {
 namespace gc {
@@ -133,16 +135,17 @@ int TransactionLevelGCManager::Unlink(const int &thread_id,
 
     std::string query_string = txn_ctx->GetQueryString();
     if(query_string != "") {
-      std::string fingerprint = "fingerprint";
       uint64_t timestamp = 123;
 
       auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
       auto txn = txn_manager.BeginTransaction();
 
-      catalog::QueryHistoryCatalog::GetInstance()->InsertQueryHistory(
-          query_string, fingerprint, timestamp, nullptr, txn);
+      auto &pool = threadpool::BrainThreadPool::GetInstance();
+      pool.SubmitTask([query_string, timestamp, txn] {
+    	  catalog::QueryHistoryCatalog::GetInstance()->InsertQueryHistory(
+    	           query_string, timestamp, nullptr, txn);
+      });
 
-      txn_manager.CommitTransaction(txn);
     }
 
     // Deallocate the Transaction Context of transactions that don't involve
