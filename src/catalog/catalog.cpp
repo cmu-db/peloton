@@ -986,6 +986,26 @@ void Catalog::InitializeFunctions() {
                                             function::DecimalFunctions::_Abs},
           txn);
       AddBuiltinFunction(
+          "sqrt", {type::TypeId::TINYINT}, type::TypeId::DECIMAL, internal_lang,
+          "Sqrt", function::BuiltInFuncType{OperatorId::Sqrt,
+                                            function::DecimalFunctions::Sqrt},
+          txn);
+      AddBuiltinFunction(
+          "sqrt", {type::TypeId::SMALLINT}, type::TypeId::DECIMAL, internal_lang,
+          "Sqrt", function::BuiltInFuncType{OperatorId::Sqrt,
+                                            function::DecimalFunctions::Sqrt},
+          txn);
+      AddBuiltinFunction(
+          "sqrt", {type::TypeId::INTEGER}, type::TypeId::DECIMAL, internal_lang,
+          "Sqrt", function::BuiltInFuncType{OperatorId::Sqrt,
+                                            function::DecimalFunctions::Sqrt},
+          txn);
+      AddBuiltinFunction(
+          "sqrt", {type::TypeId::BIGINT}, type::TypeId::DECIMAL, internal_lang,
+          "Sqrt", function::BuiltInFuncType{OperatorId::Sqrt,
+                                            function::DecimalFunctions::Sqrt},
+          txn);
+      AddBuiltinFunction(
           "sqrt", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL, internal_lang,
           "Sqrt", function::BuiltInFuncType{OperatorId::Sqrt,
                                             function::DecimalFunctions::Sqrt},
@@ -1121,7 +1141,7 @@ void Catalog::InitializeFunctions() {
 
     } catch (CatalogException &e) {
       txn_manager.AbortTransaction(txn);
-      throw & e;
+      throw e;
     }
     txn_manager.CommitTransaction(txn);
     initialized = true;

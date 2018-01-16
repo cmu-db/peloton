@@ -9,6 +9,7 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+#include "storage/tile_group_header.h"
 
 #include <iomanip>
 #include <iostream>
@@ -23,7 +24,6 @@
 #include "gc/gc_manager.h"
 #include "logging/log_manager.h"
 #include "storage/backend_manager.h"
-#include "storage/tile_group_header.h"
 #include "type/value.h"
 #include "storage/tuple.h"
 
