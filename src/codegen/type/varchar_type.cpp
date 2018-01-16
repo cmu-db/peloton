@@ -21,6 +21,7 @@
 #include "codegen/type/integer_type.h"
 #include "codegen/type/timestamp_type.h"
 #include "codegen/value.h"
+#include "common/exception.h"
 
 namespace peloton {
 namespace codegen {
@@ -335,6 +336,30 @@ struct RTrim : public TypeSystem::BinaryOperatorHandleNull {
   }
 };
 
+struct Repeat : public TypeSystem::BinaryOperatorHandleNull {
+  bool SupportsTypes(const Type &left_type,
+                     const Type &right_type) const override {
+    return left_type.GetSqlType() == Varchar::Instance() &&
+           right_type.GetSqlType() == Integer::Instance();
+  }
+
+  Type ResultType(UNUSED_ATTRIBUTE const Type &left_type,
+                  UNUSED_ATTRIBUTE const Type &right_type) const override {
+    return Varchar::Instance();
+  }
+
+  Value Impl(CodeGen &codegen, const Value &left, const Value &right,
+             const TypeSystem::InvocationContext &ctx) const override {
+    llvm::Value *ret = codegen.Call(StringFunctionsProxy::Repeat,
+                                    {ctx.executor_context, left.GetValue(),
+                                     left.GetLength(), right.GetValue()});
+
+    llvm::Value *str_ptr = codegen->CreateExtractValue(ret, 0);
+    llvm::Value *str_len = codegen->CreateExtractValue(ret, 1);
+    return Value{Varchar::Instance(), str_ptr, str_len};
+  }
+};
+
 ////////////////////////////////////////////////////////////////////////////////
 ///
 /// N-ary operators
@@ -403,12 +428,14 @@ DateTrunc kDateTrunc;
 BTrim kBTrim;
 LTrim kLTrim;
 RTrim kRTrim;
+Repeat kRepeat;
 std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
     {OperatorId::Like, kLike},
     {OperatorId::DateTrunc, kDateTrunc},
     {OperatorId::BTrim, kBTrim},
     {OperatorId::LTrim, kLTrim},
-    {OperatorId::RTrim, kRTrim}};
+    {OperatorId::RTrim, kRTrim},
+    {OperatorId::Repeat, kRepeat}};
 
 // Nary operations
 Substr kSubstr;

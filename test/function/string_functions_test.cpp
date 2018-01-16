@@ -6,7 +6,7 @@
 //
 // Identification: test/expression/string_functions_test.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -17,6 +17,7 @@
 #include "common/harness.h"
 
 #include "function/string_functions.h"
+#include "function/old_engine_string_functions.h"
 #include "common/internal_types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
@@ -69,21 +70,21 @@ TEST_F(StringFunctionsTests, LikeTest) {
 TEST_F(StringFunctionsTests, AsciiTest) {
   const char column_char = 'A';
   for (int i = 0; i < 52; i++) {
-    int expected = (int)column_char + i;
+    auto expected = static_cast<uint32_t>(column_char + i);
 
     std::ostringstream os;
     os << static_cast<char>(expected);
     std::vector<type::Value> args = {
         type::ValueFactory::GetVarcharValue(os.str())};
 
-    auto result = function::StringFunctions::_Ascii(args);
+    auto result = function::OldEngineStringFunctions::Ascii(args);
     EXPECT_FALSE(result.IsNull());
     EXPECT_EQ(expected, result.GetAs<int>());
   }
   // NULL CHECK
   std::vector<type::Value> args = {
       type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR)};
-  auto result = function::StringFunctions::_Ascii(args);
+  auto result = function::OldEngineStringFunctions::Ascii(args);
   EXPECT_TRUE(result.IsNull());
 }
 
@@ -99,14 +100,15 @@ TEST_F(StringFunctionsTests, ChrTest) {
     std::vector<type::Value> args = {
         type::ValueFactory::GetIntegerValue(char_int)};
 
-    auto result = function::StringFunctions::Chr(args);
+    auto result = function::OldEngineStringFunctions::Chr(args);
     EXPECT_FALSE(result.IsNull());
     EXPECT_EQ(expected, result.ToString());
   }
+
   // NULL CHECK
   std::vector<type::Value> args = {
       type::ValueFactory::GetNullValueByType(type::TypeId::INTEGER)};
-  auto result = function::StringFunctions::Chr(args);
+  auto result = function::OldEngineStringFunctions::Chr(args);
   EXPECT_TRUE(result.IsNull());
 }
 
@@ -124,7 +126,7 @@ TEST_F(StringFunctionsTests, SubstrTest) {
       type::ValueFactory::GetIntegerValue(from),
       type::ValueFactory::GetIntegerValue(len),
   };
-  auto result = function::StringFunctions::_Substr(args);
+  auto result = function::OldEngineStringFunctions::Substr(args);
   EXPECT_FALSE(result.IsNull());
   EXPECT_EQ(expected, result.ToString());
 
@@ -136,7 +138,7 @@ TEST_F(StringFunctionsTests, SubstrTest) {
         type::ValueFactory::GetVarcharValue("ccc"),
     };
     nullargs[i] = type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
-    auto result = function::StringFunctions::_Substr(nullargs);
+    auto result = function::OldEngineStringFunctions::Substr(nullargs);
     EXPECT_TRUE(result.IsNull());
   }
 }
@@ -148,14 +150,14 @@ TEST_F(StringFunctionsTests, CharLengthTest) {
     std::vector<type::Value> args = {
         type::ValueFactory::GetVarcharValue(input)};
 
-    auto result = function::StringFunctions::CharLength(args);
+    auto result = function::OldEngineStringFunctions::CharLength(args);
     EXPECT_FALSE(result.IsNull());
     EXPECT_EQ(i, result.GetAs<int>());
   }
   // NULL CHECK
   std::vector<type::Value> args = {
       type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR)};
-  auto result = function::StringFunctions::CharLength(args);
+  auto result = function::OldEngineStringFunctions::CharLength(args);
   EXPECT_TRUE(result.IsNull());
 }
 
@@ -167,7 +169,7 @@ TEST_F(StringFunctionsTests, RepeatTest) {
     std::vector<type::Value> args = {type::ValueFactory::GetVarcharValue(str),
                                      type::ValueFactory::GetIntegerValue(i)};
 
-    auto result = function::StringFunctions::Repeat(args);
+    auto result = function::OldEngineStringFunctions::Repeat(args);
     EXPECT_FALSE(result.IsNull());
     EXPECT_EQ(expected, result.ToString());
   }
@@ -176,7 +178,7 @@ TEST_F(StringFunctionsTests, RepeatTest) {
       type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR),
       type::ValueFactory::GetVarcharValue(str),
   };
-  auto result = function::StringFunctions::Repeat(args);
+  auto result = function::OldEngineStringFunctions::Repeat(args);
   EXPECT_TRUE(result.IsNull());
 }
 
@@ -195,7 +197,7 @@ TEST_F(StringFunctionsTests, ReplaceTest) {
         type::ValueFactory::GetVarcharValue(replaceChar),
         type::ValueFactory::GetVarcharValue(origChar)};
 
-    auto result = function::StringFunctions::Replace(args);
+    auto result = function::OldEngineStringFunctions::Replace(args);
     EXPECT_FALSE(result.IsNull());
     EXPECT_EQ(expected, result.ToString());
   }
@@ -207,7 +209,7 @@ TEST_F(StringFunctionsTests, ReplaceTest) {
         type::ValueFactory::GetVarcharValue("ccc"),
     };
     args[i] = type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
-    auto result = function::StringFunctions::Replace(args);
+    auto result = function::OldEngineStringFunctions::Replace(args);
     EXPECT_TRUE(result.IsNull());
   }
 }
@@ -219,7 +221,7 @@ TEST_F(StringFunctionsTests, LTrimTest) {
   const std::string expected = message + spaces;
   std::vector<type::Value> args = {type::ValueFactory::GetVarcharValue(origStr),
                                    type::ValueFactory::GetVarcharValue(" ")};
-  auto result = function::StringFunctions::_LTrim(args);
+  auto result = function::OldEngineStringFunctions::LTrim(args);
   EXPECT_FALSE(result.IsNull());
   EXPECT_EQ(expected, result.ToString());
 
@@ -230,7 +232,7 @@ TEST_F(StringFunctionsTests, LTrimTest) {
         type::ValueFactory::GetVarcharValue("bbb"),
     };
     nullargs[i] = type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
-    auto result = function::StringFunctions::_LTrim(nullargs);
+    auto result = function::OldEngineStringFunctions::LTrim(nullargs);
     EXPECT_TRUE(result.IsNull());
   }
 }
@@ -242,7 +244,7 @@ TEST_F(StringFunctionsTests, RTrimTest) {
   const std::string expected = spaces + message;
   std::vector<type::Value> args = {type::ValueFactory::GetVarcharValue(origStr),
                                    type::ValueFactory::GetVarcharValue(" ")};
-  auto result = function::StringFunctions::_RTrim(args);
+  auto result = function::OldEngineStringFunctions::RTrim(args);
   EXPECT_FALSE(result.IsNull());
   EXPECT_EQ(expected, result.ToString());
 
@@ -253,7 +255,7 @@ TEST_F(StringFunctionsTests, RTrimTest) {
         type::ValueFactory::GetVarcharValue("bbb"),
     };
     nullargs[i] = type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
-    auto result = function::StringFunctions::_RTrim(nullargs);
+    auto result = function::OldEngineStringFunctions::RTrim(nullargs);
     EXPECT_TRUE(result.IsNull());
   }
 }
@@ -265,11 +267,11 @@ TEST_F(StringFunctionsTests, BTrimTest) {
   const std::string expected = message;
   std::vector<type::Value> args = {type::ValueFactory::GetVarcharValue(origStr),
                                    type::ValueFactory::GetVarcharValue(" ")};
-  auto result = function::StringFunctions::_BTrim(args);
+  auto result = function::OldEngineStringFunctions::BTrim(args);
   EXPECT_FALSE(result.IsNull());
   EXPECT_EQ(expected, result.ToString());
 
-  result = function::StringFunctions::_Trim(
+  result = function::OldEngineStringFunctions::Trim(
       {type::ValueFactory::GetVarcharValue(origStr)});
   EXPECT_FALSE(result.IsNull());
   EXPECT_EQ(expected, result.ToString());
@@ -281,7 +283,7 @@ TEST_F(StringFunctionsTests, BTrimTest) {
         type::ValueFactory::GetVarcharValue("bbb"),
     };
     nullargs[i] = type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
-    auto result = function::StringFunctions::_BTrim(nullargs);
+    auto result = function::OldEngineStringFunctions::BTrim(nullargs);
     EXPECT_TRUE(result.IsNull());
   }
 }
@@ -296,14 +298,14 @@ TEST_F(StringFunctionsTests, LengthTest) {
 
     std::vector<type::Value> args = {type::ValueFactory::GetVarcharValue(str)};
 
-    auto result = function::StringFunctions::_Length(args);
+    auto result = function::OldEngineStringFunctions::Length(args);
     EXPECT_FALSE(result.IsNull());
     EXPECT_EQ(expected, result.GetAs<int>());
   }
   // NULL CHECK
   std::vector<type::Value> args = {
       type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR)};
-  auto result = function::StringFunctions::_Length(args);
+  auto result = function::OldEngineStringFunctions::Length(args);
   EXPECT_TRUE(result.IsNull());
 }
 
