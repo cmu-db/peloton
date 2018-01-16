@@ -4,19 +4,20 @@
 //
 // connection_manager.h
 //
-// Identification: src/include/network/connection_manager.h
+// Identification: src/include/network/service/connection_manager.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #pragma once
 
-#include "common/mutex.h"
-#include "tcp_connection.h"
-
 #include <event2/event.h>
 #include <pthread.h>
+
+#include "common/synchronization/mutex_latch.h"
+#include "common/synchronization/condition.h"
+#include "network/service/tcp_connection.h"
 
 namespace peloton {
 namespace network {
@@ -61,8 +62,8 @@ class ConnectionManager {
   std::map<NetworkAddress, Connection*> conn_pool_;
 
   // a connection can be shared among pthreads
-  Mutex mutex_;
-  Condition cond_;
+  common::synchronization::DirtyMutexLatch mutex_;
+  common::synchronization::Condition cond_;
 
   //////////////////////////////////////////////
   // The following is only for performance test

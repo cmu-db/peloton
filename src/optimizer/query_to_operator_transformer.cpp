@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <cmath>
-#include <include/settings/settings_manager.h>
+#include "settings/settings_manager.h"
 
 #include "catalog/database_catalog.h"
 #include "expression/expression_util.h"

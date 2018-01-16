@@ -28,11 +28,13 @@ namespace type {
 
 namespace {
 
-//===----------------------------------------------------------------------===//
-// CASTING RULES
-//
-// We do DECIMAL -> {INTEGRAL_TYPE, VARCHAR, BOOLEAN}
-//===----------------------------------------------------------------------===//
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Casting
+///
+/// We do DECIMAL -> {INTEGRAL_TYPE, VARCHAR, BOOLEAN}
+///
+////////////////////////////////////////////////////////////////////////////////
 
 struct CastDecimal : public TypeSystem::CastHandleNull {
   bool SupportsTypes(const type::Type &from_type,
@@ -85,6 +87,12 @@ struct CastDecimal : public TypeSystem::CastHandleNull {
     return Value{to_type, result, nullptr, null};
   }
 };
+
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Comparisons
+///
+////////////////////////////////////////////////////////////////////////////////
 
 // Comparison
 struct CompareDecimal : public TypeSystem::SimpleComparisonHandleNull {
@@ -140,6 +148,12 @@ struct CompareDecimal : public TypeSystem::SimpleComparisonHandleNull {
   }
 };
 
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Unary operations
+///
+////////////////////////////////////////////////////////////////////////////////
+
 // Negation
 struct Negate : public TypeSystem::UnaryOperatorHandleNull {
   bool SupportsType(const Type &type) const override {
@@ -150,7 +164,9 @@ struct Negate : public TypeSystem::UnaryOperatorHandleNull {
     return Type{Decimal::Instance()};
   }
 
-  Value Impl(CodeGen &codegen, const Value &val) const override {
+  Value Impl(CodeGen &codegen, const Value &val,
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+      const override {
     PL_ASSERT(SupportsType(val.GetType()));
 
     llvm::Value *overflow_bit = nullptr;
@@ -174,7 +190,9 @@ struct Floor : public TypeSystem::UnaryOperatorHandleNull {
     return Type{Decimal::Instance()};
   }
 
-  Value Impl(CodeGen &codegen, const Value &val) const override {
+  Value Impl(CodeGen &codegen, const Value &val,
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+      const override {
     llvm::Value *raw_ret =
         codegen.Call(DecimalFunctionsProxy::Floor, {val.GetValue()});
     return Value{Decimal::Instance(), raw_ret};
@@ -191,7 +209,9 @@ struct Round : public TypeSystem::UnaryOperatorHandleNull {
     return Decimal::Instance();
   }
 
-  Value Impl(CodeGen &codegen, const Value &val) const override {
+  Value Impl(CodeGen &codegen, const Value &val,
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+      const override {
     llvm::Value *raw_ret =
         codegen.Call(DecimalFunctionsProxy::Round, {val.GetValue()});
     return Value{Decimal::Instance(), raw_ret};
@@ -208,15 +228,41 @@ struct Ceil : public TypeSystem::UnaryOperatorHandleNull {
     return Type{Decimal::Instance()};
   }
 
-  Value Impl(CodeGen &codegen, const Value &val) const override {
+  Value Impl(CodeGen &codegen, const Value &val,
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+      const override {
     PL_ASSERT(SupportsType(val.GetType()));
 
-    llvm::Value *result = codegen.Call(DecimalFunctionsProxy::Ceil,
-                                       {val.GetValue()});
-    // Return result
+    auto *result = codegen.Call(DecimalFunctionsProxy::Ceil, {val.GetValue()});
+
     return Value{Decimal::Instance(), result};
   }
 };
+
+// Sqrt
+struct Sqrt : public TypeSystem::UnaryOperatorHandleNull {
+  bool SupportsType(const Type &type) const override {
+    return type.GetSqlType() == Decimal::Instance();
+  }
+
+  Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
+    return Decimal::Instance();
+  }
+
+ protected:
+  Value Impl(CodeGen &codegen, const Value &val,
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+      const override {
+    auto *raw_ret = codegen.Sqrt(val.GetValue());
+    return Value{Decimal::Instance(), raw_ret};
+  }
+};
+
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Binary operations
+///
+////////////////////////////////////////////////////////////////////////////////
 
 // Addition
 struct Add : public TypeSystem::BinaryOperatorHandleNull {
@@ -232,7 +278,8 @@ struct Add : public TypeSystem::BinaryOperatorHandleNull {
   }
 
   Value Impl(CodeGen &codegen, const Value &left, const Value &right,
-             UNUSED_ATTRIBUTE OnError on_error) const override {
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+      const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
     auto *raw_val = codegen->CreateFAdd(left.GetValue(), right.GetValue());
     return Value{Decimal::Instance(), raw_val, nullptr, nullptr};
@@ -253,7 +300,8 @@ struct Sub : public TypeSystem::BinaryOperatorHandleNull {
   }
 
   Value Impl(CodeGen &codegen, const Value &left, const Value &right,
-             UNUSED_ATTRIBUTE OnError on_error) const override {
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+      const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
     auto *raw_val = codegen->CreateFSub(left.GetValue(), right.GetValue());
     return Value{Decimal::Instance(), raw_val, nullptr, nullptr};
@@ -274,7 +322,8 @@ struct Mul : public TypeSystem::BinaryOperatorHandleNull {
   }
 
   Value Impl(CodeGen &codegen, const Value &left, const Value &right,
-             UNUSED_ATTRIBUTE OnError on_error) const override {
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+      const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
     auto *raw_val = codegen->CreateFMul(left.GetValue(), right.GetValue());
     return Value{Decimal::Instance(), raw_val, nullptr, nullptr};
@@ -295,7 +344,7 @@ struct Div : public TypeSystem::BinaryOperatorHandleNull {
   }
 
   Value Impl(CodeGen &codegen, const Value &left, const Value &right,
-             OnError on_error) const override {
+             const TypeSystem::InvocationContext &ctx) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // First, check if the divisor is zero
@@ -306,7 +355,7 @@ struct Div : public TypeSystem::BinaryOperatorHandleNull {
 
     auto result = Value{Decimal::Instance()};
 
-    if (on_error == OnError::ReturnNull) {
+    if (ctx.on_error == OnError::ReturnNull) {
       Value default_val, division_result;
       lang::If is_div0{codegen, div0, "div0"};
       {
@@ -324,7 +373,7 @@ struct Div : public TypeSystem::BinaryOperatorHandleNull {
       // Build PHI
       result = is_div0.BuildPHI(default_val, division_result);
 
-    } else if (on_error == OnError::Exception) {
+    } else if (ctx.on_error == OnError::Exception) {
       // If the caller **does** care about the error, generate the exception
       codegen.ThrowIfDivideByZero(div0);
 
@@ -352,7 +401,7 @@ struct Modulo : public TypeSystem::BinaryOperatorHandleNull {
   }
 
   Value Impl(CodeGen &codegen, const Value &left, const Value &right,
-             OnError on_error) const override {
+             const TypeSystem::InvocationContext &ctx) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // First, check if the divisor is zero
@@ -363,7 +412,7 @@ struct Modulo : public TypeSystem::BinaryOperatorHandleNull {
 
     auto result = Value{Decimal::Instance()};
 
-    if (on_error == OnError::ReturnNull) {
+    if (ctx.on_error == OnError::ReturnNull) {
       Value default_val, division_result;
       lang::If is_div0{codegen, div0, "div0"};
       {
@@ -381,7 +430,7 @@ struct Modulo : public TypeSystem::BinaryOperatorHandleNull {
       // Build PHI
       result = is_div0.BuildPHI(default_val, division_result);
 
-    } else if (on_error == OnError::Exception) {
+    } else if (ctx.on_error == OnError::Exception) {
       // If the caller **does** care about the error, generate the exception
       codegen.ThrowIfDivideByZero(div0);
 
@@ -395,17 +444,19 @@ struct Modulo : public TypeSystem::BinaryOperatorHandleNull {
   }
 };
 
-//===----------------------------------------------------------------------===//
-// TYPE SYSTEM CONSTRUCTION
-//===----------------------------------------------------------------------===//
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Function tables
+///
+////////////////////////////////////////////////////////////////////////////////
 
-// The list of types a SQL decimal type can be implicitly casted to
-const std::vector<peloton::type::TypeId> kImplicitCastingTable = {
+// Implicit casts
+std::vector<peloton::type::TypeId> kImplicitCastingTable = {
     peloton::type::TypeId::DECIMAL};
 
 // Explicit casting rules
-static CastDecimal kCastDecimal;
-static std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {
+CastDecimal kCastDecimal;
+std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {
     {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::BOOLEAN,
      kCastDecimal},
     {peloton::type::TypeId::DECIMAL, peloton::type::TypeId::TINYINT,
@@ -420,29 +471,29 @@ static std::vector<TypeSystem::CastInfo> kExplicitCastingTable = {
      kCastDecimal}};
 
 // Comparison operations
-static CompareDecimal kCompareDecimal;
-static std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {
-    {kCompareDecimal}};
+CompareDecimal kCompareDecimal;
+std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {{kCompareDecimal}};
 
 // Unary operators
-static Negate kNegOp;
-static Floor kFloorOp;
-static Round kRound;
-static Ceil kCeilOp;
-static std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {
+Negate kNegOp;
+Floor kFloorOp;
+Round kRound;
+Ceil kCeilOp;
+Sqrt kSqrt;
+std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {
     {OperatorId::Negation, kNegOp},
     {OperatorId::Floor, kFloorOp},
     {OperatorId::Round, kRound},
-    {OperatorId::Ceil, kCeilOp}};
-
+    {OperatorId::Ceil, kCeilOp},
+    {OperatorId::Sqrt, kSqrt}};
 
 // Binary operations
-static Add kAddOp;
-static Sub kSubOp;
-static Mul kMulOp;
-static Div kDivOp;
-static Modulo kModuloOp;
-static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
+Add kAddOp;
+Sub kSubOp;
+Mul kMulOp;
+Div kDivOp;
+Modulo kModuloOp;
+std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
     {OperatorId::Add, kAddOp},
     {OperatorId::Sub, kSubOp},
     {OperatorId::Mul, kMulOp},
@@ -450,24 +501,24 @@ static std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
     {OperatorId::Mod, kModuloOp}};
 
 // Nary operations
-static std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
+std::vector<TypeSystem::NaryOpInfo> kNaryOperatorTable = {};
 
 // No arg operations
-static std::vector<TypeSystem::NoArgOpInfo> kNoArgOperatorTable = {};
+std::vector<TypeSystem::NoArgOpInfo> kNoArgOperatorTable = {};
 
 }  // anonymous namespace
 
-//===----------------------------------------------------------------------===//
-// TINYINT TYPE CONFIGURATION
-//===----------------------------------------------------------------------===//
+////////////////////////////////////////////////////////////////////////////////
+///
+/// DECIMAL type initialization and configuration
+///
+////////////////////////////////////////////////////////////////////////////////
 
-// Initialize the DECIMAL SQL type with the configured type system
 Decimal::Decimal()
     : SqlType(peloton::type::TypeId::DECIMAL),
       type_system_(kImplicitCastingTable, kExplicitCastingTable,
-                   kComparisonTable, kUnaryOperatorTable,
-                   kBinaryOperatorTable, kNaryOperatorTable,
-                   kNoArgOperatorTable) {}
+                   kComparisonTable, kUnaryOperatorTable, kBinaryOperatorTable,
+                   kNaryOperatorTable, kNoArgOperatorTable) {}
 
 Value Decimal::GetMinValue(CodeGen &codegen) const {
   auto *raw_val = codegen.ConstDouble(peloton::type::PELOTON_DECIMAL_MIN);

@@ -101,6 +101,7 @@ class CodeGen {
   //===--------------------------------------------------------------------===//
   llvm::Value *CallPrintf(const std::string &format,
                           const std::vector<llvm::Value *> &args);
+  llvm::Value *Sqrt(llvm::Value *val);
 
   //===--------------------------------------------------------------------===//
   // Arithmetic with overflow logic - These methods perform the desired math op,
@@ -140,6 +141,10 @@ class CodeGen {
   llvm::LLVMContext &GetContext() const { return code_context_.GetContext(); }
 
   CodeContext &GetCodeContext() const { return code_context_; }
+
+  FunctionBuilder *GetCurrentFunction() const {
+    return code_context_.GetCurrentFunction();
+  }
 
  private:
   friend class Hash;

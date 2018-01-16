@@ -17,6 +17,11 @@
 #include "type/value.h"
 
 namespace peloton {
+
+namespace executor {
+class ExecutorContext;
+}  // namespace executor
+
 namespace function {
 
 class StringFunctions {

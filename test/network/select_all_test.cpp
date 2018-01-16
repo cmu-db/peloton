@@ -17,7 +17,7 @@
 #include "network/protocol_handler_factory.h"
 #include "util/string_util.h"
 #include <pqxx/pqxx> /* libpqxx is used to instantiate C++ client */
-#include <include/network/postgres_protocol_handler.h>
+#include "network/postgres_protocol_handler.h"
 
 #define NUM_THREADS 1
 

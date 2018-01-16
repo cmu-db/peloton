@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <include/util/string_util.h>
+#include "util/string_util.h"
 #include "statistics/database_metric.h"
 #include "common/macros.h"
 

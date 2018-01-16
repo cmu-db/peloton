@@ -6,17 +6,12 @@
 //
 // Identification: src/parser/postgresparser.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include <include/parser/pg_list.h>
-#include <include/parser/pg_query.h>
-#include <iostream>
-#include <string>
-#include <unordered_set>
+#include "parser/postgresparser.h"
 
-#include "common/exception.h"
 #include "expression/aggregate_expression.h"
 #include "expression/case_expression.h"
 #include "expression/comparison_expression.h"
@@ -30,10 +25,6 @@
 #include "parser/pg_list.h"
 #include "parser/pg_query.h"
 #include "parser/pg_trigger.h"
-#include "parser/postgresparser.h"
-#include "common/internal_types.h"
-#include "type/value.h"
-#include "type/value_factory.h"
 
 namespace peloton {
 namespace parser {

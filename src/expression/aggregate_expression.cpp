@@ -4,7 +4,7 @@
 //
 // aggregate_expression.cpp
 //
-// Identification: /peloton/src/expression/aggregate_expression.cpp
+// Identification: src/expression/aggregate_expression.cpp
 //
 // Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
