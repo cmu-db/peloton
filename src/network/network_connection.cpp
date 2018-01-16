@@ -203,7 +203,7 @@ ReadState NetworkConnection::FillReadBuffer() {
         SetReadBlocked(false);
         bytes_read = SSL_read(conn_SSL_context, rbuf_.GetPtr(rbuf_.buf_size),
                               rbuf_.GetMaxSize() - rbuf_.buf_size);
-        LOG_DEBUG("SSL read successfully");
+        LOG_TRACE("SSL read successfully");
         int err = SSL_get_error(conn_SSL_context, bytes_read);
         unsigned long ecode = (err != SSL_ERROR_NONE || bytes_read < 0) ? ERR_get_error() : 0;
         switch (err) {
@@ -392,7 +392,7 @@ WriteState NetworkConnection::FlushWriteBuffer() {
               return WriteState::WRITE_ERROR;
             }
             // We should go to CONN_WRITE state
-            LOG_DEBUG("WRITE NOT READY");
+            LOG_TRACE("WRITE NOT READY");
             return WriteState::WRITE_NOT_READY;
           } else {
             // fatal errors
@@ -403,7 +403,7 @@ WriteState NetworkConnection::FlushWriteBuffer() {
 
         // weird edge case?
         if (written_bytes == 0 && wbuf_.buf_size != 0) {
-          LOG_DEBUG("Not all data is written");
+          LOG_TRACE("Not all data is written");
           continue;
         }
       }
@@ -488,7 +488,7 @@ bool NetworkConnection::ReadStartupPacketHeader(Buffer &rbuf, InputPacket &rpkt)
   rpkt.is_extended = (rpkt.len > rbuf.GetMaxSize());
 
   if (rpkt.is_extended) {
-    LOG_DEBUG("Using extended buffer for pkt size:%ld", rpkt.len);
+    LOG_TRACE("Using extended buffer for pkt size:%ld", rpkt.len);
     // reserve space for the extended buffer
     rpkt.ReserveExtendedBuffer();
   }
