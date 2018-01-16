@@ -195,6 +195,7 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
 
   // execute the query using tcop
   // prepareStatement
+  LOG_INFO("Query: %s", query.c_str());
   std::string unnamed_statement = "unnamed";
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto sql_stmt_list = peloton_parser.BuildParseTree(query);
@@ -226,6 +227,8 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
   if (status == ResultType::SUCCESS) {
     tuple_descriptor = statement->GetTupleDescriptor();
   }
+  LOG_INFO("Statement executed. Result: %s",
+           ResultTypeToString(status).c_str());
   return status;
 }
 
