@@ -26,12 +26,10 @@ class ProjectionSQLTests : public PelotonTest {
   ProjectionSQLTests() {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto *txn = txn_manager.BeginTransaction();
-    catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
-    txn_manager.CommitTransaction(txn);
-
     auto catalog = catalog::Catalog::GetInstance();
     catalog->Bootstrap();
-
+    catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
+    txn_manager.CommitTransaction(txn);
     SetupTestTable();
   }
 
