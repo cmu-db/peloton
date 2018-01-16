@@ -452,7 +452,8 @@ void PostgresProtocolHandler::ExecParseMessage(InputPacket *pkt) {
 
   LOG_TRACE("PrepareStatement[%s] => %s", statement_name.c_str(),
             query_string.c_str());
-  statement = traffic_cop_->PrepareStatement(statement_name, query_string,
+  statement = traffic_cop_->PrepareStatement(statement_name, query, 
+                                             std::move(sql_stmt_list),
                                              error_message);
   if (statement.get() == nullptr) {
     traffic_cop_->ProcessInvalidStatement();
