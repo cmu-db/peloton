@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <thread>
@@ -22,6 +21,7 @@
 #include "common/platform.h"
 #include "common/init.h"
 #include "common/thread_pool.h"
+#include "common/synchronization/spin_latch.h"
 #include "concurrency/epoch_manager.h"
 #include "concurrency/local_epoch.h"
 
@@ -144,7 +144,7 @@ private:
 
   // each thread holds a pointer to a local epoch.
   // it updates the local epoch to report their local time.
-  Spinlock local_epoch_lock_;
+  common::synchronization::SpinLatch local_epoch_lock_;
   std::unordered_map<int, std::unique_ptr<LocalEpoch>> local_epochs_;
   
   // the global epoch reflects the true time of the system.
