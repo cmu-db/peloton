@@ -13,11 +13,10 @@
 #include "executor/drop_executor.h"
 
 #include "catalog/catalog.h"
-#include "catalog/index_catalog.h"
-#include "catalog/trigger_catalog.h"
 #include "catalog/database_catalog.h"
-#include "catalog/table_catalog.h"
 #include "catalog/index_catalog.h"
+#include "catalog/table_catalog.h"
+#include "catalog/trigger_catalog.h"
 #include "common/logger.h"
 #include "common/statement_cache_manager.h"
 #include "executor/executor_context.h"
@@ -89,11 +88,6 @@ bool DropExecutor::DropDatabase(const planner::DropPlan &node,
 
   auto database_object =
       catalog::Catalog::GetInstance()->GetDatabaseObject(database_name, txn);
-  std::set<oid_t> table_ids;
-  auto table_objects = database_object->GetTableObjects(false);
-  for (auto it : table_objects) {
-    table_ids.insert(it.second->GetTableOid());
-  }
 
   ResultType result =
       catalog::Catalog::GetInstance()->DropDatabaseWithName(database_name, txn);
@@ -101,7 +95,16 @@ bool DropExecutor::DropDatabase(const planner::DropPlan &node,
 
   if (txn->GetResult() == ResultType::SUCCESS) {
     LOG_TRACE("Dropping database succeeded!");
-    // StatementCacheManager::GetStmtCacheManager()->InvalidateTableOids(table_ids);
+
+    if (StatementCacheManager::GetStmtCacheManager().get()) {
+      std::set<oid_t> table_ids;
+      auto table_objects = database_object->GetTableObjects(false);
+      for (auto it : table_objects) {
+        table_ids.insert(it.second->GetTableOid());
+      }
+      StatementCacheManager::GetStmtCacheManager()->InvalidateTableOids(
+          table_ids);
+    }
   } else {
     LOG_TRACE("Result is: %s", ResultTypeToString(txn->GetResult()).c_str());
   }
@@ -123,17 +126,20 @@ bool DropExecutor::DropTable(const planner::DropPlan &node,
     }
   }
 
-  oid_t table_id = catalog::Catalog::GetInstance()
-                       ->GetTableObject(database_name, table_name, txn)
-                       ->GetTableOid();
-
   ResultType result = catalog::Catalog::GetInstance()->DropTable(
       database_name, table_name, txn);
   txn->SetResult(result);
 
   if (txn->GetResult() == ResultType::SUCCESS) {
     LOG_TRACE("Dropping table succeeded!");
-    StatementCacheManager::GetStmtCacheManager()->InvalidateTableOid(table_id);
+
+    if (StatementCacheManager::GetStmtCacheManager().get()) {
+      oid_t table_id = catalog::Catalog::GetInstance()
+                           ->GetTableObject(database_name, table_name, txn)
+                           ->GetTableOid();
+      StatementCacheManager::GetStmtCacheManager()->InvalidateTableOid(
+          table_id);
+    }
   } else {
     LOG_TRACE("Result is: %s", ResultTypeToString(txn->GetResult()).c_str());
   }
@@ -148,17 +154,19 @@ bool DropExecutor::DropTrigger(const planner::DropPlan &node,
   LOG_DEBUG("table name: %s", table_name.c_str());
   std::string trigger_name = node.GetTriggerName();
 
-  oid_t table_id = catalog::Catalog::GetInstance()
-                       ->GetTableObject(database_name, table_name, txn)
-                       ->GetTableOid();
-  LOG_DEBUG("%d", table_id);
   ResultType result = catalog::TriggerCatalog::GetInstance().DropTrigger(
       database_name, table_name, trigger_name, txn);
   txn->SetResult(result);
-
   if (txn->GetResult() == ResultType::SUCCESS) {
-    LOG_TRACE("Dropping trigger succeeded!");
-    StatementCacheManager::GetStmtCacheManager()->InvalidateTableOid(table_id);
+    LOG_DEBUG("Dropping trigger succeeded!");
+
+    if (StatementCacheManager::GetStmtCacheManager().get()) {
+      oid_t table_id = catalog::Catalog::GetInstance()
+                           ->GetTableObject(database_name, table_name, txn)
+                           ->GetTableOid();
+      StatementCacheManager::GetStmtCacheManager()->InvalidateTableOid(
+          table_id);
+    }
   } else if (txn->GetResult() == ResultType::FAILURE && node.IsMissing()) {
     txn->SetResult(ResultType::SUCCESS);
     LOG_TRACE("Dropping trigger Succeeded!");
@@ -181,8 +189,11 @@ bool DropExecutor::DropIndex(const planner::DropPlan &node,
   txn->SetResult(result);
 
   if (txn->GetResult() == ResultType::SUCCESS) {
-    oid_t table_id = index_object->GetTableOid();
-    StatementCacheManager::GetStmtCacheManager()->InvalidateTableOid(table_id);
+    if (StatementCacheManager::GetStmtCacheManager().get()) {
+      oid_t table_id = index_object->GetTableOid();
+      StatementCacheManager::GetStmtCacheManager()->InvalidateTableOid(
+          table_id);
+    }
     LOG_TRACE("Dropping Index Succeeded! Index oid: %d",
               index_object->GetIndexOid());
   } else {
