@@ -11,22 +11,24 @@
 //===----------------------------------------------------------------------===//
 
 #include "optimizer/cost_calculator.h"
+#include "optimizer/memo.h"
 
 namespace peloton {
 namespace optimizer {
 
-double CostCalculator::CalculatorCost(GroupExpression *gexpr, const PropertySet *output_properties) {
+double CostCalculator::CalculatoCost(GroupExpression *gexpr,
+                                     Memo* memo) {
   gexpr_ = gexpr;
-  output_properties_ = output_properties;
+  for (auto& child_group_id : gexpr_->GetChildGroupIDs()) {
+    input_stats_.push_back(memo->GetGroupByID(child_group_id)->GetStats());
+  }
   gexpr_->Op().Accept(this);
   return output_cost_;
 }
 
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const DummyScan *op) {}
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalSeqScan *op) {}
-void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalIndexScan *op) {
-
-}
+void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalIndexScan *op) {}
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const QueryDerivedScan *op) {}
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalOrderBy *op) {}
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalLimit *op) {}
@@ -53,5 +55,5 @@ void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalSortGroupBy *op) {
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalDistinct *op) {}
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalAggregate *op) {}
 
-} // namespace optimizer
-} // namespace peloton
+}  // namespace optimizer
+}  // namespace peloton

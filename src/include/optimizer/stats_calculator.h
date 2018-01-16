@@ -17,10 +17,14 @@
 namespace peloton {
 namespace optimizer {
 
+class Memo;
+
 // Derive stats for a logical group expression
 class StatsCalculator : public OperatorVisitor {
  public:
-  std::shared_ptr<Stats> CalculateStats(std::shared_ptr<GroupExpression> gexpr);
+  void CalculateStats(
+      GroupExpression* gexpr,
+      std::vector<expression::AbstractExpression *> required_cols, Memo *memo);
 
   void Visit(const LeafOperator *) override;
   void Visit(const LogicalGet *) override;
@@ -38,11 +42,9 @@ class StatsCalculator : public OperatorVisitor {
   void Visit(const LogicalUpdate *) override;
 
  private:
-  // We cannot use reference here because otherwise we have to initialize them
-  // when constructing the class
-  std::shared_ptr<GroupExpression> gexpr_;
-
-  std::shared_ptr<Stats> output_stats_;
+  GroupExpression* gexpr_;
+  std::vector<expression::AbstractExpression *> required_cols_;
+  Memo *memo_;
 };
 
 }  // namespace optimizer

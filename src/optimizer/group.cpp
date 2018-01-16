@@ -20,9 +20,8 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 // Group
 //===--------------------------------------------------------------------===//
-Group::Group(GroupID id, std::unordered_set<std::string> table_aliases,
-             std::shared_ptr<Stats> stats)
-    : id_(id), table_aliases_(std::move(table_aliases)), stats_(stats) {
+Group::Group(GroupID id, std::unordered_set<std::string> table_aliases)
+    : id_(id), table_aliases_(std::move(table_aliases)) {
   has_explored_ = false;
 }
 
@@ -38,8 +37,8 @@ void Group::AddExpression(std::shared_ptr<GroupExpression> expr,
     logical_expressions_.push_back(expr);
 }
 
-bool Group::SetExpressionCost(GroupExpression* expr, double cost,
-                              std::shared_ptr<PropertySet>& properties) {
+bool Group::SetExpressionCost(GroupExpression *expr, double cost,
+                              std::shared_ptr<PropertySet> &properties) {
   LOG_TRACE("Adding expression cost on group %d with op %s, req %s",
             expr->GetGroupID(), expr->Op().name().c_str(),
             properties->ToString().c_str());
@@ -52,8 +51,8 @@ bool Group::SetExpressionCost(GroupExpression* expr, double cost,
   }
   return false;
 }
-GroupExpression* Group::GetBestExpression(
-    std::shared_ptr<PropertySet>& properties) {
+GroupExpression *Group::GetBestExpression(
+    std::shared_ptr<PropertySet> &properties) {
   auto it = lowest_cost_expressions_.find(properties);
   if (it != lowest_cost_expressions_.end()) {
     return std::get<1>(it->second);

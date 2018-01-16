@@ -17,12 +17,11 @@
 namespace peloton {
 namespace optimizer {
 
+class Memo;
 // Derive cost for a physical group expressionh
 class CostCalculator : public OperatorVisitor {
  public:
-  double CalculatorCost(
-      GroupExpression* gexpr,
-      const PropertySet *output_properties);
+  double CalculatoCost(GroupExpression *gexpr, Memo *memo);
 
   void Visit(const DummyScan *) override;
   void Visit(const PhysicalSeqScan *) override;
@@ -48,10 +47,8 @@ class CostCalculator : public OperatorVisitor {
   void Visit(const PhysicalAggregate *) override;
 
  private:
-  // We cannot use reference here because otherwise we have to initialize them
-  // when constructing the class
-  GroupExpression* gexpr_;
-  const PropertySet *output_properties_;
+  GroupExpression *gexpr_;
+  std::vector<TableStats *> input_stats_;
   double output_cost_ = 0;
 };
 
