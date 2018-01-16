@@ -43,8 +43,7 @@ class QueryHistoryCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   bool InsertQueryHistory(const std::string &query_string,
                           int64_t timestamp,
-                          type::AbstractPool *pool,
-                          concurrency::TransactionContext *txn);
+                          type::AbstractPool *pool);
 
   enum ColumnId {
     QUERY_STRING = 0,

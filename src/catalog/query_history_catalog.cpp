@@ -13,6 +13,7 @@
 #include "catalog/query_history_catalog.h"
 
 #include "catalog/catalog.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "executor/logical_tile.h"
 #include "storage/data_table.h"
 #include "type/value_factory.h"
@@ -39,9 +40,10 @@ QueryHistoryCatalog::~QueryHistoryCatalog() {}
 
 bool QueryHistoryCatalog::InsertQueryHistory(const std::string &query_string, 
                                         int64_t timestamp,
-                                        type::AbstractPool *pool, 
-                                        concurrency::TransactionContext *txn) {
-  LOG_INFO("From insert query history\n");
+                                        type::AbstractPool *pool) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
   std::string fingerprint = "fingerprint";
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
@@ -55,7 +57,11 @@ bool QueryHistoryCatalog::InsertQueryHistory(const std::string &query_string,
   tuple->SetValue(ColumnId::TIMESTAMP, val2, pool);
 
   // Insert the tuple
-  return InsertTuple(std::move(tuple), txn);
+  bool insert_status = InsertTuple(std::move(tuple), txn);
+
+  txn_manager.CommitTransaction(txn);
+
+  return insert_status;
 }
 
 }  // namespace catalog
