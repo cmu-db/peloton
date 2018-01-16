@@ -543,7 +543,7 @@ class ExpressionUtil {
       const catalog::FunctionData &func_data =
           catalog->GetFunction(func_expr->GetFuncName(), argtypes);
       LOG_DEBUG("Function %s found in the catalog",
-               func_data.func_name_.c_str());
+                func_data.func_name_.c_str());
       LOG_DEBUG("Argument num: %ld", func_data.argument_types_.size());
       if (!func_data.is_udf_) {
         func_expr->SetBuiltinFunctionExpressionParameters(
