@@ -15,6 +15,7 @@
 #include "catalog/catalog.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/logical_tile.h"
+#include "parser/pg_query.h"
 #include "storage/data_table.h"
 #include "type/value_factory.h"
 
@@ -44,7 +45,7 @@ bool QueryHistoryCatalog::InsertQueryHistory(const std::string &query_string,
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
-  std::string fingerprint = "fingerprint";
+  std::string fingerprint = pg_query_fingerprint(query_string.c_str()).hexdigest;
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
