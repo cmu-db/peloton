@@ -885,7 +885,7 @@ const FunctionData Catalog::GetFunction(
     // If the function is "internal", perform the lookup in our built-in
     // functions map (i.e., function::BuiltInFunctions) to get the function
     result.func_ = function::BuiltInFunctions::GetFuncByName(result.func_name_);
-    result.isUDF_ = false;
+    result.is_udf_ = false;
     if (result.func_.impl == nullptr) {
       txn_manager.AbortTransaction(txn);
       throw CatalogException(
@@ -898,7 +898,7 @@ const FunctionData Catalog::GetFunction(
     // code_context
     result.func_context_ = function::PlpgsqlFunctions::GetFuncContextByOid(
         proc_catalog_obj->GetOid());
-    result.isUDF_ = true;
+    result.is_udf_ = true;
 
     if (result.func_context_->GetUDF() == nullptr) {
       txn_manager.AbortTransaction(txn);

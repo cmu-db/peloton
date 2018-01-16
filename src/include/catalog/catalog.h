@@ -62,7 +62,7 @@ struct FunctionData {
   // function's return type
   type::TypeId return_type_;
   // indicates if PL/pgSQL udf
-  bool isUDF_;
+  bool is_udf_;
   // pointer to the function code_context (populated if UDF)
   std::shared_ptr<peloton::codegen::CodeContext> func_context_;
   // pointer to the function (populated if built-in)

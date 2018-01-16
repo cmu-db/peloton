@@ -69,7 +69,7 @@ class FunctionExpression : public AbstractExpression {
     return func_context_;
   }
 
-  bool IsUDF() const { return isUDF_; }
+  bool IsUDF() const { return is_udf_; }
 
   const std::vector<type::TypeId> &GetArgTypes() const {
     return func_arg_types_;
@@ -82,7 +82,7 @@ class FunctionExpression : public AbstractExpression {
         func_(other.func_),
         func_arg_types_(other.func_arg_types_),
         func_context_(other.func_context_),
-        isUDF_(other.isUDF_) {}
+        is_udf_(other.is_udf_) {}
 
  private:
   // throws an exception if children return unexpected types

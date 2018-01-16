@@ -281,9 +281,9 @@ void BindNodeVisitor::Visit(expression::FunctionExpression *expr) {
       catalog_->GetFunction(expr->GetFuncName(), argtypes);
   LOG_DEBUG("Function %s found in the catalog", func_data.func_name_.c_str());
   LOG_DEBUG("Argument num: %ld", func_data.argument_types_.size());
-  LOG_DEBUG("Is UDF %d", func_data.isUDF_);
+  LOG_DEBUG("Is UDF %d", func_data.is_udf_);
 
-  if (!func_data.isUDF_) {
+  if (!func_data.is_udf_) {
     expr->SetBuiltinFunctionExpressionParameters(
         func_data.func_, func_data.return_type_, func_data.argument_types_);
     // Look into the OperatorId for built-in functions to check the first
