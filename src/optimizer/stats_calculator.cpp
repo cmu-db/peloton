@@ -11,15 +11,18 @@
 //===----------------------------------------------------------------------===//
 
 #include "optimizer/stats_calculator.h"
+#include "optimizer/memo.h"
 
 namespace peloton {
 namespace optimizer {
 
-std::shared_ptr<Stats> StatsCalculator::CalculateStats(
-    std::shared_ptr<GroupExpression> gexpr) {
+void StatsCalculator::CalculateStats(
+    GroupExpression* gexpr,
+    std::vector<expression::AbstractExpression *> required_cols, Memo *memo) {
   gexpr_ = gexpr;
+  memo_ = memo;
+  required_cols_ = required_cols;
   gexpr->Op().Accept(this);
-  return output_stats_;
 }
 
 void StatsCalculator::Visit(UNUSED_ATTRIBUTE const LeafOperator *op) {}

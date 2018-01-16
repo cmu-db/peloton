@@ -16,6 +16,8 @@
 #include "optimizer/binding.h"
 #include "optimizer/child_property_deriver.h"
 #include "optimizer/cost_calculator.h"
+#include "optimizer/stats_calculator.h"
+#include "optimizer/child_stats_deriver.h"
 
 namespace peloton {
 namespace optimizer {
@@ -72,8 +74,9 @@ void OptimizeGroup::execute() {
   }
 
   // Push implement tasks to ensure that they are run first (for early pruning)
-  for (auto &physical_expr : group_->GetPhysicalExpressions())
+  for (auto &physical_expr : group_->GetPhysicalExpressions()) {
     PushTask(new OptimizeInputs(physical_expr.get(), context_));
+  }
 
   // Since there is no cycle in the tree, it is safe to set the flag even before
   // all expressions are explored
@@ -187,6 +190,10 @@ void ApplyRule::execute() {
               new_expr, new_gexpr, group_expr_->GetGroupID())) {
         // A new group expression is generated
         if (new_gexpr->Op().IsLogical()) {
+          // Derive stats for the *logical expression*
+          PushTask(new DeriveStats(
+              new_gexpr.get(), std::vector<expression::AbstractExpression *>{},
+              context_));
           if (explore_only) {
             // Explore this logical expression
             PushTask(new ExploreExpression(new_gexpr.get(), context_));
@@ -205,6 +212,46 @@ void ApplyRule::execute() {
   group_expr_->SetRuleExplored(rule_);
 }
 
+//===--------------------------------------------------------------------===//
+// DeriveStats
+//===--------------------------------------------------------------------===//
+void DeriveStats::execute() {
+  // First do a top-down pass to get stats for required columns, then do a
+  // bottom-up pass to calculate the stats
+  ChildStatsDeriver deriver;
+  auto children_required_stats =
+      deriver.DeriveStats(gexpr_, required_cols_, &context_->metadata->memo);
+  bool derive_children = false;
+  // If we haven't got enough stats to compute the current stats, derive them
+  // from the child first
+  PL_ASSERT(children_required_stats.size() == gexpr_->GetChildrenGroupsSize());
+  for (size_t idx = 0; idx < children_required_stats.size(); ++idx) {
+    auto &child_required_stats = children_required_stats[idx];
+    auto child_group_id = gexpr_->GetChildGroupId(idx);
+    if (!child_required_stats.empty()) {
+      if (!derive_children) {
+        derive_children = true;
+        // Derive for root later
+        PushTask(new DeriveStats(this));
+      }
+      // TODO(boweic): currently we pick the first child expression in the child
+      // group to derive stats, in the future we may want to pick the one with
+      // the highest confidence
+      PushTask(new DeriveStats(GetMemo()
+                                   .GetGroupByID(child_group_id)
+                                   ->GetLogicalExpressions()[0]
+                                   .get(),
+                               child_required_stats, context_));
+    }
+  }
+  if (derive_children) {
+    // We'll derive for the current group after deriving stats of children
+    return;
+  }
+
+  StatsCalculator calculator;
+  calculator.CalculateStats(gexpr_, required_cols_, &context_->metadata->memo);
+}
 //===--------------------------------------------------------------------===//
 // OptimizeInputs
 //===--------------------------------------------------------------------===//
@@ -240,9 +287,12 @@ void OptimizeInputs::execute() {
 
     // Calculate local cost and update total cost
     if (cur_child_idx_ == 0) {
+      // Compute the cost of the root operator
+      // 1. Collect stats needed and cache them in the group
+      // 2. Calculate the cost based on the
       CostCalculator cost_calculator;
-      cur_total_cost_ +=
-          cost_calculator.CalculatorCost(group_expr_, output_prop.get());
+      cur_total_cost_ += cost_calculator.CalculatorCost(
+          group_expr_, &context_->metadata->memo);
     }
 
     for (; cur_child_idx_ < (int)group_expr_->GetChildrenGroupsSize();
@@ -317,7 +367,7 @@ void OptimizeInputs::execute() {
               std::make_shared<PropertySet>(extended_output_properties);
           CostCalculator cost_calculator;
           cur_total_cost_ += cost_calculator.CalculatorCost(
-              memo_enforced_expr, extended_prop_set.get());
+              memo_enforced_expr, &context_->metadata->memo);
 
           // Update hash tables for group and group expression
           memo_enforced_expr->SetLocalHashTable(
@@ -405,8 +455,7 @@ void BottomUpRewrite::execute() {
   auto cur_group_expr = cur_group->GetLogicalExpression();
 
   if (!has_optimized_child_) {
-    PushTask(
-        new BottomUpRewrite(group_id_, context_, rule_set_name_, true));
+    PushTask(new BottomUpRewrite(group_id_, context_, rule_set_name_, true));
     for (size_t child_group_idx = 0;
          child_group_idx < cur_group_expr->GetChildrenGroupsSize();
          child_group_idx++) {
