@@ -27,7 +27,7 @@
 #include "concurrency/transaction_manager_factory.h"
 #include "function/date_functions.h"
 #include "function/decimal_functions.h"
-#include "function/string_functions.h"
+#include "function/old_engine_string_functions.h"
 #include "function/timestamp_functions.h"
 #include "index/index_factory.h"
 #include "storage/storage_manager.h"
@@ -208,8 +208,8 @@ ResultType Catalog::CreateDatabase(const std::string &database_name,
 ResultType Catalog::CreateTable(const std::string &database_name,
                                 const std::string &table_name,
                                 std::unique_ptr<catalog::Schema> schema,
-                                concurrency::TransactionContext *txn, bool is_catalog,
-                                oid_t tuples_per_tilegroup) {
+                                concurrency::TransactionContext *txn,
+                                bool is_catalog, oid_t tuples_per_tilegroup) {
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to create table " +
                            table_name);
@@ -395,13 +395,11 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
   return success;
 }
 
-ResultType Catalog::CreateIndex(oid_t database_oid, oid_t table_oid,
-                                const std::vector<oid_t> &key_attrs,
-                                const std::string &index_name,
-                                IndexType index_type,
-                                IndexConstraintType index_constraint,
-                                bool unique_keys, concurrency::TransactionContext *txn,
-                                bool is_catalog) {
+ResultType Catalog::CreateIndex(
+    oid_t database_oid, oid_t table_oid, const std::vector<oid_t> &key_attrs,
+    const std::string &index_name, IndexType index_type,
+    IndexConstraintType index_constraint, bool unique_keys,
+    concurrency::TransactionContext *txn, bool is_catalog) {
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to create index " +
                            index_name);
@@ -572,7 +570,8 @@ ResultType Catalog::DropTable(oid_t database_oid, oid_t table_oid,
  * @param   txn            TransactionContext
  * @return  TransactionContext ResultType(SUCCESS or FAILURE)
  */
-ResultType Catalog::DropIndex(oid_t index_oid, concurrency::TransactionContext *txn) {
+ResultType Catalog::DropIndex(oid_t index_oid,
+                              concurrency::TransactionContext *txn) {
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to drop index " +
                            std::to_string(index_oid));
@@ -616,7 +615,8 @@ ResultType Catalog::DropIndex(oid_t index_oid, concurrency::TransactionContext *
  * throw exception and abort txn if not exists/invisible
  * */
 storage::Database *Catalog::GetDatabaseWithName(
-    const std::string &database_name, concurrency::TransactionContext *txn) const {
+    const std::string &database_name,
+    concurrency::TransactionContext *txn) const {
   PL_ASSERT(txn != nullptr);
 
   // Check in pg_database using txn
@@ -635,9 +635,9 @@ storage::Database *Catalog::GetDatabaseWithName(
  * get it from storage layer using table_oid,
  * throw exception and abort txn if not exists/invisible
  * */
-storage::DataTable *Catalog::GetTableWithName(const std::string &database_name,
-                                              const std::string &table_name,
-                                              concurrency::TransactionContext *txn) {
+storage::DataTable *Catalog::GetTableWithName(
+    const std::string &database_name, const std::string &table_name,
+    concurrency::TransactionContext *txn) {
   PL_ASSERT(txn != nullptr);
 
   LOG_TRACE("Looking for table %s in database %s", table_name.c_str(),
@@ -894,87 +894,88 @@ void Catalog::InitializeFunctions() {
           "ascii", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
           internal_lang, "Ascii",
           function::BuiltInFuncType{OperatorId::Ascii,
-                                    function::StringFunctions::_Ascii},
+                                    function::OldEngineStringFunctions::Ascii},
           txn);
-      AddBuiltinFunction("chr", {type::TypeId::INTEGER}, type::TypeId::VARCHAR,
-                         internal_lang, "Chr",
-                         function::BuiltInFuncType{
-                             OperatorId::Chr, function::StringFunctions::Chr},
-                         txn);
+      AddBuiltinFunction(
+          "chr", {type::TypeId::INTEGER}, type::TypeId::VARCHAR, internal_lang,
+          "Chr",
+          function::BuiltInFuncType{OperatorId::Chr,
+                                    function::OldEngineStringFunctions::Chr},
+          txn);
       AddBuiltinFunction(
           "concat", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
           type::TypeId::VARCHAR, internal_lang, "Concat",
           function::BuiltInFuncType{OperatorId::Concat,
-                                    function::StringFunctions::Concat},
+                                    function::OldEngineStringFunctions::Concat},
           txn);
       AddBuiltinFunction(
           "substr",
           {type::TypeId::VARCHAR, type::TypeId::INTEGER, type::TypeId::INTEGER},
           type::TypeId::VARCHAR, internal_lang, "Substr",
           function::BuiltInFuncType{OperatorId::Substr,
-                                    function::StringFunctions::_Substr},
+                                    function::OldEngineStringFunctions::Substr},
           txn);
-      AddBuiltinFunction(
-          "char_length", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
-          internal_lang, "CharLength",
-          function::BuiltInFuncType{OperatorId::CharLength,
-                                    function::StringFunctions::CharLength},
-          txn);
-      AddBuiltinFunction(
-          "octet_length", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
-          internal_lang, "OctetLength",
-          function::BuiltInFuncType{OperatorId::OctetLength,
-                                    function::StringFunctions::OctetLength},
-          txn);
+      AddBuiltinFunction("char_length", {type::TypeId::VARCHAR},
+                         type::TypeId::INTEGER, internal_lang, "CharLength",
+                         function::BuiltInFuncType{
+                             OperatorId::CharLength,
+                             function::OldEngineStringFunctions::CharLength},
+                         txn);
+      AddBuiltinFunction("octet_length", {type::TypeId::VARCHAR},
+                         type::TypeId::INTEGER, internal_lang, "OctetLength",
+                         function::BuiltInFuncType{
+                             OperatorId::OctetLength,
+                             function::OldEngineStringFunctions::OctetLength},
+                         txn);
       AddBuiltinFunction(
           "length", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
           internal_lang, "Length",
           function::BuiltInFuncType{OperatorId::Length,
-                                    function::StringFunctions::_Length},
+                                    function::OldEngineStringFunctions::Length},
           txn);
       AddBuiltinFunction(
           "repeat", {type::TypeId::VARCHAR, type::TypeId::INTEGER},
           type::TypeId::VARCHAR, internal_lang, "Repeat",
           function::BuiltInFuncType{OperatorId::Repeat,
-                                    function::StringFunctions::Repeat},
+                                    function::OldEngineStringFunctions::Repeat},
           txn);
       AddBuiltinFunction(
           "replace",
           {type::TypeId::VARCHAR, type::TypeId::VARCHAR, type::TypeId::VARCHAR},
           type::TypeId::VARCHAR, internal_lang, "Replace",
-          function::BuiltInFuncType{OperatorId::Replace,
-                                    function::StringFunctions::Replace},
+          function::BuiltInFuncType{
+              OperatorId::Replace, function::OldEngineStringFunctions::Replace},
           txn);
       AddBuiltinFunction(
           "ltrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
           type::TypeId::VARCHAR, internal_lang, "LTrim",
           function::BuiltInFuncType{OperatorId::LTrim,
-                                    function::StringFunctions::_LTrim},
+                                    function::OldEngineStringFunctions::LTrim},
           txn);
       AddBuiltinFunction(
           "rtrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
           type::TypeId::VARCHAR, internal_lang, "RTrim",
           function::BuiltInFuncType{OperatorId::RTrim,
-                                    function::StringFunctions::_RTrim},
+                                    function::OldEngineStringFunctions::RTrim},
           txn);
       AddBuiltinFunction(
           "btrim", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
           type::TypeId::VARCHAR, internal_lang, "btrim",
           function::BuiltInFuncType{OperatorId::BTrim,
-                                    function::StringFunctions::_BTrim},
+                                    function::OldEngineStringFunctions::BTrim},
           txn);
       // Trim
       AddBuiltinFunction(
-          "btrim", {type::TypeId::VARCHAR},
-          type::TypeId::VARCHAR, internal_lang, "trim",
+          "btrim", {type::TypeId::VARCHAR}, type::TypeId::VARCHAR,
+          internal_lang, "trim",
           function::BuiltInFuncType{OperatorId::Trim,
-                                    function::StringFunctions::_Trim},
+                                    function::OldEngineStringFunctions::Trim},
           txn);
       AddBuiltinFunction(
           "like", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
           type::TypeId::VARCHAR, internal_lang, "like",
           function::BuiltInFuncType{OperatorId::Like,
-                                    function::StringFunctions::_Like},
+                                    function::OldEngineStringFunctions::Like},
           txn);
 
       /**
@@ -986,9 +987,10 @@ void Catalog::InitializeFunctions() {
                                             function::DecimalFunctions::Sqrt},
           txn);
       AddBuiltinFunction(
-          "sqrt", {type::TypeId::SMALLINT}, type::TypeId::DECIMAL, internal_lang,
-          "Sqrt", function::BuiltInFuncType{OperatorId::Sqrt,
-                                            function::DecimalFunctions::Sqrt},
+          "sqrt", {type::TypeId::SMALLINT}, type::TypeId::DECIMAL,
+          internal_lang, "Sqrt",
+          function::BuiltInFuncType{OperatorId::Sqrt,
+                                    function::DecimalFunctions::Sqrt},
           txn);
       AddBuiltinFunction(
           "sqrt", {type::TypeId::INTEGER}, type::TypeId::DECIMAL, internal_lang,
@@ -1048,37 +1050,33 @@ void Catalog::InitializeFunctions() {
 
       AddBuiltinFunction(
           "ceil", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL, internal_lang,
-          "Ceil",
-          function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
+          "Ceil", function::BuiltInFuncType{OperatorId::Ceil,
+                                            function::DecimalFunctions::_Ceil},
           txn);
 
       AddBuiltinFunction(
           "ceil", {type::TypeId::TINYINT}, type::TypeId::DECIMAL, internal_lang,
-          "Ceil",
-          function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
+          "Ceil", function::BuiltInFuncType{OperatorId::Ceil,
+                                            function::DecimalFunctions::_Ceil},
           txn);
 
       AddBuiltinFunction(
-          "ceil", {type::TypeId::SMALLINT}, type::TypeId::DECIMAL, internal_lang,
-          "Ceil",
+          "ceil", {type::TypeId::SMALLINT}, type::TypeId::DECIMAL,
+          internal_lang, "Ceil",
           function::BuiltInFuncType{OperatorId::Ceil,
                                     function::DecimalFunctions::_Ceil},
           txn);
 
       AddBuiltinFunction(
           "ceil", {type::TypeId::INTEGER}, type::TypeId::DECIMAL, internal_lang,
-          "Ceil",
-          function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
+          "Ceil", function::BuiltInFuncType{OperatorId::Ceil,
+                                            function::DecimalFunctions::_Ceil},
           txn);
 
       AddBuiltinFunction(
           "ceil", {type::TypeId::BIGINT}, type::TypeId::DECIMAL, internal_lang,
-          "Ceil",
-          function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
+          "Ceil", function::BuiltInFuncType{OperatorId::Ceil,
+                                            function::DecimalFunctions::_Ceil},
           txn);
 
       /**
@@ -1097,14 +1095,13 @@ void Catalog::InitializeFunctions() {
           function::BuiltInFuncType{OperatorId::DateTrunc,
                                     function::TimestampFunctions::_DateTrunc},
           txn);
-          
+
       // add now()
-      AddBuiltinFunction(
-          "now", {},
-          type::TypeId::TIMESTAMP, internal_lang, "Now",
-          function::BuiltInFuncType{OperatorId::Now,
-                                    function::DateFunctions::_Now},
-          txn);
+      AddBuiltinFunction("now", {}, type::TypeId::TIMESTAMP, internal_lang,
+                         "Now",
+                         function::BuiltInFuncType{
+                             OperatorId::Now, function::DateFunctions::_Now},
+                         txn);
 
     } catch (CatalogException &e) {
       txn_manager.AbortTransaction(txn);
