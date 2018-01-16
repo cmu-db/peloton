@@ -52,18 +52,18 @@ codegen::Value FunctionTranslator::DeriveValue(CodeGen &codegen,
       .on_error = OnError::Exception,
       .executor_context = context_.GetExecutorContextPtr()};
 
-  if(!func_expr.isUDF()) {
+  if (!func_expr.IsUDF()) {
     // The ID of the operator we're calling
     OperatorId operator_id = func_expr.GetFunc().op_id;
 
     if (args.size() == 1) {
-    // Lookup unary operation
-    auto *unary_op =
-        type::TypeSystem::GetUnaryOperator(operator_id, args[0].GetType());
-    PL_ASSERT(unary_op != nullptr);
+      // Lookup unary operation
+      auto *unary_op =
+          type::TypeSystem::GetUnaryOperator(operator_id, args[0].GetType());
+      PL_ASSERT(unary_op != nullptr);
 
-    // Invoke
-    return unary_op->Eval(codegen, args[0], ctx);
+      // Invoke
+      return unary_op->Eval(codegen, args[0], ctx);
     } else if (args.size() == 2) {
       // Lookup the function
       type::Type left_type = args[0].GetType(), right_type = args[1].GetType();
@@ -73,9 +73,9 @@ codegen::Value FunctionTranslator::DeriveValue(CodeGen &codegen,
 
       // Invoke
       return binary_op->Eval(codegen, args[0].CastTo(codegen, left_type),
-                           args[1].CastTo(codegen, right_type), ctx);
+                             args[1].CastTo(codegen, right_type), ctx);
     } else {
-    // It's an N-Ary function
+      // It's an N-Ary function
       // Collect argument types for lookup
       std::vector<type::Type> arg_types;
       for (const auto &arg_val : args) {

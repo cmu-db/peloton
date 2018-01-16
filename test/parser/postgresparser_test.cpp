@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "common/harness.h"
+#include "common/internal_types.h"
 #include "common/logger.h"
 #include "common/macros.h"
 #include "expression/function_expression.h"
@@ -21,7 +22,6 @@
 #include "expression/tuple_value_expression.h"
 #include "parser/pg_trigger.h"
 #include "parser/postgresparser.h"
-#include "common/internal_types.h"
 
 namespace peloton {
 namespace test {
@@ -588,7 +588,8 @@ TEST_F(PostgresParserTests, InsertTest) {
     CmpBool res = five.CompareEquals(
         ((expression::ConstantValueExpression *)insert_stmt->insert_values.at(1)
              .at(1)
-             .get())->GetValue());
+             .get())
+            ->GetValue());
     EXPECT_EQ(CmpBool::TRUE, res);
 
     // LOG_TRACE("%d : %s", ++ii, stmt_list->GetInfo().c_str());
@@ -1138,8 +1139,8 @@ TEST_F(PostgresParserTests, UDFFuncCallTest) {
   auto const_expr =
       (expression::ConstantValueExpression *)fun_expr->GetChild(0);
   EXPECT_TRUE(const_expr != nullptr);
-  EXPECT_EQ(type::CmpBool::TRUE, const_expr->GetValue().CompareEquals(
-                                     type::ValueFactory::GetIntegerValue(1)));
+  EXPECT_EQ(CmpBool::TRUE, const_expr->GetValue().CompareEquals(
+                               type::ValueFactory::GetIntegerValue(1)));
 
   auto tv_expr = (expression::TupleValueExpression *)fun_expr->GetChild(1);
   EXPECT_TRUE(tv_expr != nullptr);

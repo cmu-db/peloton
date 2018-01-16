@@ -42,8 +42,8 @@ class FunctionExpression : public AbstractExpression {
       const std::vector<type::TypeId> &arg_types);
 
   void SetUDFFunctionExpressionParameters(
-      peloton::codegen::CodeContext *func_context, type::TypeId val_type,
-      const std::vector<type::TypeId> &arg_types);
+      std::shared_ptr<peloton::codegen::CodeContext> func_context,
+      type::TypeId val_type, const std::vector<type::TypeId> &arg_types);
 
   AbstractExpression *Copy() const override {
     return new FunctionExpression(*this);
@@ -99,10 +99,10 @@ class FunctionExpression : public AbstractExpression {
   std::vector<type::TypeId> func_arg_types_;
 
   // The function context which encapculates the compiled function
-  codegen::CodeContext *func_context_;
+  std::shared_ptr<codegen::CodeContext> func_context_;
 
   // Indicates if function is a UDF
-  bool isUDF_;
+  bool is_udf_;
 };
 
 }  // namespace expression

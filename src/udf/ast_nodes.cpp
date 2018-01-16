@@ -3,7 +3,6 @@
 #include "catalog/catalog.h"
 #include "codegen/lang/if.h"
 #include "codegen/type/type.h"
-#include "type/types.h"
 
 namespace peloton {
 namespace udf {

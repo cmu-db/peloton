@@ -888,16 +888,15 @@ class ExpressionUtil {
       auto catalog = catalog::Catalog::GetInstance();
       const catalog::FunctionData &func_data =
           catalog->GetFunction(func_expr->GetFuncName(), argtypes);
-      if(!func_data.isUDF_) {
-        func_expr->SetBuiltinFunctionExpressionParameters(func_data.func_,
-                                          func_data.return_type_,
-                                          func_data.argument_types_);
+      if (!func_data.is_udf_) {
+        func_expr->SetBuiltinFunctionExpressionParameters(
+            func_data.func_, func_data.return_type_, func_data.argument_types_);
       } else {
-        func_expr->SetUDFFunctionExpressionParameters(func_data.func_context_,
-                                          func_data.return_type_,
-                                          func_data.argument_types_);
+        func_expr->SetUDFFunctionExpressionParameters(
+            func_data.func_context_, func_data.return_type_,
+            func_data.argument_types_);
       }
-   }
+    }
 
     // Handle case expressions
     if (expr->GetExpressionType() == ExpressionType::OPERATOR_CASE_EXPR) {
@@ -913,8 +912,6 @@ class ExpressionUtil {
     // this is useful in operator expressions
     expr->DeduceExpressionType();
   }
-
-
 };
 }  // namespace expression
 }  // namespace peloton

@@ -18,7 +18,6 @@
 #include "concurrency/transaction_context.h"
 #include "executor/executor_context.h"
 #include "planner/create_function_plan.h"
-#include "type/types.h"
 #include "udf/udf_handler.h"
 
 namespace peloton {

@@ -63,7 +63,7 @@ std::shared_ptr<codegen::CodeContext> UDFHandler::Compile(
   llvm::Type *llvm_ret_type = GetCodegenParamType(ret_type, cg);
 
   // vector of pair of <argument name, argument type>
-  std::vector<std::pair<std::string, llvm::Type *>> llvm_args;
+  std::vector<codegen::FunctionDeclaration::ArgumentInfo> llvm_args;
 
   auto iterator_arg_name = args_name.begin();
   auto iterator_arg_type = args_type.begin();
