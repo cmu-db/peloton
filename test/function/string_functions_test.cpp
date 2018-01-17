@@ -16,12 +16,9 @@
 
 #include "common/harness.h"
 
+#include "executor/executor_context.h"
 #include "function/string_functions.h"
 #include "function/old_engine_string_functions.h"
-#include "common/internal_types.h"
-#include "type/value.h"
-#include "type/value_factory.h"
-#include "util/string_util.h"
 
 using ::testing::NotNull;
 using ::testing::Return;
@@ -29,42 +26,50 @@ using ::testing::Return;
 namespace peloton {
 namespace test {
 
-class StringFunctionsTests : public PelotonTest {};
+class StringFunctionsTests : public PelotonTest {
+ public:
+  StringFunctionsTests() : test_ctx_(nullptr) {}
+
+  executor::ExecutorContext &GetExecutorContext() { return test_ctx_; }
+
+ private:
+  executor::ExecutorContext test_ctx_;
+};
 
 TEST_F(StringFunctionsTests, LikeTest) {
   //-------------- match ---------------- //
   std::string s1 = "forbes \\avenue";  // "forbes \avenue"
   std::string p1 = "%b_s \\\\avenue";  // "%b_s \\avenue"
-  EXPECT_TRUE(function::StringFunctions::Like(s1.c_str(), s1.size(), p1.c_str(),
-                                              p1.size()));
+  EXPECT_TRUE(function::StringFunctions::Like(
+      GetExecutorContext(), s1.c_str(), s1.size(), p1.c_str(), p1.size()));
 
   std::string s2 = "for%bes avenue%";    // "for%bes avenue%"
   std::string p2 = "for%bes a_enue\\%";  // "for%bes a_enue%"
-  EXPECT_TRUE(function::StringFunctions::Like(s2.c_str(), s2.size(), p2.c_str(),
-                                              p2.size()));
+  EXPECT_TRUE(function::StringFunctions::Like(
+      GetExecutorContext(), s2.c_str(), s2.size(), p2.c_str(), p2.size()));
 
   std::string s3 = "Allison";  // "Allison"
   std::string p3 = "%lison";   // "%lison"
-  EXPECT_TRUE(function::StringFunctions::Like(s3.c_str(), s3.size(), p3.c_str(),
-                                              p3.size()));
+  EXPECT_TRUE(function::StringFunctions::Like(
+      GetExecutorContext(), s3.c_str(), s3.size(), p3.c_str(), p3.size()));
 
   //----------Exact Match------------//
   std::string s5 = "Allison";  // "Allison"
   std::string p5 = "Allison";  // "Allison"
-  EXPECT_TRUE(function::StringFunctions::Like(s5.c_str(), s5.size(), p5.c_str(),
-                                              p5.size()));
+  EXPECT_TRUE(function::StringFunctions::Like(
+      GetExecutorContext(), s5.c_str(), s5.size(), p5.c_str(), p5.size()));
 
   //----------Exact Match------------//
   std::string s6 = "Allison";   // "Allison"
   std::string p6 = "A%llison";  // "A%llison"
-  EXPECT_TRUE(function::StringFunctions::Like(s6.c_str(), s6.size(), p6.c_str(),
-                                              p6.size()));
+  EXPECT_TRUE(function::StringFunctions::Like(
+      GetExecutorContext(), s6.c_str(), s6.size(), p6.c_str(), p6.size()));
 
   //-------------- not match ----------------//
   std::string s4 = "forbes avenue";  // "forbes avenue"
   std::string p4 = "f_bes avenue";   // "f_bes avenue"
-  EXPECT_FALSE(function::StringFunctions::Like(s4.c_str(), s4.size(),
-                                               p4.c_str(), p4.size()));
+  EXPECT_FALSE(function::StringFunctions::Like(
+      GetExecutorContext(), s4.c_str(), s4.size(), p4.c_str(), p4.size()));
 }
 
 TEST_F(StringFunctionsTests, AsciiTest) {
@@ -314,32 +319,32 @@ TEST_F(StringFunctionsTests, CodegenSubstrTest) {
   int from = 1;
   int len = 5;
   std::string expected = message.substr(from - 1, len);
-  auto res = function::StringFunctions::Substr(message.c_str(),
-                                               message.length(), from, len);
+  auto res = function::StringFunctions::Substr(
+      GetExecutorContext(), message.c_str(), message.length(), from, len);
   EXPECT_EQ(len + 1, res.length);
   EXPECT_EQ(expected, std::string(res.str, len));
 
   from = 7;
   len = 1;
   expected = message.substr(from - 1, len);
-  res = function::StringFunctions::Substr(message.c_str(), message.length(),
-                                          from, len);
+  res = function::StringFunctions::Substr(GetExecutorContext(), message.c_str(),
+                                          message.length(), from, len);
   EXPECT_EQ(len + 1, res.length);
   EXPECT_EQ(expected, std::string(res.str, len));
 
   from = -2;
   len = 4;
   expected = message.substr(0, 1);
-  res = function::StringFunctions::Substr(message.c_str(), message.length(),
-                                          from, len);
+  res = function::StringFunctions::Substr(GetExecutorContext(), message.c_str(),
+                                          message.length(), from, len);
   EXPECT_EQ(2, res.length);
   EXPECT_EQ(expected, std::string(res.str, 1));
 
   from = -2;
   len = 2;
   expected = "";
-  res = function::StringFunctions::Substr(message.c_str(), message.length(),
-                                          from, len);
+  res = function::StringFunctions::Substr(GetExecutorContext(), message.c_str(),
+                                          message.length(), from, len);
   EXPECT_EQ(0, res.length);
   EXPECT_EQ(nullptr, res.str);
 }

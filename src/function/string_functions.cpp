@@ -18,14 +18,16 @@
 namespace peloton {
 namespace function {
 
-uint32_t StringFunctions::Ascii(const char *str, uint32_t length) {
+uint32_t StringFunctions::Ascii(UNUSED_ATTRIBUTE executor::ExecutorContext &ctx,
+                                const char *str, uint32_t length) {
   PL_ASSERT(str != nullptr);
   return length <= 1 ? 0 : static_cast<uint32_t>(str[0]);
 }
 
 #define NextByte(p, plen) ((p)++, (plen)--)
 
-bool StringFunctions::Like(const char *t, uint32_t tlen, const char *p,
+bool StringFunctions::Like(UNUSED_ATTRIBUTE executor::ExecutorContext &ctx,
+                           const char *t, uint32_t tlen, const char *p,
                            uint32_t plen) {
   PL_ASSERT(t != nullptr);
   PL_ASSERT(p != nullptr);
@@ -61,7 +63,7 @@ bool StringFunctions::Like(const char *t, uint32_t tlen, const char *p,
 
       while (tlen > 0) {
         if (tolower(*t) == firstpat) {
-          int matched = Like(t, tlen, p, plen);
+          int matched = Like(ctx, t, tlen, p, plen);
 
           if (matched != false) return matched;
         }
@@ -90,9 +92,9 @@ bool StringFunctions::Like(const char *t, uint32_t tlen, const char *p,
 
 #undef NextByte
 
-StringFunctions::StrWithLen StringFunctions::Substr(const char *str,
-                                                    uint32_t str_length,
-                                                    int32_t from, int32_t len) {
+StringFunctions::StrWithLen StringFunctions::Substr(
+    UNUSED_ATTRIBUTE executor::ExecutorContext &ctx, const char *str,
+    uint32_t str_length, int32_t from, int32_t len) {
   int32_t signed_end = from + len - 1;
   if (signed_end < 0 || str_length == 0) {
     return StringFunctions::StrWithLen{nullptr, 0};
@@ -133,11 +135,9 @@ StringFunctions::StrWithLen StringFunctions::Repeat(
   return StringFunctions::StrWithLen{new_str, total_len};
 }
 
-StringFunctions::StrWithLen StringFunctions::LTrim(const char *str,
-                                                   uint32_t str_len,
-                                                   const char *from,
-                                                   UNUSED_ATTRIBUTE uint32_t
-                                                       from_len) {
+StringFunctions::StrWithLen StringFunctions::LTrim(
+    UNUSED_ATTRIBUTE executor::ExecutorContext &ctx, const char *str,
+    uint32_t str_len, const char *from, UNUSED_ATTRIBUTE uint32_t from_len) {
   PL_ASSERT(str != nullptr && from != nullptr);
 
   // llvm expects the len to include the terminating '\0'
@@ -157,11 +157,9 @@ StringFunctions::StrWithLen StringFunctions::LTrim(const char *str,
   return StringFunctions::StrWithLen{str + head, new_len};
 }
 
-StringFunctions::StrWithLen StringFunctions::RTrim(const char *str,
-                                                   uint32_t str_len,
-                                                   const char *from,
-                                                   UNUSED_ATTRIBUTE uint32_t
-                                                       from_len) {
+StringFunctions::StrWithLen StringFunctions::RTrim(
+    UNUSED_ATTRIBUTE executor::ExecutorContext &ctx, const char *str,
+    uint32_t str_len, const char *from, UNUSED_ATTRIBUTE uint32_t from_len) {
   PL_ASSERT(str != nullptr && from != nullptr);
 
   // llvm expects the len to include the terminating '\0'
@@ -179,16 +177,15 @@ StringFunctions::StrWithLen StringFunctions::RTrim(const char *str,
   return StringFunctions::StrWithLen{str + head, new_len};
 }
 
-StringFunctions::StrWithLen StringFunctions::Trim(const char *str,
-                                                  uint32_t str_len) {
-  return BTrim(str, str_len, " ", 2);
+StringFunctions::StrWithLen StringFunctions::Trim(
+    UNUSED_ATTRIBUTE executor::ExecutorContext &ctx, const char *str,
+    uint32_t str_len) {
+  return BTrim(ctx, str, str_len, " ", 2);
 }
 
-StringFunctions::StrWithLen StringFunctions::BTrim(const char *str,
-                                                   uint32_t str_len,
-                                                   const char *from,
-                                                   UNUSED_ATTRIBUTE uint32_t
-                                                       from_len) {
+StringFunctions::StrWithLen StringFunctions::BTrim(
+    UNUSED_ATTRIBUTE executor::ExecutorContext &ctx, const char *str,
+    uint32_t str_len, const char *from, UNUSED_ATTRIBUTE uint32_t from_len) {
   PL_ASSERT(str != nullptr && from != nullptr);
 
   // Skip the tailing 0
@@ -216,8 +213,9 @@ StringFunctions::StrWithLen StringFunctions::BTrim(const char *str,
   return StringFunctions::StrWithLen{str + head, new_len};
 }
 
-uint32_t StringFunctions::Length(UNUSED_ATTRIBUTE const char *str,
-                                 uint32_t length) {
+uint32_t StringFunctions::Length(
+    UNUSED_ATTRIBUTE executor::ExecutorContext &ctx,
+    UNUSED_ATTRIBUTE const char *str, uint32_t length) {
   PL_ASSERT(str != nullptr);
   return length;
 }
