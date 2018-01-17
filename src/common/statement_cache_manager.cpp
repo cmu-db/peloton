@@ -23,13 +23,13 @@ void StatementCacheManager::UnRegisterStatementCache(StatementCache *stmt_cache)
 }
 
 void StatementCacheManager::InvalidateTableOid(oid_t table_id) {
-
   if (statement_caches_.IsEmpty()) 
     return;
 
-  // Lock the table by grabing the iterator
+  // Lock the table by grabbing the iterator
   LOG_TRACE("Locking the table to get the iterator");
   auto iterator = statement_caches_.GetIterator();
+
   // Iterate each plan cache
   for (auto &iter : iterator) {
     iter.first->NotifyInvalidTable(table_id);
@@ -38,14 +38,14 @@ void StatementCacheManager::InvalidateTableOid(oid_t table_id) {
 }
 
 void StatementCacheManager::InvalidateTableOids(std::set<oid_t> &table_ids) {
-  if (table_ids.empty())
+  if (table_ids.empty() || statement_caches_.IsEmpty())
     return;
 
-  // Lock the table by grabing the iterator
+  // Lock the table by grabbing the iterator
   LOG_TRACE("Locking the table to get the iterator");
   auto iterator = statement_caches_.GetIterator();
 
-  // Iterate each plan cache
+  // Iterate each plan cache and notify every table id
   for (auto &iter : iterator) {
     for (auto &table_id : table_ids)
       iter.first->NotifyInvalidTable(table_id);
