@@ -56,7 +56,7 @@ void StatementCache::UpdateFromInvalidTableQueue() {
 
   if (invalid_set.size()) {
     for (oid_t id : invalid_set)
-      for (auto &statement : table_ref_[id]) statement->SetNeedsPlan(true);
+      for (auto &statement : table_ref_[id]) statement->SetNeedsReplan(true);
   }
 }
 

@@ -34,7 +34,7 @@ TEST_F(StatementCacheTests, InvalidateOneTest) {
   auto statement = std::make_shared<Statement>(string_name, query);
   statement->SetReferencedTables(ref_table);
 
-  EXPECT_TRUE(!statement->GetNeedsPlan());
+  EXPECT_TRUE(!statement->GetNeedsReplan());
   statement_cache.AddStatement(statement);
 
   // Invalidate table oid 0
@@ -42,15 +42,15 @@ TEST_F(StatementCacheTests, InvalidateOneTest) {
 
   // The plan need to replan now
   statement = statement_cache.GetStatement(string_name);
-  EXPECT_TRUE(statement->GetNeedsPlan());
+  EXPECT_TRUE(statement->GetNeedsReplan());
 
   // Unregister the statement cache and invalidate again
-  statement->SetNeedsPlan(false);
+  statement->SetNeedsReplan(false);
   statement_cache_manager->UnRegisterStatementCache(&statement_cache);
   statement_cache_manager->InvalidateTableOids(ref_table);
   statement = statement_cache.GetStatement(string_name);
   // This one should not be affected, since the cache is already un-registered
-  EXPECT_TRUE(!statement->GetNeedsPlan());
+  EXPECT_TRUE(!statement->GetNeedsReplan());
 }
 
 TEST_F(StatementCacheTests, InvalidateManyTest) {
@@ -69,7 +69,7 @@ TEST_F(StatementCacheTests, InvalidateManyTest) {
     cur_ref_table.insert(oid);
     statement->SetReferencedTables(cur_ref_table);
 
-    EXPECT_TRUE(!statement->GetNeedsPlan());
+    EXPECT_TRUE(!statement->GetNeedsReplan());
     statement_cache.AddStatement(statement);
   }
 
@@ -81,7 +81,7 @@ TEST_F(StatementCacheTests, InvalidateManyTest) {
     std::string string_name = "foo" + oid;
     auto statement = statement_cache.GetStatement(string_name);
 
-    EXPECT_TRUE(statement->GetNeedsPlan());
+    EXPECT_TRUE(statement->GetNeedsReplan());
   }
 }
 }  // namespace test

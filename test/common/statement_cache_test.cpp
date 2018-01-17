@@ -27,7 +27,7 @@ TEST_F(StatementCacheTests, AddGetTest) {
   auto statement = std::make_shared<Statement>(string_name, query);
   EXPECT_EQ(string_name, statement->GetStatementName());
   EXPECT_EQ(query, statement->GetQueryString());
-  EXPECT_TRUE(!statement->GetNeedsPlan());
+  EXPECT_TRUE(!statement->GetNeedsReplan());
 
   auto statement_cache = std::make_shared<StatementCache>();
   statement_cache->AddStatement(statement);
@@ -76,7 +76,7 @@ TEST_F(StatementCacheTests, DisableTableTest) {
       EXPECT_EQ(t_i != table, stmt->GetReferencedTables().count(t_i));
     }
     table++;
-    EXPECT_TRUE(!stmt->GetNeedsPlan());
+    EXPECT_TRUE(!stmt->GetNeedsReplan());
 
     cache->AddStatement(stmt);
   }
@@ -90,9 +90,9 @@ TEST_F(StatementCacheTests, DisableTableTest) {
     auto stmt = cache->GetStatement(name);
     EXPECT_NE(nullptr, stmt);
     if (i != 2) {
-      EXPECT_TRUE(stmt->GetNeedsPlan());
+      EXPECT_TRUE(stmt->GetNeedsReplan());
     } else {
-      EXPECT_FALSE(stmt->GetNeedsPlan());
+      EXPECT_FALSE(stmt->GetNeedsReplan());
     }
   }
 }
