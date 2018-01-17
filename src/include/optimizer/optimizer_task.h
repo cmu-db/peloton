@@ -15,6 +15,8 @@
 #include <memory>
 #include <vector>
 
+#include "common/internal_types.h"
+
 namespace peloton {
 namespace expression {
 class AbstractExpression;
@@ -220,7 +222,7 @@ class OptimizeInputs : public OptimizerTask {
 class DeriveStats : public OptimizerTask {
  public:
   DeriveStats(GroupExpression *gexpr,
-              std::vector<expression::AbstractExpression *> required_cols,
+              ExprSet required_cols,
               std::shared_ptr<OptimizeContext> context)
       : OptimizerTask(context, OptimizerTaskType::DERIVE_STATS),
         gexpr_(gexpr),
@@ -235,7 +237,7 @@ class DeriveStats : public OptimizerTask {
 
  private:
   GroupExpression *gexpr_;
-  std::vector<expression::AbstractExpression *> required_cols_;
+  ExprSet required_cols_;
 };
 
 /**

@@ -72,7 +72,7 @@ class Group {
 
   // Return the raw Stats pointer, caller should not own the Stats
   TableStats* GetStats() { return stats_.get(); }
-  void SetStats(std::unique_ptr<TableStats> stats) { stats_ = std::move(stats); }
+  void SetStats(std::shared_ptr<TableStats> stats) { stats_ = stats; }
   inline GroupID GetID() { return id_; }
 
   // This is called in rewrite phase to erase the only logical expression in the
@@ -107,8 +107,8 @@ class Group {
   std::vector<std::shared_ptr<GroupExpression>> physical_expressions_;
   std::vector<std::shared_ptr<GroupExpression>> enforced_exprs_;
 
-  // We'll add stats lazily on the fly
-  std::unique_ptr<TableStats> stats_;
+  // We'll add stats lazily
+  std::shared_ptr<TableStats> stats_;
   double cost_lower_bound_ = -1;
 };
 
