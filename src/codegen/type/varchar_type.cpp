@@ -21,6 +21,7 @@
 #include "codegen/type/integer_type.h"
 #include "codegen/type/timestamp_type.h"
 #include "codegen/value.h"
+#include "common/exception.h"
 
 namespace peloton {
 namespace codegen {
@@ -132,10 +133,11 @@ struct Ascii : public TypeSystem::UnaryOperatorHandleNull {
   }
 
   Value Impl(CodeGen &codegen, const Value &val,
-             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
-      const override {
-    llvm::Value *raw_ret = codegen.Call(StringFunctionsProxy::Ascii,
-                                        {val.GetValue(), val.GetLength()});
+             const TypeSystem::InvocationContext &ctx) const override {
+    llvm::Value *executor_ctx = ctx.executor_context;
+    llvm::Value *raw_ret =
+        codegen.Call(StringFunctionsProxy::Ascii,
+                     {executor_ctx, val.GetValue(), val.GetLength()});
     return Value{Integer::Instance(), raw_ret};
   }
 };
@@ -151,10 +153,11 @@ struct Length : public TypeSystem::UnaryOperatorHandleNull {
   }
 
   Value Impl(CodeGen &codegen, const Value &val,
-             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
-      const override {
-    llvm::Value *raw_ret = codegen.Call(StringFunctionsProxy::Length,
-                                        {val.GetValue(), val.GetLength()});
+             const TypeSystem::InvocationContext &ctx) const override {
+    llvm::Value *executor_ctx = ctx.executor_context;
+    llvm::Value *raw_ret =
+        codegen.Call(StringFunctionsProxy::Length,
+                     {executor_ctx, val.GetValue(), val.GetLength()});
     return Value{Integer::Instance(), raw_ret};
   }
 };
@@ -170,10 +173,11 @@ struct Trim : public TypeSystem::UnaryOperatorHandleNull {
   }
 
   Value Impl(CodeGen &codegen, const Value &val,
-             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
-      const override {
-    llvm::Value *ret = codegen.Call(StringFunctionsProxy::Trim,
-                                    {val.GetValue(), val.GetLength()});
+             const TypeSystem::InvocationContext &ctx) const override {
+    llvm::Value *executor_ctx = ctx.executor_context;
+    llvm::Value *ret =
+        codegen.Call(StringFunctionsProxy::Trim,
+                     {executor_ctx, val.GetValue(), val.GetLength()});
 
     llvm::Value *str_ptr = codegen->CreateExtractValue(ret, 0);
     llvm::Value *str_len = codegen->CreateExtractValue(ret, 1);
@@ -199,24 +203,31 @@ struct Like : public TypeSystem::BinaryOperator {
     return Boolean::Instance();
   }
 
-  Value Impl(CodeGen &codegen, const Value &left, const Value &right) const {
+  Value Impl(CodeGen &codegen, const Value &left, const Value &right,
+             const TypeSystem::InvocationContext &ctx) const {
     // Call StringFunctions::Like(...)
-    llvm::Value *raw_ret = codegen.Call(StringFunctionsProxy::Like,
-                                        {left.GetValue(), left.GetLength(),
-                                         right.GetValue(), right.GetLength()});
+
+    // Setup input arguments
+    llvm::Value *executor_ctx = ctx.executor_context;
+    std::vector<llvm::Value *> args = {executor_ctx, left.GetValue(),
+                                       left.GetLength(), right.GetValue(),
+                                       right.GetLength()};
+
+    // Make call
+    llvm::Value *raw_ret = codegen.Call(StringFunctionsProxy::Like, args);
+
     // Return the result
     return Value{Boolean::Instance(), raw_ret};
   }
 
   Value Eval(CodeGen &codegen, const Value &left, const Value &right,
-             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
-      const override {
+             const TypeSystem::InvocationContext &ctx) const override {
     PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
     // Pre-condition: Left value is the input string; right value is the pattern
 
     if (!left.IsNullable()) {
-      return Impl(codegen, left, right);
+      return Impl(codegen, left, right, ctx);
     }
 
     codegen::Value null_ret, not_null_ret;
@@ -228,7 +239,7 @@ struct Like : public TypeSystem::BinaryOperator {
     input_null.ElseBlock();
     {
       // Input is not null, invoke LIKE
-      not_null_ret = Impl(codegen, left, right);
+      not_null_ret = Impl(codegen, left, right, ctx);
     }
     return input_null.BuildPHI(null_ret, not_null_ret);
   }
@@ -273,11 +284,12 @@ struct BTrim : public TypeSystem::BinaryOperatorHandleNull {
   }
 
   Value Impl(CodeGen &codegen, const Value &left, const Value &right,
-             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
-      const override {
-    llvm::Value *ret = codegen.Call(StringFunctionsProxy::BTrim,
-                                    {left.GetValue(), left.GetLength(),
-                                     right.GetValue(), right.GetLength()});
+             const TypeSystem::InvocationContext &ctx) const override {
+    llvm::Value *executor_ctx = ctx.executor_context;
+    llvm::Value *ret =
+        codegen.Call(StringFunctionsProxy::BTrim,
+                     {executor_ctx, left.GetValue(), left.GetLength(),
+                      right.GetValue(), right.GetLength()});
 
     llvm::Value *str_ptr = codegen->CreateExtractValue(ret, 0);
     llvm::Value *str_len = codegen->CreateExtractValue(ret, 1);
@@ -298,11 +310,12 @@ struct LTrim : public TypeSystem::BinaryOperatorHandleNull {
   }
 
   Value Impl(CodeGen &codegen, const Value &left, const Value &right,
-             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
-      const override {
-    llvm::Value *ret = codegen.Call(StringFunctionsProxy::LTrim,
-                                    {left.GetValue(), left.GetLength(),
-                                     right.GetValue(), right.GetLength()});
+             const TypeSystem::InvocationContext &ctx) const override {
+    llvm::Value *executor_ctx = ctx.executor_context;
+    llvm::Value *ret =
+        codegen.Call(StringFunctionsProxy::LTrim,
+                     {executor_ctx, left.GetValue(), left.GetLength(),
+                      right.GetValue(), right.GetLength()});
 
     llvm::Value *str_ptr = codegen->CreateExtractValue(ret, 0);
     llvm::Value *str_len = codegen->CreateExtractValue(ret, 1);
@@ -323,11 +336,36 @@ struct RTrim : public TypeSystem::BinaryOperatorHandleNull {
   }
 
   Value Impl(CodeGen &codegen, const Value &left, const Value &right,
-             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
-      const override {
-    llvm::Value *ret = codegen.Call(StringFunctionsProxy::RTrim,
-                                    {left.GetValue(), left.GetLength(),
-                                     right.GetValue(), right.GetLength()});
+             const TypeSystem::InvocationContext &ctx) const override {
+    llvm::Value *executor_ctx = ctx.executor_context;
+    llvm::Value *ret =
+        codegen.Call(StringFunctionsProxy::RTrim,
+                     {executor_ctx, left.GetValue(), left.GetLength(),
+                      right.GetValue(), right.GetLength()});
+
+    llvm::Value *str_ptr = codegen->CreateExtractValue(ret, 0);
+    llvm::Value *str_len = codegen->CreateExtractValue(ret, 1);
+    return Value{Varchar::Instance(), str_ptr, str_len};
+  }
+};
+
+struct Repeat : public TypeSystem::BinaryOperatorHandleNull {
+  bool SupportsTypes(const Type &left_type,
+                     const Type &right_type) const override {
+    return left_type.GetSqlType() == Varchar::Instance() &&
+           right_type.GetSqlType() == Integer::Instance();
+  }
+
+  Type ResultType(UNUSED_ATTRIBUTE const Type &left_type,
+                  UNUSED_ATTRIBUTE const Type &right_type) const override {
+    return Varchar::Instance();
+  }
+
+  Value Impl(CodeGen &codegen, const Value &left, const Value &right,
+             const TypeSystem::InvocationContext &ctx) const override {
+    llvm::Value *ret = codegen.Call(StringFunctionsProxy::Repeat,
+                                    {ctx.executor_context, left.GetValue(),
+                                     left.GetLength(), right.GetValue()});
 
     llvm::Value *str_ptr = codegen->CreateExtractValue(ret, 0);
     llvm::Value *str_len = codegen->CreateExtractValue(ret, 1);
@@ -357,14 +395,18 @@ struct Substr : public TypeSystem::NaryOperator {
   }
 
   Value Eval(CodeGen &codegen, const std::vector<Value> &input_args,
-             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
-      const override {
-    llvm::Value *ret =
-        codegen.Call(StringFunctionsProxy::Substr,
-                     {
-                      input_args[0].GetValue(), input_args[0].GetLength(),
-                      input_args[1].GetValue(), input_args[2].GetValue(),
-                     });
+             const TypeSystem::InvocationContext &ctx) const override {
+    // Setup function arguments
+    llvm::Value *executor_ctx = ctx.executor_context;
+    std::vector<llvm::Value *> args = {
+        executor_ctx, input_args[0].GetValue(), input_args[0].GetLength(),
+        input_args[1].GetValue(), input_args[2].GetValue(),
+    };
+
+    // Call
+    llvm::Value *ret = codegen.Call(StringFunctionsProxy::Substr, args);
+
+    // Pull out what we need and return
     llvm::Value *str_ptr = codegen->CreateExtractValue(ret, 0);
     llvm::Value *str_len = codegen->CreateExtractValue(ret, 1);
     return Value{Varchar::Instance(), str_ptr, str_len};
@@ -403,12 +445,14 @@ DateTrunc kDateTrunc;
 BTrim kBTrim;
 LTrim kLTrim;
 RTrim kRTrim;
+Repeat kRepeat;
 std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
     {OperatorId::Like, kLike},
     {OperatorId::DateTrunc, kDateTrunc},
     {OperatorId::BTrim, kBTrim},
     {OperatorId::LTrim, kLTrim},
-    {OperatorId::RTrim, kRTrim}};
+    {OperatorId::RTrim, kRTrim},
+    {OperatorId::Repeat, kRepeat}};
 
 // Nary operations
 Substr kSubstr;
