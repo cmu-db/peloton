@@ -18,7 +18,7 @@ namespace peloton {
 namespace threadpool {
 
 constexpr static size_t kDefaultBrainTaskQueueSize = 32;
-constexpr static size_t kDefaultBrainWorkerPoolSize = 2;
+constexpr static size_t kDefaultBrainWorkerPoolSize = 1;
 
 
 /**

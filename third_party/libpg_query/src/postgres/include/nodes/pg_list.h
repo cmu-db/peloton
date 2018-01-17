@@ -78,7 +78,15 @@ struct ListCell
  * if supported by the compiler, or as regular functions otherwise.
  * See STATIC_IF_INLINE in c.h.
  */
+
+#warning third_party/../nodes/ IS USED HERE
+
+#define PG_USE_INLINE
+#define STATIC_IF_INLINE static inline
+#define NULL (0)
+
 #ifndef PG_USE_INLINE
+#error TRYING TO USE EXTERNAL
 extern ListCell *list_head(const List *l);
 extern ListCell *list_tail(List *l);
 extern int	list_length(const List *l);

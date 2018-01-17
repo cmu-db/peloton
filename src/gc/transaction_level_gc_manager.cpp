@@ -137,13 +137,10 @@ int TransactionLevelGCManager::Unlink(const int &thread_id,
     if(query_string != "") {
       uint64_t timestamp = 123;
 
-      auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-      auto txn = txn_manager.BeginTransaction();
-
       auto &pool = threadpool::BrainThreadPool::GetInstance();
-      pool.SubmitTask([query_string, timestamp, txn] {
+      pool.SubmitTask([query_string, timestamp] {
     	  catalog::QueryHistoryCatalog::GetInstance()->InsertQueryHistory(
-    	           query_string, timestamp, nullptr, txn);
+               query_string, timestamp, nullptr);
       });
 
     }
