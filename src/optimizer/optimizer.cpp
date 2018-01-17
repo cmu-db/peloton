@@ -86,7 +86,7 @@ void Optimizer::OptimizeLoop(int root_group_id,
   // Derive stats for the only one logical expression before optimizing
   task_stack->Push(new DeriveStats(
       metadata_.memo.GetGroupByID(root_group_id)->GetLogicalExpression(),
-      std::vector<expression::AbstractExpression *>{}, root_context));
+      ExprSet{}, root_context));
 
   // TODO: Add timer for early stop
   while (!task_stack->Empty()) {

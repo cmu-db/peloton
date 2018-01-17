@@ -191,9 +191,7 @@ void ApplyRule::execute() {
         // A new group expression is generated
         if (new_gexpr->Op().IsLogical()) {
           // Derive stats for the *logical expression*
-          PushTask(new DeriveStats(
-              new_gexpr.get(), std::vector<expression::AbstractExpression *>{},
-              context_));
+          PushTask(new DeriveStats(new_gexpr.get(), ExprSet{}, context_));
           if (explore_only) {
             // Explore this logical expression
             PushTask(new ExploreExpression(new_gexpr.get(), context_));
@@ -219,8 +217,8 @@ void DeriveStats::execute() {
   // First do a top-down pass to get stats for required columns, then do a
   // bottom-up pass to calculate the stats
   ChildStatsDeriver deriver;
-  auto children_required_stats =
-      deriver.DeriveStats(gexpr_, required_cols_, &context_->metadata->memo);
+  auto children_required_stats = deriver.DeriveInputStats(
+      gexpr_, required_cols_, &context_->metadata->memo);
   bool derive_children = false;
   // If we haven't got enough stats to compute the current stats, derive them
   // from the child first
@@ -231,7 +229,7 @@ void DeriveStats::execute() {
     if (!child_required_stats.empty()) {
       if (!derive_children) {
         derive_children = true;
-        // Derive for root later
+        // Derive root later
         PushTask(new DeriveStats(this));
       }
       // TODO(boweic): currently we pick the first child expression in the child

@@ -18,7 +18,7 @@ namespace optimizer {
 
 void StatsCalculator::CalculateStats(
     GroupExpression* gexpr,
-    std::vector<expression::AbstractExpression *> required_cols, Memo *memo) {
+    ExprSet required_cols, Memo *memo) {
   gexpr_ = gexpr;
   memo_ = memo;
   required_cols_ = required_cols;
