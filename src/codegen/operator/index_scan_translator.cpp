@@ -78,7 +78,7 @@ void IndexScanTranslator::Produce() const {
 
   // The selection vector for the scan
   auto *raw_vec = codegen.AllocateBuffer(
-    codegen.Int32Type(), Vector::kDefaultVectorSize, "scanSelVector");
+      codegen.Int32Type(), Vector::kDefaultVectorSize, "scanSelVector");
   Vector sel_vec{raw_vec, Vector::kDefaultVectorSize, codegen.Int32Type()};
 
   // get query keys in the ConjunctionScanPredicate in index scan plan node
@@ -260,15 +260,18 @@ void IndexScanTranslator::FilterTuplesByPredicate(
 void IndexScanTranslator::SetIndexPredicate(CodeGen &codegen,
                                             llvm::Value *iterator_ptr) const {
   std::vector<const planner::AttributeInfo *> where_clause_attributes;
-  std::vector<const expression::AbstractExpression *> constant_value_expressions;
+  std::vector<const expression::AbstractExpression *>
+      constant_value_expressions;
   std::vector<ExpressionType> comparison_type;
   const auto *predicate = index_scan_.GetPredicate();
   if (predicate != nullptr) {
     auto &context = GetCompilationContext();
     const auto &parameter_cache = context.GetParameterCache();
-    const QueryParametersMap &parameters_map = parameter_cache.GetQueryParametersMap();
+    const QueryParametersMap &parameters_map =
+        parameter_cache.GetQueryParametersMap();
 
-    predicate->GetUsedAttributesInPredicateOrder(where_clause_attributes, constant_value_expressions);
+    predicate->GetUsedAttributesInPredicateOrder(where_clause_attributes,
+                                                 constant_value_expressions);
     predicate->GetComparisonTypeInPredicateOrder(comparison_type);
     for (unsigned int i = 0; i < where_clause_attributes.size(); i++) {
       const auto *ai = where_clause_attributes[i];
@@ -283,8 +286,10 @@ void IndexScanTranslator::SetIndexPredicate(CodeGen &codegen,
       llvm::Value *is_lower = codegen.ConstBool(is_lower_key);
 
       // figure out codegen parameter index for this attribute
-      auto parameters_index = parameters_map.GetIndex(constant_value_expressions[i]);
-      llvm::Value *parameter_value = parameter_cache.GetValue(parameters_index).GetValue();
+      auto parameters_index =
+          parameters_map.GetIndex(constant_value_expressions[i]);
+      llvm::Value *parameter_value =
+          parameter_cache.GetValue(parameters_index).GetValue();
       switch (ai->type.type_id) {
         case peloton::type::TypeId::TINYINT:
         case peloton::type::TypeId::SMALLINT:

@@ -65,7 +65,6 @@ namespace expression {
 
 class AbstractExpression : public Printable {
  public:
-
   /**
    * @brief Apply the operator to the inputs and produce ouput
    *
@@ -158,11 +157,12 @@ class AbstractExpression : public Printable {
       std::unordered_set<const planner::AttributeInfo *> &attributes) const;
 
   virtual void GetUsedAttributesInPredicateOrder(
-    std::vector<const planner::AttributeInfo *> &attributes,
-    std::vector<const AbstractExpression *> &constant_value_expressions) const;
+      std::vector<const planner::AttributeInfo *> &attributes,
+      std::vector<const AbstractExpression *> &constant_value_expressions)
+      const;
 
   virtual void GetComparisonTypeInPredicateOrder(
-    std::vector<ExpressionType> &comparison_type) const;
+      std::vector<ExpressionType> &comparison_type) const;
 
   virtual void DeduceExpressionType() {}
 
