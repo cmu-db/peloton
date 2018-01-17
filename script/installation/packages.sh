@@ -189,6 +189,7 @@ elif [ "$DISTRO" = "DARWIN" ]; then
     brew install libedit
     brew install llvm@3.7
     brew install postgresql
+    brew install xz
     brew install libunwind-headers
 
 ## ------------------------------------------------
