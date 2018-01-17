@@ -565,12 +565,13 @@ ResultType TrafficCop::ExecuteStatement(
       default:
         // The statement may be out of date
         // It needs to be replan
-        if (statement->GetNeedsPlan()) {
+        if (statement->GetNeedsReplan()) {
           // TODO(Tianyi) Move Statement Replan into Statement's method
           // to increase coherence
           auto plan =
               optimizer_->BuildPelotonPlanTree(statement->GetStmtParseTreeList(), default_database_name_, tcop_txn_state_.top().first);
           statement->SetPlanTree(plan);
+          statement->SetNeedsReplan(true);
         }
         
         ExecuteHelper(statement->GetPlanTree(), params, result,
