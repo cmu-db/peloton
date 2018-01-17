@@ -508,14 +508,10 @@ std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {{kCompareVarchar}};
 Ascii kAscii;
 Length kLength;
 Trim kTrim;
-Upper kUpper;
-Lower kLower;
 std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {
     {OperatorId::Ascii, kAscii},
     {OperatorId::Length, kLength},
-    {OperatorId::Trim, kTrim},
-    {OperatorId::Upper, kUpper},
-    {OperatorId::Lower, kLower}};
+    {OperatorId::Trim, kTrim}};
 
 // Binary operations
 Like kLike;
@@ -524,15 +520,13 @@ BTrim kBTrim;
 LTrim kLTrim;
 RTrim kRTrim;
 Repeat kRepeat;
-Concat kConcat;
 std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
     {OperatorId::Like, kLike},
     {OperatorId::DateTrunc, kDateTrunc},
     {OperatorId::BTrim, kBTrim},
     {OperatorId::LTrim, kLTrim},
     {OperatorId::RTrim, kRTrim},
-    {OperatorId::Repeat, kRepeat},
-    {OperatorId::Concat, kConcat}};
+    {OperatorId::Repeat, kRepeat}};
 
 // Nary operations
 Substr kSubstr;
