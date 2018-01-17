@@ -16,10 +16,9 @@
 #include <cctype>
 #include <string>
 
+#include "executor/executor_context.h"
 #include "function/string_functions.h"
 #include "type/value_factory.h"
-
-#define NextByte(p, plen) ((p)++, (plen)--)
 
 namespace peloton {
 namespace function {
@@ -32,7 +31,8 @@ type::Value OldEngineStringFunctions::Ascii(
     return type::ValueFactory::GetNullValueByType(type::TypeId::INTEGER);
   }
 
-  uint32_t ret = StringFunctions::Ascii(args[0].GetAs<const char *>(),
+  executor::ExecutorContext ctx{nullptr};
+  uint32_t ret = StringFunctions::Ascii(ctx, args[0].GetAs<const char *>(),
                                         args[0].GetLength());
   return type::ValueFactory::GetIntegerValue(ret);
 }
@@ -44,9 +44,10 @@ type::Value OldEngineStringFunctions::Like(
     return type::ValueFactory::GetNullValueByType(type::TypeId::INTEGER);
   }
 
-  bool ret =
-      StringFunctions::Like(args[0].GetAs<const char *>(), args[0].GetLength(),
-                            args[1].GetAs<const char *>(), args[1].GetLength());
+  executor::ExecutorContext ctx{nullptr};
+  bool ret = StringFunctions::Like(
+      ctx, args[0].GetAs<const char *>(), args[0].GetLength(),
+      args[1].GetAs<const char *>(), args[1].GetLength());
   return type::ValueFactory::GetBooleanValue(ret);
 }
 
@@ -159,8 +160,9 @@ type::Value OldEngineStringFunctions::LTrim(
     return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
   }
 
+  executor::ExecutorContext ctx{nullptr};
   auto ret = StringFunctions::LTrim(
-      args.at(0).GetData(), strlen(args.at(0).GetData()) + 1,
+      ctx, args.at(0).GetData(), strlen(args.at(0).GetData()) + 1,
       args.at(1).GetData(), strlen(args.at(1).GetData()) + 1);
 
   std::string str(ret.str, ret.length - 1);
@@ -176,8 +178,9 @@ type::Value OldEngineStringFunctions::RTrim(
     return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
   }
 
+  executor::ExecutorContext ctx{nullptr};
   auto ret = StringFunctions::RTrim(
-      args.at(0).GetData(), strlen(args.at(0).GetData()) + 1,
+      ctx, args.at(0).GetData(), strlen(args.at(0).GetData()) + 1,
       args.at(1).GetData(), strlen(args.at(1).GetData()) + 1);
 
   std::string str(ret.str, ret.length - 1);
@@ -199,8 +202,9 @@ type::Value OldEngineStringFunctions::BTrim(
     return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
   }
 
+  executor::ExecutorContext ctx{nullptr};
   auto ret = StringFunctions::BTrim(
-      args.at(0).GetData(), strlen(args.at(0).GetData()) + 1,
+      ctx, args.at(0).GetData(), strlen(args.at(0).GetData()) + 1,
       args.at(1).GetData(), strlen(args.at(1).GetData()) + 1);
 
   std::string str(ret.str, ret.length - 1);
@@ -215,7 +219,8 @@ type::Value OldEngineStringFunctions::Length(
     return type::ValueFactory::GetNullValueByType(type::TypeId::INTEGER);
   }
 
-  uint32_t ret = StringFunctions::Length(args[0].GetAs<const char *>(),
+  executor::ExecutorContext ctx{nullptr};
+  uint32_t ret = StringFunctions::Length(ctx, args[0].GetAs<const char *>(),
                                          args[0].GetLength());
   return type::ValueFactory::GetIntegerValue(ret);
 }
