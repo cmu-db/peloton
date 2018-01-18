@@ -35,6 +35,10 @@ namespace executor {
  * If it is instantiated using PlanNodeType::HASHAGGREGATE,
  * then the input does not need to be sorted and it will hash the group by key
  * to aggregate the tuples.
+ *
+ * 2018-01-07: This is <b>deprecated</b>. Do not modify these classes.
+ * The old interpreted engine will be removed.
+ * @deprecated
  */
 class AggregateExecutor : public AbstractExecutor {
  public:

@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 
-#include "container/lock_free_array.h"
+#include "common/container/lock_free_array.h"
 
 #include "common/harness.h"
 

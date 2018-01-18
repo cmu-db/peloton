@@ -116,6 +116,20 @@ SETTING_bool(codegen,
             true,
             true, true)
 
+
+//===----------------------------------------------------------------------===//
+// Optimizer
+//===----------------------------------------------------------------------===//
+SETTING_bool(predicate_push_down,
+             "Enable predicate push-down optimization (default: true)",
+             true,
+             true, true)
+
+SETTING_bool(hash_join_bloom_filter,
+             "Enable bloom filter for hash join in codegen (default: true)",
+             true,
+             true, true)
+
 //===----------------------------------------------------------------------===//
 // GENERAL
 //===----------------------------------------------------------------------===//

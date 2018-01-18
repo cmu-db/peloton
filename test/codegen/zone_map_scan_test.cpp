@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <include/storage/storage_manager.h>
+#include "storage/storage_manager.h"
 #include "catalog/catalog.h"
 #include "codegen/query_compiler.h"
 #include "common/harness.h"

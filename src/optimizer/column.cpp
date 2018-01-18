@@ -62,5 +62,5 @@ catalog::Column GetSchemaColumnFromOptimizerColumn(Column *column) {
                          column->Inlined());
 }
 
-} // namespace optimizer
-} // namespace peloton
+}  // namespace optimizer
+}  // namespace peloton

@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <cstdio>
-#include <sql/testing_sql_util.h>
+#include "sql/testing_sql_util.h"
 
 #include "catalog/catalog.h"
 #include "catalog/database_catalog.h"
@@ -30,7 +30,7 @@
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"
 #include "planner/plan_util.h"
-#include "include/traffic_cop/traffic_cop.h"
+#include "traffic_cop/traffic_cop.h"
 
 #include "gtest/gtest.h"
 

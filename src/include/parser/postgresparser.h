@@ -271,6 +271,9 @@ class PostgresParser {
   static parser::AnalyzeStatement *VacuumTransform(VacuumStmt* root);
 
   static parser::VariableSetStatement *VariableSetTransform(VariableSetStmt* root);
+
+  // transform helper for subquery expressions
+  static expression::AbstractExpression *SubqueryExprTransform(SubLink *node);
 };
 
 }  // namespace parser

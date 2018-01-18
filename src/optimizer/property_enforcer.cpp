@@ -20,19 +20,14 @@ namespace peloton {
 namespace optimizer {
 
 std::shared_ptr<GroupExpression> PropertyEnforcer::EnforceProperty(
-    std::shared_ptr<GroupExpression> gexpr, PropertySet *properties,
-    std::shared_ptr<Property> property) {
+    GroupExpression* gexpr, Property* property) {
   input_gexpr_ = gexpr;
-  input_properties_ = properties;
   property->Accept(this);
   return output_gexpr_;
 }
 
 void PropertyEnforcer::Visit(const PropertyColumns *) {
-  std::vector<GroupID> child_groups(1, input_gexpr_->GetGroupID());
 
-  output_gexpr_ =
-      std::make_shared<GroupExpression>(PhysicalProject::make(), child_groups);
 }
 
 void PropertyEnforcer::Visit(const PropertySort *) {
@@ -46,16 +41,8 @@ void PropertyEnforcer::Visit(const PropertyDistinct *) {
   output_gexpr_ =
       std::make_shared<GroupExpression>(PhysicalDistinct::make(), child_groups);
 }
-  
-void PropertyEnforcer::Visit(const PropertyLimit *) {
-  std::vector<GroupID> child_groups(1, input_gexpr_->GetGroupID());
-  output_gexpr_ =
-    std::make_shared<GroupExpression>(PhysicalLimit::make(), child_groups);
-}
-  
-void PropertyEnforcer::Visit(const PropertyPredicate *) {}
-  
 
+void PropertyEnforcer::Visit(const PropertyLimit *) {}
 
 }  // namespace optimizer
 }  // namespace peloton

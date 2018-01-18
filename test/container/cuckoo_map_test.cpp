@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 
-#include "container/cuckoo_map.h"
+#include "common/container/cuckoo_map.h"
 
 #include "common/harness.h"
 

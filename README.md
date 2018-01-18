@@ -56,5 +56,5 @@ See the [people page](https://github.com/cmu-db/peloton/graphs/contributors) for
 
 ## License
 
-Copyright (c) 2014-17 [CMU Database Group](http://db.cs.cmu.edu/)  
+Copyright (c) 2014-2018 [CMU Database Group](http://db.cs.cmu.edu/)  
 Licensed under the [Apache License](LICENSE).

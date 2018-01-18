@@ -12,7 +12,6 @@
 
 #pragma once
 
-#include "optimizer/group.h"
 #include "optimizer/operator_node.h"
 
 #include <memory>
@@ -41,5 +40,5 @@ class OperatorExpression {
   std::vector<std::shared_ptr<OperatorExpression>> children;
 };
 
-} // namespace optimizer
-} // namespace peloton
+}  // namespace optimizer
+}  // namespace peloton

@@ -192,6 +192,7 @@ TEST_F(GarbageCollectionTests, UpdateTest) {
   EXPECT_EQ(1, recycle_num);
 
   gc_manager.StopGC();
+  gc::GCManagerFactory::Configure(0);
 
   table.release();
 
@@ -289,6 +290,7 @@ TEST_F(GarbageCollectionTests, DeleteTest) {
   EXPECT_EQ(1, recycle_num);
 
   gc_manager.StopGC();
+  gc::GCManagerFactory::Configure(0);
 
   table.release();
 

@@ -194,6 +194,9 @@ TEST_F(TransactionLevelGCManagerTests, UpdateDeleteTest) {
 
   EXPECT_EQ(0, unlinked_count);
 
+  gc_manager.StopGC();
+  gc::GCManagerFactory::Configure(0);
+
   table.release();
 
   // DROP!
@@ -354,6 +357,9 @@ TEST_F(TransactionLevelGCManagerTests, ReInsertTest) {
   EXPECT_TRUE(ret == ResultType::SUCCESS);
   EXPECT_TRUE(results[0] != -1);
 
+  gc_manager.StopGC();
+  gc::GCManagerFactory::Configure(0);
+
   table.release();
 
   // DROP!
@@ -464,6 +470,9 @@ TEST_F(TransactionLevelGCManagerTests, ImmutabilityTest) {
   // mutable tilegroup.
   location = gc_manager.ReturnFreeSlot((table.get())->GetOid());
   EXPECT_EQ(location.IsNull(), false);
+
+  gc_manager.StopGC();
+  gc::GCManagerFactory::Configure(0);
 
   table.release();
   // DROP!

@@ -33,7 +33,7 @@
 #include "planner/index_scan_plan.h"
 #include "planner/insert_plan.h"
 #include "storage/data_table.h"
-#include "include/traffic_cop/traffic_cop.h"
+#include "traffic_cop/traffic_cop.h"
 
 
 using ::testing::NotNull;

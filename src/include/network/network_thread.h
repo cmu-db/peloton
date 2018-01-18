@@ -28,7 +28,7 @@
 
 #include "common/exception.h"
 #include "common/logger.h"
-#include "container/lock_free_queue.h"
+#include "common/container/lock_free_queue.h"
 #include "network_state.h"
 
 namespace peloton {

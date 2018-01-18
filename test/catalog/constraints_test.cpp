@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <sql/testing_sql_util.h>
+#include "sql/testing_sql_util.h"
 #include "gtest/gtest.h"
 
 #include "catalog/testing_constraints_util.h"

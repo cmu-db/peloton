@@ -22,6 +22,12 @@
 namespace peloton {
 namespace executor {
 
+/**
+ * Base class for all join algorithm implementations.
+ * This is <b>deprecated</b>. Do not modify these classes.
+ * The old interpreted engine will be removed.
+ * @deprecated
+ */
 class AbstractJoinExecutor : public AbstractExecutor {
   AbstractJoinExecutor(const AbstractJoinExecutor &) = delete;
   AbstractJoinExecutor &operator=(const AbstractJoinExecutor &) = delete;

@@ -20,7 +20,7 @@
 
 #include "common/item_pointer.h"
 #include "common/platform.h"
-#include "container/lock_free_array.h"
+#include "common/container/lock_free_array.h"
 #include "index/index.h"
 #include "storage/abstract_table.h"
 #include "storage/indirection_array.h"

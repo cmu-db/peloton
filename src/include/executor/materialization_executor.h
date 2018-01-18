@@ -31,6 +31,11 @@ class Tile;
 namespace executor {
 class LogicalTile;
 
+/**
+ * 2018-01-07: This is <b>deprecated</b>. Do not modify these classes.
+ * The old interpreted engine will be removed.
+ * @deprecated
+ */
 class MaterializationExecutor : public AbstractExecutor {
  public:
   MaterializationExecutor(const MaterializationExecutor &) = delete;

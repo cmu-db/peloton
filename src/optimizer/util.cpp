@@ -23,17 +23,21 @@ namespace peloton {
 namespace optimizer {
 namespace util {
 
+// TODO(boweic): This legacy function seems to be a little bit hacky and may not
+// work, we may want to further investigate it
 /**
- * This function checks whether the current expression can enable index
- * scan for the statement. If it is index searchable, returns true and
- * set the corresponding data structures that will be used in creating
- * index scan node. Otherwise, returns false.
+ * @breif This function checks whether the current expression can enable index
+ *  scan for the statement. If it is index searchable, returns true and
+ *  set the corresponding data structures that will be used in creating
+ *  index scan node. Otherwise, returns false.
+ *
+ * @return Return if the current table is index-searchable
  */
-bool CheckIndexSearchable(storage::DataTable* target_table,
-                          expression::AbstractExpression* expression,
-                          std::vector<oid_t>& key_column_ids,
-                          std::vector<ExpressionType>& expr_types,
-                          std::vector<type::Value>& values, oid_t& index_id) {
+bool CheckIndexSearchable(storage::DataTable *target_table,
+                          expression::AbstractExpression *expression,
+                          std::vector<oid_t> &key_column_ids,
+                          std::vector<ExpressionType> &expr_types,
+                          std::vector<type::Value> &values, oid_t &index_id) {
   bool index_searchable = false;
   index_id = 0;
 
@@ -58,7 +62,7 @@ bool CheckIndexSearchable(storage::DataTable* target_table,
       // Loop through the indexes to find to most proper one (if any)
       int max_columns = 0;
       int index_index = 0;
-      for (auto& column_set : target_table->GetIndexColumns()) {
+      for (auto &column_set : target_table->GetIndexColumns()) {
         int matched_columns = 0;
         for (auto column_id : predicate_column_ids)
           if (column_set.find(column_id) != column_set.end()) matched_columns++;
@@ -107,15 +111,15 @@ bool CheckIndexSearchable(storage::DataTable* target_table,
 }
 
 /**
- * This function replaces all COLUMN_REF expressions with TupleValue
- * expressions
+ * @breif This function replaces all COLUMN_REF expressions with TupleValue
+ *  expressions
  */
-void GetPredicateColumns(const catalog::Schema* schema,
-                         expression::AbstractExpression* expression,
-                         std::vector<oid_t>& column_ids,
-                         std::vector<ExpressionType>& expr_types,
-                         std::vector<type::Value>& values,
-                         bool& index_searchable) {
+void GetPredicateColumns(const catalog::Schema *schema,
+                         expression::AbstractExpression *expression,
+                         std::vector<oid_t> &column_ids,
+                         std::vector<ExpressionType> &expr_types,
+                         std::vector<type::Value> &values,
+                         bool &index_searchable) {
   // For now, all conjunctions should be AND when using index scan.
   if (expression->GetExpressionType() == ExpressionType::CONJUNCTION_OR)
     index_searchable = false;
@@ -137,7 +141,7 @@ void GetPredicateColumns(const catalog::Schema* schema,
     auto right_type = expression->GetChild(1)->GetExpressionType();
     if (right_type == ExpressionType::VALUE_CONSTANT ||
         right_type == ExpressionType::VALUE_PARAMETER) {
-      auto expr = (expression::TupleValueExpression*)expression->GetChild(0);
+      auto expr = (expression::TupleValueExpression *)expression->GetChild(0);
       std::string col_name(expr->GetColumnName());
       LOG_TRACE("Column name: %s", col_name.c_str());
       auto column_id = schema->GetColumnID(col_name);
@@ -145,18 +149,21 @@ void GetPredicateColumns(const catalog::Schema* schema,
       expr_types.push_back(expression->GetExpressionType());
 
       if (right_type == ExpressionType::VALUE_CONSTANT) {
-        values.push_back(reinterpret_cast<expression::ConstantValueExpression*>(
-                             expression->GetModifiableChild(1))->GetValue());
-        LOG_TRACE("Value Type: %s",
-                  TypeIdToString(
-                      reinterpret_cast<expression::ConstantValueExpression*>(
+        values.push_back(
+            reinterpret_cast<expression::ConstantValueExpression *>(
+                expression->GetModifiableChild(1))
+                ->GetValue());
+        LOG_TRACE("Value Type: %d",
+                  reinterpret_cast<expression::ConstantValueExpression *>(
                       expression->GetModifiableChild(1))
-                                ->GetValueType()).c_str());
+                      ->GetValueType());
       } else
         values.push_back(
             type::ValueFactory::GetParameterOffsetValue(
-                reinterpret_cast<expression::ParameterValueExpression*>(
-                    expression->GetModifiableChild(1))->GetValueIdx()).Copy());
+                reinterpret_cast<expression::ParameterValueExpression *>(
+                    expression->GetModifiableChild(1))
+                    ->GetValueIdx())
+                .Copy());
       LOG_TRACE("Parameter offset: %s", (*values.rbegin()).GetInfo().c_str());
     }
   } else if (expression->GetChild(1)->GetExpressionType() ==
@@ -164,7 +171,7 @@ void GetPredicateColumns(const catalog::Schema* schema,
     auto left_type = expression->GetChild(0)->GetExpressionType();
     if (left_type == ExpressionType::VALUE_CONSTANT ||
         left_type == ExpressionType::VALUE_PARAMETER) {
-      auto expr = (expression::TupleValueExpression*)expression->GetChild(1);
+      auto expr = (expression::TupleValueExpression *)expression->GetChild(1);
       std::string col_name(expr->GetColumnName());
       LOG_TRACE("Column name: %s", col_name.c_str());
       auto column_id = schema->GetColumnID(col_name);
@@ -173,18 +180,21 @@ void GetPredicateColumns(const catalog::Schema* schema,
       expr_types.push_back(expression->GetExpressionType());
 
       if (left_type == ExpressionType::VALUE_CONSTANT) {
-        values.push_back(reinterpret_cast<expression::ConstantValueExpression*>(
-                             expression->GetModifiableChild(1))->GetValue());
-        LOG_TRACE("Value Type: %s",
-                  TypeIdToString(
-                      reinterpret_cast<expression::ConstantValueExpression*>(
+        values.push_back(
+            reinterpret_cast<expression::ConstantValueExpression *>(
+                expression->GetModifiableChild(1))
+                ->GetValue());
+        LOG_TRACE("Value Type: %d",
+                  reinterpret_cast<expression::ConstantValueExpression *>(
                       expression->GetModifiableChild(0))
-                                ->GetValueType()).c_str());
+                      ->GetValueType());
       } else
         values.push_back(
             type::ValueFactory::GetParameterOffsetValue(
-                reinterpret_cast<expression::ParameterValueExpression*>(
-                    expression->GetModifiableChild(0))->GetValueIdx()).Copy());
+                reinterpret_cast<expression::ParameterValueExpression *>(
+                    expression->GetModifiableChild(0))
+                    ->GetValueIdx())
+                .Copy());
       LOG_TRACE("Parameter offset: %s", (*values.rbegin()).GetInfo().c_str());
     }
   } else {
@@ -196,13 +206,15 @@ void GetPredicateColumns(const catalog::Schema* schema,
 }
 
 /**
- * Extract single table precates and multi-table predicates from the expr
+ * @brief Extract single table precates and multi-table predicates from the expr
+ *
+ * @param expr The original predicate
+ * @param annotated_predicates The extracted conjunction predicates
  */
-void ExtractPredicates(expression::AbstractExpression* expr,
-                       SingleTablePredicates& where_predicates,
-                       MultiTablePredicates& join_predicates) {
-  // Split expression
-  std::vector<expression::AbstractExpression*> predicates;
+void ExtractPredicates(expression::AbstractExpression *expr,
+                       std::vector<AnnotatedExpression> &annotated_predicates) {
+  // Split a complex predicate into a set of predicates connected by AND.
+  std::vector<expression::AbstractExpression *> predicates;
   SplitPredicates(expr, predicates);
 
   for (auto predicate : predicates) {
@@ -210,23 +222,23 @@ void ExtractPredicates(expression::AbstractExpression* expr,
     expression::ExpressionUtil::GenerateTableAliasSet(predicate,
                                                       table_alias_set);
     // Deep copy expression to avoid memory leak
-    if (table_alias_set.size() > 1)
-      join_predicates.emplace_back(
-          MultiTableExpression(predicate->Copy(), table_alias_set));
-    else
-      where_predicates.emplace_back(predicate->Copy());
+    annotated_predicates.emplace_back(AnnotatedExpression(
+        std::shared_ptr<expression::AbstractExpression>(predicate->Copy()),
+        table_alias_set));
   }
 }
 
 /**
- * Construct a qualified join predicate (contains a subset of alias in the
- * table_alias_set)
- * and remove the multitable expressions in the original join_predicates
+ * @breif Construct a qualified join predicate (contains a subset of alias in
+ *  the table_alias_set)
+ *  and remove the multitable expressions in the original join_predicates
+ *
+ * @return The final join predicate
  */
-expression::AbstractExpression* ConstructJoinPredicate(
-    std::unordered_set<std::string>& table_alias_set,
-    MultiTablePredicates& join_predicates) {
-  std::vector<expression::AbstractExpression*> qualified_exprs;
+expression::AbstractExpression *ConstructJoinPredicate(
+    std::unordered_set<std::string> &table_alias_set,
+    MultiTablePredicates &join_predicates) {
+  std::vector<std::shared_ptr<expression::AbstractExpression>> qualified_exprs;
   MultiTablePredicates new_join_predicates;
   for (auto predicate : join_predicates) {
     if (IsSubset(table_alias_set, predicate.table_alias_set))
@@ -239,49 +251,73 @@ expression::AbstractExpression* ConstructJoinPredicate(
 }
 
 /**
- * Split conjunction expression tree into a vector of expressions with AND
+ * @breif Split conjunction expression tree into a vector of expressions with
+ * AND
  */
-void SplitPredicates(expression::AbstractExpression* expr,
-                     std::vector<expression::AbstractExpression*>& predicates) {
-  // Traverse down the expression tree along conjunction
+void SplitPredicates(
+    expression::AbstractExpression *expr,
+    std::vector<expression::AbstractExpression *> &predicates) {
   if (expr->GetExpressionType() == ExpressionType::CONJUNCTION_AND) {
+    // Traverse down the expression tree along conjunction
     for (size_t i = 0; i < expr->GetChildrenSize(); i++) {
       SplitPredicates(expr->GetModifiableChild(i), predicates);
     }
-    return;
+  } else {
+    // Find an expression that is the child of conjunction expression
+    predicates.push_back(expr);
   }
-  predicates.push_back(expr);
 }
 
 /**
- * Combine a vector of expressions with AND (deep copy each expr)
+ * @breif Combine a vector of expressions with AND
  */
-expression::AbstractExpression* CombinePredicates(
-    std::vector<expression::AbstractExpression*> predicates) {
+expression::AbstractExpression *CombinePredicates(
+    std::vector<std::shared_ptr<expression::AbstractExpression>> predicates) {
   if (predicates.empty()) return nullptr;
 
-  if (predicates.size() == 1) return predicates[0];
+  if (predicates.size() == 1) return predicates[0]->Copy();
 
   auto conjunction = new expression::ConjunctionExpression(
-      ExpressionType::CONJUNCTION_AND, predicates[0], predicates[1]);
+      ExpressionType::CONJUNCTION_AND, predicates[0]->Copy(),
+      predicates[1]->Copy());
   for (size_t i = 2; i < predicates.size(); i++) {
     conjunction = new expression::ConjunctionExpression(
-        ExpressionType::CONJUNCTION_AND, conjunction, predicates[i]);
+        ExpressionType::CONJUNCTION_AND, conjunction, predicates[i]->Copy());
   }
   return conjunction;
 }
 
 /**
- * Check if there are any join columns in the join expression
- * For example, expr = (expr_1) AND (expr_2) AND (expr_3)
- * we only extract expr_i that have the format (l_table.a = r_table.b)
- * i.e. expr that is equality check for tuple columns from both of
- * the underlying tables
+ * @breif Combine a vector of expressions with AND
+ */
+expression::AbstractExpression *CombinePredicates(
+    std::vector<AnnotatedExpression> predicates) {
+  if (predicates.empty()) return nullptr;
+
+  if (predicates.size() == 1) return predicates[0].expr->Copy();
+
+  auto conjunction = new expression::ConjunctionExpression(
+      ExpressionType::CONJUNCTION_AND, predicates[0].expr->Copy(),
+      predicates[1].expr->Copy());
+  for (size_t i = 2; i < predicates.size(); i++) {
+    conjunction = new expression::ConjunctionExpression(
+        ExpressionType::CONJUNCTION_AND, conjunction,
+        predicates[i].expr->Copy());
+  }
+  return conjunction;
+}
+
+/**
+ * @breif Check if there are any join columns in the join expression
+ *  For example, expr = (expr_1) AND (expr_2) AND (expr_3)
+ *  we only extract expr_i that have the format (l_table.a = r_table.b)
+ *  i.e. expr that is equality check for tuple columns from both of
+ *  the underlying tables
  */
 
-bool ContainsJoinColumns(const std::unordered_set<std::string>& l_group_alias,
-                         const std::unordered_set<std::string>& r_group_alias,
-                         const expression::AbstractExpression* expr) {
+bool ContainsJoinColumns(const std::unordered_set<std::string> &l_group_alias,
+                         const std::unordered_set<std::string> &r_group_alias,
+                         const expression::AbstractExpression *expr) {
   if (expr == nullptr) return false;
   if (expr->GetExpressionType() == ExpressionType::CONJUNCTION_AND) {
     if (ContainsJoinColumns(l_group_alias, r_group_alias, expr->GetChild(0)) ||
@@ -299,10 +335,10 @@ bool ContainsJoinColumns(const std::unordered_set<std::string>& l_group_alias,
     if (l_expr->GetExpressionType() == ExpressionType::VALUE_TUPLE &&
         r_expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
       auto l_table_alias =
-          reinterpret_cast<const expression::TupleValueExpression*>(l_expr)
+          reinterpret_cast<const expression::TupleValueExpression *>(l_expr)
               ->GetTableName();
       auto r_table_alias =
-          reinterpret_cast<const expression::TupleValueExpression*>(r_expr)
+          reinterpret_cast<const expression::TupleValueExpression *>(r_expr)
               ->GetTableName();
 
       // If they're from different child, then join column != empty
@@ -318,7 +354,7 @@ bool ContainsJoinColumns(const std::unordered_set<std::string>& l_group_alias,
 }
 
 std::unique_ptr<planner::AbstractPlan> CreateCopyPlan(
-    parser::CopyStatement* copy_stmt) {
+    parser::CopyStatement *copy_stmt) {
   std::string table_name(copy_stmt->cpy_table->GetTableName());
   bool deserialize_parameters = false;
 
@@ -332,7 +368,7 @@ std::unique_ptr<planner::AbstractPlan> CreateCopyPlan(
   std::unique_ptr<planner::AbstractPlan> copy_plan(
       new planner::CopyPlan(copy_stmt->file_path, deserialize_parameters));
 
-  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
       copy_stmt->cpy_table->GetDatabaseName(),
@@ -347,6 +383,102 @@ std::unique_ptr<planner::AbstractPlan> CreateCopyPlan(
   // Attach it to the copy plan
   copy_plan->AddChild(std::move(select_plan));
   return copy_plan;
+}
+
+/**
+ * @brief Construct the map from subquery column name to the actual expression
+ *  at the subquery level, for example SELECT a FROM (SELECT a + b as a FROM
+ *  test), we'll build the map {"a" -> a + b}
+ *
+ * @param select_list The select list of a subquery
+ *
+ * @return The mapping mentioned above
+ */
+std::unordered_map<std::string, std::shared_ptr<expression::AbstractExpression>>
+ConstructSelectElementMap(
+    std::vector<std::unique_ptr<expression::AbstractExpression>> &select_list) {
+  std::unordered_map<std::string,
+                     std::shared_ptr<expression::AbstractExpression>> res;
+  for (auto &expr : select_list) {
+    std::string alias;
+    if (!expr->alias.empty()) {
+      alias = expr->alias;
+    } else if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
+      auto tv_expr =
+          reinterpret_cast<expression::TupleValueExpression *>(expr.get());
+      alias = tv_expr->GetColumnName();
+    } else
+      continue;
+    std::transform(alias.begin(), alias.end(), alias.begin(), ::tolower);
+    res[alias] = std::shared_ptr<expression::AbstractExpression>(expr->Copy());
+  }
+  return res;
+};
+
+/**
+ * @brief Walk a predicate, transform the tuple value expression into the actual
+ *  expression in the sub-query
+ *
+ * @param alias_to_expr_map The column name to expression map
+ * @param expr the predicate
+ *
+ * @return the transformed predicate
+ */
+expression::AbstractExpression *TransformQueryDerivedTablePredicates(
+    const std::unordered_map<std::string,
+                             std::shared_ptr<expression::AbstractExpression>>
+        &alias_to_expr_map,
+    expression::AbstractExpression *expr) {
+  if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
+    auto new_expr =
+        alias_to_expr_map
+            .find(reinterpret_cast<expression::TupleValueExpression *>(expr)
+                      ->GetColumnName())
+            ->second;
+    return new_expr->Copy();
+  }
+  auto child_size = expr->GetChildrenSize();
+  for (size_t i = 0; i < child_size; i++) {
+    expr->SetChild(i, TransformQueryDerivedTablePredicates(
+                          alias_to_expr_map, expr->GetModifiableChild(i)));
+  }
+  return expr;
+}
+
+/**
+ * @brief Walk through a set of join predicates, generate join keys base on the
+ *  left/right table aliases set
+ */
+void ExtractEquiJoinKeys(
+    const std::vector<AnnotatedExpression> join_predicates,
+    std::vector<std::unique_ptr<expression::AbstractExpression>> &left_keys,
+    std::vector<std::unique_ptr<expression::AbstractExpression>> &right_keys,
+    const std::unordered_set<std::string> &left_alias,
+    const std::unordered_set<std::string> &right_alias) {
+  for (auto &expr_unit : join_predicates) {
+    if (expr_unit.expr->GetExpressionType() == ExpressionType::COMPARE_EQUAL) {
+      auto l_expr = expr_unit.expr->GetChild(0);
+      auto r_expr = expr_unit.expr->GetChild(1);
+      if (l_expr->GetExpressionType() == ExpressionType::VALUE_TUPLE &&
+          r_expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
+        auto l_tv_expr =
+            reinterpret_cast<const expression::TupleValueExpression *>(l_expr);
+        auto r_tv_expr =
+            reinterpret_cast<const expression::TupleValueExpression *>(r_expr);
+        if (left_alias.find(l_tv_expr->GetTableName()) != left_alias.end() &&
+            right_alias.find(r_tv_expr->GetTableName()) != right_alias.end()) {
+          left_keys.emplace_back(l_tv_expr->Copy());
+          right_keys.emplace_back(r_tv_expr->Copy());
+        } else if (left_alias.find(r_tv_expr->GetTableName()) !=
+                       left_alias.end() &&
+                   right_alias.find(l_tv_expr->GetTableName()) !=
+                       right_alias.end()) {
+          left_keys.emplace_back(r_tv_expr->Copy());
+          right_keys.emplace_back(l_tv_expr->Copy());
+        }
+      }
+    }
+  }
 }
 
 }  // namespace util

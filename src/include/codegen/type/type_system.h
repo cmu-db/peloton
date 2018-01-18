@@ -6,7 +6,7 @@
 //
 // Identification: src/include/codegen/type/type_system.h
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -18,10 +18,15 @@
 #include "common/macros.h"
 #include "common/internal_types.h"
 
+namespace llvm {
+class Value;
+}  // namespace llvm
+
 namespace peloton {
 namespace codegen {
 
 class CodeGen;
+class RuntimeState;
 class Value;
 
 namespace type {
@@ -232,11 +237,21 @@ class TypeSystem {
     const Comparison &comparison;
   };
 
+  // Every operator invocation carries this context to provide additional
+  // contextual information to the function.
+  struct InvocationContext {
+    // TODO(pmenon): Fill me
+    // What to do if an error occurs during execution?
+    OnError on_error;
+    // The execution context
+    llvm::Value *executor_context;
+  };
+
   //===--------------------------------------------------------------------===//
   // An operator with no argument
   //===--------------------------------------------------------------------===//
   struct NoArgOperator {
-    virtual ~NoArgOperator() {}
+    virtual ~NoArgOperator() = default;
 
     // Does this unary operator support values of the given type?
     bool SupportsType(const UNUSED_ATTRIBUTE Type &type) const { return false; }
@@ -246,18 +261,19 @@ class TypeSystem {
     virtual Type ResultType(const Type &val_type) const = 0;
 
     // Apply the operator on the given value
-    virtual Value DoWork(CodeGen &codegen) const = 0;
+    virtual Value Eval(CodeGen &codegen,
+                       const InvocationContext &ctx) const = 0;
   };
 
   struct NoArgOpInfo {
     // The ID of the operation
     OperatorId op_id;
-
     // The operation
     const NoArgOperator &no_arg_operation;
   };
 
   //===--------------------------------------------------------------------===//
+  //
   // A unary operator (i.e., an operator that accepts a single argument)
   //
   //===--------------------------------------------------------------------===//
@@ -272,7 +288,8 @@ class TypeSystem {
     virtual Type ResultType(const Type &val_type) const = 0;
 
     // Apply the operator on the given value
-    virtual Value Eval(CodeGen &codegen, const Value &val) const = 0;
+    virtual Value Eval(CodeGen &codegen, const Value &val,
+                       const InvocationContext &ctx) const = 0;
   };
 
   //===--------------------------------------------------------------------===//
@@ -291,11 +308,13 @@ class TypeSystem {
   //===--------------------------------------------------------------------===//
   class UnaryOperatorHandleNull : public UnaryOperator {
    public:
-    Value Eval(CodeGen &codegen, const Value &val) const override;
+    Value Eval(CodeGen &codegen, const Value &val,
+               const InvocationContext &ctx) const override;
 
    protected:
     // The actual implementation assuming non-NULL input
-    virtual Value Impl(CodeGen &codegen, const Value &val) const = 0;
+    virtual Value Impl(CodeGen &codegen, const Value &val,
+                       const InvocationContext &ctx) const = 0;
   };
 
   //===--------------------------------------------------------------------===//
@@ -304,14 +323,11 @@ class TypeSystem {
   struct UnaryOpInfo {
     // The ID of the operation
     OperatorId op_id;
-
     // The operation
     const UnaryOperator &unary_operation;
   };
 
   //===--------------------------------------------------------------------===//
-  //
-  // BinaryOperator
   //
   // A binary operator (i.e., an operator that accepts two arguments)
   //
@@ -330,12 +346,10 @@ class TypeSystem {
 
     // Execute the actual operator
     virtual Value Eval(CodeGen &codegen, const Value &left, const Value &right,
-                       OnError on_error) const = 0;
+                       const InvocationContext &ctx) const = 0;
   };
 
   //===--------------------------------------------------------------------===//
-  //
-  // BinaryOperatorHandleNull
   //
   // An abstract base class for binary operators that returns NULL if either
   // input argument is NULL. If neither input is NULL, derived implementations
@@ -350,12 +364,12 @@ class TypeSystem {
   struct BinaryOperatorHandleNull : public BinaryOperator {
    public:
     Value Eval(CodeGen &codegen, const Value &left, const Value &right,
-               OnError on_error) const override;
+               const InvocationContext &ctx) const override;
 
    protected:
     // The implementation assuming non-nullable types
     virtual Value Impl(CodeGen &codegen, const Value &left, const Value &right,
-                       OnError on_error) const = 0;
+                       const InvocationContext &ctx) const = 0;
   };
 
   struct BinaryOpInfo {
@@ -379,7 +393,7 @@ class TypeSystem {
 
     // Execute the actual operator
     virtual Value Eval(CodeGen &codegen, const std::vector<Value> &input_args,
-                       OnError on_error) const = 0;
+                       const InvocationContext &ctx) const = 0;
   };
 
   struct NaryOpInfo {
@@ -446,7 +460,7 @@ class TypeSystem {
   // The table of builtin nary operators
   const std::vector<NaryOpInfo> &nary_op_table_;
 
-  // The table of builti no-arg operators
+  // The table of builtin no-arg operators
   const std::vector<NoArgOpInfo> &no_arg_op_table_;
 
  private:

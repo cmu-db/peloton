@@ -173,7 +173,7 @@ bool AggregateExecutor::DExecute() {
   // Transform output table into result
   LOG_TRACE("%s", output_table->GetInfo().c_str());
   auto tile_group_count = output_table->GetTileGroupCount();
-  if (tile_group_count == 0) return false;
+  if (tile_group_count == 0 || output_table->GetTupleCount() == 0) return false;
 
   for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
        tile_group_itr++) {

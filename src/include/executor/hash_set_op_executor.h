@@ -37,6 +37,10 @@ namespace executor {
  * we can simply massage the validation flags of the left child
  * and forward the (logical tiles) upwards.
  * This avoids materialization.
+ *
+ * 2018-01-07: This is <b>deprecated</b>. Do not modify these classes.
+ * The old interpreted engine will be removed.
+ * @deprecated
  */
 class HashSetOpExecutor : public AbstractExecutor {
  public:

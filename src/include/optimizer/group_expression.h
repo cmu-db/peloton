@@ -15,6 +15,8 @@
 #include "optimizer/operator_node.h"
 #include "optimizer/stats.h"
 #include "optimizer/util.h"
+#include "optimizer/property_set.h"
+#include "common/internal_types.h"
 
 #include <map>
 #include <tuple>
@@ -22,6 +24,8 @@
 
 namespace peloton {
 namespace optimizer {
+
+class Rule;
 
 using GroupID = int32_t;
 
@@ -36,19 +40,21 @@ class GroupExpression {
 
   void SetGroupID(GroupID group_id);
 
+  void SetChildGroupID(int child_group_idx, GroupID group_id);
+
   const std::vector<GroupID> &GetChildGroupIDs() const;
+
+  GroupID GetChildGroupId(int child_idx) const;
 
   Operator Op() const;
 
-  std::shared_ptr<Stats> GetStats(PropertySet requirements) const;
+  double GetCost(std::shared_ptr<PropertySet>& requirements) const;
 
-  double GetCost(PropertySet requirements) const;
+  std::vector<std::shared_ptr<PropertySet>> GetInputProperties(std::shared_ptr<PropertySet> requirements) const;
 
-  std::vector<PropertySet> GetInputProperties(PropertySet requirements) const;
-
-  void SetLocalHashTable(const PropertySet &output_properties,
-                         const std::vector<PropertySet> &input_properties_list,
-                         double cost, std::shared_ptr<Stats> stats);
+  void SetLocalHashTable(const std::shared_ptr<PropertySet> &output_properties,
+                         const std::vector<std::shared_ptr<PropertySet>> &input_properties_list,
+                         double cost);
 
   void SetStats(const PropertySet &output_properties,
                 std::shared_ptr<Stats> stats);
@@ -57,20 +63,27 @@ class GroupExpression {
 
   bool operator==(const GroupExpression &r);
 
+  void SetRuleExplored(Rule *rule);
+
+  bool HasRuleExplored(Rule *rule);
+
+  inline size_t GetChildrenGroupsSize() const { return child_groups.size(); }
+
  private:
   GroupID group_id;
   Operator op;
   std::vector<GroupID> child_groups;
+  std::bitset<static_cast<uint32_t>(RuleType::NUM_RULES)> rule_mask_;
 
   // Mapping from output properties to the corresponding best cost, statistics,
   // and child properties
-  std::unordered_map<PropertySet, std::tuple<double, std::shared_ptr<Stats>,
-                                             std::vector<PropertySet>>>
-      lowest_cost_table_;
+  std::unordered_map<std::shared_ptr<PropertySet>,
+                     std::tuple<double, std::vector<std::shared_ptr<PropertySet>>>,
+                     PropSetPtrHash, PropSetPtrEq> lowest_cost_table_;
 };
 
-} // namespace optimizer
-} // namespace peloton
+}  // namespace optimizer
+}  // namespace peloton
 
 namespace std {
 
@@ -81,4 +94,4 @@ struct hash<peloton::optimizer::GroupExpression> {
   result_type operator()(argument_type const &s) const { return s.Hash(); }
 };
 
-} // namespace std
+}  // namespace std

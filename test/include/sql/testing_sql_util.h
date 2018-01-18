@@ -12,8 +12,10 @@
 
 #pragma once
 
+#include <atomic>
+
 #include "common/statement.h"
-#include "include/traffic_cop/traffic_cop.h"
+#include "traffic_cop/traffic_cop.h"
 
 namespace peloton {
 

@@ -347,7 +347,7 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(InputPacket *pkt, const 
     };
     default: {
       std::string stmt_name = "unamed";
-      std::unique_ptr<parser::SQLStatementList> unnamed_sql_stmt_list = std::make_unique<parser::SQLStatementList>();
+      std::unique_ptr<parser::SQLStatementList> unnamed_sql_stmt_list(new parser::SQLStatementList());
       unnamed_sql_stmt_list->PassInStatement(std::move(sql_stmt));
       traffic_cop_->SetStatement(traffic_cop_->PrepareStatement(stmt_name, query, std::move(unnamed_sql_stmt_list), error_message));
       if (traffic_cop_->GetStatement().get() == nullptr) {

@@ -94,27 +94,32 @@ TEST_F(PlannerEqualityTest, Select) {
       {"SELECT * from test", "SELECT * from test", true, true},
       {"SELECT * from test", "SELECT * from test2", false, false},
       {"SELECT * from test", "SELECT * from test where a = 0", false, false},
-      {"SELECT * from test where a = 1", "SELECT * from test where a = 0", true, true},
-      {"SELECT * from test where b = 1", "SELECT * from test where b > 0", false, false},
-      {"SELECT * from test where a = 1", "SELECT * from test where c = 0", false, false},
-      {"SELECT a from test where b = 1", "SELECT c from test where b = 0", false, false},
-      {"SELECT a,b from test where b = 1", "SELECT b,a from test where b = 0", false, false},
-      {"SELECT a,b from test where b = 1", "SELECT a,b from test where b = $1", true, true},
-      {"SELECT a,b from test where b = $1", "SELECT a,b from test where b = 9", true, true},
+      {"SELECT * from test where a = 1", "SELECT * from test where a = 0", true,
+       true},
+      {"SELECT * from test where b = 1", "SELECT * from test where b > 0",
+       false, false},
+      {"SELECT * from test where a = 1", "SELECT * from test where c = 0",
+       false, false},
+      {"SELECT a from test where b = 1", "SELECT c from test where b = 0",
+       false, false},
+      {"SELECT a,b from test where b = 1", "SELECT b,a from test where b = 0",
+       false, false},
+      {"SELECT a,b from test where b = 1", "SELECT a,b from test where b = $1",
+       true, true},
+      {"SELECT a,b from test where b = $1", "SELECT a,b from test where b = 9",
+       true, true},
       {"SELECT * from test where b = 1 order by c",
        "SELECT * from test where b = 0 order by a", false, false},
       {"SELECT * from test where b = 1 order by c DESC",
        "SELECT * from test where b = 0 order by c ASC", false, false},
       {"SELECT * from test where b = 1 order by c+a",
        "SELECT * from test where b = 0 order by a+c", false, false},
-      {"SELECT avg(*) from test", "SELECT avg(*) from test", true, true},
-      {"SELECT count(*) from test", "SELECT avg(*) from test", false, false},
-      {"SELECT avg(*) from test group by c",
-       "SELECT avg(*) from test group by b", false, false},
-      {"SELECT avg(*) from test group by c",
-       "SELECT avg(*) from test order by c", false, false},
-      {"SELECT avg(*) from test group by a+c",
-       "SELECT avg(*) from test group by b", false, false},
+      {"SELECT a,b from test where b = $1", "SELECT a,b from test where b = $1",
+       true, true},
+      {"SELECT a,b from test where b = $1",
+       "SELECT a,b from test where b = null", false, false},
+      {"SELECT a,b from test where b = $1", "SELECT a,b from test where b = 1",
+       true, true},
       {"SELECT a,b from test where b = $1", "SELECT a,b from test where b = $1", true, true},
       {"SELECT a,b from test where b = $1",
        "SELECT a,b from test where b = null", false, false},
@@ -139,12 +144,13 @@ TEST_F(PlannerEqualityTest, Select) {
        "SELECT * from test inner join test2 on test.a > 1 - test2.a", false, false},
   };
   // clang-format on
-
   for (uint32_t i = 0; i < items.size(); i++) {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
 
     TestItem &item = items[i];
+    LOG_DEBUG("Checking equality between (%s) and (%s)", item.q1.c_str(),
+              item.q2.c_str());
     auto plan_1 = GeneratePlanWithOptimizer(optimizer, item.q1, txn);
     auto plan_2 = GeneratePlanWithOptimizer(optimizer, item.q2, txn);
     txn_manager.CommitTransaction(txn);

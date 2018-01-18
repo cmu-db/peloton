@@ -1,5 +1,22 @@
 #!/bin/bash -x
 
+## =================================================================
+## PELOTON PACKAGE INSTALLATION
+##
+## This script will install all the packages that are needed to
+## build and run the DBMS.
+##
+## Note: On newer versions of Ubuntu (17.04), this script
+## will not install the correct version of g++. You will have
+## to use 'update-alternatives' to configure the default of
+## g++ manually.
+##
+## Supported environments:
+##  * Ubuntu (14.04, 16.04)
+##  * Fedora
+##  * OSX
+## =================================================================
+
 # Determine OS platform
 UNAME=$(uname | tr "[:upper:]" "[:lower:]")
 # If Linux, try to determine specific distribution
@@ -31,7 +48,7 @@ if [ "$DISTRO" = "UBUNTU" ]; then
         sudo apt-get update -qq
     fi
 
-    # Fix for cmake3 name change in Ubuntu 15.x and 16.x plus --force-yes deprecation 
+    # Fix for cmake3 name change in Ubuntu 15.x and 16.x plus --force-yes deprecation
     CMAKE_NAME="cmake3"
     FORCE_Y="--force-yes"
     MAJOR_VER=$(echo "$DISTRO_VER" | cut -d '.' -f 1)
@@ -104,7 +121,7 @@ elif [[ "$DISTRO" == *"REDHAT"* ]] && [[ "${DISTRO_VER%.*}" == "7" ]]; then
             echo "The download path is required."
             exit 1
         fi
-    
+
         pushd $TMPDIR
         wget -nc --no-check-certificate "$1"
         tpath=$(basename "$1")

@@ -15,6 +15,7 @@
 #include "common/sql_node_visitor.h"
 #include "parser/sql_statement.h"
 #include "parser/table_ref.h"
+#include "util/string_util.h"
 #include <vector>
 
 namespace peloton {
@@ -34,7 +35,7 @@ class OrderDescription {
 
   virtual ~OrderDescription() {}
 
-  void Accept(SqlNodeVisitor* v) { v->Visit(this); }
+  void Accept(SqlNodeVisitor *v) { v->Visit(this); }
 
   std::vector<OrderType> types;
   std::vector<std::unique_ptr<expression::AbstractExpression>> exprs;
@@ -51,7 +52,7 @@ class LimitDescription {
   LimitDescription(int64_t limit, int64_t offset)
       : limit(limit), offset(offset) {}
 
-  void Accept(SqlNodeVisitor* v) { v->Visit(this); }
+  void Accept(SqlNodeVisitor *v) { v->Visit(this); }
 
   int64_t limit;
   int64_t offset;
@@ -66,7 +67,7 @@ class GroupByDescription {
 
   ~GroupByDescription() {}
 
-  void Accept(SqlNodeVisitor* v) { v->Visit(this); }
+  void Accept(SqlNodeVisitor *v) { v->Visit(this); }
 
   std::vector<std::unique_ptr<expression::AbstractExpression>> columns;
   std::unique_ptr<expression::AbstractExpression> having;
@@ -93,9 +94,11 @@ class SelectStatement : public SQLStatement {
 
   virtual ~SelectStatement() {}
 
-  virtual void Accept(SqlNodeVisitor* v) override {
-    v->Visit(this);
-  }
+  virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
+
+  const std::string GetInfo(int num_indent) const override;
+
+  const std::string GetInfo() const override;
 
   std::unique_ptr<TableRef> from_table;
   bool select_distinct;
@@ -107,13 +110,15 @@ class SelectStatement : public SQLStatement {
   std::unique_ptr<OrderDescription> order;
   std::unique_ptr<LimitDescription> limit;
   bool is_for_update;
+  int depth = -1;
 
  public:
-  const std::vector<std::unique_ptr<expression::AbstractExpression>>& getSelectList() const {
+  const std::vector<std::unique_ptr<expression::AbstractExpression>> &
+  getSelectList() const {
     return select_list;
   }
 
-  void UpdateWhereClause(expression::AbstractExpression* expr) {
+  void UpdateWhereClause(expression::AbstractExpression *expr) {
     where_clause.reset(expr);
   }
 };

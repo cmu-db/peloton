@@ -121,7 +121,6 @@ bool QueryCompiler::IsExpressionSupported(
     const expression::AbstractExpression &expr) {
   switch (expr.GetExpressionType()) {
     case ExpressionType::STAR:
-    case ExpressionType::FUNCTION:
     case ExpressionType::VALUE_PARAMETER:
       return false;
     default:

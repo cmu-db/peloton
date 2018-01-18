@@ -96,29 +96,20 @@ TEST_F(FunctionsTests, FuncCallTest) {
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 
-  TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE test(a DECIMAL, s VARCHAR);");
-  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (4.0, 'abc');");
+  TestingSQLUtil::ExecuteSQLQuery(
+      "CREATE TABLE test(a TINYINT, b SMALLINT, c INTEGER, d BIGINT, e "
+      "DECIMAL, s VARCHAR);");
+  TestingSQLUtil::ExecuteSQLQuery(
+      "INSERT INTO test VALUES (1.0, 4.0, 9.0, 16.0, 25.0, ' abc ');");
 
-  std::vector<ResultValue> result;
-  std::vector<FieldInfo> tuple_descriptor;
-  std::string error_message;
-  int rows_affected;
+  std::vector<std::string> result = {"1|2|3|4|5"};
+  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(
+      "SELECT SQRT(a), SQRT(b), SQRT(c), SQRT(d), SQRT(e) FROM test;", result,
+      false);
 
-  TestingSQLUtil::ExecuteSQLQuery("SELECT SQRT(a), SUBSTR(s,1,2) FROM test;",
-                                  result, tuple_descriptor, rows_affected,
-                                  error_message);
-  EXPECT_EQ(1, result[0].size());
-  EXPECT_EQ('2', result[0][0]);
-  EXPECT_EQ(2, result[1].size());
-  EXPECT_EQ(result[1][0], 'a');
-  EXPECT_EQ(result[1][1], 'b');
-
-  TestingSQLUtil::ExecuteSQLQuery("SELECT ASCII(s) FROM test;", result,
-                                  tuple_descriptor, rows_affected,
-                                  error_message);
-  EXPECT_EQ(2, result[0].size());
-  EXPECT_EQ('9', result[0][0]);
-  EXPECT_EQ('7', result[0][1]);
+  result = {"32"};
+  TestingSQLUtil::ExecuteSQLQueryAndCheckResult("SELECT ASCII(s) FROM test;",
+                                                result, false);
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
@@ -135,19 +126,13 @@ TEST_F(FunctionsTests, SubstrFuncCallTest) {
   TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE test(a DECIMAL, s VARCHAR);");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (4.0, '1234567');");
 
-  std::vector<ResultValue> result;
-  std::vector<FieldInfo> tuple_descriptor;
-  std::string error_message;
-  int rows_affected;
+  std::vector<std::string> result = {"12345"};
+  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(
+      "SELECT SUBSTR(s,1,5) FROM test;", result, false);
 
-  TestingSQLUtil::ExecuteSQLQuery("SELECT SUBSTR(s,1,5) FROM test;", result,
-                                  tuple_descriptor, rows_affected,
-                                  error_message);
-  EXPECT_EQ(1, result.size());
-  EXPECT_EQ("12345", std::string(result[0].begin(), result[0].begin() + 5));
-  TestingSQLUtil::ExecuteSQLQuery("SELECT SUBSTR(s,7,1) FROM test;", result,
-                                  tuple_descriptor, rows_affected,
-                                  error_message);
+  result = {"7"};
+  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(
+      "SELECT SUBSTR(s,7,1) FROM test;", result, false);
   EXPECT_EQ(1, result.size());
   EXPECT_EQ("7", std::string(result[0].begin(), result[0].begin() + 1));
 

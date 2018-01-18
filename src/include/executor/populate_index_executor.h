@@ -25,7 +25,11 @@ namespace executor {
  * The executor class that populates a newly created index
  *
  * It should have a SeqScanExecutor as a child, for retrieving data
- * to be inputted the index. 
+ * to be inputted the index.
+ *
+ * 2018-01-07: This is <b>deprecated</b>. Do not modify these classes.
+ * The old interpreted engine will be removed.
+ * @deprecated
  */
 class PopulateIndexExecutor : public AbstractExecutor {
  public:

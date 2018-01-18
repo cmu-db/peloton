@@ -10,8 +10,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "common/internal_types.h"
 #include "optimizer/group_expression.h"
 #include "optimizer/group.h"
+#include "optimizer/rule.h"
 
 namespace peloton {
 namespace optimizer {
@@ -26,41 +28,42 @@ GroupID GroupExpression::GetGroupID() const { return group_id; }
 
 void GroupExpression::SetGroupID(GroupID id) { group_id = id; }
 
+void GroupExpression::SetChildGroupID(int child_group_idx, GroupID group_id) {
+  child_groups[child_group_idx] = group_id;
+}
+
 const std::vector<GroupID> &GroupExpression::GetChildGroupIDs() const {
   return child_groups;
 }
 
-Operator GroupExpression::Op() const { return op; }
-
-std::shared_ptr<Stats> GroupExpression::GetStats(
-    PropertySet requirements) const {
-  return std::get<1>(lowest_cost_table_.find(requirements)->second);
+GroupID GroupExpression::GetChildGroupId(int child_idx) const {
+  return child_groups[child_idx];
 }
 
-double GroupExpression::GetCost(PropertySet requirements) const {
+Operator GroupExpression::Op() const { return op; }
+
+double GroupExpression::GetCost(std::shared_ptr<PropertySet>& requirements) const {
   return std::get<0>(lowest_cost_table_.find(requirements)->second);
 }
 
-std::vector<PropertySet> GroupExpression::GetInputProperties(
-    PropertySet requirements) const {
-  return std::get<2>(lowest_cost_table_.find(requirements)->second);
+std::vector<std::shared_ptr<PropertySet>> GroupExpression::GetInputProperties(
+    std::shared_ptr<PropertySet> requirements) const {
+  return std::get<1>(lowest_cost_table_.find(requirements)->second);
 }
 
 void GroupExpression::SetLocalHashTable(
-    const PropertySet &output_properties,
-    const std::vector<PropertySet> &input_properties_list, double cost,
-    std::shared_ptr<Stats> stats) {
+    const std::shared_ptr<PropertySet> &output_properties,
+    const std::vector<std::shared_ptr<PropertySet>> &input_properties_list, double cost) {
   auto it = lowest_cost_table_.find(output_properties);
   if (it == lowest_cost_table_.end()) {
     // No other cost to compare against
     lowest_cost_table_.insert(std::make_pair(
-        output_properties, std::make_tuple(cost, std::shared_ptr<Stats>(stats),
-                                           input_properties_list)));
+        output_properties, std::make_tuple(cost, input_properties_list)));
   } else {
     // Only insert if the cost is lower than the existing cost
     if (std::get<0>(it->second) > cost) {
       lowest_cost_table_[output_properties] = std::make_tuple(
-          cost, std::shared_ptr<Stats>(stats), input_properties_list);
+          cost, input_properties_list);
     }
   }
 }
@@ -84,6 +87,14 @@ bool GroupExpression::operator==(const GroupExpression &r) {
   }
 
   return eq;
+}
+
+void GroupExpression::SetRuleExplored(Rule *rule) {
+  rule_mask_.set(rule->GetRuleIdx()) = true;
+}
+
+bool GroupExpression::HasRuleExplored(Rule *rule) {
+  return rule_mask_.test(rule->GetRuleIdx());
 }
 
 }  // namespace optimizer

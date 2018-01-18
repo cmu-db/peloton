@@ -10,8 +10,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "optimizer/group_expression.h"
 #include "optimizer/memo.h"
 #include "optimizer/operators.h"
+#include "optimizer/stats_calculator.h"
 
 namespace peloton {
 namespace optimizer {
@@ -21,14 +23,13 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 Memo::Memo() {}
 
-std::shared_ptr<GroupExpression> Memo::InsertExpression(
-    std::shared_ptr<GroupExpression> gexpr, bool enforced) {
+GroupExpression *Memo::InsertExpression(std::shared_ptr<GroupExpression> gexpr,
+                                        bool enforced) {
   return InsertExpression(gexpr, UNDEFINED_GROUP, enforced);
 }
 
-std::shared_ptr<GroupExpression> Memo::InsertExpression(
-    std::shared_ptr<GroupExpression> gexpr, GroupID target_group,
-    bool enforced) {
+GroupExpression *Memo::InsertExpression(std::shared_ptr<GroupExpression> gexpr,
+                                        GroupID target_group, bool enforced) {
   // If leaf, then just return
   if (gexpr->Op().type() == OpType::Leaf) {
     const LeafOperator *leaf = gexpr->Op().As<LeafOperator>();
@@ -39,7 +40,7 @@ std::shared_ptr<GroupExpression> Memo::InsertExpression(
   }
 
   // Lookup in hash table
-  auto it = group_expressions_.find(gexpr);
+  auto it = group_expressions_.find(gexpr.get());
 
   if (it != group_expressions_.end()) {
     assert(target_group == UNDEFINED_GROUP ||
@@ -47,7 +48,7 @@ std::shared_ptr<GroupExpression> Memo::InsertExpression(
     gexpr->SetGroupID((*it)->GetGroupID());
     return *it;
   } else {
-    group_expressions_.insert(gexpr);
+    group_expressions_.insert(gexpr.get());
     // New expression, so try to insert into an existing group or
     // create a new group if none specified
     GroupID group_id;
@@ -58,22 +59,29 @@ std::shared_ptr<GroupExpression> Memo::InsertExpression(
     }
     Group *group = GetGroupByID(group_id);
     group->AddExpression(gexpr, enforced);
-    return gexpr;
+    return gexpr.get();
   }
 }
 
-const std::vector<Group> &Memo::Groups() const { return groups_; }
+const std::vector<std::unique_ptr<Group>> &Memo::Groups() const {
+  return groups_;
+}
 
-Group *Memo::GetGroupByID(GroupID id) { return &(groups_[id]); }
+Group *Memo::GetGroupByID(GroupID id) { return groups_[id].get(); }
 
 GroupID Memo::AddNewGroup(std::shared_ptr<GroupExpression> gexpr) {
   GroupID new_group_id = groups_.size();
   // Find out the table alias that this group represents
   std::unordered_set<std::string> table_aliases;
-  if (gexpr->Op().type() == OpType::Get) {
+  auto op_type = gexpr->Op().type();
+  if (op_type == OpType::Get) {
     // For base group, the table alias can get directly from logical get
     const LogicalGet *logical_get = gexpr->Op().As<LogicalGet>();
     table_aliases.insert(logical_get->table_alias);
+  } else if (op_type == OpType::LogicalQueryDerivedGet) {
+    const LogicalQueryDerivedGet *query_get =
+        gexpr->Op().As<LogicalQueryDerivedGet>();
+    table_aliases.insert(query_get->table_alias);
   } else {
     // For other groups, need to aggregate the table alias from children
     for (auto child_group_id : gexpr->GetChildGroupIDs()) {
@@ -83,7 +91,12 @@ GroupID Memo::AddNewGroup(std::shared_ptr<GroupExpression> gexpr) {
       }
     }
   }
-  groups_.emplace_back(new_group_id, std::move(table_aliases));
+
+  StatsCalculator stats_calculator;
+  auto stats = stats_calculator.CalculateStats(gexpr);
+
+  groups_.emplace_back(
+      new Group(new_group_id, std::move(table_aliases), stats));
   return new_group_id;
 }
 

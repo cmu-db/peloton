@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <include/type/value.h>
+#include "type/value.h"
 #include "type/array_type.h"
 
 #include "type/boolean_type.h"

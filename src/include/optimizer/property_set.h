@@ -57,6 +57,19 @@ class PropertySet {
   std::vector<std::shared_ptr<Property>> properties_;
 };
 
+struct PropSetPtrHash {
+  std::size_t operator()(std::shared_ptr<PropertySet> const& s) const {
+    return s->Hash();
+  }
+};
+
+struct PropSetPtrEq {
+  bool operator()(std::shared_ptr<PropertySet> const& t1,
+                  std::shared_ptr<PropertySet> const& t2) const {
+    return *t1 == *t2;
+  }
+};
+
 } // namespace optimizer 
 } // namespace peloton 
 
