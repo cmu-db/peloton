@@ -6,7 +6,7 @@
 //
 // Identification: src/include/codegen/proxy/string_functions_proxy.h
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -14,8 +14,6 @@
 
 #include "codegen/proxy/proxy.h"
 #include "codegen/proxy/type_builder.h"
-#include "function/string_functions.h"
-
 #include "codegen/proxy/type_builder.h"
 #include "function/string_functions.h"
 
@@ -32,6 +30,7 @@ PROXY(StringFunctions) {
   DECLARE_METHOD(LTrim);
   DECLARE_METHOD(RTrim);
   DECLARE_METHOD(Substr);
+  DECLARE_METHOD(Repeat);
 };
 
 PROXY(StrWithLen) {
