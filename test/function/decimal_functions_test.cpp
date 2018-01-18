@@ -130,7 +130,7 @@ TEST_F(DecimalFunctionsTests, AbsTestInt) {
   std::vector<type::Value> args;
   // Testing Abs with Integer Types
   for (int64_t in: bigIntTestInputs) {
-    args = {type::ValueFactory::GetIntegerValue(in)};
+    args = {type::ValueFactory::GetBigIntValue(in)};
     auto result = function::DecimalFunctions::_Abs(args);
     EXPECT_FALSE(result.IsNull());
     EXPECT_EQ(std::abs(in), result.GetAs<int64_t>());
@@ -144,14 +144,14 @@ TEST_F(DecimalFunctionsTests, AbsTestInt) {
   }
 
   for (int16_t in: smallIntTestInputs) {
-    args = {type::ValueFactory::GetIntegerValue(in)};
+    args = {type::ValueFactory::GetSmallIntValue(in)};
     auto result = function::DecimalFunctions::_Abs(args);
     EXPECT_FALSE(result.IsNull());
     EXPECT_EQ(abs(in), result.GetAs<int16_t>());
   }
 
   for (int8_t in: tinyIntTestInputs) {
-    args = {type::ValueFactory::GetIntegerValue(in)};
+    args = {type::ValueFactory::GetTinyIntValue(in)};
     auto result = function::DecimalFunctions::_Abs(args);
     EXPECT_FALSE(result.IsNull());
     EXPECT_EQ(abs(in), result.GetAs<int8_t>());
