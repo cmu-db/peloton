@@ -15,6 +15,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include "codegen/code_context.h"
+#include "codegen/value.h"
 #include "type/value.h"
 
 namespace peloton {
@@ -41,6 +43,23 @@ class BuiltInFunctions {
 
   // Get the function from the name in C++ source code
   static BuiltInFuncType GetFuncByName(const std::string &func_name);
+};
+
+typedef uint32_t oid_t;
+
+class PlpgsqlFunctions {
+ private:
+  static std::unordered_map<oid_t,
+                            std::shared_ptr<peloton::codegen::CodeContext>>
+      kFuncMap;
+
+ public:
+  static void AddFunction(
+      const oid_t oid,
+      std::shared_ptr<peloton::codegen::CodeContext> code_context);
+
+  static std::shared_ptr<peloton::codegen::CodeContext> GetFuncContextByOid(
+      const oid_t oid);
 };
 
 }  // namespace function

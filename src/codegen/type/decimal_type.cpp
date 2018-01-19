@@ -13,11 +13,11 @@
 #include "codegen/type/decimal_type.h"
 
 #include "codegen/lang/if.h"
-#include "codegen/value.h"
 #include "codegen/proxy/decimal_functions_proxy.h"
 #include "codegen/proxy/values_runtime_proxy.h"
 #include "codegen/type/boolean_type.h"
 #include "codegen/type/integer_type.h"
+#include "codegen/value.h"
 #include "common/exception.h"
 #include "type/limits.h"
 #include "util/string_util.h"
