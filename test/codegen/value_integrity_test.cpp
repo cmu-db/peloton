@@ -69,7 +69,7 @@ void DivideByZeroTest(const codegen::type::Type &data_type, ExpressionType op) {
   typedef void (*func)(CType);
   func f = (func)code_context.GetRawFunctionPointer(function.GetFunction());
 
-  EXPECT_THROW(, DivideByZeroException);
+  EXPECT_THROW(f(0), DivideByZeroException);
 }
 
 template <typename CType>
