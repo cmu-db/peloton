@@ -11,8 +11,7 @@ pipeline {
                         }
                     }
                     steps {
-                        sh 'apt-get -qq update && apt-get -qq -y --no-install-recommends install python-dev lsb-release sudo'
-                        sh '/bin/bash -c "source ./peloton/script/installation/packages.sh"'
+                        sh 'sudo /bin/bash -c "source ./peloton/script/installation/packages.sh"'
                         sh 'python ./script/validators/source_validator.py'
                         sh 'mkdir build && cd build'
                         sh 'cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False ..'
