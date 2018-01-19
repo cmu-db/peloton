@@ -16,8 +16,8 @@
 #include "common/harness.h"
 #include "common/logger.h"
 #include "common/macros.h"
-#include "parser/postgresparser.h"
 #include "parser/drop_statement.h"
+#include "parser/postgresparser.h"
 
 namespace peloton {
 namespace test {
@@ -293,7 +293,8 @@ TEST_F(ParserTests, DropTest) {
   EXPECT_EQ(StatementType::DROP, stmt->GetType());
   auto d_stmt = (parser::DropStatement *)stmt;
   EXPECT_STREQ("test_db", d_stmt->GetDatabaseName().c_str());
-  EXPECT_EQ(parser::DropStatement::EntityType::kDatabase, d_stmt->GetDropType());
+  EXPECT_EQ(parser::DropStatement::EntityType::kDatabase,
+            d_stmt->GetDropType());
   EXPECT_FALSE(d_stmt->GetMissing());
 
   // Test with IF EXISTS clause
@@ -305,7 +306,8 @@ TEST_F(ParserTests, DropTest) {
   EXPECT_EQ(StatementType::DROP, stmt->GetType());
   d_stmt = (parser::DropStatement *)stmt;
   EXPECT_STREQ("test_db", d_stmt->GetDatabaseName().c_str());
-  EXPECT_EQ(parser::DropStatement::EntityType::kDatabase, d_stmt->GetDropType());
+  EXPECT_EQ(parser::DropStatement::EntityType::kDatabase,
+            d_stmt->GetDropType());
   EXPECT_TRUE(d_stmt->GetMissing());
 
   // Drop schema
@@ -330,6 +332,48 @@ TEST_F(ParserTests, DropTest) {
   EXPECT_EQ(parser::DropStatement::EntityType::kSchema, d_stmt->GetDropType());
   EXPECT_FALSE(d_stmt->GetMissing());
   EXPECT_TRUE(d_stmt->GetCascade());
+}
+
+TEST_F(ParserTests, CreateFunctionTest) {
+  std::vector<std::string> queries;
+
+  queries.push_back(
+      "CREATE OR REPLACE FUNCTION increment ("
+      " i DOUBLE"
+      " )"
+      " RETURNS double AS $$ "
+      "BEGIN RETURN i + 1; END; $$ "
+      "LANGUAGE plpgsql;");
+
+  queries.push_back(
+      "CREATE FUNCTION increment1 ("
+      " i DOUBLE, j DOUBLE"
+      " )"
+      " RETURNS double AS $$ "
+      "BEGIN RETURN i + j; END; $$ "
+      "LANGUAGE plpgsql;");
+
+  queries.push_back(
+      "CREATE OR REPLACE FUNCTION increment2 ("
+      " i INTEGER, j INTEGER"
+      " )"
+      " RETURNS INTEGER AS $$ "
+      "BEGIN RETURN i + j; END; $$ "
+      "LANGUAGE plpgsql;");
+
+  // Parsing
+  UNUSED_ATTRIBUTE int ii = 0;
+  for (auto query : queries) {
+    std::unique_ptr<parser::SQLStatementList> result(
+        parser::PostgresParser::ParseSQLString(query.c_str()));
+
+    if (result->is_valid == false) {
+      LOG_ERROR("Parsing failed: %s (%s)\n", query.c_str(), result->parser_msg);
+    }
+    EXPECT_EQ(result->is_valid, true);
+
+    LOG_TRACE("%d : %s", ++ii, result->GetInfo().c_str());
+  }
 }
 
 TEST_F(ParserTests, TM1Test) {

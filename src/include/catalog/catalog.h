@@ -61,7 +61,11 @@ struct FunctionData {
   std::vector<type::TypeId> argument_types_;
   // function's return type
   type::TypeId return_type_;
-  // pointer to the function
+  // indicates if PL/pgSQL udf
+  bool is_udf_;
+  // pointer to the function code_context (populated if UDF)
+  std::shared_ptr<peloton::codegen::CodeContext> func_context_;
+  // pointer to the function (populated if built-in)
   function::BuiltInFuncType func_;
 };
 
@@ -99,7 +103,8 @@ class Catalog {
                          const std::string &table_name,
                          const std::vector<oid_t> &key_attrs,
                          const std::string &index_name, bool unique_keys,
-                         IndexType index_type, concurrency::TransactionContext *txn);
+                         IndexType index_type,
+                         concurrency::TransactionContext *txn);
 
   ResultType CreateIndex(oid_t database_oid, oid_t table_oid,
                          const std::vector<oid_t> &key_attrs,
@@ -137,8 +142,8 @@ class Catalog {
    * get it from storage layer using database_oid,
    * throw exception and abort txn if not exists/invisible
    * */
-  storage::Database *GetDatabaseWithName(const std::string &db_name,
-                                         concurrency::TransactionContext *txn) const;
+  storage::Database *GetDatabaseWithName(
+      const std::string &db_name, concurrency::TransactionContext *txn) const;
 
   /* Check table from pg_table with table_name using txn,
    * get it from storage layer using table_oid,
@@ -165,7 +170,8 @@ class Catalog {
       const std::string &database_name, const std::string &table_name,
       concurrency::TransactionContext *txn);
   std::shared_ptr<TableCatalogObject> GetTableObject(
-      oid_t database_oid, oid_t table_oid, concurrency::TransactionContext *txn);
+      oid_t database_oid, oid_t table_oid,
+      concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
   // DEPRECATED FUNCTIONS
@@ -185,6 +191,13 @@ class Catalog {
   void InitializeLanguages();
 
   void InitializeFunctions();
+
+  void AddPlpgsqlFunction(
+      const std::string &name, const std::vector<type::TypeId> &argument_types,
+      const type::TypeId return_type, oid_t prolang,
+      const std::string &func_src,
+      std::shared_ptr<peloton::codegen::CodeContext> code_context,
+      concurrency::TransactionContext *txn);
 
   void AddBuiltinFunction(const std::string &name,
                           const std::vector<type::TypeId> &argument_types,

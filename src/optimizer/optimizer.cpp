@@ -33,6 +33,7 @@
 #include "parser/create_statement.h"
 
 #include "planner/analyze_plan.h"
+#include "planner/create_function_plan.h"
 #include "planner/create_plan.h"
 #include "planner/drop_plan.h"
 #include "planner/order_by_plan.h"
@@ -193,6 +194,13 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
     case StatementType::TRANSACTION: {
       break;
     }
+    case StatementType::CREATE_FUNC: {
+      LOG_TRACE("Adding Create function plan...");
+      unique_ptr<planner::AbstractPlan> create_func_plan(
+          new planner::CreateFunctionPlan(
+              (parser::CreateFunctionStatement *)tree));
+      ddl_plan = move(create_func_plan);
+    } break;
     case StatementType::ANALYZE: {
       LOG_TRACE("Adding Analyze plan...");
       unique_ptr<planner::AbstractPlan> analyze_plan(new planner::AnalyzePlan(
