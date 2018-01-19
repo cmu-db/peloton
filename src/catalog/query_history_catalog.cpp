@@ -39,7 +39,7 @@ QueryHistoryCatalog::QueryHistoryCatalog(concurrency::TransactionContext *txn)
 QueryHistoryCatalog::~QueryHistoryCatalog() {}
 
 bool QueryHistoryCatalog::InsertQueryHistory(const std::string &query_string, 
-                                  std::string fingerprint, uint64_t timestamp,
+                                  std::string &fingerprint, uint64_t timestamp,
                                   type::AbstractPool *pool,
                                   concurrency::TransactionContext *txn) {
   std::unique_ptr<storage::Tuple> tuple(

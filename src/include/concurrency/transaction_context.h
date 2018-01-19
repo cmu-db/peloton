@@ -75,7 +75,8 @@ class TransactionContext : public Printable {
 
   inline uint64_t GetTimestamp() const { return timestamp_; }
 
-  inline std::string GetQueryString() const { return query_string_; }
+  inline std::vector<std::string> GetQueryString() const {
+                                                      return query_string_; }
 
   inline void SetCommitId(const cid_t commit_id) { commit_id_ = commit_id; }
 
@@ -83,8 +84,8 @@ class TransactionContext : public Printable {
   
   inline void SetTimestamp(const uint64_t timestamp) { timestamp_ = timestamp; }
 
-  inline void SetQueryString(const char* query_string) {
-    query_string_ = std::string(query_string);
+  inline void AddQueryString(const char* query_string) {
+    query_string_.push_back(std::string(query_string));
   }
 
   void RecordCreate(oid_t database_oid, oid_t table_oid, oid_t index_oid) {
@@ -184,8 +185,8 @@ class TransactionContext : public Printable {
   // GC manager uses this id to check whether a version is still visible.
   eid_t epoch_id_;
 
-  // string to log at the end of the transaction
-  std::string query_string_;
+  // vector of strings to log at the end of the transaction
+  std::vector<std::string> query_string_;
 
   // timestamp when the transaction began
   uint64_t timestamp_;

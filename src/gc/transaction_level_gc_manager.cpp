@@ -131,14 +131,15 @@ int TransactionLevelGCManager::Unlink(const int &thread_id,
     }
 
     // Log the query into query_history_catalog
-    std::string query_string = txn_ctx->GetQueryString();
-    if(query_string != "") {
+    std::vector<std::string> query_string = txn_ctx->GetQueryString();
+    if(query_string.size() != 0) {
       uint64_t timestamp = txn_ctx->GetTimestamp();
       auto &pool = threadpool::BrainThreadPool::GetInstance();
-      pool.SubmitTask([this, query_string, timestamp] {
-        LogQuery(query_string, timestamp);
-      });
-
+      for(unsigned int i = 0; i < query_string.size(); i++) {
+        pool.SubmitTask([this, i, query_string, timestamp] {
+          LogQuery(query_string[i], timestamp);
+        });        
+      }
     }
 
     // Deallocate the Transaction Context of transactions that don't involve
