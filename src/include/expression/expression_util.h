@@ -27,6 +27,7 @@
 #include "expression/operator_expression.h"
 #include "expression/parameter_value_expression.h"
 #include "expression/tuple_value_expression.h"
+#include "function/string_functions.h"
 #include "index/index.h"
 
 namespace peloton {
@@ -385,8 +386,8 @@ class ExpressionUtil {
 
  public:
   /**
-  * Generate a set of table alias included in an expression
-  */
+   * Generate a set of table alias included in an expression
+   */
   static void GenerateTableAliasSet(
       const AbstractExpression *expr,
       std::unordered_set<std::string> &table_alias_set) {
@@ -541,11 +542,17 @@ class ExpressionUtil {
       auto catalog = catalog::Catalog::GetInstance();
       const catalog::FunctionData &func_data =
           catalog->GetFunction(func_expr->GetFuncName(), argtypes);
-      LOG_INFO("Function %s found in the catalog",
-               func_data.func_name_.c_str());
-      LOG_INFO("Argument num: %ld", func_data.argument_types_.size());
-      func_expr->SetFunctionExpressionParameters(
-          func_data.func_, func_data.return_type_, func_data.argument_types_);
+      LOG_DEBUG("Function %s found in the catalog",
+                func_data.func_name_.c_str());
+      LOG_DEBUG("Argument num: %ld", func_data.argument_types_.size());
+      if (!func_data.is_udf_) {
+        func_expr->SetBuiltinFunctionExpressionParameters(
+            func_data.func_, func_data.return_type_, func_data.argument_types_);
+      } else {
+        func_expr->SetUDFFunctionExpressionParameters(
+            func_data.func_context_, func_data.return_type_,
+            func_data.argument_types_);
+      }
     } else if (expr->GetExpressionType() ==
                ExpressionType::OPERATOR_CASE_EXPR) {
       auto case_expr = reinterpret_cast<expression::CaseExpression *>(expr);
@@ -881,8 +888,14 @@ class ExpressionUtil {
       auto catalog = catalog::Catalog::GetInstance();
       const catalog::FunctionData &func_data =
           catalog->GetFunction(func_expr->GetFuncName(), argtypes);
-      func_expr->SetFunctionExpressionParameters(
-          func_data.func_, func_data.return_type_, func_data.argument_types_);
+      if (!func_data.is_udf_) {
+        func_expr->SetBuiltinFunctionExpressionParameters(
+            func_data.func_, func_data.return_type_, func_data.argument_types_);
+      } else {
+        func_expr->SetUDFFunctionExpressionParameters(
+            func_data.func_context_, func_data.return_type_,
+            func_data.argument_types_);
+      }
     }
 
     // Handle case expressions
@@ -899,7 +912,6 @@ class ExpressionUtil {
     // this is useful in operator expressions
     expr->DeduceExpressionType();
   }
-
 };
-}
-}
+}  // namespace expression
+}  // namespace peloton
