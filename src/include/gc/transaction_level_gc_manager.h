@@ -156,6 +156,9 @@ class TransactionLevelGCManager : public GCManager {
   // this function unlinks a specified version from the index.
   void UnlinkVersion(const ItemPointer location, const GCVersionType type);
 
+  // this function logs the query into query history catalog
+  void LogQuery(std::string query_string, uint64_t timestamp);
+
  private:
   //===--------------------------------------------------------------------===//
   // Data members

@@ -73,11 +73,15 @@ class TransactionContext : public Printable {
 
   inline eid_t GetEpochId() const { return epoch_id_; }
 
+  inline uint64_t GetTimestamp() const { return timestamp_; }
+
   inline std::string GetQueryString() const { return query_string_; }
 
   inline void SetCommitId(const cid_t commit_id) { commit_id_ = commit_id; }
 
   inline void SetEpochId(const eid_t epoch_id) { epoch_id_ = epoch_id; }
+  
+  inline void SetTimestamp(const uint64_t timestamp) { timestamp_ = timestamp; }
 
   inline void SetQueryString(const char* query_string) {
     query_string_ = std::string(query_string);
@@ -182,6 +186,9 @@ class TransactionContext : public Printable {
 
   // string to log at the end of the transaction
   std::string query_string_;
+
+  // timestamp when the transaction began
+  uint64_t timestamp_;
 
   ReadWriteSet rw_set_;
   CreateDropSet rw_object_set_;

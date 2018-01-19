@@ -42,8 +42,9 @@ class QueryHistoryCatalog : public AbstractCatalog {
   // write Related API
   //===--------------------------------------------------------------------===//
   bool InsertQueryHistory(const std::string &query_string,
-                          int64_t timestamp,
-                          type::AbstractPool *pool);
+                          std::string fingerprint, uint64_t timestamp,
+                          type::AbstractPool *pool,
+                          concurrency::TransactionContext *txn);
 
   enum ColumnId {
     QUERY_STRING = 0,

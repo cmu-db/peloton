@@ -13,7 +13,6 @@
 #include "catalog/query_history_catalog.h"
 
 #include "catalog/catalog.h"
-#include "concurrency/transaction_manager_factory.h"
 #include "executor/logical_tile.h"
 #include "parser/pg_query.h"
 #include "storage/data_table.h"
@@ -34,36 +33,28 @@ QueryHistoryCatalog::QueryHistoryCatalog(concurrency::TransactionContext *txn)
                       " ("
                       "query_string   VARCHAR NOT NULL, "
                       "fingerprint    VARCHAR NOT NULL, "
-                      "timestamp      INT NOT NULL);",
+                      "timestamp      TIMESTAMP NOT NULL);",
                       txn) {}
 
 QueryHistoryCatalog::~QueryHistoryCatalog() {}
 
 bool QueryHistoryCatalog::InsertQueryHistory(const std::string &query_string, 
-                                        int64_t timestamp,
-                                        type::AbstractPool *pool) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-
-  std::string fingerprint = "fingerprint";
-  // std::string fingerprint = pg_query_fingerprint(query_string.c_str()).hexdigest;
+                                  std::string fingerprint, uint64_t timestamp,
+                                  type::AbstractPool *pool,
+                                  concurrency::TransactionContext *txn) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
   auto val0 = type::ValueFactory::GetVarcharValue(query_string, pool);
   auto val1 = type::ValueFactory::GetVarcharValue(fingerprint, pool);
-  auto val2 = type::ValueFactory::GetIntegerValue(timestamp);
+  auto val2 = type::ValueFactory::GetTimestampValue(timestamp);
 
   tuple->SetValue(ColumnId::QUERY_STRING, val0, pool);
   tuple->SetValue(ColumnId::FINGERPRINT, val1, pool);
   tuple->SetValue(ColumnId::TIMESTAMP, val2, pool);
 
   // Insert the tuple
-  bool insert_status = InsertTuple(std::move(tuple), txn);
-
-  txn_manager.CommitTransaction(txn);
-
-  return insert_status;
+  return InsertTuple(std::move(tuple), txn);
 }
 
 }  // namespace catalog

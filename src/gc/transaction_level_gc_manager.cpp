@@ -130,17 +130,13 @@ int TransactionLevelGCManager::Unlink(const int &thread_id,
       break;
     }
 
-    // TODO[Siva]: Add to the lockfree queue of the brain thread pool
     // Log the query into query_history_catalog
-
     std::string query_string = txn_ctx->GetQueryString();
     if(query_string != "") {
-      uint64_t timestamp = 123;
-
+      uint64_t timestamp = txn_ctx->GetTimestamp();
       auto &pool = threadpool::BrainThreadPool::GetInstance();
-      pool.SubmitTask([query_string, timestamp] {
-    	  catalog::QueryHistoryCatalog::GetInstance()->InsertQueryHistory(
-               query_string, timestamp, nullptr);
+      pool.SubmitTask([this, query_string, timestamp] {
+        LogQuery(query_string, timestamp);
       });
 
     }
@@ -405,6 +401,19 @@ void TransactionLevelGCManager::UnlinkVersion(const ItemPointer location,
       index->DeleteEntry(current_key.get(), indirection);
     }
   }
+}
+
+void TransactionLevelGCManager::LogQuery(std::string query_string, uint64_t timestamp) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
+  // TODO[Siva]: call pg_fingerprint() after Marcel's PR is merged
+  std::string fingerprint = "fingerprint";
+
+  catalog::QueryHistoryCatalog::GetInstance()->InsertQueryHistory(
+               query_string, fingerprint, timestamp, nullptr, txn);
+
+  txn_manager.CommitTransaction(txn);
 }
 
 }  // namespace gc
