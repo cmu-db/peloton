@@ -13,11 +13,11 @@
 #include "codegen/type/decimal_type.h"
 
 #include "codegen/lang/if.h"
-#include "codegen/value.h"
 #include "codegen/proxy/decimal_functions_proxy.h"
 #include "codegen/proxy/values_runtime_proxy.h"
 #include "codegen/type/boolean_type.h"
 #include "codegen/type/integer_type.h"
+#include "codegen/value.h"
 #include "common/exception.h"
 #include "type/limits.h"
 #include "util/string_util.h"
@@ -236,6 +236,25 @@ struct Ceil : public TypeSystem::UnaryOperatorHandleNull {
     auto *result = codegen.Call(DecimalFunctionsProxy::Ceil, {val.GetValue()});
 
     return Value{Decimal::Instance(), result};
+  }
+};
+
+// Sqrt
+struct Sqrt : public TypeSystem::UnaryOperatorHandleNull {
+  bool SupportsType(const Type &type) const override {
+    return type.GetSqlType() == Decimal::Instance();
+  }
+
+  Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
+    return Decimal::Instance();
+  }
+
+ protected:
+  Value Impl(CodeGen &codegen, const Value &val,
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+      const override {
+    auto *raw_ret = codegen.Sqrt(val.GetValue());
+    return Value{Decimal::Instance(), raw_ret};
   }
 };
 
@@ -460,11 +479,13 @@ Negate kNegOp;
 Floor kFloorOp;
 Round kRound;
 Ceil kCeilOp;
+Sqrt kSqrt;
 std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {
     {OperatorId::Negation, kNegOp},
     {OperatorId::Floor, kFloorOp},
     {OperatorId::Round, kRound},
-    {OperatorId::Ceil, kCeilOp}};
+    {OperatorId::Ceil, kCeilOp},
+    {OperatorId::Sqrt, kSqrt}};
 
 // Binary operations
 Add kAddOp;

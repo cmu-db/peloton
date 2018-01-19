@@ -17,6 +17,7 @@ namespace peloton {
 namespace parser {
 class SelectStatement;
 class CreateStatement;
+class CreateFunctionStatement;
 class InsertStatement;
 class DeleteStatement;
 class DropStatement;
@@ -33,7 +34,7 @@ struct TableRef;
 class GroupByDescription;
 class OrderDescription;
 class LimitDescription;
-}
+}  // namespace parser
 
 namespace expression {
 class AbstractExpression;
@@ -49,7 +50,7 @@ class FunctionExpression;
 class OperatorUnaryMinusExpression;
 class CaseExpression;
 class SubqueryExpression;
-}
+}  // namespace expression
 
 //===--------------------------------------------------------------------===//
 // Query Node Visitor
@@ -69,6 +70,7 @@ class SqlNodeVisitor {
   virtual void Visit(parser::LimitDescription *) {}
 
   virtual void Visit(parser::CreateStatement *) {}
+  virtual void Visit(parser::CreateFunctionStatement *) {}
   virtual void Visit(parser::InsertStatement *) {}
   virtual void Visit(parser::DeleteStatement *) {}
   virtual void Visit(parser::DropStatement *) {}
@@ -77,7 +79,7 @@ class SqlNodeVisitor {
   virtual void Visit(parser::TransactionStatement *) {}
   virtual void Visit(parser::UpdateStatement *) {}
   virtual void Visit(parser::CopyStatement *) {}
-  virtual void Visit(parser::AnalyzeStatement *) {};
+  virtual void Visit(parser::AnalyzeStatement *){};
 
   virtual void Visit(expression::ComparisonExpression *expr);
   virtual void Visit(expression::AggregateExpression *expr);
@@ -91,6 +93,7 @@ class SqlNodeVisitor {
   virtual void Visit(expression::StarExpression *expr);
   virtual void Visit(expression::TupleValueExpression *expr);
   virtual void Visit(expression::SubqueryExpression *expr);
+
 
 };
 

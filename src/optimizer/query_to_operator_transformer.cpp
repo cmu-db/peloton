@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <cmath>
-#include <include/settings/settings_manager.h>
+#include "settings/settings_manager.h"
 
 #include "catalog/database_catalog.h"
 #include "expression/expression_util.h"
@@ -222,6 +222,7 @@ void QueryToOperatorTransformer::Visit(parser::TableRef *node) {
 void QueryToOperatorTransformer::Visit(parser::GroupByDescription *) {}
 void QueryToOperatorTransformer::Visit(parser::OrderDescription *) {}
 void QueryToOperatorTransformer::Visit(parser::LimitDescription *) {}
+void QueryToOperatorTransformer::Visit(parser::CreateFunctionStatement *) {}
 
 void QueryToOperatorTransformer::Visit(
     UNUSED_ATTRIBUTE parser::CreateStatement *op) {}

@@ -232,6 +232,28 @@ struct Ceil : public TypeSystem::UnaryOperatorHandleNull {
   }
 };
 
+// Sqrt
+struct Sqrt : public TypeSystem::UnaryOperatorHandleNull {
+  CastTinyInt cast;
+
+  bool SupportsType(const Type &type) const override {
+    return type.GetSqlType() == TinyInt::Instance();
+  }
+
+  Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
+    return Decimal::Instance();
+  }
+
+ protected:
+  Value Impl(CodeGen &codegen, const Value &val,
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+  const override {
+    auto casted = cast.Impl(codegen, val, Decimal::Instance());
+    auto *raw_ret = codegen.Sqrt(casted.GetValue());
+    return Value{Decimal::Instance(), raw_ret};
+  }
+};
+
 ////////////////////////////////////////////////////////////////////////////////
 ///
 /// Binary operations
@@ -479,10 +501,12 @@ std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {{kCompareTinyInt}};
 Negate kNegOp;
 Ceil kCeilOp;
 Floor kFloorOp;
+Sqrt kSqrtOp;
 std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {
     {OperatorId::Negation, kNegOp},
     {OperatorId::Ceil, kCeilOp},
-    {OperatorId::Floor, kFloorOp}};
+    {OperatorId::Floor, kFloorOp},
+    {OperatorId::Sqrt, kSqrtOp}};
 
 // Binary operations
 Add kAddOp;

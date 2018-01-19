@@ -14,16 +14,20 @@
 
 #include "catalog/catalog.h"
 #include "catalog/database_catalog.h"
+#include "catalog/proc_catalog.h"
 #include "catalog/table_catalog.h"
 #include "catalog/trigger_catalog.h"
 #include "common/harness.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/create_executor.h"
+#include "executor/create_function_executor.h"
 #include "executor/executor_context.h"
 #include "expression/abstract_expression.h"
 #include "expression/tuple_value_expression.h"
+#include "parser/create_function_statement.h"
 #include "parser/pg_trigger.h"
 #include "parser/postgresparser.h"
+#include "planner/create_function_plan.h"
 #include "planner/create_plan.h"
 #include "storage/data_table.h"
 #include "trigger/trigger.h"
@@ -118,6 +122,116 @@ TEST_F(CreateTests, CreatingTable) {
   txn_manager.CommitTransaction(txn);
 }
 
+TEST_F(CreateTests, CreatingUDFs) {
+  // Bootstrap
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  // catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  auto catalog = catalog::Catalog::GetInstance();
+  catalog->Bootstrap();
+  catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
+
+  // Insert a table first
+  auto id_column = catalog::Column(
+      type::TypeId::DECIMAL, type::Type::GetTypeSize(type::TypeId::DECIMAL),
+      "balance", true);
+  auto name_column =
+      catalog::Column(type::TypeId::VARCHAR, 32, "dept_name", false);
+
+  // Schema
+  std::unique_ptr<catalog::Schema> table_schema(
+      new catalog::Schema({id_column, name_column}));
+
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+
+  // Create plans
+  planner::CreatePlan node("accounts", DEFAULT_DB_NAME, std::move(table_schema),
+                           CreateType::TABLE);
+
+  // Create executer
+  executor::CreateExecutor executor(&node, context.get());
+
+  executor.Init();
+  executor.Execute();
+
+  EXPECT_EQ(1, (int)catalog::Catalog::GetInstance()
+                   ->GetDatabaseObject(DEFAULT_DB_NAME, txn)
+                   ->GetTableObjects()
+                   .size());
+  txn_manager.CommitTransaction(txn);
+
+  // Create statement
+  auto parser = parser::PostgresParser::GetInstance();
+  std::string query =
+      "CREATE FUNCTION increment "
+      "(balance DOUBLE) "
+      " RETURNS double AS $$ BEGIN RETURN balance + 1;"
+      "END; $$ LANGUAGE plpgsql;";
+  std::unique_ptr<parser::SQLStatementList> stmt_list(
+      parser.BuildParseTree(query).release());
+  EXPECT_TRUE(stmt_list->is_valid);
+  EXPECT_EQ(StatementType::CREATE_FUNC, stmt_list->GetStatement(0)->GetType());
+  auto create_function_stmt = static_cast<parser::CreateFunctionStatement *>(
+      stmt_list->GetStatement(0));
+  // create_function_stmt->TryBindDatabaseName(DEFAULT_DB_NAME);
+
+  // Create plans
+  planner::CreateFunctionPlan plan(create_function_stmt);
+
+  // plan type
+  EXPECT_EQ(PlanNodeType::CREATE_FUNC, plan.GetPlanNodeType());
+  // UDF name
+  EXPECT_EQ("increment", plan.GetFunctionName());
+
+  EXPECT_EQ(1, plan.GetNumParams());
+
+  std::vector<std::string> parameter_names = plan.GetFunctionParameterNames();
+  EXPECT_EQ(1, parameter_names.size());
+  EXPECT_EQ("balance", parameter_names[0]);
+
+  std::vector<type::TypeId> param_types = plan.GetFunctionParameterTypes();
+  EXPECT_EQ(1, param_types.size());
+  EXPECT_EQ(type::TypeId::DECIMAL, param_types[0]);
+
+  type::TypeId return_type = plan.GetReturnType();
+  EXPECT_EQ(type::TypeId::DECIMAL, return_type);
+
+  EXPECT_FALSE(plan.IsReplace());
+
+  // Execute the create trigger
+  txn = txn_manager.BeginTransaction();
+  std::unique_ptr<executor::ExecutorContext> context2(
+      new executor::ExecutorContext(txn));
+  executor::CreateFunctionExecutor createFuncExecutor(&plan, context2.get());
+  createFuncExecutor.Init();
+  createFuncExecutor.Execute();
+  txn_manager.CommitTransaction(txn);
+
+  // test pg_proc
+  txn = txn_manager.BeginTransaction();
+  // Check the effect of creation
+  auto &pg_proc = catalog::ProcCatalog::GetInstance();
+  std::string func_name = "increment";
+  std::vector<type::TypeId> arg_types{type::TypeId::DECIMAL};
+
+  auto inserted_proc = pg_proc.GetProcByName(func_name, arg_types, txn);
+  EXPECT_NE(nullptr, inserted_proc);
+  type::TypeId ret_type = inserted_proc->GetRetType();
+  EXPECT_EQ(type::TypeId::DECIMAL, ret_type);
+  std::string func = inserted_proc->GetName();
+  EXPECT_EQ("increment", func);
+  txn_manager.CommitTransaction(txn);
+
+  auto func_data = catalog->GetFunction(func_name, arg_types);
+  EXPECT_EQ(ret_type, func_data.return_type_);
+  EXPECT_NE(nullptr, func_data.func_context_);
+
+  txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+}
+
 TEST_F(CreateTests, CreatingTrigger) {
   // Bootstrap
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -202,13 +316,15 @@ TEST_F(CreateTests, CreatingTrigger) {
   EXPECT_EQ(ExpressionType::VALUE_TUPLE, left->GetExpressionType());
   EXPECT_EQ("old", static_cast<const expression::TupleValueExpression *>(left)
                        ->GetTableName());
-  EXPECT_EQ("balance", static_cast<const expression::TupleValueExpression *>(
-                           left)->GetColumnName());
+  EXPECT_EQ("balance",
+            static_cast<const expression::TupleValueExpression *>(left)
+                ->GetColumnName());
   EXPECT_EQ(ExpressionType::VALUE_TUPLE, right->GetExpressionType());
   EXPECT_EQ("new", static_cast<const expression::TupleValueExpression *>(right)
                        ->GetTableName());
-  EXPECT_EQ("balance", static_cast<const expression::TupleValueExpression *>(
-                           right)->GetColumnName());
+  EXPECT_EQ("balance",
+            static_cast<const expression::TupleValueExpression *>(right)
+                ->GetColumnName());
   // type (level, timing, event)
   auto trigger_type = plan.GetTriggerType();
   // level

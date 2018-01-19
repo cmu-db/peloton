@@ -27,11 +27,11 @@ namespace concurrency {
 
 // timestamp ordering requires a spinlock field for protecting the atomic access
 // to txn_id field and last_reader_cid field.
-Spinlock *TimestampOrderingTransactionManager::GetSpinlockField(
+common::synchronization::SpinLatch *TimestampOrderingTransactionManager::GetSpinLatchField(
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tuple_id) {
-  return (Spinlock *)(tile_group_header->GetReservedFieldRef(tuple_id) +
-                      LOCK_OFFSET);
+  return (common::synchronization::SpinLatch *)
+            (tile_group_header->GetReservedFieldRef(tuple_id) + LOCK_OFFSET);
 }
 
 // in timestamp ordering, the last_reader_cid records the timestamp of the last
@@ -51,7 +51,7 @@ bool TimestampOrderingTransactionManager::SetLastReaderCommitId(
   cid_t *ts_ptr = (cid_t *)(tile_group_header->GetReservedFieldRef(tuple_id) +
                             LAST_READER_OFFSET);
 
-  GetSpinlockField(tile_group_header, tuple_id)->Lock();
+  GetSpinLatchField(tile_group_header, tuple_id)->Lock();
 
   txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
 
@@ -59,7 +59,7 @@ bool TimestampOrderingTransactionManager::SetLastReaderCommitId(
     // if the write lock has already been acquired by some concurrent
     // transactions,
     // then return without setting the last_reader_cid.
-    GetSpinlockField(tile_group_header, tuple_id)->Unlock();
+    GetSpinLatchField(tile_group_header, tuple_id)->Unlock();
     return false;
   } else {
     // if current_cid is larger than the current value of last_reader_cid field,
@@ -68,7 +68,7 @@ bool TimestampOrderingTransactionManager::SetLastReaderCommitId(
       *ts_ptr = current_cid;
     }
 
-    GetSpinlockField(tile_group_header, tuple_id)->Unlock();
+    GetSpinLatchField(tile_group_header, tuple_id)->Unlock();
     return true;
   }
 }
@@ -79,7 +79,7 @@ void TimestampOrderingTransactionManager::InitTupleReserved(
     const oid_t tuple_id) {
   auto reserved_area = tile_group_header->GetReservedFieldRef(tuple_id);
 
-  new ((reserved_area + LOCK_OFFSET)) Spinlock();
+  new ((reserved_area + LOCK_OFFSET)) common::synchronization::SpinLatch();
   *(cid_t *)(reserved_area + LAST_READER_OFFSET) = 0;
 }
 
@@ -158,7 +158,7 @@ bool TimestampOrderingTransactionManager::AcquireOwnership(
   // to acquire the ownership,
   // we must guarantee that no transaction that has read
   // the tuple has a larger timestamp than the current transaction.
-  GetSpinlockField(tile_group_header, tuple_id)->Lock();
+  GetSpinLatchField(tile_group_header, tuple_id)->Lock();
   // change timestamp
   cid_t last_reader_cid = GetLastReaderCommitId(tile_group_header, tuple_id);
 
@@ -167,16 +167,16 @@ bool TimestampOrderingTransactionManager::AcquireOwnership(
   // consider a transaction that is executed under snapshot isolation.
   // in this case, commit_id is not equal to read_id.
   if (last_reader_cid > current_txn->GetCommitId()) {
-    GetSpinlockField(tile_group_header, tuple_id)->Unlock();
+    GetSpinLatchField(tile_group_header, tuple_id)->Unlock();
 
     return false;
   } else {
     if (tile_group_header->SetAtomicTransactionId(tuple_id, txn_id) == false) {
-      GetSpinlockField(tile_group_header, tuple_id)->Unlock();
+      GetSpinLatchField(tile_group_header, tuple_id)->Unlock();
 
       return false;
     } else {
-      GetSpinlockField(tile_group_header, tuple_id)->Unlock();
+      GetSpinLatchField(tile_group_header, tuple_id)->Unlock();
 
       return true;
     }

@@ -16,8 +16,8 @@
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Verifier.h"
-#include "llvm/Support/raw_os_ostream.h"
 #include "llvm/Support/TargetSelect.h"
+#include "llvm/Support/raw_os_ostream.h"
 #include "llvm/Transforms/Scalar.h"
 #if LLVM_VERSION_GE(3, 9)
 #include "llvm/Transforms/Scalar/GVN.h"
@@ -94,6 +94,7 @@ CodeContext::CodeContext()
       module_(nullptr),
       builder_(nullptr),
       func_(nullptr),
+      udf_func_ptr_(nullptr),
       pass_manager_(nullptr),
       engine_(nullptr) {
   // Initialize JIT stuff
@@ -118,7 +119,7 @@ CodeContext::CodeContext()
   engine_.reset(llvm::EngineBuilder(std::move(m))
                     .setEngineKind(llvm::EngineKind::JIT)
                     .setMCJITMemoryManager(
-                         llvm::make_unique<PelotonMM>(function_symbols_))
+                        llvm::make_unique<PelotonMM>(function_symbols_))
                     .setMCPU(llvm::sys::getHostCPUName())
                     .setErrorStr(&err_str_)
                     .create());
@@ -158,18 +159,15 @@ void CodeContext::RegisterFunction(llvm::Function *func) {
   functions_.emplace_back(func, nullptr);
 }
 
-void CodeContext::RegisterExternalFunction(
-    llvm::Function *func_decl, UNUSED_ATTRIBUTE llvm::Function *external,
-    CodeContext::FuncPtr func_impl) {
+void CodeContext::RegisterExternalFunction(llvm::Function *func_decl,
+                                           CodeContext::FuncPtr func_impl) {
   PL_ASSERT(func_decl->isDeclaration() &&
             "The first argument must be a function declaration");
-  PL_ASSERT(!external->isDeclaration() &&
-            "The second argument must be a full LLVM function definition that "
-            "exists in an external module");
-  PL_ASSERT(func_decl->getName() == external->getName() &&
-            "The declaration and definition functions have different names!");
   PL_ASSERT(func_impl != nullptr && "The function pointer cannot be NULL");
   functions_.emplace_back(func_decl, func_impl);
+
+  // Register the builtin symbol by name
+  function_symbols_[func_decl->getName()] = func_impl;
 }
 
 void CodeContext::RegisterBuiltin(llvm::Function *func_decl,
