@@ -736,10 +736,12 @@ size_t PostgresProtocolHandler::ReadParamValue(
       } else {
         // BINARY mode
         PostgresValueType pg_value_type = static_cast<PostgresValueType>(param_types[param_idx]);
+        LOG_TRACE("Postgres Protocol Conversion [param_idx=%d]",
+                  param_idx);
         switch (pg_value_type) {
           case PostgresValueType::TINYINT: {
-            int int_val = 0;
-            for (size_t i = 0; i < sizeof(int); ++i) {
+            int8_t int_val = 0;
+            for (size_t i = 0; i < sizeof(int8_t); ++i) {
               int_val = (int_val << 8) | param[i];
             }
             bind_parameters[param_idx] =
@@ -749,8 +751,8 @@ size_t PostgresProtocolHandler::ReadParamValue(
             break;
           }
           case PostgresValueType::SMALLINT: {
-            int int_val = 0;
-            for (size_t i = 0; i < sizeof(int); ++i) {
+            int16_t int_val = 0;
+            for (size_t i = 0; i < sizeof(int16_t); ++i) {
               int_val = (int_val << 8) | param[i];
             }
             bind_parameters[param_idx] =
@@ -760,8 +762,8 @@ size_t PostgresProtocolHandler::ReadParamValue(
             break;
           }
           case PostgresValueType::INTEGER: {
-            int int_val = 0;
-            for (size_t i = 0; i < sizeof(int); ++i) {
+            int32_t int_val = 0;
+            for (size_t i = 0; i < sizeof(int32_t); ++i) {
               int_val = (int_val << 8) | param[i];
             }
             bind_parameters[param_idx] =

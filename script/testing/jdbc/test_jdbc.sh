@@ -1,15 +1,21 @@
 #!/bin/bash -x
 
-mkdir -p lib
-mkdir -p out
-wget -nc -P lib https://jdbc.postgresql.org/download/postgresql-9.4.1209.jre6.jar
-javac -classpath ./lib/postgresql-9.4.1209.jre6.jar -d out src/*.java
-jar -cvf out.jar -C out .
-if [ "$#" -ne 2 ]; then
-	java -cp out.jar:./lib/postgresql-9.4.1209.jre6.jar PelotonTest $1
-else
-#	Pass the file path for copy test
-	java -cp out.jar:./lib/postgresql-9.4.1209.jre6.jar PelotonTest $1 $2
+TARGET=$1
+DB_HOST=$2
+DB_PORT=$3
+
+JDBC_JAR="postgresql-9.4.1209.jre6.jar"
+
+if [ "$#" -ne 3 ]; then
+    echo "Missing required arguments: $0 <TARGET> <HOST> <PORT>"
+    exit 1
 fi
 
-# java -cp out.jar:./lib/postgresql-9.4.1209.jre6.jar SSLTest $1
+mkdir -p lib
+mkdir -p out
+
+wget -nc -P lib https://jdbc.postgresql.org/download/${JDBC_JAR}
+
+javac -classpath ./lib/${JDBC_JAR} -d out src/*.java
+jar -cvf out.jar -C out .
+java -cp out.jar:./lib/${JDBC_JAR} ${TARGET} ${DB_HOST} ${DB_PORT}
