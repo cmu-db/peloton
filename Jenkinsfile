@@ -11,9 +11,10 @@ pipeline {
                         }
                     }
                     steps {
-                        sh 'sudo /bin/bash -c "source ./peloton/script/installation/packages.sh"'
+                        sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
                         sh 'python ./script/validators/source_validator.py'
-                        sh 'mkdir build && cd build'
+                        sh 'mkdir build'
+                        sh 'cd build'
                         sh 'cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False ..'
                         sh 'make -j4'
                         sh 'make check -j4'
