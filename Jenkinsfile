@@ -7,7 +7,7 @@ pipeline {
                     agent {
                         docker {
                             image 'ubuntu:xenial'
-                            args "-v /var/lib/jenkins/jobs/crd/jobs/peloton/builds/${env.BUILD_ID}:/job"
+                            args "-v /var/lib/jenkins/jobs/crd/jobs/${env.JOB_BASE_NAME}/builds/${env.BUILD_ID}:/job"
                         }
                     }
                     steps {
