@@ -6,7 +6,7 @@
 //
 // Identification: test/function/timestamp_functions_test.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -43,14 +43,14 @@ void DateTruncTestHelper(DatePartType part, std::string &date,
   // The second argument is a TimestampValue of the date
   std::string string_date_part = DatePartTypeToString(part);
   const char *char_date_part = string_date_part.c_str();
-  uint64_t int_date =
-      type::ValueFactory::CastAsTimestamp(
-          type::ValueFactory::GetVarcharValue(date)).GetAs<uint64_t>();
+  uint64_t int_date = type::ValueFactory::CastAsTimestamp(
+                          type::ValueFactory::GetVarcharValue(date))
+                          .GetAs<uint64_t>();
 
   // The expected return value
-  uint64_t int_expected =
-      type::ValueFactory::CastAsTimestamp(
-          type::ValueFactory::GetVarcharValue(expected)).GetAs<uint64_t>();
+  uint64_t int_expected = type::ValueFactory::CastAsTimestamp(
+                              type::ValueFactory::GetVarcharValue(expected))
+                              .GetAs<uint64_t>();
 
   // Invoke the DateTrunc method and get back the result
   auto result =
@@ -64,8 +64,7 @@ void DateTruncTestHelper(DatePartType part, std::string &date,
   // Check that result is *not* null
   EXPECT_NE(type::PELOTON_TIMESTAMP_NULL, result);
   // Then check that it equals our expected value
-  LOG_TRACE("COMPARE: %s = %" PRId64 "\n",
-            expected.c_str(),
+  LOG_TRACE("COMPARE: %s = %" PRId64 "\n", expected.c_str(),
             static_cast<long>(result));
   EXPECT_EQ(int_expected, result);
 }
@@ -174,35 +173,32 @@ TEST_F(TimestampFunctionsTests, DateTruncYearTest) {
  * and checks whether we get the correct result.
  */
 void DatePartTestHelper(DatePartType part, std::string &date,
-                         std::string &expected) {
+                        std::string &expected) {
   // The first argument is an VarcharValue of the DatePartType
   // The second argument is a TimestampValue of the date
   std::string string_date_part = DatePartTypeToString(part);
   const char *char_date_part = string_date_part.c_str();
-  uint64_t int_date =
-      type::ValueFactory::CastAsTimestamp(
-          type::ValueFactory::GetVarcharValue(date)).GetAs<uint64_t>();
+  uint64_t int_date = type::ValueFactory::CastAsTimestamp(
+                          type::ValueFactory::GetVarcharValue(date))
+                          .GetAs<uint64_t>();
 
   // The expected return value
-  double double_expected =
-      type::ValueFactory::CastAsDecimal(
-          type::ValueFactory::GetVarcharValue(expected)).GetAs<double>();
+  double double_expected = type::ValueFactory::CastAsDecimal(
+                               type::ValueFactory::GetVarcharValue(expected))
+                               .GetAs<double>();
 
   // Invoke the DatePart method and get back the result
   auto result =
       function::TimestampFunctions::DatePart(char_date_part, int_date);
 
-  LOG_INFO("COMPARED: %s, %f = %f \n",
-        expected.c_str(), double_expected,
-        result);
+  LOG_INFO("COMPARED: %s, %f = %f \n", expected.c_str(), double_expected,
+           result);
 
   // Check that result is *not* null
   EXPECT_NE(type::PELOTON_DECIMAL_NULL, result);
 
   // Then check that it equals our expected value
-  LOG_TRACE("COMPARE: %s = %f \n",
-            expected.c_str(),
-            result);
+  LOG_TRACE("COMPARE: %s = %f \n", expected.c_str(), result);
   EXPECT_DOUBLE_EQ(double_expected, result);
 }
 

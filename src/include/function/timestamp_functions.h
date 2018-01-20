@@ -6,6 +6,18 @@
 //
 // Identification: src/include/function/timestamp_functions.h
 //
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// timestamp_functions.h
+//
+// Identification: src/include/function/timestamp_functions.h
+//
 // Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//

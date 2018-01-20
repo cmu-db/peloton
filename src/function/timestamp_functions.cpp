@@ -6,7 +6,7 @@
 //
 // Identification: src/function/timestamp_functions.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -158,8 +158,7 @@ type::Value TimestampFunctions::_DateTrunc(
 }
 
 double TimestampFunctions::DatePart(const char *date_part_type,
-                                       uint64_t value) {
-
+                                    uint64_t value) {
   PL_ASSERT(date_part_type != nullptr);
 
   std::string date_part_string(date_part_type);
@@ -270,9 +269,7 @@ double TimestampFunctions::DatePart(const char *date_part_type,
       result = year;
       break;
     }
-    default: {
-      result = type::PELOTON_DECIMAL_NULL;
-    }
+    default: { result = type::PELOTON_DECIMAL_NULL; }
   };
 
   return (result);
