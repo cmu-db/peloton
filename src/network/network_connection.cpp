@@ -12,7 +12,7 @@
 
 #include <unistd.h>
 #include "network/postgres_protocol_handler.h"
-#include <settings/settings_manager.h>
+#include "settings/settings_manager.h"
 #include "network/network_connection.h"
 #include "network/protocol_handler_factory.h"
 #include "errno.h"
