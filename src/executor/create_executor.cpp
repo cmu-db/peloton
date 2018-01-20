@@ -119,12 +119,6 @@ bool CreateExecutor::CreateTable(const planner::CreatePlan &node) {
       auto source_table = db->GetTableWithName(table_name);
       int count = 1;
 
-      // DEBUG
-      for (size_t k = 0; k < source_table->GetSchema()->GetColumnCount(); k++) {
-        LOG_DEBUG("col name: %s\n", source_table->GetSchema()->GetColumn(k).GetName().c_str());
-      }
-
-
       for (auto fk : node.GetForeignKeys()) {
         auto sink_table = db->GetTableWithName(fk.sink_table_name);
 
@@ -175,29 +169,26 @@ bool CreateExecutor::CreateTable(const planner::CreatePlan &node) {
         sink_table->RegisterForeignKeySource(catalog_fk);
 
         // Add a non-unique index on the source table if needed
-        // if (catalog_fk->GetUpdateAction() != FKConstrActionType::NOACTION ||
-        //     catalog_fk->GetDeleteAction() != FKConstrActionType::NOACTION) {
-          std::vector<std::string> source_col_names =
-              fk.foreign_key_sources;
-          std::string index_name =
-              source_table->GetName() + "_FK_" + sink_table->GetName() + "_"
-              + std::to_string(count);
-          catalog->CreateIndex(database_name, source_table->GetName(),
-                                source_col_ids, index_name, false,
-                                IndexType::BWTREE, current_txn);
-          count++;
+        std::vector<std::string> source_col_names =
+            fk.foreign_key_sources;
+        std::string index_name =
+            source_table->GetName() + "_FK_" + sink_table->GetName() + "_"
+            + std::to_string(count);
+        catalog->CreateIndex(database_name, source_table->GetName(),
+                              source_col_ids, index_name, false,
+                              IndexType::BWTREE, current_txn);
+        count++;
 
 #ifdef LOG_DEBUG_ENABLED
-          LOG_DEBUG("Added a FOREIGN index on in %s.\n", table_name.c_str());
-          LOG_DEBUG("Foreign key column names: \n");
-          for (auto c : source_col_names) {
-            LOG_DEBUG("FK col name: %s\n", c.c_str());
-          }
-          for (auto c : fk.foreign_key_sinks) {
-            LOG_DEBUG("FK sink col name: %s\n", c.c_str());
-          }
+        LOG_DEBUG("Added a FOREIGN index on in %s.\n", table_name.c_str());
+        LOG_DEBUG("Foreign key column names: \n");
+        for (auto c : source_col_names) {
+          LOG_DEBUG("FK col name: %s\n", c.c_str());
+        }
+        for (auto c : fk.foreign_key_sinks) {
+          LOG_DEBUG("FK sink col name: %s\n", c.c_str());
+        }
 #endif
-        //}
       }
     }
   } else if (current_txn->GetResult() == ResultType::FAILURE) {

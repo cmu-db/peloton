@@ -897,9 +897,7 @@ void PostgresParser::ColumnDefTransform(ColumnDef *root, parser::CreateStatement
         // Transform foreign key attributes
         // Reference table
 
-        // TODO: the result ColumnDefinition should also be returned !!!
-        // additionally, add a special ColumnDefinition to the list!
-        // delete result; // No no no! You are losing this col !
+        // additionally, add a speci·al ColumnDefinition to the list!
         auto col = new ColumnDefinition(ColumnDefinition::DataType::FOREIGN);
 
         col->foreign_key_source.emplace_back(root->colname);
