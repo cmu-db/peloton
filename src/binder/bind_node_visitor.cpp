@@ -4,9 +4,9 @@
 //
 // bind_node_visitor.cpp
 //
-// Identification: src/binder/binder_node_visitor.cpp
+// Identification: src/binder/bind_node_visitor.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -286,7 +286,7 @@ void BindNodeVisitor::Visit(expression::FunctionExpression *expr) {
   if (!func_data.is_udf_) {
     expr->SetBuiltinFunctionExpressionParameters(
         func_data.func_, func_data.return_type_, func_data.argument_types_);
-    
+
     // Look into the OperatorId for built-in functions to check the first
     // argument for timestamp functions.
     // TODO(LM): The OperatorId might need to be changed to global ID after we
