@@ -18,13 +18,16 @@ namespace peloton {
 namespace optimizer {
 
 class Memo;
+class TableStats;
 
-// Derive stats for a logical group expression
+/**
+ * @brief Derive stats for the root group using a group expression's children's
+ * stats
+ */
 class StatsCalculator : public OperatorVisitor {
  public:
-  void CalculateStats(
-      GroupExpression* gexpr,
-      ExprSet required_cols, Memo *memo);
+  void CalculateStats(GroupExpression *gexpr, ExprSet required_cols,
+                      Memo *memo);
 
   void Visit(const LeafOperator *) override;
   void Visit(const LogicalGet *) override;
@@ -42,7 +45,39 @@ class StatsCalculator : public OperatorVisitor {
   void Visit(const LogicalUpdate *) override;
 
  private:
-  GroupExpression* gexpr_;
+  /**
+   * @brief Add the base table stats if the base table maintain stats, or else
+   * use default stats
+   *
+   * @param col The column we want to get stats
+   * @param table_stats Base table stats
+   * @param stats The stats map to add
+   * @param copy Specify if we want to make a copy
+   */
+  void AddBaseTableStats(
+      expression::AbstractExpression *col,
+      std::shared_ptr<TableStats> table_stats,
+      std::unordered_map<std::string, std::shared_ptr<ColumnStats>> &stats,
+      bool copy);
+  /**
+   * @brief Update stats for predicate evaluation
+   *
+   * @param required_stats The stats we need to update
+   * @param predicate_stats The stats for columns in the expression
+   * @param predicates conjunction predicates
+   */
+  void UpdateStatsForFilter(
+      std::unordered_map<std::string, std::shared_ptr<ColumnStats>>
+          &required_stats,
+      std::unordered_map<std::string, std::shared_ptr<ColumnStats>>
+          &predicate_stats,
+      std::vector<AnnotatedExpression> &predicates);
+
+  double CalculateSelectivityForPredicate(
+      const std::shared_ptr<TableStats> predicate_table_stats,
+      const expression::AbstractExpression *expr);
+
+  GroupExpression *gexpr_;
   ExprSet required_cols_;
   Memo *memo_;
 };

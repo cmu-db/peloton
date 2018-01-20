@@ -20,15 +20,13 @@ namespace peloton {
 namespace optimizer {
 
 using std::vector;
-vector<ExprSet> ChildStatsDeriver::DeriveInputStats(
-    GroupExpression *gexpr,
-    ExprSet required_cols, Memo *memo) {
+vector<ExprSet> ChildStatsDeriver::DeriveInputStats(GroupExpression *gexpr,
+                                                    ExprSet required_cols,
+                                                    Memo *memo) {
   required_cols_ = required_cols;
   gexpr_ = gexpr;
   memo_ = memo;
-  output_ = vector<ExprSet>(
-      gexpr->GetChildrenGroupsSize(),
-      ExprSet{});
+  output_ = vector<ExprSet>(gexpr->GetChildrenGroupsSize(), ExprSet{});
   gexpr->Op().Accept(this);
   return std::move(output_);
 }
@@ -37,11 +35,11 @@ vector<ExprSet> ChildStatsDeriver::DeriveInputStats(
 void ChildStatsDeriver::Visit(const LogicalQueryDerivedGet *) {}
 void ChildStatsDeriver::Visit(const LogicalInnerJoin *op) {
   PassDownRequiredCols();
-  for (auto& annotated_expr : op->join_predicates) {
+  for (auto &annotated_expr : op->join_predicates) {
     auto predicate = annotated_expr.expr.get();
     ExprSet expr_set;
     expression::ExpressionUtil::GetTupleValueExprs(expr_set, predicate);
-    for (auto& col : expr_set) {
+    for (auto &col : expr_set) {
       PassDownColumn(col);
     }
   }
@@ -62,18 +60,18 @@ void ChildStatsDeriver::PassDownRequiredCols() {
   }
 }
 
-void ChildStatsDeriver::PassDownColumn(expression::AbstractExpression* col) {
-    PL_ASSERT(col->GetExpressionType() == ExpressionType::VALUE_TUPLE);
-    auto tv_expr = reinterpret_cast<expression::TupleValueExpression *>(col);
-    for (size_t idx = 0; idx < gexpr_->GetChildrenGroupsSize(); ++idx) {
-      auto child_group_id = gexpr_->GetChildGroupId(idx);
-      if (memo_->GetGroupByID(child_group_id)
-              ->GetTableAliases()
-              .count(tv_expr->GetTableName())) {
-        output_[idx].insert(col);
-        break;
-      }
+void ChildStatsDeriver::PassDownColumn(expression::AbstractExpression *col) {
+  PL_ASSERT(col->GetExpressionType() == ExpressionType::VALUE_TUPLE);
+  auto tv_expr = reinterpret_cast<expression::TupleValueExpression *>(col);
+  for (size_t idx = 0; idx < gexpr_->GetChildrenGroupsSize(); ++idx) {
+    auto child_group = memo_->GetGroupByID(gexpr_->GetChildGroupId(idx));
+    if (child_group->GetTableAliases().count(tv_expr->GetTableName()) &&
+        // If we have not derived the column stats yet
+        child_group->HasColumnStats(tv_expr->GetColFullName())) {
+      output_[idx].insert(col);
+      break;
     }
+  }
 }
 }  // namespace optimizer
 }  // namespace peloton

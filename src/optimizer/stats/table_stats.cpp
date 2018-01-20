@@ -47,7 +47,13 @@ TableStats::TableStats(std::vector<std::shared_ptr<ColumnStats>> col_stats_ptrs,
   }
 }
 
-void TableStats::UpdateNumRows(size_t new_num_rows) { num_rows = new_num_rows; }
+void TableStats::UpdateNumRows(size_t new_num_rows) { 
+  num_rows = new_num_rows; 
+  for (auto& col_name_stats_pair : col_name_to_stats_map_) {
+    auto& col_stats = col_name_stats_pair.second;
+    col_stats->num_rows = num_rows;
+  }
+}
 
 bool TableStats::AddColumnStats(std::shared_ptr<ColumnStats> col_stats) {
   auto it = col_name_to_stats_map_.find(col_stats->column_name);
