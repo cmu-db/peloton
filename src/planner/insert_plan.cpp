@@ -40,7 +40,7 @@ InsertPlan::InsertPlan(
       auto &values = (*insert_values)[tuple_idx];
       if (values.size() > schema->GetColumnCount())
         throw CatalogException(
-            "ERROR: INSERT has more expressions than target columns");
+            "ERROR:  INSERT has more expressions than target columns");
 
       uint32_t param_idx = 0;
       for (uint32_t column_id = 0; column_id < values.size(); column_id++) {

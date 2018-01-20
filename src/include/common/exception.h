@@ -69,8 +69,8 @@ class Exception : public std::runtime_error {
   Exception(ExceptionType exception_type, std::string message)
       : std::runtime_error(message), type(exception_type) {
     exception_message_ = "Exception Type :: " +
-                                    ExpectionTypeToString(exception_type) +
-                                    "\nMessage :: " + message;
+                         ExpectionTypeToString(exception_type) +
+                         "\nMessage :: " + message;
   }
 
   std::string ExpectionTypeToString(ExceptionType type) {
@@ -127,6 +127,8 @@ class Exception : public std::runtime_error {
         return "Unknown";
     }
   }
+
+  ExceptionType GetType() { return type; }
 
   // Based on :: http://panthema.net/2008/0901-stacktrace-demangled/
   static void PrintStackTrace(FILE *out = ::stderr,
@@ -197,7 +199,7 @@ class Exception : public std::runtime_error {
     }
   }
 
-  friend std::ostream& operator<<(std::ostream& os, const Exception& e);
+  friend std::ostream &operator<<(std::ostream &os, const Exception &e);
 
  private:
   // type
