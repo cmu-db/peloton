@@ -14,7 +14,7 @@
 
 #include "common/macros.h"
 #include "executor/executor_context.h"
-
+#include <string>
 namespace peloton {
 namespace function {
 
@@ -219,6 +219,156 @@ uint32_t StringFunctions::Length(
   PL_ASSERT(str != nullptr);
   return length;
 }
+
+char * StringFunctions::Upper(
+  UNUSED_ATTRIBUTE executor::ExecutorContext &ctx,
+  UNUSED_ATTRIBUTE const char* str,
+  UNUSED_ATTRIBUTE uint32_t str_len) {
+    LOG_DEBUG("called Upper");
+    LOG_DEBUG("%s",str);
+    PL_ASSERT( str != nullptr);
+    
+    auto *pool = ctx.GetPool();    
+    auto *new_str = reinterpret_cast<char *>(pool->Allocate(str_len+1));
+
+    uint32_t index = 0;
+    while (index<str_len){
+      if (str[index]>='a'&&str[index]<='z')
+        new_str[index] = str[index]-'a'+'A';
+      else
+        new_str[index] = str[index];
+      
+      index++;
+    }
+    new_str[index] = '\0';
+    LOG_DEBUG("finished Upper");
+    return new_str;
+  }
+
+
+
+char * StringFunctions::Lower(
+  UNUSED_ATTRIBUTE executor::ExecutorContext &ctx,
+  UNUSED_ATTRIBUTE const char* str,
+  UNUSED_ATTRIBUTE uint32_t str_len) {
+    PL_ASSERT( str != nullptr);
+    LOG_DEBUG("called Lower");
+    auto *pool = ctx.GetPool();    
+    auto *new_str = reinterpret_cast<char *>(pool->Allocate(str_len+1));
+    
+    uint32_t index = 0;
+    while (index<str_len){
+      if (str[index]>='A'&&str[index]<='Z')
+        new_str[index] = str[index]-'A'+'a';
+      else
+        new_str[index] = str[index];
+    
+      index++;
+    }
+    new_str[index] = '\0';
+    return new_str;
+  }
+
+type::Value StringFunctions::_Upper(
+  const std::vector<type::Value> &args) {
+  LOG_DEBUG("called _Upper");
+  PL_ASSERT(args.size()==1);
+  if (args[0].IsNull()) {
+    return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
+  }
+  executor::ExecutorContext ctx{nullptr};
+  
+  std::string ret_string(StringFunctions::Upper(ctx, args[0].GetAs<const char *>(),
+                                               args[0].GetLength()));
+  LOG_DEBUG("finished _Upper with");                                          
+  LOG_DEBUG("%s",ret_string.c_str());
+  return type::ValueFactory::GetVarcharValue(ret_string);
+}
+
+type::Value StringFunctions::_Lower(
+  const std::vector<type::Value> &args){
+    LOG_DEBUG("called _Lower");
+    PL_ASSERT(args.size()==1);
+    if (args[0].IsNull()) {
+      return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
+    }
+    executor::ExecutorContext ctx{nullptr};
+    
+    std::string ret_string(StringFunctions::Lower(ctx,args[0].GetAs<const char *>(),
+                                               args[0].GetLength()));
+    LOG_DEBUG("Lower finished with");                                               
+    LOG_DEBUG("%s",ret_string.c_str());
+    return type::ValueFactory::GetVarcharValue(ret_string);
+  }
+
+type::Value StringFunctions::_Concat(
+  const std::vector<type::Value> &args){
+    PL_ASSERT(args.size()>0);
+    executor::ExecutorContext ctx{nullptr};
+    auto *pool = ctx.GetPool();
+    
+    char **concat_strs = reinterpret_cast<char **>(pool->Allocate(args.size()));
+    uint32_t *attr_lens = reinterpret_cast<uint32_t *>
+                          (pool->Allocate(args.size()*sizeof(uint32_t)));
+    for (uint32_t i = 0; i < args.size(); i++){
+      if (args[i].IsNull())
+      {
+        attr_lens[i] = 0;
+        concat_strs[i] = nullptr; 
+        continue;
+      }
+       
+      attr_lens[i] = args[i].GetLength();
+      concat_strs[i] = args[i].GetAs<char *>();
+    }
+
+    LOG_DEBUG("called Concat with %u", args.size());
+    StrWithLen tmp = StringFunctions::Concat(ctx, (const char **) concat_strs, attr_lens, args.size());
+    std::string ret_string(tmp.str);
+    return type::ValueFactory::GetVarcharValue(ret_string);
+  }
+
+StringFunctions::StrWithLen StringFunctions::Concat(
+  UNUSED_ATTRIBUTE executor::ExecutorContext &ctx,
+  UNUSED_ATTRIBUTE const char **concat_strs,
+  UNUSED_ATTRIBUTE uint32_t *attr_lens,
+  UNUSED_ATTRIBUTE uint32_t attr_len){
+    
+    PL_ASSERT( concat_strs != nullptr);
+    PL_ASSERT( attr_lens != nullptr);
+
+
+    LOG_DEBUG("called concat with %u str", attr_len);
+
+    uint32_t len_all = 0;
+    uint32_t iter = 0;
+
+    while (iter < attr_len)
+      len_all += attr_lens[iter++];
+    
+    if (len_all == 0){
+      return StringFunctions::StrWithLen(nullptr, 1);
+    }
+
+    auto *pool = ctx.GetPool();        
+    auto *ret_str = reinterpret_cast<char *>(pool->Allocate(len_all+1));
+    
+    uint32_t tail_str = 0;
+    iter = 0;
+    while ( iter < attr_len){
+      if (concat_strs[iter]==nullptr){
+        iter++;
+        continue;
+      }
+      LOG_DEBUG("%s %u", concat_strs[iter], tail_str);
+      PL_MEMCPY(ret_str+tail_str, concat_strs[iter], attr_lens[iter]);
+      tail_str+=attr_lens[iter];
+      iter++;
+    }
+    ret_str[tail_str] = '\0';
+    return StringFunctions::StrWithLen(ret_str,len_all);
+}
+   
 
 }  // namespace function
 }  // namespace peloton

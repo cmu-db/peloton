@@ -26,7 +26,9 @@ DEFINE_METHOD(peloton::function, StringFunctions, Like);
 DEFINE_METHOD(peloton::function, StringFunctions, Length);
 DEFINE_METHOD(peloton::function, StringFunctions, Substr);
 DEFINE_METHOD(peloton::function, StringFunctions, Repeat);
-
+DEFINE_METHOD(peloton::function, StringFunctions, Lower);
+DEFINE_METHOD(peloton::function, StringFunctions, Upper);
+DEFINE_METHOD(peloton::function, StringFunctions, Concat);
 // Trim-related functions
 DEFINE_METHOD(peloton::function, StringFunctions, BTrim);
 DEFINE_METHOD(peloton::function, StringFunctions, Trim);

@@ -29,6 +29,7 @@
 #include "function/decimal_functions.h"
 #include "function/old_engine_string_functions.h"
 #include "function/timestamp_functions.h"
+#include "function/string_functions.h"
 #include "index/index_factory.h"
 #include "storage/storage_manager.h"
 #include "storage/table_factory.h"
@@ -891,6 +892,25 @@ void Catalog::InitializeFunctions() {
        * string functions
        */
       AddBuiltinFunction(
+            "upper",  {type::TypeId::VARCHAR}, type::TypeId::VARCHAR,
+            internal_lang, "Upper",
+            function::BuiltInFuncType{OperatorId::Upper,
+                                      function::StringFunctions::_Upper},
+            txn);
+      AddBuiltinFunction(
+            "lower",  {type::TypeId::VARCHAR}, type::TypeId::VARCHAR,
+            internal_lang, "Lower",
+            function::BuiltInFuncType{OperatorId::Lower,
+                                      function::StringFunctions::_Lower},
+            txn);
+      AddBuiltinFunction(
+            "concat",  {type::TypeId::VARCHAR,type::TypeId::VARCHAR}, type::TypeId::VARCHAR,
+            internal_lang, "Concat",
+            function::BuiltInFuncType{OperatorId::Concat,
+                                      function::StringFunctions::_Concat},
+            txn);
+
+      AddBuiltinFunction(
           "ascii", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
           internal_lang, "Ascii",
           function::BuiltInFuncType{OperatorId::Ascii,
@@ -902,12 +922,12 @@ void Catalog::InitializeFunctions() {
           function::BuiltInFuncType{OperatorId::Chr,
                                     function::OldEngineStringFunctions::Chr},
           txn);
-      AddBuiltinFunction(
+      /*AddBuiltinFunction(
           "concat", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
           type::TypeId::VARCHAR, internal_lang, "Concat",
           function::BuiltInFuncType{OperatorId::Concat,
                                     function::OldEngineStringFunctions::Concat},
-          txn);
+          txn);*/
       AddBuiltinFunction(
           "substr",
           {type::TypeId::VARCHAR, type::TypeId::INTEGER, type::TypeId::INTEGER},
