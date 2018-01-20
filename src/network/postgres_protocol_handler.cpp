@@ -19,7 +19,6 @@
 #include "common/macros.h"
 #include "common/portal.h"
 #include "expression/expression_util.h"
-#include "include/traffic_cop/traffic_cop.h"
 #include "network/marshal.h"
 #include "network/postgres_protocol_handler.h"
 #include "parser/postgresparser.h"

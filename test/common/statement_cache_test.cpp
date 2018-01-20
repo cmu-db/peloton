@@ -56,9 +56,11 @@ TEST_F(StatementCacheTests, DisableTableTest) {
   std::vector<std::shared_ptr<Statement>> statements;
   std::set<oid_t> ref_table = {0, 1, 2, 3};
   std::string query = "SELECT * FROM TEST";
+
+  LOG_INFO("Pareparing statements");
   // Prepare the 4 statements
   for (size_t i = 0; i < 4; i++) {
-    std::string name("" + i);
+    std::string name = std::to_string(i);
     ref_table.erase(i);
     auto stmt = std::make_shared<Statement>(name, query);
     stmt->SetReferencedTables(ref_table);
@@ -67,7 +69,8 @@ TEST_F(StatementCacheTests, DisableTableTest) {
   }
 
   oid_t table = 0;
-  // Insert statements in to the table
+  LOG_INFO("Putting statements into cache");
+  // Insert statements in to the cache
   for (auto &stmt : statements) {
     EXPECT_EQ(3, stmt->GetReferencedTables().size());
     EXPECT_EQ(0, stmt->GetReferencedTables().count(table));
@@ -81,12 +84,13 @@ TEST_F(StatementCacheTests, DisableTableTest) {
     cache->AddStatement(stmt);
   }
 
+  LOG_INFO("Notify cache the disabled table oid 2");
   // Disable the cache
   cache->NotifyInvalidTable(2);
 
   // plan 0 1 3 need to replan while 2 do not
   for (oid_t i = 0; i < 4; i++) {
-    std::string name = "" + i;
+    std::string name = std::to_string(i);
     auto stmt = cache->GetStatement(name);
     EXPECT_NE(nullptr, stmt);
     if (i != 2) {
