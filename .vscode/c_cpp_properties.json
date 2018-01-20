@@ -2,7 +2,8 @@
     "configurations": [
         {
             "name": "Mac",
-            "includePath": [                
+            "includePath": [         
+                "/usr/local/Cellar/protobuf/3.5.1/include",       
                 "/usr/local/Cellar/llvm@3.7/3.7.1/lib/llvm-3.7/include",
                 "/usr/local/include",
                 "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1",
@@ -17,6 +18,7 @@
             "intelliSenseMode": "clang-x64",
             "browse": {
                 "path": [
+                    "/usr/local/Cellar/protobuf/3.5.1/include",
                     "/usr/include/c++/4.2.1",
                     "/usr/local/include",
                     "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1",

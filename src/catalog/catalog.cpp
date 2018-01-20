@@ -28,8 +28,8 @@
 #include "function/date_functions.h"
 #include "function/decimal_functions.h"
 #include "function/old_engine_string_functions.h"
-#include "function/timestamp_functions.h"
 #include "function/string_functions.h"
+#include "function/timestamp_functions.h"
 #include "index/index_factory.h"
 #include "storage/storage_manager.h"
 #include "storage/table_factory.h"
@@ -953,23 +953,23 @@ void Catalog::InitializeFunctions() {
        * string functions
        */
       AddBuiltinFunction(
-            "upper",  {type::TypeId::VARCHAR}, type::TypeId::VARCHAR,
-            internal_lang, "Upper",
-            function::BuiltInFuncType{OperatorId::Upper,
-                                      function::StringFunctions::_Upper},
-            txn);
+          "upper", {type::TypeId::VARCHAR}, type::TypeId::VARCHAR,
+          internal_lang, "Upper",
+          function::BuiltInFuncType{OperatorId::Upper,
+                                    function::StringFunctions::__Upper},
+          txn);
       AddBuiltinFunction(
-            "lower",  {type::TypeId::VARCHAR}, type::TypeId::VARCHAR,
-            internal_lang, "Lower",
-            function::BuiltInFuncType{OperatorId::Lower,
-                                      function::StringFunctions::_Lower},
-            txn);
+          "lower", {type::TypeId::VARCHAR}, type::TypeId::VARCHAR,
+          internal_lang, "Lower",
+          function::BuiltInFuncType{OperatorId::Lower,
+                                    function::StringFunctions::__Lower},
+          txn);
       AddBuiltinFunction(
-            "concat",  {type::TypeId::VARCHAR,type::TypeId::VARCHAR}, type::TypeId::VARCHAR,
-            internal_lang, "Concat",
-            function::BuiltInFuncType{OperatorId::Concat,
-                                      function::StringFunctions::_Concat},
-            txn);
+          "concat", {type::TypeId::VARCHAR, type::TypeId::VARCHAR},
+          type::TypeId::VARCHAR, internal_lang, "Concat",
+          function::BuiltInFuncType{OperatorId::Concat,
+                                    function::StringFunctions::__Concat},
+          txn);
 
       AddBuiltinFunction(
           "ascii", {type::TypeId::VARCHAR}, type::TypeId::INTEGER,
@@ -1064,8 +1064,9 @@ void Catalog::InitializeFunctions() {
        */
       AddBuiltinFunction(
           "sqrt", {type::TypeId::TINYINT}, type::TypeId::DECIMAL, internal_lang,
-          "Sqrt", function::BuiltInFuncType{OperatorId::Sqrt,
-                                            function::DecimalFunctions::Sqrt},
+          "Sqrt",
+          function::BuiltInFuncType{OperatorId::Sqrt,
+                                    function::DecimalFunctions::Sqrt},
           txn);
       AddBuiltinFunction(
           "sqrt", {type::TypeId::SMALLINT}, type::TypeId::DECIMAL,
@@ -1075,13 +1076,15 @@ void Catalog::InitializeFunctions() {
           txn);
       AddBuiltinFunction(
           "sqrt", {type::TypeId::INTEGER}, type::TypeId::DECIMAL, internal_lang,
-          "Sqrt", function::BuiltInFuncType{OperatorId::Sqrt,
-                                            function::DecimalFunctions::Sqrt},
+          "Sqrt",
+          function::BuiltInFuncType{OperatorId::Sqrt,
+                                    function::DecimalFunctions::Sqrt},
           txn);
       AddBuiltinFunction(
           "sqrt", {type::TypeId::BIGINT}, type::TypeId::DECIMAL, internal_lang,
-          "Sqrt", function::BuiltInFuncType{OperatorId::Sqrt,
-                                            function::DecimalFunctions::Sqrt},
+          "Sqrt",
+          function::BuiltInFuncType{OperatorId::Sqrt,
+                                    function::DecimalFunctions::Sqrt},
           txn);
       AddBuiltinFunction(
           "sqrt", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL, internal_lang,
@@ -1132,14 +1135,16 @@ void Catalog::InitializeFunctions() {
 
       AddBuiltinFunction(
           "ceil", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL, internal_lang,
-          "Ceil", function::BuiltInFuncType{OperatorId::Ceil,
-                                            function::DecimalFunctions::_Ceil},
+          "Ceil",
+          function::BuiltInFuncType{OperatorId::Ceil,
+                                    function::DecimalFunctions::_Ceil},
           txn);
 
       AddBuiltinFunction(
           "ceil", {type::TypeId::TINYINT}, type::TypeId::DECIMAL, internal_lang,
-          "Ceil", function::BuiltInFuncType{OperatorId::Ceil,
-                                            function::DecimalFunctions::_Ceil},
+          "Ceil",
+          function::BuiltInFuncType{OperatorId::Ceil,
+                                    function::DecimalFunctions::_Ceil},
           txn);
 
       AddBuiltinFunction(
@@ -1151,14 +1156,16 @@ void Catalog::InitializeFunctions() {
 
       AddBuiltinFunction(
           "ceil", {type::TypeId::INTEGER}, type::TypeId::DECIMAL, internal_lang,
-          "Ceil", function::BuiltInFuncType{OperatorId::Ceil,
-                                            function::DecimalFunctions::_Ceil},
+          "Ceil",
+          function::BuiltInFuncType{OperatorId::Ceil,
+                                    function::DecimalFunctions::_Ceil},
           txn);
 
       AddBuiltinFunction(
           "ceil", {type::TypeId::BIGINT}, type::TypeId::DECIMAL, internal_lang,
-          "Ceil", function::BuiltInFuncType{OperatorId::Ceil,
-                                            function::DecimalFunctions::_Ceil},
+          "Ceil",
+          function::BuiltInFuncType{OperatorId::Ceil,
+                                    function::DecimalFunctions::_Ceil},
           txn);
 
       AddBuiltinFunction(
