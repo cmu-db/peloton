@@ -32,7 +32,7 @@
 #include "type/value.h"
 #include "type/value_factory.h"
 #include "network/marshal.h"
-#include "settings/settings_manager.h"
+
 #define SSL_MESSAGE_VERNO 80877103
 #define PROTO_MAJOR_VERSION(x) (x >> 16)
 
