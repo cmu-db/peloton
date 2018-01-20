@@ -225,5 +225,15 @@ type::Value OldEngineStringFunctions::Length(
   return type::ValueFactory::GetIntegerValue(ret);
 }
 
+type::Value OldEngineStringFunctions::Upper(
+    UNUSED_ATTRIBUTE const std::vector<type::Value> &args) {
+  throw Exception{"Upper not implemented in old engine"};
+}
+
+type::Value OldEngineStringFunctions::Lower(
+    UNUSED_ATTRIBUTE const std::vector<type::Value> &args) {
+  throw Exception{"Lower not implemented in old engine"};
+}
+
 }  // namespace function
 }  // namespace peloton
