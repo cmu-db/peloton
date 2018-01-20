@@ -26,7 +26,7 @@ namespace optimizer {
 using GroupID = int32_t;
 
 const GroupID UNDEFINED_GROUP = -1;
-class TableStats;
+class ColumnStats;
 
 //===--------------------------------------------------------------------===//
 // Group
@@ -44,12 +44,12 @@ class Group {
     logical_expressions_.erase(logical_expressions_.begin() + idx);
   }
 
-  bool SetExpressionCost(GroupExpression* expr, double cost,
-                         std::shared_ptr<PropertySet>& properties);
+  bool SetExpressionCost(GroupExpression *expr, double cost,
+                         std::shared_ptr<PropertySet> &properties);
 
-  GroupExpression* GetBestExpression(std::shared_ptr<PropertySet>& properties);
+  GroupExpression *GetBestExpression(std::shared_ptr<PropertySet> &properties);
 
-  inline const std::unordered_set<std::string>& GetTableAliases() const {
+  inline const std::unordered_set<std::string> &GetTableAliases() const {
     return table_aliases_;
   }
 
@@ -70,9 +70,17 @@ class Group {
   inline void SetExplorationFlag() { has_explored_ = true; }
   inline bool HasExplored() { return has_explored_; }
 
-  // Return the raw Stats pointer, caller should not own the Stats
-  TableStats* GetStats() { return stats_.get(); }
-  void SetStats(std::shared_ptr<TableStats> stats) { stats_ = stats; }
+  std::shared_ptr<ColumnStats> GetStats(std::string column_name) {
+    if (!stats_.count(column_name)) {
+      return nullptr;
+    }
+    return stats_[column_name];
+  }
+  void AddStats(std::string column_name, std::shared_ptr<ColumnStats> stats) {
+    stats_[column_name] = stats;
+  }
+  bool HasColumnStats(std::string column_name) { return stats_.count(column_name); }
+
   inline GroupID GetID() { return id_; }
 
   // This is called in rewrite phase to erase the only logical expression in the
@@ -85,7 +93,7 @@ class Group {
 
   // This should only be called in rewrite phase to retrieve the only logical
   // expr in the group
-  inline GroupExpression* GetLogicalExpression() {
+  inline GroupExpression *GetLogicalExpression() {
     PL_ASSERT(logical_expressions_.size() == 1);
     PL_ASSERT(physical_expressions_.size() == 0);
     return logical_expressions_[0].get();
@@ -97,7 +105,7 @@ class Group {
   // TODO(boweic) Do not use string, store table alias id
   std::unordered_set<std::string> table_aliases_;
   std::unordered_map<std::shared_ptr<PropertySet>,
-                     std::tuple<double, GroupExpression*>, PropSetPtrHash,
+                     std::tuple<double, GroupExpression *>, PropSetPtrHash,
                      PropSetPtrEq> lowest_cost_expressions_;
 
   // Whether equivalent logical expressions have been explored for this group
@@ -108,7 +116,10 @@ class Group {
   std::vector<std::shared_ptr<GroupExpression>> enforced_exprs_;
 
   // We'll add stats lazily
-  std::shared_ptr<TableStats> stats_;
+  // TODO(boweic):
+  // 1. use table alias id + column offset to identify the column
+  // 2. Support stats for arbitary expressions
+  std::unordered_map<std::string, std::shared_ptr<ColumnStats>> stats_;
   double cost_lower_bound_ = -1;
 };
 
