@@ -1052,7 +1052,7 @@ bool PostgresProtocolHandler::ReadPacket(Buffer &rbuf, InputPacket &rpkt) {
  */
 bool PostgresProtocolHandler::ProcessInitialPacket(InputPacket *pkt, Client client, bool ssl_able, bool& ssl_handshake, bool& finish_startup_packet) {
   std::string token, value;
-  std::unique_ptr<OutputPacket> response = std::make_unique<OutputPacket>();
+  std::unique_ptr<OutputPacket> response(new OutputPacket);
 
   int32_t proto_version = PacketGetInt(pkt, sizeof(int32_t));
   LOG_INFO("protocol version: %d", proto_version);
