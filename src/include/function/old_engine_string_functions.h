@@ -64,6 +64,10 @@ class OldEngineStringFunctions {
 
   // Length will return the number of characters in the given string
   static type::Value Length(const std::vector<type::Value> &args);
+
+  // Upper, Lower
+  static type::Value Upper(const std::vector<type::Value> &args);
+  static type::Value Lower(const std::vector<type::Value> &args);
 };
 
 }  // namespace function
