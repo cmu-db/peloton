@@ -21,7 +21,7 @@ class Memo;
 // Derive cost for a physical group expressionh
 class CostCalculator : public OperatorVisitor {
  public:
-  double CalculatoCost(GroupExpression *gexpr, Memo *memo);
+  double CalculateCost(GroupExpression *gexpr, Memo *memo);
 
   void Visit(const DummyScan *) override;
   void Visit(const PhysicalSeqScan *) override;
@@ -48,7 +48,7 @@ class CostCalculator : public OperatorVisitor {
 
  private:
   GroupExpression *gexpr_;
-  std::vector<TableStats *> input_stats_;
+  Memo *memo_;
   double output_cost_ = 0;
 };
 

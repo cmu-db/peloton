@@ -43,6 +43,8 @@ class StatsCalculator : public OperatorVisitor {
   void Visit(const LogicalInsertSelect *) override;
   void Visit(const LogicalDelete *) override;
   void Visit(const LogicalUpdate *) override;
+  void Visit(const LogicalLimit *) override;
+  void Visit(const LogicalDistinct *) override;
 
  private:
   /**
@@ -71,7 +73,7 @@ class StatsCalculator : public OperatorVisitor {
           &required_stats,
       std::unordered_map<std::string, std::shared_ptr<ColumnStats>>
           &predicate_stats,
-      std::vector<AnnotatedExpression> &predicates);
+      const std::vector<AnnotatedExpression> &predicates);
 
   double CalculateSelectivityForPredicate(
       const std::shared_ptr<TableStats> predicate_table_stats,

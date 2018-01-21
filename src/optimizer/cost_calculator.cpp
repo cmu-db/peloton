@@ -16,12 +16,9 @@
 namespace peloton {
 namespace optimizer {
 
-double CostCalculator::CalculatoCost(GroupExpression *gexpr,
-                                     Memo* memo) {
+double CostCalculator::CalculateCost(GroupExpression *gexpr, Memo *memo) {
   gexpr_ = gexpr;
-  for (auto& child_group_id : gexpr_->GetChildGroupIDs()) {
-    input_stats_.push_back(memo->GetGroupByID(child_group_id)->GetStats());
-  }
+  memo_ = memo;
   gexpr_->Op().Accept(this);
   return output_cost_;
 }
