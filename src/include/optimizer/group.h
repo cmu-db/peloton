@@ -19,6 +19,7 @@
 #include "optimizer/operator_node.h"
 #include "optimizer/property.h"
 #include "optimizer/property_set.h"
+#include "optimizer/stats/column_stats.h"
 
 namespace peloton {
 namespace optimizer {
@@ -77,9 +78,16 @@ class Group {
     return stats_[column_name];
   }
   void AddStats(std::string column_name, std::shared_ptr<ColumnStats> stats) {
+    PL_ASSERT(stats_.empty() || GetNumRows() == stats->num_rows);
     stats_[column_name] = stats;
   }
   bool HasColumnStats(std::string column_name) { return stats_.count(column_name); }
+  size_t GetNumRows() {
+    if (stats_.empty()) {
+      return 0;
+    }
+    return stats_.begin()->second->num_rows;
+  }
 
   inline GroupID GetID() { return id_; }
 

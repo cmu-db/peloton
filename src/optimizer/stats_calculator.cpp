@@ -12,6 +12,8 @@
 
 #include "optimizer/stats_calculator.h"
 
+#include <cmath>
+
 #include "catalog/table_catalog.h"
 #include "expression/expression_util.h"
 #include "expression/tuple_value_expression.h"
@@ -52,9 +54,9 @@ void StatsCalculator::Visit(const LogicalGet *op) {
       AddBaseTableStats(col, table_stats, predicate_stats, false);
     }
   }
-  // Next, use predicates to update the stats accordingly
+  // Use predicates to update the stats accordingly
   UpdateStatsForFilter(required_stats, predicate_stats, op->predicates);
-  // At last, add the stats to the group
+  // Add the stats to the group
   for (auto &column_name_stats_pair : required_stats) {
     auto &column_name = column_name_stats_pair.first;
     auto &column_stats = column_name_stats_pair.second;
@@ -63,19 +65,112 @@ void StatsCalculator::Visit(const LogicalGet *op) {
   }
 }
 
-void StatsCalculator::Visit(UNUSED_ATTRIBUTE const LogicalQueryDerivedGet *op) {
-  // TODO(boweic):
+void StatsCalculator::Visit(const LogicalQueryDerivedGet *) {
+  // TODO(boweic): Implement stats calculation for logical query derive get
+  auto root_group = memo_->GetGroupByID(gexpr_->GetGroupID());
+  for (auto &col : required_cols_) {
+    PL_ASSERT(col->GetExpressionType() == ExpressionType::VALUE_TUPLE);
+    auto bound_ids = reinterpret_cast<expression::TupleValueExpression *>(col)
+                         ->GetBoundOid();
+    root_group->AddStats(col->GetColFullName,
+                         std::make_shared<ColumnStats>(
+                             std::get<0>(bound_ids), std::get<1>(bound_ids),
+                             std::get<2>(bound_ids), tv_expr->GetColFullName(),
+                             false, 0, 0.f, false, std::vector<double>{},
+                             std::vector<double>{}, std::vector<double>{}));
+  }
 }
-void StatsCalculator::Visit(UNUSED_ATTRIBUTE const LogicalInnerJoin *op) {}
+
+void StatsCalculator::Visit(const LogicalInnerJoin *op) {
+  // Check if there's join condition
+  PL_ASSERT(gexpr_->GetChildrenGroupsSize() == 2);
+  auto left_child_group = memo_->GetGroupByID(gexpr_->GetChildGroupId(0));
+  auto right_child_group = memo_->GetGroupByID(gexpr_->GetChildGroupId(1));
+  // Base case
+  size_t num_rows =
+      left_child_group->GetNumRows() * right_child_group->GetNumRows();
+  for (auto &annotated_expr : op->join_predicates) {
+    // See if there are join conditions
+    if (annotated_expr.expr->GetExpressionType() ==
+            ExpressionType::COMPARE_EQUAL &&
+        annotated_expr.expr->GetChild(0)->GetExpressionType() ==
+            ExpressionType::VALUE_TUPLE &&
+        annotated_expr.expr->GetChild(1)->GetExpressionType() ==
+            ExpressionType::VALUE_TUPLE) {
+      auto left_child =
+          reinterpret_cast<const expression::TupleValueExpression *>(
+              annotated_expr.expr->GetChild(0));
+      auto right_child =
+          reinterpret_cast<const expression::TupleValueExpression *>(
+              annotated_expr.expr->GetChild(1));
+      if ((left_child_group->HasColumnStats(left_child->GetColFullName()) &&
+           right_child_group->HasColumnStats(right_child->GetColFullName())) ||
+          (left_child_group->HasColumnStats(right_child->GetColFullName()) &&
+           right_child_group->HasColumnStats(left_child->GetColFullName()))) {
+        num_rows /= std::max(std::max(left_child_group->GetNumRows(),
+                                      right_child_group->GetNumRows()),
+                             (size_t)1);
+      }
+    }
+  }
+  auto root_group = memo_->GetGroupByID(gexpr_->GetGroupID());
+  for (auto &col : required_cols_) {
+    PL_ASSERT(col->GetExpressionType() == ExpressionType::VALUE_TUPLE);
+    auto tv_expr = reinterpret_cast<expression::TupleValueExpression *>(col);
+    std::shared_ptr<ColumnStats> column_stats;
+    // Make a copy from the child stats
+    if (left_child_group->HasColumnStats(tv_expr->GetColFullName())) {
+      column_stats = std::make_shared<ColumnStats>(
+          *left_child_group->GetStats(tv_expr->GetColFullName()));
+    } else {
+      PL_ASSERT(right_child_group->HasColumnStats(tv_expr->GetColFullName()));
+      column_stats = std::make_shared<ColumnStats>(
+          *right_child_group->GetStats(tv_expr->GetColFullName()));
+    }
+    // Reset num_rows
+    column_stats->num_rows = num_rows;
+    root_group->AddStats(tv_expr->GetColFullName(), column_stats);
+  }
+  // TODO(boweic): calculate stats based on predicates other than join
+  // conditions
+}
 void StatsCalculator::Visit(UNUSED_ATTRIBUTE const LogicalLeftJoin *op) {}
 void StatsCalculator::Visit(UNUSED_ATTRIBUTE const LogicalRightJoin *op) {}
 void StatsCalculator::Visit(UNUSED_ATTRIBUTE const LogicalOuterJoin *op) {}
 void StatsCalculator::Visit(UNUSED_ATTRIBUTE const LogicalSemiJoin *op) {}
-void StatsCalculator::Visit(
-    UNUSED_ATTRIBUTE const LogicalAggregateAndGroupBy *op) {
+void StatsCalculator::Visit(const LogicalAggregateAndGroupBy *) {
   // TODO(boweic): For now we just pass the stats needed without any
   // computation,
   // We need to implement stats computation for aggregation
+  PL_ASSERT(gexpr_->GetChildrenGroupsSize() == 1);
+  for (auto &col : required_cols_) {
+    PL_ASSERT(col->GetExpressionType() == ExpressionType::VALUE_TUPLE);
+    auto column_name = reinterpret_cast<expression::TupleValueExpression *>(col)
+                           ->GetColFullName();
+    memo_->GetGroupByID(gexpr_->GetGroupID())
+        ->AddStats(column_name, memo_->GetGroupByID(gexpr_->GetChildGroupId(0))
+                                    ->GetStats(column_name));
+  }
+}
+
+void StatsCalculator::Visit(const LogicalLimit *op) {
+  PL_ASSERT(gexpr_->GetChildrenGroupsSize() == 1);
+  for (auto &col : required_cols_) {
+    PL_ASSERT(col->GetExpressionType() == ExpressionType::VALUE_TUPLE);
+    auto column_name = reinterpret_cast<expression::TupleValueExpression *>(col)
+                           ->GetColFullName();
+    std::shared_ptr<ColumnStats> column_stats = std::make_shared<ColumnStats>(
+        *memo_->GetGroupByID(gexpr_->GetChildGroupId(0))
+             ->GetStats(column_name));
+    column_stats->num_rows =
+        std::min((size_t)op->limit, column_stats->num_rows);
+    memo_->GetGroupByID(gexpr_->GetGroupID())
+        ->AddStats(column_name, column_stats);
+  }
+}
+
+void StatsCalculator::Visit(const LogicalDistinct *) {
+  // TODO calculate stats for distinct
   PL_ASSERT(gexpr_->GetChildrenGroupsSize() == 1);
   for (auto &col : required_cols_) {
     PL_ASSERT(col->GetExpressionType() == ExpressionType::VALUE_TUPLE);
@@ -114,7 +209,7 @@ void StatsCalculator::UpdateStatsForFilter(
         &required_stats,
     std::unordered_map<std::string, std::shared_ptr<ColumnStats>>
         &predicate_stats,
-    std::vector<AnnotatedExpression> &predicates) {
+    const std::vector<AnnotatedExpression> &predicates) {
   // First, construct the table stats as the interface needed it to compute
   // selectivity
   // TODO(boweic): Maybe we would want to modify the interface of selectivity
