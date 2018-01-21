@@ -35,7 +35,6 @@
 #include "common/internal_types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
-#include "optimizer/cost_and_stats_calculator.cpp"
 #include "optimizer/properties.h"
 
 namespace peloton {

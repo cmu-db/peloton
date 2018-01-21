@@ -29,20 +29,14 @@ class StatsCalculator : public OperatorVisitor {
   void CalculateStats(GroupExpression *gexpr, ExprSet required_cols,
                       Memo *memo);
 
-  void Visit(const LeafOperator *) override;
   void Visit(const LogicalGet *) override;
   void Visit(const LogicalQueryDerivedGet *) override;
-  void Visit(const LogicalFilter *) override;
   void Visit(const LogicalInnerJoin *) override;
   void Visit(const LogicalLeftJoin *) override;
   void Visit(const LogicalRightJoin *) override;
   void Visit(const LogicalOuterJoin *) override;
   void Visit(const LogicalSemiJoin *) override;
   void Visit(const LogicalAggregateAndGroupBy *) override;
-  void Visit(const LogicalInsert *) override;
-  void Visit(const LogicalInsertSelect *) override;
-  void Visit(const LogicalDelete *) override;
-  void Visit(const LogicalUpdate *) override;
   void Visit(const LogicalLimit *) override;
   void Visit(const LogicalDistinct *) override;
 

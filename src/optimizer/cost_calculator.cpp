@@ -66,7 +66,7 @@ void CostCalculator::Visit(const PhysicalLimit *op) {
       memo_->GetGroupByID(gexpr_->GetChildGroupId(0))->GetNumRows();
 
   output_cost_ =
-      std::min(child_num_rows, (size_t)op->limit) * DEFAULT_TUPLE_COST;
+      std::min((size_t)child_num_rows, (size_t)op->limit) * DEFAULT_TUPLE_COST;
 }
 void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalInnerNLJoin *op) {
   auto left_child_rows =
