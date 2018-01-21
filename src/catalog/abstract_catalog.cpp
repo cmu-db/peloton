@@ -109,19 +109,32 @@ bool AbstractCatalog::InsertTuple(std::unique_ptr<storage::Tuple> tuple,
     throw CatalogException("Insert tuple requires transaction");
 
   std::vector<type::Value> params;
+  std::vector<std::string> columns;
+  std::vector<std::vector<std::unique_ptr<expression::AbstractExpression>>>
+      values;
+  values.push_back(
+      std::vector<std::unique_ptr<expression::AbstractExpression>>());
   std::vector<int> result_format(tuple->GetSchema()->GetColumnCount(), 0);
   for (size_t i = 0; i < tuple->GetSchema()->GetColumnCount(); i++) {
     params.push_back(tuple->GetValue(i));
+    columns.push_back(tuple->GetSchema()->GetColumn(i).GetName());
+    values[0].emplace_back(
+        new expression::ConstantValueExpression(tuple->GetValue(i)));
   }
-  std::vector<StatementResult> result;
-  executor::ExecuteResult p_status;
   auto node =
-      std::make_shared<planner::InsertPlan>(catalog_table_, std::move(tuple));
+      std::make_shared<planner::InsertPlan>(catalog_table_, &columns, &values);
 
-  executor::PlanExecutor::ExecutePlan(node, txn, params, result, result_format,
-                                      p_status);
+  executor::ExecutionResult this_p_status;
+  auto on_complete =
+      [&this_p_status](executor::ExecutionResult p_status,
+                       std::vector<ResultValue> &&values UNUSED_ATTRIBUTE) {
+        this_p_status = p_status;
+      };
 
-  return p_status.m_result == peloton::ResultType::SUCCESS;
+  executor::PlanExecutor::ExecutePlan(node, txn, params, result_format,
+                                      on_complete);
+
+  return this_p_status.m_result == peloton::ResultType::SUCCESS;
 }
 
 /*@brief   Delete a tuple using index scan
