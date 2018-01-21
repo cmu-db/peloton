@@ -79,6 +79,8 @@ if [ "$DISTRO" = "UBUNTU" ]; then
         libboost-thread-dev \
         libboost-filesystem-dev \
         libjemalloc-dev \
+        libunwind8-dev \
+        liblzma-dev \
         valgrind \
         lcov \
         libpqxx-dev \
@@ -206,6 +208,8 @@ elif [ "$DISTRO" = "DARWIN" ]; then
     brew install libedit
     brew install llvm@3.7
     brew install postgresql
+    brew install xz
+    brew install libunwind-headers
 
 ## ------------------------------------------------
 ## UNKNOWN

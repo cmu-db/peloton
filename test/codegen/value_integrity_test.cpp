@@ -13,10 +13,10 @@
 #include "codegen/testing_codegen_util.h"
 
 #include "codegen/function_builder.h"
-#include "codegen/type/tinyint_type.h"
-#include "codegen/type/smallint_type.h"
-#include "codegen/type/integer_type.h"
 #include "codegen/type/bigint_type.h"
+#include "codegen/type/integer_type.h"
+#include "codegen/type/smallint_type.h"
+#include "codegen/type/tinyint_type.h"
 
 namespace peloton {
 namespace test {
@@ -68,6 +68,7 @@ void DivideByZeroTest(const codegen::type::Type &data_type, ExpressionType op) {
 
   typedef void (*func)(CType);
   func f = (func)code_context.GetRawFunctionPointer(function.GetFunction());
+
   EXPECT_THROW(f(0), DivideByZeroException);
 }
 
