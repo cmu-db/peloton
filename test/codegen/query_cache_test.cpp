@@ -12,22 +12,24 @@
 
 #include "codegen/testing_codegen_util.h"
 
+#include "catalog/catalog.h"
 #include "codegen/query_cache.h"
 #include "codegen/testing_codegen_util.h"
 #include "codegen/type/decimal_type.h"
 #include "common/timer.h"
-#include "catalog/catalog.h"
 #include "expression/conjunction_expression.h"
 #include "expression/operator_expression.h"
 #include "planner/aggregate_plan.h"
-#include "planner/hash_plan.h"
 #include "planner/hash_join_plan.h"
+#include "planner/hash_plan.h"
 #include "planner/nested_loop_join_plan.h"
 #include "planner/order_by_plan.h"
 #include "planner/seq_scan_plan.h"
 
 namespace peloton {
 namespace test {
+
+constexpr int CACHE_USED_BY_CATALOG = 4;
 
 class QueryCacheTest : public PelotonCodeGenTest {
  public:
@@ -167,12 +169,10 @@ class QueryCacheTest : public PelotonCodeGenTest {
 
   std::shared_ptr<planner::NestedLoopJoinPlan> GetBlockNestedLoopJoinPlan() {
     // Output all columns
-    DirectMapList direct_map_list = {{0, std::make_pair(0, 0)},
-                                     {1, std::make_pair(0, 1)},
-                                     {2, std::make_pair(0, 2)},
-                                     {3, std::make_pair(1, 0)},
-                                     {4, std::make_pair(1, 1)},
-                                     {5, std::make_pair(1, 2)}};
+    DirectMapList direct_map_list = {
+        {0, std::make_pair(0, 0)}, {1, std::make_pair(0, 1)},
+        {2, std::make_pair(0, 2)}, {3, std::make_pair(1, 0)},
+        {4, std::make_pair(1, 1)}, {5, std::make_pair(1, 2)}};
     std::unique_ptr<planner::ProjectInfo> projection{
         new planner::ProjectInfo(TargetList{}, std::move(direct_map_list))};
 
@@ -234,7 +234,8 @@ TEST_F(QueryCacheTest, SimpleCache) {
   const auto &results_1 = buffer_1.GetOutputTuples();
   EXPECT_EQ(NumRowsInTestTable() - 4, results_1.size());
   EXPECT_FALSE(cached);
-  EXPECT_EQ(1, codegen::QueryCache::Instance().GetCount());
+  EXPECT_EQ(1 + CACHE_USED_BY_CATALOG,
+            codegen::QueryCache::Instance().GetCount());
 
   // Execute a query cached
   codegen::BufferingConsumer buffer_2{{0}, context_2};
@@ -243,7 +244,8 @@ TEST_F(QueryCacheTest, SimpleCache) {
   EXPECT_TRUE(cached);
   EXPECT_EQ(NumRowsInTestTable() - 4, results_2.size());
 
-  EXPECT_EQ(1, codegen::QueryCache::Instance().GetCount());
+  EXPECT_EQ(1 + CACHE_USED_BY_CATALOG,
+            codegen::QueryCache::Instance().GetCount());
 
   // PelotonCodeTest dies after each TEST_F()
   // So, we delete the cache
@@ -277,9 +279,9 @@ TEST_F(QueryCacheTest, CacheSeqScanPlan) {
   const auto &results_1 = buffer_1.GetOutputTuples();
   EXPECT_EQ(1, results_1.size());
   EXPECT_EQ(CmpBool::CmpTrue, results_1[0].GetValue(0).CompareEquals(
-                                     type::ValueFactory::GetIntegerValue(20)));
+                                  type::ValueFactory::GetIntegerValue(20)));
   EXPECT_EQ(CmpBool::CmpTrue, results_1[0].GetValue(1).CompareEquals(
-                                     type::ValueFactory::GetIntegerValue(21)));
+                                  type::ValueFactory::GetIntegerValue(21)));
   EXPECT_FALSE(cached);
 
   codegen::BufferingConsumer buffer_2{{0, 1, 2}, context_2};
@@ -288,11 +290,12 @@ TEST_F(QueryCacheTest, CacheSeqScanPlan) {
   const auto &results_2 = buffer_2.GetOutputTuples();
   EXPECT_EQ(1, results_2.size());
   EXPECT_EQ(CmpBool::CmpTrue, results_2[0].GetValue(0).CompareEquals(
-                                     type::ValueFactory::GetIntegerValue(20)));
+                                  type::ValueFactory::GetIntegerValue(20)));
   EXPECT_EQ(CmpBool::CmpTrue, results_2[0].GetValue(1).CompareEquals(
-                                     type::ValueFactory::GetIntegerValue(21)));
+                                  type::ValueFactory::GetIntegerValue(21)));
   EXPECT_TRUE(cached);
-  EXPECT_EQ(1, codegen::QueryCache::Instance().GetCount());
+  EXPECT_EQ(1 + CACHE_USED_BY_CATALOG,
+            codegen::QueryCache::Instance().GetCount());
 
   // PelotonCodeTest dies after each TEST_F()
   // So, we delete the cache
@@ -350,7 +353,8 @@ TEST_F(QueryCacheTest, CacheHashJoinPlan) {
     EXPECT_EQ(tuple.GetValue(0).CompareEquals(tuple.GetValue(1)),
               CmpBool::CmpTrue);
   }
-  EXPECT_EQ(1, codegen::QueryCache::Instance().GetCount());
+  EXPECT_EQ(1 + CACHE_USED_BY_CATALOG,
+            codegen::QueryCache::Instance().GetCount());
 
   // PelotonCodeTest dies after each TEST_F()
   // So, we delete the cache
@@ -428,7 +432,8 @@ TEST_F(QueryCacheTest, CacheOrderByPlan) {
                     std::move(order_by_plan_3)) == nullptr);
   EXPECT_EQ(found, 1);
 
-  EXPECT_EQ(1, codegen::QueryCache::Instance().GetCount());
+  EXPECT_EQ(1 + CACHE_USED_BY_CATALOG,
+            codegen::QueryCache::Instance().GetCount());
 
   // PelotonCodeTest dies after each TEST_F()
   // So, we delete the cache
@@ -449,7 +454,8 @@ TEST_F(QueryCacheTest, CacheAggregatePlan) {
 
   auto is_equal = (*agg_plan1.get() == *agg_plan_2.get());
   EXPECT_TRUE(is_equal);
-  EXPECT_EQ(0, codegen::QueryCache::Instance().GetCount());
+  EXPECT_EQ(0 + CACHE_USED_BY_CATALOG,
+            codegen::QueryCache::Instance().GetCount());
 
   codegen::BufferingConsumer buffer_1{{0, 1}, context_1};
   codegen::BufferingConsumer buffer_2{{0, 1}, context_2};
@@ -461,7 +467,8 @@ TEST_F(QueryCacheTest, CacheAggregatePlan) {
   const auto &results_1 = buffer_1.GetOutputTuples();
   EXPECT_EQ(results_1.size(), 59);
   EXPECT_FALSE(cached);
-  EXPECT_EQ(1, codegen::QueryCache::Instance().GetCount());
+  EXPECT_EQ(1 + CACHE_USED_BY_CATALOG,
+            codegen::QueryCache::Instance().GetCount());
 
   // Compile and execute with the cached query
   CompileAndExecuteCache(agg_plan_2, buffer_2, cached);
@@ -471,7 +478,8 @@ TEST_F(QueryCacheTest, CacheAggregatePlan) {
   EXPECT_TRUE(cached);
 
   // Clean the query cache and leaves only one query
-  EXPECT_EQ(1, codegen::QueryCache::Instance().GetCount());
+  EXPECT_EQ(1 + CACHE_USED_BY_CATALOG,
+            codegen::QueryCache::Instance().GetCount());
   codegen::QueryCache::Instance().Clear();
   EXPECT_EQ(0, codegen::QueryCache::Instance().GetCount());
 
@@ -496,7 +504,8 @@ TEST_F(QueryCacheTest, CacheNestedLoopJoinPlan) {
 
   auto is_equal = (*nlj_plan_1.get() == *nlj_plan_2.get());
   EXPECT_TRUE(is_equal);
-  EXPECT_EQ(0, codegen::QueryCache::Instance().GetCount());
+  EXPECT_EQ(0 + CACHE_USED_BY_CATALOG,
+            codegen::QueryCache::Instance().GetCount());
 
   codegen::BufferingConsumer buffer_1{{0, 1}, context_1};
   codegen::BufferingConsumer buffer_2{{0, 1}, context_2};
@@ -505,14 +514,16 @@ TEST_F(QueryCacheTest, CacheNestedLoopJoinPlan) {
   bool cached;
   CompileAndExecuteCache(nlj_plan_1, buffer_1, cached);
   EXPECT_FALSE(cached);
-  EXPECT_EQ(1, codegen::QueryCache::Instance().GetCount());
+  EXPECT_EQ(1 + CACHE_USED_BY_CATALOG,
+            codegen::QueryCache::Instance().GetCount());
 
   // Compile and execute with the cached query
   CompileAndExecuteCache(nlj_plan_2, buffer_2, cached);
   EXPECT_TRUE(cached);
 
   // Clean the query cache and leaves only one query
-  EXPECT_EQ(1, codegen::QueryCache::Instance().GetCount());
+  EXPECT_EQ(1 + CACHE_USED_BY_CATALOG,
+            codegen::QueryCache::Instance().GetCount());
   codegen::QueryCache::Instance().Clear();
   EXPECT_EQ(0, codegen::QueryCache::Instance().GetCount());
 
