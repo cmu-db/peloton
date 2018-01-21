@@ -62,5 +62,22 @@ GroupExpression *Group::GetBestExpression(
   return nullptr;
 }
 
+std::shared_ptr<ColumnStats> Group::GetStats(std::string column_name) {
+  if (!stats_.count(column_name)) {
+    return nullptr;
+  }
+  return stats_[column_name];
+}
+
+void Group::AddStats(std::string column_name,
+                     std::shared_ptr<ColumnStats> stats) {
+  PL_ASSERT(GetNumRows() == stats->num_rows);
+  stats_[column_name] = stats;
+}
+
+bool Group::HasColumnStats(std::string column_name) {
+  return stats_.count(column_name);
+}
+
 }  // namespace optimizer
 }  // namespace peloton

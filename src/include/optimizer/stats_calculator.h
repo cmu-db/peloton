@@ -62,15 +62,14 @@ class StatsCalculator : public OperatorVisitor {
       std::unordered_map<std::string, std::shared_ptr<ColumnStats>> &stats,
       bool copy);
   /**
-   * @brief Update stats for predicate evaluation
+   * @brief Update selectivity for predicate evaluation
    *
-   * @param required_stats The stats we need to update
+   * @param num_rows Number of rows of base table
    * @param predicate_stats The stats for columns in the expression
    * @param predicates conjunction predicates
    */
   void UpdateStatsForFilter(
-      std::unordered_map<std::string, std::shared_ptr<ColumnStats>>
-          &required_stats,
+      size_t num_rows,
       std::unordered_map<std::string, std::shared_ptr<ColumnStats>>
           &predicate_stats,
       const std::vector<AnnotatedExpression> &predicates);
