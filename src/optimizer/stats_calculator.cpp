@@ -35,6 +35,10 @@ void StatsCalculator::CalculateStats(GroupExpression *gexpr,
 }
 
 void StatsCalculator::Visit(const LogicalGet *op) {
+  if (op->table == nullptr) {
+    // Dummy scan
+    return;
+  }
   auto table_stats = std::dynamic_pointer_cast<TableStats>(
       StatsStorage::GetInstance()->GetTableStats(op->table->GetDatabaseOid(),
                                                  op->table->GetTableOid()));
@@ -210,7 +214,7 @@ void StatsCalculator::AddBaseTableStats(
     std::shared_ptr<TableStats> table_stats,
     std::unordered_map<std::string, std::shared_ptr<ColumnStats>> &stats,
     bool copy) {
-  PL_ASSERT(expr->GetExpressionType() == ExpressionType::VALUE_TUPLE);
+  PL_ASSERT(col->GetExpressionType() == ExpressionType::VALUE_TUPLE);
   auto tv_expr = reinterpret_cast<expression::TupleValueExpression *>(col);
   auto bound_ids = tv_expr->GetBoundOid();
   if (table_stats->GetColumnCount() == 0) {
@@ -258,6 +262,10 @@ double StatsCalculator::CalculateSelectivityForPredicate(
     const std::shared_ptr<TableStats> predicate_table_stats,
     const expression::AbstractExpression *expr) {
   double selectivity = 1.f;
+  if (predicate_table_stats->GetColumnCount() == 0 ||
+      predicate_table_stats->GetColumnStats(0)->num_rows == 0) {
+    return selectivity;
+  }
   // Base case : Column Op Val
   if ((expr->GetChild(0)->GetExpressionType() == ExpressionType::VALUE_TUPLE &&
        (expr->GetChild(1)->GetExpressionType() ==

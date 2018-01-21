@@ -19,7 +19,6 @@
 #include "catalog/table_catalog.h"
 
 #include "optimizer/binding.h"
-#include "optimizer/cost_and_stats_calculator.h"
 #include "optimizer/operator_visitor.h"
 #include "optimizer/properties.h"
 #include "optimizer/property_enforcer.h"

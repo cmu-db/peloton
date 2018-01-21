@@ -15,6 +15,7 @@
 #include <memory>
 #include <vector>
 
+#include "expression/abstract_expression.h"
 #include "common/internal_types.h"
 
 namespace peloton {
