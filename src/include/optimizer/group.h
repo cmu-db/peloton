@@ -71,23 +71,15 @@ class Group {
   inline void SetExplorationFlag() { has_explored_ = true; }
   inline bool HasExplored() { return has_explored_; }
 
-  std::shared_ptr<ColumnStats> GetStats(std::string column_name) {
-    if (!stats_.count(column_name)) {
-      return nullptr;
-    }
-    return stats_[column_name];
-  }
-  void AddStats(std::string column_name, std::shared_ptr<ColumnStats> stats) {
-    PL_ASSERT(stats_.empty() || GetNumRows() == stats->num_rows);
-    stats_[column_name] = stats;
-  }
-  bool HasColumnStats(std::string column_name) { return stats_.count(column_name); }
-  size_t GetNumRows() {
-    if (stats_.empty()) {
-      return 0;
-    }
-    return stats_.begin()->second->num_rows;
-  }
+  std::shared_ptr<ColumnStats> GetStats(std::string column_name);
+
+  void AddStats(std::string column_name, std::shared_ptr<ColumnStats> stats);  
+
+  bool HasColumnStats(std::string column_name);  
+
+  void SetNumRows(size_t num_rows) { num_rows_ = num_rows; }
+
+  int GetNumRows() { return num_rows_; }
 
   inline GroupID GetID() { return id_; }
 
@@ -128,6 +120,7 @@ class Group {
   // 1. use table alias id + column offset to identify the column
   // 2. Support stats for arbitary expressions
   std::unordered_map<std::string, std::shared_ptr<ColumnStats>> stats_;
+  int num_rows_ = -1;
   double cost_lower_bound_ = -1;
 };
 
