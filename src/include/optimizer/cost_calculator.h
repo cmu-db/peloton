@@ -47,8 +47,9 @@ class CostCalculator : public OperatorVisitor {
   void Visit(const PhysicalAggregate *) override;
 
  private:
-  void HashCost();
-  void SortCost();
+  double HashCost();
+  double SortCost();
+  double GroupByCost();
 
   GroupExpression *gexpr_;
   Memo *memo_;
