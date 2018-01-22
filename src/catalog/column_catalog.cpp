@@ -27,10 +27,10 @@ ColumnCatalogObject::ColumnCatalogObject(executor::LogicalTile *tile,
       column_name(tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_NAME)
                       .ToString()),
       column_id(tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_ID)
-                    .GetAs<oid_t>()),
+                    .GetAs<uint32_t>()),
       column_offset(
           tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_OFFSET)
-              .GetAs<oid_t>()),
+              .GetAs<uint32_t>()),
       column_type(StringToTypeId(
           tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_TYPE)
               .ToString())),
@@ -41,9 +41,9 @@ ColumnCatalogObject::ColumnCatalogObject(executor::LogicalTile *tile,
       is_not_null(tile->GetValue(tupleId, ColumnCatalog::ColumnId::IS_NOT_NULL)
                       .GetAs<bool>()) {}
 
-ColumnCatalog *ColumnCatalog::GetInstance(storage::Database *pg_catalog,
-                                          type::AbstractPool *pool,
-                                          concurrency::TransactionContext *txn) {
+ColumnCatalog *ColumnCatalog::GetInstance(
+    storage::Database *pg_catalog, type::AbstractPool *pool,
+    concurrency::TransactionContext *txn) {
   static ColumnCatalog column_catalog{pg_catalog, pool, txn};
   return &column_catalog;
 }
@@ -63,7 +63,7 @@ ColumnCatalog::ColumnCatalog(storage::Database *pg_catalog,
            COLUMN_CATALOG_NAME "_skey1", IndexConstraintType::DEFAULT);
 
   // Insert columns into pg_attribute
-  oid_t column_id = 0;
+  uint32_t column_id = 0;
   for (auto column : catalog_table_->GetSchema()->GetColumns()) {
     InsertColumn(COLUMN_CATALOG_OID, column.GetName(), column_id,
                  column.GetOffset(), column.GetType(), column.IsInlined(),
@@ -141,7 +141,7 @@ std::unique_ptr<catalog::Schema> ColumnCatalog::InitializeSchema() {
 
 bool ColumnCatalog::InsertColumn(oid_t table_oid,
                                  const std::string &column_name,
-                                 oid_t column_id, oid_t column_offset,
+                                 uint32_t column_id, uint32_t column_offset,
                                  type::TypeId column_type, bool is_inlined,
                                  const std::vector<Constraint> &constraints,
                                  type::AbstractPool *pool,

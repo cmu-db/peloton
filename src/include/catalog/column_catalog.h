@@ -44,8 +44,8 @@ class ColumnCatalogObject {
 
   inline oid_t GetTableOid() { return table_oid; }
   inline const std::string &GetColumnName() { return column_name; }
-  inline oid_t GetColumnId() { return column_id; }
-  inline oid_t GetColumnOffset() { return column_offset; }
+  inline uint32_t GetColumnId() { return column_id; }
+  inline uint32_t GetColumnOffset() { return column_offset; }
   inline type::TypeId GetColumnType() { return column_type; }
   inline bool IsInlined() { return is_inlined; }
   inline bool IsPrimary() { return is_primary; }
@@ -55,8 +55,8 @@ class ColumnCatalogObject {
   // member variables
   oid_t table_oid;
   std::string column_name;
-  oid_t column_id;
-  oid_t column_offset;
+  uint32_t column_id;
+  uint32_t column_offset;
   type::TypeId column_type;
   bool is_inlined;
   bool is_primary;
@@ -70,9 +70,10 @@ class ColumnCatalog : public AbstractCatalog {
 
  public:
   // Global Singleton, only the first call requires passing parameters.
-  static ColumnCatalog *GetInstance(storage::Database *pg_catalog = nullptr,
-                                    type::AbstractPool *pool = nullptr,
-                                    concurrency::TransactionContext *txn = nullptr);
+  static ColumnCatalog *GetInstance(
+      storage::Database *pg_catalog = nullptr,
+      type::AbstractPool *pool = nullptr,
+      concurrency::TransactionContext *txn = nullptr);
 
   ~ColumnCatalog();
 
@@ -83,10 +84,11 @@ class ColumnCatalog : public AbstractCatalog {
   // write Related API
   //===--------------------------------------------------------------------===//
   bool InsertColumn(oid_t table_oid, const std::string &column_name,
-                    oid_t column_id, oid_t column_offset,
+                    uint32_t column_id, uint32_t column_offset,
                     type::TypeId column_type, bool is_inlined,
                     const std::vector<Constraint> &constraints,
-                    type::AbstractPool *pool, concurrency::TransactionContext *txn);
+                    type::AbstractPool *pool,
+                    concurrency::TransactionContext *txn);
   bool DeleteColumn(oid_t table_oid, const std::string &column_name,
                     concurrency::TransactionContext *txn);
   bool DeleteColumns(oid_t table_oid, concurrency::TransactionContext *txn);
