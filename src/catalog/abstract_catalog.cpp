@@ -356,7 +356,6 @@ bool AbstractCatalog::UpdateWithIndexScan(
   for (size_t i = 0; i < update_values.size(); i++) {
     planner::DerivedAttribute update_attribute{
         new expression::ConstantValueExpression(update_values[i])};
-    // emplace(update_column_id, update_val)
     target_list.emplace_back(update_columns[i], update_attribute);
   }
 
