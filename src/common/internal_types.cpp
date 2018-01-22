@@ -6,7 +6,7 @@
 //
 // Identification: src/common/internal_types.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -18,7 +18,6 @@
 #include "common/internal_types.h"
 #include "common/logger.h"
 #include "common/macros.h"
-#include "type/value_factory.h"
 #include "parser/sql_statement.h"
 #include "parser/statements.h"
 #include "util/string_util.h"
@@ -1108,6 +1107,8 @@ IndexType StringToIndexType(const std::string &str) {
     return IndexType::HASH;
   } else if (upper_str == "SKIPLIST") {
     return IndexType::SKIPLIST;
+  } else if (upper_str == "ART") {
+    return IndexType::ART;
   } else {
     throw ConversionException(StringUtil::Format(
         "No IndexType conversion from string '%s'", upper_str.c_str()));
