@@ -4,7 +4,7 @@ pipeline {
         stage('Build') {
             parallel {
                 // NOTE: this stage is special because it copies the test results out of the container
-                stage('Ubuntu Xenial/gcc-5.4.0/llvm-3.8.0 (Debug/Test)') {
+                stage('Ubuntu Xenial/gcc-5.4.0/llvm-3.7.1 (Debug/Test)') {
                     agent {
                         docker {
                             image 'ubuntu:xenial'
@@ -15,7 +15,7 @@ pipeline {
                         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
                         sh 'python ./script/validators/source_validator.py'
                         sh 'mkdir build'
-                        sh 'cd build && PATH=/usr/lib/llvm-3.8/bin:/usr/bin:$PATH cmake -DCMAKE_PREFIX_PATH=`llvm-config-3.8 --prefix` -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False -DUSE_SANITIZER=Address .. && make -j4'
+                        sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False -DUSE_SANITIZER=Address .. && make -j4'
                         sh 'cd build && make check -j4 && cp -pr test /job/'
                         sh 'cd build && make benchmark -j4'
                         sh 'cd build && make install'
@@ -24,13 +24,12 @@ pipeline {
                     }
                 }
 
-                stage('Ubuntu Xenial/gcc-5.4.0/llvm-3.8.0 (Release)') {
+                stage('Ubuntu Xenial/gcc-5.4.0/llvm-3.7.1 (Release)') {
                     agent { docker { image 'ubuntu:xenial' } }
                     steps {
                         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
                         sh 'python ./script/validators/source_validator.py'
                         sh 'mkdir build'
-                        sh 'cd build && PATH=/usr/lib/llvm-3.8/bin:/usr/bin:$PATH cmake -DCMAKE_PREFIX_PATH=`llvm-config-3.8 --prefix` -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
                         sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
                     }
                 }
@@ -124,23 +123,23 @@ pipeline {
                     }
                 }
 
-                stage('Ubuntu Xenial/clang-3.8.0/llvm-3.8.0 (Debug)') {
+                stage('Ubuntu Xenial/clang-3.7.1/llvm-3.7.1 (Debug)') {
                     agent { docker { image 'ubuntu:xenial' } }
                     steps {
                         sh '/bin/bash -c "source ./peloton/script/installation/packages.sh"'
                         sh 'python ./script/validators/source_validator.py'
                         sh 'mkdir build'
-                        sh 'cd build && CC=clang-3.8 CXX=clang++-3.8 cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False .. && make -j4 && make install'
+                        sh 'cd build && CC=clang-3.7 CXX=clang++-3.7 cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False .. && make -j4 && make install'
                     }
                 }
 
-                stage('Ubuntu Xenial/clang-3.8.0/llvm-3.8.0 (Release)') {
+                stage('Ubuntu Xenial/clang-3.7.1/llvm-3.7.1 (Release)') {
                     agent { docker { image 'ubuntu:xenial' } }
                     steps {
                         sh '/bin/bash -c "source ./peloton/script/installation/packages.sh"'
                         sh 'python ./script/validators/source_validator.py'
                         sh 'mkdir build'
-                        sh 'cd build && CC=clang-3.8 CXX=clang++-3.8 cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4 && make install'
+                        sh 'cd build && CC=clang-3.7 CXX=clang++-3.7 cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4 && make install'
                     }
                 }
 
