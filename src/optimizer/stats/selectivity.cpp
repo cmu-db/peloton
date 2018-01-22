@@ -14,6 +14,7 @@
 
 #include "catalog/table_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
+#include "executor/executor_context.h"
 #include "function/string_functions.h"
 
 namespace peloton {
@@ -164,14 +165,16 @@ double Selectivity::Like(const std::shared_ptr<TableStats> &table_stats,
   for (size_t i = 0; i < sample_tuples.size(); i++) {
     auto value = sample_tuples[i]->GetValue(column_id);
     PL_ASSERT(value.GetTypeId() == type::TypeId::VARCHAR);
-    if (function::StringFunctions::Like(value.GetData(), value.GetLength(),
-                                        pattern,
+    executor::ExecutorContext dummy_context(nullptr);
+    if (function::StringFunctions::Like(dummy_context, value.GetData(),
+                                        value.GetLength(), pattern,
                                         condition.value.GetLength())) {
       matched_count++;
     }
   }
   total_count = sample_tuples.size();
-  LOG_TRACE("total sample size %lu matched tupe %lu", total_count, matched_count);
+  LOG_TRACE("total sample size %lu matched tupe %lu", total_count,
+            matched_count);
 
   return total_count == 0 ? DEFAULT_SELECTIVITY
                           : (double)matched_count / total_count;
