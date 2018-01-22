@@ -66,13 +66,20 @@ class NetworkConnection {
   Buffer wbuf_;                     // Socket's write buffer
   unsigned int next_response_ = 0;  // The next response in the response buffer
   Client client_;
-  bool ssl_sent_ = false;
+  bool ssl_handshake_ = false;
+  bool finish_startup_packet_ = false;
+  InputPacket initial_packet;
 
-
+  bool ssl_able_;
+  // Set when doing rehandshake in SSL
+  bool read_blocked_on_write_ = false;
+  bool write_blocked_on_read_ = false;
+  bool read_blocked_ = false;
+  bool write_blocked_ = false;
  public:
   inline NetworkConnection(int sock_fd, short event_flags, NetworkThread *thread,
-                        ConnState init_state)
-      : sock_fd(sock_fd) {
+                        ConnState init_state, bool ssl_able)
+      : sock_fd(sock_fd), ssl_able_(ssl_able) {
     Init(event_flags, thread, init_state);
   }
 
@@ -100,11 +107,26 @@ class NetworkConnection {
 
   void Reset();
 
+  void SetReadBlockedOnWrite(bool flag) { read_blocked_on_write_ = flag; }
+
+  void SetWriteBlockedOnRead(bool flag) { write_blocked_on_read_ = flag; }
+
+  bool GetReadBlockedOnWrite() { return read_blocked_on_write_; }
+
+  bool GetWriteBlockedOnRead() { return write_blocked_on_read_; }
+
+  void SetReadBlocked(bool flag) { read_blocked_ = flag; }
+
+  void SetWriteBlocked(bool flag) { write_blocked_ = flag; }
+
+  bool GetReadBlocked() { return read_blocked_; }
+
+  bool GetWriteBlocked() { return write_blocked_; }
+
   static void TriggerStateMachine(void* arg);
 
   /* Runs the state machine for the protocol. Invoked by event handler callback */
   static void StateMachine(NetworkConnection *conn);
-
 
  private:
 
@@ -112,15 +134,6 @@ class NetworkConnection {
 
   // Extracts the header of a Postgres start up packet from the read socket buffer
   static bool ReadStartupPacketHeader(Buffer &rbuf, InputPacket &rpkt);
-
-  /* Routine to deal with the first packet from the client */
-  bool ProcessInitialPacket(InputPacket* pkt);
-
-  /* Routine to deal with general Startup message */
-  bool ProcessStartupPacket(InputPacket* pkt, int32_t proto_version);
-
-  /* Routine to deal with SSL request message */
-  bool ProcessSSLRequestPacket(InputPacket *pkt);
 
   // Writes a packet's header (type, size) into the write buffer
   WriteState BufferWriteBytesHeader(OutputPacket *pkt);

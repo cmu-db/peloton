@@ -59,7 +59,7 @@ include_directories(SYSTEM ${PQXX_INCLUDE_DIRECTORIES})
 list(APPEND Peloton_LINKER_LIBS ${PQXX_LIBRARIES})
 
 # --[ Open SSL
-list(APPEND Peloton_LINKER_LIBS "-lssl")
+list(APPEND Peloton_LINKER_LIBS "-lssl -lcrypto")
 
 # --[ LLVM 3.7+
 find_package(LLVM REQUIRED CONFIG)
