@@ -69,11 +69,11 @@ class Exception : public std::runtime_error {
   Exception(ExceptionType exception_type, std::string message)
       : std::runtime_error(message), type(exception_type) {
     exception_message_ = "Exception Type :: " +
-                         ExpectionTypeToString(exception_type) +
-                         "\nMessage :: " + message;
+                                    ExceptionTypeToString(exception_type) +
+                                    "\nMessage :: " + message;
   }
 
-  std::string ExpectionTypeToString(ExceptionType type) {
+  std::string ExceptionTypeToString(ExceptionType type) {
     switch (type) {
       case ExceptionType::INVALID:
         return "Invalid";

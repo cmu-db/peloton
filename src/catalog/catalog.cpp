@@ -6,9 +6,9 @@
 //
 // Identification: src/catalog/catalog.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 #include "catalog/catalog.h"
 
@@ -1065,9 +1065,8 @@ void Catalog::InitializeFunctions() {
           txn);
       AddBuiltinFunction(
           "sqrt", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL, internal_lang,
-          "Sqrt",
-          function::BuiltInFuncType{OperatorId::Sqrt,
-                                    function::DecimalFunctions::Sqrt},
+          "Sqrt", function::BuiltInFuncType{OperatorId::Sqrt,
+                                            function::DecimalFunctions::Sqrt},
           txn);
       AddBuiltinFunction(
           "floor", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL,
@@ -1180,10 +1179,10 @@ void Catalog::InitializeFunctions() {
        * date functions
        */
       AddBuiltinFunction(
-          "extract", {type::TypeId::INTEGER, type::TypeId::TIMESTAMP},
-          type::TypeId::DECIMAL, internal_lang, "Extract",
-          function::BuiltInFuncType{OperatorId::Extract,
-                                    function::DateFunctions::Extract},
+          "date_part", {type::TypeId::VARCHAR, type::TypeId::TIMESTAMP},
+          type::TypeId::DECIMAL, internal_lang, "DatePart",
+          function::BuiltInFuncType{OperatorId::DatePart,
+                                    function::TimestampFunctions::_DatePart},
           txn);
 
       AddBuiltinFunction(
