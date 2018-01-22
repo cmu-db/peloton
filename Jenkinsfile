@@ -15,7 +15,7 @@ pipeline {
                         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
                         sh 'python ./script/validators/source_validator.py'
                         sh 'mkdir build'
-                        sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False -DUSE_SANITIZER=Address .. && make -j4'
+                        sh 'cd build && PATH=/usr/lib/llvm-3.8/bin:/usr/bin:$PATH cmake -DCMAKE_PREFIX_PATH=`llvm-config-3.8 --prefix` -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False -DUSE_SANITIZER=Address .. && make -j4'
                         sh 'cd build && make check -j4 && cp -pr test /job/'
                         sh 'cd build && make benchmark -j4'
                         sh 'cd build && make install'
@@ -30,6 +30,7 @@ pipeline {
                         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
                         sh 'python ./script/validators/source_validator.py'
                         sh 'mkdir build'
+                        sh 'cd build && PATH=/usr/lib/llvm-3.8/bin:/usr/bin:$PATH cmake -DCMAKE_PREFIX_PATH=`llvm-config-3.8 --prefix` -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
                         sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
                     }
                 }
