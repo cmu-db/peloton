@@ -45,8 +45,8 @@ class TableCatalogObject {
   friend class ColumnCatalog;
 
  public:
-  TableCatalogObject(executor::LogicalTile *tile, concurrency::TransactionContext *txn,
-                     int tupleId = 0);
+  TableCatalogObject(executor::LogicalTile *tile,
+                     concurrency::TransactionContext *txn, int tupleId = 0);
 
  public:
   // Get indexes
@@ -74,12 +74,14 @@ class TableCatalogObject {
   inline oid_t GetTableOid() { return table_oid; }
   inline const std::string &GetTableName() { return table_name; }
   inline oid_t GetDatabaseOid() { return database_oid; }
+  inline uint32_t GetVersionId() { return version_id; }
 
  private:
   // member variables
   oid_t table_oid;
   std::string table_name;
   oid_t database_oid;
+  uint32_t version_id;
 
   // Get index objects
   bool InsertIndexObject(std::shared_ptr<IndexCatalogObject> index_object);
@@ -119,9 +121,10 @@ class TableCatalog : public AbstractCatalog {
   ~TableCatalog();
 
   // Global Singleton, only the first call requires passing parameters.
-  static TableCatalog *GetInstance(storage::Database *pg_catalog = nullptr,
-                                   type::AbstractPool *pool = nullptr,
-                                   concurrency::TransactionContext *txn = nullptr);
+  static TableCatalog *GetInstance(
+      storage::Database *pg_catalog = nullptr,
+      type::AbstractPool *pool = nullptr,
+      concurrency::TransactionContext *txn = nullptr);
 
   inline oid_t GetNextOid() { return oid_++ | TABLE_OID_MASK; }
 
@@ -132,6 +135,9 @@ class TableCatalog : public AbstractCatalog {
                    oid_t database_oid, type::AbstractPool *pool,
                    concurrency::TransactionContext *txn);
   bool DeleteTable(oid_t table_oid, concurrency::TransactionContext *txn);
+
+  bool UpdateVersionId(oid_t update_val, oid_t table_oid,
+                       concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
   // Read Related API
@@ -155,9 +161,10 @@ class TableCatalog : public AbstractCatalog {
     TABLE_OID = 0,
     TABLE_NAME = 1,
     DATABASE_OID = 2,
+    VERSION_ID = 3,
     // Add new columns here in creation order
   };
-  std::vector<oid_t> all_column_ids = {0, 1, 2};
+  std::vector<oid_t> all_column_ids = {0, 1, 2, 3};
 
   enum IndexId {
     PRIMARY_KEY = 0,

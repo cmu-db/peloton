@@ -11,15 +11,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "catalog/catalog.h"
-#include "catalog/database_catalog.h"
-#include "catalog/table_catalog.h"
-#include "catalog/index_catalog.h"
 #include "catalog/column_catalog.h"
+#include "catalog/database_catalog.h"
 #include "catalog/database_metrics_catalog.h"
+#include "catalog/index_catalog.h"
 #include "catalog/query_metrics_catalog.h"
-#include "concurrency/transaction_manager_factory.h"
+#include "catalog/table_catalog.h"
 #include "common/harness.h"
 #include "common/logger.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "storage/storage_manager.h"
 #include "type/ephemeral_pool.h"
 
@@ -181,6 +181,18 @@ TEST_F(CatalogTests, TableObject) {
   EXPECT_TRUE(column_objects[1]->IsInlined());
   EXPECT_FALSE(column_objects[1]->IsPrimary());
   EXPECT_FALSE(column_objects[1]->IsNotNull());
+
+  // update pg_table SET version_oid = 1 where table_name = department_table
+  oid_t department_table_oid = table_object->GetTableOid();
+  bool update_result = catalog::TableCatalog::GetInstance()->UpdateVersionId(
+      1, department_table_oid, txn);
+  // get version id after update
+  table_object = catalog::Catalog::GetInstance()->GetTableObject(
+      "EMP_DB", "department_table", txn);
+  uint32_t version_oid = table_object->GetVersionId();
+  EXPECT_NE(department_table_oid, INVALID_OID);
+  EXPECT_EQ(update_result, true);
+  EXPECT_EQ(version_oid, 1);
 
   txn_manager.CommitTransaction(txn);
 }

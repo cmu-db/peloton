@@ -14,9 +14,9 @@
 
 #include "catalog/table_catalog.h"
 
+#include "catalog/column_catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/index_catalog.h"
-#include "catalog/column_catalog.h"
 #include "concurrency/transaction_context.h"
 #include "storage/data_table.h"
 #include "type/value_factory.h"
@@ -33,6 +33,8 @@ TableCatalogObject::TableCatalogObject(executor::LogicalTile *tile,
                      .ToString()),
       database_oid(tile->GetValue(tupleId, TableCatalog::ColumnId::DATABASE_OID)
                        .GetAs<oid_t>()),
+      version_id(tile->GetValue(tupleId, TableCatalog::ColumnId::VERSION_ID)
+                     .GetAs<uint32_t>()),
       index_objects(),
       index_names(),
       valid_index_objects(false),
@@ -357,8 +359,15 @@ std::unique_ptr<catalog::Schema> TableCatalog::InitializeSchema() {
   database_id_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
-  std::unique_ptr<catalog::Schema> table_catalog_schema(new catalog::Schema(
-      {table_id_column, table_name_column, database_id_column}));
+  auto version_id_column = catalog::Column(
+      type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
+      "version_id", true);
+  version_id_column.AddConstraint(
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+
+  std::unique_ptr<catalog::Schema> table_catalog_schema(
+      new catalog::Schema({table_id_column, table_name_column,
+                           database_id_column, version_id_column}));
 
   return table_catalog_schema;
 }
@@ -380,10 +389,12 @@ bool TableCatalog::InsertTable(oid_t table_oid, const std::string &table_name,
   auto val0 = type::ValueFactory::GetIntegerValue(table_oid);
   auto val1 = type::ValueFactory::GetVarcharValue(table_name, nullptr);
   auto val2 = type::ValueFactory::GetIntegerValue(database_oid);
+  auto val3 = type::ValueFactory::GetIntegerValue(0);
 
   tuple->SetValue(TableCatalog::ColumnId::TABLE_OID, val0, pool);
   tuple->SetValue(TableCatalog::ColumnId::TABLE_NAME, val1, pool);
   tuple->SetValue(TableCatalog::ColumnId::DATABASE_OID, val2, pool);
+  tuple->SetValue(TableCatalog::ColumnId::VERSION_ID, val3, pool);
 
   // Insert the tuple
   return InsertTuple(std::move(tuple), txn);
@@ -394,7 +405,8 @@ bool TableCatalog::InsertTable(oid_t table_oid, const std::string &table_name,
  * @param   txn     TransactionContext
  * @return  Whether deletion is Successful
  */
-bool TableCatalog::DeleteTable(oid_t table_oid, concurrency::TransactionContext *txn) {
+bool TableCatalog::DeleteTable(oid_t table_oid,
+                               concurrency::TransactionContext *txn) {
   oid_t index_offset = IndexId::PRIMARY_KEY;  // Index of table_oid
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
@@ -539,6 +551,30 @@ TableCatalog::GetTableObjects(oid_t database_oid,
 
   database_object->SetValidTableObjects(true);
   return database_object->GetTableObjects();
+}
+
+bool TableCatalog::UpdateVersionId(oid_t update_val, oid_t table_oid,
+                                   concurrency::TransactionContext *txn) {
+  std::vector<oid_t> update_columns({ColumnId::VERSION_ID});  // version_id
+  oid_t index_offset = IndexId::PRIMARY_KEY;  // Index of table_oid
+  // values to execute index scan
+  std::vector<type::Value> scan_values;
+  scan_values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
+  // values to update
+  std::vector<type::Value> update_values;
+  update_values.push_back(
+      type::ValueFactory::GetIntegerValue(update_val).Copy());
+
+  // get table object, then evict table object
+  auto table_object = txn->catalog_cache.GetCachedTableObject(table_oid);
+  if (table_object) {
+    auto database_object = DatabaseCatalog::GetInstance()->GetDatabaseObject(
+        table_object->GetDatabaseOid(), txn);
+    database_object->EvictTableObject(table_oid);
+  }
+
+  return UpdateWithIndexScan(update_columns, update_values, scan_values,
+                             index_offset, txn);
 }
 
 }  // namespace catalog
