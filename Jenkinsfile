@@ -17,6 +17,8 @@ pipeline {
                         sh 'mkdir build'
                         sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False -DUSE_SANITIZER=Address .. && make -j4'
                         sh 'cd build && make check -j4 || true'
+                        sh 'ls /job'
+                        sh 'mkdir /job/TESTING'
                         sh 'cd build && cp -pr test /job/'
                         sh 'cd build && make benchmark -j4'
                         sh 'cd build && make install'
