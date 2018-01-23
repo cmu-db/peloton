@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "common/sql_node_visitor.h"
 #include "binder/binder_context.h"
+#include "common/sql_node_visitor.h"
 #include "parser/statements.h"
 #include "common/internal_types.h"
 
@@ -57,6 +57,7 @@ class BindNodeVisitor : public SqlNodeVisitor {
   void Visit(parser::LimitDescription *) override;
 
   void Visit(parser::CreateStatement *) override;
+  void Visit(parser::CreateFunctionStatement *) override;
   void Visit(parser::InsertStatement *) override;
   void Visit(parser::DeleteStatement *) override;
   void Visit(parser::DropStatement *) override;

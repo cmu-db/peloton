@@ -50,7 +50,7 @@ header_comment_line_5  = "// Identification: "
 header_comment_line_6  = "//\n"
 header_comment_line_7  = "// Copyright (c) 2015-%d, Carnegie Mellon University Database Group\n" % datetime.datetime.now().year
 header_comment_line_8  = "//\n"
-header_comment_line_9  = "//===----------------------------------------------------------------------===//\n\n\n"
+header_comment_line_9  = "//===----------------------------------------------------------------------===//\n\n"
 
 header_comment_1 = header_comment_line_1 + header_comment_line_2
 header_comment_3 = header_comment_line_4

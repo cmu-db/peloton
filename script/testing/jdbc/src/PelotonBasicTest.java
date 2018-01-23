@@ -2,11 +2,11 @@
 //
 //                         Peloton
 //
-// PelotonTest.java
+// PelotonBasicTest.java
 //
-// Identification: script/testing/jdbc/src/PelotonTest.java
+// Identification: script/testing/jdbc/src/PelotonBasicTest.java
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -16,7 +16,7 @@ import java.util.Random;
 import java.util.Date;
 import java.util.Properties;
 
-public class PelotonTest {
+public class PelotonBasicTest {
   private final String url = "jdbc:postgresql://localhost:15721/";
   private final String username = "postgres";
   private final String pass = "postgres";
@@ -131,7 +131,7 @@ public class PelotonTest {
 
   private final String EMPTY_SQL = ";;";
 
-  public PelotonTest() throws SQLException {
+  public PelotonBasicTest() throws SQLException {
     try {
       Class.forName("org.postgresql.Driver");
       if (LOG_LEVEL != 0) {
@@ -803,7 +803,7 @@ public class PelotonTest {
 
   static public void SingleTest() throws Exception {
     System.out.println("Basic Tests");
-    PelotonTest pt = new PelotonTest();
+    PelotonBasicTest pt = new PelotonBasicTest();
     pt.Init();
 //    pt.ShowTable();
     pt.Close(); 
@@ -811,7 +811,7 @@ public class PelotonTest {
 
   static public void BasicTest() throws Exception {
     System.out.println("Basic Tests");
-    PelotonTest pt = new PelotonTest();
+    PelotonBasicTest pt = new PelotonBasicTest();
     pt.Init();
     pt.ShowTable();
     pt.SeqScan();
@@ -828,14 +828,14 @@ public class PelotonTest {
 
   static public void StatsTest() throws Exception {
     System.out.println("Stats Tests: make sure to start peloton with stats_mode 1");
-    PelotonTest pt = new PelotonTest();
+    PelotonBasicTest pt = new PelotonBasicTest();
     pt.Init();
     pt.Stat_Test();
     pt.Close();
   }
  
   static public void CopyTest(String filePath) throws Exception {
-    PelotonTest pt = new PelotonTest();
+    PelotonBasicTest pt = new PelotonBasicTest();
     pt.Init();
     pt.Copy_Test(filePath);
     pt.Close();

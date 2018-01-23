@@ -437,6 +437,9 @@ std::string StatementTypeToString(StatementType type) {
     case StatementType::UPDATE: {
       return "UPDATE";
     }
+    case StatementType::CREATE_FUNC: {
+      return "CREATE_FUNC";
+    }
     case StatementType::DELETE: {
       return "DELETE";
     }
@@ -493,6 +496,8 @@ StatementType StringToStatementType(const std::string &str) {
     return StatementType::DELETE;
   } else if (upper_str == "CREATE") {
     return StatementType::CREATE;
+  } else if (upper_str == "CREATE_FUNC") {
+    return StatementType::CREATE_FUNC;
   } else if (upper_str == "DROP") {
     return StatementType::DROP;
   } else if (upper_str == "PREPARE") {
@@ -628,6 +633,147 @@ QueryType StatementTypeToQueryType(StatementType stmt_type, const parser::SQLSta
     }
   }
   return query_type;
+}
+
+//===--------------------------------------------------------------------===//
+// PostgresValueType - String Utilities
+//===--------------------------------------------------------------------===//
+
+std::string PostgresValueTypeToString(PostgresValueType type) {
+  switch (type) {
+    case PostgresValueType::INVALID: {
+      return "INVALID";
+    }
+    case PostgresValueType::TINYINT: {
+      return "TINYINT";
+    }
+    case PostgresValueType::SMALLINT: {
+      return "SMALLINT";
+    }
+    case PostgresValueType::INTEGER: {
+      return "INTEGER";
+    }
+    case PostgresValueType::VARBINARY: {
+      return "VARBINARY";
+    }
+    case PostgresValueType::BIGINT: {
+      return "BIGINT";
+    }
+    case PostgresValueType::REAL: {
+      return "REAL";
+    }
+    case PostgresValueType::DOUBLE: {
+      return "DOUBLE";
+    }
+    case PostgresValueType::TEXT: {
+      return "TEXT";
+    }
+    case PostgresValueType::BPCHAR: {
+      return "BPCHAR";
+    }
+    case PostgresValueType::BPCHAR2: {
+      return "BPCHAR2";
+    }
+    case PostgresValueType::VARCHAR: {
+      return "VARCHAR";
+    }
+    case PostgresValueType::VARCHAR2: {
+      return "VARCHAR2";
+    }
+    case PostgresValueType::DATE: {
+      return "DATE";
+    }
+    case PostgresValueType::TIMESTAMPS: {
+      return "TIMESTAMPS";
+    }
+    case PostgresValueType::TIMESTAMPS2: {
+      return "TIMESTAMPS2";
+    }
+    case PostgresValueType::TEXT_ARRAY: {
+      return "TEXT_ARRAY";
+    }
+    case PostgresValueType::INT2_ARRAY: {
+      return "INT2_ARRAY";
+    }
+    case PostgresValueType::INT4_ARRAY: {
+      return "INT4_ARRAY";
+    }
+    case PostgresValueType::OID_ARRAY: {
+      return "OID_ARRAY";
+    }
+    case PostgresValueType::FLOADT4_ARRAY: {
+      return "FLOADT4_ARRAY";
+    }
+    case PostgresValueType::DECIMAL: {
+      return "DECIMAL";
+    }
+    default: {
+      throw ConversionException(
+          StringUtil::Format("No string conversion for PostgresValueType value '%d'",
+                             static_cast<int>(type)));
+    }
+  }
+  return "INVALID";
+}
+
+PostgresValueType StringToPostgresValueType(const std::string &str) {
+  std::string upper_str = StringUtil::Upper(str);
+  if (upper_str == "INVALID") {
+    return PostgresValueType::INVALID;
+  } else if (upper_str == "BOOLEAN") {
+    return PostgresValueType::BOOLEAN;
+  } else if (upper_str == "TINYINT") {
+    return PostgresValueType::TINYINT;
+  } else if (upper_str == "SMALLINT") {
+    return PostgresValueType::SMALLINT;
+  } else if (upper_str == "INTEGER") {
+    return PostgresValueType::INTEGER;
+  } else if (upper_str == "VARBINARY") {
+    return PostgresValueType::VARBINARY;
+  } else if (upper_str == "BIGINT") {
+    return PostgresValueType::BIGINT;
+  } else if (upper_str == "REAL") {
+    return PostgresValueType::REAL;
+  } else if (upper_str == "DOUBLE") {
+    return PostgresValueType::DOUBLE;
+  } else if (upper_str == "TEXT") {
+    return PostgresValueType::TEXT;
+  } else if (upper_str == "BPCHAR") {
+    return PostgresValueType::BPCHAR;
+  } else if (upper_str == "BPCHAR2") {
+    return PostgresValueType::BPCHAR2;
+  } else if (upper_str == "VARCHAR") {
+    return PostgresValueType::VARCHAR;
+  } else if (upper_str == "VARCHAR2") {
+    return PostgresValueType::VARCHAR2;
+  } else if (upper_str == "DATE") {
+    return PostgresValueType::DATE;
+  } else if (upper_str == "TIMESTAMPS") {
+    return PostgresValueType::TIMESTAMPS;
+  } else if (upper_str == "TIMESTAMPS2") {
+    return PostgresValueType::TIMESTAMPS2;
+  } else if (upper_str == "TEXT_ARRAY") {
+    return PostgresValueType::TEXT_ARRAY;
+  } else if (upper_str == "INT2_ARRAY") {
+    return PostgresValueType::INT2_ARRAY;
+  } else if (upper_str == "INT4_ARRAY") {
+    return PostgresValueType::INT4_ARRAY;
+  } else if (upper_str == "OID_ARRAY") {
+    return PostgresValueType::OID_ARRAY;
+  } else if (upper_str == "FLOADT4_ARRAY") {
+    return PostgresValueType::FLOADT4_ARRAY;
+  } else if (upper_str == "DECIMAL") {
+    return PostgresValueType::DECIMAL;
+  } else {
+    throw ConversionException(StringUtil::Format(
+    "No PostgresValueType conversion from string '%s'", upper_str.c_str()));
+  }
+  return PostgresValueType::INVALID;
+}
+
+std::ostream &operator<<(std::ostream &os, const PostgresValueType &type) {
+  os << PostgresValueTypeToString(type);
+  return os;
 }
 
 //===--------------------------------------------------------------------===//
@@ -1114,6 +1260,9 @@ std::string PlanNodeTypeToString(PlanNodeType type) {
     }
     case PlanNodeType::CREATE: {
       return ("CREATE");
+    }
+    case PlanNodeType::CREATE_FUNC: {
+      return ("CREATE_FUNC");
     }
     case PlanNodeType::SEND: {
       return ("SEND");
@@ -2879,8 +3028,8 @@ std::string OperatorIdToString(OperatorId op_id) {
       return "BTrim";
     case OperatorId::Sqrt:
       return "Sqrt";
-    case OperatorId::Extract:
-      return "Extract";
+    case OperatorId::DatePart:
+      return "DatePart";
     case OperatorId::Floor:
       return "Floor";
     case OperatorId::Like:
