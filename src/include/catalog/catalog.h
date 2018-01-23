@@ -179,9 +179,6 @@ class Catalog {
 
 
 
- std::shared_ptr<IndexCatalogObject> GetIndexObject(
-         const std::string &database_name, const std::string &index_name, const std::string &table_name,
-         concurrency::TransactionContext *txn);
   //===--------------------------------------------------------------------===//
   // DEPRECATED FUNCTIONS
   //===--------------------------------------------------------------------===//
