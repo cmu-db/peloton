@@ -28,6 +28,20 @@ namespace type {
 
 namespace {
 
+/** Forward declarations:
+ *  Subtraction
+ */
+struct Sub : public TypeSystem::BinaryOperatorHandleNull {
+  bool SupportsTypes(const Type &left_type,
+                     const Type &right_type) const override;
+
+  Type ResultType(UNUSED_ATTRIBUTE const Type &left_type,
+                  UNUSED_ATTRIBUTE const Type &right_type) const override;
+
+  Value Impl(CodeGen &codegen, const Value &left, const Value &right,
+             const TypeSystem::InvocationContext &ctx) const override;
+};
+
 ////////////////////////////////////////////////////////////////////////////////
 ///
 /// Casting
@@ -161,6 +175,127 @@ struct CompareBigInt : public TypeSystem::SimpleComparisonHandleNull {
 
 ////////////////////////////////////////////////////////////////////////////////
 ///
+/// Unary operations
+///
+////////////////////////////////////////////////////////////////////////////////
+
+// Abs
+struct Abs : public TypeSystem::UnaryOperatorHandleNull {
+  bool SupportsType(const Type &type) const override {
+    return type.GetSqlType() == BigInt::Instance();
+  }
+
+  Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
+    return Type{BigInt::Instance()};
+  }
+
+  Value Impl(CodeGen &codegen, const Value &val,
+             const TypeSystem::InvocationContext &ctx)
+    const override {
+    PL_ASSERT(SupportsType(val.GetType()));
+    // The BigInt subtraction implementation
+    Sub sub;
+    // Zero place-holder
+    auto zero = codegen::Value{type::BigInt::Instance(), codegen.Const64(0)};
+
+    // We want: raw_ret = (val < 0 ? 0 - val : val)
+    auto sub_result = sub.Impl(codegen, zero, val, ctx);
+    auto *lt_zero = codegen->CreateICmpSLT(val.GetValue(), zero.GetValue());
+    auto *raw_ret = codegen->CreateSelect(lt_zero, sub_result.GetValue(), val.GetValue());
+    return Value{BigInt::Instance(), raw_ret};
+  }
+};
+
+// Negation
+struct Negate : public TypeSystem::UnaryOperatorHandleNull {
+  bool SupportsType(const Type &type) const override {
+    return type.GetSqlType() == BigInt::Instance();
+  }
+
+  Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
+    return Type{BigInt::Instance()};
+  }
+
+  Value Impl(CodeGen &codegen, const Value &val,
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+      const override {
+    PL_ASSERT(SupportsType(val.GetType()));
+
+    llvm::Value *overflow_bit = nullptr;
+    llvm::Value *result = codegen.CallSubWithOverflow(
+        codegen.Const64(0), val.GetValue(), overflow_bit);
+
+    codegen.ThrowIfOverflow(overflow_bit);
+
+    // Return result
+    return Value{BigInt::Instance(), result, nullptr, nullptr};
+  }
+};
+
+// Floor
+struct Floor : public TypeSystem::UnaryOperatorHandleNull {
+  CastBigInt cast;
+
+  bool SupportsType(const Type &type) const override {
+    return type.GetSqlType() == BigInt::Instance();
+  }
+
+  Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
+    return Type{Decimal::Instance()};
+  }
+
+  Value Impl(CodeGen &codegen, const Value &val,
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+      const override {
+    PL_ASSERT(SupportsType(val.GetType()));
+    return cast.Impl(codegen, val, Decimal::Instance());
+  }
+};
+
+// Ceiling
+struct Ceil : public TypeSystem::UnaryOperatorHandleNull {
+  CastBigInt cast;
+
+  bool SupportsType(const Type &type) const override {
+    return type.GetSqlType() == BigInt::Instance();
+  }
+
+  Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
+    return Type{Decimal::Instance()};
+  }
+
+  Value Impl(CodeGen &codegen, const Value &val,
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+      const override {
+    PL_ASSERT(SupportsType(val.GetType()));
+    return cast.Impl(codegen, val, Decimal::Instance());
+  }
+};
+
+// Sqrt
+struct Sqrt : public TypeSystem::UnaryOperatorHandleNull {
+  CastBigInt cast;
+
+  bool SupportsType(const Type &type) const override {
+    return type.GetSqlType() == BigInt::Instance();
+  }
+
+  Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
+    return Decimal::Instance();
+  }
+
+ protected:
+  Value Impl(CodeGen &codegen, const Value &val,
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+  const override {
+    auto casted = cast.Impl(codegen, val, Decimal::Instance());
+    auto *raw_ret = codegen.Sqrt(casted.GetValue());
+    return Value{Decimal::Instance(), raw_ret};
+  }
+};
+
+////////////////////////////////////////////////////////////////////////////////
+///
 /// Binary operations
 ///
 ////////////////////////////////////////////////////////////////////////////////
@@ -197,34 +332,32 @@ struct Add : public TypeSystem::BinaryOperatorHandleNull {
 };
 
 // Subtraction
-struct Sub : public TypeSystem::BinaryOperatorHandleNull {
-  bool SupportsTypes(const Type &left_type,
-                     const Type &right_type) const override {
-    return left_type.GetSqlType() == BigInt::Instance() &&
-           left_type == right_type;
-  }
+bool Sub::SupportsTypes(const Type &left_type,
+                        const Type &right_type) const {
+  return left_type.GetSqlType() == BigInt::Instance() &&
+    left_type == right_type;
+}
 
-  Type ResultType(UNUSED_ATTRIBUTE const Type &left_type,
-                  UNUSED_ATTRIBUTE const Type &right_type) const override {
-    return Type{BigInt::Instance()};
-  }
+Type Sub::ResultType(UNUSED_ATTRIBUTE const Type &left_type,
+                     UNUSED_ATTRIBUTE const Type &right_type) const {
+  return Type{BigInt::Instance()};
+}
 
-  Value Impl(CodeGen &codegen, const Value &left, const Value &right,
-             const TypeSystem::InvocationContext &ctx) const override {
-    PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
+Value Sub::Impl(CodeGen &codegen, const Value &left, const Value &right,
+                const TypeSystem::InvocationContext &ctx) const {
+  PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
 
-    // Do subtraction
-    llvm::Value *overflow_bit = nullptr;
-    llvm::Value *result = codegen.CallSubWithOverflow(
+  // Do subtraction
+  llvm::Value *overflow_bit = nullptr;
+  llvm::Value *result = codegen.CallSubWithOverflow(
         left.GetValue(), right.GetValue(), overflow_bit);
 
-    if (ctx.on_error == OnError::Exception) {
-      codegen.ThrowIfOverflow(overflow_bit);
-    }
-
-    // Return result
-    return Value{BigInt::Instance(), result};
+  if (ctx.on_error == OnError::Exception) {
+    codegen.ThrowIfOverflow(overflow_bit);
   }
+
+  // Return result
+  return Value{BigInt::Instance(), result};
 };
 
 // Multiplication
@@ -367,127 +500,6 @@ struct Modulo : public TypeSystem::BinaryOperatorHandleNull {
 
     // Return result
     return result;
-  }
-};
-
-////////////////////////////////////////////////////////////////////////////////
-///
-/// Unary operations
-///
-////////////////////////////////////////////////////////////////////////////////
-
-// Abs
-struct Abs : public TypeSystem::UnaryOperatorHandleNull {
-  bool SupportsType(const Type &type) const override {
-    return type.GetSqlType() == BigInt::Instance();
-  }
-
-  Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
-    return Type{BigInt::Instance()};
-  }
-
-  Value Impl(CodeGen &codegen, const Value &val,
-             const TypeSystem::InvocationContext &ctx)
-    const override {
-    PL_ASSERT(SupportsType(val.GetType()));
-    // The BigInt subtraction implementation
-    Sub sub;
-    // Zero place-holder
-    auto zero = codegen::Value{type::BigInt::Instance(), codegen.Const64(0)};
-
-    // We want: raw_ret = (val < 0 ? 0 - val : val)
-    auto sub_result = sub.Impl(codegen, zero, val, ctx);
-    auto *lt_zero = codegen->CreateICmpSLT(val.GetValue(), zero.GetValue());
-    auto *raw_ret = codegen->CreateSelect(lt_zero, sub_result.GetValue(), val.GetValue());
-    return Value{BigInt::Instance(), raw_ret};
-  }
-};
-
-// Negation
-struct Negate : public TypeSystem::UnaryOperatorHandleNull {
-  bool SupportsType(const Type &type) const override {
-    return type.GetSqlType() == BigInt::Instance();
-  }
-
-  Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
-    return Type{BigInt::Instance()};
-  }
-
-  Value Impl(CodeGen &codegen, const Value &val,
-             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
-      const override {
-    PL_ASSERT(SupportsType(val.GetType()));
-
-    llvm::Value *overflow_bit = nullptr;
-    llvm::Value *result = codegen.CallSubWithOverflow(
-        codegen.Const64(0), val.GetValue(), overflow_bit);
-
-    codegen.ThrowIfOverflow(overflow_bit);
-
-    // Return result
-    return Value{BigInt::Instance(), result, nullptr, nullptr};
-  }
-};
-
-// Floor
-struct Floor : public TypeSystem::UnaryOperatorHandleNull {
-  CastBigInt cast;
-
-  bool SupportsType(const Type &type) const override {
-    return type.GetSqlType() == BigInt::Instance();
-  }
-
-  Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
-    return Type{Decimal::Instance()};
-  }
-
-  Value Impl(CodeGen &codegen, const Value &val,
-             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
-      const override {
-    PL_ASSERT(SupportsType(val.GetType()));
-    return cast.Impl(codegen, val, Decimal::Instance());
-  }
-};
-
-// Ceiling
-struct Ceil : public TypeSystem::UnaryOperatorHandleNull {
-  CastBigInt cast;
-
-  bool SupportsType(const Type &type) const override {
-    return type.GetSqlType() == BigInt::Instance();
-  }
-
-  Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
-    return Type{Decimal::Instance()};
-  }
-
-  Value Impl(CodeGen &codegen, const Value &val,
-             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
-      const override {
-    PL_ASSERT(SupportsType(val.GetType()));
-    return cast.Impl(codegen, val, Decimal::Instance());
-  }
-};
-
-// Sqrt
-struct Sqrt : public TypeSystem::UnaryOperatorHandleNull {
-  CastBigInt cast;
-
-  bool SupportsType(const Type &type) const override {
-    return type.GetSqlType() == BigInt::Instance();
-  }
-
-  Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
-    return Decimal::Instance();
-  }
-
- protected:
-  Value Impl(CodeGen &codegen, const Value &val,
-             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
-  const override {
-    auto casted = cast.Impl(codegen, val, Decimal::Instance());
-    auto *raw_ret = codegen.Sqrt(casted.GetValue());
-    return Value{Decimal::Instance(), raw_ret};
   }
 };
 

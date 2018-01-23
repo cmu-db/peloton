@@ -124,6 +124,11 @@ class DecimalFunctionsSQLTest : public PelotonTest {};
     int lo = 0;
     int hi = 254;
     int numEntries = 200;
+
+    // for checking results
+    std::string result_query = "select id, abs(income) from foo;";
+    std::vector<std::string> ref_result;
+
     // Setting a seed
     std::srand(std::time(0));
     for (i = 0; i < numEntries; i++) {
@@ -132,29 +137,18 @@ class DecimalFunctionsSQLTest : public PelotonTest {};
       std::ostringstream os;
       os << "insert into foo values(" << i << ", " << num << ");";
       TestingSQLUtil::ExecuteSQLQuery(os.str());
+
+      // accumulate expected result
+      std::ostringstream result_string;
+      result_string << i << "|" << abs(num);
+      ref_result.push_back(result_string.str());
     }
     EXPECT_EQ(i, numEntries);
     txn_manager.CommitTransaction(txn);
 
-    // Fetch values from the table
-    std::vector<ResultValue> result;
-    std::vector<FieldInfo> tuple_descriptor;
-    std::string error_message;
-    int rows_affected;
-    std::string sql_line = "select id, abs(income) from foo;";
-
-    TestingSQLUtil::ExecuteSQLQuery(sql_line, result, tuple_descriptor,
-                                    rows_affected, error_message);
-    for (i = 0; i < numEntries; i++) {
-      std::string result_id(
-              TestingSQLUtil::GetResultValueAsString(result, (2 * i)));
-      std::string result_income(
-              TestingSQLUtil::GetResultValueAsString(result, (2 * i) + 1));
-      int id = std::stoi(result_id);
-      int income = std::stoi(result_income);
-      EXPECT_EQ(id, i);
-      EXPECT_EQ(income, abs(inputs[i]));
-    }
+    TestingSQLUtil::ExecuteSQLQueryAndCheckResult(result_query,
+                                                  ref_result,
+                                                  true);
   }
 
   TEST_F(DecimalSQLTestsBase, SmallIntAbsTest) {
@@ -167,6 +161,11 @@ class DecimalFunctionsSQLTest : public PelotonTest {};
     int lo = 0;
     int hi = 65534;
     int numEntries = 200;
+
+    // for checking results
+    std::string result_query = "select id, abs(income) from foo;";
+    std::vector<std::string> ref_result;
+
     // Setting a seed
     std::srand(std::time(0));
     for (i = 0; i < numEntries; i++) {
@@ -175,29 +174,18 @@ class DecimalFunctionsSQLTest : public PelotonTest {};
       std::ostringstream os;
       os << "insert into foo values(" << i << ", " << num << ");";
       TestingSQLUtil::ExecuteSQLQuery(os.str());
+
+      // accumulate expected result
+      std::ostringstream result_string;
+      result_string << i << "|" << abs(num);
+      ref_result.push_back(result_string.str());
     }
     EXPECT_EQ(i, numEntries);
     txn_manager.CommitTransaction(txn);
 
-    // Fetch values from the table
-    std::vector<ResultValue> result;
-    std::vector<FieldInfo> tuple_descriptor;
-    std::string error_message;
-    int rows_affected;
-    std::string sql_line = "select id, abs(income) from foo;";
-
-    TestingSQLUtil::ExecuteSQLQuery(sql_line, result, tuple_descriptor,
-                                    rows_affected, error_message);
-    for (i = 0; i < numEntries; i++) {
-      std::string result_id(
-              TestingSQLUtil::GetResultValueAsString(result, (2 * i)));
-      std::string result_income(
-              TestingSQLUtil::GetResultValueAsString(result, (2 * i) + 1));
-      int id = std::stoi(result_id);
-      int income = std::stoi(result_income);
-      EXPECT_EQ(id, i);
-      EXPECT_EQ(income, abs(inputs[i]));
-    }
+    TestingSQLUtil::ExecuteSQLQueryAndCheckResult(result_query,
+                                                  ref_result,
+                                                  true);
   }
 
   TEST_F(DecimalSQLTestsBase, IntAbsTest) {
@@ -210,6 +198,11 @@ class DecimalFunctionsSQLTest : public PelotonTest {};
     int lo = 0;
     int hi = 65534;
     int numEntries = 200;
+
+    // for checking results
+    std::string result_query = "select id, abs(income) from foo;";
+    std::vector<std::string> ref_result;
+
     // Setting a seed
     std::srand(std::time(0));
     for (i = 0; i < numEntries; i++) {
@@ -218,29 +211,18 @@ class DecimalFunctionsSQLTest : public PelotonTest {};
       std::ostringstream os;
       os << "insert into foo values(" << i << ", " << num << ");";
       TestingSQLUtil::ExecuteSQLQuery(os.str());
+
+      // accumulate expected result
+      std::ostringstream result_string;
+      result_string << i << "|" << abs(num);
+      ref_result.push_back(result_string.str());
     }
     EXPECT_EQ(i, numEntries);
     txn_manager.CommitTransaction(txn);
 
-    // Fetch values from the table
-    std::vector<ResultValue> result;
-    std::vector<FieldInfo> tuple_descriptor;
-    std::string error_message;
-    int rows_affected;
-    std::string sql_line = "select id, abs(income) from foo;";
-
-    TestingSQLUtil::ExecuteSQLQuery(sql_line, result, tuple_descriptor,
-                                    rows_affected, error_message);
-    for (i = 0; i < numEntries; i++) {
-      std::string result_id(
-              TestingSQLUtil::GetResultValueAsString(result, (2 * i)));
-      std::string result_income(
-              TestingSQLUtil::GetResultValueAsString(result, (2 * i) + 1));
-      int id = std::stoi(result_id);
-      int income = std::stoi(result_income);
-      EXPECT_EQ(id, i);
-      EXPECT_EQ(income, abs(inputs[i]));
-    }
+    TestingSQLUtil::ExecuteSQLQueryAndCheckResult(result_query,
+                                                  ref_result,
+                                                  true);
   }
 
   TEST_F(DecimalSQLTestsBase, BigIntAbsTest) {
@@ -253,6 +235,11 @@ class DecimalFunctionsSQLTest : public PelotonTest {};
     int lo = 0;
     int hi = 65534;
     int numEntries = 200;
+
+    // for checking results
+    std::string result_query = "select id, abs(income) from foo;";
+    std::vector<std::string> ref_result;
+
     // Setting a seed
     std::srand(std::time(0));
     for (i = 0; i < numEntries; i++) {
@@ -261,29 +248,18 @@ class DecimalFunctionsSQLTest : public PelotonTest {};
       std::ostringstream os;
       os << "insert into foo values(" << i << ", " << num << ");";
       TestingSQLUtil::ExecuteSQLQuery(os.str());
+
+      // accumulate expected result
+      std::ostringstream result_string;
+      result_string << i << "|" << abs(num);
+      ref_result.push_back(result_string.str());
     }
     EXPECT_EQ(i, numEntries);
     txn_manager.CommitTransaction(txn);
 
-    // Fetch values from the table
-    std::vector<ResultValue> result;
-    std::vector<FieldInfo> tuple_descriptor;
-    std::string error_message;
-    int rows_affected;
-    std::string sql_line = "select id, abs(income) from foo;";
-
-    TestingSQLUtil::ExecuteSQLQuery(sql_line, result, tuple_descriptor,
-                                    rows_affected, error_message);
-    for (i = 0; i < numEntries; i++) {
-      std::string result_id(
-              TestingSQLUtil::GetResultValueAsString(result, (2 * i)));
-      std::string result_income(
-              TestingSQLUtil::GetResultValueAsString(result, (2 * i) + 1));
-      int id = std::stoi(result_id);
-      int income = std::stoi(result_income);
-      EXPECT_EQ(id, i);
-      EXPECT_EQ(income, abs(inputs[i]));
-    }
+    TestingSQLUtil::ExecuteSQLQueryAndCheckResult(result_query,
+                                                  ref_result,
+                                                  true);
   }
 
   TEST_F(DecimalSQLTestsBase, DecimalAbsTest) {
@@ -296,6 +272,11 @@ class DecimalFunctionsSQLTest : public PelotonTest {};
     int lo = -500;
     int hi = 500;
     int numEntries = 500;
+
+    // for checking results
+    std::string result_query = "select id, abs(income) from foo;";
+    std::vector<std::string> ref_result;
+
     // Setting a seed
     std::srand(std::time(0));
     for (i = 0; i < numEntries; i++) {
@@ -304,29 +285,18 @@ class DecimalFunctionsSQLTest : public PelotonTest {};
       std::ostringstream os;
       os << "insert into foo values(" << i << ", " << num << ");";
       TestingSQLUtil::ExecuteSQLQuery(os.str());
+
+      // accumulate expected result
+      std::ostringstream result_string;
+      result_string << i << "|" << fabs(num);
+      ref_result.push_back(result_string.str());
     }
     EXPECT_EQ(i, numEntries);
     txn_manager.CommitTransaction(txn);
 
-    // Fetch values from the table
-    std::vector<ResultValue> result;
-    std::vector<FieldInfo> tuple_descriptor;
-    std::string error_message;
-    int rows_affected;
-    std::string sql_line = "select id, abs(income) from foo;";
-
-    TestingSQLUtil::ExecuteSQLQuery(sql_line, result, tuple_descriptor,
-                                    rows_affected, error_message);
-    for (i = 0; i < numEntries; i++) {
-      std::string result_id(
-              TestingSQLUtil::GetResultValueAsString(result, (2 * i)));
-      std::string result_income(
-              TestingSQLUtil::GetResultValueAsString(result, (2 * i) + 1));
-      int id = std::stoi(result_id);
-      double income = std::stod(result_income);
-      EXPECT_EQ(id, i);
-      EXPECT_DOUBLE_EQ(income, fabs(inputs[i]));
-    }
+    TestingSQLUtil::ExecuteSQLQueryAndCheckResult(result_query,
+                                                  ref_result,
+                                                  true);
   }
 
   TEST_F(DecimalFunctionsSQLTest, CeilTest) {
