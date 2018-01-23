@@ -1,4 +1,4 @@
-// Copyright (c) 2015 Sandstorm Development Group, Inc. and contributors
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 // Licensed under the MIT License:
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy

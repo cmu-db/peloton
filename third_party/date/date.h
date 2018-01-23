@@ -3,7 +3,7 @@
 
 // The MIT License (MIT)
 //
-// Copyright (c) 2015, 2016 Howard Hinnant
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 // Copyright (c) 2016 Adrian Colomitchi
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy

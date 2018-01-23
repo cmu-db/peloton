@@ -6,8 +6,7 @@
 //
 // Identification: src/backend/common/timestamp_value.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //===----------------------------------------------------------------------===//
 
 #include "type/timestamp_type.h"

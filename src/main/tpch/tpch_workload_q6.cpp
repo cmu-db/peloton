@@ -6,7 +6,7 @@
 //
 // Identification: src/main/tpch/tpch_workload_q1.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 

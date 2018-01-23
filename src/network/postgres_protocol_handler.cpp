@@ -6,8 +6,7 @@
 //
 // Identification: src/network/postgres_protocol_handler.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
-//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //===----------------------------------------------------------------------===//
 
 #include <boost/algorithm/string.hpp>

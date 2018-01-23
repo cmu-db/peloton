@@ -1,4 +1,4 @@
-// Copyright (c) 2015 Philip Quinn.
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 // Licensed under the MIT License:
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy

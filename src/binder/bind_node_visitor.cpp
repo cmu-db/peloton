@@ -7,7 +7,6 @@
 // Identification: src/binder/bind_node_visitor.cpp
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
-//
 //===----------------------------------------------------------------------===//
 
 #include "expression/expression_util.h"

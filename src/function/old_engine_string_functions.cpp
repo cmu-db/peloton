@@ -7,7 +7,6 @@
 // Identification: src/function/old_engine_string_functions.cpp
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
-//
 //===----------------------------------------------------------------------===//
 
 #include "function/old_engine_string_functions.h"

@@ -6,7 +6,7 @@
 //
 // Identification: test/sql/decimal_functions_sql_test.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 

@@ -6,8 +6,7 @@
 //
 // Identification: /peloton/src/storage/temp_table.cpp
 //
-// Copyright (c) 2015, 2016 Carnegie Mellon University Database Group
-//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //===----------------------------------------------------------------------===//
 
 #include "storage/temp_table.h"

@@ -6,7 +6,7 @@
 //
 // Identification: src/include/optimizer/tuple_sample.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 

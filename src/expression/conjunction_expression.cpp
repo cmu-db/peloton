@@ -6,8 +6,7 @@
 //
 // Identification: src/expression/conjunction_expression.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
-//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //===----------------------------------------------------------------------===//
 
 #include "expression/conjunction_expression.h"

@@ -6,8 +6,7 @@
 //
 // Identification: src/statistics/backend_stats_context.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //===----------------------------------------------------------------------===//
 
 #include "statistics/backend_stats_context.h"
