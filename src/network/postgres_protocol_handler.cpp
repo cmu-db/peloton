@@ -31,8 +31,10 @@
 #include "traffic_cop/traffic_cop.h"
 #include "type/value.h"
 #include "type/value_factory.h"
+#include "network/marshal.h"
 
-
+#define SSL_MESSAGE_VERNO 80877103
+#define PROTO_MAJOR_VERSION(x) (x >> 16)
 
 namespace peloton {
 namespace network {
@@ -448,7 +450,10 @@ void PostgresProtocolHandler::ExecParseMessage(InputPacket *pkt) {
   // Prepare statement
   std::shared_ptr<Statement> statement(nullptr);
 
-  statement = traffic_cop_->PrepareStatement(statement_name, query, std::move(sql_stmt_list),
+  LOG_TRACE("PrepareStatement[%s] => %s", statement_name.c_str(),
+            query_string.c_str());
+  statement = traffic_cop_->PrepareStatement(statement_name, query, 
+                                             std::move(sql_stmt_list),
                                              error_message);
   if (statement.get() == nullptr) {
     traffic_cop_->ProcessInvalidStatement();
@@ -730,10 +735,35 @@ size_t PostgresProtocolHandler::ReadParamValue(
         PL_ASSERT(param_values[param_idx].GetTypeId() != type::TypeId::INVALID);
       } else {
         // BINARY mode
-        switch (static_cast<PostgresValueType>(param_types[param_idx])) {
+        PostgresValueType pg_value_type = static_cast<PostgresValueType>(param_types[param_idx]);
+        LOG_TRACE("Postgres Protocol Conversion [param_idx=%d]",
+                  param_idx);
+        switch (pg_value_type) {
+          case PostgresValueType::TINYINT: {
+            int8_t int_val = 0;
+            for (size_t i = 0; i < sizeof(int8_t); ++i) {
+              int_val = (int_val << 8) | param[i];
+            }
+            bind_parameters[param_idx] =
+                std::make_pair(type::TypeId::TINYINT, std::to_string(int_val));
+            param_values[param_idx] =
+                type::ValueFactory::GetTinyIntValue(int_val).Copy();
+            break;
+          }
+          case PostgresValueType::SMALLINT: {
+            int16_t int_val = 0;
+            for (size_t i = 0; i < sizeof(int16_t); ++i) {
+              int_val = (int_val << 8) | param[i];
+            }
+            bind_parameters[param_idx] =
+                std::make_pair(type::TypeId::SMALLINT, std::to_string(int_val));
+            param_values[param_idx] =
+                type::ValueFactory::GetSmallIntValue(int_val).Copy();
+            break;
+          }
           case PostgresValueType::INTEGER: {
-            int int_val = 0;
-            for (size_t i = 0; i < sizeof(int); ++i) {
+            int32_t int_val = 0;
+            for (size_t i = 0; i < sizeof(int32_t); ++i) {
               int_val = (int_val << 8) | param[i];
             }
             bind_parameters[param_idx] =
@@ -774,7 +804,9 @@ size_t PostgresProtocolHandler::ReadParamValue(
             break;
           }
           default: {
-            LOG_ERROR("Do not support data type: %d", param_types[param_idx]);
+            LOG_ERROR("Binary Postgres protocol does not support data type '%s' [%d]",
+                      PostgresValueTypeToString(pg_value_type).c_str(),
+                      param_types[param_idx]);
             break;
           }
         }
@@ -1037,6 +1069,77 @@ bool PostgresProtocolHandler::ReadPacket(Buffer &rbuf, InputPacket &rpkt) {
     // We have processed the data, move buffer pointer
     rbuf.buf_ptr += rpkt.len;
   }
+
+  return true;
+}
+
+/*
+ * process_startup_packet - Processes the startup packet
+ *  (after the size field of the header).
+ */
+bool PostgresProtocolHandler::ProcessInitialPacket(InputPacket *pkt, Client client, bool ssl_able, bool& ssl_handshake, bool& finish_startup_packet) {
+  std::string token, value;
+  std::unique_ptr<OutputPacket> response(new OutputPacket);
+
+  int32_t proto_version = PacketGetInt(pkt, sizeof(int32_t));
+  LOG_INFO("protocol version: %d", proto_version);
+
+  // TODO(Yuchen): consider more about return value
+  if (proto_version == SSL_MESSAGE_VERNO) {
+    LOG_TRACE("process SSL MESSAGE");
+    ProcessSSLRequestPacket(ssl_able, ssl_handshake);
+    return true;
+  }
+  else {
+    LOG_TRACE("process startup packet");
+    return ProcessStartupPacket(pkt, proto_version, client, finish_startup_packet);
+  }
+}
+
+void PostgresProtocolHandler::ProcessSSLRequestPacket(bool ssl_able, bool& ssl_handshake) {
+  std::unique_ptr<OutputPacket> response(new OutputPacket());
+  ssl_handshake = ssl_able;
+  response->msg_type = ssl_able ? NetworkMessageType::SSL_YES : NetworkMessageType::SSL_NO;
+  responses.push_back(std::move(response));
+  SetFlushFlag(true);
+}
+
+bool PostgresProtocolHandler::ProcessStartupPacket(InputPacket* pkt, int32_t proto_version, Client client, bool& finished_startup_packet) {
+  std::string token, value;
+
+  // Only protocol version 3 is supported
+  if (PROTO_MAJOR_VERSION(proto_version) != 3) {
+    LOG_ERROR("Protocol error: Only protocol version 3 is supported.");
+    exit(EXIT_FAILURE);
+  }
+
+  // TODO(Yuchen): check for more malformed cases
+  while (pkt->ptr < pkt->len) {
+    // loop end case?
+    GetStringToken(pkt, token);
+    // if the option database was found
+    if (token.compare("database") == 0) {
+      // loop end?
+      if (pkt->ptr >= pkt->len) break;
+      GetStringToken(pkt, client.dbname);
+    } else if (token.compare(("user")) == 0) {
+      // loop end?
+      if (pkt->ptr >= pkt->len) break;
+      GetStringToken(pkt, client.user);
+    }
+    else {
+      if (pkt->ptr >= pkt->len) break;
+      GetStringToken(pkt, value);
+      client.cmdline_options[token] = value;
+    }
+
+  }
+  finished_startup_packet = true;
+
+  // Send AuthRequestOK to client
+  // TODO(Yuchen): Peloton does not do any kind of trust authentication now.
+  // For example, no password authentication.
+  SendInitialResponse();
 
   return true;
 }

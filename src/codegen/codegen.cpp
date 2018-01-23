@@ -147,6 +147,12 @@ llvm::Value *CodeGen::CallPrintf(const std::string &format,
   return CallFunc(printf_fn, printf_args);
 }
 
+llvm::Value *CodeGen::Sqrt(llvm::Value *val) {
+  llvm::Function *sqrt_func = llvm::Intrinsic::getDeclaration(
+      &GetModule(), llvm::Intrinsic::sqrt, val->getType());
+  return CallFunc(sqrt_func, {val});
+}
+
 llvm::Value *CodeGen::CallAddWithOverflow(llvm::Value *left, llvm::Value *right,
                                           llvm::Value *&overflow_bit) {
   PL_ASSERT(left->getType() == right->getType());

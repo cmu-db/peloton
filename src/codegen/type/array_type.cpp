@@ -23,9 +23,11 @@ namespace {
 
 // TODO: Fill this out
 
-//===----------------------------------------------------------------------===//
-// TYPE SYSTEM CONSTRUCTION
-//===----------------------------------------------------------------------===//
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Function tables
+///
+////////////////////////////////////////////////////////////////////////////////
 
 // The list of types a SQL array type can be implicitly casted to
 const std::vector<peloton::type::TypeId> kImplicitCastingTable = {};
@@ -50,7 +52,12 @@ static std::vector<TypeSystem::NoArgOpInfo> kNoArgOperatorTable = {};
 
 }  // anonymous namespace
 
-// Initialize the ARRAY SQL type with the configured type system
+////////////////////////////////////////////////////////////////////////////////
+///
+/// ARRAY type initialization and configuration
+///
+////////////////////////////////////////////////////////////////////////////////
+
 Array::Array()
     : SqlType(peloton::type::TypeId::ARRAY),
       type_system_(kImplicitCastingTable, kExplicitCastingTable,

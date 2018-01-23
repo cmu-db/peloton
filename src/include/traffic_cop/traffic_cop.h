@@ -16,18 +16,24 @@
 #include <stack>
 #include <vector>
 
+// Libevent 2.0
+#include "event.h"
+
+#include "catalog/column.h"
 #include "common/portal.h"
 #include "common/statement.h"
-#include "concurrency/transaction_context.h"
 #include "executor/plan_executor.h"
 #include "optimizer/abstract_optimizer.h"
 #include "parser/sql_statement.h"
-#include "storage/data_table.h"
 #include "type/type.h"
 #include "common/internal_types.h"
-#include "event.h"
 
 namespace peloton {
+
+namespace concurrency {
+class TransactionContext;
+}  // namespace concurrency
+
 namespace tcop {
 
 //===--------------------------------------------------------------------===//
@@ -73,14 +79,14 @@ class TrafficCop {
       const std::vector<int> &result_format, size_t thread_id = 0);
 
   // Prepare a statement using the parse tree
-  std::shared_ptr<Statement> PrepareStatement(const std::string &statement_name,
-                                              const std::string &query_string,
-                                              std::unique_ptr<parser::SQLStatementList> sql_stmt_list,
-                                              std::string &error_message,
-                                              size_t thread_id = 0);
+  std::shared_ptr<Statement> PrepareStatement(
+      const std::string &statement_name, const std::string &query_string,
+      std::unique_ptr<parser::SQLStatementList> sql_stmt_list,
+      std::string &error_message, size_t thread_id = 0);
 
-  bool BindParamsForCachePlan(const std::vector<std::unique_ptr<expression::AbstractExpression>>&,
-                              std::string &error_message, const size_t thread_id = 0);
+  bool BindParamsForCachePlan(
+      const std::vector<std::unique_ptr<expression::AbstractExpression>> &,
+      std::string &error_message, const size_t thread_id = 0);
 
   std::vector<FieldInfo> GenerateTupleDescriptor(
       parser::SQLStatement *select_stmt);
@@ -195,13 +201,14 @@ class TrafficCop {
   void GetTableColumns(parser::TableRef *from_table,
                        std::vector<catalog::Column> &target_tables);
 
-//  const std::shared_ptr<Statement> statement_;
-//  const std::vector<type::Value> params_;
-//  UNUSED_ATTRIBUTE const bool unnamed;
-//  std::shared_ptr<stats::QueryMetric::QueryParams> param_stats_;
-//  const std::vector<int> &result_format, std::vector<StatementResult> result;
-//  int &rows_changed, UNUSED_ATTRIBUTE std::string error_message;
-//  const size_t thread_id UNUSED_ATTRIBUTE;
+  //  const std::shared_ptr<Statement> statement_;
+  //  const std::vector<type::Value> params_;
+  //  UNUSED_ATTRIBUTE const bool unnamed;
+  //  std::shared_ptr<stats::QueryMetric::QueryParams> param_stats_;
+  //  const std::vector<int> &result_format, std::vector<StatementResult>
+  //  result;
+  //  int &rows_changed, UNUSED_ATTRIBUTE std::string error_message;
+  //  const size_t thread_id UNUSED_ATTRIBUTE;
 };
 
 }  // namespace tcop

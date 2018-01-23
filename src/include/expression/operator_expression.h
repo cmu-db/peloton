@@ -110,6 +110,10 @@ class OperatorExpression : public AbstractExpression {
 
   virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
+  const std::string GetInfo(int num_indent) const override;
+
+  const std::string GetInfo() const override;
+
  protected:
   OperatorExpression(const OperatorExpression &other)
       : AbstractExpression(other) {}

@@ -33,11 +33,11 @@ class UpdateClause {
 
   ~UpdateClause() {}
 
-  UpdateClause* Copy() {
-    UpdateClause* new_clause = new UpdateClause();
+  UpdateClause *Copy() {
+    UpdateClause *new_clause = new UpdateClause();
     std::string str(column);
     new_clause->column = column;
-    expression::AbstractExpression* new_expr = value->Copy();
+    expression::AbstractExpression *new_expr = value->Copy();
     new_clause->value.reset(new_expr);
     return new_clause;
   }
@@ -50,15 +50,15 @@ class UpdateClause {
 class UpdateStatement : public SQLStatement {
  public:
   UpdateStatement()
-      : SQLStatement(StatementType::UPDATE),
-        table(nullptr),
-        where(nullptr) {}
+      : SQLStatement(StatementType::UPDATE), table(nullptr), where(nullptr) {}
 
   virtual ~UpdateStatement() {}
 
-  virtual void Accept(SqlNodeVisitor* v) override {
-    v->Visit(this);
-  }
+  virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
+
+  const std::string GetInfo(int num_indent) const override;
+
+  const std::string GetInfo() const override;
 
   // TODO: switch to char* instead of TableRef
   std::unique_ptr<TableRef> table;

@@ -162,7 +162,9 @@ class AbstractExpression : public Printable {
   // Walks the expressoin trees and generate the correct expression name
   virtual void DeduceExpressionName();
 
-  const std::string GetInfo() const;
+  virtual const std::string GetInfo(int num_indent) const;
+
+  virtual const std::string GetInfo() const;
 
   // Equlity checks without actual values
   virtual bool operator==(const AbstractExpression &rhs) const;

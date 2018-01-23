@@ -107,6 +107,10 @@ enum class PostgresValueType {
   FLOADT4_ARRAY = 1021,  // FLOADT4ARRAYOID in postgres code
   DECIMAL = 1700
 };
+std::string PostgresValueTypeToString(PostgresValueType type);
+PostgresValueType StringToPostgresValueType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const PostgresValueType &type);
+
 
 //===--------------------------------------------------------------------===//
 // Predicate Expression Operation Types
@@ -540,9 +544,8 @@ enum class PlanNodeType {
   INVALID = INVALID_TYPE_ID,  // invalid plan node type
 
   // Scan Nodes
-  ABSTRACT_SCAN = 10,
-  SEQSCAN = 11,
-  INDEXSCAN = 12,
+  SEQSCAN = 10,
+  INDEXSCAN = 11,
 
   // Join Nodes
   NESTLOOP = 20,
@@ -582,6 +585,7 @@ enum class PlanNodeType {
   // Utility
   RESULT = 70,
   COPY = 71,
+  CREATE_FUNC = 72,
 
   // Test
   MOCK = 80
@@ -630,6 +634,15 @@ template<class E> class EnumHash {
 };
 
 //===--------------------------------------------------------------------===//
+// Language Types for UDFs
+//===--------------------------------------------------------------------===//
+
+enum class PLType {
+  PL_PGSQL = 0,  // UDF language: Pl_PGSQL
+  PL_C = 1       // UDF language: PL_C
+};
+
+//===--------------------------------------------------------------------===//
 // Statement Types
 //===--------------------------------------------------------------------===//
 
@@ -649,6 +662,7 @@ enum class StatementType {
   COPY = 14,                  // copy type
   ANALYZE = 15,                // analyze type
   VARIABLE_SET = 16,          // variable set statement type
+  CREATE_FUNC = 17,            // create func statement type
 };
 std::string StatementTypeToString(StatementType type);
 StatementType StringToStatementType(const std::string &str);
@@ -1055,7 +1069,7 @@ enum class OperatorId : uint32_t {
   Sqrt,
   Ceil,
   Round,
-  Extract,
+  DatePart,
   Floor,
   DateTrunc,
   Like,
@@ -1383,6 +1397,13 @@ enum class ProcessResult {
 enum class NetworkProtocolType {
   POSTGRES_JDBC,
   POSTGRES_PSQL,
+};
+
+
+enum class SSLLevel {
+  SSL_DISABLE = 0,
+  SSL_PREFER = 1,
+  SSL_VERIIFY = 2,
 };
 
 }  // namespace peloton

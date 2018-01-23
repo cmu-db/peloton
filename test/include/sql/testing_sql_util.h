@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include <atomic>
+
 #include "common/statement.h"
 #include "traffic_cop/traffic_cop.h"
 

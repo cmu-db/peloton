@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// statement_execute.h
+// execute_statement.h
 //
-// Identification: src/include/parser/statement_execute.h
+// Identification: src/include/parser/execute_statement.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -14,6 +14,7 @@
 
 #include "parser/sql_statement.h"
 #include "common/sql_node_visitor.h"
+#include "expression/abstract_expression.h"
 
 namespace peloton {
 namespace parser {
@@ -24,14 +25,15 @@ namespace parser {
  */
 class ExecuteStatement : public SQLStatement {
  public:
-  ExecuteStatement()
-      : SQLStatement(StatementType::EXECUTE) {}
+  ExecuteStatement() : SQLStatement(StatementType::EXECUTE) {}
 
   virtual ~ExecuteStatement() {}
 
-  virtual void Accept(SqlNodeVisitor* v) override {
-    v->Visit(this);
-  }
+  virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
+
+  const std::string GetInfo(int num_indent) const override;
+
+  const std::string GetInfo() const override;
 
   std::string name;
   std::vector<std::unique_ptr<expression::AbstractExpression>> parameters;

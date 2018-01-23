@@ -1,4 +1,3 @@
-#include <include/binder/bind_node_visitor.h>
 #include "common/harness.h"
 
 #define private public
@@ -20,6 +19,7 @@
 #include "planner/seq_scan_plan.h"
 #include "planner/abstract_join_plan.h"
 #include "planner/hash_join_plan.h"
+#include "binder/bind_node_visitor.h"
 #include "traffic_cop/traffic_cop.h"
 #include "expression/tuple_value_expression.h"
 #include "optimizer/operators.h"
@@ -299,10 +299,9 @@ TEST_F(OptimizerTests, PushFilterThroughJoinTest) {
       "SELECT * FROM test, test1 WHERE test.a = test1.a AND test1.b = 22");
   auto parse_tree = stmt->GetStatements().at(0).get();
   auto predicates = std::vector<expression::AbstractExpression *>();
-  optimizer::util::SplitPredicates(
-      reinterpret_cast<parser::SelectStatement *>(parse_tree)
-          ->where_clause.get(),
-      predicates);
+  optimizer::util::SplitPredicates(reinterpret_cast<parser::SelectStatement *>(
+                                       parse_tree)->where_clause.get(),
+                                   predicates);
 
   optimizer::Optimizer optimizer;
   // Only include PushFilterThroughJoin rewrite rule
@@ -382,10 +381,9 @@ TEST_F(OptimizerTests, PredicatePushDownRewriteTest) {
       "SELECT * FROM test, test1 WHERE test.a = test1.a AND test1.b = 22");
   auto parse_tree = stmt->GetStatements().at(0).get();
   auto predicates = std::vector<expression::AbstractExpression *>();
-  optimizer::util::SplitPredicates(
-      reinterpret_cast<parser::SelectStatement *>(parse_tree)
-          ->where_clause.get(),
-      predicates);
+  optimizer::util::SplitPredicates(reinterpret_cast<parser::SelectStatement *>(
+                                       parse_tree)->where_clause.get(),
+                                   predicates);
 
   optimizer::Optimizer optimizer;
   // Only include PushFilterThroughJoin rewrite rule
