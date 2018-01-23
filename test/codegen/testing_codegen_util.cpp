@@ -177,12 +177,13 @@ void PelotonCodeGenTest::ExecuteSync(
   std::mutex mu;
   std::condition_variable cond;
   bool finished = false;
+  std::string error_message;
   query.Execute(std::move(executor_context), consumer,
-                [&](executor::ExecutionResult) {
+                [&](executor::ExecutionResult, bool) {
                   std::unique_lock<decltype(mu)> lock(mu);
                   finished = true;
                   cond.notify_one();
-                });
+                }, error_message);
 
   std::unique_lock<decltype(mu)> lock(mu);
   cond.wait(lock, [&] { return finished; });

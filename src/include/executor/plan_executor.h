@@ -56,6 +56,7 @@ class PlanExecutor {
       concurrency::TransactionContext *txn,
       const std::vector<type::Value> &params,
       const std::vector<int> &result_format,
+      std::string &error_message,
       std::function<void(executor::ExecutionResult,
                          std::vector<ResultValue> &&)> on_complete);
 
