@@ -16,11 +16,12 @@ pipeline {
                         sh 'python ./script/validators/source_validator.py'
                         sh 'mkdir build'
                         sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False -DUSE_SANITIZER=Address .. && make -j4'
-                        sh 'cd build && make check -j4 && cp -pr test /job/'
+                        sh 'cd build && make check -j4'
+                        sh 'cd build && cp -pr test /job/'
                         sh 'cd build && make benchmark -j4'
                         sh 'cd build && make install'
-                        sh 'bash ../script/testing/psql/psql_test.sh'
-                        sh 'python ../script/validators/jdbc_validator.py'
+                        sh 'cd build && bash ../script/testing/psql/psql_test.sh'
+                        sh 'cd build && python ../script/validators/jdbc_validator.py'
                     }
                 }
 
@@ -45,8 +46,8 @@ pipeline {
                         sh 'cd build && make check -j4 > /dev/null'
                         sh 'cd build && make benchmark -j4'
                         sh 'cd build && make install'
-                        sh 'bash ../script/testing/psql/psql_test.sh'
-                        sh 'python ../script/validators/jdbc_validator.py'
+                        sh 'cd build && bash ../script/testing/psql/psql_test.sh'
+                        sh 'cd build && python ../script/validators/jdbc_validator.py'
                     }
                 }
 
@@ -60,8 +61,8 @@ pipeline {
                         sh 'cd build && make check -j4'
                         sh 'cd build && make benchmark -j4'
                         sh 'cd build && make install'
-                        sh 'bash ../script/testing/psql/psql_test.sh'
-                        sh 'python ../script/validators/jdbc_validator.py'
+                        sh 'cd build && bash ../script/testing/psql/psql_test.sh'
+                        sh 'cd build && python ../script/validators/jdbc_validator.py'
                     }
                 }
 
