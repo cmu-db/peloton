@@ -62,7 +62,7 @@ TEST_F(StatementCacheTests, InvalidateManyTest) {
   std::set<oid_t> ref_table = {0, 1};
 
   for (auto oid : ref_table) {
-    std::string string_name = "foo" + oid;
+    std::string string_name = std::to_string(oid);
     std::string query = "SELECT * FROM TEST";
     auto statement = std::make_shared<Statement>(string_name, query);
     std::set<oid_t> cur_ref_table;
@@ -78,7 +78,7 @@ TEST_F(StatementCacheTests, InvalidateManyTest) {
 
   // Both plans need to replan now
   for (auto oid : ref_table) {
-    std::string string_name = "foo" + oid;
+    std::string string_name = std::to_string(oid);
     auto statement = statement_cache.GetStatement(string_name);
 
     EXPECT_TRUE(statement->GetNeedsReplan());
