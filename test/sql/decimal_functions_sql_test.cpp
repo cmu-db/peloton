@@ -120,7 +120,6 @@ class DecimalFunctionsSQLTest : public PelotonTest {};
     auto txn = txn_manager.BeginTransaction();
     // Adding in 200 random decimal inputs between [-127, 127]
     int i;
-    std::vector<int8_t> inputs;
     int lo = 0;
     int hi = 254;
     int numEntries = 200;
@@ -133,7 +132,6 @@ class DecimalFunctionsSQLTest : public PelotonTest {};
     std::srand(std::time(0));
     for (i = 0; i < numEntries; i++) {
       int32_t num = (std::rand() % (hi - lo)) - 127;
-      inputs.push_back(num);
       std::ostringstream os;
       os << "insert into foo values(" << i << ", " << num << ");";
       TestingSQLUtil::ExecuteSQLQuery(os.str());
@@ -144,6 +142,10 @@ class DecimalFunctionsSQLTest : public PelotonTest {};
       ref_result.push_back(result_string.str());
     }
     EXPECT_EQ(i, numEntries);
+
+    // Add an additional entry of NULL
+    TestingSQLUtil::ExecuteSQLQuery("insert into foo values(0, NULL)");
+    ref_result.push_back("0|");
     txn_manager.CommitTransaction(txn);
 
     TestingSQLUtil::ExecuteSQLQueryAndCheckResult(result_query,
@@ -157,7 +159,6 @@ class DecimalFunctionsSQLTest : public PelotonTest {};
     auto txn = txn_manager.BeginTransaction();
     // Adding in 200 random integer inputs between [-32767, 32767]
     int i;
-    std::vector<int16_t> inputs;
     int lo = 0;
     int hi = 65534;
     int numEntries = 200;
@@ -170,7 +171,6 @@ class DecimalFunctionsSQLTest : public PelotonTest {};
     std::srand(std::time(0));
     for (i = 0; i < numEntries; i++) {
       int32_t num = (std::rand() % (hi - lo)) - 32767;
-      inputs.push_back(num);
       std::ostringstream os;
       os << "insert into foo values(" << i << ", " << num << ");";
       TestingSQLUtil::ExecuteSQLQuery(os.str());
@@ -181,6 +181,10 @@ class DecimalFunctionsSQLTest : public PelotonTest {};
       ref_result.push_back(result_string.str());
     }
     EXPECT_EQ(i, numEntries);
+
+    // Add an additional entry of NULL
+    TestingSQLUtil::ExecuteSQLQuery("insert into foo values(0, NULL)");
+    ref_result.push_back("0|");
     txn_manager.CommitTransaction(txn);
 
     TestingSQLUtil::ExecuteSQLQueryAndCheckResult(result_query,
@@ -194,7 +198,6 @@ class DecimalFunctionsSQLTest : public PelotonTest {};
     auto txn = txn_manager.BeginTransaction();
     // Adding in 200 random integer inputs between [-32767, 32767]
     int i;
-    std::vector<int32_t> inputs;
     int lo = 0;
     int hi = 65534;
     int numEntries = 200;
@@ -207,7 +210,6 @@ class DecimalFunctionsSQLTest : public PelotonTest {};
     std::srand(std::time(0));
     for (i = 0; i < numEntries; i++) {
       int32_t num = (std::rand() % (hi - lo)) - 32767;
-      inputs.push_back(num);
       std::ostringstream os;
       os << "insert into foo values(" << i << ", " << num << ");";
       TestingSQLUtil::ExecuteSQLQuery(os.str());
@@ -218,6 +220,10 @@ class DecimalFunctionsSQLTest : public PelotonTest {};
       ref_result.push_back(result_string.str());
     }
     EXPECT_EQ(i, numEntries);
+
+    // Add an additional entry of NULL
+    TestingSQLUtil::ExecuteSQLQuery("insert into foo values(0, NULL)");
+    ref_result.push_back("0|");
     txn_manager.CommitTransaction(txn);
 
     TestingSQLUtil::ExecuteSQLQueryAndCheckResult(result_query,
@@ -231,7 +237,6 @@ class DecimalFunctionsSQLTest : public PelotonTest {};
     auto txn = txn_manager.BeginTransaction();
     // Adding in 200 random integer inputs between [-32767, 32767]
     int i;
-    std::vector<int32_t> inputs;
     int lo = 0;
     int hi = 65534;
     int numEntries = 200;
@@ -244,7 +249,6 @@ class DecimalFunctionsSQLTest : public PelotonTest {};
     std::srand(std::time(0));
     for (i = 0; i < numEntries; i++) {
       int32_t num = (std::rand() % (hi - lo)) - 32767;
-      inputs.push_back(num);
       std::ostringstream os;
       os << "insert into foo values(" << i << ", " << num << ");";
       TestingSQLUtil::ExecuteSQLQuery(os.str());
@@ -255,6 +259,10 @@ class DecimalFunctionsSQLTest : public PelotonTest {};
       ref_result.push_back(result_string.str());
     }
     EXPECT_EQ(i, numEntries);
+
+    // Add an additional entry of NULL
+    TestingSQLUtil::ExecuteSQLQuery("insert into foo values(0, NULL)");
+    ref_result.push_back("0|");
     txn_manager.CommitTransaction(txn);
 
     TestingSQLUtil::ExecuteSQLQueryAndCheckResult(result_query,
@@ -268,7 +276,6 @@ class DecimalFunctionsSQLTest : public PelotonTest {};
     auto txn = txn_manager.BeginTransaction();
     // Adding in 2500 random decimal inputs between [-500, 500]
     int i;
-    std::vector<double> inputs;
     int lo = -500;
     int hi = 500;
     int numEntries = 500;
@@ -281,7 +288,6 @@ class DecimalFunctionsSQLTest : public PelotonTest {};
     std::srand(std::time(0));
     for (i = 0; i < numEntries; i++) {
       double num = 0.45 + (std::rand() % (hi - lo));
-      inputs.push_back(num);
       std::ostringstream os;
       os << "insert into foo values(" << i << ", " << num << ");";
       TestingSQLUtil::ExecuteSQLQuery(os.str());
@@ -292,6 +298,8 @@ class DecimalFunctionsSQLTest : public PelotonTest {};
       ref_result.push_back(result_string.str());
     }
     EXPECT_EQ(i, numEntries);
+    TestingSQLUtil::ExecuteSQLQuery("insert into foo values(0, NULL)");
+    ref_result.push_back("0|");
     txn_manager.CommitTransaction(txn);
 
     TestingSQLUtil::ExecuteSQLQueryAndCheckResult(result_query,
