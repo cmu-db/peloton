@@ -6,7 +6,7 @@
 //
 // Identification: test/function/functions_test.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -109,6 +109,16 @@ TEST_F(FunctionsTests, FuncCallTest) {
 
   result = {"32"};
   TestingSQLUtil::ExecuteSQLQueryAndCheckResult("SELECT ASCII(s) FROM test;",
+                                                result, false);
+  
+
+  TestingSQLUtil::ExecuteSQLQuery(
+      "CREATE OR REPLACE FUNCTION"
+      " increment(e double) RETURNS double AS $$"
+      " BEGIN RETURN e + 1; END; $$ LANGUAGE plpgsql;");
+
+  result = {"26"};
+  TestingSQLUtil::ExecuteSQLQueryAndCheckResult("SELECT increment(e) FROM test;",
                                                 result, false);
 
   // free the database just created

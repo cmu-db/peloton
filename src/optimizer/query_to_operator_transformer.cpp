@@ -222,6 +222,7 @@ void QueryToOperatorTransformer::Visit(parser::TableRef *node) {
 void QueryToOperatorTransformer::Visit(parser::GroupByDescription *) {}
 void QueryToOperatorTransformer::Visit(parser::OrderDescription *) {}
 void QueryToOperatorTransformer::Visit(parser::LimitDescription *) {}
+void QueryToOperatorTransformer::Visit(parser::CreateFunctionStatement *) {}
 
 void QueryToOperatorTransformer::Visit(
     UNUSED_ATTRIBUTE parser::CreateStatement *op) {}

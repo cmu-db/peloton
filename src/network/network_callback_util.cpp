@@ -48,7 +48,7 @@ void CallbackUtil::WorkerHandleNewConn(evutil_socket_t new_conn_recv_fd,
                                             static_cast<NetworkThread *>(thread),
                                             ConnState::CONN_READ);
       } else {
-        LOG_DEBUG("Reusing socket fd:%d", item->new_conn_fd);
+        LOG_DEBUG("Reusing connection object with socket fd:%d", item->new_conn_fd);
         /* otherwise reset and reuse the existing conn object */
         conn->Reset();
         conn->Init(item->event_flags, static_cast<NetworkThread *>(thread),

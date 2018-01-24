@@ -19,7 +19,8 @@ expression::FunctionExpression::FunctionExpression(
     const char *func_name, const std::vector<AbstractExpression *> &children)
     : AbstractExpression(ExpressionType::FUNCTION),
       func_name_(func_name),
-      func_(OperatorId::Invalid, nullptr) {
+      func_(OperatorId::Invalid, nullptr),
+      is_udf_(false) {
   for (auto &child : children) {
     children_.push_back(std::unique_ptr<AbstractExpression>(child));
   }
@@ -31,7 +32,8 @@ expression::FunctionExpression::FunctionExpression(
     const std::vector<AbstractExpression *> &children)
     : AbstractExpression(ExpressionType::FUNCTION, return_type),
       func_(func_ptr),
-      func_arg_types_(arg_types) {
+      func_arg_types_(arg_types),
+      is_udf_(false) {
   for (auto &child : children) {
     children_.push_back(std::unique_ptr<AbstractExpression>(child));
   }
@@ -40,8 +42,9 @@ expression::FunctionExpression::FunctionExpression(
 
 type::Value FunctionExpression::Evaluate(
     const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-    executor::ExecutorContext *context) const {
+    UNUSED_ATTRIBUTE executor::ExecutorContext *context) const {
   std::vector<type::Value> child_values;
+
   PL_ASSERT(func_.impl != nullptr);
   for (auto &child : children_) {
     child_values.push_back(child->Evaluate(tuple1, tuple2, context));
@@ -58,10 +61,21 @@ type::Value FunctionExpression::Evaluate(
   return ret;
 }
 
-void FunctionExpression::SetFunctionExpressionParameters(
+void FunctionExpression::SetBuiltinFunctionExpressionParameters(
     function::BuiltInFuncType func_ptr, type::TypeId val_type,
     const std::vector<type::TypeId> &arg_types) {
+  is_udf_ = false;
   func_ = func_ptr;
+  return_value_type_ = val_type;
+  func_arg_types_ = arg_types;
+  CheckChildrenTypes();
+}
+
+void FunctionExpression::SetUDFFunctionExpressionParameters(
+    std::shared_ptr<peloton::codegen::CodeContext> func_context,
+    type::TypeId val_type, const std::vector<type::TypeId> &arg_types) {
+  is_udf_ = true;
+  func_context_ = func_context;
   return_value_type_ = val_type;
   func_arg_types_ = arg_types;
   CheckChildrenTypes();
@@ -73,8 +87,8 @@ const std::string FunctionExpression::GetInfo(int num_indent) const {
   os << StringUtil::Indent(num_indent) << "Expression ::\n"
      << StringUtil::Indent(num_indent + 1) << "expression type = Function,\n"
      << StringUtil::Indent(num_indent + 1) << "function name: " << func_name_
-     << "\n" << StringUtil::Indent(num_indent + 1)
-     << "function args: " << std::endl;
+     << "\n"
+     << StringUtil::Indent(num_indent + 1) << "function args: " << std::endl;
 
   for (const auto &child : children_) {
     os << child->GetInfo(num_indent + 2);
@@ -92,11 +106,11 @@ const std::string FunctionExpression::GetInfo() const {
 
 void FunctionExpression::CheckChildrenTypes() const {
   if (func_arg_types_.size() != children_.size()) {
-    throw Exception(ExceptionType::EXPRESSION,
-                    "Unexpected number of arguments to function: " +
-                        func_name_ + ". Expected: " +
-                        std::to_string(func_arg_types_.size()) + " Actual: " +
-                        std::to_string(children_.size()));
+    throw Exception(
+        ExceptionType::EXPRESSION,
+        "Unexpected number of arguments to function: " + func_name_ +
+            ". Expected: " + std::to_string(func_arg_types_.size()) +
+            " Actual: " + std::to_string(children_.size()));
   }
   // check that the types are correct
   for (size_t i = 0; i < func_arg_types_.size(); i++) {
