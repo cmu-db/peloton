@@ -66,27 +66,16 @@ TEST_F(ForeignKeySQLTests, CascadeTest) {
   EXPECT_EQ(TestingSQLUtil::ExecuteSQLQuery(
       "INSERT INTO tb2 VALUES (1);"), ResultType::SUCCESS);
 
-  std::vector<ResultValue> result;
-  std::vector<FieldInfo> tuple_descriptor;
-  std::string error_message;
-  int rows_affected;
-
   EXPECT_EQ(TestingSQLUtil::ExecuteSQLQuery(
       "UPDATE tb1 SET id = 10 where id = 1;"), ResultType::SUCCESS);
 
-  TestingSQLUtil::ExecuteSQLQuery("SELECT id from tb1;", result,
-                                  tuple_descriptor, rows_affected,
-                                  error_message);
+  TestingSQLUtil::ExecuteSQLQueryAndCheckResult("SELECT id from tb1;",
+                                                {"10"},
+                                                true);
 
-  EXPECT_EQ("10", result[0]);
-
-  result.clear();
-  tuple_descriptor.clear();
-  TestingSQLUtil::ExecuteSQLQuery("SELECT num from tb2;", result,
-                                  tuple_descriptor, rows_affected,
-                                  error_message);
-
-  EXPECT_EQ("10", result[0]);
+  TestingSQLUtil::ExecuteSQLQueryAndCheckResult("SELECT num from tb2;",
+                                                {"10"},
+                                                true);
 
   txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
