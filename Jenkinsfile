@@ -108,7 +108,7 @@ pipeline {
                         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
                         sh 'python ./script/validators/source_validator.py'
                         sh 'mkdir build'
-                        sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False .. && make -j4'
+                        sh 'cd build && cmake3 -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False .. && make -j4'
                     }
                 }
                 stage('CentOS 7/gcc-4.8.5/llvm-3.9.1 (Release)') {
@@ -117,7 +117,7 @@ pipeline {
                         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
                         sh 'python ./script/validators/source_validator.py'
                         sh 'mkdir build'
-                        sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
+                        sh 'cd build && cmake3 -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
                     }
                 }
 

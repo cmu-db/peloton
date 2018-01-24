@@ -156,7 +156,7 @@ elif [[ "$DISTRO" == *"REDHAT"* ]] && [[ "${DISTRO_VER%.*}" == "7" ]]; then
         git \
         gcc-c++ \
         make \
-        cmake \
+        cmake3 \
         flex \
         bison \
         libevent-devel \
