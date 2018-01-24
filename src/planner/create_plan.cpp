@@ -55,13 +55,6 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree)
       }
 
       for (auto &col : parse_tree->columns) {
-        
-        // if (col->type == parser::ColumnDefinition::DataType::FOREIGN) {
-        //   this->ProcessForeignKeyConstraint(table_name, col.get());
-        //   // XXX: Why should we always continue here?
-        //   continue;
-        // }
-  
         type::TypeId val = col->GetValueType(col->type);
   
         LOG_TRACE("Column name: %s.%s; Is primary key: %d", table_name.c_str(), col->name.c_str(), col->primary);
@@ -219,7 +212,7 @@ void CreatePlan::ProcessForeignKeyConstraint(const std::string &table_name,
   fkey_info.constraint_name =
       "FK_" + table_name + "->" + fkey_info.sink_table_name;
 
-  LOG_ERROR("Added a foreign key constraint toward sink table %s",
+  LOG_DEBUG("Added a foreign key constraint toward sink table %s",
             fkey_info.sink_table_name.c_str());
   foreign_keys.push_back(fkey_info);
 }

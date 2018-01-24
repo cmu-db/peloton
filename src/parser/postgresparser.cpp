@@ -850,7 +850,8 @@ expression::AbstractExpression *PostgresParser::WhenTransform(Node *root) {
 }
 
 // This helper function takes in a Postgres ColumnDef object and transforms
-// it into a Peloton ColumnDefinition object
+// it into a Peloton ColumnDefinition object. The result of the transformation
+// is also stored into the provided statement
 void PostgresParser::ColumnDefTransform(ColumnDef *root, parser::CreateStatement* stmt) {
   TypeName *type_name = root->typeName;
   char *name =
@@ -895,9 +896,8 @@ void PostgresParser::ColumnDefTransform(ColumnDef *root, parser::CreateStatement
         result->unique = true;
       else if (constraint->contype == CONSTR_FOREIGN) {
         // Transform foreign key attributes
-        // Reference table
 
-        // additionally, add a speci·al ColumnDefinition to the list!
+        // additionally, add a special ColumnDefinition to the list!
         auto col = new ColumnDefinition(ColumnDefinition::DataType::FOREIGN);
 
         col->foreign_key_source.emplace_back(root->colname);
@@ -912,8 +912,11 @@ void PostgresParser::ColumnDefTransform(ColumnDef *root, parser::CreateStatement
         }
         else
         {
-          // TODO: Default to the primary key of the sink table
-
+          // Must specify the referenced columns
+          delete result;
+          delete col;
+          throw NotImplementedException(StringUtil::Format(
+              "Foreign key columns not specified."));
         }
 
         // Update Reference Table
@@ -925,11 +928,6 @@ void PostgresParser::ColumnDefTransform(ColumnDef *root, parser::CreateStatement
             CharToActionType(constraint->fk_upd_action);
         // Match type
         col->foreign_key_match_type = CharToMatchType(constraint->fk_matchtype);
-
-        LOG_ERROR("PK table name: %s.\n", col->fk_sink_table_name.c_str());
-        LOG_ERROR("delete action: %c\n", constraint->fk_del_action);
-        LOG_ERROR("update action: %c\n", constraint->fk_upd_action);
-        LOG_ERROR("fk match type: %c\n", constraint->fk_matchtype);
 
         stmt->foreign_keys.push_back(std::unique_ptr<ColumnDefinition>(col));
       } else if (constraint->contype == CONSTR_DEFAULT) {
@@ -978,14 +976,12 @@ parser::SQLStatement *PostgresParser::CreateTransform(CreateStmt *root) {
     Node *node = reinterpret_cast<Node *>(cell->data.ptr_value);
     if ((node->type) == T_ColumnDef) {
       // Transform Regular Column
-      // ColumnDefinition* temp = nullptr;
       try {
         ColumnDefTransform(reinterpret_cast<ColumnDef*>(node), result);
       } catch (NotImplementedException e) {
         delete result;
         throw e;
       }
-      // result->columns.push_back(std::unique_ptr<ColumnDefinition>(temp));
     } else if (node->type == T_Constraint) {
       // Transform Constraints
       auto constraint = reinterpret_cast<Constraint *>(node);
@@ -996,9 +992,7 @@ parser::SQLStatement *PostgresParser::CreateTransform(CreateStmt *root) {
               reinterpret_cast<value *>(key_cell->data.ptr_value)->val.str);
         }
       } else if (constraint->contype == CONSTR_FOREIGN) {
-        // TODO: this routine will crash the program
-        // Handle multi-column fk constraints here
-
+        // Handle multi-column fk constraints
         auto col = new ColumnDefinition(ColumnDefinition::DataType::FOREIGN);
         // Transform foreign key attributes
         for (auto attr_cell = constraint->fk_attrs->head; attr_cell != nullptr;
