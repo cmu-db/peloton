@@ -21,6 +21,7 @@
 #include "common/cache.h"
 #include "common/portal.h"
 #include "common/statement.h"
+#include "common/statement_cache.h"
 #include "traffic_cop/traffic_cop.h"
 #include "protocol_handler.h"
 #include "common/internal_types.h"
@@ -51,18 +52,6 @@ class PostgresProtocolHandler: public ProtocolHandler {
   //  bool ManageStartupPacket();
   void SendInitialResponse();
   void Reset();
-
-
-  // Ugh... this should not be here but we have no choice...
-  void ReplanPreparedStatement(Statement* statement);
-
-  // Check existence of statement in cache by name
-  // Return true if exists
-  bool ExistCachedStatement(std::string statement_name) {
-    auto statement_cache_itr = statement_cache_.find(statement_name);
-    return statement_cache_itr != statement_cache_.end();
-  }
-
 
   void GetResult();
 
@@ -170,7 +159,6 @@ class PostgresProtocolHandler: public ProtocolHandler {
   NetworkProtocolType protocol_type_;
 
   // Manage standalone queries
-  std::shared_ptr<Statement> unnamed_statement_;
 
   // The result-column format code
   std::vector<int> result_format_;
@@ -184,13 +172,7 @@ class PostgresProtocolHandler: public ProtocolHandler {
   QueryType skipped_query_type_;
 
   // Statement cache
-  // StatementName -> Statement
-  Cache<std::string, Statement> statement_cache_;
-  // TableOid -> Statements
-  // FIXME: This table statement cache is not in sync with the other cache.
-  // That means if something gets thrown out of the statement cache it is not
-  // automatically evicted from this cache.
-  std::unordered_map<oid_t, std::vector<Statement*>> table_statement_cache_;
+  StatementCache statement_cache_;
 
   //  Portals
   std::unordered_map<std::string, std::shared_ptr<Portal>> portals_;
