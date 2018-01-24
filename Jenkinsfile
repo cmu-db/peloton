@@ -8,7 +8,7 @@ pipeline {
                     agent {
                         docker {
                             image 'ubuntu:xenial'
-                            args "-v /var/lib/jenkins/jobs/crd/jobs/${env.JOB_BASE_NAME}/builds/${env.BUILD_ID}:/job"
+                            args '-v ${WORKSPACE}/../builds/${BUILD_ID}:/job:rw'
                         }
                     }
                     steps {
@@ -17,8 +17,6 @@ pipeline {
                         sh 'mkdir build'
                         sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False -DUSE_SANITIZER=Address .. && make -j4'
                         sh 'cd build && make check -j4 || true'
-                        sh 'ls /job'
-                        sh 'mkdir /job/TESTING'
                         sh 'cd build && cp -pr test /job/'
                         sh 'cd build && make benchmark -j4'
                         sh 'cd build && make install'
@@ -208,6 +206,15 @@ pipeline {
                 //         sh 'lsb_release -a'
                 //     }
                 // }
+            }
+        }
+    }
+
+    // Process test results from the first build stage
+    post {
+        always {
+            dir("${WORKSPACE}/../builds/${BUILD_ID}/results") {
+                step([$class: 'XUnitBuilder', testTimeMargin: '3000', thresholdMode: 1, thresholds: [[$class: 'FailedThreshold', failureNewThreshold: '', failureThreshold: '', unstableNewThreshold: '', unstableThreshold: ''], [$class: 'SkippedThreshold', failureNewThreshold: '', failureThreshold: '', unstableNewThreshold: '', unstableThreshold: '']], tools: [[$class: 'GoogleTestType', deleteOutputFiles: true, failIfNotNew: true, pattern: 'test/*_test.xml', skipNoTestFiles: false, stopProcessingIfError: true]]])
             }
         }
     }
