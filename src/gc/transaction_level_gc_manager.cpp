@@ -12,8 +12,8 @@
 
 #include "gc/transaction_level_gc_manager.h"
 
+#include "brain/query_logger.h"
 #include "catalog/manager.h"
-#include "catalog/query_history_catalog.h"
 #include "common/container_tuple.h"
 #include "concurrency/epoch_manager_factory.h"
 #include "concurrency/transaction_manager_factory.h"
@@ -137,7 +137,7 @@ int TransactionLevelGCManager::Unlink(const int &thread_id,
       auto &pool = threadpool::BrainThreadPool::GetInstance();
       for(auto query_string: query_strings) {
         pool.SubmitTask([this, query_string, timestamp] {
-          LogQuery(query_string, timestamp);
+          brain::QueryLogger::LogQuery(query_string, timestamp);
         });        
       }
     }
@@ -402,19 +402,6 @@ void TransactionLevelGCManager::UnlinkVersion(const ItemPointer location,
       index->DeleteEntry(current_key.get(), indirection);
     }
   }
-}
-
-void TransactionLevelGCManager::LogQuery(std::string query_string, uint64_t timestamp) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-
-  // TODO[Siva]: call pg_fingerprint() after Marcel's PR is merged
-  std::string fingerprint = "fingerprint";
-
-  catalog::QueryHistoryCatalog::GetInstance()->InsertQueryHistory(
-               query_string, fingerprint, timestamp, nullptr, txn);
-
-  txn_manager.CommitTransaction(txn);
 }
 
 }  // namespace gc
