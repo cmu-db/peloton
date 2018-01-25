@@ -65,17 +65,6 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(
 
   auto current_txn = executor_context_->GetTransaction();
 
-  auto target_table_schema = target_table_->GetSchema();
-
-  ContainerTuple<storage::TileGroup> old_tuple(tile_group, physical_tuple_id);
-  storage::Tuple prev_tuple(target_table_schema, true);
-
-  // Get a copy of the old tuple
-  for (oid_t column_itr = 0; column_itr < target_table_schema->GetColumnCount(); column_itr++) {
-    type::Value val = (old_tuple.GetValue(column_itr));
-    prev_tuple.SetValue(column_itr, val, executor_context_->GetPool());
-  }
-
   ///////////////////////////////////////
   // Delete tuple/version chain
   ///////////////////////////////////////
@@ -104,7 +93,11 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(
   ////////////////////////////////////////////
   // Insert tuple rather than install version
   ////////////////////////////////////////////
+  auto target_table_schema = target_table_->GetSchema();
+
   storage::Tuple new_tuple(target_table_schema, true);
+
+  ContainerTuple<storage::TileGroup> old_tuple(tile_group, physical_tuple_id);
 
   project_info_->Evaluate(&new_tuple, &old_tuple, nullptr, executor_context_);
 
@@ -122,15 +115,24 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(
   }
 
   // Check the source table of any foreign key constraint
-  if (target_table_->CheckForeignKeySrcAndCascade(&prev_tuple,
-                                                  &new_tuple,
-                                                  current_txn,
-                                                  executor_context_,
-                                                  true) == false)
-  {
-    transaction_manager.SetTransactionResult(current_txn,
-                                             peloton::ResultType::FAILURE);
-    return false;
+  if (target_table_->GetForeignKeySrcCount() > 0) {
+    storage::Tuple prev_tuple(target_table_schema, true);
+    // Get a copy of the old tuple
+    for (oid_t column_itr = 0; column_itr < target_table_schema->GetColumnCount(); column_itr++) {
+      type::Value val = (old_tuple.GetValue(column_itr));
+      prev_tuple.SetValue(column_itr, val, executor_context_->GetPool());
+    }
+
+    if (target_table_->CheckForeignKeySrcAndCascade(&prev_tuple,
+                                                    &new_tuple,
+                                                    current_txn,
+                                                    executor_context_,
+                                                    true) == false)
+    {
+      transaction_manager.SetTransactionResult(current_txn,
+                                              peloton::ResultType::FAILURE);
+      return false;
+    }
   }
 
   transaction_manager.PerformInsert(current_txn, location, index_entry_ptr);
