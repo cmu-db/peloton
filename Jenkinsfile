@@ -3,7 +3,8 @@ pipeline {
     stages {
         stage('Build') {
             parallel {
-                // NOTE: this stage is special because it copies the test results out of the container
+                // begin gcc builds
+                // NOTE: this next stage is special because it copies the test results out of the container
                 stage('Ubuntu Xenial/gcc-5.4.0/llvm-3.7.1 (Debug/Test)') {
                     agent {
                         docker {
@@ -70,6 +71,7 @@ pipeline {
                         sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False .. && make -j4'
                     }
                 }
+
                 stage('Fedora 26/gcc-7.1.1/llvm-4.0.1 (Release)') {
                     agent { docker { image 'fedora:26' } }
                     steps {
@@ -109,6 +111,7 @@ pipeline {
                         sh 'cd build && cmake3 -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False .. && make -j4'
                     }
                 }
+
                 stage('CentOS 7/gcc-4.8.5/llvm-3.9.1 (Release)') {
                     agent { docker { image 'centos:7' } }
                     steps {
@@ -118,86 +121,88 @@ pipeline {
                         sh 'cd build && cmake3 -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
                     }
                 }
+                // end gcc builds
 
-                stage('Ubuntu Xenial/clang-3.7.1/llvm-3.7.1 (Debug)') {
-                    agent { docker { image 'ubuntu:xenial' } }
-                    steps {
-                        sh 'sudo /bin/bash -c "source ./peloton/script/installation/packages.sh"'
-                        sh 'python ./script/validators/source_validator.py'
-                        sh 'mkdir build'
-                        sh 'cd build && CC=clang-3.7 CXX=clang++-3.7 cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False .. && make -j4 && make install'
-                    }
-                }
+                // begin clang builds
+                // stage('Ubuntu Xenial/clang-3.7.1/llvm-3.7.1 (Debug)') {
+                //     agent { docker { image 'ubuntu:xenial' } }
+                //     steps {
+                //         sh 'sudo /bin/bash -c "source ./peloton/script/installation/packages.sh"'
+                //         sh 'python ./script/validators/source_validator.py'
+                //         sh 'mkdir build'
+                //         sh 'cd build && CC=clang-3.7 CXX=clang++-3.7 cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False .. && make -j4 && make install'
+                //     }
+                // }
 
-                stage('Ubuntu Xenial/clang-3.7.1/llvm-3.7.1 (Release)') {
-                    agent { docker { image 'ubuntu:xenial' } }
-                    steps {
-                        sh 'sudo /bin/bash -c "source ./peloton/script/installation/packages.sh"'
-                        sh 'python ./script/validators/source_validator.py'
-                        sh 'mkdir build'
-                        sh 'cd build && CC=clang-3.7 CXX=clang++-3.7 cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4 && make install'
-                    }
-                }
+                // stage('Ubuntu Xenial/clang-3.7.1/llvm-3.7.1 (Release)') {
+                //     agent { docker { image 'ubuntu:xenial' } }
+                //     steps {
+                //         sh 'sudo /bin/bash -c "source ./peloton/script/installation/packages.sh"'
+                //         sh 'python ./script/validators/source_validator.py'
+                //         sh 'mkdir build'
+                //         sh 'cd build && CC=clang-3.7 CXX=clang++-3.7 cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4 && make install'
+                //     }
+                // }
 
-                stage('Ubuntu Trusty/clang-3.7.1/llvm-3.7.1 (Debug)') {
-                    agent { docker { image 'ubuntu:trusty' } }
-                    steps {
-                        sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
-                        sh 'python ./script/validators/source_validator.py'
-                        sh 'mkdir build'
-                        sh 'cd build && CC=clang-3.7 CXX=clang++-3.7 cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False .. && make -j4'
-                    }
-                }
+                // stage('Ubuntu Trusty/clang-3.7.1/llvm-3.7.1 (Debug)') {
+                //     agent { docker { image 'ubuntu:trusty' } }
+                //     steps {
+                //         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
+                //         sh 'python ./script/validators/source_validator.py'
+                //         sh 'mkdir build'
+                //         sh 'cd build && CC=clang-3.7 CXX=clang++-3.7 cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False .. && make -j4'
+                //     }
+                // }
 
-                stage('Ubuntu Trusty/clang-3.7.1/llvm-3.7.1 (Release)') {
-                    agent { docker { image 'ubuntu:trusty' } }
-                    steps {
-                        sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
-                        sh 'python ./script/validators/source_validator.py'
-                        sh 'mkdir build'
-                        sh 'cd build && CC=clang-3.7 CXX=clang++-3.7 cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
-                    }
-                }
+                // stage('Ubuntu Trusty/clang-3.7.1/llvm-3.7.1 (Release)') {
+                //     agent { docker { image 'ubuntu:trusty' } }
+                //     steps {
+                //         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
+                //         sh 'python ./script/validators/source_validator.py'
+                //         sh 'mkdir build'
+                //         sh 'cd build && CC=clang-3.7 CXX=clang++-3.7 cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
+                //     }
+                // }
 
-                stage('Fedora 26/clang-4.0.1/llvm-4.0.1 (Debug)') {
-                    agent { docker { image 'fedora:26' } }
-                    steps {
-                        sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
-                        sh 'python ./script/validators/source_validator.py'
-                        sh 'mkdir build'
-                        sh 'cd build && CC=clang CXX=clang++ cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False .. && make -j4'
-                    }
-                }
+                // stage('Fedora 26/clang-4.0.1/llvm-4.0.1 (Debug)') {
+                //     agent { docker { image 'fedora:26' } }
+                //     steps {
+                //         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
+                //         sh 'python ./script/validators/source_validator.py'
+                //         sh 'mkdir build'
+                //         sh 'cd build && CC=clang CXX=clang++ cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False .. && make -j4'
+                //     }
+                // }
 
-                stage('Fedora 26/clang-4.0.1/llvm-4.0.1 (Release)') {
-                    agent { docker { image 'fedora:26' } }
-                    steps {
-                        sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
-                        sh 'python ./script/validators/source_validator.py'
-                        sh 'mkdir build'
-                        sh 'cd build && CC=clang CXX=clang++ cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
-                    }
-                }
+                // stage('Fedora 26/clang-4.0.1/llvm-4.0.1 (Release)') {
+                //     agent { docker { image 'fedora:26' } }
+                //     steps {
+                //         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
+                //         sh 'python ./script/validators/source_validator.py'
+                //         sh 'mkdir build'
+                //         sh 'cd build && CC=clang CXX=clang++ cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
+                //     }
+                // }
 
-                stage('Fedora 27/clang-4.0.1/llvm-4.0.1 (Debug)') {
-                    agent { docker { image 'fedora:27' } }
-                    steps {
-                        sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
-                        sh 'python ./script/validators/source_validator.py'
-                        sh 'mkdir build'
-                        sh 'cd build && CC=clang CXX=clang++ cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False .. && make -j4'
-                    }
-                }
+                // stage('Fedora 27/clang-4.0.1/llvm-4.0.1 (Debug)') {
+                //     agent { docker { image 'fedora:27' } }
+                //     steps {
+                //         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
+                //         sh 'python ./script/validators/source_validator.py'
+                //         sh 'mkdir build'
+                //         sh 'cd build && CC=clang CXX=clang++ cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False .. && make -j4'
+                //     }
+                // }
 
-                stage('Fedora 27/clang-4.0.1/llvm-4.0.1 (Release)') {
-                    agent { docker { image 'fedora:27' } }
-                    steps {
-                        sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
-                        sh 'python ./script/validators/source_validator.py'
-                        sh 'mkdir build'
-                        sh 'cd build && CC=clang CXX=clang++ cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
-                    }
-                }
+                // stage('Fedora 27/clang-4.0.1/llvm-4.0.1 (Release)') {
+                //     agent { docker { image 'fedora:27' } }
+                //     steps {
+                //         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
+                //         sh 'python ./script/validators/source_validator.py'
+                //         sh 'mkdir build'
+                //         sh 'cd build && CC=clang CXX=clang++ cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
+                //     }
+                // }
 
                 // Omit this configuration for now since the corresponding version of clang does not seem to be available on this platform
                 // stage('CentOS 7/clang-??/llvm-3.9.1') {
@@ -206,6 +211,7 @@ pipeline {
                 //         sh 'lsb_release -a'
                 //     }
                 // }
+                // end clang builds
             }
         }
     }
@@ -213,7 +219,7 @@ pipeline {
     // Process test results from the first build stage
     post {
         always {
-            dir("${WORKSPACE}/../builds/${BUILD_ID}/results") {
+            dir("${WORKSPACE}/../builds/${BUILD_ID}") {
                 step([$class: 'XUnitBuilder', testTimeMargin: '3000', thresholdMode: 1, thresholds: [[$class: 'FailedThreshold', failureNewThreshold: '', failureThreshold: '', unstableNewThreshold: '', unstableThreshold: ''], [$class: 'SkippedThreshold', failureNewThreshold: '', failureThreshold: '', unstableNewThreshold: '', unstableThreshold: '']], tools: [[$class: 'GoogleTestType', deleteOutputFiles: true, failIfNotNew: true, pattern: 'test/*_test.xml', skipNoTestFiles: false, stopProcessingIfError: true]]])
             }
         }
