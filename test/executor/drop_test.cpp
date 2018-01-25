@@ -110,7 +110,7 @@ TEST_F(DropTests, DroppingTable) {
       (int)catalog->GetDatabaseObject(TEST_DB_NAME, txn)->GetTableObjects().size(),
       2);
 
-  // Now dropping the table using the executer
+  // Now dropping the table using the executor
   catalog->DropTable(TEST_DB_NAME, "department_table", txn);
   EXPECT_EQ(
       (int)catalog->GetDatabaseObject(TEST_DB_NAME, txn)->GetTableObjects().size(),
