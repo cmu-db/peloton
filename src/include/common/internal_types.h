@@ -107,6 +107,10 @@ enum class PostgresValueType {
   FLOADT4_ARRAY = 1021,  // FLOADT4ARRAYOID in postgres code
   DECIMAL = 1700
 };
+std::string PostgresValueTypeToString(PostgresValueType type);
+PostgresValueType StringToPostgresValueType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const PostgresValueType &type);
+
 
 //===--------------------------------------------------------------------===//
 // Predicate Expression Operation Types
@@ -1065,7 +1069,7 @@ enum class OperatorId : uint32_t {
   Sqrt,
   Ceil,
   Round,
-  Extract,
+  DatePart,
   Floor,
   DateTrunc,
   Like,
@@ -1394,6 +1398,13 @@ enum class ProcessResult {
 enum class NetworkProtocolType {
   POSTGRES_JDBC,
   POSTGRES_PSQL,
+};
+
+
+enum class SSLLevel {
+  SSL_DISABLE = 0,
+  SSL_PREFER = 1,
+  SSL_VERIIFY = 2,
 };
 
 }  // namespace peloton

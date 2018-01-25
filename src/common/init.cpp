@@ -19,6 +19,7 @@
 #include "brain/layout_tuner.h"
 #include "catalog/catalog.h"
 #include "common/thread_pool.h"
+#include "common/statement_cache_manager.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "gc/gc_manager_factory.h"
 #include "settings/settings_manager.h"
@@ -79,6 +80,9 @@ void PelotonInit::Initialize() {
   pg_catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
 
   txn_manager.CommitTransaction(txn);
+
+  // Initialize the Statement Cache Manager
+  StatementCacheManager::Init();
 }
 
 void PelotonInit::Shutdown() {

@@ -18,6 +18,7 @@
 #include "codegen/proxy/timestamp_functions_proxy.h"
 #include "codegen/proxy/values_runtime_proxy.h"
 #include "codegen/type/boolean_type.h"
+#include "codegen/type/decimal_type.h"
 #include "codegen/type/integer_type.h"
 #include "codegen/type/timestamp_type.h"
 #include "codegen/value.h"
@@ -315,6 +316,29 @@ struct DateTrunc : public TypeSystem::BinaryOperatorHandleNull {
   }
 };
 
+struct DatePart : public TypeSystem::BinaryOperatorHandleNull {
+  bool SupportsTypes(const Type &left_type,
+                     const Type &right_type) const override {
+    return left_type.GetSqlType() == Varchar::Instance() &&
+           right_type.GetSqlType() == Timestamp::Instance();
+  }
+
+  Type ResultType(UNUSED_ATTRIBUTE const Type &left_type,
+                  UNUSED_ATTRIBUTE const Type &right_type) const override {
+    return Type{Decimal::Instance()};
+  }
+
+  Value Impl(CodeGen &codegen, const Value &left, const Value &right,
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+      const override {
+    PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
+
+    llvm::Value *raw_ret = codegen.Call(TimestampFunctionsProxy::DatePart,
+                                        {left.GetValue(), right.GetValue()});
+    return Value{Decimal::Instance(), raw_ret};
+  }
+};
+
 struct BTrim : public TypeSystem::BinaryOperatorHandleNull {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
@@ -490,6 +514,7 @@ struct Concat : public TypeSystem::NaryOperator,
   }
 };
 
+
 ////////////////////////////////////////////////////////////////////////////////
 ///
 /// N-ary operators
@@ -566,16 +591,24 @@ std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {
 // Binary operations
 Like kLike;
 DateTrunc kDateTrunc;
+DatePart kDatePart;
 BTrim kBTrim;
 LTrim kLTrim;
 RTrim kRTrim;
 Repeat kRepeat;
 Concat kConcat;
 std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
+<<<<<<< HEAD
     {OperatorId::Like, kLike},    {OperatorId::DateTrunc, kDateTrunc},
     {OperatorId::BTrim, kBTrim},  {OperatorId::LTrim, kLTrim},
     {OperatorId::RTrim, kRTrim},  {OperatorId::Repeat, kRepeat},
     {OperatorId::Concat, kConcat}};
+=======
+    {OperatorId::Like, kLike},         {OperatorId::DateTrunc, kDateTrunc},
+    {OperatorId::DatePart, kDatePart}, {OperatorId::BTrim, kBTrim},
+    {OperatorId::LTrim, kLTrim},       {OperatorId::RTrim, kRTrim},
+    {OperatorId::Repeat, kRepeat}};
+>>>>>>> upstream/master
 
 // Nary operations
 Substr kSubstr;
