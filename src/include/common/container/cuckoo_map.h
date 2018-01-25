@@ -28,6 +28,10 @@ namespace peloton {
 // CUCKOO_MAP_TYPE
 #define CUCKOO_MAP_TYPE CuckooMap<KeyType, ValueType>
 
+// Iterator type
+#define CUCKOO_MAP_ITERATOR_TYPE \
+typename cuckoohash_map<KeyType, ValueType>::locked_table
+
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
 class CuckooMap {
  public:
@@ -58,6 +62,12 @@ class CuckooMap {
 
   // Checks if the cuckoo_map is empty
   bool IsEmpty() const;
+
+  // Lock the table and get iterator
+  // The table would be unlock when the iterator
+  // is out of scope
+  CUCKOO_MAP_ITERATOR_TYPE
+  GetIterator();
 
  private:
 

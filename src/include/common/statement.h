@@ -81,9 +81,9 @@ class Statement : public Printable {
 
   std::unique_ptr<parser::SQLStatementList> PassStmtParseTreeList() {return std::move(sql_stmt_list_);}
 
-  inline bool GetNeedsPlan() const { return (needs_replan_); }
+  inline bool GetNeedsReplan() const { return (needs_replan_); }
 
-  inline void SetNeedsPlan(bool replan) { needs_replan_ = replan; }
+  inline void SetNeedsReplan(bool replan) { needs_replan_ = replan; }
 
   // Get a string representation for debugging
   const std::string GetInfo() const;
