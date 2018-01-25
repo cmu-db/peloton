@@ -267,7 +267,7 @@ type::Value StringFunctions::__Upper(const std::vector<type::Value> &args) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
   }
   executor::ExecutorContext ctx{nullptr};
-
+  LOG_DEBUG("CALLED __UPPER");
   std::string ret_string(StringFunctions::Upper(
       ctx, args[0].GetAs<const char *>(), args[0].GetLength()));
   return type::ValueFactory::GetVarcharValue(ret_string);
@@ -279,7 +279,7 @@ type::Value StringFunctions::__Lower(const std::vector<type::Value> &args) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
   }
   executor::ExecutorContext ctx{nullptr};
-
+  LOG_DEBUG("Called __LOWER");
   std::string ret_string(StringFunctions::Lower(
       ctx, args[0].GetAs<const char *>(), args[0].GetLength()));
   return type::ValueFactory::GetVarcharValue(ret_string);
@@ -304,10 +304,11 @@ type::Value StringFunctions::__Concat(const std::vector<type::Value> &args) {
     attr_lens[i] = args[i].GetLength();
     concat_strs[i] = args[i].GetAs<char *>();
   }
-
+  LOG_DEBUG("called __CONCAT");
   StrWithLen tmp = StringFunctions::Concat(ctx, (const char **)concat_strs,
                                            attr_lens, args.size());
-
+  
+  
   if (tmp.length == 1)
     return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
 
@@ -333,9 +334,9 @@ StringFunctions::StrWithLen StringFunctions::Concat(
 
   auto *pool = ctx.GetPool();
   char *ret_str = reinterpret_cast<char *>(pool->Allocate(len_all + 1));
+  PL_MEMSET(ret_str,0,len_all+1);
   char *tail = ret_str;
 
-  uint32_t tail_str = 0;
   iter = 0;
   while (iter < attr_len) {
     if (concat_strs[iter] == nullptr || attr_lens[iter] == 1) {
