@@ -62,6 +62,31 @@ pipeline {
                     }
                 }
 
+                // stage('Debian Stretch/gcc-6.3.0/llvm-3.8.1 (Debug/Test)') {
+                //     agent { docker { image 'debian:stretch' } }
+                //     steps {
+                //         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
+                //         sh 'python ./script/validators/source_validator.py'
+                //         sh 'mkdir build'
+                //         sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False -DUSE_SANITIZER=Address .. && make -j4'
+                //         sh 'cd build && make check -j4 || true'
+                //         sh 'cd build && make benchmark -j4'
+                //         sh 'cd build && make install'
+                //         sh 'cd build && bash ../script/testing/psql/psql_test.sh'
+                //         sh 'cd build && python ../script/validators/jdbc_validator.py'
+                //     }
+                // }
+
+                // stage('Debian Stretch/gcc-6.3.0/llvm-3.8.1 (Release)') {
+                //     agent { docker { image 'debian:stretch' } }
+                //     steps {
+                //         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
+                //         sh 'python ./script/validators/source_validator.py'
+                //         sh 'mkdir build'
+                //         sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Release -DUSE_SANITIZER=Address -DCOVERALLS=False .. && make -j4'
+                //     }
+                // }
+
                 stage('Fedora 26/gcc-7.1.1/llvm-4.0.1 (Debug)') {
                     agent { docker { image 'fedora:26' } }
                     steps {
