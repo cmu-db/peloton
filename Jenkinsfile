@@ -58,7 +58,7 @@ pipeline {
                         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
                         sh 'python ./script/validators/source_validator.py'
                         sh 'mkdir build'
-                        sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Release -DUSE_SANITIZER=Address -DCOVERALLS=False .. && make -j4'
+                        sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
                     }
                 }
 
@@ -83,7 +83,7 @@ pipeline {
                 //         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
                 //         sh 'python ./script/validators/source_validator.py'
                 //         sh 'mkdir build'
-                //         sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Release -DUSE_SANITIZER=Address -DCOVERALLS=False .. && make -j4'
+                //         sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
                 //     }
                 // }
 
