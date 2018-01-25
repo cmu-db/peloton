@@ -16,6 +16,7 @@ import difflib
 import mmap
 import glob
 import functools
+import distutils.spawn
 
 ## ==============================================
 ## LOGGING CONFIGURATION
@@ -44,7 +45,7 @@ PELOTON_DIR = os.path.abspath(
     functools.reduce(os.path.join, [CODE_SOURCE_DIR, os.path.pardir, os.path.pardir])
     )
 
-CLANG_FORMAT = "clang-format-3.6"
+CLANG_FORMAT = None
 CLANG_FORMAT_FILE = os.path.join(PELOTON_DIR, ".clang-format")
 
 # Other directory paths used are relative to PELOTON_DIR
@@ -132,31 +133,32 @@ def check_format(file_path):
     status = True
 
     # Run clang-format on the file
-    try:
-        clang_format_cmd = [CLANG_FORMAT, "-style=file", file_path]
-        formatted_src = subprocess.check_output(clang_format_cmd).splitlines(True)
-        # Load source file
-        with open(file_path, "r") as file:
-            src = file.readlines()
-
-            # Do the diff
-            d = difflib.Differ()
-            diff = d.compare(src, formatted_src)
-            line_num = 0
-            for line in diff:
-                code = line[:2]
-                if code in ("  ", "- "):
-                    line_num += 1
-                if code == '- ':
-                    if status:
-                        LOG.info("Invalid formatting in file : " + file_path)
-                    LOG.info("  Line %d: %s" % (line_num, line[2:].strip()))
-                    status = False
-
-            return status
-    except OSError as e:
+    if CLANG_FORMAT is None:
         LOG.error("clang-format seems not installed")
         exit()
+        
+    clang_format_cmd = [CLANG_FORMAT, "-style=file", file_path]
+    formatted_src = subprocess.check_output(clang_format_cmd).splitlines(True)
+    # Load source file
+    with open(file_path, "r") as file:
+        src = file.readlines()
+
+        # Do the diff
+        d = difflib.Differ()
+        diff = d.compare(src, formatted_src)
+        line_num = 0
+        for line in diff:
+            code = line[:2]
+            if code in ("  ", "- "):
+                line_num += 1
+            if code == '- ':
+                if status:
+                    LOG.info("Invalid formatting in file : " + file_path)
+                LOG.info("  Line %d: %s" % (line_num, line[2:].strip()))
+                status = False
+
+        return status
+        
 
 def check_namespaces(file_path):
     # only check for src files
@@ -285,6 +287,16 @@ def validate_dir(dir_path):
     #END FOR [os.walk]
 #END VALIDATE_DIR(DIR_PATH)
 
+#find clang-format executable
+def find_clangformat():
+    global CLANG_FORMAT
+    #check for possible clang-format versions
+    for exe in ["clang-format", "clang-format-3.6", "clang-format-3.7", "clang-format-3.8"]:
+        path = distutils.spawn.find_executable(exe)
+        if not path is None:
+            CLANG_FORMAT = path
+            return
+
 ## ==============================================
 ##                 Main Function
 ## ==============================================
@@ -297,6 +309,8 @@ if __name__ == '__main__':
 
     LOG.info("Running source validator ...")
     LOG.info("Peloton root : " + PELOTON_DIR)
+    
+    find_clangformat()
 
     if args.files:
         # Validate just the provided files.

@@ -252,22 +252,27 @@ foreach (GCOV_FILE ${ALL_GCOV_FILES})
 	# ->
 	# /path/to/project/root/subdir/the_file.c
 	get_source_path_from_gcov_filename(GCOV_SRC_PATH ${GCOV_FILE})
-	file(RELATIVE_PATH GCOV_SRC_REL_PATH "${PROJECT_ROOT}" "${GCOV_SRC_PATH}")
 
-	# Is this in the list of source files?
-	# TODO: We want to match against relative path filenames from the source file root...
-	list(FIND COVERAGE_SRCS ${GCOV_SRC_PATH} WAS_FOUND)
+	# skip if full path is not present
+	# can happen if files are generated for external libraries
+	if(IS_ABSOLUTE ${GCOV_SRC_PATH})
+		file(RELATIVE_PATH GCOV_SRC_REL_PATH "${PROJECT_ROOT}" "${GCOV_SRC_PATH}")
 
-	if (NOT WAS_FOUND EQUAL -1)
-		message("YES: ${GCOV_FILE}")
-		list(APPEND GCOV_FILES ${GCOV_FILE})
+		# Is this in the list of source files?
+		# TODO: We want to match against relative path filenames from the source file root...
+		list(FIND COVERAGE_SRCS ${GCOV_SRC_PATH} WAS_FOUND)
 
-		# We remove it from the list, so we don't bother searching for it again.
-		# Also files left in COVERAGE_SRCS_REMAINING after this loop ends should
-		# have coverage data generated from them (no lines are covered).
-		list(REMOVE_ITEM COVERAGE_SRCS_REMAINING ${GCOV_SRC_PATH})
-	else()
-		message("NO:  ${GCOV_FILE}")
+		if (NOT WAS_FOUND EQUAL -1)
+			message("YES: ${GCOV_FILE}")
+			list(APPEND GCOV_FILES ${GCOV_FILE})
+
+			# We remove it from the list, so we don't bother searching for it again.
+			# Also files left in COVERAGE_SRCS_REMAINING after this loop ends should
+			# have coverage data generated from them (no lines are covered).
+			list(REMOVE_ITEM COVERAGE_SRCS_REMAINING ${GCOV_SRC_PATH})
+		else()
+			message("NO:  ${GCOV_FILE}")
+		endif()
 	endif()
 endforeach()
 
