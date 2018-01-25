@@ -41,8 +41,11 @@ void PelotonInit::Initialize() {
 
   // start worker pool
   threadpool::MonoQueuePool::GetInstance().Startup();
-  threadpool::BrainThreadPool::GetInstance().Startup();
 
+  // start brain thread pool
+  if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
+    threadpool::BrainThreadPool::GetInstance().Startup();
+  }
 
   int parallelism = (std::thread::hardware_concurrency() + 3) / 4;
   storage::DataTable::SetActiveTileGroupCount(parallelism);
@@ -105,8 +108,11 @@ void PelotonInit::Shutdown() {
 
   // stop worker pool
   threadpool::MonoQueuePool::GetInstance().Shutdown();
-  threadpool::BrainThreadPool::GetInstance().Shutdown();
 
+  // stop brain thread pool
+  if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
+    threadpool::BrainThreadPool::GetInstance().Shutdown();
+  }
 
   thread_pool.Shutdown();
 

@@ -17,6 +17,7 @@
 #include "common/container_tuple.h"
 #include "concurrency/epoch_manager_factory.h"
 #include "concurrency/transaction_manager_factory.h"
+#include "settings/settings_manager.h"
 #include "storage/database.h"
 #include "storage/tile_group.h"
 #include "storage/tuple.h"
@@ -131,14 +132,16 @@ int TransactionLevelGCManager::Unlink(const int &thread_id,
     }
 
     // Log the query into query_history_catalog
-    std::vector<std::string> query_strings = txn_ctx->GetQueryStrings();
-    if(query_strings.size() != 0) {
-      uint64_t timestamp = txn_ctx->GetTimestamp();
-      auto &pool = threadpool::BrainThreadPool::GetInstance();
-      for(auto query_string: query_strings) {
-        pool.SubmitTask([this, query_string, timestamp] {
-          brain::QueryLogger::LogQuery(query_string, timestamp);
-        });        
+    if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
+      std::vector<std::string> query_strings = txn_ctx->GetQueryStrings();
+      if(query_strings.size() != 0) {
+        uint64_t timestamp = txn_ctx->GetTimestamp();
+        auto &pool = threadpool::BrainThreadPool::GetInstance();
+        for(auto query_string: query_strings) {
+          pool.SubmitTask([this, query_string, timestamp] {
+            brain::QueryLogger::LogQuery(query_string, timestamp);
+          });        
+        }
       }
     }
 

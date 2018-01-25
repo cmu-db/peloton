@@ -31,6 +31,7 @@
 #include "function/old_engine_string_functions.h"
 #include "function/timestamp_functions.h"
 #include "index/index_factory.h"
+#include "settings/settings_manager.h"
 #include "storage/storage_manager.h"
 #include "storage/table_factory.h"
 #include "type/ephemeral_pool.h"
@@ -147,12 +148,15 @@ void Catalog::Bootstrap() {
   DatabaseMetricsCatalog::GetInstance(txn);
   TableMetricsCatalog::GetInstance(txn);
   IndexMetricsCatalog::GetInstance(txn);
-  QueryMetricsCatalog::GetInstance(txn);
-  QueryHistoryCatalog::GetInstance(txn);
+  QueryMetricsCatalog::GetInstance(txn);  
   SettingsCatalog::GetInstance(txn);
   TriggerCatalog::GetInstance(txn);
   LanguageCatalog::GetInstance(txn);
   ProcCatalog::GetInstance(txn);
+  
+  if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
+    QueryHistoryCatalog::GetInstance(txn);
+  }
 
   txn_manager.CommitTransaction(txn);
 

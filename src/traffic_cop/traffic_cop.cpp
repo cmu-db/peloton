@@ -298,7 +298,9 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
   
-  tcop_txn_state_.top().first->AddQueryString(query_string.c_str());
+  if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
+    tcop_txn_state_.top().first->AddQueryString(query_string.c_str());
+  }
 
   try {
     auto plan = optimizer_->BuildPelotonPlanTree(
