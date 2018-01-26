@@ -69,7 +69,7 @@ class NetworkConnection {
   
   bool ssl_handshake_ = false;
   bool finish_startup_packet_ = false;
-  InputPacket initial_packet;
+  InputPacket initial_packet_;
 
   bool ssl_able_;
   // Set when doing rehandshake in SSL

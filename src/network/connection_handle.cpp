@@ -14,13 +14,12 @@
 #include <cstring>
 
 #include "network/connection_handle.h"
-#include <include/network/postgres_protocol_handler.h>
+#include "network/postgres_protocol_handler.h"
 #include "network/protocol_handler_factory.h"
 #include "network/connection_dispatcher_task.h"
 #include "network/peloton_server.h"
 
-#define SSL_MESSAGE_VERNO 80877103
-#define PROTO_MAJOR_VERSION(x) ((x) >> 16)
+#include "settings/settings_manager.h"
 
 namespace peloton {
 namespace network {
@@ -87,27 +86,32 @@ namespace {
 // For readability sake, do not run clang-format on this macro block and follow
 // the style presented when editing.
 DEF_TRANSITION_GRAPH
-DEFINE_STATE(READ)
-ON(WAKEUP)
-SET_STATE_TO(READ) AND_INVOKE(FillReadBuffer) ON(PROCEED) SET_STATE_TO(PROCESS)
-    AND_INVOKE(Process) ON(NEED_DATA) SET_STATE_TO(WAIT) AND_INVOKE(Wait)
-        ON(FINISH) SET_STATE_TO(CLOSING) AND_INVOKE(CloseSocket) END_DEF
+  DEFINE_STATE(READ)
+    ON(WAKEUP) SET_STATE_TO(READ) AND_INVOKE(FillReadBuffer) 
+    ON(PROCEED) SET_STATE_TO(PROCESS) AND_INVOKE(Process) 
+    ON(NEED_DATA) SET_STATE_TO(READ) AND_WAIT
+    ON(FINISH) SET_STATE_TO(CLOSING) AND_INVOKE(CloseSocket) 
+  END_DEF
 
-    DEFINE_STATE(WAIT) ON(PROCEED) SET_STATE_TO(READ) AND_WAIT END_DEF
+  DEFINE_STATE(PROCESS) 
+    ON(PROCEED) SET_STATE_TO(WRITE) AND_INVOKE(ProcessWrite)
+    ON(NEED_DATA) SET_STATE_TO(READ) AND_INVOKE(READ) 
+    ON(GET_RESULT) SET_STATE_TO(GET_RESULT) AND_WAIT
+    ON(FINISH) SET_STATE_TO(CLOSING) AND_INVOKE(CloseSocket)
+  END_DEF
 
-    DEFINE_STATE(PROCESS) ON(PROCEED) SET_STATE_TO(WRITE)
-        AND_INVOKE(ProcessWrite) ON(NEED_DATA) SET_STATE_TO(WAIT)
-            AND_INVOKE(Wait) ON(GET_RESULT) SET_STATE_TO(GET_RESULT) AND_WAIT
-    ON(FINISH) SET_STATE_TO(CLOSING) AND_INVOKE(CloseSocket) END_DEF
+  DEFINE_STATE(WRITE) 
+    ON(WAKEUP) SET_STATE_TO(WRITE) AND_INVOKE(ProcessWrite)
+    ON(PROCEED) SET_STATE_TO(PROCESS) AND_INVOKE(Process)
+  END_DEF
 
-    DEFINE_STATE(WRITE) ON(WAKEUP) SET_STATE_TO(WRITE) AND_INVOKE(ProcessWrite)
-        ON(PROCEED) SET_STATE_TO(PROCESS) AND_INVOKE(Process) END_DEF
+  DEFINE_STATE(GET_RESULT) 
+    ON(WAKEUP) SET_STATE_TO(GET_RESULT) AND_INVOKE(GetResult) 
+    ON(PROCEED) SET_STATE_TO(WRITE) AND_INVOKE(ProcessWrite) 
+  END_DEF
+END_DEF
 
-    DEFINE_STATE(GET_RESULT) ON(WAKEUP) SET_STATE_TO(GET_RESULT)
-        AND_INVOKE(GetResult) ON(PROCEED) SET_STATE_TO(WRITE)
-            AND_INVOKE(ProcessWrite) END_DEF END_DEF
-
-    void ConnectionHandle::StateMachine::Accept(Transition action,
+void ConnectionHandle::StateMachine::Accept(Transition action,
                                                 ConnectionHandle &connection) {
   Transition next = action;
   while (next != Transition::NONE) {
@@ -125,34 +129,16 @@ SET_STATE_TO(READ) AND_INVOKE(FillReadBuffer) ON(PROCEED) SET_STATE_TO(PROCESS)
 
 ConnectionHandle::ConnectionHandle(int sock_fd, ConnectionHandlerTask *handler,
                                    std::shared_ptr<Buffer> rbuf,
-                                   std::shared_ptr<Buffer> wbuf)
+                                   std::shared_ptr<Buffer> wbuf,
+                                   bool ssl_able)
     : sock_fd_(sock_fd),
       handler_(handler),
       protocol_handler_(nullptr),
       rbuf_(std::move(rbuf)),
-      wbuf_(std::move(wbuf)) {
+      wbuf_(std::move(wbuf)),
+      ssl_able_(ssl_able) {
   SetNonBlocking(sock_fd_);
   SetTCPNoDelay(sock_fd_);
-
-  //  TODO(tianyu): The original network code seems to do this as an
-  //  optimization. I am leaving this out until we get numbers
-
-  //  if (network_event != nullptr)
-  //    handler->UpdateEvent(network_event, sock_fd_, event_flags,
-  //                         METHOD_AS_CALLBACK(ConnectionHandle, HandleEvent),
-  //                         this);
-  //  else
-  //    network_event = handler->RegisterEvent(sock_fd_, event_flags,
-  //                                           METHOD_AS_CALLBACK(ConnectionHandle,
-  //                                           HandleEvent), this);
-  //
-  //  if (workpool_event != nullptr)
-  //    handler->UpdateManualEvent(workpool_event,
-  //    METHOD_AS_CALLBACK(ConnectionHandle, HandleEvent), this);
-  //  else
-  //    workpool_event =
-  //    handler->RegisterManualEvent(METHOD_AS_CALLBACK(ConnectionHandle,
-  //    HandleEvent), this);
 
   network_event = handler->RegisterEvent(
       sock_fd_, EV_READ | EV_PERSIST,
@@ -172,9 +158,14 @@ void ConnectionHandle::UpdateEventFlags(short flags) {
   // optimization. I am leaving this out until we get numbers
   // handler->UpdateEvent(network_event, sock_fd_, flags,
   // METHOD_AS_CALLBACK(ConnectionHandle, HandleEvent), this);
+  
+  if (flags == curr_event_flag_)  return;
+
   handler_->UnregisterEvent(network_event);
   network_event = handler_->RegisterEvent(
       sock_fd_, flags, METHOD_AS_CALLBACK(ConnectionHandle, HandleEvent), this);
+  
+  curr_event_flag_ = flags;
 }
 
 WriteState ConnectionHandle::WritePackets() {
@@ -182,7 +173,7 @@ WriteState ConnectionHandle::WritePackets() {
   for (; next_response_ < protocol_handler_->responses.size();
        next_response_++) {
     auto pkt = protocol_handler_->responses[next_response_].get();
-    LOG_TRACE("To send packet with type: %c", static_cast<char>(pkt->msg_type));
+    LOG_TRACE("To send packet with type: %c, len %lu", static_cast<char>(pkt->msg_type), pkt->len);
     // write is not ready during write. transit to WRITE
     auto result = BufferWriteBytesHeader(pkt);
     if (result == WriteState::NOT_READY) return result;
@@ -205,6 +196,10 @@ WriteState ConnectionHandle::WritePackets() {
 }
 
 Transition ConnectionHandle::FillReadBuffer() {
+  // This could be changed by SSL_ERROR_WANT_WRITE
+  // When we reenter, we need to recover.
+  UpdateEventFlags(EV_READ | EV_PERSIST);
+
   Transition result = Transition::NEED_DATA;
   ssize_t bytes_read = 0;
   bool done = false;
@@ -241,33 +236,78 @@ Transition ConnectionHandle::FillReadBuffer() {
       // if the connection is a SSL connection, we use SSL_read, otherwise
       // we use general read function
       if (conn_SSL_context != nullptr) {
-        bytes_read = SSL_read(conn_SSL_context, rbuf_->GetPtr(rbuf_->buf_size),
-                              rbuf_->GetMaxSize() - rbuf_->buf_size);
+        ERR_clear_error();
+        bytes_read = SSL_read(conn_SSL_context, rbuf_.GetPtr(rbuf_.buf_size),
+                              rbuf_.GetMaxSize() - rbuf_.buf_size);
+        LOG_TRACE("SSL read successfully");
+        int err = SSL_get_error(conn_SSL_context, bytes_read);
+        unsigned long ecode = (err != SSL_ERROR_NONE || bytes_read < 0) ? ERR_get_error() : 0;
+        switch (err) {
+          case SSL_ERROR_NONE: {
+            // If successfully received, update buffer ptr and read status
+            // keep reading till no data is available or the buffer becomes full
+            rbuf_.buf_size += bytes_read;
+            result = Transition::PROCEED;
+            break;
+          }
+          
+          case SSL_ERROR_ZERO_RETURN: {
+            done = true;
+            result = Transition::FINISH;
+            break;
+          }
+          // The SSL packet is partially loaded to the SSL buffer only,
+          // More data is required in order to decode the whole packet.
+          case SSL_ERROR_WANT_READ: {
+            LOG_TRACE("SSL packet partially loaded to SSL buffer");
+            done = true;
+            break;
+          }
+          // It happens when we're trying to rehandshake and we block on a write
+          // during the handshake. We need to wait on the socket to be writable
+          case SSL_ERROR_WANT_WRITE: {
+            LOG_TRACE("Rehandshake during write, block until writable");
+            UpdateEvent(EV_WRITE | EV_PERSIST);
+            return Transition::NEED_DATA;
+          }
+          case SSL_ERROR_SYSCALL: {
+            // if interrupted, try again
+            if (errno == EINTR) {
+              LOG_INFO("Error SSL Reading: EINTR");
+              break;
+            }
+          }
+          default: {
+            throw NetworkProcessException("SSL read error: %d, error code: " +
+                                          std::to_string(err) + 
+                                          " error code:" + std::to_string(ecode));
+          }
+        }
       } else {
         bytes_read = read(sock_fd_, rbuf_->GetPtr(rbuf_->buf_size),
                           rbuf_->GetMaxSize() - rbuf_->buf_size);
         LOG_TRACE("When filling read buffer, read %ld bytes", bytes_read);
-      }
-
-      if (bytes_read > 0) {
-        // read succeeded, update buffer size
-        rbuf_->buf_size += bytes_read;
-        result = Transition::PROCEED;
-      } else if (bytes_read == 0) {
-        return Transition::FINISH;
-      } else if (bytes_read < 0) {
-        LOG_ERROR("Error writing: %s", strerror(errno));
-        // related to non-blocking?
-        if (errno == EAGAIN || errno == EWOULDBLOCK) {
-          // return whatever results we have
-          done = true;
-        } else if (errno == EINTR) {
-          // interrupts are ok, try again
-          continue;
-        } else {
-          // some other error occured
-          throw NetworkProcessException("Error when filling read buffer " +
-                                        std::to_string(errno));
+      
+        if (bytes_read > 0) {
+          // read succeeded, update buffer size
+          rbuf_->buf_size += bytes_read;
+          result = Transition::PROCEED;
+        } else if (bytes_read == 0) {
+          return Transition::FINISH;
+        } else if (bytes_read < 0) {
+          LOG_ERROR("Error writing: %s", strerror(errno));
+          // Nothing in the network pipe now
+          if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            // return whatever results we have
+            done = true;
+          } else if (errno == EINTR) {
+            // interrupts are ok, try again
+            continue;
+          } else {
+            // some other error occured
+            throw NetworkProcessException("Error when filling read buffer " +
+                                          std::to_string(errno));
+          }
         }
       }
     }
@@ -276,38 +316,77 @@ Transition ConnectionHandle::FillReadBuffer() {
 }
 
 WriteState ConnectionHandle::FlushWriteBuffer() {
+  // This could be changed by unfinished write
+  // When we reenter, we need to recover it to read
+  UpdateEventFlags(EV_READ | EV_PERSIST);
+
   ssize_t written_bytes = 0;
   // while we still have outstanding bytes to write
   while (wbuf_->buf_size > 0) {
     written_bytes = 0;
     while (written_bytes <= 0) {
       if (conn_SSL_context != nullptr) {
-        written_bytes =
-            SSL_write(conn_SSL_context, &wbuf_->buf[wbuf_->buf_flush_ptr],
-                      wbuf_->buf_size);
+        LOG_TRACE("SSL_write flush");
+        ERR_clear_error();
+        SetWriteBlockedOnRead(false);
+        written_bytes = SSL_write(conn_SSL_context, &wbuf_.buf[wbuf_.buf_flush_ptr], wbuf_.buf_size);
+        int err = SSL_get_error(conn_SSL_context, written_bytes);
+        unsigned long ecode = (err != SSL_ERROR_NONE || written_bytes < 0) ? ERR_get_error() : 0;
+        switch (err) {
+          case SSL_ERROR_NONE: {
+            wbuf_.buf_flush_ptr += written_bytes;
+            wbuf_.buf_size -= written_bytes;
+            break;
+          }
+          // It happens when the server wants to send a large SSL record 
+          // and the network buffer/SSL buffer becomes full.
+          case SSL_ERROR_WANT_WRITE: {
+            LOG_TRACE("Flush write buffer, want write, not ready");
+            // The flag could have been changed
+            UpdateEventFlags(EV_WRITE | EV_PERSIST);
+            return WriteState::WRITE_NOT_READY;
+          }
+          // It happens when doing rehandshake with client.
+          case SSL_ERROR_WANT_READ: {
+            LOG_TRACE("Flush write buffer, want read, not ready");
+            // The flag is EV_READ already. No need to update.
+            return WriteState::WRITE_NOT_READY;
+          }
+          case SSL_ERROR_SYSCALL: {
+            // If interrupted, try again.
+            if (errno == EINTR) {
+              LOG_TRACE("Flush write buffer, eintr");
+              break;
+            }
+          }
+          default: {
+            LOG_ERROR("SSL write error: %d, error code: %lu", err, ecode);
+            return WriteState::WRITE_ERROR;
+          }
+        }
       } else {
         written_bytes =
             write(sock_fd_, &wbuf_->buf[wbuf_->buf_flush_ptr], wbuf_->buf_size);
-      }
-      // Write failed
-      if (written_bytes < 0) {
-        LOG_ERROR("Error writing: %s", strerror(errno));
-        if (errno == EINTR) {
-          // interrupts are ok, try again
-          written_bytes = 0;
-          continue;
-          // Write would have blocked if the socket was
-          // in blocking mode. Wait till it's readable
-        } else if (errno == EAGAIN || errno == EWOULDBLOCK) {
-          // Listen for socket being enabled for write
-          UpdateEventFlags(EV_WRITE | EV_PERSIST);
-          // We should go to WRITE state
-          LOG_DEBUG("WRITE NOT READY");
-          return WriteState::NOT_READY;
-        } else {
-          // fatal errors
-          throw NetworkProcessException("Fatal error during write, errno " +
-                                        std::to_string(errno));
+        // Write failed
+        if (written_bytes < 0) {
+          LOG_ERROR("Error writing: %s", strerror(errno));
+          if (errno == EINTR) {
+            // interrupts are ok, try again
+            written_bytes = 0;
+            continue;
+            // Write would have blocked if the socket was
+            // in blocking mode. Wait till it's readable
+          } else if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            // Listen for socket being enabled for write
+            UpdateEventFlags(EV_WRITE | EV_PERSIST);
+            // We should go to WRITE state
+            LOG_DEBUG("WRITE NOT READY");
+            return WriteState::NOT_READY;
+          } else {
+            // fatal errors
+            throw NetworkProcessException("Fatal error during write, errno " +
+                                          std::to_string(errno));
+          }
         }
       }
 
@@ -343,30 +422,47 @@ std::string ConnectionHandle::WriteBufferToString() {
 }
 
 ProcessResult ConnectionHandle::ProcessInitial() {
-  // TODO: this is a direct copy and we should get rid of it later;
-  InputPacket rpkt;
+  // TODO(Tianyi): this is a direct copy from protocal handler
+  // and we could get rid of it later when we have the second
+  // protocol handler;
 
-  if (rpkt.header_parsed == false) {
+  if (initial_packet.header_parsed == false) {
     // parse out the header first
-    if (ReadStartupPacketHeader(*rbuf_, rpkt) == false) {
+    if (ReadStartupPacketHeader(*rbuf_, initial_packet_) == false) {
       // need more data
       return ProcessResult::MORE_DATA_REQUIRED;
     }
   }
-  PL_ASSERT(rpkt.header_parsed == true);
+  PL_ASSERT(initial_packet.header_parsed == true);
 
-  if (rpkt.is_initialized == false) {
+  if (initial_packet.is_initialized == false) {
     // packet needs to be initialized with rest of the contents
-    // TODO: If other protocols are added, this need to be changed
-    if (PostgresProtocolHandler::ReadPacket(*rbuf_, rpkt) == false) {
+    // TODO(Tianyi): If other protocols are added, this need to be changed
+    if (PostgresProtocolHandler::ReadPacket(*rbuf_, initial_packet_) == false) {
       // need more data
       return ProcessResult::MORE_DATA_REQUIRED;
     }
   }
-
+  
+  if (protocol_handler_ == nullptr) {
+      protocol_handler_ =
+        ProtocolHandlerFactory::CreateProtocolHandler(
+          ProtocolHandlerType::Postgres, &traffic_cop_
+        );
+  }
   // We need to handle startup packet first
-  ProcessInitialPacket(&rpkt);
-  return ProcessResult::COMPLETE;
+  //TODO(Tianyi): If other protocols are added, this need to be changed
+  bool result = protocol_handler_->ProcessInitialPacket(
+    &initial_packet, client_, ssl_able_, ssl_handshake_, 
+    finish_startup_packet_);
+  // Clean up the initial_packet after finishing processing.
+  initial_packet.Reset();
+  if (result) {
+    return ProcessResult::COMPLETE;
+  } else {
+    return ProcessResult::TERMINATE;
+  }
+
 }
 
 // TODO: This function is now dedicated for postgres packet
@@ -395,70 +491,6 @@ bool ConnectionHandle::ReadStartupPacketHeader(Buffer &rbuf,
   rbuf.buf_ptr += initial_read_size;
   rpkt.header_parsed = true;
   return true;
-}
-
-void ConnectionHandle::ProcessInitialPacket(InputPacket *pkt) {
-  std::string token, value;
-  std::unique_ptr<OutputPacket> response(new OutputPacket());
-
-  int32_t proto_version = PacketGetInt(pkt, sizeof(int32_t));
-  LOG_INFO("protocol version: %d", proto_version);
-
-  // TODO: consider more about return value
-  if (proto_version == SSL_MESSAGE_VERNO) {
-    LOG_TRACE("process SSL MESSAGE");
-    ProcessSSLRequestPacket(pkt);
-  } else {
-    LOG_TRACE("process startup packet");
-    ProcessStartupPacket(pkt, proto_version);
-  }
-}
-
-void ConnectionHandle::ProcessSSLRequestPacket(InputPacket *) {
-  std::unique_ptr<OutputPacket> response(new OutputPacket());
-  // TODO: consider more about a proper response
-  response->msg_type = NetworkMessageType::SSL_YES;
-  protocol_handler_->responses.push_back(std::move(response));
-  protocol_handler_->SetFlushFlag(true);
-  ssl_sent_ = true;
-}
-
-void ConnectionHandle::ProcessStartupPacket(InputPacket *pkt,
-                                            int32_t proto_version) {
-  std::string token, value;
-
-  // Only protocol version 3 is supported
-  if (PROTO_MAJOR_VERSION(proto_version) != 3)
-    throw NetworkProcessException(
-        "Protocol error: Only protocol version 3 is supported.");
-
-  // TODO: check for more malformed cases
-  // iterate till the end
-  // TODO(tianyu): WTF is this?
-  for (;;) {
-    // loop end case?
-    if (pkt->ptr >= pkt->len) break;
-    GetStringToken(pkt, token);
-    // if the option database was found
-    if (token.compare("database") == 0) {
-      // loop end?
-      if (pkt->ptr >= pkt->len) break;
-      GetStringToken(pkt, client_.dbname);
-    } else if (token.compare(("user")) == 0) {
-      // loop end?
-      if (pkt->ptr >= pkt->len) break;
-      GetStringToken(pkt, client_.user);
-    } else {
-      if (pkt->ptr >= pkt->len) break;
-      GetStringToken(pkt, value);
-      client_.cmdline_options[token] = value;
-    }
-  }
-
-  protocol_handler_ = ProtocolHandlerFactory::CreateProtocolHandler(
-      ProtocolHandlerType::Postgres, &traffic_cop_);
-
-  protocol_handler_->SendInitialResponse();
 }
 
 // Writes a packet's header (type, size) into the write buffer.
@@ -562,6 +594,28 @@ Transition ConnectionHandle::CloseSocket() {
   // Remove listening event
   handler_->UnregisterEvent(network_event);
   handler_->UnregisterEvent(workpool_event);
+  
+  if (conn_SSL_context != nullptr) {
+    int shutdown_ret = 0;
+    while (true) {
+      ERR_clear_error();
+      shutdown_ret = SSL_shutdown(conn_SSL_context);
+      int err = SSL_get_error(conn_SSL_context, shutdown_ret);
+      if (shutdown_ret == 1) {
+        break;
+      } else if (shutdown_ret == 0) {
+        LOG_TRACE("SSL shutdown is not finished yet");
+        continue;
+      } else {
+        if (err == SSL_ERROR_WANT_WRITE || err == SSL_ERROR_WANT_READ) {
+          continue;
+        } else {
+          LOG_ERROR("Error shutting down ssl session, err: %d", err);
+          break;
+        }
+      }
+    }
+  }
   for (;;) {
     int status = close(sock_fd_);
     if (status < 0) {
@@ -574,6 +628,8 @@ Transition ConnectionHandle::CloseSocket() {
     LOG_DEBUG("Already Closed the connection %d", sock_fd_);
     return Transition::NONE;
   }
+
+  Reset();
 }
 
 Transition ConnectionHandle::Wait() {
@@ -584,17 +640,20 @@ Transition ConnectionHandle::Wait() {
 
 Transition ConnectionHandle::Process() {
   // TODO(tianyu): further simplify this logic
-  if (protocol_handler_ == nullptr) {
+  if (!finish_startup_packet_) {
     // Process initial
-    if (ssl_sent_) {
+    if (ssl_handshake_) {
       // start SSL handshake
       // TODO: consider free conn_SSL_context
       conn_SSL_context = SSL_new(PelotonServer::ssl_context);
+      SSL_set_session_id_context(conn->conn_SSL_context, nullptr, 0);
       if (SSL_set_fd(conn_SSL_context, sock_fd_) == 0) {
         LOG_ERROR("Failed to set SSL fd");
         PL_ASSERT(false);
       }
-      int ssl_accept_ret;
+      
+      bool handshake_fail = false;
+      while (!handshake_fail)
       if ((ssl_accept_ret = SSL_accept(conn_SSL_context)) <= 0) {
         LOG_ERROR("Failed to accept (handshake) client SSL context.");
         throw NetworkProcessException(
