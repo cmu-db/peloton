@@ -90,7 +90,7 @@ if [ "$DISTRO" = "UBUNTU" ]; then
 ## DEBIAN
 ## ------------------------------------------------
 elif [ "$DISTRO" = "DEBIAN OS" ]; then
-    sudo apt-get -qq $FORCE_Y --ignore-missing -y install \
+    sudo apt-get -qq --ignore-missing -y install \
         git \
         g++ \
         clang \
