@@ -6,8 +6,7 @@
 //
 // Identification: /peloton/src/planner/nested_loop_join_plan.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
-//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //===----------------------------------------------------------------------===//
 
 #include <memory>

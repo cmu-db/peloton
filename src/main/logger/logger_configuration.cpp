@@ -6,7 +6,7 @@
 // //
 // // Identification: src/main/logger/logger_configuration.cpp
 // //
-// // Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// // Copyright (c) 2015-18, Carnegie Mellon University Database Group
 // //
 // //===----------------------------------------------------------------------===//
 

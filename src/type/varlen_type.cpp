@@ -6,8 +6,7 @@
 //
 // Identification: src/backend/common/varlen_value.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //===----------------------------------------------------------------------===//
 
 #include "type/varlen_type.h"

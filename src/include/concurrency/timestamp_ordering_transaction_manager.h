@@ -7,7 +7,7 @@
 // Identification:
 // src/include/concurrency/timestamp_ordering_transaction_manager.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 

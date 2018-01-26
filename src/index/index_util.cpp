@@ -6,8 +6,7 @@
 //
 // Identification: src/index/index_util.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //===----------------------------------------------------------------------===//
 
 #include "index/index.h"

@@ -7,7 +7,6 @@
 // Identification: src/parser/postgresparser.cpp
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
-//
 //===----------------------------------------------------------------------===//
 
 #include "parser/postgresparser.h"

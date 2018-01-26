@@ -6,7 +6,7 @@
 //
 // Identification: test/include/concurrency/testing_transaction_util.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 

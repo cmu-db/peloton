@@ -6,8 +6,7 @@
 //
 // Identification: src/codegen/compact_storage.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
-//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //===----------------------------------------------------------------------===//
 
 #include "codegen/compact_storage.h"

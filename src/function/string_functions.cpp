@@ -7,7 +7,6 @@
 // Identification: src/function/string_functions.cpp
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
-//
 //===----------------------------------------------------------------------===//
 
 #include "function/string_functions.h"
