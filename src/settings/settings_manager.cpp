@@ -116,6 +116,8 @@ const std::string SettingsManager::GetInfo() const {
                          GetBool(SettingId::codegen) ? "enabled" : "disabled"));
   info.append(StringUtil::Format("%28s:   %-28s\n", "Optimization Timeout",
                                  GetInt(SettingId::task_execution_timeout)));
+  info.append(StringUtil::Format("%28s:   %-28s\n", "Number of GC threads", 
+                                 GetInt(SettingId::gc_num_threads)));
   return StringBoxUtil::Box(info);
 }
 

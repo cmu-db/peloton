@@ -99,7 +99,13 @@ SETTING_int(monoqueue_worker_pool_size,
 // Number of connection threads used by peloton
 SETTING_int(connection_thread_count,
             "Number of connection threads (default: std::hardware_concurrency())",
-            std::thread::hardware_concurrency(), false, false)
+            std::thread::hardware_concurrency(),
+	    false, false)
+
+SETTING_int(gc_num_threads,
+            "The number of Garbage collection threads to run",
+            1,
+            true, true)
 
 //===----------------------------------------------------------------------===//
 // WRITE AHEAD LOG
