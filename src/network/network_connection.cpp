@@ -73,11 +73,6 @@ bool NetworkConnection::UpdateEvent(short flags) {
  * Public Functions
  */
 WriteState NetworkConnection::WritePackets() {
-  // If I have data left in SSL buffer, before moving data into the local buffer,
-  // send out the data in SSL buffer first.
-  if (GetWriteBlocked()) {
-    FlushWriteBuffer();
-  }
   // iterate through all the packets
   for (; next_response_ < protocol_handler_->responses.size(); next_response_++) {
     auto pkt = protocol_handler_->responses[next_response_].get();
@@ -109,27 +104,24 @@ Transition NetworkConnection::FillReadBuffer() {
   bool done = false;
   // If partial SSL record exists in the SSL buffer, call SSL_read()
   // to read more data from the network buffer first.
-  if (!GetReadBlocked()) {
+  // reset buffer if all the contents have been read
+  if (rbuf_.buf_ptr == rbuf_.buf_size) rbuf_.Reset();
 
-    // reset buffer if all the contents have been read
-    if (rbuf_.buf_ptr == rbuf_.buf_size) rbuf_.Reset();
+  // buf_ptr shouldn't overflow
+  PL_ASSERT(rbuf_.buf_ptr <= rbuf_.buf_size);
 
-    // buf_ptr shouldn't overflow
-    PL_ASSERT(rbuf_.buf_ptr <= rbuf_.buf_size);
-
-    /* Do we have leftover data and are we at the end of the buffer?
-     * Move the data to the head of the buffer and clear out all the old data
-     * Note: The assumption here is that all the packets/headers till
-     *  rbuf_.buf_ptr have been fully processed
-     */
-    if (rbuf_.buf_ptr < rbuf_.buf_size && rbuf_.buf_size == rbuf_.GetMaxSize()) {
-      auto unprocessed_len = rbuf_.buf_size - rbuf_.buf_ptr;
-      // Move this data to the head of rbuf_1
-      std::memmove(rbuf_.GetPtr(0), rbuf_.GetPtr(rbuf_.buf_ptr), unprocessed_len);
-      // update pointers
-      rbuf_.buf_ptr = 0;
-      rbuf_.buf_size = unprocessed_len;
-    }
+  /* Do we have leftover data and are we at the end of the buffer?
+    * Move the data to the head of the buffer and clear out all the old data
+    * Note: The assumption here is that all the packets/headers till
+    *  rbuf_.buf_ptr have been fully processed
+    */
+  if (rbuf_.buf_ptr < rbuf_.buf_size && rbuf_.buf_size == rbuf_.GetMaxSize()) {
+    auto unprocessed_len = rbuf_.buf_size - rbuf_.buf_ptr;
+    // Move this data to the head of rbuf_1
+    std::memmove(rbuf_.GetPtr(0), rbuf_.GetPtr(rbuf_.buf_ptr), unprocessed_len);
+    // update pointers
+    rbuf_.buf_ptr = 0;
+    rbuf_.buf_size = unprocessed_len;
   }
 
   // return explicitly
@@ -143,16 +135,6 @@ Transition NetworkConnection::FillReadBuffer() {
       // we use general read function
       if (conn_SSL_context != nullptr) {
         ERR_clear_error();
-        // TODO(Yuchen): For the transparent negotiation to succeed, the ssl must have been
-        // initialized to client or server mode?
-        // Only when the whole SSL record has been received and processed completely,
-        // SSL_read() will return reporting success.
-        // Special case would be: SSL_read() reads the whole SSL record from the network buffer.
-        // The network buffer becomes empty and data is in SSL buffer. We can't rely on
-        // libevent read event since the system does not know about the SSL buffer. We need to
-        // call SSL_pending() to check manually. (See StateMachine)
-        SetReadBlockedOnWrite(false);
-        SetReadBlocked(false);
         bytes_read = SSL_read(conn_SSL_context, rbuf_.GetPtr(rbuf_.buf_size),
                               rbuf_.GetMaxSize() - rbuf_.buf_size);
         LOG_TRACE("SSL read successfully");
@@ -172,23 +154,17 @@ Transition NetworkConnection::FillReadBuffer() {
             result = Transition::FINISH;
             break;
           }
-
-          // The socket would have blocked when it's in blocking mode. It happens when one
-          // SSL record arrives in multiple packets. Keep calling SSL_read until we receive all
-          // the packets for the SSL record. Meanwhile do not move buffer ptr.
-          // TODO(Yuchen): does libevent notifies if more data arrives? If that's the case, we don't
-          // need to wait here. Actually, the buffer ptr is changed before the call..
+          // The SSL packet is partially loaded to the SSL buffer only,
+          // More data is required in order to decode the whole packet.
           case SSL_ERROR_WANT_READ: {
-            LOG_INFO("Fill read buffer, want read");
-            SetReadBlocked(true);
+            LOG_TRACE("SSL packet partially loaded to SSL buffer");
             done = true;
-            result = Transition::NEED_DATA;
             break;
           }
           // It happens when we're trying to rehandshake and we block on a write
           // during the handshake. We need to wait on the socket to be writable
           case SSL_ERROR_WANT_WRITE: {
-            LOG_INFO("Fill read buffer, want write");
+            LOG_TRACE("Fill read buffer, want write");
             SetReadBlockedOnWrite(true);
             done = true;
             result = Transition::NEED_DATA;
@@ -266,7 +242,6 @@ WriteState NetworkConnection::FlushWriteBuffer() {
     while (wbuf_.buf_size > 0) {
       LOG_TRACE("SSL_write flush");
       ERR_clear_error();
-      SetWriteBlocked(false);
       SetWriteBlockedOnRead(false);
       written_bytes = SSL_write(conn_SSL_context, &wbuf_.buf[wbuf_.buf_flush_ptr], wbuf_.buf_size);
       int err = SSL_get_error(conn_SSL_context, written_bytes);
@@ -277,14 +252,9 @@ WriteState NetworkConnection::FlushWriteBuffer() {
           wbuf_.buf_size -= written_bytes;
           break;
         }
-        // We would have blocked on write if the socket is in blocking mode.
-        // It happens when the server wants to send a large SSL record and the network buffer becomes full.
-        // The kernel will flush the network buffer automatically. What we need to do is to call
-        // SSL_write() again when the buffer becomes availble to write again(notified by Libevent). Now,
-        // just return WRITE_NOT_READY and keeps the buffer ptr unchanged.
-        // TODO(Yuchen): Change this. Can't write more packets and update buffer ptr when SSL_write() is not succeeded yet.
+        // It happens when the server wants to send a large SSL record 
+        // and the network buffer becomes full.
         case SSL_ERROR_WANT_WRITE: {
-          SetWriteBlocked(true);
           LOG_TRACE("Flush write buffer, want write, not ready");
           return WriteState::WRITE_NOT_READY;
         }
@@ -621,8 +591,6 @@ void NetworkConnection::Reset() {
   }
   SetWriteBlockedOnRead(false);
   SetReadBlockedOnWrite(false);
-  SetReadBlocked(false);
-  SetWriteBlocked(false);
 }
 
 Transition NetworkConnection::Wait() {

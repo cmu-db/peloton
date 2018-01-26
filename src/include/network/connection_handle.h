@@ -220,8 +220,19 @@ class ConnectionHandle {
   std::shared_ptr<Buffer> wbuf_;    // Socket's write buffer
   unsigned int next_response_ = 0;  // The next response in the response buffer
   Client client_;
-  bool ssl_sent_ = false;
+ 
   StateMachine state_machine_;
+
+  // TODO(Tianyi) Can we encapsulate these flags?
+  bool ssl_handshake_ = false;
+  bool finish_startup_packet_ = false;
+  bool ssl_able_;
+
+  // TODO(Tianyi) hide this in protocol handler
+  InputPacket initial_packet_;
+
+  short curr_event_flag_;           // current libevent event flag
+
 };
 }
 }
