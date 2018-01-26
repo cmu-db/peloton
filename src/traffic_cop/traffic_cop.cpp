@@ -212,7 +212,7 @@ void TrafficCop::ExecuteStatementPlanGetResult() {
       txn_result == ResultType::FAILURE) {
     LOG_TRACE(
         "About to commit: single stmt: %d, init_failure: %d, txn_result: %s",
-        is_single_statement_txn_, init_failure,
+        single_statement_txn_, init_failure,
         ResultTypeToString(txn_result).c_str());
     switch (txn_result) {
       case ResultType::SUCCESS:
