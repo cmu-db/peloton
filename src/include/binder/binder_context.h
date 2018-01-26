@@ -153,9 +153,7 @@ class BinderContext {
       std::vector<std::unique_ptr<expression::AbstractExpression>> &exprs);
 
  private:
-  /**
-   * @brief Map table alias to table obj
-   */
+  /** @brief Map table alias to table obj */
   std::unordered_map<std::string, std::shared_ptr<catalog::TableCatalogObject>>
       regular_table_alias_map_;
   std::unordered_map<std::string, std::unordered_map<std::string, type::TypeId>>

@@ -28,6 +28,20 @@ namespace type {
 
 namespace {
 
+/** Forward declarations:
+ *  Subtraction
+ */
+struct Sub : public TypeSystem::BinaryOperatorHandleNull {
+  bool SupportsTypes(const Type &left_type,
+                     const Type &right_type) const override;
+
+  Type ResultType(UNUSED_ATTRIBUTE const Type &left_type,
+                  UNUSED_ATTRIBUTE const Type &right_type) const override;
+
+  Value Impl(CodeGen &codegen, const Value &left, const Value &right,
+             const TypeSystem::InvocationContext &ctx) const override;
+};
+
 ////////////////////////////////////////////////////////////////////////////////
 ///
 /// Function tables
@@ -169,6 +183,34 @@ struct CompareSmallInt : public TypeSystem::SimpleComparisonHandleNull {
 ///
 ////////////////////////////////////////////////////////////////////////////////
 
+// Abs
+struct Abs : public TypeSystem::UnaryOperatorHandleNull {
+  bool SupportsType(const Type &type) const override {
+    return type.GetSqlType() == SmallInt::Instance();
+  }
+
+  Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
+    return Type{SmallInt::Instance()};
+  }
+
+  Value Impl(CodeGen &codegen, const Value &val,
+             const TypeSystem::InvocationContext &ctx)
+    const override {
+
+    // The smallint subtraction implementation
+    Sub sub;
+    PL_ASSERT(SupportsType(val.GetType()));
+    // Zero place-holder
+    auto zero = codegen::Value{type::SmallInt::Instance(), codegen.Const16(0)};
+
+    // We want: raw_ret = (val < 0 ? 0 - val : val)
+    auto sub_result = sub.Impl(codegen, zero, val, ctx);
+    auto *lt_zero = codegen->CreateICmpSLT(val.GetValue(), zero.GetValue());
+    auto *raw_ret = codegen->CreateSelect(lt_zero, sub_result.GetValue(), val.GetValue());
+    return Value{SmallInt::Instance(), raw_ret};
+  }
+};
+
 // Negation
 struct Negate : public TypeSystem::UnaryOperatorHandleNull {
   bool SupportsType(const Type &type) const override {
@@ -295,34 +337,33 @@ struct Add : public TypeSystem::BinaryOperatorHandleNull {
 };
 
 // Subtraction
-struct Sub : public TypeSystem::BinaryOperatorHandleNull {
-  bool SupportsTypes(const Type &left_type,
-                     const Type &right_type) const override {
-    return left_type.GetSqlType() == SmallInt::Instance() &&
-           left_type == right_type;
-  }
 
-  Type ResultType(UNUSED_ATTRIBUTE const Type &left_type,
-                  UNUSED_ATTRIBUTE const Type &right_type) const override {
-    return Type{SmallInt::Instance()};
-  }
+bool Sub::SupportsTypes(const Type &left_type,
+                        const Type &right_type) const {
+  return left_type.GetSqlType() == SmallInt::Instance() &&
+    left_type == right_type;
+}
 
-  Value Impl(CodeGen &codegen, const Value &left, const Value &right,
-             const TypeSystem::InvocationContext &ctx) const override {
-    PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
+Type Sub::ResultType(UNUSED_ATTRIBUTE const Type &left_type,
+                     UNUSED_ATTRIBUTE const Type &right_type) const {
+  return Type{SmallInt::Instance()};
+}
 
-    // Do subtraction
-    llvm::Value *overflow_bit = nullptr;
-    llvm::Value *result = codegen.CallSubWithOverflow(
+Value Sub::Impl(CodeGen &codegen, const Value &left, const Value &right,
+                const TypeSystem::InvocationContext &ctx) const {
+  PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
+
+  // Do subtraction
+  llvm::Value *overflow_bit = nullptr;
+  llvm::Value *result = codegen.CallSubWithOverflow(
         left.GetValue(), right.GetValue(), overflow_bit);
 
-    if (ctx.on_error == OnError::Exception) {
-      codegen.ThrowIfOverflow(overflow_bit);
-    }
-
-    // Return result
-    return Value{SmallInt::Instance(), result};
+  if (ctx.on_error == OnError::Exception) {
+    codegen.ThrowIfOverflow(overflow_bit);
   }
+
+  // Return result
+  return Value{SmallInt::Instance(), result};
 };
 
 // Multiplication
@@ -503,11 +544,13 @@ std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {{kCompareSmallInt}};
 
 // Unary operators
 Negate kNegOp;
+Abs kAbsOp;
 Ceil kCeilOp;
 Floor kFloorOp;
 Sqrt kSqrtOp;
 std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {
     {OperatorId::Negation, kNegOp},
+    {OperatorId::Abs, kAbsOp},
     {OperatorId::Ceil, kCeilOp},
     {OperatorId::Floor, kFloorOp},
     {OperatorId::Sqrt, kSqrtOp}};
