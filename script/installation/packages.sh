@@ -48,21 +48,12 @@ if [ "$DISTRO" = "UBUNTU" ]; then
         fi
         sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 15CF4D18AF4F7421
         sudo apt-get update -qq
+        CMAKE_NAME="cmake3"
+        FORCE_Y="--force-yes"
+    else
+        CMAKE_NAME="cmake"
+        FORCE_Y=""
     fi
-
-    # Fix for cmake3 name change in Ubuntu 15.x and 16.x plus --force-yes deprecation
-    CMAKE_NAME="cmake3"
-    FORCE_Y="--force-yes"
-    MAJOR_VER=$(echo "$DISTRO_VER" | cut -d '.' -f 1)
-    for version in "15" "16"
-    do
-       if [ "$MAJOR_VER" = "$version" ]
-       then
-          FORCE_Y=""
-          CMAKE_NAME="cmake"
-          break
-       fi
-    done
 
     sudo apt-get -qq $FORCE_Y --ignore-missing -y install \
         git \
