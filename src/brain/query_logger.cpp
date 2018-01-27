@@ -14,6 +14,7 @@
 #include "catalog/query_history_catalog.h"
 #include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager_factory.h"
+#include "parser/pg_query.h"
 
 namespace peloton {
 namespace brain {
@@ -21,9 +22,7 @@ namespace brain {
 void QueryLogger::LogQuery(std::string query_string, uint64_t timestamp) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-
-  // TODO[Siva]: call pg_fingerprint() after Marcel's PR is merged
-  std::string fingerprint = "fingerprint";
+  std::string fingerprint = pg_query_fingerprint(query_string.c_str()).hexdigest;
 
   catalog::QueryHistoryCatalog::GetInstance()->InsertQueryHistory(
       query_string, fingerprint, timestamp, nullptr, txn);
