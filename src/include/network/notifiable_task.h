@@ -24,7 +24,6 @@
 
 #include "common/exception.h"
 #include "common/logger.h"
-#include "container/lock_free_queue.h"
 #include "network_state.h"
 #include "error_util.h"
 

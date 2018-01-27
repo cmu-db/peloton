@@ -59,8 +59,7 @@ class PelotonServer {
   PelotonServer();
 
 
-  static SSLLevel ssl_level_;
-  static pthread_mutex_t *ssl_mutex_buf_;
+
   /**
    * @brief Configure the server to spin up all its threads and start listening
    * on the configured port.
@@ -99,38 +98,16 @@ class PelotonServer {
   // TODO(tianyu): This is VILE. Fix this when we refactor testing.
   void SetPort(int new_port);
 
- public:
-  static int recent_connfd;
-  static SSL_CTX *ssl_context;
-  static std::string private_key_file_;
-  static std::string certificate_file_;
-  static std::string root_cert_file_;
 
- private:
-  // For logging purposes
-  // static void LogCallback(int severity, const char *msg);
-
-  uint64_t port_;       // port number
-  int listen_fd_ = -1;  // server socket fd that PelotonServer is listening on
-  size_t max_connections_;  // maximum number of connections
-
-  std::string private_key_file_;
-  std::string certificate_file_;
-
-  std::shared_ptr<ConnectionDispatcherTask> dispatcher_task;
-
-  void SetIsClosed(bool is_closed) { this->is_closed_ = is_closed; }
-
-
-  static int verify_callback(int ok, X509_STORE_CTX *store);
+  static void LoadSSLFileSettings();
 
   static void SSLInit();
+
+  static int VerifyCallback(int ok, X509_STORE_CTX *store);
 
   static void SetSSLLevel(SSLLevel ssl_level) { ssl_level_ = ssl_level; }
 
   static SSLLevel GetSSLLevel() { return ssl_level_; }
-
-  static void LoadSSLFileSettings();
 
   static void SSLLockingFunction(int mode, int n, const char* file, int line);
 
@@ -140,12 +117,30 @@ class PelotonServer {
 
   static int SSLMutexCleanup(void);
 
- private:
+  static int recent_connfd;
+  static SSL_CTX *ssl_context;
+  static std::string private_key_file_;
+  static std::string certificate_file_;
+  static std::string root_cert_file_;
+  static SSLLevel ssl_level_;
+  static pthread_mutex_t *ssl_mutex_buf_;
 
-  template<typename... Ts> void try_do(int(*func)(Ts...), Ts... arg);
+ private:
+  // For logging purposes
+  // static void LogCallback(int severity, const char *msg);
+
+  uint64_t port_;       // port number
+  int listen_fd_ = -1;  // server socket fd that PelotonServer is listening on
+  size_t max_connections_;  // maximum number of connections
+
+  std::shared_ptr<ConnectionDispatcherTask> dispatcher_task;
+
+
+
+  template<typename... Ts>
+  void TrySslOperation(int(*func)(Ts...), Ts... arg);
 
   // For testing purposes
-  bool started;
   std::shared_ptr<ConnectionDispatcherTask> dispatcher_task_;
 };
 }

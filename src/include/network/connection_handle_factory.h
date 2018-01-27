@@ -40,13 +40,14 @@ class ConnectionHandleFactory {
     // (probably also to-do: beat up the person who wrote this)
     PelotonServer::recent_connfd = conn_fd;
     auto it = reusable_handles_.find(conn_fd);
+    bool ssl_able = (PelotonServer::GetSSLLevel() != SSLLevel::SSL_DISABLE);
     if (it == reusable_handles_.end()) {
       // We are not using std::make_shared here because we want to keep
       // ConnectionHandle constructor
       // private to avoid unintentional use.
       auto handle = std::shared_ptr<ConnectionHandle>(
           new ConnectionHandle(conn_fd, handler, std::make_shared<Buffer>(),
-                               std::make_shared<Buffer>()));
+                               std::make_shared<Buffer>(), ssl_able));
       reusable_handles_[conn_fd] = handle;
       return handle;
     }
@@ -54,7 +55,7 @@ class ConnectionHandleFactory {
     it->second->rbuf_->Reset();
     it->second->wbuf_->Reset();
     std::shared_ptr<ConnectionHandle> new_handle(new ConnectionHandle(
-        conn_fd, handler, it->second->rbuf_, it->second->wbuf_));
+        conn_fd, handler, it->second->rbuf_, it->second->wbuf_, ssl_able));
     reusable_handles_[conn_fd] = new_handle;
     return new_handle;
   }

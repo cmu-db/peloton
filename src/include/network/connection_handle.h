@@ -29,7 +29,6 @@
 
 #include "common/exception.h"
 #include "common/logger.h"
-#include "type/types.h"
 
 #include "network/connection_handler_task.h"
 #include "protocol_handler.h"
@@ -59,6 +58,7 @@ namespace network {
  */
 class ConnectionHandle {
  public:
+
   /**
    * Update the existing event to listen to the passed flags
    */
@@ -145,7 +145,8 @@ class ConnectionHandle {
   friend class ConnectionHandleFactory;
 
   ConnectionHandle(int sock_fd, ConnectionHandlerTask *handler,
-                   std::shared_ptr<Buffer> rbuf, std::shared_ptr<Buffer> wbuf);
+                   std::shared_ptr<Buffer> rbuf, std::shared_ptr<Buffer> wbuf,
+                   bool ssl_able);
 
   ProcessResult ProcessInitial();
 
@@ -169,6 +170,22 @@ class ConnectionHandle {
    * Routine to deal with SSL request message
    */
   void ProcessSSLRequestPacket(InputPacket *pkt);
+
+  void SetReadBlockedOnWrite(bool flag) { read_blocked_on_write_ = flag; }
+
+  void SetWriteBlockedOnRead(bool flag) { write_blocked_on_read_ = flag; }
+
+  bool GetReadBlockedOnWrite() { return read_blocked_on_write_; }
+
+  bool GetWriteBlockedOnRead() { return write_blocked_on_read_; }
+
+  void SetReadBlocked(bool flag) { read_blocked_ = flag; }
+
+  void SetWriteBlocked(bool flag) { write_blocked_ = flag; }
+
+  bool GetReadBlocked() { return read_blocked_; }
+
+  bool GetWriteBlocked() { return write_blocked_; }
 
   /**
    * Writes a packet's header (type, size) into the write buffer
@@ -220,7 +237,6 @@ class ConnectionHandle {
   std::shared_ptr<Buffer> wbuf_;    // Socket's write buffer
   unsigned int next_response_ = 0;  // The next response in the response buffer
   Client client_;
- 
   StateMachine state_machine_;
 
   // TODO(Tianyi) Can we encapsulate these flags?
@@ -228,6 +244,10 @@ class ConnectionHandle {
   bool finish_startup_packet_ = false;
   bool ssl_able_;
 
+  bool read_blocked_on_write_ = false;
+  bool write_blocked_on_read_ = false;
+  bool read_blocked_ = false;
+  bool write_blocked_ = false;
   // TODO(Tianyi) hide this in protocol handler
   InputPacket initial_packet_;
 

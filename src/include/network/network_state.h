@@ -45,7 +45,8 @@ enum class Transition {
   NEED_DATA,
   // TODO(tianyu) generalize this symbol, this is currently only used in process
   GET_RESULT,
-  FINISH
+  FINISH,
+  RETRY
 };
 }
 }
