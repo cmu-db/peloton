@@ -33,7 +33,7 @@ ConnectionHandlerTask::ConnectionHandlerTask(const int task_id)
 void ConnectionHandlerTask::Notify(int conn_fd) {
   int buf[1];
   buf[0] = conn_fd;
-  if (write(new_conn_send_fd_, buf, sizeof(int)) != 1) {
+  if (write(new_conn_send_fd_, buf, sizeof(int)) != sizeof(int)) {
     LOG_ERROR("Failed to write to thread notify pipe");
   }
 }
@@ -49,7 +49,9 @@ void ConnectionHandlerTask::HandleDispatch(int new_conn_recv_fd, short) {
     ssize_t result = read(new_conn_recv_fd,
                        client_fd + bytes_read,
                        sizeof(int) - bytes_read);
-    if (result < 0) LOG_ERROR("Error when reading from dispatch");
+    if (result < 0) {
+      LOG_ERROR("Error when reading from dispatch");
+    }
     bytes_read += (size_t) result;
   }
 

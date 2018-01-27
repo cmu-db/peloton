@@ -47,8 +47,8 @@ int main(int argc, char *argv[]) {
     peloton::network::PelotonServer network_manager;
 
     // Start NetworkManager
-    peloton::network::NetworkManager::LoadSSLFileSettings();
-    peloton::network::NetworkManager::SSLInit();
+    peloton::network::PelotonServer::LoadSSLFileSettings();
+    peloton::network::PelotonServer::SSLInit();
 
     network_manager.SetupServer().ServerLoop();
   } catch (peloton::ConnectionException &exception) {
