@@ -25,16 +25,22 @@ namespace brain {
 #define DEFAULT_COLUMN_VALUE 0.5
 #define DEFAULT_METRIC_VALUE 0
 
+/**
+ * @brief      Class for sample type.
+ */
 enum class SampleType {
   INVALID = 0,
-  ACCESS = 1,  // accessed attributes
-  UPDATE = 2   // updated attributes
+  ACCESS = 1,  /**< accessed attributes */
+  UPDATE = 2   /**< updated attributes */
 };
 
 //===--------------------------------------------------------------------===//
 // Sample
 //===--------------------------------------------------------------------===//
 
+/**
+ * @brief      Class for sample.
+ */
 class Sample : public Printable {
  public:
   Sample(const size_t column_count)
@@ -43,6 +49,13 @@ class Sample : public Printable {
         weight_(DEFAULT_SAMPLE_WEIGHT),
         sample_type_(SampleType::ACCESS) {}
 
+  /**
+   * @brief      The constructor
+   *
+   * @param[in]  columns_accessed  The columns accessed
+   * @param[in]  weight            The weight
+   * @param[in]  sample_type       The sample type
+   */
   Sample(const std::vector<double> &columns_accessed,
          double weight = DEFAULT_SAMPLE_WEIGHT,
          SampleType sample_type = SampleType::ACCESS)
@@ -50,40 +63,93 @@ class Sample : public Printable {
         weight_(weight),
         sample_type_(sample_type) {}
 
-  // get the distance from other sample
+  /**
+   * get the distance from other sample
+   *
+   * @param[in]  other  The other
+   *
+   * @return     The distance.
+   */
   double GetDistance(const Sample &other) const;
 
-  // get difference after removing other sample
+  /**
+   * get difference after removing other sample
+   *
+   * @param[in]  other  The other
+   *
+   * @return     The difference.
+   */
   Sample GetDifference(const Sample &other) const;
 
-  // multiplication operator with a scalar
+  /**
+   * multiplication operator with a scalar
+   *
+   * @param[in]  rhs   The right hand side
+   *
+   * @return     { description_of_the_return_value }
+   */
   Sample &operator*(const double &rhs);
 
-  // addition operator with a sample
+  /**
+   * addition operator with a sample
+   *
+   * @param[in]  rhs   The right hand side
+   *
+   * @return     { description_of_the_return_value }
+   */
   Sample &operator+(const Sample &rhs);
 
-  // the sample's weight
+  /**
+   * Get the sample's weight
+   *
+   * @return     The weight.
+   */
   inline double GetWeight() const { return (weight_); }
 
-  // the sample type
+  /**
+   * Get the sample type
+   *
+   * @return     The sample type.
+   */
   inline SampleType GetSampleType() const { return (sample_type_); }
 
+  /**
+   * @brief      Gets the columns accessed.
+   *
+   * @return     The columns accessed.
+   */
   inline const std::vector<double> GetColumnsAccessed() const {
     return (columns_accessed_);
   }
 
-  // set the columns accessed
+  /**
+   * Set the columns accessed
+   *
+   * @param[in]  columns_accessed  The columns accessed
+   */
   inline void SetColumnsAccessed(const std::vector<double> columns_accessed) {
     columns_accessed_ = columns_accessed;
   }
 
-  // get enabled columns
+  /**
+   * Get enabled columns
+   *
+   * @return     The enabled columns.
+   */
   std::vector<oid_t> GetEnabledColumns() const;
 
-  // Get a string representation for debugging
+  /**
+   * Get a string representation for debugging
+   *
+   * @return     The information.
+   */
   const std::string GetInfo() const;
 
-  // Convert this sample into a parseable string
+  /**
+   * Convert this sample into a parseable string
+   *
+   * @return     String representation of the object.
+   */
   const std::string ToString() const;
 
   bool operator==(const Sample &other) const;
@@ -93,13 +159,13 @@ class Sample : public Printable {
   //===--------------------------------------------------------------------===//
 
  private:
-  // column accessed bitmap
+  /** column accessed bitmap */
   std::vector<double> columns_accessed_;
 
-  // weight of the sample
+  /** weight of the sample */
   double weight_;
 
-  // type of sample
+  /** type of sample */
   SampleType sample_type_;
 
 };
