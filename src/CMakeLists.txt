@@ -32,10 +32,7 @@ peloton_default_properties(peloton-proto)
 
 # --[ Libpg_query library
 
-add_custom_target(libpg_query ALL
-                  COMMAND ${CMAKE_MAKE_PROGRAM}
-                  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/third_party/libpg_query/
-                  COMMENT "Original libpg makefile target")
+add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/libpg_query/ libpg_query.a)
 
 
 ##################################################################################
@@ -46,9 +43,8 @@ add_custom_target(libpg_query ALL
 peloton_pickup_peloton_sources(${PROJECT_SOURCE_DIR})
 
 add_library(peloton SHARED ${srcs})
-add_dependencies(peloton libpg_query)
-target_link_libraries(peloton ${Peloton_LINKER_LIBS}
-    ${PROJECT_SOURCE_DIR}/third_party/libpg_query/libpg_query.a)
+
+target_link_libraries(peloton PUBLIC ${Peloton_LINKER_LIBS} peloton-proto pg_query)
 
 peloton_default_properties(peloton)
 set_target_properties(peloton PROPERTIES
@@ -113,5 +109,4 @@ endforeach()
 
 add_custom_target(benchmark)
 add_dependencies(benchmark tpcc ycsb sdbench)
-
 

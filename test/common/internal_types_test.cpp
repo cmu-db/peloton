@@ -21,12 +21,12 @@ namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
-// Types Test
+// Internal Types Test
 //===--------------------------------------------------------------------===//
 
-class TypesTests : public PelotonTest {};
+class InternalTypesTests : public PelotonTest {};
 
-TEST_F(TypesTests, DatePartTypeTest) {
+TEST_F(InternalTypesTests, DatePartTypeTest) {
   std::vector<DatePartType> list = {
       DatePartType::INVALID,      DatePartType::CENTURY,
       DatePartType::DAY,          DatePartType::DAYS,
@@ -77,7 +77,7 @@ TEST_F(TypesTests, DatePartTypeTest) {
   }  // FOR
 }
 
-TEST_F(TypesTests, BackendTypeTest) {
+TEST_F(InternalTypesTests, BackendTypeTest) {
   std::vector<BackendType> list = {BackendType::INVALID, BackendType::MM,
                                    BackendType::NVM, BackendType::SSD,
                                    BackendType::HDD};
@@ -102,7 +102,7 @@ TEST_F(TypesTests, BackendTypeTest) {
                peloton::Exception);
 }
 
-TEST_F(TypesTests, TypeIdTest) {
+TEST_F(InternalTypesTests, TypeIdTest) {
   std::vector<type::TypeId> list = {
       type::TypeId::INVALID, type::TypeId::PARAMETER_OFFSET,
       type::TypeId::BOOLEAN, type::TypeId::TINYINT, type::TypeId::SMALLINT,
@@ -131,7 +131,7 @@ TEST_F(TypesTests, TypeIdTest) {
                peloton::Exception);
 }
 
-TEST_F(TypesTests, StatementTypeTest) {
+TEST_F(InternalTypesTests, StatementTypeTest) {
   std::vector<StatementType> list = {
       StatementType::INVALID, StatementType::SELECT,
       StatementType::INSERT,  StatementType::UPDATE,
@@ -162,7 +162,7 @@ TEST_F(TypesTests, StatementTypeTest) {
       peloton::Exception);
 }
 
-TEST_F(TypesTests, ExpressionTypeTest) {
+TEST_F(InternalTypesTests, ExpressionTypeTest) {
   std::vector<ExpressionType> list = {
       ExpressionType::INVALID, ExpressionType::OPERATOR_PLUS,
       ExpressionType::OPERATOR_MINUS, ExpressionType::OPERATOR_MULTIPLY,
@@ -212,7 +212,7 @@ TEST_F(TypesTests, ExpressionTypeTest) {
       peloton::Exception);
 }
 
-TEST_F(TypesTests, IndexTypeTest) {
+TEST_F(InternalTypesTests, IndexTypeTest) {
   std::vector<IndexType> list = {IndexType::INVALID, IndexType::BWTREE,
                                  IndexType::HASH, IndexType::SKIPLIST};
 
@@ -236,7 +236,7 @@ TEST_F(TypesTests, IndexTypeTest) {
                peloton::Exception);
 }
 
-TEST_F(TypesTests, IndexConstraintTypeTest) {
+TEST_F(InternalTypesTests, IndexConstraintTypeTest) {
   std::vector<IndexConstraintType> list = {
       IndexConstraintType::INVALID, IndexConstraintType::DEFAULT,
       IndexConstraintType::PRIMARY_KEY, IndexConstraintType::UNIQUE};
@@ -263,7 +263,7 @@ TEST_F(TypesTests, IndexConstraintTypeTest) {
                peloton::Exception);
 }
 
-TEST_F(TypesTests, HybridScanTypeTest) {
+TEST_F(InternalTypesTests, HybridScanTypeTest) {
   std::vector<HybridScanType> list = {
       HybridScanType::INVALID, HybridScanType::SEQUENTIAL,
       HybridScanType::INDEX, HybridScanType::HYBRID};
@@ -289,7 +289,7 @@ TEST_F(TypesTests, HybridScanTypeTest) {
       peloton::Exception);
 }
 
-TEST_F(TypesTests, JoinTypeTest) {
+TEST_F(InternalTypesTests, JoinTypeTest) {
   std::vector<JoinType> list = {JoinType::INVALID, JoinType::LEFT,
                                 JoinType::RIGHT,   JoinType::INNER,
                                 JoinType::OUTER,   JoinType::SEMI};
@@ -314,7 +314,7 @@ TEST_F(TypesTests, JoinTypeTest) {
                peloton::Exception);
 }
 
-TEST_F(TypesTests, PlanNodeTypeTest) {
+TEST_F(InternalTypesTests, PlanNodeTypeTest) {
   std::vector<PlanNodeType> list = {
       PlanNodeType::INVALID, PlanNodeType::SEQSCAN, PlanNodeType::INDEXSCAN,
       PlanNodeType::NESTLOOP, PlanNodeType::NESTLOOPINDEX,
@@ -348,7 +348,7 @@ TEST_F(TypesTests, PlanNodeTypeTest) {
                peloton::Exception);
 }
 
-TEST_F(TypesTests, ParseNodeTypeTest) {
+TEST_F(InternalTypesTests, ParseNodeTypeTest) {
   std::vector<ParseNodeType> list = {
       ParseNodeType::INVALID, ParseNodeType::SCAN,      ParseNodeType::CREATE,
       ParseNodeType::DROP,    ParseNodeType::UPDATE,    ParseNodeType::INSERT,
@@ -377,7 +377,7 @@ TEST_F(TypesTests, ParseNodeTypeTest) {
       peloton::Exception);
 }
 
-TEST_F(TypesTests, ResultTypeTest) {
+TEST_F(InternalTypesTests, ResultTypeTest) {
   std::vector<ResultType> list = {ResultType::INVALID, ResultType::SUCCESS,
                                   ResultType::FAILURE, ResultType::ABORTED,
                                   ResultType::NOOP,    ResultType::UNKNOWN,
@@ -403,7 +403,7 @@ TEST_F(TypesTests, ResultTypeTest) {
                peloton::Exception);
 }
 
-TEST_F(TypesTests, ConstraintTypeTest) {
+TEST_F(InternalTypesTests, ConstraintTypeTest) {
   std::vector<ConstraintType> list = {
       ConstraintType::INVALID,  ConstraintType::NOT_NULL,
       ConstraintType::NOTNULL,  ConstraintType::DEFAULT,
@@ -432,9 +432,10 @@ TEST_F(TypesTests, ConstraintTypeTest) {
       peloton::Exception);
 }
 
-TEST_F(TypesTests, LoggingTypeTest) {
-  std::vector<LoggingType> list = {LoggingType::INVALID, LoggingType::OFF,
-                                   LoggingType::ON};
+TEST_F(InternalTypesTests, LoggingTypeTest) {
+  std::vector<LoggingType> list = {
+      LoggingType::INVALID, LoggingType::OFF, LoggingType::ON
+  };
 
   // Make sure that ToString and FromString work
   for (auto val : list) {
@@ -456,10 +457,10 @@ TEST_F(TypesTests, LoggingTypeTest) {
                peloton::Exception);
 }
 
-TEST_F(TypesTests, CheckpointingTypeTest) {
-  std::vector<CheckpointingType> list = {CheckpointingType::INVALID,
-                                         CheckpointingType::OFF,
-                                         CheckpointingType::ON};
+TEST_F(InternalTypesTests, CheckpointingTypeTest) {
+  std::vector<CheckpointingType> list = {
+      CheckpointingType::INVALID, CheckpointingType::OFF, CheckpointingType::ON
+  };
 
   // Make sure that ToString and FromString work
   for (auto val : list) {
@@ -482,10 +483,10 @@ TEST_F(TypesTests, CheckpointingTypeTest) {
                peloton::Exception);
 }
 
-TEST_F(TypesTests, GarbageCollectionTypeTest) {
-  std::vector<GarbageCollectionType> list = {GarbageCollectionType::INVALID,
-                                             GarbageCollectionType::OFF,
-                                             GarbageCollectionType::ON};
+TEST_F(InternalTypesTests, GarbageCollectionTypeTest) {
+  std::vector<GarbageCollectionType> list = {
+      GarbageCollectionType::INVALID, GarbageCollectionType::OFF, GarbageCollectionType::ON
+  };
 
   // Make sure that ToString and FromString work
   for (auto val : list) {
@@ -509,9 +510,11 @@ TEST_F(TypesTests, GarbageCollectionTypeTest) {
                peloton::Exception);
 }
 
-TEST_F(TypesTests, ProtocolTypeTest) {
-  std::vector<ProtocolType> list = {ProtocolType::INVALID,
-                                    ProtocolType::TIMESTAMP_ORDERING};
+TEST_F(InternalTypesTests, ProtocolTypeTest) {
+  std::vector<ProtocolType> list = {
+      ProtocolType::INVALID, 
+      ProtocolType::TIMESTAMP_ORDERING
+  };
 
   // Make sure that ToString and FromString work
   for (auto val : list) {
@@ -533,9 +536,11 @@ TEST_F(TypesTests, ProtocolTypeTest) {
                peloton::Exception);
 }
 
-TEST_F(TypesTests, EpochTypeTest) {
-  std::vector<EpochType> list = {EpochType::INVALID,
-                                 EpochType::DECENTRALIZED_EPOCH};
+TEST_F(InternalTypesTests, EpochTypeTest) {
+  std::vector<EpochType> list = {
+      EpochType::INVALID, 
+      EpochType::DECENTRALIZED_EPOCH
+  };
 
   // Make sure that ToString and FromString work
   for (auto val : list) {
@@ -557,7 +562,7 @@ TEST_F(TypesTests, EpochTypeTest) {
                peloton::Exception);
 }
 
-TEST_F(TypesTests, TimestampTypeTest) {
+TEST_F(InternalTypesTests, TimestampTypeTest) {
   std::vector<TimestampType> list = {
       TimestampType::INVALID, TimestampType::SNAPSHOT_READ, TimestampType::READ,
       TimestampType::COMMIT};
@@ -583,7 +588,7 @@ TEST_F(TypesTests, TimestampTypeTest) {
       peloton::Exception);
 }
 
-TEST_F(TypesTests, VisibilityTypeTest) {
+TEST_F(InternalTypesTests, VisibilityTypeTest) {
   std::vector<VisibilityType> list = {
       VisibilityType::INVALID, VisibilityType::INVISIBLE,
       VisibilityType::DELETED, VisibilityType::OK};
@@ -609,10 +614,12 @@ TEST_F(TypesTests, VisibilityTypeTest) {
       peloton::Exception);
 }
 
-TEST_F(TypesTests, VisibilityIdTypeTest) {
-  std::vector<VisibilityIdType> list = {VisibilityIdType::INVALID,
-                                        VisibilityIdType::READ_ID,
-                                        VisibilityIdType::COMMIT_ID};
+TEST_F(InternalTypesTests, VisibilityIdTypeTest) {
+  std::vector<VisibilityIdType> list = {
+      VisibilityIdType::INVALID, 
+      VisibilityIdType::READ_ID, 
+      VisibilityIdType::COMMIT_ID
+  };
 
   // Make sure that ToString and FromString work
   for (auto val : list) {
@@ -635,7 +642,7 @@ TEST_F(TypesTests, VisibilityIdTypeTest) {
       peloton::Exception);
 }
 
-TEST_F(TypesTests, IsolationLevelTypeTest) {
+TEST_F(InternalTypesTests, IsolationLevelTypeTest) {
   std::vector<IsolationLevelType> list = {
       IsolationLevelType::INVALID,        IsolationLevelType::SERIALIZABLE,
       IsolationLevelType::SNAPSHOT,       IsolationLevelType::REPEATABLE_READS,
@@ -663,7 +670,7 @@ TEST_F(TypesTests, IsolationLevelTypeTest) {
                peloton::Exception);
 }
 
-TEST_F(TypesTests, ConflictAvoidanceTypeTest) {
+TEST_F(InternalTypesTests, ConflictAvoidanceTypeTest) {
   std::vector<ConflictAvoidanceType> list = {
       ConflictAvoidanceType::INVALID, ConflictAvoidanceType::WAIT,
       ConflictAvoidanceType::ABORT,
@@ -691,7 +698,7 @@ TEST_F(TypesTests, ConflictAvoidanceTypeTest) {
                peloton::Exception);
 }
 
-TEST_F(TypesTests, RWTypeTest) {
+TEST_F(InternalTypesTests, RWTypeTest) {
   std::vector<RWType> list = {
       RWType::INVALID, RWType::READ,   RWType::READ_OWN, RWType::UPDATE,
       RWType::INSERT,  RWType::DELETE, RWType::INS_DEL,
@@ -717,7 +724,7 @@ TEST_F(TypesTests, RWTypeTest) {
                peloton::Exception);
 }
 
-TEST_F(TypesTests, CreateTypeTest) {
+TEST_F(InternalTypesTests, CreateTypeTest) {
   std::vector<CreateType> list = {
       CreateType::INVALID, CreateType::DB,         CreateType::TABLE,
       CreateType::INDEX,   CreateType::CONSTRAINT, CreateType::TRIGGER,
@@ -743,7 +750,7 @@ TEST_F(TypesTests, CreateTypeTest) {
                peloton::Exception);
 }
 
-TEST_F(TypesTests, DropTypeTest) {
+TEST_F(InternalTypesTests, DropTypeTest) {
   std::vector<DropType> list = {
       DropType::INVALID, DropType::DB,         DropType::TABLE,
       DropType::INDEX,   DropType::CONSTRAINT, DropType::TRIGGER,
@@ -769,7 +776,7 @@ TEST_F(TypesTests, DropTypeTest) {
                peloton::Exception);
 }
 
-TEST_F(TypesTests, AggregateTypeTest) {
+TEST_F(InternalTypesTests, AggregateTypeTest) {
   std::vector<AggregateType> list = {
       AggregateType::INVALID, AggregateType::SORTED, AggregateType::HASH,
       AggregateType::PLAIN,
@@ -796,7 +803,7 @@ TEST_F(TypesTests, AggregateTypeTest) {
       peloton::Exception);
 }
 
-TEST_F(TypesTests, QuantifierTypeTest) {
+TEST_F(InternalTypesTests, QuantifierTypeTest) {
   std::vector<QuantifierType> list = {
       QuantifierType::NONE, QuantifierType::ANY, QuantifierType::ALL,
   };
@@ -822,7 +829,7 @@ TEST_F(TypesTests, QuantifierTypeTest) {
       peloton::Exception);
 }
 
-TEST_F(TypesTests, TableReferenceTypeTest) {
+TEST_F(InternalTypesTests, TableReferenceTypeTest) {
   std::vector<TableReferenceType> list = {
       TableReferenceType::INVALID,       TableReferenceType::NAME,
       TableReferenceType::SELECT,        TableReferenceType::JOIN,
@@ -851,7 +858,7 @@ TEST_F(TypesTests, TableReferenceTypeTest) {
                peloton::Exception);
 }
 
-TEST_F(TypesTests, InsertTypeTest) {
+TEST_F(InternalTypesTests, InsertTypeTest) {
   std::vector<InsertType> list = {
       InsertType::INVALID, InsertType::VALUES, InsertType::SELECT,
   };
@@ -876,7 +883,7 @@ TEST_F(TypesTests, InsertTypeTest) {
                peloton::Exception);
 }
 
-TEST_F(TypesTests, CopyTypeTest) {
+TEST_F(InternalTypesTests, CopyTypeTest) {
   std::vector<CopyType> list = {
       CopyType::INVALID,    CopyType::IMPORT_CSV,    CopyType::IMPORT_TSV,
       CopyType::EXPORT_CSV, CopyType::EXPORT_STDOUT, CopyType::EXPORT_OTHER,
@@ -902,7 +909,7 @@ TEST_F(TypesTests, CopyTypeTest) {
                peloton::Exception);
 }
 
-TEST_F(TypesTests, PayloadTypeTest) {
+TEST_F(InternalTypesTests, PayloadTypeTest) {
   std::vector<PayloadType> list = {
       PayloadType::INVALID, PayloadType::CLIENT_REQUEST,
       PayloadType::CLIENT_RESPONSE, PayloadType::STOP,
@@ -928,7 +935,7 @@ TEST_F(TypesTests, PayloadTypeTest) {
                peloton::Exception);
 }
 
-TEST_F(TypesTests, TaskPriorityTypeTest) {
+TEST_F(InternalTypesTests, TaskPriorityTypeTest) {
   std::vector<TaskPriorityType> list = {
       TaskPriorityType::INVALID, TaskPriorityType::LOW,
       TaskPriorityType::NORMAL, TaskPriorityType::HIGH,
@@ -955,7 +962,7 @@ TEST_F(TypesTests, TaskPriorityTypeTest) {
       peloton::Exception);
 }
 
-TEST_F(TypesTests, SetOpTypeTest) {
+TEST_F(InternalTypesTests, SetOpTypeTest) {
   std::vector<SetOpType> list = {
       SetOpType::INVALID, SetOpType::INTERSECT,  SetOpType::INTERSECT_ALL,
       SetOpType::EXCEPT,  SetOpType::EXCEPT_ALL,
@@ -981,7 +988,7 @@ TEST_F(TypesTests, SetOpTypeTest) {
                peloton::Exception);
 }
 
-TEST_F(TypesTests, LogRecordTypeTest) {
+TEST_F(InternalTypesTests, LogRecordTypeTest) {
   std::vector<LogRecordType> list = {
       LogRecordType::INVALID, LogRecordType::TRANSACTION_BEGIN,
       LogRecordType::TRANSACTION_COMMIT, LogRecordType::TUPLE_INSERT,
@@ -1010,7 +1017,7 @@ TEST_F(TypesTests, LogRecordTypeTest) {
       peloton::Exception);
 }
 
-TEST_F(TypesTests, PropertyTypeTest) {
+TEST_F(InternalTypesTests, PropertyTypeTest) {
   std::vector<PropertyType> list = {
       PropertyType::INVALID, PropertyType::COLUMNS, PropertyType::DISTINCT,
       PropertyType::SORT,    PropertyType::LIMIT,
@@ -1036,7 +1043,7 @@ TEST_F(TypesTests, PropertyTypeTest) {
                peloton::Exception);
 }
 
-TEST_F(TypesTests, EntityTypeTest) {
+TEST_F(InternalTypesTests, EntityTypeTest) {
   std::vector<EntityType> list = {
       EntityType::INVALID, EntityType::TABLE, EntityType::SCHEMA,
       EntityType::INDEX, EntityType::VIEW, EntityType::PREPARED_STATEMENT,
@@ -1062,7 +1069,7 @@ TEST_F(TypesTests, EntityTypeTest) {
                peloton::Exception);
 }
 
-TEST_F(TypesTests, GCVersionTypeTest) {
+TEST_F(InternalTypesTests, GCVersionTypeTest) {
   std::vector<GCVersionType> list = {
       GCVersionType::INVALID,       GCVersionType::COMMIT_UPDATE,
       GCVersionType::COMMIT_DELETE, GCVersionType::COMMIT_INS_DEL,
@@ -1089,6 +1096,54 @@ TEST_F(TypesTests, GCVersionTypeTest) {
   EXPECT_THROW(
       peloton::GCVersionTypeToString(static_cast<GCVersionType>(-99999)),
       peloton::Exception);
+}
+
+TEST_F(InternalTypesTests, PostgresValueTypeTest) {
+  // Note that we are not testing BOOLEAN here because it is an alias
+  // for TINYINT. So we won't get back the correct string representation.
+  std::vector<PostgresValueType> list = {
+      PostgresValueType::INVALID,
+      PostgresValueType::TINYINT,
+      PostgresValueType::SMALLINT,
+      PostgresValueType::INTEGER,
+      PostgresValueType::VARBINARY,
+      PostgresValueType::BIGINT,
+      PostgresValueType::REAL,
+      PostgresValueType::DOUBLE,
+      PostgresValueType::TEXT,
+      PostgresValueType::BPCHAR,
+      PostgresValueType::BPCHAR2,
+      PostgresValueType::VARCHAR,
+      PostgresValueType::VARCHAR2,
+      PostgresValueType::DATE,
+      PostgresValueType::TIMESTAMPS,
+      PostgresValueType::TIMESTAMPS2,
+      PostgresValueType::TEXT_ARRAY,
+      PostgresValueType::INT2_ARRAY,
+      PostgresValueType::INT4_ARRAY,
+      PostgresValueType::OID_ARRAY,
+      PostgresValueType::FLOADT4_ARRAY,
+      PostgresValueType::DECIMAL,
+  };
+
+  // Make sure that ToString and FromString work
+  for (auto val : list) {
+    std::string str = peloton::PostgresValueTypeToString(val);
+    EXPECT_TRUE(str.size() > 0);
+
+    auto newVal = peloton::StringToPostgresValueType(str);
+    EXPECT_EQ(val, newVal);
+
+    std::ostringstream os;
+    os << val;
+    EXPECT_EQ(str, os.str());
+  }
+
+  // Then make sure that we can't cast garbage
+  std::string invalid("Never Trust The Terrier");
+  EXPECT_THROW(peloton::StringToPostgresValueType(invalid), peloton::Exception);
+  EXPECT_THROW(peloton::PostgresValueTypeToString(static_cast<PostgresValueType>(-99999)),
+               peloton::Exception);
 }
 
 }  // End test namespace
