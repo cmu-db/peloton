@@ -21,12 +21,14 @@
 SETTING_int(port,
            "Peloton port (default: 15721)",
            15721,
+           0, 32000,
            false, false)
 
 // Maximum number of connections
 SETTING_int(max_connections,
            "Maximum number of connections (default: 64)",
            64,
+           0, 512,
            true, true)
 
 SETTING_int(rpc_port,
@@ -82,18 +84,22 @@ SETTING_string(root_cert_file,
 SETTING_double(bnlj_buffer_size,
              "The default buffer size to use for blockwise nested loop joins (default: 1 MB)",
              1.0 * 1024.0 * 1024.0,
+             1.0 * 1024,
+             1.0 * 1024.0 * 1024.0 * 1024,
              true, true)
 
 // Size of the MonoQueue task queue
 SETTING_int(monoqueue_task_queue_size,
             "MonoQueue Task Queue Size (default: 32)",
-            32,
+            32, 
+            8, 128,
             false, false)
 
 // Size of the MonoQueue worker pool
 SETTING_int(monoqueue_worker_pool_size,
             "MonoQueue Worker Pool Size (default: 4)",
-            4,
+            4, 
+            1, 32,
             false, false)
 
 // Number of connection threads used by peloton
@@ -105,6 +111,7 @@ SETTING_int(connection_thread_count,
 SETTING_int(gc_num_threads,
             "The number of Garbage collection threads to run",
             1,
+            0, 128,
             true, true)
 
 //===----------------------------------------------------------------------===//
@@ -133,6 +140,7 @@ SETTING_bool(display_settings,
 SETTING_int(stats_mode,
            "Enable statistics collection (default: 0)",
            static_cast<int>(peloton::StatsType::INVALID),
+           0, 16,
            true, true)
 
 //===----------------------------------------------------------------------===//
@@ -170,12 +178,14 @@ SETTING_string(peloton_address,
 SETTING_int(brain_task_queue_size,
             "Brain Task Queue Size (default: 32)",
             32,
+            1, 128,
             false, false)
 
 // Size of the brain worker pool
 SETTING_int(brain_worker_pool_size,
             "Brain Worker Pool Size (default: 1)",
             1,
+            1, 16,
             false, false)
 
 //===----------------------------------------------------------------------===//

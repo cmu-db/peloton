@@ -129,6 +129,10 @@ class Value : public Printable {
   inline CmpBool CompareGreaterThanEquals(const Value &o) const {
     return Type::GetInstance(type_id_)->CompareGreaterThanEquals(*this, o);
   }
+  inline bool CompareBetweenInclusive(const Value &a, const Value &b) const {
+    return Type::GetInstance(type_id_)->CompareGreaterThanEquals(*this, a) == CmpBool::TRUE && 
+           Type::GetInstance(type_id_)->CompareLessThanEquals(*this, b) == CmpBool::TRUE;
+  }
 
   // Other mathematical functions
   inline Value Add(const Value &o) const {

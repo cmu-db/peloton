@@ -65,11 +65,16 @@ int main(int argc, char *argv[]) {
     ::google::HandleCommandLineHelpFlags();
   }
 
-  // Print settings
-  if (peloton::settings::SettingsManager::GetBool(
-          peloton::settings::SettingId::display_settings)) {
-    auto &settings = peloton::settings::SettingsManager::GetInstance();
-    settings.ShowInfo();
+  try {
+    // Print settings
+    if (peloton::settings::SettingsManager::GetBool(
+      peloton::settings::SettingId::display_settings)) {
+      auto &settings = peloton::settings::SettingsManager::GetInstance();
+      settings.ShowInfo();
+    }
+  } catch (peloton::SettingsException &exception) {
+    std::cerr << "Cannot load settings. Failed with " << exception.GetMessage() << std::endl;
+    return 0; // TODO: Use an enum with exit error codes
   }
 
   if (peloton::settings::SettingsManager::GetBool(

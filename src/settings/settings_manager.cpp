@@ -12,6 +12,7 @@
 
 #include <gflags/gflags.h>
 
+#include "type/type_id.h"
 #include "catalog/settings_catalog.h"
 #include "common/exception.h"
 #include "concurrency/transaction_manager_factory.h"
@@ -127,10 +128,22 @@ void SettingsManager::DefineSetting(SettingId id, const std::string &name,
                                     const type::Value &value,
                                     const std::string &description,
                                     const type::Value &default_value,
+                                    const type::Value &min_value,
+                                    const type::Value &max_value,
                                     bool is_mutable, bool is_persistent) {
   if (settings_.find(id) != settings_.end()) {
     throw SettingsException("settings " + name + " already exists");
   }
+
+  // Only below types support min-max bound checking
+  if (value.GetTypeId() == type::TypeId::INTEGER ||
+      value.GetTypeId() == type::TypeId::SMALLINT ||
+      value.GetTypeId() == type::TypeId::TINYINT ||
+      value.GetTypeId() == type::TypeId::DECIMAL) {
+    if (!value.CompareBetweenInclusive(min_value, max_value))
+      throw SettingsException("Value given for \"" + name + "\" is not in its min-max bounds.");
+  }
+
   settings_.emplace(id, Param(name, value, description, default_value,
                               is_mutable, is_persistent));
 }
