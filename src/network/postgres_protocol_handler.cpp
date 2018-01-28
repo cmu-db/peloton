@@ -26,11 +26,14 @@
 #include "planner/abstract_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"
+#include "planner/plan_util.h"
 #include "planner/update_plan.h"
 #include "settings/settings_manager.h"
 #include "traffic_cop/traffic_cop.h"
 #include "type/value.h"
 #include "type/value_factory.h"
+#include "network/marshal.h"
+#include "util/string_util.h"
 
 #define SSL_MESSAGE_VERNO 80877103
 #define PROTO_MAJOR_VERSION(x) (x >> 16)
@@ -219,6 +222,33 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(
       ExecQueryMessageGetResult(status);
       return ProcessResult::COMPLETE;
     };
+    case QueryType::QUERY_EXPLAIN: {
+      parser::ExplainStatement *explain_stmt =
+          static_cast<parser::ExplainStatement *>(sql_stmt.get());
+      std::unique_ptr<parser::SQLStatementList> unnamed_sql_stmt_list(new parser::SQLStatementList());
+      unnamed_sql_stmt_list->PassInStatement(
+          std::move(explain_stmt->real_sql_stmt));
+      auto stmt = traffic_cop_->PrepareStatement(
+          "explain", query, std::move(unnamed_sql_stmt_list), error_message);
+      ResultType status = ResultType::UNKNOWN;
+      if (stmt) {
+        traffic_cop_->SetStatement(stmt);
+        std::vector<std::string> plan_info = StringUtil::Split(
+            planner::PlanUtil::GetInfo(stmt->GetPlanTree().get()), '\n');
+        std::vector<FieldInfo> tuple_descriptor = {
+            traffic_cop_->GetColumnFieldForValueType("Query plan",
+                                                     type::TypeId::VARCHAR)
+                                                     };
+        stmt->SetTupleDescriptor(tuple_descriptor);
+        traffic_cop_->SetResult(plan_info);
+        status = ResultType::SUCCESS;
+      } else {
+        traffic_cop_->SetErrorMessage(error_message);
+        status = ResultType::FAILURE;
+      }
+      ExecQueryMessageGetResult(status);
+      return ProcessResult::COMPLETE;
+    }
     default: {
       std::string stmt_name = "unamed";
       std::unique_ptr<parser::SQLStatementList> unnamed_sql_stmt_list(
