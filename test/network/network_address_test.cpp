@@ -4,17 +4,16 @@
 //
 // network_address_test.cpp
 //
-// Identification: test/distributed/network_address_test.cpp
+// Identification: test/network/network_address_test.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "common/harness.h"
 
-#include "common/exception.h"
 #include "network/service/network_address.h"
-#include "util/string_util.h"
+#include "common/util/string_util.h"
 
 namespace peloton {
 namespace test {

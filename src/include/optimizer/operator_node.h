@@ -6,14 +6,14 @@
 //
 // Identification: src/include/optimizer/operator_node.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #pragma once
 
 #include "optimizer/property_set.h"
-#include "util/hash_util.h"
+#include "common/util/hash_util.h"
 
 #include <memory>
 #include <string>

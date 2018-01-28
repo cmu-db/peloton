@@ -6,10 +6,9 @@
 //
 // Identification: test/brain/clusterer_test.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
 
 #include <cstdio>
 #include <random>
@@ -19,8 +18,8 @@
 
 #include "brain/clusterer.h"
 #include "common/generator.h"
-#include "util/string_util.h"
-#include "util/stringtable_util.h"
+#include "common/util/string_util.h"
+#include "common/util/stringtable_util.h"
 
 namespace peloton {
 namespace test {

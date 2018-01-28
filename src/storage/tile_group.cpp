@@ -6,7 +6,7 @@
 //
 // Identification: src/storage/tile_group.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -23,7 +23,7 @@
 #include "storage/tile.h"
 #include "storage/tile_group_header.h"
 #include "storage/tuple.h"
-#include "util/stringbox_util.h"
+#include "common/util/stringbox_util.h"
 
 namespace peloton {
 namespace storage {

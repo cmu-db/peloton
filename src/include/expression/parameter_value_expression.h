@@ -6,7 +6,7 @@
 //
 // Identification: src/include/expression/parameter_value_expression.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -15,7 +15,7 @@
 #include "expression/abstract_expression.h"
 #include "executor/executor_context.h"
 #include "common/sql_node_visitor.h"
-#include "util/hash_util.h"
+#include "common/util/hash_util.h"
 
 namespace peloton {
 namespace expression {

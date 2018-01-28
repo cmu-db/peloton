@@ -6,7 +6,7 @@
 //
 // Identification: src/planner/abstract_plan.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -15,7 +15,7 @@
 #include "common/logger.h"
 #include "common/macros.h"
 #include "expression/expression_util.h"
-#include "util/hash_util.h"
+#include "common/util/hash_util.h"
 
 namespace peloton {
 namespace planner {

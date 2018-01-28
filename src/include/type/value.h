@@ -4,9 +4,9 @@
 //
 // value.h
 //
-// Identification: src/backend/type/value.h
+// Identification: src/include/type/value.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -18,12 +18,12 @@
 #include "common/exception.h"
 #include "common/macros.h"
 #include "common/printable.h"
+#include "common/util/string_util.h"
 
 #include "type/limits.h"
 #include "type/serializeio.h"
 #include "type/type.h"
 
-#include "util/string_util.h"
 
 namespace peloton {
 namespace type {

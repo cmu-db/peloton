@@ -4,21 +4,19 @@
 //
 // string_util.cpp
 //
-// Identification: /src/util/string_util.cpp
+// Identification: src/common/util/string_util.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "util/string_util.h"
+#include "common/util/string_util.h"
 
 #include <stdarg.h>
 #include <string.h>
 #include <algorithm>
 #include <iomanip>
 #include <memory>
-#include <sstream>
-#include <string>
 
 namespace peloton {
 
@@ -31,9 +29,10 @@ bool StringUtil::Contains(const std::string &haystack,
  * Remove trailing ' ', '\f', '\n', '\r', '\t', '\v'
  */
 void StringUtil::RTrim(std::string &str) {
-  str.erase(std::find_if(str.rbegin(), str.rend(), [](int ch) {
-    return !std::isspace(ch);
-  }).base(), str.end());
+  str.erase(std::find_if(str.rbegin(), str.rend(),
+                         [](int ch) { return !std::isspace(ch); })
+                .base(),
+            str.end());
 }
 
 std::string StringUtil::Indent(int num_indent) {
@@ -60,7 +59,8 @@ std::string StringUtil::Repeat(const std::string &str, const std::size_t n) {
   return (os.str());
 }
 
-std::vector<std::string> StringUtil::Split(const std::string &str, char delimiter) {
+std::vector<std::string> StringUtil::Split(const std::string &str,
+                                           char delimiter) {
   std::stringstream ss(str);
   std::vector<std::string> lines;
   std::string temp;

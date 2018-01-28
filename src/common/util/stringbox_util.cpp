@@ -4,13 +4,13 @@
 //
 // stringbox_util.cpp
 //
-// Identification: /peloton/src/util/stringbox_util.cpp
+// Identification: src/common/util/stringbox_util.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "util/stringbox_util.h"
+#include "common/util/stringbox_util.h"
 
 #include <iomanip>
 #include <sstream>
@@ -19,8 +19,9 @@
 
 namespace peloton {
 
-std::string StringBoxUtil::MakeBox(const std::string &str, int max_len, std::string &horzMark,
-                           std::string &vertMark, std::string corners[]) {
+std::string StringBoxUtil::MakeBox(const std::string &str, int max_len,
+                                   std::string &horzMark, std::string &vertMark,
+                                   std::string corners[]) {
   std::vector<std::string> lines = StringUtil::Split(str, '\n');
   if (lines.size() == 0) return ("");
 
@@ -61,6 +62,4 @@ std::string StringBoxUtil::MakeBox(const std::string &str, int max_len, std::str
 
   return (os.str());
 }
-
-
 }

@@ -4,9 +4,9 @@
 //
 // index_metric.h
 //
-// Identification: src/statistics/index_metric.h
+// Identification: src/include/statistics/index_metric.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -19,7 +19,7 @@
 #include "common/internal_types.h"
 #include "statistics/abstract_metric.h"
 #include "statistics/access_metric.h"
-#include "util/string_util.h"
+#include "common/util/string_util.h"
 
 namespace peloton {
 namespace stats {

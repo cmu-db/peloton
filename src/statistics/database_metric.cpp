@@ -6,11 +6,11 @@
 //
 // Identification: src/statistics/database_metric.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "util/string_util.h"
+#include "common/util/string_util.h"
 #include "statistics/database_metric.h"
 #include "common/macros.h"
 

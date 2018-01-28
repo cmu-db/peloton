@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// operator_transformer_test.cpp
+//
+// Identification: test/optimizer/operator_transformer_test.cpp
+//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #include <algorithm>
 #include "common/harness.h"
 
@@ -12,7 +24,7 @@
 #include "sql/testing_sql_util.h"
 #include "catalog/catalog.h"
 #include "concurrency/transaction_manager_factory.h"
-#include "util/string_util.h"
+#include "common/util/string_util.h"
 
 namespace peloton {
 

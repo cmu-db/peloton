@@ -6,7 +6,7 @@
 //
 // Identification: src/include/expression/tuple_value_expression.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -18,7 +18,7 @@
 #include "common/logger.h"
 #include "common/sql_node_visitor.h"
 #include "planner/binding_context.h"
-#include "util/string_util.h"
+#include "common/util/string_util.h"
 
 namespace peloton {
 namespace expression {
