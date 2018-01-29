@@ -157,37 +157,6 @@ class ConnectionHandle {
   static bool ReadStartupPacketHeader(Buffer &rbuf, InputPacket &rpkt);
 
   /**
-   * Routine to deal with the first packet from the client
-   */
-  void ProcessInitialPacket(InputPacket *pkt);
-
-  /**
-   * Routine to deal with general Startup message
-   */
-  void ProcessStartupPacket(InputPacket *pkt, int32_t proto_version);
-
-  /**
-   * Routine to deal with SSL request message
-   */
-  void ProcessSSLRequestPacket(InputPacket *pkt);
-
-  void SetReadBlockedOnWrite(bool flag) { read_blocked_on_write_ = flag; }
-
-  void SetWriteBlockedOnRead(bool flag) { write_blocked_on_read_ = flag; }
-
-  bool GetReadBlockedOnWrite() { return read_blocked_on_write_; }
-
-  bool GetWriteBlockedOnRead() { return write_blocked_on_read_; }
-
-  void SetReadBlocked(bool flag) { read_blocked_ = flag; }
-
-  void SetWriteBlocked(bool flag) { write_blocked_ = flag; }
-
-  bool GetReadBlocked() { return read_blocked_; }
-
-  bool GetWriteBlocked() { return write_blocked_; }
-
-  /**
    * Writes a packet's header (type, size) into the write buffer
    */
   WriteState BufferWriteBytesHeader(OutputPacket *pkt);
@@ -243,11 +212,7 @@ class ConnectionHandle {
   bool ssl_handshake_ = false;
   bool finish_startup_packet_ = false;
   bool ssl_able_;
-
-  bool read_blocked_on_write_ = false;
-  bool write_blocked_on_read_ = false;
-  bool read_blocked_ = false;
-  bool write_blocked_ = false;
+  
   // TODO(Tianyi) hide this in protocol handler
   InputPacket initial_packet_;
 
