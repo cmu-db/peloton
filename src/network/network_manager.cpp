@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 #include "event2/thread.h"
 #include <fstream>
+#include <include/common/util/file_util.h>
 
 #include "network/network_manager.h"
 
@@ -142,19 +143,35 @@ void NetworkManager::SSLInit() {
     SetSSLLevel(SSLLevel::SSL_DISABLE);
     return;
   }
-  //TODO(Yuchen): change this.
-  //load trusted CA certificates (peer authentication)
-  if (SSL_CTX_load_verify_locations(ssl_context, certificate_file_.c_str(), nullptr) != 1) {
-    LOG_ERROR("Exception when loading root_crt!");
-    SetSSLLevel(SSLLevel::SSL_PREFER);
-  }
+
   //load OpenSSL's default CA certificate location
   if (SSL_CTX_set_default_verify_paths(ssl_context) != 1) {
     LOG_ERROR("Exception when setting default verify path!");
     SetSSLLevel(SSLLevel::SSL_PREFER);
   }
 
-  LOG_INFO("certificate file path %s", certificate_file_.c_str());
+  //TODO(Yuchen): change this.
+  //load trusted CA certificates (peer authentication)
+  if (FileUtil::Exists(certificate_file_) == false) {
+    LOG_WARN("The certificate file '%s' does not exist. Disabling SSL support.",
+             certificate_file_.c_str());
+    SetSSLLevel(SSLLevel::SSL_DISABLE);
+    return;
+  }
+  if (FileUtil::Exists(private_key_file_) == false) {
+    LOG_WARN("The private key file '%s' does not exist. Disabling SSL support.",
+             private_key_file_.c_str());
+    SetSSLLevel(SSLLevel::SSL_DISABLE);
+    return;
+  }
+
+
+  if (SSL_CTX_load_verify_locations(ssl_context, certificate_file_.c_str(), nullptr) != 1) {
+    LOG_ERROR("Unexpected error when loading root_crt!");
+    SetSSLLevel(SSLLevel::SSL_PREFER);
+  }
+
+
   if (SSL_CTX_use_certificate_chain_file(ssl_context, certificate_file_.c_str()) != 1) {
     SSL_CTX_free(ssl_context);
     LOG_ERROR("Exception when loading server certificate!");
@@ -163,10 +180,11 @@ void NetworkManager::SSLInit() {
     return;
   }
 
-  LOG_INFO("private key file path %s", private_key_file_.c_str());
+  LOG_DEBUG("Attempting to load private key '%s'",
+            private_key_file_.c_str());
   if (SSL_CTX_use_PrivateKey_file(ssl_context, private_key_file_.c_str(), SSL_FILETYPE_PEM) != 1) {
     SSL_CTX_free(ssl_context);
-    LOG_ERROR("Exception when loading server key!");
+    LOG_ERROR("Unexpected error when loading server key!");
     ssl_context = nullptr;
     SetSSLLevel(SSLLevel::SSL_DISABLE);
     return;
