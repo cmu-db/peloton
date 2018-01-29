@@ -1086,10 +1086,8 @@ std::string IndexTypeToString(IndexType type) {
     case IndexType::SKIPLIST: {
       return "SKIPLIST";
     }
-    default: {
-      throw ConversionException(
-          StringUtil::Format("No string conversion for IndexType value '%d'",
-                             static_cast<int>(type)));
+    case IndexType::ART: {
+      return "ART";
     }
   }
   return "INVALID";
