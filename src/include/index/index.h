@@ -18,10 +18,10 @@
 #include <string>
 #include <vector>
 
+#include "common/internal_types.h"
 #include "common/item_pointer.h"
 #include "common/logger.h"
 #include "common/printable.h"
-#include "common/internal_types.h"
 #include "type/value.h"
 
 namespace peloton {
@@ -57,8 +57,6 @@ class ConjunctionScanPredicate;
  * mapping relation and does the conversion between tuple key and index key
  */
 class IndexMetadata : public Printable {
-  IndexMetadata() = delete;
-
  public:
   IndexMetadata(std::string index_name, oid_t index_oid, oid_t table_oid,
                 oid_t database_oid, IndexType index_type,

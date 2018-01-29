@@ -351,10 +351,11 @@ void ArtIndex::KeyConstructor::ConstructKey(const AbstractTuple &input_key,
         break;
       }
       default: {
-        LOG_ERROR("Column type '%s' not supported in ART",
-                  TypeIdToString(column.GetType()).c_str());
-        PL_ASSERT(false && "Unsupported key column type for ART index");
-        __builtin_unreachable();
+        auto error =
+            StringUtil::Format("Column type '%s' not supported in ART index",
+                               TypeIdToString(column.GetType()).c_str());
+        LOG_ERROR(error.c_str());
+        throw IndexException{error};
       }
     }
   }
