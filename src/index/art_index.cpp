@@ -49,7 +49,7 @@ void LoadKey(void *ctx, TID tid, art::Key &key) {
   art_index->ConstructArtKey(tuple, key);
 }
 
-}  // anonymous namespace
+}  // namespace
 
 ArtIndex::ArtIndex(IndexMetadata *metadata)
     : Index(metadata),
@@ -175,6 +175,7 @@ void ArtIndex::ScanLimit(const std::vector<type::Value> &values,
   (void)scan_predicate;
   (void)limit;
   (void)offset;
+  // This fucking function takes seven fucking arguments ... The fuck?
 }
 
 void ArtIndex::ScanAllKeys(std::vector<ItemPointer *> &result) {
@@ -243,8 +244,7 @@ void ArtIndex::SetLoadKeyFunc(art::Tree::LoadKeyFunction load_func, void *ctx) {
 
 /// Here we define a four utility functions to help with conversion of native
 /// integral types (i.e., 1-, 2-, 4-, and 8-byte integers) to their big-endian
-/// versions. We defined them in an anonymous namespace to avoid cluttering the
-/// class definition and for convenience.
+/// versions.
 namespace {
 
 uint8_t ToBigEndian(int8_t data) { return static_cast<uint8_t>(data); }
@@ -261,7 +261,7 @@ uint64_t ToBigEndian(int64_t data) {
   return htobe64(static_cast<uint64_t>(data));
 }
 
-}  // anonymous namespace
+}  // namespace
 
 template <typename NativeType>
 NativeType ArtIndex::KeyConstructor::FlipSign(NativeType val) {
@@ -276,10 +276,12 @@ void ArtIndex::KeyConstructor::WriteValue(uint8_t *data, NativeType val) {
   *casted_data = ToBigEndian(FlipSign(val));
 }
 
+// This is specialized for ASCII strings ...
 void ArtIndex::KeyConstructor::WriteAsciiString(uint8_t *data, const char *val,
                                                 uint32_t len) {
-  // TODO(pmenon): Handle non-ascii varchars
+  // Write out the main payload, then tack on the NULL byte terminator
   PL_MEMCPY(data, val, len);
+  data[len] = '\0';
 }
 
 // Constructing an ART tree key from a Peloton input key involves converting it
@@ -304,6 +306,10 @@ void ArtIndex::KeyConstructor::ConstructKey(const AbstractTuple &input_key,
       key_len += col_info.GetFixedLength();
     } else {
       key_len += input_key.GetValue(i).GetLength();
+      if (col_info.GetType() == type::TypeId::VARCHAR) {
+        // Need to append NULL character
+        key_len++;
+      }
     }
   }
 
@@ -354,7 +360,7 @@ void ArtIndex::KeyConstructor::ConstructKey(const AbstractTuple &input_key,
         auto error =
             StringUtil::Format("Column type '%s' not supported in ART index",
                                TypeIdToString(column.GetType()).c_str());
-        LOG_ERROR(error.c_str());
+        LOG_ERROR("%s", error.c_str());
         throw IndexException{error};
       }
     }
