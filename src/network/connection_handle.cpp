@@ -171,8 +171,6 @@ void ConnectionHandle::UpdateEventFlags(short flags) {
 
 WriteState ConnectionHandle::WritePackets() {
   // iterate through all the packets
-  if (GetWriteBlocked())
-    FlushWriteBuffer();
   for (; next_response_ < protocol_handler_->responses.size();
        next_response_++) {
     auto pkt = protocol_handler_->responses[next_response_].get();
@@ -207,33 +205,6 @@ Transition ConnectionHandle::FillReadBuffer() {
   ssize_t bytes_read = 0;
   bool done = false;
 
-  // If partial SSL record exists in the SSL buffer, call SSL_read()
-  // to read more data from the network buffer first.
-  if (!GetReadBlocked()) {
-    // reset buffer if all the contents have been read
-    if (rbuf_->buf_ptr == rbuf_->buf_size) rbuf_->Reset();
-
-    // buf_ptr shouldn't overflow
-    PL_ASSERT(rbuf_->buf_ptr <= rbuf_->buf_size);
-
-    /* Do we have leftover data and are we at the end of the buffer?
-     * Move the data to the head of the buffer and clear out all the old data
-     * Note: The assumption here is that all the packets/headers till
-     *  rbuf_.buf_ptr have been fully processed
-     */
-    if (rbuf_->buf_ptr < rbuf_->buf_size
-        && rbuf_->buf_size == rbuf_->GetMaxSize()) {
-      auto unprocessed_len = rbuf_->buf_size - rbuf_->buf_ptr;
-      // Move this data to the head of rbuf_1
-      std::memmove(rbuf_->GetPtr(0),
-                   rbuf_->GetPtr(rbuf_->buf_ptr),
-                   unprocessed_len);
-      // update pointers
-      rbuf_->buf_ptr = 0;
-      rbuf_->buf_size = unprocessed_len;
-    }
-  }
-
   // return explicitly
   while (done == false) {
     if (rbuf_->buf_size == rbuf_->GetMaxSize()) {
@@ -253,8 +224,6 @@ Transition ConnectionHandle::FillReadBuffer() {
         // The network buffer becomes empty and data is in SSL buffer. We can't rely on
         // libevent read event since the system does not know about the SSL buffer. We need to
         // call SSL_pending() to check manually. (See StateMachine)
-        SetReadBlockedOnWrite(false);
-        SetReadBlocked(false);
         bytes_read = SSL_read(conn_SSL_context, rbuf_->GetPtr(rbuf_->buf_size),
                               rbuf_->GetMaxSize() - rbuf_->buf_size);
         LOG_TRACE("SSL read successfully");
@@ -284,7 +253,6 @@ Transition ConnectionHandle::FillReadBuffer() {
           // It happens when we're trying to rehandshake and we block on a write
           // during the handshake. We need to wait on the socket to be writable
           case SSL_ERROR_WANT_WRITE: {
-
             LOG_TRACE("Rehandshake during write, block until writable");
             UpdateEventFlags(EV_WRITE | EV_PERSIST);
             return Transition::NEED_DATA;
@@ -345,8 +313,6 @@ WriteState ConnectionHandle::FlushWriteBuffer() {
     while (wbuf_->buf_size > 0) {
       LOG_TRACE("SSL_write flush");
       ERR_clear_error();
-      SetWriteBlocked(false);
-      SetWriteBlockedOnRead(false);
       written_bytes = SSL_write(conn_SSL_context, &wbuf_->buf[wbuf_->buf_flush_ptr], wbuf_->buf_size);
       int err = SSL_get_error(conn_SSL_context, written_bytes);
       unsigned long ecode = (err != SSL_ERROR_NONE || written_bytes < 0) ? ERR_get_error() : 0;
@@ -363,13 +329,12 @@ WriteState ConnectionHandle::FlushWriteBuffer() {
           // just return WRITE_NOT_READY and keeps the buffer ptr unchanged.
           // TODO(Yuchen): Change this. Can't write more packets and update buffer ptr when SSL_write() is not succeeded yet.
         case SSL_ERROR_WANT_WRITE: {
-          SetWriteBlocked(true);
+          UpdateEventFlags(EV_WRITE | EV_PERSIST);
           LOG_TRACE("Flush write buffer, want write, not ready");
           return WriteState::NOT_READY;
         }
           // It happens when doing rehandshake with client.
         case SSL_ERROR_WANT_READ: {
-          SetWriteBlockedOnRead(true);
           LOG_TRACE("Flush write buffer, want read, not ready");
           return WriteState::NOT_READY;
         }
