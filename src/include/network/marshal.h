@@ -87,7 +87,7 @@ class InputPacket {
     // Copy the data from string to packet buf
     this->len = len;
     extended_buffer_.resize(len);
-    PL_MEMCPY(extended_buffer_.data(), val.data(), len);
+    PELOTON_MEMCPY(extended_buffer_.data(), val.data(), len);
     InitializePacket();
   }
 
@@ -123,7 +123,7 @@ class InputPacket {
   inline void InitializePacket() {
     this->begin = extended_buffer_.begin();
     this->end = extended_buffer_.end();
-    PL_ASSERT(extended_buffer_.size() == len);
+    PELOTON_ASSERT(extended_buffer_.size() == len);
     is_initialized = true;
   }
 

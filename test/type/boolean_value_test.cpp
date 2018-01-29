@@ -50,7 +50,7 @@ TEST_F(BooleanValueTests, ComparisonTest) {
       ExpressionType::COMPARE_GREATERTHAN,
       ExpressionType::COMPARE_GREATERTHANOREQUALTO};
 
-  int values[] = {true, false, type::PELOTON_BOOLEAN_NULL};
+  int values[] = {true, false, type::PELOTON_VALUE_BOOLEAN_NULL};
 
   CmpBool result;
   type::Value val0;
@@ -61,7 +61,7 @@ TEST_F(BooleanValueTests, ComparisonTest) {
       bool expected_null = false;
 
       // VALUE #0
-      if (values[i] == type::PELOTON_BOOLEAN_NULL) {
+      if (values[i] == type::PELOTON_VALUE_BOOLEAN_NULL) {
         val0 = type::ValueFactory::GetNullValueByType(type::TypeId::BOOLEAN);
         expected_null = true;
       } else {
@@ -70,7 +70,7 @@ TEST_F(BooleanValueTests, ComparisonTest) {
       }
 
       // VALUE #1
-      if (values[j] == type::PELOTON_BOOLEAN_NULL) {
+      if (values[j] == type::PELOTON_VALUE_BOOLEAN_NULL) {
         val1 = type::ValueFactory::GetNullValueByType(type::TypeId::BOOLEAN);
         expected_null = true;
       } else {
@@ -145,20 +145,20 @@ TEST_F(BooleanValueTests, ToStringTest) {
 }
 
 TEST_F(BooleanValueTests, HashTest) {
-  int values[] = {true, false, type::PELOTON_BOOLEAN_NULL};
+  int values[] = {true, false, type::PELOTON_VALUE_BOOLEAN_NULL};
 
   CmpBool result;
   type::Value val0;
   type::Value val1;
 
   for (int i = 0; i < 2; i++) {
-    if (values[i] == type::PELOTON_BOOLEAN_NULL) {
+    if (values[i] == type::PELOTON_VALUE_BOOLEAN_NULL) {
       val0 = type::ValueFactory::GetNullValueByType(type::TypeId::BOOLEAN);
     } else {
       val0 = type::ValueFactory::GetBooleanValue(static_cast<bool>(values[i]));
     }
     for (int j = 0; j < 2; j++) {
-      if (values[j] == type::PELOTON_BOOLEAN_NULL) {
+      if (values[j] == type::PELOTON_VALUE_BOOLEAN_NULL) {
         val1 = type::ValueFactory::GetNullValueByType(type::TypeId::BOOLEAN);
       } else {
         val1 =

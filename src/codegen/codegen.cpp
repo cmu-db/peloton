@@ -83,7 +83,7 @@ llvm::Value *CodeGen::ConstStringPtr(const std::string &s) const {
 llvm::Value *CodeGen::AllocateVariable(llvm::Type *type,
                                        const std::string &name) {
   // To allocate a variable, a function must be under construction
-  PL_ASSERT(code_context_.GetCurrentFunction() != nullptr);
+  PELOTON_ASSERT(code_context_.GetCurrentFunction() != nullptr);
 
   // All variable allocations go into the current function's "entry" block. By
   // convention, we insert the allocation instruction before the first
@@ -155,7 +155,7 @@ llvm::Value *CodeGen::Sqrt(llvm::Value *val) {
 
 llvm::Value *CodeGen::CallAddWithOverflow(llvm::Value *left, llvm::Value *right,
                                           llvm::Value *&overflow_bit) {
-  PL_ASSERT(left->getType() == right->getType());
+  PELOTON_ASSERT(left->getType() == right->getType());
 
   // Get the intrinsic that does the addition with overflow checking
   llvm::Function *add_func = llvm::Intrinsic::getDeclaration(
@@ -173,7 +173,7 @@ llvm::Value *CodeGen::CallAddWithOverflow(llvm::Value *left, llvm::Value *right,
 
 llvm::Value *CodeGen::CallSubWithOverflow(llvm::Value *left, llvm::Value *right,
                                           llvm::Value *&overflow_bit) {
-  PL_ASSERT(left->getType() == right->getType());
+  PELOTON_ASSERT(left->getType() == right->getType());
 
   // Get the intrinsic that does the addition with overflow checking
   llvm::Function *sub_func = llvm::Intrinsic::getDeclaration(
@@ -191,7 +191,7 @@ llvm::Value *CodeGen::CallSubWithOverflow(llvm::Value *left, llvm::Value *right,
 
 llvm::Value *CodeGen::CallMulWithOverflow(llvm::Value *left, llvm::Value *right,
                                           llvm::Value *&overflow_bit) {
-  PL_ASSERT(left->getType() == right->getType());
+  PELOTON_ASSERT(left->getType() == right->getType());
   llvm::Function *mul_func = llvm::Intrinsic::getDeclaration(
       &GetModule(), llvm::Intrinsic::smul_with_overflow, left->getType());
 
@@ -206,7 +206,7 @@ llvm::Value *CodeGen::CallMulWithOverflow(llvm::Value *left, llvm::Value *right,
 }
 
 void CodeGen::ThrowIfOverflow(llvm::Value *overflow) const {
-  PL_ASSERT(overflow->getType() == BoolType());
+  PELOTON_ASSERT(overflow->getType() == BoolType());
 
   // Get the overflow basic block for the currently generating function
   auto *func = code_context_.GetCurrentFunction();
@@ -225,7 +225,7 @@ void CodeGen::ThrowIfOverflow(llvm::Value *overflow) const {
 }
 
 void CodeGen::ThrowIfDivideByZero(llvm::Value *divide_by_zero) const {
-  PL_ASSERT(divide_by_zero->getType() == BoolType());
+  PELOTON_ASSERT(divide_by_zero->getType() == BoolType());
 
   // Get the divide-by-zero basic block for the currently generating function
   auto *func = code_context_.GetCurrentFunction();
@@ -271,7 +271,7 @@ llvm::Type *CodeGen::LookupType(const std::string &name) const {
 
 llvm::Value *CodeGen::GetState() const {
   auto *func_builder = code_context_.GetCurrentFunction();
-  PL_ASSERT(func_builder != nullptr);
+  PELOTON_ASSERT(func_builder != nullptr);
 
   // The first argument of the function is always the runtime state
   return func_builder->GetArgumentByPosition(0);

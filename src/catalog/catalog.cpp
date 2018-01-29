@@ -623,7 +623,7 @@ ResultType Catalog::DropIndex(oid_t index_oid,
 storage::Database *Catalog::GetDatabaseWithName(
     const std::string &database_name,
     concurrency::TransactionContext *txn) const {
-  PL_ASSERT(txn != nullptr);
+  PELOTON_ASSERT(txn != nullptr);
 
   // Check in pg_database using txn
   auto database_object =
@@ -644,7 +644,7 @@ storage::Database *Catalog::GetDatabaseWithName(
 storage::DataTable *Catalog::GetTableWithName(
     const std::string &database_name, const std::string &table_name,
     concurrency::TransactionContext *txn) {
-  PL_ASSERT(txn != nullptr);
+  PELOTON_ASSERT(txn != nullptr);
 
   LOG_TRACE("Looking for table %s in database %s", table_name.c_str(),
             database_name.c_str());

@@ -45,7 +45,7 @@ struct CastDateToTimestamp : public TypeSystem::CastHandleNull {
   // Cast the given decimal value into the provided type
   Value Impl(CodeGen &codegen, const Value &value,
              const type::Type &to_type) const override {
-    PL_ASSERT(SupportsTypes(value.GetType(), to_type));
+    PELOTON_ASSERT(SupportsTypes(value.GetType(), to_type));
 
     // Date is number of days since 2000, timestamp is micros since same
     auto *date = codegen->CreateZExt(value.GetValue(), codegen.Int64Type());
@@ -167,17 +167,17 @@ Date::Date()
                    kNaryOperatorTable, kNoArgOperatorTable) {}
 
 Value Date::GetMinValue(CodeGen &codegen) const {
-  auto *raw_val = codegen.Const32(peloton::type::PELOTON_DATE_MIN);
+  auto *raw_val = codegen.Const32(peloton::type::PELOTON_VALUE_DATE_MIN);
   return Value{*this, raw_val, nullptr, nullptr};
 }
 
 Value Date::GetMaxValue(CodeGen &codegen) const {
-  auto *raw_val = codegen.Const32(peloton::type::PELOTON_DATE_MAX);
+  auto *raw_val = codegen.Const32(peloton::type::PELOTON_VALUE_DATE_MAX);
   return Value{*this, raw_val, nullptr, nullptr};
 }
 
 Value Date::GetNullValue(CodeGen &codegen) const {
-  auto *raw_val = codegen.Const32(peloton::type::PELOTON_DATE_NULL);
+  auto *raw_val = codegen.Const32(peloton::type::PELOTON_VALUE_DATE_NULL);
   return Value{Type{TypeId(), true}, raw_val, nullptr, codegen.ConstBool(true)};
 }
 

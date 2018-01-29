@@ -110,7 +110,7 @@ void TransactionContext::RecordRead(const ItemPointer &location) {
   oid_t tuple_id = location.offset;
 
   if (IsInRWSet(location)) {
-    PL_ASSERT(rw_set_.at(tile_group_id).at(tuple_id) != RWType::DELETE &&
+    PELOTON_ASSERT(rw_set_.at(tile_group_id).at(tuple_id) != RWType::DELETE &&
               rw_set_.at(tile_group_id).at(tuple_id) != RWType::INS_DEL);
     return;
   } else {
@@ -129,7 +129,7 @@ void TransactionContext::RecordReadOwn(const ItemPointer &location) {
       // record write.
       return;
     }
-    PL_ASSERT(type != RWType::DELETE && type != RWType::INS_DEL);
+    PELOTON_ASSERT(type != RWType::DELETE && type != RWType::INS_DEL);
   } else {
     rw_set_[tile_group_id][tuple_id] = RWType::READ_OWN;
   }
@@ -155,10 +155,10 @@ void TransactionContext::RecordUpdate(const ItemPointer &location) {
       return;
     }
     if (type == RWType::DELETE) {
-      PL_ASSERT(false);
+      PELOTON_ASSERT(false);
       return;
     }
-    PL_ASSERT(false);
+    PELOTON_ASSERT(false);
   } else {
     // consider select_for_udpate case.
     rw_set_[tile_group_id][tuple_id] = RWType::UPDATE;
@@ -170,7 +170,7 @@ void TransactionContext::RecordInsert(const ItemPointer &location) {
   oid_t tuple_id = location.offset;
 
   if (IsInRWSet(location)) {
-    PL_ASSERT(false);
+    PELOTON_ASSERT(false);
   } else {
     rw_set_[tile_group_id][tuple_id] = RWType::INSERT;
     ++insert_count_;
@@ -202,10 +202,10 @@ bool TransactionContext::RecordDelete(const ItemPointer &location) {
       return true;
     }
     if (type == RWType::DELETE) {
-      PL_ASSERT(false);
+      PELOTON_ASSERT(false);
       return false;
     }
-    PL_ASSERT(false);
+    PELOTON_ASSERT(false);
   } else {
     rw_set_[tile_group_id][tuple_id] = RWType::DELETE;
   }

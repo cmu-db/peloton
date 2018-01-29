@@ -57,7 +57,7 @@ struct CompareVarbinary : public TypeSystem::ExpensiveComparisonHandleNull {
 
   Value CompareLtImpl(CodeGen &codegen, const Value &left,
                       const Value &right) const override {
-    PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
+    PELOTON_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
     // Call CompareStrings, check is result is < 0
     llvm::Value *result = CompareStrings(codegen, left, right);
     llvm::Value *is_lt_0 = codegen->CreateICmpSLT(result, codegen.Const32(0));
@@ -66,7 +66,7 @@ struct CompareVarbinary : public TypeSystem::ExpensiveComparisonHandleNull {
 
   Value CompareLteImpl(CodeGen &codegen, const Value &left,
                        const Value &right) const override {
-    PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
+    PELOTON_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
     // Call CompareStrings, check is result is <= 0
     llvm::Value *result = CompareStrings(codegen, left, right);
     llvm::Value *is_lte_0 = codegen->CreateICmpSLE(result, codegen.Const32(0));
@@ -75,7 +75,7 @@ struct CompareVarbinary : public TypeSystem::ExpensiveComparisonHandleNull {
 
   Value CompareEqImpl(CodeGen &codegen, const Value &left,
                       const Value &right) const override {
-    PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
+    PELOTON_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
     // Call CompareStrings, check is result is == 0
     llvm::Value *result = CompareStrings(codegen, left, right);
     llvm::Value *is_eq_0 = codegen->CreateICmpEQ(result, codegen.Const32(0));
@@ -84,7 +84,7 @@ struct CompareVarbinary : public TypeSystem::ExpensiveComparisonHandleNull {
 
   Value CompareNeImpl(CodeGen &codegen, const Value &left,
                       const Value &right) const override {
-    PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
+    PELOTON_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
     // Call CompareStrings, check is result is != 0
     llvm::Value *result = CompareStrings(codegen, left, right);
     llvm::Value *is_ne_0 = codegen->CreateICmpNE(result, codegen.Const32(0));
@@ -93,7 +93,7 @@ struct CompareVarbinary : public TypeSystem::ExpensiveComparisonHandleNull {
 
   Value CompareGtImpl(CodeGen &codegen, const Value &left,
                       const Value &right) const override {
-    PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
+    PELOTON_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
     // Call CompareStrings, check is result is <= 0
     llvm::Value *result = CompareStrings(codegen, left, right);
     llvm::Value *is_gt_0 = codegen->CreateICmpSGT(result, codegen.Const32(0));
@@ -102,7 +102,7 @@ struct CompareVarbinary : public TypeSystem::ExpensiveComparisonHandleNull {
 
   Value CompareGteImpl(CodeGen &codegen, const Value &left,
                        const Value &right) const override {
-    PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
+    PELOTON_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
     // Call CompareStrings, check is result is >= 0
     llvm::Value *result = CompareStrings(codegen, left, right);
     llvm::Value *is_gte_0 = codegen->CreateICmpSGE(result, codegen.Const32(0));
@@ -111,7 +111,7 @@ struct CompareVarbinary : public TypeSystem::ExpensiveComparisonHandleNull {
 
   Value CompareForSortImpl(CodeGen &codegen, const Value &left,
                            const Value &right) const override {
-    PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
+    PELOTON_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
     // Call CompareStrings, return result directly
     llvm::Value *result = CompareStrings(codegen, left, right);
     return Value{Integer::Instance(), result};

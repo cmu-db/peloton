@@ -56,10 +56,10 @@ char *VarlenType::GetData(char *storage) {
 }
 
 CmpBool VarlenType::CompareEquals(const Value &left, const Value &right) const {
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return CmpBool::NULL_;
-  if (GetLength(left) == PELOTON_VARCHAR_MAX_LEN ||
-      GetLength(right) == PELOTON_VARCHAR_MAX_LEN) {
+  if (GetLength(left) == PELOTON_VALUE_VARCHAR_MAX_LEN ||
+      GetLength(right) == PELOTON_VALUE_VARCHAR_MAX_LEN) {
     return GetCmpBool(GetLength(left) == GetLength(right));
   }
 
@@ -68,10 +68,10 @@ CmpBool VarlenType::CompareEquals(const Value &left, const Value &right) const {
 
 CmpBool VarlenType::CompareNotEquals(const Value &left,
                                      const Value &right) const {
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return CmpBool::NULL_;
-  if (GetLength(left) == PELOTON_VARCHAR_MAX_LEN ||
-      GetLength(right) == PELOTON_VARCHAR_MAX_LEN) {
+  if (GetLength(left) == PELOTON_VALUE_VARCHAR_MAX_LEN ||
+      GetLength(right) == PELOTON_VALUE_VARCHAR_MAX_LEN) {
     return GetCmpBool(GetLength(left) != GetLength(right));
   }
 
@@ -80,10 +80,10 @@ CmpBool VarlenType::CompareNotEquals(const Value &left,
 
 CmpBool VarlenType::CompareLessThan(const Value &left,
                                     const Value &right) const {
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return CmpBool::NULL_;
-  if (GetLength(left) == PELOTON_VARCHAR_MAX_LEN ||
-      GetLength(right) == PELOTON_VARCHAR_MAX_LEN) {
+  if (GetLength(left) == PELOTON_VALUE_VARCHAR_MAX_LEN ||
+      GetLength(right) == PELOTON_VALUE_VARCHAR_MAX_LEN) {
     return GetCmpBool(GetLength(left) < GetLength(right));
   }
 
@@ -92,10 +92,10 @@ CmpBool VarlenType::CompareLessThan(const Value &left,
 
 CmpBool VarlenType::CompareLessThanEquals(const Value &left,
                                           const Value &right) const {
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return CmpBool::NULL_;
-  if (GetLength(left) == PELOTON_VARCHAR_MAX_LEN ||
-      GetLength(right) == PELOTON_VARCHAR_MAX_LEN) {
+  if (GetLength(left) == PELOTON_VALUE_VARCHAR_MAX_LEN ||
+      GetLength(right) == PELOTON_VALUE_VARCHAR_MAX_LEN) {
     return GetCmpBool(GetLength(left) <= GetLength(right));
   }
 
@@ -104,10 +104,10 @@ CmpBool VarlenType::CompareLessThanEquals(const Value &left,
 
 CmpBool VarlenType::CompareGreaterThan(const Value &left,
                                        const Value &right) const {
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return CmpBool::NULL_;
-  if (GetLength(left) == PELOTON_VARCHAR_MAX_LEN ||
-      GetLength(right) == PELOTON_VARCHAR_MAX_LEN) {
+  if (GetLength(left) == PELOTON_VALUE_VARCHAR_MAX_LEN ||
+      GetLength(right) == PELOTON_VALUE_VARCHAR_MAX_LEN) {
     return GetCmpBool(GetLength(left) > GetLength(right));
   }
 
@@ -116,10 +116,10 @@ CmpBool VarlenType::CompareGreaterThan(const Value &left,
 
 CmpBool VarlenType::CompareGreaterThanEquals(const Value &left,
                                              const Value &right) const {
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return CmpBool::NULL_;
-  if (GetLength(left) == PELOTON_VARCHAR_MAX_LEN ||
-      GetLength(right) == PELOTON_VARCHAR_MAX_LEN) {
+  if (GetLength(left) == PELOTON_VALUE_VARCHAR_MAX_LEN ||
+      GetLength(right) == PELOTON_VALUE_VARCHAR_MAX_LEN) {
     return GetCmpBool(GetLength(left) >= GetLength(right));
   }
 
@@ -127,14 +127,14 @@ CmpBool VarlenType::CompareGreaterThanEquals(const Value &left,
 }
 
 Value VarlenType::Min(const Value &left, const Value &right) const {
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return left.OperateNull(right);
   if (left.CompareLessThan(right) == CmpBool::TRUE) return left.Copy();
   return right.Copy();
 }
 
 Value VarlenType::Max(const Value &left, const Value &right) const {
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return left.OperateNull(right);
   if (left.CompareGreaterThanEquals(right) == CmpBool::TRUE) return left.Copy();
   return right.Copy();
@@ -144,7 +144,7 @@ std::string VarlenType::ToString(const Value &val) const {
   uint32_t len = GetLength(val);
 
   if (val.IsNull()) return "varlen_null";
-  if (len == PELOTON_VARCHAR_MAX_LEN) return "varlen_max";
+  if (len == PELOTON_VALUE_VARCHAR_MAX_LEN) return "varlen_max";
   if (len == 0) {
     return "";
   }
@@ -179,8 +179,8 @@ void VarlenType::SerializeTo(const Value &val, char *storage,
   } else {
     uint32_t size = len + sizeof(uint32_t);
     data = (pool == nullptr) ? new char[size] : (char *)pool->Allocate(size);
-    PL_MEMCPY(data, &len, sizeof(uint32_t));
-    PL_MEMCPY(data + sizeof(uint32_t), val.value_.varlen,
+    PELOTON_MEMCPY(data, &len, sizeof(uint32_t));
+    PELOTON_MEMCPY(data + sizeof(uint32_t), val.value_.varlen,
               size - sizeof(uint32_t));
   }
   *reinterpret_cast<const char **>(storage) = data;

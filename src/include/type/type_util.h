@@ -32,10 +32,10 @@ class TypeUtil {
    */
   static inline int CompareStrings(const char* str1, int len1, const char* str2,
                                    int len2) {
-    PL_ASSERT(str1 != nullptr);
-    PL_ASSERT(len1 >= 0);
-    PL_ASSERT(str2 != nullptr);
-    PL_ASSERT(len2 >= 0);
+    PELOTON_ASSERT(str1 != nullptr);
+    PELOTON_ASSERT(len1 >= 0);
+    PELOTON_ASSERT(str2 != nullptr);
+    PELOTON_ASSERT(len2 >= 0);
     // PAVLO: 2017-04-04
     // The reason why we use memcmp here is that our inputs are
     // not null-terminated strings, so we can't use strncmp

@@ -60,7 +60,7 @@ class ValueFactory {
 
   static inline Value GetBooleanValue(CmpBool value) {
     return Value(TypeId::BOOLEAN,
-                 value == CmpBool::NULL_ ? PELOTON_BOOLEAN_NULL : (int8_t)value);
+                 value == CmpBool::NULL_ ? PELOTON_VALUE_BOOLEAN_NULL : (int8_t)value);
   }
 
   static inline Value GetBooleanValue(bool value) {
@@ -106,28 +106,28 @@ class ValueFactory {
     Value ret_value;
     switch (type_id) {
       case TypeId::BOOLEAN:
-        ret_value = GetBooleanValue(PELOTON_BOOLEAN_NULL);
+        ret_value = GetBooleanValue(PELOTON_VALUE_BOOLEAN_NULL);
         break;
       case TypeId::TINYINT:
-        ret_value = GetTinyIntValue(PELOTON_INT8_NULL);
+        ret_value = GetTinyIntValue(PELOTON_VALUE_INT8_NULL);
         break;
       case TypeId::SMALLINT:
-        ret_value = GetSmallIntValue(PELOTON_INT16_NULL);
+        ret_value = GetSmallIntValue(PELOTON_VALUE_INT16_NULL);
         break;
       case TypeId::INTEGER:
-        ret_value = GetIntegerValue(PELOTON_INT32_NULL);
+        ret_value = GetIntegerValue(PELOTON_VALUE_INT32_NULL);
         break;
       case TypeId::BIGINT:
-        ret_value = GetBigIntValue(PELOTON_INT64_NULL);
+        ret_value = GetBigIntValue(PELOTON_VALUE_INT64_NULL);
         break;
       case TypeId::DECIMAL:
-        ret_value = GetDecimalValue(PELOTON_DECIMAL_NULL);
+        ret_value = GetDecimalValue(PELOTON_VALUE_DECIMAL_NULL);
         break;
       case TypeId::TIMESTAMP:
-        ret_value = GetTimestampValue(PELOTON_TIMESTAMP_NULL);
+        ret_value = GetTimestampValue(PELOTON_VALUE_TIMESTAMP_NULL);
         break;
       case TypeId::DATE:
-        ret_value = GetDateValue(PELOTON_DATE_NULL);
+        ret_value = GetDateValue(PELOTON_VALUE_DATE_NULL);
         break;
       case TypeId::VARCHAR:
         ret_value = GetVarcharValue(nullptr, false, nullptr);
@@ -181,7 +181,7 @@ class ValueFactory {
   static inline Value CastAsBigInt(const Value &value) {
     if (Type::GetInstance(TypeId::BIGINT)->IsCoercableFrom(value.GetTypeId())) {
       if (value.IsNull())
-        return ValueFactory::GetBigIntValue((int64_t)PELOTON_INT64_NULL);
+        return ValueFactory::GetBigIntValue((int64_t)PELOTON_VALUE_INT64_NULL);
       switch (value.GetTypeId()) {
         case TypeId::TINYINT:
           return ValueFactory::GetBigIntValue((int64_t)value.GetAs<int8_t>());
@@ -192,8 +192,8 @@ class ValueFactory {
         case TypeId::BIGINT:
           return ValueFactory::GetBigIntValue(value.GetAs<int64_t>());
         case TypeId::DECIMAL: {
-          if (value.GetAs<double>() > (double)PELOTON_INT64_MAX ||
-              value.GetAs<double>() < (double)PELOTON_INT64_MIN)
+          if (value.GetAs<double>() > (double)PELOTON_VALUE_INT64_MAX ||
+              value.GetAs<double>() < (double)PELOTON_VALUE_INT64_MIN)
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
           return ValueFactory::GetBigIntValue((int64_t)value.GetAs<double>());
@@ -207,7 +207,7 @@ class ValueFactory {
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
           }
-          if (bigint > PELOTON_INT64_MAX || bigint < PELOTON_INT64_MIN)
+          if (bigint > PELOTON_VALUE_INT64_MAX || bigint < PELOTON_VALUE_INT64_MIN)
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
           return ValueFactory::GetBigIntValue(bigint);
@@ -224,7 +224,7 @@ class ValueFactory {
     if (Type::GetInstance(TypeId::INTEGER)
             ->IsCoercableFrom(value.GetTypeId())) {
       if (value.IsNull())
-        return ValueFactory::GetIntegerValue((int32_t)PELOTON_INT32_NULL);
+        return ValueFactory::GetIntegerValue((int32_t)PELOTON_VALUE_INT32_NULL);
       switch (value.GetTypeId()) {
         case TypeId::TINYINT:
           return ValueFactory::GetIntegerValue((int32_t)value.GetAs<int8_t>());
@@ -233,15 +233,15 @@ class ValueFactory {
         case TypeId::INTEGER:
           return ValueFactory::GetIntegerValue(value.GetAs<int32_t>());
         case TypeId::BIGINT: {
-          if (value.GetAs<int64_t>() > (int64_t)PELOTON_INT32_MAX ||
-              value.GetAs<int64_t>() < (int64_t)PELOTON_INT32_MIN)
+          if (value.GetAs<int64_t>() > (int64_t)PELOTON_VALUE_INT32_MAX ||
+              value.GetAs<int64_t>() < (int64_t)PELOTON_VALUE_INT32_MIN)
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
           return ValueFactory::GetIntegerValue((int32_t)value.GetAs<int64_t>());
         }
         case TypeId::DECIMAL: {
-          if (value.GetAs<double>() > (double)PELOTON_INT32_MAX ||
-              value.GetAs<double>() < (double)PELOTON_INT32_MIN)
+          if (value.GetAs<double>() > (double)PELOTON_VALUE_INT32_MAX ||
+              value.GetAs<double>() < (double)PELOTON_VALUE_INT32_MIN)
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
           return ValueFactory::GetIntegerValue((int32_t)value.GetAs<double>());
@@ -255,7 +255,7 @@ class ValueFactory {
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
           }
-          if (integer > PELOTON_INT32_MAX || integer < PELOTON_INT32_MIN)
+          if (integer > PELOTON_VALUE_INT32_MAX || integer < PELOTON_VALUE_INT32_MIN)
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
           return ValueFactory::GetIntegerValue(integer);
@@ -272,31 +272,31 @@ class ValueFactory {
     if (Type::GetInstance(TypeId::SMALLINT)
             ->IsCoercableFrom(value.GetTypeId())) {
       if (value.IsNull())
-        return ValueFactory::GetSmallIntValue((int16_t)PELOTON_INT16_NULL);
+        return ValueFactory::GetSmallIntValue((int16_t)PELOTON_VALUE_INT16_NULL);
       switch (value.GetTypeId()) {
         case TypeId::TINYINT:
           return ValueFactory::GetSmallIntValue((int16_t)value.GetAs<int8_t>());
         case TypeId::SMALLINT:
           return ValueFactory::GetSmallIntValue(value.GetAs<int16_t>());
         case TypeId::INTEGER: {
-          if (value.GetAs<int32_t>() > (int32_t)PELOTON_INT16_MAX ||
-              value.GetAs<int32_t>() < (int32_t)PELOTON_INT16_MIN)
+          if (value.GetAs<int32_t>() > (int32_t)PELOTON_VALUE_INT16_MAX ||
+              value.GetAs<int32_t>() < (int32_t)PELOTON_VALUE_INT16_MIN)
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
           return ValueFactory::GetSmallIntValue(
               (int16_t)value.GetAs<int32_t>());
         }
         case TypeId::BIGINT: {
-          if (value.GetAs<int64_t>() > (int64_t)PELOTON_INT16_MAX ||
-              value.GetAs<int64_t>() < (int64_t)PELOTON_INT16_MIN)
+          if (value.GetAs<int64_t>() > (int64_t)PELOTON_VALUE_INT16_MAX ||
+              value.GetAs<int64_t>() < (int64_t)PELOTON_VALUE_INT16_MIN)
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
           return ValueFactory::GetSmallIntValue(
               (int16_t)value.GetAs<int64_t>());
         }
         case TypeId::DECIMAL: {
-          if (value.GetAs<double>() > (double)PELOTON_INT16_MAX ||
-              value.GetAs<double>() < (double)PELOTON_INT16_MIN)
+          if (value.GetAs<double>() > (double)PELOTON_VALUE_INT16_MAX ||
+              value.GetAs<double>() < (double)PELOTON_VALUE_INT16_MIN)
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
           return ValueFactory::GetSmallIntValue((int16_t)value.GetAs<double>());
@@ -310,7 +310,7 @@ class ValueFactory {
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
           }
-          if (smallint < PELOTON_INT16_MIN)
+          if (smallint < PELOTON_VALUE_INT16_MIN)
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
           return ValueFactory::GetSmallIntValue(smallint);
@@ -327,34 +327,34 @@ class ValueFactory {
     if (Type::GetInstance(TypeId::TINYINT)
             ->IsCoercableFrom(value.GetTypeId())) {
       if (value.IsNull())
-        return ValueFactory::GetTinyIntValue(PELOTON_INT8_NULL);
+        return ValueFactory::GetTinyIntValue(PELOTON_VALUE_INT8_NULL);
       switch (value.GetTypeId()) {
         case TypeId::TINYINT:
           return ValueFactory::GetTinyIntValue(value.GetAs<int8_t>());
         case TypeId::SMALLINT: {
-          if (value.GetAs<int16_t>() > PELOTON_INT8_MAX ||
-              value.GetAs<int16_t>() < PELOTON_INT8_MIN)
+          if (value.GetAs<int16_t>() > PELOTON_VALUE_INT8_MAX ||
+              value.GetAs<int16_t>() < PELOTON_VALUE_INT8_MIN)
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
           return ValueFactory::GetTinyIntValue((int8_t)value.GetAs<int16_t>());
         }
         case TypeId::INTEGER: {
-          if (value.GetAs<int32_t>() > (int32_t)PELOTON_INT8_MAX ||
-              value.GetAs<int32_t>() < (int32_t)PELOTON_INT8_MIN)
+          if (value.GetAs<int32_t>() > (int32_t)PELOTON_VALUE_INT8_MAX ||
+              value.GetAs<int32_t>() < (int32_t)PELOTON_VALUE_INT8_MIN)
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
           return ValueFactory::GetTinyIntValue((int8_t)value.GetAs<int32_t>());
         }
         case TypeId::BIGINT: {
-          if (value.GetAs<int64_t>() > (int64_t)PELOTON_INT8_MAX ||
-              value.GetAs<int64_t>() < (int64_t)PELOTON_INT8_MIN)
+          if (value.GetAs<int64_t>() > (int64_t)PELOTON_VALUE_INT8_MAX ||
+              value.GetAs<int64_t>() < (int64_t)PELOTON_VALUE_INT8_MIN)
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
           return ValueFactory::GetTinyIntValue((int8_t)value.GetAs<int64_t>());
         }
         case TypeId::DECIMAL: {
-          if (value.GetAs<double>() > (double)PELOTON_INT8_MAX ||
-              value.GetAs<double>() < (double)PELOTON_INT8_MIN)
+          if (value.GetAs<double>() > (double)PELOTON_VALUE_INT8_MAX ||
+              value.GetAs<double>() < (double)PELOTON_VALUE_INT8_MIN)
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
           return ValueFactory::GetTinyIntValue((int8_t)value.GetAs<double>());
@@ -368,7 +368,7 @@ class ValueFactory {
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
           }
-          if (tinyint < PELOTON_INT8_MIN)
+          if (tinyint < PELOTON_VALUE_INT8_MIN)
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
           return ValueFactory::GetTinyIntValue(tinyint);
@@ -385,7 +385,7 @@ class ValueFactory {
     if (Type::GetInstance(TypeId::DECIMAL)
             ->IsCoercableFrom(value.GetTypeId())) {
       if (value.IsNull())
-        return ValueFactory::GetDecimalValue((double)PELOTON_DECIMAL_NULL);
+        return ValueFactory::GetDecimalValue((double)PELOTON_VALUE_DECIMAL_NULL);
       switch (value.GetTypeId()) {
         case TypeId::TINYINT:
           return ValueFactory::GetDecimalValue((double)value.GetAs<int8_t>());
@@ -406,7 +406,7 @@ class ValueFactory {
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
           }
-          if (res > PELOTON_DECIMAL_MAX || res < PELOTON_DECIMAL_MIN)
+          if (res > PELOTON_VALUE_DECIMAL_MAX || res < PELOTON_VALUE_DECIMAL_MIN)
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
           return ValueFactory::GetDecimalValue(res);
@@ -445,7 +445,7 @@ class ValueFactory {
     if (Type::GetInstance(TypeId::TIMESTAMP)
             ->IsCoercableFrom(value.GetTypeId())) {
       if (value.IsNull())
-        return ValueFactory::GetTimestampValue(PELOTON_TIMESTAMP_NULL);
+        return ValueFactory::GetTimestampValue(PELOTON_VALUE_TIMESTAMP_NULL);
       switch (value.GetTypeId()) {
         case TypeId::TIMESTAMP:
           return ValueFactory::GetTimestampValue(value.GetAs<uint64_t>());
@@ -517,7 +517,7 @@ class ValueFactory {
 
   static Value CastAsDate(const Value &value) {
     if (Type::GetInstance(TypeId::DATE)->IsCoercableFrom(value.GetTypeId())) {
-      if (value.IsNull()) return ValueFactory::GetDateValue(PELOTON_DATE_NULL);
+      if (value.IsNull()) return ValueFactory::GetDateValue(PELOTON_VALUE_DATE_NULL);
       switch (value.GetTypeId()) {
         case TypeId::DATE:
           return ValueFactory::GetDateValue(value.GetAs<uint32_t>());
@@ -570,7 +570,7 @@ class ValueFactory {
     if (Type::GetInstance(TypeId::BOOLEAN)
             ->IsCoercableFrom(value.GetTypeId())) {
       if (value.IsNull())
-        return ValueFactory::GetBooleanValue(PELOTON_BOOLEAN_NULL);
+        return ValueFactory::GetBooleanValue(PELOTON_VALUE_BOOLEAN_NULL);
       switch (value.GetTypeId()) {
         case TypeId::BOOLEAN:
           return ValueFactory::GetBooleanValue(value.GetAs<int8_t>());

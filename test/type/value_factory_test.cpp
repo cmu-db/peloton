@@ -49,7 +49,7 @@ int16_t RANDOM16() {
 
 int32_t RANDOM32() {
   int32_t ret = (((size_t)(rand()) << 1) | ((size_t)(rand()) & 0x1));
-  if (ret != type::PELOTON_INT32_NULL)
+  if (ret != type::PELOTON_VALUE_INT32_NULL)
     return ret;
   return 1;
 }
@@ -57,7 +57,7 @@ int32_t RANDOM32() {
 int64_t RANDOM64() {
   int64_t ret = (((size_t)(rand()) << 33) | ((size_t)(rand()) << 2) |
                  ((size_t)(rand()) & 0x3));
-  if (ret != type::PELOTON_INT64_NULL)
+  if (ret != type::PELOTON_VALUE_INT64_NULL)
     return ret;
   return 1;
 }
@@ -70,16 +70,16 @@ TEST_F(ValueFactoryTests, ZeroValueTest) {
 }
 
 TEST_F(ValueFactoryTests, PeekValueTest) {
-  type::Value v1(type::TypeId::TINYINT, (int8_t)type::PELOTON_INT8_MAX);
-  EXPECT_EQ(type::ValuePeeker::PeekTinyInt(v1), type::PELOTON_INT8_MAX);
-  type::Value v2(type::TypeId::SMALLINT, (int16_t)type::PELOTON_INT16_MAX);
-  EXPECT_EQ(type::ValuePeeker::PeekSmallInt(v2), type::PELOTON_INT16_MAX);
-  type::Value v3(type::TypeId::INTEGER, (int32_t)type::PELOTON_INT32_MAX);
-  EXPECT_EQ(type::ValuePeeker::PeekInteger(v3), type::PELOTON_INT32_MAX);
-  type::Value v4(type::TypeId::BIGINT, (int64_t)type::PELOTON_INT64_MAX);
-  EXPECT_EQ(type::ValuePeeker::PeekBigInt(v4), type::PELOTON_INT64_MAX);
-  type::Value v5(type::TypeId::DECIMAL, (double)type::PELOTON_DECIMAL_MAX);
-  EXPECT_EQ(type::ValuePeeker::PeekDouble(v5), type::PELOTON_DECIMAL_MAX);
+  type::Value v1(type::TypeId::TINYINT, (int8_t)type::PELOTON_VALUE_INT8_MAX);
+  EXPECT_EQ(type::ValuePeeker::PeekTinyInt(v1), type::PELOTON_VALUE_INT8_MAX);
+  type::Value v2(type::TypeId::SMALLINT, (int16_t)type::PELOTON_VALUE_INT16_MAX);
+  EXPECT_EQ(type::ValuePeeker::PeekSmallInt(v2), type::PELOTON_VALUE_INT16_MAX);
+  type::Value v3(type::TypeId::INTEGER, (int32_t)type::PELOTON_VALUE_INT32_MAX);
+  EXPECT_EQ(type::ValuePeeker::PeekInteger(v3), type::PELOTON_VALUE_INT32_MAX);
+  type::Value v4(type::TypeId::BIGINT, (int64_t)type::PELOTON_VALUE_INT64_MAX);
+  EXPECT_EQ(type::ValuePeeker::PeekBigInt(v4), type::PELOTON_VALUE_INT64_MAX);
+  type::Value v5(type::TypeId::DECIMAL, (double)type::PELOTON_VALUE_DECIMAL_MAX);
+  EXPECT_EQ(type::ValuePeeker::PeekDouble(v5), type::PELOTON_VALUE_DECIMAL_MAX);
   type::Value v6(type::TypeId::BOOLEAN, true);
   EXPECT_EQ(type::ValuePeeker::PeekBoolean(v6), true);
   std::string str = "hello";
@@ -91,18 +91,18 @@ TEST_F(ValueFactoryTests, PeekValueTest) {
 
 TEST_F(ValueFactoryTests, CastTest) {
   type::Value v1(type::ValueFactory::CastAsBigInt(
-    type::Value(type::TypeId::INTEGER, (int32_t)type::PELOTON_INT32_MAX)));
+    type::Value(type::TypeId::INTEGER, (int32_t)type::PELOTON_VALUE_INT32_MAX)));
   EXPECT_EQ(v1.GetTypeId(), type::TypeId::BIGINT);
-  EXPECT_EQ(v1.GetAs<int64_t>(), type::PELOTON_INT32_MAX);
+  EXPECT_EQ(v1.GetAs<int64_t>(), type::PELOTON_VALUE_INT32_MAX);
 
   type::Value v2(type::ValueFactory::CastAsBigInt(
-    type::Value(type::TypeId::SMALLINT, (int16_t)type::PELOTON_INT16_MAX)));
+    type::Value(type::TypeId::SMALLINT, (int16_t)type::PELOTON_VALUE_INT16_MAX)));
   EXPECT_EQ(v2.GetTypeId(), type::TypeId::BIGINT);
 
   EXPECT_THROW(type::ValueFactory::CastAsBigInt(type::Value(type::TypeId::BOOLEAN, 0)), peloton::Exception);
-  EXPECT_THROW(type::ValueFactory::CastAsSmallInt(type::Value(type::TypeId::INTEGER, type::PELOTON_INT32_MAX)),
+  EXPECT_THROW(type::ValueFactory::CastAsSmallInt(type::Value(type::TypeId::INTEGER, type::PELOTON_VALUE_INT32_MAX)),
                                             peloton::Exception);
-  EXPECT_THROW(type::ValueFactory::CastAsTinyInt(type::Value(type::TypeId::INTEGER,type::PELOTON_INT32_MAX)),
+  EXPECT_THROW(type::ValueFactory::CastAsTinyInt(type::Value(type::TypeId::INTEGER,type::PELOTON_VALUE_INT32_MAX)),
                                            peloton::Exception);
 
   type::Value v3(type::ValueFactory::CastAsVarchar(type::ValueFactory::GetVarcharValue("hello")));
@@ -111,9 +111,9 @@ TEST_F(ValueFactoryTests, CastTest) {
   type::Value v4(type::ValueFactory::Clone(v3));
   EXPECT_TRUE(v3.CompareEquals(v4) == CmpBool::TRUE);
 
-  type::Value v5(type::ValueFactory::CastAsVarchar(type::Value(type::TypeId::TINYINT, (int8_t)type::PELOTON_INT8_MAX)));
+  type::Value v5(type::ValueFactory::CastAsVarchar(type::Value(type::TypeId::TINYINT, (int8_t)type::PELOTON_VALUE_INT8_MAX)));
   EXPECT_EQ(v5.ToString(), "127");
-  type::Value v6(type::ValueFactory::CastAsVarchar(type::Value(type::TypeId::BIGINT, (int64_t)type::PELOTON_INT64_MAX)));
+  type::Value v6(type::ValueFactory::CastAsVarchar(type::Value(type::TypeId::BIGINT, (int64_t)type::PELOTON_VALUE_INT64_MAX)));
   EXPECT_EQ(v6.ToString(), "9223372036854775807");
 
   std::string str1("9999-12-31 23:59:59.999999+14");

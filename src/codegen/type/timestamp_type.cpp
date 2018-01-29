@@ -44,7 +44,7 @@ struct CastTimestampToDate : public TypeSystem::CastHandleNull {
   // Cast the given decimal value into the provided type
   Value Impl(CodeGen &codegen, const Value &value,
              const type::Type &to_type) const override {
-    PL_ASSERT(SupportsTypes(value.GetType(), to_type));
+    PELOTON_ASSERT(SupportsTypes(value.GetType(), to_type));
 
     // TODO: Fix me
     auto *usecs_per_date =
@@ -188,17 +188,17 @@ Timestamp::Timestamp()
                    kNaryOperatorTable, kNoArgOperatorTable) {}
 
 Value Timestamp::GetMinValue(CodeGen &codegen) const {
-  auto *raw_val = codegen.Const64(peloton::type::PELOTON_TIMESTAMP_MIN);
+  auto *raw_val = codegen.Const64(peloton::type::PELOTON_VALUE_TIMESTAMP_MIN);
   return Value{*this, raw_val, nullptr, nullptr};
 }
 
 Value Timestamp::GetMaxValue(CodeGen &codegen) const {
-  auto *raw_val = codegen.Const64(peloton::type::PELOTON_TIMESTAMP_MAX);
+  auto *raw_val = codegen.Const64(peloton::type::PELOTON_VALUE_TIMESTAMP_MAX);
   return Value{*this, raw_val, nullptr, nullptr};
 }
 
 Value Timestamp::GetNullValue(CodeGen &codegen) const {
-  auto *raw_val = codegen.Const64(peloton::type::PELOTON_TIMESTAMP_NULL);
+  auto *raw_val = codegen.Const64(peloton::type::PELOTON_VALUE_TIMESTAMP_NULL);
   return Value{Type{TypeId(), true}, raw_val, nullptr, codegen.ConstBool(true)};
 }
 

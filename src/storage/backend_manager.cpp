@@ -110,7 +110,7 @@ int is_cpu_genuine_intel(void) {
     unsigned cpuinfo[3];
   } vendor;
 
-  PL_MEMSET(&vendor, 0, sizeof(vendor));
+  PELOTON_MEMSET(&vendor, 0, sizeof(vendor));
 
   cpuid(0x0, 0x0, cpuinfo);
 

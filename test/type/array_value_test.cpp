@@ -40,14 +40,14 @@ int16_t RANDOM16() { return ((rand() % (SHRT_MAX * 2 - 1)) - (SHRT_MAX - 1)); }
 
 int32_t RANDOM32() {
   int32_t ret = (((size_t)(rand()) << 1) | ((size_t)(rand()) & 0x1));
-  if (ret != type::PELOTON_INT32_NULL) return ret;
+  if (ret != type::PELOTON_VALUE_INT32_NULL) return ret;
   return 1;
 }
 
 int64_t RANDOM64() {
   int64_t ret = (((size_t)(rand()) << 33) | ((size_t)(rand()) << 2) |
                  ((size_t)(rand()) & 0x3));
-  if (ret != type::PELOTON_INT64_NULL) return ret;
+  if (ret != type::PELOTON_VALUE_INT64_NULL) return ret;
   return 1;
 }
 

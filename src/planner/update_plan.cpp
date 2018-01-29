@@ -48,7 +48,7 @@ void UpdatePlan::PerformBinding(BindingContext &binding_context) {
   BindingContext input_context;
 
   const auto &children = GetChildren();
-  PL_ASSERT(children.size() == 1);
+  PELOTON_ASSERT(children.size() == 1);
 
   children[0]->PerformBinding(input_context);
 
@@ -88,7 +88,7 @@ bool UpdatePlan::operator==(const AbstractPlan &rhs) const {
   auto &other = static_cast<const planner::UpdatePlan &>(rhs);
   auto *table = GetTable();
   auto *other_table = other.GetTable();
-  PL_ASSERT(table && other_table);
+  PELOTON_ASSERT(table && other_table);
   if (*table != *other_table)
     return false;
 

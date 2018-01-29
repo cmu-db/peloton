@@ -951,7 +951,7 @@ TEST_F(PostgresParserTests, DataTypeTest) {
   auto column = create_stmt->columns.at(0).get();
   EXPECT_EQ("a", column->name);
   EXPECT_EQ(type::TypeId::VARCHAR, column->GetValueType(column->type));
-  EXPECT_EQ(peloton::type::PELOTON_TEXT_MAX_LEN, column->varlen);
+  EXPECT_EQ(peloton::type::PELOTON_VALUE_TEXT_MAX_LEN, column->varlen);
 
   // Check Second column
   column = create_stmt->columns.at(1).get();

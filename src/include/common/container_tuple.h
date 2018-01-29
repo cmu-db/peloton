@@ -55,7 +55,7 @@ class ContainerTuple : public AbstractTuple {
 
   /// \brief Get the value at the given column id
   type::Value GetValue(oid_t column_id) const override {
-    PL_ASSERT(container_ != nullptr);
+    PELOTON_ASSERT(container_ != nullptr);
     return container_->GetValue(tuple_id_, column_id);
   }
 
@@ -183,8 +183,8 @@ class ContainerTuple<std::vector<type::Value>> : public AbstractTuple {
 
   /// \brief Get the value at the given column id
   type::Value GetValue(oid_t column_id) const override {
-    PL_ASSERT(container_ != nullptr);
-    PL_ASSERT(column_id < container_->size());
+    PELOTON_ASSERT(container_ != nullptr);
+    PELOTON_ASSERT(column_id < container_->size());
 
     return (*container_)[column_id];
   }
@@ -212,7 +212,7 @@ class ContainerTuple<std::vector<type::Value>> : public AbstractTuple {
   /// schema of other tuple.Is the same as this. No check.
   bool EqualsNoSchemaCheck(
       const ContainerTuple<std::vector<type::Value>> &other) const {
-    PL_ASSERT(container_->size() == other.container_->size());
+    PELOTON_ASSERT(container_->size() == other.container_->size());
 
     for (size_t column_itr = 0; column_itr < container_->size(); column_itr++) {
       type::Value lhs = GetValue(column_itr);
@@ -258,7 +258,7 @@ class ContainerTuple<storage::TileGroup> : public AbstractTuple {
 
   /// \brief Get the value at the given column id
   type::Value GetValue(oid_t column_id) const override {
-    PL_ASSERT(container_ != nullptr);
+    PELOTON_ASSERT(container_ != nullptr);
     return container_->GetValue(tuple_id_, column_id);
   }
 

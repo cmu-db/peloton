@@ -47,20 +47,20 @@ class Tuple : public AbstractTuple {
   // Setup the tuple given a schema
   inline Tuple(const catalog::Schema *schema)
       : tuple_schema_(schema), tuple_data_(nullptr), allocated_(false) {
-    PL_ASSERT(tuple_schema_);
+    PELOTON_ASSERT(tuple_schema_);
   }
 
   // Setup the tuple given a schema and location
   inline Tuple(const catalog::Schema *schema, char *data)
       : tuple_schema_(schema), tuple_data_(data), allocated_(false) {
-    PL_ASSERT(tuple_schema_);
-    PL_ASSERT(tuple_data_);
+    PELOTON_ASSERT(tuple_schema_);
+    PELOTON_ASSERT(tuple_data_);
   }
 
   // Setup the tuple given a schema and allocate space
   inline Tuple(const catalog::Schema *schema, bool allocate)
       : tuple_schema_(schema), tuple_data_(nullptr), allocated_(allocate) {
-    PL_ASSERT(tuple_schema_);
+    PELOTON_ASSERT(tuple_schema_);
 
     if (allocated_) {
       // initialize heap allocation
@@ -234,8 +234,8 @@ class Tuple : public AbstractTuple {
 template <typename ColumnType>
 inline ColumnType Tuple::GetInlinedDataOfType(oid_t column_id) const {
   // The requested field must be inlined
-  PL_ASSERT(tuple_schema_->IsInlined(column_id) == true);
-  PL_ASSERT(column_id < GetColumnCount());
+  PELOTON_ASSERT(tuple_schema_->IsInlined(column_id) == true);
+  PELOTON_ASSERT(column_id < GetColumnCount());
 
   // Translates column ID into a pointer and converts it to the
   // requested type
@@ -247,8 +247,8 @@ inline ColumnType Tuple::GetInlinedDataOfType(oid_t column_id) const {
 
 // Setup the tuple given the specified data location and schema
 inline Tuple::Tuple(char *data, catalog::Schema *schema) {
-  PL_ASSERT(data);
-  PL_ASSERT(schema);
+  PELOTON_ASSERT(data);
+  PELOTON_ASSERT(schema);
 
   tuple_data_ = data;
   tuple_schema_ = schema;

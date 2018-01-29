@@ -49,7 +49,7 @@ class HyperLogLog {
 
   // Estimate relative error for HLL.
   inline double RelativeError() {
-    PL_ASSERT(register_count_ > 0);
+    PELOTON_ASSERT(register_count_ > 0);
     return 1.04 / std::sqrt(register_count_);
   }
 

@@ -201,7 +201,7 @@ void QueryToOperatorTransformer::Visit(parser::TableRef *node) {
           std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
       join_expr->PushChild(prev_expr);
       join_expr->PushChild(output_expr_);
-      PL_ASSERT(join_expr->Children().size() == 2);
+      PELOTON_ASSERT(join_expr->Children().size() == 2);
       prev_expr = join_expr;
     }
     output_expr_ = prev_expr;
@@ -350,7 +350,7 @@ void QueryToOperatorTransformer::Visit(expression::OperatorExpression *expr) {
     std::vector<expression::AbstractExpression *> select_list;
     if (GenerateSubquerytree(expr->GetModifiableChild(0), select_list) ==
         true) {
-      PL_ASSERT(!select_list.empty());
+      PELOTON_ASSERT(!select_list.empty());
 
       // Set the right child as the output of the subquery
       expr->SetExpressionType(ExpressionType::OPERATOR_IS_NOT_NULL);

@@ -69,28 +69,28 @@ TEST_F(TypeSQLTests, TypeLimitSQLTest) {
     os << "INSERT INTO " << table_name << " VALUES (1, ";
     switch (col_type) {
       case type::TypeId::BOOLEAN:
-        os << (int32_t)type::PELOTON_BOOLEAN_NULL;
+        os << (int32_t)type::PELOTON_VALUE_BOOLEAN_NULL;
         break;
       case type::TypeId::TINYINT:
-        os << (int32_t)type::PELOTON_INT8_NULL;
+        os << (int32_t)type::PELOTON_VALUE_INT8_NULL;
         break;
       case type::TypeId::SMALLINT:
-        os << type::PELOTON_INT16_NULL;
+        os << type::PELOTON_VALUE_INT16_NULL;
         break;
       case type::TypeId::INTEGER:
-        os << type::PELOTON_INT32_NULL;
+        os << type::PELOTON_VALUE_INT32_NULL;
         break;
       case type::TypeId::BIGINT:
-        os << type::PELOTON_INT64_NULL;
+        os << type::PELOTON_VALUE_INT64_NULL;
         break;
       case type::TypeId::DECIMAL:
-        os << type::PELOTON_DECIMAL_NULL;
+        os << type::PELOTON_VALUE_DECIMAL_NULL;
         break;
       case type::TypeId::TIMESTAMP:
-        os << type::PELOTON_TIMESTAMP_NULL;
+        os << type::PELOTON_VALUE_TIMESTAMP_NULL;
         break;
       case type::TypeId::DATE:
-        os << type::PELOTON_DATE_NULL;
+        os << type::PELOTON_VALUE_DATE_NULL;
         break;
       default: {
         // Nothing to do!
