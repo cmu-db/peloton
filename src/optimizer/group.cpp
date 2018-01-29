@@ -58,7 +58,7 @@ GroupExpression *Group::GetBestExpression(
     return std::get<1>(it->second);
   }
   LOG_TRACE("Didn't get best expression with properties %s",
-            properties.ToString().c_str());
+            properties->ToString().c_str());
   return nullptr;
 }
 
