@@ -907,8 +907,6 @@ void PostgresParser::ColumnDefTransform(ColumnDef *root, parser::CreateStatement
           value* attr_val =
                 reinterpret_cast<value*>(attr_cell->data.ptr_value);
           col->foreign_key_sink.emplace_back(attr_val->val.str);
-
-          LOG_ERROR("PK attr: %s\n", attr_val->val.str);
         }
         else
         {

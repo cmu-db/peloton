@@ -789,7 +789,9 @@ bool DataTable::CheckForeignKeyConstraints(
 
         // if this key doesn't exist in the refered column
         if (location_ptrs.size() == 0) {
-          LOG_DEBUG("The key does not exist in the sink table!\n");
+          LOG_DEBUG("The key: %s does not exist in table %s\n",
+                    key->GetInfo().c_str(),
+                    ref_table->GetInfo().c_str());
           return false;
         }
 
@@ -804,7 +806,11 @@ bool DataTable::CheckForeignKeyConstraints(
           VisibilityIdType::READ_ID);
 
         if (visibility != VisibilityType::OK) {
-          LOG_DEBUG("The tuple is not visible yet.\n");
+          LOG_DEBUG("The key: %s is not yet visible in table %s, visibility "
+                    "type: %s.\n",
+                    key->GetInfo().c_str(),
+                    ref_table->GetInfo().c_str(),
+                    VisibilityTypeToString(visibility).c_str());
           return false;
         }
 
