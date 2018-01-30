@@ -37,7 +37,7 @@ void *PrepareStatementTest(int port) {
   try {
     // forcing the factory to generate jdbc protocol handler
     pqxx::connection C(StringUtil::Format(
-        "host=127.0.0.1 port=%d user=postgres sslmode=disable", port));
+        "host=127.0.0.1 port=%d user=default_database sslmode=disable", port));
     LOG_INFO("[PrepareStatementTest] Connected to %s", C.dbname());
     pqxx::work txn1(C);
 

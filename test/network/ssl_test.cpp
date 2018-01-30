@@ -39,7 +39,7 @@ void *BasicTest(int port) {
   try {
     // forcing the factory to generate psql protocol handler
     pqxx::connection C(StringUtil::Format(
-        "host=127.0.0.1 port=%d user=postgres application_name=psql sslmode=require", port));
+        "host=127.0.0.1 port=%d user=default_database application_name=psql sslmode=require", port));
     pqxx::work txn1(C);
 
     peloton::network::ConnectionHandle *conn =
