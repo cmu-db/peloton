@@ -6,7 +6,7 @@
 //
 // Identification: src/include/parser/explain_statement.h
 //
-// Copyright (c) 2018, Pranav Kant
+// Copyright (c) 2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
