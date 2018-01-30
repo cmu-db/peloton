@@ -204,7 +204,7 @@ Transition ConnectionHandle::FillReadBuffer() {
   Transition result = Transition::NEED_DATA;
   ssize_t bytes_read = 0;
   bool done = false;
-  
+
   // reset buffer if all the contents have been read
   if (rbuf_->buf_ptr == rbuf_->buf_size) rbuf_->Reset();
 
@@ -454,7 +454,7 @@ ProcessResult ConnectionHandle::ProcessInitial() {
   }
   // We need to handle startup packet first
   //TODO(Tianyi): If other protocols are added, this need to be changed
-  bool result = protocol_handler_->ProcessInitialPacket(
+  bool result = protocol_handler_->ProcessInitialPackets(
     &initial_packet_, client_, ssl_able_, ssl_handshake_,
     finish_startup_packet_);
   // Clean up the initial_packet after finishing processing.
