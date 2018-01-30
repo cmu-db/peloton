@@ -13,16 +13,16 @@
 #pragma once
 
 #include <string>
-#include <utility>
 #include <unordered_map>
+#include <utility>
 
 #include <event2/buffer.h>
 #include <event2/bufferevent.h>
 #include <event2/event.h>
 #include <event2/listener.h>
 
-#include "common/logger.h"
 #include "common/exception.h"
+#include "common/logger.h"
 
 namespace peloton {
 namespace network {
@@ -86,5 +86,5 @@ class EventUtil {
                 "Error in event base dispatch");
   }
 };
-}
-}
+}  // namespace network
+}  // namespace peloton
