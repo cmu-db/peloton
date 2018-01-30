@@ -11,11 +11,11 @@
 //===----------------------------------------------------------------------===//
 
 #pragma once
-#include <unordered_map>
 #include <event2/buffer.h>
 #include <event2/bufferevent.h>
 #include <event2/event.h>
 #include <event2/listener.h>
+#include <unordered_map>
 
 #include <csignal>
 #include <cstdio>
@@ -30,13 +30,13 @@
 #include "common/exception.h"
 #include "common/logger.h"
 
-#include "network/connection_handler_task.h"
-#include "protocol_handler.h"
 #include "marshal.h"
+#include "network/connection_handler_task.h"
 #include "network_state.h"
+#include "protocol_handler.h"
 
-#include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <openssl/ssl.h>
 
 namespace peloton {
 namespace network {
@@ -58,7 +58,6 @@ namespace network {
  */
 class ConnectionHandle {
  public:
-
   /**
    * Update the existing event to listen to the passed flags
    */
@@ -212,12 +211,11 @@ class ConnectionHandle {
   bool ssl_handshake_ = false;
   bool finish_startup_packet_ = false;
   bool ssl_able_;
-  
+
   // TODO(Tianyi) hide this in protocol handler
   InputPacket initial_packet_;
 
-  short curr_event_flag_;           // current libevent event flag
-
+  short curr_event_flag_;  // current libevent event flag
 };
-}
-}
+}  // namespace network
+}  // namespace peloton

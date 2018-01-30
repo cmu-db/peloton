@@ -42,7 +42,6 @@
 #include "traffic_cop/traffic_cop.h"
 #include "type/value.h"
 #include "type/value_factory.h"
-#include "network/marshal.h"
 
 #define SSL_MESSAGE_VERNO 80877103
 #define PROTO_MAJOR_VERSION(x) (x >> 16)
@@ -709,9 +708,9 @@ size_t PostgresProtocolHandler::ReadParamValue(
         PL_ASSERT(param_values[param_idx].GetTypeId() != type::TypeId::INVALID);
       } else {
         // BINARY mode
-        PostgresValueType pg_value_type = static_cast<PostgresValueType>(param_types[param_idx]);
-        LOG_TRACE("Postgres Protocol Conversion [param_idx=%d]",
-                  param_idx);
+        PostgresValueType pg_value_type =
+            static_cast<PostgresValueType>(param_types[param_idx]);
+        LOG_TRACE("Postgres Protocol Conversion [param_idx=%d]", param_idx);
         switch (pg_value_type) {
           case PostgresValueType::TINYINT: {
             int8_t int_val = 0;
@@ -779,9 +778,10 @@ size_t PostgresProtocolHandler::ReadParamValue(
             break;
           }
           default: {
-            LOG_ERROR("Binary Postgres protocol does not support data type '%s' [%d]",
-                      PostgresValueTypeToString(pg_value_type).c_str(),
-                      param_types[param_idx]);
+            LOG_ERROR(
+                "Binary Postgres protocol does not support data type '%s' [%d]",
+                PostgresValueTypeToString(pg_value_type).c_str(),
+                param_types[param_idx]);
             break;
           }
         }
@@ -1053,7 +1053,9 @@ bool PostgresProtocolHandler::ReadPacket(Buffer &rbuf, InputPacket &rpkt) {
  * process_startup_packet - Processes the startup packet
  *  (after the size field of the header).
  */
-bool PostgresProtocolHandler::ProcessInitialPackets(InputPacket *pkt, Client client, bool ssl_able, bool& ssl_handshake, bool& finish_startup_packet) {
+bool PostgresProtocolHandler::ProcessInitialPackets(
+    InputPacket *pkt, Client client, bool ssl_able, bool &ssl_handshake,
+    bool &finish_startup_packet) {
   std::string token, value;
   std::unique_ptr<OutputPacket> response(new OutputPacket);
 
@@ -1065,22 +1067,26 @@ bool PostgresProtocolHandler::ProcessInitialPackets(InputPacket *pkt, Client cli
     LOG_DEBUG("process SSL MESSAGE");
     ProcessSSLRequestPacket(ssl_able, ssl_handshake);
     return true;
-  }
-  else {
+  } else {
     LOG_DEBUG("process startup packet");
-    return ProcessStartupPacket(pkt, proto_version, client, finish_startup_packet);
+    return ProcessStartupPacket(pkt, proto_version, client,
+                                finish_startup_packet);
   }
 }
 
-void PostgresProtocolHandler::ProcessSSLRequestPacket(bool ssl_able, bool& ssl_handshake) {
+void PostgresProtocolHandler::ProcessSSLRequestPacket(bool ssl_able,
+                                                      bool &ssl_handshake) {
   std::unique_ptr<OutputPacket> response(new OutputPacket());
   ssl_handshake = ssl_able;
-  response->msg_type = ssl_able ? NetworkMessageType::SSL_YES : NetworkMessageType::SSL_NO;
+  response->msg_type =
+      ssl_able ? NetworkMessageType::SSL_YES : NetworkMessageType::SSL_NO;
   responses.push_back(std::move(response));
   SetFlushFlag(true);
 }
 
-bool PostgresProtocolHandler::ProcessStartupPacket(InputPacket* pkt, int32_t proto_version, Client client, bool& finished_startup_packet) {
+bool PostgresProtocolHandler::ProcessStartupPacket(
+    InputPacket *pkt, int32_t proto_version, Client client,
+    bool &finished_startup_packet) {
   std::string token, value;
 
   // Only protocol version 3 is supported
@@ -1103,13 +1109,11 @@ bool PostgresProtocolHandler::ProcessStartupPacket(InputPacket* pkt, int32_t pro
       // loop end?
       if (pkt->ptr >= pkt->len) break;
       GetStringToken(pkt, client.user);
-    }
-    else {
+    } else {
       if (pkt->ptr >= pkt->len) break;
       GetStringToken(pkt, value);
       client.cmdline_options[token] = value;
     }
-
   }
   finished_startup_packet = true;
 
