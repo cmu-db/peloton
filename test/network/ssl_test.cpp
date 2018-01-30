@@ -73,7 +73,7 @@ void *BasicTest(int port) {
     txn3.commit();
 
     pqxx::work txn4(C);
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 1000; i++) {
       std::string s = "INSERT INTO template VALUES (" + std::to_string(i) + ")";
       txn4.exec(s);
     }
@@ -81,7 +81,7 @@ void *BasicTest(int port) {
     R = txn4.exec("SELECT * from template;");
     txn4.commit();
 
-    EXPECT_EQ(R.size(), 10);
+    EXPECT_EQ(R.size(), 1000);
 
   } catch (const std::exception &e) {
     LOG_INFO("[SSLTest] Exception occurred: %s", e.what());
