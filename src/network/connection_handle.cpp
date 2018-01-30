@@ -204,6 +204,26 @@ Transition ConnectionHandle::FillReadBuffer() {
   Transition result = Transition::NEED_DATA;
   ssize_t bytes_read = 0;
   bool done = false;
+  
+  // reset buffer if all the contents have been read
+  if (rbuf_->buf_ptr == rbuf_->buf_size) rbuf_->Reset();
+
+  // buf_ptr shouldn't overflow
+  PL_ASSERT(rbuf_->buf_ptr <= rbuf_->buf_size);
+
+  /* Do we have leftover data and are we at the end of the buffer?
+   * Move the data to the head of the buffer and clear out all the old data
+   * Note: The assumption here is that all the packets/headers till
+   *  rbuf_.buf_ptr have been fully processed
+   */
+  if (rbuf_->buf_ptr < rbuf_->buf_size && rbuf_->buf_size == rbuf_->GetMaxSize()) {
+    auto unprocessed_len = rbuf_->buf_size - rbuf_->buf_ptr;
+    // Move this data to the head of rbuf_1
+    std::memmove(rbuf_->GetPtr(0), rbuf_->GetPtr(rbuf_->buf_ptr), unprocessed_len);
+    // update pointers
+    rbuf_->buf_ptr = 0;
+    rbuf_->buf_size = unprocessed_len;
+  }
 
   // return explicitly
   while (done == false) {
