@@ -44,9 +44,13 @@ WrappedTuple &WrappedTuple::operator=(const WrappedTuple &o) {
 // BufferTuple() Proxy
 //===----------------------------------------------------------------------===//
 
-PROXY(BufferingConsumer) { DECLARE_METHOD(BufferTuple); };
+PROXY(BufferingConsumer) {
+  DECLARE_METHOD(BufferTuple);
+  DECLARE_METHOD(NotifyNumTasks);
+};
 
 DEFINE_METHOD(peloton::codegen, BufferingConsumer, BufferTuple);
+DEFINE_METHOD(peloton::codegen, BufferingConsumer, NotifyNumTasks);
 
 //===----------------------------------------------------------------------===//
 // BUFFERING CONSUMER
@@ -57,16 +61,34 @@ BufferingConsumer::BufferingConsumer(const std::vector<oid_t> &cols,
   for (oid_t col_id : cols) {
     output_ais_.push_back(context.Find(col_id));
   }
-  state.output = &tuples_;
+  state.outputs = &tuples_;
+  tuples_.resize(1);  // At least one task.
 }
 
 // Append the array of values (i.e., a tuple) into the consumer's buffer of
 // output tuples.
-void BufferingConsumer::BufferTuple(char *state, char *tuple,
-                                    uint32_t num_cols) {
-  BufferingState *buffer_state = reinterpret_cast<BufferingState *>(state);
-  buffer_state->output->emplace_back(
-      reinterpret_cast<peloton::type::Value *>(tuple), num_cols);
+void BufferingConsumer::BufferTuple(char *state, char *tuple, uint32_t num_cols,
+                                    uint64_t task_id) {
+  auto buffer_state = reinterpret_cast<BufferingState *>(state);
+  buffer_state->outputs->at(task_id)
+      .emplace_back(reinterpret_cast<peloton::type::Value *>(tuple), num_cols);
+}
+
+// When we know the number of tasks, initialize per-task buffer.
+void BufferingConsumer::NotifyNumTasks(char *state, size_t ntasks) {
+  auto buffer_state = reinterpret_cast<BufferingState *>(state);
+  buffer_state->outputs->resize(ntasks);
+}
+
+// Generate code that notifies the number of tasks.
+void BufferingConsumer::CodeGenNotifyNumTasks(CompilationContext &context,
+                                              llvm::Value *ntasks) {
+  auto &codegen = context.GetCodeGen();
+  auto &runtime_state = context.GetRuntimeState();
+
+  codegen.Call(
+      BufferingConsumerProxy::NotifyNumTasks,
+      {runtime_state.LoadStateValue(codegen, consumer_state_id_), ntasks});
 }
 
 // Create two pieces of state: a pointer to the output tuple vector and an
@@ -82,6 +104,7 @@ void BufferingConsumer::Prepare(CompilationContext &ctx) {
 // currently active output tuple. When all attributes have been written, we
 // call BufferTuple(...) to append the currently active tuple into the output.
 void BufferingConsumer::ConsumeResult(ConsumerContext &ctx,
+                                      llvm::Value *task_id,
                                       RowBatch::Row &row) const {
   auto &codegen = ctx.GetCodeGen();
   auto *tuple_buffer_ = codegen.AllocateBuffer(
@@ -135,7 +158,8 @@ void BufferingConsumer::ConsumeResult(ConsumerContext &ctx,
   // Append the tuple to the output buffer (by calling BufferTuple(...))
   auto *consumer_state = GetStateValue(ctx, consumer_state_id_);
   std::vector<llvm::Value *> args = {consumer_state, tuple_buffer_,
-                                     codegen.Const32(output_ais_.size())};
+                                     codegen.Const32(output_ais_.size()),
+                                     task_id};
   codegen.Call(BufferingConsumerProxy::BufferTuple, args);
 }
 

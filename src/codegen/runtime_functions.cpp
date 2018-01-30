@@ -79,19 +79,11 @@ storage::TileGroup *RuntimeFunctions::GetTileGroup(storage::DataTable *table,
 void RuntimeFunctions::FillPredicateArray(
     const expression::AbstractExpression *expr,
     storage::PredicateInfo *predicate_array) {
-  const std::vector<storage::PredicateInfo> *parsed_predicates;
-  parsed_predicates = expr->GetParsedPredicates();
-  size_t num_preds = parsed_predicates->size();
-  size_t i;
-  for (i = 0; i < num_preds; i++) {
-    predicate_array[i].col_id = (*parsed_predicates)[i].col_id;
-    predicate_array[i].comparison_operator =
-        (*parsed_predicates)[i].comparison_operator;
-    predicate_array[i].predicate_value =
-        (*parsed_predicates)[i].predicate_value;
+  const std::vector<storage::PredicateInfo> &parsed_predicates =
+      *expr->GetParsedPredicates();
+  for (size_t i = 0; i < parsed_predicates.size(); i++) {
+    predicate_array[i] = parsed_predicates[i];
   }
-  auto temp_expr = (expression::AbstractExpression *)expr;
-  temp_expr->ClearParsedPredicates();
 }
 
 //===----------------------------------------------------------------------===//

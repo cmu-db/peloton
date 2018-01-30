@@ -13,13 +13,10 @@
 #pragma once
 
 #include "worker_pool.h"
+#include "settings/settings_manager.h"
 
 namespace peloton {
 namespace threadpool {
-
-// TODO: tune these variables
-constexpr static size_t kDefaultTaskQueueSize = 32;
-constexpr static size_t kDefaultWorkerPoolSize = 4;
 
 /**
  * @brief Wrapper class for single queue and single pool.
@@ -28,8 +25,10 @@ constexpr static size_t kDefaultWorkerPoolSize = 4;
 class MonoQueuePool {
  public:
   MonoQueuePool()
-      : task_queue_(kDefaultTaskQueueSize),
-        worker_pool_(kDefaultWorkerPoolSize, &task_queue_),
+      : task_queue_(settings::SettingsManager::GetInt(
+            settings::SettingId::mono_queue_pool_num_tasks)),
+        worker_pool_(settings::SettingsManager::GetInt(
+            settings::SettingId::mono_queue_pool_num_workers), &task_queue_),
         is_running_(false) {}
 
   ~MonoQueuePool() {
@@ -37,6 +36,10 @@ class MonoQueuePool {
       Shutdown();
     }
   }
+
+  bool IsRunning() const { return is_running_; }
+
+  size_t NumWorkers() const { return worker_pool_.NumWorkers(); }
 
   void Startup() {
     worker_pool_.Startup();

@@ -51,7 +51,7 @@ class WrappedTuple : public ContainerTuple<std::vector<peloton::type::Value>> {
 class BufferingConsumer : public QueryResultConsumer {
  public:
   struct BufferingState {
-    std::vector<WrappedTuple> *output;
+    std::vector<std::vector<WrappedTuple>> *outputs;
   };
 
   // Constructor
@@ -61,7 +61,8 @@ class BufferingConsumer : public QueryResultConsumer {
   void Prepare(CompilationContext &compilation_context) override;
   void InitializeState(CompilationContext &) override {}
   void TearDownState(CompilationContext &) override {}
-  void ConsumeResult(ConsumerContext &ctx, RowBatch::Row &row) const override;
+  void ConsumeResult(ConsumerContext &ctx, llvm::Value *task_id,
+                     RowBatch::Row &row) const override;
 
   llvm::Value *GetStateValue(ConsumerContext &ctx,
                              const RuntimeState::StateID &id) const {
@@ -70,7 +71,14 @@ class BufferingConsumer : public QueryResultConsumer {
   }
 
   // Called from compiled query code to buffer the tuple
-  static void BufferTuple(char *state, char *tuple, uint32_t num_cols);
+  static void BufferTuple(char *state, char *tuple, uint32_t num_cols,
+                          uint64_t task_id);
+
+  // Called from compiled query code to prepare per-task buffer
+  static void NotifyNumTasks(char *state, size_t ntasks);
+
+  void CodeGenNotifyNumTasks(CompilationContext &context,
+                             llvm::Value *ntasks) final;
 
   //===--------------------------------------------------------------------===//
   // ACCESSORS
@@ -78,14 +86,29 @@ class BufferingConsumer : public QueryResultConsumer {
 
   char *GetConsumerState() final { return reinterpret_cast<char *>(&state); }
 
-  const std::vector<WrappedTuple> &GetOutputTuples() const { return tuples_; }
+  const std::vector<std::vector<WrappedTuple>> &GetOutputPartitions() const {
+    return tuples_;
+  }
+
+  const std::vector<WrappedTuple> &GetOutputTuples() const {
+    if (merged_outputs_.empty()) {
+      for (auto &partition : GetOutputPartitions()) {
+        for (auto &tuple : partition) {
+          merged_outputs_.push_back(tuple);
+        }
+      }
+    }
+    return merged_outputs_;
+  }
 
  private:
   // The attributes we want to output
   std::vector<const planner::AttributeInfo *> output_ais_;
 
   // Buffered output tuples
-  std::vector<WrappedTuple> tuples_;
+  std::vector<std::vector<WrappedTuple>> tuples_;
+
+  mutable std::vector<WrappedTuple> merged_outputs_;
 
   // Running buffering state
   BufferingState state;

@@ -16,6 +16,7 @@
 #include "codegen/pipeline.h"
 #include "codegen/row_batch.h"
 #include "codegen/runtime_state.h"
+#include "codegen/stage.h"
 
 namespace peloton {
 namespace codegen {
@@ -53,7 +54,7 @@ class OperatorTranslator {
   virtual void DefineAuxiliaryFunctions() = 0;
 
   // The method that produces new tuples
-  virtual void Produce() const = 0;
+  virtual std::vector<CodeGenStage> Produce() const = 0;
 
   // The method that consumes tuples from child operators
   virtual void Consume(ConsumerContext &context, RowBatch &batch) const;

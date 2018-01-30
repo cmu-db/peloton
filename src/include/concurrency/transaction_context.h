@@ -6,7 +6,7 @@
 //
 // Identification: src/include/concurrency/transaction_context.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-18, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -21,6 +21,7 @@
 #include "catalog/catalog_cache.h"
 #include "common/exception.h"
 #include "common/item_pointer.h"
+#include "common/platform.h"
 #include "common/printable.h"
 #include "common/internal_types.h"
 
@@ -38,44 +39,34 @@ namespace concurrency {
 //===--------------------------------------------------------------------===//
 
 class TransactionContext : public Printable {
-  TransactionContext(TransactionContext const &) = delete;
-
  public:
-  TransactionContext(const size_t thread_id, const IsolationLevelType isolation,
-              const cid_t &read_id);
+  TransactionContext(size_t thread_id, IsolationLevelType isolation,
+                     cid_t read_id);
 
-  TransactionContext(const size_t thread_id, const IsolationLevelType isolation,
-              const cid_t &read_id, const cid_t &commit_id);
+  TransactionContext(size_t thread_id, IsolationLevelType isolation,
+                     cid_t read_id, cid_t commit_id);
 
-  ~TransactionContext();
+  ~TransactionContext() final = default;
 
- private:
-  void Init(const size_t thread_id, const IsolationLevelType isolation,
-            const cid_t &read_id) {
-    Init(thread_id, isolation, read_id, read_id);
-  }
+  DISALLOW_COPY_AND_MOVE(TransactionContext);
 
-  void Init(const size_t thread_id, const IsolationLevelType isolation,
-            const cid_t &read_id, const cid_t &commit_id);
-
- public:
   //===--------------------------------------------------------------------===//
   // Mutators and Accessors
   //===--------------------------------------------------------------------===//
 
-  inline size_t GetThreadId() const { return thread_id_; }
+  size_t GetThreadId() const { return thread_id_; }
 
-  inline txn_id_t GetTransactionId() const { return txn_id_; }
+  txn_id_t GetTransactionId() const { return txn_id_; }
 
-  inline cid_t GetReadId() const { return read_id_; }
+  cid_t GetReadId() const { return read_id_; }
 
-  inline cid_t GetCommitId() const { return commit_id_; }
+  cid_t GetCommitId() const { return commit_id_; }
 
-  inline eid_t GetEpochId() const { return epoch_id_; }
+  eid_t GetEpochId() const { return epoch_id_; }
 
-  inline void SetCommitId(const cid_t commit_id) { commit_id_ = commit_id; }
+  void SetCommitId(cid_t commit_id) { commit_id_ = commit_id; }
 
-  inline void SetEpochId(const eid_t epoch_id) { epoch_id_ = epoch_id; }
+  void SetEpochId(eid_t epoch_id) { epoch_id_ = epoch_id; }
 
   void RecordCreate(oid_t database_oid, oid_t table_oid, oid_t index_oid) {
     rw_object_set_.emplace_back(database_oid, table_oid, index_oid,
@@ -86,6 +77,8 @@ class TransactionContext : public Printable {
     rw_object_set_.emplace_back(database_oid, table_oid, index_oid,
                                 DDLType::DROP);
   }
+
+  void RecordTouchTileGroup(oid_t tilegroup_id) { rw_set_[tilegroup_id]; }
 
   void RecordRead(const ItemPointer &);
 
@@ -117,35 +110,30 @@ class TransactionContext : public Printable {
     }
   }
 
-  inline const ReadWriteSet &GetReadWriteSet() { return rw_set_; }
-  inline const CreateDropSet &GetCreateDropSet() { return rw_object_set_; }
+  const ReadWriteSet &GetReadWriteSet() { return rw_set_; }
 
-  inline std::shared_ptr<GCSet> GetGCSetPtr() { return gc_set_; }
+  const CreateDropSet &GetCreateDropSet() { return rw_object_set_; }
 
-  inline std::shared_ptr<GCObjectSet> GetGCObjectSetPtr() {
-    return gc_object_set_;
-  }
+  std::shared_ptr<GCSet> GetGCSetPtr() { return gc_set_; }
 
-  inline bool IsGCSetEmpty() { return gc_set_->size() == 0; }
+  std::shared_ptr<GCObjectSet> GetGCObjectSetPtr() { return gc_object_set_; }
 
-  inline bool IsGCObjectSetEmpty() { return gc_object_set_->size() == 0; }
+  bool IsGCSetEmpty() { return gc_set_->empty(); }
+
+  bool IsGCObjectSetEmpty() { return gc_object_set_->empty(); }
 
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
   // Set result and status
-  inline void SetResult(ResultType result) { result_ = result; }
+  void SetResult(ResultType result) { result_ = result; }
 
   // Get result and status
-  inline ResultType GetResult() const { return result_; }
+  ResultType GetResult() const { return result_; }
 
-  inline bool IsReadOnly() const {
-    return is_written_ == false && insert_count_ == 0;
-  }
+  bool IsReadOnly() const { return !is_written_ && insert_count_ == 0; }
 
-  inline IsolationLevelType GetIsolationLevel() const {
-    return isolation_level_;
-  }
+  IsolationLevelType GetIsolationLevel() const { return isolation_level_; }
 
   // cache for table catalog objects
   catalog::CatalogCache catalog_cache;

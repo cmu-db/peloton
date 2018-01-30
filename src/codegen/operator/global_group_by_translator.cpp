@@ -13,6 +13,7 @@
 #include "codegen/operator/global_group_by_translator.h"
 
 #include "codegen/compilation_context.h"
+#include "codegen/function_builder.h"
 #include "codegen/lang/if.h"
 #include "common/logger.h"
 #include "planner/aggregate_plan.h"
@@ -68,45 +69,59 @@ void GlobalGroupByTranslator::InitializeState() {
   aggregation_.InitializeState(GetCodeGen());
 }
 
-void GlobalGroupByTranslator::Produce() const {
-  auto &codegen = GetCodeGen();
+std::vector<CodeGenStage> GlobalGroupByTranslator::Produce() const {
+  auto &cmp_ctx = GetCompilationContext();
+
+  std::vector<CodeGenStage> stages;
 
   // Initialize aggregation for global aggregation
-  auto *mat_buffer = LoadStatePtr(mat_buffer_id_);
-  aggregation_.CreateInitialGlobalValues(codegen, mat_buffer);
+  stages.push_back(cmp_ctx.SingleThreadedStage("GlobalGroupByInit", [this] {
+    auto &codegen = GetCodeGen();
+    auto *mat_buffer = LoadStatePtr(mat_buffer_id_);
+    aggregation_.CreateInitialGlobalValues(codegen, mat_buffer);
+  }));
 
   // Let the child produce tuples that we'll aggregate
-  GetCompilationContext().Produce(*plan_.GetChild(0));
+  std::vector<CodeGenStage> child_stages = cmp_ctx.Produce(*plan_.GetChild(0));
+  stages.insert(stages.end(), child_stages.begin(), child_stages.end());
 
-  // Deserialize the finalized aggregate attribute values from the buffer
-  std::vector<codegen::Value> aggregate_vals;
-  aggregation_.FinalizeValues(GetCodeGen(), mat_buffer, aggregate_vals);
+  stages.push_back(cmp_ctx.SingleThreadedStage("GlobalGroupBy", [this] {
+    auto &codegen = GetCodeGen();
 
-  std::vector<BufferAttributeAccess> buffer_accessors;
+    // Deserialize the finalized aggregate attribute values from the buffer
+    std::vector<codegen::Value> aggregate_vals;
+    auto *mat_buffer = LoadStatePtr(mat_buffer_id_);
+    aggregation_.FinalizeValues(GetCodeGen(), mat_buffer, aggregate_vals);
 
-  const auto &agg_terms = plan_.GetUniqueAggTerms();
-  PL_ASSERT(agg_terms.size() == aggregate_vals.size());
-  for (size_t i = 0; i < agg_terms.size(); i++) {
-    buffer_accessors.emplace_back(aggregate_vals, i);
-  }
+    std::vector<BufferAttributeAccess> buffer_accessors;
 
-  // Create a row-batch of one row, place all the attributes into the row
-  auto *raw_vec =
-      codegen.AllocateBuffer(codegen.Int32Type(), 1, "globalGroupBySelVector");
-  Vector selection_vector{raw_vec, 1, codegen.Int32Type()};
-  selection_vector.SetValue(codegen, codegen.Const32(0), codegen.Const32(0));
+    const auto &agg_terms = plan_.GetUniqueAggTerms();
+    PL_ASSERT(agg_terms.size() == aggregate_vals.size());
+    for (size_t i = 0; i < agg_terms.size(); i++) {
+      buffer_accessors.emplace_back(aggregate_vals, i);
+    }
 
-  RowBatch batch{GetCompilationContext(), codegen.Const32(0),
-                 codegen.Const32(1), selection_vector, false};
+    // Create a row-batch of one row, place all the attributes into the row
+    auto *raw_vec = codegen.AllocateBuffer(codegen.Int32Type(), 1,
+                                           "globalGroupBySelVector");
+    Vector selection_vector{raw_vec, 1, codegen.Int32Type()};
+    selection_vector.SetValue(codegen, codegen.Const32(0), codegen.Const32(0));
 
-  for (size_t i = 0; i < agg_terms.size(); i++) {
-    batch.AddAttribute(&agg_terms[i].agg_ai, &buffer_accessors[i]);
-  }
+    RowBatch batch{GetCompilationContext(), codegen.Const32(0),
+                   codegen.Const32(1), selection_vector, false};
 
-  // Create a new consumer context, put the aggregates into the context and send
-  // it all up to the parent operator
-  ConsumerContext context{GetCompilationContext(), GetPipeline()};
-  context.Consume(batch);
+    for (size_t i = 0; i < agg_terms.size(); i++) {
+      batch.AddAttribute(&agg_terms[i].agg_ai, &buffer_accessors[i]);
+    }
+
+    // Create a new consumer context, put the aggregates into the context and
+    // send it all up to the parent operator
+    ConsumerContext context{GetCompilationContext(), codegen.Const64(0),
+                            GetPipeline()};
+    context.Consume(batch);
+  }));
+
+  return stages;
 }
 
 void GlobalGroupByTranslator::Consume(ConsumerContext &,

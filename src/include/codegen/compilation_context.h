@@ -15,7 +15,6 @@
 #include <memory>
 #include <unordered_map>
 
-#include "codegen/auxiliary_producer_function.h"
 #include "codegen/code_context.h"
 #include "codegen/codegen.h"
 #include "codegen/expression/expression_translator.h"
@@ -59,7 +58,7 @@ class CompilationContext {
   void Prepare(const expression::AbstractExpression &expression);
 
   // Produce the tuples for the given operator
-  void Produce(const planner::AbstractPlan &op);
+  std::vector<CodeGenStage> Produce(const planner::AbstractPlan &op);
 
   // This is the main entry point into the compilation component. Callers
   // construct a compilation context, then invoke this method to compile
@@ -68,8 +67,18 @@ class CompilationContext {
 
   // Declare an extra function that produces tuples outside of the main plan
   // function. The primary producer in this function is the provided plan node.
-  AuxiliaryProducerFunction DeclareAuxiliaryProducer(
-      const planner::AbstractPlan &plan, const std::string &provided_name);
+  std::vector<llvm::Function *> *DeclareAuxiliaryProducer(
+      const planner::AbstractPlan &plan);
+
+  // Generate a single threaded stage. This stage has one function that takes
+  // one argument: the runtime state.
+  CodeGenStage SingleThreadedStage(const std::string &stage_name,
+                                   const std::function<void()> &body);
+
+  void RefreshParameterCache() {
+    parameter_cache_.Reset();
+    parameter_cache_.Populate(codegen_, GetQueryParametersPtr());
+  }
 
   //===--------------------------------------------------------------------===//
   // ACCESSORS
@@ -100,6 +109,8 @@ class CompilationContext {
     return parameters_map_.GetIndex(expression);
   }
 
+  bool Multithread() const { return multithread_; }
+
  private:
   // Generate any auxiliary helper functions that the query needs
   void GenerateHelperFunctions();
@@ -108,7 +119,8 @@ class CompilationContext {
   llvm::Function *GenerateInitFunction();
 
   // Generate the produce() function of the query
-  llvm::Function *GeneratePlanFunction(const planner::AbstractPlan &root);
+  std::vector<CodeGenStage> GeneratePlanFunction(
+      const planner::AbstractPlan &root);
 
   // Generate the tearDown() function of the query
   llvm::Function *GenerateTearDownFunction();
@@ -147,17 +159,18 @@ class CompilationContext {
 
   // The mapping of an operator in the tree to its translator
   std::unordered_map<const planner::AbstractPlan *,
-                     std::unique_ptr<OperatorTranslator>>
-      op_translators_;
+                     std::unique_ptr<OperatorTranslator>> op_translators_;
 
   // The mapping of an expression somewhere in the tree to its translator
   std::unordered_map<const expression::AbstractExpression *,
-                     std::unique_ptr<ExpressionTranslator>>
-      exp_translators_;
+                     std::unique_ptr<ExpressionTranslator>> exp_translators_;
 
   // Pre-declared producer functions and their root plan nodes
-  std::unordered_map<const planner::AbstractPlan *, FunctionDeclaration>
+  std::unordered_map<const planner::AbstractPlan *,
+                     std::unique_ptr<std::vector<llvm::Function *>>>
       auxiliary_producers_;
+
+  bool multithread_;
 };
 
 }  // namespace codegen

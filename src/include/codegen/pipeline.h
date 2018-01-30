@@ -49,6 +49,9 @@ class Pipeline {
   // Move to the next step in this pipeline
   const OperatorTranslator *NextStep();
 
+  // Peek what the next step is
+  const OperatorTranslator *PeekNextStep() const;
+
   uint32_t GetNumStages() const;
   uint32_t GetTranslatorStage(const OperatorTranslator *translator) const;
 

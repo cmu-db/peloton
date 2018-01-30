@@ -211,33 +211,40 @@ void OrderByTranslator::DefineAuxiliaryFunctions() {
   compare_func_ = compare.GetFunction();
 }
 
-void OrderByTranslator::Produce() const {
+std::vector<CodeGenStage> OrderByTranslator::Produce() const {
   LOG_DEBUG("OrderBy requesting child to produce tuples ...");
 
+  auto &cmp_ctx = GetCompilationContext();
+
   // Let the child produce the tuples we materialize into a buffer
-  GetCompilationContext().Produce(*plan_.GetChild(0));
+  std::vector<CodeGenStage> stages = cmp_ctx.Produce(*plan_.GetChild(0));
 
-  LOG_DEBUG("OrderBy buffered tuples into sorter, going to sort ...");
+  stages.push_back(cmp_ctx.SingleThreadedStage("OrderBy", [this] {
+    auto &codegen = GetCodeGen();
 
-  auto &codegen = GetCodeGen();
-  auto *sorter_ptr = LoadStatePtr(sorter_id_);
+    LOG_DEBUG("OrderBy buffered tuples into sorter, going to sort ...");
 
-  // The tuples have been materialized into the buffer space, NOW SORT!!!
-  sorter_.Sort(codegen, sorter_ptr);
+    auto *sorter_ptr = LoadStatePtr(sorter_id_);
 
-  LOG_DEBUG("OrderBy sort complete, iterating over results ...");
+    // The tuples have been materialized into the buffer space, NOW SORT!!!
+    sorter_.Sort(codegen, sorter_ptr);
 
-  // Now iterate over the sorted list
-  auto *raw_vec = codegen.AllocateBuffer(
-      codegen.Int32Type(), Vector::kDefaultVectorSize, "orderBySelVec");
-  Vector selection_vector{raw_vec, Vector::kDefaultVectorSize,
-                          codegen.Int32Type()};
+    LOG_DEBUG("OrderBy sort complete, iterating over results ...");
 
-  ProduceResults callback{*this, selection_vector};
-  sorter_.VectorizedIterate(codegen, sorter_ptr, selection_vector.GetCapacity(),
-                            callback);
+    // Now iterate over the sorted list
+    auto *raw_vec = codegen.AllocateBuffer(
+        codegen.Int32Type(), Vector::kDefaultVectorSize, "orderBySelVec");
+    Vector selection_vector{raw_vec, Vector::kDefaultVectorSize,
+                            codegen.Int32Type()};
 
-  LOG_DEBUG("OrderBy completed producing tuples ...");
+    ProduceResults callback{*this, selection_vector};
+    sorter_.VectorizedIterate(codegen, sorter_ptr,
+                              selection_vector.GetCapacity(), callback);
+
+    LOG_DEBUG("OrderBy completed producing tuples ...");
+  }));
+
+  return stages;
 }
 
 void OrderByTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
@@ -295,6 +302,7 @@ void OrderByTranslator::ProduceResults::ProcessEntries(
 
   // Create the context and send the batch up
   ConsumerContext context{translator_.GetCompilationContext(),
+                          translator_.GetCodeGen().Const64(0),
                           translator_.GetPipeline()};
   context.Consume(batch);
 }

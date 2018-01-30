@@ -48,7 +48,7 @@ static void CompileAndExecutePlan(
   // Prepare output buffer
   std::vector<oid_t> columns;
   plan->GetOutputColumns(columns);
-  codegen::BufferingConsumer consumer{columns, context};
+  auto consumer = new codegen::BufferingConsumer(columns, context);
 
   std::unique_ptr<executor::ExecutorContext> executor_context(
       new executor::ExecutorContext(txn,
@@ -59,26 +59,30 @@ static void CompileAndExecutePlan(
   if (query == nullptr) {
     codegen::QueryCompiler compiler;
     auto compiled_query = compiler.Compile(
-        *plan, executor_context->GetParams().GetQueryParametersMap(), consumer);
+        *plan, executor_context->GetParams().GetQueryParametersMap(),
+        *consumer);
     query = compiled_query.get();
     codegen::QueryCache::Instance().Add(plan, std::move(compiled_query));
   }
 
   auto on_query_result =
-      [&on_complete, &consumer](executor::ExecutionResult result) {
+      [on_complete, consumer](executor::ExecutionResult result) {
         std::vector<ResultValue> values;
-        for (const auto &tuple : consumer.GetOutputTuples()) {
-          for (uint32_t i = 0; i < tuple.tuple_.size(); i++) {
-            auto column_val = tuple.GetValue(i);
-            auto str = column_val.IsNull() ? "" : column_val.ToString();
-            LOG_TRACE("column content: [%s]", str.c_str());
-            values.push_back(std::move(str));
+        for (const auto &partition : consumer->GetOutputPartitions()) {
+          for (const auto &tuple : partition) {
+            for (uint32_t i = 0; i < tuple.tuple_.size(); i++) {
+              auto column_val = tuple.GetValue(i);
+              auto str = column_val.IsNull() ? "" : column_val.ToString();
+              LOG_TRACE("column content: [%s]", str.c_str());
+              values.push_back(std::move(str));
+            }
           }
         }
         on_complete(result, std::move(values));
+        delete consumer;
       };
 
-  query->Execute(std::move(executor_context), consumer, on_query_result);
+  query->Execute(std::move(executor_context), *consumer, on_query_result);
 }
 
 static void InterpretPlan(

@@ -24,13 +24,18 @@ class CountingConsumer : public codegen::QueryResultConsumer {
  public:
   void Prepare(codegen::CompilationContext &compilation_context) override;
   void InitializeState(codegen::CompilationContext &context) override;
-  void ConsumeResult(codegen::ConsumerContext &context,
+  void ConsumeResult(codegen::ConsumerContext &context, llvm::Value *task_id,
                      codegen::RowBatch::Row &row) const override;
   void TearDownState(codegen::CompilationContext &) override {}
 
   uint64_t GetCount() const { return counter_; }
   void ResetCount() { counter_ = 0; }
   char *GetConsumerState() final { return reinterpret_cast<char *>(&counter_); }
+
+  void CodeGenNotifyNumTasks(UNUSED_ATTRIBUTE CompilationContext &context,
+                             UNUSED_ATTRIBUTE llvm::Value *ntasks) final {
+    PL_ASSERT(false && "Not Implemented");
+  }
 
  private:
   llvm::Value *GetCounterState(codegen::CodeGen &codegen,

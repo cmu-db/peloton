@@ -125,8 +125,8 @@ void BlockNestedLoopJoinTranslator::InitializeState() {
 void BlockNestedLoopJoinTranslator::DefineAuxiliaryFunctions() {
   const auto &right_producer = *GetPlan().GetChild(1);
   auto &compilation_context = GetCompilationContext();
-  join_buffer_func_ = compilation_context.DeclareAuxiliaryProducer(
-      right_producer, "joinBuffer");
+  join_buffer_func_ =
+      compilation_context.DeclareAuxiliaryProducer(right_producer);
 }
 
 void BlockNestedLoopJoinTranslator::TearDownState() {
@@ -140,21 +140,29 @@ std::string BlockNestedLoopJoinTranslator::GetName() const {
                             (max_buffer_size / 1024.0), max_buf_rows_);
 }
 
-void BlockNestedLoopJoinTranslator::Produce() const {
-  // Let the left child produce tuples we'll batch-process in Consume()
-  GetCompilationContext().Produce(*GetPlan().GetChild(0));
+std::vector<CodeGenStage> BlockNestedLoopJoinTranslator::Produce() const {
+  auto &cmp_ctx = GetCompilationContext();
 
-  // Flush any remaining buffered tuples through the join
-  auto &codegen = GetCodeGen();
-  auto *num_tuples =
-      buffer_.GetNumberOfStoredTuples(codegen, LoadStatePtr(buffer_id_));
-  lang::If has_tuples{codegen,
-                      codegen->CreateICmpUGT(num_tuples, codegen.Const32(0))};
-  {
-    // Flush remaining
-    join_buffer_func_.Call(codegen);
-  }
-  has_tuples.EndIf();
+  std::vector<CodeGenStage> stages = cmp_ctx.Produce(*GetPlan().GetChild(0));
+
+  stages.push_back(cmp_ctx.SingleThreadedStage("BNLJ", [this] {
+    auto &codegen = GetCodeGen();
+
+    // Flush any remaining buffered tuples through the join
+    auto *num_tuples =
+        buffer_.GetNumberOfStoredTuples(codegen, LoadStatePtr(buffer_id_));
+    lang::If has_tuples{codegen,
+                        codegen->CreateICmpUGT(num_tuples, codegen.Const32(0))};
+    {
+      // Flush remaining
+      for (auto func : *join_buffer_func_) {
+        codegen.CallFunc(func, {codegen.GetState()});
+      }
+    }
+    has_tuples.EndIf();
+  }));
+
+  return stages;
 }
 
 bool BlockNestedLoopJoinTranslator::IsFromLeftChild(
@@ -183,7 +191,9 @@ void BlockNestedLoopJoinTranslator::ConsumeFromLeft(
   lang::If flush_buffer{codegen, flush_buffer_cond};
   {
     // Process and reset buffer
-    join_buffer_func_.Call(codegen);
+    for (auto func : *join_buffer_func_) {
+      codegen.CallFunc(func, {codegen.GetState()});
+    }
     buffer_.Reset(codegen, buffer_ptr);
   }
   flush_buffer.EndIf();

@@ -40,11 +40,10 @@ void DeleteTranslator::InitializeState() {
 
   // Get the table pointer
   storage::DataTable *table = delete_plan_.GetTable();
-  llvm::Value *table_ptr =
-      codegen.Call(StorageManagerProxy::GetTableWithOid,
-                   {GetStorageManagerPtr(),
-                    codegen.Const32(table->GetDatabaseOid()),
-                    codegen.Const32(table->GetOid())});
+  llvm::Value *table_ptr = codegen.Call(
+      StorageManagerProxy::GetTableWithOid,
+      {GetStorageManagerPtr(), codegen.Const32(table->GetDatabaseOid()),
+       codegen.Const32(table->GetOid())});
 
   llvm::Value *executor_ptr = GetCompilationContext().GetExecutorContextPtr();
 
@@ -53,9 +52,9 @@ void DeleteTranslator::InitializeState() {
   codegen.Call(DeleterProxy::Init, {deleter, table_ptr, executor_ptr});
 }
 
-void DeleteTranslator::Produce() const {
+std::vector<CodeGenStage> DeleteTranslator::Produce() const {
   // Call Produce() on our child (a scan), to produce the tuples we'll delete
-  GetCompilationContext().Produce(*delete_plan_.GetChild(0));
+  return GetCompilationContext().Produce(*delete_plan_.GetChild(0));
 }
 
 void DeleteTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {

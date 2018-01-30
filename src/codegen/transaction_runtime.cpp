@@ -71,21 +71,20 @@ bool TransactionRuntime::IsOwner(concurrency::TransactionContext &txn,
                                  uint32_t tuple_offset) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   bool is_owner = txn_manager.IsOwner(&txn, tile_group_header, tuple_offset);
-  bool is_written = txn_manager.IsWritten(&txn, tile_group_header,
-                                          tuple_offset);
+  bool is_written =
+      txn_manager.IsWritten(&txn, tile_group_header, tuple_offset);
   PL_ASSERT((is_owner == false && is_written == true) == false);
-  if (is_owner == true && is_written == true)
-    return true;
+  if (is_owner == true && is_written == true) return true;
   return false;
 }
 
-bool TransactionRuntime::AcquireOwnership(concurrency::TransactionContext &txn,
+bool TransactionRuntime::AcquireOwnership(
+    concurrency::TransactionContext &txn,
     storage::TileGroupHeader *tile_group_header, uint32_t tuple_offset) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   bool is_owner = txn_manager.IsOwner(&txn, tile_group_header, tuple_offset);
-  bool is_ownable = is_owner ||
-                    txn_manager.IsOwnable(&txn, tile_group_header,
-                                          tuple_offset);
+  bool is_ownable =
+      is_owner || txn_manager.IsOwnable(&txn, tile_group_header, tuple_offset);
   if (is_ownable == false) {
     // transaction should be aborted as we cannot update the latest version.
     LOG_TRACE("Not ownable. Fail to update tuple. Txn failure.");
@@ -94,9 +93,9 @@ bool TransactionRuntime::AcquireOwnership(concurrency::TransactionContext &txn,
   }
 
   // If the tuple is not owned by any other txn and is ownable to me
-  bool acquired = is_owner ||
-                  txn_manager.AcquireOwnership(&txn, tile_group_header,
-                                               tuple_offset);
+  bool acquired =
+      is_owner ||
+      txn_manager.AcquireOwnership(&txn, tile_group_header, tuple_offset);
   if (acquired == false) {
     LOG_TRACE("Cannot acquire ownership. Fail to update tuple. Txn failure.");
     txn_manager.SetTransactionResult(&txn, ResultType::FAILURE);
@@ -105,12 +104,13 @@ bool TransactionRuntime::AcquireOwnership(concurrency::TransactionContext &txn,
   return true;
 }
 
-void TransactionRuntime::YieldOwnership(concurrency::TransactionContext &txn,
+void TransactionRuntime::YieldOwnership(
+    concurrency::TransactionContext &txn,
     storage::TileGroupHeader *tile_group_header, uint32_t tuple_offset) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   bool is_owner = txn_manager.IsOwner(&txn, tile_group_header, tuple_offset);
   if (is_owner == false) {
-      txn_manager.YieldOwnership(&txn, tile_group_header, tuple_offset);
+    txn_manager.YieldOwnership(&txn, tile_group_header, tuple_offset);
   }
   txn_manager.SetTransactionResult(&txn, ResultType::FAILURE);
 }

@@ -34,6 +34,8 @@ class WorkerPool {
         should_shutdown_(false),
         task_queue_(task_queue) {}
 
+  size_t NumWorkers() const { return num_workers_; }
+
   void Startup() {
     for (size_t i = 0; i < num_workers_; i++) {
       workers_.emplace_back(WorkerFunc, &should_shutdown_, task_queue_);

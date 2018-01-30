@@ -13,6 +13,7 @@
 #include "codegen/operator/hash_group_by_translator.h"
 
 #include "codegen/compilation_context.h"
+#include "codegen/function_builder.h"
 #include "codegen/proxy/oa_hash_table_proxy.h"
 #include "codegen/operator/projection_translator.h"
 #include "codegen/lang/vectorized_loop.h"
@@ -98,24 +99,29 @@ void HashGroupByTranslator::InitializeState() {
 }
 
 // Produce!
-void HashGroupByTranslator::Produce() const {
-  auto &comp_ctx = GetCompilationContext();
-
-  // Let the child produce its tuples which we aggregate in our hash-table
-  comp_ctx.Produce(*group_by_.GetChild(0));
-
-  LOG_DEBUG("HashGroupBy starting to produce results ...");
-
+std::vector<CodeGenStage> HashGroupByTranslator::Produce() const {
+  auto &cmp_ctx = GetCompilationContext();
   auto &codegen = GetCodeGen();
 
-  // Iterate over the hash table, sending tuples up the tree
-  auto *raw_vec = codegen.AllocateBuffer(
-      codegen.Int32Type(), Vector::kDefaultVectorSize, "hashGroupBySelVector");
-  Vector selection_vec{raw_vec, Vector::kDefaultVectorSize,
-                       GetCodeGen().Int32Type()};
-  ProduceResults producer{*this};
-  hash_table_.VectorizedIterate(GetCodeGen(), LoadStatePtr(hash_table_id_),
-                                selection_vec, producer);
+  // Let the child produce its tuples which we aggregate in the hash table.
+  std::vector<CodeGenStage> stages = cmp_ctx.Produce(*group_by_.GetChild(0));
+
+  // Iterate over the hash table to group elements.
+  stages.push_back(cmp_ctx.SingleThreadedStage("HashGroupBy", [&] {
+    LOG_DEBUG("HashGroupBy starting to produce results ...");
+
+    // Iterate over the hash table, sending tuples up the tree
+    auto *raw_vec =
+        codegen.AllocateBuffer(codegen.Int32Type(), Vector::kDefaultVectorSize,
+                               "hashGroupBySelVector");
+    Vector selection_vec{raw_vec, Vector::kDefaultVectorSize,
+                         GetCodeGen().Int32Type()};
+    ProduceResults producer{*this};
+    hash_table_.VectorizedIterate(GetCodeGen(), LoadStatePtr(hash_table_id_),
+                                  selection_vec, producer);
+  }));
+
+  return stages;
 }
 
 void HashGroupByTranslator::Consume(ConsumerContext &context,
@@ -361,6 +367,7 @@ void HashGroupByTranslator::ProduceResults::ProcessEntries(
 
   // Row batch is set up, send it up
   ConsumerContext context{translator_.GetCompilationContext(),
+                          translator_.GetCodeGen().Const64(0),
                           translator_.GetPipeline()};
 
   auto *predicate = group_by.GetPredicate();

@@ -82,11 +82,13 @@ class PelotonCodeGenTest : public PelotonTest {
   static void ExecuteSync(
       codegen::Query &query,
       std::unique_ptr<executor::ExecutorContext> executor_context,
-      codegen::QueryResultConsumer &consumer);
+      codegen::QueryResultConsumer &consumer,
+      codegen::Query::RuntimeStats *stats = nullptr);
 
   // Compile and execute the given plan
   codegen::QueryCompiler::CompileStats CompileAndExecute(
-      planner::AbstractPlan &plan, codegen::QueryResultConsumer &consumer);
+      planner::AbstractPlan &plan, codegen::QueryResultConsumer &consumer,
+      codegen::Query::RuntimeStats *stats = nullptr);
 
   codegen::QueryCompiler::CompileStats CompileAndExecuteCache(
       std::shared_ptr<planner::AbstractPlan> plan,
@@ -135,8 +137,14 @@ class Printer : public codegen::QueryResultConsumer {
   void InitializeState(codegen::CompilationContext &) override {}
   void TearDownState(codegen::CompilationContext &) override {}
   // Use
-  void ConsumeResult(codegen::ConsumerContext &ctx,
+  void ConsumeResult(codegen::ConsumerContext &ctx, llvm::Value *task_id,
                      codegen::RowBatch::Row &) const override;
+
+  void CodeGenNotifyNumTasks(
+      UNUSED_ATTRIBUTE codegen::CompilationContext &context,
+      UNUSED_ATTRIBUTE llvm::Value *ntasks) final {
+    PL_ASSERT(false && "Not Implemented");
+  }
 
  private:
   std::vector<const planner::AttributeInfo *> ais_;
