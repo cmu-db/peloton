@@ -19,12 +19,12 @@
 #include <vector>
 
 #include "common/cache.h"
+#include "common/internal_types.h"
 #include "common/portal.h"
 #include "common/statement.h"
 #include "common/statement_cache.h"
-#include "traffic_cop/traffic_cop.h"
 #include "protocol_handler.h"
-#include "common/internal_types.h"
+#include "traffic_cop/traffic_cop.h"
 
 // Packet content macros
 #define NULL_CONTENT_SIZE -1
@@ -78,13 +78,15 @@ class PostgresProtocolHandler : public ProtocolHandler {
   static bool ReadPacket(Buffer &rbuf, InputPacket &rpkt);
 
   /* Routine to deal with the first packet from the client */
-  bool ProcessInitialPackets(InputPacket* pkt, Client client, bool ssl_able, bool& ssl_sent, bool& finish_startup_packet);
+  bool ProcessInitialPackets(InputPacket *pkt, Client client, bool ssl_able,
+                             bool &ssl_sent, bool &finish_startup_packet);
 
   /* Routine to deal with SSL request message */
-  void ProcessSSLRequestPacket(bool ssl_able, bool& ssl_handshake);
+  void ProcessSSLRequestPacket(bool ssl_able, bool &ssl_handshake);
 
   /* Routine to deal with general Startup message */
-  bool ProcessStartupPacket(InputPacket* pkt, int32_t proto_version, Client client, bool& finish_startup_packet);
+  bool ProcessStartupPacket(InputPacket *pkt, int32_t proto_version,
+                            Client client, bool &finish_startup_packet);
 
   bool GetFinishedStartupPacket();
 
@@ -111,7 +113,7 @@ class PostgresProtocolHandler : public ProtocolHandler {
 
   // Used to send a packet that indicates the completion of a query. Also has
   // txn state mgmt
-  void CompleteCommand(const QueryType& query_type, int rows);
+  void CompleteCommand(const QueryType &query_type, int rows);
 
   // Specific response for empty or NULL queries
   void SendEmptyQueryResponse();
