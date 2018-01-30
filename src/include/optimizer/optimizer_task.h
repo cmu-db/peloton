@@ -15,7 +15,13 @@
 #include <memory>
 #include <vector>
 
+#include "expression/abstract_expression.h"
+#include "common/internal_types.h"
+
 namespace peloton {
+namespace expression {
+class AbstractExpression;
+}
 namespace optimizer {
 
 class OptimizeContext;
@@ -37,6 +43,7 @@ enum class OptimizerTaskType {
   EXPLORE_EXPR,
   APPLY_RULE,
   OPTIMIZE_INPUTS,
+  DERIVE_STATS,
   REWRITE_EXPR,
   APPLY_REWIRE_RULE,
   TOP_DOWN_REWRITE,
@@ -206,6 +213,32 @@ class OptimizeInputs : public OptimizerTask {
   int cur_child_idx_ = -1;
   int pre_child_idx_ = -1;
   int cur_prop_pair_idx_ = 0;
+};
+
+/**
+ * @brief Derive the stats needed to cost a group expression, will check if the
+ * child group have the stats, if not, recursively derive the stats. This would
+ * lazily collect the stats for the column needed
+ */
+class DeriveStats : public OptimizerTask {
+ public:
+  DeriveStats(GroupExpression *gexpr,
+              ExprSet required_cols,
+              std::shared_ptr<OptimizeContext> context)
+      : OptimizerTask(context, OptimizerTaskType::DERIVE_STATS),
+        gexpr_(gexpr),
+        required_cols_(required_cols) {}
+
+  DeriveStats(DeriveStats *task)
+      : OptimizerTask(task->context_, OptimizerTaskType::DERIVE_STATS),
+        gexpr_(task->gexpr_),
+        required_cols_(task->required_cols_) {}
+
+  virtual void execute() override;
+
+ private:
+  GroupExpression *gexpr_;
+  ExprSet required_cols_;
 };
 
 /**

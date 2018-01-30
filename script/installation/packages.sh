@@ -78,6 +78,33 @@ if [ "$DISTRO" = "UBUNTU" ]; then
         postgresql-client
 
 ## ------------------------------------------------
+## DEBIAN
+## ------------------------------------------------
+elif [ "$DISTRO" = "DEBIAN OS" ]; then
+    sudo apt-get -qq --ignore-missing -y install \
+        git \
+        g++ \
+        clang \
+        cmake \
+        libgflags-dev \
+        libprotobuf-dev \
+        protobuf-compiler \
+        bison \
+        flex \
+        libevent-dev \
+        libboost-dev \
+        libboost-thread-dev \
+        libboost-filesystem-dev \
+        libjemalloc-dev \
+        libssl-dev \
+        valgrind \
+        lcov \
+        libpqxx-dev \
+        llvm-dev \
+        libedit-dev \
+        postgresql-client
+
+## ------------------------------------------------
 ## FEDORA
 ## ------------------------------------------------
 elif [[ "$DISTRO" == *"FEDORA"* ]]; then
@@ -147,7 +174,7 @@ elif [[ "$DISTRO" == *"REDHAT"* ]] && [[ "${DISTRO_VER%.*}" == "7" ]]; then
         git \
         gcc-c++ \
         make \
-        cmake \
+        cmake3 \
         flex \
         bison \
         libevent-devel \

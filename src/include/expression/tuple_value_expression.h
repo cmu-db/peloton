@@ -138,6 +138,13 @@ class TupleValueExpression : public AbstractExpression {
 
   std::string GetColumnName() const { return col_name_; }
 
+  std::string GetColFullName() const {
+    if (!table_name_.empty()) {
+      return table_name_ + "." + col_name_;
+    }
+    return col_name_;
+  }
+
   void SetTableName(std::string table_alias) { table_name_ = table_alias; }
 
   void SetColName(std::string col_name) { col_name_ = col_name; }
