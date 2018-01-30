@@ -95,7 +95,7 @@ DEF_TRANSITION_GRAPH
 
   DEFINE_STATE(PROCESS) 
     ON(PROCEED) SET_STATE_TO(WRITE) AND_INVOKE(ProcessWrite)
-    ON(NEED_DATA) SET_STATE_TO(PROCESS) AND_INVOKE(Process)
+    ON(NEED_DATA) SET_STATE_TO(READ) AND_INVOKE(FillReadBuffer)
     ON(GET_RESULT) SET_STATE_TO(GET_RESULT) AND_WAIT
     ON(FINISH) SET_STATE_TO(CLOSING) AND_INVOKE(CloseSocket)
   END_DEF
@@ -216,14 +216,6 @@ Transition ConnectionHandle::FillReadBuffer() {
       // we use general read function
       if (conn_SSL_context != nullptr) {
         ERR_clear_error();
-        // TODO(Yuchen): For the transparent negotiation to succeed, the ssl must have been
-        // initialized to client or server mode?
-        // Only when the whole SSL record has been received and processed completely,
-        // SSL_read() will return reporting success.
-        // Special case would be: SSL_read() reads the whole SSL record from the network buffer.
-        // The network buffer becomes empty and data is in SSL buffer. We can't rely on
-        // libevent read event since the system does not know about the SSL buffer. We need to
-        // call SSL_pending() to check manually. (See StateMachine)
         bytes_read = SSL_read(conn_SSL_context, rbuf_->GetPtr(rbuf_->buf_size),
                               rbuf_->GetMaxSize() - rbuf_->buf_size);
         LOG_TRACE("SSL read successfully");
@@ -282,7 +274,6 @@ Transition ConnectionHandle::FillReadBuffer() {
         } else if (bytes_read == 0) {
           return Transition::FINISH;
         } else if (bytes_read < 0) {
-          LOG_ERROR("Error writing: %s", strerror(errno));
           // Nothing in the network pipe now
           if (errno == EAGAIN || errno == EWOULDBLOCK) {
             // return whatever results we have
@@ -292,6 +283,7 @@ Transition ConnectionHandle::FillReadBuffer() {
             continue;
           } else {
             // some other error occured
+            LOG_ERROR("Error writing: %s", strerror(errno));
             throw NetworkProcessException("Error when filling read buffer " +
                                           std::to_string(errno));
           }
