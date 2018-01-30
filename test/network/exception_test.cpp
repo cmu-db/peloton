@@ -41,7 +41,7 @@ void *ParserExceptionTest(int port) {
   try {
     // forcing the factory to generate psql protocol handler
     pqxx::connection C(StringUtil::Format(
-        "host=127.0.0.1 port=%d user=postgres sslmode=disable application_name=psql", port));
+        "host=127.0.0.1 port=%d user=default_database sslmode=disable application_name=psql", port));
 
     peloton::network::ConnectionHandle *conn =
         peloton::network::ConnectionHandleFactory::GetInstance().ConnectionHandleAt(
