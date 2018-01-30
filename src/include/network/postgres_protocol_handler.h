@@ -23,6 +23,8 @@
 #include "common/portal.h"
 #include "common/statement.h"
 #include "common/statement_cache.h"
+#include "traffic_cop/traffic_cop.h"
+#include "parser/postgresparser.h"
 #include "protocol_handler.h"
 #include "traffic_cop/traffic_cop.h"
 
@@ -160,6 +162,9 @@ class PostgresProtocolHandler : public ProtocolHandler {
 
   /* Execute a Simple query protocol message */
   ProcessResult ExecQueryMessage(InputPacket *pkt, const size_t thread_id);
+
+  /* Execute a EXPLAIN query message */
+  ResultType ExecQueryExplain(const std::string& query, parser::ExplainStatement* explain_stmt);
 
   /* Process the PARSE message of the extended query protocol */
   void ExecParseMessage(InputPacket *pkt);

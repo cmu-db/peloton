@@ -223,29 +223,7 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(
       return ProcessResult::COMPLETE;
     };
     case QueryType::QUERY_EXPLAIN: {
-      parser::ExplainStatement *explain_stmt =
-          static_cast<parser::ExplainStatement *>(sql_stmt.get());
-      std::unique_ptr<parser::SQLStatementList> unnamed_sql_stmt_list(new parser::SQLStatementList());
-      unnamed_sql_stmt_list->PassInStatement(
-          std::move(explain_stmt->real_sql_stmt));
-      auto stmt = traffic_cop_->PrepareStatement(
-          "explain", query, std::move(unnamed_sql_stmt_list), error_message);
-      ResultType status = ResultType::UNKNOWN;
-      if (stmt) {
-        traffic_cop_->SetStatement(stmt);
-        std::vector<std::string> plan_info = StringUtil::Split(
-            planner::PlanUtil::GetInfo(stmt->GetPlanTree().get()), '\n');
-        std::vector<FieldInfo> tuple_descriptor = {
-            traffic_cop_->GetColumnFieldForValueType("Query plan",
-                                                     type::TypeId::VARCHAR)
-                                                     };
-        stmt->SetTupleDescriptor(tuple_descriptor);
-        traffic_cop_->SetResult(plan_info);
-        status = ResultType::SUCCESS;
-      } else {
-        traffic_cop_->SetErrorMessage(error_message);
-        status = ResultType::FAILURE;
-      }
+      auto status = ExecQueryExplain(query, static_cast<parser::ExplainStatement*>(sql_stmt.get()));
       ExecQueryMessageGetResult(status);
       return ProcessResult::COMPLETE;
     }
@@ -276,6 +254,35 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(
       return ProcessResult::COMPLETE;
     }
   }
+}
+
+ResultType PostgresProtocolHandler::ExecQueryExplain(
+    const std::string &query, parser::ExplainStatement* explain_stmt) {
+  PL_ASSERT(explain_stmt != nullptr);
+
+  std::string error_message;
+  std::unique_ptr<parser::SQLStatementList> unnamed_sql_stmt_list(
+      new parser::SQLStatementList());
+  unnamed_sql_stmt_list->PassInStatement(
+      std::move(explain_stmt->real_sql_stmt));
+  auto stmt = traffic_cop_->PrepareStatement(
+      "explain", query, std::move(unnamed_sql_stmt_list), error_message);
+  ResultType status = ResultType::UNKNOWN;
+  if (stmt != nullptr) {
+    traffic_cop_->SetStatement(stmt);
+    std::vector<std::string> plan_info = StringUtil::Split(
+        planner::PlanUtil::GetInfo(stmt->GetPlanTree().get()), '\n');
+    const std::vector<FieldInfo> tuple_descriptor = {
+        traffic_cop_->GetColumnFieldForValueType("Query plan",
+                                                 type::TypeId::VARCHAR)};
+    stmt->SetTupleDescriptor(tuple_descriptor);
+    traffic_cop_->SetResult(plan_info);
+    status = ResultType::SUCCESS;
+  } else {
+    traffic_cop_->SetErrorMessage(error_message);
+    status = ResultType::FAILURE;
+  }
+  return status;
 }
 
 void PostgresProtocolHandler::ExecQueryMessageGetResult(ResultType status) {
