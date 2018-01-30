@@ -1053,7 +1053,7 @@ bool PostgresProtocolHandler::ReadPacket(Buffer &rbuf, InputPacket &rpkt) {
  * process_startup_packet - Processes the startup packet
  *  (after the size field of the header).
  */
-bool PostgresProtocolHandler::ProcessInitialPacket(InputPacket *pkt, Client client, bool ssl_able, bool& ssl_handshake, bool& finish_startup_packet) {
+bool PostgresProtocolHandler::ProcessInitialPackets(InputPacket *pkt, Client client, bool ssl_able, bool& ssl_handshake, bool& finish_startup_packet) {
   std::string token, value;
   std::unique_ptr<OutputPacket> response(new OutputPacket);
 
@@ -1098,6 +1098,7 @@ bool PostgresProtocolHandler::ProcessStartupPacket(InputPacket* pkt, int32_t pro
       // loop end?
       if (pkt->ptr >= pkt->len) break;
       GetStringToken(pkt, client.dbname);
+      traffic_cop_->SetDefaultDatabaseName(client.dbname);
     } else if (token.compare(("user")) == 0) {
       // loop end?
       if (pkt->ptr >= pkt->len) break;

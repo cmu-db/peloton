@@ -78,7 +78,7 @@ class PostgresProtocolHandler : public ProtocolHandler {
   static bool ReadPacket(Buffer &rbuf, InputPacket &rpkt);
 
   /* Routine to deal with the first packet from the client */
-  bool ProcessInitialPacket(InputPacket* pkt, Client client, bool ssl_able, bool& ssl_sent, bool& finish_startup_packet);
+  bool ProcessInitialPackets(InputPacket* pkt, Client client, bool ssl_able, bool& ssl_sent, bool& finish_startup_packet);
 
   /* Routine to deal with SSL request message */
   void ProcessSSLRequestPacket(bool ssl_able, bool& ssl_handshake);
