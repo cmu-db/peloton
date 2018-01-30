@@ -1062,12 +1062,12 @@ bool PostgresProtocolHandler::ProcessInitialPacket(InputPacket *pkt, Client clie
 
   // TODO(Yuchen): consider more about return value
   if (proto_version == SSL_MESSAGE_VERNO) {
-    LOG_TRACE("process SSL MESSAGE");
+    LOG_DEBUG("process SSL MESSAGE");
     ProcessSSLRequestPacket(ssl_able, ssl_handshake);
     return true;
   }
   else {
-    LOG_TRACE("process startup packet");
+    LOG_DEBUG("process startup packet");
     return ProcessStartupPacket(pkt, proto_version, client, finish_startup_packet);
   }
 }
@@ -1116,6 +1116,7 @@ bool PostgresProtocolHandler::ProcessStartupPacket(InputPacket* pkt, int32_t pro
   // TODO(Yuchen): Peloton does not do any kind of trust authentication now.
   // For example, no password authentication.
   SendInitialResponse();
+  LOG_DEBUG("Initial done");
 
   return true;
 }
