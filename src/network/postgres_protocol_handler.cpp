@@ -856,7 +856,7 @@ void PostgresProtocolHandler::ExecExecuteMessageGetResult(ResultType status) {
       return;
     }
   }
-}  // namespace network
+}
 
 void PostgresProtocolHandler::GetResult() {
   traffic_cop_->ExecuteStatementPlanGetResult();
