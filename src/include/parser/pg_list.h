@@ -74,14 +74,7 @@ struct ListCell {
  * See STATIC_IF_INLINE in c.h.
  */
 
-#define PG_USE_INLINE
-#define STATIC_IF_INLINE static inline
-#ifndef NULL
-#define NULL (0)
-#endif
-
 #ifndef PG_USE_INLINE
-#error TRYING TO USE EXTERNAL
 extern ListCell *list_head(const List *l);
 extern ListCell *list_tail(List *l);
 extern int list_length(const List *l);
