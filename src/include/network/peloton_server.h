@@ -20,27 +20,27 @@
 #include <arpa/inet.h>
 #include <netinet/tcp.h>
 
+#include <pthread.h>
+#include <sys/file.h>
 #include <csignal>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <vector>
-#include <pthread.h>
-#include <sys/file.h>
 
+#include "common/container/lock_free_queue.h"
 #include "common/exception.h"
 #include "common/logger.h"
-#include "common/container/lock_free_queue.h"
-#include "notifiable_task.h"
 #include "connection_dispatcher_task.h"
-#include "protocol_handler.h"
 #include "network_state.h"
+#include "notifiable_task.h"
+#include "protocol_handler.h"
 
-#include <openssl/ssl.h>
+#include <openssl/crypto.h>
 #include <openssl/err.h>
+#include <openssl/ssl.h>
 #include <openssl/x509.h>
 #include <openssl/x509_vfy.h>
-#include <openssl/crypto.h>
 
 namespace peloton {
 namespace network {
@@ -57,8 +57,6 @@ class PelotonServer {
    * is called.
    */
   PelotonServer();
-
-
 
   /**
    * @brief Configure the server to spin up all its threads and start listening
@@ -98,7 +96,6 @@ class PelotonServer {
   // TODO(tianyu): This is VILE. Fix this when we refactor testing.
   void SetPort(int new_port);
 
-
   static void LoadSSLFileSettings();
 
   static void SSLInit();
@@ -109,7 +106,7 @@ class PelotonServer {
 
   static SSLLevel GetSSLLevel() { return ssl_level_; }
 
-  static void SSLLockingFunction(int mode, int n, const char* file, int line);
+  static void SSLLockingFunction(int mode, int n, const char *file, int line);
 
   static unsigned long SSLIdFunction(void);
 
@@ -135,13 +132,11 @@ class PelotonServer {
 
   std::shared_ptr<ConnectionDispatcherTask> dispatcher_task;
 
-
-
-  template<typename... Ts>
-  void TrySslOperation(int(*func)(Ts...), Ts... arg);
+  template <typename... Ts>
+  void TrySslOperation(int (*func)(Ts...), Ts... arg);
 
   // For testing purposes
   std::shared_ptr<ConnectionDispatcherTask> dispatcher_task_;
 };
-}
-}
+}  // namespace network
+}  // namespace peloton
