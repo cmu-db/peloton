@@ -15,9 +15,9 @@
 #include <utility>
 
 #include "binder/bind_node_visitor.h"
+#include "common/internal_types.h"
 #include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager_factory.h"
-#include "common/internal_types.h"
 #include "expression/expression_util.h"
 #include "optimizer/optimizer.h"
 #include "planner/plan_util.h"
@@ -355,8 +355,8 @@ void TrafficCop::ProcessInvalidStatement() {
 }
 
 bool TrafficCop::BindParamsForCachePlan(
-    const std::vector<std::unique_ptr<expression::AbstractExpression>> &
-        parameters,
+    const std::vector<std::unique_ptr<expression::AbstractExpression>>
+        &parameters,
     std::string &error_message, const size_t thread_id UNUSED_ATTRIBUTE) {
   if (tcop_txn_state_.empty()) {
     single_statement_txn_ = true;
@@ -572,14 +572,15 @@ ResultType TrafficCop::ExecuteStatement(
         if (statement->GetNeedsReplan()) {
           // TODO(Tianyi) Move Statement Replan into Statement's method
           // to increase coherence
-          auto plan =
-              optimizer_->BuildPelotonPlanTree(statement->GetStmtParseTreeList(), default_database_name_, tcop_txn_state_.top().first);
+          auto plan = optimizer_->BuildPelotonPlanTree(
+              statement->GetStmtParseTreeList(), default_database_name_,
+              tcop_txn_state_.top().first);
           statement->SetPlanTree(plan);
           statement->SetNeedsReplan(true);
         }
-        
-        ExecuteHelper(statement->GetPlanTree(), params, result,
-                      result_format, thread_id);
+
+        ExecuteHelper(statement->GetPlanTree(), params, result, result_format,
+                      thread_id);
         if (GetQueuing()) {
           return ResultType::QUEUING;
         } else {
