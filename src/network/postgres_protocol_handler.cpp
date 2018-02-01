@@ -1185,32 +1185,32 @@ ProcessResult PostgresProtocolHandler::ProcessPacket(InputPacket *pkt,
       return ExecQueryMessage(pkt, thread_id);
     }
     case NetworkMessageType::PARSE_COMMAND: {
-      LOG_DEBUG("PARSE_COMMAND");
+      LOG_TRACE("PARSE_COMMAND");
       ExecParseMessage(pkt);
     } break;
     case NetworkMessageType::BIND_COMMAND: {
-      LOG_DEBUG("BIND_COMMAND");
+      LOG_TRACE("BIND_COMMAND");
       ExecBindMessage(pkt);
     } break;
     case NetworkMessageType::DESCRIBE_COMMAND: {
-      LOG_DEBUG("DESCRIBE_COMMAND");
+      LOG_TRACE("DESCRIBE_COMMAND");
       return ExecDescribeMessage(pkt);
     }
     case NetworkMessageType::EXECUTE_COMMAND: {
-      LOG_DEBUG("EXECUTE_COMMAND");
+      LOG_TRACE("EXECUTE_COMMAND");
       return ExecExecuteMessage(pkt, thread_id);
     }
     case NetworkMessageType::SYNC_COMMAND: {
-      LOG_DEBUG("SYNC_COMMAND");
+      LOG_TRACE("SYNC_COMMAND");
       SendReadyForQuery(txn_state_);
       SetFlushFlag(true);
     } break;
     case NetworkMessageType::CLOSE_COMMAND: {
-      LOG_DEBUG("CLOSE_COMMAND");
+      LOG_TRACE("CLOSE_COMMAND");
       ExecCloseMessage(pkt);
     } break;
     case NetworkMessageType::TERMINATE_COMMAND: {
-      LOG_DEBUG("TERMINATE_COMMAND");
+      LOG_TRACE("TERMINATE_COMMAND");
       SetFlushFlag(true);
       return ProcessResult::TERMINATE;
     }
