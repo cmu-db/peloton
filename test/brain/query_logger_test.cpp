@@ -79,14 +79,26 @@ class QueryLoggerTests : public PelotonTest {
 
     // only check once the the transaction has committed
     if (committed) {
+      // accounting for the select_query that happened before this txn
+      expected_result.push_back(select_query + "|" + select_query_fingerprint);
+
       expected_result.insert(expected_result.end(),
                              temporary_expected_result.begin(),
                              temporary_expected_result.end());
       temporary_expected_result.clear();
       TestingSQLUtil::ExecuteSQLQueryAndCheckResult(select_query.c_str(),
                                                     expected_result, true);
+
       // the select query we used will also be logged for next time
       expected_result.push_back(select_query + "|" + select_query_fingerprint);
+
+    } else {
+      // verify that the logging does not happen before the txn commit
+      TestingSQLUtil::ExecuteSQLQueryAndCheckResult(select_query.c_str(),
+                                                    expected_result, true);
+      // the select query we used will also be logged for next time
+      temporary_expected_result.push_back(select_query + "|" +
+                                          select_query_fingerprint);
     }
   }
 
@@ -104,6 +116,9 @@ TEST_F(QueryLoggerTests, QueriesTest) {
   TestSimpleUtil("CREATE TABLE test(a INT);", expected_result);
   TestSimpleUtil("INSERT INTO test VALUES (1);", expected_result);
   TestSimpleUtil("INSERT INTO test VALUES (2);", expected_result);
+
+  expected_result.pop_back();  // the select_query done at the end of above test
+                               // won't be logged till the txn below commits
 
   // check if the queries are logged only when the transaction actually commits
   TestTransactionUtil("BEGIN;", expected_result, false);
