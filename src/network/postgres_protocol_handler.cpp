@@ -553,7 +553,7 @@ void PostgresProtocolHandler::ExecBindMessage(InputPacket *pkt) {
     // TODO(Tianyi) This is a hack to respond correct describe message
     // as well as execute message
     skipped_stmt_ = true;
-    skipped_query_string_ == "";
+    skipped_query_string_ = "";
     return;
   }
 
