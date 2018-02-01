@@ -31,66 +31,87 @@ class QueryLoggerTests : public PelotonTest {
   virtual void SetUp() override {
     settings::SettingsManager::SetBool(settings::SettingId::brain, true);
     PelotonInit::Initialize();
+
+    // query to check that logging is done
+    select_query =
+        "SELECT query_string, fingerprint FROM pg_catalog.pg_query_history;";
+    select_query_fingerprint =
+        pg_query_fingerprint(select_query.c_str()).hexdigest;
+    wait_time = 2;
   }
 
-  virtual void TearDown() override {
-    PelotonInit::Shutdown();
+  virtual void TearDown() override { PelotonInit::Shutdown(); }
+
+  // Executes the given query and then checks if the queries that are executed
+  // till now are actually logged
+  void TestSimpleUtil(string const &test_query,
+                      vector<std::string> &expected_result) {
+    string test_query_fingerprint =
+        pg_query_fingerprint(test_query.c_str()).hexdigest;
+    expected_result.push_back(test_query + "|" + test_query_fingerprint);
+    TestingSQLUtil::ExecuteSQLQuery(test_query.c_str());
+
+    // give some time to actually log this query
+    sleep(wait_time);
+
+    TestingSQLUtil::ExecuteSQLQueryAndCheckResult(select_query.c_str(),
+                                                  expected_result, true);
+
+    // the select query we used will also be logged for next time
+    expected_result.push_back(select_query + "|" + select_query_fingerprint);
   }
+
+  // Executes the given query and then checks if the queries that are executed
+  // till now are actually logged only when the transaction commits. Otherwise
+  // stores to queries for checking this later when commit happens.
+  void TestTransactionUtil(string const &test_query,
+                           vector<std::string> &expected_result,
+                           bool committed) {
+    static vector<std::string> temporary_expected_result;
+    string test_query_fingerprint =
+        pg_query_fingerprint(test_query.c_str()).hexdigest;
+    temporary_expected_result.push_back(test_query + "|" +
+                                        test_query_fingerprint);
+    TestingSQLUtil::ExecuteSQLQuery(test_query.c_str());
+
+    // give some time to actually log this query
+    sleep(wait_time);
+
+    // only check once the the transaction has committed
+    if (committed) {
+      expected_result.insert(expected_result.end(),
+                             temporary_expected_result.begin(),
+                             temporary_expected_result.end());
+      temporary_expected_result.clear();
+      TestingSQLUtil::ExecuteSQLQueryAndCheckResult(select_query.c_str(),
+                                                    expected_result, true);
+      // the select query we used will also be logged for next time
+      expected_result.push_back(select_query + "|" + select_query_fingerprint);
+    }
+  }
+
+ protected:
+  string select_query;  // fixed query to check the queries logged in the table
+  string select_query_fingerprint;  // fingerprint for the fixed query
+  int wait_time;  // time to wait in seconds for the query to log into the table
 };
 
-TEST_F(QueryLoggerTests, SimpleInsertsTest) {
-  std::vector<std::string> expected_result;
-  std::string test_query;
-  std::string test_query_fingerprint;
-  std::vector<ResultValue> result;
-  std::string select_query =
-      "SELECT * FROM pg_catalog.pg_query_history;";
-  std::string select_query_fingerprint =
-      pg_query_fingerprint(select_query.c_str()).hexdigest;
+// Testing the functionality of query logging
+TEST_F(QueryLoggerTests, QueriesTest) {
+  vector<std::string> expected_result;  // used to store the expected result
 
-  test_query = "CREATE TABLE test(a INT);";
-  test_query_fingerprint = pg_query_fingerprint(test_query.c_str()).hexdigest;
+  // create the table and do some inserts and check
+  TestSimpleUtil("CREATE TABLE test(a INT);", expected_result);
+  TestSimpleUtil("INSERT INTO test VALUES (1);", expected_result);
+  TestSimpleUtil("INSERT INTO test VALUES (2);", expected_result);
 
-  expected_result.push_back(test_query + "|" + test_query_fingerprint);
+  // check if the queries are logged only when the transaction actually commits
+  TestTransactionUtil("BEGIN;", expected_result, false);
+  TestTransactionUtil("INSERT INTO test VALUES (1);", expected_result, false);
+  TestTransactionUtil("COMMIT;", expected_result, true);
 
-  TestingSQLUtil::ExecuteSQLQuery(test_query.c_str());
-  // bool check = settings::SettingsManager::GetBool(settings::SettingId::brain);
-
-  test_query = "INSERT INTO test VALUES (11);";
-  test_query_fingerprint = pg_query_fingerprint(test_query.c_str()).hexdigest;
-
-  expected_result.push_back(test_query + "|" + test_query_fingerprint);
-
-  TestingSQLUtil::ExecuteSQLQuery(test_query.c_str());
-  // check = settings::SettingsManager::GetBool(settings::SettingId::brain);
-
-  test_query = "SELECT * FROM test;";
-  test_query_fingerprint = pg_query_fingerprint(test_query.c_str()).hexdigest;
-
-  expected_result.push_back(test_query + "|" + test_query_fingerprint);
-
-  TestingSQLUtil::ExecuteSQLQuery(test_query.c_str(), result);
-  LOG_INFO("SELECT RESULT SIZE: %lu", result.size());
-  LOG_INFO("SELECT RESULT VALUE: %s", TestingSQLUtil::GetResultValueAsString(result, 0).c_str());
-  // check = settings::SettingsManager::GetBool(settings::SettingId::brain);
-
-
-  test_query = "SELECT * FROM pg_catalog.pg_table WHERE table_name = 'pg_query_history';";
-  test_query_fingerprint = pg_query_fingerprint(test_query.c_str()).hexdigest;
-
-  expected_result.push_back(test_query + "|" + test_query_fingerprint);
-
-  TestingSQLUtil::ExecuteSQLQuery(test_query.c_str(), result);
-  LOG_INFO("SELECT CATALOG RESULT SIZE: %lu", result.size());
-  LOG_INFO("SELECT CATALOG RESULT VALUE: %s", TestingSQLUtil::GetResultValueAsString(result, 1).c_str());
-
-  sleep(2);
-  
-  result.clear();
-
-  TestingSQLUtil::ExecuteSQLQuery(select_query.c_str(), result);
-  
-  LOG_INFO("RESULT SIZE: %lu", result.size());
+  // final check to see if everything is ok
+  TestSimpleUtil(select_query, expected_result);
 }
 
 }  // namespace test
