@@ -6,7 +6,7 @@
 //
 // Identification: test/network/exception_test.cpp
 //
-// Copyright (c) 2016-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -15,13 +15,11 @@
 
 #include "common/harness.h"
 #include "common/logger.h"
+#include "common/util/string_util.h"
 #include "gtest/gtest.h"
 #include "network/network_manager.h"
 #include "network/protocol_handler_factory.h"
 #include "network/postgres_protocol_handler.h"
-#include "util/string_util.h"
-
-#define NUM_THREADS 1
 
 namespace peloton {
 namespace test {

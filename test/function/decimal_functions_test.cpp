@@ -4,9 +4,9 @@
 //
 // decimal_functions_test.cpp
 //
-// Identification: test/expression/decimal_functions_test.cpp
+// Identification: test/function/decimal_functions_test.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -19,9 +19,9 @@
 
 #include "function/decimal_functions.h"
 #include "common/internal_types.h"
+#include "common/util/string_util.h"
 #include "type/value.h"
 #include "type/value_factory.h"
-#include "util/string_util.h"
 
 using ::testing::NotNull;
 using ::testing::Return;

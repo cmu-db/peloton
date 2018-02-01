@@ -2,11 +2,11 @@
 //
 //                         Peloton
 //
-// boolean_value_test.cpp
+// file_util_test.cpp
 //
-// Identification: test/common/boolean_value_test.cpp
+// Identification: test/common/file_util_test.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -18,8 +18,8 @@
 #include <utility>
 #include <vector>
 
-#include "util/file_util.h"
-#include "util/string_util.h"
+#include "common/util/file_util.h"
+#include "common/util/string_util.h"
 
 namespace peloton {
 namespace test {

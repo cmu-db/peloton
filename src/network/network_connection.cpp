@@ -6,7 +6,7 @@
 //
 // Identification: src/network/network_connection.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -220,7 +220,7 @@ ReadState NetworkConnection::FillReadBuffer() {
           // TODO(Yuchen): does libevent notifies if more data arrives? If that's the case, we don't
           // need to wait here. Actually, the buffer ptr is changed before the call..
           case SSL_ERROR_WANT_READ: {
-            LOG_INFO("Fill read buffer, want read");
+            LOG_TRACE("Fill read buffer, want read");
             SetReadBlocked(true);
             done = true;
             break;
@@ -228,7 +228,7 @@ ReadState NetworkConnection::FillReadBuffer() {
           // It happens when we're trying to rehandshake and we block on a write
           // during the handshake. We need to wait on the socket to be writable
           case SSL_ERROR_WANT_WRITE: {
-            LOG_INFO("Fill read buffer, want write");
+            LOG_TRACE("Fill read buffer, want write");
             SetReadBlockedOnWrite(true);
             done = true;
             break;
@@ -236,7 +236,7 @@ ReadState NetworkConnection::FillReadBuffer() {
           case SSL_ERROR_SYSCALL: {
             // if interrupted, try again
             if (errno == EINTR) {
-              LOG_INFO("Error SSL Reading: EINTR");
+              LOG_TRACE("Error SSL Reading: EINTR");
               break;
             }
           }

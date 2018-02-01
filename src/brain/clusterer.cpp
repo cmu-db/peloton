@@ -6,10 +6,9 @@
 //
 // Identification: src/brain/clusterer.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
 
 #include <limits>
 #include <sstream>
@@ -19,7 +18,7 @@
 #include "brain/clusterer.h"
 #include "common/logger.h"
 #include "common/macros.h"
-#include "util/string_util.h"
+#include "common/util/string_util.h"
 
 namespace peloton {
 namespace brain {

@@ -6,7 +6,7 @@
 //
 // Identification: src/include/planner/plan_util.h
 //
-// Copyright (c) 2015, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -22,7 +22,7 @@
 #include "planner/update_plan.h"
 #include "planner/populate_index_plan.h"
 #include "storage/data_table.h"
-#include "util/string_util.h"
+#include "common/util/string_util.h"
 
 namespace peloton {
 namespace planner {

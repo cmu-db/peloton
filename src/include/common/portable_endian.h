@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// portable_endian.h
+//
+// Identification: src/include/common/portable_endian.h
+//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 // "License": Public Domain
 // I, Mathias Panzenböck, place this file hereby into the public domain. Use it
 // at your own risk for whatever you like.
@@ -65,8 +77,8 @@
 
 #elif defined(__WINDOWS__)
 
-#include <winsock2.h>
 #include <sys/param.h>
+#include <winsock2.h>
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 

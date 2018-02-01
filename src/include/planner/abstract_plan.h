@@ -6,7 +6,7 @@
 //
 // Identification: src/include/planner/abstract_plan.h
 //
-// Copyright (c) 2015-18, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -24,7 +24,7 @@
 #include "type/serializer.h"
 #include "common/internal_types.h"
 #include "type/value.h"
-#include "util/hash_util.h"
+#include "common/util/hash_util.h"
 
 namespace peloton {
 

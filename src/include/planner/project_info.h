@@ -6,7 +6,7 @@
 //
 // Identification: src/include/planner/project_info.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -17,7 +17,7 @@
 
 #include "expression/abstract_expression.h"
 #include "storage/tuple.h"
-#include "util/hash_util.h"
+#include "common/util/hash_util.h"
 
 namespace peloton {
 

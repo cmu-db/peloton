@@ -6,7 +6,7 @@
 //
 // Identification: src/include/catalog/column.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -16,7 +16,7 @@
 #include "common/macros.h"
 #include "common/printable.h"
 #include "type/type.h"
-#include "util/hash_util.h"
+#include "common/util/hash_util.h"
 
 namespace peloton {
 namespace catalog {

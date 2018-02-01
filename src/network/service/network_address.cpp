@@ -2,13 +2,14 @@
 //
 //                         Peloton
 //
-// tcp_address.cpp
+// network_address.cpp
 //
-// Identification: src/network/tcp_address.cpp
+// Identification: src/network/service/network_address.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 #include "network/service/network_address.h"
 
 #include <netdb.h>
@@ -17,7 +18,7 @@
 #include "common/cast.h"
 #include "common/exception.h"
 #include "common/logger.h"
-#include "util/string_util.h"
+#include "common/util/string_util.h"
 
 namespace peloton {
 namespace network {

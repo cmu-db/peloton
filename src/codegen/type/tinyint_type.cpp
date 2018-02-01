@@ -6,7 +6,7 @@
 //
 // Identification: src/codegen/type/tinyint_type.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -20,7 +20,7 @@
 #include "codegen/type/integer_type.h"
 #include "common/exception.h"
 #include "type/limits.h"
-#include "util/string_util.h"
+#include "common/util/string_util.h"
 
 namespace peloton {
 namespace codegen {

@@ -6,11 +6,11 @@
 //
 // Identification: test/common/string_util_test.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "util/string_util.h"
+#include "common/util/string_util.h"
 #include "common/harness.h"
 #include "common/logger.h"
 

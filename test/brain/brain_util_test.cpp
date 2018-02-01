@@ -6,7 +6,7 @@
 //
 // Identification: test/brain/brain_util_test.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -15,17 +15,15 @@
 #include <cstdio>
 #include <random>
 
-#include "common/harness.h"
-
 #include "brain/brain_util.h"
-
-#include "executor/testing_executor_util.h"
 #include "brain/sample.h"
+#include "common/harness.h"
+#include "common/util/file_util.h"
 #include "common/generator.h"
+#include "executor/testing_executor_util.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "storage/data_table.h"
 #include "storage/tile_group.h"
-#include "util/file_util.h"
 
 namespace peloton {
 namespace test {

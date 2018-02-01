@@ -2,11 +2,11 @@
 //
 //                         Peloton
 //
-// statement_select.h
+// select_statement.h
 //
-// Identification: src/include/parser/statement_select.h
+// Identification: src/include/parser/select_statement.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -15,7 +15,7 @@
 #include "common/sql_node_visitor.h"
 #include "parser/sql_statement.h"
 #include "parser/table_ref.h"
-#include "util/string_util.h"
+#include "common/util/string_util.h"
 #include <vector>
 
 namespace peloton {

@@ -6,12 +6,12 @@
 //
 // Identification: src/parser/drop_statement.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "parser/drop_statement.h"
-#include "util/string_util.h"
+#include "common/util/string_util.h"
 #include <sstream>
 #include <iostream>
 

@@ -6,7 +6,7 @@
 //
 // Identification: src/settings/settings_manager.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -18,7 +18,7 @@
 #include "settings/settings_manager.h"
 #include "type/ephemeral_pool.h"
 #include "type/value_factory.h"
-#include "util/stringbox_util.h"
+#include "common/util/stringbox_util.h"
 
 // This will expand to define all the settings defined in settings.h
 // using GFlag's DEFINE_...() macro. See settings_macro.h.

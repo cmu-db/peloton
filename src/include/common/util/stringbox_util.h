@@ -1,18 +1,18 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // stringbox_util.h
 //
-// Identification: /src/include/common/stringbox_util.h
+// Identification: src/include/common/util/stringbox_util.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #pragma once
 
-#include "util/string_util.h"
+#include "string_util.h"
 
 #include <iomanip>
 #include <sstream>

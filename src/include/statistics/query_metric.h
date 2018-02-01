@@ -4,9 +4,9 @@
 //
 // query_metric.h
 //
-// Identification: src/statistics/query_metric.h
+// Identification: src/include/statistics/query_metric.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -20,7 +20,7 @@
 #include "statistics/access_metric.h"
 #include "statistics/latency_metric.h"
 #include "statistics/processor_metric.h"
-#include "util/string_util.h"
+#include "common/util/string_util.h"
 
 namespace peloton {
 

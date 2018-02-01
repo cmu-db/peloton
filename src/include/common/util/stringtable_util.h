@@ -1,25 +1,25 @@
 //===----------------------------------------------------------------------===//
 //
-//                         PelotonDB
+//                         Peloton
 //
 // stringtable_util.h
 //
-// Identification: /src/include/common/stringtable_util.h
+// Identification: src/include/common/util/stringtable_util.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #pragma once
 
-#include "util/string_util.h"
+#include "string_util.h"
 
+#include <algorithm>
+#include <iomanip>
 #include <iomanip>
 #include <sstream>
 #include <string>
 #include <vector>
-#include <algorithm>
-#include <iomanip>
 
 namespace peloton {
 /**
@@ -27,7 +27,6 @@ namespace peloton {
  */
 class StringTableUtil {
  public:
-
   static const int FIXED_WIDTH = 2;
 
   /**
@@ -43,14 +42,15 @@ class StringTableUtil {
     std::vector<std::vector<std::string>> table;
 
     for (std::string line : lines) {
-      std::vector<std::string> tokens = StringUtil::Split(line,'\t');
+      std::vector<std::string> tokens = StringUtil::Split(line, '\t');
       table.push_back(tokens);
       int i = 0;
-      for (const std::string& token : tokens) {
+      for (const std::string &token : tokens) {
         if (static_cast<int>(field_width.size()) < i + 1) {
           field_width.push_back(FIXED_WIDTH + static_cast<int>(token.length()));
         } else {
-          field_width[i] = std::max(field_width[i], FIXED_WIDTH + static_cast<int>(token.length()));
+          field_width[i] = std::max(
+              field_width[i], FIXED_WIDTH + static_cast<int>(token.length()));
         }
         i += 1;
       }
@@ -63,7 +63,7 @@ class StringTableUtil {
 
     int row_num = static_cast<int>(table.size());
     int i = 0;
-    for (const std::vector<std::string>& row : table) {
+    for (const std::vector<std::string> &row : table) {
       for (int j = 0; j < static_cast<int>(row.size()); j++) {
         ss << std::setw(field_width.at(j)) << row.at(j);
       }
