@@ -1,28 +1,15 @@
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// pg_query.h
-//
-// Identification: src/include/parser/pg_query.h
-//
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-
 #ifndef PG_QUERY_H
 #define PG_QUERY_H
 
 #include "pg_list.h"
 
 typedef struct {
-    char* message; // exception message
-    char* funcname; // source function of exception (e.g. SearchSysCache)
-    char* filename; // source of exception (e.g. parse.l)
-    int lineno; // source of exception (e.g. 104)
-    int cursorpos; // char in query at which exception occurred
-    char* context; // additional context (optional, can be NULL)
+  char* message; // exception message
+  char* funcname; // source function of exception (e.g. SearchSysCache)
+  char* filename; // source of exception (e.g. parse.l)
+  int lineno; // source of exception (e.g. 104)
+  int cursorpos; // char in query at which exception occurred
+  char* context; // additional context (optional, can be NULL)
 } PgQueryError;
 
 typedef struct {
