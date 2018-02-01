@@ -12,8 +12,8 @@ RUN mkdir /peloton/build && cd /peloton/build && cmake -DCMAKE_BUILD_TYPE=Debug 
 RUN echo -n "Peloton Release build with "; g++ --version | head -1
 RUN rm -rf /peloton/build && mkdir /peloton/build && cd /peloton/build && cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4 && make install
 
-RUN echo -n "Peloton Debug build with "; clang++-3.7 --version | head -1
-RUN rm -rf /peloton/build && mkdir /peloton/build && cd /peloton/build && CC=clang-3.7 CXX=clang++-3.7 cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False .. && make -j4 && make install
+RUN echo -n "Peloton Debug build with "; clang++ --version | head -1
+RUN rm -rf /peloton/build && mkdir /peloton/build && cd /peloton/build && CC=clang CXX=clang++ cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False .. && make -j4 && make install
 
-RUN echo -n "Peloton Release build with "; clang++-3.7 --version | head -1
-RUN rm -rf /peloton/build && mkdir /peloton/build && cd /peloton/build && CC=clang-3.7 CXX=clang++-3.7 cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4 && make install
+RUN echo -n "Peloton Release build with "; clang++ --version | head -1
+RUN rm -rf /peloton/build && mkdir /peloton/build && cd /peloton/build && CC=clang CXX=clang++ cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4 && make install

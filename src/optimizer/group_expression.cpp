@@ -22,7 +22,10 @@ namespace optimizer {
 // Group Expression
 //===--------------------------------------------------------------------===//
 GroupExpression::GroupExpression(Operator op, std::vector<GroupID> child_groups)
-    : group_id(UNDEFINED_GROUP), op(op), child_groups(child_groups) {}
+    : group_id(UNDEFINED_GROUP),
+      op(op),
+      child_groups(child_groups),
+      stats_derived_(false) {}
 
 GroupID GroupExpression::GetGroupID() const { return group_id; }
 
@@ -42,7 +45,8 @@ GroupID GroupExpression::GetChildGroupId(int child_idx) const {
 
 Operator GroupExpression::Op() const { return op; }
 
-double GroupExpression::GetCost(std::shared_ptr<PropertySet>& requirements) const {
+double GroupExpression::GetCost(
+    std::shared_ptr<PropertySet> &requirements) const {
   return std::get<0>(lowest_cost_table_.find(requirements)->second);
 }
 
@@ -53,7 +57,8 @@ std::vector<std::shared_ptr<PropertySet>> GroupExpression::GetInputProperties(
 
 void GroupExpression::SetLocalHashTable(
     const std::shared_ptr<PropertySet> &output_properties,
-    const std::vector<std::shared_ptr<PropertySet>> &input_properties_list, double cost) {
+    const std::vector<std::shared_ptr<PropertySet>> &input_properties_list,
+    double cost) {
   auto it = lowest_cost_table_.find(output_properties);
   if (it == lowest_cost_table_.end()) {
     // No other cost to compare against
@@ -62,8 +67,8 @@ void GroupExpression::SetLocalHashTable(
   } else {
     // Only insert if the cost is lower than the existing cost
     if (std::get<0>(it->second) > cost) {
-      lowest_cost_table_[output_properties] = std::make_tuple(
-          cost, input_properties_list);
+      lowest_cost_table_[output_properties] =
+          std::make_tuple(cost, input_properties_list);
     }
   }
 }

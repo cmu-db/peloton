@@ -33,7 +33,6 @@ class AbstractExpression;
 namespace optimizer {
 
 class OperatorExpression;
-class ColumnManager;
 
 /**
  * @brief Transform a query from parsed statement to operator expressions.

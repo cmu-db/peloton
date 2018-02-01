@@ -212,7 +212,7 @@ void TrafficCop::ExecuteStatementPlanGetResult() {
       txn_result == ResultType::FAILURE) {
     LOG_TRACE(
         "About to commit: single stmt: %d, init_failure: %d, txn_result: %s",
-        is_single_statement_txn_, init_failure,
+        single_statement_txn_, init_failure,
         ResultTypeToString(txn_result).c_str());
     switch (txn_result) {
       case ResultType::SUCCESS:
@@ -302,6 +302,8 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     tcop_txn_state_.top().first->AddQueryString(query_string.c_str());
   }
 
+  // TODO(Tianyi) Move Statement Planing into Statement's method
+  // to increase coherence
   try {
     auto plan = optimizer_->BuildPelotonPlanTree(
         statement->GetStmtParseTreeList(), default_database_name_,
@@ -565,8 +567,19 @@ ResultType TrafficCop::ExecuteStatement(
         return AbortQueryHelper();
       }
       default:
-        ExecuteHelper(statement->GetPlanTree(), params, result, result_format,
-                      thread_id);
+        // The statement may be out of date
+        // It needs to be replan
+        if (statement->GetNeedsReplan()) {
+          // TODO(Tianyi) Move Statement Replan into Statement's method
+          // to increase coherence
+          auto plan =
+              optimizer_->BuildPelotonPlanTree(statement->GetStmtParseTreeList(), default_database_name_, tcop_txn_state_.top().first);
+          statement->SetPlanTree(plan);
+          statement->SetNeedsReplan(true);
+        }
+        
+        ExecuteHelper(statement->GetPlanTree(), params, result,
+                      result_format, thread_id);
         if (GetQueuing()) {
           return ResultType::QUEUING;
         } else {

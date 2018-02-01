@@ -38,6 +38,9 @@ class Catalog;
 
 namespace binder {
 
+/**
+ * @brief      Interface to be notified of the composition of a bind node.
+ */
 class BindNodeVisitor : public SqlNodeVisitor {
  public:
   BindNodeVisitor(concurrency::TransactionContext *txn,

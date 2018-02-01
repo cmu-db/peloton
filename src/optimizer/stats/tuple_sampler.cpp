@@ -10,13 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <cinttypes>
 #include "optimizer/stats/tuple_sampler.h"
+#include <cinttypes>
 
 #include "storage/data_table.h"
+#include "storage/tile.h"
 #include "storage/tile_group.h"
 #include "storage/tile_group_header.h"
-#include "storage/tile.h"
 #include "storage/tuple.h"
 
 namespace peloton {
@@ -66,6 +66,8 @@ size_t TupleSampler::AcquireSampleTuples(size_t target_sample_count) {
     LOG_TRACE("Add sampled tuple: %s", tuple->GetInfo().c_str());
     sampled_tuples.push_back(std::move(tuple));
   }
+  LOG_TRACE("%lu Sample added - size: %lu", sampled_tuples.size(),
+            sampled_tuples.size() * tuple_schema->GetLength());
   return sampled_tuples.size();
 }
 
@@ -111,7 +113,74 @@ bool TupleSampler::GetTupleInTileGroup(storage::TileGroup *tile_group,
   }
   LOG_TRACE("offset %lu, Tuple info: %s", tuple_offset,
             tuple->GetInfo().c_str());
+
   return true;
+}
+
+size_t TupleSampler::AcquireSampleTuplesForIndexJoin(
+    std::vector<std::unique_ptr<storage::Tuple>> &sample_tuples,
+    std::vector<std::vector<ItemPointer *>> &matched_tuples, size_t count) {
+  size_t target = std::min(count, sample_tuples.size());
+  std::vector<size_t> sid;
+  for (size_t i = 1; i <= target; i++) {
+    sid.push_back(i);
+  }
+  srand(time(NULL));
+  for (size_t i = target + 1; i <= count; i++) {
+    if (rand() % i < target) {
+      size_t pos = rand() % target;
+      sid[pos] = i;
+    }
+  }
+  for (auto id : sid) {
+    size_t chosen = 0;
+    size_t cnt = 0;
+    while (cnt < id) {
+      cnt += matched_tuples.at(chosen).size();
+      if (cnt >= id) {
+        break;
+      }
+      chosen++;
+    }
+
+    size_t offset = rand() % matched_tuples.at(chosen).size();
+    auto item = matched_tuples.at(chosen).at(offset);
+    storage::TileGroup *tile_group = table->GetTileGroupById(item->block).get();
+
+    std::unique_ptr<storage::Tuple> tuple(
+        new storage::Tuple(table->GetSchema(), true));
+    GetTupleInTileGroup(tile_group, item->offset, tuple);
+    LOG_TRACE("tuple info %s", tuple->GetInfo().c_str());
+    AddJoinTuple(sample_tuples.at(chosen), tuple);
+  }
+  LOG_TRACE("join schema info %s",
+            sampled_tuples[0]->GetSchema()->GetInfo().c_str());
+  return sampled_tuples.size();
+}
+
+void TupleSampler::AddJoinTuple(std::unique_ptr<storage::Tuple> &left_tuple,
+                                std::unique_ptr<storage::Tuple> &right_tuple) {
+  if (join_schema == nullptr) {
+    std::unique_ptr<catalog::Schema> left_schema(
+        catalog::Schema::CopySchema(left_tuple->GetSchema()));
+    std::unique_ptr<catalog::Schema> right_schema(
+        catalog::Schema::CopySchema(right_tuple->GetSchema()));
+    join_schema.reset(
+        catalog::Schema::AppendSchema(left_schema.get(), right_schema.get()));
+  }
+  std::unique_ptr<storage::Tuple> tuple(
+      new storage::Tuple(join_schema.get(), true));
+  for (oid_t i = 0; i < left_tuple->GetColumnCount(); i++) {
+    tuple->SetValue(i, left_tuple->GetValue(i), pool_.get());
+  }
+
+  oid_t column_offset = left_tuple->GetColumnCount();
+  for (oid_t i = 0; i < right_tuple->GetColumnCount(); i++) {
+    tuple->SetValue(i + column_offset, right_tuple->GetValue(i), pool_.get());
+  }
+  LOG_TRACE("join tuple info %s", tuple->GetInfo().c_str());
+
+  sampled_tuples.push_back(std::move(tuple));
 }
 
 /**

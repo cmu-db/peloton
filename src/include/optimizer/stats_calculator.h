@@ -17,32 +17,64 @@
 namespace peloton {
 namespace optimizer {
 
-// Derive stats for a logical group expression
+class Memo;
+class TableStats;
+
+/**
+ * @brief Derive stats for the root group using a group expression's children's
+ * stats
+ */
 class StatsCalculator : public OperatorVisitor {
  public:
-  std::shared_ptr<Stats> CalculateStats(std::shared_ptr<GroupExpression> gexpr);
+  void CalculateStats(GroupExpression *gexpr, ExprSet required_cols,
+                      Memo *memo);
 
-  void Visit(const LeafOperator *) override;
   void Visit(const LogicalGet *) override;
   void Visit(const LogicalQueryDerivedGet *) override;
-  void Visit(const LogicalFilter *) override;
   void Visit(const LogicalInnerJoin *) override;
   void Visit(const LogicalLeftJoin *) override;
   void Visit(const LogicalRightJoin *) override;
   void Visit(const LogicalOuterJoin *) override;
   void Visit(const LogicalSemiJoin *) override;
   void Visit(const LogicalAggregateAndGroupBy *) override;
-  void Visit(const LogicalInsert *) override;
-  void Visit(const LogicalInsertSelect *) override;
-  void Visit(const LogicalDelete *) override;
-  void Visit(const LogicalUpdate *) override;
+  void Visit(const LogicalLimit *) override;
+  void Visit(const LogicalDistinct *) override;
 
  private:
-  // We cannot use reference here because otherwise we have to initialize them
-  // when constructing the class
-  std::shared_ptr<GroupExpression> gexpr_;
+  /**
+   * @brief Add the base table stats if the base table maintain stats, or else
+   * use default stats
+   *
+   * @param col The column we want to get stats
+   * @param table_stats Base table stats
+   * @param stats The stats map to add
+   * @param copy Specify if we want to make a copy
+   */
+  void AddBaseTableStats(
+      expression::AbstractExpression *col,
+      std::shared_ptr<TableStats> table_stats,
+      std::unordered_map<std::string, std::shared_ptr<ColumnStats>> &stats,
+      bool copy);
+  /**
+   * @brief Update selectivity for predicate evaluation
+   *
+   * @param num_rows Number of rows of base table
+   * @param predicate_stats The stats for columns in the expression
+   * @param predicates conjunction predicates
+   */
+  void UpdateStatsForFilter(
+      size_t num_rows,
+      std::unordered_map<std::string, std::shared_ptr<ColumnStats>>
+          &predicate_stats,
+      const std::vector<AnnotatedExpression> &predicates);
 
-  std::shared_ptr<Stats> output_stats_;
+  double CalculateSelectivityForPredicate(
+      const std::shared_ptr<TableStats> predicate_table_stats,
+      const expression::AbstractExpression *expr);
+
+  GroupExpression *gexpr_;
+  ExprSet required_cols_;
+  Memo *memo_;
 };
 
 }  // namespace optimizer

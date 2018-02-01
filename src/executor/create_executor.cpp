@@ -94,7 +94,7 @@ bool CreateExecutor::CreateDatabase(const planner::CreatePlan &node) {
       database_name, txn);
   txn->SetResult(result);
   LOG_TRACE("Result is: %s",
-            ResultTypeToString(current_txn->GetResult()).c_str());
+            ResultTypeToString(txn->GetResult()).c_str());
   return (true);
 }
 
