@@ -255,6 +255,19 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     UNUSED_ATTRIBUTE std::string &error_message,
     const size_t thread_id UNUSED_ATTRIBUTE) {
   LOG_TRACE("Prepare Statement query: %s", query_string.c_str());
+
+  // Empty statement
+  // TODO (Tianyi) Read through the parser code to see if this is appropriate
+  if (sql_stmt_list.get() == nullptr ||
+      sql_stmt_list->GetNumStatements() == 0) {
+    
+    // TODO (Tianyi) Do we need another query type called QUERY_EMPTY?
+    std::shared_ptr<Statement> statement =
+        std::make_shared<Statement>(stmt_name, QueryType::QUERY_INVALID,
+                                    query_string, std::move(sql_stmt_list));
+    return statement;
+  }
+
   StatementType stmt_type = sql_stmt_list->GetStatement(0)->GetType();
   QueryType query_type =
       StatementTypeToQueryType(stmt_type, sql_stmt_list->GetStatement(0));

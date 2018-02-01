@@ -425,15 +425,17 @@ void PostgresProtocolHandler::ExecParseMessage(InputPacket *pkt) {
     return;
   }
 
-  // If the query is either empty or redundant commands, or not supported yet,
+  // If the query is not supported yet,
   // we will skip the rest commands (B,E,..) for this query
-  bool skip = (sql_stmt_list.get() == nullptr ||
+  // For empty query, we still want to get it constructed
+  // TODO (Tianyi) Consider handle more statement
+  bool empty = (sql_stmt_list.get() == nullptr ||
                sql_stmt_list->GetNumStatements() == 0);
-  if (!skip) {
+  if (!empty) {
     parser::SQLStatement *sql_stmt = sql_stmt_list->GetStatement(0);
     query_type = StatementTypeToQueryType(sql_stmt->GetType(), sql_stmt);
   }
-  skip = skip || !HardcodedExecuteFilter(query_type);
+  bool skip = !HardcodedExecuteFilter(query_type);
   if (skip) {
     skipped_stmt_ = true;
     skipped_query_string_ = query;
@@ -539,6 +541,20 @@ void PostgresProtocolHandler::ExecBindMessage(InputPacket *pkt) {
     LOG_ERROR("%s", error_message.c_str());
     SendErrorResponse(
         {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
+    return;
+  }
+
+  // Empty query
+  if (statement->GetQueryType() == QueryType::QUERY_INVALID) {
+    std::unique_ptr<OutputPacket> response(new OutputPacket());
+    // Send Bind complete response
+    response->msg_type = NetworkMessageType::BIND_COMPLETE;
+    responses.push_back(std::move(response));
+    // TODO(Tianyi) This is a hack to respond correct describe message
+    // as well as execute message
+    skipped_stmt_ = true;
+    skipped_query_string_ == "";
+    return;
   }
 
   // UNNAMED STATEMENT
