@@ -20,13 +20,13 @@
 #include "event.h"
 
 #include "catalog/column.h"
-#include "common/internal_types.h"
 #include "common/portal.h"
 #include "common/statement.h"
 #include "executor/plan_executor.h"
 #include "optimizer/abstract_optimizer.h"
 #include "parser/sql_statement.h"
 #include "type/type.h"
+#include "common/internal_types.h"
 
 namespace peloton {
 

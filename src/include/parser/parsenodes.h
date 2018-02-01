@@ -44,14 +44,14 @@ typedef struct Expr { NodeTag type; } Expr;
     * A SubLink represents a subselect appearing in an expression, and in some
     * cases also the combining operator(s) just above it.  The subLinkType
 * indicates the form of the expression represented:
-*   EXISTS_SUBLINK      EXISTS(SELECT ...)
-*   ALL_SUBLINK         (lefthand) op ALL (SELECT ...)
-*   ANY_SUBLINK         (lefthand) op ANY (SELECT ...)
-*   ROWCOMPARE_SUBLINK  (lefthand) op (SELECT ...)
-*   EXPR_SUBLINK        (SELECT with single targetlist item ...)
-*   MULTIEXPR_SUBLINK   (SELECT with multiple targetlist items ...)
-*   ARRAY_SUBLINK       ARRAY(SELECT with single targetlist item ...)
-*   CTE_SUBLINK         WITH query (never actually part of an expression)
+*	EXISTS_SUBLINK		EXISTS(SELECT ...)
+*	ALL_SUBLINK			(lefthand) op ALL (SELECT ...)
+*	ANY_SUBLINK			(lefthand) op ANY (SELECT ...)
+*	ROWCOMPARE_SUBLINK	(lefthand) op (SELECT ...)
+*	EXPR_SUBLINK		(SELECT with single targetlist item ...)
+*	MULTIEXPR_SUBLINK	(SELECT with multiple targetlist items ...)
+*	ARRAY_SUBLINK		ARRAY(SELECT with single targetlist item ...)
+*	CTE_SUBLINK			WITH query (never actually part of an expression)
 * For ALL, ANY, and ROWCOMPARE, the lefthand is a list of expressions of the
 * same length as the subselect's targetlist.  ROWCOMPARE will *always* have
 * a list with more than one entry; if the subselect has just one target
@@ -98,19 +98,19 @@ typedef enum SubLinkType
   EXPR_SUBLINK,
   MULTIEXPR_SUBLINK,
   ARRAY_SUBLINK,
-  CTE_SUBLINK                   /* for SubPlans only */
+  CTE_SUBLINK					/* for SubPlans only */
 } SubLinkType;
 
 
 typedef struct SubLink
 {
-  Expr      xpr;
-  SubLinkType subLinkType;  /* see above */
-  int           subLinkId;      /* ID (1..n); 0 if not MULTIEXPR */
-  Node     *testexpr;       /* outer-query test for ALL/ANY/ROWCOMPARE */
-  List     *operName;       /* originally specified operator name */
-  Node     *subselect;      /* subselect as Query* or raw parsetree */
-  int           location;       /* token location, or -1 if unknown */
+  Expr		xpr;
+  SubLinkType subLinkType;	/* see above */
+  int			subLinkId;		/* ID (1..n); 0 if not MULTIEXPR */
+  Node	   *testexpr;		/* outer-query test for ALL/ANY/ROWCOMPARE */
+  List	   *operName;		/* originally specified operator name */
+  Node	   *subselect;		/* subselect as Query* or raw parsetree */
+  int			location;		/* token location, or -1 if unknown */
 } SubLink;
 
 typedef struct BoolExpr {
