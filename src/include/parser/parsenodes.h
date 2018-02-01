@@ -13,7 +13,7 @@
 #include <cstdint>
 
 #include "nodes.h"
-#include "pg_list.h"
+#include "parser/pg_list.h"
 
 typedef enum SetOperation {
   SETOP_NONE = 0,
@@ -73,7 +73,8 @@ typedef struct Expr { NodeTag type; } Expr;
 * of the lefthand expression (if any), and operName is the String name of
 * the combining operator.  Also, subselect is a raw parsetree.  During parse
 * analysis, the parser transforms testexpr into a complete boolean expression
-    * that compares the lefthand value(s) to PARAM_SUBLINK nodes representing the
+    * that compares the lefthand value(s) to PARAM_SUBLINK nodes representing
+*the
     * output columns of the subselect.  And subselect is transformed to a Query.
 * This is the representation seen in saved rules and in the rewriter.
 *
@@ -89,8 +90,7 @@ typedef struct Expr { NodeTag type; } Expr;
 * The CTE_SUBLINK case never occurs in actual SubLink nodes, but it is used
     * in SubPlans generated for WITH subqueries.
 */
-typedef enum SubLinkType
-{
+typedef enum SubLinkType {
   EXISTS_SUBLINK,
   ALL_SUBLINK,
   ANY_SUBLINK,
@@ -98,19 +98,17 @@ typedef enum SubLinkType
   EXPR_SUBLINK,
   MULTIEXPR_SUBLINK,
   ARRAY_SUBLINK,
-  CTE_SUBLINK					/* for SubPlans only */
+  CTE_SUBLINK /* for SubPlans only */
 } SubLinkType;
 
-
-typedef struct SubLink
-{
-  Expr		xpr;
-  SubLinkType subLinkType;	/* see above */
-  int			subLinkId;		/* ID (1..n); 0 if not MULTIEXPR */
-  Node	   *testexpr;		/* outer-query test for ALL/ANY/ROWCOMPARE */
-  List	   *operName;		/* originally specified operator name */
-  Node	   *subselect;		/* subselect as Query* or raw parsetree */
-  int			location;		/* token location, or -1 if unknown */
+typedef struct SubLink {
+  Expr xpr;
+  SubLinkType subLinkType; /* see above */
+  int subLinkId;           /* ID (1..n); 0 if not MULTIEXPR */
+  Node *testexpr;          /* outer-query test for ALL/ANY/ROWCOMPARE */
+  List *operName;          /* originally specified operator name */
+  Node *subselect;         /* subselect as Query* or raw parsetree */
+  int location;            /* token location, or -1 if unknown */
 } SubLink;
 
 typedef struct BoolExpr {
@@ -650,8 +648,8 @@ typedef struct DropStmt {
 
 typedef struct DropDatabaseStmt {
   NodeTag type;
-  char *dbname;          /* name of database to drop */
-  bool missing_ok;       /* skip error if object is missing? */
+  char *dbname;    /* name of database to drop */
+  bool missing_ok; /* skip error if object is missing? */
 } DropDatabaseStmt;
 
 typedef struct TruncateStmt {
@@ -708,47 +706,42 @@ typedef struct CreateDatabaseStmt {
   List *options; /* List of DefElem nodes */
 } CreateDatabaseStmt;
 
-typedef struct CreateSchemaStmt
-{
-  NodeTag   type;
-  char     *schemaname;   /* the name of the schema to create */
-  Node     *authrole;   /* the owner of the created schema */
-  List     *schemaElts;   /* schema components (list of parsenodes) */
-  bool    if_not_exists;  /* just do nothing if schema already exists? */
+typedef struct CreateSchemaStmt {
+  NodeTag type;
+  char *schemaname;   /* the name of the schema to create */
+  Node *authrole;     /* the owner of the created schema */
+  List *schemaElts;   /* schema components (list of parsenodes) */
+  bool if_not_exists; /* just do nothing if schema already exists? */
 } CreateSchemaStmt;
 
-typedef enum RoleSpecType
-{
-  ROLESPEC_CSTRING,     /* role name is stored as a C string */
-  ROLESPEC_CURRENT_USER,    /* role spec is CURRENT_USER */
-  ROLESPEC_SESSION_USER,    /* role spec is SESSION_USER */
-  ROLESPEC_PUBLIC       /* role name is "public" */
+typedef enum RoleSpecType {
+  ROLESPEC_CSTRING,      /* role name is stored as a C string */
+  ROLESPEC_CURRENT_USER, /* role spec is CURRENT_USER */
+  ROLESPEC_SESSION_USER, /* role spec is SESSION_USER */
+  ROLESPEC_PUBLIC        /* role name is "public" */
 } RoleSpecType;
 
-typedef struct RoleSpec
-{
-  NodeTag   type;
-  RoleSpecType roletype;    /* Type of this rolespec */
-  char     *rolename;   /* filled only for ROLESPEC_CSTRING */
-  int     location;   /* token location, or -1 if unknown */
+typedef struct RoleSpec {
+  NodeTag type;
+  RoleSpecType roletype; /* Type of this rolespec */
+  char *rolename;        /* filled only for ROLESPEC_CSTRING */
+  int location;          /* token location, or -1 if unknown */
 } RoleSpec;
 
-typedef enum ViewCheckOption
-{
+typedef enum ViewCheckOption {
   NO_CHECK_OPTION,
   LOCAL_CHECK_OPTION,
   CASCADED_CHECK_OPTION
 } ViewCheckOption;
 
-typedef struct ViewStmt
-{
-  NodeTag   type;
-  RangeVar   *view;     /* the view to be created */
-  List     *aliases;    /* target column names */
-  Node     *query;      /* the SELECT query */
-  bool    replace;    /* replace an existing view? */
-  List     *options;    /* options from WITH clause */
-  ViewCheckOption withCheckOption;  /* WITH CHECK OPTION */
+typedef struct ViewStmt {
+  NodeTag type;
+  RangeVar *view;                  /* the view to be created */
+  List *aliases;                   /* target column names */
+  Node *query;                     /* the SELECT query */
+  bool replace;                    /* replace an existing view? */
+  List *options;                   /* options from WITH clause */
+  ViewCheckOption withCheckOption; /* WITH CHECK OPTION */
 } ViewStmt;
 
 typedef struct ParamRef {
@@ -774,29 +767,26 @@ typedef struct VacuumStmt {
   List *va_cols;      /* list of column names, or NIL for all */
 } VacuumStmt;
 
-typedef enum
-{
-  VAR_SET_VALUE,              /* SET var = value */
-  VAR_SET_DEFAULT,            /* SET var TO DEFAULT */
-  VAR_SET_CURRENT,            /* SET var FROM CURRENT */
-  VAR_SET_MULTI,              /* special case for SET TRANSACTION ... */
-  VAR_RESET,                  /* RESET var */
-  VAR_RESET_ALL               /* RESET ALL */
+typedef enum {
+  VAR_SET_VALUE,   /* SET var = value */
+  VAR_SET_DEFAULT, /* SET var TO DEFAULT */
+  VAR_SET_CURRENT, /* SET var FROM CURRENT */
+  VAR_SET_MULTI,   /* special case for SET TRANSACTION ... */
+  VAR_RESET,       /* RESET var */
+  VAR_RESET_ALL    /* RESET ALL */
 } VariableSetKind;
 
-typedef struct VariableSetStmt
-{
-  NodeTag     type;
+typedef struct VariableSetStmt {
+  NodeTag type;
   VariableSetKind kind;
-  char       *name;           /* variable to be set */
-  List       *args;           /* List of A_Const nodes */
-  bool        is_local;       /* SET LOCAL? */
+  char *name;    /* variable to be set */
+  List *args;    /* List of A_Const nodes */
+  bool is_local; /* SET LOCAL? */
 } VariableSetStmt;
 
-typedef struct VariableShowStmt
-{
-  NodeTag     type;
-  char       *name;
+typedef struct VariableShowStmt {
+  NodeTag type;
+  char *name;
 } VariableShowStmt;
 
 /// **********  For UDFs *********** ///
