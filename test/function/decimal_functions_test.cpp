@@ -105,6 +105,59 @@ TEST_F(DecimalFunctionsTests, RoundTest) {
   EXPECT_TRUE(result.IsNull());
 }
 
+TEST_F(DecimalFunctionsTests,AbsTestDouble) {
+  std::vector<double> doubleTestInputs = {9.5, -2.5, -4.4, 0.0};
+  std::vector<type::Value> args;
+  for (double in : doubleTestInputs) {
+    args = {type::ValueFactory::GetDecimalValue(in)};
+    auto result = function::DecimalFunctions::_Abs(args);
+    EXPECT_FALSE(result.IsNull());
+    EXPECT_EQ(fabs(in), result.GetAs<double>());
+  }
+
+  // NULL CHECK
+  args = {type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL)};
+  auto result = function::DecimalFunctions::_Abs(args);
+  EXPECT_TRUE(result.IsNull());
+}
+
+TEST_F(DecimalFunctionsTests, AbsTestInt) {
+  std::vector<int64_t> bigIntTestInputs = {-20, -15, -10, 0, 10, 20};
+  std::vector<int32_t> intTestInputs = {-20, -15, -10, 0, 10, 20};
+  std::vector<int16_t> smallIntTestInputs = {-20, -15, -10, 0, 10, 20};
+  std::vector<int8_t> tinyIntTestInputs = {-20, -15, -10, 0, 10, 20};
+
+  std::vector<type::Value> args;
+  // Testing Abs with Integer Types
+  for (int64_t in: bigIntTestInputs) {
+    args = {type::ValueFactory::GetBigIntValue(in)};
+    auto result = function::DecimalFunctions::_Abs(args);
+    EXPECT_FALSE(result.IsNull());
+    EXPECT_EQ(std::abs(in), result.GetAs<int64_t>());
+  }
+
+  for (int32_t in: intTestInputs) {
+    args = {type::ValueFactory::GetIntegerValue(in)};
+    auto result = function::DecimalFunctions::_Abs(args);
+    EXPECT_FALSE(result.IsNull());
+    EXPECT_EQ(abs(in), result.GetAs<int32_t>());
+  }
+
+  for (int16_t in: smallIntTestInputs) {
+    args = {type::ValueFactory::GetSmallIntValue(in)};
+    auto result = function::DecimalFunctions::_Abs(args);
+    EXPECT_FALSE(result.IsNull());
+    EXPECT_EQ(abs(in), result.GetAs<int16_t>());
+  }
+
+  for (int8_t in: tinyIntTestInputs) {
+    args = {type::ValueFactory::GetTinyIntValue(in)};
+    auto result = function::DecimalFunctions::_Abs(args);
+    EXPECT_FALSE(result.IsNull());
+    EXPECT_EQ(abs(in), result.GetAs<int8_t>());
+  }
+}
+
 TEST_F(DecimalFunctionsTests, CeilTestDouble) {
   std::vector<double> doubleTestInputs = {-36.0, -35.222, -0.7, -0.5, -0.2,
                                           0.0, 0.2, 0.5, 0.7, 35.2, 36.0,

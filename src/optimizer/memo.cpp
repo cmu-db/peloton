@@ -92,11 +92,8 @@ GroupID Memo::AddNewGroup(std::shared_ptr<GroupExpression> gexpr) {
     }
   }
 
-  StatsCalculator stats_calculator;
-  auto stats = stats_calculator.CalculateStats(gexpr);
-
   groups_.emplace_back(
-      new Group(new_group_id, std::move(table_aliases), stats));
+      new Group(new_group_id, std::move(table_aliases)));
   return new_group_id;
 }
 

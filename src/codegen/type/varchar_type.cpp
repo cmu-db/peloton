@@ -18,6 +18,7 @@
 #include "codegen/proxy/values_runtime_proxy.h"
 #include "codegen/proxy/date_functions_proxy.h"
 #include "codegen/type/boolean_type.h"
+#include "codegen/type/decimal_type.h"
 #include "codegen/type/integer_type.h"
 #include "codegen/type/timestamp_type.h"
 #include "codegen/value.h"
@@ -272,6 +273,29 @@ struct DateTrunc : public TypeSystem::BinaryOperatorHandleNull {
   }
 };
 
+struct DatePart : public TypeSystem::BinaryOperatorHandleNull {
+  bool SupportsTypes(const Type &left_type,
+                     const Type &right_type) const override {
+    return left_type.GetSqlType() == Varchar::Instance() &&
+           right_type.GetSqlType() == Timestamp::Instance();
+  }
+
+  Type ResultType(UNUSED_ATTRIBUTE const Type &left_type,
+                  UNUSED_ATTRIBUTE const Type &right_type) const override {
+    return Type{Decimal::Instance()};
+  }
+
+  Value Impl(CodeGen &codegen, const Value &left, const Value &right,
+             UNUSED_ATTRIBUTE const TypeSystem::InvocationContext &ctx)
+      const override {
+    PL_ASSERT(SupportsTypes(left.GetType(), right.GetType()));
+
+    llvm::Value *raw_ret = codegen.Call(TimestampFunctionsProxy::DatePart,
+                                        {left.GetValue(), right.GetValue()});
+    return Value{Decimal::Instance(), raw_ret};
+  }
+};
+
 struct BTrim : public TypeSystem::BinaryOperatorHandleNull {
   bool SupportsTypes(const Type &left_type,
                      const Type &right_type) const override {
@@ -379,7 +403,7 @@ struct Repeat : public TypeSystem::BinaryOperatorHandleNull {
  * You should uncomment the following struct once you have created
  * the catalog and StringFunctions implementation.
  */
-//struct Concat : public TypeSystem::NaryOperator,
+// struct Concat : public TypeSystem::NaryOperator,
 //                public TypeSystem::BinaryOperator {
 //  bool SupportsTypes(const std::vector<Type> &arg_types) const override {
 //    // Every input must be a string
@@ -411,7 +435,8 @@ struct Repeat : public TypeSystem::BinaryOperatorHandleNull {
 //    // Make room on stack to store each of the input strings and their lengths
 //    auto num_inputs = static_cast<uint32_t>(input_args.size());
 //    auto *concat_str_buffer =
-//        codegen.AllocateBuffer(codegen.CharPtrType(), num_inputs, "concatStrs");
+//        codegen.AllocateBuffer(codegen.CharPtrType(), num_inputs,
+//        "concatStrs");
 //    auto *concat_str_lens_buffer = codegen.AllocateBuffer(
 //        codegen.Int32Type(), num_inputs, "concatStrLens");
 //
@@ -473,8 +498,11 @@ struct Substr : public TypeSystem::NaryOperator {
     // Setup function arguments
     llvm::Value *executor_ctx = ctx.executor_context;
     std::vector<llvm::Value *> args = {
-        executor_ctx, input_args[0].GetValue(), input_args[0].GetLength(),
-        input_args[1].GetValue(), input_args[2].GetValue(),
+        executor_ctx,
+        input_args[0].GetValue(),
+        input_args[0].GetLength(),
+        input_args[1].GetValue(),
+        input_args[2].GetValue(),
     };
 
     // Call
@@ -516,16 +544,15 @@ std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {
 // Binary operations
 Like kLike;
 DateTrunc kDateTrunc;
+DatePart kDatePart;
 BTrim kBTrim;
 LTrim kLTrim;
 RTrim kRTrim;
 Repeat kRepeat;
 std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
-    {OperatorId::Like, kLike},
-    {OperatorId::DateTrunc, kDateTrunc},
-    {OperatorId::BTrim, kBTrim},
-    {OperatorId::LTrim, kLTrim},
-    {OperatorId::RTrim, kRTrim},
+    {OperatorId::Like, kLike},         {OperatorId::DateTrunc, kDateTrunc},
+    {OperatorId::DatePart, kDatePart}, {OperatorId::BTrim, kBTrim},
+    {OperatorId::LTrim, kLTrim},       {OperatorId::RTrim, kRTrim},
     {OperatorId::Repeat, kRepeat}};
 
 // Nary operations

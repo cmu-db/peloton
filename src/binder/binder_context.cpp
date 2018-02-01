@@ -82,21 +82,16 @@ bool BinderContext::GetColumnPosTuple(
     const std::string &col_name,
     std::shared_ptr<catalog::TableCatalogObject> table_obj,
     std::tuple<oid_t, oid_t, oid_t> &col_pos_tuple, type::TypeId &value_type) {
-  try {
-    auto column_object = table_obj->GetColumnObject(col_name);
-    if (column_object == nullptr) {
-      return false;
-    }
-
-    oid_t col_pos = column_object->GetColumnId();
-    col_pos_tuple = std::make_tuple(table_obj->GetDatabaseOid(),
-                                    table_obj->GetTableOid(), col_pos);
-    value_type = column_object->GetColumnType();
-    return true;
-  } catch (CatalogException &e) {
-    LOG_TRACE("Can't find table %d! Return false", std::get<1>(table_id_tuple));
+  auto column_object = table_obj->GetColumnObject(col_name);
+  if (column_object == nullptr) {
     return false;
   }
+
+  oid_t col_pos = column_object->GetColumnId();
+  col_pos_tuple = std::make_tuple(table_obj->GetDatabaseOid(),
+                                  table_obj->GetTableOid(), col_pos);
+  value_type = column_object->GetColumnType();
+  return true;
 }
 
 bool BinderContext::GetColumnPosTuple(
