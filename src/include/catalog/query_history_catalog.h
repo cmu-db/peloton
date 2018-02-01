@@ -23,7 +23,6 @@
 #pragma once
 
 #include "catalog/abstract_catalog.h"
-#include "statistics/query_metric.h"
 
 #define QUERY_HISTORY_CATALOG_NAME "pg_query_history"
 

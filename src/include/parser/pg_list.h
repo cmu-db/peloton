@@ -73,7 +73,6 @@ struct ListCell {
  * if supported by the compiler, or as regular functions otherwise.
  * See STATIC_IF_INLINE in c.h.
  */
-
 #ifndef PG_USE_INLINE
 extern ListCell *list_head(const List *l);
 extern ListCell *list_tail(List *l);
