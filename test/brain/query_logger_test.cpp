@@ -29,50 +29,12 @@ namespace test {
 class QueryLoggerTests : public PelotonTest {
  protected:
   virtual void SetUp() override {
-    // Call parent virtual function first
-    PelotonTest::SetUp();
-
-    // Create test database
-    CreateAndLoadTable();
+    settings::SettingsManager::SetBool(settings::SettingId::brain, true);
+    PelotonInit::Initialize();
   }
 
   virtual void TearDown() override {
-    // Destroy test database
-    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    auto txn = txn_manager.BeginTransaction();
-    catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
-    txn_manager.CommitTransaction(txn);
-
-    // Call parent virtual function
-    PelotonTest::TearDown();
-  }
-
-  /*** Helper functions **/
-  void CreateAndLoadTable() {
-    // Create database
-    // auto &txn_manager =
-    // concurrency::TransactionManagerFactory::GetInstance();
-    // auto txn = txn_manager.BeginTransaction();
-    // catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
-    // txn_manager.CommitTransaction(txn);
-
-    PelotonInit::Initialize();
-    // TODO (Priyatham and Siva): Figure out why this is not working
-    // settings::SettingsManager::SetBool(settings::SettingId::brain, true);
-    // threadpool::BrainThreadPool::GetInstance().Startup();
-
-    //   auto catalog = catalog::Catalog::GetInstance();
-    //   catalog->Bootstrap();
-    // // set max thread number.
-    // thread_pool.Initialize(0, std::thread::hardware_concurrency() + 3);
-
-    // threadpool::BrainThreadPool::GetInstance().Startup();
-
-    // // start epoch.
-    // concurrency::EpochManagerFactory::GetInstance().StartEpoch();
-
-    // // start GC.
-    // gc::GCManagerFactory::GetInstance().StartGC();
+    PelotonInit::Shutdown();
   }
 };
 
@@ -80,22 +42,55 @@ TEST_F(QueryLoggerTests, SimpleInsertsTest) {
   std::vector<std::string> expected_result;
   std::string test_query;
   std::string test_query_fingerprint;
+  std::vector<ResultValue> result;
   std::string select_query =
-      "SELECT query_string, fingerprint FROM pg_catalog.pg_query_history;";
+      "SELECT * FROM pg_catalog.pg_query_history;";
   std::string select_query_fingerprint =
       pg_query_fingerprint(select_query.c_str()).hexdigest;
 
-  test_query = "CREATE TABLE test(a INT PRIMARY KEY, b INT);";
+  test_query = "CREATE TABLE test(a INT);";
   test_query_fingerprint = pg_query_fingerprint(test_query.c_str()).hexdigest;
 
   expected_result.push_back(test_query + "|" + test_query_fingerprint);
 
   TestingSQLUtil::ExecuteSQLQuery(test_query.c_str());
-  bool check = settings::SettingsManager::GetBool(settings::SettingId::brain);
-  LOG_INFO("Boolean: %d", check);
-  sleep(5);
-  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(select_query.c_str(),
-                                                expected_result, false);
+  // bool check = settings::SettingsManager::GetBool(settings::SettingId::brain);
+
+  test_query = "INSERT INTO test VALUES (11);";
+  test_query_fingerprint = pg_query_fingerprint(test_query.c_str()).hexdigest;
+
+  expected_result.push_back(test_query + "|" + test_query_fingerprint);
+
+  TestingSQLUtil::ExecuteSQLQuery(test_query.c_str());
+  // check = settings::SettingsManager::GetBool(settings::SettingId::brain);
+
+  test_query = "SELECT * FROM test;";
+  test_query_fingerprint = pg_query_fingerprint(test_query.c_str()).hexdigest;
+
+  expected_result.push_back(test_query + "|" + test_query_fingerprint);
+
+  TestingSQLUtil::ExecuteSQLQuery(test_query.c_str(), result);
+  LOG_INFO("SELECT RESULT SIZE: %lu", result.size());
+  LOG_INFO("SELECT RESULT VALUE: %s", TestingSQLUtil::GetResultValueAsString(result, 0).c_str());
+  // check = settings::SettingsManager::GetBool(settings::SettingId::brain);
+
+
+  test_query = "SELECT * FROM pg_catalog.pg_table WHERE table_name = 'pg_query_history';";
+  test_query_fingerprint = pg_query_fingerprint(test_query.c_str()).hexdigest;
+
+  expected_result.push_back(test_query + "|" + test_query_fingerprint);
+
+  TestingSQLUtil::ExecuteSQLQuery(test_query.c_str(), result);
+  LOG_INFO("SELECT CATALOG RESULT SIZE: %lu", result.size());
+  LOG_INFO("SELECT CATALOG RESULT VALUE: %s", TestingSQLUtil::GetResultValueAsString(result, 1).c_str());
+
+  sleep(2);
+  
+  result.clear();
+
+  TestingSQLUtil::ExecuteSQLQuery(select_query.c_str(), result);
+  
+  LOG_INFO("RESULT SIZE: %lu", result.size());
 }
 
 }  // namespace test
