@@ -92,29 +92,24 @@ class NotifiableTask {
 
   /**
    * @brief Register an event with the event base associated with this
-   notifiable task.
+   * notifiable task.
    *
    * After registration, the event firing will result in the callback registered
-   executing on
-   * the thread this task is running on. Certain events has the same life cycle
-   as the
-   * task itself, in which case it is safe to ignore the return value and have
-   these events
-   * be freed on destruction of the task. However, if this is not the case, the
-   caller will
-   * need to save the return value and manually unregister the event with the
-   task.
-   *
-   * @see UnregisterEvent()
+   * executing on the thread this task is running on. Certain events has the
+   * same life cycle as the task itself, in which case it is safe to ignore the
+   * return value and have these events be freed on destruction of the task.
+   * However, if this is not the case, the caller will need to save the return
+   * value and manually unregister the event with the task.
+   * @see UnregisterEvent().
    *
    * @param fd the file descriptor or signal to be monitored, or -1. (if manual
-   or time-based)
+   *         or time-based)
    * @param flags desired events to monitor: bitfield of EV_READ, EV_WRITE,
-         EV_SIGNAL, EV_PERSIST, EV_ET.
+   *         EV_SIGNAL, EV_PERSIST, EV_ET.
    * @param callback callback function to be invoked when the event happens
    * @param arg an argument to be passed to the callback function
    * @param timeout the maximum amount of time to wait for an event, defaults to
-   null which will wait forever
+   *        null which will wait forever
    * @return pointer to the allocated event.
    */
   struct event *RegisterEvent(int fd, short flags, event_callback_fn callback,
@@ -176,7 +171,9 @@ class NotifiableTask {
   }
 
   // TODO(tianyu): The original network code seems to do this as an
-  // optimization. I am leaving this out until we get numbers
+  //  optimization. Specifically it avoids new memory allocation by reusing
+  //  an existing event. I am leaving this out until we get numbers.
+
   //  void UpdateEvent(struct event *event, int fd, short flags,
   //                   event_callback_fn callback, void *arg,
   //                   const struct timeval *timeout = nullptr) {
