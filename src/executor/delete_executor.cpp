@@ -133,6 +133,27 @@ bool DeleteExecutor::DExecute() {
       physical_tuple_id = old_location.offset;
     }
 
+    ContainerTuple<storage::TileGroup> old_tuple(tile_group, physical_tuple_id);
+    storage::Tuple prev_tuple(target_table_->GetSchema(), true);
+
+    // Get a copy of the old tuple
+    for (oid_t column_itr = 0; column_itr < target_table_schema->GetColumnCount(); column_itr++) {
+      type::Value val = (old_tuple.GetValue(column_itr));
+      prev_tuple.SetValue(column_itr, val, executor_context_->GetPool());
+    }
+
+    // Check the foreign key source table
+    if (target_table_->CheckForeignKeySrcAndCascade(&prev_tuple,
+                                                    nullptr,
+                                                    current_txn,
+                                                    executor_context_,
+                                                    false) == false)
+    {
+      transaction_manager.SetTransactionResult(current_txn,
+                                              peloton::ResultType::FAILURE);
+      return false;
+    }
+
     bool is_owner = transaction_manager.IsOwner(current_txn, tile_group_header,
                                                 physical_tuple_id);
 
