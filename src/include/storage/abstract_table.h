@@ -66,7 +66,8 @@ class AbstractTable : public Printable {
   // index_entry_ptr.
   virtual ItemPointer InsertTuple(const Tuple *tuple,
                                   concurrency::TransactionContext *transaction,
-                                  ItemPointer **index_entry_ptr = nullptr) = 0;
+                                  ItemPointer **index_entry_ptr = nullptr,
+                                  bool check_fk = true) = 0;
 
   // designed for tables without primary key. e.g., output table used by
   // aggregate_executor.

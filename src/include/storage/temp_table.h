@@ -62,7 +62,8 @@ class TempTable : public AbstractTable {
   // index_entry_ptr.
   ItemPointer InsertTuple(const Tuple *tuple,
                           concurrency::TransactionContext *transaction,
-                          ItemPointer **index_entry_ptr = nullptr) override;
+                          ItemPointer **index_entry_ptr = nullptr,
+                          bool check_fk = true) override;
 
   // designed for tables without primary key. e.g., output table used by
   // aggregate_executor.

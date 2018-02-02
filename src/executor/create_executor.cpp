@@ -99,25 +99,26 @@ bool CreateExecutor::CreateDatabase(const planner::CreatePlan &node) {
 }
 
 bool CreateExecutor::CreateTable(const planner::CreatePlan &node) {
-  auto txn = context_->GetTransaction();
+  auto current_txn = context_->GetTransaction();
   std::string table_name = node.GetTableName();
   auto database_name = node.GetDatabaseName();
   std::unique_ptr<catalog::Schema> schema(node.GetSchema());
 
   ResultType result = catalog::Catalog::GetInstance()->CreateTable(
-      database_name, table_name, std::move(schema), txn);
-  txn->SetResult(result);
+      database_name, table_name, std::move(schema), current_txn);
+  current_txn->SetResult(result);
 
-  if (txn->GetResult() == ResultType::SUCCESS) {
+  if (current_txn->GetResult() == ResultType::SUCCESS) {
     LOG_TRACE("Creating table succeeded!");
 
     // Add the foreign key constraint (or other multi-column constraints)
     if (node.GetForeignKeys().empty() == false) {
       auto catalog = catalog::Catalog::GetInstance();
-      auto db = catalog->GetDatabaseWithName(database_name, txn);
+      auto db = catalog->GetDatabaseWithName(database_name, current_txn);
 
       auto source_table = db->GetTableWithName(table_name);
       int count = 1;
+
       for (auto fk : node.GetForeignKeys()) {
         auto sink_table = db->GetTableWithName(fk.sink_table_name);
 
@@ -139,7 +140,7 @@ bool CreateExecutor::CreateTable(const planner::CreatePlan &node) {
         // Sink Column Offsets
         std::vector<oid_t> sink_col_ids;
         for (auto col_name : fk.foreign_key_sinks) {
-          oid_t col_id = source_table->GetSchema()->GetColumnID(col_name);
+          oid_t col_id = sink_table->GetSchema()->GetColumnID(col_name);
           if (col_id == INVALID_OID) {
             std::string error = StringUtil::Format(
                 "Invalid sink column name '%s.%s' for foreign key '%s'",
@@ -152,43 +153,51 @@ bool CreateExecutor::CreateTable(const planner::CreatePlan &node) {
         PL_ASSERT(sink_col_ids.size() == fk.foreign_key_sinks.size());
 
         // Create the catalog object and shove it into the table
-        auto catalog_fk = new catalog::ForeignKey(
+        auto catalog_fk = new catalog::ForeignKey(INVALID_OID,
             sink_table->GetOid(), sink_col_ids, source_col_ids,
             fk.upd_action, fk.del_action, fk.constraint_name);
         source_table->AddForeignKey(catalog_fk);
 
         // Register FK with the sink table for delete/update actions
-        sink_table->RegisterForeignKeySource(table_name);
+        catalog_fk = new catalog::ForeignKey(source_table->GetOid(),
+                                              INVALID_OID,
+                                              sink_col_ids,
+                                              source_col_ids,
+                                              fk.upd_action,
+                                              fk.del_action,
+                                              fk.constraint_name);
+        sink_table->RegisterForeignKeySource(catalog_fk);
 
         // Add a non-unique index on the source table if needed
-        if (catalog_fk->GetUpdateAction() != FKConstrActionType::NOACTION ||
-            catalog_fk->GetDeleteAction() != FKConstrActionType::NOACTION) {
-          std::vector<std::string> source_col_names =
-              fk.foreign_key_sources;
-          std::string index_name =
-              source_table->GetName() + "_FK_" + std::to_string(count);
-          catalog->CreateIndex(database_name, source_table->GetName(),
-                               source_col_ids, index_name, false,
-                               IndexType::BWTREE, txn);
-          count++;
+        std::vector<std::string> source_col_names =
+            fk.foreign_key_sources;
+        std::string index_name =
+            source_table->GetName() + "_FK_" + sink_table->GetName() + "_"
+            + std::to_string(count);
+        catalog->CreateIndex(database_name, source_table->GetName(),
+                              source_col_ids, index_name, false,
+                              IndexType::BWTREE, current_txn);
+        count++;
 
 #ifdef LOG_DEBUG_ENABLED
-          LOG_DEBUG("Added a FOREIGN index on in %s.", table_name.c_str());
-          LOG_DEBUG("Foreign key column names: ");
-          for (auto c : source_col_names) {
-            LOG_DEBUG("FK col name: %s", c.c_str());
-          }
-#endif
+        LOG_DEBUG("Added a FOREIGN index on in %s.\n", table_name.c_str());
+        LOG_DEBUG("Foreign key column names: \n");
+        for (auto c : source_col_names) {
+          LOG_DEBUG("FK col name: %s\n", c.c_str());
         }
+        for (auto c : fk.foreign_key_sinks) {
+          LOG_DEBUG("FK sink col name: %s\n", c.c_str());
+        }
+#endif
       }
     }
-  } else if (txn->GetResult() == ResultType::FAILURE) {
+  } else if (current_txn->GetResult() == ResultType::FAILURE) {
     LOG_TRACE("Creating table failed!");
-    return (false);
   } else {
     LOG_TRACE("Result is: %s",
-              ResultTypeToString(txn->GetResult()).c_str());
+              ResultTypeToString(current_txn->GetResult()).c_str());
   }
+
   return (true);
 }
 
