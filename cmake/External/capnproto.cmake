@@ -44,6 +44,13 @@ if (NOT __CAPNP_INCLUDED) # guard against multiple includes
       LOG_INSTALL 1
       )
 
+    set(CAPNP_FOUND TRUE)
+    set(CAPNP_EXECUTABLE ${capnp_INSTALL}/bin/capnp)
+    set(CAPNPC_CXX_EXECUTABLE ${capnp_INSTALL}/bin/capnpc-c++)
+    set(CAPNP_INCLUDE_DIRS ${capnp_INSTALL}/include)
+    set(CAPNP_INCLUDE_DIRECTORY ${capnp_INSTALL}/include)
+    set(CAPNP_EXTERNAL TRUE)
+
     list(APPEND external_project_dependencies capnp)
 
   endif()
