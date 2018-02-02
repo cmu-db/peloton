@@ -4,7 +4,7 @@
 //
 // worker_pool.h
 //
-// Identification: src/threadpool/worker_pool.h
+// Identification: src/include/threadpool/worker_pool.h
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
