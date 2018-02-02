@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include "settings/settings_manager.h"
 #include "worker_pool.h"
 
 namespace peloton {
@@ -51,13 +52,21 @@ class MonoQueuePool {
     task_queue_.Enqueue(std::move(func));
   }
 
-  static MonoQueuePool &GetInstance(int task_queue_size, int worker_pool_size) {
+  static MonoQueuePool &GetInstance() {
+    int task_queue_size = settings::SettingsManager::GetBool(
+        settings::SettingId::monoqueue_task_queue_size);
+    int worker_pool_size = settings::SettingsManager::GetBool(
+        settings::SettingId::monoqueue_worker_pool_size);
+
     static MonoQueuePool mono_queue_pool(task_queue_size, worker_pool_size);
     return mono_queue_pool;
   }
 
-  static MonoQueuePool &GetBrainInstance(int task_queue_size,
-                                         int worker_pool_size) {
+  static MonoQueuePool &GetBrainInstance() {
+    int task_queue_size = settings::SettingsManager::GetBool(
+        settings::SettingId::brain_task_queue_size);
+    int worker_pool_size = settings::SettingsManager::GetBool(
+        settings::SettingId::brain_worker_pool_size);
     static MonoQueuePool brain_queue_pool(task_queue_size, worker_pool_size);
     return brain_queue_pool;
   }

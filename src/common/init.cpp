@@ -40,11 +40,11 @@ void PelotonInit::Initialize() {
   thread_pool.Initialize(0, std::thread::hardware_concurrency() + 3);
 
   // start worker pool
-  threadpool::MonoQueuePool::GetInstance(32, 4).Startup();
+  threadpool::MonoQueuePool::GetInstance().Startup();
 
   // start brain thread pool
   if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
-    threadpool::MonoQueuePool::GetBrainInstance(32, 1).Startup();
+    threadpool::MonoQueuePool::GetBrainInstance().Startup();
   }
 
   int parallelism = (std::thread::hardware_concurrency() + 3) / 4;
@@ -110,11 +110,11 @@ void PelotonInit::Shutdown() {
   concurrency::EpochManagerFactory::GetInstance().StopEpoch();
 
   // stop worker pool
-  threadpool::MonoQueuePool::GetInstance(32, 4).Shutdown();
+  threadpool::MonoQueuePool::GetInstance().Shutdown();
 
   // stop brain thread pool
   if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
-    threadpool::MonoQueuePool::GetBrainInstance(32, 1).Shutdown();
+    threadpool::MonoQueuePool::GetBrainInstance().Shutdown();
   }
 
   thread_pool.Shutdown();

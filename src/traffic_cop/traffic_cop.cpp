@@ -187,7 +187,7 @@ executor::ExecutionResult TrafficCop::ExecuteHelper(
     task_callback_(task_callback_arg_);
   };
 
-  auto &pool = threadpool::MonoQueuePool::GetInstance(32, 4);
+  auto &pool = threadpool::MonoQueuePool::GetInstance();
   pool.SubmitTask([plan, txn, &params, &result, &result_format, on_complete] {
     executor::PlanExecutor::ExecutePlan(plan, txn, params, result_format,
                                         on_complete);
