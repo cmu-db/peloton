@@ -22,7 +22,7 @@
 #include "storage/tile_group.h"
 #include "storage/tuple.h"
 #include "storage/storage_manager.h"
-#include "threadpool/brain_thread_pool.h"
+#include "threadpool/mono_queue_pool.h"
 
 
 namespace peloton {
@@ -136,7 +136,7 @@ int TransactionLevelGCManager::Unlink(const int &thread_id,
       std::vector<std::string> query_strings = txn_ctx->GetQueryStrings();
       if(query_strings.size() != 0) {
         uint64_t timestamp = txn_ctx->GetTimestamp();
-        auto &pool = threadpool::BrainThreadPool::GetInstance();
+        auto &pool = threadpool::MonoQueuePool::GetBrainInstance(32, 1);
         for(auto query_string: query_strings) {
           pool.SubmitTask([this, query_string, timestamp] {
             brain::QueryLogger::LogQuery(query_string, timestamp);

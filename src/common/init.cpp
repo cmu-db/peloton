@@ -24,7 +24,6 @@
 #include "gc/gc_manager_factory.h"
 #include "settings/settings_manager.h"
 #include "threadpool/mono_queue_pool.h"
-#include "threadpool/brain_thread_pool.h"
 
 namespace peloton {
 
@@ -41,11 +40,11 @@ void PelotonInit::Initialize() {
   thread_pool.Initialize(0, std::thread::hardware_concurrency() + 3);
 
   // start worker pool
-  threadpool::MonoQueuePool::GetInstance().Startup();
+  threadpool::MonoQueuePool::GetInstance(32, 4).Startup();
 
   // start brain thread pool
   if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
-    threadpool::BrainThreadPool::GetInstance().Startup();
+    threadpool::MonoQueuePool::GetBrainInstance(32, 1).Startup();
   }
 
   int parallelism = (std::thread::hardware_concurrency() + 3) / 4;
@@ -111,11 +110,11 @@ void PelotonInit::Shutdown() {
   concurrency::EpochManagerFactory::GetInstance().StopEpoch();
 
   // stop worker pool
-  threadpool::MonoQueuePool::GetInstance().Shutdown();
+  threadpool::MonoQueuePool::GetInstance(32, 4).Shutdown();
 
   // stop brain thread pool
   if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
-    threadpool::BrainThreadPool::GetInstance().Shutdown();
+    threadpool::MonoQueuePool::GetBrainInstance(32, 1).Shutdown();
   }
 
   thread_pool.Shutdown();

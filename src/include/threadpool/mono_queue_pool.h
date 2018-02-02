@@ -17,19 +17,15 @@
 namespace peloton {
 namespace threadpool {
 
-// TODO: tune these variables
-constexpr static size_t kDefaultTaskQueueSize = 32;
-constexpr static size_t kDefaultWorkerPoolSize = 4;
-
 /**
  * @brief Wrapper class for single queue and single pool.
  * One should use this if possible.
  */
 class MonoQueuePool {
  public:
-  MonoQueuePool()
-      : task_queue_(kDefaultTaskQueueSize),
-        worker_pool_(kDefaultWorkerPoolSize, &task_queue_),
+  MonoQueuePool(int task_queue_size = 32, int worker_pool_size = 4)
+      : task_queue_(task_queue_size),
+        worker_pool_(worker_pool_size, &task_queue_),
         is_running_(false) {}
 
   ~MonoQueuePool() {
@@ -55,9 +51,15 @@ class MonoQueuePool {
     task_queue_.Enqueue(std::move(func));
   }
 
-  static MonoQueuePool &GetInstance() {
-    static MonoQueuePool mono_queue_pool;
+  static MonoQueuePool &GetInstance(int task_queue_size, int worker_pool_size) {
+    static MonoQueuePool mono_queue_pool(task_queue_size, worker_pool_size);
     return mono_queue_pool;
+  }
+
+  static MonoQueuePool &GetBrainInstance(int task_queue_size,
+                                         int worker_pool_size) {
+    static MonoQueuePool brain_queue_pool(task_queue_size, worker_pool_size);
+    return brain_queue_pool;
   }
 
  private:
