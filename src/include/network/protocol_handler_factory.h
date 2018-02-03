@@ -6,7 +6,7 @@
 //
 // Identification: src/include/network/protocol_handler_factory.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -29,9 +29,8 @@ enum class ProtocolHandlerType {
 // The factory of ProtocolHandler
 class ProtocolHandlerFactory {
  public:
-  static std::unique_ptr<ProtocolHandler>
-  CreateProtocolHandler(ProtocolHandlerType type, tcop::TrafficCop *trafficCop);
-
+  static std::unique_ptr<ProtocolHandler> CreateProtocolHandler(
+      ProtocolHandlerType type, tcop::TrafficCop *trafficCop);
 };
 }
 }

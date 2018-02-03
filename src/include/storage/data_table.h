@@ -21,6 +21,7 @@
 #include "common/item_pointer.h"
 #include "common/platform.h"
 #include "common/container/lock_free_array.h"
+#include "executor/executor_context.h"
 #include "index/index.h"
 #include "storage/abstract_table.h"
 #include "storage/indirection_array.h"
@@ -118,14 +119,16 @@ class DataTable : public AbstractTable {
   // index_entry_ptr.
   ItemPointer InsertTuple(const Tuple *tuple,
                           concurrency::TransactionContext *transaction,
-                          ItemPointer **index_entry_ptr = nullptr);
+                          ItemPointer **index_entry_ptr = nullptr,
+                          bool check_fk = true);
   // designed for tables without primary key. e.g., output table used by
   // aggregate_executor.
   ItemPointer InsertTuple(const Tuple *tuple);
 
   // Insert tuple with ItemPointer provided explicitly
   bool InsertTuple(const AbstractTuple *tuple, ItemPointer location,
-      concurrency::TransactionContext *transaction, ItemPointer **index_entry_ptr);
+      concurrency::TransactionContext *transaction, ItemPointer **index_entry_ptr,
+      bool check_fk = true);
 
   //===--------------------------------------------------------------------===//
   // TILE GROUP
@@ -193,6 +196,12 @@ class DataTable : public AbstractTable {
   // FOREIGN KEYS
   //===--------------------------------------------------------------------===//
 
+  bool CheckForeignKeySrcAndCascade(storage::Tuple *prev_tuple, 
+                                    storage::Tuple *new_tuple,
+                                    concurrency::TransactionContext *transaction,
+                                    executor::ExecutorContext *context,
+                                    bool is_update);
+
   void AddForeignKey(catalog::ForeignKey *key);
 
   catalog::ForeignKey *GetForeignKey(const oid_t &key_offset) const;
@@ -201,9 +210,11 @@ class DataTable : public AbstractTable {
 
   size_t GetForeignKeyCount() const;
 
-  void RegisterForeignKeySource(const std::string &source_table_name);
+  void RegisterForeignKeySource(catalog::ForeignKey *key);
 
-  void RemoveForeignKeySource(const std::string &source_table_name);
+  size_t GetForeignKeySrcCount() const;
+
+  catalog::ForeignKey *GetForeignKeySrc(const size_t) const;
 
   //===--------------------------------------------------------------------===//
   // TRANSFORMERS
@@ -333,7 +344,8 @@ class DataTable : public AbstractTable {
                                 ItemPointer *index_entry_ptr);
 
   // check the foreign key constraints
-  bool CheckForeignKeyConstraints(const AbstractTuple *tuple);
+  bool CheckForeignKeyConstraints(const AbstractTuple *tuple,
+                                  concurrency::TransactionContext *transaction);
 
  public:
   static size_t default_active_tilegroup_count_;
@@ -379,8 +391,10 @@ class DataTable : public AbstractTable {
   // CONSTRAINTS
   // fk constraints for which this table is the source
   std::vector<catalog::ForeignKey *> foreign_keys_;
-  // names of tables for which this table's PK is the foreign key sink
-  std::vector<std::string> foreign_key_sources_;
+  // fk constraints for which this table is the sink
+  // The complete information is stored so no need to lookup the table
+  // everytime there is a constraint check
+  std::vector<catalog::ForeignKey *> foreign_key_sources_;
 
   // has a primary key ?
   std::atomic<bool> has_primary_key_ = ATOMIC_VAR_INIT(false);

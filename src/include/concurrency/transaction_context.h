@@ -73,9 +73,20 @@ class TransactionContext : public Printable {
 
   inline eid_t GetEpochId() const { return epoch_id_; }
 
+  inline uint64_t GetTimestamp() const { return timestamp_; }
+
+  inline const std::vector<std::string>& GetQueryStrings() const {
+                                                      return query_strings_; }
+
   inline void SetCommitId(const cid_t commit_id) { commit_id_ = commit_id; }
 
   inline void SetEpochId(const eid_t epoch_id) { epoch_id_ = epoch_id; }
+  
+  inline void SetTimestamp(const uint64_t timestamp) { timestamp_ = timestamp; }
+
+  inline void AddQueryString(const char* query_string) {
+    query_strings_.push_back(std::string(query_string));
+  }
 
   void RecordCreate(oid_t database_oid, oid_t table_oid, oid_t index_oid) {
     rw_object_set_.emplace_back(database_oid, table_oid, index_oid,
@@ -173,6 +184,13 @@ class TransactionContext : public Printable {
   // epoch id can be extracted from read id.
   // GC manager uses this id to check whether a version is still visible.
   eid_t epoch_id_;
+
+  // vector of strings to log at the end of the transaction
+  // populated only if the brain is running
+  std::vector<std::string> query_strings_;
+
+  // timestamp when the transaction began
+  uint64_t timestamp_;
 
   ReadWriteSet rw_set_;
   CreateDropSet rw_object_set_;

@@ -4,9 +4,9 @@
 //
 // peloton_service.cpp
 //
-// Identification: src/network/peloton_service.cpp
+// Identification: src/network/service/peloton_service.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -34,10 +34,10 @@ namespace network {
 namespace service {
 
 void PelotonService::TransactionInit(
-    ::google::protobuf::RpcController* controller,
-    UNUSED_ATTRIBUTE const TransactionInitRequest* request,
-    UNUSED_ATTRIBUTE TransactionInitResponse* response,
-    ::google::protobuf::Closure* done) {
+    ::google::protobuf::RpcController *controller,
+    UNUSED_ATTRIBUTE const TransactionInitRequest *request,
+    UNUSED_ATTRIBUTE TransactionInitResponse *response,
+    ::google::protobuf::Closure *done) {
   if (controller->Failed()) {
     std::string error = controller->ErrorText();
     LOG_TRACE("PelotonService with controller failed:%s ", error.c_str());
@@ -50,10 +50,10 @@ void PelotonService::TransactionInit(
 }
 
 void PelotonService::TransactionWork(
-    ::google::protobuf::RpcController* controller,
-    UNUSED_ATTRIBUTE const TransactionWorkRequest* request,
-    UNUSED_ATTRIBUTE TransactionWorkResponse* response,
-    ::google::protobuf::Closure* done) {
+    ::google::protobuf::RpcController *controller,
+    UNUSED_ATTRIBUTE const TransactionWorkRequest *request,
+    UNUSED_ATTRIBUTE TransactionWorkResponse *response,
+    ::google::protobuf::Closure *done) {
   if (controller->Failed()) {
     std::string error = controller->ErrorText();
     LOG_TRACE("PelotonService with controller failed:%s ", error.c_str());
@@ -66,10 +66,10 @@ void PelotonService::TransactionWork(
 }
 
 void PelotonService::TransactionPrefetch(
-    ::google::protobuf::RpcController* controller,
-    UNUSED_ATTRIBUTE const TransactionPrefetchResult* request,
-    UNUSED_ATTRIBUTE TransactionPrefetchAcknowledgement* response,
-    ::google::protobuf::Closure* done) {
+    ::google::protobuf::RpcController *controller,
+    UNUSED_ATTRIBUTE const TransactionPrefetchResult *request,
+    UNUSED_ATTRIBUTE TransactionPrefetchAcknowledgement *response,
+    ::google::protobuf::Closure *done) {
   if (controller->Failed()) {
     std::string error = controller->ErrorText();
     LOG_TRACE("PelotonService with controller failed:%s ", error.c_str());
@@ -82,10 +82,10 @@ void PelotonService::TransactionPrefetch(
 }
 
 void PelotonService::TransactionMap(
-    ::google::protobuf::RpcController* controller,
-    UNUSED_ATTRIBUTE const TransactionMapRequest* request,
-    UNUSED_ATTRIBUTE TransactionMapResponse* response,
-    ::google::protobuf::Closure* done) {
+    ::google::protobuf::RpcController *controller,
+    UNUSED_ATTRIBUTE const TransactionMapRequest *request,
+    UNUSED_ATTRIBUTE TransactionMapResponse *response,
+    ::google::protobuf::Closure *done) {
   if (controller->Failed()) {
     std::string error = controller->ErrorText();
     LOG_TRACE("PelotonService with controller failed:%s ", error.c_str());
@@ -98,10 +98,10 @@ void PelotonService::TransactionMap(
 }
 
 void PelotonService::TransactionReduce(
-    ::google::protobuf::RpcController* controller,
-    UNUSED_ATTRIBUTE const TransactionReduceRequest* request,
-    UNUSED_ATTRIBUTE TransactionReduceResponse* response,
-    ::google::protobuf::Closure* done) {
+    ::google::protobuf::RpcController *controller,
+    UNUSED_ATTRIBUTE const TransactionReduceRequest *request,
+    UNUSED_ATTRIBUTE TransactionReduceResponse *response,
+    ::google::protobuf::Closure *done) {
   if (controller->Failed()) {
     std::string error = controller->ErrorText();
     LOG_TRACE("PelotonService with controller failed:%s ", error.c_str());
@@ -114,10 +114,10 @@ void PelotonService::TransactionReduce(
 }
 
 void PelotonService::TransactionPrepare(
-    ::google::protobuf::RpcController* controller,
-    UNUSED_ATTRIBUTE const TransactionPrepareRequest* request,
-    UNUSED_ATTRIBUTE TransactionPrepareResponse* response,
-    ::google::protobuf::Closure* done) {
+    ::google::protobuf::RpcController *controller,
+    UNUSED_ATTRIBUTE const TransactionPrepareRequest *request,
+    UNUSED_ATTRIBUTE TransactionPrepareResponse *response,
+    ::google::protobuf::Closure *done) {
   if (controller->Failed()) {
     std::string error = controller->ErrorText();
     LOG_TRACE("PelotonService with controller failed:%s ", error.c_str());
@@ -130,10 +130,10 @@ void PelotonService::TransactionPrepare(
 }
 
 void PelotonService::TransactionFinish(
-    ::google::protobuf::RpcController* controller,
-    UNUSED_ATTRIBUTE const TransactionFinishRequest* request,
-    UNUSED_ATTRIBUTE TransactionFinishResponse* response,
-    ::google::protobuf::Closure* done) {
+    ::google::protobuf::RpcController *controller,
+    UNUSED_ATTRIBUTE const TransactionFinishRequest *request,
+    UNUSED_ATTRIBUTE TransactionFinishResponse *response,
+    ::google::protobuf::Closure *done) {
   if (controller->Failed()) {
     std::string error = controller->ErrorText();
     LOG_TRACE("PelotonService with controller failed:%s ", error.c_str());
@@ -146,10 +146,10 @@ void PelotonService::TransactionFinish(
 }
 
 void PelotonService::TransactionRedirect(
-    ::google::protobuf::RpcController* controller,
-    UNUSED_ATTRIBUTE const TransactionRedirectRequest* request,
-    UNUSED_ATTRIBUTE TransactionRedirectResponse* response,
-    ::google::protobuf::Closure* done) {
+    ::google::protobuf::RpcController *controller,
+    UNUSED_ATTRIBUTE const TransactionRedirectRequest *request,
+    UNUSED_ATTRIBUTE TransactionRedirectResponse *response,
+    ::google::protobuf::Closure *done) {
   if (controller->Failed()) {
     std::string error = controller->ErrorText();
     LOG_TRACE("PelotonService with controller failed:%s ", error.c_str());
@@ -162,10 +162,10 @@ void PelotonService::TransactionRedirect(
 }
 
 void PelotonService::TransactionDebug(
-    ::google::protobuf::RpcController* controller,
-    UNUSED_ATTRIBUTE const TransactionDebugRequest* request,
-    UNUSED_ATTRIBUTE TransactionDebugResponse* response,
-    ::google::protobuf::Closure* done) {
+    ::google::protobuf::RpcController *controller,
+    UNUSED_ATTRIBUTE const TransactionDebugRequest *request,
+    UNUSED_ATTRIBUTE TransactionDebugResponse *response,
+    ::google::protobuf::Closure *done) {
   if (controller->Failed()) {
     std::string error = controller->ErrorText();
     LOG_TRACE("PelotonService with controller failed:%s ", error.c_str());
@@ -177,10 +177,10 @@ void PelotonService::TransactionDebug(
   }
 }
 
-void PelotonService::SendData(::google::protobuf::RpcController* controller,
-                              UNUSED_ATTRIBUTE const SendDataRequest* request,
-                              UNUSED_ATTRIBUTE SendDataResponse* response,
-                              ::google::protobuf::Closure* done) {
+void PelotonService::SendData(::google::protobuf::RpcController *controller,
+                              UNUSED_ATTRIBUTE const SendDataRequest *request,
+                              UNUSED_ATTRIBUTE SendDataResponse *response,
+                              ::google::protobuf::Closure *done) {
   if (controller->Failed()) {
     std::string error = controller->ErrorText();
     LOG_TRACE("PelotonService with controller failed:%s ", error.c_str());
@@ -193,10 +193,10 @@ void PelotonService::SendData(::google::protobuf::RpcController* controller,
 }
 
 void PelotonService::Initialize(
-    ::google::protobuf::RpcController* controller,
-    UNUSED_ATTRIBUTE const InitializeRequest* request,
-    UNUSED_ATTRIBUTE InitializeResponse* response,
-    ::google::protobuf::Closure* done) {
+    ::google::protobuf::RpcController *controller,
+    UNUSED_ATTRIBUTE const InitializeRequest *request,
+    UNUSED_ATTRIBUTE InitializeResponse *response,
+    ::google::protobuf::Closure *done) {
   if (controller->Failed()) {
     std::string error = controller->ErrorText();
     LOG_TRACE("PelotonService with controller failed:%s ", error.c_str());
@@ -209,10 +209,10 @@ void PelotonService::Initialize(
 }
 
 void PelotonService::ShutdownPrepare(
-    ::google::protobuf::RpcController* controller,
-    UNUSED_ATTRIBUTE const ShutdownPrepareRequest* request,
-    UNUSED_ATTRIBUTE ShutdownPrepareResponse* response,
-    ::google::protobuf::Closure* done) {
+    ::google::protobuf::RpcController *controller,
+    UNUSED_ATTRIBUTE const ShutdownPrepareRequest *request,
+    UNUSED_ATTRIBUTE ShutdownPrepareResponse *response,
+    ::google::protobuf::Closure *done) {
   if (controller->Failed()) {
     std::string error = controller->ErrorText();
     LOG_TRACE("PelotonService with controller failed:%s ", error.c_str());
@@ -224,10 +224,10 @@ void PelotonService::ShutdownPrepare(
   }
 }
 
-void PelotonService::Shutdown(::google::protobuf::RpcController* controller,
-                              UNUSED_ATTRIBUTE const ShutdownRequest* request,
-                              UNUSED_ATTRIBUTE ShutdownResponse* response,
-                              ::google::protobuf::Closure* done) {
+void PelotonService::Shutdown(::google::protobuf::RpcController *controller,
+                              UNUSED_ATTRIBUTE const ShutdownRequest *request,
+                              UNUSED_ATTRIBUTE ShutdownResponse *response,
+                              ::google::protobuf::Closure *done) {
   if (controller->Failed()) {
     std::string error = controller->ErrorText();
     LOG_TRACE("PelotonService with controller failed:%s ", error.c_str());
@@ -239,10 +239,10 @@ void PelotonService::Shutdown(::google::protobuf::RpcController* controller,
   }
 }
 
-void PelotonService::Heartbeat(::google::protobuf::RpcController* controller,
-                               UNUSED_ATTRIBUTE const HeartbeatRequest* request,
-                               UNUSED_ATTRIBUTE HeartbeatResponse* response,
-                               ::google::protobuf::Closure* done) {
+void PelotonService::Heartbeat(::google::protobuf::RpcController *controller,
+                               UNUSED_ATTRIBUTE const HeartbeatRequest *request,
+                               UNUSED_ATTRIBUTE HeartbeatResponse *response,
+                               ::google::protobuf::Closure *done) {
   if (controller->Failed()) {
     std::string error = controller->ErrorText();
     LOG_TRACE("PelotonService with controller failed:%s ", error.c_str());
@@ -277,10 +277,10 @@ void PelotonService::Heartbeat(::google::protobuf::RpcController* controller,
 }
 
 void PelotonService::UnevictData(
-    ::google::protobuf::RpcController* controller,
-    UNUSED_ATTRIBUTE const UnevictDataRequest* request,
-    UNUSED_ATTRIBUTE UnevictDataResponse* response,
-    ::google::protobuf::Closure* done) {
+    ::google::protobuf::RpcController *controller,
+    UNUSED_ATTRIBUTE const UnevictDataRequest *request,
+    UNUSED_ATTRIBUTE UnevictDataResponse *response,
+    ::google::protobuf::Closure *done) {
   if (controller->Failed()) {
     std::string error = controller->ErrorText();
     LOG_TRACE("PelotonService with controller failed:%s ", error.c_str());
@@ -292,10 +292,10 @@ void PelotonService::UnevictData(
   }
 }
 
-void PelotonService::TimeSync(::google::protobuf::RpcController* controller,
-                              UNUSED_ATTRIBUTE const TimeSyncRequest* request,
-                              UNUSED_ATTRIBUTE TimeSyncResponse* response,
-                              ::google::protobuf::Closure* done) {
+void PelotonService::TimeSync(::google::protobuf::RpcController *controller,
+                              UNUSED_ATTRIBUTE const TimeSyncRequest *request,
+                              UNUSED_ATTRIBUTE TimeSyncResponse *response,
+                              ::google::protobuf::Closure *done) {
   if (controller->Failed()) {
     std::string error = controller->ErrorText();
     LOG_TRACE("PelotonService with controller failed:%s ", error.c_str());
@@ -311,10 +311,10 @@ void PelotonService::TimeSync(::google::protobuf::RpcController* controller,
  * This a QueryPlan Processing function. It is a framework right now. Different
  * query type can be added.
  */
-void PelotonService::QueryPlan(::google::protobuf::RpcController* controller,
-                               const QueryPlanExecRequest* request,
-                               QueryPlanExecResponse* response,
-                               ::google::protobuf::Closure* done) {
+void PelotonService::QueryPlan(::google::protobuf::RpcController *controller,
+                               const QueryPlanExecRequest *request,
+                               QueryPlanExecResponse *response,
+                               ::google::protobuf::Closure *done) {
   // TODO: controller should be set, we probably use it in the future
   if (controller->Failed()) {
     std::string error = controller->ErrorText();

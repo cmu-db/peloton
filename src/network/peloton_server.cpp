@@ -2,9 +2,21 @@
 //
 //                         Peloton
 //
-// network_manager.cpp
+// peloton_server.cpp
 //
-// Identification: src/network/network_manager.cpp
+// Identification: src/network/peloton_server.cpp
+//
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// peloton_server.cpp
+//
+// Identification: src/network/peloton_server.cpp
 //
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
@@ -12,9 +24,9 @@
 #include "event2/thread.h"
 #include <fstream>
 
-#include "network/network_manager.h"
-
+#include "network/peloton_server.h"
 #include "settings/settings_manager.h"
+
 #include "peloton_config.h"
 
 #define MUTEX_TYPE pthread_mutex_t
@@ -27,47 +39,15 @@
 namespace peloton {
 namespace network {
 
-int NetworkManager::recent_connfd = -1;
-SSL_CTX *NetworkManager::ssl_context = nullptr;
-std::string NetworkManager::private_key_file_;
-std::string NetworkManager::certificate_file_;
-std::string NetworkManager::root_cert_file_;
-SSLLevel NetworkManager::ssl_level_;
-MUTEX_TYPE *NetworkManager::ssl_mutex_buf_;
+int PelotonServer::recent_connfd = -1;
+SSL_CTX *PelotonServer::ssl_context = nullptr;
+std::string PelotonServer::private_key_file_;
+std::string PelotonServer::certificate_file_;
+std::string PelotonServer::root_cert_file_;
+SSLLevel PelotonServer::ssl_level_;
+MUTEX_TYPE *PelotonServer::ssl_mutex_buf_;
 
-std::unordered_map<int, std::unique_ptr<NetworkConnection>> &
-NetworkManager::GetGlobalSocketList() {
-  // mapping from socket id to socket object.
-  static std::unordered_map<int, std::unique_ptr<NetworkConnection>>
-      global_socket_list;
-
-  return global_socket_list;
-}
-
-NetworkConnection *NetworkManager::GetConnection(const int &connfd) {
-  auto &global_socket_list = GetGlobalSocketList();
-  if (global_socket_list.find(connfd) != global_socket_list.end()) {
-    return global_socket_list.at(connfd).get();
-  } else {
-    return nullptr;
-  }
-}
-
-void NetworkManager::CreateNewConnection(const int &connfd, short ev_flags,
-                                         NetworkThread *thread,
-                                         ConnState init_state) {
-  auto &global_socket_list = GetGlobalSocketList();
-  recent_connfd = connfd;
-  if (global_socket_list.find(connfd) == global_socket_list.end()) {
-    LOG_INFO("Create new connection: id = %d", connfd);
-  }
-  bool ssl_able = (GetSSLLevel() != SSLLevel::SSL_DISABLE);
-  global_socket_list[connfd].reset(
-      new NetworkConnection(connfd, ev_flags, thread, init_state, ssl_able));
-  thread->SetThreadSockFd(connfd);
-}
-
-int NetworkManager::SSLMutexSetup(void) {
+int PelotonServer::SSLMutexSetup(void) {
   int i;
   ssl_mutex_buf_ = new MUTEX_TYPE[CRYPTO_num_locks()];
   if (!ssl_mutex_buf_)
@@ -81,7 +61,7 @@ int NetworkManager::SSLMutexSetup(void) {
   return 1;
 }
 
-int NetworkManager::SSLMutexCleanup(void) {
+int PelotonServer::SSLMutexCleanup(void) {
   int i;
   if (!ssl_mutex_buf_) {
     return 0;
@@ -97,7 +77,7 @@ int NetworkManager::SSLMutexCleanup(void) {
   return 1;
 }
 
-void NetworkManager::SSLLockingFunction(int mode, int n, UNUSED_ATTRIBUTE const char* file, UNUSED_ATTRIBUTE int line) {
+void PelotonServer::SSLLockingFunction(int mode, int n, UNUSED_ATTRIBUTE const char* file, UNUSED_ATTRIBUTE int line) {
   if (mode & CRYPTO_LOCK) {
     MUTEX_LOCK(ssl_mutex_buf_[n]);
   }
@@ -106,17 +86,17 @@ void NetworkManager::SSLLockingFunction(int mode, int n, UNUSED_ATTRIBUTE const 
   }
 }
 
-unsigned long NetworkManager::SSLIdFunction(void) {
+unsigned long PelotonServer::SSLIdFunction(void) {
   return ((unsigned long)THREAD_ID);
 }
 
-void NetworkManager::LoadSSLFileSettings() {
+void PelotonServer::LoadSSLFileSettings() {
   private_key_file_ = DATA_DIR + settings::SettingsManager::GetString(settings::SettingId::private_key_file);
   certificate_file_ = DATA_DIR + settings::SettingsManager::GetString(settings::SettingId::certificate_file);
   root_cert_file_ = DATA_DIR + settings::SettingsManager::GetString(settings::SettingId::root_cert_file);
 }
 
-void NetworkManager::SSLInit() {
+void PelotonServer::SSLInit() {
 
   if (!settings::SettingsManager::GetBool(settings::SettingId::ssl)) {
     SetSSLLevel(SSLLevel::SSL_DISABLE);
@@ -186,11 +166,11 @@ void NetworkManager::SSLInit() {
     //back the certificate, it will be verified. Handshake will be terminated if the verification fails.
     //SSL_VERIFY_FAIL_IF_NO_PEER_CERT: use with SSL_VERIFY_PEER, if client does not send back the certificate,
     //terminate the handshake.
-    SSL_CTX_set_verify(ssl_context, SSL_VERIFY_PEER, verify_callback);
+    SSL_CTX_set_verify(ssl_context, SSL_VERIFY_PEER, VerifyCallback);
     SSL_CTX_set_verify_depth(ssl_context, 4);
   } else {
     //SSL_VERIFY_NONE: Server does not request certificate from client.
-    SSL_CTX_set_verify(ssl_context, SSL_VERIFY_NONE, verify_callback);
+    SSL_CTX_set_verify(ssl_context, SSL_VERIFY_NONE, VerifyCallback);
   }
   //SSLv2 and SSLv3 are deprecated, shoud not use them
   //TODO(Yuchen): postgres uses SSLv2 | SSLv3 | SSL_OP_SINGLE_DH_USE
@@ -207,36 +187,14 @@ void NetworkManager::SSLInit() {
 
 }
 
-NetworkManager::NetworkManager() {
-  evthread_use_pthreads();
-  base_ = event_base_new();
-  evthread_make_base_notifiable(base_);
-
-  // Create our event base
-  if (!base_) {
-    throw ConnectionException("Couldn't open event base");
-  }
-
-  // Add hang up signal event
-  ev_stop_ =
-      evsignal_new(base_, SIGHUP, CallbackUtil::Signal_Callback, base_);
-  evsignal_add(ev_stop_, NULL);
-
-  // Add timeout event to check server's start/close flag every one second
-  struct timeval one_seconds = {1, 0};
-  ev_timeout_ = event_new(base_, -1, EV_TIMEOUT | EV_PERSIST,
-                          CallbackUtil::ServerControl_Callback, this);
-  event_add(ev_timeout_, &one_seconds);
-
-  // a master thread is responsible for coordinating worker threads.
-  master_thread_ =
-      std::make_shared<NetworkMasterThread>(CONNECTION_THREAD_COUNT, base_);
-
+PelotonServer::PelotonServer() {
   port_ = settings::SettingsManager::GetInt(settings::SettingId::port);
-  max_connections_ = settings::SettingsManager::GetInt(settings::SettingId::max_connections);
+  max_connections_ =
+      settings::SettingsManager::GetInt(settings::SettingId::max_connections);
 
   // For logging purposes
   //  event_enable_debug_mode();
+
   //  event_set_log_callback(LogCallback);
 
   // Commented because it's not in the libevent version we're using
@@ -248,8 +206,7 @@ NetworkManager::NetworkManager() {
   signal(SIGPIPE, SIG_IGN);
 }
 
-//Report errors in more details and does not change verification result.
-int NetworkManager::verify_callback(int ok, X509_STORE_CTX *store) {
+int PelotonServer::VerifyCallback(int ok, X509_STORE_CTX *store) {
   char data[256];
   if (!ok) {
     X509 *cert = X509_STORE_CTX_get_current_cert(store);
@@ -265,7 +222,8 @@ int NetworkManager::verify_callback(int ok, X509_STORE_CTX *store) {
   return ok;
 }
 
-template<typename... Ts> void NetworkManager::try_do(int(*func)(Ts...), Ts... arg) {
+template<typename... Ts>
+void PelotonServer::TrySslOperation(int(*func)(Ts...), Ts... arg) {
   if (func(arg...) < 0) {
     if (GetSSLLevel() != SSLLevel::SSL_DISABLE) {
       SSL_CTX_free(ssl_context);
@@ -274,66 +232,63 @@ template<typename... Ts> void NetworkManager::try_do(int(*func)(Ts...), Ts... ar
   }
 }
 
-void NetworkManager::StartServer() {
-  if (settings::SettingsManager::GetString(settings::SettingId::socket_family) == "AF_INET") {
-    struct sockaddr_in sin;
-    PL_MEMSET(&sin, 0, sizeof(sin));
-    sin.sin_family = AF_INET;
-    sin.sin_addr.s_addr = INADDR_ANY;
-    sin.sin_port = htons(port_);
-
-    int listen_fd;
-
-    listen_fd = socket(AF_INET, SOCK_STREAM, 0);
-
-    if (listen_fd < 0) {
-      throw ConnectionException("Failed to create listen socket");
-    }
-
-    int conn_backlog = 12;
-    int reuse = 1;
-    setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
-
-    try_do<int, const struct sockaddr*, socklen_t>(bind, listen_fd, (struct sockaddr *) &sin, sizeof(sin));
-
-    try_do<int, int>(listen, listen_fd, conn_backlog);
-
-    master_thread_->Start();
-
-    NetworkManager::CreateNewConnection(listen_fd, EV_READ | EV_PERSIST,
-                                        master_thread_.get(), ConnState::CONN_LISTENING);
-
-    LOG_INFO("Listening on port %llu", (unsigned long long) port_);
-    event_base_dispatch(base_);
-    LOG_INFO("Closing server");
-    NetworkManager::GetConnection(listen_fd)->CloseSocket();
-
-    // Free events and event base
-    event_free(NetworkManager::GetConnection(listen_fd)->network_event);
-    event_free(NetworkManager::GetConnection(listen_fd)->workpool_event);
-    event_free(ev_stop_);
-    event_free(ev_timeout_);
-    event_base_free(base_);
-
-    master_thread_->Stop();
-    LOG_INFO("Server Closed");
-  }
-
-  // This socket family code is not implemented yet
-  else {
+PelotonServer &PelotonServer::SetupServer() {
+  // This line is critical to performance for some reason
+  evthread_use_pthreads();
+  if (settings::SettingsManager::GetString(
+          settings::SettingId::socket_family) != "AF_INET")
     throw ConnectionException("Unsupported socket family");
+
+  struct sockaddr_in sin;
+  PL_MEMSET(&sin, 0, sizeof(sin));
+  sin.sin_family = AF_INET;
+  sin.sin_addr.s_addr = INADDR_ANY;
+  sin.sin_port = htons(port_);
+
+  listen_fd_ = socket(AF_INET, SOCK_STREAM, 0);
+
+  if (listen_fd_ < 0) {
+    throw ConnectionException("Failed to create listen socket");
   }
+
+  int conn_backlog = 12;
+  int reuse = 1;
+  setsockopt(listen_fd_, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
+
+  TrySslOperation<int, const struct sockaddr *, socklen_t>(bind,
+                                                           listen_fd_,
+                                                           (struct sockaddr *) &sin,
+                                                           sizeof(sin));
+  TrySslOperation<int, int>(listen, listen_fd_, conn_backlog);
+
+  dispatcher_task_ = std::make_shared<ConnectionDispatcherTask>(
+      CONNECTION_THREAD_COUNT, listen_fd_);
+
+  LOG_INFO("Listening on port %llu", (unsigned long long)port_);
+  return *this;
 }
 
-void NetworkManager::CloseServer() {
+void PelotonServer::ServerLoop() {
+  dispatcher_task_->EventLoop();
+  LOG_INFO("Closing server");
+  int status;
+  do {
+    status = close(listen_fd_);
+  } while (status < 0 && errno == EINTR);
+  LOG_DEBUG("Already Closed the connection %d", listen_fd_);
+
+  LOG_INFO("Server Closed");
+}
+
+void PelotonServer::Close() {
   LOG_INFO("Begin to stop server");
-  this->SetIsClosed(true);
+  dispatcher_task_->ExitLoop();
 }
 
 /**
  * Change port to new_port
  */
-void NetworkManager::SetPort(int new_port) { port_ = new_port; }
+void PelotonServer::SetPort(int new_port) { port_ = new_port; }
 
 }  // namespace network
 }  // namespace peloton

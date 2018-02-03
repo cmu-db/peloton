@@ -12,14 +12,18 @@
 
 #include "gc/transaction_level_gc_manager.h"
 
+#include "brain/query_logger.h"
 #include "catalog/manager.h"
 #include "common/container_tuple.h"
 #include "concurrency/epoch_manager_factory.h"
 #include "concurrency/transaction_manager_factory.h"
+#include "settings/settings_manager.h"
 #include "storage/database.h"
 #include "storage/tile_group.h"
 #include "storage/tuple.h"
 #include "storage/storage_manager.h"
+#include "threadpool/mono_queue_pool.h"
+
 
 namespace peloton {
 namespace gc {
@@ -125,6 +129,20 @@ int TransactionLevelGCManager::Unlink(const int &thread_id,
     // if there's no more tuples in the queue, then break.
     if (unlink_queues_[thread_id]->Dequeue(txn_ctx) == false) {
       break;
+    }
+
+    // Log the query into query_history_catalog
+    if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
+      std::vector<std::string> query_strings = txn_ctx->GetQueryStrings();
+      if(query_strings.size() != 0) {
+        uint64_t timestamp = txn_ctx->GetTimestamp();
+        auto &pool = threadpool::MonoQueuePool::GetBrainInstance();
+        for(auto query_string: query_strings) {
+          pool.SubmitTask([this, query_string, timestamp] {
+            brain::QueryLogger::LogQuery(query_string, timestamp);
+          });        
+        }
+      }
     }
 
     // Deallocate the Transaction Context of transactions that don't involve
