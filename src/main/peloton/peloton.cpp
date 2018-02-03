@@ -16,7 +16,7 @@
 
 #include "common/init.h"
 #include "common/logger.h"
-#include "network/network_manager.h"
+#include "network/peloton_server.h"
 #include "settings/settings_manager.h"
 
 // For GFlag's built-in help message flag
@@ -44,13 +44,13 @@ int main(int argc, char *argv[]) {
     peloton::PelotonInit::Initialize();
 
     // Create NetworkManager object
-    peloton::network::NetworkManager network_manager;
+    peloton::network::PelotonServer network_manager;
 
     // Start NetworkManager
-    peloton::network::NetworkManager::LoadSSLFileSettings();
-    peloton::network::NetworkManager::SSLInit();
+    peloton::network::PelotonServer::LoadSSLFileSettings();
+    peloton::network::PelotonServer::SSLInit();
 
-    network_manager.StartServer();
+    network_manager.SetupServer().ServerLoop();
   } catch (peloton::ConnectionException &exception) {
     // Nothing to do here!
   }
