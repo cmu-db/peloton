@@ -18,6 +18,7 @@
 #include "catalog/foreign_key.h"
 #include "catalog/table_catalog.h"
 #include "catalog/trigger_catalog.h"
+#include "common/container_tuple.h"
 #include "common/exception.h"
 #include "common/logger.h"
 #include "common/platform.h"
@@ -115,6 +116,12 @@ DataTable::~DataTable() {
   for (auto foreign_key : foreign_keys_) {
     delete foreign_key;
   }
+  foreign_keys_.clear();
+
+  for (auto foreign_key_src : foreign_key_sources_) {
+    delete foreign_key_src;
+  }
+  foreign_key_sources_.clear();
 
   // drop all indirection arrays
   for (auto indirection_array : active_indirection_arrays_) {
@@ -325,14 +332,15 @@ bool DataTable::InstallVersion(const AbstractTuple *tuple,
 
 ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
                                    concurrency::TransactionContext *transaction,
-                                   ItemPointer **index_entry_ptr) {
+                                   ItemPointer **index_entry_ptr,
+                                   bool check_fk) {
   ItemPointer location = GetEmptyTupleSlot(tuple);
   if (location.block == INVALID_OID) {
     LOG_TRACE("Failed to get tuple slot.");
     return INVALID_ITEMPOINTER;
   }
 
-  auto result = InsertTuple(tuple, location, transaction, index_entry_ptr);
+  auto result = InsertTuple(tuple, location, transaction, index_entry_ptr, check_fk);
   if (result == false) {
     return INVALID_ITEMPOINTER;
   }
@@ -341,7 +349,7 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
 
 bool DataTable::InsertTuple(const AbstractTuple *tuple,
     ItemPointer location, concurrency::TransactionContext *transaction,
-    ItemPointer **index_entry_ptr) {
+    ItemPointer **index_entry_ptr, UNUSED_ATTRIBUTE bool check_fk) {
   if (CheckConstraints(tuple) == false) {
     LOG_TRACE("InsertTuple(): Constraint violated");
     return false;
@@ -359,6 +367,10 @@ bool DataTable::InsertTuple(const AbstractTuple *tuple,
 
   auto index_count = GetIndexCount();
   if (index_count == 0) {
+    if (check_fk && CheckForeignKeyConstraints(tuple, transaction) == false) {
+      LOG_TRACE("ForeignKey constraint violated");
+      return false;
+    }
     IncreaseTupleCount(1);
     return true;
   }
@@ -369,7 +381,7 @@ bool DataTable::InsertTuple(const AbstractTuple *tuple,
   }
 
   // ForeignKey checks
-  if (CheckForeignKeyConstraints(tuple) == false) {
+  if (check_fk && CheckForeignKeyConstraints(tuple, transaction) == false) {
     LOG_TRACE("ForeignKey constraint violated");
     return false;
   }
@@ -558,6 +570,175 @@ bool DataTable::InsertInSecondaryIndexes(const AbstractTuple *tuple,
 }
 
 /**
+ * @brief This function checks any other table which has a foreign key constraint
+ * referencing the current table, where a tuple is updated/deleted. The final
+ * result depends on the type of cascade action.
+ * 
+ * @param prev_tuple: The tuple which will be updated/deleted in the current
+ * table
+ * @param new_tuple: The new tuple after update. This parameter is ignored
+ * if is_update is false.
+ * @param current_txn: The current transaction context
+ * @param context: The executor context passed from upper level
+ * @param is_update: whether this is a update action (false means delete)
+ * 
+ * @return True if the check is successful (nothing happens) or the cascade operation
+ * is done properly. Otherwise returns false. Note that the transaction result
+ * is not set in this function.
+ */ 
+bool DataTable::CheckForeignKeySrcAndCascade(storage::Tuple *prev_tuple, 
+                                             storage::Tuple *new_tuple,
+                                             concurrency::TransactionContext *current_txn,
+                                             executor::ExecutorContext *context,
+                                             bool is_update UNUSED_ATTRIBUTE)
+{
+  size_t fk_count = GetForeignKeySrcCount();
+
+  if (fk_count == 0) return true;
+
+  auto &transaction_manager =
+      concurrency::TransactionManagerFactory::GetInstance();
+
+  for (size_t iter = 0; iter < fk_count; iter++) {
+    catalog::ForeignKey *fk = GetForeignKeySrc(iter);
+    
+    // Check if any row in the source table references the current tuple
+    oid_t source_table_id = fk->GetSourceTableOid();
+    storage::DataTable *src_table = nullptr;
+    try {
+      src_table = (storage::DataTable *)storage::StorageManager::GetInstance()
+                      ->GetTableWithOid(GetDatabaseOid(), source_table_id);
+    } catch (CatalogException &e) {
+      LOG_TRACE("Can't find table %d! Return false", source_table_id);
+      return false;
+    }
+
+    int src_table_index_count = src_table->GetIndexCount();
+    for (int iter = 0; iter < src_table_index_count; iter++) {
+      auto index = src_table->GetIndex(iter);
+      if (index == nullptr) continue;
+
+      // Make sure this is the right index to search in
+      if (index->GetMetadata()->GetName().find("_FK_") != std::string::npos &&
+          index->GetMetadata()->GetKeyAttrs() == fk->GetSourceColumnIds())
+      {
+        LOG_DEBUG("Searching in source tables's fk index...\n"); 
+
+        std::vector<oid_t> key_attrs = fk->GetSourceColumnIds();
+        std::unique_ptr<catalog::Schema> fk_schema(
+          catalog::Schema::CopySchema(src_table->GetSchema(), key_attrs));
+        std::unique_ptr<storage::Tuple> key(
+          new storage::Tuple(fk_schema.get(), true));
+        
+        key->SetFromTuple(prev_tuple, fk->GetSinkColumnIds(), index->GetPool());
+        
+        std::vector<ItemPointer *> location_ptrs;
+        index->ScanKey(key.get(), location_ptrs);
+
+        if (location_ptrs.size() > 0) {
+          LOG_DEBUG("Something found in the source table!\n");
+
+          for (ItemPointer *ptr : location_ptrs) {
+            auto src_tile_group = src_table->GetTileGroupById(ptr->block);
+            auto src_tile_group_header = src_tile_group->GetHeader();
+
+            auto visibility = transaction_manager.IsVisible(
+              current_txn, src_tile_group_header, ptr->offset,
+              VisibilityIdType::COMMIT_ID);
+
+            if (visibility != VisibilityType::OK) continue;
+
+            switch (fk->GetUpdateAction()) {
+              // Currently NOACTION is the same as RESTRICT
+              case FKConstrActionType::NOACTION:
+              case FKConstrActionType::RESTRICT: {
+                return false;
+              }
+              case FKConstrActionType::CASCADE: 
+              default: {
+                // Update
+                bool src_is_owner = transaction_manager.IsOwner(current_txn,
+                    src_tile_group_header, ptr->offset);
+
+                // Read the referencing tuple, update the read timestamp so that we can
+                // delete it later
+                bool ret = transaction_manager.PerformRead(current_txn,
+                                                            *ptr,
+                                                            true);
+
+                if (ret == false) {
+                  if (src_is_owner) {
+                    transaction_manager.YieldOwnership(current_txn, src_tile_group_header,
+                                                        ptr->offset);
+                  }
+                  return false;
+                }
+
+                ContainerTuple<storage::TileGroup> src_old_tuple(src_tile_group.get(), ptr->offset);
+                storage::Tuple src_new_tuple(src_table->GetSchema(), true);
+
+                if (is_update) {
+                  for (oid_t col_itr = 0; col_itr < src_table->GetSchema()->GetColumnCount(); col_itr++)
+                  {
+                    type::Value val = src_old_tuple.GetValue(col_itr);
+                    src_new_tuple.SetValue(col_itr, val, context->GetPool());
+                  }
+
+                  // Set the primary key fields
+                  for (oid_t k = 0; k < key_attrs.size(); k++) {
+                    auto src_col_index = key_attrs[k];
+                    auto sink_col_index = fk->GetSinkColumnIds()[k];
+                    src_new_tuple.SetValue(src_col_index,
+                                          new_tuple->GetValue(sink_col_index),
+                                          context->GetPool());
+                  }
+                }
+
+                ItemPointer new_loc = src_table->InsertEmptyVersion();
+
+                if (new_loc.IsNull()) {
+                  if (src_is_owner == false) {
+                    transaction_manager.YieldOwnership(current_txn,
+                                                        src_tile_group_header,
+                                                        ptr->offset);
+                  }
+                  return false;
+                }
+
+                transaction_manager.PerformDelete(current_txn,
+                                                  *ptr,
+                                                  new_loc);
+
+                // For delete cascade, just stop here
+                if (is_update == false) {
+                  break;
+                }
+
+                ItemPointer *index_entry_ptr = nullptr;
+                peloton::ItemPointer location =
+                    src_table->InsertTuple(&src_new_tuple, current_txn, &index_entry_ptr, false);
+
+                if (location.block == INVALID_OID) {
+                  return false;
+                }
+
+                transaction_manager.PerformInsert(current_txn, location, index_entry_ptr);
+
+                break;
+              }
+            }
+          }
+        }
+
+        break;
+      }
+    }
+  }
+
+  return true;
+}
+
+/**
  * @brief Check if all the foreign key constraints on this table
  * is satisfied by checking whether the key exist in the referred table
  *
@@ -571,7 +752,8 @@ bool DataTable::InsertInSecondaryIndexes(const AbstractTuple *tuple,
  * @returns True on success, false if any foreign key constraints fail
  */
 bool DataTable::CheckForeignKeyConstraints(
-    const AbstractTuple *tuple UNUSED_ATTRIBUTE) {
+    const AbstractTuple *tuple UNUSED_ATTRIBUTE,
+    concurrency::TransactionContext *transaction UNUSED_ATTRIBUTE) {
   for (auto foreign_key : foreign_keys_) {
     oid_t sink_table_id = foreign_key->GetSinkTableOid();
     storage::DataTable *ref_table = nullptr;
@@ -592,13 +774,12 @@ bool DataTable::CheckForeignKeyConstraints(
       // The foreign key constraints only refer to the primary key
       if (index->GetIndexType() == IndexConstraintType::PRIMARY_KEY) {
 
-        std::vector<oid_t> key_attrs = foreign_key->GetSourceColumnIds();
+        std::vector<oid_t> key_attrs = foreign_key->GetSinkColumnIds();
         std::unique_ptr<catalog::Schema> foreign_key_schema(
-            catalog::Schema::CopySchema(schema, key_attrs));
+            catalog::Schema::CopySchema(ref_table->schema, key_attrs));
         std::unique_ptr<storage::Tuple> key(
             new storage::Tuple(foreign_key_schema.get(), true));
-        // FIXME: what is the 3rd arg should be?
-        key->SetFromTuple(tuple, key_attrs, index->GetPool());
+        key->SetFromTuple(tuple, foreign_key->GetSourceColumnIds(), index->GetPool());
 
         LOG_TRACE("check key: %s", key->GetInfo().c_str());
 
@@ -607,6 +788,28 @@ bool DataTable::CheckForeignKeyConstraints(
 
         // if this key doesn't exist in the refered column
         if (location_ptrs.size() == 0) {
+          LOG_DEBUG("The key: %s does not exist in table %s\n",
+                    key->GetInfo().c_str(),
+                    ref_table->GetInfo().c_str());
+          return false;
+        }
+
+        // Check the visibility of the result
+        auto tile_group = ref_table->GetTileGroupById(location_ptrs[0]->block);
+        auto tile_group_header = tile_group->GetHeader();
+
+        auto &transaction_manager =
+          concurrency::TransactionManagerFactory::GetInstance();
+        auto visibility = transaction_manager.IsVisible(
+          transaction, tile_group_header, location_ptrs[0]->offset,
+          VisibilityIdType::READ_ID);
+
+        if (visibility != VisibilityType::OK) {
+          LOG_DEBUG("The key: %s is not yet visible in table %s, visibility "
+                    "type: %s.\n",
+                    key->GetInfo().c_str(),
+                    ref_table->GetInfo().c_str(),
+                    VisibilityTypeToString(visibility).c_str());
           return false;
         }
 
@@ -977,23 +1180,19 @@ void DataTable::DropForeignKey(const oid_t &key_offset) {
 size_t DataTable::GetForeignKeyCount() const { return foreign_keys_.size(); }
 
 // Adds to the list of tables for which this table's PK is the foreign key sink
-void DataTable::RegisterForeignKeySource(const std::string &source_table_name) {
+void DataTable::RegisterForeignKeySource(catalog::ForeignKey *key) {
   {
     std::lock_guard<std::mutex> lock(data_table_mutex_);
-    foreign_key_sources_.push_back(source_table_name);
+    foreign_key_sources_.push_back(key);
   }
 }
 
-// Remove a table for which this table's PK is the foreign key sink
-void DataTable::RemoveForeignKeySource(const std::string &source_table_name) {
-  {
-    std::lock_guard<std::mutex> lock(data_table_mutex_);
-    for (size_t i = 0; i < foreign_key_sources_.size(); i++) {
-      if (foreign_key_sources_[i] == source_table_name) {
-        foreign_key_sources_.erase(foreign_key_sources_.begin() + i);
-      }
-    }
-  }
+size_t DataTable::GetForeignKeySrcCount() const {
+  return foreign_key_sources_.size();
+}
+
+catalog::ForeignKey *DataTable::GetForeignKeySrc(const size_t offset) const {
+  return foreign_key_sources_[offset];
 }
 
 // Get the schema for the new transformed tile group

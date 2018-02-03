@@ -2,11 +2,11 @@
 //
 //                         Peloton
 //
-// tcp_address.h
+// network_address.h
 //
-// Identification: src/include/network/tcp_address.h
+// Identification: src/include/network/service/network_address.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -24,21 +24,21 @@ namespace service {
 class NetworkAddress {
  public:
   NetworkAddress() : ip_address_(0), port_(0) {}
-  NetworkAddress(const NetworkAddress& addr);
-  NetworkAddress(const sockaddr_in& addrin);
-  NetworkAddress(const sockaddr& addr);
-  NetworkAddress(const std::string& address);
+  NetworkAddress(const NetworkAddress &addr);
+  NetworkAddress(const sockaddr_in &addrin);
+  NetworkAddress(const sockaddr &addr);
+  NetworkAddress(const std::string &address);
 
   // Returns true if the address is parsed successfully.
-  bool Parse(const std::string& address);
+  bool Parse(const std::string &address);
 
-  bool operator==(const NetworkAddress& other) const {
+  bool operator==(const NetworkAddress &other) const {
     return ip_address_ == other.ip_address_ && port_ == other.port_;
   }
 
-  bool operator==(const sockaddr_in& other) const;
+  bool operator==(const sockaddr_in &other) const;
 
-  bool operator<(const NetworkAddress& other) const {
+  bool operator<(const NetworkAddress &other) const {
     if (ip_address_ == other.ip_address_) {
       return port_ < other.port_;
     }
@@ -52,7 +52,7 @@ class NetworkAddress {
   std::string IpToString() const;
 
   // Fills the addr structure with this address.
-  void FillAddr(struct sockaddr_in* addr) const;
+  void FillAddr(struct sockaddr_in *addr) const;
 
   // Returns a sockaddr_in for this address. ::fill() can be more efficient.
   struct sockaddr_in Sockaddr() const;
@@ -72,14 +72,14 @@ class NetworkAddress {
 };
 
 // Make operator== for sockaddr_in bidirectional
-inline bool operator==(const sockaddr_in& a, const NetworkAddress& b) {
+inline bool operator==(const sockaddr_in &a, const NetworkAddress &b) {
   return b == a;
 }
 
 // Returns a pointer to the raw array in a string.
 // NOTE: const_cast<char*>(s->data()) fails due to reference counting
 // implementations. See test.
-inline char* stringArray(std::string* s) {
+inline char *stringArray(std::string *s) {
   if (s->empty()) return NULL;
   return &(*s->begin());
 }
