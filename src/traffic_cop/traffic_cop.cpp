@@ -297,6 +297,10 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     // initialize the current result as success
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
+  
+  if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
+    tcop_txn_state_.top().first->AddQueryString(query_string.c_str());
+  }
 
   // TODO(Tianyi) Move Statement Planing into Statement's method
   // to increase coherence
