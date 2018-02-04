@@ -17,6 +17,7 @@
 
 namespace peloton {
 namespace codegen {
+DEFINE_METHOD(peloton::function, DecimalFunctions, Abs);
 
 DEFINE_METHOD(peloton::function, DecimalFunctions, Floor);
 

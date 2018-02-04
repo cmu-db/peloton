@@ -2,6 +2,18 @@
 //
 //                         Peloton
 //
+// network_address.cpp
+//
+// Identification: src/network/service/network_address.cpp
+//
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
 // tcp_address.cpp
 //
 // Identification: src/network/tcp_address.cpp
@@ -29,22 +41,22 @@ namespace service {
 #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-NetworkAddress::NetworkAddress(const NetworkAddress& addr) {
+NetworkAddress::NetworkAddress(const NetworkAddress &addr) {
   ip_address_ = addr.ip_address_;
   port_ = addr.port_;
 }
-NetworkAddress::NetworkAddress(const sockaddr_in& addrin) {
+NetworkAddress::NetworkAddress(const sockaddr_in &addrin) {
   ip_address_ = addrin.sin_addr.s_addr;
   port_ = addrin.sin_port;
 }
-NetworkAddress::NetworkAddress(const sockaddr& addr) {
-  const sockaddr_in* addrin = reinterpret_cast<const sockaddr_in*>(&addr);
+NetworkAddress::NetworkAddress(const sockaddr &addr) {
+  const sockaddr_in *addrin = reinterpret_cast<const sockaddr_in *>(&addr);
 
   ip_address_ = addrin->sin_addr.s_addr;
   port_ = addrin->sin_port;
 }
 
-NetworkAddress::NetworkAddress(const std::string& address) {
+NetworkAddress::NetworkAddress(const std::string &address) {
   bool re = Parse(address);
   if (re == false) {
     std::string msg =
@@ -55,7 +67,7 @@ NetworkAddress::NetworkAddress(const std::string& address) {
 }
 
 // Returns true if the address is parsed successfully.
-bool NetworkAddress::Parse(const std::string& address) {
+bool NetworkAddress::Parse(const std::string &address) {
   std::vector<std::string> parts = StringUtil::Split(address, " ");
   if (parts.size() == 1) {
     // Try splitting with a colon
@@ -65,7 +77,7 @@ bool NetworkAddress::Parse(const std::string& address) {
   if (parts[0].empty() || parts[1].empty()) return false;
 
   // Convert the first part from text to an IP address
-  addrinfo* node = NULL;
+  addrinfo *node = NULL;
 
   // PAVLO: 2017-01-25
   // There is a bug in 'getaddrinfo' that causes an invalid free.
@@ -77,12 +89,12 @@ bool NetworkAddress::Parse(const std::string& address) {
   }
 
   bool found = false;
-  addrinfo* ptr = node;
+  addrinfo *ptr = node;
   while (ptr != NULL) {
     if (ptr->ai_family == AF_INET) {
       // Avoid alignment warning on Sparc
-      const void* v = ptr->ai_addr;
-      const sockaddr_in* addr = reinterpret_cast<const sockaddr_in*>(v);
+      const void *v = ptr->ai_addr;
+      const sockaddr_in *addr = reinterpret_cast<const sockaddr_in *>(v);
       ip_address_ = addr->sin_addr.s_addr;
       found = true;
       break;
@@ -100,7 +112,7 @@ bool NetworkAddress::Parse(const std::string& address) {
   return true;
 }
 
-bool NetworkAddress::operator==(const sockaddr_in& other) const {
+bool NetworkAddress::operator==(const sockaddr_in &other) const {
   if (other.sin_family != AF_INET) return false;
   if (other.sin_port != port_) return false;
   if (other.sin_addr.s_addr != ip_address_) return false;
@@ -110,8 +122,8 @@ bool NetworkAddress::operator==(const sockaddr_in& other) const {
 // maximum length: 6 bytes (5 digits, 1 NUL)
 static const int MAX_PORT_STRING = 6;
 
-static std::string callGetNameInfo(const NetworkAddress& address,
-                                   char* port_string) {
+static std::string callGetNameInfo(const NetworkAddress &address,
+                                   char *port_string) {
   sockaddr_in addr;
   address.FillAddr(&addr);
 
@@ -119,7 +131,7 @@ static std::string callGetNameInfo(const NetworkAddress& address,
   // maximum length for IPv4 address is 16 (12 digits, 3 '.', 1 NUL)
   // IPv6 is 16 bytes = 32 hex bytes + 7 ':' + NULL = 40
   retval.resize(40);
-  int error = getnameinfo(reinterpret_cast<struct sockaddr*>(&addr),
+  int error = getnameinfo(reinterpret_cast<struct sockaddr *>(&addr),
                           sizeof(addr), stringArray(&retval),
                           static_cast<socklen_t>(retval.size()), port_string,
                           MAX_PORT_STRING, NI_NUMERICHOST | NI_NUMERICSERV);
@@ -145,7 +157,7 @@ std::string NetworkAddress::IpToString() const {
   return callGetNameInfo(*this, port_string);
 }
 
-void NetworkAddress::FillAddr(struct sockaddr_in* addr) const {
+void NetworkAddress::FillAddr(struct sockaddr_in *addr) const {
   addr->sin_family = AF_INET;
   addr->sin_port = port_;
   addr->sin_addr.s_addr = ip_address_;

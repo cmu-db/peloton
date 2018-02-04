@@ -14,6 +14,8 @@
 
 #include "catalog/table_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
+#include "executor/executor_context.h"
+#include "function/string_functions.h"
 
 namespace peloton {
 namespace optimizer {
@@ -59,7 +61,7 @@ double Selectivity::LessThan(const std::shared_ptr<TableStats> &table_stats,
   // TODO: make sure condition uses column id. check if column name is not
   // empty.
   std::shared_ptr<ColumnStats> column_stats =
-      table_stats->GetColumnStats(condition.column_id);
+      table_stats->GetColumnStats(condition.column_name);
   // Return default selectivity if no column stats for given column_id
   if (column_stats == nullptr) {
     return DEFAULT_SELECTIVITY;
@@ -79,8 +81,8 @@ double Selectivity::LessThan(const std::shared_ptr<TableStats> &table_stats,
 double Selectivity::Equal(const std::shared_ptr<TableStats> &table_stats,
                           const ValueCondition &condition) {
   double value = StatsUtil::PelotonValueToNumericValue(condition.value);
-  auto column_stats = table_stats->GetColumnStats(condition.column_id);
-
+  auto column_stats = table_stats->GetColumnStats(condition.column_name);
+  //  LOG_INFO("column name %s", condition.column_name);
   if (std::isnan(value) || column_stats == nullptr) {
     LOG_DEBUG("Calculate selectivity: return null");
     return DEFAULT_SELECTIVITY;
@@ -137,43 +139,45 @@ double Selectivity::Equal(const std::shared_ptr<TableStats> &table_stats,
 // Complete implementation once we support LIKE operator.
 double Selectivity::Like(const std::shared_ptr<TableStats> &table_stats,
                          const ValueCondition &condition) {
+  // Check whether column type is VARCHAR.
   if ((condition.value).GetTypeId() != type::TypeId::VARCHAR) {
     return DEFAULT_SELECTIVITY;
   }
 
-  UNUSED_ATTRIBUTE const char *pattern = (condition.value).GetData();
-  auto column_stats = table_stats->GetColumnStats(condition.column_id);
+  const char *pattern = (condition.value).GetData();
+
+  auto column_stats = table_stats->GetColumnStats(condition.column_name);
   if (column_stats == nullptr) {
     return DEFAULT_SELECTIVITY;
   }
-  oid_t database_id = column_stats->database_id;
-  oid_t table_id = column_stats->table_id;
   oid_t column_id = column_stats->column_id;
 
-  // Check whether column type is VARCHAR.
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-      database_id, table_id, txn);
-  auto column_type = table_object->GetColumnObject(column_id)->GetColumnType();
-  txn_manager.CommitTransaction(txn);
+  size_t matched_count = 0;
+  size_t total_count = 0;
 
-  if (column_type != type::TypeId::VARCHAR) {
-    return DEFAULT_SELECTIVITY;
+  // Sample on the fly
+  auto sampler = table_stats->GetSampler();
+  PL_ASSERT(sampler != nullptr);
+  if (sampler->GetSampledTuples().empty()) {
+    sampler->AcquireSampleTuples(DEFAULT_SAMPLE_SIZE);
   }
-
-  std::vector<type::Value> column_samples;
-  auto tuple_storage = optimizer::TupleSamplesStorage::GetInstance();
-  txn = txn_manager.BeginTransaction();
-  tuple_storage->GetColumnSamples(database_id, table_id, column_id,
-                                  column_samples);
-  txn_manager.CommitTransaction(txn);
-
-  for (size_t i = 0; i < column_samples.size(); i++) {
-    LOG_DEBUG("Value: %s", column_samples[i].GetInfo().c_str());
+  auto &sample_tuples = sampler->GetSampledTuples();
+  for (size_t i = 0; i < sample_tuples.size(); i++) {
+    auto value = sample_tuples[i]->GetValue(column_id);
+    PL_ASSERT(value.GetTypeId() == type::TypeId::VARCHAR);
+    executor::ExecutorContext dummy_context(nullptr);
+    if (function::StringFunctions::Like(dummy_context, value.GetData(),
+                                        value.GetLength(), pattern,
+                                        condition.value.GetLength())) {
+      matched_count++;
+    }
   }
+  total_count = sample_tuples.size();
+  LOG_TRACE("total sample size %lu matched tupe %lu", total_count,
+            matched_count);
 
-  return DEFAULT_SELECTIVITY;
+  return total_count == 0 ? DEFAULT_SELECTIVITY
+                          : (double)matched_count / total_count;
 }
 
 }  // namespace optimizer

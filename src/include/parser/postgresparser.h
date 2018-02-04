@@ -167,7 +167,7 @@ class PostgresParser {
   static parser::OrderDescription *OrderByTransform(List *order);
 
   // transform helper for table column definitions
-  static parser::ColumnDefinition *ColumnDefTransform(ColumnDef *root);
+  static void ColumnDefTransform(ColumnDef* root, parser::CreateStatement* stmt);
 
   // transform helper for create statements
   static parser::SQLStatement *CreateTransform(CreateStmt *root);

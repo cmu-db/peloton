@@ -19,6 +19,7 @@
 #include "catalog/index_metrics_catalog.h"
 #include "catalog/language_catalog.h"
 #include "catalog/proc_catalog.h"
+#include "catalog/query_history_catalog.h"
 #include "catalog/query_metrics_catalog.h"
 #include "catalog/settings_catalog.h"
 #include "catalog/table_catalog.h"
@@ -30,6 +31,7 @@
 #include "function/old_engine_string_functions.h"
 #include "function/timestamp_functions.h"
 #include "index/index_factory.h"
+#include "settings/settings_manager.h"
 #include "storage/storage_manager.h"
 #include "storage/table_factory.h"
 #include "type/ephemeral_pool.h"
@@ -146,11 +148,15 @@ void Catalog::Bootstrap() {
   DatabaseMetricsCatalog::GetInstance(txn);
   TableMetricsCatalog::GetInstance(txn);
   IndexMetricsCatalog::GetInstance(txn);
-  QueryMetricsCatalog::GetInstance(txn);
+  QueryMetricsCatalog::GetInstance(txn);  
   SettingsCatalog::GetInstance(txn);
   TriggerCatalog::GetInstance(txn);
   LanguageCatalog::GetInstance(txn);
   ProcCatalog::GetInstance(txn);
+  
+  if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
+    QueryHistoryCatalog::GetInstance(txn);
+  }
 
   txn_manager.CommitTransaction(txn);
 
@@ -1056,6 +1062,11 @@ void Catalog::InitializeFunctions() {
        * decimal functions
        */
       AddBuiltinFunction(
+          "abs", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL, internal_lang,
+          "Abs", function::BuiltInFuncType{OperatorId::Abs,
+                                            function::DecimalFunctions::_Abs},
+          txn);
+      AddBuiltinFunction(
           "sqrt", {type::TypeId::TINYINT}, type::TypeId::DECIMAL, internal_lang,
           "Sqrt", function::BuiltInFuncType{OperatorId::Sqrt,
                                             function::DecimalFunctions::Sqrt},
@@ -1091,6 +1102,34 @@ void Catalog::InitializeFunctions() {
       /**
        * integer functions
        */
+      AddBuiltinFunction(
+          "abs", {type::TypeId::TINYINT}, type::TypeId::TINYINT, 
+          internal_lang, "Abs",
+          function::BuiltInFuncType{OperatorId::Abs,
+                                    function::DecimalFunctions::_Abs},
+          txn);
+
+      AddBuiltinFunction(
+          "abs", {type::TypeId::SMALLINT}, type::TypeId::SMALLINT, 
+          internal_lang, "Abs",
+          function::BuiltInFuncType{OperatorId::Abs,
+                                    function::DecimalFunctions::_Abs},
+          txn);
+
+      AddBuiltinFunction(
+          "abs", {type::TypeId::INTEGER}, type::TypeId::INTEGER, 
+          internal_lang, "Abs",
+          function::BuiltInFuncType{OperatorId::Abs,
+                                    function::DecimalFunctions::_Abs},
+          txn);
+
+      AddBuiltinFunction(
+          "abs", {type::TypeId::BIGINT}, type::TypeId::BIGINT, 
+          internal_lang, "Abs",
+          function::BuiltInFuncType{OperatorId::Abs,
+                                    function::DecimalFunctions::_Abs},
+          txn);
+
       AddBuiltinFunction(
           "floor", {type::TypeId::INTEGER}, type::TypeId::DECIMAL,
           internal_lang, "Floor",
