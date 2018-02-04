@@ -51,6 +51,9 @@ class CodeGen {
   explicit CodeGen(CodeContext &code_context);
   ~CodeGen() = default;
 
+  /// This class cannot be copy or move-constructed
+  DISALLOW_COPY_AND_MOVE(CodeGen);
+
   /// We forward the -> operator to LLVM's IRBuilder
   llvm::IRBuilder<> *operator->() { return &GetBuilder(); }
 
@@ -160,10 +163,6 @@ class CodeGen {
  private:
   // The context/module where all the code this class produces goes
   CodeContext &code_context_;
-
- private:
-  // This class cannot be copy or move-constructed
-  DISALLOW_COPY_AND_MOVE(CodeGen);
 };
 
 }  // namespace codegen

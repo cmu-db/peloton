@@ -27,7 +27,7 @@ void Query::Execute(std::unique_ptr<executor::ExecutorContext> executor_context,
                     QueryResultConsumer &consumer,
                     std::function<void(executor::ExecutionResult)> on_complete,
                     RuntimeStats *stats) {
-  CodeGen codegen{GetCodeContext()};
+  CodeGen codegen{code_context_};
 
   llvm::Type *runtime_state_type = runtime_state_.FinalizeType(codegen);
   size_t parameter_size = codegen.SizeOf(runtime_state_type);

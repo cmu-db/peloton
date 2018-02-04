@@ -47,9 +47,10 @@ class FunctionDeclaration {
                       Visibility visibility, llvm::Type *ret_type,
                       const std::vector<ArgumentInfo> &args);
 
+  /// Get the raw LLVM function declaration
   llvm::Function *GetDeclaredFunction() const { return func_decl_; }
 
-  /// Construct an LLVM function declaration from this signature
+  /// Construct a FunctionDeclaration given a signature
   static FunctionDeclaration MakeDeclaration(
       CodeContext &cc, const std::string &name, Visibility visibility,
       llvm::Type *ret_type, const std::vector<ArgumentInfo> &args);
@@ -86,23 +87,25 @@ class FunctionBuilder {
   friend class CodeGen;
 
  public:
+  /// Constructors
   FunctionBuilder(CodeContext &cc, const FunctionDeclaration &declaration);
-
   FunctionBuilder(CodeContext &cc, std::string name, llvm::Type *ret_type,
                   const std::vector<FunctionDeclaration::ArgumentInfo> &args);
 
-  // Destructor
+  /// Destructor
   ~FunctionBuilder();
 
-  // Access to function arguments by argument name or index position
+  /// This class cannot be copy or move-constructed
+  DISALLOW_COPY_AND_MOVE(FunctionBuilder);
+
+  /// Access to function arguments by argument name or index position
   llvm::Value *GetArgumentByName(std::string name);
   llvm::Value *GetArgumentByPosition(uint32_t index);
-  size_t GetNumArguments() const { return func_->arg_size(); }
 
-  // Finish the current function
+  /// Finish the current function
   void ReturnAndFinish(llvm::Value *res = nullptr);
 
-  // Return the function we created in the code context
+  /// Return the function we created
   llvm::Function *GetFunction() const { return func_; }
 
  private:
@@ -116,8 +119,10 @@ class FunctionBuilder {
   llvm::BasicBlock *GetDivideByZeroBB();
 
  private:
+  // Private constructor taking in a fully constructed function declaration
   FunctionBuilder(CodeContext &cc, llvm::Function *func_decl);
 
+ private:
   // Has this function finished construction
   bool finished_;
 
@@ -138,10 +143,6 @@ class FunctionBuilder {
   llvm::BasicBlock *overflow_bb_;
   // The divide-by-zero error block
   llvm::BasicBlock *divide_by_zero_bb_;
-
- private:
-  // This class cannot be copy or move-constructed
-  DISALLOW_COPY_AND_MOVE(FunctionBuilder);
 };
 
 }  // namespace codegen

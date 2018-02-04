@@ -38,6 +38,9 @@ class ConsumerContext {
   // Constructor
   ConsumerContext(CompilationContext &compilation_context, Pipeline &pipeline);
 
+  /// This class cannot be copy or move-constructed
+  DISALLOW_COPY_AND_MOVE(ConsumerContext);
+
   // Pass this consumer context to the parent of the caller of consume()
   void Consume(RowBatch &batch);
   void Consume(RowBatch::Row &row);
@@ -57,10 +60,6 @@ class ConsumerContext {
 
   // The pipeline of operators that this context passes through
   Pipeline &pipeline_;
-
- private:
-  // This class cannot be copy or move-constructed
-  DISALLOW_COPY_AND_MOVE(ConsumerContext);
 };
 
 }  // namespace codegen

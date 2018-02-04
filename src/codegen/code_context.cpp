@@ -33,6 +33,7 @@ namespace codegen {
 static std::atomic<uint64_t> kIdCounter{0};
 
 namespace {
+
 class PelotonMM : public llvm::SectionMemoryManager {
  public:
   explicit PelotonMM(
@@ -48,6 +49,8 @@ class PelotonMM : public llvm::SectionMemoryManager {
 #define BUILD_RET_TYPE(addr) \
   (RET_TYPE{(uint64_t)addr, llvm::JITSymbolFlags::Exported})
 #endif
+
+  /// Find the address of the function with the given name
   RET_TYPE findSymbol(const std::string &name) override {
     LOG_TRACE("Looking up symbol '%s' ...", name.c_str());
     if (auto *builtin = LookupSymbol(name)) {
@@ -58,6 +61,7 @@ class PelotonMM : public llvm::SectionMemoryManager {
     LOG_TRACE("--> Not builtin, use fallback resolution ...");
     return llvm::SectionMemoryManager::findSymbol(name);
   }
+
 #undef RET_TYPE
 #undef BUILD_RET_TYPE
 
@@ -85,7 +89,8 @@ class PelotonMM : public llvm::SectionMemoryManager {
   // The code context
   const std::unordered_map<std::string, CodeContext::FuncPtr> &symbols_;
 };
-}  // anonymous namespace
+
+}  // namespace
 
 /// Constructor
 CodeContext::CodeContext()

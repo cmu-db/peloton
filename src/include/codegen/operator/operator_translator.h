@@ -44,7 +44,7 @@ class OperatorTranslator {
   OperatorTranslator(CompilationContext &context, Pipeline &pipeline);
 
   // Destructor
-  virtual ~OperatorTranslator() {}
+  virtual ~OperatorTranslator() = default;
 
   // Codegen any initialization work for this operator
   virtual void InitializeState() = 0;

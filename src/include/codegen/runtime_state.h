@@ -49,22 +49,25 @@ class RuntimeState {
   // An identifier
   typedef uint32_t StateID;
 
-  // Constructor
+  /// Constructor
   RuntimeState();
 
-  // Register a parameter with the given name and type in this state. Callers
-  // can specify whether the state is local (i.e., on the stack) or global.
+  /// This class cannot be copy or move-constructed
+  DISALLOW_COPY_AND_MOVE(RuntimeState);
+
+  /// Register a parameter with the given name and type in this state. Callers
+  /// can specify whether the state is local (i.e., on the stack) or global.
   RuntimeState::StateID RegisterState(std::string name, llvm::Type *type);
 
-  // Get the pointer to the given state information with the given ID
+  /// Get the pointer to the given state information with the given ID
   llvm::Value *LoadStatePtr(CodeGen &codegen,
                             RuntimeState::StateID state_id) const;
 
-  // Get the actual value of the state information with the given ID
+  /// Get the actual value of the state information with the given ID
   llvm::Value *LoadStateValue(CodeGen &codegen,
                               RuntimeState::StateID state_id) const;
 
-  // Construct the equivalent LLVM type that represents this runtime state
+  /// Construct the equivalent LLVM type that represents this runtime state
   llvm::Type *FinalizeType(CodeGen &codegen);
 
  private:

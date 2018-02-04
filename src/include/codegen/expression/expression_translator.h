@@ -17,6 +17,11 @@
 #include "codegen/value.h"
 
 namespace peloton {
+
+namespace planner {
+class AbstractExpression;
+}  // namespace planner
+
 namespace codegen {
 
 // Forward declare
@@ -34,7 +39,7 @@ class ExpressionTranslator {
                        CompilationContext &ctx);
 
   // Destructor
-  virtual ~ExpressionTranslator() {}
+  virtual ~ExpressionTranslator() = default;
 
   // Compute this expression
   virtual codegen::Value DeriveValue(CodeGen &codegen,

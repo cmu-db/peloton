@@ -20,10 +20,6 @@
 
 namespace peloton {
 
-namespace concurrency {
-class TransactionContext;
-}  // namespace concurrency
-
 namespace executor {
 class ExecutorContext;
 struct ExecutionResult;
@@ -38,7 +34,11 @@ namespace codegen {
 class QueryResultConsumer;
 
 //===----------------------------------------------------------------------===//
-// A query statement that can be compiled
+// A compiled query. An instance of this class can be created either by
+// providing a plan and its compiled function components through the constructor
+// of by codegen::QueryCompiler::Compile(). The former method is purely for
+// testing purposes. The system uses QueryCompiler to generate compiled query
+// objects.
 //===----------------------------------------------------------------------===//
 class Query {
  public:
@@ -54,9 +54,14 @@ class Query {
     llvm::Function *tear_down_func;
   };
 
-  // Setup this query statement with the given LLVM function components. The
-  // provided functions perform initialization, execution and tear down of
-  // this query.
+  /// This class cannot be copy or move-constructed
+  DISALLOW_COPY_AND_MOVE(Query);
+
+  /**
+   * @brief Setup this query with the given JITed function components
+   *
+   * @param funcs The compiled functions that implement the logic of the query
+   */
   bool Prepare(const QueryFunctions &funcs);
 
   /**
@@ -76,20 +81,20 @@ class Query {
                std::function<void(executor::ExecutionResult)> on_complete,
                RuntimeStats *stats = nullptr);
 
-  // Return the query plan
+  /// Return the query plan
   const planner::AbstractPlan &GetPlan() const { return query_plan_; }
 
-  // Get the holder of the code
+  /// Get the holder of the code
   CodeContext &GetCodeContext() { return code_context_; }
 
-  // The class tracking all the state needed by this query
+  /// The class tracking all the state needed by this query
   RuntimeState &GetRuntimeState() { return runtime_state_; }
 
  private:
   friend class QueryCompiler;
 
-  // Constructor
-  Query(const planner::AbstractPlan &query_plan);
+  /// Constructor
+  explicit Query(const planner::AbstractPlan &query_plan);
 
  private:
   // The query plan
@@ -106,10 +111,6 @@ class Query {
   compiled_function_t init_func_;
   compiled_function_t plan_func_;
   compiled_function_t tear_down_func_;
-
- private:
-  // This class cannot be copy or move-constructed
-  DISALLOW_COPY_AND_MOVE(Query);
 };
 
 }  // namespace codegen
