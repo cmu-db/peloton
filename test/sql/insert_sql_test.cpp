@@ -533,8 +533,6 @@ TEST_F(InsertSQLTests, UniqueColumn) {
                                         "st VARCHAR(15) NOT NULL UNIQUE);");
   TestingSQLUtil::ExecuteSQLQuery(create_table);
 
-  std::string ins_query_3("INSERT INTO t VALUES (3, 'abc');");
-
   ResultType result;
   std::vector<std::string> ref_result;
   std::string result_query = "select st from t;";
