@@ -14,6 +14,8 @@
 
 #include <nmmintrin.h>
 
+#include "murmur3/MurmurHash3.h"
+
 #include "common/exception.h"
 #include "common/logger.h"
 #include "expression/abstract_expression.h"
@@ -22,11 +24,15 @@
 #include "storage/layout.h"
 #include "storage/tile.h"
 #include "storage/tile_group.h"
-#include "storage/zone_map_manager.h"
-#include "type/value_factory.h"
 
 namespace peloton {
 namespace codegen {
+
+uint64_t RuntimeFunctions::HashMurmur3(const char *buf, uint64_t length,
+                                       uint64_t seed) {
+  return MurmurHash3_x86_32(buf, static_cast<uint32_t>(length),
+                            static_cast<uint32_t>(seed));
+}
 
 #define CRC32(op, crc, type, buf, len)                   \
   do {                                                   \
