@@ -13,6 +13,7 @@
 #include <cstdio>
 
 #include "gtest/gtest.h"
+
 #include "catalog/index_catalog.h"
 #include "catalog/catalog.h"
 #include "catalog/database_catalog.h"
@@ -224,11 +225,10 @@ TEST_F(DropTests, DroppingIndexByName) {
   catalog->Bootstrap();
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-
   auto txn = txn_manager.BeginTransaction();
+
   catalog->CreateDatabase(TEST_DB_NAME, txn);
   auto db = catalog->GetDatabaseWithName(TEST_DB_NAME, txn);
-
   // Insert a table first
   auto id_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
@@ -236,34 +236,51 @@ TEST_F(DropTests, DroppingIndexByName) {
   auto name_column =
       catalog::Column(type::TypeId::VARCHAR, 32, "dept_name", false);
 
-
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
   std::unique_ptr<catalog::Schema> table_schema2(
       new catalog::Schema({id_column, name_column}));
+  txn_manager.CommitTransaction(txn);
 
-  catalog->CreateTable(TEST_DB_NAME, "department_table_01", std::move(table_schema),
-                       txn);
+  txn = txn_manager.BeginTransaction();
+  catalog->CreateTable(TEST_DB_NAME, "department_table_01",
+                       std::move(table_schema), txn);
+  txn_manager.CommitTransaction(txn);
 
+  txn = txn_manager.BeginTransaction();
   auto source_table = db->GetTableWithName("department_table_01");
-  oid_t col_id = source_table->GetSchema()->GetColumnID(id_column.column_name);
+  oid_t col_id = source_table->GetSchema()->GetColumnID(
+              id_column.column_name);
   std::vector<oid_t> source_col_ids;
   source_col_ids.push_back(col_id);
-  std::string index_name1 = "pg_table_pkey";
+  std::string index_name1 = "Testing_Drop_Index_By_Name";
   catalog->CreateIndex(TEST_DB_NAME, "department_table_01",
                        source_col_ids, index_name1, false,
                        IndexType::BWTREE, txn);
+  txn_manager.CommitTransaction(txn);
 
-  auto index_catalog = catalog::IndexCatalog::GetInstance()->GetIndexObject(index_name1, txn);
-  auto index_oid = index_catalog->GetIndexOid();
-  catalog->DropIndex(index_oid,txn);
+  txn = txn_manager.BeginTransaction();
+  auto index_catalog = catalog::IndexCatalog::GetInstance()->GetIndexObject(
+              index_name1, txn);
+  // Check the effect of drop
+  // Most major check in this test case
+  EXPECT_EQ(catalog::IndexCatalog::GetInstance()->GetIndexObject(
+                index_name1, txn), index_catalog);
 
-  std::string index_name2 = "pg_database_pkey";
-  catalog->CreateIndex(TEST_DB_NAME, "department_table_01",
-                       source_col_ids, index_name2, false,
-                       IndexType::BWTREE, txn);
-  catalog->DropIndex(index_name2,txn);
+  // Now dropping the index using the DropIndex functionality
+  catalog->DropIndex(index_name1,txn);
+  EXPECT_EQ(catalog::IndexCatalog::GetInstance()->GetIndexObject(
+                index_name1, txn), nullptr);
+  txn_manager.CommitTransaction(txn);
 
+  // Drop the table just created
+  txn = txn_manager.BeginTransaction();
+  catalog->DropTable(TEST_DB_NAME, "department_table_01", txn);
+  txn_manager.CommitTransaction(txn);
+
+  // free the database just created
+  txn = txn_manager.BeginTransaction();
+  catalog->DropDatabaseWithName(TEST_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
 }  // namespace test
