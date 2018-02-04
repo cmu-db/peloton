@@ -19,6 +19,11 @@
 #include "type/type.h"
 
 namespace peloton {
+
+namespace expression {
+class AbstractExpression;
+}  // namespace expression
+
 namespace codegen {
 
 //===----------------------------------------------------------------------===//
@@ -33,8 +38,9 @@ class ParameterCache {
   // Set the parameter values
   void Populate(CodeGen &codegen, llvm::Value *query_parameters_ptr);
 
-  // Get the codegen value for the specific index
+  // Get the cached value for the given expression
   codegen::Value GetValue(uint32_t index) const;
+  codegen::Value GetValue(const expression::AbstractExpression *expr) const;
 
   // Clear all cache parameter values
   void Reset();

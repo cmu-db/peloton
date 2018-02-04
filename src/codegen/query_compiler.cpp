@@ -32,10 +32,11 @@ std::unique_ptr<Query> QueryCompiler::Compile(
   std::unique_ptr<Query> query{new Query(root)};
 
   // Set up the compilation context
-  CompilationContext context{*query, parameters_map, result_consumer};
+  CompilationContext context{query->GetCodeContext(), query->GetRuntimeState(),
+                             parameters_map, result_consumer};
 
   // Perform the compilation
-  context.GeneratePlan(stats);
+  context.GeneratePlan(*query, stats);
 
   // Return the compiled query statement
   return query;

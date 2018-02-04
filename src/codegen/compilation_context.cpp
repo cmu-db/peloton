@@ -12,7 +12,6 @@
 
 #include "codegen/compilation_context.h"
 
-#include "codegen/proxy/storage_manager_proxy.h"
 #include "codegen/proxy/executor_context_proxy.h"
 #include "codegen/proxy/query_parameters_proxy.h"
 #include "codegen/proxy/storage_manager_proxy.h"
@@ -31,34 +30,32 @@ void InitializeParameterCache(CodeGen &codegen, ParameterCache &cache,
   cache.Populate(codegen, runtime_query_parameters);
 }
 
-}  // anonymous namespace
+}  // namespace
 
 // Constructor
-CompilationContext::CompilationContext(Query &query,
+CompilationContext::CompilationContext(CodeContext &code,
+                                       RuntimeState &runtime_state,
                                        const QueryParametersMap &parameters_map,
                                        QueryResultConsumer &result_consumer)
-    : query_(query),
-      parameters_map_(parameters_map),
-      parameter_cache_(parameters_map_),
+    : code_context_(code),
+      runtime_state_(runtime_state),
+      parameter_cache_(parameters_map),
       result_consumer_(result_consumer),
-      codegen_(query_.GetCodeContext()) {
-  // Allocate a storage manager instance in the runtime state
-  auto &runtime_state = GetRuntimeState();
-
+      codegen_(code_context_) {
   auto *storage_manager_ptr_type =
       StorageManagerProxy::GetType(codegen_)->getPointerTo();
   storage_manager_state_id_ =
-      runtime_state.RegisterState("storageManager", storage_manager_ptr_type);
+      runtime_state_.RegisterState("storageManager", storage_manager_ptr_type);
 
   auto *executor_context_type =
       ExecutorContextProxy::GetType(codegen_)->getPointerTo();
   executor_context_state_id_ =
-      runtime_state.RegisterState("executorContext", executor_context_type);
+      runtime_state_.RegisterState("executorContext", executor_context_type);
 
   auto *query_parameters_type =
       QueryParametersProxy::GetType(codegen_)->getPointerTo();
   query_parameters_state_id_ =
-      runtime_state.RegisterState("queryParameters", query_parameters_type);
+      runtime_state_.RegisterState("queryParameters", query_parameters_type);
 
   // Let the query consumer modify the runtime state object
   result_consumer_.Prepare(*this);
@@ -85,13 +82,14 @@ void CompilationContext::Produce(const planner::AbstractPlan &op) {
 }
 
 // Generate all plan functions for the given query
-void CompilationContext::GeneratePlan(QueryCompiler::CompileStats *stats) {
+void CompilationContext::GeneratePlan(Query &query,
+                                      QueryCompiler::CompileStats *stats) {
   // Start timing
   Timer<std::ratio<1, 1000>> timer;
   timer.Start();
 
   // First we prepare the translators for all the operators in the tree
-  Prepare(query_.GetPlan(), main_pipeline_);
+  Prepare(query.GetPlan(), main_pipeline_);
 
   if (stats != nullptr) {
     timer.Stop();
@@ -109,7 +107,7 @@ void CompilationContext::GeneratePlan(QueryCompiler::CompileStats *stats) {
   llvm::Function *init = GenerateInitFunction();
 
   // Generate the plan() function
-  llvm::Function *plan = GeneratePlanFunction(query_.GetPlan());
+  llvm::Function *plan = GeneratePlanFunction(query.GetPlan());
 
   // Generate the  tearDown() function
   llvm::Function *tear_down = GenerateTearDownFunction();
@@ -122,8 +120,9 @@ void CompilationContext::GeneratePlan(QueryCompiler::CompileStats *stats) {
   }
 
   // Next, we prepare the query statement with the functions we've generated
-  Query::QueryFunctions funcs = {init, plan, tear_down};
-  bool prepared = query_.Prepare(funcs);
+  Query::QueryFunctions funcs = {
+      .init_func = init, .plan_func = plan, .tear_down_func = tear_down};
+  bool prepared = query.Prepare(funcs);
   if (!prepared) {
     throw Exception{"There was an error preparing the compiled query"};
   }
@@ -144,11 +143,10 @@ void CompilationContext::GenerateHelperFunctions() {
   }
 
   // Define each auxiliary producer function
-  auto &cc = query_.GetCodeContext();
   for (auto &iter : auxiliary_producers_) {
     const auto &plan = *iter.first;
     const auto &function_declaration = iter.second;
-    FunctionBuilder func{cc, function_declaration};
+    FunctionBuilder func{code_context_, function_declaration};
     {
       // Don't try to optimize this by moving the cache population outside the
       // function definition. We need the call to exist within the context of
@@ -179,13 +177,10 @@ llvm::Value *CompilationContext::GetQueryParametersPtr() {
 // Generate code for the init() function of the query
 llvm::Function *CompilationContext::GenerateInitFunction() {
   // Create function definition
-  auto &code_context = query_.GetCodeContext();
-  auto &runtime_state = query_.GetRuntimeState();
-
-  std::string name = StringUtil::Format("_%lu_init", code_context.GetID());
+  std::string name = StringUtil::Format("_%lu_init", code_context_.GetID());
   std::vector<FunctionDeclaration::ArgumentInfo> args = {
-      {"runtimeState", runtime_state.FinalizeType(codegen_)->getPointerTo()}};
-  FunctionBuilder init_func{code_context, name, codegen_.VoidType(), args};
+      {"runtimeState", runtime_state_.FinalizeType(codegen_)->getPointerTo()}};
+  FunctionBuilder init_func{code_context_, name, codegen_.VoidType(), args};
   {
     // Let the consumer initialize
     result_consumer_.InitializeState(*this);
@@ -207,14 +202,10 @@ llvm::Function *CompilationContext::GenerateInitFunction() {
 // Generate the code for the plan() function of the query
 llvm::Function *CompilationContext::GeneratePlanFunction(
     const planner::AbstractPlan &root) {
-  // Create function definition
-  auto &code_context = query_.GetCodeContext();
-  auto &runtime_state = query_.GetRuntimeState();
-
-  std::string name = StringUtil::Format("_%lu_plan", code_context.GetID());
+  std::string name = StringUtil::Format("_%lu_plan", code_context_.GetID());
   std::vector<FunctionDeclaration::ArgumentInfo> args = {
-      {"runtimeState", runtime_state.FinalizeType(codegen_)->getPointerTo()}};
-  FunctionBuilder plan_func{code_context, name, codegen_.VoidType(), args};
+      {"runtimeState", runtime_state_.FinalizeType(codegen_)->getPointerTo()}};
+  FunctionBuilder plan_func{code_context_, name, codegen_.VoidType(), args};
   {
     // Load the query parameter values
     InitializeParameterCache(codegen_, parameter_cache_,
@@ -233,14 +224,11 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
 
 // Generate the code for the tearDown() function of the query
 llvm::Function *CompilationContext::GenerateTearDownFunction() {
-  // Create function definition
-  auto &code_context = query_.GetCodeContext();
-  auto &runtime_state = query_.GetRuntimeState();
-
-  std::string name = StringUtil::Format("_%lu_tearDown", code_context.GetID());
+  std::string name = StringUtil::Format("_%lu_tearDown", code_context_.GetID());
   std::vector<FunctionDeclaration::ArgumentInfo> args = {
-      {"runtimeState", runtime_state.FinalizeType(codegen_)->getPointerTo()}};
-  FunctionBuilder tear_down_func{code_context, name, codegen_.VoidType(), args};
+      {"runtimeState", runtime_state_.FinalizeType(codegen_)->getPointerTo()}};
+  FunctionBuilder tear_down_func{code_context_, name, codegen_.VoidType(),
+                                 args};
   {
     // Let the consumer cleanup
     result_consumer_.TearDownState(*this);
@@ -280,23 +268,20 @@ AuxiliaryProducerFunction CompilationContext::DeclareAuxiliaryProducer(
     return AuxiliaryProducerFunction(declaration);
   }
 
-  auto &cc = query_.GetCodeContext();
-  auto &runtime_state = query_.GetRuntimeState();
-
   // Make the declaration for the caller to use
 
   std::string fn_name;
   if (!provided_name.empty()) {
     fn_name = provided_name;
   } else {
-    fn_name = StringUtil::Format("_%lu_auxPlanFunction", cc.GetID());
+    fn_name = StringUtil::Format("_%lu_auxPlanFunction", code_context_.GetID());
   }
 
   std::vector<FunctionDeclaration::ArgumentInfo> fn_args = {
-      {"runtimeState", runtime_state.FinalizeType(codegen_)->getPointerTo()}};
+      {"runtimeState", runtime_state_.FinalizeType(codegen_)->getPointerTo()}};
 
   auto declaration = FunctionDeclaration::MakeDeclaration(
-      cc, fn_name, FunctionDeclaration::Visibility::Internal,
+      code_context_, fn_name, FunctionDeclaration::Visibility::Internal,
       codegen_.VoidType(), fn_args);
 
   // Save the function declaration for later definition

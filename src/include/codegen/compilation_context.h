@@ -50,24 +50,28 @@ class CompilationContext {
   friend class RowBatch;
 
  public:
-  // Constructor
-  CompilationContext(Query &query, const QueryParametersMap &parameters_map,
+  /// Constructor
+  CompilationContext(CodeContext &code, RuntimeState &runtime_state,
+                     const QueryParametersMap &parameters_map,
                      QueryResultConsumer &result_consumer);
 
-  // Prepare a translator in this context
+  /// This class cannot be copy or move-constructed
+  DISALLOW_COPY_AND_MOVE(CompilationContext);
+
+  /// Prepare a translator in this context
   void Prepare(const planner::AbstractPlan &op, Pipeline &pipeline);
   void Prepare(const expression::AbstractExpression &expression);
 
-  // Produce the tuples for the given operator
+  /// Produce the tuples for the given operator
   void Produce(const planner::AbstractPlan &op);
 
-  // This is the main entry point into the compilation component. Callers
-  // construct a compilation context, then invoke this method to compile
-  // the plan and prepare the provided query statement.
-  void GeneratePlan(QueryCompiler::CompileStats *stats);
+  /// This is the main entry point into the compilation component. Callers
+  /// construct a compilation context, then invoke this method to compile
+  /// the plan and prepare the provided query statement.
+  void GeneratePlan(Query &query, QueryCompiler::CompileStats *stats);
 
-  // Declare an extra function that produces tuples outside of the main plan
-  // function. The primary producer in this function is the provided plan node.
+  /// Declare an extra function that produces tuples outside of the main plan
+  /// function. The primary producer in this function is the provided plan node.
   AuxiliaryProducerFunction DeclareAuxiliaryProducer(
       const planner::AbstractPlan &plan, const std::string &provided_name);
 
@@ -77,7 +81,7 @@ class CompilationContext {
 
   CodeGen &GetCodeGen() { return codegen_; }
 
-  RuntimeState &GetRuntimeState() const { return query_.GetRuntimeState(); }
+  RuntimeState &GetRuntimeState() { return runtime_state_; }
 
   const ParameterCache &GetParameterCache() const { return parameter_cache_; }
 
@@ -85,20 +89,14 @@ class CompilationContext {
     return result_consumer_;
   }
 
-  // Get a pointer to the storage manager object from the runtime state
+  /// Get a pointer to the storage manager object from the runtime state
   llvm::Value *GetStorageManagerPtr();
 
-  // Get a pointer to the executor context instance
+  /// Get a pointer to the executor context instance
   llvm::Value *GetExecutorContextPtr();
 
-  // Get a pointer to the query parameter instance
+  /// Get a pointer to the query parameter instance
   llvm::Value *GetQueryParametersPtr();
-
-  // Get the parameter index to be used to get value for the given expression
-  size_t GetParameterIdx(
-      const expression::AbstractExpression *expression) const {
-    return parameters_map_.GetIndex(expression);
-  }
 
  private:
   // Generate any auxiliary helper functions that the query needs
@@ -120,10 +118,10 @@ class CompilationContext {
 
  private:
   // The query we'll compile
-  Query &query_;
+  CodeContext &code_context_;
 
-  // The parameters and mapping for expression and parameter ids to
-  const QueryParametersMap &parameters_map_;
+  // Runtime state
+  RuntimeState &runtime_state_;
 
   // The parameter value cache of the query
   ParameterCache parameter_cache_;
@@ -147,13 +145,11 @@ class CompilationContext {
 
   // The mapping of an operator in the tree to its translator
   std::unordered_map<const planner::AbstractPlan *,
-                     std::unique_ptr<OperatorTranslator>>
-      op_translators_;
+                     std::unique_ptr<OperatorTranslator>> op_translators_;
 
   // The mapping of an expression somewhere in the tree to its translator
   std::unordered_map<const expression::AbstractExpression *,
-                     std::unique_ptr<ExpressionTranslator>>
-      exp_translators_;
+                     std::unique_ptr<ExpressionTranslator>> exp_translators_;
 
   // Pre-declared producer functions and their root plan nodes
   std::unordered_map<const planner::AbstractPlan *, FunctionDeclaration>
