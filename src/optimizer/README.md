@@ -10,7 +10,7 @@ The optimizer follows the [Cascade](http://15721.courses.cs.cmu.edu/spring2018/p
 * Property enforcing, which adds missing properties descirbing the output format, e.g. sort order.
 * Operator to plan transformation, which turns the best physical operator tree into an execution plan.
 
-The rewrite phase consists of predicate push-down and unnesting, they will run once separately before later optimization phases. Transformation, stats derivation, physical implementation and property enforcing will not be separated, an new operator generated from a transformation rule is going to be implemented as a physical operator and cost immediately, this allows us to do pruning based on the cost to avoid enumerating inefficient plans.
+The rewrite phase consists of predicate push-down and unnesting, they will run once separately before later optimization phases. Transformation, stats derivation, physical implementation and property enforcing will not be separated, a new logical operator tree generated from a transformation rule is going to be implemented as a physical operator and cost immediately, this allows us to do pruning based on the cost to avoid enumerating inefficient plans. Consider we are calculating cost for an operator tree `((A join B join C) join D)`. If the cost of only joining the intermidiate table `(A join B join C)` and the base table `D` already exceeded the cost of another operator tree in the same group, say, `((A join B) join (C join D))`, we'll do the pruning by avoiding join order enumeration for `(A join B join C)`. If we do transformation and implementation separately, the pruning is not possible, because when we're costing an operator tree after the implementation phase, the join order of all it's child groups have already been enumerated in the transformation phase.
 
 The entrance of the optimizer is `Optimizer::BuildPelotonPlanTree()` in [`optimizer.cpp`](https://github.com/chenboy/peloton/blob/optimizer_doc/src/optimizer/optimizer.cpp). We'll cover each phase in the following sections.
 
@@ -22,7 +22,13 @@ The first step in the optimizer is to transform a peloton parse tree into a logi
 
 ## Rewrite Phase
 
-The rewrite phase includes heuristic-based optimization passes that will be run once. For extensibility, we implement these passes as rule-based optimization. These passes assume the transformed tree is always better than the original tree so when a rule is applied, the new pattern will always replace the old one. For people who want to add new rewrite passes, they should specify a set of rules, pick a rewrite framework from top-down rewrite and bottom-up rewrite and push the rewrite task to the task queue.
+The rewrite phase includes heuristic-based optimization passes that will be run once. For extensibility, we implement these passes as rule-based optimization. These passes assume the transformed tree is always better than the original tree so when a rule is applied, the new pattern will always replace the old one. 
+
+We implemented two different rewrite frameworks, top-down rewrite and bottom-up rewrite in [`optimizer_task.cpp`](https://github.com/chenboy/peloton/blob/optimizer_doc/src/optimizer/optimizer_task.cpp). Both of them are designed for a single optimization pass. Basically, a top-down pass will start from the root operator, apply a set of rewrite rules until saturated, then move to lower level to apply rules for those operators, whereas a bottom-up pass will first recursively apply rules for current operator's children, then apply rules for the current operator. If any rule triggers for an operator in a bottom-up pass, we'll apply rules for its child again, since the children may have changed so rewrite rules may be applicable to them.
+
+The difference between top-down and bottom-up rewrite is top-down rewrite may have less ability of expression, but usually is more efficient. Rewrite phases that could be done in a top-down pass probably could also be implemented using bottom-up framework. For optimizations with top-down nature, e.g. predicate push-down, a top-down pass usually will be more efficient since it only applies a set of rules for each operator once, but bottom-up framework may apply for each operator multiple time because when a rule is applied for an operator, we need to recurisively apply rules for all its children.
+
+For people want to add new rewrite passes, they should specify a set of rules, pick a rewrite framework from top-down rewrite and bottom-up rewrite and push the rewrite task to the task queue.
 
 Predicate push-down is a top-down rewrite pass, what it does is to push predicate throgh operators and when the predicate cannot be further push-down, the predicate is combined with the underlying operator.
 
@@ -34,7 +40,7 @@ After the rewrite phase we'll get a logical operator tree, the next step is to f
 
 There's one task `DeriveStats` that is not mentioned in the Columnbia paper. We follow the [Orca paper](http://15721.courses.cs.cmu.edu/spring2018/papers/15-optimizer1/p337-soliman.pdf) to derive stats for each group on the fly. When a new group is generated, we'll recursively collect stats for the column used in the root operator's predicate (When a new group is generated, there's only one expression in the group, thus only one root operator), compute stats for the root group and cache those stats in the group so that we only derive stats for columns we need, which is efficient for both time and space.
 
-The design of property enforcing also follows Orca rather than Columbia. We'll add enforcer after applying physical rules and the enforcer will be stored separately from regular physical operators.
+The design of property enforcing also follows Orca rather than Columbia. We'll add enforcers after applying physical rules.
 
 ## Operator to plan transformation
 
