@@ -13,10 +13,12 @@
 #include <iostream>
 
 #include <gflags/gflags.h>
+#include <include/network/peloton_rpc_server.h>
 
 #include "common/init.h"
 #include "common/logger.h"
 #include "network/peloton_server.h"
+#include "network/peloton_rpc_server.h"
 #include "settings/settings_manager.h"
 
 // For GFlag's built-in help message flag
@@ -44,13 +46,15 @@ int main(int argc, char *argv[]) {
     peloton::PelotonInit::Initialize();
 
     // Create NetworkManager object
-    peloton::network::PelotonServer network_manager;
+    peloton::network::PelotonServer peloton_server;
+    peloton::network::PelotonRpcServer rpc_server;
 
     // Start NetworkManager
     peloton::network::PelotonServer::LoadSSLFileSettings();
     peloton::network::PelotonServer::SSLInit();
 
-    network_manager.SetupServer().ServerLoop();
+    std::thread rpc_thread([&] { rpc_server.Run("localhost:15445"); });
+    peloton_server.SetupServer().ServerLoop();
   } catch (peloton::ConnectionException &exception) {
     // Nothing to do here!
   }
