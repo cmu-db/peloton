@@ -13,8 +13,6 @@
 #include <iostream>
 
 #include <gflags/gflags.h>
-#include <include/network/peloton_rpc_server.h>
-
 #include "common/init.h"
 #include "common/logger.h"
 #include "network/peloton_server.h"
