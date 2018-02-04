@@ -374,6 +374,7 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to create database " +
                            index_name);
+
   LOG_TRACE("Trying to create index %s for table %s", index_name.c_str(),
             table_name.c_str());
   // check if database exists
@@ -609,21 +610,23 @@ ResultType Catalog::DropIndex(oid_t index_oid,
 }
 
 ResultType Catalog::DropIndex(const std::string &index_name,
-                              concurrency::TransactionContext *txn){
-    if(txn == nullptr){
-        throw CatalogException("Do not have transaction to drop index " + index_name);
+                              concurrency::TransactionContext *txn) {
+    if(txn == nullptr) {
+        throw CatalogException("Do not have transaction to drop index " +
+                               index_name);
     }
-    auto index_object = catalog::IndexCatalog::GetInstance()->GetIndexObject(index_name,txn);
-    if(index_object == nullptr){
+    auto index_object = catalog::IndexCatalog::GetInstance()->GetIndexObject(
+                index_name, txn);
+    if(index_object == nullptr) {
         throw CatalogException("Index name " + index_name + " cannot be found");
     }
-    ResultType result = DropIndex(index_object->GetIndexOid(),txn);
+    ResultType result = DropIndex(index_object->GetIndexOid(), txn);
 
     return result;
 }
 
 //===--------------------------------------------------------------------===//
-// GET WITH NAME - CHECK FROM CATALOG TABLES, USING TRANSACTION             //
+// GET WITH NAME - CHECK FROM CATALOG TABLES, USING TRANSACTION
 //===--------------------------------------------------------------------===//
 
 /* Check database from pg_database with database_name using txn,
