@@ -10,16 +10,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
-#include <vector>
 #include <thread>
+#include <vector>
 
 #include <boost/asio/io_service.hpp>
-#include <boost/thread/thread.hpp>
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
+#include <boost/thread/thread.hpp>
 
 #include "common/macros.h"
 
@@ -27,13 +26,13 @@ namespace peloton {
 // a wrapper for boost worker thread pool.
 class ThreadPool {
  public:
-  ThreadPool() : pool_size_(0), 
-                 dedicated_thread_count_(0),
-                 work_(io_service_) { }
+  ThreadPool()
+      : pool_size_(0), dedicated_thread_count_(0), work_(io_service_) {}
 
-  ~ThreadPool() { }
+  ~ThreadPool() {}
 
-  void Initialize(const size_t &pool_size, const size_t &dedicated_thread_count) {
+  void Initialize(const size_t &pool_size,
+                  const size_t &dedicated_thread_count) {
     current_thread_count_ = ATOMIC_VAR_INIT(0);
     pool_size_ = pool_size;
     // PL_ASSERT(pool_size_ != 0);
@@ -73,7 +72,8 @@ class ThreadPool {
     size_t thread_id =
         current_thread_count_.fetch_add(1, std::memory_order_relaxed);
     // assign task to dedicated thread.
-    dedicated_threads_[thread_id].reset(new std::thread(std::thread(func, params...)));
+    dedicated_threads_[thread_id].reset(
+        new std::thread(std::thread(func, params...)));
   }
 
  private:

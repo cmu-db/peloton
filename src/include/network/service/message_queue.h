@@ -4,12 +4,11 @@
 //
 // message_queue.h
 //
-// Identification: src/include/network/message_queue.h
+// Identification: src/include/network/service/message_queue.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
 
 #pragma once
 
@@ -26,8 +25,8 @@ template <typename T>
 class MessageQueue {
  public:
   MessageQueue() = default;
-  MessageQueue(const MessageQueue&) = delete;             // disable copying
-  MessageQueue& operator=(const MessageQueue&) = delete;  // disable assignment
+  MessageQueue(const MessageQueue &) = delete;             // disable copying
+  MessageQueue &operator=(const MessageQueue &) = delete;  // disable assignment
 
   T Pop() {
     std::unique_lock<std::mutex> mlock(mutex_);
@@ -39,7 +38,7 @@ class MessageQueue {
     return val;
   }
 
-  void Pop(T& item) {
+  void Pop(T &item) {
     std::unique_lock<std::mutex> mlock(mutex_);
 
     while (queue_.empty()) {
@@ -50,7 +49,7 @@ class MessageQueue {
     queue_.pop();
   }
 
-  void Push(const T& item) {
+  void Push(const T &item) {
     std::unique_lock<std::mutex> mlock(mutex_);
     queue_.push(item);
     mlock.unlock();

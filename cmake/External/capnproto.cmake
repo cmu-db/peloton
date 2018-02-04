@@ -49,14 +49,6 @@ if (NOT __CAPNP_INCLUDED) # guard against multiple includes
     set(CAPNPC_CXX_EXECUTABLE ${capnp_INSTALL}/bin/capnpc-c++)
     set(CAPNP_INCLUDE_DIRS ${capnp_INSTALL}/include)
     set(CAPNP_INCLUDE_DIRECTORY ${capnp_INSTALL}/include)
-    set(CAPNP_LIBRARIES
-      ${capnp_INSTALL}/lib/libcapnp-rpc.a
-      ${capnp_INSTALL}/lib/libcapnp.a
-      ${capnp_INSTALL}/lib/libkj-async.a
-      ${capnp_INSTALL}/lib/libkj.a
-      ${CMAKE_THREAD_LIBS_INIT}
-      )
-    set(CAPNP_LIBRARY_DIRS ${capnp_INSTALL}/lib)
     set(CAPNP_EXTERNAL TRUE)
 
     list(APPEND external_project_dependencies capnp)

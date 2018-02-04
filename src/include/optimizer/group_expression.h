@@ -67,6 +67,10 @@ class GroupExpression {
 
   bool HasRuleExplored(Rule *rule);
 
+  void SetDerivedStats() { stats_derived_ = true; }
+
+  bool HasDerivedStats() { return stats_derived_;}
+
   inline size_t GetChildrenGroupsSize() const { return child_groups.size(); }
 
  private:
@@ -74,6 +78,7 @@ class GroupExpression {
   Operator op;
   std::vector<GroupID> child_groups;
   std::bitset<static_cast<uint32_t>(RuleType::NUM_RULES)> rule_mask_;
+  bool stats_derived_;
 
   // Mapping from output properties to the corresponding best cost, statistics,
   // and child properties

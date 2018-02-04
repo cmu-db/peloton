@@ -33,6 +33,9 @@ namespace brain {
 // Layout Tuner
 //===--------------------------------------------------------------------===//
 
+/**
+ * @brief      Class for layout tuner.
+ */
 class LayoutTuner {
  public:
   LayoutTuner(const LayoutTuner &) = delete;
@@ -44,65 +47,99 @@ class LayoutTuner {
 
   ~LayoutTuner();
 
-  // Singleton
+  /**
+   * Singleton
+   *
+   * @return     The instance.
+   */
   static LayoutTuner &GetInstance();
 
-  // Start tuning
+  /**
+   * Start tuning
+   */
   void Start();
 
-  // Tune layout
+  /**
+   * Tune layout
+   */
   void Tune();
 
-  // Stop tuning
+  /**
+   * Stop tuning
+   */
   void Stop();
 
-  // Add table to list of tables whose layout must be tuned
+  /**
+   * Add table to list of tables whose layout must be tuned
+   *
+   * @param      table  The table
+   */
   void AddTable(storage::DataTable *table);
 
-  // Clear list
+  /**
+   * Clear list
+   */
   void ClearTables();
 
+  /**
+   * @brief      Gets the column map information.
+   *
+   * @param[in]  column_map  The column map
+   *
+   * @return     The column map information.
+   */
   std::string GetColumnMapInfo(const column_map_type &column_map);
 
  protected:
-  // Update layout of table
+  /**
+   * Update layout of table
+   *
+   * @param      table  The table
+   */
   void UpdateDefaultPartition(storage::DataTable *table);
 
  private:
-  // Tables whose layout must be tuned
+  /**
+   * Tables whose layout must be tuned
+   */
   std::vector<storage::DataTable *> tables;
 
   std::mutex layout_tuner_mutex;
 
-  // Stop signal
+  /**
+   * Stop signal
+   */
   std::atomic<bool> layout_tuning_stop;
 
-  // Tuner thread
+  /**
+   * Tuner thread
+   */
   std::thread layout_tuner_thread;
 
   //===--------------------------------------------------------------------===//
   // Tuner Parameters
   //===--------------------------------------------------------------------===//
 
-  // Layout similarity threshold
-  // NOTE:
-  // This is a critical parameter. It measures the difference between the schema
-  // of a existing tilegroup and the desired schema, and normalizes this difference
-  // with respect to the column count, so that it falls within [0, 1]
-  // Theta should not be set to zero, otherwise it will always trigger
-  // DataTable::TransformTileGroup, even if the schema is the same.
+  /**
+   * Layout similarity threshold NOTE: This is a critical parameter. It measures
+   * the difference between the schema of a existing tilegroup and the desired
+   * schema, and normalizes this difference with respect to the column count, so
+   * that it falls within [0, 1] Theta should not be set to zero, otherwise it
+   * will always trigger DataTable::TransformTileGroup, even if the schema is
+   * the same. 
+   */
   double theta = 0.0001;
 
-  // Sleeping period (in us)
+  /** Sleeping period (in us) */
   oid_t sleep_duration = 100;
 
-  // Cluster count
+  /** Cluster count */
   oid_t cluster_count = 4;
 
-  // New sample weight
+  /** New sample weight */
   double new_sample_weight = 0.01;
 
-  // Desired layout tile count
+  /** Desired layout tile count */
   oid_t tile_count = 2;
 
 };

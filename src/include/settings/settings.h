@@ -71,6 +71,18 @@ SETTING_double(bnlj_buffer_size,
              1.0 * 1024.0 * 1024.0,
              true, true)
 
+// Size of the MonoQueue task queue
+SETTING_int(monoqueue_task_queue_size,
+            "MonoQueue Task Queue Size (default: 32)",
+            32,
+            false, false)
+
+// Size of the MonoQueue worker pool
+SETTING_int(monoqueue_worker_pool_size,
+            "MonoQueue Worker Pool Size (default: 4)",
+            4,
+            false, false)
+
 //===----------------------------------------------------------------------===//
 // WRITE AHEAD LOG
 //===----------------------------------------------------------------------===//
@@ -114,6 +126,28 @@ SETTING_bool(layout_tuner,
             "Enable layout tuner (default: false)",
             false,
             true, true)
+
+//===----------------------------------------------------------------------===//
+// BRAIN
+//===----------------------------------------------------------------------===//
+
+// Enable or disable brain
+SETTING_bool(brain,
+            "Enable brain (default: false)",
+            false,
+            true, true)
+
+// Size of the brain task queue
+SETTING_int(brain_task_queue_size,
+            "Brain Task Queue Size (default: 32)",
+            32,
+            false, false)
+
+// Size of the brain worker pool
+SETTING_int(brain_worker_pool_size,
+            "Brain Worker Pool Size (default: 1)",
+            1,
+            false, false)
 
 //===----------------------------------------------------------------------===//
 // CODEGEN
