@@ -33,7 +33,7 @@ matrix:
               - PELOTON_BUILD_TYPE=Debug
               # COVERALLS: we run coveralls only for one compiler
               - COVERALLS=On
-          # only run tests if the build itself succeeded
+          # override script value to run also tests and benchmarks
           script:
               # create build directory
               - mkdir build
@@ -74,7 +74,7 @@ matrix:
               - CC=gcc-4.8
               - PELOTON_BUILD_TYPE=Release
               - COVERALLS=Off
-          # only run tests if the build itself succeeded
+          # override script value to run also tests and benchmarks
           script:
               # create build directory
               - mkdir build
@@ -143,6 +143,7 @@ before_script:
     # first, run source_validator
     - python ./script/validators/source_validator.py
 
+# build peloton (override this value to execute tests)
 script:
     # create build directory
     - mkdir build
