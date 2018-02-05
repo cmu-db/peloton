@@ -11,11 +11,14 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef ITEMPOINTER_H
+#define ITEMPOINTER_H
+
 #pragma once
 
 #include <cstdint>
 
-#include "internal_types.h"
+#include "common/internal_types.h"
 
 namespace peloton {
 
@@ -77,3 +80,5 @@ class ItemPointerHashFunc {
 bool AtomicUpdateItemPointer(ItemPointer *src_ptr, const ItemPointer &value);
 
 }  // namespace peloton
+
+#endif /* ITEMPOINTER_H */

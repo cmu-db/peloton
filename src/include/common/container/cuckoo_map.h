@@ -24,14 +24,15 @@ namespace peloton {
 
 // CUCKOO_MAP_TEMPLATE_ARGUMENTS
 #define CUCKOO_MAP_TEMPLATE_ARGUMENTS template <typename KeyType, \
-    typename ValueType, typename HashType >
+    typename ValueType, typename HashType, typename PredType >
 
 // CUCKOO_MAP_DEFAULT_ARGUMENTS
 #define CUCKOO_MAP_DEFAULT_ARGUMENTS template <typename KeyType, \
-    typename ValueType, typename HashType = DefaultHasher<KeyType> >
+    typename ValueType, typename HashType = DefaultHasher<KeyType>, \
+    typename PredType = std::equal_to<KeyType>>
 
 // CUCKOO_MAP_TYPE
-#define CUCKOO_MAP_TYPE CuckooMap<KeyType, ValueType, HashType >
+#define CUCKOO_MAP_TYPE CuckooMap<KeyType, ValueType, HashType, PredType >
 
 // Iterator type
 #define CUCKOO_MAP_ITERATOR_TYPE \

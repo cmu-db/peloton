@@ -10,6 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef INTERNALTYPES_H
+#define INTERNALTYPES_H
+
 #pragma once
 
 #include <bitset>
@@ -28,8 +31,13 @@
 #include "type/type_id.h"
 #include "common/logger.h"
 #include "common/macros.h"
+#include "container/cuckoo_map.h"
 
 namespace peloton {
+
+class ItemPointer;
+struct ItemPointerHasher;
+class ItemPointerComparator;
 
 // For all of the enums defined in this header, we will
 // use this value to indicate that it is an invalid value
@@ -1199,6 +1207,10 @@ std::ostream &operator<<(std::ostream &os, const RWType &type);
 typedef std::unordered_map<oid_t, std::unordered_map<oid_t, RWType>>
     ReadWriteSet;
 
+// ItemPointer -> type
+typedef CuckooMap<ItemPointer, RWType, ItemPointerHasher, ItemPointerComparator>
+   CuckooReadWriteSet;
+
 // this enum is to identify why the version should be GC'd.
 enum class GCVersionType {
   INVALID,
@@ -1407,3 +1419,5 @@ enum class SSLLevel {
 };
 
 }  // namespace peloton
+
+#endif /* INTERNALTYPES_H */
