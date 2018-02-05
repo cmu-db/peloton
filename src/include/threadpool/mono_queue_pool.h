@@ -38,6 +38,7 @@ class MonoQueuePool {
   static MonoQueuePool &GetInstance();
   // TODO(Tianyu): Rename to (Brain)QueryHistoryLog or something
   static MonoQueuePool &GetBrainInstance();
+  static MonoQueuePool &GetExecutionInstance();
 
  private:
   TaskQueue task_queue_;
@@ -108,6 +109,23 @@ inline MonoQueuePool &MonoQueuePool::GetBrainInstance() {
   PL_ASSERT(worker_pool_size > 0);
 
   std::string name = "brain-pool";
+
+  static MonoQueuePool brain_queue_pool(
+      name, static_cast<uint32_t>(task_queue_size),
+      static_cast<uint32_t>(worker_pool_size));
+  return brain_queue_pool;
+}
+
+inline MonoQueuePool &MonoQueuePool::GetExecutionInstance(){
+  int32_t task_queue_size = settings::SettingsManager::GetInt(
+      settings::SettingId::monoqueue_task_queue_size);
+  int32_t worker_pool_size = settings::SettingsManager::GetInt(
+      settings::SettingId::monoqueue_worker_pool_size);
+
+  PL_ASSERT(task_queue_size > 0);
+  PL_ASSERT(worker_pool_size > 0);
+
+  std::string name = "executor-pool";
 
   static MonoQueuePool brain_queue_pool(
       name, static_cast<uint32_t>(task_queue_size),
