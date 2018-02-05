@@ -6,7 +6,7 @@
 //
 // Identification: src/include/catalog/query_history_catalog.h
 //
-// Copyright (c) 2015-18, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
