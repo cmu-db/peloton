@@ -4,12 +4,11 @@
 //
 // tcp_connection.h
 //
-// Identification: src/include/network/tcp_connection.h
+// Identification: src/include/network/service/tcp_connection.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
 
 #pragma once
 
@@ -64,18 +63,18 @@ class Connection {
    *            If a connection is created by client, fd(socket) is -1.
    *        arg is used to pass the rpc_server pointer
    */
-  Connection(int fd, struct event_base* base, void* arg, NetworkAddress& addr);
+  Connection(int fd, struct event_base *base, void *arg, NetworkAddress &addr);
   ~Connection();
 
-  static void ReadCb(struct bufferevent* bev, void* ctx);
-  static void EventCb(struct bufferevent* bev, short events, void* ctx);
-  static void* ProcessMessage(void* connection);
+  static void ReadCb(struct bufferevent *bev, void *ctx);
+  static void EventCb(struct bufferevent *bev, short events, void *ctx);
+  static void *ProcessMessage(void *connection);
 
-  static void BufferCb(struct evbuffer* buffer,
-                       const struct evbuffer_cb_info* info, void* arg);
+  static void BufferCb(struct evbuffer *buffer,
+                       const struct evbuffer_cb_info *info, void *arg);
 
-  RpcServer* GetRpcServer();
-  NetworkAddress& GetAddr();
+  RpcServer *GetRpcServer();
+  NetworkAddress &GetAddr();
 
   /*
    * set the connection status
@@ -92,7 +91,7 @@ class Connection {
    * to
    *        any server with the given address
    */
-  bool Connect(const NetworkAddress& addr);
+  bool Connect(const NetworkAddress &addr);
 
   /*
    * @brief a rpc will be closed by client after it recvs the response by server
@@ -108,7 +107,7 @@ class Connection {
   /*
    * This is used by client to execute callback function
    */
-  const char* GetMethodName();
+  const char *GetMethodName();
 
   /*
    * Get the readable length of the read buf
@@ -121,7 +120,7 @@ class Connection {
    * Return the length of moved data
    * Note: the len data are deleted from read buf after this operation
    */
-  int GetReadData(char* buffer, int len);
+  int GetReadData(char *buffer, int len);
 
   /*
    * copy data (len) from read buf into the given buffer,
@@ -129,7 +128,7 @@ class Connection {
    * return the length of the copied data
    * the data still exist in the read buf after this operation
    */
-  int CopyReadBuffer(char* buffer, int len);
+  int CopyReadBuffer(char *buffer, int len);
 
   /*
    * Get the lengh a write buf
@@ -140,7 +139,7 @@ class Connection {
    * Add data to write buff,
    * return true on success, false on failure.
    */
-  bool AddToWriteBuffer(char* buffer, int len);
+  bool AddToWriteBuffer(char *buffer, int len);
 
   /*
    * Forward data in read buf into write buf
@@ -154,10 +153,10 @@ class Connection {
 
   ConnStatus status_;
 
-  RpcServer* rpc_server_;
+  RpcServer *rpc_server_;
 
-  struct bufferevent* bev_;
-  struct event_base* base_;
+  struct bufferevent *bev_;
+  struct event_base *base_;
 
   std::string method_name_;
 

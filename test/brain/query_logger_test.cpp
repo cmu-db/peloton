@@ -6,43 +6,45 @@
 //
 // Identification: test/brain/query_logger_test.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "common/harness.h"
+
+#include "brain/query_logger.h"
 #include "sql/testing_sql_util.h"
 #include "settings/settings_manager.h"
-#include "parser/pg_query.h"
-
-using std::vector;
-using std::string;
 
 namespace peloton {
 namespace test {
 
 class QueryLoggerTests : public PelotonTest {
  protected:
-  virtual void SetUp() override {
+  void SetUp() override {
     settings::SettingsManager::SetBool(settings::SettingId::brain, true);
     PelotonInit::Initialize();
 
     // query to check that logging is done
     select_query_ =
         "SELECT query_string, fingerprint FROM pg_catalog.pg_query_history;";
-    select_query_fingerprint_ =
-        pg_query_fingerprint(select_query_.c_str()).hexdigest;
+
+    brain::QueryLogger::Fingerprint fingerprint{select_query_};
+    select_query_fingerprint_ = fingerprint.GetFingerprint();
+
     wait_time_ = 2;
   }
 
-  virtual void TearDown() override { PelotonInit::Shutdown(); }
+  void TearDown() override { PelotonInit::Shutdown(); }
 
   // Executes the given query and then checks if the queries that are executed
   // till now are actually logged
-  void TestSimpleUtil(string const &test_query,
-                      vector<std::string> &expected_result) {
-    string test_query_fingerprint =
-        pg_query_fingerprint(test_query.c_str()).hexdigest;
+  void TestSimpleUtil(std::string const &test_query,
+                      std::vector<std::string> &expected_result) {
+    brain::QueryLogger::Fingerprint fingerprint{test_query};
+
+    std::string test_query_fingerprint = fingerprint.GetFingerprint();
+
     expected_result.push_back(test_query + "|" + test_query_fingerprint);
     TestingSQLUtil::ExecuteSQLQuery(test_query.c_str());
 
@@ -57,14 +59,16 @@ class QueryLoggerTests : public PelotonTest {
   }
 
   // Executes the given query and then checks if the queries that are executed
-  // till now are actually logged only when the transaction commits. Otherwise
+  // until now are actually logged only when the transaction commits. Otherwise
   // stores to queries for checking this later when commit happens.
-  void TestTransactionUtil(string const &test_query,
-                           vector<std::string> &expected_result,
+  void TestTransactionUtil(std::string const &test_query,
+                           std::vector<std::string> &expected_result,
                            bool committed) {
-    static vector<std::string> temporary_expected_result;
-    string test_query_fingerprint =
-        pg_query_fingerprint(test_query.c_str()).hexdigest;
+    static std::vector<std::string> temporary_expected_result;
+
+    brain::QueryLogger::Fingerprint fingerprint{test_query};
+    std::string test_query_fingerprint = fingerprint.GetFingerprint();
+
     temporary_expected_result.push_back(test_query + "|" +
                                         test_query_fingerprint);
     TestingSQLUtil::ExecuteSQLQuery(test_query.c_str());
@@ -100,15 +104,20 @@ class QueryLoggerTests : public PelotonTest {
   }
 
  protected:
-  string select_query_;  // fixed query to check the queries logged in the table
-  string select_query_fingerprint_;  // fingerprint for the fixed query
-  int wait_time_;  // time to wait in seconds for the query to log into the
-                   // table
+  // fixed query to check the queries logged in the table
+  std::string select_query_;
+
+  // fingerprint for the fixed query
+  std::string select_query_fingerprint_;
+
+  // time to wait in seconds for the query to log into the table
+  int wait_time_;
 };
 
 // Testing the functionality of query logging
 TEST_F(QueryLoggerTests, QueriesTest) {
-  vector<std::string> expected_result;  // used to store the expected result
+  // used to store the expected result
+  std::vector<std::string> expected_result;
 
   // create the table and do some inserts and check
   TestSimpleUtil("CREATE TABLE test(a INT);", expected_result);
