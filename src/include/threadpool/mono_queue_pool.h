@@ -24,9 +24,7 @@ namespace threadpool {
  */
 class MonoQueuePool {
  public:
-  MonoQueuePool() = delete;
-
-  MonoQueuePool(int task_queue_size, int worker_pool_size)
+  MonoQueuePool(uint32_t task_queue_size, uint32_t worker_pool_size)
       : task_queue_(task_queue_size),
         worker_pool_(worker_pool_size, &task_queue_),
         is_running_(false) {}
@@ -55,18 +53,18 @@ class MonoQueuePool {
   }
 
   static MonoQueuePool &GetInstance() {
-    int task_queue_size = settings::SettingsManager::GetInt(
+    uint32_t task_queue_size = settings::SettingsManager::GetInt(
         settings::SettingId::monoqueue_task_queue_size);
-    int worker_pool_size = settings::SettingsManager::GetInt(
+    uint32_t worker_pool_size = settings::SettingsManager::GetInt(
         settings::SettingId::monoqueue_worker_pool_size);
     static MonoQueuePool mono_queue_pool(task_queue_size, worker_pool_size);
     return mono_queue_pool;
   }
 
   static MonoQueuePool &GetBrainInstance() {
-    int task_queue_size = settings::SettingsManager::GetInt(
+    uint32_t task_queue_size = settings::SettingsManager::GetInt(
         settings::SettingId::brain_task_queue_size);
-    int worker_pool_size = settings::SettingsManager::GetInt(
+    uint32_t worker_pool_size = settings::SettingsManager::GetInt(
         settings::SettingId::brain_worker_pool_size);
     static MonoQueuePool brain_queue_pool(task_queue_size, worker_pool_size);
     return brain_queue_pool;
