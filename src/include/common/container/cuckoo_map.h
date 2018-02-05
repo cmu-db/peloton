@@ -24,7 +24,7 @@ namespace peloton {
 
 // CUCKOO_MAP_TEMPLATE_ARGUMENTS
 #define CUCKOO_MAP_TEMPLATE_ARGUMENTS template <typename KeyType, \
-    typename ValueType, typename HashType, typename PredType >
+    typename ValueType, typename HashType, typename PredType>
 
 // CUCKOO_MAP_DEFAULT_ARGUMENTS
 #define CUCKOO_MAP_DEFAULT_ARGUMENTS template <typename KeyType, \
@@ -32,17 +32,18 @@ namespace peloton {
     typename PredType = std::equal_to<KeyType>>
 
 // CUCKOO_MAP_TYPE
-#define CUCKOO_MAP_TYPE CuckooMap<KeyType, ValueType, HashType, PredType >
+#define CUCKOO_MAP_TYPE CuckooMap<KeyType, ValueType, HashType, PredType>
 
 // Iterator type
 #define CUCKOO_MAP_ITERATOR_TYPE \
-typename cuckoohash_map<KeyType, ValueType>::locked_table
+typename cuckoohash_map<KeyType, ValueType, HashType, PredType>::locked_table
 
 CUCKOO_MAP_DEFAULT_ARGUMENTS
 class CuckooMap {
  public:
 
   CuckooMap();
+  CuckooMap(size_t initial_size);
   ~CuckooMap();
 
   // Inserts a item
@@ -78,7 +79,8 @@ class CuckooMap {
  private:
 
   // cuckoo map
-  typedef cuckoohash_map<KeyType, ValueType, HashType> cuckoo_map_t;
+  typedef cuckoohash_map<KeyType, ValueType, HashType, PredType>
+    cuckoo_map_t;
 
   cuckoo_map_t cuckoo_map;
 };
