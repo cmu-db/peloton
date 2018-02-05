@@ -23,6 +23,7 @@
 #pragma once
 
 #include "catalog/abstract_catalog.h"
+#include "type/ephemeral_pool.h"
 
 #define QUERY_HISTORY_CATALOG_NAME "pg_query_history"
 
@@ -34,14 +35,14 @@ class QueryHistoryCatalog : public AbstractCatalog {
   ~QueryHistoryCatalog();
 
   // Global Singleton
-  static QueryHistoryCatalog *GetInstance(
+  static QueryHistoryCatalog &GetInstance(
       concurrency::TransactionContext *txn = nullptr);
 
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//
   bool InsertQueryHistory(const std::string &query_string,
-                          std::string &fingerprint, uint64_t timestamp,
+                          const std::string &fingerprint, uint64_t timestamp,
                           type::AbstractPool *pool,
                           concurrency::TransactionContext *txn);
 
@@ -54,6 +55,8 @@ class QueryHistoryCatalog : public AbstractCatalog {
  private:
   QueryHistoryCatalog(concurrency::TransactionContext *txn);
 
+  // Pool to use for variable length strings
+  type::EphemeralPool pool_;
 };
 
 }  // namespace catalog
