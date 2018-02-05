@@ -18,21 +18,26 @@
 #include <cstdio>
 
 #include "libcuckoo/cuckoohash_map.hh"
+#include "libcuckoo/default_hasher.hh"
 
 namespace peloton {
 
 // CUCKOO_MAP_TEMPLATE_ARGUMENTS
 #define CUCKOO_MAP_TEMPLATE_ARGUMENTS template <typename KeyType, \
-    typename ValueType>
+    typename ValueType, typename HashType >
+
+// CUCKOO_MAP_DEFAULT_ARGUMENTS
+#define CUCKOO_MAP_DEFAULT_ARGUMENTS template <typename KeyType, \
+    typename ValueType, typename HashType = DefaultHasher<KeyType> >
 
 // CUCKOO_MAP_TYPE
-#define CUCKOO_MAP_TYPE CuckooMap<KeyType, ValueType>
+#define CUCKOO_MAP_TYPE CuckooMap<KeyType, ValueType, HashType >
 
 // Iterator type
 #define CUCKOO_MAP_ITERATOR_TYPE \
 typename cuckoohash_map<KeyType, ValueType>::locked_table
 
-CUCKOO_MAP_TEMPLATE_ARGUMENTS
+CUCKOO_MAP_DEFAULT_ARGUMENTS
 class CuckooMap {
  public:
 
@@ -72,7 +77,7 @@ class CuckooMap {
  private:
 
   // cuckoo map
-  typedef cuckoohash_map<KeyType, ValueType> cuckoo_map_t;
+  typedef cuckoohash_map<KeyType, ValueType, HashType> cuckoo_map_t;
 
   cuckoo_map_t cuckoo_map;
 };
