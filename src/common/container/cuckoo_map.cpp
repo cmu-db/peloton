@@ -15,6 +15,7 @@
 
 #include "common/container/cuckoo_map.h"
 #include "common/internal_types.h"
+#include "common/item_pointer.h"
 #include "common/logger.h"
 #include "common/macros.h"
 
