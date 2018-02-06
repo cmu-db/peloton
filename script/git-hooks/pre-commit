@@ -12,7 +12,7 @@ FORMATTER_PATH="./script/formatting/formatter.py"
 
 FILES=$(git diff --name-only HEAD --cached --diff-filter=d | grep '\.\(cpp\|h\)$')
 if [ -n "$FILES" ]; then
-  python script/validators/source_validator.py --files $FILES
+  python3 script/validators/source_validator.py --files $FILES
   RESULT=$?
   if [ $RESULT -ne 0 ]; then
     echo "***************************************"

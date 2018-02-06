@@ -125,7 +125,7 @@ def check_common_patterns(file_path):
                                  validator_pattern.pattern +
                                  " -- found in : " + file_path
                                 )
-                    LOG.info("  Line #%d :: %s", line_ctr, line)
+                    LOG.info("Line %d: %s", line_ctr, line.strip())
                     file_status = False
             line_ctr += 1
 
@@ -146,6 +146,12 @@ def check_format(file_path):
         exit()
     clang_format_cmd = [CLANG_FORMAT, "-style=file", file_path]
     formatted_src = subprocess.check_output(clang_format_cmd).splitlines(True)
+
+    # For Python 3, the above command gives a list of binary sequences, each
+    # of which has to be converted to string for diff to operate correctly.
+    # Otherwise, strings would be compared with binary sequences and there
+    # will always be a big difference.
+    formatted_src = [line.decode('utf-8') for line in formatted_src]
     # Load source file
     with open(file_path, "r") as file:
         src = file.readlines()
