@@ -22,6 +22,7 @@
 #include "planner/aggregate_plan.h"
 #include "planner/hash_plan.h"
 #include "planner/hash_join_plan.h"
+#include "planner/index_scan_plan.h"
 #include "planner/nested_loop_join_plan.h"
 #include "planner/order_by_plan.h"
 #include "planner/seq_scan_plan.h"
@@ -39,6 +40,7 @@ class QueryCacheTest : public PelotonCodeGenTest {
   uint32_t NumRowsInTestTable() const { return num_rows_to_insert; }
   oid_t TestTableId() { return test_table_oids[0]; }
   oid_t RightTableId() { return test_table_oids[1]; }
+  oid_t IndexedTableId() { return test_table_oids[4]; }
 
   // SELECT b FROM table where a >= 40;
   std::shared_ptr<planner::SeqScanPlan> GetSeqScanPlan() {
@@ -70,6 +72,27 @@ class QueryCacheTest : public PelotonCodeGenTest {
 
     return std::shared_ptr<planner::SeqScanPlan>(new planner::SeqScanPlan(
         &GetTestTable(TestTableId()), conj_eq, {0, 1, 2}));
+  }
+
+  // SELECT a, b, c FROM table where a >= 20;
+  std::shared_ptr<planner::IndexScanPlan> GetIndexScanPlan() {
+    auto &test_table = GetTestTable(IndexedTableId());
+    auto index = test_table.GetIndex(0);
+    std::vector<oid_t> key_column_offsets =
+      index->GetMetadata()->GetKeySchema()->GetIndexedColumns();
+
+    std::vector<ExpressionType> expr_types;
+    std::vector<type::Value> values;
+    // a >= 20
+    expr_types.push_back(ExpressionType::COMPARE_GREATERTHANOREQUALTO);
+    values.push_back(type::ValueFactory::GetIntegerValue(20));
+
+    std::vector<expression::AbstractExpression *> runtime_keys;
+    planner::IndexScanPlan::IndexScanDesc index_scan_desc(
+      index, key_column_offsets, expr_types, values, runtime_keys);
+
+    return std::shared_ptr<planner::IndexScanPlan>(new planner::IndexScanPlan(
+      &GetTestTable(IndexedTableId()), nullptr, {0, 1, 2}, index_scan_desc));
   }
 
   // SELECT left_table.a, right_table.a, left_table.b, right_table.c,
@@ -565,6 +588,59 @@ TEST_F(QueryCacheTest, PerformanceBenchmark) {
 
   LOG_INFO("Time spent w/ codegen w/o cache is %f ms", timer1.GetDuration());
   LOG_INFO("Time spent w/ codegen & cache is %f ms", timer2.GetDuration());
+}
+
+TEST_F(QueryCacheTest, CacheIndexScanPlan) {
+  // load data into table that has index
+  uint32_t num_rows_to_insert = 64;
+  LoadTestTable(IndexedTableId(), num_rows_to_insert);
+
+  // SELECT a, b, c FROM table where a >= 20;
+  auto scan1 = GetIndexScanPlan();
+  auto scan2 = GetIndexScanPlan();
+
+  // Do binding
+  planner::BindingContext context_1;
+  scan1->PerformBinding(context_1);
+  planner::BindingContext context_2;
+  scan2->PerformBinding(context_2);
+
+  auto hash_equal = (scan1->Hash() == scan2->Hash());
+  EXPECT_TRUE(hash_equal);
+
+  auto is_equal = (*scan1.get() == *scan2.get());
+  EXPECT_TRUE(is_equal);
+
+  codegen::BufferingConsumer buffer_1{{0, 1, 2}, context_1};
+
+  bool cached;
+  CompileAndExecuteCache(scan1, buffer_1, cached);
+
+  // Check that we got all the results
+  const auto &results_1 = buffer_1.GetOutputTuples();
+  EXPECT_EQ(62, results_1.size());
+  EXPECT_EQ(CmpBool::TRUE, results_1[0].GetValue(0).CompareEquals(
+    type::ValueFactory::GetIntegerValue(20)));
+  EXPECT_EQ(CmpBool::TRUE, results_1[0].GetValue(1).CompareEquals(
+    type::ValueFactory::GetIntegerValue(21)));
+  EXPECT_FALSE(cached);
+
+  codegen::BufferingConsumer buffer_2{{0, 1, 2}, context_2};
+  CompileAndExecuteCache(scan2, buffer_2, cached);
+
+  const auto &results_2 = buffer_2.GetOutputTuples();
+  EXPECT_EQ(62, results_2.size());
+  EXPECT_EQ(CmpBool::TRUE, results_2[0].GetValue(0).CompareEquals(
+    type::ValueFactory::GetIntegerValue(20)));
+  EXPECT_EQ(CmpBool::TRUE, results_2[0].GetValue(1).CompareEquals(
+    type::ValueFactory::GetIntegerValue(21)));
+  EXPECT_TRUE(cached);
+  EXPECT_EQ(1, codegen::QueryCache::Instance().GetCount());
+
+  // PelotonCodeTest dies after each TEST_F()
+  // So, we delete the cache
+  codegen::QueryCache::Instance().Clear();
+  EXPECT_EQ(0, codegen::QueryCache::Instance().GetCount());
 }
 
 }  // namespace test

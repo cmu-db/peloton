@@ -16,7 +16,7 @@
 #include "planner/aggregate_plan.h"
 #include "planner/hash_join_plan.h"
 #include "planner/projection_plan.h"
-#include "planner/seq_scan_plan.h"
+#include "planner/abstract_scan_plan.h"
 
 namespace peloton {
 namespace codegen {
@@ -45,6 +45,7 @@ std::unique_ptr<Query> QueryCompiler::Compile(
 bool QueryCompiler::IsSupported(const planner::AbstractPlan &plan) {
   switch (plan.GetPlanNodeType()) {
     case PlanNodeType::SEQSCAN:
+    case PlanNodeType::INDEXSCAN:
     case PlanNodeType::ORDERBY:
     case PlanNodeType::DELETE:
     case PlanNodeType::INSERT:
@@ -86,8 +87,9 @@ bool QueryCompiler::IsSupported(const planner::AbstractPlan &plan) {
   // Check the predicate is compilable
   const expression::AbstractExpression *pred = nullptr;
   switch (plan.GetPlanNodeType()) {
-    case PlanNodeType::SEQSCAN: {
-      auto &scan_plan = static_cast<const planner::SeqScanPlan &>(plan);
+    case PlanNodeType::SEQSCAN:
+    case PlanNodeType::INDEXSCAN: {
+      auto &scan_plan = static_cast<const planner::AbstractScan &>(plan);
       pred = scan_plan.GetPredicate();
       break;
     }

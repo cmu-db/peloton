@@ -133,7 +133,7 @@ class IndexScanPlan : public AbstractScan {
     return runtime_keys_;
   }
 
-  inline PlanNodeType GetPlanNodeType() const {
+  inline PlanNodeType GetPlanNodeType() const override {
     return PlanNodeType::INDEXSCAN;
   }
 
@@ -149,7 +149,7 @@ class IndexScanPlan : public AbstractScan {
 
   inline bool GetDescend() const { return descend_; }
 
-  const std::string GetInfo() const { return "IndexScan"; }
+  const std::string GetInfo() const override { return "IndexScan"; }
 
   void SetLimit(bool limit) { limit_ = limit; }
 
@@ -159,9 +159,9 @@ class IndexScanPlan : public AbstractScan {
 
   void SetDescend(bool descend) { descend_ = descend; }
 
-  void SetParameterValues(std::vector<type::Value> *values);
+  void SetParameterValues(std::vector<type::Value> *values) override;
 
-  std::unique_ptr<AbstractPlan> Copy() const {
+  std::unique_ptr<AbstractPlan> Copy() const override {
     std::vector<expression::AbstractExpression *> new_runtime_keys;
     for (auto *key : runtime_keys_) {
       new_runtime_keys.push_back(key->Copy());
@@ -173,6 +173,18 @@ class IndexScanPlan : public AbstractScan {
         GetTable(), GetPredicate()->Copy(), GetColumnIds(), desc, false);
     return std::unique_ptr<AbstractPlan>(new_plan);
   }
+
+  hash_t Hash() const override;
+
+  bool operator==(const AbstractPlan &rhs) const override;
+  bool operator!=(const AbstractPlan &rhs) const override {
+    return !(*this == rhs);
+  }
+
+  virtual void VisitParameters(
+      codegen::QueryParametersMap &map,
+      std::vector<peloton::type::Value> &values,
+      const std::vector<peloton::type::Value> &values_from_user) override;
 
  private:
   /** @brief index associated with index scan. */

@@ -91,6 +91,9 @@ std::unique_ptr<catalog::Schema> PelotonCodeGenTest::CreateTestSchema(
   if (add_primary) {
     cols[0].AddConstraint(
         catalog::Constraint{ConstraintType::PRIMARY, "con_primary"});
+    // add an unique constraint to create an index
+    cols[0].AddConstraint(
+      catalog::Constraint{ConstraintType::UNIQUE, "unique"});
   }
   cols[2].AddConstraint(
       catalog::Constraint{ConstraintType::NOTNULL, "not_null"});

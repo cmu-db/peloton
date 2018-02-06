@@ -23,13 +23,26 @@ class TileGroup;
 class ZoneMap;
 class ZoneMapManager;
 struct PredicateInfo;
+class Tuple;
 }  // namespace storage
 
 namespace expression {
 class AbstractExpression;
-}  // namespace storage
+}  // namespace expression
+
+namespace index {
+class Index;
+}  // namespace index
 
 namespace codegen {
+namespace util {
+class IndexScanIterator;
+
+}  // namespace util
+}  // namespace codegen
+
+namespace codegen {
+
 //===----------------------------------------------------------------------===//
 // Various common functions that are called from compiled query plans
 //===----------------------------------------------------------------------===//
@@ -49,6 +62,9 @@ class RuntimeFunctions {
 
   static void FillPredicateArray(const expression::AbstractExpression *expr,
                                  storage::PredicateInfo *predicate_array);
+
+  static storage::TileGroup *GetTileGroupById(storage::DataTable *table,
+                                                    uint32_t tile_group_id);
 
   // This struct represents the layout (or configuration) of a column in a
   // tile group. A configuration is characterized by two properties: its
@@ -71,6 +87,13 @@ class RuntimeFunctions {
   static void ThrowDivideByZeroException();
 
   static void ThrowOverflowException();
+
+  static util::IndexScanIterator *GetIterator(index::Index *index,
+                                              uint64_t point_key_p,
+                                              uint64_t low_key_p,
+                                              uint64_t high_key_p);
+
+  static void DeleteIterator(util::IndexScanIterator *iterator);
 };
 
 }  // namespace codegen

@@ -37,10 +37,13 @@ PROXY(AbstractExpression) {
 PROXY(RuntimeFunctions) {
   DECLARE_METHOD(HashCrc64);
   DECLARE_METHOD(GetTileGroup);
+  DECLARE_METHOD(GetTileGroupById);
   DECLARE_METHOD(GetTileGroupLayout);
   DECLARE_METHOD(FillPredicateArray);
   DECLARE_METHOD(ThrowDivideByZeroException);
   DECLARE_METHOD(ThrowOverflowException);
+  DECLARE_METHOD(GetIterator);
+  DECLARE_METHOD(DeleteIterator);
 };
 
 TYPE_BUILDER(ColumnLayoutInfo, codegen::RuntimeFunctions::ColumnLayoutInfo);

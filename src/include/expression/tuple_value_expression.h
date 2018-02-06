@@ -93,6 +93,18 @@ class TupleValueExpression : public AbstractExpression {
     attributes.insert(GetAttributeRef());
   }
 
+  void GetUsedAttributesInPredicateOrder(
+      std::vector<const planner::AttributeInfo *> &attributes,
+      UNUSED_ATTRIBUTE std::vector<const AbstractExpression *> &
+          constant_value_expressions) const override {
+    PL_ASSERT(GetAttributeRef() != nullptr);
+    attributes.push_back(GetAttributeRef());
+  }
+
+  void GetComparisonTypeInPredicateOrder(
+      UNUSED_ATTRIBUTE std::vector<ExpressionType> &comparison_type)
+      const override {}
+
   AbstractExpression *Copy() const override {
     return new TupleValueExpression(*this);
   }

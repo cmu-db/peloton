@@ -58,6 +58,26 @@ class PlannerEqualityTest : public PelotonTest {
     TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE test3(a INT, b INT, c INT);");
   }
 
+  void CreateIndex() {
+    // Create index on column 'a' in table 'test'
+    TestingSQLUtil::ExecuteSQLQuery("CREATE INDEX idx1 on test(a);");
+
+    // Create index on column 'b' in table 'test'
+    TestingSQLUtil::ExecuteSQLQuery("CREATE INDEX idx2 on test(b);");
+
+    // Create index on column 'c' in table 'test'
+    TestingSQLUtil::ExecuteSQLQuery("CREATE INDEX idx3 on test(c);");
+
+    // Create index on column 'a' in table 'test2'
+    TestingSQLUtil::ExecuteSQLQuery("CREATE INDEX idx4 on test2(a);");
+
+    // Create index on column 'b' in table 'test2'
+    TestingSQLUtil::ExecuteSQLQuery("CREATE INDEX idx5 on test2(b);");
+
+    // Create index on column 'c' in table 'test2'
+    TestingSQLUtil::ExecuteSQLQuery("CREATE INDEX idx6 on test2(c);");
+  }
+
   std::shared_ptr<planner::AbstractPlan> GeneratePlanWithOptimizer(
       std::unique_ptr<optimizer::AbstractOptimizer> &optimizer,
       const std::string query, concurrency::TransactionContext *txn) {
@@ -262,6 +282,77 @@ TEST_F(PlannerEqualityTest, Update) {
       {"UPDATE test SET c = b + 1 WHERE a=1",
        "UPDATE test SET c = b + 2 WHERE a=$1", true, true},
   };
+
+  for (uint32_t i = 0; i < items.size(); i++) {
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto txn = txn_manager.BeginTransaction();
+
+    TestItem &item = items[i];
+    auto plan_1 = GeneratePlanWithOptimizer(optimizer, item.q1, txn);
+    auto plan_2 = GeneratePlanWithOptimizer(optimizer, item.q2, txn);
+    txn_manager.CommitTransaction(txn);
+
+    planner::BindingContext context_1;
+    plan_1->PerformBinding(context_1);
+
+    planner::BindingContext context_2;
+    plan_2->PerformBinding(context_2);
+
+    auto hash_equal = (plan_1->Hash() == plan_2->Hash());
+    EXPECT_EQ(item.hash_equal, hash_equal);
+
+    auto is_equal = (*plan_1 == *plan_2);
+    EXPECT_EQ(item.is_equal, is_equal);
+  }
+}
+
+TEST_F(PlannerEqualityTest, IndexScan) {
+  // set up optimizer for every test
+  optimizer.reset(new optimizer::Optimizer());
+
+  // create index on tables
+  CreateIndex();
+
+  std::vector<TestItem> items{
+      {"SELECT * from test", "SELECT * from test where a = 0", false, false},
+      {"SELECT * from test where a = 1", "SELECT * from test where a = 0", true,
+       true},
+      {"SELECT * from test where b = 1", "SELECT * from test where b > 0",
+       false, false},
+      {"SELECT * from test where a = 1", "SELECT * from test where c = 0",
+       false, false},
+      {"SELECT a from test where b = 1", "SELECT c from test where b = 0",
+       false, false},
+      {"SELECT a,b from test where b = 1", "SELECT b,a from test where b = 0",
+       false, false},
+      {"SELECT a,b from test where b = 1", "SELECT a,b from test where b = $1",
+       true, true},
+      {"SELECT a,b from test where b = $1", "SELECT a,b from test where b = 9",
+       true, true},
+      {"SELECT a,b from test where b = $1", "SELECT a,b from test where b = $1",
+       true, true},
+      {"SELECT a,b from test where b = $1",
+       "SELECT a,b from test where b = null", false, false},
+      {"SELECT a,b from test where b = $1", "SELECT a,b from test where b = 1",
+       true, true},
+      {"SELECT a,b from test where b = null",
+       "SELECT a,b from test where b = 1", false, false},
+      {"SELECT DISTINCT a from test where b = 1",
+       "SELECT a from test where b = 0", false, false},
+      {"SELECT * FROM test, test2 WHERE test.a = 1 AND test2.b = 0",
+       "SELECT * FROM test, test2 WHERE test.a = 1 AND test2.b = 0", true,
+       true},
+      {"SELECT test.a, test.b, test3.b, test2.c FROM test2, test, test3 "
+       "WHERE test.b = test2.b AND test2.c = test3.c",
+       "SELECT test.a, test.b, test2.c, test3.b FROM test2, test, test3 "
+       "WHERE test.b = test2.b AND test2.c = test3.c",
+       false, false},
+      {"SELECT * FROM test WHERE a > 0 AND a < 10",
+       "SELECT * FROM test WHERE a > 11 AND a < 21", true, true},
+      {"SELECT * FROM test WHERE a > 0 AND a < 10",
+       "SELECT * FROM test WHERE b > 11 AND b < 21", false, false},
+      {"SELECT * FROM test WHERE a > 0 AND a < 10",
+       "SELECT * FROM test2 WHERE a > 11 AND a < 21", false, false}};
 
   for (uint32_t i = 0; i < items.size(); i++) {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();

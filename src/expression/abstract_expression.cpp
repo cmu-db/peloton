@@ -56,6 +56,25 @@ void AbstractExpression::GetUsedAttributes(
   }
 }
 
+void AbstractExpression::GetUsedAttributesInPredicateOrder(
+    std::vector<const planner::AttributeInfo *> &attributes,
+    std::vector<const AbstractExpression *> &constant_value_expressions) const {
+  for (uint32_t i = 0; i < GetChildrenSize(); i++) {
+    children_[i]->GetUsedAttributesInPredicateOrder(attributes,
+                                                    constant_value_expressions);
+  }
+}
+
+void AbstractExpression::GetComparisonTypeInPredicateOrder(
+    std::vector<ExpressionType> &comparison_type) const {
+  for (uint32_t i = 0; i < GetChildrenSize(); i++) {
+    children_[i]->GetComparisonTypeInPredicateOrder(comparison_type);
+  }
+  if (IsComparisonExpressionType(exp_type_)) {
+    comparison_type.push_back(exp_type_);
+  }
+}
+
 codegen::type::Type AbstractExpression::ResultType() const {
   return codegen::type::Type{GetValueType(), IsNullable()};
 }

@@ -28,6 +28,7 @@ PROXY(StorageManager) {
 
   /// Proxy peloton::storage::StorageManager::GetTableWithOid()
   DECLARE_METHOD(GetTableWithOid);
+  DECLARE_METHOD(GetIndexWithOid);
 };
 
 TYPE_BUILDER(StorageManager, storage::StorageManager);

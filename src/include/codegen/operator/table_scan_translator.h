@@ -35,6 +35,8 @@ namespace codegen {
 //===----------------------------------------------------------------------===//
 class TableScanTranslator : public OperatorTranslator {
  public:
+  friend class IndexScanTranslator;
+
   // Constructor
   TableScanTranslator(const planner::SeqScanPlan &scan,
                       CompilationContext &context, Pipeline &pipeline);

@@ -23,6 +23,8 @@
 #include "storage/tile.h"
 #include "storage/zone_map_manager.h"
 #include "type/value_factory.h"
+#include "codegen/util/index_scan_iterator.h"
+#include "storage/tuple.h"
 
 namespace peloton {
 namespace codegen {
@@ -68,6 +70,12 @@ uint64_t RuntimeFunctions::HashCrc64(const char *buf, uint64_t length,
 storage::TileGroup *RuntimeFunctions::GetTileGroup(storage::DataTable *table,
                                                    uint64_t tile_group_index) {
   auto tile_group = table->GetTileGroup(tile_group_index);
+  return tile_group.get();
+}
+
+storage::TileGroup *RuntimeFunctions::GetTileGroupById(
+    storage::DataTable *table, uint32_t tile_group_id) {
+  auto tile_group = table->GetTileGroupById(tile_group_id);
   return tile_group.get();
 }
 
@@ -127,6 +135,21 @@ void RuntimeFunctions::ThrowDivideByZeroException() {
 
 void RuntimeFunctions::ThrowOverflowException() {
   throw std::overflow_error("ERROR: overflow");
+}
+
+util::IndexScanIterator *RuntimeFunctions::GetIterator(index::Index *index,
+                                                       uint64_t point_key_p,
+                                                       uint64_t low_key_p,
+                                                       uint64_t high_key_p) {
+  util::IndexScanIterator *iterator = new util::IndexScanIterator(
+      index, (storage::Tuple *)point_key_p, (storage::Tuple *)low_key_p,
+      (storage::Tuple *)high_key_p);
+  return iterator;
+}
+
+void RuntimeFunctions::DeleteIterator(util::IndexScanIterator *iterator) {
+  PL_ASSERT(iterator != nullptr);
+  delete iterator;
 }
 
 }  // namespace codegen

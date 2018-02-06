@@ -34,6 +34,8 @@ class ScanCallback;
 //===----------------------------------------------------------------------===//
 class TileGroup {
  public:
+  friend class IndexScanTranslator;
+
   // Constructor
   TileGroup(const catalog::Schema &schema);
 
