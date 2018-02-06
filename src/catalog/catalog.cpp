@@ -271,7 +271,6 @@ ResultType Catalog::CreateTable(const std::string &database_name,
         table_oid, column.GetName(), column_id, column.GetOffset(),
         column.GetType(), column.IsInlined(), column.GetConstraints(),
         pool_.get(), txn);
-    column_id++;
 
     // Create index on unique single column
     if (column.IsUnique()) {
@@ -282,6 +281,7 @@ ResultType Catalog::CreateTable(const std::string &database_name,
       LOG_DEBUG("Added a UNIQUE index on %s in %s.", col_name.c_str(),
                 table_name.c_str());
     }
+    column_id++;
   }
   CreatePrimaryIndex(database_object->GetDatabaseOid(), table_oid, txn);
   return ResultType::SUCCESS;

@@ -199,7 +199,6 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   auto current_txn = executor_context_->GetTransaction();
   auto &manager = catalog::Manager::GetInstance();
   std::vector<ItemPointer> visible_tuple_locations;
-  std::map<oid_t, std::vector<oid_t>> visible_tuples;
 
 #ifdef LOG_TRACE_ENABLED
   int num_tuples_examined = 0;
@@ -326,26 +325,52 @@ bool IndexScanExecutor::ExecPrimaryIndexLookup() {
   LOG_TRACE("%ld tuples after pruning boundaries",
             visible_tuple_locations.size());
 
+  // Add the tuple locations to the result vector in the order returned by
+  // the index scan. We might end up reading the same tile group multiple
+  // times. However, this is necessary to adhere to the ORDER BY clause
+  oid_t current_tile_group_oid = INVALID_OID;
+  std::vector<oid_t> tuples;
+
   for (auto &visible_tuple_location : visible_tuple_locations) {
-    visible_tuples[visible_tuple_location.block]
-        .push_back(visible_tuple_location.offset);
+    if (current_tile_group_oid == INVALID_OID) {
+      current_tile_group_oid = visible_tuple_location.block;
+    }
+    if (current_tile_group_oid == visible_tuple_location.block) {
+      tuples.push_back(visible_tuple_location.offset);
+    } else {
+      // Since the tile_group_oids differ, fill in the current tile group
+      // into the result vector
+      auto &manager = catalog::Manager::GetInstance();
+      auto tile_group = manager.GetTileGroup(current_tile_group_oid);
+      std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
+      // Add relevant columns to logical tile
+      logical_tile->AddColumns(tile_group, full_column_ids_);
+      logical_tile->AddPositionList(std::move(tuples));
+      if (column_ids_.size() != 0) {
+        logical_tile->ProjectColumns(full_column_ids_, column_ids_);
+      }
+      result_.push_back(logical_tile.release());
+
+      // Change the current_tile_group_oid and add the current tuple
+      tuples.clear();
+      current_tile_group_oid = visible_tuple_location.block;
+      tuples.push_back(visible_tuple_location.offset);
+    }
   }
 
-  // Construct a logical tile for each block
-  for (auto tuples : visible_tuples) {
-    auto &manager = catalog::Manager::GetInstance();
-    auto tile_group = manager.GetTileGroup(tuples.first);
-
+  // Add the remaining tuples to the result vector
+  if ((current_tile_group_oid != INVALID_OID) && (!tuples.empty())) {
+    auto tile_group = manager.GetTileGroup(current_tile_group_oid);
     std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
     // Add relevant columns to logical tile
     logical_tile->AddColumns(tile_group, full_column_ids_);
-    logical_tile->AddPositionList(std::move(tuples.second));
+    logical_tile->AddPositionList(std::move(tuples));
     if (column_ids_.size() != 0) {
       logical_tile->ProjectColumns(full_column_ids_, column_ids_);
     }
-
     result_.push_back(logical_tile.release());
   }
+
 
   done_ = true;
 
@@ -408,7 +433,6 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   auto current_txn = executor_context_->GetTransaction();
 
   std::vector<ItemPointer> visible_tuple_locations;
-  std::map<oid_t, std::vector<oid_t>> visible_tuples;
   auto &manager = catalog::Manager::GetInstance();
 
   // Quickie Hack
@@ -567,24 +591,49 @@ bool IndexScanExecutor::ExecSecondaryIndexLookup() {
   // Check whether the boundaries satisfy the required condition
   CheckOpenRangeWithReturnedTuples(visible_tuple_locations);
 
+  // Add the tuple locations to the result vector in the order returned by
+  // the index scan. We might end up reading the same tile group multiple
+  // times. However, this is necessary to adhere to the ORDER BY clause
+  oid_t current_tile_group_oid = INVALID_OID;
+  std::vector<oid_t> tuples;
+
   for (auto &visible_tuple_location : visible_tuple_locations) {
-    visible_tuples[visible_tuple_location.block]
-        .push_back(visible_tuple_location.offset);
+    if (current_tile_group_oid == INVALID_OID) {
+      current_tile_group_oid = visible_tuple_location.block;
+    }
+    if (current_tile_group_oid == visible_tuple_location.block) {
+      tuples.push_back(visible_tuple_location.offset);
+    } else {
+      // Since the tile_group_oids differ, fill in the current tile group
+      // into the result vector
+      auto &manager = catalog::Manager::GetInstance();
+      auto tile_group = manager.GetTileGroup(current_tile_group_oid);
+      std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
+      // Add relevant columns to logical tile
+      logical_tile->AddColumns(tile_group, full_column_ids_);
+      logical_tile->AddPositionList(std::move(tuples));
+      if (column_ids_.size() != 0) {
+        logical_tile->ProjectColumns(full_column_ids_, column_ids_);
+      }
+      result_.push_back(logical_tile.release());
+
+      // Change the current_tile_group_oid and add the current tuple
+      tuples.clear();
+      current_tile_group_oid = visible_tuple_location.block;
+      tuples.push_back(visible_tuple_location.offset);
+    }
   }
 
-  // Construct a logical tile for each block
-  for (auto tuples : visible_tuples) {
-    auto &manager = catalog::Manager::GetInstance();
-    auto tile_group = manager.GetTileGroup(tuples.first);
-
+  // Add the remaining tuples (if any) to the result vector
+  if ((current_tile_group_oid != INVALID_OID) && (!tuples.empty())) {
+    auto tile_group = manager.GetTileGroup(current_tile_group_oid);
     std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
     // Add relevant columns to logical tile
     logical_tile->AddColumns(tile_group, full_column_ids_);
-    logical_tile->AddPositionList(std::move(tuples.second));
+    logical_tile->AddPositionList(std::move(tuples));
     if (column_ids_.size() != 0) {
       logical_tile->ProjectColumns(full_column_ids_, column_ids_);
     }
-
     result_.push_back(logical_tile.release());
   }
 
@@ -663,19 +712,6 @@ bool IndexScanExecutor::CheckKeyConditions(const ItemPointer &tuple_location) {
     // To make the procedure more uniform, we interpret IN as EQUAL
     // and NOT IN as NOT EQUAL, and react based on expression type below
     // accordingly
-    /*if (expr_type == ExpressionType::COMPARE_IN) {
-      bool bret = lhs.InList(rhs);
-
-      if (bret == true) {
-        diff = VALUE_COMPARE_EQUAL;
-      } else {
-        diff = VALUE_COMPARE_NO_EQUAL;
-      }
-    } else {
-      diff = lhs.Compare(rhs);
-    }
-
-    LOG_TRACE("Difference : %d ", diff);*/
     if (lhs.CompareEquals(rhs) == CmpBool::TRUE) {
       switch (expr_type) {
         case ExpressionType::COMPARE_EQUAL:
