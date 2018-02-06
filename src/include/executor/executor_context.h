@@ -22,6 +22,10 @@ namespace concurrency {
 class TransactionContext;
 }  // namespace concurrency
 
+namespace storage {
+class StorageManager;
+}  // namespace storage
+
 namespace executor {
 
 /**
@@ -40,6 +44,8 @@ class ExecutorContext {
 
   const std::vector<type::Value> &GetParamValues() const;
 
+  storage::StorageManager *GetStorageManager() const;
+
   codegen::QueryParameters &GetParams();
 
   type::EphemeralPool *GetPool();
@@ -52,6 +58,8 @@ class ExecutorContext {
   concurrency::TransactionContext *transaction_;
   // All query parameters
   codegen::QueryParameters parameters_;
+  // The storage manager instance
+  storage::StorageManager *storage_manager_;
   // Temporary memory pool for allocations done during execution
   std::unique_ptr<type::EphemeralPool> pool_;
 };

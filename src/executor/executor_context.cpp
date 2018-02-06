@@ -12,16 +12,20 @@
 
 #include <utility>
 
-#include "type/value.h"
 #include "executor/executor_context.h"
+
 #include "concurrency/transaction_context.h"
+#include "storage/storage_manager.h"
+#include "type/value.h"
 
 namespace peloton {
 namespace executor {
 
 ExecutorContext::ExecutorContext(concurrency::TransactionContext *transaction,
                                  codegen::QueryParameters parameters)
-    : transaction_(transaction), parameters_(std::move(parameters)) {}
+    : transaction_(transaction),
+      parameters_(std::move(parameters)),
+      storage_manager_(storage::StorageManager::GetInstance()) {}
 
 concurrency::TransactionContext *ExecutorContext::GetTransaction() const {
   return transaction_;
@@ -29,6 +33,10 @@ concurrency::TransactionContext *ExecutorContext::GetTransaction() const {
 
 const std::vector<type::Value> &ExecutorContext::GetParamValues() const {
   return parameters_.GetParameterValues();
+}
+
+storage::StorageManager *ExecutorContext::GetStorageManager() const {
+  return storage_manager_;
 }
 
 codegen::QueryParameters &ExecutorContext::GetParams() { return parameters_; }
