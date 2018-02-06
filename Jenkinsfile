@@ -59,6 +59,12 @@ pipeline {
                         sh 'python ./script/validators/source_validator.py'
                         sh 'mkdir build'
                         sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
+                        sh 'cd build && make check -j4 || true'
+                        // sh 'cd build && cp -pr test /job/'
+                        sh 'cd build && make benchmark -j4'
+                        sh 'cd build && make install'
+                        sh 'cd build && bash ../script/testing/psql/psql_test.sh'
+                        sh 'cd build && python ../script/validators/jdbc_validator.py'
                     }
                 }
 
