@@ -13,6 +13,7 @@
 #include "codegen/operator/hash_group_by_translator.h"
 
 #include "codegen/compilation_context.h"
+#include "codegen/function_builder.h"
 #include "codegen/proxy/oa_hash_table_proxy.h"
 #include "codegen/operator/projection_translator.h"
 #include "codegen/lang/vectorized_loop.h"
@@ -98,24 +99,43 @@ void HashGroupByTranslator::InitializeState() {
 }
 
 // Produce!
-void HashGroupByTranslator::Produce() const {
-  auto &comp_ctx = GetCompilationContext();
+std::vector<CodeGenStage> HashGroupByTranslator::Produce() const {
+  auto &compilation_context = GetCompilationContext();
+  auto &runtime_state = compilation_context.GetRuntimeState();
+  auto &codegen = GetCodeGen();
+  auto &code_context = codegen.GetCodeContext();
 
   // Let the child produce its tuples which we aggregate in our hash-table
-  comp_ctx.Produce(*group_by_.GetChild(0));
+  std::vector<CodeGenStage> child_stages =
+      compilation_context.Produce(*group_by_.GetChild(0));
 
-  LOG_DEBUG("HashGroupBy starting to produce results ...");
+  FunctionBuilder function_builder{
+      code_context,
+      "hash_group_by_stage",
+      codegen.VoidType(),
+      {{"runtime_state", runtime_state.FinalizeType(codegen)->getPointerTo()}}};
+  {
+    compilation_context.RefreshParameterCache();
+    LOG_DEBUG("HashGroupBy starting to produce results ...");
 
-  auto &codegen = GetCodeGen();
+    // Iterate over the hash table, sending tuples up the tree
+    auto *raw_vec = codegen.AllocateBuffer(
+        codegen.Int32Type(), Vector::kDefaultVectorSize, "hashGroupBySelVector");
+    Vector selection_vec{raw_vec, Vector::kDefaultVectorSize,
+                         GetCodeGen().Int32Type()};
+    ProduceResults producer{*this};
+    hash_table_.VectorizedIterate(GetCodeGen(), LoadStatePtr(hash_table_id_),
+                                  selection_vec, producer);
+  }
+  function_builder.ReturnAndFinish();
+  CodeGenStage hash_group_by_stage = {
+      .kind_ = StageKind::SINGLE_THREADED,
+      .llvm_func_ = function_builder.GetFunction(),
+  };
 
-  // Iterate over the hash table, sending tuples up the tree
-  auto *raw_vec = codegen.AllocateBuffer(
-      codegen.Int32Type(), Vector::kDefaultVectorSize, "hashGroupBySelVector");
-  Vector selection_vec{raw_vec, Vector::kDefaultVectorSize,
-                       GetCodeGen().Int32Type()};
-  ProduceResults producer{*this};
-  hash_table_.VectorizedIterate(GetCodeGen(), LoadStatePtr(hash_table_id_),
-                                selection_vec, producer);
+  std::vector<CodeGenStage> stages = std::move(child_stages);
+  stages.push_back(hash_group_by_stage);
+  return stages;
 }
 
 void HashGroupByTranslator::Consume(ConsumerContext &context,

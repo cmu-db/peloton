@@ -34,7 +34,7 @@ class OrderByTranslator : public OperatorTranslator {
 
   void DefineAuxiliaryFunctions() override;
 
-  void Produce() const override;
+  std::vector<CodeGenStage> Produce() const override;
 
   void Consume(ConsumerContext &context, RowBatch::Row &row) const override;
 
