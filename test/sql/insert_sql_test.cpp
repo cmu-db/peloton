@@ -523,5 +523,52 @@ TEST_F(InsertSQLTests, InsertIntoSelectColumn) {
   txn_manager.CommitTransaction(txn);
 }
 
+TEST_F(InsertSQLTests, UniqueColumn) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+
+  std::string create_table("CREATE TABLE t (id INTEGER NOT NULL PRIMARY KEY,"
+                                        "st VARCHAR(15) NOT NULL UNIQUE);");
+  TestingSQLUtil::ExecuteSQLQuery(create_table);
+
+  ResultType result;
+  std::vector<std::string> ref_result;
+  std::string result_query = "select st from t;";
+
+  // Single row, should succeed
+  std::string ins_query_1("INSERT INTO t VALUES (1, 'abc');");
+  result = TestingSQLUtil::ExecuteSQLQuery(ins_query_1);
+  EXPECT_EQ(result, ResultType::SUCCESS);
+  ref_result.push_back("abc");
+  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(result_query,
+                                                ref_result,
+                                                false);
+
+  // Second row, distinct from first, should succeed
+  std::string ins_query_2("INSERT INTO t VALUES (2, 'def');");
+  result = TestingSQLUtil::ExecuteSQLQuery(ins_query_2);
+  EXPECT_EQ(result, ResultType::SUCCESS);
+  ref_result.push_back("def");
+  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(result_query,
+                                                ref_result,
+                                                false);
+
+  // Third row, non-unique value for string, should fail
+  std::string ins_query_3("INSERT INTO t VALUES (3, 'abc');");
+  result = TestingSQLUtil::ExecuteSQLQuery(ins_query_3);
+  EXPECT_EQ(result, ResultType::ABORTED);
+  // and the results returned should not include failed insert
+  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(result_query,
+                                                ref_result,
+                                                false);
+
+  // free the database just created
+  txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+}
+
 }  // namespace test
 }  // namespace peloton
