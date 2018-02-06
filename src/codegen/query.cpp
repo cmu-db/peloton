@@ -14,6 +14,7 @@
 #include "codegen/query_result_consumer.h"
 #include "common/timer.h"
 #include "executor/plan_executor.h"
+#include "executor/executor_context.h"
 #include "storage/storage_manager.h"
 
 namespace peloton {

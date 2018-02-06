@@ -16,7 +16,6 @@
 #include "codegen/runtime_state.h"
 #include "codegen/query_parameters.h"
 #include "codegen/parameter_cache.h"
-#include "executor/executor_context.h"
 
 namespace peloton {
 

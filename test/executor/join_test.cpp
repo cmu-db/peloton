@@ -20,6 +20,7 @@
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
 
+#include "executor/executor_context.h"
 #include "executor/hash_executor.h"
 #include "executor/hash_join_executor.h"
 #include "executor/index_scan_executor.h"

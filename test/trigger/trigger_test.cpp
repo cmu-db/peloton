@@ -15,6 +15,7 @@
 #include "common/harness.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/executors.h"
+#include "executor/executor_context.h"
 #include "parser/pg_trigger.h"
 #include "parser/postgresparser.h"
 #include "planner/create_plan.h"

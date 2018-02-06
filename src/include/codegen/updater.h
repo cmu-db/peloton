@@ -13,7 +13,6 @@
 #pragma once
 
 #include "common/item_pointer.h"
-#include "executor/executor_context.h"
 #include "common/internal_types.h"
 
 namespace peloton {
@@ -21,6 +20,10 @@ namespace peloton {
 namespace concurrency {
 class TransactionContext;
 }  // namespace concurrency
+
+namespace executor {
+class ExecutorContext;
+}  // namespace executor
 
 namespace storage {
 class DataTable;
