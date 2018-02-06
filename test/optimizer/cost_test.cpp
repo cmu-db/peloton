@@ -42,7 +42,7 @@ namespace test {
 
 using namespace optimizer;
 
-const int N_ROW = 100;
+// const int N_ROW = 100;
 
 class CostTests : public PelotonTest {};
 
