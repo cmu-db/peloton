@@ -68,6 +68,11 @@ class PelotonCodeGenTest : public PelotonTest {
   PelotonCodeGenTest(oid_t tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP,
                      peloton::LayoutType layout_type = LayoutType::ROW);
 
+  typedef struct {
+    codegen::QueryCompiler::CompileStats compile_stats;
+    codegen::Query::RuntimeStats runtime_stats;
+  } CodeGenStats;
+
   virtual ~PelotonCodeGenTest();
 
   // Get the test database
@@ -103,10 +108,10 @@ class PelotonCodeGenTest : public PelotonTest {
                                     bool is_inlined);
 
   // Compile and execute the given plan
-  codegen::QueryCompiler::CompileStats CompileAndExecute(
-      planner::AbstractPlan &plan, codegen::ExecutionConsumer &consumer);
+  CodeGenStats CompileAndExecute(
+      planner::AbstractPlan &plan, codegen::QueryResultConsumer &consumer);
 
-  codegen::QueryCompiler::CompileStats CompileAndExecuteCache(
+  CodeGenStats CompileAndExecuteCache(
       std::shared_ptr<planner::AbstractPlan> plan,
       codegen::ExecutionConsumer &consumer, bool &cached,
       std::vector<type::Value> params = {});

@@ -1,0 +1,185 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// bytecode_instructions.def
+//
+// Identification: src/include/codegen/interpreter/bytecode_instructions.def
+//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+//----------------------------------------------------------------------------//
+//                          Instruction Definitions
+//
+// This file contains the definitions for all bytecode instructions.
+//
+// The definitions can be used by defining one of the HANDLE functions below
+// before including this definition file (see X-Macros). This way the
+// definitions can be used to generate the Opcode enum, the dispatch area, etc.
+//
+// Most instructions are automatically expanded to all their supported types.
+//
+// When adding a bytecode instruction here, the instruction at least needs a
+// Translate-function in the BytecodeBuilder and a Handler-function in the
+// BytecodeInterpreter.
+//----------------------------------------------------------------------------//
+
+#ifndef HANDLE_INST
+#define HANDLE_INST(op)
+#endif
+
+#ifndef HANDLE_TYPED_INST
+#define HANDLE_TYPED_INST(op, type) HANDLE_INST(op ## _ ## type)
+#endif
+
+#ifndef HANDLE_OVERFLOW_TYPED_INST
+#define HANDLE_OVERFLOW_TYPED_INST(op, type) HANDLE_TYPED_INST(op, type)
+#endif
+
+#ifndef HANDLE_SELECT_INST
+#define HANDLE_SELECT_INST(op) HANDLE_INST(op)
+#endif
+
+#ifndef HANDLE_RET_INST
+#define HANDLE_RET_INST(op) HANDLE_INST(op)
+#endif
+
+#ifndef HANDLE_EXTERNAL_CALL_INST
+#define HANDLE_EXTERNAL_CALL_INST(op) HANDLE_INST(op)
+#endif
+
+#ifndef HANDLE_INTERNAL_CALL_INST
+#define HANDLE_INTERNAL_CALL_INST(op) HANDLE_INST(op)
+#endif
+
+// Takes a function and a opcode and calls the function for all type instances
+// of that opcode
+#define CREATE_FOR_ALL_TYPES(func, op) \
+func(op, i8) \
+func(op, i16) \
+func(op, i32) \
+func(op, i64) \
+func(op, float) \
+func(op, double)
+
+// Returns the first type used when expanding to all types
+// (needed for use of GetOpcodeForTypeAllTypes)
+#define GET_FIRST_ALL_TYPES(op) (op ## _i8)
+
+// Takes a function and a opcode and calls the function for all integer
+// instances of that opcode
+#define CREATE_FOR_INT_TYPES(func, op) \
+func(op, i8) \
+func(op, i16) \
+func(op, i32) \
+func(op, i64)
+
+// Returns the first type used when expanding to integer types
+// (needed for use of GetOpcodeForTypeIntTypes)
+#define GET_FIRST_INT_TYPES(op) (op ## _i8)
+
+// Takes a function and a opcode and calls the function for all floating point
+// instances of that opcode
+#define CREATE_FOR_FLOAT_TYPES(func, op) \
+func(op, float) \
+func(op, double)
+
+// Returns the first type used when expanding to floating point types
+// (needed for use of GetOpcodeForTypeFloatTypes)
+#define GET_FIRST_FLOAT_TYPES(op) (op ## _float)
+
+
+
+//------              Bytecode Instruction Definitions                  ------//
+
+CREATE_FOR_ALL_TYPES(HANDLE_TYPED_INST, add)
+CREATE_FOR_ALL_TYPES(HANDLE_TYPED_INST, sub)
+CREATE_FOR_ALL_TYPES(HANDLE_TYPED_INST, mul)
+CREATE_FOR_ALL_TYPES(HANDLE_TYPED_INST, div)     // division for unsigned integer and floating point
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, sdiv)    // division for signed integer
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, urem)    // remainder for unsigned integer
+CREATE_FOR_FLOAT_TYPES(HANDLE_TYPED_INST, frem)  // remainder for floating point
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, srem)    // remainder for signed integer
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, shl)
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, lshr)
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, ashr)
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, and)
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, or)
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, xor)
+
+HANDLE_INST(extractvalue)
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, load)
+CREATE_FOR_ALL_TYPES(HANDLE_TYPED_INST, store)
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, alloca_array)
+HANDLE_INST(alloca)
+
+CREATE_FOR_ALL_TYPES(HANDLE_TYPED_INST, cmp_eq)  // compare for unsigned integer and floating point
+CREATE_FOR_ALL_TYPES(HANDLE_TYPED_INST, cmp_ne)  // compare for unsigned integer and floating point
+CREATE_FOR_ALL_TYPES(HANDLE_TYPED_INST, cmp_gt)  // compare for unsigned integer and floating point
+CREATE_FOR_ALL_TYPES(HANDLE_TYPED_INST, cmp_lt)  // compare for unsigned integer and floating point
+CREATE_FOR_ALL_TYPES(HANDLE_TYPED_INST, cmp_ge)  // compare for unsigned integer and floating point
+CREATE_FOR_ALL_TYPES(HANDLE_TYPED_INST, cmp_le)  // compare for unsigned integer and floating point
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, cmp_sgt) // compare for signed integer
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, cmp_slt) // compare for signed integer
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, cmp_sge) // compare for signed integer
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, cmp_sle) // compare for signed integer
+
+HANDLE_INST(sext_i8_i16) // there is no handy way to expand this relationship
+HANDLE_INST(sext_i8_i32)
+HANDLE_INST(sext_i8_i64)
+HANDLE_INST(sext_i16_i32)
+HANDLE_INST(sext_i16_i64)
+HANDLE_INST(sext_i32_i64)
+HANDLE_INST(zext_i8_i16)
+HANDLE_INST(zext_i8_i32)
+HANDLE_INST(zext_i8_i64)
+HANDLE_INST(zext_i16_i32)
+HANDLE_INST(zext_i16_i64)
+HANDLE_INST(zext_i32_i64)
+
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, doubletosi) // we can only expand in one dimension, so we expand the integer dimension and write down all floating point instances manually
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, doubletoui)
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, sitodouble)
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, uitodouble)
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, floattosi)
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, floattoui)
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, sitofloat)
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, uitofloat)
+
+HANDLE_INST(gep_offset)                            // struct access of GEP instruction (accumulated)
+CREATE_FOR_INT_TYPES(HANDLE_TYPED_INST, gep_array) // array access of GEP instruction (inplace)
+HANDLE_INST(phi_mov)
+HANDLE_INST(nop_mov)
+HANDLE_SELECT_INST(select)
+HANDLE_EXTERNAL_CALL_INST(call_external) // external function call
+HANDLE_INTERNAL_CALL_INST(call_internal) // internal function call
+
+HANDLE_RET_INST(ret)
+HANDLE_INST(branch_uncond)
+HANDLE_INST(branch_cond)
+HANDLE_INST(branch_cond_ft) // conditional branch with fall through
+
+HANDLE_INST(llvm_memcpy)
+HANDLE_INST(llvm_memmove)
+HANDLE_INST(llvm_memset)
+
+CREATE_FOR_INT_TYPES(HANDLE_OVERFLOW_TYPED_INST, llvm_uadd_overflow)
+CREATE_FOR_INT_TYPES(HANDLE_OVERFLOW_TYPED_INST, llvm_sadd_overflow)
+CREATE_FOR_INT_TYPES(HANDLE_OVERFLOW_TYPED_INST, llvm_usub_overflow)
+CREATE_FOR_INT_TYPES(HANDLE_OVERFLOW_TYPED_INST, llvm_ssub_overflow)
+CREATE_FOR_INT_TYPES(HANDLE_OVERFLOW_TYPED_INST, llvm_umul_overflow)
+CREATE_FOR_INT_TYPES(HANDLE_OVERFLOW_TYPED_INST, llvm_smul_overflow)
+
+HANDLE_INST(llvm_sse42_crc32)
+
+
+// undefine all handlers
+#undef HANDLE_INST
+#undef HANDLE_TYPED_INST
+#undef HANDLE_OVERFLOW_TYPED_INST
+#undef HANDLE_SELECT_INST
+#undef HANDLE_RET_INST
+#undef HANDLE_EXTERNAL_CALL_INST
+#undef HANDLE_INTERNAL_CALL_INST

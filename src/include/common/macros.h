@@ -106,6 +106,19 @@ namespace peloton {
 #define GCC_AT_LEAST_6 0
 #endif
 
+#if __GNUC__ > 5 || (__GNUC__ == 5 && __GNUC_MINOR__ >= 1)
+#define GCC_AT_LEAST_51 1
+#else
+#define GCC_AT_LEAST_51 0
+#endif
+
+// g++-5.0 does not support overflow builtins
+#if GCC_AT_LEAST_51
+#define GCC_OVERFLOW_BUILTINS_DEFINED 1
+#else
+#define GCC_OVERFLOW_BUILTINS_DEFINED 0
+#endif
+
 //===--------------------------------------------------------------------===//
 // Port to OSX
 //===---------------------------

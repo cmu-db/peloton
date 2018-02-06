@@ -16,8 +16,8 @@
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Verifier.h"
-#include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/raw_os_ostream.h"
+#include "llvm/Support/TargetSelect.h"
 #include "llvm/Transforms/Scalar.h"
 #if LLVM_VERSION_GE(3, 9)
 #include "llvm/Transforms/Scalar/GVN.h"
@@ -75,16 +75,16 @@ class PelotonMemoryManager : public llvm::SectionMemoryManager {
  private:
   void *LookupSymbol(const std::string &name) const {
     // Check for a builtin with the exact name
-    auto symbol_iter = symbols_.find(name);
-    if (symbol_iter != symbols_.end()) {
-      return symbol_iter->second;
+    auto symbol_iter = builtins_.find(name);
+    if (symbol_iter != builtins_.end()) {
+      return symbol_iter->second.second;
     }
 
     // Check for a builtin with the leading '_' removed
     if (!name.empty() && name[0] == '_') {
-      symbol_iter = symbols_.find(name.substr(1));
-      if (symbol_iter != symbols_.end()) {
-        return symbol_iter->second;
+      symbol_iter = builtins_.find(name.substr(1));
+      if (symbol_iter != builtins_.end()) {
+        return symbol_iter->second.second;
       }
     }
 
@@ -94,7 +94,9 @@ class PelotonMemoryManager : public llvm::SectionMemoryManager {
 
  private:
   // The code context
-  const std::unordered_map<std::string, CodeContext::FuncPtr> &symbols_;
+  const std::unordered_map<std::string,
+                           std::pair<llvm::Function *, CodeContext::FuncPtr>> &
+      builtins_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -177,7 +179,8 @@ CodeContext::CodeContext()
       func_(nullptr),
       udf_func_ptr_(nullptr),
       pass_manager_(nullptr),
-      engine_(nullptr) {
+      engine_(nullptr),
+      is_verified_(false) {
   // Initialize JIT stuff
   llvm::InitializeNativeTarget();
   llvm::InitializeNativeTargetAsmPrinter();
@@ -199,12 +202,11 @@ CodeContext::CodeContext()
   module_ = m.get();
   engine_.reset(
       llvm::EngineBuilder(std::move(m))
-          .setEngineKind(llvm::EngineKind::JIT)
-          .setMCJITMemoryManager(
-               llvm::make_unique<PelotonMemoryManager>(function_symbols_))
-          .setMCPU(llvm::sys::getHostCPUName())
-          .setErrorStr(&err_str_)
-          .create());
+                    .setEngineKind(llvm::EngineKind::JIT)
+          .setMCJITMemoryManager(llvm::make_unique<PelotonMemoryManager>(builtins_))
+                    .setMCPU(llvm::sys::getHostCPUName())
+                    .setErrorStr(&err_str_)
+                    .create());
   PELOTON_ASSERT(engine_ != nullptr);
 
   // The set of optimization passes we include
@@ -223,6 +225,7 @@ CodeContext::CodeContext()
   int32_type_ = llvm::Type::getInt32Ty(*context_);
   int64_type_ = llvm::Type::getInt64Ty(*context_);
   double_type_ = llvm::Type::getDoubleTy(*context_);
+  float_type_ = llvm::Type::getFloatTy(*context_);
   void_type_ = llvm::Type::getVoidTy(*context_);
   void_ptr_type_ = llvm::Type::getInt8PtrTy(*context_);
   char_ptr_type_ = llvm::Type::getInt8PtrTy(*context_);
@@ -251,14 +254,13 @@ void CodeContext::RegisterExternalFunction(llvm::Function *func_decl,
   PELOTON_ASSERT(func_impl != nullptr && "The function pointer cannot be NULL");
   functions_.emplace_back(func_decl, func_impl);
 
-  // Register the builtin symbol by name
-  function_symbols_[func_decl->getName()] = func_impl;
+  builtins_[func_decl->getName()] = std::make_pair(func_decl, func_impl);
 }
 
 void CodeContext::RegisterBuiltin(llvm::Function *func_decl,
                                   CodeContext::FuncPtr func_impl) {
   const auto name = func_decl->getName();
-  if (LookupBuiltin(name) != nullptr) {
+  if (LookupBuiltinType(name) != nullptr) {
     LOG_DEBUG("Builtin '%s' already registered, skipping ...", name.data());
     return;
   }
@@ -268,11 +270,8 @@ void CodeContext::RegisterBuiltin(llvm::Function *func_decl,
       func_decl->isDeclaration() &&
       "You cannot provide a function definition for a builtin function");
 
-  // Register the builtin function
-  builtins_[name] = func_decl;
-
-  // Register the builtin symbol by name
-  function_symbols_[name] = func_impl;
+  // Register the builtin function with type and implementation
+  builtins_[name] = std::make_pair(func_decl, func_impl);
 }
 
 llvm::Function *CodeContext::LookupBuiltin(const std::string &name) const {
@@ -280,8 +279,8 @@ llvm::Function *CodeContext::LookupBuiltin(const std::string &name) const {
   return (iter == builtins_.end() ? nullptr : iter->second);
 }
 
-/// Optimize and JIT compile all the functions that were created in this context
-bool CodeContext::Compile() {
+/// Verify all the functions that were created in this context
+bool CodeContext::Verify() {
   // Verify the module is okay
   llvm::raw_ostream &errors = llvm::errs();
   if (llvm::verifyModule(*module_, &errors)) {
@@ -291,6 +290,16 @@ bool CodeContext::Compile() {
     return false;
   }
 
+  // All is well
+  is_verified_ = true;
+  return true;
+}
+
+/// Optimize all the functions that were created in this context
+bool CodeContext::Optimize() {
+  // make sure the code is verified
+  if (!is_verified_) Verify();
+
   // Run the optimization passes over each function in this module
   pass_manager_->doInitialization();
   for (auto &func_iter : functions_) {
@@ -298,6 +307,16 @@ bool CodeContext::Compile() {
   }
   pass_manager_->doFinalization();
 
+  // All is well
+  return true;
+}
+
+/// JIT compile all the functions that were created in this context
+bool CodeContext::Compile() {
+  // make sure the code is verified
+  if (!is_verified_) Verify();
+
+  // Print some IR stats
   if (settings::SettingsManager::GetBool(settings::SettingId::print_ir_stats)) {
     char name[] = "inst count";
     InstructionCounts inst_count(*name);
@@ -305,7 +324,7 @@ bool CodeContext::Compile() {
     inst_count.DumpStats();
   }
 
-  // Functions and module have been optimized, now JIT compile the module
+  // JIT compile the module
   engine_->finalizeObject();
 
   // Pull out the compiled function implementations
@@ -322,6 +341,23 @@ bool CodeContext::Compile() {
   return true;
 }
 
+size_t CodeContext::GetTypeSize(llvm::Type *type) const {
+  auto size = GetDataLayout().getTypeSizeInBits(type) / 8;
+  return size != 0 ? size : 1;
+}
+
+size_t CodeContext::GetTypeSizeInBits(llvm::Type *type) const {
+  return GetDataLayout().getTypeSizeInBits(type);
+}
+
+size_t CodeContext::GetTypeAllocSize(llvm::Type *type) const {
+  return GetDataLayout().getTypeAllocSize(type);
+}
+
+size_t CodeContext::GetTypeAllocSizeInBits(llvm::Type *type) const {
+  return GetDataLayout().getTypeAllocSizeInBits(type);
+}
+
 CodeContext::FuncPtr CodeContext::GetRawFunctionPointer(
     llvm::Function *fn) const {
   for (const auto &iter : functions_) {
@@ -334,6 +370,7 @@ CodeContext::FuncPtr CodeContext::GetRawFunctionPointer(
   return nullptr;
 }
 
+/// Get the module's layout
 const llvm::DataLayout &CodeContext::GetDataLayout() const {
   return module_->getDataLayout();
 }
@@ -343,14 +380,14 @@ void CodeContext::DumpContents() const {
 
   // First, write out the LLVM IR file
   {
-    std::string ll_fname = "dump_plan_" + std::to_string(id_) + ".ll";
+    std::string ll_fname = "dump_" + std::to_string(id_) + "_plan.ll";
     llvm::raw_fd_ostream ll_ostream{ll_fname, error_code, llvm::sys::fs::F_RW};
     module_->print(ll_ostream, nullptr, false);
   }
 
   // Now, write out the raw ASM
   {
-    std::string asm_fname = "dump_plan_" + std::to_string(id_) + ".s";
+    std::string asm_fname = "dump_" + std::to_string(id_) + "_plan.s";
     llvm::raw_fd_ostream asm_ostream{asm_fname, error_code,
                                      llvm::sys::fs::F_RW};
     llvm::legacy::PassManager pass_manager;

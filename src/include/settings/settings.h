@@ -136,6 +136,16 @@ SETTING_int(min_parallel_table_scan_size,
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
+// SETTINGURATION
+//===----------------------------------------------------------------------===//
+
+// Display configuration
+SETTING_bool(display_settings,
+            "Display settings (default: false)",
+            false,
+            true, true)
+
+//===----------------------------------------------------------------------===//
 // STATISTICS
 //===----------------------------------------------------------------------===//
 
@@ -199,6 +209,10 @@ SETTING_bool(codegen,
             "Enable code-generation for query execution (default: true)",
             true,
             true, true)
+
+SETTING_bool(codegen_interpreter,
+             "Force interpretation of generated llvm code (default: false)",
+             false, true, true)
 
 SETTING_bool(print_ir_stats,
              "Print statistics on generated IR (default: false)",

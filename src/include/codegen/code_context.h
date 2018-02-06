@@ -34,6 +34,10 @@ namespace codegen {
 
 class FunctionBuilder;
 
+namespace interpreter {
+class BytecodeBuilder;
+}
+
 //===----------------------------------------------------------------------===//
 // The context where all generated LLVM query code resides. We create a context
 // instance for every query we see.  We keep instances of these around in the
@@ -43,6 +47,8 @@ class FunctionBuilder;
 class CodeContext {
   friend class CodeGen;
   friend class FunctionBuilder;
+  friend class PelotonMM;
+  friend class interpreter::BytecodeBuilder;
 
  public:
   using FuncPtr = void *;
@@ -70,6 +76,12 @@ class CodeContext {
 
   /// Sets UDF function ptr
   void SetUDF(llvm::Function *func_ptr) { udf_func_ptr_ = func_ptr; }
+
+  /// Verify all the code contained in this context
+  bool Verify();
+
+  /// Optimize all the code contained in this context
+  bool Optimize();
 
   /// Compile all the code contained in this context
   bool Compile();
@@ -143,6 +155,7 @@ class CodeContext {
   llvm::Type *int16_type_;
   llvm::Type *int32_type_;
   llvm::Type *int64_type_;
+  llvm::Type *float_type_;
   llvm::Type *double_type_;
   llvm::Type *void_type_;
   llvm::Type *void_ptr_type_;
@@ -156,7 +169,8 @@ class CodeContext {
   // function pointers are populated in Compile()
   std::vector<std::pair<llvm::Function *, FuncPtr>> functions_;
 
-  std::unordered_map<std::string, FuncPtr> function_symbols_;
+  // Shows if the Verify() has been run
+  bool is_verified_;
 };
 
 }  // namespace codegen
