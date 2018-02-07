@@ -260,9 +260,10 @@ void GetToIndexScan::Transform(
                   value_expr)
                   ->GetValue());
           LOG_TRACE("Value Type: %d",
-                    reinterpret_cast<expression::ConstantValueExpression *>(
-                        expr->GetModifiableChild(1))
-                        ->GetValueType());
+                    static_cast<int>(
+                        reinterpret_cast<expression::ConstantValueExpression *>(
+                        expr->GetModifiedChild(1))
+                        ->GetValueType()));
         } else {
           value_list.push_back(
               type::ValueFactory::GetParameterOffsetValue(
@@ -271,7 +272,7 @@ void GetToIndexScan::Transform(
                       ->GetValueIdx())
                   .Copy());
           LOG_TRACE("Parameter offset: %s",
-                    (*values.rbegin()).GetInfo().c_str());
+                    (*value_list.rbegin()).GetInfo().c_str());
         }
       }
     }  // Loop predicates end
