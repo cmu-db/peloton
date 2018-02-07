@@ -44,12 +44,24 @@ if (NOT __CAPNP_INCLUDED) # guard against multiple includes
       LOG_INSTALL 1
       )
 
+    # This will set several system default installaion dirs which capnproto is using.
+    # It's important especially for LIBDIR which varies from platform to platform.
+    include(GNUInstallDirs)
+
     set(CAPNP_FOUND TRUE)
-    set(CAPNP_EXECUTABLE ${capnp_INSTALL}/bin/capnp)
-    set(CAPNPC_CXX_EXECUTABLE ${capnp_INSTALL}/bin/capnpc-c++)
-    set(CAPNP_INCLUDE_DIRS ${capnp_INSTALL}/include)
-    set(CAPNP_INCLUDE_DIRECTORY ${capnp_INSTALL}/include)
+    set(CAPNP_EXECUTABLE ${capnp_INSTALL}/${CMAKE_INSTALL_BINDIR}/capnp)
+    set(CAPNPC_CXX_EXECUTABLE ${capnp_INSTALL}/${CMAKE_INSTALL_BINDIR}/capnpc-c++)
+    set(CAPNP_INCLUDE_DIRS ${capnp_INSTALL}/${CMAKE_INSTALL_INCLUDEDIR})
+    set(CAPNP_INCLUDE_DIRECTORY ${capnp_INSTALL}/${CMAKE_INSTALL_INCLUDEDIR})
     set(CAPNP_EXTERNAL TRUE)
+    set(CAPNP_LIBRARIES
+      ${capnp_INSTALL}/${CMAKE_INSTALL_LIBDIR}/libcapnp-rpc.a
+      ${capnp_INSTALL}/${CMAKE_INSTALL_LIBDIR}/libcapnp.a
+      ${capnp_INSTALL}/${CMAKE_INSTALL_LIBDIR}/libkj-async.a
+      ${capnp_INSTALL}/${CMAKE_INSTALL_LIBDIR}/libkj.a
+      ${CMAKE_THREAD_LIBS_INIT}
+    )
+    set(CAPNP_LIBRARY_DIRS ${capnp_INSTALL}/${CMAKE_INSTALL_LIBDIR})
 
     list(APPEND external_project_dependencies capnp)
 
