@@ -15,17 +15,6 @@
 #include <set>
 #include <string>
 
-#include "catalog/catalog_cache.h"
-#include "catalog/database_catalog.h"
-#include "catalog/table_catalog.h"
-#include "catalog/column_catalog.h"
-#include "catalog/index_catalog.h"
-
-#include "parser/delete_statement.h"
-#include "parser/insert_statement.h"
-#include "parser/sql_statement.h"
-#include "parser/update_statement.h"
-
 #include "planner/abstract_plan.h"
 #include "planner/abstract_scan_plan.h"
 #include "planner/delete_plan.h"
@@ -36,6 +25,15 @@
 #include "util/string_util.h"
 
 namespace peloton {
+
+namespace catalog {
+class CatalogCache;
+}
+
+namespace parser {
+class SQLStatement;
+}
+
 namespace planner {
 
 class PlanUtil {
@@ -62,7 +60,7 @@ class PlanUtil {
   * @return set of affected index object ids
   */
   static const std::set<oid_t> GetAffectedIndexes(
-      catalog::CatalogCache& catalog_cache, parser::SQLStatement* sql_stmt);
+      catalog::CatalogCache &catalog_cache, parser::SQLStatement *sql_stmt);
 
  private:
   ///
@@ -167,93 +165,6 @@ inline void PlanUtil::GetTablesReferenced(const planner::AbstractPlan *plan,
       GetTablesReferenced(child.get(), table_ids);
     }
   }
-}
-
-namespace {
-
-template <typename T>
-bool isDisjoint(const std::set<T> &setA, const std::set<T> &setB) {
-  bool disjoint = true;
-  if (setA.empty() || setB.empty())
-    return disjoint;
-
-  typename std::set<T>::const_iterator setA_it = setA.begin();
-  typename std::set<T>::const_iterator setB_it = setB.begin();
-  while (setA_it != setA.end() && setB_it != setB.end() && disjoint) {
-    if (*setA_it == *setB_it)
-      disjoint = false;
-    else if (*setA_it < *setB_it)
-      setA_it++;
-    else
-      setB_it++;
-  }
-
-  return disjoint;
-}
-
-}  // namespace
-
-inline const std::set<oid_t> PlanUtil::GetAffectedIndexes(
-    catalog::CatalogCache &catalog_cache, parser::SQLStatement *sql_stmt) {
-  std::set<oid_t> index_oids;
-  std::string db_name, table_name;
-  switch (sql_stmt->GetType()) {
-    // For INSERT, DELETE, all indexes are affected
-    case StatementType::INSERT: {
-      auto insert_stmt = static_cast<parser::InsertStatement *>(sql_stmt);
-      db_name = insert_stmt->GetDatabaseName();
-      table_name = insert_stmt->GetTableName();
-    }
-    PELOTON_FALLTHROUGH;
-    case StatementType::DELETE: {
-      if (table_name.empty() || db_name.empty()) {
-        auto delete_stmt = static_cast<parser::DeleteStatement *>(sql_stmt);
-        db_name = delete_stmt->GetDatabaseName();
-        table_name = delete_stmt->GetTableName();
-      }
-      auto indexes_map = catalog_cache.GetDatabaseObject(db_name)
-                             ->GetTableObject(table_name)
-                             ->GetIndexObjects();
-      for (auto &index : indexes_map) {
-        index_oids.insert(index.first);
-      }
-    }
-    break;
-    case StatementType::UPDATE: {
-      auto update_stmt = static_cast<parser::UpdateStatement *>(sql_stmt);
-      db_name = update_stmt->table->GetDatabaseName();
-      table_name = update_stmt->table->GetTableName();
-      auto db_object = catalog_cache.GetDatabaseObject(db_name);
-      auto table_object = db_object->GetTableObject(table_name);
-
-      auto &update_clauses = update_stmt->updates;
-      std::set<oid_t> update_oids;
-      for (const auto &update_clause : update_clauses) {
-        LOG_TRACE("Affected column name for table(%s) in UPDATE query: %s",
-                  table_name.c_str(), update_clause->column.c_str());
-        auto col_object = table_object->GetColumnObject(update_clause->column);
-        update_oids.insert(col_object->GetColumnId());
-      }
-
-      auto indexes_map = table_object->GetIndexObjects();
-      for (auto &index : indexes_map) {
-        LOG_TRACE("Checking if UPDATE query affects index: %s",
-                  index.second->GetIndexName().c_str());
-        const std::vector<oid_t> &key_attrs =
-            index.second->GetKeyAttrs();  // why it's a vector, and not set?
-        const std::set<oid_t> key_attrs_set(key_attrs.begin(), key_attrs.end());
-        if (!isDisjoint(key_attrs_set, update_oids)) {
-          LOG_TRACE("Index (%s) is affected",
-                    index.second->GetIndexName().c_str());
-          index_oids.insert(index.first);
-        }
-      }
-    } break;
-    default:
-      LOG_TRACE("Does not support finding affected indexes for query type: %d",
-                static_cast<int>(sql_stmt->GetType()));
-  }
-  return (index_oids);
 }
 
 }  // namespace planner
