@@ -53,7 +53,7 @@ class CompilationContext {
   /// Constructor
   CompilationContext(CodeContext &code, RuntimeState &runtime_state,
                      const QueryParametersMap &parameters_map,
-                     QueryResultConsumer &result_consumer);
+                     ExecutionConsumer &execution_consumer);
 
   /// This class cannot be copy or move-constructed
   DISALLOW_COPY_AND_MOVE(CompilationContext);
@@ -75,28 +75,19 @@ class CompilationContext {
   AuxiliaryProducerFunction DeclareAuxiliaryProducer(
       const planner::AbstractPlan &plan, const std::string &provided_name);
 
-  //===--------------------------------------------------------------------===//
-  // ACCESSORS
-  //===--------------------------------------------------------------------===//
-
+  /// Get the code-generation instances
   CodeGen &GetCodeGen() { return codegen_; }
 
+  /// Get the runtime state
   RuntimeState &GetRuntimeState() { return runtime_state_; }
 
+  /// Get the parameter cache
   const ParameterCache &GetParameterCache() const { return parameter_cache_; }
 
-  QueryResultConsumer &GetQueryResultConsumer() const {
-    return result_consumer_;
+  /// Get the consumer of the execution of the query
+  ExecutionConsumer &GetExecutionConsumer() const {
+    return execution_consumer_;
   }
-
-  /// Get a pointer to the storage manager object from the runtime state
-  llvm::Value *GetStorageManagerPtr();
-
-  /// Get a pointer to the executor context instance
-  llvm::Value *GetExecutorContextPtr();
-
-  /// Get a pointer to the query parameter instance
-  llvm::Value *GetQueryParametersPtr();
 
  private:
   // Generate any auxiliary helper functions that the query needs
@@ -127,7 +118,7 @@ class CompilationContext {
   ParameterCache parameter_cache_;
 
   // The consumer of the results of the query
-  QueryResultConsumer &result_consumer_;
+  ExecutionConsumer &execution_consumer_;
 
   // The code generator
   CodeGen codegen_;
@@ -137,11 +128,6 @@ class CompilationContext {
 
   // The factory that creates translators for operators and expressions
   TranslatorFactory translator_factory_;
-
-  // The runtime state IDs
-  RuntimeState::StateID storage_manager_state_id_;
-  RuntimeState::StateID executor_context_state_id_;
-  RuntimeState::StateID query_parameters_state_id_;
 
   // The mapping of an operator in the tree to its translator
   std::unordered_map<const planner::AbstractPlan *,

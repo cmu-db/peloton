@@ -17,7 +17,7 @@
 
 #include "codegen/query.h"
 #include "codegen/query_parameters_map.h"
-#include "codegen/query_result_consumer.h"
+#include "codegen/execution_consumer.h"
 
 namespace peloton {
 
@@ -56,7 +56,7 @@ class QueryCompiler {
   // process.
   std::unique_ptr<Query> Compile(const planner::AbstractPlan &query_plan,
                                  const QueryParametersMap &parameters_map,
-                                 QueryResultConsumer &consumer,
+                                 ExecutionConsumer &consumer,
                                  CompileStats *stats = nullptr);
 
   // Get the next available query plan ID

@@ -15,7 +15,7 @@
 #include <vector>
 
 #include "codegen/compilation_context.h"
-#include "codegen/query_result_consumer.h"
+#include "codegen/execution_consumer.h"
 #include "codegen/value.h"
 #include "common/container_tuple.h"
 
@@ -48,7 +48,7 @@ class WrappedTuple : public ContainerTuple<std::vector<peloton::type::Value>> {
 //===----------------------------------------------------------------------===//
 // A query consumer that buffers tuples into a local memory location
 //===----------------------------------------------------------------------===//
-class BufferingConsumer : public QueryResultConsumer {
+class BufferingConsumer : public ExecutionConsumer {
  public:
   struct BufferingState {
     std::vector<WrappedTuple> *output;

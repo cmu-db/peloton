@@ -30,7 +30,7 @@ class AbstractPlan;
 
 namespace codegen {
 
-class QueryResultConsumer;
+class ExecutionConsumer;
 
 //===----------------------------------------------------------------------===//
 // A compiled query. An instance of this class can be created either by
@@ -76,7 +76,7 @@ class Query {
    * @param on_complete The callback to be invoked when execution completes.
    */
   void Execute(std::unique_ptr<executor::ExecutorContext> executor_context,
-               QueryResultConsumer &consumer,
+               ExecutionConsumer &consumer,
                std::function<void(executor::ExecutionResult)> on_complete,
                RuntimeStats *stats = nullptr);
 

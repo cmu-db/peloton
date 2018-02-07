@@ -16,10 +16,8 @@
 namespace peloton {
 namespace codegen {
 
-DEFINE_TYPE(ExecutorContext, "executor::ExecutorContext", MEMBER(opaque));
-
-// Define a method that proxies executor::ExecutorContext::GetTransaction()
-DEFINE_METHOD(peloton::executor, ExecutorContext, GetTransaction);
+DEFINE_TYPE(ExecutorContext, "executor::ExecutorContext", MEMBER(num_processed),
+            MEMBER(txn), MEMBER(params), MEMBER(storage_manager), MEMBER(pool));
 
 }  // namespace codegen
 }  // namespace peloton

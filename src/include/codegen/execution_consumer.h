@@ -1,0 +1,63 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// execution_consumer.h
+//
+// Identification: src/include/codegen/execution_consumer.h
+//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+#pragma once
+
+#include "codegen/consumer_context.h"
+
+namespace peloton {
+namespace codegen {
+
+//===----------------------------------------------------------------------===//
+// The main interface for consumers of query results.
+//===----------------------------------------------------------------------===//
+class ExecutionConsumer {
+ public:
+  /// Default constructor
+  ExecutionConsumer();
+
+  /// Default virtual destructor
+  virtual ~ExecutionConsumer() = default;
+
+  /// Invoked before code-generation begins to allow the consumer to prepare
+  /// itself in the provided context
+  virtual void Prepare(CompilationContext &compilation_ctx);
+
+  /// Called to generate any initialization code the consumer needs
+  virtual void InitializeState(CompilationContext &compilation_ctx) = 0;
+
+  ///
+  virtual char *GetConsumerState() = 0;
+
+  /// Consume either a single output (i.e., result) row, or a batch of output
+  /// rows. A default implementation is provided by batch-consumption, but one
+  /// must be provided for single-row consumption.
+  virtual void ConsumeResult(ConsumerContext &context, RowBatch &batch) const;
+  virtual void ConsumeResult(ConsumerContext &context,
+                             RowBatch::Row &row) const = 0;
+
+  /// Called to generate any code to tear down the state of the consumer
+  virtual void TearDownState(CompilationContext &compilation_ctx) = 0;
+
+  /// Load the ExecutorContext, Transaction, or StorageManager objects
+  llvm::Value *GetExecutorContextPtr(CompilationContext &compilation_ctx);
+  llvm::Value *GetTransactionPtr(CompilationContext &compilation_ctx);
+  llvm::Value *GetStorageManagerPtr(CompilationContext &compilation_ctx);
+  llvm::Value *GetQueryParametersPtr(CompilationContext &compilation_ctx);
+
+ private:
+  llvm::Type *executor_ctx_type_;
+  RuntimeState::StateID executor_ctx_id_;
+};
+
+}  // namespace codegen
+}  // namespace peloton

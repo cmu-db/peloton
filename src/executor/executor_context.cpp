@@ -41,15 +41,7 @@ storage::StorageManager *ExecutorContext::GetStorageManager() const {
 
 codegen::QueryParameters &ExecutorContext::GetParams() { return parameters_; }
 
-type::EphemeralPool *ExecutorContext::GetPool() {
-  // construct pool if needed
-  if (pool_ == nullptr) {
-    pool_.reset(new type::EphemeralPool());
-  }
-
-  // return pool
-  return pool_.get();
-}
+type::EphemeralPool *ExecutorContext::GetPool() { return &pool_; }
 
 }  // namespace executor
 }  // namespace peloton

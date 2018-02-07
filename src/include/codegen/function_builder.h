@@ -108,6 +108,9 @@ class FunctionBuilder {
   /// Return the function we created
   llvm::Function *GetFunction() const { return func_; }
 
+  llvm::Value *GetOrCacheVariable(const std::string &name,
+                                  const std::function<llvm::Value *()> &func);
+
  private:
   // Get the first basic block in this function
   llvm::BasicBlock *GetEntryBlock() const { return entry_bb_; }
@@ -143,6 +146,9 @@ class FunctionBuilder {
   llvm::BasicBlock *overflow_bb_;
   // The divide-by-zero error block
   llvm::BasicBlock *divide_by_zero_bb_;
+
+  // Cached variables
+  std::unordered_map<std::string, llvm::Value *> cached_vars_;
 };
 
 }  // namespace codegen

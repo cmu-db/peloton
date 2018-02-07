@@ -40,20 +40,17 @@ InsertTranslator::InsertTranslator(const planner::InsertPlan &insert_plan,
 
 void InsertTranslator::InitializeState() {
   auto &codegen = GetCodeGen();
-  auto &context = GetCompilationContext();
 
   storage::DataTable *table = insert_plan_.GetTable();
-  llvm::Value *table_ptr =
-      codegen.Call(StorageManagerProxy::GetTableWithOid,
-                   {GetStorageManagerPtr(),
-                    codegen.Const32(table->GetDatabaseOid()),
-                    codegen.Const32(table->GetOid())});
-
-  llvm::Value *executor_ptr = context.GetExecutorContextPtr();
+  llvm::Value *table_ptr = codegen.Call(
+      StorageManagerProxy::GetTableWithOid,
+      {GetStorageManagerPtr(), codegen.Const32(table->GetDatabaseOid()),
+       codegen.Const32(table->GetOid())});
 
   // Initialize the inserter with txn and table
   llvm::Value *inserter = LoadStatePtr(inserter_state_id_);
-  codegen.Call(InserterProxy::Init, {inserter, table_ptr, executor_ptr});
+  codegen.Call(InserterProxy::Init,
+               {inserter, table_ptr, GetExecutorContextPtr()});
 }
 
 void InsertTranslator::Produce() const {

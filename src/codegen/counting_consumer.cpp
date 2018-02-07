@@ -17,6 +17,9 @@ namespace peloton {
 namespace codegen {
 
 void CountingConsumer::Prepare(codegen::CompilationContext &ctx) {
+  // Be sure to call our parent
+  ExecutionConsumer::Prepare(ctx);
+
   auto &codegen = ctx.GetCodeGen();
   auto &runtime_state = ctx.GetRuntimeState();
   counter_state_id_ = runtime_state.RegisterState(

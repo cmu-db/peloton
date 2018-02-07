@@ -74,7 +74,9 @@ class OperatorTranslator {
   // Return the code generator
   CodeGen &GetCodeGen() const;
 
-  // Get the pointer to the Manager from the runtime state parameter
+  // Load pointers to the ExecutorContext, Transaction, or StorageManager
+  llvm::Value *GetExecutorContextPtr() const;
+  llvm::Value *GetTransactionPtr() const;
   llvm::Value *GetStorageManagerPtr() const;
 
   // Retrieve a parameter from the runtime state

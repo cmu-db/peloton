@@ -27,8 +27,16 @@ CodeGen &OperatorTranslator::GetCodeGen() const {
   return context_.GetCodeGen();
 }
 
+llvm::Value *OperatorTranslator::GetExecutorContextPtr() const {
+  return context_.GetExecutionConsumer().GetExecutorContextPtr(context_);
+}
+
+llvm::Value *OperatorTranslator::GetTransactionPtr() const {
+  return context_.GetExecutionConsumer().GetTransactionPtr(context_);
+}
+
 llvm::Value *OperatorTranslator::GetStorageManagerPtr() const {
-  return context_.GetStorageManagerPtr();
+  return context_.GetExecutionConsumer().GetStorageManagerPtr(context_);
 }
 
 llvm::Value *OperatorTranslator::LoadStatePtr(

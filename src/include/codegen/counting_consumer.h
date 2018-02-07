@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "codegen/query_result_consumer.h"
+#include "codegen/execution_consumer.h"
 
 namespace peloton {
 namespace codegen {
@@ -20,7 +20,7 @@ namespace codegen {
 //===----------------------------------------------------------------------===//
 // A consumer that just counts the number of results
 //===----------------------------------------------------------------------===//
-class CountingConsumer : public codegen::QueryResultConsumer {
+class CountingConsumer : public codegen::ExecutionConsumer {
  public:
   void Prepare(codegen::CompilationContext &compilation_context) override;
   void InitializeState(codegen::CompilationContext &context) override;

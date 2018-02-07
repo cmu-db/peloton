@@ -33,12 +33,10 @@ namespace executor {
  */
 class ExecutorContext {
  public:
-  explicit ExecutorContext(concurrency::TransactionContext *transaction,
-                           codegen::QueryParameters parameters = {});
+  ExecutorContext(concurrency::TransactionContext *transaction,
+                  codegen::QueryParameters parameters = {});
 
   DISALLOW_COPY_AND_MOVE(ExecutorContext);
-
-  ~ExecutorContext() = default;
 
   concurrency::TransactionContext *GetTransaction() const;
 
@@ -61,7 +59,7 @@ class ExecutorContext {
   // The storage manager instance
   storage::StorageManager *storage_manager_;
   // Temporary memory pool for allocations done during execution
-  std::unique_ptr<type::EphemeralPool> pool_;
+  type::EphemeralPool pool_;
 };
 
 }  // namespace executor

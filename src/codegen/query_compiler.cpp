@@ -27,7 +27,7 @@ QueryCompiler::QueryCompiler() : next_id_(0) {}
 // Compile the given query statement
 std::unique_ptr<Query> QueryCompiler::Compile(
     const planner::AbstractPlan &root, const QueryParametersMap &parameters_map,
-    QueryResultConsumer &result_consumer, CompileStats *stats) {
+    ExecutionConsumer &result_consumer, CompileStats *stats) {
   // The query statement we compile
   std::unique_ptr<Query> query{new Query(root)};
 

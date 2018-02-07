@@ -28,7 +28,7 @@ void ConsumerContext::Consume(RowBatch &batch) {
   if (translator == nullptr) {
     // We're at the end of the query pipeline, we now send the output tuples
     // to the result consumer configured in the compilation context
-    auto &consumer = compilation_context_.GetQueryResultConsumer();
+    auto &consumer = compilation_context_.GetExecutionConsumer();
     consumer.ConsumeResult(*this, batch);
   } else {
     // We're not at the end of the pipeline, push the batch through the stages
@@ -61,7 +61,7 @@ void ConsumerContext::Consume(RowBatch::Row &row) {
 
   // We're at the end of the query pipeline, we now send the output tuples
   // to the result consumer configured in the compilation context
-  auto &consumer = compilation_context_.GetQueryResultConsumer();
+  auto &consumer = compilation_context_.GetExecutionConsumer();
   consumer.ConsumeResult(*this, row);
 }
 

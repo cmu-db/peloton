@@ -40,17 +40,15 @@ void DeleteTranslator::InitializeState() {
 
   // Get the table pointer
   storage::DataTable *table = delete_plan_.GetTable();
-  llvm::Value *table_ptr =
-      codegen.Call(StorageManagerProxy::GetTableWithOid,
-                   {GetStorageManagerPtr(),
-                    codegen.Const32(table->GetDatabaseOid()),
-                    codegen.Const32(table->GetOid())});
-
-  llvm::Value *executor_ptr = GetCompilationContext().GetExecutorContextPtr();
+  llvm::Value *table_ptr = codegen.Call(
+      StorageManagerProxy::GetTableWithOid,
+      {GetStorageManagerPtr(), codegen.Const32(table->GetDatabaseOid()),
+       codegen.Const32(table->GetOid())});
 
   // Call Deleter.Init(txn, table)
   llvm::Value *deleter = LoadStatePtr(deleter_state_id_);
-  codegen.Call(DeleterProxy::Init, {deleter, table_ptr, executor_ptr});
+  codegen.Call(DeleterProxy::Init,
+               {deleter, table_ptr, GetExecutorContextPtr()});
 }
 
 void DeleteTranslator::Produce() const {

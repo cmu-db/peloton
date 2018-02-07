@@ -258,5 +258,25 @@ void FunctionBuilder::ReturnAndFinish(llvm::Value *ret) {
   finished_ = true;
 }
 
+llvm::Value *FunctionBuilder::GetOrCacheVariable(
+    const std::string &name, const std::function<llvm::Value *()> &func) {
+  auto iter = cached_vars_.find(name);
+  if (iter != cached_vars_.end()) {
+    return iter->second;
+  } else {
+    CodeGen codegen{code_context_};
+    auto pos = codegen->GetInsertPoint();
+    if (entry_bb_->empty()) {
+      codegen->SetInsertPoint(entry_bb_);
+    } else {
+      codegen->SetInsertPoint(&entry_bb_->back());
+    }
+    auto *val = func();
+    codegen->SetInsertPoint(&*pos);
+    cached_vars_.emplace(name, val);
+    return val;
+  }
+}
+
 }  // namespace codegen
 }  // namespace peloton

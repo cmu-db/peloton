@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "codegen/query.h"
-#include "codegen/query_result_consumer.h"
+#include "codegen/execution_consumer.h"
 #include "common/timer.h"
 #include "executor/plan_executor.h"
 #include "executor/executor_context.h"
@@ -25,7 +25,7 @@ Query::Query(const planner::AbstractPlan &query_plan)
     : query_plan_(query_plan) {}
 
 void Query::Execute(std::unique_ptr<executor::ExecutorContext> executor_context,
-                    QueryResultConsumer &consumer,
+                    ExecutionConsumer &consumer,
                     std::function<void(executor::ExecutionResult)> on_complete,
                     RuntimeStats *stats) {
   CodeGen codegen{code_context_};
@@ -41,18 +41,18 @@ void Query::Execute(std::unique_ptr<executor::ExecutorContext> executor_context,
 
   // We use this handy class to avoid complex casting and pointer manipulation
   struct FunctionArguments {
-    storage::StorageManager *storage_manager;
+    //storage::StorageManager *storage_manager;
     executor::ExecutorContext *executor_context;
-    QueryParameters *query_parameters;
+    //QueryParameters *query_parameters;
     char *consumer_arg;
     char rest[0];
   } PACKED;
 
   // Set up the function arguments
   auto *func_args = reinterpret_cast<FunctionArguments *>(param_data.get());
-  func_args->storage_manager = storage::StorageManager::GetInstance();
+  //func_args->storage_manager = storage::StorageManager::GetInstance();
   func_args->executor_context = executor_context.get();
-  func_args->query_parameters = &executor_context->GetParams();
+  //func_args->query_parameters = &executor_context->GetParams();
   func_args->consumer_arg = consumer.GetConsumerState();
 
   // Timer

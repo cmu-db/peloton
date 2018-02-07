@@ -25,7 +25,8 @@ namespace codegen {
 UpdateTranslator::UpdateTranslator(const planner::UpdatePlan &update_plan,
                                    CompilationContext &context,
                                    Pipeline &pipeline)
-    : OperatorTranslator(context, pipeline), update_plan_(update_plan),
+    : OperatorTranslator(context, pipeline),
+      update_plan_(update_plan),
       table_storage_(*update_plan.GetTable()->GetSchema()) {
   // Create the translator for our child and derived attributes
   context.Prepare(*update_plan.GetChild(0), pipeline);
@@ -37,8 +38,8 @@ UpdateTranslator::UpdateTranslator(const planner::UpdatePlan &update_plan,
     context.Prepare(*derived_attribute.expr);
   }
   // Prepare for updater
-  updater_state_id_ = context.GetRuntimeState().RegisterState("updater",
-      UpdaterProxy::GetType(GetCodeGen()));
+  updater_state_id_ = context.GetRuntimeState().RegisterState(
+      "updater", UpdaterProxy::GetType(GetCodeGen()));
 }
 
 oid_t GetTargetIndex(const TargetList &target_list, uint32_t index) {
@@ -53,13 +54,13 @@ oid_t GetTargetIndex(const TargetList &target_list, uint32_t index) {
 
 void UpdateTranslator::InitializeState() {
   auto &codegen = GetCodeGen();
-  auto &context = GetCompilationContext();
 
   // Prepare for all the information to be handed over to the updater
   // Get the transaction pointer
   // Get the table object pointer
   storage::DataTable *table = update_plan_.GetTable();
-  llvm::Value *table_ptr = codegen.Call(StorageManagerProxy::GetTableWithOid,
+  llvm::Value *table_ptr = codegen.Call(
+      StorageManagerProxy::GetTableWithOid,
       {GetStorageManagerPtr(), codegen.Const32(table->GetDatabaseOid()),
        codegen.Const32(table->GetOid())});
 
@@ -74,8 +75,7 @@ void UpdateTranslator::InitializeState() {
 
   // Initialize the inserter with txn and table
   llvm::Value *updater = LoadStatePtr(updater_state_id_);
-  codegen.Call(UpdaterProxy::Init, {updater, table_ptr,
-                                    context.GetExecutorContextPtr(),
+  codegen.Call(UpdaterProxy::Init, {updater, table_ptr, GetExecutorContextPtr(),
                                     target_vector_ptr, target_vector_size_ptr});
 }
 
@@ -128,7 +128,7 @@ void UpdateTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
 
     // Build up a tuple storage
     table_storage_.StoreValues(codegen, tuple_ptr, values, pool_ptr);
-  
+
     // Finally, update with help from the Updater
     std::vector<llvm::Value *> update_args = {updater};
     if (update_plan_.GetUpdatePrimaryKey() == false) {

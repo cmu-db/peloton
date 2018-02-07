@@ -6,7 +6,7 @@
 //
 // Identification: src/codegen/operator/table_scan_translator.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -37,8 +37,6 @@ TableScanTranslator::TableScanTranslator(const planner::SeqScanPlan &scan,
     : OperatorTranslator(context, pipeline),
       scan_(scan),
       table_(*scan_.GetTable()) {
-  LOG_DEBUG("Constructing TableScanTranslator ...");
-
   // The restriction, if one exists
   const auto *predicate = GetScanPlan().GetPredicate();
   if (predicate != nullptr) {
@@ -50,7 +48,6 @@ TableScanTranslator::TableScanTranslator(const planner::SeqScanPlan &scan,
       pipeline.InstallBoundaryAtOutput(this);
     }
   }
-  LOG_TRACE("Finished constructing TableScanTranslator ...");
 }
 
 // Produce!
@@ -58,15 +55,11 @@ void TableScanTranslator::Produce() const {
   auto &codegen = GetCodeGen();
   auto &table = GetTable();
 
-  LOG_TRACE("TableScan on [%u] starting to produce tuples ...", table.GetOid());
-
   // Get the table instance from the database
-  llvm::Value *storage_manager_ptr = GetStorageManagerPtr();
-  llvm::Value *db_oid = codegen.Const32(table.GetDatabaseOid());
-  llvm::Value *table_oid = codegen.Const32(table.GetOid());
-  llvm::Value *table_ptr =
-      codegen.Call(StorageManagerProxy::GetTableWithOid,
-                   {storage_manager_ptr, db_oid, table_oid});
+  auto *db_oid = codegen.Const32(table.GetDatabaseOid());
+  auto *table_oid = codegen.Const32(table.GetOid());
+  auto *table_ptr = codegen.Call(StorageManagerProxy::GetTableWithOid,
+                                 {GetStorageManagerPtr(), db_oid, table_oid});
 
   // The selection vector for the scan
   auto *raw_vec = codegen.AllocateBuffer(
@@ -121,8 +114,6 @@ TableScanTranslator::ScanConsumer::ScanConsumer(
 void TableScanTranslator::ScanConsumer::ProcessTuples(
     CodeGen &codegen, llvm::Value *tid_start, llvm::Value *tid_end,
     TileGroup::TileGroupAccess &tile_group_access) {
-  // TODO: Should visibility check be done here or in codegen::Table/TileGroup?
-
   // 1. Filter the rows in the range [tid_start, tid_end) by txn visibility
   FilterRowsByVisibility(codegen, tid_start, tid_end, selection_vector_);
 
@@ -180,10 +171,7 @@ void TableScanTranslator::ScanConsumer::SetupRowBatch(
 void TableScanTranslator::ScanConsumer::FilterRowsByVisibility(
     CodeGen &codegen, llvm::Value *tid_start, llvm::Value *tid_end,
     Vector &selection_vector) const {
-  llvm::Value *executor_context_ptr =
-      translator_.GetCompilationContext().GetExecutorContextPtr();
-  llvm::Value *txn = codegen.Call(ExecutorContextProxy::GetTransaction,
-                                  {executor_context_ptr});
+  llvm::Value *txn = translator_.GetTransactionPtr();
   llvm::Value *raw_sel_vec = selection_vector.GetVectorPtr();
 
   // Invoke TransactionRuntime::PerformRead(...)
@@ -210,7 +198,10 @@ void TableScanTranslator::ScanConsumer::FilterRowsByPredicate(
 
   // First, check if the predicate is SIMDable
   const auto *predicate = GetPredicate();
-  LOG_DEBUG("Is Predicate SIMDable : %d", predicate->IsSIMDable());
+
+  LOG_DEBUG("Is Predicate SIMDable: %s",
+            predicate->IsSIMDable() ? "true" : "false");
+
   // Determine the attributes the predicate needs
   std::unordered_set<const planner::AttributeInfo *> used_attributes;
   predicate->GetUsedAttributes(used_attributes);

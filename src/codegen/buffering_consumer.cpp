@@ -72,6 +72,10 @@ void BufferingConsumer::BufferTuple(char *state, char *tuple,
 // Create two pieces of state: a pointer to the output tuple vector and an
 // on-stack value array representing a single tuple.
 void BufferingConsumer::Prepare(CompilationContext &ctx) {
+  // Be sure to call our parent
+  ExecutionConsumer::Prepare(ctx);
+
+  // Install a little char* for the state we need
   auto &codegen = ctx.GetCodeGen();
   auto &runtime_state = ctx.GetRuntimeState();
   consumer_state_id_ =

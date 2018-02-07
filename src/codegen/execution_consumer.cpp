@@ -1,0 +1,73 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// execution_consumer.cpp
+//
+// Identification: src/codegen/execution_consumer.cpp
+//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+#include "codegen/execution_consumer.h"
+
+#include "codegen/compilation_context.h"
+#include "codegen/proxy/executor_context_proxy.h"
+
+namespace peloton {
+namespace codegen {
+
+ExecutionConsumer::ExecutionConsumer() : executor_ctx_type_(nullptr) {}
+
+void ExecutionConsumer::Prepare(CompilationContext &compilation_ctx) {
+  auto &codegen = compilation_ctx.GetCodeGen();
+  auto &runtime_state = compilation_ctx.GetRuntimeState();
+  executor_ctx_type_ = ExecutorContextProxy::GetType(codegen);
+  executor_ctx_id_ = runtime_state.RegisterState(
+      "executorContext", executor_ctx_type_->getPointerTo());
+}
+
+void ExecutionConsumer::ConsumeResult(ConsumerContext &context,
+                                      RowBatch &batch) const {
+  // Just iterate over every row in the batch
+  batch.Iterate(context.GetCodeGen(), [this, &context](RowBatch::Row &row) {
+    ConsumeResult(context, row);
+  });
+}
+
+llvm::Value *ExecutionConsumer::GetExecutorContextPtr(
+    CompilationContext &compilation_ctx) {
+  auto &runtime_state = compilation_ctx.GetRuntimeState();
+  return runtime_state.LoadStateValue(compilation_ctx.GetCodeGen(),
+                                      executor_ctx_id_);
+}
+
+llvm::Value *ExecutionConsumer::GetTransactionPtr(
+    CompilationContext &compilation_ctx) {
+  auto &codegen = compilation_ctx.GetCodeGen();
+  auto *exec_ctx_ptr = GetExecutorContextPtr(compilation_ctx);
+  auto *addr = codegen->CreateConstInBoundsGEP2_32(executor_ctx_type_,
+                                                   exec_ctx_ptr, 0, 1);
+  return codegen->CreateLoad(addr, "transactionPtr");
+}
+
+llvm::Value *ExecutionConsumer::GetStorageManagerPtr(
+    CompilationContext &compilation_ctx) {
+  auto &codegen = compilation_ctx.GetCodeGen();
+  auto *exec_ctx_ptr = GetExecutorContextPtr(compilation_ctx);
+  auto *addr = codegen->CreateConstInBoundsGEP2_32(executor_ctx_type_,
+                                                   exec_ctx_ptr, 0, 3);
+  return codegen->CreateLoad(addr, "storageMgrPtr");
+}
+
+llvm::Value *ExecutionConsumer::GetQueryParametersPtr(
+    CompilationContext &compilation_ctx) {
+  auto &codegen = compilation_ctx.GetCodeGen();
+  auto *exec_ctx_ptr = GetExecutorContextPtr(compilation_ctx);
+  return codegen->CreateConstInBoundsGEP2_32(executor_ctx_type_, exec_ctx_ptr,
+                                             0, 2, "queryParamsPtr");
+}
+
+}  // namespace codegen
+}  // namespace peloton
