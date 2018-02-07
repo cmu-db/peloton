@@ -262,7 +262,7 @@ void GetToIndexScan::Transform(
           LOG_TRACE("Value Type: %d",
                     static_cast<int>(
                         reinterpret_cast<expression::ConstantValueExpression *>(
-                        expr->GetModifiedChild(1))
+                        expr->GetModifiableChild(1))
                         ->GetValueType()));
         } else {
           value_list.push_back(
