@@ -117,10 +117,10 @@ elif [ "$DISTRO" = "DEBIAN OS" ]; then
 ## FEDORA
 ## ------------------------------------------------
 elif [[ "$DISTRO" == *"FEDORA"* ]]; then
-    if [ "$DISTRO_VER" == "27" ]; then
-        LLVM_INSTALL_VERSION="3.9"
-    else
+    if [ "$DISTRO_VER" -le "26" ]; then
         LLVM_INSTALL_VERSION=""
+    else
+        LLVM_INSTALL_VERSION="3.9"
     fi
     
     sudo dnf -q install -y \
