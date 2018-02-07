@@ -15,7 +15,7 @@ PELOTON_DIR="$CODE_SOURCE_DIR/../../.."
 PELOTON_PID=""
 PELOTON_PORT="57721"
 PELOTON_HOST="localhost"
-PELOTON_USER="postgres"
+PELOTON_USER="default_database"
 PELOTON_PASS="postgres"
 PELOTON_ARGS='sslmode=disable'
 

@@ -33,8 +33,15 @@ matrix:
               - PELOTON_BUILD_TYPE=Debug
               # COVERALLS: we run coveralls only for one compiler
               - COVERALLS=On
-          # only run tests if the build itself succeeded
-          after_success:
+          # override script value to run also tests and benchmarks
+          script:
+              # create build directory
+              - mkdir build
+              - cd build
+              # run cmake. NOTE: the PATH is made explicit to avoid automatic selection of the preinstalled llvm version in the Travis trusty image
+              - PATH=/usr/lib/llvm-3.7/bin:/usr/bin:$PATH cmake -DCOVERALLS=$COVERALLS -DCMAKE_PREFIX_PATH=`llvm-config-3.7 --prefix` -DCMAKE_BUILD_TYPE=$PELOTON_BUILD_TYPE -DUSE_SANITIZER=Address ..
+              # build
+              - make -j4
               # run tests
               - if [[ $TRAVIS_OS_NAME != 'osx' ]]; then make check -j4; fi
               - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then ASAN_OPTIONS=detect_container_overflow=0 make check -j4; fi
@@ -67,8 +74,15 @@ matrix:
               - CC=gcc-4.8
               - PELOTON_BUILD_TYPE=Release
               - COVERALLS=Off
-          # only run tests if the build itself succeeded
-          after_success:
+          # override script value to run also tests and benchmarks
+          script:
+              # create build directory
+              - mkdir build
+              - cd build
+              # run cmake. NOTE: the PATH is made explicit to avoid automatic selection of the preinstalled llvm version in the Travis trusty image
+              - PATH=/usr/lib/llvm-3.7/bin:/usr/bin:$PATH cmake -DCOVERALLS=$COVERALLS -DCMAKE_PREFIX_PATH=`llvm-config-3.7 --prefix` -DCMAKE_BUILD_TYPE=$PELOTON_BUILD_TYPE -DUSE_SANITIZER=Address ..
+              # build
+              - make -j4
               # run tests
               - if [[ $TRAVIS_OS_NAME != 'osx' ]]; then make check -j4; fi
               - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then ASAN_OPTIONS=detect_container_overflow=0 make check -j4; fi
@@ -129,6 +143,7 @@ before_script:
     # first, run source_validator
     - python ./script/validators/source_validator.py
 
+# build peloton (override this value to execute tests)
 script:
     # create build directory
     - mkdir build
