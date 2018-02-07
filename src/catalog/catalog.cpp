@@ -377,6 +377,7 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
 
   LOG_TRACE("Trying to create index %s for table %s", index_name.c_str(),
             table_name.c_str());
+
   // check if database exists
   auto database_object =
       DatabaseCatalog::GetInstance()->GetDatabaseObject(database_name, txn);
@@ -392,9 +393,11 @@ ResultType Catalog::CreateIndex(const std::string &database_name,
 
   IndexConstraintType index_constraint =
       unique_keys ? IndexConstraintType::UNIQUE : IndexConstraintType::DEFAULT;
+
   ResultType success = CreateIndex(
       database_object->GetDatabaseOid(), table_object->GetTableOid(), key_attrs,
       index_name, index_type, index_constraint, unique_keys, txn);
+
   return success;
 }
 
