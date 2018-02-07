@@ -57,13 +57,20 @@ class ItemPointerComparator {
     return (p1->block == p2->block) && (p1->offset == p2->offset);
   }
 
+  bool operator()(ItemPointer const &p1, ItemPointer const &p2) const {
+    return (p1.block == p2.block) && (p1.offset == p2.offset);
+  }
+
   ItemPointerComparator(const ItemPointerComparator &) {}
   ItemPointerComparator() {}
 };
 
 struct ItemPointerHasher {
   size_t operator()(const ItemPointer &item) const {
-    return std::hash<oid_t>()(item.block) ^ std::hash<oid_t>()(item.offset);
+    // This constant is found in the CityHash code 
+    // [Source libcuckoo/default_hasher.hh]
+    return (std::hash<oid_t>()(item.block)*0x9ddfea08eb382d69ULL) ^
+      std::hash<oid_t>()(item.offset);
   }
 };
 
