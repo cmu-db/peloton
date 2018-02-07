@@ -33,7 +33,7 @@
 namespace peloton {
 
 namespace parser {
-    class ExplainStatement;
+class ExplainStatement;
 }
 
 namespace network {
@@ -167,7 +167,8 @@ class PostgresProtocolHandler : public ProtocolHandler {
   ProcessResult ExecQueryMessage(InputPacket *pkt, const size_t thread_id);
 
   /* Execute a EXPLAIN query message */
-  ResultType ExecQueryExplain(const std::string& query, parser::ExplainStatement* explain_stmt);
+  ResultType ExecQueryExplain(const std::string &query,
+                              parser::ExplainStatement *explain_stmt);
 
   /* Process the PARSE message of the extended query protocol */
   void ExecParseMessage(InputPacket *pkt);

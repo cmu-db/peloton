@@ -326,19 +326,17 @@ typedef struct SelectStmt {
   /* Eventually add fields for CORRESPONDING spec here */
 } SelectStmt;
 
-/* ----------------------
- *		Explain Statement
+/*
+ * Explain Statement
  *
  * The "query" field is initially a raw parse tree, and is converted to a
  * Query node during parse analysis.  Note that rewriting and planning
  * of the query are always postponed until execution.
- * ----------------------
  */
-typedef struct ExplainStmt
-{
-	NodeTag		type;
-	Node	   *query;			/* the query (see comments above) */
-	List	   *options;		/* list of DefElem nodes */
+typedef struct ExplainStmt {
+  NodeTag type;
+  Node *query;   /* the query (see comments above) */
+  List *options; /* list of DefElem nodes */
 } ExplainStmt;
 
 typedef struct TypeName {

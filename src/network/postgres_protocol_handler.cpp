@@ -224,7 +224,8 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(
       return ProcessResult::COMPLETE;
     };
     case QueryType::QUERY_EXPLAIN: {
-      auto status = ExecQueryExplain(query, static_cast<parser::ExplainStatement*>(sql_stmt.get()));
+      auto status = ExecQueryExplain(
+          query, static_cast<parser::ExplainStatement *>(sql_stmt.get()));
       ExecQueryMessageGetResult(status);
       return ProcessResult::COMPLETE;
     }
@@ -258,7 +259,7 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(
 }
 
 ResultType PostgresProtocolHandler::ExecQueryExplain(
-    const std::string &query, parser::ExplainStatement* explain_stmt) {
+    const std::string &query, parser::ExplainStatement *explain_stmt) {
   PL_ASSERT(explain_stmt != nullptr);
 
   std::string error_message;

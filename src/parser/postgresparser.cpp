@@ -1794,7 +1794,7 @@ parser::SQLStatement *PostgresParser::NodeTransform(Node *stmt) {
       result = VariableSetTransform((VariableSetStmt*)stmt);
       break;
     case T_ExplainStmt:
-      result = ExplainTransform(reinterpret_cast<ExplainStmt*>(stmt));
+      result = ExplainTransform(reinterpret_cast<ExplainStmt *>(stmt));
       break;
     default: {
       throw NotImplementedException(StringUtil::Format(
