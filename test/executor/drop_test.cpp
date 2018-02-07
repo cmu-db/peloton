@@ -260,13 +260,8 @@ TEST_F(DropTests, DroppingIndexByName) {
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  auto index_catalog = catalog::IndexCatalog::GetInstance()->GetIndexObject(
-              index_name1, txn);
   // Check the effect of drop
   // Most major check in this test case
-  EXPECT_EQ(catalog::IndexCatalog::GetInstance()->GetIndexObject(
-                index_name1, txn), index_catalog);
-
   // Now dropping the index using the DropIndex functionality
   catalog->DropIndex(index_name1,txn);
   EXPECT_EQ(catalog::IndexCatalog::GetInstance()->GetIndexObject(
@@ -275,6 +270,11 @@ TEST_F(DropTests, DroppingIndexByName) {
 
   // Drop the table just created
   txn = txn_manager.BeginTransaction();
+  // Check the effect of drop index
+  EXPECT_EQ(catalog::IndexCatalog::GetInstance()->GetIndexObject(
+                index_name1, txn), nullptr);
+
+  // Now dropping the table
   catalog->DropTable(TEST_DB_NAME, "department_table_01", txn);
   txn_manager.CommitTransaction(txn);
 
