@@ -88,6 +88,13 @@ CUCKOO_MAP_TEMPLATE_ARGUMENTS
 CUCKOO_MAP_ITERATOR_TYPE
 CUCKOO_MAP_TYPE::GetIterator() { return cuckoo_map.lock_table(); }
 
+CUCKOO_MAP_TEMPLATE_ARGUMENTS
+CUCKOO_MAP_ITERATOR_TYPE 
+CUCKOO_MAP_TYPE::GetConstIterator() const {
+  auto locked_table = const_cast<CuckooMap*>(this)->cuckoo_map.lock_table();
+  return locked_table;
+}
+
 // Explicit template instantiation
 template class CuckooMap<uint32_t, uint32_t>;
 
@@ -106,5 +113,9 @@ template class CuckooMap<std::shared_ptr<oid_t>, std::shared_ptr<oid_t>>;
 
 // Used in StatementCacheManager
 template class CuckooMap<StatementCache *, StatementCache *>;
+
+// Used in InternalTypes
+template class CuckooMap<ItemPointer, RWType, ItemPointerHasher, 
+                          ItemPointerComparator>;
 
 }  // namespace peloton

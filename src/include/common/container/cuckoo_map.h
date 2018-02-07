@@ -76,6 +76,9 @@ class CuckooMap {
   CUCKOO_MAP_ITERATOR_TYPE
   GetIterator();
 
+  CUCKOO_MAP_ITERATOR_TYPE
+  GetConstIterator() const;
+
  private:
 
   // cuckoo map
