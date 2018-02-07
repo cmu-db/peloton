@@ -12,13 +12,12 @@
 
 #pragma once
 
-#include "common/logger.h"
-#include "common/sql_node_visitor.h"
-#include "expression/abstract_expression.h"
 #include "parser/sql_statement.h"
-#include "parser/table_ref.h"
 
 namespace peloton {
+
+class SqlNodeVisitor;
+
 namespace parser {
 
 /**
@@ -31,7 +30,7 @@ class ExplainStatement : public SQLStatement {
       : SQLStatement(StatementType::EXPLAIN) {}
   virtual ~ExplainStatement() {}
 
-  virtual void Accept(SqlNodeVisitor* /*v*/) override { }
+  virtual void Accept(UNUSED_ATTRIBUTE SqlNodeVisitor* v) override { }
 
   std::unique_ptr<parser::SQLStatement> real_sql_stmt;
 };

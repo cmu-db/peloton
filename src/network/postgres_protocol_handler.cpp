@@ -23,6 +23,7 @@
 #include "network/postgres_protocol_handler.h"
 #include "network/peloton_server.h"
 #include "parser/postgresparser.h"
+#include "parser/statements.h"
 #include "planner/abstract_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"

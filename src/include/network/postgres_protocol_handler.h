@@ -24,7 +24,6 @@
 #include "common/statement.h"
 #include "common/statement_cache.h"
 #include "traffic_cop/traffic_cop.h"
-#include "parser/postgresparser.h"
 #include "protocol_handler.h"
 #include "traffic_cop/traffic_cop.h"
 
@@ -32,6 +31,10 @@
 #define NULL_CONTENT_SIZE -1
 
 namespace peloton {
+
+namespace parser {
+    class ExplainStatement;
+}
 
 namespace network {
 
