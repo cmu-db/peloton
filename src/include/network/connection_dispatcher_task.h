@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include "common/dedicated_thread_owner.h"
 #include "notifiable_task.h"
 #include "network_state.h"
 #include "concurrency/epoch_manager_factory.h"
@@ -29,7 +30,9 @@ namespace network {
  * then responsible for maintain, and when shutting down, shutting down the
  * spawned handlers also.
  */
-class ConnectionDispatcherTask : public NotifiableTask {
+class ConnectionDispatcherTask
+    : public NotifiableTask,
+      public DedicatedThreadOwner {
  public:
   /**
    * Creates a new ConnectionDispatcherTask, spawning the specified number of
@@ -57,7 +60,10 @@ class ConnectionDispatcherTask : public NotifiableTask {
   /**
    * Breaks the dispatcher and managed handlers from their event loops.
    */
-  void ExitLoop() override;
+  void Terminate() override;
+
+ protected:
+  void OnThreadRemoved(std::shared_ptr<DedicatedThreadTask> task) override;
 
  private:
   std::vector<std::shared_ptr<ConnectionHandlerTask>> handlers_;
