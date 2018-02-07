@@ -60,7 +60,8 @@ std::string StringUtil::Repeat(const std::string &str, const std::size_t n) {
   return (os.str());
 }
 
-std::vector<std::string> StringUtil::Split(const std::string &str, char delimiter) {
+std::vector<std::string> StringUtil::Split(const std::string &str,
+                                           char delimiter) {
   std::stringstream ss(str);
   std::vector<std::string> lines;
   std::string temp;
@@ -68,6 +69,25 @@ std::vector<std::string> StringUtil::Split(const std::string &str, char delimite
     lines.push_back(temp);
   }  // WHILE
   return (lines);
+}
+
+std::string StringUtil::Join(const std::vector<std::string> &input,
+                             const std::string &separator) {
+  // The result
+  std::string result;
+
+  // If the input isn't empty, append the first element. We do this so we don't
+  // need to introduce an if into the loop.
+  if (!input.empty()) {
+    result += input[0];
+  }
+
+  // Append the remaining input components, after the first
+  for (uint32_t i = 1; i < input.size(); i++) {
+    result += separator + input[i];
+  }
+
+  return result;
 }
 
 std::string StringUtil::Prefix(const std::string &str,
