@@ -773,7 +773,6 @@ bool DataTable::CheckForeignKeyConstraints(
 
       // The foreign key constraints only refer to the primary key
       if (index->GetIndexType() == IndexConstraintType::PRIMARY_KEY) {
-        LOG_INFO("BEGIN checking referred table");
 
         std::vector<oid_t> key_attrs = foreign_key->GetSinkColumnIds();
         std::unique_ptr<catalog::Schema> foreign_key_schema(
