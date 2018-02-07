@@ -6,6 +6,18 @@
 //
 // Identification: src/network/peloton_server.cpp
 //
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// peloton_server.cpp
+//
+// Identification: src/network/peloton_server.cpp
+//
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
@@ -257,7 +269,7 @@ PelotonServer &PelotonServer::SetupServer() {
 }
 
 void PelotonServer::ServerLoop() {
-  dispatcher_task_->RunTask();
+  dispatcher_task_->EventLoop();
   LOG_INFO("Closing server");
   int status;
   do {
@@ -270,7 +282,7 @@ void PelotonServer::ServerLoop() {
 
 void PelotonServer::Close() {
   LOG_INFO("Begin to stop server");
-  dispatcher_task_->Terminate();
+  dispatcher_task_->ExitLoop();
 }
 
 /**

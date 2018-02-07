@@ -11,7 +11,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "network/connection_dispatcher_task.h"
-#include "common/dedicated_thread_registry.h"
 
 #define MASTER_THREAD_ID (-1)
 
@@ -24,7 +23,7 @@ ConnectionDispatcherTask::ConnectionDispatcherTask(int num_handlers,
   RegisterEvent(
       listen_fd, EV_READ | EV_PERSIST,
       METHOD_AS_CALLBACK(ConnectionDispatcherTask, DispatchConnection), this);
-  RegisterSignalEvent(SIGHUP, METHOD_AS_CALLBACK(NotifiableTask, Terminate),
+  RegisterSignalEvent(SIGHUP, METHOD_AS_CALLBACK(NotifiableTask, ExitLoop),
                       this);
 
   // TODO(tianyu) Figure out what this initialization logic is doing and
@@ -32,17 +31,16 @@ ConnectionDispatcherTask::ConnectionDispatcherTask(int num_handlers,
   // register thread to epoch manager.
   if (concurrency::EpochManagerFactory::GetEpochType() ==
       EpochType::DECENTRALIZED_EPOCH) {
-    for (size_t task_id = 0; task_id < (size_t) num_handlers; task_id++) {
+    for (size_t task_id = 0; task_id < (size_t)num_handlers; task_id++) {
       concurrency::EpochManagerFactory::GetInstance().RegisterThread(task_id);
     }
   }
 
   // create worker threads.
   for (int task_id = 0; task_id < num_handlers; task_id++) {
-    auto handler =
-        DedicatedThreadRegistry::GetInstance()
-            .RegisterThread<ConnectionHandlerTask>(this, task_id);
+    auto handler = std::make_shared<ConnectionHandlerTask>(task_id);
     handlers_.push_back(handler);
+    thread_pool.SubmitDedicatedTask([=] { handler->EventLoop(); });
   }
 }
 
@@ -50,7 +48,7 @@ void ConnectionDispatcherTask::DispatchConnection(int fd, short) {
   struct sockaddr_storage addr;
   socklen_t addrlen = sizeof(addr);
 
-  int new_conn_fd = accept(fd, (struct sockaddr *) &addr, &addrlen);
+  int new_conn_fd = accept(fd, (struct sockaddr *)&addr, &addrlen);
   if (new_conn_fd == -1) {
     LOG_ERROR("Failed to accept");
   }
@@ -67,15 +65,9 @@ void ConnectionDispatcherTask::DispatchConnection(int fd, short) {
   handler->Notify(new_conn_fd);
 }
 
-void ConnectionDispatcherTask::Terminate() {
-  NotifiableTask::Terminate();
-  for (auto &handler : handlers_) handler->Terminate();
-}
-
-void ConnectionDispatcherTask::OnThreadRemoved(
-    std::shared_ptr<DedicatedThreadTask> task) {
-  handlers_.erase(handlers_.begin()
-                      + std::static_pointer_cast<ConnectionHandlerTask>(task)->Id());
+void ConnectionDispatcherTask::ExitLoop() {
+  NotifiableTask::ExitLoop();
+  for (auto &handler : handlers_) handler->ExitLoop();
 }
 
 }  // namespace network

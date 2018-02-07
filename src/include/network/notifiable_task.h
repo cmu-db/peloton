@@ -22,7 +22,6 @@
 #include <sys/file.h>
 #include <event2/thread.h>
 
-#include "common/dedicated_thread_task.h"
 #include "common/exception.h"
 #include "common/logger.h"
 #include "network_state.h"
@@ -56,7 +55,7 @@ namespace network {
  * More specifically, NotifiableTasks are backed by libevent, and takes care of
  * memory management with the library.
  */
-class NotifiableTask : public DedicatedThreadTask {
+class NotifiableTask {
  public:
   /**
    * Constructs a new NotifiableTask instance.
@@ -211,19 +210,22 @@ class NotifiableTask : public DedicatedThreadTask {
   }
 
   /**
+   * In a loop, make this notifiable task wait and respond to incoming events
+   */
+  void EventLoop() {
+    EventUtil::EventBaseDispatch(base_);
+    LOG_TRACE("stop");
+  }
+
+  /**
    * Exits the event loop
    */
-  virtual void Terminate() override { event_active(terminate_, 0, 0); }
+  virtual void ExitLoop() { event_active(terminate_, 0, 0); }
 
   /**
    * Wrapper around ExitLoop() to conform to libevent callback signature
    */
-  void Terminate(int, short) { Terminate(); }
-
-  void RunTask() override {
-    EventUtil::EventBaseDispatch(base_);
-    LOG_TRACE("stop");
-  }
+  void ExitLoop(int, short) { ExitLoop(); }
 
  private:
   const int task_id_;
