@@ -49,24 +49,26 @@ namespace concurrency {
  */
 
 TransactionContext::TransactionContext(const size_t thread_id,
-                         const IsolationLevelType isolation,
-                         const cid_t &read_id)
-                         : rw_set_(INTITIAL_RW_SET_SIZE) {
+                                       const IsolationLevelType isolation,
+                                       const cid_t &read_id)
+    : rw_set_(INTITIAL_RW_SET_SIZE) {
   Init(thread_id, isolation, read_id);
 }
 
 TransactionContext::TransactionContext(const size_t thread_id,
-                         const IsolationLevelType isolation,
-                         const cid_t &read_id, const cid_t &commit_id)
-                         : rw_set_(INTITIAL_RW_SET_SIZE) {
+                                       const IsolationLevelType isolation,
+                                       const cid_t &read_id,
+                                       const cid_t &commit_id)
+    : rw_set_(INTITIAL_RW_SET_SIZE) {
   Init(thread_id, isolation, read_id, commit_id);
 }
 
 TransactionContext::TransactionContext(const size_t thread_id,
-                         const IsolationLevelType isolation,
-                         const cid_t &read_id, const cid_t &commit_id,
-                         const size_t rw_set_size)
-                         : rw_set_(rw_set_size) {
+                                       const IsolationLevelType isolation,
+                                       const cid_t &read_id,
+                                       const cid_t &commit_id,
+                                       const size_t rw_set_size)
+    : rw_set_(rw_set_size) {
   Init(thread_id, isolation, read_id, commit_id);
 }
 
