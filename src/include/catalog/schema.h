@@ -36,7 +36,8 @@ class Schema : public Printable {
   void CreateTupleSchema(const std::vector<type::TypeId> &column_types,
                          const std::vector<oid_t> &column_lengths,
                          const std::vector<std::string> &column_names,
-                         const std::vector<bool> &is_inlined);
+                         const std::vector<bool> &is_inlined,
+                         const std::vector<type::TypeId> &column_elem_types);
 
   // Construct schema from vector of Column
   Schema(const std::vector<Column> &columns);

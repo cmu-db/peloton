@@ -25,7 +25,8 @@ void Schema::CreateTupleSchema(
     const std::vector<type::TypeId> &column_types,
     const std::vector<oid_t> &column_lengths,
     const std::vector<std::string> &column_names,
-    const std::vector<bool> &is_inlined) {
+    const std::vector<bool> &is_inlined,
+    const std::vector<type::TypeId> &column_elem_types) {
   bool tup_is_inlined = true;
   oid_t num_columns = column_types.size();
   oid_t column_offset = 0;
@@ -33,7 +34,7 @@ void Schema::CreateTupleSchema(
   for (oid_t column_itr = 0; column_itr < num_columns; column_itr++) {
     Column column(column_types[column_itr], column_lengths[column_itr],
                   column_names[column_itr], is_inlined[column_itr],
-                  column_offset);
+                  column_offset, column_elem_types[column_itr]);
 
     column_offset += column.GetFixedLength();
 
@@ -61,9 +62,11 @@ Schema::Schema(const std::vector<Column> &columns)
   std::vector<oid_t> column_lengths;
   std::vector<std::string> column_names;
   std::vector<bool> is_inlined;
+  std::vector<type::TypeId> column_elem_types;
 
   for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
     column_types.push_back(columns[column_itr].GetType());
+    column_elem_types.push_back(columns[column_itr].GetElemType());
 
     if (columns[column_itr].IsInlined())
       column_lengths.push_back(columns[column_itr].GetFixedLength());
@@ -74,7 +77,8 @@ Schema::Schema(const std::vector<Column> &columns)
     is_inlined.push_back(columns[column_itr].IsInlined());
   }
 
-  CreateTupleSchema(column_types, column_lengths, column_names, is_inlined);
+  CreateTupleSchema(column_types, column_lengths, column_names, is_inlined,
+                    column_elem_types);
 
   // Add constraints
   for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {

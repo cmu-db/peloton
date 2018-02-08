@@ -147,6 +147,12 @@ typedef struct A_Expr {
   int location;     /* token location, or -1 if unknown */
 } A_Expr;
 
+typedef struct A_ArrayExpr {
+  NodeTag   type;
+  List     *elements;   /* array element expressions */
+  int     location;   /* token location, or -1 if unknown */
+} A_ArrayExpr;
+
 typedef enum NullTestType { IS_NULL, IS_NOT_NULL } NullTestType;
 
 typedef struct NullTest {

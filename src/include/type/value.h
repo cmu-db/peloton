@@ -50,7 +50,8 @@ class Value : public Printable {
 
   // ARRAY values
   template <class T>
-  Value(TypeId type, const std::vector<T> &vals, TypeId element_type);
+  Value(TypeId type, const std::vector<T> *vals, TypeId element_type,
+        bool manage_data);
 
   // BOOLEAN and TINYINT
   Value(TypeId type, int8_t val);
@@ -91,6 +92,7 @@ class Value : public Printable {
 
   // Get the type of this value
   inline TypeId GetTypeId() const { return type_id_; }
+  inline TypeId GetElemTypeId() const { return size_.elem_type_id; }
   const std::string GetInfo() const override;
 
   // Comparison functions
@@ -167,7 +169,12 @@ class Value : public Printable {
   }
 
   // Is a value null?
-  inline bool IsNull() const { return size_.len == PELOTON_VALUE_NULL; }
+  inline bool IsNull() const {
+    if(type_id_ == TypeId::ARRAY) {
+      return GetLength() == 0;
+    }
+    return size_.len == PELOTON_VALUE_NULL;
+  }
 
   // Examine the type of this object.
   bool CheckInteger() const;
@@ -223,6 +230,14 @@ class Value : public Printable {
   inline static Value DeserializeFrom(SerializeInput &in, const TypeId type_id,
                                       AbstractPool *pool = nullptr) {
     return Type::GetInstance(type_id)->DeserializeFrom(in, pool);
+  }
+
+  inline int32_t GetInteger() const {
+    return value_.integer;
+  }
+
+  inline double GetDecimal() const {
+    return value_.decimal;
   }
 
   // Access the raw variable length data
@@ -345,11 +360,18 @@ class Value : public Printable {
 // ARRAY here to ease creation of templates
 // TODO: Fix the representation for a null array
 template <class T>
-Value::Value(TypeId type, const std::vector<T> &vals, TypeId element_type)
-    : Value(TypeId::ARRAY) {
+Value::Value(TypeId type, const std::vector<T> *vals, TypeId element_type,
+             bool manage_data)
+    : Value(TypeId::ARRAY){
+  manage_data_ = manage_data; 
   switch (type) {
     case TypeId::ARRAY:
-      value_.array = (char *)&vals;
+      if (manage_data) {
+        auto vec = new std::vector<T>(*vals);
+        value_.array = reinterpret_cast<char *>(vec);
+      } else {
+        value_.array = const_cast<char *>(reinterpret_cast<const char *>(vals));
+      }
       size_.elem_type_id = element_type;
       break;
     default: {

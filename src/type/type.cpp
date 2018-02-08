@@ -30,7 +30,7 @@
 namespace peloton {
 namespace type {
 
-Type* Type::kTypes[] = {
+Type *Type::kTypes[] = {
     new Type(TypeId::INVALID),
     new IntegerType(TypeId::PARAMETER_OFFSET),
     new BooleanType(),

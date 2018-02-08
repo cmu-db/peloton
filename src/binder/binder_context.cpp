@@ -181,6 +181,7 @@ void BinderContext::GenerateAllColumnExpressions(
       auto tv_expr = new expression::TupleValueExpression(
           std::string(col_obj->GetColumnName()), std::string(entry.first));
       tv_expr->SetValueType(col_obj->GetColumnType());
+      tv_expr->SetElemValueType(col_obj->GetColumnElemType());
       tv_expr->DeduceExpressionName();
       tv_expr->SetBoundOid(table_obj->GetDatabaseOid(),
                            table_obj->GetTableOid(), col_obj->GetColumnId());

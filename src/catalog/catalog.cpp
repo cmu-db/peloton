@@ -270,7 +270,7 @@ ResultType Catalog::CreateTable(const std::string &database_name,
     ColumnCatalog::GetInstance()->InsertColumn(
         table_oid, column.GetName(), column_id, column.GetOffset(),
         column.GetType(), column.IsInlined(), column.GetConstraints(),
-        pool_.get(), txn);
+        pool_.get(), txn, column.GetElemType());
 
     // Create index on unique single column
     if (column.IsUnique()) {

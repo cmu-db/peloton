@@ -12,6 +12,7 @@
 
 #include "type/value.h"
 #include "type/array_type.h"
+#include <sstream>
 
 #include "type/boolean_type.h"
 #include "type/decimal_type.h"
@@ -19,6 +20,7 @@
 #include "type/timestamp_type.h"
 #include "type/type.h"
 #include "type/varlen_type.h"
+#include "type/abstract_pool.h"
 
 namespace peloton {
 namespace type {
@@ -590,9 +592,144 @@ Value ArrayType::CastAs(const Value &val UNUSED_ATTRIBUTE,
                   "Cannot cast array values.");
 }
 
-TypeId ArrayType::GetElementType(
-    const Value &val UNUSED_ATTRIBUTE) const {
-  return val.size_.elem_type_id;
+TypeId ArrayType::GetElementType(const Value &val) const {
+  return val.GetElemTypeId();
+}
+
+// Create a copy of this value
+Value ArrayType::Copy(const Value& val) const { return Value(val); }
+
+void ArrayType::SerializeTo(const Value& val UNUSED_ATTRIBUTE, SerializeOutput &out UNUSED_ATTRIBUTE) const {
+  throw Exception("Can't serialize array types to storage");
+}
+
+void ArrayType::SerializeTo(const Value& val, char *storage,
+                 bool inlined UNUSED_ATTRIBUTE,
+                 AbstractPool *pool) const {
+  TypeId elem_type_id = val.GetElemTypeId();
+  uint32_t len, size;
+  char* data = nullptr;
+  switch (elem_type_id) {
+    case TypeId::INTEGER: {
+      std::vector<int32_t> *int32_vec = 
+          reinterpret_cast<std::vector<int32_t> *>(val.value_.array);
+      len = int32_vec->size();
+      size = len * sizeof(int32_t) + sizeof(uint32_t) + sizeof(TypeId);
+      data = (pool == nullptr) ? new char[size] : (char *)pool->Allocate(size);
+      PL_MEMCPY(data, &elem_type_id, sizeof(TypeId));
+      PL_MEMCPY(data + sizeof(TypeId), &len, sizeof(uint32_t));
+      if(len > 0){
+        PL_MEMCPY(data + sizeof(TypeId) + sizeof(uint32_t), int32_vec->data(),
+                  size - sizeof(TypeId) - sizeof(uint32_t));
+      }
+      break;
+    }
+    case TypeId::DECIMAL: {
+      std::vector<double> *double_vec = 
+          reinterpret_cast<std::vector<double> *>(val.value_.array);
+      len = double_vec->size();
+      size = len * sizeof(double) + sizeof(uint32_t);
+      data = (pool == nullptr) ? new char[size] : (char *)pool->Allocate(size);
+      PL_MEMCPY(data, &elem_type_id, sizeof(TypeId));
+      PL_MEMCPY(data + sizeof(TypeId), &len, sizeof(uint32_t));
+      if(len > 0){
+        PL_MEMCPY(data + sizeof(TypeId) + sizeof(uint32_t), double_vec->data(),
+                  size - sizeof(TypeId) - sizeof(uint32_t));
+      }
+      break;
+    }
+    default: {
+      std::string msg =
+          StringUtil::Format("Invalid Type '%d' for Array SerializeTo method",
+                             static_cast<int>(elem_type_id));
+      throw Exception(ExceptionType::INCOMPATIBLE_TYPE, msg);
+    }
+  }
+  *reinterpret_cast<const char **>(storage) = data;
+}
+
+// Deserialize a value of the given type from the given storage space.
+Value ArrayType::DeserializeFrom(const char *storage,
+                                  const bool inlined UNUSED_ATTRIBUTE,
+                                  AbstractPool *pool UNUSED_ATTRIBUTE) const {
+  const char *ptr = *reinterpret_cast<const char *const *>(storage);
+  TypeId elem_type_id_ = *reinterpret_cast<const TypeId *>(ptr);
+  uint32_t len = *reinterpret_cast<const uint32_t *>(ptr + sizeof(TypeId));
+  switch (elem_type_id_) {
+    case TypeId::INTEGER:
+      if(len == 0) {
+        auto int32_vec = new std::vector<int32_t>();
+        return Value(TypeId::ARRAY, int32_vec, TypeId::INTEGER, false);
+      } else {
+        const int32_t *int32_begin = reinterpret_cast<const int32_t *>(ptr + 
+            sizeof(uint32_t) + sizeof(TypeId));
+        auto int32_vec = new std::vector<int32_t>(int32_begin, int32_begin + len);
+        return Value(TypeId::ARRAY, int32_vec, TypeId::INTEGER, false);
+      }
+      break;
+    case TypeId::DECIMAL:
+      if(len == 0) {
+        auto double_vec = new std::vector<double>();
+        return Value(TypeId::ARRAY, double_vec, TypeId::DECIMAL, false);
+      } else {
+        const double *double_begin = reinterpret_cast<const double *>(ptr + 
+            sizeof(uint32_t) + sizeof(TypeId));
+        auto double_vec = new std::vector<double>(double_begin, double_begin + len);
+        return Value(TypeId::ARRAY, double_vec, TypeId::DECIMAL, false);
+      }
+      break;
+    default: {
+      std::string msg =
+          StringUtil::Format("Invalid Type '%d' for Array DeserializeFrom method",
+                             static_cast<int>(elem_type_id_));
+      throw Exception(ExceptionType::INCOMPATIBLE_TYPE, msg);
+    }
+  }
+}
+
+Value ArrayType::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,
+                                  AbstractPool *pool UNUSED_ATTRIBUTE) const {
+  throw Exception("Can't deserialize array types from storage");
+}
+
+std::string ArrayType::ToString(const Value &val) const {
+  uint32_t len = GetLength(val);
+  std::ostringstream os;
+  os << "{";
+  for (uint32_t idx = 0; idx < len; idx++) {
+    if(idx != 0) {
+      os << ",";
+    }
+    os << GetElementAt(val, idx).ToString();
+  }
+  os << "}";
+  return os.str();
+}
+
+uint32_t ArrayType::GetLength(const Value &val) const {
+  TypeId elem_type_id = val.GetElemTypeId();
+  uint32_t len;
+  switch (elem_type_id) {
+    case TypeId::INTEGER: {
+      std::vector<int32_t> *int32_vec = 
+          reinterpret_cast<std::vector<int32_t> *>(val.value_.array);
+      len = int32_vec->size();
+      break;
+    }
+    case TypeId::DECIMAL: {
+      std::vector<double> *double_vec = 
+          reinterpret_cast<std::vector<double> *>(val.value_.array);
+      len = double_vec->size();
+      break;
+    }
+    default: {
+      std::string msg =
+          StringUtil::Format("Invalid Type '%d' for Array GetLength method",
+                             static_cast<int>(elem_type_id));
+      throw Exception(ExceptionType::INCOMPATIBLE_TYPE, msg);
+    }
+  }
+  return len;
 }
 
 }  // namespace type

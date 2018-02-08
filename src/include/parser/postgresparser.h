@@ -133,6 +133,9 @@ class PostgresParser {
   // transform helper for NullTest nodes
   static expression::AbstractExpression *NullTestTransform(NullTest *root);
 
+  // transform helper for ArrayExpr nodes
+  static expression::AbstractExpression *ArrayExprTransform(A_ArrayExpr *root);
+
   // transform helper for where clauses
   static expression::AbstractExpression *WhereTransform(Node *root);
 

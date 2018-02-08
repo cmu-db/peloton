@@ -50,7 +50,8 @@ struct ColumnDefinition {
     TEXT,
 
     VARCHAR,
-    VARBINARY
+    VARBINARY,
+    ARRAY
   };
 
   ColumnDefinition(DataType type) : type(type) {
@@ -58,7 +59,9 @@ struct ColumnDefinition {
     if (type == DataType::TEXT) varlen = type::PELOTON_TEXT_MAX_LEN;
   }
 
-  ColumnDefinition(char *name, DataType type) : name(name), type(type) {
+  ColumnDefinition(char *name, DataType type,
+                   DataType elem_type = DataType::INVALID) : name(name),
+                   type(type), elem_type(elem_type) {
     // Set varlen to TEXT_MAX_LENGTH if the data type is TEXT
     if (type == DataType::TEXT) varlen = type::PELOTON_TEXT_MAX_LEN;
   }
@@ -170,6 +173,58 @@ struct ColumnDefinition {
       case DataType::VARBINARY:
         return type::TypeId::VARBINARY;
 
+      case DataType::ARRAY:
+        return type::TypeId::ARRAY;
+
+      case DataType::DATE:
+        return type::TypeId::DATE;
+
+      case DataType::INVALID:
+      case DataType::PRIMARY:
+      case DataType::FOREIGN:
+      case DataType::MULTIUNIQUE:
+      default:
+        return type::TypeId::INVALID;
+    }
+  }
+
+  static type::TypeId GetElemValueType(DataType elem_type) {
+    switch (elem_type) {
+      case DataType::INT:
+      case DataType::INTEGER:
+        return type::TypeId::INTEGER;
+      case DataType::TINYINT:
+        return type::TypeId::TINYINT;
+      case DataType::SMALLINT:
+        return type::TypeId::SMALLINT;
+      case DataType::BIGINT:
+        return type::TypeId::BIGINT;
+
+      case DataType::DECIMAL:
+      case DataType::DOUBLE:
+      case DataType::FLOAT:
+        return type::TypeId::DECIMAL;
+
+      case DataType::BOOLEAN:
+        return type::TypeId::BOOLEAN;
+
+      // case ADDRESS:
+      //  return type::Type::ADDRESS;
+
+      case DataType::TIMESTAMP:
+        return type::TypeId::TIMESTAMP;
+
+      case DataType::CHAR:
+      case DataType::TEXT:
+      case DataType::VARCHAR:
+        return type::TypeId::VARCHAR;
+
+      case DataType::VARBINARY:
+        return type::TypeId::VARBINARY;
+
+      case DataType::ARRAY:
+        return type::TypeId::ARRAY;
+
       case DataType::DATE:
         return type::TypeId::DATE;
 
@@ -188,6 +243,7 @@ struct ColumnDefinition {
   std::unique_ptr<TableInfo> table_info_ = nullptr;
 
   DataType type;
+  DataType elem_type;
   size_t varlen = 0;
   bool not_null = false;
   bool primary = false;

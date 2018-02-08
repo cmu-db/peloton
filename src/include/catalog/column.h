@@ -29,18 +29,21 @@ class Column : public Printable {
   friend class Constraint;
 
  public:
-  Column() : column_type(type::TypeId::INVALID), fixed_length(INVALID_OID) {
+  Column() : column_type(type::TypeId::INVALID), fixed_length(INVALID_OID),
+             column_elem_type(type::TypeId::INVALID) {
     // Nothing to see...
   }
 
   Column(type::TypeId value_type, size_t column_length,
          std::string column_name, bool is_inlined = false,
-         oid_t column_offset = INVALID_OID)
+         oid_t column_offset = INVALID_OID,
+         type::TypeId elem_value_type = type::TypeId::INVALID)
       : column_name(column_name),
         column_type(value_type),
         fixed_length(INVALID_OID),
         is_inlined(is_inlined),
-        column_offset(column_offset) {
+        column_offset(column_offset),
+        column_elem_type(elem_value_type) {
     SetInlined();
 
     // We should not have an inline value of length 0
@@ -77,6 +80,8 @@ class Column : public Printable {
   size_t GetVariableLength() const { return variable_length; }
 
   inline type::TypeId GetType() const { return column_type; }
+
+  inline type::TypeId GetElemType() const { return column_elem_type; }
 
   inline bool IsInlined() const { return is_inlined; }
 
@@ -151,6 +156,8 @@ class Column : public Printable {
 
   // offset of column in tuple
   oid_t column_offset = INVALID_OID;
+  
+  type::TypeId column_elem_type;  //  = type::TypeId::INVALID;
 
   // Constraints
   std::vector<Constraint> constraints;

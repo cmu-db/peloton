@@ -14,6 +14,7 @@
 
 #include "catalog/catalog.h"
 #include "expression/constant_value_expression.h"
+#include "expression/array_expression.h"
 #include "storage/data_table.h"
 #include "type/ephemeral_pool.h"
 #include "type/value_factory.h"
@@ -54,6 +55,11 @@ InsertPlan::InsertPlan(storage::DataTable *table,
               std::make_tuple(tuple_idx, column_id, param_idx++);
           parameter_vector_->push_back(pair);
           params_value_type_->push_back(type);
+        } else if (exp->GetExpressionType() ==
+                   ExpressionType::ARRAY) {
+          auto *array_exp =
+              dynamic_cast<expression::ArrayExpression *>(exp.get());
+          values_.push_back(array_exp->GetValue());
         } else {
           PL_ASSERT(exp->GetExpressionType() == ExpressionType::VALUE_CONSTANT);
           auto *const_exp =

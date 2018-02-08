@@ -169,9 +169,11 @@ void BindNodeVisitor::Visit(parser::LimitDescription *) {}
 void BindNodeVisitor::Visit(parser::CopyStatement *) {}
 void BindNodeVisitor::Visit(parser::CreateFunctionStatement *) {}
 void BindNodeVisitor::Visit(parser::CreateStatement *node) {
+  LOG_INFO("aaron: CreateStatement");
   node->TryBindDatabaseName(default_database_name_);
 }
 void BindNodeVisitor::Visit(parser::InsertStatement *node) {
+  LOG_INFO("aaron: InsertStatement");
   node->TryBindDatabaseName(default_database_name_);
   context_ = std::make_shared<BinderContext>(nullptr);
   context_->AddRegularTable(node->GetDatabaseName(), node->GetTableName(),
@@ -194,6 +196,7 @@ void BindNodeVisitor::Visit(parser::AnalyzeStatement *node) {
 // void BindNodeVisitor::Visit(const parser::ConstantValueExpression *) {}
 
 void BindNodeVisitor::Visit(expression::TupleValueExpression *expr) {
+  LOG_INFO("aaron: TupleValueExpression");
   if (!expr->GetIsBound()) {
     std::tuple<oid_t, oid_t, oid_t> col_pos_tuple;
     std::shared_ptr<catalog::TableCatalogObject> table_obj = nullptr;

@@ -12,6 +12,7 @@
 
 #include "common/sql_node_visitor.h"
 #include "expression/comparison_expression.h"
+#include "expression/array_expression.h"
 #include "expression/aggregate_expression.h"
 #include "expression/conjunction_expression.h"
 #include "expression/function_expression.h"
@@ -58,6 +59,9 @@ void SqlNodeVisitor::Visit(expression::TupleValueExpression *expr) {
   expr->AcceptChildren(this);
 }
 void SqlNodeVisitor::Visit(expression::SubqueryExpression *expr) {
+  expr->AcceptChildren(this);
+}
+void SqlNodeVisitor::Visit(expression::ArrayExpression *expr) {
   expr->AcceptChildren(this);
 }
 

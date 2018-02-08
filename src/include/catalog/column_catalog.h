@@ -47,6 +47,7 @@ class ColumnCatalogObject {
   inline oid_t GetColumnId() { return column_id; }
   inline oid_t GetColumnOffset() { return column_offset; }
   inline type::TypeId GetColumnType() { return column_type; }
+  inline type::TypeId GetColumnElemType() { return column_elem_type; }
   inline bool IsInlined() { return is_inlined; }
   inline bool IsPrimary() { return is_primary; }
   inline bool IsNotNull() { return is_not_null; }
@@ -61,6 +62,7 @@ class ColumnCatalogObject {
   bool is_inlined;
   bool is_primary;
   bool is_not_null;
+  type::TypeId column_elem_type;
 };
 
 class ColumnCatalog : public AbstractCatalog {
@@ -86,7 +88,8 @@ class ColumnCatalog : public AbstractCatalog {
                     oid_t column_id, oid_t column_offset,
                     type::TypeId column_type, bool is_inlined,
                     const std::vector<Constraint> &constraints,
-                    type::AbstractPool *pool, concurrency::TransactionContext *txn);
+                    type::AbstractPool *pool, concurrency::TransactionContext *txn,
+                    type::TypeId column_elem_type = type::TypeId::INVALID);
   bool DeleteColumn(oid_t table_oid, const std::string &column_name,
                     concurrency::TransactionContext *txn);
   bool DeleteColumns(oid_t table_oid, concurrency::TransactionContext *txn);
@@ -112,6 +115,7 @@ class ColumnCatalog : public AbstractCatalog {
     IS_INLINED = 5,
     IS_PRIMARY = 6,
     IS_NOT_NULL = 7,
+    COLUMN_ELEM_TYPE = 8,
     // Add new columns here in creation order
   };
   std::vector<oid_t> all_column_ids = {0, 1, 2, 3, 4, 5, 6, 7};
