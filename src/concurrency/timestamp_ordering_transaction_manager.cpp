@@ -775,19 +775,18 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
     gc_object_set->emplace_back(database_oid, table_oid, index_oid);
   }
 
+  // Call the GetIterator() function to explicitly lock the cuckoohash
+  // and initilaize the iterator
+  auto rw_set_lt = rw_set.GetConstIterator();
+
   oid_t database_id = 0;
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
       StatsType::INVALID) {
     if (!rw_set.IsEmpty()) {
-      auto rw_set_iterator = rw_set.GetConstIterator();
-      const auto tile_group_id = rw_set_iterator.begin()->first.block;
+      const auto tile_group_id = rw_set_lt.begin()->first.block;
       database_id = manager.GetTileGroup(tile_group_id)->GetDatabaseId();
     }
   }
-
-  // Call the GetIterator() function to explicitly lock the cuckoohash
-  // and initilaize the iterator
-  auto rw_set_lt = rw_set.GetConstIterator();
 
   // install everything.
   // 1. install a new version for update operations;
@@ -952,19 +951,19 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
     gc_object_set->emplace_back(database_oid, table_oid, index_oid);
   }
 
-  oid_t database_id = 0;
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
-      StatsType::INVALID) {
-    if (!rw_set.IsEmpty()) {
-      auto rw_set_iterator = rw_set.GetConstIterator();
-      const auto tile_group_id = rw_set_iterator.begin()->first.block;
-      database_id = manager.GetTileGroup(tile_group_id)->GetDatabaseId();
-    }
-  }
 
   // Call the GetIterator() function to explicitly lock the cuckoohash
   // and initilaize the iterator
   auto rw_set_lt = rw_set.GetConstIterator();
+
+  oid_t database_id = 0;
+  if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
+      StatsType::INVALID) {
+    if (!rw_set.IsEmpty()) {
+      const auto tile_group_id = rw_set_lt.begin()->first.block;
+      database_id = manager.GetTileGroup(tile_group_id)->GetDatabaseId();
+    }
+  }
 
   // Iterate through each item pointer in the read write set
   // TODO: This might be inefficient since we will have to get the
