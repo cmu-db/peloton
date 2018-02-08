@@ -232,9 +232,6 @@ void QueryToOperatorTransformer::Visit(parser::InsertStatement *op) {
       catalog::Catalog::GetInstance()
           ->GetDatabaseObject(op->GetDatabaseName(), txn_)
           ->GetTableObject(op->GetTableName());
-  
-  if (target_table == nullptr)
-      throw CatalogException("Table " + op->GetTableName() + " is not found");
 
   if (op->type == InsertType::SELECT) {
     auto insert_expr = std::make_shared<OperatorExpression>(
