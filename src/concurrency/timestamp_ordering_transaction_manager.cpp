@@ -781,8 +781,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
     if (!rw_set.IsEmpty()) {
       auto rw_set_iterator = rw_set.GetConstIterator();
       const auto tile_group_id = rw_set_iterator.begin()->first.block;
-      database_id =
-          manager.GetTileGroup(tile_group_id)->GetDatabaseId();
+      database_id = manager.GetTileGroup(tile_group_id)->GetDatabaseId();
     }
   }
 
@@ -798,7 +797,6 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
   // TODO: This might be inefficient since we will have to get the
   // tile_group_header for each entry. Check if this needs to be consolidated
   for (const auto &tuple_entry : rw_set_lt) {
-    
     ItemPointer item_ptr = tuple_entry.first;
     oid_t tile_group_id = item_ptr.block;
     oid_t tuple_slot = item_ptr.offset;
@@ -809,7 +807,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
       // A read operation has acquired ownership but hasn't done any further
       // update/delete yet
       // Yield the ownership
-      YieldOwnership(current_txn, tile_group_header, tuple_slot);      
+      YieldOwnership(current_txn, tile_group_header, tuple_slot);
     } else if (tuple_entry.second == RWType::UPDATE) {
       // we must guarantee that, at any time point, only one version is
       // visible.
@@ -960,8 +958,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
     if (!rw_set.IsEmpty()) {
       auto rw_set_iterator = rw_set.GetConstIterator();
       const auto tile_group_id = rw_set_iterator.begin()->first.block;
-      database_id =
-          manager.GetTileGroup(tile_group_id)->GetDatabaseId();
+      database_id = manager.GetTileGroup(tile_group_id)->GetDatabaseId();
     }
   }
 
@@ -973,7 +970,6 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
   // TODO: This might be inefficient since we will have to get the
   // tile_group_header for each entry. Check if this needs to be consolidated
   for (const auto &tuple_entry : rw_set_lt) {
-
     ItemPointer item_ptr = tuple_entry.first;
     oid_t tile_group_id = item_ptr.block;
     oid_t tuple_slot = item_ptr.offset;
@@ -985,9 +981,9 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
       // Yield the ownership
       YieldOwnership(current_txn, tile_group_header, tuple_slot);
     } else if (tuple_entry.second == RWType::UPDATE) {
-      ItemPointer new_version = 
+      ItemPointer new_version =
           tile_group_header->GetPrevItemPointer(tuple_slot);
-      auto new_tile_group_header = 
+      auto new_tile_group_header =
           manager.GetTileGroup(new_version.block)->GetHeader();
       // these two fields can be set at any time.
       new_tile_group_header->SetBeginCommitId(new_version.offset, MAX_CID);

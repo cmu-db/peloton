@@ -189,7 +189,7 @@ class TransactionContext : public Printable {
   // timestamp when the transaction began
   uint64_t timestamp_;
 
-  ReadWriteSet rw_set_; 
+  ReadWriteSet rw_set_;
   CreateDropSet rw_object_set_;
 
   // this set contains data location that needs to be gc'd in the transaction.

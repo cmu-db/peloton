@@ -18,7 +18,7 @@
 
 #include <cstdint>
 
-#include "common/internal_types.h"
+#include "internal_types.h"
 
 namespace peloton {
 
@@ -67,8 +67,10 @@ class ItemPointerComparator {
 
 struct ItemPointerHasher {
   size_t operator()(const ItemPointer &item) const {
-    // This constant is found in the CityHash code 
+    // This constant is found in the CityHash code
     // [Source libcuckoo/default_hasher.hh]
+    // std::hash returns the same number for unsigned int which causes
+    // too many collisions in the Cuckoohash leading to too many collisions
     return (std::hash<oid_t>()(item.block)*0x9ddfea08eb382d69ULL) ^
       std::hash<oid_t>()(item.offset);
   }
@@ -77,7 +79,8 @@ struct ItemPointerHasher {
 class ItemPointerHashFunc {
  public:
   size_t operator()(ItemPointer *const &p) const {
-    return std::hash<oid_t>()(p->block) ^ std::hash<oid_t>()(p->offset);
+    return (std::hash<oid_t>()(p->block)*0x9ddfea08eb382d69ULL) ^
+    std::hash<oid_t>()(p->offset);
   }
 
   ItemPointerHashFunc(const ItemPointerHashFunc &) {}

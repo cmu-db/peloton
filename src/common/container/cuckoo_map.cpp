@@ -36,8 +36,7 @@ CUCKOO_MAP_TEMPLATE_ARGUMENTS
 CUCKOO_MAP_TYPE::CuckooMap() {}
 
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
-CUCKOO_MAP_TYPE::CuckooMap(size_t initial_size)
-  : cuckoo_map(initial_size) {}
+CUCKOO_MAP_TYPE::CuckooMap(size_t initial_size) : cuckoo_map(initial_size) {}
 
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
 CUCKOO_MAP_TYPE::~CuckooMap() {}
@@ -89,9 +88,14 @@ CUCKOO_MAP_ITERATOR_TYPE
 CUCKOO_MAP_TYPE::GetIterator() { return cuckoo_map.lock_table(); }
 
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
-CUCKOO_MAP_ITERATOR_TYPE 
+CUCKOO_MAP_ITERATOR_TYPE
 CUCKOO_MAP_TYPE::GetConstIterator() const {
-  auto locked_table = const_cast<CuckooMap*>(this)->cuckoo_map.lock_table();
+  // WARNING: This is a compiler hack and should never be used elsewhere
+  // If you are considering using this, please ask Marcel first
+  // We need the const iterator on the const object and the cuckoohash
+  // library returns a lock_table object. The other option would be to
+  // Modify the cuckoohash library which is not neat.
+  auto locked_table = const_cast<CuckooMap *>(this)->cuckoo_map.lock_table();
   return locked_table;
 }
 
@@ -115,7 +119,7 @@ template class CuckooMap<std::shared_ptr<oid_t>, std::shared_ptr<oid_t>>;
 template class CuckooMap<StatementCache *, StatementCache *>;
 
 // Used in InternalTypes
-template class CuckooMap<ItemPointer, RWType, ItemPointerHasher, 
-                          ItemPointerComparator>;
+template class CuckooMap<ItemPointer, RWType, ItemPointerHasher,
+                         ItemPointerComparator>;
 
 }  // namespace peloton
