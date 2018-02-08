@@ -130,6 +130,8 @@ class Exception : public std::runtime_error {
     }
   }
 
+  ExceptionType GetType() { return type; }
+
   // Based on :: http://panthema.net/2008/0901-stacktrace-demangled/
   static void PrintStackTrace(FILE *out = ::stderr,
                               unsigned int max_frames = 63) {
