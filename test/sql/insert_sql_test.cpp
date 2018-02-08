@@ -63,10 +63,12 @@ void CreateAndLoadTable4() {
       "i CHAR, j VARCHAR, k VARBINARY, l BOOLEAN);");
 
   // Insert tuples into table
-  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test4 VALUES "
+  TestingSQLUtil::ExecuteSQLQuery(
+      "INSERT INTO test4 VALUES "
       "(1, 2, 3, 4, 5.1, 6.1, '2017-10-10 00:00:00-00', "
       "'A', 'a', '1', 'true');");
-  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test4 VALUES "
+  TestingSQLUtil::ExecuteSQLQuery(
+      "INSERT INTO test4 VALUES "
       "(11, 12, 13, 14, 15.1, 16.1, '2017-10-11 00:00:00-00', "
       "'B', 'b', '2', 'false');");
 }
@@ -81,8 +83,7 @@ void CreateAndLoadTable5() {
 
 void CreateAndLoadTable6() {
   // Create a table first
-  TestingSQLUtil::ExecuteSQLQuery(
-      "CREATE TABLE test6(a INT, b INT, c INT);");
+  TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE test6(a INT, b INT, c INT);");
 
   // Insert tuples into table
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test6 VALUES (1, 22, 333);");
@@ -93,8 +94,7 @@ void CreateAndLoadTable6() {
 
 void CreateAndLoadTable7() {
   // Create a table first
-  TestingSQLUtil::ExecuteSQLQuery(
-      "CREATE TABLE test7(a INT, b INT, c INT);");
+  TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE test7(a INT, b INT, c INT);");
 
   // Insert tuples into table
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test7 VALUES (99, 5, 888);");
@@ -102,7 +102,6 @@ void CreateAndLoadTable7() {
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test7 VALUES (77, 7, 666);");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test7 VALUES (55, 8, 999);");
 }
-
 
 TEST_F(InsertSQLTests, InsertOneValue) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -258,12 +257,12 @@ TEST_F(InsertSQLTests, InsertTooLargeVarchar) {
       new optimizer::Optimizer());
 
   std::string query("INSERT INTO test3 VALUES(1, 'abcd', 'abcdefghij');");
-  //std::string query("INSERT INTO test3 VALUES(1, 'abcd', 'abcdefghijk');");
+  // std::string query("INSERT INTO test3 VALUES(1, 'abcd', 'abcdefghijk');");
 
   txn = txn_manager.BeginTransaction();
-  // This should be re-enabled when the check is properly done in catalog 
+  // This should be re-enabled when the check is properly done in catalog
   // It used to be done at the insert query level
-  //EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query,
+  // EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query,
   //             txn, peloton::Exception);
   auto plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn);
   EXPECT_EQ(plan->GetPlanNodeType(), PlanNodeType::INSERT);
@@ -402,7 +401,7 @@ TEST_F(InsertSQLTests, InsertIntoSelectSimpleAllType) {
   EXPECT_EQ("5.1", TestingSQLUtil::GetResultValueAsString(result, 4));
   EXPECT_EQ("6.1", TestingSQLUtil::GetResultValueAsString(result, 5));
   EXPECT_EQ("2017-10-10 00:00:00.000000+00",
-             TestingSQLUtil::GetResultValueAsString(result, 6));
+            TestingSQLUtil::GetResultValueAsString(result, 6));
   EXPECT_EQ("A", TestingSQLUtil::GetResultValueAsString(result, 7));
   EXPECT_EQ("a", TestingSQLUtil::GetResultValueAsString(result, 8));
   EXPECT_EQ('1', TestingSQLUtil::GetResultValueAsString(result, 9).at(0));
@@ -419,7 +418,7 @@ TEST_F(InsertSQLTests, InsertIntoSelectSimpleAllType) {
   EXPECT_EQ("5.1", TestingSQLUtil::GetResultValueAsString(result, 4));
   EXPECT_EQ("6.1", TestingSQLUtil::GetResultValueAsString(result, 5));
   EXPECT_EQ("2017-10-10 00:00:00.000000+00",
-             TestingSQLUtil::GetResultValueAsString(result, 6));
+            TestingSQLUtil::GetResultValueAsString(result, 6));
   EXPECT_EQ("A", TestingSQLUtil::GetResultValueAsString(result, 7));
   EXPECT_EQ("a", TestingSQLUtil::GetResultValueAsString(result, 8));
   EXPECT_EQ('1', TestingSQLUtil::GetResultValueAsString(result, 9).at(0));
@@ -436,7 +435,7 @@ TEST_F(InsertSQLTests, InsertIntoSelectSimpleAllType) {
   EXPECT_EQ("15.1", TestingSQLUtil::GetResultValueAsString(result, 4));
   EXPECT_EQ("16.1", TestingSQLUtil::GetResultValueAsString(result, 5));
   EXPECT_EQ("2017-10-11 00:00:00.000000+00",
-             TestingSQLUtil::GetResultValueAsString(result, 6));
+            TestingSQLUtil::GetResultValueAsString(result, 6));
   EXPECT_EQ("B", TestingSQLUtil::GetResultValueAsString(result, 7));
   EXPECT_EQ("b", TestingSQLUtil::GetResultValueAsString(result, 8));
   EXPECT_EQ('2', TestingSQLUtil::GetResultValueAsString(result, 9).at(0));
@@ -529,8 +528,9 @@ TEST_F(InsertSQLTests, UniqueColumn) {
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 
-  std::string create_table("CREATE TABLE t (id INTEGER NOT NULL PRIMARY KEY,"
-                                        "st VARCHAR(15) NOT NULL UNIQUE);");
+  std::string create_table(
+      "CREATE TABLE t (id INTEGER NOT NULL PRIMARY KEY,"
+      "st VARCHAR(15) NOT NULL UNIQUE);");
   TestingSQLUtil::ExecuteSQLQuery(create_table);
 
   ResultType result;
@@ -542,8 +542,7 @@ TEST_F(InsertSQLTests, UniqueColumn) {
   result = TestingSQLUtil::ExecuteSQLQuery(ins_query_1);
   EXPECT_EQ(result, ResultType::SUCCESS);
   ref_result.push_back("abc");
-  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(result_query,
-                                                ref_result,
+  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(result_query, ref_result,
                                                 false);
 
   // Second row, distinct from first, should succeed
@@ -551,8 +550,7 @@ TEST_F(InsertSQLTests, UniqueColumn) {
   result = TestingSQLUtil::ExecuteSQLQuery(ins_query_2);
   EXPECT_EQ(result, ResultType::SUCCESS);
   ref_result.push_back("def");
-  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(result_query,
-                                                ref_result,
+  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(result_query, ref_result,
                                                 false);
 
   // Third row, non-unique value for string, should fail
@@ -560,8 +558,7 @@ TEST_F(InsertSQLTests, UniqueColumn) {
   result = TestingSQLUtil::ExecuteSQLQuery(ins_query_3);
   EXPECT_EQ(result, ResultType::ABORTED);
   // and the results returned should not include failed insert
-  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(result_query,
-                                                ref_result,
+  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(result_query, ref_result,
                                                 false);
 
   // free the database just created
@@ -570,33 +567,33 @@ TEST_F(InsertSQLTests, UniqueColumn) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(InsertSQLTests, NonExistentTable){
-    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    auto txn = txn_manager.BeginTransaction();
-    catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
-    txn_manager.CommitTransaction(txn);
-    std::string error_message;
-    int rows_changed;
-    std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
-        new optimizer::Optimizer());
+TEST_F(InsertSQLTests, NonExistentTable) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+  std::string error_message;
+  int rows_changed;
+  std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
+      new optimizer::Optimizer());
 
-    rows_changed = 0;
-    EXPECT_THROW({
-        try {
-        // Insert an int into a non-existent table.
-        std::string query("INSERT INTO NotExistTestTable VALUES(3);");
-        txn = txn_manager.BeginTransaction();
-        auto plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn);
-        EXPECT_EQ(plan->GetPlanNodeType(), PlanNodeType::INSERT);
-        txn_manager.CommitTransaction(txn);
-        } catch (peloton::Exception &ex) {
-        EXPECT_EQ(ExceptionType::CATALOG, ex.GetType());
-        EXPECT_STREQ("Table NotExistTestTable is not found",
-                    ex.what());
-        throw peloton::CatalogException(ex.what());
-        }
-    }, peloton::CatalogException);
-    EXPECT_EQ(0, rows_changed);
+  rows_changed = 0;
+  EXPECT_THROW({
+    try {
+      // Insert an int into a non-existent table.
+      std::string query("INSERT INTO NotExistTestTable VALUES(3);");
+      txn = txn_manager.BeginTransaction();
+      auto plan =
+          TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn);
+      EXPECT_EQ(plan->GetPlanNodeType(), PlanNodeType::INSERT);
+      txn_manager.CommitTransaction(txn);
+    } catch (peloton::Exception &ex) {
+      EXPECT_EQ(ExceptionType::CATALOG, ex.GetType());
+      EXPECT_STREQ("Table NotExistTestTable is not found", ex.what());
+      throw peloton::CatalogException(ex.what());
+    }
+  }, peloton::CatalogException);
+  EXPECT_EQ(0, rows_changed);
 }
 
 }  // namespace test
