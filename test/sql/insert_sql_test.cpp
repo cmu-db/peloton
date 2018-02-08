@@ -570,5 +570,34 @@ TEST_F(InsertSQLTests, UniqueColumn) {
   txn_manager.CommitTransaction(txn);
 }
 
+TEST_F(InsertSQLTests, NonExistentTable){
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto txn = txn_manager.BeginTransaction();
+    catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+    txn_manager.CommitTransaction(txn);
+    std::string error_message;
+    int rows_changed;
+    std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
+        new optimizer::Optimizer());
+
+    rows_changed = 0;
+    EXPECT_THROW({
+        try {
+        // Insert an int into a non-existent table.
+        std::string query("INSERT INTO NotExistTestTable VALUES(3);");
+        txn = txn_manager.BeginTransaction();
+        auto plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn);
+        EXPECT_EQ(plan->GetPlanNodeType(), PlanNodeType::INSERT);
+        txn_manager.CommitTransaction(txn);
+        } catch (peloton::Exception &ex) {
+        EXPECT_EQ(ExceptionType::CATALOG, ex.GetType());
+        EXPECT_STREQ("Table NotExistTestTable is not found",
+                    ex.what());
+        throw peloton::CatalogException(ex.what());
+        }
+    }, peloton::CatalogException);
+    EXPECT_EQ(0, rows_changed);
+}
+
 }  // namespace test
 }  // namespace peloton
