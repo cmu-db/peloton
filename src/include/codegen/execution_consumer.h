@@ -28,6 +28,9 @@ class ExecutionConsumer {
   /// Default virtual destructor
   virtual ~ExecutionConsumer() = default;
 
+  /// Does this consumer support parallel execution?
+  virtual bool SupportsParallelExec() const { return true; }
+
   /// Invoked before code-generation begins to allow the consumer to prepare
   /// itself in the provided context
   virtual void Prepare(CompilationContext &compilation_ctx);

@@ -24,9 +24,8 @@ namespace codegen {
 DeleteTranslator::DeleteTranslator(const planner::DeletePlan &delete_plan,
                                    CompilationContext &context,
                                    Pipeline &pipeline)
-    : OperatorTranslator(context, pipeline),
-      delete_plan_(delete_plan),
-      table_(*delete_plan_.GetTable()) {
+    : OperatorTranslator(delete_plan, context, pipeline),
+      table_(*delete_plan.GetTable()) {
   // Also create the translator for our child.
   context.Prepare(*delete_plan.GetChild(0), pipeline);
 
@@ -39,7 +38,7 @@ void DeleteTranslator::InitializeState() {
   auto &codegen = GetCodeGen();
 
   // Get the table pointer
-  storage::DataTable *table = delete_plan_.GetTable();
+  storage::DataTable *table = GetPlan().GetTable();
   llvm::Value *table_ptr = codegen.Call(
       StorageManagerProxy::GetTableWithOid,
       {GetStorageManagerPtr(), codegen.Const32(table->GetDatabaseOid()),
@@ -53,7 +52,7 @@ void DeleteTranslator::InitializeState() {
 
 void DeleteTranslator::Produce() const {
   // Call Produce() on our child (a scan), to produce the tuples we'll delete
-  GetCompilationContext().Produce(*delete_plan_.GetChild(0));
+  GetCompilationContext().Produce(*GetPlan().GetChild(0));
 }
 
 void DeleteTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
@@ -63,6 +62,10 @@ void DeleteTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
   auto *deleter = LoadStatePtr(deleter_state_id_);
   codegen.Call(DeleterProxy::Delete,
                {deleter, row.GetTileGroupID(), row.GetTID(codegen)});
+}
+
+const planner::DeletePlan &DeleteTranslator::GetPlan() const  {
+  return GetPlanAs<planner::DeletePlan>();
 }
 
 }  // namespace codegen

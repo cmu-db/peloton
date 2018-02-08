@@ -25,8 +25,7 @@ static const std::string kMatBufferTypeName = "Buffer";
 GlobalGroupByTranslator::GlobalGroupByTranslator(
     const planner::AggregatePlan &plan, CompilationContext &context,
     Pipeline &pipeline)
-    : OperatorTranslator(context, pipeline),
-      plan_(plan),
+    : OperatorTranslator(plan, context, pipeline),
       child_pipeline_(this),
       aggregation_(context.GetRuntimeState()) {
   LOG_DEBUG("Constructing GlobalGroupByTranslator ...");
@@ -34,10 +33,10 @@ GlobalGroupByTranslator::GlobalGroupByTranslator(
   auto &codegen = context.GetCodeGen();
 
   // Prepare the child in the new child pipeline
-  context.Prepare(*plan_.GetChild(0), child_pipeline_);
+  context.Prepare(*plan.GetChild(0), child_pipeline_);
 
   // Prepare all the aggregating expressions
-  const auto &aggregates = plan_.GetUniqueAggTerms();
+  const auto &aggregates = plan.GetUniqueAggTerms();
   for (const auto &agg_term : aggregates) {
     if (agg_term.expression != nullptr) {
       context.Prepare(*agg_term.expression);
@@ -76,7 +75,8 @@ void GlobalGroupByTranslator::Produce() const {
   aggregation_.CreateInitialGlobalValues(codegen, mat_buffer);
 
   // Let the child produce tuples that we'll aggregate
-  GetCompilationContext().Produce(*plan_.GetChild(0));
+  const auto &plan = GetPlan();
+  GetCompilationContext().Produce(*plan.GetChild(0));
 
   // Deserialize the finalized aggregate attribute values from the buffer
   std::vector<codegen::Value> aggregate_vals;
@@ -84,7 +84,7 @@ void GlobalGroupByTranslator::Produce() const {
 
   std::vector<BufferAttributeAccess> buffer_accessors;
 
-  const auto &agg_terms = plan_.GetUniqueAggTerms();
+  const auto &agg_terms = plan.GetUniqueAggTerms();
   PELOTON_ASSERT(agg_terms.size() == aggregate_vals.size());
   for (size_t i = 0; i < agg_terms.size(); i++) {
     buffer_accessors.emplace_back(aggregate_vals, i);
@@ -112,7 +112,9 @@ void GlobalGroupByTranslator::Produce() const {
 void GlobalGroupByTranslator::Consume(ConsumerContext &,
                                       RowBatch::Row &row) const {
   // Get the updates to advance the aggregates
-  auto &aggregates = plan_.GetUniqueAggTerms();
+  const auto &plan = GetPlan();
+
+  auto &aggregates = plan.GetUniqueAggTerms();
   std::vector<codegen::Value> vals{aggregates.size()};
   for (uint32_t i = 0; i < aggregates.size(); i++) {
     const auto &agg_term = aggregates[i];
@@ -131,10 +133,11 @@ void GlobalGroupByTranslator::TearDownState() {
   aggregation_.TearDownState(GetCodeGen());
 }
 
-//===----------------------------------------------------------------------===//
-// Get the stringified name of this global group-by
-//===----------------------------------------------------------------------===//
 std::string GlobalGroupByTranslator::GetName() const { return "GlobalGroupBy"; }
+
+const planner::AggregatePlan &GlobalGroupByTranslator::GetPlan() const {
+  return GetPlanAs<planner::AggregatePlan>();
+}
 
 }  // namespace codegen
 }  // namespace peloton

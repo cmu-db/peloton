@@ -22,32 +22,37 @@ namespace codegen {
 ProjectionTranslator::ProjectionTranslator(const planner::ProjectionPlan &plan,
                                            CompilationContext &context,
                                            Pipeline &pipeline)
-    : OperatorTranslator(context, pipeline), plan_(plan) {
+    : OperatorTranslator(plan, context, pipeline) {
   // Prepare translator for our child
   PELOTON_ASSERT(plan.GetChildrenSize() < 2);
-  context.Prepare(*plan_.GetChild(0), pipeline);
+  context.Prepare(*plan.GetChild(0), pipeline);
 
   // Prepare translators for the projection
-  const auto *projection_info = plan_.GetProjectInfo();
+  const auto *projection_info = plan.GetProjectInfo();
   PrepareProjection(context, *projection_info);
 }
 
 void ProjectionTranslator::Produce() const {
-  GetCompilationContext().Produce(*plan_.GetChild(0));
+  GetCompilationContext().Produce(*GetPlan().GetChild(0));
 }
 
 void ProjectionTranslator::Consume(ConsumerContext &context,
                                    RowBatch::Row &row) const {
   // Add attribute accessors for all non-trivial (i.e. derived) attributes
+  const auto &plan = GetPlan();
   std::vector<RowBatch::ExpressionAccess> accessors;
-  AddNonTrivialAttributes(row.GetBatch(), *plan_.GetProjectInfo(), accessors);
+  AddNonTrivialAttributes(row.GetBatch(), *plan.GetProjectInfo(), accessors);
 
   // That's it
   context.Consume(row);
 }
 
+const planner::ProjectionPlan &ProjectionTranslator::GetPlan() const {
+  return GetPlanAs<planner::ProjectionPlan>();
+}
+
 std::string ProjectionTranslator::GetName() const {
-  bool non_trivial = plan_.GetProjectInfo()->IsNonTrivial();
+  bool non_trivial = GetPlan().GetProjectInfo()->IsNonTrivial();
   std::string ret = "Projection";
   ret.append(non_trivial ? "(non-trivial)" : "(trivial)");
   return ret;

@@ -44,9 +44,9 @@ class DeleteTranslator : public OperatorTranslator {
   void Consume(ConsumerContext &, RowBatch::Row &) const override;
 
  private:
-  // The delete plan
-  const planner::DeletePlan &delete_plan_;
+  const planner::DeletePlan &GetPlan() const;
 
+ private:
   // Table accessor
   codegen::Table table_;
 

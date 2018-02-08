@@ -140,15 +140,12 @@ class TableScanTranslator : public OperatorTranslator {
   };
 
   // Plan accessor
-  const planner::SeqScanPlan &GetScanPlan() const { return scan_; }
+  const planner::SeqScanPlan &GetScanPlan() const;
 
   // Table accessor
   const storage::DataTable &GetTable() const;
 
  private:
-  // The scan
-  const planner::SeqScanPlan &scan_;
-
   // The code-generating table instance
   codegen::Table table_;
 };

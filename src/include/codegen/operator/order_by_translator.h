@@ -43,8 +43,7 @@ class OrderByTranslator : public OperatorTranslator {
   std::string GetName() const override;
 
  private:
-  // Accessor
-  const planner::OrderByPlan &GetPlan() const { return plan_; }
+  const planner::OrderByPlan &GetPlan() const;
 
   //===--------------------------------------------------------------------===//
   // The call back used when iterating over the results in the sorter instance
@@ -83,9 +82,6 @@ class OrderByTranslator : public OperatorTranslator {
   };
 
  private:
-  // The plan
-  const planner::OrderByPlan &plan_;
-
   // The child pipeline
   Pipeline child_pipeline_;
 

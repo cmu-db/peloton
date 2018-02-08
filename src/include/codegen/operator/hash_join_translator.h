@@ -86,7 +86,7 @@ class HashJoinTranslator : public OperatorTranslator {
   // Should this operator employ prefetching?
   bool UsePrefetching() const;
 
-  const planner::HashJoinPlan &GetJoinPlan() const { return join_; }
+  const planner::HashJoinPlan &GetJoinPlan() const;
 
   //===--------------------------------------------------------------------===//
   // The callback used when we probe the hash table with right-side tuples
@@ -133,9 +133,6 @@ class HashJoinTranslator : public OperatorTranslator {
   };
 
  private:
-  // The hash join plan node that contains all the information we need
-  const planner::HashJoinPlan &join_;
-
   // The build-side pipeline
   Pipeline left_pipeline_;
 

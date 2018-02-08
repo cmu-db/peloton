@@ -29,9 +29,7 @@ namespace codegen {
 OrderByTranslator::OrderByTranslator(const planner::OrderByPlan &plan,
                                      CompilationContext &context,
                                      Pipeline &pipeline)
-    : OperatorTranslator(context, pipeline),
-      plan_(plan),
-      child_pipeline_(this) {
+    : OperatorTranslator(plan, context, pipeline), child_pipeline_(this) {
   LOG_DEBUG("Constructing OrderByTranslator ...");
 
   // Prepare the child
@@ -55,8 +53,8 @@ OrderByTranslator::OrderByTranslator(const planner::OrderByPlan &plan,
   std::unordered_map<oid_t, uint32_t> col_id_map;
 
   // Every output column **must** be materialized. Add them all here.
-  const auto &output_ais = plan_.GetOutputColumnAIs();
-  const auto &output_col_ids = plan_.GetOutputColumnIds();
+  const auto &output_ais = plan.GetOutputColumnAIs();
+  const auto &output_col_ids = plan.GetOutputColumnIds();
   for (uint32_t i = 0; i < output_ais.size(); i++) {
     const auto *ai = output_ais[i];
     LOG_DEBUG("Adding output column %p (%s) to format @ %u", ai,
@@ -66,8 +64,8 @@ OrderByTranslator::OrderByTranslator(const planner::OrderByPlan &plan,
   }
 
   // Now consider the sort columns
-  const auto &sort_col_ais = plan_.GetSortKeyAIs();
-  const auto &sort_col_ids = plan_.GetSortKeys();
+  const auto &sort_col_ais = plan.GetSortKeyAIs();
+  const auto &sort_col_ids = plan.GetSortKeys();
   PELOTON_ASSERT(!sort_col_ids.empty());
 
   for (uint32_t i = 0; i < sort_col_ais.size(); i++) {
@@ -210,7 +208,7 @@ void OrderByTranslator::Produce() const {
   LOG_DEBUG("OrderBy requesting child to produce tuples ...");
 
   // Let the child produce the tuples we materialize into a buffer
-  GetCompilationContext().Produce(*plan_.GetChild(0));
+  GetCompilationContext().Produce(*GetPlan().GetChild(0));
 
   LOG_DEBUG("OrderBy buffered tuples into sorter, going to sort ...");
 
@@ -240,7 +238,7 @@ void OrderByTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
 
   // Pull out the attributes we need and append the tuple into the sorter
   std::vector<codegen::Value> tuple;
-  const auto &output_cols = plan_.GetOutputColumnAIs();
+  const auto &output_cols = GetPlan().GetOutputColumnAIs();
   for (const auto *ai : output_cols) {
     tuple.push_back(row.DeriveValue(codegen, ai));
   }
@@ -261,6 +259,10 @@ void OrderByTranslator::TearDownState() {
 }
 
 std::string OrderByTranslator::GetName() const { return "OrderBy"; }
+
+const planner::OrderByPlan &OrderByTranslator::GetPlan() const {
+  return GetPlanAs<planner::OrderByPlan>();
+}
 
 //===----------------------------------------------------------------------===//
 // PRODUCE RESULTS

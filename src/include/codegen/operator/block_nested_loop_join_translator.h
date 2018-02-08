@@ -26,7 +26,7 @@ class NestedLoopJoinPlan;
 namespace codegen {
 
 //===----------------------------------------------------------------------===//
-// The translator for a blockwise nested loop join
+// The translator for a block-wise nested loop join
 //===----------------------------------------------------------------------===//
 class BlockNestedLoopJoinTranslator : public OperatorTranslator {
  public:
@@ -54,12 +54,9 @@ class BlockNestedLoopJoinTranslator : public OperatorTranslator {
 
   void FindMatchesForRow(ConsumerContext &ctx, RowBatch::Row &row) const;
 
-  const planner::NestedLoopJoinPlan &GetPlan() const { return nlj_plan_; }
+  const planner::NestedLoopJoinPlan &GetPlan() const;
 
  private:
-  // The plan
-  const planner::NestedLoopJoinPlan &nlj_plan_;
-
   // The pipeline for the left subtree of the plan
   Pipeline left_pipeline_;
 

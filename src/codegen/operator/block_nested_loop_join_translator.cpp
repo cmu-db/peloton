@@ -56,11 +56,9 @@ namespace codegen {
 BlockNestedLoopJoinTranslator::BlockNestedLoopJoinTranslator(
     const planner::NestedLoopJoinPlan &nlj_plan, CompilationContext &context,
     Pipeline &pipeline)
-    : OperatorTranslator(context, pipeline),
-      nlj_plan_(nlj_plan),
-      left_pipeline_(this) {
+    : OperatorTranslator(nlj_plan, context, pipeline), left_pipeline_(this) {
   PELOTON_ASSERT(nlj_plan.GetChildrenSize() == 2 &&
-            "NLJ must have exactly two children");
+                 "NLJ must have exactly two children");
 
   // Prepare children
   context.Prepare(*nlj_plan.GetChild(0), left_pipeline_);
@@ -204,6 +202,11 @@ void BlockNestedLoopJoinTranslator::Consume(ConsumerContext &ctx,
   } else {
     ConsumeFromRight(ctx, row);
   }
+}
+
+const planner::NestedLoopJoinPlan &BlockNestedLoopJoinTranslator::GetPlan()
+    const {
+  return GetPlanAs<planner::NestedLoopJoinPlan>();
 }
 
 namespace {

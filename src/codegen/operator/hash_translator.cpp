@@ -29,7 +29,7 @@ namespace codegen {
 // Constructor
 HashTranslator::HashTranslator(const planner::HashPlan &hash_plan,
                                CompilationContext &context, Pipeline &pipeline)
-    : OperatorTranslator(context, pipeline), hash_plan_(hash_plan) {
+    : OperatorTranslator(hash_plan, context, pipeline) {
   LOG_DEBUG("Constructing HashTranslator ...");
 
   auto &codegen = GetCodeGen();
@@ -40,11 +40,11 @@ HashTranslator::HashTranslator(const planner::HashPlan &hash_plan,
       runtime_state.RegisterState("hash", OAHashTableProxy::GetType(codegen));
 
   // Prepare the input operator
-  context.Prepare(*hash_plan_.GetChild(0), pipeline);
+  context.Prepare(*hash_plan.GetChild(0), pipeline);
 
   // Prepare the hash keys
   std::vector<type::Type> key_type;
-  const auto &hash_keys = hash_plan_.GetHashKeys();
+  const auto &hash_keys = hash_plan.GetHashKeys();
   for (const auto &hash_key : hash_keys) {
     // TODO: do the hash keys have to be prepared? Pipeline?
     context.Prepare(*hash_key);
@@ -67,7 +67,7 @@ void HashTranslator::Produce() const {
   auto &comp_ctx = GetCompilationContext();
 
   // Let the child produce its tuples which we aggregate in our hash-table
-  comp_ctx.Produce(*hash_plan_.GetChild(0));
+  comp_ctx.Produce(*GetHashPlan().GetChild(0));
 
   LOG_DEBUG("Hash starting to produce results ...");
 }
@@ -110,9 +110,13 @@ uint64_t HashTranslator::EstimateHashTableSize() const {
 void HashTranslator::CollectHashKeys(RowBatch::Row &row,
                                      std::vector<codegen::Value> &key) const {
   auto &codegen = GetCodeGen();
-  for (const auto &hash_key : hash_plan_.GetHashKeys()) {
+  for (const auto &hash_key : GetHashPlan().GetHashKeys()) {
     key.push_back(row.DeriveValue(codegen, *hash_key));
   }
+}
+
+const planner::HashPlan &HashTranslator::GetHashPlan() const {
+  return GetPlanAs<planner::HashPlan>();
 }
 
 //===----------------------------------------------------------------------===//

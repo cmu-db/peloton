@@ -6,13 +6,14 @@
 //
 // Identification: src/codegen/pipeline.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "codegen/pipeline.h"
 
 #include "codegen/operator/operator_translator.h"
+#include "util/string_util.h"
 
 namespace peloton {
 namespace codegen {
@@ -29,30 +30,6 @@ void Pipeline::Add(const OperatorTranslator *translator) {
   pipeline_index_ = static_cast<uint32_t>(pipeline_.size()) - 1;
 }
 
-// Install a stage boundary at the input into the given translator
-void Pipeline::InstallBoundaryAtInput(const OperatorTranslator *translator) {
-  // Validate the assumption
-  (void)translator;
-  PELOTON_ASSERT(pipeline_[pipeline_index_] == translator);
-  stage_boundaries_.push_back(pipeline_index_ + 1);
-}
-
-// Install a stage boundary at the input into the given translator
-void Pipeline::InstallBoundaryAtOutput(const OperatorTranslator *translator) {
-  // Validate the assumption
-  (void)translator;
-  PELOTON_ASSERT(pipeline_[pipeline_index_] == translator);
-  if (!stage_boundaries_.empty() &&
-      stage_boundaries_.back() != pipeline_index_) {
-    stage_boundaries_.push_back(pipeline_index_);
-  }
-}
-
-bool Pipeline::AtStageBoundary() const {
-  return std::find(stage_boundaries_.begin(), stage_boundaries_.end(),
-                   pipeline_index_) != stage_boundaries_.end();
-}
-
 // Get the child of the current operator in this pipeline
 const OperatorTranslator *Pipeline::GetChild() const {
   return pipeline_index_ < pipeline_.size() - 1 ? pipeline_[pipeline_index_ + 1]
@@ -66,6 +43,25 @@ const OperatorTranslator *Pipeline::NextStep() {
   } else {
     return nullptr;
   }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Stage-related functionality
+///
+////////////////////////////////////////////////////////////////////////////////
+
+// Install a stage boundary at the input into the given translator
+void Pipeline::InstallStageBoundary(
+    UNUSED_ATTRIBUTE const OperatorTranslator *translator) {
+  // Validate the assumption
+  PL_ASSERT(pipeline_[pipeline_index_] == translator);
+  stage_boundaries_.push_back(pipeline_index_ + 1);
+}
+
+bool Pipeline::AtStageBoundary() const {
+  return std::find(stage_boundaries_.begin(), stage_boundaries_.end(),
+                   pipeline_index_) != stage_boundaries_.end();
 }
 
 uint32_t Pipeline::GetNumStages() const {
@@ -94,6 +90,23 @@ uint32_t Pipeline::GetTranslatorStage(
   }
   return GetNumStages() - stage - 1;
 }
+
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Serial/parallel execution functionality
+///
+////////////////////////////////////////////////////////////////////////////////
+
+void Pipeline::RunSerial(UNUSED_ATTRIBUTE const std::function<void()> &func) {}
+
+void Pipeline::RunParallel(UNUSED_ATTRIBUTE const std::function<void()> &func) {
+}
+
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Utils
+///
+////////////////////////////////////////////////////////////////////////////////
 
 // Get the stringified version of this pipeline
 std::string Pipeline::GetInfo() const {

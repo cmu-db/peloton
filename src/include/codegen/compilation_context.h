@@ -6,7 +6,7 @@
 //
 // Identification: src/include/codegen/compilation_context.h
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -108,7 +108,7 @@ class CompilationContext {
   OperatorTranslator *GetTranslator(const planner::AbstractPlan &op) const;
 
  private:
-  // The query we'll compile
+  // The context where all the code lives
   CodeContext &code_context_;
 
   // Runtime state

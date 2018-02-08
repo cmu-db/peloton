@@ -32,8 +32,7 @@ std::atomic<bool> HashGroupByTranslator::kUsePrefetch{false};
 HashGroupByTranslator::HashGroupByTranslator(
     const planner::AggregatePlan &group_by, CompilationContext &context,
     Pipeline &pipeline)
-    : OperatorTranslator(context, pipeline),
-      group_by_(group_by),
+    : OperatorTranslator(group_by, context, pipeline),
       child_pipeline_(this),
       aggregation_(context.GetRuntimeState()) {
   LOG_DEBUG("Constructing HashGroupByTranslator ...");
@@ -45,7 +44,7 @@ HashGroupByTranslator::HashGroupByTranslator(
   // pipeline at the input into this translator to ensure it receives a vector
   // of input tuples
   if (UsePrefetching()) {
-    child_pipeline_.InstallBoundaryAtInput(this);
+    child_pipeline_.InstallStageBoundary(this);
   }
 
   // Register the hash-table instance in the runtime state
@@ -53,24 +52,24 @@ HashGroupByTranslator::HashGroupByTranslator(
       "groupBy", OAHashTableProxy::GetType(codegen));
 
   // Prepare the input operator to this group by
-  context.Prepare(*group_by_.GetChild(0), child_pipeline_);
+  context.Prepare(*group_by.GetChild(0), child_pipeline_);
 
   // Prepare the predicate if one exists
-  if (group_by_.GetPredicate() != nullptr) {
-    context.Prepare(*group_by_.GetPredicate());
+  if (group_by.GetPredicate() != nullptr) {
+    context.Prepare(*group_by.GetPredicate());
   }
 
   // Prepare the grouping expressions
   // TODO: We need to handle grouping keys that are expressions (i.e., prepare)
   std::vector<type::Type> key_type;
-  const auto &grouping_ais = group_by_.GetGroupbyAIs();
+  const auto &grouping_ais = group_by.GetGroupbyAIs();
   for (const auto *grouping_ai : grouping_ais) {
     key_type.push_back(grouping_ai->type);
   }
 
   // Prepare all the aggregation expressions and setup the storage format of
   // values/aggregates in the hash table
-  auto &aggregates = group_by_.GetUniqueAggTerms();
+  auto &aggregates = group_by.GetUniqueAggTerms();
   for (const auto &agg_term : aggregates) {
     if (agg_term.expression != nullptr) {
       context.Prepare(*agg_term.expression);
@@ -78,7 +77,7 @@ HashGroupByTranslator::HashGroupByTranslator(
   }
 
   // Prepare the projection (if one exists)
-  const auto *projection_info = group_by_.GetProjectInfo();
+  const auto *projection_info = group_by.GetProjectInfo();
   if (projection_info != nullptr) {
     ProjectionTranslator::PrepareProjection(context, *projection_info);
   }
@@ -102,7 +101,7 @@ void HashGroupByTranslator::Produce() const {
   auto &comp_ctx = GetCompilationContext();
 
   // Let the child produce its tuples which we aggregate in our hash-table
-  comp_ctx.Produce(*group_by_.GetChild(0));
+  comp_ctx.Produce(*GetPlan().GetChild(0));
 
   LOG_DEBUG("HashGroupBy starting to produce results ...");
 
@@ -217,7 +216,7 @@ void HashGroupByTranslator::Consume(ConsumerContext &,
   CollectHashKeys(row, key);
 
   // Collect the values of the expressions
-  auto &aggregates = group_by_.GetUniqueAggTerms();
+  auto &aggregates = GetPlan().GetUniqueAggTerms();
   std::vector<codegen::Value> vals{aggregates.size()};
   for (uint32_t i = 0; i < aggregates.size(); i++) {
     const auto &agg_term = aggregates[i];
@@ -264,9 +263,13 @@ bool HashGroupByTranslator::UsePrefetching() const {
 void HashGroupByTranslator::CollectHashKeys(
     RowBatch::Row &row, std::vector<codegen::Value> &key) const {
   auto &codegen = GetCodeGen();
-  for (const auto *gb_ai : group_by_.GetGroupbyAIs()) {
+  for (const auto *gb_ai : GetPlan().GetGroupbyAIs()) {
     key.push_back(row.DeriveValue(codegen, gb_ai));
   }
+}
+
+const planner::AggregatePlan &HashGroupByTranslator::GetPlan() const {
+  return GetPlanAs<planner::AggregatePlan>();
 }
 
 //===----------------------------------------------------------------------===//
@@ -328,7 +331,7 @@ void HashGroupByTranslator::ProduceResults::ProcessEntries(
 
   AggregateFinalizer finalizer{translator_.GetAggregation(), access};
 
-  const auto &group_by = translator_.GetAggregatePlan();
+  const auto &group_by = translator_.GetPlan();
   auto &grouping_ais = group_by.GetGroupbyAIs();
   auto &aggregates = group_by.GetUniqueAggTerms();
 

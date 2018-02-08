@@ -18,6 +18,11 @@
 #include "codegen/runtime_state.h"
 
 namespace peloton {
+
+namespace planner {
+class AbstractPlan;
+}  // namespace planner
+
 namespace codegen {
 
 // Forward declare
@@ -41,7 +46,8 @@ class ConsumerContext;
 class OperatorTranslator {
  public:
   // Constructor
-  OperatorTranslator(CompilationContext &context, Pipeline &pipeline);
+  OperatorTranslator(const planner::AbstractPlan &plan,
+                     CompilationContext &context, Pipeline &pipeline);
 
   // Destructor
   virtual ~OperatorTranslator() = default;
@@ -65,6 +71,11 @@ class OperatorTranslator {
   virtual std::string GetName() const = 0;
 
  protected:
+  template <typename T>
+  const T &GetPlanAs() const {
+    return static_cast<const T &>(plan_);
+  }
+
   // Return the compilation context
   CompilationContext &GetCompilationContext() const { return context_; }
 
@@ -84,6 +95,9 @@ class OperatorTranslator {
   llvm::Value *LoadStateValue(const RuntimeState::StateID &state_id) const;
 
  private:
+  // The plan node
+  const planner::AbstractPlan &plan_;
+
   // The compilation state context
   CompilationContext &context_;
 

@@ -6,7 +6,7 @@
 //
 // Identification: src/codegen/operator/operator_translator.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -17,9 +17,11 @@
 namespace peloton {
 namespace codegen {
 
-OperatorTranslator::OperatorTranslator(CompilationContext &context,
+OperatorTranslator::OperatorTranslator(const planner::AbstractPlan &plan,
+                                       CompilationContext &context,
                                        Pipeline &pipeline)
-    : context_(context), pipeline_(pipeline) {
+    : plan_(plan), context_(context), pipeline_(pipeline) {
+  // Add this operator to the provided pipeline
   pipeline.Add(this);
 }
 

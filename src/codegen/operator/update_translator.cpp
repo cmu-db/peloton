@@ -25,14 +25,13 @@ namespace codegen {
 UpdateTranslator::UpdateTranslator(const planner::UpdatePlan &update_plan,
                                    CompilationContext &context,
                                    Pipeline &pipeline)
-    : OperatorTranslator(context, pipeline),
-      update_plan_(update_plan),
+    : OperatorTranslator(update_plan, context, pipeline),
       table_storage_(*update_plan.GetTable()->GetSchema()) {
   // Create the translator for our child and derived attributes
   context.Prepare(*update_plan.GetChild(0), pipeline);
 
-  const auto *project_info = update_plan_.GetProjectInfo();
-  auto target_list = project_info->GetTargetList();
+  const auto *project_info = update_plan.GetProjectInfo();
+  const auto &target_list = project_info->GetTargetList();
   for (const auto &target : target_list) {
     const auto &derived_attribute = target.second;
     context.Prepare(*derived_attribute.expr);
@@ -53,12 +52,14 @@ oid_t GetTargetIndex(const TargetList &target_list, uint32_t index) {
 }
 
 void UpdateTranslator::InitializeState() {
+  const auto &update_plan = GetPlan();
+
   auto &codegen = GetCodeGen();
 
   // Prepare for all the information to be handed over to the updater
   // Get the transaction pointer
   // Get the table object pointer
-  storage::DataTable *table = update_plan_.GetTable();
+  storage::DataTable *table = update_plan.GetTable();
   llvm::Value *table_ptr = codegen.Call(
       StorageManagerProxy::GetTableWithOid,
       {GetStorageManagerPtr(), codegen.Const32(table->GetDatabaseOid()),
@@ -66,7 +67,7 @@ void UpdateTranslator::InitializeState() {
 
   // Get the target list's raw vectors and their sizes
   // : this is required when installing a new version at updater
-  const auto *project_info = update_plan_.GetProjectInfo();
+  const auto *project_info = update_plan.GetProjectInfo();
   llvm::Value *target_vector_ptr = codegen->CreateIntToPtr(
       codegen.Const64((int64_t)project_info->GetTargetList().data()),
       TargetProxy::GetType(codegen)->getPointerTo());
@@ -80,17 +81,22 @@ void UpdateTranslator::InitializeState() {
 }
 
 void UpdateTranslator::Produce() const {
-  GetCompilationContext().Produce(*update_plan_.GetChild(0));
+  GetCompilationContext().Produce(*GetPlan().GetChild(0));
 }
 
 void UpdateTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
+  const auto &plan = GetPlan();
+
   auto &codegen = GetCodeGen();
-  const auto *project_info = update_plan_.GetProjectInfo();
-  auto target_list = project_info->GetTargetList();
-  auto direct_map_list = project_info->GetDirectMapList();
+
+  const auto *project_info = plan.GetProjectInfo();
+  const auto &target_list = project_info->GetTargetList();
+  const auto &direct_map_list = project_info->GetDirectMapList();
+
   uint32_t column_num =
       static_cast<uint32_t>(target_list.size() + direct_map_list.size());
-  auto &ais = update_plan_.GetAttributeInfos();
+
+  const auto &ais = plan.GetAttributeInfos();
 
   // Collect all the column values
   std::vector<codegen::Value> values;
@@ -112,7 +118,7 @@ void UpdateTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
   llvm::Value *tuple_ptr;
   std::vector<llvm::Value *> prep_args = {updater, row.GetTileGroupID(),
                                           row.GetTID(codegen)};
-  if (update_plan_.GetUpdatePrimaryKey() == false) {
+  if (!plan.GetUpdatePrimaryKey()) {
     tuple_ptr = codegen.Call(UpdaterProxy::Prepare, prep_args);
   } else {
     tuple_ptr = codegen.Call(UpdaterProxy::PreparePK, prep_args);
@@ -131,7 +137,7 @@ void UpdateTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
 
     // Finally, update with help from the Updater
     std::vector<llvm::Value *> update_args = {updater};
-    if (update_plan_.GetUpdatePrimaryKey() == false) {
+    if (!plan.GetUpdatePrimaryKey()) {
       codegen.Call(UpdaterProxy::Update, update_args);
     } else {
       codegen.Call(UpdaterProxy::UpdatePK, update_args);
@@ -145,6 +151,10 @@ void UpdateTranslator::TearDownState() {
   // Tear down the updater
   llvm::Value *updater = LoadStatePtr(updater_state_id_);
   codegen.Call(UpdaterProxy::TearDown, {updater});
+}
+
+const planner::UpdatePlan &UpdateTranslator::GetPlan() const {
+  return GetPlanAs<planner::UpdatePlan>();
 }
 
 }  // namespace codegen

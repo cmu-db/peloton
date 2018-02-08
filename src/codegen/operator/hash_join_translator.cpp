@@ -6,7 +6,7 @@
 //
 // Identification: src/codegen/operator/hash_join_translator.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -32,7 +32,7 @@ std::atomic<bool> HashJoinTranslator::kUsePrefetch{false};
 HashJoinTranslator::HashJoinTranslator(const planner::HashJoinPlan &join,
                                        CompilationContext &context,
                                        Pipeline &pipeline)
-    : OperatorTranslator(context, pipeline), join_(join), left_pipeline_(this) {
+    : OperatorTranslator(join, context, pipeline), left_pipeline_(this) {
   LOG_DEBUG("Constructing HashJoinTranslator ...");
 
   auto &codegen = GetCodeGen();
@@ -42,8 +42,8 @@ HashJoinTranslator::HashJoinTranslator(const planner::HashJoinPlan &join,
   // both the left and right pipeline at the input into this translator to
   // ensure it receives a vector of input tuples
   if (UsePrefetching()) {
-    left_pipeline_.InstallBoundaryAtInput(this);
-    pipeline.InstallBoundaryAtInput(this);
+    left_pipeline_.InstallStageBoundary(this);
+    pipeline.InstallStageBoundary(this);
   }
 
   // Allocate state for our hash table and bloom filter
@@ -55,8 +55,8 @@ HashJoinTranslator::HashJoinTranslator(const planner::HashJoinPlan &join,
   }
 
   // Prepare translators for the left and right input operators
-  context.Prepare(*join_.GetChild(0), left_pipeline_);
-  context.Prepare(*join_.GetChild(1)->GetChild(0), pipeline);
+  context.Prepare(*join.GetChild(0), left_pipeline_);
+  context.Prepare(*join.GetChild(1)->GetChild(0), pipeline);
 
   // Prepare the expressions that produce the build-size keys
   join.GetLeftHashKeys(left_key_exprs_);
@@ -83,7 +83,7 @@ HashJoinTranslator::HashJoinTranslator(const planner::HashJoinPlan &join,
   }
 
   // Prepare the predicate
-  auto *predicate = join_.GetPredicate();
+  auto *predicate = join.GetPredicate();
   if (predicate != nullptr) {
     context.Prepare(*predicate);
   }
@@ -142,10 +142,10 @@ void HashJoinTranslator::InitializeState() {
 // Produce!
 void HashJoinTranslator::Produce() const {
   // Let the left child produce tuples which we materialize into the hash-table
-  GetCompilationContext().Produce(*join_.GetChild(0));
+  GetCompilationContext().Produce(*GetJoinPlan().GetChild(0));
 
   // Let the right child produce tuples, which we use to probe the hash table
-  GetCompilationContext().Produce(*join_.GetChild(1)->GetChild(0));
+  GetCompilationContext().Produce(*GetJoinPlan().GetChild(1)->GetChild(0));
 
   // That's it, we've produced all the tuples
 }
@@ -329,7 +329,7 @@ void HashJoinTranslator::TearDownState() {
 // Get the stringified name of this join
 std::string HashJoinTranslator::GetName() const {
   std::string name = "HashJoin::";
-  switch (join_.GetJoinType()) {
+  switch (GetJoinPlan().GetJoinType()) {
     case JoinType::INNER: {
       name.append("Inner");
       break;
@@ -391,6 +391,10 @@ void HashJoinTranslator::CollectValues(
   for (const auto *ai : ais) {
     values.push_back(row.DeriveValue(GetCodeGen(), ai));
   }
+}
+
+const planner::HashJoinPlan &HashJoinTranslator::GetJoinPlan() const {
+  return GetPlanAs<planner::HashJoinPlan>();
 }
 
 //===----------------------------------------------------------------------===//

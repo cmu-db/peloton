@@ -176,14 +176,11 @@ class HashGroupByTranslator : public OperatorTranslator {
   // Should this operator employ prefetching?
   bool UsePrefetching() const;
 
-  const planner::AggregatePlan &GetAggregatePlan() const { return group_by_; }
+  const planner::AggregatePlan &GetPlan() const;
 
   const Aggregation &GetAggregation() const { return aggregation_; }
 
  private:
-  // The group-by plan
-  const planner::AggregatePlan &group_by_;
-
   // The pipeline forming all child operators of this aggregation
   Pipeline child_pipeline_;
 

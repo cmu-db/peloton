@@ -34,19 +34,12 @@ namespace codegen {
 TableScanTranslator::TableScanTranslator(const planner::SeqScanPlan &scan,
                                          CompilationContext &context,
                                          Pipeline &pipeline)
-    : OperatorTranslator(context, pipeline),
-      scan_(scan),
-      table_(*scan_.GetTable()) {
+    : OperatorTranslator(scan, context, pipeline), table_(*scan.GetTable()) {
   // The restriction, if one exists
-  const auto *predicate = GetScanPlan().GetPredicate();
+  const auto *predicate = scan.GetPredicate();
   if (predicate != nullptr) {
     // If there is a predicate, prepare a translator for it
     context.Prepare(*predicate);
-
-    // If the scan's predicate is SIMDable, install a boundary at the output
-    if (predicate->IsSIMDable()) {
-      pipeline.InstallBoundaryAtOutput(this);
-    }
   }
 }
 
@@ -96,9 +89,13 @@ std::string TableScanTranslator::GetName() const {
   return name;
 }
 
+const planner::SeqScanPlan &TableScanTranslator::GetScanPlan() const {
+  return GetPlanAs<planner::SeqScanPlan>();
+}
+
 // Table accessor
 const storage::DataTable &TableScanTranslator::GetTable() const {
-  return *scan_.GetTable();
+  return *GetScanPlan().GetTable();
 }
 
 //===----------------------------------------------------------------------===//

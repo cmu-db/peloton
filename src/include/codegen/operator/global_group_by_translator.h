@@ -53,6 +53,8 @@ class GlobalGroupByTranslator : public OperatorTranslator {
   std::string GetName() const override;
 
  private:
+  const planner::AggregatePlan &GetPlan() const;
+
   //===--------------------------------------------------------------------===//
   // An accessor into a single tuple stored in buffered state
   //===--------------------------------------------------------------------===//
@@ -76,9 +78,6 @@ class GlobalGroupByTranslator : public OperatorTranslator {
   };
 
  private:
-  // The aggregation plan
-  const planner::AggregatePlan &plan_;
-
   // The pipeline the child operator of this aggregation belongs to
   Pipeline child_pipeline_;
 

@@ -61,7 +61,7 @@ class HashTranslator : public OperatorTranslator {
   // Estimate the size of the constructed hash table
   uint64_t EstimateHashTableSize() const;
 
-  const planner::HashPlan &GetHashPlan() const { return hash_plan_; }
+  const planner::HashPlan &GetHashPlan() const;
 
  private:
   //===--------------------------------------------------------------------===//
@@ -95,9 +95,6 @@ class HashTranslator : public OperatorTranslator {
     // The row that will be given to the parent
     RowBatch::Row &row_;
   };
-
-  // The hash plan
-  const planner::HashPlan &hash_plan_;
 
   // The ID of the hash-table in the runtime state
   RuntimeState::StateID hash_table_id_;

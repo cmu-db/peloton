@@ -25,8 +25,7 @@ namespace codegen {
 InsertTranslator::InsertTranslator(const planner::InsertPlan &insert_plan,
                                    CompilationContext &context,
                                    Pipeline &pipeline)
-    : OperatorTranslator(context, pipeline),
-      insert_plan_(insert_plan),
+    : OperatorTranslator(insert_plan, context, pipeline),
       table_storage_(*insert_plan.GetTable()->GetSchema()) {
   // Create the translator for its child only when there is a child
   if (insert_plan.GetChildrenSize() != 0) {
@@ -41,7 +40,7 @@ InsertTranslator::InsertTranslator(const planner::InsertPlan &insert_plan,
 void InsertTranslator::InitializeState() {
   auto &codegen = GetCodeGen();
 
-  storage::DataTable *table = insert_plan_.GetTable();
+  storage::DataTable *table = GetPlan().GetTable();
   llvm::Value *table_ptr = codegen.Call(
       StorageManagerProxy::GetTableWithOid,
       {GetStorageManagerPtr(), codegen.Const32(table->GetDatabaseOid()),
@@ -54,18 +53,20 @@ void InsertTranslator::InitializeState() {
 }
 
 void InsertTranslator::Produce() const {
+  const auto &insert_plan = GetPlan();
+
   auto &context = GetCompilationContext();
-  if (insert_plan_.GetChildrenSize() != 0) {
+  if (insert_plan.GetChildrenSize() != 0) {
     // The insert has a child (a scan); it's an insert-from-select. Let the
     // child produce the tuples we'll insert in Consume()
-    context.Produce(*insert_plan_.GetChild(0));
+    context.Produce(*insert_plan.GetChild(0));
   } else {
     // Regular insert with constants
     auto &codegen = GetCodeGen();
     auto *inserter = LoadStatePtr(inserter_state_id_);
 
-    auto num_tuples = insert_plan_.GetBulkInsertCount();
-    auto num_columns = insert_plan_.GetTable()->GetSchema()->GetColumnCount();
+    auto num_tuples = insert_plan.GetBulkInsertCount();
+    auto num_columns = insert_plan.GetTable()->GetSchema()->GetColumnCount();
 
     // Read tuple data from the parameter storage and insert
     const auto &parameter_cache = context.GetParameterCache();
@@ -99,7 +100,7 @@ void InsertTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
 
   // Generate/Materialize tuple data from row and attribute information
   std::vector<codegen::Value> values;
-  auto &ais = insert_plan_.GetAttributeInfos();
+  auto &ais = GetPlan().GetAttributeInfos();
   for (const auto *ai : ais) {
     codegen::Value v = row.DeriveValue(codegen, ai);
     values.push_back(v);
@@ -114,6 +115,10 @@ void InsertTranslator::TearDownState() {
   // Tear down the inserter
   llvm::Value *inserter = LoadStatePtr(inserter_state_id_);
   GetCodeGen().Call(InserterProxy::TearDown, {inserter});
+}
+
+const planner::InsertPlan &InsertTranslator::GetPlan() const {
+  return GetPlanAs<planner::InsertPlan>();
 }
 
 }  // namespace codegen

@@ -60,8 +60,7 @@ class ProjectionTranslator : public OperatorTranslator {
       std::vector<RowBatch::ExpressionAccess> &accessors);
 
  private:
-  // The aggregation plan
-  const planner::ProjectionPlan &plan_;
+  const planner::ProjectionPlan &GetPlan() const;
 };
 
 }  // namespace codegen

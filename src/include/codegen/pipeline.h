@@ -6,13 +6,14 @@
 //
 // Identification: src/include/codegen/pipeline.h
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -31,29 +32,60 @@ class ConsumerContext;
 //===----------------------------------------------------------------------===//
 class Pipeline {
  public:
-  // Constructor
+  /// Enum indicitating level of parallelism
+  enum Parallelism { Serial = 0, Parallel = 1 };
+
+  /// Constructor
   Pipeline();
   Pipeline(const OperatorTranslator *translator);
 
-  // Add the provided translator to this pipeline
+  /// Add the provided translator to this pipeline
   void Add(const OperatorTranslator *translator);
 
-  void InstallBoundaryAtInput(const OperatorTranslator *translator);
-  void InstallBoundaryAtOutput(const OperatorTranslator *translator);
-
-  bool AtStageBoundary() const;
-
-  // Get the child of the current operator in this pipeline
+  /// Get the child of the current operator in this pipeline
   const OperatorTranslator *GetChild() const;
 
-  // Move to the next step in this pipeline
+  /// Move to the next step in this pipeline
   const OperatorTranslator *NextStep();
 
+  //////////////////////////////////////////////////////////////////////////////
+  ///
+  /// Stages
+  ///
+  //////////////////////////////////////////////////////////////////////////////
+
+  /// Install a stage boundary in front of the given operator
+  void InstallStageBoundary(const OperatorTranslator *translator);
+
+  /// Is the pipeline position currently sitting at a stage boundary?
+  bool AtStageBoundary() const;
+
+  /// Return the total number of stages in the pipeline
   uint32_t GetNumStages() const;
+
+  /// Get the stage the given translator is in
   uint32_t GetTranslatorStage(const OperatorTranslator *translator) const;
 
-  // Get a stringified version of this pipeline
+  //////////////////////////////////////////////////////////////////////////////
+  ///
+  /// Serial/Parallel execution
+  ///
+  //////////////////////////////////////////////////////////////////////////////
+
+  void RunSerial(const std::function<void()> &func);
+  void RunParallel(const std::function<void()> &func);
+
+  //////////////////////////////////////////////////////////////////////////////
+  ///
+  /// Utilities
+  ///
+  //////////////////////////////////////////////////////////////////////////////
+
+  /// Get a stringified version of this pipeline
   std::string GetInfo() const;
+
+ private:
+  std::string GetSimplePipelineName() const;
 
  private:
   // The pipeline of operators, progress is made from the end to the beginning
