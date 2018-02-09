@@ -28,6 +28,15 @@ void ExecutionConsumer::Prepare(CompilationContext &compilation_ctx) {
       "executorContext", executor_ctx_type_->getPointerTo());
 }
 
+void ExecutionConsumer::InitializePipelineState(PipelineContext &pipeline_ctx) {
+  // TODO(pmenon): This is nasty. We should move the parameters to this class...
+  auto &compilation_ctx = pipeline_ctx.GetPipeline().GetCompilationContext();
+  auto &paramter_cache = compilation_ctx.GetParameterCache();
+  paramter_cache.Reset();
+  paramter_cache.Populate(compilation_ctx.GetCodeGen(),
+                          GetQueryParametersPtr(compilation_ctx));
+}
+
 void ExecutionConsumer::ConsumeResult(ConsumerContext &context,
                                       RowBatch &batch) const {
   // Just iterate over every row in the batch

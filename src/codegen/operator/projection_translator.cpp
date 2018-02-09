@@ -39,23 +39,12 @@ void ProjectionTranslator::Produce() const {
 void ProjectionTranslator::Consume(ConsumerContext &context,
                                    RowBatch::Row &row) const {
   // Add attribute accessors for all non-trivial (i.e. derived) attributes
-  const auto &plan = GetPlan();
+  const auto &plan = GetPlanAs<planner::ProjectionPlan>();
   std::vector<RowBatch::ExpressionAccess> accessors;
   AddNonTrivialAttributes(row.GetBatch(), *plan.GetProjectInfo(), accessors);
 
   // That's it
   context.Consume(row);
-}
-
-const planner::ProjectionPlan &ProjectionTranslator::GetPlan() const {
-  return GetPlanAs<planner::ProjectionPlan>();
-}
-
-std::string ProjectionTranslator::GetName() const {
-  bool non_trivial = GetPlan().GetProjectInfo()->IsNonTrivial();
-  std::string ret = "Projection";
-  ret.append(non_trivial ? "(non-trivial)" : "(trivial)");
-  return ret;
 }
 
 void ProjectionTranslator::PrepareProjection(

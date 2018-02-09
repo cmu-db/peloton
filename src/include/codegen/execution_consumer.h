@@ -13,6 +13,8 @@
 #pragma once
 
 #include "codegen/consumer_context.h"
+#include "codegen/parameter_cache.h"
+#include "codegen/query_parameters_map.h"
 
 namespace peloton {
 namespace codegen {
@@ -37,6 +39,9 @@ class ExecutionConsumer {
 
   /// Called to generate any initialization code the consumer needs
   virtual void InitializeState(CompilationContext &compilation_ctx) = 0;
+
+  /// Called to generate any initialization code within a pipeline
+  virtual void InitializePipelineState(PipelineContext &pipeline_ctx);
 
   ///
   virtual char *GetConsumerState() = 0;

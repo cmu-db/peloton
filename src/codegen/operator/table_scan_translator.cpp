@@ -45,48 +45,41 @@ TableScanTranslator::TableScanTranslator(const planner::SeqScanPlan &scan,
 
 // Produce!
 void TableScanTranslator::Produce() const {
-  auto &codegen = GetCodeGen();
-  auto &table = GetTable();
+  auto producer = [this]() {
+    CodeGen &codegen = GetCodeGen();
+    const storage::DataTable &table = GetTable();
 
-  // Get the table instance from the database
-  auto *db_oid = codegen.Const32(table.GetDatabaseOid());
-  auto *table_oid = codegen.Const32(table.GetOid());
-  auto *table_ptr = codegen.Call(StorageManagerProxy::GetTableWithOid,
-                                 {GetStorageManagerPtr(), db_oid, table_oid});
+    // Get the table instance from the database
+    auto *db_oid = codegen.Const32(table.GetDatabaseOid());
+    auto *table_oid = codegen.Const32(table.GetOid());
+    auto *table_ptr = codegen.Call(StorageManagerProxy::GetTableWithOid,
+                                   {GetStorageManagerPtr(), db_oid, table_oid});
 
-  // The selection vector for the scan
-  auto *raw_vec = codegen.AllocateBuffer(
-      codegen.Int32Type(), Vector::kDefaultVectorSize, "scanSelVector");
-  Vector sel_vec{raw_vec, Vector::kDefaultVectorSize, codegen.Int32Type()};
+    // The selection vector for the scan
+    auto *raw_vec = codegen.AllocateBuffer(
+        codegen.Int32Type(), Vector::kDefaultVectorSize, "scanSelVector");
+    Vector sel_vec{raw_vec, Vector::kDefaultVectorSize, codegen.Int32Type()};
 
-  auto predicate = const_cast<expression::AbstractExpression *>(
-      GetScanPlan().GetPredicate());
-  llvm::Value *predicate_ptr = codegen->CreateIntToPtr(
-      codegen.Const64((int64_t)predicate),
-      AbstractExpressionProxy::GetType(codegen)->getPointerTo());
-  size_t num_preds = 0;
+    auto predicate = const_cast<expression::AbstractExpression *>(
+        GetScanPlan().GetPredicate());
+    llvm::Value *predicate_ptr = codegen->CreateIntToPtr(
+        codegen.Const64((int64_t)predicate),
+        AbstractExpressionProxy::GetType(codegen)->getPointerTo());
+    size_t num_preds = 0;
 
-  auto *zone_map_manager = storage::ZoneMapManager::GetInstance();
-  if (predicate != nullptr && zone_map_manager->ZoneMapTableExists()) {
-    if (predicate->IsZoneMappable()) {
-      num_preds = predicate->GetNumberofParsedPredicates();
+    auto *zone_map_manager = storage::ZoneMapManager::GetInstance();
+    if (predicate != nullptr && zone_map_manager->ZoneMapTableExists()) {
+      if (predicate->IsZoneMappable()) {
+        num_preds = predicate->GetNumberofParsedPredicates();
+      }
     }
-  }
-  ScanConsumer scan_consumer{*this, sel_vec};
-  table_.GenerateScan(codegen, table_ptr, sel_vec.GetCapacity(), scan_consumer,
-                      predicate_ptr, num_preds);
-  LOG_TRACE("TableScan on [%u] finished producing tuples ...", table.GetOid());
-}
+    ScanConsumer scan_consumer{*this, sel_vec};
+    table_.GenerateScan(codegen, table_ptr, sel_vec.GetCapacity(),
+                        scan_consumer, predicate_ptr, num_preds);
+  };
 
-// Get the stringified name of this scan
-std::string TableScanTranslator::GetName() const {
-  std::string name = "Scan('" + GetTable().GetName() + "'";
-  auto *predicate = GetScanPlan().GetPredicate();
-  if (predicate != nullptr && predicate->IsSIMDable()) {
-    name.append(", ").append(std::to_string(Vector::kDefaultVectorSize));
-  }
-  name.append(")");
-  return name;
+  // Execute serially
+  GetPipeline().RunSerial(producer);
 }
 
 const planner::SeqScanPlan &TableScanTranslator::GetScanPlan() const {
@@ -144,7 +137,7 @@ void TableScanTranslator::ScanConsumer::SetupRowBatch(
     std::vector<TableScanTranslator::AttributeAccess> &access) const {
   // Grab a hold of the stuff we need (i.e., the plan, all the attributes, and
   // the IDs of the columns the scan _actually_ produces)
-  const auto &scan_plan = translator_.GetScanPlan();
+  const planner::SeqScanPlan &scan_plan = translator_.GetScanPlan();
   std::vector<const planner::AttributeInfo *> ais;
   scan_plan.GetAttributes(ais);
   const auto &output_col_ids = scan_plan.GetColumnIds();
@@ -189,9 +182,8 @@ void TableScanTranslator::ScanConsumer::FilterRowsByPredicate(
     llvm::Value *tid_start, llvm::Value *tid_end,
     Vector &selection_vector) const {
   // The batch we're filtering
-  auto &compilation_ctx = translator_.GetCompilationContext();
-  RowBatch batch{compilation_ctx, tile_group_id_,   tid_start,
-                 tid_end,         selection_vector, true};
+  RowBatch batch{translator_.GetCompilationContext(), tile_group_id_, tid_start,
+                 tid_end, selection_vector, true};
 
   // First, check if the predicate is SIMDable
   const auto *predicate = GetPredicate();

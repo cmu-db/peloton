@@ -40,11 +40,7 @@ class OrderByTranslator : public OperatorTranslator {
 
   void TearDownState() override;
 
-  std::string GetName() const override;
-
  private:
-  const planner::OrderByPlan &GetPlan() const;
-
   //===--------------------------------------------------------------------===//
   // The call back used when iterating over the results in the sorter instance
   //===--------------------------------------------------------------------===//

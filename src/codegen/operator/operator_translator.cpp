@@ -43,13 +43,13 @@ llvm::Value *OperatorTranslator::GetStorageManagerPtr() const {
 
 llvm::Value *OperatorTranslator::LoadStatePtr(
     const RuntimeState::StateID &state_id) const {
-  auto &runtime_state = context_.GetRuntimeState();
+  RuntimeState &runtime_state = context_.GetRuntimeState();
   return runtime_state.LoadStatePtr(GetCodeGen(), state_id);
 }
 
 llvm::Value *OperatorTranslator::LoadStateValue(
     const RuntimeState::StateID &state_id) const {
-  auto &runtime_state = context_.GetRuntimeState();
+  RuntimeState &runtime_state = context_.GetRuntimeState();
   return runtime_state.LoadStateValue(GetCodeGen(), state_id);
 }
 

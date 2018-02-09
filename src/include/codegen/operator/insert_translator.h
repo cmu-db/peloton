@@ -64,11 +64,8 @@ class InsertTranslator : public OperatorTranslator {
   // Codegen any cleanup work
   void TearDownState() override;
 
-  // Get the name of this translator
-  std::string GetName() const override { return "Insert"; }
-
  private:
-  const planner::InsertPlan &GetPlan() const;
+  const planner::InsertPlan &GetInsertPlan() const;
 
  private:
   // The ID used to retrieve the Insert instance

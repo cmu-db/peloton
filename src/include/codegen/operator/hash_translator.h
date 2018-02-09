@@ -51,15 +51,9 @@ class HashTranslator : public OperatorTranslator {
   // Codegen any cleanup work for this translator
   void TearDownState() override;
 
-  // Get a stringified name for this hash-table based aggregation
-  std::string GetName() const override;
-
  private:
   void CollectHashKeys(RowBatch::Row &row,
                        std::vector<codegen::Value> &key) const;
-
-  // Estimate the size of the constructed hash table
-  uint64_t EstimateHashTableSize() const;
 
   const planner::HashPlan &GetHashPlan() const;
 

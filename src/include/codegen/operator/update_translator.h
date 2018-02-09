@@ -43,11 +43,6 @@ class UpdateTranslator : public OperatorTranslator {
 
   void TearDownState() override;
 
-  std::string GetName() const override { return "Update"; }
-
- private:
-  const planner::UpdatePlan &GetPlan() const;
-
  private:
   // Target table
   storage::DataTable *target_table_;

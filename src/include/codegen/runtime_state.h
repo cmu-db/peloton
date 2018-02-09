@@ -70,6 +70,9 @@ class RuntimeState {
   /// Construct the equivalent LLVM type that represents this runtime state
   llvm::Type *FinalizeType(CodeGen &codegen);
 
+  /// Get the constructed runtime state type
+  llvm::Type *GetType() const;
+
  private:
   // Little struct to track information of elements in the runtime state
   struct StateInfo {

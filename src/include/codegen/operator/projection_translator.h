@@ -48,9 +48,6 @@ class ProjectionTranslator : public OperatorTranslator {
   // No state to tear down
   void TearDownState() override {}
 
-  // Get the stringified name of this translator
-  std::string GetName() const override;
-
   // Helpers
   static void PrepareProjection(CompilationContext &context,
                                 const planner::ProjectInfo &projection_info);
@@ -58,9 +55,6 @@ class ProjectionTranslator : public OperatorTranslator {
   static void AddNonTrivialAttributes(
       RowBatch &row_batch, const planner::ProjectInfo &projection_info,
       std::vector<RowBatch::ExpressionAccess> &accessors);
-
- private:
-  const planner::ProjectionPlan &GetPlan() const;
 };
 
 }  // namespace codegen

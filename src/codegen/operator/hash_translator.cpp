@@ -30,10 +30,8 @@ namespace codegen {
 HashTranslator::HashTranslator(const planner::HashPlan &hash_plan,
                                CompilationContext &context, Pipeline &pipeline)
     : OperatorTranslator(hash_plan, context, pipeline) {
-  LOG_DEBUG("Constructing HashTranslator ...");
-
-  auto &codegen = GetCodeGen();
-  auto &runtime_state = context.GetRuntimeState();
+  CodeGen &codegen = GetCodeGen();
+  RuntimeState &runtime_state = context.GetRuntimeState();
 
   // Register the hash-table instance in the runtime state
   hash_table_id_ =
@@ -64,20 +62,14 @@ void HashTranslator::InitializeState() {
 
 // Produce!
 void HashTranslator::Produce() const {
-  auto &comp_ctx = GetCompilationContext();
-
   // Let the child produce its tuples which we aggregate in our hash-table
-  comp_ctx.Produce(*GetHashPlan().GetChild(0));
-
-  LOG_DEBUG("Hash starting to produce results ...");
+  GetCompilationContext().Produce(*GetHashPlan().GetChild(0));
 }
 
 // Consume the tuples from the context, adding them to the hash table
 void HashTranslator::Consume(ConsumerContext &context,
                              RowBatch::Row &row) const {
-  LOG_DEBUG("Hash operator consuming results ...");
-
-  auto &codegen = GetCodeGen();
+  CodeGen &codegen = GetCodeGen();
 
   // Collect the keys we use to probe the hash table
   std::vector<codegen::Value> key;
@@ -98,18 +90,9 @@ void HashTranslator::TearDownState() {
   hash_table_.Destroy(GetCodeGen(), LoadStatePtr(hash_table_id_));
 }
 
-// Get the stringified name of this hash operator
-std::string HashTranslator::GetName() const { return "Hash"; }
-
-// Estimate the size of the dynamically constructed hash-table
-uint64_t HashTranslator::EstimateHashTableSize() const {
-  // TODO: Implement me
-  return 0;
-}
-
 void HashTranslator::CollectHashKeys(RowBatch::Row &row,
                                      std::vector<codegen::Value> &key) const {
-  auto &codegen = GetCodeGen();
+  CodeGen &codegen = GetCodeGen();
   for (const auto &hash_key : GetHashPlan().GetHashKeys()) {
     key.push_back(row.DeriveValue(codegen, *hash_key));
   }
@@ -129,8 +112,7 @@ void HashTranslator::ConsumerProbe::ProcessEntry(
     UNUSED_ATTRIBUTE CodeGen &codegen,
     UNUSED_ATTRIBUTE llvm::Value *data_area) const {
   // The key already exists in the hash table, which means that we can just drop
-  // this row,
-  // as it already exists in the result
+  // this row, as it already exists in the result
 }
 
 //===----------------------------------------------------------------------===//
@@ -146,10 +128,7 @@ HashTranslator::ConsumerInsert::ConsumerInsert(ConsumerContext &context,
 void HashTranslator::ConsumerInsert::StoreValue(
     UNUSED_ATTRIBUTE CodeGen &codegen,
     UNUSED_ATTRIBUTE llvm::Value *space) const {
-  // It is the first time this key appears, so we just pass it on to the next
-  // operator
-
-  // call consume on parent
+  // It is the first time this key appears, so we just pass it along pipeline
   context_.Consume(row_);
 }
 

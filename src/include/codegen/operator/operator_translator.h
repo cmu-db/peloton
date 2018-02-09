@@ -55,6 +55,10 @@ class OperatorTranslator {
   // Codegen any initialization work for this operator
   virtual void InitializeState() = 0;
 
+  // Codegen any initialization at the start of the given pipeline
+  virtual void InitializePipelineState(
+      UNUSED_ATTRIBUTE PipelineContext &pipeline_context) {}
+
   // Define any helper functions this translator needs
   virtual void DefineAuxiliaryFunctions() = 0;
 
@@ -68,16 +72,16 @@ class OperatorTranslator {
   // Codegen any cleanup work for this translator
   virtual void TearDownState() = 0;
 
-  virtual std::string GetName() const = 0;
+  virtual const planner::AbstractPlan &GetPlan() const { return plan_; }
+
+  // Return the compilation context
+  CompilationContext &GetCompilationContext() const { return context_; }
 
  protected:
   template <typename T>
   const T &GetPlanAs() const {
     return static_cast<const T &>(plan_);
   }
-
-  // Return the compilation context
-  CompilationContext &GetCompilationContext() const { return context_; }
 
   // Return the pipeline the operator is a part of
   Pipeline &GetPipeline() const { return pipeline_; }

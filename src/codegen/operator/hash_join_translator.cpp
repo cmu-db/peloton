@@ -33,10 +33,8 @@ HashJoinTranslator::HashJoinTranslator(const planner::HashJoinPlan &join,
                                        CompilationContext &context,
                                        Pipeline &pipeline)
     : OperatorTranslator(join, context, pipeline), left_pipeline_(this) {
-  LOG_DEBUG("Constructing HashJoinTranslator ...");
-
-  auto &codegen = GetCodeGen();
-  auto &runtime_state = context.GetRuntimeState();
+  CodeGen &codegen = GetCodeGen();
+  RuntimeState &runtime_state = context.GetRuntimeState();
 
   // If we should be prefetching into the hash-table, install a boundary in the
   // both the left and right pipeline at the input into this translator to
@@ -50,6 +48,7 @@ HashJoinTranslator::HashJoinTranslator(const planner::HashJoinPlan &join,
   hash_table_id_ =
       runtime_state.RegisterState("join", OAHashTableProxy::GetType(codegen));
   if (GetJoinPlan().IsBloomFilterEnabled()) {
+    LOG_DEBUG("Building HashJoin using BloomFilter ...");
     bloom_filter_id_ = runtime_state.RegisterState(
         "bloomfilter", BloomFilterProxy::GetType(codegen));
   }
@@ -127,7 +126,6 @@ HashJoinTranslator::HashJoinTranslator(const planner::HashJoinPlan &join,
   // Create the hash table
   hash_table_ =
       OAHashTable{codegen, left_key_type, left_value_storage_.MaxStorageSize()};
-  LOG_DEBUG("Finished constructing HashJoinTranslator ...");
 }
 
 // Initialize the hash-table instance
@@ -160,7 +158,7 @@ void HashJoinTranslator::Consume(ConsumerContext &context,
   // This aggregation uses prefetching
   // TODO: This code is copied verbatime from aggregation ... REFACTOR!
 
-  auto &codegen = GetCodeGen();
+  CodeGen &codegen = GetCodeGen();
 
   // The vector holding the hash values for the group
   auto *raw_vec = codegen.AllocateBuffer(
@@ -254,7 +252,7 @@ void HashJoinTranslator::Consume(ConsumerContext &context,
 // The given row is coming from the left child. Insert into hash table
 void HashJoinTranslator::ConsumeFromLeft(ConsumerContext &,
                                          RowBatch::Row &row) const {
-  auto &codegen = GetCodeGen();
+  CodeGen &codegen = GetCodeGen();
 
   // Collect all the attributes we need for the join (including keys and vals)
   std::vector<codegen::Value> key;
@@ -319,41 +317,11 @@ void HashJoinTranslator::CodegenHashProbe(
 
 // Cleanup by destroying the hash-table instance
 void HashJoinTranslator::TearDownState() {
-  auto &codegen = GetCodeGen();
+  CodeGen &codegen = GetCodeGen();
   hash_table_.Destroy(codegen, LoadStatePtr(hash_table_id_));
   if (GetJoinPlan().IsBloomFilterEnabled()) {
     bloom_filter_.Destroy(GetCodeGen(), LoadStatePtr(bloom_filter_id_));
   }
-}
-
-// Get the stringified name of this join
-std::string HashJoinTranslator::GetName() const {
-  std::string name = "HashJoin::";
-  switch (GetJoinPlan().GetJoinType()) {
-    case JoinType::INNER: {
-      name.append("Inner");
-      break;
-    }
-    case JoinType::OUTER: {
-      name.append("Outer");
-      break;
-    }
-    case JoinType::LEFT: {
-      name.append("Left");
-      break;
-    }
-    case JoinType::RIGHT: {
-      name.append("Right");
-      break;
-    }
-    case JoinType::SEMI: {
-      name.append("Semi");
-      break;
-    }
-    case JoinType::INVALID:
-      throw Exception{"Invalid join type"};
-  }
-  return name;
 }
 
 // Estimate the size of the dynamically constructed hash-table

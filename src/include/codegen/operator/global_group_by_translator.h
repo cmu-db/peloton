@@ -50,11 +50,7 @@ class GlobalGroupByTranslator : public OperatorTranslator {
   // No state to tear down
   void TearDownState() override;
 
-  std::string GetName() const override;
-
  private:
-  const planner::AggregatePlan &GetPlan() const;
-
   //===--------------------------------------------------------------------===//
   // An accessor into a single tuple stored in buffered state
   //===--------------------------------------------------------------------===//

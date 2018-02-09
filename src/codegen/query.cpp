@@ -30,7 +30,7 @@ void Query::Execute(std::unique_ptr<executor::ExecutorContext> executor_context,
                     RuntimeStats *stats) {
   CodeGen codegen{code_context_};
 
-  llvm::Type *runtime_state_type = runtime_state_.FinalizeType(codegen);
+  llvm::Type *runtime_state_type = runtime_state_.GetType();
   size_t parameter_size = codegen.SizeOf(runtime_state_type);
   PELOTON_ASSERT((parameter_size % 8 == 0) && "parameter size not multiple of 8");
 

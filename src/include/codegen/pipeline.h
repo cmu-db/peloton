@@ -24,23 +24,41 @@ class OperatorTranslator;
 class CompilationContext;
 class ConsumerContext;
 
+class Pipeline;
+
+class PipelineContext {
+ public:
+  explicit PipelineContext(Pipeline &pipeline);
+
+  Pipeline &GetPipeline();
+  CompilationContext &GetCompilationContext();
+
+ private:
+  Pipeline &pipeline_;
+};
+
 //===----------------------------------------------------------------------===//
+//
 // A pipeline represents operators in a query plan that can be fully pipelined.
 // Peloton pipelines are decomposed further into stages. Operators in a
 // stage are fully pipelined/fused together, while whole stages communicate
 // through cache-resident vectors of TIDs.
+//
 //===----------------------------------------------------------------------===//
 class Pipeline {
  public:
-  /// Enum indicitating level of parallelism
+  /// Enum indicating level of parallelism
   enum Parallelism { Serial = 0, Parallel = 1 };
 
   /// Constructor
-  Pipeline();
-  Pipeline(const OperatorTranslator *translator);
+  Pipeline(CompilationContext &compilation_ctx);
+  Pipeline(OperatorTranslator *translator);
+
+  /// Compilation context accessor
+  CompilationContext &GetCompilationContext();
 
   /// Add the provided translator to this pipeline
-  void Add(const OperatorTranslator *translator);
+  void Add(OperatorTranslator *translator);
 
   /// Get the child of the current operator in this pipeline
   const OperatorTranslator *GetChild() const;
@@ -72,7 +90,9 @@ class Pipeline {
   ///
   //////////////////////////////////////////////////////////////////////////////
 
-  void RunSerial(const std::function<void()> &func);
+  void InitializePipeline(PipelineContext &pipeline_context);
+  bool IsParallel() const { return false; }
+  void RunSerial(const std::function<void()> &body);
   void RunParallel(const std::function<void()> &func);
 
   //////////////////////////////////////////////////////////////////////////////
@@ -84,12 +104,15 @@ class Pipeline {
   /// Get a stringified version of this pipeline
   std::string GetInfo() const;
 
- private:
-  std::string GetSimplePipelineName() const;
+  ///
+  std::string ConstructPipelineName() const;
 
  private:
+  // The compilation context
+  CompilationContext &compilation_ctx_;
+
   // The pipeline of operators, progress is made from the end to the beginning
-  std::vector<const OperatorTranslator *> pipeline_;
+  std::vector<OperatorTranslator *> pipeline_;
 
   // The index into the pipeline that points to the current working operator
   uint32_t pipeline_index_;

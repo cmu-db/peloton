@@ -37,14 +37,9 @@ class DeleteTranslator : public OperatorTranslator {
 
   void TearDownState() override {}
 
-  std::string GetName() const override { return "Delete"; }
-
   void Produce() const override;
 
   void Consume(ConsumerContext &, RowBatch::Row &) const override;
-
- private:
-  const planner::DeletePlan &GetPlan() const;
 
  private:
   // Table accessor

@@ -52,9 +52,9 @@ oid_t GetTargetIndex(const TargetList &target_list, uint32_t index) {
 }
 
 void UpdateTranslator::InitializeState() {
-  const auto &update_plan = GetPlan();
+  const auto &update_plan = GetPlanAs<planner::UpdatePlan>();
 
-  auto &codegen = GetCodeGen();
+  CodeGen &codegen = GetCodeGen();
 
   // Prepare for all the information to be handed over to the updater
   // Get the transaction pointer
@@ -85,9 +85,9 @@ void UpdateTranslator::Produce() const {
 }
 
 void UpdateTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
-  const auto &plan = GetPlan();
+  const auto &plan = GetPlanAs<planner::UpdatePlan>();
 
-  auto &codegen = GetCodeGen();
+  CodeGen &codegen = GetCodeGen();
 
   const auto *project_info = plan.GetProjectInfo();
   const auto &target_list = project_info->GetTargetList();
@@ -147,14 +147,9 @@ void UpdateTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
 }
 
 void UpdateTranslator::TearDownState() {
-  auto &codegen = GetCodeGen();
   // Tear down the updater
   llvm::Value *updater = LoadStatePtr(updater_state_id_);
-  codegen.Call(UpdaterProxy::TearDown, {updater});
-}
-
-const planner::UpdatePlan &UpdateTranslator::GetPlan() const {
-  return GetPlanAs<planner::UpdatePlan>();
+  GetCodeGen().Call(UpdaterProxy::TearDown, {updater});
 }
 
 }  // namespace codegen

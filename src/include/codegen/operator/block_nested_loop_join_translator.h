@@ -40,8 +40,6 @@ class BlockNestedLoopJoinTranslator : public OperatorTranslator {
 
   void TearDownState() override;
 
-  std::string GetName() const override;
-
   void Produce() const override;
 
   void Consume(ConsumerContext &context, RowBatch::Row &row) const override;
@@ -53,8 +51,6 @@ class BlockNestedLoopJoinTranslator : public OperatorTranslator {
   void ConsumeFromRight(ConsumerContext &context, RowBatch::Row &row) const;
 
   void FindMatchesForRow(ConsumerContext &ctx, RowBatch::Row &row) const;
-
-  const planner::NestedLoopJoinPlan &GetPlan() const;
 
  private:
   // The pipeline for the left subtree of the plan

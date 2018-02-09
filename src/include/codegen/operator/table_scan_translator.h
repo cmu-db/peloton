@@ -54,9 +54,6 @@ class TableScanTranslator : public OperatorTranslator {
   // Similar to InitializeState(), table scans don't have any state
   void TearDownState() override {}
 
-  // Get a stringified version of this translator
-  std::string GetName() const override;
-
  private:
   //===--------------------------------------------------------------------===//
   // An attribute accessor that uses the backing tile group to access columns

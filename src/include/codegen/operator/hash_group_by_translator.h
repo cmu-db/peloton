@@ -53,9 +53,6 @@ class HashGroupByTranslator : public OperatorTranslator {
   // Codegen any cleanup work for this translator
   void TearDownState() override;
 
-  // Get a stringified name for this hash-table based aggregation
-  std::string GetName() const override;
-
  private:
   //===--------------------------------------------------------------------===//
   // The callback the group-by uses when iterating the results of the hash table

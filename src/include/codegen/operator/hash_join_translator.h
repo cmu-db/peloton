@@ -54,8 +54,6 @@ class HashJoinTranslator : public OperatorTranslator {
   // Codegen any cleanup work for this translator
   void TearDownState() override;
 
-  std::string GetName() const override;
-
  private:
   // Consume the given context from the left/build side or the right/probe side
   void ConsumeFromLeft(ConsumerContext &context, RowBatch::Row &row) const;

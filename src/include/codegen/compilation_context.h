@@ -14,6 +14,7 @@
 
 #include <memory>
 #include <unordered_map>
+#include <vector>
 
 #include "codegen/auxiliary_producer_function.h"
 #include "codegen/code_context.h"
@@ -39,16 +40,15 @@ class AbstractPlan;
 namespace codegen {
 
 //===----------------------------------------------------------------------===//
+//
 // All the state for the current compilation unit (i.e., one query). This state
 // includes translations for every operator and expression in the tree, the
 // context where all the code is produced, the runtime state that tracks all the
 // runtime objects that the query needs, and the consumer of the results. Users
 // wishing to compile plans make a call to GeneratePlan(...) with query plan.
+//
 //===----------------------------------------------------------------------===//
 class CompilationContext {
-  friend class ConsumerContext;
-  friend class RowBatch;
-
  public:
   /// Constructor
   CompilationContext(CodeContext &code, RuntimeState &runtime_state,
@@ -75,19 +75,27 @@ class CompilationContext {
   AuxiliaryProducerFunction DeclareAuxiliaryProducer(
       const planner::AbstractPlan &plan, const std::string &provided_name);
 
-  /// Get the code-generation instances
+  void RegisterPipeline(Pipeline &pipeline);
+  uint32_t GetPipelinePosition(Pipeline &pipeline);
+
+  //////////////////////////////////////////////////////////////////////////////
+  ///
+  /// Accessors
+  ///
+  //////////////////////////////////////////////////////////////////////////////
+
   CodeGen &GetCodeGen() { return codegen_; }
 
-  /// Get the runtime state
   RuntimeState &GetRuntimeState() { return runtime_state_; }
 
-  /// Get the parameter cache
-  const ParameterCache &GetParameterCache() const { return parameter_cache_; }
+  ParameterCache &GetParameterCache() { return parameter_cache_; }
 
-  /// Get the consumer of the execution of the query
-  ExecutionConsumer &GetExecutionConsumer() const {
-    return execution_consumer_;
-  }
+  ExecutionConsumer &GetExecutionConsumer() const { return exec_consumer_; }
+
+  ExpressionTranslator *GetTranslator(
+      const expression::AbstractExpression &exp) const;
+
+  OperatorTranslator *GetTranslator(const planner::AbstractPlan &op) const;
 
  private:
   // Generate any auxiliary helper functions that the query needs
@@ -102,11 +110,6 @@ class CompilationContext {
   // Generate the tearDown() function of the query
   llvm::Function *GenerateTearDownFunction();
 
-  // Get the registered translator for the given operator/expression
-  ExpressionTranslator *GetTranslator(
-      const expression::AbstractExpression &exp) const;
-  OperatorTranslator *GetTranslator(const planner::AbstractPlan &op) const;
-
  private:
   // The context where all the code lives
   CodeContext &code_context_;
@@ -118,10 +121,13 @@ class CompilationContext {
   ParameterCache parameter_cache_;
 
   // The consumer of the results of the query
-  ExecutionConsumer &execution_consumer_;
+  ExecutionConsumer &exec_consumer_;
 
   // The code generator
   CodeGen codegen_;
+
+  // All the pipelines
+  std::vector<Pipeline *> pipelines_;
 
   // The main pipeline
   Pipeline main_pipeline_;

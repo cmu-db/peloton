@@ -12,7 +12,6 @@
 
 #include "codegen/compilation_context.h"
 
-#include "codegen/proxy/executor_context_proxy.h"
 #include "common/logger.h"
 #include "common/timer.h"
 
@@ -20,15 +19,6 @@ namespace peloton {
 namespace codegen {
 
 namespace {
-
-// Reset the cache (if already loaded), the populate the cache
-void InitializeParameterCache(CodeGen &codegen, ParameterCache &cache,
-                              llvm::Value *runtime_query_parameters) {
-  cache.Reset();
-  cache.Populate(codegen, runtime_query_parameters);
-}
-
-}  // namespace
 
 // Constructor
 CompilationContext::CompilationContext(CodeContext &code,
@@ -38,11 +28,10 @@ CompilationContext::CompilationContext(CodeContext &code,
     : code_context_(code),
       runtime_state_(runtime_state),
       parameter_cache_(parameters_map),
-      execution_consumer_(execution_consumer),
-      codegen_(code_context_) {
-  // Let the consumer prepare itself
-  execution_consumer_.Prepare(*this);
-}
+      exec_consumer_(execution_consumer),
+      codegen_(code_context_),
+      pipelines_(),
+      main_pipeline_(*this) {}
 
 // Prepare the translator for the given operator
 void CompilationContext::Prepare(const planner::AbstractPlan &op,
@@ -71,8 +60,12 @@ void CompilationContext::GeneratePlan(Query &query,
   Timer<std::ratio<1, 1000>> timer;
   timer.Start();
 
-  // First we prepare the translators for all the operators in the tree
+  // First we prepare the consumer and translators for each plan node
+  exec_consumer_.Prepare(*this);
   Prepare(query.GetPlan(), main_pipeline_);
+
+  // Finalize the runtime state
+  runtime_state_.FinalizeType(codegen_);
 
   if (stats != nullptr) {
     timer.Stop();
@@ -131,12 +124,6 @@ void CompilationContext::GenerateHelperFunctions() {
     const auto &function_declaration = iter.second;
     FunctionBuilder func{code_context_, function_declaration};
     {
-      // Don't try to optimize this by moving the cache population outside the
-      // function definition. We need the call to exist within the context of
-      // the function we're generating.
-      InitializeParameterCache(
-          codegen_, parameter_cache_,
-          execution_consumer_.GetQueryParametersPtr(*this));
       // Let the plan produce
       Produce(plan);
       // That's it
@@ -150,11 +137,11 @@ llvm::Function *CompilationContext::GenerateInitFunction() {
   // Create function definition
   std::string name = StringUtil::Format("_%lu_init", code_context_.GetID());
   std::vector<FunctionDeclaration::ArgumentInfo> args = {
-      {"runtimeState", runtime_state_.FinalizeType(codegen_)->getPointerTo()}};
+      {"runtimeState", runtime_state_.GetType()->getPointerTo()}};
   FunctionBuilder init_func{code_context_, name, codegen_.VoidType(), args};
   {
     // Let the consumer initialize
-    execution_consumer_.InitializeState(*this);
+    exec_consumer_.InitializeState(*this);
 
     // Allow each operator to initialize their state
     for (auto &iter : op_translators_) {
@@ -175,16 +162,11 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
     const planner::AbstractPlan &root) {
   std::string name = StringUtil::Format("_%lu_plan", code_context_.GetID());
   std::vector<FunctionDeclaration::ArgumentInfo> args = {
-      {"runtimeState", runtime_state_.FinalizeType(codegen_)->getPointerTo()}};
+      {"runtimeState", runtime_state_.GetType()->getPointerTo()}};
   FunctionBuilder plan_func{code_context_, name, codegen_.VoidType(), args};
   {
-    // Load the query parameter values
-    InitializeParameterCache(codegen_, parameter_cache_,
-                             execution_consumer_.GetQueryParametersPtr(*this));
-
     // Generate the primary plan logic
     Produce(root);
-
     // Finish the function
     plan_func.ReturnAndFinish();
   }
@@ -197,12 +179,12 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
 llvm::Function *CompilationContext::GenerateTearDownFunction() {
   std::string name = StringUtil::Format("_%lu_tearDown", code_context_.GetID());
   std::vector<FunctionDeclaration::ArgumentInfo> args = {
-      {"runtimeState", runtime_state_.FinalizeType(codegen_)->getPointerTo()}};
+      {"runtimeState", runtime_state_.GetType()->getPointerTo()}};
   FunctionBuilder tear_down_func{code_context_, name, codegen_.VoidType(),
                                  args};
   {
     // Let the consumer cleanup
-    execution_consumer_.TearDownState(*this);
+    exec_consumer_.TearDownState(*this);
 
     // Allow each operator to clean up their state
     for (auto &iter : op_translators_) {
@@ -249,7 +231,7 @@ AuxiliaryProducerFunction CompilationContext::DeclareAuxiliaryProducer(
   }
 
   std::vector<FunctionDeclaration::ArgumentInfo> fn_args = {
-      {"runtimeState", runtime_state_.FinalizeType(codegen_)->getPointerTo()}};
+      {"runtimeState", runtime_state_.GetType()->getPointerTo()}};
 
   auto declaration = FunctionDeclaration::MakeDeclaration(
       code_context_, fn_name, FunctionDeclaration::Visibility::Internal,
@@ -259,6 +241,19 @@ AuxiliaryProducerFunction CompilationContext::DeclareAuxiliaryProducer(
   auxiliary_producers_.emplace(&plan, declaration);
 
   return AuxiliaryProducerFunction(declaration);
+}
+
+void CompilationContext::RegisterPipeline(Pipeline &pipeline) {
+  pipelines_.push_back(&pipeline);
+}
+
+uint32_t CompilationContext::GetPipelinePosition(Pipeline &pipeline) {
+  for (uint32_t i = 0; i < pipelines_.size(); i++) {
+    if (&pipeline == pipelines_[i]) {
+      return i;
+    }
+  }
+  throw Exception{"Attempted to find a non-existant pipeline!"};
 }
 
 }  // namespace codegen

@@ -17,7 +17,6 @@
 #include "codegen/operator/projection_translator.h"
 #include "codegen/lang/vectorized_loop.h"
 #include "codegen/type/integer_type.h"
-#include "common/logger.h"
 
 namespace peloton {
 namespace codegen {
@@ -35,11 +34,6 @@ HashGroupByTranslator::HashGroupByTranslator(
     : OperatorTranslator(group_by, context, pipeline),
       child_pipeline_(this),
       aggregation_(context.GetRuntimeState()) {
-  LOG_DEBUG("Constructing HashGroupByTranslator ...");
-
-  auto &codegen = GetCodeGen();
-  auto &runtime_state = context.GetRuntimeState();
-
   // If we should be prefetching into the hash-table, install a boundary in the
   // pipeline at the input into this translator to ensure it receives a vector
   // of input tuples
@@ -48,6 +42,8 @@ HashGroupByTranslator::HashGroupByTranslator(
   }
 
   // Register the hash-table instance in the runtime state
+  CodeGen &codegen = GetCodeGen();
+  RuntimeState &runtime_state = context.GetRuntimeState();
   hash_table_id_ = runtime_state.RegisterState(
       "groupBy", OAHashTableProxy::GetType(codegen));
 
@@ -98,23 +94,26 @@ void HashGroupByTranslator::InitializeState() {
 
 // Produce!
 void HashGroupByTranslator::Produce() const {
-  auto &comp_ctx = GetCompilationContext();
+  // Let the left child produce its tuples which we aggregate in our hash-table
+  GetCompilationContext().Produce(*GetPlan().GetChild(0));
 
-  // Let the child produce its tuples which we aggregate in our hash-table
-  comp_ctx.Produce(*GetPlan().GetChild(0));
+  // Send aggregates up in separate pipeline function
+  auto producer = [this]() {
+    CodeGen &codegen = GetCodeGen();
 
-  LOG_DEBUG("HashGroupBy starting to produce results ...");
+    // The selection vector
+    auto *i32_type = codegen.Int32Type();
+    auto vec_size = Vector::kDefaultVectorSize.load();
+    auto *raw_vec = codegen.AllocateBuffer(i32_type, vec_size, "hgbSelVector");
+    Vector selection_vec{raw_vec, vec_size, i32_type};
 
-  auto &codegen = GetCodeGen();
+    // Iterate
+    ProduceResults produce_results{*this};
+    hash_table_.VectorizedIterate(codegen, LoadStatePtr(hash_table_id_),
+                                  selection_vec, produce_results);
+  };
 
-  // Iterate over the hash table, sending tuples up the tree
-  auto *raw_vec = codegen.AllocateBuffer(
-      codegen.Int32Type(), Vector::kDefaultVectorSize, "hashGroupBySelVector");
-  Vector selection_vec{raw_vec, Vector::kDefaultVectorSize,
-                       GetCodeGen().Int32Type()};
-  ProduceResults producer{*this};
-  hash_table_.VectorizedIterate(GetCodeGen(), LoadStatePtr(hash_table_id_),
-                                selection_vec, producer);
+  GetPipeline().RunSerial(producer);
 }
 
 void HashGroupByTranslator::Consume(ConsumerContext &context,
@@ -126,7 +125,7 @@ void HashGroupByTranslator::Consume(ConsumerContext &context,
 
   // This aggregation uses prefetching
 
-  auto &codegen = GetCodeGen();
+  CodeGen &codegen = GetCodeGen();
 
   // The vector holding the hash values for the group
   auto *raw_vec = codegen.AllocateBuffer(
@@ -206,10 +205,7 @@ void HashGroupByTranslator::Consume(ConsumerContext &context,
 // Consume the tuples from the context, grouping them into the hash table
 void HashGroupByTranslator::Consume(ConsumerContext &,
                                     RowBatch::Row &row) const {
-  LOG_DEBUG("HashGroupBy consuming results ...");
-
-  auto &context = GetCompilationContext();
-  auto &codegen = GetCodeGen();
+  CodeGen &codegen = GetCodeGen();
 
   // Collect the keys we use to probe the hash table
   std::vector<codegen::Value> key;
@@ -234,7 +230,7 @@ void HashGroupByTranslator::Consume(ConsumerContext &,
 
   // Perform the insertion into the hash table
   llvm::Value *hash_table = LoadStatePtr(hash_table_id_);
-  ConsumerProbe probe{context, aggregation_, vals, key};
+  ConsumerProbe probe{GetCompilationContext(), aggregation_, vals, key};
   ConsumerInsert insert{aggregation_, vals, key};
   hash_table_.ProbeOrInsert(codegen, hash_table, hash, key, probe, insert);
 }
@@ -244,9 +240,6 @@ void HashGroupByTranslator::TearDownState() {
   hash_table_.Destroy(GetCodeGen(), LoadStatePtr(hash_table_id_));
   aggregation_.TearDownState(GetCodeGen());
 }
-
-// Get the stringified name of this hash-based group-by
-std::string HashGroupByTranslator::GetName() const { return "HashGroupBy"; }
 
 // Estimate the size of the dynamically constructed hash-table
 uint64_t HashGroupByTranslator::EstimateHashTableSize() const {
@@ -262,7 +255,7 @@ bool HashGroupByTranslator::UsePrefetching() const {
 
 void HashGroupByTranslator::CollectHashKeys(
     RowBatch::Row &row, std::vector<codegen::Value> &key) const {
-  auto &codegen = GetCodeGen();
+  CodeGen &codegen = GetCodeGen();
   for (const auto *gb_ai : GetPlan().GetGroupbyAIs()) {
     key.push_back(row.DeriveValue(codegen, gb_ai));
   }
@@ -324,14 +317,14 @@ HashGroupByTranslator::ProduceResults::ProduceResults(
     : translator_(translator) {}
 
 void HashGroupByTranslator::ProduceResults::ProcessEntries(
-    CodeGen &, llvm::Value *start, llvm::Value *end, Vector &selection_vector,
-    HashTable::HashTableAccess &access) const {
+    CodeGen &codegen, llvm::Value *start, llvm::Value *end,
+    Vector &selection_vector, HashTable::HashTableAccess &access) const {
   RowBatch batch{translator_.GetCompilationContext(), start, end,
                  selection_vector, true};
 
   AggregateFinalizer finalizer{translator_.GetAggregation(), access};
 
-  const auto &group_by = translator_.GetPlan();
+  const auto &group_by = translator_.GetPlanAs<planner::AggregatePlan>();
   auto &grouping_ais = group_by.GetGroupbyAIs();
   auto &aggregates = group_by.GetUniqueAggTerms();
 
@@ -368,9 +361,6 @@ void HashGroupByTranslator::ProduceResults::ProcessEntries(
 
   auto *predicate = group_by.GetPredicate();
   if (predicate != nullptr) {
-    // There is a predicate that must be checked
-    auto &codegen = translator_.GetCodeGen();
-
     // Iterate over the batch, performing a branching predicate check
     batch.Iterate(codegen, [&](RowBatch::Row &row) {
       codegen::Value valid_row = row.DeriveValue(codegen, *predicate);
@@ -406,7 +396,7 @@ HashGroupByTranslator::ConsumerProbe::ConsumerProbe(
 // an existing value for the key.  In this case, since we're aggregating, we
 // advance all of the aggregates.
 void HashGroupByTranslator::ConsumerProbe::ProcessEntry(
-    UNUSED_ATTRIBUTE CodeGen &codegen, llvm::Value *data_area) const {
+    CodeGen &codegen, llvm::Value *data_area) const {
   aggregation_.AdvanceValues(codegen, data_area, next_vals_, grouping_keys_);
 }
 
@@ -425,7 +415,7 @@ HashGroupByTranslator::ConsumerInsert::ConsumerInsert(
 // Given free storage space in the hash table, store the initial values of all
 // the aggregates
 void HashGroupByTranslator::ConsumerInsert::StoreValue(
-    UNUSED_ATTRIBUTE CodeGen &codegen, llvm::Value *space) const {
+    CodeGen &codegen, llvm::Value *space) const {
   aggregation_.CreateInitialValues(codegen, space, initial_vals_,
                                    grouping_keys_);
 }

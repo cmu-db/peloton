@@ -95,8 +95,8 @@ BlockNestedLoopJoinTranslator::BlockNestedLoopJoinTranslator(
   }
 
   // Allocate buffer instance in runtime state and configure its accessor
-  auto &codegen = GetCodeGen();
-  auto &runtime_state = context.GetRuntimeState();
+  CodeGen &codegen = GetCodeGen();
+  RuntimeState &runtime_state = context.GetRuntimeState();
   buffer_id_ =
       runtime_state.RegisterState("buffer", SorterProxy::GetType(codegen));
   buffer_ = Sorter{codegen, left_input_desc};
@@ -114,15 +114,15 @@ BlockNestedLoopJoinTranslator::BlockNestedLoopJoinTranslator(
 }
 
 void BlockNestedLoopJoinTranslator::InitializeState() {
-  auto &codegen = GetCodeGen();
+  CodeGen &codegen = GetCodeGen();
   auto *null_func = codegen.Null(
       proxy::TypeBuilder<util::Sorter::ComparisonFunction>::GetType(codegen));
   buffer_.Init(codegen, LoadStatePtr(buffer_id_), null_func);
 }
 
 void BlockNestedLoopJoinTranslator::DefineAuxiliaryFunctions() {
-  const auto &right_producer = *GetPlan().GetChild(1);
-  auto &compilation_context = GetCompilationContext();
+  const planner::AbstractPlan &right_producer = *GetPlan().GetChild(1);
+  CompilationContext &compilation_context = GetCompilationContext();
   join_buffer_func_ = compilation_context.DeclareAuxiliaryProducer(
       right_producer, "joinBuffer");
 }
@@ -131,19 +131,12 @@ void BlockNestedLoopJoinTranslator::TearDownState() {
   buffer_.Destroy(GetCodeGen(), LoadStatePtr(buffer_id_));
 }
 
-std::string BlockNestedLoopJoinTranslator::GetName() const {
-  auto max_buffer_size = settings::SettingsManager::GetDouble(
-      settings::SettingId::bnlj_buffer_size);
-  return StringUtil::Format("BlockNestedLoopJoin[buffer: %.2lf KB, # rows: %u]",
-                            (max_buffer_size / 1024.0), max_buf_rows_);
-}
-
 void BlockNestedLoopJoinTranslator::Produce() const {
   // Let the left child produce tuples we'll batch-process in Consume()
   GetCompilationContext().Produce(*GetPlan().GetChild(0));
 
   // Flush any remaining buffered tuples through the join
-  auto &codegen = GetCodeGen();
+  CodeGen &codegen = GetCodeGen();
   auto *num_tuples =
       buffer_.GetNumberOfStoredTuples(codegen, LoadStatePtr(buffer_id_));
   lang::If has_tuples{codegen,
@@ -162,7 +155,7 @@ bool BlockNestedLoopJoinTranslator::IsFromLeftChild(
 
 void BlockNestedLoopJoinTranslator::ConsumeFromLeft(
     UNUSED_ATTRIBUTE ConsumerContext &context, RowBatch::Row &row) const {
-  auto &codegen = GetCodeGen();
+  CodeGen &codegen = GetCodeGen();
 
   // Construct tuple
   std::vector<Value> tuple;
@@ -202,11 +195,6 @@ void BlockNestedLoopJoinTranslator::Consume(ConsumerContext &ctx,
   } else {
     ConsumeFromRight(ctx, row);
   }
-}
-
-const planner::NestedLoopJoinPlan &BlockNestedLoopJoinTranslator::GetPlan()
-    const {
-  return GetPlanAs<planner::NestedLoopJoinPlan>();
 }
 
 namespace {
@@ -291,7 +279,8 @@ void BufferedTupleCallback::ProjectAndConsume() const {
 
 void BlockNestedLoopJoinTranslator::FindMatchesForRow(
     ConsumerContext &ctx, RowBatch::Row &row) const {
-  BufferedTupleCallback callback{GetPlan(), unique_left_attributes_, ctx, row};
+  const auto &plan = GetPlanAs<planner::NestedLoopJoinPlan>();
+  BufferedTupleCallback callback{plan, unique_left_attributes_, ctx, row};
   buffer_.Iterate(GetCodeGen(), LoadStatePtr(buffer_id_), callback);
 }
 

@@ -30,7 +30,7 @@ GlobalGroupByTranslator::GlobalGroupByTranslator(
       aggregation_(context.GetRuntimeState()) {
   LOG_DEBUG("Constructing GlobalGroupByTranslator ...");
 
-  auto &codegen = context.GetCodeGen();
+  CodeGen &codegen = context.GetCodeGen();
 
   // Prepare the child in the new child pipeline
   context.Prepare(*plan.GetChild(0), child_pipeline_);
@@ -56,7 +56,7 @@ GlobalGroupByTranslator::GlobalGroupByTranslator(
       kMatBufferTypeName, true);
 
   // Allocate state in the function argument for our materialization buffer
-  auto &runtime_state = context.GetRuntimeState();
+  RuntimeState &runtime_state = context.GetRuntimeState();
   mat_buffer_id_ = runtime_state.RegisterState("buf", mat_buffer_type);
 
   LOG_DEBUG("Finished constructing GlobalGroupByTranslator ...");
@@ -68,51 +68,55 @@ void GlobalGroupByTranslator::InitializeState() {
 }
 
 void GlobalGroupByTranslator::Produce() const {
-  auto &codegen = GetCodeGen();
-
   // Initialize aggregation for global aggregation
-  auto *mat_buffer = LoadStatePtr(mat_buffer_id_);
-  aggregation_.CreateInitialGlobalValues(codegen, mat_buffer);
+  aggregation_.CreateInitialGlobalValues(GetCodeGen(),
+                                         LoadStatePtr(mat_buffer_id_));
 
   // Let the child produce tuples that we'll aggregate
-  const auto &plan = GetPlan();
-  GetCompilationContext().Produce(*plan.GetChild(0));
+  GetCompilationContext().Produce(*GetPlan().GetChild(0));
 
-  // Deserialize the finalized aggregate attribute values from the buffer
-  std::vector<codegen::Value> aggregate_vals;
-  aggregation_.FinalizeValues(GetCodeGen(), mat_buffer, aggregate_vals);
+  auto producer = [this]() {
+    CodeGen &codegen = GetCodeGen();
+    auto *raw_vec =
+        codegen.AllocateBuffer(codegen.Int32Type(), 1, "globalGbSelVector");
+    Vector selection_vector{raw_vec, 1, codegen.Int32Type()};
+    selection_vector.SetValue(codegen, codegen.Const32(0), codegen.Const32(0));
 
-  std::vector<BufferAttributeAccess> buffer_accessors;
+    // Create a row-batch of one row, place all the attributes into the row
+    RowBatch batch{GetCompilationContext(), codegen.Const32(0),
+                   codegen.Const32(1), selection_vector, false};
 
-  const auto &agg_terms = plan.GetUniqueAggTerms();
-  PELOTON_ASSERT(agg_terms.size() == aggregate_vals.size());
-  for (size_t i = 0; i < agg_terms.size(); i++) {
-    buffer_accessors.emplace_back(aggregate_vals, i);
-  }
+    // Deserialize the finalized aggregate attribute values from the buffer
+    std::vector<codegen::Value> aggregate_vals;
+    aggregation_.FinalizeValues(GetCodeGen(), LoadStatePtr(mat_buffer_id_),
+                                aggregate_vals);
 
-  // Create a row-batch of one row, place all the attributes into the row
-  auto *raw_vec =
-      codegen.AllocateBuffer(codegen.Int32Type(), 1, "globalGroupBySelVector");
-  Vector selection_vector{raw_vec, 1, codegen.Int32Type()};
-  selection_vector.SetValue(codegen, codegen.Const32(0), codegen.Const32(0));
+    // Collect accessors for each aggregate
+    const auto &plan = GetPlanAs<planner::AggregatePlan>();
 
-  RowBatch batch{GetCompilationContext(), codegen.Const32(0),
-                 codegen.Const32(1), selection_vector, false};
+    std::vector<BufferAttributeAccess> buffer_accessors;
+    const auto &agg_terms = plan.GetUniqueAggTerms();
+    PELOTON_ASSERT(agg_terms.size() == aggregate_vals.size());
+    for (size_t i = 0; i < agg_terms.size(); i++) {
+      buffer_accessors.emplace_back(aggregate_vals, i);
+    }
+    for (size_t i = 0; i < agg_terms.size(); i++) {
+      batch.AddAttribute(&agg_terms[i].agg_ai, &buffer_accessors[i]);
+    }
 
-  for (size_t i = 0; i < agg_terms.size(); i++) {
-    batch.AddAttribute(&agg_terms[i].agg_ai, &buffer_accessors[i]);
-  }
+    // Create a new consumer context, send (single row) batch to parent
+    ConsumerContext context{GetCompilationContext(), GetPipeline()};
+    context.Consume(batch);
+  };
 
-  // Create a new consumer context, put the aggregates into the context and send
-  // it all up to the parent operator
-  ConsumerContext context{GetCompilationContext(), GetPipeline()};
-  context.Consume(batch);
+  // Run the last pipeline serially
+  GetPipeline().RunSerial(producer);
 }
 
 void GlobalGroupByTranslator::Consume(ConsumerContext &,
                                       RowBatch::Row &row) const {
   // Get the updates to advance the aggregates
-  const auto &plan = GetPlan();
+  const auto &plan = GetPlanAs<planner::AggregatePlan>();
 
   auto &aggregates = plan.GetUniqueAggTerms();
   std::vector<codegen::Value> vals{aggregates.size()};
@@ -131,12 +135,6 @@ void GlobalGroupByTranslator::Consume(ConsumerContext &,
 // Cleanup by destroying the aggregation hash-table
 void GlobalGroupByTranslator::TearDownState() {
   aggregation_.TearDownState(GetCodeGen());
-}
-
-std::string GlobalGroupByTranslator::GetName() const { return "GlobalGroupBy"; }
-
-const planner::AggregatePlan &GlobalGroupByTranslator::GetPlan() const {
-  return GetPlanAs<planner::AggregatePlan>();
 }
 
 }  // namespace codegen

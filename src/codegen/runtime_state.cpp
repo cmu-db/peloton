@@ -87,5 +87,10 @@ llvm::Type *RuntimeState::FinalizeType(CodeGen &codegen) {
   return constructed_type_;
 }
 
+llvm::Type *RuntimeState::GetType() const {
+  PL_ASSERT(constructed_type_ != nullptr);
+  return constructed_type_;
+}
+
 }  // namespace codegen
 }  // namespace peloton

@@ -35,10 +35,10 @@ OrderByTranslator::OrderByTranslator(const planner::OrderByPlan &plan,
   // Prepare the child
   context.Prepare(*plan.GetChild(0), child_pipeline_);
 
-  auto &codegen = GetCodeGen();
+  CodeGen &codegen = GetCodeGen();
 
   // Register the sorter instance
-  auto &runtime_state = context.GetRuntimeState();
+  RuntimeState &runtime_state = context.GetRuntimeState();
   sorter_id_ =
       runtime_state.RegisterState("sort", SorterProxy::GetType(codegen));
 
@@ -131,12 +131,13 @@ void OrderByTranslator::InitializeState() {
 // or descending order and worry about types etc.
 //===----------------------------------------------------------------------===//
 void OrderByTranslator::DefineAuxiliaryFunctions() {
-  LOG_DEBUG("Constructing 'compare' function for sort ...");
-  auto &codegen = GetCodeGen();
-  auto &storage_format = sorter_.GetStorageFormat();
+  CodeGen &codegen = GetCodeGen();
+  const auto &plan = GetPlanAs<planner::OrderByPlan>();
 
-  const auto &sort_keys = plan_.GetSortKeys();
-  const auto &descend_flags = plan_.GetDescendFlags();
+  const auto &storage_format = sorter_.GetStorageFormat();
+
+  const auto &sort_keys = plan.GetSortKeys();
+  const auto &descend_flags = plan.GetDescendFlags();
 
   // The comparison function builder
   auto *ret_type = codegen.Int32Type();
@@ -205,40 +206,37 @@ void OrderByTranslator::DefineAuxiliaryFunctions() {
 }
 
 void OrderByTranslator::Produce() const {
-  LOG_DEBUG("OrderBy requesting child to produce tuples ...");
-
   // Let the child produce the tuples we materialize into a buffer
   GetCompilationContext().Produce(*GetPlan().GetChild(0));
 
-  LOG_DEBUG("OrderBy buffered tuples into sorter, going to sort ...");
+  auto producer = [this]() {
+    CodeGen &codegen = GetCodeGen();
+    auto *sorter_ptr = LoadStatePtr(sorter_id_);
 
-  auto &codegen = GetCodeGen();
-  auto *sorter_ptr = LoadStatePtr(sorter_id_);
+    // The tuples have been materialized into the buffer space, NOW SORT!!!
+    sorter_.Sort(codegen, sorter_ptr);
 
-  // The tuples have been materialized into the buffer space, NOW SORT!!!
-  sorter_.Sort(codegen, sorter_ptr);
+    // Now iterate over the sorted list
+    auto *i32_type = codegen.Int32Type();
+    auto vec_size = Vector::kDefaultVectorSize.load();
+    auto *raw_vec = codegen.AllocateBuffer(i32_type, vec_size, "obSelVec");
+    Vector selection_vector{raw_vec, vec_size, i32_type};
 
-  LOG_DEBUG("OrderBy sort complete, iterating over results ...");
+    ProduceResults callback{*this, selection_vector};
+    sorter_.VectorizedIterate(codegen, sorter_ptr,
+                              selection_vector.GetCapacity(), callback);
+  };
 
-  // Now iterate over the sorted list
-  auto *raw_vec = codegen.AllocateBuffer(
-      codegen.Int32Type(), Vector::kDefaultVectorSize, "orderBySelVec");
-  Vector selection_vector{raw_vec, Vector::kDefaultVectorSize,
-                          codegen.Int32Type()};
-
-  ProduceResults callback{*this, selection_vector};
-  sorter_.VectorizedIterate(codegen, sorter_ptr, selection_vector.GetCapacity(),
-                            callback);
-
-  LOG_DEBUG("OrderBy completed producing tuples ...");
+  GetPipeline().RunSerial(producer);
 }
 
 void OrderByTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
-  auto &codegen = GetCodeGen();
+  CodeGen &codegen = GetCodeGen();
 
   // Pull out the attributes we need and append the tuple into the sorter
+  const auto &plan = GetPlanAs<planner::OrderByPlan>();
   std::vector<codegen::Value> tuple;
-  const auto &output_cols = GetPlan().GetOutputColumnAIs();
+  const auto &output_cols = plan.GetOutputColumnAIs();
   for (const auto *ai : output_cols) {
     tuple.push_back(row.DeriveValue(codegen, ai));
   }
@@ -258,12 +256,6 @@ void OrderByTranslator::TearDownState() {
   sorter_.Destroy(GetCodeGen(), LoadStatePtr(sorter_id_));
 }
 
-std::string OrderByTranslator::GetName() const { return "OrderBy"; }
-
-const planner::OrderByPlan &OrderByTranslator::GetPlan() const {
-  return GetPlanAs<planner::OrderByPlan>();
-}
-
 //===----------------------------------------------------------------------===//
 // PRODUCE RESULTS
 //===----------------------------------------------------------------------===//
@@ -276,13 +268,14 @@ void OrderByTranslator::ProduceResults::ProcessEntries(
     CodeGen &, llvm::Value *start_index, llvm::Value *end_index,
     Sorter::SorterAccess &access) const {
   // Construct the row batch we're producing
-  auto &compilation_context = translator_.GetCompilationContext();
+  CompilationContext &compilation_context = translator_.GetCompilationContext();
   RowBatch batch{compilation_context, start_index, end_index, selection_vector_,
                  false};
 
   // Add the attribute accessors for rows in this batch
+  const auto &plan = translator_.GetPlanAs<planner::OrderByPlan>();
   std::vector<SorterAttributeAccess> accessors;
-  auto &output_ais = translator_.GetPlan().GetOutputColumnAIs();
+  auto &output_ais = plan.GetOutputColumnAIs();
   for (oid_t col_id = 0; col_id < output_ais.size(); col_id++) {
     accessors.emplace_back(access, col_id);
   }
@@ -291,8 +284,7 @@ void OrderByTranslator::ProduceResults::ProcessEntries(
   }
 
   // Create the context and send the batch up
-  ConsumerContext context{translator_.GetCompilationContext(),
-                          translator_.GetPipeline()};
+  ConsumerContext context{compilation_context, translator_.GetPipeline()};
   context.Consume(batch);
 }
 
