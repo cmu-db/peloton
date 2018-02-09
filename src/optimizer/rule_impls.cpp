@@ -877,15 +877,26 @@ void EmbedFilterIntoGet::Transform(
 
 ///////////////////////////////////////////////////////////////////////////////
 /// MarkJoinGetToInnerJoin
-MarkJoinGetToInnerJoin::MarkJoinGetToInnerJoin() {
+MarkJoinToInnerJoin::MarkJoinToInnerJoin() {
   type_ = RuleType::MARK_JOIN_GET_TO_INNER_JOIN;
 
   match_pattern = std::make_shared<Pattern>(OpType::LogicalMarkJoin);
   match_pattern->AddChild(std::make_shared<Pattern>(OpType::Leaf));
-  match_pattern->AddChild(std::make_shared<Pattern>(OpType::Get));
+  match_pattern->AddChild(std::make_shared<Pattern>(OpType::Leaf));
 }
 
-bool MarkJoinGetToInnerJoin::Check(std::shared_ptr<OperatorExpression> plan,
+int MarkJoinToInnerJoin::Promise(GroupExpression *group_expr,
+                                    OptimizeContext *context) const {
+  (void)context;
+  auto root_type = match_pattern->Type();
+  // This rule is not applicable
+  if (root_type != OpType::Leaf && root_type != group_expr->Op().type()) {
+    return 0;
+  }
+  return static_cast<int>(UnnestPromise::Low);
+}
+
+bool MarkJoinToInnerJoin::Check(std::shared_ptr<OperatorExpression> plan,
                                    OptimizeContext *context) const {
   (void)context;
   (void)plan;
@@ -896,49 +907,7 @@ bool MarkJoinGetToInnerJoin::Check(std::shared_ptr<OperatorExpression> plan,
   return true;
 }
 
-void MarkJoinGetToInnerJoin::Transform(
-    std::shared_ptr<OperatorExpression> input,
-    std::vector<std::shared_ptr<OperatorExpression>> &transformed,
-    UNUSED_ATTRIBUTE OptimizeContext *context) const {
-  UNUSED_ATTRIBUTE auto mark_join = input->Op().As<LogicalMarkJoin>();
-  auto &join_children = input->Children();
-
-  PL_ASSERT(mark_join->join_predicates.empty());
-
-  std::shared_ptr<OperatorExpression> output =
-      std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
-
-  output->PushChild(join_children[0]);
-  output->PushChild(join_children[1]);
-
-  transformed.push_back(output);
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/// MarkJoinInnerJoinToInnerJoin
-MarkJoinInnerJoinToInnerJoin::MarkJoinInnerJoinToInnerJoin() {
-  type_ = RuleType::MARK_JOIN_INNER_JOIN_TO_INNER_JOIN;
-
-  match_pattern = std::make_shared<Pattern>(OpType::LogicalMarkJoin);
-  match_pattern->AddChild(std::make_shared<Pattern>(OpType::Leaf));
-  auto inner_join = std::make_shared<Pattern>(OpType::InnerJoin);
-  inner_join->AddChild(std::make_shared<Pattern>(OpType::Leaf));
-  inner_join->AddChild(std::make_shared<Pattern>(OpType::Leaf));
-  match_pattern->AddChild(inner_join);
-}
-
-bool MarkJoinInnerJoinToInnerJoin::Check(
-    std::shared_ptr<OperatorExpression> plan, OptimizeContext *context) const {
-  (void)context;
-  (void)plan;
-
-  UNUSED_ATTRIBUTE auto &children = plan->Children();
-  PL_ASSERT(children.size() == 2);
-
-  return true;
-}
-
-void MarkJoinInnerJoinToInnerJoin::Transform(
+void MarkJoinToInnerJoin::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed,
     UNUSED_ATTRIBUTE OptimizeContext *context) const {
@@ -966,6 +935,17 @@ PullFilterThroughMarkJoin::PullFilterThroughMarkJoin() {
   auto filter = std::make_shared<Pattern>(OpType::LogicalFilter);
   filter->AddChild(std::make_shared<Pattern>(OpType::Leaf));
   match_pattern->AddChild(filter);
+}
+
+int PullFilterThroughMarkJoin::Promise(GroupExpression *group_expr,
+                                       OptimizeContext *context) const {
+  (void)context;
+  auto root_type = match_pattern->Type();
+  // This rule is not applicable
+  if (root_type != OpType::Leaf && root_type != group_expr->Op().type()) {
+    return 0;
+  }
+  return static_cast<int>(UnnestPromise::High);
 }
 
 bool PullFilterThroughMarkJoin::Check(std::shared_ptr<OperatorExpression> plan,

@@ -417,7 +417,8 @@ void TopDownRewrite::execute() {
                       GetRuleSet().GetRewriteRulesByName(rule_set_name_),
                       valid_rules);
 
-  std::sort(valid_rules.begin(), valid_rules.end());
+  // Sort so that we apply rewrite rules with higher promise first
+  std::sort(valid_rules.begin(), valid_rules.end(), std::greater<RuleWithPromise>());
 
   for (auto &r : valid_rules) {
     GroupExprBindingIterator iterator(GetMemo(), cur_group_expr,
@@ -476,7 +477,9 @@ void BottomUpRewrite::execute() {
                       GetRuleSet().GetRewriteRulesByName(rule_set_name_),
                       valid_rules);
 
-  std::sort(valid_rules.begin(), valid_rules.end());
+  // Sort so that we apply rewrite rules with higher promise first
+  std::sort(valid_rules.begin(), valid_rules.end(), std::greater<RuleWithPromise>());
+  // std::reverse(valid_rules.begin(), valid_rules.end());
 
   for (auto &r : valid_rules) {
     GroupExprBindingIterator iterator(GetMemo(), cur_group_expr,

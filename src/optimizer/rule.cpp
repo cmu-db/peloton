@@ -44,15 +44,17 @@ RuleSet::RuleSet() {
   AddImplementationRule(new ImplementDistinct());
   AddImplementationRule(new ImplementLimit());
 
-  AddRewriteRule(RewriteRuleSetName::PREDICATE_PUSH_DOWN, new PushFilterThroughJoin());
-  AddRewriteRule(RewriteRuleSetName::PREDICATE_PUSH_DOWN, new CombineConsecutiveFilter());
-  AddRewriteRule(RewriteRuleSetName::PREDICATE_PUSH_DOWN, new EmbedFilterIntoGet());
+  AddRewriteRule(RewriteRuleSetName::PREDICATE_PUSH_DOWN,
+                 new PushFilterThroughJoin());
+  AddRewriteRule(RewriteRuleSetName::PREDICATE_PUSH_DOWN,
+                 new CombineConsecutiveFilter());
+  AddRewriteRule(RewriteRuleSetName::PREDICATE_PUSH_DOWN,
+                 new EmbedFilterIntoGet());
 
-  AddRewriteRule(RewriteRuleSetName::UNNEST_SUBQUERY, new PullFilterThroughMarkJoin());
-  AddRewriteRule(RewriteRuleSetName::UNNEST_SUBQUERY, new MarkJoinInnerJoinToInnerJoin());
-  AddRewriteRule(RewriteRuleSetName::UNNEST_SUBQUERY, new MarkJoinGetToInnerJoin());
-
-
+  AddRewriteRule(RewriteRuleSetName::UNNEST_SUBQUERY,
+                 new PullFilterThroughMarkJoin());
+  AddRewriteRule(RewriteRuleSetName::UNNEST_SUBQUERY,
+                 new MarkJoinToInnerJoin());
 }
 
 }  // namespace optimizer

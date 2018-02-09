@@ -307,25 +307,21 @@ class EmbedFilterIntoGet : public Rule {
                  OptimizeContext *context) const override;
 };
 
+
+///////////////////////////////////////////////////////////////////////////////
+/// Unnesting rules
+enum class UnnestPromise {
+ Low = 1,
+ High
+};
 ///////////////////////////////////////////////////////////////////////////////
 /// MarkJoinGetToInnerJoin
-class MarkJoinGetToInnerJoin : public Rule {
+class MarkJoinToInnerJoin : public Rule {
  public:
-  MarkJoinGetToInnerJoin();
+  MarkJoinToInnerJoin();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan,
-             OptimizeContext *context) const override;
-
-  void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
-                 OptimizeContext *context) const override;
-};
-
-///////////////////////////////////////////////////////////////////////////////
-/// MarkJoinInnerJoinToInnerJoin
-class MarkJoinInnerJoinToInnerJoin : public Rule {
- public:
-  MarkJoinInnerJoinToInnerJoin();
+  int Promise(GroupExpression *group_expr,
+                      OptimizeContext *context) const override;
 
   bool Check(std::shared_ptr<OperatorExpression> plan,
              OptimizeContext *context) const override;
@@ -340,6 +336,9 @@ class MarkJoinInnerJoinToInnerJoin : public Rule {
 class PullFilterThroughMarkJoin : public Rule {
  public:
   PullFilterThroughMarkJoin();
+
+  int Promise(GroupExpression *group_expr,
+                      OptimizeContext *context) const override;
 
   bool Check(std::shared_ptr<OperatorExpression> plan,
              OptimizeContext *context) const override;
