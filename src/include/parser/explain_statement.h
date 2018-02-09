@@ -16,8 +16,6 @@
 
 namespace peloton {
 
-class SqlNodeVisitor;
-
 namespace parser {
 
 /**
@@ -29,7 +27,7 @@ class ExplainStatement : public SQLStatement {
   ExplainStatement() : SQLStatement(StatementType::EXPLAIN) {}
   virtual ~ExplainStatement() {}
 
-  virtual void Accept(UNUSED_ATTRIBUTE SqlNodeVisitor *v) override {}
+  void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
 
   std::unique_ptr<parser::SQLStatement> real_sql_stmt;
 };

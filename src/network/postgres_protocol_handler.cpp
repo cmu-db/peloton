@@ -33,7 +33,6 @@
 #include "traffic_cop/traffic_cop.h"
 #include "type/value.h"
 #include "type/value_factory.h"
-#include "network/marshal.h"
 #include "util/string_util.h"
 
 #define SSL_MESSAGE_VERNO 80877103
@@ -225,7 +224,7 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(
     };
     case QueryType::QUERY_EXPLAIN: {
       auto status = ExecQueryExplain(
-          query, static_cast<parser::ExplainStatement *>(sql_stmt.get()));
+          query, static_cast<parser::ExplainStatement &>(*sql_stmt));
       ExecQueryMessageGetResult(status);
       return ProcessResult::COMPLETE;
     }
@@ -259,14 +258,11 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(
 }
 
 ResultType PostgresProtocolHandler::ExecQueryExplain(
-    const std::string &query, parser::ExplainStatement *explain_stmt) {
-  PL_ASSERT(explain_stmt != nullptr);
-
+    const std::string &query, parser::ExplainStatement &explain_stmt) {
   std::string error_message;
   std::unique_ptr<parser::SQLStatementList> unnamed_sql_stmt_list(
       new parser::SQLStatementList());
-  unnamed_sql_stmt_list->PassInStatement(
-      std::move(explain_stmt->real_sql_stmt));
+  unnamed_sql_stmt_list->PassInStatement(std::move(explain_stmt.real_sql_stmt));
   auto stmt = traffic_cop_->PrepareStatement(
       "explain", query, std::move(unnamed_sql_stmt_list), error_message);
   ResultType status = ResultType::UNKNOWN;

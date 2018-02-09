@@ -23,7 +23,6 @@
 #include "common/portal.h"
 #include "common/statement.h"
 #include "common/statement_cache.h"
-#include "traffic_cop/traffic_cop.h"
 #include "protocol_handler.h"
 #include "traffic_cop/traffic_cop.h"
 
@@ -34,7 +33,7 @@ namespace peloton {
 
 namespace parser {
 class ExplainStatement;
-}
+}  // namespace parser
 
 namespace network {
 
@@ -168,7 +167,7 @@ class PostgresProtocolHandler : public ProtocolHandler {
 
   /* Execute a EXPLAIN query message */
   ResultType ExecQueryExplain(const std::string &query,
-                              parser::ExplainStatement *explain_stmt);
+                              parser::ExplainStatement &explain_stmt);
 
   /* Process the PARSE message of the extended query protocol */
   void ExecParseMessage(InputPacket *pkt);
