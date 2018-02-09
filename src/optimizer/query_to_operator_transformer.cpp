@@ -26,7 +26,6 @@
 #include "parser/statements.h"
 
 #include "catalog/manager.h"
-#include "common/exception.h"
 
 using std::vector;
 using std::shared_ptr;
