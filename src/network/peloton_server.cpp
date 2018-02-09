@@ -25,7 +25,9 @@
 #include <fstream>
 
 #include "network/peloton_server.h"
+#include "network/peloton_rpc_handler_task.h"
 #include "settings/settings_manager.h"
+#include "common/dedicated_thread_registry.h"
 
 #include "peloton_config.h"
 
@@ -77,23 +79,28 @@ int PelotonServer::SSLMutexCleanup(void) {
   return 1;
 }
 
-void PelotonServer::SSLLockingFunction(int mode, int n, UNUSED_ATTRIBUTE const char* file, UNUSED_ATTRIBUTE int line) {
+void PelotonServer::SSLLockingFunction(int mode,
+                                       int n,
+                                       UNUSED_ATTRIBUTE const char *file,
+                                       UNUSED_ATTRIBUTE int line) {
   if (mode & CRYPTO_LOCK) {
     MUTEX_LOCK(ssl_mutex_buf_[n]);
-  }
-  else {
+  } else {
     MUTEX_UNLOCK(ssl_mutex_buf_[n]);
   }
 }
 
 unsigned long PelotonServer::SSLIdFunction(void) {
-  return ((unsigned long)THREAD_ID);
+  return ((unsigned long) THREAD_ID);
 }
 
 void PelotonServer::LoadSSLFileSettings() {
-  private_key_file_ = DATA_DIR + settings::SettingsManager::GetString(settings::SettingId::private_key_file);
-  certificate_file_ = DATA_DIR + settings::SettingsManager::GetString(settings::SettingId::certificate_file);
-  root_cert_file_ = DATA_DIR + settings::SettingsManager::GetString(settings::SettingId::root_cert_file);
+  private_key_file_ = DATA_DIR
+      + settings::SettingsManager::GetString(settings::SettingId::private_key_file);
+  certificate_file_ = DATA_DIR
+      + settings::SettingsManager::GetString(settings::SettingId::certificate_file);
+  root_cert_file_ = DATA_DIR
+      + settings::SettingsManager::GetString(settings::SettingId::root_cert_file);
 }
 
 void PelotonServer::SSLInit() {
@@ -124,7 +131,9 @@ void PelotonServer::SSLInit() {
   }
   //TODO(Yuchen): change this.
   //load trusted CA certificates (peer authentication)
-  if (SSL_CTX_load_verify_locations(ssl_context, certificate_file_.c_str(), nullptr) != 1) {
+  if (SSL_CTX_load_verify_locations(ssl_context,
+                                    certificate_file_.c_str(),
+                                    nullptr) != 1) {
     LOG_ERROR("Exception when loading root_crt!");
     SetSSLLevel(SSLLevel::SSL_PREFER);
   }
@@ -135,7 +144,8 @@ void PelotonServer::SSLInit() {
   }
 
   LOG_INFO("certificate file path %s", certificate_file_.c_str());
-  if (SSL_CTX_use_certificate_chain_file(ssl_context, certificate_file_.c_str()) != 1) {
+  if (SSL_CTX_use_certificate_chain_file(ssl_context, certificate_file_.c_str())
+      != 1) {
     SSL_CTX_free(ssl_context);
     LOG_ERROR("Exception when loading server certificate!");
     ssl_context = nullptr;
@@ -144,7 +154,9 @@ void PelotonServer::SSLInit() {
   }
 
   LOG_INFO("private key file path %s", private_key_file_.c_str());
-  if (SSL_CTX_use_PrivateKey_file(ssl_context, private_key_file_.c_str(), SSL_FILETYPE_PEM) != 1) {
+  if (SSL_CTX_use_PrivateKey_file(ssl_context,
+                                  private_key_file_.c_str(),
+                                  SSL_FILETYPE_PEM) != 1) {
     SSL_CTX_free(ssl_context);
     LOG_ERROR("Exception when loading server key!");
     ssl_context = nullptr;
@@ -236,7 +248,7 @@ PelotonServer &PelotonServer::SetupServer() {
   // This line is critical to performance for some reason
   evthread_use_pthreads();
   if (settings::SettingsManager::GetString(
-          settings::SettingId::socket_family) != "AF_INET")
+      settings::SettingId::socket_family) != "AF_INET")
     throw ConnectionException("Unsupported socket family");
 
   struct sockaddr_in sin;
@@ -264,11 +276,16 @@ PelotonServer &PelotonServer::SetupServer() {
   dispatcher_task_ = std::make_shared<ConnectionDispatcherTask>(
       CONNECTION_THREAD_COUNT, listen_fd_);
 
-  LOG_INFO("Listening on port %llu", (unsigned long long)port_);
+  LOG_INFO("Listening on port %llu", (unsigned long long) port_);
   return *this;
 }
 
 void PelotonServer::ServerLoop() {
+  int rpc_port =
+      settings::SettingsManager::GetInt(settings::SettingId::rpc_port);
+  DedicatedThreadRegistry::GetInstance()
+      .RegisterThread<PelotonRpcHandlerTask, const char *>
+          (this, ("127.0.0.1:" + std::to_string(rpc_port)).c_str());
   dispatcher_task_->EventLoop();
   LOG_INFO("Closing server");
   int status;

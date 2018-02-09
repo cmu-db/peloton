@@ -30,6 +30,11 @@ SETTING_int(max_connections,
            64,
            true, true)
 
+SETTING_int(rpc_port,
+            "Peloton rpc port (default: 15445)",
+             15445,
+             false, false)
+
 // Socket family
 SETTING_string(socket_family,
               "Socket family (default: AF_INET)",
