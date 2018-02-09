@@ -929,6 +929,9 @@ std::string ExpressionTypeToString(ExpressionType type, bool short_str) {
     case ExpressionType::CAST: {
       return ("CAST");
     }
+    case ExpressionType::OPERATOR_IS_NOT_NULL: {
+      return ("IS_NOT_NULL");
+    }
     default: {
       throw ConversionException(StringUtil::Format(
           "No string conversion for ExpressionType value '%d'",

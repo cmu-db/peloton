@@ -132,6 +132,7 @@ ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
     return status.m_result;
   } catch (Exception &e) {
     error_message = e.what();
+    LOG_DEBUG("Testing SQL Util Caught Exception : %s", e.what());
     return ResultType::FAILURE;
   }
 }

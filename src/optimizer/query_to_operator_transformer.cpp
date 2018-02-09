@@ -304,15 +304,9 @@ void QueryToOperatorTransformer::Visit(
 void QueryToOperatorTransformer::Visit(expression::ComparisonExpression *expr) {
   auto expr_type = expr->GetExpressionType();
   if (expr->GetExpressionType() == ExpressionType::COMPARE_IN) {
-    std::vector<expression::AbstractExpression *> select_list;
-    if (GenerateSubquerytree(expr->GetModifiableChild(1), select_list) ==
-        true) {
-      if (select_list.size() != 1) {
-        throw Exception("Array in predicates not supported");
-      }
-
-      // Set the right child as the output of the subquery
-      expr->SetChild(1, select_list.at(0)->Copy());
+    if (GenerateSubquerytree(expr, 1)) {
+      // TODO(boweic): Should use IN to preserve the semantic, for now we do not
+      // have semi-join so use = to transform into inner join
       expr->SetExpressionType(ExpressionType::COMPARE_EQUAL);
     }
 
@@ -321,40 +315,25 @@ void QueryToOperatorTransformer::Visit(expression::ComparisonExpression *expr) {
              expr_type == ExpressionType::COMPARE_GREATERTHANOREQUALTO ||
              expr_type == ExpressionType::COMPARE_LESSTHAN ||
              expr_type == ExpressionType::COMPARE_LESSTHANOREQUALTO) {
-    std::vector<expression::AbstractExpression *> select_list;
-    if (GenerateSubquerytree(expr->GetModifiableChild(0), select_list, true) ==
-        true) {
-      if (select_list.size() != 1) {
-        throw Exception("Array in predicates not supported");
-      }
-
-      // Set the left child as the output of the subquery
-      expr->SetChild(0, select_list.at(0)->Copy());
+    if (expr->GetChild(0)->GetExpressionType() ==
+            ExpressionType::ROW_SUBQUERY &&
+        expr->GetChild(1)->GetExpressionType() ==
+            ExpressionType::ROW_SUBQUERY) {
+      throw Exception("Do not support comparison between sub-select");
     }
-    select_list.clear();
-    if (GenerateSubquerytree(expr->GetModifiableChild(1), select_list, true) ==
-        true) {
-      if (select_list.size() != 1) {
-        throw Exception("Array in predicates not supported");
-      }
-
-      // Set the right child as the output of the subquery
-      expr->SetChild(1, select_list.at(0)->Copy());
-    }
+    // Transform if either child is sub-query
+    GenerateSubquerytree(expr, 0, true) || GenerateSubquerytree(expr, 1, true);
   }
   expr->AcceptChildren(this);
 }
 
 void QueryToOperatorTransformer::Visit(expression::OperatorExpression *expr) {
+  // TODO(boweic): We may want to do the rewrite (exist -> in) in the binder
   if (expr->GetExpressionType() == ExpressionType::OPERATOR_EXISTS) {
-    std::vector<expression::AbstractExpression *> select_list;
-    if (GenerateSubquerytree(expr->GetModifiableChild(0), select_list) ==
-        true) {
-      PL_ASSERT(!select_list.empty());
-
-      // Set the right child as the output of the subquery
+    if (GenerateSubquerytree(expr, 0)) {
+      // Already reset the child to column, we need to transform exist to
+      // not-null to preserve semantic
       expr->SetExpressionType(ExpressionType::OPERATOR_IS_NOT_NULL);
-      expr->SetChild(0, select_list.at(0)->Copy());
     }
   }
 
@@ -391,24 +370,117 @@ bool QueryToOperatorTransformer::RequireAggregation(
 
 void QueryToOperatorTransformer::CollectPredicates(
     expression::AbstractExpression *expr) {
+  // First check if all conjunctive predicates are supported before
+  // transfoming
+  // predicate with sub-select into regular predicates
+  std::vector<expression::AbstractExpression *> predicates;
+  util::SplitPredicates(expr, predicates);
+  for (const auto &pred : predicates) {
+    if (!IsSupportedConjunctivePredicate(pred)) {
+      throw Exception("Predicate type not supported yet");
+    }
+  }
+  // Accept will change the expression, e.g. (a in (select b from test)) into
+  // (a IN test.b), after the rewrite, we can extract the table aliases
+  // information correctly
   expr->Accept(this);
   util::ExtractPredicates(expr, predicates_);
 }
 
+bool QueryToOperatorTransformer::IsSupportedConjunctivePredicate(
+    expression::AbstractExpression *expr) {
+  // Currently support : 1. expr without subquery
+  // 2. subquery without disjunction. Since the expr is already one of the
+  // conjunctive exprs, we'll only need to check if the root level is an
+  // operator with subquery
+  if (!expr->HasSubquery()) {
+    return true;
+  }
+  auto expr_type = expr->GetExpressionType();
+  // Subquery with IN
+  if (expr_type == ExpressionType::COMPARE_IN &&
+      expr->GetChild(1)->GetExpressionType() == ExpressionType::ROW_SUBQUERY) {
+    return true;
+  }
+  // Subquery with EXIST
+  if (expr_type == ExpressionType::OPERATOR_EXISTS &&
+      expr->GetChild(0)->GetExpressionType() == ExpressionType::ROW_SUBQUERY) {
+    return true;
+  }
+  // Subquery with other operator
+  if (expr_type == ExpressionType::COMPARE_EQUAL ||
+      expr_type == ExpressionType::COMPARE_GREATERTHAN ||
+      expr_type == ExpressionType::COMPARE_GREATERTHANOREQUALTO ||
+      expr_type == ExpressionType::COMPARE_LESSTHAN ||
+      expr_type == ExpressionType::COMPARE_LESSTHANOREQUALTO) {
+    // Supported is one child is subquery and the other is not
+    if ((!expr->GetChild(0)->HasSubquery() &&
+         expr->GetChild(1)->GetExpressionType() ==
+             ExpressionType::ROW_SUBQUERY) ||
+        (!expr->GetChild(1)->HasSubquery() &&
+         expr->GetChild(0)->GetExpressionType() ==
+             ExpressionType::ROW_SUBQUERY)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool QueryToOperatorTransformer::IsSupportedSubSelect(
+    const parser::SelectStatement *op) {
+  // Supported if 1. No aggregation. 2. With aggregation and WHERE clause only
+  // have correlated columns in conjunctive predicates in the form of
+  // "outer_relation.a = ..."
+  // TODO(boweic): Add support for arbitary expressions, this would require
+  // the
+  // support for mark join & some special operators, see Hyper's unnesting
+  // arbitary query slides
+  if (!RequireAggregation(op)) {
+    return true;
+  }
+
+  std::vector<expression::AbstractExpression *> predicates;
+  util::SplitPredicates(op->where_clause.get(), predicates);
+  for (const auto &pred : predicates) {
+    // If correlated predicate
+    if (pred->GetDepth() < op->depth) {
+      if (pred->GetExpressionType() != ExpressionType::COMPARE_EQUAL) {
+        return false;
+      }
+      // Check if in the form of
+      // "outer_relation.a = (expr only columns in inner relation)"
+      if (!((pred->GetChild(0)->GetDepth() == op->depth &&
+             pred->GetChild(0)->GetExpressionType() ==
+                 ExpressionType::VALUE_TUPLE) ||
+            (pred->GetChild(1)->GetDepth() == op->depth &&
+             pred->GetChild(1)->GetExpressionType() ==
+                 ExpressionType::VALUE_TUPLE))) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 bool QueryToOperatorTransformer::GenerateSubquerytree(
-    expression::AbstractExpression *expr,
-    std::vector<expression::AbstractExpression *> &select_list,
-    bool single_join) {
-  if (expr->GetExpressionType() != ExpressionType::ROW_SUBQUERY) {
+    expression::AbstractExpression *expr, oid_t child_id, bool single_join) {
+  // Get potential subquery
+  auto subquery_expr = expr->GetChild(child_id);
+  if (subquery_expr->GetExpressionType() != ExpressionType::ROW_SUBQUERY) {
     return false;
   }
-  auto subquery_expr = dynamic_cast<expression::SubqueryExpression *>(expr);
-  auto sub_select = subquery_expr->GetSubSelect();
-
-  for (auto &ele : sub_select->select_list) {
-    select_list.push_back(ele.get());
+  auto sub_select =
+      static_cast<const expression::SubqueryExpression *>(subquery_expr)
+          ->GetSubSelect()
+          .get();
+  if (!IsSupportedSubSelect(sub_select)) {
+    throw Exception("Sub-select not supported");
   }
-
+  // We only support subselect with single row
+  if (sub_select->select_list.size() != 1) {
+    throw Exception("Array in predicates not supported");
+  }
+  std::vector<expression::AbstractExpression *> select_list;
   // Construct join
   std::shared_ptr<OperatorExpression> op_expr;
   if (single_join) {
@@ -426,6 +498,8 @@ bool QueryToOperatorTransformer::GenerateSubquerytree(
   op_expr->PushChild(output_expr_);
 
   output_expr_ = op_expr;
+  // Convert subquery to the selected column in the sub-select
+  expr->SetChild(child_id, sub_select->select_list.at(0)->Copy());
   return true;
 }
 

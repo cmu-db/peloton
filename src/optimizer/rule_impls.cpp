@@ -261,9 +261,9 @@ void GetToIndexScan::Transform(
                   ->GetValue());
           LOG_TRACE("Value Type: %d",
                     static_cast<int>(
-                      reinterpret_cast<expression::ConstantValueExpression *>(
-                        expr->GetModifiableChild(1))
-                        ->GetValueType()));
+                        reinterpret_cast<expression::ConstantValueExpression *>(
+                            expr->GetModifiableChild(1))
+                            ->GetValueType()));
         } else {
           value_list.push_back(
               type::ValueFactory::GetParameterOffsetValue(
@@ -748,12 +748,14 @@ void PushFilterThroughJoin::Transform(
   // E.g. An expression (test.a = test1.b and test.a = 5) would become
   // {test.a = test1.b, test.a = 5}
   for (auto &predicate : predicates) {
-    if (util::IsSubset(left_group_aliases_set, predicate.table_alias_set))
+    if (util::IsSubset(left_group_aliases_set, predicate.table_alias_set)) {
       left_predicates.emplace_back(predicate);
-    else if (util::IsSubset(right_group_aliases_set, predicate.table_alias_set))
+    } else if (util::IsSubset(right_group_aliases_set,
+                              predicate.table_alias_set)) {
       right_predicates.emplace_back(predicate);
-    else
+    } else {
       join_predicates.emplace_back(predicate);
+    }
   }
 
   // Construct join operator
