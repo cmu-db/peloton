@@ -12,9 +12,9 @@ import re
 import sys
 import datetime
 import subprocess
-import distutils.spawn
 
 from functools import reduce
+from script.helpers import find_clangformat
 
 ## ==============================================
 ## CONFIGURATION
@@ -144,18 +144,6 @@ def format_dir(dir_path, update_header, clang_format_code):
 #END ADD_HEADERS_DIR(DIR_PATH)
 
 
-def find_clangformat():
-    """Finds appropriate clang-format executable."""
-    #check for possible clang-format versions
-    for exe in ["clang-format", "clang-format-3.6", "clang-format-3.7",
-                "clang-format-3.8"
-               ]:
-        path = distutils.spawn.find_executable(exe)
-        if not path is None:
-            break
-    return path
-
-
 ## ==============================================
 ##                 Main Function
 ## ==============================================
@@ -191,11 +179,13 @@ if __name__ == '__main__':
     CLANG_FORMAT = find_clangformat()
 
     if ARGS.staged_files:
-        TARGETS = [os.path.abspath(os.path.join(PELOTON_DIR, f)) for f in \
-        subprocess.check_output(
-            ["git", "diff", "--name-only", "HEAD", "--cached",
-             "--diff-filter=d"
-            ]
+        PELOTON_DIR_bytes = bytes(PELOTON_DIR, 'utf-8')
+        TARGETS = [
+            str(os.path.abspath(os.path.join(PELOTON_DIR_bytes, f)), 'utf-8') \
+            for f in subprocess.check_output(
+                ["git", "diff", "--name-only", "HEAD", "--cached",
+                 "--diff-filter=d"
+                ]
             ).split()]
 
         if not TARGETS:

@@ -11,7 +11,8 @@ import difflib
 import mmap
 import glob
 import functools
-import distutils.spawn
+
+from script.helpers import find_clangformat
 
 ## ==============================================
 ## LOGGING CONFIGURATION
@@ -93,16 +94,6 @@ FORMATTING_FILE_WHITELIST = [
 ## ==============================================
 ##           UTILITY FUNCTION DEFINITIONS
 ## ==============================================
-
-def find_clangformat():
-    """Finds clang-format executable."""
-    #check for possible clang-format versions
-    for exe in ["clang-format", "clang-format-3.6",
-                "clang-format-3.7", "clang-format-3.8"
-               ]:
-        path = distutils.spawn.find_executable(exe)
-        if not path is None:
-            return path
 
 
 def check_common_patterns(file_path):
