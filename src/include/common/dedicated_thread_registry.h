@@ -19,9 +19,16 @@
 #include "common/macros.h"
 
 namespace peloton {
+/**
+ * Singleton class responsible for maintaining and dispensing long running
+ * (dedicated) threads to other system components. The class also serves
+ * as a control panel for the brain component to be able to collect information
+ * on threads in the system and modify how threads are allocated.
+ */
 class DedicatedThreadRegistry {
  public:
   DedicatedThreadRegistry() = default;
+
   ~DedicatedThreadRegistry() {
     for (auto &entry : thread_owners_table_) {
       for (auto &task : entry.second) {
@@ -37,6 +44,15 @@ class DedicatedThreadRegistry {
     return registry;
   }
 
+  /**
+   *
+   * @tparam Task The type of Task to be run on the new thread. Must be a
+   *              subtype of DedicatedThreadTask
+   * @tparam Args types of arguments to be supplied to constructor of Task
+   * @param requester The owner to assign the new thread to
+   * @param args the arguments to pass to constructor of task
+   * @return the DedicatedThreadTask running on new thread
+   */
   template <typename Task, typename... Args>
   std::shared_ptr<Task> RegisterThread(DedicatedThreadOwner *requester,
                                        Args... args) {

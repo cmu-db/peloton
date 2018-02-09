@@ -25,14 +25,14 @@ class DedicatedThreadTask {
   /**
    * Send a termination signal to the dedicated thread.
    *
-   * The thread must then wrap up and exit from its Run function.
+   * The thread must then wrap up and exit from its Run function. The
+   * termination is guaranteed to be communicated to the owner
    */
   virtual void Terminate() = 0;
 
   /**
-   * Executes the dedicated thread. It is assumed that the thread does exit
+   * Executes the dedicated thread. It is assumed that the thread doesn't exit
    * until terminate is explicitly called.
-   * @param params parameters to be provided
    */
   virtual void RunTask() = 0;
 };

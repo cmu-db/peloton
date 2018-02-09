@@ -28,16 +28,32 @@ namespace peloton {
  */
 class DedicatedThreadOwner {
  public:
+  /**
+   * @return the number of threads owned by this owner
+   */
   size_t GetThreadCount() { return thread_count_; }
 
+  /**
+   * Notifies the owner that a new thread has been given to it
+   */
   void NotifyNewThread() { thread_count_++; };
 
+  /**
+   * Notifies the owner that the thread running task will be terminated
+   * @param task the task to be terminated
+   */
   void NotifyThreadRemoved(std::shared_ptr<DedicatedThreadTask> task) {
     thread_count_--;
     OnThreadRemoved(task);
   }
 
  protected:
+  /**
+   * Custom code to be run when removing a thread by each owner. It is expected
+   * that this function blocks until the thread can be dropped safely
+   *
+   * TODO(tianyu) turn into async if need be
+   */
   virtual void OnThreadRemoved(std::shared_ptr<DedicatedThreadTask>) {}
 
  private:
