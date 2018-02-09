@@ -20,8 +20,8 @@
 namespace peloton {
 
 namespace planner {
-    class PlanUtil;
-}
+class PlanUtil;
+}  // namespace planner
 
 namespace catalog {
 
