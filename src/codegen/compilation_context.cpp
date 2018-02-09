@@ -18,8 +18,6 @@
 namespace peloton {
 namespace codegen {
 
-namespace {
-
 // Constructor
 CompilationContext::CompilationContext(CodeContext &code,
                                        RuntimeState &runtime_state,
