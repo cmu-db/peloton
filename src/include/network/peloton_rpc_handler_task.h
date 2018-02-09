@@ -2,21 +2,21 @@
 //
 //                         Peloton
 //
-// peloton_rpc_server.h
+// peloton_rpc_handler_task.h
 //
-// Identification: src/include/network/peloton_rpc_server.h
+// Identification: src/include/network/peloton_rpc_handler_task.h
 //
-// Copyright (c) 2015-18, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #pragma once
-#include "peloton/capnp/peloton_service.capnp.h"
-#include "kj/debug.h"
 #include "capnp/ez-rpc.h"
 #include "capnp/message.h"
-#include "common/logger.h"
 #include "common/dedicated_thread_task.h"
+#include "common/logger.h"
+#include "kj/debug.h"
+#include "peloton/capnp/peloton_service.capnp.h"
 
 namespace peloton {
 namespace network {
@@ -29,9 +29,9 @@ class PelotonRpcServerImpl final : public PelotonService::Server {
   }
 };
 
-class PelotonRpcHandlerTask : public DedicatedThreadTask  {
+class PelotonRpcHandlerTask : public DedicatedThreadTask {
  public:
-  PelotonRpcHandlerTask(const char *address): address_(address) {}
+  PelotonRpcHandlerTask(const char *address) : address_(address) {}
 
   void Terminate() override {
     // TODO(tianyu): Write when we implement tuning
@@ -46,5 +46,5 @@ class PelotonRpcHandlerTask : public DedicatedThreadTask  {
  private:
   const char *address_;
 };
-}
-}
+}  // namespace network
+}  // namespace peloton

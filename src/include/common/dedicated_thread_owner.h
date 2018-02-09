@@ -11,8 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 #pragma once
-#include <thread>
 #include <memory>
+#include <thread>
 #include "common/dedicated_thread_task.h"
 
 namespace peloton {
@@ -30,9 +30,7 @@ class DedicatedThreadOwner {
  public:
   size_t GetThreadCount() { return thread_count_; }
 
-  void NotifyNewThread() {
-    thread_count_++;
-  };
+  void NotifyNewThread() { thread_count_++; };
 
   void NotifyThreadRemoved(std::shared_ptr<DedicatedThreadTask> task) {
     thread_count_--;
@@ -45,4 +43,4 @@ class DedicatedThreadOwner {
  private:
   size_t thread_count_ = 0;
 };
-}
+}  // namespace peloton

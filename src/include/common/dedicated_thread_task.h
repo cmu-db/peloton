@@ -9,6 +9,7 @@
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 #pragma once
 
 namespace peloton {
@@ -35,4 +36,4 @@ class DedicatedThreadTask {
    */
   virtual void RunTask() = 0;
 };
-}
+}  // namespace peloton

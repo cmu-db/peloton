@@ -11,12 +11,12 @@
 //===----------------------------------------------------------------------===//
 
 #pragma once
+#include <memory>
 #include <unordered_map>
 #include <vector>
-#include <memory>
-#include "common/macros.h"
 #include "common/dedicated_thread_owner.h"
 #include "common/dedicated_thread_task.h"
+#include "common/macros.h"
 
 namespace peloton {
 class DedicatedThreadRegistry {
@@ -37,13 +37,13 @@ class DedicatedThreadRegistry {
     return registry;
   }
 
-  template<typename Task, typename... Args>
+  template <typename Task, typename... Args>
   std::shared_ptr<Task> RegisterThread(DedicatedThreadOwner *requester,
-                      Args... args) {
+                                       Args... args) {
     auto task = std::make_shared<Task>(args...);
     thread_owners_table_[requester].push_back(task);
     requester->NotifyNewThread();
-    threads_table.emplace(task.get(), std::thread([=]{ task->RunTask(); }));
+    threads_table.emplace(task.get(), std::thread([=] { task->RunTask(); }));
     return task;
   }
 
@@ -59,4 +59,4 @@ class DedicatedThreadRegistry {
                      std::vector<std::shared_ptr<DedicatedThreadTask>>>
       thread_owners_table_;
 };
-}
+}  // namespace peloton

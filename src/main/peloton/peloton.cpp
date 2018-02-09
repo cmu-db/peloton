@@ -16,7 +16,6 @@
 #include "common/init.h"
 #include "common/logger.h"
 #include "network/peloton_server.h"
-#include "network/peloton_rpc_server.h"
 #include "settings/settings_manager.h"
 
 // For GFlag's built-in help message flag
