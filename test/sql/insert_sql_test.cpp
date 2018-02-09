@@ -585,8 +585,6 @@ TEST_F(InsertSQLTests, NonExistentTable) {
       txn = txn_manager.BeginTransaction();
       auto plan =
           TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn);
-      EXPECT_EQ(plan->GetPlanNodeType(), PlanNodeType::INSERT);
-      txn_manager.CommitTransaction(txn);
     } catch (peloton::Exception &ex) {
       EXPECT_EQ(ExceptionType::CATALOG, ex.GetType());
       EXPECT_STREQ("Table NotExistTestTable is not found", ex.what());
