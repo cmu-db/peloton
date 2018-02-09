@@ -35,6 +35,15 @@ SETTING_int(rpc_port,
              15445,
              false, false)
 
+// TODO(tianyu): Remove when we change to a different rpc framework
+// This is here only because capnp cannot exit gracefully and thus causes
+// test failure. This is an issue with the capnp implementation and has
+// been such way for a while, so it's unlikely it gets fixed.
+// See: https://groups.google.com/forum/#!topic/capnproto/bgxCdqGD6oE
+SETTING_bool(rpc_enabled,
+             "Enable rpc, this should be turned off when testing",
+             false, false, false)
+
 // Socket family
 SETTING_string(socket_family,
               "Socket family (default: AF_INET)",

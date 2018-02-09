@@ -29,41 +29,24 @@ class PelotonRpcServerImpl final : public PelotonService::Server {
   }
 };
 
-// Dumb code does not have a no throw destructor, preventing smart-pointer use
-// This a temporary work around, see:
-// https://github.com/capnproto/capnproto/issues/553
-
-template <typename T>
-struct DestructorCatcher {
-  T value;
-  template <typename... Params>
-  DestructorCatcher(Params&&... params) : value(kj::fwd<Params>(params)...) {}
-  ~DestructorCatcher() noexcept try {} catch (kj::Exception& e) {
-    LOG_DEBUG("Unexpected destructor throw");
-  }
-  T *operator->() { return &value; }
-};
 
 class PelotonRpcHandlerTask : public DedicatedThreadTask {
  public:
-  PelotonRpcHandlerTask(const char *address)
-      : address_(address),
-        termination_trigger_(kj::newPromiseAndFulfiller<void>()) {}\
+  explicit PelotonRpcHandlerTask(const char *address) : address_(address) {}
 
   void Terminate() override {
-    termination_trigger_->fulfiller->fulfill();
+    // TODO(tianyu): Not implemented. See:
+    // https://groups.google.com/forum/#!topic/capnproto/bgxCdqGD6oE
   }
 
   void RunTask() override {
     capnp::EzRpcServer server(kj::heap<PelotonRpcServerImpl>(), address_);
     LOG_DEBUG("Server listening on %s", address_);
-    termination_trigger_->promise.wait(server.getWaitScope());
+    kj::NEVER_DONE.wait(server.getWaitScope());
   }
 
  private:
-  using PromiseFulfillerPair = DestructorCatcher<kj::PromiseFulfillerPair<void>>;
   const char *address_;
-  PromiseFulfillerPair termination_trigger_;
 };
 }  // namespace network
 }  // namespace peloton
