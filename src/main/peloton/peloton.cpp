@@ -44,13 +44,11 @@ int main(int argc, char *argv[]) {
 
     // Create NetworkManager object
     peloton::network::PelotonServer peloton_server;
-    peloton::network::PelotonRpcServer rpc_server;
 
     // Start NetworkManager
     peloton::network::PelotonServer::LoadSSLFileSettings();
     peloton::network::PelotonServer::SSLInit();
 
-    std::thread rpc_thread([&] { rpc_server.Run("localhost:15445"); });
     peloton_server.SetupServer().ServerLoop();
   } catch (peloton::ConnectionException &exception) {
     // Nothing to do here!
