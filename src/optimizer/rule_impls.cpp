@@ -876,7 +876,7 @@ void EmbedFilterIntoGet::Transform(
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/// MarkJoinGetToInnerJoin
+/// MarkJoinToInnerJoin
 MarkJoinToInnerJoin::MarkJoinToInnerJoin() {
   type_ = RuleType::MARK_JOIN_GET_TO_INNER_JOIN;
 
@@ -886,7 +886,7 @@ MarkJoinToInnerJoin::MarkJoinToInnerJoin() {
 }
 
 int MarkJoinToInnerJoin::Promise(GroupExpression *group_expr,
-                                    OptimizeContext *context) const {
+                                 OptimizeContext *context) const {
   (void)context;
   auto root_type = match_pattern->Type();
   // This rule is not applicable
@@ -897,7 +897,7 @@ int MarkJoinToInnerJoin::Promise(GroupExpression *group_expr,
 }
 
 bool MarkJoinToInnerJoin::Check(std::shared_ptr<OperatorExpression> plan,
-                                   OptimizeContext *context) const {
+                                OptimizeContext *context) const {
   (void)context;
   (void)plan;
 
@@ -915,6 +915,56 @@ void MarkJoinToInnerJoin::Transform(
   auto &join_children = input->Children();
 
   PL_ASSERT(mark_join->join_predicates.empty());
+
+  std::shared_ptr<OperatorExpression> output =
+      std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
+
+  output->PushChild(join_children[0]);
+  output->PushChild(join_children[1]);
+
+  transformed.push_back(output);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/// SingleJoinGetToInnerJoin
+SingleJoinToInnerJoin::SingleJoinToInnerJoin() {
+  type_ = RuleType::MARK_JOIN_GET_TO_INNER_JOIN;
+
+  match_pattern = std::make_shared<Pattern>(OpType::LogicalSingleJoin);
+  match_pattern->AddChild(std::make_shared<Pattern>(OpType::Leaf));
+  match_pattern->AddChild(std::make_shared<Pattern>(OpType::Leaf));
+}
+
+int SingleJoinToInnerJoin::Promise(GroupExpression *group_expr,
+                                   OptimizeContext *context) const {
+  (void)context;
+  auto root_type = match_pattern->Type();
+  // This rule is not applicable
+  if (root_type != OpType::Leaf && root_type != group_expr->Op().type()) {
+    return 0;
+  }
+  return static_cast<int>(UnnestPromise::Low);
+}
+
+bool SingleJoinToInnerJoin::Check(std::shared_ptr<OperatorExpression> plan,
+                                  OptimizeContext *context) const {
+  (void)context;
+  (void)plan;
+
+  UNUSED_ATTRIBUTE auto &children = plan->Children();
+  PL_ASSERT(children.size() == 2);
+
+  return true;
+}
+
+void SingleJoinToInnerJoin::Transform(
+    std::shared_ptr<OperatorExpression> input,
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+    UNUSED_ATTRIBUTE OptimizeContext *context) const {
+  UNUSED_ATTRIBUTE auto single_join = input->Op().As<LogicalSingleJoin>();
+  auto &join_children = input->Children();
+
+  PL_ASSERT(single_join->join_predicates.empty());
 
   std::shared_ptr<OperatorExpression> output =
       std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
@@ -986,5 +1036,102 @@ void PullFilterThroughMarkJoin::Transform(
   transformed.push_back(output);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+/// PullFilterThroughAggregation
+PullFilterThroughAggregation::PullFilterThroughAggregation() {
+  type_ = RuleType::PULL_FILTER_THROUGH_AGGREGATION;
+
+  auto filter = std::make_shared<Pattern>(OpType::LogicalFilter);
+  filter->AddChild(std::make_shared<Pattern>(OpType::Leaf));
+  match_pattern = std::make_shared<Pattern>(OpType::LogicalAggregateAndGroupBy);
+  match_pattern->AddChild(filter);
+}
+
+int PullFilterThroughAggregation::Promise(GroupExpression *group_expr,
+                                          OptimizeContext *context) const {
+  (void)context;
+  auto root_type = match_pattern->Type();
+  // This rule is not applicable
+  if (root_type != OpType::Leaf && root_type != group_expr->Op().type()) {
+    return 0;
+  }
+  return static_cast<int>(UnnestPromise::High);
+}
+
+bool PullFilterThroughAggregation::Check(
+    std::shared_ptr<OperatorExpression> plan, OptimizeContext *context) const {
+  (void)context;
+  (void)plan;
+
+  auto &children = plan->Children();
+  PL_ASSERT(children.size() == 1);
+  UNUSED_ATTRIBUTE auto &r_grandchildren = children[1]->Children();
+  PL_ASSERT(r_grandchildren.size() == 1);
+
+  return true;
+}
+
+void PullFilterThroughAggregation::Transform(
+    std::shared_ptr<OperatorExpression> input,
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+    UNUSED_ATTRIBUTE OptimizeContext *context) const {
+  auto &memo = context->metadata->memo;
+  auto &filter_expr = input->Children()[0];
+  auto child_group_id =
+      filter_expr->Children()[0]->Op().As<LeafOperator>()->origin_group;
+  const auto &child_group_aliases_set =
+      memo.GetGroupByID(child_group_id)->GetTableAliases();
+
+  auto &predicates = filter_expr->Op().As<LogicalFilter>()->predicates;
+
+  std::vector<AnnotatedExpression> correlated_predicates;
+  std::vector<AnnotatedExpression> normal_predicates;
+  std::vector<std::shared_ptr<expression::AbstractExpression>> new_groupby_cols;
+  for (auto &predicate : predicates) {
+    if (util::IsSubset(child_group_aliases_set, predicate.table_alias_set)) {
+      normal_predicates.emplace_back(predicate);
+    } else {
+      // Correlated predicate, already in the form of
+      // (outer_relation.a = (expr))
+      correlated_predicates.emplace_back(predicate);
+      auto &root_expr = predicate.expr;
+      if (root_expr->GetChild(0)->GetDepth() < root_expr->GetDepth()) {
+        new_groupby_cols.emplace_back(root_expr->GetChild(1)->Copy());
+      } else {
+        new_groupby_cols.emplace_back(root_expr->GetChild(0)->Copy());
+      }
+    }
+  }
+
+  if (correlated_predicates.empty()) {
+    // No need to pull
+    return;
+  }
+  auto aggregation = input->Op().As<LogicalAggregateAndGroupBy>();
+  for (auto &col : aggregation->columns) {
+    new_groupby_cols.emplace_back(col->Copy());
+  }
+  std::vector<AnnotatedExpression> new_having(aggregation->having);
+  std::shared_ptr<OperatorExpression> new_aggregation =
+      std::make_shared<OperatorExpression>(LogicalAggregateAndGroupBy::make(
+          new_groupby_cols, new_having));
+  std::shared_ptr<OperatorExpression> output =
+      std::make_shared<OperatorExpression>(
+          LogicalFilter::make(correlated_predicates));
+  output->PushChild(new_aggregation);
+  auto bottom_operator = new_aggregation;
+
+  // Construct child filter if any
+  if (!normal_predicates.empty()) {
+    std::shared_ptr<OperatorExpression> new_filter =
+        std::make_shared<OperatorExpression>(
+            LogicalFilter::make(normal_predicates));
+    new_aggregation->PushChild(new_filter);
+    bottom_operator = new_filter;
+  }
+  bottom_operator->PushChild(filter_expr->Children()[0]);
+
+  transformed.push_back(output);
+}
 }  // namespace optimizer
 }  // namespace peloton

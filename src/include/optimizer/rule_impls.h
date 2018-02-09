@@ -307,13 +307,13 @@ class EmbedFilterIntoGet : public Rule {
                  OptimizeContext *context) const override;
 };
 
-
 ///////////////////////////////////////////////////////////////////////////////
 /// Unnesting rules
-enum class UnnestPromise {
- Low = 1,
- High
-};
+enum class UnnestPromise { Low = 1, High };
+// TODO(boweic): MarkJoin and SingleJoin should not be transformed into inner
+// join. Sometimes MarkJoin could be transformed into semi-join, but for now we
+// do not have these operators in the llvm cogen engine. Once we have those, we
+// should not use the following rules in the rewrite phase
 ///////////////////////////////////////////////////////////////////////////////
 /// MarkJoinGetToInnerJoin
 class MarkJoinToInnerJoin : public Rule {
@@ -321,7 +321,23 @@ class MarkJoinToInnerJoin : public Rule {
   MarkJoinToInnerJoin();
 
   int Promise(GroupExpression *group_expr,
-                      OptimizeContext *context) const override;
+              OptimizeContext *context) const override;
+
+  bool Check(std::shared_ptr<OperatorExpression> plan,
+             OptimizeContext *context) const override;
+
+  void Transform(std::shared_ptr<OperatorExpression> input,
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+                 OptimizeContext *context) const override;
+};
+///////////////////////////////////////////////////////////////////////////////
+/// SingleJoinToInnerJoin
+class SingleJoinToInnerJoin : public Rule {
+ public:
+  SingleJoinToInnerJoin();
+
+  int Promise(GroupExpression *group_expr,
+              OptimizeContext *context) const override;
 
   bool Check(std::shared_ptr<OperatorExpression> plan,
              OptimizeContext *context) const override;
@@ -338,7 +354,7 @@ class PullFilterThroughMarkJoin : public Rule {
   PullFilterThroughMarkJoin();
 
   int Promise(GroupExpression *group_expr,
-                      OptimizeContext *context) const override;
+              OptimizeContext *context) const override;
 
   bool Check(std::shared_ptr<OperatorExpression> plan,
              OptimizeContext *context) const override;
@@ -348,5 +364,21 @@ class PullFilterThroughMarkJoin : public Rule {
                  OptimizeContext *context) const override;
 };
 
+///////////////////////////////////////////////////////////////////////////////
+/// PullFilterThroughAggregation
+class PullFilterThroughAggregation : public Rule {
+ public:
+  PullFilterThroughAggregation();
+
+  int Promise(GroupExpression *group_expr,
+              OptimizeContext *context) const override;
+
+  bool Check(std::shared_ptr<OperatorExpression> plan,
+             OptimizeContext *context) const override;
+
+  void Transform(std::shared_ptr<OperatorExpression> input,
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+                 OptimizeContext *context) const override;
+};
 }  // namespace optimizer
 }  // namespace peloton

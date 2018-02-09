@@ -296,8 +296,8 @@ void OptimizeInputs::execute() {
       // 1. Collect stats needed and cache them in the group
       // 2. Calculate cost based on children's stats
       CostCalculator cost_calculator;
-      cur_total_cost_ += cost_calculator.CalculateCost(
-          group_expr_, &context_->metadata->memo);
+      cur_total_cost_ +=
+          cost_calculator.CalculateCost(group_expr_, &context_->metadata->memo);
     }
 
     for (; cur_child_idx_ < (int)group_expr_->GetChildrenGroupsSize();
@@ -418,7 +418,8 @@ void TopDownRewrite::execute() {
                       valid_rules);
 
   // Sort so that we apply rewrite rules with higher promise first
-  std::sort(valid_rules.begin(), valid_rules.end(), std::greater<RuleWithPromise>());
+  std::sort(valid_rules.begin(), valid_rules.end(),
+            std::greater<RuleWithPromise>());
 
   for (auto &r : valid_rules) {
     GroupExprBindingIterator iterator(GetMemo(), cur_group_expr,
@@ -478,8 +479,8 @@ void BottomUpRewrite::execute() {
                       valid_rules);
 
   // Sort so that we apply rewrite rules with higher promise first
-  std::sort(valid_rules.begin(), valid_rules.end(), std::greater<RuleWithPromise>());
-  // std::reverse(valid_rules.begin(), valid_rules.end());
+  std::sort(valid_rules.begin(), valid_rules.end(),
+            std::greater<RuleWithPromise>());
 
   for (auto &r : valid_rules) {
     GroupExprBindingIterator iterator(GetMemo(), cur_group_expr,

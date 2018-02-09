@@ -733,7 +733,6 @@ TEST_F(OptimizerSQLTests, NestedQueryTest) {
       {"1", "2", "3", "4"}, false);
 }
 
-/*
 TEST_F(OptimizerSQLTests, NestedQueryWithAggregationTest) {
   // Nested with aggregation
   TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE agg(a int, b int);");
@@ -790,7 +789,6 @@ TEST_F(OptimizerSQLTests, NestedQueryWithAggregationTest) {
       "s.sid < 4;",
       {"Patrick", "4", "David", "4", "Alice", "2"}, false);
 }
-*/
 
 }  // namespace test
 }  // namespace peloton
