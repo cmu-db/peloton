@@ -30,9 +30,13 @@ class DedicatedThreadRegistry {
   DedicatedThreadRegistry() = default;
 
   ~DedicatedThreadRegistry() {
+    // Note that if registry is shutting down, it doesn't matter whether
+    // owners are notified as this class should have the same life cycle
+    // as the entire peloton process.
+
     for (auto &entry : thread_owners_table_) {
       for (auto &task : entry.second) {
-        entry.first->NotifyThreadRemoved(task);
+        task->Terminate();
         threads_table[task.get()].join();
       }
     }
@@ -46,21 +50,18 @@ class DedicatedThreadRegistry {
 
   /**
    *
-   * @tparam Task The type of Task to be run on the new thread. Must be a
-   *              subtype of DedicatedThreadTask
-   * @tparam Args types of arguments to be supplied to constructor of Task
+   * Register a thread under requester to run the given task
+   *
    * @param requester The owner to assign the new thread to
    * @param args the arguments to pass to constructor of task
    * @return the DedicatedThreadTask running on new thread
    */
-  template <typename Task, typename... Args>
-  std::shared_ptr<Task> RegisterThread(DedicatedThreadOwner *requester,
-                                       Args... args) {
-    auto task = std::make_shared<Task>(args...);
+  template <typename Task>
+  void RegisterDedicatedThread(DedicatedThreadOwner *requester,
+                      std::shared_ptr<Task> task) {
     thread_owners_table_[requester].push_back(task);
     requester->NotifyNewThread();
     threads_table.emplace(task.get(), std::thread([=] { task->RunTask(); }));
-    return task;
   }
 
   // TODO(tianyu): Add code for thread removal

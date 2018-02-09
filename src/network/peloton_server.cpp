@@ -10,18 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// peloton_server.cpp
-//
-// Identification: src/network/peloton_server.cpp
-//
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
 #include <fstream>
+#include <memory>
 #include "event2/thread.h"
 
 #include "common/dedicated_thread_registry.h"
@@ -88,16 +78,16 @@ void PelotonServer::SSLLockingFunction(int mode, int n,
 }
 
 unsigned long PelotonServer::SSLIdFunction(void) {
-  return ((unsigned long)THREAD_ID);
+  return ((unsigned long) THREAD_ID);
 }
 
 void PelotonServer::LoadSSLFileSettings() {
   private_key_file_ = DATA_DIR + settings::SettingsManager::GetString(
-                                     settings::SettingId::private_key_file);
+      settings::SettingId::private_key_file);
   certificate_file_ = DATA_DIR + settings::SettingsManager::GetString(
-                                     settings::SettingId::certificate_file);
+      settings::SettingId::certificate_file);
   root_cert_file_ = DATA_DIR + settings::SettingsManager::GetString(
-                                   settings::SettingId::root_cert_file);
+      settings::SettingId::root_cert_file);
 }
 
 void PelotonServer::SSLInit() {
@@ -231,7 +221,7 @@ int PelotonServer::VerifyCallback(int ok, X509_STORE_CTX *store) {
   return ok;
 }
 
-template <typename... Ts>
+template<typename... Ts>
 void PelotonServer::TrySslOperation(int (*func)(Ts...), Ts... arg) {
   if (func(arg...) < 0) {
     if (GetSSLLevel() != SSLLevel::SSL_DISABLE) {
@@ -245,7 +235,7 @@ PelotonServer &PelotonServer::SetupServer() {
   // This line is critical to performance for some reason
   evthread_use_pthreads();
   if (settings::SettingsManager::GetString(
-          settings::SettingId::socket_family) != "AF_INET")
+      settings::SettingId::socket_family) != "AF_INET")
     throw ConnectionException("Unsupported socket family");
 
   struct sockaddr_in sin;
@@ -265,22 +255,23 @@ PelotonServer &PelotonServer::SetupServer() {
   setsockopt(listen_fd_, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
 
   TrySslOperation<int, const struct sockaddr *, socklen_t>(
-      bind, listen_fd_, (struct sockaddr *)&sin, sizeof(sin));
+      bind, listen_fd_, (struct sockaddr *) &sin, sizeof(sin));
   TrySslOperation<int, int>(listen, listen_fd_, conn_backlog);
 
   dispatcher_task_ = std::make_shared<ConnectionDispatcherTask>(
       CONNECTION_THREAD_COUNT, listen_fd_);
 
-  LOG_INFO("Listening on port %llu", (unsigned long long)port_);
+  LOG_INFO("Listening on port %llu", (unsigned long long) port_);
   return *this;
 }
 
 void PelotonServer::ServerLoop() {
   int rpc_port =
       settings::SettingsManager::GetInt(settings::SettingId::rpc_port);
+  auto rpc_task = std::make_shared<PelotonRpcHandlerTask>(("127.0.0.1:"
+      + std::to_string(rpc_port)).c_str());
   DedicatedThreadRegistry::GetInstance()
-      .RegisterThread<PelotonRpcHandlerTask, const char *>(
-          this, ("127.0.0.1:" + std::to_string(rpc_port)).c_str());
+      .RegisterDedicatedThread<PelotonRpcHandlerTask>(this, rpc_task);
   dispatcher_task_->EventLoop();
   LOG_INFO("Closing server");
   int status;
