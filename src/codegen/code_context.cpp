@@ -221,7 +221,7 @@ bool CodeContext::Compile() {
   }
 
   // Log the module
-  LOG_INFO("%s\n", GetIR().c_str());
+  LOG_TRACE("%s\n", GetIR().c_str());
 
   // All is well
   return true;
