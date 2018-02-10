@@ -43,13 +43,15 @@ class FunctionBuilder;
 class CodeContext {
   friend class CodeGen;
   friend class FunctionBuilder;
-  friend class PelotonMM;
 
  public:
   using FuncPtr = void *;
 
   CodeContext();
   ~CodeContext();
+
+  /// This class cannot be copy or move-constructed
+  DISALLOW_COPY_AND_MOVE(CodeContext);
 
   /// Register a function that will be defined in this context
   void RegisterFunction(llvm::Function *func);
@@ -61,45 +63,36 @@ class CodeContext {
   void RegisterBuiltin(llvm::Function *func_decl, FuncPtr func_impl);
 
   /// Lookup a builtin function that has been registered in this context
-  llvm::Function *LookupBuiltin(const std::string &name) const {
-    auto iter = builtins_.find(name);
-    return iter != builtins_.end() ? iter->second : nullptr;
-  }
+  llvm::Function *LookupBuiltin(const std::string &name) const;
 
-  // Returns the function pointer for UDF that has been registered in this
-  // context
+  /// Return the LLVM function for UDF that has been registered in this context
   llvm::Function *GetUDF() const { return udf_func_ptr_; }
 
-  // Sets UDF function ptr
+  /// Sets UDF function ptr
   void SetUDF(llvm::Function *func_ptr) { udf_func_ptr_ = func_ptr; }
 
   /// Compile all the code contained in this context
   bool Compile();
 
   /// Retrieve the raw function pointer to the provided compiled LLVM function
-  FuncPtr GetRawFunctionPointer(llvm::Function *fn) const {
-    for (size_t i = 0; i < functions_.size(); i++) {
-      if (functions_[i].first == fn) {
-        return functions_[i].second;
-      }
-    }
-    return nullptr;
-  }
+  FuncPtr GetRawFunctionPointer(llvm::Function *fn) const;
 
-  // Dump the contents of all the code in this context
+  /// Dump the contents of all the code in this context
   void DumpContents() const;
 
-  //===--------------------------------------------------------------------===//
-  // ACCESSORS
-  //===--------------------------------------------------------------------===//
+  //////////////////////////////////////////////////////////////////////////////
+  ///
+  /// Accessors
+  ///
+  //////////////////////////////////////////////////////////////////////////////
 
-  // Get the identifier for this code
+  /// Get the globally unique identifier for this code
   uint64_t GetID() const { return id_; }
 
-  // Get the context
+  /// Get the context
   llvm::LLVMContext &GetContext() const { return *context_; }
 
-  // Get the module
+  /// Get the module
   llvm::Module &GetModule() const { return *module_; }
 
  private:
@@ -163,10 +156,6 @@ class CodeContext {
   std::vector<std::pair<llvm::Function *, FuncPtr>> functions_;
 
   std::unordered_map<std::string, FuncPtr> function_symbols_;
-
- private:
-  // This class cannot be copy or move-constructed
-  DISALLOW_COPY_AND_MOVE(CodeContext);
 };
 
 }  // namespace codegen

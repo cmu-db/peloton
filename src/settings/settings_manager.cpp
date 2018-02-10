@@ -96,29 +96,21 @@ const std::string SettingsManager::GetInfo() const {
   info.append(StringUtil::Format("%*s\n", box_width / 2 + title.length() / 2,
                                  title.c_str()));
   info.append(StringUtil::Repeat("=", box_width)).append("\n");
+  
+  // clang-format off
+  info.append(StringUtil::Format("%28s:   %-28i\n", "Port", GetInt(SettingId::port)));
+  info.append(StringUtil::Format("%28s:   %-28s\n", "Socket Family", GetString(SettingId::socket_family).c_str()));
+  info.append(StringUtil::Format("%28s:   %-28s\n", "Statistics", GetInt(SettingId::stats_mode) ? "enabled" : "disabled"));
+  info.append(StringUtil::Format("%28s:   %-28i\n", "Max Connections", GetInt(SettingId::max_connections)));
+  info.append(StringUtil::Format("%28s:   %-28s\n", "Index Tuner", GetBool(SettingId::index_tuner) ? "enabled" : "disabled"));
+  info.append(StringUtil::Format("%28s:   %-28s\n", "Layout Tuner", GetBool(SettingId::layout_tuner) ? "enabled" : "disabled"));
+  info.append(StringUtil::Format("%28s:   %-28s\n", "Code-generation", GetBool(SettingId::codegen) ? "enabled" : "disabled"));
+  info.append(StringUtil::Format("%28s:   %-28s\n", "Print IR Statistics", GetBool(SettingId::print_ir_stats) ? "enabled" : "disabled"));
+  info.append(StringUtil::Format("%28s:   %-28s\n", "Dump IR", GetBool(SettingId::dump_ir) ? "enabled" : "disabled"));
+  info.append(StringUtil::Format("%28s:   %-28s\n", "Optimization Timeout", GetInt(SettingId::task_execution_timeout)));
+  info.append(StringUtil::Format("%28s:   %-28i\n", "Number of GC threads", GetInt(SettingId::gc_num_threads)));
+  // clang-format on
 
-  info.append(
-      StringUtil::Format("%28s:   %-28i\n", "Port", GetInt(SettingId::port)));
-  info.append(StringUtil::Format("%28s:   %-28s\n", "Socket Family",
-                                 GetString(SettingId::socket_family).c_str()));
-  info.append(StringUtil::Format(
-      "%28s:   %-28s\n", "Statistics",
-      GetInt(SettingId::stats_mode) ? "enabled" : "disabled"));
-  info.append(StringUtil::Format("%28s:   %-28i\n", "Max Connections",
-                                 GetInt(SettingId::max_connections)));
-  info.append(StringUtil::Format(
-      "%28s:   %-28s\n", "Index Tuner",
-      GetBool(SettingId::index_tuner) ? "enabled" : "disabled"));
-  info.append(StringUtil::Format(
-      "%28s:   %-28s\n", "Layout Tuner",
-      GetBool(SettingId::layout_tuner) ? "enabled" : "disabled"));
-  info.append(
-      StringUtil::Format("%28s:   %-28s\n", "Code-generation",
-                         GetBool(SettingId::codegen) ? "enabled" : "disabled"));
-  info.append(StringUtil::Format("%28s:   %-28i\n", "Optimization Timeout",
-                                 GetInt(SettingId::task_execution_timeout)));
-  info.append(StringUtil::Format("%28s:   %-28i\n", "Number of GC threads", 
-                                 GetInt(SettingId::gc_num_threads)));
   return StringBoxUtil::Box(info);
 }
 

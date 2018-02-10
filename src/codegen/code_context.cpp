@@ -25,6 +25,7 @@
 
 #include "common/exception.h"
 #include "common/logger.h"
+#include "settings/settings_manager.h"
 
 namespace peloton {
 namespace codegen {
@@ -34,9 +35,15 @@ static std::atomic<uint64_t> kIdCounter{0};
 
 namespace {
 
-class PelotonMM : public llvm::SectionMemoryManager {
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Peloton Memory Manager
+///
+////////////////////////////////////////////////////////////////////////////////
+
+class PelotonMemoryManager : public llvm::SectionMemoryManager {
  public:
-  explicit PelotonMM(
+  explicit PelotonMemoryManager(
       const std::unordered_map<std::string, CodeContext::FuncPtr> &symbols)
       : symbols_(symbols) {}
 
@@ -90,7 +97,76 @@ class PelotonMM : public llvm::SectionMemoryManager {
   const std::unordered_map<std::string, CodeContext::FuncPtr> &symbols_;
 };
 
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Instruction Count Pass
+///
+////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * This class analyzes a given LLVM module and keeps statistics on:
+ *   1. The number of functions defined in the module
+ *   2. The number of externally defined functions called from this module
+ *   3. The number of basic blocks in the module
+ *   4. The total number of instructions in the module
+ *   5. A breakdown of instruction counts by their type.
+ *
+ * Counts can be retrieved through the accessors, or all statistics can be
+ * dumped to the logger through DumpStats().
+ */
+class InstructionCounts : public llvm::ModulePass {
+ public:
+  explicit InstructionCounts(char &pid)
+      : ModulePass(pid),
+        external_func_count_(0),
+        func_count_(0),
+        basic_block_count_(0),
+        total_inst_counts_(0) {}
+
+  bool runOnModule(::llvm::Module &module) override {
+    for (const auto &func : module) {
+      if (func.isDeclaration()) {
+        external_func_count_++;
+      } else {
+        func_count_++;
+      }
+      for (const auto &block : func) {
+        basic_block_count_++;
+        for (const auto &inst : block) {
+          total_inst_counts_++;
+          counts_[inst.getOpcode()]++;
+        }
+      }
+    }
+    return false;
+  }
+
+  void DumpStats() const {
+    LOG_DEBUG("# functions: %" PRId64 " (%" PRId64
+              " external), # blocks: %" PRId64 ", # instructions: %" PRId64,
+              func_count_, external_func_count_, basic_block_count_,
+              total_inst_counts_);
+    for (const auto iter : counts_) {
+      const char *inst_name = llvm::Instruction::getOpcodeName(iter.first);
+      LOG_DEBUG("↳ %s: %" PRId64, inst_name, iter.second);
+    }
+  }
+
+ private:
+  uint64_t external_func_count_;
+  uint64_t func_count_;
+  uint64_t basic_block_count_;
+  uint64_t total_inst_counts_;
+  llvm::DenseMap<uint32_t, uint64_t> counts_;
+};
+
 }  // namespace
+
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Code Context
+///
+////////////////////////////////////////////////////////////////////////////////
 
 /// Constructor
 CodeContext::CodeContext()
@@ -121,13 +197,14 @@ CodeContext::CodeContext()
   // references etc.
   std::unique_ptr<llvm::Module> m{module_};
   module_ = m.get();
-  engine_.reset(llvm::EngineBuilder(std::move(m))
-                    .setEngineKind(llvm::EngineKind::JIT)
-                    .setMCJITMemoryManager(
-                        llvm::make_unique<PelotonMM>(function_symbols_))
-                    .setMCPU(llvm::sys::getHostCPUName())
-                    .setErrorStr(&err_str_)
-                    .create());
+  engine_.reset(
+      llvm::EngineBuilder(std::move(m))
+          .setEngineKind(llvm::EngineKind::JIT)
+          .setMCJITMemoryManager(
+               llvm::make_unique<PelotonMemoryManager>(function_symbols_))
+          .setMCPU(llvm::sys::getHostCPUName())
+          .setErrorStr(&err_str_)
+          .create());
   PELOTON_ASSERT(engine_ != nullptr);
 
   // The set of optimization passes we include
@@ -158,16 +235,18 @@ CodeContext::~CodeContext() {
 }
 
 void CodeContext::RegisterFunction(llvm::Function *func) {
-  PELOTON_ASSERT(func->getParent() == &GetModule() &&
-            "The provided function is part of a different context and module");
+  PELOTON_ASSERT(
+      func->getParent() == &GetModule() &&
+      "Cannot register a function from a different context and module");
   // Insert the function without an implementation
   functions_.emplace_back(func, nullptr);
 }
 
 void CodeContext::RegisterExternalFunction(llvm::Function *func_decl,
                                            CodeContext::FuncPtr func_impl) {
+  PELOTON_ASSERT(func_decl != nullptr && "Function declaration cannot be NULL");
   PELOTON_ASSERT(func_decl->isDeclaration() &&
-            "The first argument must be a function declaration");
+                 "The first argument must be a function declaration");
   PELOTON_ASSERT(func_impl != nullptr && "The function pointer cannot be NULL");
   functions_.emplace_back(func_decl, func_impl);
 
@@ -184,14 +263,20 @@ void CodeContext::RegisterBuiltin(llvm::Function *func_decl,
   }
 
   // Sanity check
-  PELOTON_ASSERT(func_decl->isDeclaration() &&
-            "You cannot provide a function definition for a builtin function");
+  PELOTON_ASSERT(
+      func_decl->isDeclaration() &&
+      "You cannot provide a function definition for a builtin function");
 
   // Register the builtin function
   builtins_[name] = func_decl;
 
   // Register the builtin symbol by name
   function_symbols_[name] = func_impl;
+}
+
+llvm::Function *CodeContext::LookupBuiltin(const std::string &name) const {
+  auto iter = builtins_.find(name);
+  return (iter == builtins_.end() ? nullptr : iter->second);
 }
 
 /// Optimize and JIT compile all the functions that were created in this context
@@ -212,6 +297,13 @@ bool CodeContext::Compile() {
   }
   pass_manager_->doFinalization();
 
+  if (settings::SettingsManager::GetBool(settings::SettingId::print_ir_stats)) {
+    char name[] = "inst count";
+    InstructionCounts inst_count(*name);
+    inst_count.runOnModule(GetModule());
+    inst_count.DumpStats();
+  }
+
   // Functions and module have been optimized, now JIT compile the module
   engine_->finalizeObject();
 
@@ -221,13 +313,26 @@ bool CodeContext::Compile() {
   }
 
   // Log the module
-  LOG_TRACE("%s\n", GetIR().c_str());
+  if (settings::SettingsManager::GetBool(settings::SettingId::dump_ir)) {
+    LOG_DEBUG("%s\n", GetIR().c_str());
+  }
 
   // All is well
   return true;
 }
 
-/// Get the module's layout
+CodeContext::FuncPtr CodeContext::GetRawFunctionPointer(
+    llvm::Function *fn) const {
+  for (const auto &iter : functions_) {
+    if (iter.first == fn) {
+      return iter.second;
+    }
+  }
+
+  // Not found
+  return nullptr;
+}
+
 const llvm::DataLayout &CodeContext::GetDataLayout() const {
   return module_->getDataLayout();
 }

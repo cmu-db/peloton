@@ -15,11 +15,14 @@
 #include <unordered_map>
 #include <vector>
 
-#include "codegen/code_context.h"
-#include "codegen/value.h"
 #include "type/value.h"
 
 namespace peloton {
+
+namespace codegen {
+class CodeContext;
+}  // namespace codegen
+
 namespace function {
 
 struct BuiltInFuncType {

@@ -199,6 +199,15 @@ SETTING_bool(codegen,
             true,
             true, true)
 
+SETTING_bool(print_ir_stats,
+             "Print statistics on generated IR (default: false)",
+             false,
+             true, true)
+
+SETTING_bool(dump_ir,
+             "Enable logging of all generated IR (default: false)",
+             false,
+             true, true)
 
 //===----------------------------------------------------------------------===//
 // Optimizer

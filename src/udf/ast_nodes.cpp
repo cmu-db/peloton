@@ -16,6 +16,7 @@
 #include "codegen/function_builder.h"
 #include "codegen/lang/if.h"
 #include "codegen/type/type.h"
+#include "codegen/value.h"
 
 namespace peloton {
 namespace udf {
