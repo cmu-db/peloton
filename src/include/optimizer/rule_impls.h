@@ -291,6 +291,20 @@ class CombineConsecutiveFilter : public Rule {
 };
 
 /**
+ * @brief perform predicate push-down to push a filter through aggregation, also will embed filter into aggregation operator if appropriate. 
+ */
+class PushFilterThroughAggregation : public Rule {
+ public:
+  PushFilterThroughAggregation();
+
+  bool Check(std::shared_ptr<OperatorExpression> plan,
+             OptimizeContext *context) const override;
+
+  void Transform(std::shared_ptr<OperatorExpression> input,
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+                 OptimizeContext *context) const override;
+};
+/**
  * @brief Embed a filter into a scan operator. After predicate push-down, we
  * eliminate all filters in the operator trees, predicates should be associated
  * with get or join

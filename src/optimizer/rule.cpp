@@ -47,6 +47,8 @@ RuleSet::RuleSet() {
   AddRewriteRule(RewriteRuleSetName::PREDICATE_PUSH_DOWN,
                  new PushFilterThroughJoin());
   AddRewriteRule(RewriteRuleSetName::PREDICATE_PUSH_DOWN,
+                 new PushFilterThroughAggregation());
+  AddRewriteRule(RewriteRuleSetName::PREDICATE_PUSH_DOWN,
                  new CombineConsecutiveFilter());
   AddRewriteRule(RewriteRuleSetName::PREDICATE_PUSH_DOWN,
                  new EmbedFilterIntoGet());
@@ -55,6 +57,8 @@ RuleSet::RuleSet() {
                  new PullFilterThroughMarkJoin());
   AddRewriteRule(RewriteRuleSetName::UNNEST_SUBQUERY,
                  new MarkJoinToInnerJoin());
+  AddRewriteRule(RewriteRuleSetName::UNNEST_SUBQUERY,
+                 new PullFilterThroughAggregation());
 }
 
 }  // namespace optimizer

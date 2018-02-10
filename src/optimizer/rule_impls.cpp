@@ -726,6 +726,7 @@ void PushFilterThroughJoin::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed,
     UNUSED_ATTRIBUTE OptimizeContext *context) const {
+  LOG_DEBUG("PushFilterThroughJoin::Transform");
   auto &memo = context->metadata->memo;
   auto join_op_expr = input->Children().at(0);
   auto &join_children = join_op_expr->Children();
@@ -792,6 +793,73 @@ void PushFilterThroughJoin::Transform(
   transformed.push_back(output);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+/// PushFilterThroughAggregation
+PushFilterThroughAggregation::PushFilterThroughAggregation() {
+  type_ = RuleType::PUSH_FILTER_THROUGH_JOIN;
+
+  std::shared_ptr<Pattern> child(
+      std::make_shared<Pattern>(OpType::LogicalAggregateAndGroupBy));
+  child->AddChild(std::make_shared<Pattern>(OpType::Leaf));
+
+  // Initialize a pattern for optimizer to match
+  match_pattern = std::make_shared<Pattern>(OpType::LogicalFilter);
+
+  // Add node - we match (filter)->(aggregation)->(leaf)
+  match_pattern->AddChild(child);
+}
+
+bool PushFilterThroughAggregation::Check(std::shared_ptr<OperatorExpression>,
+                                         OptimizeContext *) const {
+  return true;
+}
+
+void PushFilterThroughAggregation::Transform(
+    std::shared_ptr<OperatorExpression> input,
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+    UNUSED_ATTRIBUTE OptimizeContext *context) const {
+  LOG_DEBUG("PushFilterThroughAggregation::Transform");
+  auto aggregation_op =
+      input->Children().at(0)->Op().As<LogicalAggregateAndGroupBy>();
+
+  auto &predicates = input->Op().As<LogicalFilter>()->predicates;
+  std::vector<AnnotatedExpression> embedded_predicates;
+  std::vector<AnnotatedExpression> pushdown_predicates;
+
+  for (auto &predicate : predicates) {
+    std::vector<expression::AggregateExpression *> aggr_exprs;
+    expression::ExpressionUtil::GetAggregateExprs(aggr_exprs,
+                                                  predicate.expr.get());
+    // No aggr_expr in the predicate -- pushdown to evaluate
+    if (aggr_exprs.empty()) {
+      pushdown_predicates.emplace_back(predicate);
+    } else {
+      embedded_predicates.emplace_back(predicate);
+    }
+  }
+
+  // Add original having predicates
+  for (auto &predicate : aggregation_op->having) {
+    embedded_predicates.emplace_back(predicate);
+  }
+  auto groupby_cols = aggregation_op->columns;
+  std::shared_ptr<OperatorExpression> output =
+      std::make_shared<OperatorExpression>(
+          LogicalAggregateAndGroupBy::make(groupby_cols, embedded_predicates));
+
+  auto bottom_operator = output;
+  // Construct left filter if any
+  if (!pushdown_predicates.empty()) {
+    auto filter = std::make_shared<OperatorExpression>(
+        LogicalFilter::make(pushdown_predicates));
+    output->PushChild(filter);
+    bottom_operator = filter;
+  }
+
+  // Add leaf
+  bottom_operator->PushChild(input->Children()[0]->Children()[0]);
+  transformed.push_back(output);
+}
 ///////////////////////////////////////////////////////////////////////////////
 /// CombineConsecutiveFilter
 CombineConsecutiveFilter::CombineConsecutiveFilter() {
@@ -911,6 +979,7 @@ void MarkJoinToInnerJoin::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed,
     UNUSED_ATTRIBUTE OptimizeContext *context) const {
+  LOG_DEBUG("MarkJoinToInnerJoin::Transform");
   UNUSED_ATTRIBUTE auto mark_join = input->Op().As<LogicalMarkJoin>();
   auto &join_children = input->Children();
 
@@ -961,6 +1030,7 @@ void SingleJoinToInnerJoin::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed,
     UNUSED_ATTRIBUTE OptimizeContext *context) const {
+  LOG_DEBUG("SingleJoinToInnerJoin::Transform");
   UNUSED_ATTRIBUTE auto single_join = input->Op().As<LogicalSingleJoin>();
   auto &join_children = input->Children();
 
@@ -1015,6 +1085,7 @@ void PullFilterThroughMarkJoin::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed,
     UNUSED_ATTRIBUTE OptimizeContext *context) const {
+  LOG_DEBUG("PullFilterThroughMarkJoin::Transform");
   UNUSED_ATTRIBUTE auto mark_join = input->Op().As<LogicalMarkJoin>();
   auto &join_children = input->Children();
   auto filter = join_children[1]->Op();
@@ -1075,6 +1146,7 @@ void PullFilterThroughAggregation::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed,
     UNUSED_ATTRIBUTE OptimizeContext *context) const {
+  LOG_DEBUG("PullFilterThroughAggregation::Transform");
   auto &memo = context->metadata->memo;
   auto &filter_expr = input->Children()[0];
   auto child_group_id =
@@ -1095,9 +1167,14 @@ void PullFilterThroughAggregation::Transform(
       // (outer_relation.a = (expr))
       correlated_predicates.emplace_back(predicate);
       auto &root_expr = predicate.expr;
+      LOG_DEBUG("Correlated predicate : %s", root_expr->GetInfo().c_str());
       if (root_expr->GetChild(0)->GetDepth() < root_expr->GetDepth()) {
+        LOG_DEBUG("New groupby col : %s",
+                  root_expr->GetChild(1)->GetInfo().c_str());
         new_groupby_cols.emplace_back(root_expr->GetChild(1)->Copy());
       } else {
+        LOG_DEBUG("New groupby col : %s",
+                  root_expr->GetChild(0)->GetInfo().c_str());
         new_groupby_cols.emplace_back(root_expr->GetChild(0)->Copy());
       }
     }
@@ -1107,17 +1184,18 @@ void PullFilterThroughAggregation::Transform(
     // No need to pull
     return;
   }
+
   auto aggregation = input->Op().As<LogicalAggregateAndGroupBy>();
   for (auto &col : aggregation->columns) {
     new_groupby_cols.emplace_back(col->Copy());
   }
-  std::vector<AnnotatedExpression> new_having(aggregation->having);
-  std::shared_ptr<OperatorExpression> new_aggregation =
-      std::make_shared<OperatorExpression>(LogicalAggregateAndGroupBy::make(
-          new_groupby_cols, new_having));
   std::shared_ptr<OperatorExpression> output =
       std::make_shared<OperatorExpression>(
           LogicalFilter::make(correlated_predicates));
+  std::vector<AnnotatedExpression> new_having(aggregation->having);
+  std::shared_ptr<OperatorExpression> new_aggregation =
+      std::make_shared<OperatorExpression>(
+          LogicalAggregateAndGroupBy::make(new_groupby_cols, new_having));
   output->PushChild(new_aggregation);
   auto bottom_operator = new_aggregation;
 

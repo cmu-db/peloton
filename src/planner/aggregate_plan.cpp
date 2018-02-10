@@ -107,18 +107,18 @@ void AggregatePlan::PerformBinding(BindingContext &binding_context) {
     agg_ctx.BindNew(i, &agg_ai);
   }
 
-  // Let the predicate do its binding (if one exists)
-  const auto *predicate = GetPredicate();
-  if (predicate != nullptr) {
-    const_cast<expression::AbstractExpression *>(predicate)
-        ->PerformBinding({&input_context, &agg_ctx});
-  }
-
   // Do projection (if one exists)
   if (GetProjectInfo() != nullptr) {
     std::vector<const BindingContext *> inputs = {&input_context, &agg_ctx};
     GetProjectInfo()->PerformRebinding(binding_context, inputs);
   }
+  // Let the predicate do its binding (if one exists)
+  const auto *predicate = GetPredicate();
+  if (predicate != nullptr) {
+    const_cast<expression::AbstractExpression *>(predicate)
+        ->PerformBinding({&binding_context});
+  }
+
 }
 
 hash_t AggregatePlan::Hash(

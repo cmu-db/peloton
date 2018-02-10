@@ -144,19 +144,15 @@ void PlanGenerator::Visit(const PhysicalOrderBy *) {
 void PlanGenerator::Visit(const PhysicalHashGroupBy *op) {
   auto having_predicates =
       expression::ExpressionUtil::JoinAnnotatedExprs(op->having);
-  expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
-                                                 having_predicates.get());
   BuildAggregatePlan(AggregateType::HASH, &op->columns,
-                     having_predicates.release());
+                     std::move(having_predicates));
 }
 
 void PlanGenerator::Visit(const PhysicalSortGroupBy *op) {
   auto having_predicates =
       expression::ExpressionUtil::JoinAnnotatedExprs(op->having);
-  expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
-                                                 having_predicates.get());
   BuildAggregatePlan(AggregateType::HASH, &op->columns,
-                     having_predicates.release());
+                     std::move(having_predicates));
 }
 
 void PlanGenerator::Visit(const PhysicalAggregate *) {
@@ -457,7 +453,7 @@ void PlanGenerator::BuildAggregatePlan(
     AggregateType aggr_type,
     const std::vector<std::shared_ptr<expression::AbstractExpression>>
         *groupby_cols,
-    expression::AbstractExpression *having_predicate) {
+    std::unique_ptr<expression::AbstractExpression> having_predicate) {
   vector<planner::AggregatePlan::AggTerm> aggr_terms;
   vector<catalog::Column> output_schema_columns;
   DirectMapList dml;
@@ -466,12 +462,15 @@ void PlanGenerator::BuildAggregatePlan(
   auto &child_expr_map = children_expr_map_[0];
 
   auto agg_id = 0;
+  ExprMap output_expr_map;
   for (size_t idx = 0; idx < output_cols_.size(); ++idx) {
     auto expr = output_cols_[idx];
+    output_expr_map[expr] = idx;
     expr->DeduceExpressionType();
     expression::ExpressionUtil::EvaluateExpression(children_expr_map_, expr);
     if (expression::ExpressionUtil::IsAggregateExpression(
             expr->GetExpressionType())) {
+      LOG_DEBUG("Output Column for Agg %lu : %s", idx, expr->GetInfo().c_str());
       auto agg_expr = reinterpret_cast<expression::AggregateExpression *>(expr);
       auto agg_col = expr->GetModifiableChild(0);
       // Maps the aggregate value in th right tuple to the output
@@ -501,7 +500,14 @@ void PlanGenerator::BuildAggregatePlan(
   // Generate the Aggregate Plan
   unique_ptr<const planner::ProjectInfo> proj_info(
       new planner::ProjectInfo(move(tl), move(dml)));
-  unique_ptr<const expression::AbstractExpression> predicate(having_predicate);
+  // LOG_DEBUG(
+  //     "Having predicate : %s ",
+  //     having_predicate == nullptr ? "" :
+  //     having_predicate->GetInfo().c_str());
+  expression::ExpressionUtil::EvaluateExpression({output_expr_map},
+                                                 having_predicate.get());
+  unique_ptr<const expression::AbstractExpression> predicate(
+      having_predicate.release());
   // TODO(boweic): Ditto, since the aggregate plan will own the schema, we may
   // want make the parameter as unique_ptr
   shared_ptr<const catalog::Schema> output_table_schema(

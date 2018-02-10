@@ -349,7 +349,7 @@ TEST_F(OptimizerSQLTests, DDLSqlTest) {
       optimizer, query, result, tuple_descriptor, rows_changed, error_message);
 
   LOG_DEBUG("here");
-  
+
   txn = txn_manager.BeginTransaction();
   EXPECT_THROW(catalog::Catalog::GetInstance()->GetTableWithName(
                    DEFAULT_DB_NAME, "test2", txn),
@@ -391,6 +391,9 @@ TEST_F(OptimizerSQLTests, GroupByTest) {
   // Test group by with having
   TestUtil("SELECT AVG(a), b FROM test GROUP BY b having b=22", {"3.5", "22"},
            false);
+  // Test group by with having
+  TestUtil("SELECT AVG(a), b FROM test GROUP BY b having AVG(a)=3.5",
+           {"3.5", "22"}, false);
 
   // Test group by combined with ORDER BY
   TestUtil("SELECT b FROM test GROUP BY b ORDER BY b", {"0", "11", "22", "33"},

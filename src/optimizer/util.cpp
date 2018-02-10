@@ -154,10 +154,10 @@ void GetPredicateColumns(const catalog::Schema *schema,
                 expression->GetModifiableChild(1))
                 ->GetValue());
         LOG_TRACE("Value Type: %d",
-                static_cast<int>(
-                  reinterpret_cast<expression::ConstantValueExpression *>(
-                      expression->GetModifiableChild(1))
-                      ->GetValueType()));
+                  static_cast<int>(
+                      reinterpret_cast<expression::ConstantValueExpression *>(
+                          expression->GetModifiableChild(1))
+                          ->GetValueType()));
       } else
         values.push_back(
             type::ValueFactory::GetParameterOffsetValue(
@@ -186,10 +186,10 @@ void GetPredicateColumns(const catalog::Schema *schema,
                 expression->GetModifiableChild(1))
                 ->GetValue());
         LOG_TRACE("Value Type: %d",
-                static_cast<int>(
-                  reinterpret_cast<expression::ConstantValueExpression *>(
-                      expression->GetModifiableChild(0))
-                      ->GetValueType()));
+                  static_cast<int>(
+                      reinterpret_cast<expression::ConstantValueExpression *>(
+                          expression->GetModifiableChild(0))
+                          ->GetValueType()));
       } else
         values.push_back(
             type::ValueFactory::GetParameterOffsetValue(

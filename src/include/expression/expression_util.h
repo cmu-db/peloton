@@ -446,6 +446,42 @@ class ExpressionUtil {
   /**
    * Walks an expression trees and find all AggregationExprs subtrees.
    */
+  static void GetTupleAndAggregateExprs(ExprSet &expr_set,
+                                        AbstractExpression *expr) {
+    std::vector<TupleValueExpression *> tv_exprs;
+    std::vector<AggregateExpression *> aggr_exprs;
+    GetAggregateExprs(aggr_exprs, tv_exprs, expr);
+    for (auto &tv_expr : tv_exprs) {
+      expr_set.insert(tv_expr);
+    }
+    for (auto &aggr_expr : aggr_exprs) {
+      expr_set.insert(aggr_expr);
+    }
+  }
+
+  /**
+   * Walks an expression trees and find all AggregationExprs subtrees.
+   */
+  static void GetTupleAndAggregateExprs(ExprMap &expr_map,
+                                        AbstractExpression *expr) {
+    std::vector<TupleValueExpression *> tv_exprs;
+    std::vector<AggregateExpression *> aggr_exprs;
+    GetAggregateExprs(aggr_exprs, tv_exprs, expr);
+    for (auto &tv_expr : tv_exprs) {
+      if (!expr_map.count(tv_expr)) {
+        expr_map.emplace(tv_expr, expr_map.size());
+      }
+    }
+    for (auto &aggr_expr : aggr_exprs) {
+      if (!expr_map.count(aggr_expr)) {
+        expr_map.emplace(aggr_expr, expr_map.size());
+      }
+    }
+  }
+
+  /**
+   * Walks an expression trees and find all AggregationExprs subtrees.
+   */
   static void GetAggregateExprs(std::vector<AggregateExpression *> &aggr_exprs,
                                 AbstractExpression *expr) {
     std::vector<TupleValueExpression *> dummy_tv_exprs;
@@ -511,8 +547,9 @@ class ExpressionUtil {
     // To evaluate the return type, we need a bottom up approach.
     if (expr == nullptr) return;
     size_t children_size = expr->GetChildrenSize();
-    for (size_t i = 0; i < children_size; i++)
+    for (size_t i = 0; i < children_size; i++) {
       EvaluateExpression(expr_maps, expr->GetModifiableChild(i));
+    }
 
     if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
       // Point to the correct column returned in the logical tuple underneath
@@ -530,9 +567,12 @@ class ExpressionUtil {
       }
     } else if (IsAggregateExpression(expr->GetExpressionType())) {
       auto aggr_expr = (AggregateExpression *)expr;
-      auto &expr_map = expr_maps[0];
-      auto iter = expr_map.find(expr);
-      if (iter != expr_map.end()) aggr_expr->SetValueIdx(iter->second);
+      for (auto &expr_map : expr_maps) {
+        auto iter = expr_map.find(expr);
+        if (iter != expr_map.end()) {
+          aggr_expr->SetValueIdx(iter->second);
+        }
+      }
     } else if (expr->GetExpressionType() == ExpressionType::FUNCTION) {
       auto func_expr = (expression::FunctionExpression *)expr;
       std::vector<type::TypeId> argtypes;

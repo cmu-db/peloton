@@ -125,7 +125,7 @@ void OptimizeExpression::execute() {
 //===--------------------------------------------------------------------===//
 void ExploreGroup::execute() {
   if (group_->HasExplored()) return;
-  LOG_DEBUG("ExploreGroup::execute() ");
+  // LOG_DEBUG("ExploreGroup::execute() ");
 
   for (auto &logical_expr : group_->GetLogicalExpressions()) {
     PushTask(new ExploreExpression(logical_expr.get(), context_));
@@ -140,7 +140,7 @@ void ExploreGroup::execute() {
 // ExploreExpression
 //===--------------------------------------------------------------------===//
 void ExploreExpression::execute() {
-  LOG_DEBUG("ExploreExpression::execute() ");
+  // LOG_DEBUG("ExploreExpression::execute() ");
   std::vector<RuleWithPromise> valid_rules;
 
   // Construct valid transformation rules from rule set
