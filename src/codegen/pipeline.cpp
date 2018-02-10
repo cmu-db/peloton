@@ -31,6 +31,8 @@ namespace codegen {
 
 PipelineContext::PipelineContext(Pipeline &pipeline) : pipeline_(pipeline) {}
 
+bool PipelineContext::IsParallel() const { return pipeline_.IsParallel(); }
+
 Pipeline &PipelineContext::GetPipeline() { return pipeline_; }
 
 CompilationContext &PipelineContext::GetCompilationContext() {
@@ -210,7 +212,6 @@ std::string Pipeline::GetInfo() const {
   for (int32_t pi = static_cast<int32_t>(pipeline_.size()) - 1,
                sbi = static_cast<int32_t>(stage_boundaries_.size()) - 1;
        pi >= 0; pi--) {
-
     // Determine the plan type and append to the result
     const planner::AbstractPlan &plan = pipeline_[pi]->GetPlan();
     const std::string plan_type = PlanNodeTypeToString(plan.GetPlanNodeType());

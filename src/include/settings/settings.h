@@ -209,8 +209,8 @@ SETTING_bool(predicate_push_down,
              true, true)
 
 SETTING_bool(hash_join_bloom_filter,
-             "Enable bloom filter for hash join in codegen (default: true)",
-             true,
+             "Enable bloom filter for hash join in codegen (default: false)",
+             false,
              true, true)
 
 SETTING_int(task_execution_timeout,

@@ -30,6 +30,7 @@ class PipelineContext {
  public:
   explicit PipelineContext(Pipeline &pipeline);
 
+  bool IsParallel() const;
   Pipeline &GetPipeline();
   CompilationContext &GetCompilationContext();
 
