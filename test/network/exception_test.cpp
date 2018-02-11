@@ -33,6 +33,43 @@ namespace test {
 
 class ExceptionTests : public PelotonTest {};
 
+void *ExecutorExceptionTest(int port) {
+  try {
+    pqxx::connection C(StringUtil::Format(
+        "host=127.0.0.1 port=%d user=default_database sslmode=disable application_name=psql", port));
+    int exception_count = 0, total = 2;
+    pqxx::work txn1(C);
+    try {
+      txn1.exec("CREATE TABLE foo(id INT);");
+      txn1.exec("CREATE TABLE foo(id INT);");
+      txn1.commit();
+    } catch (const pqxx::pqxx_exception &e) {
+      const pqxx::sql_error *s = dynamic_cast<const pqxx::sql_error *>(&e.base());
+      if (s) {
+        LOG_TRACE("Invalid Create Query: %s", e.base().what());
+        exception_count += 1;
+      }
+    }
+    pqxx::work txn2(C);
+    try {
+      txn2.exec("CREATE TABLE A (val1 INT, val2 INT,  val3 INT,  val4 INT);");
+      txn2.exec("INSERT INTO A (val1, val2, val3, val4, val5) VALUES (1, 1, 1, 1, 1);");
+      txn2.commit();
+    } catch (const pqxx::pqxx_exception &e) {
+      const pqxx::sql_error *s = dynamic_cast<const pqxx::sql_error *>(&e.base());
+      if (s) {
+        LOG_TRACE("Invalid Insert Query: %s", e.base().what());
+        exception_count += 1;
+      }
+    }
+    EXPECT_EQ(exception_count, total);
+  }catch (const std::exception &e) {
+    LOG_ERROR("[ExceptionTest] Exception occurred: %s", e.what());
+    EXPECT_TRUE(false);
+  }
+  return NULL;
+}
+
 /*
  * To test with the queries with syntax error that will be caught by parser.
  * The server will catch these errors in Networking layer and directly return ERROR response.
@@ -162,13 +199,7 @@ void *ParserExceptionTest(int port) {
   return NULL;
 }
 
-/**
- * Use std::thread to initiate peloton server and pqxx client in separate
- * threads
- * Simple query test to guarantee both sides run correctly
- * Callback method to close server after client finishes
- */
-TEST_F(ExceptionTests, ParserExceptionTest) {
+void TestSuit(std::function<void(int)> test_function) {
   peloton::PelotonInit::Initialize();
   LOG_INFO("Server initialized");
   peloton::network::PelotonServer server;
@@ -184,7 +215,7 @@ TEST_F(ExceptionTests, ParserExceptionTest) {
   std::thread serverThread([&] { server.ServerLoop(); });
 
   // server & client running correctly
-  ParserExceptionTest(port);
+  test_function(port);
 
   server.Close();
   serverThread.join();
@@ -192,6 +223,26 @@ TEST_F(ExceptionTests, ParserExceptionTest) {
   peloton::PelotonInit::Shutdown();
   LOG_INFO("Peloton has shut down");
 }
+
+/**
+ * Use std::thread to initiate peloton server and pqxx client in separate
+ * threads
+ * Simple query test to guarantee both sides run correctly
+ * Callback method to close server after client finishes
+ */
+TEST_F(ExceptionTests, ParserExceptionTest) {
+  TestSuit(ParserExceptionTest);
+}
+
+/**
+ * Use std::thread to initiate peloton server and pqxx client in separate
+ * threads
+ * Simple query test to guarantee both sides run correctly
+ * Callback method to close server after client finishes
+ */
+// TEST_F(ExceptionTests, ExecutorExceptionTest) {
+//   TestSuit(ExecutorExceptionTest);
+// }
 
 }  // namespace test
 }  // namespace peloton

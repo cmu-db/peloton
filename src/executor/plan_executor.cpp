@@ -146,10 +146,17 @@ void PlanExecutor::ExecutePlan(
 
   bool codegen_enabled =
       settings::SettingsManager::GetBool(settings::SettingId::codegen);
-  if (codegen_enabled && codegen::QueryCompiler::IsSupported(*plan)) {
-    CompileAndExecutePlan(plan, txn, params, std::move(on_complete));
-  } else {
-    InterpretPlan(plan, txn, params, result_format, std::move(on_complete));
+  
+  try {
+    if (codegen_enabled && codegen::QueryCompiler::IsSupported(*plan)) {
+      CompileAndExecutePlan(plan, txn, params, std::move(on_complete));
+    } else {
+      InterpretPlan(plan, txn, params, result_format, std::move(on_complete));
+    }
+  } catch (Exception &e) {
+    ExecutionResult result;
+    result.m_result = ResultType::FAILURE;
+    on_complete(result, {});
   }
 }
 
