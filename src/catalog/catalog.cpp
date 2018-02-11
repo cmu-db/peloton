@@ -612,6 +612,22 @@ ResultType Catalog::DropIndex(oid_t index_oid,
   return ResultType::SUCCESS;
 }
 
+ResultType Catalog::DropIndex(const std::string &index_name,
+                              concurrency::TransactionContext *txn) {
+    if(txn == nullptr) {
+        throw CatalogException("Do not have transaction to drop index " +
+                               index_name);
+    }
+    auto index_object = catalog::IndexCatalog::GetInstance()->GetIndexObject(
+                index_name, txn);
+    if(index_object == nullptr) {
+        throw CatalogException("Index name " + index_name + " cannot be found");
+    }
+    ResultType result = DropIndex(index_object->GetIndexOid(), txn);
+
+    return result;
+}
+
 //===--------------------------------------------------------------------===//
 // GET WITH NAME - CHECK FROM CATALOG TABLES, USING TRANSACTION
 //===--------------------------------------------------------------------===//
