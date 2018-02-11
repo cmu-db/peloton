@@ -14,7 +14,7 @@ pipeline {
                     }
                     steps {
                         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
-                        sh 'python ./script/validators/source_validator.py'
+                        sh 'python3 -m script.validators.source_validator'
                         sh 'mkdir build'
                         sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False -DUSE_SANITIZER=Address .. && make -j4'
                         sh 'cd build && make check -j4 || true'
@@ -30,7 +30,7 @@ pipeline {
                     agent { docker { image 'ubuntu:xenial' } }
                     steps {
                         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
-                        sh 'python ./script/validators/source_validator.py'
+                        sh 'python3 -m script.validators.source_validator'
                         sh 'mkdir build'
                         sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
                     }
@@ -40,7 +40,7 @@ pipeline {
                     agent { docker { image 'ubuntu:trusty' } }
                     steps {
                         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
-                        sh 'python ./script/validators/source_validator.py'
+                        sh 'python3 -m script.validators.source_validator'
                         sh 'mkdir build'
                         sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False -DUSE_SANITIZER=Address -DCMAKE_CXX_FLAGS="-DLOG_LEVEL=LOG_LEVEL_TRACE" .. && make -j4'
                         // redirect output to /dev/null because it is voluminous
@@ -56,7 +56,7 @@ pipeline {
                     agent { docker { image 'ubuntu:trusty' } }
                     steps {
                         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
-                        sh 'python ./script/validators/source_validator.py'
+                        sh 'python3 -m script.validators.source_validator'
                         sh 'mkdir build'
                         sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
                         sh 'cd build && make check -j4 || true'
@@ -72,7 +72,7 @@ pipeline {
                 //     agent { docker { image 'debian:stretch' } }
                 //     steps {
                 //         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
-                //         sh 'python ./script/validators/source_validator.py'
+                //         sh 'python3 -m script.validators.source_validator'
                 //         sh 'mkdir build'
                 //         sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False -DUSE_SANITIZER=Address .. && make -j4'
                 //         sh 'cd build && make check -j4 || true'
@@ -87,7 +87,7 @@ pipeline {
                 //     agent { docker { image 'debian:stretch' } }
                 //     steps {
                 //         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
-                //         sh 'python ./script/validators/source_validator.py'
+                //         sh 'python3 -m script.validators.source_validator'
                 //         sh 'mkdir build'
                 //         sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
                 //     }
@@ -97,7 +97,7 @@ pipeline {
                 //     agent { docker { image 'fedora:26' } }
                 //     steps {
                 //         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
-                //         sh 'python ./script/validators/source_validator.py'
+                //         sh 'python3 -m script.validators.source_validator'
                 //         sh 'mkdir build'
                 //         sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False .. && make -j4'
                 //     }
@@ -107,7 +107,7 @@ pipeline {
                 //     agent { docker { image 'fedora:26' } }
                 //     steps {
                 //         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
-                //         sh 'python ./script/validators/source_validator.py'
+                //         sh 'python3 -m script.validators.source_validator'
                 //         sh 'mkdir build'
                 //         sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
                 //     }
@@ -117,7 +117,7 @@ pipeline {
                 //     agent { docker { image 'fedora:27' } }
                 //     steps {
                 //         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
-                //         sh 'python ./script/validators/source_validator.py'
+                //         sh 'python3 -m script.validators.source_validator'
                 //         sh 'mkdir build'
                 //         sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False .. && make -j4'
                 //     }
@@ -127,7 +127,7 @@ pipeline {
                 //     agent { docker { image 'fedora:27' } }
                 //     steps {
                 //         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
-                //         sh 'python ./script/validators/source_validator.py'
+                //         sh 'python3 -m script.validators.source_validator'
                 //         sh 'mkdir build'
                 //         sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
                 //     }
@@ -137,7 +137,7 @@ pipeline {
                 //     agent { docker { image 'centos:7' } }
                 //     steps {
                 //         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
-                //         sh 'python ./script/validators/source_validator.py'
+                //         sh 'python3 -m script.validators.source_validator'
                 //         sh 'mkdir build'
                 //         sh 'cd build && cmake3 -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False .. && make -j4'
                 //     }
@@ -147,7 +147,7 @@ pipeline {
                 //     agent { docker { image 'centos:7' } }
                 //     steps {
                 //         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
-                //         sh 'python ./script/validators/source_validator.py'
+                //         sh 'python3 -m script.validators.source_validator'
                 //         sh 'mkdir build'
                 //         sh 'cd build && cmake3 -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
                 //     }
@@ -159,7 +159,7 @@ pipeline {
                 //     agent { docker { image 'ubuntu:xenial' } }
                 //     steps {
                 //         sh 'sudo /bin/bash -c "source ./peloton/script/installation/packages.sh"'
-                //         sh 'python ./script/validators/source_validator.py'
+                //         sh 'python3 -m script.validators.source_validator'
                 //         sh 'mkdir build'
                 //         sh 'cd build && CC=clang-3.7 CXX=clang++-3.7 cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False .. && make -j4 && make install'
                 //     }
@@ -169,7 +169,7 @@ pipeline {
                 //     agent { docker { image 'ubuntu:xenial' } }
                 //     steps {
                 //         sh 'sudo /bin/bash -c "source ./peloton/script/installation/packages.sh"'
-                //         sh 'python ./script/validators/source_validator.py'
+                //         sh 'python3 -m script.validators.source_validator'
                 //         sh 'mkdir build'
                 //         sh 'cd build && CC=clang-3.7 CXX=clang++-3.7 cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4 && make install'
                 //     }
@@ -179,7 +179,7 @@ pipeline {
                 //     agent { docker { image 'ubuntu:trusty' } }
                 //     steps {
                 //         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
-                //         sh 'python ./script/validators/source_validator.py'
+                //         sh 'python3 -m script.validators.source_validator'
                 //         sh 'mkdir build'
                 //         sh 'cd build && CC=clang-3.7 CXX=clang++-3.7 cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False .. && make -j4'
                 //     }
@@ -189,7 +189,7 @@ pipeline {
                 //     agent { docker { image 'ubuntu:trusty' } }
                 //     steps {
                 //         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
-                //         sh 'python ./script/validators/source_validator.py'
+                //         sh 'python3 -m script.validators.source_validator'
                 //         sh 'mkdir build'
                 //         sh 'cd build && CC=clang-3.7 CXX=clang++-3.7 cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
                 //     }
@@ -199,7 +199,7 @@ pipeline {
                 //     agent { docker { image 'fedora:26' } }
                 //     steps {
                 //         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
-                //         sh 'python ./script/validators/source_validator.py'
+                //         sh 'python3 -m script.validators.source_validator'
                 //         sh 'mkdir build'
                 //         sh 'cd build && CC=clang CXX=clang++ cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False .. && make -j4'
                 //     }
@@ -209,7 +209,7 @@ pipeline {
                 //     agent { docker { image 'fedora:26' } }
                 //     steps {
                 //         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
-                //         sh 'python ./script/validators/source_validator.py'
+                //         sh 'python3 -m script.validators.source_validator'
                 //         sh 'mkdir build'
                 //         sh 'cd build && CC=clang CXX=clang++ cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
                 //     }
@@ -219,7 +219,7 @@ pipeline {
                 //     agent { docker { image 'fedora:27' } }
                 //     steps {
                 //         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
-                //         sh 'python ./script/validators/source_validator.py'
+                //         sh 'python3 -m script.validators.source_validator'
                 //         sh 'mkdir build'
                 //         sh 'cd build && CC=clang CXX=clang++ cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False .. && make -j4'
                 //     }
@@ -229,7 +229,7 @@ pipeline {
                 //     agent { docker { image 'fedora:27' } }
                 //     steps {
                 //         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
-                //         sh 'python ./script/validators/source_validator.py'
+                //         sh 'python3 -m script.validators.source_validator'
                 //         sh 'mkdir build'
                 //         sh 'cd build && CC=clang CXX=clang++ cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
                 //     }
