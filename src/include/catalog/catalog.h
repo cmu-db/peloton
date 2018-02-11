@@ -228,7 +228,7 @@ class Catalog {
   std::mutex catalog_mutex;
   // key: database oid
   // value: SystemCatalog object(including pg_table, pg_index and pg_attribute)
-  std::unordered_map<oid_t, SystemCatalog> catalog_map_;
+  std::unordered_map<oid_t, SystemCatalogs> catalog_map_;
 };
 
 }  // namespace catalog

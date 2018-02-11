@@ -22,6 +22,8 @@ namespace catalog {
 
 class SystemCatalogs {
  public:
+  SystemCatalogs() = delete;
+
   SystemCatalogs(storage::Database *database, type::AbstractPool *pool,
                  concurrency::TransactionContext *txn);
 
