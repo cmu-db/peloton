@@ -141,7 +141,7 @@ install:
 
 before_script:
     # first, run source_validator
-    - python ./script/validators/source_validator.py
+    - python3 -m script.validators.source_validator
 
 # build peloton (override this value to execute tests)
 script:
