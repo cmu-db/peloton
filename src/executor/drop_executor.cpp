@@ -180,12 +180,17 @@ bool DropExecutor::DropTrigger(const planner::DropPlan &node,
 
 bool DropExecutor::DropIndex(const planner::DropPlan &node,
                              concurrency::TransactionContext *txn) {
+  auto database_object = DatabaseCatalog::GetInstance()->GetDatabaseObject(
+      node.GetDatabaseName(), txn);
+
+  auto pg_index = catalog::Catalog::GetInstance()
+                      ->GetSystemCatalog(database_object->GetDatabaseOid())
+                      ->GetIndexCatalog();
   std::string index_name = node.GetIndexName();
-  auto index_object =
-      catalog::IndexCatalog::GetInstance()->GetIndexObject(index_name, txn);
+  auto index_object = pg_index->GetIndexObject(index_name, txn);
 
   ResultType result = catalog::Catalog::GetInstance()->DropIndex(
-      index_object->GetIndexOid(), txn);
+      database_object->GetDatabaseOid(), index_object->GetIndexOid(), txn);
   txn->SetResult(result);
 
   if (txn->GetResult() == ResultType::SUCCESS) {
@@ -194,8 +199,8 @@ bool DropExecutor::DropIndex(const planner::DropPlan &node,
       StatementCacheManager::GetStmtCacheManager()->InvalidateTableOid(
           table_id);
     }
-    LOG_TRACE("Dropping Index Succeeded! Index oid: %d",
-              index_object->GetIndexOid());
+    LOG_TRACE("Dropping Index Succeeded! Index name: %s",
+              node.GetIndexName().c_str());
   } else {
     LOG_TRACE("Dropping Index Failed!");
   }

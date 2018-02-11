@@ -196,7 +196,7 @@ bool ColumnCatalog::DeleteColumn(oid_t table_oid,
 
   // delete column from cache
   auto pg_table =
-      Catalog::GetInstance()->GetSystemCatalog(database_oid).GetTableCatalog();
+      Catalog::GetInstance()->GetSystemCatalog(database_oid)->GetTableCatalog();
   auto table_object = pg_table->GetTableObject(table_oid, txn);
   table_object->EvictColumnObject(column_name);
 
@@ -217,7 +217,7 @@ bool ColumnCatalog::DeleteColumns(oid_t table_oid,
 
   // delete columns from cache
   auto pg_table =
-      Catalog::GetInstance()->GetSystemCatalog(database_oid).GetTableCatalog();
+      Catalog::GetInstance()->GetSystemCatalog(database_oid)->GetTableCatalog();
   auto table_object = pg_table->GetTableObject(table_oid, txn);
   table_object->EvictAllColumnObjects();
 
@@ -229,7 +229,7 @@ ColumnCatalog::GetColumnObjects(oid_t table_oid,
                                 concurrency::TransactionContext *txn) {
   // try get from cache
   auto pg_table =
-      Catalog::GetInstance()->GetSystemCatalog(database_oid).GetTableCatalog();
+      Catalog::GetInstance()->GetSystemCatalog(database_oid)->GetTableCatalog();
   auto table_object = pg_table->GetTableObject(table_oid, txn);
   PL_ASSERT(table_object && table_object->GetTableOid() == table_oid);
   auto column_objects = table_object->GetColumnObjects(true);

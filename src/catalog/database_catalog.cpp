@@ -127,7 +127,7 @@ std::shared_ptr<TableCatalogObject> DatabaseCatalogObject::GetTableObject(
     // cache miss get from pg_table
     auto pg_table = Catalog::GetInstance()
                         ->GetSystemCatalog(database_oid)
-                        .GetTableCatalog();
+                        ->GetTableCatalog();
     return pg_table->GetTableObject(table_oid, txn);
   }
 }
@@ -150,7 +150,7 @@ std::shared_ptr<TableCatalogObject> DatabaseCatalogObject::GetTableObject(
     // cache miss get from pg_table
     auto pg_table = Catalog::GetInstance()
                         ->GetSystemCatalog(database_oid)
-                        .GetTableCatalog();
+                        ->GetTableCatalog();
     return pg_table->GetTableObject(table_name, database_oid, txn);
   }
 }
@@ -166,7 +166,7 @@ DatabaseCatalogObject::GetTableObjects(bool cached_only) {
     // cache miss get from pg_table
     auto pg_table = Catalog::GetInstance()
                         ->GetSystemCatalog(database_oid)
-                        .GetTableCatalog();
+                        ->GetTableCatalog();
     return pg_table->GetTableObjects(database_oid, txn);
   }
   // make sure to check IsValidTableObjects() before getting table objects

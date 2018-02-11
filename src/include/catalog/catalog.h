@@ -180,7 +180,7 @@ class Catalog {
   /*
    * Using database oid to get system catalog object
    */
-  SystemCatalog GetSystemCatalog(const oid_t database_oid);
+  shared_ptr<SystemCatalog> GetSystemCatalog(const oid_t database_oid);
   //===--------------------------------------------------------------------===//
   // DEPRECATED FUNCTIONS
   //===--------------------------------------------------------------------===//

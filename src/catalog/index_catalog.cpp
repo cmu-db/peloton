@@ -219,7 +219,7 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
     // fetch all indexes into table object (cannot use the above index object)
     auto pg_table = Catalog::GetInstance()
                         ->GetSystemCatalog(database_oid)
-                        .GetTableCatalog();
+                        ->GetTableCatalog();
     auto table_object =
         pg_table->GetTableObject(index_object->GetTableOid(), txn);
     PL_ASSERT(table_object &&
@@ -260,7 +260,7 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
     // fetch all indexes into table object (cannot use the above index object)
     auto pg_table = Catalog::GetInstance()
                         ->GetSystemCatalog(database_oid)
-                        .GetTableCatalog();
+                        ->GetTableCatalog();
     auto table_object =
         pg_table->GetTableObject(index_object->GetTableOid(), txn);
     PL_ASSERT(table_object &&
@@ -289,7 +289,7 @@ IndexCatalog::GetIndexObjects(oid_t table_oid,
   }
   // try get from cache
   auto pg_table =
-      Catalog::GetInstance()->GetSystemCatalog(database_oid).GetTableCatalog();
+      Catalog::GetInstance()->GetSystemCatalog(database_oid)->GetTableCatalog();
   auto table_object =
       pg_table->GetTableObject(index_object->GetTableOid(), txn);
   PL_ASSERT(table_object && table_object->GetTableOid() == table_oid);

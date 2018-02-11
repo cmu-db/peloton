@@ -131,7 +131,7 @@ TableCatalogObject::GetIndexObjects(bool cached_only) {
     valid_index_objects = true;
     auto pg_index = Catalog::GetInstance()
                         ->GetSystemCatalog(database_oid)
-                        .GetIndexCatalog();
+                        ->GetIndexCatalog();
     index_objects = pg_index->GetIndexObjects(table_oid, txn);
   }
   return index_objects;
@@ -257,7 +257,7 @@ TableCatalogObject::GetColumnObjects(bool cached_only) {
     // get column catalog objects from pg_column
     auto pg_attribute = Catalog::GetInstance()
                             ->GetSystemCatalog(database_oid)
-                            .GetColumnCatalog();
+                            ->GetColumnCatalog();
     pg_attribute->GetColumnObjects(table_oid, txn);
     valid_column_objects = true;
   }
