@@ -252,7 +252,6 @@ void TrafficCop::ExecuteStatementPlanGetResult() {
 std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     const std::string &stmt_name, const std::string &query_string,
     std::unique_ptr<parser::SQLStatementList> sql_stmt_list,
-    UNUSED_ATTRIBUTE std::string &error_message,
     const size_t thread_id UNUSED_ATTRIBUTE) {
   LOG_TRACE("Prepare Statement query: %s", query_string.c_str());
 
@@ -260,7 +259,6 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   // TODO (Tianyi) Read through the parser code to see if this is appropriate
   if (sql_stmt_list.get() == nullptr ||
       sql_stmt_list->GetNumStatements() == 0) {
-    
     // TODO (Tianyi) Do we need another query type called QUERY_EMPTY?
     std::shared_ptr<Statement> statement =
         std::make_shared<Statement>(stmt_name, QueryType::QUERY_INVALID,
@@ -310,7 +308,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     // initialize the current result as success
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
-  
+
   if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
     tcop_txn_state_.top().first->AddQueryString(query_string.c_str());
   }
@@ -335,7 +333,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
       LOG_TRACE("select query, finish setting");
     }
   } catch (Exception &e) {
-    error_message = e.what();
+    error_message_ = e.what();
     ProcessInvalidStatement();
     return nullptr;
   }
@@ -370,7 +368,7 @@ void TrafficCop::ProcessInvalidStatement() {
 bool TrafficCop::BindParamsForCachePlan(
     const std::vector<std::unique_ptr<expression::AbstractExpression>>
         &parameters,
-    std::string &error_message, const size_t thread_id UNUSED_ATTRIBUTE) {
+    const size_t thread_id UNUSED_ATTRIBUTE) {
   if (tcop_txn_state_.empty()) {
     single_statement_txn_ = true;
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -390,7 +388,7 @@ bool TrafficCop::BindParamsForCachePlan(
   for (const std::unique_ptr<expression::AbstractExpression> &param :
        parameters) {
     if (!expression::ExpressionUtil::IsValidStaticExpression(param.get())) {
-      error_message = "Invalid Expression Type";
+      error_message_ = "Invalid Expression Type";
       return false;
     }
     param->Accept(bind_node_visitor.get());
@@ -550,7 +548,8 @@ ResultType TrafficCop::ExecuteStatement(
     const std::vector<type::Value> &params, UNUSED_ATTRIBUTE bool unnamed,
     std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
     const std::vector<int> &result_format, std::vector<ResultValue> &result,
-    std::string &error_message, size_t thread_id) {
+    size_t thread_id) {
+  // TODO(Tianyi) Further simplify this API
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(
           settings::SettingId::stats_mode)) != StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()->InitQueryMetric(
@@ -602,7 +601,7 @@ ResultType TrafficCop::ExecuteStatement(
     }
 
   } catch (Exception &e) {
-    error_message = e.what();
+    error_message_ = e.what();
     return ResultType::FAILURE;
   }
 }

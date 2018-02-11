@@ -20,13 +20,13 @@
 #include "event.h"
 
 #include "catalog/column.h"
+#include "common/internal_types.h"
 #include "common/portal.h"
 #include "common/statement.h"
 #include "executor/plan_executor.h"
 #include "optimizer/abstract_optimizer.h"
 #include "parser/sql_statement.h"
 #include "type/type.h"
-#include "common/internal_types.h"
 
 namespace peloton {
 
@@ -70,7 +70,7 @@ class TrafficCop {
       const std::vector<type::Value> &params, const bool unnamed,
       std::shared_ptr<stats::QueryMetric::QueryParams> param_stats,
       const std::vector<int> &result_format, std::vector<ResultValue> &result,
-      std::string &error_message, size_t thread_id = 0);
+      size_t thread_id = 0);
 
   // Helper to handle txn-specifics for the plan-tree of a statement.
   executor::ExecutionResult ExecuteHelper(
@@ -82,11 +82,11 @@ class TrafficCop {
   std::shared_ptr<Statement> PrepareStatement(
       const std::string &statement_name, const std::string &query_string,
       std::unique_ptr<parser::SQLStatementList> sql_stmt_list,
-      std::string &error_message, size_t thread_id = 0);
+      size_t thread_id = 0);
 
   bool BindParamsForCachePlan(
       const std::vector<std::unique_ptr<expression::AbstractExpression>> &,
-      std::string &error_message, const size_t thread_id = 0);
+      const size_t thread_id = 0);
 
   std::vector<FieldInfo> GenerateTupleDescriptor(
       parser::SQLStatement *select_stmt);
@@ -200,15 +200,6 @@ class TrafficCop {
   // still a HACK
   void GetTableColumns(parser::TableRef *from_table,
                        std::vector<catalog::Column> &target_tables);
-
-  //  const std::shared_ptr<Statement> statement_;
-  //  const std::vector<type::Value> params_;
-  //  UNUSED_ATTRIBUTE const bool unnamed;
-  //  std::shared_ptr<stats::QueryMetric::QueryParams> param_stats_;
-  //  const std::vector<int> &result_format, std::vector<StatementResult>
-  //  result;
-  //  int &rows_changed, UNUSED_ATTRIBUTE std::string error_message;
-  //  const size_t thread_id UNUSED_ATTRIBUTE;
 };
 
 }  // namespace tcop
