@@ -24,9 +24,8 @@ using TaskQueue = peloton::LockFreeQueue<std::function<void()>>;
 
 /**
  * @brief A worker pool that maintains a group of worker threads. This pool is
- * re-startable, meaning it can be started-up after it has been shutdown.
- * Calls to Startup() and Shutdown() can be called safely by multiple threads,
- * multiple times (i.e., they're thread-safe and idempotent).
+ * restartable, meaning it can be started again after it has been shutdown.
+ * Calls to Startup() and Shutdown() are thread-safe and idempotent.
  */
 class WorkerPool {
  public:
@@ -42,6 +41,13 @@ class WorkerPool {
    * @brief Shutdown this worker pool. Thread-safe and idempotent.
    */
   void Shutdown();
+
+  /**
+   * @brief Access the number of worker threads in this pool
+   *
+   * @return The number of worker threads assigned to this pool
+   */
+  size_t NumWorkers() const { return num_workers_; }
 
  private:
   // The name of this pool
