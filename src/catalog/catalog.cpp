@@ -71,8 +71,8 @@ Catalog::Catalog() : pool_(new type::EphemeralPool()) {
 
 void Catalog::BootstrapSystemCatalogs(Database *database,
                                       concurrency::TransactionContext *txn) {
-  auto &system_catalogs = catalog_map_[database_oid] =
-      SystemCatalogs(database, pool_.get(), txn);
+  auto system_catalogs = catalog_map_[database_oid] =
+      new SystemCatalogs(database, pool_.get(), txn);
 
   // Create indexes on catalog tables, insert them into pg_index
   // note that CreateIndex() from catalog.cpp will create index on storage level
@@ -260,9 +260,9 @@ ResultType Catalog::CreateTable(const std::string &database_name,
 
   // Create actual table
   auto pg_table =
-      catalog_map_[database_object->GetDatabaseOid()].GetTableCatalog();
+      catalog_map_[database_object->GetDatabaseOid()]->GetTableCatalog();
   auto pg_attribute =
-      catalog_map_[database_object->GetDatabaseOid()].GetColumnCatalog();
+      catalog_map_[database_object->GetDatabaseOid()]->GetColumnCatalog();
   oid_t table_oid = pg_table->GetNextOid();
   bool own_schema = true;
   bool adapt_table = false;
@@ -340,7 +340,7 @@ ResultType Catalog::CreatePrimaryIndex(oid_t database_oid, oid_t table_oid,
 
   bool unique_keys = true;
   auto pg_index =
-      catalog_map_[database_object->GetDatabaseOid()].GetIndexCatalog();
+      catalog_map_[database_object->GetDatabaseOid()]->GetIndexCatalog();
   oid_t index_oid = pg_index->GetNextOid();
 
   index_metadata = new index::IndexMetadata(
@@ -444,7 +444,7 @@ ResultType Catalog::CreateIndex(
   LOG_TRACE("Trying to create index %s on table %d", index_name.c_str(),
             table_oid);
   auto pg_index =
-      catalog_map_[database_object->GetDatabaseOid()].GetIndexCatalog();
+      catalog_map_[database_object->GetDatabaseOid()]->GetIndexCatalog();
   oid_t index_oid = pg_index->GetNextOid();
   auto key_schema = catalog::Schema::CopySchema(schema, key_attrs);
   key_schema->SetIndexedColumns(key_attrs);
@@ -578,11 +578,11 @@ ResultType Catalog::DropTable(oid_t database_oid, oid_t table_oid,
     DropIndex(database_oid, it.second->GetIndexOid(), txn);
   // delete record in pg_attribute
   auto pg_attribute =
-      catalog_map_[database_object->GetDatabaseOid()].GetColumnCatalog();
+      catalog_map_[database_object->GetDatabaseOid()]->GetColumnCatalog();
   pg_attribute->DeleteColumns(table_oid, txn);
   // delete record in pg_table
   auto pg_table =
-      catalog_map_[database_object->GetDatabaseOid()].GetTableCatalog();
+      catalog_map_[database_object->GetDatabaseOid()]->GetTableCatalog();
   pg_table->DeleteTable(table_oid, txn);
 
   database->GetTableWithOid(table_oid);
@@ -603,7 +603,7 @@ ResultType Catalog::DropIndex(oid_t database_oid, oid_t index_oid,
                            std::to_string(index_oid));
   // find index catalog object by looking up pg_index or read from cache using
   // index_oid
-  auto pg_index = catalog_map_[database_oid].GetIndexCatalog();
+  auto pg_index = catalog_map_[database_oid]->GetIndexCatalog();
   auto index_object = pg_index->GetIndexObject(index_oid, txn);
   if (index_object == nullptr) {
     throw CatalogException("Can't find index " + std::to_string(index_oid) +
@@ -634,7 +634,7 @@ ResultType Catalog::DropIndex(const std::string &database_name,
   }
   auto database_object =
       DatabaseCatalog::GetInstance()->GetDatabaseObject(database_name, txn);
-  auto pg_index = catalog_map_[database_oid].GetIndexCatalog();
+  auto pg_index = catalog_map_[database_oid]->GetIndexCatalog();
   auto index_object = pg_index->GetIndexObject(index_name, txn);
 
   if (index_object == nullptr || database_object == nullptr) {
@@ -805,9 +805,10 @@ std::shared_ptr<TableCatalogObject> Catalog::GetTableObject(
   return table_object;
 }
 
-SystemCatalogs Catalog::GetSystemCatalog(const oid_t database_oid) {
+shared_ptr<SystemCatalogs> Catalog::GetSystemCatalog(const oid_t database_oid) {
   if (catalog_map_.find(database_oid) == catalog_map_.end()) {
-    throw CatalogException("Failed to find SystemCatalog " + database_oid);
+    throw CatalogException("Failed to find SystemCatalog for database_oid = " +
+                           database_oid);
   }
   return catalog_map_[database_oid];
 }
