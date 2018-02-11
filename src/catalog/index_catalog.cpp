@@ -14,9 +14,9 @@
 
 #include <sstream>
 
-#include "concurrency/transaction_context.h"
-#include "catalog/table_catalog.h"
 #include "catalog/column_catalog.h"
+#include "catalog/table_catalog.h"
+#include "concurrency/transaction_context.h"
 #include "executor/logical_tile.h"
 #include "storage/data_table.h"
 #include "storage/tuple.h"
@@ -175,7 +175,8 @@ bool IndexCatalog::InsertIndex(oid_t index_oid, const std::string &index_name,
   return InsertTuple(std::move(tuple), txn);
 }
 
-bool IndexCatalog::DeleteIndex(oid_t index_oid, concurrency::TransactionContext *txn) {
+bool IndexCatalog::DeleteIndex(oid_t index_oid,
+                               concurrency::TransactionContext *txn) {
   oid_t index_offset = IndexId::PRIMARY_KEY;  // Index of index_oid
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(index_oid).Copy());
@@ -214,9 +215,12 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
     auto index_object =
         std::make_shared<IndexCatalogObject>((*result_tiles)[0].get());
     // fetch all indexes into table object (cannot use the above index object)
-    auto table_object = TableCatalog::GetInstance()->GetTableObject(
-        index_object->GetTableOid(), txn);
-    PELOTON_ASSERT(table_object &&
+    auto pg_table = Catalog::GetInstance()
+                        ->GetSystemCatalog(database_oid)
+                        .GetTableCatalog();
+    auto table_object =
+        pg_table->GetTableObject(index_object->GetTableOid(), txn);
+    PL_ASSERT(table_object &&
               table_object->GetTableOid() == index_object->GetTableOid());
     return table_object->GetIndexObject(index_oid);
   } else {
@@ -252,9 +256,12 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
     auto index_object =
         std::make_shared<IndexCatalogObject>((*result_tiles)[0].get());
     // fetch all indexes into table object (cannot use the above index object)
-    auto table_object = TableCatalog::GetInstance()->GetTableObject(
-        index_object->GetTableOid(), txn);
-    PELOTON_ASSERT(table_object &&
+    auto pg_table = Catalog::GetInstance()
+                        ->GetSystemCatalog(database_oid)
+                        .GetTableCatalog();
+    auto table_object =
+        pg_table->GetTableObject(index_object->GetTableOid(), txn);
+    PL_ASSERT(table_object &&
               table_object->GetTableOid() == index_object->GetTableOid());
     return table_object->GetIndexObject(index_name);
   } else {
@@ -273,14 +280,17 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
  * @return  a vector of index catalog objects
  */
 const std::unordered_map<oid_t, std::shared_ptr<IndexCatalogObject>>
-IndexCatalog::GetIndexObjects(oid_t table_oid, concurrency::TransactionContext *txn) {
+IndexCatalog::GetIndexObjects(oid_t table_oid,
+                              concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
   }
   // try get from cache
+  auto pg_table =
+      Catalog::GetInstance()->GetSystemCatalog(database_oid).GetTableCatalog();
   auto table_object =
-      TableCatalog::GetInstance()->GetTableObject(table_oid, txn);
-  PELOTON_ASSERT(table_object && table_object->GetTableOid() == table_oid);
+      pg_table->GetTableObject(index_object->GetTableOid(), txn);
+  PL_ASSERT(table_object && table_object->GetTableOid() == table_oid);
   auto index_objects = table_object->GetIndexObjects(true);
   if (index_objects.empty() == false) return index_objects;
 

@@ -193,8 +193,9 @@ bool ColumnCatalog::DeleteColumn(oid_t table_oid,
       type::ValueFactory::GetVarcharValue(column_name, nullptr).Copy());
 
   // delete column from cache
-  auto table_object =
-      TableCatalog::GetInstance()->GetTableObject(table_oid, txn);
+  auto pg_table =
+      Catalog::GetInstance()->GetSystemCatalog(database_oid).GetTableCatalog();
+  auto table_object = pg_table->GetTableObject(table_oid, txn);
   table_object->EvictColumnObject(column_name);
 
   return DeleteWithIndexScan(index_offset, values, txn);
@@ -213,8 +214,9 @@ bool ColumnCatalog::DeleteColumns(oid_t table_oid,
   values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
 
   // delete columns from cache
-  auto table_object =
-      TableCatalog::GetInstance()->GetTableObject(table_oid, txn);
+  auto pg_table =
+      Catalog::GetInstance()->GetSystemCatalog(database_oid).GetTableCatalog();
+  auto table_object = pg_table->GetTableObject(table_oid, txn);
   table_object->EvictAllColumnObjects();
 
   return DeleteWithIndexScan(index_offset, values, txn);
@@ -224,9 +226,10 @@ const std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogObject>>
 ColumnCatalog::GetColumnObjects(oid_t table_oid,
                                 concurrency::TransactionContext *txn) {
   // try get from cache
-  auto table_object =
-      TableCatalog::GetInstance()->GetTableObject(table_oid, txn);
-  PELOTON_ASSERT(table_object && table_object->GetTableOid() == table_oid);
+  auto pg_table =
+      Catalog::GetInstance()->GetSystemCatalog(database_oid).GetTableCatalog();
+  auto table_object = pg_table->GetTableObject(table_oid, txn);
+  PL_ASSERT(table_object && table_object->GetTableOid() == table_oid);
   auto column_objects = table_object->GetColumnObjects(true);
   if (column_objects.size() != 0) return column_objects;
 

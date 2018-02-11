@@ -129,8 +129,10 @@ TableCatalogObject::GetIndexObjects(bool cached_only) {
   if (!valid_index_objects && !cached_only) {
     // get index catalog objects from pg_index
     valid_index_objects = true;
-    index_objects =
-        IndexCatalog::GetInstance()->GetIndexObjects(table_oid, txn);
+    auto pg_index = Catalog::GetInstance()
+                        ->GetSystemCatalog(database_oid)
+                        .GetIndexCatalog();
+    index_objects = pg_index->GetIndexObjects(table_oid, txn);
   }
   return index_objects;
 }
@@ -253,7 +255,10 @@ std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogObject>>
 TableCatalogObject::GetColumnObjects(bool cached_only) {
   if (!valid_column_objects && !cached_only) {
     // get column catalog objects from pg_column
-    ColumnCatalog::GetInstance()->GetColumnObjects(table_oid, txn);
+    auto pg_attribute = Catalog::GetInstance()
+                            ->GetSystemCatalog(database_oid)
+                            .GetColumnCatalog();
+    pg_attribute->GetColumnObjects(table_oid, txn);
     valid_column_objects = true;
   }
   return column_objects;

@@ -176,6 +176,11 @@ class Catalog {
   std::shared_ptr<TableCatalogObject> GetTableObject(
       oid_t database_oid, oid_t table_oid,
       concurrency::TransactionContext *txn);
+
+  /*
+   * Using database oid to get system catalog object
+   */
+  SystemCatalog GetSystemCatalog(const oid_t database_oid);
   //===--------------------------------------------------------------------===//
   // DEPRECATED FUNCTIONS
   //===--------------------------------------------------------------------===//
@@ -217,8 +222,10 @@ class Catalog {
 
   // The pool for new varlen tuple fields
   std::unique_ptr<type::AbstractPool> pool_;
-
   std::mutex catalog_mutex;
+  // key: database oid
+  // value: SystemCatalog object(including pg_table, pg_index and pg_attribute)
+  std::unordered_map<oid_t, SystemCatalog> catalog_map_;
 };
 
 }  // namespace catalog

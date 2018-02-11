@@ -14,9 +14,9 @@
 
 #include "catalog/database_catalog.h"
 
-#include "concurrency/transaction_context.h"
-#include "catalog/table_catalog.h"
 #include "catalog/column_catalog.h"
+#include "catalog/table_catalog.h"
+#include "concurrency/transaction_context.h"
 #include "executor/logical_tile.h"
 #include "storage/data_table.h"
 #include "storage/tuple.h"
@@ -25,8 +25,8 @@
 namespace peloton {
 namespace catalog {
 
-DatabaseCatalogObject::DatabaseCatalogObject(executor::LogicalTile *tile,
-                                             concurrency::TransactionContext *txn)
+DatabaseCatalogObject::DatabaseCatalogObject(
+    executor::LogicalTile *tile, concurrency::TransactionContext *txn)
     : database_oid(tile->GetValue(0, DatabaseCatalog::ColumnId::DATABASE_OID)
                        .GetAs<oid_t>()),
       database_name(tile->GetValue(0, DatabaseCatalog::ColumnId::DATABASE_NAME)
@@ -104,7 +104,7 @@ bool DatabaseCatalogObject::EvictTableObject(const std::string &table_name) {
 }
 
 /*@brief   evict all table catalog objects in this database from cache
-*/
+ */
 void DatabaseCatalogObject::EvictAllTableObjects() {
   table_objects_cache.clear();
   table_name_cache.clear();
@@ -125,7 +125,10 @@ std::shared_ptr<TableCatalogObject> DatabaseCatalogObject::GetTableObject(
     return nullptr;
   } else {
     // cache miss get from pg_table
-    return TableCatalog::GetInstance()->GetTableObject(table_oid, txn);
+    auto pg_table = Catalog::GetInstance()
+                        ->GetSystemCatalog(database_oid)
+                        .GetTableCatalog();
+    return pg_table->GetTableObject(table_oid, txn);
   }
 }
 
@@ -145,8 +148,10 @@ std::shared_ptr<TableCatalogObject> DatabaseCatalogObject::GetTableObject(
     return nullptr;
   } else {
     // cache miss get from pg_table
-    return TableCatalog::GetInstance()->GetTableObject(table_name, database_oid,
-                                                       txn);
+    auto pg_table = Catalog::GetInstance()
+                        ->GetSystemCatalog(database_oid)
+                        .GetTableCatalog();
+    return pg_table->GetTableObject(table_name, database_oid, txn);
   }
 }
 
@@ -159,7 +164,10 @@ std::unordered_map<oid_t, std::shared_ptr<TableCatalogObject>>
 DatabaseCatalogObject::GetTableObjects(bool cached_only) {
   if (!cached_only && !valid_table_objects) {
     // cache miss get from pg_table
-    return TableCatalog::GetInstance()->GetTableObjects(database_oid, txn);
+    auto pg_table = Catalog::GetInstance()
+                        ->GetSystemCatalog(database_oid)
+                        .GetTableCatalog();
+    return pg_table->GetTableObjects(database_oid, txn);
   }
   // make sure to check IsValidTableObjects() before getting table objects
   PELOTON_ASSERT(valid_table_objects);
@@ -167,9 +175,9 @@ DatabaseCatalogObject::GetTableObjects(bool cached_only) {
 }
 
 /*@brief   search index catalog object from all cached database objects
-* @param   index_oid
-* @return  index catalog object; if not found return null
-*/
+ * @param   index_oid
+ * @return  index catalog object; if not found return null
+ */
 std::shared_ptr<IndexCatalogObject> DatabaseCatalogObject::GetCachedIndexObject(
     oid_t index_oid) {
   for (auto it = table_objects_cache.begin(); it != table_objects_cache.end();
@@ -182,9 +190,9 @@ std::shared_ptr<IndexCatalogObject> DatabaseCatalogObject::GetCachedIndexObject(
 }
 
 /*@brief   search index catalog object from all cached database objects
-* @param   index_name
-* @return  index catalog object; if not found return null
-*/
+ * @param   index_name
+ * @return  index catalog object; if not found return null
+ */
 std::shared_ptr<IndexCatalogObject> DatabaseCatalogObject::GetCachedIndexObject(
     const std::string &index_name) {
   for (auto it = table_objects_cache.begin(); it != table_objects_cache.end();
@@ -196,9 +204,9 @@ std::shared_ptr<IndexCatalogObject> DatabaseCatalogObject::GetCachedIndexObject(
   return nullptr;
 }
 
-DatabaseCatalog *DatabaseCatalog::GetInstance(storage::Database *pg_catalog,
-                                              type::AbstractPool *pool,
-                                              concurrency::TransactionContext *txn) {
+DatabaseCatalog *DatabaseCatalog::GetInstance(
+    storage::Database *pg_catalog, type::AbstractPool *pool,
+    concurrency::TransactionContext *txn) {
   static DatabaseCatalog database_catalog{pg_catalog, pool, txn};
   return &database_catalog;
 }
