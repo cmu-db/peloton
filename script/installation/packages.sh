@@ -88,20 +88,21 @@ if [ "$DISTRO" = "UBUNTU" ]; then
         $PKG_CLANG \
         git \
         g++ \
-        libgflags-dev \
-        libprotobuf-dev \
-        protobuf-compiler \
         bison \
         flex \
+        valgrind \
+        lcov \
+        protobuf-compiler \
+        libgflags-dev \
+        libprotobuf-dev \
         libevent-dev \
         libboost-dev \
         libboost-thread-dev \
         libboost-filesystem-dev \
         libjemalloc-dev \
-        valgrind \
-        lcov \
         libpqxx-dev \
         libedit-dev \
+        libssl-dev \
         postgresql-client
 
 ## ------------------------------------------------
