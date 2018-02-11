@@ -63,6 +63,8 @@ IndexCatalog::IndexCatalog(storage::Database *pg_catalog,
                            concurrency::TransactionContext *txn)
     : AbstractCatalog(INDEX_CATALOG_OID, INDEX_CATALOG_NAME,
                       InitializeSchema().release(), pg_catalog) {
+  database_oid = pg_catalog->GetOid();
+
   // Add indexes for pg_index
   AddIndex({0}, INDEX_CATALOG_PKEY_OID, INDEX_CATALOG_NAME "_pkey",
            IndexConstraintType::PRIMARY_KEY);

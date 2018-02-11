@@ -100,6 +100,8 @@ class IndexCatalog : public AbstractCatalog {
   GetIndexObjects(oid_t table_oid, concurrency::TransactionContext *txn);
 
  private:
+  oid_t database_oid;
+
   IndexCatalog(storage::Database *pg_catalog, type::AbstractPool *pool,
                concurrency::TransactionContext *txn);
 

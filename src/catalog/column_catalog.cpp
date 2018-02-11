@@ -53,6 +53,8 @@ ColumnCatalog::ColumnCatalog(storage::Database *pg_catalog,
                              concurrency::TransactionContext *txn)
     : AbstractCatalog(COLUMN_CATALOG_OID, COLUMN_CATALOG_NAME,
                       InitializeSchema().release(), pg_catalog) {
+  database_oid = pg_catalog->GetOid();
+
   // Add indexes for pg_attribute
   AddIndex({ColumnId::TABLE_OID, ColumnId::COLUMN_NAME},
            COLUMN_CATALOG_PKEY_OID, COLUMN_CATALOG_NAME "_pkey",

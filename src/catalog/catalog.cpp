@@ -63,9 +63,16 @@ Catalog::Catalog() : pool_(new type::EphemeralPool()) {
 
   // Create catalog tables
   auto pg_database = DatabaseCatalog::GetInstance(pg_catalog, pool_.get(), txn);
-  auto pg_table = TableCatalog::GetInstance(pg_catalog, pool_.get(), txn);
-  IndexCatalog::GetInstance(pg_catalog, pool_.get(), txn);
-  //  ColumnCatalog::GetInstance(); // Called implicitly
+  BootstrapSystemCatalogs(pg_catalog, txn);
+
+  // Commit transaction
+  txn_manager.CommitTransaction(txn);
+}
+
+void Catalog::BootstrapSystemCatalogs(Database *database,
+                                      concurrency::TransactionContext *txn) {
+  auto &system_catalogs = catalog_map_[database_oid] =
+      SystemCatalogs(database, pool_.get(), txn);
 
   // Create indexes on catalog tables, insert them into pg_index
   // note that CreateIndex() from catalog.cpp will create index on storage level
@@ -94,51 +101,52 @@ Catalog::Catalog() : pool_(new type::EphemeralPool()) {
   // actual index already added in column_catalog, index_catalog constructor
   // the reason we treat those two catalog tables differently is that indexes
   // needs to be built before insert tuples into table
-  IndexCatalog::GetInstance()->InsertIndex(
+  system_catalogs.GetIndexCatalog()->InsertIndex(
       COLUMN_CATALOG_PKEY_OID, COLUMN_CATALOG_NAME "_pkey", COLUMN_CATALOG_OID,
       IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY, true,
       {ColumnCatalog::ColumnId::TABLE_OID,
        ColumnCatalog::ColumnId::COLUMN_NAME},
       pool_.get(), txn);
-  IndexCatalog::GetInstance()->InsertIndex(
+  system_catalogs.GetIndexCatalog()->InsertIndex(
       COLUMN_CATALOG_SKEY0_OID, COLUMN_CATALOG_NAME "_skey0",
       COLUMN_CATALOG_OID, IndexType::BWTREE, IndexConstraintType::UNIQUE, true,
       {ColumnCatalog::ColumnId::TABLE_OID, ColumnCatalog::ColumnId::COLUMN_ID},
       pool_.get(), txn);
-  IndexCatalog::GetInstance()->InsertIndex(
+  system_catalogs.GetIndexCatalog()->InsertIndex(
       COLUMN_CATALOG_SKEY1_OID, COLUMN_CATALOG_NAME "_skey1",
       COLUMN_CATALOG_OID, IndexType::BWTREE, IndexConstraintType::DEFAULT,
       false, {ColumnCatalog::ColumnId::TABLE_OID}, pool_.get(), txn);
 
-  IndexCatalog::GetInstance()->InsertIndex(
+  system_catalogs.GetIndexCatalog()->InsertIndex(
       INDEX_CATALOG_PKEY_OID, INDEX_CATALOG_NAME "_pkey", INDEX_CATALOG_OID,
       IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY, true,
       {IndexCatalog::ColumnId::INDEX_OID}, pool_.get(), txn);
-  IndexCatalog::GetInstance()->InsertIndex(
+  system_catalogs.GetIndexCatalog()->InsertIndex(
       INDEX_CATALOG_SKEY0_OID, INDEX_CATALOG_NAME "_skey0", INDEX_CATALOG_OID,
       IndexType::BWTREE, IndexConstraintType::UNIQUE, true,
       {IndexCatalog::ColumnId::INDEX_NAME}, pool_.get(), txn);
-  IndexCatalog::GetInstance()->InsertIndex(
+  system_catalogs.GetIndexCatalog()->InsertIndex(
       INDEX_CATALOG_SKEY1_OID, INDEX_CATALOG_NAME "_skey1", INDEX_CATALOG_OID,
       IndexType::BWTREE, IndexConstraintType::DEFAULT, false,
       {IndexCatalog::ColumnId::TABLE_OID}, pool_.get(), txn);
 
   // Insert pg_catalog database into pg_database
-  pg_database->InsertDatabase(CATALOG_DATABASE_OID, CATALOG_DATABASE_NAME,
-                              pool_.get(), txn);
+  DatabaseCatalog::GetInstance()->InsertDatabase(
+      CATALOG_DATABASE_OID, CATALOG_DATABASE_NAME, pool_.get(), txn);
 
   // Insert catalog tables into pg_table
-  pg_table->InsertTable(DATABASE_CATALOG_OID, DATABASE_CATALOG_NAME,
-                        CATALOG_DATABASE_OID, pool_.get(), txn);
-  pg_table->InsertTable(TABLE_CATALOG_OID, TABLE_CATALOG_NAME,
-                        CATALOG_DATABASE_OID, pool_.get(), txn);
-  pg_table->InsertTable(INDEX_CATALOG_OID, INDEX_CATALOG_NAME,
-                        CATALOG_DATABASE_OID, pool_.get(), txn);
-  pg_table->InsertTable(COLUMN_CATALOG_OID, COLUMN_CATALOG_NAME,
-                        CATALOG_DATABASE_OID, pool_.get(), txn);
-
-  // Commit transaction
-  txn_manager.CommitTransaction(txn);
+  system_catalogs.GetTableCatalog()->InsertTable(
+      DATABASE_CATALOG_OID, DATABASE_CATALOG_NAME, CATALOG_DATABASE_OID,
+      pool_.get(), txn);
+  system_catalogs.GetTableCatalog()->InsertTable(
+      TABLE_CATALOG_OID, TABLE_CATALOG_NAME, CATALOG_DATABASE_OID, pool_.get(),
+      txn);
+  system_catalogs.GetTableCatalog()->InsertTable(
+      INDEX_CATALOG_OID, INDEX_CATALOG_NAME, CATALOG_DATABASE_OID, pool_.get(),
+      txn);
+  system_catalogs.GetTableCatalog()->InsertTable(
+      COLUMN_CATALOG_OID, COLUMN_CATALOG_NAME, CATALOG_DATABASE_OID,
+      pool_.get(), txn);
 }
 
 void Catalog::Bootstrap() {

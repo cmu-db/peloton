@@ -220,6 +220,9 @@ class Catalog {
  private:
   Catalog();
 
+  void BootstrapSystemCatalogs(Database *database,
+                               concurrency::TransactionContext *txn);
+
   // The pool for new varlen tuple fields
   std::unique_ptr<type::AbstractPool> pool_;
   std::mutex catalog_mutex;

@@ -1,0 +1,41 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// system_catalog.h
+//
+// Identification: src/include/catalog/system_catalog.h
+//
+// Copyright (c) 2015-18, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+#pragma once
+
+#include <mutex>
+
+#include "catalog/database_catalog.h"
+#include "catalog/table_catalog.h"
+
+namespace peloton {
+namespace catalog {
+
+class SystemCatalogs {
+ public:
+  SystemCatalogs(storage::Database *database, type::AbstractPool *pool,
+                 concurrency::TransactionContext *txn);
+
+  ~SystemCatalogs();
+
+  ColumnCatalog *GetColumnCatalog() { return pg_attribute; }
+  TableCatalog *GetTableCatalog() { return pg_table; }
+  IndexCatalog *GetIndexCatalog() { return pg_index; }
+
+ private:
+  ColumnCatalog *pg_attribute;
+  TableCatalog *pg_table;
+  IndexCatalog *pg_index;
+};
+
+}  // namespace catalog
+}  // namespace peloton
