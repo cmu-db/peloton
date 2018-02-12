@@ -35,10 +35,10 @@ class ExceptionTests : public PelotonTest {};
 
 void *ExecutorExceptionTest(int port) {
   try {
-    pqxx::connection C(
-        StringUtil::Format("host=127.0.0.1 port=%d user=default_database "
-                           "sslmode=disable application_name=psql",
-                           port));
+    pqxx::connection C(StringUtil::Format(
+        "host=127.0.0.1 port=%d user=default_database "
+        "sslmode=disable application_name=psql",
+        port));
     int exception_count = 0, total = 2;
     pqxx::work txn1(C);
     try {
@@ -84,10 +84,10 @@ void *ExecutorExceptionTest(int port) {
 void *ParserExceptionTest(int port) {
   try {
     // forcing the factory to generate psql protocol handler
-    pqxx::connection C(
-        StringUtil::Format("host=127.0.0.1 port=%d user=default_database "
-                           "sslmode=disable application_name=psql",
-                           port));
+    pqxx::connection C(StringUtil::Format(
+        "host=127.0.0.1 port=%d user=default_database "
+        "sslmode=disable application_name=psql",
+        port));
 
     peloton::network::ConnectionHandle *conn =
         peloton::network::ConnectionHandleFactory::GetInstance()
@@ -242,7 +242,6 @@ TEST_F(ExceptionTests, ExceptionTest) {
   // server & client running correctly
   ParserExceptionTest(port);
   ExecutorExceptionTest(port);
-
 
   server.Close();
   serverThread.join();

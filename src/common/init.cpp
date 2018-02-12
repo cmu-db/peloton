@@ -83,7 +83,7 @@ void PelotonInit::Initialize() {
   // initialize the catalog and add the default database, so we don't do this on
   // the first query
   pg_catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
-  
+
   txn_manager.CommitTransaction(txn);
 
   // Initialize the Statement Cache Manager

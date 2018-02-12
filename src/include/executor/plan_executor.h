@@ -55,13 +55,13 @@ class PlanExecutor {
    * Before ExecutePlan, a node first receives value list, so we should
    * pass value list directly rather than passing Postgres's ParamListInfo
    */
-  static void ExecutePlan(std::shared_ptr<planner::AbstractPlan> plan,
-                          concurrency::TransactionContext *txn,
-                          const std::vector<type::Value> &params,
-                          const std::vector<int> &result_format,
-                          std::function<void(executor::ExecutionResult,
-                                             std::vector<ResultValue> &&)>
-                              on_complete);
+  static void ExecutePlan(
+      std::shared_ptr<planner::AbstractPlan> plan,
+      concurrency::TransactionContext *txn,
+      const std::vector<type::Value> &params,
+      const std::vector<int> &result_format,
+      std::function<void(executor::ExecutionResult,
+                         std::vector<ResultValue> &&)> on_complete);
 
   /*
    * @brief When a peloton node recvs a query plan, this function is invoked
