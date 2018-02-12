@@ -204,8 +204,7 @@ executor::ExecutionResult TrafficCop::ExecuteHelper(
 }
 
 void TrafficCop::ExecuteStatementPlanGetResult() {
-  if (p_status_.m_result == ResultType::FAILURE)
-    return;
+  if (p_status_.m_result == ResultType::FAILURE) return;
 
   auto txn_result = GetCurrentTxnState().first->GetResult();
   if (single_statement_txn_ || txn_result == ResultType::FAILURE) {
@@ -363,8 +362,8 @@ void TrafficCop::ProcessInvalidStatement() {
 }
 
 bool TrafficCop::BindParamsForCachePlan(
-    const std::vector<std::unique_ptr<expression::AbstractExpression>>
-        &parameters,
+    const std::vector<std::unique_ptr<expression::AbstractExpression>> &
+        parameters,
     const size_t thread_id UNUSED_ATTRIBUTE) {
   if (tcop_txn_state_.empty()) {
     single_statement_txn_ = true;
