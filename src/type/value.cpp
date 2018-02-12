@@ -327,7 +327,7 @@ Value::Value(TypeId type, const std::string &data) : Value(type) {
     case TypeId::VARBINARY: {
       manage_data_ = true;
       // TODO: How to represent a null string here?
-      uint32_t len = data.length() + (type == TypeId::VARCHAR);
+      uint32_t len = data.length();
       value_.varlen = new char[len];
       PL_ASSERT(value_.varlen != nullptr);
       size_.len = len;
