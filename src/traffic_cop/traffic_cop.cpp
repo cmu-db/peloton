@@ -101,7 +101,7 @@ ResultType TrafficCop::CommitQueryHelper() {
   auto txn = curr_state.first;
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   // I catch the exception (ex. table not found) explicitly,
-  // If this exception if caused by a query in a transaction,
+  // If this exception is caused by a query in a transaction,
   // I will block following queries in that transaction until 'COMMIT' or
   // 'ROLLBACK' After receive 'COMMIT', see if it is rollback or really commit.
   if (curr_state.second != ResultType::ABORTED) {
@@ -183,6 +183,9 @@ executor::ExecutionResult TrafficCop::ExecuteHelper(
   auto on_complete = [&result, this](executor::ExecutionResult p_status,
                                      std::vector<ResultValue> &&values) {
     this->p_status_ = p_status;
+    // TODO (Tianyi) I would make a decision on keeping one of p_status or
+    // error_message in my next PR
+    this->error_message_ = std::move(p_status.m_error_message);
     result = std::move(values);
     task_callback_(task_callback_arg_);
   };
@@ -201,19 +204,13 @@ executor::ExecutionResult TrafficCop::ExecuteHelper(
 }
 
 void TrafficCop::ExecuteStatementPlanGetResult() {
-  bool init_failure = false;
-  if (p_status_.m_result == ResultType::FAILURE) {
-    // only possible if init failed
-    init_failure = true;
-  }
+  if (p_status_.m_result == ResultType::FAILURE)
+    return;
 
   auto txn_result = GetCurrentTxnState().first->GetResult();
-  if (single_statement_txn_ || init_failure ||
-      txn_result == ResultType::FAILURE) {
-    LOG_TRACE(
-        "About to commit: single stmt: %d, init_failure: %d, txn_result: %s",
-        single_statement_txn_, init_failure,
-        ResultTypeToString(txn_result).c_str());
+  if (single_statement_txn_ || txn_result == ResultType::FAILURE) {
+    LOG_TRACE("About to commit/abort: single stmt: %d,txn_result: %s",
+              single_statement_txn_, ResultTypeToString(txn_result).c_str());
     switch (txn_result) {
       case ResultType::SUCCESS:
         // Commit single statement

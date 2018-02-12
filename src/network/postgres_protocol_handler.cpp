@@ -306,9 +306,9 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(
       }
       // Did not find statement with same name
       else {
-        traffic_cop_->SetErrorMessage("The prepared statement does not exist");
-        SendErrorResponse({{NetworkMessageType::HUMAN_READABLE_ERROR,
-                            traffic_cop_->GetErrorMessage()}});
+        std::string error_message = "The prepared statement does not exist";
+        SendErrorResponse(
+            {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
         SendReadyForQuery(NetworkTransactionStateType::IDLE);
         return ProcessResult::COMPLETE;
       }
@@ -373,11 +373,11 @@ void PostgresProtocolHandler::ExecQueryMessageGetResult(ResultType status) {
     SendReadyForQuery(NetworkTransactionStateType::IDLE);
     return;
   } else if (status == ResultType::TO_ABORT) {
-    traffic_cop_->SetErrorMessage(
+    std::string error_message =
         "current transaction is aborted, commands ignored until end of "
-        "transaction block");
-    SendErrorResponse({{NetworkMessageType::HUMAN_READABLE_ERROR,
-                        traffic_cop_->GetErrorMessage()}});
+        "transaction block";
+    SendErrorResponse(
+        {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
     SendReadyForQuery(NetworkTransactionStateType::IDLE);
     return;
   }
