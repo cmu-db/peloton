@@ -6,7 +6,7 @@
 //
 // Identification: src/include/index/compact_ints_key.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -320,16 +320,23 @@ class CompactIntsKey {
   }
 
  public:
-  /*
-   * GetInfo() - Prints the content of this key
+
+  /**
+   * Prints the content of this key.
+   *
+   * IMPORTANT: This class should <b>not</b> override Printable
+   * because that adds an extra 8 bytes and it makes all the math
+   * above for doing fast comparisons fail.
+   *
+   * @return
    */
-  std::string GetInfo() const {
+  const std::string GetInfo() const {
     std::ostringstream os;
     os << "CompactIntsKey<" << KeySize << "> - " << key_size_byte << " bytes"
        << std::endl;
 
     // This is the current offset we are on printing the key
-    int offset = 0;
+    size_t offset = 0;
     while (offset < key_size_byte) {
       constexpr int byte_per_line = 16;
       os << StringUtil::Format("0x%.8X    ", offset);

@@ -4,18 +4,17 @@
 //
 // bwtree_index.cpp
 //
-// Identification: src/backend/index/bwtree_index.cpp
+// Identification: src/index/bwtree_index.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 #include "index/bwtree_index.h"
 
-#include "common/logger.h"
 #include "index/index_key.h"
 #include "index/scan_optimizer.h"
 #include "statistics/stats_aggregator.h"
-#include "storage/tuple.h"
 #include "settings/settings_manager.h"
 
 namespace peloton {
@@ -60,6 +59,11 @@ bool BWTREE_INDEX_TYPE::InsertEntry(const storage::Tuple *key,
     stats::BackendStatsContext::GetInstance()->IncrementIndexInserts(metadata);
   }
 
+  LOG_TRACE("InsertEntry(key=%s, val=%s) [%s]",
+            index_key.GetInfo().c_str(),
+            IndexUtil::GetInfo(value).c_str(),
+            (ret ? "SUCCESS" : "FAIL"));
+
   return ret;
 }
 
@@ -73,6 +77,7 @@ bool BWTREE_INDEX_TYPE::DeleteEntry(const storage::Tuple *key,
                                     ItemPointer *value) {
   KeyType index_key;
   index_key.SetFromKey(key);
+
   size_t delete_count = 0;
 
   // In Delete() since we just use the value for comparison (i.e. read-only)
@@ -83,6 +88,12 @@ bool BWTREE_INDEX_TYPE::DeleteEntry(const storage::Tuple *key,
     stats::BackendStatsContext::GetInstance()->IncrementIndexDeletes(
         delete_count, metadata);
   }
+
+  LOG_TRACE("DeleteEntry(key=%s, val=%s) [%s]",
+            index_key.GetInfo().c_str(),
+            IndexUtil::GetInfo(value).c_str(),
+            (ret ? "SUCCESS" : "FAIL"));
+
   return ret;
 }
 

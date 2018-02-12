@@ -6,7 +6,7 @@
 //
 // Identification: src/include/index/index.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -255,6 +255,20 @@ class Index : public Printable {
   // Index Scan
   ///////////////////////////////////////////////////////////////////
 
+  /**
+   * Scans a range inside the index and returns all elements
+   * in the result vector. The type of scan to perform is
+   * specified by the given scan predicate (csp_p).
+   * Whether to perform a forward or backward scan is
+   * determined by the given scan_direction.
+   *
+   * @param value_list
+   * @param tuple_column_id_list
+   * @param expr_list
+   * @param scan_direction
+   * @param result
+   * @param csp_p
+   */
   virtual void Scan(const std::vector<type::Value> &value_list,
                     const std::vector<oid_t> &tuple_column_id_list,
                     const std::vector<ExpressionType> &expr_list,
@@ -262,6 +276,20 @@ class Index : public Printable {
                     std::vector<ItemPointer *> &result,
                     const ConjunctionScanPredicate *csp_p) = 0;
 
+  /**
+   * The ScanLimit function has the same behavior as the Scan function
+   * except that the scan stops after it reads offset + limit elements.
+   * Therefore, maximum of limit elements are returned in the result vector.
+   *
+   * @param value_list
+   * @param tuple_column_id_list
+   * @param expr_list
+   * @param scan_direction
+   * @param result
+   * @param csp_p
+   * @param limit
+   * @param offset
+   */
   virtual void ScanLimit(const std::vector<type::Value> &value_list,
                          const std::vector<oid_t> &tuple_column_id_list,
                          const std::vector<ExpressionType> &expr_list,
@@ -270,17 +298,41 @@ class Index : public Printable {
                          const ConjunctionScanPredicate *csp_p, uint64_t limit,
                          uint64_t offset) = 0;
 
-  // This is the version used to test scan
-  // Since it does scan planning everytime, it is slow, and should
-  // only be used for correctness testing
+  /**
+   * This is the version used to test the basic scan operation.
+   * Since it does a scan planning every time it is invoked, it will
+   * be slower than the regular scan.
+   * This should <b>only</b> be used for correctness testing.
+   *
+   * @param value_list
+   * @param tuple_column_id_list
+   * @param expr_list
+   * @param scan_direction
+   * @param result
+   */
   virtual void ScanTest(const std::vector<type::Value> &value_list,
                         const std::vector<oid_t> &tuple_column_id_list,
                         const std::vector<ExpressionType> &expr_list,
                         const ScanDirectionType &scan_direction,
                         std::vector<ItemPointer *> &result);
 
+  /**
+   * Scan all of the keys in the index and store their values
+   * in the result vector.
+   *
+   * @param result
+   */
   virtual void ScanAllKeys(std::vector<ItemPointer *> &result) = 0;
 
+  /**
+   * Finds all of the values in the index for the given key and
+   * return them in the result vector.
+   * If the index is not configured to store duplicate keys,
+   * then at most one value will be returned.
+   *
+   * @param key
+   * @param result
+   */
   virtual void ScanKey(const storage::Tuple *key,
                        std::vector<ItemPointer *> &result) = 0;
 
@@ -340,8 +392,6 @@ class Index : public Printable {
   const catalog::Schema *GetKeySchema() const {
     return metadata->GetKeySchema();
   }
-
-  IndexType GetIndexMethodType() { return metadata->GetIndexType(); }
 
   IndexConstraintType GetIndexType() const {
     return metadata->GetIndexConstraintType();
