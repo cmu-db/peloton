@@ -15,6 +15,8 @@
 #include "optimizer/rule.h"
 
 #include <memory>
+#include <algorithm>
+
 
 namespace peloton {
 namespace optimizer {

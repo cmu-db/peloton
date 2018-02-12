@@ -22,6 +22,7 @@
 #include "optimizer/properties.h"
 #include "optimizer/optimizer_metadata.h"
 
+
 namespace peloton {
 namespace optimizer {
 
@@ -97,20 +98,59 @@ void InnerJoinAssociativity::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed,
     UNUSED_ATTRIBUTE OptimizeContext *context) const {
-  auto join_op = input->Op().As<LogicalInnerJoin>();
-  auto join_predicates =
-      std::vector<AnnotatedExpression>(join_op->join_predicates);
-  auto result_plan = std::make_shared<OperatorExpression>(
-      LogicalInnerJoin::make(join_predicates));
-  std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
-  PL_ASSERT(children.size() == 2);
-  LOG_TRACE(
-      "Reorder left child with op %s and right child with op %s for inner join",
-      children[0]->Op().GetName().c_str(), children[1]->Op().GetName().c_str());
-  result_plan->PushChild(children[1]);
-  result_plan->PushChild(children[0]);
 
-  transformed.push_back(result_plan);
+
+  // NOTE: Transforms (left JOIN middle) JOIN right -> left JOIN (middle JOIN right)
+  // Variables are named accordingly to above transformation
+
+
+
+//  auto result_plan = std::make_shared<OperatorExpression>(
+//      LogicalInnerJoin::make(join_predicates));
+
+  auto parent_join = input->Op().As<LogicalInnerJoin>();
+  std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
+  auto child_join = children[0]->Op().As<LogicalInnerJoin>();
+  PL_ASSERT(children.size() == 2);
+  PL_ASSERT(children[0]->Op().GetType() == OpType::InnerJoin);
+  PL_ASSERT(children[0]->Children().size() == 2);
+
+  // Get Alias sets
+  auto &memo = context->metadata->memo;
+  auto left_group_id = children[0]->Children()[0]->Op().As<LeafOperator>()->origin_group;
+  auto middle_group_id = children[0]->Children()[1]->Op().As<LeafOperator>()->origin_group;
+  auto right_group_id = children[1]->Op().As<LeafOperator>()->origin_group;
+
+  const auto &left_group_aliases_set =
+      memo.GetGroupByID(left_group_id)->GetTableAliases();
+  const auto &middle_group_aliases_set =
+      memo.GetGroupByID(middle_group_id)->GetTableAliases();
+  const auto &right_group_aliases_set =
+      memo.GetGroupByID(right_group_id)->GetTableAliases();
+
+
+
+  // Redistribute predicates
+  auto parent_join_predicates = std::vector<AnnotatedExpression>(parent_join->join_predicates);
+  auto child_join_predicates = std::vector<AnnotatedExpression>(child_join->join_predicates);
+
+  std::vector<AnnotatedExpression> predicates;
+  predicates.insert(predicates.end(), parent_join_predicates.begin(), parent_join_predicates.end());
+  predicates.insert(predicates.end(), child_join_predicates.begin(), child_join_predicates.end());
+
+//  for (auto predicate : predicates) {
+//
+//  }
+//
+//
+//
+//  LOG_TRACE(
+//      "Reorder left child with op %s and right child with op %s for inner join",
+//      children[0]->Op().GetName().c_str(), children[1]->Op().GetName().c_str());
+//  result_plan->PushChild(children[1]);
+//  result_plan->PushChild(children[0]);
+//
+//  transformed.push_back(result_plan);
 }
 
 //===--------------------------------------------------------------------===//
