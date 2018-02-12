@@ -37,9 +37,7 @@ InsertPlan::InsertPlan(storage::DataTable *table,
     for (uint32_t tuple_idx = 0; tuple_idx < insert_values->size();
          tuple_idx++) {
       auto &values = (*insert_values)[tuple_idx];
-      if (values.size() > schema->GetColumnCount()) {
-        throw Exception("Column size does not match");
-      }
+      PL_ASSERT(values.size() <= schema->GetColumnCount());
       uint32_t param_idx = 0;
       for (uint32_t column_id = 0; column_id < values.size(); column_id++) {
         auto &exp = values[column_id];
@@ -68,9 +66,7 @@ InsertPlan::InsertPlan(storage::DataTable *table,
   }
   // INSERT INTO table_name (col1, col2, ...) VALUES (val1, val2, ...);
   else {
-    if (columns->size() > schema->GetColumnCount()) {
-      throw Exception("Column size does not match");
-    }
+    PL_ASSERT(columns->size() <= schema->GetColumnCount());
     for (uint32_t tuple_idx = 0; tuple_idx < insert_values->size();
          tuple_idx++) {
       auto &values = (*insert_values)[tuple_idx];

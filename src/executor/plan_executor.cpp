@@ -63,19 +63,19 @@ static void CompileAndExecutePlan(
     codegen::QueryCache::Instance().Add(plan, std::move(compiled_query));
   }
 
-  auto on_query_result = [&on_complete,
-                          &consumer](executor::ExecutionResult result) {
-    std::vector<ResultValue> values;
-    for (const auto &tuple : consumer.GetOutputTuples()) {
-      for (uint32_t i = 0; i < tuple.tuple_.size(); i++) {
-        auto column_val = tuple.GetValue(i);
-        auto str = column_val.IsNull() ? "" : column_val.ToString();
-        LOG_TRACE("column content: [%s]", str.c_str());
-        values.push_back(std::move(str));
-      }
-    }
-    on_complete(result, std::move(values));
-  };
+  auto on_query_result =
+      [&on_complete, &consumer](executor::ExecutionResult result) {
+        std::vector<ResultValue> values;
+        for (const auto &tuple : consumer.GetOutputTuples()) {
+          for (uint32_t i = 0; i < tuple.tuple_.size(); i++) {
+            auto column_val = tuple.GetValue(i);
+            auto str = column_val.IsNull() ? "" : column_val.ToString();
+            LOG_TRACE("column content: [%s]", str.c_str());
+            values.push_back(std::move(str));
+          }
+        }
+        on_complete(result, std::move(values));
+      };
 
   query->Execute(std::move(executor_context), consumer, on_query_result);
 }
@@ -100,7 +100,7 @@ static void InterpretPlan(
   status = executor_tree->Init();
   if (status != true) {
     result.m_result = ResultType::FAILURE;
-    result.m_error_message = "Executor tree init failed";
+    result.m_error_message = "Failed initialization of query execution tree";
     CleanExecutorTree(executor_tree.get());
     on_complete(result, std::move(values));
     return;
@@ -157,7 +157,8 @@ void PlanExecutor::ExecutePlan(
     ExecutionResult result;
     result.m_result = ResultType::FAILURE;
     result.m_error_message = e.what();
-    LOG_ERROR("error thrown in Execution: %s", result.m_error_message.c_str());
+    LOG_ERROR("Error thrown during execution: %s",
+              result.m_error_message.c_str());
     on_complete(result, {});
   }
 }
