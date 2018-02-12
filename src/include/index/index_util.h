@@ -6,10 +6,9 @@
 //
 // Identification: src/include/index/index_util.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
 
 #pragma once
 
@@ -76,11 +75,21 @@ class IndexUtil {
                       std::vector<std::pair<oid_t, oid_t>> &value_index_list);
 
   /**
-   *
+   * Generate a string with a list of the values in the index.
+   * Note that this is will not print out the keys!.
    * @param index
    * @return
    */
   static std::string Debug(Index *index);
+
+  /**
+   * Return a string representation of an ItemPointer.
+   * This is here because we don't want to add extra methods
+   * to our ItemPointer since that takes up memory.
+   * @param ptr
+   * @return
+   */
+  static const std::string GetInfo(const ItemPointer *ptr);
 
 };
 
