@@ -2,11 +2,11 @@
 //
 //                         Peloton
 //
-// index_tests_util.cpp
+// testing_index_util.cpp
 //
-// Identification: test/index/index_tests_util.cpp
+// Identification: test/index/testing_index_util.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -15,13 +15,13 @@
 #include "gtest/gtest.h"
 
 #include "common/harness.h"
-#include "catalog/catalog.h"
+#include "common/internal_types.h"
 #include "common/item_pointer.h"
 #include "common/logger.h"
+#include "catalog/catalog.h"
 #include "index/index.h"
 #include "index/index_util.h"
 #include "storage/tuple.h"
-#include "common/internal_types.h"
 #include "type/value_factory.h"
 
 namespace peloton {
@@ -49,15 +49,15 @@ void TestingIndexUtil::BasicTest(const IndexType index_type) {
 
   // SCAN
   index->ScanKey(key0.get(), location_ptrs);
-  EXPECT_EQ(location_ptrs.size(), 1);
-  EXPECT_EQ(location_ptrs[0]->block, TestingIndexUtil::item0->block);
+  EXPECT_EQ(1, location_ptrs.size());
+  EXPECT_EQ(TestingIndexUtil::item0->block, location_ptrs[0]->block);
   location_ptrs.clear();
 
   // DELETE
   index->DeleteEntry(key0.get(), TestingIndexUtil::item0.get());
 
   index->ScanKey(key0.get(), location_ptrs);
-  EXPECT_EQ(location_ptrs.size(), 0);
+  EXPECT_EQ(0, location_ptrs.size());
   location_ptrs.clear();
 }
 
@@ -77,7 +77,7 @@ void TestingIndexUtil::MultiMapInsertTest(const IndexType index_type) {
 
   // Checks
   index->ScanAllKeys(location_ptrs);
-  EXPECT_EQ(location_ptrs.size(), 7);
+  EXPECT_EQ(7, location_ptrs.size());
   location_ptrs.clear();
 
   std::unique_ptr<storage::Tuple> key0(new storage::Tuple(key_schema, true));
@@ -89,12 +89,12 @@ void TestingIndexUtil::MultiMapInsertTest(const IndexType index_type) {
   keynonce->SetValue(1, type::ValueFactory::GetVarcharValue("f"), pool);
 
   index->ScanKey(keynonce.get(), location_ptrs);
-  EXPECT_EQ(location_ptrs.size(), 0);
+  EXPECT_EQ(0, location_ptrs.size());
   location_ptrs.clear();
 
   index->ScanKey(key0.get(), location_ptrs);
-  EXPECT_EQ(location_ptrs.size(), 1);
-  EXPECT_EQ(location_ptrs[0]->block, TestingIndexUtil::item0->block);
+  EXPECT_EQ(1, location_ptrs.size());
+  EXPECT_EQ(TestingIndexUtil::item0->block, location_ptrs[0]->block);
   location_ptrs.clear();
 }
 
@@ -128,15 +128,20 @@ void TestingIndexUtil::UniqueKeyDeleteTest(const IndexType index_type) {
 
   // INDEX
   std::unique_ptr<index::Index, void(*)(index::Index *)> index(
-      TestingIndexUtil::BuildIndex(index_type, false), DestroyIndex);
+      TestingIndexUtil::BuildIndex(index_type, true), DestroyIndex);
   const catalog::Schema *key_schema = index->GetKeySchema();
 
   // Single threaded test
   size_t scale_factor = 1;
   LaunchParallelTest(1, TestingIndexUtil::InsertHelper, index.get(), pool,
                      scale_factor);
+  LOG_DEBUG("INDEX VALUE CONTENTS BEFORE DELETE:\n%s",
+           index::IndexUtil::Debug(index.get()).c_str());
+
   LaunchParallelTest(1, TestingIndexUtil::DeleteHelper, index.get(), pool,
                      scale_factor);
+  LOG_DEBUG("INDEX VALUE CONTENTS AFTER DELETE:\n%s",
+           index::IndexUtil::Debug(index.get()).c_str());
 
   // Checks
   std::unique_ptr<storage::Tuple> key0(new storage::Tuple(key_schema, true));
@@ -145,25 +150,44 @@ void TestingIndexUtil::UniqueKeyDeleteTest(const IndexType index_type) {
 
   key0->SetValue(0, type::ValueFactory::GetIntegerValue(100), pool);
   key0->SetValue(1, type::ValueFactory::GetVarcharValue("a"), pool);
-  key1->SetValue(0, type::ValueFactory::GetIntegerValue(100), pool);
-  key1->SetValue(1, type::ValueFactory::GetVarcharValue("b"), pool);
   key2->SetValue(0, type::ValueFactory::GetIntegerValue(100), pool);
-  key2->SetValue(1, type::ValueFactory::GetVarcharValue("c"), pool);
+  key2->SetValue(1, type::ValueFactory::GetVarcharValue("b"), pool);
+  key1->SetValue(0, type::ValueFactory::GetIntegerValue(100), pool);
+  key1->SetValue(1, type::ValueFactory::GetVarcharValue("c"), pool);
 
+  LOG_DEBUG("INDEX CONTENTS:\n%s",
+           index::IndexUtil::Debug(index.get()).c_str());
+
+  LOG_DEBUG("ScanKey(key0=%s)", key0->GetInfo().c_str());
   index->ScanKey(key0.get(), location_ptrs);
+#ifdef LOG_DEBUG_ENABLED
+  for (auto ptr : location_ptrs) {
+    LOG_DEBUG(" FOUND: %s", index::IndexUtil::GetInfo(ptr).c_str());
+  }
+#endif
   EXPECT_EQ(0, location_ptrs.size());
   location_ptrs.clear();
 
+  LOG_DEBUG("ScanKey(key1=%s)", key1->GetInfo().c_str());
   index->ScanKey(key1.get(), location_ptrs);
+#ifdef LOG_DEBUG_ENABLED
+  for (auto ptr : location_ptrs) {
+    LOG_DEBUG(" FOUND: %s", index::IndexUtil::GetInfo(ptr).c_str());
+  }
+#endif
   EXPECT_EQ(0, location_ptrs.size());
   location_ptrs.clear();
 
+  LOG_DEBUG("ScanKey(key2=%s)", key2->GetInfo().c_str());
   index->ScanKey(key2.get(), location_ptrs);
+#ifdef LOG_DEBUG_ENABLED
+  for (auto ptr : location_ptrs) {
+    LOG_DEBUG(" FOUND: %s", index::IndexUtil::GetInfo(ptr).c_str());
+  }
+#endif
   EXPECT_EQ(1, location_ptrs.size());
   EXPECT_EQ(TestingIndexUtil::item1->block, location_ptrs[0]->block);
   location_ptrs.clear();
-
-  LOG_INFO("INDEX:\n%s", index->GetInfo().c_str());
 }
 
 void TestingIndexUtil::NonUniqueKeyDeleteTest(const IndexType index_type) {
@@ -195,16 +219,16 @@ void TestingIndexUtil::NonUniqueKeyDeleteTest(const IndexType index_type) {
   key2->SetValue(1, type::ValueFactory::GetVarcharValue("c"), pool);
 
   index->ScanKey(key0.get(), location_ptrs);
-  EXPECT_EQ(location_ptrs.size(), 0);
+  EXPECT_EQ(0, location_ptrs.size());
   location_ptrs.clear();
 
   index->ScanKey(key1.get(), location_ptrs);
-  EXPECT_EQ(location_ptrs.size(), 2);
+  EXPECT_EQ(2, location_ptrs.size());
   location_ptrs.clear();
 
   index->ScanKey(key2.get(), location_ptrs);
-  EXPECT_EQ(location_ptrs.size(), 1);
-  EXPECT_EQ(location_ptrs[0]->block, TestingIndexUtil::item1->block);
+  EXPECT_EQ(1, location_ptrs.size());
+  EXPECT_EQ(TestingIndexUtil::item1->block, location_ptrs[0]->block);
   location_ptrs.clear();
 }
 
@@ -224,7 +248,7 @@ void TestingIndexUtil::MultiThreadedInsertTest(const IndexType index_type) {
                      pool, scale_factor);
 
   index->ScanAllKeys(location_ptrs);
-  EXPECT_EQ(location_ptrs.size(), 7);
+  EXPECT_EQ(7, location_ptrs.size());
   location_ptrs.clear();
 
   std::unique_ptr<storage::Tuple> key0(new storage::Tuple(key_schema, true));
@@ -238,12 +262,12 @@ void TestingIndexUtil::MultiThreadedInsertTest(const IndexType index_type) {
   key0->SetValue(1, type::ValueFactory::GetVarcharValue("a"), pool);
 
   index->ScanKey(keynonce.get(), location_ptrs);
-  EXPECT_EQ(location_ptrs.size(), 0);
+  EXPECT_EQ(0, location_ptrs.size());
   location_ptrs.clear();
 
   index->ScanKey(key0.get(), location_ptrs);
-  EXPECT_EQ(location_ptrs.size(), 1);
-  EXPECT_EQ(location_ptrs[0]->block, TestingIndexUtil::item0->block);
+  EXPECT_EQ(1, location_ptrs.size());
+  EXPECT_EQ(TestingIndexUtil::item0->block, location_ptrs[0]->block);
   location_ptrs.clear();
 }
 
@@ -283,21 +307,23 @@ void TestingIndexUtil::UniqueKeyMultiThreadedTest(const IndexType index_type) {
   type::Value key2_val0 = (key2->GetValue(0));
   type::Value key2_val1 = (key2->GetValue(1));
 
+  LOG_INFO("%s", index->GetInfo().c_str());
+
   index->ScanKey(key0.get(), location_ptrs);
-  EXPECT_EQ(location_ptrs.size(), 0);
+  EXPECT_EQ(0, location_ptrs.size());
   location_ptrs.clear();
 
   index->ScanKey(key1.get(), location_ptrs);
-  EXPECT_EQ(location_ptrs.size(), 0);
+  EXPECT_EQ(0, location_ptrs.size());
   location_ptrs.clear();
 
   index->ScanKey(key2.get(), location_ptrs);
-  EXPECT_EQ(location_ptrs.size(), 1);
-  EXPECT_EQ(location_ptrs[0]->block, TestingIndexUtil::item1->block);
+  EXPECT_EQ(1, location_ptrs.size());
+  EXPECT_EQ(TestingIndexUtil::item1->block, location_ptrs[0]->block);
   location_ptrs.clear();
 
   index->ScanAllKeys(location_ptrs);
-  EXPECT_EQ(location_ptrs.size(), 1);
+  EXPECT_EQ(1, location_ptrs.size());
   location_ptrs.clear();
 
   // FORWARD SCAN
@@ -307,14 +333,14 @@ void TestingIndexUtil::UniqueKeyMultiThreadedTest(const IndexType index_type) {
   // to do the final filtering.
   index->ScanTest({key1_val0}, {0}, {ExpressionType::COMPARE_EQUAL},
                   ScanDirectionType::FORWARD, location_ptrs);
-  EXPECT_EQ(location_ptrs.size(), 1);
+  EXPECT_EQ(1, location_ptrs.size());
   location_ptrs.clear();
 
   index->ScanTest(
       {key1_val0, key1_val1}, {0, 1},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL},
       ScanDirectionType::FORWARD, location_ptrs);
-  EXPECT_EQ(location_ptrs.size(), 0);
+  EXPECT_EQ(0, location_ptrs.size());
   location_ptrs.clear();
 
   // DVANAKEN: 2017-03-06
@@ -325,7 +351,7 @@ void TestingIndexUtil::UniqueKeyMultiThreadedTest(const IndexType index_type) {
       {key1_val0, key1_val1}, {0, 1},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_GREATERTHAN},
       ScanDirectionType::FORWARD, location_ptrs);
-  EXPECT_EQ(location_ptrs.size(), 1);
+  EXPECT_EQ(1, location_ptrs.size());
   location_ptrs.clear();
 
   // DVANAKEN: 2017-03-06
@@ -336,7 +362,7 @@ void TestingIndexUtil::UniqueKeyMultiThreadedTest(const IndexType index_type) {
       {key1_val0, key1_val1}, {0, 1},
       {ExpressionType::COMPARE_GREATERTHAN, ExpressionType::COMPARE_EQUAL},
       ScanDirectionType::FORWARD, location_ptrs);
-  EXPECT_EQ(location_ptrs.size(), 1);
+  EXPECT_EQ(1, location_ptrs.size());
   location_ptrs.clear();
 }
 
@@ -565,20 +591,20 @@ void TestingIndexUtil::NonUniqueKeyMultiThreadedStressTest(const IndexType index
   key2->SetValue(1, type::ValueFactory::GetVarcharValue("c"), pool);
 
   index->ScanKey(key0.get(), location_ptrs);
-  EXPECT_EQ(location_ptrs.size(), 0);
+  EXPECT_EQ(0, location_ptrs.size());
   location_ptrs.clear();
 
   index->ScanKey(key1.get(), location_ptrs);
-  EXPECT_EQ(location_ptrs.size(), 2);
+  EXPECT_EQ(2, location_ptrs.size());
   location_ptrs.clear();
 
   index->ScanKey(key2.get(), location_ptrs);
-  EXPECT_EQ(location_ptrs.size(), 1);
-  EXPECT_EQ(location_ptrs[0]->block, TestingIndexUtil::item1->block);
+  EXPECT_EQ(1, location_ptrs.size());
+  EXPECT_EQ(TestingIndexUtil::item1->block, location_ptrs[0]->block);
   location_ptrs.clear();
 
   index->ScanAllKeys(location_ptrs);
-  EXPECT_EQ(location_ptrs.size(), 3 * scale_factor);
+  EXPECT_EQ(3 * scale_factor, location_ptrs.size());
   location_ptrs.clear();
 }
 
@@ -601,9 +627,9 @@ void TestingIndexUtil::NonUniqueKeyMultiThreadedStressTest2(const IndexType inde
 
   index->ScanAllKeys(location_ptrs);
   if (index->HasUniqueKeys()) {
-    EXPECT_EQ(location_ptrs.size(), scale_factor);
+    EXPECT_EQ(scale_factor, location_ptrs.size());
   } else {
-    EXPECT_EQ(location_ptrs.size(), 3 * scale_factor);
+    EXPECT_EQ(3 * scale_factor, location_ptrs.size());
   }
   location_ptrs.clear();
 
@@ -617,17 +643,17 @@ void TestingIndexUtil::NonUniqueKeyMultiThreadedStressTest2(const IndexType inde
 
   index->ScanKey(key1.get(), location_ptrs);
   if (index->HasUniqueKeys()) {
-    EXPECT_EQ(location_ptrs.size(), 0);
+    EXPECT_EQ(0, location_ptrs.size());
   } else {
-    EXPECT_EQ(location_ptrs.size(), 2);
+    EXPECT_EQ(2, location_ptrs.size());
   }
   location_ptrs.clear();
 
   index->ScanKey(key2.get(), location_ptrs);
   if (index->HasUniqueKeys()) {
-    EXPECT_EQ(location_ptrs.size(), num_threads);
+    EXPECT_EQ(num_threads, location_ptrs.size());
   } else {
-    EXPECT_EQ(location_ptrs.size(), 1);
+    EXPECT_EQ(1, location_ptrs.size());
   }
 
   location_ptrs.clear();
@@ -636,7 +662,9 @@ void TestingIndexUtil::NonUniqueKeyMultiThreadedStressTest2(const IndexType inde
 
 index::Index *TestingIndexUtil::BuildIndex(const IndexType index_type,
                                            const bool unique_keys) {
-  LOG_DEBUG("Build index type: %s", IndexTypeToString(index_type).c_str());
+  LOG_DEBUG("Build index type: %s [unique_keys=%s]",
+            IndexTypeToString(index_type).c_str(),
+            std::to_string(unique_keys).c_str());
 
   catalog::Schema *key_schema = nullptr;
   catalog::Schema *tuple_schema = nullptr;
