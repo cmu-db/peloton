@@ -72,7 +72,7 @@ class SkipListIndex : public Index {
                  const ConjunctionScanPredicate *csp_p, uint64_t limit,
                  uint64_t offset);
 
-  void ScanAllKeys(std::vector<ValueType> &result);
+  void ScanAllKeys(std::vector<ValueType> &result);i
 
   void ScanKey(const storage::Tuple *key, std::vector<ValueType> &result);
 

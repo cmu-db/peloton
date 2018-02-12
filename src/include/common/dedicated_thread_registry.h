@@ -37,7 +37,7 @@ class DedicatedThreadRegistry {
     for (auto &entry : thread_owners_table_) {
       for (auto &task : entry.second) {
         task->Terminate();
-        threads_table[task.get()].join();
+        threads_table_[task.get()].join();
       }
     }
   }
@@ -61,7 +61,7 @@ class DedicatedThreadRegistry {
                       std::shared_ptr<Task> task) {
     thread_owners_table_[requester].push_back(task);
     requester->NotifyNewThread();
-    threads_table.emplace(task.get(), std::thread([=] { task->RunTask(); }));
+    threads_table_.emplace(task.get(), std::thread([=] { task->RunTask(); }));
   }
 
   // TODO(tianyu): Add code for thread removal
@@ -69,7 +69,7 @@ class DedicatedThreadRegistry {
  private:
   // Using raw pointer is okay since we never dereference said pointer,
   // but only use it as a lookup key
-  std::unordered_map<DedicatedThreadTask *, std::thread> threads_table;
+  std::unordered_map<DedicatedThreadTask *, std::thread> threads_table_;
   // Using raw pointer here is also fine since the owner's life cycle is
   // not controlled by the registry
   std::unordered_map<DedicatedThreadOwner *,

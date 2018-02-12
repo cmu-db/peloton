@@ -42,10 +42,8 @@ int main(int argc, char *argv[]) {
     // Setup
     peloton::PelotonInit::Initialize();
 
-    // Create NetworkManager object
     peloton::network::PelotonServer peloton_server;
 
-    // Start NetworkManager
     peloton::network::PelotonServer::LoadSSLFileSettings();
     peloton::network::PelotonServer::SSLInit();
 
