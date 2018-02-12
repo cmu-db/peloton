@@ -87,7 +87,7 @@ HashGroupByTranslator::HashGroupByTranslator(
 }
 
 // Initialize the hash table instance
-void HashGroupByTranslator::InitializeState() {
+void HashGroupByTranslator::InitializeQueryState() {
   hash_table_.Init(GetCodeGen(), LoadStatePtr(hash_table_id_));
   aggregation_.InitializeState(GetCodeGen());
 }
@@ -236,7 +236,7 @@ void HashGroupByTranslator::Consume(ConsumerContext &,
 }
 
 // Cleanup by destroying the aggregation hash-table
-void HashGroupByTranslator::TearDownState() {
+void HashGroupByTranslator::TearDownQueryState() {
   hash_table_.Destroy(GetCodeGen(), LoadStatePtr(hash_table_id_));
   aggregation_.TearDownState(GetCodeGen());
 }

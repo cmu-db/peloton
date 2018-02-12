@@ -32,7 +32,7 @@ class UpdateTranslator : public OperatorTranslator {
   UpdateTranslator(const planner::UpdatePlan &plan, CompilationContext &context,
                    Pipeline &pipeline);
 
-  void InitializeState() override;
+  void InitializeQueryState() override;
 
   // No helper functions
   void DefineAuxiliaryFunctions() override {}
@@ -41,7 +41,7 @@ class UpdateTranslator : public OperatorTranslator {
 
   void Consume(ConsumerContext &context, RowBatch::Row &row) const override;
 
-  void TearDownState() override;
+  void TearDownQueryState() override;
 
  private:
   // Target table

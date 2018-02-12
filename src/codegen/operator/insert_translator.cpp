@@ -41,7 +41,7 @@ const planner::InsertPlan &InsertTranslator::GetInsertPlan() const {
   return GetPlanAs<planner::InsertPlan>();
 }
 
-void InsertTranslator::InitializeState() {
+void InsertTranslator::InitializeQueryState() {
   CodeGen &codegen = GetCodeGen();
 
   storage::DataTable *table = GetInsertPlan().GetTable();
@@ -123,7 +123,7 @@ void InsertTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
   codegen.Call(InserterProxy::Insert, {inserter});
 }
 
-void InsertTranslator::TearDownState() {
+void InsertTranslator::TearDownQueryState() {
   // Tear down the inserter
   llvm::Value *inserter = LoadStatePtr(inserter_state_id_);
   GetCodeGen().Call(InserterProxy::TearDown, {inserter});

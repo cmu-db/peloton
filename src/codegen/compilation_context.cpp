@@ -144,7 +144,7 @@ llvm::Function *CompilationContext::GenerateInitFunction() {
     // Allow each operator to initialize their state
     for (auto &iter : op_translators_) {
       auto &translator = iter.second;
-      translator->InitializeState();
+      translator->InitializeQueryState();
     }
 
     // Finish the function
@@ -187,7 +187,7 @@ llvm::Function *CompilationContext::GenerateTearDownFunction() {
     // Allow each operator to clean up their state
     for (auto &iter : op_translators_) {
       auto &translator = iter.second;
-      translator->TearDownState();
+      translator->TearDownQueryState();
     }
 
     // Finish the function

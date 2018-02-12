@@ -39,7 +39,7 @@ class HashJoinTranslator : public OperatorTranslator {
                      CompilationContext &context, Pipeline &pipeline);
 
   // Codegen any initialization work for this operator
-  void InitializeState() override;
+  void InitializeQueryState() override;
 
   // Define any helper functions this translator needs
   void DefineAuxiliaryFunctions() override {}
@@ -52,7 +52,7 @@ class HashJoinTranslator : public OperatorTranslator {
   void Consume(ConsumerContext &context, RowBatch::Row &row) const override;
 
   // Codegen any cleanup work for this translator
-  void TearDownState() override;
+  void TearDownQueryState() override;
 
  private:
   // Consume the given context from the left/build side or the right/probe side

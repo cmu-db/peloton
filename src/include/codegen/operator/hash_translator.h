@@ -37,7 +37,7 @@ class HashTranslator : public OperatorTranslator {
                  CompilationContext &context, Pipeline &pipeline);
 
   // Codegen any initialization work for this operator
-  void InitializeState() override;
+  void InitializeQueryState() override;
 
   // Define any helper functions this translator needs
   void DefineAuxiliaryFunctions() override {}
@@ -49,7 +49,7 @@ class HashTranslator : public OperatorTranslator {
   void Consume(ConsumerContext &context, RowBatch::Row &row) const override;
 
   // Codegen any cleanup work for this translator
-  void TearDownState() override;
+  void TearDownQueryState() override;
 
  private:
   void CollectHashKeys(RowBatch::Row &row,

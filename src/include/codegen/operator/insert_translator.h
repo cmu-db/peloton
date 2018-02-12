@@ -50,7 +50,7 @@ class InsertTranslator : public OperatorTranslator {
                    CompilationContext &context, Pipeline &pipeline);
 
   // Codegen any initialization work
-  void InitializeState() override;
+  void InitializeQueryState() override;
 
   // Define any helper function for this translator needs
   void DefineAuxiliaryFunctions() override {}
@@ -62,7 +62,7 @@ class InsertTranslator : public OperatorTranslator {
   void Consume(ConsumerContext &context, RowBatch::Row &row) const override;
 
   // Codegen any cleanup work
-  void TearDownState() override;
+  void TearDownQueryState() override;
 
  private:
   const planner::InsertPlan &GetInsertPlan() const;

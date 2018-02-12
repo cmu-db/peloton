@@ -51,7 +51,7 @@ oid_t GetTargetIndex(const TargetList &target_list, uint32_t index) {
   return INVALID_OID;
 }
 
-void UpdateTranslator::InitializeState() {
+void UpdateTranslator::InitializeQueryState() {
   const auto &update_plan = GetPlanAs<planner::UpdatePlan>();
 
   CodeGen &codegen = GetCodeGen();
@@ -146,7 +146,7 @@ void UpdateTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
   prepare_success.EndIf();
 }
 
-void UpdateTranslator::TearDownState() {
+void UpdateTranslator::TearDownQueryState() {
   // Tear down the updater
   llvm::Value *updater = LoadStatePtr(updater_state_id_);
   GetCodeGen().Call(UpdaterProxy::TearDown, {updater});

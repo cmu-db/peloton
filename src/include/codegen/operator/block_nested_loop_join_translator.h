@@ -34,11 +34,11 @@ class BlockNestedLoopJoinTranslator : public OperatorTranslator {
                                 CompilationContext &context,
                                 Pipeline &pipeline);
 
-  void InitializeState() override;
+  void InitializeQueryState() override;
 
   void DefineAuxiliaryFunctions() override;
 
-  void TearDownState() override;
+  void TearDownQueryState() override;
 
   void Produce() const override;
 

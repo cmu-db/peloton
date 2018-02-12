@@ -6,7 +6,7 @@
 //
 // Identification: src/include/codegen/operator/operator_translator.h
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -30,51 +30,66 @@ class CompilationContext;
 class ConsumerContext;
 
 //===----------------------------------------------------------------------===//
+//
 // The base class of all operator translators.
 //
-// Translators implement the push-based data-flow model by implementing the
-// Produce() and Consume() methods. State is managed through the RuntimeState
-// object found in the compilation context. State can either be global (i.e.
-// external) or local (i.e., on the stack and automatically cleaned up). All
-// external state should be initialized in InitializeState() and cleaned up in
-// TearDownState().
+// State:
+// ------
+// Operators may require state in order to operate. State required for the
+// duration of the whole query is declared and registered with RuntimeState in
+// CompilationContext. Query state must be initialized in
+// InitializeQueryState() and cleaned up in TearDownQueryState(), both of which
+// are guaranteed to be called at most once. Translators may not assume an
+// initialization order.
 //
+// Data-flow:
+// ----------
+// Translators implement the push-based data-flow model through definitions of
+// Produce() and Consume(). A call to Produce() is a request to begin producing
+// a batch of rows (i.e., a RowBatch). A call to Consume() can be viewed as a
+// call-back from its child to implement logic to operate on the given set
+// or rows, or an individual row.
+//
+// Helper functions:
+// -----------------
 // Translators are also allowed to declare helper functions. These functions
 // must be defined and implemented in the DefineAuxiliaryFunctions() method,
 // which is guaranteed to be called on all operators before any other method.
+//
 //===----------------------------------------------------------------------===//
 class OperatorTranslator {
  public:
-  // Constructor
+  /// Constructor
   OperatorTranslator(const planner::AbstractPlan &plan,
                      CompilationContext &context, Pipeline &pipeline);
 
-  // Destructor
+  /// Destructor
   virtual ~OperatorTranslator() = default;
 
-  // Codegen any initialization work for this operator
-  virtual void InitializeState() = 0;
+  /// Codegen any initialization work for this operator
+  virtual void InitializeQueryState() = 0;
 
-  // Codegen any initialization at the start of the given pipeline
-  virtual void InitializePipelineState(
-      UNUSED_ATTRIBUTE PipelineContext &pipeline_context) {}
+  /// Codegen any initialization at the start of the given pipeline
+  virtual void DeclarePipelineState(PipelineContext &pipeline_context);
+  virtual void InitializePipelineState(PipelineContext &pipeline_context);
 
-  // Define any helper functions this translator needs
+  /// Define any helper functions this translator needs
   virtual void DefineAuxiliaryFunctions() = 0;
 
-  // The method that produces new tuples
+  /// The method that produces new tuples
   virtual void Produce() const = 0;
 
-  // The method that consumes tuples from child operators
+  /// The method that consumes tuples from child operators
   virtual void Consume(ConsumerContext &context, RowBatch &batch) const;
   virtual void Consume(ConsumerContext &context, RowBatch::Row &row) const = 0;
 
-  // Codegen any cleanup work for this translator
-  virtual void TearDownState() = 0;
+  /// Codegen any cleanup work for this translator
+  virtual void TearDownQueryState() = 0;
 
-  virtual const planner::AbstractPlan &GetPlan() const { return plan_; }
+  /// Return the plan node this translator is for
+  const planner::AbstractPlan &GetPlan() const { return plan_; }
 
-  // Return the compilation context
+  /// Return the compilation context
   CompilationContext &GetCompilationContext() const { return context_; }
 
  protected:

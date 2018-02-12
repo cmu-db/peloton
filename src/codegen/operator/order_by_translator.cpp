@@ -101,7 +101,7 @@ OrderByTranslator::OrderByTranslator(const planner::OrderByPlan &plan,
 }
 
 // Initialize the sorter instance
-void OrderByTranslator::InitializeState() {
+void OrderByTranslator::InitializeQueryState() {
   sorter_.Init(GetCodeGen(), LoadStatePtr(sorter_id_), compare_func_);
 }
 
@@ -252,7 +252,7 @@ void OrderByTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
   sorter_.Append(codegen, LoadStatePtr(sorter_id_), tuple);
 }
 
-void OrderByTranslator::TearDownState() {
+void OrderByTranslator::TearDownQueryState() {
   sorter_.Destroy(GetCodeGen(), LoadStatePtr(sorter_id_));
 }
 

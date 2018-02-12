@@ -30,7 +30,7 @@ class OrderByTranslator : public OperatorTranslator {
   OrderByTranslator(const planner::OrderByPlan &plan,
                     CompilationContext &context, Pipeline &pipeline);
 
-  void InitializeState() override;
+  void InitializeQueryState() override;
 
   void DefineAuxiliaryFunctions() override;
 
@@ -38,7 +38,7 @@ class OrderByTranslator : public OperatorTranslator {
 
   void Consume(ConsumerContext &context, RowBatch::Row &row) const override;
 
-  void TearDownState() override;
+  void TearDownQueryState() override;
 
  private:
   //===--------------------------------------------------------------------===//

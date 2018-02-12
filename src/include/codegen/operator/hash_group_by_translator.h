@@ -38,7 +38,7 @@ class HashGroupByTranslator : public OperatorTranslator {
                         CompilationContext &context, Pipeline &pipeline);
 
   // Codegen any initialization work for this operator
-  void InitializeState() override;
+  void InitializeQueryState() override;
 
   // Define any helper functions this translator needs
   void DefineAuxiliaryFunctions() override {}
@@ -51,7 +51,7 @@ class HashGroupByTranslator : public OperatorTranslator {
   void Consume(ConsumerContext &context, RowBatch &batch) const override;
 
   // Codegen any cleanup work for this translator
-  void TearDownState() override;
+  void TearDownQueryState() override;
 
  private:
   //===--------------------------------------------------------------------===//

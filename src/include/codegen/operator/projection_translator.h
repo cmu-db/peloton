@@ -34,7 +34,7 @@ class ProjectionTranslator : public OperatorTranslator {
                        CompilationContext &context, Pipeline &pipeline);
 
   // Nothing to initialize
-  void InitializeState() override {}
+  void InitializeQueryState() override {}
 
   // No helper functions
   void DefineAuxiliaryFunctions() override {}
@@ -46,7 +46,7 @@ class ProjectionTranslator : public OperatorTranslator {
   void Consume(ConsumerContext &context, RowBatch::Row &row) const override;
 
   // No state to tear down
-  void TearDownState() override {}
+  void TearDownQueryState() override {}
 
   // Helpers
   static void PrepareProjection(CompilationContext &context,

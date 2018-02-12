@@ -129,7 +129,7 @@ HashJoinTranslator::HashJoinTranslator(const planner::HashJoinPlan &join,
 }
 
 // Initialize the hash-table instance
-void HashJoinTranslator::InitializeState() {
+void HashJoinTranslator::InitializeQueryState() {
   hash_table_.Init(GetCodeGen(), LoadStatePtr(hash_table_id_));
   if (GetJoinPlan().IsBloomFilterEnabled()) {
     bloom_filter_.Init(GetCodeGen(), LoadStatePtr(bloom_filter_id_),
@@ -316,7 +316,7 @@ void HashJoinTranslator::CodegenHashProbe(
 }
 
 // Cleanup by destroying the hash-table instance
-void HashJoinTranslator::TearDownState() {
+void HashJoinTranslator::TearDownQueryState() {
   CodeGen &codegen = GetCodeGen();
   hash_table_.Destroy(codegen, LoadStatePtr(hash_table_id_));
   if (GetJoinPlan().IsBloomFilterEnabled()) {

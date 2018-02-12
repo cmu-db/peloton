@@ -53,6 +53,12 @@ llvm::Value *OperatorTranslator::LoadStateValue(
   return runtime_state.LoadStateValue(GetCodeGen(), state_id);
 }
 
+void OperatorTranslator::DeclarePipelineState(
+    UNUSED_ATTRIBUTE PipelineContext &pipeline_context) {}
+
+void OperatorTranslator::InitializePipelineState(
+    UNUSED_ATTRIBUTE PipelineContext &pipeline_context) {}
+
 void OperatorTranslator::Consume(ConsumerContext &context,
                                  RowBatch &batch) const {
   batch.Iterate(GetCodeGen(), [this, &context](RowBatch::Row &row) {

@@ -39,7 +39,7 @@ class TableScanTranslator : public OperatorTranslator {
   TableScanTranslator(const planner::SeqScanPlan &scan,
                       CompilationContext &context, Pipeline &pipeline);
 
-  void InitializeState() override {}
+  void InitializeQueryState() override {}
 
   // Table scans don't rely on any auxiliary functions
   void DefineAuxiliaryFunctions() override {}
@@ -51,8 +51,8 @@ class TableScanTranslator : public OperatorTranslator {
   void Consume(ConsumerContext &, RowBatch &) const override {}
   void Consume(ConsumerContext &, RowBatch::Row &) const override {}
 
-  // Similar to InitializeState(), table scans don't have any state
-  void TearDownState() override {}
+  // Similar to InitializeQueryState(), table scans don't have any state
+  void TearDownQueryState() override {}
 
  private:
   //===--------------------------------------------------------------------===//

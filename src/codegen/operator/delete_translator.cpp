@@ -34,7 +34,7 @@ DeleteTranslator::DeleteTranslator(const planner::DeletePlan &delete_plan,
       "deleter", DeleterProxy::GetType(GetCodeGen()));
 }
 
-void DeleteTranslator::InitializeState() {
+void DeleteTranslator::InitializeQueryState() {
   CodeGen &codegen = GetCodeGen();
 
   const planner::DeletePlan &plan = GetPlanAs<planner::DeletePlan>();

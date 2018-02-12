@@ -56,7 +56,7 @@ HashTranslator::HashTranslator(const planner::HashPlan &hash_plan,
 }
 
 // Initialize the hash table instance
-void HashTranslator::InitializeState() {
+void HashTranslator::InitializeQueryState() {
   hash_table_.Init(GetCodeGen(), LoadStatePtr(hash_table_id_));
 }
 
@@ -86,7 +86,7 @@ void HashTranslator::Consume(ConsumerContext &context,
 }
 
 // Cleanup by destroying the aggregation hash-table
-void HashTranslator::TearDownState() {
+void HashTranslator::TearDownQueryState() {
   hash_table_.Destroy(GetCodeGen(), LoadStatePtr(hash_table_id_));
 }
 

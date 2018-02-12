@@ -113,7 +113,7 @@ BlockNestedLoopJoinTranslator::BlockNestedLoopJoinTranslator(
       max_buffer_size, row_size, max_buf_rows_);
 }
 
-void BlockNestedLoopJoinTranslator::InitializeState() {
+void BlockNestedLoopJoinTranslator::InitializeQueryState() {
   CodeGen &codegen = GetCodeGen();
   auto *null_func = codegen.Null(
       proxy::TypeBuilder<util::Sorter::ComparisonFunction>::GetType(codegen));
@@ -127,7 +127,7 @@ void BlockNestedLoopJoinTranslator::DefineAuxiliaryFunctions() {
       right_producer, "joinBuffer");
 }
 
-void BlockNestedLoopJoinTranslator::TearDownState() {
+void BlockNestedLoopJoinTranslator::TearDownQueryState() {
   buffer_.Destroy(GetCodeGen(), LoadStatePtr(buffer_id_));
 }
 

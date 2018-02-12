@@ -31,11 +31,11 @@ class DeleteTranslator : public OperatorTranslator {
   DeleteTranslator(const planner::DeletePlan &delete_plan,
                    CompilationContext &context, Pipeline &pipeline);
 
-  void InitializeState() override;
+  void InitializeQueryState() override;
 
   void DefineAuxiliaryFunctions() override {}
 
-  void TearDownState() override {}
+  void TearDownQueryState() override {}
 
   void Produce() const override;
 
