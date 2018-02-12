@@ -206,6 +206,8 @@ class ValueFactory {
           } catch (std::out_of_range &e) {
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
+          } catch(std::invalid_argument &e) {
+            throw Exception("Invalid input syntax for bigint: \'" + str + "\'");
           }
           if (bigint > PELOTON_INT64_MAX || bigint < PELOTON_INT64_MIN)
             throw Exception(ExceptionType::OUT_OF_RANGE,
@@ -312,6 +314,8 @@ class ValueFactory {
           } catch (std::out_of_range &e) {
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
+          } catch(std::invalid_argument &e) {
+            throw Exception("Invalid input syntax for smallint: \'" + str + "\'");
           }
           if (smallint < PELOTON_INT16_MIN)
             throw Exception(ExceptionType::OUT_OF_RANGE,
@@ -370,6 +374,8 @@ class ValueFactory {
           } catch (std::out_of_range &e) {
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
+          } catch(std::invalid_argument &e) {
+            throw Exception("Invalid input syntax for tinyint: \'" + str + "\'");
           }
           if (tinyint < PELOTON_INT8_MIN)
             throw Exception(ExceptionType::OUT_OF_RANGE,
@@ -408,6 +414,8 @@ class ValueFactory {
           } catch (std::out_of_range &e) {
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
+          } catch(std::invalid_argument &e) {
+            throw Exception("Invalid input syntax for decimal: \'" + str + "\'");
           }
           if (res > PELOTON_DECIMAL_MAX || res < PELOTON_DECIMAL_MIN)
             throw Exception(ExceptionType::OUT_OF_RANGE,
