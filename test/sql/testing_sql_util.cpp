@@ -10,6 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 #include "sql/testing_sql_util.h"
+
+#include "binder/bind_node_visitor.h"
 #include <random>
 #include "catalog/catalog.h"
 #include "common/logger.h"
@@ -61,11 +63,11 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto sql_stmt_list = peloton_parser.BuildParseTree(query);
   PL_ASSERT(sql_stmt_list);
-  if (!sql_stmt_list -> is_valid) {
+  if (!sql_stmt_list->is_valid) {
     return ResultType::FAILURE;
   }
-  auto statement = traffic_cop_.PrepareStatement(unnamed_statement, query, std::move(sql_stmt_list),
-                                                 error_message);
+  auto statement = traffic_cop_.PrepareStatement(
+      unnamed_statement, query, std::move(sql_stmt_list), error_message);
   if (statement.get() == nullptr) {
     traffic_cop_.setRowsAffected(0);
     rows_changed = 0;
@@ -108,8 +110,12 @@ ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
   traffic_cop_.SetTcopTxnState(txn);
 
   auto parsed_stmt = peloton_parser.BuildParseTree(query);
-  auto plan =
-      optimizer->BuildPelotonPlanTree(parsed_stmt, DEFAULT_DB_NAME, txn);
+
+  auto bind_node_visitor =
+      std::make_shared<binder::BindNodeVisitor>(txn, DEFAULT_DB_NAME);
+  bind_node_visitor->BindNameToNode(parsed_stmt->GetStatement(0));
+
+  auto plan = optimizer->BuildPelotonPlanTree(parsed_stmt, txn);
   tuple_descriptor =
       traffic_cop_.GenerateTupleDescriptor(parsed_stmt->GetStatement(0));
   auto result_format = std::vector<int>(tuple_descriptor.size(), 0);
@@ -143,8 +149,12 @@ TestingSQLUtil::GeneratePlanWithOptimizer(
   auto &peloton_parser = parser::PostgresParser::GetInstance();
 
   auto parsed_stmt = peloton_parser.BuildParseTree(query);
-  auto return_value =
-      optimizer->BuildPelotonPlanTree(parsed_stmt, DEFAULT_DB_NAME, txn);
+
+  auto bind_node_visitor =
+      std::make_shared<binder::BindNodeVisitor>(txn, DEFAULT_DB_NAME);
+  bind_node_visitor->BindNameToNode(parsed_stmt->GetStatement(0));
+
+  auto return_value = optimizer->BuildPelotonPlanTree(parsed_stmt, txn);
   return return_value;
 }
 
@@ -158,11 +168,11 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query,
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto sql_stmt_list = peloton_parser.BuildParseTree(query);
   PL_ASSERT(sql_stmt_list);
-  if (!sql_stmt_list -> is_valid) {
+  if (!sql_stmt_list->is_valid) {
     return ResultType::FAILURE;
   }
-  auto statement = traffic_cop_.PrepareStatement(unnamed_statement, query, std::move(sql_stmt_list),
-                                                 error_message);
+  auto statement = traffic_cop_.PrepareStatement(
+      unnamed_statement, query, std::move(sql_stmt_list), error_message);
   if (statement.get() == nullptr) {
     traffic_cop_.setRowsAffected(0);
     return ResultType::FAILURE;
@@ -199,11 +209,11 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto sql_stmt_list = peloton_parser.BuildParseTree(query);
   PL_ASSERT(sql_stmt_list);
-  if (!sql_stmt_list -> is_valid) {
+  if (!sql_stmt_list->is_valid) {
     return ResultType::FAILURE;
   }
-  auto statement = traffic_cop_.PrepareStatement(unnamed_statement, query, std::move(sql_stmt_list),
-                                                 error_message);
+  auto statement = traffic_cop_.PrepareStatement(
+      unnamed_statement, query, std::move(sql_stmt_list), error_message);
   if (statement.get() == nullptr) {
     traffic_cop_.setRowsAffected(0);
     return ResultType::FAILURE;

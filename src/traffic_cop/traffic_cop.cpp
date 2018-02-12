@@ -260,7 +260,6 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   // TODO (Tianyi) Read through the parser code to see if this is appropriate
   if (sql_stmt_list.get() == nullptr ||
       sql_stmt_list->GetNumStatements() == 0) {
-    
     // TODO (Tianyi) Do we need another query type called QUERY_EMPTY?
     std::shared_ptr<Statement> statement =
         std::make_shared<Statement>(stmt_name, QueryType::QUERY_INVALID,
@@ -310,7 +309,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
     // initialize the current result as success
     tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   }
-  
+
   if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
     tcop_txn_state_.top().first->AddQueryString(query_string.c_str());
   }
@@ -318,9 +317,13 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   // TODO(Tianyi) Move Statement Planing into Statement's method
   // to increase coherence
   try {
+    // Run binder
+    auto bind_node_visitor = std::make_shared<binder::BindNodeVisitor>(
+        tcop_txn_state_.top().first, default_database_name_);
+    bind_node_visitor->BindNameToNode(
+        statement->GetStmtParseTreeList()->GetStatement(0));
     auto plan = optimizer_->BuildPelotonPlanTree(
-        statement->GetStmtParseTreeList(), default_database_name_,
-        tcop_txn_state_.top().first);
+        statement->GetStmtParseTreeList(), tcop_txn_state_.top().first);
     statement->SetPlanTree(plan);
     // Get the tables that our plan references so that we know how to
     // invalidate it at a later point when the catalog changes
@@ -368,8 +371,8 @@ void TrafficCop::ProcessInvalidStatement() {
 }
 
 bool TrafficCop::BindParamsForCachePlan(
-    const std::vector<std::unique_ptr<expression::AbstractExpression>>
-        &parameters,
+    const std::vector<std::unique_ptr<expression::AbstractExpression>> &
+        parameters,
     std::string &error_message, const size_t thread_id UNUSED_ATTRIBUTE) {
   if (tcop_txn_state_.empty()) {
     single_statement_txn_ = true;
@@ -585,9 +588,12 @@ ResultType TrafficCop::ExecuteStatement(
         if (statement->GetNeedsReplan()) {
           // TODO(Tianyi) Move Statement Replan into Statement's method
           // to increase coherence
+          auto bind_node_visitor = std::make_shared<binder::BindNodeVisitor>(
+              tcop_txn_state_.top().first, default_database_name_);
+          bind_node_visitor->BindNameToNode(
+              statement->GetStmtParseTreeList()->GetStatement(0));
           auto plan = optimizer_->BuildPelotonPlanTree(
-              statement->GetStmtParseTreeList(), default_database_name_,
-              tcop_txn_state_.top().first);
+              statement->GetStmtParseTreeList(), tcop_txn_state_.top().first);
           statement->SetPlanTree(plan);
           statement->SetNeedsReplan(true);
         }

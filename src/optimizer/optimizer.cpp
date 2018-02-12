@@ -42,8 +42,6 @@
 
 #include "storage/data_table.h"
 
-#include "binder/bind_node_visitor.h"
-
 using std::vector;
 using std::unordered_map;
 using std::shared_ptr;
@@ -95,20 +93,17 @@ void Optimizer::OptimizeLoop(int root_group_id,
 }
 
 shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
-    const unique_ptr<parser::SQLStatementList> &parse_tree_list,
-    const std::string default_database_name,
+    const std::unique_ptr<parser::SQLStatementList> &parse_tree_list,
     concurrency::TransactionContext *txn) {
-  // Base Case
-  if (parse_tree_list->GetStatements().size() == 0) return nullptr;
+  if (parse_tree_list->GetStatements().empty()) {
+    // TODO: create optimizer exception
+    throw CatalogException(
+        "Parse tree list has no parse trees. Cannot build plan");
+  }
+  // TODO: support multi-statement queries
+  auto parse_tree = parse_tree_list->GetStatement(0);
 
   unique_ptr<planner::AbstractPlan> child_plan = nullptr;
-
-  auto parse_tree = parse_tree_list->GetStatements().at(0).get();
-
-  // Run binder
-  auto bind_node_visitor =
-      make_shared<binder::BindNodeVisitor>(txn, default_database_name);
-  bind_node_visitor->BindNameToNode(parse_tree);
 
   metadata_.catalog_cache = &txn->catalog_cache;
   // Handle ddl statement
@@ -117,7 +112,6 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   if (is_ddl_stmt) {
     return move(ddl_plan);
   }
-
   // Generate initial operator tree from query tree
   shared_ptr<GroupExpression> gexpr = InsertQueryTree(parse_tree, txn);
   GroupID root_id = gexpr->GetGroupID();
@@ -240,29 +234,29 @@ shared_ptr<GroupExpression> Optimizer::InsertQueryTree(
 }
 
 QueryInfo Optimizer::GetQueryInfo(parser::SQLStatement *tree) {
-  auto GetQueryInfoHelper = [](
-      std::vector<unique_ptr<expression::AbstractExpression>> &select_list,
-      std::unique_ptr<parser::OrderDescription> &order_info,
-      std::vector<expression::AbstractExpression *> &output_exprs,
-      std::shared_ptr<PropertySet> &physical_props) {
-    // Extract output column
-    for (auto &expr : select_list) output_exprs.push_back(expr.get());
+  auto GetQueryInfoHelper =
+      [](std::vector<unique_ptr<expression::AbstractExpression>> &select_list,
+         std::unique_ptr<parser::OrderDescription> &order_info,
+         std::vector<expression::AbstractExpression *> &output_exprs,
+         std::shared_ptr<PropertySet> &physical_props) {
+        // Extract output column
+        for (auto &expr : select_list) output_exprs.push_back(expr.get());
 
-    // Extract sort property
-    if (order_info != nullptr) {
-      std::vector<expression::AbstractExpression *> sort_exprs;
-      std::vector<bool> sort_ascending;
-      for (auto &expr : order_info->exprs) {
-        sort_exprs.push_back(expr.get());
-      }
-      for (auto &type : order_info->types) {
-        sort_ascending.push_back(type == parser::kOrderAsc);
-      }
-      if (!sort_exprs.empty())
-        physical_props->AddProperty(
-            std::make_shared<PropertySort>(sort_exprs, sort_ascending));
-    }
-  };
+        // Extract sort property
+        if (order_info != nullptr) {
+          std::vector<expression::AbstractExpression *> sort_exprs;
+          std::vector<bool> sort_ascending;
+          for (auto &expr : order_info->exprs) {
+            sort_exprs.push_back(expr.get());
+          }
+          for (auto &type : order_info->types) {
+            sort_ascending.push_back(type == parser::kOrderAsc);
+          }
+          if (!sort_exprs.empty())
+            physical_props->AddProperty(
+                std::make_shared<PropertySort>(sort_exprs, sort_ascending));
+        }
+      };
 
   std::vector<expression::AbstractExpression *> output_exprs;
   std::shared_ptr<PropertySet> physical_props = std::make_shared<PropertySet>();
@@ -280,7 +274,8 @@ QueryInfo Optimizer::GetQueryInfo(parser::SQLStatement *tree) {
                            output_exprs, physical_props);
       break;
     }
-    default:;
+    default:
+      ;
   }
 
   return QueryInfo(output_exprs, physical_props);
