@@ -13,6 +13,9 @@ import argparse
 import urllib
 import json
 import logging
+import requests
+import csv
+from StringIO import StringIO
 from datetime import datetime
 from pprint import pprint
 
@@ -40,9 +43,9 @@ LOG.setLevel(logging.INFO)
 GITHUB_USER = 'cmu-db'
 GITHUB_REPO = 'peloton'
 
-CACHE_FILEPATH = "/tmp/%d.github-cache"
+CACHE_FILEPATH = "/tmp/github-cache/%s.cache"
 
-EMAIL_FROM = "pavlo@cs.cmu.edu"
+EMAIL_FROM = "no-reply@pelotondb.io"
 
 # ==============================================
 # pr_format
@@ -55,12 +58,58 @@ def pr_format(pr):
 ## DEF    
 
 # ==============================================
+# get_current_czar
+# ==============================================
+def get_current_czar(url, cache=False):
+    
+    data = None
+    cache_file = CACHE_FILEPATH % "schedule"
+    if cache and os.path.exists(cache_file):
+        LOG.debug("Cached Schedule '%s'" % cache_file)
+        with open(cache_file, "r") as fd:
+            data = fd.read()
+    else:
+        LOG.debug("Downloading schedule from %s" % url)
+        response = requests.get(url)
+        assert response.status_code == 200, \
+            "Failed to download schedule '%s'" % url
+        data = response.content
+        LOG.debug("Creating schedule cached file '%s'" % cache_file)
+        with open(cache_file, "w") as fd:
+            fd.write(data)
+    ## IF
+
+    # The CSV file should have two columns:
+    #   (1) The date "Month Year"
+    #   (2) Email address
+    current_date = datetime.now().strftime("%B %Y")
+    current_czar = None
+    first = True
+    for row in csv.reader(StringIO(data)):
+        if first:
+            first = False
+            continue
+        if row[0].strip() == current_date:
+            current_czar = row[1].strip()
+            break
+    ## FOR
+    if current_czar is None:
+        raise Exception("Failed to find current assignment for '%s'" % current_date)
+    
+    LOG.debug("Current Czar ('%s'): %s" % (current_date, current_czar))
+    return (current_czar)
+## DEF
+
+
+# ==============================================
 # main
 # ==============================================
 if __name__ == '__main__':
     aparser = argparse.ArgumentParser()
     aparser.add_argument('token', type=str, help='Github API Token')
-    aparser.add_argument('--send', type=str, help='Send status report to given email')
+    aparser.add_argument('schedule', type=str, help='Schedule CSV URL')
+    aparser.add_argument('--send', action='store_true', help='Send status report to current czar')
+    aparser.add_argument('--send-to', type=str, help='Send status report to given email')
     aparser.add_argument('--gmail-user', type=str, help='Gmail username')
     aparser.add_argument('--gmail-pass', type=str,help='Gmail password')
     aparser.add_argument("--cache", action='store_true', help="Enable caching of raw Github requests (for development only)")
@@ -71,6 +120,20 @@ if __name__ == '__main__':
     
     if args['debug']:
         LOG.setLevel(logging.DEBUG)
+
+    if args['cache']:
+        cache_dir = os.path.dirname(CACHE_FILEPATH)
+        if not os.path.exists(cache_dir):
+            LOG.debug("Creating cache directory '%s'" % cache_dir)
+            os.makedirs(cache_dir)
+    ## IF
+        
+
+    ## ----------------------------------------------
+    
+    
+    # Download the schedule CSV and figure out who is the czar this month
+    current_czar = get_current_czar(args['schedule'], cache=args['cache'])
 
     ## ----------------------------------------------
     
@@ -104,7 +167,7 @@ if __name__ == '__main__':
         
         
         # Get review comments for this issue
-        cache_reviews = CACHE_FILEPATH % pr.number
+        cache_reviews = CACHE_FILEPATH % str(pr.number)
         data = None
         if 'cache' in args and args['cache'] and os.path.exists(cache_reviews):
             LOG.debug("CACHED REVIEW COMMENTS '%s'" % cache_reviews)
@@ -133,7 +196,7 @@ if __name__ == '__main__':
     all_recieved_reviews = { }
     all_reviewers = { }
     for pr, labels, reviews in open_pulls.values():
-        LOG.debug("Pull Request #%d - LABELS: %s", pr.number, labels)
+        LOG.debug("PR #%d - LABELS: %s", pr.number, labels)
         
         # Step 1: Get the list of 'ready_for_review' PRs that do not have
         # an assigned reviewer
@@ -171,11 +234,11 @@ if __name__ == '__main__':
                 status['ReviewMissing'].append(pr.number)
                 
                 
-            all_reviewers[pr.number] = reviewers
-            all_recieved_reviews[pr.number] = recieved_reviews
+            all_reviewers[pr.number] = map(str, reviewers)
+            all_recieved_reviews[pr.number] = map(str, recieved_reviews)
                 
-            LOG.debug("REVIEWERS: %s", ",".join(reviewers))
-            LOG.debug("RECEIVED REVIEWS: %s", ",".join(recieved_reviews))
+            LOG.debug("PR #%d - REVIEWERS: %s", pr.number, ",".join(reviewers))
+            LOG.debug("PR #%d - RECEIVED REVIEWS: %s", pr.number, ",".join(recieved_reviews))
         # IF
         
         # Step 4: Mark any PRs without labels
@@ -190,7 +253,7 @@ if __name__ == '__main__':
     ## NO LABELS
     content += "*NO LABELS*\n\n"
     if len(status['NoLabels']) == 0:
-        content += "**NONE**\n\n"
+        content += "*NONE*\n\n"
     else:
         for pr_num in sorted(status['NoLabels']):
             content += pr_format(open_pulls[pr_num][0]) + "\n\n"
@@ -199,7 +262,7 @@ if __name__ == '__main__':
     ## READY TO MERGE
     content += "*READY TO MERGE*\n\n"
     if len(status['ReadyToMerge']) == 0:
-        content += "**NONE**\n\n"
+        content += "*NONE*\n\n"
     else:
         for pr_num in sorted(status['ReadyToMerge']):
             content += pr_format(open_pulls[pr_num][0]) + "\n\n"
@@ -208,29 +271,39 @@ if __name__ == '__main__':
     ## READY FOR REVIEW, NO ASSIGNMENT
     content += "*READY FOR REVIEW WITHOUT ASSIGNMENT*\n\n"
     if len(status['NeedReviewers']) == 0:
-        content += "**NONE**\n\n"
+        content += "*NONE*\n\n"
     else:
         for pr_num in sorted(status['NeedReviewers']):
             content += pr_format(open_pulls[pr_num][0]) + "\n\n"
     content += linebreak
     
-    
     ## MISSING REVIEWS
     content += "*WAITING FOR REVIEW*\n\n"
     if len(status['ReviewMissing']) == 0:
-        content += "**NONE**\n\n"
+        content += "*NONE*\n\n"
     else:
         for pr_num in sorted(status['ReviewMissing']):
-            content += pr_format(open_pulls[pr_num][0]) + "\n\n"
-            content += "        Assigned Reviewers: %s\n" % (list(all_recieved_reviews[pr_num]))
+            if len(all_reviewers[pr_num]) == 0:
+                all_reviewers[pr_num] = [ '*NONE*' ]
+            if len(all_recieved_reviews[pr_num]) == 0:
+                all_recieved_reviews[pr_num] = [ '*NONE*' ]
+            
+            content += pr_format(open_pulls[pr_num][0]) + "\n"
+            content += "        Assigned Reviewers: %s\n" % (",".join(all_reviewers[pr_num]))
+            content += "        Reviews Provided: %s\n\n" % (",".join(all_recieved_reviews[pr_num]))
     #content += linebreak
         
         
     if "send" in args and args["send"]:
+        send_to = current_czar
+        if "send_to" in args and args["send_to"]:
+            send_to = args["send_to"]
+            
+        LOG.debug("Sending status report to '%s'" % send_to)
         msg = MIMEText(content)
         msg['Subject'] = "%s PR Status Report (%s)" % (GITHUB_REPO.title(), datetime.now().strftime("%Y-%m-%d"))
         msg['From'] = EMAIL_FROM
-        msg['To'] = args["send"]
+        msg['To'] = send_to
         msg['Reply-To'] = "no-reply@db.cs.cmu.edu"
         
         server_ssl = smtplib.SMTP_SSL("smtp.gmail.com", 465)
@@ -241,7 +314,7 @@ if __name__ == '__main__':
         #server_ssl.quit()
         server_ssl.close()
         
-        LOG.info("Status email sent to '%s'" % args["send"])
+        LOG.info("Status email sent to '%s'" % send_to)
     else:
         print content
     ## IF
