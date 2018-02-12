@@ -1,4 +1,5 @@
 language: c++
+python: 3.6
 matrix:
     fast_finish: true
 
@@ -7,7 +8,6 @@ matrix:
         - os: osx
           osx_image: xcode8.3
           compiler: clang
-          python: 3.6
           env:
               # NAME has no actual use, just to make the travis jobs overview more clear
               - NAME="clang Debug"
@@ -26,7 +26,6 @@ matrix:
                       - ubuntu-toolchain-r-test
                   packages:
                     - g++-4.8
-          python: 3.6
           env:
               # NAME has no actual use, just to make the travis jobs overview more clear
               - NAME="gcc4.8 Debug+Tests+Coveralls"
@@ -69,7 +68,6 @@ matrix:
                       - ubuntu-toolchain-r-test
                   packages:
                     - g++-4.8
-          python: 3.6
           env:
               # NAME has no actual use, just to make the travis jobs overview more clear
               - NAME="gcc4.8 Release+Tests"
@@ -110,7 +108,6 @@ matrix:
                       - ubuntu-toolchain-r-test
                   packages:
                     - g++-5
-          python: 3.6
           env:
               # NAME has no actual use, just to make the travis jobs overview more clear
               - NAME="gcc5 Debug"
@@ -130,7 +127,6 @@ matrix:
                       - ubuntu-toolchain-r-test
                   packages:
                     - g++-5
-          python: 3.6
           env:
               # NAME has no actual use, just to make the travis jobs overview more clear
               - NAME="gcc5 Release"
@@ -146,7 +142,7 @@ install:
 
 before_script:
     # first, run source_validator
-    - python -m script.validators.source_validator
+    - python ./script/validators/source_validator.py
 
 # build peloton (override this value to execute tests)
 script:
