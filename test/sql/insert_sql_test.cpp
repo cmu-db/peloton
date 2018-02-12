@@ -576,15 +576,13 @@ TEST_F(InsertSQLTests, NonExistentTable) {
   int rows_changed;
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
       new optimizer::Optimizer());
-
+  // Insert an int into a non-existent table.
+  std::string query("INSERT INTO NonExistentTable VALUES(3);");
+  txn = txn_manager.BeginTransaction();
   rows_changed = 0;
   EXPECT_THROW({
     try {
-      // Insert an int into a non-existent table.
-      std::string query("INSERT INTO NonExistentTable VALUES(3);");
-      txn = txn_manager.BeginTransaction();
-      auto plan =
-          TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn);
+      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn);
     } catch (peloton::Exception &ex) {
       EXPECT_EQ(ExceptionType::CATALOG, ex.GetType());
       EXPECT_STREQ("Table nonexistenttable is not found", ex.what());
