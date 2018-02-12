@@ -43,11 +43,15 @@ TableScanTranslator::TableScanTranslator(const planner::SeqScanPlan &scan,
   }
 }
 
-// Produce!
-void TableScanTranslator::Produce() const {
-  auto producer = [this]() {
+// TODO merge serial and parallel ...
+// TODO cleanup zonemap stuff
+
+void TableScanTranslator::ProduceSerial() const {
+  auto producer = [this](ConsumerContext &ctx) {
     CodeGen &codegen = GetCodeGen();
-    const storage::DataTable &table = GetTable();
+
+    const auto &plan = GetScanPlan();
+    const storage::DataTable &table = *plan.GetTable();
 
     // Get the table instance from the database
     auto *db_oid = codegen.Const32(table.GetDatabaseOid());
@@ -73,22 +77,76 @@ void TableScanTranslator::Produce() const {
         num_preds = predicate->GetNumberofParsedPredicates();
       }
     }
-    ScanConsumer scan_consumer{*this, sel_vec};
-    table_.GenerateScan(codegen, table_ptr, sel_vec.GetCapacity(),
-                        scan_consumer, predicate_ptr, num_preds);
+    ScanConsumer scan_consumer{ctx, plan, sel_vec};
+    table_.GenerateScan(codegen, table_ptr, nullptr, nullptr,
+                        sel_vec.GetCapacity(), predicate_ptr, num_preds,
+                        scan_consumer);
   };
 
   // Execute serially
   GetPipeline().RunSerial(producer);
 }
 
-const planner::SeqScanPlan &TableScanTranslator::GetScanPlan() const {
-  return GetPlanAs<planner::SeqScanPlan>();
+void TableScanTranslator::ProduceParallel() const {
+  CodeGen &codegen = GetCodeGen();
+
+  // The launch function
+  auto *launcher = RuntimeFunctionsProxy::ExecuteTableScan.GetFunction(codegen);
+
+  // The input arguments
+  const storage::DataTable &table = *GetScanPlan().GetTable();
+  std::vector<llvm::Value *> launch_args = {
+      codegen.Const32(table.GetDatabaseOid()), codegen.Const32(table.GetOid())};
+  std::vector<llvm::Type *> pipeline_arg_types = {codegen.Int64Type(),
+                                                  codegen.Int64Type()};
+
+  // Parallel production
+  auto producer = [this, &codegen, &table](
+      ConsumerContext &ctx, const std::vector<llvm::Value *> params) {
+    PELOTON_ASSERT(params.size() == 2);
+    llvm::Value *tilegroup_start = params[0];
+    llvm::Value *tilegroup_end = params[1];
+
+    auto *db_oid = codegen.Const32(table.GetDatabaseOid());
+    auto *table_oid = codegen.Const32(table.GetOid());
+    auto *table_ptr = codegen.Call(StorageManagerProxy::GetTableWithOid,
+                                   {GetStorageManagerPtr(), db_oid, table_oid});
+
+    // The selection vector for the scan
+    auto *raw_vec = codegen.AllocateBuffer(
+        codegen.Int32Type(), Vector::kDefaultVectorSize, "scanSelVector");
+    Vector sel_vec{raw_vec, Vector::kDefaultVectorSize, codegen.Int32Type()};
+
+    // zonemap
+    auto predicate = const_cast<expression::AbstractExpression *>(
+        GetScanPlan().GetPredicate());
+    llvm::Value *predicate_ptr = codegen->CreateIntToPtr(
+        codegen.Const64((int64_t)predicate),
+        AbstractExpressionProxy::GetType(codegen)->getPointerTo());
+    size_t num_preds = 0;
+
+    auto *zone_map_manager = storage::ZoneMapManager::GetInstance();
+    if (predicate != nullptr && zone_map_manager->ZoneMapTableExists()) {
+      if (predicate->IsZoneMappable()) {
+        num_preds = predicate->GetNumberofParsedPredicates();
+      }
+    }
+
+    ScanConsumer scan_consumer{ctx, GetScanPlan(), sel_vec};
+    table_.GenerateScan(codegen, table_ptr, tilegroup_start, tilegroup_end,
+                        sel_vec.GetCapacity(), predicate_ptr, num_preds,
+                        scan_consumer);
+  };
+
+  // Execute parallel
+  auto &pipeline = GetPipeline();
+  pipeline.RunParallel(launcher, launch_args, pipeline_arg_types, producer);
 }
 
-// Table accessor
-const storage::DataTable &TableScanTranslator::GetTable() const {
-  return *GetScanPlan().GetTable();
+void TableScanTranslator::Produce() const { ProduceSerial(); }
+
+const planner::SeqScanPlan &TableScanTranslator::GetScanPlan() const {
+  return GetPlanAs<planner::SeqScanPlan>();
 }
 
 //===----------------------------------------------------------------------===//
@@ -97,8 +155,9 @@ const storage::DataTable &TableScanTranslator::GetTable() const {
 
 // Constructor
 TableScanTranslator::ScanConsumer::ScanConsumer(
-    const TableScanTranslator &translator, Vector &selection_vector)
-    : translator_(translator), selection_vector_(selection_vector) {}
+    ConsumerContext &ctx, const planner::SeqScanPlan &plan,
+    Vector &selection_vector)
+    : ctx_(ctx), plan_(plan), selection_vector_(selection_vector) {}
 
 // Generate the body of the vectorized scan
 void TableScanTranslator::ScanConsumer::ProcessTuples(
@@ -108,7 +167,7 @@ void TableScanTranslator::ScanConsumer::ProcessTuples(
   FilterRowsByVisibility(codegen, tid_start, tid_end, selection_vector_);
 
   // 2. Filter rows by the given predicate (if one exists)
-  auto *predicate = GetPredicate();
+  auto *predicate = plan_.GetPredicate();
   if (predicate != nullptr) {
     // First perform a vectorized filter, putting TIDs into the selection vector
     FilterRowsByPredicate(codegen, tile_group_access, tid_start, tid_end,
@@ -116,20 +175,14 @@ void TableScanTranslator::ScanConsumer::ProcessTuples(
   }
 
   // 3. Setup the (filtered) row batch and setup attribute accessors
-  RowBatch batch{translator_.GetCompilationContext(),
-                 tile_group_id_,
-                 tid_start,
-                 tid_end,
-                 selection_vector_,
-                 true};
+  RowBatch batch{ctx_.GetCompilationContext(), tile_group_id_, tid_start,
+                 tid_end, selection_vector_, true};
 
   std::vector<TableScanTranslator::AttributeAccess> attribute_accesses;
   SetupRowBatch(batch, tile_group_access, attribute_accesses);
 
   // 4. Push the batch into the pipeline
-  ConsumerContext context{translator_.GetCompilationContext(),
-                          translator_.GetPipeline()};
-  context.Consume(batch);
+  ctx_.Consume(batch);
 }
 
 void TableScanTranslator::ScanConsumer::SetupRowBatch(
@@ -137,10 +190,9 @@ void TableScanTranslator::ScanConsumer::SetupRowBatch(
     std::vector<TableScanTranslator::AttributeAccess> &access) const {
   // Grab a hold of the stuff we need (i.e., the plan, all the attributes, and
   // the IDs of the columns the scan _actually_ produces)
-  const planner::SeqScanPlan &scan_plan = translator_.GetScanPlan();
   std::vector<const planner::AttributeInfo *> ais;
-  scan_plan.GetAttributes(ais);
-  const auto &output_col_ids = scan_plan.GetColumnIds();
+  plan_.GetAttributes(ais);
+  const auto &output_col_ids = plan_.GetColumnIds();
 
   // 1. Put all the attribute accessors into a vector
   access.clear();
@@ -161,7 +213,8 @@ void TableScanTranslator::ScanConsumer::SetupRowBatch(
 void TableScanTranslator::ScanConsumer::FilterRowsByVisibility(
     CodeGen &codegen, llvm::Value *tid_start, llvm::Value *tid_end,
     Vector &selection_vector) const {
-  llvm::Value *txn = translator_.GetTransactionPtr();
+  ExecutionConsumer &ec = ctx_.GetCompilationContext().GetExecutionConsumer();
+  llvm::Value *txn = ec.GetTransactionPtr(ctx_.GetCompilationContext());
   llvm::Value *raw_sel_vec = selection_vector.GetVectorPtr();
 
   // Invoke TransactionRuntime::PerformRead(...)
@@ -171,27 +224,17 @@ void TableScanTranslator::ScanConsumer::FilterRowsByVisibility(
   selection_vector.SetNumElements(out_idx);
 }
 
-// Get the predicate, if one exists
-const expression::AbstractExpression *
-TableScanTranslator::ScanConsumer::GetPredicate() const {
-  return translator_.GetScanPlan().GetPredicate();
-}
-
 void TableScanTranslator::ScanConsumer::FilterRowsByPredicate(
     CodeGen &codegen, const TileGroup::TileGroupAccess &access,
     llvm::Value *tid_start, llvm::Value *tid_end,
     Vector &selection_vector) const {
   // The batch we're filtering
-  RowBatch batch{translator_.GetCompilationContext(), tile_group_id_, tid_start,
+  RowBatch batch{ctx_.GetCompilationContext(), tile_group_id_, tid_start,
                  tid_end, selection_vector, true};
 
-  // First, check if the predicate is SIMDable
-  const auto *predicate = GetPredicate();
-
-  LOG_DEBUG("Is Predicate SIMDable: %s",
-            predicate->IsSIMDable() ? "true" : "false");
-
   // Determine the attributes the predicate needs
+  const auto *predicate = plan_.GetPredicate();
+
   std::unordered_set<const planner::AttributeInfo *> used_attributes;
   predicate->GetUsedAttributes(used_attributes);
 

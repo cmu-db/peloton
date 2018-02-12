@@ -27,6 +27,7 @@ namespace codegen {
 
 // Forward declare
 class CompilationContext;
+class PipelineContext;
 
 //===----------------------------------------------------------------------===//
 // This is just a glue class that manages the given pipeline and provides access
@@ -37,6 +38,8 @@ class ConsumerContext {
  public:
   // Constructor
   ConsumerContext(CompilationContext &compilation_context, Pipeline &pipeline);
+  ConsumerContext(CompilationContext &compilation_context, Pipeline &pipeline,
+                  PipelineContext *pipeline_context);
 
   /// This class cannot be copy or move-constructed
   DISALLOW_COPY_AND_MOVE(ConsumerContext);
@@ -44,6 +47,8 @@ class ConsumerContext {
   // Pass this consumer context to the parent of the caller of consume()
   void Consume(RowBatch &batch);
   void Consume(RowBatch::Row &row);
+
+  CompilationContext &GetCompilationContext() { return compilation_context_; }
 
   // Get the code generator instance
   CodeGen &GetCodeGen() const;
@@ -60,6 +65,7 @@ class ConsumerContext {
 
   // The pipeline of operators that this context passes through
   Pipeline &pipeline_;
+  PipelineContext *pipeline_context_;
 };
 
 }  // namespace codegen

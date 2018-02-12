@@ -224,6 +224,7 @@ CodeContext::CodeContext()
   int64_type_ = llvm::Type::getInt64Ty(*context_);
   double_type_ = llvm::Type::getDoubleTy(*context_);
   void_type_ = llvm::Type::getVoidTy(*context_);
+  void_ptr_type_ = llvm::Type::getVoidTy(*context_)->getPointerTo();
   char_ptr_type_ = llvm::Type::getInt8PtrTy(*context_);
 }
 

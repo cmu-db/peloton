@@ -78,5 +78,13 @@ llvm::Value *ExecutionConsumer::GetQueryParametersPtr(
                                              0, 2, "queryParamsPtr");
 }
 
+llvm::Value *ExecutionConsumer::GetThreadStatesPtr(
+    CompilationContext &compilation_ctx) {
+  auto &codegen = compilation_ctx.GetCodeGen();
+  auto *exec_ctx_ptr = GetExecutorContextPtr(compilation_ctx);
+  return codegen->CreateConstInBoundsGEP2_32(executor_ctx_type_, exec_ctx_ptr,
+                                             0, 5, "threadStatesPtr");
+}
+
 }  // namespace codegen
 }  // namespace peloton

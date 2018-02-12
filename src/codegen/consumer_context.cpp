@@ -20,7 +20,14 @@ namespace codegen {
 // Constructor
 ConsumerContext::ConsumerContext(CompilationContext &compilation_context,
                                  Pipeline &pipeline)
-    : compilation_context_(compilation_context), pipeline_(pipeline) {}
+    : ConsumerContext(compilation_context, pipeline, nullptr) {}
+
+ConsumerContext::ConsumerContext(CompilationContext &compilation_context,
+                                 Pipeline &pipeline,
+                                 PipelineContext *pipeline_context)
+    : compilation_context_(compilation_context),
+      pipeline_(pipeline),
+      pipeline_context_(pipeline_context) {}
 
 // Pass the row batch to the next operator in the pipeline
 void ConsumerContext::Consume(RowBatch &batch) {

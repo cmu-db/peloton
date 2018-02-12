@@ -46,7 +46,7 @@ class OrderByTranslator : public OperatorTranslator {
   //===--------------------------------------------------------------------===//
   class ProduceResults : public Sorter::VectorizedIterateCallback {
    public:
-    ProduceResults(const OrderByTranslator &translator,
+    ProduceResults(ConsumerContext &ctx, const planner::OrderByPlan &plan,
                    Vector &selection_vector);
     // The callback function providing the current tuple in the sorter instance
     void ProcessEntries(CodeGen &codegen, llvm::Value *start_index,
@@ -55,7 +55,9 @@ class OrderByTranslator : public OperatorTranslator {
 
    private:
     // The translator
-    const OrderByTranslator &translator_;
+    ConsumerContext &ctx_;
+    // The plan node
+    const planner::OrderByPlan &plan_;
     // The selection vector when producing rows
     Vector &selection_vector_;
   };

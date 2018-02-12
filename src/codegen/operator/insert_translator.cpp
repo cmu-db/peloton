@@ -32,7 +32,7 @@ InsertTranslator::InsertTranslator(const planner::InsertPlan &insert_plan,
     context.Prepare(*insert_plan.GetChild(0), pipeline);
   }
 
-  // Register the inserter's runtime state to approach it throughout this
+  // Register the inserter instance as state
   inserter_state_id_ = context.GetRuntimeState().RegisterState(
       "inserter", InserterProxy::GetType(GetCodeGen()));
 }
@@ -67,7 +67,7 @@ void InsertTranslator::Produce() const {
     GetCompilationContext().Produce(*GetInsertPlan().GetChild(0));
   } else {
     /// Regular insert with constants
-    auto producer = [this]() {
+    auto producer = [this](UNUSED_ATTRIBUTE ConsumerContext &ctx) {
       CodeGen &codegen = GetCodeGen();
       auto *inserter = LoadStatePtr(inserter_state_id_);
 

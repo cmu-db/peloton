@@ -98,7 +98,7 @@ void HashGroupByTranslator::Produce() const {
   GetCompilationContext().Produce(*GetPlan().GetChild(0));
 
   // Send aggregates up in separate pipeline function
-  auto producer = [this]() {
+  auto producer = [this](ConsumerContext &ctx) {
     CodeGen &codegen = GetCodeGen();
 
     // The selection vector
@@ -108,7 +108,8 @@ void HashGroupByTranslator::Produce() const {
     Vector selection_vec{raw_vec, vec_size, i32_type};
 
     // Iterate
-    ProduceResults produce_results{*this};
+    const auto &plan = GetPlanAs<planner::AggregatePlan>();
+    ProduceResults produce_results{ctx, plan, aggregation_};
     hash_table_.VectorizedIterate(codegen, LoadStatePtr(hash_table_id_),
                                   selection_vec, produce_results);
   };
@@ -212,7 +213,7 @@ void HashGroupByTranslator::Consume(ConsumerContext &,
   CollectHashKeys(row, key);
 
   // Collect the values of the expressions
-  auto &aggregates = GetPlan().GetUniqueAggTerms();
+  auto &aggregates = GetPlanAs<planner::AggregatePlan>().GetUniqueAggTerms();
   std::vector<codegen::Value> vals{aggregates.size()};
   for (uint32_t i = 0; i < aggregates.size(); i++) {
     const auto &agg_term = aggregates[i];
@@ -256,13 +257,10 @@ bool HashGroupByTranslator::UsePrefetching() const {
 void HashGroupByTranslator::CollectHashKeys(
     RowBatch::Row &row, std::vector<codegen::Value> &key) const {
   CodeGen &codegen = GetCodeGen();
-  for (const auto *gb_ai : GetPlan().GetGroupbyAIs()) {
+  const auto &plan = GetPlanAs<planner::AggregatePlan>();
+  for (const auto *gb_ai : plan.GetGroupbyAIs()) {
     key.push_back(row.DeriveValue(codegen, gb_ai));
   }
-}
-
-const planner::AggregatePlan &HashGroupByTranslator::GetPlan() const {
-  return GetPlanAs<planner::AggregatePlan>();
 }
 
 //===----------------------------------------------------------------------===//
@@ -313,20 +311,20 @@ codegen::Value HashGroupByTranslator::AggregateAccess::Access(
 //===----------------------------------------------------------------------===//
 
 HashGroupByTranslator::ProduceResults::ProduceResults(
-    const HashGroupByTranslator &translator)
-    : translator_(translator) {}
+    ConsumerContext &ctx, const planner::AggregatePlan &plan,
+    const Aggregation &aggregation)
+    : ctx_(ctx), plan_(plan), aggregation_(aggregation) {}
 
 void HashGroupByTranslator::ProduceResults::ProcessEntries(
     CodeGen &codegen, llvm::Value *start, llvm::Value *end,
     Vector &selection_vector, HashTable::HashTableAccess &access) const {
-  RowBatch batch{translator_.GetCompilationContext(), start, end,
-                 selection_vector, true};
+  RowBatch batch{ctx_.GetCompilationContext(), start, end, selection_vector,
+                 true};
 
-  AggregateFinalizer finalizer{translator_.GetAggregation(), access};
+  AggregateFinalizer finalizer{aggregation_, access};
 
-  const auto &group_by = translator_.GetPlanAs<planner::AggregatePlan>();
-  auto &grouping_ais = group_by.GetGroupbyAIs();
-  auto &aggregates = group_by.GetUniqueAggTerms();
+  auto &grouping_ais = plan_.GetGroupbyAIs();
+  auto &aggregates = plan_.GetUniqueAggTerms();
 
   std::vector<AggregateAccess> accessors;
 
@@ -349,17 +347,14 @@ void HashGroupByTranslator::ProduceResults::ProcessEntries(
   }
 
   std::vector<RowBatch::ExpressionAccess> derived_attribute_accessors;
-  const auto *project_info = group_by.GetProjectInfo();
+  const auto *project_info = plan_.GetProjectInfo();
   if (project_info != nullptr) {
     ProjectionTranslator::AddNonTrivialAttributes(batch, *project_info,
                                                   derived_attribute_accessors);
   }
 
   // Row batch is set up, send it up
-  ConsumerContext context{translator_.GetCompilationContext(),
-                          translator_.GetPipeline()};
-
-  auto *predicate = group_by.GetPredicate();
+  auto *predicate = plan_.GetPredicate();
   if (predicate != nullptr) {
     // Iterate over the batch, performing a branching predicate check
     batch.Iterate(codegen, [&](RowBatch::Row &row) {
@@ -367,14 +362,14 @@ void HashGroupByTranslator::ProduceResults::ProcessEntries(
       lang::If is_valid_row{codegen, valid_row};
       {
         // The row is valid, send along the pipeline
-        context.Consume(row);
+        ctx_.Consume(row);
       }
       is_valid_row.EndIf();
     });
 
   } else {
     // There isn't a predicate, just send the entire batch as-is
-    context.Consume(batch);
+    ctx_.Consume(batch);
   }
 }
 

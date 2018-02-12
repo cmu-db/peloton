@@ -16,6 +16,7 @@ namespace peloton {
 namespace codegen {
 
 DEFINE_TYPE(AbstractPool, "type::AbstractPool", MEMBER(opaque));
+DEFINE_TYPE(EphemeralPool, "type::EphemeralPool", MEMBER(opaque));
 
 }  // namespace codegen
 }  // namespace peloton

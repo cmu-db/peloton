@@ -61,6 +61,7 @@ class ExecutionConsumer {
   llvm::Value *GetTransactionPtr(CompilationContext &compilation_ctx);
   llvm::Value *GetStorageManagerPtr(CompilationContext &compilation_ctx);
   llvm::Value *GetQueryParametersPtr(CompilationContext &compilation_ctx);
+  llvm::Value *GetThreadStatesPtr(CompilationContext &compilation_ctx);
 
  private:
   llvm::Type *executor_ctx_type_;

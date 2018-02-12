@@ -34,7 +34,7 @@ class MonoQueuePool {
 
   void SubmitTask(std::function<void()> func);
 
-  size_t NumWorkers() const { return worker_pool_.NumWorkers(); }
+  uint32_t NumWorkers() const { return worker_pool_.NumWorkers(); }
 
   /// Instances for various components
   static MonoQueuePool &GetInstance();

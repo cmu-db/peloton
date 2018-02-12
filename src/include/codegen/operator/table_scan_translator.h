@@ -55,6 +55,10 @@ class TableScanTranslator : public OperatorTranslator {
   void TearDownQueryState() override {}
 
  private:
+  void ProduceSerial() const;
+
+  void ProduceParallel() const;
+
   //===--------------------------------------------------------------------===//
   // An attribute accessor that uses the backing tile group to access columns
   //===--------------------------------------------------------------------===//
@@ -82,7 +86,7 @@ class TableScanTranslator : public OperatorTranslator {
   class ScanConsumer : public codegen::ScanCallback {
    public:
     // Constructor
-    ScanConsumer(const TableScanTranslator &translator,
+    ScanConsumer(ConsumerContext &ctx, const planner::SeqScanPlan &plan,
                  Vector &selection_vector);
 
     // The callback when starting iteration over a new tile group
@@ -101,9 +105,6 @@ class TableScanTranslator : public OperatorTranslator {
     void TileGroupFinish(CodeGen &, llvm::Value *) override {}
 
    private:
-    // Get the predicate, if one exists
-    const expression::AbstractExpression *GetPredicate() const;
-
     void SetupRowBatch(RowBatch &batch,
                        TileGroup::TileGroupAccess &tile_group_access,
                        std::vector<AttributeAccess> &access) const;
@@ -119,28 +120,21 @@ class TableScanTranslator : public OperatorTranslator {
                                llvm::Value *tid_start, llvm::Value *tid_end,
                                Vector &selection_vector) const;
 
-    llvm::Value *SIMDFilterRows(RowBatch &batch,
-                                const TileGroup::TileGroupAccess &access) const;
-
    private:
-    // The translator instance the consumer is generating code for
-    const TableScanTranslator &translator_;
-
+    // The consumer context
+    ConsumerContext &ctx_;
+    // The plan node
+    const planner::SeqScanPlan &plan_;
     // The selection vector used for vectorized scans
     Vector &selection_vector_;
-
     // The current tile group id we're scanning over
     llvm::Value *tile_group_id_;
-
     // The current tile group we're scanning over
     llvm::Value *tile_group_ptr_;
   };
 
   // Plan accessor
   const planner::SeqScanPlan &GetScanPlan() const;
-
-  // Table accessor
-  const storage::DataTable &GetTable() const;
 
  private:
   // The code-generating table instance

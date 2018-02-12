@@ -33,22 +33,50 @@ namespace executor {
  */
 class ExecutorContext {
  public:
+  /// Constructor
   ExecutorContext(concurrency::TransactionContext *transaction,
                   codegen::QueryParameters parameters = {});
 
+  /// This class cannot be copy or move-constructed
   DISALLOW_COPY_AND_MOVE(ExecutorContext);
 
+  //////////////////////////////////////////////////////////////////////////////
+  ///
+  /// Accessors
+  ///
+  //////////////////////////////////////////////////////////////////////////////
+
+  /// Return the transaction for this particular query execution
   concurrency::TransactionContext *GetTransaction() const;
 
+  /// Return the explicit set of parameters for this particular query execution
   const std::vector<type::Value> &GetParamValues() const;
 
-  storage::StorageManager *GetStorageManager() const;
+  /// Return the storage manager for the database
+  storage::StorageManager &GetStorageManager() const;
 
+  /// Return the query parameters
   codegen::QueryParameters &GetParams();
 
+  /// Return the memory pool for this particular query execution
   type::EphemeralPool *GetPool();
 
-  // Number of processed tuples during execution
+  class ThreadStates {
+   public:
+    explicit ThreadStates(type::EphemeralPool &pool);
+    void Reset(uint32_t state_size);
+    void Allocate(uint32_t num_threads);
+    char *AccessThreadState(uint32_t thread_id) const;
+   private:
+    type::EphemeralPool &pool_;
+    uint32_t num_threads_;
+    uint32_t state_size_;
+    char *states_;
+  };
+
+  ThreadStates &GetThreadStates();
+
+  /// Number of processed tuples during execution
   uint32_t num_processed = 0;
 
  private:
@@ -60,6 +88,8 @@ class ExecutorContext {
   storage::StorageManager *storage_manager_;
   // Temporary memory pool for allocations done during execution
   type::EphemeralPool pool_;
+  // Container for all states of all thread participating in this execution
+  ThreadStates thread_states_;
 };
 
 }  // namespace executor

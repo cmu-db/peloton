@@ -60,7 +60,8 @@ class HashGroupByTranslator : public OperatorTranslator {
   class ProduceResults : public HashTable::VectorizedIterateCallback {
    public:
     // Constructor
-    ProduceResults(const HashGroupByTranslator &translator);
+    ProduceResults(ConsumerContext &ctx, const planner::AggregatePlan &plan,
+                   const Aggregation &aggregation);
 
     // The callback
     void ProcessEntries(CodeGen &codegen, llvm::Value *start, llvm::Value *end,
@@ -68,8 +69,9 @@ class HashGroupByTranslator : public OperatorTranslator {
                         HashTable::HashTableAccess &access) const override;
 
    private:
-    // The plan details
-    const HashGroupByTranslator &translator_;
+    ConsumerContext &ctx_;
+    const planner::AggregatePlan &plan_;
+    const Aggregation &aggregation_;
   };
 
   //===--------------------------------------------------------------------===//
@@ -172,10 +174,6 @@ class HashGroupByTranslator : public OperatorTranslator {
 
   // Should this operator employ prefetching?
   bool UsePrefetching() const;
-
-  const planner::AggregatePlan &GetPlan() const;
-
-  const Aggregation &GetAggregation() const { return aggregation_; }
 
  private:
   // The pipeline forming all child operators of this aggregation

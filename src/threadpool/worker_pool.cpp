@@ -44,7 +44,7 @@ void WorkerFunc(std::string thread_name, std::atomic_bool *is_running,
 
 }  // namespace
 
-WorkerPool::WorkerPool(const std::string &pool_name, size_t num_workers,
+WorkerPool::WorkerPool(const std::string &pool_name, uint32_t num_workers,
                        TaskQueue &task_queue)
     : pool_name_(pool_name),
       num_workers_(num_workers),

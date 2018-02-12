@@ -13,6 +13,7 @@
 #include "codegen/proxy/runtime_functions_proxy.h"
 
 #include "codegen/proxy/data_table_proxy.h"
+#include "codegen/proxy/executor_context_proxy.h"
 #include "codegen/proxy/tile_group_proxy.h"
 #include "codegen/proxy/zone_map_proxy.h"
 
@@ -29,6 +30,7 @@ DEFINE_METHOD(peloton::codegen, RuntimeFunctions, HashCrc64);
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, GetTileGroup);
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, GetTileGroupLayout);
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, FillPredicateArray);
+DEFINE_METHOD(peloton::codegen, RuntimeFunctions, ExecuteTableScan);
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, ThrowDivideByZeroException);
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, ThrowOverflowException);
 

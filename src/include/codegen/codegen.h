@@ -66,6 +66,7 @@ class CodeGen {
   llvm::Type *Int64Type() const { return code_context_.int64_type_; }
   llvm::Type *DoubleType() const { return code_context_.double_type_; }
   llvm::Type *VoidType() const { return code_context_.void_type_; }
+  llvm::Type *VoidPtrType() const { return code_context_.void_ptr_type_; }
   llvm::PointerType *CharPtrType() const {
     return code_context_.char_ptr_type_;
   }

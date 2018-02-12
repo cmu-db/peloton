@@ -17,25 +17,54 @@
 #include <string>
 #include <vector>
 
+namespace llvm {
+class Function;
+class Type;
+class Value;
+}  // namespace llvm
+
 namespace peloton {
 namespace codegen {
 
-class OperatorTranslator;
+class CodeGen;
 class CompilationContext;
 class ConsumerContext;
+class OperatorTranslator;
 
 class Pipeline;
 
 class PipelineContext {
+  friend class Pipeline;
+
  public:
+  using SlotId = uint8_t;
+
+  /// Constructor
   explicit PipelineContext(Pipeline &pipeline);
 
+  /// Register some state
+  SlotId RegisterThreadState(std::string name, llvm::Type *type);
+
+  /// Build the final type of the thread state. Once finalized, the thread
+  /// state type is immutable.
+  void FinalizeThreadState(CodeGen &codegen);
+  llvm::Type *GetThreadStateType() const { return thread_state_; }
+
+  /// Is the pipeline associated with this context parallel?
   bool IsParallel() const;
+
+  /// Return the pipeline this context is associated with
   Pipeline &GetPipeline();
-  CompilationContext &GetCompilationContext();
 
  private:
+  // The pipeline
   Pipeline &pipeline_;
+  // The elements of the thread state for this pipeline
+  std::vector<std::pair<std::string, llvm::Type *>> state_components_;
+  llvm::Type *thread_state_;
+  // The generate thread initialization function and pipeline function
+  llvm::Function *thread_init_func_;
+  llvm::Function *pipeline_func_;
 };
 
 //===----------------------------------------------------------------------===//
@@ -79,9 +108,6 @@ class Pipeline {
   /// Is the pipeline position currently sitting at a stage boundary?
   bool AtStageBoundary() const;
 
-  /// Return the total number of stages in the pipeline
-  uint32_t GetNumStages() const;
-
   /// Get the stage the given translator is in
   uint32_t GetTranslatorStage(const OperatorTranslator *translator) const;
 
@@ -91,10 +117,14 @@ class Pipeline {
   ///
   //////////////////////////////////////////////////////////////////////////////
 
-  void InitializePipeline(PipelineContext &pipeline_context);
   bool IsParallel() const { return false; }
-  void RunSerial(const std::function<void()> &body);
-  void RunParallel(const std::function<void()> &func);
+  void RunSerial(const std::function<void(ConsumerContext &)> &body);
+  void RunParallel(
+      llvm::Function *launch_func,
+      const std::vector<llvm::Value *> &launch_args,
+      const std::vector<llvm::Type *> &pipeline_args_types,
+      const std::function<void(ConsumerContext &,
+                               const std::vector<llvm::Value *> &)> &body);
 
   //////////////////////////////////////////////////////////////////////////////
   ///
@@ -105,8 +135,26 @@ class Pipeline {
   /// Get a stringified version of this pipeline
   std::string GetInfo() const;
 
-  ///
+  /// Build a simple name for this pipeline
   std::string ConstructPipelineName() const;
+
+ private:
+  /// Initialize the state for this pipeline
+  void InitializePipeline(PipelineContext &pipeline_context);
+  void CompletePipeline(PipelineContext &pipeline_context);
+  void Run(llvm::Function *launch_func,
+           const std::vector<llvm::Value *> &launch_args,
+           const std::vector<llvm::Type *> &pipeline_arg_types,
+           const std::function<void(ConsumerContext &,
+                                    const std::vector<llvm::Value *> &)> &body);
+  void DoRun(PipelineContext &pipeline_context, llvm::Function *launch_func,
+             const std::vector<llvm::Value *> &launch_args,
+             const std::vector<llvm::Type *> &pipeline_args_types,
+             const std::function<void(
+                 ConsumerContext &, const std::vector<llvm::Value *> &)> &body);
+
+  /// Return the total number of stages in the pipeline
+  uint32_t GetNumStages() const;
 
  private:
   // The compilation context

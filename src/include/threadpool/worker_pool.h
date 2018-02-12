@@ -29,7 +29,7 @@ using TaskQueue = peloton::LockFreeQueue<std::function<void()>>;
  */
 class WorkerPool {
  public:
-  WorkerPool(const std::string &pool_name, size_t num_workers,
+  WorkerPool(const std::string &pool_name, uint32_t num_workers,
              TaskQueue &task_queue);
 
   /**
@@ -47,7 +47,7 @@ class WorkerPool {
    *
    * @return The number of worker threads assigned to this pool
    */
-  size_t NumWorkers() const { return num_workers_; }
+  uint32_t NumWorkers() const { return num_workers_; }
 
  private:
   // The name of this pool
@@ -55,7 +55,7 @@ class WorkerPool {
   // The worker threads
   std::vector<std::thread> workers_;
   // The number of worker threads
-  size_t num_workers_;
+  uint32_t num_workers_;
   // Flag indicating whether the pool is running
   std::atomic_bool is_running_;
   // The queue where workers pick up tasks

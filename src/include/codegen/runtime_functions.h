@@ -12,8 +12,10 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
+
 #include "common/internal_types.h"
+#include "executor/executor_context.h"
 
 namespace peloton {
 
@@ -67,6 +69,14 @@ class RuntimeFunctions {
   // Get the column configuration for every column in the tile group
   static void GetTileGroupLayout(const storage::TileGroup *tile_group,
                                  ColumnLayoutInfo *infos, uint32_t num_cols);
+
+  // Execute a parallel scan on the given table in the given database, calling
+  // the provided scan function.
+  static void ExecuteTableScan(
+      void *query_state, executor::ExecutorContext::ThreadStates &thread_states,
+      uint32_t db_oid, uint32_t table_oid,
+      void *f);
+//      void (*scanner)(void *, void *, uint64_t, uint64_t));
 
   static void ThrowDivideByZeroException();
 

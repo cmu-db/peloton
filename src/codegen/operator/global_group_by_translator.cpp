@@ -20,8 +20,6 @@
 namespace peloton {
 namespace codegen {
 
-static const std::string kMatBufferTypeName = "Buffer";
-
 GlobalGroupByTranslator::GlobalGroupByTranslator(
     const planner::AggregatePlan &plan, CompilationContext &context,
     Pipeline &pipeline)
@@ -53,7 +51,7 @@ GlobalGroupByTranslator::GlobalGroupByTranslator(
   auto *mat_buffer_type = llvm::StructType::create(
       codegen.GetContext(),
       llvm::cast<llvm::StructType>(aggregate_storage)->elements(),
-      kMatBufferTypeName, true);
+      "Buffer", true);
 
   // Allocate state in the function argument for our materialization buffer
   RuntimeState &runtime_state = context.GetRuntimeState();
@@ -75,7 +73,7 @@ void GlobalGroupByTranslator::Produce() const {
   // Let the child produce tuples that we'll aggregate
   GetCompilationContext().Produce(*GetPlan().GetChild(0));
 
-  auto producer = [this]() {
+  auto producer = [this](ConsumerContext &ctx) {
     CodeGen &codegen = GetCodeGen();
     auto *raw_vec =
         codegen.AllocateBuffer(codegen.Int32Type(), 1, "globalGbSelVector");
@@ -105,8 +103,7 @@ void GlobalGroupByTranslator::Produce() const {
     }
 
     // Create a new consumer context, send (single row) batch to parent
-    ConsumerContext context{GetCompilationContext(), GetPipeline()};
-    context.Consume(batch);
+    ctx.Consume(batch);
   };
 
   // Run the last pipeline serially

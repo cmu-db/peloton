@@ -209,7 +209,7 @@ void OrderByTranslator::Produce() const {
   // Let the child produce the tuples we materialize into a buffer
   GetCompilationContext().Produce(*GetPlan().GetChild(0));
 
-  auto producer = [this]() {
+  auto producer = [this](ConsumerContext &ctx) {
     CodeGen &codegen = GetCodeGen();
     auto *sorter_ptr = LoadStatePtr(sorter_id_);
 
@@ -222,7 +222,8 @@ void OrderByTranslator::Produce() const {
     auto *raw_vec = codegen.AllocateBuffer(i32_type, vec_size, "obSelVec");
     Vector selection_vector{raw_vec, vec_size, i32_type};
 
-    ProduceResults callback{*this, selection_vector};
+    const auto &plan = GetPlanAs<planner::OrderByPlan>();
+    ProduceResults callback{ctx, plan, selection_vector};
     sorter_.VectorizedIterate(codegen, sorter_ptr,
                               selection_vector.GetCapacity(), callback);
   };
@@ -261,21 +262,20 @@ void OrderByTranslator::TearDownQueryState() {
 //===----------------------------------------------------------------------===//
 
 OrderByTranslator::ProduceResults::ProduceResults(
-    const OrderByTranslator &translator, Vector &selection_vector)
-    : translator_(translator), selection_vector_(selection_vector) {}
+    ConsumerContext &ctx, const planner::OrderByPlan &plan,
+    Vector &selection_vector)
+    : ctx_(ctx), plan_(plan), selection_vector_(selection_vector) {}
 
 void OrderByTranslator::ProduceResults::ProcessEntries(
     CodeGen &, llvm::Value *start_index, llvm::Value *end_index,
     Sorter::SorterAccess &access) const {
   // Construct the row batch we're producing
-  CompilationContext &compilation_context = translator_.GetCompilationContext();
-  RowBatch batch{compilation_context, start_index, end_index, selection_vector_,
-                 false};
+  RowBatch batch{ctx_.GetCompilationContext(), start_index, end_index,
+                 selection_vector_, false};
 
   // Add the attribute accessors for rows in this batch
-  const auto &plan = translator_.GetPlanAs<planner::OrderByPlan>();
   std::vector<SorterAttributeAccess> accessors;
-  auto &output_ais = plan.GetOutputColumnAIs();
+  auto &output_ais = plan_.GetOutputColumnAIs();
   for (oid_t col_id = 0; col_id < output_ais.size(); col_id++) {
     accessors.emplace_back(access, col_id);
   }
@@ -283,9 +283,7 @@ void OrderByTranslator::ProduceResults::ProcessEntries(
     batch.AddAttribute(output_ais[col_id], &accessors[col_id]);
   }
 
-  // Create the context and send the batch up
-  ConsumerContext context{compilation_context, translator_.GetPipeline()};
-  context.Consume(batch);
+  ctx_.Consume(batch);
 }
 
 //===----------------------------------------------------------------------===//

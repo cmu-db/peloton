@@ -145,6 +145,7 @@ class CodeContext {
   llvm::Type *int64_type_;
   llvm::Type *double_type_;
   llvm::Type *void_type_;
+  llvm::Type *void_ptr_type_;
   llvm::PointerType *char_ptr_type_;
 
   // All C/C++ builtin functions and their implementations
