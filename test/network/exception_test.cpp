@@ -10,17 +10,17 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <pqxx/pqxx> /* libpqxx is used to instantiate C++ client */
 #include <pqxx/except.hxx>
+#include <pqxx/pqxx> /* libpqxx is used to instantiate C++ client */
 
 #include "common/harness.h"
 #include "common/logger.h"
 #include "gtest/gtest.h"
-#include "network/peloton_server.h"
-#include "network/protocol_handler_factory.h"
-#include "network/postgres_protocol_handler.h"
-#include "util/string_util.h"
 #include "network/connection_handle_factory.h"
+#include "network/peloton_server.h"
+#include "network/postgres_protocol_handler.h"
+#include "network/protocol_handler_factory.h"
+#include "util/string_util.h"
 
 #define NUM_THREADS 1
 
@@ -35,8 +35,10 @@ class ExceptionTests : public PelotonTest {};
 
 void *ExecutorExceptionTest(int port) {
   try {
-    pqxx::connection C(StringUtil::Format(
-        "host=127.0.0.1 port=%d user=default_database sslmode=disable application_name=psql", port));
+    pqxx::connection C(
+        StringUtil::Format("host=127.0.0.1 port=%d user=default_database "
+                           "sslmode=disable application_name=psql",
+                           port));
     int exception_count = 0, total = 2;
     pqxx::work txn1(C);
     try {
@@ -44,7 +46,8 @@ void *ExecutorExceptionTest(int port) {
       txn1.exec("CREATE TABLE foo(id INT);");
       txn1.commit();
     } catch (const pqxx::pqxx_exception &e) {
-      const pqxx::sql_error *s = dynamic_cast<const pqxx::sql_error *>(&e.base());
+      const pqxx::sql_error *s =
+          dynamic_cast<const pqxx::sql_error *>(&e.base());
       if (s) {
         LOG_TRACE("Invalid Create Query: %s", e.base().what());
         exception_count += 1;
@@ -53,17 +56,20 @@ void *ExecutorExceptionTest(int port) {
     pqxx::work txn2(C);
     try {
       txn2.exec("CREATE TABLE A (val1 INT, val2 INT,  val3 INT,  val4 INT);");
-      txn2.exec("INSERT INTO A (val1, val2, val3, val4, val5) VALUES (1, 1, 1, 1, 1);");
+      txn2.exec(
+          "INSERT INTO A (val1, val2, val3, val4, val5) VALUES (1, 1, 1, 1, "
+          "1);");
       txn2.commit();
     } catch (const pqxx::pqxx_exception &e) {
-      const pqxx::sql_error *s = dynamic_cast<const pqxx::sql_error *>(&e.base());
+      const pqxx::sql_error *s =
+          dynamic_cast<const pqxx::sql_error *>(&e.base());
       if (s) {
         LOG_TRACE("Invalid Insert Query: %s", e.base().what());
         exception_count += 1;
       }
     }
     EXPECT_EQ(exception_count, total);
-  }catch (const std::exception &e) {
+  } catch (const std::exception &e) {
     LOG_ERROR("[ExceptionTest] Exception occurred: %s", e.what());
     EXPECT_TRUE(false);
   }
@@ -72,23 +78,29 @@ void *ExecutorExceptionTest(int port) {
 
 /*
  * To test with the queries with syntax error that will be caught by parser.
- * The server will catch these errors in Networking layer and directly return ERROR response.
+ * The server will catch these errors in Networking layer and directly return
+ * ERROR response.
  */
 void *ParserExceptionTest(int port) {
   try {
     // forcing the factory to generate psql protocol handler
-    pqxx::connection C(StringUtil::Format(
-        "host=127.0.0.1 port=%d user=default_database sslmode=disable application_name=psql", port));
+    pqxx::connection C(
+        StringUtil::Format("host=127.0.0.1 port=%d user=default_database "
+                           "sslmode=disable application_name=psql",
+                           port));
 
     peloton::network::ConnectionHandle *conn =
-        peloton::network::ConnectionHandleFactory::GetInstance().ConnectionHandleAt(
-            peloton::network::PelotonServer::recent_connfd).get();
+        peloton::network::ConnectionHandleFactory::GetInstance()
+            .ConnectionHandleAt(peloton::network::PelotonServer::recent_connfd)
+            .get();
 
     network::PostgresProtocolHandler *handler =
-        dynamic_cast<network::PostgresProtocolHandler*>(conn->GetProtocolHandler().get());
+        dynamic_cast<network::PostgresProtocolHandler *>(
+            conn->GetProtocolHandler().get());
     EXPECT_NE(handler, nullptr);
 
-    // If an exception occurs on one transaction, we can not use this transaction anymore
+    // If an exception occurs on one transaction, we can not use this
+    // transaction anymore
     int exception_count = 0, total = 6;
 
     // DROP query
@@ -97,7 +109,8 @@ void *ParserExceptionTest(int port) {
       txn1.exec("DROP TABEL IF EXISTS employee;");
       txn1.commit();
     } catch (const pqxx::pqxx_exception &e) {
-      const pqxx::sql_error *s = dynamic_cast<const pqxx::sql_error*>(&e.base());
+      const pqxx::sql_error *s =
+          dynamic_cast<const pqxx::sql_error *>(&e.base());
       if (s) {
         LOG_TRACE("Invalid Drop Query: %s", e.base().what());
         exception_count += 1;
@@ -110,7 +123,8 @@ void *ParserExceptionTest(int port) {
       txn2.exec("CREATE TABEL employee(id ITN, name VARCHAR(100));");
       txn2.commit();
     } catch (const pqxx::pqxx_exception &e) {
-      const pqxx::sql_error *s = dynamic_cast<const pqxx::sql_error*>(&e.base());
+      const pqxx::sql_error *s =
+          dynamic_cast<const pqxx::sql_error *>(&e.base());
       if (s) {
         LOG_TRACE("Invalid Create Query: %s", e.base().what());
         exception_count += 1;
@@ -127,7 +141,8 @@ void *ParserExceptionTest(int port) {
       txn4.exec("SELECT name FROM foo id = 1;");
       txn4.commit();
     } catch (const pqxx::pqxx_exception &e) {
-      const pqxx::sql_error *s = dynamic_cast<const pqxx::sql_error*>(&e.base());
+      const pqxx::sql_error *s =
+          dynamic_cast<const pqxx::sql_error *>(&e.base());
       if (s) {
         LOG_TRACE("Invalid Select Query: %s", e.base().what());
         exception_count += 1;
@@ -140,7 +155,8 @@ void *ParserExceptionTest(int port) {
       txn5.exec("SELECT ;");
       txn5.commit();
     } catch (const pqxx::pqxx_exception &e) {
-      const pqxx::sql_error *s = dynamic_cast<const pqxx::sql_error*>(&e.base());
+      const pqxx::sql_error *s =
+          dynamic_cast<const pqxx::sql_error *>(&e.base());
       if (s) {
         LOG_TRACE("Invalid Select Query: %s", e.base().what());
         exception_count += 1;
@@ -153,7 +169,8 @@ void *ParserExceptionTest(int port) {
       txn6.exec("PREPARE func INSERT INTO foo VALUES($1, $2);");
       txn6.commit();
     } catch (const pqxx::pqxx_exception &e) {
-      const pqxx::sql_error *s = dynamic_cast<const pqxx::sql_error*>(&e.base());
+      const pqxx::sql_error *s =
+          dynamic_cast<const pqxx::sql_error *>(&e.base());
       if (s) {
         LOG_TRACE("Invalid Prepare Query: %s", e.base().what());
         exception_count += 1;
@@ -167,7 +184,8 @@ void *ParserExceptionTest(int port) {
       txn7.exec("EXECUTE fun;");
       txn7.commit();
     } catch (const pqxx::pqxx_exception &e) {
-      const pqxx::sql_error *s = dynamic_cast<const pqxx::sql_error*>(&e.base());
+      const pqxx::sql_error *s =
+          dynamic_cast<const pqxx::sql_error *>(&e.base());
       if (s) {
         LOG_TRACE("Invalid Execute Query: %s", e.base().what());
         exception_count += 1;
@@ -180,7 +198,8 @@ void *ParserExceptionTest(int port) {
       txn8.exec(";;");
       txn8.commit();
     } catch (const pqxx::pqxx_exception &e) {
-      const pqxx::sql_error *s = dynamic_cast<const pqxx::sql_error*>(&e.base());
+      const pqxx::sql_error *s =
+          dynamic_cast<const pqxx::sql_error *>(&e.base());
       if (s) {
         LOG_TRACE("Empty Query: %s", e.base().what());
         EXPECT_TRUE(false);
@@ -199,7 +218,13 @@ void *ParserExceptionTest(int port) {
   return NULL;
 }
 
-void TestSuit(std::function<void(int)> test_function) {
+/**
+ * Use std::thread to initiate peloton server and pqxx client in separate
+ * threads
+ * Simple query test to guarantee both sides run correctly
+ * Callback method to close server after client finishes
+ */
+TEST_F(ExceptionTests, ExceptionTest) {
   peloton::PelotonInit::Initialize();
   LOG_INFO("Server initialized");
   peloton::network::PelotonServer server;
@@ -215,7 +240,9 @@ void TestSuit(std::function<void(int)> test_function) {
   std::thread serverThread([&] { server.ServerLoop(); });
 
   // server & client running correctly
-  test_function(port);
+  ParserExceptionTest(port);
+  ExecutorExceptionTest(port);
+
 
   server.Close();
   serverThread.join();
@@ -223,26 +250,6 @@ void TestSuit(std::function<void(int)> test_function) {
   peloton::PelotonInit::Shutdown();
   LOG_INFO("Peloton has shut down");
 }
-
-/**
- * Use std::thread to initiate peloton server and pqxx client in separate
- * threads
- * Simple query test to guarantee both sides run correctly
- * Callback method to close server after client finishes
- */
-TEST_F(ExceptionTests, ParserExceptionTest) {
-  TestSuit(ParserExceptionTest);
-}
-
-/**
- * Use std::thread to initiate peloton server and pqxx client in separate
- * threads
- * Simple query test to guarantee both sides run correctly
- * Callback method to close server after client finishes
- */
-// TEST_F(ExceptionTests, ExecutorExceptionTest) {
-//   TestSuit(ExecutorExceptionTest);
-// }
 
 }  // namespace test
 }  // namespace peloton

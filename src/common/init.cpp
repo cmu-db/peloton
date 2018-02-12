@@ -12,14 +12,14 @@
 
 #include "common/init.h"
 
-#include <google/protobuf/stubs/common.h>
 #include <gflags/gflags.h>
+#include <google/protobuf/stubs/common.h>
 
 #include "brain/index_tuner.h"
 #include "brain/layout_tuner.h"
 #include "catalog/catalog.h"
-#include "common/thread_pool.h"
 #include "common/statement_cache_manager.h"
+#include "common/thread_pool.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "gc/gc_manager_factory.h"
 #include "settings/settings_manager.h"
@@ -83,7 +83,7 @@ void PelotonInit::Initialize() {
   // initialize the catalog and add the default database, so we don't do this on
   // the first query
   pg_catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
-
+  
   txn_manager.CommitTransaction(txn);
 
   // Initialize the Statement Cache Manager
