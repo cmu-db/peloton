@@ -318,14 +318,14 @@ bool DataTable::InstallVersion(const AbstractTuple *tuple,
                                ItemPointer *index_entry_ptr) {
   if (CheckConstraints(tuple) == false) {
     LOG_TRACE("InsertVersion(): Constraint violated");
-    return false;
+    throw Exception("Constraint violated");
   }
 
   // Index checks and updates
   if (InsertInSecondaryIndexes(tuple, targets_ptr, transaction,
                                index_entry_ptr) == false) {
     LOG_TRACE("Index constraint violated");
-    return false;
+    throw Exception("Constraint violated");
   }
   return true;
 }

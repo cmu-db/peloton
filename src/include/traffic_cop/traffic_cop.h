@@ -133,10 +133,6 @@ class TrafficCop {
 
   std::vector<type::Value> &GetParamVal() { return param_values_; }
 
-  void SetErrorMessage(std::string error_message) {
-    error_message_ = std::move(error_message);
-  }
-
   std::string &GetErrorMessage() { return error_message_; }
 
   void SetQueuing(bool is_queuing) { is_queuing_ = is_queuing; }
