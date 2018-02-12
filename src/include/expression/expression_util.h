@@ -418,18 +418,24 @@ class ExpressionUtil {
    *original expression since it may be referenced in other places
    */
   static void ConvertToTvExpr(AbstractExpression *expr,
-                              ExprMap &child_expr_map) {
+                              std::vector<ExprMap> child_expr_maps) {
+    if (expr == nullptr) {
+      return;
+    };
     for (size_t i = 0; i < expr->GetChildrenSize(); i++) {
       auto child_expr = expr->GetModifiableChild(i);
-      if (child_expr->GetExpressionType() != ExpressionType::VALUE_TUPLE &&
-          child_expr_map.count(child_expr)) {
-        // EvaluateExpression({child_expr_map}, child_expr);
-        expr->SetChild(i,
-                       new TupleValueExpression(child_expr->GetValueType(), 0,
-                                                child_expr_map[child_expr]));
-      } else {
-        ConvertToTvExpr(child_expr, child_expr_map);
+      for (size_t tuple_idx = 0; tuple_idx < child_expr_maps.size();
+           ++tuple_idx) {
+        if (child_expr->GetExpressionType() != ExpressionType::VALUE_TUPLE &&
+            child_expr_maps[tuple_idx].count(child_expr)) {
+          // EvaluateExpression({child_expr_map}, child_expr);
+          expr->SetChild(i, new TupleValueExpression(
+                                child_expr->GetValueType(), tuple_idx,
+                                child_expr_maps[tuple_idx][child_expr]));
+          break;
+        }
       }
+      ConvertToTvExpr(expr->GetModifiableChild(i), child_expr_maps);
     }
   }
 

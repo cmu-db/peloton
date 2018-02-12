@@ -84,7 +84,7 @@ class AggregateExpression : public AbstractExpression {
     const auto &context = binding_contexts[0];
     ai_ = context->Find(value_idx_);
     PL_ASSERT(ai_ != nullptr);
-    LOG_DEBUG("AggregateOutput Column ID %u.%u binds to AI %p (%s)", 0,
+    LOG_TRACE("AggregateOutput Column ID %u.%u binds to AI %p (%s)", 0,
               value_idx_, ai_, ai_->name.c_str());
   }
 

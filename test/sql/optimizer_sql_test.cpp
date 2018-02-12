@@ -393,7 +393,7 @@ TEST_F(OptimizerSQLTests, GroupByTest) {
            false);
   // Test group by with having
   TestUtil("SELECT AVG(a), b FROM test GROUP BY b having AVG(a)=3.5",
-           {"3.5", "22"}, false);
+           {"3.5", "11", "3.5", "22"}, false);
 
   // Test group by combined with ORDER BY
   TestUtil("SELECT b FROM test GROUP BY b ORDER BY b", {"0", "11", "22", "33"},

@@ -36,7 +36,7 @@ void TupleValueExpression::PerformBinding(
   const auto &context = binding_contexts[GetTupleId()];
   ai_ = context->Find(GetColumnId());
   PL_ASSERT(ai_ != nullptr);
-  LOG_DEBUG("TVE Column ID %u.%u binds to AI %p (%s)", GetTupleId(),
+  LOG_TRACE("TVE Column ID %u.%u binds to AI %p (%s)", GetTupleId(),
             GetColumnId(), ai_, ai_->name.c_str());
 }
 

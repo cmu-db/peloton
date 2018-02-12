@@ -199,7 +199,6 @@ void GetToIndexScan::Transform(
         }
         // Add transformed plan if found
         if (index_matched) {
-          LOG_DEBUG("Index id :%u", index_id);
           auto index_scan_op = PhysicalIndexScan::make(
               get->get_id, get->table, get->table_alias, get->predicates,
               get->is_for_update, index_id, {}, {}, {});
@@ -726,7 +725,7 @@ void PushFilterThroughJoin::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed,
     UNUSED_ATTRIBUTE OptimizeContext *context) const {
-  LOG_DEBUG("PushFilterThroughJoin::Transform");
+  LOG_TRACE("PushFilterThroughJoin::Transform");
   auto &memo = context->metadata->memo;
   auto join_op_expr = input->Children().at(0);
   auto &join_children = join_op_expr->Children();
@@ -818,7 +817,7 @@ void PushFilterThroughAggregation::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed,
     UNUSED_ATTRIBUTE OptimizeContext *context) const {
-  LOG_DEBUG("PushFilterThroughAggregation::Transform");
+  LOG_TRACE("PushFilterThroughAggregation::Transform");
   auto aggregation_op =
       input->Children().at(0)->Op().As<LogicalAggregateAndGroupBy>();
 
@@ -979,7 +978,7 @@ void MarkJoinToInnerJoin::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed,
     UNUSED_ATTRIBUTE OptimizeContext *context) const {
-  LOG_DEBUG("MarkJoinToInnerJoin::Transform");
+  LOG_TRACE("MarkJoinToInnerJoin::Transform");
   UNUSED_ATTRIBUTE auto mark_join = input->Op().As<LogicalMarkJoin>();
   auto &join_children = input->Children();
 
@@ -1030,7 +1029,7 @@ void SingleJoinToInnerJoin::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed,
     UNUSED_ATTRIBUTE OptimizeContext *context) const {
-  LOG_DEBUG("SingleJoinToInnerJoin::Transform");
+  LOG_TRACE("SingleJoinToInnerJoin::Transform");
   UNUSED_ATTRIBUTE auto single_join = input->Op().As<LogicalSingleJoin>();
   auto &join_children = input->Children();
 
@@ -1085,7 +1084,7 @@ void PullFilterThroughMarkJoin::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed,
     UNUSED_ATTRIBUTE OptimizeContext *context) const {
-  LOG_DEBUG("PullFilterThroughMarkJoin::Transform");
+  LOG_TRACE("PullFilterThroughMarkJoin::Transform");
   UNUSED_ATTRIBUTE auto mark_join = input->Op().As<LogicalMarkJoin>();
   auto &join_children = input->Children();
   auto filter = join_children[1]->Op();
@@ -1146,7 +1145,7 @@ void PullFilterThroughAggregation::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed,
     UNUSED_ATTRIBUTE OptimizeContext *context) const {
-  LOG_DEBUG("PullFilterThroughAggregation::Transform");
+  LOG_TRACE("PullFilterThroughAggregation::Transform");
   auto &memo = context->metadata->memo;
   auto &filter_expr = input->Children()[0];
   auto child_group_id =
@@ -1167,14 +1166,9 @@ void PullFilterThroughAggregation::Transform(
       // (outer_relation.a = (expr))
       correlated_predicates.emplace_back(predicate);
       auto &root_expr = predicate.expr;
-      LOG_DEBUG("Correlated predicate : %s", root_expr->GetInfo().c_str());
       if (root_expr->GetChild(0)->GetDepth() < root_expr->GetDepth()) {
-        LOG_DEBUG("New groupby col : %s",
-                  root_expr->GetChild(1)->GetInfo().c_str());
         new_groupby_cols.emplace_back(root_expr->GetChild(1)->Copy());
       } else {
-        LOG_DEBUG("New groupby col : %s",
-                  root_expr->GetChild(0)->GetInfo().c_str());
         new_groupby_cols.emplace_back(root_expr->GetChild(0)->Copy());
       }
     }

@@ -186,6 +186,8 @@ void PlanGenerator::Visit(const PhysicalInnerNLJoin *op) {
       expression::ExpressionUtil::JoinAnnotatedExprs(op->join_predicates);
   expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
                                                  join_predicate.get());
+  expression::ExpressionUtil::ConvertToTvExpr(join_predicate.get(),
+                                              children_expr_map_);
 
   vector<oid_t> left_keys;
   vector<oid_t> right_keys;
@@ -225,6 +227,8 @@ void PlanGenerator::Visit(const PhysicalInnerHashJoin *op) {
       expression::ExpressionUtil::JoinAnnotatedExprs(op->join_predicates);
   expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
                                                  join_predicate.get());
+  expression::ExpressionUtil::ConvertToTvExpr(join_predicate.get(),
+                                              children_expr_map_);
 
   vector<unique_ptr<const expression::AbstractExpression>> left_keys;
   vector<unique_ptr<const expression::AbstractExpression>> right_keys;
@@ -423,7 +427,7 @@ void PlanGenerator::BuildProjectionPlan() {
       // Copy then evaluate the expression and add to target list
       auto col_copy = col->Copy();
       // TODO(boweic) : integrate the following two functions
-      expression::ExpressionUtil::ConvertToTvExpr(col_copy, child_expr_map);
+      expression::ExpressionUtil::ConvertToTvExpr(col_copy, {child_expr_map});
       expression::ExpressionUtil::EvaluateExpression(output_expr_maps,
                                                      col_copy);
       planner::DerivedAttribute attribute{col_copy};
@@ -470,7 +474,6 @@ void PlanGenerator::BuildAggregatePlan(
     expression::ExpressionUtil::EvaluateExpression(children_expr_map_, expr);
     if (expression::ExpressionUtil::IsAggregateExpression(
             expr->GetExpressionType())) {
-      LOG_DEBUG("Output Column for Agg %lu : %s", idx, expr->GetInfo().c_str());
       auto agg_expr = reinterpret_cast<expression::AggregateExpression *>(expr);
       auto agg_col = expr->GetModifiableChild(0);
       // Maps the aggregate value in th right tuple to the output
@@ -500,12 +503,10 @@ void PlanGenerator::BuildAggregatePlan(
   // Generate the Aggregate Plan
   unique_ptr<const planner::ProjectInfo> proj_info(
       new planner::ProjectInfo(move(tl), move(dml)));
-  // LOG_DEBUG(
-  //     "Having predicate : %s ",
-  //     having_predicate == nullptr ? "" :
-  //     having_predicate->GetInfo().c_str());
   expression::ExpressionUtil::EvaluateExpression({output_expr_map},
                                                  having_predicate.get());
+  expression::ExpressionUtil::ConvertToTvExpr(having_predicate.get(),
+                                              {output_expr_map});
   unique_ptr<const expression::AbstractExpression> predicate(
       having_predicate.release());
   // TODO(boweic): Ditto, since the aggregate plan will own the schema, we may
