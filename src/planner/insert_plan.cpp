@@ -13,6 +13,7 @@
 #include "planner/insert_plan.h"
 
 #include "catalog/catalog.h"
+#include "common/exception.h"
 #include "expression/constant_value_expression.h"
 #include "storage/data_table.h"
 #include "type/ephemeral_pool.h"
@@ -21,8 +22,8 @@
 namespace peloton {
 namespace planner {
 
-InsertPlan::InsertPlan(storage::DataTable *table,
-    const std::vector<std::string> *columns,
+InsertPlan::InsertPlan(
+    storage::DataTable *table, const std::vector<std::string> *columns,
     const std::vector<std::vector<
         std::unique_ptr<expression::AbstractExpression>>> *insert_values)
     : target_table_(table), bulk_insert_count_(insert_values->size()) {
@@ -37,7 +38,10 @@ InsertPlan::InsertPlan(storage::DataTable *table,
     for (uint32_t tuple_idx = 0; tuple_idx < insert_values->size();
          tuple_idx++) {
       auto &values = (*insert_values)[tuple_idx];
-      PL_ASSERT(values.size() <= schema->GetColumnCount());
+      if (values.size() > schema->GetColumnCount())
+        throw CatalogException(
+            "ERROR:  INSERT has more expressions than target columns");
+
       uint32_t param_idx = 0;
       for (uint32_t column_id = 0; column_id < values.size(); column_id++) {
         auto &exp = values[column_id];
@@ -66,28 +70,46 @@ InsertPlan::InsertPlan(storage::DataTable *table,
   }
   // INSERT INTO table_name (col1, col2, ...) VALUES (val1, val2, ...);
   else {
-    PL_ASSERT(columns->size() <= schema->GetColumnCount());
+    uint32_t tup_size = ((*insert_values)[0]).size();  // size of each tuple
+    auto &table_columns = schema->GetColumns();
+    auto table_columns_num = schema->GetColumnCount();
+    // check for equality of columns size and insert values size
+    if (columns->size() > tup_size)
+      throw CatalogException(
+          "ERROR:  INSERT has more target columns than expressions");
+    else if (columns->size() < tup_size)
+      throw CatalogException(
+          "ERROR:  INSERT has more expressions than target columns");
+
+    std::vector<size_t> specified(
+        columns->size());  // containing the indices of columns specified.
+    // Would it be more appropriate for 'specified' to be a map?
+    for (size_t idx = 0; idx != columns->size(); ++idx) {
+      auto col = (*columns)[idx];
+      // for(size_t idx = 0; idx < columns->size(); idx++){
+      // auto col = (*columns)[idx];
+      auto found = std::find_if(table_columns.begin(), table_columns.end(),
+                                [&col](const peloton::catalog::Column &x) {
+                                  return col == x.GetName();
+                                });
+      if (found == table_columns.end())
+        throw CatalogException("ERROR:  column \"" + col + "\" of relation \"" +
+                               target_table_->GetName() + "\" does not exist");
+      size_t column_id = std::distance(table_columns.begin(), found);
+      specified[idx] = column_id;
+    }
+
+    values_.resize(table_columns_num);
+
     for (uint32_t tuple_idx = 0; tuple_idx < insert_values->size();
          tuple_idx++) {
       auto &values = (*insert_values)[tuple_idx];
 
-      auto &table_columns = schema->GetColumns();
-      auto table_columns_num = schema->GetColumnCount();
       uint32_t param_idx = 0;
-      for (size_t column_id = 0; column_id < table_columns_num; column_id++) {
-        auto col = table_columns[column_id];
+
+      for (size_t idx = 0; idx != specified.size(); ++idx) {
+        auto column_id = specified[idx];
         const type::TypeId type = schema->GetType(column_id);
-        auto found = std::find_if(columns->begin(), columns->end(),
-            [&col](const std::string &x) { return col.GetName() == x; });
-        if (found == columns->end()) {
-          type::Value *v = schema->GetDefaultValue(column_id);
-          if (v == nullptr)
-            values_.push_back(type::ValueFactory::GetNullValueByType(type));
-          else
-            values_.push_back(*v);
-          continue;
-        }
-        auto idx = std::distance(columns->begin(), found);
         auto &exp = values[idx];
         if (exp->GetExpressionType() == ExpressionType::VALUE_PARAMETER) {
           std::tuple<oid_t, oid_t, oid_t> pair =
@@ -99,16 +121,32 @@ InsertPlan::InsertPlan(storage::DataTable *table,
           auto *const_exp =
               dynamic_cast<expression::ConstantValueExpression *>(exp.get());
           type::Value value = const_exp->GetValue().CastAs(type);
-          values_.push_back(value);
+          values_[column_id] = value;
         }
+      }
+
+      // Write defaults for unspecified columns.
+      size_t specified_idx = 0;
+      std::sort(specified.begin(),
+                specified.end());  // for efficient comparision
+      for (size_t column_id = 0; column_id < table_columns_num; column_id++) {
+        if (column_id == specified[specified_idx]) {
+          specified_idx++;
+          continue;  // column with index idx already specified
+        }
+        const type::TypeId type = schema->GetType(column_id);
+        type::Value *v = schema->GetDefaultValue(column_id);
+        if (v == nullptr)
+          values_[column_id] = type::ValueFactory::GetNullValueByType(type);
+        else
+          values_[column_id] = *v;
       }
     }
   }
 }
 
 type::AbstractPool *InsertPlan::GetPlanPool() {
-  if (pool_.get() == nullptr)
-    pool_.reset(new type::EphemeralPool());
+  if (pool_.get() == nullptr) pool_.reset(new type::EphemeralPool());
   return pool_.get();
 }
 
@@ -157,23 +195,19 @@ hash_t InsertPlan::Hash() const {
 }
 
 bool InsertPlan::operator==(const AbstractPlan &rhs) const {
-  if (GetPlanNodeType() != rhs.GetPlanNodeType())
-    return false;
+  if (GetPlanNodeType() != rhs.GetPlanNodeType()) return false;
 
   auto &other = static_cast<const planner::InsertPlan &>(rhs);
 
   auto *table = GetTable();
   auto *other_table = other.GetTable();
   PL_ASSERT(table && other_table);
-  if (*table != *other_table)
-    return false;
+  if (*table != *other_table) return false;
 
   if (GetChildren().size() == 0) {
-    if (other.GetChildren().size() != 0)
-      return false;
+    if (other.GetChildren().size() != 0) return false;
 
-    if (GetBulkInsertCount() != other.GetBulkInsertCount())
-      return false;
+    if (GetBulkInsertCount() != other.GetBulkInsertCount()) return false;
   }
 
   return AbstractPlan::operator==(rhs);
@@ -189,8 +223,9 @@ void InsertPlan::VisitParameters(
     for (uint32_t i = 0; i < values_.size(); i++) {
       auto value = values_[i];
       auto column_id = i % columns_num;
-      map.Insert(expression::Parameter::CreateConstParameter(value.GetTypeId(),
-          schema->AllowNull(column_id)), nullptr);
+      map.Insert(expression::Parameter::CreateConstParameter(
+                     value.GetTypeId(), schema->AllowNull(column_id)),
+                 nullptr);
       values.push_back(value);
     }
   } else {

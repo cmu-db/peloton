@@ -13,6 +13,7 @@
 #include <memory>
 
 #include "catalog/catalog.h"
+#include "common/exception.h"
 #include "common/harness.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/create_executor.h"
@@ -63,10 +64,12 @@ void CreateAndLoadTable4() {
       "i CHAR, j VARCHAR, k VARBINARY, l BOOLEAN);");
 
   // Insert tuples into table
-  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test4 VALUES "
+  TestingSQLUtil::ExecuteSQLQuery(
+      "INSERT INTO test4 VALUES "
       "(1, 2, 3, 4, 5.1, 6.1, '2017-10-10 00:00:00-00', "
       "'A', 'a', '1', 'true');");
-  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test4 VALUES "
+  TestingSQLUtil::ExecuteSQLQuery(
+      "INSERT INTO test4 VALUES "
       "(11, 12, 13, 14, 15.1, 16.1, '2017-10-11 00:00:00-00', "
       "'B', 'b', '2', 'false');");
 }
@@ -81,8 +84,7 @@ void CreateAndLoadTable5() {
 
 void CreateAndLoadTable6() {
   // Create a table first
-  TestingSQLUtil::ExecuteSQLQuery(
-      "CREATE TABLE test6(a INT, b INT, c INT);");
+  TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE test6(a INT, b INT, c INT);");
 
   // Insert tuples into table
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test6 VALUES (1, 22, 333);");
@@ -93,8 +95,7 @@ void CreateAndLoadTable6() {
 
 void CreateAndLoadTable7() {
   // Create a table first
-  TestingSQLUtil::ExecuteSQLQuery(
-      "CREATE TABLE test7(a INT, b INT, c INT);");
+  TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE test7(a INT, b INT, c INT);");
 
   // Insert tuples into table
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test7 VALUES (99, 5, 888);");
@@ -103,6 +104,15 @@ void CreateAndLoadTable7() {
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test7 VALUES (55, 8, 999);");
 }
 
+void CreateAndLoadTable8() {
+  // Create a table with some defaults
+  TestingSQLUtil::ExecuteSQLQuery(
+      "CREATE TABLE test8(num1 int DEFAULT 33, num2 int DEFAULT 66, num3 int "
+      "DEFAULT 99);");
+
+  // Insert tuples
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test8(num2) VALUES(50);");
+}
 
 TEST_F(InsertSQLTests, InsertOneValue) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -140,6 +150,24 @@ TEST_F(InsertSQLTests, InsertOneValue) {
   EXPECT_EQ("5", TestingSQLUtil::GetResultValueAsString(result, 0));
   EXPECT_EQ("55", TestingSQLUtil::GetResultValueAsString(result, 1));
   EXPECT_EQ("555", TestingSQLUtil::GetResultValueAsString(result, 2));
+
+  rows_changed = 0;
+  EXPECT_THROW({
+    try {
+      // Insert a tuple with more target columns than values
+      query = "INSERT INTO test VALUES(3, 4, 5, 6);";
+      txn = txn_manager.BeginTransaction();
+      plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn);
+      EXPECT_EQ(plan->GetPlanNodeType(), PlanNodeType::INSERT);
+      txn_manager.CommitTransaction(txn);
+    } catch (peloton::Exception &ex) {
+      EXPECT_EQ(ExceptionType::CATALOG, ex.GetType());
+      EXPECT_STREQ("ERROR:  INSERT has more expressions than target columns",
+                   ex.what());
+      throw peloton::CatalogException(ex.what());
+    }
+  }, peloton::CatalogException);
+  EXPECT_EQ(0, rows_changed);
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
@@ -205,7 +233,7 @@ TEST_F(InsertSQLTests, InsertSpecifyColumns) {
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 
-  CreateAndLoadTable();
+  CreateAndLoadTable8();
 
   std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
@@ -215,7 +243,8 @@ TEST_F(InsertSQLTests, InsertSpecifyColumns) {
       new optimizer::Optimizer());
 
   // INSERT a tuple with columns specified
-  std::string query("INSERT INTO test (b, a, c) VALUES (99, 8, 111);");
+  std::string query(
+      "INSERT INTO test8 (num3, num2, num1) VALUES (99, 8, 111);");
 
   txn = txn_manager.BeginTransaction();
   auto plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn);
@@ -229,12 +258,111 @@ TEST_F(InsertSQLTests, InsertSpecifyColumns) {
 
   // SELECT to find out if the tuple is correctly inserted
   TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
-      optimizer, "SELECT * FROM test WHERE a=8", result, tuple_descriptor,
+      optimizer, "SELECT * FROM test8 WHERE num2=8", result, tuple_descriptor,
       rows_changed, error_message);
   EXPECT_EQ(3, result.size());
-  EXPECT_EQ("8", TestingSQLUtil::GetResultValueAsString(result, 0));
-  EXPECT_EQ("99", TestingSQLUtil::GetResultValueAsString(result, 1));
-  EXPECT_EQ("111", TestingSQLUtil::GetResultValueAsString(result, 2));
+  EXPECT_EQ("111", TestingSQLUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("8", TestingSQLUtil::GetResultValueAsString(result, 1));
+  EXPECT_EQ("99", TestingSQLUtil::GetResultValueAsString(result, 2));
+
+  // SELECT to find out whether defaults are correctly inserted
+  TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
+      optimizer, "SELECT * FROM test8 WHERE num2=50", result, tuple_descriptor,
+      rows_changed, error_message);
+
+  EXPECT_EQ(3, result.size());
+  EXPECT_EQ("33", TestingSQLUtil::GetResultValueAsString(result, 0));
+  EXPECT_EQ("50", TestingSQLUtil::GetResultValueAsString(result, 1));
+  EXPECT_EQ("99", TestingSQLUtil::GetResultValueAsString(result, 2));
+
+  rows_changed = 0;
+  EXPECT_THROW({
+    try {
+      // Insert a tuple with more target columns than values
+      query = "INSERT INTO test8(num1, num3) VALUES(3);";
+      txn = txn_manager.BeginTransaction();
+      plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn);
+      EXPECT_EQ(plan->GetPlanNodeType(), PlanNodeType::INSERT);
+      txn_manager.CommitTransaction(txn);
+    } catch (peloton::Exception &ex) {
+      EXPECT_EQ(ExceptionType::CATALOG, ex.GetType());
+      EXPECT_STREQ("ERROR:  INSERT has more target columns than expressions",
+                   ex.what());
+      throw peloton::CatalogException(ex.what());
+    }
+  }, peloton::CatalogException);
+  EXPECT_EQ(0,
+            rows_changed);  // no rows should be affected by the incorrect query
+
+  EXPECT_THROW({
+    try {
+      // Insert a tuple with more target columns than values
+      query = "INSERT INTO test8(num1, num3) VALUES(3, 4, 5);";
+      txn = txn_manager.BeginTransaction();
+      plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn);
+      EXPECT_EQ(plan->GetPlanNodeType(), PlanNodeType::INSERT);
+      txn_manager.CommitTransaction(txn);
+    } catch (peloton::Exception &ex) {
+      EXPECT_EQ(ExceptionType::CATALOG, ex.GetType());
+      EXPECT_STREQ("ERROR:  INSERT has more expressions than target columns",
+                   ex.what());
+      throw peloton::CatalogException(ex.what());
+    }
+  }, peloton::CatalogException);
+  EXPECT_EQ(0, rows_changed);
+
+  EXPECT_THROW({
+    try {
+      // Insert a tuple with more target columns than values
+      query = "INSERT INTO test8(num1, num3) VALUES(3, 4, 5);";
+      txn = txn_manager.BeginTransaction();
+      plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn);
+      EXPECT_EQ(plan->GetPlanNodeType(), PlanNodeType::INSERT);
+      txn_manager.CommitTransaction(txn);
+    } catch (peloton::Exception &ex) {
+      EXPECT_EQ(ExceptionType::CATALOG, ex.GetType());
+      EXPECT_STREQ("ERROR:  INSERT has more expressions than target columns",
+                   ex.what());
+      throw peloton::CatalogException(ex.what());
+    }
+  }, peloton::CatalogException);
+  EXPECT_EQ(0, rows_changed);
+
+  EXPECT_THROW({
+    try {
+      // Insert a tuple with more target columns than values
+      query = "INSERT INTO test8(numx) VALUES(3);";
+      txn = txn_manager.BeginTransaction();
+      plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn);
+      EXPECT_EQ(plan->GetPlanNodeType(), PlanNodeType::INSERT);
+      txn_manager.CommitTransaction(txn);
+    } catch (peloton::Exception &ex) {
+      EXPECT_EQ(ExceptionType::CATALOG, ex.GetType());
+      EXPECT_STREQ(
+          "ERROR:  column \"numx\" of relation \"test8\" does not exist",
+          ex.what());
+      throw peloton::CatalogException(ex.what());
+    }
+  }, peloton::CatalogException);
+  EXPECT_EQ(0, rows_changed);
+
+  EXPECT_THROW({
+    try {
+      // Insert a tuple with more target columns than values
+      query = "INSERT INTO test8(num1, num4) VALUES(3, 4);";
+      txn = txn_manager.BeginTransaction();
+      plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn);
+      EXPECT_EQ(plan->GetPlanNodeType(), PlanNodeType::INSERT);
+      txn_manager.CommitTransaction(txn);
+    } catch (peloton::Exception &ex) {
+      EXPECT_EQ(ExceptionType::CATALOG, ex.GetType());
+      EXPECT_STREQ(
+          "ERROR:  column \"num4\" of relation \"test8\" does not exist",
+          ex.what());
+      throw peloton::CatalogException(ex.what());
+    }
+  }, peloton::CatalogException);
+  EXPECT_EQ(0, rows_changed);
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
@@ -258,12 +386,12 @@ TEST_F(InsertSQLTests, InsertTooLargeVarchar) {
       new optimizer::Optimizer());
 
   std::string query("INSERT INTO test3 VALUES(1, 'abcd', 'abcdefghij');");
-  //std::string query("INSERT INTO test3 VALUES(1, 'abcd', 'abcdefghijk');");
+  // std::string query("INSERT INTO test3 VALUES(1, 'abcd', 'abcdefghijk');");
 
   txn = txn_manager.BeginTransaction();
-  // This should be re-enabled when the check is properly done in catalog 
+  // This should be re-enabled when the check is properly done in catalog
   // It used to be done at the insert query level
-  //EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query,
+  // EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query,
   //             txn, peloton::Exception);
   auto plan = TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn);
   EXPECT_EQ(plan->GetPlanNodeType(), PlanNodeType::INSERT);
@@ -402,7 +530,7 @@ TEST_F(InsertSQLTests, InsertIntoSelectSimpleAllType) {
   EXPECT_EQ("5.1", TestingSQLUtil::GetResultValueAsString(result, 4));
   EXPECT_EQ("6.1", TestingSQLUtil::GetResultValueAsString(result, 5));
   EXPECT_EQ("2017-10-10 00:00:00.000000+00",
-             TestingSQLUtil::GetResultValueAsString(result, 6));
+            TestingSQLUtil::GetResultValueAsString(result, 6));
   EXPECT_EQ("A", TestingSQLUtil::GetResultValueAsString(result, 7));
   EXPECT_EQ("a", TestingSQLUtil::GetResultValueAsString(result, 8));
   EXPECT_EQ('1', TestingSQLUtil::GetResultValueAsString(result, 9).at(0));
@@ -419,7 +547,7 @@ TEST_F(InsertSQLTests, InsertIntoSelectSimpleAllType) {
   EXPECT_EQ("5.1", TestingSQLUtil::GetResultValueAsString(result, 4));
   EXPECT_EQ("6.1", TestingSQLUtil::GetResultValueAsString(result, 5));
   EXPECT_EQ("2017-10-10 00:00:00.000000+00",
-             TestingSQLUtil::GetResultValueAsString(result, 6));
+            TestingSQLUtil::GetResultValueAsString(result, 6));
   EXPECT_EQ("A", TestingSQLUtil::GetResultValueAsString(result, 7));
   EXPECT_EQ("a", TestingSQLUtil::GetResultValueAsString(result, 8));
   EXPECT_EQ('1', TestingSQLUtil::GetResultValueAsString(result, 9).at(0));
@@ -436,7 +564,7 @@ TEST_F(InsertSQLTests, InsertIntoSelectSimpleAllType) {
   EXPECT_EQ("15.1", TestingSQLUtil::GetResultValueAsString(result, 4));
   EXPECT_EQ("16.1", TestingSQLUtil::GetResultValueAsString(result, 5));
   EXPECT_EQ("2017-10-11 00:00:00.000000+00",
-             TestingSQLUtil::GetResultValueAsString(result, 6));
+            TestingSQLUtil::GetResultValueAsString(result, 6));
   EXPECT_EQ("B", TestingSQLUtil::GetResultValueAsString(result, 7));
   EXPECT_EQ("b", TestingSQLUtil::GetResultValueAsString(result, 8));
   EXPECT_EQ('2', TestingSQLUtil::GetResultValueAsString(result, 9).at(0));
