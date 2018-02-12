@@ -254,7 +254,10 @@ class ValueFactory {
           } catch (std::out_of_range &e) {
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
+          } catch (std::invalid_argument &e) {
+            throw Exception("Invalid input syntax for integer: \'" + str + "\'");
           }
+
           if (integer > PELOTON_INT32_MAX || integer < PELOTON_INT32_MIN)
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
