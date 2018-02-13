@@ -139,7 +139,7 @@ llvm::Function *CompilationContext::GenerateInitFunction() {
   FunctionBuilder init_func{code_context_, name, codegen_.VoidType(), args};
   {
     // Let the consumer initialize
-    exec_consumer_.InitializeState(*this);
+    exec_consumer_.InitializeQueryState(*this);
 
     // Allow each operator to initialize their state
     for (auto &iter : op_translators_) {
@@ -182,7 +182,7 @@ llvm::Function *CompilationContext::GenerateTearDownFunction() {
                                  args};
   {
     // Let the consumer cleanup
-    exec_consumer_.TearDownState(*this);
+    exec_consumer_.TearDownQueryState(*this);
 
     // Allow each operator to clean up their state
     for (auto &iter : op_translators_) {
@@ -239,19 +239,6 @@ AuxiliaryProducerFunction CompilationContext::DeclareAuxiliaryProducer(
   auxiliary_producers_.emplace(&plan, declaration);
 
   return AuxiliaryProducerFunction(declaration);
-}
-
-void CompilationContext::RegisterPipeline(Pipeline &pipeline) {
-  pipelines_.push_back(&pipeline);
-}
-
-uint32_t CompilationContext::GetPipelinePosition(Pipeline &pipeline) {
-  for (uint32_t i = 0; i < pipelines_.size(); i++) {
-    if (&pipeline == pipelines_[i]) {
-      return i;
-    }
-  }
-  throw Exception{"Attempted to find a non-existant pipeline!"};
 }
 
 }  // namespace codegen

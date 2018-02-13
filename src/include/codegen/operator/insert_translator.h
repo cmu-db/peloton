@@ -69,7 +69,7 @@ class InsertTranslator : public OperatorTranslator {
 
  private:
   // The ID used to retrieve the Insert instance
-  RuntimeState::StateID inserter_state_id_;
+  RuntimeState::Id inserter_state_id_;
 
   // Storage access
   codegen::TableStorage table_storage_;

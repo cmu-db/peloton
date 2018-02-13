@@ -142,8 +142,8 @@ class Printer : public codegen::ExecutionConsumer {
   }
 
   // None of these are used, except ConsumeResult()
-  void InitializeState(codegen::CompilationContext &) override {}
-  void TearDownState(codegen::CompilationContext &) override {}
+  void InitializeQueryState(codegen::CompilationContext &) override {}
+  void TearDownQueryState(codegen::CompilationContext &) override {}
 
   void Prepare(codegen::CompilationContext &ctx) override;
   void ConsumeResult(codegen::ConsumerContext &ctx,

@@ -75,8 +75,14 @@ class CompilationContext {
   AuxiliaryProducerFunction DeclareAuxiliaryProducer(
       const planner::AbstractPlan &plan, const std::string &provided_name);
 
-  void RegisterPipeline(Pipeline &pipeline);
-  uint32_t GetPipelinePosition(Pipeline &pipeline);
+  /// Register the given pipeline in this context
+  uint32_t RegisterPipeline(Pipeline &pipeline) {
+    auto pos = static_cast<uint32_t>(pipelines_.size());
+    pipelines_.push_back(&pipeline);
+    return pos;
+  }
+
+  bool IsLastPipeline(const Pipeline &p) const { return p.GetId() == 0; }
 
   //////////////////////////////////////////////////////////////////////////////
   ///

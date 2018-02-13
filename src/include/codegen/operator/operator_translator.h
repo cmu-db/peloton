@@ -66,14 +66,20 @@ class OperatorTranslator {
   /// Destructor
   virtual ~OperatorTranslator() = default;
 
-  /// Codegen any initialization work for this operator
+  /// Setup and tear down query state. These functions are each guaranteed to be
+  /// called exactly once.
   virtual void InitializeQueryState() = 0;
+  virtual void TearDownQueryState() = 0;
 
-  /// Codegen any initialization at the start of the given pipeline
-  virtual void DeclarePipelineState(PipelineContext &pipeline_context);
-  virtual void InitializePipelineState(PipelineContext &pipeline_context);
+  /// Pipeline-related operations. These functions are invoked exactly once for
+  /// each pipeline the operator is part of.
+  virtual void RegisterPipelineState(PipelineContext &) {}
+  virtual void InitializePipelineState(PipelineContext &) {}
+  virtual void FinishPipeline(PipelineContext &) {}
+  virtual void TearDownPipelineState(PipelineContext &) {}
 
-  /// Define any helper functions this translator needs
+  /// Define any helper functions this translator needs. This is called exactly
+  /// once.
   virtual void DefineAuxiliaryFunctions() = 0;
 
   /// The method that produces new tuples
@@ -83,13 +89,14 @@ class OperatorTranslator {
   virtual void Consume(ConsumerContext &context, RowBatch &batch) const;
   virtual void Consume(ConsumerContext &context, RowBatch::Row &row) const = 0;
 
-  /// Codegen any cleanup work for this translator
-  virtual void TearDownQueryState() = 0;
+  //////////////////////////////////////////////////////////////////////////////
+  ///
+  /// Accessors
+  ///
+  //////////////////////////////////////////////////////////////////////////////
 
-  /// Return the plan node this translator is for
   const planner::AbstractPlan &GetPlan() const { return plan_; }
 
-  /// Return the compilation context
   CompilationContext &GetCompilationContext() const { return context_; }
 
  protected:
@@ -110,8 +117,8 @@ class OperatorTranslator {
   llvm::Value *GetStorageManagerPtr() const;
 
   // Retrieve a parameter from the runtime state
-  llvm::Value *LoadStatePtr(const RuntimeState::StateID &state_id) const;
-  llvm::Value *LoadStateValue(const RuntimeState::StateID &state_id) const;
+  llvm::Value *LoadStatePtr(const RuntimeState::Id &state_id) const;
+  llvm::Value *LoadStateValue(const RuntimeState::Id &state_id) const;
 
  private:
   // The plan node

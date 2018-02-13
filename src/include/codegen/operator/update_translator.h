@@ -48,7 +48,7 @@ class UpdateTranslator : public OperatorTranslator {
   storage::DataTable *target_table_;
 
   // Runtime state id for the updater
-  RuntimeState::StateID updater_state_id_;
+  RuntimeState::Id updater_state_id_;
 
   // Tuple storage area
   codegen::TableStorage table_storage_;

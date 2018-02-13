@@ -59,12 +59,12 @@ class BufferingConsumer : public ExecutionConsumer {
                     const planner::BindingContext &context);
 
   void Prepare(CompilationContext &compilation_context) override;
-  void InitializeState(CompilationContext &) override {}
-  void TearDownState(CompilationContext &) override {}
+  void InitializeQueryState(CompilationContext &) override {}
+  void TearDownQueryState(CompilationContext &) override {}
   void ConsumeResult(ConsumerContext &ctx, RowBatch::Row &row) const override;
 
   llvm::Value *GetStateValue(ConsumerContext &ctx,
-                             const RuntimeState::StateID &id) const {
+                             const RuntimeState::Id &id) const {
     auto &runtime_state = ctx.GetRuntimeState();
     return runtime_state.LoadStateValue(ctx.GetCodeGen(), id);
   }
@@ -91,7 +91,7 @@ class BufferingConsumer : public ExecutionConsumer {
   BufferingState state;
 
   // The slot in the runtime state to find our state context
-  RuntimeState::StateID consumer_state_id_;
+  RuntimeState::Id consumer_state_id_;
 };
 
 }  // namespace codegen

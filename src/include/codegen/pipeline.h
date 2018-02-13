@@ -36,19 +36,28 @@ class Pipeline;
 class PipelineContext {
   friend class Pipeline;
 
+  static const uint32_t kFlagOffset = 0;
+
  public:
-  using SlotId = uint8_t;
+  using Id = uint32_t;
 
   /// Constructor
   explicit PipelineContext(Pipeline &pipeline);
 
   /// Register some state
-  SlotId RegisterThreadState(std::string name, llvm::Type *type);
+  Id RegisterThreadState(std::string name, llvm::Type *type);
 
   /// Build the final type of the thread state. Once finalized, the thread
   /// state type is immutable.
   void FinalizeThreadState(CodeGen &codegen);
-  llvm::Type *GetThreadStateType() const { return thread_state_; }
+  llvm::Type *GetThreadStateType() const { return thread_state_type_; }
+
+  /// State access
+  llvm::Value *AccessThreadState(CodeGen &codegen) const;
+  llvm::Value *LoadFlag(CodeGen &codegen) const;
+  void StoreFlag(CodeGen &codegen, llvm::Value *flag) const;
+  llvm::Value *LoadStatePtr(CodeGen &codegen, Id) const;
+  llvm::Value *LoadState(CodeGen &codegen, Id state_id) const;
 
   /// Is the pipeline associated with this context parallel?
   bool IsParallel() const;
@@ -61,7 +70,7 @@ class PipelineContext {
   Pipeline &pipeline_;
   // The elements of the thread state for this pipeline
   std::vector<std::pair<std::string, llvm::Type *>> state_components_;
-  llvm::Type *thread_state_;
+  llvm::Type *thread_state_type_;
   // The generate thread initialization function and pipeline function
   llvm::Function *thread_init_func_;
   llvm::Function *pipeline_func_;
@@ -83,9 +92,6 @@ class Pipeline {
   /// Constructor
   Pipeline(CompilationContext &compilation_ctx);
   Pipeline(OperatorTranslator *translator);
-
-  /// Compilation context accessor
-  CompilationContext &GetCompilationContext();
 
   /// Add the provided translator to this pipeline
   void Add(OperatorTranslator *translator);
@@ -132,6 +138,16 @@ class Pipeline {
   ///
   //////////////////////////////////////////////////////////////////////////////
 
+  /// Return the unique ID of this pipeline
+  uint32_t GetId() const { return id_; }
+
+  /// Pipeline equality check
+  bool operator==(const Pipeline &other) const { return id_ == other.id_; }
+  bool operator!=(const Pipeline &other) const { return !(*this == other); }
+
+  /// Compilation context accessor
+  CompilationContext &GetCompilationContext();
+
   /// Get a stringified version of this pipeline
   std::string GetInfo() const;
 
@@ -157,6 +173,9 @@ class Pipeline {
   uint32_t GetNumStages() const;
 
  private:
+  // Unique ID of this pipeline
+  uint32_t id_;
+
   // The compilation context
   CompilationContext &compilation_ctx_;
 

@@ -6,7 +6,7 @@
 //
 // Identification: src/codegen/operator/order_by_translator.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -22,9 +22,11 @@
 namespace peloton {
 namespace codegen {
 
-//===----------------------------------------------------------------------===//
-// ORDER BY TRANSLATOR
-//===----------------------------------------------------------------------===//
+////////////////////////////////////////////////////////////////////////////////
+///
+/// OrderByTranslator
+///
+////////////////////////////////////////////////////////////////////////////////
 
 OrderByTranslator::OrderByTranslator(const planner::OrderByPlan &plan,
                                      CompilationContext &context,
@@ -100,7 +102,6 @@ OrderByTranslator::OrderByTranslator(const planner::OrderByPlan &plan,
   LOG_DEBUG("Finished constructing OrderByTranslator ...");
 }
 
-// Initialize the sorter instance
 void OrderByTranslator::InitializeQueryState() {
   sorter_.Init(GetCodeGen(), LoadStatePtr(sorter_id_), compare_func_);
 }
@@ -257,9 +258,11 @@ void OrderByTranslator::TearDownQueryState() {
   sorter_.Destroy(GetCodeGen(), LoadStatePtr(sorter_id_));
 }
 
-//===----------------------------------------------------------------------===//
-// PRODUCE RESULTS
-//===----------------------------------------------------------------------===//
+////////////////////////////////////////////////////////////////////////////////
+///
+/// PRODUCE RESULTS
+///
+////////////////////////////////////////////////////////////////////////////////
 
 OrderByTranslator::ProduceResults::ProduceResults(
     ConsumerContext &ctx, const planner::OrderByPlan &plan,
@@ -286,9 +289,11 @@ void OrderByTranslator::ProduceResults::ProcessEntries(
   ctx_.Consume(batch);
 }
 
-//===----------------------------------------------------------------------===//
-// SORTER TUPLE ATTRIBUTE ACCESS
-//===----------------------------------------------------------------------===//
+////////////////////////////////////////////////////////////////////////////////
+///
+/// SORTER TUPLE ATTRIBUTE ACCESS
+///
+////////////////////////////////////////////////////////////////////////////////
 
 OrderByTranslator::SorterAttributeAccess::SorterAttributeAccess(
     Sorter::SorterAccess &sorter_access, uint32_t col_index)

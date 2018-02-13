@@ -26,7 +26,7 @@ void CountingConsumer::Prepare(codegen::CompilationContext &ctx) {
       "consumerState", codegen.Int64Type()->getPointerTo());
 }
 
-void CountingConsumer::InitializeState(codegen::CompilationContext &context) {
+void CountingConsumer::InitializeQueryState(codegen::CompilationContext &context) {
   auto &codegen = context.GetCodeGen();
   auto *state_ptr = GetCounterState(codegen, context.GetRuntimeState());
   codegen->CreateStore(codegen.Const64(0), state_ptr);

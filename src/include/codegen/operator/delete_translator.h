@@ -46,7 +46,7 @@ class DeleteTranslator : public OperatorTranslator {
   codegen::Table table_;
 
   // The Deleter instance
-  RuntimeState::StateID deleter_state_id_;
+  RuntimeState::Id deleter_state_id_;
 };
 
 }  // namespace codegen

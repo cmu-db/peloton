@@ -64,9 +64,19 @@ class ExecutorContext {
   class ThreadStates {
    public:
     explicit ThreadStates(type::EphemeralPool &pool);
+
+    /// Reset the state space
     void Reset(uint32_t state_size);
+
+    /// Allocate enough state for the given number of threads
     void Allocate(uint32_t num_threads);
+
+    /// Access the state for the thread with the given id
     char *AccessThreadState(uint32_t thread_id) const;
+
+    /// Return the number of threads registered in this state
+    uint32_t NumThreads() const { return num_threads_; }
+
    private:
     type::EphemeralPool &pool_;
     uint32_t num_threads_;

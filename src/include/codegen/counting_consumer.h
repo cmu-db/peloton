@@ -23,10 +23,10 @@ namespace codegen {
 class CountingConsumer : public codegen::ExecutionConsumer {
  public:
   void Prepare(codegen::CompilationContext &compilation_context) override;
-  void InitializeState(codegen::CompilationContext &context) override;
+  void InitializeQueryState(codegen::CompilationContext &context) override;
   void ConsumeResult(codegen::ConsumerContext &context,
                      codegen::RowBatch::Row &row) const override;
-  void TearDownState(codegen::CompilationContext &) override {}
+  void TearDownQueryState(codegen::CompilationContext &) override {}
 
   uint64_t GetCount() const { return counter_; }
   void ResetCount() { counter_ = 0; }
@@ -39,7 +39,7 @@ class CountingConsumer : public codegen::ExecutionConsumer {
  private:
   uint64_t counter_;
   // The slot in the runtime state to find our state context
-  codegen::RuntimeState::StateID counter_state_id_;
+  codegen::RuntimeState::Id counter_state_id_;
 };
 
 }  // namespace codegen

@@ -38,7 +38,13 @@ class ExecutionConsumer {
   virtual void Prepare(CompilationContext &compilation_ctx);
 
   /// Called to generate any initialization code the consumer needs
-  virtual void InitializeState(CompilationContext &compilation_ctx) = 0;
+  virtual void InitializeQueryState(CompilationContext &compilation_ctx) = 0;
+
+  /// Called to generate any code to tear down the state of the consumer
+  virtual void TearDownQueryState(CompilationContext &compilation_ctx) = 0;
+
+  /// Register pipeline local state
+  virtual void RegisterPipelineState(PipelineContext &) {}
 
   /// Called to generate any initialization code within a pipeline
   virtual void InitializePipelineState(PipelineContext &pipeline_ctx);
@@ -53,9 +59,6 @@ class ExecutionConsumer {
   virtual void ConsumeResult(ConsumerContext &context,
                              RowBatch::Row &row) const = 0;
 
-  /// Called to generate any code to tear down the state of the consumer
-  virtual void TearDownState(CompilationContext &compilation_ctx) = 0;
-
   /// Load the ExecutorContext, Transaction, or StorageManager objects
   llvm::Value *GetExecutorContextPtr(CompilationContext &compilation_ctx);
   llvm::Value *GetTransactionPtr(CompilationContext &compilation_ctx);
@@ -65,7 +68,7 @@ class ExecutionConsumer {
 
  private:
   llvm::Type *executor_ctx_type_;
-  RuntimeState::StateID executor_ctx_id_;
+  RuntimeState::Id executor_ctx_id_;
 };
 
 }  // namespace codegen

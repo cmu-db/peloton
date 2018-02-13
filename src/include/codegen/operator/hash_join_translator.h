@@ -135,10 +135,10 @@ class HashJoinTranslator : public OperatorTranslator {
   Pipeline left_pipeline_;
 
   // The ID of the hash-table in the runtime state
-  RuntimeState::StateID hash_table_id_;
+  RuntimeState::Id hash_table_id_;
 
   // The ID of the bloom filter in the runtime state
-  RuntimeState::StateID bloom_filter_id_;
+  RuntimeState::Id bloom_filter_id_;
 
   // The hash table we use to perform the join
   OAHashTable hash_table_;

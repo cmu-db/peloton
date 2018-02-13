@@ -22,10 +22,10 @@ RuntimeState::RuntimeState() : constructed_type_(nullptr) {}
 // Register some state of the given type and with the given name. The last
 // argument indicates whether this state is local (i.e., lives on the stack) or
 // whether the requesting operator wants to manage the memory.
-RuntimeState::StateID RuntimeState::RegisterState(std::string name,
-                                                  llvm::Type *type) {
+RuntimeState::Id RuntimeState::RegisterState(std::string name,
+                                             llvm::Type *type) {
   PELOTON_ASSERT(constructed_type_ == nullptr);
-  RuntimeState::StateID state_id = state_slots_.size();
+  RuntimeState::Id state_id = state_slots_.size();
   RuntimeState::StateInfo state_info;
   state_info.name = name;
   state_info.type = type;
@@ -34,7 +34,7 @@ RuntimeState::StateID RuntimeState::RegisterState(std::string name,
 }
 
 llvm::Value *RuntimeState::LoadStatePtr(CodeGen &codegen,
-                                        RuntimeState::StateID state_id) const {
+                                        RuntimeState::Id state_id) const {
   // At this point, the runtime state type must have been finalized. Otherwise,
   // it'd be impossible for us to index into it because the type would be
   // incomplete.
@@ -51,8 +51,8 @@ llvm::Value *RuntimeState::LoadStatePtr(CodeGen &codegen,
   return state_ptr;
 }
 
-llvm::Value *RuntimeState::LoadStateValue(
-    CodeGen &codegen, RuntimeState::StateID state_id) const {
+llvm::Value *RuntimeState::LoadStateValue(CodeGen &codegen,
+                                          RuntimeState::Id state_id) const {
   llvm::Value *state_ptr = LoadStatePtr(codegen, state_id);
   llvm::Value *state = codegen->CreateLoad(state_ptr);
 #ifndef NDEBUG

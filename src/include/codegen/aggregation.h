@@ -169,7 +169,7 @@ class Aggregation {
 
   // Hash tables and their runtime IDs for the distinct aggregations, access via
   // index
-  std::vector<std::pair<OAHashTable, RuntimeState::StateID>> hash_table_infos_;
+  std::vector<std::pair<OAHashTable, RuntimeState::Id>> hash_table_infos_;
 
   // Reference to RuntimeState, needed for the hash tables
   RuntimeState &runtime_state_;

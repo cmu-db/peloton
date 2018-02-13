@@ -29,7 +29,7 @@ namespace codegen {
 
 PipelineContext::PipelineContext(Pipeline &pipeline)
     : pipeline_(pipeline),
-      thread_state_(nullptr),
+      thread_state_type_(nullptr),
       thread_init_func_(nullptr),
       pipeline_func_(nullptr) {
   // Make room for the bool flag indicating validity
@@ -37,10 +37,10 @@ PipelineContext::PipelineContext(Pipeline &pipeline)
   state_components_.emplace_back("initialized", codegen.BoolType());
 }
 
-PipelineContext::SlotId PipelineContext::RegisterThreadState(std::string name,
-                                                             llvm::Type *type) {
-  PL_ASSERT(thread_state_ == nullptr);
-  if (thread_state_ != nullptr) {
+PipelineContext::Id PipelineContext::RegisterThreadState(std::string name,
+                                                         llvm::Type *type) {
+  PL_ASSERT(thread_state_type_ == nullptr);
+  if (thread_state_type_ != nullptr) {
     throw Exception{"Cannot register thread state after finalization"};
   }
 
@@ -52,7 +52,7 @@ PipelineContext::SlotId PipelineContext::RegisterThreadState(std::string name,
 
 void PipelineContext::FinalizeThreadState(CodeGen &codegen) {
   // Quit early if we've already finalized the type
-  if (thread_state_ != nullptr) {
+  if (thread_state_type_ != nullptr) {
     return;
   }
 
@@ -63,8 +63,36 @@ void PipelineContext::FinalizeThreadState(CodeGen &codegen) {
   }
 
   // Build
-  thread_state_ =
+  thread_state_type_ =
       llvm::StructType::create(codegen.GetContext(), types, "ThreadState");
+}
+
+llvm::Value *PipelineContext::AccessThreadState(CodeGen &codegen) const {
+  auto *func = codegen.GetCurrentFunction();
+  PL_ASSERT(func != nullptr);
+  return func->GetArgumentByPosition(1);
+}
+
+llvm::Value *PipelineContext::LoadFlag(CodeGen &codegen) const {
+  return LoadState(codegen, kFlagOffset);
+}
+
+void PipelineContext::StoreFlag(CodeGen &codegen, llvm::Value *flag) const {
+  auto *flag_ptr = LoadStatePtr(codegen, kFlagOffset);
+  codegen->CreateStore(flag, flag_ptr);
+}
+
+llvm::Value *PipelineContext::LoadStatePtr(CodeGen &codegen,
+                                           PipelineContext::Id state_id) const {
+  auto name = state_components_[state_id].first + "Ptr";
+  return codegen->CreateConstInBoundsGEP2_32(
+      GetThreadStateType(), AccessThreadState(codegen), 0, state_id, name);
+}
+
+llvm::Value *PipelineContext::LoadState(CodeGen &codegen,
+                                        PipelineContext::Id state_id) const {
+  auto name = state_components_[state_id].first;
+  return codegen->CreateLoad(LoadStatePtr(codegen, state_id), name);
 }
 
 bool PipelineContext::IsParallel() const { return pipeline_.IsParallel(); }
@@ -172,11 +200,9 @@ std::string ConstructFunctionName(Pipeline &pipeline,
                                   const std::string &prefix) {
   CompilationContext &compilation_ctx = pipeline.GetCompilationContext();
   CodeContext &cc = compilation_ctx.GetCodeGen().GetCodeContext();
-  auto pipeline_pos = compilation_ctx.GetPipelinePosition(pipeline);
-  auto pipeline_name = pipeline.ConstructPipelineName();
   return StringUtil::Format("_%" PRId64 "_pipeline_%u_%s_%s", cc.GetID(),
-                            pipeline_pos, prefix.c_str(),
-                            pipeline_name.c_str());
+                            pipeline.GetId(), prefix.c_str(),
+                            pipeline.ConstructPipelineName().c_str());
 }
 
 }  // namespace
@@ -205,7 +231,13 @@ void Pipeline::InitializePipeline(PipelineContext &pipeline_context) {
   // Let each operator in the pipeline declare state it needs
   for (auto riter = pipeline_.rbegin(), rend = pipeline_.rend(); riter != rend;
        ++riter) {
-    (*riter)->DeclarePipelineState(pipeline_context);
+    (*riter)->RegisterPipelineState(pipeline_context);
+  }
+
+  // If we're the last pipeline, let the consumer know
+  ExecutionConsumer &consumer = compilation_ctx_.GetExecutionConsumer();
+  if (GetCompilationContext().IsLastPipeline(*this)) {
+    consumer.RegisterPipelineState(pipeline_context);
   }
 
   // Finalize thread state type
@@ -215,7 +247,6 @@ void Pipeline::InitializePipeline(PipelineContext &pipeline_context) {
       codegen.SizeOf(pipeline_context.GetThreadStateType()));
 
   // Setup thread states
-  ExecutionConsumer &consumer = compilation_ctx_.GetExecutionConsumer();
   llvm::Value *thread_states = consumer.GetThreadStatesPtr(compilation_ctx_);
   codegen.Call(ThreadStatesProxy::Reset,
                {thread_states, codegen.Const32(thread_state_size)});
@@ -246,8 +277,20 @@ void Pipeline::InitializePipeline(PipelineContext &pipeline_context) {
 }
 
 void Pipeline::CompletePipeline(PipelineContext &pipeline_context) {
-  (void)pipeline_context;
-  // TODO Implement me
+  if (!pipeline_context.IsParallel()) {
+    // Let operators in the pipeline do some post-pipeline work
+    for (auto riter = pipeline_.rbegin(), rend = pipeline_.rend();
+         riter != rend; ++riter) {
+      (*riter)->FinishPipeline(pipeline_context);
+    }
+    // Let operators in the pipeline clean up any pipeline state
+    for (auto riter = pipeline_.rbegin(), rend = pipeline_.rend();
+         riter != rend; ++riter) {
+      (*riter)->TearDownPipelineState(pipeline_context);
+    }
+    // That's it
+    return;
+  }
 }
 
 void Pipeline::RunSerial(const std::function<void(ConsumerContext &)> &body) {

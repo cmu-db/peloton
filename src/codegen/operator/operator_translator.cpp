@@ -42,22 +42,16 @@ llvm::Value *OperatorTranslator::GetStorageManagerPtr() const {
 }
 
 llvm::Value *OperatorTranslator::LoadStatePtr(
-    const RuntimeState::StateID &state_id) const {
+    const RuntimeState::Id &state_id) const {
   RuntimeState &runtime_state = context_.GetRuntimeState();
   return runtime_state.LoadStatePtr(GetCodeGen(), state_id);
 }
 
 llvm::Value *OperatorTranslator::LoadStateValue(
-    const RuntimeState::StateID &state_id) const {
+    const RuntimeState::Id &state_id) const {
   RuntimeState &runtime_state = context_.GetRuntimeState();
   return runtime_state.LoadStateValue(GetCodeGen(), state_id);
 }
-
-void OperatorTranslator::DeclarePipelineState(
-    UNUSED_ATTRIBUTE PipelineContext &pipeline_context) {}
-
-void OperatorTranslator::InitializePipelineState(
-    UNUSED_ATTRIBUTE PipelineContext &pipeline_context) {}
 
 void OperatorTranslator::Consume(ConsumerContext &context,
                                  RowBatch &batch) const {
