@@ -29,6 +29,7 @@ int Rule::Promise(GroupExpression *group_expr, OptimizeContext *context) const {
 
 RuleSet::RuleSet() {
   AddTransformationRule(new InnerJoinCommutativity());
+  AddTransformationRule(new InnerJoinAssociativity());
   AddImplementationRule(new LogicalDeleteToPhysical());
   AddImplementationRule(new LogicalUpdateToPhysical());
   AddImplementationRule(new LogicalInsertToPhysical());
