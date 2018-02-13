@@ -39,7 +39,7 @@ void *ExecutorExceptionTest(int port) {
         "host=127.0.0.1 port=%d user=default_database "
         "sslmode=disable application_name=psql",
         port));
-    int exception_count = 0, total = 2;
+    int exception_count = 0;
     pqxx::work txn1(C);
     try {
       txn1.exec("CREATE TABLE foo(id INT);");
@@ -53,22 +53,7 @@ void *ExecutorExceptionTest(int port) {
         exception_count += 1;
       }
     }
-    pqxx::work txn2(C);
-    try {
-      txn2.exec("CREATE TABLE A (val1 INT, val2 INT,  val3 INT,  val4 INT);");
-      txn2.exec(
-          "INSERT INTO A (val1, val2, val3, val4, val5) VALUES (1, 1, 1, 1, "
-          "1);");
-      txn2.commit();
-    } catch (const pqxx::pqxx_exception &e) {
-      const pqxx::sql_error *s =
-          dynamic_cast<const pqxx::sql_error *>(&e.base());
-      if (s) {
-        LOG_TRACE("Invalid Insert Query: %s", e.base().what());
-        exception_count += 1;
-      }
-    }
-    EXPECT_EQ(exception_count, total);
+    EXPECT_EQ(exception_count, 1);
   } catch (const std::exception &e) {
     LOG_ERROR("[ExceptionTest] Exception occurred: %s", e.what());
     EXPECT_TRUE(false);
