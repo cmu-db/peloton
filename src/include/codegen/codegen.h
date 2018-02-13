@@ -70,10 +70,10 @@ class CodeGen {
 
   /// Constant wrappers for bool, int8, int16, int32, int64, strings, and null
   llvm::Constant *ConstBool(bool val) const;
-  llvm::Constant *Const8(uint8_t val) const;
-  llvm::Constant *Const16(uint16_t val) const;
-  llvm::Constant *Const32(uint32_t val) const;
-  llvm::Constant *Const64(uint64_t val) const;
+  llvm::Constant *Const8(int8_t val) const;
+  llvm::Constant *Const16(int16_t val) const;
+  llvm::Constant *Const32(int32_t val) const;
+  llvm::Constant *Const64(int64_t val) const;
   llvm::Constant *ConstDouble(double val) const;
   llvm::Constant *ConstString(const std::string &s) const;
   llvm::Constant *Null(llvm::Type *type) const;
