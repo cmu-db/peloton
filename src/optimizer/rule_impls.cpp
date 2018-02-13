@@ -103,14 +103,12 @@ void InnerJoinAssociativity::Transform(
   // NOTE: Transforms (left JOIN middle) JOIN right -> left JOIN (middle JOIN right)
   // Variables are named accordingly to above transformation
 
-
-
-//  auto result_plan = std::make_shared<OperatorExpression>(
-//      LogicalInnerJoin::make(join_predicates));
-
   auto parent_join = input->Op().As<LogicalInnerJoin>();
   std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   auto child_join = children[0]->Op().As<LogicalInnerJoin>();
+  auto left = children[0]->Children()[0];
+  auto middle = children[0]->Children()[1];
+  auto right = children[1];
   PL_ASSERT(children.size() == 2);
   PL_ASSERT(children[0]->Op().GetType() == OpType::InnerJoin);
   PL_ASSERT(children[0]->Children().size() == 2);
@@ -128,8 +126,6 @@ void InnerJoinAssociativity::Transform(
   const auto &right_group_aliases_set =
       memo.GetGroupByID(right_group_id)->GetTableAliases();
 
-
-
   // Redistribute predicates
   auto parent_join_predicates = std::vector<AnnotatedExpression>(parent_join->join_predicates);
   auto child_join_predicates = std::vector<AnnotatedExpression>(child_join->join_predicates);
@@ -138,19 +134,41 @@ void InnerJoinAssociativity::Transform(
   predicates.insert(predicates.end(), parent_join_predicates.begin(), parent_join_predicates.end());
   predicates.insert(predicates.end(), child_join_predicates.begin(), child_join_predicates.end());
 
-//  for (auto predicate : predicates) {
-//
-//  }
-//
-//
-//
-//  LOG_TRACE(
-//      "Reorder left child with op %s and right child with op %s for inner join",
-//      children[0]->Op().GetName().c_str(), children[1]->Op().GetName().c_str());
-//  result_plan->PushChild(children[1]);
-//  result_plan->PushChild(children[0]);
-//
-//  transformed.push_back(result_plan);
+  std::vector<AnnotatedExpression> new_child_join_predicates;
+  std::vector<AnnotatedExpression> new_parent_join_predicates;
+
+  //TODO: This assumes that predicate pushdown has not occured yet, as it will put all non-join predicates into parent join
+  for (auto predicate : predicates) {
+
+    // New child join predicate must contain middle and right group
+    if (util::IsSubset(middle_group_aliases_set, predicate.table_alias_set) &&
+        util::IsSubset(right_group_aliases_set, predicate.table_alias_set))
+      new_child_join_predicates.emplace_back(predicate);
+    else
+      new_parent_join_predicates.emplace_back(predicate);
+  }
+
+  // Construct new child join operator
+  std::shared_ptr<OperatorExpression> new_child_join =
+      std::make_shared<OperatorExpression>(
+          LogicalInnerJoin::make(new_child_join_predicates));
+  new_child_join->PushChild(middle);
+  new_child_join->PushChild(right);
+
+  // Construct new parent join operator
+  std::shared_ptr<OperatorExpression> new_parent_join =
+      std::make_shared<OperatorExpression>(
+          LogicalInnerJoin::make(new_parent_join_predicates));
+  new_parent_join->PushChild(left);
+  new_parent_join->PushChild(new_child_join);
+
+
+  LOG_TRACE(
+      "Reordered join structured: (%s JOIN %s) JOIN %s",
+      left->Op().GetName().c_str(), middle->Op().GetName().c_str(), right->Op().GetName().c_str());
+
+  transformed.push_back(new_parent_join);
+
 }
 
 //===--------------------------------------------------------------------===//
