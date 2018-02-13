@@ -45,11 +45,10 @@ using namespace optimizer;
 
 class OptimizerRuleTests : public PelotonTest {};
 
-TEST_F(OptimizerRuleTests, SimpleRuleApplyTest) {
+TEST_F(OptimizerRuleTests, SimpleCommutativeRuleTest) {
   // Build op plan node to match rule
   auto left_get = std::make_shared<OperatorExpression>(LogicalGet::make());
   auto right_get = std::make_shared<OperatorExpression>(LogicalGet::make());
-  auto val = type::ValueFactory::GetBooleanValue(true);
   auto join = std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
   join->PushChild(left_get);
   join->PushChild(right_get);
@@ -62,6 +61,45 @@ TEST_F(OptimizerRuleTests, SimpleRuleApplyTest) {
   std::vector<std::shared_ptr<OperatorExpression>> outputs;
   rule.Transform(join, outputs, nullptr);
   EXPECT_EQ(outputs.size(), 1);
+
+  auto output_join = outputs[0];
+
+  EXPECT_EQ(output_join->Children()[0], right_get);
+  EXPECT_EQ(output_join->Children()[1], left_get);
+
+}
+
+TEST_F(OptimizerRuleTests, SimpleAssociativeRuleTest) {
+  // Build op plan node to match rule
+  // (left JOIN middle) JOIN right
+  auto left_get = std::make_shared<OperatorExpression>(LogicalGet::make());
+  auto middle_get = std::make_shared<OperatorExpression>(LogicalGet::make());
+  auto right_get = std::make_shared<OperatorExpression>(LogicalGet::make());
+  auto child_join = std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
+  child_join->PushChild(left_get);
+  child_join->PushChild(middle_get);
+
+  auto parent_join = std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
+  parent_join->PushChild(child_join);
+  parent_join->PushChild(right_get);
+
+
+  // Setup rule
+  InnerJoinAssociativity rule;
+
+  EXPECT_TRUE(rule.Check(parent_join, nullptr));
+
+  std::vector<std::shared_ptr<OperatorExpression>> outputs;
+  rule.Transform(parent_join, outputs, nullptr);
+  EXPECT_EQ(outputs.size(), 1);
+
+  auto output_join = outputs[0];
+
+  EXPECT_EQ(output_join->Children()[0], left_get);
+  EXPECT_EQ(output_join->Children()[1]->Children()[0], middle_get);
+  EXPECT_EQ(output_join->Children()[1]->Children()[1], right_get);
+
+
 }
 
 }  // namespace test

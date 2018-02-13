@@ -115,12 +115,12 @@ void InnerJoinAssociativity::Transform(
 
   // Get Alias sets
   auto &memo = context->metadata->memo;
-  auto left_group_id = children[0]->Children()[0]->Op().As<LeafOperator>()->origin_group;
+//  auto left_group_id = children[0]->Children()[0]->Op().As<LeafOperator>()->origin_group;
   auto middle_group_id = children[0]->Children()[1]->Op().As<LeafOperator>()->origin_group;
   auto right_group_id = children[1]->Op().As<LeafOperator>()->origin_group;
 
-  const auto &left_group_aliases_set =
-      memo.GetGroupByID(left_group_id)->GetTableAliases();
+//  const auto &left_group_aliases_set =
+//      memo.GetGroupByID(left_group_id)->GetTableAliases();
   const auto &middle_group_aliases_set =
       memo.GetGroupByID(middle_group_id)->GetTableAliases();
   const auto &right_group_aliases_set =
