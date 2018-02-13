@@ -77,6 +77,7 @@ void ExecutorContext::ThreadStates::Allocate(const uint32_t num_threads) {
   num_threads_ = num_threads;
   uint32_t alloc_size = num_threads_ * state_size_;
   states_ = reinterpret_cast<char *>(pool_.Allocate(alloc_size));
+  PL_MEMSET(states_, 0, alloc_size);
 }
 
 char *ExecutorContext::ThreadStates::AccessThreadState(
