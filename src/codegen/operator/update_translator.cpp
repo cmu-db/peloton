@@ -37,7 +37,7 @@ UpdateTranslator::UpdateTranslator(const planner::UpdatePlan &update_plan,
     context.Prepare(*derived_attribute.expr);
   }
   // Prepare for updater
-  updater_state_id_ = context.GetRuntimeState().RegisterState(
+  updater_state_id_ = context.GetQueryState().RegisterState(
       "updater", UpdaterProxy::GetType(GetCodeGen()));
 }
 

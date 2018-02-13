@@ -136,7 +136,7 @@ void Aggregation::Setup(
     }
 
     // Register the hash-table instance in the runtime state
-    auto hash_table_id = runtime_state_.RegisterState(
+    auto hash_table_id = query_state_.RegisterState(
         "agg_hash" + std::to_string(agg_info.source_index),
         OAHashTableProxy::GetType(codegen));
 
@@ -182,7 +182,7 @@ void Aggregation::InitializeState(CodeGen &codegen) {
     auto &hash_table = hash_table_info.first;
     auto hash_table_id = hash_table_info.second;
     hash_table.Init(codegen,
-                    runtime_state_.LoadStatePtr(codegen, hash_table_id));
+                    query_state_.LoadStatePtr(codegen, hash_table_id));
   }
 }
 
@@ -192,7 +192,7 @@ void Aggregation::TearDownState(CodeGen &codegen) {
     auto &hash_table = hash_table_info.first;
     auto hash_table_id = hash_table_info.second;
     hash_table.Destroy(codegen,
-                       runtime_state_.LoadStatePtr(codegen, hash_table_id));
+                       query_state_.LoadStatePtr(codegen, hash_table_id));
   }
 }
 
@@ -262,7 +262,7 @@ void Aggregation::CreateInitialValues(
 
       // Get runtime state pointer for this hash table
       llvm::Value *state_pointer =
-          runtime_state_.LoadStatePtr(codegen, hash_table_id);
+          query_state_.LoadStatePtr(codegen, hash_table_id);
 
       // TODO(marcel): is it possible to cache the hash value for this
       // expression?
@@ -522,7 +522,7 @@ void Aggregation::AdvanceValues(
         hash_table_infos_[aggregate_info.hast_table_index].second;
 
     // Get runtime state pointer for this hash table
-    llvm::Value *ht_ptr = runtime_state_.LoadStatePtr(codegen, hash_table_id);
+    llvm::Value *ht_ptr = query_state_.LoadStatePtr(codegen, hash_table_id);
 
     // TODO(marcel): is it possible to cache the hash value for this
     // expression?

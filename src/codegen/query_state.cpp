@@ -2,39 +2,38 @@
 //
 //                         Peloton
 //
-// runtime_state.cpp
+// query_state.cpp
 //
-// Identification: src/codegen/runtime_state.cpp
+// Identification: src/codegen/query_state.cpp
 //
 // Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "codegen/runtime_state.h"
+#include "codegen/query_state.h"
 #include "codegen/vector.h"
 
 namespace peloton {
 namespace codegen {
 
 // Constructor
-RuntimeState::RuntimeState() : constructed_type_(nullptr) {}
+QueryState::QueryState() : constructed_type_(nullptr) {}
 
 // Register some state of the given type and with the given name. The last
 // argument indicates whether this state is local (i.e., lives on the stack) or
 // whether the requesting operator wants to manage the memory.
-RuntimeState::Id RuntimeState::RegisterState(std::string name,
-                                             llvm::Type *type) {
+QueryState::Id QueryState::RegisterState(std::string name, llvm::Type *type) {
   PELOTON_ASSERT(constructed_type_ == nullptr);
-  RuntimeState::Id state_id = state_slots_.size();
-  RuntimeState::StateInfo state_info;
+  QueryState::Id state_id = state_slots_.size();
+  QueryState::StateInfo state_info;
   state_info.name = name;
   state_info.type = type;
   state_slots_.push_back(state_info);
   return state_id;
 }
 
-llvm::Value *RuntimeState::LoadStatePtr(CodeGen &codegen,
-                                        RuntimeState::Id state_id) const {
+llvm::Value *QueryState::LoadStatePtr(CodeGen &codegen,
+                                      QueryState::Id state_id) const {
   // At this point, the runtime state type must have been finalized. Otherwise,
   // it'd be impossible for us to index into it because the type would be
   // incomplete.
@@ -45,14 +44,14 @@ llvm::Value *RuntimeState::LoadStatePtr(CodeGen &codegen,
 
   // We index into the runtime state to get a pointer to the state
   std::string ptr_name{state_info.name + "Ptr"};
-  llvm::Value *runtime_state = codegen.GetState();
+  llvm::Value *query_state = codegen.GetState();
   llvm::Value *state_ptr = codegen->CreateConstInBoundsGEP2_32(
-      constructed_type_, runtime_state, 0, state_info.index, ptr_name);
+      constructed_type_, query_state, 0, state_info.index, ptr_name);
   return state_ptr;
 }
 
-llvm::Value *RuntimeState::LoadStateValue(CodeGen &codegen,
-                                          RuntimeState::Id state_id) const {
+llvm::Value *QueryState::LoadStateValue(CodeGen &codegen,
+                                        QueryState::Id state_id) const {
   llvm::Value *state_ptr = LoadStatePtr(codegen, state_id);
   llvm::Value *state = codegen->CreateLoad(state_ptr);
 #ifndef NDEBUG
@@ -68,7 +67,7 @@ llvm::Value *RuntimeState::LoadStateValue(CodeGen &codegen,
   return state;
 }
 
-llvm::Type *RuntimeState::FinalizeType(CodeGen &codegen) {
+llvm::Type *QueryState::FinalizeType(CodeGen &codegen) {
   // Check if we've already constructed the type
   if (constructed_type_ != nullptr) {
     return constructed_type_;
@@ -83,12 +82,12 @@ llvm::Type *RuntimeState::FinalizeType(CodeGen &codegen) {
   }
 
   constructed_type_ =
-      llvm::StructType::create(codegen.GetContext(), types, "RuntimeState");
+      llvm::StructType::create(codegen.GetContext(), types, "QueryState");
   return constructed_type_;
 }
 
-llvm::Type *RuntimeState::GetType() const {
-  PL_ASSERT(constructed_type_ != nullptr);
+llvm::Type *QueryState::GetType() const {
+  PELOTON_ASSERT(constructed_type_ != nullptr);
   return constructed_type_;
 }
 

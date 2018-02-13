@@ -15,7 +15,7 @@
 #include "codegen/compilation_context.h"
 #include "codegen/operator/operator_translator.h"
 #include "codegen/pipeline.h"
-#include "codegen/runtime_state.h"
+#include "codegen/query_state.h"
 #include "codegen/table_storage.h"
 
 namespace peloton {
@@ -48,7 +48,7 @@ class UpdateTranslator : public OperatorTranslator {
   storage::DataTable *target_table_;
 
   // Runtime state id for the updater
-  RuntimeState::Id updater_state_id_;
+  QueryState::Id updater_state_id_;
 
   // Tuple storage area
   codegen::TableStorage table_storage_;

@@ -34,7 +34,7 @@ HashJoinTranslator::HashJoinTranslator(const planner::HashJoinPlan &join,
                                        Pipeline &pipeline)
     : OperatorTranslator(join, context, pipeline), left_pipeline_(this) {
   CodeGen &codegen = GetCodeGen();
-  RuntimeState &runtime_state = context.GetRuntimeState();
+  QueryState &query_state = context.GetQueryState();
 
   // If we should be prefetching into the hash-table, install a boundary in the
   // both the left and right pipeline at the input into this translator to
@@ -46,10 +46,10 @@ HashJoinTranslator::HashJoinTranslator(const planner::HashJoinPlan &join,
 
   // Allocate state for our hash table and bloom filter
   hash_table_id_ =
-      runtime_state.RegisterState("join", OAHashTableProxy::GetType(codegen));
+      query_state.RegisterState("join", OAHashTableProxy::GetType(codegen));
   if (GetJoinPlan().IsBloomFilterEnabled()) {
     LOG_DEBUG("Building HashJoin using BloomFilter ...");
-    bloom_filter_id_ = runtime_state.RegisterState(
+    bloom_filter_id_ = query_state.RegisterState(
         "bloomfilter", BloomFilterProxy::GetType(codegen));
   }
 

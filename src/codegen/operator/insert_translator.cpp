@@ -33,7 +33,7 @@ InsertTranslator::InsertTranslator(const planner::InsertPlan &insert_plan,
   }
 
   // Register the inserter instance as state
-  inserter_state_id_ = context.GetRuntimeState().RegisterState(
+  inserter_state_id_ = context.GetQueryState().RegisterState(
       "inserter", InserterProxy::GetType(GetCodeGen()));
 }
 

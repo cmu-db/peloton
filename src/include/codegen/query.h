@@ -13,8 +13,8 @@
 #pragma once
 
 #include "codegen/code_context.h"
-#include "codegen/runtime_state.h"
 #include "codegen/query_parameters.h"
+#include "codegen/query_state.h"
 #include "codegen/parameter_cache.h"
 
 namespace peloton {
@@ -87,7 +87,7 @@ class Query {
   CodeContext &GetCodeContext() { return code_context_; }
 
   /// The class tracking all the state needed by this query
-  RuntimeState &GetRuntimeState() { return runtime_state_; }
+  QueryState &GetQueryState() { return query_state_; }
 
  private:
   friend class QueryCompiler;
@@ -103,7 +103,7 @@ class Query {
   CodeContext code_context_;
 
   // The size of the parameter the functions take
-  RuntimeState runtime_state_;
+  QueryState query_state_;
 
   // The init(), plan() and tearDown() functions
   typedef void (*compiled_function_t)(char *);

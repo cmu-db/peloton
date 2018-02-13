@@ -30,7 +30,7 @@ DeleteTranslator::DeleteTranslator(const planner::DeletePlan &delete_plan,
   context.Prepare(*delete_plan.GetChild(0), pipeline);
 
   // Register the deleter
-  deleter_state_id_ = context.GetRuntimeState().RegisterState(
+  deleter_state_id_ = context.GetQueryState().RegisterState(
       "deleter", DeleterProxy::GetType(GetCodeGen()));
 }
 

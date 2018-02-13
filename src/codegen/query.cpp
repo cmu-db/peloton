@@ -30,8 +30,8 @@ void Query::Execute(std::unique_ptr<executor::ExecutorContext> executor_context,
                     RuntimeStats *stats) {
   CodeGen codegen{code_context_};
 
-  llvm::Type *runtime_state_type = runtime_state_.GetType();
-  size_t parameter_size = codegen.SizeOf(runtime_state_type);
+  llvm::Type *query_state_type = query_state_.GetType();
+  size_t parameter_size = codegen.SizeOf(query_state_type);
   PELOTON_ASSERT((parameter_size % 8 == 0) && "parameter size not multiple of 8");
 
   // Allocate some space for the function arguments
@@ -41,18 +41,18 @@ void Query::Execute(std::unique_ptr<executor::ExecutorContext> executor_context,
 
   // We use this handy class to avoid complex casting and pointer manipulation
   struct FunctionArguments {
-    //storage::StorageManager *storage_manager;
+    // storage::StorageManager *storage_manager;
     executor::ExecutorContext *executor_context;
-    //QueryParameters *query_parameters;
+    // QueryParameters *query_parameters;
     char *consumer_arg;
     char rest[0];
   } PACKED;
 
   // Set up the function arguments
   auto *func_args = reinterpret_cast<FunctionArguments *>(param_data.get());
-  //func_args->storage_manager = storage::StorageManager::GetInstance();
+  // func_args->storage_manager = storage::StorageManager::GetInstance();
   func_args->executor_context = executor_context.get();
-  //func_args->query_parameters = &executor_context->GetParams();
+  // func_args->query_parameters = &executor_context->GetParams();
   func_args->consumer_arg = consumer.GetConsumerState();
 
   // Timer

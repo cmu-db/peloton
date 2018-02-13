@@ -24,7 +24,7 @@
 #include "codegen/operator/operator_translator.h"
 #include "codegen/query.h"
 #include "codegen/query_compiler.h"
-#include "codegen/runtime_state.h"
+#include "codegen/query_state.h"
 #include "codegen/translator_factory.h"
 
 namespace peloton {
@@ -51,7 +51,7 @@ namespace codegen {
 class CompilationContext {
  public:
   /// Constructor
-  CompilationContext(CodeContext &code, RuntimeState &runtime_state,
+  CompilationContext(CodeContext &code, QueryState &query_state,
                      const QueryParametersMap &parameters_map,
                      ExecutionConsumer &execution_consumer);
 
@@ -92,7 +92,7 @@ class CompilationContext {
 
   CodeGen &GetCodeGen() { return codegen_; }
 
-  RuntimeState &GetRuntimeState() { return runtime_state_; }
+  QueryState &GetQueryState() { return query_state_; }
 
   ParameterCache &GetParameterCache() { return parameter_cache_; }
 
@@ -121,7 +121,7 @@ class CompilationContext {
   CodeContext &code_context_;
 
   // Runtime state
-  RuntimeState &runtime_state_;
+  QueryState &query_state_;
 
   // The parameter value cache of the query
   ParameterCache parameter_cache_;

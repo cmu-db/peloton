@@ -180,7 +180,7 @@ class HashGroupByTranslator : public OperatorTranslator {
   Pipeline child_pipeline_;
 
   // The ID of the hash-table in the runtime state
-  RuntimeState::Id hash_table_id_;
+  QueryState::Id hash_table_id_;
 
   // The hash table
   OAHashTable hash_table_;

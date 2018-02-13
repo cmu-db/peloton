@@ -252,14 +252,14 @@ void Pipeline::InitializePipeline(PipelineContext &pipeline_context) {
                {thread_states, codegen.Const32(thread_state_size)});
 
   // Generate an initialization function
-  RuntimeState &runtime_state = compilation_ctx_.GetRuntimeState();
+  QueryState &query_state = compilation_ctx_.GetQueryState();
   CodeContext &cc = codegen.GetCodeContext();
 
   auto func_name = ConstructFunctionName(*this, "initializeWorkerState");
   auto visibility = FunctionDeclaration::Visibility::Internal;
   auto *ret_type = codegen.VoidType();
   std::vector<FunctionDeclaration::ArgumentInfo> args = {
-      {"runtimeState", runtime_state.GetType()->getPointerTo()},
+      {"queryState", query_state.GetType()->getPointerTo()},
       {"threadState", pipeline_context.GetThreadStateType()->getPointerTo()}};
 
   FunctionDeclaration init_decl{cc, func_name, visibility, ret_type, args};
@@ -335,7 +335,7 @@ void Pipeline::DoRun(
     const std::function<void(ConsumerContext &,
                              const std::vector<llvm::Value *> &)> &body) {
   CodeGen &codegen = compilation_ctx_.GetCodeGen();
-  RuntimeState &runtime_state = compilation_ctx_.GetRuntimeState();
+  QueryState &query_state = compilation_ctx_.GetQueryState();
   CodeContext &cc = codegen.GetCodeContext();
 
   // Function signature
@@ -344,7 +344,7 @@ void Pipeline::DoRun(
   auto visibility = FunctionDeclaration::Visibility::Internal;
   auto *ret_type = codegen.VoidType();
   std::vector<FunctionDeclaration::ArgumentInfo> args = {
-      {"runtimeState", runtime_state.GetType()->getPointerTo()}};
+      {"queryState", query_state.GetType()->getPointerTo()}};
 
   if (IsParallel()) {
     args.emplace_back("threadState",

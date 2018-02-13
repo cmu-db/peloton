@@ -2,11 +2,11 @@
 //
 //                         Peloton
 //
-// runtime_state.h
+// query_state.h
 //
-// Identification: src/include/codegen/runtime_state.h
+// Identification: src/include/codegen/query_state.h
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -44,26 +44,26 @@ namespace codegen {
 //     limit on the number of arguments a function can accept.
 //
 //===----------------------------------------------------------------------===//
-class RuntimeState {
+class QueryState {
  public:
   // An identifier
   using Id = uint32_t;
 
   /// Constructor
-  RuntimeState();
+  QueryState();
 
   /// This class cannot be copy or move-constructed
-  DISALLOW_COPY_AND_MOVE(RuntimeState);
+  DISALLOW_COPY_AND_MOVE(QueryState);
 
   /// Register a parameter with the given name and type in this state
-  RuntimeState::Id RegisterState(std::string name, llvm::Type *type);
+  QueryState::Id RegisterState(std::string name, llvm::Type *type);
 
   /// Get the pointer to the given state information with the given ID
-  llvm::Value *LoadStatePtr(CodeGen &codegen, RuntimeState::Id state_id) const;
+  llvm::Value *LoadStatePtr(CodeGen &codegen, QueryState::Id state_id) const;
 
   /// Get the actual value of the state information with the given ID
   llvm::Value *LoadStateValue(CodeGen &codegen,
-                              RuntimeState::Id state_id) const;
+                              QueryState::Id state_id) const;
 
   /// Construct the equivalent LLVM type that represents this runtime state
   llvm::Type *FinalizeType(CodeGen &codegen);
@@ -87,7 +87,7 @@ class RuntimeState {
 
  private:
   // All the states we've allocated
-  std::vector<RuntimeState::StateInfo> state_slots_;
+  std::vector<QueryState::StateInfo> state_slots_;
 
   // The LLVM type of this runtime state. This type is cached for re-use.
   llvm::Type *constructed_type_;

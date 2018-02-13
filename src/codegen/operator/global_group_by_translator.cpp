@@ -25,7 +25,7 @@ GlobalGroupByTranslator::GlobalGroupByTranslator(
     Pipeline &pipeline)
     : OperatorTranslator(plan, context, pipeline),
       child_pipeline_(this),
-      aggregation_(context.GetRuntimeState()) {
+      aggregation_(context.GetQueryState()) {
   LOG_DEBUG("Constructing GlobalGroupByTranslator ...");
 
   CodeGen &codegen = context.GetCodeGen();
@@ -50,12 +50,12 @@ GlobalGroupByTranslator::GlobalGroupByTranslator(
 
   auto *mat_buffer_type = llvm::StructType::create(
       codegen.GetContext(),
-      llvm::cast<llvm::StructType>(aggregate_storage)->elements(),
-      "Buffer", true);
+      llvm::cast<llvm::StructType>(aggregate_storage)->elements(), "Buffer",
+      true);
 
   // Allocate state in the function argument for our materialization buffer
-  RuntimeState &runtime_state = context.GetRuntimeState();
-  mat_buffer_id_ = runtime_state.RegisterState("buf", mat_buffer_type);
+  QueryState &query_state = context.GetQueryState();
+  mat_buffer_id_ = query_state.RegisterState("buf", mat_buffer_type);
 
   LOG_DEBUG("Finished constructing GlobalGroupByTranslator ...");
 }

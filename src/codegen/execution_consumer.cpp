@@ -22,9 +22,9 @@ ExecutionConsumer::ExecutionConsumer() : executor_ctx_type_(nullptr) {}
 
 void ExecutionConsumer::Prepare(CompilationContext &compilation_ctx) {
   auto &codegen = compilation_ctx.GetCodeGen();
-  auto &runtime_state = compilation_ctx.GetRuntimeState();
+  auto &query_state = compilation_ctx.GetQueryState();
   executor_ctx_type_ = ExecutorContextProxy::GetType(codegen);
-  executor_ctx_id_ = runtime_state.RegisterState(
+  executor_ctx_id_ = query_state.RegisterState(
       "executorContext", executor_ctx_type_->getPointerTo());
 }
 
@@ -47,9 +47,9 @@ void ExecutionConsumer::ConsumeResult(ConsumerContext &context,
 
 llvm::Value *ExecutionConsumer::GetExecutorContextPtr(
     CompilationContext &compilation_ctx) {
-  auto &runtime_state = compilation_ctx.GetRuntimeState();
-  return runtime_state.LoadStateValue(compilation_ctx.GetCodeGen(),
-                                      executor_ctx_id_);
+  auto &query_state = compilation_ctx.GetQueryState();
+  return query_state.LoadStateValue(compilation_ctx.GetCodeGen(),
+                                    executor_ctx_id_);
 }
 
 llvm::Value *ExecutionConsumer::GetTransactionPtr(

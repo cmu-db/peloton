@@ -14,8 +14,8 @@
 
 #include "codegen/codegen.h"
 #include "codegen/pipeline.h"
+#include "codegen/query_state.h"
 #include "codegen/row_batch.h"
-#include "codegen/runtime_state.h"
 
 namespace peloton {
 
@@ -36,7 +36,7 @@ class ConsumerContext;
 // State:
 // ------
 // Operators may require state in order to operate. State required for the
-// duration of the whole query is declared and registered with RuntimeState in
+// duration of the whole query is declared and registered with QueryState in
 // CompilationContext. Query state must be initialized in
 // InitializeQueryState() and cleaned up in TearDownQueryState(), both of which
 // are guaranteed to be called at most once. Translators may not assume an
@@ -117,8 +117,8 @@ class OperatorTranslator {
   llvm::Value *GetStorageManagerPtr() const;
 
   // Retrieve a parameter from the runtime state
-  llvm::Value *LoadStatePtr(const RuntimeState::Id &state_id) const;
-  llvm::Value *LoadStateValue(const RuntimeState::Id &state_id) const;
+  llvm::Value *LoadStatePtr(const QueryState::Id &state_id) const;
+  llvm::Value *LoadStateValue(const QueryState::Id &state_id) const;
 
  private:
   // The plan node

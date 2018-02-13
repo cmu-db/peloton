@@ -68,7 +68,7 @@ class ExecutionConsumer {
 
  private:
   llvm::Type *executor_ctx_type_;
-  RuntimeState::Id executor_ctx_id_;
+  QueryState::Id executor_ctx_id_;
 };
 
 }  // namespace codegen

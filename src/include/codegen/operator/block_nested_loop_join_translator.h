@@ -62,7 +62,7 @@ class BlockNestedLoopJoinTranslator : public OperatorTranslator {
   // The memory space we use to buffer left input tuples. We use a util::Sorter
   // instance because it provides a simple API to append tuples into a buffer.
   // We **DO NOT** actually sort the input at all.
-  RuntimeState::Id buffer_id_;
+  QueryState::Id buffer_id_;
   Sorter buffer_;
 
   // This controls the number of tuples we buffer before performing the nested

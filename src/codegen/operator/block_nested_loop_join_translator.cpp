@@ -96,9 +96,9 @@ BlockNestedLoopJoinTranslator::BlockNestedLoopJoinTranslator(
 
   // Allocate buffer instance in runtime state and configure its accessor
   CodeGen &codegen = GetCodeGen();
-  RuntimeState &runtime_state = context.GetRuntimeState();
+  QueryState &query_state = context.GetQueryState();
   buffer_id_ =
-      runtime_state.RegisterState("buffer", SorterProxy::GetType(codegen));
+      query_state.RegisterState("buffer", SorterProxy::GetType(codegen));
   buffer_ = Sorter{codegen, left_input_desc};
 
   // Determine the number of rows to buffer before flushing it through the join

@@ -64,9 +64,9 @@ class BufferingConsumer : public ExecutionConsumer {
   void ConsumeResult(ConsumerContext &ctx, RowBatch::Row &row) const override;
 
   llvm::Value *GetStateValue(ConsumerContext &ctx,
-                             const RuntimeState::Id &id) const {
-    auto &runtime_state = ctx.GetRuntimeState();
-    return runtime_state.LoadStateValue(ctx.GetCodeGen(), id);
+                             const QueryState::Id &id) const {
+    auto &query_state = ctx.GetQueryState();
+    return query_state.LoadStateValue(ctx.GetCodeGen(), id);
   }
 
   // Called from compiled query code to buffer the tuple
@@ -91,7 +91,7 @@ class BufferingConsumer : public ExecutionConsumer {
   BufferingState state;
 
   // The slot in the runtime state to find our state context
-  RuntimeState::Id consumer_state_id_;
+  QueryState::Id consumer_state_id_;
 };
 
 }  // namespace codegen

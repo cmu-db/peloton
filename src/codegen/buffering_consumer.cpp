@@ -77,9 +77,9 @@ void BufferingConsumer::Prepare(CompilationContext &ctx) {
 
   // Install a little char* for the state we need
   auto &codegen = ctx.GetCodeGen();
-  auto &runtime_state = ctx.GetRuntimeState();
+  auto &query_state = ctx.GetQueryState();
   consumer_state_id_ =
-      runtime_state.RegisterState("consumerState", codegen.CharPtrType());
+      query_state.RegisterState("consumerState", codegen.CharPtrType());
 }
 
 // For each output attribute, we write out the attribute's value into the

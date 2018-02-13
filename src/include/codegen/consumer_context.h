@@ -13,8 +13,8 @@
 #pragma once
 
 #include "codegen/pipeline.h"
+#include "codegen/query_state.h"
 #include "codegen/row_batch.h"
-#include "codegen/runtime_state.h"
 #include "codegen/value.h"
 
 namespace peloton {
@@ -53,8 +53,8 @@ class ConsumerContext {
   // Get the code generator instance
   CodeGen &GetCodeGen() const;
 
-  // Get the runtime state
-  RuntimeState &GetRuntimeState() const;
+  // Get the query state
+  QueryState &GetQueryState() const;
 
   // Get the pipeline
   const Pipeline &GetPipeline() const { return pipeline_; }

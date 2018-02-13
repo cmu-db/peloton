@@ -34,12 +34,12 @@ class CountingConsumer : public codegen::ExecutionConsumer {
 
  private:
   llvm::Value *GetCounterState(codegen::CodeGen &codegen,
-                               codegen::RuntimeState &runtime_state) const;
+                               codegen::QueryState &query_state) const;
 
  private:
   uint64_t counter_;
   // The slot in the runtime state to find our state context
-  codegen::RuntimeState::Id counter_state_id_;
+  codegen::QueryState::Id counter_state_id_;
 };
 
 }  // namespace codegen

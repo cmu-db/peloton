@@ -91,7 +91,7 @@ class HashTranslator : public OperatorTranslator {
   };
 
   // The ID of the hash-table in the runtime state
-  RuntimeState::Id hash_table_id_;
+  QueryState::Id hash_table_id_;
 
   // The hash table
   OAHashTable hash_table_;

@@ -76,8 +76,8 @@ CodeGen &ConsumerContext::GetCodeGen() const {
   return compilation_context_.GetCodeGen();
 }
 
-RuntimeState &ConsumerContext::GetRuntimeState() const {
-  return compilation_context_.GetRuntimeState();
+QueryState &ConsumerContext::GetQueryState() const {
+  return compilation_context_.GetQueryState();
 }
 
 }  // namespace codegen

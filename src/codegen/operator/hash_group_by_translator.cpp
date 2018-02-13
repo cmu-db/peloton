@@ -33,7 +33,7 @@ HashGroupByTranslator::HashGroupByTranslator(
     Pipeline &pipeline)
     : OperatorTranslator(group_by, context, pipeline),
       child_pipeline_(this),
-      aggregation_(context.GetRuntimeState()) {
+      aggregation_(context.GetQueryState()) {
   // If we should be prefetching into the hash-table, install a boundary in the
   // pipeline at the input into this translator to ensure it receives a vector
   // of input tuples
@@ -43,9 +43,9 @@ HashGroupByTranslator::HashGroupByTranslator(
 
   // Register the hash-table instance in the runtime state
   CodeGen &codegen = GetCodeGen();
-  RuntimeState &runtime_state = context.GetRuntimeState();
-  hash_table_id_ = runtime_state.RegisterState(
-      "groupBy", OAHashTableProxy::GetType(codegen));
+  QueryState &query_state = context.GetQueryState();
+  hash_table_id_ =
+      query_state.RegisterState("groupBy", OAHashTableProxy::GetType(codegen));
 
   // Prepare the input operator to this group by
   context.Prepare(*group_by.GetChild(0), child_pipeline_);

@@ -31,11 +31,11 @@ HashTranslator::HashTranslator(const planner::HashPlan &hash_plan,
                                CompilationContext &context, Pipeline &pipeline)
     : OperatorTranslator(hash_plan, context, pipeline) {
   CodeGen &codegen = GetCodeGen();
-  RuntimeState &runtime_state = context.GetRuntimeState();
+  QueryState &query_state = context.GetQueryState();
 
   // Register the hash-table instance in the runtime state
   hash_table_id_ =
-      runtime_state.RegisterState("hash", OAHashTableProxy::GetType(codegen));
+      query_state.RegisterState("hash", OAHashTableProxy::GetType(codegen));
 
   // Prepare the input operator
   context.Prepare(*hash_plan.GetChild(0), pipeline);

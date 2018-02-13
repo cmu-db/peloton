@@ -20,11 +20,11 @@ namespace codegen {
 
 // Constructor
 CompilationContext::CompilationContext(CodeContext &code,
-                                       RuntimeState &runtime_state,
+                                       QueryState &query_state,
                                        const QueryParametersMap &parameters_map,
                                        ExecutionConsumer &execution_consumer)
     : code_context_(code),
-      runtime_state_(runtime_state),
+      query_state_(query_state),
       parameter_cache_(parameters_map),
       exec_consumer_(execution_consumer),
       codegen_(code_context_),
@@ -63,7 +63,7 @@ void CompilationContext::GeneratePlan(Query &query,
   Prepare(query.GetPlan(), main_pipeline_);
 
   // Finalize the runtime state
-  runtime_state_.FinalizeType(codegen_);
+  query_state_.FinalizeType(codegen_);
 
   if (stats != nullptr) {
     timer.Stop();
@@ -135,7 +135,7 @@ llvm::Function *CompilationContext::GenerateInitFunction() {
   // Create function definition
   std::string name = StringUtil::Format("_%lu_init", code_context_.GetID());
   std::vector<FunctionDeclaration::ArgumentInfo> args = {
-      {"runtimeState", runtime_state_.GetType()->getPointerTo()}};
+      {"queryState", query_state_.GetType()->getPointerTo()}};
   FunctionBuilder init_func{code_context_, name, codegen_.VoidType(), args};
   {
     // Let the consumer initialize
@@ -160,7 +160,7 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
     const planner::AbstractPlan &root) {
   std::string name = StringUtil::Format("_%lu_plan", code_context_.GetID());
   std::vector<FunctionDeclaration::ArgumentInfo> args = {
-      {"runtimeState", runtime_state_.GetType()->getPointerTo()}};
+      {"queryState", query_state_.GetType()->getPointerTo()}};
   FunctionBuilder plan_func{code_context_, name, codegen_.VoidType(), args};
   {
     // Generate the primary plan logic
@@ -177,7 +177,7 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
 llvm::Function *CompilationContext::GenerateTearDownFunction() {
   std::string name = StringUtil::Format("_%lu_tearDown", code_context_.GetID());
   std::vector<FunctionDeclaration::ArgumentInfo> args = {
-      {"runtimeState", runtime_state_.GetType()->getPointerTo()}};
+      {"queryState", query_state_.GetType()->getPointerTo()}};
   FunctionBuilder tear_down_func{code_context_, name, codegen_.VoidType(),
                                  args};
   {
@@ -229,7 +229,7 @@ AuxiliaryProducerFunction CompilationContext::DeclareAuxiliaryProducer(
   }
 
   std::vector<FunctionDeclaration::ArgumentInfo> fn_args = {
-      {"runtimeState", runtime_state_.GetType()->getPointerTo()}};
+      {"queryState", query_state_.GetType()->getPointerTo()}};
 
   auto declaration = FunctionDeclaration::MakeDeclaration(
       code_context_, fn_name, FunctionDeclaration::Visibility::Internal,

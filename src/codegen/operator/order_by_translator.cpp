@@ -40,9 +40,8 @@ OrderByTranslator::OrderByTranslator(const planner::OrderByPlan &plan,
   CodeGen &codegen = GetCodeGen();
 
   // Register the sorter instance
-  RuntimeState &runtime_state = context.GetRuntimeState();
-  sorter_id_ =
-      runtime_state.RegisterState("sort", SorterProxy::GetType(codegen));
+  QueryState &query_state = context.GetQueryState();
+  sorter_id_ = query_state.RegisterState("sort", SorterProxy::GetType(codegen));
 
   // When sorting, we need to materialize both the output columns and the sort
   // columns. These sets may overlap. To avoid duplicating storage, we track

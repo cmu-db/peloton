@@ -81,7 +81,7 @@ class GlobalGroupByTranslator : public OperatorTranslator {
   Aggregation aggregation_;
 
   // The ID of our materialization buffer in the runtime state
-  RuntimeState::Id mat_buffer_id_;
+  QueryState::Id mat_buffer_id_;
 };
 
 }  // namespace codegen
