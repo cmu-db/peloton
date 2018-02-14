@@ -16,7 +16,6 @@
 
 #include <memory>
 
-
 namespace peloton {
 namespace optimizer {
 
@@ -45,7 +44,7 @@ class InnerJoinCommutativity : public Rule {
 
 class InnerJoinAssociativity : public Rule {
  public:
- InnerJoinAssociativity();
+  InnerJoinAssociativity();
 
   bool Check(std::shared_ptr<OperatorExpression> plan,
              OptimizeContext *context) const override;

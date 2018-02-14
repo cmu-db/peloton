@@ -16,12 +16,7 @@
 
 #define private public
 
-#include "optimizer/operator_expression.h"
-#include "optimizer/operators.h"
-#include "optimizer/optimizer.h"
-#include "optimizer/rule.h"
-#include "optimizer/rule_impls.h"
-#include "sql/testing_sql_util.h"
+#include "binder/bind_node_visitor.h"
 #include "catalog/catalog.h"
 #include "common/logger.h"
 #include "common/statement.h"
@@ -30,13 +25,17 @@
 #include "executor/insert_executor.h"
 #include "executor/plan_executor.h"
 #include "executor/update_executor.h"
+#include "optimizer/operator_expression.h"
+#include "optimizer/operators.h"
+#include "optimizer/optimizer.h"
+#include "optimizer/rule.h"
+#include "optimizer/rule_impls.h"
 #include "planner/create_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"
 #include "planner/update_plan.h"
+#include "sql/testing_sql_util.h"
 #include "type/value_factory.h"
-#include "binder/bind_node_visitor.h"
-
 
 namespace peloton {
 namespace test {
@@ -56,7 +55,6 @@ class OptimizerRuleTests : public PelotonTest {
     return group->logical_expressions_[0].get();
   }
 };
-
 
 TEST_F(OptimizerRuleTests, SimpleCommutativeRuleTest) {
   // Build op plan node to match rule
@@ -79,7 +77,6 @@ TEST_F(OptimizerRuleTests, SimpleCommutativeRuleTest) {
 
   EXPECT_EQ(output_join->Children()[0], right_get);
   EXPECT_EQ(output_join->Children()[1], left_get);
-
 }
 
 TEST_F(OptimizerRuleTests, AssociativeRuleTest) {
@@ -96,8 +93,8 @@ TEST_F(OptimizerRuleTests, AssociativeRuleTest) {
       "CREATE TABLE test3(a INT PRIMARY KEY, b INT, c INT);");
 
   auto &peloton_parser = parser::PostgresParser::GetInstance();
-  auto stmt = peloton_parser.BuildParseTree(
-      "SELECT * FROM test1, test2, test3");
+  auto stmt =
+      peloton_parser.BuildParseTree("SELECT * FROM test1, test2, test3");
   auto parse_tree = stmt->GetStatements().at(0).get();
   auto predicates = std::vector<expression::AbstractExpression *>();
 
@@ -119,7 +116,8 @@ TEST_F(OptimizerRuleTests, AssociativeRuleTest) {
   std::vector<GroupID> child_groups = {gexpr->GetGroupID()};
 
   auto &memo = optimizer.metadata_.memo;
-  std::shared_ptr<GroupExpression> head_gexpr = std::make_shared<GroupExpression>(Operator(), child_groups);
+  std::shared_ptr<GroupExpression> head_gexpr =
+      std::make_shared<GroupExpression>(Operator(), child_groups);
 
   // Check plan is of structure (left JOIN middle) JOIN right
   // Check Parent join
@@ -143,9 +141,11 @@ TEST_F(OptimizerRuleTests, AssociativeRuleTest) {
   std::shared_ptr<OptimizeContext> root_context =
       std::make_shared<OptimizeContext>(&(optimizer.metadata_), nullptr);
 
-  auto task_stack = std::unique_ptr<OptimizerTaskStack>(new OptimizerTaskStack());
+  auto task_stack =
+      std::unique_ptr<OptimizerTaskStack>(new OptimizerTaskStack());
   optimizer.metadata_.SetTaskPool(task_stack.get());
-  task_stack->Push(new ApplyRule(group_expr, new InnerJoinAssociativity, root_context));
+  task_stack->Push(
+      new ApplyRule(group_expr, new InnerJoinAssociativity, root_context));
 
   while (!task_stack->Empty()) {
     auto task = task_stack->Pop();
@@ -163,7 +163,8 @@ TEST_F(OptimizerRuleTests, AssociativeRuleTest) {
   LOG_DEBUG("Parent join: OK");
 
   // Check left Get
-  //TODO: Not sure why left is at index 1, but the (middle JOIN right) is at index 0
+  // TODO: Not sure why left is at index 1, but the (middle JOIN right) is at
+  // index 0
   left = GetSingleGroupExpression(memo, group_expr, 1);
   EXPECT_EQ(OpType::Get, left->Op().GetType());
   LOG_DEBUG("Left Leaf: OK");

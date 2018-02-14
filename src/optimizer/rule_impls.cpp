@@ -12,16 +12,15 @@
 
 #include <memory>
 
+#include "catalog/column_catalog.h"
 #include "catalog/index_catalog.h"
 #include "catalog/table_catalog.h"
-#include "catalog/column_catalog.h"
+#include "optimizer/operators.h"
+#include "optimizer/optimizer_metadata.h"
+#include "optimizer/properties.h"
 #include "optimizer/rule_impls.h"
 #include "optimizer/util.h"
-#include "optimizer/operators.h"
 #include "storage/data_table.h"
-#include "optimizer/properties.h"
-#include "optimizer/optimizer_metadata.h"
-
 
 namespace peloton {
 namespace optimizer {
@@ -86,7 +85,7 @@ InnerJoinAssociativity::InnerJoinAssociativity() {
   match_pattern->AddChild(right_child);
 }
 
-//TODO: As far as I know, theres nothing else that needs to be checked
+// TODO: As far as I know, theres nothing else that needs to be checked
 bool InnerJoinAssociativity::Check(std::shared_ptr<OperatorExpression> expr,
                                    OptimizeContext *context) const {
   (void)context;
@@ -98,10 +97,8 @@ void InnerJoinAssociativity::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed,
     UNUSED_ATTRIBUTE OptimizeContext *context) const {
-
-
-  // NOTE: Transforms (left JOIN middle) JOIN right -> left JOIN (middle JOIN right)
-  // Variables are named accordingly to above transformation
+  // NOTE: Transforms (left JOIN middle) JOIN right -> left JOIN (middle JOIN
+  // right) Variables are named accordingly to above transformation
   auto parent_join = input->Op().As<LogicalInnerJoin>();
   std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   auto child_join = children[0]->Op().As<LogicalInnerJoin>();
@@ -114,7 +111,8 @@ void InnerJoinAssociativity::Transform(
 
   // Get Alias sets
   auto &memo = context->metadata->memo;
-  auto middle_group_id = children[0]->Children()[1]->Op().As<LeafOperator>()->origin_group;
+  auto middle_group_id =
+      children[0]->Children()[1]->Op().As<LeafOperator>()->origin_group;
   auto right_group_id = children[1]->Op().As<LeafOperator>()->origin_group;
 
   const auto &middle_group_aliases_set =
@@ -123,19 +121,23 @@ void InnerJoinAssociativity::Transform(
       memo.GetGroupByID(right_group_id)->GetTableAliases();
 
   // Redistribute predicates
-  auto parent_join_predicates = std::vector<AnnotatedExpression>(parent_join->join_predicates);
-  auto child_join_predicates = std::vector<AnnotatedExpression>(child_join->join_predicates);
+  auto parent_join_predicates =
+      std::vector<AnnotatedExpression>(parent_join->join_predicates);
+  auto child_join_predicates =
+      std::vector<AnnotatedExpression>(child_join->join_predicates);
 
   std::vector<AnnotatedExpression> predicates;
-  predicates.insert(predicates.end(), parent_join_predicates.begin(), parent_join_predicates.end());
-  predicates.insert(predicates.end(), child_join_predicates.begin(), child_join_predicates.end());
+  predicates.insert(predicates.end(), parent_join_predicates.begin(),
+                    parent_join_predicates.end());
+  predicates.insert(predicates.end(), child_join_predicates.begin(),
+                    child_join_predicates.end());
 
   std::vector<AnnotatedExpression> new_child_join_predicates;
   std::vector<AnnotatedExpression> new_parent_join_predicates;
 
-  //TODO: This assumes that predicate pushdown has not occured yet, as it will put all non-join predicates into parent join
+  // TODO: This assumes that predicate pushdown has not occured yet, as it will
+  // put all non-join predicates into parent join
   for (auto predicate : predicates) {
-
     // New child join predicate must contain middle and right group
     if (util::IsSubset(middle_group_aliases_set, predicate.table_alias_set) &&
         util::IsSubset(right_group_aliases_set, predicate.table_alias_set))
@@ -158,13 +160,11 @@ void InnerJoinAssociativity::Transform(
   new_parent_join->PushChild(left);
   new_parent_join->PushChild(new_child_join);
 
-
-  LOG_DEBUG(
-      "Reordered join structured: (%s JOIN %s) JOIN %s",
-      left->Op().GetName().c_str(), middle->Op().GetName().c_str(), right->Op().GetName().c_str());
+  LOG_DEBUG("Reordered join structured: (%s JOIN %s) JOIN %s",
+            left->Op().GetName().c_str(), middle->Op().GetName().c_str(),
+            right->Op().GetName().c_str());
 
   transformed.push_back(new_parent_join);
-
 }
 
 //===--------------------------------------------------------------------===//
@@ -361,8 +361,8 @@ void GetToIndexScan::Transform(
           LOG_TRACE("Value Type: %d",
                     static_cast<int>(
                         reinterpret_cast<expression::ConstantValueExpression *>(
-                        expr->GetModifiableChild(1))
-                        ->GetValueType()));
+                            expr->GetModifiableChild(1))
+                            ->GetValueType()));
         } else {
           value_list.push_back(
               type::ValueFactory::GetParameterOffsetValue(
