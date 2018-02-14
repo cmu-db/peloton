@@ -102,7 +102,6 @@ void InnerJoinAssociativity::Transform(
 
   // NOTE: Transforms (left JOIN middle) JOIN right -> left JOIN (middle JOIN right)
   // Variables are named accordingly to above transformation
-
   auto parent_join = input->Op().As<LogicalInnerJoin>();
   std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   auto child_join = children[0]->Op().As<LogicalInnerJoin>();
@@ -115,12 +114,9 @@ void InnerJoinAssociativity::Transform(
 
   // Get Alias sets
   auto &memo = context->metadata->memo;
-//  auto left_group_id = children[0]->Children()[0]->Op().As<LeafOperator>()->origin_group;
   auto middle_group_id = children[0]->Children()[1]->Op().As<LeafOperator>()->origin_group;
   auto right_group_id = children[1]->Op().As<LeafOperator>()->origin_group;
 
-//  const auto &left_group_aliases_set =
-//      memo.GetGroupByID(left_group_id)->GetTableAliases();
   const auto &middle_group_aliases_set =
       memo.GetGroupByID(middle_group_id)->GetTableAliases();
   const auto &right_group_aliases_set =
@@ -163,7 +159,7 @@ void InnerJoinAssociativity::Transform(
   new_parent_join->PushChild(new_child_join);
 
 
-  LOG_TRACE(
+  LOG_DEBUG(
       "Reordered join structured: (%s JOIN %s) JOIN %s",
       left->Op().GetName().c_str(), middle->Op().GetName().c_str(), right->Op().GetName().c_str());
 
