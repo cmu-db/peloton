@@ -283,5 +283,14 @@ uint64_t CodeGen::SizeOf(llvm::Type *type) const {
   return size != 0 ? size : 1;
 }
 
+uint64_t CodeGen::ElementOffset(llvm::Type *type, uint32_t element_idx) const {
+  PL_ASSERT(llvm::isa<llvm::StructType>(type));
+  auto &data_layout = code_context_.GetDataLayout();
+
+  auto *struct_layout =
+      data_layout.getStructLayout(llvm::cast<llvm::StructType>(type));
+  return struct_layout->getElementOffset(element_idx);
+}
+
 }  // namespace codegen
 }  // namespace peloton

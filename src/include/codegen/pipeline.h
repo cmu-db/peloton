@@ -56,8 +56,10 @@ class PipelineContext {
   llvm::Value *AccessThreadState(CodeGen &codegen) const;
   llvm::Value *LoadFlag(CodeGen &codegen) const;
   void StoreFlag(CodeGen &codegen, llvm::Value *flag) const;
+  void MarkInitialized(CodeGen &codegen) const;
   llvm::Value *LoadStatePtr(CodeGen &codegen, Id) const;
   llvm::Value *LoadState(CodeGen &codegen, Id state_id) const;
+  uint32_t GetEntryOffset(CodeGen &codegen, Id state_id) const;
 
   /// Is the pipeline associated with this context parallel?
   bool IsParallel() const;
@@ -108,13 +110,8 @@ class Pipeline {
   ///
   //////////////////////////////////////////////////////////////////////////////
 
-  /// Install a stage boundary in front of the given operator
   void InstallStageBoundary(const OperatorTranslator *translator);
-
-  /// Is the pipeline position currently sitting at a stage boundary?
   bool AtStageBoundary() const;
-
-  /// Get the stage the given translator is in
   uint32_t GetTranslatorStage(const OperatorTranslator *translator) const;
 
   //////////////////////////////////////////////////////////////////////////////

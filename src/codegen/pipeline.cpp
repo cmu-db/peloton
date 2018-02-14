@@ -78,8 +78,14 @@ llvm::Value *PipelineContext::LoadFlag(CodeGen &codegen) const {
 }
 
 void PipelineContext::StoreFlag(CodeGen &codegen, llvm::Value *flag) const {
+  PL_ASSERT(flag->getType()->isIntegerTy(1) &&
+            flag->getType() == codegen.BoolType());
   auto *flag_ptr = LoadStatePtr(codegen, kFlagOffset);
   codegen->CreateStore(flag, flag_ptr);
+}
+
+void PipelineContext::MarkInitialized(CodeGen &codegen) const {
+  StoreFlag(codegen, codegen.ConstBool(true));
 }
 
 llvm::Value *PipelineContext::LoadStatePtr(CodeGen &codegen,
@@ -93,6 +99,12 @@ llvm::Value *PipelineContext::LoadState(CodeGen &codegen,
                                         PipelineContext::Id state_id) const {
   auto name = state_components_[state_id].first;
   return codegen->CreateLoad(LoadStatePtr(codegen, state_id), name);
+}
+
+uint32_t PipelineContext::GetEntryOffset(CodeGen &codegen,
+                                         PipelineContext::Id state_id) const {
+  auto *state_type = GetThreadStateType();
+  return static_cast<uint32_t>(codegen.ElementOffset(state_type, state_id));
 }
 
 bool PipelineContext::IsParallel() const { return pipeline_.IsParallel(); }
@@ -270,6 +282,8 @@ void Pipeline::InitializePipeline(PipelineContext &pipeline_context) {
          riter != rend; ++riter) {
       (*riter)->InitializePipelineState(pipeline_context);
     }
+    // Set initialized flag
+    pipeline_context.MarkInitialized(codegen);
     // That's it
     init_func.ReturnAndFinish();
   }

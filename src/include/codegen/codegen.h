@@ -137,6 +137,7 @@ class CodeGen {
 
   /// Return the size of the given type in bytes (returns 1 when size < 1 byte)
   uint64_t SizeOf(llvm::Type *type) const;
+  uint64_t ElementOffset(llvm::Type *type, uint32_t element_idx) const;
 
   //===--------------------------------------------------------------------===//
   // ACCESSORS
