@@ -25,8 +25,15 @@
 namespace peloton {
 namespace concurrency {
 
-// timestamp ordering requires a spinlock field for protecting the atomic access
-// to txn_id field and last_reader_cid field.
+/**
+ * Timestamp ordering requires a spinlock field for protecting the atomic access
+ * to txn_id field and last_reader_cid field.
+ *
+ * @param[in]  tile_group_header  The tile group header
+ * @param[in]  tuple_id           The tuple identifier
+ *
+ * @return     The spin latch field.
+ */
 common::synchronization::SpinLatch *TimestampOrderingTransactionManager::GetSpinLatchField(
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tuple_id) {
@@ -34,9 +41,15 @@ common::synchronization::SpinLatch *TimestampOrderingTransactionManager::GetSpin
             (tile_group_header->GetReservedFieldRef(tuple_id) + LOCK_OFFSET);
 }
 
-// in timestamp ordering, the last_reader_cid records the timestamp of the last
-// transaction
-// that reads the tuple.
+/**
+ * In timestamp ordering, the last_reader_cid records the timestamp of the last
+ * transaction that reads the tuple.
+ *
+ * @param[in]  tile_group_header  The tile group header
+ * @param[in]  tuple_id           The tuple identifier
+ *
+ * @return     True if success, False otherwise
+ */
 cid_t TimestampOrderingTransactionManager::GetLastReaderCommitId(
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tuple_id) {
@@ -44,6 +57,16 @@ cid_t TimestampOrderingTransactionManager::GetLastReaderCommitId(
                     LAST_READER_OFFSET);
 }
 
+/**
+ * @brief      Sets the last reader commit identifier.
+ *
+ * @param[in]  tile_group_header  The tile group header
+ * @param[in]  tuple_id           The tuple identifier
+ * @param[in]  current_cid        The current cid
+ * @param[in]  is_owner           Indicates if owner
+ *
+ * @return     True if success, False otherwise
+ */
 bool TimestampOrderingTransactionManager::SetLastReaderCommitId(
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tuple_id, const cid_t &current_cid, const bool is_owner) {
@@ -73,7 +96,12 @@ bool TimestampOrderingTransactionManager::SetLastReaderCommitId(
   }
 }
 
-// Initiate reserved area of a tuple
+/**
+ * Initiate reserved area of a tuple.
+ *
+ * @param[in]  tile_group_header  The tile group header
+ * @param[in]  tuple_id           The tuple identifier
+ */
 void TimestampOrderingTransactionManager::InitTupleReserved(
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t tuple_id) {
@@ -83,6 +111,15 @@ void TimestampOrderingTransactionManager::InitTupleReserved(
   *(cid_t *)(reserved_area + LAST_READER_OFFSET) = 0;
 }
 
+/**
+ * @brief      Gets the instance.
+ *
+ * @param[in]  protocol   The protocol
+ * @param[in]  isolation  The isolation
+ * @param[in]  conflict   The conflict
+ *
+ * @return     The instance.
+ */
 TimestampOrderingTransactionManager &
 TimestampOrderingTransactionManager::GetInstance(
     const ProtocolType protocol, const IsolationLevelType isolation,
@@ -94,7 +131,15 @@ TimestampOrderingTransactionManager::GetInstance(
   return txn_manager;
 }
 
-// check whether the current transaction owns the tuple version.
+/**
+ * Check whether the current transaction owns the tuple version.
+ *
+ * @param      current_txn        The current transaction
+ * @param[in]  tile_group_header  The tile group header
+ * @param[in]  tuple_id           The tuple identifier
+ *
+ * @return     True if owner, False otherwise.
+ */
 bool TimestampOrderingTransactionManager::IsOwner(
     TransactionContext *const current_txn,
     const storage::TileGroupHeader *const tile_group_header,
@@ -104,7 +149,15 @@ bool TimestampOrderingTransactionManager::IsOwner(
   return tuple_txn_id == current_txn->GetTransactionId();
 }
 
-// check whether any other transaction owns the tuple version.
+/**
+ * Check whether any other transaction owns the tuple version.
+ *
+ * @param      current_txn        The current transaction
+ * @param[in]  tile_group_header  The tile group header
+ * @param[in]  tuple_id           The tuple identifier
+ *
+ * @return     True if owned, False otherwise.
+ */
 bool TimestampOrderingTransactionManager::IsOwned(
     TransactionContext *const current_txn,
     const storage::TileGroupHeader *const tile_group_header,
@@ -115,19 +168,25 @@ bool TimestampOrderingTransactionManager::IsOwned(
          tuple_txn_id != INITIAL_TXN_ID;
 }
 
-// This method tests whether the current transaction has
-// created this version of the tuple
-//
-// this method is designed for select_for_update.
-//
-// The DBMS can acquire write locks for a transaction in two cases:
-// (1) Every time a transaction updates a tuple, the DBMS creates
-//     a new version of the tuple and acquire the locks on both
-//     the older and the newer version;
-// (2) Every time a transaction executes a select_for_update statement,
-//     the DBMS needs to acquire the lock on the corresponding version
-//     without creating a new version.
-// IsWritten() method is designed for distinguishing these two cases.
+/**
+ * This method tests whether the current transaction has created this version of
+ * the tuple.
+ *
+ * This method is designed for select_for_update.
+ *
+ * The DBMS can acquire write locks for a transaction in two cases: (1) Every
+ * time a transaction updates a tuple, the DBMS creates a new version of the
+ * tuple and acquire the locks on both the older and the newer version; (2)
+ * Every time a transaction executes a select_for_update statement, the DBMS
+ * needs to acquire the lock on the corresponding version without creating a new
+ * version. IsWritten() method is designed for distinguishing these two cases.
+ *
+ * @param[in]  TransactionContext  The transaction context
+ * @param[in]  tile_group_header  The tile group header
+ * @param[in]  tuple_id           The tuple identifier
+ *
+ * @return     True if written, False otherwise.
+ */
 bool TimestampOrderingTransactionManager::IsWritten(
     UNUSED_ATTRIBUTE TransactionContext *const current_txn,
     const storage::TileGroupHeader *const tile_group_header,
@@ -137,9 +196,16 @@ bool TimestampOrderingTransactionManager::IsWritten(
   return tuple_begin_cid == MAX_CID;
 }
 
-// if the tuple is not owned by any transaction and is visible to current
-// transaction.
-// the version must be the latest version in the version chain.
+/**
+ * If the tuple is not owned by any transaction and is visible to current
+ * transaction. the version must be the latest version in the version chain.
+ *
+ * @param[in]  TransactionContext  The transaction context
+ * @param[in]  tile_group_header  The tile group header
+ * @param[in]  tuple_id           The tuple identifier
+ *
+ * @return     True if ownable, False otherwise.
+ */
 bool TimestampOrderingTransactionManager::IsOwnable(
     UNUSED_ATTRIBUTE TransactionContext *const current_txn,
     const storage::TileGroupHeader *const tile_group_header,
@@ -183,12 +249,17 @@ bool TimestampOrderingTransactionManager::AcquireOwnership(
   }
 }
 
-// release write lock on a tuple.
-// one example usage of this method is when a tuple is acquired, but operation
-// (insert,update,delete) can't proceed, the executor needs to yield the
-// ownership before return false to upper layer.
-// It should not be called if the tuple is in the write set as commit and abort
-// will release the write lock anyway.
+/**
+ * Release write lock on a tuple. one example usage of this method is when a
+ * tuple is acquired, but operation (insert,update,delete) can't proceed, the
+ * executor needs to yield the ownership before return false to upper layer. It
+ * should not be called if the tuple is in the write set as commit and abort
+ * will release the write lock anyway.
+ *
+ * @param[in]  TransactionContext  The transaction context
+ * @param[in]  tile_group_header   The tile group header
+ * @param[in]  tuple_id            The tuple identifier
+ */
 void TimestampOrderingTransactionManager::YieldOwnership(
     UNUSED_ATTRIBUTE TransactionContext *const current_txn,
     const storage::TileGroupHeader *const tile_group_header,
@@ -582,7 +653,12 @@ void TimestampOrderingTransactionManager::PerformUpdate(
   }
 }
 
-// NOTE: this function is deprecated.
+/**
+ * NOTE: this function is deprecated.
+ *
+ * @param      current_txn   The current transaction
+ * @param[in]  location      The location
+ */
 void TimestampOrderingTransactionManager::PerformUpdate(
     TransactionContext *const current_txn UNUSED_ATTRIBUTE,
     const ItemPointer &location) {
