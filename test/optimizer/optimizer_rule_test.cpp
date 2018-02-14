@@ -10,16 +10,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <include/concurrency/transaction_manager_factory.h>
-#include <include/parser/postgresparser.h>
-#include "common/harness.h"
-
 #define private public
 
 #include "binder/bind_node_visitor.h"
 #include "catalog/catalog.h"
+#include "common/harness.h"
 #include "common/logger.h"
 #include "common/statement.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "executor/create_executor.h"
 #include "executor/delete_executor.h"
 #include "executor/insert_executor.h"
@@ -30,6 +28,7 @@
 #include "optimizer/optimizer.h"
 #include "optimizer/rule.h"
 #include "optimizer/rule_impls.h"
+#include "parser/postgresparser.h"
 #include "planner/create_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"
