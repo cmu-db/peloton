@@ -21,14 +21,14 @@
 SETTING_int(port,
            "Peloton port (default: 15721)",
            15721,
-           0, 32000,
+           1024, 65535,
            false, false)
 
 // Maximum number of connections
 SETTING_int(max_connections,
            "Maximum number of connections (default: 64)",
            64,
-           0, 512,
+           1, 512,
            true, true)
 
 SETTING_int(rpc_port,
@@ -111,7 +111,7 @@ SETTING_int(connection_thread_count,
 SETTING_int(gc_num_threads,
             "The number of Garbage collection threads to run",
             1,
-            0, 128,
+            1, 128,
             true, true)
 
 //===----------------------------------------------------------------------===//
