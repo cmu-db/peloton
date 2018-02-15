@@ -11,9 +11,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "catalog/column_catalog.h"
-#include "concurrency/transaction_context.h"
 
+#include "catalog/catalog.h"
+#include "catalog/system_catalogs.h"
 #include "catalog/table_catalog.h"
+#include "concurrency/transaction_context.h"
+#include "storage/database.h"
 #include "storage/data_table.h"
 #include "type/value_factory.h"
 
@@ -41,13 +44,6 @@ ColumnCatalogObject::ColumnCatalogObject(executor::LogicalTile *tile,
       is_not_null(tile->GetValue(tupleId, ColumnCatalog::ColumnId::IS_NOT_NULL)
                       .GetAs<bool>()) {}
 
-ColumnCatalog *ColumnCatalog::GetInstance(
-    storage::Database *pg_catalog, type::AbstractPool *pool,
-    concurrency::TransactionContext *txn) {
-  static ColumnCatalog column_catalog{pg_catalog, pool, txn};
-  return &column_catalog;
-}
-
 ColumnCatalog::ColumnCatalog(storage::Database *pg_catalog,
                              type::AbstractPool *pool,
                              concurrency::TransactionContext *txn)
@@ -64,7 +60,7 @@ ColumnCatalog::ColumnCatalog(storage::Database *pg_catalog,
   AddIndex({ColumnId::TABLE_OID}, COLUMN_CATALOG_SKEY1_OID,
            COLUMN_CATALOG_NAME "_skey1", IndexConstraintType::DEFAULT);
 
-  // Insert columns into pg_attribute
+  // Insert columns of pg_attribute table into pg_attribute itself
   uint32_t column_id = 0;
   for (auto column : catalog_table_->GetSchema()->GetColumns()) {
     InsertColumn(COLUMN_CATALOG_OID, column.GetName(), column_id,
@@ -196,7 +192,7 @@ bool ColumnCatalog::DeleteColumn(oid_t table_oid,
 
   // delete column from cache
   auto pg_table =
-      Catalog::GetInstance()->GetSystemCatalog(database_oid)->GetTableCatalog();
+      Catalog::GetInstance()->GetSystemCatalogs(database_oid)->GetTableCatalog();
   auto table_object = pg_table->GetTableObject(table_oid, txn);
   table_object->EvictColumnObject(column_name);
 
@@ -217,7 +213,7 @@ bool ColumnCatalog::DeleteColumns(oid_t table_oid,
 
   // delete columns from cache
   auto pg_table =
-      Catalog::GetInstance()->GetSystemCatalog(database_oid)->GetTableCatalog();
+      Catalog::GetInstance()->GetSystemCatalogs(database_oid)->GetTableCatalog();
   auto table_object = pg_table->GetTableObject(table_oid, txn);
   table_object->EvictAllColumnObjects();
 
@@ -229,7 +225,7 @@ ColumnCatalog::GetColumnObjects(oid_t table_oid,
                                 concurrency::TransactionContext *txn) {
   // try get from cache
   auto pg_table =
-      Catalog::GetInstance()->GetSystemCatalog(database_oid)->GetTableCatalog();
+      Catalog::GetInstance()->GetSystemCatalogs(database_oid)->GetTableCatalog();
   auto table_object = pg_table->GetTableObject(table_oid, txn);
   PL_ASSERT(table_object && table_object->GetTableOid() == table_oid);
   auto column_objects = table_object->GetColumnObjects(true);

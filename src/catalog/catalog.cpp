@@ -12,6 +12,7 @@
 
 #include "catalog/catalog.h"
 
+#include "catalog/system_catalogs.h"
 #include "catalog/column_catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/database_metrics_catalog.h"
@@ -62,17 +63,29 @@ Catalog::Catalog() : pool_(new type::EphemeralPool()) {
   storage_manager->AddDatabaseToStorageManager(pg_catalog);
 
   // Create catalog tables
-  auto pg_database = DatabaseCatalog::GetInstance(pg_catalog, pool_.get(), txn);
+  DatabaseCatalog::GetInstance(pg_catalog, pool_.get(), txn);
   BootstrapSystemCatalogs(pg_catalog, txn);
+
+  // Insert pg_catalog database into pg_database
+  DatabaseCatalog::GetInstance()->InsertDatabase(
+      CATALOG_DATABASE_OID, CATALOG_DATABASE_NAME, pool_.get(), txn);
 
   // Commit transaction
   txn_manager.CommitTransaction(txn);
 }
 
-void Catalog::BootstrapSystemCatalogs(Database *database,
+/* This function *MUST* be called after a new database is created to bootstrap
+ * all system catalog tables for that database.
+ * The system catalog tables must be created in certain order to make sure
+ * all tuples are indexed (actually this might be fine now after Paulo's fix)
+ */
+void Catalog::BootstrapSystemCatalogs(storage::Database *database,
                                       concurrency::TransactionContext *txn) {
-  auto system_catalogs = catalog_map_[database_oid] =
-      new SystemCatalogs(database, pool_.get(), txn);
+  oid_t database_oid = database->GetOid();
+  catalog_map_.emplace(database_oid,
+    std::shared_ptr<SystemCatalogs>(
+      new SystemCatalogs(database, pool_.get(), txn)));
+  auto system_catalogs = catalog_map_[database_oid];
 
   // Create indexes on catalog tables, insert them into pg_index
   // note that CreateIndex() from catalog.cpp will create index on storage level
@@ -101,50 +114,46 @@ void Catalog::BootstrapSystemCatalogs(Database *database,
   // actual index already added in column_catalog, index_catalog constructor
   // the reason we treat those two catalog tables differently is that indexes
   // needs to be built before insert tuples into table
-  system_catalogs.GetIndexCatalog()->InsertIndex(
+  system_catalogs->GetIndexCatalog()->InsertIndex(
       COLUMN_CATALOG_PKEY_OID, COLUMN_CATALOG_NAME "_pkey", COLUMN_CATALOG_OID,
       IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY, true,
       {ColumnCatalog::ColumnId::TABLE_OID,
        ColumnCatalog::ColumnId::COLUMN_NAME},
       pool_.get(), txn);
-  system_catalogs.GetIndexCatalog()->InsertIndex(
+  system_catalogs->GetIndexCatalog()->InsertIndex(
       COLUMN_CATALOG_SKEY0_OID, COLUMN_CATALOG_NAME "_skey0",
       COLUMN_CATALOG_OID, IndexType::BWTREE, IndexConstraintType::UNIQUE, true,
       {ColumnCatalog::ColumnId::TABLE_OID, ColumnCatalog::ColumnId::COLUMN_ID},
       pool_.get(), txn);
-  system_catalogs.GetIndexCatalog()->InsertIndex(
+  system_catalogs->GetIndexCatalog()->InsertIndex(
       COLUMN_CATALOG_SKEY1_OID, COLUMN_CATALOG_NAME "_skey1",
       COLUMN_CATALOG_OID, IndexType::BWTREE, IndexConstraintType::DEFAULT,
       false, {ColumnCatalog::ColumnId::TABLE_OID}, pool_.get(), txn);
 
-  system_catalogs.GetIndexCatalog()->InsertIndex(
+  system_catalogs->GetIndexCatalog()->InsertIndex(
       INDEX_CATALOG_PKEY_OID, INDEX_CATALOG_NAME "_pkey", INDEX_CATALOG_OID,
       IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY, true,
       {IndexCatalog::ColumnId::INDEX_OID}, pool_.get(), txn);
-  system_catalogs.GetIndexCatalog()->InsertIndex(
+  system_catalogs->GetIndexCatalog()->InsertIndex(
       INDEX_CATALOG_SKEY0_OID, INDEX_CATALOG_NAME "_skey0", INDEX_CATALOG_OID,
       IndexType::BWTREE, IndexConstraintType::UNIQUE, true,
       {IndexCatalog::ColumnId::INDEX_NAME}, pool_.get(), txn);
-  system_catalogs.GetIndexCatalog()->InsertIndex(
+  system_catalogs->GetIndexCatalog()->InsertIndex(
       INDEX_CATALOG_SKEY1_OID, INDEX_CATALOG_NAME "_skey1", INDEX_CATALOG_OID,
       IndexType::BWTREE, IndexConstraintType::DEFAULT, false,
       {IndexCatalog::ColumnId::TABLE_OID}, pool_.get(), txn);
 
-  // Insert pg_catalog database into pg_database
-  DatabaseCatalog::GetInstance()->InsertDatabase(
-      CATALOG_DATABASE_OID, CATALOG_DATABASE_NAME, pool_.get(), txn);
-
   // Insert catalog tables into pg_table
-  system_catalogs.GetTableCatalog()->InsertTable(
+  system_catalogs->GetTableCatalog()->InsertTable(
       DATABASE_CATALOG_OID, DATABASE_CATALOG_NAME, CATALOG_DATABASE_OID,
       pool_.get(), txn);
-  system_catalogs.GetTableCatalog()->InsertTable(
+  system_catalogs->GetTableCatalog()->InsertTable(
       TABLE_CATALOG_OID, TABLE_CATALOG_NAME, CATALOG_DATABASE_OID, pool_.get(),
       txn);
-  system_catalogs.GetTableCatalog()->InsertTable(
+  system_catalogs->GetTableCatalog()->InsertTable(
       INDEX_CATALOG_OID, INDEX_CATALOG_NAME, CATALOG_DATABASE_OID, pool_.get(),
       txn);
-  system_catalogs.GetTableCatalog()->InsertTable(
+  system_catalogs->GetTableCatalog()->InsertTable(
       COLUMN_CATALOG_OID, COLUMN_CATALOG_NAME, CATALOG_DATABASE_OID,
       pool_.get(), txn);
 }
@@ -205,6 +214,7 @@ ResultType Catalog::CreateDatabase(const std::string &database_name,
   txn->RecordCreate(database_oid, INVALID_OID, INVALID_OID);
 
   // Insert database record into pg_db
+  BootstrapSystemCatalogs(database, txn);
   pg_database->InsertDatabase(database_oid, database_name, pool_.get(), txn);
 
   LOG_TRACE("Database %s created. Returning RESULT_SUCCESS.",
@@ -340,7 +350,7 @@ ResultType Catalog::CreatePrimaryIndex(oid_t database_oid, oid_t table_oid,
 
   bool unique_keys = true;
   auto pg_index =
-      catalog_map_[database_object->GetDatabaseOid()]->GetIndexCatalog();
+      catalog_map_[database_oid]->GetIndexCatalog();
   oid_t index_oid = pg_index->GetNextOid();
 
   index_metadata = new index::IndexMetadata(
@@ -444,7 +454,7 @@ ResultType Catalog::CreateIndex(
   LOG_TRACE("Trying to create index %s on table %d", index_name.c_str(),
             table_oid);
   auto pg_index =
-      catalog_map_[database_object->GetDatabaseOid()]->GetIndexCatalog();
+      catalog_map_[database_oid]->GetIndexCatalog();
   oid_t index_oid = pg_index->GetNextOid();
   auto key_schema = catalog::Schema::CopySchema(schema, key_attrs);
   key_schema->SetIndexedColumns(key_attrs);
@@ -632,14 +642,19 @@ ResultType Catalog::DropIndex(const std::string &database_name,
     throw CatalogException("Do not have transaction to drop index " +
                            index_name);
   }
+
   auto database_object =
       DatabaseCatalog::GetInstance()->GetDatabaseObject(database_name, txn);
-  auto pg_index = catalog_map_[database_oid]->GetIndexCatalog();
-  auto index_object = pg_index->GetIndexObject(index_name, txn);
+  if (database_object == nullptr) {
+    throw CatalogException("Index name " + index_name + " cannot be found");
+  }
 
+  auto pg_index = catalog_map_[database_object->GetDatabaseOid()]->GetIndexCatalog();
+  auto index_object = pg_index->GetIndexObject(index_name, txn);
   if (index_object == nullptr || database_object == nullptr) {
     throw CatalogException("Index name " + index_name + " cannot be found");
   }
+
   ResultType result = DropIndex(database_object->GetDatabaseOid(),
                                 index_object->GetIndexOid(), txn);
 
@@ -805,7 +820,7 @@ std::shared_ptr<TableCatalogObject> Catalog::GetTableObject(
   return table_object;
 }
 
-shared_ptr<SystemCatalogs> Catalog::GetSystemCatalog(const oid_t database_oid) {
+std::shared_ptr<SystemCatalogs> Catalog::GetSystemCatalogs(const oid_t database_oid) {
   if (catalog_map_.find(database_oid) == catalog_map_.end()) {
     throw CatalogException("Failed to find SystemCatalog for database_oid = " +
                            database_oid);
@@ -824,6 +839,7 @@ void Catalog::AddDatabase(storage::Database *database) {
   storage_manager->AddDatabaseToStorageManager(database);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
+  BootstrapSystemCatalogs(database, txn);
   DatabaseCatalog::GetInstance()->InsertDatabase(
       database->GetOid(), database->GetDBName(), pool_.get(),
       txn);  // I guess this can pass tests

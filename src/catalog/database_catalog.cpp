@@ -10,10 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <memory>
-
 #include "catalog/database_catalog.h"
 
+#include <memory>
+
+#include "catalog/catalog.h"
+#include "catalog/system_catalogs.h"
 #include "catalog/column_catalog.h"
 #include "catalog/table_catalog.h"
 #include "concurrency/transaction_context.h"
@@ -126,7 +128,7 @@ std::shared_ptr<TableCatalogObject> DatabaseCatalogObject::GetTableObject(
   } else {
     // cache miss get from pg_table
     auto pg_table = Catalog::GetInstance()
-                        ->GetSystemCatalog(database_oid)
+                        ->GetSystemCatalogs(database_oid)
                         ->GetTableCatalog();
     return pg_table->GetTableObject(table_oid, txn);
   }
@@ -149,7 +151,7 @@ std::shared_ptr<TableCatalogObject> DatabaseCatalogObject::GetTableObject(
   } else {
     // cache miss get from pg_table
     auto pg_table = Catalog::GetInstance()
-                        ->GetSystemCatalog(database_oid)
+                        ->GetSystemCatalogs(database_oid)
                         ->GetTableCatalog();
     return pg_table->GetTableObject(table_name, database_oid, txn);
   }
@@ -165,7 +167,7 @@ DatabaseCatalogObject::GetTableObjects(bool cached_only) {
   if (!cached_only && !valid_table_objects) {
     // cache miss get from pg_table
     auto pg_table = Catalog::GetInstance()
-                        ->GetSystemCatalog(database_oid)
+                        ->GetSystemCatalogs(database_oid)
                         ->GetTableCatalog();
     return pg_table->GetTableObjects(database_oid, txn);
   }
@@ -212,23 +214,10 @@ DatabaseCatalog *DatabaseCatalog::GetInstance(
 }
 
 DatabaseCatalog::DatabaseCatalog(storage::Database *pg_catalog,
-                                 type::AbstractPool *pool,
-                                 concurrency::TransactionContext *txn)
+                                 UNUSED_ATTRIBUTE type::AbstractPool *pool,
+                                 UNUSED_ATTRIBUTE concurrency::TransactionContext *txn)
     : AbstractCatalog(DATABASE_CATALOG_OID, DATABASE_CATALOG_NAME,
-                      InitializeSchema().release(), pg_catalog) {
-  // Insert columns into pg_attribute
-  ColumnCatalog *pg_attribute =
-      ColumnCatalog::GetInstance(pg_catalog, pool, txn);
-
-  oid_t column_id = 0;
-  for (auto column : catalog_table_->GetSchema()->GetColumns()) {
-    pg_attribute->InsertColumn(DATABASE_CATALOG_OID, column.GetName(),
-                               column_id, column.GetOffset(), column.GetType(),
-                               column.IsInlined(), column.GetConstraints(),
-                               pool, txn);
-    column_id++;
-  }
-}
+                      InitializeSchema().release(), pg_catalog) {}
 
 DatabaseCatalog::~DatabaseCatalog() {}
 

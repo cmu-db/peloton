@@ -18,7 +18,17 @@
 #include "catalog/table_catalog.h"
 
 namespace peloton {
+
+namespace storage {
+class Database;
+}  // namespace storage
+
 namespace catalog {
+
+class DatabaseCatalog;
+class TableCatalog;
+class IndexCatalog;
+class ColumnCatalog;
 
 class SystemCatalogs {
  public:

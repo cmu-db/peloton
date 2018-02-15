@@ -14,10 +14,13 @@
 
 #include <sstream>
 
+#include "catalog/catalog.h"
+#include "catalog/system_catalogs.h"
 #include "catalog/column_catalog.h"
 #include "catalog/table_catalog.h"
 #include "concurrency/transaction_context.h"
 #include "executor/logical_tile.h"
+#include "storage/database.h"
 #include "storage/data_table.h"
 #include "storage/tuple.h"
 #include "type/value_factory.h"
@@ -51,13 +54,6 @@ IndexCatalogObject::IndexCatalogObject(executor::LogicalTile *tile, int tupleId)
   LOG_TRACE("the size for indexed key is %lu", key_attrs.size());
 }
 
-IndexCatalog *IndexCatalog::GetInstance(storage::Database *pg_catalog,
-                                        type::AbstractPool *pool,
-                                        concurrency::TransactionContext *txn) {
-  static IndexCatalog index_catalog{pg_catalog, pool, txn};
-  return &index_catalog;
-}
-
 IndexCatalog::IndexCatalog(storage::Database *pg_catalog,
                            type::AbstractPool *pool,
                            concurrency::TransactionContext *txn)
@@ -75,7 +71,7 @@ IndexCatalog::IndexCatalog(storage::Database *pg_catalog,
 
   // Insert columns into pg_attribute
   ColumnCatalog *pg_attribute =
-      ColumnCatalog::GetInstance(pg_catalog, pool, txn);
+      Catalog::GetInstance()->GetSystemCatalogs(database_oid)->GetColumnCatalog();
 
   oid_t column_id = 0;
   for (auto column : catalog_table_->GetSchema()->GetColumns()) {
@@ -218,7 +214,7 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
         std::make_shared<IndexCatalogObject>((*result_tiles)[0].get());
     // fetch all indexes into table object (cannot use the above index object)
     auto pg_table = Catalog::GetInstance()
-                        ->GetSystemCatalog(database_oid)
+                        ->GetSystemCatalogs(database_oid)
                         ->GetTableCatalog();
     auto table_object =
         pg_table->GetTableObject(index_object->GetTableOid(), txn);
@@ -259,7 +255,7 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
         std::make_shared<IndexCatalogObject>((*result_tiles)[0].get());
     // fetch all indexes into table object (cannot use the above index object)
     auto pg_table = Catalog::GetInstance()
-                        ->GetSystemCatalog(database_oid)
+                        ->GetSystemCatalogs(database_oid)
                         ->GetTableCatalog();
     auto table_object =
         pg_table->GetTableObject(index_object->GetTableOid(), txn);
@@ -289,9 +285,9 @@ IndexCatalog::GetIndexObjects(oid_t table_oid,
   }
   // try get from cache
   auto pg_table =
-      Catalog::GetInstance()->GetSystemCatalog(database_oid)->GetTableCatalog();
+      Catalog::GetInstance()->GetSystemCatalogs(database_oid)->GetTableCatalog();
   auto table_object =
-      pg_table->GetTableObject(index_object->GetTableOid(), txn);
+      pg_table->GetTableObject(table_oid, txn);
   PL_ASSERT(table_object && table_object->GetTableOid() == table_oid);
   auto index_objects = table_object->GetIndexObjects(true);
   if (index_objects.empty() == false) return index_objects;

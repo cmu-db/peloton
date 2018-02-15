@@ -10,6 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "catalog/system_catalogs.h"
+#include "catalog/column_catalog.h"
+#include "catalog/table_catalog.h"
+#include "catalog/index_catalog.h"
+#include "storage/storage_manager.h"
+#include "storage/data_table.h"
+
 namespace peloton {
 namespace catalog {
 
@@ -18,9 +25,10 @@ SystemCatalogs::SystemCatalogs(storage::Database *database,
                                concurrency::TransactionContext *txn) {
   pg_attribute = new ColumnCatalog(database, pool, txn);
 
+  // TODO: can we move this to BootstrapSystemCatalogs()?
   oid_t column_id = 0;
   for (auto column :
-       StorageManager::GetInstance()
+       storage::StorageManager::GetInstance()
            ->GetTableWithOid(CATALOG_DATABASE_OID, DATABASE_CATALOG_OID)
            ->GetSchema()
            ->GetColumns()) {
@@ -37,9 +45,9 @@ SystemCatalogs::SystemCatalogs(storage::Database *database,
 }
 
 SystemCatalogs::~SystemCatalogs() {
-  delete IndexCatalog;
-  delete TableCatalog;
-  delete ColumnCatalog;
+  delete pg_index;
+  delete pg_table;
+  delete pg_attribute;
 }
 
 }  // namespace catalog

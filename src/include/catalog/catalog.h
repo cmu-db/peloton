@@ -24,6 +24,7 @@ class Schema;
 class DatabaseCatalogObject;
 class TableCatalogObject;
 class IndexCatalogObject;
+class SystemCatalogs;
 }  // namespace catalog
 
 namespace concurrency {
@@ -180,7 +181,7 @@ class Catalog {
   /*
    * Using database oid to get system catalog object
    */
-  shared_ptr<SystemCatalog> GetSystemCatalog(const oid_t database_oid);
+  std::shared_ptr<SystemCatalogs> GetSystemCatalogs(const oid_t database_oid);
   //===--------------------------------------------------------------------===//
   // DEPRECATED FUNCTIONS
   //===--------------------------------------------------------------------===//
@@ -220,7 +221,7 @@ class Catalog {
  private:
   Catalog();
 
-  void BootstrapSystemCatalogs(Database *database,
+  void BootstrapSystemCatalogs(storage::Database *database,
                                concurrency::TransactionContext *txn);
 
   // The pool for new varlen tuple fields
@@ -228,7 +229,7 @@ class Catalog {
   std::mutex catalog_mutex;
   // key: database oid
   // value: SystemCatalog object(including pg_table, pg_index and pg_attribute)
-  std::unordered_map<oid_t, shared_ptr<SystemCatalogs>> catalog_map_;
+  std::unordered_map<oid_t, std::shared_ptr<SystemCatalogs>> catalog_map_;
 };
 
 }  // namespace catalog

@@ -69,11 +69,8 @@ class ColumnCatalog : public AbstractCatalog {
   friend class Catalog;
 
  public:
-  // Global Singleton, only the first call requires passing parameters.
-  static ColumnCatalog *GetInstance(
-      storage::Database *pg_catalog = nullptr,
-      type::AbstractPool *pool = nullptr,
-      concurrency::TransactionContext *txn = nullptr);
+  ColumnCatalog(storage::Database *pg_catalog, type::AbstractPool *pool,
+                concurrency::TransactionContext *txn);
 
   ~ColumnCatalog();
 
@@ -101,9 +98,6 @@ class ColumnCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   const std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogObject>>
   GetColumnObjects(oid_t table_oid, concurrency::TransactionContext *txn);
-
-  ColumnCatalog(storage::Database *pg_catalog, type::AbstractPool *pool,
-                concurrency::TransactionContext *txn);
 
   std::unique_ptr<catalog::Schema> InitializeSchema();
 

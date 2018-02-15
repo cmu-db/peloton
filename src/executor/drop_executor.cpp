@@ -15,6 +15,7 @@
 #include "catalog/catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/index_catalog.h"
+#include "catalog/system_catalogs.h"
 #include "catalog/table_catalog.h"
 #include "catalog/trigger_catalog.h"
 #include "common/logger.h"
@@ -180,11 +181,11 @@ bool DropExecutor::DropTrigger(const planner::DropPlan &node,
 
 bool DropExecutor::DropIndex(const planner::DropPlan &node,
                              concurrency::TransactionContext *txn) {
-  auto database_object = DatabaseCatalog::GetInstance()->GetDatabaseObject(
+  auto database_object = catalog::Catalog::GetInstance()->GetDatabaseObject(
       node.GetDatabaseName(), txn);
 
   auto pg_index = catalog::Catalog::GetInstance()
-                      ->GetSystemCatalog(database_object->GetDatabaseOid())
+                      ->GetSystemCatalogs(database_object->GetDatabaseOid())
                       ->GetIndexCatalog();
   std::string index_name = node.GetIndexName();
   auto index_object = pg_index->GetIndexObject(index_name, txn);

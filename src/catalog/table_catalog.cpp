@@ -10,14 +10,17 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <memory>
-
 #include "catalog/table_catalog.h"
 
+#include <memory>
+
+#include "catalog/catalog.h"
+#include "catalog/system_catalogs.h"
 #include "catalog/column_catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/index_catalog.h"
 #include "concurrency/transaction_context.h"
+#include "storage/database.h"
 #include "storage/data_table.h"
 #include "type/value_factory.h"
 
@@ -130,7 +133,7 @@ TableCatalogObject::GetIndexObjects(bool cached_only) {
     // get index catalog objects from pg_index
     valid_index_objects = true;
     auto pg_index = Catalog::GetInstance()
-                        ->GetSystemCatalog(database_oid)
+                        ->GetSystemCatalogs(database_oid)
                         ->GetIndexCatalog();
     index_objects = pg_index->GetIndexObjects(table_oid, txn);
   }
@@ -256,7 +259,7 @@ TableCatalogObject::GetColumnObjects(bool cached_only) {
   if (!valid_column_objects && !cached_only) {
     // get column catalog objects from pg_column
     auto pg_attribute = Catalog::GetInstance()
-                            ->GetSystemCatalog(database_oid)
+                            ->GetSystemCatalogs(database_oid)
                             ->GetColumnCatalog();
     pg_attribute->GetColumnObjects(table_oid, txn);
     valid_column_objects = true;
@@ -310,21 +313,16 @@ std::shared_ptr<ColumnCatalogObject> TableCatalogObject::GetColumnObject(
   return nullptr;
 }
 
-TableCatalog *TableCatalog::GetInstance(storage::Database *pg_catalog,
-                                        type::AbstractPool *pool,
-                                        concurrency::TransactionContext *txn) {
-  static TableCatalog table_catalog{pg_catalog, pool, txn};
-  return &table_catalog;
-}
-
 TableCatalog::TableCatalog(storage::Database *pg_catalog,
                            type::AbstractPool *pool,
                            concurrency::TransactionContext *txn)
     : AbstractCatalog(TABLE_CATALOG_OID, TABLE_CATALOG_NAME,
                       InitializeSchema().release(), pg_catalog) {
+  database_oid = pg_catalog->GetOid();
+
   // Insert columns into pg_attribute
   ColumnCatalog *pg_attribute =
-      ColumnCatalog::GetInstance(pg_catalog, pool, txn);
+      Catalog::GetInstance()->GetSystemCatalogs(database_oid)->GetColumnCatalog();
 
   oid_t column_id = 0;
   for (auto column : catalog_table_->GetSchema()->GetColumns()) {
