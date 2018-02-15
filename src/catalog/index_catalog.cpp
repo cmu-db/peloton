@@ -54,9 +54,9 @@ IndexCatalogObject::IndexCatalogObject(executor::LogicalTile *tile, int tupleId)
   LOG_TRACE("the size for indexed key is %lu", key_attrs.size());
 }
 
-IndexCatalog::IndexCatalog(storage::Database *pg_catalog,
-                           type::AbstractPool *pool,
-                           concurrency::TransactionContext *txn)
+IndexCatalog::IndexCatalog(
+    storage::Database *pg_catalog, UNUSED_ATTRIBUTE type::AbstractPool *pool,
+    UNUSED_ATTRIBUTE concurrency::TransactionContext *txn)
     : AbstractCatalog(INDEX_CATALOG_OID, INDEX_CATALOG_NAME,
                       InitializeSchema().release(), pg_catalog) {
   database_oid = pg_catalog->GetOid();
@@ -68,19 +68,6 @@ IndexCatalog::IndexCatalog(storage::Database *pg_catalog,
            IndexConstraintType::UNIQUE);
   AddIndex({2}, INDEX_CATALOG_SKEY1_OID, INDEX_CATALOG_NAME "_skey1",
            IndexConstraintType::DEFAULT);
-
-  // Insert columns into pg_attribute
-  ColumnCatalog *pg_attribute =
-      Catalog::GetInstance()->GetSystemCatalogs(database_oid)->GetColumnCatalog();
-
-  oid_t column_id = 0;
-  for (auto column : catalog_table_->GetSchema()->GetColumns()) {
-    pg_attribute->InsertColumn(INDEX_CATALOG_OID, column.GetName(), column_id,
-                               column.GetOffset(), column.GetType(),
-                               column.IsInlined(), column.GetConstraints(),
-                               pool, txn);
-    column_id++;
-  }
 }
 
 IndexCatalog::~IndexCatalog() {}
@@ -284,10 +271,10 @@ IndexCatalog::GetIndexObjects(oid_t table_oid,
     throw CatalogException("Transaction is invalid!");
   }
   // try get from cache
-  auto pg_table =
-      Catalog::GetInstance()->GetSystemCatalogs(database_oid)->GetTableCatalog();
-  auto table_object =
-      pg_table->GetTableObject(table_oid, txn);
+  auto pg_table = Catalog::GetInstance()
+                      ->GetSystemCatalogs(database_oid)
+                      ->GetTableCatalog();
+  auto table_object = pg_table->GetTableObject(table_oid, txn);
   PL_ASSERT(table_object && table_object->GetTableOid() == table_oid);
   auto index_objects = table_object->GetIndexObjects(true);
   if (index_objects.empty() == false) return index_objects;

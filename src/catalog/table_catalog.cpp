@@ -313,25 +313,12 @@ std::shared_ptr<ColumnCatalogObject> TableCatalogObject::GetColumnObject(
   return nullptr;
 }
 
-TableCatalog::TableCatalog(storage::Database *pg_catalog,
-                           type::AbstractPool *pool,
-                           concurrency::TransactionContext *txn)
+TableCatalog::TableCatalog(
+    storage::Database *pg_catalog, UNUSED_ATTRIBUTE type::AbstractPool *pool,
+    UNUSED_ATTRIBUTE concurrency::TransactionContext *txn)
     : AbstractCatalog(TABLE_CATALOG_OID, TABLE_CATALOG_NAME,
                       InitializeSchema().release(), pg_catalog) {
   database_oid = pg_catalog->GetOid();
-
-  // Insert columns into pg_attribute
-  ColumnCatalog *pg_attribute =
-      Catalog::GetInstance()->GetSystemCatalogs(database_oid)->GetColumnCatalog();
-
-  oid_t column_id = 0;
-  for (auto column : catalog_table_->GetSchema()->GetColumns()) {
-    pg_attribute->InsertColumn(TABLE_CATALOG_OID, column.GetName(), column_id,
-                               column.GetOffset(), column.GetType(),
-                               column.IsInlined(), column.GetConstraints(),
-                               pool, txn);
-    column_id++;
-  }
 }
 
 TableCatalog::~TableCatalog() {}

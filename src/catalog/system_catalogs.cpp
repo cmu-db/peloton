@@ -15,6 +15,7 @@
 #include "catalog/table_catalog.h"
 #include "catalog/index_catalog.h"
 #include "storage/storage_manager.h"
+#include "storage/database.h"
 #include "storage/data_table.h"
 
 namespace peloton {
@@ -23,9 +24,13 @@ namespace catalog {
 SystemCatalogs::SystemCatalogs(storage::Database *database,
                                type::AbstractPool *pool,
                                concurrency::TransactionContext *txn) {
+  oid_t database_oid = database->GetOid();
   pg_attribute = new ColumnCatalog(database, pool, txn);
+  pg_table = new TableCatalog(database, pool, txn);
+  pg_index = new IndexCatalog(database, pool, txn);
 
   // TODO: can we move this to BootstrapSystemCatalogs()?
+  // insert pg_database columns into pg_attribute
   oid_t column_id = 0;
   for (auto column :
        storage::StorageManager::GetInstance()
@@ -39,9 +44,31 @@ SystemCatalogs::SystemCatalogs(storage::Database *database,
     column_id++;
   }
 
-  pg_table = new TableCatalog(database, pool, txn);
+  // Insert pg_table columns into pg_attribute
+  column_id = 0;
+  for (auto column : storage::StorageManager::GetInstance()
+                         ->GetTableWithOid(database_oid, TABLE_CATALOG_OID)
+                         ->GetSchema()
+                         ->GetColumns()) {
+    pg_attribute->InsertColumn(TABLE_CATALOG_OID, column.GetName(), column_id,
+                               column.GetOffset(), column.GetType(),
+                               column.IsInlined(), column.GetConstraints(),
+                               pool, txn);
+    column_id++;
+  }
 
-  pg_index = new IndexCatalog(database, pool, txn);
+  // Insert pg_index columns into pg_attribute
+  column_id = 0;
+  for (auto column : storage::StorageManager::GetInstance()
+                         ->GetTableWithOid(database_oid, INDEX_CATALOG_OID)
+                         ->GetSchema()
+                         ->GetColumns()) {
+    pg_attribute->InsertColumn(INDEX_CATALOG_OID, column.GetName(), column_id,
+                               column.GetOffset(), column.GetType(),
+                               column.IsInlined(), column.GetConstraints(),
+                               pool, txn);
+    column_id++;
+  }
 }
 
 SystemCatalogs::~SystemCatalogs() {
