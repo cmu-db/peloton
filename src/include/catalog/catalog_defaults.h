@@ -64,6 +64,10 @@ namespace catalog {
 #define INDEX_CATALOG_SKEY0_OID (4 | INDEX_OID_MASK)
 #define INDEX_CATALOG_SKEY1_OID (5 | INDEX_OID_MASK)
 
+// Reserved pg_database index oid
+#define DATABASE_CATALOG_PKEY_OID (6 | INDEX_OID_MASK)
+#define DATABASE_CATALOG_SKEY0_OID (7 | INDEX_OID_MASK)
+
 // Use upper 8 bits indicating catalog type
 #define CATALOG_TYPE_OFFSET 24
 

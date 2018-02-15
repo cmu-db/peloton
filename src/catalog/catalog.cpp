@@ -83,8 +83,8 @@ void Catalog::BootstrapSystemCatalogs(storage::Database *database,
                                       concurrency::TransactionContext *txn) {
   oid_t database_oid = database->GetOid();
   catalog_map_.emplace(database_oid,
-    std::shared_ptr<SystemCatalogs>(
-      new SystemCatalogs(database, pool_.get(), txn)));
+                       std::shared_ptr<SystemCatalogs>(
+                           new SystemCatalogs(database, pool_.get(), txn)));
   auto system_catalogs = catalog_map_[database_oid];
 
   // Create indexes on catalog tables, insert them into pg_index
@@ -93,20 +93,14 @@ void Catalog::BootstrapSystemCatalogs(storage::Database *database,
   // TODO: This should be hash index rather than tree index?? (but postgres use
   // btree!!)
 
-  CreatePrimaryIndex(CATALOG_DATABASE_OID, DATABASE_CATALOG_OID, txn);
-  CreatePrimaryIndex(CATALOG_DATABASE_OID, TABLE_CATALOG_OID, txn);
+  CreatePrimaryIndex(database_oid, TABLE_CATALOG_OID, txn);
 
-  CreateIndex(CATALOG_DATABASE_OID, DATABASE_CATALOG_OID,
-              {DatabaseCatalog::ColumnId::DATABASE_NAME},
-              DATABASE_CATALOG_NAME "_skey0", IndexType::BWTREE,
-              IndexConstraintType::UNIQUE, true, txn, true);
-
-  CreateIndex(CATALOG_DATABASE_OID, TABLE_CATALOG_OID,
+  CreateIndex(database_oid, TABLE_CATALOG_OID,
               {TableCatalog::ColumnId::TABLE_NAME,
                TableCatalog::ColumnId::DATABASE_OID},
               TABLE_CATALOG_NAME "_skey0", IndexType::BWTREE,
               IndexConstraintType::UNIQUE, true, txn, true);
-  CreateIndex(CATALOG_DATABASE_OID, TABLE_CATALOG_OID,
+  CreateIndex(database_oid, TABLE_CATALOG_OID,
               {TableCatalog::ColumnId::DATABASE_OID},
               TABLE_CATALOG_NAME "_skey1", IndexType::BWTREE,
               IndexConstraintType::DEFAULT, false, txn, true);
@@ -142,6 +136,14 @@ void Catalog::BootstrapSystemCatalogs(storage::Database *database,
       INDEX_CATALOG_SKEY1_OID, INDEX_CATALOG_NAME "_skey1", INDEX_CATALOG_OID,
       IndexType::BWTREE, IndexConstraintType::DEFAULT, false,
       {IndexCatalog::ColumnId::TABLE_OID}, pool_.get(), txn);
+  system_catalogs->GetIndexCatalog()->InsertIndex(
+      DATABASE_CATALOG_PKEY_OID, DATABASE_CATALOG_NAME "_pkey",
+      DATABASE_CATALOG_OID, IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY,
+      true, {DatabaseCatalog::ColumnId::DATABASE_OID}, pool_.get(), txn);
+  system_catalogs->GetIndexCatalog()->InsertIndex(
+      DATABASE_CATALOG_SKEY0_OID, DATABASE_CATALOG_NAME "_skey0",
+      DATABASE_CATALOG_OID, IndexType::BWTREE, IndexConstraintType::DEFAULT,
+      false, {DatabaseCatalog::ColumnId::DATABASE_NAME}, pool_.get(), txn);
 
   // Insert catalog tables into pg_table
   system_catalogs->GetTableCatalog()->InsertTable(
@@ -349,8 +351,7 @@ ResultType Catalog::CreatePrimaryIndex(oid_t database_oid, oid_t table_oid,
   std::string index_name = table->GetName() + "_pkey";
 
   bool unique_keys = true;
-  auto pg_index =
-      catalog_map_[database_oid]->GetIndexCatalog();
+  auto pg_index = catalog_map_[database_oid]->GetIndexCatalog();
   oid_t index_oid = pg_index->GetNextOid();
 
   index_metadata = new index::IndexMetadata(
@@ -453,8 +454,7 @@ ResultType Catalog::CreateIndex(
   // Passed all checks, now get all index metadata
   LOG_TRACE("Trying to create index %s on table %d", index_name.c_str(),
             table_oid);
-  auto pg_index =
-      catalog_map_[database_oid]->GetIndexCatalog();
+  auto pg_index = catalog_map_[database_oid]->GetIndexCatalog();
   oid_t index_oid = pg_index->GetNextOid();
   auto key_schema = catalog::Schema::CopySchema(schema, key_attrs);
   key_schema->SetIndexedColumns(key_attrs);
@@ -649,7 +649,8 @@ ResultType Catalog::DropIndex(const std::string &database_name,
     throw CatalogException("Index name " + index_name + " cannot be found");
   }
 
-  auto pg_index = catalog_map_[database_object->GetDatabaseOid()]->GetIndexCatalog();
+  auto pg_index =
+      catalog_map_[database_object->GetDatabaseOid()]->GetIndexCatalog();
   auto index_object = pg_index->GetIndexObject(index_name, txn);
   if (index_object == nullptr || database_object == nullptr) {
     throw CatalogException("Index name " + index_name + " cannot be found");
@@ -820,7 +821,8 @@ std::shared_ptr<TableCatalogObject> Catalog::GetTableObject(
   return table_object;
 }
 
-std::shared_ptr<SystemCatalogs> Catalog::GetSystemCatalogs(const oid_t database_oid) {
+std::shared_ptr<SystemCatalogs> Catalog::GetSystemCatalogs(
+    const oid_t database_oid) {
   if (catalog_map_.find(database_oid) == catalog_map_.end()) {
     throw CatalogException("Failed to find SystemCatalog for database_oid = " +
                            database_oid);

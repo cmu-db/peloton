@@ -213,11 +213,17 @@ DatabaseCatalog *DatabaseCatalog::GetInstance(
   return &database_catalog;
 }
 
-DatabaseCatalog::DatabaseCatalog(storage::Database *pg_catalog,
-                                 UNUSED_ATTRIBUTE type::AbstractPool *pool,
-                                 UNUSED_ATTRIBUTE concurrency::TransactionContext *txn)
+DatabaseCatalog::DatabaseCatalog(
+    storage::Database *pg_catalog, UNUSED_ATTRIBUTE type::AbstractPool *pool,
+    UNUSED_ATTRIBUTE concurrency::TransactionContext *txn)
     : AbstractCatalog(DATABASE_CATALOG_OID, DATABASE_CATALOG_NAME,
-                      InitializeSchema().release(), pg_catalog) {}
+                      InitializeSchema().release(), pg_catalog) {
+  // Add indexes for pg_database
+  AddIndex({ColumnId::DATABASE_OID}, DATABASE_CATALOG_PKEY_OID,
+           DATABASE_CATALOG_NAME "_pkey", IndexConstraintType::PRIMARY_KEY);
+  AddIndex({ColumnId::DATABASE_NAME}, DATABASE_CATALOG_SKEY0_OID,
+           DATABASE_CATALOG_NAME "_skey0", IndexConstraintType::UNIQUE);
+}
 
 DatabaseCatalog::~DatabaseCatalog() {}
 
