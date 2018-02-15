@@ -448,11 +448,11 @@ bool QueryToOperatorTransformer::IsSupportedSubSelect(
         return false;
       }
       // Check if in the form of
-      // "outer_relation.a = (expr only columns in inner relation)"
-      if (!((pred->GetChild(0)->GetDepth() == op->depth &&
+      // "outer_relation.a = (expr with only columns in inner relation)"
+      if (!((pred->GetChild(1)->GetDepth() == op->depth &&
              pred->GetChild(0)->GetExpressionType() ==
                  ExpressionType::VALUE_TUPLE) ||
-            (pred->GetChild(1)->GetDepth() == op->depth &&
+            (pred->GetChild(0)->GetDepth() == op->depth &&
              pred->GetChild(1)->GetExpressionType() ==
                  ExpressionType::VALUE_TUPLE))) {
         return false;
