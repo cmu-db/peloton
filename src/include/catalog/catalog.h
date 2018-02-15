@@ -134,10 +134,10 @@ class Catalog {
   ResultType DropTable(oid_t database_oid, oid_t table_oid,
                        concurrency::TransactionContext *txn);
   // Drop an index, using its index_oid
-  ResultType DropIndex(oid_t index_oid, concurrency::TransactionContext *txn);
+  ResultType DropIndex(oid_t database_oid, oid_t index_oid, concurrency::TransactionContext *txn);
 
   // Drop an index, using its index name
-  ResultType DropIndex(const std::string &index_name,
+  ResultType DropIndex(const std::string &database_name, const std::string &index_name,
                        concurrency::TransactionContext *txn);
   //===--------------------------------------------------------------------===//
   // GET WITH NAME - CHECK FROM CATALOG TABLES, USING TRANSACTION
