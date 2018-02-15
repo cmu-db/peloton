@@ -4,12 +4,11 @@
 //
 // tcp_connection.cpp
 //
-// Identification: src/network/tcp_connection.cpp
+// Identification: src/network/service/tcp_connection.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
 
 #include <iostream>
 #include <functional>
@@ -297,7 +296,7 @@ void Connection::ReadCb(UNUSED_ATTRIBUTE struct bufferevent *bev, void *ctx) {
    * request on this connection can be processed while
    * the former is still being processed
    */
-  //PthreadThreadPool::GetInstance().AddTask(worker_conn);
+  // PthreadThreadPool::GetInstance().AddTask(worker_conn);
 }
 
 /*
@@ -385,11 +384,11 @@ int Connection::GetReadData(char *buffer, int len) {
    */
 
   int remaining_len = len;
-  do{
-  struct evbuffer *input = bufferevent_get_input(bev_);
-  remaining_len -= evbuffer_remove(input, buffer, len);
+  do {
+    struct evbuffer *input = bufferevent_get_input(bev_);
+    remaining_len -= evbuffer_remove(input, buffer, len);
 
-  }while(remaining_len > 0);
+  } while (remaining_len > 0);
   return len;
 }
 
