@@ -21,52 +21,57 @@ namespace peloton {
 namespace catalog {
 
 ColumnCatalogObject::ColumnCatalogObject(executor::LogicalTile *tile,
-                                         int tupleId)
-{
-  auto field_location = tile->GetTuplePointer(tupleId, ColumnCatalog::ColumnId::TABLE_OID);
+                                         int tupleId) {
+  auto field_location =
+      tile->GetTuplePointer(tupleId, ColumnCatalog::ColumnId::TABLE_OID);
   PL_ASSERT(field_location != nullptr);
   table_oid = *(reinterpret_cast<const oid_t *>(field_location));
 
-  field_location = tile->GetTuplePointer(tupleId, ColumnCatalog::ColumnId::COLUMN_NAME);
+  field_location =
+      tile->GetTuplePointer(tupleId, ColumnCatalog::ColumnId::COLUMN_NAME);
   PL_ASSERT(field_location != nullptr);
-  auto varchar = *(reinterpret_cast<const char *const*>(field_location));
+  auto varchar = *(reinterpret_cast<const char *const *>(field_location));
   auto size = reinterpret_cast<const uint32_t *>(varchar);
   auto string = (reinterpret_cast<const char *>(varchar) + sizeof(uint32_t));
   column_name = std::string(string, *size - 1);
 
-  field_location = tile->GetTuplePointer(tupleId, ColumnCatalog::ColumnId::COLUMN_ID);
+  field_location =
+      tile->GetTuplePointer(tupleId, ColumnCatalog::ColumnId::COLUMN_ID);
   PL_ASSERT(field_location != nullptr);
   column_id = *(reinterpret_cast<const oid_t *>(field_location));
 
-  field_location = tile->GetTuplePointer(tupleId, ColumnCatalog::ColumnId::COLUMN_OFFSET);
+  field_location =
+      tile->GetTuplePointer(tupleId, ColumnCatalog::ColumnId::COLUMN_OFFSET);
   PL_ASSERT(field_location != nullptr);
   column_offset = *(reinterpret_cast<const oid_t *>(field_location));
 
-  field_location = tile->GetTuplePointer(tupleId, ColumnCatalog::ColumnId::COLUMN_TYPE);
+  field_location =
+      tile->GetTuplePointer(tupleId, ColumnCatalog::ColumnId::COLUMN_TYPE);
   PL_ASSERT(field_location != nullptr);
-  varchar = *(reinterpret_cast<const char *const*>(field_location));
+  varchar = *(reinterpret_cast<const char *const *>(field_location));
   size = reinterpret_cast<const uint32_t *>(varchar);
   string = (reinterpret_cast<const char *>(varchar) + sizeof(uint32_t));
   column_type = StringToTypeId(std::string(string, *size - 1));
 
-  field_location = tile->GetTuplePointer(tupleId, ColumnCatalog::ColumnId::IS_INLINED);
+  field_location =
+      tile->GetTuplePointer(tupleId, ColumnCatalog::ColumnId::IS_INLINED);
   PL_ASSERT(field_location != nullptr);
   is_inlined = *(reinterpret_cast<const bool *>(field_location));
 
-
-  field_location = tile->GetTuplePointer(tupleId, ColumnCatalog::ColumnId::IS_PRIMARY);
+  field_location =
+      tile->GetTuplePointer(tupleId, ColumnCatalog::ColumnId::IS_PRIMARY);
   PL_ASSERT(field_location != nullptr);
   is_primary = *(reinterpret_cast<const bool *>(field_location));
 
-
-  field_location = tile->GetTuplePointer(tupleId, ColumnCatalog::ColumnId::IS_NOT_NULL);
+  field_location =
+      tile->GetTuplePointer(tupleId, ColumnCatalog::ColumnId::IS_NOT_NULL);
   PL_ASSERT(field_location != nullptr);
   is_not_null = *(reinterpret_cast<const bool *>(field_location));
 }
 
-ColumnCatalog *ColumnCatalog::GetInstance(storage::Database *pg_catalog,
-                                          type::AbstractPool *pool,
-                                          concurrency::TransactionContext *txn) {
+ColumnCatalog *ColumnCatalog::GetInstance(
+    storage::Database *pg_catalog, type::AbstractPool *pool,
+    concurrency::TransactionContext *txn) {
   static ColumnCatalog column_catalog{pg_catalog, pool, txn};
   return &column_catalog;
 }

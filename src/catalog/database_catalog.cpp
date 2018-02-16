@@ -25,20 +25,22 @@
 namespace peloton {
 namespace catalog {
 
-DatabaseCatalogObject::DatabaseCatalogObject(executor::LogicalTile *tile,
-                                             concurrency::TransactionContext *txn)
+DatabaseCatalogObject::DatabaseCatalogObject(
+    executor::LogicalTile *tile, concurrency::TransactionContext *txn)
     : table_objects_cache(),
       table_name_cache(),
       valid_table_objects(false),
       txn(txn) {
-  auto field_location = tile->GetTuplePointer(0, DatabaseCatalog::ColumnId::DATABASE_NAME);
+  auto field_location =
+      tile->GetTuplePointer(0, DatabaseCatalog::ColumnId::DATABASE_NAME);
   PL_ASSERT(field_location != nullptr);
-  auto varchar = *(reinterpret_cast<const char *const*>(field_location));
+  auto varchar = *(reinterpret_cast<const char *const *>(field_location));
   auto size = reinterpret_cast<const uint32_t *>(varchar);
   auto string = (reinterpret_cast<const char *>(varchar) + sizeof(uint32_t));
   database_name = std::string(string, *size - 1);
 
-  field_location = tile->GetTuplePointer(0, DatabaseCatalog::ColumnId::DATABASE_OID);
+  field_location =
+      tile->GetTuplePointer(0, DatabaseCatalog::ColumnId::DATABASE_OID);
   PL_ASSERT(field_location != nullptr);
   database_oid = *(reinterpret_cast<const oid_t *>(field_location));
 }
@@ -203,9 +205,9 @@ std::shared_ptr<IndexCatalogObject> DatabaseCatalogObject::GetCachedIndexObject(
   return nullptr;
 }
 
-DatabaseCatalog *DatabaseCatalog::GetInstance(storage::Database *pg_catalog,
-                                              type::AbstractPool *pool,
-                                              concurrency::TransactionContext *txn) {
+DatabaseCatalog *DatabaseCatalog::GetInstance(
+    storage::Database *pg_catalog, type::AbstractPool *pool,
+    concurrency::TransactionContext *txn) {
   static DatabaseCatalog database_catalog{pg_catalog, pool, txn};
   return &database_catalog;
 }
