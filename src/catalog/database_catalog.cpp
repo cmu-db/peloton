@@ -27,14 +27,21 @@ namespace catalog {
 
 DatabaseCatalogObject::DatabaseCatalogObject(executor::LogicalTile *tile,
                                              concurrency::TransactionContext *txn)
-    : database_oid(tile->GetValue(0, DatabaseCatalog::ColumnId::DATABASE_OID)
-                       .GetAs<oid_t>()),
-      database_name(tile->GetValue(0, DatabaseCatalog::ColumnId::DATABASE_NAME)
-                        .ToString()),
-      table_objects_cache(),
+    : table_objects_cache(),
       table_name_cache(),
       valid_table_objects(false),
-      txn(txn) {}
+      txn(txn) {
+  auto field_location = tile->GetTuplePointer(0, DatabaseCatalog::ColumnId::DATABASE_NAME);
+  PL_ASSERT(field_location != nullptr);
+  auto varchar = *(reinterpret_cast<const char *const*>(field_location));
+  auto size = reinterpret_cast<const uint32_t *>(varchar);
+  auto string = (reinterpret_cast<const char *>(varchar) + sizeof(uint32_t));
+  database_name = std::string(string, *size - 1);
+
+  field_location = tile->GetTuplePointer(0, DatabaseCatalog::ColumnId::DATABASE_OID);
+  PL_ASSERT(field_location != nullptr);
+  database_oid = *(reinterpret_cast<const oid_t *>(field_location));
+}
 
 /* @brief   insert table catalog object into cache
  * @param   table_object

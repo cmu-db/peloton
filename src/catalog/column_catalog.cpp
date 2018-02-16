@@ -22,24 +22,47 @@ namespace catalog {
 
 ColumnCatalogObject::ColumnCatalogObject(executor::LogicalTile *tile,
                                          int tupleId)
-    : table_oid(tile->GetValue(tupleId, ColumnCatalog::ColumnId::TABLE_OID)
-                    .GetAs<oid_t>()),
-      column_name(tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_NAME)
-                      .ToString()),
-      column_id(tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_ID)
-                    .GetAs<oid_t>()),
-      column_offset(
-          tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_OFFSET)
-              .GetAs<oid_t>()),
-      column_type(StringToTypeId(
-          tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_TYPE)
-              .ToString())),
-      is_inlined(tile->GetValue(tupleId, ColumnCatalog::ColumnId::IS_INLINED)
-                     .GetAs<bool>()),
-      is_primary(tile->GetValue(tupleId, ColumnCatalog::ColumnId::IS_PRIMARY)
-                     .GetAs<bool>()),
-      is_not_null(tile->GetValue(tupleId, ColumnCatalog::ColumnId::IS_NOT_NULL)
-                      .GetAs<bool>()) {}
+{
+  auto field_location = tile->GetTuplePointer(tupleId, ColumnCatalog::ColumnId::TABLE_OID);
+  PL_ASSERT(field_location != nullptr);
+  table_oid = *(reinterpret_cast<const oid_t *>(field_location));
+
+  field_location = tile->GetTuplePointer(tupleId, ColumnCatalog::ColumnId::COLUMN_NAME);
+  PL_ASSERT(field_location != nullptr);
+  auto varchar = *(reinterpret_cast<const char *const*>(field_location));
+  auto size = reinterpret_cast<const uint32_t *>(varchar);
+  auto string = (reinterpret_cast<const char *>(varchar) + sizeof(uint32_t));
+  column_name = std::string(string, *size - 1);
+
+  field_location = tile->GetTuplePointer(tupleId, ColumnCatalog::ColumnId::COLUMN_ID);
+  PL_ASSERT(field_location != nullptr);
+  column_id = *(reinterpret_cast<const oid_t *>(field_location));
+
+  field_location = tile->GetTuplePointer(tupleId, ColumnCatalog::ColumnId::COLUMN_OFFSET);
+  PL_ASSERT(field_location != nullptr);
+  column_offset = *(reinterpret_cast<const oid_t *>(field_location));
+
+  field_location = tile->GetTuplePointer(tupleId, ColumnCatalog::ColumnId::COLUMN_TYPE);
+  PL_ASSERT(field_location != nullptr);
+  varchar = *(reinterpret_cast<const char *const*>(field_location));
+  size = reinterpret_cast<const uint32_t *>(varchar);
+  string = (reinterpret_cast<const char *>(varchar) + sizeof(uint32_t));
+  column_type = StringToTypeId(std::string(string, *size - 1));
+
+  field_location = tile->GetTuplePointer(tupleId, ColumnCatalog::ColumnId::IS_INLINED);
+  PL_ASSERT(field_location != nullptr);
+  is_inlined = *(reinterpret_cast<const bool *>(field_location));
+
+
+  field_location = tile->GetTuplePointer(tupleId, ColumnCatalog::ColumnId::IS_PRIMARY);
+  PL_ASSERT(field_location != nullptr);
+  is_primary = *(reinterpret_cast<const bool *>(field_location));
+
+
+  field_location = tile->GetTuplePointer(tupleId, ColumnCatalog::ColumnId::IS_NOT_NULL);
+  PL_ASSERT(field_location != nullptr);
+  is_not_null = *(reinterpret_cast<const bool *>(field_location));
+}
 
 ColumnCatalog *ColumnCatalog::GetInstance(storage::Database *pg_catalog,
                                           type::AbstractPool *pool,

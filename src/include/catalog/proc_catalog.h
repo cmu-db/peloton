@@ -64,7 +64,7 @@ class ProcCatalogObject {
   oid_t oid_;
   std::string name_;
   type::TypeId ret_type_;
-  const std::vector<type::TypeId> arg_types_;
+  std::vector<type::TypeId> arg_types_;
   oid_t lang_oid_;
   std::string src_;
 

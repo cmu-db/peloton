@@ -20,9 +20,18 @@
 namespace peloton {
 namespace catalog {
 
-LanguageCatalogObject::LanguageCatalogObject(executor::LogicalTile *tuple)
-    : lang_oid_(tuple->GetValue(0, 0).GetAs<oid_t>()),
-      lang_name_(tuple->GetValue(0, 1).GetAs<const char *>()) {}
+LanguageCatalogObject::LanguageCatalogObject(executor::LogicalTile *tile) {
+  auto field_location = tile->GetTuplePointer(0, LanguageCatalog::ColumnId::OID);
+  PL_ASSERT(field_location != nullptr);
+  lang_oid_ = *(reinterpret_cast<const oid_t *>(field_location));
+
+  field_location = tile->GetTuplePointer(0, LanguageCatalog::ColumnId::LANNAME);
+  PL_ASSERT(field_location != nullptr);
+  auto varchar = *(reinterpret_cast<const char *const*>(field_location));
+  auto size = reinterpret_cast<const uint32_t *>(varchar);
+  auto string = (reinterpret_cast<const char *>(varchar) + sizeof(uint32_t));
+  lang_name_ = std::string(string, *size - 1);
+}
 
 LanguageCatalog &LanguageCatalog::GetInstance(concurrency::TransactionContext *txn) {
   static LanguageCatalog language_catalog{txn};
