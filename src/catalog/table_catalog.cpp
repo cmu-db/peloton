@@ -20,8 +20,6 @@
 #include "concurrency/transaction_context.h"
 #include "storage/data_table.h"
 #include "type/value_factory.h"
-#include "storage/tile.h"
-#include "executor/logical_tile.h"
 
 namespace peloton {
 namespace catalog {
@@ -29,12 +27,6 @@ namespace catalog {
 TableCatalogObject::TableCatalogObject(executor::LogicalTile *tile,
                                        concurrency::TransactionContext *txn,
                                        int tupleId)
-//    : table_oid(tile->GetValue(tupleId, TableCatalog::ColumnId::TABLE_OID)
-//                    .GetAs<oid_t>()),
-//      table_name(tile->GetValue(tupleId, TableCatalog::ColumnId::TABLE_NAME)
-//                     .ToString()),
-//      database_oid(tile->GetValue(tupleId, TableCatalog::ColumnId::DATABASE_OID)
-//                       .GetAs<oid_t>()),
     : index_objects(),
       index_names(),
       valid_index_objects(false),
@@ -42,36 +34,20 @@ TableCatalogObject::TableCatalogObject(executor::LogicalTile *tile,
       column_names(),
       valid_column_objects(false),
       txn(txn) {
-  auto cp = tile->GetSchema()[TableCatalog::ColumnId::TABLE_OID];
-  auto base_tuple_id = tile->GetPositionList(cp.position_list_idx)[tupleId];
-  auto base_tile = cp.base_tile.get();
-  auto tuple_location = base_tile->GetTupleLocation(base_tuple_id);
-  auto field_location = tuple_location + base_tile->GetSchema()->GetOffset(cp.origin_column_id);
-
+  auto field_location = tile->GetTuplePointer(tupleId, TableCatalog::ColumnId::TABLE_OID);
+  PL_ASSERT(field_location != nullptr);
   table_oid = *(reinterpret_cast<const oid_t *>(field_location));
-//  PL_ASSERT(table_oid == *(reinterpret_cast<const oid_t *>(field_location)));
 
-  cp = tile->GetSchema()[TableCatalog::ColumnId::TABLE_NAME];
-  base_tuple_id = tile->GetPositionList(cp.position_list_idx)[tupleId];
-  base_tile = cp.base_tile.get();
-  tuple_location = base_tile->GetTupleLocation(base_tuple_id);
-  field_location = tuple_location + base_tile->GetSchema()->GetOffset(cp.origin_column_id);
+  field_location = tile->GetTuplePointer(tupleId, TableCatalog::ColumnId::TABLE_NAME);
+  PL_ASSERT(field_location != nullptr);
+  auto varchar = *(reinterpret_cast<const char *const*>(field_location));
+  auto size = reinterpret_cast<const uint32_t *>(varchar);
+  auto string = (reinterpret_cast<const char *>(varchar) + sizeof(uint32_t));
+  table_name = std::string(string, *size - 1);
 
-  auto varchar = *(reinterpret_cast<const char **>(field_location));
-  uint32_t size = *(reinterpret_cast<const uint32_t *>(varchar));
-  const char *string = (reinterpret_cast<const char *>(varchar) + 4);
-
-  table_name = std::string(string, size - 1);
-//  PL_ASSERT(strncmp(table_name.c_str(), (reinterpret_cast<const char *>(varchar) + 4), size) == 0);
-
-  cp = tile->GetSchema()[TableCatalog::TableCatalog::ColumnId::DATABASE_OID];
-  base_tuple_id = tile->GetPositionList(cp.position_list_idx)[tupleId];
-  base_tile = cp.base_tile.get();
-  tuple_location = base_tile->GetTupleLocation(base_tuple_id);
-  field_location = tuple_location + base_tile->GetSchema()->GetOffset(cp.origin_column_id);
-
+  field_location = tile->GetTuplePointer(tupleId, TableCatalog::ColumnId::DATABASE_OID);
+  PL_ASSERT(field_location != nullptr);
   database_oid = *(reinterpret_cast<const oid_t *>(field_location));
-//  PL_ASSERT(database_oid == *(reinterpret_cast<const oid_t *>(field_location)));
 }
 
 /* @brief   insert index catalog object into cache
