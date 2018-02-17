@@ -150,14 +150,11 @@ void Catalog::BootstrapSystemCatalogs(storage::Database *database,
       DATABASE_CATALOG_OID, DATABASE_CATALOG_NAME, CATALOG_DATABASE_OID,
       pool_.get(), txn);
   system_catalogs->GetTableCatalog()->InsertTable(
-      TABLE_CATALOG_OID, TABLE_CATALOG_NAME, CATALOG_DATABASE_OID, pool_.get(),
-      txn);
+      TABLE_CATALOG_OID, TABLE_CATALOG_NAME, database_oid, pool_.get(), txn);
   system_catalogs->GetTableCatalog()->InsertTable(
-      INDEX_CATALOG_OID, INDEX_CATALOG_NAME, CATALOG_DATABASE_OID, pool_.get(),
-      txn);
+      INDEX_CATALOG_OID, INDEX_CATALOG_NAME, database_oid, pool_.get(), txn);
   system_catalogs->GetTableCatalog()->InsertTable(
-      COLUMN_CATALOG_OID, COLUMN_CATALOG_NAME, CATALOG_DATABASE_OID,
-      pool_.get(), txn);
+      COLUMN_CATALOG_OID, COLUMN_CATALOG_NAME, database_oid, pool_.get(), txn);
 }
 
 void Catalog::Bootstrap() {
