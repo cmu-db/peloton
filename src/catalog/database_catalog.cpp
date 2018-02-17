@@ -153,7 +153,7 @@ std::shared_ptr<TableCatalogObject> DatabaseCatalogObject::GetTableObject(
     auto pg_table = Catalog::GetInstance()
                         ->GetSystemCatalogs(database_oid)
                         ->GetTableCatalog();
-    return pg_table->GetTableObject(table_name, database_oid, txn);
+    return pg_table->GetTableObject(table_name, txn);
   }
 }
 

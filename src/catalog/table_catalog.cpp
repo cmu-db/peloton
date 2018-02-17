@@ -15,13 +15,13 @@
 #include <memory>
 
 #include "catalog/catalog.h"
-#include "catalog/system_catalogs.h"
 #include "catalog/column_catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/index_catalog.h"
+#include "catalog/system_catalogs.h"
 #include "concurrency/transaction_context.h"
-#include "storage/database.h"
 #include "storage/data_table.h"
+#include "storage/database.h"
 #include "type/value_factory.h"
 
 namespace peloton {
@@ -274,8 +274,9 @@ std::unordered_map<std::string, std::shared_ptr<ColumnCatalogObject>>
 TableCatalogObject::GetColumnNames(bool cached_only) {
   if (!valid_column_objects && !cached_only) {
     auto column_objects = GetColumnObjects();
-    std::unordered_map<std::string, std::shared_ptr<ColumnCatalogObject> > column_names;
-    for (auto& pair : column_objects) {
+    std::unordered_map<std::string, std::shared_ptr<ColumnCatalogObject>>
+        column_names;
+    for (auto &pair : column_objects) {
       auto column = pair.second;
       column_names[column->GetColumnName()] = column;
     }
@@ -404,8 +405,8 @@ bool TableCatalog::DeleteTable(oid_t table_oid,
   // evict from cache
   auto table_object = txn->catalog_cache.GetCachedTableObject(table_oid);
   if (table_object) {
-    auto database_object = DatabaseCatalog::GetInstance()->GetDatabaseObject(
-        table_object->GetDatabaseOid(), txn);
+    auto database_object =
+        DatabaseCatalog::GetInstance()->GetDatabaseObject(database_oid, txn);
     database_object->EvictTableObject(table_oid);
   }
 
@@ -439,9 +440,9 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
     auto table_object =
         std::make_shared<TableCatalogObject>((*result_tiles)[0].get(), txn);
     // insert into cache
-    auto database_object = DatabaseCatalog::GetInstance()->GetDatabaseObject(
-        table_object->GetDatabaseOid(), txn);
-    PELOTON_ASSERT(database_object);
+    auto database_object =
+        DatabaseCatalog::GetInstance()->GetDatabaseObject(database_oid, txn);
+    PL_ASSERT(database_object);
     bool success = database_object->InsertTableObject(table_object);
     PELOTON_ASSERT(success == true);
     (void)success;
@@ -462,8 +463,7 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
  * @return  table catalog object
  */
 std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
-    const std::string &table_name, oid_t database_oid,
-    concurrency::TransactionContext *txn) {
+    const std::string &table_name, concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
   }
@@ -476,12 +476,10 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
 
   // cache miss, get from pg_table
   std::vector<oid_t> column_ids(all_column_ids);
-  oid_t index_offset =
-      IndexId::SKEY_TABLE_NAME;  // Index of table_name & database_oid
+  oid_t index_offset = IndexId::SKEY_TABLE_NAME;  // Index of table_name
   std::vector<type::Value> values;
   values.push_back(
       type::ValueFactory::GetVarcharValue(table_name, nullptr).Copy());
-  values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
 
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
@@ -490,9 +488,9 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
     auto table_object =
         std::make_shared<TableCatalogObject>((*result_tiles)[0].get(), txn);
     // insert into cache
-    auto database_object = DatabaseCatalog::GetInstance()->GetDatabaseObject(
-        table_object->GetDatabaseOid(), txn);
-    PELOTON_ASSERT(database_object);
+    auto database_object =
+        DatabaseCatalog::GetInstance()->GetDatabaseObject(database_oid, txn);
+    PL_ASSERT(database_object);
     bool success = database_object->InsertTableObject(table_object);
     PELOTON_ASSERT(success == true);
     (void)success;
@@ -558,8 +556,8 @@ bool TableCatalog::UpdateVersionId(oid_t update_val, oid_t table_oid,
   // get table object, then evict table object
   auto table_object = txn->catalog_cache.GetCachedTableObject(table_oid);
   if (table_object) {
-    auto database_object = DatabaseCatalog::GetInstance()->GetDatabaseObject(
-        table_object->GetDatabaseOid(), txn);
+    auto database_object =
+        DatabaseCatalog::GetInstance()->GetDatabaseObject(database_oid, txn);
     database_object->EvictTableObject(table_oid);
   }
 

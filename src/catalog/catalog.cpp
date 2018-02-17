@@ -96,10 +96,8 @@ void Catalog::BootstrapSystemCatalogs(storage::Database *database,
   CreatePrimaryIndex(database_oid, TABLE_CATALOG_OID, txn);
 
   CreateIndex(database_oid, TABLE_CATALOG_OID,
-              {TableCatalog::ColumnId::TABLE_NAME,
-               TableCatalog::ColumnId::DATABASE_OID},
-              TABLE_CATALOG_NAME "_skey0", IndexType::BWTREE,
-              IndexConstraintType::UNIQUE, true, txn, true);
+              {TableCatalog::ColumnId::TABLE_NAME}, TABLE_CATALOG_NAME "_skey0",
+              IndexType::BWTREE, IndexConstraintType::UNIQUE, true, txn, true);
   CreateIndex(database_oid, TABLE_CATALOG_OID,
               {TableCatalog::ColumnId::DATABASE_OID},
               TABLE_CATALOG_NAME "_skey1", IndexType::BWTREE,

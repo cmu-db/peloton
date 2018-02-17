@@ -973,8 +973,8 @@ parser::SQLStatement *PostgresParser::CreateTransform(CreateStmt *root) {
   if (relation->relname) {
     result->table_info_->table_name = relation->relname;
   }
-  if (relation->catalogname) {
-    result->table_info_->database_name = relation->catalogname;
+  if (relation->schemaname) {
+    result->table_info_->database_name = relation->schemaname;
   };
 
   std::unordered_set<std::string> primary_keys;

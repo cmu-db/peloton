@@ -20,7 +20,7 @@
 //
 // Indexes: (index offset: indexed columns)
 // 0: table_oid (unique & primary key)
-// 1: table_name & database_oid (unique)
+// 1: table_name (unique)
 // 2: database_oid (non-unique)
 //
 //===----------------------------------------------------------------------===//
@@ -120,7 +120,7 @@ class TableCatalog : public AbstractCatalog {
  public:
   TableCatalog(storage::Database *pg_catalog, type::AbstractPool *pool,
                concurrency::TransactionContext *txn);
-  
+
   ~TableCatalog();
 
   inline oid_t GetNextOid() { return oid_++ | TABLE_OID_MASK; }
@@ -143,8 +143,7 @@ class TableCatalog : public AbstractCatalog {
   std::shared_ptr<TableCatalogObject> GetTableObject(
       oid_t table_oid, concurrency::TransactionContext *txn);
   std::shared_ptr<TableCatalogObject> GetTableObject(
-      const std::string &table_name, oid_t database_oid,
-      concurrency::TransactionContext *txn);
+      const std::string &table_name, concurrency::TransactionContext *txn);
   std::unordered_map<oid_t, std::shared_ptr<TableCatalogObject>>
   GetTableObjects(oid_t database_oid, concurrency::TransactionContext *txn);
 
