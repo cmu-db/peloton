@@ -18,6 +18,8 @@
 #include "catalog/manager.h"
 #include "catalog/table_catalog.h"
 
+#include "common/exception.h"
+
 #include "optimizer/binding.h"
 #include "optimizer/operator_visitor.h"
 #include "optimizer/properties.h"
@@ -74,24 +76,19 @@ void Optimizer::OptimizeLoop(int root_group_id,
 
   task_stack->Push(new BottomUpRewrite(
       root_group_id, root_context, RewriteRuleSetName::UNNEST_SUBQUERY, false));
-  while (!task_stack->Empty()) {
-    auto task = task_stack->Pop();
-    task->execute();
-  }
+
+  ExecuteTaskStack(*task_stack, root_group_id, root_context);
 
   // Perform optimization after the rewrite
   task_stack->Push(new OptimizeGroup(metadata_.memo.GetGroupByID(root_group_id),
                                      root_context));
+
   // Derive stats for the only one logical expression before optimizing
   task_stack->Push(new DeriveStats(
       metadata_.memo.GetGroupByID(root_group_id)->GetLogicalExpression(),
       ExprSet{}, root_context));
 
-  // TODO: Add timer for early stop
-  while (!task_stack->Empty()) {
-    auto task = task_stack->Pop();
-    task->execute();
-  }
+  ExecuteTaskStack(*task_stack, root_group_id, root_context);
 }
 
 shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
@@ -124,7 +121,11 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   // Get the physical properties the final plan must output
   auto query_info = GetQueryInfo(parse_tree);
 
-  OptimizeLoop(root_id, query_info.physical_props);
+  try {
+    OptimizeLoop(root_id, query_info.physical_props);
+  } catch (OptimizerException &e) {
+    LOG_WARN("Optimize Loop ended prematurely: %s", e.what());
+  }
 
   try {
     auto best_plan = ChooseBestPlan(root_id, query_info.physical_props,
@@ -240,29 +241,29 @@ shared_ptr<GroupExpression> Optimizer::InsertQueryTree(
 }
 
 QueryInfo Optimizer::GetQueryInfo(parser::SQLStatement *tree) {
-  auto GetQueryInfoHelper = [](
-      std::vector<unique_ptr<expression::AbstractExpression>> &select_list,
-      std::unique_ptr<parser::OrderDescription> &order_info,
-      std::vector<expression::AbstractExpression *> &output_exprs,
-      std::shared_ptr<PropertySet> &physical_props) {
-    // Extract output column
-    for (auto &expr : select_list) output_exprs.push_back(expr.get());
+  auto GetQueryInfoHelper =
+      [](std::vector<unique_ptr<expression::AbstractExpression>> &select_list,
+         std::unique_ptr<parser::OrderDescription> &order_info,
+         std::vector<expression::AbstractExpression *> &output_exprs,
+         std::shared_ptr<PropertySet> &physical_props) {
+        // Extract output column
+        for (auto &expr : select_list) output_exprs.push_back(expr.get());
 
-    // Extract sort property
-    if (order_info != nullptr) {
-      std::vector<expression::AbstractExpression *> sort_exprs;
-      std::vector<bool> sort_ascending;
-      for (auto &expr : order_info->exprs) {
-        sort_exprs.push_back(expr.get());
-      }
-      for (auto &type : order_info->types) {
-        sort_ascending.push_back(type == parser::kOrderAsc);
-      }
-      if (!sort_exprs.empty())
-        physical_props->AddProperty(
-            std::make_shared<PropertySort>(sort_exprs, sort_ascending));
-    }
-  };
+        // Extract sort property
+        if (order_info != nullptr) {
+          std::vector<expression::AbstractExpression *> sort_exprs;
+          std::vector<bool> sort_ascending;
+          for (auto &expr : order_info->exprs) {
+            sort_exprs.push_back(expr.get());
+          }
+          for (auto &type : order_info->types) {
+            sort_ascending.push_back(type == parser::kOrderAsc);
+          }
+          if (!sort_exprs.empty())
+            physical_props->AddProperty(
+                std::make_shared<PropertySort>(sort_exprs, sort_ascending));
+        }
+      };
 
   std::vector<expression::AbstractExpression *> output_exprs;
   std::shared_ptr<PropertySet> physical_props = std::make_shared<PropertySet>();
@@ -280,7 +281,8 @@ QueryInfo Optimizer::GetQueryInfo(parser::SQLStatement *tree) {
                            output_exprs, physical_props);
       break;
     }
-    default:;
+    default:
+      ;
   }
 
   return QueryInfo(output_exprs, physical_props);
@@ -336,5 +338,35 @@ unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
   LOG_TRACE("Finish Choosing best plan for group %d", id);
   return plan;
 }
+
+void Optimizer::ExecuteTaskStack(
+    OptimizerTaskStack &task_stack, int root_group_id,
+    std::shared_ptr<OptimizeContext> root_context) {
+  auto root_group = metadata_.memo.GetGroupByID(root_group_id);
+  auto &timer = metadata_.timer;
+  const auto timeout_limit = metadata_.timeout_limit;
+  const auto &required_props = root_context->required_prop;
+
+  if (timer.GetInvocations() == 0) {
+    timer.Start();
+  }
+  // Iterate through the task stack
+  while (!task_stack.Empty()) {
+    // Check to see if we have at least one plan, and if we have exceeded our
+    // timeout limit
+    if (timer.GetDuration() >= timeout_limit &&
+        root_group->HasExpressions(required_props)) {
+      throw OptimizerException("Optimizer task execution duration " +
+                               std::to_string(timer.GetDuration()) +
+                               " exceeds timeout limit " +
+                               std::to_string(timeout_limit));
+    }
+    timer.Reset();
+    auto task = task_stack.Pop();
+    task->execute();
+    timer.Stop();
+  }
+}
+
 }  // namespace optimizer
 }  // namespace peloton
