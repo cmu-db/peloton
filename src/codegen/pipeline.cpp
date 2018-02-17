@@ -120,7 +120,7 @@ Pipeline &PipelineContext::GetPipeline() { return pipeline_; }
 // Constructor
 Pipeline::Pipeline(CompilationContext &compilation_ctx)
     : compilation_ctx_(compilation_ctx), pipeline_index_(0) {
-  compilation_ctx.RegisterPipeline(*this);
+  id_ = compilation_ctx.RegisterPipeline(*this);
 }
 
 // Constructor
@@ -226,6 +226,9 @@ std::string Pipeline::ConstructPipelineName() const {
     const planner::AbstractPlan &plan = (*riter)->GetPlan();
     const std::string plan_type = PlanNodeTypeToString(plan.GetPlanNodeType());
     parts.emplace_back(StringUtil::Lower(plan_type));
+  }
+  if (compilation_ctx_.IsLastPipeline(*this)) {
+    parts.emplace_back("output");
   }
   return StringUtil::Join(parts, "_");
 }
