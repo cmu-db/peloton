@@ -12,7 +12,7 @@ import mmap
 import glob
 import functools
 
-from script.helpers import find_clangformat
+from script.helpers import CLANG_FORMAT
 
 ## ==============================================
 ## LOGGING CONFIGURATION
@@ -327,7 +327,6 @@ if __name__ == '__main__':
     LOG.info("Running source validator ...")
     LOG.info("Peloton root : " + PELOTON_DIR)
 
-    CLANG_FORMAT = find_clangformat()
 
     if ARGS.files:
         # Validate just the provided files.

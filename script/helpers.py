@@ -12,3 +12,5 @@ def find_clangformat():
         if not path is None:
             break
     return path
+
+CLANG_FORMAT = find_clangformat()

@@ -14,7 +14,7 @@ import datetime
 import subprocess
 
 from functools import reduce
-from script.helpers import find_clangformat
+from script.helpers import CLANG_FORMAT
 
 ## ==============================================
 ## CONFIGURATION
@@ -175,8 +175,6 @@ if __name__ == '__main__':
         )
 
     ARGS = PARSER.parse_args()
-
-    CLANG_FORMAT = find_clangformat()
 
     if ARGS.staged_files:
         PELOTON_DIR_bytes = bytes(PELOTON_DIR, 'utf-8')
