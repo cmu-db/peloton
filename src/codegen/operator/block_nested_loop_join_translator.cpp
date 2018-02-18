@@ -16,7 +16,7 @@
 #include "codegen/compilation_context.h"
 #include "codegen/function_builder.h"
 #include "codegen/operator/projection_translator.h"
-#include "codegen/proxy/sorter_proxy.h"
+#include "codegen/proxy/buffer_proxy.h"
 #include "planner/nested_loop_join_plan.h"
 #include "settings/settings_manager.h"
 
@@ -26,11 +26,11 @@ namespace codegen {
 ////////////////////////////////////////////////////////////////////////////////
 ///
 /// This class implements a block-wise nested loop join. It does this by using
-/// a buffer (in our case, a Sorter instance) into which tuples are buffered
-/// from the left side. If this buffer is full, we call a second, generated
-/// function that joins the buffer with all tuples from the right side. This
-/// generated "joinBuffer" function implements the nested-loop portion. The
-/// psuedocode for an INNER join would be:
+/// a Buffer (an expandable, contiguous memory region) into which tuples are
+/// buffered from the left side. If this buffer is full, we call a second,
+/// generated function that joins the buffer with all tuples from the right
+/// side. This generated "joinBuffer" function implements the nested-loop
+/// portion. The psuedocode for an INNER join would be:
 ///
 /// function main():
 ///   Buffer b
@@ -98,13 +98,13 @@ BlockNestedLoopJoinTranslator::BlockNestedLoopJoinTranslator(
   CodeGen &codegen = GetCodeGen();
   QueryState &query_state = context.GetQueryState();
   buffer_id_ =
-      query_state.RegisterState("buffer", SorterProxy::GetType(codegen));
-  buffer_ = Sorter{codegen, left_input_desc};
+      query_state.RegisterState("buffer", BufferProxy::GetType(codegen));
+  buffer_ = BufferAccessor(codegen, left_input_desc);
 
   // Determine the number of rows to buffer before flushing it through the join
   auto max_buffer_size = settings::SettingsManager::GetDouble(
       settings::SettingId::bnlj_buffer_size);
-  auto row_size = buffer_.GetStorageFormat().GetStorageSize();
+  auto row_size = buffer_.GetTupleSize();
   max_buf_rows_ =
       static_cast<uint32_t>(std::max(1.0, max_buffer_size / row_size));
 
@@ -114,10 +114,7 @@ BlockNestedLoopJoinTranslator::BlockNestedLoopJoinTranslator(
 }
 
 void BlockNestedLoopJoinTranslator::InitializeQueryState() {
-  CodeGen &codegen = GetCodeGen();
-  auto *null_func = codegen.Null(
-      proxy::TypeBuilder<util::Sorter::ComparisonFunction>::GetType(codegen));
-  buffer_.Init(codegen, LoadStatePtr(buffer_id_), null_func);
+  buffer_.Init(GetCodeGen(), LoadStatePtr(buffer_id_));
 }
 
 void BlockNestedLoopJoinTranslator::DefineAuxiliaryFunctions() {
@@ -137,10 +134,9 @@ void BlockNestedLoopJoinTranslator::Produce() const {
 
   // Flush any remaining buffered tuples through the join
   CodeGen &codegen = GetCodeGen();
-  auto *num_tuples =
-      buffer_.GetNumberOfStoredTuples(codegen, LoadStatePtr(buffer_id_));
-  lang::If has_tuples{codegen,
-                      codegen->CreateICmpUGT(num_tuples, codegen.Const32(0))};
+  auto *num_tuples = buffer_.NumTuples(codegen, LoadStatePtr(buffer_id_));
+  auto *flush_buffer = codegen->CreateICmpNE(num_tuples, codegen.Const32(0));
+  lang::If has_tuples{codegen, flush_buffer};
   {
     // Flush remaining
     join_buffer_func_.Call(codegen);
@@ -168,7 +164,7 @@ void BlockNestedLoopJoinTranslator::ConsumeFromLeft(
   buffer_.Append(codegen, buffer_ptr, tuple);
 
   // Check if we should process the filled buffer
-  auto *buf_size = buffer_.GetNumberOfStoredTuples(codegen, buffer_ptr);
+  auto *buf_size = buffer_.NumTuples(codegen, buffer_ptr);
   auto *flush_buffer_cond =
       codegen->CreateICmpUGE(buf_size, codegen.Const32(max_buf_rows_));
   lang::If flush_buffer{codegen, flush_buffer_cond};
@@ -201,7 +197,7 @@ namespace {
 
 // This is the callback called for every tuple in the buffer. There's a bit of
 // ceremony, but it's just a callback function.
-class BufferedTupleCallback : public Sorter::IterateCallback {
+class BufferedTupleCallback : public BufferAccessor::IterateCallback {
  public:
   // Constructor
   BufferedTupleCallback(

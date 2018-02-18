@@ -14,6 +14,7 @@
 #pragma once
 
 #include "codegen/auxiliary_producer_function.h"
+#include "codegen/buffer_accessor.h"
 #include "codegen/operator/operator_translator.h"
 #include "codegen/sorter.h"
 
@@ -59,11 +60,9 @@ class BlockNestedLoopJoinTranslator : public OperatorTranslator {
   // All the attributes from the left input that are materialized
   std::vector<const planner::AttributeInfo *> unique_left_attributes_;
 
-  // The memory space we use to buffer left input tuples. We use a util::Sorter
-  // instance because it provides a simple API to append tuples into a buffer.
-  // We **DO NOT** actually sort the input at all.
+  // The memory space we use to buffer left input tuples
   QueryState::Id buffer_id_;
-  Sorter buffer_;
+  BufferAccessor buffer_;
 
   // This controls the number of tuples we buffer before performing the nested
   // loop join. Ideally, we want the buffer to always be, at least, L2 cache
