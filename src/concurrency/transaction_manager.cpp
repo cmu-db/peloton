@@ -14,6 +14,7 @@
 
 #include "catalog/manager.h"
 #include "concurrency/transaction_context.h"
+#include "function/date_functions.h"
 #include "gc/gc_manager_factory.h"
 #include "logging/log_manager.h"
 #include "settings/settings_manager.h"
@@ -71,6 +72,8 @@ TransactionContext *TransactionManager::BeginTransaction(
         ->GetTxnLatencyMetric()
         .StartTimer();
   }
+
+  txn->SetTimestamp(function::DateFunctions::Now());
 
   return txn;
 }

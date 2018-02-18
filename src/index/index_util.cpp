@@ -6,7 +6,7 @@
 //
 // Identification: src/index/index_util.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -352,10 +352,16 @@ std::string IndexUtil::Debug(Index *index) {
   std::ostringstream os;
   int i = 0;
   for (auto ptr : location_ptrs) {
-    os << StringUtil::Format("%03d: {%d, %d}\n", i, ptr->block, ptr->offset);
+    if (i > 0) os << std::endl;
+    os << StringUtil::Format("%03d: %s",
+                             i, IndexUtil::GetInfo(ptr).c_str());
     i += 1;
   }
   return (os.str());
+}
+
+const std::string IndexUtil::GetInfo(const ItemPointer *ptr) {
+  return StringUtil::Format("{%d, %d}", ptr->block, ptr->offset);
 }
 
 }  // namespace index

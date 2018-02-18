@@ -48,21 +48,12 @@ if [ "$DISTRO" = "UBUNTU" ]; then
         fi
         sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 15CF4D18AF4F7421
         sudo apt-get update -qq
+        CMAKE_NAME="cmake3"
+        FORCE_Y="--force-yes"
+    else
+        CMAKE_NAME="cmake"
+        FORCE_Y=""
     fi
-
-    # Fix for cmake3 name change in Ubuntu 15.x and 16.x plus --force-yes deprecation
-    CMAKE_NAME="cmake3"
-    FORCE_Y="--force-yes"
-    MAJOR_VER=$(echo "$DISTRO_VER" | cut -d '.' -f 1)
-    for version in "15" "16"
-    do
-       if [ "$MAJOR_VER" = "$version" ]
-       then
-          FORCE_Y=""
-          CMAKE_NAME="cmake"
-          break
-       fi
-    done
 
     sudo apt-get -qq $FORCE_Y --ignore-missing -y install \
         git \
@@ -83,6 +74,33 @@ if [ "$DISTRO" = "UBUNTU" ]; then
         lcov \
         libpqxx-dev \
         llvm-3.7 \
+        libedit-dev \
+        postgresql-client
+
+## ------------------------------------------------
+## DEBIAN
+## ------------------------------------------------
+elif [ "$DISTRO" = "DEBIAN OS" ]; then
+    sudo apt-get -qq --ignore-missing -y install \
+        git \
+        g++ \
+        clang \
+        cmake \
+        libgflags-dev \
+        libprotobuf-dev \
+        protobuf-compiler \
+        bison \
+        flex \
+        libevent-dev \
+        libboost-dev \
+        libboost-thread-dev \
+        libboost-filesystem-dev \
+        libjemalloc-dev \
+        libssl-dev \
+        valgrind \
+        lcov \
+        libpqxx-dev \
+        llvm-dev \
         libedit-dev \
         postgresql-client
 
@@ -156,7 +174,7 @@ elif [[ "$DISTRO" == *"REDHAT"* ]] && [[ "${DISTRO_VER%.*}" == "7" ]]; then
         git \
         gcc-c++ \
         make \
-        cmake \
+        cmake3 \
         flex \
         bison \
         libevent-devel \

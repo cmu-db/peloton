@@ -1,4 +1,3 @@
-
 //===----------------------------------------------------------------------===//
 //
 //                         Peloton
@@ -7,7 +6,7 @@
 //
 // Identification: src/include/index/tuple_key.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -114,6 +113,20 @@ class TupleKey {
       return indexColumn;
     else
       return column_indices[indexColumn];
+  }
+
+  /**
+ * Prints the content of this key.
+ *
+ * IMPORTANT: This class should <b>not</b> override Printable
+ * because that adds an extra 8 bytes and it makes all the math
+ * above for doing fast comparisons fail.
+ *
+ * @return
+ */
+  const std::string GetInfo() const {
+    storage::Tuple tuple(key_tuple_schema, key_tuple);
+    return (tuple.GetInfo());
   }
 };
 

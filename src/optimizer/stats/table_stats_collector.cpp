@@ -70,7 +70,7 @@ void TableStatsCollector::InitColumnStatsCollectors() {
   for (oid_t column_id = 0; column_id < column_count_; column_id++) {
     std::unique_ptr<ColumnStatsCollector> colstats(new ColumnStatsCollector(
         database_id, table_id, column_id, schema_->GetType(column_id),
-        schema_->GetColumn(column_id).GetName()));
+        table_->GetName()+"."+schema_->GetColumn(column_id).GetName()));
     column_stats_collectors_.push_back(std::move(colstats));
   }
 

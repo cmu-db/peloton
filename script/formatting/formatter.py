@@ -12,6 +12,8 @@ import re
 import sys
 import datetime
 import subprocess
+import distutils.spawn
+
 
 ## ==============================================
 ## CONFIGURATION
@@ -32,7 +34,7 @@ DEFAULT_DIRS = []
 DEFAULT_DIRS.append(PELOTON_SRC_DIR)
 DEFAULT_DIRS.append(PELOTON_TESTS_DIR)
 
-CLANG_FORMAT = "clang-format-3.6"
+CLANG_FORMAT = None
 CLANG_FORMAT_FILE = os.path.join(PELOTON_DIR, ".clang-format")
 
 ## ==============================================
@@ -112,13 +114,13 @@ def format_file(file_path, update_header, clang_format_code):
             fd.write(file_data)
 
         elif clang_format_code:
-            try:
-                formatting_command = CLANG_FORMAT + " -style=file -i " + file_path
-                LOG.info(formatting_command)
-                subprocess.call([CLANG_FORMAT, "-style=file", "-i", file_path])
-            except OSError as e:
+            if CLANG_FORMAT is None:
                 LOG.error("clang-format seems not installed")
                 exit("clang-format seems not installed")
+            
+            formatting_command = CLANG_FORMAT + " -style=file -i " + file_path
+            LOG.info(formatting_command)
+            subprocess.call([CLANG_FORMAT, "-style=file", "-i", file_path])
 
     #END WITH
 
@@ -140,6 +142,17 @@ def format_dir(dir_path, update_header, clang_format_code):
     #END FOR [os.walk]
 #END ADD_HEADERS_DIR(DIR_PATH)
 
+#find clang-format executable
+def find_clangformat():
+    global CLANG_FORMAT
+    #check for possible clang-format versions
+    for exe in ["clang-format", "clang-format-3.6", "clang-format-3.7", "clang-format-3.8"]:
+        path = distutils.spawn.find_executable(exe)
+        if not path is None:
+            CLANG_FORMAT = path
+            return
+
+
 ## ==============================================
 ##                 Main Function
 ## ==============================================
@@ -155,6 +168,8 @@ if __name__ == '__main__':
                         help='Files or directories to (recursively) apply the actions to')
     
     args = parser.parse_args()
+    
+    find_clangformat()
 
     if args.staged_files:
         targets = [os.path.abspath(os.path.join(PELOTON_DIR, f)) for f in subprocess.check_output(["git", "diff", "--name-only", "HEAD", "--cached", "--diff-filter=d"]).split()]

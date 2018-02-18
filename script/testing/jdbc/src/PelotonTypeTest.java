@@ -34,7 +34,7 @@ public class PelotonTypeTest {
     
 
     private static Connection makeConnection(String host, int port, String username, String pass) throws SQLException {
-        String url = String.format("jdbc:postgresql://%s:%d/pavlo", host, port);
+        String url = String.format("jdbc:postgresql://%s:%d/default_database", host, port);
         Connection conn = DriverManager.getConnection(url, username, pass);
         return conn;
     }
