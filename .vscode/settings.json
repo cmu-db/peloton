@@ -52,6 +52,8 @@
         "hashtable": "cpp",
         "unordered_map": "cpp",
         "unordered_set": "cpp",
-        "valarray": "cpp"
+        "valarray": "cpp",
+        "iterator": "cpp",
+        "*.ipp": "cpp"
     }
 }

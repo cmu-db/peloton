@@ -136,7 +136,6 @@ struct Upper : public TypeSystem::UnaryOperatorHandleNull {
 
   Value Impl(CodeGen &codegen, const Value &val,
              const TypeSystem::InvocationContext &ctx) const override {
-    LOG_DEBUG("called upper impl with");
     llvm::Value *executor_ctx = ctx.executor_context;
     llvm::Value *ret =
         codegen.Call(StringFunctionsProxy::Upper,
@@ -514,7 +513,6 @@ struct Concat : public TypeSystem::NaryOperator,
   }
 };
 
-
 ////////////////////////////////////////////////////////////////////////////////
 ///
 /// N-ary operators
@@ -541,11 +539,8 @@ struct Substr : public TypeSystem::NaryOperator {
     // Setup function arguments
     llvm::Value *executor_ctx = ctx.executor_context;
     std::vector<llvm::Value *> args = {
-        executor_ctx,
-        input_args[0].GetValue(),
-        input_args[0].GetLength(),
-        input_args[1].GetValue(),
-        input_args[2].GetValue(),
+        executor_ctx, input_args[0].GetValue(), input_args[0].GetLength(),
+        input_args[1].GetValue(), input_args[2].GetValue(),
     };
 
     // Call
@@ -598,17 +593,14 @@ RTrim kRTrim;
 Repeat kRepeat;
 Concat kConcat;
 std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
-<<<<<<< HEAD
-    {OperatorId::Like, kLike},    {OperatorId::DateTrunc, kDateTrunc},
-    {OperatorId::BTrim, kBTrim},  {OperatorId::LTrim, kLTrim},
-    {OperatorId::RTrim, kRTrim},  {OperatorId::Repeat, kRepeat},
+    {OperatorId::Like, kLike},
+    {OperatorId::DateTrunc, kDateTrunc},
+    {OperatorId::DatePart, kDatePart},
+    {OperatorId::BTrim, kBTrim},
+    {OperatorId::LTrim, kLTrim},
+    {OperatorId::RTrim, kRTrim},
+    {OperatorId::Repeat, kRepeat},
     {OperatorId::Concat, kConcat}};
-=======
-    {OperatorId::Like, kLike},         {OperatorId::DateTrunc, kDateTrunc},
-    {OperatorId::DatePart, kDatePart}, {OperatorId::BTrim, kBTrim},
-    {OperatorId::LTrim, kLTrim},       {OperatorId::RTrim, kRTrim},
-    {OperatorId::Repeat, kRepeat}};
->>>>>>> upstream/master
 
 // Nary operations
 Substr kSubstr;

@@ -296,19 +296,19 @@ type::Value StringFunctions::__Concat(const std::vector<type::Value> &args) {
       pool->Allocate(args.size() * sizeof(uint32_t)));
   for (uint32_t i = 0; i < args.size(); i++) {
     if (args[i].IsNull()) {
-      attr_lens[i] = 0;
+      attr_lens[i] = 1;
       concat_strs[i] = nullptr;
       continue;
     }
 
-    attr_lens[i] = args[i].GetLength();
+    attr_lens[i] = args[i].GetLength() + 1;
     concat_strs[i] = args[i].GetAs<char *>();
   }
   LOG_DEBUG("called __CONCAT");
-  StrWithLen tmp = StringFunctions::Concat(ctx, (const char **)concat_strs,
-                                           attr_lens, args.size());
-  
-  
+  StrWithLen tmp =
+      StringFunctions::Concat(ctx, (const char **)concat_strs,
+                              (const uint32_t *)attr_lens, args.size());
+
   if (tmp.length == 1)
     return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
 
@@ -319,36 +319,46 @@ type::Value StringFunctions::__Concat(const std::vector<type::Value> &args) {
 StringFunctions::StrWithLen StringFunctions::Concat(
     UNUSED_ATTRIBUTE executor::ExecutorContext &ctx,
     UNUSED_ATTRIBUTE const char **concat_strs,
-    UNUSED_ATTRIBUTE uint32_t *attr_lens, UNUSED_ATTRIBUTE uint32_t attr_len) {
+    UNUSED_ATTRIBUTE const uint32_t *attr_lens,
+    UNUSED_ATTRIBUTE uint32_t attr_len) {
   PL_ASSERT(concat_strs != nullptr);
   PL_ASSERT(attr_lens != nullptr);
 
-  uint32_t len_all = 0;
+  int len_all = 0;
   uint32_t iter = 0;
 
-  while (iter < attr_len) len_all += attr_lens[iter++];
+  if (attr_lens == nullptr || concat_strs == nullptr || attr_len == 0) {
+    return StringFunctions::StrWithLen(nullptr, 1);
+  }
 
-  if (len_all == 0) {
+  while (iter < attr_len) {
+    if (concat_strs[iter] == nullptr) {
+      iter++;
+      continue;
+    }
+    len_all += (int)attr_lens[iter++] - 1;
+  }
+
+  if (len_all <= 0) {
     return StringFunctions::StrWithLen(nullptr, 1);
   }
 
   auto *pool = ctx.GetPool();
-  char *ret_str = reinterpret_cast<char *>(pool->Allocate(len_all + 1));
-  PL_MEMSET(ret_str,0,len_all+1);
+  char *ret_str = reinterpret_cast<char *>(pool->Allocate((size_t)len_all + 1));
+  PL_MEMSET(ret_str, 0, (size_t)len_all + 1);
   char *tail = ret_str;
 
   iter = 0;
   while (iter < attr_len) {
-    if (concat_strs[iter] == nullptr || attr_lens[iter] == 1) {
+    if (concat_strs[iter] == nullptr || attr_lens[iter] <= 1) {
       iter++;
       continue;
     }
-    PL_MEMCPY(tail, concat_strs[iter], attr_lens[iter] - 1);
+    PL_MEMCPY(tail, concat_strs[iter], (size_t)attr_lens[iter] - 1);
     tail += attr_lens[iter] - 1;
     iter++;
   }
-  ret_str[tail - ret_str] = '\0';
-  return StringFunctions::StrWithLen(ret_str, len_all + 1);
+  return StringFunctions::StrWithLen(ret_str, (uint32_t)len_all + 1);
 }
 
 }  // namespace function

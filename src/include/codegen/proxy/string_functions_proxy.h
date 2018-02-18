@@ -37,7 +37,7 @@ PROXY(StringFunctions) {
 };
 
 PROXY(StrWithLen) {
-  DECLARE_MEMBER(0, char*, str);
+  DECLARE_MEMBER(0, char *, str);
   DECLARE_MEMBER(1, uint32_t, length);
   DECLARE_TYPE;
 };
