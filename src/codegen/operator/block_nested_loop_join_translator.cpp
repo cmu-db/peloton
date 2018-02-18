@@ -15,6 +15,7 @@
 
 #include "codegen/compilation_context.h"
 #include "codegen/function_builder.h"
+#include "codegen/lang/if.h"
 #include "codegen/operator/projection_translator.h"
 #include "codegen/proxy/buffer_proxy.h"
 #include "planner/nested_loop_join_plan.h"

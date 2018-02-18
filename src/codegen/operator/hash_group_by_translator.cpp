@@ -13,6 +13,7 @@
 #include "codegen/operator/hash_group_by_translator.h"
 
 #include "codegen/compilation_context.h"
+#include "codegen/lang/if.h"
 #include "codegen/proxy/oa_hash_table_proxy.h"
 #include "codegen/operator/projection_translator.h"
 #include "codegen/lang/vectorized_loop.h"

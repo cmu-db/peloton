@@ -6,12 +6,13 @@
 //
 // Identification: src/codegen/aggregation.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "codegen/aggregation.h"
 
+#include "codegen/lang/if.h"
 #include "codegen/proxy/oa_hash_table_proxy.h"
 #include "codegen/type/boolean_type.h"
 #include "codegen/type/bigint_type.h"
