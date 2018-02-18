@@ -115,6 +115,7 @@ class OperatorTranslator {
   llvm::Value *GetExecutorContextPtr() const;
   llvm::Value *GetTransactionPtr() const;
   llvm::Value *GetStorageManagerPtr() const;
+  llvm::Value *GetThreadStatesPtr() const;
 
   // Retrieve a parameter from the runtime state
   llvm::Value *LoadStatePtr(const QueryState::Id &state_id) const;

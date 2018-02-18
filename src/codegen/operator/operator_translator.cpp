@@ -41,6 +41,10 @@ llvm::Value *OperatorTranslator::GetStorageManagerPtr() const {
   return context_.GetExecutionConsumer().GetStorageManagerPtr(context_);
 }
 
+llvm::Value *OperatorTranslator::GetThreadStatesPtr() const {
+  return context_.GetExecutionConsumer().GetThreadStatesPtr(context_);
+}
+
 llvm::Value *OperatorTranslator::LoadStatePtr(
     const QueryState::Id &state_id) const {
   QueryState &query_state = context_.GetQueryState();
