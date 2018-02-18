@@ -6,7 +6,7 @@
 //
 // Identification: src/include/threadpool/worker_pool.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -20,9 +20,16 @@
 namespace peloton {
 namespace threadpool {
 
+class WorkerPool;
+
 using TaskQueue = peloton::LockFreeQueue<std::function<void()>>;
 
-void WorkerFunc(std::atomic_bool *should_shutdown, TaskQueue *task_queue);
+/**
+ * Wrapper method for invoking a function inside of the worker pool
+ * @param should_shutdown A pointer to boolean that tells whether to shutdown
+ * @param task_queue Where to poll for tasks
+ */
+void WorkerFunc(WorkerPool *pool, TaskQueue *task_queue);
 
 /**
  * @brief A worker pool that maintains a group of worker threads.
@@ -34,24 +41,33 @@ class WorkerPool {
         should_shutdown_(false),
         task_queue_(task_queue) {}
 
-  void Startup() {
-    for (size_t i = 0; i < num_workers_; i++) {
-      workers_.emplace_back(WorkerFunc, &should_shutdown_, task_queue_);
-    }
-  }
+  /**
+   * Start the threads to begin polling the task queue
+   */
+  void Startup();
 
-  void Shutdown() {
-    should_shutdown_ = true;
-    for (auto &worker : workers_) {
-      worker.join();
-    }
-    workers_.clear();
+  /**
+   * Tell the threads to shutdown after the task queue is empty
+   */
+  void Shutdown();
+
+  /**
+   * Returns true if this pool has been marked for shutdown
+   * @return
+   */
+  bool ShouldShutdown() const {
+    return (should_shutdown_);
   }
 
  private:
   std::vector<std::thread> workers_;
   size_t num_workers_;
-  std::atomic_bool should_shutdown_;
+
+  // This used to be a std::atomic_bool
+  // It doesn't need to be because don't care about updating
+  // this flag atomically.
+  bool should_shutdown_;
+
   TaskQueue *task_queue_;
 };
 
