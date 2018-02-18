@@ -6,7 +6,7 @@
 //
 // Identification: src/include/codegen/proxy/sorter_proxy.h
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -20,19 +20,27 @@ namespace peloton {
 namespace codegen {
 
 PROXY(Sorter) {
-  DECLARE_MEMBER(0, char *, buffer_start);
-  DECLARE_MEMBER(1, char *, buffer_pos);
-  DECLARE_MEMBER(2, char *, buffer_end);
-  DECLARE_MEMBER(3, uint32_t, num_tuples);
-  DECLARE_MEMBER(4, uint32_t, tuple_size);
-  DECLARE_MEMBER(5, char *, comp_fn);
+  // clang-format off
+  DECLARE_MEMBER(0,
+                 char[sizeof(void *) +              // comparison function
+                      sizeof(uint32_t) +            // tuple size
+                      sizeof(char *) +              // buffer start
+                      sizeof(char *) +              // buffer end
+                      sizeof(uint64_t) +            // next allocation size
+                      sizeof(std::vector<char *>)], // tuple reference vector
+                 opaque1);
+  DECLARE_MEMBER(1, char **, tuples_start);
+  DECLARE_MEMBER(2, char **, tuples_end);
+  DECLARE_MEMBER(3, char[sizeof(std::vector<std::pair<void *, uint64_t>>)],
+                 opaque2);
   DECLARE_TYPE;
+  // clang-format on
 
   // Proxy methods in util::Sorter
   DECLARE_METHOD(Init);
   DECLARE_METHOD(StoreInputTuple);
   DECLARE_METHOD(Sort);
-  DECLARE_METHOD(Clear);
+  DECLARE_METHOD(SortParallel);
   DECLARE_METHOD(Destroy);
 };
 

@@ -15,144 +15,119 @@
 #include <cstdint>
 #include <vector>
 
+#include "executor/executor_context.h"
+
 namespace peloton {
 namespace codegen {
 namespace util {
 
-//===----------------------------------------------------------------------===//
-// A class than enables the storage and sorting of arbitrarily sized tuples.
-// Note that this class is meant to mimic a std::vector<T> providing
-// contiguous storage space for elements of type T.  However, there are a few
-// differences:
-//
-// 1) This class is called from LLVM code, hence we do not want to worry about
-//    defining types for std::vector.
-// 2) The _type_ of element it will store (and hence its size) is only be known
-//    at run-time (i.e., _after_ an instance has been instantiated). Therefore,
-//    we can't put templates on this guy.
-// 3) Post-sort, we only need sequential access to elements in the sorted
-//    buffer. This is why we only provide a single uni-directional iterator.
-// 4) Unlike std::vector, this class will (lazily) allocate space for incoming
-//    tuples and let clients worry about serializing types into the allocated
-//    space. We would accept a Serializer type as part of the Init(..) function,
-//    but we don't need it at this moment.
-//===----------------------------------------------------------------------===//
+/**
+ * Sorters are a class than enable the storage and sorting of arbitrary sized
+ * tuples. This class is meant to mimic a std::vector<T> providing contiguous
+ * storage space for elements of type T. The main, and most important,
+ * difference to std::vector<T> is that the size of T is not a compile-time
+ * constant, but is known only at runtime **after** an instance of this class
+ * has been instantiated. For this reason, we can't put templates on the class.
+ *
+ * This class only supports forward iteration since this is all that's required.
+ * Additionally, Sorter does not serialize elements into its memory space.
+ * Instead, it allocates space for incoming tuples on demand and returns a
+ * pointer to the call, relying on her to serialize into the space. This assumes
+ * well-behaved callers. We **could** accept a Serializer type as part of
+ * Init(..), but we don't need it at this moment.
+ */
 class Sorter {
  private:
-  // We (arbitrarily) allocate 32KB of buffer space upon initialization
-  static constexpr uint64_t kInitialBufferSize = 32 * 1024;
+  // We allocate 4KB of buffer space upon initialization
+  static constexpr uint64_t kInitialBufferSize = 4 * 1024;
 
  public:
   typedef int (*ComparisonFunction)(const char *left_tuple,
                                     const char *right_tuple);
 
-  // Constructor
-  Sorter();
+  /// Constructor
+  Sorter(ComparisonFunction func, uint32_t tuple_size);
 
-  // Destructor
+  /// Destructor
   ~Sorter();
 
   /**
-   * This function initializes the sorter with the given comparison function
-   * and assumes all input tuples have the given size.
+   * @brief This static function initializes the given sorter instance with the
+   * given comparison function and assumes all input tuples have the given size.
    *
+   * @param sorter The sorter instance we are initializing
    * @param func The comparison function used during sort
    * @param tuple_size The size of the tuple in bytes
    */
-  void Init(ComparisonFunction func, uint32_t tuple_size);
+  static void Init(Sorter &sorter, ComparisonFunction func,
+                   uint32_t tuple_size);
 
   /**
-   * Allocate space for a new input tuple. The size of the new tuple must be
-   * equivalent to the size provided at initialization time.
+   * @brief Cleans up all resources maintained by the given sorter instance
+   */
+  static void Destroy(Sorter &sorter);
+
+  /**
+   * @brief Allocate space for a new input tuple in this sorter. It is assumed
+   * that the size of the tuple is equivalent to the tuple size provided when
+   * this sorter was initialized.
    *
    * @return A pointer to a memory space large enough to store one tuple
    */
   char *StoreInputTuple();
 
   /**
-   * Sort all tuples stored in this sorter.
+   * @brief Sort all tuples stored in this sorter.
    */
   void Sort();
 
   /**
-   * Removes all stored tuples, leaving the sorter with a size of zero.
+   * @brief Perform a parallel sort of all sorter instances stored in the thread
+   * states object.
    */
-  void Clear();
+  void SortParallel(
+      const executor::ExecutorContext::ThreadStates &thread_states,
+      uint32_t sorter_offset);
 
-  /**
-   * Cleans up all resources this sorter maintains.
-   */
-  void Destroy();
+  //////////////////////////////////////////////////////////////////////////////
+  ///
+  /// Accessors
+  ///
+  //////////////////////////////////////////////////////////////////////////////
 
-  // Iterator over the tuples in the sort
-  struct Iterator {
-   public:
-    // Move the iterator forward
-    Iterator &operator++();
+  /// Return the number of tuples
+  uint64_t NumTuples() const { return tuples_.size(); }
 
-    // (In)Equality check
-    bool operator==(const Iterator &rhs) const;
-    bool operator!=(const Iterator &rhs) const;
-
-    // Dereference
-    const char *operator*();
-
-   private:
-    friend class Sorter;
-    // Private constructor so only the sorter can create these
-    Iterator(char *pos, uint32_t tuple_size)
-        : curr_pos_(pos), tuple_size_(tuple_size) {}
-
-    // Private position
-    char *curr_pos_;
-    uint32_t tuple_size_;
-  };
-
-  // Iterators
-  Iterator begin();
-  Iterator end();
-
-  uint64_t GetNumTuples() const { return num_tuples_; }
+  /// Iterators
+  std::vector<char *>::iterator begin() { return tuples_.begin(); }
+  std::vector<char *>::iterator end() { return tuples_.end(); }
 
  private:
-  // Is there enough room in the buffer to store a tuple of the provided size?
-  bool EnoughSpace(uint32_t tuple_size) const {
-    return buffer_start_ != nullptr && buffer_pos_ + tuple_size < buffer_end_;
-  }
-
-  uint64_t GetAllocatedSpace() const { return buffer_end_ - buffer_start_; }
-  uint64_t GetUsedSpace() const { return buffer_pos_ - buffer_start_; }
-
-  // Resize the given array to a larger size
-  void Resize();
+  void MakeRoomForNewTuple();
 
  private:
-  // The three pointers below track the buffer space where tuples are stored.
-  //
-  // buffer_start_ - points to the start of the memory space
-  // buffer_pos_   - points to where the next tuple insertion is written to
-  // buffer_end_   - points to the boundary (i.e., end) of the allocated space
-  //
-  // The sorter instance can either be initialized or uninitialized.
-  //
-  // In the uninitialized state, we maintain the invariant:
-  //   buffer_start_ == buffer_pos_ == buffer_end_ == NULL
-  //
-  // In the initialized state, we maintain the invariant:
-  //   buffer_start <= buffer_pos < buffer_end.
-  //
-  char *buffer_start_;
-  char *buffer_pos_;
-  char *buffer_end_;
-
-  // The number of tuples in this sorter instance
-  uint32_t num_tuples_;
+  // The comparison function
+  ComparisonFunction cmp_func_;
 
   // The size of the tuples
   uint32_t tuple_size_;
 
-  // The comparison function
-  ComparisonFunction cmp_func_;
+  // The following two pointers are pointers into the currently active block
+  // buffer_pos_ is the position in the block the next tuple will be written to.
+  // buffer_end_ marks the end of the block
+  char *buffer_pos_;
+  char *buffer_end_;
+
+  // Sorters double-expand
+  uint64_t next_alloc_size_;
+
+  // The tuples
+  std::vector<char *> tuples_;
+  char **tuples_start_;
+  char **tuples_end_;
+
+  // The memory blocks we've allocated and their sizes
+  std::vector<std::pair<void *, uint64_t>> blocks_;
 };
 
 }  // namespace util

@@ -6,23 +6,24 @@
 //
 // Identification: src/codegen/proxy/sorter_proxy.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "codegen/proxy/sorter_proxy.h"
 
+#include "codegen/proxy/executor_context_proxy.h"
+
 namespace peloton {
 namespace codegen {
 
-DEFINE_TYPE(Sorter, "peloton::util::Sorter", MEMBER(buffer_start),
-            MEMBER(buffer_pos), MEMBER(buffer_end), MEMBER(num_tuples),
-            MEMBER(tuple_size), MEMBER(comp_fn));
+DEFINE_TYPE(Sorter, "peloton::util::Sorter", MEMBER(opaque1),
+            MEMBER(tuples_start), MEMBER(tuples_end), MEMBER(opaque2));
 
 DEFINE_METHOD(peloton::codegen::util, Sorter, Init);
 DEFINE_METHOD(peloton::codegen::util, Sorter, StoreInputTuple);
 DEFINE_METHOD(peloton::codegen::util, Sorter, Sort);
-DEFINE_METHOD(peloton::codegen::util, Sorter, Clear);
+DEFINE_METHOD(peloton::codegen::util, Sorter, SortParallel);
 DEFINE_METHOD(peloton::codegen::util, Sorter, Destroy);
 
 }  // namespace codegen

@@ -32,8 +32,6 @@ OrderByTranslator::OrderByTranslator(const planner::OrderByPlan &plan,
                                      CompilationContext &context,
                                      Pipeline &pipeline)
     : OperatorTranslator(plan, context, pipeline), child_pipeline_(this) {
-  LOG_DEBUG("Constructing OrderByTranslator ...");
-
   // Prepare the child
   context.Prepare(*plan.GetChild(0), child_pipeline_);
 
@@ -97,8 +95,6 @@ OrderByTranslator::OrderByTranslator(const planner::OrderByPlan &plan,
 
   // Create the sorter
   sorter_ = Sorter{codegen, tuple_desc};
-
-  LOG_DEBUG("Finished constructing OrderByTranslator ...");
 }
 
 void OrderByTranslator::InitializeQueryState() {
@@ -219,13 +215,12 @@ void OrderByTranslator::Produce() const {
     // Now iterate over the sorted list
     auto *i32_type = codegen.Int32Type();
     auto vec_size = Vector::kDefaultVectorSize.load();
-    auto *raw_vec = codegen.AllocateBuffer(i32_type, vec_size, "obSelVec");
-    Vector selection_vector{raw_vec, vec_size, i32_type};
+    auto *raw_vec = codegen.AllocateBuffer(i32_type, vec_size, "obPosList");
+    Vector position_list{raw_vec, vec_size, i32_type};
 
     const auto &plan = GetPlanAs<planner::OrderByPlan>();
-    ProduceResults callback{ctx, plan, selection_vector};
-    sorter_.VectorizedIterate(codegen, sorter_ptr,
-                              selection_vector.GetCapacity(), callback);
+    ProduceResults callback{ctx, plan, position_list};
+    sorter_.VectorizedIterate(codegen, sorter_ptr, vec_size, callback);
   };
 
   GetPipeline().RunSerial(producer);
@@ -257,6 +252,43 @@ void OrderByTranslator::TearDownQueryState() {
   sorter_.Destroy(GetCodeGen(), LoadStatePtr(sorter_id_));
 }
 
+void OrderByTranslator::RegisterPipelineState(PipelineContext &pipeline_ctx) {
+  if (pipeline_ctx.GetPipeline() == child_pipeline_ &&
+      pipeline_ctx.IsParallel()) {
+    auto *sorter_type = SorterProxy::GetType(GetCodeGen());
+    thread_sorter_id_ = pipeline_ctx.RegisterThreadState("sorter", sorter_type);
+  }
+}
+
+void OrderByTranslator::InitializePipelineState(PipelineContext &pipeline_ctx) {
+  if (pipeline_ctx.GetPipeline() == child_pipeline_ &&
+      pipeline_ctx.IsParallel()) {
+    CodeGen &codegen = GetCodeGen();
+    auto *sorter_ptr = pipeline_ctx.LoadStatePtr(codegen, thread_sorter_id_);
+    sorter_.Init(codegen, sorter_ptr, compare_func_);
+  }
+}
+
+void OrderByTranslator::FinishPipeline(PipelineContext &pipeline_ctx) {
+  if (pipeline_ctx.GetPipeline() == child_pipeline_ &&
+      pipeline_ctx.IsParallel()) {
+    CodeGen &codegen = GetCodeGen();
+    auto *sorter_ptr = pipeline_ctx.LoadStatePtr(codegen, thread_sorter_id_);
+    auto *thread_states_ptr = GetThreadStatesPtr();
+    auto offset = pipeline_ctx.GetEntryOffset(codegen, thread_sorter_id_);
+    sorter_.SortParallel(codegen, sorter_ptr, thread_states_ptr, offset);
+  }
+}
+
+void OrderByTranslator::TearDownPipelineState(PipelineContext &pipeline_ctx) {
+  if (pipeline_ctx.GetPipeline() == child_pipeline_ &&
+      pipeline_ctx.IsParallel()) {
+    CodeGen &codegen = GetCodeGen();
+    auto *sorter_ptr = pipeline_ctx.LoadStatePtr(codegen, thread_sorter_id_);
+    sorter_.Destroy(codegen, sorter_ptr);
+  }
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 ///
 /// PRODUCE RESULTS
@@ -265,15 +297,15 @@ void OrderByTranslator::TearDownQueryState() {
 
 OrderByTranslator::ProduceResults::ProduceResults(
     ConsumerContext &ctx, const planner::OrderByPlan &plan,
-    Vector &selection_vector)
-    : ctx_(ctx), plan_(plan), selection_vector_(selection_vector) {}
+    Vector &position_list)
+    : ctx_(ctx), plan_(plan), position_list_(position_list) {}
 
 void OrderByTranslator::ProduceResults::ProcessEntries(
     CodeGen &, llvm::Value *start_index, llvm::Value *end_index,
     Sorter::SorterAccess &access) const {
   // Construct the row batch we're producing
-  RowBatch batch{ctx_.GetCompilationContext(), start_index, end_index,
-                 selection_vector_, false};
+  auto &comp_ctx = ctx_.GetCompilationContext();
+  RowBatch batch{comp_ctx, start_index, end_index, position_list_, false};
 
   // Add the attribute accessors for rows in this batch
   std::vector<SorterAttributeAccess> accessors;

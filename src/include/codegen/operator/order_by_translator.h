@@ -31,14 +31,19 @@ class OrderByTranslator : public OperatorTranslator {
                     CompilationContext &context, Pipeline &pipeline);
 
   void InitializeQueryState() override;
+  void TearDownQueryState() override;
+
+  // We parallel, son
+  void RegisterPipelineState(PipelineContext &pipeline_ctx) override;
+  void InitializePipelineState(PipelineContext &pipeline_ctx) override;
+  void FinishPipeline(PipelineContext &pipeline_ctx) override;
+  void TearDownPipelineState(PipelineContext &pipeline_ctx) override;
 
   void DefineAuxiliaryFunctions() override;
 
   void Produce() const override;
 
   void Consume(ConsumerContext &context, RowBatch::Row &row) const override;
-
-  void TearDownQueryState() override;
 
  private:
   //===--------------------------------------------------------------------===//
@@ -47,7 +52,7 @@ class OrderByTranslator : public OperatorTranslator {
   class ProduceResults : public Sorter::VectorizedIterateCallback {
    public:
     ProduceResults(ConsumerContext &ctx, const planner::OrderByPlan &plan,
-                   Vector &selection_vector);
+                   Vector &position_list);
     // The callback function providing the current tuple in the sorter instance
     void ProcessEntries(CodeGen &codegen, llvm::Value *start_index,
                         llvm::Value *end_index,
@@ -59,7 +64,7 @@ class OrderByTranslator : public OperatorTranslator {
     // The plan node
     const planner::OrderByPlan &plan_;
     // The selection vector when producing rows
-    Vector &selection_vector_;
+    Vector &position_list_;
   };
 
   //===--------------------------------------------------------------------===//
@@ -85,6 +90,7 @@ class OrderByTranslator : public OperatorTranslator {
 
   // The ID of our sorter instance in the runtime state
   QueryState::Id sorter_id_;
+  PipelineContext::Id thread_sorter_id_;
 
   // The sorter translator instance
   Sorter sorter_;

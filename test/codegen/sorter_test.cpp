@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <cstdlib>
+#include <random>
 
 #include "common/harness.h"
 #include "common/timer.h"
@@ -36,71 +37,122 @@ static int CompareTuplesForAscending(const char *a, const char *b) {
 
 class SorterTest : public PelotonTest {
  public:
-  SorterTest() {
-    // Init
-    sorter.Init(CompareTuplesForAscending, sizeof(TestTuple));
-  }
+  // The sorter instance
+  codegen::util::Sorter sorter_;
 
-  ~SorterTest() {
-    // Clean up
-    sorter.Destroy();
-  }
+  SorterTest() : sorter_(CompareTuplesForAscending, sizeof(TestTuple)) {}
 
-  void TestSort(uint64_t num_tuples_to_insert = 10) {
-    // Time this stuff
-    Timer<std::ratio<1, 1000>> timer;
-    timer.Start();
+  static void LoadSorter(codegen::util::Sorter &sorter, uint64_t num_inserts) {
+    std::random_device r;
+    std::default_random_engine e(r());
+    std::uniform_int_distribution<uint32_t> gen;
 
-    // Insert TestTuples
-    for (uint32_t i = 0; i < num_tuples_to_insert; i++) {
-      TestTuple *tuple =
-          reinterpret_cast<TestTuple *>(sorter.StoreInputTuple());
-      tuple->col_a = rand() % 100;
-      tuple->col_b = rand() % 1000;
-      tuple->col_c = rand() % 10000;
-      tuple->col_d = rand() % 100000;
+    for (uint32_t i = 0; i < num_inserts; i++) {
+      auto *tuple = reinterpret_cast<TestTuple *>(sorter.StoreInputTuple());
+      tuple->col_a = gen(e) % 100;
+      tuple->col_b = gen(e) % 1000;
+      tuple->col_c = gen(e) % 10000;
+      tuple->col_d = gen(e) % 100000;
     }
+  }
 
-    timer.Stop();
-    LOG_INFO("Loading %llu tuples into sort took %.2f ms",
-             (unsigned long long)num_tuples_to_insert, timer.GetDuration());
-    timer.Reset();
-    timer.Start();
-
-    // Sort
-    sorter.Sort();
-
-    timer.Stop();
-    LOG_INFO("Sorting %llu tuples took %.2f ms",
-             (unsigned long long)num_tuples_to_insert, timer.GetDuration());
-
-    // Check sorted results
-    uint64_t res_tuples = 0;
+  static void CheckSorted(codegen::util::Sorter &sorter, bool ascending) {
     uint32_t last_col_b = std::numeric_limits<uint32_t>::max();
     for (auto iter : sorter) {
       const auto *tt = reinterpret_cast<const TestTuple *>(iter);
       if (last_col_b != std::numeric_limits<uint32_t>::max()) {
-        EXPECT_LE(last_col_b, tt->col_b);
+        if (ascending) {
+          EXPECT_LE(last_col_b, tt->col_b);
+        } else {
+          EXPECT_GE(last_col_b, tt->col_b);
+        }
       }
       last_col_b = tt->col_b;
-      res_tuples++;
     }
-
-    EXPECT_EQ(num_tuples_to_insert, res_tuples);
   }
 
-  // The sorter instance
-  codegen::util::Sorter sorter;
+  void TestSort(uint64_t num_tuples_to_insert = 100) {
+    // Time this stuff
+    Timer<std::ratio<1, 1000>> timer;
+    timer.Start();
+
+    // Load the sorter
+    LoadSorter(sorter_, num_tuples_to_insert);
+
+    timer.Stop();
+    LOG_INFO("Loading %" PRId64 " tuples into sort took %.2f ms",
+             num_tuples_to_insert, timer.GetDuration());
+    timer.Reset();
+    timer.Start();
+
+    // Sort
+    sorter_.Sort();
+
+    timer.Stop();
+    LOG_INFO("Sorting %" PRId64 " tuples took %.2f ms", num_tuples_to_insert,
+             timer.GetDuration());
+
+    // Check sorted results
+    CheckSorted(sorter_, true);
+
+    EXPECT_EQ(num_tuples_to_insert, sorter_.NumTuples());
+  }
 };
 
 TEST_F(SorterTest, CanSortTuples) {
   // Test sorting 10
-  TestSort(10);
+  TestSort(100);
 }
 
 TEST_F(SorterTest, BenchmarkSorter) {
   // Test sorting 5 million input tuples
   TestSort(5000000);
+}
+
+TEST_F(SorterTest, ParallelSortTest) {
+  executor::ExecutorContext ctx(nullptr);
+
+  uint32_t num_threads = 4;
+
+  // Allocate sorters for fake threads
+  auto &thread_states = ctx.GetThreadStates();
+  thread_states.Reset(sizeof(codegen::util::Sorter));
+  thread_states.Allocate(num_threads);
+
+  // Load each sorter
+  uint32_t num_tuples = 5000000;
+  uint32_t ntuples_per_sorter = num_tuples / num_threads;
+
+  // Load each sorter
+  for (uint32_t i = 0; i < num_threads; i++) {
+    auto *sorter = reinterpret_cast<codegen::util::Sorter *>(
+        thread_states.AccessThreadState(i));
+    codegen::util::Sorter::Init(*sorter, CompareTuplesForAscending,
+                                sizeof(TestTuple));
+    LoadSorter(*sorter, ntuples_per_sorter);
+  }
+
+  Timer<std::milli> timer;
+  timer.Start();
+
+  // Sort parallel
+  sorter_.SortParallel(thread_states, 0);
+
+  timer.Stop();
+  LOG_DEBUG("Parallel sort took: %.2lf ms", timer.GetDuration());
+
+  // Check main sorter is sorted
+  CheckSorted(sorter_, true);
+
+  // Check result size
+  EXPECT_EQ(num_tuples, sorter_.NumTuples());
+
+  // Clean up
+  for (uint32_t i = 0; i < num_threads; i++) {
+    auto *sorter = reinterpret_cast<codegen::util::Sorter *>(
+        thread_states.AccessThreadState(i));
+    codegen::util::Sorter::Destroy(*sorter);
+  }
 }
 
 }  // namespace test
