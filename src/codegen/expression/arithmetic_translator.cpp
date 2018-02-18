@@ -22,7 +22,7 @@ ArithmeticTranslator::ArithmeticTranslator(
     const expression::OperatorExpression &arithmetic,
     CompilationContext &context)
     : ExpressionTranslator(arithmetic, context) {
-  PL_ASSERT(arithmetic.GetChildrenSize() == 2);
+  PELOTON_ASSERT(arithmetic.GetChildrenSize() == 2);
 }
 
 // Produce the value that is the result of codegening the expression

@@ -135,7 +135,7 @@ bool CreateExecutor::CreateTable(const planner::CreatePlan &node) {
           }
           source_col_ids.push_back(col_id);
         }  // FOR
-        PL_ASSERT(source_col_ids.size() == fk.foreign_key_sources.size());
+        PELOTON_ASSERT(source_col_ids.size() == fk.foreign_key_sources.size());
 
         // Sink Column Offsets
         std::vector<oid_t> sink_col_ids;
@@ -150,7 +150,7 @@ bool CreateExecutor::CreateTable(const planner::CreatePlan &node) {
           }
           sink_col_ids.push_back(col_id);
         }  // FOR
-        PL_ASSERT(sink_col_ids.size() == fk.foreign_key_sinks.size());
+        PELOTON_ASSERT(sink_col_ids.size() == fk.foreign_key_sinks.size());
 
         // Create the catalog object and shove it into the table
         auto catalog_fk = new catalog::ForeignKey(INVALID_OID,

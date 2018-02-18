@@ -72,7 +72,7 @@ Value ArrayType::GetElementAt(const Value &val, uint64_t idx) const {
 // Does this value exist in this array?
 Value ArrayType::InList(const Value &list, const Value &object) const {
   Value ele = (list.GetElementAt(0));
-  PL_ASSERT(ele.CheckComparable(object));
+  PELOTON_ASSERT(ele.CheckComparable(object));
   if (object.IsNull()) return ValueFactory::GetNullValueByType(TypeId::BOOLEAN);
   switch (list.GetElementType()) {
     case TypeId::BOOLEAN: {
@@ -161,8 +161,8 @@ Value ArrayType::InList(const Value &list, const Value &object) const {
 }
 
 CmpBool ArrayType::CompareEquals(const Value &left, const Value &right) const {
-  PL_ASSERT(GetTypeId() == TypeId::ARRAY);
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(GetTypeId() == TypeId::ARRAY);
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (right.GetElementType() != left.GetElementType()) {
     std::string msg = Type::GetInstance(right.GetElementType())->ToString() +
                       " mismatch with " +
@@ -231,8 +231,8 @@ CmpBool ArrayType::CompareEquals(const Value &left, const Value &right) const {
 }
 
 CmpBool ArrayType::CompareNotEquals(const Value &left, const Value &right) const {
-  PL_ASSERT(GetTypeId() == TypeId::ARRAY);
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(GetTypeId() == TypeId::ARRAY);
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (right.GetElementType() != left.GetElementType()) {
     std::string msg = Type::GetInstance(right.GetElementType())->ToString() +
                       " mismatch with " +
@@ -301,8 +301,8 @@ CmpBool ArrayType::CompareNotEquals(const Value &left, const Value &right) const
 }
 
 CmpBool ArrayType::CompareLessThan(const Value &left, const Value &right) const {
-  PL_ASSERT(GetTypeId() == TypeId::ARRAY);
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(GetTypeId() == TypeId::ARRAY);
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (right.GetElementType() != left.GetElementType()) {
     std::string msg = Type::GetInstance(right.GetElementType())->ToString() +
                       " mismatch with " +
@@ -372,8 +372,8 @@ CmpBool ArrayType::CompareLessThan(const Value &left, const Value &right) const 
 
 CmpBool ArrayType::CompareLessThanEquals(const Value &left,
                                        const Value &right) const {
-  PL_ASSERT(GetTypeId() == TypeId::ARRAY);
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(GetTypeId() == TypeId::ARRAY);
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (right.GetElementType() != left.GetElementType()) {
     std::string msg = Type::GetInstance(right.GetElementType())->ToString() +
                       " mismatch with " +
@@ -443,8 +443,8 @@ CmpBool ArrayType::CompareLessThanEquals(const Value &left,
 
 CmpBool ArrayType::CompareGreaterThan(const Value &left,
                                     const Value &right) const {
-  PL_ASSERT(GetTypeId() == TypeId::ARRAY);
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(GetTypeId() == TypeId::ARRAY);
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (right.GetElementType() != left.GetElementType()) {
     std::string msg = Type::GetInstance(right.GetElementType())->ToString() +
                       " mismatch with " +
@@ -514,8 +514,8 @@ CmpBool ArrayType::CompareGreaterThan(const Value &left,
 
 CmpBool ArrayType::CompareGreaterThanEquals(const Value &left,
                                           const Value &right) const {
-  PL_ASSERT(GetTypeId() == TypeId::ARRAY);
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(GetTypeId() == TypeId::ARRAY);
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (right.GetElementType() != left.GetElementType()) {
     std::string msg = Type::GetInstance(right.GetElementType())->ToString() +
                       " mismatch with " +
@@ -585,7 +585,7 @@ CmpBool ArrayType::CompareGreaterThanEquals(const Value &left,
 
 Value ArrayType::CastAs(const Value &val UNUSED_ATTRIBUTE,
                         UNUSED_ATTRIBUTE const TypeId type_id) const {
-  PL_ASSERT(false);
+  PELOTON_ASSERT(false);
   throw Exception(ExceptionType::INCOMPATIBLE_TYPE,
                   "Cannot cast array values.");
 }

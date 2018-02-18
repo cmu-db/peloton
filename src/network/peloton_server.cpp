@@ -240,7 +240,7 @@ PelotonServer &PelotonServer::SetupServer() {
     throw ConnectionException("Unsupported socket family");
 
   struct sockaddr_in sin;
-  PL_MEMSET(&sin, 0, sizeof(sin));
+  PELOTON_MEMSET(&sin, 0, sizeof(sin));
   sin.sin_family = AF_INET;
   sin.sin_addr.s_addr = INADDR_ANY;
   sin.sin_port = htons(port_);

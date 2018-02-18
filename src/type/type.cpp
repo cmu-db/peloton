@@ -130,19 +130,19 @@ Value Type::GetMinValue(TypeId type_id) {
     case TypeId::BOOLEAN:
       return Value(type_id, 0);
     case TypeId::TINYINT:
-      return Value(type_id, (int8_t)PELOTON_INT8_MIN);
+      return Value(type_id, (int8_t)PELOTON_VALUE_INT8_MIN);
     case TypeId::SMALLINT:
-      return Value(type_id, (int16_t)PELOTON_INT16_MIN);
+      return Value(type_id, (int16_t)PELOTON_VALUE_INT16_MIN);
     case TypeId::INTEGER:
-      return Value(type_id, (int32_t)PELOTON_INT32_MIN);
+      return Value(type_id, (int32_t)PELOTON_VALUE_INT32_MIN);
     case TypeId::BIGINT:
-      return Value(type_id, (int64_t)PELOTON_INT64_MIN);
+      return Value(type_id, (int64_t)PELOTON_VALUE_INT64_MIN);
     case TypeId::DECIMAL:
-      return Value(type_id, PELOTON_DECIMAL_MIN);
+      return Value(type_id, PELOTON_VALUE_DECIMAL_MIN);
     case TypeId::TIMESTAMP:
-      return Value(type_id, PELOTON_TIMESTAMP_MIN);
+      return Value(type_id, PELOTON_VALUE_TIMESTAMP_MIN);
     case TypeId::DATE:
-      return Value(type_id, PELOTON_DATE_MIN);
+      return Value(type_id, PELOTON_VALUE_DATE_MIN);
     case TypeId::VARCHAR:
       return Value(type_id, "");
     case TypeId::VARBINARY:
@@ -158,19 +158,19 @@ Value Type::GetMaxValue(TypeId type_id) {
     case TypeId::BOOLEAN:
       return Value(type_id, 1);
     case TypeId::TINYINT:
-      return Value(type_id, (int8_t)PELOTON_INT8_MAX);
+      return Value(type_id, (int8_t)PELOTON_VALUE_INT8_MAX);
     case TypeId::SMALLINT:
-      return Value(type_id, (int16_t)PELOTON_INT16_MAX);
+      return Value(type_id, (int16_t)PELOTON_VALUE_INT16_MAX);
     case TypeId::INTEGER:
-      return Value(type_id, (int32_t)PELOTON_INT32_MAX);
+      return Value(type_id, (int32_t)PELOTON_VALUE_INT32_MAX);
     case TypeId::BIGINT:
-      return Value(type_id, (int64_t)PELOTON_INT64_MAX);
+      return Value(type_id, (int64_t)PELOTON_VALUE_INT64_MAX);
     case TypeId::DECIMAL:
-      return Value(type_id, PELOTON_DECIMAL_MAX);
+      return Value(type_id, PELOTON_VALUE_DECIMAL_MAX);
     case TypeId::TIMESTAMP:
-      return Value(type_id, PELOTON_TIMESTAMP_MAX);
+      return Value(type_id, PELOTON_VALUE_TIMESTAMP_MAX);
     case TypeId::DATE:
-      return Value(type_id, PELOTON_DATE_MAX);
+      return Value(type_id, PELOTON_VALUE_DATE_MAX);
     case TypeId::VARCHAR:
       return Value(type_id, nullptr, 0, false);
     case TypeId::VARBINARY:

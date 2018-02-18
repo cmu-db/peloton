@@ -22,7 +22,7 @@ TupleValueTranslator::TupleValueTranslator(
     const expression::TupleValueExpression &tve_expr,
     CompilationContext &context)
     : ExpressionTranslator(tve_expr, context) {
-  PL_ASSERT(tve_expr.GetAttributeRef() != nullptr);
+  PELOTON_ASSERT(tve_expr.GetAttributeRef() != nullptr);
 }
 
 // Produce the value that is the result of codegening the expression

@@ -55,16 +55,16 @@ void ZoneMapManager::CreateZoneMapTableInCatalog() {
  */
 void ZoneMapManager::CreateZoneMapsForTable(storage::DataTable *table,
                                             concurrency::TransactionContext *txn) {
-  PL_ASSERT(table != nullptr);
+  PELOTON_ASSERT(table != nullptr);
   // Scan over the tile groups, check for immutable flag to be true
   // and keep adding to the zone map catalog
   size_t num_tile_groups = table->GetTileGroupCount();
   for (size_t i = 0; i < num_tile_groups; i++) {
     auto tile_group = table->GetTileGroup(i);
     auto tile_group_ptr = tile_group.get();
-    PL_ASSERT(tile_group_ptr != nullptr);
+    PELOTON_ASSERT(tile_group_ptr != nullptr);
     auto tile_group_header = tile_group_ptr->GetHeader();
-    PL_ASSERT(tile_group_header != nullptr);
+    PELOTON_ASSERT(tile_group_header != nullptr);
     bool immutable = tile_group_header->GetImmutability();
     if (immutable) {
       CreateOrUpdateZoneMapForTileGroup(table, i, txn);

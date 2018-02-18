@@ -106,7 +106,7 @@ Sample GetClustererSample(const Sample& sample, oid_t column_count) {
     }
   }
 
-  PL_ASSERT(columns_accessed_bitmap.size() == column_count);
+  PELOTON_ASSERT(columns_accessed_bitmap.size() == column_count);
   clusterer_sample.SetColumnsAccessed(columns_accessed_bitmap);
 
   return clusterer_sample;

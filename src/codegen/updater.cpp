@@ -30,7 +30,7 @@ namespace codegen {
 void Updater::Init(storage::DataTable *table,
                    executor::ExecutorContext *executor_context,
                    Target *target_vector, uint32_t target_vector_size) {
-  PL_ASSERT(table != nullptr && executor_context != nullptr&&
+  PELOTON_ASSERT(table != nullptr && executor_context != nullptr&&
             target_vector != nullptr);
   table_ = table;
   executor_context_ = executor_context;
@@ -50,7 +50,7 @@ char *Updater::GetDataPtr(uint32_t tile_group_id, uint32_t tuple_offset) {
 }
 
 char *Updater::Prepare(uint32_t tile_group_id, uint32_t tuple_offset) {
-  PL_ASSERT(table_ != nullptr && executor_context_ != nullptr);
+  PELOTON_ASSERT(table_ != nullptr && executor_context_ != nullptr);
   auto *txn = executor_context_->GetTransaction();
   auto tile_group = table_->GetTileGroupById(tile_group_id).get();
   auto *tile_group_header = tile_group->GetHeader();
@@ -74,7 +74,7 @@ char *Updater::Prepare(uint32_t tile_group_id, uint32_t tuple_offset) {
 }
 
 char *Updater::PreparePK(uint32_t tile_group_id, uint32_t tuple_offset) {
-  PL_ASSERT(table_ != nullptr && executor_context_ != nullptr);
+  PELOTON_ASSERT(table_ != nullptr && executor_context_ != nullptr);
   auto *txn = executor_context_->GetTransaction();
   auto tile_group = table_->GetTileGroupById(tile_group_id).get();
   auto *tile_group_header = tile_group->GetHeader();
@@ -108,12 +108,12 @@ char *Updater::PreparePK(uint32_t tile_group_id, uint32_t tuple_offset) {
 
 peloton::type::AbstractPool *Updater::GetPool() {
   // This should be called after Prepare() or PreparePK()
-  PL_ASSERT(tile_);
+  PELOTON_ASSERT(tile_);
   return tile_->GetPool();
 }
 
 void Updater::Update() {
-  PL_ASSERT(table_ != nullptr && executor_context_ != nullptr);
+  PELOTON_ASSERT(table_ != nullptr && executor_context_ != nullptr);
   LOG_TRACE("Updating tuple <%u, %u> from table '%s' (db ID: %u, table ID: %u)",
             old_location_.block, old_location_.offset,
             table_->GetName().c_str(), table_->GetDatabaseOid(),
@@ -147,7 +147,7 @@ void Updater::Update() {
 }
 
 void Updater::UpdatePK() {
-  PL_ASSERT(table_ != nullptr && executor_context_ != nullptr);
+  PELOTON_ASSERT(table_ != nullptr && executor_context_ != nullptr);
   LOG_TRACE("Updating tuple <%u, %u> from table '%s' (db ID: %u, table ID: %u)",
             old_location_.block, old_location_.offset,
             table_->GetName().c_str(), table_->GetDatabaseOid(),

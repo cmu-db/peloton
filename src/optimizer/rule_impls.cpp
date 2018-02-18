@@ -58,7 +58,7 @@ void InnerJoinCommutativity::Transform(
   auto result_plan = std::make_shared<OperatorExpression>(
       LogicalInnerJoin::make(join_predicates));
   std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
-  PL_ASSERT(children.size() == 2);
+  PELOTON_ASSERT(children.size() == 2);
   LOG_TRACE(
       "Reorder left child with op %s and right child with op %s for inner join",
       children[0]->Op().name().c_str(), children[1]->Op().name().c_str());
@@ -123,7 +123,7 @@ void GetToSeqScan::Transform(
 
   UNUSED_ATTRIBUTE std::vector<std::shared_ptr<OperatorExpression>> children =
       input->Children();
-  PL_ASSERT(children.size() == 0);
+  PELOTON_ASSERT(children.size() == 0);
 
   transformed.push_back(result_plan);
 }
@@ -156,7 +156,7 @@ void GetToIndexScan::Transform(
     UNUSED_ATTRIBUTE OptimizeContext *context) const {
   UNUSED_ATTRIBUTE std::vector<std::shared_ptr<OperatorExpression>> children =
       input->Children();
-  PL_ASSERT(children.size() == 0);
+  PELOTON_ASSERT(children.size() == 0);
 
   const LogicalGet *get = input->Op().As<LogicalGet>();
 
@@ -362,7 +362,7 @@ void LogicalDeleteToPhysical::Transform(
   const LogicalDelete *delete_op = input->Op().As<LogicalDelete>();
   auto result = std::make_shared<OperatorExpression>(
       PhysicalDelete::make(delete_op->target_table));
-  PL_ASSERT(input->Children().size() == 1);
+  PELOTON_ASSERT(input->Children().size() == 1);
   result->PushChild(input->Children().at(0));
   transformed.push_back(result);
 }
@@ -390,7 +390,7 @@ void LogicalUpdateToPhysical::Transform(
   const LogicalUpdate *update_op = input->Op().As<LogicalUpdate>();
   auto result = std::make_shared<OperatorExpression>(
       PhysicalUpdate::make(update_op->target_table, update_op->updates));
-  PL_ASSERT(input->Children().size() != 0);
+  PELOTON_ASSERT(input->Children().size() != 0);
   result->PushChild(input->Children().at(0));
   transformed.push_back(result);
 }
@@ -418,7 +418,7 @@ void LogicalInsertToPhysical::Transform(
   const LogicalInsert *insert_op = input->Op().As<LogicalInsert>();
   auto result = std::make_shared<OperatorExpression>(PhysicalInsert::make(
       insert_op->target_table, insert_op->columns, insert_op->values));
-  PL_ASSERT(input->Children().size() == 0);
+  PELOTON_ASSERT(input->Children().size() == 0);
   //  result->PushChild(input->Children().at(0));
   transformed.push_back(result);
 }
@@ -446,7 +446,7 @@ void LogicalInsertSelectToPhysical::Transform(
   const LogicalInsertSelect *insert_op = input->Op().As<LogicalInsertSelect>();
   auto result = std::make_shared<OperatorExpression>(
       PhysicalInsertSelect::make(insert_op->target_table));
-  PL_ASSERT(input->Children().size() == 1);
+  PELOTON_ASSERT(input->Children().size() == 1);
   result->PushChild(input->Children().at(0));
   transformed.push_back(result);
 }
@@ -477,7 +477,7 @@ void LogicalGroupByToHashGroupBy::Transform(
       input->Op().As<LogicalAggregateAndGroupBy>();
   auto result = std::make_shared<OperatorExpression>(
       PhysicalHashGroupBy::make(agg_op->columns, agg_op->having));
-  PL_ASSERT(input->Children().size() == 1);
+  PELOTON_ASSERT(input->Children().size() == 1);
   result->PushChild(input->Children().at(0));
   transformed.push_back(result);
 }
@@ -505,7 +505,7 @@ void LogicalAggregateToPhysical::Transform(
     std::vector<std::shared_ptr<OperatorExpression>> &transformed,
     UNUSED_ATTRIBUTE OptimizeContext *context) const {
   auto result = std::make_shared<OperatorExpression>(PhysicalAggregate::make());
-  PL_ASSERT(input->Children().size() == 1);
+  PELOTON_ASSERT(input->Children().size() == 1);
   result->PushChild(input->Children().at(0));
   transformed.push_back(result);
 }
@@ -544,7 +544,7 @@ void InnerJoinToInnerNLJoin::Transform(
   const LogicalInnerJoin *inner_join = input->Op().As<LogicalInnerJoin>();
 
   auto children = input->Children();
-  PL_ASSERT(children.size() == 2);
+  PELOTON_ASSERT(children.size() == 2);
   auto left_group_id = children[0]->Op().As<LeafOperator>()->origin_group;
   auto right_group_id = children[1]->Op().As<LeafOperator>()->origin_group;
   auto &left_group_alias =
@@ -557,7 +557,7 @@ void InnerJoinToInnerNLJoin::Transform(
   util::ExtractEquiJoinKeys(inner_join->join_predicates, left_keys, right_keys,
                             left_group_alias, right_group_alias);
 
-  PL_ASSERT(right_keys.size() == left_keys.size());
+  PELOTON_ASSERT(right_keys.size() == left_keys.size());
   auto result_plan =
       std::make_shared<OperatorExpression>(PhysicalInnerNLJoin::make(
           inner_join->join_predicates, left_keys, right_keys));
@@ -605,7 +605,7 @@ void InnerJoinToInnerHashJoin::Transform(
   const LogicalInnerJoin *inner_join = input->Op().As<LogicalInnerJoin>();
 
   auto children = input->Children();
-  PL_ASSERT(children.size() == 2);
+  PELOTON_ASSERT(children.size() == 2);
   auto left_group_id = children[0]->Op().As<LeafOperator>()->origin_group;
   auto right_group_id = children[1]->Op().As<LeafOperator>()->origin_group;
   auto &left_group_alias =
@@ -618,7 +618,7 @@ void InnerJoinToInnerHashJoin::Transform(
   util::ExtractEquiJoinKeys(inner_join->join_predicates, left_keys, right_keys,
                             left_group_alias, right_group_alias);
 
-  PL_ASSERT(right_keys.size() == left_keys.size());
+  PELOTON_ASSERT(right_keys.size() == left_keys.size());
   if (!left_keys.empty()) {
     auto result_plan =
         std::make_shared<OperatorExpression>(PhysicalInnerHashJoin::make(
@@ -656,7 +656,7 @@ void ImplementDistinct::Transform(
   auto result_plan =
       std::make_shared<OperatorExpression>(PhysicalDistinct::make());
   std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
-  PL_ASSERT(children.size() == 1);
+  PELOTON_ASSERT(children.size() == 1);
 
   result_plan->PushChild(children[0]);
 
@@ -689,7 +689,7 @@ void ImplementLimit::Transform(
   auto result_plan = std::make_shared<OperatorExpression>(
       PhysicalLimit::make(limit_op->offset, limit_op->limit));
   std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
-  PL_ASSERT(children.size() == 1);
+  PELOTON_ASSERT(children.size() == 1);
 
   result_plan->PushChild(children[0]);
 
@@ -785,7 +785,7 @@ void PushFilterThroughJoin::Transform(
     output->PushChild(join_op_expr->Children()[1]);
   }
 
-  PL_ASSERT(output->Children().size() == 2);
+  PELOTON_ASSERT(output->Children().size() == 2);
 
   transformed.push_back(output);
 }
@@ -810,10 +810,10 @@ bool CombineConsecutiveFilter::Check(std::shared_ptr<OperatorExpression> plan,
 
   auto &children = plan->Children();
   (void)children;
-  PL_ASSERT(children.size() == 1);
+  PELOTON_ASSERT(children.size() == 1);
   auto &filter = children.at(0);
   (void)filter;
-  PL_ASSERT(filter->Children().size() == 1);
+  PELOTON_ASSERT(filter->Children().size() == 1);
 
   return true;
 }
@@ -889,7 +889,7 @@ bool MarkJoinGetToInnerJoin::Check(std::shared_ptr<OperatorExpression> plan,
   (void)plan;
 
   UNUSED_ATTRIBUTE auto &children = plan->Children();
-  PL_ASSERT(children.size() == 2);
+  PELOTON_ASSERT(children.size() == 2);
 
   return true;
 }
@@ -901,7 +901,7 @@ void MarkJoinGetToInnerJoin::Transform(
   UNUSED_ATTRIBUTE auto mark_join = input->Op().As<LogicalMarkJoin>();
   auto &join_children = input->Children();
 
-  PL_ASSERT(mark_join->join_predicates.empty());
+  PELOTON_ASSERT(mark_join->join_predicates.empty());
 
   std::shared_ptr<OperatorExpression> output =
       std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
@@ -931,7 +931,7 @@ bool MarkJoinInnerJoinToInnerJoin::Check(
   (void)plan;
 
   UNUSED_ATTRIBUTE auto &children = plan->Children();
-  PL_ASSERT(children.size() == 2);
+  PELOTON_ASSERT(children.size() == 2);
 
   return true;
 }
@@ -943,7 +943,7 @@ void MarkJoinInnerJoinToInnerJoin::Transform(
   UNUSED_ATTRIBUTE auto mark_join = input->Op().As<LogicalMarkJoin>();
   auto &join_children = input->Children();
 
-  PL_ASSERT(mark_join->join_predicates.empty());
+  PELOTON_ASSERT(mark_join->join_predicates.empty());
 
   std::shared_ptr<OperatorExpression> output =
       std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
@@ -972,9 +972,9 @@ bool PullFilterThroughMarkJoin::Check(std::shared_ptr<OperatorExpression> plan,
   (void)plan;
 
   auto &children = plan->Children();
-  PL_ASSERT(children.size() == 2);
+  PELOTON_ASSERT(children.size() == 2);
   UNUSED_ATTRIBUTE auto &r_grandchildren = children[1]->Children();
-  PL_ASSERT(r_grandchildren.size() == 1);
+  PELOTON_ASSERT(r_grandchildren.size() == 1);
 
   return true;
 }
@@ -988,7 +988,7 @@ void PullFilterThroughMarkJoin::Transform(
   auto filter = join_children[1]->Op();
   auto &filter_children = join_children[1]->Children();
 
-  PL_ASSERT(mark_join->join_predicates.empty());
+  PELOTON_ASSERT(mark_join->join_predicates.empty());
 
   std::shared_ptr<OperatorExpression> output =
       std::make_shared<OperatorExpression>(filter);

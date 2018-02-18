@@ -40,7 +40,7 @@ llvm::Value *Hash::HashValues(CodeGen &codegen,
     llvm::Value *val = nullptr;
     llvm::Value *len = nullptr;
     value.ValuesForHash(val, len);
-    PL_ASSERT(val != nullptr);
+    PELOTON_ASSERT(val != nullptr);
 
     llvm::Type *val_type = val->getType();
 
@@ -156,7 +156,7 @@ llvm::Value *Hash::ComputeCRC32Hash(CodeGen &codegen,
   // Hash the numerics
   llvm::Function *crc32_func = llvm::Intrinsic::getDeclaration(
       &codegen.GetModule(), llvm::Intrinsic::x86_sse42_crc32_64_64);
-  PL_ASSERT(crc32_func != nullptr);
+  PELOTON_ASSERT(crc32_func != nullptr);
   for (auto *val : numerics) {
     crc_low = codegen.CallFunc(crc32_func, {crc_low, val});
     crc_high = codegen.CallFunc(crc32_func, {crc_high, val});

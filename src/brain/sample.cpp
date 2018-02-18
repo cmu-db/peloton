@@ -64,7 +64,7 @@ Sample &Sample::operator+(const Sample &rhs) {
   size_t column_itr;
   size_t column_count = columns_accessed_.size();
 
-  PL_ASSERT(rhs.columns_accessed_.size() == column_count);
+  PELOTON_ASSERT(rhs.columns_accessed_.size() == column_count);
 
   for (column_itr = 0; column_itr < column_count; column_itr++) {
     auto other_val = rhs.columns_accessed_[column_itr];

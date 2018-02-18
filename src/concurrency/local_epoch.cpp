@@ -66,7 +66,7 @@ namespace concurrency {
   void LocalEpoch::ExitEpoch(const eid_t epoch_id) {
     epoch_lock_.Lock();
 
-    PL_ASSERT(epoch_map_.find(epoch_id) != epoch_map_.end());
+    PELOTON_ASSERT(epoch_map_.find(epoch_id) != epoch_map_.end());
     epoch_map_.at(epoch_id)->txn_count_--;
 
     while (epoch_queue_.size() != 0) {
@@ -75,7 +75,7 @@ namespace concurrency {
         epoch_map_.erase(epoch_ptr->epoch_id_);
         epoch_queue_.pop();
       } else {
-        PL_ASSERT(epoch_ptr->epoch_id_ > epoch_id_lower_bound_);
+        PELOTON_ASSERT(epoch_ptr->epoch_id_ > epoch_id_lower_bound_);
         epoch_id_lower_bound_ = epoch_ptr->epoch_id_ - 1;
         break;
       }
@@ -99,7 +99,7 @@ namespace concurrency {
           epoch_map_.erase(epoch_ptr->epoch_id_);
           epoch_queue_.pop();
         } else {
-          PL_ASSERT(epoch_ptr->epoch_id_ > epoch_id_lower_bound_);
+          PELOTON_ASSERT(epoch_ptr->epoch_id_ > epoch_id_lower_bound_);
           epoch_id_lower_bound_ = epoch_ptr->epoch_id_ - 1;
           break;
         }

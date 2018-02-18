@@ -75,7 +75,7 @@ class TupleKey {
    * tuple given here is the key without any unused column
    */
   inline void SetFromKey(const storage::Tuple *tuple) {
-    PL_ASSERT(tuple != nullptr);
+    PELOTON_ASSERT(tuple != nullptr);
 
     // Do not use the column mapping - we use all columns in the tuple
     // as index key
@@ -91,8 +91,8 @@ class TupleKey {
   // Set a key from a table-schema tuple.
   inline void SetFromTuple(const storage::Tuple *tuple, const int *indices,
                            UNUSED_ATTRIBUTE const catalog::Schema *key_schema) {
-    PL_ASSERT(tuple);
-    PL_ASSERT(indices);
+    PELOTON_ASSERT(tuple);
+    PELOTON_ASSERT(indices);
     column_indices = indices;
     key_tuple = tuple->GetData();
     key_tuple_schema = tuple->GetSchema();

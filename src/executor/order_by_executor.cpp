@@ -35,7 +35,7 @@ OrderByExecutor::OrderByExecutor(const planner::AbstractPlan *node,
 OrderByExecutor::~OrderByExecutor() {}
 
 bool OrderByExecutor::DInit() {
-  PL_ASSERT(children_.size() == 1);
+  PELOTON_ASSERT(children_.size() == 1);
 
   sort_done_ = false;
   num_tuples_returned_ = 0;
@@ -67,9 +67,9 @@ bool OrderByExecutor::DExecute() {
     return false;
   }
 
-  PL_ASSERT(sort_done_);
-  PL_ASSERT(output_schema_.get());
-  PL_ASSERT(input_tiles_.size() > 0);
+  PELOTON_ASSERT(sort_done_);
+  PELOTON_ASSERT(output_schema_.get());
+  PELOTON_ASSERT(input_tiles_.size() > 0);
 
   // Returned tiles must be newly created physical tiles.
   // NOTE: the schema of these tiles might not match the input tiles when some of the order by columns are not be part of the output schema
@@ -97,22 +97,22 @@ bool OrderByExecutor::DExecute() {
   // Create an owner wrapper of this physical tile
   std::vector<std::shared_ptr<storage::Tile>> singleton({ptile});
   std::unique_ptr<LogicalTile> ltile(LogicalTileFactory::WrapTiles(singleton));
-  PL_ASSERT(ltile->GetTupleCount() == tile_size);
+  PELOTON_ASSERT(ltile->GetTupleCount() == tile_size);
 
   SetOutput(ltile.release());
 
   num_tuples_returned_ += tile_size;
 
-  PL_ASSERT(num_tuples_returned_ <= sort_buffer_.size());
+  PELOTON_ASSERT(num_tuples_returned_ <= sort_buffer_.size());
 
   return true;
 }
 
 bool OrderByExecutor::DoSort() {
-  PL_ASSERT(children_.size() == 1);
-  PL_ASSERT(children_[0] != nullptr);
-  PL_ASSERT(!sort_done_);
-  PL_ASSERT(executor_context_ != nullptr);
+  PELOTON_ASSERT(children_.size() == 1);
+  PELOTON_ASSERT(children_[0] != nullptr);
+  PELOTON_ASSERT(!sort_done_);
+  PELOTON_ASSERT(executor_context_ != nullptr);
 
   // Extract all data from child
   while (children_[0]->Execute()) {
@@ -179,7 +179,7 @@ bool OrderByExecutor::DoSort() {
     }
   }
 
-  PL_ASSERT(count == sort_buffer_.size());
+  PELOTON_ASSERT(count == sort_buffer_.size());
 
   // If the underlying result has the same order, it is not necessary to sort
   // the result again. Instead, go to the end.

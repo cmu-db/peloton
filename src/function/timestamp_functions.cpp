@@ -25,7 +25,7 @@ namespace function {
 
 uint64_t TimestampFunctions::DateTrunc(const char *date_part_type,
                                        uint64_t value) {
-  PL_ASSERT(date_part_type != nullptr);
+  PELOTON_ASSERT(date_part_type != nullptr);
 
   std::string date_part_string(date_part_type);
   DatePartType date_part = StringToDatePartType(date_part_string);
@@ -36,8 +36,8 @@ uint64_t TimestampFunctions::DateTrunc(const char *date_part_type,
   // TODO(lma): A more efficient NULL check is to implement something like the
   // value::CallBinaryOp() for arithmetic operations. Right now the timestamp
   // functions doesn't have that infrastructure.
-  if (timestamp == type::PELOTON_TIMESTAMP_NULL) {
-    return type::PELOTON_TIMESTAMP_NULL;
+  if (timestamp == type::PELOTON_VALUE_TIMESTAMP_NULL) {
+    return type::PELOTON_VALUE_TIMESTAMP_NULL;
   }
 
   uint32_t micro = timestamp % 1000000;
@@ -136,7 +136,7 @@ uint64_t TimestampFunctions::DateTrunc(const char *date_part_type,
           ((((uint64_t)32 + 1) * 27 + tz) * 10000 + year) * 100000 * 1000000;
       break;
     }
-    default: { result = type::PELOTON_TIMESTAMP_NULL; }
+    default: { result = type::PELOTON_VALUE_TIMESTAMP_NULL; }
   };
 
   return (result);
@@ -149,7 +149,7 @@ type::Value TimestampFunctions::_DateTrunc(
   uint64_t timestamp = args[1].GetAs<uint64_t>();
   type::Value result;
 
-  if (timestamp == type::PELOTON_TIMESTAMP_NULL) {
+  if (timestamp == type::PELOTON_VALUE_TIMESTAMP_NULL) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::TIMESTAMP);
   }
 
@@ -159,7 +159,7 @@ type::Value TimestampFunctions::_DateTrunc(
 
 double TimestampFunctions::DatePart(const char *date_part_type,
                                     uint64_t value) {
-  PL_ASSERT(date_part_type != nullptr);
+  PELOTON_ASSERT(date_part_type != nullptr);
 
   std::string date_part_string(date_part_type);
   DatePartType date_part = StringToDatePartType(date_part_string);
@@ -167,8 +167,8 @@ double TimestampFunctions::DatePart(const char *date_part_type,
   uint64_t timestamp = value;
   double result = 0.0;
 
-  if (timestamp == type::PELOTON_TIMESTAMP_NULL) {
-    return type::PELOTON_DECIMAL_NULL;
+  if (timestamp == type::PELOTON_VALUE_TIMESTAMP_NULL) {
+    return type::PELOTON_VALUE_DECIMAL_NULL;
   }
 
   uint32_t micro = timestamp % 1000000;
@@ -269,7 +269,7 @@ double TimestampFunctions::DatePart(const char *date_part_type,
       result = year;
       break;
     }
-    default: { result = type::PELOTON_DECIMAL_NULL; }
+    default: { result = type::PELOTON_VALUE_DECIMAL_NULL; }
   };
 
   return (result);
@@ -282,7 +282,7 @@ type::Value TimestampFunctions::_DatePart(
   uint64_t timestamp = args[1].GetAs<uint64_t>();
   type::Value result;
 
-  if (timestamp == type::PELOTON_TIMESTAMP_NULL) {
+  if (timestamp == type::PELOTON_VALUE_TIMESTAMP_NULL) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::TIMESTAMP);
   }
 

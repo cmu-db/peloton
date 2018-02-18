@@ -87,7 +87,7 @@ void InputColumnDeriver::Visit(const PhysicalLimit *) { Passdown(); }
 void InputColumnDeriver::Visit(const PhysicalOrderBy *) {
   // we need to pass down both required columns and sort columns
   auto prop = properties_->GetPropertyOfType(PropertyType::SORT);
-  PL_ASSERT(prop.get() != nullptr);
+  PELOTON_ASSERT(prop.get() != nullptr);
   ExprSet input_cols_set;
   for (auto expr : required_cols_) {
     if (expression::ExpressionUtil::IsAggregateExpression(expr))
@@ -244,9 +244,9 @@ void InputColumnDeriver::JoinHelper(const BaseOperatorNode *op) {
 
   ExprSet input_cols_set;
 
-  PL_ASSERT(left_keys != nullptr);
-  PL_ASSERT(right_keys != nullptr);
-  PL_ASSERT(join_conds != nullptr);
+  PELOTON_ASSERT(left_keys != nullptr);
+  PELOTON_ASSERT(right_keys != nullptr);
+  PELOTON_ASSERT(join_conds != nullptr);
   for (auto &left_key : *left_keys) {
     expression::ExpressionUtil::GetTupleValueExprs(input_cols_set,
                                                    left_key.get());
@@ -274,12 +274,12 @@ void InputColumnDeriver::JoinHelper(const BaseOperatorNode *op) {
   UNUSED_ATTRIBUTE auto &probe_table_aliases =
       memo_->GetGroupByID(gexpr_->GetChildGroupId(1))->GetTableAliases();
   for (auto &col : input_cols_set) {
-    PL_ASSERT(col->GetExpressionType() == ExpressionType::VALUE_TUPLE);
+    PELOTON_ASSERT(col->GetExpressionType() == ExpressionType::VALUE_TUPLE);
     auto tv_expr = reinterpret_cast<expression::TupleValueExpression *>(col);
     if (build_table_aliases.count(tv_expr->GetTableName())) {
       build_table_cols_set.insert(col);
     } else {
-      PL_ASSERT(probe_table_aliases.count(tv_expr->GetTableName()));
+      PELOTON_ASSERT(probe_table_aliases.count(tv_expr->GetTableName()));
       probe_table_cols_set.insert(col);
     }
   }

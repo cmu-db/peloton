@@ -125,7 +125,7 @@ class AbstractJoinExecutor : public AbstractExecutor {
     if (right_tile == nullptr) {
       non_empty_tile = left_tile;
     }
-    PL_ASSERT(non_empty_tile != nullptr);
+    PELOTON_ASSERT(non_empty_tile != nullptr);
     return non_empty_tile;
   }
 

@@ -21,9 +21,9 @@ bool LogBuffer::WriteData(const char *data, size_t len) {
   if (unlikely_branch(size_ + len > log_buffer_capacity_)) {
     return false;
   } else {
-    PL_ASSERT(data);
-    PL_ASSERT(len);
-    PL_MEMCPY(data_ + size_, data, len);
+    PELOTON_ASSERT(data);
+    PELOTON_ASSERT(len);
+    PELOTON_MEMCPY(data_ + size_, data, len);
     size_ += len;
     return true;
   }

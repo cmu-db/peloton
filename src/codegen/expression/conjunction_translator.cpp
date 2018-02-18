@@ -22,7 +22,7 @@ ConjunctionTranslator::ConjunctionTranslator(
     const expression::ConjunctionExpression &conjunction,
     CompilationContext &context)
     : ExpressionTranslator(conjunction, context) {
-  PL_ASSERT(conjunction.GetChildrenSize() == 2);
+  PELOTON_ASSERT(conjunction.GetChildrenSize() == 2);
 }
 
 // Produce the value that is the result of codegening the expression

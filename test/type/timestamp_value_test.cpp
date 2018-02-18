@@ -32,7 +32,7 @@ TEST_F(TimestampValueTests, ComparisonTest) {
       ExpressionType::COMPARE_GREATERTHAN,
       ExpressionType::COMPARE_GREATERTHANOREQUALTO};
 
-  uint64_t values[] = {1000000000, 2000000000, type::PELOTON_TIMESTAMP_NULL};
+  uint64_t values[] = {1000000000, 2000000000, type::PELOTON_VALUE_TIMESTAMP_NULL};
 
   CmpBool result;
   type::Value val0;
@@ -43,7 +43,7 @@ TEST_F(TimestampValueTests, ComparisonTest) {
       bool expected_null = false;
 
       // VALUE #0
-      if (values[i] == type::PELOTON_TIMESTAMP_NULL) {
+      if (values[i] == type::PELOTON_VALUE_TIMESTAMP_NULL) {
         val0 = type::ValueFactory::GetNullValueByType(type::TypeId::TIMESTAMP);
         expected_null = true;
       } else {
@@ -52,7 +52,7 @@ TEST_F(TimestampValueTests, ComparisonTest) {
       }
 
       // VALUE #1
-      if (values[j] == type::PELOTON_TIMESTAMP_NULL) {
+      if (values[j] == type::PELOTON_VALUE_TIMESTAMP_NULL) {
         val1 = type::ValueFactory::GetNullValueByType(type::TypeId::TIMESTAMP);
         expected_null = true;
       } else {
@@ -117,21 +117,21 @@ TEST_F(TimestampValueTests, NullToStringTest) {
 }
 
 TEST_F(TimestampValueTests, HashTest) {
-  uint64_t values[] = {1000000000, 2000000000, type::PELOTON_TIMESTAMP_NULL};
+  uint64_t values[] = {1000000000, 2000000000, type::PELOTON_VALUE_TIMESTAMP_NULL};
 
   type::Value result;
   type::Value val0;
   type::Value val1;
 
   for (int i = 0; i < 2; i++) {
-    if (values[i] == type::PELOTON_TIMESTAMP_NULL) {
+    if (values[i] == type::PELOTON_VALUE_TIMESTAMP_NULL) {
       val0 = type::ValueFactory::GetNullValueByType(type::TypeId::TIMESTAMP);
     } else {
       val0 = type::ValueFactory::GetTimestampValue(
           static_cast<uint64_t>(values[i]));
     }
     for (int j = 0; j < 2; j++) {
-      if (values[j] == type::PELOTON_TIMESTAMP_NULL) {
+      if (values[j] == type::PELOTON_VALUE_TIMESTAMP_NULL) {
         val1 = type::ValueFactory::GetNullValueByType(type::TypeId::TIMESTAMP);
       } else {
         val1 = type::ValueFactory::GetTimestampValue(

@@ -212,7 +212,7 @@ Transition ConnectionHandle::FillReadBuffer() {
   if (rbuf_->buf_ptr == rbuf_->buf_size) rbuf_->Reset();
 
   // buf_ptr shouldn't overflow
-  PL_ASSERT(rbuf_->buf_ptr <= rbuf_->buf_size);
+  PELOTON_ASSERT(rbuf_->buf_ptr <= rbuf_->buf_size);
 
   /* Do we have leftover data and are we at the end of the buffer?
    * Move the data to the head of the buffer and clear out all the old data
@@ -439,7 +439,7 @@ ProcessResult ConnectionHandle::ProcessInitial() {
       return ProcessResult::MORE_DATA_REQUIRED;
     }
   }
-  PL_ASSERT(initial_packet_.header_parsed == true);
+  PELOTON_ASSERT(initial_packet_.header_parsed == true);
 
   if (initial_packet_.is_initialized == false) {
     // packet needs to be initialized with rest of the contents
@@ -651,7 +651,7 @@ Transition ConnectionHandle::Process() {
       SSL_set_session_id_context(conn_SSL_context, nullptr, 0);
       if (SSL_set_fd(conn_SSL_context, sock_fd_) == 0) {
         LOG_ERROR("Failed to set SSL fd");
-        PL_ASSERT(false);
+        PELOTON_ASSERT(false);
       }
 
       bool handshake_fail = false;
@@ -764,7 +764,7 @@ Transition ConnectionHandle::GetResult() {
   // TODO(tianyu) We probably can collapse this state with some other state.
   if (event_add(network_event, nullptr) < 0) {
     LOG_ERROR("Failed to add event");
-    PL_ASSERT(false);
+    PELOTON_ASSERT(false);
   }
   protocol_handler_->GetResult();
   traffic_cop_.SetQueuing(false);

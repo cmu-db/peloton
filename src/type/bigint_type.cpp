@@ -70,8 +70,8 @@ bool BigintType::IsZero(const Value& val) const {
 }
 
 Value BigintType::Add(const Value& left, const Value &right) const {
-  PL_ASSERT(left.CheckInteger());
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckInteger());
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
@@ -81,8 +81,8 @@ Value BigintType::Add(const Value& left, const Value &right) const {
 }
 
 Value BigintType::Subtract(const Value& left, const Value &right) const {
-  PL_ASSERT(left.CheckInteger());
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckInteger());
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
@@ -92,8 +92,8 @@ Value BigintType::Subtract(const Value& left, const Value &right) const {
 }
 
 Value BigintType::Multiply(const Value& left, const Value &right) const {
-  PL_ASSERT(left.CheckInteger());
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckInteger());
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
@@ -103,8 +103,8 @@ Value BigintType::Multiply(const Value& left, const Value &right) const {
 }
 
 Value BigintType::Divide(const Value& left, const Value &right) const {
-  PL_ASSERT(left.CheckInteger());
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckInteger());
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
@@ -119,8 +119,8 @@ Value BigintType::Divide(const Value& left, const Value &right) const {
 }
 
 Value BigintType::Modulo(const Value& left, const Value &right) const {
-  PL_ASSERT(left.CheckInteger());
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckInteger());
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return left.OperateNull(right);
 
@@ -153,9 +153,9 @@ Value BigintType::Modulo(const Value& left, const Value &right) const {
 }
 
 Value BigintType::Sqrt(const Value& val) const {
-  PL_ASSERT(val.CheckInteger());
+  PELOTON_ASSERT(val.CheckInteger());
   if (val.IsNull())
-    return ValueFactory::GetDecimalValue(PELOTON_DECIMAL_NULL);
+    return ValueFactory::GetDecimalValue(PELOTON_VALUE_DECIMAL_NULL);
 
   if (val.value_.bigint < 0) {
     throw Exception(ExceptionType::DECIMAL,
@@ -173,9 +173,9 @@ Value BigintType::OperateNull(const Value& left UNUSED_ATTRIBUTE, const Value &r
   case TypeId::INTEGER:
   case TypeId::PARAMETER_OFFSET:
   case TypeId::BIGINT:
-    return ValueFactory::GetBigIntValue((int64_t) PELOTON_INT64_NULL);
+    return ValueFactory::GetBigIntValue((int64_t) PELOTON_VALUE_INT64_NULL);
   case TypeId::DECIMAL:
-    return ValueFactory::GetDecimalValue((double) PELOTON_DECIMAL_NULL);
+    return ValueFactory::GetDecimalValue((double) PELOTON_VALUE_DECIMAL_NULL);
   default:
     break;
   }
@@ -183,8 +183,8 @@ Value BigintType::OperateNull(const Value& left UNUSED_ATTRIBUTE, const Value &r
 }
 
 CmpBool BigintType::CompareEquals(const Value& left, const Value &right) const {
-  PL_ASSERT(left.CheckInteger());
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckInteger());
+  PELOTON_ASSERT(left.CheckComparable(right));
 
   if (left.IsNull() || right.IsNull())
     return CmpBool::NULL_;
@@ -196,8 +196,8 @@ CmpBool BigintType::CompareEquals(const Value& left, const Value &right) const {
 
 CmpBool BigintType::CompareNotEquals(const Value& left,
     const Value &right) const {
-  PL_ASSERT(left.CheckInteger());
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckInteger());
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return CmpBool::NULL_;
 
@@ -208,8 +208,8 @@ CmpBool BigintType::CompareNotEquals(const Value& left,
 
 CmpBool BigintType::CompareLessThan(const Value& left,
     const Value &right) const {
-  PL_ASSERT(left.CheckInteger());
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckInteger());
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return CmpBool::NULL_;
 
@@ -220,8 +220,8 @@ CmpBool BigintType::CompareLessThan(const Value& left,
 
 CmpBool BigintType::CompareLessThanEquals(const Value& left,
     const Value &right) const {
-  PL_ASSERT(left.CheckInteger());
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckInteger());
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return CmpBool::NULL_;
 
@@ -232,8 +232,8 @@ CmpBool BigintType::CompareLessThanEquals(const Value& left,
 
 CmpBool BigintType::CompareGreaterThan(const Value& left,
     const Value &right) const {
-  PL_ASSERT(left.CheckInteger());
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckInteger());
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return CmpBool::NULL_;
 
@@ -244,8 +244,8 @@ CmpBool BigintType::CompareGreaterThan(const Value& left,
 
 CmpBool BigintType::CompareGreaterThanEquals(const Value& left,
     const Value &right) const {
-  PL_ASSERT(left.CheckInteger());
-  PL_ASSERT(left.CheckComparable(right));
+  PELOTON_ASSERT(left.CheckInteger());
+  PELOTON_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
     return CmpBool::NULL_;
 
@@ -255,7 +255,7 @@ CmpBool BigintType::CompareGreaterThanEquals(const Value& left,
 }
 
 std::string BigintType::ToString(const Value& val) const {
-  PL_ASSERT(val.CheckInteger());
+  PELOTON_ASSERT(val.CheckInteger());
 
   if (val.IsNull())
     return "bigint_null";
@@ -264,7 +264,7 @@ std::string BigintType::ToString(const Value& val) const {
 }
 
 size_t BigintType::Hash(const Value& val) const {
-  PL_ASSERT(val.CheckInteger());
+  PELOTON_ASSERT(val.CheckInteger());
 
   return std::hash<int64_t> { }(val.value_.bigint);
 
@@ -311,16 +311,16 @@ Value BigintType::CastAs(const Value& val, const TypeId type_id) const {
   switch (type_id) {
   case TypeId::TINYINT: {
     if (val.IsNull()) return ValueFactory::GetNullValueByType(type_id);
-    if (val.GetAs<int64_t>() > PELOTON_INT8_MAX ||
-        val.GetAs<int64_t>() < PELOTON_INT8_MIN)
+    if (val.GetAs<int64_t>() > PELOTON_VALUE_INT8_MAX ||
+        val.GetAs<int64_t>() < PELOTON_VALUE_INT8_MIN)
       throw Exception(ExceptionType::OUT_OF_RANGE,
           "Numeric value out of range.");
     return ValueFactory::GetTinyIntValue((int8_t) val.GetAs<int64_t>());
   }
   case TypeId::SMALLINT: {
     if (val.IsNull()) return ValueFactory::GetNullValueByType(type_id);
-    if (val.GetAs<int64_t>() > PELOTON_INT16_MAX ||
-        val.GetAs<int64_t>() < PELOTON_INT16_MIN)
+    if (val.GetAs<int64_t>() > PELOTON_VALUE_INT16_MAX ||
+        val.GetAs<int64_t>() < PELOTON_VALUE_INT16_MIN)
       throw Exception(ExceptionType::OUT_OF_RANGE,
           "Numeric value out of range.");
     return ValueFactory::GetSmallIntValue((int16_t) val.GetAs<int64_t>());
@@ -328,8 +328,8 @@ Value BigintType::CastAs(const Value& val, const TypeId type_id) const {
   case TypeId::INTEGER:
   case TypeId::PARAMETER_OFFSET: {
     if (val.IsNull()) return ValueFactory::GetNullValueByType(type_id);
-    if (val.GetAs<int64_t>() > PELOTON_INT32_MAX ||
-        val.GetAs<int64_t>() < PELOTON_INT32_MIN)
+    if (val.GetAs<int64_t>() > PELOTON_VALUE_INT32_MAX ||
+        val.GetAs<int64_t>() < PELOTON_VALUE_INT32_MIN)
       throw Exception(ExceptionType::OUT_OF_RANGE,
           "Numeric value out of range.");
     return Value(type_id, (int32_t) val.GetAs<int64_t>());
