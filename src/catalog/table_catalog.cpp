@@ -34,21 +34,18 @@ TableCatalogObject::TableCatalogObject(executor::LogicalTile *tile,
       column_names(),
       valid_column_objects(false),
       txn(txn) {
-  auto field_location =
-      tile->GetTuplePointer(tupleId, TableCatalog::ColumnId::TABLE_OID);
+  auto field_location = tile->GetLocationPointer(tupleId, TableCatalog::ColumnId::TABLE_OID);
   PL_ASSERT(field_location != nullptr);
   table_oid = *(reinterpret_cast<const oid_t *>(field_location));
 
-  field_location =
-      tile->GetTuplePointer(tupleId, TableCatalog::ColumnId::TABLE_NAME);
+  field_location = tile->GetLocationPointer(tupleId, TableCatalog::ColumnId::TABLE_NAME);
   PL_ASSERT(field_location != nullptr);
-  auto varchar = *(reinterpret_cast<const char *const *>(field_location));
+  auto varchar = *(reinterpret_cast<const char *const*>(field_location));
   auto size = reinterpret_cast<const uint32_t *>(varchar);
   auto string = (reinterpret_cast<const char *>(varchar) + sizeof(uint32_t));
   table_name = std::string(string, *size - 1);
 
-  field_location =
-      tile->GetTuplePointer(tupleId, TableCatalog::ColumnId::DATABASE_OID);
+  field_location = tile->GetLocationPointer(tupleId, TableCatalog::ColumnId::DATABASE_OID);
   PL_ASSERT(field_location != nullptr);
   database_oid = *(reinterpret_cast<const oid_t *>(field_location));
 }
@@ -390,8 +387,7 @@ bool TableCatalog::InsertTable(oid_t table_oid, const std::string &table_name,
  * @param   txn     TransactionContext
  * @return  Whether deletion is Successful
  */
-bool TableCatalog::DeleteTable(oid_t table_oid,
-                               concurrency::TransactionContext *txn) {
+bool TableCatalog::DeleteTable(oid_t table_oid, concurrency::TransactionContext *txn) {
   oid_t index_offset = IndexId::PRIMARY_KEY;  // Index of table_oid
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());

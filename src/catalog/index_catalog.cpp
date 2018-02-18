@@ -25,46 +25,37 @@
 namespace peloton {
 namespace catalog {
 
-IndexCatalogObject::IndexCatalogObject(executor::LogicalTile *tile,
-                                       int tupleId) {
-  auto field_location =
-      tile->GetTuplePointer(tupleId, IndexCatalog::ColumnId::INDEX_OID);
+IndexCatalogObject::IndexCatalogObject(executor::LogicalTile *tile, int tupleId) {
+  auto field_location = tile->GetLocationPointer(tupleId, IndexCatalog::ColumnId::INDEX_OID);
   PL_ASSERT(field_location != nullptr);
   index_oid = *(reinterpret_cast<const oid_t *>(field_location));
 
-  field_location =
-      tile->GetTuplePointer(tupleId, IndexCatalog::ColumnId::INDEX_NAME);
+  field_location = tile->GetLocationPointer(tupleId, IndexCatalog::ColumnId::INDEX_NAME);
   PL_ASSERT(field_location != nullptr);
-  auto varchar = *(reinterpret_cast<const char *const *>(field_location));
+  auto varchar = *(reinterpret_cast<const char *const*>(field_location));
   auto size = reinterpret_cast<const uint32_t *>(varchar);
   auto string = (reinterpret_cast<const char *>(varchar) + sizeof(uint32_t));
   index_name = std::string(string, *size - 1);
 
-  field_location =
-      tile->GetTuplePointer(tupleId, IndexCatalog::ColumnId::TABLE_OID);
+  field_location = tile->GetLocationPointer(tupleId, IndexCatalog::ColumnId::TABLE_OID);
   PL_ASSERT(field_location != nullptr);
   table_oid = *(reinterpret_cast<const oid_t *>(field_location));
 
-  field_location =
-      tile->GetTuplePointer(tupleId, IndexCatalog::ColumnId::INDEX_TYPE);
+  field_location = tile->GetLocationPointer(tupleId, IndexCatalog::ColumnId::INDEX_TYPE);
   PL_ASSERT(field_location != nullptr);
   index_type = *(reinterpret_cast<const IndexType *>(field_location));
 
-  field_location =
-      tile->GetTuplePointer(tupleId, IndexCatalog::ColumnId::INDEX_CONSTRAINT);
+  field_location = tile->GetLocationPointer(tupleId, IndexCatalog::ColumnId::INDEX_CONSTRAINT);
   PL_ASSERT(field_location != nullptr);
-  index_constraint =
-      *(reinterpret_cast<const IndexConstraintType *>(field_location));
+  index_constraint = *(reinterpret_cast<const IndexConstraintType *>(field_location));
 
-  field_location =
-      tile->GetTuplePointer(tupleId, IndexCatalog::ColumnId::UNIQUE_KEYS);
+  field_location = tile->GetLocationPointer(tupleId, IndexCatalog::ColumnId::UNIQUE_KEYS);
   PL_ASSERT(field_location != nullptr);
   unique_keys = *(reinterpret_cast<const bool *>(field_location));
 
-  field_location = tile->GetTuplePointer(
-      tupleId, IndexCatalog::ColumnId::INDEXED_ATTRIBUTES);
+  field_location = tile->GetLocationPointer(tupleId, IndexCatalog::ColumnId::INDEXED_ATTRIBUTES);
   PL_ASSERT(field_location != nullptr);
-  varchar = *(reinterpret_cast<const char *const *>(field_location));
+  varchar = *(reinterpret_cast<const char *const*>(field_location));
   size = reinterpret_cast<const uint32_t *>(varchar);
   string = (reinterpret_cast<const char *>(varchar) + sizeof(uint32_t));
   std::string attr_str = std::string(string, *size - 1);
@@ -201,8 +192,7 @@ bool IndexCatalog::InsertIndex(oid_t index_oid, const std::string &index_name,
   return InsertTuple(std::move(tuple), txn);
 }
 
-bool IndexCatalog::DeleteIndex(oid_t index_oid,
-                               concurrency::TransactionContext *txn) {
+bool IndexCatalog::DeleteIndex(oid_t index_oid, concurrency::TransactionContext *txn) {
   oid_t index_offset = IndexId::PRIMARY_KEY;  // Index of index_oid
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(index_oid).Copy());
@@ -300,8 +290,7 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
  * @return  a vector of index catalog objects
  */
 const std::unordered_map<oid_t, std::shared_ptr<IndexCatalogObject>>
-IndexCatalog::GetIndexObjects(oid_t table_oid,
-                              concurrency::TransactionContext *txn) {
+IndexCatalog::GetIndexObjects(oid_t table_oid, concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
   }

@@ -184,7 +184,7 @@ type::Value LogicalTile::GetValue(oid_t tuple_id, oid_t column_id) {
  * @return pointer to the tuple residing in a physical tile
  *         or nullptr if it doesn't exist.
  */
-const char *LogicalTile::GetTuplePointer(const oid_t tuple_id, const oid_t column_id) const {
+const char *LogicalTile::GetLocationPointer(const oid_t tuple_id, const oid_t column_id) const {
   PL_ASSERT(column_id < schema_.size());
   PL_ASSERT(tuple_id < total_tuples_);
 
@@ -192,14 +192,14 @@ const char *LogicalTile::GetTuplePointer(const oid_t tuple_id, const oid_t colum
   auto base_tuple_id = position_lists_[cp.position_list_idx][tuple_id];
   auto *base_tile = cp.base_tile.get();
 
+  if (base_tuple_id == NULL_OID) {
+    return nullptr;
+  }
+
   auto tuple_location = base_tile->GetTupleLocation(base_tuple_id);
   auto field_location = tuple_location + base_tile->GetSchema()->GetOffset(cp.origin_column_id);
 
-  if (base_tuple_id == NULL_OID) {
-    return nullptr;
-  } else {
-    return field_location;
-  }
+  return field_location;
 }
 
 // this function is designed for overriding pure virtual function.

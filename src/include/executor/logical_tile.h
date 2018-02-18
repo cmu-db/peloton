@@ -114,7 +114,7 @@ class LogicalTile : public Printable {
   // Materialize and return a physical tile.
   std::unique_ptr<storage::Tile> Materialize();
 
-  const char *GetTuplePointer(const oid_t tuple_id, const oid_t column_id) const;
+  const char *GetLocationPointer(const oid_t tuple_id, const oid_t column_id) const;
 
   //===--------------------------------------------------------------------===//
   // Logical Tile Iterator

@@ -25,39 +25,36 @@ namespace catalog {
 
 ProcCatalogObject::ProcCatalogObject(executor::LogicalTile *tile,
                                      concurrency::TransactionContext *txn)
-    //    : ret_type_(tile->GetValue(0, 2).GetAs<type::TypeId>()),
-    //      arg_types_(StringToTypeArray(tile->GetValue(0, 3).GetAs<const char
-    //      *>())),
     : txn_(txn) {
-  auto field_location = tile->GetTuplePointer(0, ProcCatalog::ColumnId::OID);
+  auto field_location = tile->GetLocationPointer(0, ProcCatalog::ColumnId::OID);
   PL_ASSERT(field_location != nullptr);
   oid_ = *(reinterpret_cast<const oid_t *>(field_location));
 
-  field_location = tile->GetTuplePointer(0, ProcCatalog::ColumnId::PRONAME);
+  field_location = tile->GetLocationPointer(0, ProcCatalog::ColumnId::PRONAME);
   PL_ASSERT(field_location != nullptr);
-  auto varchar = *(reinterpret_cast<const char *const *>(field_location));
+  auto varchar = *(reinterpret_cast<const char *const*>(field_location));
   auto size = reinterpret_cast<const uint32_t *>(varchar);
   auto string = (reinterpret_cast<const char *>(varchar) + sizeof(uint32_t));
   name_ = std::string(string, *size - 1);
 
-  field_location = tile->GetTuplePointer(0, ProcCatalog::ColumnId::PRORETTYPE);
+  field_location = tile->GetLocationPointer(0, ProcCatalog::ColumnId::PRORETTYPE);
   PL_ASSERT(field_location != nullptr);
   ret_type_ = *(reinterpret_cast<const type::TypeId *>(field_location));
 
-  field_location = tile->GetTuplePointer(0, ProcCatalog::ColumnId::PROARGTYPES);
+  field_location = tile->GetLocationPointer(0, ProcCatalog::ColumnId::PROARGTYPES);
   PL_ASSERT(field_location != nullptr);
-  varchar = *(reinterpret_cast<const char *const *>(field_location));
+  varchar = *(reinterpret_cast<const char *const*>(field_location));
   size = reinterpret_cast<const uint32_t *>(varchar);
   string = (reinterpret_cast<const char *>(varchar) + sizeof(uint32_t));
   arg_types_ = StringToTypeArray(std::string(string, *size - 1));
 
-  field_location = tile->GetTuplePointer(0, ProcCatalog::ColumnId::PROLANG);
+  field_location = tile->GetLocationPointer(0, ProcCatalog::ColumnId::PROLANG);
   PL_ASSERT(field_location != nullptr);
   lang_oid_ = *(reinterpret_cast<const oid_t *>(field_location));
 
-  field_location = tile->GetTuplePointer(0, ProcCatalog::ColumnId::PROSRC);
+  field_location = tile->GetLocationPointer(0, ProcCatalog::ColumnId::PROSRC);
   PL_ASSERT(field_location != nullptr);
-  varchar = *(reinterpret_cast<const char *const *>(field_location));
+  varchar = *(reinterpret_cast<const char *const*>(field_location));
   size = reinterpret_cast<const uint32_t *>(varchar);
   string = (reinterpret_cast<const char *>(varchar) + sizeof(uint32_t));
   src_ = std::string(string, *size - 1);
@@ -148,7 +145,7 @@ std::unique_ptr<ProcCatalogObject> ProcCatalog::GetProcByName(
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetVarcharValue(proc_name).Copy());
   values.push_back(type::ValueFactory::GetVarcharValue(
-                       TypeIdArrayToString(proc_arg_types)).Copy());
+      TypeIdArrayToString(proc_arg_types)).Copy());
 
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
