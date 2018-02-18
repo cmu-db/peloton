@@ -6,7 +6,7 @@
 //
 // Identification: src/codegen/sorter.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -47,14 +47,10 @@ void Sorter::Append(CodeGen &codegen, llvm::Value *sorter_ptr,
   auto *space = codegen.Call(SorterProxy::StoreInputTuple, {sorter_ptr});
 
   // Now, individually store the attributes of the tuple into the free space
-  UpdateableStorage::NullBitmap null_bitmap{codegen, storage_format_, space};
+  UpdateableStorage::NullBitmap null_bitmap(codegen, storage_format_, space);
   for (uint32_t col_id = 0; col_id < tuple.size(); col_id++) {
-    if (!null_bitmap.IsNullable(col_id)) {
-      storage_format_.SetValueSkipNull(codegen, space, col_id, tuple[col_id]);
-    } else {
-      storage_format_.SetValue(codegen, space, col_id, tuple[col_id],
-                               null_bitmap);
-    }
+    storage_format_.SetValue(codegen, space, col_id, tuple[col_id],
+                             null_bitmap);
   }
   null_bitmap.WriteBack(codegen);
 }
@@ -202,14 +198,10 @@ codegen::Value Sorter::SorterAccess::LoadRowValue(
   }
 
   const auto &storage_format = sorter_.GetStorageFormat();
-  UpdateableStorage::NullBitmap null_bitmap{codegen, storage_format,
-                                            row.row_pos_};
-  if (!null_bitmap.IsNullable(column_index)) {
-    return storage_format.GetValueSkipNull(codegen, row.row_pos_, column_index);
-  } else {
-    return storage_format.GetValue(codegen, row.row_pos_, column_index,
-                                   null_bitmap);
-  }
+  UpdateableStorage::NullBitmap null_bitmap(codegen, storage_format,
+                                            row.row_pos_);
+  return storage_format.GetValue(codegen, row.row_pos_, column_index,
+                                 null_bitmap);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

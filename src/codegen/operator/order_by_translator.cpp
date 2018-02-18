@@ -101,6 +101,10 @@ void OrderByTranslator::InitializeQueryState() {
   sorter_.Init(GetCodeGen(), LoadStatePtr(sorter_id_), compare_func_);
 }
 
+void OrderByTranslator::TearDownQueryState() {
+  sorter_.Destroy(GetCodeGen(), LoadStatePtr(sorter_id_));
+}
+
 //===----------------------------------------------------------------------===//
 // Here, we define the primary comparison function that is used to sort input
 // tuples.  The function should return:
@@ -140,37 +144,29 @@ void OrderByTranslator::DefineAuxiliaryFunctions() {
   std::vector<FunctionDeclaration::ArgumentInfo> args = {
       {"leftTuple", codegen.CharPtrType()},
       {"rightTuple", codegen.CharPtrType()}};
-  FunctionBuilder compare{codegen.GetCodeContext(), "compare", ret_type, args};
+  FunctionBuilder compare(codegen.GetCodeContext(), "compare", ret_type, args);
   {
     llvm::Value *left_tuple = compare.GetArgumentByPosition(0);
     llvm::Value *right_tuple = compare.GetArgumentByPosition(1);
 
-    UpdateableStorage::NullBitmap left_null_bitmap{codegen, storage_format,
-                                                   left_tuple};
-    UpdateableStorage::NullBitmap right_null_bitmap{codegen, storage_format,
-                                                    right_tuple};
+    UpdateableStorage::NullBitmap left_null_bitmap(codegen, storage_format,
+                                                   left_tuple);
+    UpdateableStorage::NullBitmap right_null_bitmap(codegen, storage_format,
+                                                    right_tuple);
 
     // The result of the overall comparison
     codegen::Value result;
-    codegen::Value zero{type::Integer::Instance(), codegen.Const32(0)};
+    codegen::Value zero(type::Integer::Instance(), codegen.Const32(0));
 
     for (size_t idx = 0; idx < sort_keys.size(); idx++) {
       auto &sort_key_info = sort_key_info_[idx];
       uint32_t slot = sort_key_info.tuple_slot;
 
-      codegen::Value left, right;
-
       // Read values from storage
-      if (!left_null_bitmap.IsNullable(slot)) {
-        PELOTON_ASSERT(!right_null_bitmap.IsNullable(slot));
-        left = storage_format.GetValueSkipNull(codegen, left_tuple, slot);
-        right = storage_format.GetValueSkipNull(codegen, right_tuple, slot);
-      } else {
-        left = storage_format.GetValue(codegen, left_tuple, slot,
-                                       left_null_bitmap);
-        right = storage_format.GetValue(codegen, right_tuple, slot,
-                                        right_null_bitmap);
-      }
+      codegen::Value left =
+          storage_format.GetValue(codegen, left_tuple, slot, left_null_bitmap);
+      codegen::Value right = storage_format.GetValue(codegen, right_tuple, slot,
+                                                     right_null_bitmap);
 
       // Perform comparison
       codegen::Value cmp;
@@ -187,10 +183,10 @@ void OrderByTranslator::DefineAuxiliaryFunctions() {
         // running value to the result of the last comparison. Otherwise, carry
         // forward the comparison result of the previous attributes
         auto prev_zero = result.CompareEq(codegen, zero);
-        result = codegen::Value{
+        result = codegen::Value(
             type::Integer::Instance(),
             codegen->CreateSelect(prev_zero.GetValue(), cmp.GetValue(),
-                                  result.GetValue())};
+                                  result.GetValue()));
       }
     }
 
@@ -219,7 +215,7 @@ void OrderByTranslator::Produce() const {
     Vector position_list{raw_vec, vec_size, i32_type};
 
     const auto &plan = GetPlanAs<planner::OrderByPlan>();
-    ProduceResults callback{ctx, plan, position_list};
+    ProduceResults callback(ctx, plan, position_list);
     sorter_.VectorizedIterate(codegen, sorter_ptr, vec_size, callback);
   };
 
@@ -246,10 +242,6 @@ void OrderByTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
 
   // Append the tuple into the sorter
   sorter_.Append(codegen, LoadStatePtr(sorter_id_), tuple);
-}
-
-void OrderByTranslator::TearDownQueryState() {
-  sorter_.Destroy(GetCodeGen(), LoadStatePtr(sorter_id_));
 }
 
 void OrderByTranslator::RegisterPipelineState(PipelineContext &pipeline_ctx) {
@@ -305,7 +297,7 @@ void OrderByTranslator::ProduceResults::ProcessEntries(
     Sorter::SorterAccess &access) const {
   // Construct the row batch we're producing
   auto &comp_ctx = ctx_.GetCompilationContext();
-  RowBatch batch{comp_ctx, start_index, end_index, position_list_, false};
+  RowBatch batch(comp_ctx, start_index, end_index, position_list_, false);
 
   // Add the attribute accessors for rows in this batch
   std::vector<SorterAttributeAccess> accessors;

@@ -53,10 +53,10 @@ class Aggregation {
              bool is_global);
 
   // Codegen any initialization work for the hash tables
-  void InitializeState(CodeGen &codegen);
+  void InitializeQueryState(CodeGen &codegen);
 
   // Cleanup by destroying the aggregation hash tables
-  void TearDownState(CodeGen &codegen);
+  void TearDownQueryState(CodeGen &codegen);
 
   // Create default initial values for all global aggregate components
   void CreateInitialGlobalValues(CodeGen &codegen, llvm::Value *space) const;

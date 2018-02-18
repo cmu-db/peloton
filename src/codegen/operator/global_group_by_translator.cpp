@@ -62,7 +62,7 @@ GlobalGroupByTranslator::GlobalGroupByTranslator(
 
 // Initialize the hash table instance
 void GlobalGroupByTranslator::InitializeQueryState() {
-  aggregation_.InitializeState(GetCodeGen());
+  aggregation_.InitializeQueryState(GetCodeGen());
 }
 
 void GlobalGroupByTranslator::Produce() const {
@@ -131,7 +131,7 @@ void GlobalGroupByTranslator::Consume(ConsumerContext &,
 
 // Cleanup by destroying the aggregation hash-table
 void GlobalGroupByTranslator::TearDownQueryState() {
-  aggregation_.TearDownState(GetCodeGen());
+  aggregation_.TearDownQueryState(GetCodeGen());
 }
 
 }  // namespace codegen

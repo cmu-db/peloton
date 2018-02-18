@@ -38,14 +38,10 @@ void BufferAccessor::Append(CodeGen &codegen, llvm::Value *buffer_ptr,
   auto *space = codegen.Call(BufferProxy::Append, {buffer_ptr, size});
 
   // Now, individually store the attributes of the tuple into the free space
-  UpdateableStorage::NullBitmap null_bitmap{codegen, storage_format_, space};
+  UpdateableStorage::NullBitmap null_bitmap(codegen, storage_format_, space);
   for (uint32_t col_id = 0; col_id < tuple.size(); col_id++) {
-    if (!null_bitmap.IsNullable(col_id)) {
-      storage_format_.SetValueSkipNull(codegen, space, col_id, tuple[col_id]);
-    } else {
-      storage_format_.SetValue(codegen, space, col_id, tuple[col_id],
-                               null_bitmap);
-    }
+    storage_format_.SetValue(codegen, space, col_id, tuple[col_id],
+                             null_bitmap);
   }
   null_bitmap.WriteBack(codegen);
 }
@@ -60,15 +56,10 @@ void BufferAccessor::Iterate(CodeGen &codegen, llvm::Value *buffer_ptr,
 
     // Read
     std::vector<codegen::Value> vals;
-    UpdateableStorage::NullBitmap null_bitmap{codegen, storage_format_, pos};
+    UpdateableStorage::NullBitmap null_bitmap(codegen, storage_format_, pos);
     for (uint32_t col_id = 0; col_id < storage_format_.GetNumElements();
          col_id++) {
-      codegen::Value val;
-      if (!null_bitmap.IsNullable(col_id)) {
-        val = storage_format_.GetValueSkipNull(codegen, pos, col_id);
-      } else {
-        val = storage_format_.GetValue(codegen, pos, col_id, null_bitmap);
-      }
+      auto val = storage_format_.GetValue(codegen, pos, col_id, null_bitmap);
       vals.emplace_back(val);
     }
 

@@ -90,7 +90,7 @@ HashGroupByTranslator::HashGroupByTranslator(
 // Initialize the hash table instance
 void HashGroupByTranslator::InitializeQueryState() {
   hash_table_.Init(GetCodeGen(), LoadStatePtr(hash_table_id_));
-  aggregation_.InitializeState(GetCodeGen());
+  aggregation_.InitializeQueryState(GetCodeGen());
 }
 
 // Produce!
@@ -240,7 +240,7 @@ void HashGroupByTranslator::Consume(ConsumerContext &,
 // Cleanup by destroying the aggregation hash-table
 void HashGroupByTranslator::TearDownQueryState() {
   hash_table_.Destroy(GetCodeGen(), LoadStatePtr(hash_table_id_));
-  aggregation_.TearDownState(GetCodeGen());
+  aggregation_.TearDownQueryState(GetCodeGen());
 }
 
 // Estimate the size of the dynamically constructed hash-table

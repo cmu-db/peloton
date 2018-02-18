@@ -47,13 +47,21 @@ llvm::Type *UpdateableStorage::Finalize(CodeGen &codegen) {
     // Create a slot metadata entry for the value
     // Note: The physical and logical index are the same for now. The physical
     //       index is modified after storage format optimization (later).
-    storage_format_.push_back(CompactStorage::EntryInfo{
-        val_type, i, i, false, codegen.SizeOf(val_type)});
+    storage_format_.emplace_back(
+        CompactStorage::EntryInfo{.type = val_type,
+                                  .physical_index = i,
+                                  .logical_index = i,
+                                  .is_length = false,
+                                  .num_bytes = codegen.SizeOf(val_type)});
 
     // If there is a length component, add that too
     if (len_type != nullptr) {
-      storage_format_.push_back(CompactStorage::EntryInfo{
-          len_type, i, i, true, codegen.SizeOf(len_type)});
+      storage_format_.emplace_back(
+          CompactStorage::EntryInfo{.type = len_type,
+                                    .physical_index = i,
+                                    .logical_index = i,
+                                    .is_length = true,
+                                    .num_bytes = codegen.SizeOf(len_type)});
     }
   }
 
@@ -141,6 +149,11 @@ codegen::Value UpdateableStorage::GetValueSkipNull(CodeGen &codegen,
 codegen::Value UpdateableStorage::GetValue(
     CodeGen &codegen, llvm::Value *space, uint64_t index,
     UpdateableStorage::NullBitmap &null_bitmap) const {
+  // If the index isn't NULL-able, skip the check
+  if (!null_bitmap.IsNullable(index)) {
+    return GetValueSkipNull(codegen, space, index);
+  }
+
   codegen::Value null_val, read_val;
 
   lang::If val_is_null(codegen, null_bitmap.IsNull(codegen, index));
@@ -191,6 +204,12 @@ void UpdateableStorage::SetValue(
     CodeGen &codegen, llvm::Value *space, uint64_t index,
     const codegen::Value &value,
     UpdateableStorage::NullBitmap &null_bitmap) const {
+  // If the index isn't NULL-able, skip storing the NULL bit
+  if (!null_bitmap.IsNullable(index)) {
+    SetValueSkipNull(codegen, space, index, value);
+    return;
+  }
+
   PELOTON_ASSERT(null_bitmap.IsNullable(index));
 
   // Set the NULL bit
