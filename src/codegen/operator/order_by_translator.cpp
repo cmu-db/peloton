@@ -137,76 +137,71 @@ void OrderByTranslator::DefineAuxiliaryFunctions() {
   auto &codegen = GetCodeGen();
   auto &storage_format = sorter_.GetStorageFormat();
 
-  // The comparison function builder
-  std::vector<FunctionDeclaration::ArgumentInfo> args = {
-      {"leftTuple", codegen.CharPtrType()},
-      {"rightTuple", codegen.CharPtrType()}};
-  FunctionBuilder compare{codegen.GetCodeContext(), "compare",
-                          codegen.Int32Type(), args};
-
-  // The left and right tuple (from function argument)
-  llvm::Value *left_tuple = compare.GetArgumentByName("leftTuple");
-  llvm::Value *right_tuple = compare.GetArgumentByName("rightTuple");
-
   const auto &sort_keys = plan_.GetSortKeys();
   const auto &descend_flags = plan_.GetDescendFlags();
 
-  // First pull out all the values from materialized state
-  UpdateableStorage::NullBitmap null_bitmap{codegen, storage_format,
-                                            left_tuple};
-  std::vector<codegen::Value> left_vals, right_vals;
-  for (size_t idx = 0; idx < sort_keys.size(); idx++) {
-    auto &sort_key_info = sort_key_info_[idx];
-    uint32_t slot = sort_key_info.tuple_slot;
+  // The comparison function builder
+  auto *ret_type = codegen.Int32Type();
+  std::vector<FunctionDeclaration::ArgumentInfo> args = {
+      {"leftTuple", codegen.CharPtrType()},
+      {"rightTuple", codegen.CharPtrType()}};
+  FunctionBuilder compare{codegen.GetCodeContext(), "compare", ret_type, args};
+  {
+    llvm::Value *left_tuple = compare.GetArgumentByPosition(0);
+    llvm::Value *right_tuple = compare.GetArgumentByPosition(1);
 
-    if (!null_bitmap.IsNullable(slot)) {
-      left_vals.push_back(
-          storage_format.GetValueSkipNull(codegen, left_tuple, slot));
-      right_vals.push_back(
-          storage_format.GetValueSkipNull(codegen, right_tuple, slot));
-    } else {
-      left_vals.push_back(
-          storage_format.GetValue(codegen, left_tuple, slot, null_bitmap));
-      right_vals.push_back(
-          storage_format.GetValue(codegen, right_tuple, slot, null_bitmap));
+    UpdateableStorage::NullBitmap left_null_bitmap{codegen, storage_format,
+                                                   left_tuple};
+    UpdateableStorage::NullBitmap right_null_bitmap{codegen, storage_format,
+                                                    right_tuple};
+
+    // The result of the overall comparison
+    codegen::Value result;
+    codegen::Value zero{type::Integer::Instance(), codegen.Const32(0)};
+
+    for (size_t idx = 0; idx < sort_keys.size(); idx++) {
+      auto &sort_key_info = sort_key_info_[idx];
+      uint32_t slot = sort_key_info.tuple_slot;
+
+      codegen::Value left, right;
+
+      // Read values from storage
+      if (!left_null_bitmap.IsNullable(slot)) {
+        PL_ASSERT(!right_null_bitmap.IsNullable(slot));
+        left = storage_format.GetValueSkipNull(codegen, left_tuple, slot);
+        right = storage_format.GetValueSkipNull(codegen, right_tuple, slot);
+      } else {
+        left = storage_format.GetValue(codegen, left_tuple, slot,
+                                       left_null_bitmap);
+        right = storage_format.GetValue(codegen, right_tuple, slot,
+                                        right_null_bitmap);
+      }
+
+      // Perform comparison
+      codegen::Value cmp;
+      if (!descend_flags[idx]) {
+        cmp = left.CompareForSort(codegen, right);
+      } else {
+        cmp = right.CompareForSort(codegen, left);
+      }
+
+      if (idx == 0) {
+        result = cmp;
+      } else {
+        // If previous result is zero (meaning the values were equal), set the
+        // running value to the result of the last comparison. Otherwise, carry
+        // forward the comparison result of the previous attributes
+        auto prev_zero = result.CompareEq(codegen, zero);
+        result = codegen::Value{
+            type::Integer::Instance(),
+            codegen->CreateSelect(prev_zero.GetValue(), cmp.GetValue(),
+                                  result.GetValue())};
+      }
     }
+
+    // Return result
+    compare.ReturnAndFinish(result.GetValue());
   }
-
-  // TODO: The logic here should be simplified.
-
-  // The result of the overall comparison
-  codegen::Value result;
-
-  // The first comparison must be expensive, since this result we propagate
-  // through the remaining comparison
-  if (!descend_flags[0]) {
-    result = left_vals[0].CompareForSort(codegen, right_vals[0]);
-  } else {
-    result = right_vals[0].CompareForSort(codegen, left_vals[0]);
-  }
-
-  // Do the remaining comparisons using cheaper options
-  auto zero = codegen::Value{type::Integer::Instance(), codegen.Const32(0)};
-  for (size_t idx = 1; idx < sort_keys.size(); idx++) {
-    codegen::Value comp_result;
-    if (!descend_flags[idx]) {
-      comp_result = left_vals[idx].CompareForSort(codegen, right_vals[idx]);
-    } else {
-      comp_result = right_vals[idx].CompareForSort(codegen, left_vals[idx]);
-    }
-    // If previous result is zero (meaning the values were equal), set the
-    // running value to the result of the last comparison. Otherwise, carry
-    // forward the comparison result of the previous attributes
-    auto prev_zero = result.CompareEq(codegen, zero);
-    result = codegen::Value{
-        type::Integer::Instance(),
-        codegen->CreateSelect(prev_zero.GetValue(), comp_result.GetValue(),
-                              result.GetValue())};
-  }
-
-  // At this point, all keys are equal (otherwise we would've jumped out)
-  compare.ReturnAndFinish(result.GetValue());
-
   // Set the function pointer
   compare_func_ = compare.GetFunction();
 }

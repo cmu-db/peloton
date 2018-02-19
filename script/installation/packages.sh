@@ -41,10 +41,21 @@ TMPDIR=/tmp
 ## UBUNTU
 ## ------------------------------------------------
 if [ "$DISTRO" = "UBUNTU" ]; then
-    # Fix for LLVM-3.7 on Ubuntu 14.04
-    if [ "$DISTRO_VER" == "14.04" ]; then
-        if ! grep -q 'deb http://llvm.org/apt/trusty/ llvm-toolchain-trusty-3.7 main' /etc/apt/sources.list; then
-            echo 'deb http://llvm.org/apt/trusty/ llvm-toolchain-trusty-3.7 main' | sudo tee -a /etc/apt/sources.list > /dev/null
+    MAJOR_VER=$(echo "$DISTRO_VER" | cut -d '.' -f 1)
+
+    # Fix for LLVM-3.7 on Ubuntu 14 + 17
+    if [ "$MAJOR_VER" == "14" -o "$MAJOR_VER" == "17" ]; then
+        if [ "$MAJOR_VER" == "14" ]; then
+            LLVM_PKG_URL="http://llvm.org/apt/trusty/"
+            LLVM_PKG_TARGET="llvm-toolchain-trusty-3.7 main"
+        fi
+        if [ "$MAJOR_VER" == "17" ]; then
+            LLVM_PKG_URL="http://apt.llvm.org/artful/"
+            LLVM_PKG_TARGET="llvm-toolchain-artful main"
+        fi
+
+        if ! grep -q "deb $LLVM_PKG_URL $LLVM_PKG_TARGET" /etc/apt/sources.list; then
+            echo -e "\n# Added by Peloton 'packages.sh' script on $(date)\ndeb $LLVM_PKG_URL $LLVM_PKG_TARGET" | sudo tee -a /etc/apt/sources.list > /dev/null
         fi
         sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 15CF4D18AF4F7421
         sudo apt-get update -qq
@@ -55,26 +66,43 @@ if [ "$DISTRO" = "UBUNTU" ]; then
         FORCE_Y=""
     fi
 
+    FORCE_Y=""
+    PKG_CMAKE="cmake"
+    PKG_LLVM="llvm-3.7"
+    PKG_CLANG="clang-3.7"
+
+    # Fix for cmake name change on Ubuntu 14.x and 16.x plus --force-yes deprecation
+    if [ "$MAJOR_VER" == "14" ]; then
+        PKG_CMAKE="cmake3"
+        FORCE_Y="--force-yes"
+    fi
+    # Fix for llvm on Ubuntu 17.x
+    if [ "$MAJOR_VER" == "17" ]; then
+        PKG_LLVM="llvm-3.9"
+        PKG_CLANG="clang-3.8"
+    fi
+
     sudo apt-get -qq $FORCE_Y --ignore-missing -y install \
+        $PKG_CMAKE \
+        $PKG_LLVM \
+        $PKG_CLANG \
         git \
         g++ \
-        clang-3.7 \
-        $CMAKE_NAME \
-        libgflags-dev \
-        libprotobuf-dev \
-        protobuf-compiler \
         bison \
         flex \
+        valgrind \
+        lcov \
+        protobuf-compiler \
+        libgflags-dev \
+        libprotobuf-dev \
         libevent-dev \
         libboost-dev \
         libboost-thread-dev \
         libboost-filesystem-dev \
         libjemalloc-dev \
-        valgrind \
-        lcov \
         libpqxx-dev \
-        llvm-3.7 \
         libedit-dev \
+        libssl-dev \
         postgresql-client
 
 ## ------------------------------------------------
