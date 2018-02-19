@@ -23,6 +23,8 @@
 #include "executor/insert_executor.h"
 #include "executor/plan_executor.h"
 #include "executor/update_executor.h"
+#include "expression/abstract_expression.h"
+#include "expression/operator_expression.h"
 #include "optimizer/operator_expression.h"
 #include "optimizer/operators.h"
 #include "optimizer/optimizer.h"
@@ -35,6 +37,7 @@
 #include "planner/update_plan.h"
 #include "sql/testing_sql_util.h"
 #include "type/value_factory.h"
+
 
 namespace peloton {
 namespace test {
@@ -78,106 +81,73 @@ TEST_F(OptimizerRuleTests, SimpleCommutativeRuleTest) {
   EXPECT_EQ(output_join->Children()[1], left_get);
 }
 
-TEST_F(OptimizerRuleTests, AssociativeRuleTest) {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
-  txn_manager.CommitTransaction(txn);
+TEST_F(OptimizerRuleTests, SimpleAssociativeRuleTest) {
 
-  TestingSQLUtil::ExecuteSQLQuery(
-      "CREATE TABLE test1(a INT PRIMARY KEY, b INT, c INT);");
-  TestingSQLUtil::ExecuteSQLQuery(
-      "CREATE TABLE test2(a INT PRIMARY KEY, b INT, c INT);");
-  TestingSQLUtil::ExecuteSQLQuery(
-      "CREATE TABLE test3(a INT PRIMARY KEY, b INT, c INT);");
+  // (left JOIN middle) JOIN right
+  // Build Operator Expression
 
-  auto &peloton_parser = parser::PostgresParser::GetInstance();
-  auto stmt =
-      peloton_parser.BuildParseTree("SELECT * FROM test1, test2, test3");
-  auto parse_tree = stmt->GetStatements().at(0).get();
-  auto predicates = std::vector<expression::AbstractExpression *>();
+  // Setup Memo
+  Optimizer optimizer;
 
-  optimizer::Optimizer optimizer;
+  auto left_get = std::make_shared<OperatorExpression>(LogicalGet::make(0, {}, nullptr, "test1"));
+  auto middle_get = std::make_shared<OperatorExpression>(LogicalGet::make(0, {}, nullptr, "test2"));
+  auto right_get = std::make_shared<OperatorExpression>(LogicalGet::make(0, {}, nullptr, "test3"));
 
-  // Push Associativity rule and execute tasks
-  optimizer.metadata_.rule_set.transformation_rules_.clear();
-  optimizer.metadata_.rule_set.transformation_rules_.emplace_back(
-      new InnerJoinAssociativity());
+  auto left_get_group = optimizer.metadata_.memo.InsertExpression(optimizer.metadata_.MakeGroupExpression(left_get), true);
+  auto middle_get_group = optimizer.metadata_.memo.InsertExpression(optimizer.metadata_.MakeGroupExpression(middle_get),true);
+  auto right_get_group = optimizer.metadata_.memo.InsertExpression(optimizer.metadata_.MakeGroupExpression(right_get),true);
 
-  txn = txn_manager.BeginTransaction();
+  auto left_leaf = std::make_shared<OperatorExpression>(LeafOperator::make(left_get_group->GetGroupID()));
+  auto middle_leaf = std::make_shared<OperatorExpression>(LeafOperator::make(middle_get_group->GetGroupID()));
+  auto right_leaf = std::make_shared<OperatorExpression>(LeafOperator::make(right_get_group->GetGroupID()));
 
-  auto bind_node_visitor =
-      std::make_shared<binder::BindNodeVisitor>(txn, DEFAULT_DB_NAME);
-  bind_node_visitor->BindNameToNode(parse_tree);
+  // Make Child Join
+  std::vector<AnnotatedExpression> child_join_predicates;
+  std::unordered_set<std::string> child_tables({"test1","test2"});
+  auto dummy_expr = std::shared_ptr<expression::AbstractExpression>{
+      new expression::OperatorExpression(ExpressionType::COMPARE_EQUAL, type::TypeId::INTEGER)};
 
-  std::shared_ptr<GroupExpression> gexpr =
-      optimizer.InsertQueryTree(parse_tree, txn);
-  std::vector<GroupID> child_groups = {gexpr->GetGroupID()};
+  AnnotatedExpression pred = {dummy_expr, child_tables};
+  child_join_predicates.push_back(pred);
 
-  auto &memo = optimizer.metadata_.memo;
-  std::shared_ptr<GroupExpression> head_gexpr =
-      std::make_shared<GroupExpression>(Operator(), child_groups);
+  auto child_join = std::make_shared<OperatorExpression>(LogicalInnerJoin::make(child_join_predicates));
+  child_join->PushChild(left_leaf);
+  child_join->PushChild(middle_leaf);
+  optimizer.metadata_.memo.InsertExpression(optimizer.metadata_.MakeGroupExpression(child_join), true);
 
-  // Check plan is of structure (left JOIN middle) JOIN right
-  // Check Parent join
-  auto group_expr = GetSingleGroupExpression(memo, head_gexpr.get(), 0);
-  EXPECT_EQ(OpType::InnerJoin, group_expr->Op().GetType());
-  auto join_op = group_expr->Op().As<LogicalInnerJoin>();
-  EXPECT_EQ(0, join_op->join_predicates.size());
+  // Make Parent join
+  std::vector<AnnotatedExpression> parent_join_predicates;
+  std::unordered_set<std::string> parent_tables({"test1","test3"});
+  pred = {dummy_expr, parent_tables};
+  parent_join_predicates.push_back(pred);
 
-  // Check left join
-  auto l_group_expr = GetSingleGroupExpression(memo, group_expr, 0);
-  EXPECT_EQ(OpType::InnerJoin, l_group_expr->Op().GetType());
-  auto left = GetSingleGroupExpression(memo, l_group_expr, 0);
-  auto middle = GetSingleGroupExpression(memo, l_group_expr, 1);
-  EXPECT_EQ(OpType::Get, left->Op().GetType());
-  EXPECT_EQ(OpType::Get, middle->Op().GetType());
+  auto parent_join = std::make_shared<OperatorExpression>(LogicalInnerJoin::make(parent_join_predicates));
+  parent_join->PushChild(child_join);
+  parent_join->PushChild(right_leaf);
 
-  // Check right Get
-  auto right = GetSingleGroupExpression(memo, group_expr, 1);
-  EXPECT_EQ(OpType::Get, right->Op().GetType());
+  optimizer.metadata_.memo.InsertExpression(optimizer.metadata_.MakeGroupExpression(parent_join), true);
+  OptimizeContext* root_context = new OptimizeContext(&(optimizer.metadata_), nullptr);
+  LOG_DEBUG("Set up Memo");
 
-  std::shared_ptr<OptimizeContext> root_context =
-      std::make_shared<OptimizeContext>(&(optimizer.metadata_), nullptr);
+  // Setup rule
+  InnerJoinAssociativity rule;
 
-  auto task_stack =
-      std::unique_ptr<OptimizerTaskStack>(new OptimizerTaskStack());
-  optimizer.metadata_.SetTaskPool(task_stack.get());
-  task_stack->Push(
-      new ApplyRule(group_expr, new InnerJoinAssociativity, root_context));
+  EXPECT_TRUE(rule.Check(parent_join, root_context));
+  std::vector<std::shared_ptr<OperatorExpression>> outputs;
+  rule.Transform(parent_join, outputs, root_context);
+  EXPECT_EQ(1, outputs.size());
 
-  while (!task_stack->Empty()) {
-    auto task = task_stack->Pop();
-    task->execute();
-  }
+  auto output_join = outputs[0];
 
-  LOG_DEBUG("Executed all tasks");
+  EXPECT_EQ(left_leaf, output_join->Children()[0]);
+  EXPECT_EQ(middle_leaf, output_join->Children()[1]->Children()[0]);
+  EXPECT_EQ(right_leaf, output_join->Children()[1]->Children()[1]);
 
-  // Check plan is now: left JOIN (middle JOIN right)
-  // Check Parent join
-  EXPECT_EQ(OpType::InnerJoin, group_expr->Op().GetType());
-  join_op = group_expr->Op().As<LogicalInnerJoin>();
-  EXPECT_EQ(0, join_op->join_predicates.size());
-  EXPECT_EQ(2, group_expr->GetChildrenGroupsSize());
-  LOG_DEBUG("Parent join: OK");
+  auto parent_join_op = output_join->Op().As<LogicalInnerJoin>();
+  auto child_join_op = output_join->Children()[1]->Op().As<LogicalInnerJoin>();
+  EXPECT_EQ(2, parent_join_op->join_predicates.size());
+  EXPECT_EQ(0, child_join_op->join_predicates.size());
 
-  // Check left Get
-  // TODO: Not sure why left is at index 1, but the (middle JOIN right) is at
-  // index 0
-  left = GetSingleGroupExpression(memo, group_expr, 1);
-  EXPECT_EQ(OpType::Get, left->Op().GetType());
-  LOG_DEBUG("Left Leaf: OK");
-
-  // Check (right JOIN right)
-  auto r_group_expr = GetSingleGroupExpression(memo, group_expr, 0);
-  EXPECT_EQ(OpType::InnerJoin, r_group_expr->Op().GetType());
-  middle = GetSingleGroupExpression(memo, r_group_expr, 0);
-  right = GetSingleGroupExpression(memo, r_group_expr, 1);
-  EXPECT_EQ(OpType::Get, middle->Op().GetType());
-  EXPECT_EQ(OpType::Get, right->Op().GetType());
-  LOG_DEBUG("Right join: OK");
-
-  txn_manager.CommitTransaction(txn);
 }
 
 }  // namespace test

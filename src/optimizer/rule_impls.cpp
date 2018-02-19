@@ -96,29 +96,35 @@ bool InnerJoinAssociativity::Check(std::shared_ptr<OperatorExpression> expr,
 void InnerJoinAssociativity::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed,
-    UNUSED_ATTRIBUTE OptimizeContext *context) const {
+    OptimizeContext *context) const {
+
   // NOTE: Transforms (left JOIN middle) JOIN right -> left JOIN (middle JOIN
   // right) Variables are named accordingly to above transformation
   auto parent_join = input->Op().As<LogicalInnerJoin>();
   std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
+  PL_ASSERT(children.size() == 2);
+  PL_ASSERT(children[0]->Op().GetType() == OpType::InnerJoin);
+  PL_ASSERT(children[0]->Children().size() == 2);
   auto child_join = children[0]->Op().As<LogicalInnerJoin>();
   auto left = children[0]->Children()[0];
   auto middle = children[0]->Children()[1];
   auto right = children[1];
-  PL_ASSERT(children.size() == 2);
-  PL_ASSERT(children[0]->Op().GetType() == OpType::InnerJoin);
-  PL_ASSERT(children[0]->Children().size() == 2);
 
   // Get Alias sets
   auto &memo = context->metadata->memo;
-  auto middle_group_id =
-      children[0]->Children()[1]->Op().As<LeafOperator>()->origin_group;
+
+  auto middle_group_id = children[0]->Children()[1]->Op().As<LeafOperator>()->origin_group;
   auto right_group_id = children[1]->Op().As<LeafOperator>()->origin_group;
 
   const auto &middle_group_aliases_set =
       memo.GetGroupByID(middle_group_id)->GetTableAliases();
   const auto &right_group_aliases_set =
       memo.GetGroupByID(right_group_id)->GetTableAliases();
+
+  // Union Predicates into single alias set for new child join
+  std::unordered_set<std::string> right_join_aliases_set;
+  right_join_aliases_set.insert(middle_group_aliases_set.begin(), middle_group_aliases_set.end());
+  right_join_aliases_set.insert(right_group_aliases_set.begin(), right_group_aliases_set.end());
 
   // Redistribute predicates
   auto parent_join_predicates =
@@ -135,12 +141,8 @@ void InnerJoinAssociativity::Transform(
   std::vector<AnnotatedExpression> new_child_join_predicates;
   std::vector<AnnotatedExpression> new_parent_join_predicates;
 
-  // TODO: This assumes that predicate pushdown has not occured yet, as it will
-  // put all non-join predicates into parent join
   for (auto predicate : predicates) {
-    // New child join predicate must contain middle and right group
-    if (util::IsSubset(middle_group_aliases_set, predicate.table_alias_set) &&
-        util::IsSubset(right_group_aliases_set, predicate.table_alias_set))
+    if (util::IsSubset(right_join_aliases_set, predicate.table_alias_set))
       new_child_join_predicates.emplace_back(predicate);
     else
       new_parent_join_predicates.emplace_back(predicate);
