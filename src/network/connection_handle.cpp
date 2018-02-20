@@ -93,11 +93,18 @@ DEF_TRANSITION_GRAPH
     ON(FINISH) SET_STATE_TO(CLOSING) AND_INVOKE(CloseSocket) 
   END_DEF
 
+  DEFINE_STATE(SSL_HANDSHAKE)
+    ON(WAKEUP) SET_STATE_TO(SSL_HANDSHAKE) AND_WAIT
+    ON(NEED_DATA) SET_STATE_TO(SSL_HANDSHAKE) AND_WAIT
+    ON(PROCEED) SET_STATE_TO(PROCESS) AND_INVOKE(Process)
+  END_DEF
+  
   DEFINE_STATE(PROCESS) 
     ON(PROCEED) SET_STATE_TO(WRITE) AND_INVOKE(ProcessWrite)
     ON(NEED_DATA) SET_STATE_TO(READ) AND_INVOKE(FillReadBuffer)
     ON(GET_RESULT) SET_STATE_TO(GET_RESULT) AND_WAIT
     ON(FINISH) SET_STATE_TO(CLOSING) AND_INVOKE(CloseSocket)
+    ON(SSL_HANDSHAKE) SET_STATE_TO(SSL_HANDSHKE) AND_INVOKE(SSL_handshake)
   END_DEF
 
   DEFINE_STATE(WRITE) 
@@ -639,6 +646,93 @@ Transition ConnectionHandle::Wait() {
   // TODO(tianyu): Maybe we don't need this state? Also, this name is terrible
   UpdateEventFlags(EV_READ | EV_PERSIST);
   return Transition::PROCEED;
+}
+
+Transition ConnectionHandle::SSL_handshake() {
+  
+  if (conn_SSL_context == nullptr) {
+    // TODO(Tianyi) encapsulate this
+    conn_SSL_context = SSL_new(PelotonServer::ssl_context);
+    if (conn_SSL_context == nullptr) {
+      throw NetworkProcessException("ssl context for conn failed");
+    }
+    SSL_set_session_id_context(conn_SSL_context, nullptr, 0);
+    if (SSL_set_fd(conn_SSL_context, sock_fd_) == 0) {
+      LOG_ERROR("Failed to set SSL fd");
+      PL_ASSERT(false);
+    }
+  }
+
+  bool handshake_fail = false;
+    // TODO(Yuchen): post-connection verification?
+  while (!handshake_fail) {
+    // clear current thread's error queue before any OpenSSL call
+    ERR_clear_error();
+    int ssl_accept_ret = SSL_accept(conn_SSL_context);
+    if (ssl_accept_ret > 0) {
+      break;
+    }
+    int err = SSL_get_error(conn_SSL_context, ssl_accept_ret);
+    int ecode = ERR_get_error();
+    char error_string[120];
+    ERR_error_string(ecode, error_string);
+    switch (err) {
+      case SSL_ERROR_SSL: {
+        if (ecode < 0) {
+          LOG_ERROR("Could not accept SSL connection");
+        } else {
+          LOG_ERROR(
+              "Could not accept SSL connection: EOF detected, "
+              "ssl_error_ssl, %s",
+              error_string);
+        }
+        handshake_fail = true;
+        break;
+      }
+      case SSL_ERROR_ZERO_RETURN: {
+        LOG_ERROR(
+            "Could not accept SSL connection: EOF detected, "
+            "ssl_error_zero_return, %s",
+            error_string);
+        handshake_fail = true;
+        break;
+      }
+      case SSL_ERROR_SYSCALL: {
+        if (ecode < 0) {
+          LOG_ERROR("Could not accept SSL connection, %s", error_string);
+        } else {
+          LOG_ERROR(
+              "Could not accept SSL connection: EOF detected, "
+              "ssl_sys_call, %s",
+              error_string);
+        }
+        handshake_fail = true;
+        break;
+      }
+      case SSL_ERROR_WANT_READ: {
+        UpdateEventFlags(EV_READ | EV_PERSIST);
+        break;
+      }
+      case SSL_ERROR_WANT_WRITE: {
+        UpdateEventFlags(EV_WRITE | EV_PERSIST);
+        break;
+      }
+      default: {
+        LOG_ERROR("Unrecognized SSL error code: %d", err);
+        handshake_fail = true;
+      }
+    }
+  }
+  if (!handshake_fail) {
+    // handshake succeeds, reset ssl_sent_
+    ssl_handshake_ = false;
+    finish_startup_packet_ = false;
+    return Transition::NEED_DATA;
+  } else {
+    throw NetworkProcessException("SSL handshake failure");
+  }
+
+
 }
 
 Transition ConnectionHandle::Process() {
