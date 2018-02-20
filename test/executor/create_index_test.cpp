@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// delete_test.cpp
+// create_index_test.cpp
 //
 // Identification: test/executor/create_index_test.cpp
 //
