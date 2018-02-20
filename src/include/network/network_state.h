@@ -47,7 +47,8 @@ enum class Transition {
   // TODO(tianyu) generalize this symbol, this is currently only used in process
   GET_RESULT,
   FINISH,
-  RETRY
+  RETRY,
+  NEED_SSL_HANDSHAKE
 };
 }
 }

@@ -649,7 +649,6 @@ Transition ConnectionHandle::Wait() {
 }
 
 Transition ConnectionHandle::SSL_handshake() {
-  
   if (conn_SSL_context == nullptr) {
     // TODO(Tianyi) encapsulate this
     conn_SSL_context = SSL_new(PelotonServer::ssl_context);
@@ -663,9 +662,8 @@ Transition ConnectionHandle::SSL_handshake() {
     }
   }
 
-  bool handshake_fail = false;
-    // TODO(Yuchen): post-connection verification?
-  while (!handshake_fail) {
+  // TODO(Yuchen): post-connection verification?
+  while (true) {
     // clear current thread's error queue before any OpenSSL call
     ERR_clear_error();
     int ssl_accept_ret = SSL_accept(conn_SSL_context);
@@ -686,16 +684,14 @@ Transition ConnectionHandle::SSL_handshake() {
               "ssl_error_ssl, %s",
               error_string);
         }
-        handshake_fail = true;
-        break;
+        return FINISH;
       }
       case SSL_ERROR_ZERO_RETURN: {
         LOG_ERROR(
             "Could not accept SSL connection: EOF detected, "
             "ssl_error_zero_return, %s",
             error_string);
-        handshake_fail = true;
-        break;
+        return FINISH;
       }
       case SSL_ERROR_SYSCALL: {
         if (ecode < 0) {
@@ -706,139 +702,47 @@ Transition ConnectionHandle::SSL_handshake() {
               "ssl_sys_call, %s",
               error_string);
         }
-        handshake_fail = true;
-        break;
+        return FINISH;
       }
       case SSL_ERROR_WANT_READ: {
         UpdateEventFlags(EV_READ | EV_PERSIST);
-        break;
+        return Transition::NEED_DATA;
       }
       case SSL_ERROR_WANT_WRITE: {
         UpdateEventFlags(EV_WRITE | EV_PERSIST);
-        break;
+        return Transition::NEED_DATA;
       }
       default: {
         LOG_ERROR("Unrecognized SSL error code: %d", err);
-        handshake_fail = true;
+        return FINISH;
       }
     }
   }
-  if (!handshake_fail) {
-    // handshake succeeds, reset ssl_sent_
-    ssl_handshake_ = false;
-    finish_startup_packet_ = false;
-    return Transition::NEED_DATA;
-  } else {
-    throw NetworkProcessException("SSL handshake failure");
-  }
-
-
 }
 
 Transition ConnectionHandle::Process() {
-  // TODO(tianyu): further simplify this logic
-  if (!finish_startup_packet_) {
-    // Process initial
-    if (ssl_handshake_) {
-      // start SSL handshake
-      conn_SSL_context = SSL_new(PelotonServer::ssl_context);
-      SSL_set_session_id_context(conn_SSL_context, nullptr, 0);
-      if (SSL_set_fd(conn_SSL_context, sock_fd_) == 0) {
-        LOG_ERROR("Failed to set SSL fd");
-        PL_ASSERT(false);
-      }
-
-      bool handshake_fail = false;
-      // TODO(Yuchen): post-connection verification?
-      while (!handshake_fail) {
-        // clear current thread's error queue before any OpenSSL call
-        ERR_clear_error();
-        int ssl_accept_ret = SSL_accept(conn_SSL_context);
-        if (ssl_accept_ret > 0) {
-          break;
-        }
-        int err = SSL_get_error(conn_SSL_context, ssl_accept_ret);
-        int ecode = ERR_get_error();
-        char error_string[120];
-        ERR_error_string(ecode, error_string);
-        switch (err) {
-          case SSL_ERROR_SSL: {
-            if (ecode < 0) {
-              LOG_ERROR("Could not accept SSL connection");
-            } else {
-              LOG_ERROR(
-                  "Could not accept SSL connection: EOF detected, "
-                  "ssl_error_ssl, %s",
-                  error_string);
-            }
-            handshake_fail = true;
-            break;
-          }
-          case SSL_ERROR_ZERO_RETURN: {
-            LOG_ERROR(
-                "Could not accept SSL connection: EOF detected, "
-                "ssl_error_zero_return, %s",
-                error_string);
-            handshake_fail = true;
-            break;
-          }
-          case SSL_ERROR_SYSCALL: {
-            if (ecode < 0) {
-              LOG_ERROR("Could not accept SSL connection, %s", error_string);
-            } else {
-              LOG_ERROR(
-                  "Could not accept SSL connection: EOF detected, "
-                  "ssl_sys_call, %s",
-                  error_string);
-            }
-            handshake_fail = true;
-            break;
-          }
-          case SSL_ERROR_WANT_READ:
-          case SSL_ERROR_WANT_WRITE:
-            break;
-          default: {
-            LOG_ERROR("Unrecognized SSL error code: %d", err);
-            handshake_fail = true;
-          }
-        }
-      }
-      if (!handshake_fail) {
-        // handshake succeeds, reset ssl_sent_
-        ssl_handshake_ = false;
-        finish_startup_packet_ = false;
-        return Transition::NEED_DATA;
-      } else {
-        throw NetworkProcessException("SSL handshake failure");
-      }
-    }
-
-    switch (ProcessInitial()) {
-      case ProcessResult::COMPLETE:
-        return Transition::PROCEED;
-      case ProcessResult::MORE_DATA_REQUIRED:
-        return Transition::NEED_DATA;
-      default:  // PROCESSING is impossible to happens in initial packets
-        throw NetworkProcessException("Should not reach");
-    }
-  } else {
-    ProcessResult status =
-        protocol_handler_->Process(*rbuf_, (size_t)handler_->Id());
-
-    switch (status) {
-      case ProcessResult::MORE_DATA_REQUIRED:
-        return Transition::NEED_DATA;
-      case ProcessResult::COMPLETE:
-        return Transition::PROCEED;
-      case ProcessResult::PROCESSING:
-        EventUtil::EventDel(network_event);
-        LOG_TRACE("ProcessResult: queueing");
-        return Transition::GET_RESULT;
-      case ProcessResult::TERMINATE:
-        return Transition::FINISH;
-    }
+  if (protocol_handler_ == nullptr) {
+    // TODO(Tianyi) Check the rbuf here before we create one if we have
+    // another protocol handler
+    protocol_handler_ = ProtocolHandlerFactory::CreateProtocolHandler(
+        ProtocolHandlerType::Postgres, &traffic_cop_);
   }
-  throw NetworkProcessException("Unexpected process result");
+
+  ProcessResult status =
+      protocol_handler_->Process(*rbuf_, (size_t)handler_->Id());
+
+  switch (status) {
+    case ProcessResult::MORE_DATA_REQUIRED:
+      return Transition::NEED_DATA;
+    case ProcessResult::COMPLETE:
+      return Transition::PROCEED;
+    case ProcessResult::PROCESSING:
+      EventUtil::EventDel(network_event);
+      LOG_TRACE("ProcessResult: queueing");
+      return Transition::GET_RESULT;
+    case ProcessResult::TERMINATE:
+      return Transition::FINISH;
+  }
 }
 
 Transition ConnectionHandle::ProcessWrite() {
