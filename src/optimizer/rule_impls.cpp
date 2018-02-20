@@ -97,7 +97,6 @@ void InnerJoinAssociativity::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed,
     OptimizeContext *context) const {
-
   // NOTE: Transforms (left JOIN middle) JOIN right -> left JOIN (middle JOIN
   // right) Variables are named accordingly to above transformation
   auto parent_join = input->Op().As<LogicalInnerJoin>();
@@ -113,7 +112,8 @@ void InnerJoinAssociativity::Transform(
   // Get Alias sets
   auto &memo = context->metadata->memo;
 
-  auto middle_group_id = children[0]->Children()[1]->Op().As<LeafOperator>()->origin_group;
+  auto middle_group_id =
+      children[0]->Children()[1]->Op().As<LeafOperator>()->origin_group;
   auto right_group_id = children[1]->Op().As<LeafOperator>()->origin_group;
 
   const auto &middle_group_aliases_set =
@@ -123,8 +123,10 @@ void InnerJoinAssociativity::Transform(
 
   // Union Predicates into single alias set for new child join
   std::unordered_set<std::string> right_join_aliases_set;
-  right_join_aliases_set.insert(middle_group_aliases_set.begin(), middle_group_aliases_set.end());
-  right_join_aliases_set.insert(right_group_aliases_set.begin(), right_group_aliases_set.end());
+  right_join_aliases_set.insert(middle_group_aliases_set.begin(),
+                                middle_group_aliases_set.end());
+  right_join_aliases_set.insert(right_group_aliases_set.begin(),
+                                right_group_aliases_set.end());
 
   // Redistribute predicates
   auto parent_join_predicates =
