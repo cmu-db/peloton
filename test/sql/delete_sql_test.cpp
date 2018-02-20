@@ -2,11 +2,11 @@
 //
 //                         Peloton
 //
-// update_sql_test.cpp
+// delete_sql_test.cpp
 //
 // Identification: test/sql/delete_sql_test.cpp
 //
-// Copyright (c) 2015-18, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 

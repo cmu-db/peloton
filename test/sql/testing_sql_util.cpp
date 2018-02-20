@@ -2,13 +2,14 @@
 //
 //                         Peloton
 //
-// sql_tests_util.cpp
+// testing_sql_util.cpp
 //
-// Identification: test/sql/sql_tests_util.cpp
+// Identification: test/sql/testing_sql_util.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 #include "sql/testing_sql_util.h"
 #include <random>
 #include "catalog/catalog.h"
