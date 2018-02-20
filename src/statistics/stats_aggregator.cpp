@@ -19,6 +19,7 @@
 #include "catalog/index_metrics_catalog.h"
 #include "catalog/query_metrics_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
+#include "index/index.h"
 #include "storage/storage_manager.h"
 #include "type/ephemeral_pool.h"
 

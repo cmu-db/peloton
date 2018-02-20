@@ -39,20 +39,20 @@ llvm::Constant *CodeGen::ConstBool(bool val) const {
   }
 }
 
-llvm::Constant *CodeGen::Const8(uint8_t val) const {
-  return llvm::ConstantInt::get(Int8Type(), val, false);
+llvm::Constant *CodeGen::Const8(int8_t val) const {
+  return llvm::ConstantInt::get(Int8Type(), val, true);
 }
 
-llvm::Constant *CodeGen::Const16(uint16_t val) const {
-  return llvm::ConstantInt::get(Int16Type(), val, false);
+llvm::Constant *CodeGen::Const16(int16_t val) const {
+  return llvm::ConstantInt::get(Int16Type(), val, true);
 }
 
-llvm::Constant *CodeGen::Const32(uint32_t val) const {
-  return llvm::ConstantInt::get(Int32Type(), val, false);
+llvm::Constant *CodeGen::Const32(int32_t val) const {
+  return llvm::ConstantInt::get(Int32Type(), val, true);
 }
 
-llvm::Constant *CodeGen::Const64(uint64_t val) const {
-  return llvm::ConstantInt::get(Int64Type(), val, false);
+llvm::Constant *CodeGen::Const64(int64_t val) const {
+  return llvm::ConstantInt::get(Int64Type(), val, true);
 }
 
 llvm::Constant *CodeGen::ConstDouble(double val) const {

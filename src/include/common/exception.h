@@ -6,7 +6,7 @@
 //
 // Identification: src/include/common/exception.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -21,9 +21,10 @@
 #include <iostream>
 #include <memory>
 #include <stdexcept>
+#include <string>
 
 #include "type/type.h"
-#include "internal_types.h"
+#include "common/internal_types.h"
 
 namespace peloton {
 
