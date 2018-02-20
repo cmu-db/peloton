@@ -14,7 +14,7 @@ import datetime
 import subprocess
 
 from functools import reduce
-from script.helpers import CLANG_FORMAT
+from script.helpers import CLANG_FORMAT, PELOTON_DIR, CLANG_FORMAT_FILE, LOG
 
 ## ==============================================
 ## CONFIGURATION
@@ -23,8 +23,6 @@ from script.helpers import CLANG_FORMAT
 # NOTE: absolute path to peloton directory is calculated from current directory
 # directory structure: peloton/scripts/formatting/<this_file>
 # PELOTON_DIR needs to be redefined if the directory structure is changed
-CODE_SOURCE_DIR = os.path.abspath(os.path.dirname(__file__))
-PELOTON_DIR = reduce(os.path.join, [CODE_SOURCE_DIR, os.path.pardir, os.path.pardir])
 
 #other directory paths used are relative to peloton_dir
 PELOTON_SRC_DIR = os.path.join(PELOTON_DIR, "src")
@@ -34,8 +32,6 @@ PELOTON_TESTS_DIR = os.path.join(PELOTON_DIR, "test")
 DEFAULT_DIRS = []
 DEFAULT_DIRS.append(PELOTON_SRC_DIR)
 DEFAULT_DIRS.append(PELOTON_TESTS_DIR)
-
-CLANG_FORMAT_FILE = os.path.join(PELOTON_DIR, ".clang-format")
 
 ## ==============================================
 ##             HEADER CONFIGURATION
@@ -61,20 +57,6 @@ header_comment_5 = header_comment_line_6 + header_comment_line_7 \
 
 #regular expresseion used to track header
 HEADER_REGEX = re.compile(r"((\/\/===-*===\/\/\n(\/\/.*\n)*\/\/===-*===\/\/[\n]*)\n\n)*")
-
-## ==============================================
-##             LOGGING CONFIGURATION
-## ==============================================
-
-LOG = logging.getLogger(__name__)
-LOG_HANDLER = logging.StreamHandler()
-LOG_FORMATTER = logging.Formatter(
-    fmt='%(asctime)s [%(funcName)s:%(lineno)03d] %(levelname)-5s: %(message)s',
-    datefmt='%m-%d-%Y %H:%M:%S'
-)
-LOG_HANDLER.setFormatter(LOG_FORMATTER)
-LOG.addHandler(LOG_HANDLER)
-LOG.setLevel(logging.INFO)
 
 ## ==============================================
 ##           UTILITY FUNCTION DEFINITIONS
@@ -126,7 +108,6 @@ def format_file(file_path, update_header, clang_format_code):
 
     #END WITH
 #END FORMAT__FILE(FILE_NAME)
-
 
 
 def format_dir(dir_path, update_header, clang_format_code):
