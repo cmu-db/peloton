@@ -47,9 +47,7 @@ namespace index {
 class Index;
 }
 
-namespace logging {
-class LogManager;
-}
+
 
 namespace concurrency {
 class TransactionContext;
@@ -78,7 +76,6 @@ class DataTable : public AbstractTable {
   friend class TileGroup;
   friend class TileGroupFactory;
   friend class TableFactory;
-  friend class logging::LogManager;
 
   DataTable() = delete;
   DataTable(DataTable const &) = delete;

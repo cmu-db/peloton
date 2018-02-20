@@ -18,6 +18,7 @@
 #include "common/platform.h"
 #include "common/macros.h"
 #include "trigger/trigger.h"
+#include "logging/log_buffer.h"
 
 #include <chrono>
 #include <thread>
@@ -87,6 +88,8 @@ void TransactionContext::Init(const size_t thread_id,
   gc_object_set_.reset(new GCObjectSet());
 
   on_commit_triggers_.reset();
+
+  ResetLogBuffer();
 }
 
 RWType TransactionContext::GetRWType(const ItemPointer &location) {

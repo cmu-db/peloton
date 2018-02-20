@@ -22,7 +22,6 @@
 #include "common/printable.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "gc/gc_manager.h"
-#include "logging/log_manager.h"
 #include "storage/backend_manager.h"
 #include "type/value.h"
 #include "storage/tuple.h"

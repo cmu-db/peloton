@@ -23,6 +23,8 @@
 #include "common/item_pointer.h"
 #include "common/printable.h"
 #include "common/internal_types.h"
+#include "logging/log_buffer.h"
+
 
 namespace peloton {
 
@@ -75,8 +77,12 @@ class TransactionContext : public Printable {
 
   inline uint64_t GetTimestamp() const { return timestamp_; }
 
+  inline logging::LogBuffer* GetLogBuffer() const { return log_buffer_; }
+
   inline const std::vector<std::string>& GetQueryStrings() const {
                                                       return query_strings_; }
+
+  inline void ResetLogBuffer() { log_buffer_ = new logging::LogBuffer(); }
 
   inline void SetCommitId(const cid_t commit_id) { commit_id_ = commit_id; }
 
@@ -208,6 +214,8 @@ class TransactionContext : public Printable {
   IsolationLevelType isolation_level_;
 
   std::unique_ptr<trigger::TriggerSet> on_commit_triggers_;
+
+  logging::LogBuffer *log_buffer_;
 };
 
 }  // namespace concurrency

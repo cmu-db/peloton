@@ -19,6 +19,9 @@
 #include "common/synchronization/spin_latch.h"
 
 namespace peloton {
+
+namespace logging {}
+
 namespace concurrency {
 
 //===--------------------------------------------------------------------===//

@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <cinttypes>
+#include <include/threadpool/mono_queue_pool.h>
 #include "concurrency/timestamp_ordering_transaction_manager.h"
 
 #include "catalog/manager.h"
@@ -19,7 +20,10 @@
 #include "common/platform.h"
 #include "concurrency/transaction_context.h"
 #include "gc/gc_manager_factory.h"
-#include "logging/log_manager_factory.h"
+#include "logging/log_record.h"
+#include "logging/log_buffer.h"
+#include "logging/wal_logger.h"
+#include "threadpool/logger_queue_pool.h"
 #include "settings/settings_manager.h"
 
 namespace peloton {
@@ -491,6 +495,26 @@ void TimestampOrderingTransactionManager::PerformInsert(
   // Write down the head pointer's address in tile group header
   tile_group_header->SetIndirection(tuple_id, index_entry_ptr);
 
+  logging::LogRecord record =
+          logging::LogRecordFactory::CreateTupleRecord(
+                  LogRecordType::TUPLE_INSERT, location, current_txn->GetEpochId(),
+                  current_txn->GetTransactionId(), current_txn->GetCommitId());
+
+  current_txn->GetLogBuffer()->WriteRecord(record);
+
+  if(current_txn->GetLogBuffer()->GetSize() >= logging::LogBuffer::GetThreshold()) {
+
+    LOG_DEBUG("Submitting log buffer %p", current_txn->GetLogBuffer());
+
+    /* insert to the queue */
+   threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(current_txn->GetLogBuffer());
+
+    /* allocate a new buffer for the current transaction */
+    current_txn->ResetLogBuffer();
+  }
+
+
+
   // Increment table insert op stats
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
       StatsType::INVALID) {
@@ -694,6 +718,16 @@ void TimestampOrderingTransactionManager::PerformDelete(
 
   current_txn->RecordDelete(old_location);
 
+//  logging::LogRecord record =
+//          logging::LogRecordFactory::CreateTupleRecord(
+//                  LogRecordType::TUPLE_DELETE,
+//                  old_location, current_txn->GetEpochId(),
+//                  current_txn->GetTransactionId(),
+//                  current_txn->GetCommitId());
+//
+//  logging::WalLogger::WriteRecordToBuffer(record, current_txn->GetLogBuffer());
+
+
   // Increment table delete op stats
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
       StatsType::INVALID) {
@@ -702,6 +736,7 @@ void TimestampOrderingTransactionManager::PerformDelete(
   }
 }
 
+// called when the current transaction creates a new version and then deletes that version.
 void TimestampOrderingTransactionManager::PerformDelete(
     TransactionContext *const current_txn, const ItemPointer &location) {
   PL_ASSERT(current_txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY);
@@ -720,15 +755,30 @@ void TimestampOrderingTransactionManager::PerformDelete(
 
   // Add the old tuple into the delete set
   auto old_location = tile_group_header->GetNextItemPointer(tuple_id);
-  if (old_location.IsNull() == false) {
+
+  if (old_location.IsNull() == false) {         // update and delete by the current transaction
     // if this version is not newly inserted.
     current_txn->RecordDelete(old_location);
-  } else {
+  } else {                                      // insert and delete by the current transaction
     // if this version is newly inserted.
     current_txn->RecordDelete(location);
   }
 
-  // Increment table delete op stats
+//  logging::LogRecord record =
+//          logging::LogRecordFactory::CreateTupleRecord(
+//                  LogRecordType::TUPLE_DELETE,
+//                  location, current_txn->GetEpochId(),
+//                  current_txn->GetTransactionId(),
+//                  current_txn->GetCommitId());
+//
+//
+//
+//  logging::WalLogger::WriteRecordToBuffer(record, current_txn->GetLogBuffer());
+
+
+
+
+      // Increment table delete op stats
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
       StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()->IncrementTableDeletes(
@@ -753,9 +803,9 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
   //////////////////////////////////////////////////////////
 
   auto &manager = catalog::Manager::GetInstance();
-  auto &log_manager = logging::LogManager::GetInstance();
+  //auto &log_manager = logging::LogManager::GetInstance();
 
-  log_manager.StartLogging();
+  //log_manager.StartLogging();
 
   // generate transaction id.
   cid_t end_commit_id = current_txn->GetCommitId();
@@ -832,7 +882,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         gc_set->operator[](tile_group_id)[tuple_slot] =
             GCVersionType::COMMIT_UPDATE;
 
-        log_manager.LogUpdate(new_version);
+        //log_manager.LogUpdate(new_version);
 
       } else if (tuple_entry.second == RWType::DELETE) {
         ItemPointer new_version =
@@ -865,7 +915,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
         gc_set->operator[](tile_group_id)[tuple_slot] =
             GCVersionType::COMMIT_DELETE;
 
-        log_manager.LogDelete(ItemPointer(tile_group_id, tuple_slot));
+        //log_manager.LogDelete(ItemPointer(tile_group_id, tuple_slot));
 
       } else if (tuple_entry.second == RWType::INSERT) {
         PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
@@ -881,7 +931,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
 
         // nothing to be added to gc set.
 
-        log_manager.LogInsert(ItemPointer(tile_group_id, tuple_slot));
+        //log_manager.LogInsert(ItemPointer(tile_group_id, tuple_slot));
 
       } else if (tuple_entry.second == RWType::INS_DEL) {
         PL_ASSERT(tile_group_header->GetTransactionId(tuple_slot) ==
@@ -907,7 +957,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
 
   ResultType result = current_txn->GetResult();
 
-  log_manager.LogEnd();
+  //log_manager.LogEnd();
 
   EndTransaction(current_txn);
 
