@@ -18,6 +18,7 @@
 #include "concurrency/epoch_manager_factory.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "settings/settings_manager.h"
+#include "index/index.h"
 #include "storage/database.h"
 #include "storage/tile_group.h"
 #include "storage/tuple.h"
