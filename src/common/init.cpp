@@ -12,16 +12,17 @@
 
 #include "common/init.h"
 
-#include <google/protobuf/stubs/common.h>
 #include <gflags/gflags.h>
+#include <google/protobuf/stubs/common.h>
 
 #include "brain/index_tuner.h"
 #include "brain/layout_tuner.h"
 #include "catalog/catalog.h"
-#include "common/thread_pool.h"
 #include "common/statement_cache_manager.h"
+#include "common/thread_pool.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "gc/gc_manager_factory.h"
+#include "index/index.h"
 #include "settings/settings_manager.h"
 #include "threadpool/mono_queue_pool.h"
 

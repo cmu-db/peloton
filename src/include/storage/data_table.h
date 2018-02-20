@@ -21,8 +21,6 @@
 #include "common/item_pointer.h"
 #include "common/platform.h"
 #include "common/container/lock_free_array.h"
-#include "executor/executor_context.h"
-#include "index/index.h"
 #include "storage/abstract_table.h"
 #include "storage/indirection_array.h"
 #include "trigger/trigger.h"
@@ -37,23 +35,23 @@ namespace peloton {
 
 namespace brain {
 class Sample;
-}
+}  // namespace brain
 
 namespace catalog {
 class ForeignKey;
-}
+}  // namespace catalog
 
 namespace index {
 class Index;
-}
+}  // namespace index
 
 namespace logging {
 class LogManager;
-}
+}  // namespace logging
 
 namespace concurrency {
 class TransactionContext;
-}
+}  // namespace concurrency
 
 namespace storage {
 
