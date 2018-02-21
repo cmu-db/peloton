@@ -66,6 +66,9 @@ bool TimestampOrderingTransactionManager::SetLastReaderCommitId(
     // then set last_reader_cid to current_cid.
     if (*ts_ptr < current_cid) {
       *ts_ptr = current_cid;
+      // Since we need this memory address to be updated before other
+      // transactions attempt to modify/read the tuple.
+      COMPILER_MEMORY_FENCE;
     }
 
     GetSpinLatchField(tile_group_header, tuple_id)->Unlock();
@@ -779,7 +782,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
       StatsType::INVALID) {
     if (!rw_set.IsEmpty()) {
-      // Call the GetIterator() function to explicitly lock the cuckoohash
+      // Call the GetConstIterator() function to explicitly lock the cuckoohash
       // and initilaize the iterator
       auto rw_set_lt = rw_set.GetConstIterator();
       const auto tile_group_id = rw_set_lt.begin()->first.block;
@@ -793,7 +796,7 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
   // 3. install a new tuple for insert operations.
   // Iterate through each item pointer in the read write set
 
-  // TODO: This might be inefficient since we will have to get the
+  // TODO (Pooja): This might be inefficient since we will have to get the
   // tile_group_header for each entry. Check if this needs to be consolidated
   for (const auto &tuple_entry : rw_set.GetConstIterator()) {
     ItemPointer item_ptr = tuple_entry.first;
@@ -955,7 +958,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
       StatsType::INVALID) {
     if (!rw_set.IsEmpty()) {
-      // Call the GetIterator() function to explicitly lock the cuckoohash
+      // Call the GetConstIterator() function to explicitly lock the cuckoohash
       // and initilaize the iterator
       auto rw_set_lt = rw_set.GetConstIterator();
       const auto tile_group_id = rw_set_lt.begin()->first.block;
@@ -964,7 +967,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
   }
 
   // Iterate through each item pointer in the read write set
-  // TODO: This might be inefficient since we will have to get the
+  // TODO (Pooja): This might be inefficient since we will have to get the
   // tile_group_header for each entry. Check if this needs to be consolidated
   for (const auto &tuple_entry : rw_set.GetConstIterator()) {
     ItemPointer item_ptr = tuple_entry.first;
