@@ -578,14 +578,8 @@ TEST_F(InsertSQLTests, NonExistentTable) {
   // Insert an int into a non-existent table.
   std::string query("INSERT INTO NonExistentTable VALUES(3);");
   txn = txn_manager.BeginTransaction();
-  EXPECT_THROW({
-    try {
-      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn);
-    } catch (peloton::CatalogException &ex) {
-      EXPECT_STREQ("Table nonexistenttable is not found", ex.what());
-      throw peloton::CatalogException(ex.what());
-    }
-  }, peloton::CatalogException);
+  EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
+               peloton::CatalogException);
 }
 
 }  // namespace test
