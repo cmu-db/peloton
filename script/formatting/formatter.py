@@ -14,7 +14,8 @@ import datetime
 import subprocess
 
 from functools import reduce
-from script.helpers import CLANG_FORMAT, PELOTON_DIR, CLANG_FORMAT_FILE, LOG
+from script.helpers import CLANG_FORMAT, PELOTON_DIR, CLANG_FORMAT_FILE, LOG,\
+clang_format
 
 ## ==============================================
 ## CONFIGURATION
@@ -98,13 +99,9 @@ def format_file(file_path, update_header, clang_format_code):
             file.write(file_data)
 
         elif clang_format_code:
-            if CLANG_FORMAT is None:
+            if clang_format(file_path) is None:
                 LOG.error("clang-format seems not installed")
-                exit("clang-format seems not installed")
-
-            formatting_command = CLANG_FORMAT + " -style=file -i " + file_path
-            LOG.info(formatting_command)
-            subprocess.call([CLANG_FORMAT, "-style=file", "-i", file_path])
+                exit()
 
     #END WITH
 #END FORMAT__FILE(FILE_NAME)

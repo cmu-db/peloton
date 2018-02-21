@@ -42,7 +42,7 @@ def find_clangformat():
     return path
 
 CLANG_FORMAT = find_clangformat()
-
+CLANG_COMMAND_PREFIX = [CLANG_FORMAT, "-style=file"]
 
 def clang_check(file_path):
     """Checks and reports bad code formatting."""
@@ -57,7 +57,7 @@ def clang_check(file_path):
     if CLANG_FORMAT is None:
         LOG.error("clang-format seems not installed")
         exit()
-    clang_format_cmd = [CLANG_FORMAT, "-style=file", file_path]
+    clang_format_cmd = CLANG_COMMAND_PREFIX + [file_path]
     formatted_src = subprocess.check_output(clang_format_cmd).splitlines(True)
 
     # For Python 3, the above command gives a list of binary sequences, each
@@ -84,3 +84,13 @@ def clang_check(file_path):
                 file_status = False
 
         return file_status
+
+
+def clang_format(file_path):
+    """Formats the file at file_path"""
+    if CLANG_FORMAT is None:
+        return False
+    formatting_command = CLANG_COMMAND_PREFIX + ["-i", file_path]
+    LOG.info(' '.join(formatting_command))
+    subprocess.call(formatting_command)
+    return True
