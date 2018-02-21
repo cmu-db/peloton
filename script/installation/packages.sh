@@ -136,6 +136,12 @@ elif [ "$DISTRO" = "DEBIAN OS" ]; then
 ## FEDORA
 ## ------------------------------------------------
 elif [[ "$DISTRO" == *"FEDORA"* ]]; then
+    if [ "$DISTRO_VER" -le "26" ]; then
+        LLVM_INSTALL_VERSION=""
+    else
+        LLVM_INSTALL_VERSION="3.9"
+    fi
+    
     sudo dnf -q install -y \
         git \
         gcc-c++ \
@@ -153,9 +159,9 @@ elif [[ "$DISTRO" == *"FEDORA"* ]]; then
         lcov \
         libpqxx-devel \
         libpqxx \
-        llvm \
-        llvm-devel \
-        llvm-static \
+        llvm${LLVM_INSTALL_VERSION} \
+        llvm${LLVM_INSTALL_VERSION}-devel \
+        llvm${LLVM_INSTALL_VERSION}-static \
         libedit-devel \
         postgresql \
         libatomic
