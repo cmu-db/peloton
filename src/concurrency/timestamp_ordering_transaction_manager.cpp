@@ -66,9 +66,6 @@ bool TimestampOrderingTransactionManager::SetLastReaderCommitId(
     // then set last_reader_cid to current_cid.
     if (*ts_ptr < current_cid) {
       *ts_ptr = current_cid;
-      // Since we need this memory address to be updated before other
-      // transactions attempt to modify/read the tuple.
-      COMPILER_MEMORY_FENCE;
     }
 
     GetSpinLatchField(tile_group_header, tuple_id)->Unlock();
