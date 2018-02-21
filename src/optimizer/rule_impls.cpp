@@ -61,7 +61,7 @@ void InnerJoinCommutativity::Transform(
   PL_ASSERT(children.size() == 2);
   LOG_TRACE(
       "Reorder left child with op %s and right child with op %s for inner join",
-      children[0]->Op().name().c_str(), children[1]->Op().name().c_str());
+      children[0]->Op().GetName().c_str(), children[1]->Op().GetName().c_str());
   result_plan->PushChild(children[1]);
   result_plan->PushChild(children[0]);
 
@@ -261,7 +261,7 @@ void GetToIndexScan::Transform(
                   ->GetValue());
           LOG_TRACE("Value Type: %d",
                     static_cast<int>(
-                      reinterpret_cast<expression::ConstantValueExpression *>(
+                        reinterpret_cast<expression::ConstantValueExpression *>(
                         expr->GetModifiableChild(1))
                         ->GetValueType()));
         } else {
