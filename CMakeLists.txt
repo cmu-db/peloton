@@ -97,7 +97,20 @@ endif()
 # ---[ Warnings
 peloton_warnings_disable(CMAKE_CXX_FLAGS -Wno-strict-aliasing -Wno-implicit-fallthrough)
 
-# Turn on sanitizers if necessary.
+# ---[ Check if we should use the GNU Gold linker
+set(USE_GOLD true CACHE BOOL "Use the GNU Gold linker if available")
+if (USE_GOLD)
+    execute_process(COMMAND ${CMAKE_C_COMPILER} -fuse-ld=gold -Wl,--version ERROR_QUIET OUTPUT_VARIABLE LD_VERSION)
+    if ("${LD_VERSION}" MATCHES "GNU gold")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=gold -Wl,--disable-new-dtags")
+        set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=gold -Wl,--disable-new-dtags")
+    else ()
+        message(WARNING "GNU gold linker isn't available, using the default system linker.")
+        set(USE_LD_GOLD OFF)
+    endif ()
+endif()
+
+# ---[ Turn on sanitizers if necessary.
 if(USE_SANITIZER)
     if (USE_SANITIZER STREQUAL "Address")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
@@ -116,9 +129,6 @@ if(USE_SANITIZER)
         if (${FSANITIZE_USE_AFTER_SCOPE_FLAG})
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize-address-use-after-scope")
         endif()
-    endif()
-    if (CMAKE_COMPILER_IS_GNUCC)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fuse-ld=gold")
     endif()
 endif()
 
