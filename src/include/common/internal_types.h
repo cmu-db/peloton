@@ -467,7 +467,8 @@ enum class IndexType {
   INVALID = INVALID_TYPE_ID,  // invalid index type
   BWTREE = 1,                 // bwtree
   HASH = 2,                   // hash
-  SKIPLIST = 3                // skiplist
+  SKIPLIST = 3,               // skiplist
+  ART = 4,                    // ART
 };
 std::string IndexTypeToString(IndexType type);
 IndexType StringToIndexType(const std::string &str);
