@@ -89,8 +89,9 @@ def clang_check(file_path):
 def clang_format(file_path):
     """Formats the file at file_path"""
     if CLANG_FORMAT is None:
-        return False
+        LOG.error("clang-format seems not installed")
+        exit()
+
     formatting_command = CLANG_COMMAND_PREFIX + ["-i", file_path]
     LOG.info(' '.join(formatting_command))
     subprocess.call(formatting_command)
-    return True

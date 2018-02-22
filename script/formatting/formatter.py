@@ -99,9 +99,7 @@ def format_file(file_path, update_header, clang_format_code):
             file.write(file_data)
 
         elif clang_format_code:
-            if clang_format(file_path) is None:
-                LOG.error("clang-format seems not installed")
-                exit()
+            clang_format(file_path)
 
     #END WITH
 #END FORMAT__FILE(FILE_NAME)
