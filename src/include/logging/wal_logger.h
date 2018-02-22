@@ -4,7 +4,11 @@
 
 #pragma once
 
+#include <deque>
+
+#include "logging/log_buffer.h"
 #include "logging/log_record.h"
+#include "logging/wal_log_manager.h"
 #include "type/serializeio.h"
 
 
@@ -16,32 +20,30 @@ namespace storage {
 
 namespace logging {
 
-#define TRANSACTION_BUFFER_LIMIT 2048;
+
 
 class WalLogger {
-  public:
+private:
+    struct logger_callback{
 
-//    WalLogger(const size_t &log_id, const std::string &log_dir)
-//            : log_id_(log_id), log_dir_(log_dir) {}
+    };
 
-    WalLogger() {}
+public:
 
-    ~WalLogger() {}
+  WalLogger() {
+      disk_buffer_ = new LogBuffer(LogManager::GetLoggerBufferSize());
+  }
 
+  ~WalLogger() {}
 
+  bool IsFlushNeeded(bool pending_buffers);
+  void FlushToDisk();
+  void AppendLogBuffer(LogBuffer *buffer);
 
-//  private:
-//    std::string GetLogFileFullPath() {
-//      return log_dir_ + "/" + logging_filename_prefix_ + "_" +
-//             std::to_string(log_id_);
-//    }
+private:
+  LogBuffer *disk_buffer_;
+  std::deque<std::pair<CallbackFunction, void *>> callbacks_;
 
-
-//  private:
-//    size_t log_id_;
-//    std::string log_dir_;
-//
-//    const std::string logging_filename_prefix_ = "logfile";
 };
 }
 }

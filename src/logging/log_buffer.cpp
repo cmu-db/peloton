@@ -14,16 +14,16 @@ namespace logging{
 void LogBuffer::WriteRecord(LogRecord &record) {
 
   // Reserve for the frame length
-  size_t start = output_buffer.Position();
-  output_buffer.WriteInt(0);
+  size_t start = log_buffer_.Position();
+  log_buffer_.WriteInt(0);
 
   LogRecordType type = record.GetType();
-  output_buffer.WriteEnumInSingleByte(
+  log_buffer_.WriteEnumInSingleByte(
           static_cast<int>(type));
 
-  output_buffer.WriteLong(record.GetEpochId());
-  output_buffer.WriteLong(record.GetTransactionId());
-  output_buffer.WriteLong(record.GetCommitId());
+  log_buffer_.WriteLong(record.GetEpochId());
+  log_buffer_.WriteLong(record.GetTransactionId());
+  log_buffer_.WriteLong(record.GetCommitId());
 
 
   switch (type) {
@@ -34,11 +34,11 @@ void LogBuffer::WriteRecord(LogRecord &record) {
       std::vector<catalog::Column> columns;
 
       // Write down the database id and the table id
-      output_buffer.WriteLong(tg->GetDatabaseId());
-      output_buffer.WriteLong(tg->GetTableId());
+      log_buffer_.WriteLong(tg->GetDatabaseId());
+      log_buffer_.WriteLong(tg->GetTableId());
 
-      output_buffer.WriteLong(tuple_pos.block);
-      output_buffer.WriteLong(tuple_pos.offset);
+      log_buffer_.WriteLong(tuple_pos.block);
+      log_buffer_.WriteLong(tuple_pos.offset);
 
       // Write the full tuple into the buffer
       for (auto schema : tg->GetTileSchemas()) {
@@ -52,7 +52,7 @@ void LogBuffer::WriteRecord(LogRecord &record) {
 
         // TODO: check if GetValue() returns variable length fields appropriately
         auto val = container_tuple.GetValue(oid);
-        val.SerializeTo(output_buffer);
+        val.SerializeTo(log_buffer_);
       }
       break;
     }
@@ -73,8 +73,8 @@ void LogBuffer::WriteRecord(LogRecord &record) {
 
   // Add the frame length
   // XXX: We rely on the fact that the serializer treat a int32_t as 4 bytes
-  int32_t length = output_buffer.Position() - start - sizeof(int32_t);
-  output_buffer.WriteIntAt(start, length);
+  int32_t length = log_buffer_.Position() - start - sizeof(int32_t);
+  log_buffer_.WriteIntAt(start, length);
 }
 
 }

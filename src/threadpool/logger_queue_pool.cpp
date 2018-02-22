@@ -1,10 +1,12 @@
 #include "threadpool/logger_queue_pool.h"
 #include "common/container/lock_free_queue.h"
-
+#include "logging/wal_logger.h"
 
 
 namespace peloton{
 namespace threadpool{
+
+
 
 void LoggerFunc(std::atomic_bool *is_running, LoggerQueue *logger_queue) {
   constexpr auto kMinPauseTime = std::chrono::microseconds(1);
@@ -22,7 +24,14 @@ void LoggerFunc(std::atomic_bool *is_running, LoggerQueue *logger_queue) {
       std::this_thread::sleep_for(pause_time);
       pause_time = std::min(pause_time * 2, kMaxPauseTime);
     } else {
-      LOG_DEBUG("Logger dequeued a log buffer %p", (void *) log_buffer);
+
+      logger.AppendLogBuffer(log_buffer);
+
+      if(logger.IsFlushNeeded(logger_queue->IsEmpty())){
+        logger.FlushToDisk();
+      }
+
+      // TODO(gandeevan): free log buffers
 
       pause_time = kMinPauseTime;
     }

@@ -7,24 +7,32 @@
 namespace peloton{
 namespace logging{
 
-class LogBuffer{
 
-private:
-  //TODO(gandeevan): Tune this size
-  const static size_t log_buffer_threshold_ = 100;  // 4 KB
+typedef void (*CallbackFunction)(void *); // function pointer type
+
+class LogBuffer{
 
 public:
 
-  LogBuffer() : task_callback_(nullptr),
-                task_callback_arg_(nullptr) {}
+  LogBuffer(size_t threshold)
+          : log_buffer_threshold_(threshold),
+            task_callback_(nullptr),
+            task_callback_arg_(nullptr) {}
 
   ~LogBuffer() {}
 
   void WriteRecord(LogRecord &record);
 
-  size_t GetSize() { return output_buffer.Size(); }
+  inline const char *GetData() { return log_buffer_.Data(); }
+  inline size_t GetSize() { return log_buffer_.Size(); }
 
-  static size_t GetThreshold() { return log_buffer_threshold_; }
+
+  inline CopySerializeOutput &GetCopySerializedOutput() { return log_buffer_; }
+
+  inline bool HasThresholdExceeded() { return log_buffer_.Size() >= log_buffer_threshold_; }
+  inline size_t GetThreshold() { return log_buffer_threshold_; }
+  inline CallbackFunction GetCallback() { return task_callback_; }
+  inline void* GetCallbackArgs() { return task_callback_arg_; }
 
   void SetTaskCallback(void (*task_callback)(void *), void *task_callback_arg) {
     task_callback_ = task_callback;
@@ -32,7 +40,8 @@ public:
   }
 
 private:
-  CopySerializeOutput output_buffer;
+  CopySerializeOutput log_buffer_;
+  size_t log_buffer_threshold_;
 
   // The current callback to be invoked after logging completes.
   void (*task_callback_)(void *);

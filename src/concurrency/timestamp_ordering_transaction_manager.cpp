@@ -502,7 +502,7 @@ void TimestampOrderingTransactionManager::PerformInsert(
 
   current_txn->GetLogBuffer()->WriteRecord(record);
 
-  if(current_txn->GetLogBuffer()->GetSize() >= logging::LogBuffer::GetThreshold()) {
+  if(current_txn->GetLogBuffer()->HasThresholdExceeded()) {
 
     LOG_DEBUG("Submitting log buffer %p", current_txn->GetLogBuffer());
 
@@ -788,7 +788,7 @@ void TimestampOrderingTransactionManager::PerformDelete(
 
 ResultType TimestampOrderingTransactionManager::CommitTransaction(
     TransactionContext *const current_txn) {
-  LOG_TRACE("Committing peloton txn : %" PRId64, current_txn->GetTransactionId());
+  LOG_DEBUG("Committing peloton txn : %" PRId64, current_txn->GetTransactionId());
 
   //////////////////////////////////////////////////////////
   //// handle READ_ONLY
