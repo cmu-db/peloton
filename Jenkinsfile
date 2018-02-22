@@ -71,91 +71,91 @@ pipeline {
                     }
                 }
 
-                // stage('Debian Stretch/gcc-6.3.0/llvm-3.8.1 (Debug/Test)') {
-                //     agent { docker { image 'debian:stretch' } }
-                //     steps {
-                //         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
-                //         sh 'python ./script/validators/source_validator.py'
-                //         sh 'mkdir build'
-                //         sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False -DUSE_SANITIZER=Address .. && make -j4'
-                //         sh 'cd build && make check -j4 || true'
-                //         sh 'cd build && make benchmark -j4'
-                //         sh 'cd build && make install'
-                //         sh 'cd build && bash ../script/testing/psql/psql_test.sh'
-                //         sh 'sudo apt-get -qq update && sudo apt-get -qq -y --no-install-recommends install wget default-jdk default-jre' // prerequisites for jdbc_validator
-                //         sh 'cd build && python ../script/validators/jdbc_validator.py'
-                //     }
-                // }
+                stage('Debian Stretch/gcc-6.3.0/llvm-3.8.1 (Debug/Test)') {
+                    agent { docker { image 'debian:stretch' } }
+                    steps {
+                        sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
+                        sh 'python ./script/validators/source_validator.py'
+                        sh 'mkdir build'
+                        sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False -DUSE_SANITIZER=Address .. && make -j4'
+                        sh 'cd build && make check -j4 || true'
+                        sh 'cd build && make benchmark -j4'
+                        sh 'cd build && make install'
+                        sh 'cd build && bash ../script/testing/psql/psql_test.sh'
+                        sh 'sudo apt-get -qq update && sudo apt-get -qq -y --no-install-recommends install wget default-jdk default-jre' // prerequisites for jdbc_validator
+                        sh 'cd build && python ../script/validators/jdbc_validator.py'
+                    }
+                }
 
-                // stage('Debian Stretch/gcc-6.3.0/llvm-3.8.1 (Release)') {
-                //     agent { docker { image 'debian:stretch' } }
-                //     steps {
-                //         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
-                //         sh 'python ./script/validators/source_validator.py'
-                //         sh 'mkdir build'
-                //         sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
-                //     }
-                // }
+                stage('Debian Stretch/gcc-6.3.0/llvm-3.8.1 (Release)') {
+                    agent { docker { image 'debian:stretch' } }
+                    steps {
+                        sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
+                        sh 'python ./script/validators/source_validator.py'
+                        sh 'mkdir build'
+                        sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
+                    }
+                }
 
-                // stage('Fedora 26/gcc-7.1.1/llvm-4.0.1 (Debug)') {
-                //     agent { docker { image 'fedora:26' } }
-                //     steps {
-                //         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
-                //         sh 'python ./script/validators/source_validator.py'
-                //         sh 'mkdir build'
-                //         sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False .. && make -j4'
-                //     }
-                // }
+                stage('Fedora 26/gcc-7.1.1/llvm-4.0.1 (Debug)') {
+                    agent { docker { image 'fedora:26' } }
+                    steps {
+                        sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
+                        sh 'python ./script/validators/source_validator.py'
+                        sh 'mkdir build'
+                        sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False .. && make -j4'
+                    }
+                }
 
-                // stage('Fedora 26/gcc-7.1.1/llvm-4.0.1 (Release)') {
-                //     agent { docker { image 'fedora:26' } }
-                //     steps {
-                //         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
-                //         sh 'python ./script/validators/source_validator.py'
-                //         sh 'mkdir build'
-                //         sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
-                //     }
-                // }
+                stage('Fedora 26/gcc-7.1.1/llvm-4.0.1 (Release)') {
+                    agent { docker { image 'fedora:26' } }
+                    steps {
+                        sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
+                        sh 'python ./script/validators/source_validator.py'
+                        sh 'mkdir build'
+                        sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
+                    }
+                }
 
-                // stage('Fedora 27/gcc-7.2.1/llvm-4.0.1 (Debug)') {
-                //     agent { docker { image 'fedora:27' } }
-                //     steps {
-                //         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
-                //         sh 'python ./script/validators/source_validator.py'
-                //         sh 'mkdir build'
-                //         sh 'cd build && PATH=/usr/lib64/llvm4.0/bin:$PATH cmake -DCMAKE_CXX_FLAGS="-isystem /usr/include/llvm4.0" -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False .. && make -j4'
-                //     }
-                // }
+                stage('Fedora 27/gcc-7.2.1/llvm-4.0.1 (Debug)') {
+                    agent { docker { image 'fedora:27' } }
+                    steps {
+                        sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
+                        sh 'python ./script/validators/source_validator.py'
+                        sh 'mkdir build'
+                        sh 'cd build && PATH=/usr/lib64/llvm4.0/bin:$PATH cmake -DCMAKE_CXX_FLAGS="-isystem /usr/include/llvm4.0" -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False .. && make -j4'
+                    }
+                }
 
-                // stage('Fedora 27/gcc-7.2.1/llvm-4.0.1 (Release)') {
-                //     agent { docker { image 'fedora:27' } }
-                //     steps {
-                //         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
-                //         sh 'python ./script/validators/source_validator.py'
-                //         sh 'mkdir build'
-                //         sh 'cd build && PATH=/usr/lib64/llvm4.0/bin:$PATH cmake -DCMAKE_CXX_FLAGS="-isystem /usr/include/llvm4.0" -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
-                //     }
-                // }
+                stage('Fedora 27/gcc-7.2.1/llvm-4.0.1 (Release)') {
+                    agent { docker { image 'fedora:27' } }
+                    steps {
+                        sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
+                        sh 'python ./script/validators/source_validator.py'
+                        sh 'mkdir build'
+                        sh 'cd build && PATH=/usr/lib64/llvm4.0/bin:$PATH cmake -DCMAKE_CXX_FLAGS="-isystem /usr/include/llvm4.0" -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
+                    }
+                }
 
-                // stage('CentOS 7/gcc-4.8.5/llvm-3.9.1 (Debug)') {
-                //     agent { docker { image 'centos:7' } }
-                //     steps {
-                //         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
-                //         sh 'python ./script/validators/source_validator.py'
-                //         sh 'mkdir build'
-                //         sh 'cd build && cmake3 -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False .. && make -j4'
-                //     }
-                // }
+                stage('CentOS 7/gcc-4.8.5/llvm-3.9.1 (Debug)') {
+                    agent { docker { image 'centos:7' } }
+                    steps {
+                        sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
+                        sh 'python ./script/validators/source_validator.py'
+                        sh 'mkdir build'
+                        sh 'cd build && cmake3 -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False .. && make -j4'
+                    }
+                }
 
-                // stage('CentOS 7/gcc-4.8.5/llvm-3.9.1 (Release)') {
-                //     agent { docker { image 'centos:7' } }
-                //     steps {
-                //         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
-                //         sh 'python ./script/validators/source_validator.py'
-                //         sh 'mkdir build'
-                //         sh 'cd build && cmake3 -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
-                //     }
-                // }
+                stage('CentOS 7/gcc-4.8.5/llvm-3.9.1 (Release)') {
+                    agent { docker { image 'centos:7' } }
+                    steps {
+                        sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
+                        sh 'python ./script/validators/source_validator.py'
+                        sh 'mkdir build'
+                        sh 'cd build && cmake3 -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
+                    }
+                }
                 // end gcc builds
 
                 // begin clang builds
