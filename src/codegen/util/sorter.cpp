@@ -227,6 +227,17 @@ void Sorter::SortParallel(
   // Wait
   merge_latch.Await(0);
 
+  // Cleanup thread-local sorters by moving their allocated blocks to us
+  for (auto *sorter : sorters) {
+    blocks_.insert(blocks_.end(), sorter->blocks_.begin(),
+                   sorter->blocks_.end());
+    sorter->tuples_.clear();
+    sorter->blocks_.clear();
+  }
+
+  tuples_start_ = tuples_.data();
+  tuples_end_ = tuples_start_ + tuples_.size();
+
   timer.Stop();
   LOG_DEBUG("Merging sorted runs time: %.2lf ms", timer.GetDuration());
 }
