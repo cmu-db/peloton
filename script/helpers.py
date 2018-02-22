@@ -9,7 +9,7 @@ import subprocess
 from functools import reduce
 
 CODE_SOURCE_DIR = os.path.abspath(os.path.dirname(__file__))
-PELOTON_DIR = CODE_SOURCE_DIR.rstrip('/script')
+PELOTON_DIR = CODE_SOURCE_DIR.replace('/script', '')
 CLANG_FORMAT_FILE = os.path.join(PELOTON_DIR, ".clang-format")
 
 FORMATTING_FILE_WHITELIST = [

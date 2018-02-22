@@ -14,7 +14,12 @@ import datetime
 import subprocess
 
 from functools import reduce
-from script.helpers import CLANG_FORMAT, PELOTON_DIR, CLANG_FORMAT_FILE, LOG,\
+
+# Following is done so that we can import from ../helpers.py
+sys.path.append(
+    os.path.abspath(os.path.dirname(__file__)).replace('/formatting', '')
+    )
+from helpers import CLANG_FORMAT, PELOTON_DIR, CLANG_FORMAT_FILE, LOG,\
 clang_format
 
 ## ==============================================

@@ -34,8 +34,7 @@ int main(int argc, char *argv[]) {
 
   // Print settings
   if (peloton::settings::SettingsManager::GetBool(
-          peloton::settings::SettingId::display_settings)) {
-    auto &settings = peloton::settings::SettingsManager::GetInstance();
+          peloton::settings::SettingId::display_settings)) {auto &settings = peloton::settings::SettingsManager::GetInstance();
     settings.ShowInfo();
   }
 

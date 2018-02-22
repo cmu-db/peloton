@@ -8,7 +8,11 @@ import sys
 import mmap
 import glob
 
-from script.helpers import clang_check, PELOTON_DIR, LOG
+# Following is done so that we can import from ../helpers.py
+sys.path.append(
+    os.path.abspath(os.path.dirname(__file__)).replace('/validators', '')
+    )
+from helpers import clang_check, PELOTON_DIR, LOG
 
 ## ==============================================
 ## CONFIGURATION
