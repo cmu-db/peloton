@@ -57,7 +57,8 @@ namespace codegen {
 BlockNestedLoopJoinTranslator::BlockNestedLoopJoinTranslator(
     const planner::NestedLoopJoinPlan &nlj_plan, CompilationContext &context,
     Pipeline &pipeline)
-    : OperatorTranslator(nlj_plan, context, pipeline), left_pipeline_(this) {
+    : OperatorTranslator(nlj_plan, context, pipeline),
+      left_pipeline_(this, Pipeline::Parallelism::Serial) {
   PELOTON_ASSERT(nlj_plan.GetChildrenSize() == 2 &&
                  "NLJ must have exactly two children");
 
@@ -137,7 +138,7 @@ void BlockNestedLoopJoinTranslator::Produce() const {
   CodeGen &codegen = GetCodeGen();
   auto *num_tuples = buffer_.NumTuples(codegen, LoadStatePtr(buffer_id_));
   auto *flush_buffer = codegen->CreateICmpNE(num_tuples, codegen.Const32(0));
-  lang::If has_tuples{codegen, flush_buffer};
+  lang::If has_tuples(codegen, flush_buffer);
   {
     // Flush remaining
     join_buffer_func_.Call(codegen);
@@ -147,7 +148,7 @@ void BlockNestedLoopJoinTranslator::Produce() const {
 
 bool BlockNestedLoopJoinTranslator::IsFromLeftChild(
     const Pipeline &pipeline) const {
-  return pipeline.GetChild() == left_pipeline_.GetChild();
+  return pipeline == left_pipeline_;
 }
 
 void BlockNestedLoopJoinTranslator::ConsumeFromLeft(
@@ -168,7 +169,7 @@ void BlockNestedLoopJoinTranslator::ConsumeFromLeft(
   auto *buf_size = buffer_.NumTuples(codegen, buffer_ptr);
   auto *flush_buffer_cond =
       codegen->CreateICmpUGE(buf_size, codegen.Const32(max_buf_rows_));
-  lang::If flush_buffer{codegen, flush_buffer_cond};
+  lang::If flush_buffer(codegen, flush_buffer_cond);
   {
     // Process and reset buffer
     join_buffer_func_.Call(codegen);
@@ -251,7 +252,7 @@ void BufferedTupleCallback::ProcessEntry(
   } else {
     // Check predicate before sending to parent
     const auto &valid = right_row_.DeriveValue(codegen, *predicate);
-    lang::If valid_match{codegen, valid};
+    lang::If valid_match(codegen, valid);
     {
       // Valid tuple
       ProjectAndConsume();

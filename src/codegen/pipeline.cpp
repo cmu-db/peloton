@@ -16,7 +16,9 @@
 #include "codegen/codegen.h"
 #include "codegen/compilation_context.h"
 #include "codegen/consumer_context.h"
+#include "codegen/lang/loop.h"
 #include "codegen/proxy/executor_context_proxy.h"
+#include "settings/settings_manager.h"
 
 namespace peloton {
 namespace codegen {
@@ -30,6 +32,7 @@ namespace codegen {
 PipelineContext::PipelineContext(Pipeline &pipeline)
     : pipeline_(pipeline),
       thread_state_type_(nullptr),
+      thread_state_(nullptr),
       thread_init_func_(nullptr),
       pipeline_func_(nullptr) {
   // Make room for the bool flag indicating validity
@@ -37,8 +40,8 @@ PipelineContext::PipelineContext(Pipeline &pipeline)
   state_components_.emplace_back("initialized", codegen.BoolType());
 }
 
-PipelineContext::Id PipelineContext::RegisterThreadState(std::string name,
-                                                         llvm::Type *type) {
+PipelineContext::Id PipelineContext::RegisterState(std::string name,
+                                                   llvm::Type *type) {
   PL_ASSERT(thread_state_type_ == nullptr);
   if (thread_state_type_ != nullptr) {
     throw Exception{"Cannot register thread state after finalization"};
@@ -50,7 +53,7 @@ PipelineContext::Id PipelineContext::RegisterThreadState(std::string name,
   return slot;
 }
 
-void PipelineContext::FinalizeThreadState(CodeGen &codegen) {
+void PipelineContext::FinalizeState(CodeGen &codegen) {
   // Quit early if we've already finalized the type
   if (thread_state_type_ != nullptr) {
     return;
@@ -67,10 +70,10 @@ void PipelineContext::FinalizeThreadState(CodeGen &codegen) {
       llvm::StructType::create(codegen.GetContext(), types, "ThreadState");
 }
 
-llvm::Value *PipelineContext::AccessThreadState(CodeGen &codegen) const {
-  auto *func = codegen.GetCurrentFunction();
-  PL_ASSERT(func != nullptr);
-  return func->GetArgumentByPosition(1);
+llvm::Value *PipelineContext::AccessThreadState(
+    UNUSED_ATTRIBUTE CodeGen &codegen) const {
+  PL_ASSERT(thread_state_ != nullptr);
+  return thread_state_;
 }
 
 llvm::Value *PipelineContext::LoadFlag(CodeGen &codegen) const {
@@ -117,32 +120,66 @@ Pipeline &PipelineContext::GetPipeline() { return pipeline_; }
 ///
 ////////////////////////////////////////////////////////////////////////////////
 
-// Constructor
 Pipeline::Pipeline(CompilationContext &compilation_ctx)
-    : compilation_ctx_(compilation_ctx), pipeline_index_(0) {
+    : compilation_ctx_(compilation_ctx),
+      pipeline_index_(0),
+      parallelism_(Pipeline::Parallelism::Flexible) {
   id_ = compilation_ctx.RegisterPipeline(*this);
 }
 
-// Constructor
-Pipeline::Pipeline(OperatorTranslator *translator)
+Pipeline::Pipeline(OperatorTranslator *translator,
+                   Pipeline::Parallelism parallelism)
     : Pipeline(translator->GetCompilationContext()) {
-  Add(translator);
+  Add(translator, parallelism);
 }
 
-CompilationContext &Pipeline::GetCompilationContext() {
-  return compilation_ctx_;
-}
-
-// Add this translator in this pipeline
-void Pipeline::Add(OperatorTranslator *translator) {
+void Pipeline::Add(OperatorTranslator *translator, Parallelism parallelism) {
+  // Add the operator to the pipeline
   pipeline_.push_back(translator);
   pipeline_index_ = static_cast<uint32_t>(pipeline_.size()) - 1;
+
+  // Set parallelism
+  parallelism_ = std::min(parallelism_, parallelism);
 }
 
-// Get the child of the current operator in this pipeline
-const OperatorTranslator *Pipeline::GetChild() const {
-  return pipeline_index_ < pipeline_.size() - 1 ? pipeline_[pipeline_index_ + 1]
-                                                : nullptr;
+void Pipeline::MarkSource(OperatorTranslator *translator,
+                          Pipeline::Parallelism parallelism) {
+  PL_ASSERT(translator == pipeline_.back());
+
+  // Check parallel execution settings
+  bool parallel_exec_disabled = !settings::SettingsManager::GetBool(
+                                    settings::SettingId::parallel_execution);
+
+  // Check if the consumer supports parallel execution
+  auto &exec_consumer = compilation_ctx_.GetExecutionConsumer();
+  bool parallel_consumer = exec_consumer.SupportsParallelExec();
+
+  // We choose serial execution for one of four reasons:
+  //   1. If parallel execution is globally disabled.
+  //   2. If the consumer isn't parallel.
+  //   3. If the source wants serial execution.
+  //   4. If the pipeline is already configured to be serial.
+  if (parallel_exec_disabled || !parallel_consumer ||
+      parallelism == Pipeline::Parallelism::Serial ||
+      parallelism_ == Pipeline::Parallelism::Serial) {
+    parallelism_ = Pipeline::Parallelism::Serial;
+    return;
+  }
+
+  // At this point, the pipeline is either fully parallel or flexible, and the
+  // source is either parallel or flexible. We choose whatever the source wants
+  if (parallelism == Pipeline::Parallelism::Flexible) {
+    auto pipeline_name = ConstructPipelineName();
+    auto source_name = translator->GetPlan().GetInfo();
+    LOG_WARN(
+        "Pipeline '%s' source (%s) chose Flexible parallelism rather "
+        "than committing to Serial or Parallel. A Serial execution "
+        "mode was chosen to err on the side of caution.",
+        pipeline_name.c_str(), source_name.c_str());
+    parallelism_ = Pipeline::Parallelism::Serial;
+  } else {
+    parallelism_ = Pipeline::Parallelism::Parallel;
+  }
 }
 
 // Move to the next step in this pipeline
@@ -257,7 +294,7 @@ void Pipeline::InitializePipeline(PipelineContext &pipeline_context) {
 
   // Finalize thread state type
   CodeGen &codegen = compilation_ctx_.GetCodeGen();
-  pipeline_context.FinalizeThreadState(codegen);
+  pipeline_context.FinalizeState(codegen);
   auto thread_state_size = static_cast<uint32_t>(
       codegen.SizeOf(pipeline_context.GetThreadStateType()));
 
@@ -277,16 +314,18 @@ void Pipeline::InitializePipeline(PipelineContext &pipeline_context) {
       {"queryState", query_state.GetType()->getPointerTo()},
       {"threadState", pipeline_context.GetThreadStateType()->getPointerTo()}};
 
-  FunctionDeclaration init_decl{cc, func_name, visibility, ret_type, args};
-  FunctionBuilder init_func{cc, init_decl};
+  FunctionDeclaration init_decl(cc, func_name, visibility, ret_type, args);
+  FunctionBuilder init_func(cc, init_decl);
   {
+    PipelineContext::ScopedStateAccess state_access(
+        pipeline_context, init_func.GetArgumentByPosition(1));
+    // Set initialized flag
+    pipeline_context.MarkInitialized(codegen);
     // Let each translator initialize
     for (auto riter = pipeline_.rbegin(), rend = pipeline_.rend();
          riter != rend; ++riter) {
       (*riter)->InitializePipelineState(pipeline_context);
     }
-    // Set initialized flag
-    pipeline_context.MarkInitialized(codegen);
     // That's it
     init_func.ReturnAndFinish();
   }
@@ -294,19 +333,55 @@ void Pipeline::InitializePipeline(PipelineContext &pipeline_context) {
 }
 
 void Pipeline::CompletePipeline(PipelineContext &pipeline_context) {
-  if (!pipeline_context.IsParallel()) {
-    // Let operators in the pipeline do some post-pipeline work
-    for (auto riter = pipeline_.rbegin(), rend = pipeline_.rend();
-         riter != rend; ++riter) {
-      (*riter)->FinishPipeline(pipeline_context);
-    }
+  // Let operators in the pipeline do some post-pipeline work
+  for (auto riter = pipeline_.rbegin(), rend = pipeline_.rend(); riter != rend;
+       ++riter) {
+    (*riter)->FinishPipeline(pipeline_context);
+  }
+
+  if (!IsParallel()) {
+    return;
+  }
+
+  auto &exec_consumer = compilation_ctx_.GetExecutionConsumer();
+  auto *thread_states = exec_consumer.GetThreadStatesPtr(compilation_ctx_);
+
+  CodeGen &codegen = compilation_ctx_.GetCodeGen();
+
+  auto *thread_states_type = ThreadStatesProxy::GetType(codegen);
+
+  llvm::Value *num_threads =
+      codegen->CreateLoad(codegen->CreateConstInBoundsGEP2_32(
+          thread_states_type, thread_states, 0, 1));
+
+  llvm::Value *state_size =
+      codegen->CreateLoad(codegen->CreateConstInBoundsGEP2_32(
+          thread_states_type, thread_states, 0, 2));
+
+  llvm::Value *state = codegen->CreateLoad(codegen->CreateConstInBoundsGEP2_32(
+      thread_states_type, thread_states, 0, 3));
+
+  llvm::Value *state_end = codegen->CreateInBoundsGEP(
+      state, {codegen->CreateMul(num_threads, state_size)});
+
+  llvm::Value *loop_cond = codegen->CreateICmpNE(state, state_end);
+  lang::Loop worker_loop(codegen, loop_cond, {{"threadState", state}});
+  {
+    state = worker_loop.GetLoopVar(0);
+    llvm::Value *thread_state = codegen->CreateBitOrPointerCast(
+        state, pipeline_context.GetThreadStateType()->getPointerTo());
+    PipelineContext::ScopedStateAccess state_access(pipeline_context,
+                                                    thread_state);
+
     // Let operators in the pipeline clean up any pipeline state
     for (auto riter = pipeline_.rbegin(), rend = pipeline_.rend();
          riter != rend; ++riter) {
       (*riter)->TearDownPipelineState(pipeline_context);
     }
-    // That's it
-    return;
+
+    // Wrap up
+    state = codegen->CreateInBoundsGEP(state, {state_size});
+    worker_loop.LoopEnd(codegen->CreateICmpNE(state, state_end), {state});
   }
 }
 
@@ -319,16 +394,18 @@ void Pipeline::RunSerial(const std::function<void(ConsumerContext &)> &body) {
 }
 
 void Pipeline::RunParallel(
-    llvm::Function *launch_func, const std::vector<llvm::Value *> &launch_args,
+    llvm::Function *dispatch_func,
+    const std::vector<llvm::Value *> &dispatch_args,
     const std::vector<llvm::Type *> &pipeline_args_types,
     const std::function<void(ConsumerContext &,
                              const std::vector<llvm::Value *> &)> &body) {
-  PL_ASSERT(IsParallel() && "Cannot run parallel if pipeline isn't parallel");
-  Run(launch_func, launch_args, pipeline_args_types, body);
+  PL_ASSERT(IsParallel());
+  Run(dispatch_func, dispatch_args, pipeline_args_types, body);
 }
 
 void Pipeline::Run(
-    llvm::Function *launch_func, const std::vector<llvm::Value *> &launch_args,
+    llvm::Function *dispatch_func,
+    const std::vector<llvm::Value *> &dispatch_args,
     const std::vector<llvm::Type *> &pipeline_arg_types,
     const std::function<void(ConsumerContext &,
                              const std::vector<llvm::Value *> &)> &body) {
@@ -339,15 +416,16 @@ void Pipeline::Run(
   InitializePipeline(pipeline_context);
 
   // Generate pipeline
-  DoRun(pipeline_context, launch_func, launch_args, pipeline_arg_types, body);
+  DoRun(pipeline_context, dispatch_func, dispatch_args, pipeline_arg_types,
+        body);
 
   // Finish
   CompletePipeline(pipeline_context);
 }
 
 void Pipeline::DoRun(
-    PipelineContext &pipeline_context, llvm::Function *launch_func,
-    const std::vector<llvm::Value *> &launch_args,
+    PipelineContext &pipeline_context, llvm::Function *dispatch_func,
+    const std::vector<llvm::Value *> &dispatch_args,
     const std::vector<llvm::Type *> &pipeline_args_types,
     const std::function<void(ConsumerContext &,
                              const std::vector<llvm::Value *> &)> &body) {
@@ -361,26 +439,32 @@ void Pipeline::DoRun(
   auto visibility = FunctionDeclaration::Visibility::Internal;
   auto *ret_type = codegen.VoidType();
   std::vector<FunctionDeclaration::ArgumentInfo> args = {
-      {"queryState", query_state.GetType()->getPointerTo()}};
+      {"queryState", query_state.GetType()->getPointerTo()},
+      {"threadState", codegen.CharPtrType()}};
 
-  if (IsParallel()) {
-    args.emplace_back("threadState",
-                      pipeline_context.GetThreadStateType()->getPointerTo());
-    for (uint32_t i = 0; i < pipeline_args_types.size(); i++) {
-      args.emplace_back("arg" + std::to_string(i), pipeline_args_types[i]);
-    }
+  for (uint32_t i = 0; i < pipeline_args_types.size(); i++) {
+    args.emplace_back("arg" + std::to_string(i), pipeline_args_types[i]);
   }
 
   // The main function
-  FunctionDeclaration decl{cc, func_name, visibility, ret_type, args};
-  FunctionBuilder func{cc, decl};
+  FunctionDeclaration declaration(cc, func_name, visibility, ret_type, args);
+  FunctionBuilder func(cc, declaration);
   {
+    auto *query_state = func.GetArgumentByPosition(0);
+    auto *thread_state = func.GetArgumentByPosition(1);
+
+    // If the pipeline is parallel, we need to call the generated init function
     if (IsParallel()) {
-      auto *query_state = func.GetArgumentByPosition(0);
-      auto *thread_state = func.GetArgumentByPosition(1);
-      codegen.CallFunc(pipeline_context.thread_init_func_,
-                       {query_state, thread_state});
+      thread_state = codegen->CreateBitOrPointerCast(
+          thread_state, pipeline_context.GetThreadStateType()->getPointerTo());
+
+      auto *init_func = pipeline_context.thread_init_func_;
+      codegen.CallFunc(init_func, {query_state, thread_state});
     }
+
+    // Setup the thread state access for the pipeline context
+    PipelineContext::ScopedStateAccess state_access(pipeline_context,
+                                                    thread_state);
 
     // First initialize the execution consumer
     auto &execution_consumer = compilation_ctx_.GetExecutionConsumer();
@@ -388,14 +472,12 @@ void Pipeline::DoRun(
 
     // Pull out the input parameters
     std::vector<llvm::Value *> pipeline_args;
-    if (IsParallel()) {
-      for (uint32_t i = 0; i < pipeline_args_types.size(); i++) {
-        pipeline_args.push_back(func.GetArgumentByPosition(i + 2));
-      }
+    for (uint32_t i = 0; i < pipeline_args_types.size(); i++) {
+      pipeline_args.push_back(func.GetArgumentByPosition(i + 2));
     }
 
     // Generate pipeline body
-    ConsumerContext ctx{GetCompilationContext(), *this, &pipeline_context};
+    ConsumerContext ctx(compilation_ctx_, *this, &pipeline_context);
     body(ctx, pipeline_args);
 
     // Finish
@@ -403,28 +485,33 @@ void Pipeline::DoRun(
   }
   pipeline_context.pipeline_func_ = func.GetFunction();
 
-  // If a launching function is provided, invoke it passing the pipeline
-  // function we just constructed as the last argument
-  if (launch_func != nullptr) {
-    // Construct arguments to launch function
-    llvm::Value *query_state =
-        codegen->CreateBitCast(codegen.GetState(), codegen.VoidPtrType());
-
-    ExecutionConsumer &consumer = compilation_ctx_.GetExecutionConsumer();
-    llvm::Value *thread_states = consumer.GetThreadStatesPtr(compilation_ctx_);
-
-    std::vector<llvm::Value *> new_launch_args = {query_state, thread_states};
-    new_launch_args.insert(new_launch_args.end(), launch_args.begin(),
-                           launch_args.end());
-    new_launch_args.emplace_back(
-        codegen->CreateBitCast(func.GetFunction(), codegen.VoidPtrType()));
-    //    new_launch_args.emplace_back(pipeline_func.GetFunction());
-
-    // Call the launch function
-    codegen.CallFunc(launch_func, new_launch_args);
+  // The launch argument starts with QueryState and ThreadState. We pass in
+  // NULL for serial execution pipelines.
+  std::vector<llvm::Value *> new_dispatch_args = {codegen.GetState()};
+  if (IsParallel()) {
+    auto &consumer = compilation_ctx_.GetExecutionConsumer();
+    new_dispatch_args.push_back(consumer.GetThreadStatesPtr(compilation_ctx_));
   } else {
-    // Directly launch the pipeline function
-    codegen.CallFunc(func.GetFunction(), {codegen.GetState()});
+    new_dispatch_args.push_back(codegen.NullPtr(codegen.CharPtrType()));
+  }
+
+  // Now insert the arguments the caller wants
+  new_dispatch_args.insert(new_dispatch_args.end(), dispatch_args.begin(),
+                           dispatch_args.end());
+  if (dispatch_func != nullptr) {
+    // If we have a launch function, we need to cast the QueryState parameter
+    // to a void*. This is because it is a JITed data-structure which
+    // pre-compiled code has no notion of.
+    //
+    // We also append the pipeline function to the end of the arguments
+    new_dispatch_args[0] = codegen->CreateBitOrPointerCast(
+        new_dispatch_args[0], codegen.VoidPtrType());
+    new_dispatch_args.push_back(
+        codegen->CreateBitCast(func.GetFunction(), codegen.VoidPtrType()));
+    codegen.CallFunc(dispatch_func, new_dispatch_args);
+  } else {
+    // Immediately invoke the pipeline function
+    codegen.CallFunc(func.GetFunction(), new_dispatch_args);
   }
 }
 

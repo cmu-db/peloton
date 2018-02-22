@@ -16,6 +16,7 @@
 #include "codegen/proxy/runtime_functions_proxy.h"
 #include "codegen/proxy/sorter_proxy.h"
 #include "codegen/type/integer_type.h"
+#include "codegen/vector.h"
 #include "common/logger.h"
 #include "planner/order_by_plan.h"
 
@@ -31,7 +32,8 @@ namespace codegen {
 OrderByTranslator::OrderByTranslator(const planner::OrderByPlan &plan,
                                      CompilationContext &context,
                                      Pipeline &pipeline)
-    : OperatorTranslator(plan, context, pipeline), child_pipeline_(this) {
+    : OperatorTranslator(plan, context, pipeline),
+      child_pipeline_(this, Pipeline::Parallelism::Flexible) {
   // Prepare the child
   context.Prepare(*plan.GetChild(0), child_pipeline_);
 
@@ -205,8 +207,12 @@ void OrderByTranslator::Produce() const {
     CodeGen &codegen = GetCodeGen();
     auto *sorter_ptr = LoadStatePtr(sorter_id_);
 
+#if 0
     // The tuples have been materialized into the buffer space, NOW SORT!!!
-    sorter_.Sort(codegen, sorter_ptr);
+    if (!child_pipeline_.IsParallel()) {
+      sorter_.Sort(codegen, sorter_ptr);
+    }
+#endif
 
     // Now iterate over the sorted list
     auto *i32_type = codegen.Int32Type();
@@ -222,7 +228,8 @@ void OrderByTranslator::Produce() const {
   GetPipeline().RunSerial(producer);
 }
 
-void OrderByTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
+void OrderByTranslator::Consume(ConsumerContext &ctx,
+                                RowBatch::Row &row) const {
   CodeGen &codegen = GetCodeGen();
 
   // Pull out the attributes we need and append the tuple into the sorter
@@ -240,15 +247,24 @@ void OrderByTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
     }
   }
 
+  // Get the right sorter pointer
+  llvm::Value *sorter_ptr = nullptr;
+  if (ctx.GetPipeline().IsParallel()) {
+    auto *pipeline_ctx = ctx.GetPipelineContext();
+    sorter_ptr = pipeline_ctx->LoadStatePtr(codegen, thread_sorter_id_);
+  } else {
+    sorter_ptr = LoadStatePtr(sorter_id_);
+  }
+
   // Append the tuple into the sorter
-  sorter_.Append(codegen, LoadStatePtr(sorter_id_), tuple);
+  sorter_.Append(codegen, sorter_ptr, tuple);
 }
 
 void OrderByTranslator::RegisterPipelineState(PipelineContext &pipeline_ctx) {
   if (pipeline_ctx.GetPipeline() == child_pipeline_ &&
       pipeline_ctx.IsParallel()) {
     auto *sorter_type = SorterProxy::GetType(GetCodeGen());
-    thread_sorter_id_ = pipeline_ctx.RegisterThreadState("sorter", sorter_type);
+    thread_sorter_id_ = pipeline_ctx.RegisterState("sorter", sorter_type);
   }
 }
 
@@ -262,13 +278,18 @@ void OrderByTranslator::InitializePipelineState(PipelineContext &pipeline_ctx) {
 }
 
 void OrderByTranslator::FinishPipeline(PipelineContext &pipeline_ctx) {
-  if (pipeline_ctx.GetPipeline() == child_pipeline_ &&
-      pipeline_ctx.IsParallel()) {
-    CodeGen &codegen = GetCodeGen();
-    auto *sorter_ptr = pipeline_ctx.LoadStatePtr(codegen, thread_sorter_id_);
+  if (pipeline_ctx.GetPipeline() != child_pipeline_) {
+    return;
+  }
+
+  CodeGen &codegen = GetCodeGen();
+  auto *sorter_ptr = LoadStatePtr(sorter_id_);
+  if (pipeline_ctx.IsParallel()) {
     auto *thread_states_ptr = GetThreadStatesPtr();
     auto offset = pipeline_ctx.GetEntryOffset(codegen, thread_sorter_id_);
     sorter_.SortParallel(codegen, sorter_ptr, thread_states_ptr, offset);
+  } else {
+    sorter_.Sort(codegen, sorter_ptr);
   }
 }
 

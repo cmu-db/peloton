@@ -104,6 +104,8 @@ const std::string SettingsManager::GetInfo() const {
   info.append(StringUtil::Format("%28s:   %-28i\n", "Max Connections", GetInt(SettingId::max_connections)));
   info.append(StringUtil::Format("%28s:   %-28s\n", "Index Tuner", GetBool(SettingId::index_tuner) ? "enabled" : "disabled"));
   info.append(StringUtil::Format("%28s:   %-28s\n", "Layout Tuner", GetBool(SettingId::layout_tuner) ? "enabled" : "disabled"));
+  info.append(StringUtil::Format("%28s:   (queue size %i, %i threads)\n", "Worker Pool", GetInt(SettingId::monoqueue_task_queue_size), GetInt(SettingId::monoqueue_worker_pool_size)));
+  info.append(StringUtil::Format("%28s:   %-28s\n", "Parallel Query Execution", GetBool(SettingId::parallel_execution) ? "enabled" : "disabled"));
   info.append(StringUtil::Format("%28s:   %-28s\n", "Code-generation", GetBool(SettingId::codegen) ? "enabled" : "disabled"));
   info.append(StringUtil::Format("%28s:   %-28s\n", "Print IR Statistics", GetBool(SettingId::print_ir_stats) ? "enabled" : "disabled"));
   info.append(StringUtil::Format("%28s:   %-28s\n", "Dump IR", GetBool(SettingId::dump_ir) ? "enabled" : "disabled"));

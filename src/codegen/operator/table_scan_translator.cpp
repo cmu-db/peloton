@@ -19,26 +19,27 @@
 #include "codegen/proxy/transaction_runtime_proxy.h"
 #include "codegen/proxy/zone_map_proxy.h"
 #include "codegen/type/boolean_type.h"
+#include "codegen/vector.h"
 #include "planner/seq_scan_plan.h"
-#include "storage/data_table.h"
-#include "storage/zone_map_manager.h"
 
 namespace peloton {
 namespace codegen {
 
-//===----------------------------------------------------------------------===//
-// TABLE SCAN TRANSLATOR
-//===----------------------------------------------------------------------===//
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Table Scan Translator
+///
+////////////////////////////////////////////////////////////////////////////////
 
-// Constructor
 TableScanTranslator::TableScanTranslator(const planner::SeqScanPlan &scan,
                                          CompilationContext &context,
                                          Pipeline &pipeline)
     : OperatorTranslator(scan, context, pipeline), table_(*scan.GetTable()) {
-  // The restriction, if one exists
+  // Set ourselves as the source of the pipeline
+  pipeline.MarkSource(this, Pipeline::Parallelism::Serial);
+  // If there is a predicate, prepare a translator for it
   const auto *predicate = scan.GetPredicate();
   if (predicate != nullptr) {
-    // If there is a predicate, prepare a translator for it
     context.Prepare(*predicate);
   }
 }
@@ -143,17 +144,24 @@ void TableScanTranslator::ProduceParallel() const {
   pipeline.RunParallel(launcher, launch_args, pipeline_arg_types, producer);
 }
 
-void TableScanTranslator::Produce() const { ProduceSerial(); }
+void TableScanTranslator::Produce() const {
+  if (GetPipeline().IsParallel()) {
+    ProduceParallel();
+  } else {
+    ProduceSerial();
+  }
+}
 
 const planner::SeqScanPlan &TableScanTranslator::GetScanPlan() const {
   return GetPlanAs<planner::SeqScanPlan>();
 }
 
-//===----------------------------------------------------------------------===//
-// VECTORIZED SCAN CONSUMER
-//===----------------------------------------------------------------------===//
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Scan Consumer
+///
+////////////////////////////////////////////////////////////////////////////////
 
-// Constructor
 TableScanTranslator::ScanConsumer::ScanConsumer(
     ConsumerContext &ctx, const planner::SeqScanPlan &plan,
     Vector &selection_vector)
@@ -263,9 +271,11 @@ void TableScanTranslator::ScanConsumer::FilterRowsByPredicate(
   });
 }
 
-//===----------------------------------------------------------------------===//
-// ATTRIBUTE ACCESS
-//===----------------------------------------------------------------------===//
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Attribute Access
+///
+////////////////////////////////////////////////////////////////////////////////
 
 TableScanTranslator::AttributeAccess::AttributeAccess(
     const TileGroup::TileGroupAccess &access, const planner::AttributeInfo *ai)

@@ -31,6 +31,7 @@ class CompilationContext;
 class ConsumerContext;
 class OperatorTranslator;
 
+/// Forward declare Pipeline that's declared at the end of this file
 class Pipeline;
 
 class PipelineContext {
@@ -45,11 +46,11 @@ class PipelineContext {
   explicit PipelineContext(Pipeline &pipeline);
 
   /// Register some state
-  Id RegisterThreadState(std::string name, llvm::Type *type);
+  Id RegisterState(std::string name, llvm::Type *type);
 
   /// Build the final type of the thread state. Once finalized, the thread
   /// state type is immutable.
-  void FinalizeThreadState(CodeGen &codegen);
+  void FinalizeState(CodeGen &codegen);
   llvm::Type *GetThreadStateType() const { return thread_state_type_; }
 
   /// State access
@@ -67,41 +68,75 @@ class PipelineContext {
   /// Return the pipeline this context is associated with
   Pipeline &GetPipeline();
 
+  class ScopedStateAccess {
+   public:
+    ScopedStateAccess(PipelineContext &pipeline_ctx, llvm::Value *thread_state)
+        : pipeline_ctx_(pipeline_ctx),
+          prev_thread_state_(pipeline_ctx.thread_state_) {
+      pipeline_ctx.thread_state_ = thread_state;
+    }
+    ~ScopedStateAccess() { pipeline_ctx_.thread_state_ = prev_thread_state_; }
+
+   private:
+    PipelineContext &pipeline_ctx_;
+    llvm::Value *prev_thread_state_;
+  };
+
+  /**
+   * A handy class to loop over all thread states
+   */
+  class LoopOverStates {
+   public:
+    LoopOverStates(PipelineContext &pipeline_ctx);
+    ~LoopOverStates();
+  };
+
  private:
   // The pipeline
   Pipeline &pipeline_;
   // The elements of the thread state for this pipeline
   std::vector<std::pair<std::string, llvm::Type *>> state_components_;
   llvm::Type *thread_state_type_;
+  llvm::Value *thread_state_;
   // The generate thread initialization function and pipeline function
   llvm::Function *thread_init_func_;
   llvm::Function *pipeline_func_;
 };
 
-//===----------------------------------------------------------------------===//
-//
-// A pipeline represents operators in a query plan that can be fully pipelined.
-// Peloton pipelines are decomposed further into stages. Operators in a
-// stage are fully pipelined/fused together, while whole stages communicate
-// through cache-resident vectors of TIDs.
-//
-//===----------------------------------------------------------------------===//
+/**
+ * A pipeline represents an ordered sequence of relational operators that
+ * operate on tuple data without explicit copying or materialization. Tuples are
+ * read at the start of the pipeline, are passed through each operator, and are
+ * materialized in some form only at the end of the pipeline.
+ *
+ * Peloton pipelines are decomposed further into stages. Stages represent
+ * sub-sequences of pipeline operators. Peloton reads batches of tuples at the
+ * start of the pipeline, and passes this batch through each stage. This enables
+ * a hybrid tuple-at-time and vectorized processing model. Each tuple batch is
+ * accompanied by a cache-resident selection vector (also known as a position
+ * list) to determine the validity of each tuple in the batch. Refer to
+ * @refitem peloton::codegen::RowBatch for more details.
+ *
+ * Pipelines form the unit of parallelism in Peloton. Each pipeline can either
+ * be launched serially or in parallel.
+ */
 class Pipeline {
  public:
-  /// Enum indicating level of parallelism
-  enum Parallelism { Serial = 0, Parallel = 1 };
+  /**
+   * Enum class representing a degree of parallelism. The Serial and Parallel
+   * values are clear and explicit. The Flexible option should be used when both
+   * serial and parallel operation is supported, but no preference is taken.
+   */
+  enum class Parallelism : uint32_t { Serial = 0, Flexible = 1, Parallel = 2 };
 
-  /// Constructor
-  Pipeline(CompilationContext &compilation_ctx);
-  Pipeline(OperatorTranslator *translator);
+  explicit Pipeline(CompilationContext &compilation_ctx);
 
-  /// Add the provided translator to this pipeline
-  void Add(OperatorTranslator *translator);
+  Pipeline(OperatorTranslator *translator, Parallelism parallelism);
 
-  /// Get the child of the current operator in this pipeline
-  const OperatorTranslator *GetChild() const;
+  void Add(OperatorTranslator *translator, Parallelism parallelism);
 
-  /// Move to the next step in this pipeline
+  void MarkSource(OperatorTranslator *translator, Parallelism parallelism);
+
   const OperatorTranslator *NextStep();
 
   //////////////////////////////////////////////////////////////////////////////
@@ -111,7 +146,9 @@ class Pipeline {
   //////////////////////////////////////////////////////////////////////////////
 
   void InstallStageBoundary(const OperatorTranslator *translator);
+
   bool AtStageBoundary() const;
+
   uint32_t GetTranslatorStage(const OperatorTranslator *translator) const;
 
   //////////////////////////////////////////////////////////////////////////////
@@ -120,11 +157,13 @@ class Pipeline {
   ///
   //////////////////////////////////////////////////////////////////////////////
 
-  bool IsParallel() const { return false; }
+  bool IsParallel() const { return parallelism_ == Parallelism::Parallel; }
+
   void RunSerial(const std::function<void(ConsumerContext &)> &body);
+
   void RunParallel(
-      llvm::Function *launch_func,
-      const std::vector<llvm::Value *> &launch_args,
+      llvm::Function *dispatch_func,
+      const std::vector<llvm::Value *> &dispatch_args,
       const std::vector<llvm::Type *> &pipeline_args_types,
       const std::function<void(ConsumerContext &,
                                const std::vector<llvm::Value *> &)> &body);
@@ -138,12 +177,12 @@ class Pipeline {
   /// Return the unique ID of this pipeline
   uint32_t GetId() const { return id_; }
 
-  /// Pipeline equality check
+  /// Pipeline equality check (this is more of an **identity** equality check)
   bool operator==(const Pipeline &other) const { return id_ == other.id_; }
   bool operator!=(const Pipeline &other) const { return !(*this == other); }
 
   /// Compilation context accessor
-  CompilationContext &GetCompilationContext();
+  CompilationContext &GetCompilationContext() { return compilation_ctx_; }
 
   /// Get a stringified version of this pipeline
   std::string GetInfo() const;
@@ -155,13 +194,13 @@ class Pipeline {
   /// Initialize the state for this pipeline
   void InitializePipeline(PipelineContext &pipeline_context);
   void CompletePipeline(PipelineContext &pipeline_context);
-  void Run(llvm::Function *launch_func,
-           const std::vector<llvm::Value *> &launch_args,
+  void Run(llvm::Function *dispatch_func,
+           const std::vector<llvm::Value *> &dispatch_args,
            const std::vector<llvm::Type *> &pipeline_arg_types,
            const std::function<void(ConsumerContext &,
                                     const std::vector<llvm::Value *> &)> &body);
-  void DoRun(PipelineContext &pipeline_context, llvm::Function *launch_func,
-             const std::vector<llvm::Value *> &launch_args,
+  void DoRun(PipelineContext &pipeline_context, llvm::Function *dispatch_func,
+             const std::vector<llvm::Value *> &dispatch_args,
              const std::vector<llvm::Type *> &pipeline_args_types,
              const std::function<void(
                  ConsumerContext &, const std::vector<llvm::Value *> &)> &body);
@@ -186,6 +225,9 @@ class Pipeline {
   // A value, i, in this list means there is a stage boundary between operators
   // i-1 and i in the pipeline.
   std::vector<uint32_t> stage_boundaries_;
+
+  // Level of parallelism
+  Parallelism parallelism_;
 };
 
 }  // namespace codegen

@@ -22,11 +22,16 @@ namespace codegen {
 //===----------------------------------------------------------------------===//
 class CountingConsumer : public codegen::ExecutionConsumer {
  public:
+  bool SupportsParallelExec() const override { return false; }
+
   void Prepare(codegen::CompilationContext &compilation_context) override;
+
   void InitializeQueryState(codegen::CompilationContext &context) override;
+
+  void TearDownQueryState(codegen::CompilationContext &) override {}
+
   void ConsumeResult(codegen::ConsumerContext &context,
                      codegen::RowBatch::Row &row) const override;
-  void TearDownQueryState(codegen::CompilationContext &) override {}
 
   uint64_t GetCount() const { return counter_; }
   void ResetCount() { counter_ = 0; }

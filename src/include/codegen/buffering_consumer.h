@@ -59,8 +59,14 @@ class BufferingConsumer : public ExecutionConsumer {
                     const planner::BindingContext &context);
 
   void Prepare(CompilationContext &compilation_context) override;
+
+  // Query state
   void InitializeQueryState(CompilationContext &) override {}
   void TearDownQueryState(CompilationContext &) override {}
+
+  // TODO(pmenon): Implement me
+  bool SupportsParallelExec() const override { return false; }
+
   void ConsumeResult(ConsumerContext &ctx, RowBatch::Row &row) const override;
 
   llvm::Value *GetStateValue(ConsumerContext &ctx,
@@ -76,7 +82,7 @@ class BufferingConsumer : public ExecutionConsumer {
   // ACCESSORS
   //===--------------------------------------------------------------------===//
 
-  char *GetConsumerState() final { return reinterpret_cast<char *>(&state); }
+  char *GetConsumerState() override { return reinterpret_cast<char *>(&state); }
 
   const std::vector<WrappedTuple> &GetOutputTuples() const { return tuples_; }
 

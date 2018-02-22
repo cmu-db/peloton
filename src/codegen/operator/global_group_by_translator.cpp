@@ -6,14 +6,13 @@
 //
 // Identification: src/codegen/operator/global_group_by_translator.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "codegen/operator/global_group_by_translator.h"
 
 #include "codegen/compilation_context.h"
-#include "codegen/lang/if.h"
 #include "common/logger.h"
 #include "planner/aggregate_plan.h"
 
@@ -24,7 +23,7 @@ GlobalGroupByTranslator::GlobalGroupByTranslator(
     const planner::AggregatePlan &plan, CompilationContext &context,
     Pipeline &pipeline)
     : OperatorTranslator(plan, context, pipeline),
-      child_pipeline_(this),
+      child_pipeline_(this, Pipeline::Parallelism::Serial),
       aggregation_(context.GetQueryState()) {
   LOG_DEBUG("Constructing GlobalGroupByTranslator ...");
 

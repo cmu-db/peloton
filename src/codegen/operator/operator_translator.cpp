@@ -21,8 +21,7 @@ OperatorTranslator::OperatorTranslator(const planner::AbstractPlan &plan,
                                        CompilationContext &context,
                                        Pipeline &pipeline)
     : plan_(plan), context_(context), pipeline_(pipeline) {
-  // Add this operator to the provided pipeline
-  pipeline.Add(this);
+  pipeline.Add(this, Pipeline::Parallelism::Flexible);
 }
 
 CodeGen &OperatorTranslator::GetCodeGen() const {

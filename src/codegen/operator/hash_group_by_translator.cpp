@@ -6,7 +6,7 @@
 //
 // Identification: src/codegen/operator/hash_group_by_translator.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -33,7 +33,7 @@ HashGroupByTranslator::HashGroupByTranslator(
     const planner::AggregatePlan &group_by, CompilationContext &context,
     Pipeline &pipeline)
     : OperatorTranslator(group_by, context, pipeline),
-      child_pipeline_(this),
+      child_pipeline_(this, Pipeline::Parallelism::Serial),
       aggregation_(context.GetQueryState()) {
   // If we should be prefetching into the hash-table, install a boundary in the
   // pipeline at the input into this translator to ensure it receives a vector
@@ -142,8 +142,8 @@ void HashGroupByTranslator::Consume(ConsumerContext &context,
         codegen->CreateSub(iter_instance.end, iter_instance.start);
 
     // The first loop does hash computation and prefetching
-    lang::Loop prefetch_loop{
-        codegen, codegen->CreateICmpULT(p, end), {{"p", p}}};
+    lang::Loop prefetch_loop(
+        codegen, codegen->CreateICmpULT(p, end), {{"p", p}});
     {
       p = prefetch_loop.GetLoopVar(0);
       RowBatch::Row row =
@@ -172,7 +172,7 @@ void HashGroupByTranslator::Consume(ConsumerContext &context,
     p = codegen.Const32(0);
     std::vector<lang::Loop::LoopVariable> loop_vars = {
         {"p", p}, {"writeIdx", iter_instance.write_pos}};
-    lang::Loop process_loop{codegen, codegen->CreateICmpULT(p, end), loop_vars};
+    lang::Loop process_loop(codegen, codegen->CreateICmpULT(p, end), loop_vars);
     {
       p = process_loop.GetLoopVar(0);
       llvm::Value *write_pos = process_loop.GetLoopVar(1);
@@ -360,7 +360,7 @@ void HashGroupByTranslator::ProduceResults::ProcessEntries(
     // Iterate over the batch, performing a branching predicate check
     batch.Iterate(codegen, [&](RowBatch::Row &row) {
       codegen::Value valid_row = row.DeriveValue(codegen, *predicate);
-      lang::If is_valid_row{codegen, valid_row};
+      lang::If is_valid_row(codegen, valid_row);
       {
         // The row is valid, send along the pipeline
         ctx_.Consume(row);

@@ -141,6 +141,8 @@ class Printer : public codegen::ExecutionConsumer {
     }
   }
 
+  bool SupportsParallelExec() const override { return false; }
+
   // None of these are used, except ConsumeResult()
   void InitializeQueryState(codegen::CompilationContext &) override {}
   void TearDownQueryState(codegen::CompilationContext &) override {}

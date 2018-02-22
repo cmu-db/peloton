@@ -20,15 +20,15 @@ void CountingConsumer::Prepare(codegen::CompilationContext &ctx) {
   // Be sure to call our parent
   ExecutionConsumer::Prepare(ctx);
 
-  auto &codegen = ctx.GetCodeGen();
-  auto &query_state = ctx.GetQueryState();
+  CodeGen &codegen = ctx.GetCodeGen();
+  QueryState &query_state = ctx.GetQueryState();
   counter_state_id_ = query_state.RegisterState(
       "consumerState", codegen.Int64Type()->getPointerTo());
 }
 
 void CountingConsumer::InitializeQueryState(
     codegen::CompilationContext &context) {
-  auto &codegen = context.GetCodeGen();
+  CodeGen &codegen = context.GetCodeGen();
   auto *state_ptr = GetCounterState(codegen, context.GetQueryState());
   codegen->CreateStore(codegen.Const64(0), state_ptr);
 }
@@ -36,7 +36,7 @@ void CountingConsumer::InitializeQueryState(
 // Increment the counter
 void CountingConsumer::ConsumeResult(codegen::ConsumerContext &context,
                                      codegen::RowBatch::Row &) const {
-  auto &codegen = context.GetCodeGen();
+  CodeGen &codegen = context.GetCodeGen();
 
   auto *counter_ptr = GetCounterState(codegen, context.GetQueryState());
   auto *new_count =
@@ -46,6 +46,7 @@ void CountingConsumer::ConsumeResult(codegen::ConsumerContext &context,
 
 llvm::Value *CountingConsumer::GetCounterState(
     codegen::CodeGen &codegen, codegen::QueryState &query_state) const {
+
   return query_state.LoadStateValue(codegen, counter_state_id_);
 }
 

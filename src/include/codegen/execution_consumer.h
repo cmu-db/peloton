@@ -19,9 +19,9 @@
 namespace peloton {
 namespace codegen {
 
-//===----------------------------------------------------------------------===//
-// The main interface for consumers of query results.
-//===----------------------------------------------------------------------===//
+/**
+ * This is the main abstract class for consumers of query executions.
+ */
 class ExecutionConsumer {
  public:
   /// Default constructor
@@ -31,7 +31,7 @@ class ExecutionConsumer {
   virtual ~ExecutionConsumer() = default;
 
   /// Does this consumer support parallel execution?
-  virtual bool SupportsParallelExec() const { return true; }
+  virtual bool SupportsParallelExec() const = 0;
 
   /// Invoked before code-generation begins to allow the consumer to prepare
   /// itself in the provided context
@@ -43,11 +43,12 @@ class ExecutionConsumer {
   /// Called to generate any code to tear down the state of the consumer
   virtual void TearDownQueryState(CompilationContext &compilation_ctx) = 0;
 
-  /// Register pipeline local state
+  /// Pipeline-related operations. These functions are invoked exactly once for
+  /// each pipeline the operator is part of.
   virtual void RegisterPipelineState(PipelineContext &) {}
-
-  /// Called to generate any initialization code within a pipeline
   virtual void InitializePipelineState(PipelineContext &pipeline_ctx);
+  virtual void FinishPipeline(PipelineContext &) {}
+  virtual void TearDownPipelineState(PipelineContext &) {}
 
   ///
   virtual char *GetConsumerState() = 0;

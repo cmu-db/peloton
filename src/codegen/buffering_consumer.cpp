@@ -76,8 +76,8 @@ void BufferingConsumer::Prepare(CompilationContext &ctx) {
   ExecutionConsumer::Prepare(ctx);
 
   // Install a little char* for the state we need
-  auto &codegen = ctx.GetCodeGen();
-  auto &query_state = ctx.GetQueryState();
+  CodeGen &codegen = ctx.GetCodeGen();
+  QueryState &query_state = ctx.GetQueryState();
   consumer_state_id_ =
       query_state.RegisterState("consumerState", codegen.CharPtrType());
 }
@@ -87,14 +87,15 @@ void BufferingConsumer::Prepare(CompilationContext &ctx) {
 // call BufferTuple(...) to append the currently active tuple into the output.
 void BufferingConsumer::ConsumeResult(ConsumerContext &ctx,
                                       RowBatch::Row &row) const {
-  auto &codegen = ctx.GetCodeGen();
-  auto *tuple_buffer_ = codegen.AllocateBuffer(
-      ValueProxy::GetType(codegen), static_cast<uint32_t>(output_ais_.size()),
-      "output");
+  CodeGen &codegen = ctx.GetCodeGen();
+
+  auto num_cols = static_cast<uint32_t>(output_ais_.size());
+  auto *tuple_buffer_ =
+      codegen.AllocateBuffer(ValueProxy::GetType(codegen), num_cols, "output");
   tuple_buffer_ =
       codegen->CreatePointerCast(tuple_buffer_, codegen.CharPtrType());
 
-  for (size_t i = 0; i < output_ais_.size(); i++) {
+  for (uint32_t i = 0; i < num_cols; i++) {
     // Derive the column's final value
     Value val = row.DeriveValue(codegen, output_ais_[i]);
 
@@ -103,7 +104,7 @@ void BufferingConsumer::ConsumeResult(ConsumerContext &ctx,
 
     // Check if it's NULL
     Value null_val;
-    lang::If val_is_null{codegen, val.IsNull(codegen)};
+    lang::If val_is_null(codegen, val.IsNull(codegen));
     {
       // If the value is NULL (i.e., has the NULL bit set), produce the NULL
       // value for the given type.

@@ -60,7 +60,7 @@ class HashJoinTranslator : public OperatorTranslator {
   void ConsumeFromRight(ConsumerContext &context, RowBatch::Row &row) const;
 
   bool IsFromLeftChild(ConsumerContext &context) const {
-    return context.GetPipeline().GetChild() == left_pipeline_.GetChild();
+    return context.GetPipeline() == left_pipeline_;
   }
 
   void CollectKeys(

@@ -33,7 +33,8 @@ std::atomic<bool> HashJoinTranslator::kUsePrefetch{false};
 HashJoinTranslator::HashJoinTranslator(const planner::HashJoinPlan &join,
                                        CompilationContext &context,
                                        Pipeline &pipeline)
-    : OperatorTranslator(join, context, pipeline), left_pipeline_(this) {
+    : OperatorTranslator(join, context, pipeline),
+      left_pipeline_(this, Pipeline::Parallelism::Serial) {
   CodeGen &codegen = GetCodeGen();
   QueryState &query_state = context.GetQueryState();
 
@@ -174,8 +175,8 @@ void HashJoinTranslator::Consume(ConsumerContext &context,
         codegen->CreateSub(iter_instance.end, iter_instance.start);
 
     // The first loop does hash computation and prefetching
-    lang::Loop prefetch_loop{
-        codegen, codegen->CreateICmpULT(p, end), {{"p", p}}};
+    lang::Loop prefetch_loop(
+        codegen, codegen->CreateICmpULT(p, end), {{"p", p}});
     {
       p = prefetch_loop.GetLoopVar(0);
       RowBatch::Row row =
@@ -208,7 +209,7 @@ void HashJoinTranslator::Consume(ConsumerContext &context,
     p = codegen.Const32(0);
     std::vector<lang::Loop::LoopVariable> loop_vars = {
         {"p", p}, {"writeIdx", iter_instance.write_pos}};
-    lang::Loop process_loop{codegen, codegen->CreateICmpULT(p, end), loop_vars};
+    lang::Loop process_loop(codegen, codegen->CreateICmpULT(p, end), loop_vars);
     {
       p = process_loop.GetLoopVar(0);
       llvm::Value *write_pos = process_loop.GetLoopVar(1);
@@ -292,7 +293,7 @@ void HashJoinTranslator::ConsumeFromRight(ConsumerContext &context,
     llvm::Value *contains = bloom_filter_.Contains(
         GetCodeGen(), LoadStatePtr(bloom_filter_id_), key);
 
-    lang::If is_valid_row{GetCodeGen(), contains};
+    lang::If is_valid_row(GetCodeGen(), contains);
     {
       // For each tuple that passes the bloom filter, probe the hash table
       // to eliminate the false positives.
@@ -418,7 +419,7 @@ void HashJoinTranslator::ProbeRight::ProcessEntry(
   if (predicate != nullptr) {
     // Vectorize of TaaT filter?
     auto valid_row = row_.DeriveValue(codegen, *predicate);
-    lang::If is_valid_row{codegen, valid_row};
+    lang::If is_valid_row(codegen, valid_row);
     {
       // Send row up to the parent
       context_.Consume(row_);

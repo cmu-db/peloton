@@ -6,12 +6,13 @@
 //
 // Identification: src/codegen/compilation_context.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "codegen/compilation_context.h"
 
+#include "codegen/pipeline.h"
 #include "common/logger.h"
 #include "common/timer.h"
 
@@ -28,8 +29,7 @@ CompilationContext::CompilationContext(CodeContext &code,
       parameter_cache_(parameters_map),
       exec_consumer_(execution_consumer),
       codegen_(code_context_),
-      pipelines_(),
-      main_pipeline_(*this) {}
+      pipelines_() {}
 
 // Prepare the translator for the given operator
 void CompilationContext::Prepare(const planner::AbstractPlan &op,
@@ -58,9 +58,12 @@ void CompilationContext::GeneratePlan(Query &query,
   Timer<std::ratio<1, 1000>> timer;
   timer.Start();
 
+  // The main pipeline
+  Pipeline main_pipeline(*this);
+
   // First we prepare the consumer and translators for each plan node
   exec_consumer_.Prepare(*this);
-  Prepare(query.GetPlan(), main_pipeline_);
+  Prepare(query.GetPlan(), main_pipeline);
 
   // Finalize the runtime state
   query_state_.FinalizeType(codegen_);
@@ -72,7 +75,7 @@ void CompilationContext::GeneratePlan(Query &query,
     timer.Start();
   }
 
-  LOG_TRACE("Main pipeline: %s", main_pipeline_.GetInfo().c_str());
+  LOG_TRACE("Main pipeline: %s", main_pipeline.GetInfo().c_str());
 
   // Generate the helper functions the query needs
   GenerateHelperFunctions();
@@ -120,7 +123,7 @@ void CompilationContext::GenerateHelperFunctions() {
   for (auto &iter : auxiliary_producers_) {
     const auto &plan = *iter.first;
     const auto &function_declaration = iter.second;
-    FunctionBuilder func{code_context_, function_declaration};
+    FunctionBuilder func(code_context_, function_declaration);
     {
       // Let the plan produce
       Produce(plan);
@@ -136,7 +139,7 @@ llvm::Function *CompilationContext::GenerateInitFunction() {
   std::string name = StringUtil::Format("_%lu_init", code_context_.GetID());
   std::vector<FunctionDeclaration::ArgumentInfo> args = {
       {"queryState", query_state_.GetType()->getPointerTo()}};
-  FunctionBuilder init_func{code_context_, name, codegen_.VoidType(), args};
+  FunctionBuilder init_func(code_context_, name, codegen_.VoidType(), args);
   {
     // Let the consumer initialize
     exec_consumer_.InitializeQueryState(*this);
@@ -161,7 +164,7 @@ llvm::Function *CompilationContext::GeneratePlanFunction(
   std::string name = StringUtil::Format("_%lu_plan", code_context_.GetID());
   std::vector<FunctionDeclaration::ArgumentInfo> args = {
       {"queryState", query_state_.GetType()->getPointerTo()}};
-  FunctionBuilder plan_func{code_context_, name, codegen_.VoidType(), args};
+  FunctionBuilder plan_func(code_context_, name, codegen_.VoidType(), args);
   {
     // Generate the primary plan logic
     Produce(root);
@@ -178,8 +181,8 @@ llvm::Function *CompilationContext::GenerateTearDownFunction() {
   std::string name = StringUtil::Format("_%lu_tearDown", code_context_.GetID());
   std::vector<FunctionDeclaration::ArgumentInfo> args = {
       {"queryState", query_state_.GetType()->getPointerTo()}};
-  FunctionBuilder tear_down_func{code_context_, name, codegen_.VoidType(),
-                                 args};
+  FunctionBuilder tear_down_func(code_context_, name, codegen_.VoidType(),
+                                 args);
   {
     // Let the consumer cleanup
     exec_consumer_.TearDownQueryState(*this);

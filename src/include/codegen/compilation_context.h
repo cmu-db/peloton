@@ -39,15 +39,13 @@ class AbstractPlan;
 
 namespace codegen {
 
-//===----------------------------------------------------------------------===//
-//
-// All the state for the current compilation unit (i.e., one query). This state
-// includes translations for every operator and expression in the tree, the
-// context where all the code is produced, the runtime state that tracks all the
-// runtime objects that the query needs, and the consumer of the results. Users
-// wishing to compile plans make a call to GeneratePlan(...) with query plan.
-//
-//===----------------------------------------------------------------------===//
+/**
+ * All the state for the current compilation unit (i.e., one query). This state
+ * includes translations for every operator and expression in the tree, the
+ * context where all the code is produced, the runtime state that tracks all the
+ * runtime objects that the query needs, and the consumer of the results. Users
+ * wishing to compile plans make a call to GeneratePlan(...) with query plan.
+ */
 class CompilationContext {
  public:
   /// Constructor
@@ -134,9 +132,6 @@ class CompilationContext {
 
   // All the pipelines
   std::vector<Pipeline *> pipelines_;
-
-  // The main pipeline
-  Pipeline main_pipeline_;
 
   // The factory that creates translators for operators and expressions
   TranslatorFactory translator_factory_;
