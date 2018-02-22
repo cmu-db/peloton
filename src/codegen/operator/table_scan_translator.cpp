@@ -91,13 +91,17 @@ void TableScanTranslator::ProduceSerial() const {
 void TableScanTranslator::ProduceParallel() const {
   CodeGen &codegen = GetCodeGen();
 
-  // The launch function
-  auto *launcher = RuntimeFunctionsProxy::ExecuteTableScan.GetFunction(codegen);
-
   // The input arguments
   const storage::DataTable &table = *GetScanPlan().GetTable();
-  std::vector<llvm::Value *> launch_args = {
+
+  // The use RuntimeFunctions::ExecuteTableScan() to launch a parallel scan.
+  // We pass in the database and table IDs to scan the correct table.
+  auto *dispatcher =
+      RuntimeFunctionsProxy::ExecuteTableScan.GetFunction(codegen);
+  std::vector<llvm::Value *> dispatch_args = {
       codegen.Const32(table.GetDatabaseOid()), codegen.Const32(table.GetOid())};
+
+  // Our function needs to know the start and stop tile groups to scan
   std::vector<llvm::Type *> pipeline_arg_types = {codegen.Int64Type(),
                                                   codegen.Int64Type()};
 
@@ -133,6 +137,7 @@ void TableScanTranslator::ProduceParallel() const {
       }
     }
 
+    // Scan the given range of the table
     ScanConsumer scan_consumer{ctx, GetScanPlan(), sel_vec};
     table_.GenerateScan(codegen, table_ptr, tilegroup_start, tilegroup_end,
                         sel_vec.GetCapacity(), predicate_ptr, num_preds,
@@ -141,7 +146,7 @@ void TableScanTranslator::ProduceParallel() const {
 
   // Execute parallel
   auto &pipeline = GetPipeline();
-  pipeline.RunParallel(launcher, launch_args, pipeline_arg_types, producer);
+  pipeline.RunParallel(dispatcher, dispatch_args, pipeline_arg_types, producer);
 }
 
 void TableScanTranslator::Produce() const {
