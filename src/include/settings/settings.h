@@ -116,6 +116,11 @@ SETTING_int(gc_num_threads,
             1, 128,
             true, true)
 
+SETTING_bool(parallel_execution,
+             "Enable parallel execution of queries (default: true)",
+             true,
+             false, false)
+
 //===----------------------------------------------------------------------===//
 // WRITE AHEAD LOG
 //===----------------------------------------------------------------------===//
@@ -123,16 +128,6 @@ SETTING_int(gc_num_threads,
 //===----------------------------------------------------------------------===//
 // ERROR REPORTING AND LOGGING
 //===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-// SETTINGURATION
-//===----------------------------------------------------------------------===//
-
-// Display configuration
-SETTING_bool(display_settings,
-            "Display settings (default: false)",
-            false,
-            true, true)
 
 //===----------------------------------------------------------------------===//
 // STATISTICS
@@ -233,3 +228,9 @@ SETTING_int(task_execution_timeout,
 //===----------------------------------------------------------------------===//
 // GENERAL
 //===----------------------------------------------------------------------===//
+
+// Display configuration
+SETTING_bool(display_settings,
+             "Display settings (default: false)",
+             false,
+             true, true)

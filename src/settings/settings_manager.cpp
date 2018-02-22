@@ -96,7 +96,7 @@ const std::string SettingsManager::GetInfo() const {
   info.append(StringUtil::Format("%*s\n", box_width / 2 + title.length() / 2,
                                  title.c_str()));
   info.append(StringUtil::Repeat("=", box_width)).append("\n");
-  
+
   // clang-format off
   info.append(StringUtil::Format("%28s:   %-28i\n", "Port", GetInt(SettingId::port)));
   info.append(StringUtil::Format("%28s:   %-28s\n", "Socket Family", GetString(SettingId::socket_family).c_str()));

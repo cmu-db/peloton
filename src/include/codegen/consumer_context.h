@@ -6,7 +6,7 @@
 //
 // Identification: src/include/codegen/consumer_context.h
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -56,8 +56,9 @@ class ConsumerContext {
   // Get the query state
   QueryState &GetQueryState() const;
 
-  // Get the pipeline
+  // Get the pipeline and the context
   const Pipeline &GetPipeline() const { return pipeline_; }
+  PipelineContext *GetPipelineContext() const { return pipeline_context_; }
 
  private:
   // The compilation context
