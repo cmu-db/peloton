@@ -1,0 +1,30 @@
+#!/bin/sh
+# Source validation pre-commit hook
+#
+# This script collects all modified files and runs it through our source code
+# validation script. The validation script returns 0 on success and 1 on any
+# failure.
+#
+# To enable, symlink this file to '.git/hooks/pre-commit' like so:
+#   ln -s ../../script/git-hooks/pre-commit .git/hooks/pre-commit
+
+FORMATTER_COMMAND="./script/formatting/formatter.py"
+
+FILES=$(git diff --name-only HEAD --cached --diff-filter=d | grep '\.\(cpp\|h\)$')
+if [ -n "$FILES" ]; then
+  ./script/validators/source_validator.py --files $FILES
+  RESULT=$?
+  if [ $RESULT -ne 0 ]; then
+    echo "***************************************"
+    echo "******* Peloton Pre-Commit Hook *******"
+    echo "***************************************"
+    echo "Use \"$FORMATTER_COMMAND -c -f\" to format all staged files."
+    echo "Or use \"$FORMATTER_COMMAND --no-verify\" to temporarily bypass the pre-commit hook."
+    echo
+    echo "Be aware that changed files have to be staged again!"
+    echo "***************************************"
+  fi
+  exit $RESULT
+fi
+
+exit 0
