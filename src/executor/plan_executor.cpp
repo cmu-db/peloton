@@ -65,7 +65,7 @@ static void CompileAndExecutePlan(
   }
 
   auto on_query_result =
-      [&on_complete, &consumer](executor::ExecutionResult result) {
+    [&on_complete, &consumer, plan](executor::ExecutionResult result) {
         std::vector<ResultValue> values;
         for (const auto &tuple : consumer.GetOutputTuples()) {
           for (uint32_t i = 0; i < tuple.tuple_.size(); i++) {
@@ -75,6 +75,7 @@ static void CompileAndExecutePlan(
             values.push_back(std::move(str));
           }
         }
+	plan->ClearParameterValues();
         on_complete(result, std::move(values));
       };
 
@@ -102,6 +103,7 @@ static void InterpretPlan(
   if (status != true) {
     result.m_result = ResultType::FAILURE;
     CleanExecutorTree(executor_tree.get());
+    plan->ClearParameterValues();
     on_complete(result, std::move(values));
     return;
   }
@@ -131,6 +133,7 @@ static void InterpretPlan(
   result.m_processed = executor_context->num_processed;
   result.m_result = ResultType::SUCCESS;
   CleanExecutorTree(executor_tree.get());
+  plan->ClearParameterValues();
   on_complete(result, std::move(values));
 }
 
@@ -164,7 +167,7 @@ void PlanExecutor::ExecutePlan(
  * @return number of executed tuples and logical_tile_list
  */
 int PlanExecutor::ExecutePlan(
-    const planner::AbstractPlan *plan, const std::vector<type::Value> &params,
+    planner::AbstractPlan *plan, const std::vector<type::Value> &params,
     std::vector<std::unique_ptr<executor::LogicalTile>> &logical_tile_list) {
   PL_ASSERT(plan != nullptr);
   LOG_TRACE("PlanExecutor Start with transaction");
