@@ -141,7 +141,10 @@ void SettingsManager::DefineSetting(SettingId id, const std::string &name,
       value.GetTypeId() == type::TypeId::TINYINT ||
       value.GetTypeId() == type::TypeId::DECIMAL) {
     if (!value.CompareBetweenInclusive(min_value, max_value))
-      throw SettingsException("Value given for \"" + name + "\" is not in its min-max bounds.");
+      throw SettingsException("Value given for \"" + name +
+                              "\" is not in its min-max bounds (" +
+                              std::to_string(min_value.GetAs<int32_t>()) + "-" +
+                              std::to_string(max_value.GetAs<int32_t>()) + ")");
   }
 
   settings_.emplace(id, Param(name, value, description, default_value,
