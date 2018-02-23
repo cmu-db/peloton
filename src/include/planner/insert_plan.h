@@ -73,7 +73,7 @@ class InsertPlan : public AbstractPlan {
    * Clear the parameter values of the current insert. The plan may be 
    * cached in the statement / plan cache and may be reused.
    */
-  void ClearParameterValues() { values_.clear(); }
+  void ClearParameterValues() override { values_.clear(); }
 
   storage::DataTable *GetTable() const { return target_table_; }
 
