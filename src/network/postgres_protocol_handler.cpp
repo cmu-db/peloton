@@ -6,18 +6,6 @@
 //
 // Identification: src/network/postgres_protocol_handler.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// postgres_protocol_handler.cpp
-//
-// Identification: src/network/postgres_protocol_handler.cpp
-//
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
