@@ -47,23 +47,28 @@ TableScanTranslator::TableScanTranslator(const planner::SeqScanPlan &scan,
 // TODO merge serial and parallel ...
 // TODO cleanup zonemap stuff
 
+llvm::Value *TableScanTranslator::LoadTablePtr(CodeGen &codegen) const {
+  const storage::DataTable &table = *GetScanPlan().GetTable();
+
+  // Get the table instance from the database
+  llvm::Value *db_oid = codegen.Const32(table.GetDatabaseOid());
+  llvm::Value *table_oid = codegen.Const32(table.GetOid());
+  return codegen.Call(StorageManagerProxy::GetTableWithOid,
+                      {GetStorageManagerPtr(), db_oid, table_oid});
+}
+
 void TableScanTranslator::ProduceSerial() const {
   auto producer = [this](ConsumerContext &ctx) {
     CodeGen &codegen = GetCodeGen();
 
-    const auto &plan = GetScanPlan();
-    const storage::DataTable &table = *plan.GetTable();
-
-    // Get the table instance from the database
-    auto *db_oid = codegen.Const32(table.GetDatabaseOid());
-    auto *table_oid = codegen.Const32(table.GetOid());
-    auto *table_ptr = codegen.Call(StorageManagerProxy::GetTableWithOid,
-                                   {GetStorageManagerPtr(), db_oid, table_oid});
+    // Load the table
+    auto *table_ptr = LoadTablePtr(codegen);
 
     // The selection vector for the scan
-    auto *raw_vec = codegen.AllocateBuffer(
-        codegen.Int32Type(), Vector::kDefaultVectorSize, "scanSelVector");
-    Vector sel_vec{raw_vec, Vector::kDefaultVectorSize, codegen.Int32Type()};
+    auto *i32_type = codegen.Int32Type();
+    auto vec_size = Vector::kDefaultVectorSize.load();
+    auto *raw_vec = codegen.AllocateBuffer(i32_type, vec_size, "scanPosList");
+    Vector position_list{raw_vec, vec_size, i32_type};
 
     auto predicate = const_cast<expression::AbstractExpression *>(
         GetScanPlan().GetPredicate());
@@ -78,10 +83,10 @@ void TableScanTranslator::ProduceSerial() const {
         num_preds = predicate->GetNumberofParsedPredicates();
       }
     }
-    ScanConsumer scan_consumer{ctx, plan, sel_vec};
-    table_.GenerateScan(codegen, table_ptr, nullptr, nullptr,
-                        sel_vec.GetCapacity(), predicate_ptr, num_preds,
-                        scan_consumer);
+
+    ScanConsumer scan_consumer{ctx, GetScanPlan(), position_list};
+    table_.GenerateScan(codegen, table_ptr, nullptr, nullptr, vec_size,
+                        predicate_ptr, num_preds, scan_consumer);
   };
 
   // Execute serially
@@ -112,15 +117,14 @@ void TableScanTranslator::ProduceParallel() const {
     llvm::Value *tilegroup_start = params[0];
     llvm::Value *tilegroup_end = params[1];
 
-    auto *db_oid = codegen.Const32(table.GetDatabaseOid());
-    auto *table_oid = codegen.Const32(table.GetOid());
-    auto *table_ptr = codegen.Call(StorageManagerProxy::GetTableWithOid,
-                                   {GetStorageManagerPtr(), db_oid, table_oid});
+    // Load the table pointer
+    auto *table_ptr = LoadTablePtr(codegen);
 
     // The selection vector for the scan
-    auto *raw_vec = codegen.AllocateBuffer(
-        codegen.Int32Type(), Vector::kDefaultVectorSize, "scanSelVector");
-    Vector sel_vec{raw_vec, Vector::kDefaultVectorSize, codegen.Int32Type()};
+    auto *i32_type = codegen.Int32Type();
+    auto vec_size = Vector::kDefaultVectorSize.load();
+    auto *raw_vec = codegen.AllocateBuffer(i32_type, vec_size, "scanPosList");
+    Vector position_list{raw_vec, vec_size, i32_type};
 
     // zonemap
     auto predicate = const_cast<expression::AbstractExpression *>(
@@ -138,10 +142,9 @@ void TableScanTranslator::ProduceParallel() const {
     }
 
     // Scan the given range of the table
-    ScanConsumer scan_consumer{ctx, GetScanPlan(), sel_vec};
+    ScanConsumer scan_consumer{ctx, GetScanPlan(), position_list};
     table_.GenerateScan(codegen, table_ptr, tilegroup_start, tilegroup_end,
-                        sel_vec.GetCapacity(), predicate_ptr, num_preds,
-                        scan_consumer);
+                        vec_size, predicate_ptr, num_preds, scan_consumer);
   };
 
   // Execute parallel

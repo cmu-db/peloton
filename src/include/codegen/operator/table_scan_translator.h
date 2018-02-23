@@ -55,6 +55,9 @@ class TableScanTranslator : public OperatorTranslator {
   void TearDownQueryState() override {}
 
  private:
+  // Load the table pointer
+  llvm::Value *LoadTablePtr(CodeGen &codegen) const;
+
   void ProduceSerial() const;
 
   void ProduceParallel() const;
