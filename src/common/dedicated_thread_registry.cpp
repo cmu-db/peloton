@@ -11,6 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "common/dedicated_thread_registry.h"
+#include "common/dedicated_thread_task.h"
+#include "common/dedicated_thread_owner.h
 
 namespace peloton {
 
