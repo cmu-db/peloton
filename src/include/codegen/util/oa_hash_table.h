@@ -106,16 +106,26 @@ class OAHashTable {
   static void Destroy(OAHashTable &table);
 
   /**
-   * Insert a key-value pair into the hash-table.
+   * Insert a key-value pair into the hash-table. Mostly used for testing.
    *
-   * @tparam Key The datatype of the key
-   * @tparam Value The datatype of the value
    * @param hash The hash value of the key
    * @param key The key to store in the table
    * @param value The value to store in the value
    */
   template <typename Key, typename Value>
-  void Insert(uint64_t hash, Key &key, Value &value);
+  void Insert(uint64_t hash, const Key &key, const Value &value);
+
+  /**
+   * Probe a key in the hash table. Doesn't deal with duplicate values. Mostly
+   * for testing.
+   *
+   * @param hash
+   * @param key
+   * @param value
+   * @return
+   */
+  template <typename Key, typename Value>
+  bool Probe(uint64_t hash, const Key &key, Value &value);
 
   /**
    * Make room in the hash-table to store a new key-value pair. The provided
@@ -263,13 +273,13 @@ class OAHashTable {
 };
 
 template <typename Key, typename Value>
-void OAHashTable::Insert(uint64_t hash, Key &key, Value &value) {
+void OAHashTable::Insert(uint64_t hash, const Key &key, const Value &value) {
   uint64_t bucket = hash & bucket_mask_;
 
   uint64_t entry_int =
       reinterpret_cast<uint64_t>(buckets_) + bucket * entry_size_;
   while (true) {
-    HashEntry *entry = reinterpret_cast<HashEntry *>(entry_int);
+    auto *entry = reinterpret_cast<HashEntry *>(entry_int);
 
     // If entry is free, dump key and value
     if (entry->IsFree()) {
@@ -292,10 +302,49 @@ void OAHashTable::Insert(uint64_t hash, Key &key, Value &value) {
     }
 
     // Continue
-    bucket = (bucket == num_buckets_) ? 0 : bucket + 1;
-    entry_int = (bucket == num_buckets_) ? reinterpret_cast<uint64_t>(buckets_)
-                                         : entry_int + entry_size_;
+    bucket++;
+    entry_int += entry_size_;
+
+    // Wrap
+    if (bucket == num_buckets_) {
+      bucket = 0;
+      entry_int = reinterpret_cast<uint64_t>(buckets_);
+    }
   }
+}
+
+template <typename Key, typename Value>
+bool OAHashTable::Probe(uint64_t hash, const Key &key, Value &value) {
+  uint64_t steps = 0;
+
+  uint64_t bucket = hash & bucket_mask_;
+
+  uint64_t entry_int =
+      reinterpret_cast<uint64_t>(buckets_) + (bucket * entry_size_);
+
+  while (steps++ < num_entries_) {
+    auto *entry = reinterpret_cast<HashEntry *>(entry_int);
+    // check if entry is free
+    if (!entry->IsFree() && entry->hash == hash) {
+      // hashes match, check key
+      auto *entry_key = reinterpret_cast<Key *>(entry->data);
+      if (*entry_key == key) {
+        value = *reinterpret_cast<Value *>(entry->data + sizeof(Key));
+        return true;
+      }
+    }
+
+    // Continue
+    bucket++;
+    entry_int += entry_size_;
+
+    // Wrap
+    if (bucket == num_buckets_) {
+      bucket = 0;
+      entry_int = reinterpret_cast<uint64_t>(buckets_);
+    }
+  }
+  return false;
 }
 
 }  // namespace util

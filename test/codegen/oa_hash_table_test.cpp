@@ -136,15 +136,19 @@ TEST_F(OAHashTableTest, MicroBenchmark) {
   std::vector<Key> keys;
   Value v = {6, 5, 4, 3};
 
+  std::random_device r;
+  std::default_random_engine e(r());
+  std::uniform_int_distribution<uint32_t> gen;
+
   // Create all keys
   uint32_t num_keys = 100000;
   for (uint32_t i = 0; i < num_keys; i++) {
-    keys.emplace_back(1, static_cast<uint32_t>(rand()));
+    keys.emplace_back(gen(e), gen(e));
   }
 
-  double avg_oaht = 0.0;
-  double avg_map = 0.0;
-  double avg_cuckoo = 0.0;
+  double avg_oaht_insert = 0.0, avg_oaht_probe = 0.0;
+  double avg_map_insert = 0.0, avg_map_probe = 0.0;
+  double avg_cuckoo_insert = 0.0, avg_cuckoo_probe = 0.0;
 
   // First, bench ours ...
   {
@@ -156,14 +160,29 @@ TEST_F(OAHashTableTest, MicroBenchmark) {
       Timer<std::ratio<1, 1000>> timer;
       timer.Start();
 
-      // Start
+      // Start Insert
       for (uint32_t i = 0; i < num_keys; i++) {
         ht.Insert(Hash(keys[i]), keys[i], v);
       }
-      // End
+      // End Insert
 
       timer.Stop();
-      avg_oaht += timer.GetDuration();
+      avg_oaht_insert += timer.GetDuration();
+
+      timer.Reset();
+      timer.Start();
+
+      // Start Probe
+      std::vector<Key> shuffled = keys;
+      std::random_shuffle(shuffled.begin(), shuffled.end());
+      for (uint32_t i = 0; i < num_keys; i++) {
+        Value probe_val;
+        EXPECT_TRUE(ht.Probe(Hash(shuffled[i]), shuffled[i], probe_val));
+      }
+      // End Probe
+
+      timer.Stop();
+      avg_oaht_probe += timer.GetDuration();
     }
   }
 
@@ -185,7 +204,21 @@ TEST_F(OAHashTableTest, MicroBenchmark) {
       }
 
       timer.Stop();
-      avg_map += timer.GetDuration();
+      avg_map_insert += timer.GetDuration();
+
+      timer.Reset();
+      timer.Start();
+
+      // Start Probe
+      std::vector<Key> shuffled = keys;
+      std::random_shuffle(shuffled.begin(), shuffled.end());
+      for (uint32_t i = 0; i < num_keys; i++) {
+        EXPECT_NE(ht.find(shuffled[i]), ht.end());
+      }
+      // End Probe
+
+      timer.Stop();
+      avg_map_probe += timer.GetDuration();
     }
   }
 
@@ -207,13 +240,33 @@ TEST_F(OAHashTableTest, MicroBenchmark) {
       }
 
       timer.Stop();
-      avg_cuckoo += timer.GetDuration();
+      avg_cuckoo_insert += timer.GetDuration();
+
+      timer.Reset();
+      timer.Start();
+
+      // Start Probe
+      std::vector<Key> shuffled = keys;
+      std::random_shuffle(shuffled.begin(), shuffled.end());
+      for (uint32_t i = 0; i < num_keys; i++) {
+        Value probe_val;
+        EXPECT_TRUE(map.find(shuffled[i], probe_val));
+      }
+      // End Probe
+
+      timer.Stop();
+      avg_cuckoo_probe += timer.GetDuration();
     }
   }
 
-  LOG_INFO("Avg OA_HT: %.2lf, Avg std::unordered_map: %.2lf, Avg cuckoo: %.2lf",
-           avg_oaht / (double)num_runs, avg_map / (double)num_runs,
-           avg_cuckoo / (double)num_runs);
+  LOG_INFO("OA_HT insert: %.2lf, probe: %.2lf",
+           avg_oaht_insert / (double)num_runs,
+           avg_oaht_probe / (double)num_runs);
+  LOG_INFO("std::unordered_map insert: %.2lf, probe: %.2lf",
+           avg_map_insert / (double)num_runs, avg_map_probe / (double)num_runs);
+  LOG_INFO("Cuckoo insert: %.2lf, probe: %.2lf",
+           avg_cuckoo_insert / (double)num_runs,
+           avg_cuckoo_probe / (double)num_runs);
 }
 
 }  // namespace test
