@@ -6,7 +6,7 @@
 //
 // Identification: test/codegen/oa_hash_table_test.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -15,6 +15,7 @@
 #include "common/harness.h"
 
 #include "murmur3/MurmurHash3.h"
+#include "libcuckoo/cuckoohash_map.hh"
 
 #include "codegen/util/oa_hash_table.h"
 #include "common/timer.h"
@@ -27,6 +28,8 @@ class OAHashTableTest : public PelotonTest {
   // The key and value object we store in the hash table
   struct Key {
     uint32_t k1, k2;
+
+    Key(uint32_t _k1, uint32_t _k2) : k1(_k1), k2(_k2) {}
 
     bool operator==(const Key &rhs) const {
       return k1 == rhs.k1 && k2 == rhs.k2;
@@ -42,40 +45,22 @@ class OAHashTableTest : public PelotonTest {
     bool operator!=(const Value &rhs) const { return !(rhs == *this); }
   };
 
-  OAHashTableTest() {
-    PELOTON_MEMSET(raw_hash_table, 1, sizeof(raw_hash_table));
-    GetHashTable().Init(sizeof(Key), sizeof(Value));
-  }
+  OAHashTableTest() : ht_(sizeof(Key), sizeof(Value)) {}
 
-  ~OAHashTableTest() {
-    // Clean up
-    GetHashTable().Destroy();
-  }
-
-  static inline uint32_t Hash(const Key &k) {
+  static uint32_t Hash(const Key &k) {
     static constexpr uint32_t seed = 12345;
     auto h1 = MurmurHash3_x86_32(&k.k1, sizeof(uint32_t), seed);
     auto h2 = MurmurHash3_x86_32(&k.k2, sizeof(uint32_t), seed);
     return h1 ^ (h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2));
   }
 
-  inline void Insert(Key k, Value v) {
-    auto &hash_table = GetHashTable();
-    hash_table.Insert(Hash(k), k, v);
-  }
+  void Insert(Key k, Value v) { GetHashTable().Insert(Hash(k), k, v); }
 
-  inline void Reset() {
-    GetHashTable().Destroy();
-    GetHashTable().Init(sizeof(Key), sizeof(Value));
-  }
-
-  codegen::util::OAHashTable &GetHashTable() {
-    return *reinterpret_cast<codegen::util::OAHashTable *>(raw_hash_table);
-  }
+  codegen::util::OAHashTable &GetHashTable() { return ht_; }
 
  private:
   // The open-addressing hash-table instance
-  int8_t raw_hash_table[sizeof(codegen::util::OAHashTable)];
+  codegen::util::OAHashTable ht_;
 };
 
 TEST_F(OAHashTableTest, CanInsertKeyValuePairs) {
@@ -130,12 +115,12 @@ TEST_F(OAHashTableTest, CanIterate) {
 
   i = 0;
   uint32_t dup_count = 0;
-  for (auto iter = hashtable.begin(), end = hashtable.end();
-       iter != end; ++iter) {
-    const Key *iter_key = reinterpret_cast<const Key *>(iter.Key());
+  for (auto iter = hashtable.begin(), end = hashtable.end(); iter != end;
+       ++iter) {
+    const auto *iter_key = reinterpret_cast<const Key *>(iter.Key());
     if (*iter_key == key_dup) {
       dup_count++;
-      const Value *iter_val = reinterpret_cast<const Value *>(iter.Value());
+      const auto *iter_val = reinterpret_cast<const Value *>(iter.Value());
       EXPECT_TRUE(*iter_val == v || *iter_val == vdup1 || *iter_val == vdup2);
     }
     i++;
@@ -144,8 +129,6 @@ TEST_F(OAHashTableTest, CanIterate) {
   EXPECT_EQ(to_insert + 2, i);
   EXPECT_EQ(3, dup_count);
 }
-
-TEST_F(OAHashTableTest, CanCodegenProbeOrInsert) {}
 
 TEST_F(OAHashTableTest, MicroBenchmark) {
   uint32_t num_runs = 10;
@@ -156,29 +139,31 @@ TEST_F(OAHashTableTest, MicroBenchmark) {
   // Create all keys
   uint32_t num_keys = 100000;
   for (uint32_t i = 0; i < num_keys; i++) {
-    keys.push_back({1, static_cast<uint32_t>(rand())});
+    keys.emplace_back(1, static_cast<uint32_t>(rand()));
   }
 
   double avg_oaht = 0.0;
   double avg_map = 0.0;
+  double avg_cuckoo = 0.0;
 
   // First, bench ours ...
   {
     for (uint32_t b = 0; b < num_runs; b++) {
+      codegen::util::OAHashTable ht(
+          sizeof(Key), sizeof(Value),
+          codegen::util::OAHashTable::kDefaultInitialSize);
+
       Timer<std::ratio<1, 1000>> timer;
       timer.Start();
 
       // Start
       for (uint32_t i = 0; i < num_keys; i++) {
-        Insert(keys[i], v);
+        ht.Insert(Hash(keys[i]), keys[i], v);
       }
       // End
 
       timer.Stop();
       avg_oaht += timer.GetDuration();
-
-      // Reset
-      Reset();
     }
   }
 
@@ -189,8 +174,8 @@ TEST_F(OAHashTableTest, MicroBenchmark) {
     };
 
     for (uint32_t b = 0; b < num_runs; b++) {
-      std::unordered_map<Key, Value, Hasher> ht{
-          codegen::util::OAHashTable::kDefaultInitialSize};
+      std::unordered_map<Key, Value, Hasher> ht(
+          codegen::util::OAHashTable::kDefaultInitialSize);
 
       Timer<std::ratio<1, 1000>> timer;
       timer.Start();
@@ -204,8 +189,31 @@ TEST_F(OAHashTableTest, MicroBenchmark) {
     }
   }
 
-  LOG_INFO("Avg OA_HT: %.2lf, Avg std::unordered_map: %.2lf",
-          avg_oaht / (double)num_runs, avg_map / (double)num_runs);
+  // Next, cuckoo map
+  {
+    struct Hasher {
+      size_t operator()(const Key &k) const { return Hash(k); }
+    };
+
+    for (uint32_t b = 0; b < num_runs; b++) {
+      cuckoohash_map<Key, Value, Hasher> map(
+          codegen::util::OAHashTable::kDefaultInitialSize);
+
+      Timer<std::ratio<1, 1000>> timer;
+      timer.Start();
+
+      for (uint32_t i = 0; i < num_keys; i++) {
+        map.insert(keys[i], v);
+      }
+
+      timer.Stop();
+      avg_cuckoo += timer.GetDuration();
+    }
+  }
+
+  LOG_INFO("Avg OA_HT: %.2lf, Avg std::unordered_map: %.2lf, Avg cuckoo: %.2lf",
+           avg_oaht / (double)num_runs, avg_map / (double)num_runs,
+           avg_cuckoo / (double)num_runs);
 }
 
 }  // namespace test
