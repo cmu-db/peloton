@@ -6,7 +6,7 @@
 //
 // Identification: src/network/postgres_protocol_handler.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -261,11 +261,11 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(
       std::shared_ptr<Statement> statement(nullptr);
       auto prep_stmt = dynamic_cast<parser::PrepareStatement *>(sql_stmt.get());
       std::string stmt_name = prep_stmt->name;
-      statement = traffic_cop_->PrepareStatement(
-          stmt_name, query, std::move(prep_stmt->query), error_message);
+      statement = traffic_cop_->PrepareStatement(stmt_name, query,
+                                                 std::move(prep_stmt->query));
       if (statement.get() == nullptr) {
-        SendErrorResponse(
-            {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
+        SendErrorResponse({{NetworkMessageType::HUMAN_READABLE_ERROR,
+                            traffic_cop_->GetErrorMessage()}});
         SendReadyForQuery(NetworkTransactionStateType::IDLE);
         return ProcessResult::COMPLETE;
       }
@@ -294,9 +294,9 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(
       }
       // Did not find statement with same name
       else {
-        traffic_cop_->SetErrorMessage("The prepared statement does not exist");
-        SendErrorResponse({{NetworkMessageType::HUMAN_READABLE_ERROR,
-                            traffic_cop_->GetErrorMessage()}});
+        std::string error_message = "The prepared statement does not exist";
+        SendErrorResponse(
+            {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
         SendReadyForQuery(NetworkTransactionStateType::IDLE);
         return ProcessResult::COMPLETE;
       }
@@ -304,10 +304,8 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(
           traffic_cop_->GetStatement()->GetTupleDescriptor().size(), 0);
       result_format_ = result_format;
 
-      if (!traffic_cop_->BindParamsForCachePlan(exec_stmt->parameters,
-                                                error_message)) {
+      if (!traffic_cop_->BindParamsForCachePlan(exec_stmt->parameters)) {
         traffic_cop_->ProcessInvalidStatement();
-        traffic_cop_->SetErrorMessage(error_message);
         SendErrorResponse({{NetworkMessageType::HUMAN_READABLE_ERROR,
                             traffic_cop_->GetErrorMessage()}});
         SendReadyForQuery(NetworkTransactionStateType::IDLE);
@@ -317,8 +315,7 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(
       bool unnamed = false;
       auto status = traffic_cop_->ExecuteStatement(
           traffic_cop_->GetStatement(), traffic_cop_->GetParamVal(), unnamed,
-          nullptr, result_format_, traffic_cop_->GetResult(),
-          traffic_cop_->GetErrorMessage(), thread_id);
+          nullptr, result_format_, traffic_cop_->GetResult(), thread_id);
       if (traffic_cop_->GetQueuing()) {
         return ProcessResult::PROCESSING;
       }
@@ -331,10 +328,10 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(
           new parser::SQLStatementList());
       unnamed_sql_stmt_list->PassInStatement(std::move(sql_stmt));
       traffic_cop_->SetStatement(traffic_cop_->PrepareStatement(
-          stmt_name, query, std::move(unnamed_sql_stmt_list), error_message));
+          stmt_name, query, std::move(unnamed_sql_stmt_list)));
       if (traffic_cop_->GetStatement().get() == nullptr) {
-        SendErrorResponse(
-            {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
+        SendErrorResponse({{NetworkMessageType::HUMAN_READABLE_ERROR,
+                            traffic_cop_->GetErrorMessage()}});
         SendReadyForQuery(NetworkTransactionStateType::IDLE);
         return ProcessResult::COMPLETE;
       }
@@ -344,8 +341,7 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(
           traffic_cop_->GetStatement()->GetTupleDescriptor().size(), 0);
       auto status = traffic_cop_->ExecuteStatement(
           traffic_cop_->GetStatement(), traffic_cop_->GetParamVal(), unnamed,
-          nullptr, result_format_, traffic_cop_->GetResult(),
-          traffic_cop_->GetErrorMessage(), thread_id);
+          nullptr, result_format_, traffic_cop_->GetResult(), thread_id);
       if (traffic_cop_->GetQueuing()) {
         return ProcessResult::PROCESSING;
       }
@@ -365,11 +361,11 @@ void PostgresProtocolHandler::ExecQueryMessageGetResult(ResultType status) {
     SendReadyForQuery(NetworkTransactionStateType::IDLE);
     return;
   } else if (status == ResultType::TO_ABORT) {
-    traffic_cop_->SetErrorMessage(
+    std::string error_message =
         "current transaction is aborted, commands ignored until end of "
-        "transaction block");
-    SendErrorResponse({{NetworkMessageType::HUMAN_READABLE_ERROR,
-                        traffic_cop_->GetErrorMessage()}});
+        "transaction block";
+    SendErrorResponse(
+        {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
     SendReadyForQuery(NetworkTransactionStateType::IDLE);
     return;
   }
@@ -390,7 +386,7 @@ void PostgresProtocolHandler::ExecQueryMessageGetResult(ResultType status) {
  * exec_parse_message - handle PARSE message
  */
 void PostgresProtocolHandler::ExecParseMessage(InputPacket *pkt) {
-  std::string error_message, statement_name, query, query_type_string;
+  std::string statement_name, query, query_type_string;
   GetStringToken(pkt, statement_name);
   GetStringToken(pkt, query);
 
@@ -418,7 +414,7 @@ void PostgresProtocolHandler::ExecParseMessage(InputPacket *pkt) {
   // For empty query, we still want to get it constructed
   // TODO (Tianyi) Consider handle more statement
   bool empty = (sql_stmt_list.get() == nullptr ||
-               sql_stmt_list->GetNumStatements() == 0);
+                sql_stmt_list->GetNumStatements() == 0);
   if (!empty) {
     parser::SQLStatement *sql_stmt = sql_stmt_list->GetStatement(0);
     query_type = StatementTypeToQueryType(sql_stmt->GetType(), sql_stmt);
@@ -437,13 +433,13 @@ void PostgresProtocolHandler::ExecParseMessage(InputPacket *pkt) {
   // Prepare statement
   std::shared_ptr<Statement> statement(nullptr);
 
-  statement = traffic_cop_->PrepareStatement(
-      statement_name, query, std::move(sql_stmt_list), error_message);
+  statement = traffic_cop_->PrepareStatement(statement_name, query,
+                                             std::move(sql_stmt_list));
   if (statement.get() == nullptr) {
     traffic_cop_->ProcessInvalidStatement();
     skipped_stmt_ = true;
-    SendErrorResponse(
-        {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
+    SendErrorResponse({{NetworkMessageType::HUMAN_READABLE_ERROR,
+                        traffic_cop_->GetErrorMessage()}});
     return;
   }
   LOG_TRACE("PrepareStatement[%s] => %s", statement_name.c_str(),
@@ -886,8 +882,7 @@ ProcessResult PostgresProtocolHandler::ExecExecuteMessage(
 
   auto status = traffic_cop_->ExecuteStatement(
       traffic_cop_->GetStatement(), traffic_cop_->GetParamVal(), unnamed,
-      param_stat, result_format_, traffic_cop_->GetResult(),
-      traffic_cop_->GetErrorMessage(), thread_id);
+      param_stat, result_format_, traffic_cop_->GetResult(), thread_id);
   if (traffic_cop_->GetQueuing()) {
     return ProcessResult::PROCESSING;
   }

@@ -61,13 +61,13 @@ SETTING_bool(ssl, "Enable SSL connection (default: true)", true, false, false)
 // The same applies to certificate file
 SETTING_string(private_key_file,
               "path to private key file",
-              "server.key",
+              "peloton_insecure_server.key",
               false, false)
 
 // Peloton certificate file
 SETTING_string(certificate_file,
               "path to certificate file",
-              "server.crt",
+              "peloton_insecure_server.crt",
               false, false)
 
 // Peloton root certificate file

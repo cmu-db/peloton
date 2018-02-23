@@ -119,7 +119,7 @@ pipeline {
                 //         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
                 //         sh 'python ./script/validators/source_validator.py'
                 //         sh 'mkdir build'
-                //         sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False .. && make -j4'
+                //         sh 'cd build && PATH=/usr/lib64/llvm4.0/bin:$PATH cmake -DCMAKE_CXX_FLAGS="-isystem /usr/include/llvm4.0" -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False .. && make -j4'
                 //     }
                 // }
 
@@ -129,7 +129,7 @@ pipeline {
                 //         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
                 //         sh 'python ./script/validators/source_validator.py'
                 //         sh 'mkdir build'
-                //         sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
+                //         sh 'cd build && PATH=/usr/lib64/llvm4.0/bin:$PATH cmake -DCMAKE_CXX_FLAGS="-isystem /usr/include/llvm4.0" -DCMAKE_BUILD_TYPE=Release -DCOVERALLS=False .. && make -j4'
                 //     }
                 // }
 
