@@ -16,7 +16,8 @@
 #include <vector>
 #include <thread>
 #include "common/macros.h"
-
+#include "common/dedicated_thread_task.h"
+#include "common/dedicated_thread_owner.h
 
 namespace peloton {
 
@@ -32,10 +33,24 @@ class DedicatedThreadRegistry {
  public:
   DedicatedThreadRegistry() = default;
 
-  ~DedicatedThreadRegistry();
+  ~DedicatedThreadRegistry() {
+    // Note that if registry is shutting down, it doesn't matter whether
+    // owners are notified as this class should have the same life cycle
+    // as the entire peloton process.
+
+    for (auto &entry : thread_owners_table_) {
+      for (auto &task : entry.second) {
+        task->Terminate();
+        threads_table_[task.get()].join();
+      }
+    }
+  }
 
   // TODO(tianyu): Remove when we remove singletons
-  static DedicatedThreadRegistry &GetInstance();
+  static DedicatedThreadRegistry &GetInstance()  {
+    static DedicatedThreadRegistry registry;
+    return registry;
+  }
 
   /**
    *
@@ -47,7 +62,11 @@ class DedicatedThreadRegistry {
    */
   template <typename Task>
   void RegisterDedicatedThread(DedicatedThreadOwner *requester,
-                      std::shared_ptr<Task> task);
+                      std::shared_ptr<Task> task) {
+    thread_owners_table_[requester].push_back(task);
+    requester->NotifyNewThread();
+    threads_table_.emplace(task.get(), std::thread([=] { task->RunTask(); }));
+  }
 
   // TODO(tianyu): Add code for thread removal
 
