@@ -17,12 +17,10 @@
 #include <thread>
 #include "common/macros.h"
 #include "common/dedicated_thread_task.h"
-#include "common/dedicated_thread_owner.h
+#include "common/dedicated_thread_owner.h"
 
 namespace peloton {
 
-class DedicatedThreadOwner;
-class DedicatedThreadTask;
 /**
  * Singleton class responsible for maintaining and dispensing long running
  * (dedicated) threads to other system components. The class also serves
