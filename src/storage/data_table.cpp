@@ -13,8 +13,8 @@
 #include <mutex>
 #include <utility>
 
-#include "brain/clusterer.h"
-#include "brain/sample.h"
+#include "include/indextuner/clusterer.h"
+#include "include/indextuner/sample.h"
 #include "catalog/foreign_key.h"
 #include "catalog/table_catalog.h"
 #include "catalog/trigger_catalog.h"
@@ -1317,7 +1317,7 @@ storage::TileGroup *DataTable::TransformTileGroup(
   return new_tile_group.get();
 }
 
-void DataTable::RecordLayoutSample(const brain::Sample &sample) {
+void DataTable::RecordLayoutSample(const indextuner::Sample &sample) {
   // Add layout sample
   {
     std::lock_guard<std::mutex> lock(layout_samples_mutex_);
@@ -1325,7 +1325,7 @@ void DataTable::RecordLayoutSample(const brain::Sample &sample) {
   }
 }
 
-std::vector<brain::Sample> DataTable::GetLayoutSamples() {
+std::vector<indextuner::Sample> DataTable::GetLayoutSamples() {
   {
     std::lock_guard<std::mutex> lock(layout_samples_mutex_);
     return layout_samples_;
@@ -1340,7 +1340,7 @@ void DataTable::ClearLayoutSamples() {
   }
 }
 
-void DataTable::RecordIndexSample(const brain::Sample &sample) {
+void DataTable::RecordIndexSample(const indextuner::Sample &sample) {
   // Add index sample
   {
     std::lock_guard<std::mutex> lock(index_samples_mutex_);
@@ -1348,7 +1348,7 @@ void DataTable::RecordIndexSample(const brain::Sample &sample) {
   }
 }
 
-std::vector<brain::Sample> DataTable::GetIndexSamples() {
+std::vector<indextuner::Sample> DataTable::GetIndexSamples() {
   {
     std::lock_guard<std::mutex> lock(index_samples_mutex_);
     return index_samples_;

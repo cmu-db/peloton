@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// index_tuner.h
+// indextuner.h
 //
-// Identification: src/include/brain/index_tuner.h
+// Identification: src/include/indextuner/indextuner.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -29,7 +29,7 @@ namespace storage {
 class DataTable;
 }
 
-namespace brain {
+namespace indextuner {
 
 /**
  * Load statistics for Index Tuner from a file
@@ -224,7 +224,7 @@ class IndexTuner {
    *
    * @return     The workload write ratio.
    */
-  double ComputeWorkloadWriteRatio(const std::vector<brain::Sample> &samples);
+  double ComputeWorkloadWriteRatio(const std::vector<indextuner::Sample> &samples);
 
   void DropIndexes(storage::DataTable *table);
 
@@ -293,5 +293,5 @@ class IndexTuner {
   bool visibility_mode_ = false;
 };
 
-}  // namespace brain
+}  // namespace indextuner
 }  // namespace peloton

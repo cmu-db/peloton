@@ -46,7 +46,7 @@ TEST_F(SettingsManagerTests, InitializationTest) {
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(socket_family, socket_family_default);
 
-  // test index_tuner (bool)
+  // test indextuner (bool)
   txn = txn_manager.BeginTransaction();
   bool index_tuner = settings::SettingsManager::GetBool(settings::SettingId::index_tuner);
   bool index_tuner_default = ("true" == settings_catalog.GetDefaultValue("index_tuner", txn));

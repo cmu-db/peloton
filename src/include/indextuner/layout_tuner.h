@@ -4,7 +4,7 @@
 //
 // layout_tuner.h
 //
-// Identification: src/include/brain/layout_tuner.h
+// Identification: src/include/indextuner/layout_tuner.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -17,7 +17,7 @@
 #include <thread>
 #include <vector>
 
-#include "brain/clusterer.h"
+#include "clusterer.h"
 #include "common/internal_types.h"
 #include "common/timer.h"
 
@@ -27,7 +27,7 @@ namespace storage {
 class DataTable;
 }
 
-namespace brain {
+namespace indextuner {
 
 //===--------------------------------------------------------------------===//
 // Layout Tuner
@@ -144,5 +144,5 @@ class LayoutTuner {
 
 };
 
-}  // namespace brain
+}  // namespace indextuner
 }  // namespace peloton

@@ -17,10 +17,10 @@
 #include <thread>
 #include "common/macros.h"
 #include "common/dedicated_thread_task.h"
+#include "common/dedicated_thread_owner.h"
 
 namespace peloton {
 
-class DedicatedThreadOwner;
 /**
  * Singleton class responsible for maintaining and dispensing long running
  * (dedicated) threads to other system components. The class also serves
@@ -46,7 +46,11 @@ class DedicatedThreadRegistry {
    */
   template <typename Task>
   void RegisterDedicatedThread(DedicatedThreadOwner *requester,
-                      std::shared_ptr<Task> task);
+                      std::shared_ptr<Task> task) {
+    thread_owners_table_[requester].push_back(task);
+    requester->NotifyNewThread();
+    threads_table_.emplace(task.get(), std::thread([=] { task->RunTask(); }));
+  }
 
   // TODO(tianyu): Add code for thread removal
 

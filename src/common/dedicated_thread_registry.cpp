@@ -12,6 +12,7 @@
 
 #include "common/dedicated_thread_registry.h"
 
+
 namespace peloton {
 
 DedicatedThreadRegistry::~DedicatedThreadRegistry() {
@@ -26,16 +27,9 @@ DedicatedThreadRegistry::~DedicatedThreadRegistry() {
     }
   }
 }
+
 DedicatedThreadRegistry &DedicatedThreadRegistry::GetInstance() {
   static DedicatedThreadRegistry registry;
   return registry;
-}
-
-template<typename Task>
-void DedicatedThreadRegistry::RegisterDedicatedThread(DedicatedThreadOwner *requester,
-                                                      std::shared_ptr<Task> task) {
-  thread_owners_table_[requester].push_back(task);
-  requester->NotifyNewThread();
-  threads_table_.emplace(task.get(), std::thread([=] { task->RunTask(); }));
 }
 }

@@ -4,7 +4,7 @@
 //
 // layout_tuner_test.cpp
 //
-// Identification: test/brain/layout_tuner_test.cpp
+// Identification: test/indextuner/layout_tuner_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -16,7 +16,7 @@
 
 #include "common/harness.h"
 
-#include "brain/layout_tuner.h"
+#include "include/indextuner/layout_tuner.h"
 
 #include "executor/testing_executor_util.h"
 #include "common/generator.h"
@@ -53,7 +53,7 @@ TEST_F(LayoutTunerTests, BasicTest) {
   EXPECT_EQ(column_count, 4);
 
   // Layout tuner
-  brain::LayoutTuner &layout_tuner = brain::LayoutTuner::GetInstance();
+  indextuner::LayoutTuner &layout_tuner = indextuner::LayoutTuner::GetInstance();
 
   // Attach table to index tuner
   layout_tuner.AddTable(data_table.get());
@@ -85,7 +85,7 @@ TEST_F(LayoutTunerTests, BasicTest) {
 
     // Create a table access sample
     // Indicates the columns accessed (bitmap), and query weight
-    brain::Sample sample(columns_accessed, sample_weight);
+    indextuner::Sample sample(columns_accessed, sample_weight);
 
     // Collect layout sample in table
     data_table->RecordLayoutSample(sample);

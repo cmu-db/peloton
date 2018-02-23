@@ -4,13 +4,13 @@
 //
 // layout_tuner.cpp
 //
-// Identification: src/brain/layout_tuner.cpp
+// Identification: src/indextuner/layout_tuner.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "brain/layout_tuner.h"
+#include "include/indextuner/layout_tuner.h"
 
 #include <vector>
 #include <string>
@@ -22,7 +22,7 @@
 #include "storage/data_table.h"
 
 namespace peloton {
-namespace brain {
+namespace indextuner {
 
 LayoutTuner& LayoutTuner::GetInstance() {
   static LayoutTuner layout_tuner;
@@ -40,7 +40,7 @@ void LayoutTuner::Start() {
   layout_tuning_stop = false;
 
   // Launch thread
-  layout_tuner_thread = std::thread(&brain::LayoutTuner::Tune, this);
+  layout_tuner_thread = std::thread(&indextuner::LayoutTuner::Tune, this);
 
   LOG_INFO("Started layout tuner");
 }
@@ -116,7 +116,7 @@ void LayoutTuner::UpdateDefaultPartition(storage::DataTable* table) {
   oid_t column_count = table->GetSchema()->GetColumnCount();
 
   // Set up clusterer
-  brain::Clusterer clusterer(cluster_count, column_count, new_sample_weight);
+  indextuner::Clusterer clusterer(cluster_count, column_count, new_sample_weight);
 
   // Process all samples in table
   auto samples = table->GetLayoutSamples();
@@ -198,5 +198,5 @@ void LayoutTuner::ClearTables() {
   }
 }
 
-}  // namespace brain
+}  // namespace indextuner
 }  // namespace peloton

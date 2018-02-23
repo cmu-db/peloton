@@ -4,7 +4,7 @@
 //
 // query_logger_test.cpp
 //
-// Identification: test/brain/query_logger_test.cpp
+// Identification: test/indextuner/query_logger_test.cpp
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
