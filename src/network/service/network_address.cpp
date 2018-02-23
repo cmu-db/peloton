@@ -6,21 +6,10 @@
 //
 // Identification: src/network/service/network_address.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// tcp_address.cpp
-//
-// Identification: src/network/tcp_address.cpp
-//
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
 #include "network/service/network_address.h"
 
 #include <netdb.h>
