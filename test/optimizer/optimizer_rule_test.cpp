@@ -47,15 +47,7 @@ namespace test {
 
 using namespace optimizer;
 
-class OptimizerRuleTests : public PelotonTest {
- protected:
-  GroupExpression *GetSingleGroupExpression(Memo &memo, GroupExpression *expr,
-                                            int child_group_idx) {
-    auto group = memo.GetGroupByID(expr->GetChildGroupId(child_group_idx));
-    EXPECT_EQ(1, group->logical_expressions_.size());
-    return group->logical_expressions_[0].get();
-  }
-};
+class OptimizerRuleTests : public PelotonTest {};
 
 TEST_F(OptimizerRuleTests, SimpleCommutativeRuleTest) {
   // Build op plan node to match rule
