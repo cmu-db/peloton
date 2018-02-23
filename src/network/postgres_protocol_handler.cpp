@@ -259,12 +259,11 @@ ProcessResult PostgresProtocolHandler::ExecQueryMessage(
 
 ResultType PostgresProtocolHandler::ExecQueryExplain(
     const std::string &query, parser::ExplainStatement &explain_stmt) {
-  std::string error_message;
   std::unique_ptr<parser::SQLStatementList> unnamed_sql_stmt_list(
       new parser::SQLStatementList());
   unnamed_sql_stmt_list->PassInStatement(std::move(explain_stmt.real_sql_stmt));
   auto stmt = traffic_cop_->PrepareStatement(
-      "explain", query, std::move(unnamed_sql_stmt_list), error_message);
+      "explain", query, std::move(unnamed_sql_stmt_list));
   ResultType status = ResultType::UNKNOWN;
   if (stmt != nullptr) {
     traffic_cop_->SetStatement(stmt);
@@ -277,7 +276,6 @@ ResultType PostgresProtocolHandler::ExecQueryExplain(
     traffic_cop_->SetResult(plan_info);
     status = ResultType::SUCCESS;
   } else {
-    traffic_cop_->SetErrorMessage(error_message);
     status = ResultType::FAILURE;
   }
   return status;
