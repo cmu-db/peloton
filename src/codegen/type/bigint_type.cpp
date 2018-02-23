@@ -168,7 +168,7 @@ struct CompareBigInt : public TypeSystem::SimpleComparisonHandleNull {
     // result to a 32-bit value
     llvm::Value *diff = codegen->CreateSub(left.GetValue(), right.GetValue());
     return Value{Integer::Instance(),
-                 codegen->CreateSExt(diff, codegen.Int32Type()), nullptr,
+                 codegen->CreateTrunc(diff, codegen.Int32Type()), nullptr,
                  nullptr};
   }
 };

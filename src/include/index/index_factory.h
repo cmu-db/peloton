@@ -6,7 +6,7 @@
 //
 // Identification: src/include/index/index_factory.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -19,33 +19,26 @@
 namespace peloton {
 namespace index {
 
-//===--------------------------------------------------------------------===//
-// IndexFactory
-//===--------------------------------------------------------------------===//
-
+//===----------------------------------------------------------------------===//
+//
+// This is a factory for all index structures supported in Peloton
+//
+//===----------------------------------------------------------------------===//
 class IndexFactory {
  public:
-  // Get an index with required attributes
+  /// Get an index with required attributes
   static Index *GetIndex(IndexMetadata *metadata);
 
  private:
   static std::string GetInfo(IndexMetadata *metadata,
-                             std::string comparatorType);
+                             const std::string &comparator_type);
 
-  //===--------------------------------------------------------------------===//
-  // PELOTON::BWTREE
-  //===--------------------------------------------------------------------===//
-
+  /// BwTree factory methods
   static Index *GetBwTreeIntsKeyIndex(IndexMetadata *metadata);
-
   static Index *GetBwTreeGenericKeyIndex(IndexMetadata *metadata);
 
-  //===--------------------------------------------------------------------===//
-  // PELOTON::SKIPLIST
-  //===--------------------------------------------------------------------===//
-
+  /// SkipList factory methods
   static Index *GetSkipListIntsKeyIndex(IndexMetadata *metadata);
-
   static Index *GetSkipListGenericKeyIndex(IndexMetadata *metadata);
 };
 

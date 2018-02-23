@@ -12,9 +12,9 @@
 
 #pragma once
 
+#include "common/internal_types.h"
 #include "common/statement.h"
 #include "executor/abstract_executor.h"
-#include "common/internal_types.h"
 
 namespace peloton {
 
@@ -34,9 +34,13 @@ struct ExecutionResult {
   // number of tuples processed
   uint32_t m_processed;
 
+  // string of error message
+  std::string m_error_message;
+
   ExecutionResult() {
     m_processed = 0;
     m_result = ResultType::SUCCESS;
+    m_error_message = "";
   }
 };
 

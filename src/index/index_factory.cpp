@@ -6,18 +6,18 @@
 //
 // Identification: src/index/index_factory.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include <iostream>
+#include "index/index_factory.h"
 
 #include <sstream>
 
 #include "common/logger.h"
 #include "common/macros.h"
+#include "index/art_index.h"
 #include "index/bwtree_index.h"
-#include "index/index_factory.h"
 #include "index/index_key.h"
 #include "index/skiplist_index.h"
 
@@ -37,9 +37,10 @@ Index *IndexFactory::GetIndex(IndexMetadata *metadata) {
   // If so, then we can rock a specialized IntsKeyComparator
   // that is faster than the FastGenericComparator
   bool ints_only = true;
-  for (auto column : metadata->key_schema->GetColumns()) {
+  for (const auto &column : metadata->key_schema->GetColumns()) {
     auto col_type = column.GetType();
-    if (col_type != type::TypeId::TINYINT && col_type != type::TypeId::SMALLINT &&
+    if (col_type != type::TypeId::TINYINT &&
+        col_type != type::TypeId::SMALLINT &&
         col_type != type::TypeId::INTEGER && col_type != type::TypeId::BIGINT) {
       ints_only = false;
       break;
@@ -66,9 +67,9 @@ Index *IndexFactory::GetIndex(IndexMetadata *metadata) {
       index = IndexFactory::GetBwTreeGenericKeyIndex(metadata);
     }
 
-  // -----------------------
-  // SKIP-LIST
-  // -----------------------
+    // -----------------------
+    // SKIP-LIST
+    // -----------------------
   } else if (index_type == IndexType::SKIPLIST) {
     if (ints_only) {
       index = IndexFactory::GetSkipListIntsKeyIndex(metadata);
@@ -76,9 +77,15 @@ Index *IndexFactory::GetIndex(IndexMetadata *metadata) {
       index = IndexFactory::GetSkipListGenericKeyIndex(metadata);
     }
 
-  // -----------------------
-  // ERROR
-  // -----------------------
+    // -----------------------
+    // Art
+    // -----------------------
+  } else if (index_type == IndexType::ART) {
+    index = new ArtIndex(metadata);
+
+    // -----------------------
+    // ERROR
+    // -----------------------
   } else {
     throw IndexException("Unsupported index scheme.");
   }
@@ -142,7 +149,8 @@ Index *IndexFactory::GetBwTreeIntsKeyIndex(IndexMetadata *metadata) {
 #ifdef LOG_TRACE_ENABLED
   LOG_TRACE("%s", IndexFactory::GetInfo(metadata, comparatorType).c_str());
 #endif
-  return (index);
+
+  return index;
 }
 
 Index *IndexFactory::GetBwTreeGenericKeyIndex(IndexMetadata *metadata) {
@@ -213,7 +221,8 @@ Index *IndexFactory::GetBwTreeGenericKeyIndex(IndexMetadata *metadata) {
 #ifdef LOG_TRACE_ENABLED
   LOG_TRACE("%s", IndexFactory::GetInfo(metadata, comparatorType).c_str());
 #endif
-  return (index);
+
+  return index;
 }
 
 Index *IndexFactory::GetSkipListIntsKeyIndex(IndexMetadata *metadata) {
@@ -271,7 +280,8 @@ Index *IndexFactory::GetSkipListIntsKeyIndex(IndexMetadata *metadata) {
 #ifdef LOG_TRACE_ENABLED
   LOG_TRACE("%s", IndexFactory::GetInfo(metadata, comparatorType).c_str());
 #endif
-  return (index);
+
+  return index;
 }
 
 Index *IndexFactory::GetSkipListGenericKeyIndex(IndexMetadata *metadata) {
@@ -339,18 +349,19 @@ Index *IndexFactory::GetSkipListGenericKeyIndex(IndexMetadata *metadata) {
 #ifdef LOG_TRACE_ENABLED
   LOG_TRACE("%s", IndexFactory::GetInfo(metadata, comparatorType).c_str());
 #endif
-  return (index);
+
+  return index;
 }
 
 std::string IndexFactory::GetInfo(IndexMetadata *metadata,
-                                  std::string comparatorType) {
+                                  const std::string &comparator_type) {
   std::ostringstream os;
   os << "Index '" << metadata->GetName() << "' => "
-     << IndexTypeToString(metadata->GetIndexType()) << "::" << comparatorType
+     << IndexTypeToString(metadata->GetIndexType()) << "::" << comparator_type
      << "(";
   bool first = true;
   for (auto column : metadata->key_schema->GetColumns()) {
-    if (first == false) os << ", ";
+    if (!first) os << ", ";
     os << column.GetName();
     first = false;
   }

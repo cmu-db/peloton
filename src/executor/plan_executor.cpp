@@ -15,7 +15,6 @@
 #include "codegen/buffering_consumer.h"
 #include "codegen/query.h"
 #include "codegen/query_cache.h"
-#include "concurrency/transaction_manager_factory.h"
 #include "codegen/query_compiler.h"
 #include "common/logger.h"
 #include "concurrency/transaction_manager_factory.h"
@@ -102,6 +101,7 @@ static void InterpretPlan(
   status = executor_tree->Init();
   if (status != true) {
     result.m_result = ResultType::FAILURE;
+    result.m_error_message = "Failed initialization of query execution tree";
     CleanExecutorTree(executor_tree.get());
     plan->ClearParameterValues();
     on_complete(result, std::move(values));
@@ -149,10 +149,20 @@ void PlanExecutor::ExecutePlan(
 
   bool codegen_enabled =
       settings::SettingsManager::GetBool(settings::SettingId::codegen);
-  if (codegen_enabled && codegen::QueryCompiler::IsSupported(*plan)) {
-    CompileAndExecutePlan(plan, txn, params, std::move(on_complete));
-  } else {
-    InterpretPlan(plan, txn, params, result_format, std::move(on_complete));
+
+  try {
+    if (codegen_enabled && codegen::QueryCompiler::IsSupported(*plan)) {
+      CompileAndExecutePlan(plan, txn, params, on_complete);
+    } else {
+      InterpretPlan(plan, txn, params, result_format, on_complete);
+    }
+  } catch (Exception &e) {
+    ExecutionResult result;
+    result.m_result = ResultType::FAILURE;
+    result.m_error_message = e.what();
+    LOG_ERROR("Error thrown during execution: %s",
+              result.m_error_message.c_str());
+    on_complete(result, {});
   }
 }
 

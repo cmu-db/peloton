@@ -6,11 +6,13 @@
 //
 // Identification: src/include/index/generic_key.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #pragma once
+
+#include <sstream>
 
 #include "type/type_util.h"
 
@@ -51,6 +53,24 @@ class GenericKey {
     const char *data_ptr = &data[schema->GetOffset(column_id)];
     return (data_ptr);
   }
+
+  /**
+   * Generate a human-readable version of this GenericKey.
+   * This method is slow (lots of memory copying) so you
+   * don't want to execute this on the critical path of
+   * anything real in the system.
+   *
+   * IMPORTANT: The output is based on the original tuple
+   * schema and not the key schema. So you may end up seeing
+   * attributes values that are not actually used in the index.
+   *
+   * @return
+   */
+  const std::string GetInfo() const {
+    storage::Tuple tuple(schema, data);
+    return (tuple.GetInfo());
+  }
+
 
   // actual location of data, extends past the end.
   char data[KeySize];
