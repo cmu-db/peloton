@@ -61,14 +61,15 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto sql_stmt_list = peloton_parser.BuildParseTree(query);
   PL_ASSERT(sql_stmt_list);
-  if (!sql_stmt_list -> is_valid) {
+  if (!sql_stmt_list->is_valid) {
     return ResultType::FAILURE;
   }
-  auto statement = traffic_cop_.PrepareStatement(unnamed_statement, query, std::move(sql_stmt_list),
-                                                 error_message);
+  auto statement = traffic_cop_.PrepareStatement(unnamed_statement, query,
+                                                 std::move(sql_stmt_list));
   if (statement.get() == nullptr) {
     traffic_cop_.setRowsAffected(0);
     rows_changed = 0;
+    error_message = traffic_cop_.GetErrorMessage();
     return ResultType::FAILURE;
   }
   // ExecuteStatment
@@ -77,9 +78,8 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
   // SetTrafficCopCounter();
   counter_.store(1);
-  auto status =
-      traffic_cop_.ExecuteStatement(statement, param_values, unnamed, nullptr,
-                                    result_format, result, error_message);
+  auto status = traffic_cop_.ExecuteStatement(statement, param_values, unnamed,
+                                              nullptr, result_format, result);
   if (traffic_cop_.GetQueuing()) {
     ContinueAfterComplete();
     traffic_cop_.ExecuteStatementPlanGetResult();
@@ -151,18 +151,17 @@ TestingSQLUtil::GeneratePlanWithOptimizer(
 ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query,
                                            std::vector<ResultValue> &result) {
   std::vector<FieldInfo> tuple_descriptor;
-  std::string error_message;
 
   // prepareStatement
   std::string unnamed_statement = "unnamed";
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto sql_stmt_list = peloton_parser.BuildParseTree(query);
   PL_ASSERT(sql_stmt_list);
-  if (!sql_stmt_list -> is_valid) {
+  if (!sql_stmt_list->is_valid) {
     return ResultType::FAILURE;
   }
-  auto statement = traffic_cop_.PrepareStatement(unnamed_statement, query, std::move(sql_stmt_list),
-                                                 error_message);
+  auto statement = traffic_cop_.PrepareStatement(unnamed_statement, query,
+                                                 std::move(sql_stmt_list));
   if (statement.get() == nullptr) {
     traffic_cop_.setRowsAffected(0);
     return ResultType::FAILURE;
@@ -173,9 +172,8 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query,
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
   // SetTrafficCopCounter();
   counter_.store(1);
-  auto status =
-      traffic_cop_.ExecuteStatement(statement, param_values, unnamed, nullptr,
-                                    result_format, result, error_message);
+  auto status = traffic_cop_.ExecuteStatement(statement, param_values, unnamed,
+                                              nullptr, result_format, result);
   if (traffic_cop_.GetQueuing()) {
     ContinueAfterComplete();
     traffic_cop_.ExecuteStatementPlanGetResult();
@@ -191,7 +189,6 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query,
 ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
   std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
-  std::string error_message;
 
   // execute the query using tcop
   // prepareStatement
@@ -199,11 +196,11 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto sql_stmt_list = peloton_parser.BuildParseTree(query);
   PL_ASSERT(sql_stmt_list);
-  if (!sql_stmt_list -> is_valid) {
+  if (!sql_stmt_list->is_valid) {
     return ResultType::FAILURE;
   }
-  auto statement = traffic_cop_.PrepareStatement(unnamed_statement, query, std::move(sql_stmt_list),
-                                                 error_message);
+  auto statement = traffic_cop_.PrepareStatement(unnamed_statement, query,
+                                                 std::move(sql_stmt_list));
   if (statement.get() == nullptr) {
     traffic_cop_.setRowsAffected(0);
     return ResultType::FAILURE;
@@ -214,9 +211,8 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
   std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
   // SetTrafficCopCounter();
   counter_.store(1);
-  auto status =
-      traffic_cop_.ExecuteStatement(statement, param_values, unnamed, nullptr,
-                                    result_format, result, error_message);
+  auto status = traffic_cop_.ExecuteStatement(statement, param_values, unnamed,
+                                              nullptr, result_format, result);
   if (traffic_cop_.GetQueuing()) {
     ContinueAfterComplete();
     traffic_cop_.ExecuteStatementPlanGetResult();
