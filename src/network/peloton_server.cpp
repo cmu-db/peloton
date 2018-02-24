@@ -6,21 +6,10 @@
 //
 // Identification: src/network/peloton_server.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// peloton_server.cpp
-//
-// Identification: src/network/peloton_server.cpp
-//
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
 #include "event2/thread.h"
 #include <fstream>
 
