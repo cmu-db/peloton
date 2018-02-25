@@ -31,14 +31,11 @@ namespace codegen {
 
 PipelineContext::PipelineContext(Pipeline &pipeline)
     : pipeline_(pipeline),
+      init_flag_id_(0),
       thread_state_type_(nullptr),
       thread_state_(nullptr),
       thread_init_func_(nullptr),
-      pipeline_func_(nullptr) {
-  // Make room for the bool flag indicating validity
-  CodeGen &codegen = pipeline.GetCompilationContext().GetCodeGen();
-  state_components_.emplace_back("initialized", codegen.BoolType());
-}
+      pipeline_func_(nullptr) {}
 
 PipelineContext::Id PipelineContext::RegisterState(std::string name,
                                                    llvm::Type *type) {
@@ -59,6 +56,9 @@ void PipelineContext::FinalizeState(CodeGen &codegen) {
     return;
   }
 
+  // Tag on the initialization flag at the end
+  init_flag_id_ = RegisterState("initialized", codegen.BoolType());
+
   // Pull out types
   std::vector<llvm::Type *> types;
   for (const auto &slot_info : state_components_) {
@@ -77,13 +77,13 @@ llvm::Value *PipelineContext::AccessThreadState(
 }
 
 llvm::Value *PipelineContext::LoadFlag(CodeGen &codegen) const {
-  return LoadState(codegen, kFlagOffset);
+  return LoadState(codegen, init_flag_id_);
 }
 
 void PipelineContext::StoreFlag(CodeGen &codegen, llvm::Value *flag) const {
   PL_ASSERT(flag->getType()->isIntegerTy(1) &&
             flag->getType() == codegen.BoolType());
-  auto *flag_ptr = LoadStatePtr(codegen, kFlagOffset);
+  auto *flag_ptr = LoadStatePtr(codegen, init_flag_id_);
   codegen->CreateStore(flag, flag_ptr);
 }
 
@@ -455,7 +455,7 @@ void Pipeline::DoRun(
 
     // If the pipeline is parallel, we need to call the generated init function
     if (IsParallel()) {
-      thread_state = codegen->CreateBitOrPointerCast(
+      thread_state = codegen->CreatePointerCast(
           thread_state, pipeline_context.GetThreadStateType()->getPointerTo());
 
       auto *init_func = pipeline_context.thread_init_func_;
@@ -485,33 +485,45 @@ void Pipeline::DoRun(
   }
   pipeline_context.pipeline_func_ = func.GetFunction();
 
-  // The launch argument starts with QueryState and ThreadState. We pass in
-  // NULL for serial execution pipelines.
-  std::vector<llvm::Value *> new_dispatch_args = {codegen.GetState()};
+  // The pipeline function we generated above encapsulates the logic for all
+  // operators in the pipeline. If we're executing it serially then we directly
+  // invoke the function now. If the pipeline is run in parallel then a dispatch
+  // function must have been provided. Either way, we need to setup the call
+  // now.
+  //
+  // In both cases, the pipeline function expects QueryState and ThreadState
+  // pointers are the first two arguments. When run serially, we pass in a NULL
+  // thread state pointer. When running in parallel (through a dispatch
+  // function), we need to convert the QueryState type to a void * because it is
+  // a runtime generated type (i.e., pre-compiled code doesn't know the layout
+  // since it's dynamic)
+  //
+  // After this, the next arguments are whatever the caller provided to use.
+  //
+  // Finally, if the pipeline is run through a dispatcher function, the last
+  // argument is a function pointer to the pipeline function we generated.
+
+  std::vector<llvm::Value *> invoke_args = {codegen.GetState()};
   if (IsParallel()) {
     auto &consumer = compilation_ctx_.GetExecutionConsumer();
-    new_dispatch_args.push_back(consumer.GetThreadStatesPtr(compilation_ctx_));
+    invoke_args.push_back(consumer.GetThreadStatesPtr(compilation_ctx_));
   } else {
-    new_dispatch_args.push_back(codegen.NullPtr(codegen.CharPtrType()));
+    invoke_args.push_back(codegen.NullPtr(codegen.CharPtrType()));
   }
 
-  // Now insert the arguments the caller wants
-  new_dispatch_args.insert(new_dispatch_args.end(), dispatch_args.begin(),
-                           dispatch_args.end());
+  invoke_args.insert(invoke_args.end(), dispatch_args.begin(),
+                     dispatch_args.end());
+
   if (dispatch_func != nullptr) {
-    // If we have a launch function, we need to cast the QueryState parameter
-    // to a void*. This is because it is a JITed data-structure which
-    // pre-compiled code has no notion of.
-    //
-    // We also append the pipeline function to the end of the arguments
-    new_dispatch_args[0] = codegen->CreateBitOrPointerCast(
-        new_dispatch_args[0], codegen.VoidPtrType());
-    new_dispatch_args.push_back(
+    // Convert QueryState to void *
+    invoke_args[0] =
+        codegen->CreateBitOrPointerCast(invoke_args[0], codegen.VoidPtrType());
+    // Tag on the pipeline function
+    invoke_args.push_back(
         codegen->CreateBitCast(func.GetFunction(), codegen.VoidPtrType()));
-    codegen.CallFunc(dispatch_func, new_dispatch_args);
+    codegen.CallFunc(dispatch_func, invoke_args);
   } else {
-    // Immediately invoke the pipeline function
-    codegen.CallFunc(func.GetFunction(), new_dispatch_args);
+    codegen.CallFunc(func.GetFunction(), invoke_args);
   }
 }
 

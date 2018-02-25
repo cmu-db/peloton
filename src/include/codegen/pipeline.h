@@ -37,8 +37,6 @@ class Pipeline;
 class PipelineContext {
   friend class Pipeline;
 
-  static const uint32_t kFlagOffset = 0;
-
  public:
   using Id = uint32_t;
 
@@ -94,10 +92,20 @@ class PipelineContext {
  private:
   // The pipeline
   Pipeline &pipeline_;
+
+  // The ID of the "initialized" flag in the thread state indicating if a
+  // particular thread has initialized all state required for the pipeline
+  Id init_flag_id_;
+
   // The elements of the thread state for this pipeline
   std::vector<std::pair<std::string, llvm::Type *>> state_components_;
+
+  // The finalized LLVM type of the thread state
   llvm::Type *thread_state_type_;
+
+  // A runtime pointer to the current thread's state in the pipeline
   llvm::Value *thread_state_;
+
   // The generate thread initialization function and pipeline function
   llvm::Function *thread_init_func_;
   llvm::Function *pipeline_func_;
