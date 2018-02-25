@@ -18,6 +18,7 @@
 #include "common/macros.h"
 #include "index/art_index.h"
 #include "index/bwtree_index.h"
+#include "index/hash_index.h"
 #include "index/index_key.h"
 #include "index/skiplist_index.h"
 
@@ -82,6 +83,16 @@ Index *IndexFactory::GetIndex(IndexMetadata *metadata) {
     // -----------------------
   } else if (index_type == IndexType::ART) {
     index = new ArtIndex(metadata);
+
+    // -----------------------
+    // HASH-INDEX
+    // -----------------------
+  } else if (index_type == IndexType::HASH) {
+    if (ints_only) {
+      index = IndexFactory::GetCuckooHashIntsKeyIndex(metadata);
+    } else {
+      index = IndexFactory::GetCuckooHashGenericKeyIndex(metadata);
+    }
 
     // -----------------------
     // ERROR
@@ -351,6 +362,121 @@ Index *IndexFactory::GetSkipListGenericKeyIndex(IndexMetadata *metadata) {
 #endif
 
   return index;
+}
+
+Index *IndexFactory::GetCuckooHashIntsKeyIndex(IndexMetadata *metadata) {
+  // Our new Index!
+  Index *index = nullptr;
+
+  // The size of the key in bytes
+  const auto key_size = metadata->key_schema->GetLength();
+
+// Debug Output
+#ifdef LOG_TRACE_ENABLED
+  std::string comparatorType;
+#endif
+
+  if (key_size <= sizeof(uint64_t)) {
+#ifdef LOG_TRACE_ENABLED
+    comparatorType = "CompactIntsKey<1>";
+#endif
+    index =
+        new HashIndex<CompactIntsKey<1>, ItemPointer *,
+                      CompactIntsHasher<1>, CompactIntsComparator<1>>(
+            metadata);
+  } else if (key_size <= sizeof(uint64_t) * 2) {
+#ifdef LOG_TRACE_ENABLED
+    comparatorType = "CompactIntsKey<2>";
+#endif
+    index =
+        new HashIndex<CompactIntsKey<2>, ItemPointer *,
+                      CompactIntsHasher<2>, CompactIntsComparator<2>>(
+            metadata);
+  } else if (key_size <= sizeof(uint64_t) * 3) {
+#ifdef LOG_TRACE_ENABLED
+    comparatorType = "CompactIntsKey<3>";
+#endif
+    index =
+        new HashIndex<CompactIntsKey<3>, ItemPointer *,
+                      CompactIntsHasher<3>, CompactIntsComparator<3>>(
+            metadata);
+  } else if (key_size <= sizeof(uint64_t) * 4) {
+#ifdef LOG_TRACE_ENABLED
+    comparatorType = "CompactIntsKey<4>";
+#endif
+    index =
+        new HashIndex<CompactIntsKey<4>, ItemPointer *,
+                      CompactIntsHasher<4>, CompactIntsComparator<4>>(
+            metadata);
+  } else {
+    throw IndexException("Unsupported IntsKey scheme");
+  }
+
+#ifdef LOG_TRACE_ENABLED
+  LOG_TRACE("%s", IndexFactory::GetInfo(metadata, comparatorType).c_str());
+#endif
+  return (index);
+}
+
+Index *IndexFactory::GetCuckooHashGenericKeyIndex(IndexMetadata *metadata) {
+  // Our new Index!
+  Index *index = nullptr;
+
+  // The size of the key in bytes
+  const auto key_size = metadata->key_schema->GetLength();
+
+// Debug Output
+#ifdef LOG_TRACE_ENABLED
+  std::string comparatorType;
+#endif
+
+  if (key_size <= 4) {
+#ifdef LOG_TRACE_ENABLED
+    comparatorType = "GenericKey<4>";
+#endif
+    index =
+        new HashIndex<GenericKey<4>, ItemPointer *,
+                      GenericHasher<4>, FastGenericComparator<4>>(metadata);
+  } else if (key_size <= 8) {
+#ifdef LOG_TRACE_ENABLED
+    comparatorType = "GenericKey<8>";
+#endif
+    index =
+        new HashIndex<GenericKey<8>, ItemPointer *,
+                      GenericHasher<8>, FastGenericComparator<8>>(metadata);
+  } else if (key_size <= 16) {
+#ifdef LOG_TRACE_ENABLED
+    comparatorType = "GenericKey<16>";
+#endif
+    index =
+        new HashIndex<GenericKey<16>, ItemPointer *,
+                      GenericHasher<16>, FastGenericComparator<16>>(metadata);
+  } else if (key_size <= 64) {
+#ifdef LOG_TRACE_ENABLED
+    comparatorType = "GenericKey<64>";
+#endif
+    index =
+        new HashIndex<GenericKey<64>, ItemPointer *,
+                      GenericHasher<64>, FastGenericComparator<64>>(metadata);
+  } else if (key_size <= 256) {
+#ifdef LOG_TRACE_ENABLED
+    comparatorType = "GenericKey<256>";
+#endif
+    index =
+        new HashIndex<GenericKey<256>, ItemPointer *,
+                      GenericHasher<256>, FastGenericComparator<256>>(metadata);
+  } else {
+#ifdef LOG_TRACE_ENABLED
+    comparatorType = "TupleKey";
+#endif
+    index = new HashIndex<TupleKey, ItemPointer *, 
+                          TupleKeyHasher, TupleKeyComparator>(metadata);
+  }
+
+#ifdef LOG_TRACE_ENABLED
+  LOG_TRACE("%s", IndexFactory::GetInfo(metadata, comparatorType).c_str());
+#endif
+  return (index);
 }
 
 std::string IndexFactory::GetInfo(IndexMetadata *metadata,

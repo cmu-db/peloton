@@ -16,6 +16,8 @@
 
 #include "util/string_util.h"
 #include "util/portable_endian.h"
+#include "storage/tuple.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 namespace index {
