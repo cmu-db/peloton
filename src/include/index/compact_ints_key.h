@@ -15,6 +15,7 @@
 #include <sstream>
 
 #include "util/string_util.h"
+#include "util/hash_util.h"
 #include "util/portable_endian.h"
 #include "storage/tuple.h"
 #include "type/value_factory.h"
@@ -640,7 +641,7 @@ class CompactIntsHasher {
     // For every 8 byte word just combine it with the current seed
     for (size_t i = 0;
          i < (CompactIntsKey<KeySize>::key_size_byte / sizeof(uint64_t)); i++) {
-      boost::hash_combine(seed, ptr[i]);
+      HashUtil::CombineHashes(seed, ptr[i]);
     }
 
     return seed;
