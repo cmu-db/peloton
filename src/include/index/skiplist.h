@@ -129,6 +129,13 @@ class SkipListEpochManager{
 };
 //maintains Epoch
 //has a inside linked list in which every node represents an epoch
+template<typename KeyType, typename ValueType>
+class SkipListNode{
+  SkipListNode *next, *downSide;
+  KeyType key;
+  ValueType value;
+  word flags;
+};
 
 }  // namespace index
 }  // namespace peloton
