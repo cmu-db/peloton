@@ -82,6 +82,8 @@ public:
 class SkipListEpochManager{
   public:
     class EpochNode;
+
+    bool AddGarbageNode(SkipListNode *node);
     /* 
      * return the current EpochNode
      * need to add the reference count of current EpochNode
