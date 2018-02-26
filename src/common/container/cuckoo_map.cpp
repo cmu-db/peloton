@@ -118,37 +118,37 @@ template class CuckooMap<StatementCache *, StatementCache *>;
 // Compact Ints Key
 template class CuckooMap<index::CompactIntsKey<1>, ItemPointer *,
                          index::CompactIntsHasher<1>,
-                         index::CompactIntsComparator<1>>;
+                         index::CompactIntsEqualityChecker<1>>;
 template class CuckooMap<index::CompactIntsKey<2>, ItemPointer *,
                          index::CompactIntsHasher<2>,
-                         index::CompactIntsComparator<2>>;
+                         index::CompactIntsEqualityChecker<2>>;
 template class CuckooMap<index::CompactIntsKey<3>, ItemPointer *,
                          index::CompactIntsHasher<3>,
-                         index::CompactIntsComparator<3>>;
+                         index::CompactIntsEqualityChecker<3>>;
 template class CuckooMap<index::CompactIntsKey<4>, ItemPointer *,
                          index::CompactIntsHasher<4>,
-                         index::CompactIntsComparator<4>>;
+                         index::CompactIntsEqualityChecker<4>>;
 
 // Generic key
 template class CuckooMap<index::GenericKey<4>, ItemPointer *,
                          index::GenericHasher<4>,
-                         index::FastGenericComparator<4>>;
+                         index::GenericEqualityChecker<4>>;
 template class CuckooMap<index::GenericKey<8>, ItemPointer *,
                          index::GenericHasher<8>,
-                         index::FastGenericComparator<8>>;
+                         index::GenericEqualityChecker<8>>;
 template class CuckooMap<index::GenericKey<16>, ItemPointer *,
                          index::GenericHasher<16>,
-                         index::FastGenericComparator<16>>;
+                         index::GenericEqualityChecker<16>>;
 template class CuckooMap<index::GenericKey<64>, ItemPointer *,
                          index::GenericHasher<64>,
-                         index::FastGenericComparator<64>>;
+                         index::GenericEqualityChecker<64>>;
 template class CuckooMap<index::GenericKey<256>, ItemPointer *,
                          index::GenericHasher<256>,
-                         index::FastGenericComparator<256>>;
+                         index::GenericEqualityChecker<256>>;
 
 // Tuple key
 template class CuckooMap<index::TupleKey, ItemPointer *,
                          index::TupleKeyHasher,
-                         index::TupleKeyComparator>;
+                         index::TupleKeyEqualityChecker>;
 
 }  // namespace peloton

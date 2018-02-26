@@ -26,7 +26,6 @@ HASH_INDEX_TYPE::HashIndex(IndexMetadata *metadata)
     :  // Base class
       Index{metadata},
       container{} {
-  LOG_INFO("HERE");
   return;
 }
 
@@ -39,13 +38,13 @@ HASH_INDEX_TYPE::~HashIndex() {}
  * If the key value pair already exists in the map, just return false
  */
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
-bool HASH_INDEX_TYPE::InsertEntry(
-    UNUSED_ATTRIBUTE const storage::Tuple *key,
-    UNUSED_ATTRIBUTE ItemPointer *value) {
+bool HASH_INDEX_TYPE::InsertEntry(UNUSED_ATTRIBUTE const storage::Tuple *key,
+                                  UNUSED_ATTRIBUTE ItemPointer *value) {
   KeyType index_key;
   index_key.SetFromKey(key);
-
-  bool ret = container.Insert(index_key,value);
+  bool ret = container.Insert(index_key, value);
+  LOG_TRACE("Insert Key : %s, res : %s", index_key.GetInfo().c_str(),
+            ret ? "Success" : "Failed");
   return ret;
 }
 
@@ -53,12 +52,12 @@ bool HASH_INDEX_TYPE::InsertEntry(
  * DeleteEntry() - Removes a key-value pair
  *
  * If the key does not exists yet in the map return false
- * CuckooHash provides API to delete key and its associate value, not key-value pair
+ * CuckooHash provides API to delete key and its associate value, not key-value
+ * pair
  */
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
-bool HASH_INDEX_TYPE::DeleteEntry(
-    UNUSED_ATTRIBUTE const storage::Tuple *key,
-    UNUSED_ATTRIBUTE ItemPointer *value) {
+bool HASH_INDEX_TYPE::DeleteEntry(UNUSED_ATTRIBUTE const storage::Tuple *key,
+                                  UNUSED_ATTRIBUTE ItemPointer *value) {
   KeyType index_key;
   index_key.SetFromKey(key);
 
@@ -107,7 +106,7 @@ void HASH_INDEX_TYPE::ScanLimit(
     UNUSED_ATTRIBUTE std::vector<ValueType> &result,
     UNUSED_ATTRIBUTE const ConjunctionScanPredicate *csp_p,
     UNUSED_ATTRIBUTE uint64_t limit, UNUSED_ATTRIBUTE uint64_t offset) {
-  throw Exception{ExceptionType::NOT_IMPLEMENTED, 
+  throw Exception{ExceptionType::NOT_IMPLEMENTED,
                   "ScanLimit not supported for CuckooHash."};
   return;
 }
@@ -115,22 +114,22 @@ void HASH_INDEX_TYPE::ScanLimit(
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
 void HASH_INDEX_TYPE::ScanAllKeys(
     UNUSED_ATTRIBUTE std::vector<ValueType> &result) {
-  throw Exception{ExceptionType::NOT_IMPLEMENTED, 
+  throw Exception{ExceptionType::NOT_IMPLEMENTED,
                   "ScanAllKeys not supported for CuckooHash."};
   return;
 }
 
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
-  void HASH_INDEX_TYPE::ScanKey(
-    UNUSED_ATTRIBUTE const storage::Tuple *key,
-    UNUSED_ATTRIBUTE std::vector<ValueType> &result) {
+void HASH_INDEX_TYPE::ScanKey(UNUSED_ATTRIBUTE const storage::Tuple *key,
+                              UNUSED_ATTRIBUTE std::vector<ValueType> &result) {
   KeyType index_key;
   index_key.SetFromKey(key);
+  LOG_TRACE("Scan Key : %s", index_key.GetInfo().c_str());
 
   try {
     auto val = container.GetValue(index_key);
     result.push_back(val);
-  } catch (const std::out_of_range& e) {
+  } catch (const std::out_of_range &e) {
     LOG_DEBUG("key not found in table");
   }
   return;
@@ -140,40 +139,30 @@ CUCKOO_MAP_TEMPLATE_ARGUMENTS
 std::string HASH_INDEX_TYPE::GetTypeName() const { return "HashIndex"; }
 
 // IMPORTANT: Make sure you don't exceed CompactIntegerKey_MAX_SLOTS
-template class HashIndex<CompactIntsKey<1>, ItemPointer *, 
-                         CompactIntsHasher<1>,
-                         CompactIntsComparator<1>>;
-template class HashIndex<CompactIntsKey<2>, ItemPointer *, 
-                         CompactIntsHasher<2>,
-                         CompactIntsComparator<2>>;
-template class HashIndex<CompactIntsKey<3>, ItemPointer *, 
-                         CompactIntsHasher<3>,
-                         CompactIntsComparator<3>>;
-template class HashIndex<CompactIntsKey<4>, ItemPointer *,
-                         CompactIntsHasher<4>,
-                         CompactIntsComparator<4>>;
+template class HashIndex<CompactIntsKey<1>, ItemPointer *, CompactIntsHasher<1>,
+                         CompactIntsEqualityChecker<1>>;
+template class HashIndex<CompactIntsKey<2>, ItemPointer *, CompactIntsHasher<2>,
+                         CompactIntsEqualityChecker<2>>;
+template class HashIndex<CompactIntsKey<3>, ItemPointer *, CompactIntsHasher<3>,
+                         CompactIntsEqualityChecker<3>>;
+template class HashIndex<CompactIntsKey<4>, ItemPointer *, CompactIntsHasher<4>,
+                         CompactIntsEqualityChecker<4>>;
 
 // Generic key
-template class HashIndex<GenericKey<4>, ItemPointer *,
-                         GenericHasher<4>,
-                         FastGenericComparator<4>>;
-template class HashIndex<GenericKey<8>, ItemPointer *,
-                         GenericHasher<8>,
-                         FastGenericComparator<8>>;
-template class HashIndex<GenericKey<16>, ItemPointer *,
-                         GenericHasher<16>,
-                         FastGenericComparator<16>>;
-template class HashIndex<GenericKey<64>, ItemPointer *,
-                         GenericHasher<64>,
-                         FastGenericComparator<64>>;
-template class HashIndex<GenericKey<256>, ItemPointer *,
-                         GenericHasher<256>,
-                         FastGenericComparator<256>>;
+template class HashIndex<GenericKey<4>, ItemPointer *, GenericHasher<4>,
+                         GenericEqualityChecker<4>>;
+template class HashIndex<GenericKey<8>, ItemPointer *, GenericHasher<8>,
+                         GenericEqualityChecker<8>>;
+template class HashIndex<GenericKey<16>, ItemPointer *, GenericHasher<16>,
+                         GenericEqualityChecker<16>>;
+template class HashIndex<GenericKey<64>, ItemPointer *, GenericHasher<64>,
+                         GenericEqualityChecker<64>>;
+template class HashIndex<GenericKey<256>, ItemPointer *, GenericHasher<256>,
+                         GenericEqualityChecker<256>>;
 
 // Tuple key
-template class HashIndex<TupleKey, ItemPointer *,
-                         TupleKeyHasher, 
-                         TupleKeyComparator>;
+template class HashIndex<TupleKey, ItemPointer *, TupleKeyHasher,
+                         TupleKeyEqualityChecker>;
 
 }  // namespace index
 }  // namespace peloton

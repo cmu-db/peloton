@@ -382,7 +382,7 @@ Index *IndexFactory::GetCuckooHashIntsKeyIndex(IndexMetadata *metadata) {
 #endif
     index =
         new HashIndex<CompactIntsKey<1>, ItemPointer *,
-                      CompactIntsHasher<1>, CompactIntsComparator<1>>(
+                      CompactIntsHasher<1>, CompactIntsEqualityChecker<1>>(
             metadata);
   } else if (key_size <= sizeof(uint64_t) * 2) {
 #ifdef LOG_TRACE_ENABLED
@@ -390,7 +390,7 @@ Index *IndexFactory::GetCuckooHashIntsKeyIndex(IndexMetadata *metadata) {
 #endif
     index =
         new HashIndex<CompactIntsKey<2>, ItemPointer *,
-                      CompactIntsHasher<2>, CompactIntsComparator<2>>(
+                      CompactIntsHasher<2>, CompactIntsEqualityChecker<2>>(
             metadata);
   } else if (key_size <= sizeof(uint64_t) * 3) {
 #ifdef LOG_TRACE_ENABLED
@@ -398,7 +398,7 @@ Index *IndexFactory::GetCuckooHashIntsKeyIndex(IndexMetadata *metadata) {
 #endif
     index =
         new HashIndex<CompactIntsKey<3>, ItemPointer *,
-                      CompactIntsHasher<3>, CompactIntsComparator<3>>(
+                      CompactIntsHasher<3>, CompactIntsEqualityChecker<3>>(
             metadata);
   } else if (key_size <= sizeof(uint64_t) * 4) {
 #ifdef LOG_TRACE_ENABLED
@@ -406,7 +406,7 @@ Index *IndexFactory::GetCuckooHashIntsKeyIndex(IndexMetadata *metadata) {
 #endif
     index =
         new HashIndex<CompactIntsKey<4>, ItemPointer *,
-                      CompactIntsHasher<4>, CompactIntsComparator<4>>(
+                      CompactIntsHasher<4>, CompactIntsEqualityChecker<4>>(
             metadata);
   } else {
     throw IndexException("Unsupported IntsKey scheme");
@@ -436,41 +436,41 @@ Index *IndexFactory::GetCuckooHashGenericKeyIndex(IndexMetadata *metadata) {
 #endif
     index =
         new HashIndex<GenericKey<4>, ItemPointer *,
-                      GenericHasher<4>, FastGenericComparator<4>>(metadata);
+                      GenericHasher<4>, GenericEqualityChecker<4>>(metadata);
   } else if (key_size <= 8) {
 #ifdef LOG_TRACE_ENABLED
     comparatorType = "GenericKey<8>";
 #endif
     index =
         new HashIndex<GenericKey<8>, ItemPointer *,
-                      GenericHasher<8>, FastGenericComparator<8>>(metadata);
+                      GenericHasher<8>, GenericEqualityChecker<8>>(metadata);
   } else if (key_size <= 16) {
 #ifdef LOG_TRACE_ENABLED
     comparatorType = "GenericKey<16>";
 #endif
     index =
         new HashIndex<GenericKey<16>, ItemPointer *,
-                      GenericHasher<16>, FastGenericComparator<16>>(metadata);
+                      GenericHasher<16>, GenericEqualityChecker<16>>(metadata);
   } else if (key_size <= 64) {
 #ifdef LOG_TRACE_ENABLED
     comparatorType = "GenericKey<64>";
 #endif
     index =
         new HashIndex<GenericKey<64>, ItemPointer *,
-                      GenericHasher<64>, FastGenericComparator<64>>(metadata);
+                      GenericHasher<64>, GenericEqualityChecker<64>>(metadata);
   } else if (key_size <= 256) {
 #ifdef LOG_TRACE_ENABLED
     comparatorType = "GenericKey<256>";
 #endif
     index =
         new HashIndex<GenericKey<256>, ItemPointer *,
-                      GenericHasher<256>, FastGenericComparator<256>>(metadata);
+                      GenericHasher<256>, GenericEqualityChecker<256>>(metadata);
   } else {
 #ifdef LOG_TRACE_ENABLED
     comparatorType = "TupleKey";
 #endif
     index = new HashIndex<TupleKey, ItemPointer *, 
-                          TupleKeyHasher, TupleKeyComparator>(metadata);
+                          TupleKeyHasher, TupleKeyEqualityChecker>(metadata);
   }
 
 #ifdef LOG_TRACE_ENABLED
