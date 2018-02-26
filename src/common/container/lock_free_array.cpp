@@ -32,7 +32,6 @@ class IndirectionArray;
 LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
 LOCK_FREE_ARRAY_TYPE::LockFreeArray(){
   new_lock_free_array.clear();
-  lock_free_array.reset(new lock_free_array_t());
 }
 
 LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
@@ -44,7 +43,6 @@ LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
 bool LOCK_FREE_ARRAY_TYPE::Update(const std::size_t &offset, ValueType value){
   PL_ASSERT(offset <= LOCK_FREE_ARRAY_MAX_SIZE);
   LOG_TRACE("Update at %lu", lock_free_array_offset.load());
-  lock_free_array->at(offset) =  value;
   if (new_lock_free_array.size() < offset + 1) {
     new_lock_free_array.resize(LOCK_FREE_ARRAY_MAX_SIZE);
   }
@@ -55,7 +53,6 @@ bool LOCK_FREE_ARRAY_TYPE::Update(const std::size_t &offset, ValueType value){
 LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
 bool LOCK_FREE_ARRAY_TYPE::Append(ValueType value){
   LOG_TRACE("Appended at %lu", lock_free_array_offset.load());
-  lock_free_array->at(lock_free_array_offset++) = value;
   new_lock_free_array.push_back(value);
   return true;
 }
@@ -64,7 +61,6 @@ LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
 bool LOCK_FREE_ARRAY_TYPE::Erase(const std::size_t &offset, const ValueType& invalid_value){
   PL_ASSERT(offset <= LOCK_FREE_ARRAY_MAX_SIZE);
   LOG_TRACE("Erase at %lu", offset);
-  lock_free_array->at(offset) =  invalid_value;
   new_lock_free_array.at(offset) = invalid_value;
   return true;
 }
