@@ -203,6 +203,7 @@ bool CreateExecutor::CreateTable(const planner::CreatePlan &node) {
 
 bool CreateExecutor::CreateIndex(const planner::CreatePlan &node) {
   auto txn = context_->GetTransaction();
+  auto database_name = node.GetDatabaseName();
   std::string table_name = node.GetTableName();
   std::string index_name = node.GetIndexName();
   bool unique_flag = node.IsUnique();
@@ -211,7 +212,7 @@ bool CreateExecutor::CreateIndex(const planner::CreatePlan &node) {
   auto key_attrs = node.GetKeyAttrs();
 
   ResultType result = catalog::Catalog::GetInstance()->CreateIndex(
-      DEFAULT_DB_NAME, table_name, key_attrs, index_name, unique_flag,
+      database_name, table_name, key_attrs, index_name, unique_flag,
       index_type, txn);
   txn->SetResult(result);
 

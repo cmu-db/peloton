@@ -6,7 +6,7 @@
 //
 // Identification: src/include/common/exception.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -21,9 +21,10 @@
 #include <iostream>
 #include <memory>
 #include <stdexcept>
+#include <string>
 
 #include "type/type.h"
-#include "internal_types.h"
+#include "common/internal_types.h"
 
 namespace peloton {
 
@@ -56,7 +57,7 @@ enum class ExceptionType {
   CONNECTION = 21,        // connection related
   SYNTAX = 22,            // syntax related
   SETTINGS = 23,          // settings related
-  BINDER = 24,             // settings related
+  BINDER = 24,            // settings related
   NETWORK = 25
 };
 
@@ -70,8 +71,8 @@ class Exception : public std::runtime_error {
   Exception(ExceptionType exception_type, std::string message)
       : std::runtime_error(message), type(exception_type) {
     exception_message_ = "Exception Type :: " +
-                                    ExceptionTypeToString(exception_type) +
-                                    "\nMessage :: " + message;
+                         ExceptionTypeToString(exception_type) +
+                         "\nMessage :: " + message;
   }
 
   std::string ExceptionTypeToString(ExceptionType type) {
@@ -198,7 +199,7 @@ class Exception : public std::runtime_error {
     }
   }
 
-  friend std::ostream& operator<<(std::ostream& os, const Exception& e);
+  friend std::ostream &operator<<(std::ostream &os, const Exception &e);
 
  private:
   // type
@@ -431,8 +432,9 @@ class ConnectionException : public Exception {
 class NetworkProcessException : public Exception {
   NetworkProcessException() = delete;
 
-  public:
-  NetworkProcessException(std::string msg) : Exception(ExceptionType::NETWORK, msg) {}
+ public:
+  NetworkProcessException(std::string msg)
+      : Exception(ExceptionType::NETWORK, msg) {}
 };
 
 class SettingsException : public Exception {

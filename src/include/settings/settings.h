@@ -30,6 +30,20 @@ SETTING_int(max_connections,
            64,
            true, true)
 
+SETTING_int(rpc_port,
+            "Peloton rpc port (default: 15445)",
+             15445,
+             false, false)
+
+// TODO(tianyu): Remove when we change to a different rpc framework
+// This is here only because capnp cannot exit gracefully and thus causes
+// test failure. This is an issue with the capnp implementation and has
+// been such way for a while, so it's unlikely it gets fixed.
+// See: https://groups.google.com/forum/#!topic/capnproto/bgxCdqGD6oE
+SETTING_bool(rpc_enabled,
+             "Enable rpc, this should be turned off when testing",
+             false, false, false)
+
 // Socket family
 SETTING_string(socket_family,
               "Socket family (default: AF_INET)",
@@ -47,13 +61,13 @@ SETTING_bool(ssl, "Enable SSL connection (default: true)", true, false, false)
 // The same applies to certificate file
 SETTING_string(private_key_file,
               "path to private key file",
-              "server.key",
+              "peloton_insecure_server.key",
               false, false)
 
 // Peloton certificate file
 SETTING_string(certificate_file,
               "path to certificate file",
-              "server.crt",
+              "peloton_insecure_server.crt",
               false, false)
 
 // Peloton root certificate file
