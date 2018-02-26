@@ -121,7 +121,7 @@ void RuntimeFunctions::GetTileGroupLayout(const storage::TileGroup *tile_group,
   for (uint32_t col_idx = 0; col_idx < num_cols; col_idx++) {
     // Map the current column to a tile and a column offset in the tile
     oid_t tile_offset, tile_column_offset;
-    tile_group->LocateTileAndColumn(col_idx, tile_offset, tile_column_offset);
+    layout.LocateTileAndColumn(col_idx, tile_offset, tile_column_offset);
 
     // Now grab the column information
     auto *tile = tile_group->GetTile(tile_offset);

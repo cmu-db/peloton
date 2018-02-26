@@ -33,7 +33,7 @@ class Layout {
 
   oid_t  GetLayoutId() const { return layout_id_; }
 
-  inline void LocateTileAndColumn(oid_t column_offset, oid_t &tile_offset,
+  void LocateTileAndColumn(oid_t column_offset, oid_t &tile_offset,
                            oid_t &tile_column_offset) const;
 
   oid_t GetTileIdFromColumnId(oid_t column_id);

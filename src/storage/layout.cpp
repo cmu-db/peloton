@@ -32,7 +32,7 @@ Layout::Layout(const column_map_type& column_map)
 
 // Sets the tile id and column id w.r.t that tile corresponding to
 // the specified tile group column id.
-inline void Layout::LocateTileAndColumn(oid_t column_offset,
+void Layout::LocateTileAndColumn(oid_t column_offset,
     oid_t &tile_offset, oid_t &tile_column_offset) const {
 
 	// Ensure that the column_offset is not out of bound
