@@ -320,18 +320,6 @@ oid_t TileGroup::InsertTupleFromCheckpoint(oid_t tuple_slot_id,
   return tuple_slot_id;
 }
 
-oid_t TileGroup::GetTileIdFromColumnId(oid_t column_id) {
-  oid_t tile_column_id, tile_offset;
-  tile_group_layout_.LocateTileAndColumn(column_id, tile_offset, tile_column_id);
-  return tile_offset;
-}
-
-oid_t TileGroup::GetTileColumnId(oid_t column_id) {
-  oid_t tile_column_id, tile_offset;
-  tile_group_layout_.LocateTileAndColumn(column_id, tile_offset, tile_column_id);
-  return tile_column_id;
-}
-
 type::Value TileGroup::GetValue(oid_t tuple_id, oid_t column_id) {
   PELOTON_ASSERT(tuple_id < GetNextTupleSlot());
   oid_t tile_column_id, tile_offset;

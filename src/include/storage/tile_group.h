@@ -171,10 +171,6 @@ class TileGroup : public Printable {
     tile_column_offset = entry.second;
   }
 
-  oid_t GetTileIdFromColumnId(oid_t column_id);
-
-  oid_t GetTileColumnId(oid_t column_id);
-
   type::Value GetValue(oid_t tuple_id, oid_t column_id);
 
   void SetValue(type::Value &value, oid_t tuple_id, oid_t column_id);
