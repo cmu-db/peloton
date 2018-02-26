@@ -74,7 +74,7 @@ static void CompileAndExecutePlan(
             values.push_back(std::move(str));
           }
         }
-	plan->ClearParameterValues();
+        plan->ClearParameterValues();
         on_complete(result, std::move(values));
       };
 
