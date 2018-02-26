@@ -23,17 +23,6 @@
 
 #include "common/container/cuckoo_map.h"
 
-/* // HASH_INDEX_TEMPLATE_ARGUMENTS
-#define HASH_INDEX_TEMPLATE_ARGUMENTS                   \
-  template <typename KeyType, typename ValueType, typename HashType, \
-            typename PredType>
-
-// HASH_INDEX_DEFAULT_ARGUMENTS
-#define HASH_INDEX_DEFAULT_ARGUMENTS                   \
-  template <typename KeyType, typename ValueType,       \
-            typename HashType = DefaultHasher<KeyType>, \
-            typename PredType = std::equal_to<KeyType>> */
-
 #define HASH_INDEX_TYPE HashIndex <KeyType, ValueType, HashType, PredType>
 
 namespace peloton {
