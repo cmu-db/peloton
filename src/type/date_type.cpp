@@ -62,14 +62,14 @@ CmpBool DateType::CompareGreaterThanEquals(const Value& left,
 Value DateType::Min(const Value& left, const Value& right) const {
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return left.OperateNull(right);
-  if (left.CompareLessThan(right) == CmpBool::TRUE) return left.Copy();
+  if (left.CompareLessThan(right) == CmpBool::CmpTrue) return left.Copy();
   return right.Copy();
 }
 
 Value DateType::Max(const Value& left, const Value& right) const {
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull()) return left.OperateNull(right);
-  if (left.CompareGreaterThan(right) == CmpBool::TRUE) return left.Copy();
+  if (left.CompareGreaterThan(right) == CmpBool::CmpTrue) return left.Copy();
   return right.Copy();
 }
 
