@@ -68,8 +68,8 @@ extern int TEST_TUPLES_PER_TILEGROUP;
 // This is used when comparing values with each other
 //===--------------------------------------------------------------------===//
 enum class CmpBool {
-  FALSE = 0,
-  TRUE = 1,
+  CmpFalse = 0,
+  CmpTrue = 1,
   NULL_ = 2 // Note the underscore suffix
 };
 

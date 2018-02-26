@@ -31,11 +31,13 @@ class IndirectionArray;
 
 LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
 LOCK_FREE_ARRAY_TYPE::LockFreeArray(){
+  new_lock_free_array.clear();
   lock_free_array.reset(new lock_free_array_t());
 }
 
 LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
 LOCK_FREE_ARRAY_TYPE::~LockFreeArray(){
+  new_lock_free_array.clear();
 }
 
 LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
@@ -43,6 +45,10 @@ bool LOCK_FREE_ARRAY_TYPE::Update(const std::size_t &offset, ValueType value){
   PL_ASSERT(offset <= LOCK_FREE_ARRAY_MAX_SIZE);
   LOG_TRACE("Update at %lu", lock_free_array_offset.load());
   lock_free_array->at(offset) =  value;
+  if (new_lock_free_array.size() < offset + 1) {
+    new_lock_free_array.resize(LOCK_FREE_ARRAY_MAX_SIZE);
+  }
+  new_lock_free_array.at(offset) = value;
   return true;
 }
 
@@ -50,6 +56,7 @@ LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
 bool LOCK_FREE_ARRAY_TYPE::Append(ValueType value){
   LOG_TRACE("Appended at %lu", lock_free_array_offset.load());
   lock_free_array->at(lock_free_array_offset++) = value;
+  new_lock_free_array.push_back(value);
   return true;
 }
 
@@ -58,6 +65,7 @@ bool LOCK_FREE_ARRAY_TYPE::Erase(const std::size_t &offset, const ValueType& inv
   PL_ASSERT(offset <= LOCK_FREE_ARRAY_MAX_SIZE);
   LOG_TRACE("Erase at %lu", offset);
   lock_free_array->at(offset) =  invalid_value;
+  new_lock_free_array.at(offset) = invalid_value;
   return true;
 }
 
@@ -65,7 +73,8 @@ LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
 ValueType LOCK_FREE_ARRAY_TYPE::Find(const std::size_t &offset) const{
   PL_ASSERT(offset <= LOCK_FREE_ARRAY_MAX_SIZE);
   LOG_TRACE("Find at %lu", offset);
-  auto value = lock_free_array->at(offset);
+//  auto value = lock_free_array->at(offset);
+  auto value = new_lock_free_array.at(offset);
   return value;
 }
 
@@ -77,11 +86,11 @@ ValueType LOCK_FREE_ARRAY_TYPE::FindValid(const std::size_t &offset,
 
   std::size_t valid_array_itr = 0;
   std::size_t array_itr;
-
+  auto new_lock_free_array_offset = new_lock_free_array.size();
   for(array_itr = 0;
-      array_itr < lock_free_array_offset;
+      array_itr < new_lock_free_array_offset;
       array_itr++){
-    auto value = lock_free_array->at(array_itr);
+    auto value = new_lock_free_array.at(array_itr);
     if (value != invalid_value) {
       // Check offset
       if(valid_array_itr == offset) {
@@ -98,22 +107,26 @@ ValueType LOCK_FREE_ARRAY_TYPE::FindValid(const std::size_t &offset,
 
 LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
 size_t LOCK_FREE_ARRAY_TYPE::GetSize() const{
-  return lock_free_array_offset;
+  return new_lock_free_array.size();
+//  return lock_free_array_offset;
 }
 
 LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
 bool LOCK_FREE_ARRAY_TYPE::IsEmpty() const{
-  return lock_free_array->empty();
+  return new_lock_free_array.empty();
+//  return lock_free_array->empty();
 }
 
 LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
 void LOCK_FREE_ARRAY_TYPE::Clear(const ValueType& invalid_value) {
 
   // Set invalid value for all elements and reset lock_free_array_offset
+
   for(std::size_t array_itr = 0;
-      array_itr < lock_free_array_offset;
+      array_itr < new_lock_free_array.size();
       array_itr++){
-    lock_free_array->at(array_itr) = invalid_value;
+//    lock_free_array->at(array_itr) = invalid_value;
+    new_lock_free_array.at(array_itr) = invalid_value;
   }
 
   // Reset sentinel
@@ -127,9 +140,9 @@ bool LOCK_FREE_ARRAY_TYPE::Contains(const ValueType& value) {
   bool exists = false;
 
   for(std::size_t array_itr = 0;
-      array_itr < lock_free_array_offset;
+      array_itr < new_lock_free_array.size();
       array_itr++){
-    auto array_value = lock_free_array->at(array_itr);
+    auto array_value = new_lock_free_array.at(array_itr);
     // Check array value
     if(array_value == value) {
       exists = true;
