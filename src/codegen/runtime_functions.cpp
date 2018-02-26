@@ -19,6 +19,7 @@
 #include "expression/abstract_expression.h"
 #include "expression/expression_util.h"
 #include "storage/data_table.h"
+#include "storage/layout.h"
 #include "storage/tile_group.h"
 #include "storage/tile.h"
 #include "storage/zone_map_manager.h"
@@ -101,8 +102,22 @@ void RuntimeFunctions::FillPredicateArray(
 // to skip over to find successive values of the column.
 //===----------------------------------------------------------------------===//
 void RuntimeFunctions::GetTileGroupLayout(const storage::TileGroup *tile_group,
+                                          const catalog::Schema *schema, 
                                           ColumnLayoutInfo *infos,
                                           uint32_t num_cols) {
+  const auto& layout = tile_group->GetLayout();
+  // For ROW_STORE_OID, the tile group contains a single tile
+  // and all the columns are in the same order as the table schema.
+  if (layout.IsRowStore()) {
+    auto tuple_location = tile_group->GetTile(0)->GetTupleLocation(0);
+    auto stride = schema->GetLength();
+    for (uint32_t col_idx = 0; col_idx < num_cols; col_idx++) {
+      infos[col_idx].column = tuple_location + schema->GetOffset(col_idx);
+      infos[col_idx].stride = stride;
+      infos[col_idx].is_columnar = false;
+    }
+    return;
+  }
   for (uint32_t col_idx = 0; col_idx < num_cols; col_idx++) {
     // Map the current column to a tile and a column offset in the tile
     oid_t tile_offset, tile_column_offset;

@@ -20,6 +20,7 @@
 #include "common/platform.h"
 #include "common/internal_types.h"
 #include "storage/abstract_table.h"
+#include "storage/layout.h"
 #include "storage/tile.h"
 #include "storage/tile_group_header.h"
 #include "storage/tuple.h"
@@ -40,9 +41,9 @@ TileGroup::TileGroup(BackendType backend_type,
       tile_group_header(tile_group_header),
       table(table),
       num_tuple_slots(tuple_count),
-      column_map(column_map) {
+      column_map(column_map),
+      tile_group_layout_(column_map){
   tile_count = tile_schemas.size();
-
   for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
     auto &manager = catalog::Manager::GetInstance();
     oid_t tile_id = manager.GetNextTileId();
@@ -321,20 +322,20 @@ oid_t TileGroup::InsertTupleFromCheckpoint(oid_t tuple_slot_id,
 
 oid_t TileGroup::GetTileIdFromColumnId(oid_t column_id) {
   oid_t tile_column_id, tile_offset;
-  LocateTileAndColumn(column_id, tile_offset, tile_column_id);
+  tile_group_layout_.LocateTileAndColumn(column_id, tile_offset, tile_column_id);
   return tile_offset;
 }
 
 oid_t TileGroup::GetTileColumnId(oid_t column_id) {
   oid_t tile_column_id, tile_offset;
-  LocateTileAndColumn(column_id, tile_offset, tile_column_id);
+  tile_group_layout_.LocateTileAndColumn(column_id, tile_offset, tile_column_id);
   return tile_column_id;
 }
 
 type::Value TileGroup::GetValue(oid_t tuple_id, oid_t column_id) {
   PELOTON_ASSERT(tuple_id < GetNextTupleSlot());
   oid_t tile_column_id, tile_offset;
-  LocateTileAndColumn(column_id, tile_offset, tile_column_id);
+  tile_group_layout_.LocateTileAndColumn(column_id, tile_offset, tile_column_id);
   return GetTile(tile_offset)->GetValue(tuple_id, tile_column_id);
 }
 
@@ -342,7 +343,7 @@ void TileGroup::SetValue(type::Value &value, oid_t tuple_id,
                          oid_t column_id) {
   PELOTON_ASSERT(tuple_id < GetNextTupleSlot());
   oid_t tile_column_id, tile_offset;
-  LocateTileAndColumn(column_id, tile_offset, tile_column_id);
+  tile_group_layout_.LocateTileAndColumn(column_id, tile_offset, tile_column_id);
   GetTile(tile_offset)->SetValue(value, tuple_id, tile_column_id);
 }
 
@@ -353,7 +354,7 @@ std::shared_ptr<Tile> TileGroup::GetTileReference(
   return tiles[tile_offset];
 }
 
-double TileGroup::GetSchemaDifference(
+double TileGroup::GetLayoutDifference(
     const storage::column_map_type &new_column_map) {
   double theta = 0;
   size_t capacity = column_map.size();

@@ -1284,7 +1284,7 @@ storage::TileGroup *DataTable::TransformTileGroup(
   // Get orig tile group from catalog
   auto &catalog_manager = catalog::Manager::GetInstance();
   auto tile_group = catalog_manager.GetTileGroup(tile_group_id);
-  auto diff = tile_group->GetSchemaDifference(default_partition_);
+  auto diff = tile_group->GetLayoutDifference(default_partition_);
 
   // Check threshold for transformation
   if (diff < theta) {

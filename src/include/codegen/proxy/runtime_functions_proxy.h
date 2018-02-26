@@ -14,6 +14,7 @@
 
 #include <vector>
 #include <memory>
+#include "catalog/schema.h"
 #include "codegen/proxy/proxy.h"
 #include "codegen/proxy/type_builder.h"
 #include "codegen/runtime_functions.h"
@@ -34,6 +35,11 @@ PROXY(AbstractExpression) {
   DECLARE_TYPE;
 };
 
+PROXY(Schema) {
+  DECLARE_MEMBER(0, char[sizeof(catalog::Schema)], opaque);
+  DECLARE_TYPE;
+};
+
 PROXY(RuntimeFunctions) {
   DECLARE_METHOD(HashCrc64);
   DECLARE_METHOD(GetTileGroup);
@@ -45,6 +51,7 @@ PROXY(RuntimeFunctions) {
 
 TYPE_BUILDER(ColumnLayoutInfo, codegen::RuntimeFunctions::ColumnLayoutInfo);
 TYPE_BUILDER(AbstractExpression, expression::AbstractExpression);
+TYPE_BUILDER(Schema, catalog::Schema);
 
 }  // namespace codegen
 }  // namespace peloton

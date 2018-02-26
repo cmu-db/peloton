@@ -21,6 +21,7 @@
 #include "common/item_pointer.h"
 #include "common/printable.h"
 #include "planner/project_info.h"
+#include "storage/layout.h"
 #include "type/abstract_pool.h"
 #include "common/internal_types.h"
 #include "type/value.h"
@@ -52,8 +53,6 @@ class TileGroupHeader;
 class AbstractTable;
 class TileGroupIterator;
 class RollbackSegment;
-
-typedef std::map<oid_t, std::pair<oid_t, oid_t>> column_map_type;
 
 /**
  * Represents a group of tiles logically horizontally contiguous.
@@ -180,10 +179,12 @@ class TileGroup : public Printable {
 
   void SetValue(type::Value &value, oid_t tuple_id, oid_t column_id);
 
-  double GetSchemaDifference(const storage::column_map_type &new_column_map);
+  double GetLayoutDifference(const storage::column_map_type &new_column_map);
 
   // Sync the contents
   void Sync();
+
+  const storage::Layout& GetLayout() const { return tile_group_layout_; }
 
  protected:
   //===--------------------------------------------------------------------===//
@@ -221,6 +222,8 @@ class TileGroup : public Printable {
   // column to tile mapping :
   // <column offset> to <tile offset, tile column offset>
   column_map_type column_map;
+
+  Layout tile_group_layout_;
 };
 
 }  // namespace storage
