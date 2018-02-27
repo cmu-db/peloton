@@ -90,11 +90,11 @@ TEST_F(OptimizerRuleTests, SimpleAssociativeRuleTest) {
       LogicalGet::make(2, {}, nullptr, "test3"));
 
   auto left_get_group = optimizer.metadata_.memo.InsertExpression(
-      optimizer.metadata_.MakeGroupExpression(left_get), true);
+      optimizer.metadata_.MakeGroupExpression(left_get), false);
   auto middle_get_group = optimizer.metadata_.memo.InsertExpression(
-      optimizer.metadata_.MakeGroupExpression(middle_get), true);
+      optimizer.metadata_.MakeGroupExpression(middle_get), false);
   auto right_get_group = optimizer.metadata_.memo.InsertExpression(
-      optimizer.metadata_.MakeGroupExpression(right_get), true);
+      optimizer.metadata_.MakeGroupExpression(right_get), false);
 
   auto left_leaf = std::make_shared<OperatorExpression>(
       LeafOperator::make(left_get_group->GetGroupID()));
@@ -186,11 +186,11 @@ TEST_F(OptimizerRuleTests, SimpleAssociativeRuleTest2) {
 
   // Create Groups for Get Operators
   auto left_get_group = memo.InsertExpression(
-      optimizer.metadata_.MakeGroupExpression(left_get), true);
+      optimizer.metadata_.MakeGroupExpression(left_get), false);
   auto middle_get_group = memo.InsertExpression(
-      optimizer.metadata_.MakeGroupExpression(middle_get), true);
+      optimizer.metadata_.MakeGroupExpression(middle_get), false);
   auto right_get_group = memo.InsertExpression(
-      optimizer.metadata_.MakeGroupExpression(right_get), true);
+      optimizer.metadata_.MakeGroupExpression(right_get), false);
 
   auto left_leaf = std::make_shared<OperatorExpression>(
       LeafOperator::make(left_get_group->GetGroupID()));

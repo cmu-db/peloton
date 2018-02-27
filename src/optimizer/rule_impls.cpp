@@ -111,10 +111,8 @@ void InnerJoinAssociativity::Transform(
 
   // Get Alias sets
   auto &memo = context->metadata->memo;
-
-  auto middle_group_id =
-      children[0]->Children()[1]->Op().As<LeafOperator>()->origin_group;
-  auto right_group_id = children[1]->Op().As<LeafOperator>()->origin_group;
+  auto middle_group_id = middle->Op().As<LeafOperator>()->origin_group;
+  auto right_group_id = right->Op().As<LeafOperator>()->origin_group;
 
   const auto &middle_group_aliases_set =
       memo.GetGroupByID(middle_group_id)->GetTableAliases();
@@ -144,10 +142,11 @@ void InnerJoinAssociativity::Transform(
   std::vector<AnnotatedExpression> new_parent_join_predicates;
 
   for (auto predicate : predicates) {
-    if (util::IsSubset(right_join_aliases_set, predicate.table_alias_set))
+    if (util::IsSubset(right_join_aliases_set, predicate.table_alias_set)) {
       new_child_join_predicates.emplace_back(predicate);
-    else
+    } else {
       new_parent_join_predicates.emplace_back(predicate);
+    }
   }
 
   // Construct new child join operator
