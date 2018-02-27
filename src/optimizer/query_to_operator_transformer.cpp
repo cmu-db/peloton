@@ -406,6 +406,7 @@ bool QueryToOperatorTransformer::IsSupportedConjunctivePredicate(
   auto expr_type = expr->GetExpressionType();
   // Subquery with IN
   if (expr_type == ExpressionType::COMPARE_IN &&
+      expr->GetChild(0)->GetExpressionType() != ExpressionType::ROW_SUBQUERY &&
       expr->GetChild(1)->GetExpressionType() == ExpressionType::ROW_SUBQUERY) {
     return true;
   }

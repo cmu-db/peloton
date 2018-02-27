@@ -75,9 +75,8 @@ void BindNodeVisitor::Visit(parser::SelectStatement *node) {
     }
     select_element->DeriveSubqueryFlag();
 
-    // Recursively deduce expression value type
+    // Traverse the expression to deduce expression value type and name
     select_element->DeduceExpressionType();
-    // Recursively deduce expression name
     select_element->DeduceExpressionName();
     new_select_list.push_back(std::move(select_element));
   }

@@ -428,7 +428,6 @@ class ExpressionUtil {
            ++tuple_idx) {
         if (child_expr->GetExpressionType() != ExpressionType::VALUE_TUPLE &&
             child_expr_maps[tuple_idx].count(child_expr)) {
-          // EvaluateExpression({child_expr_map}, child_expr);
           expr->SetChild(i, new TupleValueExpression(
                                 child_expr->GetValueType(), tuple_idx,
                                 child_expr_maps[tuple_idx][child_expr]));
