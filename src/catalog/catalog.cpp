@@ -78,17 +78,17 @@ Catalog::Catalog() : pool_(new type::EphemeralPool()) {
 
   CreateIndex(CATALOG_DATABASE_OID, DATABASE_CATALOG_OID,
               {DatabaseCatalog::ColumnId::DATABASE_NAME},
-              DATABASE_CATALOG_NAME "_skey0", IndexType::BWTREE,
+              DATABASE_CATALOG_NAME "_skey0", IndexType::HASH,
               IndexConstraintType::UNIQUE, true, txn, true);
 
   CreateIndex(CATALOG_DATABASE_OID, TABLE_CATALOG_OID,
               {TableCatalog::ColumnId::TABLE_NAME,
                TableCatalog::ColumnId::DATABASE_OID},
-              TABLE_CATALOG_NAME "_skey0", IndexType::BWTREE,
+              TABLE_CATALOG_NAME "_skey0", IndexType::HASH,
               IndexConstraintType::UNIQUE, true, txn, true);
   CreateIndex(CATALOG_DATABASE_OID, TABLE_CATALOG_OID,
               {TableCatalog::ColumnId::DATABASE_OID},
-              TABLE_CATALOG_NAME "_skey1", IndexType::BWTREE,
+              TABLE_CATALOG_NAME "_skey1", IndexType::HASH,
               IndexConstraintType::DEFAULT, false, txn, true);
 
   // actual index already added in column_catalog, index_catalog constructor
@@ -96,31 +96,31 @@ Catalog::Catalog() : pool_(new type::EphemeralPool()) {
   // needs to be built before insert tuples into table
   IndexCatalog::GetInstance()->InsertIndex(
       COLUMN_CATALOG_PKEY_OID, COLUMN_CATALOG_NAME "_pkey", COLUMN_CATALOG_OID,
-      IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY, true,
+      IndexType::HASH, IndexConstraintType::PRIMARY_KEY, true,
       {ColumnCatalog::ColumnId::TABLE_OID,
        ColumnCatalog::ColumnId::COLUMN_NAME},
       pool_.get(), txn);
   IndexCatalog::GetInstance()->InsertIndex(
       COLUMN_CATALOG_SKEY0_OID, COLUMN_CATALOG_NAME "_skey0",
-      COLUMN_CATALOG_OID, IndexType::BWTREE, IndexConstraintType::UNIQUE, true,
+      COLUMN_CATALOG_OID, IndexType::HASH, IndexConstraintType::UNIQUE, true,
       {ColumnCatalog::ColumnId::TABLE_OID, ColumnCatalog::ColumnId::COLUMN_ID},
       pool_.get(), txn);
   IndexCatalog::GetInstance()->InsertIndex(
       COLUMN_CATALOG_SKEY1_OID, COLUMN_CATALOG_NAME "_skey1",
-      COLUMN_CATALOG_OID, IndexType::BWTREE, IndexConstraintType::DEFAULT,
+      COLUMN_CATALOG_OID, IndexType::HASH, IndexConstraintType::DEFAULT,
       false, {ColumnCatalog::ColumnId::TABLE_OID}, pool_.get(), txn);
 
   IndexCatalog::GetInstance()->InsertIndex(
       INDEX_CATALOG_PKEY_OID, INDEX_CATALOG_NAME "_pkey", INDEX_CATALOG_OID,
-      IndexType::BWTREE, IndexConstraintType::PRIMARY_KEY, true,
+      IndexType::HASH, IndexConstraintType::PRIMARY_KEY, true,
       {IndexCatalog::ColumnId::INDEX_OID}, pool_.get(), txn);
   IndexCatalog::GetInstance()->InsertIndex(
       INDEX_CATALOG_SKEY0_OID, INDEX_CATALOG_NAME "_skey0", INDEX_CATALOG_OID,
-      IndexType::BWTREE, IndexConstraintType::UNIQUE, true,
+      IndexType::HASH, IndexConstraintType::UNIQUE, true,
       {IndexCatalog::ColumnId::INDEX_NAME}, pool_.get(), txn);
   IndexCatalog::GetInstance()->InsertIndex(
       INDEX_CATALOG_SKEY1_OID, INDEX_CATALOG_NAME "_skey1", INDEX_CATALOG_OID,
-      IndexType::BWTREE, IndexConstraintType::DEFAULT, false,
+      IndexType::HASH, IndexConstraintType::DEFAULT, false,
       {IndexCatalog::ColumnId::TABLE_OID}, pool_.get(), txn);
 
   // Insert pg_catalog database into pg_database
@@ -277,7 +277,7 @@ ResultType Catalog::CreateTable(const std::string &database_name,
       std::string col_name = column.GetName();
       std::string index_name = table->GetName() + "_" + col_name + "_UNIQ";
       CreateIndex(database_name, table_name, {column_id}, index_name, true,
-                  IndexType::BWTREE, txn);
+                  IndexType::HASH, txn);
       LOG_DEBUG("Added a UNIQUE index on %s in %s.", col_name.c_str(),
                 table_name.c_str());
     }
@@ -331,7 +331,7 @@ ResultType Catalog::CreatePrimaryIndex(oid_t database_oid, oid_t table_oid,
   oid_t index_oid = IndexCatalog::GetInstance()->GetNextOid();
 
   index_metadata = new index::IndexMetadata(
-      index_name, index_oid, table_oid, database_oid, IndexType::BWTREE,
+      index_name, index_oid, table_oid, database_oid, IndexType::HASH,
       IndexConstraintType::PRIMARY_KEY, schema, key_schema, key_attrs,
       unique_keys);
 
@@ -343,7 +343,7 @@ ResultType Catalog::CreatePrimaryIndex(oid_t database_oid, oid_t table_oid,
   txn->RecordCreate(database_oid, table_oid, index_oid);
   // insert index record into index_catalog(pg_index) table
   IndexCatalog::GetInstance()->InsertIndex(
-      index_oid, index_name, table_oid, IndexType::BWTREE,
+      index_oid, index_name, table_oid, IndexType::HASH,
       IndexConstraintType::PRIMARY_KEY, unique_keys, key_attrs, pool_.get(),
       txn);
 
