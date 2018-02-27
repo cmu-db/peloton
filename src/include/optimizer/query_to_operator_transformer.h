@@ -81,7 +81,9 @@ class QueryToOperatorTransformer : public SqlNodeVisitor {
    *
    * @param expr The original predicate
    */
-  void CollectPredicates(expression::AbstractExpression *expr);
+  std::vector<AnnotatedExpression> CollectPredicates(
+      expression::AbstractExpression *expr,
+      std::vector<AnnotatedExpression> predicates = {});
 
   // TODO(boweic): Since we haven't migrated all the functionalities needed to
   // generate mark-join and single-join to the optimizer, currently this

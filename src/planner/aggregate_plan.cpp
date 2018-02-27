@@ -99,7 +99,6 @@ void AggregatePlan::PerformBinding(BindingContext &binding_context) {
   // Handle the projection by creating two binding contexts, the first being
   // input context we receive, and the next being all the aggregates this
   // plan produces.
-
   BindingContext agg_ctx;
   for (oid_t i = 0; i < aggregates.size(); i++) {
     const auto &agg_ai = aggregates[i].agg_ai;
@@ -118,6 +117,7 @@ void AggregatePlan::PerformBinding(BindingContext &binding_context) {
     const_cast<expression::AbstractExpression *>(predicate)
         ->PerformBinding({&binding_context});
   }
+
 
 }
 

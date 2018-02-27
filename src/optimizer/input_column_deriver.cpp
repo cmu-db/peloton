@@ -275,7 +275,7 @@ void InputColumnDeriver::JoinHelper(const BaseOperatorNode *op) {
   }
   ExprMap output_cols_map;
   for (auto expr : required_cols_) {
-    expression::ExpressionUtil::GetTupleValueExprs(output_cols_map, expr);
+    expression::ExpressionUtil::GetTupleAndAggregateExprs(output_cols_map, expr);
   }
   for (auto &expr_idx_pair : output_cols_map) {
     input_cols_set.insert(expr_idx_pair.first);

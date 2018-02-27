@@ -50,8 +50,6 @@ void QueryToOperatorTransformer::Visit(parser::SelectStatement *op) {
   // information is derived before the plan generation, at this step we
   // don't need to derive that
   auto pre_predicates = std::move(predicates_);
-  auto pre_depth = depth_;
-  depth_ = op->depth;
 
   if (op->from_table != nullptr) {
     // SELECT with FROM
@@ -62,7 +60,7 @@ void QueryToOperatorTransformer::Visit(parser::SelectStatement *op) {
   }
 
   if (op->where_clause != nullptr) {
-    CollectPredicates(op->where_clause.get());
+    predicates_ = CollectPredicates(op->where_clause.get(), predicates_);
   }
 
   if (!predicates_.empty()) {
@@ -76,8 +74,11 @@ void QueryToOperatorTransformer::Visit(parser::SelectStatement *op) {
     // Plain aggregation
     std::shared_ptr<OperatorExpression> agg_expr;
     if (op->group_by == nullptr) {
+      // TODO(boweic): aggregation without groupby could still have having clause
       agg_expr = std::make_shared<OperatorExpression>(
           LogicalAggregateAndGroupBy::make());
+      agg_expr->PushChild(output_expr_);
+      output_expr_ = agg_expr;
     } else {
       size_t num_group_by_cols = op->group_by->columns.size();
       auto group_by_cols =
@@ -87,15 +88,21 @@ void QueryToOperatorTransformer::Visit(parser::SelectStatement *op) {
         group_by_cols[i] = std::shared_ptr<expression::AbstractExpression>(
             op->group_by->columns[i]->Copy());
       }
+      agg_expr = std::make_shared<OperatorExpression>(
+          LogicalAggregateAndGroupBy::make(group_by_cols));
+      agg_expr->PushChild(output_expr_);
+      output_expr_ = agg_expr;
       std::vector<AnnotatedExpression> having;
       if (op->group_by->having != nullptr) {
-        util::ExtractPredicates(op->group_by->having.get(), having);
+        having = CollectPredicates(op->group_by->having.get());
       }
-      agg_expr = std::make_shared<OperatorExpression>(
-          LogicalAggregateAndGroupBy::make(group_by_cols, having));
+      if (!having.empty()) {
+        auto filter_expr =
+            std::make_shared<OperatorExpression>(LogicalFilter::make(having));
+        filter_expr->PushChild(output_expr_);
+        output_expr_ = filter_expr;
+      }
     }
-    agg_expr->PushChild(output_expr_);
-    output_expr_ = agg_expr;
   }
 
   if (op->select_distinct) {
@@ -113,7 +120,6 @@ void QueryToOperatorTransformer::Visit(parser::SelectStatement *op) {
   }
 
   predicates_ = std::move(pre_predicates);
-  depth_ = pre_depth;
 }
 void QueryToOperatorTransformer::Visit(parser::JoinDefinition *node) {
   // Get left operator
@@ -128,7 +134,7 @@ void QueryToOperatorTransformer::Visit(parser::JoinDefinition *node) {
   std::shared_ptr<OperatorExpression> join_expr;
   switch (node->type) {
     case JoinType::INNER: {
-      CollectPredicates(node->condition.get());
+      predicates_ = CollectPredicates(node->condition.get(), predicates_);
       join_expr =
           std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
       break;
@@ -250,8 +256,8 @@ void QueryToOperatorTransformer::Visit(parser::DeleteStatement *op) {
                           ->GetTableObject(op->GetTableName());
   std::shared_ptr<OperatorExpression> table_scan;
   if (op->expr != nullptr) {
-    std::vector<AnnotatedExpression> predicates;
-    util::ExtractPredicates(op->expr.get(), predicates);
+    std::vector<AnnotatedExpression> predicates =
+        util::ExtractPredicates(op->expr.get());
     table_scan = std::make_shared<OperatorExpression>(LogicalGet::make(
         GetAndIncreaseGetId(), predicates, target_table, op->GetTableName()));
   } else
@@ -282,8 +288,8 @@ void QueryToOperatorTransformer::Visit(parser::UpdateStatement *op) {
       LogicalUpdate::make(target_table, &op->updates));
 
   if (op->where != nullptr) {
-    std::vector<AnnotatedExpression> predicates;
-    util::ExtractPredicates(op->where.get(), predicates);
+    std::vector<AnnotatedExpression> predicates =
+        util::ExtractPredicates(op->where.get());
     table_scan = std::make_shared<OperatorExpression>(
         LogicalGet::make(GetAndIncreaseGetId(), predicates, target_table,
                          op->table->GetTableName(), true));
@@ -368,14 +374,15 @@ bool QueryToOperatorTransformer::RequireAggregation(
   return has_aggregation;
 }
 
-void QueryToOperatorTransformer::CollectPredicates(
-    expression::AbstractExpression *expr) {
+std::vector<AnnotatedExpression> QueryToOperatorTransformer::CollectPredicates(
+    expression::AbstractExpression *expr,
+    std::vector<AnnotatedExpression> predicates) {
   // First check if all conjunctive predicates are supported before
   // transfoming
   // predicate with sub-select into regular predicates
-  std::vector<expression::AbstractExpression *> predicates;
-  util::SplitPredicates(expr, predicates);
-  for (const auto &pred : predicates) {
+  std::vector<expression::AbstractExpression *> predicate_ptrs;
+  util::SplitPredicates(expr, predicate_ptrs);
+  for (const auto &pred : predicate_ptrs) {
     if (!IsSupportedConjunctivePredicate(pred)) {
       throw Exception("Predicate type not supported yet");
     }
@@ -384,7 +391,7 @@ void QueryToOperatorTransformer::CollectPredicates(
   // (a IN test.b), after the rewrite, we can extract the table aliases
   // information correctly
   expr->Accept(this);
-  util::ExtractPredicates(expr, predicates_);
+  return util::ExtractPredicates(expr, predicates);
 }
 
 bool QueryToOperatorTransformer::IsSupportedConjunctivePredicate(

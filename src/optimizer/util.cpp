@@ -213,8 +213,9 @@ void GetPredicateColumns(const catalog::Schema *schema,
  * @param expr The original predicate
  * @param annotated_predicates The extracted conjunction predicates
  */
-void ExtractPredicates(expression::AbstractExpression *expr,
-                       std::vector<AnnotatedExpression> &annotated_predicates) {
+std::vector<AnnotatedExpression> ExtractPredicates(
+    expression::AbstractExpression *expr,
+    std::vector<AnnotatedExpression> annotated_predicates) {
   // Split a complex predicate into a set of predicates connected by AND.
   std::vector<expression::AbstractExpression *> predicates;
   SplitPredicates(expr, predicates);
@@ -228,6 +229,7 @@ void ExtractPredicates(expression::AbstractExpression *expr,
         std::shared_ptr<expression::AbstractExpression>(predicate->Copy()),
         table_alias_set));
   }
+  return annotated_predicates;
 }
 
 /**
