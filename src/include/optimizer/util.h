@@ -51,20 +51,6 @@ void SetUnion(std::unordered_set<T> &new_set, std::unordered_set<T> &old_set) {
   for (auto element : old_set) new_set.insert(element);
 }
 
-// get the column IDs evaluated in a predicate
-void GetPredicateColumns(const catalog::Schema *schema,
-                         expression::AbstractExpression *expression,
-                         std::vector<oid_t> &column_ids,
-                         std::vector<ExpressionType> &expr_types,
-                         std::vector<type::Value> &values,
-                         bool &index_searchable);
-
-bool CheckIndexSearchable(storage::DataTable *target_table,
-                          expression::AbstractExpression *expression,
-                          std::vector<oid_t> &key_column_ids,
-                          std::vector<ExpressionType> &expr_types,
-                          std::vector<type::Value> &values, oid_t &index_id);
-
 void SplitPredicates(expression::AbstractExpression *expr,
                      std::vector<expression::AbstractExpression *> &predicates);
 
