@@ -809,40 +809,27 @@ TEST_F(OptimizerSQLTests, NestedQueryInHavingTest) {
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test2 VALUES (22, 00, '4th');");
 
   TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE agg(a int, b int);");
-  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO agg VALUES (1, 2);");
-  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO agg VALUES (1, 3);");
-  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO agg VALUES (2, 3);");
-  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO agg VALUES (2, 4);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO agg VALUES (1, 22);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO agg VALUES (2, 33);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO agg VALUES (1, 11);");
+  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO agg VALUES (1, 11);");
   TestUtil(
       "select sum(a) as c, b from test as B group by b having exists (select b "
       "from test2 where a = B.b);",
       {"7", "11", "8", "22"}, false);
+  // TestUtil(
+  //     "select sum(a) as d, b from test as B group by b having exists (select
+  //     b "
+  //     "from test2 where a = B.d);",
+  //     {"7", "11", "8", "22"}, false);
   TestUtil(
-      "select sum(a) as c, b from test as B group by b having exists (select b "
-      "from test2 where a = B.c);",
+      "select sum(a) as c, b from test as B group by b having exists (select "
+      "avg(a) from agg where b = B.b);",
+      {"7", "11", "8", "22", "3", "33"}, false);
+  TestUtil(
+      "select sum(a) as c, b from test as B group by b having exists (select "
+      "avg(a) from agg where b = B.b group by b having avg(a) < 2);",
       {"7", "11", "8", "22"}, false);
-  // TestUtil(
-  //     "select b from test where a in (select a from test as t where a = "
-  //     "test.a)",
-  //     {"11", "22", "33", "0"}, false);
-  // TestUtil(
-  //     "select B.a from test as B where exists (select b as a from test2 where "
-  //     "a = B.a) and "
-  //     "b in (select b from test where b > 22);",
-  //     {"3"}, false);
-  // TestUtil(
-  //     "select B.a from test as B where exists (select b as a from test2 where "
-  //     "a = B.a) and "
-  //     "b in (select b from test) and c > 0;",
-  //     {"1", "3"}, false);
-  // TestUtil(
-  //     "select t1.a, t2.a from test as t1 join test as t2 on t1.a=t2.a "
-  //     "where t1.b+t2.b in (select 2*b from test2 where a > 2)",
-  //     {"3", "3", "4", "4"}, false);
-  // TestUtil(
-  //     "select B.a from test as B where exists (select b as a from test as T "
-  //     "where a = B.a and exists (select c from test where T.c = c));",
-  //     {"1", "2", "3", "4"}, false);
 }
 
 }  // namespace test
