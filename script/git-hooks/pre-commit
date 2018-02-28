@@ -19,7 +19,7 @@ if [ -n "$FILES" ]; then
     echo "******* Peloton Pre-Commit Hook *******"
     echo "***************************************"
     echo "Use \"$FORMATTER_PATH -c -f\" to format all staged files."
-    echo "Or use \"$FORMATTER_PATH --no-verify\" to temporarily bypass the pre-commit hook."
+    echo "Or use \"git commit --no-verify\" to temporarily bypass the pre-commit hook."
     echo
     echo "Be aware that changed files have to be staged again!"
     echo "***************************************"
