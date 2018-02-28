@@ -95,6 +95,7 @@ void TransactionContext::Init(const size_t thread_id,
 
   insert_count_ = 0;
 
+  rw_set_.Clear();
   gc_set_.reset(new GCSet());
   gc_object_set_.reset(new GCObjectSet());
 
