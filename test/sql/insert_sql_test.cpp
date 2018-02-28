@@ -576,32 +576,28 @@ TEST_F(InsertSQLTests, BadTypes) {
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
       new optimizer::Optimizer());
 
-  std::string create_table("CREATE TABLE foo (id1 int, id2 bigint,"
-                                         "id3 smallint, id4 tinyint,"
-                                         "id5 decimal);");
+  std::string create_table(
+      "CREATE TABLE foo (id1 int, id2 bigint,"
+      "id3 smallint, id4 tinyint,"
+      "id5 decimal);");
   TestingSQLUtil::ExecuteSQLQuery(create_table);
   // Insert an unconvertible int.
   std::string query("INSERT INTO(id) foo VALUES('h');");
   txn = txn_manager.BeginTransaction();
-  EXPECT_THROW(
-      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
-      peloton::Exception);
+  EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
+               peloton::Exception);
   query = "INSERT INTO foo(id2) VALUES('h');";
-  EXPECT_THROW(
-      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
-      peloton::Exception);
+  EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
+               peloton::Exception);
   query = "INSERT INTO foo(id3) VALUES('h');";
-  EXPECT_THROW(
-      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
-      peloton::Exception);
+  EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
+               peloton::Exception);
   query = "INSERT INTO foo(id4) VALUES('h');";
-  EXPECT_THROW(
-      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
-      peloton::Exception);
+  EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
+               peloton::Exception);
   query = "INSERT INTO foo(id5) VALUES('h');";
-  EXPECT_THROW(
-      TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
-      peloton::Exception);
+  EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
+               peloton::Exception);
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
