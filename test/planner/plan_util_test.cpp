@@ -154,6 +154,17 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
   EXPECT_EQ(static_cast<int>(affected_indexes.size()), 2);
   expected_oids = std::set<oid_t>({id_idx_oid, fname_idx_oid});
   EXPECT_EQ(expected_oids, affected_indexes);
+
+  // ========= SELECT statement check ==
+  query_string = "SELECT * FROM test_table;";
+  stmt.reset(new Statement("SELECT", query_string));
+  sql_stmt_list = peloton_parser.BuildParseTree(query_string);
+  sql_stmt = sql_stmt_list->GetStatement(0);
+  affected_indexes =
+      planner::PlanUtil::GetAffectedIndexes(txn->catalog_cache, *sql_stmt);
+
+  // no indexes are affected
+  EXPECT_EQ(static_cast<int>(affected_indexes.size()), 0);
 }
 }
 }
