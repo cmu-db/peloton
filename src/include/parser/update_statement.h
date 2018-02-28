@@ -14,8 +14,8 @@
 
 #include <cstring>
 
-#include "expression/abstract_expression.h"
 #include "common/sql_node_visitor.h"
+#include "expression/abstract_expression.h"
 #include "parser/sql_statement.h"
 #include "parser/table_ref.h"
 
@@ -55,6 +55,10 @@ class UpdateStatement : public SQLStatement {
   virtual ~UpdateStatement() {}
 
   virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
+
+  inline void TryBindDatabaseName(std::string default_database_name) {
+    table->TryBindDatabaseName(default_database_name);
+  }
 
   const std::string GetInfo(int num_indent) const override;
 
