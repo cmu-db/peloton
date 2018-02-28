@@ -100,7 +100,7 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto sql_stmt_list = peloton_parser.BuildParseTree(query_string);
   auto sql_stmt = sql_stmt_list->GetStatement(0);
-  static_cast<parser::UpdateStatement *>(sql_stmt)->TryBindDatabaseName(
+  static_cast<parser::UpdateStatement *>(sql_stmt)->table->TryBindDatabaseName(
       TEST_DB_NAME);
   std::set<oid_t> affected_indexes =
       planner::PlanUtil::GetAffectedIndexes(txn->catalog_cache, *sql_stmt);
@@ -115,7 +115,7 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
   stmt.reset(new Statement("UPDATE", query_string));
   sql_stmt_list = peloton_parser.BuildParseTree(query_string);
   sql_stmt = sql_stmt_list->GetStatement(0);
-  static_cast<parser::UpdateStatement *>(sql_stmt)->TryBindDatabaseName(
+  static_cast<parser::UpdateStatement *>(sql_stmt)->table->TryBindDatabaseName(
       TEST_DB_NAME);
   affected_indexes =
       planner::PlanUtil::GetAffectedIndexes(txn->catalog_cache, *sql_stmt);
