@@ -36,6 +36,7 @@ LOCK_FREE_ARRAY_TYPE::LockFreeArray(){
 
 LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
 LOCK_FREE_ARRAY_TYPE::~LockFreeArray(){
+  lock_free_array.release();
 }
 
 LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
@@ -110,6 +111,7 @@ LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
 void LOCK_FREE_ARRAY_TYPE::Clear(const ValueType& invalid_value) {
 
   // Set invalid value for all elements and reset lock_free_array_offset
+
   for(std::size_t array_itr = 0;
       array_itr < lock_free_array_offset;
       array_itr++){
