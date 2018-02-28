@@ -96,8 +96,7 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
 
   // An update query affecting both indexes
   std::string query_string = "UPDATE test_table SET id = 0;";
-  std::unique_ptr<Statement> stmt =
-      std::make_unique<Statement>("UPDATE", query_string);
+  std::unique_ptr<Statement> stmt(new Statement("UPDATE", query_string));
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto sql_stmt_list = peloton_parser.BuildParseTree(query_string);
   auto sql_stmt = sql_stmt_list->GetStatement(0);
@@ -113,7 +112,7 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
 
   // Update query affecting only one index
   query_string = "UPDATE test_table SET first_name = '';";
-  stmt = std::make_unique<Statement>("UPDATE", query_string);
+  stmt.reset(new Statement("UPDATE", query_string));
   sql_stmt_list = peloton_parser.BuildParseTree(query_string);
   sql_stmt = sql_stmt_list->GetStatement(0);
   static_cast<parser::UpdateStatement *>(sql_stmt)->TryBindDatabaseName(
@@ -128,7 +127,7 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
 
   // ====== DELETE statements check ===
   query_string = "DELETE FROM test_table;";
-  stmt = std::make_unique<Statement>("DELETE", query_string);
+  stmt.reset(new Statement("DELETE", query_string));
   sql_stmt_list = peloton_parser.BuildParseTree(query_string);
   sql_stmt = sql_stmt_list->GetStatement(0);
   static_cast<parser::DeleteStatement *>(sql_stmt)->TryBindDatabaseName(
@@ -143,7 +142,7 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
 
   // ========= INSERT statements check ==
   query_string = "INSERT INTO test_table VALUES (1, 'pel', 'ton');";
-  stmt = std::make_unique<Statement>("INSERT", query_string);
+  stmt.reset(new Statement("INSERT", query_string));
   sql_stmt_list = peloton_parser.BuildParseTree(query_string);
   sql_stmt = sql_stmt_list->GetStatement(0);
   static_cast<parser::InsertStatement *>(sql_stmt)->TryBindDatabaseName(
