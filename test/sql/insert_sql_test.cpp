@@ -602,6 +602,11 @@ TEST_F(InsertSQLTests, BadTypes) {
   EXPECT_THROW(
       TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
       peloton::Exception);
+
+  // free the database just created
+  txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
 }
 
 TEST_F(InsertSQLTests, NonExistentTable) {
