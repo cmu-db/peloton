@@ -24,6 +24,8 @@
 #include <vector>
 #include <unistd.h>
 
+#include "tbb/concurrent_unordered_map.h"
+
 #include "parser/pg_trigger.h"
 #include "type/type_id.h"
 #include "common/logger.h"
@@ -1196,9 +1198,12 @@ std::string RWTypeToString(RWType type);
 RWType StringToRWType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const RWType &type);
 
-// block -> offset -> type
-typedef std::unordered_map<oid_t, std::unordered_map<oid_t, RWType>>
-    ReadWriteSet;
+// offset -> type
+typedef tbb::concurrent_unordered_map<oid_t, RWType> BlockReadWriteSet;
+
+// block -> <offset -> type>
+typedef tbb::concurrent_unordered_map<oid_t, BlockReadWriteSet > ReadWriteSet;
+
 
 // this enum is to identify why the version should be GC'd.
 enum class GCVersionType {
