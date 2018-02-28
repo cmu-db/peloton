@@ -69,6 +69,12 @@ class InsertPlan : public AbstractPlan {
 
   void SetParameterValues(std::vector<type::Value> *values) override;
 
+  /* 
+   * Clear the parameter values of the current insert. The plan may be 
+   * cached in the statement / plan cache and may be reused.
+   */
+  void ClearParameterValues() override { values_.clear(); }
+
   storage::DataTable *GetTable() const { return target_table_; }
 
   const planner::ProjectInfo *GetProjectInfo() const {
