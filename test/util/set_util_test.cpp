@@ -30,16 +30,16 @@ TEST_F(SetUtilTests, DisjointTest) {
   // Check sorted sets
   std::set<int> setA{1, 2, 3, 4};
   std::set<int> setB{4, 5, 6, 7};
-  EXPECT_FALSE(SetUtil::isDisjoint(setA, setB));
+  EXPECT_FALSE(SetUtil::IsDisjoint(setA, setB));
 
   std::set<int> setC{9, 8, 10};
-  EXPECT_TRUE(SetUtil::isDisjoint(setA, setC));
+  EXPECT_TRUE(SetUtil::IsDisjoint(setA, setC));
 
   std::set<int> setD{4, 1, 3, 2};
-  EXPECT_FALSE(SetUtil::isDisjoint(setB, setD));
+  EXPECT_FALSE(SetUtil::IsDisjoint(setB, setD));
 
   std::set<int> setE;
-  EXPECT_TRUE(SetUtil::isDisjoint(setD, setE));
+  EXPECT_TRUE(SetUtil::IsDisjoint(setD, setE));
 }
 
 }  // namespace test
