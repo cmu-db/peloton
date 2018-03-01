@@ -13,8 +13,8 @@
 #include <mutex>
 #include <utility>
 
-#include "include/indextuner/clusterer.h"
-#include "include/indextuner/sample.h"
+#include "indextuner/clusterer.h"
+#include "indextuner/sample.h"
 #include "catalog/foreign_key.h"
 #include "catalog/table_catalog.h"
 #include "catalog/trigger_catalog.h"

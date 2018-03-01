@@ -16,7 +16,7 @@
 
 #include "common/harness.h"
 
-#include "include/indextuner/layout_tuner.h"
+#include "indextuner/layout_tuner.h"
 
 #include "executor/testing_executor_util.h"
 #include "common/generator.h"

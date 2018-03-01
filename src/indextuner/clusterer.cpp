@@ -16,7 +16,7 @@
 #include <iostream>
 #include <map>
 
-#include "include/indextuner/clusterer.h"
+#include "indextuner/clusterer.h"
 #include "common/logger.h"
 #include "common/macros.h"
 #include "util/string_util.h"

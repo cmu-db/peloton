@@ -9,13 +9,13 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-#include "include/indextuner/index_tuner.h"
+#include "indextuner/index_tuner.h"
 
 #include <algorithm>
-#include "include/indextuner/brain_util.h"
+#include "indextuner/brain_util.h"
 
 #include "concurrency/transaction_manager_factory.h"
-#include "include/indextuner/clusterer.h"
+#include "indextuner/clusterer.h"
 #include "catalog/catalog.h"
 #include "catalog/schema.h"
 #include "common/container_tuple.h"

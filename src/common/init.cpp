@@ -15,8 +15,8 @@
 #include <gflags/gflags.h>
 #include <google/protobuf/stubs/common.h>
 
-#include "include/indextuner/index_tuner.h"
-#include "include/indextuner/layout_tuner.h"
+#include "indextuner/index_tuner.h"
+#include "indextuner/layout_tuner.h"
 #include "catalog/catalog.h"
 #include "common/statement_cache_manager.h"
 #include "common/thread_pool.h"

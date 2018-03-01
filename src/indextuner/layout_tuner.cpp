@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "include/indextuner/layout_tuner.h"
+#include "indextuner/layout_tuner.h"
 
 #include <vector>
 #include <string>

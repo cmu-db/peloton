@@ -20,9 +20,9 @@
 #include <unordered_map>
 #include <vector>
 
-#include "include/indextuner/index_tuner.h"
-#include "include/indextuner/layout_tuner.h"
-#include "include/indextuner/sample.h"
+#include "indextuner/index_tuner.h"
+#include "indextuner/layout_tuner.h"
+#include "indextuner/sample.h"
 
 #include "benchmark/sdbench/sdbench_loader.h"
 #include "benchmark/sdbench/sdbench_workload.h"

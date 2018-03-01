@@ -17,10 +17,10 @@
 
 #include "common/harness.h"
 
-#include "include/indextuner/index_tuner.h"
+#include "indextuner/index_tuner.h"
 
 #include "executor/testing_executor_util.h"
-#include "include/indextuner/sample.h"
+#include "indextuner/sample.h"
 #include "common/generator.h"
 
 #include "storage/data_table.h"

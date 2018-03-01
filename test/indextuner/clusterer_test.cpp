@@ -17,7 +17,7 @@
 
 #include "common/harness.h"
 
-#include "include/indextuner/clusterer.h"
+#include "indextuner/clusterer.h"
 #include "common/generator.h"
 #include "util/string_util.h"
 #include "util/stringtable_util.h"

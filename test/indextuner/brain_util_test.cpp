@@ -17,10 +17,10 @@
 
 #include "common/harness.h"
 
-#include "include/indextuner/brain_util.h"
+#include "indextuner/brain_util.h"
 
 #include "executor/testing_executor_util.h"
-#include "include/indextuner/sample.h"
+#include "indextuner/sample.h"
 #include "common/generator.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "storage/data_table.h"

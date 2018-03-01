@@ -9,13 +9,13 @@
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-#include "include/indextuner/sample.h"
+#include "indextuner/sample.h"
 
 #include <cmath>
 #include <iostream>
 #include <sstream>
 
-#include "include/indextuner/sample.h"
+#include "indextuner/sample.h"
 #include "common/logger.h"
 #include "common/macros.h"
 
