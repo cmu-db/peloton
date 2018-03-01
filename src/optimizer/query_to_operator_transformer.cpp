@@ -231,6 +231,7 @@ void QueryToOperatorTransformer::Visit(parser::InsertStatement *op) {
       catalog::Catalog::GetInstance()
           ->GetDatabaseObject(op->GetDatabaseName(), txn_)
           ->GetTableObject(op->GetTableName());
+
   if (op->type == InsertType::SELECT) {
     auto insert_expr = std::make_shared<OperatorExpression>(
         LogicalInsertSelect::make(target_table));

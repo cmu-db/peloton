@@ -141,7 +141,7 @@ struct CompareDecimal : public TypeSystem::SimpleComparisonHandleNull {
                            const Value &right) const override {
     // For integer comparisons, just subtract left from right and cast the
     // result to a 32-bit value
-    llvm::Value *diff = codegen->CreateSub(left.GetValue(), right.GetValue());
+    llvm::Value *diff = codegen->CreateFSub(left.GetValue(), right.GetValue());
     return Value{Integer::Instance(),
                  codegen->CreateFPToSI(diff, codegen.Int32Type()), nullptr,
                  nullptr};

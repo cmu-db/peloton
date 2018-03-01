@@ -24,6 +24,7 @@
 #include "common/platform.h"
 #include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager_factory.h"
+#include "executor/executor_context.h"
 #include "gc/gc_manager_factory.h"
 #include "index/index.h"
 #include "logging/log_manager.h"
