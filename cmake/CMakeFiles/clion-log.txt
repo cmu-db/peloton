@@ -1,0 +1,83 @@
+/Applications/CLion.app/Contents/bin/cmake/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=`llvm-config-3.7 --prefix` -G "CodeBlocks - Unix Makefiles" /Users/Tianyu/Desktop/peloton
+INFO Apple LLVM version 9.0.0 (clang-900.0.37)
+Target: x86_64-apple-darwin16.7.0
+Thread model: posix
+InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
+
+-- Unknown compiler. Version info:
+Apple LLVM version 9.0.0 (clang-900.0.37)
+Target: x86_64-apple-darwin16.7.0
+Thread model: posix
+InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
+
+Selected compiler  
+CMake Warning at /Applications/CLion.app/Contents/bin/cmake/share/cmake-3.8/Modules/FindBoost.cmake:765 (message):
+  Imported targets not available for Boost version 106500
+Call Stack (most recent call first):
+  /Applications/CLion.app/Contents/bin/cmake/share/cmake-3.8/Modules/FindBoost.cmake:869 (_Boost_COMPONENT_DEPENDENCIES)
+  /Applications/CLion.app/Contents/bin/cmake/share/cmake-3.8/Modules/FindBoost.cmake:1472 (_Boost_MISSING_DEPENDENCIES)
+  cmake/Dependencies.cmake:5 (find_package)
+  CMakeLists.txt:41 (include)
+
+
+CMake Warning at /Applications/CLion.app/Contents/bin/cmake/share/cmake-3.8/Modules/FindBoost.cmake:765 (message):
+  Imported targets not available for Boost version 106500
+Call Stack (most recent call first):
+  /Applications/CLion.app/Contents/bin/cmake/share/cmake-3.8/Modules/FindBoost.cmake:869 (_Boost_COMPONENT_DEPENDENCIES)
+  /Applications/CLion.app/Contents/bin/cmake/share/cmake-3.8/Modules/FindBoost.cmake:1472 (_Boost_MISSING_DEPENDENCIES)
+  cmake/Dependencies.cmake:5 (find_package)
+  CMakeLists.txt:41 (include)
+
+
+CMake Warning at /Applications/CLion.app/Contents/bin/cmake/share/cmake-3.8/Modules/FindBoost.cmake:765 (message):
+  Imported targets not available for Boost version 106500
+Call Stack (most recent call first):
+  /Applications/CLion.app/Contents/bin/cmake/share/cmake-3.8/Modules/FindBoost.cmake:869 (_Boost_COMPONENT_DEPENDENCIES)
+  /Applications/CLion.app/Contents/bin/cmake/share/cmake-3.8/Modules/FindBoost.cmake:1472 (_Boost_MISSING_DEPENDENCIES)
+  cmake/Dependencies.cmake:5 (find_package)
+  CMakeLists.txt:41 (include)
+
+
+-- Boost version: 1.65.0
+-- Found the following Boost libraries:
+--   system
+--   filesystem
+--   thread
+-- Found gflags  (include: /usr/local/include, library: /usr/local/lib/libgflags.dylib)
+-- Found PROTOBUF Compiler: /usr/local/bin/protoc
+-- Found libevent pthread (include: /usr/local/include, library: /usr/local/lib/libevent_pthreads.dylib)
+-- Found libevent (include: /usr/local/include, library: /usr/local/lib/libevent.dylib)
+-- Could NOT find Doxygen (missing:  DOXYGEN_EXECUTABLE) 
+-- Found jemalloc (include: , library: /usr/local/lib/libjemalloc.dylib)
+-- Found LLVM 3.7.1
+-- 
+-- ******************* Peloton Configuration Summary *******************
+-- General:
+--   Version           :   0.0.5
+--   Git               :   8ee0c0c57-dirty
+--   System            :   Darwin
+--   Compiler          :   /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ ( )
+--   Release CXX flags :   -O3 -DNDEBUG -std=c++1y -D__PELOTONFILE__='"$(subst /Users/Tianyu/Desktop/peloton/,,$(abspath $<))"' -fcolor-diagnostics -fPIC -Wall -Wextra -Werror -mcx16 -Wno-invalid-offsetof -march=native -Wno-tautological-undefined-compare -Wno-unused-private-field -Wno-braced-scalar-init -Wno-constant-conversion -Wno-potentially-evaluated-expression -Wno-infinite-recursion -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS -I/usr/local/opt/openssl/include -Wno-strict-aliasing
+--   Debug CXX flags   :   -g -O0 -ggdb -fno-omit-frame-pointer -fno-optimize-sibling-calls -std=c++1y -D__PELOTONFILE__='"$(subst /Users/Tianyu/Desktop/peloton/,,$(abspath $<))"' -fcolor-diagnostics -fPIC -Wall -Wextra -Werror -mcx16 -Wno-invalid-offsetof -march=native -Wno-tautological-undefined-compare -Wno-unused-private-field -Wno-braced-scalar-init -Wno-constant-conversion -Wno-potentially-evaluated-expression -Wno-infinite-recursion -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS -I/usr/local/opt/openssl/include -Wno-strict-aliasing
+--   Build type        :   Debug
+-- 
+--   BUILD_docs        :   ON
+-- 
+-- Dependencies:
+--   Linker flags      :   
+--   Boost             :   Yes (ver. 1.65)
+--   glog              :   Yes
+--   gflags            :   Yes
+--   protobuf          :   Yes (ver. 3.4.0)
+--   LLVM              :   Yes (ver. 3.7.1)
+-- 
+-- Documentaion:
+--   Doxygen           :   No
+--   config_file       :   
+-- 
+-- Install:
+--   Install path      :   /Users/Tianyu/Desktop/peloton/cmake/install
+-- 
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /Users/Tianyu/Desktop/peloton/cmake

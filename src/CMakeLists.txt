@@ -42,7 +42,7 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/libpg_query/ libpg_query.a)
 # creates 'srcs' lists
 peloton_pickup_peloton_sources(${PROJECT_SOURCE_DIR})
 
-add_library(peloton SHARED ${srcs})
+add_library(peloton SHARED ${srcs} brain/index_selection.cpp brain/indexable_column_finder.cpp)
 
 target_link_libraries(peloton PUBLIC ${Peloton_LINKER_LIBS} peloton-proto pg_query)
 
