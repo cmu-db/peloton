@@ -20,36 +20,35 @@ namespace codegen {
 /// This file contains several macros that help in creating proxies to C++
 /// classes.
 
-#define PROXY(N) struct N##Proxy
+#define PROXY(clazz) struct clazz##Proxy
 
-#define DECLARE_MEMBER(P, T, N) \
-  static const ::peloton::codegen::ProxyMember<P, T> _##N;
+#define DECLARE_MEMBER(pos, type, name) \
+  static const ::peloton::codegen::ProxyMember<pos, type> name;
 
 #define DECLARE_TYPE \
   static ::llvm::Type *GetType(::peloton::codegen::CodeGen &codegen);
 
-#define DECLARE_METHOD(N)                                                      \
-  struct _##N : public ::peloton::codegen::ProxyMethod<_##N> {                 \
-    static const char *k##N##FnName;                                           \
+#define DECLARE_METHOD(name)                                                   \
+  struct _##name {                                                             \
     ::llvm::Function *GetFunction(::peloton::codegen::CodeGen &codegen) const; \
   };                                                                           \
-  static _##N N;
+  static _##name name;
 
-#define MEMBER(N) decltype(_##N)
+#define MEMBER(member_name) decltype(member_name)
 #define FIELDS(...) \
   (::peloton::codegen::proxy::TypeList<__VA_ARGS__>::GetType(codegen))
 
-#define DEFINE_TYPE(P, N, ...)                                            \
-  ::llvm::Type *P##Proxy::GetType(::peloton::codegen::CodeGen &codegen) { \
-    static constexpr const char *kTypeName = N;                           \
-    /* Check if type has already been registered */                       \
-    ::llvm::Type *type = codegen.LookupType(kTypeName);                   \
-    if (type != nullptr) {                                                \
-      return type;                                                        \
-    }                                                                     \
-    ::std::vector<::llvm::Type *> fields = (FIELDS(__VA_ARGS__));         \
-    return ::llvm::StructType::create(codegen.GetContext(), fields,       \
-                                      kTypeName);                         \
+#define DEFINE_TYPE(clazz, str_name, ...)                                     \
+  ::llvm::Type *clazz##Proxy::GetType(::peloton::codegen::CodeGen &codegen) { \
+    static constexpr const char *kTypeName = str_name;                        \
+    /* Check if type has already been registered */                           \
+    ::llvm::Type *type = codegen.LookupType(kTypeName);                       \
+    if (type != nullptr) {                                                    \
+      return type;                                                            \
+    }                                                                         \
+    ::std::vector<::llvm::Type *> fields = (FIELDS(__VA_ARGS__));             \
+    return ::llvm::StructType::create(codegen.GetContext(), fields,           \
+                                      kTypeName);                             \
   }
 
 namespace proxy {
@@ -195,31 +194,31 @@ struct MemFn<R (*)(Args..., ...), T, F> {
 
 #define STR(x) #x
 
-#define DEFINE_METHOD(NS, C, F)                                                \
-  C##Proxy::_##F C##Proxy::F = {};                                             \
-  const char *C##Proxy::_##F::k##F##FnName = STR(NS::C::F);                    \
-  ::llvm::Function *C##Proxy::_##F::GetFunction(                               \
-      ::peloton::codegen::CodeGen &codegen) const {                            \
-    /* If the function has already been defined, return it. */                 \
-    if (::llvm::Function *func = codegen.LookupBuiltin(k##F##FnName)) {        \
-      return func;                                                             \
-    }                                                                          \
-                                                                               \
-    /* Ensure either a function pointer or a member function pointer */        \
-    static_assert(                                                             \
-        ((::std::is_pointer<decltype(&NS::C::F)>::value &&                     \
-          ::std::is_function<typename ::std::remove_pointer<decltype(          \
-              &NS::C::F)>::type>::value) ||                                    \
-         ::std::is_member_function_pointer<decltype(&NS::C::F)>::value),       \
-        "You must provide a pointer to the function you want to proxy");       \
-                                                                               \
-    /* The function hasn't been registered. Do it now. */                      \
-    auto *func_type_ptr = ::llvm::cast<::llvm::PointerType>(                   \
-        ::peloton::codegen::proxy::TypeBuilder<decltype(&NS::C::F)>::GetType(  \
-            codegen));                                                         \
-    auto *func_type =                                                          \
-        ::llvm::cast<::llvm::FunctionType>(func_type_ptr->getElementType());   \
-    return codegen.RegisterBuiltin(k##F##FnName, func_type, MEMFN(&NS::C::F)); \
+#define DEFINE_METHOD(NS, C, F)                                               \
+  C##Proxy::_##F C##Proxy::F = {};                                            \
+  ::llvm::Function *C##Proxy::_##F::GetFunction(                              \
+      ::peloton::codegen::CodeGen &codegen) const {                           \
+    static constexpr const char *kFnName = STR(NS::C::F);                     \
+    /* If the function has already been defined, return it. */                \
+    if (::llvm::Function *func = codegen.LookupBuiltin(kFnName)) {            \
+      return func;                                                            \
+    }                                                                         \
+                                                                              \
+    /* Ensure either a function pointer or a member function pointer */       \
+    static_assert(                                                            \
+        ((::std::is_pointer<decltype(&NS::C::F)>::value &&                    \
+          ::std::is_function<typename ::std::remove_pointer<decltype(         \
+              &NS::C::F)>::type>::value) ||                                   \
+         ::std::is_member_function_pointer<decltype(&NS::C::F)>::value),      \
+        "You must provide a pointer to the function you want to proxy");      \
+                                                                              \
+    /* The function hasn't been registered. Do it now. */                     \
+    auto *func_type_ptr = ::llvm::cast<::llvm::PointerType>(                  \
+        ::peloton::codegen::proxy::TypeBuilder<decltype(&NS::C::F)>::GetType( \
+            codegen));                                                        \
+    auto *func_type =                                                         \
+        ::llvm::cast<::llvm::FunctionType>(func_type_ptr->getElementType());  \
+    return codegen.RegisterBuiltin(kFnName, func_type, MEMFN(&NS::C::F));     \
   }
 
 #define TYPE_BUILDER(PROXY, TYPE)                                      \
