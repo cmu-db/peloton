@@ -143,8 +143,8 @@ void SettingsManager::DefineSetting(SettingId id, const std::string &name,
     if (!value.CompareBetweenInclusive(min_value, max_value))
       throw SettingsException("Value given for \"" + name +
                               "\" is not in its min-max bounds (" +
-                              std::to_string(min_value.GetAs<int32_t>()) + "-" +
-                              std::to_string(max_value.GetAs<int32_t>()) + ")");
+                              min_value.ToString() + "-" +
+                              max_value.ToString() + ")");
   }
 
   settings_.emplace(id, Param(name, value, description, default_value,
