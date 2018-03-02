@@ -32,7 +32,6 @@ using std::string;
 using std::unique_ptr;
 using std::vector;
 using std::make_tuple;
-using std::make_shared;
 
 namespace peloton {
 namespace test {
@@ -82,7 +81,7 @@ void SetupTables(std::string database_name) {
     auto parse_tree_list = parser.BuildParseTree(sql);
     auto parse_tree = parse_tree_list->GetStatement(0);
     auto bind_node_visitor =
-        make_shared<binder::BindNodeVisitor>(txn, database_name);
+        std::make_shared<binder::BindNodeVisitor>(txn, database_name);
     bind_node_visitor->BindNameToNode(parse_tree);
 
     statement->SetPlanTree(
