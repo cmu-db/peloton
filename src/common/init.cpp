@@ -36,7 +36,6 @@ void PelotonInit::Initialize() {
   LOGGING_THREAD_COUNT = 1;
   GC_THREAD_COUNT = 1;
   EPOCH_THREAD_COUNT = 1;
-  MAX_CONCURRENCY = 10;
 
   // set max thread number.
   thread_pool.Initialize(0, CONNECTION_THREAD_COUNT + 3);
