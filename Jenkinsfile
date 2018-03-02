@@ -9,7 +9,7 @@ pipeline {
                     agent {
                         docker {
                             image 'ubuntu:xenial'
-                            args '-v ${WORKSPACE}/../builds/${BUILD_ID}:/job:rw'
+                            // args '-v ${WORKSPACE}/../builds/${BUILD_ID}:/job:rw'
                         }
                     }
                     steps {
@@ -18,7 +18,7 @@ pipeline {
                         sh 'mkdir build'
                         sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Debug -DUSE_SANITIZER=Address -DCOVERALLS=False .. && make -j4'
                         sh 'cd build && make check -j4 || true'
-                        sh 'cd build && cp -pr test /job/' // special tests collection step just for this stage
+                        // sh 'cd build && cp -pr test /job/' // special tests collection step just for this stage
                         sh 'cd build && make install'
                         sh 'cd build && bash ../script/testing/psql/psql_test.sh'
                         sh 'sudo apt-get -qq update && sudo apt-get -qq -y --no-install-recommends install wget default-jdk default-jre' // prerequisites for jdbc_validator
@@ -177,7 +177,7 @@ pipeline {
                 //         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
                 //         sh 'python ./script/validators/source_validator.py'
                 //         sh 'mkdir build'
-                //         sh 'cd build && cmake3 -DCMAKE_BUILD_TYPE=Debug -DUSE_SANITIZER=Address -DCOVERALLS=False .. && make -j4'
+                //         sh 'cd build && cmake3 -DCMAKE_BUILD_TYPE=Debug -DCOVERALLS=False .. && make -j4'
                 //         sh 'cd build && make check -j4 || true'
                 //         sh 'cd build && make install'
                 //         sh 'cd build && bash ../script/testing/psql/psql_test.sh'
@@ -296,11 +296,11 @@ pipeline {
     }
 
     // Process test results from the first build stage
-    post {
-        always {
-            dir("${WORKSPACE}/../builds/${BUILD_ID}") {
-                step([$class: 'XUnitBuilder', testTimeMargin: '3000', thresholdMode: 1, thresholds: [[$class: 'FailedThreshold', failureNewThreshold: '', failureThreshold: '', unstableNewThreshold: '', unstableThreshold: ''], [$class: 'SkippedThreshold', failureNewThreshold: '', failureThreshold: '', unstableNewThreshold: '', unstableThreshold: '']], tools: [[$class: 'GoogleTestType', deleteOutputFiles: true, failIfNotNew: true, pattern: 'test/*_test.xml', skipNoTestFiles: false, stopProcessingIfError: true]]])
-            }
-        }
-    }
+    // post {
+    //     always {
+    //         dir("${WORKSPACE}/../builds/${BUILD_ID}") {
+    //             step([$class: 'XUnitBuilder', testTimeMargin: '3000', thresholdMode: 1, thresholds: [[$class: 'FailedThreshold', failureNewThreshold: '', failureThreshold: '', unstableNewThreshold: '', unstableThreshold: ''], [$class: 'SkippedThreshold', failureNewThreshold: '', failureThreshold: '', unstableNewThreshold: '', unstableThreshold: '']], tools: [[$class: 'GoogleTestType', deleteOutputFiles: true, failIfNotNew: true, pattern: 'test/*_test.xml', skipNoTestFiles: false, stopProcessingIfError: true]]])
+    //         }
+    //     }
+    // }
 }
