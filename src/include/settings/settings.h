@@ -33,8 +33,9 @@ SETTING_int(max_connections,
 
 SETTING_int(rpc_port,
             "Peloton rpc port (default: 15445)",
-             15445,
-             false, false)
+            15445,
+            1024, 65535,
+            false, false)
 
 // TODO(tianyu): Remove when we change to a different rpc framework
 // This is here only because capnp cannot exit gracefully and thus causes
@@ -106,7 +107,8 @@ SETTING_int(monoqueue_worker_pool_size,
 SETTING_int(connection_thread_count,
             "Number of connection threads (default: std::hardware_concurrency())",
             std::thread::hardware_concurrency(),
-	    false, false)
+            1, 64,
+            false, false)
 
 SETTING_int(gc_num_threads,
             "The number of Garbage collection threads to run",
