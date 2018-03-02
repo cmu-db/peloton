@@ -12,16 +12,13 @@
 
 
 #pragma once
-#include "tbb/concurrent_vector.h"
-#include "tbb/tbb_allocator.h"
+
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
 #include <array>
 #include <atomic>
 #include <memory>
-
-
 
 namespace peloton {
 
@@ -75,10 +72,7 @@ class LockFreeArray {
   std::atomic<std::size_t> lock_free_array_offset {0};
 
   // lock free array
-//  std::unique_ptr<lock_free_array_t> lock_free_array;
-  typedef tbb::concurrent_vector<ValueType, tbb::zero_allocator<ValueType>> TBBLockFreeArray;
-  TBBLockFreeArray new_lock_free_array;
-
+  std::unique_ptr<lock_free_array_t> lock_free_array;
 };
 
 }  // namespace peloton
