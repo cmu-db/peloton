@@ -4,7 +4,7 @@
 //
 // indextuner.h
 //
-// Identification: src/include/indextuner/indextuner.h
+// Identification: src/include/tuning/indextuner.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -29,7 +29,7 @@ namespace storage {
 class DataTable;
 }
 
-namespace indextuner {
+namespace tuning {
 
 /**
  * Load statistics for Index Tuner from a file
@@ -224,7 +224,7 @@ class IndexTuner {
    *
    * @return     The workload write ratio.
    */
-  double ComputeWorkloadWriteRatio(const std::vector<indextuner::Sample> &samples);
+  double ComputeWorkloadWriteRatio(const std::vector<tuning::Sample> &samples);
 
   void DropIndexes(storage::DataTable *table);
 

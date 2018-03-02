@@ -20,9 +20,9 @@
 #include <unordered_map>
 #include <vector>
 
-#include "indextuner/index_tuner.h"
-#include "indextuner/layout_tuner.h"
-#include "indextuner/sample.h"
+#include "tuning/index_tuner.h"
+#include "tuning/layout_tuner.h"
+#include "tuning/sample.h"
 
 #include "benchmark/sdbench/sdbench_loader.h"
 #include "benchmark/sdbench/sdbench_workload.h"
@@ -99,10 +99,10 @@ oid_t sdbench_tuple_counter = -1000000;
 std::vector<oid_t> column_counts = {50, 500};
 
 // Index tuner
-indextuner::IndexTuner &index_tuner = indextuner::IndexTuner::GetInstance();
+tuning::IndexTuner &index_tuner = tuning::IndexTuner::GetInstance();
 
 // Layout tuner
-indextuner::LayoutTuner &layout_tuner = indextuner::LayoutTuner::GetInstance();
+tuning::LayoutTuner &layout_tuner = tuning::LayoutTuner::GetInstance();
 
 // Predicate generator
 std::vector<std::vector<oid_t>> predicate_distribution;
@@ -381,7 +381,7 @@ static std::vector<double> GetColumnsAccessed(
  * @param selectivity The selectivity of the operation.
  */
 static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors,
-                        indextuner::SampleType sample_type,
+                        tuning::SampleType sample_type,
                         std::vector<std::vector<double>> index_columns_accessed,
                         std::vector<std::vector<oid_t>> tuple_columns_accessed,
                         UNUSED_ATTRIBUTE double selectivity) {
@@ -448,7 +448,7 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors,
 
   // Record index sample
   for (auto &index_columns : index_columns_accessed) {
-    indextuner::Sample index_access_sample(
+    tuning::Sample index_access_sample(
         index_columns, duration / index_columns_accessed.size(), sample_type);
     // ???, selectivity);
     sdbench_table->RecordIndexSample(index_access_sample);
@@ -457,7 +457,7 @@ static void ExecuteTest(std::vector<executor::AbstractExecutor *> &executors,
   // Record layout sample
   for (auto &tuple_columns : tuple_columns_accessed) {
     // Record layout sample
-    indextuner::Sample tuple_access_bitmap(GetColumnsAccessed(tuple_columns),
+    tuning::Sample tuple_access_bitmap(GetColumnsAccessed(tuple_columns),
                                       duration / tuple_columns_accessed.size());
     sdbench_table->RecordLayoutSample(tuple_access_bitmap);
   }
@@ -808,7 +808,7 @@ static void JoinQueryHelper(
   auto selectivity = state.selectivity;
 
   ExecuteTest(
-      executors, indextuner::SampleType::ACCESS,
+      executors, tuning::SampleType::ACCESS,
       {left_table_index_columns_accessed, right_table_index_columns_accessed},
       {left_table_tuple_columns_accessed, right_table_tuple_columns_accessed},
       selectivity);
@@ -966,7 +966,7 @@ static void AggregateQueryHelper(const std::vector<oid_t> &tuple_key_attrs,
     tuple_columns_accessed.push_back(column_id);
   }
 
-  ExecuteTest(executors, indextuner::SampleType::ACCESS, {index_columns_accessed},
+  ExecuteTest(executors, tuning::SampleType::ACCESS, {index_columns_accessed},
               {tuple_columns_accessed}, selectivity);
 
   auto result = txn_manager.CommitTransaction(txn);
@@ -1077,7 +1077,7 @@ static void UpdateHelper(const std::vector<oid_t> &tuple_key_attrs,
     tuple_columns_accessed.push_back(update_attr);
   }
 
-  ExecuteTest(executors, indextuner::SampleType::ACCESS, {index_columns_accessed},
+  ExecuteTest(executors, tuning::SampleType::ACCESS, {index_columns_accessed},
               {tuple_columns_accessed}, selectivity);
 
   auto result = txn_manager.CommitTransaction(txn);
@@ -1143,7 +1143,7 @@ static void InsertHelper() {
   std::vector<double> index_columns_accessed;
   double selectivity = 0;
 
-  ExecuteTest(executors, indextuner::SampleType::UPDATE, {{}}, {}, selectivity);
+  ExecuteTest(executors, tuning::SampleType::UPDATE, {{}}, {}, selectivity);
 
   auto result = txn_manager.CommitTransaction(txn);
 
@@ -1473,8 +1473,8 @@ static void SDBenchHelper() {
                                                  predicate.end());
       // double selectivity = state.selectivity;
       double duration = rand() % 100;
-      indextuner::Sample index_access_sample(index_columns_accessed, duration,
-                                        indextuner::SampleType::ACCESS);
+      tuning::Sample index_access_sample(index_columns_accessed, duration,
+                                        tuning::SampleType::ACCESS);
       // ??? , selectivity);
       for (oid_t i = 0; i < state.analyze_sample_count_threshold; i++) {
         sdbench_table->RecordIndexSample(index_access_sample);

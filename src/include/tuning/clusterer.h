@@ -4,7 +4,7 @@
 //
 // clusterer.h
 //
-// Identification: src/include/indextuner/clusterer.h
+// Identification: src/include/tuning/clusterer.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -22,7 +22,7 @@
 #include "common/internal_types.h"
 
 namespace peloton {
-namespace indextuner {
+namespace tuning {
 
 #define NEW_SAMPLE_WEIGHT 0.01
 

@@ -15,8 +15,8 @@
 #include <gflags/gflags.h>
 #include <google/protobuf/stubs/common.h>
 
-#include "indextuner/index_tuner.h"
-#include "indextuner/layout_tuner.h"
+#include "tuning/index_tuner.h"
+#include "tuning/layout_tuner.h"
 #include "catalog/catalog.h"
 #include "common/statement_cache_manager.h"
 #include "common/thread_pool.h"
@@ -62,13 +62,13 @@ void PelotonInit::Initialize() {
   if (settings::SettingsManager::GetBool(settings::SettingId::index_tuner)) {
     // Set the default visibility flag for all indexes to false
     index::IndexMetadata::SetDefaultVisibleFlag(false);
-    auto &index_tuner = indextuner::IndexTuner::GetInstance();
+    auto &index_tuner = tuning::IndexTuner::GetInstance();
     index_tuner.Start();
   }
 
   // start layout tuner
   if (settings::SettingsManager::GetBool(settings::SettingId::layout_tuner)) {
-    auto &layout_tuner = indextuner::LayoutTuner::GetInstance();
+    auto &layout_tuner = tuning::LayoutTuner::GetInstance();
     layout_tuner.Start();
   }
 
@@ -94,13 +94,13 @@ void PelotonInit::Initialize() {
 void PelotonInit::Shutdown() {
   // shut down index tuner
   if (settings::SettingsManager::GetBool(settings::SettingId::index_tuner)) {
-    auto &index_tuner = indextuner::IndexTuner::GetInstance();
+    auto &index_tuner = tuning::IndexTuner::GetInstance();
     index_tuner.Stop();
   }
 
   // shut down layout tuner
   if (settings::SettingsManager::GetBool(settings::SettingId::layout_tuner)) {
-    auto &layout_tuner = indextuner::LayoutTuner::GetInstance();
+    auto &layout_tuner = tuning::LayoutTuner::GetInstance();
     layout_tuner.Stop();
   }
 

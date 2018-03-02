@@ -4,7 +4,7 @@
 //
 // clusterer.cpp
 //
-// Identification: src/indextuner/clusterer.cpp
+// Identification: src/tuning/clusterer.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -16,13 +16,13 @@
 #include <iostream>
 #include <map>
 
-#include "indextuner/clusterer.h"
+#include "tuning/clusterer.h"
 #include "common/logger.h"
 #include "common/macros.h"
 #include "util/string_util.h"
 
 namespace peloton {
-namespace indextuner {
+namespace tuning {
 
 // http://www.cs.princeton.edu/courses/archive/fall08/cos436/Duda/C/sk_means.htm
 void Clusterer::ProcessSample(const Sample &sample) {

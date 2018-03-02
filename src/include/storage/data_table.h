@@ -33,7 +33,7 @@ extern std::vector<peloton::oid_t> sdbench_column_ids;
 
 namespace peloton {
 
-namespace indextuner {
+namespace tuning {
 class Sample;
 }  // namespace indextuner
 
@@ -241,9 +241,9 @@ class DataTable : public AbstractTable {
   // LAYOUT TUNER
   //===--------------------------------------------------------------------===//
 
-  void RecordLayoutSample(const indextuner::Sample &sample);
+  void RecordLayoutSample(const tuning::Sample &sample);
 
-  std::vector<indextuner::Sample> GetLayoutSamples();
+  std::vector<tuning::Sample> GetLayoutSamples();
 
   void ClearLayoutSamples();
 
@@ -255,9 +255,9 @@ class DataTable : public AbstractTable {
   // INDEX TUNER
   //===--------------------------------------------------------------------===//
 
-  void RecordIndexSample(const indextuner::Sample &sample);
+  void RecordIndexSample(const tuning::Sample &sample);
 
-  std::vector<indextuner::Sample> GetIndexSamples();
+  std::vector<tuning::Sample> GetIndexSamples();
 
   void ClearIndexSamples();
 
@@ -418,13 +418,13 @@ class DataTable : public AbstractTable {
   column_map_type default_partition_;
 
   // samples for layout tuning
-  std::vector<indextuner::Sample> layout_samples_;
+  std::vector<tuning::Sample> layout_samples_;
 
   // layout samples mutex
   std::mutex layout_samples_mutex_;
 
   // samples for layout tuning
-  std::vector<indextuner::Sample> index_samples_;
+  std::vector<tuning::Sample> index_samples_;
 
   // index samples mutex
   std::mutex index_samples_mutex_;

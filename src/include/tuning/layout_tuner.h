@@ -4,7 +4,7 @@
 //
 // layout_tuner.h
 //
-// Identification: src/include/indextuner/layout_tuner.h
+// Identification: src/include/tuning/layout_tuner.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -27,7 +27,7 @@ namespace storage {
 class DataTable;
 }
 
-namespace indextuner {
+namespace tuning {
 
 //===--------------------------------------------------------------------===//
 // Layout Tuner

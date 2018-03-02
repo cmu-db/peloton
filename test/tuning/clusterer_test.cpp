@@ -4,7 +4,7 @@
 //
 // clusterer_test.cpp
 //
-// Identification: test/indextuner/clusterer_test.cpp
+// Identification: test/tuning/clusterer_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -17,7 +17,7 @@
 
 #include "common/harness.h"
 
-#include "indextuner/clusterer.h"
+#include "tuning/clusterer.h"
 #include "common/generator.h"
 #include "util/string_util.h"
 #include "util/stringtable_util.h"
@@ -35,7 +35,7 @@ TEST_F(ClustererTests, BasicTest) {
   oid_t column_count = 7;
   oid_t cluster_count = 3;
 
-  indextuner::Clusterer clusterer(cluster_count, column_count);
+  tuning::Clusterer clusterer(cluster_count, column_count);
   std::vector<double> columns_accessed(column_count, 0);
   double sample_weight;
 
@@ -62,7 +62,7 @@ TEST_F(ClustererTests, BasicTest) {
       sample_weight = 1000;
     }
 
-    indextuner::Sample sample(columns_accessed, sample_weight);
+    tuning::Sample sample(columns_accessed, sample_weight);
     clusterer.ProcessSample(sample);
   }
 
