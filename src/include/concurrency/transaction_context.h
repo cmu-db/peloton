@@ -89,13 +89,13 @@ class TransactionContext : public Printable {
   }
 
   void RecordCreate(oid_t database_oid, oid_t table_oid, oid_t index_oid) {
-    rw_object_set_.emplace_back(database_oid, table_oid, index_oid,
-                                DDLType::CREATE);
+    rw_object_set_.emplace_back(std::make_tuple(database_oid, table_oid,
+                                index_oid, DDLType::CREATE));
   }
 
   void RecordDrop(oid_t database_oid, oid_t table_oid, oid_t index_oid) {
-    rw_object_set_.emplace_back(database_oid, table_oid, index_oid,
-                                DDLType::DROP);
+    rw_object_set_.emplace_back(std::make_tuple(database_oid, table_oid,
+                                index_oid, DDLType::DROP));
   }
 
   void RecordRead(const ItemPointer &);
