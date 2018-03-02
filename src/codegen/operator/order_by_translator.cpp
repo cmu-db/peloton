@@ -25,7 +25,98 @@ namespace codegen {
 
 ////////////////////////////////////////////////////////////////////////////////
 ///
-/// OrderByTranslator
+/// Sorter Attribute Access
+///
+////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * This class is used as a deferred accessor for an attribute from the sorter..
+ */
+class OrderByTranslator::SorterAttributeAccess
+    : public RowBatch::AttributeAccess {
+ public:
+  SorterAttributeAccess(Sorter::SorterAccess &sorter_access,
+                        uint32_t col_index);
+  // Access the configured attributes in the provided row
+  Value Access(CodeGen &codegen, RowBatch::Row &row) override;
+
+ private:
+  // A random access interface to the underlying sorter
+  Sorter::SorterAccess &sorter_access_;
+  // The column index of the column/attribute we want to access
+  uint32_t col_index_;
+};
+
+/// Constructor
+OrderByTranslator::SorterAttributeAccess::SorterAttributeAccess(
+    Sorter::SorterAccess &sorter_access, uint32_t col_index)
+    : sorter_access_(sorter_access), col_index_(col_index) {}
+
+/// Access
+Value OrderByTranslator::SorterAttributeAccess::Access(CodeGen &codegen,
+                                                       RowBatch::Row &row) {
+  auto &sorted_row = sorter_access_.GetRow(row.GetTID(codegen));
+  return sorted_row.LoadColumn(codegen, col_index_);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Produce Results
+///
+////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * This is the callback used when we're iterating over the sorted results.
+ */
+class OrderByTranslator::ProduceResults
+    : public Sorter::VectorizedIterateCallback {
+ public:
+  ProduceResults(ConsumerContext &ctx, const planner::OrderByPlan &plan,
+                 Vector &position_list);
+  // The callback function providing the current tuple in the sorter instance
+  void ProcessEntries(CodeGen &codegen, llvm::Value *start_index,
+                      llvm::Value *end_index,
+                      Sorter::SorterAccess &access) const override;
+
+ private:
+  // The translator
+  ConsumerContext &ctx_;
+  // The plan node
+  const planner::OrderByPlan &plan_;
+  // The selection vector when producing rows
+  Vector &position_list_;
+};
+
+/// Constructor
+OrderByTranslator::ProduceResults::ProduceResults(
+    ConsumerContext &ctx, const planner::OrderByPlan &plan,
+    Vector &position_list)
+    : ctx_(ctx), plan_(plan), position_list_(position_list) {}
+
+/// Callback to process a batch of rows from the sorter
+void OrderByTranslator::ProduceResults::ProcessEntries(
+    CodeGen &, llvm::Value *start_index, llvm::Value *end_index,
+    Sorter::SorterAccess &access) const {
+  // Construct the row batch we're producing
+  auto &comp_ctx = ctx_.GetCompilationContext();
+  RowBatch batch(comp_ctx, start_index, end_index, position_list_, false);
+
+  // Add the attribute accessors for rows in this batch
+  std::vector<SorterAttributeAccess> accessors;
+  auto &output_ais = plan_.GetOutputColumnAIs();
+  for (oid_t col_id = 0; col_id < output_ais.size(); col_id++) {
+    accessors.emplace_back(access, col_id);
+  }
+  for (oid_t col_id = 0; col_id < output_ais.size(); col_id++) {
+    batch.AddAttribute(output_ais[col_id], &accessors[col_id]);
+  }
+
+  ctx_.Consume(batch);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Order By Translator
 ///
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -218,7 +309,7 @@ void OrderByTranslator::Produce() const {
     auto *i32_type = codegen.Int32Type();
     auto vec_size = Vector::kDefaultVectorSize.load();
     auto *raw_vec = codegen.AllocateBuffer(i32_type, vec_size, "obPosList");
-    Vector position_list{raw_vec, vec_size, i32_type};
+    Vector position_list(raw_vec, vec_size, i32_type);
 
     const auto &plan = GetPlanAs<planner::OrderByPlan>();
     ProduceResults callback(ctx, plan, position_list);
@@ -300,53 +391,6 @@ void OrderByTranslator::TearDownPipelineState(PipelineContext &pipeline_ctx) {
     auto *sorter_ptr = pipeline_ctx.LoadStatePtr(codegen, thread_sorter_id_);
     sorter_.Destroy(codegen, sorter_ptr);
   }
-}
-
-////////////////////////////////////////////////////////////////////////////////
-///
-/// PRODUCE RESULTS
-///
-////////////////////////////////////////////////////////////////////////////////
-
-OrderByTranslator::ProduceResults::ProduceResults(
-    ConsumerContext &ctx, const planner::OrderByPlan &plan,
-    Vector &position_list)
-    : ctx_(ctx), plan_(plan), position_list_(position_list) {}
-
-void OrderByTranslator::ProduceResults::ProcessEntries(
-    CodeGen &, llvm::Value *start_index, llvm::Value *end_index,
-    Sorter::SorterAccess &access) const {
-  // Construct the row batch we're producing
-  auto &comp_ctx = ctx_.GetCompilationContext();
-  RowBatch batch(comp_ctx, start_index, end_index, position_list_, false);
-
-  // Add the attribute accessors for rows in this batch
-  std::vector<SorterAttributeAccess> accessors;
-  auto &output_ais = plan_.GetOutputColumnAIs();
-  for (oid_t col_id = 0; col_id < output_ais.size(); col_id++) {
-    accessors.emplace_back(access, col_id);
-  }
-  for (oid_t col_id = 0; col_id < output_ais.size(); col_id++) {
-    batch.AddAttribute(output_ais[col_id], &accessors[col_id]);
-  }
-
-  ctx_.Consume(batch);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-///
-/// SORTER TUPLE ATTRIBUTE ACCESS
-///
-////////////////////////////////////////////////////////////////////////////////
-
-OrderByTranslator::SorterAttributeAccess::SorterAttributeAccess(
-    Sorter::SorterAccess &sorter_access, uint32_t col_index)
-    : sorter_access_(sorter_access), col_index_(col_index) {}
-
-Value OrderByTranslator::SorterAttributeAccess::Access(CodeGen &codegen,
-                                                       RowBatch::Row &row) {
-  auto &sorted_row = sorter_access_.GetRow(row.GetTID(codegen));
-  return sorted_row.LoadColumn(codegen, col_index_);
 }
 
 }  // namespace codegen

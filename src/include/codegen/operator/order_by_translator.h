@@ -6,7 +6,7 @@
 //
 // Identification: src/include/codegen/operator/order_by_translator.h
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -25,6 +25,9 @@ class OrderByPlan;
 
 namespace codegen {
 
+/**
+ * Translator for sorting/order-by operators.
+ */
 class OrderByTranslator : public OperatorTranslator {
  public:
   OrderByTranslator(const planner::OrderByPlan &plan,
@@ -46,43 +49,9 @@ class OrderByTranslator : public OperatorTranslator {
   void Consume(ConsumerContext &context, RowBatch::Row &row) const override;
 
  private:
-  //===--------------------------------------------------------------------===//
-  // The call back used when iterating over the results in the sorter instance
-  //===--------------------------------------------------------------------===//
-  class ProduceResults : public Sorter::VectorizedIterateCallback {
-   public:
-    ProduceResults(ConsumerContext &ctx, const planner::OrderByPlan &plan,
-                   Vector &position_list);
-    // The callback function providing the current tuple in the sorter instance
-    void ProcessEntries(CodeGen &codegen, llvm::Value *start_index,
-                        llvm::Value *end_index,
-                        Sorter::SorterAccess &access) const override;
-
-   private:
-    // The translator
-    ConsumerContext &ctx_;
-    // The plan node
-    const planner::OrderByPlan &plan_;
-    // The selection vector when producing rows
-    Vector &position_list_;
-  };
-
-  //===--------------------------------------------------------------------===//
-  // An attribute accessor from a row in the sorter
-  //===--------------------------------------------------------------------===//
-  class SorterAttributeAccess : public RowBatch::AttributeAccess {
-   public:
-    SorterAttributeAccess(Sorter::SorterAccess &sorter_access,
-                          uint32_t col_index);
-    // Access the configured attributes in the provided row
-    Value Access(CodeGen &codegen, RowBatch::Row &row) override;
-
-   private:
-    // A random access interface to the underlying sorter
-    Sorter::SorterAccess &sorter_access_;
-    // The column index of the column/attribute we want to access
-    uint32_t col_index_;
-  };
+  // Helper class declarations
+  class ProduceResults;
+  class SorterAttributeAccess;
 
  private:
   // The child pipeline
@@ -95,7 +64,7 @@ class OrderByTranslator : public OperatorTranslator {
   // The sorter translator instance
   Sorter sorter_;
 
-  // The comparison function
+  // The (generated) comparison function
   llvm::Function *compare_func_;
 
   struct SortKeyInfo {
