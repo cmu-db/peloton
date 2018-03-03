@@ -83,7 +83,7 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
 
   // This is also required so that database objects are cached
   auto db_object = catalog->GetDatabaseObject(TEST_DB_NAME, txn);
-  EXPECT_EQ(static_cast<int>(db_object->GetTableObjects().size()), 1);
+  EXPECT_EQ(1, static_cast<int>(db_object->GetTableObjects().size()));
 
   // Till now, we have a table : id, first_name, last_name
   // And two indexes on following columns:
@@ -106,7 +106,7 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
       planner::PlanUtil::GetAffectedIndexes(txn->catalog_cache, *sql_stmt);
 
   // id and first_name are affected
-  EXPECT_EQ(static_cast<int>(affected_indexes.size()), 2);
+  EXPECT_EQ(2, static_cast<int>(affected_indexes.size()));
   std::set<oid_t> expected_oids{id_idx_oid, fname_idx_oid};
   EXPECT_EQ(expected_oids, affected_indexes);
 
@@ -121,7 +121,7 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
       planner::PlanUtil::GetAffectedIndexes(txn->catalog_cache, *sql_stmt);
 
   // only first_name is affected
-  EXPECT_EQ(static_cast<int>(affected_indexes.size()), 1);
+  EXPECT_EQ(1, static_cast<int>(affected_indexes.size()));
   expected_oids = std::set<oid_t>({fname_idx_oid});
   EXPECT_EQ(expected_oids, affected_indexes);
 
@@ -136,7 +136,7 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
       planner::PlanUtil::GetAffectedIndexes(txn->catalog_cache, *sql_stmt);
 
   // all indexes are affected
-  EXPECT_EQ(static_cast<int>(affected_indexes.size()), 2);
+  EXPECT_EQ(2, static_cast<int>(affected_indexes.size()));
   expected_oids = std::set<oid_t>({id_idx_oid, fname_idx_oid});
   EXPECT_EQ(expected_oids, affected_indexes);
 
@@ -151,7 +151,7 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
       planner::PlanUtil::GetAffectedIndexes(txn->catalog_cache, *sql_stmt);
 
   // all indexes are affected
-  EXPECT_EQ(static_cast<int>(affected_indexes.size()), 2);
+  EXPECT_EQ(2, static_cast<int>(affected_indexes.size()));
   expected_oids = std::set<oid_t>({id_idx_oid, fname_idx_oid});
   EXPECT_EQ(expected_oids, affected_indexes);
 
@@ -164,7 +164,7 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
       planner::PlanUtil::GetAffectedIndexes(txn->catalog_cache, *sql_stmt);
 
   // no indexes are affected
-  EXPECT_EQ(static_cast<int>(affected_indexes.size()), 0);
+  EXPECT_EQ(0, static_cast<int>(affected_indexes.size()));
 }
 }
 }
