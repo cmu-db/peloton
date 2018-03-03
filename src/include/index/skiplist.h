@@ -45,7 +45,6 @@ class SkipList {
   // Core components
   ///////////////////////////////////////////////////////////////////
   SkipListNode *skip_list_head_;
-  SkipListNode *skip_list_tail_;
   EpochManager epoch_manager_;
   NodeManager node_manager_;
 
@@ -74,13 +73,19 @@ class SkipList {
 
   // returns a forward iterator from the very beginning
   ForwardIterator ForwardBegin();
+
   // returns a forward iterator from the key
   ForwardIterator ForwardBegin(KeyType &startsKey);
 
   ReversedIterator ReverseBegin();
+
   ReversedIterator ReverseBegin(KeyType &startsKey);
 
   void PerformGC();
+
+  bool NeedGC();
+
+  size_t GetMemoryFootprint();
 
  public:
   // Key comparator
