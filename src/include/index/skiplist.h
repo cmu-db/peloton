@@ -19,10 +19,10 @@
 namespace peloton {
 namespace index {
 
-#define GET_DELETE(addr) (addr & 0x1)
-#define GET_MARK(addr) (addr & 0x2)
-#define SET_DELETE(addr, bit) (addr & (-1 & ~1) | bit)
-#define SET_MARK(addr, bit) (addr & (-1 & ~2) | bit)
+#define GET_DELETE(addr) ((addr)&1)
+#define GET_MARK(addr) ((addr)&2)
+#define SET_DELETE(addr, bit) ((addr) & ~1 | (bit))
+#define SET_MARK(addr, bit) ((addr) & ~2 | ((bit) << 1))
 
 /*
  * SKIPLIST_TEMPLATE_ARGUMENTS - Save some key strokes
@@ -47,13 +47,69 @@ class SkipList {
   SkipListNode *skip_list_head_;
   EpochManager epoch_manager_;
   NodeManager node_manager_;
+  bool duplicate_support_;
+  int GC_Interval_;
 
  public:
+  SkipList(bool duplicate, int GC_Interval,
+           KeyComparator key_cmp_obj = KeyComparator{},
+           KeyEqualityChecker key_eq_obj = KeyEqualityChecker{},
+           ValueEqualityChecker value_eq_obj = ValueEqualityChecker{})
+      : duplicate_support_(duplicate), GC_Interval_(GC_Interval_) {
+    LOG_TRACE("SkipList constructed!");
+  }
+
+  ~SkipList() {
+    // TODO:
+    // deconstruct all nodes in the skip list
+    LOG_TRACE("SkipList deconstructed!");
+
+    return;
+  }
+  /*
+   * struct shouldn't exceed 64 bytes -- cache line
+   * possible optimization: add a direct link to the root of the skiplist
+   */
   template <typename KeyType, typename ValueType>
-  class SkipListNode {
-    SkipListNode *next, *down, *back_link;
-    KeyType key;
-    ValueType value;
+  class SkipListBaseNode {
+   public:
+    SkipListBaseNode *next_, *down_, *back_link_;
+    KeyType key_;
+    bool isHead_;
+    SkipListHeadNode(SkipListBaseNode *next, SkipListBaseNode *down,
+                     SkipListBaseNode *back_link, KeyType key, bool isHead)
+        : next_(next),
+          down_(down),
+          back_link_(back_link),
+          key_(key),
+          isHead_(isHead) {}
+  };
+
+  template <typename KeyType, typename ValueType>
+  class SkipListInnerNode : public SkipListBaseNode {
+   public:
+    SkipListInnerNode(SkipListBaseNode *next, SkipListBaseNode *down,
+                      SkipListBaseNode *back_link, KeyType key, bool isHead)
+        : SkipListBaseNode(next, down, back_link, key, isHead) {}
+
+    // set the union value
+    void SetValue(ValueType value) {
+      PL_ASSERT(this->down == NULL);
+      this->valueOrRoot.value = value;
+    }
+
+    // set the union root
+    void SetRoot(SkipListInnerNode *root) {
+      PL_ASSERT(this->down != NULL);
+      this->valueOrRoot.root = root;
+    }
+
+    // value when down is null
+    // otherwise root
+    union valueOrRoot {
+      ValueType value;
+      SkipListInnerNode *root;
+    };
   };
 
   // this one provides the abstract interfaces
@@ -94,14 +150,8 @@ class SkipList {
   // Raw key eq checker
   const KeyEqualityChecker key_eq_obj;
 
-  // Raw key hasher
-  const KeyHashFunc key_hash_obj;
-
   // Check whether values are equivalent
   const ValueEqualityChecker value_eq_obj;
-
-  // Hash ValueType into a size_t
-  const ValueHashFunc value_hash_obj;
 
   ///////////////////////////////////////////////////////////////////
   // Key Comparison Member Functions
