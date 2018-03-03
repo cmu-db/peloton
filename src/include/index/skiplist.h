@@ -12,6 +12,10 @@
 
 #pragma once
 
+#include <atomic>
+#include <functional>
+#include <thread>
+
 namespace peloton {
 namespace index {
 
@@ -25,85 +29,161 @@ template <typename KeyType, typename ValueType, typename KeyComparator,
           typename KeyEqualityChecker, typename ValueEqualityChecker>
 class SkipList {
   // TODO: Add your declarations here
-private:
-  
-  SkipListNode skip_list_head;
+
   class NodeManager;
-  class SkipListEpochManager;
+  class EpochManager;
+  class ForwardIterator;
+  class ReversedIterator;
 
-  //returns a forward iterator from the very beginning
-  ForwardIterator& ForwardBegin();
-  //returns a forward iterator from the key
-  ForwardIterator& ForwardBegin(KeyType &startsKey);
+ private:
+  ///////////////////////////////////////////////////////////////////
+  // Core components
+  ///////////////////////////////////////////////////////////////////
+  SkipListNode skip_list_head_;
+  EpochManager epoch_manager_;
+  NodeManager node_manager_;
 
-  ReversedIterator& ReverseBegin();
-  ReversedIterator& ReverseBegin(KeyType &startsKey);
+ public:
+  template <typename KeyType, typename ValueType>
+  class SkipListNode {
+    SkipListNode *next, *down, back_link;
+    KeyType key;
+    ValueType value;
+  };
 
-public:
-  
-  class SkipListNode;
   // this one provides the abstract interfaces
   class SkipListIterator;
-  class ForwardIterator: protected SkipListIterator;
-  class ReversedIterator: protected SkipListIterator;
+  class ForwardIterator : protected SkipListIterator;
+  class ReversedIterator : protected SkipListIterator;
 
   bool Insert(const KeyType &key, const ValueType &value);
-  
+
   bool Delete(const KeyType &key);
 
   bool ConditionalInsert(const KeyType &key, const ValueType &value,
                          std::function<bool(const void *)> predicate,
                          bool *predicate_satisfied);
 
-  ValueType GetSingleValue(const KeyType &key);
+  void GetValue(const KeyType &search_key, std::vector<ValueType> &value_list);
 
+  // returns a forward iterator from the very beginning
+  ForwardIterator ForwardBegin();
+  // returns a forward iterator from the key
+  ForwardIterator ForwardBegin(KeyType &startsKey);
 
-  // don't know whether we should take the wrapped values out
-  // e.g. take the ValueType val out from <type::Value> values
-  // maybe it will cost more time
-  void Scan(const std::vector<type::Value> &values,
-            const std::vector<oid_t> &key_column_ids,
-            const std::vector<ExpressionType> &expr_types,
-            ScanDirectionType scan_direction, std::vector<ValueType> &result,
-            const ConjunctionScanPredicate *csp_p);
+  ReversedIterator ReverseBegin();
+  ReversedIterator ReverseBegin(KeyType &startsKey);
 
-  void ScanLimit(const std::vector<type::Value> &values,
-                 const std::vector<oid_t> &key_column_ids,
-                 const std::vector<ExpressionType> &expr_types,
-                 ScanDirectionType scan_direction,
-                 std::vector<ValueType> &result,
-                 const ConjunctionScanPredicate *csp_p, uint64_t limit,
-                 uint64_t offset);
+  void PerformGC();
 
-  void ScanAllKeys(std::vector<ValueType> &result);
+ public:
+  // Key comparator
+  const KeyComparator key_cmp_obj;
 
-  void ScanKey(const storage::Tuple *key, std::vector<ValueType> &result);                        
+  // Raw key eq checker
+  const KeyEqualityChecker key_eq_obj;
 
-class SkipListEpochManager{
-  public:
+  // Raw key hasher
+  const KeyHashFunc key_hash_obj;
+
+  // Check whether values are equivalent
+  const ValueEqualityChecker value_eq_obj;
+
+  // Hash ValueType into a size_t
+  const ValueHashFunc value_hash_obj;
+
+  ///////////////////////////////////////////////////////////////////
+  // Key Comparison Member Functions
+  ///////////////////////////////////////////////////////////////////
+
+  /*
+   * KeyCmpLess() - Compare two keys for "less than" relation
+   *
+   * If key1 < key2 return true
+   * If not return false
+   *
+   * NOTE: In older version of the implementation this might be defined
+   * as the comparator to wrapped key type. However wrapped key has
+   * been removed from the newest implementation, and this function
+   * compares KeyType specified in template argument.
+   */
+  inline bool KeyCmpLess(const KeyType &key1, const KeyType &key2) const {
+    return key_cmp_obj(key1, key2);
+  }
+
+  /*
+   * KeyCmpEqual() - Compare a pair of keys for equality
+   *
+   * This functions compares keys for equality relation
+   */
+  inline bool KeyCmpEqual(const KeyType &key1, const KeyType &key2) const {
+    return key_eq_obj(key1, key2);
+  }
+
+  /*
+   * KeyCmpGreaterEqual() - Compare a pair of keys for >= relation
+   *
+   * It negates result of keyCmpLess()
+   */
+  inline bool KeyCmpGreaterEqual(const KeyType &key1,
+                                 const KeyType &key2) const {
+    return !KeyCmpLess(key1, key2);
+  }
+
+  /*
+   * KeyCmpGreater() - Compare a pair of keys for > relation
+   *
+   * It flips input for keyCmpLess()
+   */
+  inline bool KeyCmpGreater(const KeyType &key1, const KeyType &key2) const {
+    return KeyCmpLess(key2, key1);
+  }
+
+  /*
+   * KeyCmpLessEqual() - Compare a pair of keys for <= relation
+   */
+  inline bool KeyCmpLessEqual(const KeyType &key1, const KeyType &key2) const {
+    return !KeyCmpGreater(key1, key2);
+  }
+
+  ///////////////////////////////////////////////////////////////////
+  // Value Comparison Member
+  ///////////////////////////////////////////////////////////////////
+
+  /*
+   * ValueCmpEqual() - Compares whether two values are equal
+   */
+  inline bool ValueCmpEqual(const ValueType &v1, const ValueType &v2) {
+    return value_eq_obj(v1, v2);
+  }
+
+  // maintains Epoch
+  // has a inside linked list in which every node represents an epoch
+  class EpochManager {
+   public:
     class EpochNode;
 
     bool AddGarbageNode(SkipListNode *node);
-    /* 
+    /*
      * return the current EpochNode
      * need to add the reference count of current EpochNode
      */
-    EpochNode* JoinEpoch();
+    EpochNode *JoinEpoch();
 
-    /* 
+    /*
      * leaves current EpochNode
      * should maintain atomicity when counting the reference
      */
-    void LeaveEpoch(EpochNode* node);
+    void LeaveEpoch(EpochNode *node);
 
     /*
      * NewEpoch() - start new epoch after the call
-     * 
-     * begins new Epoch that caused by the 
+     *
+     * begins new Epoch that caused by the
      * Need to atomically maintain the epoch list
      */
     void NewEpoch();
-    
+
     /*
      * ClearEpoch() - Sweep the chain of epoch and free memory
      *
@@ -114,27 +194,19 @@ class SkipListEpochManager{
      * only called by the cleaner thread
      */
     void ClearEpoch();
-};
+  };
+
   /*
    * NodeManager - maintains the SkipList Node pool
-   * 
+   *
    */
-  class NodeManager{
-    public:
-      SkipListNode *GetSkipListNode();
-      void ReturnSkipListNode(SkipListNode *node);
+  class NodeManager {
+   public:
+    SkipListNode *GetSkipListNode();
+    void ReturnSkipListNode(SkipListNode *node);
 
-      int NodeNum;
+    int NodeNum;
   };
-};
-//maintains Epoch
-//has a inside linked list in which every node represents an epoch
-template<typename KeyType, typename ValueType>
-class SkipListNode{
-  SkipListNode *next, *downSide;
-  KeyType key;
-  ValueType value;
-  word flags;
 };
 
 }  // namespace index
