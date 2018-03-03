@@ -219,6 +219,8 @@ void InputColumnDeriver::AggregateHelper(const BaseOperatorNode *op) {
   // Check having predicate, since the predicate may use columns other than
   // output columns
   for (auto &having_expr : having_exprs) {
+    // We perform aggregate here so the output contains aggregate exprs while
+    // input should contain all tuple value exprs used to perform aggregation.
     expression::ExpressionUtil::GetTupleValueExprs(input_cols_set,
                                                    having_expr.expr.get());
     expression::ExpressionUtil::GetTupleAndAggregateExprs(
@@ -275,7 +277,8 @@ void InputColumnDeriver::JoinHelper(const BaseOperatorNode *op) {
   }
   ExprMap output_cols_map;
   for (auto expr : required_cols_) {
-    expression::ExpressionUtil::GetTupleAndAggregateExprs(output_cols_map, expr);
+    expression::ExpressionUtil::GetTupleAndAggregateExprs(output_cols_map,
+                                                          expr);
   }
   for (auto &expr_idx_pair : output_cols_map) {
     input_cols_set.insert(expr_idx_pair.first);

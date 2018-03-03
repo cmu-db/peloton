@@ -23,12 +23,6 @@ namespace peloton {
 namespace optimizer {
 namespace util {
 
-/**
- * @brief Extract single table precates and multi-table predicates from the expr
- *
- * @param expr The original predicate
- * @param annotated_predicates The extracted conjunction predicates
- */
 std::vector<AnnotatedExpression> ExtractPredicates(
     expression::AbstractExpression *expr,
     std::vector<AnnotatedExpression> annotated_predicates) {
@@ -48,13 +42,6 @@ std::vector<AnnotatedExpression> ExtractPredicates(
   return annotated_predicates;
 }
 
-/**
- * @breif Construct a qualified join predicate (contains a subset of alias in
- *  the table_alias_set)
- *  and remove the multitable expressions in the original join_predicates
- *
- * @return The final join predicate
- */
 expression::AbstractExpression *ConstructJoinPredicate(
     std::unordered_set<std::string> &table_alias_set,
     MultiTablePredicates &join_predicates) {
@@ -70,10 +57,6 @@ expression::AbstractExpression *ConstructJoinPredicate(
   return CombinePredicates(qualified_exprs);
 }
 
-/**
- * @breif Split conjunction expression tree into a vector of expressions with
- * AND
- */
 void SplitPredicates(
     expression::AbstractExpression *expr,
     std::vector<expression::AbstractExpression *> &predicates) {
@@ -88,9 +71,6 @@ void SplitPredicates(
   }
 }
 
-/**
- * @breif Combine a vector of expressions with AND
- */
 expression::AbstractExpression *CombinePredicates(
     std::vector<std::shared_ptr<expression::AbstractExpression>> predicates) {
   if (predicates.empty()) return nullptr;
@@ -107,9 +87,6 @@ expression::AbstractExpression *CombinePredicates(
   return conjunction;
 }
 
-/**
- * @breif Combine a vector of expressions with AND
- */
 expression::AbstractExpression *CombinePredicates(
     std::vector<AnnotatedExpression> predicates) {
   if (predicates.empty()) return nullptr;
@@ -126,14 +103,6 @@ expression::AbstractExpression *CombinePredicates(
   }
   return conjunction;
 }
-
-/**
- * @breif Check if there are any join columns in the join expression
- *  For example, expr = (expr_1) AND (expr_2) AND (expr_3)
- *  we only extract expr_i that have the format (l_table.a = r_table.b)
- *  i.e. expr that is equality check for tuple columns from both of
- *  the underlying tables
- */
 
 bool ContainsJoinColumns(const std::unordered_set<std::string> &l_group_alias,
                          const std::unordered_set<std::string> &r_group_alias,
@@ -205,15 +174,6 @@ std::unique_ptr<planner::AbstractPlan> CreateCopyPlan(
   return copy_plan;
 }
 
-/**
- * @brief Construct the map from subquery column name to the actual expression
- *  at the subquery level, for example SELECT a FROM (SELECT a + b as a FROM
- *  test), we'll build the map {"a" -> a + b}
- *
- * @param select_list The select list of a subquery
- *
- * @return The mapping mentioned above
- */
 std::unordered_map<std::string, std::shared_ptr<expression::AbstractExpression>>
 ConstructSelectElementMap(
     std::vector<std::unique_ptr<expression::AbstractExpression>> &select_list) {
@@ -235,15 +195,6 @@ ConstructSelectElementMap(
   return res;
 };
 
-/**
- * @brief Walk a predicate, transform the tuple value expression into the actual
- *  expression in the sub-query
- *
- * @param alias_to_expr_map The column name to expression map
- * @param expr the predicate
- *
- * @return the transformed predicate
- */
 expression::AbstractExpression *TransformQueryDerivedTablePredicates(
     const std::unordered_map<std::string,
                              std::shared_ptr<expression::AbstractExpression>>
@@ -265,10 +216,6 @@ expression::AbstractExpression *TransformQueryDerivedTablePredicates(
   return expr;
 }
 
-/**
- * @brief Walk through a set of join predicates, generate join keys base on the
- *  left/right table aliases set
- */
 void ExtractEquiJoinKeys(
     const std::vector<AnnotatedExpression> join_predicates,
     std::vector<std::unique_ptr<expression::AbstractExpression>> &left_keys,

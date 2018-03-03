@@ -74,7 +74,8 @@ void QueryToOperatorTransformer::Visit(parser::SelectStatement *op) {
     // Plain aggregation
     std::shared_ptr<OperatorExpression> agg_expr;
     if (op->group_by == nullptr) {
-      // TODO(boweic): aggregation without groupby could still have having clause
+      // TODO(boweic): aggregation without groupby could still have having
+      // clause
       agg_expr = std::make_shared<OperatorExpression>(
           LogicalAggregateAndGroupBy::make());
       agg_expr->PushChild(output_expr_);
@@ -421,7 +422,7 @@ bool QueryToOperatorTransformer::IsSupportedConjunctivePredicate(
       expr_type == ExpressionType::COMPARE_GREATERTHANOREQUALTO ||
       expr_type == ExpressionType::COMPARE_LESSTHAN ||
       expr_type == ExpressionType::COMPARE_LESSTHANOREQUALTO) {
-    // Supported is one child is subquery and the other is not
+    // Supported if one child is subquery and the other is not
     if ((!expr->GetChild(0)->HasSubquery() &&
          expr->GetChild(1)->GetExpressionType() ==
              ExpressionType::ROW_SUBQUERY) ||
@@ -450,7 +451,9 @@ bool QueryToOperatorTransformer::IsSupportedSubSelect(
   std::vector<expression::AbstractExpression *> predicates;
   util::SplitPredicates(op->where_clause.get(), predicates);
   for (const auto &pred : predicates) {
-    // If correlated predicate
+    // Depth is used to detect correlated subquery, it is set in the binder,
+    // if a TVE has depth less than the depth of the current operator, then it
+    // is correlated predicate
     if (pred->GetDepth() < op->depth) {
       if (pred->GetExpressionType() != ExpressionType::COMPARE_EQUAL) {
         return false;

@@ -401,9 +401,9 @@ class ExpressionUtil {
   }
 
   /**
-   * TODO(boweic): this function may not be efficient, in the future we may want
-   * to add expressions to groups so that we do not need to walk through the
-   * expression tree when judging '==' each time
+   * @brief TODO(boweic): this function may not be efficient, in the future we
+   * may want to add expressions to groups so that we do not need to walk
+   * through the expression tree when judging '==' each time
    *
    * Convert all expression in the current expression tree that is in
    * child_expr_map to tuple value expression with corresponding column offset
@@ -411,11 +411,14 @@ class ExpressionUtil {
    * on situations like aggregate function (e.g. SELECT sum(a)+max(b) FROM ...
    * GROUP BY ...) when input columns contain sum(a) and sum(b). We need to
    * treat them as tuple value expression in the projection plan. This function
-   *should always be called before calling EvaluateExpression
+   * should always be called before calling EvaluateExpression
    *
    * Please notice that this function should only apply to copied expression
-   *since it would modify the current expression. We do not want to modify the
-   *original expression since it may be referenced in other places
+   * since it would modify the current expression. We do not want to modify the
+   * original expression since it may be referenced in other places
+   *
+   * @param expr The expression to modify
+   * @param child_expr_maps map from child column ids to expression
    */
   static void ConvertToTvExpr(AbstractExpression *expr,
                               std::vector<ExprMap> child_expr_maps) {

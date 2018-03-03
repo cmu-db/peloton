@@ -85,10 +85,6 @@ class QueryToOperatorTransformer : public SqlNodeVisitor {
       expression::AbstractExpression *expr,
       std::vector<AnnotatedExpression> predicates = {});
 
-  // TODO(boweic): Since we haven't migrated all the functionalities needed to
-  // generate mark-join and single-join to the optimizer, currently this
-  // function has not been tested, and it may be a bit hard to understand. We
-  // may integrate the unnesting functionality in the next PR
   /**
    * @brief Transform a sub-query in an expression to use
    *

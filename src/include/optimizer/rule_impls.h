@@ -291,7 +291,8 @@ class CombineConsecutiveFilter : public Rule {
 };
 
 /**
- * @brief perform predicate push-down to push a filter through aggregation, also will embed filter into aggregation operator if appropriate. 
+ * @brief perform predicate push-down to push a filter through aggregation, also
+ * will embed filter into aggregation operator if appropriate.
  */
 class PushFilterThroughAggregation : public Rule {
  public:
@@ -323,6 +324,9 @@ class EmbedFilterIntoGet : public Rule {
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Unnesting rules
+// We use this promise to determine which rules should be applied first if
+// multiple rules are applicable, we need to first pull filters up through mark-join
+// then turn mark-join into a regular join operator
 enum class UnnestPromise { Low = 1, High };
 // TODO(boweic): MarkJoin and SingleJoin should not be transformed into inner
 // join. Sometimes MarkJoin could be transformed into semi-join, but for now we
