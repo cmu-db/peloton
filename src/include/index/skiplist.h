@@ -30,6 +30,7 @@ namespace index {
 #define SET_DELETE(addr, bit) ((addr) & ~1 | (bit))
 #define SET_MARK(addr, bit) ((addr) & ~2 | ((bit) << 1))
 
+#define SKIP_LIST_INITIAL_MAX_LEVEL_ 10
 /*
  * SKIPLIST_TEMPLATE_ARGUMENTS - Save some key strokes
  */
@@ -37,7 +38,7 @@ namespace index {
   template <typename KeyType, typename ValueType, typename KeyComparator, \
             typename KeyEqualityChecker, typename ValueEqualityChecker>
 template <typename KeyType, typename ValueType, typename KeyComparator,
-    typename KeyEqualityChecker, typename ValueEqualityChecker>
+          typename KeyEqualityChecker, typename ValueEqualityChecker>
 class SkipList {
   class NodeManager;
   class EpochManager;
@@ -49,7 +50,8 @@ class SkipList {
   ///////////////////////////////////////////////////////////////////
   // Core components
   ///////////////////////////////////////////////////////////////////
-  SkipListBaseNode *skip_list_head_;
+  std::atomic<SkipListBaseNode *> skip_list_head_;
+  int max_level_;
   EpochManager epoch_manager_;
   NodeManager node_manager_;
   bool duplicate_support_;
@@ -60,7 +62,8 @@ class SkipList {
    *
    * The return value is a indicator of the success get
    */
-  bool Get(const KeyType &key,  std::vector<SkipListBaseNode *> &node_list, OperationContext &ctx) {
+  bool Get(const KeyType &key, std::vector<SkipListBaseNode *> &node_list,
+           OperationContext &ctx) {
     return GetFrom(key, skip_list_head_, node_list, ctx);
   }
 
@@ -69,30 +72,69 @@ class SkipList {
    *
    * The return value is a indicator of the success get from
    */
-  bool GetFrom(const KeyType &key, const SkipListBaseNode *Node, std::vector<SkipListBaseNode *> &node_list, OperationContext &ctx) {
+  bool GetFrom(const KeyType &key, const SkipListBaseNode *Node,
+               std::vector<SkipListBaseNode *> &node_list,
+               OperationContext &ctx) {
     return false;
   }
 
   /*
    * Search() - Search the first interval that node1.key<key and key<=node2.key
-   * 
+   *
    * the return value is a pair of node1,node2
-   */ 
-  std::tuple<SkipListBaseNode *, SkipListBaseNode *> Search(const KeyType &key,
-                                                       OperationContext &ctx){
-    return std::tuple<SkipListBaseNode *, SkipListBaseNode *>{};                                                  
-  } 
-  
+   * if duplicate is available, the node1 is the last node among all duplicators
+   * with dup.key==node1.key as well as the node2 is the first of its
+   *duplicators
+   *
+   * NOTE: the second pointer might be nullptr!!!!!!!!
+   */
+  std::pair<SkipListBaseNode *, SkipListBaseNode *> Search(
+      const KeyType &key, OperationContext &ctx) {
+    SkipListBaseNode *headNode = this->skip_list_head_.load();
+    while (1) {
+      auto sr = SearchFrom(key, headNode, ctx);
+      PL_ASSERT(sr != nullptr);
+      headNode = sr.first;
+      if (headNode->down_.load() == nullptr) {
+        return sr;
+      } else {
+        headNode = headNode->down_.load();
+      }
+    }
+  }
+
   /*
-   * SearchFrom() - Search the first interval that node1.key<key and key<=node2.key
+   * SearchFrom() - Search the first interval that node1.key<key and
+   *key<=node2.key
    * from given skip list node
-   * 
-   * the return value is a pair of node1, node2
-   */ 
-  std::tuple<SkipListBaseNode *, SkipListBaseNode *> SearchFrom(const KeyType &key,
-                                                                const SkipListBaseNode *Node,
-                                                                OperationContext &ctx){
-    return std::tuple<SkipListBaseNode *, SkipListBaseNode *>{};                                                                  
+   *
+   * The return value is a pair of node1, node2
+   * For duplicate enabled skiplist, the type of return value is the same as
+   *Search()
+   * There is no guarantee that the nodes would be succeed after being returned
+   *
+   * Call this function again in insert and delete if the node pair is not
+   *consistent (node1.next!=node2)
+   */
+  std::pair<SkipListBaseNode *, SkipListBaseNode *> SearchFrom(
+      const KeyType &key, const SkipListBaseNode *Node, OperationContext &ctx) {
+    // TODO: physically deletion when search in the list
+    PL_ASSERT(Node != nullptr);
+    SkipListBaseNode *curr_node = static_cast<SkipListBaseNode *>(Node);
+    SkipListBaseNode *next_node;
+    while (curr_node) {
+      if (curr_node->next_.load() == nullptr) {
+        return std::make_pair(curr_node, nullptr);
+      } else {
+        next_node = curr_node->next_.load();
+        if (KeyCmpGreaterEqual(next_node->key_, key)) {
+          return std::make_pair(curr_node, next_node);
+        } else {
+          curr_node = next_node;
+        }
+      }
+    }
+    return nullptr;
   }
 
   /*
@@ -151,11 +193,12 @@ class SkipList {
            ValueEqualityChecker value_eq_obj = ValueEqualityChecker{})
       : duplicate_support_(duplicate),
         GC_Interval_(GC_Interval_),
-      // Key comparator, equality checker and hasher
+        max_level_(SKIP_LIST_INITIAL_MAX_LEVEL_),
+        // Key comparator, equality checker and hasher
         key_cmp_obj_{key_cmp_obj},
         key_eq_obj_{key_eq_obj},
 
-      // Value equality checker and hasher
+        // Value equality checker and hasher
         value_eq_obj_{value_eq_obj} {
     LOG_TRACE("SkipList constructed!");
   }
@@ -445,8 +488,21 @@ class SkipList {
    */
   class NodeManager {
    public:
-    SkipListBaseNode *GetSkipListNode();
-    void ReturnSkipListNode(SkipListBaseNode *node);
+    SkipListBaseNode *GetSkipListNode(KeyType key, bool isHead) {
+      NodeNum.fetch_add(1);
+      return new SkipListBaseNode(nullptr, nullptr, nullptr, key, isHead);
+    }
+    SkipListBaseNode *GetSkipListNode(SkipListBaseNode *next,
+                                      SkipListBaseNode *down,
+                                      SkipListBaseNode *back_link, KeyType key,
+                                      bool isHead) {
+      NodeNum.fetch_add(1);
+      return new SkipListBaseNode(next, down, back_link, key, isHead);
+    }
+    void ReturnSkipListNode(SkipListBaseNode *node) {
+      NodeNum.fetch_sub(1);
+      delete node;
+    }
 
     std::atomic<int> NodeNum;
   };
@@ -460,8 +516,7 @@ class SkipList {
    public:
     EpochManager::EpochNode *epoch_node_;
     OperationContext(EpochManager::EpochNode *epoch_node)
-        : epoch_node_(epoch_node)
-    {}
+        : epoch_node_(epoch_node) {}
   };
 };
 }  // namespace index
