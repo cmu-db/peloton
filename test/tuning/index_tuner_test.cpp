@@ -4,7 +4,7 @@
 //
 // index_tuner_test.cpp
 //
-// Identification: test/brain/index_tuner_test.cpp
+// Identification: test/tuning/index_tuner_test.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -17,10 +17,10 @@
 
 #include "common/harness.h"
 
-#include "brain/index_tuner.h"
+#include "tuning/index_tuner.h"
 
 #include "executor/testing_executor_util.h"
-#include "brain/sample.h"
+#include "tuning/sample.h"
 #include "common/generator.h"
 
 #include "storage/data_table.h"
@@ -54,7 +54,7 @@ TEST_F(IndexTunerTests, BasicTest) {
   EXPECT_EQ(column_count, 4);
 
   // Index tuner
-  brain::IndexTuner &index_tuner = brain::IndexTuner::GetInstance();
+  tuning::IndexTuner &index_tuner = tuning::IndexTuner::GetInstance();
 
   // Attach table to index tuner
   index_tuner.AddTable(data_table.get());
@@ -87,9 +87,9 @@ TEST_F(IndexTunerTests, BasicTest) {
 
     // Create a table access sample
     // Indicates the columns present in predicate, query weight, and selectivity
-    brain::Sample sample(columns_accessed,
+    tuning::Sample sample(columns_accessed,
                          sample_weight,
-                         brain::SampleType::ACCESS);
+                         tuning::SampleType::ACCESS);
 
     // Collect index sample in table
     data_table->RecordIndexSample(sample);
