@@ -10,6 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef _SKIPLIST_H
+#define _SKIPLIST_H
+
 #pragma once
 
 #include <atomic>
@@ -33,8 +36,6 @@ namespace index {
 template <typename KeyType, typename ValueType, typename KeyComparator,
           typename KeyEqualityChecker, typename ValueEqualityChecker>
 class SkipList {
-  // TODO: Add your declarations here
-
   class NodeManager;
   class EpochManager;
   class ForwardIterator;
@@ -44,24 +45,49 @@ class SkipList {
   ///////////////////////////////////////////////////////////////////
   // Core components
   ///////////////////////////////////////////////////////////////////
-  SkipListNode *skip_list_head_;
+  SkipListBaseNode *skip_list_head_;
   EpochManager epoch_manager_;
   NodeManager node_manager_;
   bool duplicate_support_;
   int GC_Interval_;
+
+  std::vector<SkipListInnerNode *> Search(const KeyType &key) {
+    return SearchFrom(key, skip_list_head_);
+  }
+
+  std::vector<SkipListInnerNode *> SearchFrom(const KeyType &key,
+                                              const SkipListBaseNode *Node) {
+    return std::vector<SkipListInnerNode *>{};
+  }
+
+  bool InsertNode(const KeyType &key, const ValueType &value) { return false; }
+
+  SkipListInnerNode *DeleteNode(const KeyType &key) { return nullptr; }
+
+  void HelpDeleted(SkipListBaseNode *prev_node, SkipListBaseNode *del_node) {}
+
+  void HelpFlagged(SkipListBaseNode *prev_node, SkipListBaseNode *del_node) {}
+
+  void TryMark(SkipListBaseNode *node) {}
 
  public:
   SkipList(bool duplicate, int GC_Interval,
            KeyComparator key_cmp_obj = KeyComparator{},
            KeyEqualityChecker key_eq_obj = KeyEqualityChecker{},
            ValueEqualityChecker value_eq_obj = ValueEqualityChecker{})
-      : duplicate_support_(duplicate), GC_Interval_(GC_Interval_) {
+      : duplicate_support_(duplicate),
+        GC_Interval_(GC_Interval_),
+        // Key comparator, equality checker and hasher
+        key_cmp_obj_{key_cmp_obj},
+        key_eq_obj_{key_eq_obj},
+
+        // Value equality checker and hasher
+        value_eq_obj_{value_eq_obj} {
     LOG_TRACE("SkipList constructed!");
   }
 
   ~SkipList() {
-    // TODO:
-    // deconstruct all nodes in the skip list
+    // TODO: deconstruct all nodes in the skip list
     LOG_TRACE("SkipList deconstructed!");
 
     return;
@@ -76,7 +102,7 @@ class SkipList {
     SkipListBaseNode *next_, *down_, *back_link_;
     KeyType key_;
     bool isHead_;
-    SkipListHeadNode(SkipListBaseNode *next, SkipListBaseNode *down,
+    SkipListBaseNode(SkipListBaseNode *next, SkipListBaseNode *down,
                      SkipListBaseNode *back_link, KeyType key, bool isHead)
         : next_(next),
           down_(down),
@@ -117,15 +143,29 @@ class SkipList {
   class ForwardIterator : protected SkipListIterator;
   class ReversedIterator : protected SkipListIterator;
 
-  bool Insert(const KeyType &key, const ValueType &value);
+  bool Insert(const KeyType &key, const ValueType &value) {
+    LOG_TRACE("Insert called!")
+    EpochNode *epoch_node_p = epoch_manager.JoinEpoch();
+    bool ret = InsertNode(key, value);
+    epoch_manager.LeaveEpoch(epoch_node_p);
+    return ret;
+  }
 
-  bool Delete(const KeyType &key);
+  bool Delete(const KeyType &key) {
+    LOG_TRACE("Delete called!")
+    EpochNode *epoch_node_p = epoch_manager.JoinEpoch();
+    SkipListInnerNode *node = DeleteNode(key);
+    epoch_manager.LeaveEpoch(epoch_node_p);
+    return node != nullptr;
+  }
 
   bool ConditionalInsert(const KeyType &key, const ValueType &value,
                          std::function<bool(const void *)> predicate,
                          bool *predicate_satisfied);
 
-  void GetValue(const KeyType &search_key, std::vector<ValueType> &value_list);
+  void GetValue(const KeyType &search_key, std::vector<ValueType> &value_list) {
+    // TODO:
+  }
 
   // returns a forward iterator from the very beginning
   ForwardIterator ForwardBegin();
@@ -137,21 +177,27 @@ class SkipList {
 
   ReversedIterator ReverseBegin(KeyType &startsKey);
 
-  void PerformGC();
+  void PerformGC() { LOG_TRACE("Perform garbage collection!"); }
 
-  bool NeedGC();
+  bool NeedGC() {
+    LOG_TRACE("Need GC!");
+    return true;
+  }
 
-  size_t GetMemoryFootprint();
+  size_t GetMemoryFootprint() {
+    LOG_TRACE("Get Memory Footprint!");
+    return 0;
+  }
 
  public:
   // Key comparator
-  const KeyComparator key_cmp_obj;
+  const KeyComparator key_cmp_obj_;
 
   // Raw key eq checker
-  const KeyEqualityChecker key_eq_obj;
+  const KeyEqualityChecker key_eq_obj_;
 
   // Check whether values are equivalent
-  const ValueEqualityChecker value_eq_obj;
+  const ValueEqualityChecker value_eq_obj_;
 
   ///////////////////////////////////////////////////////////////////
   // Key Comparison Member Functions
@@ -272,3 +318,5 @@ class SkipList {
 
 }  // namespace index
 }  // namespace peloton
+
+#endif
