@@ -10,11 +10,15 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef _SKIPLIST_H
+#define _SKIPLIST_H
+
 #pragma once
 
 #include <atomic>
 #include <functional>
 #include <thread>
+#include <tuple>
 
 namespace peloton {
 namespace index {
@@ -33,8 +37,6 @@ namespace index {
 template <typename KeyType, typename ValueType, typename KeyComparator,
           typename KeyEqualityChecker, typename ValueEqualityChecker>
 class SkipList {
-  // TODO: Add your declarations here
-
   class NodeManager;
   class EpochManager;
   class ForwardIterator;
@@ -44,24 +46,91 @@ class SkipList {
   ///////////////////////////////////////////////////////////////////
   // Core components
   ///////////////////////////////////////////////////////////////////
-  SkipListNode *skip_list_head_;
+  SkipListBaseNode *skip_list_head_;
   EpochManager epoch_manager_;
   NodeManager node_manager_;
   bool duplicate_support_;
   int GC_Interval_;
+
+  /*
+   * Search() - Search a key in the skip-list
+   *
+   * The return value is a list of search results.
+   */
+  std::vector<SkipListBaseNode *> Search(const KeyType &key) {
+    return SearchFrom(key, skip_list_head_);
+  }
+
+  /*
+   * SearchFrom() - Search a key start from a given node
+   *
+   * The return value is a list of search results
+   *
+   */
+  std::vector<SkipListBaseNode *> SearchFrom(const KeyType &key,
+                                             const SkipListBaseNode *Node) {
+    return std::vector<SkipListBaseNode *>{};
+  }
+
+  /*
+   * InsertNode() - Insert key value tuple to the skip-list
+   *
+   * The return value is a indicator of success or not
+   */
+  bool InsertNode(const KeyType &key, const ValueType &value) { return false; }
+
+  /*
+   * DeleteNode() - Delete certain key from the skip-list
+   *
+   * The return value is the node deleted or NULL if failed to delete
+   */
+  SkipListBaseNode *DeleteNode(const KeyType &key) { return nullptr; }
+
+  /*
+   * HelpDeleted() Attempts to physically delete the del_node and unflag
+   * prev_node
+   */
+  void HelpDeleted(SkipListBaseNode *prev_node, SkipListBaseNode *del_node) {}
+
+  /*
+   * HelpFlagged() - Attempts to mark and physically delete del_node
+   */
+  void HelpFlagged(SkipListBaseNode *prev_node, SkipListBaseNode *del_node) {}
+
+  /*
+   * TryDelete() Attempts to mark the node del node.
+   */
+  void TryDelete(SkipListBaseNode *del_node) {}
+
+  /*
+   * TryFlag() - Attempts to flag the prev_node, which is the last node known to
+   *be the predecessor of target_node
+   *
+   * The return value is a tuple of deleted node and the success indicator
+   */
+  std::tuple<SkipListBaseNode *, bool> TryFlag(SkipListBaseNode *prev_node,
+                                               SkipListBaseNode *target_node) {
+    return std::tuple<SkipListBaseNode *, bool>{};
+  }
 
  public:
   SkipList(bool duplicate, int GC_Interval,
            KeyComparator key_cmp_obj = KeyComparator{},
            KeyEqualityChecker key_eq_obj = KeyEqualityChecker{},
            ValueEqualityChecker value_eq_obj = ValueEqualityChecker{})
-      : duplicate_support_(duplicate), GC_Interval_(GC_Interval_) {
+      : duplicate_support_(duplicate),
+        GC_Interval_(GC_Interval_),
+        // Key comparator, equality checker and hasher
+        key_cmp_obj_{key_cmp_obj},
+        key_eq_obj_{key_eq_obj},
+
+        // Value equality checker and hasher
+        value_eq_obj_{value_eq_obj} {
     LOG_TRACE("SkipList constructed!");
   }
 
   ~SkipList() {
-    // TODO:
-    // deconstruct all nodes in the skip list
+    // TODO: deconstruct all nodes in the skip list
     LOG_TRACE("SkipList deconstructed!");
 
     return;
@@ -76,7 +145,7 @@ class SkipList {
     SkipListBaseNode *next_, *down_, *back_link_;
     KeyType key_;
     bool isHead_;
-    SkipListHeadNode(SkipListBaseNode *next, SkipListBaseNode *down,
+    SkipListBaseNode(SkipListBaseNode *next, SkipListBaseNode *down,
                      SkipListBaseNode *back_link, KeyType key, bool isHead)
         : next_(next),
           down_(down),
@@ -117,15 +186,69 @@ class SkipList {
   class ForwardIterator : protected SkipListIterator;
   class ReversedIterator : protected SkipListIterator;
 
-  bool Insert(const KeyType &key, const ValueType &value);
+  /*
+   * Insert() - Insert a key-value pair
+   *
+   * This function returns false if value already exists
+   * If CAS fails this function retries until it succeeds
+   */
+  bool Insert(const KeyType &key, const ValueType &value) {
+    LOG_TRACE("Insert called!")
+    EpochNode *epoch_node_p = epoch_manager.JoinEpoch();
+    bool ret = InsertNode(key, value);
+    epoch_manager.LeaveEpoch(epoch_node_p);
+    return ret;
+  }
 
-  bool Delete(const KeyType &key);
-
+  /*
+   * ConditionalInsert() - Insert a key-value pair only if a given
+   *                       predicate fails for all values with a key
+   *
+   * If return true then the value has been inserted
+   * If return false then the value is not inserted. The reason could be
+   * predicates returning true for one of the values of a given key
+   * or because the value is already in the index
+   */
   bool ConditionalInsert(const KeyType &key, const ValueType &value,
                          std::function<bool(const void *)> predicate,
-                         bool *predicate_satisfied);
+                         bool *predicate_satisfied) {
+    LOG_TRACE("Cond Insert called!")
+    EpochNode *epoch_node_p = epoch_manager.JoinEpoch();
+    // TODO: Insert key value pair to the skiplist with predicate
+    epoch_manager.LeaveEpoch(epoch_node_p);
+    return ret;
+  }
 
-  void GetValue(const KeyType &search_key, std::vector<ValueType> &value_list);
+  /*
+   * Delete() - Remove a key-value pair from the tree
+   *
+   * This function returns false if the key and value pair does not
+   * exist. Return true if delete succeeds
+   */
+  bool Delete(const KeyType &key) {
+    LOG_TRACE("Delete called!")
+    EpochNode *epoch_node_p = epoch_manager.JoinEpoch();
+    SkipListBaseNode *node = DeleteNode(key);
+    epoch_manager.LeaveEpoch(epoch_node_p);
+    return node != nullptr;
+  }
+
+  /*
+   * GetValue() - Fill a value list with values stored
+   *
+   * This function accepts a value list as argument,
+   * and will copy all values into the list
+   *
+   * The return value is used to indicate whether the value set
+   * is empty or not
+   */
+  void GetValue(const KeyType &search_key, std::vector<ValueType> &value_list) {
+    LOG_TRACE("GetValue()");
+    EpochNode *epoch_node_p = epoch_manager.JoinEpoch();
+    // TODO: call contatiner to fillin the value_list
+    epoch_manager.LeaveEpoch(epoch_node_p);
+    return;
+  }
 
   // returns a forward iterator from the very beginning
   ForwardIterator ForwardBegin();
@@ -137,21 +260,34 @@ class SkipList {
 
   ReversedIterator ReverseBegin(KeyType &startsKey);
 
-  void PerformGC();
+  /*
+   * PerformGC() - Interface function for external users to
+   *                              force a garbage collection
+   */
+  void PerformGC() { LOG_TRACE("Perform garbage collection!"); }
 
-  bool NeedGC();
+  /*
+   * NeedGC() - Whether the skiplsit needs garbage collection
+   */
+  bool NeedGC() {
+    LOG_TRACE("Need GC!");
+    return true;
+  }
 
-  size_t GetMemoryFootprint();
+  size_t GetMemoryFootprint() {
+    LOG_TRACE("Get Memory Footprint!");
+    return 0;
+  }
 
  public:
   // Key comparator
-  const KeyComparator key_cmp_obj;
+  const KeyComparator key_cmp_obj_;
 
   // Raw key eq checker
-  const KeyEqualityChecker key_eq_obj;
+  const KeyEqualityChecker key_eq_obj_;
 
   // Check whether values are equivalent
-  const ValueEqualityChecker value_eq_obj;
+  const ValueEqualityChecker value_eq_obj_;
 
   ///////////////////////////////////////////////////////////////////
   // Key Comparison Member Functions
@@ -272,3 +408,5 @@ class SkipList {
 
 }  // namespace index
 }  // namespace peloton
+
+#endif
