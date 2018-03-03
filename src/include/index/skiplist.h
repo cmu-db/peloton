@@ -19,10 +19,10 @@
 namespace peloton {
 namespace index {
 
-#define GET_DELETE(addr) ((addr) & 0x1)
-#define GET_MARK(addr) ((addr) & 0x2)
-#define SET_DELETE(addr, bit) ((addr) & (-1 & ~1) | (bit))
-#define SET_MARK(addr, bit) ((addr) & (-1 & ~2) | ((bit) << 1))
+#define GET_DELETE(addr) ((addr) & 1)
+#define GET_MARK(addr) ((addr) & 2)
+#define SET_DELETE(addr, bit) ((addr) & ~1 | (bit))
+#define SET_MARK(addr, bit) ((addr) & ~2 | ((bit) << 1))
 
 /*
  * SKIPLIST_TEMPLATE_ARGUMENTS - Save some key strokes
@@ -56,10 +56,11 @@ class SkipList {
           KeyEqualityChecker key_eq_obj = KeyEqualityChecker{},
           ValueEqualityChecker value_eq_obj = ValueEqualityChecker{})
           :duplicate_support_(duplicate), GC_Interval_(GC_Interval_){
+    LOG_TRACE("SkipList constructed!");
   }
 
   ~SkipList(){
-    // TO DO:
+    // TODO:
     // deconstruct all nodes in the skip list
     LOG_TRACE("SkipList deconstructed!");
 
