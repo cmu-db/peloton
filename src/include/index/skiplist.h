@@ -18,6 +18,7 @@
 #include <atomic>
 #include <functional>
 #include <thread>
+#include <tuple>
 
 namespace peloton {
 namespace index {
@@ -51,24 +52,66 @@ class SkipList {
   bool duplicate_support_;
   int GC_Interval_;
 
-  std::vector<SkipListInnerNode *> Search(const KeyType &key) {
+  /*
+   * Search() - Search a key in the skip-list
+   *
+   * The return value is a list of search results.
+   */
+  std::vector<SkipListBaseNode *> Search(const KeyType &key) {
     return SearchFrom(key, skip_list_head_);
   }
 
-  std::vector<SkipListInnerNode *> SearchFrom(const KeyType &key,
-                                              const SkipListBaseNode *Node) {
-    return std::vector<SkipListInnerNode *>{};
+  /*
+   * SearchFrom() - Search a key start from a given node
+   *
+   * The return value is a list of search results
+   *
+   */
+  std::vector<SkipListBaseNode *> SearchFrom(const KeyType &key,
+                                             const SkipListBaseNode *Node) {
+    return std::vector<SkipListBaseNode *>{};
   }
 
+  /*
+   * InsertNode() - Insert key value tuple to the skip-list
+   *
+   * The return value is a indicator of success or not
+   */
   bool InsertNode(const KeyType &key, const ValueType &value) { return false; }
 
-  SkipListInnerNode *DeleteNode(const KeyType &key) { return nullptr; }
+  /*
+   * DeleteNode() - Delete certain key from the skip-list
+   *
+   * The return value is the node deleted or NULL if failed to delete
+   */
+  SkipListBaseNode *DeleteNode(const KeyType &key) { return nullptr; }
 
+  /*
+   * HelpDeleted() Attempts to physically delete the del_node and unflag
+   * prev_node
+   */
   void HelpDeleted(SkipListBaseNode *prev_node, SkipListBaseNode *del_node) {}
 
+  /*
+   * HelpFlagged() - Attempts to mark and physically delete del_node
+   */
   void HelpFlagged(SkipListBaseNode *prev_node, SkipListBaseNode *del_node) {}
 
-  void TryMark(SkipListBaseNode *node) {}
+  /*
+   * TryDelete() Attempts to mark the node del node.
+   */
+  void TryDelete(SkipListBaseNode *del_node) {}
+
+  /*
+   * TryFlag() - Attempts to flag the prev_node, which is the last node known to
+   *be the predecessor of target_node
+   *
+   * The return value is a tuple of deleted node and the success indicator
+   */
+  std::tuple<SkipListBaseNode *, bool> TryFlag(SkipListBaseNode *prev_node,
+                                               SkipListBaseNode *target_node) {
+    return std::tuple<SkipListBaseNode *, bool>{};
+  }
 
  public:
   SkipList(bool duplicate, int GC_Interval,
@@ -143,6 +186,12 @@ class SkipList {
   class ForwardIterator : protected SkipListIterator;
   class ReversedIterator : protected SkipListIterator;
 
+  /*
+   * Insert() - Insert a key-value pair
+   *
+   * This function returns false if value already exists
+   * If CAS fails this function retries until it succeeds
+   */
   bool Insert(const KeyType &key, const ValueType &value) {
     LOG_TRACE("Insert called!")
     EpochNode *epoch_node_p = epoch_manager.JoinEpoch();
@@ -151,20 +200,54 @@ class SkipList {
     return ret;
   }
 
+  /*
+   * ConditionalInsert() - Insert a key-value pair only if a given
+   *                       predicate fails for all values with a key
+   *
+   * If return true then the value has been inserted
+   * If return false then the value is not inserted. The reason could be
+   * predicates returning true for one of the values of a given key
+   * or because the value is already in the index
+   */
+  bool ConditionalInsert(const KeyType &key, const ValueType &value,
+                         std::function<bool(const void *)> predicate,
+                         bool *predicate_satisfied) {
+    LOG_TRACE("Cond Insert called!")
+    EpochNode *epoch_node_p = epoch_manager.JoinEpoch();
+    // TODO: Insert key value pair to the skiplist with predicate
+    epoch_manager.LeaveEpoch(epoch_node_p);
+    return ret;
+  }
+
+  /*
+   * Delete() - Remove a key-value pair from the tree
+   *
+   * This function returns false if the key and value pair does not
+   * exist. Return true if delete succeeds
+   */
   bool Delete(const KeyType &key) {
     LOG_TRACE("Delete called!")
     EpochNode *epoch_node_p = epoch_manager.JoinEpoch();
-    SkipListInnerNode *node = DeleteNode(key);
+    SkipListBaseNode *node = DeleteNode(key);
     epoch_manager.LeaveEpoch(epoch_node_p);
     return node != nullptr;
   }
 
-  bool ConditionalInsert(const KeyType &key, const ValueType &value,
-                         std::function<bool(const void *)> predicate,
-                         bool *predicate_satisfied);
-
+  /*
+   * GetValue() - Fill a value list with values stored
+   *
+   * This function accepts a value list as argument,
+   * and will copy all values into the list
+   *
+   * The return value is used to indicate whether the value set
+   * is empty or not
+   */
   void GetValue(const KeyType &search_key, std::vector<ValueType> &value_list) {
-    // TODO:
+    LOG_TRACE("GetValue()");
+    EpochNode *epoch_node_p = epoch_manager.JoinEpoch();
+    // TODO: call contatiner to fillin the value_list
+    epoch_manager.LeaveEpoch(epoch_node_p);
+    return;
   }
 
   // returns a forward iterator from the very beginning
@@ -177,8 +260,15 @@ class SkipList {
 
   ReversedIterator ReverseBegin(KeyType &startsKey);
 
+  /*
+   * PerformGC() - Interface function for external users to
+   *                              force a garbage collection
+   */
   void PerformGC() { LOG_TRACE("Perform garbage collection!"); }
 
+  /*
+   * NeedGC() - Whether the skiplsit needs garbage collection
+   */
   bool NeedGC() {
     LOG_TRACE("Need GC!");
     return true;
