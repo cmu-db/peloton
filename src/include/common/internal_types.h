@@ -1160,7 +1160,6 @@ extern size_t CONNECTION_THREAD_COUNT;
 extern size_t LOGGING_THREAD_COUNT;
 extern size_t GC_THREAD_COUNT;
 extern size_t EPOCH_THREAD_COUNT;
-extern size_t MAX_CONCURRENCY;
 
 //===--------------------------------------------------------------------===//
 // TupleMetadata
