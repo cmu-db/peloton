@@ -19,7 +19,6 @@
 #include <functional>
 #include <thread>
 #include <tuple>
-#include <atomic>
 
 namespace peloton {
 namespace index {
