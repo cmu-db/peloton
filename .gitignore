@@ -9,6 +9,7 @@
 *~
 cp.bash
 .vscode*
+.vscode/*
 # Merge files created by git.
 *.orig
 # Byte compiled python modules.
