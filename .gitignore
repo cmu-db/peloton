@@ -8,7 +8,8 @@
 # Temp files created by most text editors.
 *~
 cp.bash
-vscode*
+.vscode*
+.vscode/*
 # Merge files created by git.
 *.orig
 # Byte compiled python modules.
