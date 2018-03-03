@@ -78,7 +78,7 @@ class SkipList {
    * 
    * the return value is a pair of node1,node2
    */ 
-  std::tuple<SkipListBaseNode *, SkiplListBaseNode *> Search(const KeyType &key,
+  std::tuple<SkipListBaseNode *, SkipListBaseNode *> Search(const KeyType &key,
                                                        OperationContext &ctx){
     return std::tuple<SkipListBaseNode *, SkipListBaseNode *>{};                                                  
   } 
@@ -89,7 +89,7 @@ class SkipList {
    * 
    * the return value is a pair of node1, node2
    */ 
-  std::tuple<SkipListBaseNode *, SkipListBaseNode *> SearchFrom(const KeyTpe &key,
+  std::tuple<SkipListBaseNode *, SkipListBaseNode *> SearchFrom(const KeyType &key,
                                                                 const SkipListBaseNode *Node,
                                                                 OperationContext &ctx){
     return std::tuple<SkipListBaseNode *, SkipListBaseNode *>{};                                                                  
