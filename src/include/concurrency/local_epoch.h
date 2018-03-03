@@ -26,6 +26,9 @@
 namespace peloton {
 namespace concurrency {
 
+/**
+ * @brief      Epoch struct
+ */
 struct Epoch {
   Epoch(const uint64_t epoch_id, const size_t txn_count):
     epoch_id_(epoch_id),
@@ -46,6 +49,9 @@ struct EpochCompare {
   }
 };
 
+/**
+ * @brief      Class for local epoch.
+ */
 class LocalEpoch {
 
 public:
@@ -57,6 +63,13 @@ public:
 
   void ExitEpoch(const eid_t epoch_id);
   
+  /**
+   * @brief      Gets the expired epoch identifier.
+   *
+   * @param[in]  current_epoch_id  The current epoch identifier
+   *
+   * @return     The expired epoch identifier.
+   */
   uint64_t GetExpiredEpochId(const uint64_t current_epoch_id);
 
 private:
