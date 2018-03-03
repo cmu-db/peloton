@@ -36,7 +36,7 @@ namespace index {
  * @see Index
  */
 template <typename KeyType, typename ValueType, typename KeyComparator,
-          typename KeyEqualityChecker, typename ValueEqualityChecker>
+    typename KeyEqualityChecker, typename ValueEqualityChecker>
 class SkipListIndex : public Index {
   friend class IndexFactory;
 
@@ -51,18 +51,18 @@ class SkipListIndex : public Index {
 
   ~SkipListIndex();
 
-  bool InsertEntry(const storage::Tuple *key, ItemPointer *value);
+  bool InsertEntry(const storage::Tuple *key, ItemPointer *value) override;
 
-  bool DeleteEntry(const storage::Tuple *key, ItemPointer *value);
+  bool DeleteEntry(const storage::Tuple *key, ItemPointer *value) override;
 
   bool CondInsertEntry(const storage::Tuple *key, ItemPointer *value,
-                       std::function<bool(const void *)> predicate);
+                       std::function<bool(const void *)> predicate) override;
 
   void Scan(const std::vector<type::Value> &values,
             const std::vector<oid_t> &key_column_ids,
             const std::vector<ExpressionType> &expr_types,
             ScanDirectionType scan_direction, std::vector<ValueType> &result,
-            const ConjunctionScanPredicate *csp_p);
+            const ConjunctionScanPredicate *csp_p) override;
 
   void ScanLimit(const std::vector<type::Value> &values,
                  const std::vector<oid_t> &key_column_ids,
@@ -70,22 +70,22 @@ class SkipListIndex : public Index {
                  ScanDirectionType scan_direction,
                  std::vector<ValueType> &result,
                  const ConjunctionScanPredicate *csp_p, uint64_t limit,
-                 uint64_t offset);
+                 uint64_t offset) override;
 
-  void ScanAllKeys(std::vector<ValueType> &result);
+  void ScanAllKeys(std::vector<ValueType> &result) override;
 
-  void ScanKey(const storage::Tuple *key, std::vector<ValueType> &result);
+  void ScanKey(const storage::Tuple *key, std::vector<ValueType> &result) override;
 
-  std::string GetTypeName() const;
+  std::string GetTypeName() const override;
 
-  // TODO: Implement this
-  size_t GetMemoryFootprint() { return 0; }
+  size_t GetMemoryFootprint() { return container.GetMemoryFootprint(); }
 
-  // TODO: Implement this
-  bool NeedGC() { return false; }
+  bool NeedGC() { return container.NeedGC(); }
 
-  // TODO: Implement this
-  void PerformGC() { return; }
+  void PerformGC() {
+    container.PerformGC();
+    return;
+  }
 
  protected:
   // equality checker and comparator
