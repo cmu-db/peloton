@@ -19,6 +19,11 @@
 namespace peloton {
 namespace index {
 
+#define GET_DELETE(addr) (addr & 0x1)
+#define GET_MARK(addr) (addr & 0x2)
+#define SET_DELETE(addr, bit) (addr & (-1 & ~1) | bit)
+#define SET_MARK(addr, bit) (addr & (-1 & ~2) | bit)
+
 /*
  * SKIPLIST_TEMPLATE_ARGUMENTS - Save some key strokes
  */
@@ -39,14 +44,15 @@ class SkipList {
   ///////////////////////////////////////////////////////////////////
   // Core components
   ///////////////////////////////////////////////////////////////////
-  SkipListNode skip_list_head_;
+  SkipListNode *skip_list_head_;
+  SkipListNode *skip_list_tail_;
   EpochManager epoch_manager_;
   NodeManager node_manager_;
 
  public:
   template <typename KeyType, typename ValueType>
   class SkipListNode {
-    SkipListNode *next, *down, back_link;
+    SkipListNode *next, *down, *back_link;
     KeyType key;
     ValueType value;
   };
