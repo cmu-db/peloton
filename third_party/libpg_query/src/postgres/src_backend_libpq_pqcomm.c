@@ -12,7 +12,7 @@
  * These routines handle the low-level details of communication between
  * frontend and backend.  They just shove data across the communication
  * channel, and are ignorant of the semantics of the data --- or would be,
- * except for major brain damage in the design of the old COPY OUT protocol.
+ * except for major indextuner damage in the design of the old COPY OUT protocol.
  * Unfortunately, COPY OUT was designed to commandeer the communication
  * channel (it just transfers data without wrapping it into messages).
  * No other messages can be sent while COPY OUT is in progress; and if the

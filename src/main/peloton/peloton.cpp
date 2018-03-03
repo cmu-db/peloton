@@ -22,6 +22,7 @@
 DECLARE_bool(help);
 
 int main(int argc, char *argv[]) {
+
   // Parse the command line flags
   ::google::ParseCommandLineNonHelpFlags(&argc, &argv, true);
 
