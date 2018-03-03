@@ -4,7 +4,7 @@
 //
 // set_util_test.cpp
 //
-// Identification: test/set_util_test.cpp
+// Identification: test/util/set_util_test.cpp
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //

@@ -61,7 +61,6 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
   txn = txn_manager.BeginTransaction();
   auto source_table = db->GetTableWithName("test_table");
   oid_t col_id = source_table->GetSchema()->GetColumnID(id_column.column_name);
-  LOG_INFO("id: %d", static_cast<int>(col_id));
   std::vector<oid_t> source_col_ids;
   source_col_ids.push_back(col_id);
 
@@ -71,7 +70,6 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
 
   // create index on 'id' and 'first_name'
   col_id = source_table->GetSchema()->GetColumnID(fname_column.column_name);
-  LOG_INFO("fname: %d", static_cast<int>(col_id));
   source_col_ids.push_back(col_id);
 
   catalog->CreateIndex(TEST_DB_NAME, "test_table", source_col_ids,
@@ -166,5 +164,6 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
   // no indexes are affected
   EXPECT_EQ(0, static_cast<int>(affected_indexes.size()));
 }
-}
-}
+
+}  // namespace test
+}  // namespace peloton
