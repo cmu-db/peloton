@@ -23,11 +23,12 @@ namespace index {
 SKIPLIST_TEMPLATE_ARGUMENTS
 SKIPLIST_INDEX_TYPE::SkipListIndex(IndexMetadata *metadata)
     :  // Base class
-      Index{metadata},
-      // Key "less than" relation comparator
-      comparator{},
-      // Key equality checker
-      equals{} {
+    Index{metadata},
+    // Key "less than" relation comparator
+    comparator{},
+    // Key equality checker
+    equals{},
+    container{!metadata->HasUniqueKeys(), 50, comparator, equals} {
   // TODO: Add your implementation here
   return;
 }
@@ -41,11 +42,19 @@ SKIPLIST_INDEX_TYPE::~SkipListIndex() {}
  * If the key value pair already exists in the map, just return false
  */
 SKIPLIST_TEMPLATE_ARGUMENTS
-bool SKIPLIST_INDEX_TYPE::InsertEntry(
-    UNUSED_ATTRIBUTE const storage::Tuple *key,
-    UNUSED_ATTRIBUTE ItemPointer *value) {
-  bool ret = false;
-  // TODO: Add your implementation here
+bool SKIPLIST_INDEX_TYPE::InsertEntry(const storage::Tuple *key,
+                                      ItemPointer *value) {
+
+  KeyType index_key;
+  index_key.SetFromKey(key);
+
+  bool ret = container.Insert(index_key, value);
+
+  LOG_TRACE("InsertEntry(key=%s, val=%s) [%s]",
+            index_key.GetInfo().c_str(),
+            IndexUtil::GetInfo(value).c_str(),
+            (ret ? "SUCCESS" : "FAIL"));
+
   return ret;
 }
 
@@ -55,21 +64,45 @@ bool SKIPLIST_INDEX_TYPE::InsertEntry(
  * If the key-value pair does not exists yet in the map return false
  */
 SKIPLIST_TEMPLATE_ARGUMENTS
-bool SKIPLIST_INDEX_TYPE::DeleteEntry(
-    UNUSED_ATTRIBUTE const storage::Tuple *key,
-    UNUSED_ATTRIBUTE ItemPointer *value) {
-  bool ret = false;
-  // TODO: Add your implementation here
+bool SKIPLIST_INDEX_TYPE::DeleteEntry(const storage::Tuple *key,
+                                      ItemPointer *value) {
+
+  KeyType index_key;
+  index_key.SetFromKey(key);
+
+  // In Delete() since we just use the value for comparison (i.e. read-only)
+  // it is unnecessary for us to allocate memory
+  bool ret = container.Delete(index_key);
+
+  LOG_TRACE("DeleteEntry(key=%s, val=%s) [%s]",
+            index_key.GetInfo().c_str(),
+            IndexUtil::GetInfo(value).c_str(),
+            (ret ? "SUCCESS" : "FAIL"));
   return ret;
 }
 
 SKIPLIST_TEMPLATE_ARGUMENTS
-bool SKIPLIST_INDEX_TYPE::CondInsertEntry(
-    UNUSED_ATTRIBUTE const storage::Tuple *key,
-    UNUSED_ATTRIBUTE ItemPointer *value,
-    UNUSED_ATTRIBUTE std::function<bool(const void *)> predicate) {
-  bool ret = false;
-  // TODO: Add your implementation here
+bool SKIPLIST_INDEX_TYPE::CondInsertEntry(const storage::Tuple *key,
+                                          ItemPointer *value, std::function<bool(const void *)> predicate) {
+  KeyType index_key;
+  index_key.SetFromKey(key);
+
+  bool predicate_satisfied = false;
+
+  // This function will complete them in one step
+  // predicate will be set to nullptr if the predicate
+  // returns true for some value
+  bool ret = container.ConditionalInsert(index_key, value, predicate,
+                                         &predicate_satisfied);
+
+  // If predicate is not satisfied then we know insertion successes
+  if (predicate_satisfied == false) {
+    // So it should always succeed?
+    assert(ret == true);
+  } else {
+    assert(ret == false);
+  }
+
   return ret;
 }
 
