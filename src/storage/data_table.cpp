@@ -350,7 +350,7 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
 
 bool DataTable::InsertTuple(const AbstractTuple *tuple,
     ItemPointer location, concurrency::TransactionContext *transaction,
-    ItemPointer **index_entry_ptr, UNUSED_ATTRIBUTE bool check_fk) {
+    ItemPointer **index_entry_ptr, bool check_fk) {
   if (CheckConstraints(tuple) == false) {
     LOG_TRACE("InsertTuple(): Constraint violated");
     return false;
@@ -591,7 +591,7 @@ bool DataTable::CheckForeignKeySrcAndCascade(storage::Tuple *prev_tuple,
                                              storage::Tuple *new_tuple,
                                              concurrency::TransactionContext *current_txn,
                                              executor::ExecutorContext *context,
-                                             bool is_update UNUSED_ATTRIBUTE)
+                                             bool is_update)
 {
   size_t fk_count = GetForeignKeySrcCount();
 
@@ -739,6 +739,8 @@ bool DataTable::CheckForeignKeySrcAndCascade(storage::Tuple *prev_tuple,
   return true;
 }
 
+// PA - looks like the FIXME has been done. We check to see if the key
+// is visible
 /**
  * @brief Check if all the foreign key constraints on this table
  * is satisfied by checking whether the key exist in the referred table
@@ -753,8 +755,8 @@ bool DataTable::CheckForeignKeySrcAndCascade(storage::Tuple *prev_tuple,
  * @returns True on success, false if any foreign key constraints fail
  */
 bool DataTable::CheckForeignKeyConstraints(
-    const AbstractTuple *tuple UNUSED_ATTRIBUTE,
-    concurrency::TransactionContext *transaction UNUSED_ATTRIBUTE) {
+    const AbstractTuple *tuple,
+    concurrency::TransactionContext *transaction) {
   for (auto foreign_key : foreign_keys_) {
     oid_t sink_table_id = foreign_key->GetSinkTableOid();
     storage::DataTable *ref_table = nullptr;
@@ -774,7 +776,6 @@ bool DataTable::CheckForeignKeyConstraints(
 
       // The foreign key constraints only refer to the primary key
       if (index->GetIndexType() == IndexConstraintType::PRIMARY_KEY) {
-
         std::vector<oid_t> key_attrs = foreign_key->GetSinkColumnIds();
         std::unique_ptr<catalog::Schema> foreign_key_schema(
             catalog::Schema::CopySchema(ref_table->schema, key_attrs));
@@ -783,11 +784,10 @@ bool DataTable::CheckForeignKeyConstraints(
         key->SetFromTuple(tuple, foreign_key->GetSourceColumnIds(), index->GetPool());
 
         LOG_TRACE("check key: %s", key->GetInfo().c_str());
-
         std::vector<ItemPointer *> location_ptrs;
         index->ScanKey(key.get(), location_ptrs);
 
-        // if this key doesn't exist in the refered column
+        // if this key doesn't exist in the referred column
         if (location_ptrs.size() == 0) {
           LOG_DEBUG("The key: %s does not exist in table %s\n",
                     key->GetInfo().c_str(),
