@@ -19,6 +19,7 @@
 #include <functional>
 #include <thread>
 #include <tuple>
+#include <atomic>
 
 namespace peloton {
 namespace index {
@@ -41,6 +42,7 @@ class SkipList {
   class EpochManager;
   class ForwardIterator;
   class ReversedIterator;
+  class OperationContext;
 
  private:
   ///////////////////////////////////////////////////////////////////
@@ -57,7 +59,8 @@ class SkipList {
    *
    * The return value is a list of search results.
    */
-  std::vector<SkipListBaseNode *> Search(const KeyType &key) {
+  std::vector<SkipListBaseNode *> Search(const KeyType &key,
+                                         OperationContext &ctx) {
     return SearchFrom(key, skip_list_head_);
   }
 
@@ -68,7 +71,8 @@ class SkipList {
    *
    */
   std::vector<SkipListBaseNode *> SearchFrom(const KeyType &key,
-                                             const SkipListBaseNode *Node) {
+                                             const SkipListBaseNode *Node,
+                                             OperationContext &ctx) {
     return std::vector<SkipListBaseNode *>{};
   }
 
@@ -77,30 +81,37 @@ class SkipList {
    *
    * The return value is a indicator of success or not
    */
-  bool InsertNode(const KeyType &key, const ValueType &value) { return false; }
+  bool InsertNode(const KeyType &key, const ValueType &value,
+                  OperationContext &ctx) {
+    return false;
+  }
 
   /*
    * DeleteNode() - Delete certain key from the skip-list
    *
    * The return value is the node deleted or NULL if failed to delete
    */
-  SkipListBaseNode *DeleteNode(const KeyType &key) { return nullptr; }
+  SkipListBaseNode *DeleteNode(const KeyType &key, OperationContext &ctx) {
+    return nullptr;
+  }
 
   /*
    * HelpDeleted() Attempts to physically delete the del_node and unflag
    * prev_node
    */
-  void HelpDeleted(SkipListBaseNode *prev_node, SkipListBaseNode *del_node) {}
+  void HelpDeleted(SkipListBaseNode *prev_node, SkipListBaseNode *del_node,
+                   OperationContext &ctx) {}
 
   /*
    * HelpFlagged() - Attempts to mark and physically delete del_node
    */
-  void HelpFlagged(SkipListBaseNode *prev_node, SkipListBaseNode *del_node) {}
+  void HelpFlagged(SkipListBaseNode *prev_node, SkipListBaseNode *del_node,
+                   OperationContext &ctx) {}
 
   /*
    * TryDelete() Attempts to mark the node del node.
    */
-  void TryDelete(SkipListBaseNode *del_node) {}
+  void TryDelete(SkipListBaseNode *del_node, OperationContext &ctx) {}
 
   /*
    * TryFlag() - Attempts to flag the prev_node, which is the last node known to
@@ -109,7 +120,8 @@ class SkipList {
    * The return value is a tuple of deleted node and the success indicator
    */
   std::tuple<SkipListBaseNode *, bool> TryFlag(SkipListBaseNode *prev_node,
-                                               SkipListBaseNode *target_node) {
+                                               SkipListBaseNode *target_node,
+                                               OperationContext &ctx) {
     return std::tuple<SkipListBaseNode *, bool>{};
   }
 
@@ -142,7 +154,7 @@ class SkipList {
   template <typename KeyType, typename ValueType>
   class SkipListBaseNode {
    public:
-    SkipListBaseNode *next_, *down_, *back_link_;
+    std::atomic<SkipListBaseNode *> next_, down_, back_link_;
     KeyType key_;
     bool isHead_;
     SkipListBaseNode(SkipListBaseNode *next, SkipListBaseNode *down,
@@ -173,11 +185,22 @@ class SkipList {
       this->valueOrRoot.root = root;
     }
 
+    ValueType &GetValue() {
+      PL_ASSERT(this->down == NULL);
+      return this->valueOrRoot.value;
+    }
+
+    std::atomic<SkipListInnerNode *> &GetRoot() {
+      PL_ASSERT(this->down != NULL);
+      return this->valueOrRoot.root;
+    }
+
+   private:
     // value when down is null
     // otherwise root
     union valueOrRoot {
       ValueType value;
-      SkipListInnerNode *root;
+      std::atomic<SkipListInnerNode *> root;
     };
   };
 
@@ -360,7 +383,7 @@ class SkipList {
    public:
     class EpochNode;
 
-    bool AddGarbageNode(SkipListNode *node);
+    bool AddGarbageNode(EpochNode *epoch_node, SkipListNode *node);
     /*
      * return the current EpochNode
      * need to add the reference count of current EpochNode
@@ -402,10 +425,22 @@ class SkipList {
     SkipListNode *GetSkipListNode();
     void ReturnSkipListNode(SkipListNode *node);
 
-    int NodeNum;
+    std::atomic<int> NodeNum;
+  };
+
+  /*
+   * OperationContext - maintains info and context of each thread
+   *
+   * EpochNode: the epoch node that the thread is in
+   */
+  class OperationContext {
+   public:
+    EpochManager::EpochNode *epoch_node_;
+    OperationContext(EpochManager::EpochNode *epoch_node)
+        : epoch_node_(epoch_node);
+    {}
   };
 };
-
 }  // namespace index
 }  // namespace peloton
 
