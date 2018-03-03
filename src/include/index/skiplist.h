@@ -76,6 +76,28 @@ class SkipList {
   }
 
   /*
+   * Search() - Search the first interval that node1.key<key and key<=node2.key
+   * 
+   * the return value is a pair of node1,node2
+   */ 
+  std::tuple<SkipListBaseNode *, SkiplListBaseNode *> Search(const KeyType &key,
+                                                       OperationContext &ctx){
+    return std::tuple<SkipListBaseNode *, SkipListBaseNode *>{};                                                  
+  } 
+  
+  /*
+   * SearchFrom() - Search the first interval that node1.key<key and key<=node2.key
+   * from given skip list node
+   * 
+   * the return value is a pair of node1, node2
+   */ 
+  std::tuple<SkipListBaseNode *, SkipListBaseNode *> SearchFrom(const KeyTpe &key,
+                                                                const SkipListBaseNode *Node,
+                                                                OperationContext &ctx){
+    return std::tuple<SkipListBaseNode *, SkipListBaseNode *>{};                                                                  
+  }
+
+  /*
    * InsertNode() - Insert key value tuple to the skip-list
    *
    * The return value is a indicator of success or not
