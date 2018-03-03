@@ -49,7 +49,7 @@ class SkipList {
   ///////////////////////////////////////////////////////////////////
   // Core components
   ///////////////////////////////////////////////////////////////////
-  SkipListBaseNode *skip_list_head_;
+  std::atomic<SkipListBaseNode *> skip_list_head_;
   EpochManager epoch_manager_;
   NodeManager node_manager_;
   bool duplicate_support_;
@@ -77,22 +77,53 @@ class SkipList {
    * Search() - Search the first interval that node1.key<key and key<=node2.key
    * 
    * the return value is a pair of node1,node2
-   */ 
-  std::tuple<SkipListBaseNode *, SkipListBaseNode *> Search(const KeyType &key,
+   * if duplicate is available, the node1 is the last node among all duplicators
+   * with dup.key==node1.key as well as the node2 is the first of its duplicators
+   *
+   * NOTE: the second pointer might be nullptr!!!!!!!!
+   */
+  std::pair<SkipListBaseNode *, SkipListBaseNode *> Search(const KeyType &key,
                                                        OperationContext &ctx){
-    return std::tuple<SkipListBaseNode *, SkipListBaseNode *>{};                                                  
+    SkipListBaseNode *headNode = this->skip_list_head_;
+    while (headNode->down_!=nullptr){
+      auto sr = SearchFrom(key,headNode,ctx);
+      headNode = sr.first;
+      if (headNode->down_==nullptr) {
+        return sr;
+      }
+    }
+    return std::pair<SkipListBaseNode *, SkipListBaseNode *>{};
   } 
   
   /*
    * SearchFrom() - Search the first interval that node1.key<key and key<=node2.key
    * from given skip list node
    * 
-   * the return value is a pair of node1, node2
-   */ 
-  std::tuple<SkipListBaseNode *, SkipListBaseNode *> SearchFrom(const KeyType &key,
+   * The return value is a pair of node1, node2
+   * For duplicate enabled skiplist, the return value is the same as Search()
+   * There is no guarantee that the nodes would be succeed after being returned
+   *
+   * Call this function again in insert and delete if the node pair is not consistent
+   */
+  std::pair<SkipListBaseNode *, SkipListBaseNode *> SearchFrom(const KeyType &key,
                                                                 const SkipListBaseNode *Node,
                                                                 OperationContext &ctx){
-    return std::tuple<SkipListBaseNode *, SkipListBaseNode *>{};                                                                  
+    PL_ASSERT(Node != nullptr);
+    SkipListBaseNode *curr_node = static_cast<SkipListBaseNode *>(Node);
+    SkipListBaseNode *next_node;
+    while (curr_node){
+      if (curr_node->next_.load() == nullptr){
+        return std::make_pair(curr_node, nullptr);
+      }else{
+        next_node = curr_node->next_.load();
+        if (KeyCmpGreaterEqual(next_node->key_, key)){
+          return std::make_pair(curr_node, next_node);
+        }else{
+          curr_node = next_node;
+        }
+      }
+    }
+    return std::pair<SkipListBaseNode *, SkipListBaseNode *>{};
   }
 
   /*
