@@ -84,15 +84,16 @@ class SkipList {
    */
   std::pair<SkipListBaseNode *, SkipListBaseNode *> Search(const KeyType &key,
                                                        OperationContext &ctx){
-    SkipListBaseNode *headNode = this->skip_list_head_;
-    while (headNode->down_!=nullptr){
+    SkipListBaseNode *headNode = this->skip_list_head_.load();
+    while (1){
       auto sr = SearchFrom(key,headNode,ctx);
       headNode = sr.first;
-      if (headNode->down_==nullptr) {
+      if (headNode->down_.load() == nullptr) {
         return sr;
+      } else {
+        headNode = headNode->down_.load();
       }
     }
-    return std::pair<SkipListBaseNode *, SkipListBaseNode *>{};
   } 
   
   /*
@@ -476,8 +477,19 @@ class SkipList {
    */
   class NodeManager {
    public:
-    SkipListBaseNode *GetSkipListNode();
-    void ReturnSkipListNode(SkipListBaseNode *node);
+    SkipListBaseNode *GetSkipListNode(KeyType key, bool isHead){
+      NodeNum.fetch_add(1);
+      return new SkipListBaseNode(nullptr, nullptr, nullptr, key, isHead);
+    }
+    SkipListBaseNode *GetSkipListNode(SkipListBaseNode *next, SkipListBaseNode *down,
+                                      SkipListBaseNode *back_link, KeyType key, bool isHead){
+      NodeNum.fetch_add(1);
+      return new SkipListBaseNode(next, down, back_link, key, isHead);
+    }
+    void ReturnSkipListNode(SkipListBaseNode *node) {
+      NodeNum.fetch_sub(1);
+      delete node;
+    }
 
     std::atomic<int> NodeNum;
   };
