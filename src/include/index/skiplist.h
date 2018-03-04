@@ -152,11 +152,13 @@ class SkipList {
    *  call_stack: used for storing the path
    *  key: the search key
    *  curr_node: the same as SearchFrom, but please send in a SkipListHead
-   *  expected_stored_level: from which level the function starts to record the path, default to start recording from
+   *  expected_stored_level: from which level the function starts to record the
+   *path, default to start recording from
    *  curr_node's level
    *
    * The lowest level starts from 0, the search would start from the curr_node
-   * The function defaults to store all nodes in the path from the head to target node
+   * The function defaults to store all nodes in the path from the head to
+   *target node
    *
    * returns nothing but will store the path at call_stack
    */
@@ -240,8 +242,8 @@ class SkipList {
         key_cmp_obj_{key_cmp_obj},
         key_eq_obj_{key_eq_obj}
 
-        // Value equality checker and hasher
-        {
+  // Value equality checker and hasher
+  {
     LOG_TRACE("SkipList constructed!");
   }
 
@@ -432,7 +434,7 @@ class SkipList {
   const KeyEqualityChecker key_eq_obj_;
 
   // Check whether values are equivalent
-  //const ValueEqualityChecker value_eq_obj_;
+  // const ValueEqualityChecker value_eq_obj_;
 
   ///////////////////////////////////////////////////////////////////
   // Key Comparison Member Functions
@@ -579,7 +581,6 @@ class SkipList {
       return tmp;
     }
     void ReturnSkipListNode(SkipListBaseNode *node) { delete node; }
-
   };
 
   /*
