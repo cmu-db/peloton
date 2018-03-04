@@ -137,7 +137,7 @@ class SkipList {
     while (curr_node) {
       SkipListBaseNode *tmp_pointer = curr_node->next_.load();
       if (GET_FLAG(tmp_pointer)) {
-        HelpFlagged(curr_node, GET_NEXT(tmp_pointer), ctx);
+        HelpFlagged(curr_node, GET_NEXT(curr_node), ctx);
       } else if ((GET_DELETE(tmp_pointer))) {
         curr_node = curr_node->back_link_.load();
       } else if (tmp_pointer == nullptr) {
