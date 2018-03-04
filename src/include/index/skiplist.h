@@ -19,18 +19,22 @@
 #include <functional>
 #include <thread>
 #include <tuple>
+#include <deque>
 
 #include "index/index.h"
 
 namespace peloton {
 namespace index {
 
-#define GET_DELETE(addr) ((addr)&1)
-#define GET_MARK(addr) ((addr)&2)
-#define SET_DELETE(addr, bit) ((addr) & ~1 | (bit))
-#define SET_MARK(addr, bit) ((addr) & ~2 | ((bit) << 1))
+#define GET_DELETE(addr) (((word)(addr)) & 1ll)
+#define GET_FLAG(addr) (((word)(addr)) & 2ll)
+#define SET_DELETE(addr, bit) (((word)(addr)) & ~1ll | (bit))
+#define SET_FLAG(addr, bit) (((word)(addr)) & ~2ll | ((bit) << 1)
+#define GET_NEXT(node) \
+  static_cast<SkipListBaseNode *>((word)((node)->next_) & ~3ll)
 
 #define SKIP_LIST_INITIAL_MAX_LEVEL_ 10
+typedef u_int64_t word;
 /*
  * SKIPLIST_TEMPLATE_ARGUMENTS - Save some key strokes
  */
@@ -42,9 +46,11 @@ template <typename KeyType, typename ValueType, typename KeyComparator,
 class SkipList {
   class NodeManager;
   class EpochManager;
-  class ForwardIterator;
-  class ReversedIterator;
   class OperationContext;
+  template <typename KeyType, typename ValueType>
+  class SkipListBaseNode;
+  template <typename KeyType, typename ValueType>
+  class SkipListInnerNode;
 
  private:
   ///////////////////////////////////////////////////////////////////
@@ -64,7 +70,7 @@ class SkipList {
    */
   bool Get(const KeyType &key, std::vector<SkipListBaseNode *> &node_list,
            OperationContext &ctx) {
-    return GetFrom(key, skip_list_head_, node_list, ctx);
+    return GetFrom(key, skip_list_head_.load(), node_list, ctx);
   }
 
   /*
@@ -105,32 +111,35 @@ class SkipList {
 
   /*
    * SearchFrom() - Search the first interval that node1.key<key and
-   *key<=node2.key
+   * key<=node2.key
    * from given skip list node
    *
    * The return value is a pair of node1, node2
    * For duplicate enabled skiplist, the type of return value is the same as
-   *Search()
+   * Search()
    * There is no guarantee that the nodes would be succeed after being returned
    *
    * Call this function again in insert and delete if the node pair is not
-   *consistent (node1.next!=node2)
+   * consistent (node1.next!=node2)
    */
   std::pair<SkipListBaseNode *, SkipListBaseNode *> SearchFrom(
       const KeyType &key, const SkipListBaseNode *Node, OperationContext &ctx) {
     // TODO: physically deletion when search in the list
     PL_ASSERT(Node != nullptr);
     SkipListBaseNode *curr_node = static_cast<SkipListBaseNode *>(Node);
-    SkipListBaseNode *next_node;
     while (curr_node) {
-      if (curr_node->next_.load() == nullptr) {
+      SkipListBaseNode *tmp_pointer = curr_node->next_.load();
+      if (GET_FLAG(tmp_pointer)) {
+        HelpFlagged(curr_node, GET_NEXT(tmp_pointer), ctx);
+      } else if ((GET_DELETE(tmp_pointer))) {
+        curr_node = curr_node->back_link_.load();
+      } else if (tmp_pointer == nullptr) {
         return std::make_pair(curr_node, nullptr);
       } else {
-        next_node = curr_node->next_.load();
-        if (KeyCmpGreaterEqual(next_node->key_, key)) {
-          return std::make_pair(curr_node, next_node);
+        if (KeyCmpGreaterEqual(tmp_pointer->key_, key)) {
+          return std::make_pair(curr_node, tmp_pointer);
         } else {
-          curr_node = next_node;
+          curr_node = tmp_pointer;
         }
       }
     }
@@ -138,12 +147,49 @@ class SkipList {
   }
 
   /*
+   * SearchWithPath() - Search the skiplist for the key, would store the path of
+   *every level
+   *
+   * @param:
+   *  call_stack: used for storing the path
+   *  key: the search key
+   *  curr_node: the same as SearchFrom, but please send in a SkipListHead
+   *  expected_stored_level: from which level the function starts to record the
+   *path, default to start recording from
+   *  curr_node's level
+   *
+   * The lowest level starts from 0, the search would start from the curr_node
+   * The function defaults to store all nodes in the path from the head to
+   *target node
+   *
+   * returns nothing but will store the path at call_stack
+   */
+  void SearchWithPath(
+      std::vector<std::pair<SkipListBaseNode *, SkipListBaseNode *>> &
+          call_stack,
+      KeyType &key, SkipListBaseNode *curr_node, OperationContext &ctx,
+      u_int32_t expected_stored_level = curr_node->level_) {
+    int level_now = curr_node->level_;
+    call_stack.resize(expected_stored_level + 1);
+    while (level_now >= 0) {
+      if (level_now <= expected_stored_level) {
+        call_stack[level_now] = SearchFrom(key, curr_node, ctx);
+        curr_node = call_stack[level_now].first->down_.load();
+      } else {
+        auto tmp_pair = SearchFrom(key, curr_node, ctx);
+        curr_node = tmp_pair.first->down_.load();
+      }
+      level_now--;
+    }
+  }
+  /*
    * InsertNode() - Insert key value tuple to the skip-list
    *
    * The return value is a indicator of success or not
    */
   bool InsertNode(const KeyType &key, const ValueType &value,
                   OperationContext &ctx) {
+    u_int32_t expected_level = 0;
     return false;
   }
 
@@ -209,12 +255,12 @@ class SkipList {
    * struct shouldn't exceed 64 bytes -- cache line
    * possible optimization: add a direct link to the root of the skiplist
    */
-  template <typename KeyType, typename ValueType>
   class SkipListBaseNode {
    public:
     std::atomic<SkipListBaseNode *> next_, down_, back_link_;
     KeyType key_;
     bool isHead_;
+    u_int32_t level_;
     SkipListBaseNode(SkipListBaseNode *next, SkipListBaseNode *down,
                      SkipListBaseNode *back_link, KeyType key, bool isHead)
         : next_(next),
@@ -222,6 +268,16 @@ class SkipList {
           back_link_(back_link),
           key_(key),
           isHead_(isHead) {}
+    SkipListBaseNode(SkipListBaseNode *next, SkipListBaseNode *down,
+                     SkipListBaseNode *back_link, KeyType key, bool isHead,
+                     u_int32_t level)
+        : next_(next),
+          down_(down),
+          back_link_(back_link),
+          key_(key),
+          isHead_(isHead),
+          level_(level) {}
+    virtual ~SkipListBaseNode(){};
   };
 
   template <typename KeyType, typename ValueType>
@@ -230,7 +286,10 @@ class SkipList {
     SkipListInnerNode(SkipListBaseNode *next, SkipListBaseNode *down,
                       SkipListBaseNode *back_link, KeyType key, bool isHead)
         : SkipListBaseNode(next, down, back_link, key, isHead) {}
-
+    SkipListInnerNode(SkipListBaseNode *next, SkipListBaseNode *down,
+                      SkipListBaseNode *back_link, KeyType key, bool isHead,
+                      u_int32_t level)
+        : SkipListBaseNode(next, down, back_link, key, isHead, level) {}
     // set the union value
     void SetValue(ValueType value) {
       PL_ASSERT(this->down_ == NULL);
@@ -424,7 +483,7 @@ class SkipList {
   inline bool KeyCmpLessEqual(const KeyType &key1, const KeyType &key2) const {
     return !KeyCmpGreater(key1, key2);
   }
-
+  
   // maintains Epoch
   // has a inside linked list in which every node represents an epoch
   class EpochManager {
@@ -470,23 +529,41 @@ class SkipList {
    */
   class NodeManager {
    public:
+    /*
+     * GetSkipListNode() - getSkipListNode with only key and isHead settled
+     */
     SkipListBaseNode *GetSkipListNode(KeyType key, bool isHead) {
-      NodeNum.fetch_add(1);
       return new SkipListBaseNode(nullptr, nullptr, nullptr, key, isHead);
     }
+    /*
+     * GetSkipListNode() - get SkipListNode full equiped
+     */
     SkipListBaseNode *GetSkipListNode(SkipListBaseNode *next,
                                       SkipListBaseNode *down,
                                       SkipListBaseNode *back_link, KeyType key,
                                       bool isHead) {
-      NodeNum.fetch_add(1);
       return new SkipListBaseNode(next, down, back_link, key, isHead);
     }
-    void ReturnSkipListNode(SkipListBaseNode *node) {
-      NodeNum.fetch_sub(1);
-      delete node;
+    /*
+     * GetSkipListInnerNode() - get a SkipListInnerNode using key and value
+     */
+    SkipListInnerNode *GetSkipListInnerNode(KeyType key, ValueType value) {
+      auto tmp = new SkipListInnerNode(nullptr, nullptr, nullptr, key, false);
+      tmp->SetValue(value);
+      return tmp;
     }
-
-    std::atomic<int> NodeNum;
+    /*
+     * GetSkipListInnerNode() - get a SkipListInnerNode using key and root
+     * pointer
+     */
+    SkipListInnerNode *GetSkipListInnerNode(KeyType key,
+                                            SkipListInnerNode *root,
+                                            SkipListInnerNode *down) {
+      auto tmp = new SkipListInnerNode(nullptr, down, nullptr, key, false);
+      tmp->SetRoot(root);
+      return tmp;
+    }
+    void ReturnSkipListNode(SkipListBaseNode *node) { delete node; }
   };
 
   /*
