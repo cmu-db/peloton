@@ -46,9 +46,11 @@ template <typename KeyType, typename ValueType, typename KeyComparator,
 class SkipList {
   class NodeManager;
   class EpochManager;
-  class ForwardIterator;
-  class ReversedIterator;
   class OperationContext;
+  template <typename KeyType, typename ValueType>
+  class SkipListBaseNode;
+  template <typename KeyType, typename ValueType>
+  class SkipListInnerNode;
 
  private:
   ///////////////////////////////////////////////////////////////////
@@ -68,7 +70,7 @@ class SkipList {
    */
   bool Get(const KeyType &key, std::vector<SkipListBaseNode *> &node_list,
            OperationContext &ctx) {
-    return GetFrom(key, skip_list_head_, node_list, ctx);
+    return GetFrom(key, skip_list_head_.load(), node_list, ctx);
   }
 
   /*
@@ -380,7 +382,6 @@ class SkipList {
    * struct shouldn't exceed 64 bytes -- cache line
    * possible optimization: add a direct link to the root of the skiplist
    */
-  template <typename KeyType, typename ValueType>
   class SkipListBaseNode {
    public:
     std::atomic<SkipListBaseNode *> next_, down_, back_link_;
