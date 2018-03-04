@@ -17,9 +17,41 @@
 #include "common/logger.h"
 #include "network/peloton_server.h"
 #include "settings/settings_manager.h"
+#include "brain/brain.h"
 
 // For GFlag's built-in help message flag
 DECLARE_bool(help);
+
+void RunPelotonEngine() {
+  try {
+    // Setup
+    peloton::PelotonInit::Initialize();
+
+    peloton::network::PelotonServer peloton_server;
+
+    peloton::network::PelotonServer::LoadSSLFileSettings();
+    peloton::network::PelotonServer::SSLInit();
+
+    peloton_server.SetupServer().ServerLoop();
+  } catch (peloton::ConnectionException &exception) {
+    // Nothing to do here!
+  }
+
+  // Teardown
+  peloton::PelotonInit::Shutdown();
+}
+
+
+void RunPelotonBrain() {
+  // TODO(tianyu): boot up other peloton resources as needed here
+  peloton::brain::Brain brain;
+  evthread_use_pthreads();
+  // TODO(tianyu): register jobs here
+  struct timeval *one_minute;
+  one_minute->tv_sec = 60;
+  brain.RegisterJob(one_minute, "test", peloton::brain::BrainJob());
+  brain.Run();
+}
 
 int main(int argc, char *argv[]) {
 
@@ -39,22 +71,10 @@ int main(int argc, char *argv[]) {
     settings.ShowInfo();
   }
 
-  try {
-    // Setup
-    peloton::PelotonInit::Initialize();
-
-    peloton::network::PelotonServer peloton_server;
-
-    peloton::network::PelotonServer::LoadSSLFileSettings();
-    peloton::network::PelotonServer::SSLInit();
-
-    peloton_server.SetupServer().ServerLoop();
-  } catch (peloton::ConnectionException &exception) {
-    // Nothing to do here!
-  }
-
-  // Teardown
-  peloton::PelotonInit::Shutdown();
-
+  if (peloton::settings::SettingsManager::GetBool(
+      peloton::settings::SettingId::brain))
+    RunPelotonBrain();
+  else
+    RunPelotonEngine();
   return 0;
 }
