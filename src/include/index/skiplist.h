@@ -18,7 +18,6 @@
 #include <atomic>
 #include <functional>
 #include <thread>
-#include <tuple>
 #include <deque>
 
 #include "index/index.h"
@@ -33,6 +32,9 @@ namespace index {
 #define SET_FLAG(addr, bit) ((WORD((addr))) & ~2ll | ((bit) << 1)
 #define GET_NEXT(node) \
   static_cast<SkipListBaseNode *>(WORD(((node)->next_)) & ~3ll)
+
+#define NODE_PAIR std::pair<SkipListBaseNode *, SkipListBaseNode *>
+#define NODE_LIST std::vector<SkipListBaseNode *>
 
 #define SKIP_LIST_INITIAL_MAX_LEVEL_ 10
 
@@ -73,8 +75,7 @@ class SkipList {
    *
    * The return value is a indicator of the success get
    */
-  bool Get(const KeyType &key, std::vector<SkipListBaseNode *> &node_list,
-           OperationContext &ctx) {
+  bool Get(const KeyType &key, NODE_LIST &node_list, OperationContext &ctx) {
     return GetFrom(key, skip_list_head_.load(), node_list, ctx);
   }
 
@@ -83,9 +84,9 @@ class SkipList {
    *
    * The return value is a indicator of the success get from
    */
-  bool GetFrom(const KeyType & UNUSED(key), const SkipListBaseNode* UNUSED(Node),
-               std::vector<SkipListBaseNode *> &UNUSED(node_list),
-               OperationContext &UNUSED(ctx)) {
+
+  bool GetFrom(const KeyType &key, const SkipListBaseNode *Node,
+               NODE_LIST &node_list, OperationContext &ctx) {
     return false;
   }
 
@@ -99,8 +100,7 @@ class SkipList {
    *
    * NOTE: the second pointer might be nullptr!!!!!!!!
    */
-  std::pair<SkipListBaseNode *, SkipListBaseNode *> Search(
-      const KeyType &key, OperationContext &ctx) {
+  NODE_PAIR Search(const KeyType &key, OperationContext &ctx) {
     SkipListBaseNode *headNode = this->skip_list_head_.load();
     while (1) {
       auto sr = SearchFrom(key, headNode, ctx);
@@ -115,22 +115,24 @@ class SkipList {
   }
 
   /*
-   * SearchFrom() - Search the first interval that node1.key<key and
-   * key<=node2.key
+   * SearchFrom() - Search the first interval that node1.key < key and
+   * key <= node2.key
    * from given skip list node
    *
    * The return value is a pair of node1, node2
-   * For duplicate enabled skiplist, the type of return value is the same as
+   * For duplicate enabled skip list, the type of return value is the same as
    * Search()
    * There is no guarantee that the nodes would be succeed after being returned
    *
    * Call this function again in insert and delete if the node pair is not
-   * consistent (node1.next!=node2)
+   * consistent (node1.next != node2)
    */
-  std::pair<SkipListBaseNode *, SkipListBaseNode *> SearchFrom(
-      const KeyType &key, const SkipListBaseNode *Node, OperationContext &ctx) {
+  NODE_PAIR SearchFrom(const KeyType &key, const SkipListBaseNode *Node,
+                       OperationContext &ctx) {
     // TODO: physically deletion when search in the list
-    PL_ASSERT(Node != nullptr);
+    if (Node == nullptr){
+      return nullptr;
+    }
     SkipListBaseNode *curr_node = static_cast<SkipListBaseNode *>(Node);
     while (curr_node) {
       SkipListBaseNode *tmp_pointer = curr_node->next_.load();
@@ -175,13 +177,13 @@ class SkipList {
     expected_stored_level = expected_stored_level==0? curr_node->level_:expected_stored_level;
     u_int32_t level_now = curr_node->level_;
     call_stack.resize(expected_stored_level + 1);
+
     while (level_now >= 0) {
       if (level_now <= expected_stored_level) {
         call_stack[level_now] = SearchFrom(key, curr_node, ctx);
         curr_node = call_stack[level_now].first->down_.load();
       } else {
-        auto tmp_pair = SearchFrom(key, curr_node, ctx);
-        curr_node = tmp_pair.first->down_.load();
+        curr_node = SearchFrom(key, curr_node, ctx).first->down_.load();
       }
       level_now--;
     }
@@ -197,12 +199,46 @@ class SkipList {
   }
 
   /*
-   * DeleteNode() - Delete certain key from the skip-list
+   * DeleteNode() - Delete certain key from the skip-list and fill in the
+   *deleted nodes to del_nodes
    *
-   * The return value is the node deleted or NULL if failed to delete
+   * The return value is the list of node deleted or NULL if failed to delete
    */
-  SkipListBaseNode *DeleteNode(const KeyType &key, OperationContext &ctx) {
-    return nullptr;
+  bool DeleteNode(const KeyType &key, NODE_LIST del_nodes,
+                  OperationContext &ctx) {
+    auto pair = Search(key, ctx);
+    SkipListBaseNode *prev_node = pair.first;
+    SkipListBaseNode *del_node = pair.second;
+
+    // No such key
+    while (del_node != nullptr) {
+      // Tries to flag the prev node
+      auto flag_pair = TryFlag(prev_node, del_node, ctx);
+      prev_node = flag_pair.first;
+      bool result = flag_pair.second;
+      // Attempts to remove the del_node from list
+      if (prev_node != nullptr) {
+        HelpFlagged(prev_node, del_node, ctx);
+      }
+      // Node deleted by this process
+      if (result) {
+        del_nodes.push_back(del_node);
+      }
+
+      // Cleanup the superfluous nodes
+      std::vector<NODE_PAIR> call_stack;
+      SearchWithPath(call_stack, key, skip_list_head_.load(), ctx);
+      for (auto node : call_stack) {
+        SearchFrom(key, node, ctx);
+      }
+
+      // Continue searching duplicate key
+      auto new_pair = SearchFrom(key, prev_node, ctx);
+      prev_node = new_pair.first;
+      del_node = new_pair.second;
+    }
+
+    return del_nodes.size() > 0;
   }
 
   /*
@@ -232,10 +268,10 @@ class SkipList {
    *
    * The return value is a tuple of deleted node and the success indicator
    */
-  std::tuple<SkipListBaseNode *, bool> TryFlag(SkipListBaseNode *prev_node,
-                                               SkipListBaseNode *target_node,
-                                               OperationContext &ctx) {
-    return std::tuple<SkipListBaseNode *, bool>{};
+  std::pair<SkipListBaseNode *, bool> TryFlag(SkipListBaseNode *prev_node,
+                                              SkipListBaseNode *target_node,
+                                              OperationContext &ctx) {
+    return std::pair<SkipListBaseNode *, bool>{};
   }
 
  public:
@@ -245,7 +281,8 @@ class SkipList {
       : duplicate_support_(duplicate),
         GC_Interval_(GC_Interval),
         max_level_(SKIP_LIST_INITIAL_MAX_LEVEL_),
-        // Key comparator, equality checker and hasher
+
+        // Key comparator, equality checker
         key_cmp_obj_{key_cmp_obj},
         key_eq_obj_{key_eq_obj}
 
@@ -270,6 +307,7 @@ class SkipList {
     KeyType key_;
     bool isHead_;
     u_int32_t level_;
+
     SkipListBaseNode(SkipListBaseNode *next, SkipListBaseNode *down,
                      SkipListBaseNode *back_link, KeyType key, bool isHead)
         : next_(next),
@@ -277,6 +315,7 @@ class SkipList {
           back_link_(back_link),
           key_(key),
           isHead_(isHead) {}
+
     SkipListBaseNode(SkipListBaseNode *next, SkipListBaseNode *down,
                      SkipListBaseNode *back_link, KeyType key, bool isHead,
                      u_int32_t level)
@@ -286,6 +325,7 @@ class SkipList {
           key_(key),
           isHead_(isHead),
           level_(level) {}
+
     virtual ~SkipListBaseNode(){};
   };
 
@@ -298,6 +338,7 @@ class SkipList {
                       SkipListBaseNode *back_link, KeyType key, bool isHead,
                       u_int32_t level)
         : SkipListBaseNode(next, down, back_link, key, isHead, level) {}
+
     // set the union value
     void SetValue(ValueType value) {
       PL_ASSERT(this->down_ == nullptr);
@@ -379,9 +420,10 @@ class SkipList {
     LOG_TRACE("Delete called!");
     auto *epoch_node_p = epoch_manager_.JoinEpoch();
     OperationContext ctx{epoch_node_p};
-    SkipListBaseNode *node = DeleteNode(key, ctx);
+    std::vector<SkipListBaseNode *> del_nodes;
+    bool ret = DeleteNode(key, del_nodes, ctx);
     epoch_manager_.LeaveEpoch(epoch_node_p);
-    return node != nullptr;
+    return ret;
   }
 
   /*
