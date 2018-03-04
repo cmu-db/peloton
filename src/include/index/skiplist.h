@@ -166,11 +166,9 @@ class SkipList {
    *
    * returns nothing but will store the path at call_stack
    */
-  void SearchWithPath(
-      std::vector<std::pair<SkipListBaseNode *, SkipListBaseNode *>> &
-          call_stack,
-      const KeyType &key, SkipListBaseNode *curr_node, OperationContext &ctx,
-      u_int32_t expected_stored_level = 0) {
+  void SearchWithPath(std::vector<NODE_PAIR> &call_stack, const KeyType &key,
+                      SkipListBaseNode *curr_node, OperationContext &ctx,
+                      u_int32_t expected_stored_level = 0) {
     expected_stored_level =
         expected_stored_level == 0 ? curr_node->level_ : expected_stored_level;
     u_int32_t level_now = curr_node->level_;
