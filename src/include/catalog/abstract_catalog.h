@@ -81,7 +81,7 @@ class AbstractCatalog {
   //===--------------------------------------------------------------------===//
 
   // Maximum column name size for catalog schemas
-  static const size_t max_name_size = 32;
+  static const size_t max_name_size = 64;
 
   // Local oid (without catalog type mask) starts from START_OID + OID_OFFSET
   std::atomic<oid_t> oid_ = ATOMIC_VAR_INIT(START_OID + OID_OFFSET);

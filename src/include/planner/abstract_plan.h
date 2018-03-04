@@ -78,6 +78,9 @@ class AbstractPlan : public Printable {
 
   // Setting values of the parameters in the prepare statement
   virtual void SetParameterValues(std::vector<type::Value> *values);
+
+  // FIXME. Clear the value_ vector.
+  virtual void ClearParameterValues() {};
   
   // Get the estimated cardinality of this plan
   int GetCardinality() const { return estimated_cardinality_; }

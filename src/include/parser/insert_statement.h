@@ -24,7 +24,7 @@ namespace parser {
  * @brief Represents "INSERT INTO students VALUES ('Max', 1112233,
  * 'Musterhausen', 2.3)"
  */
-class InsertStatement : SQLStatement {
+class InsertStatement : public SQLStatement {
  public:
   InsertStatement(InsertType type)
       : SQLStatement(StatementType::INSERT), type(type), select(nullptr) {}
