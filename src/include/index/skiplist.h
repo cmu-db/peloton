@@ -26,11 +26,12 @@
 namespace peloton {
 namespace index {
 
-#define GET_DELETE(addr) (((word)(addr))&1ll)
-#define GET_FLAG(addr) (((word)(addr))&2ll)
+#define GET_DELETE(addr) (((word)(addr)) & 1ll)
+#define GET_FLAG(addr) (((word)(addr)) & 2ll)
 #define SET_DELETE(addr, bit) (((word)(addr)) & ~1ll | (bit))
 #define SET_FLAG(addr, bit) (((word)(addr)) & ~2ll | ((bit) << 1)
-#define GET_NEXT(node) static_cast<SkipListBaseNode *>((word)((node)->next_) & ~3ll)
+#define GET_NEXT(node) \
+  static_cast<SkipListBaseNode *>((word)((node)->next_) & ~3ll)
 
 #define SKIP_LIST_INITIAL_MAX_LEVEL_ 10
 typedef u_int64_t word;
@@ -108,7 +109,7 @@ class SkipList {
 
   /*
    * SearchFrom() - Search the first interval that node1.key<key and
-   *key<=node2.key
+   * key<=node2.key
    * from given skip list node
    *
    * The return value is a pair of node1, node2
@@ -126,11 +127,11 @@ class SkipList {
     SkipListBaseNode *curr_node = static_cast<SkipListBaseNode *>(Node);
     while (curr_node) {
       SkipListBaseNode *tmp_pointer = curr_node->next_.load();
-      if (GET_FLAG((word)tmp_pointer)){
-        HelpFlagged(curr_node,GET_NEXT(tmp_pointer),ctx);
-      }else if ((GET_DELETE((word)tmp_pointer))){
+      if (GET_FLAG(tmp_pointer)) {
+        HelpFlagged(curr_node, GET_NEXT(tmp_pointer), ctx);
+      } else if ((GET_DELETE(tmp_pointer))) {
         curr_node = curr_node->back_link_.load();
-      }else if (tmp_pointer == nullptr) {
+      } else if (tmp_pointer == nullptr) {
         return std::make_pair(curr_node, nullptr);
       } else {
         if (KeyCmpGreaterEqual(tmp_pointer->key_, key)) {
@@ -142,46 +143,32 @@ class SkipList {
     }
     return nullptr;
   }
-  /*
-   * AddLevel() - add corresponding level to the SkipList
-   *
-   * return true if successfully added or the level is already added
-   * return false if the level cannot be reached from the highest level now
-   */
-  bool AddLevel(u_int32_t level){
-    SkipListBaseNode* head = this->skip_list_head_.load();
-    if (head->level_+1 < level){
-      return false;
-    } else{
-      if (head->level_+1 == level){
-        SkipListBaseNode* new_head = node_manager_.GetSkipListNode(nullptr,head, nullptr, nullptr,1);
-        if (this->skip_list_head_.compare_exchange_strong(head, new_head)) {
-          return true;
-        }
-        else{
-          node_manager_.ReturnSkipListNode(new_head);
-          head = this->skip_list_head_.load();
-          return head->level_==level;
-        }
-      }else{
-        return true;
-      }
-    }
-  }
 
   /*
-   * SearchWithPath() - Search the skiplist for the key, would store the path of every level
+   * SearchWithPath() - Search the skiplist for the key, would store the path of
+   *every level
    *
-   * The level starts from 0
-   * The function defaults to store
+   * @param:
+   *  call_stack: used for storing the path
+   *  key: the search key
+   *  curr_node: the same as SearchFrom, but please send in a SkipListHead
+   *  expected_stored_level: from which level the function starts to record the path, default to start recording from
+   *  curr_node's level
+   *
+   * The lowest level starts from 0, the search would start from the curr_node
+   * The function defaults to store all nodes in the path from the head to target node
+   *
+   * returns nothing but will store the path at call_stack
    */
-  void SearchWithPath(std::vector<std::pair<SkipListBaseNode *,SkipListBaseNode *>> &call_stack,
-                      KeyType &key, SkipListBaseNode *curr_node, OperationContext &ctx,
-                      u_int32_t expected_stored_level = curr_node->level_){
+  void SearchWithPath(
+      std::vector<std::pair<SkipListBaseNode *, SkipListBaseNode *>> &
+          call_stack,
+      KeyType &key, SkipListBaseNode *curr_node, OperationContext &ctx,
+      u_int32_t expected_stored_level = curr_node->level_) {
     int level_now = curr_node->level_;
-    call_stack.resize(expected_stored_level+1);
-    while (level_now>=0) {
-      if (level_now<=expected_stored_level) {
+    call_stack.resize(expected_stored_level + 1);
+    while (level_now >= 0) {
+      if (level_now <= expected_stored_level) {
         call_stack[level_now] = SearchFrom(key, curr_node, ctx);
         curr_node = call_stack[level_now].first->down_.load();
       } else {
@@ -198,8 +185,7 @@ class SkipList {
    */
   bool InsertNode(const KeyType &key, const ValueType &value,
                   OperationContext &ctx) {
-
-    
+    u_int32_t expected_level = 0;
     return false;
   }
 
@@ -252,10 +238,10 @@ class SkipList {
         max_level_(SKIP_LIST_INITIAL_MAX_LEVEL_),
         // Key comparator, equality checker and hasher
         key_cmp_obj_{key_cmp_obj},
-        key_eq_obj_{key_eq_obj},
+        key_eq_obj_{key_eq_obj}
 
         // Value equality checker and hasher
-        value_eq_obj_{value_eq_obj} {
+        {
     LOG_TRACE("SkipList constructed!");
   }
 
@@ -284,8 +270,8 @@ class SkipList {
           key_(key),
           isHead_(isHead) {}
     SkipListBaseNode(SkipListBaseNode *next, SkipListBaseNode *down,
-                      SkipListBaseNode *back_link, KeyType key,
-                     bool isHead,u_int32_t level)
+                     SkipListBaseNode *back_link, KeyType key, bool isHead,
+                     u_int32_t level)
         : next_(next),
           down_(down),
           back_link_(back_link),
@@ -446,7 +432,7 @@ class SkipList {
   const KeyEqualityChecker key_eq_obj_;
 
   // Check whether values are equivalent
-  const ValueEqualityChecker value_eq_obj_;
+  //const ValueEqualityChecker value_eq_obj_;
 
   ///////////////////////////////////////////////////////////////////
   // Key Comparison Member Functions
@@ -509,9 +495,9 @@ class SkipList {
   /*
    * ValueCmpEqual() - Compares whether two values are equal
    */
-  inline bool ValueCmpEqual(const ValueType &v1, const ValueType &v2) {
+  /*inline bool ValueCmpEqual(const ValueType &v1, const ValueType &v2) {
     return value_eq_obj_(v1, v2);
-  }
+  }*/
 
   // maintains Epoch
   // has a inside linked list in which every node represents an epoch
@@ -576,25 +562,24 @@ class SkipList {
     /*
      * GetSkipListInnerNode() - get a SkipListInnerNode using key and value
      */
-    SkipListInnerNode *GetSkipListInnerNode(KeyType key, ValueType value){
+    SkipListInnerNode *GetSkipListInnerNode(KeyType key, ValueType value) {
       auto tmp = new SkipListInnerNode(nullptr, nullptr, nullptr, key, false);
       tmp->SetValue(value);
       return tmp;
     }
     /*
-     * GetSkipListInnerNode() - get a SkipListInnerNode using key and root pointer
+     * GetSkipListInnerNode() - get a SkipListInnerNode using key and root
+     * pointer
      */
-    SkipListInnerNode *GetSkipListInnerNode(KeyType key,SkipListInnerNode *root,
-                                            SkipListInnerNode *down){
+    SkipListInnerNode *GetSkipListInnerNode(KeyType key,
+                                            SkipListInnerNode *root,
+                                            SkipListInnerNode *down) {
       auto tmp = new SkipListInnerNode(nullptr, down, nullptr, key, false);
       tmp->SetRoot(root);
       return tmp;
     }
-    void ReturnSkipListNode(SkipListBaseNode *node) {
-      delete node;
-    }
+    void ReturnSkipListNode(SkipListBaseNode *node) { delete node; }
 
-    std::atomic<int> NodeNum_;
   };
 
   /*
