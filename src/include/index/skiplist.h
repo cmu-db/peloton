@@ -235,17 +235,13 @@ class SkipList {
  public:
   SkipList(bool duplicate, int GC_Interval,
            KeyComparator key_cmp_obj = KeyComparator{},
-           KeyEqualityChecker key_eq_obj = KeyEqualityChecker{},
-           ValueEqualityChecker value_eq_obj = ValueEqualityChecker{})
+           KeyEqualityChecker key_eq_obj = KeyEqualityChecker{})
       : duplicate_support_(duplicate),
         GC_Interval_(GC_Interval_),
         max_level_(SKIP_LIST_INITIAL_MAX_LEVEL_),
         // Key comparator, equality checker and hasher
         key_cmp_obj_{key_cmp_obj},
-        key_eq_obj_{key_eq_obj}
-
-  // Value equality checker and hasher
-  {
+        key_eq_obj_{key_eq_obj} {
     LOG_TRACE("SkipList constructed!");
   }
 
@@ -434,9 +430,6 @@ class SkipList {
   // Raw key eq checker
   const KeyEqualityChecker key_eq_obj_;
 
-  // Check whether values are equivalent
-  // const ValueEqualityChecker value_eq_obj_;
-
   ///////////////////////////////////////////////////////////////////
   // Key Comparison Member Functions
   ///////////////////////////////////////////////////////////////////
@@ -490,18 +483,7 @@ class SkipList {
   inline bool KeyCmpLessEqual(const KeyType &key1, const KeyType &key2) const {
     return !KeyCmpGreater(key1, key2);
   }
-
-  ///////////////////////////////////////////////////////////////////
-  // Value Comparison Member
-  ///////////////////////////////////////////////////////////////////
-
-  /*
-   * ValueCmpEqual() - Compares whether two values are equal
-   */
-  /*inline bool ValueCmpEqual(const ValueType &v1, const ValueType &v2) {
-    return value_eq_obj_(v1, v2);
-  }*/
-
+  
   // maintains Epoch
   // has a inside linked list in which every node represents an epoch
   class EpochManager {
