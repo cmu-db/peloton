@@ -62,7 +62,7 @@ bool SKIPLIST_INDEX_TYPE::InsertEntry(const storage::Tuple *key,
  */
 SKIPLIST_TEMPLATE_ARGUMENTS
 bool SKIPLIST_INDEX_TYPE::DeleteEntry(const storage::Tuple *key,
-                                      ItemPointer *value) {
+                                      UNUSED_ATTRIBUTE ItemPointer *value) {
   KeyType index_key;
   index_key.SetFromKey(key);
 
