@@ -193,8 +193,11 @@ class SkipList {
    *
    * The return value is a indicator of success or not
    */
-  bool InsertNode(const KeyType &key, const ValueType &value,
-                  OperationContext &ctx) {
+
+  bool InsertNode(UNUSED_ATTRIBUTE const KeyType &key,
+                  UNUSED_ATTRIBUTE const ValueType &value,
+                  UNUSED_ATTRIBUTE OperationContext &ctx) {
+    u_int32_t expected_level = 0;
     return false;
   }
 
@@ -245,22 +248,24 @@ class SkipList {
    * HelpDeleted() Attempts to physically delete the del_node and unflag
    * prev_node
    */
-  void HelpDeleted(SkipListBaseNode *prev_node, SkipListBaseNode *del_node,
-                   OperationContext &ctx) {
-  }
+
+  void HelpDeleted(UNUSED_ATTRIBUTE SkipListBaseNode *prev_node,
+                   UNUSED_ATTRIBUTE SkipListBaseNode *del_node,
+                   UNUSED_ATTRIBUTE OperationContext &ctx) {}
 
   /*
    * HelpFlagged() - Attempts to mark and physically delete del_node
    */
-  void HelpFlagged(SkipListBaseNode *prev_node, SkipListBaseNode *del_node,
-                   OperationContext &ctx) {
-  }
+  void HelpFlagged(UNUSED_ATTRIBUTE SkipListBaseNode *prev_node,
+                   UNUSED_ATTRIBUTE SkipListBaseNode *del_node,
+                   UNUSED_ATTRIBUTE OperationContext &ctx) {}
 
   /*
    * TryDelete() Attempts to mark the node del node.
    */
-  void TryDelete(SkipListBaseNode *del_node, OperationContext &ctx) {
-  }
+  void TryDelete(UNUSED_ATTRIBUTE SkipListBaseNode *del_node,
+                 UNUSED_ATTRIBUTE OperationContext &ctx) {}
+
 
   /*
    * TryFlag() - Attempts to flag the prev_node, which is the last node known to
@@ -268,9 +273,10 @@ class SkipList {
    *
    * The return value is a tuple of deleted node and the success indicator
    */
-  std::pair<SkipListBaseNode *, bool> TryFlag(SkipListBaseNode *prev_node,
-                                              SkipListBaseNode *target_node,
-                                              OperationContext &ctx) {
+  std::pair<SkipListBaseNode *, bool> TryFlag(
+      UNUSED_ATTRIBUTE SkipListBaseNode *prev_node,
+      UNUSED_ATTRIBUTE SkipListBaseNode *target_node,
+      UNUSED_ATTRIBUTE OperationContext &ctx) {
     return std::pair<SkipListBaseNode *, bool>{};
   }
 
@@ -444,23 +450,15 @@ class SkipList {
     return;
   }
 
-  // returns a forward iterator from the very beginning
-  ForwardIterator ForwardBegin(){
-    return ForwardIterator{};
-  };
+
+  ForwardIterator ForwardBegin() {}
 
   // returns a forward iterator from the key
-  ForwardIterator ForwardBegin(KeyType &startsKey){
-    return ForwardIterator{};
-  }
+  ForwardIterator ForwardBegin(UNUSED_ATTRIBUTE KeyType &startsKey) {}
 
-  ReversedIterator ReverseBegin(){
-    return ReversedIterator{};
-  };
+  ReversedIterator ReverseBegin() {}
 
-  ReversedIterator ReverseBegin(KeyType &startsKey){
-    return ReversedIterator{};
-  };
+  ReversedIterator ReverseBegin(UNUSED_ATTRIBUTE KeyType &startsKey) {}
 
   /*
    * PerformGC() - Interface function for external users to
@@ -551,22 +549,21 @@ class SkipList {
    public:
     class EpochNode;
 
-    bool AddGarbageNode(EpochNode *epoch_node, SkipListBaseNode *node){
-    }
+    bool AddGarbageNode(UNUSED_ATTRIBUTE EpochNode *epoch_node,
+                        UNUSED_ATTRIBUTE SkipListBaseNode *node) {}
     /*
      * return the current EpochNode
      * need to add the reference count of current EpochNode
      */
-    EpochNode *JoinEpoch(){
-      return nullptr;
-    };
+
+    EpochNode *JoinEpoch(){};
 
     /*
      * leaves current EpochNode
      * should maintain atomicity when counting the reference
      */
-    void LeaveEpoch(EpochNode *node){
-    }
+
+    void LeaveEpoch(UNUSED_ATTRIBUTE EpochNode *node){};
 
     /*
      * NewEpoch() - start new epoch after the call
@@ -574,7 +571,7 @@ class SkipList {
      * begins new Epoch that caused by the
      * Need to atomically maintain the epoch list
      */
-    void NewEpoch(){}
+    void NewEpoch(){};
 
     /*
      * ClearEpoch() - Sweep the chain of epoch and free memory
@@ -585,7 +582,8 @@ class SkipList {
      * NOTE: There is no race condition in this function since it is
      * only called by the cleaner thread
      */
-    void ClearEpoch(){}
+
+    void ClearEpoch() {}
   };
 
   /*
