@@ -44,13 +44,12 @@ typedef u_int64_t word;
 template <typename KeyType, typename ValueType, typename KeyComparator,
           typename KeyEqualityChecker, typename ValueEqualityChecker>
 class SkipList {
-  class NodeManager;
-  class EpochManager;
-  class OperationContext;
-  template <typename KeyType, typename ValueType>
-  class SkipListBaseNode;
-  template <typename KeyType, typename ValueType>
-  class SkipListInnerNode;
+  public:
+    class NodeManager;
+    class EpochManager;
+    class OperationContext;
+    class SkipListBaseNode;
+    class SkipListInnerNode;
 
  private:
   ///////////////////////////////////////////////////////////////////
@@ -168,7 +167,9 @@ class SkipList {
       std::vector<std::pair<SkipListBaseNode *, SkipListBaseNode *>> &
           call_stack,
       KeyType &key, SkipListBaseNode *curr_node, OperationContext &ctx,
-      u_int32_t expected_stored_level = curr_node->level_) {
+      u_int32_t expected_stored_level = 0) {
+    if (expected_stored_level == 0)
+      expected_stored_level = curr_node->level_;
     int level_now = curr_node->level_;
     call_stack.resize(expected_stored_level + 1);
     while (level_now >= 0) {
@@ -280,7 +281,6 @@ class SkipList {
     virtual ~SkipListBaseNode(){};
   };
 
-  template <typename KeyType, typename ValueType>
   class SkipListInnerNode : public SkipListBaseNode {
    public:
     SkipListInnerNode(SkipListBaseNode *next, SkipListBaseNode *down,
@@ -334,7 +334,7 @@ class SkipList {
    */
   bool Insert(const KeyType &key, const ValueType &value) {
     LOG_TRACE("Insert called!");
-    EpochManager::EpochNode *epoch_node_p = epoch_manager_.JoinEpoch();
+    auto *epoch_node_p = epoch_manager_.JoinEpoch();
     OperationContext ctx{epoch_node_p};
     bool ret = InsertNode(key, value, ctx);
     epoch_manager_.LeaveEpoch(epoch_node_p);
@@ -354,7 +354,7 @@ class SkipList {
                          std::function<bool(const void *)> predicate,
                          bool *predicate_satisfied) {
     LOG_TRACE("Cond Insert called!");
-    EpochManager::EpochNode *epoch_node_p = epoch_manager_.JoinEpoch();
+    auto *epoch_node_p = epoch_manager_.JoinEpoch();
     OperationContext ctx{epoch_node_p};
     // TODO: Insert key value pair to the skiplist with predicate
     epoch_manager_.LeaveEpoch(epoch_node_p);
@@ -369,7 +369,7 @@ class SkipList {
    */
   bool Delete(const KeyType &key) {
     LOG_TRACE("Delete called!");
-    EpochManager::EpochNode *epoch_node_p = epoch_manager_.JoinEpoch();
+    auto *epoch_node_p = epoch_manager_.JoinEpoch();
     OperationContext ctx{epoch_node_p};
     SkipListBaseNode *node = DeleteNode(key, ctx);
     epoch_manager_.LeaveEpoch(epoch_node_p);
@@ -387,7 +387,7 @@ class SkipList {
    */
   void GetValue(const KeyType &search_key, std::vector<ValueType> &value_list) {
     LOG_TRACE("GetValue()");
-    EpochManager::EpochNode *epoch_node_p = epoch_manager_.JoinEpoch();
+    auto *epoch_node_p = epoch_manager_.JoinEpoch();
     OperationContext ctx{epoch_node_p};
     // TODO: call contatiner to fillin the value_list
     epoch_manager_.LeaveEpoch(epoch_node_p);
@@ -483,25 +483,31 @@ class SkipList {
   inline bool KeyCmpLessEqual(const KeyType &key1, const KeyType &key2) const {
     return !KeyCmpGreater(key1, key2);
   }
-  
+
   // maintains Epoch
   // has a inside linked list in which every node represents an epoch
   class EpochManager {
    public:
-    class EpochNode;
+    class EpochNode{};
 
-    bool AddGarbageNode(EpochNode *epoch_node, SkipListBaseNode *node);
+    bool AddGarbageNode(EpochNode *epoch_node, SkipListBaseNode *node){
+      return true;
+    }
     /*
      * return the current EpochNode
      * need to add the reference count of current EpochNode
      */
-    EpochNode *JoinEpoch();
+    EpochNode *JoinEpoch(){
+      return nullptr;
+    }
 
     /*
      * leaves current EpochNode
      * should maintain atomicity when counting the reference
      */
-    void LeaveEpoch(EpochNode *node);
+    void LeaveEpoch(EpochNode *node){
+
+    }
 
     /*
      * NewEpoch() - start new epoch after the call
@@ -509,7 +515,9 @@ class SkipList {
      * begins new Epoch that caused by the
      * Need to atomically maintain the epoch list
      */
-    void NewEpoch();
+    void NewEpoch(){
+
+    }
 
     /*
      * ClearEpoch() - Sweep the chain of epoch and free memory
@@ -520,7 +528,9 @@ class SkipList {
      * NOTE: There is no race condition in this function since it is
      * only called by the cleaner thread
      */
-    void ClearEpoch();
+    void ClearEpoch(){
+
+    }
   };
 
   /*
@@ -573,8 +583,8 @@ class SkipList {
    */
   class OperationContext {
    public:
-    EpochManager::EpochNode *epoch_node_;
-    OperationContext(EpochManager::EpochNode *epoch_node)
+    typename EpochManager::EpochNode *epoch_node_;
+    OperationContext(typename EpochManager::EpochNode *epoch_node)
         : epoch_node_(epoch_node) {}
   };
 };
