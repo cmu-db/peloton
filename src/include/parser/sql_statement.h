@@ -19,10 +19,10 @@
 
 #include <vector>
 
+#include "common/internal_types.h"
 #include "common/macros.h"
 #include "common/printable.h"
 #include "common/sql_node_visitor.h"
-#include "common/internal_types.h"
 
 namespace peloton {
 
@@ -43,7 +43,7 @@ class SQLStatement : public Printable {
 
   virtual ~SQLStatement() {}
 
-  virtual StatementType GetType() { return stmt_type; }
+  virtual StatementType GetType() const { return stmt_type; }
 
   // Get a string representation for debugging
   virtual const std::string GetInfo(int num_indent) const;
