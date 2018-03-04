@@ -186,6 +186,9 @@ void PlanGenerator::Visit(const PhysicalInnerNLJoin *op) {
       expression::ExpressionUtil::JoinAnnotatedExprs(op->join_predicates);
   expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
                                                  join_predicate.get());
+  if (join_predicate != nullptr) {
+    LOG_DEBUG("NLJoin predicate : %s", join_predicate->GetInfo().c_str());
+  }
   expression::ExpressionUtil::ConvertToTvExpr(join_predicate.get(),
                                               children_expr_map_);
 
@@ -227,6 +230,9 @@ void PlanGenerator::Visit(const PhysicalInnerHashJoin *op) {
       expression::ExpressionUtil::JoinAnnotatedExprs(op->join_predicates);
   expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
                                                  join_predicate.get());
+  if (join_predicate != nullptr) {
+    LOG_DEBUG("Hash Join predicate : %s", join_predicate->GetInfo().c_str());
+  }
   expression::ExpressionUtil::ConvertToTvExpr(join_predicate.get(),
                                               children_expr_map_);
 
@@ -458,6 +464,7 @@ void PlanGenerator::BuildAggregatePlan(
     const std::vector<std::shared_ptr<expression::AbstractExpression>>
         *groupby_cols,
     std::unique_ptr<expression::AbstractExpression> having_predicate) {
+  LOG_DEBUG("Generating Aggregate Plan");
   vector<planner::AggregatePlan::AggTerm> aggr_terms;
   vector<catalog::Column> output_schema_columns;
   DirectMapList dml;

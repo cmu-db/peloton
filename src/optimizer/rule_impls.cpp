@@ -109,6 +109,10 @@ void InnerJoinAssociativity::Transform(
   auto middle = children[0]->Children()[1];
   auto right = children[1];
 
+  LOG_TRACE("Reordered join structured: (%s JOIN %s) JOIN %s",
+            left->Op().GetName().c_str(), middle->Op().GetName().c_str(),
+            right->Op().GetName().c_str());
+
   // Get Alias sets
   auto &memo = context->metadata->memo;
   auto middle_group_id = middle->Op().As<LeafOperator>()->origin_group;
@@ -162,10 +166,6 @@ void InnerJoinAssociativity::Transform(
           LogicalInnerJoin::make(new_parent_join_predicates));
   new_parent_join->PushChild(left);
   new_parent_join->PushChild(new_child_join);
-
-  LOG_DEBUG("Reordered join structured: (%s JOIN %s) JOIN %s",
-            left->Op().GetName().c_str(), middle->Op().GetName().c_str(),
-            right->Op().GetName().c_str());
 
   transformed.push_back(new_parent_join);
 }
@@ -1059,7 +1059,7 @@ int MarkJoinToInnerJoin::Promise(GroupExpression *group_expr,
   (void)context;
   auto root_type = match_pattern->Type();
   // This rule is not applicable
-  if (root_type != OpType::Leaf && root_type != group_expr->Op().type()) {
+  if (root_type != OpType::Leaf && root_type != group_expr->Op().GetType()) {
     return 0;
   }
   return static_cast<int>(UnnestPromise::Low);
@@ -1110,7 +1110,7 @@ int SingleJoinToInnerJoin::Promise(GroupExpression *group_expr,
   (void)context;
   auto root_type = match_pattern->Type();
   // This rule is not applicable
-  if (root_type != OpType::Leaf && root_type != group_expr->Op().type()) {
+  if (root_type != OpType::Leaf && root_type != group_expr->Op().GetType()) {
     return 0;
   }
   return static_cast<int>(UnnestPromise::Low);
@@ -1163,7 +1163,7 @@ int PullFilterThroughMarkJoin::Promise(GroupExpression *group_expr,
   (void)context;
   auto root_type = match_pattern->Type();
   // This rule is not applicable
-  if (root_type != OpType::Leaf && root_type != group_expr->Op().type()) {
+  if (root_type != OpType::Leaf && root_type != group_expr->Op().GetType()) {
     return 0;
   }
   return static_cast<int>(UnnestPromise::High);
@@ -1224,7 +1224,7 @@ int PullFilterThroughAggregation::Promise(GroupExpression *group_expr,
   (void)context;
   auto root_type = match_pattern->Type();
   // This rule is not applicable
-  if (root_type != OpType::Leaf && root_type != group_expr->Op().type()) {
+  if (root_type != OpType::Leaf && root_type != group_expr->Op().GetType()) {
     return 0;
   }
   return static_cast<int>(UnnestPromise::High);
