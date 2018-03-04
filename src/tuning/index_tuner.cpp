@@ -2,20 +2,20 @@
 //
 //                         Peloton
 //
-// index_tuner.cpp
+// indextuner.cpp
 //
-// Identification: src/brain/index_tuner.cpp
+// Identification: src/tuning/indextuner.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-#include "brain/index_tuner.h"
+#include "tuning/index_tuner.h"
 
 #include <algorithm>
-#include "brain/brain_util.h"
+#include "tuning/brain_util.h"
 
 #include "concurrency/transaction_manager_factory.h"
-#include "brain/clusterer.h"
+#include "tuning/clusterer.h"
 #include "catalog/catalog.h"
 #include "catalog/schema.h"
 #include "common/container_tuple.h"
@@ -27,7 +27,7 @@
 #include "storage/tile_group.h"
 
 namespace peloton {
-namespace brain {
+namespace tuning {
 
 IndexTuner& IndexTuner::GetInstance() {
   static IndexTuner index_tuner;
@@ -46,7 +46,7 @@ void IndexTuner::Start() {
   index_tuning_stop = false;
 
   // Launch thread
-  index_tuner_thread = std::thread(&brain::IndexTuner::Tune, this);
+  index_tuner_thread = std::thread(&tuning::IndexTuner::Tune, this);
 
   LOG_INFO("Started index tuner");
 }
@@ -153,7 +153,7 @@ void IndexTuner::BuildIndices(storage::DataTable* table) {
 }
 
 double IndexTuner::ComputeWorkloadWriteRatio(
-    const std::vector<brain::Sample>& samples) {
+    const std::vector<tuning::Sample>& samples) {
   double write_ratio = 0;
 
   double total_read_duration = 0;
@@ -190,7 +190,7 @@ double IndexTuner::ComputeWorkloadWriteRatio(
   return average_write_ratio;
 }
 
-typedef std::pair<brain::Sample, double> sample_frequency_map_entry;
+typedef std::pair<tuning::Sample, double> sample_frequency_map_entry;
 
 bool SampleFrequencyMapEntryComparator(sample_frequency_map_entry a,
                                        sample_frequency_map_entry b) {
@@ -198,8 +198,8 @@ bool SampleFrequencyMapEntryComparator(sample_frequency_map_entry a,
 }
 
 std::vector<sample_frequency_map_entry> GetFrequentSamples(
-    const std::vector<brain::Sample>& samples) {
-  std::unordered_map<brain::Sample, double> sample_frequency_map;
+    const std::vector<tuning::Sample>& samples) {
+  std::unordered_map<tuning::Sample, double> sample_frequency_map;
   double total_weight = 0;
 
   // Go over all samples
@@ -221,7 +221,7 @@ std::vector<sample_frequency_map_entry> GetFrequentSamples(
   PL_ASSERT(total_weight > 0);
 
   // Normalize
-  std::unordered_map<brain::Sample, double>::iterator sample_frequency_map_itr;
+  std::unordered_map<tuning::Sample, double>::iterator sample_frequency_map_itr;
 
   for (sample_frequency_map_itr = sample_frequency_map.begin();
        sample_frequency_map_itr != sample_frequency_map.end();
@@ -581,7 +581,7 @@ void IndexTuner::BootstrapTPCC(const std::string& path) {
   // Enable visibility mode
   SetVisibilityMode();
 
-  auto tables_samples = brain::BrainUtil::LoadSamplesFile(path);
+  auto tables_samples = tuning::BrainUtil::LoadSamplesFile(path);
 
   // Build sample map
   std::string database_name = "default_database";
@@ -615,7 +615,7 @@ void LoadStatsFromFile(const std::string& path) {
   LOG_INFO("LoadStatsFromFile Invoked");
 
   // Get index tuner
-  auto& index_tuner = brain::IndexTuner::GetInstance();
+  auto& index_tuner = tuning::IndexTuner::GetInstance();
 
   // Set duration between pauses
   auto duration = 30000;  // in ms
@@ -627,5 +627,5 @@ void LoadStatsFromFile(const std::string& path) {
   return;
 }
 
-}  // namespace brain
+}  // namespace indextuner
 }  // namespace peloton

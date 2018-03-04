@@ -38,6 +38,22 @@ class InnerJoinCommutativity : public Rule {
                  OptimizeContext *context) const override;
 };
 
+/**
+ * @brief (A join B) join C -> A join (B join C)
+ */
+
+class InnerJoinAssociativity : public Rule {
+ public:
+  InnerJoinAssociativity();
+
+  bool Check(std::shared_ptr<OperatorExpression> plan,
+             OptimizeContext *context) const override;
+
+  void Transform(std::shared_ptr<OperatorExpression> input,
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+                 OptimizeContext *context) const override;
+};
+
 //===--------------------------------------------------------------------===//
 // Implementation rules
 //===--------------------------------------------------------------------===//

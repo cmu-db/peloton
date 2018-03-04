@@ -173,6 +173,9 @@ void BindNodeVisitor::Visit(parser::CreateStatement *node) {
 }
 void BindNodeVisitor::Visit(parser::InsertStatement *node) {
   node->TryBindDatabaseName(default_database_name_);
+  context_ = std::make_shared<BinderContext>(nullptr);
+  context_->AddRegularTable(node->GetDatabaseName(), node->GetTableName(),
+                            node->GetTableName(), txn_);
   if (node->select != nullptr) {
     node->select->Accept(this);
   }

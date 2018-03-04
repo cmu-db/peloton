@@ -30,7 +30,7 @@ void OptimizerTask::ConstructValidRules(
     std::vector<std::unique_ptr<Rule>> &rules,
     std::vector<RuleWithPromise> &valid_rules) {
   for (auto &rule : rules) {
-    if (group_expr->Op().type() !=
+    if (group_expr->Op().GetType() !=
             rule->GetMatchPattern()->Type() ||  // Root pattern type mismatch
         group_expr->HasRuleExplored(rule.get()) ||  // Rule has been applied
         group_expr->GetChildrenGroupsSize() !=

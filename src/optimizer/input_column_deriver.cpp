@@ -204,11 +204,11 @@ void InputColumnDeriver::AggregateHelper(const BaseOperatorNode *op) {
   // TODO(boweic): do not use shared_ptr
   vector<shared_ptr<AbstractExpression>> groupby_cols;
   vector<AnnotatedExpression> having_exprs;
-  if (op->type() == OpType::HashGroupBy) {
+  if (op->GetType() == OpType::HashGroupBy) {
     auto groupby = reinterpret_cast<const PhysicalHashGroupBy *>(op);
     groupby_cols = groupby->columns;
     having_exprs = groupby->having;
-  } else if (op->type() == OpType::SortGroupBy) {
+  } else if (op->GetType() == OpType::SortGroupBy) {
     auto groupby = reinterpret_cast<const PhysicalSortGroupBy *>(op);
     groupby_cols = groupby->columns;
     having_exprs = groupby->having;
@@ -246,12 +246,12 @@ void InputColumnDeriver::JoinHelper(const BaseOperatorNode *op) {
   const vector<unique_ptr<expression::AbstractExpression>> *left_keys = nullptr;
   const vector<unique_ptr<expression::AbstractExpression>> *right_keys =
       nullptr;
-  if (op->type() == OpType::InnerHashJoin) {
+  if (op->GetType() == OpType::InnerHashJoin) {
     auto join_op = reinterpret_cast<const PhysicalInnerHashJoin *>(op);
     join_conds = &(join_op->join_predicates);
     left_keys = &(join_op->left_keys);
     right_keys = &(join_op->right_keys);
-  } else if (op->type() == OpType::InnerNLJoin) {
+  } else if (op->GetType() == OpType::InnerNLJoin) {
     auto join_op = reinterpret_cast<const PhysicalInnerNLJoin *>(op);
     join_conds = &(join_op->join_predicates);
     left_keys = &(join_op->left_keys);

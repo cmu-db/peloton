@@ -21,8 +21,6 @@
 #include "common/item_pointer.h"
 #include "common/platform.h"
 #include "common/container/lock_free_array.h"
-#include "executor/executor_context.h"
-#include "index/index.h"
 #include "storage/abstract_table.h"
 #include "storage/indirection_array.h"
 #include "trigger/trigger.h"
@@ -35,25 +33,25 @@ extern std::vector<peloton::oid_t> sdbench_column_ids;
 
 namespace peloton {
 
-namespace brain {
+namespace tuning {
 class Sample;
-}
+}  // namespace indextuner
 
 namespace catalog {
 class ForeignKey;
-}
+}  // namespace catalog
 
 namespace index {
 class Index;
-}
+}  // namespace index
 
 namespace logging {
 class LogManager;
-}
+}  // namespace logging
 
 namespace concurrency {
 class TransactionContext;
-}
+}  // namespace concurrency
 
 namespace storage {
 
@@ -243,9 +241,9 @@ class DataTable : public AbstractTable {
   // LAYOUT TUNER
   //===--------------------------------------------------------------------===//
 
-  void RecordLayoutSample(const brain::Sample &sample);
+  void RecordLayoutSample(const tuning::Sample &sample);
 
-  std::vector<brain::Sample> GetLayoutSamples();
+  std::vector<tuning::Sample> GetLayoutSamples();
 
   void ClearLayoutSamples();
 
@@ -257,9 +255,9 @@ class DataTable : public AbstractTable {
   // INDEX TUNER
   //===--------------------------------------------------------------------===//
 
-  void RecordIndexSample(const brain::Sample &sample);
+  void RecordIndexSample(const tuning::Sample &sample);
 
-  std::vector<brain::Sample> GetIndexSamples();
+  std::vector<tuning::Sample> GetIndexSamples();
 
   void ClearIndexSamples();
 
@@ -420,13 +418,13 @@ class DataTable : public AbstractTable {
   column_map_type default_partition_;
 
   // samples for layout tuning
-  std::vector<brain::Sample> layout_samples_;
+  std::vector<tuning::Sample> layout_samples_;
 
   // layout samples mutex
   std::mutex layout_samples_mutex_;
 
   // samples for layout tuning
-  std::vector<brain::Sample> index_samples_;
+  std::vector<tuning::Sample> index_samples_;
 
   // index samples mutex
   std::mutex index_samples_mutex_;

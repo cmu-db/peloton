@@ -304,7 +304,7 @@ class TileGroupHeader : public Printable {
 
   common::synchronization::SpinLatch tile_header_lock;
 
-  // Immmutable Flag. Should be set by the brain to be true.
+  // Immmutable Flag. Should be set by the indextuner to be true.
   // By default it will be set to false.
   bool immutable;
 };

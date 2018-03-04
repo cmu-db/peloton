@@ -51,7 +51,7 @@ hash_t LogicalGet::Hash() const {
 }
 
 bool LogicalGet::operator==(const BaseOperatorNode &r) {
-  if (r.type() != OpType::Get) return false;
+  if (r.GetType()!= OpType::Get) return false;
   const LogicalGet &node = *static_cast<const LogicalGet *>(&r);
   if (predicates.size() != node.predicates.size()) return false;
   for (size_t i = 0; i < predicates.size(); i++) {
@@ -78,7 +78,7 @@ Operator LogicalQueryDerivedGet::make(
 }
 
 bool LogicalQueryDerivedGet::operator==(const BaseOperatorNode &node) {
-  if (node.type() != OpType::LogicalQueryDerivedGet) return false;
+  if (node.GetType() != OpType::LogicalQueryDerivedGet) return false;
   const LogicalQueryDerivedGet &r =
       *static_cast<const LogicalQueryDerivedGet *>(&node);
   return get_id == r.get_id;
@@ -107,7 +107,7 @@ hash_t LogicalFilter::Hash() const {
 }
 
 bool LogicalFilter::operator==(const BaseOperatorNode &r) {
-  if (r.type() != OpType::LogicalFilter) return false;
+  if (r.GetType() != OpType::LogicalFilter) return false;
   const LogicalFilter &node = *static_cast<const LogicalFilter *>(&r);
   if (predicates.size() != node.predicates.size()) return false;
   for (size_t i = 0; i < predicates.size(); i++) {
@@ -150,7 +150,7 @@ hash_t LogicalDependentJoin::Hash() const {
 }
 
 bool LogicalDependentJoin::operator==(const BaseOperatorNode &r) {
-  if (r.type() != OpType::LogicalDependentJoin) return false;
+  if (r.GetType() != OpType::LogicalDependentJoin) return false;
   const LogicalDependentJoin &node =
       *static_cast<const LogicalDependentJoin *>(&r);
   if (join_predicates.size() != node.join_predicates.size()) return false;
@@ -185,7 +185,7 @@ hash_t LogicalMarkJoin::Hash() const {
 }
 
 bool LogicalMarkJoin::operator==(const BaseOperatorNode &r) {
-  if (r.type() != OpType::LogicalMarkJoin) return false;
+  if (r.GetType() != OpType::LogicalMarkJoin) return false;
   const LogicalMarkJoin &node = *static_cast<const LogicalMarkJoin *>(&r);
   if (join_predicates.size() != node.join_predicates.size()) return false;
   for (size_t i = 0; i < join_predicates.size(); i++) {
@@ -219,7 +219,7 @@ hash_t LogicalSingleJoin::Hash() const {
 }
 
 bool LogicalSingleJoin::operator==(const BaseOperatorNode &r) {
-  if (r.type() != OpType::LogicalSingleJoin) return false;
+  if (r.GetType() != OpType::LogicalSingleJoin) return false;
   const LogicalSingleJoin &node = *static_cast<const LogicalSingleJoin *>(&r);
   if (join_predicates.size() != node.join_predicates.size()) return false;
   for (size_t i = 0; i < join_predicates.size(); i++) {
@@ -253,7 +253,7 @@ hash_t LogicalInnerJoin::Hash() const {
 }
 
 bool LogicalInnerJoin::operator==(const BaseOperatorNode &r) {
-  if (r.type() != OpType::InnerJoin) return false;
+  if (r.GetType() != OpType::InnerJoin) return false;
   const LogicalInnerJoin &node = *static_cast<const LogicalInnerJoin *>(&r);
   if (join_predicates.size() != node.join_predicates.size()) return false;
   for (size_t i = 0; i < join_predicates.size(); i++) {
@@ -330,7 +330,7 @@ Operator LogicalAggregateAndGroupBy::make(
 }
 
 bool LogicalAggregateAndGroupBy::operator==(const BaseOperatorNode &node) {
-  if (node.type() != OpType::LogicalAggregateAndGroupBy) return false;
+  if (node.GetType() != OpType::LogicalAggregateAndGroupBy) return false;
   const LogicalAggregateAndGroupBy &r =
       *static_cast<const LogicalAggregateAndGroupBy *>(&node);
   if (having.size() != r.having.size() || columns.size() != r.columns.size())
@@ -438,7 +438,7 @@ Operator PhysicalSeqScan::make(
 }
 
 bool PhysicalSeqScan::operator==(const BaseOperatorNode &r) {
-  if (r.type() != OpType::SeqScan) return false;
+  if (r.GetType() != OpType::SeqScan) return false;
   const PhysicalSeqScan &node = *static_cast<const PhysicalSeqScan *>(&r);
   if (predicates.size() != node.predicates.size()) return false;
   for (size_t i = 0; i < predicates.size(); i++) {
@@ -481,7 +481,7 @@ Operator PhysicalIndexScan::make(
 }
 
 bool PhysicalIndexScan::operator==(const BaseOperatorNode &r) {
-  if (r.type() != OpType::IndexScan) return false;
+  if (r.GetType() != OpType::IndexScan) return false;
   const PhysicalIndexScan &node = *static_cast<const PhysicalIndexScan *>(&r);
   // TODO: Should also check value list
   if (index_id != node.index_id ||
@@ -523,7 +523,7 @@ Operator QueryDerivedScan::make(
 }
 
 bool QueryDerivedScan::operator==(const BaseOperatorNode &node) {
-  if (node.type() != OpType::QueryDerivedScan) return false;
+  if (node.GetType() != OpType::QueryDerivedScan) return false;
   const QueryDerivedScan &r = *static_cast<const QueryDerivedScan *>(&node);
   return get_id == r.get_id;
 }
@@ -580,7 +580,7 @@ hash_t PhysicalInnerNLJoin::Hash() const {
 }
 
 bool PhysicalInnerNLJoin::operator==(const BaseOperatorNode &r) {
-  if (r.type() != OpType::InnerNLJoin) return false;
+  if (r.GetType() != OpType::InnerNLJoin) return false;
   const PhysicalInnerNLJoin &node =
       *static_cast<const PhysicalInnerNLJoin *>(&r);
   if (join_predicates.size() != node.join_predicates.size() ||
@@ -657,7 +657,7 @@ hash_t PhysicalInnerHashJoin::Hash() const {
 }
 
 bool PhysicalInnerHashJoin::operator==(const BaseOperatorNode &r) {
-  if (r.type() != OpType::InnerHashJoin) return false;
+  if (r.GetType() != OpType::InnerHashJoin) return false;
   const PhysicalInnerHashJoin &node =
       *static_cast<const PhysicalInnerHashJoin *>(&r);
   if (join_predicates.size() != node.join_predicates.size() ||
@@ -769,7 +769,7 @@ Operator PhysicalHashGroupBy::make(
 }
 
 bool PhysicalHashGroupBy::operator==(const BaseOperatorNode &node) {
-  if (node.type() != OpType::HashGroupBy) return false;
+  if (node.GetType() != OpType::HashGroupBy) return false;
   const PhysicalHashGroupBy &r =
       *static_cast<const PhysicalHashGroupBy *>(&node);
   if (having.size() != r.having.size() || columns.size() != r.columns.size())
@@ -800,7 +800,7 @@ Operator PhysicalSortGroupBy::make(
 }
 
 bool PhysicalSortGroupBy::operator==(const BaseOperatorNode &node) {
-  if (node.type() != OpType::SortGroupBy) return false;
+  if (node.GetType() != OpType::SortGroupBy) return false;
   const PhysicalSortGroupBy &r =
       *static_cast<const PhysicalSortGroupBy *>(&node);
   if (having.size() != r.having.size() || columns.size() != r.columns.size())
