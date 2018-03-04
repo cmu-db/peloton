@@ -44,12 +44,13 @@ typedef u_int64_t word;
 template <typename KeyType, typename ValueType, typename KeyComparator,
           typename KeyEqualityChecker, typename ValueEqualityChecker>
 class SkipList {
-  public:
-    class NodeManager;
-    class EpochManager;
-    class OperationContext;
-    class SkipListBaseNode;
-    class SkipListInnerNode;
+  class NodeManager;
+  class EpochManager;
+  class OperationContext;
+  template <typename KeyType, typename ValueType>
+  class SkipListBaseNode;
+  template <typename KeyType, typename ValueType>
+  class SkipListInnerNode;
 
  private:
   ///////////////////////////////////////////////////////////////////
@@ -144,6 +145,32 @@ class SkipList {
     }
     return nullptr;
   }
+  /*
+   * AddLevel() - add corresponding level to the SkipList
+   *
+   * return true if successfully added or the level is already added
+   * return false if the level cannot be reached from the highest level now
+   */
+  bool AddLevel(u_int32_t level) {
+    SkipListBaseNode *head = this->skip_list_head_.load();
+    if (head->level_ + 1 < level) {
+      return false;
+    } else {
+      if (head->level_ + 1 == level) {
+        SkipListBaseNode *new_head =
+            node_manager_.GetSkipListNode(nullptr, head, nullptr, nullptr, 1);
+        if (this->skip_list_head_.compare_exchange_strong(head, new_head)) {
+          return true;
+        } else {
+          node_manager_.ReturnSkipListNode(new_head);
+          head = this->skip_list_head_.load();
+          return head->level_ == level;
+        }
+      } else {
+        return true;
+      }
+    }
+  }
 
   /*
    * SearchWithPath() - Search the skiplist for the key, would store the path of
@@ -153,13 +180,11 @@ class SkipList {
    *  call_stack: used for storing the path
    *  key: the search key
    *  curr_node: the same as SearchFrom, but please send in a SkipListHead
-   *  expected_stored_level: from which level the function starts to record the
-   *path, default to start recording from
+   *  expected_stored_level: from which level the function starts to record the path, default to start recording from
    *  curr_node's level
    *
    * The lowest level starts from 0, the search would start from the curr_node
-   * The function defaults to store all nodes in the path from the head to
-   *target node
+   * The function defaults to store all nodes in the path from the head to target node
    *
    * returns nothing but will store the path at call_stack
    */
@@ -167,9 +192,7 @@ class SkipList {
       std::vector<std::pair<SkipListBaseNode *, SkipListBaseNode *>> &
           call_stack,
       KeyType &key, SkipListBaseNode *curr_node, OperationContext &ctx,
-      u_int32_t expected_stored_level = 0) {
-    if (expected_stored_level == 0)
-      expected_stored_level = curr_node->level_;
+      u_int32_t expected_stored_level = curr_node->level_) {
     int level_now = curr_node->level_;
     call_stack.resize(expected_stored_level + 1);
     while (level_now >= 0) {
@@ -184,6 +207,45 @@ class SkipList {
     }
   }
   /*
+   * InserNodeIntoInterval() - this method would try to insert the tower into
+   *the interval and retry due to contention
+   *
+   * It has a call_stack array to accelorate the process
+   * NOTE: this method would retry until the world ends (or the root is
+   *deleted)!!!
+   *
+   * Would only return true, or it would retry until succeed or the root is deleted
+   * Use this function only the tower can be exactly inserted
+   */
+  bool InsertTowerIntoInterval(
+      const KeyType &key, std::vector<SkipListInnerNode *> &tower,
+      std::vector<std::pair<SkipListBaseNode *, SkipListBaseNode *>> &
+          call_stack,
+      OperationContext &ctx, u_int32_t start_level = 0) {
+    u_int32_t expected_level = tower.size();
+    for (auto i = start_level; i < expected_level + 1; i++) {
+      bool insert_flag = false;
+      do {
+        if (i != 0 && GET_DELETE((word)tower[i]->GetRoot)) {
+          // the root has been deleted
+          // there is no need to continue
+          for (auto j = i; j < expected_level + 1; j++) {
+            node_manager_.ReturnSkipListNode(tower[j]);
+          }
+          return true;
+        }
+        tower[i]->next_ = call_stack[i].second;
+        insert_flag = call_stack[i].first->next_.compare_exchange_strong(
+            call_stack[i].second, tower[i]);
+        if (insert_flag)
+          break;
+        else
+          call_stack[i] = SearchFrom(key, call_stack[i].first, ctx);
+      } while (!insert_flag);
+    }
+    return true;
+  }
+  /*
    * InsertNode() - Insert key value tuple to the skip-list
    *
    * The return value is a indicator of success or not
@@ -191,7 +253,67 @@ class SkipList {
   bool InsertNode(const KeyType &key, const ValueType &value,
                   OperationContext &ctx) {
     u_int32_t expected_level = 0;
-    return false;
+
+    while (expected_level < max_level_) {
+      if (rand() & 1) {
+        expected_level++;
+      } else {
+        break;
+      }
+    }
+
+    SkipListBaseNode *curr_node = this->skip_list_head_.load();
+
+    while (curr_node->level_ < expected_level) {
+      AddLevel(curr_node->level_ + 1);
+      curr_node = this->skip_list_head_.load();
+    }
+
+    // used to store the path
+    std::vector<std::pair<SkipListBaseNode *, SkipListBaseNode *>> call_stack;
+    std::vector<SkipListInnerNode *> tower(expected_level + 1);
+    // build the tower of expected level
+    SkipListInnerNode *new_node =
+        node_manager_.GetSkipListInnerNode(key, value);
+    tower[0] = new_node;
+    for (auto i = 1; i < expected_level + 1; i++) {
+      SkipListInnerNode *tmp_node =
+          node_manager_.GetSkipListInnerNode(key, tower[0], tower[i - 1]);
+    }
+    SearchWithPath(call_stack, key, curr_node, ctx, expected_level);
+    int level_now = curr_node->level_;
+    PL_ASSERT(curr_node != nullptr);
+    // if duplicate support, then just try insert
+    // else need to verify the next node
+    if (this->duplicate_support_) {
+      // insert the node from the lowest level
+      // redo the search from stack if the insert fails
+      return InsertTowerIntoInterval(key, tower, call_stack, ctx);
+    } else {
+      // unique key
+      // need to compare with the second return value's key
+      bool insert_flag;
+      do {
+        // try to insert the key in the lowest level
+        // if failed then abort the insert
+        if (call_stack[0].second == nullptr ||
+            GET_DELETE(call_stack[0].second->next_) ||
+            !KeyCmpEqual(call_stack[0].second->key_, key)) {
+          tower[0]->next_ = call_stack[0].second;
+          insert_flag = call_stack[0].first->next_.compare_exchange_strong(
+              call_stack[0].second, tower[0]);
+        } else {
+          // found duplicate key not deleted
+          // abort the insertion
+          return false;
+        }
+        if (insert_flag) break;
+        call_stack[0] = SearchFrom(key, call_stack[0].frist, ctx);
+      } while (!insert_flag);
+      // insertion at the lowest level has succeeded
+      // those towers should all be inserted into the skiplist successfully
+      return InsertTowerIntoInterval(key, tower, call_stack, ctx, 1);
+    }
   }
 
   /*
@@ -236,13 +358,17 @@ class SkipList {
  public:
   SkipList(bool duplicate, int GC_Interval,
            KeyComparator key_cmp_obj = KeyComparator{},
-           KeyEqualityChecker key_eq_obj = KeyEqualityChecker{})
+           KeyEqualityChecker key_eq_obj = KeyEqualityChecker{},
+           ValueEqualityChecker value_eq_obj = ValueEqualityChecker{})
       : duplicate_support_(duplicate),
         GC_Interval_(GC_Interval_),
         max_level_(SKIP_LIST_INITIAL_MAX_LEVEL_),
         // Key comparator, equality checker and hasher
         key_cmp_obj_{key_cmp_obj},
-        key_eq_obj_{key_eq_obj} {
+        key_eq_obj_{key_eq_obj}
+
+        // Value equality checker and hasher
+        {
     LOG_TRACE("SkipList constructed!");
   }
 
@@ -281,6 +407,7 @@ class SkipList {
     virtual ~SkipListBaseNode(){};
   };
 
+  template <typename KeyType, typename ValueType>
   class SkipListInnerNode : public SkipListBaseNode {
    public:
     SkipListInnerNode(SkipListBaseNode *next, SkipListBaseNode *down,
@@ -334,7 +461,7 @@ class SkipList {
    */
   bool Insert(const KeyType &key, const ValueType &value) {
     LOG_TRACE("Insert called!");
-    auto *epoch_node_p = epoch_manager_.JoinEpoch();
+    EpochManager::EpochNode *epoch_node_p = epoch_manager_.JoinEpoch();
     OperationContext ctx{epoch_node_p};
     bool ret = InsertNode(key, value, ctx);
     epoch_manager_.LeaveEpoch(epoch_node_p);
@@ -354,7 +481,7 @@ class SkipList {
                          std::function<bool(const void *)> predicate,
                          bool *predicate_satisfied) {
     LOG_TRACE("Cond Insert called!");
-    auto *epoch_node_p = epoch_manager_.JoinEpoch();
+    EpochManager::EpochNode *epoch_node_p = epoch_manager_.JoinEpoch();
     OperationContext ctx{epoch_node_p};
     // TODO: Insert key value pair to the skiplist with predicate
     epoch_manager_.LeaveEpoch(epoch_node_p);
@@ -369,7 +496,7 @@ class SkipList {
    */
   bool Delete(const KeyType &key) {
     LOG_TRACE("Delete called!");
-    auto *epoch_node_p = epoch_manager_.JoinEpoch();
+    EpochManager::EpochNode *epoch_node_p = epoch_manager_.JoinEpoch();
     OperationContext ctx{epoch_node_p};
     SkipListBaseNode *node = DeleteNode(key, ctx);
     epoch_manager_.LeaveEpoch(epoch_node_p);
@@ -387,7 +514,7 @@ class SkipList {
    */
   void GetValue(const KeyType &search_key, std::vector<ValueType> &value_list) {
     LOG_TRACE("GetValue()");
-    auto *epoch_node_p = epoch_manager_.JoinEpoch();
+    EpochManager::EpochNode *epoch_node_p = epoch_manager_.JoinEpoch();
     OperationContext ctx{epoch_node_p};
     // TODO: call contatiner to fillin the value_list
     epoch_manager_.LeaveEpoch(epoch_node_p);
@@ -429,6 +556,9 @@ class SkipList {
 
   // Raw key eq checker
   const KeyEqualityChecker key_eq_obj_;
+
+  // Check whether values are equivalent
+  //const ValueEqualityChecker value_eq_obj_;
 
   ///////////////////////////////////////////////////////////////////
   // Key Comparison Member Functions
@@ -484,31 +614,35 @@ class SkipList {
     return !KeyCmpGreater(key1, key2);
   }
 
+  ///////////////////////////////////////////////////////////////////
+  // Value Comparison Member
+  ///////////////////////////////////////////////////////////////////
+
+  /*
+   * ValueCmpEqual() - Compares whether two values are equal
+   */
+  /*inline bool ValueCmpEqual(const ValueType &v1, const ValueType &v2) {
+    return value_eq_obj_(v1, v2);
+  }*/
 
   // maintains Epoch
   // has a inside linked list in which every node represents an epoch
   class EpochManager {
    public:
-    class EpochNode{};
+    class EpochNode;
 
-    bool AddGarbageNode(EpochNode *epoch_node, SkipListBaseNode *node){
-      return true;
-    }
+    bool AddGarbageNode(EpochNode *epoch_node, SkipListBaseNode *node);
     /*
      * return the current EpochNode
      * need to add the reference count of current EpochNode
      */
-    EpochNode *JoinEpoch(){
-      return nullptr;
-    }
+    EpochNode *JoinEpoch();
 
     /*
      * leaves current EpochNode
      * should maintain atomicity when counting the reference
      */
-    void LeaveEpoch(EpochNode *node){
-
-    }
+    void LeaveEpoch(EpochNode *node);
 
     /*
      * NewEpoch() - start new epoch after the call
@@ -516,9 +650,7 @@ class SkipList {
      * begins new Epoch that caused by the
      * Need to atomically maintain the epoch list
      */
-    void NewEpoch(){
-
-    }
+    void NewEpoch();
 
     /*
      * ClearEpoch() - Sweep the chain of epoch and free memory
@@ -529,9 +661,7 @@ class SkipList {
      * NOTE: There is no race condition in this function since it is
      * only called by the cleaner thread
      */
-    void ClearEpoch(){
-
-    }
+    void ClearEpoch();
   };
 
   /*
@@ -575,6 +705,7 @@ class SkipList {
       return tmp;
     }
     void ReturnSkipListNode(SkipListBaseNode *node) { delete node; }
+
   };
 
   /*
@@ -584,8 +715,8 @@ class SkipList {
    */
   class OperationContext {
    public:
-    typename EpochManager::EpochNode *epoch_node_;
-    OperationContext(typename EpochManager::EpochNode *epoch_node)
+    EpochManager::EpochNode *epoch_node_;
+    OperationContext(EpochManager::EpochNode *epoch_node)
         : epoch_node_(epoch_node) {}
   };
 };
