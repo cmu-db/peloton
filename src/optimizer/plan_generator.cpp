@@ -458,7 +458,6 @@ void PlanGenerator::BuildAggregatePlan(
     const std::vector<std::shared_ptr<expression::AbstractExpression>>
         *groupby_cols,
     std::unique_ptr<expression::AbstractExpression> having_predicate) {
-  LOG_DEBUG("Generating Aggregate Plan");
   vector<planner::AggregatePlan::AggTerm> aggr_terms;
   vector<catalog::Column> output_schema_columns;
   DirectMapList dml;

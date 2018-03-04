@@ -95,8 +95,7 @@ void OptimizeExpression::execute() {
 
   std::sort(valid_rules.begin(), valid_rules.end());
   LOG_TRACE("OptimizeExpression::execute() op %d, valid rules : %lu",
-            static_cast<int>(group_expr_->Op().type()), valid_rules.size());
-
+            static_cast<int>(group_expr_->Op().GetType()), valid_rules.size());
   // Apply rule
   for (auto &r : valid_rules) {
     PushTask(new ApplyRule(group_expr_, r.rule, context_));

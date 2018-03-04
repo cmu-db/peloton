@@ -799,6 +799,7 @@ TEST_F(OptimizerSQLTests, NestedQueryWithAggregationTest) {
 }
 
 TEST_F(OptimizerSQLTests, NestedQueryInHavingTest) {
+  // 4 previously inserted tuples
   //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (1, 22, 333);");
   //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (2, 11, 000);");
   //  TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test VALUES (3, 33, 444);");
