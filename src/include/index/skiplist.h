@@ -93,6 +93,9 @@ public:
       // need a new head with node_level
       LOG_DEBUG("%s: need to install a new head", __func__);
       Node *new_head = new Node(node_level, KeyType(), nullptr);
+      for (int i=0; i<old_head->level; i++) {
+        new_head->next[i] = old_head->next[i].load();
+      }
       while (true) {
         old_head = head.load();
         if (old_head->level >= node_level) {
@@ -111,7 +114,7 @@ public:
 retry:
     Search(key, preds, succs, level);
 
-    if (KeyCmpEqual(succs[0]->key, key)) {
+    if (succs[0]!= nullptr && KeyCmpEqual(succs[0]->key, key)) {
       // key already exist
       ValueNode *old_val_ptr = succs[0]->val_ptr.load();
       if (old_val_ptr == nullptr) { // current succesor is deleted
@@ -156,7 +159,7 @@ retry:
         }
         // successor may have same key because of
         // concurrent deletion of current node and concurrent insertion of the same key
-        if (KeyCmpEqual(right->key, key))
+        if (right!= nullptr && KeyCmpEqual(right->key, key))
           right = get_node_address(right->next[i].load());
         if (left->next[i].compare_exchange_strong(right, new_node))
           break;
@@ -172,6 +175,7 @@ retry:
    * Delete - delete key-value pair if the pair exist
    * */
   bool Delete(const KeyType &key, const ValueType &value) {
+    LOG_DEBUG("%s: called", __func__);
     Node **preds = nullptr; // predecessors
     Node **succs = nullptr; // successors
     int level = 0;
@@ -180,11 +184,15 @@ retry:
       return false;
     }
     ValueNode *old_val_ptr = succs[0]->val_ptr.load();
-    // ATTENTION: we have to explicitly declare a variable of nullptr for CAS operation
+    // WARNING: we have to explicitly declare a variable of nullptr for CAS operation
     // otherwise, compare_exchange_strong CAN NOT compile with nullptr!
     ValueNode *empty_val_ptr = nullptr;
     if (unique_key) { // key is unique
-      if (old_val_ptr != nullptr && ValueCmpEqual(old_val_ptr->val, value)) {
+      if (old_val_ptr != nullptr && !is_deleted_val_ptr(old_val_ptr)
+          &&ValueCmpEqual(old_val_ptr->val, value)) {
+        // old_val_ptr should exist, and it should not be marked as deleted
+        // WARNING: we should guarantee we only use pointer with address WITHOUT a delete bit
+        // when we want to use member variables of that pointer
         // value match
         while (!(succs[0]->val_ptr.compare_exchange_strong(old_val_ptr, empty_val_ptr))) {
           old_val_ptr = succs[0]->val_ptr.load();
@@ -206,6 +214,7 @@ retry:
             old_val_ptr = succs[0]->val_ptr.load();
           }
           if (new_val_ptr == nullptr) { // all values are deleted, the key Node should be deleted too
+            LOG_DEBUG("%s: val all deleted, delete key", __func__);
             delete_node(succs[0]);
           }
         }
@@ -218,6 +227,29 @@ retry:
     return true;
   }
 
+  /*
+   * GetValue - get values with key and store them in value_list
+   * */
+  void GetValue(const KeyType &key, std::vector<ValueType> &value_list) {
+    LOG_DEBUG("%s: called", __func__);
+    Node **prods, **succs;
+    int level = 0;
+    Search(key, prods, succs, level);
+    LOG_DEBUG("%s: level=%d", __func__, level);
+    if (succs[0]!= nullptr && KeyCmpEqual(succs[0]->key, key)) {
+      LOG_DEBUG("%s: find key", __func__);
+      ValueNode *val_ptr = succs[0]->val_ptr.load(), *val_next;
+      while (val_ptr != nullptr) {
+        val_next = val_ptr->next.load();
+        if (!is_deleted_val_ptr(val_next)) {
+          value_list.push_back(val_ptr->val);
+        }
+        val_ptr = get_val_address(val_next);
+      }
+    } else {
+      LOG_DEBUG("%s: NOT find key", __func__);
+    }
+  }
   /*
    * Search - get predecessors (p_key) and successors (s_key) for the key
    * all p_key < key
@@ -255,7 +287,7 @@ retry:
           right = get_node_address(right_next);
         }
         // key <= right->key || right == nullptr means right is at the end of the list
-        if (right == nullptr || KeyCmpLess(key, right->key))
+        if (right == nullptr || !KeyCmpLess(right->key, key))
           break;
         // key > right->key
         left = right;
@@ -335,7 +367,7 @@ private:
    * */
   void delete_node(Node *p) {
     Node *next;
-    for (int i=p->level; i>=0; i--) {
+    for (int i=p->level-1; i>=0; i--) {
       do {
         next = p->next[i].load();
         if (is_deleted_node(next))
@@ -375,11 +407,19 @@ private:
    * */
   ValueNode* traverse_value_list(ValueNode *val_ptr) {
     ValueNode* head_val_ptr = val_ptr;
+    ValueNode *left, *right, *old_next;
     // find first exist node
-    while (!is_deleted_val_ptr(head_val_ptr->next.load())) {
-      head_val_ptr = get_val_address(head_val_ptr->next.load());
+    while (true) {
+      if (head_val_ptr == nullptr)
+        break;
+      // head_val_ptr is not nullptr
+      old_next = head_val_ptr->next.load();
+      if (!is_deleted_val_ptr(old_next)) // head_val_ptr exist
+        break;
+      head_val_ptr = get_val_address(old_next);
     }
-    ValueNode *left = head_val_ptr, *right, *old_next;
+
+    left = head_val_ptr;
     while (left != nullptr) {
       old_next = left->next.load();
       right = old_next;
@@ -405,7 +445,7 @@ private:
    * */
   bool delete_value(ValueNode *val_ptr, const ValueType & value) {
     bool find_and_delete_val = false;
-    ValueNode *v = val_ptr, *v_next;
+    ValueNode *v = get_val_address(val_ptr), *v_next;
     while (v != nullptr) {
       if (ValueCmpEqual(v->val, value)) {
         // find matched value

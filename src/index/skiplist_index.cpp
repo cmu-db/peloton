@@ -121,10 +121,13 @@ void SKIPLIST_INDEX_TYPE::ScanAllKeys(
 }
 
 SKIPLIST_TEMPLATE_ARGUMENTS
-void SKIPLIST_INDEX_TYPE::ScanKey(
-    UNUSED_ATTRIBUTE const storage::Tuple *key,
-    UNUSED_ATTRIBUTE std::vector<ValueType> &result) {
-  // TODO: Add your implementation here
+void SKIPLIST_INDEX_TYPE::ScanKey(const storage::Tuple *key,
+                                  std::vector<ValueType> &result) {
+  KeyType index_key;
+  index_key.SetFromKey(key);
+
+  // This function in BwTree fills a given vector
+  container.GetValue(index_key, result);
   return;
 }
 
