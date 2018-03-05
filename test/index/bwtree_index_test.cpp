@@ -26,6 +26,7 @@ namespace test {
 class BwTreeIndexTests : public PelotonTest {};
 
 TEST_F(BwTreeIndexTests, BasicTest) {
+
   TestingIndexUtil::BasicTest(IndexType::BWTREE);
 }
 

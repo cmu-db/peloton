@@ -27,8 +27,14 @@ SKIPLIST_INDEX_TYPE::SkipListIndex(IndexMetadata *metadata)
       // Key "less than" relation comparator
       comparator{},
       // Key equality checker
-      equals{} {
+      equals{},
+      container{true, metadata->HasUniqueKeys(), comparator, equals, ValueEqualityChecker{}}
+    {
   // TODO: Add your implementation here
+      // xingyuj1
+      // whether or not support duplicate keys
+      LOG_TRACE("unique_key=%d", metadata->HasUniqueKeys());
+      // initialize container as a skiplist MapType here
   return;
 }
 
@@ -44,8 +50,11 @@ SKIPLIST_TEMPLATE_ARGUMENTS
 bool SKIPLIST_INDEX_TYPE::InsertEntry(
     UNUSED_ATTRIBUTE const storage::Tuple *key,
     UNUSED_ATTRIBUTE ItemPointer *value) {
-  bool ret = false;
   // TODO: Add your implementation here
+  KeyType index_key;
+  index_key.SetFromKey(key);
+
+  bool ret = container.Insert(index_key, value);
   return ret;
 }
 
