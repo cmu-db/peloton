@@ -197,19 +197,39 @@ class SkipList {
   }
 
   /*
-   * DeleteNode() - Delete certain key from the skip-list and fill in the
-   *deleted nodes to del_nodes
+   * SearchKeyValueInList() - Search specific key value pair in the current
+   *level
    *
-   * The return value is the list of node deleted or NULL if failed to delete
+   * return the prev of the node to delete
    */
-  bool DeleteNode(const KeyType &key, NODE_LIST del_nodes,
+  SkipListBaseNode *SearchKeyValueInList(const KeyType &key,
+                                         const ValueType &value,
+                                         SkipListBaseNode *prev,
+                                         SkipListBaseNode *del) {
+    PL_ASSERT(del != nullptr);
+    while (del && KeyCmpEqual(del->key_, del)) {
+      auto inner_node = static_cast<SkipListInnerNode *>(del);
+      if (ValueCmpEqual(inner_node->GetRootValue(), value)) {
+        return prev;
+      } else {
+        prev = del;
+        del = GET_NEXT(del->next_.load());
+      }
+    }
+    return nullptr;
+  }
+
+  /*
+   * DeleteNode() - Try delete the key value pair from the skip list
+   *
+   * return true if successful deleted
+   */
+  bool DeleteNode(const KeyType &key, const ValueType &value, NODE_PAIR &pair,
                   OperationContext &ctx) {
-    auto pair = Search(key, ctx);
     SkipListBaseNode *prev_node = pair.first;
     SkipListBaseNode *del_node = pair.second;
 
-    // No such key
-    while (del_node != nullptr) {
+    while (prev_node && del_node) {
       // Tries to flag the prev node
       auto flag_pair = TryFlag(prev_node, del_node, ctx);
       prev_node = flag_pair.first;
@@ -220,23 +240,55 @@ class SkipList {
       }
       // Node deleted by this process
       if (result) {
-        del_nodes.push_back(del_node);
+        // TODO: Notify epoch manager
       }
 
-      // Cleanup the superfluous nodes
+      // Cleanup the superfluous tower
       std::vector<NODE_PAIR> call_stack;
       SearchWithPath(call_stack, key, skip_list_head_.load(), ctx);
       for (auto node : call_stack) {
-        SearchFrom(key, node.first, ctx);
+        auto to_del_pair =
+            SearchKeyValueInList(key, value, node.first, node.second);
+        SearchFrom(key, to_del_pair, ctx);
       }
-
-      // Continue searching duplicate key
-      auto new_pair = SearchFrom(key, prev_node, ctx);
-      prev_node = new_pair.first;
-      del_node = new_pair.second;
     }
+  }
 
-    return del_nodes.size() > 0;
+  /*
+   * Delete() - Delete certain key from the skip-list and fill in the
+   *deleted nodes to del_nodes
+   *
+   * The return value is the list of node deleted or NULL if failed to delete
+   */
+  bool Delete(const KeyType &key, const ValueType &value,
+              OperationContext &ctx) {
+    auto pair = Search(key, ctx);
+    SkipListBaseNode *prev_node = pair.first;
+    SkipListBaseNode *del_node = pair.second;
+
+    // Check the node and see if it's deleted dean
+    while (del_node) {
+      auto root_node = static_cast<SkipListInnerNode *>(del_node);
+      // Continue only if value match
+      if (ValueCmpEqual(root_node->GetValue(), value)) {
+        auto next = root_node->next_.load();
+        if (GET_FLAG(next)) {
+          SearchFrom(key, del_node, ctx);
+          // Already deleted
+        } else if (GET_DELETE(next)) {
+          return false;
+        } else {
+          // Delete the node
+          NODE_PAIR pair = std::make_pair(prev_node, del_node);
+          return DeleteNode(key, value, pair, ctx);
+        }
+      } else {
+        // Continue searching other nodes with the same key
+        prev_node = del_node;
+        del_node = GET_NEXT(del_node->next_.load());
+      }
+    }
+    return false;
   }
 
   /*
@@ -353,6 +405,16 @@ class SkipList {
       this->valueOrRoot_.root = root;
     }
 
+    // Get the value from the tower
+    ValueType &GetRootValue() {
+      if (this->down_ == nullptr) {
+        return this->valueOrRoot_.value;
+      } else {
+        SkipListInnerNode *root = this->valueOrRoot_.root.load();
+        return root->valueOrRoot_.value;
+      }
+    }
+
     ValueType &GetValue() {
       PL_ASSERT(this->down_ == nullptr);
       return this->valueOrRoot_.value;
@@ -420,12 +482,11 @@ class SkipList {
    * This function returns false if the key and value pair does not
    * exist. Return true if delete succeeds
    */
-  bool Delete(const KeyType &key) {
+  bool Delete(const KeyType &key, const ValueType &value) {
     LOG_TRACE("Delete called!");
     auto *epoch_node_p = epoch_manager_.JoinEpoch();
     OperationContext ctx{epoch_node_p};
-    std::vector<SkipListBaseNode *> del_nodes;
-    bool ret = DeleteNode(key, del_nodes, ctx);
+    bool ret = Delete(key, value, ctx);
     epoch_manager_.LeaveEpoch(epoch_node_p);
     return ret;
   }
