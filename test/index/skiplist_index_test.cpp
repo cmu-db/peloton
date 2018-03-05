@@ -26,8 +26,7 @@ namespace test {
 class SkipListIndexTests : public PelotonTest {};
 
 TEST_F(SkipListIndexTests, BasicTest) {
-  // TestingIndexUtil::BasicTest(IndexType::SKIPLIST);
-  EXPECT_EQ(2, 1+1);
+   TestingIndexUtil::BasicTest(IndexType::SKIPLIST);
 }
 
 //TEST_F(SkipListIndexTests, MultiMapInsertTest) {
