@@ -207,7 +207,7 @@ class SkipList {
                                          SkipListBaseNode *prev,
                                          SkipListBaseNode *del) {
     PL_ASSERT(del != nullptr);
-    while (del && KeyCmpEqual(del->key_, del)) {
+    while (del && KeyCmpEqual(del->key_, key)) {
       auto inner_node = static_cast<SkipListInnerNode *>(del);
       if (ValueCmpEqual(inner_node->GetRootValue(), value)) {
         return prev;
@@ -228,12 +228,13 @@ class SkipList {
                   OperationContext &ctx) {
     SkipListBaseNode *prev_node = pair.first;
     SkipListBaseNode *del_node = pair.second;
+    bool result = false;
 
-    while (prev_node && del_node) {
+    if (prev_node && del_node) {
       // Tries to flag the prev node
       auto flag_pair = TryFlag(prev_node, del_node, ctx);
       prev_node = flag_pair.first;
-      bool result = flag_pair.second;
+      result = flag_pair.second;
       // Attempts to remove the del_node from list
       if (prev_node != nullptr) {
         HelpFlagged(prev_node, del_node, ctx);
@@ -241,17 +242,18 @@ class SkipList {
       // Node deleted by this process
       if (result) {
         // TODO: Notify epoch manager
-      }
 
-      // Cleanup the superfluous tower
-      std::vector<NODE_PAIR> call_stack;
-      SearchWithPath(call_stack, key, skip_list_head_.load(), ctx);
-      for (auto node : call_stack) {
-        auto to_del_pair =
-            SearchKeyValueInList(key, value, node.first, node.second);
-        SearchFrom(key, to_del_pair, ctx);
+        // Cleanup the superfluous tower
+        std::vector<NODE_PAIR> call_stack;
+        SearchWithPath(call_stack, key, skip_list_head_.load(), ctx);
+        for (auto node : call_stack) {
+          auto to_del_pair =
+              SearchKeyValueInList(key, value, node.first, node.second);
+          SearchFrom(key, to_del_pair, ctx);
+        }
       }
     }
+    return result;
   }
 
   /*
