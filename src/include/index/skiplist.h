@@ -135,7 +135,7 @@ private:
    */
   NODE_PAIR SearchFrom(const KeyType &key, const SkipListBaseNode *Node,
                        OperationContext &ctx) {
-    // LOG_INFO("Search From %p", Node);
+    //LOG_INFO("Search From %p", Node);
     // TODO: physically deletion when search in the list
     if (Node == nullptr) {
       return std::make_pair(nullptr, nullptr);
@@ -143,7 +143,11 @@ private:
     SkipListBaseNode *curr_node = const_cast<SkipListBaseNode *>(Node);
     while (curr_node) {
       SkipListBaseNode *tmp_pointer = curr_node->next_.load();
-      // LOG_INFO("Search Trace %p", curr_node);
+
+      //LOG_INFO("Search Trace %p", curr_node);
+      //LOG_INFO("Search Trace next: %p", tmp_pointer);
+      //LOG_INFO("Search Trace down_: %p", curr_node->down_.load());
+
       if (GET_FLAG(tmp_pointer)) {
         HelpFlagged(curr_node, GET_NEXT(curr_node), ctx);
       } else if ((GET_DELETE(tmp_pointer))) {
@@ -214,8 +218,8 @@ private:
       return false;
     } else {
       if (head->level_ + 1 == level) {
-        SkipListBaseNode *new_head = node_manager_.GetSkipListNode(
-            nullptr, head, nullptr, KeyType{}, 1, level);
+        SkipListBaseNode *new_head = node_manager_.GetSkipListHead(level);
+        new_head->down_ = head;
         if (this->skip_list_head_.compare_exchange_strong(head, new_head)) {
           return true;
         } else {
@@ -438,7 +442,7 @@ public:
   {
     LOG_INFO("SkipList constructed!");
     this->max_level_ = SKIP_LIST_INITIAL_MAX_LEVEL_;
-    this->skip_list_head_ = node_manager_.GetSkipListNode(KeyType{}, 1, 0);
+    this->skip_list_head_ = node_manager_.GetSkipListHead(0);
   }
 
   ~SkipList() {
@@ -457,6 +461,12 @@ public:
     KeyType key_;
     bool isHead_;
     u_int32_t level_;
+
+    SkipListBaseNode(bool isHead, u_int32_t level)
+        : isHead_(isHead),
+          level_(level) {
+        this->next_ = this->down_ = this->back_link_ = nullptr;
+    }
 
     SkipListBaseNode(SkipListBaseNode *next, SkipListBaseNode *down,
                      SkipListBaseNode *back_link, KeyType key, bool isHead)
@@ -751,6 +761,12 @@ public:
    */
   class NodeManager {
   public:
+    /*
+     *
+     */
+    SkipListBaseNode *GetSkipListHead(u_int32_t level){
+      return new SkipListBaseNode(true, level);
+    }
     /*
      * GetSkipListNode() - getSkipListNode with only key and isHead settled
      */
