@@ -15,6 +15,7 @@
 #include <atomic>
 #include <ctime>
 #include <cstdlib>
+#include <vector>
 
 #include "common/logger.h"
 
@@ -47,7 +48,7 @@ public:
       value_eq_obj{p_value_eq_obj}
   {
     LOG_DEBUG("Skip List Constructor called. ");
-    // TODO: initialize head node
+    // initialize head node
     srand(time(nullptr));
     int init_level = get_rand_level();
     LOG_DEBUG("init_level = %d", init_level);
@@ -65,11 +66,11 @@ public:
   }
 
   ~SkipList(){
-    LOG_TRACE("Destructor: Free tree nodes");
+    LOG_TRACE("Destructor: Free nodes");
     // TODO: free all nodes
     int node_count = 0;
     node_count++;
-    LOG_DEBUG("Freed %d tree nodes", node_count);
+    LOG_DEBUG("Freed %d nodes", node_count);
     return;
   }
 
@@ -87,7 +88,25 @@ public:
     Node **succs = nullptr; // successors
     int level = 0;
 
-    // TODO: node_level > head_level, update head
+    Node *old_head = head.load();
+    if (node_level > old_head->level) {
+      // need a new head with node_level
+      LOG_DEBUG("%s: need to install a new head", __func__);
+      Node *new_head = new Node(node_level, KeyType(), nullptr);
+      while (true) {
+        old_head = head.load();
+        if (old_head->level >= node_level) {
+          // other thread update head before current thread install new_head
+          // we do not have to install new_head
+          // TODO: GC for new_head, because it won't be installed
+          break;
+        }
+        if (head.compare_exchange_strong(old_head, new_head)) {
+          // TODO: GC for old_head if new_head is installed successfully
+          break;
+        }
+      }
+    }
 
 retry:
     Search(key, preds, succs, level);
@@ -115,8 +134,9 @@ retry:
     Node *new_node = new Node(node_level, key, val_ptr);
     Node *left, *right, *new_next;
     for (int i=0; i<node_level; i++) {
-      new_next = new_node->next[i].load();
-      new_node->next[i].compare_exchange_strong(new_next, succs[i]);
+//      new_next = new_node->next[i].load();
+//      new_node->next[i].compare_exchange_strong(new_next, succs[i]);
+      new_node->next[i] = succs[i];
     }
 
     // install new_node at level 0, if fail, just retry
@@ -130,14 +150,14 @@ retry:
         new_next = new_node->next[i].load();
         // update ptr if the next ptr of new node is deleted or outdated
         if (new_next != right) {
-          new_next = get_address(new_next);
+          new_next = get_node_address(new_next);
           if (!(new_node->next[i].compare_exchange_strong(new_next, right)))
             break;
         }
         // successor may have same key because of
         // concurrent deletion of current node and concurrent insertion of the same key
         if (KeyCmpEqual(right->key, key))
-          right = get_address(right->next[i].load());
+          right = get_node_address(right->next[i].load());
         if (left->next[i].compare_exchange_strong(right, new_node))
           break;
         // CAS fail
@@ -149,36 +169,49 @@ retry:
   }
 
   /*
-   * Delete -
+   * Delete - delete key-value pair if the pair exist
    * */
   bool Delete(const KeyType &key, const ValueType &value) {
     Node **preds = nullptr; // predecessors
     Node **succs = nullptr; // successors
     int level = 0;
     Search(key, preds, succs, level);
-    if (!KeyCmpEqual(succs[0]->key, key)) {
-      // key not exist
+    if (!KeyCmpEqual(succs[0]->key, key)) { // key not exist
       return false;
     }
     ValueNode *old_val_ptr = succs[0]->val_ptr.load();
     // ATTENTION: we have to explicitly declare a variable of nullptr for CAS operation
     // otherwise, compare_exchange_strong CAN NOT compile with nullptr!
     ValueNode *empty_val_ptr = nullptr;
-    if (unique_key) {
-      // key is unique
-      if (old_val_ptr != nullptr && ValueEqualityChecker(old_val_ptr->val, value)) {
+    if (unique_key) { // key is unique
+      if (old_val_ptr != nullptr && ValueCmpEqual(old_val_ptr->val, value)) {
         // value match
         while (!(succs[0]->val_ptr.compare_exchange_strong(old_val_ptr, empty_val_ptr))) {
           old_val_ptr = succs[0]->val_ptr.load();
         }
-        return true;
-      } else { // value not match
+        // delete Node
+        delete_node(succs[0]);
+      } else { // value not match or the key is already deleted
         return false;
       }
-    } else {
-      // key is duplicate
-      // CAS operation to delete a target value is complicated and should be handled carefully
-      // TODO: delete targe value in value linked list by CAS, need careness!
+    } else { // key is duplicate
+      // delete targe value in value linked list by CAS, need careness!
+      // There may be duplicate value in the linked list
+      bool find_delete = delete_value(old_val_ptr, value);
+      if (find_delete) { // find value and logically delete it
+        ValueNode* new_val_ptr = traverse_value_list(old_val_ptr);
+        if (new_val_ptr != old_val_ptr) {
+          // update val_ptr to new_val_ptr
+          while (!(succs[0]->val_ptr.compare_exchange_strong(old_val_ptr, new_val_ptr))) {
+            old_val_ptr = succs[0]->val_ptr.load();
+          }
+          if (new_val_ptr == nullptr) { // all values are deleted, the key Node should be deleted too
+            delete_node(succs[0]);
+          }
+        }
+      } else { // value is not found
+        return false;
+      }
     }
     // search is intended to just jump all logical deleted nodes
     Search(key, preds, succs, level);
@@ -206,7 +239,7 @@ retry:
     }
     for (int i=level-1; i>=0; i--) {
       left_next = left->next[i].load();
-      if (left_next != nullptr && is_deleted(left_next)) {
+      if (left_next != nullptr && is_deleted_node(left_next)) {
         goto retry;
       }
       // find exist node at this level
@@ -217,9 +250,9 @@ retry:
           if (right == nullptr)
             break;
           right_next = right->next[i];
-          if (right_next == nullptr || !is_deleted(right_next))
+          if (right_next == nullptr || !is_deleted_node(right_next))
             break;
-          right = get_address(right_next);
+          right = get_node_address(right_next);
         }
         // key <= right->key || right == nullptr means right is at the end of the list
         if (right == nullptr || KeyCmpLess(key, right->key))
@@ -243,7 +276,7 @@ private:
   class ValueNode{
   public:
     ValueType val;
-    ValueNode* next;
+    std::atomic<ValueNode*> next; // support concurrent delete in duplicate key mode
     ValueNode(ValueType val){ this->val = val; next = nullptr;}
     ValueNode(ValueType val, ValueNode *next) {this->val = val; this->next = next;}
     ~ValueNode();
@@ -262,16 +295,20 @@ private:
       this->level = level;
       this->key = key;
       next = new std::atomic<Node *>[level];
-      for (int i=0; i<level; i++) {
-        Node *tmp = next[i].load();
-        while(!next[i].compare_exchange_strong(tmp, nullptr)){
-          LOG_DEBUG("%s: next[%d] CAS fail", __func__, i);
-        }
-      }
-      ValueNode* old = this->val_ptr.load();
-      while(!this->val_ptr.compare_exchange_strong(old, val_ptr)){
-        LOG_DEBUG("%s, val_ptr CAS fail", __func__);
-      }
+      for (int i=0; i<level; i++)
+        next[i] = nullptr;
+      this->val_ptr = val_ptr;
+//      Node *empty_node = nullptr;
+//      for (int i=0; i<level; i++) {
+//        Node *tmp = next[i].load();
+//        while(!next[i].compare_exchange_strong(tmp, empty_node)){
+//          LOG_DEBUG("%s: next[%d] CAS fail", __func__, i);
+//        }
+//      }
+//      ValueNode* old = this->val_ptr.load();
+//      while(!this->val_ptr.compare_exchange_strong(old, val_ptr)){
+//        LOG_DEBUG("%s, val_ptr CAS fail", __func__);
+//      }
     }
 
     ~Node(){
@@ -290,8 +327,8 @@ private:
   std::atomic<Node*> head;
   // unique key mark whether to use duplicate key
   bool unique_key;
-  long long ADDRESS_MASK = ~0x1;
-  long long DELETE_MASK = 0x1;
+  const long long ADDRESS_MASK = ~0x1;
+  const long long DELETE_MASK = 0x1;
 
   /*
    * delete_node - mark last bit in address in each level, logical delete node
@@ -301,34 +338,117 @@ private:
     for (int i=p->level; i>=0; i--) {
       do {
         next = p->next[i].load();
-        if (is_deleted(next))
+        if (is_deleted_node(next))
           break;
-      } while (!(p->next[i].compare_exchange_strong(next, delete_address(next))));
+      } while (!(p->next[i].compare_exchange_strong(next, delete_node_address(next))));
     }
   }
 
   /*
-   * is_deleted - judge whether the next node is deleted from marked bit in pointer
+   * is_deleted_node - judge whether the next node is deleted from marked bit in pointer
    * */
-  bool is_deleted(Node* p) {
+  inline bool is_deleted_node(Node* p) {
     long long t = reinterpret_cast<long long>(p) & DELETE_MASK;
     return (t == DELETE_MASK);
   }
 
   /*
-   * get_address - get address from pointer with a marked bit
+   * get_node_address - get address from pointer with a marked bit
    * */
-  Node* get_address(Node* p) {
+  inline Node* get_node_address(Node* p) {
     long long t = reinterpret_cast<long long>(p) & ADDRESS_MASK;
     return reinterpret_cast<Node*>(t);
   }
 
   /*
-   * delete_address - mark the last bit of pointer, as logical delete address
+   * delete_node_address - mark the last bit of pointer, as logical delete address
    * */
-  Node* delete_address(Node* p) {
+  inline Node* delete_node_address(Node* p) {
     long long t = reinterpret_cast<long long>(p) | DELETE_MASK;
     return reinterpret_cast<Node*>(t);
+  }
+
+
+  /*
+   * traverse_value_list - traverse ValueNode linked list, connect exist ValueNodes by changing next pointers
+   * return head ValueNode pointer
+   * */
+  ValueNode* traverse_value_list(ValueNode *val_ptr) {
+    ValueNode* head_val_ptr = val_ptr;
+    // find first exist node
+    while (!is_deleted_val_ptr(head_val_ptr->next.load())) {
+      head_val_ptr = get_val_address(head_val_ptr->next.load());
+    }
+    ValueNode *left = head_val_ptr, *right, *old_next;
+    while (left != nullptr) {
+      old_next = left->next.load();
+      right = old_next;
+      while (right != nullptr && is_deleted_val_ptr(right->next.load())) {
+        right = get_val_address(right->next.load());
+      }
+      if (old_next != right) { // left and right are not adjancent
+        // update left->next
+        while (!left->next.compare_exchange_strong(old_next, right)) {
+          old_next = left->next.load();
+        }
+      }
+      left = right;
+    }
+
+    return head_val_ptr;
+  }
+  /*
+   * delete_value - logically delete all ValueNodes whose value equals to value
+   *                by marking delete bit in its next pointer
+   * return true if delete operation on a value node happens
+   * return false if no such delete operation
+   * */
+  bool delete_value(ValueNode *val_ptr, const ValueType & value) {
+    bool find_and_delete_val = false;
+    ValueNode *v = val_ptr, *v_next;
+    while (v != nullptr) {
+      if (ValueCmpEqual(v->val, value)) {
+        // find matched value
+        while (true) {
+          v_next = v->next.load();
+          if (is_deleted_val_ptr(v_next)) { // ValueNode is deleted by other thread, skip this node
+            break;
+          }
+          if (v->next.compare_exchange_strong(v_next, delete_val_address(v_next))) {
+            // mark delete bit
+            find_and_delete_val = true;
+            // TODO: GC for ValueNode
+            break;
+          }
+        }
+      }
+      // pointer go to next ValueNode
+      v = get_val_address(v->next.load());
+    }
+    return find_and_delete_val;
+  }
+  /*
+   * is_deleted_val_ptr - judge whether the next val_ptr is deleted from marked bit in pointer
+   * */
+  inline bool is_deleted_val_ptr(ValueNode* p) {
+    long long t = reinterpret_cast<long long>(p) & DELETE_MASK;
+    return (t == DELETE_MASK);
+  }
+
+  /*
+   * get_val_address - get address from pointer with a marked bit
+   * */
+  inline ValueNode* get_val_address(ValueNode* p) {
+    long long t = reinterpret_cast<long long>(p) & ADDRESS_MASK;
+    return reinterpret_cast<ValueNode*>(t);
+  }
+
+  /*
+   * delete_val_address - mark the last bit of pointer, as logical delete address
+   * */
+  inline ValueNode* delete_val_address(ValueNode* p) {
+    long long t = reinterpret_cast<long long>(p) | DELETE_MASK;
+    return reinterpret_cast<ValueNode*>(t);
   }
 
   /*
