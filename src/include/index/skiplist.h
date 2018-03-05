@@ -110,7 +110,7 @@ private:
     SkipListBaseNode *headNode = this->skip_list_head_.load();
     while (1) {
       auto sr = SearchFrom(key, headNode, ctx);
-      PL_ASSERT(sr != nullptr);
+      PL_ASSERT(sr.first != nullptr);
       headNode = sr.first;
       if (headNode->down_.load() == nullptr) {
         return sr;
@@ -424,13 +424,15 @@ private:
 public:
   SkipList(bool duplicate, int GC_Interval,
            KeyComparator key_cmp_obj = KeyComparator{},
-           KeyEqualityChecker key_eq_obj = KeyEqualityChecker{})
+           KeyEqualityChecker key_eq_obj = KeyEqualityChecker{},
+           ValueEqualityChecker val_eq_obj = ValueEqualityChecker{})
       : duplicate_support_(duplicate),
         GC_Interval_(GC_Interval),
 
       // Key comparator, equality checker
         key_cmp_obj_{key_cmp_obj},
-        key_eq_obj_{key_eq_obj}
+        key_eq_obj_{key_eq_obj},
+        value_eq_obj_{val_eq_obj}
 
   // Value equality checker and hasher
   {
@@ -635,7 +637,7 @@ public:
   const KeyEqualityChecker key_eq_obj_;
 
   // Check whether values are equivalent
-  // const ValueEqualityChecker value_eq_obj_;
+  const ValueEqualityChecker value_eq_obj_;
 
   ///////////////////////////////////////////////////////////////////
   // Key Comparison Member Functions
@@ -689,6 +691,13 @@ public:
    */
   inline bool KeyCmpLessEqual(const KeyType &key1, const KeyType &key2) const {
     return !KeyCmpGreater(key1, key2);
+  }
+
+  /*
+   * ValueCmpEqual() - Compares whether two values are equal
+   */
+  inline bool ValueCmpEqual(const ValueType &v1, const ValueType &v2) {
+    return value_eq_obj_(v1, v2);
   }
 
   // maintains Epoch
