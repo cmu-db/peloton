@@ -53,6 +53,12 @@ bool CUCKOO_MAP_TYPE::Insert(const KeyType &key, ValueType value) {
 }
 
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
+void CUCKOO_MAP_TYPE::Upsert(const KeyType &key, ValueType &value) {
+  cuckoo_map.upsert(key, [&value](ValueType &v) { v = value; }, value);
+  return;
+}
+
+CUCKOO_MAP_TEMPLATE_ARGUMENTS
 bool CUCKOO_MAP_TYPE::Update(const KeyType &key, ValueType value) {
   auto status = cuckoo_map.update(key, value);
   return status;
@@ -70,11 +76,6 @@ bool CUCKOO_MAP_TYPE::Find(const KeyType &key, ValueType &value) const {
   auto status = cuckoo_map.find(key, value);
   LOG_TRACE("find status : %d", status);
   return status;
-}
-
-CUCKOO_MAP_TEMPLATE_ARGUMENTS
-ValueType CUCKOO_MAP_TYPE::GetValue(const KeyType &key) const {
-  return cuckoo_map.find(key);
 }
 
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
@@ -147,8 +148,7 @@ template class CuckooMap<index::GenericKey<256>, ItemPointer *,
                          index::GenericEqualityChecker<256>>;
 
 // Tuple key
-template class CuckooMap<index::TupleKey, ItemPointer *,
-                         index::TupleKeyHasher,
+template class CuckooMap<index::TupleKey, ItemPointer *, index::TupleKeyHasher,
                          index::TupleKeyEqualityChecker>;
 
 }  // namespace peloton

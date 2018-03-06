@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <cstdlib>
@@ -22,41 +21,40 @@
 namespace peloton {
 
 // CUCKOO_MAP_TEMPLATE_ARGUMENTS
-#define CUCKOO_MAP_TEMPLATE_ARGUMENTS                   \
+#define CUCKOO_MAP_TEMPLATE_ARGUMENTS                                \
   template <typename KeyType, typename ValueType, typename HashType, \
             typename PredType>
 
 // CUCKOO_MAP_DEFAULT_ARGUMENTS
-#define CUCKOO_MAP_DEFAULT_ARGUMENTS                   \
+#define CUCKOO_MAP_DEFAULT_ARGUMENTS                    \
   template <typename KeyType, typename ValueType,       \
             typename HashType = DefaultHasher<KeyType>, \
-            typename PredType = std::equal_to<KeyType>>
+            typename PredType = std::equal_to<KeyType> >
 
 // CUCKOO_MAP_TYPE
 #define CUCKOO_MAP_TYPE CuckooMap<KeyType, ValueType, HashType, PredType>
 
 // Iterator type
 #define CUCKOO_MAP_ITERATOR_TYPE \
-typename cuckoohash_map<KeyType, ValueType, HashType, PredType>::locked_table
+  typename cuckoohash_map<KeyType, ValueType, HashType, PredType>::locked_table
 
 CUCKOO_MAP_DEFAULT_ARGUMENTS
 class CuckooMap {
  public:
-
   CuckooMap();
   ~CuckooMap();
 
   // Inserts a item
   bool Insert(const KeyType &key, ValueType value);
 
+  // Conditional Insert for a given predicate
+  void Upsert(const KeyType &key, ValueType &value);
+
   // Extracts item with high priority
   bool Update(const KeyType &key, ValueType value);
 
   // Extracts the corresponding value
   bool Find(const KeyType &key, ValueType &value) const;
-
-  // Extracts the corresponding value
-  ValueType GetValue(const KeyType &key) const;
 
   // Delete key from the cuckoo_map
   bool Erase(const KeyType &key);
@@ -80,7 +78,6 @@ class CuckooMap {
   GetIterator();
 
  private:
-
   // cuckoo map
   typedef cuckoohash_map<KeyType, ValueType, HashType, PredType> cuckoo_map_t;
 

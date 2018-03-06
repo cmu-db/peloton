@@ -23,11 +23,11 @@
 
 #include "common/container/cuckoo_map.h"
 
-#define HASH_INDEX_TYPE HashIndex <KeyType, ValueType, HashType, PredType>
+#define HASH_INDEX_TYPE HashIndex<KeyType, ValueType, HashType, PredType>
 
 namespace peloton {
 namespace index {
-  
+
 /**
  * Hash index implementation.
  *
@@ -49,24 +49,21 @@ class HashIndex : public Index {
 
   bool DeleteEntry(const storage::Tuple *key, ItemPointer *value) override;
 
-  bool CondInsertEntry(const storage::Tuple *key,
-                       ItemPointer *value,
+  bool CondInsertEntry(const storage::Tuple *key, ItemPointer *value,
                        std::function<bool(const void *)> predicate) override;
 
   void Scan(const std::vector<type::Value> &values,
             const std::vector<oid_t> &key_column_ids,
             const std::vector<ExpressionType> &expr_types,
-            ScanDirectionType scan_direction,
-            std::vector<ValueType> &result,
+            ScanDirectionType scan_direction, std::vector<ValueType> &result,
             const ConjunctionScanPredicate *csp_p) override;
-            
+
   void ScanLimit(const std::vector<type::Value> &values,
                  const std::vector<oid_t> &key_column_ids,
                  const std::vector<ExpressionType> &expr_types,
                  ScanDirectionType scan_direction,
                  std::vector<ValueType> &result,
-                 const ConjunctionScanPredicate *csp_p,
-                 uint64_t limit,
+                 const ConjunctionScanPredicate *csp_p, uint64_t limit,
                  uint64_t offset) override;
 
   void ScanAllKeys(std::vector<ValueType> &result) override;
@@ -76,9 +73,8 @@ class HashIndex : public Index {
 
   std::string GetTypeName() const override;
 
-  // TODO: Implement this
   size_t GetMemoryFootprint() override { return 0; }
-  
+
   bool NeedGC() override {
     return false;
     // return container.NeedGarbageCollection();

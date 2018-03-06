@@ -70,10 +70,19 @@ bool HASH_INDEX_TYPE::CondInsertEntry(
     UNUSED_ATTRIBUTE const storage::Tuple *key,
     UNUSED_ATTRIBUTE ItemPointer *value,
     UNUSED_ATTRIBUTE std::function<bool(const void *)> predicate) {
-  bool ret = false;
-  throw Exception{ExceptionType::NOT_IMPLEMENTED,
-                  "CondInsertEntry not supported for CuckooHash."};
-  return ret;
+  KeyType index_key;
+  index_key.SetFromKey(key);
+
+  ValueType found_val;
+  bool find_status = container.Find(index_key, found_val);
+  if (find_status) {
+    if (predicate(found_val)) {
+      return false;
+    }
+  }
+  container.Upsert(index_key, value);
+
+  return true;
 }
 
 /*
@@ -126,11 +135,10 @@ void HASH_INDEX_TYPE::ScanKey(UNUSED_ATTRIBUTE const storage::Tuple *key,
   index_key.SetFromKey(key);
   LOG_TRACE("Scan Key : %s", index_key.GetInfo().c_str());
 
-  try {
-    auto val = container.GetValue(index_key);
+  ValueType val;
+  bool ret = container.Find(index_key, val);
+  if (ret) {
     result.push_back(val);
-  } catch (const std::out_of_range &e) {
-    LOG_DEBUG("key not found in table");
   }
   return;
 }
