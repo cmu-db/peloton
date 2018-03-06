@@ -53,7 +53,13 @@ void TimestampCheckpointManager::DoRecovery(){
 		LOG_INFO("No checkpoint for recovery");
 	} else {
 		LOG_INFO("Do checkpoint recovery");
+		Timer<std::milli> checkpoint_timer;
+		checkpoint_timer.Start();
+
 		PerformCheckpointRecovery(epoch_id);
+
+		checkpoint_timer.Stop();
+		LOG_INFO("Checkpointing time: %lf ms", checkpoint_timer.GetDuration());
 	}
 }
 
@@ -121,6 +127,9 @@ void TimestampCheckpointManager::PerformCheckpointing() {
 	auto catalog = catalog::Catalog::GetInstance();
 	auto storage_manager = storage::StorageManager::GetInstance();
 	auto db_count = storage_manager->GetDatabaseCount();
+
+	// insert database info (# of databases) into catalog file
+	CheckpointingDatabaseCount(db_count, catalog_file);
 
 	// do checkpointing to take tables into each file and make catalog files
 	for (oid_t db_idx = START_OID; db_idx < db_count; db_idx++) {
@@ -231,7 +240,21 @@ size_t TimestampCheckpointManager::CheckpointingTable(const storage::DataTable *
 	return table_size;
 }
 
-size_t TimestampCheckpointManager::CheckpointingDatabaseCatalog(catalog::DatabaseCatalogObject *db_catalog, const oid_t table_count, FileHandle &file_handle) {
+void TimestampCheckpointManager::CheckpointingDatabaseCount(const oid_t db_count, FileHandle &file_handle) {
+	CopySerializeOutput catalog_buffer;
+
+	catalog_buffer.WriteInt(db_count);
+
+	int ret = fwrite((void *)catalog_buffer.Data(), catalog_buffer.Size(), 1, file_handle.file);
+	if (ret != 1) {
+		LOG_ERROR("Write error: database count %d", db_count);
+		return;
+	}
+
+	LoggingUtil::FFlushFsync(file_handle);
+}
+
+void TimestampCheckpointManager::CheckpointingDatabaseCatalog(catalog::DatabaseCatalogObject *db_catalog, const oid_t table_count, FileHandle &file_handle) {
 	CopySerializeOutput catalog_buffer;
 
 	catalog_buffer.WriteTextString(db_catalog->GetDatabaseName());
@@ -240,16 +263,14 @@ size_t TimestampCheckpointManager::CheckpointingDatabaseCatalog(catalog::Databas
 	int ret = fwrite((void *)catalog_buffer.Data(), catalog_buffer.Size(), 1, file_handle.file);
 	if (ret != 1) {
 		LOG_ERROR("Write error (database '%s' catalog data)", db_catalog->GetDatabaseName().c_str());
-		return -1;
+		return;
 	}
 
 	LoggingUtil::FFlushFsync(file_handle);
-
-	return 0;
 }
 
-// TODO: migrate below serializations process into each class file (TableCatalogObject, Schema, Column, MultiConstraint, Constraint, Index)
-size_t TimestampCheckpointManager::CheckpointingTableCatalog(catalog::TableCatalogObject *table_catalog, catalog::Schema *schema, const size_t table_size, FileHandle &file_handle) {
+// TODO: migrate below processes of serializations into each class file (TableCatalogObject, Schema, Column, MultiConstraint, Constraint, Index)
+void TimestampCheckpointManager::CheckpointingTableCatalog(catalog::TableCatalogObject *table_catalog, catalog::Schema *schema, const size_t table_size, FileHandle &file_handle) {
 	CopySerializeOutput catalog_buffer;
 
 	// Write table information (ID, name and size)
@@ -342,12 +363,10 @@ size_t TimestampCheckpointManager::CheckpointingTableCatalog(catalog::TableCatal
 	int ret = fwrite((void *)catalog_buffer.Data(), catalog_buffer.Size(), 1, file_handle.file);
 	if (ret != 1) {
 		LOG_ERROR("Write error (table '%s' catalog data)", table_catalog->GetTableName().c_str());
-		return -1;
+		return;
 	}
 
 	LoggingUtil::FFlushFsync(file_handle);
-
-	return 0;
 }
 
 bool TimestampCheckpointManager::IsVisible(const storage::TileGroupHeader *header, const oid_t &tuple_id, const cid_t &begin_cid) {
@@ -388,16 +407,21 @@ bool TimestampCheckpointManager::IsVisible(const storage::TileGroupHeader *heade
 }
 
 void TimestampCheckpointManager::PerformCheckpointRecovery(const eid_t &epoch_id) {
-
 	// Recover catalog
 	FileHandle catalog_file;
 	std::string catalog_filename = GetCatalogFileFullPath(epoch_id);
-
+	bool success = LoggingUtil::OpenFile(catalog_filename.c_str(), "rb", catalog_file);
+	PL_ASSERT(success == true);
+	if(success != true) {
+		LOG_ERROR("Create checkpoint file failed!");
+		return;
+	}
+//	RecoverCatalog(catalog_file);
 
 	// Recover table
 	FileHandle table_file;
 	std::string table_filename = GetCheckpointFileFullPath(1,0, epoch_id);
-	bool success = LoggingUtil::OpenFile(table_filename.c_str(), "rb", table_file);
+	success = LoggingUtil::OpenFile(table_filename.c_str(), "rb", table_file);
 	PL_ASSERT(success == true);
 	if(success != true) {
 		LOG_ERROR("Create checkpoint file failed!");
@@ -408,21 +432,32 @@ void TimestampCheckpointManager::PerformCheckpointRecovery(const eid_t &epoch_id
 }
 
 void TimestampCheckpointManager::RecoverCatalog(FileHandle &file_handle) {
-	size_t table_size = LoggingUtil::GetFileSize(file_handle);
-	char data[table_size];
+	size_t catalog_size = LoggingUtil::GetFileSize(file_handle);
+	char catalog_data[catalog_size];
 
-	LOG_DEBUG("Recover table data (%lu byte)", table_size);
+	LOG_DEBUG("Recover catalog data (%lu byte)", catalog_size);
 
-	if (LoggingUtil::ReadNBytesFromFile(file_handle, data, table_size) == false) {
+	if (LoggingUtil::ReadNBytesFromFile(file_handle, catalog_data, catalog_size) == false) {
 		LOG_ERROR("Read error");
 		return;
 	}
-	CopySerializeInput input_buffer(data, sizeof(data));
-	for(int i=0; i<4; i++) {
-		type::Value value1 = type::Value::DeserializeFrom(input_buffer, type::TypeId::INTEGER, NULL);
-		type::Value value2 = type::Value::DeserializeFrom(input_buffer, type::TypeId::VARCHAR, NULL);
-		LOG_DEBUG("%s %s", value1.GetInfo().c_str(), value2.GetInfo().c_str());
-	}
+
+	CopySerializeInput catalog_buffer(catalog_data, catalog_size);
+
+	// Recover database catalog
+	std::string db_name = catalog_buffer.ReadTextString();
+	size_t db_count = catalog_buffer.ReadLong();
+
+	LOG_DEBUG("Read %lu database catalog", db_count);
+
+		// Recover table catalog
+
+		// Recover schema catalog
+
+		// Recover column catalog
+
+		// Recover index catalog
+
 }
 
 void TimestampCheckpointManager::RecoverTable(FileHandle &file_handle) {
