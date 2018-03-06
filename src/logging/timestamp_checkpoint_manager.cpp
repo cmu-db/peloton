@@ -23,7 +23,7 @@
 #include "catalog/constraint.h"
 #include "catalog/multi_constraint.h"
 #include "common/timer.h"
-#include "concurrency/epoch_manager_factory.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "concurrency/timestamp_ordering_transaction_manager.h"
 #include "storage/storage_manager.h"
 #include "storage/database.h"
@@ -117,7 +117,7 @@ void TimestampCheckpointManager::PerformCheckpointing() {
 	auto catalog = catalog::Catalog::GetInstance();
 	auto storage_manager = storage::StorageManager::GetInstance();
 	auto db_count = storage_manager->GetDatabaseCount();
-	std::unordered_map<std::shared_ptr<catalog::DatabaseCatalogObject>, oid_t> target_db_catalogs;
+	std::vector<std::shared_ptr<catalog::DatabaseCatalogObject>> target_db_catalogs;
 	std::unordered_map<std::shared_ptr<catalog::TableCatalogObject>, size_t> target_table_catalogs;
 
 	// do checkpointing to take tables into each file
@@ -130,7 +130,9 @@ void TimestampCheckpointManager::PerformCheckpointing() {
 			// catalog database is out of checkpoint.
 			if (db_catalog != nullptr && db_catalog->GetDatabaseOid() != CATALOG_DATABASE_OID) {
 				auto table_count = database->GetTableCount();
-				size_t actual_table_count = 0;
+
+				// collect database info for catalog file
+				target_db_catalogs.push_back(db_catalog);
 
 				for (oid_t table_idx = START_OID; table_idx < table_count; table_idx++) {
 					try {
@@ -155,7 +157,6 @@ void TimestampCheckpointManager::PerformCheckpointing() {
 							fclose(table_file.file);
 
 							// collect table info for catalog file
-							actual_table_count++;
 							target_table_catalogs[table_catalog] = table_size;
 
 						} else {
@@ -168,9 +169,6 @@ void TimestampCheckpointManager::PerformCheckpointing() {
 
 				} // end table loop
 
-				// collect database info for catalog file
-				target_db_catalogs[db_catalog] = actual_table_count;
-
 			} else {
 				LOG_DEBUG("Database %d is invisible or catalog database.", database->GetOid());
 			}
@@ -180,7 +178,7 @@ void TimestampCheckpointManager::PerformCheckpointing() {
 	} // end database loop
 
 
-	// open catalog file
+	// do checkpointing to catalog data
 	FileHandle catalog_file;
 	std::string catalog_filename = GetWorkingCatalogFileFullPath();
 	bool success = LoggingUtil::OpenFile(catalog_filename.c_str(), "wb", catalog_file);
@@ -189,28 +187,7 @@ void TimestampCheckpointManager::PerformCheckpointing() {
 		LOG_ERROR("Create catalog file failed!");
 		return;
 	}
-
-	// insert # of databases into catalog file
-	size_t actual_db_count = target_db_catalogs.size();
-	CheckpointingDatabaseCount(actual_db_count, catalog_file);
-
-	// insert each database info into catalog file
-	for (auto db_catalog_pair : target_db_catalogs) {
-		auto db_catalog = db_catalog_pair.first;
-		auto actual_table_count = db_catalog_pair.second;
-		auto database = storage_manager->GetDatabaseWithOid(db_catalog->GetDatabaseOid());
-		CheckpointingDatabaseCatalog(db_catalog.get(), actual_table_count, catalog_file);
-
-		// insert each table info into catalog file
-		for (auto table_catalog_pair : target_table_catalogs) {
-			auto table_catalog = table_catalog_pair.first;
-			auto table = database->GetTableWithOid(table_catalog->GetTableOid());
-			auto table_size = table_catalog_pair.second;
-			CheckpointingTableCatalog(table_catalog.get(), table->GetSchema(), table_size, catalog_file);
-		}
-	}
-
-
+	CheckpointingCatalog(target_db_catalogs, target_table_catalogs, catalog_file);
 	fclose(catalog_file.file);
 
 	// end transaction
@@ -267,134 +244,146 @@ size_t TimestampCheckpointManager::CheckpointingTable(const storage::DataTable *
 	return table_size;
 }
 
-void TimestampCheckpointManager::CheckpointingDatabaseCount(const oid_t db_count, FileHandle &file_handle) {
+// TODO: migrate below processes of serializations into each class file
+//			(DatabaseCatalogObject, TableCatalogObject, Schema, Column, MultiConstraint, Constraint, Index)
+void TimestampCheckpointManager::CheckpointingCatalog(
+		const std::vector<std::shared_ptr<catalog::DatabaseCatalogObject>> &target_db_catalogs,
+		const std::unordered_map<std::shared_ptr<catalog::TableCatalogObject>, size_t> &target_table_catalogs,
+		FileHandle &file_handle) {
 	CopySerializeOutput catalog_buffer;
+	auto storage_manager = storage::StorageManager::GetInstance();
 
+	// insert # of databases into catalog file
+	size_t db_count = target_db_catalogs.size();
 	catalog_buffer.WriteInt(db_count);
 
-	int ret = fwrite((void *)catalog_buffer.Data(), catalog_buffer.Size(), 1, file_handle.file);
-	if (ret != 1) {
-		LOG_ERROR("Write error: database count %d", db_count);
-		return;
-	}
+	// insert each database information into catalog file
+	for (auto db_catalog : target_db_catalogs) {
+		auto table_count = target_table_catalogs.size();
+		auto database = storage_manager->GetDatabaseWithOid(db_catalog->GetDatabaseOid());
 
-	LoggingUtil::FFlushFsync(file_handle);
-}
+		// write database information (ID, name, and table count)
+		catalog_buffer.WriteInt(db_catalog->GetDatabaseOid());
+		catalog_buffer.WriteTextString(db_catalog->GetDatabaseName());
+		catalog_buffer.WriteLong(table_count);
 
-void TimestampCheckpointManager::CheckpointingDatabaseCatalog(catalog::DatabaseCatalogObject *db_catalog, const oid_t table_count, FileHandle &file_handle) {
-	CopySerializeOutput catalog_buffer;
+		LOG_DEBUG("Write database catalog %d '%s' : %lu tables",
+				db_catalog->GetDatabaseOid(), db_catalog->GetDatabaseName().c_str(), table_count);
 
-	// write database information (ID, name, and table count)
-	catalog_buffer.WriteInt(db_catalog->GetDatabaseOid());
-	catalog_buffer.WriteTextString(db_catalog->GetDatabaseName());
-	catalog_buffer.WriteInt(table_count);
+		// insert each table information into catalog file
+		for (auto table_catalog_pair : target_table_catalogs) {
+			auto table_catalog = table_catalog_pair.first;
+			auto table = database->GetTableWithOid(table_catalog->GetTableOid());
+			auto table_size = table_catalog_pair.second;
 
-	int ret = fwrite((void *)catalog_buffer.Data(), catalog_buffer.Size(), 1, file_handle.file);
-	if (ret != 1) {
-		LOG_ERROR("Write error (database %d '%s' catalog data)", db_catalog->GetDatabaseOid(), db_catalog->GetDatabaseName().c_str());
-		return;
-	}
+			// Write table information (ID, name and size)
+			catalog_buffer.WriteInt(table_catalog->GetTableOid());
+			catalog_buffer.WriteTextString(table_catalog->GetTableName());
+			catalog_buffer.WriteLong(table_size);
 
-	LoggingUtil::FFlushFsync(file_handle);
-}
+			// Write schema information (# of columns)
+			auto schema = table->GetSchema();
+			catalog_buffer.WriteLong(schema->GetColumnCount());
 
-// TODO: migrate below processes of serializations into each class file (TableCatalogObject, Schema, Column, MultiConstraint, Constraint, Index)
-void TimestampCheckpointManager::CheckpointingTableCatalog(catalog::TableCatalogObject *table_catalog, catalog::Schema *schema, const size_t table_size, FileHandle &file_handle) {
-	CopySerializeOutput catalog_buffer;
+			LOG_DEBUG("Write table catalog %d '%s' (%lu bytes): %lu columns",
+					table_catalog->GetTableOid(), table_catalog->GetTableName().c_str(),
+					table_size, schema->GetColumnCount());
 
-	// Write table information (ID, name and size)
-	catalog_buffer.WriteInt(table_catalog->GetTableOid());
-	catalog_buffer.WriteTextString(table_catalog->GetTableName());
-	catalog_buffer.WriteLong(table_size);
+			// Write each column information (column name, length, offset, type and constraints)
+			for(auto column : schema->GetColumns()) {
+				// Column basic information
+				catalog_buffer.WriteTextString(column.GetName());
+				catalog_buffer.WriteInt((int)column.GetType());
+				catalog_buffer.WriteInt(column.GetLength());
+				catalog_buffer.WriteInt(column.GetOffset());
+				catalog_buffer.WriteBool(column.IsInlined());
+				LOG_DEBUG("|- Column '%s %s': length %lu, offset %d, Inline %d",
+						column.GetName().c_str(), TypeIdToString(column.GetType()).c_str(),
+						column.GetLength(), column.GetOffset(), column.IsInlined());
 
-	// Write schema information (# of columns)
-	catalog_buffer.WriteLong(schema->GetColumnCount());
+				// Column constraints
+				auto column_constraints = column.GetConstraints();
+				catalog_buffer.WriteLong(column_constraints.size());
+				for (auto column_constraint : column_constraints) {
+					catalog_buffer.WriteTextString(column_constraint.GetName());
+					catalog_buffer.WriteInt((int)column_constraint.GetType());
+					catalog_buffer.WriteInt(column_constraint.GetForeignKeyListOffset());
+					catalog_buffer.WriteInt(column_constraint.GetUniqueIndexOffset());
+					LOG_DEBUG("|  |- Column constraint '%s %s': Foreign key list offset %d, Unique index offset %d",
+							column_constraint.GetName().c_str(), ConstraintTypeToString(column_constraint.GetType()).c_str(),
+							column_constraint.GetForeignKeyListOffset(), column_constraint.GetUniqueIndexOffset());
 
-	// Write schema information (multi-column constraints)
-	auto multi_constraints = schema->GetMultiConstraints();
-	catalog_buffer.WriteLong(multi_constraints.size());
-	for (auto multi_constraint : multi_constraints) {
-		auto constraint_columns = multi_constraint.GetCols();
-		catalog_buffer.WriteLong(constraint_columns.size());
-		for (auto column : constraint_columns) {
-			catalog_buffer.WriteInt(column);
-		}
-		catalog_buffer.WriteTextString(multi_constraint.GetName());
-		catalog_buffer.WriteInt((int)multi_constraint.GetType());
-	}
-	LOG_DEBUG("Write table catalog %d '%s' (%lu bytes): %lu columns",
-			table_catalog->GetTableOid(), table_catalog->GetTableName().c_str(),
-			table_size, schema->GetColumnCount());
+					if (column_constraint.GetType() == ConstraintType::DEFAULT) {
+						auto default_value = column_constraint.getDefaultValue();
+						default_value->SerializeTo(catalog_buffer);
+						LOG_DEBUG("|  |      Default value %s", default_value->ToString().c_str());
+					}
 
-	// Write each column information (column name, length, offset, type and constraints)
-	for(auto column : schema->GetColumns()) {
-		// Column basic information
-		catalog_buffer.WriteTextString(column.GetName());
-		catalog_buffer.WriteInt((int)column.GetType());
-		catalog_buffer.WriteInt(column.GetLength());
-		catalog_buffer.WriteInt(column.GetOffset());
-		catalog_buffer.WriteBool(column.IsInlined());
-		LOG_DEBUG("|- Column '%s %s': length %lu, offset %d, Inline %d",
-				column.GetName().c_str(), TypeIdToString(column.GetType()).c_str(),
-				column.GetLength(), column.GetOffset(), column.IsInlined());
+					if (column_constraint.GetType() == ConstraintType::CHECK) {
+						auto exp = column_constraint.GetCheckExpression();
+						catalog_buffer.WriteInt((int)exp.first);
+						auto exp_value = exp.second;
+						exp_value.SerializeTo(catalog_buffer);
+						LOG_DEBUG("|  |      Check expression %s %s",
+								ExpressionTypeToString(exp.first).c_str(), exp_value.ToString().c_str());
+					}
+				} // end column constraint loop
 
-		// Column constraints
-		auto column_constraints = column.GetConstraints();
-		catalog_buffer.WriteLong(column_constraints.size());
-		for (auto column_constraint : column_constraints) {
-			catalog_buffer.WriteTextString(column_constraint.GetName());
-			catalog_buffer.WriteInt((int)column_constraint.GetType());
-			catalog_buffer.WriteInt(column_constraint.GetForeignKeyListOffset());
-			catalog_buffer.WriteInt(column_constraint.GetUniqueIndexOffset());
-			LOG_DEBUG("|  |- Column constraint '%s %s': Foreign key list offset %d, Unique index offset %d",
-					column_constraint.GetName().c_str(), ConstraintTypeToString(column_constraint.GetType()).c_str(),
-					column_constraint.GetForeignKeyListOffset(), column_constraint.GetUniqueIndexOffset());
+			} // end column loop
 
-			if (column_constraint.GetType() == ConstraintType::DEFAULT) {
-				auto default_value = column_constraint.getDefaultValue();
-				default_value->SerializeTo(catalog_buffer);
-				LOG_DEBUG("|  |      Default value %s", default_value->ToString().c_str());
+			// Write schema information (multi-column constraints)
+			auto multi_constraints = schema->GetMultiConstraints();
+			catalog_buffer.WriteLong(multi_constraints.size());
+			for (auto multi_constraint : multi_constraints) {
+				// multi-column constraint basic information
+				auto constraint_columns = multi_constraint.GetCols();
+				catalog_buffer.WriteTextString(multi_constraint.GetName());
+				catalog_buffer.WriteInt((int)multi_constraint.GetType());
+				catalog_buffer.WriteLong(constraint_columns.size());
+				LOG_DEBUG("|- Multi-column constraint '%s': type %s, %lu column",
+						multi_constraint.GetName().c_str(), ConstraintTypeToString(multi_constraint.GetType()).c_str(),
+						constraint_columns.size());
+
+				// multi-column constraint columns
+				for (auto column_oid : constraint_columns) {
+					catalog_buffer.WriteInt(column_oid);
+					LOG_DEBUG("|  |- Column %d '%s'", column_oid, table_catalog->GetColumnObject(column_oid)->GetColumnName().c_str());
+				}
 			}
 
-			if (column_constraint.GetType() == ConstraintType::CHECK) {
-				auto exp = column_constraint.GetCheckExpression();
-				catalog_buffer.WriteInt((int)exp.first);
-				auto exp_value = exp.second;
-				exp_value.SerializeTo(catalog_buffer);
-				LOG_DEBUG("|  |      Check expression %s %s", ExpressionTypeToString(exp.first).c_str(), exp_value.ToString().c_str());
+			// Write index information (index name, type, constraint, key attributes, and # of index)
+			auto index_catalogs = table_catalog->GetIndexObjects();
+			catalog_buffer.WriteInt(index_catalogs.size());
+			for (auto index_catalog_pair : index_catalogs) {
+				// Index basic information
+				auto index_catalog = index_catalog_pair.second;
+				catalog_buffer.WriteTextString(index_catalog->GetIndexName());
+				catalog_buffer.WriteInt((int)index_catalog->GetIndexType());
+				catalog_buffer.WriteInt((int)index_catalog->GetIndexConstraint());
+				catalog_buffer.WriteBool(index_catalog->HasUniqueKeys());
+				LOG_DEBUG("|- Index '%s':  Index type %s, Index constraint %s, unique keys %d",
+						index_catalog->GetIndexName().c_str(), IndexTypeToString(index_catalog->GetIndexType()).c_str(),
+						IndexConstraintTypeToString(index_catalog->GetIndexConstraint()).c_str(), index_catalog->HasUniqueKeys());
+
+				// Index key attributes
+				auto key_attrs = index_catalog->GetKeyAttrs();
+				catalog_buffer.WriteLong(key_attrs.size());
+				for (auto attr_oid : key_attrs) {
+					catalog_buffer.WriteInt(attr_oid);
+					LOG_DEBUG("|  |- Key attribute %d '%s'", attr_oid, table_catalog->GetColumnObject(attr_oid)->GetColumnName().c_str());
+				}
+			} // end index loop
+
+			// Output data to file
+			int ret = fwrite((void *)catalog_buffer.Data(), catalog_buffer.Size(), 1, file_handle.file);
+			if (ret != 1) {
+				LOG_ERROR("Write error (table '%s' catalog data)", table_catalog->GetTableName().c_str());
+				return;
 			}
-		}
-	}
 
-	// Write index information (index name, type, constraint, key attributes, and # of index)
-	auto index_catalogs = table_catalog->GetIndexObjects();
-	catalog_buffer.WriteInt(index_catalogs.size());
-	for (auto index_catalog_pair : index_catalogs) {
-		// Index basic information
-		auto index_catalog = index_catalog_pair.second;
-		catalog_buffer.WriteTextString(index_catalog->GetIndexName());
-		catalog_buffer.WriteInt((int)index_catalog->GetIndexType());
-		catalog_buffer.WriteInt((int)index_catalog->GetIndexConstraint());
-		catalog_buffer.WriteBool(index_catalog->HasUniqueKeys());
-		LOG_DEBUG("|- Index '%s':  Index type %s, Index constraint %s, unique keys %d",
-				index_catalog->GetIndexName().c_str(), IndexTypeToString(index_catalog->GetIndexType()).c_str(),
-				IndexConstraintTypeToString(index_catalog->GetIndexConstraint()).c_str(), index_catalog->HasUniqueKeys());
+		} // end table loop
 
-		// Index key attributes
-		auto key_attrs = index_catalog->GetKeyAttrs();
-		catalog_buffer.WriteLong(key_attrs.size());
-		for (auto attr_oid : key_attrs) {
-			catalog_buffer.WriteInt(attr_oid);
-			LOG_DEBUG("|  |- Key attribute %d %s", attr_oid, table_catalog->GetColumnObject(attr_oid)->GetColumnName().c_str());
-		}
-	}
-
-	// Output data to file
-	int ret = fwrite((void *)catalog_buffer.Data(), catalog_buffer.Size(), 1, file_handle.file);
-	if (ret != 1) {
-		LOG_ERROR("Write error (table '%s' catalog data)", table_catalog->GetTableName().c_str());
-		return;
-	}
+	} // end database loop
 
 	LoggingUtil::FFlushFsync(file_handle);
 }
@@ -465,39 +454,66 @@ void TimestampCheckpointManager::PerformCheckpointRecovery(const eid_t &epoch_id
 }
 
 void TimestampCheckpointManager::RecoverCatalog(FileHandle &file_handle) {
+	// begin a transaction to create databases, tables, and indexes.
+	auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+	auto txn = txn_manager.BeginTransaction();
+
+	// read catalog file to be recovered
 	size_t catalog_size = LoggingUtil::GetFileSize(file_handle);
 	char catalog_data[catalog_size];
 
 	LOG_DEBUG("Recover catalog data (%lu byte)", catalog_size);
 
-	// Read catalog file to be recovered
 	if (LoggingUtil::ReadNBytesFromFile(file_handle, catalog_data, catalog_size) == false) {
 		LOG_ERROR("Read error");
 		return;
 	}
 
+	/*
+
 	CopySerializeInput catalog_buffer(catalog_data, catalog_size);
 
-	// Recover database catalog
+	// recover database catalog
 	std::string db_name = catalog_buffer.ReadTextString();
 	size_t db_count = catalog_buffer.ReadLong();
 
 	LOG_DEBUG("Read %lu database catalog", db_count);
-/*
+
+	auto catalog = catalog::Catalog::GetInstance();
 	for(oid_t db_idx = 0; db_idx < db_count; db_idx++) {
+		// read basic database information
 		oid_t db_oid = catalog_buffer.ReadInt();
 		std::string db_name = catalog_buffer.ReadTextString();
 		oid_t table_count = catalog_buffer.ReadInt();
+
+		LOG_DEBUG("Create database %d '%s' (including %d tables)", db_oid, db_name, table_count);
+
+		// create database catalog
+		auto result = catalog->CreateDatabase(db_name, txn);
+		if (result != ResultType::SUCCESS) {
+			LOG_ERROR("Create database error");
+			continue;
+		}
+
+		// Recover table catalog
+		for (oid_t table_idx = 0; table_idx < table_count; table_idx++) {
+			// read basic column information
+			oid_t table_oid = catalog_buffer.ReadInt();
+			std::string table_name = catalog_buffer.ReadTextString();
+			size_t table_size = catalog_buffer.ReadLong();
+
+			// recover column catalog
+
+
+			// recover schema catalog
+
+		}
+		// recover index catalog
+
 	}
 */
-		// Recover table catalog
 
-		// Recover schema catalog
-
-		// Recover column catalog
-
-		// Recover index catalog
-
+	txn_manager.CommitTransaction(txn);
 }
 
 void TimestampCheckpointManager::RecoverTable(FileHandle &file_handle) {

@@ -84,9 +84,10 @@ class TimestampCheckpointManager : public CheckpointManager {
   std::vector<std::vector<size_t>>& CreateDatabaseStructures();
   void PerformCheckpointing();
   size_t CheckpointingTable(const storage::DataTable *target_table, const cid_t &begin_cid, FileHandle &file_handle);
-  void CheckpointingDatabaseCount(const oid_t db_count, FileHandle &file_handle);
-  void CheckpointingDatabaseCatalog(catalog::DatabaseCatalogObject *target_db, const oid_t table_count, FileHandle &file_handle);
-  void CheckpointingTableCatalog(catalog::TableCatalogObject *target_table, catalog::Schema *schema, const size_t table_size, FileHandle &file_handle);
+  void CheckpointingCatalog(
+  		const std::vector<std::shared_ptr<catalog::DatabaseCatalogObject>> &target_db_catalogs,
+  		const std::unordered_map<std::shared_ptr<catalog::TableCatalogObject>, size_t> &target_table_catalogs,
+  		FileHandle &file_handle);
   bool IsVisible(const storage::TileGroupHeader *header, const oid_t &tuple_id, const cid_t &begin_cid);
   void PerformCheckpointRecovery(const eid_t &epoch_id);
   void RecoverCatalog(FileHandle &file_handle);
