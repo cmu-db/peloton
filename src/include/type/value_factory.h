@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// value_factory.h
+//
+// Identification: src/include/type/value_factory.h
+//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #pragma once
 
 #include <algorithm>
@@ -202,7 +214,7 @@ class ValueFactory {
           std::string str = value.ToString();
           int64_t bigint = 0;
           try {
-            bigint = stoll(str);
+            bigint = std::stoll(str);
           } catch (std::out_of_range &e) {
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
@@ -250,7 +262,7 @@ class ValueFactory {
           std::string str = value.ToString();
           int32_t integer = 0;
           try {
-            integer = stoi(str);
+            integer = std::stoi(str);
           } catch (std::out_of_range &e) {
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
@@ -305,7 +317,7 @@ class ValueFactory {
           std::string str = value.ToString();
           int16_t smallint = 0;
           try {
-            smallint = stoi(str);
+            smallint = std::stoi(str);
           } catch (std::out_of_range &e) {
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
@@ -363,7 +375,7 @@ class ValueFactory {
           std::string str = value.ToString();
           int8_t tinyint = 0;
           try {
-            tinyint = stoi(str);
+            tinyint = std::stoi(str);
           } catch (std::out_of_range &e) {
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
@@ -401,7 +413,7 @@ class ValueFactory {
           std::string str = value.ToString();
           double res = 0;
           try {
-            res = stod(str);
+            res = std::stod(str);
           } catch (std::out_of_range &e) {
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");

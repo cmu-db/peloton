@@ -23,6 +23,7 @@ namespace catalog {
 class Schema;
 class DatabaseCatalogObject;
 class TableCatalogObject;
+class IndexCatalogObject;
 }  // namespace catalog
 
 namespace concurrency {
@@ -134,6 +135,9 @@ class Catalog {
   // Drop an index, using its index_oid
   ResultType DropIndex(oid_t index_oid, concurrency::TransactionContext *txn);
 
+  // Drop an index, using its index name
+  ResultType DropIndex(const std::string &index_name,
+                       concurrency::TransactionContext *txn);
   //===--------------------------------------------------------------------===//
   // GET WITH NAME - CHECK FROM CATALOG TABLES, USING TRANSACTION
   //===--------------------------------------------------------------------===//
@@ -172,7 +176,6 @@ class Catalog {
   std::shared_ptr<TableCatalogObject> GetTableObject(
       oid_t database_oid, oid_t table_oid,
       concurrency::TransactionContext *txn);
-
   //===--------------------------------------------------------------------===//
   // DEPRECATED FUNCTIONS
   //===--------------------------------------------------------------------===//

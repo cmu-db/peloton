@@ -110,7 +110,10 @@ class AggregatePlan : public AbstractPlan {
     std::iota(columns.begin(), columns.end(), 0);
   }
 
-  const std::string GetInfo() const override { return "AggregatePlan"; }
+  const std::string GetInfo() const override {
+    return "AggregatePlan(Having(" +
+           (predicate_ != nullptr ? predicate_->GetInfo() : "") + "))";
+  }
 
   const std::vector<oid_t> &GetColumnIds() const { return column_ids_; }
 
@@ -124,7 +127,9 @@ class AggregatePlan : public AbstractPlan {
     std::shared_ptr<const catalog::Schema> output_schema_copy(
         catalog::Schema::CopySchema(GetOutputSchema()));
     AggregatePlan *new_plan = new AggregatePlan(
-        project_info_->Copy(), std::unique_ptr<const expression::AbstractExpression>(predicate_->Copy()),
+        project_info_->Copy(),
+        std::unique_ptr<const expression::AbstractExpression>(
+            predicate_->Copy()),
         std::move(copied_agg_terms), std::move(copied_groupby_col_ids),
         output_schema_copy, agg_strategy_);
     return std::unique_ptr<AbstractPlan>(new_plan);
@@ -137,7 +142,8 @@ class AggregatePlan : public AbstractPlan {
     return !(*this == rhs);
   }
 
-  virtual void VisitParameters(codegen::QueryParametersMap &map,
+  virtual void VisitParameters(
+      codegen::QueryParametersMap &map,
       std::vector<peloton::type::Value> &values,
       const std::vector<peloton::type::Value> &values_from_user) override;
 
@@ -145,8 +151,8 @@ class AggregatePlan : public AbstractPlan {
   bool AreEqual(const std::vector<planner::AggregatePlan::AggTerm> &A,
                 const std::vector<planner::AggregatePlan::AggTerm> &B) const;
 
-  hash_t Hash(const std::vector<planner::AggregatePlan::AggTerm> &agg_terms)
-      const;
+  hash_t Hash(
+      const std::vector<planner::AggregatePlan::AggTerm> &agg_terms) const;
 
  private:
   /* For projection */

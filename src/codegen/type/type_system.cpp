@@ -141,12 +141,53 @@ Value TypeSystem::SimpleComparisonHandleNull::EvalCompareGte(
   GEN_COMPARE(CompareGteImpl(codegen, left, right));
 }
 
+#undef GEN_COMPARE
+
 Value TypeSystem::SimpleComparisonHandleNull::EvalCompareForSort(
     CodeGen &codegen, const Value &left, const Value &right) const {
-  GEN_COMPARE(CompareForSortImpl(codegen, left, right));
-}
+  // Do null-safe comparison
+  auto real_cmp = CompareForSortImpl(codegen, left, right);
 
-#undef GEN_COMPARE
+  // If neither input is NULLable, we're done
+  if (!left.IsNullable() && !right.IsNullable()) {
+    return real_cmp;
+  }
+
+  /// What we're doing is a simplification of the NULL-handling logic Postgres
+  /// uses when sorting heap tuples. We essentially implement a shortcut version
+  /// of the following logic:
+  ///
+  /// @code
+  ///  if (left.IsNull()) {
+  ///    if (right.IsNull()) {
+  ///       return 0;
+  ///    } else {
+  ///       return 1;
+  ///    }
+  ///  } else if (right.IsNull()) {
+  ///    if (left.IsNull()) {
+  ///      return 0;
+  ///    } else {
+  ///      return -1;
+  ///    }
+  ///  } else {
+  ///    return Impl();
+  ///  }
+  /// @endcode
+
+  llvm::Value *left_null = left.IsNull(codegen);
+  llvm::Value *right_null = right.IsNull(codegen);
+  llvm::Value *either_null = codegen->CreateOr(left_null, right_null);
+
+  llvm::Value *null_cmp =
+      codegen->CreateSub(codegen->CreateZExt(left_null, codegen.Int32Type()),
+                         codegen->CreateZExt(right_null, codegen.Int32Type()));
+
+  llvm::Value *final =
+      codegen->CreateSelect(either_null, null_cmp, real_cmp.GetValue());
+
+  return Value{Integer::Instance(), final, nullptr, nullptr};
+}
 
 //===----------------------------------------------------------------------===//
 //
@@ -210,11 +251,34 @@ Value TypeSystem::ExpensiveComparisonHandleNull::EvalCompareGte(
 
 Value TypeSystem::ExpensiveComparisonHandleNull::EvalCompareForSort(
     CodeGen &codegen, const Value &left, const Value &right) const {
-  auto impl = [this](CodeGen &codegen, const Value &left, const Value &right) {
+  // If neither input is NULLable, we're done
+  if (!left.IsNullable() && !right.IsNullable()) {
     return CompareForSortImpl(codegen, left, right);
-  };
-  const auto &result_type = Integer::Instance();
-  return GenerateBinaryHandleNull(codegen, result_type, left, right, impl);
+  }
+
+  /// The logic here is very similar to
+  /// SimpleComparisonHandleNull::EvalCompareForSort() except we **generate**
+  /// an if-clause becuase the non-null check is unsafe.
+
+  auto *left_null = left.IsNull(codegen);
+  auto *right_null = right.IsNull(codegen);
+
+  Value null_ret, ret_val;
+  lang::If is_null{codegen, codegen->CreateOr(left_null, right_null)};
+  {
+    // One of the inputs is null
+    auto *null_cmp = codegen->CreateSub(
+        codegen->CreateZExt(left_null, codegen.Int32Type()),
+        codegen->CreateZExt(right_null, codegen.Int32Type()));
+    null_ret = Value{Integer::Instance(), null_cmp};
+  }
+  is_null.ElseBlock();
+  {
+    // If both values are not null, perform the non-null-aware operation
+    ret_val = CompareForSortImpl(codegen, left, right);
+  }
+  is_null.EndIf();
+  return is_null.BuildPHI(null_ret, ret_val);
 }
 
 //===----------------------------------------------------------------------===//

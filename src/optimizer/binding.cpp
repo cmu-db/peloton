@@ -88,8 +88,8 @@ GroupExprBindingIterator::GroupExprBindingIterator(Memo& memo,
       has_next_(false),
       current_binding_(std::make_shared<OperatorExpression>(gexpr->Op())) {
   LOG_TRACE("Attempting to bind on group %d with expression of type %s",
-            gexpr->GetGroupID(), gexpr->Op().name().c_str());
-  if (gexpr->Op().type() != pattern->Type()) return;
+            gexpr->GetGroupID(), gexpr->Op().GetName().c_str());
+  if (gexpr->Op().GetType() != pattern->Type()) return;
 
   const std::vector<GroupID> &child_groups = gexpr->GetChildGroupIDs();
   const std::vector<std::shared_ptr<Pattern>> &child_patterns =

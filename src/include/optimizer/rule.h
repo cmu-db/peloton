@@ -108,6 +108,7 @@ struct RuleWithPromise {
   int promise;
 
   bool operator<(const RuleWithPromise &r) const { return promise < r.promise; }
+  bool operator>(const RuleWithPromise &r) const { return promise > r.promise; }
 };
 
 enum class RewriteRuleSetName : uint32_t {
