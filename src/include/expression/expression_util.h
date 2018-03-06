@@ -401,9 +401,9 @@ class ExpressionUtil {
   }
 
   /**
-   * TODO(boweic): this function may not be efficient, in the future we may want
-   * to add expressions to groups so that we do not need to walk through the
-   * expression tree when judging '==' each time
+   * @brief TODO(boweic): this function may not be efficient, in the future we
+   * may want to add expressions to groups so that we do not need to walk
+   * through the expression tree when judging '==' each time
    *
    * Convert all expression in the current expression tree that is in
    * child_expr_map to tuple value expression with corresponding column offset
@@ -411,25 +411,33 @@ class ExpressionUtil {
    * on situations like aggregate function (e.g. SELECT sum(a)+max(b) FROM ...
    * GROUP BY ...) when input columns contain sum(a) and sum(b). We need to
    * treat them as tuple value expression in the projection plan. This function
-   *should always be called before calling EvaluateExpression
+   * should always be called before calling EvaluateExpression
    *
    * Please notice that this function should only apply to copied expression
-   *since it would modify the current expression. We do not want to modify the
-   *original expression since it may be referenced in other places
+   * since it would modify the current expression. We do not want to modify the
+   * original expression since it may be referenced in other places
+   *
+   * @param expr The expression to modify
+   * @param child_expr_maps map from child column ids to expression
    */
   static void ConvertToTvExpr(AbstractExpression *expr,
-                              ExprMap &child_expr_map) {
+                              std::vector<ExprMap> child_expr_maps) {
+    if (expr == nullptr) {
+      return;
+    };
     for (size_t i = 0; i < expr->GetChildrenSize(); i++) {
       auto child_expr = expr->GetModifiableChild(i);
-      if (child_expr->GetExpressionType() != ExpressionType::VALUE_TUPLE &&
-          child_expr_map.count(child_expr)) {
-        // EvaluateExpression({child_expr_map}, child_expr);
-        expr->SetChild(i,
-                       new TupleValueExpression(child_expr->GetValueType(), 0,
-                                                child_expr_map[child_expr]));
-      } else {
-        ConvertToTvExpr(child_expr, child_expr_map);
+      for (size_t tuple_idx = 0; tuple_idx < child_expr_maps.size();
+           ++tuple_idx) {
+        if (child_expr->GetExpressionType() != ExpressionType::VALUE_TUPLE &&
+            child_expr_maps[tuple_idx].count(child_expr)) {
+          expr->SetChild(i, new TupleValueExpression(
+                                child_expr->GetValueType(), tuple_idx,
+                                child_expr_maps[tuple_idx][child_expr]));
+          break;
+        }
       }
+      ConvertToTvExpr(expr->GetModifiableChild(i), child_expr_maps);
     }
   }
 
@@ -441,6 +449,42 @@ class ExpressionUtil {
     std::vector<AbstractExpression *> ordered_expr(expr_map.size());
     for (auto iter : expr_map) ordered_expr[iter.second] = iter.first;
     return ordered_expr;
+  }
+
+  /**
+   * Walks an expression trees and find all AggregationExprs subtrees.
+   */
+  static void GetTupleAndAggregateExprs(ExprSet &expr_set,
+                                        AbstractExpression *expr) {
+    std::vector<TupleValueExpression *> tv_exprs;
+    std::vector<AggregateExpression *> aggr_exprs;
+    GetAggregateExprs(aggr_exprs, tv_exprs, expr);
+    for (auto &tv_expr : tv_exprs) {
+      expr_set.insert(tv_expr);
+    }
+    for (auto &aggr_expr : aggr_exprs) {
+      expr_set.insert(aggr_expr);
+    }
+  }
+
+  /**
+   * Walks an expression trees and find all AggregationExprs subtrees.
+   */
+  static void GetTupleAndAggregateExprs(ExprMap &expr_map,
+                                        AbstractExpression *expr) {
+    std::vector<TupleValueExpression *> tv_exprs;
+    std::vector<AggregateExpression *> aggr_exprs;
+    GetAggregateExprs(aggr_exprs, tv_exprs, expr);
+    for (auto &tv_expr : tv_exprs) {
+      if (!expr_map.count(tv_expr)) {
+        expr_map.emplace(tv_expr, expr_map.size());
+      }
+    }
+    for (auto &aggr_expr : aggr_exprs) {
+      if (!expr_map.count(aggr_expr)) {
+        expr_map.emplace(aggr_expr, expr_map.size());
+      }
+    }
   }
 
   /**
@@ -511,8 +555,9 @@ class ExpressionUtil {
     // To evaluate the return type, we need a bottom up approach.
     if (expr == nullptr) return;
     size_t children_size = expr->GetChildrenSize();
-    for (size_t i = 0; i < children_size; i++)
+    for (size_t i = 0; i < children_size; i++) {
       EvaluateExpression(expr_maps, expr->GetModifiableChild(i));
+    }
 
     if (expr->GetExpressionType() == ExpressionType::VALUE_TUPLE) {
       // Point to the correct column returned in the logical tuple underneath
@@ -530,9 +575,12 @@ class ExpressionUtil {
       }
     } else if (IsAggregateExpression(expr->GetExpressionType())) {
       auto aggr_expr = (AggregateExpression *)expr;
-      auto &expr_map = expr_maps[0];
-      auto iter = expr_map.find(expr);
-      if (iter != expr_map.end()) aggr_expr->SetValueIdx(iter->second);
+      for (auto &expr_map : expr_maps) {
+        auto iter = expr_map.find(expr);
+        if (iter != expr_map.end()) {
+          aggr_expr->SetValueIdx(iter->second);
+        }
+      }
     } else if (expr->GetExpressionType() == ExpressionType::FUNCTION) {
       auto func_expr = (expression::FunctionExpression *)expr;
       std::vector<type::TypeId> argtypes;
