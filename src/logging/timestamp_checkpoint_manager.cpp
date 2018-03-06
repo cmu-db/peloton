@@ -53,13 +53,13 @@ void TimestampCheckpointManager::DoRecovery(){
 		LOG_INFO("No checkpoint for recovery");
 	} else {
 		LOG_INFO("Do checkpoint recovery");
-		Timer<std::milli> checkpoint_timer;
-		checkpoint_timer.Start();
+		Timer<std::milli> recovery_timer;
+		recovery_timer.Start();
 
 		PerformCheckpointRecovery(epoch_id);
 
-		checkpoint_timer.Stop();
-		LOG_INFO("Checkpointing time: %lf ms", checkpoint_timer.GetDuration());
+		recovery_timer.Stop();
+		LOG_INFO("Checkpoint recovery time: %lf ms", recovery_timer.GetDuration());
 	}
 }
 
@@ -113,25 +113,14 @@ void TimestampCheckpointManager::PerformCheckpointing() {
 	// create checkpoint directory
 	CreateWorkingCheckpointDirectory();
 
-	// open catalog file
-	FileHandle catalog_file;
-	std::string catalog_filename = GetWorkingCatalogFileFullPath();
-	bool success = LoggingUtil::OpenFile(catalog_filename.c_str(), "wb", catalog_file);
-	PL_ASSERT(success == true);
-	if(success != true) {
-		LOG_ERROR("Create catalog file failed!");
-		return;
-	}
-
 	// prepare for data loading
 	auto catalog = catalog::Catalog::GetInstance();
 	auto storage_manager = storage::StorageManager::GetInstance();
 	auto db_count = storage_manager->GetDatabaseCount();
+	std::unordered_map<std::shared_ptr<catalog::DatabaseCatalogObject>, oid_t> target_db_catalogs;
+	std::unordered_map<std::shared_ptr<catalog::TableCatalogObject>, size_t> target_table_catalogs;
 
-	// insert database info (# of databases) into catalog file
-	CheckpointingDatabaseCount(db_count, catalog_file);
-
-	// do checkpointing to take tables into each file and make catalog files
+	// do checkpointing to take tables into each file
 	for (oid_t db_idx = START_OID; db_idx < db_count; db_idx++) {
 		try {
 			auto database = storage_manager->GetDatabaseWithOffset(db_idx);
@@ -141,20 +130,17 @@ void TimestampCheckpointManager::PerformCheckpointing() {
 			// catalog database is out of checkpoint.
 			if (db_catalog != nullptr && db_catalog->GetDatabaseOid() != CATALOG_DATABASE_OID) {
 				auto table_count = database->GetTableCount();
-
-				// insert database info (database name and table count) into catalog file
-				CheckpointingDatabaseCatalog(db_catalog.get(), table_count, catalog_file);
+				size_t actual_table_count = 0;
 
 				for (oid_t table_idx = START_OID; table_idx < table_count; table_idx++) {
 					try {
-						auto table_catalog = db_catalog->GetTableObject(database->GetTable(table_idx)->GetOid());
+						auto table = database->GetTable(table_idx);
+						auto table_catalog = db_catalog->GetTableObject(table->GetOid());
 
 						// make sure the table exists in this epoch
 						if (table_catalog != nullptr) {
 							std::string filename = GetWorkingCheckpointFileFullPath(db_idx, table_idx);
 							FileHandle table_file;
-							auto table = database->GetTable(table_idx);
-							auto table_catalog = db_catalog->GetTableObject(table->GetOid());
 
 							// make a table file
 							bool success = LoggingUtil::OpenFile(filename.c_str(), "wb", table_file);
@@ -167,8 +153,9 @@ void TimestampCheckpointManager::PerformCheckpointing() {
 							LOG_DEBUG("Done checkpointing to table %d '%s' (%lu byte) in database %d", table_idx, table->GetName().c_str(), table_size, db_idx);
 							fclose(table_file.file);
 
-							// insert table info into catalog file
-							CheckpointingTableCatalog(table_catalog.get(), table->GetSchema(), table_size, catalog_file);
+							// collect table info for catalog file
+							actual_table_count++;
+							target_table_catalogs[table_catalog] = table_size;
 
 						} else {
 							LOG_DEBUG("Table %d in database %s (%d) is invisible.", table_idx, db_catalog->GetDatabaseName().c_str(), db_idx);
@@ -176,7 +163,11 @@ void TimestampCheckpointManager::PerformCheckpointing() {
 					} catch (CatalogException& e) {
 						LOG_DEBUG("%s", e.what());
 					}
+
 				} // end table loop
+
+				// collect database info for catalog file
+				target_db_catalogs[db_catalog] = actual_table_count;
 
 			} else {
 				LOG_DEBUG("Database %d is invisible.", db_idx);
@@ -185,6 +176,38 @@ void TimestampCheckpointManager::PerformCheckpointing() {
 			LOG_DEBUG("%s", e.what());
 		}
 	} // end database loop
+
+
+	// open catalog file
+	FileHandle catalog_file;
+	std::string catalog_filename = GetWorkingCatalogFileFullPath();
+	bool success = LoggingUtil::OpenFile(catalog_filename.c_str(), "wb", catalog_file);
+	PL_ASSERT(success == true);
+	if(success != true) {
+		LOG_ERROR("Create catalog file failed!");
+		return;
+	}
+
+	// insert # of databases into catalog file
+	size_t actual_db_count = target_db_catalogs.size();
+	CheckpointingDatabaseCount(actual_db_count, catalog_file);
+
+	// insert each database info into catalog file
+	for (auto db_catalog_pair : target_db_catalogs) {
+		auto db_catalog = db_catalog_pair.first;
+		auto actual_table_count = db_catalog_pair.second;
+		auto database = storage_manager->GetDatabaseWithOid(db_catalog->GetDatabaseOid());
+		CheckpointingDatabaseCatalog(db_catalog.get(), actual_table_count, catalog_file);
+
+		// insert each table info into catalog file
+		for (auto table_catalog_pair : target_table_catalogs) {
+			auto table_catalog = table_catalog_pair.first;
+			auto table = database->GetTableWithOid(table_catalog->GetTableOid());
+			auto table_size = table_catalog_pair.second;
+			CheckpointingTableCatalog(table_catalog.get(), table->GetSchema(), table_size, catalog_file);
+		}
+	}
+
 
 	fclose(catalog_file.file);
 
@@ -449,6 +472,8 @@ void TimestampCheckpointManager::RecoverCatalog(FileHandle &file_handle) {
 	size_t db_count = catalog_buffer.ReadLong();
 
 	LOG_DEBUG("Read %lu database catalog", db_count);
+
+
 
 		// Recover table catalog
 
