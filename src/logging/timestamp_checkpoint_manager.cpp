@@ -285,7 +285,7 @@ void TimestampCheckpointManager::CheckpointingDatabaseCatalog(catalog::DatabaseC
 	CopySerializeOutput catalog_buffer;
 
 	// write database information (ID, name, and table count)
-	catalog_buffer.WriteLong(db_catalog->GetDatabaseOid());
+	catalog_buffer.WriteInt(db_catalog->GetDatabaseOid());
 	catalog_buffer.WriteTextString(db_catalog->GetDatabaseName());
 	catalog_buffer.WriteInt(table_count);
 
@@ -303,7 +303,7 @@ void TimestampCheckpointManager::CheckpointingTableCatalog(catalog::TableCatalog
 	CopySerializeOutput catalog_buffer;
 
 	// Write table information (ID, name and size)
-	catalog_buffer.WriteLong(table_catalog->GetTableOid());
+	catalog_buffer.WriteInt(table_catalog->GetTableOid());
 	catalog_buffer.WriteTextString(table_catalog->GetTableName());
 	catalog_buffer.WriteLong(table_size);
 
@@ -317,12 +317,11 @@ void TimestampCheckpointManager::CheckpointingTableCatalog(catalog::TableCatalog
 		auto constraint_columns = multi_constraint.GetCols();
 		catalog_buffer.WriteLong(constraint_columns.size());
 		for (auto column : constraint_columns) {
-			catalog_buffer.WriteLong(column);
+			catalog_buffer.WriteInt(column);
 		}
 		catalog_buffer.WriteTextString(multi_constraint.GetName());
 		catalog_buffer.WriteInt((int)multi_constraint.GetType());
 	}
-
 	LOG_DEBUG("Write table catalog %d '%s' (%lu bytes): %lu columns",
 			table_catalog->GetTableOid(), table_catalog->GetTableName().c_str(),
 			table_size, schema->GetColumnCount());
@@ -332,8 +331,8 @@ void TimestampCheckpointManager::CheckpointingTableCatalog(catalog::TableCatalog
 		// Column basic information
 		catalog_buffer.WriteTextString(column.GetName());
 		catalog_buffer.WriteInt((int)column.GetType());
-		catalog_buffer.WriteLong(column.GetLength());
-		catalog_buffer.WriteLong(column.GetOffset());
+		catalog_buffer.WriteInt(column.GetLength());
+		catalog_buffer.WriteInt(column.GetOffset());
 		catalog_buffer.WriteBool(column.IsInlined());
 		LOG_DEBUG("|- Column '%s %s': length %lu, offset %d, Inline %d",
 				column.GetName().c_str(), TypeIdToString(column.GetType()).c_str(),
@@ -345,8 +344,8 @@ void TimestampCheckpointManager::CheckpointingTableCatalog(catalog::TableCatalog
 		for (auto column_constraint : column_constraints) {
 			catalog_buffer.WriteTextString(column_constraint.GetName());
 			catalog_buffer.WriteInt((int)column_constraint.GetType());
-			catalog_buffer.WriteLong(column_constraint.GetForeignKeyListOffset());
-			catalog_buffer.WriteLong(column_constraint.GetUniqueIndexOffset());
+			catalog_buffer.WriteInt(column_constraint.GetForeignKeyListOffset());
+			catalog_buffer.WriteInt(column_constraint.GetUniqueIndexOffset());
 			LOG_DEBUG("|  |- Column constraint '%s %s': Foreign key list offset %d, Unique index offset %d",
 					column_constraint.GetName().c_str(), ConstraintTypeToString(column_constraint.GetType()).c_str(),
 					column_constraint.GetForeignKeyListOffset(), column_constraint.GetUniqueIndexOffset());
@@ -369,7 +368,7 @@ void TimestampCheckpointManager::CheckpointingTableCatalog(catalog::TableCatalog
 
 	// Write index information (index name, type, constraint, key attributes, and # of index)
 	auto index_catalogs = table_catalog->GetIndexObjects();
-	catalog_buffer.WriteLong(index_catalogs.size());
+	catalog_buffer.WriteInt(index_catalogs.size());
 	for (auto index_catalog_pair : index_catalogs) {
 		// Index basic information
 		auto index_catalog = index_catalog_pair.second;
@@ -384,9 +383,9 @@ void TimestampCheckpointManager::CheckpointingTableCatalog(catalog::TableCatalog
 		// Index key attributes
 		auto key_attrs = index_catalog->GetKeyAttrs();
 		catalog_buffer.WriteLong(key_attrs.size());
-		for (auto attr : key_attrs) {
-			catalog_buffer.WriteLong(attr);
-			LOG_DEBUG("|  |- Key attribute %d %s", attr, table_catalog->GetColumnObject(attr)->GetColumnName().c_str());
+		for (auto attr_oid : key_attrs) {
+			catalog_buffer.WriteInt(attr_oid);
+			LOG_DEBUG("|  |- Key attribute %d %s", attr_oid, table_catalog->GetColumnObject(attr_oid)->GetColumnName().c_str());
 		}
 	}
 
@@ -448,8 +447,10 @@ void TimestampCheckpointManager::PerformCheckpointRecovery(const eid_t &epoch_id
 		return;
 	}
 	RecoverCatalog(catalog_file);
+	fclose(catalog_file.file);
 
 	// Recover table
+	/*
 	FileHandle table_file;
 	std::string table_filename = GetCheckpointFileFullPath(1,0, epoch_id);
 	success = LoggingUtil::OpenFile(table_filename.c_str(), "rb", table_file);
@@ -460,6 +461,7 @@ void TimestampCheckpointManager::PerformCheckpointRecovery(const eid_t &epoch_id
 	}
 	RecoverTable(table_file);
 	fclose(table_file.file);
+	*/
 }
 
 void TimestampCheckpointManager::RecoverCatalog(FileHandle &file_handle) {
@@ -468,6 +470,7 @@ void TimestampCheckpointManager::RecoverCatalog(FileHandle &file_handle) {
 
 	LOG_DEBUG("Recover catalog data (%lu byte)", catalog_size);
 
+	// Read catalog file to be recovered
 	if (LoggingUtil::ReadNBytesFromFile(file_handle, catalog_data, catalog_size) == false) {
 		LOG_ERROR("Read error");
 		return;
@@ -480,9 +483,13 @@ void TimestampCheckpointManager::RecoverCatalog(FileHandle &file_handle) {
 	size_t db_count = catalog_buffer.ReadLong();
 
 	LOG_DEBUG("Read %lu database catalog", db_count);
-
-
-
+/*
+	for(oid_t db_idx = 0; db_idx < db_count; db_idx++) {
+		oid_t db_oid = catalog_buffer.ReadInt();
+		std::string db_name = catalog_buffer.ReadTextString();
+		oid_t table_count = catalog_buffer.ReadInt();
+	}
+*/
 		// Recover table catalog
 
 		// Recover schema catalog
