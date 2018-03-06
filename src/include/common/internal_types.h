@@ -1336,6 +1336,7 @@ enum class RuleType : uint32_t {
   MARK_JOIN_INNER_JOIN_TO_INNER_JOIN,
   MARK_JOIN_FILTER_TO_INNER_JOIN,
   PULL_FILTER_THROUGH_MARK_JOIN,
+  PULL_FILTER_THROUGH_AGGREGATION,
 
   // Place holder to generate number of rules compile time
   NUM_RULES
