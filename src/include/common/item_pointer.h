@@ -11,9 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef ITEMPOINTER_H
-#define ITEMPOINTER_H
-
 #pragma once
 
 #include <cstdint>
@@ -90,5 +87,3 @@ class ItemPointerHashFunc {
 bool AtomicUpdateItemPointer(ItemPointer *src_ptr, const ItemPointer &value);
 
 }  // namespace peloton
-
-#endif /* ITEMPOINTER_H */

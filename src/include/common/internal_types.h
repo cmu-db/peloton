@@ -9,10 +9,6 @@
 // Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
-#ifndef INTERNALTYPES_H
-#define INTERNALTYPES_H
-
 #pragma once
 
 #include <bitset>
@@ -1417,5 +1413,3 @@ enum class SSLLevel {
 };
 
 }  // namespace peloton
-
-#endif /* INTERNALTYPES_H */
