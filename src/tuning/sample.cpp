@@ -4,23 +4,23 @@
 //
 // sample.cpp
 //
-// Identification: src/brain/sample.cpp
+// Identification: src/tuning/sample.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-#include "brain/sample.h"
+#include "tuning/sample.h"
 
 #include <cmath>
 #include <iostream>
 #include <sstream>
 
-#include "brain/sample.h"
+#include "tuning/sample.h"
 #include "common/logger.h"
 #include "common/macros.h"
 
 namespace peloton {
-namespace brain {
+namespace tuning {
 
 double Sample::GetDistance(const Sample &other) const {
   double dist = 0;
@@ -129,5 +129,5 @@ bool Sample::operator==(const Sample &other) const {
   return true;
 }
 
-}  // namespace brain
+}  // namespace indextuner
 }  // namespace peloton
