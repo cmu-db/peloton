@@ -56,7 +56,7 @@ void TimestampCheckpointManager::DoRecovery(){
 		Timer<std::milli> recovery_timer;
 		recovery_timer.Start();
 
-		PerformCheckpointRecovery(epoch_id);
+		// PerformCheckpointRecovery(epoch_id);
 
 		recovery_timer.Stop();
 		LOG_INFO("Checkpoint recovery time: %lf ms", recovery_timer.GetDuration());
@@ -139,7 +139,7 @@ void TimestampCheckpointManager::PerformCheckpointing() {
 
 						// make sure the table exists in this epoch
 						if (table_catalog != nullptr) {
-							std::string filename = GetWorkingCheckpointFileFullPath(db_idx, table_idx);
+							std::string filename = GetWorkingCheckpointFileFullPath(database->GetOid(), table->GetOid());
 							FileHandle table_file;
 
 							// make a table file
@@ -150,7 +150,8 @@ void TimestampCheckpointManager::PerformCheckpointing() {
 								return;
 							}
 							size_t table_size = CheckpointingTable(table, begin_cid, table_file);
-							LOG_DEBUG("Done checkpointing to table %d '%s' (%lu byte) in database %d", table_idx, table->GetName().c_str(), table_size, db_idx);
+							LOG_DEBUG("Done checkpointing to table %d '%s' (%lu byte) in database %d",
+									table->GetOid(), table->GetName().c_str(), table_size, database->GetOid());
 							fclose(table_file.file);
 
 							// collect table info for catalog file
@@ -158,7 +159,8 @@ void TimestampCheckpointManager::PerformCheckpointing() {
 							target_table_catalogs[table_catalog] = table_size;
 
 						} else {
-							LOG_DEBUG("Table %d in database %s (%d) is invisible.", table_idx, db_catalog->GetDatabaseName().c_str(), db_idx);
+							LOG_DEBUG("Table %d in database %s (%d) is invisible.",
+									table->GetOid(), db_catalog->GetDatabaseName().c_str(), database->GetOid());
 						}
 					} catch (CatalogException& e) {
 						LOG_DEBUG("%s", e.what());
@@ -170,7 +172,7 @@ void TimestampCheckpointManager::PerformCheckpointing() {
 				target_db_catalogs[db_catalog] = actual_table_count;
 
 			} else {
-				LOG_DEBUG("Database %d is invisible.", db_idx);
+				LOG_DEBUG("Database %d is invisible or catalog database.", database->GetOid());
 			}
 		} catch (CatalogException& e) {
 			LOG_DEBUG("%s", e.what());
@@ -215,7 +217,8 @@ void TimestampCheckpointManager::PerformCheckpointing() {
 	//epoch_manager.ExitEpoch(thread_id, begin_epoch_id);
 	txn_manager.EndTransaction(txn);
 
-	LOG_INFO("Complete Checkpointing in epoch %lu (cid = %lu)", concurrency::EpochManagerFactory::GetInstance().GetCurrentEpochId(), begin_cid);
+	LOG_INFO("Complete Checkpointing in epoch %lu (cid = %lu)",
+			concurrency::EpochManagerFactory::GetInstance().GetCurrentEpochId(), begin_cid);
 
 	// finalize checkpoint directory
 	MoveWorkingToCheckpointDirectory(std::to_string(begin_epoch_id));
@@ -242,7 +245,8 @@ size_t TimestampCheckpointManager::CheckpointingTable(const storage::DataTable *
 				for (oid_t column_id = START_OID; column_id < column_count; column_id++){
 					type::Value value = tile_group->GetValue(tuple_id, column_id);
 					value.SerializeTo(output_buffer);
-					LOG_TRACE("%s(column %d, tuple %d):%s\n", target_table->GetName().c_str(), column_id, tuple_id, value.ToString().c_str());
+					LOG_TRACE("%s(column %d, tuple %d):%s\n",
+							target_table->GetName().c_str(), column_id, tuple_id, value.ToString().c_str());
 				}
 
 				int ret = fwrite((void *)output_buffer.Data(), output_buffer.Size(), 1, file_handle.file);
@@ -280,12 +284,14 @@ void TimestampCheckpointManager::CheckpointingDatabaseCount(const oid_t db_count
 void TimestampCheckpointManager::CheckpointingDatabaseCatalog(catalog::DatabaseCatalogObject *db_catalog, const oid_t table_count, FileHandle &file_handle) {
 	CopySerializeOutput catalog_buffer;
 
+	// write database information (ID, name, and table count)
+	catalog_buffer.WriteLong(db_catalog->GetDatabaseOid());
 	catalog_buffer.WriteTextString(db_catalog->GetDatabaseName());
 	catalog_buffer.WriteInt(table_count);
 
 	int ret = fwrite((void *)catalog_buffer.Data(), catalog_buffer.Size(), 1, file_handle.file);
 	if (ret != 1) {
-		LOG_ERROR("Write error (database '%s' catalog data)", db_catalog->GetDatabaseName().c_str());
+		LOG_ERROR("Write error (database %d '%s' catalog data)", db_catalog->GetDatabaseOid(), db_catalog->GetDatabaseName().c_str());
 		return;
 	}
 
@@ -297,6 +303,7 @@ void TimestampCheckpointManager::CheckpointingTableCatalog(catalog::TableCatalog
 	CopySerializeOutput catalog_buffer;
 
 	// Write table information (ID, name and size)
+	catalog_buffer.WriteLong(table_catalog->GetTableOid());
 	catalog_buffer.WriteTextString(table_catalog->GetTableName());
 	catalog_buffer.WriteLong(table_size);
 
@@ -316,8 +323,9 @@ void TimestampCheckpointManager::CheckpointingTableCatalog(catalog::TableCatalog
 		catalog_buffer.WriteInt((int)multi_constraint.GetType());
 	}
 
-	LOG_DEBUG("Write talbe catalog '%s' (%lu bytes): %lu columns",
-			table_catalog->GetTableName().c_str(), table_size, schema->GetColumnCount());
+	LOG_DEBUG("Write table catalog %d '%s' (%lu bytes): %lu columns",
+			table_catalog->GetTableOid(), table_catalog->GetTableName().c_str(),
+			table_size, schema->GetColumnCount());
 
 	// Write each column information (column name, length, offset, type and constraints)
 	for(auto column : schema->GetColumns()) {
@@ -439,7 +447,7 @@ void TimestampCheckpointManager::PerformCheckpointRecovery(const eid_t &epoch_id
 		LOG_ERROR("Create checkpoint file failed!");
 		return;
 	}
-//	RecoverCatalog(catalog_file);
+	RecoverCatalog(catalog_file);
 
 	// Recover table
 	FileHandle table_file;
