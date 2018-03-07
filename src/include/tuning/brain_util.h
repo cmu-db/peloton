@@ -4,7 +4,7 @@
 //
 // brain_util.h
 //
-// Identification: /peloton/src/include/brain/brain_util.h
+// Identification: /peloton/src/include/tuning/brain_util.h
 //
 // Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
@@ -19,10 +19,10 @@
 #include <vector>
 #include <algorithm>
 
-#include "brain/sample.h"
+#include "sample.h"
 
 namespace peloton {
-namespace brain {
+namespace tuning {
 
 /**
  * Brain Utility Functions
@@ -34,9 +34,9 @@ class BrainUtil {
    * It's a vector because there could be more multiple samples per table.
    * TableName -> Sample
    */
-  static std::unordered_map<std::string, std::vector<brain::Sample>> LoadSamplesFile(
+  static std::unordered_map<std::string, std::vector<tuning::Sample>> LoadSamplesFile(
       const std::string file_path) {
-    std::unordered_map<std::string, std::vector<brain::Sample>> samples;
+    std::unordered_map<std::string, std::vector<tuning::Sample>> samples;
 
     // Parse the input file line-by-line
     std::ifstream infile(file_path);
@@ -60,7 +60,7 @@ class BrainUtil {
       }
       std::transform(name.begin(), name.end(), name.begin(), ::tolower);
 
-      brain::Sample sample(columns, weight, brain::SampleType::ACCESS);
+      tuning::Sample sample(columns, weight, tuning::SampleType::ACCESS);
       samples[name].push_back(sample);
 
     }  // WHILE

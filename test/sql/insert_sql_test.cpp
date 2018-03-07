@@ -104,6 +104,7 @@ void CreateAndLoadTable7() {
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test7 VALUES (55, 8, 999);");
 }
 
+<<<<<<< HEAD
 void CreateAndLoadTable8() {
   // Create a table with some defaults
   TestingSQLUtil::ExecuteSQLQuery(
@@ -114,6 +115,10 @@ void CreateAndLoadTable8() {
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test8(num2) VALUES(50);");
 }
 
+||||||| merged common ancestors
+
+=======
+>>>>>>> 0db1a2a478ce2102451a47c0be14ecb5ecb45e00
 TEST_F(InsertSQLTests, InsertOneValue) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -657,8 +662,9 @@ TEST_F(InsertSQLTests, UniqueColumn) {
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 
-  std::string create_table("CREATE TABLE t (id INTEGER NOT NULL PRIMARY KEY,"
-                                        "st VARCHAR(15) NOT NULL UNIQUE);");
+  std::string create_table(
+      "CREATE TABLE t (id INTEGER NOT NULL PRIMARY KEY,"
+      "st VARCHAR(15) NOT NULL UNIQUE);");
   TestingSQLUtil::ExecuteSQLQuery(create_table);
 
   ResultType result;
@@ -670,8 +676,7 @@ TEST_F(InsertSQLTests, UniqueColumn) {
   result = TestingSQLUtil::ExecuteSQLQuery(ins_query_1);
   EXPECT_EQ(result, ResultType::SUCCESS);
   ref_result.push_back("abc");
-  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(result_query,
-                                                ref_result,
+  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(result_query, ref_result,
                                                 false);
 
   // Second row, distinct from first, should succeed
@@ -679,8 +684,7 @@ TEST_F(InsertSQLTests, UniqueColumn) {
   result = TestingSQLUtil::ExecuteSQLQuery(ins_query_2);
   EXPECT_EQ(result, ResultType::SUCCESS);
   ref_result.push_back("def");
-  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(result_query,
-                                                ref_result,
+  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(result_query, ref_result,
                                                 false);
 
   // Third row, non-unique value for string, should fail
@@ -688,14 +692,28 @@ TEST_F(InsertSQLTests, UniqueColumn) {
   result = TestingSQLUtil::ExecuteSQLQuery(ins_query_3);
   EXPECT_EQ(result, ResultType::ABORTED);
   // and the results returned should not include failed insert
-  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(result_query,
-                                                ref_result,
+  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(result_query, ref_result,
                                                 false);
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
+}
+
+TEST_F(InsertSQLTests, NonExistentTable) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+  std::string error_message;
+  std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
+      new optimizer::Optimizer());
+  // Insert an int into a non-existent table.
+  std::string query("INSERT INTO NonExistentTable VALUES(3);");
+  txn = txn_manager.BeginTransaction();
+  EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
+               peloton::CatalogException);
 }
 
 }  // namespace test

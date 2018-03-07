@@ -31,6 +31,7 @@
 #include "common/container/lock_free_queue.h"
 #include "common/exception.h"
 #include "common/logger.h"
+#include "common/dedicated_thread_owner.h"
 #include "connection_dispatcher_task.h"
 #include "network_state.h"
 #include "notifiable_task.h"
@@ -48,7 +49,7 @@ namespace network {
 /**
  * PelotonServer is the entry point of the network layer
  */
-class PelotonServer {
+class PelotonServer : public DedicatedThreadOwner {
  public:
   /**
    * @brief Constructs a new PelotonServer instance.

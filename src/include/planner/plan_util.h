@@ -19,12 +19,21 @@
 #include "planner/abstract_scan_plan.h"
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"
-#include "planner/update_plan.h"
 #include "planner/populate_index_plan.h"
+#include "planner/update_plan.h"
 #include "storage/data_table.h"
 #include "util/string_util.h"
 
 namespace peloton {
+
+namespace catalog {
+class CatalogCache;
+}  // namespace catalog
+
+namespace parser {
+class SQLStatement;
+}  // namespace parser
+
 namespace planner {
 
 class PlanUtil {
@@ -43,6 +52,16 @@ class PlanUtil {
    */
   static const std::set<oid_t> GetTablesReferenced(
       const planner::AbstractPlan *plan);
+
+  /**
+  * @brief Get the indexes affected by a given query
+  * @param CatalogCache
+  * @param SQLStatement
+  * @return set of affected index object ids
+  */
+  static const std::set<oid_t> GetAffectedIndexes(
+      catalog::CatalogCache &catalog_cache,
+      const parser::SQLStatement &sql_stmt);
 
  private:
   ///
