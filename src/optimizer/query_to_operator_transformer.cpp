@@ -14,6 +14,7 @@
 #include "settings/settings_manager.h"
 
 #include "catalog/database_catalog.h"
+#include "catalog/table_catalog.h"
 #include "expression/expression_util.h"
 #include "expression/subquery_expression.h"
 #include "optimizer/operator_expression.h"
@@ -26,6 +27,8 @@
 #include "parser/statements.h"
 
 #include "catalog/manager.h"
+#include "storage/storage_manager.h"
+#include "storage/database.h"
 
 using std::vector;
 using std::shared_ptr;
@@ -246,6 +249,46 @@ void QueryToOperatorTransformer::Visit(parser::InsertStatement *op) {
     insert_expr->PushChild(output_expr_);
     output_expr_ = insert_expr;
   } else {
+    auto storage_manager = storage::StorageManager::GetInstance();
+    auto database = storage_manager->GetDatabaseWithOid(target_table->GetDatabaseOid());
+    auto table = database->GetTableWithOid(target_table->GetTableOid());
+
+    auto *schema = table->GetSchema();
+    // INSERT INTO table_name VALUES (val1, val2, ...), (val_a, val_b, ...), ...
+    if (op->columns.empty()){
+      for (uint32_t tuple_idx = 0; tuple_idx < op->insert_values.size();
+           tuple_idx++) {
+        auto &values = (op->insert_values)[tuple_idx];
+        if (values.size() > schema->GetColumnCount())
+          throw CatalogException(
+              "ERROR:  INSERT has more expressions than target columns");
+        }
+    }
+    // INSERT INTO table_name (col1, col2, ...) VALUES (val1, val2, ...), ...
+    else{
+      auto num_columns = op->columns.size();
+      // range based for-loop shows "call to implicitly-deleted copy constructor" error
+      for (uint32_t i = 0; i != op->insert_values.size(); ++i){ // check size of each tuple
+          if (op->insert_values[i].size() > num_columns)
+              throw CatalogException("ERROR:  INSERT has more expressions than target columns");
+          else if (op->insert_values[i].size() < num_columns)
+              throw CatalogException("ERROR:  INSERT has more target columns than expressions");
+      }
+
+      auto &table_columns = schema->GetColumns();
+      //auto table_columns_num = schema->GetColumnCount();
+
+      for (size_t idx = 0; idx != num_columns; ++idx) {
+        auto col = (op->columns)[idx];
+        auto found = std::find_if(table_columns.begin(), table_columns.end(),
+                                  [&col](const peloton::catalog::Column &x) {
+                                    return col == x.GetName();
+                                  });
+        if (found == table_columns.end())
+          throw CatalogException("ERROR:  column \"" + col + "\" of relation \"" +
+                                 table->GetName() + "\" does not exist");
+      }
+    }
     auto insert_expr = std::make_shared<OperatorExpression>(
         LogicalInsert::make(target_table, &op->columns, &op->insert_values));
     output_expr_ = insert_expr;
