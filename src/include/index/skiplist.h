@@ -145,6 +145,11 @@ class SkipList {
     SkipListBaseNode *curr_node = const_cast<SkipListBaseNode *>(Node);
     while (curr_node) {
       SkipListBaseNode *tmp_pointer = curr_node->next_.load();
+
+      // LOG_INFO("Search Trace %p", curr_node);
+      // LOG_INFO("Search Trace next: %p", tmp_pointer);
+      // LOG_INFO("Search Trace down_: %p", curr_node->down_.load());
+
       if (GET_FLAG(tmp_pointer)) {
         HelpFlagged(curr_node, GET_NEXT(curr_node), ctx);
       } else if ((GET_DELETE(tmp_pointer))) {
@@ -187,7 +192,8 @@ class SkipList {
         expected_stored_level == 0 ? curr_node->level_ : expected_stored_level;
     u_int32_t level_now = curr_node->level_;
     call_stack.resize(expected_stored_level + 1);
-
+    LOG_INFO("SearchWithPath %d, levelNow: %u", expected_stored_level,
+             level_now);
     while (level_now >= 0) {
       if (level_now <= expected_stored_level) {
         call_stack[level_now] = SearchFrom(key, curr_node, ctx);
@@ -195,19 +201,151 @@ class SkipList {
       } else {
         curr_node = SearchFrom(key, curr_node, ctx).first->down_.load();
       }
+      // level_now is unsigned
+      if (level_now == 0) break;
       level_now--;
     }
+  }
+
+  /*
+ * AddLevel() - add corresponding level to the SkipList
+ *
+ * return true if successfully added or the level is already added
+ * return false if the level cannot be reached from the highest level now
+ */
+  bool AddLevel(u_int32_t level) {
+    LOG_INFO("AddLevel");
+    SkipListBaseNode *head = this->skip_list_head_.load();
+    if (head->level_ + 1 < level) {
+      return false;
+    } else {
+      if (head->level_ + 1 == level) {
+        SkipListBaseNode *new_head = node_manager_.GetSkipListHead(level);
+        new_head->down_ = head;
+        if (this->skip_list_head_.compare_exchange_strong(head, new_head)) {
+          return true;
+        } else {
+          node_manager_.ReturnSkipListNode(new_head);
+          head = this->skip_list_head_.load();
+          return head->level_ == level;
+        }
+      } else {
+        return true;
+      }
+    }
+  }
+
+  /*
+   * InserNodeIntoInterval() - this method would try to insert the tower into
+   *the interval and retry due to contention
+   *
+   * It has a call_stack array to accelorate the process
+   * NOTE: this method would retry until the world ends (or the root is
+   *deleted)!!!
+   *
+   * Would only return true, or it would retry until succeed or the root is
+   *deleted
+   * Use this function only the tower can be exactly inserted
+   */
+  bool InsertTowerIntoInterval(
+      const KeyType &key, std::vector<SkipListInnerNode *> &tower,
+      std::vector<std::pair<SkipListBaseNode *, SkipListBaseNode *>> &
+          call_stack,
+      OperationContext &ctx, u_int32_t start_level = 0) {
+    LOG_INFO("InsertTower");
+    u_int32_t expected_level = tower.size();
+    for (u_int32_t i = start_level; i < expected_level; i++) {
+      bool insert_flag = false;
+      do {
+        if (i != 0 && GET_DELETE(tower[i]->GetRoot().load()->next_.load())) {
+          // the root has been deleted
+          // there is no need to continue
+          for (auto j = i; j < expected_level; j++) {
+            node_manager_.ReturnSkipListNode(tower[j]);
+          }
+          return true;
+        }
+        tower[i]->next_ = call_stack[i].second;
+        insert_flag = call_stack[i].first->next_.compare_exchange_strong(
+            call_stack[i].second, tower[i]);
+        if (insert_flag)
+          break;
+        else
+          call_stack[i] = SearchFrom(key, call_stack[i].first, ctx);
+      } while (!insert_flag);
+    }
+    return true;
   }
   /*
    * InsertNode() - Insert key value tuple to the skip-list
    *
    * The return value is a indicator of success or not
    */
+  bool InsertNode(const KeyType &key, const ValueType &value,
+                  OperationContext &ctx) {
+    LOG_INFO("Insert node");
 
-  bool InsertNode(UNUSED_ATTRIBUTE const KeyType &key,
-                  UNUSED_ATTRIBUTE const ValueType &value,
-                  UNUSED_ATTRIBUTE OperationContext &ctx) {
-    return false;
+    u_int32_t expected_level = 0;
+
+    while (expected_level < max_level_) {
+      if (rand() & 1) {
+        expected_level++;
+      } else {
+        break;
+      }
+    }
+
+    SkipListBaseNode *curr_node = this->skip_list_head_.load();
+
+    while (curr_node->level_ < expected_level) {
+      AddLevel(curr_node->level_ + 1);
+      curr_node = this->skip_list_head_.load();
+    }
+
+    // used to store the path
+    std::vector<std::pair<SkipListBaseNode *, SkipListBaseNode *>> call_stack;
+    std::vector<SkipListInnerNode *> tower(expected_level + 1);
+    // build the tower of expected level
+    SkipListInnerNode *new_node =
+        node_manager_.GetSkipListInnerNode(key, value, 0);
+    tower[0] = new_node;
+    for (u_int32_t i = 1; i < expected_level + 1; i++) {
+      tower[i] =
+          node_manager_.GetSkipListInnerNode(key, tower[0], tower[i - 1], i);
+    }
+    SearchWithPath(call_stack, key, curr_node, ctx, expected_level);
+    PL_ASSERT(curr_node != nullptr);
+    // if duplicate support, then just try insert
+    // else need to verify the next node
+    if (this->duplicate_support_) {
+      // insert the node from the lowest level
+      // redo the search from stack if the insert fails
+      return InsertTowerIntoInterval(key, tower, call_stack, ctx);
+    } else {
+      // unique key
+      // need to compare with the second return value's key
+      bool insert_flag;
+      do {
+        // try to insert the key in the lowest level
+        // if failed then abort the insert
+        if (call_stack[0].second == nullptr ||
+            GET_DELETE(call_stack[0].second->next_.load()) ||
+            !KeyCmpEqual(call_stack[0].second->key_, key)) {
+          tower[0]->next_ = call_stack[0].second;
+          insert_flag = call_stack[0].first->next_.compare_exchange_strong(
+              call_stack[0].second, tower[0]);
+        } else {
+          // found duplicate key not deleted
+          // abort the insertion
+          return false;
+        }
+        if (insert_flag) break;
+        call_stack[0] = SearchFrom(key, call_stack[0].first, ctx);
+      } while (!insert_flag);
+      // insertion at the lowest level has succeeded
+      // those towers should all be inserted into the skiplist successfully
+      return InsertTowerIntoInterval(key, tower, call_stack, ctx, 1);
+    }
   }
 
   /*
@@ -218,6 +356,7 @@ class SkipList {
    */
   bool DeleteNode(const KeyType &key, NodeList &del_nodes,
                   OperationContext &ctx) {
+    LOG_INFO("delete called");
     auto pair = Search(key, ctx);
     SkipListBaseNode *prev_node = pair.first;
     SkipListBaseNode *del_node = pair.second;
@@ -303,8 +442,9 @@ class SkipList {
 
   // Value equality checker and hasher
   {
-    this->max_level_ = SKIP_LIST_INITIAL_MAX_LEVEL_;
     LOG_INFO("SkipList constructed!");
+    this->max_level_ = SKIP_LIST_INITIAL_MAX_LEVEL_;
+    this->skip_list_head_ = node_manager_.GetSkipListHead(0);
   }
 
   ~SkipList() {
@@ -323,6 +463,11 @@ class SkipList {
     KeyType key_;
     bool isHead_;
     u_int32_t level_;
+
+    SkipListBaseNode(bool isHead, u_int32_t level)
+        : isHead_(isHead), level_(level) {
+      this->next_ = this->down_ = this->back_link_ = nullptr;
+    }
 
     SkipListBaseNode(SkipListBaseNode *next, SkipListBaseNode *down,
                      SkipListBaseNode *back_link, KeyType key, bool isHead)
@@ -411,9 +556,14 @@ class SkipList {
       // Get the pointer of the first node
       auto head = list->skip_list_head_.load();
       while (head->down_) head = head->down_;
-      auto head_root = reinterpret_cast<SkipListInnerNode *>(head);
 
-      kv_p = std::make_pair(head_root->key_, head_root->GetValue());
+      if (GET_NEXT(head) != nullptr) {
+        node_ = reinterpret_cast<SkipListInnerNode *>(GET_NEXT(head));
+      } else {
+        node_ = nullptr;
+      }
+
+      kv_p = std::make_pair(node_->key_, node_->GetValue());
 
       list_->epoch_manager_.LeaveEpoch(epoch_node_p);
     }
@@ -427,9 +577,13 @@ class SkipList {
 
       // Get the pointer of the first node
       auto root_pair = list->Search(start_key, ctx);
-      auto head_root = reinterpret_cast<SkipListInnerNode *>(root_pair.first);
-
-      kv_p = std::make_pair(head_root->key_, head_root->GetValue());
+      if (root_pair.second != nullptr) {
+        node_ =
+            reinterpret_cast<SkipListInnerNode *>(GET_NEXT(root_pair.first));
+        kv_p = std::make_pair(node_->key_, node_->GetValue());
+      } else {
+        node_ = nullptr;
+      }
 
       list_->epoch_manager_.LeaveEpoch(epoch_node_p);
     }
@@ -437,7 +591,7 @@ class SkipList {
     /*
      * IsEnd() - If it's the end of the list
      */
-    bool IsEnd() { return node_->next_.load() == nullptr; }
+    bool IsEnd() { return node_ == nullptr; }
 
     inline const KeyValuePair *operator->() { return &kv_p; }
 
@@ -450,10 +604,11 @@ class SkipList {
       OperationContext ctx{epoch_node_p};
 
       // TODO: Add logic for handling delete node
-      node_ =
-          reinterpret_cast<SkipListInnerNode *>(GET_NEXT(node_->next_.load()));
-      kv_p.first = node_->key_;
-      kv_p.second = node_->GetValue();
+      node_ = reinterpret_cast<SkipListInnerNode *>(GET_NEXT(node_));
+      if (node_) {
+        kv_p.first = node_->key_;
+        kv_p.second = node_->GetValue();
+      }
 
       list_->epoch_manager_.LeaveEpoch(epoch_node_p);
 
@@ -473,10 +628,11 @@ class SkipList {
       OperationContext ctx{epoch_node_p};
 
       // TODO: Add logic for handling delete node
-      node_ =
-          reinterpret_cast<SkipListInnerNode *>(GET_NEXT(node_->next_.load()));
-      kv_p.first = node_->key_;
-      kv_p.second = node_->GetValue();
+      node_ = reinterpret_cast<SkipListInnerNode *>(GET_NEXT(node_));
+      if (node_) {
+        kv_p.first = node_->key_;
+        kv_p.second = node_->GetValue();
+      }
 
       list_->epoch_manager_.LeaveEpoch(epoch_node_p);
 
@@ -493,7 +649,6 @@ class SkipList {
    * If CAS fails this function retries until it succeeds
    */
   bool Insert(const KeyType &key, const ValueType &value) {
-    LOG_INFO("Insert called!");
     auto *epoch_node_p = epoch_manager_.JoinEpoch();
     OperationContext ctx{epoch_node_p};
     bool ret = InsertNode(key, value, ctx);
@@ -515,7 +670,6 @@ class SkipList {
       UNUSED_ATTRIBUTE const ValueType &value,
       UNUSED_ATTRIBUTE std::function<bool(const void *)> predicate,
       UNUSED_ATTRIBUTE bool *predicate_satisfied) {
-    LOG_TRACE("Cond Insert called!");
     auto *epoch_node_p = epoch_manager_.JoinEpoch();
     OperationContext ctx{epoch_node_p};
     // TODO: Insert key value pair to the skiplist with predicate
@@ -530,7 +684,6 @@ class SkipList {
    * exist. Return true if delete succeeds
    */
   bool Delete(const KeyType &key) {
-    LOG_INFO("Delete called!");
     auto *epoch_node_p = epoch_manager_.JoinEpoch();
     OperationContext ctx{epoch_node_p};
     std::vector<SkipListBaseNode *> del_nodes;
@@ -712,10 +865,18 @@ class SkipList {
   class NodeManager {
    public:
     /*
+     *
+     */
+    SkipListBaseNode *GetSkipListHead(u_int32_t level) {
+      return new SkipListBaseNode(true, level);
+    }
+    /*
      * GetSkipListNode() - getSkipListNode with only key and isHead settled
      */
-    SkipListBaseNode *GetSkipListNode(KeyType key, bool isHead) {
-      return new SkipListBaseNode(nullptr, nullptr, nullptr, key, isHead);
+    SkipListBaseNode *GetSkipListNode(KeyType key, bool isHead,
+                                      u_int32_t level) {
+      return new SkipListBaseNode(nullptr, nullptr, nullptr, key, isHead,
+                                  level);
     }
     /*
      * GetSkipListNode() - get SkipListNode full equiped
@@ -723,14 +884,16 @@ class SkipList {
     SkipListBaseNode *GetSkipListNode(SkipListBaseNode *next,
                                       SkipListBaseNode *down,
                                       SkipListBaseNode *back_link, KeyType key,
-                                      bool isHead) {
-      return new SkipListBaseNode(next, down, back_link, key, isHead);
+                                      bool isHead, u_int32_t level) {
+      return new SkipListBaseNode(next, down, back_link, key, isHead, level);
     }
     /*
      * GetSkipListInnerNode() - get a SkipListInnerNode using key and value
      */
-    SkipListInnerNode *GetSkipListInnerNode(KeyType key, ValueType value) {
-      auto tmp = new SkipListInnerNode(nullptr, nullptr, nullptr, key, false);
+    SkipListInnerNode *GetSkipListInnerNode(KeyType key, ValueType value,
+                                            u_int32_t level) {
+      auto tmp =
+          new SkipListInnerNode(nullptr, nullptr, nullptr, key, false, level);
       tmp->SetValue(value);
       return tmp;
     }
@@ -740,8 +903,10 @@ class SkipList {
      */
     SkipListInnerNode *GetSkipListInnerNode(KeyType key,
                                             SkipListInnerNode *root,
-                                            SkipListInnerNode *down) {
-      auto tmp = new SkipListInnerNode(nullptr, down, nullptr, key, false);
+                                            SkipListInnerNode *down,
+                                            u_int32_t level) {
+      auto tmp =
+          new SkipListInnerNode(nullptr, down, nullptr, key, false, level);
       tmp->SetRoot(root);
       return tmp;
     }

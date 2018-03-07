@@ -67,10 +67,9 @@ class GenericKey {
    * @return
    */
   const std::string GetInfo() const {
-    storage::Tuple tuple(schema, data);
+    storage::Tuple tuple(schema, (char *)data);
     return (tuple.GetInfo());
   }
-
 
   // actual location of data, extends past the end.
   char data[KeySize];
