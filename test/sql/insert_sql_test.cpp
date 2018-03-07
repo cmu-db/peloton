@@ -104,7 +104,6 @@ void CreateAndLoadTable7() {
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test7 VALUES (55, 8, 999);");
 }
 
-<<<<<<< HEAD
 void CreateAndLoadTable8() {
   // Create a table with some defaults
   TestingSQLUtil::ExecuteSQLQuery(
@@ -115,10 +114,6 @@ void CreateAndLoadTable8() {
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO test8(num2) VALUES(50);");
 }
 
-||||||| merged common ancestors
-
-=======
->>>>>>> 0db1a2a478ce2102451a47c0be14ecb5ecb45e00
 TEST_F(InsertSQLTests, InsertOneValue) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
