@@ -250,33 +250,38 @@ void QueryToOperatorTransformer::Visit(parser::InsertStatement *op) {
     output_expr_ = insert_expr;
   } else {
     auto storage_manager = storage::StorageManager::GetInstance();
-    auto database = storage_manager->GetDatabaseWithOid(target_table->GetDatabaseOid());
+    auto database =
+        storage_manager->GetDatabaseWithOid(target_table->GetDatabaseOid());
     auto table = database->GetTableWithOid(target_table->GetTableOid());
 
     auto *schema = table->GetSchema();
     // INSERT INTO table_name VALUES (val1, val2, ...), (val_a, val_b, ...), ...
-    if (op->columns.empty()){
+    if (op->columns.empty()) {
       for (uint32_t tuple_idx = 0; tuple_idx < op->insert_values.size();
            tuple_idx++) {
         auto &values = (op->insert_values)[tuple_idx];
         if (values.size() > schema->GetColumnCount())
           throw CatalogException(
               "ERROR:  INSERT has more expressions than target columns");
-        }
+      }
     }
     // INSERT INTO table_name (col1, col2, ...) VALUES (val1, val2, ...), ...
-    else{
+    else {
       auto num_columns = op->columns.size();
-      // range based for-loop shows "call to implicitly-deleted copy constructor" error
-      for (uint32_t i = 0; i != op->insert_values.size(); ++i){ // check size of each tuple
-          if (op->insert_values[i].size() > num_columns)
-              throw CatalogException("ERROR:  INSERT has more expressions than target columns");
-          else if (op->insert_values[i].size() < num_columns)
-              throw CatalogException("ERROR:  INSERT has more target columns than expressions");
+      // range based for-loop shows "call to implicitly-deleted copy
+      // constructor" error
+      for (uint32_t i = 0; i != op->insert_values.size();
+           ++i) {  // check size of each tuple
+        if (op->insert_values[i].size() > num_columns)
+          throw CatalogException(
+              "ERROR:  INSERT has more expressions than target columns");
+        else if (op->insert_values[i].size() < num_columns)
+          throw CatalogException(
+              "ERROR:  INSERT has more target columns than expressions");
       }
 
       auto &table_columns = schema->GetColumns();
-      //auto table_columns_num = schema->GetColumnCount();
+      // auto table_columns_num = schema->GetColumnCount();
 
       for (size_t idx = 0; idx != num_columns; ++idx) {
         auto col = (op->columns)[idx];
@@ -285,8 +290,9 @@ void QueryToOperatorTransformer::Visit(parser::InsertStatement *op) {
                                     return col == x.GetName();
                                   });
         if (found == table_columns.end())
-          throw CatalogException("ERROR:  column \"" + col + "\" of relation \"" +
-                                 table->GetName() + "\" does not exist");
+          throw CatalogException("ERROR:  column \"" + col +
+                                 "\" of relation \"" + table->GetName() +
+                                 "\" does not exist");
       }
     }
     auto insert_expr = std::make_shared<OperatorExpression>(
