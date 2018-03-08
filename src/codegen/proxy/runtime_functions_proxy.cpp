@@ -26,6 +26,7 @@ DEFINE_TYPE(ColumnLayoutInfo, "peloton::ColumnLayoutInfo", col_start_ptr,
 DEFINE_TYPE(AbstractExpression, "peloton::expression::AbstractExpression",
             opaque);
 
+DEFINE_METHOD(peloton::codegen, RuntimeFunctions, HashMurmur3);
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, HashCrc64);
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, GetTileGroup);
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, GetTileGroupLayout);

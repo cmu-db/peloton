@@ -34,6 +34,7 @@ PROXY(AbstractExpression) {
 };
 
 PROXY(RuntimeFunctions) {
+  DECLARE_METHOD(HashMurmur3);
   DECLARE_METHOD(HashCrc64);
   DECLARE_METHOD(GetTileGroup);
   DECLARE_METHOD(GetTileGroupLayout);

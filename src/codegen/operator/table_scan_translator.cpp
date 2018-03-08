@@ -221,7 +221,7 @@ void TableScanTranslator::ScanConsumer::SetupRowBatch(
   for (oid_t col_idx = 0; col_idx < output_col_ids.size(); col_idx++) {
     auto *attribute = ais[output_col_ids[col_idx]];
     LOG_TRACE("Adding attribute '%s.%s' (%p) into row batch",
-              scan_plan.GetTable()->GetName().c_str(), attribute->name.c_str(),
+              plan_.GetTable()->GetName().c_str(), attribute->name.c_str(),
               attribute);
     batch.AddAttribute(attribute, &access[col_idx]);
   }
