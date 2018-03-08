@@ -108,7 +108,7 @@ void Sorter::Iterate(CodeGen &codegen, llvm::Value *sorter_ptr,
 void Sorter::VectorizedIterate(
     CodeGen &codegen, llvm::Value *sorter_ptr, uint32_t vector_size,
     Sorter::VectorizedIterateCallback &callback) const {
-  llvm::Value *start_pos = GetStartPosition(codegen, sorter_ptr);
+  llvm::Value *start_pos = codegen.Load(SorterProxy::tuples_start, sorter_ptr);
   llvm::Value *num_tuples = NumTuples(codegen, sorter_ptr);
   num_tuples = codegen->CreateTrunc(num_tuples, codegen.Int32Type());
   lang::VectorizedLoop loop(codegen, num_tuples, vector_size, {});
@@ -135,8 +135,8 @@ void Sorter::Destroy(CodeGen &codegen, llvm::Value *sorter_ptr) const {
 llvm::Value *Sorter::NumTuples(CodeGen &codegen,
                                llvm::Value *sorter_ptr) const {
   // Pull out start and end (char **)
-  auto *start = GetStartPosition(codegen, sorter_ptr);
-  auto *end = GetEndPosition(codegen, sorter_ptr);
+  auto *start = codegen.Load(SorterProxy::tuples_start, sorter_ptr);
+  auto *end = codegen.Load(SorterProxy::tuples_end, sorter_ptr);
 
   // Convert both to uint64_t
   start = codegen->CreatePtrToInt(start, codegen.Int64Type());
@@ -147,27 +147,6 @@ llvm::Value *Sorter::NumTuples(CodeGen &codegen,
 
   // Divide by pointer size (diff >> 3, or div / 8)
   return codegen->CreateAShr(diff, 3, "numTuples", true);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-/// TODO: We should codify access to instance memory variables using templates
-///       to something like: codegen.LoadMember<SorterProxy::start_pos>(...)
-////////////////////////////////////////////////////////////////////////////////
-
-llvm::Value *Sorter::GetStartPosition(CodeGen &codegen,
-                                      llvm::Value *sorter_ptr) const {
-  auto *sorter_type = SorterProxy::GetType(codegen);
-  auto *start_ptr_addr =
-      codegen->CreateConstInBoundsGEP2_32(sorter_type, sorter_ptr, 0, 1);
-  return codegen->CreateLoad(start_ptr_addr);
-}
-
-llvm::Value *Sorter::GetEndPosition(CodeGen &codegen,
-                                    llvm::Value *sorter_ptr) const {
-  auto *sorter_type = SorterProxy::GetType(codegen);
-  auto *end_ptr_addr =
-      codegen->CreateConstInBoundsGEP2_32(sorter_type, sorter_ptr, 0, 2);
-  return codegen->CreateLoad(end_ptr_addr);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

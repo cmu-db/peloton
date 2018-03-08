@@ -6,14 +6,13 @@
 //
 // Identification: src/include/codegen/proxy/cc_hash_table_proxy.h
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #pragma once
 
 #include "codegen/proxy/proxy.h"
-#include "codegen/proxy/type_builder.h"
 #include "codegen/util/cc_hash_table.h"
 
 namespace peloton {

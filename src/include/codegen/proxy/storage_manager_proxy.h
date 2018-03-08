@@ -6,14 +6,13 @@
 //
 // Identification: src/include/codegen/proxy/storage_manager_proxy.h
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #pragma once
 
 #include "codegen/proxy/proxy.h"
-#include "codegen/proxy/type_builder.h"
 #include "storage/storage_manager.h"
 
 namespace peloton {

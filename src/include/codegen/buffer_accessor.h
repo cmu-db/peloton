@@ -48,12 +48,6 @@ class BufferAccessor {
   };
 
  private:
-  llvm::Value *GetStartPosition(CodeGen &codegen,
-                                llvm::Value *buffer_ptr) const;
-  llvm::Value *GetEndPosition(CodeGen &codegen,
-                              llvm::Value *buffer_ptr) const;
-
- private:
   UpdateableStorage storage_format_;
 };
 

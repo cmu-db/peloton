@@ -6,7 +6,7 @@
 //
 // Identification: src/include/codegen/proxy/updater_proxy.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -14,7 +14,6 @@
 
 #include "codegen/updater.h"
 #include "codegen/proxy/proxy.h"
-#include "codegen/proxy/type_builder.h"
 
 namespace peloton {
 namespace codegen {

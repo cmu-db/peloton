@@ -18,8 +18,7 @@
 namespace peloton {
 namespace codegen {
 
-DEFINE_TYPE(Buffer, "peloton::Buffer", MEMBER(buffer_start), MEMBER(buffer_pos),
-            MEMBER(buffer_end));
+DEFINE_TYPE(Buffer, "peloton::Buffer", buffer_start, buffer_pos, buffer_end);
 
 DEFINE_METHOD(peloton::codegen::util, Buffer, Init);
 DEFINE_METHOD(peloton::codegen::util, Buffer, Destroy);

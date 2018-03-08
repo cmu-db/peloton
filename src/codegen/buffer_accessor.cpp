@@ -48,8 +48,8 @@ void BufferAccessor::Append(CodeGen &codegen, llvm::Value *buffer_ptr,
 
 void BufferAccessor::Iterate(CodeGen &codegen, llvm::Value *buffer_ptr,
                              BufferAccessor::IterateCallback &callback) const {
-  auto *start = GetStartPosition(codegen, buffer_ptr);
-  auto *end = GetEndPosition(codegen, buffer_ptr);
+  auto *start = codegen.Load(BufferProxy::buffer_start, buffer_ptr);
+  auto *end = codegen.Load(BufferProxy::buffer_pos, buffer_ptr);
   lang::Loop loop(codegen, codegen->CreateICmpNE(start, end), {{"pos", start}});
   {
     auto *pos = loop.GetLoopVar(0);
@@ -83,29 +83,13 @@ void BufferAccessor::Destroy(CodeGen &codegen, llvm::Value *buffer_ptr) const {
 
 llvm::Value *BufferAccessor::NumTuples(CodeGen &codegen,
                                        llvm::Value *buffer_ptr) const {
-  llvm::Value *start = GetStartPosition(codegen, buffer_ptr);
-  llvm::Value *end = GetEndPosition(codegen, buffer_ptr);
+  auto *start = codegen.Load(BufferProxy::buffer_start, buffer_ptr);
+  auto *end = codegen.Load(BufferProxy::buffer_pos, buffer_ptr);
   start = codegen->CreatePtrToInt(start, codegen.Int64Type());
   end = codegen->CreatePtrToInt(end, codegen.Int64Type());
   auto *diff = codegen->CreateSub(end, start);
   diff = codegen->CreateAShr(diff, 3, "numTuples", true);
   return codegen->CreateTrunc(diff, codegen.Int32Type());
-}
-
-llvm::Value *BufferAccessor::GetStartPosition(CodeGen &codegen,
-                                              llvm::Value *buffer_ptr) const {
-  auto *buffer_type = BufferProxy::GetType(codegen);
-  auto *addr =
-      codegen->CreateConstInBoundsGEP2_32(buffer_type, buffer_ptr, 0, 0);
-  return codegen->CreateLoad(addr);
-}
-
-llvm::Value *BufferAccessor::GetEndPosition(CodeGen &codegen,
-                                            llvm::Value *buffer_ptr) const {
-  auto *buffer_type = BufferProxy::GetType(codegen);
-  auto *addr =
-      codegen->CreateConstInBoundsGEP2_32(buffer_type, buffer_ptr, 0, 1);
-  return codegen->CreateLoad(addr);
 }
 
 }  // namespace codegen

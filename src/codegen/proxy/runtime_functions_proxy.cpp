@@ -6,7 +6,7 @@
 //
 // Identification: src/codegen/proxy/runtime_functions_proxy.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -20,11 +20,11 @@
 namespace peloton {
 namespace codegen {
 
-DEFINE_TYPE(ColumnLayoutInfo, "peloton::ColumnLayoutInfo",
-            MEMBER(col_start_ptr), MEMBER(stride), MEMBER(columnar));
+DEFINE_TYPE(ColumnLayoutInfo, "peloton::ColumnLayoutInfo", col_start_ptr,
+            stride, columnar);
 
 DEFINE_TYPE(AbstractExpression, "peloton::expression::AbstractExpression",
-            MEMBER(opaque));
+            opaque);
 
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, HashCrc64);
 DEFINE_METHOD(peloton::codegen, RuntimeFunctions, GetTileGroup);

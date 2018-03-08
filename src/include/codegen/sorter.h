@@ -156,11 +156,6 @@ class Sorter {
   };
 
  private:
-  llvm::Value *GetStartPosition(CodeGen &codegen,
-                                llvm::Value *sorter_ptr) const;
-  llvm::Value *GetEndPosition(CodeGen &codegen, llvm::Value *sorter_ptr) const;
-
- private:
   // Compact storage to materialize things
   // TODO: Change to CompactStorage?
   UpdateableStorage storage_format_;

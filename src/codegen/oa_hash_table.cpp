@@ -58,16 +58,6 @@ llvm::Value *OAHashTable::HashKey(
   return Hash::HashValues(codegen, key);
 }
 
-// Load the value of a field from the given hash table instance.
-// NOTE: the type returned is the actual type registered in HashTable type
-llvm::Value *OAHashTable::LoadHashTableField(CodeGen &codegen,
-                                             llvm::Value *hash_table,
-                                             uint32_t field_id) const {
-  llvm::Type *hash_table_type = OAHashTableProxy::GetType(codegen);
-  return codegen->CreateLoad(codegen->CreateConstInBoundsGEP2_32(
-      hash_table_type, hash_table, 0, field_id));
-}
-
 // Return the element stored in a specified field of a HashEntry struct. Since
 // we also need to access data field, the offset is an extra argument
 llvm::Value *OAHashTable::LoadHashEntryField(CodeGen &codegen,
@@ -115,7 +105,8 @@ OAHashTable::HashTablePos OAHashTable::GetNextEntry(CodeGen &codegen,
                                                     llvm::Value *entry_ptr,
                                                     llvm::Value *index) const {
   // hash_table_size = hash_table->num_buckets_
-  llvm::Value *hash_table_size = LoadHashTableField(codegen, hash_table, 1);
+  llvm::Value *hash_table_size =
+      codegen.Load(OAHashTableProxy::num_buckets, hash_table);
   // next_index = index + 1
   llvm::Value *next_index = codegen->CreateAdd(index, codegen.Const64(1));
   // next_entry_p = entry_p + HashEntrySize()
@@ -128,7 +119,7 @@ OAHashTable::HashTablePos OAHashTable::GetNextEntry(CodeGen &codegen,
                      codegen->CreateICmpEQ(next_index, hash_table_size)};
   {
     wrap_back_index = codegen.Const64(0);
-    wrap_back_entry_ptr = LoadHashTableField(codegen, hash_table, 0);
+    wrap_back_entry_ptr = codegen.Load(OAHashTableProxy::buckets, hash_table);
   }
   wrap_back.EndIf();
 
@@ -144,7 +135,7 @@ llvm::Value *OAHashTable::GetEntry(CodeGen &codegen, llvm::Value *hash_table,
   llvm::Value *byte_offset = codegen->CreateMul(
       codegen.Const64(hash_entry_size_),
       codegen->CreateZExtOrBitCast(index, codegen.Int64Type()));
-  llvm::Value *base_ptr = LoadHashTableField(codegen, hash_table, 0);
+  llvm::Value *base_ptr = codegen.Load(OAHashTableProxy::buckets, hash_table);
   return AdvancePointer(codegen, base_ptr, byte_offset);
 }
 
@@ -154,7 +145,8 @@ OAHashTable::HashTablePos OAHashTable::GetEntryByHash(
   // We need both to judge whether to wrap back
 
   // Load bucket mask from the hash table field #2 (3rd)
-  llvm::Value *bucket_mask = LoadHashTableField(codegen, hash_table, 2);
+  llvm::Value *bucket_mask =
+      codegen.Load(OAHashTableProxy::bucket_mask, hash_table);
   llvm::Value *index = codegen->CreateAnd(bucket_mask, hash_value);
   llvm::Value *entry_ptr = GetEntry(codegen, hash_table, index);
   return HashTablePos{index, entry_ptr};
@@ -540,14 +532,15 @@ void OAHashTable::Insert(CodeGen &codegen, llvm::Value *ht_ptr,
 void OAHashTable::Iterate(CodeGen &codegen, llvm::Value *hash_table,
                           IterateCallback &callback) const {
   // Load the size of the array
-  llvm::Value *num_buckets = LoadHashTableField(codegen, hash_table, 1);
+  llvm::Value *num_buckets =
+      codegen.Load(OAHashTableProxy::num_buckets, hash_table);
 
   // Create a constant number from entry size
   llvm::Value *entry_size = codegen.Const64(HashEntrySize());
 
   // This is the first entry in the hash table
   // The type of this pointer is HashEntry without key and value field
-  llvm::Value *entry_ptr = LoadHashTableField(codegen, hash_table, 0);
+  llvm::Value *entry_ptr = codegen.Load(OAHashTableProxy::buckets, hash_table);
 
   // Create an uint64_t variable which is the current index in the array
   // and initialize it with cosntant number 0
@@ -627,10 +620,11 @@ void OAHashTable::VectorizedIterate(
   PELOTON_ASSERT((size & (size - 1)) == 0);
 
   // The start of the buckets array
-  llvm::Value *entry_ptr = LoadHashTableField(codegen, hash_table, 0);
+  llvm::Value *entry_ptr = codegen.Load(OAHashTableProxy::buckets, hash_table);
 
   // Load the size of the array
-  llvm::Value *num_buckets = LoadHashTableField(codegen, hash_table, 1);
+  llvm::Value *num_buckets =
+      codegen.Load(OAHashTableProxy::num_buckets, hash_table);
   num_buckets = codegen->CreateTruncOrBitCast(num_buckets, codegen.Int32Type());
 
   lang::VectorizedLoop vector_loop(codegen, num_buckets, size,

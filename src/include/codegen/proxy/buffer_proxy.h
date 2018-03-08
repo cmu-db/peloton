@@ -12,9 +12,7 @@
 
 #pragma once
 
-#include "codegen/hash.h"
 #include "codegen/proxy/proxy.h"
-#include "codegen/proxy/type_builder.h"
 #include "codegen/util/buffer.h"
 
 namespace peloton {

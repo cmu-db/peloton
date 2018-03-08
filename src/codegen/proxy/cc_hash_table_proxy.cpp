@@ -6,7 +6,7 @@
 //
 // Identification: src/codegen/proxy/cc_hash_table_proxy.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -37,8 +37,8 @@ llvm::Type *HashEntryProxy::GetType(CodeGen &codegen) {
   return hash_entry_type;
 }
 
-DEFINE_TYPE(CCHashTable, "peloton::CCHashTable", MEMBER(buckets),
-            MEMBER(num_buckets), MEMBER(bucket_mask), MEMBER(num_elements));
+DEFINE_TYPE(CCHashTable, "peloton::CCHashTable", buckets, num_buckets,
+            bucket_mask, num_elements);
 
 DEFINE_METHOD(peloton::codegen::util, CCHashTable, Init);
 DEFINE_METHOD(peloton::codegen::util, CCHashTable, StoreTuple);

@@ -25,7 +25,46 @@ namespace codegen {
 
 ////////////////////////////////////////////////////////////////////////////////
 ///
-/// PipelineContext
+/// LoopOverStates
+///
+////////////////////////////////////////////////////////////////////////////////
+
+PipelineContext::LoopOverStates::LoopOverStates(PipelineContext &pipeline_ctx)
+    : ctx_(pipeline_ctx) {}
+
+void PipelineContext::LoopOverStates::Do(
+    const std::function<void(llvm::Value *)> &body) const {
+  auto &compilation_ctx = ctx_.GetPipeline().GetCompilationContext();
+  auto &exec_consumer = compilation_ctx.GetExecutionConsumer();
+  auto *thread_states = exec_consumer.GetThreadStatesPtr(compilation_ctx);
+
+  CodeGen &codegen = compilation_ctx.GetCodeGen();
+
+  llvm::Value *num_threads =
+      codegen.Load(ThreadStatesProxy::num_threads, thread_states);
+  llvm::Value *state_size =
+      codegen.Load(ThreadStatesProxy::state_size, thread_states);
+  llvm::Value *states = codegen.Load(ThreadStatesProxy::states, thread_states);
+
+  llvm::Value *state_end = codegen->CreateInBoundsGEP(
+      states, {codegen->CreateMul(num_threads, state_size)});
+
+  llvm::Value *loop_cond = codegen->CreateICmpNE(states, state_end);
+  lang::Loop state_loop(codegen, loop_cond, {{"threadState", states}});
+  {
+    // Pull out state in this iteration
+    llvm::Value *curr_state = state_loop.GetLoopVar(0);
+    // Invoke caller
+    body(curr_state);
+    // Wrap up
+    states = codegen->CreateInBoundsGEP(states, {state_size});
+    state_loop.LoopEnd(codegen->CreateICmpNE(states, state_end), {states});
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+///
+/// Pipeline context
 ///
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -343,46 +382,17 @@ void Pipeline::CompletePipeline(PipelineContext &pipeline_context) {
     return;
   }
 
-  auto &exec_consumer = compilation_ctx_.GetExecutionConsumer();
-  auto *thread_states = exec_consumer.GetThreadStatesPtr(compilation_ctx_);
-
-  CodeGen &codegen = compilation_ctx_.GetCodeGen();
-
-  auto *thread_states_type = ThreadStatesProxy::GetType(codegen);
-
-  llvm::Value *num_threads =
-      codegen->CreateLoad(codegen->CreateConstInBoundsGEP2_32(
-          thread_states_type, thread_states, 0, 1));
-
-  llvm::Value *state_size =
-      codegen->CreateLoad(codegen->CreateConstInBoundsGEP2_32(
-          thread_states_type, thread_states, 0, 2));
-
-  llvm::Value *state = codegen->CreateLoad(codegen->CreateConstInBoundsGEP2_32(
-      thread_states_type, thread_states, 0, 3));
-
-  llvm::Value *state_end = codegen->CreateInBoundsGEP(
-      state, {codegen->CreateMul(num_threads, state_size)});
-
-  llvm::Value *loop_cond = codegen->CreateICmpNE(state, state_end);
-  lang::Loop worker_loop(codegen, loop_cond, {{"threadState", state}});
-  {
-    state = worker_loop.GetLoopVar(0);
-    llvm::Value *thread_state = codegen->CreateBitOrPointerCast(
-        state, pipeline_context.GetThreadStateType()->getPointerTo());
+  // Loop over all states
+  PipelineContext::LoopOverStates loop_state(pipeline_context);
+  loop_state.Do([this, &pipeline_context](llvm::Value *thread_state) {
     PipelineContext::ScopedStateAccess state_access(pipeline_context,
                                                     thread_state);
-
     // Let operators in the pipeline clean up any pipeline state
     for (auto riter = pipeline_.rbegin(), rend = pipeline_.rend();
          riter != rend; ++riter) {
       (*riter)->TearDownPipelineState(pipeline_context);
     }
-
-    // Wrap up
-    state = codegen->CreateInBoundsGEP(state, {state_size});
-    worker_loop.LoopEnd(codegen->CreateICmpNE(state, state_end), {state});
-  }
+  });
 }
 
 void Pipeline::RunSerial(const std::function<void(ConsumerContext &)> &body) {

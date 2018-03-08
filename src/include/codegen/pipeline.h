@@ -31,6 +31,10 @@ class CompilationContext;
 class ConsumerContext;
 class OperatorTranslator;
 
+namespace lang {
+class Loop;
+}  // namespace lang
+
 /// Forward declare Pipeline that's declared at the end of this file
 class Pipeline;
 
@@ -66,6 +70,9 @@ class PipelineContext {
   /// Return the pipeline this context is associated with
   Pipeline &GetPipeline();
 
+  /**
+   * A handy class to temporarily set a thread state
+   */
   class ScopedStateAccess {
    public:
     ScopedStateAccess(PipelineContext &pipeline_ctx, llvm::Value *thread_state)
@@ -86,7 +93,9 @@ class PipelineContext {
   class LoopOverStates {
    public:
     LoopOverStates(PipelineContext &pipeline_ctx);
-    ~LoopOverStates();
+    void Do(const std::function<void(llvm::Value *)> &body) const;
+   private:
+    PipelineContext &ctx_;
   };
 
  private:

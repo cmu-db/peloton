@@ -18,7 +18,7 @@ namespace peloton {
 namespace codegen {
 
 // Define the proxy type with the single opaque member field
-DEFINE_TYPE(StorageManager, "storage::StorageManager", MEMBER(opaque));
+DEFINE_TYPE(StorageManager, "storage::StorageManager", opaque);
 
 // Define a method that proxies storage::StorageManager::GetTableWithOid()
 DEFINE_METHOD(peloton::storage, StorageManager, GetTableWithOid);

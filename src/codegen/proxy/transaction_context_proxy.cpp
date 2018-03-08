@@ -15,8 +15,7 @@
 namespace peloton {
 namespace codegen {
 
-DEFINE_TYPE(TransactionContext, "concurrency::TransactionContext",
-            MEMBER(opaque));
+DEFINE_TYPE(TransactionContext, "concurrency::TransactionContext", opaque);
 
 }  // namespace codegen
 }  // namespace peloton

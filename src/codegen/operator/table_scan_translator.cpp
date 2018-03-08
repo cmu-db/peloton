@@ -21,6 +21,7 @@
 #include "codegen/type/boolean_type.h"
 #include "codegen/vector.h"
 #include "planner/seq_scan_plan.h"
+#include "storage/data_table.h"
 
 namespace peloton {
 namespace codegen {

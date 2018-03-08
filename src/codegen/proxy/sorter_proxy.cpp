@@ -17,8 +17,8 @@
 namespace peloton {
 namespace codegen {
 
-DEFINE_TYPE(Sorter, "peloton::util::Sorter", MEMBER(opaque1),
-            MEMBER(tuples_start), MEMBER(tuples_end), MEMBER(opaque2));
+DEFINE_TYPE(Sorter, "peloton::util::Sorter", opaque1, tuples_start, tuples_end,
+            opaque2);
 
 DEFINE_METHOD(peloton::codegen::util, Sorter, Init);
 DEFINE_METHOD(peloton::codegen::util, Sorter, StoreInputTuple);

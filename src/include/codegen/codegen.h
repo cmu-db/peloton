@@ -22,10 +22,14 @@ namespace codegen {
 
 /// A proxy to a member of a class. Users must provide both the physical
 /// position of the member in the class, and the C++ type of the member.
-template <uint32_t Pos, typename T>
-struct ProxyMember {
-  // Virtual destructor
-  virtual ~ProxyMember() = default;
+class CodeGen;
+
+struct CppProxyMember {
+  uint32_t slot;
+
+  explicit CppProxyMember(uint32_t _slot) noexcept : slot(_slot) {}
+
+  llvm::Value *Load(CodeGen &codegen, llvm::Value *ptr) const;
 };
 
 //===----------------------------------------------------------------------===//
@@ -83,6 +87,11 @@ class CodeGen {
   template <typename T>
   llvm::Value *Call(const T &proxy, const std::vector<llvm::Value *> &args) {
     return CallFunc(proxy.GetFunction(*this), args);
+  }
+
+  template <typename T>
+  llvm::Value *Load(const T &loader, llvm::Value *ptr) {
+    return loader.Load(*this, ptr);
   }
 
   //===--------------------------------------------------------------------===//

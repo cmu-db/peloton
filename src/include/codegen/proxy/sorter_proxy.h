@@ -13,7 +13,6 @@
 #pragma once
 
 #include "codegen/proxy/proxy.h"
-#include "codegen/proxy/type_builder.h"
 #include "codegen/util/sorter.h"
 
 namespace peloton {
