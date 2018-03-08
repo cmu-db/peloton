@@ -251,7 +251,8 @@ class SkipList {
       const KeyType &key, std::vector<SkipListInnerNode *> &tower,
       std::vector<std::pair<SkipListBaseNode *, SkipListBaseNode *>> &
           call_stack,
-      OperationContext &ctx, u_int32_t start_level = 0) {
+      OperationContext &ctx, u_int32_t start_level = 0,
+      bool check_multiple_key_value=false) {
     LOG_INFO("InsertTower");
     u_int32_t expected_level = tower.size();
     for (u_int32_t i = start_level; i < expected_level; i++) {
@@ -265,6 +266,36 @@ class SkipList {
           }
           return true;
         }
+
+        //if the level is 0, multiple key-value pair is required
+        //if the check bool is true, then it should be non-unique index
+        if (i==0){
+          if (!check_multiple_key_value){
+            // unique index, just need to check the next one
+            if (!GET_DELETE(call_stack[i].second->next_.load())
+                &&ValueCmpEqual(tower[i]->GetValue(),
+                                static_cast<SkipListInnerNode *>(call_stack[i].second)->GetValue())){
+              return false;
+            }
+          }else{
+            //need to check all key-value pairs
+            //TODO: add optimization of last pointer check
+            auto cursor = static_cast<SkipListInnerNode *>(call_stack[i].second);
+            while (cursor){
+              if (!KeyCmpEqual(key,cursor->key_))
+                break;
+              if (GET_DELETE(cursor->next_.load())){
+                cursor = static_cast<SkipListInnerNode *>(GET_NEXT(cursor));
+                continue;
+              }
+              if (ValueCmpEqual(tower[i]->GetValue(), cursor->GetValue()))
+                return false;
+              cursor = static_cast<SkipListInnerNode *>(GET_NEXT(cursor));
+            }
+          }
+        }
+
+        // if multiple test passed, try to insert
         tower[i]->next_ = call_stack[i].second;
         insert_flag = call_stack[i].first->next_.compare_exchange_strong(
             call_stack[i].second, tower[i]);
@@ -320,7 +351,7 @@ class SkipList {
     if (this->duplicate_support_) {
       // insert the node from the lowest level
       // redo the search from stack if the insert fails
-      return InsertTowerIntoInterval(key, tower, call_stack, ctx);
+      return InsertTowerIntoInterval(key, tower, call_stack, ctx, 0, true);
     } else {
       // unique key
       // need to compare with the second return value's key
@@ -670,6 +701,7 @@ class SkipList {
       UNUSED_ATTRIBUTE const ValueType &value,
       UNUSED_ATTRIBUTE std::function<bool(const void *)> predicate,
       UNUSED_ATTRIBUTE bool *predicate_satisfied) {
+    LOG_INFO("ConditionalInsert Called");
     auto *epoch_node_p = epoch_manager_.JoinEpoch();
     OperationContext ctx{epoch_node_p};
     // TODO: Insert key value pair to the skiplist with predicate
