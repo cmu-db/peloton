@@ -35,6 +35,7 @@ namespace index {
 
 #define SKIP_LIST_INITIAL_MAX_LEVEL_ 10
 
+
 /*
  * SKIPLIST_TEMPLATE_ARGUMENTS - Save some key strokes
  */
@@ -380,47 +381,99 @@ class SkipList {
   }
 
   /*
-   * DeleteNode() - Delete certain key from the skip-list and fill in the
-   *deleted nodes to del_nodes
+   * SearchKeyValueInList() - Search specific key value pair in the current
+   *level
    *
-   * The return value is the list of node deleted or NULL if failed to delete
+   * return the prev of the node to delete
    */
-  bool DeleteNode(const KeyType &key, NodeList &del_nodes,
+  SkipListBaseNode *SearchKeyValueInList(const KeyType &key,
+                                         const ValueType &value,
+                                         SkipListBaseNode *prev,
+                                         SkipListBaseNode *del) {
+    PL_ASSERT(del != nullptr);
+    while (del && KeyCmpEqual(del->key_, key)) {
+      auto inner_node = static_cast<SkipListInnerNode *>(del);
+      if (ValueCmpEqual(inner_node->GetRootValue(), value)) {
+        return prev;
+      } else {
+        prev = del;
+        del = GET_NEXT(del->next_.load());
+      }
+    }
+    return nullptr;
+  }
+
+  /*
+   * DeleteNode() - Try delete the key value pair from the skip list
+   *
+   * return true if successful deleted
+   */
+  bool DeleteNode(const KeyType &key, const ValueType &value, NodePair &pair,
                   OperationContext &ctx) {
-    LOG_INFO("delete called");
-    auto pair = Search(key, ctx);
     SkipListBaseNode *prev_node = pair.first;
     SkipListBaseNode *del_node = pair.second;
+    bool result = false;
 
-    // No such key
-    while (del_node != nullptr) {
+    if (prev_node && del_node) {
       // Tries to flag the prev node
       auto flag_pair = TryFlag(prev_node, del_node, ctx);
       prev_node = flag_pair.first;
-      bool result = flag_pair.second;
+      result = flag_pair.second;
       // Attempts to remove the del_node from list
       if (prev_node != nullptr) {
         HelpFlagged(prev_node, del_node, ctx);
       }
       // Node deleted by this process
       if (result) {
-        del_nodes.push_back(del_node);
-      }
+        // TODO: Notify epoch manager
 
-      // Cleanup the superfluous nodes
-      std::vector<NodePair> call_stack;
-      SearchWithPath(call_stack, key, skip_list_head_.load(), ctx);
-      for (auto node : call_stack) {
-        SearchFrom(key, node.first, ctx);
+        // Cleanup the superfluous tower
+        std::vector<NodePair> call_stack;
+        SearchWithPath(call_stack, key, skip_list_head_.load(), ctx);
+        for (auto node : call_stack) {
+          auto to_del_pair =
+              SearchKeyValueInList(key, value, node.first, node.second);
+          SearchFrom(key, to_del_pair, ctx);
+        }
       }
-
-      // Continue searching duplicate key
-      auto new_pair = SearchFrom(key, prev_node, ctx);
-      prev_node = new_pair.first;
-      del_node = new_pair.second;
     }
+    return result;
+  }
+  /*
+   * Delete() - Delete certain key from the skip-list and fill in the
+   *deleted nodes to del_nodes
+   *
+   * The return value is the list of node deleted or NULL if failed to delete
+   */
+  bool Delete(const KeyType &key, const ValueType &value,
+              OperationContext &ctx) {
+    auto pair = Search(key, ctx);
+    SkipListBaseNode *prev_node = pair.first;
+    SkipListBaseNode *del_node = pair.second;
 
-    return del_nodes.size() > 0;
+    // Check the node and see if it's deleted dean
+    while (del_node) {
+      auto root_node = static_cast<SkipListInnerNode *>(del_node);
+      // Continue only if value match
+      if (ValueCmpEqual(root_node->GetValue(), value)) {
+        auto next = root_node->next_.load();
+        if (GET_FLAG(next)) {
+          SearchFrom(key, del_node, ctx);
+          // Already deleted
+        } else if (GET_DELETE(next)) {
+          return false;
+        } else {
+          // Delete the node
+          NodePair pair = std::make_pair(prev_node, del_node);
+          return DeleteNode(key, value, pair, ctx);
+        }
+      } else {
+        // Continue searching other nodes with the same key
+        prev_node = del_node;
+        del_node = GET_NEXT(del_node->next_.load());
+      }
+    }
+    return false;
   }
 
   /*
@@ -459,6 +512,17 @@ class SkipList {
   }
 
  public:
+  SkipList(KeyComparator key_cmp_obj = KeyComparator{},
+           KeyEqualityChecker key_eq_obj = KeyEqualityChecker{},
+           ValueEqualityChecker val_eq_obj = ValueEqualityChecker{})
+      : key_cmp_obj_{key_cmp_obj},
+        key_eq_obj_{key_eq_obj},
+        value_eq_obj_{val_eq_obj} {
+    this->duplicate_support_ = false;
+    this->GC_Interval_ = 50;
+    this->max_level_ = SKIP_LIST_INITIAL_MAX_LEVEL_;
+    this->skip_list_head_ = node_manager_.GetSkipListHead(0);
+  }
   SkipList(bool duplicate, int GC_Interval,
            KeyComparator key_cmp_obj = KeyComparator{},
            KeyEqualityChecker key_eq_obj = KeyEqualityChecker{},
@@ -541,6 +605,16 @@ class SkipList {
     void SetRoot(SkipListInnerNode *root) {
       PL_ASSERT(this->down_ != nullptr);
       this->valueOrRoot_.root = root;
+    }
+
+    // Get the value from the tower
+    ValueType &GetRootValue() {
+      if (this->down_ == nullptr) {
+        return this->valueOrRoot_.value;
+      } else {
+        SkipListInnerNode *root = this->valueOrRoot_.root.load();
+        return root->valueOrRoot_.value;
+      }
     }
 
     ValueType &GetValue() {
@@ -715,11 +789,11 @@ class SkipList {
    * This function returns false if the key and value pair does not
    * exist. Return true if delete succeeds
    */
-  bool Delete(const KeyType &key) {
+  bool Delete(const KeyType &key, const ValueType &value) {
+    LOG_TRACE("Delete called!");
     auto *epoch_node_p = epoch_manager_.JoinEpoch();
     OperationContext ctx{epoch_node_p};
-    std::vector<SkipListBaseNode *> del_nodes;
-    bool ret = DeleteNode(key, del_nodes, ctx);
+    bool ret = Delete(key, value, ctx);
     epoch_manager_.LeaveEpoch(epoch_node_p);
     return ret;
   }
