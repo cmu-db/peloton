@@ -102,47 +102,11 @@ void SKIPLIST_INDEX_TYPE::Scan(
     UNUSED_ATTRIBUTE const std::vector<type::Value> &value_list,
     UNUSED_ATTRIBUTE const std::vector<oid_t> &tuple_column_id_list,
     UNUSED_ATTRIBUTE const std::vector<ExpressionType> &expr_list,
-    ScanDirectionType scan_direction, std::vector<ValueType> &result,
-    const ConjunctionScanPredicate *csp_p) {
-  // This is a hack - we do not support backward scan
-  if (scan_direction == ScanDirectionType::INVALID) {
-    throw Exception("Invalid scan direction \n");
-  }
-
-  LOG_INFO("Scan() Point Query = %d; Full Scan = %d ", csp_p->IsPointQuery(),
-           csp_p->IsFullIndexScan());
-
-  if (csp_p->IsPointQuery()) {
-    const storage::Tuple *point_query_key_p = csp_p->GetPointQueryKey();
-
-    KeyType point_query_key;
-    point_query_key.SetFromKey(point_query_key_p);
-
-    container.GetValue(point_query_key, result);
-  } else if (csp_p->IsFullIndexScan()) {
-    for (auto scan_itr = container.ForwardBegin(); !scan_itr.IsEnd();
-         scan_itr++) {
-      result.push_back(scan_itr->second);
-    }
-  } else {
-    const storage::Tuple *low_key_p = csp_p->GetLowKey();
-    const storage::Tuple *high_key_p = csp_p->GetHighKey();
-
-    LOG_INFO("Partial scan low key: %s\n high key: %s",
-             low_key_p->GetInfo().c_str(), high_key_p->GetInfo().c_str());
-
-    KeyType index_low_key;
-    KeyType index_high_key;
-    index_low_key.SetFromKey(low_key_p);
-    index_high_key.SetFromKey(high_key_p);
-
-    for (auto scan_itr = container.ForwardBegin(index_low_key);
-         (scan_itr.IsEnd() == false) &&
-             (container.KeyCmpLessEqual(scan_itr->first, index_high_key));
-         scan_itr++) {
-      result.push_back(scan_itr->second);
-    }
-  }
+    UNUSED_ATTRIBUTE ScanDirectionType scan_direction,
+    UNUSED_ATTRIBUTE std::vector<ValueType> &result,
+    UNUSED_ATTRIBUTE const ConjunctionScanPredicate *csp_p) {
+  // TODO: Add your implementation here
+  return;
 }
 
 /*
@@ -163,28 +127,18 @@ void SKIPLIST_INDEX_TYPE::ScanLimit(
 }
 
 SKIPLIST_TEMPLATE_ARGUMENTS
-void SKIPLIST_INDEX_TYPE::ScanAllKeys(std::vector<ValueType> &result) {
-  LOG_TRACE("ScannAllKeys()");
-  auto it = container.ForwardBegin();
-
-  // scan all entries
-  while (it.IsEnd() == false) {
-    result.push_back(it->second);
-    it++;
-  }
+void SKIPLIST_INDEX_TYPE::ScanAllKeys(
+    UNUSED_ATTRIBUTE std::vector<ValueType> &result) {
+  // TODO: Add your implementation here
+  return;
 }
 
 SKIPLIST_TEMPLATE_ARGUMENTS
-void SKIPLIST_INDEX_TYPE::ScanKey(const storage::Tuple *key,
-                                  std::vector<ValueType> &result) {
-  KeyType index_key;
-  index_key.SetFromKey(key);
-
-  // This function in BwTree fills a given vector
-  bool ret = container.GetValue(index_key, result);
-
-  LOG_INFO("ScanKey (key=%s) [%s]", index_key.GetInfo().c_str(),
-           (ret ? "SUCCESS" : "FAIL"));
+void SKIPLIST_INDEX_TYPE::ScanKey(
+    UNUSED_ATTRIBUTE const storage::Tuple *key,
+    UNUSED_ATTRIBUTE std::vector<ValueType> &result) {
+  // TODO: Add your implementation here
+  return;
 }
 
 SKIPLIST_TEMPLATE_ARGUMENTS
