@@ -49,8 +49,8 @@ bool SKIPLIST_INDEX_TYPE::InsertEntry(const storage::Tuple *key,
 
   bool ret = container.Insert(index_key, value);
 
-  LOG_TRACE("InsertEntry(key=%s, val=%s) [%s]", index_key.GetInfo().c_str(),
-            IndexUtil::GetInfo(value).c_str(), (ret ? "SUCCESS" : "FAIL"));
+  LOG_INFO("InsertEntry(key=%s, val=%s) [%s]", index_key.GetInfo().c_str(),
+           IndexUtil::GetInfo(value).c_str(), (ret ? "SUCCESS" : "FAIL"));
 
   return ret;
 }
@@ -62,16 +62,16 @@ bool SKIPLIST_INDEX_TYPE::InsertEntry(const storage::Tuple *key,
  */
 SKIPLIST_TEMPLATE_ARGUMENTS
 bool SKIPLIST_INDEX_TYPE::DeleteEntry(const storage::Tuple *key,
-                                      UNUSED_ATTRIBUTE ItemPointer *value) {
+                                      ItemPointer *value) {
   KeyType index_key;
   index_key.SetFromKey(key);
 
   // In Delete() since we just use the value for comparison (i.e. read-only)
   // it is unnecessary for us to allocate memory
-  bool ret = container.Delete(index_key);
+  bool ret = container.Delete(index_key, value);
 
-  LOG_TRACE("DeleteEntry(key=%s, val=%s) [%s]", index_key.GetInfo().c_str(),
-            IndexUtil::GetInfo(value).c_str(), (ret ? "SUCCESS" : "FAIL"));
+  LOG_INFO("DeleteEntry(key=%s, val=%s) [%s]", index_key.GetInfo().c_str(),
+           IndexUtil::GetInfo(value).c_str(), (ret ? "SUCCESS" : "FAIL"));
   return ret;
 }
 
