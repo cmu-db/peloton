@@ -35,7 +35,6 @@ namespace index {
 
 #define SKIP_LIST_INITIAL_MAX_LEVEL_ 10
 
-
 /*
  * SKIPLIST_TEMPLATE_ARGUMENTS - Save some key strokes
  */
@@ -87,17 +86,6 @@ class SkipList {
       node = GET_NEXT(node);
     }
     return true;
-  }
-
-  /*
-   * GetFrom() - Search a key start from a given node and fill in the node list
-   *
-   * The return value is a indicator of the success get from
-   */
-
-  bool GetFrom(const KeyType &key, const SkipListBaseNode *Node,
-               NodeList &node_list, OperationContext &ctx) {
-    return false;
   }
 
   /*
@@ -202,7 +190,7 @@ class SkipList {
       } else {
         curr_node = SearchFrom(key, curr_node, ctx).first->down_.load();
       }
-      // level_now is unsigned
+      // Stop at root level
       if (level_now == 0) break;
       level_now--;
     }
@@ -215,7 +203,7 @@ class SkipList {
  * return false if the level cannot be reached from the highest level now
  */
   bool AddLevel(u_int32_t level) {
-    LOG_INFO("AddLevel");
+    LOG_INFO("AddLevel %u", level);
     SkipListBaseNode *head = this->skip_list_head_.load();
     if (head->level_ + 1 < level) {
       return false;
@@ -237,7 +225,7 @@ class SkipList {
   }
 
   /*
-   * InserNodeIntoInterval() - this method would try to insert the tower into
+   * InsertTowerIntoInterval() - this method would try to insert the tower into
    *the interval and retry due to contention
    *
    * It has a call_stack array to accelorate the process
@@ -253,7 +241,7 @@ class SkipList {
       std::vector<std::pair<SkipListBaseNode *, SkipListBaseNode *>> &
           call_stack,
       OperationContext &ctx, u_int32_t start_level = 0,
-      bool check_multiple_key_value=false) {
+      bool check_multiple_key_value = false) {
     LOG_INFO("InsertTower");
     u_int32_t expected_level = tower.size();
     for (u_int32_t i = start_level; i < expected_level; i++) {
@@ -268,24 +256,26 @@ class SkipList {
           return true;
         }
 
-        //if the level is 0, multiple key-value pair is required
-        //if the check bool is true, then it should be non-unique index
-        if (i==0){
-          if (!check_multiple_key_value){
+        // if the level is 0, multiple key-value pair is required
+        // if the check bool is true, then it should be non-unique index
+        if (i == 0) {
+          if (!check_multiple_key_value) {
             // unique index, just need to check the next one
-            if (!GET_DELETE(call_stack[i].second->next_.load())
-                &&ValueCmpEqual(tower[i]->GetValue(),
-                                static_cast<SkipListInnerNode *>(call_stack[i].second)->GetValue())){
+            if (!GET_DELETE(call_stack[i].second->next_.load()) &&
+                ValueCmpEqual(tower[i]->GetValue(),
+                              static_cast<SkipListInnerNode *>(
+                                  call_stack[i].second)->GetValue())) {
               return false;
             }
-          }else{
-            //need to check all key-value pairs
-            //TODO: add optimization of last pointer check
-            auto cursor = static_cast<SkipListInnerNode *>(call_stack[i].second);
-            while (cursor){
-              if (!KeyCmpEqual(key,cursor->key_))
-                break;
-              if (GET_DELETE(cursor->next_.load())){
+          } else {
+            // There can be node with the same key and different values, we need
+            // to ensure no nodes with both key and value are the same
+            // TODO: add optimization of last pointer check
+            auto cursor =
+                static_cast<SkipListInnerNode *>(call_stack[i].second);
+            while (cursor) {
+              if (!KeyCmpEqual(key, cursor->key_)) break;
+              if (GET_DELETE(cursor->next_.load())) {
                 cursor = static_cast<SkipListInnerNode *>(GET_NEXT(cursor));
                 continue;
               }
@@ -320,6 +310,7 @@ class SkipList {
     u_int32_t expected_level = 0;
 
     while (expected_level < max_level_) {
+      // TODO: try not to call too many rand()
       if (rand() & 1) {
         expected_level++;
       } else {
@@ -335,8 +326,8 @@ class SkipList {
     }
 
     // used to store the path
-    std::vector<std::pair<SkipListBaseNode *, SkipListBaseNode *>> call_stack;
-    std::vector<SkipListInnerNode *> tower(expected_level + 1);
+    std::vector<NodePair> call_stack;
+    NodeList tower(expected_level + 1);
     // build the tower of expected level
     SkipListInnerNode *new_node =
         node_manager_.GetSkipListInnerNode(key, value, 0);
@@ -743,6 +734,7 @@ class SkipList {
 
       return temp;
     }
+    // TODO: more operation need to be override
   };
 
   class ReversedIterator {};
