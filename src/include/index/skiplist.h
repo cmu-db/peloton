@@ -460,7 +460,7 @@ class SkipList {
         }
         // Continue checking if there are duplicate keys
         if (this->duplicate_support_) {
-          prev_node = GET_NEXT(del_node);
+          prev_node = GET_NEXT(prev_node);
         } else {
           return false;
         }

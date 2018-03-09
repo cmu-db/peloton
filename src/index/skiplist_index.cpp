@@ -180,11 +180,7 @@ void SKIPLIST_INDEX_TYPE::ScanKey(const storage::Tuple *key,
   KeyType index_key;
   index_key.SetFromKey(key);
 
-  // This function in BwTree fills a given vector
-  bool ret = container.GetValue(index_key, result);
-
-  LOG_INFO("ScanKey (key=%s) [%s]", index_key.GetInfo().c_str(),
-           (ret ? "SUCCESS" : "FAIL"));
+  container.GetValue(index_key, result);
 }
 
 SKIPLIST_TEMPLATE_ARGUMENTS
