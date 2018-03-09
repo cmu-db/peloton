@@ -770,6 +770,76 @@ std::shared_ptr<TableCatalogObject> Catalog::GetTableObject(
 }
 
 //===--------------------------------------------------------------------===//
+// CHECK EXISTENCE WITH NAME - CHECK FROM CATALOG TABLES, USING TRANSACTION
+//===--------------------------------------------------------------------===//
+
+// check existence of database with database_name using txn.
+bool Catalog::ExistsDatabaseByName(const std::string &database_name,
+											 concurrency::Transaction *txn) {
+  if (txn == nullptr)
+    throw CatalogException("Do not have transaction to check database " +
+                           database_name);
+
+  auto database_object =
+  		DatabaseCatalog::GetInstance()->GetDatabaseObject(database_name, txn);
+  if (database_object == nullptr) {
+  	return false;
+  } else {
+  	return true;
+  }
+}
+
+// check existence of table with table_name using txn.
+bool Catalog::ExistsTableByName(const std::string &database_name,
+											 const std::string &table_name,
+											 concurrency::Transaction *txn){
+  if (txn == nullptr)
+    throw CatalogException("Do not have transaction to check table " +
+                           table_name);
+
+  auto database_object =
+      DatabaseCatalog::GetInstance()->GetDatabaseObject(database_name, txn);
+  if (database_object == nullptr) {
+  	return false;
+  } else {
+    auto table_object = database_object->GetTableObject(table_name);
+    if (table_object == nullptr) {
+    	return false;
+    } else {
+    	return true;
+    }
+  }
+}
+
+// check existence of index with index_name using txn.
+bool Catalog::ExistsIndexByName(const std::string &database_name,
+											 const std::string &table_name,
+											 const std::string &index_name,
+											 concurrency::Transaction *txn) {
+  if (txn == nullptr)
+    throw CatalogException("Do not have transaction to check index " +
+                           index_name);
+
+  auto database_object =
+      DatabaseCatalog::GetInstance()->GetDatabaseObject(database_name, txn);
+  if (database_object == nullptr) {
+  	return false;
+  } else {
+    auto table_object = database_object->GetTableObject(table_name);
+    if (table_object == nullptr) {
+    	return false;
+    } else {
+    	auto index_object = table_object->GetIndexObject(index_name);
+    	if (index_object == nullptr) {
+    		return false;
+    	} else {
+    		return true;
+    	}
+    }
+  }
+}
+
+//===--------------------------------------------------------------------===//
 // DEPRECATED
 //===--------------------------------------------------------------------===//
 
