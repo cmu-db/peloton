@@ -47,9 +47,10 @@ void RunPelotonBrain() {
   peloton::brain::Brain brain;
   evthread_use_pthreads();
   // TODO(tianyu): register jobs here
-  struct timeval *one_minute;
-  one_minute->tv_sec = 60;
-  brain.RegisterJob(one_minute, "test", peloton::brain::BrainJob());
+  struct timeval one_second;
+  one_second.tv_sec = 1;
+  peloton::brain::ExampleBrainJob job;
+  brain.RegisterJob(&one_second, "test", job);
   brain.Run();
 }
 
