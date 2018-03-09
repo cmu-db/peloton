@@ -13,10 +13,10 @@
 #include "codegen/type/varchar_type.h"
 
 #include "codegen/lang/if.h"
+#include "codegen/proxy/date_functions_proxy.h"
 #include "codegen/proxy/string_functions_proxy.h"
 #include "codegen/proxy/timestamp_functions_proxy.h"
 #include "codegen/proxy/values_runtime_proxy.h"
-#include "codegen/proxy/date_functions_proxy.h"
 #include "codegen/type/boolean_type.h"
 #include "codegen/type/decimal_type.h"
 #include "codegen/type/integer_type.h"
@@ -123,6 +123,48 @@ struct CompareVarchar : public TypeSystem::ExpensiveComparisonHandleNull {
 /// Unary operators
 ///
 ////////////////////////////////////////////////////////////////////////////////
+
+// UPPER
+struct Upper : public TypeSystem::UnaryOperatorHandleNull {
+  bool SupportsType(const Type &type) const override {
+    return type.GetSqlType() == Varchar::Instance();
+  }
+
+  Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
+    return Varchar::Instance();
+  }
+
+  Value Impl(CodeGen &codegen, const Value &val,
+             const TypeSystem::InvocationContext &ctx) const override {
+    llvm::Value *executor_ctx = ctx.executor_context;
+    llvm::Value *ret =
+        codegen.Call(StringFunctionsProxy::Upper,
+                     {executor_ctx, val.GetValue(), val.GetLength()});
+
+    return Value(Varchar::Instance(), ret, val.GetLength());
+  }
+};
+
+// Lower
+struct Lower : public TypeSystem::UnaryOperatorHandleNull {
+  bool SupportsType(const Type &type) const override {
+    return type.GetSqlType() == Varchar::Instance();
+  }
+
+  Type ResultType(UNUSED_ATTRIBUTE const Type &val_type) const override {
+    return Varchar::Instance();
+  }
+
+  Value Impl(CodeGen &codegen, const Value &val,
+             const TypeSystem::InvocationContext &ctx) const override {
+    llvm::Value *executor_ctx = ctx.executor_context;
+    llvm::Value *ret =
+        codegen.Call(StringFunctionsProxy::Lower,
+                     {executor_ctx, val.GetValue(), val.GetLength()});
+
+    return Value(Varchar::Instance(), ret, val.GetLength());
+  }
+};
 
 // ASCII
 struct Ascii : public TypeSystem::UnaryOperatorHandleNull {
@@ -403,74 +445,73 @@ struct Repeat : public TypeSystem::BinaryOperatorHandleNull {
  * You should uncomment the following struct once you have created
  * the catalog and StringFunctions implementation.
  */
-// struct Concat : public TypeSystem::NaryOperator,
-//                public TypeSystem::BinaryOperator {
-//  bool SupportsTypes(const std::vector<Type> &arg_types) const override {
-//    // Every input must be a string
-//    for (const auto &type : arg_types) {
-//      if (type.GetSqlType() != Varchar::Instance()) {
-//        return false;
-//      }
-//    }
-//    return true;
-//  }
-//
-//  bool SupportsTypes(const Type &left_type,
-//                     const Type &right_type) const override {
-//    return SupportsTypes({left_type, right_type});
-//  }
-//
-//  Type ResultType(
-//      UNUSED_ATTRIBUTE const std::vector<Type> &arg_types) const override {
-//    return Varchar::Instance();
-//  }
-//
-//  Type ResultType(const Type &left_type,
-//                  const Type &right_type) const override {
-//    return ResultType({left_type, right_type});
-//  }
-//
-//  Value Eval(CodeGen &codegen, const std::vector<Value> &input_args,
-//             const TypeSystem::InvocationContext &ctx) const override {
-//    // Make room on stack to store each of the input strings and their lengths
-//    auto num_inputs = static_cast<uint32_t>(input_args.size());
-//    auto *concat_str_buffer =
-//        codegen.AllocateBuffer(codegen.CharPtrType(), num_inputs,
-//        "concatStrs");
-//    auto *concat_str_lens_buffer = codegen.AllocateBuffer(
-//        codegen.Int32Type(), num_inputs, "concatStrLens");
-//
-//    // Create vector accessors to simplify creating the store instructions
-//    Vector concat_strs{concat_str_buffer, num_inputs, codegen.CharPtrType()};
-//    Vector concat_strs_lens{concat_str_lens_buffer, num_inputs,
-//                            codegen.Int32Type()};
-//
-//    // Store each input string into the on-stack buffer
-//    for (uint32_t i = 0; i < input_args.size(); i++) {
-//      auto *index = codegen.Const32(i);
-//      concat_strs.SetValue(codegen, index, input_args[i].GetValue());
-//      concat_strs_lens.SetValue(codegen, index, input_args[i].GetLength());
-//    }
-//
-//    // Setup the input arguments for the final function call
-//    std::vector<llvm::Value *> func_args = {
-//        ctx.executor_context, concat_strs.GetVectorPtr(),
-//        concat_strs_lens.GetVectorPtr(), codegen.Const32(num_inputs)};
-//
-//    // Invoke StringFunctions::Concat(...)
-//    auto *ret = codegen.Call(StringFunctionsProxy::Concat, func_args);
-//
-//    // Pull out what we need and return
-//    llvm::Value *str_ptr = codegen->CreateExtractValue(ret, 0);
-//    llvm::Value *str_len = codegen->CreateExtractValue(ret, 1);
-//    return Value{Varchar::Instance(), str_ptr, str_len};
-//  }
-//
-//  Value Eval(CodeGen &codegen, const Value &left, const Value &right,
-//             const TypeSystem::InvocationContext &ctx) const override {
-//    return Eval(codegen, {left, right}, ctx);
-//  }
-//};
+struct Concat : public TypeSystem::NaryOperator,
+                public TypeSystem::BinaryOperator {
+  bool SupportsTypes(const std::vector<Type> &arg_types) const override {
+    // Every input must be a string
+    for (const auto &type : arg_types) {
+      if (type.GetSqlType() != Varchar::Instance()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool SupportsTypes(const Type &left_type,
+                     const Type &right_type) const override {
+    return SupportsTypes({left_type, right_type});
+  }
+
+  Type ResultType(
+      UNUSED_ATTRIBUTE const std::vector<Type> &arg_types) const override {
+    return Varchar::Instance();
+  }
+
+  Type ResultType(const Type &left_type,
+                  const Type &right_type) const override {
+    return ResultType({left_type, right_type});
+  }
+
+  Value Eval(CodeGen &codegen, const std::vector<Value> &input_args,
+             const TypeSystem::InvocationContext &ctx) const override {
+    // Make room on stack to store each of the input strings and their lengths
+    auto num_inputs = static_cast<uint32_t>(input_args.size());
+    auto *concat_str_buffer =
+        codegen.AllocateBuffer(codegen.CharPtrType(), num_inputs, "concatStrs");
+    auto *concat_str_lens_buffer = codegen.AllocateBuffer(
+        codegen.Int32Type(), num_inputs, "concatStrLens");
+
+    // Create vector accessors to simplify creating the store instructions
+    Vector concat_strs{concat_str_buffer, num_inputs, codegen.CharPtrType()};
+    Vector concat_strs_lens{concat_str_lens_buffer, num_inputs,
+                            codegen.Int32Type()};
+
+    // Store each input string into the on-stack buffer
+    for (uint32_t i = 0; i < input_args.size(); i++) {
+      auto *index = codegen.Const32(i);
+      concat_strs.SetValue(codegen, index, input_args[i].GetValue());
+      concat_strs_lens.SetValue(codegen, index, input_args[i].GetLength());
+    }
+
+    // Setup the input arguments for the final function call
+    std::vector<llvm::Value *> func_args = {
+        ctx.executor_context, concat_strs.GetVectorPtr(),
+        concat_strs_lens.GetVectorPtr(), codegen.Const32(num_inputs)};
+
+    // Invoke StringFunctions::Concat(...)
+    auto *ret = codegen.Call(StringFunctionsProxy::Concat, func_args);
+
+    // Pull out what we need and return
+    llvm::Value *str_ptr = codegen->CreateExtractValue(ret, 0);
+    llvm::Value *str_len = codegen->CreateExtractValue(ret, 1);
+    return Value{Varchar::Instance(), str_ptr, str_len};
+  }
+
+  Value Eval(CodeGen &codegen, const Value &left, const Value &right,
+             const TypeSystem::InvocationContext &ctx) const override {
+    return Eval(codegen, {left, right}, ctx);
+  }
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 ///
@@ -498,11 +539,8 @@ struct Substr : public TypeSystem::NaryOperator {
     // Setup function arguments
     llvm::Value *executor_ctx = ctx.executor_context;
     std::vector<llvm::Value *> args = {
-        executor_ctx,
-        input_args[0].GetValue(),
-        input_args[0].GetLength(),
-        input_args[1].GetValue(),
-        input_args[2].GetValue(),
+        executor_ctx, input_args[0].GetValue(), input_args[0].GetLength(),
+        input_args[1].GetValue(), input_args[2].GetValue(),
     };
 
     // Call
@@ -536,10 +574,14 @@ std::vector<TypeSystem::ComparisonInfo> kComparisonTable = {{kCompareVarchar}};
 Ascii kAscii;
 Length kLength;
 Trim kTrim;
+Lower kLower;
+Upper kUpper;
 std::vector<TypeSystem::UnaryOpInfo> kUnaryOperatorTable = {
     {OperatorId::Ascii, kAscii},
     {OperatorId::Length, kLength},
-    {OperatorId::Trim, kTrim}};
+    {OperatorId::Trim, kTrim},
+    {OperatorId::Lower, kLower},
+    {OperatorId::Upper, kUpper}};
 
 // Binary operations
 Like kLike;
@@ -549,11 +591,16 @@ BTrim kBTrim;
 LTrim kLTrim;
 RTrim kRTrim;
 Repeat kRepeat;
+Concat kConcat;
 std::vector<TypeSystem::BinaryOpInfo> kBinaryOperatorTable = {
-    {OperatorId::Like, kLike},         {OperatorId::DateTrunc, kDateTrunc},
-    {OperatorId::DatePart, kDatePart}, {OperatorId::BTrim, kBTrim},
-    {OperatorId::LTrim, kLTrim},       {OperatorId::RTrim, kRTrim},
-    {OperatorId::Repeat, kRepeat}};
+    {OperatorId::Like, kLike},
+    {OperatorId::DateTrunc, kDateTrunc},
+    {OperatorId::DatePart, kDatePart},
+    {OperatorId::BTrim, kBTrim},
+    {OperatorId::LTrim, kLTrim},
+    {OperatorId::RTrim, kRTrim},
+    {OperatorId::Repeat, kRepeat},
+    {OperatorId::Concat, kConcat}};
 
 // Nary operations
 Substr kSubstr;
