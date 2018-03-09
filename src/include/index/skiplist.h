@@ -491,8 +491,9 @@ class SkipList {
         del_node->back_link_.compare_exchange_strong(prev_assert, prev_node);
     if (flag) {
       if (!CHECK_DELETE(del_node)) {
-        HelpDeleted(prev_node, del_node, ctx);
+        TryDelete(del_node, ctx);
       }
+      HelpDeleted(prev_node, del_node, ctx);
     }
   }
 
@@ -501,11 +502,11 @@ class SkipList {
    */
   void TryDelete(SkipListBaseNode *del_node,
                  UNUSED_ATTRIBUTE OperationContext &ctx) {
-    while (CHECK_DELETE(del_node)) {
+    while (!CHECK_DELETE(del_node)) {
       auto cmp_ptr = GET_NEXT(del_node);
       auto set_ptr =
           reinterpret_cast<SkipListBaseNode *> SET_DELETE(cmp_ptr, 1);
-      bool success = del_node->next_.compare_exchange_strong(cmp_ptr, set_ptr);
+      del_node->next_.compare_exchange_strong(cmp_ptr, set_ptr);
       if (CHECK_FLAG(del_node)) {
         HelpFlagged(del_node, GET_NEXT(del_node), ctx);
       }
