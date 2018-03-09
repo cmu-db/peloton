@@ -236,7 +236,7 @@ TEST_F(GroupByTranslatorTest, AggregationWithOutputPredicate) {
 
   // 5) The predicate on the average aggregate
   auto *x_exp =
-      new expression::TupleValueExpression(type::TypeId::DECIMAL, 1, 0);
+      new expression::TupleValueExpression(type::TypeId::DECIMAL, 0, 1);
   auto *const_50 = new expression::ConstantValueExpression(
       type::ValueFactory::GetDecimalValue(50.0));
   ExpressionPtr x_gt_50{

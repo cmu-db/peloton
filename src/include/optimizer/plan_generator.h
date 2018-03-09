@@ -126,7 +126,8 @@ class PlanGenerator : public OperatorVisitor {
    */
   std::unique_ptr<expression::AbstractExpression> GeneratePredicateForScan(
       const std::shared_ptr<expression::AbstractExpression> predicate_expr,
-      const std::string &alias, std::shared_ptr<catalog::TableCatalogObject> table);
+      const std::string &alias,
+      std::shared_ptr<catalog::TableCatalogObject> table);
 
   /**
    * @brief Generate projection info and projection schema for join
@@ -148,7 +149,7 @@ class PlanGenerator : public OperatorVisitor {
       AggregateType aggr_type,
       const std::vector<std::shared_ptr<expression::AbstractExpression>>
           *groupby_cols,
-      expression::AbstractExpression *having);
+      std::unique_ptr<expression::AbstractExpression> having);
 
   /**
    * @brief The required output property. Note that we have previously enforced
