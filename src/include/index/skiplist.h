@@ -438,9 +438,6 @@ class SkipList {
    */
   bool Delete(const KeyType &key, const ValueType &value,
               OperationContext &ctx) {
-    if (this->duplicate_support_) {
-      return true;
-    }
     NodePair pair = Search(key, ctx);
     SkipListBaseNode *prev_node = pair.first;
     SkipListBaseNode *del_node = pair.second;
@@ -463,7 +460,7 @@ class SkipList {
         }
         // Continue checking if there are duplicate keys
         if (this->duplicate_support_) {
-          continue;
+          prev_node = GET_NEXT(del_node);
         } else {
           return false;
         }
@@ -556,7 +553,7 @@ class SkipList {
       : key_cmp_obj_{key_cmp_obj},
         key_eq_obj_{key_eq_obj},
         value_eq_obj_{val_eq_obj} {
-    this->duplicate_support_ = false;
+    this->duplicate_support_ = true;
     this->GC_Interval_ = 50;
     this->max_level_ = SKIP_LIST_INITIAL_MAX_LEVEL_;
     this->skip_list_head_ = node_manager_.GetSkipListHead(0);
