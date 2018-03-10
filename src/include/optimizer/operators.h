@@ -227,6 +227,9 @@ class LogicalAggregateAndGroupBy
   static Operator make();
 
   static Operator make(
+      std::vector<std::shared_ptr<expression::AbstractExpression>> &columns);
+
+  static Operator make(
       std::vector<std::shared_ptr<expression::AbstractExpression>> &columns,
       std::vector<AnnotatedExpression> &having);
 
