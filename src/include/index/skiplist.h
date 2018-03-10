@@ -16,9 +16,9 @@
 #include <ctime>
 #include <cstdlib>
 #include <vector>
+#include <functional>
 
 #include "common/logger.h"
-
 #define MAX_THREAD_COUNT ((int)0x7FFFFFFF)
 
 namespace peloton {
@@ -53,6 +53,9 @@ namespace peloton {
               // Value equality checker and hasher
               value_eq_obj{p_value_eq_obj}
       {
+        // initialize memory footprint
+        this->memory_footprint = 0;
+        this->epoch = new Epoch();
         // initialize head node
         srand(time(nullptr));
         int init_level = get_rand_level();
@@ -161,6 +164,126 @@ namespace peloton {
         for (int i=0; i<node_level; i++) {
 //      new_next = new_node->next[i].load();
 //      new_node->next[i].compare_exchange_strong(new_next, succs[i]);
+          new_node->next[i] = succs[i];
+        }
+
+        // install new_node at level 0, if fail, just retry
+        if (!(preds[0]->next[0].compare_exchange_strong(succs[0], new_node)))
+          goto retry;
+
+        for (int i=1; i<node_level; i++) {
+          while (true) {
+            left = preds[i];
+            right = succs[i];
+            new_next = new_node->next[i].load();
+            // update ptr if the next ptr of new node is deleted or outdated
+            if (new_next != right) {
+              new_next = get_node_address(new_next);
+              if (!(new_node->next[i].compare_exchange_strong(new_next, right)))
+                break;
+            }
+            // successor may have same key because of
+            // concurrent deletion of current node and concurrent insertion of the same key
+            if (right!= nullptr && KeyCmpEqual(right->key, key))
+              right = get_node_address(right->next[i].load());
+            if (left->next[i].compare_exchange_strong(right, new_node))
+              break;
+            // CAS fail
+            LOG_DEBUG("%s: CAS fail, search again", __func__);
+            Search(key, preds, succs, level);
+          }
+        }
+        return true;
+      }
+
+
+      /*
+       * ConditionalInsert() - Insert a key-value pair only if a given
+       *                       predicate fails for all values with a key
+       *
+       * If return true then the value has been inserted
+       * If return false then the value is not inserted. The reason could be
+       * predicates returning true for one of the values of a given key
+       * or because the value is already in the index
+       *
+       * NOTE: We first test the predicate, and then test for duplicated values
+       * so predicate test result is always available
+       */
+      bool ConditionalInsert(const KeyType &key, const ValueType &value,
+                             std::function<bool(const void *)> predicate,
+                             bool *predicate_satisfied){
+        ValueNode *val_ptr = new ValueNode(value);
+        int node_level = get_rand_level();
+        LOG_DEBUG("%s: node_level=%d", __func__, node_level);
+
+        Node **preds = nullptr; // predecessors
+        Node **succs = nullptr; // successors
+        int level = 0;
+
+        Node *old_head = head.load();
+        if (node_level > old_head->level) {
+          // need a new head with node_level
+          LOG_DEBUG("%s: need to install a new head", __func__);
+          Node *new_head = new Node(node_level, KeyType(), nullptr);
+          for (int i=0; i<old_head->level; i++) {
+            new_head->next[i] = old_head->next[i].load();
+          }
+          while (true) {
+            old_head = head.load();
+            if (old_head->level >= node_level) {
+              // other thread update head before current thread install new_head
+              // we do not have to install new_head
+              // TODO: GC for new_head, because it won't be installed
+              break;
+            }
+            if (head.compare_exchange_strong(old_head, new_head)) {
+              // TODO: GC for old_head if new_head is installed successfully
+              break;
+            }
+          }
+        }
+
+        retry:
+        Search(key, preds, succs, level);
+
+        if (succs[0]!= nullptr && KeyCmpEqual(succs[0]->key, key)) {
+          // key already exist
+          ValueNode *old_val_ptr = succs[0]->val_ptr.load();
+          if (old_val_ptr == nullptr) { // current succesor is deleted
+            delete_node(succs[0]);
+            goto retry;
+          }
+          if (unique_key) {
+            return false;
+          } else { // duplicate key allowed, value should be unique under one key
+            while (true) {
+              old_val_ptr = succs[0]->val_ptr.load();
+              if (old_val_ptr == nullptr) { // current succesor is deleted
+                delete_node(succs[0]);
+                goto retry;
+              }
+              // current successor exist
+              old_val_ptr = get_tail_value_without_predicate(old_val_ptr, val_ptr->val, predicate, predicate_satisfied);
+              if (old_val_ptr == nullptr) { // there is an exist value in the value list equal to val_ptr->val
+                // TODO: GC ValueNode
+                return false;
+              }
+              ValueNode *val_next = old_val_ptr->next.load();
+              if (!is_deleted_val_ptr(val_next)) { // tail is not deleted
+                if (old_val_ptr->next.compare_exchange_strong(val_next, val_ptr)) {
+                  // install current value at the end of value linked list
+                  return true;
+                }
+                // install fail, just run the loop again, retry insertion in the value list
+              }
+            }
+          }
+        }
+
+        // key not exist
+        Node *new_node = new Node(node_level, key, val_ptr);
+        Node *left, *right, *new_next;
+        for (int i=0; i<node_level; i++) {
           new_node->next[i] = succs[i];
         }
 
@@ -475,6 +598,14 @@ namespace peloton {
         return key_cmp_obj(key1, key2) || key_eq_obj(key1, key2);
       }
 
+      void PerformGC(){
+        memory_footprint-=epoch.ClearOldEpoch();
+      }
+
+      int GetMemoryFootprint(){
+        return memory_footprint;
+      }
+
     private:
       // xingyuj1
       // value node is used to build linked list of ValueType to use CAS in SkipList node
@@ -532,11 +663,10 @@ namespace peloton {
       Epoch epoch;
 
       class Epoch{
-      public:
       private:
         struct EpochNode{
           std::atomic<int> thread_count;
-          std::atomic<int> memory_usage;
+          std::atomic<int> memory_freed;
           std::atomic<GarbageNode *> garbage_list;
           std::atomic<GarbageValueNode *> garbage_value_list;
           EpochNode *next;
@@ -555,7 +685,8 @@ namespace peloton {
         EpochNode *head;
         std::atomic<bool> exited;
 
-        EpochManager() {
+      public:
+        Epoch() {
           current = new EpochNode{};
           head = current;
           current->thread_count = 0;
@@ -594,6 +725,7 @@ namespace peloton {
                   (new_garbage->next, new_garbage)){
             LOG_TRACE("Add garbage node CAS failed. Retry");
           }
+          epoch->memory_freed.fetch_add(sizeof(Node));
           return;
         }
 
@@ -606,6 +738,7 @@ namespace peloton {
                   (new_garbage->next, new_garbage)){
             LOG_TRACE("Add garbage value node CAS failed. Retry");
           }
+          epoch->memory_freed.fetch_add(sizeof(ValueNode));
           return;
         }
 
@@ -627,14 +760,9 @@ namespace peloton {
           return;
         }
 
-        void PerformGC(){
-          ClearOldEpoch();
-          return;
-        }
-
-
-        void ClearOldEpoch(){
+        int ClearOldEpoch(){
           LOG_TRACE("Start to clear epoch");
+          int total_memory_freed = 0;
           while(true){
 
             if (head == current){
@@ -668,12 +796,13 @@ namespace peloton {
               delete current_node;
             }
 
+            total_memory_freed += head->memory_freed;
             EpochNode *next_epoch = head->next;
             delete head;
             head = next_epoch;
 
           }
-          return;
+          return total_memory_freed;
         }
 
       };
@@ -750,6 +879,41 @@ namespace peloton {
         }
         if (!is_deleted_val_ptr(val_next) && ValueCmpEqual(val_ptr->val, val)) {
           return nullptr;
+        }
+        return val_ptr;
+      }
+
+
+      /*
+       * get_tail_value_without_predicate - return tail value in the value list, where do not satisfy either
+       *                                    predicate function or value equation
+       *                                    return nullptr if either of mentioned conditions is satisfied
+       * */
+      inline ValueNode* get_tail_value_without_predicate(ValueNode *val_ptr, const ValueType& val,
+                                                         std::function<bool(const void *)> predicate,
+                                                         bool *predicate_satisfied) {
+        ValueNode *val_next = val_ptr->next.load();
+        while (get_val_address(val_next) != nullptr) {
+          if (!is_deleted_val_ptr(val_next)) {
+            if (predicate(val_ptr->val)) {
+              *predicate_satisfied = true;
+              return nullptr;
+            }
+            if (ValueCmpEqual(val_ptr->val, val)) {
+              return nullptr;
+            }
+          }
+          val_ptr = get_val_address(val_next);
+          val_next = val_ptr->next.load();
+        }
+        if (!is_deleted_val_ptr(val_next)) {
+          if (predicate(val_ptr->val)) {
+            *predicate_satisfied = true;
+            return nullptr;
+          }
+          if (ValueCmpEqual(val_ptr->val, val)) {
+            return nullptr;
+          }
         }
         return val_ptr;
       }
