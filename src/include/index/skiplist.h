@@ -19,6 +19,8 @@
 
 #include "common/logger.h"
 
+#define MAX_THREAD_COUNT ((int)0x7FFFFFFF)
+
 namespace peloton {
 namespace index {
 
@@ -34,6 +36,7 @@ class SkipList {
 private: // pre-declare private class names
   class Node;
   class ValueNode;
+  class EpochManager;
   // TODO: Add your declarations here
 public:
   SkipList(bool start_gc_thread = true,
@@ -255,7 +258,8 @@ retry:
    * all p_key < key
    * all s_key >= key, or s_key not exists
    * */
-  void Search(const KeyType &key, Node** &left_list, Node** &right_list, int &level) {
+  void Search(const KeyType &key, Node** &left_list,
+              Node** &right_list, int &level) {
     Node *left = head.load(), *left_next = nullptr, *right = nullptr, *right_next = nullptr;
     level = left->level;
     left_list = new Node*[level];
@@ -304,7 +308,8 @@ retry:
 
 private:
   // xingyuj1
-  // value node is used to build linked list of ValueType to use CAS in SkipList node
+  // value node is used to build linked list of ValueType to use CAS in
+  // SkipList node
   class ValueNode{
   public:
     ValueType val;
@@ -354,6 +359,157 @@ private:
       return;
     }
   };
+
+  int memory_footprint;
+  Epoch epoch;
+
+  class Epoch{
+  public:
+  private:
+    struct EpochNode{
+      std::atomic<int> thread_count;
+      std::atomic<int> memory_usage;
+      std::atomic<GarbageNode *> garbage_list;
+      std::atomic<GarbageValueNode *> garbage_value_list;
+      EpochNode *next;
+    };
+
+    struct GarbageNode{
+      Node *node;
+      GarbageNode *next;
+    };
+    struct GarbageValueNode{
+      ValueNode *node;
+      GarbageValueNode *next;
+    };
+
+    EpochNode *current;
+    EpochNode *head;
+    std::atomic<bool> exited;
+
+    EpochManager() {
+      current = new EpochNode{};
+      head = current;
+      current->thread_count = 0;
+      current->garbage_list = nullptr;
+      current->garbage_value_list = nullptr;
+      current->next = nullptr;
+      exited.store(false);
+      return;
+    }
+
+    ~EpochManager() {
+      exited.store(true);
+      current = nullptr;
+      ClearEpoch();
+      PL_ASSERT(head == nullptr);
+      return;
+    }
+
+    void CreateEpoch() {
+      EpochNode *new_epoch = new EpochNode{};
+      new_epoch->thread_count = 0;
+      new_epoch->garbage_list = nullptr;
+      new_epoch->garbage_value_list = nullptr;
+      new_epoch->next = nullptr;
+      current->next = new_epoch;
+      current = new_epoch;
+      return;
+    }
+
+    void AddGarbageNode(const Node* node){
+      EpochNode *epoch = current;
+      GarbageNode *new_garbage = new GarbageNode{};
+      new_garbage->node = node;
+      new_garbage->next = epoch->garbage_list.load();
+      while (!epoch->garbage_list.compare_exchange_strong
+              (new_garbage->next, new_garbage)){
+        LOG_TRACE("Add garbage node CAS failed. Retry");
+      }
+      return;
+    }
+
+    void AddGarbageValueNode(const ValueNode* vnode){
+      EpochNode *epoch = current;
+      GarbageValueNode *new_garbage = new GarbageValueNode{};
+      new_garbage->node = vnode;
+      new_garbage->next = epoch->garbage_value_list.load();
+      while (!epoch->garbage_value_list.compare_exchange_strong
+              (new_garbage->next, new_garbage)){
+        LOG_TRACE("Add garbage value node CAS failed. Retry");
+      }
+      return;
+    }
+
+    EpochNode* JoinEpoch(){
+      int64_t count = 0;
+      EpochNode *epoch = nullptr;
+      while (count >= 0){
+        epoch = current;
+        count = epoch->thread_count.fetch_add(1);
+        if (count < 0){
+          epoch->thread_count.fetch_sub(1);
+        }
+      }
+      return epoch;
+    }
+
+    void LeaveEpoch(EpochNode *epoch){
+      epoch->thread_count.fetch_sub(1);
+      return;
+    }
+
+    void PerformGC(){
+      ClearOldEpoch();
+      return;
+    }
+
+
+    void ClearOldEpoch(){
+      LOG_TRACE("Start to clear epoch");
+      while(true){
+
+        if (head == current){
+          LOG_TRACE("Current epoch is head epoch. Do not clean");
+          break;
+        }
+
+        int count = head->thread_count.load();
+        PL_ASSERT(count >= 0);
+        if (count != 0) {
+          LOG_TRACE("Head epoch is not empty. Return");
+          break;
+        }
+
+        if (head->thread_count.fetch_sub(MAX_THREAD_COUNT) > 0) {
+          LOG_TRACE("Some thread sneaks in after we have decided to clean. Return");
+          head->thread_count.fetch_add(MAX_THREAD_COUNT);
+          break;
+        }
+
+        const GarbageNode *next_garbage_node = nullptr;
+        const GarbageValueNode *next_garbage_value_node = nullptr;
+
+        for (const GarbageNode *current_node = head->garbage_list.load(); current_node != nullptr; current_node = next_garbage_node) {
+          next_garbage_node = current_node->next;
+          delete current_node;
+        }
+
+        for (const GarbageValueNode *current_node = head->garbage_value_list.load(); current_node != nullptr; current_node = next_garbage_value_node) {
+          next_garbage_value_node = current_node->next;
+          delete current_node;
+        }
+
+        EpochNode *next_epoch = head->next;
+        delete head;
+        head = next_epoch;
+
+      }
+      return;
+    }
+
+  };
+
 
   // head is head of SkipList
   std::atomic<Node*> head;
