@@ -19,6 +19,7 @@
 #include <functional>
 
 #include "common/logger.h"
+#include "index/index.h"
 #define MAX_THREAD_COUNT ((int)0x7FFFFFFF)
 
 namespace peloton {
@@ -36,7 +37,7 @@ namespace peloton {
     private: // pre-declare private class names
       class Node;
       class ValueNode;
-      class EpochManager;
+      class Epoch;
       // TODO: Add your declarations here
     public:
       // KeyType-ValueType pair
@@ -599,7 +600,7 @@ namespace peloton {
       }
 
       void PerformGC(){
-        memory_footprint-=epoch.ClearOldEpoch();
+        memory_footprint-=epoch->ClearOldEpoch();
       }
 
       int GetMemoryFootprint(){
@@ -660,17 +661,10 @@ namespace peloton {
       };
 
       int memory_footprint;
-      Epoch epoch;
+      Epoch *epoch;
 
       class Epoch{
       private:
-        struct EpochNode{
-          std::atomic<int> thread_count;
-          std::atomic<int> memory_freed;
-          std::atomic<GarbageNode *> garbage_list;
-          std::atomic<GarbageValueNode *> garbage_value_list;
-          EpochNode *next;
-        };
 
         struct GarbageNode{
           Node *node;
@@ -679,6 +673,14 @@ namespace peloton {
         struct GarbageValueNode{
           ValueNode *node;
           GarbageValueNode *next;
+        };
+
+        struct EpochNode{
+          std::atomic<int> thread_count;
+          std::atomic<int> memory_freed;
+          std::atomic<GarbageNode *> garbage_list;
+          std::atomic<GarbageValueNode *> garbage_value_list;
+          EpochNode *next;
         };
 
         EpochNode *current;
@@ -697,10 +699,10 @@ namespace peloton {
           return;
         }
 
-        ~EpochManager() {
+        ~Epoch() {
           exited.store(true);
           current = nullptr;
-          ClearEpoch();
+          ClearOldEpoch();
           PL_ASSERT(head == nullptr);
           return;
         }
@@ -788,11 +790,13 @@ namespace peloton {
 
             for (const GarbageNode *current_node = head->garbage_list.load(); current_node != nullptr; current_node = next_garbage_node) {
               next_garbage_node = current_node->next;
+              delete current_node->node;
               delete current_node;
             }
 
             for (const GarbageValueNode *current_node = head->garbage_value_list.load(); current_node != nullptr; current_node = next_garbage_value_node) {
               next_garbage_value_node = current_node->next;
+              delete current_node->node;
               delete current_node;
             }
 
