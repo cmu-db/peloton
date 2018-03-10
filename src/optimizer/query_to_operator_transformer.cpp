@@ -258,7 +258,8 @@ void QueryToOperatorTransformer::Visit(parser::InsertStatement *op) {
     auto *schema = table->GetSchema();
     */
 
-    // column_objects represents the columns for the current table as defined in its schema
+    // column_objects represents the columns for the current table as defined in
+    // its schema
     auto column_objects = target_table->GetColumnObjects();
     // INSERT INTO table_name VALUES (val1, val2, ...), (val_a, val_b, ...), ...
     if (op->columns.empty()) {
@@ -269,7 +270,7 @@ void QueryToOperatorTransformer::Visit(parser::InsertStatement *op) {
           throw CatalogException(
               "ERROR:  INSERT has more expressions than target columns");
         else if (values.size() < column_objects.size())
-            throw CatalogException(
+          throw CatalogException(
               "ERROR:  INSERT has more target columns than expressions");
       }
     }
@@ -288,18 +289,19 @@ void QueryToOperatorTransformer::Visit(parser::InsertStatement *op) {
               "ERROR:  INSERT has more target columns than expressions");
       }
 
-      //auto &table_columns = schema->GetColumns();
+      // auto &table_columns = schema->GetColumns();
       // auto table_columns_num = schema->GetColumnCount();
       for (size_t idx = 0; idx != num_columns; ++idx) {
         auto col = (op->columns)[idx];
-        auto found = std::find_if(column_objects.begin(), column_objects.end(),
-                                  [&col](const decltype(column_objects)::value_type &x) {
-                                    return col == x.second->GetColumnName();
-                                  });
+        auto found =
+            std::find_if(column_objects.begin(), column_objects.end(),
+                         [&col](const decltype(column_objects)::value_type &x) {
+                           return col == x.second->GetColumnName();
+                         });
         if (found == column_objects.end())
-          throw CatalogException("ERROR:  column \"" + col +
-                                 "\" of relation \"" + target_table->GetTableName() +
-                                 "\" does not exist");
+          throw CatalogException(
+              "ERROR:  column \"" + col + "\" of relation \"" +
+              target_table->GetTableName() + "\" does not exist");
       }
     }
     auto insert_expr = std::make_shared<OperatorExpression>(
