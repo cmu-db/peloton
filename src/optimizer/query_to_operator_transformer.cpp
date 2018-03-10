@@ -268,11 +268,10 @@ void QueryToOperatorTransformer::Visit(parser::InsertStatement *op) {
         auto &values = (op->insert_values)[tuple_idx];
         if (values.size() > column_objects.size()) {
           throw CatalogException(
-            "ERROR:  INSERT has more expressions than target columns");
-        }
-        else if (values.size() < column_objects.size()) {
+              "ERROR:  INSERT has more expressions than target columns");
+        } else if (values.size() < column_objects.size()) {
           throw CatalogException(
-            "ERROR:  INSERT has more target columns than expressions");
+              "ERROR:  INSERT has more target columns than expressions");
         }
       }
     }
@@ -285,11 +284,10 @@ void QueryToOperatorTransformer::Visit(parser::InsertStatement *op) {
            ++i) {  // check size of each tuple
         if (op->insert_values[i].size() > num_columns) {
           throw CatalogException(
-            "ERROR:  INSERT has more expressions than target columns");
-        }
-        else if (op->insert_values[i].size() < num_columns) {
+              "ERROR:  INSERT has more expressions than target columns");
+        } else if (op->insert_values[i].size() < num_columns) {
           throw CatalogException(
-            "ERROR:  INSERT has more target columns than expressions");
+              "ERROR:  INSERT has more target columns than expressions");
         }
       }
 
@@ -304,8 +302,8 @@ void QueryToOperatorTransformer::Visit(parser::InsertStatement *op) {
                          });
         if (found == column_objects.end()) {
           throw CatalogException(
-            "ERROR:  column \"" + col + "\" of relation \"" +
-            target_table->GetTableName() + "\" does not exist");
+              "ERROR:  column \"" + col + "\" of relation \"" +
+              target_table->GetTableName() + "\" does not exist");
         }
       }
     }
