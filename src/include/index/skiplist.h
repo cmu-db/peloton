@@ -105,8 +105,7 @@ class SkipList {
  public:
   /*
    * Insert - insert a key-value pair into index
-   *
-   * assume value is unique under a key
+   *          assume value is unique under a key
    * */
   bool Insert(const KeyType &key, const ValueType &value) {
     LOG_TRACE("Insert join epoch");
@@ -536,8 +535,8 @@ class SkipList {
   }
   /*
    * Search - get predecessors (p_key) and successors (s_key) for the key
-   * all p_key < key
-   * all s_key >= key, or s_key not exists
+   *          all p_key < key
+   *          all s_key >= key, or s_key not exists
    * */
   void Search(const KeyType &key, Node **&left_list, Node **&right_list,
               int &level) {
@@ -589,7 +588,7 @@ class SkipList {
 
   /*
    * class ForwardIterator - Iterator that supports forward iteration of skip
-   * list elements
+   *                         list elements
    */
   class ForwardIterator {
    private:
@@ -613,15 +612,6 @@ class SkipList {
      *           the iterator points to the last element
      */
     bool IsEnd() const { return node_ptr == nullptr || val_ptr == nullptr; }
-
-    /*
-     * operator->() - Returns the value pointer pointed to by this iterator
-     *
-     * Note that this function returns a contsnat pointer which can be used
-     * to access members of the value, but cannot modify
-     */
-    //    inline const KeyValuePair *operator->() { return
-    //    &KeyValuePair(node_ptr->key, val_ptr->val); }
 
     inline const KeyType getKey() { return node_ptr->key; }
 
@@ -1119,7 +1109,7 @@ class SkipList {
 
   /*
    * is_deleted_node - judge whether the next node is deleted from marked bit in
-   * pointer
+   *                   pointer
    * */
   static inline bool is_deleted_node(Node *p) {
     long long t = reinterpret_cast<long long>(p) & DELETE_MASK;
@@ -1136,7 +1126,7 @@ class SkipList {
 
   /*
    * delete_node_address - mark the last bit of pointer, as logical delete
-   * address
+   *                       address
    * */
   inline Node *delete_node_address(Node *p) {
     long long t = reinterpret_cast<long long>(p) | DELETE_MASK;
@@ -1145,7 +1135,7 @@ class SkipList {
 
   /*
    * get_first_exist_value - return the first exist value node start from
-   * val_ptr
+   *                         val_ptr
    * */
   static inline ValueNode *get_first_exist_value(ValueNode *val_ptr) {
     while (val_ptr != nullptr && is_deleted_val_ptr(val_ptr->next.load())) {
@@ -1156,10 +1146,10 @@ class SkipList {
 
   /*
    * get_tail_value_with_diff - return tail value in the value list, where do
-   * not contain "val"
+   *                            not contain "val"
    *                            val_ptr should not be nullptr
    *                            return nullptr if meet existing node with same
-   * value with value
+   *                            value with value
    * */
   inline ValueNode *get_tail_value_with_diff(ValueNode *val_ptr,
                                              const ValueType &val) {
@@ -1179,10 +1169,10 @@ class SkipList {
 
   /*
    * get_tail_value_without_predicate - return tail value in the value list,
-   * where do not satisfy either
+   *                                    where do not satisfy either
    *                                    predicate function or value equation
    *                                    return nullptr if either of mentioned
-   * conditions is satisfied
+   *                                    conditions is satisfied
    * */
   inline ValueNode *get_tail_value_without_predicate(
       ValueNode *val_ptr, const ValueType &val,
@@ -1215,8 +1205,8 @@ class SkipList {
 
   /*
    * traverse_value_list - traverse ValueNode linked list, connect exist
-   * ValueNodes by changing next pointers
-   * return head ValueNode pointer
+   *                       ValueNodes by changing next pointers
+   *                       return head ValueNode pointer
    * */
   ValueNode *traverse_value_list(ValueNode *val_ptr) {
     // find first exist node or just get nullptr
@@ -1241,8 +1231,8 @@ class SkipList {
   /*
    * delete_value - logically delete all ValueNodes whose value equals to value
    *                by marking delete bit in its next pointer
-   * return true if delete operation on a value node happens
-   * return false if no such delete operation
+   *                return true if delete operation on a value node happens
+   *                return false if no such delete operation
    * */
   bool delete_value(ValueNode *val_ptr, const ValueType &value) {
     bool find_and_delete_val = false;
@@ -1273,7 +1263,7 @@ class SkipList {
   }
   /*
    * is_deleted_val_ptr - judge whether the next val_ptr is deleted from marked
-   * bit in pointer
+   *                      bit in pointer
    * */
   static inline bool is_deleted_val_ptr(ValueNode *p) {
     long long t = reinterpret_cast<long long>(p) & DELETE_MASK;
@@ -1290,7 +1280,7 @@ class SkipList {
 
   /*
    * delete_val_address - mark the last bit of pointer, as logical delete
-   * address
+   *                      address
    * */
   inline ValueNode *delete_val_address(ValueNode *p) {
     long long t = reinterpret_cast<long long>(p) | DELETE_MASK;
@@ -1321,10 +1311,8 @@ class SkipList {
 
   /*
    * KeyCmpLess() - Compare two keys for "less than" relation
-   *
-   * If key1 < key2 return true
-   * If not return false
-   *
+   *                If key1 < key2 return true
+   *                If not return false
    */
   inline bool KeyCmpLess(const KeyType &key1, const KeyType &key2) const {
     return key_cmp_obj(key1, key2);
@@ -1332,8 +1320,7 @@ class SkipList {
 
   /*
    * KeyCmpEqual() - Compare a pair of keys for equality
-   *
-   * This functions compares keys for equality relation
+   *                 This functions compares keys for equality relation
    */
   inline bool KeyCmpEqual(const KeyType &key1, const KeyType &key2) const {
     return key_eq_obj(key1, key2);
