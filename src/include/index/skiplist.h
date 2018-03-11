@@ -457,6 +457,7 @@ namespace peloton {
             }
             // delete Node
             delete_node(succs[0]);
+	    epoch->AddGarbageValueNode(old_val_ptr);
           } else { // value not match or the key is already deleted
             delete[](preds);
             delete[](succs);
@@ -802,6 +803,7 @@ namespace peloton {
         ~Node(){
           delete[](next);
           ValueNode *t = val_ptr, *p;
+	  LOG_WARN("try to delete a node");
           while (t != nullptr) {
             p = t->next.load();
             if (!is_deleted_val_ptr(p)) { // t is not deleted
