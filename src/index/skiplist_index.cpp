@@ -30,12 +30,12 @@ SKIPLIST_INDEX_TYPE::SkipListIndex(IndexMetadata *metadata)
       comparator{},
       // Key equality checker
       equals{},
-      container{true, metadata->HasUniqueKeys(), comparator, equals, ValueEqualityChecker{}}
-    {
-      // xingyuj1
-      // whether or not support duplicate keys
-      LOG_TRACE("unique_key=%d", metadata->HasUniqueKeys());
-      // initialize container as a skiplist MapType here
+      container{true, metadata->HasUniqueKeys(), comparator, equals,
+                ValueEqualityChecker{}} {
+  // xingyuj1
+  // whether or not support duplicate keys
+  LOG_TRACE("unique_key=%d", metadata->HasUniqueKeys());
+  // initialize container as a skiplist MapType here
   return;
 }
 
@@ -153,7 +153,7 @@ void SKIPLIST_INDEX_TYPE::Scan(
     if (scan_direction == ScanDirectionType::FORWARD) {
       for (auto scan_itr = container.Begin(index_low_key);
            (scan_itr.IsEnd() == false) &&
-           (container.KeyCmpLessEqual(scan_itr.getKey(), index_high_key));
+               (container.KeyCmpLessEqual(scan_itr.getKey(), index_high_key));
            scan_itr++) {
         result.push_back(scan_itr.getValue());
       }
@@ -162,18 +162,17 @@ void SKIPLIST_INDEX_TYPE::Scan(
       std::stack<ValueType> value_stack;
       for (auto scan_itr = container.Begin(index_low_key);
            (scan_itr.IsEnd() == false) &&
-           (container.KeyCmpLessEqual(scan_itr.getKey(), index_high_key));
+               (container.KeyCmpLessEqual(scan_itr.getKey(), index_high_key));
            scan_itr++) {
         value_stack.push(scan_itr.getValue());
       }
-      while(!value_stack.empty()) {
+      while (!value_stack.empty()) {
         result.push_back(value_stack.top());
         value_stack.pop();
       }
     }
 
   }  // if is full scan
-
 
   return;
 }
@@ -187,10 +186,8 @@ void SKIPLIST_INDEX_TYPE::ScanLimit(
     UNUSED_ATTRIBUTE const std::vector<type::Value> &value_list,
     UNUSED_ATTRIBUTE const std::vector<oid_t> &tuple_column_id_list,
     UNUSED_ATTRIBUTE const std::vector<ExpressionType> &expr_list,
-    ScanDirectionType scan_direction,
-    std::vector<ValueType> &result,
+    ScanDirectionType scan_direction, std::vector<ValueType> &result,
     const ConjunctionScanPredicate *csp_p, uint64_t limit, uint64_t offset) {
-
   if (csp_p->IsPointQuery() == true) {
     const storage::Tuple *point_query_key_p = csp_p->GetPointQueryKey();
 
@@ -214,8 +211,10 @@ void SKIPLIST_INDEX_TYPE::ScanLimit(
     const storage::Tuple *low_key_p = csp_p->GetLowKey();
     const storage::Tuple *high_key_p = csp_p->GetHighKey();
 
-    LOG_TRACE("Partial scan low key: %s\n high key: %s, offset = %lld, limit = %lld",
-              low_key_p->GetInfo().c_str(), high_key_p->GetInfo().c_str(), offset, limit);
+    LOG_TRACE(
+        "Partial scan low key: %s\n high key: %s, offset = %lld, limit = %lld",
+        low_key_p->GetInfo().c_str(), high_key_p->GetInfo().c_str(), offset,
+        limit);
 
     // Construct low key and high key in KeyType form, rather than
     // the standard in-memory tuple
@@ -231,12 +230,12 @@ void SKIPLIST_INDEX_TYPE::ScanLimit(
     if (scan_direction == ScanDirectionType::FORWARD) {
       for (auto scan_itr = container.Begin(index_low_key);
            (scan_itr.IsEnd() == false) &&
-           (container.KeyCmpLessEqual(scan_itr.getKey(), index_high_key));
+               (container.KeyCmpLessEqual(scan_itr.getKey(), index_high_key));
            scan_itr++) {
         if (current == offset) {
           if (result.size() < limit) {
             result.push_back(scan_itr.getValue());
-          } else { // result.size == limit, reach upper bound
+          } else {  // result.size == limit, reach upper bound
             return;
           }
         } else {
@@ -248,16 +247,16 @@ void SKIPLIST_INDEX_TYPE::ScanLimit(
       std::stack<ValueType> value_stack;
       for (auto scan_itr = container.Begin(index_low_key);
            (scan_itr.IsEnd() == false) &&
-           (container.KeyCmpLessEqual(scan_itr.getKey(), index_high_key));
+               (container.KeyCmpLessEqual(scan_itr.getKey(), index_high_key));
            scan_itr++) {
         value_stack.push(scan_itr.getValue());
       }
-      while(!value_stack.empty()) {
+      while (!value_stack.empty()) {
         if (current == offset) {
           if (result.size() < limit) {
             result.push_back(value_stack.top());
             value_stack.pop();
-          } else { // result.size == limit, reach upper bound
+          } else {  // result.size == limit, reach upper bound
             return;
           }
         } else {
@@ -266,7 +265,6 @@ void SKIPLIST_INDEX_TYPE::ScanLimit(
         }
       }
     }
-
   }
   return;
 }
