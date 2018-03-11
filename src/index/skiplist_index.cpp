@@ -32,7 +32,6 @@ SKIPLIST_INDEX_TYPE::SkipListIndex(IndexMetadata *metadata)
       equals{},
       container{true, metadata->HasUniqueKeys(), comparator, equals, ValueEqualityChecker{}}
     {
-  // TODO: Add your implementation here
       // xingyuj1
       // whether or not support duplicate keys
       LOG_TRACE("unique_key=%d", metadata->HasUniqueKeys());
