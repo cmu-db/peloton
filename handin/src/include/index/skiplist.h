@@ -744,6 +744,7 @@ namespace peloton {
       }
 
       void PerformGC(){
+        epoch->CreateEpoch();
         epoch->ClearOldEpoch();
       }
 
