@@ -81,12 +81,16 @@ namespace peloton {
         delete epoch;
         Node *current = head.load(), *next;
         next = current->next[0].load();
+	      int node_count = 0;
         while (get_node_address(next) != nullptr) {
           if (!is_deleted_node(next)) { // current node is not deleted
+	          node_count++;
             delete(current);
+	          LOG_WARN("freed 1 node, size is %zu", sizeof(Node));
             current = next;
             next = current->next[0].load();
           } else { // current node is marked as deleted, let GC thread to delete that node
+	          LOG_WARN("Node marked as deleted, possibly lost!");
             current = get_node_address(next);
             next = current->next[0].load();
           }
@@ -94,12 +98,13 @@ namespace peloton {
 
         if (!is_deleted_node(next)) { // current node is not deleted
           delete(current);
+	        node_count++;
+	        LOG_WARN("freed 1 node, size is %zu", sizeof(Node));
         }
 
         // TODO: free all nodes
-        int node_count = 0;
-        node_count++;
-        LOG_DEBUG("Freed %d nodes", node_count);
+       
+        LOG_WARN("Freed %d nodes", node_count);
         return;
       }
 
@@ -116,7 +121,8 @@ namespace peloton {
 
         ValueNode *val_ptr = new ValueNode(value);
         epoch->memory_footprint.fetch_add(sizeof(ValueNode));
-
+	      epoch->memory_value.fetch_add(sizeof(ValueNode));
+	      //LOG_WARN("created value node, total size for value node is %zu", (size_t)epoch->memory_value);
         int node_level = get_rand_level();
         Node *new_node = new Node(node_level, key, nullptr);
         epoch->memory_footprint.fetch_add(sizeof(Node));
@@ -446,11 +452,19 @@ namespace peloton {
             // WARNING: we should guarantee we only use pointer with address WITHOUT a delete bit
             // when we want to use member variables of that pointer
             // value match
-            while (!(succs[0]->val_ptr.compare_exchange_strong(old_val_ptr, empty_val_ptr))) {
+            while (true) {
+              if (old_val_ptr == empty_val_ptr) {
+                break;
+              }
+              if (succs[0]->val_ptr.compare_exchange_strong(old_val_ptr, empty_val_ptr)){
+                epoch->AddGarbageValueNode(old_val_ptr);
+                break;
+              }
               old_val_ptr = succs[0]->val_ptr.load();
             }
             // delete Node
             delete_node(succs[0]);
+
           } else { // value not match or the key is already deleted
             delete[](preds);
             delete[](succs);
@@ -796,12 +810,15 @@ namespace peloton {
         ~Node(){
           delete[](next);
           ValueNode *t = val_ptr, *p;
+	        //LOG_WARN("try to delete a node");
           while (t != nullptr) {
             p = t->next.load();
             if (!is_deleted_val_ptr(p)) { // t is not deleted
+	            //LOG_WARN("deleted value node, size is %zu", sizeof(ValueNode));
               delete(t);
               t = p;
             } else { // t is deleted, pass it
+	            //LOG_WARN("valuenode marked as deleted, possibly lost!");
               t = get_val_address(p);
             }
           }
@@ -826,17 +843,20 @@ namespace peloton {
         struct EpochNode{
           std::atomic<int> thread_count;
           std::atomic<size_t> memory_freed;
+	  std::atomic<size_t> memory_freed_value;
           std::atomic<GarbageNode *> garbage_list;
           std::atomic<GarbageValueNode *> garbage_value_list;
           EpochNode *next;
         };
 
         std::atomic<size_t> memory_footprint;
+	std::atomic<size_t> memory_value;
         EpochNode *current;
         EpochNode *head;
         std::atomic<bool> exited;
 
         Epoch() {
+	  memory_value = 0;
           memory_footprint = 0;
           current = new EpochNode{};
           head = current;
@@ -878,6 +898,8 @@ namespace peloton {
           LOG_DEBUG("Epoch: created new epoch");
           EpochNode *new_epoch = new EpochNode{};
           new_epoch->thread_count = 0;
+	        new_epoch->memory_freed = 0;
+          new_epoch->memory_freed_value = 0;
           new_epoch->garbage_list = nullptr;
           new_epoch->garbage_value_list = nullptr;
           new_epoch->next = nullptr;
@@ -896,10 +918,12 @@ namespace peloton {
             LOG_TRACE("Add garbage node CAS failed. Retry");
           }
           epoch->memory_freed.fetch_add(sizeof(Node));
+	        //LOG_WARN("Add garbage node, total garbage is %zu", (size_t)epoch->memory_freed);
           return;
         }
 
         void AddGarbageValueNode(const ValueNode* vnode){
+	        //LOG_WARN("add value node for GC");
           EpochNode *epoch = current;
           GarbageValueNode *new_garbage = new GarbageValueNode();
           new_garbage->node = vnode;
@@ -909,6 +933,8 @@ namespace peloton {
             LOG_TRACE("Add garbage value node CAS failed. Retry");
           }
           epoch->memory_freed.fetch_add(sizeof(ValueNode));
+	        epoch->memory_freed_value.fetch_add(sizeof(ValueNode));
+	        //LOG_WARN("Add garbage value node, total garbage is %zu, total value garbage is %zu", (size_t)epoch->memory_freed, (size_t)epoch->memory_freed_value);
           return;
         }
 
@@ -936,7 +962,9 @@ namespace peloton {
         size_t ClearOldEpoch(){
           LOG_WARN("Start to clear epoch");
           size_t total_memory_freed = 0;
+	        size_t total_memory_freed_value = 0;
           int retry = 0;
+	        LOG_WARN("Before gc, total memory is %zu, total memory for valuenode is %zu", (size_t)memory_footprint, (size_t)memory_value);
           while(true){
 
             if (head == current){
@@ -968,26 +996,29 @@ namespace peloton {
             const GarbageNode *next_garbage_node = nullptr;
             const GarbageValueNode *next_garbage_value_node = nullptr;
 
+	    for (const GarbageValueNode *current_node = head->garbage_value_list.load(); current_node != nullptr; current_node = next_garbage_value_node) {
+              next_garbage_value_node = current_node->next;
+              delete current_node->node;
+              delete current_node;
+            }
+
             for (const GarbageNode *current_node = head->garbage_list.load(); current_node != nullptr; current_node = next_garbage_node) {
               next_garbage_node = current_node->next;
               delete current_node->node;
               delete current_node;
             }
 
-            for (const GarbageValueNode *current_node = head->garbage_value_list.load(); current_node != nullptr; current_node = next_garbage_value_node) {
-              next_garbage_value_node = current_node->next;
-              delete current_node->node;
-              delete current_node;
-            }
-
             total_memory_freed += head->memory_freed;
+	          total_memory_freed_value += head->memory_freed_value;
             EpochNode *next_epoch = head->next;
             delete head;
             head = next_epoch;
 
           }
-          LOG_WARN("Finish clearing epoch, memory freed: %zu", total_memory_freed);
+          LOG_WARN("Finish clearing epoch, memory freed: %zu, memory freed for value nodes: %zu", total_memory_freed, total_memory_freed_value);
           memory_footprint.fetch_sub(total_memory_freed);
+	        memory_value.fetch_sub(total_memory_freed_value);
+	        LOG_WARN("After gc, total memory is %zu, total memory for valuenode is %zu", (size_t)memory_footprint, (size_t)memory_value);
           LOG_WARN("memory in use: %zu", size_t(memory_footprint));
           return total_memory_freed;
         }
