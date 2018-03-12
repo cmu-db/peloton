@@ -645,39 +645,45 @@ TEST_F(InsertSQLTests, BadInserts) {
   // Insert a tuple with more values than target columns
   std::string query("INSERT INTO test8 VALUES(1, 2, 3, 4);");
   txn = txn_manager.BeginTransaction();
-  EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn), peloton::CatalogException);
+  EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
+               peloton::CatalogException);
   EXPECT_EQ(0,
             rows_changed);  // no rows should be affected by the incorrect query
 
   // Insert a tuple with more target columns than values
   query = "INSERT INTO test8(num1, num3) VALUES(3);";
   txn = txn_manager.BeginTransaction();
-  EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn), peloton::CatalogException);
+  EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
+               peloton::CatalogException);
   EXPECT_EQ(0,
             rows_changed);  // no rows should be affected by the incorrect query
 
   // Insert a tuple with more target columns than values
   query = "INSERT INTO test8(num1, num3) VALUES (1, 2), (3, 4), (3, 4, 5);";
   txn = txn_manager.BeginTransaction();
-  EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn), peloton::CatalogException);
+  EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
+               peloton::CatalogException);
   EXPECT_EQ(0, rows_changed);
 
   // Insert a tuple with more target columns than values
   query = "INSERT INTO test8(num1, num3) VALUES (6, 7), (3, 4, 5);";
   txn = txn_manager.BeginTransaction();
-  EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn), peloton::CatalogException);
+  EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
+               peloton::CatalogException);
   EXPECT_EQ(0, rows_changed);
 
   // Insert a tuple with more target columns than values
   query = "INSERT INTO test8(numx) VALUES(3);";
   txn = txn_manager.BeginTransaction();
-  EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn), peloton::CatalogException);
+  EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
+               peloton::CatalogException);
   EXPECT_EQ(0, rows_changed);
 
   // Insert a tuple with more target columns than values
   query = "INSERT INTO test8(num1, num4) VALUES(3, 4);";
   txn = txn_manager.BeginTransaction();
-  EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn), peloton::CatalogException);
+  EXPECT_THROW(TestingSQLUtil::GeneratePlanWithOptimizer(optimizer, query, txn),
+               peloton::CatalogException);
   EXPECT_EQ(0, rows_changed);
 
   // free the database just created
