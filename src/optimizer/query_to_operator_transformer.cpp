@@ -270,8 +270,12 @@ void QueryToOperatorTransformer::Visit(parser::InsertStatement *op) {
           throw CatalogException(
               "ERROR:  INSERT has more expressions than target columns");
         } else if (values.size() < column_objects.size()) {
-          throw CatalogException(
-              "ERROR:  INSERT has more target columns than expressions");
+          for (oid_t i = values.size(); i != column_objects.size(); ++i) {  // check whether null values are allowed in the rest of the columns
+            if (column_objects[i]->IsNotNull()) {
+              throw CatalogException(
+              "ERROR:  null value in column \"" + column_objects[i]->GetColumnName() + "\" violates not-null constraint");
+            }
+          }
         }
       }
     }
