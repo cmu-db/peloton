@@ -12,15 +12,15 @@
 
 #include <memory>
 
+#include "catalog/column_catalog.h"
 #include "catalog/index_catalog.h"
 #include "catalog/table_catalog.h"
-#include "catalog/column_catalog.h"
+#include "optimizer/operators.h"
+#include "optimizer/optimizer_metadata.h"
+#include "optimizer/properties.h"
 #include "optimizer/rule_impls.h"
 #include "optimizer/util.h"
-#include "optimizer/operators.h"
 #include "storage/data_table.h"
-#include "optimizer/properties.h"
-#include "optimizer/optimizer_metadata.h"
 
 namespace peloton {
 namespace optimizer {
@@ -61,11 +61,113 @@ void InnerJoinCommutativity::Transform(
   PL_ASSERT(children.size() == 2);
   LOG_TRACE(
       "Reorder left child with op %s and right child with op %s for inner join",
-      children[0]->Op().name().c_str(), children[1]->Op().name().c_str());
+      children[0]->Op().GetName().c_str(), children[1]->Op().GetName().c_str());
   result_plan->PushChild(children[1]);
   result_plan->PushChild(children[0]);
 
   transformed.push_back(result_plan);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/// InnerJoinAssociativity
+InnerJoinAssociativity::InnerJoinAssociativity() {
+  type_ = RuleType::INNER_JOIN_ASSOCIATE;
+
+  // Create left nested join
+  auto left_child = std::make_shared<Pattern>(OpType::InnerJoin);
+  left_child->AddChild(std::make_shared<Pattern>(OpType::Leaf));
+  left_child->AddChild(std::make_shared<Pattern>(OpType::Leaf));
+
+  std::shared_ptr<Pattern> right_child(std::make_shared<Pattern>(OpType::Leaf));
+
+  match_pattern = std::make_shared<Pattern>(OpType::InnerJoin);
+  match_pattern->AddChild(left_child);
+  match_pattern->AddChild(right_child);
+}
+
+// TODO: As far as I know, theres nothing else that needs to be checked
+bool InnerJoinAssociativity::Check(std::shared_ptr<OperatorExpression> expr,
+                                   OptimizeContext *context) const {
+  (void)context;
+  (void)expr;
+  return true;
+}
+
+void InnerJoinAssociativity::Transform(
+    std::shared_ptr<OperatorExpression> input,
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+    OptimizeContext *context) const {
+  // NOTE: Transforms (left JOIN middle) JOIN right -> left JOIN (middle JOIN
+  // right) Variables are named accordingly to above transformation
+  auto parent_join = input->Op().As<LogicalInnerJoin>();
+  std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
+  PL_ASSERT(children.size() == 2);
+  PL_ASSERT(children[0]->Op().GetType() == OpType::InnerJoin);
+  PL_ASSERT(children[0]->Children().size() == 2);
+  auto child_join = children[0]->Op().As<LogicalInnerJoin>();
+  auto left = children[0]->Children()[0];
+  auto middle = children[0]->Children()[1];
+  auto right = children[1];
+
+  LOG_TRACE("Reordered join structured: (%s JOIN %s) JOIN %s",
+            left->Op().GetName().c_str(), middle->Op().GetName().c_str(),
+            right->Op().GetName().c_str());
+
+  // Get Alias sets
+  auto &memo = context->metadata->memo;
+  auto middle_group_id = middle->Op().As<LeafOperator>()->origin_group;
+  auto right_group_id = right->Op().As<LeafOperator>()->origin_group;
+
+  const auto &middle_group_aliases_set =
+      memo.GetGroupByID(middle_group_id)->GetTableAliases();
+  const auto &right_group_aliases_set =
+      memo.GetGroupByID(right_group_id)->GetTableAliases();
+
+  // Union Predicates into single alias set for new child join
+  std::unordered_set<std::string> right_join_aliases_set;
+  right_join_aliases_set.insert(middle_group_aliases_set.begin(),
+                                middle_group_aliases_set.end());
+  right_join_aliases_set.insert(right_group_aliases_set.begin(),
+                                right_group_aliases_set.end());
+
+  // Redistribute predicates
+  auto parent_join_predicates =
+      std::vector<AnnotatedExpression>(parent_join->join_predicates);
+  auto child_join_predicates =
+      std::vector<AnnotatedExpression>(child_join->join_predicates);
+
+  std::vector<AnnotatedExpression> predicates;
+  predicates.insert(predicates.end(), parent_join_predicates.begin(),
+                    parent_join_predicates.end());
+  predicates.insert(predicates.end(), child_join_predicates.begin(),
+                    child_join_predicates.end());
+
+  std::vector<AnnotatedExpression> new_child_join_predicates;
+  std::vector<AnnotatedExpression> new_parent_join_predicates;
+
+  for (auto predicate : predicates) {
+    if (util::IsSubset(right_join_aliases_set, predicate.table_alias_set)) {
+      new_child_join_predicates.emplace_back(predicate);
+    } else {
+      new_parent_join_predicates.emplace_back(predicate);
+    }
+  }
+
+  // Construct new child join operator
+  std::shared_ptr<OperatorExpression> new_child_join =
+      std::make_shared<OperatorExpression>(
+          LogicalInnerJoin::make(new_child_join_predicates));
+  new_child_join->PushChild(middle);
+  new_child_join->PushChild(right);
+
+  // Construct new parent join operator
+  std::shared_ptr<OperatorExpression> new_parent_join =
+      std::make_shared<OperatorExpression>(
+          LogicalInnerJoin::make(new_parent_join_predicates));
+  new_parent_join->PushChild(left);
+  new_parent_join->PushChild(new_child_join);
+
+  transformed.push_back(new_parent_join);
 }
 
 //===--------------------------------------------------------------------===//
@@ -199,7 +301,6 @@ void GetToIndexScan::Transform(
         }
         // Add transformed plan if found
         if (index_matched) {
-          LOG_DEBUG("Index id :%u", index_id);
           auto index_scan_op = PhysicalIndexScan::make(
               get->get_id, get->table, get->table_alias, get->predicates,
               get->is_for_update, index_id, {}, {}, {});
@@ -261,9 +362,9 @@ void GetToIndexScan::Transform(
                   ->GetValue());
           LOG_TRACE("Value Type: %d",
                     static_cast<int>(
-                      reinterpret_cast<expression::ConstantValueExpression *>(
-                        expr->GetModifiableChild(1))
-                        ->GetValueType()));
+                        reinterpret_cast<expression::ConstantValueExpression *>(
+                            expr->GetModifiableChild(1))
+                            ->GetValueType()));
         } else {
           value_list.push_back(
               type::ValueFactory::GetParameterOffsetValue(
@@ -726,6 +827,7 @@ void PushFilterThroughJoin::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed,
     UNUSED_ATTRIBUTE OptimizeContext *context) const {
+  LOG_TRACE("PushFilterThroughJoin::Transform");
   auto &memo = context->metadata->memo;
   auto join_op_expr = input->Children().at(0);
   auto &join_children = join_op_expr->Children();
@@ -748,12 +850,14 @@ void PushFilterThroughJoin::Transform(
   // E.g. An expression (test.a = test1.b and test.a = 5) would become
   // {test.a = test1.b, test.a = 5}
   for (auto &predicate : predicates) {
-    if (util::IsSubset(left_group_aliases_set, predicate.table_alias_set))
+    if (util::IsSubset(left_group_aliases_set, predicate.table_alias_set)) {
       left_predicates.emplace_back(predicate);
-    else if (util::IsSubset(right_group_aliases_set, predicate.table_alias_set))
+    } else if (util::IsSubset(right_group_aliases_set,
+                              predicate.table_alias_set)) {
       right_predicates.emplace_back(predicate);
-    else
+    } else {
       join_predicates.emplace_back(predicate);
+    }
   }
 
   // Construct join operator
@@ -790,6 +894,73 @@ void PushFilterThroughJoin::Transform(
   transformed.push_back(output);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+/// PushFilterThroughAggregation
+PushFilterThroughAggregation::PushFilterThroughAggregation() {
+  type_ = RuleType::PUSH_FILTER_THROUGH_JOIN;
+
+  std::shared_ptr<Pattern> child(
+      std::make_shared<Pattern>(OpType::LogicalAggregateAndGroupBy));
+  child->AddChild(std::make_shared<Pattern>(OpType::Leaf));
+
+  // Initialize a pattern for optimizer to match
+  match_pattern = std::make_shared<Pattern>(OpType::LogicalFilter);
+
+  // Add node - we match (filter)->(aggregation)->(leaf)
+  match_pattern->AddChild(child);
+}
+
+bool PushFilterThroughAggregation::Check(std::shared_ptr<OperatorExpression>,
+                                         OptimizeContext *) const {
+  return true;
+}
+
+void PushFilterThroughAggregation::Transform(
+    std::shared_ptr<OperatorExpression> input,
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+    UNUSED_ATTRIBUTE OptimizeContext *context) const {
+  LOG_TRACE("PushFilterThroughAggregation::Transform");
+  auto aggregation_op =
+      input->Children().at(0)->Op().As<LogicalAggregateAndGroupBy>();
+
+  auto &predicates = input->Op().As<LogicalFilter>()->predicates;
+  std::vector<AnnotatedExpression> embedded_predicates;
+  std::vector<AnnotatedExpression> pushdown_predicates;
+
+  for (auto &predicate : predicates) {
+    std::vector<expression::AggregateExpression *> aggr_exprs;
+    expression::ExpressionUtil::GetAggregateExprs(aggr_exprs,
+                                                  predicate.expr.get());
+    // No aggr_expr in the predicate -- pushdown to evaluate
+    if (aggr_exprs.empty()) {
+      pushdown_predicates.emplace_back(predicate);
+    } else {
+      embedded_predicates.emplace_back(predicate);
+    }
+  }
+
+  // Add original having predicates
+  for (auto &predicate : aggregation_op->having) {
+    embedded_predicates.emplace_back(predicate);
+  }
+  auto groupby_cols = aggregation_op->columns;
+  std::shared_ptr<OperatorExpression> output =
+      std::make_shared<OperatorExpression>(
+          LogicalAggregateAndGroupBy::make(groupby_cols, embedded_predicates));
+
+  auto bottom_operator = output;
+  // Construct left filter if any
+  if (!pushdown_predicates.empty()) {
+    auto filter = std::make_shared<OperatorExpression>(
+        LogicalFilter::make(pushdown_predicates));
+    output->PushChild(filter);
+    bottom_operator = filter;
+  }
+
+  // Add leaf
+  bottom_operator->PushChild(input->Children()[0]->Children()[0]);
+  transformed.push_back(output);
+}
 ///////////////////////////////////////////////////////////////////////////////
 /// CombineConsecutiveFilter
 CombineConsecutiveFilter::CombineConsecutiveFilter() {
@@ -874,17 +1045,28 @@ void EmbedFilterIntoGet::Transform(
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/// MarkJoinGetToInnerJoin
-MarkJoinGetToInnerJoin::MarkJoinGetToInnerJoin() {
+/// MarkJoinToInnerJoin
+MarkJoinToInnerJoin::MarkJoinToInnerJoin() {
   type_ = RuleType::MARK_JOIN_GET_TO_INNER_JOIN;
 
   match_pattern = std::make_shared<Pattern>(OpType::LogicalMarkJoin);
   match_pattern->AddChild(std::make_shared<Pattern>(OpType::Leaf));
-  match_pattern->AddChild(std::make_shared<Pattern>(OpType::Get));
+  match_pattern->AddChild(std::make_shared<Pattern>(OpType::Leaf));
 }
 
-bool MarkJoinGetToInnerJoin::Check(std::shared_ptr<OperatorExpression> plan,
-                                   OptimizeContext *context) const {
+int MarkJoinToInnerJoin::Promise(GroupExpression *group_expr,
+                                 OptimizeContext *context) const {
+  (void)context;
+  auto root_type = match_pattern->Type();
+  // This rule is not applicable
+  if (root_type != OpType::Leaf && root_type != group_expr->Op().GetType()) {
+    return 0;
+  }
+  return static_cast<int>(UnnestPromise::Low);
+}
+
+bool MarkJoinToInnerJoin::Check(std::shared_ptr<OperatorExpression> plan,
+                                OptimizeContext *context) const {
   (void)context;
   (void)plan;
 
@@ -894,10 +1076,11 @@ bool MarkJoinGetToInnerJoin::Check(std::shared_ptr<OperatorExpression> plan,
   return true;
 }
 
-void MarkJoinGetToInnerJoin::Transform(
+void MarkJoinToInnerJoin::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed,
     UNUSED_ATTRIBUTE OptimizeContext *context) const {
+  LOG_TRACE("MarkJoinToInnerJoin::Transform");
   UNUSED_ATTRIBUTE auto mark_join = input->Op().As<LogicalMarkJoin>();
   auto &join_children = input->Children();
 
@@ -913,20 +1096,28 @@ void MarkJoinGetToInnerJoin::Transform(
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/// MarkJoinInnerJoinToInnerJoin
-MarkJoinInnerJoinToInnerJoin::MarkJoinInnerJoinToInnerJoin() {
-  type_ = RuleType::MARK_JOIN_INNER_JOIN_TO_INNER_JOIN;
+/// SingleJoinGetToInnerJoin
+SingleJoinToInnerJoin::SingleJoinToInnerJoin() {
+  type_ = RuleType::MARK_JOIN_GET_TO_INNER_JOIN;
 
-  match_pattern = std::make_shared<Pattern>(OpType::LogicalMarkJoin);
+  match_pattern = std::make_shared<Pattern>(OpType::LogicalSingleJoin);
   match_pattern->AddChild(std::make_shared<Pattern>(OpType::Leaf));
-  auto inner_join = std::make_shared<Pattern>(OpType::InnerJoin);
-  inner_join->AddChild(std::make_shared<Pattern>(OpType::Leaf));
-  inner_join->AddChild(std::make_shared<Pattern>(OpType::Leaf));
-  match_pattern->AddChild(inner_join);
+  match_pattern->AddChild(std::make_shared<Pattern>(OpType::Leaf));
 }
 
-bool MarkJoinInnerJoinToInnerJoin::Check(
-    std::shared_ptr<OperatorExpression> plan, OptimizeContext *context) const {
+int SingleJoinToInnerJoin::Promise(GroupExpression *group_expr,
+                                   OptimizeContext *context) const {
+  (void)context;
+  auto root_type = match_pattern->Type();
+  // This rule is not applicable
+  if (root_type != OpType::Leaf && root_type != group_expr->Op().GetType()) {
+    return 0;
+  }
+  return static_cast<int>(UnnestPromise::Low);
+}
+
+bool SingleJoinToInnerJoin::Check(std::shared_ptr<OperatorExpression> plan,
+                                  OptimizeContext *context) const {
   (void)context;
   (void)plan;
 
@@ -936,14 +1127,15 @@ bool MarkJoinInnerJoinToInnerJoin::Check(
   return true;
 }
 
-void MarkJoinInnerJoinToInnerJoin::Transform(
+void SingleJoinToInnerJoin::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed,
     UNUSED_ATTRIBUTE OptimizeContext *context) const {
-  UNUSED_ATTRIBUTE auto mark_join = input->Op().As<LogicalMarkJoin>();
+  LOG_TRACE("SingleJoinToInnerJoin::Transform");
+  UNUSED_ATTRIBUTE auto single_join = input->Op().As<LogicalSingleJoin>();
   auto &join_children = input->Children();
 
-  PL_ASSERT(mark_join->join_predicates.empty());
+  PL_ASSERT(single_join->join_predicates.empty());
 
   std::shared_ptr<OperatorExpression> output =
       std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
@@ -966,6 +1158,17 @@ PullFilterThroughMarkJoin::PullFilterThroughMarkJoin() {
   match_pattern->AddChild(filter);
 }
 
+int PullFilterThroughMarkJoin::Promise(GroupExpression *group_expr,
+                                       OptimizeContext *context) const {
+  (void)context;
+  auto root_type = match_pattern->Type();
+  // This rule is not applicable
+  if (root_type != OpType::Leaf && root_type != group_expr->Op().GetType()) {
+    return 0;
+  }
+  return static_cast<int>(UnnestPromise::High);
+}
+
 bool PullFilterThroughMarkJoin::Check(std::shared_ptr<OperatorExpression> plan,
                                       OptimizeContext *context) const {
   (void)context;
@@ -983,6 +1186,7 @@ void PullFilterThroughMarkJoin::Transform(
     std::shared_ptr<OperatorExpression> input,
     std::vector<std::shared_ptr<OperatorExpression>> &transformed,
     UNUSED_ATTRIBUTE OptimizeContext *context) const {
+  LOG_TRACE("PullFilterThroughMarkJoin::Transform");
   UNUSED_ATTRIBUTE auto mark_join = input->Op().As<LogicalMarkJoin>();
   auto &join_children = input->Children();
   auto filter = join_children[1]->Op();
@@ -1004,5 +1208,104 @@ void PullFilterThroughMarkJoin::Transform(
   transformed.push_back(output);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+/// PullFilterThroughAggregation
+PullFilterThroughAggregation::PullFilterThroughAggregation() {
+  type_ = RuleType::PULL_FILTER_THROUGH_AGGREGATION;
+
+  auto filter = std::make_shared<Pattern>(OpType::LogicalFilter);
+  filter->AddChild(std::make_shared<Pattern>(OpType::Leaf));
+  match_pattern = std::make_shared<Pattern>(OpType::LogicalAggregateAndGroupBy);
+  match_pattern->AddChild(filter);
+}
+
+int PullFilterThroughAggregation::Promise(GroupExpression *group_expr,
+                                          OptimizeContext *context) const {
+  (void)context;
+  auto root_type = match_pattern->Type();
+  // This rule is not applicable
+  if (root_type != OpType::Leaf && root_type != group_expr->Op().GetType()) {
+    return 0;
+  }
+  return static_cast<int>(UnnestPromise::High);
+}
+
+bool PullFilterThroughAggregation::Check(
+    std::shared_ptr<OperatorExpression> plan, OptimizeContext *context) const {
+  (void)context;
+  (void)plan;
+
+  auto &children = plan->Children();
+  PL_ASSERT(children.size() == 1);
+  UNUSED_ATTRIBUTE auto &r_grandchildren = children[1]->Children();
+  PL_ASSERT(r_grandchildren.size() == 1);
+
+  return true;
+}
+
+void PullFilterThroughAggregation::Transform(
+    std::shared_ptr<OperatorExpression> input,
+    std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+    UNUSED_ATTRIBUTE OptimizeContext *context) const {
+  LOG_TRACE("PullFilterThroughAggregation::Transform");
+  auto &memo = context->metadata->memo;
+  auto &filter_expr = input->Children()[0];
+  auto child_group_id =
+      filter_expr->Children()[0]->Op().As<LeafOperator>()->origin_group;
+  const auto &child_group_aliases_set =
+      memo.GetGroupByID(child_group_id)->GetTableAliases();
+
+  auto &predicates = filter_expr->Op().As<LogicalFilter>()->predicates;
+
+  std::vector<AnnotatedExpression> correlated_predicates;
+  std::vector<AnnotatedExpression> normal_predicates;
+  std::vector<std::shared_ptr<expression::AbstractExpression>> new_groupby_cols;
+  for (auto &predicate : predicates) {
+    if (util::IsSubset(child_group_aliases_set, predicate.table_alias_set)) {
+      normal_predicates.emplace_back(predicate);
+    } else {
+      // Correlated predicate, already in the form of
+      // (outer_relation.a = (expr))
+      correlated_predicates.emplace_back(predicate);
+      auto &root_expr = predicate.expr;
+      if (root_expr->GetChild(0)->GetDepth() < root_expr->GetDepth()) {
+        new_groupby_cols.emplace_back(root_expr->GetChild(1)->Copy());
+      } else {
+        new_groupby_cols.emplace_back(root_expr->GetChild(0)->Copy());
+      }
+    }
+  }
+
+  if (correlated_predicates.empty()) {
+    // No need to pull
+    return;
+  }
+
+  auto aggregation = input->Op().As<LogicalAggregateAndGroupBy>();
+  for (auto &col : aggregation->columns) {
+    new_groupby_cols.emplace_back(col->Copy());
+  }
+  std::shared_ptr<OperatorExpression> output =
+      std::make_shared<OperatorExpression>(
+          LogicalFilter::make(correlated_predicates));
+  std::vector<AnnotatedExpression> new_having(aggregation->having);
+  std::shared_ptr<OperatorExpression> new_aggregation =
+      std::make_shared<OperatorExpression>(
+          LogicalAggregateAndGroupBy::make(new_groupby_cols, new_having));
+  output->PushChild(new_aggregation);
+  auto bottom_operator = new_aggregation;
+
+  // Construct child filter if any
+  if (!normal_predicates.empty()) {
+    std::shared_ptr<OperatorExpression> new_filter =
+        std::make_shared<OperatorExpression>(
+            LogicalFilter::make(normal_predicates));
+    new_aggregation->PushChild(new_filter);
+    bottom_operator = new_filter;
+  }
+  bottom_operator->PushChild(filter_expr->Children()[0]);
+
+  transformed.push_back(output);
+}
 }  // namespace optimizer
 }  // namespace peloton

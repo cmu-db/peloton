@@ -29,12 +29,8 @@ void OptimizerTask::ConstructValidRules(
     GroupExpression *group_expr, OptimizeContext *context,
     std::vector<std::unique_ptr<Rule>> &rules,
     std::vector<RuleWithPromise> &valid_rules) {
-  //  LOG_DEBUG("Child size %lu", group_expr->GetChildrenGroupsSize());
   for (auto &rule : rules) {
-    // LOG_DEBUG("Op %d, Pattern Op %d",
-    // static_cast<int>(group_expr->Op().type()),
-    //           static_cast<int>(rule->GetMatchPattern()->Type()));
-    if (group_expr->Op().type() !=
+    if (group_expr->Op().GetType() !=
             rule->GetMatchPattern()->Type() ||  // Root pattern type mismatch
         group_expr->HasRuleExplored(rule.get()) ||  // Rule has been applied
         group_expr->GetChildrenGroupsSize() !=
@@ -61,7 +57,7 @@ RuleSet &OptimizerTask::GetRuleSet() const {
 // OptimizeGroup
 //===--------------------------------------------------------------------===//
 void OptimizeGroup::execute() {
-  // LOG_DEBUG("OptimizeGroup::Execute() group %d", group_->GetID());
+  LOG_TRACE("OptimizeGroup::Execute() group %d", group_->GetID());
   if (group_->GetCostLB() > context_->cost_upper_bound ||  // Cost LB > Cost UB
       group_->GetBestExpression(context_->required_prop) !=
           nullptr)  // Has optimized given the context
@@ -98,9 +94,8 @@ void OptimizeExpression::execute() {
                       GetRuleSet().GetImplementationRules(), valid_rules);
 
   std::sort(valid_rules.begin(), valid_rules.end());
-  // LOG_DEBUG("OptimizeExpression::execute() op %d, valid rules : %lu",
-  //           static_cast<int>(group_expr_->Op().type()), valid_rules.size());
-
+  LOG_TRACE("OptimizeExpression::execute() op %d, valid rules : %lu",
+            static_cast<int>(group_expr_->Op().GetType()), valid_rules.size());
   // Apply rule
   for (auto &r : valid_rules) {
     PushTask(new ApplyRule(group_expr_, r.rule, context_));
@@ -125,7 +120,7 @@ void OptimizeExpression::execute() {
 //===--------------------------------------------------------------------===//
 void ExploreGroup::execute() {
   if (group_->HasExplored()) return;
-  LOG_DEBUG("ExploreGroup::execute() ");
+  LOG_TRACE("ExploreGroup::execute() ");
 
   for (auto &logical_expr : group_->GetLogicalExpressions()) {
     PushTask(new ExploreExpression(logical_expr.get(), context_));
@@ -140,7 +135,7 @@ void ExploreGroup::execute() {
 // ExploreExpression
 //===--------------------------------------------------------------------===//
 void ExploreExpression::execute() {
-  LOG_DEBUG("ExploreExpression::execute() ");
+  LOG_TRACE("ExploreExpression::execute() ");
   std::vector<RuleWithPromise> valid_rules;
 
   // Construct valid transformation rules from rule set
@@ -172,7 +167,7 @@ void ExploreExpression::execute() {
 // ApplyRule
 //===--------------------------------------------------------------------===//
 void ApplyRule::execute() {
-  // LOG_DEBUG("ApplyRule::execute() ");
+  LOG_TRACE("ApplyRule::execute() ");
   if (group_expr_->HasRuleExplored(rule_)) return;
 
   GroupExprBindingIterator iterator(GetMemo(), group_expr_,
@@ -262,7 +257,7 @@ void DeriveStats::execute() {
 //===--------------------------------------------------------------------===//
 void OptimizeInputs::execute() {
   // Init logic: only run once per task
-  // LOG_DEBUG("OptimizeInputs::execute() ");
+  LOG_TRACE("OptimizeInputs::execute() ");
   if (cur_child_idx_ == -1) {
     // TODO(patrick):
     // 1. We can init input cost using non-zero value for pruning
@@ -296,8 +291,8 @@ void OptimizeInputs::execute() {
       // 1. Collect stats needed and cache them in the group
       // 2. Calculate cost based on children's stats
       CostCalculator cost_calculator;
-      cur_total_cost_ += cost_calculator.CalculateCost(
-          group_expr_, &context_->metadata->memo);
+      cur_total_cost_ +=
+          cost_calculator.CalculateCost(group_expr_, &context_->metadata->memo);
     }
 
     for (; cur_child_idx_ < (int)group_expr_->GetChildrenGroupsSize();
@@ -417,7 +412,9 @@ void TopDownRewrite::execute() {
                       GetRuleSet().GetRewriteRulesByName(rule_set_name_),
                       valid_rules);
 
-  std::sort(valid_rules.begin(), valid_rules.end());
+  // Sort so that we apply rewrite rules with higher promise first
+  std::sort(valid_rules.begin(), valid_rules.end(),
+            std::greater<RuleWithPromise>());
 
   for (auto &r : valid_rules) {
     GroupExprBindingIterator iterator(GetMemo(), cur_group_expr,
@@ -476,7 +473,9 @@ void BottomUpRewrite::execute() {
                       GetRuleSet().GetRewriteRulesByName(rule_set_name_),
                       valid_rules);
 
-  std::sort(valid_rules.begin(), valid_rules.end());
+  // Sort so that we apply rewrite rules with higher promise first
+  std::sort(valid_rules.begin(), valid_rules.end(),
+            std::greater<RuleWithPromise>());
 
   for (auto &r : valid_rules) {
     GroupExprBindingIterator iterator(GetMemo(), cur_group_expr,

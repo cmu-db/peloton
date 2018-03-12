@@ -163,6 +163,9 @@ elif [[ "$DISTRO" == *"FEDORA"* ]]; then
         ${LLVM}-static \
         libedit-devel \
         postgresql \
+        libasan \
+        libtsan \
+        libubsan \
         libatomic
 
 ## ------------------------------------------------

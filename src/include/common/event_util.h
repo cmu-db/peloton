@@ -2,19 +2,15 @@
 //
 //                         Peloton
 //
-// error_util.h
+// event_util.h
 //
-// Identification: src/include/network/error_util.h
+// Identification: src/include/common/event_util.h
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #pragma once
-
-#include <string>
-#include <unordered_map>
-#include <utility>
 
 #include <event2/buffer.h>
 #include <event2/bufferevent.h>
@@ -25,7 +21,6 @@
 #include "common/logger.h"
 
 namespace peloton {
-namespace network {
 /**
  * Static utility class with wrappers for libevent functions.
  *
@@ -86,5 +81,4 @@ class EventUtil {
                 "Error in event base dispatch");
   }
 };
-}  // namespace network
 }  // namespace peloton

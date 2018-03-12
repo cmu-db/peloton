@@ -24,51 +24,51 @@ Operator::Operator(BaseOperatorNode *node) : node(node) {}
 
 void Operator::Accept(OperatorVisitor *v) const { node->Accept(v); }
 
-std::string Operator::name() const {
-  if (defined()) {
-    return node->name();
+std::string Operator::GetName() const {
+  if (IsDefined()) {
+    return node->GetName();
   }
   return "Undefined";
 }
 
-OpType Operator::type() const {
-  if (defined()) {
-    return node->type();
+OpType Operator::GetType() const {
+  if (IsDefined()) {
+    return node->GetType();
   }
   return OpType::Undefined;
 }
 
 bool Operator::IsLogical() const {
-  if (defined()) {
+  if (IsDefined()) {
     return node->IsLogical();
   }
   return false;
 }
 
 bool Operator::IsPhysical() const {
-  if (defined()) {
+  if (IsDefined()) {
     return node->IsPhysical();
   }
   return false;
 }
 
 hash_t Operator::Hash() const {
-  if (defined()) {
+  if (IsDefined()) {
     return node->Hash();
   }
   return 0;
 }
 
 bool Operator::operator==(const Operator &r) {
-  if (defined() && r.defined()) {
+  if (IsDefined() && r.IsDefined()) {
     return *node == *r.node;
-  } else if (!defined() && !r.defined()) {
+  } else if (!IsDefined() && !r.IsDefined()) {
     return true;
   }
   return false;
 }
 
-bool Operator::defined() const { return node != nullptr; }
+bool Operator::IsDefined() const { return node != nullptr; }
 
 }  // namespace optimizer
 }  // namespace peloton

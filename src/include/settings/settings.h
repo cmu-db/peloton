@@ -97,6 +97,11 @@ SETTING_int(monoqueue_worker_pool_size,
             4,
             false, false)
 
+// Number of connection threads used by peloton
+SETTING_int(connection_thread_count,
+            "Number of connection threads (default: std::hardware_concurrency())",
+            std::thread::hardware_concurrency(), false, false)
+
 //===----------------------------------------------------------------------===//
 // WRITE AHEAD LOG
 //===----------------------------------------------------------------------===//
@@ -150,6 +155,11 @@ SETTING_bool(brain,
             "Enable brain (default: false)",
             false,
             true, true)
+
+SETTING_string(peloton_address,
+               "ip and port of the peloton rpc service, address:port",
+               "127.0.0.1:15445",
+               false, false)
 
 // Size of the brain task queue
 SETTING_int(brain_task_queue_size,

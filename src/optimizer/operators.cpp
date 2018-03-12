@@ -30,8 +30,8 @@ Operator LeafOperator::make(GroupID group) {
 //===--------------------------------------------------------------------===//
 Operator LogicalGet::make(oid_t get_id,
                           std::vector<AnnotatedExpression> predicates,
-                          std::shared_ptr<catalog::TableCatalogObject> table, std::string alias,
-                          bool update) {
+                          std::shared_ptr<catalog::TableCatalogObject> table,
+                          std::string alias, bool update) {
   LogicalGet *get = new LogicalGet;
   get->table = table;
   get->table_alias = alias;
@@ -51,7 +51,7 @@ hash_t LogicalGet::Hash() const {
 }
 
 bool LogicalGet::operator==(const BaseOperatorNode &r) {
-  if (r.type() != OpType::Get) return false;
+  if (r.GetType()!= OpType::Get) return false;
   const LogicalGet &node = *static_cast<const LogicalGet *>(&r);
   if (predicates.size() != node.predicates.size()) return false;
   for (size_t i = 0; i < predicates.size(); i++) {
@@ -78,7 +78,7 @@ Operator LogicalQueryDerivedGet::make(
 }
 
 bool LogicalQueryDerivedGet::operator==(const BaseOperatorNode &node) {
-  if (node.type() != OpType::LogicalQueryDerivedGet) return false;
+  if (node.GetType() != OpType::LogicalQueryDerivedGet) return false;
   const LogicalQueryDerivedGet &r =
       *static_cast<const LogicalQueryDerivedGet *>(&node);
   return get_id == r.get_id;
@@ -107,7 +107,7 @@ hash_t LogicalFilter::Hash() const {
 }
 
 bool LogicalFilter::operator==(const BaseOperatorNode &r) {
-  if (r.type() != OpType::LogicalFilter) return false;
+  if (r.GetType() != OpType::LogicalFilter) return false;
   const LogicalFilter &node = *static_cast<const LogicalFilter *>(&r);
   if (predicates.size() != node.predicates.size()) return false;
   for (size_t i = 0; i < predicates.size(); i++) {
@@ -150,12 +150,13 @@ hash_t LogicalDependentJoin::Hash() const {
 }
 
 bool LogicalDependentJoin::operator==(const BaseOperatorNode &r) {
-  if (r.type() != OpType::LogicalDependentJoin) return false;
+  if (r.GetType() != OpType::LogicalDependentJoin) return false;
   const LogicalDependentJoin &node =
       *static_cast<const LogicalDependentJoin *>(&r);
   if (join_predicates.size() != node.join_predicates.size()) return false;
   for (size_t i = 0; i < join_predicates.size(); i++) {
-    if (!join_predicates[i].expr->ExactlyEquals(*node.join_predicates[i].expr.get()))
+    if (!join_predicates[i].expr->ExactlyEquals(
+            *node.join_predicates[i].expr.get()))
       return false;
   }
   return true;
@@ -184,16 +185,16 @@ hash_t LogicalMarkJoin::Hash() const {
 }
 
 bool LogicalMarkJoin::operator==(const BaseOperatorNode &r) {
-  if (r.type() != OpType::LogicalMarkJoin) return false;
+  if (r.GetType() != OpType::LogicalMarkJoin) return false;
   const LogicalMarkJoin &node = *static_cast<const LogicalMarkJoin *>(&r);
   if (join_predicates.size() != node.join_predicates.size()) return false;
   for (size_t i = 0; i < join_predicates.size(); i++) {
-    if (!join_predicates[i].expr->ExactlyEquals(*node.join_predicates[i].expr.get()))
+    if (!join_predicates[i].expr->ExactlyEquals(
+            *node.join_predicates[i].expr.get()))
       return false;
   }
   return true;
 }
-
 
 //===--------------------------------------------------------------------===//
 // SingleJoin
@@ -218,11 +219,12 @@ hash_t LogicalSingleJoin::Hash() const {
 }
 
 bool LogicalSingleJoin::operator==(const BaseOperatorNode &r) {
-  if (r.type() != OpType::LogicalSingleJoin) return false;
+  if (r.GetType() != OpType::LogicalSingleJoin) return false;
   const LogicalSingleJoin &node = *static_cast<const LogicalSingleJoin *>(&r);
   if (join_predicates.size() != node.join_predicates.size()) return false;
   for (size_t i = 0; i < join_predicates.size(); i++) {
-    if (!join_predicates[i].expr->ExactlyEquals(*node.join_predicates[i].expr.get()))
+    if (!join_predicates[i].expr->ExactlyEquals(
+            *node.join_predicates[i].expr.get()))
       return false;
   }
   return true;
@@ -251,11 +253,12 @@ hash_t LogicalInnerJoin::Hash() const {
 }
 
 bool LogicalInnerJoin::operator==(const BaseOperatorNode &r) {
-  if (r.type() != OpType::InnerJoin) return false;
+  if (r.GetType() != OpType::InnerJoin) return false;
   const LogicalInnerJoin &node = *static_cast<const LogicalInnerJoin *>(&r);
   if (join_predicates.size() != node.join_predicates.size()) return false;
   for (size_t i = 0; i < join_predicates.size(); i++) {
-    if (!join_predicates[i].expr->ExactlyEquals(*node.join_predicates[i].expr.get()))
+    if (!join_predicates[i].expr->ExactlyEquals(
+            *node.join_predicates[i].expr.get()))
       return false;
   }
   return true;
@@ -309,6 +312,14 @@ Operator LogicalAggregateAndGroupBy::make() {
   group_by->columns = {};
   return Operator(group_by);
 }
+
+Operator LogicalAggregateAndGroupBy::make(
+    std::vector<std::shared_ptr<expression::AbstractExpression>> &columns) {
+  LogicalAggregateAndGroupBy *group_by = new LogicalAggregateAndGroupBy;
+  group_by->columns = move(columns);
+  return Operator(group_by);
+}
+
 Operator LogicalAggregateAndGroupBy::make(
     std::vector<std::shared_ptr<expression::AbstractExpression>> &columns,
     std::vector<AnnotatedExpression> &having) {
@@ -319,15 +330,13 @@ Operator LogicalAggregateAndGroupBy::make(
 }
 
 bool LogicalAggregateAndGroupBy::operator==(const BaseOperatorNode &node) {
-  if (node.type() != OpType::LogicalAggregateAndGroupBy) return false;
+  if (node.GetType() != OpType::LogicalAggregateAndGroupBy) return false;
   const LogicalAggregateAndGroupBy &r =
       *static_cast<const LogicalAggregateAndGroupBy *>(&node);
   if (having.size() != r.having.size() || columns.size() != r.columns.size())
     return false;
   for (size_t i = 0; i < having.size(); i++) {
-    if (!having[i].expr->
-        ExactlyEquals(*r.having[i].expr.get()))
-      return false;
+    if (!having[i].expr->ExactlyEquals(*r.having[i].expr.get())) return false;
   }
   return expression::ExpressionUtil::EqualExpressions(columns, r.columns);
 }
@@ -343,7 +352,8 @@ hash_t LogicalAggregateAndGroupBy::Hash() const {
 // Insert
 //===--------------------------------------------------------------------===//
 Operator LogicalInsert::make(
-    std::shared_ptr<catalog::TableCatalogObject> target_table, const std::vector<std::string> *columns,
+    std::shared_ptr<catalog::TableCatalogObject> target_table,
+    const std::vector<std::string> *columns,
     const std::vector<std::vector<
         std::unique_ptr<peloton::expression::AbstractExpression>>> *values) {
   LogicalInsert *insert_op = new LogicalInsert;
@@ -353,7 +363,8 @@ Operator LogicalInsert::make(
   return Operator(insert_op);
 }
 
-Operator LogicalInsertSelect::make(std::shared_ptr<catalog::TableCatalogObject> target_table) {
+Operator LogicalInsertSelect::make(
+    std::shared_ptr<catalog::TableCatalogObject> target_table) {
   LogicalInsertSelect *insert_op = new LogicalInsertSelect;
   insert_op->target_table = target_table;
   return Operator(insert_op);
@@ -362,7 +373,8 @@ Operator LogicalInsertSelect::make(std::shared_ptr<catalog::TableCatalogObject> 
 //===--------------------------------------------------------------------===//
 // Delete
 //===--------------------------------------------------------------------===//
-Operator LogicalDelete::make(std::shared_ptr<catalog::TableCatalogObject> target_table) {
+Operator LogicalDelete::make(
+    std::shared_ptr<catalog::TableCatalogObject> target_table) {
   LogicalDelete *delete_op = new LogicalDelete;
   delete_op->target_table = target_table;
   return Operator(delete_op);
@@ -373,8 +385,8 @@ Operator LogicalDelete::make(std::shared_ptr<catalog::TableCatalogObject> target
 //===--------------------------------------------------------------------===//
 Operator LogicalUpdate::make(
     std::shared_ptr<catalog::TableCatalogObject> target_table,
-    const std::vector<std::unique_ptr<peloton::parser::UpdateClause>> *
-        updates) {
+    const std::vector<std::unique_ptr<peloton::parser::UpdateClause>>
+        *updates) {
   LogicalUpdate *update_op = new LogicalUpdate;
   update_op->target_table = target_table;
   update_op->updates = updates;
@@ -410,10 +422,10 @@ Operator DummyScan::make() {
 //===--------------------------------------------------------------------===//
 // SeqScan
 //===--------------------------------------------------------------------===//
-Operator PhysicalSeqScan::make(oid_t get_id, std::shared_ptr<catalog::TableCatalogObject> table,
-                               std::string alias,
-                               std::vector<AnnotatedExpression> predicates,
-                               bool update) {
+Operator PhysicalSeqScan::make(
+    oid_t get_id, std::shared_ptr<catalog::TableCatalogObject> table,
+    std::string alias, std::vector<AnnotatedExpression> predicates,
+    bool update) {
   assert(table != nullptr);
   PhysicalSeqScan *scan = new PhysicalSeqScan;
   scan->table_ = table;
@@ -426,7 +438,7 @@ Operator PhysicalSeqScan::make(oid_t get_id, std::shared_ptr<catalog::TableCatal
 }
 
 bool PhysicalSeqScan::operator==(const BaseOperatorNode &r) {
-  if (r.type() != OpType::SeqScan) return false;
+  if (r.GetType() != OpType::SeqScan) return false;
   const PhysicalSeqScan &node = *static_cast<const PhysicalSeqScan *>(&r);
   if (predicates.size() != node.predicates.size()) return false;
   for (size_t i = 0; i < predicates.size(); i++) {
@@ -447,13 +459,12 @@ hash_t PhysicalSeqScan::Hash() const {
 //===--------------------------------------------------------------------===//
 // IndexScan
 //===--------------------------------------------------------------------===//
-Operator PhysicalIndexScan::make(oid_t get_id, std::shared_ptr<catalog::TableCatalogObject> table,
-                                 std::string alias,
-                                 std::vector<AnnotatedExpression> predicates,
-                                 bool update, oid_t index_id,
-                                 std::vector<oid_t> key_column_id_list,
-                                 std::vector<ExpressionType> expr_type_list,
-                                 std::vector<type::Value> value_list) {
+Operator PhysicalIndexScan::make(
+    oid_t get_id, std::shared_ptr<catalog::TableCatalogObject> table,
+    std::string alias, std::vector<AnnotatedExpression> predicates, bool update,
+    oid_t index_id, std::vector<oid_t> key_column_id_list,
+    std::vector<ExpressionType> expr_type_list,
+    std::vector<type::Value> value_list) {
   assert(table != nullptr);
   PhysicalIndexScan *scan = new PhysicalIndexScan;
   scan->table_ = table;
@@ -470,7 +481,7 @@ Operator PhysicalIndexScan::make(oid_t get_id, std::shared_ptr<catalog::TableCat
 }
 
 bool PhysicalIndexScan::operator==(const BaseOperatorNode &r) {
-  if (r.type() != OpType::IndexScan) return false;
+  if (r.GetType() != OpType::IndexScan) return false;
   const PhysicalIndexScan &node = *static_cast<const PhysicalIndexScan *>(&r);
   // TODO: Should also check value list
   if (index_id != node.index_id ||
@@ -512,7 +523,7 @@ Operator QueryDerivedScan::make(
 }
 
 bool QueryDerivedScan::operator==(const BaseOperatorNode &node) {
-  if (node.type() != OpType::QueryDerivedScan) return false;
+  if (node.GetType() != OpType::QueryDerivedScan) return false;
   const QueryDerivedScan &r = *static_cast<const QueryDerivedScan *>(&node);
   return get_id == r.get_id;
 }
@@ -547,8 +558,8 @@ Operator PhysicalLimit::make(int64_t offset, int64_t limit) {
 //===--------------------------------------------------------------------===//
 Operator PhysicalInnerNLJoin::make(
     std::vector<AnnotatedExpression> conditions,
-    std::vector<std::unique_ptr<expression::AbstractExpression>>& left_keys,
-    std::vector<std::unique_ptr<expression::AbstractExpression>>& right_keys) {
+    std::vector<std::unique_ptr<expression::AbstractExpression>> &left_keys,
+    std::vector<std::unique_ptr<expression::AbstractExpression>> &right_keys) {
   PhysicalInnerNLJoin *join = new PhysicalInnerNLJoin();
   join->join_predicates = std::move(conditions);
   join->left_keys = std::move(left_keys);
@@ -569,7 +580,7 @@ hash_t PhysicalInnerNLJoin::Hash() const {
 }
 
 bool PhysicalInnerNLJoin::operator==(const BaseOperatorNode &r) {
-  if (r.type() != OpType::InnerNLJoin) return false;
+  if (r.GetType() != OpType::InnerNLJoin) return false;
   const PhysicalInnerNLJoin &node =
       *static_cast<const PhysicalInnerNLJoin *>(&r);
   if (join_predicates.size() != node.join_predicates.size() ||
@@ -583,8 +594,8 @@ bool PhysicalInnerNLJoin::operator==(const BaseOperatorNode &r) {
     if (!right_keys[i]->ExactlyEquals(*node.right_keys[i].get())) return false;
   }
   for (size_t i = 0; i < join_predicates.size(); i++) {
-    if (!join_predicates[i].expr->
-        ExactlyEquals(*node.join_predicates[i].expr.get()))
+    if (!join_predicates[i].expr->ExactlyEquals(
+            *node.join_predicates[i].expr.get()))
       return false;
   }
   return true;
@@ -625,8 +636,8 @@ Operator PhysicalOuterNLJoin::make(
 //===--------------------------------------------------------------------===//
 Operator PhysicalInnerHashJoin::make(
     std::vector<AnnotatedExpression> conditions,
-    std::vector<std::unique_ptr<expression::AbstractExpression>>& left_keys,
-    std::vector<std::unique_ptr<expression::AbstractExpression>>& right_keys) {
+    std::vector<std::unique_ptr<expression::AbstractExpression>> &left_keys,
+    std::vector<std::unique_ptr<expression::AbstractExpression>> &right_keys) {
   PhysicalInnerHashJoin *join = new PhysicalInnerHashJoin();
   join->join_predicates = std::move(conditions);
   join->left_keys = std::move(left_keys);
@@ -646,7 +657,7 @@ hash_t PhysicalInnerHashJoin::Hash() const {
 }
 
 bool PhysicalInnerHashJoin::operator==(const BaseOperatorNode &r) {
-  if (r.type() != OpType::InnerHashJoin) return false;
+  if (r.GetType() != OpType::InnerHashJoin) return false;
   const PhysicalInnerHashJoin &node =
       *static_cast<const PhysicalInnerHashJoin *>(&r);
   if (join_predicates.size() != node.join_predicates.size() ||
@@ -660,8 +671,8 @@ bool PhysicalInnerHashJoin::operator==(const BaseOperatorNode &r) {
     if (!right_keys[i]->ExactlyEquals(*node.right_keys[i].get())) return false;
   }
   for (size_t i = 0; i < join_predicates.size(); i++) {
-    if (!join_predicates[i].expr->
-        ExactlyEquals(*node.join_predicates[i].expr.get()))
+    if (!join_predicates[i].expr->ExactlyEquals(
+            *node.join_predicates[i].expr.get()))
       return false;
   }
   return true;
@@ -701,7 +712,8 @@ Operator PhysicalOuterHashJoin::make(
 // PhysicalInsert
 //===--------------------------------------------------------------------===//
 Operator PhysicalInsert::make(
-    std::shared_ptr<catalog::TableCatalogObject> target_table, const std::vector<std::string> *columns,
+    std::shared_ptr<catalog::TableCatalogObject> target_table,
+    const std::vector<std::string> *columns,
     const std::vector<std::vector<
         std::unique_ptr<peloton::expression::AbstractExpression>>> *values) {
   PhysicalInsert *insert_op = new PhysicalInsert;
@@ -714,7 +726,8 @@ Operator PhysicalInsert::make(
 //===--------------------------------------------------------------------===//
 // PhysicalInsertSelect
 //===--------------------------------------------------------------------===//
-Operator PhysicalInsertSelect::make(std::shared_ptr<catalog::TableCatalogObject> target_table) {
+Operator PhysicalInsertSelect::make(
+    std::shared_ptr<catalog::TableCatalogObject> target_table) {
   PhysicalInsertSelect *insert_op = new PhysicalInsertSelect;
   insert_op->target_table = target_table;
   return Operator(insert_op);
@@ -723,7 +736,8 @@ Operator PhysicalInsertSelect::make(std::shared_ptr<catalog::TableCatalogObject>
 //===--------------------------------------------------------------------===//
 // PhysicalDelete
 //===--------------------------------------------------------------------===//
-Operator PhysicalDelete::make(std::shared_ptr<catalog::TableCatalogObject> target_table) {
+Operator PhysicalDelete::make(
+    std::shared_ptr<catalog::TableCatalogObject> target_table) {
   PhysicalDelete *delete_op = new PhysicalDelete;
   delete_op->target_table = target_table;
   return Operator(delete_op);
@@ -734,8 +748,8 @@ Operator PhysicalDelete::make(std::shared_ptr<catalog::TableCatalogObject> targe
 //===--------------------------------------------------------------------===//
 Operator PhysicalUpdate::make(
     std::shared_ptr<catalog::TableCatalogObject> target_table,
-    const std::vector<std::unique_ptr<peloton::parser::UpdateClause>> *
-        updates) {
+    const std::vector<std::unique_ptr<peloton::parser::UpdateClause>>
+        *updates) {
   PhysicalUpdate *update = new PhysicalUpdate;
   update->target_table = target_table;
   update->updates = updates;
@@ -755,15 +769,13 @@ Operator PhysicalHashGroupBy::make(
 }
 
 bool PhysicalHashGroupBy::operator==(const BaseOperatorNode &node) {
-  if (node.type() != OpType::HashGroupBy) return false;
+  if (node.GetType() != OpType::HashGroupBy) return false;
   const PhysicalHashGroupBy &r =
       *static_cast<const PhysicalHashGroupBy *>(&node);
   if (having.size() != r.having.size() || columns.size() != r.columns.size())
     return false;
   for (size_t i = 0; i < having.size(); i++) {
-    if (!having[i].expr->
-        ExactlyEquals(*r.having[i].expr.get()))
-      return false;
+    if (!having[i].expr->ExactlyEquals(*r.having[i].expr.get())) return false;
   }
   return expression::ExpressionUtil::EqualExpressions(columns, r.columns);
 }
@@ -788,15 +800,13 @@ Operator PhysicalSortGroupBy::make(
 }
 
 bool PhysicalSortGroupBy::operator==(const BaseOperatorNode &node) {
-  if (node.type() != OpType::SortGroupBy) return false;
+  if (node.GetType() != OpType::SortGroupBy) return false;
   const PhysicalSortGroupBy &r =
       *static_cast<const PhysicalSortGroupBy *>(&node);
   if (having.size() != r.having.size() || columns.size() != r.columns.size())
     return false;
   for (size_t i = 0; i < having.size(); i++) {
-    if (!having[i].expr->
-        ExactlyEquals(*r.having[i].expr.get()))
-      return false;
+    if (!having[i].expr->ExactlyEquals(*r.having[i].expr.get())) return false;
   }
   return expression::ExpressionUtil::EqualExpressions(columns, r.columns);
 }
@@ -859,7 +869,8 @@ std::string OperatorNode<LogicalOuterJoin>::name_ = "LogicalOuterJoin";
 template <>
 std::string OperatorNode<LogicalSemiJoin>::name_ = "LogicalSemiJoin";
 template <>
-std::string OperatorNode<LogicalAggregateAndGroupBy>::name_ = "LogicalAggregateAndGroupBy";
+std::string OperatorNode<LogicalAggregateAndGroupBy>::name_ =
+    "LogicalAggregateAndGroupBy";
 template <>
 std::string OperatorNode<LogicalInsert>::name_ = "LogicalInsert";
 template <>
@@ -949,7 +960,8 @@ OpType OperatorNode<LogicalOuterJoin>::type_ = OpType::OuterJoin;
 template <>
 OpType OperatorNode<LogicalSemiJoin>::type_ = OpType::SemiJoin;
 template <>
-OpType OperatorNode<LogicalAggregateAndGroupBy>::type_ = OpType::LogicalAggregateAndGroupBy;
+OpType OperatorNode<LogicalAggregateAndGroupBy>::type_ =
+    OpType::LogicalAggregateAndGroupBy;
 template <>
 OpType OperatorNode<LogicalInsert>::type_ = OpType::LogicalInsert;
 template <>
