@@ -167,8 +167,8 @@ class SkipList {
         goto retry;
       }
       if (unique_key) {  // insert fail
-
         // GC ValueNode and Node
+        new_node->val_ptr = nullptr;
         epoch->AddGarbageValueNode(val_ptr);
         epoch->AddGarbageNode(new_node);
         LOG_TRACE("Insert leave epoch");
@@ -188,6 +188,7 @@ class SkipList {
           if (old_val_ptr == nullptr) {  // there is an exist value in the value
                                          // list equal to val_ptr->val
             // GC ValueNode and Node
+            new_node->val_ptr = nullptr;
             epoch->AddGarbageValueNode(val_ptr);
             epoch->AddGarbageNode(new_node);
             LOG_TRACE("Insert leave epoch");
@@ -201,6 +202,7 @@ class SkipList {
             if (old_val_ptr->next.compare_exchange_strong(val_next, val_ptr)) {
               // install current value at the end of value linked list
               // GC Node
+              new_node->val_ptr = nullptr;
               epoch->AddGarbageNode(new_node);
               LOG_TRACE("Insert leave epoch");
               epoch->LeaveEpoch(current_epoch);
@@ -333,6 +335,7 @@ class SkipList {
       }
       if (unique_key) {
         // GC ValueNode and Node
+        new_node->val_ptr = nullptr;
         epoch->AddGarbageValueNode(val_ptr);
         epoch->AddGarbageNode(new_node);
         LOG_TRACE("Cond Insert leave epoch");
@@ -353,6 +356,7 @@ class SkipList {
           if (old_val_ptr == nullptr) {  // there is an exist value in the value
                                          // list equal to val_ptr->val
             // GC ValueNode and Node
+            new_node->val_ptr = nullptr;
             epoch->AddGarbageValueNode(val_ptr);
             epoch->AddGarbageNode(new_node);
             LOG_TRACE("Cond Insert leave epoch");
@@ -365,6 +369,7 @@ class SkipList {
           if (!is_deleted_val_ptr(val_next)) {  // tail is not deleted
             if (old_val_ptr->next.compare_exchange_strong(val_next, val_ptr)) {
               // install current value at the end of value linked list
+              new_node->val_ptr = nullptr;
               epoch->AddGarbageNode(new_node);
               LOG_TRACE("Cond Insert leave epoch");
               epoch->LeaveEpoch(current_epoch);
