@@ -248,6 +248,8 @@ class SkipList {
 
         delete[](preds);
         delete[](succs);
+        preds = nullptr;
+        succs = nullptr;
         Search(key, preds, succs, level);
       }
     }
@@ -409,6 +411,8 @@ class SkipList {
         LOG_DEBUG("%s: CAS fail, search again", __func__);
         delete[](preds);
         delete[](succs);
+        preds = nullptr;
+        succs = nullptr;
         Search(key, preds, succs, level);
       }
     }
@@ -498,6 +502,8 @@ class SkipList {
     }
     delete[](preds);
     delete[](succs);
+    preds = nullptr;
+    succs = nullptr;
     // search is intended to just jump all logical deleted nodes
     Search(key, preds, succs, level);
     delete[](preds);
@@ -540,6 +546,8 @@ class SkipList {
    * */
   void Search(const KeyType &key, Node **&left_list, Node **&right_list,
               int &level) {
+    LOG_TRACE("search join epoch");
+    EpochNode *current_epoch = epoch->JoinEpoch();
     Node *left = head.load(), *left_next = nullptr, *right = nullptr,
          *right_next = nullptr;
     level = left->level;
@@ -583,6 +591,8 @@ class SkipList {
       left_list[i] = left;
       right_list[i] = right;
     }
+    LOG_TRACE("search leave epoch");
+    epoch->LeaveEpoch(current_epoch);
     return;
   }
 
@@ -649,11 +659,15 @@ class SkipList {
         return *this;
       }
 
+      LOG_TRACE("fwd move ahead join epoch");
+      EpochNode *current_epoch = parent->epoch->JoinEpoch();
       // Make a copy of the current one before advancing
       // This will increase ref count temporarily, but it is always consistent
       ForwardIterator temp = *this;
 
       MoveAheadByOne();
+      LOG_TRACE("fwd move ahead leave epoch");
+      parent->epoch->LeaveEpoch(current_epoch);
 
       return temp;
     }
