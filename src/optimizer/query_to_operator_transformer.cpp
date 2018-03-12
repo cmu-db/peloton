@@ -250,14 +250,6 @@ void QueryToOperatorTransformer::Visit(parser::InsertStatement *op) {
     insert_expr->PushChild(output_expr_);
     output_expr_ = insert_expr;
   } else {
-    /*auto storage_manager = storage::StorageManager::GetInstance();
-    auto database =
-        storage_manager->GetDatabaseWithOid(target_table->GetDatabaseOid());
-    auto table = database->GetTableWithOid(target_table->GetTableOid());
-
-    auto *schema = table->GetSchema();
-    */
-
     // column_objects represents the columns for the current table as defined in
     // its schema
     auto column_objects = target_table->GetColumnObjects();
@@ -272,6 +264,7 @@ void QueryToOperatorTransformer::Visit(parser::InsertStatement *op) {
         } else if (values.size() < column_objects.size()) {
           for (oid_t i = values.size(); i != column_objects.size(); ++i) {  // check whether null values are allowed in the rest of the columns
             if (column_objects[i]->IsNotNull()) {
+              // TODO: Add check for default value's existence for the current column
               throw CatalogException(
               "ERROR:  null value in column \"" + column_objects[i]->GetColumnName() + "\" violates not-null constraint");
             }
@@ -295,8 +288,6 @@ void QueryToOperatorTransformer::Visit(parser::InsertStatement *op) {
         }
       }
 
-      // auto &table_columns = schema->GetColumns();
-      // auto table_columns_num = schema->GetColumnCount();
       for (size_t idx = 0; idx != num_columns; ++idx) {
         auto col = (op->columns)[idx];
         auto found =
