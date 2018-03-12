@@ -30,6 +30,7 @@
 #include "storage/data_table.h"
 #include "storage/database.h"
 #include "storage/table_factory.h"
+#include "storage/tile.h"
 #include "storage/tile_group.h"
 #include "storage/tile_group_factory.h"
 #include "storage/tuple.h"
@@ -252,8 +253,13 @@ void TestingExecutorUtil::PopulateTable(storage::DataTable *table, int num_rows,
  */
 void TestingExecutorUtil::PopulateTiles(
     std::shared_ptr<storage::TileGroup> tile_group, int num_rows) {
+  size_t  tile_count = tile_group->GetTileCount();
   // Create tuple schema from tile schemas.
-  std::vector<catalog::Schema> &tile_schemas = tile_group->GetTileSchemas();
+  std::vector<catalog::Schema> tile_schemas;
+  for (oid_t tile_id = 0; tile_id < tile_count; tile_id++) {
+    tile_schemas.push_back(*(tile_group->GetTile(tile_id)->GetSchema()));
+  }
+
   std::unique_ptr<catalog::Schema> schema(
       catalog::Schema::AppendSchemaList(tile_schemas));
 
