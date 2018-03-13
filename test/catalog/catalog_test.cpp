@@ -16,6 +16,7 @@
 #include "catalog/database_metrics_catalog.h"
 #include "catalog/index_catalog.h"
 #include "catalog/query_metrics_catalog.h"
+#include "catalog/system_catalogs.h"
 #include "catalog/table_catalog.h"
 #include "common/harness.h"
 #include "common/logger.h"
@@ -184,9 +185,11 @@ TEST_F(CatalogTests, TableObject) {
 
   // update pg_table SET version_oid = 1 where table_name = department_table
   oid_t department_table_oid = table_object->GetTableOid();
-  bool update_result = catalog::TableCatalog::GetInstance()->UpdateVersionId(
-      1, department_table_oid, txn);
-  // get version id after update
+  auto pg_table = catalog::Catalog::GetInstance()
+                      ->GetSystemCatalogs(table_object->GetDatabaseOid())
+                      ->GetTableCatalog();
+  bool update_result = pg_table->UpdateVersionId(1, department_table_oid, txn);
+  // get version id after update, invalidate old cache
   table_object = catalog::Catalog::GetInstance()->GetTableObject(
       "EMP_DB", "department_table", txn);
   uint32_t version_oid = table_object->GetVersionId();
@@ -201,8 +204,9 @@ TEST_F(CatalogTests, DroppingTable) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto catalog = catalog::Catalog::GetInstance();
+  // everytime we create a database, there will be 3 catalog tables inside
   EXPECT_EQ(
-      3,
+      6,
       (int)catalog->GetDatabaseObject("EMP_DB", txn)->GetTableObjects().size());
   auto database_object =
       catalog::Catalog::GetInstance()->GetDatabaseObject("EMP_DB", txn);
@@ -214,9 +218,8 @@ TEST_F(CatalogTests, DroppingTable) {
   EXPECT_NE(nullptr, database_object);
   auto department_table_object =
       database_object->GetTableObject("department_table");
-  //  catalog::Catalog::GetInstance()->PrintCatalogs();
   EXPECT_EQ(
-      2,
+      5,
       (int)catalog->GetDatabaseObject("EMP_DB", txn)->GetTableObjects().size());
   txn_manager.CommitTransaction(txn);
 
@@ -229,7 +232,7 @@ TEST_F(CatalogTests, DroppingTable) {
                CatalogException);
 
   EXPECT_EQ(
-      2,
+      5,
       (int)catalog->GetDatabaseObject("EMP_DB", txn)->GetTableObjects().size());
   txn_manager.CommitTransaction(txn);
 
@@ -239,7 +242,7 @@ TEST_F(CatalogTests, DroppingTable) {
       catalog::Catalog::GetInstance()->DropTable("EMP_DB", "void_table", txn),
       CatalogException);
   EXPECT_EQ(
-      2,
+      5,
       (int)catalog->GetDatabaseObject("EMP_DB", txn)->GetTableObjects().size());
   txn_manager.CommitTransaction(txn);
 
@@ -247,7 +250,7 @@ TEST_F(CatalogTests, DroppingTable) {
   txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropTable("EMP_DB", "emp_table", txn);
   EXPECT_EQ(
-      1,
+      4,
       (int)catalog->GetDatabaseObject("EMP_DB", txn)->GetTableObjects().size());
   txn_manager.CommitTransaction(txn);
 }

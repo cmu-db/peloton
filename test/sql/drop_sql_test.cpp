@@ -12,13 +12,13 @@
 
 #include <memory>
 
-#include "catalog/index_catalog.h"
-#include "sql/testing_sql_util.h"
 #include "catalog/catalog.h"
+#include "catalog/index_catalog.h"
 #include "common/harness.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/create_executor.h"
 #include "planner/create_plan.h"
+#include "sql/testing_sql_util.h"
 
 namespace peloton {
 namespace test {
