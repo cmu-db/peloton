@@ -294,7 +294,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
   auto gexpr = group->GetBestExpression(required_props);
 
   LOG_TRACE("Choosing best plan for group %d with op %s", gexpr->GetGroupID(),
-            gexpr->Op().name().c_str());
+            gexpr->Op().GetName().c_str());
 
   vector<GroupID> child_groups = gexpr->GetChildGroupIDs();
   auto required_input_props = gexpr->GetInputProperties(required_props);

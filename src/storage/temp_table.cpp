@@ -80,6 +80,7 @@ ItemPointer TempTable::InsertTuple(
 
   return (location);
 }
+
 ItemPointer TempTable::InsertTuple(const Tuple *tuple) {
   return (this->InsertTuple(tuple, nullptr, nullptr));
 }
