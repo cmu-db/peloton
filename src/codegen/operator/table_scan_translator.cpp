@@ -28,6 +28,105 @@ namespace codegen {
 
 ////////////////////////////////////////////////////////////////////////////////
 ///
+/// AttributeAccess
+///
+////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * This class enables deferred access to any one available attribute in an input
+ * row. The main (overridden) function, Access(), is responsible for loading the
+ * attribute the class was constructed with from the input row provided to the
+ * function.
+ */
+class TableScanTranslator::AttributeAccess : public RowBatch::AttributeAccess {
+ public:
+  AttributeAccess(const TileGroup::TileGroupAccess &access,
+                  const planner::AttributeInfo *ai)
+      : tile_group_access_(access), ai_(ai) {}
+
+  // Access an attribute in the given row
+  codegen::Value Access(CodeGen &codegen, RowBatch::Row &row) override {
+    auto raw_row = tile_group_access_.GetRow(row.GetTID(codegen));
+    return raw_row.LoadColumn(codegen, ai_->attribute_id);
+  }
+
+  const planner::AttributeInfo *GetAttributeRef() const { return ai_; }
+
+ private:
+  // The accessor we use to load column values
+  const TileGroup::TileGroupAccess &tile_group_access_;
+  // The attribute we will access
+  const planner::AttributeInfo *ai_;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+///
+/// ScanConsumer
+///
+////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * The ScanConsumer is the callback functor used when issuing a sequential scan
+ * over a table. The meat of callback is in ProcessTuples(), which is called to
+ * process a batch of tuples within a tile group of a table.
+ */
+class TableScanTranslator::ScanConsumer : public codegen::ScanCallback {
+ public:
+  // Constructor
+  ScanConsumer(ConsumerContext &ctx, const planner::SeqScanPlan &plan,
+               Vector &selection_vector)
+      : ctx_(ctx),
+        plan_(plan),
+        selection_vector_(selection_vector),
+        tile_group_id_(nullptr),
+        tile_group_ptr_(nullptr) {}
+
+  // The callback when starting iteration over a new tile group
+  void TileGroupStart(CodeGen &, llvm::Value *tile_group_id,
+                      llvm::Value *tile_group_ptr) override {
+    tile_group_id_ = tile_group_id;
+    tile_group_ptr_ = tile_group_ptr;
+  }
+
+  // The code that forms the body of the scan loop
+  void ProcessTuples(CodeGen &codegen, llvm::Value *tid_start,
+                     llvm::Value *tid_end,
+                     TileGroup::TileGroupAccess &tile_group_access) override;
+
+  // The callback when finishing iteration over a tile group
+  void TileGroupFinish(CodeGen &, llvm::Value *) override {}
+
+ private:
+  void SetupRowBatch(RowBatch &batch,
+                     TileGroup::TileGroupAccess &tile_group_access,
+                     std::vector<AttributeAccess> &access) const;
+
+  void FilterRowsByVisibility(CodeGen &codegen, llvm::Value *tid_start,
+                              llvm::Value *tid_end,
+                              Vector &selection_vector) const;
+
+  // Filter all the rows whose TIDs are in the range [tid_start, tid_end] and
+  // store their TIDs in the output TID selection vector
+  void FilterRowsByPredicate(CodeGen &codegen,
+                             const TileGroup::TileGroupAccess &access,
+                             llvm::Value *tid_start, llvm::Value *tid_end,
+                             Vector &selection_vector) const;
+
+ private:
+  // The consumer context
+  ConsumerContext &ctx_;
+  // The plan node
+  const planner::SeqScanPlan &plan_;
+  // The selection vector used for vectorized scans
+  Vector &selection_vector_;
+  // The current tile group id we're scanning over
+  llvm::Value *tile_group_id_;
+  // The current tile group we're scanning over
+  llvm::Value *tile_group_ptr_;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+///
 /// Table Scan Translator
 ///
 ////////////////////////////////////////////////////////////////////////////////
@@ -171,11 +270,6 @@ const planner::SeqScanPlan &TableScanTranslator::GetScanPlan() const {
 ///
 ////////////////////////////////////////////////////////////////////////////////
 
-TableScanTranslator::ScanConsumer::ScanConsumer(
-    ConsumerContext &ctx, const planner::SeqScanPlan &plan,
-    Vector &selection_vector)
-    : ctx_(ctx), plan_(plan), selection_vector_(selection_vector) {}
-
 // Generate the body of the vectorized scan
 void TableScanTranslator::ScanConsumer::ProcessTuples(
     CodeGen &codegen, llvm::Value *tid_start, llvm::Value *tid_end,
@@ -278,22 +372,6 @@ void TableScanTranslator::ScanConsumer::FilterRowsByPredicate(
     // Set the validity of the row
     row.SetValidity(codegen, bool_val);
   });
-}
-
-////////////////////////////////////////////////////////////////////////////////
-///
-/// Attribute Access
-///
-////////////////////////////////////////////////////////////////////////////////
-
-TableScanTranslator::AttributeAccess::AttributeAccess(
-    const TileGroup::TileGroupAccess &access, const planner::AttributeInfo *ai)
-    : tile_group_access_(access), ai_(ai) {}
-
-codegen::Value TableScanTranslator::AttributeAccess::Access(
-    CodeGen &codegen, RowBatch::Row &row) {
-  auto raw_row = tile_group_access_.GetRow(row.GetTID(codegen));
-  return raw_row.LoadColumn(codegen, ai_->attribute_id);
 }
 
 }  // namespace codegen

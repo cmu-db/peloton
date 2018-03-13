@@ -49,7 +49,7 @@ class OrderByTranslator : public OperatorTranslator {
   void Consume(ConsumerContext &context, RowBatch::Row &row) const override;
 
  private:
-  // Helper class declarations
+  // Helper class declarations (defined in implementation)
   class ProduceResults;
   class SorterAttributeAccess;
 
