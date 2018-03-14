@@ -39,25 +39,29 @@ InsertPlan::InsertPlan(storage::DataTable *table,
       auto &values = (*insert_values)[tuple_idx];
       PL_ASSERT(values.size() <= schema->GetColumnCount());
       uint32_t param_idx = 0;
-      for (uint32_t column_id = 0; column_id < values.size(); column_id++) {
-        auto &exp = values[column_id];
+      for (uint32_t column_id = 0; column_id < schema->GetColumnCount(); column_id++) {
+        auto index = column_id;
+        if (column_id >= values.size()){
+          index = 0; // so that expr = values[index] doesn't give an undeclared identifier error
+        }
+        auto &expr = values[index];
         const type::TypeId type = schema->GetType(column_id);
-        if (exp == nullptr) {
+        if (column_id >= values.size() || expr == nullptr) {
           type::Value *v = schema->GetDefaultValue(column_id);
           if (v == nullptr)
             values_.push_back(type::ValueFactory::GetNullValueByType(type));
           else
             values_.push_back(*v);
-        } else if (exp->GetExpressionType() ==
+        } else if (expr->GetExpressionType() ==
                    ExpressionType::VALUE_PARAMETER) {
           std::tuple<oid_t, oid_t, oid_t> pair =
               std::make_tuple(tuple_idx, column_id, param_idx++);
           parameter_vector_->push_back(pair);
           params_value_type_->push_back(type);
         } else {
-          PL_ASSERT(exp->GetExpressionType() == ExpressionType::VALUE_CONSTANT);
+          PL_ASSERT(expr->GetExpressionType() == ExpressionType::VALUE_CONSTANT);
           auto *const_exp =
-              dynamic_cast<expression::ConstantValueExpression *>(exp.get());
+              dynamic_cast<expression::ConstantValueExpression *>(expr.get());
           type::Value value = const_exp->GetValue().CastAs(type);
           values_.push_back(value);
         }
