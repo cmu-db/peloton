@@ -29,8 +29,6 @@
 namespace peloton {
 namespace test {
 
-constexpr int CACHE_USED_BY_CATALOG = 4;
-
 class QueryCacheTest : public PelotonCodeGenTest {
  public:
   QueryCacheTest() : PelotonCodeGenTest(), num_rows_to_insert(64) {
@@ -210,6 +208,8 @@ class QueryCacheTest : public PelotonCodeGenTest {
 };
 
 TEST_F(QueryCacheTest, SimpleCache) {
+  int CACHE_USED_BY_CATALOG = codegen::QueryCache::Instance().GetCount();
+
   // SELECT b FROM table where a >= 40;
   std::shared_ptr<planner::SeqScanPlan> scan1 = GetSeqScanPlan();
   std::shared_ptr<planner::SeqScanPlan> scan2 = GetSeqScanPlan();
@@ -254,6 +254,8 @@ TEST_F(QueryCacheTest, SimpleCache) {
 }
 
 TEST_F(QueryCacheTest, CacheSeqScanPlan) {
+  int CACHE_USED_BY_CATALOG = codegen::QueryCache::Instance().GetCount();
+
   // SELECT a, b, c FROM table where a >= 20 and b = 21;
   auto scan1 = GetSeqScanPlanWithPredicate();
   auto scan2 = GetSeqScanPlanWithPredicate();
@@ -304,6 +306,8 @@ TEST_F(QueryCacheTest, CacheSeqScanPlan) {
 }
 
 TEST_F(QueryCacheTest, CacheHashJoinPlan) {
+  int CACHE_USED_BY_CATALOG = codegen::QueryCache::Instance().GetCount();
+
   auto hj_plan1 = GetHashJoinPlan();
   auto hj_plan_2 = GetHashJoinPlan();
 
@@ -363,6 +367,8 @@ TEST_F(QueryCacheTest, CacheHashJoinPlan) {
 }
 
 TEST_F(QueryCacheTest, CacheOrderByPlan) {
+  int CACHE_USED_BY_CATALOG = codegen::QueryCache::Instance().GetCount();
+
   // plan 1, 2: SELECT * FROM test_table ORDER BY b DESC a ASC;
   // plan 3: SELECT * FROM test_table ORDER BY b ASC a DESC;
   std::shared_ptr<planner::OrderByPlan> order_by_plan_1{
@@ -442,6 +448,8 @@ TEST_F(QueryCacheTest, CacheOrderByPlan) {
 }
 
 TEST_F(QueryCacheTest, CacheAggregatePlan) {
+  int CACHE_USED_BY_CATALOG = codegen::QueryCache::Instance().GetCount();
+
   auto agg_plan1 = GetAggregatePlan();
   auto agg_plan_2 = GetAggregatePlan();
 
@@ -492,6 +500,8 @@ TEST_F(QueryCacheTest, CacheAggregatePlan) {
 }
 
 TEST_F(QueryCacheTest, CacheNestedLoopJoinPlan) {
+  int CACHE_USED_BY_CATALOG = codegen::QueryCache::Instance().GetCount();
+
   auto nlj_plan_1 = GetBlockNestedLoopJoinPlan();
   auto nlj_plan_2 = GetBlockNestedLoopJoinPlan();
 
