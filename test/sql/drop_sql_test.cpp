@@ -14,6 +14,7 @@
 
 #include "catalog/catalog.h"
 #include "catalog/index_catalog.h"
+#include "catalog/system_catalogs.h"
 #include "common/harness.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/create_executor.h"
@@ -101,12 +102,20 @@ TEST_F(DropSQLTests, DropIndexTest) {
 
   // Create a Index
   TestingSQLUtil::ExecuteSQLQuery("CREATE INDEX idx ON test(a);");
+  // retrieve pg_index catalog table
+  auto database_object =
+      catalog::Catalog::GetInstance()->GetDatabaseObject(DEFAULT_DB_NAME, txn);
+  EXPECT_NE(nullptr, database_object);
 
+  auto pg_index = catalog::Catalog::GetInstance()
+                      ->GetSystemCatalogs(database_object->GetDatabaseOid())
+                      ->GetIndexCatalog();
+  EXPECT_NE(nullptr, pg_index);
   // Check if the index is in catalog
   std::shared_ptr<catalog::IndexCatalogObject> index;
   txn = txn_manager.BeginTransaction();
   try {
-    index = catalog::IndexCatalog::GetInstance()->GetIndexObject("idx", txn);
+    index = pg_index->GetIndexObject("idx", txn);
 
   } catch (CatalogException &e) {
     index = nullptr;
@@ -120,11 +129,11 @@ TEST_F(DropSQLTests, DropIndexTest) {
 
   // Check if index is not in catalog
   txn = txn_manager.BeginTransaction();
-  index = catalog::IndexCatalog::GetInstance()->GetIndexObject("idx", txn);
+  index = pg_index->GetIndexObject("idx", txn);
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(index, nullptr);
 
-  // Free the database just created
+  //  Free the database just created
   txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
