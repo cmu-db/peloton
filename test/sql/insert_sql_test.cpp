@@ -606,10 +606,8 @@ TEST_F(InsertSQLTests, BadInserts) {
   std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
-  int rows_changed;
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
       new optimizer::Optimizer());
-  rows_changed = 0;
   // Insert a tuple with more values than target columns
   std::string query("INSERT INTO test8 VALUES(1, 2, 3, 4);");
   txn = txn_manager.BeginTransaction();
