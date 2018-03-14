@@ -10,9 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "traffic_cop/traffic_cop.h"
 #include <cstdio>
 #include "sql/testing_sql_util.h"
+#include "traffic_cop/traffic_cop.h"
 
 #include "binder/bind_node_visitor.h"
 #include "catalog/catalog.h"
@@ -118,7 +118,7 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   EXPECT_EQ(catalog::Catalog::GetInstance()
                 ->GetDatabaseWithName(DEFAULT_DB_NAME, txn)
                 ->GetTableCount(),
-            1);
+            4);
 
   // Inserting a tuple end-to-end
   traffic_cop.SetTcopTxnState(txn);

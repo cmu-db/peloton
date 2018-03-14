@@ -12,13 +12,14 @@
 
 #include <cstdio>
 
+#include "common/harness.h"
 #include "executor/testing_executor_util.h"
 #include "sql/testing_sql_util.h"
-#include "common/harness.h"
 
 #include "binder/bind_node_visitor.h"
 #include "catalog/catalog.h"
 #include "catalog/schema.h"
+#include "common/internal_types.h"
 #include "common/logger.h"
 #include "common/statement.h"
 #include "concurrency/transaction_context.h"
@@ -46,7 +47,6 @@
 #include "storage/data_table.h"
 #include "storage/tile_group_factory.h"
 #include "traffic_cop/traffic_cop.h"
-#include "common/internal_types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
 
@@ -182,7 +182,7 @@ TEST_F(UpdateTests, UpdatingOld) {
   create_executor.Init();
   create_executor.Execute();
   EXPECT_EQ(catalog->GetDatabaseWithName(DEFAULT_DB_NAME, txn)->GetTableCount(),
-            1);
+            4);
 
   LOG_INFO("Table created!");
 
@@ -416,6 +416,6 @@ TEST_F(UpdateTests, UpdatingOld) {
   catalog->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
-}  // namespace?
+}  // namespace
 }  // namespace test
 }  // namespace peloton

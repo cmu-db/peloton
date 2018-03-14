@@ -110,7 +110,7 @@ TEST_F(CreateTests, CreatingTable) {
   executor.Init();
   executor.Execute();
 
-  EXPECT_EQ(1, (int)catalog::Catalog::GetInstance()
+  EXPECT_EQ(4, (int)catalog::Catalog::GetInstance()
                    ->GetDatabaseObject(DEFAULT_DB_NAME, txn)
                    ->GetTableObjects()
                    .size());
@@ -155,7 +155,7 @@ TEST_F(CreateTests, CreatingUDFs) {
   executor.Init();
   executor.Execute();
 
-  EXPECT_EQ(1, (int)catalog::Catalog::GetInstance()
+  EXPECT_EQ(4, (int)catalog::Catalog::GetInstance()
                    ->GetDatabaseObject(DEFAULT_DB_NAME, txn)
                    ->GetTableObjects()
                    .size());

@@ -82,7 +82,7 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
 
   // This is also required so that database objects are cached
   auto db_object = catalog->GetDatabaseObject(TEST_DB_NAME, txn);
-  EXPECT_EQ(1, static_cast<int>(db_object->GetTableObjects().size()));
+  EXPECT_EQ(4, static_cast<int>(db_object->GetTableObjects().size()));
 
   // Till now, we have a table : id, first_name, last_name
   // And two indexes on following columns:

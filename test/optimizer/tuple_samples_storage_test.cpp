@@ -12,14 +12,14 @@
 
 #include "common/harness.h"
 
-#include "optimizer/stats/tuple_samples_storage.h"
 #include "optimizer/stats/tuple_sampler.h"
+#include "optimizer/stats/tuple_samples_storage.h"
 
+#include "catalog/catalog.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "executor/testing_executor_util.h"
 #include "storage/data_table.h"
 #include "storage/database.h"
-#include "catalog/catalog.h"
-#include "executor/testing_executor_util.h"
-#include "concurrency/transaction_manager_factory.h"
 
 namespace peloton {
 namespace test {

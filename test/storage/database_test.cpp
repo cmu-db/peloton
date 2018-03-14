@@ -12,8 +12,8 @@
 
 #include "common/harness.h"
 
-#include "concurrency/transaction_manager_factory.h"
 #include "catalog/catalog.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "storage/data_table.h"
 #include "storage/database.h"
 #include "storage/storage_manager.h"
@@ -63,11 +63,11 @@ TEST_F(DatabaseTests, AddDropTableTest) {
 
   database->AddTable(data_table.get());
 
-  EXPECT_TRUE(database->GetTableCount() == 1);
+  EXPECT_TRUE(database->GetTableCount() == 4);
 
   database->DropTableWithOid(table_oid);
 
-  EXPECT_TRUE(database->GetTableCount() == 0);
+  EXPECT_TRUE(database->GetTableCount() == 3);
 
   data_table.release();
 

@@ -121,7 +121,7 @@ TEST_F(DeleteTests, VariousOperations) {
   executor::CreateExecutor create_executor(&node, context.get());
   create_executor.Init();
   create_executor.Execute();
-  EXPECT_EQ(1, (int)catalog::Catalog::GetInstance()
+  EXPECT_EQ(4, (int)catalog::Catalog::GetInstance()
                    ->GetDatabaseObject(DEFAULT_DB_NAME, txn)
                    ->GetTableObjects()
                    .size());

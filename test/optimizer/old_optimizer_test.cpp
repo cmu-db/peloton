@@ -104,7 +104,7 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
   EXPECT_EQ(catalog::Catalog::GetInstance()
                 ->GetDatabaseWithName(DEFAULT_DB_NAME, txn)
                 ->GetTableCount(),
-            1);
+            4);
 
   // Inserting a tuple end-to-end
   traffic_cop.SetTcopTxnState(txn);
