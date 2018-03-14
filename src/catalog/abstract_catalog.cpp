@@ -79,20 +79,22 @@ AbstractCatalog::AbstractCatalog(const std::string &catalog_table_ddl,
       optimizer::Optimizer().BuildPelotonPlanTree(parse_tree_list, txn));
   auto catalog_table_schema = create_plan->GetSchema();
   auto catalog_table_name = create_plan->GetTableName();
+  auto catalog_database_name = create_plan->GetDatabaseName();
 
   // Create catalog table
   Catalog::GetInstance()->CreateTable(
-      CATALOG_DATABASE_NAME, catalog_table_name,
+      catalog_database_name, catalog_table_name,
       std::unique_ptr<catalog::Schema>(catalog_table_schema), txn, true);
 
   // Get catalog table oid
   auto catalog_table_object = Catalog::GetInstance()->GetTableObject(
-      CATALOG_DATABASE_NAME, catalog_table_name, txn);
+      catalog_database_name, catalog_table_name, txn);
 
   // Set catalog_table_
   try {
     catalog_table_ = storage::StorageManager::GetInstance()->GetTableWithOid(
-        CATALOG_DATABASE_OID, catalog_table_object->GetTableOid());
+        catalog_table_object->GetDatabaseOid(),
+        catalog_table_object->GetTableOid());
   } catch (CatalogException &e) {
     LOG_TRACE("Can't find table %d! Return false",
               catalog_table_object->GetTableOid());

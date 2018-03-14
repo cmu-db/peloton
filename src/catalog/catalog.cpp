@@ -164,7 +164,6 @@ void Catalog::Bootstrap() {
   IndexMetricsCatalog::GetInstance(txn);
   QueryMetricsCatalog::GetInstance(txn);
   SettingsCatalog::GetInstance(txn);
-  TriggerCatalog::GetInstance(txn);
   LanguageCatalog::GetInstance(txn);
   ProcCatalog::GetInstance(txn);
 

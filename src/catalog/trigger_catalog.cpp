@@ -21,36 +21,32 @@
 namespace peloton {
 namespace catalog {
 
-TriggerCatalog &TriggerCatalog::GetInstance(concurrency::TransactionContext *txn) {
-  static TriggerCatalog trigger_catalog{txn};
-  return trigger_catalog;
-}
-
-TriggerCatalog::TriggerCatalog(concurrency::TransactionContext *txn)
-    : AbstractCatalog("CREATE TABLE " CATALOG_DATABASE_NAME
-                      "." TRIGGER_CATALOG_NAME
-                      " ("
-                      "oid          INT NOT NULL PRIMARY KEY, "
-                      "tgrelid      INT NOT NULL, "
-                      "tgname       VARCHAR NOT NULL, "
-                      "tgfoid       VARCHAR, "
-                      "tgtype       INT NOT NULL, "
-                      "tgargs       VARCHAR, "
-                      "tgqual       VARBINARY, "
-                      "timestamp    TIMESTAMP NOT NULL);",
+TriggerCatalog::TriggerCatalog(const std::string &database_name,
+                               concurrency::TransactionContext *txn)
+    : AbstractCatalog("CREATE TABLE " + database_name +
+                          "." TRIGGER_CATALOG_NAME
+                          " ("
+                          "oid          INT NOT NULL PRIMARY KEY, "
+                          "tgrelid      INT NOT NULL, "
+                          "tgname       VARCHAR NOT NULL, "
+                          "tgfoid       VARCHAR, "
+                          "tgtype       INT NOT NULL, "
+                          "tgargs       VARCHAR, "
+                          "tgqual       VARBINARY, "
+                          "timestamp    TIMESTAMP NOT NULL);",
                       txn) {
   // Add secondary index here if necessary
   Catalog::GetInstance()->CreateIndex(
-      CATALOG_DATABASE_NAME, TRIGGER_CATALOG_NAME,
+      database_name, TRIGGER_CATALOG_NAME,
       {ColumnId::TABLE_OID, ColumnId::TRIGGER_TYPE},
       TRIGGER_CATALOG_NAME "_skey0", false, IndexType::BWTREE, txn);
 
   Catalog::GetInstance()->CreateIndex(
-      CATALOG_DATABASE_NAME, TRIGGER_CATALOG_NAME, {ColumnId::TABLE_OID},
+      database_name, TRIGGER_CATALOG_NAME, {ColumnId::TABLE_OID},
       TRIGGER_CATALOG_NAME "_skey1", false, IndexType::BWTREE, txn);
 
   Catalog::GetInstance()->CreateIndex(
-      CATALOG_DATABASE_NAME, TRIGGER_CATALOG_NAME,
+      database_name, TRIGGER_CATALOG_NAME,
       {ColumnId::TRIGGER_NAME, ColumnId::TABLE_OID},
       TRIGGER_CATALOG_NAME "_skey2", false, IndexType::BWTREE, txn);
 }
@@ -165,7 +161,8 @@ bool TriggerCatalog::DeleteTriggerByName(const std::string &trigger_name,
 }
 
 std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggersByType(
-    oid_t table_oid, int16_t trigger_type, concurrency::TransactionContext *txn) {
+    oid_t table_oid, int16_t trigger_type,
+    concurrency::TransactionContext *txn) {
   LOG_INFO("Get triggers for table %d", table_oid);
   // select trigger_name, fire condition, function_name, function_args
   std::vector<oid_t> column_ids(

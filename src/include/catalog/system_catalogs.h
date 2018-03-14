@@ -42,11 +42,13 @@ class SystemCatalogs {
   ColumnCatalog *GetColumnCatalog() { return pg_attribute; }
   TableCatalog *GetTableCatalog() { return pg_table; }
   IndexCatalog *GetIndexCatalog() { return pg_index; }
+  TriggerCatalog *GetTriggerCatalog() { return pg_trigger; }
 
  private:
   ColumnCatalog *pg_attribute;
   TableCatalog *pg_table;
   IndexCatalog *pg_index;
+  TriggerCatalog *pg_trigger;
 };
 
 }  // namespace catalog

@@ -31,43 +31,24 @@ SystemCatalogs::SystemCatalogs(storage::Database *database,
 
   // TODO: can we move this to BootstrapSystemCatalogs()?
   // insert pg_database columns into pg_attribute
-  oid_t column_id = 0;
-  for (auto column :
-       storage::StorageManager::GetInstance()
-           ->GetTableWithOid(CATALOG_DATABASE_OID, DATABASE_CATALOG_OID)
-           ->GetSchema()
-           ->GetColumns()) {
-    pg_attribute->InsertColumn(DATABASE_CATALOG_OID, column.GetName(),
-                               column_id, column.GetOffset(), column.GetType(),
-                               column.IsInlined(), column.GetConstraints(),
-                               pool, txn);
-    column_id++;
-  }
+  std::vector<std::pair<oid, oid>> shared_tables = {
+      {CATALOG_DATABASE_OID, DATABASE_CATALOG_OID},
+      {database_oid, TABLE_CATALOG_OID},
+      {database_oid, INDEX_CATALOG_OID}};
 
-  // Insert pg_table columns into pg_attribute
-  column_id = 0;
-  for (auto column : storage::StorageManager::GetInstance()
-                         ->GetTableWithOid(database_oid, TABLE_CATALOG_OID)
-                         ->GetSchema()
-                         ->GetColumns()) {
-    pg_attribute->InsertColumn(TABLE_CATALOG_OID, column.GetName(), column_id,
-                               column.GetOffset(), column.GetType(),
-                               column.IsInlined(), column.GetConstraints(),
-                               pool, txn);
-    column_id++;
-  }
-
-  // Insert pg_index columns into pg_attribute
-  column_id = 0;
-  for (auto column : storage::StorageManager::GetInstance()
-                         ->GetTableWithOid(database_oid, INDEX_CATALOG_OID)
-                         ->GetSchema()
-                         ->GetColumns()) {
-    pg_attribute->InsertColumn(INDEX_CATALOG_OID, column.GetName(), column_id,
-                               column.GetOffset(), column.GetType(),
-                               column.IsInlined(), column.GetConstraints(),
-                               pool, txn);
-    column_id++;
+  for (int i = 0; i < shared_tables.size(); i++) {
+    oid_t column_id = 0;
+    for (auto column :
+         storage::StorageManager::GetInstance()
+             ->GetTableWithOid(CATALOG_DATABASE_OID, DATABASE_CATALOG_OID)
+             ->GetSchema()
+             ->GetColumns()) {
+      pg_attribute->InsertColumn(DATABASE_CATALOG_OID, column.GetName(),
+                                 column_id, column.GetOffset(),
+                                 column.GetType(), column.IsInlined(),
+                                 column.GetConstraints(), pool, txn);
+      column_id++;
+    }
   }
 }
 

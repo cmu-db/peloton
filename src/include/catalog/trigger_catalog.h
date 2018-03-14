@@ -47,10 +47,8 @@ namespace catalog {
 
 class TriggerCatalog : public AbstractCatalog {
  public:
+  TriggerCatalog(concurrency::TransactionContext *txn);
   ~TriggerCatalog();
-
-  // Global Singleton
-  static TriggerCatalog &GetInstance(concurrency::TransactionContext *txn = nullptr);
 
   //===--------------------------------------------------------------------===//
   // write Related API
@@ -74,7 +72,8 @@ class TriggerCatalog : public AbstractCatalog {
   // of the same type
   //===--------------------------------------------------------------------===//
   std::unique_ptr<trigger::TriggerList> GetTriggersByType(
-      oid_t table_oid, int16_t trigger_type, concurrency::TransactionContext *txn);
+      oid_t table_oid, int16_t trigger_type,
+      concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
   // get all types of triggers for a specific table
@@ -97,8 +96,6 @@ class TriggerCatalog : public AbstractCatalog {
   };
 
  private:
-  TriggerCatalog(concurrency::TransactionContext *txn);
-
   oid_t GetNextOid() { return oid_++ | TRIGGER_OID_MASK; }
 
   enum IndexId {
