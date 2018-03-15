@@ -75,10 +75,8 @@ void BindNodeVisitor::Visit(parser::SelectStatement *node) {
     }
     select_element->DeriveSubqueryFlag();
 
-    // Recursively deduce expression value type
-    expression::ExpressionUtil::EvaluateExpression({ExprMap()},
-                                                   select_element.get());
-    // Recursively deduce expression name
+    // Traverse the expression to deduce expression value type and name
+    select_element->DeduceExpressionType();
     select_element->DeduceExpressionName();
     new_select_list.push_back(std::move(select_element));
   }
@@ -175,6 +173,9 @@ void BindNodeVisitor::Visit(parser::CreateStatement *node) {
 }
 void BindNodeVisitor::Visit(parser::InsertStatement *node) {
   node->TryBindDatabaseName(default_database_name_);
+  context_ = std::make_shared<BinderContext>(nullptr);
+  context_->AddRegularTable(node->GetDatabaseName(), node->GetTableName(),
+                            node->GetTableName(), txn_);
   if (node->select != nullptr) {
     node->select->Accept(this);
   }

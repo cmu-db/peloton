@@ -84,9 +84,9 @@ struct BaseOperatorNode {
 
   virtual void Accept(OperatorVisitor *v) const = 0;
 
-  virtual std::string name() const = 0;
+  virtual std::string GetName() const = 0;
 
-  virtual OpType type() const = 0;
+  virtual OpType GetType() const = 0;
 
   virtual bool IsLogical() const = 0;
 
@@ -97,12 +97,12 @@ struct BaseOperatorNode {
   }
 
   virtual hash_t Hash() const {
-    OpType t = type();
+    OpType t = GetType();
     return HashUtil::Hash(&t);
   }
 
   virtual bool operator==(const BaseOperatorNode &r) {
-    return type() == r.type();
+    return GetType() == r.GetType();
   }
 };
 
@@ -111,9 +111,9 @@ template <typename T>
 struct OperatorNode : public BaseOperatorNode {
   void Accept(OperatorVisitor *v) const;
 
-  std::string name() const { return name_; }
+  std::string GetName() const { return name_; }
 
-  OpType type() const { return type_; }
+  OpType GetType() const { return type_; }
 
   bool IsLogical() const;
 
@@ -130,21 +130,27 @@ class Operator {
 
   Operator(BaseOperatorNode *node);
 
+  // Calls corresponding visitor to node
   void Accept(OperatorVisitor *v) const;
 
-  std::string name() const;
+  // Return name of operator
+  std::string GetName() const;
 
-  OpType type() const;
+  // Return operator type
+  OpType GetType() const;
 
+  // Operator contains Logical node
   bool IsLogical() const;
 
+  // Operator contains Physical node
   bool IsPhysical() const;
 
   hash_t Hash() const;
 
   bool operator==(const Operator &r);
 
-  bool defined() const;
+  // Operator contains physical or logical operator node
+  bool IsDefined() const;
 
   template <typename T>
   const T *As() const {
