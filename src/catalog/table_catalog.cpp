@@ -27,19 +27,28 @@ namespace catalog {
 TableCatalogObject::TableCatalogObject(executor::LogicalTile *tile,
                                        concurrency::TransactionContext *txn,
                                        int tupleId)
-    : table_oid(tile->GetValue(tupleId, TableCatalog::ColumnId::TABLE_OID)
-                    .GetAs<oid_t>()),
-      table_name(tile->GetValue(tupleId, TableCatalog::ColumnId::TABLE_NAME)
-                     .ToString()),
-      database_oid(tile->GetValue(tupleId, TableCatalog::ColumnId::DATABASE_OID)
-                       .GetAs<oid_t>()),
-      index_objects(),
+    : index_objects(),
       index_names(),
       valid_index_objects(false),
       column_objects(),
       column_names(),
       valid_column_objects(false),
-      txn(txn) {}
+      txn(txn) {
+  auto field_location = tile->GetLocationPointer(tupleId, TableCatalog::ColumnId::TABLE_OID);
+  PL_ASSERT(field_location != nullptr);
+  table_oid = *(reinterpret_cast<const oid_t *>(field_location));
+
+  field_location = tile->GetLocationPointer(tupleId, TableCatalog::ColumnId::TABLE_NAME);
+  PL_ASSERT(field_location != nullptr);
+  auto varchar = *(reinterpret_cast<const char *const*>(field_location));
+  auto size = reinterpret_cast<const uint32_t *>(varchar);
+  auto string = (reinterpret_cast<const char *>(varchar) + sizeof(uint32_t));
+  table_name = std::string(string, *size - 1);
+
+  field_location = tile->GetLocationPointer(tupleId, TableCatalog::ColumnId::DATABASE_OID);
+  PL_ASSERT(field_location != nullptr);
+  database_oid = *(reinterpret_cast<const oid_t *>(field_location));
+}
 
 /* @brief   insert index catalog object into cache
  * @param   index_object

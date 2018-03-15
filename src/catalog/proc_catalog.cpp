@@ -25,13 +25,40 @@ namespace catalog {
 
 ProcCatalogObject::ProcCatalogObject(executor::LogicalTile *tile,
                                      concurrency::TransactionContext *txn)
-    : oid_(tile->GetValue(0, 0).GetAs<oid_t>()),
-      name_(tile->GetValue(0, 1).GetAs<const char *>()),
-      ret_type_(tile->GetValue(0, 2).GetAs<type::TypeId>()),
-      arg_types_(StringToTypeArray(tile->GetValue(0, 3).GetAs<const char *>())),
-      lang_oid_(tile->GetValue(0, 4).GetAs<oid_t>()),
-      src_(tile->GetValue(0, 5).GetAs<const char *>()),
-      txn_(txn) {}
+    : txn_(txn) {
+  auto field_location = tile->GetLocationPointer(0, ProcCatalog::ColumnId::OID);
+  PL_ASSERT(field_location != nullptr);
+  oid_ = *(reinterpret_cast<const oid_t *>(field_location));
+
+  field_location = tile->GetLocationPointer(0, ProcCatalog::ColumnId::PRONAME);
+  PL_ASSERT(field_location != nullptr);
+  auto varchar = *(reinterpret_cast<const char *const*>(field_location));
+  auto size = reinterpret_cast<const uint32_t *>(varchar);
+  auto string = (reinterpret_cast<const char *>(varchar) + sizeof(uint32_t));
+  name_ = std::string(string, *size - 1);
+
+  field_location = tile->GetLocationPointer(0, ProcCatalog::ColumnId::PRORETTYPE);
+  PL_ASSERT(field_location != nullptr);
+  ret_type_ = *(reinterpret_cast<const type::TypeId *>(field_location));
+
+  field_location = tile->GetLocationPointer(0, ProcCatalog::ColumnId::PROARGTYPES);
+  PL_ASSERT(field_location != nullptr);
+  varchar = *(reinterpret_cast<const char *const*>(field_location));
+  size = reinterpret_cast<const uint32_t *>(varchar);
+  string = (reinterpret_cast<const char *>(varchar) + sizeof(uint32_t));
+  arg_types_ = StringToTypeArray(std::string(string, *size - 1));
+
+  field_location = tile->GetLocationPointer(0, ProcCatalog::ColumnId::PROLANG);
+  PL_ASSERT(field_location != nullptr);
+  lang_oid_ = *(reinterpret_cast<const oid_t *>(field_location));
+
+  field_location = tile->GetLocationPointer(0, ProcCatalog::ColumnId::PROSRC);
+  PL_ASSERT(field_location != nullptr);
+  varchar = *(reinterpret_cast<const char *const*>(field_location));
+  size = reinterpret_cast<const uint32_t *>(varchar);
+  string = (reinterpret_cast<const char *>(varchar) + sizeof(uint32_t));
+  src_ = std::string(string, *size - 1);
+}
 
 std::unique_ptr<LanguageCatalogObject> ProcCatalogObject::GetLanguage() const {
   return LanguageCatalog::GetInstance().GetLanguageByOid(GetLangOid(), txn_);

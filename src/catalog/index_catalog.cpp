@@ -25,23 +25,40 @@
 namespace peloton {
 namespace catalog {
 
-IndexCatalogObject::IndexCatalogObject(executor::LogicalTile *tile, int tupleId)
-    : index_oid(tile->GetValue(tupleId, IndexCatalog::ColumnId::INDEX_OID)
-                    .GetAs<oid_t>()),
-      index_name(tile->GetValue(tupleId, IndexCatalog::ColumnId::INDEX_NAME)
-                     .ToString()),
-      table_oid(tile->GetValue(tupleId, IndexCatalog::ColumnId::TABLE_OID)
-                    .GetAs<oid_t>()),
-      index_type(tile->GetValue(tupleId, IndexCatalog::ColumnId::INDEX_TYPE)
-                     .GetAs<IndexType>()),
-      index_constraint(
-          tile->GetValue(tupleId, IndexCatalog::ColumnId::INDEX_CONSTRAINT)
-              .GetAs<IndexConstraintType>()),
-      unique_keys(tile->GetValue(tupleId, IndexCatalog::ColumnId::UNIQUE_KEYS)
-                      .GetAs<bool>()) {
-  std::string attr_str =
-      tile->GetValue(tupleId, IndexCatalog::ColumnId::INDEXED_ATTRIBUTES)
-          .ToString();
+IndexCatalogObject::IndexCatalogObject(executor::LogicalTile *tile, int tupleId) {
+  auto field_location = tile->GetLocationPointer(tupleId, IndexCatalog::ColumnId::INDEX_OID);
+  PL_ASSERT(field_location != nullptr);
+  index_oid = *(reinterpret_cast<const oid_t *>(field_location));
+
+  field_location = tile->GetLocationPointer(tupleId, IndexCatalog::ColumnId::INDEX_NAME);
+  PL_ASSERT(field_location != nullptr);
+  auto varchar = *(reinterpret_cast<const char *const*>(field_location));
+  auto size = reinterpret_cast<const uint32_t *>(varchar);
+  auto string = (reinterpret_cast<const char *>(varchar) + sizeof(uint32_t));
+  index_name = std::string(string, *size - 1);
+
+  field_location = tile->GetLocationPointer(tupleId, IndexCatalog::ColumnId::TABLE_OID);
+  PL_ASSERT(field_location != nullptr);
+  table_oid = *(reinterpret_cast<const oid_t *>(field_location));
+
+  field_location = tile->GetLocationPointer(tupleId, IndexCatalog::ColumnId::INDEX_TYPE);
+  PL_ASSERT(field_location != nullptr);
+  index_type = *(reinterpret_cast<const IndexType *>(field_location));
+
+  field_location = tile->GetLocationPointer(tupleId, IndexCatalog::ColumnId::INDEX_CONSTRAINT);
+  PL_ASSERT(field_location != nullptr);
+  index_constraint = *(reinterpret_cast<const IndexConstraintType *>(field_location));
+
+  field_location = tile->GetLocationPointer(tupleId, IndexCatalog::ColumnId::UNIQUE_KEYS);
+  PL_ASSERT(field_location != nullptr);
+  unique_keys = *(reinterpret_cast<const bool *>(field_location));
+
+  field_location = tile->GetLocationPointer(tupleId, IndexCatalog::ColumnId::INDEXED_ATTRIBUTES);
+  PL_ASSERT(field_location != nullptr);
+  varchar = *(reinterpret_cast<const char *const*>(field_location));
+  size = reinterpret_cast<const uint32_t *>(varchar);
+  string = (reinterpret_cast<const char *>(varchar) + sizeof(uint32_t));
+  std::string attr_str = std::string(string, *size - 1);
   std::stringstream ss(attr_str.c_str());  // Turn the string into a stream.
   std::string tok;
 
