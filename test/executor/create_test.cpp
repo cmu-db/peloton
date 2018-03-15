@@ -13,10 +13,8 @@
 #include <cstdio>
 
 #include "catalog/catalog.h"
-#include "catalog/database_catalog.h"
 #include "catalog/proc_catalog.h"
-#include "catalog/table_catalog.h"
-#include "catalog/trigger_catalog.h"
+#include "catalog/system_catalogs.h"
 #include "common/harness.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/create_executor.h"
@@ -526,9 +524,14 @@ TEST_F(CreateTests, CreatingTriggerInCatalog) {
   // check whether the trigger catalog table contains this new trigger
   auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
       DEFAULT_DB_NAME, "accounts", txn);
-  auto trigger_list = catalog::TriggerCatalog::GetInstance().GetTriggersByType(
-      table_object->GetTableOid(),
-      (TRIGGER_TYPE_ROW | TRIGGER_TYPE_BEFORE | TRIGGER_TYPE_UPDATE), txn);
+  auto trigger_list =
+      catalog::Catalog::GetInstance()
+          ->GetSystemCatalogs(table_object->GetDatabaseOid())
+          ->GetTriggerCatalog()
+          ->GetTriggersByType(
+              table_object->GetTableOid(),
+              (TRIGGER_TYPE_ROW | TRIGGER_TYPE_BEFORE | TRIGGER_TYPE_UPDATE),
+              txn);
 
   txn_manager.CommitTransaction(txn);
 

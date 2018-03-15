@@ -579,12 +579,24 @@ ResultType Catalog::DropTable(oid_t database_oid, oid_t table_oid,
   auto index_objects = table_object->GetIndexObjects();
   LOG_TRACE("dropping #%d indexes", (int)index_objects.size());
 
+  // delete trigger and records in pg_trigger
+  auto pg_trigger =
+      catalog_map_[database_object->GetDatabaseOid()]->GetTriggerCatalog();
+  std::unique_ptr<trigger::TriggerList> trigger_lists =
+      pg_trigger->GetTriggers(table_oid, txn);
+  for (int i = 0; i < trigger_lists->GetTriggerListSize(); i++)
+    pg_trigger->DropTrigger(database_oid, table_oid,
+                            trigger_lists->Get(i)->GetTriggerName(), txn);
+
+  // delete index and records pg_index
   for (auto it : index_objects)
     DropIndex(database_oid, it.second->GetIndexOid(), txn);
+
   // delete record in pg_attribute
   auto pg_attribute =
       catalog_map_[database_object->GetDatabaseOid()]->GetColumnCatalog();
   pg_attribute->DeleteColumns(table_oid, txn);
+
   // delete record in pg_table
   auto pg_table =
       catalog_map_[database_object->GetDatabaseOid()]->GetTableCatalog();

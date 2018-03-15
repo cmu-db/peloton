@@ -65,6 +65,10 @@ class TriggerCatalog : public AbstractCatalog {
                          const std::string &trigger_name,
                          concurrency::TransactionContext *txn);
 
+  ResultType DropTrigger(const oid_t oid_tdatabase_oid, const oid_t table_oid,
+                         const std::string &trigger_name,
+                         concurrency::TransactionContext *txn);
+
   bool DeleteTriggerByName(const std::string &trigger_name, oid_t table_oid,
                            concurrency::TransactionContext *txn);
 
