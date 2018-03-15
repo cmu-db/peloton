@@ -30,7 +30,6 @@ SystemCatalogs::SystemCatalogs(storage::Database *database,
   pg_index = new IndexCatalog(database, pool, txn);
 
   // TODO: can we move this to BootstrapSystemCatalogs()?
-  // insert pg_database columns into pg_attribute
   std::vector<std::pair<oid, oid>> shared_tables = {
       {CATALOG_DATABASE_OID, DATABASE_CATALOG_OID},
       {database_oid, TABLE_CATALOG_OID},
@@ -56,6 +55,12 @@ SystemCatalogs::~SystemCatalogs() {
   delete pg_index;
   delete pg_table;
   delete pg_attribute;
+  if (pg_trigger) delete pg_trigger;
+}
+
+void SystemCatalogs::Bootstrap(const string &database_name) {
+  pg_trigger =
+      new TriggerCatalog(database_name, concurrency::TransactionContext * txn);
 }
 
 }  // namespace catalog

@@ -39,6 +39,8 @@ class SystemCatalogs {
 
   ~SystemCatalogs();
 
+  void Bootstrap();
+
   ColumnCatalog *GetColumnCatalog() { return pg_attribute; }
   TableCatalog *GetTableCatalog() { return pg_table; }
   IndexCatalog *GetIndexCatalog() { return pg_index; }

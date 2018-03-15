@@ -150,13 +150,19 @@ bool DropExecutor::DropTable(const planner::DropPlan &node,
 bool DropExecutor::DropTrigger(const planner::DropPlan &node,
                                concurrency::TransactionContext *txn) {
   auto database_name = node.GetDatabaseName();
-  std::string table_name = node.GetTableName();
+  auto table_name = node.GetTableName();
   LOG_DEBUG("database name: %s", database_name.c_str());
   LOG_DEBUG("table name: %s", table_name.c_str());
   std::string trigger_name = node.GetTriggerName();
 
-  ResultType result = catalog::TriggerCatalog::GetInstance().DropTrigger(
-      database_name, table_name, trigger_name, txn);
+  auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
+      database_name, table_name, txn);
+
+  ResultType result =
+      catalog::Catalog::GetInstance()
+          .GetSystemCatalogs(table_object->database_oid)
+          .GetTriggerCatalog()
+          .DropTrigger(database_name, table_name, trigger_name, txn);
   txn->SetResult(result);
   if (txn->GetResult() == ResultType::SUCCESS) {
     LOG_DEBUG("Dropping trigger succeeded!");
