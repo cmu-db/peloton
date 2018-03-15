@@ -277,6 +277,9 @@ void QueryToOperatorTransformer::Visit(parser::InsertStatement *op) {
       }
     }
 
+    // vector below contains column ids of the columns mentioned in the insert statement
+    std::vector<oid_t> specified;
+    
     for (const auto col : op->columns) {
       auto found =
           std::find_if(column_objects.begin(), column_objects.end(),
@@ -285,6 +288,21 @@ void QueryToOperatorTransformer::Visit(parser::InsertStatement *op) {
                         });
       if (found == column_objects.end()) {
         throw CatalogException(StringUtil::Format("ERROR:  column \"%s\" of relation \"%s\" does not exist", col.c_str(), target_table->GetTableName().c_str()));
+      } else {
+        specified.push_back(found->first);
+      }
+    }
+
+    int32_t index = 0;  // index for 'specified' vector
+    for (oid_t id = 0; id != column_objects.size(); ++id) {
+      // this loop checks not null constraint for unspecified columns
+      if (id == specified[index]) {
+        index++;
+        continue;
+      }
+      if (column_objects[id]->IsNotNull()) {
+        // TODO: Add check for default value's existence for the current column
+        throw CatalogException(StringUtil::Format("ERROR:  null value in column \"%s\" violates not-null constraint", column_objects[id]->GetColumnName().c_str()));
       }
     }
   }
