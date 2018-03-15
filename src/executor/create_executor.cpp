@@ -14,9 +14,7 @@
 
 #include "catalog/catalog.h"
 #include "catalog/foreign_key.h"
-#include "catalog/trigger_catalog.h"
-#include "catalog/database_catalog.h"
-#include "catalog/table_catalog.h"
+#include "catalog/system_catalogs.h"
 #include "concurrency/transaction_context.h"
 #include "executor/executor_context.h"
 #include "planner/create_plan.h"
@@ -234,7 +232,8 @@ bool CreateExecutor::CreateTrigger(const planner::CreatePlan &node) {
   // catalog table
   auto time_stamp = type::ValueFactory::GetTimestampValue(
       std::chrono::duration_cast<std::chrono::milliseconds>(
-          std::chrono::system_clock::now().time_since_epoch()).count());
+          std::chrono::system_clock::now().time_since_epoch())
+          .count());
 
   CopySerializeOutput output;
   newTrigger.SerializeWhen(output, table_object->GetDatabaseOid(),
@@ -243,11 +242,11 @@ bool CreateExecutor::CreateTrigger(const planner::CreatePlan &node) {
       (const unsigned char *)output.Data(), (int32_t)output.Size(), true);
 
   catalog::Catalog::GetInstance()
-      .GetSystemCatalogs(table_object->database_oid)
-      .GetTriggerCatalog()
-      .InsertTrigger(table_object->GetTableOid(), trigger_name,
-                     newTrigger.GetTriggerType(), newTrigger.GetFuncname(),
-                     newTrigger.GetArgs(), when, time_stamp, pool_.get(), txn);
+      ->GetSystemCatalogs(table_object->GetDatabaseOid())
+      ->GetTriggerCatalog()
+      ->InsertTrigger(table_object->GetTableOid(), trigger_name,
+                      newTrigger.GetTriggerType(), newTrigger.GetFuncname(),
+                      newTrigger.GetArgs(), when, time_stamp, pool_.get(), txn);
   // ask target table to update its trigger list variable
   storage::DataTable *target_table =
       catalog::Catalog::GetInstance()->GetTableWithName(database_name,

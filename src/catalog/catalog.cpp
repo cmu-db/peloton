@@ -12,7 +12,6 @@
 
 #include "catalog/catalog.h"
 
-#include "catalog/system_catalogs.h"
 #include "catalog/column_catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/database_metrics_catalog.h"
@@ -23,6 +22,7 @@
 #include "catalog/query_history_catalog.h"
 #include "catalog/query_metrics_catalog.h"
 #include "catalog/settings_catalog.h"
+#include "catalog/system_catalogs.h"
 #include "catalog/table_catalog.h"
 #include "catalog/table_metrics_catalog.h"
 #include "catalog/trigger_catalog.h"
@@ -92,7 +92,6 @@ void Catalog::BootstrapSystemCatalogs(storage::Database *database,
   // table and at the same time insert a new index record into pg_index
   // TODO: This should be hash index rather than tree index?? (but postgres use
   // btree!!)
-
   CreatePrimaryIndex(database_oid, TABLE_CATALOG_OID, txn);
 
   CreateIndex(database_oid, TABLE_CATALOG_OID,
@@ -208,11 +207,12 @@ ResultType Catalog::CreateDatabase(const std::string &database_name,
   }
   // put database object into rw_object_set
   txn->RecordCreate(database_oid, INVALID_OID, INVALID_OID);
-
   // Insert database record into pg_db
-  BootstrapSystemCatalogs(database, txn);
   pg_database->InsertDatabase(database_oid, database_name, pool_.get(), txn);
 
+  // add core & non-core system catalog tables into database
+  BootstrapSystemCatalogs(database, txn);
+  catalog_map_[database_oid]->Bootstrap(database_name, txn);
   LOG_TRACE("Database %s created. Returning RESULT_SUCCESS.",
             database_name.c_str());
   return ResultType::SUCCESS;
@@ -513,6 +513,7 @@ ResultType Catalog::DropDatabaseWithOid(oid_t database_oid,
     throw CatalogException("Database record: " + std::to_string(database_oid) +
                            " does not exist in pg_database");
 
+  catalog_map_.erase(database_oid);
   // put database object into rw_object_set
   storage_manager->GetDatabaseWithOid(database_oid);
   txn->RecordDrop(database_oid, INVALID_OID, INVALID_OID);
@@ -1109,8 +1110,9 @@ void Catalog::InitializeFunctions() {
                          txn);
       AddBuiltinFunction(
           "sqrt", {type::TypeId::TINYINT}, type::TypeId::DECIMAL, internal_lang,
-          "Sqrt", function::BuiltInFuncType{OperatorId::Sqrt,
-                                            function::DecimalFunctions::Sqrt},
+          "Sqrt",
+          function::BuiltInFuncType{OperatorId::Sqrt,
+                                    function::DecimalFunctions::Sqrt},
           txn);
       AddBuiltinFunction(
           "sqrt", {type::TypeId::SMALLINT}, type::TypeId::DECIMAL,
@@ -1120,18 +1122,21 @@ void Catalog::InitializeFunctions() {
           txn);
       AddBuiltinFunction(
           "sqrt", {type::TypeId::INTEGER}, type::TypeId::DECIMAL, internal_lang,
-          "Sqrt", function::BuiltInFuncType{OperatorId::Sqrt,
-                                            function::DecimalFunctions::Sqrt},
+          "Sqrt",
+          function::BuiltInFuncType{OperatorId::Sqrt,
+                                    function::DecimalFunctions::Sqrt},
           txn);
       AddBuiltinFunction(
           "sqrt", {type::TypeId::BIGINT}, type::TypeId::DECIMAL, internal_lang,
-          "Sqrt", function::BuiltInFuncType{OperatorId::Sqrt,
-                                            function::DecimalFunctions::Sqrt},
+          "Sqrt",
+          function::BuiltInFuncType{OperatorId::Sqrt,
+                                    function::DecimalFunctions::Sqrt},
           txn);
       AddBuiltinFunction(
           "sqrt", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL, internal_lang,
-          "Sqrt", function::BuiltInFuncType{OperatorId::Sqrt,
-                                            function::DecimalFunctions::Sqrt},
+          "Sqrt",
+          function::BuiltInFuncType{OperatorId::Sqrt,
+                                    function::DecimalFunctions::Sqrt},
           txn);
       AddBuiltinFunction(
           "floor", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL,
@@ -1200,14 +1205,16 @@ void Catalog::InitializeFunctions() {
 
       AddBuiltinFunction(
           "ceil", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL, internal_lang,
-          "Ceil", function::BuiltInFuncType{OperatorId::Ceil,
-                                            function::DecimalFunctions::_Ceil},
+          "Ceil",
+          function::BuiltInFuncType{OperatorId::Ceil,
+                                    function::DecimalFunctions::_Ceil},
           txn);
 
       AddBuiltinFunction(
           "ceil", {type::TypeId::TINYINT}, type::TypeId::DECIMAL, internal_lang,
-          "Ceil", function::BuiltInFuncType{OperatorId::Ceil,
-                                            function::DecimalFunctions::_Ceil},
+          "Ceil",
+          function::BuiltInFuncType{OperatorId::Ceil,
+                                    function::DecimalFunctions::_Ceil},
           txn);
 
       AddBuiltinFunction(
@@ -1219,14 +1226,16 @@ void Catalog::InitializeFunctions() {
 
       AddBuiltinFunction(
           "ceil", {type::TypeId::INTEGER}, type::TypeId::DECIMAL, internal_lang,
-          "Ceil", function::BuiltInFuncType{OperatorId::Ceil,
-                                            function::DecimalFunctions::_Ceil},
+          "Ceil",
+          function::BuiltInFuncType{OperatorId::Ceil,
+                                    function::DecimalFunctions::_Ceil},
           txn);
 
       AddBuiltinFunction(
           "ceil", {type::TypeId::BIGINT}, type::TypeId::DECIMAL, internal_lang,
-          "Ceil", function::BuiltInFuncType{OperatorId::Ceil,
-                                            function::DecimalFunctions::_Ceil},
+          "Ceil",
+          function::BuiltInFuncType{OperatorId::Ceil,
+                                    function::DecimalFunctions::_Ceil},
           txn);
 
       AddBuiltinFunction(

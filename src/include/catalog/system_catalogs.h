@@ -16,6 +16,7 @@
 
 #include "catalog/database_catalog.h"
 #include "catalog/table_catalog.h"
+#include "catalog/trigger_catalog.h"
 
 namespace peloton {
 
@@ -39,7 +40,8 @@ class SystemCatalogs {
 
   ~SystemCatalogs();
 
-  void Bootstrap();
+  void Bootstrap(const std::string &database_name,
+                 concurrency::TransactionContext *txn);
 
   ColumnCatalog *GetColumnCatalog() { return pg_attribute; }
   TableCatalog *GetTableCatalog() { return pg_table; }

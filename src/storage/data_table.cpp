@@ -13,11 +13,9 @@
 #include <mutex>
 #include <utility>
 
-#include "tuning/clusterer.h"
-#include "tuning/sample.h"
+#include "catalog/catalog.h"
 #include "catalog/foreign_key.h"
-#include "catalog/table_catalog.h"
-#include "catalog/trigger_catalog.h"
+#include "catalog/system_catalogs.h"
 #include "common/container_tuple.h"
 #include "common/exception.h"
 #include "common/logger.h"
@@ -37,6 +35,8 @@
 #include "storage/tile_group_factory.h"
 #include "storage/tile_group_header.h"
 #include "storage/tuple.h"
+#include "tuning/clusterer.h"
+#include "tuning/sample.h"
 
 //===--------------------------------------------------------------------===//
 // Configuration Variables
@@ -1406,9 +1406,9 @@ trigger::TriggerList *DataTable::GetTriggerList() {
 void DataTable::UpdateTriggerListFromCatalog(
     concurrency::TransactionContext *txn) {
   trigger_list_ = catalog::Catalog::GetInstance()
-                      .GetSystemCatalogs(database_oid)
-                      .GetTriggerCatalog()
-                      .GetTriggers(table_oid, txn);
+                      ->GetSystemCatalogs(database_oid)
+                      ->GetTriggerCatalog()
+                      ->GetTriggers(table_oid, txn);
 }
 
 hash_t DataTable::Hash() const {
@@ -1432,5 +1432,5 @@ bool DataTable::operator==(const DataTable &rhs) const {
   return true;
 }
 
-}  // End storage namespace
-}  // End peloton namespace
+}  // namespace storage
+}  // namespace peloton

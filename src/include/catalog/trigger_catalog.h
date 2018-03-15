@@ -47,7 +47,8 @@ namespace catalog {
 
 class TriggerCatalog : public AbstractCatalog {
  public:
-  TriggerCatalog(concurrency::TransactionContext *txn);
+  TriggerCatalog(const std::string &database_name,
+                 concurrency::TransactionContext *txn);
   ~TriggerCatalog();
 
   //===--------------------------------------------------------------------===//

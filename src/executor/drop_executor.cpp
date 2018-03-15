@@ -13,11 +13,8 @@
 #include "executor/drop_executor.h"
 
 #include "catalog/catalog.h"
-#include "catalog/database_catalog.h"
 #include "catalog/index_catalog.h"
 #include "catalog/system_catalogs.h"
-#include "catalog/table_catalog.h"
-#include "catalog/trigger_catalog.h"
 #include "common/logger.h"
 #include "common/statement_cache_manager.h"
 #include "executor/executor_context.h"
@@ -160,9 +157,9 @@ bool DropExecutor::DropTrigger(const planner::DropPlan &node,
 
   ResultType result =
       catalog::Catalog::GetInstance()
-          .GetSystemCatalogs(table_object->database_oid)
-          .GetTriggerCatalog()
-          .DropTrigger(database_name, table_name, trigger_name, txn);
+          ->GetSystemCatalogs(table_object->GetDatabaseOid())
+          ->GetTriggerCatalog()
+          ->DropTrigger(database_name, table_name, trigger_name, txn);
   txn->SetResult(result);
   if (txn->GetResult() == ResultType::SUCCESS) {
     LOG_DEBUG("Dropping trigger succeeded!");

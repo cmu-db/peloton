@@ -12,11 +12,11 @@
 
 #include "catalog/system_catalogs.h"
 #include "catalog/column_catalog.h"
-#include "catalog/table_catalog.h"
 #include "catalog/index_catalog.h"
-#include "storage/storage_manager.h"
-#include "storage/database.h"
+#include "catalog/table_catalog.h"
 #include "storage/data_table.h"
+#include "storage/database.h"
+#include "storage/storage_manager.h"
 
 namespace peloton {
 namespace catalog {
@@ -30,19 +30,19 @@ SystemCatalogs::SystemCatalogs(storage::Database *database,
   pg_index = new IndexCatalog(database, pool, txn);
 
   // TODO: can we move this to BootstrapSystemCatalogs()?
-  std::vector<std::pair<oid, oid>> shared_tables = {
+  std::vector<std::pair<oid_t, oid_t>> shared_tables = {
       {CATALOG_DATABASE_OID, DATABASE_CATALOG_OID},
       {database_oid, TABLE_CATALOG_OID},
       {database_oid, INDEX_CATALOG_OID}};
 
-  for (int i = 0; i < shared_tables.size(); i++) {
+  for (int i = 0; i < (int)shared_tables.size(); i++) {
     oid_t column_id = 0;
     for (auto column :
          storage::StorageManager::GetInstance()
-             ->GetTableWithOid(CATALOG_DATABASE_OID, DATABASE_CATALOG_OID)
+             ->GetTableWithOid(shared_tables[i].first, shared_tables[i].second)
              ->GetSchema()
              ->GetColumns()) {
-      pg_attribute->InsertColumn(DATABASE_CATALOG_OID, column.GetName(),
+      pg_attribute->InsertColumn(shared_tables[i].second, column.GetName(),
                                  column_id, column.GetOffset(),
                                  column.GetType(), column.IsInlined(),
                                  column.GetConstraints(), pool, txn);
@@ -58,9 +58,9 @@ SystemCatalogs::~SystemCatalogs() {
   if (pg_trigger) delete pg_trigger;
 }
 
-void SystemCatalogs::Bootstrap(const string &database_name) {
-  pg_trigger =
-      new TriggerCatalog(database_name, concurrency::TransactionContext * txn);
+void SystemCatalogs::Bootstrap(const std::string &database_name,
+                               concurrency::TransactionContext *txn) {
+  pg_trigger = new TriggerCatalog(database_name, txn);
 }
 
 }  // namespace catalog
