@@ -73,7 +73,7 @@ int main(int argc, char *argv[]) {
       settings.ShowInfo();
     }
   } catch (peloton::SettingsException &exception) {
-    std::cerr << "Cannot load settings. Failed with " << exception.GetMessage() << std::endl;
+    peloton::LOG_ERROR("Cannot load settings. Failed with %s\n", exception.GetMessage().c_str());
     return 0; // TODO: Use an enum with exit error codes
   }
 
