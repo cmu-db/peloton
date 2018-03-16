@@ -41,7 +41,7 @@ class QueryClusterer {
 
   void MergeClusters();
 
-  // void UpdateClusterCentroids();
+  void UpdateCluster();
 
  private:
   // Map from the fingerprint of the template query to its feature vector

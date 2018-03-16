@@ -108,5 +108,11 @@ void QueryClusterer::MergeClusters() {
   kd_tree_.Build(clusters_);
 }
 
+void QueryClusterer::UpdateCluster() {
+  UpdateFeatures();
+  UpdateExistingTemplates();
+  MergeClusters();
+}
+
 }  // namespace brain
 }  // namespace peloton
