@@ -334,6 +334,7 @@ elif [ "$DISTRO" = "DARWIN" ]; then
     brew install llvm@3.7
     brew install postgresql
     brew install curl
+    brew install wget
     brew install python
     brew upgrade python
     # Brew installs correct version of Protobuf(3.5.1 >= 3.4.0)
