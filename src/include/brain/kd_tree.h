@@ -43,7 +43,7 @@ class KDTree {
     Build();
   }
 
-  void GetNN(std::vector<double> &feature, Cluster *cluster,
+  void GetNN(std::vector<double> &feature, Cluster *&cluster,
              double &similarity) {
     if (size_ == 0) {
       cluster = nullptr;
