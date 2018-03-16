@@ -9,6 +9,8 @@
 *~
 # Merge files created by git.
 *.orig
+# Java bytecode
+*.class
 # Byte compiled python modules.
 *.pyc
 # vim swap files
