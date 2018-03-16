@@ -55,14 +55,13 @@ function install_protobuf3.4.0() {
     echo "Only Ubuntu and Fedora is supported currently!"
     return 0
  fi
- CWD=`pwd`
- cd $TMPDIR
  wget -O protobuf-cpp-3.4.0.tar.gz https://github.com/google/protobuf/releases/download/v3.4.0/protobuf-cpp-3.4.0.tar.gz
  tar -xzf protobuf-cpp-3.4.0.tar.gz
  cd protobuf-3.4.0
  ./autogen.sh && ./configure && make -j4 && sudo make install && sudo ldconfig
- # Do cleanup
- cd $CWD
+ cd ..
+ # Cleanup
+ rm -rf protobuf-3.4.0 protobuf-cpp-3.4.0.tar.gz
 }
 
 # Utility function for installing tensorflow components of python/C++
@@ -72,14 +71,16 @@ function install_tf() {
  LinkerConfigCmd=$3
  TARGET_DIRECTORY="/usr/local"
  # Install Tensorflow Python Binary
- sudo pip3 install --upgrade ${TFBinaryURL}
+ sudo -E pip3 install --upgrade ${TFBinaryURL}
 
  # Install C-API
  TFCApiURL="https://storage.googleapis.com/tensorflow/libtensorflow/${TFCApiFile}"
  wget -O $TFCApiFile $TFCApiURL
- sudo tar -C $TARGET_DIRECTORY -xzf $TFCApiFile
+ sudo tar -C $TARGET_DIRECTORY -xzf $TFCApiFile || true
  # Configure the Linker
  eval $LinkerConfigCmd
+ # Cleanup
+ rm -rf ${TFCApiFile}
 }
 
 ## ------------------------------------------------
