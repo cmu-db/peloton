@@ -458,9 +458,6 @@ std::vector<FieldInfo> TrafficCop::GenerateTupleDescriptor(
   // Example : SELECT * FROM A;
   GetTableColumns(select_stmt->from_table.get(), all_columns);
 
-  for (auto col : all_columns) {
-  }
-
   int count = 0;
   for (auto &expr : select_stmt->select_list) {
     count++;

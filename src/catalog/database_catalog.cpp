@@ -217,7 +217,7 @@ DatabaseCatalog::DatabaseCatalog(storage::Database *pg_catalog,
     pg_attribute->InsertColumn(DATABASE_CATALOG_OID, column.GetName(),
                                column_id, column.GetOffset(), column.GetType(),
                                column.IsInlined(), column.GetConstraints(),
-                               pool, txn);
+                               column.GetElemType(), pool, txn);
     column_id++;
   }
 }

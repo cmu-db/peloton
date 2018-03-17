@@ -88,8 +88,8 @@ class ColumnCatalog : public AbstractCatalog {
                     oid_t column_id, oid_t column_offset,
                     type::TypeId column_type, bool is_inlined,
                     const std::vector<Constraint> &constraints,
-                    type::AbstractPool *pool, concurrency::TransactionContext *txn,
-                    type::TypeId column_elem_type = type::TypeId::INVALID);
+                    type::TypeId column_elem_type, type::AbstractPool *pool,
+                    concurrency::TransactionContext *txn);
   bool DeleteColumn(oid_t table_oid, const std::string &column_name,
                     concurrency::TransactionContext *txn);
   bool DeleteColumns(oid_t table_oid, concurrency::TransactionContext *txn);

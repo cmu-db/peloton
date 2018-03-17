@@ -462,7 +462,6 @@ std::vector<std::vector<std::string>> LogicalTile::GetAllValuesAsStrings(
           row.push_back(val.ToString());
         }
       } else {
-        // TODO:(Aaron) convert ARRAY into binary
         auto data_length =
             cp.base_tile->GetSchema()->GetLength(cp.origin_column_id);
         LOG_TRACE("data length: %ld", data_length);
