@@ -23,7 +23,8 @@ namespace catalog {
 
 SystemCatalogs::SystemCatalogs(storage::Database *database,
                                type::AbstractPool *pool,
-                               concurrency::TransactionContext *txn) {
+                               concurrency::TransactionContext *txn)
+    : pg_trigger(nullptr) {
   oid_t database_oid = database->GetOid();
   pg_attribute = new ColumnCatalog(database, pool, txn);
   pg_table = new TableCatalog(database, pool, txn);
