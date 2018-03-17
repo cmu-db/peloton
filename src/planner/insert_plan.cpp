@@ -22,8 +22,8 @@
 namespace peloton {
 namespace planner {
 
-InsertPlan::InsertPlan(storage::DataTable *table,
-    const std::vector<std::string> *columns,
+InsertPlan::InsertPlan(
+    storage::DataTable *table, const std::vector<std::string> *columns,
     const std::vector<std::vector<
         std::unique_ptr<expression::AbstractExpression>>> *insert_values)
     : target_table_(table), bulk_insert_count_(insert_values->size()) {
@@ -55,8 +55,7 @@ InsertPlan::InsertPlan(storage::DataTable *table,
               std::make_tuple(tuple_idx, column_id, param_idx++);
           parameter_vector_->push_back(pair);
           params_value_type_->push_back(type);
-        } else if (exp->GetExpressionType() ==
-                   ExpressionType::ARRAY) {
+        } else if (exp->GetExpressionType() == ExpressionType::ARRAY) {
           auto *array_exp =
               dynamic_cast<expression::ArrayExpression *>(exp.get());
           values_.push_back(array_exp->GetValue());
@@ -83,7 +82,8 @@ InsertPlan::InsertPlan(storage::DataTable *table,
       for (size_t column_id = 0; column_id < table_columns_num; column_id++) {
         auto col = table_columns[column_id];
         const type::TypeId type = schema->GetType(column_id);
-        auto found = std::find_if(columns->begin(), columns->end(),
+        auto found = std::find_if(
+            columns->begin(), columns->end(),
             [&col](const std::string &x) { return col.GetName() == x; });
         if (found == columns->end()) {
           type::Value *v = schema->GetDefaultValue(column_id);
@@ -113,8 +113,7 @@ InsertPlan::InsertPlan(storage::DataTable *table,
 }
 
 type::AbstractPool *InsertPlan::GetPlanPool() {
-  if (pool_.get() == nullptr)
-    pool_.reset(new type::EphemeralPool());
+  if (pool_.get() == nullptr) pool_.reset(new type::EphemeralPool());
   return pool_.get();
 }
 
@@ -163,23 +162,19 @@ hash_t InsertPlan::Hash() const {
 }
 
 bool InsertPlan::operator==(const AbstractPlan &rhs) const {
-  if (GetPlanNodeType() != rhs.GetPlanNodeType())
-    return false;
+  if (GetPlanNodeType() != rhs.GetPlanNodeType()) return false;
 
   auto &other = static_cast<const planner::InsertPlan &>(rhs);
 
   auto *table = GetTable();
   auto *other_table = other.GetTable();
   PL_ASSERT(table && other_table);
-  if (*table != *other_table)
-    return false;
+  if (*table != *other_table) return false;
 
   if (GetChildren().size() == 0) {
-    if (other.GetChildren().size() != 0)
-      return false;
+    if (other.GetChildren().size() != 0) return false;
 
-    if (GetBulkInsertCount() != other.GetBulkInsertCount())
-      return false;
+    if (GetBulkInsertCount() != other.GetBulkInsertCount()) return false;
   }
 
   return AbstractPlan::operator==(rhs);
@@ -195,8 +190,9 @@ void InsertPlan::VisitParameters(
     for (uint32_t i = 0; i < values_.size(); i++) {
       auto value = values_[i];
       auto column_id = i % columns_num;
-      map.Insert(expression::Parameter::CreateConstParameter(value.GetTypeId(),
-          schema->AllowNull(column_id)), nullptr);
+      map.Insert(expression::Parameter::CreateConstParameter(
+                     value.GetTypeId(), schema->AllowNull(column_id)),
+                 nullptr);
       values.push_back(value);
     }
   } else {

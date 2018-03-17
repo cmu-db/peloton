@@ -408,10 +408,9 @@ void TrafficCop::GetTableColumns(parser::TableRef *from_table,
       if (expr->GetExpressionType() == ExpressionType::STAR)
         GetTableColumns(from_table->select->from_table.get(), target_columns);
       else
-        target_columns.push_back(catalog::Column(expr->GetValueType(), 0,
-                                                 expr->GetExpressionName(),
-                                                 false, INVALID_OID,
-                                                 expr->GetElemValueType()));
+        target_columns.push_back(
+            catalog::Column(expr->GetValueType(), 0, expr->GetExpressionName(),
+                            false, INVALID_OID, expr->GetElemValueType()));
     }
   } else if (from_table->list.empty()) {
     if (from_table->join == NULL) {
@@ -463,9 +462,8 @@ std::vector<FieldInfo> TrafficCop::GenerateTupleDescriptor(
     count++;
     if (expr->GetExpressionType() == ExpressionType::STAR) {
       for (auto column : all_columns) {
-        tuple_descriptor.push_back(
-            GetColumnFieldForValueType(column.GetName(), column.GetType(),
-                                       column.GetElemType()));
+        tuple_descriptor.push_back(GetColumnFieldForValueType(
+            column.GetName(), column.GetType(), column.GetElemType()));
       }
     } else {
       std::string col_name;
@@ -476,9 +474,8 @@ std::vector<FieldInfo> TrafficCop::GenerateTupleDescriptor(
       } else {
         col_name = expr->alias;
       }
-      tuple_descriptor.push_back(
-          GetColumnFieldForValueType(col_name, expr->GetValueType(),
-                                     expr->GetElemValueType()));
+      tuple_descriptor.push_back(GetColumnFieldForValueType(
+          col_name, expr->GetValueType(), expr->GetElemValueType()));
     }
   }
 
@@ -537,12 +534,13 @@ FieldInfo TrafficCop::GetColumnFieldForValueType(std::string column_name,
           break;
         }
         default:
-        // Type not Identified
-        LOG_ERROR("Unrecognized ARRAY field type '%s' for field '%s'",
-                  TypeIdToString(column_elem_type->GetTypeId()).c_str(), column_name.c_str());
-        field_type = PostgresValueType::TEXT;
-        field_size = 255;
-        break;
+          // Type not Identified
+          LOG_ERROR("Unrecognized ARRAY field type '%s' for field '%s'",
+                    TypeIdToString(column_elem_type->GetTypeId()).c_str(),
+                    column_name.c_str());
+          field_type = PostgresValueType::TEXT;
+          field_size = 255;
+          break;
       }
     }
     case type::TypeId::TIMESTAMP: {

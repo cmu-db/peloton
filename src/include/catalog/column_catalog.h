@@ -72,9 +72,10 @@ class ColumnCatalog : public AbstractCatalog {
 
  public:
   // Global Singleton, only the first call requires passing parameters.
-  static ColumnCatalog *GetInstance(storage::Database *pg_catalog = nullptr,
-                                    type::AbstractPool *pool = nullptr,
-                                    concurrency::TransactionContext *txn = nullptr);
+  static ColumnCatalog *GetInstance(
+      storage::Database *pg_catalog = nullptr,
+      type::AbstractPool *pool = nullptr,
+      concurrency::TransactionContext *txn = nullptr);
 
   ~ColumnCatalog();
 

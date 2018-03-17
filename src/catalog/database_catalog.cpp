@@ -25,8 +25,8 @@
 namespace peloton {
 namespace catalog {
 
-DatabaseCatalogObject::DatabaseCatalogObject(executor::LogicalTile *tile,
-                                             concurrency::TransactionContext *txn)
+DatabaseCatalogObject::DatabaseCatalogObject(
+    executor::LogicalTile *tile, concurrency::TransactionContext *txn)
     : database_oid(tile->GetValue(0, DatabaseCatalog::ColumnId::DATABASE_OID)
                        .GetAs<oid_t>()),
       database_name(tile->GetValue(0, DatabaseCatalog::ColumnId::DATABASE_NAME)
@@ -196,9 +196,9 @@ std::shared_ptr<IndexCatalogObject> DatabaseCatalogObject::GetCachedIndexObject(
   return nullptr;
 }
 
-DatabaseCatalog *DatabaseCatalog::GetInstance(storage::Database *pg_catalog,
-                                              type::AbstractPool *pool,
-                                              concurrency::TransactionContext *txn) {
+DatabaseCatalog *DatabaseCatalog::GetInstance(
+    storage::Database *pg_catalog, type::AbstractPool *pool,
+    concurrency::TransactionContext *txn) {
   static DatabaseCatalog database_catalog{pg_catalog, pool, txn};
   return &database_catalog;
 }

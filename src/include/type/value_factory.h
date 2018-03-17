@@ -71,8 +71,8 @@ class ValueFactory {
   }
 
   static inline Value GetBooleanValue(CmpBool value) {
-    return Value(TypeId::BOOLEAN,
-                 value == CmpBool::NULL_ ? PELOTON_BOOLEAN_NULL : (int8_t)value);
+    return Value(TypeId::BOOLEAN, value == CmpBool::NULL_ ? PELOTON_BOOLEAN_NULL
+                                                          : (int8_t)value);
   }
 
   static inline Value GetBooleanValue(bool value) {
@@ -115,8 +115,8 @@ class ValueFactory {
   }
 
   template <class T>
-  static inline Value GetArrayValue(
-      const std::vector<T> *vals, Type *elem_type) {
+  static inline Value GetArrayValue(const std::vector<T> *vals,
+                                    Type *elem_type) {
     TypeId elem_type_id = elem_type->GetTypeId();
     switch (elem_type_id) {
       case TypeId::INTEGER: {

@@ -65,7 +65,6 @@ namespace expression {
 
 class AbstractExpression : public Printable {
  public:
-
   /**
    * @brief Apply the operator to the inputs and produce ouput
    *
@@ -279,15 +278,15 @@ class AbstractExpression : public Printable {
  protected:
   AbstractExpression(ExpressionType type) : exp_type_(type) {}
   AbstractExpression(ExpressionType exp_type, type::TypeId return_value_type,
-                     type::Type *return_elem_value_type =
-                     nullptr)
-      : exp_type_(exp_type), return_value_type_(return_value_type),
+                     type::Type *return_elem_value_type = nullptr)
+      : exp_type_(exp_type),
+        return_value_type_(return_value_type),
         return_elem_value_type_(return_elem_value_type) {}
   AbstractExpression(ExpressionType exp_type, type::TypeId return_value_type,
                      AbstractExpression *left, AbstractExpression *right,
-                     type::Type *return_elem_value_type =
-                     nullptr)
-      : exp_type_(exp_type), return_value_type_(return_value_type),
+                     type::Type *return_elem_value_type = nullptr)
+      : exp_type_(exp_type),
+        return_value_type_(return_value_type),
         return_elem_value_type_(return_elem_value_type) {
     // Order of these is important!
     if (left != nullptr)

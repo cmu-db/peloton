@@ -170,7 +170,7 @@ class Value : public Printable {
 
   // Is a value null?
   inline bool IsNull() const {
-    if(type_id_ == TypeId::ARRAY) {
+    if (type_id_ == TypeId::ARRAY) {
       return GetLength() == 0;
     }
     return size_.len == PELOTON_VALUE_NULL;
@@ -232,13 +232,9 @@ class Value : public Printable {
     return Type::GetInstance(type_id)->DeserializeFrom(in, pool);
   }
 
-  inline int32_t GetInteger() const {
-    return value_.integer;
-  }
+  inline int32_t GetInteger() const { return value_.integer; }
 
-  inline double GetDecimal() const {
-    return value_.decimal;
-  }
+  inline double GetDecimal() const { return value_.decimal; }
 
   // Access the raw variable length data
   inline const char *GetData() const {
@@ -293,7 +289,8 @@ class Value : public Printable {
   // For unordered_map
   struct equal_to {
     inline bool operator()(const Value &x, const Value &y) const {
-      return Type::GetInstance(x.type_id_)->CompareEquals(x, y) == CmpBool::TRUE;
+      return Type::GetInstance(x.type_id_)->CompareEquals(x, y) ==
+             CmpBool::TRUE;
     }
   };
 
@@ -362,8 +359,8 @@ class Value : public Printable {
 template <class T>
 Value::Value(TypeId type, const std::vector<T> *vals, Type *element_type,
              bool manage_data)
-    : Value(TypeId::ARRAY){
-  manage_data_ = manage_data; 
+    : Value(TypeId::ARRAY) {
+  manage_data_ = manage_data;
   switch (type) {
     case TypeId::ARRAY:
       if (manage_data) {

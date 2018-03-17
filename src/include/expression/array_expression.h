@@ -26,10 +26,11 @@ namespace expression {
 
 class ArrayExpression : public AbstractExpression {
  public:
-  ArrayExpression(const std::vector<AbstractExpression *> &expr_array, 
-    const type::Value &value)
+  ArrayExpression(const std::vector<AbstractExpression *> &expr_array,
+                  const type::Value &value)
       : AbstractExpression(ExpressionType::ARRAY, value.GetTypeId(),
-        value.GetElemType()), value_(value.Copy()) {
+                           value.GetElemType()),
+        value_(value.Copy()) {
     for (auto &expr : expr_array) {
       expr_array_.push_back(std::unique_ptr<AbstractExpression>(expr));
     }
@@ -52,8 +53,7 @@ class ArrayExpression : public AbstractExpression {
 
  protected:
   ArrayExpression(const ArrayExpression &other)
-      : AbstractExpression(other), value_(other.value_.Copy()) {
-  }
+      : AbstractExpression(other), value_(other.value_.Copy()) {}
 
   std::vector<std::unique_ptr<expression::AbstractExpression>> expr_array_;
   type::Value value_;

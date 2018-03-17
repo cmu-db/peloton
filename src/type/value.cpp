@@ -43,32 +43,31 @@ Value::Value(const Value &other) {
       }
       break;
     case TypeId::ARRAY:
-        size_.elem_type = other.size_.elem_type;
-        if (manage_data_) {
-          switch (size_.elem_type->GetTypeId()) {
-            case TypeId::INTEGER: {
-              auto vec_ptr = (std::vector<int32_t> *)other.value_.array;
-              auto vec = new std::vector<int32_t>(*vec_ptr);
-              value_.array = reinterpret_cast<char *>(vec);
-              break;
-            }
-            case TypeId::DECIMAL: {
-              auto vec_ptr = (std::vector<double> *)other.value_.array;
-              auto vec = new std::vector<double>(*vec_ptr);
-              value_.array = reinterpret_cast<char *>(vec);
-              break;
-            }
-            default: {
-              std::string msg =
-                  StringUtil::Format(
-                    "Invalid Type '%d' for Array Value constructor",
-                    static_cast<int>(size_.elem_type->GetTypeId()));
-              throw Exception(ExceptionType::INCOMPATIBLE_TYPE, msg);
-            }
+      size_.elem_type = other.size_.elem_type;
+      if (manage_data_) {
+        switch (size_.elem_type->GetTypeId()) {
+          case TypeId::INTEGER: {
+            auto vec_ptr = (std::vector<int32_t> *)other.value_.array;
+            auto vec = new std::vector<int32_t>(*vec_ptr);
+            value_.array = reinterpret_cast<char *>(vec);
+            break;
           }
-        } else {
-          value_ = other.value_;
+          case TypeId::DECIMAL: {
+            auto vec_ptr = (std::vector<double> *)other.value_.array;
+            auto vec = new std::vector<double>(*vec_ptr);
+            value_.array = reinterpret_cast<char *>(vec);
+            break;
+          }
+          default: {
+            std::string msg = StringUtil::Format(
+                "Invalid Type '%d' for Array Value constructor",
+                static_cast<int>(size_.elem_type->GetTypeId()));
+            throw Exception(ExceptionType::INCOMPATIBLE_TYPE, msg);
+          }
         }
+      } else {
+        value_ = other.value_;
+      }
       break;
     default:
       value_ = other.value_;
@@ -390,10 +389,10 @@ Value::~Value() {
           delete reinterpret_cast<std::vector<double> *>(value_.array);
           break;
         default:
-        // Type not Identified
-        LOG_ERROR("Unrecognized ARRAY field type '%s' for deletion",
-                  TypeIdToString(size_.elem_type->GetTypeId()).c_str());
-        break;
+          // Type not Identified
+          LOG_ERROR("Unrecognized ARRAY field type '%s' for deletion",
+                    TypeIdToString(size_.elem_type->GetTypeId()).c_str());
+          break;
       }
       break;
     default:

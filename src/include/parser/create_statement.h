@@ -60,8 +60,8 @@ struct ColumnDefinition {
   }
 
   ColumnDefinition(char *name, DataType type,
-                   DataType elem_type = DataType::INVALID) : name(name),
-                   type(type), elem_type(elem_type) {
+                   DataType elem_type = DataType::INVALID)
+      : name(name), type(type), elem_type(elem_type) {
     // Set varlen to TEXT_MAX_LENGTH if the data type is TEXT
     if (type == DataType::TEXT) varlen = type::PELOTON_TEXT_MAX_LEN;
   }

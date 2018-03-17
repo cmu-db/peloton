@@ -37,18 +37,15 @@ Value ArrayType::GetElementAt(const Value &val, uint64_t idx) const {
       return ValueFactory::GetTinyIntValue((int8_t)vec.at(idx));
     }
     case TypeId::SMALLINT: {
-      std::vector<int16_t> vec =
-          *(std::vector<int16_t> *)(val.value_.array);
+      std::vector<int16_t> vec = *(std::vector<int16_t> *)(val.value_.array);
       return ValueFactory::GetSmallIntValue((int16_t)vec.at(idx));
     }
     case TypeId::INTEGER: {
-      std::vector<int32_t> vec =
-          *(std::vector<int32_t> *)(val.value_.array);
+      std::vector<int32_t> vec = *(std::vector<int32_t> *)(val.value_.array);
       return ValueFactory::GetIntegerValue((int32_t)vec.at(idx));
     }
     case TypeId::BIGINT: {
-      std::vector<int64_t> vec =
-          *(std::vector<int64_t> *)(val.value_.array);
+      std::vector<int64_t> vec = *(std::vector<int64_t> *)(val.value_.array);
       return ValueFactory::GetBigIntValue((int64_t)vec.at(idx));
     }
     case TypeId::DECIMAL: {
@@ -56,8 +53,7 @@ Value ArrayType::GetElementAt(const Value &val, uint64_t idx) const {
       return ValueFactory::GetDecimalValue((double)vec.at(idx));
     }
     case TypeId::TIMESTAMP: {
-      std::vector<uint64_t> vec =
-          *(std::vector<uint64_t> *)(val.value_.array);
+      std::vector<uint64_t> vec = *(std::vector<uint64_t> *)(val.value_.array);
       return ValueFactory::GetTimestampValue((uint64_t)vec.at(idx));
     }
     case TypeId::VARCHAR: {
@@ -81,67 +77,70 @@ Value ArrayType::InList(const Value &list, const Value &object) const {
       std::vector<bool> vec = *(std::vector<bool> *)(list.value_.array);
       std::vector<bool>::iterator it;
       for (it = vec.begin(); it != vec.end(); it++) {
-        Value res = ValueFactory::GetBooleanValue(ValueFactory::GetBooleanValue(*it).CompareEquals(object));
-        if (ValueFactory::GetBooleanValue(*it).CompareEquals(object) == CmpBool::TRUE) return res;
+        Value res = ValueFactory::GetBooleanValue(
+            ValueFactory::GetBooleanValue(*it).CompareEquals(object));
+        if (ValueFactory::GetBooleanValue(*it).CompareEquals(object) ==
+            CmpBool::TRUE)
+          return res;
       }
       return ValueFactory::GetBooleanValue(false);
     }
     case TypeId::TINYINT: {
-      std::vector<int8_t> vec =
-          *(std::vector<int8_t> *)(list.value_.array);
+      std::vector<int8_t> vec = *(std::vector<int8_t> *)(list.value_.array);
       std::vector<int8_t>::iterator it;
       for (it = vec.begin(); it != vec.end(); it++) {
-        Value res = ValueFactory::GetBooleanValue(Value(TypeId::TINYINT, *it).CompareEquals(object));
+        Value res = ValueFactory::GetBooleanValue(
+            Value(TypeId::TINYINT, *it).CompareEquals(object));
         if (res.IsTrue()) return res;
       }
       return ValueFactory::GetBooleanValue(false);
     }
     case TypeId::SMALLINT: {
-      std::vector<int16_t> vec =
-          *(std::vector<int16_t> *)(list.value_.array);
+      std::vector<int16_t> vec = *(std::vector<int16_t> *)(list.value_.array);
       std::vector<int16_t>::iterator it;
       for (it = vec.begin(); it != vec.end(); it++) {
-        Value res = ValueFactory::GetBooleanValue(Value(TypeId::SMALLINT, *it).CompareEquals(object));
+        Value res = ValueFactory::GetBooleanValue(
+            Value(TypeId::SMALLINT, *it).CompareEquals(object));
         if (res.IsTrue()) return res;
       }
       return ValueFactory::GetBooleanValue(false);
     }
     case TypeId::INTEGER: {
-      std::vector<int32_t> vec =
-          *(std::vector<int32_t> *)(list.value_.array);
+      std::vector<int32_t> vec = *(std::vector<int32_t> *)(list.value_.array);
       std::vector<int32_t>::iterator it;
       for (it = vec.begin(); it != vec.end(); it++) {
-        Value res = ValueFactory::GetBooleanValue(ValueFactory::GetIntegerValue(*it).CompareEquals(object));
+        Value res = ValueFactory::GetBooleanValue(
+            ValueFactory::GetIntegerValue(*it).CompareEquals(object));
         if (res.IsTrue()) return res;
       }
       return ValueFactory::GetBooleanValue(false);
     }
     case TypeId::BIGINT: {
-      std::vector<int64_t> vec =
-          *(std::vector<int64_t> *)(list.value_.array);
+      std::vector<int64_t> vec = *(std::vector<int64_t> *)(list.value_.array);
       std::vector<int64_t>::iterator it;
       for (it = vec.begin(); it != vec.end(); it++) {
-        Value res = ValueFactory::GetBooleanValue(ValueFactory::GetBigIntValue(*it).CompareEquals(object));
+        Value res = ValueFactory::GetBooleanValue(
+            ValueFactory::GetBigIntValue(*it).CompareEquals(object));
         if (res.IsTrue()) return res;
       }
       return ValueFactory::GetBooleanValue(false);
     }
     case TypeId::DECIMAL: {
-      std::vector<double> vec =
-          *(std::vector<double> *)(list.value_.array);
+      std::vector<double> vec = *(std::vector<double> *)(list.value_.array);
       std::vector<double>::iterator it;
       for (it = vec.begin(); it != vec.end(); it++) {
-        Value res = ValueFactory::GetBooleanValue(ValueFactory::GetDecimalValue(*it).CompareEquals(object));
+        Value res = ValueFactory::GetBooleanValue(
+            ValueFactory::GetDecimalValue(*it).CompareEquals(object));
         if (res.IsTrue()) return res;
       }
       return ValueFactory::GetBooleanValue(false);
     }
     case TypeId::TIMESTAMP: {
-      std::vector<uint64_t> vec =
-          *(std::vector<uint64_t> *)(list.value_.array);
+      std::vector<uint64_t> vec = *(std::vector<uint64_t> *)(list.value_.array);
       std::vector<uint64_t>::iterator it;
       for (it = vec.begin(); it != vec.end(); it++) {
-        Value res = ValueFactory::GetBooleanValue(ValueFactory::GetTimestampValue(*it).CompareEquals(object));
+        Value res = ValueFactory::GetBooleanValue(
+            ValueFactory::GetTimestampValue(*it).CompareEquals(object));
         if (res.IsTrue()) return res;
       }
       return ValueFactory::GetBooleanValue(false);
@@ -151,7 +150,8 @@ Value ArrayType::InList(const Value &list, const Value &object) const {
           *(std::vector<std::string> *)(list.value_.array);
       std::vector<std::string>::iterator it;
       for (it = vec.begin(); it != vec.end(); it++) {
-        Value res = ValueFactory::GetBooleanValue(Value(TypeId::VARCHAR, *it).CompareEquals(object));
+        Value res = ValueFactory::GetBooleanValue(
+            Value(TypeId::VARCHAR, *it).CompareEquals(object));
         if (res.IsTrue()) return res;
       }
       return ValueFactory::GetBooleanValue(false);
@@ -166,9 +166,10 @@ CmpBool ArrayType::CompareEquals(const Value &left, const Value &right) const {
   PL_ASSERT(GetTypeId() == TypeId::ARRAY);
   PL_ASSERT(left.CheckComparable(right));
   if (right.GetElementType() != left.GetElementType()) {
-    std::string msg = Type::GetInstance(right.GetElementType()->GetTypeId())->ToString() +
-                      " mismatch with " +
-                      Type::GetInstance(left.GetElementType()->GetTypeId())->ToString();
+    std::string msg =
+        Type::GetInstance(right.GetElementType()->GetTypeId())->ToString() +
+        " mismatch with " +
+        Type::GetInstance(left.GetElementType()->GetTypeId())->ToString();
     throw Exception(ExceptionType::MISMATCH_TYPE, msg);
   }
   switch (left.GetElementType()->GetTypeId()) {
@@ -178,36 +179,31 @@ CmpBool ArrayType::CompareEquals(const Value &left, const Value &right) const {
       return GetCmpBool(vec1 == vec2);
     }
     case TypeId::TINYINT: {
-      std::vector<int8_t> vec1 =
-          *(std::vector<int8_t> *)(left.value_.array);
+      std::vector<int8_t> vec1 = *(std::vector<int8_t> *)(left.value_.array);
       std::vector<int8_t> vec2 =
           *(std::vector<int8_t> *)(right.GetAs<char *>());
       return GetCmpBool(vec1 == vec2);
     }
     case TypeId::SMALLINT: {
-      std::vector<int16_t> vec1 =
-          *(std::vector<int16_t> *)(left.value_.array);
+      std::vector<int16_t> vec1 = *(std::vector<int16_t> *)(left.value_.array);
       std::vector<int16_t> vec2 =
           *(std::vector<int16_t> *)(right.GetAs<char *>());
       return GetCmpBool(vec1 == vec2);
     }
     case TypeId::INTEGER: {
-      std::vector<int32_t> vec1 =
-          *(std::vector<int32_t> *)(left.value_.array);
+      std::vector<int32_t> vec1 = *(std::vector<int32_t> *)(left.value_.array);
       std::vector<int32_t> vec2 =
           *(std::vector<int32_t> *)(right.GetAs<char *>());
       return GetCmpBool(vec1 == vec2);
     }
     case TypeId::BIGINT: {
-      std::vector<int64_t> vec1 =
-          *(std::vector<int64_t> *)(left.value_.array);
+      std::vector<int64_t> vec1 = *(std::vector<int64_t> *)(left.value_.array);
       std::vector<int64_t> vec2 =
           *(std::vector<int64_t> *)(right.GetAs<char *>());
       return GetCmpBool(vec1 == vec2);
     }
     case TypeId::DECIMAL: {
-      std::vector<double> vec1 =
-          *(std::vector<double> *)(left.value_.array);
+      std::vector<double> vec1 = *(std::vector<double> *)(left.value_.array);
       std::vector<double> vec2 =
           *(std::vector<double> *)(right.GetAs<char *>());
       return GetCmpBool(vec1 == vec2);
@@ -232,13 +228,15 @@ CmpBool ArrayType::CompareEquals(const Value &left, const Value &right) const {
   throw Exception(ExceptionType::UNKNOWN_TYPE, "Element type is invalid.");
 }
 
-CmpBool ArrayType::CompareNotEquals(const Value &left, const Value &right) const {
+CmpBool ArrayType::CompareNotEquals(const Value &left,
+                                    const Value &right) const {
   PL_ASSERT(GetTypeId() == TypeId::ARRAY);
   PL_ASSERT(left.CheckComparable(right));
   if (right.GetElementType() != left.GetElementType()) {
-    std::string msg = Type::GetInstance(right.GetElementType()->GetTypeId())->ToString() +
-                      " mismatch with " +
-                      Type::GetInstance(left.GetElementType()->GetTypeId())->ToString();
+    std::string msg =
+        Type::GetInstance(right.GetElementType()->GetTypeId())->ToString() +
+        " mismatch with " +
+        Type::GetInstance(left.GetElementType()->GetTypeId())->ToString();
     throw Exception(ExceptionType::MISMATCH_TYPE, msg);
   }
   switch (left.GetElementType()->GetTypeId()) {
@@ -248,36 +246,31 @@ CmpBool ArrayType::CompareNotEquals(const Value &left, const Value &right) const
       return GetCmpBool(vec1 != vec2);
     }
     case TypeId::TINYINT: {
-      std::vector<int8_t> vec1 =
-          *(std::vector<int8_t> *)(left.value_.array);
+      std::vector<int8_t> vec1 = *(std::vector<int8_t> *)(left.value_.array);
       std::vector<int8_t> vec2 =
           *(std::vector<int8_t> *)(right.GetAs<char *>());
       return GetCmpBool(vec1 != vec2);
     }
     case TypeId::SMALLINT: {
-      std::vector<int16_t> vec1 =
-          *(std::vector<int16_t> *)(left.value_.array);
+      std::vector<int16_t> vec1 = *(std::vector<int16_t> *)(left.value_.array);
       std::vector<int16_t> vec2 =
           *(std::vector<int16_t> *)(right.GetAs<char *>());
       return GetCmpBool(vec1 != vec2);
     }
     case TypeId::INTEGER: {
-      std::vector<int32_t> vec1 =
-          *(std::vector<int32_t> *)(left.value_.array);
+      std::vector<int32_t> vec1 = *(std::vector<int32_t> *)(left.value_.array);
       std::vector<int32_t> vec2 =
           *(std::vector<int32_t> *)(right.GetAs<char *>());
       return GetCmpBool(vec1 != vec2);
     }
     case TypeId::BIGINT: {
-      std::vector<int64_t> vec1 =
-          *(std::vector<int64_t> *)(left.value_.array);
+      std::vector<int64_t> vec1 = *(std::vector<int64_t> *)(left.value_.array);
       std::vector<int64_t> vec2 =
           *(std::vector<int64_t> *)(right.GetAs<char *>());
       return GetCmpBool(vec1 != vec2);
     }
     case TypeId::DECIMAL: {
-      std::vector<double> vec1 =
-          *(std::vector<double> *)(left.value_.array);
+      std::vector<double> vec1 = *(std::vector<double> *)(left.value_.array);
       std::vector<double> vec2 =
           *(std::vector<double> *)(right.GetAs<char *>());
       return GetCmpBool(vec1 != vec2);
@@ -302,13 +295,15 @@ CmpBool ArrayType::CompareNotEquals(const Value &left, const Value &right) const
   throw Exception(ExceptionType::UNKNOWN_TYPE, "Element type is invalid.");
 }
 
-CmpBool ArrayType::CompareLessThan(const Value &left, const Value &right) const {
+CmpBool ArrayType::CompareLessThan(const Value &left,
+                                   const Value &right) const {
   PL_ASSERT(GetTypeId() == TypeId::ARRAY);
   PL_ASSERT(left.CheckComparable(right));
   if (right.GetElementType() != left.GetElementType()) {
-    std::string msg = Type::GetInstance(right.GetElementType()->GetTypeId())->ToString() +
-                      " mismatch with " +
-                      Type::GetInstance(left.GetElementType()->GetTypeId())->ToString();
+    std::string msg =
+        Type::GetInstance(right.GetElementType()->GetTypeId())->ToString() +
+        " mismatch with " +
+        Type::GetInstance(left.GetElementType()->GetTypeId())->ToString();
     throw Exception(ExceptionType::MISMATCH_TYPE, msg);
   }
   switch (left.GetElementType()->GetTypeId()) {
@@ -318,36 +313,31 @@ CmpBool ArrayType::CompareLessThan(const Value &left, const Value &right) const 
       return GetCmpBool(vec1 < vec2);
     }
     case TypeId::TINYINT: {
-      std::vector<int8_t> vec1 =
-          *(std::vector<int8_t> *)(left.value_.array);
+      std::vector<int8_t> vec1 = *(std::vector<int8_t> *)(left.value_.array);
       std::vector<int8_t> vec2 =
           *(std::vector<int8_t> *)(right.GetAs<char *>());
       return GetCmpBool(vec1 < vec2);
     }
     case TypeId::SMALLINT: {
-      std::vector<int16_t> vec1 =
-          *(std::vector<int16_t> *)(left.value_.array);
+      std::vector<int16_t> vec1 = *(std::vector<int16_t> *)(left.value_.array);
       std::vector<int16_t> vec2 =
           *(std::vector<int16_t> *)(right.GetAs<char *>());
       return GetCmpBool(vec1 < vec2);
     }
     case TypeId::INTEGER: {
-      std::vector<int32_t> vec1 =
-          *(std::vector<int32_t> *)(left.value_.array);
+      std::vector<int32_t> vec1 = *(std::vector<int32_t> *)(left.value_.array);
       std::vector<int32_t> vec2 =
           *(std::vector<int32_t> *)(right.GetAs<char *>());
       return GetCmpBool(vec1 < vec2);
     }
     case TypeId::BIGINT: {
-      std::vector<int64_t> vec1 =
-          *(std::vector<int64_t> *)(left.value_.array);
+      std::vector<int64_t> vec1 = *(std::vector<int64_t> *)(left.value_.array);
       std::vector<int64_t> vec2 =
           *(std::vector<int64_t> *)(right.GetAs<char *>());
       return GetCmpBool(vec1 < vec2);
     }
     case TypeId::DECIMAL: {
-      std::vector<double> vec1 =
-          *(std::vector<double> *)(left.value_.array);
+      std::vector<double> vec1 = *(std::vector<double> *)(left.value_.array);
       std::vector<double> vec2 =
           *(std::vector<double> *)(right.GetAs<char *>());
       return GetCmpBool(vec1 < vec2);
@@ -373,13 +363,14 @@ CmpBool ArrayType::CompareLessThan(const Value &left, const Value &right) const 
 }
 
 CmpBool ArrayType::CompareLessThanEquals(const Value &left,
-                                       const Value &right) const {
+                                         const Value &right) const {
   PL_ASSERT(GetTypeId() == TypeId::ARRAY);
   PL_ASSERT(left.CheckComparable(right));
   if (right.GetElementType() != left.GetElementType()) {
-    std::string msg = Type::GetInstance(right.GetElementType()->GetTypeId())->ToString() +
-                      " mismatch with " +
-                      Type::GetInstance(left.GetElementType()->GetTypeId())->ToString();
+    std::string msg =
+        Type::GetInstance(right.GetElementType()->GetTypeId())->ToString() +
+        " mismatch with " +
+        Type::GetInstance(left.GetElementType()->GetTypeId())->ToString();
     throw Exception(ExceptionType::MISMATCH_TYPE, msg);
   }
   switch (left.GetElementType()->GetTypeId()) {
@@ -389,36 +380,31 @@ CmpBool ArrayType::CompareLessThanEquals(const Value &left,
       return GetCmpBool(vec1 <= vec2);
     }
     case TypeId::TINYINT: {
-      std::vector<int8_t> vec1 =
-          *(std::vector<int8_t> *)(left.value_.array);
+      std::vector<int8_t> vec1 = *(std::vector<int8_t> *)(left.value_.array);
       std::vector<int8_t> vec2 =
           *(std::vector<int8_t> *)(right.GetAs<char *>());
       return GetCmpBool(vec1 <= vec2);
     }
     case TypeId::SMALLINT: {
-      std::vector<int16_t> vec1 =
-          *(std::vector<int16_t> *)(left.value_.array);
+      std::vector<int16_t> vec1 = *(std::vector<int16_t> *)(left.value_.array);
       std::vector<int16_t> vec2 =
           *(std::vector<int16_t> *)(right.GetAs<char *>());
       return GetCmpBool(vec1 <= vec2);
     }
     case TypeId::INTEGER: {
-      std::vector<int32_t> vec1 =
-          *(std::vector<int32_t> *)(left.value_.array);
+      std::vector<int32_t> vec1 = *(std::vector<int32_t> *)(left.value_.array);
       std::vector<int32_t> vec2 =
           *(std::vector<int32_t> *)(right.GetAs<char *>());
       return GetCmpBool(vec1 <= vec2);
     }
     case TypeId::BIGINT: {
-      std::vector<int64_t> vec1 =
-          *(std::vector<int64_t> *)(left.value_.array);
+      std::vector<int64_t> vec1 = *(std::vector<int64_t> *)(left.value_.array);
       std::vector<int64_t> vec2 =
           *(std::vector<int64_t> *)(right.GetAs<char *>());
       return GetCmpBool(vec1 <= vec2);
     }
     case TypeId::DECIMAL: {
-      std::vector<double> vec1 =
-          *(std::vector<double> *)(left.value_.array);
+      std::vector<double> vec1 = *(std::vector<double> *)(left.value_.array);
       std::vector<double> vec2 =
           *(std::vector<double> *)(right.GetAs<char *>());
       return GetCmpBool(vec1 <= vec2);
@@ -444,13 +430,14 @@ CmpBool ArrayType::CompareLessThanEquals(const Value &left,
 }
 
 CmpBool ArrayType::CompareGreaterThan(const Value &left,
-                                    const Value &right) const {
+                                      const Value &right) const {
   PL_ASSERT(GetTypeId() == TypeId::ARRAY);
   PL_ASSERT(left.CheckComparable(right));
   if (right.GetElementType() != left.GetElementType()) {
-    std::string msg = Type::GetInstance(right.GetElementType()->GetTypeId())->ToString() +
-                      " mismatch with " +
-                      Type::GetInstance(left.GetElementType()->GetTypeId())->ToString();
+    std::string msg =
+        Type::GetInstance(right.GetElementType()->GetTypeId())->ToString() +
+        " mismatch with " +
+        Type::GetInstance(left.GetElementType()->GetTypeId())->ToString();
     throw Exception(ExceptionType::MISMATCH_TYPE, msg);
   }
   switch (left.GetElementType()->GetTypeId()) {
@@ -460,36 +447,31 @@ CmpBool ArrayType::CompareGreaterThan(const Value &left,
       return GetCmpBool(vec1 > vec2);
     }
     case TypeId::TINYINT: {
-      std::vector<int8_t> vec1 =
-          *(std::vector<int8_t> *)(left.value_.array);
+      std::vector<int8_t> vec1 = *(std::vector<int8_t> *)(left.value_.array);
       std::vector<int8_t> vec2 =
           *(std::vector<int8_t> *)(right.GetAs<char *>());
       return GetCmpBool(vec1 > vec2);
     }
     case TypeId::SMALLINT: {
-      std::vector<int16_t> vec1 =
-          *(std::vector<int16_t> *)(left.value_.array);
+      std::vector<int16_t> vec1 = *(std::vector<int16_t> *)(left.value_.array);
       std::vector<int16_t> vec2 =
           *(std::vector<int16_t> *)(right.GetAs<char *>());
       return GetCmpBool(vec1 > vec2);
     }
     case TypeId::INTEGER: {
-      std::vector<int32_t> vec1 =
-          *(std::vector<int32_t> *)(left.value_.array);
+      std::vector<int32_t> vec1 = *(std::vector<int32_t> *)(left.value_.array);
       std::vector<int32_t> vec2 =
           *(std::vector<int32_t> *)(right.GetAs<char *>());
       return GetCmpBool(vec1 > vec2);
     }
     case TypeId::BIGINT: {
-      std::vector<int64_t> vec1 =
-          *(std::vector<int64_t> *)(left.value_.array);
+      std::vector<int64_t> vec1 = *(std::vector<int64_t> *)(left.value_.array);
       std::vector<int64_t> vec2 =
           *(std::vector<int64_t> *)(right.GetAs<char *>());
       return GetCmpBool(vec1 > vec2);
     }
     case TypeId::DECIMAL: {
-      std::vector<double> vec1 =
-          *(std::vector<double> *)(left.value_.array);
+      std::vector<double> vec1 = *(std::vector<double> *)(left.value_.array);
       std::vector<double> vec2 =
           *(std::vector<double> *)(right.GetAs<char *>());
       return GetCmpBool(vec1 > vec2);
@@ -515,13 +497,14 @@ CmpBool ArrayType::CompareGreaterThan(const Value &left,
 }
 
 CmpBool ArrayType::CompareGreaterThanEquals(const Value &left,
-                                          const Value &right) const {
+                                            const Value &right) const {
   PL_ASSERT(GetTypeId() == TypeId::ARRAY);
   PL_ASSERT(left.CheckComparable(right));
   if (right.GetElementType() != left.GetElementType()) {
-    std::string msg = Type::GetInstance(right.GetElementType()->GetTypeId())->ToString() +
-                      " mismatch with " +
-                      Type::GetInstance(left.GetElementType()->GetTypeId())->ToString();
+    std::string msg =
+        Type::GetInstance(right.GetElementType()->GetTypeId())->ToString() +
+        " mismatch with " +
+        Type::GetInstance(left.GetElementType()->GetTypeId())->ToString();
     throw Exception(ExceptionType::MISMATCH_TYPE, msg);
   }
   switch (left.GetElementType()->GetTypeId()) {
@@ -531,36 +514,31 @@ CmpBool ArrayType::CompareGreaterThanEquals(const Value &left,
       return GetCmpBool(vec1 >= vec2);
     }
     case TypeId::TINYINT: {
-      std::vector<int8_t> vec1 =
-          *(std::vector<int8_t> *)(left.value_.array);
+      std::vector<int8_t> vec1 = *(std::vector<int8_t> *)(left.value_.array);
       std::vector<int8_t> vec2 =
           *(std::vector<int8_t> *)(right.GetAs<char *>());
       return GetCmpBool(vec1 >= vec2);
     }
     case TypeId::SMALLINT: {
-      std::vector<int16_t> vec1 =
-          *(std::vector<int16_t> *)(left.value_.array);
+      std::vector<int16_t> vec1 = *(std::vector<int16_t> *)(left.value_.array);
       std::vector<int16_t> vec2 =
           *(std::vector<int16_t> *)(right.GetAs<char *>());
       return GetCmpBool(vec1 >= vec2);
     }
     case TypeId::INTEGER: {
-      std::vector<int32_t> vec1 =
-          *(std::vector<int32_t> *)(left.value_.array);
+      std::vector<int32_t> vec1 = *(std::vector<int32_t> *)(left.value_.array);
       std::vector<int32_t> vec2 =
           *(std::vector<int32_t> *)(right.GetAs<char *>());
       return GetCmpBool(vec1 >= vec2);
     }
     case TypeId::BIGINT: {
-      std::vector<int64_t> vec1 =
-          *(std::vector<int64_t> *)(left.value_.array);
+      std::vector<int64_t> vec1 = *(std::vector<int64_t> *)(left.value_.array);
       std::vector<int64_t> vec2 =
           *(std::vector<int64_t> *)(right.GetAs<char *>());
       return GetCmpBool(vec1 >= vec2);
     }
     case TypeId::DECIMAL: {
-      std::vector<double> vec1 =
-          *(std::vector<double> *)(left.value_.array);
+      std::vector<double> vec1 = *(std::vector<double> *)(left.value_.array);
       std::vector<double> vec2 =
           *(std::vector<double> *)(right.GetAs<char *>());
       return GetCmpBool(vec1 >= vec2);
@@ -597,43 +575,44 @@ Type *ArrayType::GetElementType(const Value &val) const {
 }
 
 // Create a copy of this value
-Value ArrayType::Copy(const Value& val) const { return Value(val); }
+Value ArrayType::Copy(const Value &val) const { return Value(val); }
 
-void ArrayType::SerializeTo(const Value& val UNUSED_ATTRIBUTE, SerializeOutput &out UNUSED_ATTRIBUTE) const {
+void ArrayType::SerializeTo(const Value &val UNUSED_ATTRIBUTE,
+                            SerializeOutput &out UNUSED_ATTRIBUTE) const {
   throw Exception("Can't serialize array types to storage");
 }
 
-void ArrayType::SerializeTo(const Value& val, char *storage,
-                 bool inlined UNUSED_ATTRIBUTE,
-                 AbstractPool *pool) const {
+void ArrayType::SerializeTo(const Value &val, char *storage,
+                            bool inlined UNUSED_ATTRIBUTE,
+                            AbstractPool *pool) const {
   Type *elem_type = val.GetElemType();
   TypeId elem_type_id = elem_type->GetTypeId();
   uint32_t len, size;
-  char* data = nullptr;
+  char *data = nullptr;
   switch (elem_type_id) {
     case TypeId::INTEGER: {
-      std::vector<int32_t> *int32_vec = 
+      std::vector<int32_t> *int32_vec =
           reinterpret_cast<std::vector<int32_t> *>(val.value_.array);
       len = int32_vec->size();
       size = len * sizeof(int32_t) + sizeof(uint32_t) + sizeof(TypeId);
       data = (pool == nullptr) ? new char[size] : (char *)pool->Allocate(size);
       PL_MEMCPY(data, &elem_type_id, sizeof(TypeId));
       PL_MEMCPY(data + sizeof(TypeId), &len, sizeof(uint32_t));
-      if(len > 0){
+      if (len > 0) {
         PL_MEMCPY(data + sizeof(TypeId) + sizeof(uint32_t), int32_vec->data(),
                   size - sizeof(TypeId) - sizeof(uint32_t));
       }
       break;
     }
     case TypeId::DECIMAL: {
-      std::vector<double> *double_vec = 
+      std::vector<double> *double_vec =
           reinterpret_cast<std::vector<double> *>(val.value_.array);
       len = double_vec->size();
       size = len * sizeof(double) + sizeof(uint32_t);
       data = (pool == nullptr) ? new char[size] : (char *)pool->Allocate(size);
       PL_MEMCPY(data, &elem_type_id, sizeof(TypeId));
       PL_MEMCPY(data + sizeof(TypeId), &len, sizeof(uint32_t));
-      if(len > 0){
+      if (len > 0) {
         PL_MEMCPY(data + sizeof(TypeId) + sizeof(uint32_t), double_vec->data(),
                   size - sizeof(TypeId) - sizeof(uint32_t));
       }
@@ -651,49 +630,51 @@ void ArrayType::SerializeTo(const Value& val, char *storage,
 
 // Deserialize a value of the given type from the given storage space.
 Value ArrayType::DeserializeFrom(const char *storage,
-                                  const bool inlined UNUSED_ATTRIBUTE,
-                                  AbstractPool *pool UNUSED_ATTRIBUTE) const {
+                                 const bool inlined UNUSED_ATTRIBUTE,
+                                 AbstractPool *pool UNUSED_ATTRIBUTE) const {
   const char *ptr = *reinterpret_cast<const char *const *>(storage);
   TypeId elem_type_id = *reinterpret_cast<const TypeId *>(ptr);
   uint32_t len = *reinterpret_cast<const uint32_t *>(ptr + sizeof(TypeId));
   switch (elem_type_id) {
     case TypeId::INTEGER: {
       Type *elem_type = new Type(elem_type_id);
-      if(len == 0) {
+      if (len == 0) {
         auto int32_vec = new std::vector<int32_t>();
         return Value(TypeId::ARRAY, int32_vec, elem_type, false);
       } else {
-        const int32_t *int32_begin = reinterpret_cast<const int32_t *>(ptr + 
-            sizeof(uint32_t) + sizeof(TypeId));
-        auto int32_vec = new std::vector<int32_t>(int32_begin, int32_begin + len);
+        const int32_t *int32_begin = reinterpret_cast<const int32_t *>(
+            ptr + sizeof(uint32_t) + sizeof(TypeId));
+        auto int32_vec =
+            new std::vector<int32_t>(int32_begin, int32_begin + len);
         return Value(TypeId::ARRAY, int32_vec, elem_type, false);
       }
       break;
     }
     case TypeId::DECIMAL: {
       Type *elem_type = new Type(elem_type_id);
-      if(len == 0) {
+      if (len == 0) {
         auto double_vec = new std::vector<double>();
         return Value(TypeId::ARRAY, double_vec, elem_type, false);
       } else {
-        const double *double_begin = reinterpret_cast<const double *>(ptr + 
-            sizeof(uint32_t) + sizeof(TypeId));
-        auto double_vec = new std::vector<double>(double_begin, double_begin + len);
+        const double *double_begin = reinterpret_cast<const double *>(
+            ptr + sizeof(uint32_t) + sizeof(TypeId));
+        auto double_vec =
+            new std::vector<double>(double_begin, double_begin + len);
         return Value(TypeId::ARRAY, double_vec, elem_type, false);
       }
       break;
     }
     default: {
-      std::string msg =
-          StringUtil::Format("Invalid Type '%d' for Array DeserializeFrom method",
-                             static_cast<int>(elem_type_id));
+      std::string msg = StringUtil::Format(
+          "Invalid Type '%d' for Array DeserializeFrom method",
+          static_cast<int>(elem_type_id));
       throw Exception(ExceptionType::INCOMPATIBLE_TYPE, msg);
     }
   }
 }
 
 Value ArrayType::DeserializeFrom(SerializeInput &in UNUSED_ATTRIBUTE,
-                                  AbstractPool *pool UNUSED_ATTRIBUTE) const {
+                                 AbstractPool *pool UNUSED_ATTRIBUTE) const {
   throw Exception("Can't deserialize array types from storage");
 }
 
@@ -702,7 +683,7 @@ std::string ArrayType::ToString(const Value &val) const {
   std::ostringstream os;
   os << "{";
   for (uint32_t idx = 0; idx < len; idx++) {
-    if(idx != 0) {
+    if (idx != 0) {
       os << ",";
     }
     os << GetElementAt(val, idx).ToString();
@@ -716,13 +697,13 @@ uint32_t ArrayType::GetLength(const Value &val) const {
   uint32_t len;
   switch (elem_type_id) {
     case TypeId::INTEGER: {
-      std::vector<int32_t> *int32_vec = 
+      std::vector<int32_t> *int32_vec =
           reinterpret_cast<std::vector<int32_t> *>(val.value_.array);
       len = int32_vec->size();
       break;
     }
     case TypeId::DECIMAL: {
-      std::vector<double> *double_vec = 
+      std::vector<double> *double_vec =
           reinterpret_cast<std::vector<double> *>(val.value_.array);
       len = double_vec->size();
       break;
