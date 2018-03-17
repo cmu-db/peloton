@@ -69,9 +69,8 @@ void ShowTable(std::string database_name, std::string table_name) {
       peloton_parser.BuildParseTree("SELECT * FROM " + table_name);
 
   auto parse_tree = select_stmt->GetStatement(0);
-  auto bind_node_visitor =
-      std::make_shared<binder::BindNodeVisitor>(txn, DEFAULT_DB_NAME);
-  bind_node_visitor->BindNameToNode(parse_tree);
+  auto bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor.BindNameToNode(parse_tree);
 
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(select_stmt, txn));
   LOG_TRACE("Query Plan\n%s",
@@ -151,9 +150,8 @@ TEST_F(DeleteTests, VariousOperations) {
 
   LOG_INFO("Binding parse tree...");
   auto parse_tree = insert_stmt->GetStatement(0);
-  auto bind_node_visitor =
-      std::make_shared<binder::BindNodeVisitor>(txn, DEFAULT_DB_NAME);
-  bind_node_visitor->BindNameToNode(parse_tree);
+  auto bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor.BindNameToNode(parse_tree);
   LOG_INFO("Binding parse tree completed!");
 
   LOG_INFO("Building plan tree...");
@@ -196,9 +194,8 @@ TEST_F(DeleteTests, VariousOperations) {
 
   LOG_INFO("Binding parse tree...");
   parse_tree = insert_stmt->GetStatement(0);
-  bind_node_visitor =
-      std::make_shared<binder::BindNodeVisitor>(txn, DEFAULT_DB_NAME);
-  bind_node_visitor->BindNameToNode(parse_tree);
+  bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor.BindNameToNode(parse_tree);
   LOG_INFO("Binding parse tree completed!");
 
   LOG_INFO("Building plan tree...");
@@ -238,9 +235,8 @@ TEST_F(DeleteTests, VariousOperations) {
 
   LOG_INFO("Binding parse tree...");
   parse_tree = insert_stmt->GetStatement(0);
-  bind_node_visitor =
-      std::make_shared<binder::BindNodeVisitor>(txn, DEFAULT_DB_NAME);
-  bind_node_visitor->BindNameToNode(parse_tree);
+  bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor.BindNameToNode(parse_tree);
   LOG_INFO("Binding parse tree completed!");
 
   LOG_INFO("Building plan tree...");
@@ -280,9 +276,8 @@ TEST_F(DeleteTests, VariousOperations) {
 
   LOG_INFO("Binding parse tree...");
   parse_tree = select_stmt->GetStatement(0);
-  bind_node_visitor =
-      std::make_shared<binder::BindNodeVisitor>(txn, DEFAULT_DB_NAME);
-  bind_node_visitor->BindNameToNode(parse_tree);
+  bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor.BindNameToNode(parse_tree);
   LOG_INFO("Binding parse tree completed!");
 
   LOG_INFO("Building plan tree...");
@@ -321,9 +316,8 @@ TEST_F(DeleteTests, VariousOperations) {
 
   LOG_INFO("Binding parse tree...");
   parse_tree = delete_stmt_2->GetStatement(0);
-  bind_node_visitor =
-      std::make_shared<binder::BindNodeVisitor>(txn, DEFAULT_DB_NAME);
-  bind_node_visitor->BindNameToNode(parse_tree);
+  bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor.BindNameToNode(parse_tree);
   LOG_INFO("Binding parse tree completed!");
 
   LOG_INFO("Building plan tree...");
@@ -362,9 +356,8 @@ TEST_F(DeleteTests, VariousOperations) {
 
   LOG_INFO("Binding parse tree...");
   parse_tree = delete_stmt->GetStatement(0);
-  bind_node_visitor =
-      std::make_shared<binder::BindNodeVisitor>(txn, DEFAULT_DB_NAME);
-  bind_node_visitor->BindNameToNode(parse_tree);
+  bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+  bind_node_visitor.BindNameToNode(parse_tree);
   LOG_INFO("Binding parse tree completed!");
 
   LOG_INFO("Building plan tree...");

@@ -66,9 +66,8 @@ class PlannerEqualityTest : public PelotonTest {
     auto parsed_stmt = peloton_parser.BuildParseTree(query);
 
     auto parse_tree = parsed_stmt->GetStatement(0);
-    auto bind_node_visitor =
-        std::make_shared<binder::BindNodeVisitor>(txn, DEFAULT_DB_NAME);
-    bind_node_visitor->BindNameToNode(parse_tree);
+    auto bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+    bind_node_visitor.BindNameToNode(parse_tree);
 
     auto return_value = optimizer->BuildPelotonPlanTree(parsed_stmt, txn);
     return return_value;

@@ -69,9 +69,8 @@ AbstractCatalog::AbstractCatalog(const std::string &catalog_table_ddl,
   auto parse_tree = parse_tree_list->GetStatement(0);
 
   // Run binder
-  auto bind_node_visitor =
-      std::make_shared<binder::BindNodeVisitor>(txn, DATABASE_CATALOG_NAME);
-  bind_node_visitor->BindNameToNode(parse_tree);
+  auto bind_node_visitor = binder::BindNodeVisitor(txn, DATABASE_CATALOG_NAME);
+  bind_node_visitor.BindNameToNode(parse_tree);
 
   // Create the plan tree
   auto create_plan = std::dynamic_pointer_cast<planner::CreatePlan>(
