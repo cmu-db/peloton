@@ -29,7 +29,10 @@ namespace brain {
 
 class QueryClusterer {
  public:
-  QueryClusterer(int num_features) : threshold_(0.7), kd_tree_(num_features) {}
+  QueryClusterer(int num_features, int threshold)
+      : num_features_(num_features),
+        threshold_(threshold),
+        kd_tree_(num_features) {}
 
   // Collect the latest period's data from the server and update the feature
   // vectors of the template queries
@@ -43,14 +46,16 @@ class QueryClusterer {
 
   void UpdateCluster();
 
+  ~QueryClusterer();
+
  private:
   // Map from the fingerprint of the template query to its feature vector
   std::map<std::string, std::vector<double>> features_;
   std::map<std::string, Cluster *> template_cluster_;
   std::set<Cluster *> clusters_;
 
-  double threshold_;
   int num_features_;
+  double threshold_;
 
   // Similarity search structure for finding the nearest centroid;
   KDTree kd_tree_;

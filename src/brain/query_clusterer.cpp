@@ -114,5 +114,9 @@ void QueryClusterer::UpdateCluster() {
   MergeClusters();
 }
 
+QueryClusterer::~QueryClusterer() {
+  for (auto &cluster : clusters_) delete cluster;
+}
+
 }  // namespace brain
 }  // namespace peloton

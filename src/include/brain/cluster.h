@@ -50,7 +50,7 @@ class Cluster {
 
   std::vector<double> GetCentroid() { return centroid_; }
 
-  std::set<std::string> GetTemplates() { return templates_; }
+  const std::set<std::string> &GetTemplates() { return templates_; }
 
  private:
   uint32_t index_;
