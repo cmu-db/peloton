@@ -137,7 +137,7 @@ class AbstractExpression : public Printable {
 
   type::TypeId GetValueType() const { return return_value_type_; }
 
-  type::TypeId GetElemValueType() const { return return_elem_value_type_; }
+  type::Type *GetElemValueType() const { return return_elem_value_type_; }
 
   codegen::type::Type ResultType() const;
 
@@ -279,14 +279,14 @@ class AbstractExpression : public Printable {
  protected:
   AbstractExpression(ExpressionType type) : exp_type_(type) {}
   AbstractExpression(ExpressionType exp_type, type::TypeId return_value_type,
-                     type::TypeId return_elem_value_type =
-                     type::TypeId::INVALID)
+                     type::Type *return_elem_value_type =
+                     nullptr)
       : exp_type_(exp_type), return_value_type_(return_value_type),
         return_elem_value_type_(return_elem_value_type) {}
   AbstractExpression(ExpressionType exp_type, type::TypeId return_value_type,
                      AbstractExpression *left, AbstractExpression *right,
-                     type::TypeId return_elem_value_type =
-                     type::TypeId::INVALID)
+                     type::Type *return_elem_value_type =
+                     nullptr)
       : exp_type_(exp_type), return_value_type_(return_value_type),
         return_elem_value_type_(return_elem_value_type) {
     // Order of these is important!
@@ -327,7 +327,7 @@ class AbstractExpression : public Printable {
    * @brief The flag indicating if there's sub-query in the current expression
    */
   bool has_subquery_ = false;
-  type::TypeId return_elem_value_type_ = type::TypeId::INVALID;
+  type::Type *return_elem_value_type_ = nullptr;
 };
 
 // Equality Comparator class for Abstract Expression

@@ -820,7 +820,7 @@ expression::AbstractExpression *PostgresParser::ArrayExprTransform(
 
   auto expr_array = std::vector<expression::AbstractExpression *>();
   expression::AbstractExpression *expr, *result;
-  type::TypeId element_type = type::TypeId::INVALID;
+  type::TypeId element_type_id = type::TypeId::INVALID;
 
   auto int32_vec = new std::vector<int32_t>();
   auto double_vec = new std::vector<double>();
@@ -830,11 +830,11 @@ expression::AbstractExpression *PostgresParser::ArrayExprTransform(
     switch (node->type) {
       case T_A_Const: {
         expr = ConstTransform(reinterpret_cast<A_Const *>(node));
-        if(element_type == type::TypeId::INVALID) {
-          element_type = expr->GetValueType();
+        if(element_type_id == type::TypeId::INVALID) {
+          element_type_id = expr->GetValueType();
         }
         expr_array.push_back(expr);
-        switch (element_type) {
+        switch (element_type_id) {
           case type::TypeId::INTEGER: {
             int32_vec->push_back(
               (reinterpret_cast<expression::ConstantValueExpression *>(expr))->GetValue().GetInteger());
@@ -847,7 +847,7 @@ expression::AbstractExpression *PostgresParser::ArrayExprTransform(
           }
           default:
             throw NotImplementedException(StringUtil::Format(
-              "Array element value type %d not supported yet...", element_type));
+              "Array element value type %d not supported yet...", element_type_id));
         }
         break;
       }
@@ -857,20 +857,22 @@ expression::AbstractExpression *PostgresParser::ArrayExprTransform(
     }
   }
 
-  switch (element_type) {
+  switch (element_type_id) {
     case type::TypeId::INTEGER: {
+      type::Type elem_type(type::TypeId::INTEGER);
       result = new expression::ArrayExpression(expr_array,
-        type::ValueFactory::GetArrayValue<int32_t>(int32_vec, element_type));
+        type::ValueFactory::GetArrayValue<int32_t>(int32_vec, &elem_type));
       break;
     }
     case type::TypeId::DECIMAL: {
+      type::Type elem_type(type::TypeId::DECIMAL);
       result = new expression::ArrayExpression(expr_array,
-        type::ValueFactory::GetArrayValue<double>(double_vec, element_type));
+        type::ValueFactory::GetArrayValue<double>(double_vec, &elem_type));
       break;
     }
     default:
       throw NotImplementedException(StringUtil::Format(
-        "Array element value type %d not supported yet...", element_type));
+        "Array element value type %d not supported yet...", element_type_id));
   }
   return result;
 }

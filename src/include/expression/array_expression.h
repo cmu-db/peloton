@@ -29,7 +29,7 @@ class ArrayExpression : public AbstractExpression {
   ArrayExpression(const std::vector<AbstractExpression *> &expr_array, 
     const type::Value &value)
       : AbstractExpression(ExpressionType::ARRAY, value.GetTypeId(),
-        value.GetElemTypeId()), value_(value.Copy()) {
+        value.GetElemType()), value_(value.Copy()) {
     for (auto &expr : expr_array) {
       expr_array_.push_back(std::unique_ptr<AbstractExpression>(expr));
     }

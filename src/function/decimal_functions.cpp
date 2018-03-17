@@ -31,7 +31,7 @@ type::Value DecimalFunctions::_Abs(const std::vector<type::Value> &args) {
   if (args[0].IsNull()) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL);
   }
-  switch (args[0].GetElementType()) {
+  switch (args[0].GetElementType()->GetTypeId()) {
     case type::TypeId::DECIMAL:
       {
         double result;
@@ -81,7 +81,7 @@ type::Value DecimalFunctions::_Ceil(const std::vector<type::Value> &args) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL);
   }
   double result;
-  switch (args[0].GetElementType()) {
+  switch (args[0].GetElementType()->GetTypeId()) {
     case type::TypeId::DECIMAL:
       result = Ceil(args[0].GetAs<double>());
       break;
@@ -112,7 +112,7 @@ type::Value DecimalFunctions::_Floor(const std::vector<type::Value> &args) {
     return type::ValueFactory::GetNullValueByType(type::TypeId::DECIMAL);
   }
   double res;
-  switch(args[0].GetElementType()) {
+  switch(args[0].GetElementType()->GetTypeId()) {
     case type::TypeId::DECIMAL:
       res = Floor(args[0].GetAs<double>());
       break;

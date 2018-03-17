@@ -53,7 +53,7 @@ type::Value FunctionExpression::Evaluate(
   type::Value ret = func_.impl(child_values);
 
   // TODO: Checking this every time is not necessary, but it prevents crashing
-  if (ret.GetElementType() != return_value_type_) {
+  if (ret.GetElementType()->GetTypeId() != return_value_type_) {
     throw Exception(ExceptionType::EXPRESSION,
                     "function " + func_name_ + " returned an unexpected type.");
   }

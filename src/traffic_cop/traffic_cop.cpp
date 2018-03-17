@@ -488,7 +488,7 @@ std::vector<FieldInfo> TrafficCop::GenerateTupleDescriptor(
 // TODO: move it to postgres_protocal_handler.cpp
 FieldInfo TrafficCop::GetColumnFieldForValueType(std::string column_name,
                                                  type::TypeId column_type,
-                                                 type::TypeId column_elem_type) {
+                                                 type::Type *column_elem_type) {
   PostgresValueType field_type;
   size_t field_size;
   switch (column_type) {
@@ -525,7 +525,7 @@ FieldInfo TrafficCop::GetColumnFieldForValueType(std::string column_name,
       break;
     }
     case type::TypeId::ARRAY: {
-      switch (column_elem_type) {
+      switch (column_elem_type->GetTypeId()) {
         case type::TypeId::INTEGER: {
           field_type = PostgresValueType::INT4_ARRAY;
           field_size = 255;
@@ -539,7 +539,7 @@ FieldInfo TrafficCop::GetColumnFieldForValueType(std::string column_name,
         default:
         // Type not Identified
         LOG_ERROR("Unrecognized ARRAY field type '%s' for field '%s'",
-                  TypeIdToString(column_elem_type).c_str(), column_name.c_str());
+                  TypeIdToString(column_elem_type->GetTypeId()).c_str(), column_name.c_str());
         field_type = PostgresValueType::TEXT;
         field_size = 255;
         break;

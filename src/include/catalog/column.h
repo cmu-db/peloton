@@ -30,14 +30,14 @@ class Column : public Printable {
 
  public:
   Column() : column_type(type::TypeId::INVALID), fixed_length(INVALID_OID),
-             column_elem_type(type::TypeId::INVALID) {
+             column_elem_type(nullptr) {
     // Nothing to see...
   }
 
   Column(type::TypeId value_type, size_t column_length,
          std::string column_name, bool is_inlined = false,
          oid_t column_offset = INVALID_OID,
-         type::TypeId elem_value_type = type::TypeId::INVALID)
+         type::Type *elem_value_type = nullptr)
       : column_name(column_name),
         column_type(value_type),
         fixed_length(INVALID_OID),
@@ -81,7 +81,7 @@ class Column : public Printable {
 
   inline type::TypeId GetType() const { return column_type; }
 
-  inline type::TypeId GetElemType() const { return column_elem_type; }
+  inline type::Type *GetElemType() const { return column_elem_type; }
 
   inline bool IsInlined() const { return is_inlined; }
 
@@ -157,7 +157,9 @@ class Column : public Printable {
   // offset of column in tuple
   oid_t column_offset = INVALID_OID;
   
-  type::TypeId column_elem_type;  //  = type::TypeId::INVALID;
+  // The pinter too element value type of column,
+  // valid when value type of column is type::TypeId::ARRAY
+  type::Type *column_elem_type; 
 
   // Constraints
   std::vector<Constraint> constraints;

@@ -27,7 +27,7 @@ namespace type {
 
 // Get the element at a given index in this array
 Value ArrayType::GetElementAt(const Value &val, uint64_t idx) const {
-  switch (val.GetElementType()) {
+  switch (val.GetElementType()->GetTypeId()) {
     case TypeId::BOOLEAN: {
       std::vector<bool> vec = *(std::vector<bool> *)(val.value_.array);
       return ValueFactory::GetBooleanValue(vec.at(idx));
@@ -76,7 +76,7 @@ Value ArrayType::InList(const Value &list, const Value &object) const {
   Value ele = (list.GetElementAt(0));
   PL_ASSERT(ele.CheckComparable(object));
   if (object.IsNull()) return ValueFactory::GetNullValueByType(TypeId::BOOLEAN);
-  switch (list.GetElementType()) {
+  switch (list.GetElementType()->GetTypeId()) {
     case TypeId::BOOLEAN: {
       std::vector<bool> vec = *(std::vector<bool> *)(list.value_.array);
       std::vector<bool>::iterator it;
@@ -166,12 +166,12 @@ CmpBool ArrayType::CompareEquals(const Value &left, const Value &right) const {
   PL_ASSERT(GetTypeId() == TypeId::ARRAY);
   PL_ASSERT(left.CheckComparable(right));
   if (right.GetElementType() != left.GetElementType()) {
-    std::string msg = Type::GetInstance(right.GetElementType())->ToString() +
+    std::string msg = Type::GetInstance(right.GetElementType()->GetTypeId())->ToString() +
                       " mismatch with " +
-                      Type::GetInstance(left.GetElementType())->ToString();
+                      Type::GetInstance(left.GetElementType()->GetTypeId())->ToString();
     throw Exception(ExceptionType::MISMATCH_TYPE, msg);
   }
-  switch (left.GetElementType()) {
+  switch (left.GetElementType()->GetTypeId()) {
     case TypeId::BOOLEAN: {
       std::vector<bool> vec1 = *(std::vector<bool> *)(left.value_.array);
       std::vector<bool> vec2 = *(std::vector<bool> *)(right.GetAs<char *>());
@@ -236,12 +236,12 @@ CmpBool ArrayType::CompareNotEquals(const Value &left, const Value &right) const
   PL_ASSERT(GetTypeId() == TypeId::ARRAY);
   PL_ASSERT(left.CheckComparable(right));
   if (right.GetElementType() != left.GetElementType()) {
-    std::string msg = Type::GetInstance(right.GetElementType())->ToString() +
+    std::string msg = Type::GetInstance(right.GetElementType()->GetTypeId())->ToString() +
                       " mismatch with " +
-                      Type::GetInstance(left.GetElementType())->ToString();
+                      Type::GetInstance(left.GetElementType()->GetTypeId())->ToString();
     throw Exception(ExceptionType::MISMATCH_TYPE, msg);
   }
-  switch (left.GetElementType()) {
+  switch (left.GetElementType()->GetTypeId()) {
     case TypeId::BOOLEAN: {
       std::vector<bool> vec1 = *(std::vector<bool> *)(left.value_.array);
       std::vector<bool> vec2 = *(std::vector<bool> *)(right.GetAs<char *>());
@@ -306,12 +306,12 @@ CmpBool ArrayType::CompareLessThan(const Value &left, const Value &right) const 
   PL_ASSERT(GetTypeId() == TypeId::ARRAY);
   PL_ASSERT(left.CheckComparable(right));
   if (right.GetElementType() != left.GetElementType()) {
-    std::string msg = Type::GetInstance(right.GetElementType())->ToString() +
+    std::string msg = Type::GetInstance(right.GetElementType()->GetTypeId())->ToString() +
                       " mismatch with " +
-                      Type::GetInstance(left.GetElementType())->ToString();
+                      Type::GetInstance(left.GetElementType()->GetTypeId())->ToString();
     throw Exception(ExceptionType::MISMATCH_TYPE, msg);
   }
-  switch (left.GetElementType()) {
+  switch (left.GetElementType()->GetTypeId()) {
     case TypeId::BOOLEAN: {
       std::vector<bool> vec1 = *(std::vector<bool> *)(left.value_.array);
       std::vector<bool> vec2 = *(std::vector<bool> *)(right.GetAs<char *>());
@@ -377,12 +377,12 @@ CmpBool ArrayType::CompareLessThanEquals(const Value &left,
   PL_ASSERT(GetTypeId() == TypeId::ARRAY);
   PL_ASSERT(left.CheckComparable(right));
   if (right.GetElementType() != left.GetElementType()) {
-    std::string msg = Type::GetInstance(right.GetElementType())->ToString() +
+    std::string msg = Type::GetInstance(right.GetElementType()->GetTypeId())->ToString() +
                       " mismatch with " +
-                      Type::GetInstance(left.GetElementType())->ToString();
+                      Type::GetInstance(left.GetElementType()->GetTypeId())->ToString();
     throw Exception(ExceptionType::MISMATCH_TYPE, msg);
   }
-  switch (left.GetElementType()) {
+  switch (left.GetElementType()->GetTypeId()) {
     case TypeId::BOOLEAN: {
       std::vector<bool> vec1 = *(std::vector<bool> *)(left.value_.array);
       std::vector<bool> vec2 = *(std::vector<bool> *)(right.GetAs<char *>());
@@ -448,12 +448,12 @@ CmpBool ArrayType::CompareGreaterThan(const Value &left,
   PL_ASSERT(GetTypeId() == TypeId::ARRAY);
   PL_ASSERT(left.CheckComparable(right));
   if (right.GetElementType() != left.GetElementType()) {
-    std::string msg = Type::GetInstance(right.GetElementType())->ToString() +
+    std::string msg = Type::GetInstance(right.GetElementType()->GetTypeId())->ToString() +
                       " mismatch with " +
-                      Type::GetInstance(left.GetElementType())->ToString();
+                      Type::GetInstance(left.GetElementType()->GetTypeId())->ToString();
     throw Exception(ExceptionType::MISMATCH_TYPE, msg);
   }
-  switch (left.GetElementType()) {
+  switch (left.GetElementType()->GetTypeId()) {
     case TypeId::BOOLEAN: {
       std::vector<bool> vec1 = *(std::vector<bool> *)(left.value_.array);
       std::vector<bool> vec2 = *(std::vector<bool> *)(right.GetAs<char *>());
@@ -519,12 +519,12 @@ CmpBool ArrayType::CompareGreaterThanEquals(const Value &left,
   PL_ASSERT(GetTypeId() == TypeId::ARRAY);
   PL_ASSERT(left.CheckComparable(right));
   if (right.GetElementType() != left.GetElementType()) {
-    std::string msg = Type::GetInstance(right.GetElementType())->ToString() +
+    std::string msg = Type::GetInstance(right.GetElementType()->GetTypeId())->ToString() +
                       " mismatch with " +
-                      Type::GetInstance(left.GetElementType())->ToString();
+                      Type::GetInstance(left.GetElementType()->GetTypeId())->ToString();
     throw Exception(ExceptionType::MISMATCH_TYPE, msg);
   }
-  switch (left.GetElementType()) {
+  switch (left.GetElementType()->GetTypeId()) {
     case TypeId::BOOLEAN: {
       std::vector<bool> vec1 = *(std::vector<bool> *)(left.value_.array);
       std::vector<bool> vec2 = *(std::vector<bool> *)(right.GetAs<char *>());
@@ -592,8 +592,8 @@ Value ArrayType::CastAs(const Value &val UNUSED_ATTRIBUTE,
                   "Cannot cast array values.");
 }
 
-TypeId ArrayType::GetElementType(const Value &val) const {
-  return val.GetElemTypeId();
+Type *ArrayType::GetElementType(const Value &val) const {
+  return val.GetElemType();
 }
 
 // Create a copy of this value
@@ -606,7 +606,8 @@ void ArrayType::SerializeTo(const Value& val UNUSED_ATTRIBUTE, SerializeOutput &
 void ArrayType::SerializeTo(const Value& val, char *storage,
                  bool inlined UNUSED_ATTRIBUTE,
                  AbstractPool *pool) const {
-  TypeId elem_type_id = val.GetElemTypeId();
+  Type *elem_type = val.GetElemType();
+  TypeId elem_type_id = elem_type->GetTypeId();
   uint32_t len, size;
   char* data = nullptr;
   switch (elem_type_id) {
@@ -653,35 +654,39 @@ Value ArrayType::DeserializeFrom(const char *storage,
                                   const bool inlined UNUSED_ATTRIBUTE,
                                   AbstractPool *pool UNUSED_ATTRIBUTE) const {
   const char *ptr = *reinterpret_cast<const char *const *>(storage);
-  TypeId elem_type_id_ = *reinterpret_cast<const TypeId *>(ptr);
+  TypeId elem_type_id = *reinterpret_cast<const TypeId *>(ptr);
   uint32_t len = *reinterpret_cast<const uint32_t *>(ptr + sizeof(TypeId));
-  switch (elem_type_id_) {
-    case TypeId::INTEGER:
+  switch (elem_type_id) {
+    case TypeId::INTEGER: {
+      Type *elem_type = new Type(elem_type_id);
       if(len == 0) {
         auto int32_vec = new std::vector<int32_t>();
-        return Value(TypeId::ARRAY, int32_vec, TypeId::INTEGER, false);
+        return Value(TypeId::ARRAY, int32_vec, elem_type, false);
       } else {
         const int32_t *int32_begin = reinterpret_cast<const int32_t *>(ptr + 
             sizeof(uint32_t) + sizeof(TypeId));
         auto int32_vec = new std::vector<int32_t>(int32_begin, int32_begin + len);
-        return Value(TypeId::ARRAY, int32_vec, TypeId::INTEGER, false);
+        return Value(TypeId::ARRAY, int32_vec, elem_type, false);
       }
       break;
-    case TypeId::DECIMAL:
+    }
+    case TypeId::DECIMAL: {
+      Type *elem_type = new Type(elem_type_id);
       if(len == 0) {
         auto double_vec = new std::vector<double>();
-        return Value(TypeId::ARRAY, double_vec, TypeId::DECIMAL, false);
+        return Value(TypeId::ARRAY, double_vec, elem_type, false);
       } else {
         const double *double_begin = reinterpret_cast<const double *>(ptr + 
             sizeof(uint32_t) + sizeof(TypeId));
         auto double_vec = new std::vector<double>(double_begin, double_begin + len);
-        return Value(TypeId::ARRAY, double_vec, TypeId::DECIMAL, false);
+        return Value(TypeId::ARRAY, double_vec, elem_type, false);
       }
       break;
+    }
     default: {
       std::string msg =
           StringUtil::Format("Invalid Type '%d' for Array DeserializeFrom method",
-                             static_cast<int>(elem_type_id_));
+                             static_cast<int>(elem_type_id));
       throw Exception(ExceptionType::INCOMPATIBLE_TYPE, msg);
     }
   }
@@ -707,7 +712,7 @@ std::string ArrayType::ToString(const Value &val) const {
 }
 
 uint32_t ArrayType::GetLength(const Value &val) const {
-  TypeId elem_type_id = val.GetElemTypeId();
+  TypeId elem_type_id = val.GetElemType()->GetTypeId();
   uint32_t len;
   switch (elem_type_id) {
     case TypeId::INTEGER: {

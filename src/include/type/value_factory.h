@@ -116,12 +116,17 @@ class ValueFactory {
 
   template <class T>
   static inline Value GetArrayValue(
-      const std::vector<T> *vals, TypeId elem_type_id) {
+      const std::vector<T> *vals, Type *elem_type) {
+    TypeId elem_type_id = elem_type->GetTypeId();
     switch (elem_type_id) {
-      case TypeId::INTEGER:
-        return Value(TypeId::ARRAY, vals, TypeId::INTEGER, false);
-      case TypeId::DECIMAL:
-        return Value(TypeId::ARRAY, vals, TypeId::DECIMAL, false);
+      case TypeId::INTEGER: {
+        Type *elem_type = new Type(TypeId::INTEGER);
+        return Value(TypeId::ARRAY, vals, elem_type, false);
+      }
+      case TypeId::DECIMAL: {
+        Type *elem_type = new Type(TypeId::DECIMAL);
+        return Value(TypeId::ARRAY, vals, elem_type, false);
+      }
       default: {
         std::string msg =
             StringUtil::Format("Array Type '%s' does not support GetArrayValue",

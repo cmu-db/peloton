@@ -27,13 +27,13 @@ class ValueFactory;
 class ArrayType : public Type {
  public:
   ArrayType(): Type(TypeId::ARRAY){}
-  ArrayType(TypeId elem_type): Type(TypeId::ARRAY) { elem_type_id_ = elem_type; }
+  ArrayType(Type *elem_type): Type(TypeId::ARRAY, elem_type) {}
   ~ArrayType() {}
 
   // Get the element at a given index in this array
   Value GetElementAt(const Value& val, uint64_t idx) const override;
 
-  TypeId GetElementType(const Value& val UNUSED_ATTRIBUTE) const override;
+  Type *GetElementType(const Value& val UNUSED_ATTRIBUTE) const override;
 
   // Does this value exist in this array?
   Value InList(const Value& list, const Value &object) const override;
@@ -69,9 +69,6 @@ class ArrayType : public Type {
 
   // Get the number of elements in the array
   uint32_t GetLength(const Value& val) const override;
-
- protected:
-  TypeId elem_type_id_;
 };
 
 }  // namespace peloton

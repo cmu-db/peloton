@@ -43,9 +43,9 @@ Value::Value(const Value &other) {
       }
       break;
     case TypeId::ARRAY:
-        size_.elem_type_id = other.size_.elem_type_id;
+        size_.elem_type = other.size_.elem_type;
         if (manage_data_) {
-          switch (size_.elem_type_id) {
+          switch (size_.elem_type->GetTypeId()) {
             case TypeId::INTEGER: {
               auto vec_ptr = (std::vector<int32_t> *)other.value_.array;
               auto vec = new std::vector<int32_t>(*vec_ptr);
@@ -62,7 +62,7 @@ Value::Value(const Value &other) {
               std::string msg =
                   StringUtil::Format(
                     "Invalid Type '%d' for Array Value constructor",
-                    static_cast<int>(size_.elem_type_id));
+                    static_cast<int>(size_.elem_type->GetTypeId()));
               throw Exception(ExceptionType::INCOMPATIBLE_TYPE, msg);
             }
           }
@@ -382,7 +382,7 @@ Value::~Value() {
       }
       break;
     case TypeId::ARRAY:
-      switch (size_.elem_type_id) {
+      switch (size_.elem_type->GetTypeId()) {
         case TypeId::INTEGER:
           delete reinterpret_cast<std::vector<int32_t> *>(value_.array);
           break;
@@ -392,7 +392,7 @@ Value::~Value() {
         default:
         // Type not Identified
         LOG_ERROR("Unrecognized ARRAY field type '%s' for deletion",
-                  TypeIdToString(size_.elem_type_id).c_str());
+                  TypeIdToString(size_.elem_type->GetTypeId()).c_str());
         break;
       }
       break;

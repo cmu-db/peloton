@@ -56,7 +56,7 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree)
 
       for (auto &col : parse_tree->columns) {
         type::TypeId val = col->GetValueType(col->type);
-        type::TypeId elem_val = col->GetElemValueType(col->elem_type);
+        type::Type *elem_val = col->GetElemValueType(col->elem_type);
   
         LOG_TRACE("Column name: %s.%s; Is primary key: %d", table_name.c_str(), col->name.c_str(), col->primary);
   

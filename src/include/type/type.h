@@ -35,7 +35,9 @@ class Type {
     }
   };
 
-  Type(TypeId type_id) : type_id_(type_id) {}
+  Type(TypeId type_id) : type_id_(type_id), elem_type_(nullptr) {}
+  Type(TypeId type_id, Type* elem_type) : type_id_(type_id),
+                                             elem_type_(elem_type) {}
 
   virtual ~Type() {}
   // Get the size of this data type in bytes
@@ -58,6 +60,16 @@ class Type {
   inline static Type *GetInstance(TypeId type_id) { return kTypes[static_cast<int>(type_id)]; }
 
   inline TypeId GetTypeId() const { return type_id_; }
+  inline Type *GetElemType() const { return elem_type_; }
+
+  inline void SetTypeId(TypeId type_id) {
+    type_id_ = type_id;
+    return;
+  }
+  inline void SetElemType(Type *elem_type) {
+    elem_type_ = elem_type;
+    return;
+  }
 
   // Comparison functions
   //
@@ -142,7 +154,7 @@ class Type {
   // Get the element at a given index in this array
   virtual Value GetElementAt(const Value& val, uint64_t idx) const;
 
-  virtual TypeId GetElementType(const Value& val) const;
+  virtual Type *GetElementType(const Value& val) const;
 
   // Does this value exist in this array?
   virtual Value InList(const Value& list, const Value& object) const;
@@ -150,6 +162,9 @@ class Type {
  protected:
   // The actual type ID
   TypeId type_id_;
+
+  // The pointer to the element type
+  Type *elem_type_;
 
   // Singleton instances.
   static Type *kTypes[14];

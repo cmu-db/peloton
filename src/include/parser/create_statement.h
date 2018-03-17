@@ -188,52 +188,52 @@ struct ColumnDefinition {
     }
   }
 
-  static type::TypeId GetElemValueType(DataType elem_type) {
+  static type::Type *GetElemValueType(DataType elem_type) {
     switch (elem_type) {
       case DataType::INT:
       case DataType::INTEGER:
-        return type::TypeId::INTEGER;
+        return new type::Type(type::TypeId::INTEGER);
       case DataType::TINYINT:
-        return type::TypeId::TINYINT;
+        return new type::Type(type::TypeId::TINYINT);
       case DataType::SMALLINT:
-        return type::TypeId::SMALLINT;
+        return new type::Type(type::TypeId::SMALLINT);
       case DataType::BIGINT:
-        return type::TypeId::BIGINT;
+        return new type::Type(type::TypeId::BIGINT);
 
       case DataType::DECIMAL:
       case DataType::DOUBLE:
       case DataType::FLOAT:
-        return type::TypeId::DECIMAL;
+        return new type::Type(type::TypeId::DECIMAL);
 
       case DataType::BOOLEAN:
-        return type::TypeId::BOOLEAN;
+        return new type::Type(type::TypeId::BOOLEAN);
 
       // case ADDRESS:
       //  return type::Type::ADDRESS;
 
       case DataType::TIMESTAMP:
-        return type::TypeId::TIMESTAMP;
+        return new type::Type(type::TypeId::TIMESTAMP);
 
       case DataType::CHAR:
       case DataType::TEXT:
       case DataType::VARCHAR:
-        return type::TypeId::VARCHAR;
+        return new type::Type(type::TypeId::VARCHAR);
 
       case DataType::VARBINARY:
-        return type::TypeId::VARBINARY;
+        return new type::Type(type::TypeId::VARBINARY);
 
       case DataType::ARRAY:
-        return type::TypeId::ARRAY;
+        return new type::Type(type::TypeId::ARRAY);
 
       case DataType::DATE:
-        return type::TypeId::DATE;
+        return new type::Type(type::TypeId::DATE);
 
       case DataType::INVALID:
       case DataType::PRIMARY:
       case DataType::FOREIGN:
       case DataType::MULTIUNIQUE:
       default:
-        return type::TypeId::INVALID;
+        return new type::Type(type::TypeId::INVALID);
     }
   }
 

@@ -74,8 +74,8 @@ class TupleValueExpression : public AbstractExpression {
     return_value_type_ = type_id;
   }
 
-  inline void SetElemValueType(type::TypeId elem_type_id) {
-    return_elem_value_type_ = elem_type_id;
+  inline void SetElemValueType(type::Type *elem_type) {
+    return_elem_value_type_ = elem_type;
   }
 
   inline void SetValueIdx(int value_idx, int tuple_idx = 0) {
