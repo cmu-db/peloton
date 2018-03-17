@@ -19,6 +19,8 @@
 #include <iostream>
 #include <type_traits>
 #include <vector>
+#include "common/logger.h"
+#include "common/macros.h"
 
 #define TFSEIO_BASE_TEMPLATE_ARGUMENTS template <typename N>
 #define TFSEIO_BASE_TYPE TfSessionEntityIOBase<N>

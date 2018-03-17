@@ -11,8 +11,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "brain/tf_session_entity/tf_session_entity.h"
-#include <include/common/logger.h>
-#include <include/common/macros.h>
 
 namespace peloton {
 namespace brain {
@@ -43,7 +41,7 @@ TFSE_TYPE::~TfSessionEntity() {
 
 TFSE_TEMPLATE_ARGUMENTS
 void TFSE_TYPE::FreeBuffer(void *data, UNUSED_ATTRIBUTE size_t length) {
-  free(data);
+  ::operator delete(data);
 }
 
 TFSE_TEMPLATE_ARGUMENTS
@@ -62,8 +60,9 @@ TF_Buffer *TFSE_TYPE::ReadFile(const std::string &filename) {
   fseek(f, 0, SEEK_END);
   size_t fsize = (size_t)ftell(f);
   fseek(f, 0, SEEK_SET);  // same as rewind(f);
-
-  void *data = malloc(fsize);
+  // Reference:
+  // https://stackoverflow.com/questions/14111900/using-new-on-void-pointer
+  void *data = ::operator new(fsize);
   fread(data, fsize, 1, f);
   fclose(f);
 
