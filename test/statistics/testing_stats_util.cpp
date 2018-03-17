@@ -137,7 +137,7 @@ std::shared_ptr<Statement> TestingStatsUtil::GetInsertStmt(int id,
                                                            std::string val) {
   std::shared_ptr<Statement> statement;
   std::string sql =
-      "INSERT INTO EMP_DB.department_table(dept_id,dept_name) VALUES "
+      "INSERT INTO emp_db.department_table(dept_id,dept_name) VALUES "
       "(" +
       std::to_string(id) + ",'" + val + "');";
   LOG_TRACE("Query: %s", sql.c_str());
@@ -148,7 +148,7 @@ std::shared_ptr<Statement> TestingStatsUtil::GetInsertStmt(int id,
 
 std::shared_ptr<Statement> TestingStatsUtil::GetDeleteStmt() {
   std::shared_ptr<Statement> statement;
-  std::string sql = "DELETE FROM EMP_DB.department_table";
+  std::string sql = "DELETE FROM emp_db.department_table";
   LOG_INFO("Query: %s", sql.c_str());
   statement.reset(new Statement("DELETE", sql));
   ParseAndPlan(statement.get(), sql);
@@ -158,7 +158,7 @@ std::shared_ptr<Statement> TestingStatsUtil::GetDeleteStmt() {
 std::shared_ptr<Statement> TestingStatsUtil::GetUpdateStmt() {
   std::shared_ptr<Statement> statement;
   std::string sql =
-      "UPDATE EMP_DB.department_table SET dept_name = 'CS' WHERE dept_id = 1";
+      "UPDATE emp_db.department_table SET dept_name = 'CS' WHERE dept_id = 1";
   LOG_INFO("Query: %s", sql.c_str());
   statement.reset(new Statement("UPDATE", sql));
   ParseAndPlan(statement.get(), sql);

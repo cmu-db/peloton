@@ -47,7 +47,7 @@ TEST_F(CreateTests, CreatingDB) {
   auto txn = txn_manager.BeginTransaction();
 
   // Create plans with database name set.
-  planner::CreatePlan node("PelotonDB", CreateType::DB);
+  planner::CreatePlan node("pelotondb", CreateType::DB);
 
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -58,9 +58,9 @@ TEST_F(CreateTests, CreatingDB) {
   executor.Execute();
   // Check if the database exists in the same txn
   EXPECT_EQ(0, catalog::Catalog::GetInstance()
-                   ->GetDatabaseObject("PelotonDB", txn)
+                   ->GetDatabaseObject("pelotondb", txn)
                    ->GetDatabaseName()
-                   .compare("PelotonDB"));
+                   .compare("pelotondb"));
 
   txn_manager.CommitTransaction(txn);
 
@@ -68,12 +68,12 @@ TEST_F(CreateTests, CreatingDB) {
   txn = txn_manager.BeginTransaction();
   // Check if the database exists in a new txn
   EXPECT_EQ(0, catalog::Catalog::GetInstance()
-                   ->GetDatabaseObject("PelotonDB", txn)
+                   ->GetDatabaseObject("pelotondb", txn)
                    ->GetDatabaseName()
-                   .compare("PelotonDB"));
+                   .compare("pelotondb"));
 
   // free the database just created
-  catalog::Catalog::GetInstance()->DropDatabaseWithName("PelotonDB", txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName("pelotondb", txn);
 
   txn_manager.CommitTransaction(txn);
 }
@@ -314,15 +314,13 @@ TEST_F(CreateTests, CreatingTrigger) {
   EXPECT_EQ(ExpressionType::VALUE_TUPLE, left->GetExpressionType());
   EXPECT_EQ("old", static_cast<const expression::TupleValueExpression *>(left)
                        ->GetTableName());
-  EXPECT_EQ("balance",
-            static_cast<const expression::TupleValueExpression *>(left)
-                ->GetColumnName());
+  EXPECT_EQ("balance", static_cast<const expression::TupleValueExpression *>(
+                           left)->GetColumnName());
   EXPECT_EQ(ExpressionType::VALUE_TUPLE, right->GetExpressionType());
   EXPECT_EQ("new", static_cast<const expression::TupleValueExpression *>(right)
                        ->GetTableName());
-  EXPECT_EQ("balance",
-            static_cast<const expression::TupleValueExpression *>(right)
-                ->GetColumnName());
+  EXPECT_EQ("balance", static_cast<const expression::TupleValueExpression *>(
+                           right)->GetColumnName());
   // type (level, timing, event)
   auto trigger_type = plan.GetTriggerType();
   // level

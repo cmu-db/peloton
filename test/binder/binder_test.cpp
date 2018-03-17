@@ -102,7 +102,7 @@ void SetupTables(std::string database_name) {
 }
 
 TEST_F(BinderCorrectnessTest, SelectStatementTest) {
-  std::string default_database_name = "TEST_DB";
+  std::string default_database_name = "test_db";
   SetupTables(default_database_name);
   auto &parser = parser::PostgresParser::GetInstance();
   catalog::Catalog *catalog_ptr = catalog::Catalog::GetInstance();
@@ -246,7 +246,7 @@ TEST_F(BinderCorrectnessTest, SelectStatementTest) {
 // test after UpdateStatement is changed
 
 TEST_F(BinderCorrectnessTest, DeleteStatementTest) {
-  std::string default_database_name = "TEST_DB";
+  std::string default_database_name = "test_db";
   SetupTables(default_database_name);
   auto &parser = parser::PostgresParser::GetInstance();
   catalog::Catalog *catalog_ptr = catalog::Catalog::GetInstance();
@@ -286,7 +286,7 @@ TEST_F(BinderCorrectnessTest, DeleteStatementTest) {
 }
 
 TEST_F(BinderCorrectnessTest, BindDepthTest) {
-  std::string default_database_name = "TEST_DB";
+  std::string default_database_name = "test_db";
   SetupTables(default_database_name);
   auto &parser = parser::PostgresParser::GetInstance();
 

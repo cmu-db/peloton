@@ -52,14 +52,14 @@ TEST_F(CatalogTests, BootstrappingCatalog) {
 TEST_F(CatalogTests, CreatingDatabase) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase("EMP_DB", txn);
+  catalog::Catalog::GetInstance()->CreateDatabase("emp_db", txn);
   auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
       CATALOG_DATABASE_NAME, INDEX_CATALOG_NAME, txn);
   auto index_object = table_object->GetIndexObject(INDEX_CATALOG_PKEY_OID);
   std::vector<oid_t> key_attrs = index_object->GetKeyAttrs();
 
-  EXPECT_EQ("EMP_DB", catalog::Catalog::GetInstance()
-                          ->GetDatabaseWithName("EMP_DB", txn)
+  EXPECT_EQ("emp_db", catalog::Catalog::GetInstance()
+                          ->GetDatabaseWithName("emp_db", txn)
                           ->GetDBName());
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(1, key_attrs.size());
@@ -83,11 +83,11 @@ TEST_F(CatalogTests, CreatingTable) {
   std::unique_ptr<catalog::Schema> table_schema_3(
       new catalog::Schema({id_column, name_column}));
 
-  catalog::Catalog::GetInstance()->CreateTable("EMP_DB", "emp_table",
+  catalog::Catalog::GetInstance()->CreateTable("emp_db", "emp_table",
                                                std::move(table_schema), txn);
-  catalog::Catalog::GetInstance()->CreateTable("EMP_DB", "department_table",
+  catalog::Catalog::GetInstance()->CreateTable("emp_db", "department_table",
                                                std::move(table_schema_2), txn);
-  catalog::Catalog::GetInstance()->CreateTable("EMP_DB", "salary_table",
+  catalog::Catalog::GetInstance()->CreateTable("emp_db", "salary_table",
                                                std::move(table_schema_3), txn);
   // insert random tuple into DATABASE_METRICS_CATALOG and check
   std::unique_ptr<type::AbstractPool> pool(new type::EphemeralPool());
@@ -110,7 +110,7 @@ TEST_F(CatalogTests, CreatingTable) {
   EXPECT_EQ('a', *param1.buf);
 
   EXPECT_EQ("name", catalog::Catalog::GetInstance()
-                        ->GetDatabaseWithName("EMP_DB", txn)
+                        ->GetDatabaseWithName("emp_db", txn)
                         ->GetTableWithName("department_table")
                         ->GetSchema()
                         ->GetColumn(1)
@@ -132,7 +132,7 @@ TEST_F(CatalogTests, CreatingTable) {
   //               ->GetTableWithName("pg_attribute")
   //               ->GetTupleCount(),
   //           57);
-  // // pg_catalog + EMP_DB
+  // // pg_catalog + emp_db
   // EXPECT_EQ(catalog::Catalog::GetInstance()
   //               ->GetDatabaseWithName("pg_catalog")
   //               ->GetTableWithName("pg_database")
@@ -157,7 +157,7 @@ TEST_F(CatalogTests, TableObject) {
   auto txn = txn_manager.BeginTransaction();
 
   auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-      "EMP_DB", "department_table", txn);
+      "emp_db", "department_table", txn);
 
   auto index_objects = table_object->GetIndexObjects();
   auto column_objects = table_object->GetColumnObjects();
@@ -191,7 +191,7 @@ TEST_F(CatalogTests, TableObject) {
   bool update_result = pg_table->UpdateVersionId(1, department_table_oid, txn);
   // get version id after update, invalidate old cache
   table_object = catalog::Catalog::GetInstance()->GetTableObject(
-      "EMP_DB", "department_table", txn);
+      "emp_db", "department_table", txn);
   uint32_t version_oid = table_object->GetVersionId();
   EXPECT_NE(department_table_oid, INVALID_OID);
   EXPECT_EQ(update_result, true);
@@ -207,20 +207,20 @@ TEST_F(CatalogTests, DroppingTable) {
   // everytime we create a database, there will be 3 catalog tables inside
   EXPECT_EQ(
       6,
-      (int)catalog->GetDatabaseObject("EMP_DB", txn)->GetTableObjects().size());
+      (int)catalog->GetDatabaseObject("emp_db", txn)->GetTableObjects().size());
   auto database_object =
-      catalog::Catalog::GetInstance()->GetDatabaseObject("EMP_DB", txn);
+      catalog::Catalog::GetInstance()->GetDatabaseObject("emp_db", txn);
   EXPECT_NE(nullptr, database_object);
-  catalog::Catalog::GetInstance()->DropTable("EMP_DB", "department_table", txn);
+  catalog::Catalog::GetInstance()->DropTable("emp_db", "department_table", txn);
 
   database_object =
-      catalog::Catalog::GetInstance()->GetDatabaseObject("EMP_DB", txn);
+      catalog::Catalog::GetInstance()->GetDatabaseObject("emp_db", txn);
   EXPECT_NE(nullptr, database_object);
   auto department_table_object =
       database_object->GetTableObject("department_table");
   EXPECT_EQ(
       5,
-      (int)catalog->GetDatabaseObject("EMP_DB", txn)->GetTableObjects().size());
+      (int)catalog->GetDatabaseObject("emp_db", txn)->GetTableObjects().size());
   txn_manager.CommitTransaction(txn);
 
   EXPECT_EQ(nullptr, department_table_object);
@@ -228,40 +228,40 @@ TEST_F(CatalogTests, DroppingTable) {
   // Try to drop again
   txn = txn_manager.BeginTransaction();
   EXPECT_THROW(catalog::Catalog::GetInstance()->DropTable(
-                   "EMP_DB", "department_table", txn),
+                   "emp_db", "department_table", txn),
                CatalogException);
 
   EXPECT_EQ(
       5,
-      (int)catalog->GetDatabaseObject("EMP_DB", txn)->GetTableObjects().size());
+      (int)catalog->GetDatabaseObject("emp_db", txn)->GetTableObjects().size());
   txn_manager.CommitTransaction(txn);
 
   // Drop a table that does not exist
   txn = txn_manager.BeginTransaction();
   EXPECT_THROW(
-      catalog::Catalog::GetInstance()->DropTable("EMP_DB", "void_table", txn),
+      catalog::Catalog::GetInstance()->DropTable("emp_db", "void_table", txn),
       CatalogException);
   EXPECT_EQ(
       5,
-      (int)catalog->GetDatabaseObject("EMP_DB", txn)->GetTableObjects().size());
+      (int)catalog->GetDatabaseObject("emp_db", txn)->GetTableObjects().size());
   txn_manager.CommitTransaction(txn);
 
   // Drop the other table
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropTable("EMP_DB", "emp_table", txn);
+  catalog::Catalog::GetInstance()->DropTable("emp_db", "emp_table", txn);
   EXPECT_EQ(
       4,
-      (int)catalog->GetDatabaseObject("EMP_DB", txn)->GetTableObjects().size());
+      (int)catalog->GetDatabaseObject("emp_db", txn)->GetTableObjects().size());
   txn_manager.CommitTransaction(txn);
 }
 
 TEST_F(CatalogTests, DroppingDatabase) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName("EMP_DB", txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName("emp_db", txn);
 
   EXPECT_THROW(
-      catalog::Catalog::GetInstance()->GetDatabaseWithName("EMP_DB", txn),
+      catalog::Catalog::GetInstance()->GetDatabaseWithName("emp_db", txn),
       CatalogException);
   txn_manager.CommitTransaction(txn);
 }
