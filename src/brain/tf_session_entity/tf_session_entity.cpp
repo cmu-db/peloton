@@ -63,7 +63,7 @@ TF_Buffer *TFSE_TYPE::ReadFile(const std::string &filename) {
   // Reference:
   // https://stackoverflow.com/questions/14111900/using-new-on-void-pointer
   void *data = ::operator new(fsize);
-  fread(data, fsize, 1, f);
+  UNUSED_ATTRIBUTE size_t size_read = fread(data, fsize, 1, f);
   fclose(f);
 
   TF_Buffer *buf = TF_NewBuffer();
