@@ -94,19 +94,18 @@ TEST_F(DropSQLTests, DropIndexTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  auto database_object =
+      catalog::Catalog::GetInstance()->GetDatabaseObject(DEFAULT_DB_NAME, txn);
+  EXPECT_NE(nullptr, database_object);
   txn_manager.CommitTransaction(txn);
 
   // Create a table first
   TestingSQLUtil::ExecuteSQLQuery(
       "CREATE TABLE test(a INT PRIMARY KEY, b INT);");
-
   // Create a Index
   TestingSQLUtil::ExecuteSQLQuery("CREATE INDEX idx ON test(a);");
-  // retrieve pg_index catalog table
-  auto database_object =
-      catalog::Catalog::GetInstance()->GetDatabaseObject(DEFAULT_DB_NAME, txn);
-  EXPECT_NE(nullptr, database_object);
 
+  // retrieve pg_index catalog table
   auto pg_index = catalog::Catalog::GetInstance()
                       ->GetSystemCatalogs(database_object->GetDatabaseOid())
                       ->GetIndexCatalog();
@@ -130,11 +129,9 @@ TEST_F(DropSQLTests, DropIndexTest) {
   // Check if index is not in catalog
   txn = txn_manager.BeginTransaction();
   index = pg_index->GetIndexObject("idx", txn);
-  txn_manager.CommitTransaction(txn);
   EXPECT_EQ(index, nullptr);
 
   //  Free the database just created
-  txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
