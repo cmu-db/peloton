@@ -12,7 +12,7 @@ struct CreateIndexRequest {
 }
 
 struct CreateIndexResponse {
-
+  message @0 :Text;
 }
 
 interface PelotonService {
