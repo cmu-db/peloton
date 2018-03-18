@@ -17,6 +17,7 @@
 ##  * OSX
 ## =================================================================
 
+
 # Determine OS platform
 UNAME=$(uname | tr "[:upper:]" "[:lower:]")
 # If Linux, try to determine specific distribution
@@ -36,6 +37,51 @@ fi
 unset UNAME
 DISTRO=$(echo $DISTRO | tr "[:lower:]" "[:upper:]")
 TMPDIR=/tmp
+TF_VERSION="1.4.0"
+TF_TYPE="cpu"
+
+
+function install_protobuf3.4.0() {
+ # Install Relevant tooling
+ # Remove any old versions of protobuf
+ DISTRIB=$1 # ubuntu/fedora
+ if [ "$DISTRIB" == "ubuntu" ]
+ then
+    sudo apt-get --yes --force-yes remove --purge libprotobuf-dev protobuf-compiler
+ elif [ "$DISTRIB" == "fedora" ] 
+ then
+    sudo dnf -q remove -y protobuf protobuf-devel protobuf-compiler
+ else 
+    echo "Only Ubuntu and Fedora is supported currently!"
+    return 0
+ fi
+ wget -O protobuf-cpp-3.4.0.tar.gz https://github.com/google/protobuf/releases/download/v3.4.0/protobuf-cpp-3.4.0.tar.gz
+ tar -xzf protobuf-cpp-3.4.0.tar.gz
+ cd protobuf-3.4.0
+ ./autogen.sh && ./configure && make -j4 && sudo make install && sudo ldconfig
+ cd ..
+ # Cleanup
+ rm -rf protobuf-3.4.0 protobuf-cpp-3.4.0.tar.gz
+}
+
+# Utility function for installing tensorflow components of python/C++
+function install_tf() {
+ TFCApiFile=$1
+ TFBinaryURL=$2
+ LinkerConfigCmd=$3
+ TARGET_DIRECTORY="/usr/local"
+ # Install Tensorflow Python Binary
+ sudo -E pip3 install --upgrade ${TFBinaryURL}
+
+ # Install C-API
+ TFCApiURL="https://storage.googleapis.com/tensorflow/libtensorflow/${TFCApiFile}"
+ wget -O $TFCApiFile $TFCApiURL
+ sudo tar -C $TARGET_DIRECTORY -xzf $TFCApiFile || true
+ # Configure the Linker
+ eval $LinkerConfigCmd
+ # Cleanup
+ rm -rf ${TFCApiFile}
+}
 
 ## ------------------------------------------------
 ## UBUNTU
@@ -75,13 +121,19 @@ if [ "$DISTRO" = "UBUNTU" ]; then
     if [ "$MAJOR_VER" == "14" ]; then
         PKG_CMAKE="cmake3"
         FORCE_Y="--force-yes"
+        TFBinaryURL="https://storage.googleapis.com/tensorflow/linux/${TF_TYPE}/tensorflow-${TF_VERSION}-cp34-cp34m-linux_x86_64.whl"
+    fi
+    if [ "$MAJOR_VER" == "16" ]; then
+        TFBinaryURL="https://storage.googleapis.com/tensorflow/linux/${TF_TYPE}/tensorflow-${TF_VERSION}-cp35-cp35m-linux_x86_64.whl"
     fi
     # Fix for llvm on Ubuntu 17.x
     if [ "$MAJOR_VER" == "17" ]; then
         PKG_LLVM="llvm-3.9"
         PKG_CLANG="clang-3.8"
+        TFBinaryURL="https://storage.googleapis.com/tensorflow/linux/${TF_TYPE}/tensorflow-${TF_VERSION}-cp35-cp35m-linux_x86_64.whl"
     fi
-
+    TFCApiFile="libtensorflow-${TF_TYPE}-linux-x86_64-${TF_VERSION}.tar.gz"
+    LinkerConfigCmd="sudo ldconfig"
     sudo apt-get -qq $FORCE_Y --ignore-missing -y install \
         $PKG_CMAKE \
         $PKG_LLVM \
@@ -92,9 +144,7 @@ if [ "$DISTRO" = "UBUNTU" ]; then
         flex \
         valgrind \
         lcov \
-        protobuf-compiler \
         libgflags-dev \
-        libprotobuf-dev \
         libevent-dev \
         libboost-dev \
         libboost-thread-dev \
@@ -103,7 +153,19 @@ if [ "$DISTRO" = "UBUNTU" ]; then
         libpqxx-dev \
         libedit-dev \
         libssl-dev \
-        postgresql-client
+        postgresql-client \
+        python3-pip \
+        curl \
+        autoconf \
+        automake \
+        libtool \
+        make \
+        g++ \
+        unzip
+    # Install version of protobuf needed by C-API
+    install_protobuf3.4.0 "ubuntu"
+    # Install tensorflow
+    install_tf "$TFCApiFile" "$TFBinaryURL" "$LinkerConfigCmd"
 
 ## ------------------------------------------------
 ## DEBIAN
@@ -136,13 +198,19 @@ elif [ "$DISTRO" = "DEBIAN OS" ]; then
 ## FEDORA
 ## ------------------------------------------------
 elif [[ "$DISTRO" == *"FEDORA"* ]]; then
+    case $DISTRO_VER in
+        26) LLVM="llvm";;
+        *)  LLVM="llvm4.0";;
+    esac
+    TFCApiFile="libtensorflow-${TF_TYPE}-linux-x86_64-${TF_VERSION}.tar.gz"
+    TFBinaryURL="https://storage.googleapis.com/tensorflow/linux/${TF_TYPE}/tensorflow-${TF_VERSION}-cp36-cp36m-linux_x86_64.whl"
+    LinkerConfigCmd="sudo ldconfig"
     sudo dnf -q install -y \
         git \
         gcc-c++ \
         make \
         cmake \
         gflags-devel \
-        protobuf-devel \
         bison \
         flex \
         libevent-devel \
@@ -153,12 +221,24 @@ elif [[ "$DISTRO" == *"FEDORA"* ]]; then
         lcov \
         libpqxx-devel \
         libpqxx \
-        llvm \
-        llvm-devel \
-        llvm-static \
+        ${LLVM} \
+        ${LLVM}-devel \
+        ${LLVM}-static \
         libedit-devel \
         postgresql \
-        libatomic
+        libasan \
+        libtsan \
+        libubsan \
+        libatomic \
+        python3-pip \
+        curl \
+        autoconf \
+        automake \
+        libtool
+    # Install version of protobuf needed by C-API
+    install_protobuf3.4.0 "fedora"        
+    # Install tensorflow
+    install_tf "$TFCApiFile" "$TFBinaryURL" "$LinkerConfigCmd"
 
 ## ------------------------------------------------
 ## REDHAT
@@ -186,18 +266,17 @@ elif [[ "$DISTRO" == *"REDHAT"* ]] && [[ "${DISTRO_VER%.*}" == "7" ]]; then
         fi
         popd; popd
         return 0
-    }
+}
 
-    # Package download paths
+#Package download paths
     PKGS=(
         "https://github.com/schuhschuh/gflags/archive/v2.0.tar.gz"
     )
-
-    # Add EPEL repository first
+#Add EPEL repository first
     sudo yum -q -y install epel-release
     sudo yum -q -y upgrade epel-release
 
-    # Simple installations via yum
+#Simple installations via yum
     sudo yum -q -y install \
         git \
         gcc-c++ \
@@ -237,7 +316,9 @@ elif [ "$DISTRO" = "DARWIN" ]; then
       echo "Installing homebrew..."
       ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
     fi
-
+    TFBinaryURL="https://storage.googleapis.com/tensorflow/mac/${TF_TYPE}/tensorflow-${TF_VERSION}-py3-none-any.whl"
+    TFCApiFile="libtensorflow-${TF_TYPE}-darwin-x86_64-${TF_VERSION}.tar.gz"
+    LinkerConfigCmd="sudo update_dyld_shared_cache"
     brew install git
     brew install cmake
     brew install gflags
@@ -252,6 +333,13 @@ elif [ "$DISTRO" = "DARWIN" ]; then
     brew install libedit
     brew install llvm@3.7
     brew install postgresql
+    brew install curl
+    brew install wget
+    brew install python
+    brew upgrade python
+    # Brew installs correct version of Protobuf(3.5.1 >= 3.4.0)
+    # So we can directly install tensorflow
+    install_tf "$TFCApiFile" "$TFBinaryURL" "$LinkerConfigCmd"
 
 ## ------------------------------------------------
 ## UNKNOWN

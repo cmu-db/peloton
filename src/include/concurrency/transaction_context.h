@@ -186,7 +186,7 @@ class TransactionContext : public Printable {
   eid_t epoch_id_;
 
   // vector of strings to log at the end of the transaction
-  // populated only if the brain is running
+  // populated only if the indextuner is running
   std::vector<std::string> query_strings_;
 
   // timestamp when the transaction began

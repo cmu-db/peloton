@@ -70,7 +70,7 @@ class PlanExecutor {
    */
   // FIXME This should be removed when PelotonService is removed/rewritten
   static int ExecutePlan(
-      const planner::AbstractPlan *plan, const std::vector<type::Value> &params,
+      planner::AbstractPlan *plan, const std::vector<type::Value> &params,
       std::vector<std::unique_ptr<executor::LogicalTile>> &logical_tile_list);
 };
 
