@@ -21,7 +21,6 @@ namespace network {
 enum class ConnState {
   READ,        // State that reads data from the network
   WRITE,       // State the writes data to the network
-  WAIT,        // State for waiting for some event to happen
   PROCESS,     // State that runs the network protocol on received data
   CLOSING,     // State for closing the client connection
   GET_RESULT,  // State when triggered by worker thread that completes the task.

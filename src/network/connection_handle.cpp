@@ -94,8 +94,8 @@ DEF_TRANSITION_GRAPH
   END_DEF
 
   DEFINE_STATE(SSL_HANDSHAKE)
-    ON(WAKEUP) SET_STATE_TO(SSL_HANDSHAKE) AND_WAIT
     ON(NEED_DATA) SET_STATE_TO(SSL_HANDSHAKE) AND_WAIT
+    ON(FINISH) SET_STATE_TO(CLOSING) AND_INVOKE(CloseSocket)
     ON(PROCEED) SET_STATE_TO(PROCESS) AND_INVOKE(Process)
   END_DEF
   
@@ -117,6 +117,12 @@ DEF_TRANSITION_GRAPH
     ON(WAKEUP) SET_STATE_TO(GET_RESULT) AND_INVOKE(GetResult)
     ON(PROCEED) SET_STATE_TO(WRITE) AND_INVOKE(ProcessWrite)
   END_DEF
+
+  DEFINE_STATE(CLOSING)
+    ON(PROCEED) SET_STATE_TO(CLOSED) AND_WAIT
+    ON(NEED_DATA) SET_STATE_TO(CLOSING) AND_WAIT
+  END_DEF
+
 END_DEF
 
 void ConnectionHandle::StateMachine::Accept(Transition action,
@@ -238,7 +244,7 @@ Transition ConnectionHandle::FillReadBuffer() {
   }
 
   // return explicitly
-  while (done == false) {
+  while (!done) {
     if (rbuf_->buf_size == rbuf_->GetMaxSize()) {
       // we have filled the whole buffer, exit loop
       done = true;
@@ -609,26 +615,22 @@ Transition ConnectionHandle::CloseSocket() {
 
   if (conn_SSL_context != nullptr) {
     int shutdown_ret = 0;
-    while (true) {
-      ERR_clear_error();
-      shutdown_ret = SSL_shutdown(conn_SSL_context);
+    ERR_clear_error();
+    shutdown_ret = SSL_shutdown(conn_SSL_context);
+    if (shutdown_ret != 0) {
       int err = SSL_get_error(conn_SSL_context, shutdown_ret);
-      if (shutdown_ret == 1) {
-        break;
-      } else if (shutdown_ret == 0) {
+      if (err == SSL_ERROR_WANT_WRITE || err == SSL_ERROR_WANT_READ) {
         LOG_TRACE("SSL shutdown is not finished yet");
-        continue;
+        return Transition::NEED_DATA;
       } else {
-        if (err == SSL_ERROR_WANT_WRITE || err == SSL_ERROR_WANT_READ) {
-          continue;
-        } else {
-          LOG_ERROR("Error shutting down ssl session, err: %d", err);
-          break;
-        }
+        LOG_ERROR("Error shutting down ssl session, err: %d", err);
       }
     }
+    SSL_free(conn_SSL_context);
+    conn_SSL_context = nullptr;
   }
-  for (;;) {
+
+  while(true) {
     int status = close(sock_fd_);
     if (status < 0) {
       // failed close
@@ -642,15 +644,8 @@ Transition ConnectionHandle::CloseSocket() {
   }
 }
 
-Transition ConnectionHandle::Wait() {
-  // TODO(tianyu): Maybe we don't need this state? Also, this name is terrible
-  UpdateEventFlags(EV_READ | EV_PERSIST);
-  return Transition::PROCEED;
-}
-
 Transition ConnectionHandle::SSL_handshake() {
   if (conn_SSL_context == nullptr) {
-    // TODO(Tianyi) encapsulate this
     conn_SSL_context = SSL_new(PelotonServer::ssl_context);
     if (conn_SSL_context == nullptr) {
       throw NetworkProcessException("ssl context for conn failed");
@@ -658,64 +653,62 @@ Transition ConnectionHandle::SSL_handshake() {
     SSL_set_session_id_context(conn_SSL_context, nullptr, 0);
     if (SSL_set_fd(conn_SSL_context, sock_fd_) == 0) {
       LOG_ERROR("Failed to set SSL fd");
-      PL_ASSERT(false);
+      return Transition::FINISH;
     }
   }
 
   // TODO(Yuchen): post-connection verification?
-  while (true) {
-    // clear current thread's error queue before any OpenSSL call
-    ERR_clear_error();
-    int ssl_accept_ret = SSL_accept(conn_SSL_context);
-    if (ssl_accept_ret > 0) {
-      break;
-    }
-    int err = SSL_get_error(conn_SSL_context, ssl_accept_ret);
-    int ecode = ERR_get_error();
-    char error_string[120];
-    ERR_error_string(ecode, error_string);
-    switch (err) {
-      case SSL_ERROR_SSL: {
-        if (ecode < 0) {
-          LOG_ERROR("Could not accept SSL connection");
-        } else {
-          LOG_ERROR(
-              "Could not accept SSL connection: EOF detected, "
-              "ssl_error_ssl, %s",
-              error_string);
-        }
-        return FINISH;
-      }
-      case SSL_ERROR_ZERO_RETURN: {
+  // clear current thread's error queue before any OpenSSL call
+  ERR_clear_error();
+  int ssl_accept_ret = SSL_accept(conn_SSL_context);
+  if (ssl_accept_ret > 0)
+    return Transition::PROCEED;
+
+  int err = SSL_get_error(conn_SSL_context, ssl_accept_ret);
+  int ecode = ERR_get_error();
+  char error_string[120];
+  ERR_error_string(ecode, error_string);
+  switch (err) {
+    case SSL_ERROR_SSL: {
+      if (ecode < 0) {
+        LOG_ERROR("Could not accept SSL connection");
+      } else {
         LOG_ERROR(
             "Could not accept SSL connection: EOF detected, "
-            "ssl_error_zero_return, %s",
+            "ssl_error_ssl, %s",
             error_string);
-        return FINISH;
       }
-      case SSL_ERROR_SYSCALL: {
-        if (ecode < 0) {
-          LOG_ERROR("Could not accept SSL connection, %s", error_string);
-        } else {
-          LOG_ERROR(
-              "Could not accept SSL connection: EOF detected, "
-              "ssl_sys_call, %s",
-              error_string);
-        }
-        return FINISH;
+      return Transition::FINISH;
+    }
+    case SSL_ERROR_ZERO_RETURN: {
+      LOG_ERROR(
+          "Could not accept SSL connection: EOF detected, "
+          "ssl_error_zero_return, %s",
+          error_string);
+      return Transition::FINISH;
+    }
+    case SSL_ERROR_SYSCALL: {
+      if (ecode < 0) {
+        LOG_ERROR("Could not accept SSL connection, %s", error_string);
+      } else {
+        LOG_ERROR(
+            "Could not accept SSL connection: EOF detected, "
+            "ssl_sys_call, %s",
+            error_string);
       }
-      case SSL_ERROR_WANT_READ: {
-        UpdateEventFlags(EV_READ | EV_PERSIST);
-        return Transition::NEED_DATA;
-      }
-      case SSL_ERROR_WANT_WRITE: {
-        UpdateEventFlags(EV_WRITE | EV_PERSIST);
-        return Transition::NEED_DATA;
-      }
-      default: {
-        LOG_ERROR("Unrecognized SSL error code: %d", err);
-        return FINISH;
-      }
+      return Transition::FINISH;
+    }
+    case SSL_ERROR_WANT_READ: {
+      UpdateEventFlags(EV_READ | EV_PERSIST);
+      return Transition::NEED_DATA;
+    }
+    case SSL_ERROR_WANT_WRITE: {
+      UpdateEventFlags(EV_WRITE | EV_PERSIST);
+      return Transition::NEED_DATA;
+    }
+    default: {
+      LOG_ERROR("Unrecognized SSL error code: %d", err);
+      return Transition::FINISH;
     }
   }
 }
