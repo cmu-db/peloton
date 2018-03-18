@@ -74,6 +74,10 @@ class AbstractScan : public AbstractPlan {
 
   void SetForUpdateFlag(bool flag) { is_for_update = flag; }
 
+  const std::string GetPredicateInfo() const {
+    return predicate_ != nullptr ? predicate_->GetInfo() : "";
+  }
+
  private:
   // Pointer to table to scan from
   storage::DataTable *target_table_ = nullptr;

@@ -1160,7 +1160,6 @@ extern size_t CONNECTION_THREAD_COUNT;
 extern size_t LOGGING_THREAD_COUNT;
 extern size_t GC_THREAD_COUNT;
 extern size_t EPOCH_THREAD_COUNT;
-extern size_t MAX_CONCURRENCY;
 
 //===--------------------------------------------------------------------===//
 // TupleMetadata
@@ -1305,6 +1304,7 @@ std::ostream &operator<<(std::ostream &os, const PropertyType &type);
 enum class RuleType : uint32_t {
   // Transformation rules (logical -> logical)
   INNER_JOIN_COMMUTE = 0,
+  INNER_JOIN_ASSOCIATE,
 
   // Don't move this one
   LogicalPhysicalDelimiter,
@@ -1336,6 +1336,7 @@ enum class RuleType : uint32_t {
   MARK_JOIN_INNER_JOIN_TO_INNER_JOIN,
   MARK_JOIN_FILTER_TO_INNER_JOIN,
   PULL_FILTER_THROUGH_MARK_JOIN,
+  PULL_FILTER_THROUGH_AGGREGATION,
 
   // Place holder to generate number of rules compile time
   NUM_RULES

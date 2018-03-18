@@ -120,7 +120,7 @@ void PelotonServer::SSLInit() {
   // load trusted CA certificates (peer authentication)
   if (SSL_CTX_load_verify_locations(ssl_context, certificate_file_.c_str(),
                                     nullptr) != 1) {
-    LOG_ERROR("Exception when loading root_crt!");
+    LOG_WARN("Exception when loading root_crt!");
     SetSSLLevel(SSLLevel::SSL_PREFER);
   }
   // load OpenSSL's default CA certificate location
@@ -133,7 +133,7 @@ void PelotonServer::SSLInit() {
   if (SSL_CTX_use_certificate_chain_file(ssl_context,
                                          certificate_file_.c_str()) != 1) {
     SSL_CTX_free(ssl_context);
-    LOG_ERROR("Exception when loading server certificate!");
+    LOG_WARN("Exception when loading server certificate!");
     ssl_context = nullptr;
     SetSSLLevel(SSLLevel::SSL_DISABLE);
     return;

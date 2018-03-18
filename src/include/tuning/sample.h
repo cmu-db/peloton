@@ -4,7 +4,7 @@
 //
 // sample.h
 //
-// Identification: src/include/brain/sample.h
+// Identification: src/include/tuning/sample.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -19,7 +19,7 @@
 #include "common/internal_types.h"
 
 namespace peloton {
-namespace brain {
+namespace tuning {
 
 #define DEFAULT_SAMPLE_WEIGHT 1.0
 #define DEFAULT_COLUMN_VALUE 0.5
@@ -170,14 +170,14 @@ class Sample : public Printable {
 
 };
 
-}  // namespace brain
+}  // namespace indextuner
 }  // namespace peloton
 
 namespace std {
 
 template <>
-struct hash<peloton::brain::Sample> {
-  size_t operator()(const peloton::brain::Sample &sample) const {
+struct hash<peloton::tuning::Sample> {
+  size_t operator()(const peloton::tuning::Sample &sample) const {
     // Compute individual hash values using XOR and bit shifting:
     long hash = 31;
     auto columns = sample.GetColumnsAccessed();

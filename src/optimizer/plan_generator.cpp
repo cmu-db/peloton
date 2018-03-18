@@ -144,19 +144,15 @@ void PlanGenerator::Visit(const PhysicalOrderBy *) {
 void PlanGenerator::Visit(const PhysicalHashGroupBy *op) {
   auto having_predicates =
       expression::ExpressionUtil::JoinAnnotatedExprs(op->having);
-  expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
-                                                 having_predicates.get());
   BuildAggregatePlan(AggregateType::HASH, &op->columns,
-                     having_predicates.release());
+                     std::move(having_predicates));
 }
 
 void PlanGenerator::Visit(const PhysicalSortGroupBy *op) {
   auto having_predicates =
       expression::ExpressionUtil::JoinAnnotatedExprs(op->having);
-  expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
-                                                 having_predicates.get());
   BuildAggregatePlan(AggregateType::HASH, &op->columns,
-                     having_predicates.release());
+                     std::move(having_predicates));
 }
 
 void PlanGenerator::Visit(const PhysicalAggregate *) {
@@ -190,6 +186,8 @@ void PlanGenerator::Visit(const PhysicalInnerNLJoin *op) {
       expression::ExpressionUtil::JoinAnnotatedExprs(op->join_predicates);
   expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
                                                  join_predicate.get());
+  expression::ExpressionUtil::ConvertToTvExpr(join_predicate.get(),
+                                              children_expr_map_);
 
   vector<oid_t> left_keys;
   vector<oid_t> right_keys;
@@ -229,6 +227,8 @@ void PlanGenerator::Visit(const PhysicalInnerHashJoin *op) {
       expression::ExpressionUtil::JoinAnnotatedExprs(op->join_predicates);
   expression::ExpressionUtil::EvaluateExpression(children_expr_map_,
                                                  join_predicate.get());
+  expression::ExpressionUtil::ConvertToTvExpr(join_predicate.get(),
+                                              children_expr_map_);
 
   vector<unique_ptr<const expression::AbstractExpression>> left_keys;
   vector<unique_ptr<const expression::AbstractExpression>> right_keys;
@@ -427,7 +427,7 @@ void PlanGenerator::BuildProjectionPlan() {
       // Copy then evaluate the expression and add to target list
       auto col_copy = col->Copy();
       // TODO(boweic) : integrate the following two functions
-      expression::ExpressionUtil::ConvertToTvExpr(col_copy, child_expr_map);
+      expression::ExpressionUtil::ConvertToTvExpr(col_copy, {child_expr_map});
       expression::ExpressionUtil::EvaluateExpression(output_expr_maps,
                                                      col_copy);
       planner::DerivedAttribute attribute{col_copy};
@@ -457,7 +457,7 @@ void PlanGenerator::BuildAggregatePlan(
     AggregateType aggr_type,
     const std::vector<std::shared_ptr<expression::AbstractExpression>>
         *groupby_cols,
-    expression::AbstractExpression *having_predicate) {
+    std::unique_ptr<expression::AbstractExpression> having_predicate) {
   vector<planner::AggregatePlan::AggTerm> aggr_terms;
   vector<catalog::Column> output_schema_columns;
   DirectMapList dml;
@@ -466,8 +466,10 @@ void PlanGenerator::BuildAggregatePlan(
   auto &child_expr_map = children_expr_map_[0];
 
   auto agg_id = 0;
+  ExprMap output_expr_map;
   for (size_t idx = 0; idx < output_cols_.size(); ++idx) {
     auto expr = output_cols_[idx];
+    output_expr_map[expr] = idx;
     expr->DeduceExpressionType();
     expression::ExpressionUtil::EvaluateExpression(children_expr_map_, expr);
     if (expression::ExpressionUtil::IsAggregateExpression(
@@ -501,7 +503,12 @@ void PlanGenerator::BuildAggregatePlan(
   // Generate the Aggregate Plan
   unique_ptr<const planner::ProjectInfo> proj_info(
       new planner::ProjectInfo(move(tl), move(dml)));
-  unique_ptr<const expression::AbstractExpression> predicate(having_predicate);
+  expression::ExpressionUtil::EvaluateExpression({output_expr_map},
+                                                 having_predicate.get());
+  expression::ExpressionUtil::ConvertToTvExpr(having_predicate.get(),
+                                              {output_expr_map});
+  unique_ptr<const expression::AbstractExpression> predicate(
+      having_predicate.release());
   // TODO(boweic): Ditto, since the aggregate plan will own the schema, we may
   // want make the parameter as unique_ptr
   shared_ptr<const catalog::Schema> output_table_schema(
