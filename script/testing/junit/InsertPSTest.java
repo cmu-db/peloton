@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 /**
  * 1 and 2 tuple, prepared insert statement tests.
  */
@@ -209,7 +208,31 @@ public class InsertPSTest extends PLTestBase {
 		 new int [] {1, 0, 3});
         assertNoMoreRows(rs);
     }
-    
+
+    /**
+     * Prepared statement, 1 tuple insert, with columns inserted
+     * in schema order, one constant column
+     */
+    // Works, due to use of insert rather than push back
+
+    @Test
+    public void testPS_1Tuple_CS_5() throws SQLException {
+	
+        String sql = "INSERT INTO tbl (c1, c2, c3) VALUES (?, 2, ?);";
+        PreparedStatement pstmt = conn.prepareStatement(sql);
+	
+	setValues(pstmt, new int [] {1, 3});	
+        pstmt.addBatch();
+        pstmt.executeBatch();
+
+	getResultsPS();
+        rs.next();
+	checkRow(rs,
+		 new String [] {"c1", "c2", "c3"},
+		 new int [] {1, 2, 3});
+        assertNoMoreRows(rs);
+    }
+
     /* --------------------------------------------
      * 2 tuple insertions
     * ---------------------------------------------
@@ -431,8 +454,7 @@ public class InsertPSTest extends PLTestBase {
         assertNoMoreRows(rs);
     }
 
-
-    /* 2 tuple inserts */
+    /* 2 tuple (non-prepared statement) inserts */
     
     /**
      * 2 tuple insert, with no column specification.
@@ -460,6 +482,4 @@ public class InsertPSTest extends PLTestBase {
 	
         assertNoMoreRows(rs);
     }
-
-    
 }
