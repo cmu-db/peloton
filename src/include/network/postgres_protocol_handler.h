@@ -46,7 +46,7 @@ class PostgresProtocolHandler : public ProtocolHandler {
 
   /* Main switch case wrapper to process every packet apart from the startup
    * packet. Avoid flushing the response for extended protocols. */
-  ProcessResult ProcessPacket(InputPacket *pkt, const size_t thread_id);
+  ProcessResult ProcessNormalPacket(InputPacket *pkt, const size_t thread_id);
 
   /* Manage the startup packet */
   //  bool ManageStartupPacket();
@@ -55,6 +55,7 @@ class PostgresProtocolHandler : public ProtocolHandler {
 
   void GetResult();
 
+ private:
   //===--------------------------------------------------------------------===//
   // STATIC HELPERS
   //===--------------------------------------------------------------------===//
@@ -73,27 +74,24 @@ class PostgresProtocolHandler : public ProtocolHandler {
       std::vector<std::pair<type::TypeId, std::string>> &bind_parameters,
       std::vector<type::Value> &param_values, std::vector<int16_t> &formats);
 
+  // Parse the input packet based on if it is the startup packet
+  static bool ParseInputPacket(Buffer &rbuf, InputPacket &rpkt,
+                               bool startup_format);
+
   // Packet Reading Function
   // Extracts the contents of Postgres packet from the read socket buffer
   static bool ReadPacket(Buffer &rbuf, InputPacket &rpkt);
 
+  // Packet Reading Function
+  // Extracts the header of a Postgres packet from the read socket buffer
+  static bool ReadPacketHeader(Buffer &rbuf, InputPacket &rpkt,
+                               bool startup_format);
+
   /* Routine to deal with the first packet from the client */
-  bool ProcessInitialPackets(InputPacket *pkt, Client client, bool ssl_able,
-                             bool &ssl_sent, bool &finish_startup_packet);
+  bool ProcessInitialPackets(InputPacket *pkt, bool ssl_able);
 
   /* Routine to deal with SSL request message */
   void ProcessSSLRequestPacket(bool ssl_able, bool &ssl_handshake);
-
-  /* Routine to deal with general Startup message */
-  bool ProcessStartupPacket(InputPacket *pkt, int32_t proto_version,
-                            Client client, bool &finish_startup_packet);
-
-  bool GetFinishedStartupPacket();
-
- private:
-  // Packet Reading Function
-  // Extracts the header of a Postgres packet from the read socket buffer
-  static bool ReadPacketHeader(Buffer &rbuf, InputPacket &rpkt);
 
   //===--------------------------------------------------------------------===//
   // PROTOCOL HANDLING FUNCTIONS
@@ -155,6 +153,8 @@ class PostgresProtocolHandler : public ProtocolHandler {
   //===--------------------------------------------------------------------===//
   // MEMBERS
   //===--------------------------------------------------------------------===//
+  // True if this protocol is handling startup/SSL packets
+  bool init_stage_;
 
   NetworkProtocolType protocol_type_;
 
@@ -166,7 +166,7 @@ class PostgresProtocolHandler : public ProtocolHandler {
   // global txn state
   NetworkTransactionStateType txn_state_;
 
-  // state to mang skipped queries
+  // state to manage skipped queries
   bool skipped_stmt_ = false;
   std::string skipped_query_string_;
   QueryType skipped_query_type_;

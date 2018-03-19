@@ -15,9 +15,9 @@
 #include <string>
 #include <vector>
 
+#include "common/internal_types.h"
 #include "common/logger.h"
 #include "common/macros.h"
-#include "common/internal_types.h"
 
 #define BUFFER_INIT_SIZE 100
 
@@ -152,25 +152,13 @@ struct OutputPacket {
   }
 };
 
-struct Client {
-  // Authentication details
-  std::string dbname;
-  std::string user;
-  std::unordered_map<std::string, std::string> cmdline_options;
-
-  inline void Reset() {
-    dbname.clear();
-    user.clear();
-    cmdline_options.clear();
-  }
-};
-
 /*
-* Marshallers
-*/
+ * Marshallers
+ */
 
 /* packet_put_byte - used to write a single byte into a packet */
-extern void PacketPutByte(OutputPacket *pkt, const uchar c);
+extern void
+PacketPutByte(OutputPacket *pkt, const uchar c);
 
 /* packet_put_string - used to write a string into a packet */
 extern void PacketPutStringWithTerminator(OutputPacket *pkt,
@@ -186,22 +174,22 @@ extern void PacketPutCbytes(OutputPacket *pkt, const uchar *b, int len);
 extern void PacketPutString(OutputPacket *pkt, const std::string &data);
 
 /*
-* Unmarshallers
-*/
+ * Unmarshallers
+ */
 
 /* Copy len bytes from the position indicated by begin to an array */
 extern uchar *PacketCopyBytes(ByteBuf::const_iterator begin, int len);
 /*
-* packet_get_int -  Parse an int out of the head of the
-* 	packet. "base" bytes determine the number of bytes of integer
-* 	we are parsing out.
-*/
+ * packet_get_int -  Parse an int out of the head of the
+ * 	packet. "base" bytes determine the number of bytes of integer
+ * 	we are parsing out.
+ */
 extern int PacketGetInt(InputPacket *pkt, uchar base);
 
 /*
-* packet_get_string - parse out a string of size len.
-* 		if len=0? parse till the end of the string
-*/
+ * packet_get_string - parse out a string of size len.
+ * 		if len=0? parse till the end of the string
+ */
 extern void PacketGetString(InputPacket *pkt, size_t len, std::string &result);
 
 /* packet_get_bytes - Parse out "len" bytes of pkt as raw bytes */
@@ -211,9 +199,9 @@ extern void PacketGetBytes(InputPacket *pkt, size_t len, ByteBuf &result);
 extern void PacketGetByte(InputPacket *rpkt, uchar &result);
 
 /*
-* get_string_token - used to extract a string token
-* 		from an unsigned char vector
-*/
+ * get_string_token - used to extract a string token
+ * 		from an unsigned char vector
+ */
 extern void GetStringToken(InputPacket *pkt, std::string &result);
 
 }  // namespace network

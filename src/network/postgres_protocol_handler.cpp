@@ -57,6 +57,7 @@ const std::unordered_map<std::string, std::string>
 
 PostgresProtocolHandler::PostgresProtocolHandler(tcop::TrafficCop *traffic_cop)
     : ProtocolHandler(traffic_cop),
+      stage_(CommStage::SSL_SETUP),
       txn_state_(NetworkTransactionStateType::IDLE) {}
 
 PostgresProtocolHandler::~PostgresProtocolHandler() {}
@@ -80,111 +81,6 @@ void PostgresProtocolHandler::SendInitialResponse() {
 
   // we need to send the response right away
   SetFlushFlag(true);
-}
-
-void PostgresProtocolHandler::MakeHardcodedParameterStatus(
-    const std::pair<std::string, std::string> &kv) {
-  std::unique_ptr<OutputPacket> response(new OutputPacket());
-  response->msg_type = NetworkMessageType::PARAMETER_STATUS;
-  PacketPutStringWithTerminator(response.get(), kv.first);
-  PacketPutStringWithTerminator(response.get(), kv.second);
-  responses.push_back(std::move(response));
-}
-
-void PostgresProtocolHandler::PutTupleDescriptor(
-    const std::vector<FieldInfo> &tuple_descriptor) {
-  if (tuple_descriptor.empty()) return;
-
-  std::unique_ptr<OutputPacket> pkt(new OutputPacket());
-  pkt->msg_type = NetworkMessageType::ROW_DESCRIPTION;
-  PacketPutInt(pkt.get(), tuple_descriptor.size(), 2);
-
-  for (auto col : tuple_descriptor) {
-    PacketPutStringWithTerminator(pkt.get(), std::get<0>(col));
-    // TODO: Table Oid (int32)
-    PacketPutInt(pkt.get(), 0, 4);
-    // TODO: Attr id of column (int16)
-    PacketPutInt(pkt.get(), 0, 2);
-    // Field data type (int32)
-    PacketPutInt(pkt.get(), std::get<1>(col), 4);
-    // Data type size (int16)
-    PacketPutInt(pkt.get(), std::get<2>(col), 2);
-    // Type modifier (int32)
-    PacketPutInt(pkt.get(), -1, 4);
-    // Format code for text
-    PacketPutInt(pkt.get(), 0, 2);
-  }
-  responses.push_back(std::move(pkt));
-}
-
-void PostgresProtocolHandler::SendDataRows(std::vector<ResultValue> &results,
-                                           int colcount) {
-  if (results.empty() || colcount == 0) return;
-
-  size_t numrows = results.size() / colcount;
-
-  // 1 packet per row
-  for (size_t i = 0; i < numrows; i++) {
-    std::unique_ptr<OutputPacket> pkt(new OutputPacket());
-    pkt->msg_type = NetworkMessageType::DATA_ROW;
-    PacketPutInt(pkt.get(), colcount, 2);
-    for (int j = 0; j < colcount; j++) {
-      auto content = results[i * colcount + j];
-      if (content.size() == 0) {
-        // content is NULL
-        PacketPutInt(pkt.get(), NULL_CONTENT_SIZE, 4);
-        // no value bytes follow
-      } else {
-        // length of the row attribute
-        PacketPutInt(pkt.get(), content.size(), 4);
-        // contents of the row attribute
-        PacketPutString(pkt.get(), content);
-      }
-    }
-    responses.push_back(std::move(pkt));
-  }
-  traffic_cop_->setRowsAffected(numrows);
-}
-
-void PostgresProtocolHandler::CompleteCommand(const QueryType &query_type,
-                                              int rows) {
-  std::unique_ptr<OutputPacket> pkt(new OutputPacket());
-  pkt->msg_type = NetworkMessageType::COMMAND_COMPLETE;
-  std::string tag = QueryTypeToString(query_type);
-  switch (query_type) {
-    /* After Begin, we enter a txn block */
-    case QueryType::QUERY_BEGIN:
-      txn_state_ = NetworkTransactionStateType::BLOCK;
-      break;
-    /* After commit, we end the txn block */
-    case QueryType::QUERY_COMMIT:
-    /* After rollback, the txn block is ended */
-    case QueryType::QUERY_ROLLBACK:
-      txn_state_ = NetworkTransactionStateType::IDLE;
-      break;
-    case QueryType::QUERY_INSERT:
-      tag += " 0 " + std::to_string(rows);
-      break;
-    case QueryType::QUERY_CREATE_TABLE:
-    case QueryType::QUERY_CREATE_DB:
-    case QueryType::QUERY_CREATE_INDEX:
-    case QueryType::QUERY_CREATE_TRIGGER:
-    case QueryType::QUERY_PREPARE:
-      break;
-    default:
-      tag += " " + std::to_string(rows);
-  }
-  PacketPutStringWithTerminator(pkt.get(), tag);
-  responses.push_back(std::move(pkt));
-}
-
-/*
- * put_empty_query_response - Informs the client that an empty query was sent
- */
-void PostgresProtocolHandler::SendEmptyQueryResponse() {
-  std::unique_ptr<OutputPacket> response(new OutputPacket());
-  response->msg_type = NetworkMessageType::EMPTY_QUERY_RESPONSE;
-  responses.push_back(std::move(response));
 }
 
 bool PostgresProtocolHandler::HardcodedExecuteFilter(QueryType query_type) {
@@ -975,25 +871,48 @@ void PostgresProtocolHandler::ExecCloseMessage(InputPacket *pkt) {
   responses.push_back(std::move(response));
 }
 
+bool PostgresProtocolHandler::ParseInputPacket(Buffer &rbuf, InputPacket,
+                                               bool starup_format) {
+  if (request.header_parsed == false) {
+    // parse out the header first
+    if (ReadPacketHeader(rbuf, request, startup_format) == false) {
+      // need more data
+      return false;
+    }
+  }
+
+  PL_ASSERT(request.header_parsed == true);
+
+  if (request.is_initialized == false) {
+    // packet needs to be initialized with rest of the contents
+    if (PostgresProtocolHandler::ReadPacket(rbuf, request) == false) {
+      // need more data
+      return false;
+    }
+  }
+}
+
 // The function tries to do a preliminary read to fetch the size value and
 // then reads the rest of the packet.
 // Assume: Packet length field is always 32-bit int
-bool PostgresProtocolHandler::ReadPacketHeader(Buffer &rbuf,
-                                               InputPacket &rpkt) {
+bool PostgresProtocolHandler::ReadPacketHeader(Buffer &rbuf, InputPacket &rpkt,
+                                               bool startup) {
   // All packets other than the startup packet have a 5 bytes header
-  size_t initial_read_size = sizeof(int32_t);
+  size_t initial_read_size = startup ? sizeof(int32_t) : sizeof(int32_t) + 1;
   // check if header bytes are available
-  if (!rbuf.IsReadDataAvailable(initial_read_size + 1)) {
+  if (!rbuf.IsReadDataAvailable(initial_read_size)) {
     // nothing more to read
     return false;
   }
 
-  // get packet size from the header
-  // Header also contains msg type
-  rpkt.msg_type = static_cast<NetworkMessageType>(rbuf.GetByte(rbuf.buf_ptr));
-  // Skip the message type byte
-  rbuf.buf_ptr++;
+  if (!startup) {
+    // Header also contains msg type
+    rpkt.msg_type = static_cast<NetworkMessageType>(rbuf.GetByte(rbuf.buf_ptr));
+    // Skip the message type byte
+    rbuf.buf_ptr++;
+  }
 
+  // get packet size from the header
   // extract packet contents size
   // content lengths should exclude the length bytes
   rpkt.len = rbuf.GetUInt32BigEndian() - sizeof(uint32_t);
@@ -1008,7 +927,7 @@ bool PostgresProtocolHandler::ReadPacketHeader(Buffer &rbuf,
   }
 
   // we have processed the data, move buffer pointer
-  rbuf.buf_ptr += initial_read_size;
+  rbuf.buf_ptr += sizeof(int32_t);
   rpkt.header_parsed = true;
 
   return true;
@@ -1064,7 +983,7 @@ bool PostgresProtocolHandler::ProcessInitialPackets(
   // TODO(Yuchen): consider more about return value
   if (proto_version == SSL_MESSAGE_VERNO) {
     LOG_DEBUG("process SSL MESSAGE");
-    ProcessSSLRequestPacket(ssl_able, ssl_handshake);
+    ProcessSSLRequestPacket(ssl_able);
     return true;
   } else {
     LOG_DEBUG("process startup packet");
@@ -1073,79 +992,59 @@ bool PostgresProtocolHandler::ProcessInitialPackets(
   }
 }
 
-void PostgresProtocolHandler::ProcessSSLRequestPacket(bool ssl_able,
-                                                      bool &ssl_handshake) {
+void PostgresProtocolHandler::ProcessSSLRequestPacket(bool ssl_able) {
   std::unique_ptr<OutputPacket> response(new OutputPacket());
-  ssl_handshake = ssl_able;
   response->msg_type =
       ssl_able ? NetworkMessageType::SSL_YES : NetworkMessageType::SSL_NO;
   responses.push_back(std::move(response));
   SetFlushFlag(true);
 }
 
-bool PostgresProtocolHandler::ProcessStartupPacket(
-    InputPacket *pkt, int32_t proto_version, Client client,
-    bool &finished_startup_packet) {
+void PostgresProtocolHandler::ProcessStartupPacket(InputPacket *pkt,
+                                                   int32_t proto_version) {
   std::string token, value;
 
   // Only protocol version 3 is supported
   if (PROTO_MAJOR_VERSION(proto_version) != 3) {
     LOG_ERROR("Protocol error: Only protocol version 3 is supported.");
-    exit(EXIT_FAILURE);
+    SendErrorResponse({{NetworkMessageType::HUMAN_READABLE_ERROR,
+                        "Protocol Version Not Support"}});
+    return;
   }
 
   // TODO(Yuchen): check for more malformed cases
   while (pkt->ptr < pkt->len) {
     // loop end case?
     GetStringToken(pkt, token);
-    // if the option database was found
+    LOG_TRACE("Option key is %s", token.c_str());
+    if (pkt->ptr >= pkt->len) break;
+    GetStringToken(pkt, value);
+    LOG_TRACE("Option value is %s", token.c_str());
+    client.cmdline_options[token] = value;
     if (token.compare("database") == 0) {
-      // loop end?
-      if (pkt->ptr >= pkt->len) break;
-      GetStringToken(pkt, client.dbname);
-      traffic_cop_->SetDefaultDatabaseName(client.dbname);
-    } else if (token.compare(("user")) == 0) {
-      // loop end?
-      if (pkt->ptr >= pkt->len) break;
-      GetStringToken(pkt, client.user);
-    } else {
-      if (pkt->ptr >= pkt->len) break;
-      GetStringToken(pkt, value);
-      client.cmdline_options[token] = value;
+      traffic_cop_->SetDefaultDatabaseName(value);
     }
   }
-  finished_startup_packet = true;
 
   // Send AuthRequestOK to client
   // TODO(Yuchen): Peloton does not do any kind of trust authentication now.
   // For example, no password authentication.
   SendInitialResponse();
-  LOG_DEBUG("Initial done");
-
-  return true;
 }
 
 ProcessResult PostgresProtocolHandler::Process(Buffer &rbuf,
+                                               const bool ssl_able,
                                                const size_t thread_id) {
-  if (request.header_parsed == false) {
-    // parse out the header first
-    if (ReadPacketHeader(rbuf, request) == false) {
-      // need more data
-      return ProcessResult::MORE_DATA_REQUIRED;
-    }
+  // if the packet is of startup packet format
+  if (!ParseInputPacket(rbuf, rpkt_, startup_stage_))
+    return ProcessResult::MORE_DATA_REQUIRED;
+
+  ProcessResult process_status;
+  if (startup_stage) {
+    process_status = ProcessInitialPacket();
+  } else {
+    process_status = ProcessNormalPacket();
   }
-  PL_ASSERT(request.header_parsed == true);
-
-  if (request.is_initialized == false) {
-    // packet needs to be initialized with rest of the contents
-    if (PostgresProtocolHandler::ReadPacket(rbuf, request) == false) {
-      // need more data
-      return ProcessResult::MORE_DATA_REQUIRED;
-    }
-  }
-
-  auto process_status = ProcessPacket(&request, thread_id);
-
   request.Reset();
 
   return process_status;
@@ -1155,8 +1054,8 @@ ProcessResult PostgresProtocolHandler::Process(Buffer &rbuf,
  * process_packet - Main switch block; process incoming packets,
  *  Returns false if the session needs to be closed.
  */
-ProcessResult PostgresProtocolHandler::ProcessPacket(InputPacket *pkt,
-                                                     const size_t thread_id) {
+ProcessResult PostgresProtocolHandler::ProcessNormalPacket(
+    InputPacket *pkt, const size_t thread_id) {
   LOG_TRACE("Message type: %c", static_cast<unsigned char>(pkt->msg_type));
   // We don't set force_flush to true for `PBDE` messages because they're
   // part of the extended protocol. Buffer responses and don't flush until
@@ -1209,6 +1108,110 @@ ProcessResult PostgresProtocolHandler::ProcessPacket(InputPacket *pkt,
     }
   }
   return ProcessResult::COMPLETE;
+}
+void PostgresProtocolHandler::MakeHardcodedParameterStatus(
+    const std::pair<std::string, std::string> &kv) {
+  std::unique_ptr<OutputPacket> response(new OutputPacket());
+  response->msg_type = NetworkMessageType::PARAMETER_STATUS;
+  PacketPutStringWithTerminator(response.get(), kv.first);
+  PacketPutStringWithTerminator(response.get(), kv.second);
+  responses.push_back(std::move(response));
+}
+
+void PostgresProtocolHandler::PutTupleDescriptor(
+    const std::vector<FieldInfo> &tuple_descriptor) {
+  if (tuple_descriptor.empty()) return;
+
+  std::unique_ptr<OutputPacket> pkt(new OutputPacket());
+  pkt->msg_type = NetworkMessageType::ROW_DESCRIPTION;
+  PacketPutInt(pkt.get(), tuple_descriptor.size(), 2);
+
+  for (auto col : tuple_descriptor) {
+    PacketPutStringWithTerminator(pkt.get(), std::get<0>(col));
+    // TODO: Table Oid (int32)
+    PacketPutInt(pkt.get(), 0, 4);
+    // TODO: Attr id of column (int16)
+    PacketPutInt(pkt.get(), 0, 2);
+    // Field data type (int32)
+    PacketPutInt(pkt.get(), std::get<1>(col), 4);
+    // Data type size (int16)
+    PacketPutInt(pkt.get(), std::get<2>(col), 2);
+    // Type modifier (int32)
+    PacketPutInt(pkt.get(), -1, 4);
+    // Format code for text
+    PacketPutInt(pkt.get(), 0, 2);
+  }
+  responses.push_back(std::move(pkt));
+}
+
+void PostgresProtocolHandler::SendDataRows(std::vector<ResultValue> &results,
+                                           int colcount) {
+  if (results.empty() || colcount == 0) return;
+
+  size_t numrows = results.size() / colcount;
+
+  // 1 packet per row
+  for (size_t i = 0; i < numrows; i++) {
+    std::unique_ptr<OutputPacket> pkt(new OutputPacket());
+    pkt->msg_type = NetworkMessageType::DATA_ROW;
+    PacketPutInt(pkt.get(), colcount, 2);
+    for (int j = 0; j < colcount; j++) {
+      auto content = results[i * colcount + j];
+      if (content.size() == 0) {
+        // content is NULL
+        PacketPutInt(pkt.get(), NULL_CONTENT_SIZE, 4);
+        // no value bytes follow
+      } else {
+        // length of the row attribute
+        PacketPutInt(pkt.get(), content.size(), 4);
+        // contents of the row attribute
+        PacketPutString(pkt.get(), content);
+      }
+    }
+    responses.push_back(std::move(pkt));
+  }
+  traffic_cop_->setRowsAffected(numrows);
+}
+
+void PostgresProtocolHandler::CompleteCommand(const QueryType &query_type,
+                                              int rows) {
+  std::unique_ptr<OutputPacket> pkt(new OutputPacket());
+  pkt->msg_type = NetworkMessageType::COMMAND_COMPLETE;
+  std::string tag = QueryTypeToString(query_type);
+  switch (query_type) {
+    /* After Begin, we enter a txn block */
+    case QueryType::QUERY_BEGIN:
+      txn_state_ = NetworkTransactionStateType::BLOCK;
+      break;
+    /* After commit, we end the txn block */
+    case QueryType::QUERY_COMMIT:
+    /* After rollback, the txn block is ended */
+    case QueryType::QUERY_ROLLBACK:
+      txn_state_ = NetworkTransactionStateType::IDLE;
+      break;
+    case QueryType::QUERY_INSERT:
+      tag += " 0 " + std::to_string(rows);
+      break;
+    case QueryType::QUERY_CREATE_TABLE:
+    case QueryType::QUERY_CREATE_DB:
+    case QueryType::QUERY_CREATE_INDEX:
+    case QueryType::QUERY_CREATE_TRIGGER:
+    case QueryType::QUERY_PREPARE:
+      break;
+    default:
+      tag += " " + std::to_string(rows);
+  }
+  PacketPutStringWithTerminator(pkt.get(), tag);
+  responses.push_back(std::move(pkt));
+}
+
+/*
+ * put_empty_query_response - Informs the client that an empty query was sent
+ */
+void PostgresProtocolHandler::SendEmptyQueryResponse() {
+  std::unique_ptr<OutputPacket> response(new OutputPacket());
+  response->msg_type = NetworkMessageType::EMPTY_QUERY_RESPONSE;
+  responses.push_back(std::move(response));
 }
 
 /*

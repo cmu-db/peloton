@@ -83,8 +83,7 @@ namespace {
   ;
 }
 
-// For readability sake, do not run clang-format on this macro block and follow
-// the style presented when editing.
+// clang-format off
 DEF_TRANSITION_GRAPH
   DEFINE_STATE(READ)
     ON(WAKEUP) SET_STATE_TO(READ) AND_INVOKE(FillReadBuffer)
@@ -94,6 +93,7 @@ DEF_TRANSITION_GRAPH
   END_DEF
 
   DEFINE_STATE(SSL_HANDSHAKE)
+    ON(WAKEUP) SET_STATE_TO(SSL_HANDSHAKE) AND_INVOKE(SSL_handshake)
     ON(NEED_DATA) SET_STATE_TO(SSL_HANDSHAKE) AND_WAIT
     ON(FINISH) SET_STATE_TO(CLOSING) AND_INVOKE(CloseSocket)
     ON(PROCEED) SET_STATE_TO(PROCESS) AND_INVOKE(Process)
@@ -124,6 +124,7 @@ DEF_TRANSITION_GRAPH
   END_DEF
 
 END_DEF
+// clang-format on
 
 void ConnectionHandle::StateMachine::Accept(Transition action,
                                             ConnectionHandle &connection) {
@@ -440,75 +441,6 @@ std::string ConnectionHandle::WriteBufferToString() {
   return std::string(wbuf_->buf.begin(), wbuf_->buf.end());
 }
 
-ProcessResult ConnectionHandle::ProcessInitial() {
-  // TODO(Tianyi): this is a direct copy from protocol handler
-  // and we could get rid of it later when we have the second
-  // protocol handler;
-
-  if (initial_packet_.header_parsed == false) {
-    // parse out the header first
-    if (ReadStartupPacketHeader(*rbuf_, initial_packet_) == false) {
-      // need more data
-      return ProcessResult::MORE_DATA_REQUIRED;
-    }
-  }
-  PL_ASSERT(initial_packet_.header_parsed == true);
-
-  if (initial_packet_.is_initialized == false) {
-    // packet needs to be initialized with rest of the contents
-    // TODO(Tianyi): If other protocols are added, this need to be changed
-    if (PostgresProtocolHandler::ReadPacket(*rbuf_, initial_packet_) == false) {
-      // need more data
-      return ProcessResult::MORE_DATA_REQUIRED;
-    }
-  }
-
-  if (protocol_handler_ == nullptr) {
-    protocol_handler_ = ProtocolHandlerFactory::CreateProtocolHandler(
-        ProtocolHandlerType::Postgres, &traffic_cop_);
-  }
-  // We need to handle startup packet first
-  // TODO(Tianyi): If other protocols are added, this need to be changed
-  bool result = protocol_handler_->ProcessInitialPackets(
-      &initial_packet_, client_, ssl_able_, ssl_handshake_,
-      finish_startup_packet_);
-  // Clean up the initial_packet after finishing processing.
-  initial_packet_.Reset();
-  if (result) {
-    return ProcessResult::COMPLETE;
-  } else {
-    return ProcessResult::TERMINATE;
-  }
-}
-
-// TODO(Tianyi): This function is now dedicated for postgres packet
-bool ConnectionHandle::ReadStartupPacketHeader(Buffer &rbuf,
-                                               InputPacket &rpkt) {
-  size_t initial_read_size = sizeof(int32_t);
-
-  if (!rbuf.IsReadDataAvailable(initial_read_size)) {
-    return false;
-  }
-
-  // extract packet contents size
-  // content lengths should exclude the length
-  rpkt.len = rbuf.GetUInt32BigEndian() - sizeof(uint32_t);
-
-  // do we need to use the extended buffer for this packet?
-  rpkt.is_extended = (rpkt.len > rbuf.GetMaxSize());
-
-  if (rpkt.is_extended) {
-    LOG_DEBUG("Using extended buffer for pkt size:%ld", rpkt.len);
-    // reserve space for the extended buffer
-    rpkt.ReserveExtendedBuffer();
-  }
-
-  // we have processed the data, move buffer pointer
-  rbuf.buf_ptr += initial_read_size;
-  rpkt.header_parsed = true;
-  return true;
-}
-
 // Writes a packet's header (type, size) into the write buffer.
 // Return false when the socket is not ready for write
 WriteState ConnectionHandle::BufferWriteBytesHeader(OutputPacket *pkt) {
@@ -645,6 +577,12 @@ Transition ConnectionHandle::CloseSocket() {
 }
 
 Transition ConnectionHandle::SSL_handshake() {
+  if (HaveResponse()) {
+    switch(ProcessWrite()) {
+      
+    } 
+  }
+
   if (conn_SSL_context == nullptr) {
     conn_SSL_context = SSL_new(PelotonServer::ssl_context);
     if (conn_SSL_context == nullptr) {
@@ -735,6 +673,8 @@ Transition ConnectionHandle::Process() {
       return Transition::GET_RESULT;
     case ProcessResult::TERMINATE:
       return Transition::FINISH;
+    case ProcessResult::NEED_SSL_HANDSHAKE：
+      return Transition::NEED_SSL_HANDSHAKE;
   }
 }
 

@@ -1397,7 +1397,8 @@ enum class ProcessResult {
   COMPLETE,
   TERMINATE,
   PROCESSING,
-  MORE_DATA_REQUIRED
+  MORE_DATA_REQUIRED,
+  NEED_SSL_HANDSHAKE,
 };
 
 enum class NetworkProtocolType {

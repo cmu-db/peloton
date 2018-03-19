@@ -60,6 +60,8 @@ class ProtocolHandler {
 
   // The traffic cop used for this connection
   tcop::TrafficCop *traffic_cop_;
+
+  std::unordered_map<std::string, std::string> cmdline_options;
 };
 
 }  // namespace network
