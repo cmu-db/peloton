@@ -4,7 +4,7 @@
 //
 // clusterer.h
 //
-// Identification: src/include/brain/clusterer.h
+// Identification: src/include/tuning/clusterer.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
@@ -17,12 +17,12 @@
 #include <map>
 
 #include "common/printable.h"
-#include "brain/sample.h"
+#include "sample.h"
 #include "common/printable.h"
 #include "common/internal_types.h"
 
 namespace peloton {
-namespace brain {
+namespace tuning {
 
 #define NEW_SAMPLE_WEIGHT 0.01
 
@@ -123,5 +123,5 @@ class Clusterer : public Printable {
   oid_t sample_column_count_;
 };
 
-}  // namespace brain
+}  // namespace indextuner
 }  // namespace peloton

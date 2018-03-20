@@ -61,6 +61,7 @@ class MonoQueuePool {
     return mono_queue_pool;
   }
 
+  // TODO(Tianyu): Rename to (Brain)QueryHistoryLog or something
   static MonoQueuePool &GetBrainInstance() {
     uint32_t task_queue_size = settings::SettingsManager::GetInt(
         settings::SettingId::brain_task_queue_size);

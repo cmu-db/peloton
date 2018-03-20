@@ -22,7 +22,7 @@
 #include "common/exception.h"
 #include "common/logger.h"
 #include "common/container/lock_free_queue.h"
-#include "network/notifiable_task.h"
+#include "common/notifiable_task.h"
 
 namespace peloton {
 namespace network {

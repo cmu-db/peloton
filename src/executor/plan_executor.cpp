@@ -15,7 +15,6 @@
 #include "codegen/buffering_consumer.h"
 #include "codegen/query.h"
 #include "codegen/query_cache.h"
-#include "concurrency/transaction_manager_factory.h"
 #include "codegen/query_compiler.h"
 #include "common/logger.h"
 #include "concurrency/transaction_manager_factory.h"
@@ -65,7 +64,7 @@ static void CompileAndExecutePlan(
   }
 
   auto on_query_result =
-      [&on_complete, &consumer](executor::ExecutionResult result) {
+    [&on_complete, &consumer, plan](executor::ExecutionResult result) {
         std::vector<ResultValue> values;
         for (const auto &tuple : consumer.GetOutputTuples()) {
           for (uint32_t i = 0; i < tuple.tuple_.size(); i++) {
@@ -75,6 +74,7 @@ static void CompileAndExecutePlan(
             values.push_back(std::move(str));
           }
         }
+        plan->ClearParameterValues();
         on_complete(result, std::move(values));
       };
 
@@ -101,7 +101,9 @@ static void InterpretPlan(
   status = executor_tree->Init();
   if (status != true) {
     result.m_result = ResultType::FAILURE;
+    result.m_error_message = "Failed initialization of query execution tree";
     CleanExecutorTree(executor_tree.get());
+    plan->ClearParameterValues();
     on_complete(result, std::move(values));
     return;
   }
@@ -131,6 +133,7 @@ static void InterpretPlan(
   result.m_processed = executor_context->num_processed;
   result.m_result = ResultType::SUCCESS;
   CleanExecutorTree(executor_tree.get());
+  plan->ClearParameterValues();
   on_complete(result, std::move(values));
 }
 
@@ -146,10 +149,20 @@ void PlanExecutor::ExecutePlan(
 
   bool codegen_enabled =
       settings::SettingsManager::GetBool(settings::SettingId::codegen);
-  if (codegen_enabled && codegen::QueryCompiler::IsSupported(*plan)) {
-    CompileAndExecutePlan(plan, txn, params, std::move(on_complete));
-  } else {
-    InterpretPlan(plan, txn, params, result_format, std::move(on_complete));
+
+  try {
+    if (codegen_enabled && codegen::QueryCompiler::IsSupported(*plan)) {
+      CompileAndExecutePlan(plan, txn, params, on_complete);
+    } else {
+      InterpretPlan(plan, txn, params, result_format, on_complete);
+    }
+  } catch (Exception &e) {
+    ExecutionResult result;
+    result.m_result = ResultType::FAILURE;
+    result.m_error_message = e.what();
+    LOG_ERROR("Error thrown during execution: %s",
+              result.m_error_message.c_str());
+    on_complete(result, {});
   }
 }
 
@@ -164,7 +177,7 @@ void PlanExecutor::ExecutePlan(
  * @return number of executed tuples and logical_tile_list
  */
 int PlanExecutor::ExecutePlan(
-    const planner::AbstractPlan *plan, const std::vector<type::Value> &params,
+    planner::AbstractPlan *plan, const std::vector<type::Value> &params,
     std::vector<std::unique_ptr<executor::LogicalTile>> &logical_tile_list) {
   PL_ASSERT(plan != nullptr);
   LOG_TRACE("PlanExecutor Start with transaction");

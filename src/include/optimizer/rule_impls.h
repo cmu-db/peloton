@@ -38,6 +38,22 @@ class InnerJoinCommutativity : public Rule {
                  OptimizeContext *context) const override;
 };
 
+/**
+ * @brief (A join B) join C -> A join (B join C)
+ */
+
+class InnerJoinAssociativity : public Rule {
+ public:
+  InnerJoinAssociativity();
+
+  bool Check(std::shared_ptr<OperatorExpression> plan,
+             OptimizeContext *context) const override;
+
+  void Transform(std::shared_ptr<OperatorExpression> input,
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+                 OptimizeContext *context) const override;
+};
+
 //===--------------------------------------------------------------------===//
 // Implementation rules
 //===--------------------------------------------------------------------===//
@@ -291,6 +307,21 @@ class CombineConsecutiveFilter : public Rule {
 };
 
 /**
+ * @brief perform predicate push-down to push a filter through aggregation, also
+ * will embed filter into aggregation operator if appropriate.
+ */
+class PushFilterThroughAggregation : public Rule {
+ public:
+  PushFilterThroughAggregation();
+
+  bool Check(std::shared_ptr<OperatorExpression> plan,
+             OptimizeContext *context) const override;
+
+  void Transform(std::shared_ptr<OperatorExpression> input,
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+                 OptimizeContext *context) const override;
+};
+/**
  * @brief Embed a filter into a scan operator. After predicate push-down, we
  * eliminate all filters in the operator trees, predicates should be associated
  * with get or join
@@ -308,10 +339,23 @@ class EmbedFilterIntoGet : public Rule {
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+/// Unnesting rules
+// We use this promise to determine which rules should be applied first if
+// multiple rules are applicable, we need to first pull filters up through mark-join
+// then turn mark-join into a regular join operator
+enum class UnnestPromise { Low = 1, High };
+// TODO(boweic): MarkJoin and SingleJoin should not be transformed into inner
+// join. Sometimes MarkJoin could be transformed into semi-join, but for now we
+// do not have these operators in the llvm cogen engine. Once we have those, we
+// should not use the following rules in the rewrite phase
+///////////////////////////////////////////////////////////////////////////////
 /// MarkJoinGetToInnerJoin
-class MarkJoinGetToInnerJoin : public Rule {
+class MarkJoinToInnerJoin : public Rule {
  public:
-  MarkJoinGetToInnerJoin();
+  MarkJoinToInnerJoin();
+
+  int Promise(GroupExpression *group_expr,
+              OptimizeContext *context) const override;
 
   bool Check(std::shared_ptr<OperatorExpression> plan,
              OptimizeContext *context) const override;
@@ -320,12 +364,14 @@ class MarkJoinGetToInnerJoin : public Rule {
                  std::vector<std::shared_ptr<OperatorExpression>> &transformed,
                  OptimizeContext *context) const override;
 };
-
 ///////////////////////////////////////////////////////////////////////////////
-/// MarkJoinInnerJoinToInnerJoin
-class MarkJoinInnerJoinToInnerJoin : public Rule {
+/// SingleJoinToInnerJoin
+class SingleJoinToInnerJoin : public Rule {
  public:
-  MarkJoinInnerJoinToInnerJoin();
+  SingleJoinToInnerJoin();
+
+  int Promise(GroupExpression *group_expr,
+              OptimizeContext *context) const override;
 
   bool Check(std::shared_ptr<OperatorExpression> plan,
              OptimizeContext *context) const override;
@@ -341,6 +387,9 @@ class PullFilterThroughMarkJoin : public Rule {
  public:
   PullFilterThroughMarkJoin();
 
+  int Promise(GroupExpression *group_expr,
+              OptimizeContext *context) const override;
+
   bool Check(std::shared_ptr<OperatorExpression> plan,
              OptimizeContext *context) const override;
 
@@ -349,5 +398,21 @@ class PullFilterThroughMarkJoin : public Rule {
                  OptimizeContext *context) const override;
 };
 
+///////////////////////////////////////////////////////////////////////////////
+/// PullFilterThroughAggregation
+class PullFilterThroughAggregation : public Rule {
+ public:
+  PullFilterThroughAggregation();
+
+  int Promise(GroupExpression *group_expr,
+              OptimizeContext *context) const override;
+
+  bool Check(std::shared_ptr<OperatorExpression> plan,
+             OptimizeContext *context) const override;
+
+  void Transform(std::shared_ptr<OperatorExpression> input,
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+                 OptimizeContext *context) const override;
+};
 }  // namespace optimizer
 }  // namespace peloton
