@@ -154,7 +154,19 @@ if [ "$DISTRO" = "UBUNTU" ]; then
         libedit-dev \
         libssl-dev \
         postgresql-client \
-        libtbb-dev
+        libtbb-dev \
+        python3-pip \
+        curl \
+        autoconf \
+        automake \
+        libtool \
+        make \
+        g++ \
+        unzip
+    # Install version of protobuf needed by C-API
+    install_protobuf3.4.0 "ubuntu"
+    # Install tensorflow
+    install_tf "$TFCApiFile" "$TFBinaryURL" "$LinkerConfigCmd"
 
 ## ------------------------------------------------
 ## DEBIAN
@@ -216,8 +228,20 @@ elif [[ "$DISTRO" == *"FEDORA"* ]]; then
         ${LLVM}-static \
         libedit-devel \
         postgresql \
+        libasan \
+        libtsan \
+        libubsan \
         libatomic \
-        libtbb-dev
+        libtbb-dev \
+        python3-pip \
+        curl \
+        autoconf \
+        automake \
+        libtool
+    # Install version of protobuf needed by C-API
+    install_protobuf3.4.0 "fedora"
+    # Install tensorflow
+    install_tf "$TFCApiFile" "$TFBinaryURL" "$LinkerConfigCmd"
 
 ## ------------------------------------------------
 ## REDHAT
@@ -314,6 +338,13 @@ elif [ "$DISTRO" = "DARWIN" ]; then
     brew install llvm@3.7
     brew install postgresql
     brew install tbb
+    brew install curl
+    brew install wget
+    brew install python
+    brew upgrade python
+    # Brew installs correct version of Protobuf(3.5.1 >= 3.4.0)
+    # So we can directly install tensorflow
+    install_tf "$TFCApiFile" "$TFBinaryURL" "$LinkerConfigCmd"
 
 ## ------------------------------------------------
 ## UNKNOWN
