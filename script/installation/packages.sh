@@ -1,4 +1,4 @@
-#!/bin/bash -ex
+#!/bin/bash -x
 
 ## =================================================================
 ## PELOTON PACKAGE INSTALLATION
@@ -17,6 +17,7 @@
 ##  * OSX
 ## =================================================================
 
+set -o errexit
 
 # Determine OS platform
 UNAME=$(uname | tr "[:upper:]" "[:lower:]")
@@ -105,13 +106,11 @@ if [ "$DISTRO" = "UBUNTU" ]; then
         fi
         sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 15CF4D18AF4F7421
         CMAKE_NAME="cmake3"
-        FORCE_Y="--force-yes"
     else
         CMAKE_NAME="cmake"
-        FORCE_Y=""
     fi
 
-    sudo apt-get update -qq
+    sudo apt-get update
     FORCE_Y=""
     PKG_CMAKE="cmake"
     PKG_LLVM="llvm-3.7"
@@ -134,7 +133,7 @@ if [ "$DISTRO" = "UBUNTU" ]; then
     fi
     TFCApiFile="libtensorflow-${TF_TYPE}-linux-x86_64-${TF_VERSION}.tar.gz"
     LinkerConfigCmd="sudo ldconfig"
-    sudo apt-get -qq $FORCE_Y --ignore-missing -y install \
+    sudo apt-get -q $FORCE_Y --ignore-missing -y install \
         $PKG_CMAKE \
         $PKG_LLVM \
         $PKG_CLANG \
@@ -171,7 +170,7 @@ if [ "$DISTRO" = "UBUNTU" ]; then
 ## DEBIAN
 ## ------------------------------------------------
 elif [ "$DISTRO" = "DEBIAN OS" ]; then
-    sudo apt-get -qq --ignore-missing -y install \
+    sudo apt-get -q --ignore-missing -y install \
         git \
         g++ \
         clang \
@@ -312,6 +311,7 @@ elif [[ "$DISTRO" == *"REDHAT"* ]] && [[ "${DISTRO_VER%.*}" == "7" ]]; then
 ## DARWIN (OSX)
 ## ------------------------------------------------
 elif [ "$DISTRO" = "DARWIN" ]; then
+    set +o errexit
     if test ! $(which brew); then
       echo "Installing homebrew..."
       ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
