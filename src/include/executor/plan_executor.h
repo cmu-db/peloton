@@ -12,9 +12,9 @@
 
 #pragma once
 
+#include "common/internal_types.h"
 #include "common/statement.h"
 #include "executor/abstract_executor.h"
-#include "common/internal_types.h"
 
 namespace peloton {
 
@@ -34,9 +34,13 @@ struct ExecutionResult {
   // number of tuples processed
   uint32_t m_processed;
 
+  // string of error message
+  std::string m_error_message;
+
   ExecutionResult() {
     m_processed = 0;
     m_result = ResultType::SUCCESS;
+    m_error_message = "";
   }
 };
 
@@ -66,7 +70,7 @@ class PlanExecutor {
    */
   // FIXME This should be removed when PelotonService is removed/rewritten
   static int ExecutePlan(
-      const planner::AbstractPlan *plan, const std::vector<type::Value> &params,
+      planner::AbstractPlan *plan, const std::vector<type::Value> &params,
       std::vector<std::unique_ptr<executor::LogicalTile>> &logical_tile_list);
 };
 

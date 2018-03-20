@@ -79,16 +79,16 @@ class AggregateExpression : public AbstractExpression {
   }
 
   // Attribute binding
-  void PerformBinding(const std::vector<const planner::BindingContext *> &
-                          binding_contexts) override {
+  void PerformBinding(const std::vector<const planner::BindingContext *>
+                          &binding_contexts) override {
     const auto &context = binding_contexts[0];
     ai_ = context->Find(value_idx_);
     PL_ASSERT(ai_ != nullptr);
-    LOG_DEBUG("AggregateOutput Column ID %u.%u binds to AI %p (%s)", 0,
+    LOG_TRACE("AggregateOutput Column ID %u.%u binds to AI %p (%s)", 0,
               value_idx_, ai_, ai_->name.c_str());
   }
 
-  const planner::AttributeInfo* GetAttributeRef() const { return ai_; }
+  const planner::AttributeInfo *GetAttributeRef() const { return ai_; }
 
   inline void SetValueIdx(int value_idx) { value_idx_ = value_idx; }
 
@@ -130,7 +130,7 @@ class AggregateExpression : public AbstractExpression {
 
  private:
   int value_idx_ = -1;
-  const planner::AttributeInfo* ai_;
+  const planner::AttributeInfo *ai_;
 };
 
 }  // namespace expression
