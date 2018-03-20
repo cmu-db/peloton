@@ -20,8 +20,6 @@
 #include "catalog/index_catalog.h"
 #include "catalog/schema.h"
 #include "catalog/column.h"
-#include "catalog/constraint.h"
-#include "catalog/multi_constraint.h"
 #include "common/timer.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "concurrency/timestamp_ordering_transaction_manager.h"
@@ -513,7 +511,6 @@ void TimestampCheckpointManager::RecoverTable(storage::DataTable *table, FileHan
 
 	// recover table tuples
 	oid_t column_count = schema->GetColumnCount();
-	//auto columns = schema->GetColumns();
 	while (input_buffer.RestSize() > 0) {
     // recover values on each column
     ItemPointer *index_entry_ptr = nullptr;
