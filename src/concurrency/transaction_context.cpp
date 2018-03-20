@@ -49,14 +49,26 @@ namespace concurrency {
  */
 
 TransactionContext::TransactionContext(const size_t thread_id,
-                         const IsolationLevelType isolation,
-                         const cid_t &read_id) {
+                                       const IsolationLevelType isolation,
+                                       const cid_t &read_id)
+    : rw_set_(INTITIAL_RW_SET_SIZE) {
   Init(thread_id, isolation, read_id);
 }
 
 TransactionContext::TransactionContext(const size_t thread_id,
-                         const IsolationLevelType isolation,
-                         const cid_t &read_id, const cid_t &commit_id) {
+                                       const IsolationLevelType isolation,
+                                       const cid_t &read_id,
+                                       const cid_t &commit_id)
+    : rw_set_(INTITIAL_RW_SET_SIZE) {
+  Init(thread_id, isolation, read_id, commit_id);
+}
+
+TransactionContext::TransactionContext(const size_t thread_id,
+                                       const IsolationLevelType isolation,
+                                       const cid_t &read_id,
+                                       const cid_t &commit_id,
+                                       const size_t rw_set_size)
+    : rw_set_(rw_set_size) {
   Init(thread_id, isolation, read_id, commit_id);
 }
 
@@ -83,6 +95,7 @@ void TransactionContext::Init(const size_t thread_id,
 
   insert_count_ = 0;
 
+  rw_set_.Clear();
   gc_set_.reset(new GCSet());
   gc_object_set_.reset(new GCObjectSet());
 
@@ -90,124 +103,98 @@ void TransactionContext::Init(const size_t thread_id,
 }
 
 RWType TransactionContext::GetRWType(const ItemPointer &location) {
-  oid_t tile_group_id = location.block;
-  oid_t tuple_id = location.offset;
-  auto itr = rw_set_.find(tile_group_id);
-  if (itr == rw_set_.end()) {
-    return RWType::INVALID;
-  }
+  RWType rw_type;
 
-  auto inner_itr = itr->second.find(tuple_id);
-  if (inner_itr == itr->second.end()) {
-    return RWType::INVALID;
+  if (!rw_set_.Find(location, rw_type)) {
+    rw_type = RWType::INVALID;
   }
-
-  return inner_itr->second;
+  return rw_type;
 }
 
 void TransactionContext::RecordRead(const ItemPointer &location) {
-  oid_t tile_group_id = location.block;
-  oid_t tuple_id = location.offset;
+  RWType rw_type;
 
-  if (IsInRWSet(location)) {
-    PL_ASSERT(rw_set_.at(tile_group_id).at(tuple_id) != RWType::DELETE &&
-              rw_set_.at(tile_group_id).at(tuple_id) != RWType::INS_DEL);
+  if (rw_set_.Find(location, rw_type)) {
+    PL_ASSERT(rw_type != RWType::DELETE && rw_type != RWType::INS_DEL);
     return;
   } else {
-    rw_set_[tile_group_id][tuple_id] = RWType::READ;
+    rw_set_.Insert(location, RWType::READ);
   }
 }
 
 void TransactionContext::RecordReadOwn(const ItemPointer &location) {
-  oid_t tile_group_id = location.block;
-  oid_t tuple_id = location.offset;
+  RWType rw_type;
 
-  if (IsInRWSet(location)) {
-    RWType &type = rw_set_.at(tile_group_id).at(tuple_id);
-    if (type == RWType::READ) {
-      type = RWType::READ_OWN;
-      // record write.
-      return;
-    }
-    PL_ASSERT(type != RWType::DELETE && type != RWType::INS_DEL);
+  if (rw_set_.Find(location, rw_type)) {
+    PL_ASSERT(rw_type != RWType::DELETE && rw_type != RWType::INS_DEL);
+    if (rw_type == RWType::READ) {
+      rw_set_.Update(location, RWType::READ_OWN);
+    } 
   } else {
-    rw_set_[tile_group_id][tuple_id] = RWType::READ_OWN;
+    rw_set_.Insert(location, RWType::READ_OWN);
   }
 }
 
 void TransactionContext::RecordUpdate(const ItemPointer &location) {
-  oid_t tile_group_id = location.block;
-  oid_t tuple_id = location.offset;
+  RWType rw_type;
 
-  if (IsInRWSet(location)) {
-    RWType &type = rw_set_.at(tile_group_id).at(tuple_id);
-    if (type == RWType::READ || type == RWType::READ_OWN) {
-      type = RWType::UPDATE;
-      // record write.
+  if (rw_set_.Find(location, rw_type)) {
+    if (rw_type == RWType::READ || rw_type == RWType::READ_OWN) {
       is_written_ = true;
-
+      rw_set_.Update(location, RWType::UPDATE);
       return;
     }
-    if (type == RWType::UPDATE) {
+    if (rw_type == RWType::UPDATE) {
       return;
     }
-    if (type == RWType::INSERT) {
+    if (rw_type == RWType::INSERT) {
       return;
     }
-    if (type == RWType::DELETE) {
+    if (rw_type == RWType::DELETE) {
       PL_ASSERT(false);
       return;
     }
     PL_ASSERT(false);
   } else {
-    // consider select_for_udpate case.
-    rw_set_[tile_group_id][tuple_id] = RWType::UPDATE;
+    rw_set_.Insert(location, RWType::UPDATE);
   }
 }
 
 void TransactionContext::RecordInsert(const ItemPointer &location) {
-  oid_t tile_group_id = location.block;
-  oid_t tuple_id = location.offset;
-
   if (IsInRWSet(location)) {
     PL_ASSERT(false);
   } else {
-    rw_set_[tile_group_id][tuple_id] = RWType::INSERT;
+    rw_set_.Insert(location, RWType::INSERT);
     ++insert_count_;
   }
 }
 
 bool TransactionContext::RecordDelete(const ItemPointer &location) {
-  oid_t tile_group_id = location.block;
-  oid_t tuple_id = location.offset;
+  RWType rw_type;
 
-  if (IsInRWSet(location)) {
-    RWType &type = rw_set_.at(tile_group_id).at(tuple_id);
-    if (type == RWType::READ || type == RWType::READ_OWN) {
-      type = RWType::DELETE;
-      // record write.
+  if (rw_set_.Find(location, rw_type)) {
+    if (rw_type == RWType::READ || rw_type == RWType::READ_OWN) {
+      rw_set_.Update(location, RWType::DELETE);
+      // record write
       is_written_ = true;
-
       return false;
     }
-    if (type == RWType::UPDATE) {
-      type = RWType::DELETE;
-
+    if (rw_type == RWType::UPDATE) {
+      rw_set_.Update(location, RWType::DELETE);
       return false;
     }
-    if (type == RWType::INSERT) {
-      type = RWType::INS_DEL;
+    if (rw_type == RWType::INSERT) {
+      rw_set_.Update(location, RWType::INS_DEL);
       --insert_count_;
-
       return true;
     }
-    if (type == RWType::DELETE) {
+    if(rw_type == RWType::DELETE) {
       PL_ASSERT(false);
       return false;
     }
     PL_ASSERT(false);
   } else {
-    rw_set_[tile_group_id][tuple_id] = RWType::DELETE;
+    rw_set_.Insert(location, RWType::DELETE);
   }
   return false;
 }
