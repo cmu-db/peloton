@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 #include "tbb/concurrent_vector.h"
 #include "tbb/tbb_allocator.h"
@@ -21,11 +20,9 @@
 #include <atomic>
 #include <memory>
 
-
-
 namespace peloton {
 
-#define LOCK_FREE_ARRAY_MAX_SIZE 1024 * 1024
+#define LOCK_FREE_ARRAY_GROW_SPEED (100)
 
 // LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
 #define LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS template <typename ValueType>
@@ -36,7 +33,6 @@ namespace peloton {
 LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
 class LockFreeArray {
  public:
-
   LockFreeArray();
   ~LockFreeArray();
 
@@ -50,10 +46,11 @@ class LockFreeArray {
   ValueType Find(const std::size_t &offset) const;
 
   // Get a valid item
-  ValueType FindValid(const std::size_t &offset, const ValueType& invalid_value) const;
+  ValueType FindValid(const std::size_t &offset,
+                      const ValueType &invalid_value) const;
 
   // Delete key from the lock_free_array
-  bool Erase(const std::size_t &offset, const ValueType& invalid_value);
+  bool Erase(const std::size_t &offset, const ValueType &invalid_value);
 
   // Returns item count in the lock_free_array
   size_t GetSize() const;
@@ -62,23 +59,17 @@ class LockFreeArray {
   bool IsEmpty() const;
 
   // Clear all elements and reset them to default value
-  void Clear(const ValueType& invalid_value);
+  void Clear(const ValueType &invalid_value);
 
   // Exists ?
-  bool Contains(const ValueType& value);
+  bool Contains(const ValueType &value);
 
  private:
-
-  // lock free array type
-  typedef std::array<ValueType, LOCK_FREE_ARRAY_MAX_SIZE> lock_free_array_t;
-
-  std::atomic<std::size_t> lock_free_array_offset {0};
+  std::atomic<std::size_t> lock_free_array_offset{0};
 
   // lock free array
-//  std::unique_ptr<lock_free_array_t> lock_free_array;
-  typedef tbb::concurrent_vector<ValueType, tbb::zero_allocator<ValueType>> TBBLockFreeArray;
-  TBBLockFreeArray new_lock_free_array;
-
+  tbb::concurrent_vector<ValueType, tbb::zero_allocator<ValueType>>
+      lock_free_array;
 };
 
 }  // namespace peloton
