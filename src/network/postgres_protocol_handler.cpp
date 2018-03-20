@@ -1053,7 +1053,7 @@ ProcessResult PostgresProtocolHandler::Process(Buffer &rbuf,
  * process_packet - Main switch block; process incoming packets,
  *  Returns false if the session needs to be closed.
  */
-ProcessResult PostgresProtocolHandler::ProcessNormalPacket(
+ProcessResult PostgresProtocolHandler::ProcessNormalPackets(
     InputPacket *pkt, const size_t thread_id) {
   LOG_TRACE("Message type: %c", static_cast<unsigned char>(pkt->msg_type));
   // We don't set force_flush to true for `PBDE` messages because they're

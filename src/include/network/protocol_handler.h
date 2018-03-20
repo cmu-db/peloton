@@ -32,10 +32,9 @@ class ProtocolHandler {
   /* Main switch case wrapper to process every packet apart from the startup
    * packet. Avoid flushing the response for extended protocols. */
 
-  /* Manage the startup packet */
-  //  bool ManageStartupPacket();
-  virtual void SendInitialResponse();
-
+  /**
+   * 
+   */
   virtual ProcessResult Process(Buffer &rbuf, const bool ssl_able, const size_t thread_id);
 
   virtual void Reset();
