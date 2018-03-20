@@ -12,6 +12,8 @@
 
 #include "codegen/compact_storage.h"
 
+#include "ips4o/ips4o.hpp"
+
 #include "codegen/type/sql_type.h"
 
 namespace peloton {
@@ -138,11 +140,10 @@ llvm::Type *CompactStorage::Setup(CodeGen &codegen,
 
   // Sort the entries by decreasing size. This minimizes storage overhead due to
   // padding (potentially) added by LLVM.
-  // TODO: Does this help?
-  std::sort(storage_format_.begin(), storage_format_.end(),
-            [](const EntryInfo &left, const EntryInfo &right) {
-              return right.num_bytes < left.num_bytes;
-            });
+  ips4o::sort(storage_format_.begin(), storage_format_.end(),
+              [](const EntryInfo &left, const EntryInfo &right) {
+                return right.num_bytes < left.num_bytes;
+              });
 
   // Now we construct the LLVM type of this storage space. First comes bytes
   // to manage the null bitmap. Then all the data elements.

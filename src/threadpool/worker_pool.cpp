@@ -24,7 +24,7 @@ void WorkerFunc(std::string thread_name, std::atomic_bool *is_running,
   constexpr auto kMinPauseTime = std::chrono::microseconds(1);
   constexpr auto kMaxPauseTime = std::chrono::microseconds(1000);
 
-  LOG_DEBUG("Thread %s starting ...", thread_name.c_str());
+  LOG_INFO("Thread %s starting ...", thread_name.c_str());
 
   auto pause_time = kMinPauseTime;
   while (is_running->load() || !task_queue->IsEmpty()) {
@@ -39,7 +39,7 @@ void WorkerFunc(std::string thread_name, std::atomic_bool *is_running,
     }
   }
 
-  LOG_DEBUG("Thread %s exiting ...", thread_name.c_str());
+  LOG_INFO("Thread %s exiting ...", thread_name.c_str());
 }
 
 }  // namespace

@@ -142,6 +142,7 @@ class InstructionCounts : public llvm::ModulePass {
   }
 
   void DumpStats() const {
+#ifndef NDEBUG
     LOG_DEBUG("# functions: %" PRId64 " (%" PRId64
               " external), # blocks: %" PRId64 ", # instructions: %" PRId64,
               func_count_, external_func_count_, basic_block_count_,
@@ -150,6 +151,7 @@ class InstructionCounts : public llvm::ModulePass {
       const char *inst_name = llvm::Instruction::getOpcodeName(iter.first);
       LOG_DEBUG("↳ %s: %" PRId64, inst_name, iter.second);
     }
+#endif
   }
 
  private:

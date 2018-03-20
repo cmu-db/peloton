@@ -139,7 +139,7 @@ TEST_F(SorterTest, ParallelSortTest) {
   sorter_.SortParallel(thread_states, 0);
 
   timer.Stop();
-  LOG_DEBUG("Parallel sort took: %.2lf ms", timer.GetDuration());
+  LOG_INFO("Parallel sort took: %.2lf ms", timer.GetDuration());
 
   // Check main sorter is sorted
   CheckSorted(sorter_, true);

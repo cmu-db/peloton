@@ -14,7 +14,7 @@
 
 #include <queue>
 
-#include "pdqsort/pdqsort.h"
+#include "ips4o/ips4o.hpp"
 
 #include "common/synchronization/count_down_latch.h"
 #include "common/timer.h"
@@ -88,7 +88,7 @@ void Sorter::Sort() {
 
   // Sort the sucker
   auto cmp = [this](char *l, char *r) { return cmp_func_(l, r) < 0; };
-  pdqsort(tuples_.begin(), tuples_.end(), cmp);
+  ips4o::sort(tuples_.begin(), tuples_.end(), cmp);
 
   // Setup pointers
   tuples_start_ = tuples_.data();
@@ -170,7 +170,7 @@ void Sorter::SortParallel(
     // Sort the local separators and choose the median
     char *separator = nullptr;
     if (idx < separators.size() - 1) {
-      pdqsort(separators[idx].begin(), separators[idx].end(), cmp);
+      ips4o::sort(separators[idx].begin(), separators[idx].end(), cmp);
       separator = separators[idx][sorters.size() / 2];
     }
 
