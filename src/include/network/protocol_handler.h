@@ -36,11 +36,7 @@ class ProtocolHandler {
   //  bool ManageStartupPacket();
   virtual void SendInitialResponse();
 
-  virtual bool ProcessInitialPackets(InputPacket *pkt, Client client,
-                                     bool ssl_able, bool &ssl_sent,
-                                     bool &finish_startup_packet) = 0;
-
-  virtual ProcessResult Process(Buffer &rbuf, const size_t thread_id);
+  virtual ProcessResult Process(Buffer &rbuf, const bool ssl_able, const size_t thread_id);
 
   virtual void Reset();
 

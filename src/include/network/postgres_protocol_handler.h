@@ -37,17 +37,26 @@ typedef std::vector<std::unique_ptr<OutputPacket>> ResponseBuffer;
 
 class PostgresProtocolHandler : public ProtocolHandler {
  public:
-  // TODO we need to somehow make this virtual?
   PostgresProtocolHandler(tcop::TrafficCop *traffic_cop);
 
   ~PostgresProtocolHandler();
+  /**
+   * Parse the content in the buffer and process to generate results.
+   * thread_id is the thread of current running thread. This is used
+   * to generate txn
+   */
+  ProcessResult Process(Buffer &rbuf, const bool ssl_able, const size_t thread_id);
 
-  ProcessResult Process(Buffer &rbuf, const size_t thread_id);
+  /**
+   * 
+   */
+  ProcessResult ProcessInitialPackets(
 
-  /* Main switch case wrapper to process every packet apart from the startup
-   * packet. Avoid flushing the response for extended protocols. */
-  ProcessResult ProcessNormalPacket(InputPacket *pkt, const size_t thread_id);
-
+  /** 
+   * Main switch case wrapper to process every general packet apart from the
+   * initial packets. Avoid flushing the response for extended protocols.
+   */
+  ProcessResult ProcessNormalPackets(InputPacket *pkt, const size_t thread_id);
   /* Manage the startup packet */
   //  bool ManageStartupPacket();
   void SendInitialResponse();
@@ -96,6 +105,9 @@ class PostgresProtocolHandler : public ProtocolHandler {
   //===--------------------------------------------------------------------===//
   // PROTOCOL HANDLING FUNCTIONS
   //===--------------------------------------------------------------------===//
+  /* Manage the startup packet */
+  virtual void SendInitialResponse();
+
   // Generic error protocol packet
   void SendErrorResponse(
       std::vector<std::pair<NetworkMessageType, std::string>> error_status);

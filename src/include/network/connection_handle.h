@@ -87,7 +87,10 @@ class ConnectionHandle {
   Transition ProcessWrite();
   Transition GetResult();
   Transition CloseSocket();
-
+  /**
+   * Flush out all the responses and do real SSL handshake
+   */
+  Transition ProcessWrite_SSLHandshake();
  private:
   /**
    * A state machine is defined to be a set of states, a set of symbols it
@@ -172,6 +175,12 @@ class ConnectionHandle {
   WriteState FlushWriteBuffer();
 
   /**
+   * Process SSL handshake to generate valid SSL connection context
+   * for further communications
+   */
+  Transition ConnectionHandle::SSLHandshake();
+
+  /**
    * Set the socket to non-blocking mode
    */
   inline void SetNonBlocking(evutil_socket_t fd) {
@@ -188,6 +197,13 @@ class ConnectionHandle {
   inline void SetTCPNoDelay(evutil_socket_t fd) {
     int one = 1;
     setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof one);
+  }
+
+  /**
+   * Determine if there is still responses in the buffer
+   */
+  inline bool HasResponse() {
+    return (protocol_handler_->responses.size() != 0) || (wbuf_->buf_size != 0);
   }
 
   int sock_fd_;                            // socket file descriptor

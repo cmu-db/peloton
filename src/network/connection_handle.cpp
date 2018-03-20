@@ -92,9 +92,10 @@ DEF_TRANSITION_GRAPH
     ON(FINISH) SET_STATE_TO(CLOSING) AND_INVOKE(CloseSocket) 
   END_DEF
 
-  DEFINE_STATE(SSL_HANDSHAKE)
-    ON(WAKEUP) SET_STATE_TO(SSL_HANDSHAKE) AND_INVOKE(SSL_handshake)
-    ON(NEED_DATA) SET_STATE_TO(SSL_HANDSHAKE) AND_WAIT
+  DEFINE_STATE(PROCESS_WRITE_SSL_HANDSHAKE)
+    ON(WAKEUP) SET_STATE_TO(PROCESS_WRITE_SSL_HANDSHAKE)
+      AND_INVOKE(ProcessWrite_SSLHandshake)
+    ON(NEED_DATA) SET_STATE_TO(PROCESS_WRITE_SSL_HANDSHAKE) AND_WAIT
     ON(FINISH) SET_STATE_TO(CLOSING) AND_INVOKE(CloseSocket)
     ON(PROCEED) SET_STATE_TO(PROCESS) AND_INVOKE(Process)
   END_DEF
@@ -104,7 +105,8 @@ DEF_TRANSITION_GRAPH
     ON(NEED_DATA) SET_STATE_TO(READ) AND_INVOKE(FillReadBuffer)
     ON(GET_RESULT) SET_STATE_TO(GET_RESULT) AND_WAIT
     ON(FINISH) SET_STATE_TO(CLOSING) AND_INVOKE(CloseSocket)
-    ON(SSL_HANDSHAKE) SET_STATE_TO(SSL_HANDSHKE) AND_INVOKE(SSL_handshake)
+    ON(NEED_SSL_HANDSHAKE) SET_STATE_TO(PROCESS_WRITE_SSL_HANDSHKE) 
+      AND_INVOKE(ProcessWrite_SSLHandshake)
   END_DEF
 
   DEFINE_STATE(WRITE) 
@@ -576,13 +578,19 @@ Transition ConnectionHandle::CloseSocket() {
   }
 }
 
-Transition ConnectionHandle::SSL_handshake() {
-  if (HaveResponse()) {
-    switch(ProcessWrite()) {
-      
-    } 
+Transition ConnectionHandle::ProcessWrite_SSLHandshake() {
+  // Flush out all the response first
+  if (HasResponse()) {
+    auto write_ret = ProcessWrite();
+    if (write_ret != Transition::PROCEED) {
+      return write_ret;
+    }
   }
 
+  return SSLHandshake();
+}
+
+Transition ConnectionHandle::SSLHandshake() {
   if (conn_SSL_context == nullptr) {
     conn_SSL_context = SSL_new(PelotonServer::ssl_context);
     if (conn_SSL_context == nullptr) {

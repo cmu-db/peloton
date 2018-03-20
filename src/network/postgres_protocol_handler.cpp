@@ -1035,12 +1035,11 @@ void PostgresProtocolHandler::ProcessStartupPacket(InputPacket *pkt,
 ProcessResult PostgresProtocolHandler::Process(Buffer &rbuf,
                                                const bool ssl_able,
                                                const size_t thread_id) {
-  // if the packet is of startup packet format
-  if (!ParseInputPacket(rbuf, rpkt_, startup_stage_))
+  if (!ParseInputPacket(rbuf, rpkt_, init_stage_))
     return ProcessResult::MORE_DATA_REQUIRED;
 
   ProcessResult process_status;
-  if (startup_stage) {
+  if (init_stage_) {
     process_status = ProcessInitialPacket();
   } else {
     process_status = ProcessNormalPacket();
