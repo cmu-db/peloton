@@ -81,21 +81,20 @@ TEST_F(TimestampCheckpointingTests, CheckpointingTest) {
   // generate table and data that will be out of checkpointing.
   TestingSQLUtil::ExecuteSQLQuery("BEGIN;");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO checkpoint_table_test VALUES (4, -1.0, 'out of the checkpoint');");
-
-  // do checkpointing
-  checkpoint_manager.StartCheckpointing();
-
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO checkpoint_table_test VALUES (5, -2.0, 'out of the checkpoint');");
   TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE out_of_checkpoint_test (pid INTEGER PRIMARY KEY);");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO out_of_checkpoint_test VALUES (1);");
   // TestingSQLUtil::ExecuteSQLQuery("CREATE DATABASE out_of_checkpoint;");
 
+  // do checkpointing
+  checkpoint_manager.StartCheckpointing();
+
   EXPECT_TRUE(checkpoint_manager.GetStatus());
 
-  sleep(5);
-  TestingSQLUtil::ExecuteSQLQuery("COMMIT;");
-
+  sleep(3);
   checkpoint_manager.StopCheckpointing();
+
+  TestingSQLUtil::ExecuteSQLQuery("COMMIT;");
   
   EXPECT_FALSE(checkpoint_manager.GetStatus());
 

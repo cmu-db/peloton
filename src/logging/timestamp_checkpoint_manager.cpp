@@ -47,20 +47,25 @@ void TimestampCheckpointManager::StopCheckpointing() {
 	central_checkpoint_thread_->join();
 }
 
-void TimestampCheckpointManager::DoRecovery(){
+bool TimestampCheckpointManager::DoRecovery(){
 	eid_t epoch_id = GetRecoveryCheckpointEpoch();
 	if (epoch_id == INVALID_EID) {
 		LOG_INFO("No checkpoint for recovery");
+		return false;
 	} else {
 		LOG_INFO("Do checkpoint recovery");
 		Timer<std::milli> recovery_timer;
 		recovery_timer.Start();
 
-		PerformCheckpointRecovery(epoch_id);
+		if(PerformCheckpointRecovery(epoch_id) == false) {
+			LOG_INFO("Checkpoint recovery was failed");
+			return false;
+		}
 
 		recovery_timer.Stop();
 		LOG_INFO("Checkpoint recovery time: %lf ms", recovery_timer.GetDuration());
 	}
+	return true;
 }
 
 
@@ -107,7 +112,7 @@ void TimestampCheckpointManager::PerformCheckpointing() {
 	auto storage_manager = storage::StorageManager::GetInstance();
 	auto db_count = storage_manager->GetDatabaseCount();
 	std::vector<std::shared_ptr<catalog::DatabaseCatalogObject>> target_db_catalogs;
-	std::unordered_map<std::shared_ptr<catalog::TableCatalogObject>, size_t> target_table_catalogs;
+	std::vector<std::shared_ptr<catalog::TableCatalogObject>> target_table_catalogs;
 
 	// do checkpointing to take tables into each file
 	for (oid_t db_idx = START_OID; db_idx < db_count; db_idx++) {
@@ -135,14 +140,15 @@ void TimestampCheckpointManager::PerformCheckpointing() {
 
 							// make a table file
 							if(LoggingUtil::OpenFile(filename.c_str(), "wb", table_file) != true) {
+								txn_manager.EndTransaction(txn);
 								LOG_ERROR("Create checkpoint file failed!");
 								return;
 							}
-							size_t table_size = CheckpointingTable(table, begin_cid, table_file);
+							CheckpointingTable(table, begin_cid, table_file);
 							fclose(table_file.file);
 
 							// collect table info for catalog file
-							target_table_catalogs[table_catalog] = table_size;
+							target_table_catalogs.push_back(table_catalog);
 
 						} else {
 							LOG_DEBUG("Table %d in database %s (%d) is invisible.",
@@ -167,13 +173,13 @@ void TimestampCheckpointManager::PerformCheckpointing() {
 	std::string catalog_filename = GetWorkingCatalogFileFullPath();
 	if (LoggingUtil::OpenFile(catalog_filename.c_str(), "wb", catalog_file) != true) {
 		LOG_ERROR("Create catalog file failed!");
+		txn_manager.EndTransaction(txn);
 		return;
 	}
 	CheckpointingCatalog(target_db_catalogs, target_table_catalogs, catalog_file);
 	fclose(catalog_file.file);
 
 	// end transaction
-	//epoch_manager.ExitEpoch(thread_id, begin_epoch_id);
 	txn_manager.EndTransaction(txn);
 
 	LOG_INFO("Complete Checkpointing in epoch %lu (cid = %lu)",
@@ -184,9 +190,8 @@ void TimestampCheckpointManager::PerformCheckpointing() {
 	RemoveOldCheckpoints(begin_epoch_id);
 }
 
-size_t TimestampCheckpointManager::CheckpointingTable(const storage::DataTable *target_table, const cid_t &begin_cid, FileHandle &file_handle) {
+void TimestampCheckpointManager::CheckpointingTable(const storage::DataTable *target_table, const cid_t &begin_cid, FileHandle &file_handle) {
 	CopySerializeOutput output_buffer;
-	size_t table_size = 0;
 
 	LOG_DEBUG("Done checkpointing to table %d '%s' in database %d",
 			target_table->GetOid(), target_table->GetName().c_str(), target_table->GetDatabaseOid());
@@ -200,7 +205,6 @@ size_t TimestampCheckpointManager::CheckpointingTable(const storage::DataTable *
 		// load all tuple data in the table
 		oid_t tuple_count = tile_group->GetNextTupleSlot();
 		for (oid_t tuple_id = START_OID; tuple_id < tuple_count; tuple_id++) {
-
 			if (IsVisible(tile_group_header, tuple_id, begin_cid)) {
 				// load all field data of each column in the tuple
 				oid_t column_count = tile_group->GetColumnMap().size();
@@ -214,10 +218,9 @@ size_t TimestampCheckpointManager::CheckpointingTable(const storage::DataTable *
 				int ret = fwrite((void *)output_buffer.Data(), output_buffer.Size(), 1, file_handle.file);
 				if (ret != 1) {
 					LOG_ERROR("Write error (tuple %d, table %d)", tuple_id, target_table->GetOid());
-					return -1;
+					return;
 				}
 
-				table_size += output_buffer.Size();
 				output_buffer.Reset();
 			} else {
 				LOG_TRACE("%s's tuple %d is invisible\n", target_table->GetName().c_str(), tuple_id);
@@ -227,7 +230,6 @@ size_t TimestampCheckpointManager::CheckpointingTable(const storage::DataTable *
 	}
 
 	LoggingUtil::FFlushFsync(file_handle);
-	return table_size;
 }
 
 bool TimestampCheckpointManager::IsVisible(const storage::TileGroupHeader *header, const oid_t &tuple_id, const cid_t &begin_cid) {
@@ -271,7 +273,7 @@ bool TimestampCheckpointManager::IsVisible(const storage::TileGroupHeader *heade
 //			(DatabaseCatalogObject, TableCatalogObject, Index)
 void TimestampCheckpointManager::CheckpointingCatalog(
 		const std::vector<std::shared_ptr<catalog::DatabaseCatalogObject>> &target_db_catalogs,
-		const std::unordered_map<std::shared_ptr<catalog::TableCatalogObject>, size_t> &target_table_catalogs,
+		const std::vector<std::shared_ptr<catalog::TableCatalogObject>> &target_table_catalogs,
 		FileHandle &file_handle) {
 	CopySerializeOutput catalog_buffer;
 	auto storage_manager = storage::StorageManager::GetInstance();
@@ -293,23 +295,19 @@ void TimestampCheckpointManager::CheckpointingCatalog(
 				db_catalog->GetDatabaseOid(), db_catalog->GetDatabaseName().c_str(), target_table_catalogs.size());
 
 		// insert each table information into catalog file
-		for (auto table_catalog_pair : target_table_catalogs) {
-			auto table_catalog = table_catalog_pair.first;
+		for (auto table_catalog : target_table_catalogs) {
 			auto table = database->GetTableWithOid(table_catalog->GetTableOid());
-			auto table_size = table_catalog_pair.second;
 
 			// Write table information (ID, name and size)
 			catalog_buffer.WriteInt(table_catalog->GetTableOid());
 			catalog_buffer.WriteTextString(table_catalog->GetTableName());
-			catalog_buffer.WriteLong(table_size);
 
 			// Write schema information (# of columns)
 			auto schema = table->GetSchema();
 
 			schema->SerializeTo(catalog_buffer);
-			LOG_DEBUG("Write table catalog %d '%s' (%lu bytes): %lu columns",
-					table_catalog->GetTableOid(), table_catalog->GetTableName().c_str(),
-					table_size, schema->GetColumnCount());
+			LOG_DEBUG("Write table catalog %d '%s': %lu columns",
+					table_catalog->GetTableOid(), table_catalog->GetTableName().c_str(), schema->GetColumnCount());
 
 			// Write index information (index name, type, constraint, key attributes, and # of index)
 			auto index_catalogs = table_catalog->GetIndexObjects();
@@ -347,7 +345,7 @@ void TimestampCheckpointManager::CheckpointingCatalog(
 	LoggingUtil::FFlushFsync(file_handle);
 }
 
-void TimestampCheckpointManager::PerformCheckpointRecovery(const eid_t &epoch_id) {
+bool TimestampCheckpointManager::PerformCheckpointRecovery(const eid_t &epoch_id) {
 	// begin a transaction to recover tuples into each table.
 	auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 	auto txn = txn_manager.BeginTransaction();
@@ -356,8 +354,9 @@ void TimestampCheckpointManager::PerformCheckpointRecovery(const eid_t &epoch_id
 	FileHandle catalog_file;
 	std::string catalog_filename = GetCatalogFileFullPath(epoch_id);
 	if (LoggingUtil::OpenFile(catalog_filename.c_str(), "rb", catalog_file) != true) {
+		txn_manager.AbortTransaction(txn);
 		LOG_ERROR("Create checkpoint file failed!");
-		return;
+		return false;
 	}
 	RecoverCatalog(catalog_file, txn);
 	fclose(catalog_file.file);
@@ -377,8 +376,9 @@ void TimestampCheckpointManager::PerformCheckpointRecovery(const eid_t &epoch_id
 				auto table = database->GetTable(table_idx);
 				std::string table_filename = GetCheckpointFileFullPath(database->GetDBName(), table->GetName(), epoch_id);
 				if (LoggingUtil::OpenFile(table_filename.c_str(), "rb", table_file) != true) {
+					txn_manager.AbortTransaction(txn);
 					LOG_ERROR("Open checkpoint file %s failed!", table_filename.c_str());
-					return;
+					return false;
 				}
 				RecoverTable(table, table_file, txn);
 				fclose(table_file.file);
@@ -391,8 +391,8 @@ void TimestampCheckpointManager::PerformCheckpointRecovery(const eid_t &epoch_id
 	}
 
 	txn_manager.CommitTransaction(txn);
-
 	LOG_INFO("Complete checkpoint recovery in epoch %lu", epoch_id);
+	return true;
 }
 
 // TODO: migrate below deserializing processes into each class file
@@ -405,7 +405,7 @@ void TimestampCheckpointManager::RecoverCatalog(FileHandle &file_handle, concurr
 	LOG_DEBUG("Recover catalog data (%lu byte)", catalog_size);
 
 	if (LoggingUtil::ReadNBytesFromFile(file_handle, catalog_data, catalog_size) == false) {
-		LOG_ERROR("Read error");
+		LOG_ERROR("checkpoint catalog file read error");
 		return;
 	}
 
@@ -439,8 +439,7 @@ void TimestampCheckpointManager::RecoverCatalog(FileHandle &file_handle, concurr
 			// read basic table information
 			oid_t table_oid = catalog_buffer.ReadInt();
 			std::string table_name = catalog_buffer.ReadTextString();
-			size_t table_size = catalog_buffer.ReadLong();
-			LOG_DEBUG("Create table %d '%s' (%lu bytes)", table_oid, table_name.c_str(), table_size);
+			LOG_DEBUG("Create table %d '%s'", table_oid, table_name.c_str());
 
 			// recover table schema
 			std::unique_ptr<catalog::Schema> schema = catalog::Schema::DeserializeFrom(catalog_buffer);
@@ -496,7 +495,7 @@ void TimestampCheckpointManager::RecoverTable(storage::DataTable *table, FileHan
 	LOG_DEBUG("Recover table %s (%d) data (%lu byte)", table->GetName().c_str(), table->GetOid(), table_size);
 
 	if (LoggingUtil::ReadNBytesFromFile(file_handle, data, table_size) == false) {
-		LOG_ERROR("Read error");
+		LOG_ERROR("Checkpoint table file read error");
 		return;
 	}
 	CopySerializeInput input_buffer(data, sizeof(data));
@@ -513,14 +512,22 @@ void TimestampCheckpointManager::RecoverTable(storage::DataTable *table, FileHan
 	*/
 
 	// recover table tuples
-	while(input_buffer.RestSize() > 0) {
+	oid_t column_count = schema->GetColumnCount();
+	//auto columns = schema->GetColumns();
+	while (input_buffer.RestSize() > 0) {
+    // recover values on each column
     ItemPointer *index_entry_ptr = nullptr;
-		for (oid_t column_id = 0; column_id < schema->GetColumnCount(); column_id++) {
+		for (oid_t column_id = 0; column_id < column_count; column_id++) {
 			auto value = type::Value::DeserializeFrom(input_buffer, schema->GetType(column_id), NULL);
 			tuple->SetValue(column_id, value);
 		}
 
+		// insert the deserialized tuple into the table
 		ItemPointer location = table->InsertTuple(tuple.get(), txn, &index_entry_ptr);
+		if (location.block == INVALID_OID) {
+			LOG_ERROR("Tuple insert error");
+			return;
+		}
 		concurrency::TransactionManagerFactory::GetInstance().PerformInsert(txn, location, index_entry_ptr);
 	}
 
