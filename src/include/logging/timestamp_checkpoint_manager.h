@@ -90,8 +90,8 @@ class TimestampCheckpointManager : public CheckpointManager {
   		FileHandle &file_handle);
   bool IsVisible(const storage::TileGroupHeader *header, const oid_t &tuple_id, const cid_t &begin_cid);
   void PerformCheckpointRecovery(const eid_t &epoch_id);
-  void RecoverCatalog(FileHandle &file_handle);
-  void RecoverTable(FileHandle &file_handle);
+  void RecoverCatalog(FileHandle &file_handle, concurrency::Transaction *txn);
+  void RecoverTable(storage::DataTable *table, FileHandle &file_handle, concurrency::Transaction *txn);
 
   void CreateCheckpointDirectory(const std::string &dir_name) {
   	std::string checkpoint_dir = checkpoint_base_dir_ + "/" + dir_name;
@@ -124,11 +124,11 @@ class TimestampCheckpointManager : public CheckpointManager {
   	}
   }
 
-  std::string GetCheckpointFileFullPath(const oid_t &database_idx, const oid_t &table_idx, const eid_t &epoch_id) {
-  	return checkpoint_base_dir_ + "/" + std::to_string(epoch_id) + "/" + checkpoint_filename_prefix_ + "_" + std::to_string(database_idx) + "_" + std::to_string(table_idx);
+  std::string GetCheckpointFileFullPath(const std::string &database_name, const std::string &table_name, const eid_t &epoch_id) {
+  	return checkpoint_base_dir_ + "/" + std::to_string(epoch_id) + "/" + checkpoint_filename_prefix_ + "_" + database_name + "_" + table_name;
   }
-  std::string GetWorkingCheckpointFileFullPath(const oid_t &database_idx, const oid_t &table_idx) {
-  	return checkpoint_base_dir_ + "/" + checkpoint_working_dir_name_ + "/" + checkpoint_filename_prefix_ + "_" + std::to_string(database_idx) + "_" + std::to_string(table_idx);
+  std::string GetWorkingCheckpointFileFullPath(const std::string &database_name, const std::string &table_name) {
+  	return checkpoint_base_dir_ + "/" + checkpoint_working_dir_name_ + "/" + checkpoint_filename_prefix_ + "_" + database_name + "_" + table_name;
   }
   std::string GetCatalogFileFullPath(const eid_t &epoch_id) {
   	return checkpoint_base_dir_ + "/" + std::to_string(epoch_id) + "/" + catalog_filename_prefix_;
@@ -166,7 +166,7 @@ class TimestampCheckpointManager : public CheckpointManager {
   }
 
   eid_t GetRecoveryCheckpointEpoch() {
-  	eid_t max_epoch = 0;
+  	eid_t max_epoch = INVALID_EID;
   	std::vector<std::string> dir_name_list;
 
   	// Get list of checkpoint directories
@@ -183,7 +183,7 @@ class TimestampCheckpointManager : public CheckpointManager {
   		}
   		epoch_id = std::strtoul((*dir_name).c_str(), NULL, 10);
 
-  		if (epoch_id == 0) {
+  		if (epoch_id == INVALID_EID) {
   			LOG_ERROR("Unexpected epoch value in checkpoints directory: %s", (*dir_name).c_str());
   		}
   		max_epoch = (epoch_id > max_epoch)? epoch_id : max_epoch;

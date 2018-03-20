@@ -59,6 +59,12 @@ class Constraint : public Printable {
 
   std::string GetName() const { return constraint_name; }
 
+  // Serialize this constraint
+  void SerializeTo(SerializeOutput &out);
+
+  // Deserialize this constraint
+  static Constraint DeserializeFrom(SerializeInput &in, const type::TypeId column_type);
+
   // Get a string representation for debugging
   const std::string GetInfo() const;
 

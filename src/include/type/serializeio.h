@@ -94,6 +94,11 @@ class SerializeInput {
       current_ -= bytes;
   }
 
+  // Return the rest size of data
+  size_t RestSize() {
+  	return end_ - current_;
+  }
+
  private:
   template <typename T>
   T ReadPrimitive() {

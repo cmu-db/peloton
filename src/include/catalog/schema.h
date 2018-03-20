@@ -79,6 +79,12 @@ class Schema : public Printable {
       const std::vector<Schema *> &schema_list,
       const std::vector<std::vector<oid_t>> &subsets);
 
+  // Serialize this schema
+  void SerializeTo(SerializeOutput &out);
+
+  // Deserialize this schema
+  static std::unique_ptr<Schema> DeserializeFrom(SerializeInput &in);
+
   // Compare two schemas
   hash_t Hash() const;
   bool operator==(const Schema &other) const;
