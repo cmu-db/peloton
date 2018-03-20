@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash -ex
 
 ## =================================================================
 ## PELOTON PACKAGE INSTALLATION
@@ -104,7 +104,6 @@ if [ "$DISTRO" = "UBUNTU" ]; then
             echo -e "\n# Added by Peloton 'packages.sh' script on $(date)\ndeb $LLVM_PKG_URL $LLVM_PKG_TARGET" | sudo tee -a /etc/apt/sources.list > /dev/null
         fi
         sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 15CF4D18AF4F7421
-        sudo apt-get update -qq
         CMAKE_NAME="cmake3"
         FORCE_Y="--force-yes"
     else
@@ -112,6 +111,7 @@ if [ "$DISTRO" = "UBUNTU" ]; then
         FORCE_Y=""
     fi
 
+    sudo apt-get update -qq
     FORCE_Y=""
     PKG_CMAKE="cmake"
     PKG_LLVM="llvm-3.7"
