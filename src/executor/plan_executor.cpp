@@ -11,93 +11,35 @@
 //===----------------------------------------------------------------------===//
 
 #include "executor/plan_executor.h"
-#include <cinttypes>
 
 #include "codegen/buffering_consumer.h"
+#include "codegen/query.h"
 #include "codegen/query_cache.h"
 #include "codegen/query_compiler.h"
-#include "codegen/query.h"
-#include "concurrency/transaction_manager_factory.h"
 #include "common/logger.h"
+#include "concurrency/transaction_manager_factory.h"
 #include "executor/executor_context.h"
 #include "executor/executors.h"
-#include "storage/tuple_iterator.h"
 #include "settings/settings_manager.h"
+#include "storage/tuple_iterator.h"
 
 namespace peloton {
 namespace executor {
 
-executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
-                                              const planner::AbstractPlan *plan,
-                                              executor::ExecutorContext *executor_context);
+executor::AbstractExecutor *BuildExecutorTree(
+    executor::AbstractExecutor *root, const planner::AbstractPlan *plan,
+    executor::ExecutorContext *executor_context);
 
 void CleanExecutorTree(executor::AbstractExecutor *root);
 
-/**
- * @brief Build a executor tree and execute it.
- * Use std::vector<type::Value> as params to make it more elegant for
- * networking
- * Before ExecutePlan, a node first receives value list, so we should pass
- * value list directly rather than passing Postgres's ParamListInfo
- * @return status of execution.
- */
-void PlanExecutor::ExecutePlan(
+static void CompileAndExecutePlan(
     std::shared_ptr<planner::AbstractPlan> plan,
-    concurrency::Transaction *txn, const std::vector<type::Value> &params,
-    std::vector<StatementResult> &result,
-    const std::vector<int> &result_format, executor::ExecuteResult &p_status) {
-  PL_ASSERT(plan != nullptr && txn != nullptr);
-  LOG_TRACE("PlanExecutor Start (Txn ID=%" PRId64")", txn->GetTransactionId());
-
-  result.clear();
-  std::unique_ptr<executor::ExecutorContext> executor_context(
-      new executor::ExecutorContext(txn, params));
-
-  if (!settings::SettingsManager::GetBool(settings::SettingId::codegen)
-      || !codegen::QueryCompiler::IsSupported(*plan)) {
-    bool status;
-    std::unique_ptr<executor::AbstractExecutor> executor_tree(
-        BuildExecutorTree(nullptr, plan.get(), executor_context.get()));
-
-    status = executor_tree->Init();
-    if (status != true) {
-      p_status.m_result = ResultType::FAILURE;
-      p_status.m_result_slots = nullptr;
-      CleanExecutorTree(executor_tree.get());
-      return;
-    }
-
-    // Execute the tree until we get result tiles from root node
-    while (status == true) {
-      status = executor_tree->Execute();
-      std::unique_ptr<executor::LogicalTile> tile(executor_tree->GetOutput());
-
-      // Some executors don't return logical tiles (e.g., Update).
-      if (tile.get() != nullptr) {
-        LOG_TRACE("Final Answer: %s", tile->GetInfo().c_str());
-        std::vector<std::vector<std::string>> tuples;
-        tuples = tile->GetAllValuesAsStrings(result_format, false);
-
-        // Construct the returned results
-        for (auto &tuple : tuples) {
-          for (unsigned int i = 0; i < tile->GetColumnCount(); i++) {
-            auto res = StatementResult();
-            PlanExecutor::copyFromTo(tuple[i], res.second);
-            result.push_back(std::move(res));
-            LOG_TRACE("column content: %s",
-                      tuple[i].c_str() != nullptr ?  tuple[i].c_str() : "-emptry-");
-          }
-        }
-      }
-    }
-    p_status.m_processed = executor_context->num_processed;
-    p_status.m_result = ResultType::SUCCESS;
-    p_status.m_result_slots = nullptr;
-    CleanExecutorTree(executor_tree.get());
-    return;
-  }
-
+    concurrency::TransactionContext *txn,
+    const std::vector<type::Value> &params,
+    std::function<void(executor::ExecutionResult, std::vector<ResultValue> &&)>
+        on_complete) {
   LOG_TRACE("Compiling and executing query ...");
+
   // Perform binding
   planner::BindingContext context;
   plan->PerformBinding(context);
@@ -107,40 +49,121 @@ void PlanExecutor::ExecutePlan(
   plan->GetOutputColumns(columns);
   codegen::BufferingConsumer consumer{columns, context};
 
-  // Prepare parameter: TODO Combine with executor context when legacy is gone
-  codegen::QueryParameters parameters{*plan, params};
+  std::unique_ptr<executor::ExecutorContext> executor_context(
+      new executor::ExecutorContext(txn,
+                                    codegen::QueryParameters(*plan, params)));
 
-  // Compile and execute the query
+  // Compile the query
   codegen::Query *query = codegen::QueryCache::Instance().Find(plan);
   if (query == nullptr) {
     codegen::QueryCompiler compiler;
-    auto compiled_query =
-        compiler.Compile(*plan, parameters.GetQueryParametersMap(), consumer);
-
-    compiled_query->Execute(*executor_context.get(), parameters,
-                            reinterpret_cast<char *>(consumer.GetState()));
+    auto compiled_query = compiler.Compile(
+        *plan, executor_context->GetParams().GetQueryParametersMap(), consumer);
+    query = compiled_query.get();
     codegen::QueryCache::Instance().Add(plan, std::move(compiled_query));
-  } else {
-    query->Execute(*executor_context.get(), parameters,
-                   reinterpret_cast<char *>(consumer.GetState()));
   }
 
-  // Iterate over results
-  const auto &results = consumer.GetOutputTuples();
-  for (const auto &tuple : results) {
-    for (uint32_t i = 0; i < tuple.tuple_.size(); i++) {
-      auto res = StatementResult();
-      auto column_val = tuple.GetValue(i);
-      auto str = column_val.IsNull() ? "" : column_val.ToString();
-      PlanExecutor::copyFromTo(str, res.second);
-      LOG_TRACE("column content: [%s]", str.c_str());
-      result.push_back(std::move(res));
+  auto on_query_result =
+    [&on_complete, &consumer, plan](executor::ExecutionResult result) {
+        std::vector<ResultValue> values;
+        for (const auto &tuple : consumer.GetOutputTuples()) {
+          for (uint32_t i = 0; i < tuple.tuple_.size(); i++) {
+            auto column_val = tuple.GetValue(i);
+            auto str = column_val.IsNull() ? "" : column_val.ToString();
+            LOG_TRACE("column content: [%s]", str.c_str());
+            values.push_back(std::move(str));
+          }
+        }
+        plan->ClearParameterValues();
+        on_complete(result, std::move(values));
+      };
+
+  query->Execute(std::move(executor_context), consumer, on_query_result);
+}
+
+static void InterpretPlan(
+    std::shared_ptr<planner::AbstractPlan> plan,
+    concurrency::TransactionContext *txn,
+    const std::vector<type::Value> &params,
+    const std::vector<int> &result_format,
+    std::function<void(executor::ExecutionResult, std::vector<ResultValue> &&)>
+        on_complete) {
+  executor::ExecutionResult result;
+  std::vector<ResultValue> values;
+
+  std::unique_ptr<executor::ExecutorContext> executor_context(
+      new executor::ExecutorContext(txn, params));
+
+  bool status;
+  std::unique_ptr<executor::AbstractExecutor> executor_tree(
+      BuildExecutorTree(nullptr, plan.get(), executor_context.get()));
+
+  status = executor_tree->Init();
+  if (status != true) {
+    result.m_result = ResultType::FAILURE;
+    result.m_error_message = "Failed initialization of query execution tree";
+    CleanExecutorTree(executor_tree.get());
+    plan->ClearParameterValues();
+    on_complete(result, std::move(values));
+    return;
+  }
+
+  // Execute the tree until we get values tiles from root node
+  while (status == true) {
+    status = executor_tree->Execute();
+    std::unique_ptr<executor::LogicalTile> tile(executor_tree->GetOutput());
+
+    // Some executors don't return logical tiles (e.g., Update).
+    if (tile.get() != nullptr) {
+      LOG_TRACE("Final Answer: %s", tile->GetInfo().c_str());
+      std::vector<std::vector<std::string>> tuples;
+      tuples = tile->GetAllValuesAsStrings(result_format, false);
+
+      // Construct the returned results
+      for (auto &tuple : tuples) {
+        for (unsigned int i = 0; i < tile->GetColumnCount(); i++) {
+          LOG_TRACE("column content: %s",
+                    tuple[i].c_str() != nullptr ? tuple[i].c_str() : "-empty-");
+          values.push_back(std::move(tuple[i]));
+        }
+      }
     }
   }
-  p_status.m_processed = executor_context->num_processed;
-  p_status.m_result = ResultType::SUCCESS;
-  p_status.m_result_slots = nullptr;
-  return;
+
+  result.m_processed = executor_context->num_processed;
+  result.m_result = ResultType::SUCCESS;
+  CleanExecutorTree(executor_tree.get());
+  plan->ClearParameterValues();
+  on_complete(result, std::move(values));
+}
+
+void PlanExecutor::ExecutePlan(
+    std::shared_ptr<planner::AbstractPlan> plan,
+    concurrency::TransactionContext *txn,
+    const std::vector<type::Value> &params,
+    const std::vector<int> &result_format,
+    std::function<void(executor::ExecutionResult, std::vector<ResultValue> &&)>
+        on_complete) {
+  PL_ASSERT(plan != nullptr && txn != nullptr);
+  LOG_TRACE("PlanExecutor Start (Txn ID=%" PRId64 ")", txn->GetTransactionId());
+
+  bool codegen_enabled =
+      settings::SettingsManager::GetBool(settings::SettingId::codegen);
+
+  try {
+    if (codegen_enabled && codegen::QueryCompiler::IsSupported(*plan)) {
+      CompileAndExecutePlan(plan, txn, params, on_complete);
+    } else {
+      InterpretPlan(plan, txn, params, result_format, on_complete);
+    }
+  } catch (Exception &e) {
+    ExecutionResult result;
+    result.m_result = ResultType::FAILURE;
+    result.m_error_message = e.what();
+    LOG_ERROR("Error thrown during execution: %s",
+              result.m_error_message.c_str());
+    on_complete(result, {});
+  }
 }
 
 // FIXME this function is here temporarily to support PelotonService
@@ -153,9 +176,9 @@ void PlanExecutor::ExecutePlan(
  * value list directly rather than passing Postgres's ParamListInfo
  * @return number of executed tuples and logical_tile_list
  */
-int PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
-                              const std::vector<type::Value> &params,
-                              std::vector<std::unique_ptr<executor::LogicalTile>> &logical_tile_list) {
+int PlanExecutor::ExecutePlan(
+    planner::AbstractPlan *plan, const std::vector<type::Value> &params,
+    std::vector<std::unique_ptr<executor::LogicalTile>> &logical_tile_list) {
   PL_ASSERT(plan != nullptr);
   LOG_TRACE("PlanExecutor Start with transaction");
 
@@ -181,15 +204,14 @@ int PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
   // Execute the tree until we get result tiles from root node
   while (status == true) {
     status = executor_tree->Execute();
-    if (status == false)
-      break;
+    if (status == false) break;
 
     std::unique_ptr<executor::LogicalTile> logical_tile(
         executor_tree->GetOutput());
     logical_tile_list.push_back(std::move(logical_tile));
   }
 
-  cleanup:
+cleanup:
   LOG_TRACE("About to commit: init_failure: %d, status: %s", init_failure,
             ResultTypeToString(txn->GetResult()).c_str());
 
@@ -217,9 +239,9 @@ int PlanExecutor::ExecutePlan(const planner::AbstractPlan *plan,
  * @param Transation context
  * @return The updated executor tree.
  */
-executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
-                                              const planner::AbstractPlan *plan,
-                                              executor::ExecutorContext *executor_context) {
+executor::AbstractExecutor *BuildExecutorTree(
+    executor::AbstractExecutor *root, const planner::AbstractPlan *plan,
+    executor::ExecutorContext *executor_context) {
   // Base case
   if (plan == nullptr) return root;
 
@@ -300,13 +322,21 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
     case PlanNodeType::CREATE:
       child_executor = new executor::CreateExecutor(plan, executor_context);
       break;
+
+    case PlanNodeType::CREATE_FUNC:
+      child_executor =
+          new executor::CreateFunctionExecutor(plan, executor_context);
+      break;
+
     case PlanNodeType::COPY:
       child_executor = new executor::CopyExecutor(plan, executor_context);
       break;
+
     case PlanNodeType::POPULATE_INDEX:
       child_executor =
           new executor::PopulateIndexExecutor(plan, executor_context);
       break;
+
     default:
       LOG_ERROR("Unsupported plan node type : %s",
                 PlanNodeTypeToString(plan_node_type).c_str());
@@ -325,8 +355,8 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
   // Recurse
   auto &children = plan->GetChildren();
   for (auto &child : children) {
-    child_executor = BuildExecutorTree(child_executor, child.get(),
-                                       executor_context);
+    child_executor =
+        BuildExecutorTree(child_executor, child.get(), executor_context);
   }
 
   return root;

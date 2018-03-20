@@ -51,7 +51,7 @@ TEST_F(StringFunctionTest, LengthTest) {
   }
   EXPECT_EQ(i, 32);
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
 

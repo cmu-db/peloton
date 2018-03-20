@@ -41,7 +41,7 @@ class LanguageCatalogObject;
 //===----------------------------------------------------------------------===//
 class ProcCatalogObject {
  public:
-  ProcCatalogObject(executor::LogicalTile *tile, concurrency::Transaction *txn);
+  ProcCatalogObject(executor::LogicalTile *tile, concurrency::TransactionContext *txn);
 
   // Accessors
 
@@ -69,7 +69,7 @@ class ProcCatalogObject {
   std::string src_;
 
   // Only valid in this transaction
-  concurrency::Transaction *txn_;
+  concurrency::TransactionContext *txn_;
 };
 
 //===----------------------------------------------------------------------===//
@@ -80,7 +80,7 @@ class ProcCatalog : public AbstractCatalog {
   ~ProcCatalog();
 
   // Global Singleton
-  static ProcCatalog &GetInstance(concurrency::Transaction *txn = nullptr);
+  static ProcCatalog &GetInstance(concurrency::TransactionContext *txn = nullptr);
 
   //===--------------------------------------------------------------------===//
   // write Related API
@@ -88,19 +88,19 @@ class ProcCatalog : public AbstractCatalog {
   bool InsertProc(const std::string &proname, type::TypeId prorettype,
                   const std::vector<type::TypeId> &proargtypes, oid_t prolang,
                   const std::string &prosrc, type::AbstractPool *pool,
-                  concurrency::Transaction *txn);
+                  concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
   // Read-only Related API
   //===--------------------------------------------------------------------===//
 
   std::unique_ptr<ProcCatalogObject> GetProcByOid(
-      oid_t proc_oid, concurrency::Transaction *txn) const;
+      oid_t proc_oid, concurrency::TransactionContext *txn) const;
 
   std::unique_ptr<ProcCatalogObject> GetProcByName(
       const std::string &proc_name,
       const std::vector<type::TypeId> &proc_arg_types,
-      concurrency::Transaction *txn) const;
+      concurrency::TransactionContext *txn) const;
 
   enum ColumnId {
     OID = 0,
@@ -114,7 +114,7 @@ class ProcCatalog : public AbstractCatalog {
   std::vector<oid_t> all_column_ids = {0, 1, 2, 3, 4, 5};
 
  private:
-  ProcCatalog(concurrency::Transaction *txn);
+  ProcCatalog(concurrency::TransactionContext *txn);
 
   oid_t GetNextOid() { return oid_++ | PROC_OID_MASK; }
 

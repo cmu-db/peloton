@@ -13,7 +13,7 @@
 #include "codegen/proxy/query_parameters_proxy.h"
 
 #include "codegen/proxy/data_table_proxy.h"
-#include "codegen/proxy/transaction_proxy.h"
+#include "codegen/proxy/transaction_context_proxy.h"
 
 namespace peloton {
 namespace codegen {

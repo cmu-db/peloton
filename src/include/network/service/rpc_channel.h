@@ -4,12 +4,11 @@
 //
 // rpc_channel.h
 //
-// Identification: src/include/network/rpc_channel.h
+// Identification: src/include/network/service/rpc_channel.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
 
 #pragma once
 
@@ -29,16 +28,16 @@ namespace service {
 
 class RpcChannel : public google::protobuf::RpcChannel {
  public:
-  RpcChannel(const std::string& url);
+  RpcChannel(const std::string &url);
   // RpcChannel(const long ip, const int port);
 
   virtual ~RpcChannel();
 
-  virtual void CallMethod(const google::protobuf::MethodDescriptor* method,
-                          google::protobuf::RpcController* controller,
-                          const google::protobuf::Message* request,
-                          google::protobuf::Message* response,
-                          google::protobuf::Closure* done);
+  virtual void CallMethod(const google::protobuf::MethodDescriptor *method,
+                          google::protobuf::RpcController *controller,
+                          const google::protobuf::Message *request,
+                          google::protobuf::Message *response,
+                          google::protobuf::Closure *done);
 
   void Close();
 

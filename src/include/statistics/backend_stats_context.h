@@ -18,13 +18,14 @@
 #include <unordered_map>
 
 #include "common/platform.h"
+#include "common/container/cuckoo_map.h"
+#include "common/container/lock_free_queue.h"
+#include "common/synchronization/spin_latch.h"
 #include "statistics/table_metric.h"
 #include "statistics/index_metric.h"
 #include "statistics/latency_metric.h"
 #include "statistics/database_metric.h"
 #include "statistics/query_metric.h"
-#include "container/cuckoo_map.h"
-#include "container/lock_free_queue.h"
 
 #define QUERY_METRIC_QUEUE_SIZE 100000
 
@@ -151,9 +152,6 @@ class BackendStatsContext {
   // Index oids
   std::unordered_set<oid_t> index_ids_;
 
-  // Index oid spin lock
-  Spinlock index_id_lock;
-
   // Metrics for completed queries
   LockFreeQueue<std::shared_ptr<QueryMetric>> completed_query_metrics_{
       QUERY_METRIC_QUEUE_SIZE};
@@ -177,6 +175,9 @@ class BackendStatsContext {
 
   // The total number of queries aggregated
   oid_t aggregated_query_count_ = 0;
+
+  // Index oid spin lock
+  common::synchronization::SpinLatch index_id_lock;
 
   //===--------------------------------------------------------------------===//
   // HELPER FUNCTIONS

@@ -21,12 +21,12 @@
 namespace peloton {
 namespace catalog {
 
-SettingsCatalog &SettingsCatalog::GetInstance(concurrency::Transaction *txn) {
+SettingsCatalog &SettingsCatalog::GetInstance(concurrency::TransactionContext *txn) {
   static SettingsCatalog settings_catalog{txn};
   return settings_catalog;
 }
 
-SettingsCatalog::SettingsCatalog(concurrency::Transaction *txn)
+SettingsCatalog::SettingsCatalog(concurrency::TransactionContext *txn)
     : AbstractCatalog("CREATE TABLE " CATALOG_DATABASE_NAME
                       "." SETTINGS_CATALOG_NAME
                       " ("
@@ -53,7 +53,7 @@ bool SettingsCatalog::InsertSetting(
     const std::string &description, const std::string &min_value,
     const std::string &max_value, const std::string &default_value,
     bool is_mutable, bool is_persistent, type::AbstractPool *pool,
-    concurrency::Transaction *txn) {
+    concurrency::TransactionContext *txn) {
   // Create the tuple first
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
@@ -84,7 +84,7 @@ bool SettingsCatalog::InsertSetting(
 }
 
 bool SettingsCatalog::DeleteSetting(const std::string &name,
-                                    concurrency::Transaction *txn) {
+                                    concurrency::TransactionContext *txn) {
   oid_t index_offset = 0;
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
@@ -93,7 +93,7 @@ bool SettingsCatalog::DeleteSetting(const std::string &name,
 }
 
 std::string SettingsCatalog::GetSettingValue(const std::string &name,
-                                             concurrency::Transaction *txn) {
+                                             concurrency::TransactionContext *txn) {
   std::vector<oid_t> column_ids({static_cast<int>(ColumnId::VALUE)});
   oid_t index_offset = static_cast<int>(IndexId::SECONDARY_KEY_0);
   std::vector<type::Value> values;
@@ -114,7 +114,7 @@ std::string SettingsCatalog::GetSettingValue(const std::string &name,
 }
 
 std::string SettingsCatalog::GetDefaultValue(const std::string &name,
-                                             concurrency::Transaction *txn) {
+                                             concurrency::TransactionContext *txn) {
   std::vector<oid_t> column_ids({static_cast<int>(ColumnId::VALUE)});
   oid_t index_offset = static_cast<int>(IndexId::SECONDARY_KEY_0);
   std::vector<type::Value> values;

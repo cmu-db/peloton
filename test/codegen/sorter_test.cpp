@@ -62,8 +62,8 @@ class SorterTest : public PelotonTest {
     }
 
     timer.Stop();
-    LOG_INFO("Loading %llu tuples into sort took %.2f ms", (unsigned long long) num_tuples_to_insert,
-             timer.GetDuration());
+    LOG_INFO("Loading %llu tuples into sort took %.2f ms",
+             (unsigned long long)num_tuples_to_insert, timer.GetDuration());
     timer.Reset();
     timer.Start();
 
@@ -71,8 +71,8 @@ class SorterTest : public PelotonTest {
     sorter.Sort();
 
     timer.Stop();
-    LOG_INFO("Sorting %llu tuples took %.2f ms", (unsigned long long) num_tuples_to_insert,
-             timer.GetDuration());
+    LOG_INFO("Sorting %llu tuples took %.2f ms",
+             (unsigned long long)num_tuples_to_insert, timer.GetDuration());
 
     // Check sorted results
     uint64_t res_tuples = 0;

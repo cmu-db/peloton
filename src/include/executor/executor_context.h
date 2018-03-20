@@ -6,71 +6,54 @@
 //
 // Identification: src/include/executor/executor_context.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #pragma once
 
+#include "codegen/query_parameters.h"
 #include "type/ephemeral_pool.h"
 #include "type/value.h"
 
 namespace peloton {
 
-//class Value;
-
-namespace concurrency{
-class Transaction;
-}
+namespace concurrency {
+class TransactionContext;
+}  // namespace concurrency
 
 namespace executor {
 
-//===--------------------------------------------------------------------===//
-// Executor Context
-//===--------------------------------------------------------------------===//
-
+/**
+ * @brief Stores information for one execution of a plan.
+ */
 class ExecutorContext {
  public:
-  ExecutorContext(const ExecutorContext &) = delete;
-  ExecutorContext &operator=(const ExecutorContext &) = delete;
-  ExecutorContext(ExecutorContext &&) = delete;
-  ExecutorContext &operator=(ExecutorContext &&) = delete;
+  explicit ExecutorContext(concurrency::TransactionContext *transaction,
+                           codegen::QueryParameters parameters = {});
 
-  ExecutorContext(concurrency::Transaction *transaction);
+  DISALLOW_COPY_AND_MOVE(ExecutorContext);
 
-  ExecutorContext(concurrency::Transaction *transaction,
-                  const std::vector<type::Value> &params);
+  ~ExecutorContext() = default;
 
-  ~ExecutorContext();
+  concurrency::TransactionContext *GetTransaction() const;
 
-  concurrency::Transaction *GetTransaction() const;
+  const std::vector<type::Value> &GetParamValues() const;
 
-  const std::vector<type::Value> &GetParams() const;
+  codegen::QueryParameters &GetParams();
 
-  void SetParams(type::Value &value);
-
-  void ClearParams();
-
-  // Get a pool
   type::EphemeralPool *GetPool();
 
-  // num of tuple processed
+  // Number of processed tuples during execution
   uint32_t num_processed = 0;
 
  private:
-  //===--------------------------------------------------------------------===//
-  // MEMBERS
-  //===--------------------------------------------------------------------===//
-
-  // transaction
-  concurrency::Transaction *transaction_;
-
-  // params
-  std::vector<type::Value> params_;
-
-  // pool
+  // The transaction context
+  concurrency::TransactionContext *transaction_;
+  // All query parameters
+  codegen::QueryParameters parameters_;
+  // Temporary memory pool for allocations done during execution
   std::unique_ptr<type::EphemeralPool> pool_;
-
 };
 
 }  // namespace executor

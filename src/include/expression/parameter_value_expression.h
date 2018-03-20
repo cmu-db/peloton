@@ -29,14 +29,15 @@ class ParameterValueExpression : public AbstractExpression {
   ParameterValueExpression(int value_idx)
       : AbstractExpression(ExpressionType::VALUE_PARAMETER,
                            type::TypeId::PARAMETER_OFFSET),
-        value_idx_(value_idx), is_nullable_(false) {}
+        value_idx_(value_idx),
+        is_nullable_(false) {}
 
   int GetValueIdx() const { return value_idx_; }
 
   type::Value Evaluate(UNUSED_ATTRIBUTE const AbstractTuple *tuple1,
                        UNUSED_ATTRIBUTE const AbstractTuple *tuple2,
                        executor::ExecutorContext *context) const override {
-    return context->GetParams().at(value_idx_);
+    return context->GetParamValues().at(value_idx_);
   }
 
   AbstractExpression *Copy() const override {
@@ -77,7 +78,8 @@ class ParameterValueExpression : public AbstractExpression {
 
   bool IsNullable() const override { return is_nullable_; }
 
-  virtual void VisitParameters(codegen::QueryParametersMap &map,
+  virtual void VisitParameters(
+      codegen::QueryParametersMap &map,
       std::vector<peloton::type::Value> &values,
       const std::vector<peloton::type::Value> &values_from_user) override {
     // Add a new parameter object for a parameter
@@ -90,6 +92,10 @@ class ParameterValueExpression : public AbstractExpression {
     values.push_back(value);
     return_value_type_ = value.GetTypeId();
   };
+
+  const std::string GetInfo(int num_indent) const override;
+
+  const std::string GetInfo() const override;
 
  protected:
   // Index of the value in the value vectors coming in from the user

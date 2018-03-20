@@ -18,16 +18,19 @@
 #include <vector>
 
 #include "common/printable.h"
-#include "type/types.h"
+#include "internal_types.h"
+#include "parser/sql_statement.h"
 
 namespace peloton {
 namespace planner {
 class AbstractPlan;
 }
 
-// TODO: Somebody needs to define what the hell this is???
-typedef std::pair<std::vector<unsigned char>, std::vector<unsigned char>>
-    StatementResult;
+// Contains the value of a column in a tuple of the result set.
+// std::string since the result is sent to the client over the network.
+// Previously it used to be StatementResult of type
+// std::pair<std::vector<unsigned char>, std::vector<unsigned char>>.
+using ResultValue = std::string;
 
 // FIELD INFO TYPE : field name, oid (data type), size
 typedef std::tuple<std::string, oid_t, size_t> FieldInfo;
@@ -41,17 +44,10 @@ class Statement : public Printable {
   Statement& operator=(Statement&&) = delete;
 
   Statement(const std::string& statement_name, const std::string& query_string);
+  Statement(const std::string& statement_name, QueryType query_type,
+            std::string query_string, std::unique_ptr<parser::SQLStatementList> sql_stmt_list);
 
   ~Statement();
-
-  static void ParseQueryTypeString(const std::string& query_string,
-                             std::string& query_type_string);
-
-  static void ParseCreateTypeString(const std::string& query_string,
-                             std::string& create_type_string);
- 
-  static void MapToQueryType(const std::string& query_type_string,
-                             QueryType& query_type);
 
   std::vector<FieldInfo> GetTupleDescriptor() const;
 
@@ -81,9 +77,13 @@ class Statement : public Printable {
 
   const std::shared_ptr<planner::AbstractPlan>& GetPlanTree() const;
 
-  inline bool GetNeedsPlan() const { return (needs_replan_); }
+  std::unique_ptr<parser::SQLStatementList>const& GetStmtParseTreeList() {return sql_stmt_list_;}
 
-  inline void SetNeedsPlan(bool replan) { needs_replan_ = replan; }
+  std::unique_ptr<parser::SQLStatementList> PassStmtParseTreeList() {return std::move(sql_stmt_list_);}
+
+  inline bool GetNeedsReplan() const { return (needs_replan_); }
+
+  inline void SetNeedsReplan(bool replan) { needs_replan_ = replan; }
 
   // Get a string representation for debugging
   const std::string GetInfo() const;
@@ -92,16 +92,19 @@ class Statement : public Printable {
   // logical name of statement
   std::string statement_name_;
 
+  // enum value of query_type
+  QueryType query_type_;
+
   // query string
   std::string query_string_;
+
+  // query parse tree
+  std::unique_ptr<parser::SQLStatementList> sql_stmt_list_;
 
   // first token in query
   // Keep the string token of the query_type because it is returned 
   // as responses after executing commands.
   std::string query_type_string_;
-
-  // enum value of query_type
-  QueryType query_type_;
 
   // format codes of the parameters
   std::vector<int32_t> param_types_;
@@ -118,10 +121,5 @@ class Statement : public Printable {
 
   // If this flag is true, then somebody wants us to replan this query
   bool needs_replan_ = false;
-
-  // containing pairs of <query_type_string, query_type>
-  // use map to speed up searching
-  static std::unordered_map<std::string, QueryType> query_type_map_;
-
 };
 }  // namespace peloton

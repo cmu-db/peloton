@@ -18,6 +18,11 @@
 namespace peloton {
 namespace executor {
 
+/**
+ * 2018-01-07: This is <b>deprecated</b>. Do not modify these classes.
+ * The old interpreted engine will be removed.
+ * @deprecated
+ */
 class MergeJoinExecutor : public AbstractJoinExecutor {
   MergeJoinExecutor(const MergeJoinExecutor &) = delete;
   MergeJoinExecutor &operator=(const MergeJoinExecutor &) = delete;

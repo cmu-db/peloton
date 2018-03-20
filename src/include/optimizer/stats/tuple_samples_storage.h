@@ -15,7 +15,7 @@
 #include <sstream>
 
 #include "common/macros.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "type/value_factory.h"
 
 #define SAMPLE_COUNT_PER_TABLE 100
@@ -28,7 +28,7 @@ class Tuple;
 }
 
 namespace concurrency {
-class Transaction;
+class TransactionContext;
 }
 
 namespace executor {
@@ -55,19 +55,19 @@ class TupleSamplesStorage {
       std::vector<std::unique_ptr<storage::Tuple>> &sampled_tuples);
 
   ResultType DeleteSamplesTable(oid_t database_id, oid_t table_id,
-                                concurrency::Transaction *txn = nullptr);
+                                concurrency::TransactionContext *txn = nullptr);
 
   bool InsertSampleTuple(storage::DataTable *samples_table,
                          std::unique_ptr<storage::Tuple> tuple,
-                         concurrency::Transaction *txn);
+                         concurrency::TransactionContext *txn);
 
   ResultType CollectSamplesForTable(storage::DataTable *data_table,
-                                    concurrency::Transaction *txn = nullptr);
+                                    concurrency::TransactionContext *txn = nullptr);
 
   std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
   GetTuplesWithSeqScan(storage::DataTable *data_table,
                        std::vector<oid_t> column_offsets,
-                       concurrency::Transaction *txn);
+                       concurrency::TransactionContext *txn);
 
   std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
   GetTupleSamples(oid_t database_id, oid_t table_id);

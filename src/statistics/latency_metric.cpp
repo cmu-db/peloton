@@ -25,7 +25,7 @@ LatencyMetric::LatencyMetric(MetricType type, size_t max_history)
 }
 
 void LatencyMetric::Aggregate(AbstractMetric& source) {
-  PL_ASSERT(source.GetType() == LATENCY_METRIC);
+  PL_ASSERT(source.GetType() == MetricType::LATENCY);
 
   LatencyMetric& latency_metric = static_cast<LatencyMetric&>(source);
   CircularBuffer<double> source_latencies = latency_metric.Copy();
@@ -62,7 +62,7 @@ const std::string LatencyMetric::GetInfo() const {
   ss << ", 75th-%-tile=" << latency_measurements_.perc_75th_;
   ss << ", 99th-%-tile=" << latency_measurements_.perc_99th_;
   ss << ", max=" << latency_measurements_.max_;
-  ss << " ]" << std::endl;
+  ss << " ]";
   return ss.str();
 }
 

@@ -30,7 +30,7 @@ void CheckBox(std::string &box, std::string key, int num_lines) {
 
   // Make sure that it has the same number of lines as the input
   // plus two extra ones for the border
-  std::vector<std::string> lines = StringUtil::Split(box);
+  std::vector<std::string> lines = StringUtil::Split(box, '\n');
   EXPECT_EQ(num_lines + 2, static_cast<int>(lines.size()));
 }
 

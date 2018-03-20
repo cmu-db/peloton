@@ -11,8 +11,8 @@
 #include "parser/postgresparser.h"
 #include "planner/plan_util.h"
 #include "planner/update_plan.h"
-#include <sql/testing_sql_util.h>
-#include "include/traffic_cop/traffic_cop.h"
+#include "sql/testing_sql_util.h"
+#include "traffic_cop/traffic_cop.h"
 
 namespace peloton {
 namespace test {
@@ -33,7 +33,7 @@ class OldOptimizerTests : public PelotonTest {};
 // TODO: Split the tests into separate test cases.
 TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
   LOG_TRACE("Bootstrapping...");
-  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
@@ -41,8 +41,9 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
   LOG_TRACE("Bootstrapping completed!");
 
   optimizer::Optimizer optimizer;
-  auto& traffic_cop = tcop::TrafficCop::GetInstance();
-  traffic_cop.SetTaskCallback(TestingSQLUtil::UtilTestTaskCallback, &TestingSQLUtil::counter_);
+  auto &traffic_cop = tcop::TrafficCop::GetInstance();
+  traffic_cop.SetTaskCallback(TestingSQLUtil::UtilTestTaskCallback,
+                              &TestingSQLUtil::counter_);
 
   // Create a table first
   txn = txn_manager.BeginTransaction();
@@ -58,23 +59,23 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
                                 "PRIMARY KEY, student_id INT, dept_name "
                                 "TEXT);"));
 
-  auto& peloton_parser = parser::PostgresParser::GetInstance();
+  auto &peloton_parser = parser::PostgresParser::GetInstance();
 
   auto create_stmt = peloton_parser.BuildParseTree(
       "CREATE TABLE department_table(dept_id INT PRIMARY KEY, student_id INT, "
       "dept_name TEXT);");
 
-  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(create_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(
+      optimizer.BuildPelotonPlanTree(create_stmt, DEFAULT_DB_NAME, txn));
 
   std::vector<type::Value> params;
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   LOG_TRACE("Query Plan:\n%s",
             planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
   std::vector<int> result_format;
-  result_format =
-      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
   TestingSQLUtil::counter_.store(1);
-  executor::ExecuteResult status = traffic_cop.ExecuteHelper(
+  executor::ExecutionResult status = traffic_cop.ExecuteHelper(
       statement->GetPlanTree(), params, result, result_format);
   if (traffic_cop.GetQueuing()) {
     TestingSQLUtil::ContinueAfterComplete();
@@ -108,13 +109,13 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
       "INSERT INTO department_table(dept_id,student_id,dept_name) VALUES "
       "(1,52,'hello_1');");
 
-  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(insert_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(
+      optimizer.BuildPelotonPlanTree(insert_stmt, DEFAULT_DB_NAME, txn));
 
-  result_format =
-      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
   TestingSQLUtil::counter_.store(1);
-  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(),
-                                     params, result, result_format);
+  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(), params, result,
+                                     result_format);
   if (traffic_cop.GetQueuing()) {
     TestingSQLUtil::ContinueAfterComplete();
     traffic_cop.ExecuteStatementPlanGetResult();
@@ -137,13 +138,13 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
   auto update_stmt = peloton_parser.BuildParseTree(
       "CREATE INDEX saif ON department_table (student_id);");
 
-  statement->SetPlanTree(optimizer.BuildPelotonPlanTree(update_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(
+      optimizer.BuildPelotonPlanTree(update_stmt, DEFAULT_DB_NAME, txn));
 
-  result_format =
-      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
   TestingSQLUtil::counter_.store(1);
-  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(),
-                                     params, result, result_format);
+  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(), params, result,
+                                     result_format);
   if (traffic_cop.GetQueuing()) {
     TestingSQLUtil::ContinueAfterComplete();
     traffic_cop.ExecuteStatementPlanGetResult();
@@ -170,19 +171,21 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
       "52");
   update_stmt = peloton_parser.BuildParseTree(
       "UPDATE department_table SET dept_name = 'CS' WHERE student_id = 52");
-  auto update_plan = optimizer.BuildPelotonPlanTree(update_stmt, DEFAULT_DB_NAME, txn);
+  auto update_plan =
+      optimizer.BuildPelotonPlanTree(update_stmt, DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
   // Check scan plan
   ASSERT_FALSE(update_plan == nullptr);
   EXPECT_EQ(update_plan->GetPlanNodeType(), PlanNodeType::UPDATE);
-  auto& update_scan_plan = update_plan->GetChildren().front();
+  auto &update_scan_plan = update_plan->GetChildren().front();
   EXPECT_EQ(update_scan_plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
 
   update_stmt = peloton_parser.BuildParseTree(
       "UPDATE department_table SET dept_name = 'CS' WHERE dept_name = 'CS'");
-  update_plan = optimizer.BuildPelotonPlanTree(update_stmt, DEFAULT_DB_NAME, txn);
+  update_plan =
+      optimizer.BuildPelotonPlanTree(update_stmt, DEFAULT_DB_NAME, txn);
   EXPECT_EQ(update_plan->GetChildren().front()->GetPlanNodeType(),
             PlanNodeType::SEQSCAN);
   txn_manager.CommitTransaction(txn);
@@ -193,12 +196,13 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
   LOG_TRACE("Query: DELETE FROM department_table WHERE student_id = 52");
   auto delete_stmt = peloton_parser.BuildParseTree(
       "DELETE FROM department_table WHERE student_id = 52");
-  auto del_plan = optimizer.BuildPelotonPlanTree(delete_stmt, DEFAULT_DB_NAME, txn);
+  auto del_plan =
+      optimizer.BuildPelotonPlanTree(delete_stmt, DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 
   // Check scan plan
   EXPECT_EQ(del_plan->GetPlanNodeType(), PlanNodeType::DELETE);
-  auto& del_scan_plan = del_plan->GetChildren().front();
+  auto &del_scan_plan = del_plan->GetChildren().front();
   EXPECT_EQ(del_scan_plan->GetPlanNodeType(), PlanNodeType::INDEXSCAN);
   del_plan = nullptr;
 
@@ -206,8 +210,9 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
   // Test delete tuple with seq scan
   auto delete_stmt_seq = peloton_parser.BuildParseTree(
       "DELETE FROM department_table WHERE dept_name = 'CS'");
-  auto del_plan_seq = optimizer.BuildPelotonPlanTree(delete_stmt_seq, DEFAULT_DB_NAME, txn);
-  auto& del_scan_plan_seq = del_plan_seq->GetChildren().front();
+  auto del_plan_seq =
+      optimizer.BuildPelotonPlanTree(delete_stmt_seq, DEFAULT_DB_NAME, txn);
+  auto &del_scan_plan_seq = del_plan_seq->GetChildren().front();
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(del_scan_plan_seq->GetPlanNodeType(), PlanNodeType::SEQSCAN);
 

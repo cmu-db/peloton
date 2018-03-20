@@ -24,7 +24,7 @@ namespace catalog {
 #define PROC_CATALOG_NAME "pg_proc"
 
 ProcCatalogObject::ProcCatalogObject(executor::LogicalTile *tile,
-                                     concurrency::Transaction *txn)
+                                     concurrency::TransactionContext *txn)
     : oid_(tile->GetValue(0, 0).GetAs<oid_t>()),
       name_(tile->GetValue(0, 1).GetAs<const char *>()),
       ret_type_(tile->GetValue(0, 2).GetAs<type::TypeId>()),
@@ -37,14 +37,14 @@ std::unique_ptr<LanguageCatalogObject> ProcCatalogObject::GetLanguage() const {
   return LanguageCatalog::GetInstance().GetLanguageByOid(GetLangOid(), txn_);
 }
 
-ProcCatalog &ProcCatalog::GetInstance(concurrency::Transaction *txn) {
+ProcCatalog &ProcCatalog::GetInstance(concurrency::TransactionContext *txn) {
   static ProcCatalog proc_catalog{txn};
   return proc_catalog;
 }
 
 ProcCatalog::~ProcCatalog(){};
 
-ProcCatalog::ProcCatalog(concurrency::Transaction *txn)
+ProcCatalog::ProcCatalog(concurrency::TransactionContext *txn)
     : AbstractCatalog("CREATE TABLE " CATALOG_DATABASE_NAME
                       "." PROC_CATALOG_NAME
                       " ("
@@ -65,7 +65,7 @@ bool ProcCatalog::InsertProc(const std::string &proname,
                              const std::vector<type::TypeId> &proargtypes,
                              oid_t prolang, const std::string &prosrc,
                              type::AbstractPool *pool,
-                             concurrency::Transaction *txn) {
+                             concurrency::TransactionContext *txn) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
@@ -90,7 +90,7 @@ bool ProcCatalog::InsertProc(const std::string &proname,
 }
 
 std::unique_ptr<ProcCatalogObject> ProcCatalog::GetProcByOid(
-    oid_t proc_oid, concurrency::Transaction *txn) const {
+    oid_t proc_oid, concurrency::TransactionContext *txn) const {
   std::vector<oid_t> column_ids(all_column_ids);
   oid_t index_offset = IndexId::PRIMARY_KEY;
   std::vector<type::Value> values;
@@ -112,7 +112,7 @@ std::unique_ptr<ProcCatalogObject> ProcCatalog::GetProcByOid(
 std::unique_ptr<ProcCatalogObject> ProcCatalog::GetProcByName(
     const std::string &proc_name,
     const std::vector<type::TypeId> &proc_arg_types,
-    concurrency::Transaction *txn) const {
+    concurrency::TransactionContext *txn) const {
   std::vector<oid_t> column_ids(all_column_ids);
   oid_t index_offset = IndexId::SECONDARY_KEY_0;
   std::vector<type::Value> values;

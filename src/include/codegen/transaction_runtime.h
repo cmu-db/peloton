@@ -17,7 +17,7 @@
 namespace peloton {
 
 namespace concurrency {
-class Transaction;
+class TransactionContext;
 }  // namespace concurrency
 
 namespace executor {
@@ -44,22 +44,22 @@ class TransactionRuntime {
  public:
   // Perform a read operation for all tuples in the given tile group with IDs
   // in the range [tid_start, tid_end) in the context of the given transaction
-  static uint32_t PerformVectorizedRead(concurrency::Transaction &txn,
+  static uint32_t PerformVectorizedRead(concurrency::TransactionContext &txn,
                                         storage::TileGroup &tile_group,
                                         uint32_t tid_start, uint32_t tid_end,
                                         uint32_t *selection_vector);
   // Check Ownership
-  static bool IsOwner(concurrency::Transaction &txn,
+  static bool IsOwner(concurrency::TransactionContext &txn,
                       storage::TileGroupHeader *tile_group_header,
                       uint32_t tuple_offset);
   // Acquire Ownership
-  static bool AcquireOwnership(concurrency::Transaction &txn,
+  static bool AcquireOwnership(concurrency::TransactionContext &txn,
                                storage::TileGroupHeader *tile_group_header,
                                uint32_t tuple_offset);
   // Yield Ownership
   // Note: this should be called when failed after acquired ownership
   //       otherwise, ownership is yielded inside transaction functions
-  static void YieldOwnership(concurrency::Transaction &txn,
+  static void YieldOwnership(concurrency::TransactionContext &txn,
                              storage::TileGroupHeader *tile_group_header,
                              uint32_t tuple_offset);
 };

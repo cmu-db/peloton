@@ -10,12 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <sql/testing_sql_util.h>
+#include "sql/testing_sql_util.h"
 #include "gtest/gtest.h"
 
 #include "catalog/testing_constraints_util.h"
 
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "catalog/catalog.h"
 #include "concurrency/testing_transaction_util.h"
 #include "planner/plan_util.h"
@@ -138,7 +138,7 @@ TEST_F(ConstraintsTests, DEFAULTTEST) {
   TestingConstraintsUtil::CreateAndPopulateTable(constraints, multi_constraints);
 
   // Bootstrap
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_affected;
@@ -158,7 +158,6 @@ TEST_F(ConstraintsTests, DEFAULTTEST) {
   status = TestingSQLUtil::ExecuteSQLQuery(
       sql, result, tuple_descriptor, rows_affected, error_message);
   EXPECT_EQ(ResultType::SUCCESS, status);
-  // EXPECT_EQ(result[0].second[0], '1');
   std::string resultStr = TestingSQLUtil::GetResultValueAsString(result, 0);
   LOG_INFO("OUTPUT:\n%s", resultStr.c_str());
 }
@@ -180,7 +179,7 @@ TEST_F(ConstraintsTests, CHECKTest) {
   type::Value tmp_value = type::ValueFactory::GetIntegerValue(0);
   constraints.AddCheck(ExpressionType::COMPARE_GREATERTHAN, tmp_value);
   column1.AddConstraint(constraints);
-  LOG_DEBUG("**** %s", constraints.GetInfo().c_str());
+  LOG_DEBUG("%s %s", peloton::DOUBLE_STAR.c_str(), constraints.GetInfo().c_str());
   catalog::Schema *table_schema = new catalog::Schema({column1});
   std::string table_name("TEST_TABLE");
   bool own_schema = true;
@@ -231,7 +230,7 @@ TEST_F(ConstraintsTests, UNIQUETest) {
 
   auto constraints = catalog::Constraint(ConstraintType::UNIQUE, "unique1");
   column1.AddConstraint(constraints);
-  LOG_DEBUG("**** %s", constraints.GetInfo().c_str());
+  LOG_DEBUG("%s %s", peloton::DOUBLE_STAR.c_str(), constraints.GetInfo().c_str());
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({column1, column2}));
   std::string table_name("TEST_TABLE");
@@ -306,7 +305,8 @@ TEST_F(ConstraintsTests, UNIQUETest) {
 //  columns.push_back(column2);
 //  columns.push_back(column3);
 //  auto mc = catalog::MultiConstraint(ConstraintType::UNIQUE, "c1", cols);
-//  LOG_DEBUG("**** MULTI CONSTRAINTS **** %s", mc.GetInfo().c_str());
+//  LOG_DEBUG("%s MULTI CONSTRAINTS %s %s", peloton::DOUBLE_STAR.c_str(),
+// peloton::DOUBLE_STAR.c_str(), mc.GetInfo().c_str());
 //
 //  std::unique_ptr<catalog::Schema> table_schema(new catalog::Schema(columns));
 //  table_schema->AddMultiConstraints(mc);
@@ -393,7 +393,7 @@ TEST_F(ConstraintsTests, UNIQUETest) {
 //
 //  auto constraints = catalog::Constraint(ConstraintType::PRIMARY, "primary1");
 //  column1.AddConstraint(constraints);
-//  LOG_DEBUG("**** %s", constraints.GetInfo().c_str());
+//  LOG_DEBUG("%s %s", peloton::DOUBLE_STAR.c_str(), constraints.GetInfo().c_str());
 //  std::unique_ptr<catalog::Schema> tableA_schema(
 //      new catalog::Schema({column1, column2}));
 //
@@ -499,7 +499,8 @@ TEST_F(ConstraintsTests, UNIQUETest) {
 //  cols.push_back(1);
 //  auto mc =
 //      catalog::MultiConstraint(ConstraintType::PRIMARY, "multiprimary1", cols);
-//  LOG_DEBUG("**** MULTI CONSTRAINTS **** %s", mc.GetInfo().c_str());
+//  LOG_DEBUG("%s MULTI CONSTRAINTS %s %s", peloton::DOUBLE_STAR.c_str(),
+// peloton::DOUBLE_STAR.c_str(), mc.GetInfo().c_str());
 //
 //  // TABLE B
 //  catalog::Schema *table_schema = new catalog::Schema({column3, column4});

@@ -57,7 +57,7 @@
 
 #include "catalog/schema.h"
 #include "common/harness.h"
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "expression/comparison_expression.h"
@@ -68,7 +68,7 @@
 #include "storage/tile_group_header.h"
 #include "storage/tuple.h"
 #include "catalog/catalog_defaults.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #pragma once
 
 namespace peloton {
@@ -120,8 +120,9 @@ class TestingTransactionUtil {
   // when created
   static storage::DataTable *CreateTable(
       int num_key = 10, std::string table_name = "TEST_TABLE",
-      oid_t database_id = CATALOG_DATABASE_OID, oid_t relation_id = TEST_TABLE_OID,
-      oid_t index_oid = 1234, bool need_primary_index = false);
+      oid_t database_id = CATALOG_DATABASE_OID,
+      oid_t relation_id = TEST_TABLE_OID, oid_t index_oid = 1234,
+      bool need_primary_index = false, size_t tuples_per_tilegroup = 100);
 
   // Create the same table as CreateTable with primary key constraints on id and
   // unique key constraints on value
@@ -130,22 +131,22 @@ class TestingTransactionUtil {
   // Create the same table with combined primary key constraints on (id, value)
   static storage::DataTable *CreateCombinedPrimaryKeyTable();
 
-  static bool ExecuteInsert(concurrency::Transaction *txn,
+  static bool ExecuteInsert(concurrency::TransactionContext *txn,
                             storage::DataTable *table, int id, int value);
-  static bool ExecuteRead(concurrency::Transaction *txn,
+  static bool ExecuteRead(concurrency::TransactionContext *txn,
                           storage::DataTable *table, int id, int &result,
                           bool select_for_update = false);
-  static bool ExecuteDelete(concurrency::Transaction *txn,
+  static bool ExecuteDelete(concurrency::TransactionContext *txn,
                             storage::DataTable *table, int id,
                             bool select_for_update = false);
-  static bool ExecuteUpdate(concurrency::Transaction *txn,
+  static bool ExecuteUpdate(concurrency::TransactionContext *txn,
                             storage::DataTable *table, int id, int value,
                             bool select_for_update = false);
-  static bool ExecuteUpdateByValue(concurrency::Transaction *txn,
+  static bool ExecuteUpdateByValue(concurrency::TransactionContext *txn,
                                    storage::DataTable *table, int old_value,
                                    int new_value,
                                    bool select_for_update = false);
-  static bool ExecuteScan(concurrency::Transaction *txn,
+  static bool ExecuteScan(concurrency::TransactionContext *txn,
                           std::vector<int> &results, storage::DataTable *table,
                           int id, bool select_for_update = false);
 
@@ -339,7 +340,7 @@ class TransactionThread {
   storage::DataTable *table;
   int cur_seq;
   bool go;
-  concurrency::Transaction *txn;
+  concurrency::TransactionContext *txn;
 };
 
 // Transaction scheduler, to make life easier for writing txn test

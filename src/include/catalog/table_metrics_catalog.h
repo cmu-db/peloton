@@ -43,7 +43,7 @@ class TableMetricsCatalog : public AbstractCatalog {
 
   // Global Singleton
   static TableMetricsCatalog *GetInstance(
-      concurrency::Transaction *txn = nullptr);
+      concurrency::TransactionContext *txn = nullptr);
 
   //===--------------------------------------------------------------------===//
   // Write Related API
@@ -51,8 +51,8 @@ class TableMetricsCatalog : public AbstractCatalog {
   bool InsertTableMetrics(oid_t database_oid, oid_t table_oid, int64_t reads,
                           int64_t updates, int64_t deletes, int64_t inserts,
                           int64_t time_stamp, type::AbstractPool *pool,
-                          concurrency::Transaction *txn);
-  bool DeleteTableMetrics(oid_t table_oid, concurrency::Transaction *txn);
+                          concurrency::TransactionContext *txn);
+  bool DeleteTableMetrics(oid_t table_oid, concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
   // Read-only Related API
@@ -60,7 +60,7 @@ class TableMetricsCatalog : public AbstractCatalog {
   // TODO: add if needed
 
  private:
-  TableMetricsCatalog(concurrency::Transaction *txn);
+  TableMetricsCatalog(concurrency::TransactionContext *txn);
 
   enum ColumnId {
     DATABASE_OID = 0,

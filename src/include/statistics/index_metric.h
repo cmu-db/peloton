@@ -16,9 +16,10 @@
 #include <string>
 #include <sstream>
 
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "statistics/abstract_metric.h"
 #include "statistics/access_metric.h"
+#include "util/string_util.h"
 
 namespace peloton {
 namespace stats {
@@ -69,7 +70,7 @@ class IndexMetric : public AbstractMetric {
     std::stringstream ss;
     ss << "INDEXES: " << std::endl;
     ss << index_name_ << "(OID=" << index_id_ << "): ";
-    ss << index_access_.GetInfo() << std::endl;
+    ss << index_access_.GetInfo();
     return ss.str();
   }
 
@@ -91,7 +92,7 @@ class IndexMetric : public AbstractMetric {
   std::string index_name_;
 
   // Counts the number of index entries accessed
-  AccessMetric index_access_{ACCESS_METRIC};
+  AccessMetric index_access_{MetricType::ACCESS};
 };
 
 }  // namespace stats

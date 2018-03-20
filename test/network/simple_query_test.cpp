@@ -13,11 +13,12 @@
 #include "common/harness.h"
 #include "gtest/gtest.h"
 #include "common/logger.h"
-#include "network/network_manager.h"
+#include "network/peloton_server.h"
 #include "network/protocol_handler_factory.h"
 #include "util/string_util.h"
 #include <pqxx/pqxx> /* libpqxx is used to instantiate C++ client */
-#include <include/network/postgres_protocol_handler.h>
+#include "network/postgres_protocol_handler.h"
+#include "network/connection_handle_factory.h"
 
 #define NUM_THREADS 1
 
@@ -30,17 +31,6 @@ namespace test {
 
 class SimpleQueryTests : public PelotonTest {};
 
-static void *LaunchServer(peloton::network::NetworkManager network_manager,
-                          int port) {
-  try {
-    network_manager.SetPort(port);
-    network_manager.StartServer();
-  } catch (peloton::ConnectionException &exception) {
-    LOG_INFO("[LaunchServer] exception in thread");
-  }
-  return NULL;
-}
-
 /**
  * Simple select query test
  */
@@ -48,18 +38,18 @@ void *SimpleQueryTest(int port) {
   try {
     // forcing the factory to generate psql protocol handler
     pqxx::connection C(StringUtil::Format(
-        "host=127.0.0.1 port=%d user=postgres sslmode=disable application_name=psql", port));
+        "host=127.0.0.1 port=%d user=default_database sslmode=disable application_name=psql", port));
     pqxx::work txn1(C);
 
-    peloton::network::NetworkConnection *conn =
-        peloton::network::NetworkManager::GetConnection(
-            peloton::network::NetworkManager::recent_connfd);
+    peloton::network::ConnectionHandle *conn =
+        peloton::network::ConnectionHandleFactory::GetInstance().ConnectionHandleAt(
+            peloton::network::PelotonServer::recent_connfd).get();
 
     network::PostgresProtocolHandler *handler =
-        dynamic_cast<network::PostgresProtocolHandler*>(conn->protocol_handler_.get());
+        dynamic_cast<network::PostgresProtocolHandler*>(conn->GetProtocolHandler().get());
     EXPECT_NE(handler, nullptr);
 
-    // EXPECT_EQ(conn->state, peloton::network::CONN_READ);
+    // EXPECT_EQ(conn->state, peloton::network::READ);
     // create table and insert some data
     txn1.exec("DROP TABLE IF EXISTS employee;");
     txn1.exec("CREATE TABLE employee(id INT, name VARCHAR(100));");
@@ -72,8 +62,23 @@ void *SimpleQueryTest(int port) {
 
     pqxx::result R = txn2.exec("SELECT name FROM employee where id=1;");
     txn2.commit();
-
     EXPECT_EQ(R.size(), 1);
+
+    pqxx::work txn3(C);
+    txn3.exec("DROP TABLE IF EXISTS foo;");
+    txn3.exec("CREATE TABLE foo(length DECIMAL);");
+    txn3.commit();
+
+    pqxx::work txn4(C);
+    txn4.exec("PREPARE func AS INSERT INTO foo VALUES($1);");
+    txn4.exec("EXECUTE func(1);");
+    txn4.exec("EXECUTE func(1+1);");
+    txn4.exec("EXECUTE func(SQRT(9.0));");
+
+    pqxx::result R2 = txn4.exec("SELECT * FROM foo;");
+    txn4.commit();
+    EXPECT_EQ(R2.size(), 3);
+
   } catch (const std::exception &e) {
     LOG_INFO("[SimpleQueryTest] Exception occurred: %s", e.what());
     EXPECT_TRUE(false);
@@ -95,12 +100,12 @@ void *RollbackTest(int port) {
     LOG_INFO("[RollbackTest] Connected to %s", C.dbname());
     pqxx::work W(C);
 
-    peloton::network::NetworkConnection *conn =
+    peloton::network::ClientSocketWrapper *conn =
         peloton::network::NetworkManager::GetConnection(
             peloton::network::NetworkManager::recent_connfd);
 
-    EXPECT_EQ(conn->protocol_handler_.is_started, true);
-    // EXPECT_EQ(conn->state, peloton::network::CONN_READ);
+    EXPECT_TRUE(conn->protocol_handler_.is_started);
+    // EXPECT_EQ(conn->state, peloton::network::READ);
     // create table and insert some data
     W.exec("DROP TABLE IF EXISTS employee;");
     W.exec("CREATE TABLE employee(id INT, name VARCHAR(100));");
@@ -160,18 +165,21 @@ TEST_F(PacketManagerTests, RollbackTest) {
 TEST_F(SimpleQueryTests, SimpleQueryTest) {
   peloton::PelotonInit::Initialize();
   LOG_INFO("Server initialized");
-  peloton::network::NetworkManager network_manager;
+  peloton::network::PelotonServer server;
 
   int port = 15721;
-  std::thread serverThread(LaunchServer, network_manager, port);
-  while (!network_manager.GetIsStarted()) {
-    sleep(1);
+  try {
+    server.SetPort(port);
+    server.SetupServer();
+  } catch (peloton::ConnectionException &exception) {
+    LOG_INFO("[LaunchServer] exception when launching server");
   }
+  std::thread serverThread([&]() { server.ServerLoop(); });
 
   // server & client running correctly
   SimpleQueryTest(port);
 
-  network_manager.CloseServer();
+  server.Close();
   serverThread.join();
   LOG_INFO("Peloton is shutting down");
   peloton::PelotonInit::Shutdown();

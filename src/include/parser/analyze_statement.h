@@ -25,8 +25,7 @@ namespace parser {
 class AnalyzeStatement : public SQLStatement {
  public:
   AnalyzeStatement()
-      : SQLStatement(StatementType::ANALYZE),
-        analyze_table(nullptr) {};
+      : SQLStatement(StatementType::ANALYZE), analyze_table(nullptr){};
 
   virtual ~AnalyzeStatement() {}
 
@@ -37,7 +36,7 @@ class AnalyzeStatement : public SQLStatement {
     return analyze_table->GetTableName();
   }
 
-  const std::vector<std::string>& GetColumnNames() const {
+  const std::vector<std::string> &GetColumnNames() const {
     return analyze_columns;
   }
 
@@ -53,9 +52,11 @@ class AnalyzeStatement : public SQLStatement {
     return analyze_table->GetDatabaseName();
   }
 
-  virtual void Accept(SqlNodeVisitor* v) override {
-    v->Visit(this);
-  }
+  virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
+
+  const std::string GetInfo(int num_indent) const override;
+
+  const std::string GetInfo() const override;
 
   std::unique_ptr<parser::TableRef> analyze_table;
   std::vector<std::string> analyze_columns;

@@ -17,8 +17,10 @@
 #include "codegen/proxy/value_proxy.h"
 #include "codegen/proxy/values_runtime_proxy.h"
 #include "concurrency/transaction_manager_factory.h"
+#include "executor/plan_executor.h"
 #include "executor/executor_context.h"
 #include "expression/comparison_expression.h"
+#include "expression/operator_expression.h"
 #include "expression/tuple_value_expression.h"
 #include "storage/table_factory.h"
 #include "codegen/query_cache.h"
@@ -30,7 +32,7 @@ namespace test {
 // PELOTON CODEGEN TEST
 //===----------------------------------------------------------------------===//
 
-PelotonCodeGenTest::PelotonCodeGenTest() {
+PelotonCodeGenTest::PelotonCodeGenTest(oid_t tuples_per_tilegroup) {
   auto *catalog = catalog::Catalog::GetInstance();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -38,9 +40,8 @@ PelotonCodeGenTest::PelotonCodeGenTest() {
   // create test db
   catalog->CreateDatabase(test_db_name, txn);
   test_db = catalog->GetDatabaseWithName(test_db_name, txn);
-
   // Create test table
-  CreateTestTables(txn);
+  CreateTestTables(txn, tuples_per_tilegroup);
 
   txn_manager.CommitTransaction(txn);
 }
@@ -55,28 +56,42 @@ PelotonCodeGenTest::~PelotonCodeGenTest() {
   codegen::QueryCache::Instance().Clear();
 }
 
+catalog::Column PelotonCodeGenTest::GetTestColumn(uint32_t col_id) const {
+  PL_ASSERT(col_id < 4);
+  static const uint64_t int_size =
+      type::Type::GetTypeSize(type::TypeId::INTEGER);
+  static const uint64_t dec_size =
+      type::Type::GetTypeSize(type::TypeId::DECIMAL);
+
+  bool is_inlined = true;
+  if (col_id == 0) {
+    return catalog::Column{type::TypeId::INTEGER, int_size, "COL_A",
+                           is_inlined};
+  } else if (col_id == 1) {
+    return catalog::Column{type::TypeId::INTEGER, int_size, "COL_B",
+                           is_inlined};
+  } else if (col_id == 2) {
+    return catalog::Column{type::TypeId::DECIMAL, dec_size, "COL_C",
+                           is_inlined};
+  } else {
+    return catalog::Column{type::TypeId::VARCHAR, 25, "COL_D", !is_inlined};
+  }
+}
+
 // Create the test schema for all the tables
 std::unique_ptr<catalog::Schema> PelotonCodeGenTest::CreateTestSchema(
     bool add_primary) const {
-  bool is_inlined = true;
-
   // Create the columns
-  static const uint32_t int_size =
-      type::Type::GetTypeSize(type::TypeId::INTEGER);
-  static const uint32_t dec_size =
-      type::Type::GetTypeSize(type::TypeId::DECIMAL);
-  std::vector<catalog::Column> cols = {
-      catalog::Column{type::TypeId::INTEGER, int_size, "COL_A", is_inlined},
-      catalog::Column{type::TypeId::INTEGER, int_size, "COL_B", is_inlined},
-      catalog::Column{type::TypeId::DECIMAL, dec_size, "COL_C", is_inlined},
-      catalog::Column{type::TypeId::VARCHAR, 25, "COL_D", !is_inlined}};
+  std::vector<catalog::Column> cols = {GetTestColumn(0), GetTestColumn(1),
+                                       GetTestColumn(2), GetTestColumn(3)};
 
   // Add NOT NULL constraints on COL_A, COL_C, COL_D
   cols[0].AddConstraint(
       catalog::Constraint{ConstraintType::NOTNULL, "not_null"});
-  if (add_primary == true)
+  if (add_primary) {
     cols[0].AddConstraint(
         catalog::Constraint{ConstraintType::PRIMARY, "con_primary"});
+  }
   cols[2].AddConstraint(
       catalog::Constraint{ConstraintType::NOTNULL, "not_null"});
   cols[3].AddConstraint(
@@ -87,13 +102,14 @@ std::unique_ptr<catalog::Schema> PelotonCodeGenTest::CreateTestSchema(
 }
 
 // Create all the test tables, but don't load any data
-void PelotonCodeGenTest::CreateTestTables(concurrency::Transaction *txn) {
+void PelotonCodeGenTest::CreateTestTables(concurrency::TransactionContext *txn,
+                                          oid_t tuples_per_tilegroup) {
   auto *catalog = catalog::Catalog::GetInstance();
-
   for (int i = 0; i < 4; i++) {
     auto table_schema = CreateTestSchema();
     catalog->CreateTable(test_db_name, test_table_names[i],
-                         std::move(table_schema), txn);
+                         std::move(table_schema), txn, false,
+                         tuples_per_tilegroup);
     test_table_oids.push_back(catalog->GetTableObject(test_db_name,
                                                       test_table_names[i],
                                                       txn)->GetTableOid());
@@ -101,7 +117,8 @@ void PelotonCodeGenTest::CreateTestTables(concurrency::Transaction *txn) {
   for (int i = 4; i < 5; i++) {
     auto table_schema = CreateTestSchema(true);
     catalog->CreateTable(test_db_name, test_table_names[i],
-                         std::move(table_schema), txn);
+                         std::move(table_schema), txn, false,
+                         tuples_per_tilegroup);
     test_table_oids.push_back(catalog->GetTableObject(test_db_name,
                                                       test_table_names[i],
                                                       txn)->GetTableOid());
@@ -153,127 +170,162 @@ void PelotonCodeGenTest::LoadTestTable(oid_t table_id, uint32_t num_rows,
   txn_manager.CommitTransaction(txn);
 }
 
+void PelotonCodeGenTest::ExecuteSync(
+    codegen::Query &query,
+    std::unique_ptr<executor::ExecutorContext> executor_context,
+    codegen::QueryResultConsumer &consumer) {
+  std::mutex mu;
+  std::condition_variable cond;
+  bool finished = false;
+  query.Execute(std::move(executor_context), consumer,
+                [&](executor::ExecutionResult) {
+                  std::unique_lock<decltype(mu)> lock(mu);
+                  finished = true;
+                  cond.notify_one();
+                });
+
+  std::unique_lock<decltype(mu)> lock(mu);
+  cond.wait(lock, [&] { return finished; });
+}
+
 codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecute(
-    planner::AbstractPlan &plan, codegen::QueryResultConsumer &consumer,
-    char *consumer_state, std::vector<type::Value> *params) {
-  // Start a transaction
+    planner::AbstractPlan &plan, codegen::QueryResultConsumer &consumer) {
+  codegen::QueryParameters parameters(plan, {});
+
+  // Start a transaction.
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto *txn = txn_manager.BeginTransaction();
 
-  // Compile
+  // Compile the query.
   codegen::QueryCompiler::CompileStats stats;
-  codegen::QueryCompiler compiler;
-  std::unique_ptr<executor::ExecutorContext> executor_context;
-  if (params != nullptr) {
-    executor_context.reset(new executor::ExecutorContext{txn, *params});
-  } else {
-    executor_context.reset(new executor::ExecutorContext{txn});
-  }
-  codegen::QueryParameters parameters{plan, executor_context->GetParams()};
+  auto compiled_query = codegen::QueryCompiler().Compile(
+      plan, parameters.GetQueryParametersMap(), consumer, &stats);
 
-  auto compiled_query = compiler.Compile(plan,
-      parameters.GetQueryParametersMap(), consumer, &stats);
-  // Run
-  compiled_query->Execute(*executor_context.get(), parameters,
-                          consumer_state);
+  // Execute the query.
+  ExecuteSync(*compiled_query,
+              std::unique_ptr<executor::ExecutorContext>(
+                  new executor::ExecutorContext(txn, std::move(parameters))),
+              consumer);
+
+  // Commit the transaction.
   txn_manager.CommitTransaction(txn);
+
   return stats;
 }
 
 codegen::QueryCompiler::CompileStats PelotonCodeGenTest::CompileAndExecuteCache(
     std::shared_ptr<planner::AbstractPlan> plan,
-    codegen::QueryResultConsumer &consumer, char *consumer_state, bool &cached,
-    std::vector<type::Value> *params) {
+    codegen::QueryResultConsumer &consumer, bool &cached,
+    std::vector<type::Value> params) {
   // Start a transaction
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto *txn = txn_manager.BeginTransaction();
 
+  std::unique_ptr<executor::ExecutorContext> executor_context(
+      new executor::ExecutorContext(txn,
+                                    codegen::QueryParameters(*plan, params)));
+
   // Compile
   codegen::QueryCompiler::CompileStats stats;
-  codegen::QueryCompiler compiler;
-
-  std::unique_ptr<executor::ExecutorContext> executor_context;
-  if (params != nullptr) {
-    executor_context.reset(new executor::ExecutorContext{txn, *params});
-  } else {
-    executor_context.reset(new executor::ExecutorContext{txn});
-  }
-  codegen::QueryParameters parameters{*plan.get(),
-                                      executor_context->GetParams()};
-
   codegen::Query *query = codegen::QueryCache::Instance().Find(plan);
+  cached = (query != nullptr);
   if (query == nullptr) {
-    auto compiled_query = compiler.Compile(*plan,
-                                           parameters.GetQueryParametersMap(),
-                                           consumer, &stats);
-    compiled_query->Execute(*executor_context.get(), parameters,
-                            consumer_state);
+    codegen::QueryCompiler compiler;
+    auto compiled_query = compiler.Compile(
+        *plan, executor_context->GetParams().GetQueryParametersMap(), consumer);
+    query = compiled_query.get();
     codegen::QueryCache::Instance().Add(plan, std::move(compiled_query));
-    cached = false;
-  } else {
-    query->Execute(*executor_context.get(), parameters, consumer_state);
-    cached = true;
   }
+
+  // Execute the query.
+  ExecuteSync(*query, std::move(executor_context), consumer);
+
+  // Commit the transaction.
   txn_manager.CommitTransaction(txn);
 
   return stats;
 }
 
-std::unique_ptr<expression::AbstractExpression>
-PelotonCodeGenTest::ConstIntExpr(int64_t val) {
+ExpressionPtr PelotonCodeGenTest::ConstIntExpr(int64_t val) {
   auto *expr = new expression::ConstantValueExpression(
       type::ValueFactory::GetIntegerValue(val));
-  return std::unique_ptr<expression::AbstractExpression>{expr};
+  return ExpressionPtr{expr};
 }
 
-std::unique_ptr<expression::AbstractExpression>
-PelotonCodeGenTest::ConstDecimalExpr(double val) {
+ExpressionPtr PelotonCodeGenTest::ConstDecimalExpr(double val) {
   auto *expr = new expression::ConstantValueExpression(
       type::ValueFactory::GetDecimalValue(val));
-  return std::unique_ptr<expression::AbstractExpression>{expr};
+  return ExpressionPtr{expr};
 }
 
-std::unique_ptr<expression::AbstractExpression> PelotonCodeGenTest::ColRefExpr(
-    type::TypeId type, uint32_t col_id) {
+ExpressionPtr PelotonCodeGenTest::ColRefExpr(type::TypeId type,
+                                             uint32_t col_id) {
   auto *expr = new expression::TupleValueExpression(type, 0, col_id);
-  return std::unique_ptr<expression::AbstractExpression>{expr};
+  return ExpressionPtr{expr};
 }
 
-std::unique_ptr<expression::AbstractExpression> PelotonCodeGenTest::CmpExpr(
-    ExpressionType cmp_type,
-    std::unique_ptr<expression::AbstractExpression> &&left,
-    std::unique_ptr<expression::AbstractExpression> &&right) {
+ExpressionPtr PelotonCodeGenTest::ColRefExpr(type::TypeId type, bool left,
+                                             uint32_t col_id) {
+  return ExpressionPtr{
+      new expression::TupleValueExpression(type, !left, col_id)};
+}
+
+ExpressionPtr PelotonCodeGenTest::CmpExpr(ExpressionType cmp_type,
+                                          ExpressionPtr &&left,
+                                          ExpressionPtr &&right) {
   auto *expr = new expression::ComparisonExpression(cmp_type, left.release(),
                                                     right.release());
-  return std::unique_ptr<expression::AbstractExpression>{expr};
+  return ExpressionPtr{expr};
 }
 
-std::unique_ptr<expression::AbstractExpression> PelotonCodeGenTest::CmpLtExpr(
-    std::unique_ptr<expression::AbstractExpression> &&left,
-    std::unique_ptr<expression::AbstractExpression> &&right) {
+ExpressionPtr PelotonCodeGenTest::CmpLtExpr(ExpressionPtr &&left,
+                                            ExpressionPtr &&right) {
   return CmpExpr(ExpressionType::COMPARE_LESSTHAN, std::move(left),
                  std::move(right));
 }
 
-std::unique_ptr<expression::AbstractExpression> PelotonCodeGenTest::CmpGtExpr(
-    std::unique_ptr<expression::AbstractExpression> &&left,
-    std::unique_ptr<expression::AbstractExpression> &&right) {
+ExpressionPtr PelotonCodeGenTest::CmpLteExpr(ExpressionPtr &&left,
+                                             ExpressionPtr &&right) {
+  return CmpExpr(ExpressionType::COMPARE_LESSTHANOREQUALTO, std::move(left),
+                 std::move(right));
+}
+
+ExpressionPtr PelotonCodeGenTest::CmpGtExpr(ExpressionPtr &&left,
+                                            ExpressionPtr &&right) {
   return CmpExpr(ExpressionType::COMPARE_GREATERTHAN, std::move(left),
                  std::move(right));
 }
 
-std::unique_ptr<expression::AbstractExpression> PelotonCodeGenTest::CmpGteExpr(
-    std::unique_ptr<expression::AbstractExpression> &&left,
-    std::unique_ptr<expression::AbstractExpression> &&right) {
+ExpressionPtr PelotonCodeGenTest::CmpGteExpr(ExpressionPtr &&left,
+                                             ExpressionPtr &&right) {
   return CmpExpr(ExpressionType::COMPARE_GREATERTHANOREQUALTO, std::move(left),
                  std::move(right));
 }
 
-std::unique_ptr<expression::AbstractExpression> PelotonCodeGenTest::CmpEqExpr(
-    std::unique_ptr<expression::AbstractExpression> &&left,
-    std::unique_ptr<expression::AbstractExpression> &&right) {
+ExpressionPtr PelotonCodeGenTest::CmpEqExpr(ExpressionPtr &&left,
+                                            ExpressionPtr &&right) {
   return CmpExpr(ExpressionType::COMPARE_EQUAL, std::move(left),
                  std::move(right));
+}
+
+ExpressionPtr PelotonCodeGenTest::OpExpr(ExpressionType op_type,
+                                         type::TypeId type,
+                                         ExpressionPtr &&left,
+                                         ExpressionPtr &&right) {
+  switch (op_type) {
+    case ExpressionType::OPERATOR_PLUS:
+    case ExpressionType::OPERATOR_MINUS:
+    case ExpressionType::OPERATOR_MULTIPLY:
+    case ExpressionType::OPERATOR_DIVIDE:
+    case ExpressionType::OPERATOR_MOD: {
+      return ExpressionPtr{new expression::OperatorExpression(
+          op_type, type, left.release(), right.release())};
+      break;
+    }
+    default: {
+      throw Exception{"OpExpr only supports (+, -, *, /, %) operations"};
+    }
+  }
 }
 
 //===----------------------------------------------------------------------===//
@@ -328,34 +380,6 @@ void Printer::ConsumeResult(codegen::ConsumerContext &ctx,
 
   // Make the printf call
   codegen.CallPrintf(format, cols);
-}
-
-//===----------------------------------------------------------------------===//
-// COUNTING CONSUMER
-//===----------------------------------------------------------------------===//
-
-void CountingConsumer::Prepare(codegen::CompilationContext &ctx) {
-  auto &codegen = ctx.GetCodeGen();
-  auto &runtime_state = ctx.GetRuntimeState();
-  counter_state_id_ =
-      runtime_state.RegisterState("consumerState", codegen.Int64Type());
-}
-
-void CountingConsumer::InitializeState(codegen::CompilationContext &context) {
-  auto &codegen = context.GetCodeGen();
-  auto *state_ptr = GetCounter(codegen, context.GetRuntimeState());
-  codegen->CreateStore(codegen.Const64(0), state_ptr);
-}
-
-// Increment the counter
-void CountingConsumer::ConsumeResult(codegen::ConsumerContext &context,
-                                     codegen::RowBatch::Row &) const {
-  auto &codegen = context.GetCodeGen();
-
-  auto *counter_ptr = GetCounter(context);
-  auto *new_count =
-      codegen->CreateAdd(codegen->CreateLoad(counter_ptr), codegen.Const64(1));
-  codegen->CreateStore(new_count, counter_ptr);
 }
 
 }  // namespace test

@@ -28,8 +28,6 @@ class ProjectionSQLTests : public PelotonTest {
     auto *txn = txn_manager.BeginTransaction();
     catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
     txn_manager.CommitTransaction(txn);
-
-    SetupTestTable();
   }
 
   ~ProjectionSQLTests() {
@@ -51,6 +49,8 @@ class ProjectionSQLTests : public PelotonTest {
 };
 
 TEST_F(ProjectionSQLTests, SimpleProjectionSQLTest) {
+  SetupTestTable();
+
   // Test TINYINT
   std::string sql = "SELECT a+a, a-a, a*a, a/a, a+b, a+c, a+d, a+e FROM test";
   std::vector<std::string> expected = {"2|0|1|1|3|4|5|6"};
@@ -78,6 +78,8 @@ TEST_F(ProjectionSQLTests, SimpleProjectionSQLTest) {
 }
 
 TEST_F(ProjectionSQLTests, ProjectionSQLTest) {
+  SetupTestTable();
+
   std::string sql = "SELECT a*5+b, -1+c, 6, a from test";
   std::vector<std::string> expected = {"7|2|6|1"};
   TestingSQLUtil::ExecuteSQLQueryAndCheckResult(sql, expected, false);

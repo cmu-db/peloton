@@ -16,6 +16,7 @@
 #include "expression/abstract_expression.h"
 #include "parser/postgresparser.h"
 #include "type/value_factory.h"
+#include "type/value.h"
 
 namespace peloton {
 namespace expression {
@@ -47,6 +48,14 @@ class OperatorExpression : public AbstractExpression {
       else
         return (
             type::ValueFactory::GetBooleanValue(type::PELOTON_BOOLEAN_NULL));
+    }
+    if (exp_type_ == ExpressionType::OPERATOR_EXISTS) {
+      PL_ASSERT(children_.size() == 1);
+      type::Value vl = children_[0]->Evaluate(tuple1, tuple2, context);
+      if (vl.IsNull())
+        return (type::ValueFactory::GetBooleanValue(false));
+      else
+        return (type::ValueFactory::GetBooleanValue(true));
     }
     if (exp_type_ == ExpressionType::OPERATOR_IS_NULL ||
         exp_type_ == ExpressionType::OPERATOR_IS_NOT_NULL) {
@@ -84,7 +93,8 @@ class OperatorExpression : public AbstractExpression {
     // This relies on a particular order in types.h
     if (exp_type_ == ExpressionType::OPERATOR_NOT ||
         exp_type_ == ExpressionType::OPERATOR_IS_NULL ||
-        exp_type_ == ExpressionType::OPERATOR_IS_NOT_NULL) {
+        exp_type_ == ExpressionType::OPERATOR_IS_NOT_NULL ||
+        exp_type_ == ExpressionType::OPERATOR_EXISTS) {
       return_value_type_ = type::TypeId::BOOLEAN;
       return;
     }
@@ -99,6 +109,10 @@ class OperatorExpression : public AbstractExpression {
   }
 
   virtual void Accept(SqlNodeVisitor *v) override { v->Visit(this); }
+
+  const std::string GetInfo(int num_indent) const override;
+
+  const std::string GetInfo() const override;
 
  protected:
   OperatorExpression(const OperatorExpression &other)

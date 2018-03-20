@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "executor/abstract_executor.h"
 #include "executor/logical_tile.h"
 
@@ -23,6 +23,10 @@ namespace executor {
  * @brief Append executor.
  * Trivially concatenate input tiles from the children.
  * No check on the schemas of children.
+ *
+ * 2018-01-07: This is <b>deprecated</b>. Do not modify these classes.
+ * The old interpreted engine will be removed.
+ * @deprecated
  */
 class AppendExecutor : public AbstractExecutor {
  public:

@@ -17,23 +17,40 @@
 
 #include "expression/abstract_expression.h"
 #include "parser/sql_statement.h"
+#include "util/string_util.h"
 #include "common/sql_node_visitor.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 
 namespace peloton {
 namespace parser {
 
 class SelectStatement;
-class JoinDefinition;
+
+// Definition of a join table
+class JoinDefinition {
+ public:
+  JoinDefinition()
+      : left(nullptr),
+        right(nullptr),
+        condition(nullptr),
+        type(JoinType::INNER) {}
+
+  virtual ~JoinDefinition() {}
+
+  std::unique_ptr<TableRef> left;
+  std::unique_ptr<TableRef> right;
+  std::unique_ptr<expression::AbstractExpression> condition;
+
+  JoinType type;
+
+  void Accept(SqlNodeVisitor *v) { v->Visit(this); }
+};
 
 //  Holds reference to tables.
 // Can be either table names or a select statement.
 struct TableRef {
   TableRef(TableReferenceType type)
-      : type(type),
-        table_info_(nullptr),
-        select(nullptr),
-        join(nullptr) {}
+      : type(type), table_info_(nullptr), select(nullptr), join(nullptr) {}
 
   virtual ~TableRef();
 
@@ -46,7 +63,7 @@ struct TableRef {
 
   std::string alias;
 
-  SelectStatement* select;
+  SelectStatement *select;
   std::vector<std::unique_ptr<TableRef>> list;
   std::unique_ptr<JoinDefinition> join;
 
@@ -58,7 +75,7 @@ struct TableRef {
     if (table_info_ == nullptr) {
       table_info_.reset(new TableInfo());
     }
-    
+
     if (table_info_->database_name.empty()) {
       table_info_->database_name = default_database_name;
     }
@@ -77,28 +94,11 @@ struct TableRef {
       return table_info_->table_name;
   }
 
-  inline std::string GetTableName() const {
-    return table_info_->table_name;
-  }
+  inline std::string GetTableName() const { return table_info_->table_name; }
 
-  void Accept(SqlNodeVisitor* v) { v->Visit(this); }
-};
+  const std::string GetInfo(int num_indent) const;
 
-// Definition of a join table
-class JoinDefinition {
- public:
-  JoinDefinition()
-      : left(nullptr), right(nullptr), condition(nullptr), type(JoinType::INNER) {}
-
-  virtual ~JoinDefinition() {}
-
-  std::unique_ptr<TableRef> left;
-  std::unique_ptr<TableRef> right;
-  std::unique_ptr<expression::AbstractExpression> condition;
-
-  JoinType type;
-
-  void Accept(SqlNodeVisitor* v) { v->Visit(this); }
+  void Accept(SqlNodeVisitor *v) { v->Visit(this); }
 };
 
 }  // namespace parser

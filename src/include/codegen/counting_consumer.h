@@ -30,7 +30,7 @@ class CountingConsumer : public codegen::QueryResultConsumer {
 
   uint64_t GetCount() const { return counter_; }
   void ResetCount() { counter_ = 0; }
-  char *GetCountAsState() { return reinterpret_cast<char *>(&counter_); }
+  char *GetConsumerState() final { return reinterpret_cast<char *>(&counter_); }
 
  private:
   llvm::Value *GetCounterState(codegen::CodeGen &codegen,

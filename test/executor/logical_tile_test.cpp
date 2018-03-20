@@ -18,7 +18,7 @@
 
 #include "catalog/manager.h"
 #include "catalog/schema.h"
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/logical_tile.h"
 
@@ -28,7 +28,7 @@
 #include "storage/tile.h"
 #include "storage/tile_group.h"
 #include "storage/tuple.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "type/value_factory.h"
 
 
@@ -87,8 +87,8 @@ TEST_F(LogicalTileTests, TempTableTest) {
 
     LOG_INFO("GetActiveTupleCount() = %d",
              (int)tile_group->GetActiveTupleCount());
-    LOG_INFO("%s", tile_group->GetInfo().c_str());
-    LOG_INFO("*****************************************");
+    LOG_INFO("\n%s", tile_group->GetInfo().c_str());
+    LOG_INFO("%s", peloton::GETINFO_THICK_LINE.c_str());
     LOG_INFO("%s", logical_tile->GetInfo().c_str());
   }
 }

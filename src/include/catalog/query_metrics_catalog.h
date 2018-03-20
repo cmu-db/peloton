@@ -49,7 +49,7 @@ class QueryMetricsCatalog : public AbstractCatalog {
 
   // Global Singleton
   static QueryMetricsCatalog *GetInstance(
-      concurrency::Transaction *txn = nullptr);
+      concurrency::TransactionContext *txn = nullptr);
 
   //===--------------------------------------------------------------------===//
   // write Related API
@@ -62,18 +62,18 @@ class QueryMetricsCatalog : public AbstractCatalog {
                           int64_t reads, int64_t updates, int64_t deletes,
                           int64_t inserts, int64_t latency, int64_t cpu_time,
                           int64_t time_stamp, type::AbstractPool *pool,
-                          concurrency::Transaction *txn);
+                          concurrency::TransactionContext *txn);
   bool DeleteQueryMetrics(const std::string &name, oid_t database_oid,
-                          concurrency::Transaction *txn);
+                          concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
   // Read-only Related API
   //===--------------------------------------------------------------------===//
   stats::QueryMetric::QueryParamBuf GetParamTypes(
       const std::string &name, oid_t database_oid,
-      concurrency::Transaction *txn);
+      concurrency::TransactionContext *txn);
   int64_t GetNumParams(const std::string &name, oid_t database_oid,
-                       concurrency::Transaction *txn);
+                       concurrency::TransactionContext *txn);
   // TODO: add more if needed
 
   enum ColumnId {
@@ -94,7 +94,7 @@ class QueryMetricsCatalog : public AbstractCatalog {
   };
 
  private:
-  QueryMetricsCatalog(concurrency::Transaction *txn);
+  QueryMetricsCatalog(concurrency::TransactionContext *txn);
 
   enum IndexId {
     SECONDARY_KEY_0 = 0,

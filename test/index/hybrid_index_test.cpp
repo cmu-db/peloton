@@ -26,7 +26,7 @@
 #include "catalog/manager.h"
 #include "catalog/schema.h"
 #include "common/timer.h"
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/abstract_executor.h"
 #include "executor/executor_context.h"

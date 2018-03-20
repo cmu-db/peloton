@@ -191,7 +191,7 @@ CmpBool IntegerType::CompareEquals(const Value& left, const Value &right) const 
   PL_ASSERT(left.CheckComparable(right));
 
   if (left.IsNull() || right.IsNull())
-    return CMP_NULL;
+    return CmpBool::NULL_;
 
   INT_COMPARE_FUNC(==);
 
@@ -203,7 +203,7 @@ CmpBool IntegerType::CompareNotEquals(const Value& left,
   PL_ASSERT(left.CheckInteger());
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
-    return CMP_NULL;
+    return CmpBool::NULL_;
 
   INT_COMPARE_FUNC(!=);
 
@@ -215,7 +215,7 @@ CmpBool IntegerType::CompareLessThan(const Value& left,
   PL_ASSERT(left.CheckInteger());
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
-    return CMP_NULL;
+    return CmpBool::NULL_;
 
   INT_COMPARE_FUNC(<);
 
@@ -227,7 +227,7 @@ CmpBool IntegerType::CompareLessThanEquals(const Value& left,
   PL_ASSERT(left.CheckInteger());
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
-    return CMP_NULL;
+    return CmpBool::NULL_;
 
   INT_COMPARE_FUNC(<=);
 
@@ -239,7 +239,7 @@ CmpBool IntegerType::CompareGreaterThan(const Value& left,
   PL_ASSERT(left.CheckInteger());
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
-    return CMP_NULL;
+    return CmpBool::NULL_;
 
   INT_COMPARE_FUNC(>);
 
@@ -251,7 +251,7 @@ CmpBool IntegerType::CompareGreaterThanEquals(const Value& left,
   PL_ASSERT(left.CheckInteger());
   PL_ASSERT(left.CheckComparable(right));
   if (left.IsNull() || right.IsNull())
-    return CMP_NULL;
+    return CmpBool::NULL_;
 
   INT_COMPARE_FUNC(>=);
 

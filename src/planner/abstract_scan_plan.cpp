@@ -48,7 +48,7 @@ void AbstractScan::PerformBinding(BindingContext &binding_context) {
     const auto &input_col_ids = GetColumnIds();
     for (oid_t col_id = 0; col_id < input_col_ids.size(); col_id++) {
       const auto &ai = attributes_[input_col_ids[col_id]];
-      LOG_DEBUG("Attribute '%s.%s' (%u) binds to AI %p",
+      LOG_TRACE("Attribute '%s.%s' (%u) binds to AI %p",
                 GetTable()->GetName().c_str(), ai.name.c_str(), col_id, &ai);
       binding_context.BindNew(col_id, &ai);
     }

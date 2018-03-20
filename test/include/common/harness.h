@@ -22,7 +22,7 @@
 #include "common/macros.h"
 #include "common/logger.h"
 #include "common/init.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "gc/gc_manager_factory.h"
 
 #include "gmock/gmock.h"
@@ -108,6 +108,7 @@ class PelotonTest : public ::testing::Test {
   virtual void SetUp() {
 
     // turn off gc under test mode
+    gc::GCManagerFactory::GetInstance().StopGC();
     gc::GCManagerFactory::Configure(0);
 
   }

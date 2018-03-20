@@ -18,8 +18,8 @@
 #include "codegen/codegen.h"
 #include "codegen/updateable_storage.h"
 #include "codegen/value.h"
-#include "codegen/compilation_context.h"
 #include "codegen/oa_hash_table.h"
+#include "codegen/runtime_state.h"
 #include "planner/aggregate_plan.h"
 
 namespace peloton {

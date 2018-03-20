@@ -21,7 +21,7 @@ CounterMetric::CounterMetric(MetricType type) : AbstractMetric(type) {
 }
 
 void CounterMetric::Aggregate(AbstractMetric &source) {
-  PL_ASSERT(source.GetType() == COUNTER_METRIC);
+  PL_ASSERT(source.GetType() == MetricType::COUNTER);
   count_ += static_cast<CounterMetric &>(source).GetCounter();
 }
 

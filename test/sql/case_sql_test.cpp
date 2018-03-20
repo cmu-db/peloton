@@ -48,7 +48,7 @@ TEST_F(CaseSQLTests, Simple) {
 
   CreateAndLoadTable();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -85,7 +85,7 @@ TEST_F(CaseSQLTests, SimpleWithArg) {
   txn_manager.CommitTransaction(txn);
 
   CreateAndLoadTable();
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -122,7 +122,7 @@ TEST_F(CaseSQLTests, SimpleWithArgStringResult) {
   txn_manager.CommitTransaction(txn);
 
   CreateAndLoadTable();
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -161,7 +161,7 @@ TEST_F(CaseSQLTests, SimpleMultipleWhen) {
 
   CreateAndLoadTable();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -199,7 +199,7 @@ TEST_F(CaseSQLTests, SimpleMultipleWhenWithoutElse) {
 
   CreateAndLoadTable();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;

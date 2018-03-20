@@ -14,7 +14,7 @@
 
 #include "catalog/manager.h"
 #include "common/container_tuple.h"
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/executor_context.h"
 #include "storage/tile_group.h"
@@ -26,7 +26,7 @@ namespace codegen {
 // TODO: Right now, we split this check into two loops: a visibility check and
 //       the actual reading. Can this be merged?
 uint32_t TransactionRuntime::PerformVectorizedRead(
-    concurrency::Transaction &txn, storage::TileGroup &tile_group,
+    concurrency::TransactionContext &txn, storage::TileGroup &tile_group,
     uint32_t tid_start, uint32_t tid_end, uint32_t *selection_vector) {
   // Get the transaction manager
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -66,7 +66,7 @@ uint32_t TransactionRuntime::PerformVectorizedRead(
   return out_idx;
 }
 
-bool TransactionRuntime::IsOwner(concurrency::Transaction &txn,
+bool TransactionRuntime::IsOwner(concurrency::TransactionContext &txn,
                                  storage::TileGroupHeader *tile_group_header,
                                  uint32_t tuple_offset) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -79,7 +79,7 @@ bool TransactionRuntime::IsOwner(concurrency::Transaction &txn,
   return false;
 }
 
-bool TransactionRuntime::AcquireOwnership(concurrency::Transaction &txn,
+bool TransactionRuntime::AcquireOwnership(concurrency::TransactionContext &txn,
     storage::TileGroupHeader *tile_group_header, uint32_t tuple_offset) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   bool is_owner = txn_manager.IsOwner(&txn, tile_group_header, tuple_offset);
@@ -105,7 +105,7 @@ bool TransactionRuntime::AcquireOwnership(concurrency::Transaction &txn,
   return true;
 }
 
-void TransactionRuntime::YieldOwnership(concurrency::Transaction &txn,
+void TransactionRuntime::YieldOwnership(concurrency::TransactionContext &txn,
     storage::TileGroupHeader *tile_group_header, uint32_t tuple_offset) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   bool is_owner = txn_manager.IsOwner(&txn, tile_group_header, tuple_offset);

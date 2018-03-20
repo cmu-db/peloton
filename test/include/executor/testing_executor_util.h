@@ -15,7 +15,7 @@
 #include <memory>
 #include <vector>
 
-#include "type/types.h"
+#include "common/internal_types.h"
 
 namespace peloton {
 
@@ -29,7 +29,7 @@ class Manager;
 }
 
 namespace concurrency {
-class Transaction;
+class TransactionContext;
 }
 
 namespace executor {
@@ -80,7 +80,7 @@ class TestingExecutorUtil {
 
   static void PopulateTable(storage::DataTable *table, int num_rows,
                             bool mutate, bool random, bool group_by,
-                            concurrency::Transaction *current_txn);
+                            concurrency::TransactionContext *current_txn);
 
   static void PopulateTiles(std::shared_ptr<storage::TileGroup> tile_group,
                             int num_rows);

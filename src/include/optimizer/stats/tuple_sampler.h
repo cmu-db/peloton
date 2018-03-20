@@ -12,15 +12,19 @@
 
 #pragma once
 
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "type/ephemeral_pool.h"
+#include "common/item_pointer.h"
+#include "catalog/schema.h"
+
+#define DEFAULT_SAMPLE_SIZE 100
 
 namespace peloton {
 namespace storage {
 class DataTable;
 class Tuple;
 class TileGroup;
-}
+}  // namespace storage
 
 namespace optimizer {
 
@@ -40,12 +44,21 @@ class TupleSampler {
 
   std::vector<std::unique_ptr<storage::Tuple>> &GetSampledTuples();
 
+  size_t AcquireSampleTuplesForIndexJoin(
+      std::vector<std::unique_ptr<storage::Tuple>> &sample_tuples,
+      std::vector<std::vector<ItemPointer *>> &matched_tuples, size_t count);
+
  private:
+  void AddJoinTuple(std::unique_ptr<storage::Tuple> &left_tuple,
+                    std::unique_ptr<storage::Tuple> &right_tuple);
+
   std::unique_ptr<type::AbstractPool> pool_;
 
   storage::DataTable *table;
 
   std::vector<std::unique_ptr<storage::Tuple>> sampled_tuples;
+
+  std::shared_ptr<catalog::Schema> join_schema;
 };
 
 }  // namespace optimizer

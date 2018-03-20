@@ -25,8 +25,9 @@ namespace peloton {
 namespace storage {
 
 TempTable::TempTable(const oid_t &table_oid, catalog::Schema *schema,
-                     const bool own_schema)
-    : AbstractTable(table_oid, schema, own_schema) {
+                     const bool own_schema,
+                     const peloton::LayoutType layout_type)
+    : AbstractTable(table_oid, schema, own_schema, layout_type) {
   // We only want to instantiate a single TileGroup
   AddDefaultTileGroup();
 }
@@ -36,8 +37,8 @@ TempTable::~TempTable() {
 }
 
 ItemPointer TempTable::InsertTuple(
-    const Tuple *tuple, UNUSED_ATTRIBUTE concurrency::Transaction *transaction,
-    UNUSED_ATTRIBUTE ItemPointer **index_entry_ptr) {
+    const Tuple *tuple, UNUSED_ATTRIBUTE concurrency::TransactionContext *transaction,
+    UNUSED_ATTRIBUTE ItemPointer **index_entry_ptr, UNUSED_ATTRIBUTE bool check_fk) {
   PL_ASSERT(tuple != nullptr);
   PL_ASSERT(transaction == nullptr);
   PL_ASSERT(index_entry_ptr == nullptr);
@@ -79,6 +80,7 @@ ItemPointer TempTable::InsertTuple(
 
   return (location);
 }
+
 ItemPointer TempTable::InsertTuple(const Tuple *tuple) {
   return (this->InsertTuple(tuple, nullptr, nullptr));
 }
@@ -114,7 +116,7 @@ oid_t TempTable::AddDefaultTileGroup() {
 
   // Figure out the partitioning for given tilegroup layout
   column_map =
-      AbstractTable::GetTileGroupLayout((LayoutType)peloton_layout_mode);
+      AbstractTable::GetTileGroupLayout();
 
   // Create a tile group with that partitioning
   std::shared_ptr<storage::TileGroup> tile_group(

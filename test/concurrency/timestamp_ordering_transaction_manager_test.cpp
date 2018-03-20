@@ -19,7 +19,7 @@ namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
-// Transaction Tests
+// TransactionContext Tests
 //===--------------------------------------------------------------------===//
 
 class TimestampOrderingTransactionManagerTests : public PelotonTest {};

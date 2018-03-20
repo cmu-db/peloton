@@ -15,7 +15,9 @@
 #include "catalog/schema.h"
 #include "codegen/proxy/data_table_proxy.h"
 #include "codegen/lang/loop.h"
+#include "codegen/lang/if.h"
 #include "codegen/proxy/runtime_functions_proxy.h"
+#include "codegen/proxy/zone_map_proxy.h"
 #include "storage/data_table.h"
 
 namespace peloton {
@@ -38,38 +40,57 @@ llvm::Value *Table::GetTileGroup(CodeGen &codegen, llvm::Value *table_ptr,
                       {table_ptr, tile_group_id});
 }
 
+// We acquire a Zone Map manager instance
+llvm::Value *Table::GetZoneMapManager(CodeGen &codegen) const {
+  return codegen.Call(ZoneMapManagerProxy::GetInstance, {});
+}
+
 // Generate a scan over all tile groups.
 //
 // @code
 // column_layouts := alloca<peloton::ColumnLayoutInfo>(
 //     table.GetSchema().GetColumnCount())
+// predicate_array := alloca<peloton::PredicateInfo>(
+//     num_predicates)
 //
 // oid_t tile_group_idx := 0
 // num_tile_groups = GetTileGroupCount(table_ptr)
 //
 // for (; tile_group_idx < num_tile_groups; ++tile_group_idx) {
-//   tile_group_ptr := GetTileGroup(table_ptr, tile_group_idx)
-//   consumer.TileGroupStart(tile_group_ptr);
-//   tile_group.TidScan(tile_group_ptr, column_layouts, vector_size, consumer);
-//   consumer.TileGroupEnd(tile_group_ptr);
+//   if (ShouldScanTileGroup(predicate_array, tile_group_idx)) {
+//      tile_group_ptr := GetTileGroup(table_ptr, tile_group_idx)
+//      consumer.TileGroupStart(tile_group_ptr);
+//      tile_group.TidScan(tile_group_ptr, column_layouts, vector_size,
+//                         consumer);
+//      consumer.TileGroupEnd(tile_group_ptr);
+//   }
 // }
 //
 // @endcode
 void Table::GenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
-                         uint32_t batch_size, ScanCallback &consumer) const {
-  // First get the columns from the table the consumer needs. For every column,
-  // we'll need to have a ColumnInfoLayout struct
-  const uint32_t num_columns =
+                         uint32_t batch_size, ScanCallback &consumer,
+                         llvm::Value *predicate_ptr,
+                         size_t num_predicates) const {
+  // Allocate some space for the column layouts
+  const auto num_columns =
       static_cast<uint32_t>(table_.GetSchema()->GetColumnCount());
+  llvm::Value *column_layouts = codegen.AllocateBuffer(
+      ColumnLayoutInfoProxy::GetType(codegen), num_columns, "columnLayout");
 
-  llvm::Value *column_layouts = codegen->CreateAlloca(
-      ColumnLayoutInfoProxy::GetType(codegen), codegen.Const32(num_columns));
+  // Allocate some space for the parsed predicates (if need be!)
+  llvm::Value *predicate_array =
+      codegen.NullPtr(PredicateInfoProxy::GetType(codegen)->getPointerTo());
+  if (num_predicates != 0) {
+    predicate_array = codegen.AllocateBuffer(
+        PredicateInfoProxy::GetType(codegen), num_predicates, "predicateInfo");
+    codegen.Call(RuntimeFunctionsProxy::FillPredicateArray,
+                 {predicate_ptr, predicate_array});
+  }
 
   // Get the number of tile groups in the given table
   llvm::Value *tile_group_idx = codegen.Const64(0);
   llvm::Value *num_tile_groups = GetTileGroupCount(codegen, table_ptr);
 
-  // Iterate over all tile groups in the table
   lang::Loop loop{codegen,
                   codegen->CreateICmpULT(tile_group_idx, num_tile_groups),
                   {{"tileGroupIdx", tile_group_idx}}};
@@ -81,16 +102,25 @@ void Table::GenerateScan(CodeGen &codegen, llvm::Value *table_ptr,
     llvm::Value *tile_group_id =
         tile_group_.GetTileGroupId(codegen, tile_group_ptr);
 
-    // Invoke the consumer to let her know that we're starting to iterate over
-    // the tile group now
-    consumer.TileGroupStart(codegen, tile_group_id, tile_group_ptr);
+    // Check zone map
+    llvm::Value *cond = codegen.Call(
+        ZoneMapManagerProxy::ShouldScanTileGroup,
+        {GetZoneMapManager(codegen), predicate_array,
+         codegen.Const32(num_predicates), table_ptr, tile_group_idx});
 
-    // Generate the scan cover over the given tile group
-    tile_group_.GenerateTidScan(codegen, tile_group_ptr, column_layouts,
-                                batch_size, consumer);
+    codegen::lang::If should_scan_tilegroup{codegen, cond};
+    {
+      // Inform the consumer that we're starting iteration over the tile group
+      consumer.TileGroupStart(codegen, tile_group_id, tile_group_ptr);
 
-    // Invoke the consumer to let her know that we're done with this tile group
-    consumer.TileGroupFinish(codegen, tile_group_ptr);
+      // Generate the scan cover over the given tile group
+      tile_group_.GenerateTidScan(codegen, tile_group_ptr, column_layouts,
+                                  batch_size, consumer);
+
+      // Inform the consumer that we've finished iteration over the tile group
+      consumer.TileGroupFinish(codegen, tile_group_ptr);
+    }
+    should_scan_tilegroup.EndIf();
 
     // Move to next tile group in the table
     tile_group_idx = codegen->CreateAdd(tile_group_idx, codegen.Const64(1));

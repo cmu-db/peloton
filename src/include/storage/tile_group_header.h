@@ -17,9 +17,11 @@
 
 #include "common/item_pointer.h"
 #include "common/macros.h"
-#include "common/platform.h"
+#include "common/synchronization/spin_latch.h"
 #include "common/printable.h"
-#include "type/types.h"
+#include "storage/tuple.h"
+#include "common/internal_types.h"
+#include "type/value.h"
 
 namespace peloton {
 namespace storage {
@@ -48,12 +50,9 @@ class TileGroup;
  *  TxnID: serve as a write lock on the tuple version.
  *  BeginTimeStamp: the lower bound of the version visibility range.
  *  EndTimeStamp: the upper bound of the version visibility range.
- *  NextItemPointer: the pointer pointing to the next (older) version in the
- * version chain.
- *  PrevItemPointer: the pointer pointing to the prev (newer) version in the
- * version chain.
- *  Indirection: the pointer pointing to the index entry that holds the address
- * of the version chain header.
+ *  NextItemPointer: the pointer pointing to the next (older) version in the version chain.
+ *  PrevItemPointer: the pointer pointing to the prev (newer) version in the version chain.
+ *  Indirection: the pointer pointing to the index entry that holds the address of the version chain header.
  *  ReservedField: unused space for future usage.
  *
  *  STATUS:
@@ -228,10 +227,28 @@ class TileGroupHeader : public Printable {
                                         transaction_id);
   }
 
+  /*
+  * @brief The following method use Compare and Swap to set the tilegroup's
+  immutable flag to be true. 
+  */
+  inline bool SetImmutability() {
+    return __sync_bool_compare_and_swap(&immutable, false, true);
+  }
+  
+  /*
+  * @brief The following method use Compare and Swap to set the tilegroup's
+  immutable flag to be false. 
+  */
+  inline bool ResetImmutability() {
+    return __sync_bool_compare_and_swap(&immutable, true, false);
+  }
+
+  inline bool GetImmutability() const { return immutable; }
+
   void PrintVisibility(txn_id_t txn_id, cid_t at_cid);
 
   // Getter for spin lock
-  Spinlock &GetHeaderLock() { return tile_header_lock; }
+  common::synchronization::SpinLatch &GetHeaderLock() { return tile_header_lock; }
 
   // Sync the contents
   void Sync();
@@ -285,7 +302,11 @@ class TileGroupHeader : public Printable {
   // IT MAY OUT OF BOUNDARY! ALWAYS CHECK IF IT EXCEEDS num_tuple_slots
   std::atomic<oid_t> next_tuple_slot;
 
-  Spinlock tile_header_lock;
+  common::synchronization::SpinLatch tile_header_lock;
+
+  // Immmutable Flag. Should be set by the indextuner to be true.
+  // By default it will be set to false.
+  bool immutable;
 };
 
 }  // namespace storage

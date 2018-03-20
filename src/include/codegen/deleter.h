@@ -20,7 +20,7 @@
 namespace peloton {
 
 namespace concurrency {
-class Transaction;
+class TransactionContext;
 }  // namespace concurrency
 
 namespace executor {

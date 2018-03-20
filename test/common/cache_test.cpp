@@ -47,7 +47,7 @@ TEST_F(CacheTests, Basic) {
   Cache<uint32_t, const planner::AbstractPlan> cache(CACHE_SIZE, 1);
 
   EXPECT_EQ(0, cache.size());
-  EXPECT_EQ(true, cache.empty());
+  EXPECT_TRUE(cache.empty());
 }
 
 /**
@@ -80,7 +80,7 @@ TEST_F(CacheTests, Insert) {
     cache.insert(std::make_pair(i, plans[i]));
 
   EXPECT_EQ(CACHE_SIZE, cache.size());
-  EXPECT_EQ(false, cache.empty());
+  EXPECT_FALSE(cache.empty());
 
   // Additional insert
   peloton::Cache<std::string, Statement> statement_cache_;
@@ -137,7 +137,7 @@ TEST_F(CacheTests, Iterator) {
   }
 
   EXPECT_EQ(CACHE_SIZE, set.size());
-  EXPECT_EQ(false, cache.empty());
+  EXPECT_FALSE(cache.empty());
   for (int i = 0; i < CACHE_SIZE; i++) {
     EXPECT_NE(set.end(), set.find(plans[i].get()));
   }
@@ -164,7 +164,7 @@ TEST_F(CacheTests, EvictionByInsert) {
   }
 
   EXPECT_EQ(CACHE_SIZE, set.size());
-  EXPECT_EQ(false, cache.empty());
+  EXPECT_FALSE(cache.empty());
   for (int i = 0; i < CACHE_SIZE; i++) {
     EXPECT_EQ(set.end(), set.find(plans[i].get()));
   }
@@ -197,7 +197,7 @@ TEST_F(CacheTest, EvictionWithAccessing) {
   }
 
   EXPECT_EQ(CACHE_SIZE, set.size());
-  EXPECT_EQ(false, cache.empty());
+  EXPECT_FALSE(cache.empty());
 
   int diff = CACHE_SIZE / 2;
 
@@ -210,7 +210,7 @@ TEST_F(CacheTest, EvictionWithAccessing) {
   }
 
   EXPECT_EQ(CACHE_SIZE, set.size());
-  EXPECT_EQ(false, cache.empty());
+  EXPECT_FALSE(cache.empty());
 
   i = 0;
   for (; i < CACHE_SIZE - diff; i++) {
@@ -240,7 +240,7 @@ TEST_F(CacheTest, EvictionWithAccessing) {
   }
 
   EXPECT_EQ(CACHE_SIZE, cache.size());
-  EXPECT_EQ(false, cache.empty());
+  EXPECT_FALSE(cache.empty());
 
   i = 0;
   for (; i < CACHE_SIZE; i++) {
@@ -275,7 +275,7 @@ TEST_F(CacheTests, Updating) {
   }
 
   EXPECT_EQ(CACHE_SIZE, set.size());
-  EXPECT_EQ(false, cache.empty());
+  EXPECT_FALSE(cache.empty());
 
   int diff = CACHE_SIZE / 2;
 
@@ -296,7 +296,7 @@ TEST_F(CacheTests, Updating) {
   }
 
   EXPECT_EQ(CACHE_SIZE, set.size());
-  EXPECT_EQ(false, cache.empty());
+  EXPECT_FALSE(cache.empty());
 
   i = 0;
   for (; i < CACHE_SIZE - diff; i++) {

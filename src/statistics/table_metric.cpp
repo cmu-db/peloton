@@ -30,7 +30,7 @@ TableMetric::TableMetric(MetricType type, oid_t database_id, oid_t table_id)
 }
 
 void TableMetric::Aggregate(AbstractMetric& source) {
-  assert(source.GetType() == TABLE_METRIC);
+  assert(source.GetType() == MetricType::TABLE);
 
   TableMetric& table_metric = static_cast<TableMetric&>(source);
   table_access_.Aggregate(table_metric.GetTableAccess());

@@ -18,7 +18,7 @@
 
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 
 #include "executor/hash_executor.h"
 #include "executor/hash_join_executor.h"
@@ -56,20 +56,21 @@ class JoinTests : public PelotonTest {};
 
 std::vector<planner::MergeJoinPlan::JoinClause> CreateJoinClauses() {
   std::vector<planner::MergeJoinPlan::JoinClause> join_clauses;
-  auto left =
-      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 0, 1);
-  auto right =
-      expression::ExpressionUtil::TupleValueFactory(type::TypeId::INTEGER, 1, 1);
+  auto left = expression::ExpressionUtil::TupleValueFactory(
+      type::TypeId::INTEGER, 0, 1);
+  auto right = expression::ExpressionUtil::TupleValueFactory(
+      type::TypeId::INTEGER, 1, 1);
   bool reversed = false;
   join_clauses.emplace_back(left, right, reversed);
   return join_clauses;
 }
 
 std::shared_ptr<const peloton::catalog::Schema> CreateJoinSchema() {
-  return std::shared_ptr<const peloton::catalog::Schema>(new catalog::Schema(
-      {TestingExecutorUtil::GetColumnInfo(1), TestingExecutorUtil::GetColumnInfo(1),
-       TestingExecutorUtil::GetColumnInfo(0),
-       TestingExecutorUtil::GetColumnInfo(0)}));
+  return std::shared_ptr<const peloton::catalog::Schema>(
+      new catalog::Schema({TestingExecutorUtil::GetColumnInfo(1),
+                           TestingExecutorUtil::GetColumnInfo(1),
+                           TestingExecutorUtil::GetColumnInfo(0),
+                           TestingExecutorUtil::GetColumnInfo(0)}));
 }
 
 // PlanNodeType::NESTLOOP is picked out as a separated test
@@ -84,7 +85,7 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, JoinType join_type,
 void ExecuteNestedLoopJoinTest(JoinType join_type, bool IndexScan = false);
 
 void PopulateTable(storage::DataTable *table, int num_rows, bool random,
-                   concurrency::Transaction *current_txn);
+                   concurrency::TransactionContext *current_txn);
 
 oid_t CountTuplesWithNullFields(executor::LogicalTile *logical_tile);
 
@@ -95,13 +96,13 @@ void ExpectEmptyTileResult(MockExecutor *table_scan_executor);
 
 void ExpectMoreThanOneTileResults(
     MockExecutor *table_scan_executor,
-    std::vector<std::unique_ptr<executor::LogicalTile>>
-        &table_logical_tile_ptrs);
+    std::vector<std::unique_ptr<executor::LogicalTile>> &
+        table_logical_tile_ptrs);
 
-void ExpectNormalTileResults(size_t table_tile_group_count,
-                             MockExecutor *table_scan_executor,
-                             std::vector<std::unique_ptr<executor::LogicalTile>>
-                                 &table_logical_tile_ptrs);
+void ExpectNormalTileResults(
+    size_t table_tile_group_count, MockExecutor *table_scan_executor,
+    std::vector<std::unique_ptr<executor::LogicalTile>> &
+        table_logical_tile_ptrs);
 
 enum JOIN_TEST_TYPE {
   BASIC_TEST = 0,
@@ -224,7 +225,7 @@ TEST_F(JoinTests, BasicNestedLoopTest) {
 }
 
 void PopulateTable(storage::DataTable *table, int num_rows, bool random,
-                   concurrency::Transaction *current_txn) {
+                   concurrency::TransactionContext *current_txn) {
   // Random values
   if (random) std::srand(std::time(nullptr));
 
@@ -334,20 +335,21 @@ void ExecuteNestedLoopJoinTest(JoinType join_type, bool IndexScan) {
         index, key_column_ids, expr_types, values, runtime_keys);
 
     // Create plan node.
-    left_table_node.reset(new planner::IndexScanPlan(left_table.get(), predicate_scan,
-                                           column_ids, index_scan_desc));
+    left_table_node.reset(new planner::IndexScanPlan(
+        left_table.get(), predicate_scan, column_ids, index_scan_desc));
 
     // executor
     left_table_scan_executor.reset(
         new executor::IndexScanExecutor(left_table_node.get(), context.get()));
-  }
-  else {
+  } else {
     LOG_INFO("Construct Left Seq Scan Node");
     // Create sequential scan plan node
-    left_table_node.reset(new planner::SeqScanPlan(left_table.get(), predicate_scan, column_ids));
+    left_table_node.reset(
+        new planner::SeqScanPlan(left_table.get(), predicate_scan, column_ids));
 
     // Executor
-    left_table_scan_executor.reset(new executor::SeqScanExecutor(left_table_node.get(), context.get()));
+    left_table_scan_executor.reset(
+        new executor::SeqScanExecutor(left_table_node.get(), context.get()));
   }
 
   // Right ATTR 0 =
@@ -361,7 +363,6 @@ void ExecuteNestedLoopJoinTest(JoinType join_type, bool IndexScan) {
   expr_types_right.push_back(ExpressionType::COMPARE_EQUAL);
   // values_right.push_back(type::ValueFactory::GetIntegerValue(100).Copy());
   values_right.push_back(type::ValueFactory::GetParameterOffsetValue(0).Copy());
-
 
   expression::AbstractExpression *predicate_scan_right = nullptr;
   std::vector<oid_t> column_ids_right({0, 1});
@@ -377,22 +378,22 @@ void ExecuteNestedLoopJoinTest(JoinType join_type, bool IndexScan) {
         runtime_keys_right);
 
     // Create plan node.
-    right_table_node.reset(new planner::IndexScanPlan(
-        right_table.get(), predicate_scan_right, column_ids_right,
-        index_scan_desc_right));
+    right_table_node.reset(
+        new planner::IndexScanPlan(right_table.get(), predicate_scan_right,
+                                   column_ids_right, index_scan_desc_right));
 
     // executor
     right_table_scan_executor.reset(
         new executor::IndexScanExecutor(right_table_node.get(), context.get()));
-  }
-  else {
+  } else {
     LOG_INFO("Construct Right Seq Scan Node");
     // Create sequential scan plan node
-    right_table_node.reset(
-        new planner::SeqScanPlan(right_table.get(), predicate_scan_right, column_ids_right));
+    right_table_node.reset(new planner::SeqScanPlan(
+        right_table.get(), predicate_scan_right, column_ids_right));
 
     // Executor
-    right_table_scan_executor.reset(new executor::SeqScanExecutor(right_table_node.get(), context.get()));
+    right_table_scan_executor.reset(
+        new executor::SeqScanExecutor(right_table_node.get(), context.get()));
   }
 
   //===--------------------------------------------------------------------===//
@@ -625,8 +626,11 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, JoinType join_type,
   switch (join_algorithm) {
     case PlanNodeType::NESTLOOP: {
       // Create nested loop join plan node.
+      std::vector<oid_t> left_join_cols = {1};
+      std::vector<oid_t> right_join_cols = {1};
       planner::NestedLoopJoinPlan nested_loop_join_node(
-          join_type, std::move(predicate), std::move(projection), schema);
+          join_type, std::move(predicate), std::move(projection), schema,
+          left_join_cols, right_join_cols);
 
       // Run the nested loop join executor
       executor::NestedLoopJoinExecutor nested_loop_join_executor(
@@ -702,13 +706,15 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, JoinType join_type,
           left_hash_keys;
       left_hash_keys.emplace_back(
           std::unique_ptr<expression::AbstractExpression>{
-              new expression::TupleValueExpression(type::TypeId::INTEGER, 0, 1)});
+              new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                                   1)});
 
       std::vector<std::unique_ptr<const expression::AbstractExpression>>
           right_hash_keys;
       right_hash_keys.emplace_back(
           std::unique_ptr<expression::AbstractExpression>{
-              new expression::TupleValueExpression(type::TypeId::INTEGER, 1, 1)});
+              new expression::TupleValueExpression(type::TypeId::INTEGER, 1,
+                                                   1)});
 
       // Create hash plan node
       planner::HashPlan hash_plan_node(hash_keys);
@@ -717,11 +723,9 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, JoinType join_type,
       executor::HashExecutor hash_executor(&hash_plan_node, nullptr);
 
       // Create hash join plan node.
-      planner::HashJoinPlan hash_join_plan_node(join_type, std::move(predicate),
-                                                std::move(projection), schema,
-                                                left_hash_keys,
-                                                right_hash_keys,
-                                                false);
+      planner::HashJoinPlan hash_join_plan_node(
+          join_type, std::move(predicate), std::move(projection), schema,
+          left_hash_keys, right_hash_keys, false);
 
       // Construct the hash join executor
       executor::HashJoinExecutor hash_join_executor(&hash_join_plan_node,
@@ -784,7 +788,8 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, JoinType join_type,
         break;
 
       default:
-        throw Exception("Unsupported join type : " + JoinTypeToString(join_type));
+        throw Exception("Unsupported join type : " +
+                        JoinTypeToString(join_type));
         break;
     }
 
@@ -812,7 +817,8 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, JoinType join_type,
         break;
 
       default:
-        throw Exception("Unsupported join type : " + JoinTypeToString(join_type));
+        throw Exception("Unsupported join type : " +
+                        JoinTypeToString(join_type));
         break;
     }
 
@@ -840,7 +846,8 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, JoinType join_type,
         break;
 
       default:
-        throw Exception("Unsupported join type : " + JoinTypeToString(join_type));
+        throw Exception("Unsupported join type : " +
+                        JoinTypeToString(join_type));
         break;
     }
 
@@ -868,7 +875,8 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, JoinType join_type,
         break;
 
       default:
-        throw Exception("Unsupported join type : " + JoinTypeToString(join_type));
+        throw Exception("Unsupported join type : " +
+                        JoinTypeToString(join_type));
         break;
     }
   } else if (join_test_type == RIGHT_TABLE_EMPTY) {
@@ -895,7 +903,8 @@ void ExecuteJoinTest(PlanNodeType join_algorithm, JoinType join_type,
         break;
 
       default:
-        throw Exception("Unsupported join type : " + JoinTypeToString(join_type));
+        throw Exception("Unsupported join type : " +
+                        JoinTypeToString(join_type));
         break;
     }
   }
@@ -910,8 +919,8 @@ oid_t CountTuplesWithNullFields(executor::LogicalTile *logical_tile) {
 
   // Go over the tile
   for (auto logical_tile_itr : *logical_tile) {
-    const ContainerTuple<executor::LogicalTile> join_tuple(
-        logical_tile, logical_tile_itr);
+    const ContainerTuple<executor::LogicalTile> join_tuple(logical_tile,
+                                                           logical_tile_itr);
 
     // Go over all the fields and check for null values
     for (oid_t col_itr = 0; col_itr < column_count; col_itr++) {
@@ -938,8 +947,8 @@ void ValidateJoinLogicalTile(executor::LogicalTile *logical_tile) {
   // Check the attribute values
   // Go over the tile
   for (auto logical_tile_itr : *logical_tile) {
-    const ContainerTuple<executor::LogicalTile> join_tuple(
-        logical_tile, logical_tile_itr);
+    const ContainerTuple<executor::LogicalTile> join_tuple(logical_tile,
+                                                           logical_tile_itr);
 
     // Check the join fields
     type::Value left_tuple_join_attribute_val = (join_tuple.GetValue(0));
@@ -963,8 +972,8 @@ void ValidateNestedLoopJoinLogicalTile(executor::LogicalTile *logical_tile) {
   // Check the attribute values
   // Go over the tile
   for (auto logical_tile_itr : *logical_tile) {
-    const ContainerTuple<executor::LogicalTile> join_tuple(
-        logical_tile, logical_tile_itr);
+    const ContainerTuple<executor::LogicalTile> join_tuple(logical_tile,
+                                                           logical_tile_itr);
 
     // Check the join fields
     type::Value left_tuple_join_attribute_val = (join_tuple.GetValue(2));
@@ -983,18 +992,18 @@ void ExpectEmptyTileResult(MockExecutor *table_scan_executor) {
 
 void ExpectMoreThanOneTileResults(
     MockExecutor *table_scan_executor,
-    std::vector<std::unique_ptr<executor::LogicalTile>>
-        &table_logical_tile_ptrs) {
+    std::vector<std::unique_ptr<executor::LogicalTile>> &
+        table_logical_tile_ptrs) {
   // Expect more than one result tiles from the child, but only get one of them
   EXPECT_CALL(*table_scan_executor, DExecute()).WillOnce(Return(true));
   EXPECT_CALL(*table_scan_executor, GetOutput())
       .WillOnce(Return(table_logical_tile_ptrs[0].release()));
 }
 
-void ExpectNormalTileResults(size_t table_tile_group_count,
-                             MockExecutor *table_scan_executor,
-                             std::vector<std::unique_ptr<executor::LogicalTile>>
-                                 &table_logical_tile_ptrs) {
+void ExpectNormalTileResults(
+    size_t table_tile_group_count, MockExecutor *table_scan_executor,
+    std::vector<std::unique_ptr<executor::LogicalTile>> &
+        table_logical_tile_ptrs) {
   // Return true for the first table_tile_group_count times
   // Then return false after that
   {

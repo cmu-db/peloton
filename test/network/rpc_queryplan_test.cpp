@@ -31,7 +31,7 @@ TEST_F(RpcQueryPlanTests, BasicTest) {
   peloton::CopySerializeOutput output_plan;
   bool serialize = mapped_plan_ptr.SerializeTo(output_plan);
   // Becuase the plan is not completed, so it is false
-  EXPECT_EQ(serialize, false);
+  EXPECT_FALSE(serialize);
 }
 }
 }

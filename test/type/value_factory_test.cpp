@@ -109,7 +109,7 @@ TEST_F(ValueFactoryTests, CastTest) {
   EXPECT_EQ(v3.GetTypeId(), type::TypeId::VARCHAR);
 
   type::Value v4(type::ValueFactory::Clone(v3));
-  EXPECT_TRUE(v3.CompareEquals(v4) == type::CMP_TRUE);
+  EXPECT_TRUE(v3.CompareEquals(v4) == CmpBool::TRUE);
 
   type::Value v5(type::ValueFactory::CastAsVarchar(type::Value(type::TypeId::TINYINT, (int8_t)type::PELOTON_INT8_MAX)));
   EXPECT_EQ(v5.ToString(), "127");
@@ -161,7 +161,7 @@ TEST_F(ValueFactoryTests, SerializationTest) {
       type::Value expected = (expect_min ?
                                 type::Type::GetMinValue(col_type) :
                                 type::Type::GetMaxValue(col_type));
-      EXPECT_EQ(type::CMP_TRUE, v.CompareEquals(expected));
+      EXPECT_EQ(CmpBool::TRUE, v.CompareEquals(expected));
     }
   }
 }

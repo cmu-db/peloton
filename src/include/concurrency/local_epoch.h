@@ -20,8 +20,8 @@
 #include <functional>
 #include <cstdint>
 
-#include "type/types.h"
-#include "common/platform.h"
+#include "common/internal_types.h"
+#include "common/synchronization/spin_latch.h"
 
 namespace peloton {
 namespace concurrency {
@@ -60,7 +60,7 @@ public:
   uint64_t GetExpiredEpochId(const uint64_t current_epoch_id);
 
 private:
-  Spinlock epoch_lock_;
+  common::synchronization::SpinLatch epoch_lock_;
   
   uint64_t epoch_id_lower_bound_;
 

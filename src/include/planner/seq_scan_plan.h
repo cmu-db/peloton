@@ -20,7 +20,7 @@
 #include "common/logger.h"
 #include "expression/abstract_expression.h"
 #include "type/serializer.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 
 namespace peloton {
 
@@ -53,7 +53,9 @@ class SeqScanPlan : public AbstractScan {
     return PlanNodeType::SEQSCAN;
   }
 
-  const std::string GetInfo() const override { return "SeqScan"; }
+  const std::string GetInfo() const override {
+    return "SeqScan(" + GetPredicateInfo() + ")";
+  }
 
   void SetParameterValues(std::vector<type::Value> *values) override;
 
@@ -81,7 +83,8 @@ class SeqScanPlan : public AbstractScan {
     return !(*this == rhs);
   }
 
-  virtual void VisitParameters(codegen::QueryParametersMap &map,
+  virtual void VisitParameters(
+      codegen::QueryParametersMap &map,
       std::vector<peloton::type::Value> &values,
       const std::vector<peloton::type::Value> &values_from_user) override;
 

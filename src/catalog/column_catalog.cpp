@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "catalog/column_catalog.h"
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 
 #include "catalog/table_catalog.h"
 #include "storage/data_table.h"
@@ -43,14 +43,14 @@ ColumnCatalogObject::ColumnCatalogObject(executor::LogicalTile *tile,
 
 ColumnCatalog *ColumnCatalog::GetInstance(storage::Database *pg_catalog,
                                           type::AbstractPool *pool,
-                                          concurrency::Transaction *txn) {
+                                          concurrency::TransactionContext *txn) {
   static ColumnCatalog column_catalog{pg_catalog, pool, txn};
   return &column_catalog;
 }
 
 ColumnCatalog::ColumnCatalog(storage::Database *pg_catalog,
                              type::AbstractPool *pool,
-                             concurrency::Transaction *txn)
+                             concurrency::TransactionContext *txn)
     : AbstractCatalog(COLUMN_CATALOG_OID, COLUMN_CATALOG_NAME,
                       InitializeSchema().release(), pg_catalog) {
   // Add indexes for pg_attribute
@@ -145,7 +145,7 @@ bool ColumnCatalog::InsertColumn(oid_t table_oid,
                                  type::TypeId column_type, bool is_inlined,
                                  const std::vector<Constraint> &constraints,
                                  type::AbstractPool *pool,
-                                 concurrency::Transaction *txn) {
+                                 concurrency::TransactionContext *txn) {
   // Create the tuple first
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
@@ -184,7 +184,7 @@ bool ColumnCatalog::InsertColumn(oid_t table_oid,
 
 bool ColumnCatalog::DeleteColumn(oid_t table_oid,
                                  const std::string &column_name,
-                                 concurrency::Transaction *txn) {
+                                 concurrency::TransactionContext *txn) {
   oid_t index_offset =
       IndexId::PRIMARY_KEY;  // Index of table_oid & column_name
   std::vector<type::Value> values;
@@ -203,11 +203,11 @@ bool ColumnCatalog::DeleteColumn(oid_t table_oid,
 /* @brief   delete all column records from the same table
  * this function is useful when calling DropTable
  * @param   table_oid
- * @param   txn  Transaction
+ * @param   txn  TransactionContext
  * @return  a vector of table oid
  */
 bool ColumnCatalog::DeleteColumns(oid_t table_oid,
-                                  concurrency::Transaction *txn) {
+                                  concurrency::TransactionContext *txn) {
   oid_t index_offset = IndexId::SKEY_TABLE_OID;  // Index of table_oid
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
@@ -222,7 +222,7 @@ bool ColumnCatalog::DeleteColumns(oid_t table_oid,
 
 const std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogObject>>
 ColumnCatalog::GetColumnObjects(oid_t table_oid,
-                                concurrency::Transaction *txn) {
+                                concurrency::TransactionContext *txn) {
   // try get from cache
   auto table_object =
       TableCatalog::GetInstance()->GetTableObject(table_oid, txn);

@@ -12,6 +12,7 @@
 
 #include "codegen/operator/global_group_by_translator.h"
 
+#include "codegen/compilation_context.h"
 #include "codegen/lang/if.h"
 #include "common/logger.h"
 #include "planner/aggregate_plan.h"
@@ -58,8 +59,6 @@ GlobalGroupByTranslator::GlobalGroupByTranslator(
   // Allocate state in the function argument for our materialization buffer
   auto &runtime_state = context.GetRuntimeState();
   mat_buffer_id_ = runtime_state.RegisterState("buf", mat_buffer_type);
-  output_vector_id_ = runtime_state.RegisterState(
-      "ggbSelVec", codegen.ArrayType(codegen.Int32Type(), 1), true);
 
   LOG_DEBUG("Finished constructing GlobalGroupByTranslator ...");
 }
@@ -92,9 +91,13 @@ void GlobalGroupByTranslator::Produce() const {
   }
 
   // Create a row-batch of one row, place all the attributes into the row
-  Vector v{LoadStateValue(output_vector_id_), 1, codegen.Int32Type()};
+  auto *raw_vec =
+      codegen.AllocateBuffer(codegen.Int32Type(), 1, "globalGroupBySelVector");
+  Vector selection_vector{raw_vec, 1, codegen.Int32Type()};
+  selection_vector.SetValue(codegen, codegen.Const32(0), codegen.Const32(0));
+
   RowBatch batch{GetCompilationContext(), codegen.Const32(0),
-                 codegen.Const32(1), v, false};
+                 codegen.Const32(1), selection_vector, false};
 
   for (size_t i = 0; i < agg_terms.size(); i++) {
     batch.AddAttribute(&agg_terms[i].agg_ai, &buffer_accessors[i]);

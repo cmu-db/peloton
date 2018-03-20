@@ -14,7 +14,7 @@
 
 #include "catalog/database_catalog.h"
 
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "catalog/table_catalog.h"
 #include "catalog/column_catalog.h"
 #include "executor/logical_tile.h"
@@ -26,7 +26,7 @@ namespace peloton {
 namespace catalog {
 
 DatabaseCatalogObject::DatabaseCatalogObject(executor::LogicalTile *tile,
-                                             concurrency::Transaction *txn)
+                                             concurrency::TransactionContext *txn)
     : database_oid(tile->GetValue(0, DatabaseCatalog::ColumnId::DATABASE_OID)
                        .GetAs<oid_t>()),
       database_name(tile->GetValue(0, DatabaseCatalog::ColumnId::DATABASE_NAME)
@@ -198,14 +198,14 @@ std::shared_ptr<IndexCatalogObject> DatabaseCatalogObject::GetCachedIndexObject(
 
 DatabaseCatalog *DatabaseCatalog::GetInstance(storage::Database *pg_catalog,
                                               type::AbstractPool *pool,
-                                              concurrency::Transaction *txn) {
+                                              concurrency::TransactionContext *txn) {
   static DatabaseCatalog database_catalog{pg_catalog, pool, txn};
   return &database_catalog;
 }
 
 DatabaseCatalog::DatabaseCatalog(storage::Database *pg_catalog,
                                  type::AbstractPool *pool,
-                                 concurrency::Transaction *txn)
+                                 concurrency::TransactionContext *txn)
     : AbstractCatalog(DATABASE_CATALOG_OID, DATABASE_CATALOG_NAME,
                       InitializeSchema().release(), pg_catalog) {
   // Insert columns into pg_attribute
@@ -252,7 +252,7 @@ std::unique_ptr<catalog::Schema> DatabaseCatalog::InitializeSchema() {
 bool DatabaseCatalog::InsertDatabase(oid_t database_oid,
                                      const std::string &database_name,
                                      type::AbstractPool *pool,
-                                     concurrency::Transaction *txn) {
+                                     concurrency::TransactionContext *txn) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
@@ -267,7 +267,7 @@ bool DatabaseCatalog::InsertDatabase(oid_t database_oid,
 }
 
 bool DatabaseCatalog::DeleteDatabase(oid_t database_oid,
-                                     concurrency::Transaction *txn) {
+                                     concurrency::TransactionContext *txn) {
   oid_t index_offset = IndexId::PRIMARY_KEY;  // Index of database_oid
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
@@ -279,7 +279,7 @@ bool DatabaseCatalog::DeleteDatabase(oid_t database_oid,
 }
 
 std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
-    oid_t database_oid, concurrency::Transaction *txn) {
+    oid_t database_oid, concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
   }
@@ -318,7 +318,7 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
  *          cache.
  */
 std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
-    const std::string &database_name, concurrency::Transaction *txn) {
+    const std::string &database_name, concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
   }

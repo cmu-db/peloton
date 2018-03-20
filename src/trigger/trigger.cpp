@@ -15,7 +15,7 @@
 #include "catalog/catalog.h"
 #include "catalog/column_catalog.h"
 #include "catalog/table_catalog.h"
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "expression/comparison_expression.h"
 #include "expression/constant_value_expression.h"
 #include "expression/tuple_value_expression.h"
@@ -58,7 +58,7 @@ Trigger::Trigger(const std::string &name, int16_t type,
  *
  */
 void Trigger::SerializeWhen(SerializeOutput &output, oid_t database_oid,
-                            oid_t table_oid, concurrency::Transaction *txn) {
+                            oid_t table_oid, concurrency::TransactionContext *txn) {
   size_t start = output.Position();
   output.WriteInt(0);  // reserve first 4 bytes for the total tuple size
   if (trigger_when != nullptr) {
@@ -165,7 +165,7 @@ void TriggerList::UpdateTypeSummary(int16_t type) {
 }
 
 bool TriggerList::ExecTriggers(TriggerType exec_type,
-                               concurrency::Transaction *txn,
+                               concurrency::TransactionContext *txn,
                                storage::Tuple *new_tuple,
                                executor::ExecutorContext *executor_context_,
                                storage::Tuple *old_tuple,

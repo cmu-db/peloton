@@ -81,6 +81,10 @@ class CodeGen {
   /// Wrapper for pointer for constant string
   llvm::Value *ConstStringPtr(const std::string &s) const;
 
+  llvm::Value *AllocateVariable(llvm::Type *type, const std::string &name);
+  llvm::Value *AllocateBuffer(llvm::Type *element_type, uint32_t num_elems,
+                              const std::string &name);
+
   // /Generate a call to the function with the provided name and arguments
   llvm::Value *CallFunc(llvm::Value *fn,
                         std::initializer_list<llvm::Value *> args);
@@ -97,6 +101,7 @@ class CodeGen {
   //===--------------------------------------------------------------------===//
   llvm::Value *CallPrintf(const std::string &format,
                           const std::vector<llvm::Value *> &args);
+  llvm::Value *Sqrt(llvm::Value *val);
 
   //===--------------------------------------------------------------------===//
   // Arithmetic with overflow logic - These methods perform the desired math op,
@@ -136,6 +141,10 @@ class CodeGen {
   llvm::LLVMContext &GetContext() const { return code_context_.GetContext(); }
 
   CodeContext &GetCodeContext() const { return code_context_; }
+
+  FunctionBuilder *GetCurrentFunction() const {
+    return code_context_.GetCurrentFunction();
+  }
 
  private:
   friend class Hash;

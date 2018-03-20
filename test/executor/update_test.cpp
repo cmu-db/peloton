@@ -13,14 +13,14 @@
 #include <cstdio>
 
 #include "executor/testing_executor_util.h"
-#include <sql/testing_sql_util.h>
+#include "sql/testing_sql_util.h"
 #include "common/harness.h"
 
 #include "catalog/catalog.h"
 #include "catalog/schema.h"
 #include "common/logger.h"
 #include "common/statement.h"
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/abstract_executor.h"
 #include "executor/create_executor.h"
@@ -44,8 +44,8 @@
 #include "planner/update_plan.h"
 #include "storage/data_table.h"
 #include "storage/tile_group_factory.h"
-#include "include/traffic_cop/traffic_cop.h"
-#include "type/types.h"
+#include "traffic_cop/traffic_cop.h"
+#include "common/internal_types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
 
@@ -63,7 +63,7 @@ class UpdateTests : public PelotonTest {};
 
 namespace {
 
-storage::DataTable* CreateTable() {
+storage::DataTable *CreateTable() {
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
   std::unique_ptr<storage::DataTable> table(TestingExecutorUtil::CreateTable());
 
@@ -137,7 +137,7 @@ TEST_F(UpdateTests, MultiColumnUpdates) {
   //      traffic_cop::TrafficCop::GetInstance().GenerateTupleDescriptor(
   //          select_stmt->GetStatement(0));
   //  result_format = std::move(std::vector<int>(tuple_descriptor.size(), 0));
-  //  UNUSED_ATTRIBUTE executor::ExecuteResult status =
+  //  UNUSED_ATTRIBUTE executor::ExecutionResult status =
   //      executor::PlanExecutor::ExecutePlan(statement->GetPlanTree().get(),
   //      params,
   //                                        result, result_format);
@@ -148,15 +148,16 @@ TEST_F(UpdateTests, MultiColumnUpdates) {
 TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Bootstrapping...");
   auto catalog = catalog::Catalog::GetInstance();
-  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
   LOG_INFO("Bootstrapping completed!");
 
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
       new optimizer::Optimizer);
-  auto& traffic_cop = tcop::TrafficCop::GetInstance();
-  traffic_cop.SetTaskCallback(TestingSQLUtil::UtilTestTaskCallback, &TestingSQLUtil::counter_);
+  auto &traffic_cop = tcop::TrafficCop::GetInstance();
+  traffic_cop.SetTaskCallback(TestingSQLUtil::UtilTestTaskCallback,
+                              &TestingSQLUtil::counter_);
   // Create a table first
   LOG_INFO("Creating a table...");
   auto id_column = catalog::Column(
@@ -184,7 +185,7 @@ TEST_F(UpdateTests, UpdatingOld) {
 
   LOG_INFO("Table created!");
 
-  storage::DataTable* table =
+  storage::DataTable *table =
       catalog->GetTableWithName(DEFAULT_DB_NAME, "department_table", txn);
   txn_manager.CommitTransaction(txn);
 
@@ -201,7 +202,7 @@ TEST_F(UpdateTests, UpdatingOld) {
                                 "INSERT INTO "
                                 "department_table(dept_id,manager_id,dept_name)"
                                 " VALUES (1,12,'hello_1');"));
-  auto& peloton_parser = parser::PostgresParser::GetInstance();
+  auto &peloton_parser = parser::PostgresParser::GetInstance();
   LOG_INFO("Building parse tree...");
   auto insert_stmt = peloton_parser.BuildParseTree(
       "INSERT INTO department_table(dept_id,manager_id,dept_name) VALUES "
@@ -209,18 +210,18 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
 
-  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(insert_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(
+      optimizer->BuildPelotonPlanTree(insert_stmt, DEFAULT_DB_NAME, txn));
   LOG_INFO("Building plan tree completed!");
   std::vector<type::Value> params;
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
 
   std::vector<int> result_format;
-  result_format =
-      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
   TestingSQLUtil::counter_.store(1);
-  executor::ExecuteResult status = traffic_cop.ExecuteHelper(
+  executor::ExecutionResult status = traffic_cop.ExecuteHelper(
       statement->GetPlanTree(), params, result, result_format);
   if (traffic_cop.GetQueuing()) {
     TestingSQLUtil::ContinueAfterComplete();
@@ -251,15 +252,15 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
 
-  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(update_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(
+      optimizer->BuildPelotonPlanTree(update_stmt, DEFAULT_DB_NAME, txn));
   LOG_INFO("Building plan tree completed!");
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
-  result_format =
-      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
   TestingSQLUtil::counter_.store(1);
-  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(),
-                                     params, result, result_format);
+  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(), params, result,
+                                     result_format);
   if (traffic_cop.GetQueuing()) {
     TestingSQLUtil::ContinueAfterComplete();
     traffic_cop.ExecuteStatementPlanGetResult();
@@ -290,15 +291,15 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
 
-  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(update_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(
+      optimizer->BuildPelotonPlanTree(update_stmt, DEFAULT_DB_NAME, txn));
   LOG_INFO("Building plan tree completed!");
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
-  result_format =
-      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
   TestingSQLUtil::counter_.store(1);
-  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(),
-                                     params, result, result_format);
+  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(), params, result,
+                                     result_format);
   if (traffic_cop.GetQueuing()) {
     TestingSQLUtil::ContinueAfterComplete();
     traffic_cop.ExecuteStatementPlanGetResult();
@@ -323,15 +324,15 @@ TEST_F(UpdateTests, UpdatingOld) {
       "UPDATE department_table SET dept_id = 2 WHERE dept_id = 1");
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
-  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(update_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(
+      optimizer->BuildPelotonPlanTree(update_stmt, DEFAULT_DB_NAME, txn));
   LOG_INFO("Building plan tree completed!");
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
-  result_format =
-      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
   TestingSQLUtil::counter_.store(1);
-  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(),
-                                     params, result, result_format);
+  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(), params, result,
+                                     result_format);
   if (traffic_cop.GetQueuing()) {
     TestingSQLUtil::ContinueAfterComplete();
     traffic_cop.ExecuteStatementPlanGetResult();
@@ -359,15 +360,15 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Building parse tree completed!");
   LOG_INFO("Building plan tree...");
 
-  statement->SetPlanTree(optimizer->BuildPelotonPlanTree(delete_stmt, DEFAULT_DB_NAME, txn));
+  statement->SetPlanTree(
+      optimizer->BuildPelotonPlanTree(delete_stmt, DEFAULT_DB_NAME, txn));
   LOG_INFO("Building plan tree completed!");
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
-  result_format =
-      std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
   TestingSQLUtil::counter_.store(1);
-  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(),
-                                     params, result, result_format);
+  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(), params, result,
+                                     result_format);
   if (traffic_cop.GetQueuing()) {
     TestingSQLUtil::ContinueAfterComplete();
     traffic_cop.ExecuteStatementPlanGetResult();

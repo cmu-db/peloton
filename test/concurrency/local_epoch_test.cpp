@@ -18,7 +18,7 @@ namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
-// Transaction Tests
+// TransactionContext Tests
 //===--------------------------------------------------------------------===//
 
 class LocalEpochTests : public PelotonTest {};
@@ -30,12 +30,12 @@ TEST_F(LocalEpochTests, EpochCompareTest) {
   std::shared_ptr<concurrency::Epoch> epoch0(new concurrency::Epoch(10, 20));
   std::shared_ptr<concurrency::Epoch> epoch1(new concurrency::Epoch(10, 20));
   bool rt = comp(epoch0, epoch1);
-  EXPECT_EQ(rt, false);
+  EXPECT_FALSE(rt);
 
   std::shared_ptr<concurrency::Epoch> epoch2(new concurrency::Epoch(11, 21));
   std::shared_ptr<concurrency::Epoch> epoch3(new concurrency::Epoch(12, 20));
   rt = comp(epoch2, epoch3);
-  EXPECT_EQ(rt, false);
+  EXPECT_FALSE(rt);
 }
 
 
@@ -44,14 +44,14 @@ TEST_F(LocalEpochTests, TransactionTest) {
   
   // a transaction enters epoch 10
   bool rt = local_epoch.EnterEpoch(10, TimestampType::READ);
-  EXPECT_EQ(rt, true);
+  EXPECT_TRUE(rt);
 
   uint64_t max_eid = local_epoch.GetExpiredEpochId(11);
   EXPECT_EQ(max_eid, 9);
   
   // a transaction enters epoch 15
   rt = local_epoch.EnterEpoch(15, TimestampType::READ);
-  EXPECT_EQ(rt, true);
+  EXPECT_TRUE(rt);
   
   max_eid = local_epoch.GetExpiredEpochId(18);
   EXPECT_EQ(max_eid, 9);
@@ -65,7 +65,7 @@ TEST_F(LocalEpochTests, TransactionTest) {
   // now the lower bound is 14.
   // a transaction at epoch 12 must be rejected.
   rt = local_epoch.EnterEpoch(12, TimestampType::READ);
-  EXPECT_EQ(rt, false);
+  EXPECT_FALSE(rt);
 
   // a read-only transaction can always succeed.
   local_epoch.EnterEpoch(12, TimestampType::SNAPSHOT_READ);

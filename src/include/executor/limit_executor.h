@@ -21,6 +21,10 @@ namespace executor {
  * TODO Currently, both limit and offset must be good numbers.
  * Postgres also allows stand-alone LIMIT and stand-alone OFFSET.
  * Need further change to accommodate it.
+ *
+ * 2018-01-07: This is <b>deprecated</b>. Do not modify these classes.
+ * The old interpreted engine will be removed.
+ * @deprecated
  */
 class LimitExecutor : public AbstractExecutor {
  public:

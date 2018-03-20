@@ -18,11 +18,12 @@
 #include "common/container_tuple.h"
 #include "common/logger.h"
 #include "common/platform.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "storage/abstract_table.h"
 #include "storage/tile.h"
 #include "storage/tile_group_header.h"
 #include "storage/tuple.h"
+#include "util/stringbox_util.h"
 
 namespace peloton {
 namespace storage {
@@ -92,6 +93,7 @@ oid_t TileGroup::GetActiveTupleCount() const {
   return tile_group_header->GetActiveTupleCount();
 }
 
+
 //===--------------------------------------------------------------------===//
 // Operations
 //===--------------------------------------------------------------------===//
@@ -159,7 +161,6 @@ oid_t TileGroup::InsertTuple(const Tuple *tuple) {
             INVALID_TXN_ID);
   PL_ASSERT(tile_group_header->GetBeginCommitId(tuple_slot_id) == MAX_CID);
   PL_ASSERT(tile_group_header->GetEndCommitId(tuple_slot_id) == MAX_CID);
-
   return tuple_slot_id;
 }
 
@@ -386,7 +387,8 @@ void TileGroup::Sync() {
 const std::string TileGroup::GetInfo() const {
   std::ostringstream os;
 
-  os << "** TILE GROUP[#" << tile_group_id << "] **" << std::endl;
+  os << peloton::GETINFO_DOUBLE_STAR << " TILE GROUP[#" << tile_group_id << "] "
+     << peloton::GETINFO_DOUBLE_STAR << std::endl;
   os << "Database[" << database_id << "] // ";
   os << "Table[" << table_id << "] " << std::endl;
   os << (*tile_group_header) << std::endl;
@@ -400,8 +402,8 @@ const std::string TileGroup::GetInfo() const {
 
   // auto header = GetHeader();
   // if (header != nullptr) os << (*header);
-
-  return os.str();
+  return peloton::StringUtil::Prefix(peloton::StringBoxUtil::Box(os.str()),
+                                     GETINFO_SPACER);
 }
 
 }  // namespace storage

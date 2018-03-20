@@ -10,8 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "concurrency/decentralized_epoch_manager.h"
+#include "concurrency/local_epoch.h"
 
+#include "concurrency/decentralized_epoch_manager.h"
 
 namespace peloton {
 namespace concurrency {

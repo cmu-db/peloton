@@ -16,7 +16,7 @@
 #include "codegen/proxy/executor_context_proxy.h"
 #include "codegen/proxy/target_proxy.h"
 #include "codegen/proxy/tile_group_proxy.h"
-#include "codegen/proxy/transaction_proxy.h"
+#include "codegen/proxy/transaction_context_proxy.h"
 #include "codegen/proxy/value_proxy.h"
 #include "codegen/proxy/pool_proxy.h"
 

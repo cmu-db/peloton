@@ -11,8 +11,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "codegen/operator/delete_translator.h"
-#include "codegen/proxy/catalog_proxy.h"
+
+#include "codegen/compilation_context.h"
 #include "codegen/proxy/deleter_proxy.h"
+#include "codegen/proxy/storage_manager_proxy.h"
 #include "planner/delete_plan.h"
 #include "storage/data_table.h"
 
@@ -40,7 +42,8 @@ void DeleteTranslator::InitializeState() {
   storage::DataTable *table = delete_plan_.GetTable();
   llvm::Value *table_ptr =
       codegen.Call(StorageManagerProxy::GetTableWithOid,
-                   {GetCatalogPtr(), codegen.Const32(table->GetDatabaseOid()),
+                   {GetStorageManagerPtr(),
+                    codegen.Const32(table->GetDatabaseOid()),
                     codegen.Const32(table->GetOid())});
 
   llvm::Value *executor_ptr = GetCompilationContext().GetExecutorContextPtr();

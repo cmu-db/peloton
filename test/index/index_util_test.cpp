@@ -143,7 +143,7 @@ TEST_F(IndexUtilTests, FindValueIndexTest) {
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL,
        ExpressionType::COMPARE_EQUAL},
       value_index_list);
-  EXPECT_EQ(ret, true);
+  EXPECT_TRUE(ret);
   value_index_list.clear();
 
   ret = IndexUtil::FindValueIndex(
@@ -151,7 +151,7 @@ TEST_F(IndexUtilTests, FindValueIndexTest) {
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL,
        ExpressionType::COMPARE_EQUAL},
       value_index_list);
-  EXPECT_EQ(ret, true);
+  EXPECT_TRUE(ret);
   value_index_list.clear();
 
   ret = IndexUtil::FindValueIndex(
@@ -159,7 +159,7 @@ TEST_F(IndexUtilTests, FindValueIndexTest) {
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL,
        ExpressionType::COMPARE_EQUAL},
       value_index_list);
-  EXPECT_EQ(ret, true);
+  EXPECT_TRUE(ret);
   value_index_list.clear();
 
   // Test whether reconizes if only two columns are matched
@@ -168,20 +168,20 @@ TEST_F(IndexUtilTests, FindValueIndexTest) {
       index_p->GetMetadata(), {0, 1},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL},
       value_index_list);
-  EXPECT_EQ(ret, false);
+  EXPECT_FALSE(ret);
   value_index_list.clear();
 
   ret = IndexUtil::FindValueIndex(
       index_p->GetMetadata(), {3, 0},
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL},
       value_index_list);
-  EXPECT_EQ(ret, false);
+  EXPECT_FALSE(ret);
   value_index_list.clear();
 
   // Test empty
 
   ret = IndexUtil::FindValueIndex(index_p->GetMetadata(), {}, {}, value_index_list);
-  EXPECT_EQ(ret, false);
+  EXPECT_FALSE(ret);
   value_index_list.clear();
 
   // Test redundant conditions
@@ -193,7 +193,7 @@ TEST_F(IndexUtilTests, FindValueIndexTest) {
        ExpressionType::COMPARE_LESSTHAN, ExpressionType::COMPARE_EQUAL,
        ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL},
       value_index_list);
-  EXPECT_EQ(ret, false);
+  EXPECT_FALSE(ret);
   value_index_list.clear();
 
   // This should return true
@@ -203,7 +203,7 @@ TEST_F(IndexUtilTests, FindValueIndexTest) {
        ExpressionType::COMPARE_LESSTHAN, ExpressionType::COMPARE_LESSTHAN,
        ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL},
       value_index_list);
-  EXPECT_EQ(ret, true);
+  EXPECT_TRUE(ret);
   value_index_list.clear();
 
   // Test duplicated conditions on a single column
@@ -212,7 +212,7 @@ TEST_F(IndexUtilTests, FindValueIndexTest) {
       {ExpressionType::COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL,
        ExpressionType::COMPARE_EQUAL},
       value_index_list);
-  EXPECT_EQ(ret, false);
+  EXPECT_FALSE(ret);
   value_index_list.clear();
 
   // The last test should logically be classified as point query
@@ -224,7 +224,7 @@ TEST_F(IndexUtilTests, FindValueIndexTest) {
        ExpressionType::COMPARE_EQUAL,
        ExpressionType::COMPARE_GREATERTHANOREQUALTO},
       value_index_list);
-  EXPECT_EQ(ret, false);
+  EXPECT_FALSE(ret);
   value_index_list.clear();
 
   return;
@@ -272,13 +272,13 @@ TEST_F(IndexUtilTests, ConstructBoundaryKeyTest) {
   EXPECT_EQ(cl[0].GetBindingCount(), 0UL);
 
   // Check whether the entire predicate is full index scan (should not be)
-  EXPECT_EQ(isp.IsFullIndexScan(), false);
+  EXPECT_FALSE(isp.IsFullIndexScan());
 
   // Then check the conjunction predicate
-  EXPECT_EQ(cl[0].IsFullIndexScan(), false);
+  EXPECT_FALSE(cl[0].IsFullIndexScan());
 
   // Then check whether the conjunction predicate is a point query
-  EXPECT_EQ(cl[0].IsPointQuery(), false);
+  EXPECT_FALSE(cl[0].IsPointQuery());
 
   LOG_INFO("Low key = %s", cl[0].GetLowKey()->GetInfo().c_str());
   LOG_INFO("High key = %s", cl[0].GetHighKey()->GetInfo().c_str());
@@ -308,9 +308,9 @@ TEST_F(IndexUtilTests, ConstructBoundaryKeyTest) {
 
   EXPECT_EQ(cl2.size(), 2UL);
   EXPECT_EQ(cl2[1].GetBindingCount(), 0UL);
-  EXPECT_EQ(isp.IsFullIndexScan(), true);
-  EXPECT_EQ(cl2[1].IsFullIndexScan(), true);
-  EXPECT_EQ(cl2[1].IsPointQuery(), false);
+  EXPECT_TRUE(isp.IsFullIndexScan());
+  EXPECT_TRUE(cl2[1].IsFullIndexScan());
+  EXPECT_FALSE(cl2[1].IsPointQuery());
 
   ///////////////////////////////////////////////////////////////////
   // Test point query and query key
@@ -340,9 +340,9 @@ TEST_F(IndexUtilTests, ConstructBoundaryKeyTest) {
 
   EXPECT_EQ(cl3.size(), 1UL);
   EXPECT_EQ(cl3[0].GetBindingCount(), 0UL);
-  EXPECT_EQ(isp2.IsFullIndexScan(), false);
-  EXPECT_EQ(cl3[0].IsFullIndexScan(), false);
-  EXPECT_EQ(cl3[0].IsPointQuery(), true);
+  EXPECT_FALSE(isp2.IsFullIndexScan());
+  EXPECT_FALSE(cl3[0].IsFullIndexScan());
+  EXPECT_TRUE(cl3[0].IsPointQuery());
 
   LOG_INFO("Point query key = %s",
            cl3[0].GetPointQueryKey()->GetInfo().c_str());
@@ -394,8 +394,8 @@ TEST_F(IndexUtilTests, BindKeyTest) {
 
   // Basic check to avoid surprise in later tests
   EXPECT_EQ(cl.size(), 1);
-  EXPECT_EQ(cl[0].IsPointQuery(), false);
-  EXPECT_EQ(isp.IsFullIndexScan(), false);
+  EXPECT_FALSE(cl[0].IsPointQuery());
+  EXPECT_FALSE(isp.IsFullIndexScan());
 
   // There are three unbound values
   EXPECT_EQ(cl[0].GetBindingCount(), 3);

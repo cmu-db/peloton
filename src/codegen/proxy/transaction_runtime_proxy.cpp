@@ -14,7 +14,7 @@
 
 #include "codegen/transaction_runtime.h"
 #include "codegen/proxy/data_table_proxy.h"
-#include "codegen/proxy/transaction_proxy.h"
+#include "codegen/proxy/transaction_context_proxy.h"
 #include "codegen/proxy/tile_group_proxy.h"
 #include "codegen/proxy/value_proxy.h"
 

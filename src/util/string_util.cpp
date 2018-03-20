@@ -27,6 +27,19 @@ bool StringUtil::Contains(const std::string &haystack,
   return (haystack.find(needle) != std::string::npos);
 }
 
+/*
+ * Remove trailing ' ', '\f', '\n', '\r', '\t', '\v'
+ */
+void StringUtil::RTrim(std::string &str) {
+  str.erase(std::find_if(str.rbegin(), str.rend(), [](int ch) {
+    return !std::isspace(ch);
+  }).base(), str.end());
+}
+
+std::string StringUtil::Indent(int num_indent) {
+  return std::string(num_indent, ' ');
+}
+
 bool StringUtil::StartsWith(const std::string &str, const std::string &prefix) {
   return std::equal(prefix.begin(), prefix.end(), str.begin());
 }
@@ -47,11 +60,11 @@ std::string StringUtil::Repeat(const std::string &str, const std::size_t n) {
   return (os.str());
 }
 
-std::vector<std::string> StringUtil::Split(const std::string &str) {
+std::vector<std::string> StringUtil::Split(const std::string &str, char delimiter) {
   std::stringstream ss(str);
   std::vector<std::string> lines;
   std::string temp;
-  while (std::getline(ss, temp, '\n')) {
+  while (std::getline(ss, temp, delimiter)) {
     lines.push_back(temp);
   }  // WHILE
   return (lines);
@@ -59,7 +72,7 @@ std::vector<std::string> StringUtil::Split(const std::string &str) {
 
 std::string StringUtil::Prefix(const std::string &str,
                                const std::string &prefix) {
-  std::vector<std::string> lines = StringUtil::Split(str);
+  std::vector<std::string> lines = StringUtil::Split(str, '\n');
   if (lines.empty()) return ("");
 
   std::ostringstream os;

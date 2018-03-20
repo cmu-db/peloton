@@ -305,7 +305,7 @@ class HashAggregator : public AbstractAggregator {
     bool operator()(const std::vector<type::Value> &lhs,
                     const std::vector<type::Value> &rhs) const {
       for (size_t i = 0; i < lhs.size() && i < rhs.size(); i++) {
-        if (lhs[i].CompareNotEquals(rhs[i]) == type::CMP_TRUE) return false;
+        if (lhs[i].CompareNotEquals(rhs[i]) == CmpBool::TRUE) return false;
       }
       if (lhs.size() == rhs.size()) return true;
       return false;

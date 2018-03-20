@@ -15,8 +15,8 @@
 namespace peloton {
 namespace codegen {
 
-// The default vector size is 2048 elements
-std::atomic<uint32_t> Vector::kDefaultVectorSize{2048};
+// The default vector size is 1024 elements
+std::atomic<uint32_t> Vector::kDefaultVectorSize{1024};
 
 // The default byte-alignment of all vectors is 32 bytes
 uint32_t Vector::kDefaultVectorAlignment = 32;

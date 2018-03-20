@@ -8,14 +8,24 @@
 # To enable, symlink this file to '.git/hooks/pre-commit' like so:
 #   ln -s ../../script/git-hooks/pre-commit .git/hooks/pre-commit
 
-files=$(git diff --name-only HEAD --cached --diff-filter=d | grep '\.\(cpp\|h\)$')
-if [ -n "$files" ]; then
-  python script/validators/source_validator.py --files $files
-  result=$?
-  if [ $result -ne 0 ]; then
-    echo "Use `./script/formatter/formatter.py -c -f` to format all staged files or `--no-verify` to temporarily bypass the pre-commit hook. Be aware that changed files have to be staged again!"
+FORMATTER_COMMAND="./script/formatting/formatter.py"
+
+FILES=$(git diff --name-only HEAD --cached --diff-filter=d | grep '\.\(cpp\|h\)$')
+if [ -n "$FILES" ]; then
+  ./script/validators/source_validator.py --files $FILES
+  RESULT=$?
+  if [ $RESULT -ne 0 ]; then
+    echo "***************************************"
+    echo "******* Peloton Pre-Commit Hook *******"
+    echo "***************************************"
+    echo "Use \"$FORMATTER_PATH -c -f\" to format all staged files."
+    echo "Or use \"git commit --no-verify\" to temporarily bypass the pre-commit hook."
+
+    echo
+    echo "Be aware that changed files have to be staged again!"
+    echo "***************************************"
   fi
-  exit $result
+  exit $RESULT
 fi
 
 exit 0

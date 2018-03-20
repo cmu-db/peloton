@@ -4,12 +4,11 @@
 //
 // rpc_controller.h
 //
-// Identification: src/include/network/rpc_controller.h
+// Identification: src/include/network/service/rpc_controller.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
 
 #pragma once
 
@@ -41,7 +40,7 @@ class RpcController : public google::protobuf::RpcController {
   }
 
   // sever side
-  void SetFailed(const std::string& reason) {
+  void SetFailed(const std::string &reason) {
     is_failed_ = true;
     error_str_ = reason;
   }
@@ -52,7 +51,7 @@ class RpcController : public google::protobuf::RpcController {
   }
 
   // sever side
-  void NotifyOnCancel(google::protobuf::Closure* callback) {  // NOT IMPL
+  void NotifyOnCancel(google::protobuf::Closure *callback) {  // NOT IMPL
 
     if (callback) {
       callback->Run();

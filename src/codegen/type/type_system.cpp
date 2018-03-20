@@ -141,12 +141,53 @@ Value TypeSystem::SimpleComparisonHandleNull::EvalCompareGte(
   GEN_COMPARE(CompareGteImpl(codegen, left, right));
 }
 
+#undef GEN_COMPARE
+
 Value TypeSystem::SimpleComparisonHandleNull::EvalCompareForSort(
     CodeGen &codegen, const Value &left, const Value &right) const {
-  GEN_COMPARE(CompareForSortImpl(codegen, left, right));
-}
+  // Do null-safe comparison
+  auto real_cmp = CompareForSortImpl(codegen, left, right);
 
-#undef GEN_COMPARE
+  // If neither input is NULLable, we're done
+  if (!left.IsNullable() && !right.IsNullable()) {
+    return real_cmp;
+  }
+
+  /// What we're doing is a simplification of the NULL-handling logic Postgres
+  /// uses when sorting heap tuples. We essentially implement a shortcut version
+  /// of the following logic:
+  ///
+  /// @code
+  ///  if (left.IsNull()) {
+  ///    if (right.IsNull()) {
+  ///       return 0;
+  ///    } else {
+  ///       return 1;
+  ///    }
+  ///  } else if (right.IsNull()) {
+  ///    if (left.IsNull()) {
+  ///      return 0;
+  ///    } else {
+  ///      return -1;
+  ///    }
+  ///  } else {
+  ///    return Impl();
+  ///  }
+  /// @endcode
+
+  llvm::Value *left_null = left.IsNull(codegen);
+  llvm::Value *right_null = right.IsNull(codegen);
+  llvm::Value *either_null = codegen->CreateOr(left_null, right_null);
+
+  llvm::Value *null_cmp =
+      codegen->CreateSub(codegen->CreateZExt(left_null, codegen.Int32Type()),
+                         codegen->CreateZExt(right_null, codegen.Int32Type()));
+
+  llvm::Value *final =
+      codegen->CreateSelect(either_null, null_cmp, real_cmp.GetValue());
+
+  return Value{Integer::Instance(), final, nullptr, nullptr};
+}
 
 //===----------------------------------------------------------------------===//
 //
@@ -210,11 +251,34 @@ Value TypeSystem::ExpensiveComparisonHandleNull::EvalCompareGte(
 
 Value TypeSystem::ExpensiveComparisonHandleNull::EvalCompareForSort(
     CodeGen &codegen, const Value &left, const Value &right) const {
-  auto impl = [this](CodeGen &codegen, const Value &left, const Value &right) {
+  // If neither input is NULLable, we're done
+  if (!left.IsNullable() && !right.IsNullable()) {
     return CompareForSortImpl(codegen, left, right);
-  };
-  const auto &result_type = Integer::Instance();
-  return GenerateBinaryHandleNull(codegen, result_type, left, right, impl);
+  }
+
+  /// The logic here is very similar to
+  /// SimpleComparisonHandleNull::EvalCompareForSort() except we **generate**
+  /// an if-clause becuase the non-null check is unsafe.
+
+  auto *left_null = left.IsNull(codegen);
+  auto *right_null = right.IsNull(codegen);
+
+  Value null_ret, ret_val;
+  lang::If is_null{codegen, codegen->CreateOr(left_null, right_null)};
+  {
+    // One of the inputs is null
+    auto *null_cmp = codegen->CreateSub(
+        codegen->CreateZExt(left_null, codegen.Int32Type()),
+        codegen->CreateZExt(right_null, codegen.Int32Type()));
+    null_ret = Value{Integer::Instance(), null_cmp};
+  }
+  is_null.ElseBlock();
+  {
+    // If both values are not null, perform the non-null-aware operation
+    ret_val = CompareForSortImpl(codegen, left, right);
+  }
+  is_null.EndIf();
+  return is_null.BuildPHI(null_ret, ret_val);
 }
 
 //===----------------------------------------------------------------------===//
@@ -222,11 +286,11 @@ Value TypeSystem::ExpensiveComparisonHandleNull::EvalCompareForSort(
 // UnaryOperatorHandleNull
 //
 //===----------------------------------------------------------------------===//
-Value TypeSystem::UnaryOperatorHandleNull::Eval(CodeGen &codegen,
-                                                const Value &val) const {
+Value TypeSystem::UnaryOperatorHandleNull::Eval(
+    CodeGen &codegen, const Value &val, const InvocationContext &ctx) const {
   if (!val.IsNullable()) {
     // If the input is not NULLable, elide the NULL check
-    return Impl(codegen, val);
+    return Impl(codegen, val, ctx);
   }
 
   Value null_val, ret_val;
@@ -238,7 +302,7 @@ Value TypeSystem::UnaryOperatorHandleNull::Eval(CodeGen &codegen,
   is_null.ElseBlock();
   {
     // If the input isn't NULL, perform the non-null-aware operation
-    ret_val = Impl(codegen, val);
+    ret_val = Impl(codegen, val, ctx);
   }
   is_null.EndIf();
 
@@ -250,14 +314,13 @@ Value TypeSystem::UnaryOperatorHandleNull::Eval(CodeGen &codegen,
 // BinaryOperatorHandleNull
 //
 //===----------------------------------------------------------------------===//
-Value TypeSystem::BinaryOperatorHandleNull::Eval(CodeGen &codegen,
-                                                 const Value &left,
-                                                 const Value &right,
-                                                 OnError on_error) const {
-  auto impl = [this, &on_error](CodeGen &codegen, const Value &left,
-                                const Value &right) {
-    return Impl(codegen, left, right, on_error);
-  };
+Value TypeSystem::BinaryOperatorHandleNull::Eval(
+    CodeGen &codegen, const Value &left, const Value &right,
+    const InvocationContext &ctx) const {
+  auto impl =
+      [this, &ctx](CodeGen &codegen, const Value &left, const Value &right) {
+        return Impl(codegen, left, right, ctx);
+      };
 
   auto &result_type = ResultType(left.GetType(), right.GetType()).GetSqlType();
   return GenerateBinaryHandleNull(codegen, result_type, left, right, impl);
@@ -274,13 +337,15 @@ TypeSystem::TypeSystem(
     const std::vector<TypeSystem::ComparisonInfo> &comparison_table,
     const std::vector<TypeSystem::UnaryOpInfo> &unary_op_table,
     const std::vector<TypeSystem::BinaryOpInfo> &binary_op_table,
-    const std::vector<TypeSystem::NaryOpInfo> &nary_op_table)
+    const std::vector<TypeSystem::NaryOpInfo> &nary_op_table,
+    const std::vector<TypeSystem::NoArgOpInfo> &no_arg_op_table)
     : implicit_cast_table_(implicit_cast_table),
       explicit_cast_table_(explicit_cast_table),
       comparison_table_(comparison_table),
       unary_op_table_(unary_op_table),
       binary_op_table_(binary_op_table),
-      nary_op_table_(nary_op_table) {}
+      nary_op_table_(nary_op_table),
+      no_arg_op_table_(no_arg_op_table) {}
 
 bool TypeSystem::CanImplicitlyCastTo(const Type &from_type,
                                      const Type &to_type) {

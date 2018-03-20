@@ -19,7 +19,6 @@
 namespace peloton {
 namespace optimizer {
 
-class ColumnManager;
 class PropertySet;
 
 //===--------------------------------------------------------------------===//
@@ -29,24 +28,20 @@ class PropertySet;
 // Enforce missing physical properties to group expression
 class PropertyEnforcer : public PropertyVisitor {
  public:
-  PropertyEnforcer(ColumnManager &manager) : manager_(manager) {}
+
 
   std::shared_ptr<GroupExpression> EnforceProperty(
-      std::shared_ptr<GroupExpression> gexpr, PropertySet *properties,
-      std::shared_ptr<Property> property);
+      GroupExpression* gexpr, Property* property);
 
   virtual void Visit(const PropertyColumns *) override;
   virtual void Visit(const PropertySort *) override;
-  virtual void Visit(const PropertyPredicate *) override;
   virtual void Visit(const PropertyDistinct *) override;
   virtual void Visit(const PropertyLimit *) override;
 
  private:
-  ColumnManager &manager_;
-  std::shared_ptr<GroupExpression> input_gexpr_;
+  GroupExpression* input_gexpr_;
   std::shared_ptr<GroupExpression> output_gexpr_;
-  PropertySet *input_properties_;
 };
 
-} // namespace optimizer
-} // namespace peloton
+}  // namespace optimizer
+}  // namespace peloton

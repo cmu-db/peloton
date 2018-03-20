@@ -21,7 +21,7 @@
 #include "catalog/schema.h"
 #include "common/exception.h"
 #include "common/harness.h"
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/abstract_executor.h"
 #include "executor/logical_tile.h"
@@ -187,7 +187,7 @@ std::shared_ptr<storage::TileGroup> TestingExecutorUtil::CreateTileGroup(
  */
 void TestingExecutorUtil::PopulateTable(storage::DataTable *table, int num_rows,
                                         bool mutate, bool random, bool group_by,
-                                        concurrency::Transaction *current_txn) {
+                                        concurrency::TransactionContext *current_txn) {
   // Random values
   if (random) std::srand(std::time(nullptr));
 

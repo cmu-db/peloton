@@ -73,7 +73,8 @@ class Sorter {
   //===--------------------------------------------------------------------===//
   struct IterateCallback {
     // Destructor
-    virtual ~IterateCallback() {}
+    virtual ~IterateCallback() = default;
+
     // Process the range of rows between the given start and end indices
     virtual void ProcessEntry(
         CodeGen &codegen, const std::vector<codegen::Value> &vals) const = 0;
@@ -84,7 +85,8 @@ class Sorter {
   //===--------------------------------------------------------------------===//
   struct VectorizedIterateCallback {
     // Destructor
-    virtual ~VectorizedIterateCallback() {}
+    virtual ~VectorizedIterateCallback() = default;
+
     // Process the range of rows between the given start and end indices
     virtual void ProcessEntries(CodeGen &codegen, llvm::Value *start_index,
                                 llvm::Value *end_index,
@@ -106,6 +108,9 @@ class Sorter {
   // Sort all the data that has been inserted into the sorter instance
   void Sort(CodeGen &codegen, llvm::Value *sorter_ptr) const;
 
+  // Reset the sorter
+  void Reset(CodeGen &codegen, llvm::Value *sorter_ptr) const;
+
   void Iterate(CodeGen &codegen, llvm::Value *sorter_ptr,
                IterateCallback &callback) const;
 
@@ -122,20 +127,14 @@ class Sorter {
 
  private:
   //===--------------------------------------------------------------------===//
-  // SORTER INSTANCE ACCESSORS
-  //
+  // ACCESSORS
   // TODO: We should codify access to instance memory variables using templates
   //       to something like: codegen.LoadMember<SorterProxy::start_pos>(...)
   //===--------------------------------------------------------------------===//
 
   llvm::Value *GetStartPosition(CodeGen &codegen,
                                 llvm::Value *sorter_ptr) const;
-  llvm::Value *GetEndPosition(CodeGen &codegen, llvm::Value *sorter_ptr) const;
-
-  llvm::Value *GetTupleSize(CodeGen &codegen) const {
-    // TODO: Why 64-bit?
-    return codegen.Const32(storage_format_.GetStorageSize());
-  }
+  llvm::Value *GetTupleSize(CodeGen &codegen) const;
 
  private:
   // Compact storage to materialize things

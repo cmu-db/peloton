@@ -12,6 +12,7 @@
 
 #include "codegen/operator/projection_translator.h"
 
+#include "codegen/compilation_context.h"
 #include "common/logger.h"
 #include "planner/projection_plan.h"
 
@@ -46,7 +47,7 @@ void ProjectionTranslator::Consume(ConsumerContext &context,
 }
 
 std::string ProjectionTranslator::GetName() const {
-  bool non_trivial = plan_.GetProjectInfo()->isNonTrivial();
+  bool non_trivial = plan_.GetProjectInfo()->IsNonTrivial();
   std::string ret = "Projection";
   ret.append(non_trivial ? "(non-trivial)" : "(trivial)");
   return ret;
@@ -56,7 +57,7 @@ void ProjectionTranslator::PrepareProjection(
     CompilationContext &context, const planner::ProjectInfo &projection_info) {
   // If the projection is non-trivial, we need to prepare translators for every
   // target expression
-  if (projection_info.isNonTrivial()) {
+  if (projection_info.IsNonTrivial()) {
     for (const auto &target : projection_info.GetTargetList()) {
       const auto &derived_attribute = target.second;
       PL_ASSERT(derived_attribute.expr != nullptr);
@@ -70,7 +71,7 @@ void ProjectionTranslator::AddNonTrivialAttributes(
     std::vector<RowBatch::ExpressionAccess> &accessors) {
   // If the projection is non-trivial, we need to add attribute accessors for
   // all targets
-  if (projection_info.isNonTrivial()) {
+  if (projection_info.IsNonTrivial()) {
     // Construct an accessor for each target
     const auto &target_list = projection_info.GetTargetList();
     for (uint32_t i = 0; i < target_list.size(); i++) {

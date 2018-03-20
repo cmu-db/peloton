@@ -14,7 +14,7 @@
 
 #include <unordered_map>
 
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "executor/abstract_executor.h"
 #include "executor/logical_tile.h"
 #include "common/container_tuple.h"
@@ -27,6 +27,9 @@ namespace executor {
 /**
  * @brief Hash executor.
  *
+ * 2018-01-07: This is <b>deprecated</b>. Do not modify these classes.
+ * The old interpreted engine will be removed.
+ * @deprecated
  */
 class HashExecutor : public AbstractExecutor {
  public:
@@ -65,6 +68,8 @@ class HashExecutor : public AbstractExecutor {
   std::vector<std::unique_ptr<LogicalTile>> child_tiles_;
 
   std::vector<oid_t> column_ids_;
+
+  std::vector<oid_t> output_tile_itrs_;
 
   bool done_ = false;
 

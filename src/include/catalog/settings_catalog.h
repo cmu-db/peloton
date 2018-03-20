@@ -22,7 +22,7 @@ class SettingsCatalog : public AbstractCatalog {
   ~SettingsCatalog();
 
   // Global Singleton
-  static SettingsCatalog &GetInstance(concurrency::Transaction *txn = nullptr);
+  static SettingsCatalog &GetInstance(concurrency::TransactionContext *txn = nullptr);
 
   //===--------------------------------------------------------------------===//
   // write Related API
@@ -32,18 +32,18 @@ class SettingsCatalog : public AbstractCatalog {
                      const std::string &min_value, const std::string &max_value,
                      const std::string &default_value, bool is_mutable,
                      bool is_persistent, type::AbstractPool *pool,
-                     concurrency::Transaction *txn);
+                     concurrency::TransactionContext *txn);
 
-  bool DeleteSetting(const std::string &name, concurrency::Transaction *txn);
+  bool DeleteSetting(const std::string &name, concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
   // Read-only Related API
   //===--------------------------------------------------------------------===//
   std::string GetSettingValue(const std::string &name,
-                              concurrency::Transaction *txn);
+                              concurrency::TransactionContext *txn);
 
   std::string GetDefaultValue(const std::string &name,
-                              concurrency::Transaction *txn);
+                              concurrency::TransactionContext *txn);
 
   enum class ColumnId {
     NAME = 0,
@@ -59,7 +59,7 @@ class SettingsCatalog : public AbstractCatalog {
   };
 
  private:
-  SettingsCatalog(concurrency::Transaction *txn);
+  SettingsCatalog(concurrency::TransactionContext *txn);
 
   enum class IndexId {
     SECONDARY_KEY_0 = 0,

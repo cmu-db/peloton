@@ -15,9 +15,14 @@
 #include <mutex>
 #include <unordered_map>
 
-#include "type/types.h"
+#include "common/internal_types.h"
 
 namespace peloton {
+
+namespace planner {
+class PlanUtil;
+}  // namespace planner
+
 namespace catalog {
 
 class DatabaseCatalogObject;
@@ -32,6 +37,7 @@ class CatalogCache {
   friend class DatabaseCatalogObject;
   friend class TableCatalogObject;
   friend class IndexCatalogObject;
+  friend class planner::PlanUtil;
 
  public:
   CatalogCache() {}

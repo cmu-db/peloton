@@ -15,11 +15,12 @@
 #include <string>
 #include <sstream>
 #include <vector>
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "statistics/abstract_metric.h"
 #include "statistics/access_metric.h"
 #include "statistics/latency_metric.h"
 #include "statistics/processor_metric.h"
+#include "util/string_util.h"
 
 namespace peloton {
 
@@ -94,10 +95,10 @@ class QueryMetric : public AbstractMetric {
 
   inline const std::string GetInfo() const {
     std::stringstream ss;
-    ss << "-----------------------------" << std::endl;
+    ss << peloton::GETINFO_SINGLE_LINE << std::endl;
     ss << "  QUERY " << query_name_ << std::endl;
-    ss << "-----------------------------" << std::endl;
-    ss << query_access_.GetInfo() << std::endl;
+    ss << peloton::GETINFO_SINGLE_LINE << std::endl;
+    ss << query_access_.GetInfo();
     return ss.str();
   }
 
@@ -116,13 +117,13 @@ class QueryMetric : public AbstractMetric {
   std::shared_ptr<QueryParams> query_params_;
 
   // The number of tuple accesses
-  AccessMetric query_access_{ACCESS_METRIC};
+  AccessMetric query_access_{MetricType::ACCESS};
 
   // Latency metric
-  LatencyMetric latency_metric_{LATENCY_METRIC, 2};
+  LatencyMetric latency_metric_{MetricType::LATENCY, 2};
 
   // Processor metric
-  ProcessorMetric processor_metric_{PROCESSOR_METRIC};
+  ProcessorMetric processor_metric_{MetricType::PROCESSOR};
 };
 
 }  // namespace stats

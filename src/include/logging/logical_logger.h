@@ -18,7 +18,7 @@
 #include <stack>
 #include <unordered_map>
 
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "concurrency/epoch_manager.h"
 #include "logging/log_buffer.h"
 #include "logging/log_record.h"
@@ -30,7 +30,7 @@
 #include "common/lockfree_queue.h"
 #include "common/logger.h"
 #include "common/pool.h"
-
+#include "common/synchronization/spin_lock.h"
 
 namespace peloton {
   
@@ -115,8 +115,8 @@ private:
     std::atomic<int> max_replay_file_id_;
 
     /* Recovery */
-    // TODO: Check if we can discard the recovery pool after the recovery is done. Since every thing is copied to the
-    // tile group and tile group related pool
+    // TODO: Check if we can discard the recovery pool after the recovery is done.
+    // Since every thing is copied to the tile group and tile group related pool
     std::vector<std::unique_ptr<VarlenPool>> recovery_pools_;
     
     // logger thread
@@ -129,8 +129,10 @@ private:
     /* Log buffers */
     size_t persist_epoch_id_;
 
-    // The spin lock to protect the worker map. We only update this map when creating/terminating a new worker
-    Spinlock worker_map_lock_;
+    // The spin lock to protect the worker map.
+    // We only update this map when creating/terminating a new worker
+    common::synchronization::SpinLatch worker_map_lock_;
+
     // map from worker id to the worker's context.
     std::unordered_map<oid_t, std::shared_ptr<WorkerContext>> worker_map_;
   

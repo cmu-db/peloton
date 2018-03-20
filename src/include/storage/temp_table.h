@@ -49,7 +49,8 @@ class TempTable : public AbstractTable {
  public:
   // Table constructor
   TempTable(const oid_t &table_oid, catalog::Schema *schema,
-            const bool own_schema);
+            const bool own_schema,
+            const peloton::LayoutType layout_type = peloton::LayoutType::ROW);
 
   ~TempTable();
 
@@ -60,8 +61,9 @@ class TempTable : public AbstractTable {
   // insert tuple in table. the pointer to the index entry is returned as
   // index_entry_ptr.
   ItemPointer InsertTuple(const Tuple *tuple,
-                          concurrency::Transaction *transaction,
-                          ItemPointer **index_entry_ptr = nullptr) override;
+                          concurrency::TransactionContext *transaction,
+                          ItemPointer **index_entry_ptr = nullptr,
+                          bool check_fk = true) override;
 
   // designed for tables without primary key. e.g., output table used by
   // aggregate_executor.

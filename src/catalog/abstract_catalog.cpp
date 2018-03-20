@@ -54,7 +54,7 @@ AbstractCatalog::AbstractCatalog(oid_t catalog_table_oid,
 }
 
 AbstractCatalog::AbstractCatalog(const std::string &catalog_table_ddl,
-                                 concurrency::Transaction *txn) {
+                                 concurrency::TransactionContext *txn) {
   // get catalog table schema
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto create_plan = std::dynamic_pointer_cast<planner::CreatePlan>(
@@ -85,11 +85,11 @@ AbstractCatalog::AbstractCatalog(const std::string &catalog_table_ddl,
 
 /*@brief   insert tuple(reord) helper function
 * @param   tuple     tuple to be inserted
-* @param   txn       Transaction
+* @param   txn       TransactionContext
 * @return  Whether insertion is Successful
 */
 bool AbstractCatalog::InsertTuple(std::unique_ptr<storage::Tuple> tuple,
-                                  concurrency::Transaction *txn) {
+                                  concurrency::TransactionContext *txn) {
   if (txn == nullptr)
     throw CatalogException("Insert tuple requires transaction");
 
@@ -106,12 +106,12 @@ bool AbstractCatalog::InsertTuple(std::unique_ptr<storage::Tuple> tuple,
 /*@brief   Delete a tuple using index scan
 * @param   index_offset  Offset of index for scan
 * @param   values        Values for search
-* @param   txn           Transaction
+* @param   txn           TransactionContext
 * @return  Whether deletion is Successful
 */
-bool AbstractCatalog::DeleteWithIndexScan(oid_t index_offset,
-                                          std::vector<type::Value> values,
-                                          concurrency::Transaction *txn) {
+bool AbstractCatalog::DeleteWithIndexScan(
+    oid_t index_offset, std::vector<type::Value> values,
+    concurrency::TransactionContext *txn) {
   if (txn == nullptr)
     throw CatalogException("Delete tuple requires transaction");
 
@@ -156,14 +156,14 @@ bool AbstractCatalog::DeleteWithIndexScan(oid_t index_offset,
 * @param   column_offsets    Column ids for search (projection)
 * @param   index_offset      Offset of index for scan
 * @param   values            Values for search
-* @param   txn               Transaction
+* @param   txn               TransactionContext
 * @return  Unique pointer of vector of logical tiles
 */
 std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
-AbstractCatalog::GetResultWithIndexScan(std::vector<oid_t> column_offsets,
-                                        oid_t index_offset,
-                                        std::vector<type::Value> values,
-                                        concurrency::Transaction *txn) const {
+AbstractCatalog::GetResultWithIndexScan(
+    std::vector<oid_t> column_offsets, oid_t index_offset,
+    std::vector<type::Value> values,
+    concurrency::TransactionContext *txn) const {
   if (txn == nullptr) throw CatalogException("Scan table requires transaction");
 
   // Index scan
@@ -205,14 +205,14 @@ AbstractCatalog::GetResultWithIndexScan(std::vector<oid_t> column_offsets,
 * shouldn't build too many indexes on one catalog table
 * @param   column_offsets    Column ids for search (projection)
 * @param   predicate         predicate for this sequential scan query
-* @param   txn               Transaction
+* @param   txn               TransactionContext
 *
 * @return  Unique pointer of vector of logical tiles
 */
 std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
 AbstractCatalog::GetResultWithSeqScan(std::vector<oid_t> column_offsets,
                                       expression::AbstractExpression *predicate,
-                                      concurrency::Transaction *txn) {
+                                      concurrency::TransactionContext *txn) {
   if (txn == nullptr) throw CatalogException("Scan table requires transaction");
 
   // Sequential scan

@@ -56,7 +56,7 @@ TEST_F(UpdateSQLTests, SimpleUpdateSQLTest) {
   LOG_DEBUG("Updating a tuple...");
   LOG_DEBUG("Query: UPDATE test SET b = 2.0 WHERE a = 0");
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_affected;
@@ -75,7 +75,7 @@ TEST_F(UpdateSQLTests, SimpleUpdateSQLTest) {
                                   tuple_descriptor, rows_affected,
                                   error_message);
   // Check the return value
-  EXPECT_EQ('2', result[0].second[0]);
+  EXPECT_EQ('2', result[0][0]);
 
   // Another update a tuple into table
   LOG_DEBUG("Another update a tuple...");
@@ -95,7 +95,7 @@ TEST_F(UpdateSQLTests, SimpleUpdateSQLTest) {
                                   tuple_descriptor, rows_affected,
                                   error_message);
   // Check the return value
-  EXPECT_EQ('2', result[0].second[0]);
+  EXPECT_EQ('2', result[0][0]);
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
@@ -142,7 +142,7 @@ TEST_F(UpdateSQLTests, ComplexUpdateSQLTest) {
       "salary = 2 + salary + bonus*salary + 3*(salary+1)+0.1*bonus*salary"
       " WHERE e_id = 0");
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_affected;
@@ -231,7 +231,7 @@ TEST_F(UpdateSQLTests, UpdateSQLCastTest) {
   LOG_DEBUG("Updating a tuple...");
   LOG_DEBUG("Query: UPDATE employees SET salary = 2 WHERE e_id = 0");
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_affected;

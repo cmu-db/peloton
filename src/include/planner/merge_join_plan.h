@@ -17,7 +17,7 @@
 #include <vector>
 
 #include "abstract_join_plan.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "expression/abstract_expression.h"
 #include "planner/project_info.h"
 

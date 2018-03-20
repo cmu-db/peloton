@@ -14,7 +14,7 @@
 #include "common/harness.h"
 
 #include "type/value_factory.h"
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "storage/tile_group.h"
 #include "storage/tile_group_factory.h"
@@ -444,14 +444,14 @@ TEST_F(TileGroupTests, TileCopyTest) {
 
   txn_manager.CommitTransaction(txn);
 
-  LOG_INFO("\t Original Tile Details ...");
+  LOG_INFO(" Original Tile Details ...");
   LOG_INFO("%s", tile->GetInfo().c_str());
 
   const catalog::Schema *old_schema = tile->GetSchema();
   const catalog::Schema *new_schema = old_schema;
   std::unique_ptr<storage::Tile> new_tile(tile->CopyTile(BackendType::MM));
 
-  LOG_INFO("\t Copied Tile Details ...");
+  LOG_INFO(" Copied Tile Details ...");
   LOG_INFO("%s", new_tile->GetInfo().c_str());
 
   /*
@@ -528,7 +528,7 @@ TEST_F(TileGroupTests, TileCopyTest) {
   }
 
   // At the end of all the checks, intended_behavior is expected to be true
-  EXPECT_EQ(true, intended_behavior);
+  EXPECT_TRUE(intended_behavior);
 }
 
 }  // namespace test

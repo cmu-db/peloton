@@ -11,11 +11,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "codegen/proxy/executor_context_proxy.h"
+#include "codegen/proxy/transaction_context_proxy.h"
 
 namespace peloton {
 namespace codegen {
 
 DEFINE_TYPE(ExecutorContext, "executor::ExecutorContext", MEMBER(opaque));
+
+// Define a method that proxies executor::ExecutorContext::GetTransaction()
+DEFINE_METHOD(peloton::executor, ExecutorContext, GetTransaction);
 
 }  // namespace codegen
 }  // namespace peloton

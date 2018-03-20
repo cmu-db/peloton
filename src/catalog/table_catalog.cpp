@@ -17,7 +17,7 @@
 #include "catalog/database_catalog.h"
 #include "catalog/index_catalog.h"
 #include "catalog/column_catalog.h"
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "storage/data_table.h"
 #include "type/value_factory.h"
 
@@ -25,7 +25,7 @@ namespace peloton {
 namespace catalog {
 
 TableCatalogObject::TableCatalogObject(executor::LogicalTile *tile,
-                                       concurrency::Transaction *txn,
+                                       concurrency::TransactionContext *txn,
                                        int tupleId)
     : table_oid(tile->GetValue(tupleId, TableCatalog::ColumnId::TABLE_OID)
                     .GetAs<oid_t>()),
@@ -289,14 +289,14 @@ std::shared_ptr<ColumnCatalogObject> TableCatalogObject::GetColumnObject(
 
 TableCatalog *TableCatalog::GetInstance(storage::Database *pg_catalog,
                                         type::AbstractPool *pool,
-                                        concurrency::Transaction *txn) {
+                                        concurrency::TransactionContext *txn) {
   static TableCatalog table_catalog{pg_catalog, pool, txn};
   return &table_catalog;
 }
 
 TableCatalog::TableCatalog(storage::Database *pg_catalog,
                            type::AbstractPool *pool,
-                           concurrency::Transaction *txn)
+                           concurrency::TransactionContext *txn)
     : AbstractCatalog(TABLE_CATALOG_OID, TABLE_CATALOG_NAME,
                       InitializeSchema().release(), pg_catalog) {
   // Insert columns into pg_attribute
@@ -351,12 +351,12 @@ std::unique_ptr<catalog::Schema> TableCatalog::InitializeSchema() {
  * @param   table_oid
  * @param   table_name
  * @param   database_oid
- * @param   txn     Transaction
+ * @param   txn     TransactionContext
  * @return  Whether insertion is Successful
  */
 bool TableCatalog::InsertTable(oid_t table_oid, const std::string &table_name,
                                oid_t database_oid, type::AbstractPool *pool,
-                               concurrency::Transaction *txn) {
+                               concurrency::TransactionContext *txn) {
   // Create the tuple first
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
@@ -375,10 +375,10 @@ bool TableCatalog::InsertTable(oid_t table_oid, const std::string &table_name,
 
 /*@brief   delete a tuple about table info from pg_table(using index scan)
  * @param   table_oid
- * @param   txn     Transaction
+ * @param   txn     TransactionContext
  * @return  Whether deletion is Successful
  */
-bool TableCatalog::DeleteTable(oid_t table_oid, concurrency::Transaction *txn) {
+bool TableCatalog::DeleteTable(oid_t table_oid, concurrency::TransactionContext *txn) {
   oid_t index_offset = IndexId::PRIMARY_KEY;  // Index of table_oid
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
@@ -396,11 +396,11 @@ bool TableCatalog::DeleteTable(oid_t table_oid, concurrency::Transaction *txn) {
 
 /*@brief   read table catalog object from pg_table using table oid
  * @param   table_oid
- * @param   txn     Transaction
+ * @param   txn     TransactionContext
  * @return  table catalog object
  */
 std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
-    oid_t table_oid, concurrency::Transaction *txn) {
+    oid_t table_oid, concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
   }
@@ -440,12 +440,12 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
  * oid
  * @param   table_name
  * @param   database_oid
- * @param   txn     Transaction
+ * @param   txn     TransactionContext
  * @return  table catalog object
  */
 std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
     const std::string &table_name, oid_t database_oid,
-    concurrency::Transaction *txn) {
+    concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
   }
@@ -487,12 +487,12 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
 
 /*@brief   read table catalog objects from pg_table using database oid
  * @param   database_oid
- * @param   txn     Transaction
+ * @param   txn     TransactionContext
  * @return  table catalog objects
  */
 std::unordered_map<oid_t, std::shared_ptr<TableCatalogObject>>
 TableCatalog::GetTableObjects(oid_t database_oid,
-                              concurrency::Transaction *txn) {
+                              concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
   }

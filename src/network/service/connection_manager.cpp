@@ -4,12 +4,11 @@
 //
 // connection_manager.cpp
 //
-// Identification: src/network/connection_manager.cpp
+// Identification: src/network/service/connection_manager.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
 
 #include "network/service/connection_manager.h"
 
@@ -19,7 +18,7 @@ namespace peloton {
 namespace network {
 namespace service {
 
-ConnectionManager& ConnectionManager::GetInstance(void) {
+ConnectionManager &ConnectionManager::GetInstance(void) {
   static ConnectionManager connection_nanager;
   return connection_nanager;
 }
@@ -32,7 +31,7 @@ ConnectionManager::ConnectionManager() : rpc_server_(NULL), cond_(&mutex_) {
 }
 
 ConnectionManager::~ConnectionManager() {
-  std::map<NetworkAddress, Connection*>::iterator iter;
+  std::map<NetworkAddress, Connection *>::iterator iter;
 
   for (iter = conn_pool_.begin(); iter != conn_pool_.end(); iter++) {
     PL_ASSERT(iter->second != NULL);
@@ -40,14 +39,14 @@ ConnectionManager::~ConnectionManager() {
   }
 }
 
-void ConnectionManager::ResterRpcServer(RpcServer* server) {
+void ConnectionManager::ResterRpcServer(RpcServer *server) {
   // this function is only called once, but in case, we still have lock here
   mutex_.Lock();
   rpc_server_ = server;
   mutex_.UnLock();
 }
 
-RpcServer* ConnectionManager::GetRpcServer() {
+RpcServer *ConnectionManager::GetRpcServer() {
   PL_ASSERT(rpc_server_ != NULL);
   return rpc_server_;
 }
@@ -55,14 +54,14 @@ RpcServer* ConnectionManager::GetRpcServer() {
 /*
  * if the there is no connection, create it
  */
-Connection* ConnectionManager::GetConn(std::string& addr) {
+Connection *ConnectionManager::GetConn(std::string &addr) {
   NetworkAddress netaddr(addr);
 
   return GetConn(netaddr);
 }
 
-struct event_base* ConnectionManager::GetEventBase() {
-  struct event_base* base;
+struct event_base *ConnectionManager::GetEventBase() {
+  struct event_base *base;
   // TODO: should we lock the server?
   // mutex_.Lock();
   if (rpc_server_ == NULL) {
@@ -77,19 +76,19 @@ struct event_base* ConnectionManager::GetEventBase() {
 /*
  * if the there is no corresponding connection, create it
  */
-Connection* ConnectionManager::GetConn(NetworkAddress& addr) {
-  Connection* conn = NULL;
+Connection *ConnectionManager::GetConn(NetworkAddress &addr) {
+  Connection *conn = NULL;
 
   /* conn_pool_ is a critical section */
   mutex_.Lock();
 
   /* Check whether the connection already exists */
-  std::map<NetworkAddress, Connection*>::iterator iter = conn_pool_.find(addr);
+  std::map<NetworkAddress, Connection *>::iterator iter = conn_pool_.find(addr);
 
   /* If there is such a connection, create a connection*/
   if (iter == conn_pool_.end()) {
     /* Before creating a connection we should know the event base*/
-    struct event_base* base = GetEventBase();
+    struct event_base *base = GetEventBase();
 
     if (base == NULL) {
       LOG_ERROR("No event base when creating a connection");
@@ -97,7 +96,7 @@ Connection* ConnectionManager::GetConn(NetworkAddress& addr) {
     }
 
     /* A connection should know rpc server, which is used to find RPC method */
-    RpcServer* server = GetRpcServer();
+    RpcServer *server = GetRpcServer();
     PL_ASSERT(server != NULL);
 
     /* For a client connection, the socket fd is -1 (required by libevent)
@@ -119,7 +118,7 @@ Connection* ConnectionManager::GetConn(NetworkAddress& addr) {
      * Note: if we get close error in event callback, we should remove the
      * connection
      */
-    conn_pool_.insert(std::pair<NetworkAddress, Connection*>(addr, conn));
+    conn_pool_.insert(std::pair<NetworkAddress, Connection *>(addr, conn));
     LOG_TRACE("Connect to ---> %s:%d", addr.IpToString().c_str(),
               addr.GetPort());
 
@@ -138,20 +137,20 @@ Connection* ConnectionManager::GetConn(NetworkAddress& addr) {
 /*
  * This method is only for test, we don't use it for now!!!
  */
-Connection* ConnectionManager::CreateConn(NetworkAddress& addr) {
-  Connection* conn = NULL;
+Connection *ConnectionManager::CreateConn(NetworkAddress &addr) {
+  Connection *conn = NULL;
 
   /* conn_pool_ is a critical section */
   //    mutex_.Lock();
 
   /* Check whether the connection already exists */
-  std::map<NetworkAddress, Connection*>::iterator iter =
+  std::map<NetworkAddress, Connection *>::iterator iter =
       client_conn_pool_.find(addr);
 
   /* If there is such a connection, create a connection*/
   if (iter == client_conn_pool_.end()) {
     /* Before creating a connection we should know the event base*/
-    struct event_base* base = GetEventBase();
+    struct event_base *base = GetEventBase();
 
     if (base == NULL) {
       LOG_ERROR("No event base when creating a connection");
@@ -159,7 +158,7 @@ Connection* ConnectionManager::CreateConn(NetworkAddress& addr) {
     }
 
     /* A connection should know rpc server, which is used to find RPC method */
-    RpcServer* server = GetRpcServer();
+    RpcServer *server = GetRpcServer();
     PL_ASSERT(server != NULL);
 
     /* For a client connection, the socket fd is -1 (required by libevent)
@@ -182,7 +181,7 @@ Connection* ConnectionManager::CreateConn(NetworkAddress& addr) {
      * connection
      */
     client_conn_pool_.insert(
-        std::pair<NetworkAddress, Connection*>(addr, conn));
+        std::pair<NetworkAddress, Connection *>(addr, conn));
     LOG_TRACE("Connect to ---> %s:%d", addr.IpToString().c_str(),
               addr.GetPort());
 
@@ -201,9 +200,9 @@ Connection* ConnectionManager::CreateConn(NetworkAddress& addr) {
 /*
  * if the there is no connection, return NULL
  */
-Connection* ConnectionManager::FindConn(NetworkAddress& addr) {
+Connection *ConnectionManager::FindConn(NetworkAddress &addr) {
   mutex_.Lock();
-  std::map<NetworkAddress, Connection*>::iterator iter = conn_pool_.find(addr);
+  std::map<NetworkAddress, Connection *>::iterator iter = conn_pool_.find(addr);
   mutex_.UnLock();
 
   if (iter == conn_pool_.end()) return NULL;
@@ -211,11 +210,11 @@ Connection* ConnectionManager::FindConn(NetworkAddress& addr) {
   return iter->second;
 }
 
-bool ConnectionManager::AddConn(NetworkAddress addr, Connection* conn) {
+bool ConnectionManager::AddConn(NetworkAddress addr, Connection *conn) {
   // the map is a critical section
   mutex_.Lock();
 
-  std::map<NetworkAddress, Connection*>::iterator iter = conn_pool_.find(addr);
+  std::map<NetworkAddress, Connection *>::iterator iter = conn_pool_.find(addr);
 
   if (iter != conn_pool_.end()) {
     /* If we already have the connection in conn_pool, we do nothing
@@ -224,7 +223,7 @@ bool ConnectionManager::AddConn(NetworkAddress addr, Connection* conn) {
     mutex_.UnLock();
     return false;
   } else {
-    conn_pool_.insert(std::pair<NetworkAddress, Connection*>(addr, conn));
+    conn_pool_.insert(std::pair<NetworkAddress, Connection *>(addr, conn));
   }
 
   mutex_.UnLock();
@@ -232,7 +231,7 @@ bool ConnectionManager::AddConn(NetworkAddress addr, Connection* conn) {
   return true;
 }
 
-bool ConnectionManager::AddConn(struct sockaddr& addr, Connection* conn) {
+bool ConnectionManager::AddConn(struct sockaddr &addr, Connection *conn) {
   NetworkAddress netaddr(addr);
   // the map is a critical section
   return AddConn(netaddr, conn);
@@ -240,10 +239,10 @@ bool ConnectionManager::AddConn(struct sockaddr& addr, Connection* conn) {
 /*
  * if there is no corresponding connection, return false
  */
-bool ConnectionManager::DeleteConn(NetworkAddress& addr) {
+bool ConnectionManager::DeleteConn(NetworkAddress &addr) {
   // the map is a critical section
   mutex_.Lock();
-  std::map<NetworkAddress, Connection*>::iterator iter;
+  std::map<NetworkAddress, Connection *>::iterator iter;
   iter = conn_pool_.find(addr);
   if (iter == conn_pool_.end()) {
     mutex_.UnLock();
@@ -260,8 +259,8 @@ bool ConnectionManager::DeleteConn(NetworkAddress& addr) {
 /*
  * if there is no corresponding connection, return false
  */
-bool ConnectionManager::DeleteConn(Connection* conn) {
-  NetworkAddress& addr = conn->GetAddr();
+bool ConnectionManager::DeleteConn(Connection *conn) {
+  NetworkAddress &addr = conn->GetAddr();
   return DeleteConn(addr);
 }
 

@@ -1,4 +1,3 @@
-
 //===----------------------------------------------------------------------===//
 //
 //                         Peloton
@@ -7,7 +6,7 @@
 //
 // Identification: src/include/index/tuple_key.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -115,6 +114,20 @@ class TupleKey {
     else
       return column_indices[indexColumn];
   }
+
+  /**
+ * Prints the content of this key.
+ *
+ * IMPORTANT: This class should <b>not</b> override Printable
+ * because that adds an extra 8 bytes and it makes all the math
+ * above for doing fast comparisons fail.
+ *
+ * @return
+ */
+  const std::string GetInfo() const {
+    storage::Tuple tuple(key_tuple_schema, key_tuple);
+    return (tuple.GetInfo());
+  }
 };
 
 /*
@@ -178,12 +191,12 @@ class TupleKeyComparator {
         rhTuple.GetValue(rhs.ColumnForIndexColumn(col_itr));
 
       // If there is a field in LHS < RHS then return true;
-      if (lhValue.CompareLessThan(rhValue) == type::CMP_TRUE) {
+      if (lhValue.CompareLessThan(rhValue) == CmpBool::TRUE) {
         return true;
       }
       
       // If there is a field in LHS > RHS then return false
-      if (lhValue.CompareGreaterThan(rhValue) == type::CMP_TRUE) {
+      if (lhValue.CompareGreaterThan(rhValue) == CmpBool::TRUE) {
         return false;
       }
     }
@@ -235,11 +248,11 @@ class TupleKeyComparatorRaw {
       type::Value rhValue = \
           rhTuple.GetValue(rhs.ColumnForIndexColumn(col_itr));
 
-      if (lhValue.CompareLessThan(rhValue) == type::CMP_TRUE) {
+      if (lhValue.CompareLessThan(rhValue) == CmpBool::TRUE) {
         return VALUE_COMPARE_LESSTHAN;
       }
 
-      if (lhValue.CompareGreaterThan(rhValue) == type::CMP_TRUE) {
+      if (lhValue.CompareGreaterThan(rhValue) == CmpBool::TRUE) {
         return VALUE_COMPARE_GREATERTHAN;
       }
     }
@@ -293,7 +306,7 @@ class TupleKeyEqualityChecker {
 
       // If any of these two columns differ then just return false
       // because we know they could not be equal 
-      if (lhValue.CompareNotEquals(rhValue) == type::CMP_TRUE) {
+      if (lhValue.CompareNotEquals(rhValue) == CmpBool::TRUE) {
         return false;
       }
     }

@@ -1,5 +1,20 @@
 ##################################################################################
-# SRC CMAKELISTS
+#SRC CMAKELISTS
+##################################################################################
+
+#--[Cap'nProto library
+
+file(GLOB capnp_files include/capnp/*.capnp)
+if (capnp_files)
+  # the output folder for the compiled capnp headers and srouces
+  set(CAPNPC_OUTPUT_DIR ${PROJECT_BINARY_DIR}/include/peloton/capnp)
+  capnp_generate_cpp(capnp_srcs capnp_hdrs ${capnp_files})
+
+  add_library(peloton-capnp STATIC ${capnp_hdrs} ${capnp_srcs})
+  set(Peloton_LINKER_LIBS peloton-capnp ${Peloton_LINKER_LIBS}) # note, crucial to prepend!
+  peloton_default_properties(peloton-capnp)
+endif()
+
 ##################################################################################
 
 # --[ Proto library
@@ -9,6 +24,7 @@ peloton_protobuf_generate_cpp_py(${proto_gen_folder} proto_srcs proto_hdrs proto
 
 # include python files either to force generation
 add_library(peloton-proto STATIC ${proto_hdrs} ${proto_srcs} ${proto_python})
+target_compile_options(peloton-proto PRIVATE "-Wno-unused-parameter")
 set(Peloton_LINKER_LIBS peloton-proto ${Peloton_LINKER_LIBS}) # note, crucial to prepend!
 peloton_default_properties(peloton-proto)
 
@@ -16,11 +32,24 @@ peloton_default_properties(peloton-proto)
 
 # --[ Libpg_query library
 
-add_custom_target(libpg_query ALL
-                  COMMAND ${CMAKE_MAKE_PROGRAM}
-                  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/third_party/libpg_query/
-                  COMMENT "Original libpg makefile target")
+add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/libpg_query/ libpg_query.a)
 
+##################################################################################
+
+# --[ tensorflow
+# Generate essential model files
+set(MODEL_GEN_DIR ${CMAKE_CURRENT_LIST_DIR}/brain/modelgen)
+set(MODEL_GEN_PY ${MODEL_GEN_DIR}/model_generator.py)
+set(MODEL_GEN_SETTINGS ${MODEL_GEN_DIR}/settings.json)
+set(MODEL_GEN_COMMAND python3 ${MODEL_GEN_PY} ${MODEL_GEN_SETTINGS} ${MODEL_GEN_DIR})
+
+message(STATUS "Tensorflow models being generated")
+execute_process(COMMAND ${MODEL_GEN_COMMAND}
+        RESULT_VARIABLE RETURN_VALUE)
+
+if (NOT RETURN_VALUE EQUAL 0)
+    message(FATAL_ERROR "Failed to generate tensorflow models.")
+endif()
 
 ##################################################################################
 
@@ -31,7 +60,7 @@ peloton_pickup_peloton_sources(${PROJECT_SOURCE_DIR})
 
 add_library(peloton SHARED ${srcs})
 
-target_link_libraries(peloton ${Peloton_LINKER_LIBS} peloton-proto ${PROJECT_SOURCE_DIR}/third_party/libpg_query/libpg_query.a)
+target_link_libraries(peloton PUBLIC ${Peloton_LINKER_LIBS} peloton-proto pg_query)
 
 peloton_default_properties(peloton)
 set_target_properties(peloton PROPERTIES
@@ -96,5 +125,4 @@ endforeach()
 
 add_custom_target(benchmark)
 add_dependencies(benchmark tpcc ycsb sdbench)
-
 

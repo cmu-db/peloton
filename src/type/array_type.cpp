@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <include/type/value.h>
+#include "type/value.h"
 #include "type/array_type.h"
 
 #include "type/boolean_type.h"
@@ -80,7 +80,7 @@ Value ArrayType::InList(const Value &list, const Value &object) const {
       std::vector<bool>::iterator it;
       for (it = vec.begin(); it != vec.end(); it++) {
         Value res = ValueFactory::GetBooleanValue(ValueFactory::GetBooleanValue(*it).CompareEquals(object));
-        if (ValueFactory::GetBooleanValue(*it).CompareEquals(object) == CMP_TRUE) return res;
+        if (ValueFactory::GetBooleanValue(*it).CompareEquals(object) == CmpBool::TRUE) return res;
       }
       return ValueFactory::GetBooleanValue(false);
     }

@@ -21,7 +21,7 @@
 
 #include "planner/limit_plan.h"
 
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "type/value.h"
 #include "executor/logical_tile.h"
 #include "executor/limit_executor.h"
@@ -52,7 +52,9 @@ void RunTest(executor::LimitExecutor &executor, size_t expected_num_tiles,
 
   EXPECT_EQ(expected_num_tiles, result_tiles.size());
 
-  if (result_tiles.size() > 0) EXPECT_EQ(expected_first_oid, *(result_tiles[0]->begin()));
+  if (result_tiles.size() > 0) {
+     EXPECT_EQ(expected_first_oid, *(result_tiles[0]->begin()));
+  }
 
   size_t actual_num_tuples_returned = 0;
   for (auto &tile : result_tiles) {

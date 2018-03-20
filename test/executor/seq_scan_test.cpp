@@ -19,10 +19,10 @@
 #include "common/harness.h"
 
 #include "catalog/schema.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/abstract_executor.h"
 #include "executor/executor_context.h"
@@ -238,7 +238,7 @@ void RunTest(executor::SeqScanExecutor &executor, int expected_num_tiles,
           (type::ValueFactory::GetVarcharValue(std::to_string(val2)));
       type::Value val =
           (result_tiles[i]->GetValue(new_tuple_id, expected_num_cols - 1));
-      EXPECT_TRUE(val.CompareEquals(string_value) == type::CMP_TRUE);
+      EXPECT_TRUE(val.CompareEquals(string_value) == CmpBool::TRUE);
     }
     EXPECT_EQ(0, expected_tuples_left.size());
   }

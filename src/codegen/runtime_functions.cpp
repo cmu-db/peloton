@@ -16,9 +16,13 @@
 
 #include "common/exception.h"
 #include "common/logger.h"
+#include "expression/abstract_expression.h"
+#include "expression/expression_util.h"
 #include "storage/data_table.h"
 #include "storage/tile_group.h"
 #include "storage/tile.h"
+#include "storage/zone_map_manager.h"
+#include "type/value_factory.h"
 
 namespace peloton {
 namespace codegen {
@@ -68,6 +72,29 @@ storage::TileGroup *RuntimeFunctions::GetTileGroup(storage::DataTable *table,
 }
 
 //===----------------------------------------------------------------------===//
+// Fills in the Predicate Array for the Zone Map to compare against.
+// Predicates are converted into an array of struct.
+// Each struct contains the column id, operator id and predicate value.
+//===----------------------------------------------------------------------===//
+void RuntimeFunctions::FillPredicateArray(
+    const expression::AbstractExpression *expr,
+    storage::PredicateInfo *predicate_array) {
+  const std::vector<storage::PredicateInfo> *parsed_predicates;
+  parsed_predicates = expr->GetParsedPredicates();
+  size_t num_preds = parsed_predicates->size();
+  size_t i;
+  for (i = 0; i < num_preds; i++) {
+    predicate_array[i].col_id = (*parsed_predicates)[i].col_id;
+    predicate_array[i].comparison_operator =
+        (*parsed_predicates)[i].comparison_operator;
+    predicate_array[i].predicate_value =
+        (*parsed_predicates)[i].predicate_value;
+  }
+  auto temp_expr = (expression::AbstractExpression *)expr;
+  temp_expr->ClearParsedPredicates();
+}
+
+//===----------------------------------------------------------------------===//
 // For every column in the tile group, fill out the layout information for the
 // column in the provided 'infos' array.  Specifically, we need a pointer to
 // where the first value of the column can be found, and the amount of bytes
@@ -88,7 +115,7 @@ void RuntimeFunctions::GetTileGroupLayout(const storage::TileGroup *tile_group,
         tile->GetTupleLocation(0) + tile_schema->GetOffset(tile_column_offset);
     infos[col_idx].stride = tile_schema->GetLength();
     infos[col_idx].is_columnar = tile_schema->GetColumnCount() == 1;
-    LOG_DEBUG("Col [%u] start: %p, stride: %u, columnar: %s", col_idx,
+    LOG_TRACE("Col [%u] start: %p, stride: %u, columnar: %s", col_idx,
               infos[col_idx].column, infos[col_idx].stride,
               infos[col_idx].is_columnar ? "true" : "false");
   }

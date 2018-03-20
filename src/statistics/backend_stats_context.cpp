@@ -14,7 +14,7 @@
 
 #include <map>
 
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "common/statement.h"
 #include "catalog/catalog.h"
 #include "catalog/manager.h"
@@ -47,7 +47,7 @@ BackendStatsContext* BackendStatsContext::GetInstance() {
 
 BackendStatsContext::BackendStatsContext(size_t max_latency_history,
                                          bool regiser_to_aggregator)
-    : txn_latencies_(LATENCY_METRIC, max_latency_history) {
+    : txn_latencies_(MetricType::LATENCY, max_latency_history) {
   std::thread::id this_id = std::this_thread::get_id();
   thread_id_ = this_id;
 
@@ -69,7 +69,7 @@ TableMetric* BackendStatsContext::GetTableMetric(oid_t database_id,
                                                  oid_t table_id) {
   if (table_metrics_.find(table_id) == table_metrics_.end()) {
     table_metrics_[table_id] = std::unique_ptr<TableMetric>(
-        new TableMetric{TABLE_METRIC, database_id, table_id});
+        new TableMetric{MetricType::TABLE, database_id, table_id});
   }
   return table_metrics_[table_id].get();
 }
@@ -78,7 +78,7 @@ TableMetric* BackendStatsContext::GetTableMetric(oid_t database_id,
 DatabaseMetric* BackendStatsContext::GetDatabaseMetric(oid_t database_id) {
   if (database_metrics_.find(database_id) == database_metrics_.end()) {
     database_metrics_[database_id] = std::unique_ptr<DatabaseMetric>(
-        new DatabaseMetric{DATABASE_METRIC, database_id});
+        new DatabaseMetric{MetricType::DATABASE, database_id});
   }
   return database_metrics_[database_id].get();
 }
@@ -92,7 +92,7 @@ IndexMetric* BackendStatsContext::GetIndexMetric(oid_t database_id,
   // Index metric doesn't exist yet
   if (index_metrics_.Contains(index_id) == false) {
     index_metric.reset(
-        new IndexMetric{INDEX_METRIC, database_id, table_id, index_id});
+        new IndexMetric{MetricType::INDEX, database_id, table_id, index_id});
     index_metrics_.Insert(index_id, index_metric);
     index_id_lock.Lock();
     index_ids_.insert(index_id);
@@ -222,7 +222,7 @@ void BackendStatsContext::InitQueryMetric(
     const std::shared_ptr<QueryMetric::QueryParams> params) {
   // TODO currently all queries belong to DEFAULT_DB
   ongoing_query_metric_.reset(new QueryMetric(
-      QUERY_METRIC, statement->GetQueryString(), params, DEFAULT_DB_ID));
+      MetricType::QUERY, statement->GetQueryString(), params, DEFAULT_DB_ID));
 }
 
 //===--------------------------------------------------------------------===//
@@ -290,7 +290,7 @@ void BackendStatsContext::Reset() {
     // Reset database metrics
     if (database_metrics_.find(database_id) == database_metrics_.end()) {
       database_metrics_[database_id] = std::unique_ptr<DatabaseMetric>(
-          new DatabaseMetric{DATABASE_METRIC, database_id});
+          new DatabaseMetric{MetricType::DATABASE, database_id});
     }
 
     // Reset table metrics
@@ -301,7 +301,7 @@ void BackendStatsContext::Reset() {
 
       if (table_metrics_.find(table_id) == table_metrics_.end()) {
         table_metrics_[table_id] = std::unique_ptr<TableMetric>(
-            new TableMetric{TABLE_METRIC, database_id, table_id});
+            new TableMetric{MetricType::TABLE, database_id, table_id});
       }
 
       // Reset indexes metrics
@@ -312,7 +312,7 @@ void BackendStatsContext::Reset() {
         oid_t index_id = index->GetOid();
         if (index_metrics_.Contains(index_id) == false) {
           std::shared_ptr<IndexMetric> index_metric(
-              new IndexMetric{INDEX_METRIC, database_id, table_id, index_id});
+              new IndexMetric{MetricType::INDEX, database_id, table_id, index_id});
           index_metrics_.Insert(index_id, index_metric);
           index_ids_.insert(index_id);
         }
@@ -355,8 +355,9 @@ std::string BackendStatsContext::ToString() const {
       ss << std::endl;
     }
   }
-
-  return ss.str();
+  std::string info = ss.str();
+  StringUtil::RTrim(info);
+  return info;
 }
 
 void BackendStatsContext::CompleteQueryMetric() {

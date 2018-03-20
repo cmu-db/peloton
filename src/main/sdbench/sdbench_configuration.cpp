@@ -173,18 +173,19 @@ static void ValidateScaleFactor(const configuration &state) {
 }
 
 static void ValidateLayout(const configuration &state) {
-  if (state.layout_mode < 1 || state.layout_mode > 3) {
-    LOG_ERROR("Invalid layout :: %d", state.layout_mode);
+  if (state.layout_mode == LayoutType::INVALID) {
+    LOG_ERROR("Invalid layout :: %s",
+              LayoutTypeToString(state.layout_mode).c_str());
     exit(EXIT_FAILURE);
   } else {
     switch (state.layout_mode) {
-      case LAYOUT_TYPE_ROW:
+      case LayoutType::ROW:
         LOG_INFO("%s : ROW", "layout ");
         break;
-      case LAYOUT_TYPE_COLUMN:
+      case LayoutType::COLUMN:
         LOG_INFO("%s : COLUMN", "layout ");
         break;
-      case LAYOUT_TYPE_HYBRID:
+      case LayoutType::HYBRID:
         LOG_INFO("%s : HYBRID", "layout ");
         break;
       default:
@@ -397,7 +398,7 @@ void ParseArguments(int argc, char *argv[], configuration &state) {
   state.projectivity = 0.01;
 
   // Layout parameter
-  state.layout_mode = LAYOUT_TYPE_ROW;
+  state.layout_mode = LayoutType::ROW;
 
   // Learning rate
   state.analyze_sample_count_threshold = 100;

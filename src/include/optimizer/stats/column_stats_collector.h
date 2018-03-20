@@ -16,7 +16,7 @@
 #include <functional>
 #include <libcount/hll.h>
 
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "optimizer/stats/count_min_sketch.h"
 #include "optimizer/stats/top_k_elements.h"
 #include "optimizer/stats/histogram.h"

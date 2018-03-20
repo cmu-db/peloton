@@ -4,19 +4,20 @@
 //
 // connection_manager.h
 //
-// Identification: src/include/network/connection_manager.h
+// Identification: src/include/network/service/connection_manager.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #pragma once
 
-#include "common/mutex.h"
-#include "tcp_connection.h"
-
 #include <event2/event.h>
 #include <pthread.h>
+
+#include "common/synchronization/mutex_latch.h"
+#include "common/synchronization/condition.h"
+#include "network/service/tcp_connection.h"
 
 namespace peloton {
 namespace network {
@@ -28,25 +29,24 @@ namespace service {
 //===--------------------------------------------------------------------===//
 
 class ConnectionManager {
-
  public:
   // global singleton
-  static ConnectionManager& GetInstance(void);
+  static ConnectionManager &GetInstance(void);
 
-  void ResterRpcServer(RpcServer* server);
-  RpcServer* GetRpcServer();
+  void ResterRpcServer(RpcServer *server);
+  RpcServer *GetRpcServer();
 
-  struct event_base* GetEventBase();
+  struct event_base *GetEventBase();
 
-  Connection* GetConn(std::string& addr);
+  Connection *GetConn(std::string &addr);
 
-  Connection* GetConn(NetworkAddress& addr);
-  Connection* CreateConn(NetworkAddress& addr);
-  Connection* FindConn(NetworkAddress& addr);
-  bool AddConn(NetworkAddress addr, Connection* conn);
-  bool AddConn(struct sockaddr& addr, Connection* conn);
-  bool DeleteConn(NetworkAddress& addr);
-  bool DeleteConn(Connection* conn);
+  Connection *GetConn(NetworkAddress &addr);
+  Connection *CreateConn(NetworkAddress &addr);
+  Connection *FindConn(NetworkAddress &addr);
+  bool AddConn(NetworkAddress addr, Connection *conn);
+  bool AddConn(struct sockaddr &addr, Connection *conn);
+  bool DeleteConn(NetworkAddress &addr);
+  bool DeleteConn(Connection *conn);
 
   ConnectionManager();
   ~ConnectionManager();
@@ -55,19 +55,19 @@ class ConnectionManager {
 
  private:
   // rpc server
-  RpcServer* rpc_server_;
+  RpcServer *rpc_server_;
 
   // all the connections established: addr --> connection instance
-  std::map<NetworkAddress, Connection*> conn_pool_;
+  std::map<NetworkAddress, Connection *> conn_pool_;
 
   // a connection can be shared among pthreads
-  Mutex mutex_;
-  Condition cond_;
+  common::synchronization::DirtyMutexLatch mutex_;
+  common::synchronization::Condition cond_;
 
   //////////////////////////////////////////////
   // The following is only for performance test
   //////////////////////////////////////////////
-  std::map<NetworkAddress, Connection*> client_conn_pool_;
+  std::map<NetworkAddress, Connection *> client_conn_pool_;
 };
 
 }  // namespace service

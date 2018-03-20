@@ -24,7 +24,7 @@
 
 #include "catalog/manager.h"
 #include "catalog/schema.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
 #include "executor/logical_tile.h"
@@ -79,20 +79,20 @@ TEST_F(MaterializationTests, SingleBaseTileTest) {
   for (int i = 0; i < tuple_count; i++) {
     type::Value val0 = (result_base_tile->GetValue(i, 0));
     type::Value val1 = (result_base_tile->GetValue(i, 1));
-    type::CmpBool cmp = (val0.CompareEquals(
+    CmpBool cmp = (val0.CompareEquals(
       type::ValueFactory::GetIntegerValue(TestingExecutorUtil::PopulatedValue(i, 0))));
-    EXPECT_TRUE(cmp == type::CMP_TRUE);
+    EXPECT_TRUE(cmp == CmpBool::TRUE);
     cmp = val1.CompareEquals(type::ValueFactory::GetIntegerValue(
         TestingExecutorUtil::PopulatedValue(i, 1)));
-    EXPECT_TRUE(cmp == type::CMP_TRUE);
+    EXPECT_TRUE(cmp == CmpBool::TRUE);
 
     // Double check that logical tile is functioning.
     type::Value logic_val0 = (result_logical_tile->GetValue(i, 0));
     type::Value logic_val1 = (result_logical_tile->GetValue(i, 1));
     cmp = (logic_val0.CompareEquals(val0));
-    EXPECT_TRUE(cmp == type::CMP_TRUE);
+    EXPECT_TRUE(cmp == CmpBool::TRUE);
     cmp = (logic_val1.CompareEquals(val1));
-    EXPECT_TRUE(cmp == type::CMP_TRUE);
+    EXPECT_TRUE(cmp == CmpBool::TRUE);
   }
 }
 
@@ -152,30 +152,30 @@ TEST_F(MaterializationTests, TwoBaseTilesWithReorderTest) {
     type::Value val1(result_base_tile->GetValue(i, 1));
     type::Value val2(result_base_tile->GetValue(i, 2));
     // Output column 2.
-    type::CmpBool cmp(val2.CompareEquals(
+    CmpBool cmp(val2.CompareEquals(
       type::ValueFactory::GetIntegerValue(TestingExecutorUtil::PopulatedValue(i, 0))));
-    EXPECT_TRUE(cmp == type::CMP_TRUE);
+    EXPECT_TRUE(cmp == CmpBool::TRUE);
 
     // Output column 1.
     cmp = (val1.CompareEquals(type::ValueFactory::GetIntegerValue(
         TestingExecutorUtil::PopulatedValue(i, 1))));
-    EXPECT_TRUE(cmp == type::CMP_TRUE);
+    EXPECT_TRUE(cmp == CmpBool::TRUE);
 
     // Output column 0.
     cmp = (val0.CompareEquals(type::ValueFactory::GetVarcharValue(
         std::to_string(TestingExecutorUtil::PopulatedValue(i, 3)))));
-    EXPECT_TRUE(cmp == type::CMP_TRUE);
+    EXPECT_TRUE(cmp == CmpBool::TRUE);
 
     // Double check that logical tile is functioning.
     type::Value logic_val0 = (result_logical_tile->GetValue(i, 0));
     type::Value logic_val1 = (result_logical_tile->GetValue(i, 1));
     type::Value logic_val2 = (result_logical_tile->GetValue(i, 2));
     cmp = (logic_val0.CompareEquals(val0));
-    EXPECT_TRUE(cmp == type::CMP_TRUE);
+    EXPECT_TRUE(cmp == CmpBool::TRUE);
     cmp = (logic_val1.CompareEquals(val1));
-    EXPECT_TRUE(cmp == type::CMP_TRUE);
+    EXPECT_TRUE(cmp == CmpBool::TRUE);
     cmp = (logic_val2.CompareEquals(val2));
-    EXPECT_TRUE(cmp == type::CMP_TRUE);
+    EXPECT_TRUE(cmp == CmpBool::TRUE);
   }
 }
 

@@ -22,7 +22,7 @@
 #include "benchmark/ycsb/ycsb_configuration.h"
 #include "catalog/catalog.h"
 #include "catalog/schema.h"
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/abstract_executor.h"
 #include "executor/insert_executor.h"
@@ -199,7 +199,7 @@ void LoadYCSBDatabase() {
   double diff = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
   LOG_INFO("database table loading time = %lf ms", diff);
 
-  LOG_INFO("============TABLE SIZES==========");
+  LOG_INFO("%sTABLE SIZES%s", peloton::GETINFO_HALF_THICK_LINE.c_str(), peloton::GETINFO_HALF_THICK_LINE.c_str());
   LOG_INFO("user count = %lu", user_table->GetTupleCount());
 
 }

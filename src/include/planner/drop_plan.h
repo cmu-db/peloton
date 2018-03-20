@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "planner/abstract_plan.h"
 
 namespace peloton {
@@ -40,7 +40,8 @@ class DropPlan : public AbstractPlan {
 
   const std::string GetInfo() const {
     std::string returned_string = "DropPlan:\n";
-    returned_string += "\tTable name: " + table_name + "\n";
+    returned_string += " Table name:     " + table_name;
+    returned_string += " Database name : " + database_name;
     return returned_string;
   }
 
@@ -48,9 +49,13 @@ class DropPlan : public AbstractPlan {
     return std::unique_ptr<AbstractPlan>(new DropPlan(table_name));
   }
 
+  std::string GetDatabaseName() const { return database_name; }
+
   std::string GetTableName() const { return table_name; }
 
   std::string GetTriggerName() const { return trigger_name; }
+
+  std::string GetIndexName() const { return index_name; }
 
   DropType GetDropType() const { return drop_type; }
 
@@ -60,9 +65,13 @@ class DropPlan : public AbstractPlan {
   DropType drop_type = DropType::TABLE;
 
   // Target Table
-  // storage::DataTable *target_table_ = nullptr;
   std::string table_name;
+
+  // Database Name
+  std::string database_name;
+
   std::string trigger_name;
+  std::string index_name;
   bool missing;
 
  private:

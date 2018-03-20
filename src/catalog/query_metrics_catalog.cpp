@@ -21,12 +21,12 @@ namespace peloton {
 namespace catalog {
 
 QueryMetricsCatalog *QueryMetricsCatalog::GetInstance(
-    concurrency::Transaction *txn) {
+    concurrency::TransactionContext *txn) {
   static QueryMetricsCatalog query_metrics_catalog{txn};
   return &query_metrics_catalog;
 }
 
-QueryMetricsCatalog::QueryMetricsCatalog(concurrency::Transaction *txn)
+QueryMetricsCatalog::QueryMetricsCatalog(concurrency::TransactionContext *txn)
     : AbstractCatalog("CREATE TABLE " CATALOG_DATABASE_NAME
                       "." QUERY_METRICS_CATALOG_NAME
                       " ("
@@ -59,7 +59,7 @@ bool QueryMetricsCatalog::InsertQueryMetrics(
     const stats::QueryMetric::QueryParamBuf &value_buf, int64_t reads,
     int64_t updates, int64_t deletes, int64_t inserts, int64_t latency,
     int64_t cpu_time, int64_t time_stamp, type::AbstractPool *pool,
-    concurrency::Transaction *txn) {
+    concurrency::TransactionContext *txn) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
@@ -108,7 +108,7 @@ bool QueryMetricsCatalog::InsertQueryMetrics(
 
 bool QueryMetricsCatalog::DeleteQueryMetrics(const std::string &name,
                                              oid_t database_oid,
-                                             concurrency::Transaction *txn) {
+                                             concurrency::TransactionContext *txn) {
   oid_t index_offset = IndexId::SECONDARY_KEY_0;  // Secondary key index
 
   std::vector<type::Value> values;
@@ -120,7 +120,7 @@ bool QueryMetricsCatalog::DeleteQueryMetrics(const std::string &name,
 
 stats::QueryMetric::QueryParamBuf QueryMetricsCatalog::GetParamTypes(
     const std::string &name, oid_t database_oid,
-    concurrency::Transaction *txn) {
+    concurrency::TransactionContext *txn) {
   std::vector<oid_t> column_ids({ColumnId::PARAM_TYPES});  // param_types
   oid_t index_offset = IndexId::SECONDARY_KEY_0;  // Secondary key index
   std::vector<type::Value> values;
@@ -147,7 +147,7 @@ stats::QueryMetric::QueryParamBuf QueryMetricsCatalog::GetParamTypes(
 
 int64_t QueryMetricsCatalog::GetNumParams(const std::string &name,
                                           oid_t database_oid,
-                                          concurrency::Transaction *txn) {
+                                          concurrency::TransactionContext *txn) {
   std::vector<oid_t> column_ids({ColumnId::NUM_PARAMS});  // num_params
   oid_t index_offset = IndexId::SECONDARY_KEY_0;          // Secondary key index
   std::vector<type::Value> values;

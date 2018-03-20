@@ -195,8 +195,8 @@ void TPCHBenchmark::RunQuery(const TPCHBenchmark::QueryConfig &query_config) {
     overall_stats.tear_down_ms += runtime_stats.tear_down_ms;
   }
 
-  LOG_INFO("%s: ==============================================",
-           query_config.query_name.c_str());
+  LOG_INFO("%s: %s",
+           query_config.query_name.c_str(), peloton::GETINFO_THICK_LINE.c_str());
   LOG_INFO("# Runs: %u, # Result tuples: %lu", config_.num_runs,
            counter.GetCount());
   LOG_INFO("Setup: %.2lf, IR Gen: %.2lf, Compile: %.2lf",

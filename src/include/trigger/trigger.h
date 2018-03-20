@@ -20,13 +20,13 @@
 #include "expression/abstract_expression.h"
 #include "planner/create_plan.h"
 #include "storage/tuple.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "parser/pg_trigger.h"
 
 namespace peloton {
 
 namespace concurrency {
-class Transaction;
+class TransactionContext;
 }
 
 namespace trigger {
@@ -95,7 +95,7 @@ class Trigger {
 
   // only apply to the simple case: old.balance != new.balance
   void SerializeWhen(SerializeOutput &output, oid_t database_oid,
-                     oid_t table_oid, concurrency::Transaction *txn);
+                     oid_t table_oid, concurrency::TransactionContext *txn);
   expression::AbstractExpression *DeserializeWhen(SerializeInput &input);
 
  private:
@@ -145,7 +145,7 @@ class TriggerList {
   // Insert/Update/Delete are events that invoke triggers
 
   bool ExecTriggers(TriggerType exec_type,
-                    concurrency::Transaction *txn = nullptr,
+                    concurrency::TransactionContext *txn = nullptr,
                     storage::Tuple *new_tuple = nullptr,
                     executor::ExecutorContext *executor_context_ = nullptr,
                     storage::Tuple *old_tuple = nullptr,

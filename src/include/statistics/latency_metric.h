@@ -17,9 +17,9 @@
 
 #include "common/timer.h"
 #include "common/macros.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "common/exception.h"
-#include "container/circular_buffer.h"
+#include "common/container/circular_buffer.h"
 #include "statistics/abstract_metric.h"
 #include <mutex>
 

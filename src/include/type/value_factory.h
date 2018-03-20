@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// value_factory.h
+//
+// Identification: src/include/type/value_factory.h
+//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #pragma once
 
 #include <algorithm>
@@ -60,7 +72,7 @@ class ValueFactory {
 
   static inline Value GetBooleanValue(CmpBool value) {
     return Value(TypeId::BOOLEAN,
-                 value == CMP_NULL ? PELOTON_BOOLEAN_NULL : (int8_t)value);
+                 value == CmpBool::NULL_ ? PELOTON_BOOLEAN_NULL : (int8_t)value);
   }
 
   static inline Value GetBooleanValue(bool value) {
@@ -202,7 +214,7 @@ class ValueFactory {
           std::string str = value.ToString();
           int64_t bigint = 0;
           try {
-            bigint = stoll(str);
+            bigint = std::stoll(str);
           } catch (std::out_of_range &e) {
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
@@ -250,7 +262,7 @@ class ValueFactory {
           std::string str = value.ToString();
           int32_t integer = 0;
           try {
-            integer = stoi(str);
+            integer = std::stoi(str);
           } catch (std::out_of_range &e) {
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
@@ -305,7 +317,7 @@ class ValueFactory {
           std::string str = value.ToString();
           int16_t smallint = 0;
           try {
-            smallint = stoi(str);
+            smallint = std::stoi(str);
           } catch (std::out_of_range &e) {
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
@@ -363,7 +375,7 @@ class ValueFactory {
           std::string str = value.ToString();
           int8_t tinyint = 0;
           try {
-            tinyint = stoi(str);
+            tinyint = std::stoi(str);
           } catch (std::out_of_range &e) {
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
@@ -401,7 +413,7 @@ class ValueFactory {
           std::string str = value.ToString();
           double res = 0;
           try {
-            res = stod(str);
+            res = std::stod(str);
           } catch (std::out_of_range &e) {
             throw Exception(ExceptionType::OUT_OF_RANGE,
                             "Numeric value out of range.");
@@ -513,6 +525,57 @@ class ValueFactory {
     }
     throw Exception(Type::GetInstance(value.GetTypeId())->ToString() +
                     " is not coercable to TIMESTAMP.");
+  }
+
+  static Value CastAsDate(const Value &value) {
+    if (Type::GetInstance(TypeId::DATE)->IsCoercableFrom(value.GetTypeId())) {
+      if (value.IsNull()) return ValueFactory::GetDateValue(PELOTON_DATE_NULL);
+      switch (value.GetTypeId()) {
+        case TypeId::DATE:
+          return ValueFactory::GetDateValue(value.GetAs<uint32_t>());
+        case TypeId::VARCHAR: {
+          std::string str = value.ToString();
+          if (str.length() != 10) throw Exception("Date format error.");
+          uint32_t res = 0;
+          // Format: YYYY-MM-DD
+          uint32_t year = 0;
+          uint32_t month = 0;
+          uint32_t day = 0;
+          if (sscanf(str.c_str(), "%4u-%2u-%2u", &year, &month, &day) != 3)
+            throw Exception("Date format error.");
+          if (year > 9999 || month > 12 || day > 31 || day == 0 || month == 0)
+            throw Exception(ExceptionType::OUT_OF_RANGE,
+                            "Date value out of range.");
+          uint32_t max_day[13] = {0,  31, 28, 31, 30, 31, 30,
+                                  31, 31, 30, 31, 30, 31};
+          uint32_t max_day_lunar[13] = {0,  31, 29, 31, 30, 31, 30,
+                                        31, 31, 30, 31, 30, 31};
+
+          if ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0) {
+            if (day > max_day_lunar[month])
+              throw Exception(ExceptionType::OUT_OF_RANGE,
+                              "Date value out of range.");
+          } else if (day > max_day[month])
+            throw Exception(ExceptionType::OUT_OF_RANGE,
+                            "Date value out of range.");
+          bool isDigit[10] = {1, 1, 1, 1, 0, 1, 1, 0, 1, 1};
+          for (int i = 0; i < 10; i++) {
+            if (isDigit[i])
+              if (str[i] < '0' || str[i] > '9')
+                throw Exception("Date format error.");
+          }
+          res += year;
+          res *= 10000;
+          res += month * 100;
+          res += day;
+          return ValueFactory::GetDateValue(res);
+        }
+        default:
+          break;
+      }
+    }
+    throw Exception(Type::GetInstance(value.GetTypeId())->ToString() +
+                    " is not coercable to DATE.");
   }
 
   static inline Value CastAsBoolean(const Value &value) {

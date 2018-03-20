@@ -34,6 +34,10 @@ int32_t SettingsManager::GetInt(SettingId id) {
   return GetInstance().GetValue(id).GetAs<int32_t>();
 }
 
+double SettingsManager::GetDouble(SettingId id) {
+  return GetInstance().GetValue(id).GetAs<double>();
+}
+
 bool SettingsManager::GetBool(SettingId id) {
   return GetInstance().GetValue(id).GetAs<bool>();
 }

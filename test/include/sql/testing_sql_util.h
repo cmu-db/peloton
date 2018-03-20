@@ -12,8 +12,10 @@
 
 #pragma once
 
+#include <atomic>
+
 #include "common/statement.h"
-#include "include/traffic_cop/traffic_cop.h"
+#include "traffic_cop/traffic_cop.h"
 
 namespace peloton {
 
@@ -40,13 +42,13 @@ class TestingSQLUtil {
 
   // Execute a SQL query end-to-end
   static ResultType ExecuteSQLQuery(const std::string query,
-                                    std::vector<StatementResult> &result,
+                                    std::vector<ResultValue> &result,
                                     std::vector<FieldInfo> &tuple_descriptor,
                                     int &rows_affected,
                                     std::string &error_message);
 
   static ResultType ExecuteSQLQuery(const std::string query,
-                                    std::vector<StatementResult> &result,
+                                    std::vector<ResultValue> &result,
                                     std::vector<FieldInfo> &tuple_descriptor,
                                     int &rows_affected);
 
@@ -56,18 +58,18 @@ class TestingSQLUtil {
   // the refactor by Siddharth
   static ResultType ExecuteSQLQueryWithOptimizer(
       std::unique_ptr<optimizer::AbstractOptimizer> &optimizer,
-      const std::string query, std::vector<StatementResult> &result,
+      const std::string query, std::vector<ResultValue> &result,
       std::vector<FieldInfo> &tuple_descriptor, int &rows_changed,
       std::string &error_message);
 
   // Generate the plan tree for a SQL query with the specific optimizer
   static std::shared_ptr<planner::AbstractPlan> GeneratePlanWithOptimizer(
       std::unique_ptr<optimizer::AbstractOptimizer> &optimizer,
-      const std::string query, concurrency::Transaction *txn);
+      const std::string query, concurrency::TransactionContext *txn);
 
   // A simpler wrapper around ExecuteSQLQuery
   static ResultType ExecuteSQLQuery(const std::string query,
-                                    std::vector<StatementResult> &result);
+                                    std::vector<ResultValue> &result);
 
   // A another simpler wrapper around ExecuteSQLQuery
   static ResultType ExecuteSQLQuery(const std::string query);
@@ -84,8 +86,8 @@ class TestingSQLUtil {
   // NOTE: Result columns across different rows are unfolded into a single
   // vector (vector<ResultType>).
   static std::string GetResultValueAsString(
-      const std::vector<StatementResult> &result, size_t index) {
-    std::string value(result[index].second.begin(), result[index].second.end());
+      const std::vector<ResultValue> &result, size_t index) {
+    std::string value(result[index].begin(), result[index].end());
     return value;
   }
 

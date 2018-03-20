@@ -30,8 +30,7 @@ namespace codegen {
 //===----------------------------------------------------------------------===//
 // A wrapped class for output tuples
 //===----------------------------------------------------------------------===//
-class WrappedTuple
-    : public ContainerTuple<std::vector<peloton::type::Value>> {
+class WrappedTuple : public ContainerTuple<std::vector<peloton::type::Value>> {
  public:
   // Basic Constructor
   WrappedTuple(peloton::type::Value *vals, uint32_t num_vals);
@@ -57,7 +56,7 @@ class BufferingConsumer : public QueryResultConsumer {
 
   // Constructor
   BufferingConsumer(const std::vector<oid_t> &cols,
-                    planner::BindingContext &context);
+                    const planner::BindingContext &context);
 
   void Prepare(CompilationContext &compilation_context) override;
   void InitializeState(CompilationContext &) override {}
@@ -77,7 +76,7 @@ class BufferingConsumer : public QueryResultConsumer {
   // ACCESSORS
   //===--------------------------------------------------------------------===//
 
-  BufferingState *GetState() { return &state; }
+  char *GetConsumerState() final { return reinterpret_cast<char *>(&state); }
 
   const std::vector<WrappedTuple> &GetOutputTuples() const { return tuples_; }
 
@@ -93,9 +92,6 @@ class BufferingConsumer : public QueryResultConsumer {
 
   // The slot in the runtime state to find our state context
   RuntimeState::StateID consumer_state_id_;
-
-  // The ID of our output tuple buffer state
-  RuntimeState::StateID tuple_output_state_id_;
 };
 
 }  // namespace codegen

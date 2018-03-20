@@ -14,12 +14,12 @@
 
 #include "common/item_pointer.h"
 #include "executor/executor_context.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 
 namespace peloton {
 
 namespace concurrency {
-class Transaction;
+class TransactionContext;
 }  // namespace concurrency
 
 namespace storage {

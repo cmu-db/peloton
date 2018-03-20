@@ -12,8 +12,15 @@
 
 #include "planner/abstract_join_plan.h"
 
+#include <numeric>
+
 namespace peloton {
 namespace planner {
+
+void AbstractJoinPlan::GetOutputColumns(std::vector<oid_t> &columns) const {
+  columns.resize(GetSchema()->GetColumnCount());
+  std::iota(columns.begin(), columns.end(), 0);
+}
 
 void AbstractJoinPlan::PerformBinding(BindingContext &context) {
   const auto &children = GetChildren();
@@ -52,6 +59,82 @@ void AbstractJoinPlan::PerformBinding(BindingContext &context) {
     const_cast<expression::AbstractExpression *>(predicate)
         ->PerformBinding({&left_context, &right_context});
   }
+}
+
+void AbstractJoinPlan::VisitParameters(
+    codegen::QueryParametersMap &map, std::vector<peloton::type::Value> &values,
+    const std::vector<peloton::type::Value> &values_from_user) {
+  AbstractPlan::VisitParameters(map, values, values_from_user);
+
+  auto *predicate =
+      const_cast<expression::AbstractExpression *>(GetPredicate());
+  if (predicate != nullptr) {
+    predicate->VisitParameters(map, values, values_from_user);
+  }
+
+  auto *projection = const_cast<planner::ProjectInfo *>(GetProjInfo());
+  if (projection != nullptr && projection->IsNonTrivial()) {
+    for (const auto &target : projection->GetTargetList()) {
+      auto *derived_attr_expr =
+          const_cast<expression::AbstractExpression *>(target.second.expr);
+      derived_attr_expr->VisitParameters(map, values, values_from_user);
+    }
+  }
+}
+
+bool AbstractJoinPlan::operator==(const AbstractPlan &rhs) const {
+  if (GetPlanNodeType() != rhs.GetPlanNodeType()) {
+    return false;
+  }
+
+  // Check join type
+  auto &other = static_cast<const planner::AbstractJoinPlan &>(rhs);
+  if (GetJoinType() != other.GetJoinType()) {
+    return false;
+  }
+
+  // Check predicate
+  auto *pred = GetPredicate();
+  auto *other_pred = other.GetPredicate();
+  if ((pred == nullptr && other_pred != nullptr) ||
+      (pred != nullptr && other_pred == nullptr)) {
+    return false;
+  }
+  if (pred != nullptr && *pred != *other_pred) {
+    return false;
+  }
+
+  // Check projection information
+  auto *proj_info = GetProjInfo();
+  auto *other_proj_info = other.GetProjInfo();
+  if ((proj_info == nullptr && other_proj_info != nullptr) ||
+      (proj_info != nullptr && other_proj_info == nullptr)) {
+    return false;
+  }
+  if (proj_info != nullptr && *proj_info != *other_proj_info) {
+    return false;
+  }
+
+  // Looks okay, but let subclass make sure
+  return true;
+}
+
+hash_t AbstractJoinPlan::Hash() const {
+  auto type = GetPlanNodeType();
+  hash_t hash = HashUtil::Hash(&type);
+
+  auto join_type = GetJoinType();
+  hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&join_type));
+
+  if (GetPredicate() != nullptr) {
+    hash = HashUtil::CombineHashes(hash, GetPredicate()->Hash());
+  }
+
+  if (GetProjInfo() != nullptr) {
+    hash = HashUtil::CombineHashes(hash, GetProjInfo()->Hash());
+  }
+
+  return hash;
 }
 
 }  // namespace planner

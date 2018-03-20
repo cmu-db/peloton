@@ -13,7 +13,8 @@
 #include "concurrency/transaction_manager.h"
 
 #include "catalog/manager.h"
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
+#include "function/date_functions.h"
 #include "gc/gc_manager_factory.h"
 #include "logging/log_manager.h"
 #include "settings/settings_manager.h"
@@ -29,15 +30,15 @@ IsolationLevelType TransactionManager::isolation_level_ =
 ConflictAvoidanceType TransactionManager::conflict_avoidance_ =
     ConflictAvoidanceType::ABORT;
 
-Transaction *TransactionManager::BeginTransaction(
+TransactionContext *TransactionManager::BeginTransaction(
     const size_t thread_id, const IsolationLevelType type) {
-  Transaction *txn = nullptr;
+  TransactionContext *txn = nullptr;
 
   if (type == IsolationLevelType::READ_ONLY) {
     // transaction processing with decentralized epoch manager
     cid_t read_id = EpochManagerFactory::GetInstance().EnterEpoch(
         thread_id, TimestampType::SNAPSHOT_READ);
-    txn = new Transaction(thread_id, type, read_id);
+    txn = new TransactionContext(thread_id, type, read_id);
 
   } else if (type == IsolationLevelType::SNAPSHOT) {
     // transaction processing with decentralized epoch manager
@@ -49,9 +50,9 @@ Transaction *TransactionManager::BeginTransaction(
       cid_t commit_id = EpochManagerFactory::GetInstance().EnterEpoch(
           thread_id, TimestampType::COMMIT);
 
-      txn = new Transaction(thread_id, type, read_id, commit_id);
+      txn = new TransactionContext(thread_id, type, read_id, commit_id);
     } else {
-      txn = new Transaction(thread_id, type, read_id);
+      txn = new TransactionContext(thread_id, type, read_id);
     }
 
   } else {
@@ -62,62 +63,48 @@ Transaction *TransactionManager::BeginTransaction(
     // transaction processing with decentralized epoch manager
     cid_t read_id = EpochManagerFactory::GetInstance().EnterEpoch(
         thread_id, TimestampType::READ);
-    txn = new Transaction(thread_id, type, read_id);
+    txn = new TransactionContext(thread_id, type, read_id);
   }
 
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
-      StatsType::INVALID) {
+  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+      settings::SettingId::stats_mode)) != StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()
         ->GetTxnLatencyMetric()
         .StartTimer();
   }
 
+  txn->SetTimestamp(function::DateFunctions::Now());
+
   return txn;
 }
 
-void TransactionManager::EndTransaction(Transaction *current_txn) {
+void TransactionManager::EndTransaction(TransactionContext *current_txn) {
   // fire all on commit triggers
   if (current_txn->GetResult() == ResultType::SUCCESS) {
     current_txn->ExecOnCommitTriggers();
   }
 
-  auto &epoch_manager = EpochManagerFactory::GetInstance();
-
-  epoch_manager.ExitEpoch(current_txn->GetThreadId(),
-                          current_txn->GetEpochId());
-
-  if (current_txn->GetIsolationLevel() != IsolationLevelType::READ_ONLY) {
-    if (current_txn->GetResult() == ResultType::SUCCESS) {
-      if (current_txn->IsGCSetEmpty() != true) {
-        gc::GCManagerFactory::GetInstance().RecycleTransaction(
-            current_txn->GetGCSetPtr(), current_txn->GetGCObjectSetPtr(),
-            current_txn->GetEpochId(), current_txn->GetThreadId());
-      }
-    } else {
-      if (current_txn->IsGCSetEmpty() != true) {
-        // consider what parameter we should use.
-        gc::GCManagerFactory::GetInstance().RecycleTransaction(
-            current_txn->GetGCSetPtr(), current_txn->GetGCObjectSetPtr(),
-            epoch_manager.GetNextEpochId(), current_txn->GetThreadId());
-      }
-    }
+  if(gc::GCManagerFactory::GetGCType() == GarbageCollectionType::ON) {
+    gc::GCManagerFactory::GetInstance().RecycleTransaction(current_txn);
+  } else {
+    delete current_txn;
   }
 
-  delete current_txn;
   current_txn = nullptr;
 
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
-      StatsType::INVALID) {
+  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+      settings::SettingId::stats_mode)) != StatsType::INVALID) {
     stats::BackendStatsContext::GetInstance()
         ->GetTxnLatencyMetric()
         .RecordLatency();
+
   }
 }
 
 // this function checks whether a concurrent transaction is inserting the same
 // tuple
 // that is to-be-inserted by the current transaction.
-bool TransactionManager::IsOccupied(Transaction *const current_txn,
+bool TransactionManager::IsOccupied(TransactionContext *const current_txn,
                                     const void *position_ptr) {
   ItemPointer &position = *((ItemPointer *)position_ptr);
 
@@ -188,7 +175,7 @@ bool TransactionManager::IsOccupied(Transaction *const current_txn,
 
 // this function checks whether a version is visible to current transaction.
 VisibilityType TransactionManager::IsVisible(
-    Transaction *const current_txn,
+    TransactionContext *const current_txn,
     const storage::TileGroupHeader *const tile_group_header,
     const oid_t &tuple_id, const VisibilityIdType type) {
   txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);

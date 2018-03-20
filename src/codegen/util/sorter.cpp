@@ -28,17 +28,16 @@ Sorter::Sorter()
     : buffer_start_(nullptr),
       buffer_pos_(nullptr),
       buffer_end_(nullptr),
+      num_tuples_(0),
       tuple_size_(std::numeric_limits<uint32_t>::max()),
       cmp_func_(nullptr) {}
 
 // Destruction calls the destroy method to clean up the resources.
 Sorter::~Sorter() { Destroy(); }
 
-// It'd be nice if calls could hint the size of the buffer space they'd need
-// when initializing the sorter. Till then ...
+// TODO(pmenon): It'd be nice if calls could hint the size of the buffer space
+// they'd need when initializing the sorter. Till then ...
 void Sorter::Init(ComparisonFunction func, uint32_t tuple_size) {
-  LOG_DEBUG("Initializing Sorter ...");
-
   tuple_size_ = tuple_size;
   cmp_func_ = func;
 
@@ -49,19 +48,20 @@ void Sorter::Init(ComparisonFunction func, uint32_t tuple_size) {
   buffer_pos_ = buffer_start_;
   buffer_end_ = buffer_start_ + kInitialBufferSize;
 
-  LOG_INFO("Initialized Sorter with size %llu KB for tuples of size %u...",
-           (unsigned long long)kInitialBufferSize / 1024, tuple_size_);
+  LOG_DEBUG("Initialized Sorter with size %.2lf KB for tuples of size %u bytes",
+            kInitialBufferSize / 1024.0, tuple_size_);
 }
 
-// StoreValue a tuple of the given size in this sorter. We return a buffer that
-// has room to store tuple_size bytes.  We should also resize the existing
-// buffer space if we don't have sufficient room for the incoming tuple.
+// Make room for a new tuple of the given size in this sorter, return a buffer
+// that has room to store tuple_size bytes. If we don't have enough space, we
+// allocate more.
 char *Sorter::StoreInputTuple() {
   if (!EnoughSpace(tuple_size_)) {
     Resize();
   }
   char *ret = buffer_pos_;
   buffer_pos_ += tuple_size_;
+  num_tuples_++;
   return ret;
 }
 
@@ -72,22 +72,24 @@ void Sorter::Sort() {
     return;
   }
 
+  auto num_tuples = static_cast<unsigned long long>(GetNumTuples());
+
   // Time it
-  Timer<std::ratio<1, 1000>> timer;
+  Timer<std::milli> timer;
   timer.Start();
-
-  uint64_t num_tuples = GetNumTuples();
-
-  LOG_DEBUG("Going to sort %llu tuples in sort buffer",
-            (unsigned long long)num_tuples);
 
   // Sort the sucker
   std::qsort(buffer_start_, num_tuples, tuple_size_,
              reinterpret_cast<int (*)(const void *, const void *)>(cmp_func_));
 
   timer.Stop();
-  LOG_INFO("Sorted %llu tuples in %.2f ms", (unsigned long long)num_tuples,
-           timer.GetDuration());
+
+  LOG_DEBUG("Sorted %llu tuples in %.2f ms", num_tuples, timer.GetDuration());
+}
+
+void Sorter::Clear() {
+  buffer_pos_ = buffer_start_;
+  num_tuples_ = 0;
 }
 
 // Release any memory we allocated from the storage manager.
@@ -123,7 +125,7 @@ void Sorter::Resize() {
 
   auto &backend_manager = storage::BackendManager::GetInstance();
 
-  char *new_buffer_start = reinterpret_cast<char *>(
+  auto *new_buffer_start = reinterpret_cast<char *>(
       backend_manager.Allocate(BackendType::MM, next_alloc_size));
 
   // Now copy the previous buffer into the new area. Note that we only need

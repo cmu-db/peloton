@@ -44,12 +44,6 @@ HashJoinTranslator::HashJoinTranslator(const planner::HashJoinPlan &join,
   if (UsePrefetching()) {
     left_pipeline_.InstallBoundaryAtInput(this);
     pipeline.InstallBoundaryAtInput(this);
-
-    // Allocate slot for prefetch array
-    prefetch_vector_id_ = runtime_state.RegisterState(
-        "hjPFVec", codegen.ArrayType(codegen.Int64Type(),
-                                     OAHashTable::kDefaultGroupPrefetchSize),
-        true);
   }
 
   // Allocate state for our hash table and bloom filter
@@ -169,8 +163,10 @@ void HashJoinTranslator::Consume(ConsumerContext &context,
   auto &codegen = GetCodeGen();
 
   // The vector holding the hash values for the group
-  Vector hashes{LoadStateValue(prefetch_vector_id_),
-                OAHashTable::kDefaultGroupPrefetchSize, codegen.Int64Type()};
+  auto *raw_vec = codegen.AllocateBuffer(
+      codegen.Int64Type(), OAHashTable::kDefaultGroupPrefetchSize, "pfVector");
+  Vector hashes{raw_vec, OAHashTable::kDefaultGroupPrefetchSize,
+                codegen.Int64Type()};
 
   auto group_prefetch = [&](
       RowBatch::VectorizedIterateCallback::IterationInstance &iter_instance) {

@@ -12,7 +12,8 @@
 #include "gc/gc_manager.h"
 
 #include "catalog/schema.h"
-#include "type/types.h"
+#include "common/internal_types.h"
+#include "concurrency/transaction_context.h"
 #include "type/value.h"
 #include "type/abstract_pool.h"
 #include "storage/tile.h"

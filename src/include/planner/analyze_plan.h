@@ -27,7 +27,7 @@ namespace catalog {
 class Schema;
 }
 namespace concurrency {
-class Transaction;
+class TransactionContext;
 }
 
 namespace planner {
@@ -42,15 +42,15 @@ class AnalyzePlan : public AbstractPlan {
 
   explicit AnalyzePlan(std::string table_name,
                        std::string database_name,
-                       concurrency::Transaction *txn);
+                       concurrency::TransactionContext *txn);
 
   explicit AnalyzePlan(std::string table_name, 
                        std::string database_name, 
                        std::vector<char *> column_names,
-                       concurrency::Transaction *txn);
+                       concurrency::TransactionContext *txn);
 
   explicit AnalyzePlan(parser::AnalyzeStatement *parse_tree,
-                       concurrency::Transaction *txn);
+                       concurrency::TransactionContext *txn);
 
   inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::ANALYZE; }
 

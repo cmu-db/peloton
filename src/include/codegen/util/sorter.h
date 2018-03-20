@@ -48,20 +48,40 @@ class Sorter {
 
   // Constructor
   Sorter();
+
   // Destructor
   ~Sorter();
 
-  // Initialize this sorter with the given comparison function
+  /**
+   * This function initializes the sorter with the given comparison function
+   * and assumes all input tuples have the given size.
+   *
+   * @param func The comparison function used during sort
+   * @param tuple_size The size of the tuple in bytes
+   */
   void Init(ComparisonFunction func, uint32_t tuple_size);
 
-  // StoreValue an input tuple whose size is _equivalent_ to the size of tuple
-  // provided at initialization time.
+  /**
+   * Allocate space for a new input tuple. The size of the new tuple must be
+   * equivalent to the size provided at initialization time.
+   *
+   * @return A pointer to a memory space large enough to store one tuple
+   */
   char *StoreInputTuple();
 
-  // Perform the sort
+  /**
+   * Sort all tuples stored in this sorter.
+   */
   void Sort();
 
-  // Cleanup all the resources this sorter maintains
+  /**
+   * Removes all stored tuples, leaving the sorter with a size of zero.
+   */
+  void Clear();
+
+  /**
+   * Cleans up all resources this sorter maintains.
+   */
   void Destroy();
 
   // Iterator over the tuples in the sort
@@ -69,9 +89,11 @@ class Sorter {
    public:
     // Move the iterator forward
     Iterator &operator++();
+
     // (In)Equality check
     bool operator==(const Iterator &rhs) const;
     bool operator!=(const Iterator &rhs) const;
+
     // Dereference
     const char *operator*();
 
@@ -90,7 +112,7 @@ class Sorter {
   Iterator begin();
   Iterator end();
 
-  uint64_t GetNumTuples() const { return GetUsedSpace() / tuple_size_; }
+  uint64_t GetNumTuples() const { return num_tuples_; }
 
  private:
   // Is there enough room in the buffer to store a tuple of the provided size?
@@ -105,17 +127,26 @@ class Sorter {
   void Resize();
 
  private:
-  // The contiguous buffer space where tuples are stored.
+  // The three pointers below track the buffer space where tuples are stored.
   //
-  // The invariant this class holds for the following buffer pointers are:
-  //   1) buffer_start_ is NULL, in which case both buffer_pos_ and buffer_end_
-  //    are also NULL.
-  // OR
-  //   2) buffer_start <= buffer_pos < buffer_end
+  // buffer_start_ - points to the start of the memory space
+  // buffer_pos_   - points to where the next tuple insertion is written to
+  // buffer_end_   - points to the boundary (i.e., end) of the allocated space
+  //
+  // The sorter instance can either be initialized or uninitialized.
+  //
+  // In the uninitialized state, we maintain the invariant:
+  //   buffer_start_ == buffer_pos_ == buffer_end_ == NULL
+  //
+  // In the initialized state, we maintain the invariant:
+  //   buffer_start <= buffer_pos < buffer_end.
   //
   char *buffer_start_;
   char *buffer_pos_;
   char *buffer_end_;
+
+  // The number of tuples in this sorter instance
+  uint32_t num_tuples_;
 
   // The size of the tuples
   uint32_t tuple_size_;

@@ -42,7 +42,7 @@ static std::vector<ConflictAvoidanceType> CONFLICT_AVOIDANCE_TYPES = {
 
 
 // Dirty write:
-// Transaction T1 modifies a data item. Another transaction T2 then further 
+// TransactionContext T1 modifies a data item. Another transaction T2 then further
 // modifies that data item before T1 performs a COMMIT or ROLLBACK.
 // If T1 or T2 then performs a ROLLBACK, it is unclear what the correct 
 // data value should be.
@@ -302,7 +302,7 @@ void DirtyWriteTest(const ProtocolType protocol UNUSED_ATTRIBUTE,
 
 
 // Dirty read:
-// Transaction T1 modifies a data item. Another transaction T2 then reads
+// TransactionContext T1 modifies a data item. Another transaction T2 then reads
 // that data item before T1 performs a COMMIT or ROLLBACK.
 // If T1 then performs a ROLLBACK, T2 has read a data item that was never
 // committed and so never really existed.
@@ -408,7 +408,7 @@ void DirtyReadTest(const ProtocolType protocol UNUSED_ATTRIBUTE,
 
 
 // Fuzzy read:
-// Transaction T1 reads a data item. Another transaction T2 then modifies
+// TransactionContext T1 reads a data item. Another transaction T2 then modifies
 // or deletes that data item and commits. If T1 then attempts to reread
 // the data item, it receives a modified value or discovers that the data
 // item has been deleted.

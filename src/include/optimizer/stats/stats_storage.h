@@ -18,7 +18,7 @@
 #include <sstream>
 
 #include "common/macros.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "type/value_factory.h"
 
 namespace peloton {
@@ -49,14 +49,14 @@ class StatsStorage {
 
   void InsertOrUpdateTableStats(storage::DataTable *table,
                                 TableStatsCollector *table_stats_collector,
-                                concurrency::Transaction *txn = nullptr);
+                                concurrency::TransactionContext *txn = nullptr);
 
   void InsertOrUpdateColumnStats(
       oid_t database_id, oid_t table_id, oid_t column_id, int num_rows,
       double cardinality, double frac_null, std::string most_common_vals,
       std::string most_common_freqs, std::string histogram_bounds,
       std::string column_name, bool has_index = false,
-      concurrency::Transaction *txn = nullptr);
+      concurrency::TransactionContext *txn = nullptr);
 
   std::shared_ptr<ColumnStats> GetColumnStatsByID(oid_t database_id,
                                                   oid_t table_id,
@@ -69,10 +69,10 @@ class StatsStorage {
 
   /* Functions for triggerring stats collection */
 
-  ResultType AnalyzeStatsForAllTables(concurrency::Transaction *txn = nullptr);
+  ResultType AnalyzeStatsForAllTables(concurrency::TransactionContext *txn = nullptr);
 
   ResultType AnalyzeStatsForTable(storage::DataTable *table,
-                                  concurrency::Transaction *txn = nullptr);
+                                  concurrency::TransactionContext *txn = nullptr);
 
   ResultType AnalayzeStatsForColumns(storage::DataTable *table,
                                      std::vector<std::string> column_names);

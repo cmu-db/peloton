@@ -6,11 +6,13 @@
 //
 // Identification: src/include/index/generic_key.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #pragma once
+
+#include <sstream>
 
 #include "type/type_util.h"
 
@@ -52,6 +54,24 @@ class GenericKey {
     return (data_ptr);
   }
 
+  /**
+   * Generate a human-readable version of this GenericKey.
+   * This method is slow (lots of memory copying) so you
+   * don't want to execute this on the critical path of
+   * anything real in the system.
+   *
+   * IMPORTANT: The output is based on the original tuple
+   * schema and not the key schema. So you may end up seeing
+   * attributes values that are not actually used in the index.
+   *
+   * @return
+   */
+  const std::string GetInfo() const {
+    storage::Tuple tuple(schema, data);
+    return (tuple.GetInfo());
+  }
+
+
   // actual location of data, extends past the end.
   char data[KeySize];
 
@@ -75,9 +95,9 @@ class GenericComparator {
       const type::Value lhs_value = (lhs.ToValue(schema, col_itr));
       const type::Value rhs_value = (rhs.ToValue(schema, col_itr));
 
-      if (lhs_value.CompareLessThan(rhs_value) == type::CMP_TRUE) return true;
+      if (lhs_value.CompareLessThan(rhs_value) == CmpBool::TRUE) return true;
 
-      if (lhs_value.CompareGreaterThan(rhs_value) == type::CMP_TRUE)
+      if (lhs_value.CompareGreaterThan(rhs_value) == CmpBool::TRUE)
         return false;
     }
 
@@ -108,10 +128,10 @@ class FastGenericComparator {
       bool inlined = schema->IsInlined(col_itr);
 
       if (type::TypeUtil::CompareLessThanRaw(type, lhs_data, rhs_data,
-                                             inlined) == type::CMP_TRUE)
+                                             inlined) == CmpBool::TRUE)
         return true;
       else if (type::TypeUtil::CompareGreaterThanRaw(type, lhs_data, rhs_data,
-                                                     inlined) == type::CMP_TRUE)
+                                                     inlined) == CmpBool::TRUE)
         return false;
     }
 
@@ -137,10 +157,10 @@ class GenericComparatorRaw {
       const type::Value lhs_value = (lhs.ToValue(schema, column_itr));
       const type::Value rhs_value = (rhs.ToValue(schema, column_itr));
 
-      if (lhs_value.CompareLessThan(rhs_value) == type::CMP_TRUE)
+      if (lhs_value.CompareLessThan(rhs_value) == CmpBool::TRUE)
         return VALUE_COMPARE_LESSTHAN;
 
-      if (lhs_value.CompareGreaterThan(rhs_value) == type::CMP_TRUE)
+      if (lhs_value.CompareGreaterThan(rhs_value) == CmpBool::TRUE)
         return VALUE_COMPARE_GREATERTHAN;
     }
 

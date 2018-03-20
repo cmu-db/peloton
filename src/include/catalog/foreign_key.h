@@ -16,7 +16,7 @@
 #include <string>
 #include <vector>
 
-#include "type/types.h"
+#include "common/internal_types.h"
 
 namespace peloton {
 namespace catalog {
@@ -28,20 +28,23 @@ namespace catalog {
 // Stores info about foreign key constraints, like the sink table id etc.
 class ForeignKey {
  public:
-  ForeignKey(oid_t sink_table_id,
+  ForeignKey(oid_t source_table_id,
+             oid_t sink_table_id,
              std::vector<oid_t> sink_col_ids,
              std::vector<oid_t> source_col_ids,
              FKConstrActionType update_action,
              FKConstrActionType delete_action,
              std::string constraint_name)
 
-      : sink_table_id(sink_table_id),
+      : source_table_id(source_table_id),
+        sink_table_id(sink_table_id),
         sink_col_ids(sink_col_ids),
         source_col_ids(source_col_ids),
         update_action(update_action),
         delete_action(delete_action),
         fk_name(constraint_name) {}
 
+  oid_t GetSourceTableOid() const { return source_table_id; }
   oid_t GetSinkTableOid() const { return sink_table_id; }
 
   std::vector<oid_t> GetSinkColumnIds() const { return sink_col_ids; }
@@ -52,6 +55,7 @@ class ForeignKey {
   std::string &GetConstraintName() { return fk_name; }
 
  private:
+  oid_t source_table_id = INVALID_OID;
   oid_t sink_table_id = INVALID_OID;
 
   // Columns in the reference table (sink)

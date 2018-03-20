@@ -4,9 +4,9 @@
 //
 // rpc_server.h
 //
-// Identification: src/include/network/rpc_server.h
+// Identification: src/include/network/service/rpc_server.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -25,7 +25,7 @@ namespace network {
 namespace service {
 
 class RpcServer {
-  typedef std::map<uint64_t, RpcMethod*> RpcMethodMap;
+  typedef std::map<uint64_t, RpcMethod *> RpcMethodMap;
 
  public:
   RpcServer(const int port);
@@ -35,13 +35,13 @@ class RpcServer {
   void Start();
 
   // register service
-  bool RegisterService(google::protobuf::Service* service);
+  bool RegisterService(google::protobuf::Service *service);
 
   // find a rpcmethod
-  RpcMethod* FindMethod(uint64_t opcode);
+  RpcMethod *FindMethod(uint64_t opcode);
 
   // get listener
-  Listener* GetListener();
+  Listener *GetListener();
 
  private:
   // remove all services. It is only invoked by destroy constructor

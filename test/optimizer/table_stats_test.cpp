@@ -54,14 +54,14 @@ TEST_F(TableStatsTests, BaiscTests) {
 
   auto col_stats_result0 = table_stats2.GetColumnStats("col0");
   EXPECT_EQ(col_stats_result0->database_id, 0);
-  EXPECT_EQ(col_stats_result0->has_index, true);
+  EXPECT_TRUE(col_stats_result0->has_index);
   auto col_stats_result1 = table_stats2.GetColumnStats("col1");
   EXPECT_EQ(col_stats_result1->database_id, 1);
-  EXPECT_EQ(col_stats_result1->has_index, false);
+  EXPECT_FALSE(col_stats_result1->has_index);
 
-  EXPECT_EQ(table_stats2.HasIndex("col0"), true);
-  EXPECT_EQ(table_stats2.HasIndex("col1"), false);
-  EXPECT_EQ(table_stats2.HasIndex("col3"), false);
+  EXPECT_TRUE(table_stats2.HasIndex("col0"));
+  EXPECT_FALSE(table_stats2.HasIndex("col1"));
+  EXPECT_FALSE(table_stats2.HasIndex("col3"));
 
   EXPECT_EQ(table_stats2.GetCardinality("col0"), 10);
   EXPECT_EQ(table_stats2.GetCardinality("col1"), 20);
@@ -86,7 +86,7 @@ TEST_F(TableStatsTests, UpdateTests) {
   EXPECT_EQ(table_stats.GetColumnStats("col2"), nullptr);
   table_stats.AddColumnStats(col_stats2);
   EXPECT_NE(table_stats.GetColumnStats("col2"), nullptr);
-  EXPECT_EQ(table_stats.HasIndex("col2"), true);
+  EXPECT_TRUE(table_stats.HasIndex("col2"));
   EXPECT_EQ(table_stats.GetCardinality("col2"), 30);
 
   table_stats.RemoveColumnStats("col0");

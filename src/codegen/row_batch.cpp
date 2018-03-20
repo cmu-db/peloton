@@ -130,7 +130,7 @@ codegen::Value RowBatch::Row::DeriveValue(
 }
 
 void RowBatch::Row::RegisterAttributeValue(const planner::AttributeInfo *ai,
-                                           codegen::Value &val) {
+                                           const codegen::Value &val) {
   // Here the caller wants to register a temporary attribute value for the row
   // that overrides any attribute accessor available for the underlying batch
   // We place the value in the cache to ensure we don't go through the normal

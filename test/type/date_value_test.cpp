@@ -34,7 +34,7 @@ TEST_F(DateValueTests, ComparisonTest) {
 
   int32_t values[] = {1000000000, 2000000000, type::PELOTON_DATE_NULL};
 
-  type::CmpBool result;
+  CmpBool result;
   type::Value val0;
   type::Value val1;
 
@@ -97,13 +97,15 @@ TEST_F(DateValueTests, ComparisonTest) {
         }  // SWITCH
         LOG_TRACE("%s %s %s => %d | %d\n", val0.ToString().c_str(),
                   ExpressionTypeToString(etype).c_str(),
-                  val1.ToString().c_str(), expected, result);
+                  val1.ToString().c_str(),
+                  static_cast<int>(expected),
+                  static_cast<int>(result));
 
         if (expected_null) {
-          EXPECT_EQ(expected_null, result == type::CMP_NULL);
+          EXPECT_EQ(expected_null, result == CmpBool::NULL_);
         } else {
-          EXPECT_EQ(expected, result == type::CMP_TRUE);
-          EXPECT_EQ(!expected, result == type::CMP_FALSE);
+          EXPECT_EQ(expected, result == CmpBool::TRUE);
+          EXPECT_EQ(!expected, result == CmpBool::FALSE);
         }
       }
     }
@@ -155,7 +157,7 @@ TEST_F(DateValueTests, CopyTest) {
   type::Value val0 =
       type::ValueFactory::GetDateValue(static_cast<int32_t>(1000000));
   type::Value val1 = val0.Copy();
-  EXPECT_EQ(val0.CompareEquals(val1) == type::CMP_TRUE, true);
+  EXPECT_EQ(CmpBool::TRUE, val0.CompareEquals(val1));
 }
 
 TEST_F(DateValueTests, CastTest) {
@@ -166,12 +168,12 @@ TEST_F(DateValueTests, CastTest) {
 
   result = val_null.CastAs(type::TypeId::DATE);
   EXPECT_TRUE(result.IsNull());
-  EXPECT_EQ(result.CompareEquals(val_null) == type::CMP_NULL, true);
+  EXPECT_EQ(CmpBool::NULL_, result.CompareEquals(val_null));
   EXPECT_EQ(result.GetTypeId(), val_null.GetTypeId());
 
   result = val_null.CastAs(type::TypeId::VARCHAR);
   EXPECT_TRUE(result.IsNull());
-  EXPECT_EQ(result.CompareEquals(str_null) == type::CMP_NULL, true);
+  EXPECT_EQ(CmpBool::NULL_, result.CompareEquals(str_null));
   EXPECT_EQ(result.GetTypeId(), str_null.GetTypeId());
 
   EXPECT_THROW(val_null.CastAs(type::TypeId::BOOLEAN), peloton::Exception);

@@ -15,7 +15,7 @@
 #include "common/macros.h"
 #include "index/index_factory.h"
 #include "storage/tuple.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 
 namespace peloton {
 namespace test {
@@ -30,51 +30,45 @@ class TestingIndexUtil {
   // Test Cases
   //===--------------------------------------------------------------------===//
 
-  static void BasicTest(const IndexType index_type);
+  static void BasicTest(IndexType index_type);
 
-  static void MultiMapInsertTest(const IndexType index_type);
+  static void MultiMapInsertTest(IndexType index_type);
 
-  static void UniqueKeyInsertTest(const IndexType index_type);
+  static void UniqueKeyInsertTest(IndexType index_type);
 
-  static void UniqueKeyDeleteTest(const IndexType index_type);
+  static void UniqueKeyDeleteTest(IndexType index_type);
 
-  static void NonUniqueKeyDeleteTest(const IndexType index_type);
+  static void NonUniqueKeyDeleteTest(IndexType index_type);
 
-  static void MultiThreadedInsertTest(const IndexType index_type);
+  static void MultiThreadedInsertTest(IndexType index_type);
 
-  static void UniqueKeyMultiThreadedTest(const IndexType index_type);
+  static void UniqueKeyMultiThreadedTest(IndexType index_type);
 
-  static void NonUniqueKeyMultiThreadedTest(const IndexType index_type);
+  static void NonUniqueKeyMultiThreadedTest(IndexType index_type);
 
-  static void NonUniqueKeyMultiThreadedStressTest(const IndexType index_type);
+  static void NonUniqueKeyMultiThreadedStressTest(IndexType index_type);
 
-  static void NonUniqueKeyMultiThreadedStressTest2(const IndexType index_type);
+  static void NonUniqueKeyMultiThreadedStressTest2(IndexType index_type);
 
   //===--------------------------------------------------------------------===//
   // Utility Methods
   //===--------------------------------------------------------------------===//
 
-  /**
-   * Builds an index with 4 columns, the first 2 being indexed
-   */
-  static index::Index *BuildIndex(const IndexType index_type,
-                                  const bool unique_keys);
+  // Builds an index with 4 columns, the first 2 being indexed
+  static std::unique_ptr<index::IndexMetadata> BuildTestIndexMetadata(
+      const IndexType index_type, const bool unique_keys);
+
+  static index::Index *BuildIndex(IndexType index_type, bool unique_keys);
 
   static void DestroyIndex(index::Index *index);
 
-  /**
-   * Insert helper function
-   */
+  // Insert helper function
   static void InsertHelper(index::Index *index, type::AbstractPool *pool,
-                         size_t scale_factor,
-                         UNUSED_ATTRIBUTE uint64_t thread_itr);
+                           size_t scale_factor, uint64_t thread_itr);
 
-  /**
-   * Delete helper function
-   */
+  // Delete helper function
   static void DeleteHelper(index::Index *index, type::AbstractPool *pool,
-                         size_t scale_factor,
-                         UNUSED_ATTRIBUTE uint64_t thread_itr);
+                           size_t scale_factor, uint64_t thread_itr);
 
   static std::shared_ptr<ItemPointer> item0;
   static std::shared_ptr<ItemPointer> item1;

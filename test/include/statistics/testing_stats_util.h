@@ -12,7 +12,7 @@
 
 #include "../concurrency/testing_transaction_util.h"
 #include "common/harness.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "type/value.h"
 #include "type/value_factory.h"
 #include "common/statement.h"
@@ -21,7 +21,7 @@
 #include "catalog/column.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "concurrency/transaction_manager.h"
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "storage/tile_group_factory.h"
 #include "storage/table_factory.h"
 #include "storage/tuple.h"

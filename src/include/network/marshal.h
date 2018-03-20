@@ -6,7 +6,7 @@
 //
 // Identification: src/include/network/marshal.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -17,7 +17,7 @@
 
 #include "common/logger.h"
 #include "common/macros.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 
 #define BUFFER_INIT_SIZE 100
 
@@ -54,7 +54,7 @@ struct Buffer {
 
   inline size_t GetMaxSize() { return SOCKET_BUFFER_SIZE; }
 
-  //Get the 4 bytes Big endian uint32 and convert it to little endian
+  // Get the 4 bytes Big endian uint32 and convert it to little endian
   size_t GetUInt32BigEndian();
 
   // Is the requested amount of data available from the current position in
@@ -173,7 +173,8 @@ struct Client {
 extern void PacketPutByte(OutputPacket *pkt, const uchar c);
 
 /* packet_put_string - used to write a string into a packet */
-extern void PacketPutString(OutputPacket *pkt, const std::string &str);
+extern void PacketPutStringWithTerminator(OutputPacket *pkt,
+                                          const std::string &str);
 
 /* packet_put_int - used to write a single int into a packet */
 extern void PacketPutInt(OutputPacket *pkt, int n, int base);
@@ -182,7 +183,7 @@ extern void PacketPutInt(OutputPacket *pkt, int n, int base);
 extern void PacketPutCbytes(OutputPacket *pkt, const uchar *b, int len);
 
 /* packet_put_bytes - used to write a uchar vector into a packet */
-extern void PacketPutBytes(OutputPacket *pkt, const std::vector<uchar> &data);
+extern void PacketPutString(OutputPacket *pkt, const std::string &data);
 
 /*
 * Unmarshallers

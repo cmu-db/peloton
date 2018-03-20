@@ -13,8 +13,9 @@
 #pragma once
 
 #include <list>
+
 #include "codegen/query.h"
-#include "common/platform.h"
+#include "common/synchronization/readwrite_latch.h"
 #include "common/singleton.h"
 #include "planner/abstract_plan.h"
 
@@ -34,7 +35,7 @@ namespace codegen {
 class QueryCache : public Singleton<QueryCache> {
  public:
   // Find the cached query object with the given plan
-  Query* Find(const std::shared_ptr<planner::AbstractPlan> &key);
+  Query *Find(const std::shared_ptr<planner::AbstractPlan> &key);
 
   // Add a plan and a query object to the cache
   void Add(const std::shared_ptr<planner::AbstractPlan> &key,
@@ -71,13 +72,13 @@ class QueryCache : public Singleton<QueryCache> {
                       std::unique_ptr<Query>>> query_list_;
 
   std::unordered_map<std::shared_ptr<planner::AbstractPlan>,
-           decltype(query_list_.begin()),
-           planner::Hash, planner::Equal> cache_map_;
+                     decltype(query_list_.begin()), planner::Hash,
+                     planner::Equal> cache_map_;
 
-  RWLock cache_lock_;
+  common::synchronization::ReadWriteLatch cache_lock_;
 
   size_t capacity_ = 0;
 };
 
 }  // namespace codegen
-}  // namespace peloton 
+}  // namespace peloton

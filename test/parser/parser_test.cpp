@@ -14,8 +14,9 @@
 #include <vector>
 
 #include "common/harness.h"
-#include "common/macros.h"
 #include "common/logger.h"
+#include "common/macros.h"
+#include "parser/drop_statement.h"
 #include "parser/postgresparser.h"
 
 namespace peloton {
@@ -107,6 +108,8 @@ TEST_F(ParserTests, BasicTest) {
       "PREPARE prep_inst AS INSERT INTO test VALUES ($1, $2, $3);");
   queries.push_back("EXECUTE prep_inst(1, 2, 3);");
   queries.push_back("EXECUTE prep;");
+  queries.push_back("EXECUTE prep(1+1);");
+  queries.push_back("EXECUTE prep(sqrt(1));");
 
   queries.push_back(
       "COPY pg_catalog.query_metric TO '/home/user/output.csv' DELIMITER ',';");
@@ -165,8 +168,8 @@ TEST_F(ParserTests, SelectParserTest) {
   EXPECT_EQ(list->GetNumStatements(), 1);
   EXPECT_EQ(list->GetStatement(0)->GetType(), StatementType::SELECT);
 
-  parser::SelectStatement* stmt =
-      (parser::SelectStatement*)list->GetStatement(0);
+  parser::SelectStatement *stmt =
+      (parser::SelectStatement *)list->GetStatement(0);
 
   EXPECT_NOTNULL(stmt->from_table);
   EXPECT_NOTNULL(stmt->group_by);
@@ -184,7 +187,7 @@ TEST_F(ParserTests, SelectParserTest) {
             ExpressionType::AGGREGATE_SUM);
 
   // Join Table
-  parser::JoinDefinition* join = stmt->from_table->join.get();
+  parser::JoinDefinition *join = stmt->from_table->join.get();
   EXPECT_EQ(stmt->from_table->type, TableReferenceType::JOIN);
   EXPECT_NOTNULL(join);
   EXPECT_STREQ(join->left->GetTableName().c_str(), "customers");
@@ -224,21 +227,21 @@ TEST_F(ParserTests, TransactionTest) {
 
   std::unique_ptr<parser::SQLStatementList> list(
       parser::PostgresParser::ParseSQLString(valid_queries[0].c_str()));
-  parser::TransactionStatement* stmt =
-      (parser::TransactionStatement*)list->GetStatement(0);
+  parser::TransactionStatement *stmt =
+      (parser::TransactionStatement *)list->GetStatement(0);
   EXPECT_EQ(list->GetStatement(0)->GetType(), StatementType::TRANSACTION);
   EXPECT_EQ(stmt->type, parser::TransactionStatement::kBegin);
 
   list.reset(parser::PostgresParser::ParseSQLString(valid_queries[1].c_str()));
-  stmt = (parser::TransactionStatement*)list->GetStatement(0);
+  stmt = (parser::TransactionStatement *)list->GetStatement(0);
   EXPECT_EQ(stmt->type, parser::TransactionStatement::kBegin);
 
   list.reset(parser::PostgresParser::ParseSQLString(valid_queries[2].c_str()));
-  stmt = (parser::TransactionStatement*)list->GetStatement(0);
+  stmt = (parser::TransactionStatement *)list->GetStatement(0);
   EXPECT_EQ(stmt->type, parser::TransactionStatement::kCommit);
 
   list.reset(parser::PostgresParser::ParseSQLString(valid_queries[3].c_str()));
-  stmt = (parser::TransactionStatement*)list->GetStatement(0);
+  stmt = (parser::TransactionStatement *)list->GetStatement(0);
   EXPECT_EQ(stmt->type, parser::TransactionStatement::kRollback);
 }
 
@@ -263,6 +266,100 @@ TEST_F(ParserTests, CreateTest) {
       " PRIMARY KEY (s_id, ai_type),"
       " FOREIGN KEY (s_id) REFERENCES SUBSCRIBER (s_id)"
       " )");
+
+  // Parsing
+  UNUSED_ATTRIBUTE int ii = 0;
+  for (auto query : queries) {
+    std::unique_ptr<parser::SQLStatementList> result(
+        parser::PostgresParser::ParseSQLString(query.c_str()));
+
+    if (result->is_valid == false) {
+      LOG_ERROR("Parsing failed: %s (%s)\n", query.c_str(), result->parser_msg);
+    }
+    EXPECT_TRUE(result->is_valid);
+
+    LOG_TRACE("%d : %s", ++ii, result->GetInfo().c_str());
+  }
+}
+
+TEST_F(ParserTests, DropTest) {
+  // Drop database
+  auto parser = parser::PostgresParser::GetInstance();
+  std::string query = "DROP DATABASE test_db;";
+  std::unique_ptr<parser::SQLStatementList> stmt_list(
+      parser.BuildParseTree(query).release());
+  EXPECT_TRUE(stmt_list->is_valid);
+  auto stmt = stmt_list->GetStatement(0);
+  EXPECT_EQ(StatementType::DROP, stmt->GetType());
+  auto d_stmt = (parser::DropStatement *)stmt;
+  EXPECT_STREQ("test_db", d_stmt->GetDatabaseName().c_str());
+  EXPECT_EQ(parser::DropStatement::EntityType::kDatabase,
+            d_stmt->GetDropType());
+  EXPECT_FALSE(d_stmt->GetMissing());
+
+  // Test with IF EXISTS clause
+  query = "DROP DATABASE IF EXISTS test_db;";
+  std::unique_ptr<parser::SQLStatementList> exist_stmt_list(
+      parser.BuildParseTree(query).release());
+  EXPECT_TRUE(exist_stmt_list->is_valid);
+  stmt = exist_stmt_list->GetStatement(0);
+  EXPECT_EQ(StatementType::DROP, stmt->GetType());
+  d_stmt = (parser::DropStatement *)stmt;
+  EXPECT_STREQ("test_db", d_stmt->GetDatabaseName().c_str());
+  EXPECT_EQ(parser::DropStatement::EntityType::kDatabase,
+            d_stmt->GetDropType());
+  EXPECT_TRUE(d_stmt->GetMissing());
+
+  // Drop schema
+  query = "DROP SCHEMA sche;";
+  stmt_list.reset(parser.BuildParseTree(query).release());
+  EXPECT_TRUE(stmt_list->is_valid);
+  stmt = stmt_list->GetStatement(0);
+  EXPECT_EQ(StatementType::DROP, stmt->GetType());
+  d_stmt = (parser::DropStatement *)stmt;
+  EXPECT_STREQ("sche", d_stmt->GetSchemaName().c_str());
+  EXPECT_EQ(parser::DropStatement::EntityType::kSchema, d_stmt->GetDropType());
+  EXPECT_FALSE(d_stmt->GetMissing());
+
+  // Test with CASCADE clause
+  query = "DROP SCHEMA sche CASCADE;";
+  stmt_list.reset(parser.BuildParseTree(query).release());
+  EXPECT_TRUE(stmt_list->is_valid);
+  stmt = stmt_list->GetStatement(0);
+  EXPECT_EQ(StatementType::DROP, stmt->GetType());
+  d_stmt = (parser::DropStatement *)stmt;
+  EXPECT_STREQ("sche", d_stmt->GetSchemaName().c_str());
+  EXPECT_EQ(parser::DropStatement::EntityType::kSchema, d_stmt->GetDropType());
+  EXPECT_FALSE(d_stmt->GetMissing());
+  EXPECT_TRUE(d_stmt->GetCascade());
+}
+
+TEST_F(ParserTests, CreateFunctionTest) {
+  std::vector<std::string> queries;
+
+  queries.push_back(
+      "CREATE OR REPLACE FUNCTION increment ("
+      " i DOUBLE"
+      " )"
+      " RETURNS double AS $$ "
+      "BEGIN RETURN i + 1; END; $$ "
+      "LANGUAGE plpgsql;");
+
+  queries.push_back(
+      "CREATE FUNCTION increment1 ("
+      " i DOUBLE, j DOUBLE"
+      " )"
+      " RETURNS double AS $$ "
+      "BEGIN RETURN i + j; END; $$ "
+      "LANGUAGE plpgsql;");
+
+  queries.push_back(
+      "CREATE OR REPLACE FUNCTION increment2 ("
+      " i INTEGER, j INTEGER"
+      " )"
+      " RETURNS INTEGER AS $$ "
+      "BEGIN RETURN i + j; END; $$ "
+      "LANGUAGE plpgsql;");
 
   // Parsing
   UNUSED_ATTRIBUTE int ii = 0;
@@ -327,7 +424,7 @@ TEST_F(ParserTests, TM1Test) {
     if (result->is_valid == false) {
       LOG_ERROR("Parsing failed: %s (%s)\n", query.c_str(), result->parser_msg);
     }
-    EXPECT_EQ(result->is_valid, true);
+    EXPECT_TRUE(result->is_valid);
 
     LOG_TRACE("%d : %s", ++ii, result->GetInfo().c_str());
   }
@@ -357,7 +454,7 @@ TEST_F(ParserTests, IndexTest) {
     if (result->is_valid == false) {
       LOG_ERROR("Parsing failed: %s (%s)\n", query.c_str(), result->parser_msg);
     }
-    EXPECT_EQ(result->is_valid, true);
+    EXPECT_TRUE(result->is_valid);
 
     LOG_TRACE("%d : %s", ++ii, result->GetInfo().c_str());
   }
@@ -379,10 +476,10 @@ TEST_F(ParserTests, CopyTest) {
       LOG_ERROR("Message: %s, line: %d, col: %d", result->parser_msg,
                 result->error_line, result->error_col);
     }
-    EXPECT_EQ(result->is_valid, true);
+    EXPECT_TRUE(result->is_valid);
 
-    parser::CopyStatement* copy_stmt =
-        static_cast<parser::CopyStatement*>(result->GetStatement(0));
+    parser::CopyStatement *copy_stmt =
+        static_cast<parser::CopyStatement *>(result->GetStatement(0));
 
     EXPECT_EQ(copy_stmt->delimiter, ',');
     EXPECT_STREQ(copy_stmt->file_path.c_str(), "/home/user/output.csv");
@@ -390,5 +487,6 @@ TEST_F(ParserTests, CopyTest) {
     LOG_TRACE("%d : %s", ++ii, result->GetInfo().c_str());
   }
 }
+
 }  // namespace test
 }  // namespace peloton

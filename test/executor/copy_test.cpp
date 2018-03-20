@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <cstdio>
-#include <sql/testing_sql_util.h>
+#include "sql/testing_sql_util.h"
 
 #include "catalog/catalog.h"
 #include "common/harness.h"
@@ -23,7 +23,7 @@
 #include "optimizer/rule.h"
 #include "parser/postgresparser.h"
 #include "planner/seq_scan_plan.h"
-#include "include/traffic_cop/traffic_cop.h"
+#include "traffic_cop/traffic_cop.h"
 
 #include "gtest/gtest.h"
 #include "statistics/testing_stats_util.h"
@@ -39,14 +39,16 @@ class CopyTests : public PelotonTest {};
 
 TEST_F(CopyTests, Copying) {
   auto catalog = catalog::Catalog::GetInstance();
-  auto& txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog->CreateDatabase("emp_db", txn);
   txn_manager.CommitTransaction(txn);
 
-  std::unique_ptr<optimizer::AbstractOptimizer> optimizer(new optimizer::Optimizer);
-  auto& traffic_cop = tcop::TrafficCop::GetInstance();
-  traffic_cop.SetTaskCallback(TestingSQLUtil::UtilTestTaskCallback, &TestingSQLUtil::counter_);
+  std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
+      new optimizer::Optimizer);
+  auto &traffic_cop = tcop::TrafficCop::GetInstance();
+  traffic_cop.SetTaskCallback(TestingSQLUtil::UtilTestTaskCallback,
+                              &TestingSQLUtil::counter_);
 
   // Create a table without primary key
   TestingStatsUtil::CreateTable(false);
@@ -55,9 +57,9 @@ TEST_F(CopyTests, Copying) {
   std::string short_string = "eeeeeeeeee";
   std::string long_string =
       short_string + short_string + short_string + short_string + short_string +
-          short_string + short_string + short_string + short_string + short_string +
-          short_string + short_string + short_string + short_string + short_string +
-          short_string + short_string + short_string;
+      short_string + short_string + short_string + short_string + short_string +
+      short_string + short_string + short_string + short_string + short_string +
+      short_string + short_string + short_string;
   std::string escape_string = "eeeeeee,eeeeee,eeeeeee,";
 
   // Inserting tuples end-to-end
@@ -85,10 +87,10 @@ TEST_F(CopyTests, Copying) {
     auto statement = TestingStatsUtil::GetInsertStmt(12345, insert_str);
     std::vector<type::Value> params;
     std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
-    std::vector<StatementResult> result;
+    std::vector<ResultValue> result;
 
     TestingSQLUtil::counter_.store(1);
-    executor::ExecuteResult status = traffic_cop.ExecuteHelper(
+    executor::ExecutionResult status = traffic_cop.ExecuteHelper(
         statement->GetPlanTree(), params, result, result_format);
 
     if (traffic_cop.GetQueuing()) {
@@ -114,11 +116,12 @@ TEST_F(CopyTests, Copying) {
   std::unique_ptr<Statement> statement(new Statement("COPY", copy_sql));
 
   LOG_TRACE("Building parse tree...");
-  auto& peloton_parser = parser::PostgresParser::GetInstance();
+  auto &peloton_parser = parser::PostgresParser::GetInstance();
   auto copy_stmt = peloton_parser.BuildParseTree(copy_sql);
 
   LOG_TRACE("Building plan tree...");
-  auto copy_plan = optimizer->BuildPelotonPlanTree(copy_stmt, DEFAULT_DB_NAME, txn);
+  auto copy_plan =
+      optimizer->BuildPelotonPlanTree(copy_stmt, DEFAULT_DB_NAME, txn);
   statement->SetPlanTree(copy_plan);
 
   LOG_TRACE("Building executor tree...");
@@ -136,7 +139,7 @@ TEST_F(CopyTests, Copying) {
   LOG_TRACE("Executing plan...");
   // Initialize the executor tree
   auto status = root_executor->Init();
-  EXPECT_EQ(status, true);
+  EXPECT_TRUE(status);
   // Execute the tree until we get result tiles from root node
   while (status == true) {
     status = root_executor->Execute();

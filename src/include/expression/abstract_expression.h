@@ -18,7 +18,8 @@
 #include "planner/attribute_info.h"
 #include "expression/parameter.h"
 #include "codegen/query_parameters_map.h"
-#include "type/types.h"
+#include "common/internal_types.h"
+#include "storage/zone_map_manager.h"
 
 namespace peloton {
 
@@ -64,6 +65,20 @@ namespace expression {
 
 class AbstractExpression : public Printable {
  public:
+
+  /**
+   * @brief Apply the operator to the inputs and produce ouput
+   *
+   * This will be removed in the future and replaced by the
+   * the LLVM engine. You should not modify any Evaluate methods
+   * nor should you add new ones.
+   *
+   * @param tuple1
+   * @param tuple2
+   * @param context
+   * @return
+   * @deprecated
+   */
   virtual type::Value Evaluate(const AbstractTuple *tuple1,
                                const AbstractTuple *tuple2,
                                executor::ExecutorContext *context) const = 0;
@@ -96,6 +111,26 @@ class AbstractExpression : public Printable {
     children_[index].reset(expr);
   }
 
+  void SetExpressionType(ExpressionType type) { exp_type_ = type; }
+
+  //===----------------------------------------------------------------------===//
+  // Utilities and members for Zone Map consumption.
+  //===----------------------------------------------------------------------===//
+  bool IsZoneMappable();
+
+  size_t GetNumberofParsedPredicates() const {
+    return parsed_predicates.size();
+  }
+
+  const std::vector<storage::PredicateInfo> *GetParsedPredicates() const {
+    return &parsed_predicates;
+  }
+
+  void ClearParsedPredicates() { parsed_predicates.clear(); }
+
+  std::vector<storage::PredicateInfo> parsed_predicates;
+  //===----------------------------------------------------------------------===//
+
   /** accessors */
 
   ExpressionType GetExpressionType() const { return exp_type_; }
@@ -127,7 +162,9 @@ class AbstractExpression : public Printable {
   // Walks the expressoin trees and generate the correct expression name
   virtual void DeduceExpressionName();
 
-  const std::string GetInfo() const;
+  virtual const std::string GetInfo(int num_indent) const;
+
+  virtual const std::string GetInfo() const;
 
   // Equlity checks without actual values
   virtual bool operator==(const AbstractExpression &rhs) const;
@@ -140,7 +177,8 @@ class AbstractExpression : public Printable {
   virtual bool ExactlyEquals(const AbstractExpression &other) const;
   virtual hash_t HashForExactMatch() const;
 
-  virtual void VisitParameters(codegen::QueryParametersMap &map,
+  virtual void VisitParameters(
+      codegen::QueryParametersMap &map,
       std::vector<peloton::type::Value> &values,
       const std::vector<peloton::type::Value> &values_from_user) {
     for (auto &child : children_) {
@@ -179,6 +217,63 @@ class AbstractExpression : public Printable {
     }
   }
 
+  /**
+   * @brief Derive the sub-query depth level of the current expression
+   *
+   * @return the derived depth
+   */
+  virtual int DeriveDepth() {
+    if (depth_ < 0) {
+      for (auto &child : children_) {
+        auto child_depth = child->DeriveDepth();
+        if (child_depth >= 0 && (depth_ == -1 || child_depth < depth_))
+          depth_ = child_depth;
+      }
+    }
+    return depth_;
+  }
+
+  /**
+   * @brief Set the sub-query depth level of the current expression
+   *
+   * @param depth The depth to set
+   */
+  void SetDepth(int depth) { depth_ = depth; }
+
+  /**
+   * @brief Get the sub-query depth level of the current expression
+   *
+   * @return The sub-query depth level
+   */
+  int GetDepth() const { return depth_; }
+
+  /**
+   * @brief Tell if the current expression contain a sub-query
+   *
+   * @return The sub-query flag
+   */
+  bool HasSubquery() const { return has_subquery_; }
+
+  /**
+   * @brief Derive if there's sub-query in the current expression
+   *
+   * @return If there is sub-query, then return true, otherwise return false
+   */
+  virtual bool DeriveSubqueryFlag() {
+    if (exp_type_ == ExpressionType::ROW_SUBQUERY ||
+        exp_type_ == ExpressionType::SELECT_SUBQUERY) {
+      has_subquery_ = true;
+    } else {
+      for (auto &child : children_) {
+        if (child->DeriveSubqueryFlag()) {
+          has_subquery_ = true;
+          break;
+        }
+      }
+    }
+    return has_subquery_;
+  }
+
  protected:
   AbstractExpression(ExpressionType type) : exp_type_(type) {}
   AbstractExpression(ExpressionType exp_type, type::TypeId return_value_type)
@@ -199,7 +294,8 @@ class AbstractExpression : public Printable {
         distinct_(other.distinct_),
         exp_type_(other.exp_type_),
         return_value_type_(other.return_value_type_),
-        has_parameter_(other.has_parameter_) {
+        has_parameter_(other.has_parameter_),
+        depth_(other.depth_) {
     for (auto &child : other.children_) {
       children_.push_back(std::unique_ptr<AbstractExpression>(child->Copy()));
     }
@@ -211,22 +307,33 @@ class AbstractExpression : public Printable {
   std::vector<std::unique_ptr<AbstractExpression>> children_;
 
   bool has_parameter_ = false;
+
+  /**
+   * @brief The current sub-query depth level in the current expression, -1
+   *  stands for not derived
+   */
+  int depth_ = -1;
+
+  /**
+   * @brief The flag indicating if there's sub-query in the current expression
+   */
+  bool has_subquery_ = false;
 };
 
 // Equality Comparator class for Abstract Expression
 class ExprEqualCmp {
  public:
-  inline bool operator()(std::shared_ptr<AbstractExpression> expr1,
-                         std::shared_ptr<AbstractExpression> expr2) const {
-    return expr1.get()->ExactlyEquals(*expr2.get());
+  inline bool operator()(AbstractExpression *expr1,
+                         AbstractExpression *expr2) const {
+    return expr1->ExactlyEquals(*expr2);
   }
 };
 
 // Hasher class for Abstract Expression
 class ExprHasher {
  public:
-  inline size_t operator()(std::shared_ptr<AbstractExpression> expr) const {
-    return expr->HashForExactMatch();
+  inline size_t operator()(AbstractExpression *expr) const {
+    return expr->Hash();
   }
 };
 

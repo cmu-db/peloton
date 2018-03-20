@@ -38,42 +38,42 @@ void do_deletion(void *location) { free(location); }
 
 }  // namespace peloton
 
-void *operator new(size_t size) throw(std::bad_alloc) {
+void *operator new(size_t size) {
   return peloton::do_allocation(size, true);
 }
 
-void *operator new(size_t size, const std::nothrow_t &) throw() {
+void *operator new(size_t size, const std::nothrow_t &) noexcept {
   return peloton::do_allocation(size, false);
 }
 
-void *operator new[](size_t size) throw(std::bad_alloc) {
+void *operator new[](size_t size) {
   return peloton::do_allocation(size, true);
 }
 
-void *operator new[](size_t size, std::nothrow_t &) throw() {
+void *operator new[](size_t size, std::nothrow_t &) noexcept {
   return peloton::do_allocation(size, false);
 }
 
-void operator delete(void *location) throw() {
+void operator delete(void *location) noexcept {
   return peloton::do_deletion(location);
 }
 
-void operator delete(void *location, __attribute__ ((unused)) size_t size) throw() {
+void operator delete(void *location, __attribute__ ((unused)) size_t size) noexcept {
   return peloton::do_deletion(location);
 }
 
-void operator delete(void *location, const std::nothrow_t &) throw() {
+void operator delete(void *location, const std::nothrow_t &) noexcept {
   return peloton::do_deletion(location);
 }
 
-void operator delete[](void *location) throw() {
+void operator delete[](void *location) noexcept {
   return peloton::do_deletion(location);
 }
 
-void operator delete[](void *location, __attribute__ ((unused)) size_t size) throw() {
+void operator delete[](void *location, __attribute__ ((unused)) size_t size) noexcept {
   return peloton::do_deletion(location);
 }
 
-void operator delete[](void *location, const std::nothrow_t &) throw() {
+void operator delete[](void *location, const std::nothrow_t &) noexcept {
   return peloton::do_deletion(location);
 }

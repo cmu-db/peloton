@@ -54,7 +54,9 @@ bool QueryCompiler::IsSupported(const planner::AbstractPlan &plan) {
     }
     case PlanNodeType::PROJECTION: {
       // TODO(pmenon): Why does this check exists?
-      if (plan.GetChildren().empty()) return false;
+      if (plan.GetChildren().empty()) {
+        return false;
+      }
 
       // Check each projection expression
       auto &proj_plan = static_cast<const planner::ProjectionPlan &>(plan);
@@ -67,10 +69,11 @@ bool QueryCompiler::IsSupported(const planner::AbstractPlan &plan) {
       }
       break;
     }
+    case PlanNodeType::NESTLOOP:
     case PlanNodeType::HASHJOIN: {
-      const auto &hjp = static_cast<const planner::HashJoinPlan &>(plan);
+      const auto &join = static_cast<const planner::AbstractJoinPlan &>(plan);
       // Right now, only support inner joins
-      if (hjp.GetJoinType() == JoinType::INNER) {
+      if (join.GetJoinType() == JoinType::INNER) {
         break;
       }
     }
@@ -120,7 +123,6 @@ bool QueryCompiler::IsExpressionSupported(
     const expression::AbstractExpression &expr) {
   switch (expr.GetExpressionType()) {
     case ExpressionType::STAR:
-    case ExpressionType::FUNCTION:
     case ExpressionType::VALUE_PARAMETER:
       return false;
     default:

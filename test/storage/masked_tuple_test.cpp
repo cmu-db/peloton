@@ -41,7 +41,7 @@ void MaskedTupleTestHelper(storage::MaskedTuple *masked_tuple,
         v.CompareEquals(type::ValueFactory::GetIntegerValue(expected));
     LOG_TRACE("mask[%d]->%d ==> (Expected=%d / Result=%s)", i, mask[i],
               expected, v.GetInfo().c_str());
-    EXPECT_EQ(type::CmpBool::CMP_TRUE, result);
+    EXPECT_EQ(CmpBool::TRUE, result);
   }
 }
 
@@ -80,7 +80,7 @@ TEST_F(MaskedTupleTests, BasicTest) {
     int expected = values[i];
     auto result =
         v.CompareEquals(type::ValueFactory::GetIntegerValue(expected));
-    EXPECT_EQ(type::CmpBool::CMP_TRUE, result);
+    EXPECT_EQ(CmpBool::TRUE, result);
   }
 
   // CREATE MASKED TUPLE

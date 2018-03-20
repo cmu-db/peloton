@@ -33,6 +33,13 @@
 namespace peloton {
 namespace test {
 
+using ExpressionPtr = std::unique_ptr<expression::AbstractExpression>;
+using ConstExpressionPtr =
+    std::unique_ptr<const expression::AbstractExpression>;
+
+using PlanPtr = std::unique_ptr<planner::AbstractPlan>;
+using ConstPlanPtr = std::unique_ptr<const planner::AbstractPlan>;
+
 //===----------------------------------------------------------------------===//
 // Common base class for all codegen tests. This class four test tables that all
 // the codegen components use. Their ID's are available through the oid_t
@@ -45,7 +52,7 @@ class PelotonCodeGenTest : public PelotonTest {
                                                "table4", "table5"};
   std::vector<oid_t> test_table_oids;
 
-  PelotonCodeGenTest();
+  PelotonCodeGenTest(oid_t tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP);
 
   virtual ~PelotonCodeGenTest();
 
@@ -58,55 +65,55 @@ class PelotonCodeGenTest : public PelotonTest {
   }
 
   // Create the schema (common among all tables)
-  std::unique_ptr<catalog::Schema> CreateTestSchema(bool add_primary = false)
-      const;
+  catalog::Column GetTestColumn(uint32_t col_id) const;
+
+  std::unique_ptr<catalog::Schema> CreateTestSchema(
+      bool add_primary = false) const;
 
   // Create the test tables
-  void CreateTestTables(concurrency::Transaction *txn);
+  void CreateTestTables(
+      concurrency::TransactionContext *txn,
+      oid_t tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP);
 
   // Load the given table with the given number of rows
   void LoadTestTable(oid_t table_id, uint32_t num_rows,
                      bool insert_nulls = false);
 
+  static void ExecuteSync(
+      codegen::Query &query,
+      std::unique_ptr<executor::ExecutorContext> executor_context,
+      codegen::QueryResultConsumer &consumer);
+
   // Compile and execute the given plan
   codegen::QueryCompiler::CompileStats CompileAndExecute(
-      planner::AbstractPlan &plan, codegen::QueryResultConsumer &consumer,
-      char *consumer_state, std::vector<type::Value> *params = nullptr);
+      planner::AbstractPlan &plan, codegen::QueryResultConsumer &consumer);
 
   codegen::QueryCompiler::CompileStats CompileAndExecuteCache(
       std::shared_ptr<planner::AbstractPlan> plan,
-      codegen::QueryResultConsumer &consumer, char *consumer_state,
-      bool &cached, std::vector<type::Value> *params = nullptr);
+      codegen::QueryResultConsumer &consumer, bool &cached,
+      std::vector<type::Value> params = {});
 
   //===--------------------------------------------------------------------===//
   // Helpers
   //===--------------------------------------------------------------------===//
-  std::unique_ptr<expression::AbstractExpression> ConstIntExpr(int64_t val);
+  ExpressionPtr ConstIntExpr(int64_t val);
 
-  std::unique_ptr<expression::AbstractExpression> ConstDecimalExpr(double val);
+  ExpressionPtr ConstDecimalExpr(double val);
 
-  std::unique_ptr<expression::AbstractExpression> ColRefExpr(type::TypeId type,
-                                                             uint32_t col_id);
+  ExpressionPtr ColRefExpr(type::TypeId type, uint32_t col_id);
+  ExpressionPtr ColRefExpr(type::TypeId type, bool left, uint32_t col_id);
 
-  std::unique_ptr<expression::AbstractExpression> CmpExpr(
-      ExpressionType cmp_type,
-      std::unique_ptr<expression::AbstractExpression> &&left,
-      std::unique_ptr<expression::AbstractExpression> &&right);
+  ExpressionPtr CmpExpr(ExpressionType cmp_type, ExpressionPtr &&left,
+                        ExpressionPtr &&right);
 
-  std::unique_ptr<expression::AbstractExpression> CmpLtExpr(
-      std::unique_ptr<expression::AbstractExpression> &&left,
-      std::unique_ptr<expression::AbstractExpression> &&right);
+  ExpressionPtr CmpLtExpr(ExpressionPtr &&left, ExpressionPtr &&right);
+  ExpressionPtr CmpLteExpr(ExpressionPtr &&left, ExpressionPtr &&right);
+  ExpressionPtr CmpGtExpr(ExpressionPtr &&left, ExpressionPtr &&right);
+  ExpressionPtr CmpGteExpr(ExpressionPtr &&left, ExpressionPtr &&right);
+  ExpressionPtr CmpEqExpr(ExpressionPtr &&left, ExpressionPtr &&right);
 
-  std::unique_ptr<expression::AbstractExpression> CmpGtExpr(
-      std::unique_ptr<expression::AbstractExpression> &&left,
-      std::unique_ptr<expression::AbstractExpression> &&right);
-  std::unique_ptr<expression::AbstractExpression> CmpGteExpr(
-      std::unique_ptr<expression::AbstractExpression> &&left,
-      std::unique_ptr<expression::AbstractExpression> &&right);
-
-  std::unique_ptr<expression::AbstractExpression> CmpEqExpr(
-      std::unique_ptr<expression::AbstractExpression> &&left,
-      std::unique_ptr<expression::AbstractExpression> &&right);
+  ExpressionPtr OpExpr(ExpressionType op_type, type::TypeId type,
+                       ExpressionPtr &&left, ExpressionPtr &&right);
 
  private:
   storage::Database *test_db;
@@ -133,35 +140,6 @@ class Printer : public codegen::QueryResultConsumer {
 
  private:
   std::vector<const planner::AttributeInfo *> ais_;
-};
-
-//===----------------------------------------------------------------------===//
-// A consumer that just counts the number of results
-//===----------------------------------------------------------------------===//
-class CountingConsumer : public codegen::QueryResultConsumer {
- public:
-  void Prepare(codegen::CompilationContext &compilation_context) override;
-  void InitializeState(codegen::CompilationContext &context) override;
-  void ConsumeResult(codegen::ConsumerContext &context,
-                     codegen::RowBatch::Row &row) const override;
-  void TearDownState(codegen::CompilationContext &) override {}
-
-  uint64_t GetCount() const { return counter_; }
-
- private:
-  llvm::Value *GetCounter(codegen::CodeGen &codegen,
-                          codegen::RuntimeState &runtime_state) const {
-    return runtime_state.LoadStateValue(codegen, counter_state_id_);
-  }
-
-  llvm::Value *GetCounter(codegen::ConsumerContext &ctx) const {
-    return GetCounter(ctx.GetCodeGen(), ctx.GetRuntimeState());
-  }
-
- private:
-  uint64_t counter_;
-  // The slot in the runtime state to find our state context
-  codegen::RuntimeState::StateID counter_state_id_;
 };
 
 }  // namespace test

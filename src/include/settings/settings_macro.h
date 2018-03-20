@@ -24,6 +24,9 @@
   #ifdef SETTING_int
     #undef SETTING_int
   #endif
+  #ifdef SETTING_double
+    #undef SETTING_double
+  #endif
   #ifdef SETTING_bool
     #undef SETTING_bool
   #endif
@@ -32,6 +35,9 @@
   #endif
   #define SETTING_int(name, description, default_value, is_mutable, is_persistent)     \
     DEFINE_int32(name, default_value, description);
+
+  #define SETTING_double(name, description, default_value, is_mutable, is_persistent)     \
+    DEFINE_double(name, default_value, description);
 
   #define SETTING_bool(name, description, default_value, is_mutable, is_persistent)    \
     DEFINE_bool(name, default_value, description);
@@ -44,6 +50,9 @@
   #ifdef SETTING_int
     #undef SETTING_int
   #endif
+  #ifdef SETTING_double
+    #undef SETTING_double
+  #endif
   #ifdef SETTING_bool
     #undef SETTING_bool
   #endif
@@ -52,6 +61,9 @@
   #endif
   #define SETTING_int(name, description, default_value, is_mutable, is_persistent)     \
     DECLARE_int32(name);
+
+  #define SETTING_double(name, description, default_value, is_mutable, is_persistent)     \
+    DECLARE_double(name);
 
   #define SETTING_bool(name, description, default_value, is_mutable, is_persistent)    \
     DECLARE_bool(name);
@@ -64,6 +76,9 @@
   #ifdef SETTING_int
     #undef SETTING_int
   #endif
+  #ifdef SETTING_double
+    #undef SETTING_double
+  #endif
   #ifdef SETTING_bool
     #undef SETTING_bool
   #endif
@@ -75,6 +90,13 @@
         peloton::settings::SettingId::name,                                            \
         #name, type::ValueFactory::GetIntegerValue(FLAGS_##name),                      \
         description, type::ValueFactory::GetIntegerValue(default_value),               \
+        is_mutable, is_persistent);
+
+  #define SETTING_double(name, description, default_value, is_mutable, is_persistent)  \
+      DefineSetting(                                                                   \
+        peloton::settings::SettingId::name,                                            \
+        #name, type::ValueFactory::GetDecimalValue(FLAGS_##name),                      \
+        description, type::ValueFactory::GetDecimalValue(default_value),               \
         is_mutable, is_persistent);
 
   #define SETTING_bool(name, description, default_value, is_mutable, is_persistent)    \
@@ -96,6 +118,9 @@
   #ifdef SETTING_int
     #undef SETTING_int
   #endif
+  #ifdef SETTING_double
+    #undef SETTING_double
+  #endif
   #ifdef SETTING_bool
     #undef SETTING_bool
   #endif
@@ -103,6 +128,9 @@
     #undef SETTING_string
   #endif
   #define SETTING_int(name, description, default_value, is_mutable, is_persistent)     \
+    name,
+
+  #define SETTING_double(name, description, default_value, is_mutable, is_persistent)     \
     name,
 
   #define SETTING_bool(name, description, default_value, is_mutable, is_persistent)    \

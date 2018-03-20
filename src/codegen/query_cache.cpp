@@ -95,10 +95,11 @@ oid_t QueryCache::GetOidFromPlan(const planner::AbstractPlan &plan) const {
     }
     default: { break; }
   }
-  if (plan.GetChildren().size() == 0)
+  if (plan.GetChildren().size() == 0) {
     return INVALID_OID;
-  else
+  } else {
     return GetOidFromPlan(*plan.GetChild(0));
+  }
 }
 
 }  // namespace codegen

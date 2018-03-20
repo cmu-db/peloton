@@ -22,6 +22,7 @@ class DataTable;
 
 namespace planner {
 class AbstractPlan;
+class CreatePlan;
 }
 
 namespace executor {
@@ -42,6 +43,14 @@ class CreateExecutor : public AbstractExecutor {
   bool DInit();
 
   bool DExecute();
+
+  bool CreateDatabase(const planner::CreatePlan &node);
+
+  bool CreateTable(const planner::CreatePlan &node);
+
+  bool CreateIndex(const planner::CreatePlan &node);
+
+  bool CreateTrigger(const planner::CreatePlan &node);
 
  private:
   ExecutorContext *context_;

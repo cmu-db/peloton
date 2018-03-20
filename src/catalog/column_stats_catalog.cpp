@@ -22,12 +22,12 @@ namespace peloton {
 namespace catalog {
 
 ColumnStatsCatalog *ColumnStatsCatalog::GetInstance(
-    concurrency::Transaction *txn) {
+    concurrency::TransactionContext *txn) {
   static ColumnStatsCatalog column_stats_catalog{txn};
   return &column_stats_catalog;
 }
 
-ColumnStatsCatalog::ColumnStatsCatalog(concurrency::Transaction *txn)
+ColumnStatsCatalog::ColumnStatsCatalog(concurrency::TransactionContext *txn)
     : AbstractCatalog("CREATE TABLE " CATALOG_DATABASE_NAME
                       "." COLUMN_STATS_CATALOG_NAME
                       " ("
@@ -60,7 +60,7 @@ bool ColumnStatsCatalog::InsertColumnStats(
     double cardinality, double frac_null, std::string most_common_vals,
     std::string most_common_freqs, std::string histogram_bounds,
     std::string column_name, bool has_index, type::AbstractPool *pool,
-    concurrency::Transaction *txn) {
+    concurrency::TransactionContext *txn) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
@@ -112,7 +112,7 @@ bool ColumnStatsCatalog::InsertColumnStats(
 
 bool ColumnStatsCatalog::DeleteColumnStats(oid_t database_id, oid_t table_id,
                                            oid_t column_id,
-                                           concurrency::Transaction *txn) {
+                                           concurrency::TransactionContext *txn) {
   oid_t index_offset = IndexId::SECONDARY_KEY_0;  // Secondary key index
 
   std::vector<type::Value> values;
@@ -125,7 +125,7 @@ bool ColumnStatsCatalog::DeleteColumnStats(oid_t database_id, oid_t table_id,
 
 std::unique_ptr<std::vector<type::Value>> ColumnStatsCatalog::GetColumnStats(
     oid_t database_id, oid_t table_id, oid_t column_id,
-    concurrency::Transaction *txn) {
+    concurrency::TransactionContext *txn) {
   std::vector<oid_t> column_ids(
       {ColumnId::NUM_ROWS, ColumnId::CARDINALITY, ColumnId::FRAC_NULL,
        ColumnId::MOST_COMMON_VALS, ColumnId::MOST_COMMON_FREQS,
@@ -173,7 +173,7 @@ std::unique_ptr<std::vector<type::Value>> ColumnStatsCatalog::GetColumnStats(
 
 // Return value: number of column stats
 size_t ColumnStatsCatalog::GetTableStats(
-    oid_t database_id, oid_t table_id, concurrency::Transaction *txn,
+    oid_t database_id, oid_t table_id, concurrency::TransactionContext *txn,
     std::map<oid_t, std::unique_ptr<std::vector<type::Value>>>
         &column_stats_map) {
   std::vector<oid_t> column_ids(

@@ -17,7 +17,7 @@
 #include "common/macros.h"
 #include "storage/tile_group.h"
 #include "storage/tile_group_header.h"
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "type/value.h"
 
 namespace peloton {
@@ -70,7 +70,7 @@ void TableStatsCollector::InitColumnStatsCollectors() {
   for (oid_t column_id = 0; column_id < column_count_; column_id++) {
     std::unique_ptr<ColumnStatsCollector> colstats(new ColumnStatsCollector(
         database_id, table_id, column_id, schema_->GetType(column_id),
-        schema_->GetColumn(column_id).GetName()));
+        table_->GetName()+"."+schema_->GetColumn(column_id).GetName()));
     column_stats_collectors_.push_back(std::move(colstats));
   }
 

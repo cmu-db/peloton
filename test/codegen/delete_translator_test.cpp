@@ -33,7 +33,7 @@ class DeleteTranslatorTest : public PelotonCodeGenTest {
     scan.PerformBinding(context);
 
     codegen::BufferingConsumer buffer{{0, 1}, context};
-    CompileAndExecute(scan, buffer, reinterpret_cast<char*>(buffer.GetState()));
+    CompileAndExecute(scan, buffer);
     return buffer.GetOutputTuples().size();
   }
 
@@ -68,8 +68,7 @@ TEST_F(DeleteTranslatorTest, DeleteAllTuples) {
   delete_plan->PerformBinding(deleteContext);
 
   codegen::BufferingConsumer buffer{{0, 1}, deleteContext};
-  CompileAndExecute(*delete_plan, buffer,
-                    reinterpret_cast<char*>(buffer.GetState()));
+  CompileAndExecute(*delete_plan, buffer);
   EXPECT_EQ(0, GetCurrentTableSize(TestTableId1()));
 }
 
@@ -100,8 +99,7 @@ TEST_F(DeleteTranslatorTest, DeleteWithSimplePredicate) {
   codegen::BufferingConsumer buffer{{0, 1, 2}, context};
 
   // COMPILE and execute
-  CompileAndExecute(*delete_plan, buffer,
-                    reinterpret_cast<char*>(buffer.GetState()));
+  CompileAndExecute(*delete_plan, buffer);
 
   EXPECT_EQ(4, GetCurrentTableSize(TestTableId2()));
 }
@@ -125,7 +123,7 @@ TEST_F(DeleteTranslatorTest, DeleteWithCompositePredicate) {
       CmpEqExpr(ColRefExpr(type::TypeId::INTEGER, 1), ConstIntExpr(21));
 
   // a >= 20 AND b = 21
-  auto* conj_eq = new expression::ConjunctionExpression(
+  auto *conj_eq = new expression::ConjunctionExpression(
       ExpressionType::CONJUNCTION_AND, b_eq_21.release(), a_gt_20.release());
 
   std::unique_ptr<planner::DeletePlan> delete_plan{
@@ -141,8 +139,7 @@ TEST_F(DeleteTranslatorTest, DeleteWithCompositePredicate) {
   codegen::BufferingConsumer buffer{{0, 1, 2}, context};
 
   // COMPILE and execute
-  CompileAndExecute(*delete_plan, buffer,
-                    reinterpret_cast<char*>(buffer.GetState()));
+  CompileAndExecute(*delete_plan, buffer);
 
   EXPECT_EQ(NumRowsInTestTable() - 1, GetCurrentTableSize(TestTableId3()));
 }
@@ -158,10 +155,9 @@ TEST_F(DeleteTranslatorTest, DeleteWithModuloPredicate) {
 
   auto b_col_exp = ColRefExpr(type::TypeId::INTEGER, 1);
   auto const_1_exp = ConstIntExpr(1);
-  auto b_mod_1 = std::unique_ptr<expression::AbstractExpression>{
-      new expression::OperatorExpression(
-          ExpressionType::OPERATOR_MOD, type::TypeId::DECIMAL,
-          b_col_exp.release(), const_1_exp.release())};
+  auto b_mod_1 = ExpressionPtr{new expression::OperatorExpression(
+      ExpressionType::OPERATOR_MOD, type::TypeId::DECIMAL, b_col_exp.release(),
+      const_1_exp.release())};
 
   // a = b % 1
   auto a_eq_b_mod_1 =
@@ -180,8 +176,7 @@ TEST_F(DeleteTranslatorTest, DeleteWithModuloPredicate) {
   codegen::BufferingConsumer buffer{{0, 1, 2}, context};
 
   // COMPILE and execute
-  CompileAndExecute(*delete_plan, buffer,
-                    reinterpret_cast<char*>(buffer.GetState()));
+  CompileAndExecute(*delete_plan, buffer);
 
   EXPECT_EQ(NumRowsInTestTable() - 1, GetCurrentTableSize(TestTableId4()));
 }

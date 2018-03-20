@@ -6,38 +6,28 @@
 //
 // Identification: src/function/string_functions.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include <cctype>
-#include <string>
-
 #include "function/string_functions.h"
-#include "type/value_factory.h"
 
-#define NextByte(p, plen) ((p)++, (plen)--)
+#include "common/macros.h"
+#include "executor/executor_context.h"
 
 namespace peloton {
 namespace function {
 
-uint32_t StringFunctions::Ascii(const char *str, uint32_t length) {
+uint32_t StringFunctions::Ascii(UNUSED_ATTRIBUTE executor::ExecutorContext &ctx,
+                                const char *str, uint32_t length) {
   PL_ASSERT(str != nullptr);
   return length <= 1 ? 0 : static_cast<uint32_t>(str[0]);
 }
 
-// ASCII code of the first character of the argument.
-type::Value StringFunctions::_Ascii(const std::vector<type::Value> &args) {
-  PL_ASSERT(args.size() == 1);
-  if (args[0].IsNull()) {
-    return type::ValueFactory::GetNullValueByType(type::TypeId::INTEGER);
-  }
+#define NextByte(p, plen) ((p)++, (plen)--)
 
-  uint32_t ret = Ascii(args[0].GetAs<const char *>(), args[0].GetLength());
-  return type::ValueFactory::GetIntegerValue(ret);
-}
-
-bool StringFunctions::Like(const char *t, uint32_t tlen, const char *p,
+bool StringFunctions::Like(UNUSED_ATTRIBUTE executor::ExecutorContext &ctx,
+                           const char *t, uint32_t tlen, const char *p,
                            uint32_t plen) {
   PL_ASSERT(t != nullptr);
   PL_ASSERT(p != nullptr);
@@ -73,7 +63,7 @@ bool StringFunctions::Like(const char *t, uint32_t tlen, const char *p,
 
       while (tlen > 0) {
         if (tolower(*t) == firstpat) {
-          int matched = Like(t, tlen, p, plen);
+          int matched = Like(ctx, t, tlen, p, plen);
 
           if (matched != false) return matched;
         }
@@ -100,184 +90,134 @@ bool StringFunctions::Like(const char *t, uint32_t tlen, const char *p,
   return false;
 }
 
-type::Value StringFunctions::_Like(const std::vector<type::Value> &args) {
-  PL_ASSERT(args.size() == 2);
-  if (args[0].IsNull() || args[1].IsNull()) {
-    return type::ValueFactory::GetNullValueByType(type::TypeId::INTEGER);
+#undef NextByte
+
+StringFunctions::StrWithLen StringFunctions::Substr(
+    UNUSED_ATTRIBUTE executor::ExecutorContext &ctx, const char *str,
+    uint32_t str_length, int32_t from, int32_t len) {
+  int32_t signed_end = from + len - 1;
+  if (signed_end < 0 || str_length == 0) {
+    return StringFunctions::StrWithLen{nullptr, 0};
   }
 
-  bool ret = Like(args[0].GetAs<const char *>(), args[0].GetLength(),
-                  args[1].GetAs<const char *>(), args[1].GetLength());
-  return type::ValueFactory::GetBooleanValue(ret);
+  uint32_t begin = from > 0 ? unsigned(from) - 1 : 0;
+  uint32_t end = unsigned(signed_end);
+
+  if (end > str_length) {
+    end = str_length;
+  }
+
+  if (begin > end) {
+    return StringFunctions::StrWithLen{nullptr, 0};
+  }
+
+  return StringFunctions::StrWithLen{str + begin, end - begin + 1};
 }
 
-// Get Character from integer
-type::Value StringFunctions::Chr(const std::vector<type::Value> &args) {
-  PL_ASSERT(args.size() == 1);
-  if (args[0].IsNull()) {
-    return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
+StringFunctions::StrWithLen StringFunctions::Repeat(
+    executor::ExecutorContext &ctx, const char *str, uint32_t length,
+    uint32_t num_repeat) {
+  // Determine the number of bytes we need
+  uint32_t total_len = ((length - 1) * num_repeat) + 1;
+
+  // Allocate new memory
+  auto *pool = ctx.GetPool();
+  auto *new_str = reinterpret_cast<char *>(pool->Allocate(total_len));
+
+  // Perform repeat
+  char *ptr = new_str;
+  for (uint32_t i = 0; i < num_repeat; i++) {
+    PL_MEMCPY(ptr, str, length - 1);
+    ptr += (length - 1);
   }
-  int32_t val = args[0].GetAs<int32_t>();
-  std::string str(1, static_cast<char>(val));
-  return type::ValueFactory::GetVarcharValue(str);
+
+  // We done
+  return StringFunctions::StrWithLen{new_str, total_len};
 }
 
-// substring
-type::Value StringFunctions::Substr(const std::vector<type::Value> &args) {
-  PL_ASSERT(args.size() == 3);
-  if (args[0].IsNull() || args[1].IsNull() || args[2].IsNull()) {
-    return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
+StringFunctions::StrWithLen StringFunctions::LTrim(
+    UNUSED_ATTRIBUTE executor::ExecutorContext &ctx, const char *str,
+    uint32_t str_len, const char *from, UNUSED_ATTRIBUTE uint32_t from_len) {
+  PL_ASSERT(str != nullptr && from != nullptr);
+
+  // llvm expects the len to include the terminating '\0'
+  if (str_len == 1) {
+    return StringFunctions::StrWithLen{nullptr, 1};
   }
-  std::string str = args[0].ToString();
-  int32_t from = args[1].GetAs<int32_t>() - 1;
-  int32_t len = args[2].GetAs<int32_t>();
-  return type::ValueFactory::GetVarcharValue(str.substr(from, len));
+
+  str_len -= 1;
+  int tail = str_len - 1, head = 0;
+
+  while (head < (int)str_len && strchr(from, str[head]) != nullptr) {
+    head++;
+  }
+
+  // Determine length and return
+  auto new_len = static_cast<uint32_t>(std::max(tail - head + 1, 0) + 1);
+  return StringFunctions::StrWithLen{str + head, new_len};
 }
 
-// Number of characters in string
-type::Value StringFunctions::CharLength(const std::vector<type::Value> &args) {
-  PL_ASSERT(args.size() == 1);
-  if (args[0].IsNull()) {
-    return type::ValueFactory::GetNullValueByType(type::TypeId::INTEGER);
+StringFunctions::StrWithLen StringFunctions::RTrim(
+    UNUSED_ATTRIBUTE executor::ExecutorContext &ctx, const char *str,
+    uint32_t str_len, const char *from, UNUSED_ATTRIBUTE uint32_t from_len) {
+  PL_ASSERT(str != nullptr && from != nullptr);
+
+  // llvm expects the len to include the terminating '\0'
+  if (str_len == 1) {
+    return StringFunctions::StrWithLen{nullptr, 1};
   }
-  std::string str = args[0].ToString();
-  int32_t len = str.length();
-  return (type::ValueFactory::GetIntegerValue(len));
+
+  str_len -= 1;
+  int tail = str_len - 1, head = 0;
+  while (tail >= 0 && strchr(from, str[tail]) != nullptr) {
+    tail--;
+  }
+
+  auto new_len = static_cast<uint32_t>(std::max(tail - head + 1, 0) + 1);
+  return StringFunctions::StrWithLen{str + head, new_len};
 }
 
-// Concatenate two strings
-type::Value StringFunctions::Concat(const std::vector<type::Value> &args) {
-  PL_ASSERT(args.size() == 2);
-  if (args[0].IsNull() || args[1].IsNull()) {
-    return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
-  }
-  std::string str = args[0].ToString() + args[1].ToString();
-  return (type::ValueFactory::GetVarcharValue(str));
+StringFunctions::StrWithLen StringFunctions::Trim(
+    UNUSED_ATTRIBUTE executor::ExecutorContext &ctx, const char *str,
+    uint32_t str_len) {
+  return BTrim(ctx, str, str_len, " ", 2);
 }
 
-// Number of bytes in string
-type::Value StringFunctions::OctetLength(const std::vector<type::Value> &args) {
-  PL_ASSERT(args.size() == 1);
-  std::string str = args[0].ToString();
-  int32_t len = str.length();
-  return (type::ValueFactory::GetIntegerValue(len));
+StringFunctions::StrWithLen StringFunctions::BTrim(
+    UNUSED_ATTRIBUTE executor::ExecutorContext &ctx, const char *str,
+    uint32_t str_len, const char *from, UNUSED_ATTRIBUTE uint32_t from_len) {
+  PL_ASSERT(str != nullptr && from != nullptr);
+
+  // Skip the tailing 0
+  str_len--;
+
+  if (str_len == 0) {
+    return StringFunctions::StrWithLen{str, 1};
+  }
+
+  int head = 0;
+  int tail = str_len - 1;
+
+  // Trim tail
+  while (tail >= 0 && strchr(from, str[tail]) != nullptr) {
+    tail--;
+  }
+
+  // Trim head
+  while (head < (int)str_len && strchr(from, str[head]) != nullptr) {
+    head++;
+  }
+
+  // Done
+  auto new_len = static_cast<uint32_t>(std::max(tail - head + 1, 0) + 1);
+  return StringFunctions::StrWithLen{str + head, new_len};
 }
 
-// Repeat string the specified number of times
-type::Value StringFunctions::Repeat(const std::vector<type::Value> &args) {
-  PL_ASSERT(args.size() == 2);
-  if (args[0].IsNull() || args[1].IsNull()) {
-    return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
-  }
-  std::string str = args[0].ToString();
-  int32_t num = args[1].GetAs<int32_t>();
-  std::string ret = "";
-  while (num--) {
-    ret = ret + str;
-  }
-  return (type::ValueFactory::GetVarcharValue(ret));
-}
-
-// Replace all occurrences in string of substring from with substring to
-type::Value StringFunctions::Replace(const std::vector<type::Value> &args) {
-  PL_ASSERT(args.size() == 3);
-  if (args[0].IsNull() || args[1].IsNull() || args[2].IsNull()) {
-    return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
-  }
-  std::string str = args[0].ToString();
-  std::string from = args[1].ToString();
-  std::string to = args[2].ToString();
-  size_t pos = 0;
-  while ((pos = str.find(from, pos)) != std::string::npos) {
-    str.replace(pos, from.length(), to);
-    pos += to.length();
-  }
-  return (type::ValueFactory::GetVarcharValue(str));
-}
-
-// Remove the longest string containing only characters from characters
-// from the start of string
-type::Value StringFunctions::LTrim(const std::vector<type::Value> &args) {
-  PL_ASSERT(args.size() == 2);
-  if (args[0].IsNull() || args[1].IsNull()) {
-    return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
-  }
-  std::string str = args[0].ToString();
-  std::string from = args[1].ToString();
-  size_t pos = 0;
-  bool erase = 0;
-  while (from.find(str[pos]) != std::string::npos) {
-    erase = 1;
-    pos++;
-  }
-  if (erase) str.erase(0, pos);
-  return (type::ValueFactory::GetVarcharValue(str));
-}
-
-// Remove the longest string containing only characters from characters
-// from the end of string
-type::Value StringFunctions::RTrim(const std::vector<type::Value> &args) {
-  PL_ASSERT(args.size() == 2);
-  if (args[0].IsNull() || args[1].IsNull()) {
-    return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
-  }
-  std::string str = args.at(0).ToString();
-  std::string from = args.at(1).ToString();
-  if (str.length() == 0) return (type::ValueFactory::GetVarcharValue(""));
-  size_t pos = str.length() - 1;
-  bool erase = 0;
-  while (from.find(str[pos]) != std::string::npos) {
-    erase = 1;
-    pos--;
-  }
-  if (erase) str.erase(pos + 1, str.length() - pos - 1);
-  return (type::ValueFactory::GetVarcharValue(str));
-}
-
-// Remove the longest string consisting only of characters in characters
-// from the start and end of string
-type::Value StringFunctions::BTrim(const std::vector<type::Value> &args) {
-  PL_ASSERT(args.size() == 2);
-  if (args[0].IsNull() || args[1].IsNull()) {
-    return type::ValueFactory::GetNullValueByType(type::TypeId::VARCHAR);
-  }
-  std::string str = args.at(0).ToString();
-  std::string from = args.at(1).ToString();
-  if (str.length() == 0) return (type::ValueFactory::GetVarcharValue(""));
-
-  size_t pos = str.length() - 1;
-  bool erase = 0;
-  while (from.find(str[pos]) != std::string::npos) {
-    erase = 1;
-    pos--;
-  }
-  if (erase) str.erase(pos + 1, str.length() - pos - 1);
-
-  pos = 0;
-  erase = 0;
-  while (from.find(str[pos]) != std::string::npos) {
-    erase = 1;
-    pos++;
-  }
-  if (erase) str.erase(0, pos);
-  return (type::ValueFactory::GetVarcharValue(str));
-}
-
-uint32_t StringFunctions::Length(UNUSED_ATTRIBUTE const char *str,
-                                 uint32_t length) {
+uint32_t StringFunctions::Length(
+    UNUSED_ATTRIBUTE executor::ExecutorContext &ctx,
+    UNUSED_ATTRIBUTE const char *str, uint32_t length) {
   PL_ASSERT(str != nullptr);
   return length;
-}
-
-// The length of the string
-type::Value StringFunctions::_Length(const std::vector<type::Value> &args) {
-  PL_ASSERT(args.size() == 1);
-  if (args[0].IsNull()) {
-    return type::ValueFactory::GetNullValueByType(type::TypeId::INTEGER);
-  }
-
-  uint32_t ret = Length(args[0].GetAs<const char *>(), args[0].GetLength());
-  return type::ValueFactory::GetIntegerValue(ret);
 }
 
 }  // namespace function

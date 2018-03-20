@@ -68,7 +68,7 @@ TEST_F(OrderBySQLTests, PerformanceTest) {
 
   TestingSQLUtil::ShowTable(DEFAULT_DB_NAME, "test");
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_affected;
@@ -120,7 +120,7 @@ TEST_F(OrderBySQLTests, OrderByWithColumnsTest) {
 
   CreateAndLoadTable();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -150,7 +150,7 @@ TEST_F(OrderBySQLTests, OrderByWithColumnsDescTest) {
 
   CreateAndLoadTable();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -180,7 +180,7 @@ TEST_F(OrderBySQLTests, OrderByWithoutColumnsTest) {
 
   CreateAndLoadTable();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -210,7 +210,7 @@ TEST_F(OrderBySQLTests, OrderByWithoutColumnsDescTest) {
 
   CreateAndLoadTable();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -240,7 +240,7 @@ TEST_F(OrderBySQLTests, OrderByWithColumnsAndLimitTest) {
 
   CreateAndLoadTable();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -271,7 +271,7 @@ TEST_F(OrderBySQLTests, OrderByWithColumnsAndLimitDescTest) {
 
   CreateAndLoadTable();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -302,7 +302,7 @@ TEST_F(OrderBySQLTests, OrderByWithoutColumnsAndLimitTest) {
 
   CreateAndLoadTable();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -333,7 +333,7 @@ TEST_F(OrderBySQLTests, OrderByWithoutColumnsAndLimitDescTest) {
 
   CreateAndLoadTable();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -364,7 +364,7 @@ TEST_F(OrderBySQLTests, OrderByStar) {
 
   CreateAndLoadTable();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -397,7 +397,7 @@ TEST_F(OrderBySQLTests, OrderByStarDesc) {
 
   CreateAndLoadTable();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -430,7 +430,7 @@ TEST_F(OrderBySQLTests, OrderByStarWithLimit) {
 
   CreateAndLoadTable();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -462,7 +462,7 @@ TEST_F(OrderBySQLTests, OrderByStarWithLimitDesc) {
 
   CreateAndLoadTable();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -494,7 +494,7 @@ TEST_F(OrderBySQLTests, OrderByWithProjectionTest) {
 
   CreateAndLoadTable();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -528,7 +528,7 @@ TEST_F(OrderBySQLTests, OrderByWithProjectionDescTest) {
 
   CreateAndLoadTable();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -562,7 +562,7 @@ TEST_F(OrderBySQLTests, OrderByWithProjectionLimitTest) {
 
   CreateAndLoadTable();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -598,7 +598,7 @@ TEST_F(OrderBySQLTests, OrderByWithProjectionLimitDescTest) {
 
   CreateAndLoadTable();
 
-  std::vector<StatementResult> result;
+  std::vector<ResultValue> result;
   std::vector<FieldInfo> tuple_descriptor;
   std::string error_message;
   int rows_changed;
@@ -625,5 +625,48 @@ TEST_F(OrderBySQLTests, OrderByWithProjectionLimitDescTest) {
   catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
 }
+
+TEST_F(OrderBySQLTests, OrderByWithNullCheck) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+
+  CreateAndLoadTable();
+
+  // Insert some NULLs
+  TestingSQLUtil::ExecuteSQLQuery(
+      "INSERT INTO test VALUES (4, 55, 222, 'aaa');");
+  TestingSQLUtil::ExecuteSQLQuery(
+      "INSERT INTO test VALUES (5, NULL, 222, 'ccc');");
+  TestingSQLUtil::ExecuteSQLQuery(
+      "INSERT INTO test VALUES (6, 44, NULL, 'bbb');");
+  TestingSQLUtil::ExecuteSQLQuery(
+      "INSERT INTO test VALUES (7, 66, 555, NULL);");
+  TestingSQLUtil::ExecuteSQLQuery(
+      "INSERT INTO test VALUES (8, NULL, 222, NULL);");
+
+  std::string query = "SELECT b FROM test ORDER BY b ASC";
+  std::vector<std::string> exp = {"11", "22", "33", "44", "55", "66", "", ""};
+  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(query, exp, true);
+
+  query = "SELECT b FROM test ORDER BY b DESC";
+  exp = {"", "", "66", "55", "44", "33", "22", "11"};
+  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(query, exp, true);
+
+  query = "SELECT d FROM test ORDER BY d ASC";
+  exp = {"aaa", "abcd", "bbb", "bcd", "bcda", "ccc", "", ""};
+  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(query, exp, true);
+
+  query = "SELECT d FROM test ORDER BY d DESC";
+  exp = {"", "", "ccc", "bcda", "bcd", "bbb", "abcd", "aaa"};
+  TestingSQLUtil::ExecuteSQLQueryAndCheckResult(query, exp, true);
+
+  // free the database just created
+  txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+}
+
 }  // namespace test
 }  // namespace peloton

@@ -21,14 +21,14 @@
 #include "common/harness.h"
 #include "executor/mock_executor.h"
 
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "catalog/catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/schema.h"
 #include "type/value.h"
 #include "type/value_factory.h"
 #include "common/exception.h"
-#include "concurrency/transaction.h"
+#include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/abstract_executor.h"
 #include "executor/logical_tile.h"
@@ -226,7 +226,7 @@ class TestingConstraintsUtil {
   };
 
   /** @brief Insert a tuple with 1 columns' value specified */
-  static bool ExecuteOneInsert(concurrency::Transaction *transaction,
+  static bool ExecuteOneInsert(concurrency::TransactionContext *transaction,
                                storage::DataTable *table,
                                const type::Value &col1) {
     std::unique_ptr<executor::ExecutorContext> context(
@@ -247,7 +247,7 @@ class TestingConstraintsUtil {
   };
 
   /** @brief Delete all tuples from a table */
-//  static bool ExecuteTruncate(concurrency::Transaction *transaction,
+//  static bool ExecuteTruncate(concurrency::TransactionContext *transaction,
 //                              storage::DataTable *table) {
 //    std::unique_ptr<executor::ExecutorContext> context(
 //        new executor::ExecutorContext(transaction));
@@ -258,7 +258,7 @@ class TestingConstraintsUtil {
 //  };
 
   /** @brief Insert a tuple with 1 columns' value specified */
-  static bool ExecuteMultiInsert(concurrency::Transaction *transaction,
+  static bool ExecuteMultiInsert(concurrency::TransactionContext *transaction,
                                  storage::DataTable *table,
                                  std::vector<type::Value> cols) {
     std::unique_ptr<executor::ExecutorContext> context(
@@ -281,7 +281,7 @@ class TestingConstraintsUtil {
   };
 
   /** @brief Insert a tuple with 4 columns' value specified */
-  static bool ExecuteInsert(concurrency::Transaction *transaction,
+  static bool ExecuteInsert(concurrency::TransactionContext *transaction,
                             storage::DataTable *table, const type::Value &col1,
                             const type::Value &col2, const type::Value &col3,
                             const type::Value &col4) {
@@ -307,7 +307,7 @@ class TestingConstraintsUtil {
   };
 
   /** @brief Insert a tuple with 3 columns' value specified */
-  static bool ExecuteInsert(concurrency::Transaction *transaction,
+  static bool ExecuteInsert(concurrency::TransactionContext *transaction,
                             storage::DataTable *table, const type::Value &col1,
                             const type::Value &col2, const type::Value &col3) {
     std::unique_ptr<executor::ExecutorContext> context(
@@ -332,7 +332,7 @@ class TestingConstraintsUtil {
 
 
 
-  static void PopulateTable(concurrency::Transaction *transaction,
+  static void PopulateTable(concurrency::TransactionContext *transaction,
                             storage::DataTable *table, int num_rows) {
     // Ensure that the tile group is as expected.
     UNUSED_ATTRIBUTE const catalog::Schema *schema = table->GetSchema();

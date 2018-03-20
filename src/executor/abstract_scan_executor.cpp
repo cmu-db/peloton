@@ -12,7 +12,7 @@
 
 #include "executor/abstract_scan_executor.h"
 
-#include "type/types.h"
+#include "common/internal_types.h"
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
 #include "expression/abstract_expression.h"

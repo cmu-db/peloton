@@ -21,6 +21,7 @@
 #include "expression/tuple_value_expression.h"
 #include "expression/constant_value_expression.h"
 #include "expression/case_expression.h"
+#include "expression/subquery_expression.h"
 
 namespace peloton {
 void SqlNodeVisitor::Visit(expression::ComparisonExpression *expr) {
@@ -54,6 +55,9 @@ void SqlNodeVisitor::Visit(expression::StarExpression *expr) {
   expr->AcceptChildren(this);
 }
 void SqlNodeVisitor::Visit(expression::TupleValueExpression *expr) {
+  expr->AcceptChildren(this);
+}
+void SqlNodeVisitor::Visit(expression::SubqueryExpression *expr) {
   expr->AcceptChildren(this);
 }
 

@@ -31,7 +31,7 @@ namespace type {
 class Type;
 
 inline CmpBool GetCmpBool(bool boolean) {
-  return boolean ? CMP_TRUE : CMP_FALSE;
+  return boolean ? CmpBool::TRUE : CmpBool::FALSE;
 }
 
 // A value is an abstract class that represents a view over SQL data stored in
@@ -278,7 +278,7 @@ class Value : public Printable {
   // For unordered_map
   struct equal_to {
     inline bool operator()(const Value &x, const Value &y) const {
-      return Type::GetInstance(x.type_id_)->CompareEquals(x, y) == CMP_TRUE;
+      return Type::GetInstance(x.type_id_)->CompareEquals(x, y) == CmpBool::TRUE;
     }
   };
 

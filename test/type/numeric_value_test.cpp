@@ -54,51 +54,51 @@ int64_t RANDOM64() {
 }
 
 void CheckEqual(type::Value &v1, type::Value &v2) {
-  type::CmpBool result[6];
+  CmpBool result[6];
   result[0] = v1.CompareEquals(v2);
-  EXPECT_TRUE((result[0]) );
+  EXPECT_EQ(CmpBool::TRUE, result[0]);
   result[1] = v1.CompareNotEquals(v2);
-  EXPECT_TRUE((result[1]) == type::CMP_FALSE);
+  EXPECT_EQ(CmpBool::FALSE, result[1]);
   result[2] = v1.CompareLessThan(v2);
-  EXPECT_TRUE((result[2]) == type::CMP_FALSE);
+  EXPECT_EQ(CmpBool::FALSE, result[2]);
   result[3] = v1.CompareLessThanEquals(v2);
-  EXPECT_TRUE((result[3]) == type::CMP_TRUE);
+  EXPECT_EQ(CmpBool::TRUE, result[3]);
   result[4] = v1.CompareGreaterThan(v2);
-  EXPECT_TRUE((result[4]) == type::CMP_FALSE);
+  EXPECT_EQ(CmpBool::FALSE, result[4]);
   result[5] = v1.CompareGreaterThanEquals(v2);
-  EXPECT_TRUE((result[5]) == type::CMP_TRUE);
+  EXPECT_EQ(CmpBool::TRUE, result[5]);
 }
 
 void CheckLessThan(type::Value &v1, type::Value &v2) {
-  type::CmpBool result[6];
+  CmpBool result[6];
   result[0] = v1.CompareEquals(v2);
-  EXPECT_TRUE((result[0]) == type::CMP_FALSE);
+  EXPECT_EQ(CmpBool::FALSE, result[0]);
   result[1] = v1.CompareNotEquals(v2);
-  EXPECT_TRUE((result[1]) == type::CMP_TRUE);
+  EXPECT_EQ(CmpBool::TRUE, result[1]);
   result[2] = v1.CompareLessThan(v2);
-  EXPECT_TRUE((result[2]) == type::CMP_TRUE);
+  EXPECT_EQ(CmpBool::TRUE, result[2]);
   result[3] = v1.CompareLessThanEquals(v2);
-  EXPECT_TRUE((result[3]) == type::CMP_TRUE);
+  EXPECT_EQ(CmpBool::TRUE, result[3]);
   result[4] = v1.CompareGreaterThan(v2);
-  EXPECT_TRUE((result[4]) == type::CMP_FALSE);
+  EXPECT_EQ(CmpBool::FALSE, result[4]);
   result[5] = v1.CompareGreaterThanEquals(v2);
-  EXPECT_TRUE((result[5]) == type::CMP_FALSE);
+  EXPECT_EQ(CmpBool::FALSE, result[5]);
 }
 
 void CheckGreaterThan(type::Value &v1, type::Value &v2) {
-  type::CmpBool result[6];
+  CmpBool result[6];
   result[0] = v1.CompareEquals(v2);
-  EXPECT_TRUE((result[0]) == type::CMP_FALSE);
+  EXPECT_EQ(CmpBool::FALSE, result[0]);
   result[1] = v1.CompareNotEquals(v2);
-  EXPECT_TRUE((result[1]) == type::CMP_TRUE);
+  EXPECT_EQ(CmpBool::TRUE, result[1]);
   result[2] = v1.CompareLessThan(v2);
-  EXPECT_TRUE((result[2]) == type::CMP_FALSE);
+  EXPECT_EQ(CmpBool::FALSE, result[2]);
   result[3] = v1.CompareLessThanEquals(v2);
-  EXPECT_TRUE((result[3]) == type::CMP_FALSE);
+  EXPECT_EQ(CmpBool::FALSE, result[3]);
   result[4] = v1.CompareGreaterThan(v2);
-  EXPECT_TRUE((result[4]) == type::CMP_TRUE);
+  EXPECT_EQ(CmpBool::TRUE, result[4]);
   result[5] = v1.CompareGreaterThanEquals(v2);
-  EXPECT_TRUE((result[5]) == type::CMP_TRUE);
+  EXPECT_EQ(CmpBool::TRUE, result[5]);
 }
 
 // Compare two integers
@@ -181,17 +181,20 @@ void CheckMath1(T1 x, T2 y, type::TypeId xtype, type::TypeId ytype) {
   T1 sum1 = (T1)(x + y);
   T2 sum2 = (T2)(x + y);
   // Out of range detection
-  if ((x + y) != sum1 && (x + y) != sum2)
+  if ((x + y) != sum1 && (x + y) != sum2) {
     EXPECT_THROW(type::Value(xtype, x).Add(type::Value(ytype, y)),
-      peloton::Exception);
-  else if (sizeof(x) >= sizeof(y)) {
-    if ((x > 0 && y > 0 && sum1 < 0) || (x < 0 && y < 0 && sum1 > 0))
-      EXPECT_THROW(type::Value(xtype, x).Add(type::Value(ytype, y)),
-        peloton::Exception);
+                 peloton::Exception);
   }
-  else if ((x > 0 && y > 0 && sum2 < 0) || (x < 0 && y < 0 && sum2 > 0))
+  else if (sizeof(x) >= sizeof(y)) {
+    if ((x > 0 && y > 0 && sum1 < 0) || (x < 0 && y < 0 && sum1 > 0)) {
+      EXPECT_THROW(type::Value(xtype, x).Add(type::Value(ytype, y)),
+                   peloton::Exception);
+    }
+  }
+  else if ((x > 0 && y > 0 && sum2 < 0) || (x < 0 && y < 0 && sum2 > 0)) {
     EXPECT_THROW(type::Value(xtype, x).Add(type::Value(ytype, y)),
-      peloton::Exception);
+                 peloton::Exception);
+  }
   else {
     v1 = type::Value(xtype, x).Add(type::Value(ytype, y));
     CheckEqual(v1, v2);
@@ -201,17 +204,20 @@ void CheckMath1(T1 x, T2 y, type::TypeId xtype, type::TypeId ytype) {
   T1 diff1 = (T1)(x - y);
   T2 diff2 = (T2)(x - y);
   // Out of range detection
-  if ((x - y) != diff1 && (x - y) != diff2)
+  if ((x - y) != diff1 && (x - y) != diff2) {
     EXPECT_THROW(type::Value(xtype, x).Subtract(type::Value(ytype, y)),
-      peloton::Exception);
-  else if (sizeof(x) >= sizeof(y)) {
-    if ((x > 0 && y < 0 && diff1 < 0) || (x < 0 && y > 0 && diff1 > 0))
-      EXPECT_THROW(type::Value(xtype, x).Subtract(type::Value(ytype, y)),
-        peloton::Exception);
+                 peloton::Exception);
   }
-  else if ((x > 0 && y < 0 && diff2 < 0) || (x < 0 && y > 0 && diff2 > 0))
+  else if (sizeof(x) >= sizeof(y)) {
+    if ((x > 0 && y < 0 && diff1 < 0) || (x < 0 && y > 0 && diff1 > 0)) {
+      EXPECT_THROW(type::Value(xtype, x).Subtract(type::Value(ytype, y)),
+                   peloton::Exception);
+    }
+  }
+  else if ((x > 0 && y < 0 && diff2 < 0) || (x < 0 && y > 0 && diff2 > 0)) {
     EXPECT_THROW(type::Value(xtype, x).Subtract(type::Value(ytype, y)),
-      peloton::Exception);
+                 peloton::Exception);
+  }
   else {
     v1 = type::Value(xtype, x).Subtract(type::Value(ytype, y));
     CheckEqual(v1, v2);
@@ -222,17 +228,20 @@ void CheckMath1(T1 x, T2 y, type::TypeId xtype, type::TypeId ytype) {
   T1 prod1 = (T1)(x * y);
   T2 prod2 = (T2)(x * y);
   // Out of range detection
-  if ((x * y) != prod1 && (x * y) != prod2)
+  if ((x * y) != prod1 && (x * y) != prod2) {
     EXPECT_THROW(type::Value(xtype, x).Multiply(type::Value(ytype, y)),
-      peloton::Exception);
-  else if (sizeof(x) >= sizeof(y)) {
-    if (y != 0 && prod1 / y != x)
-      EXPECT_THROW(type::Value(xtype, x).Multiply(type::Value(ytype, y)),
-        peloton::Exception);
+                 peloton::Exception);
   }
-  else if (y != 0 && prod2 / y != x)
+  else if (sizeof(x) >= sizeof(y)) {
+    if (y != 0 && prod1 / y != x) {
+      EXPECT_THROW(type::Value(xtype, x).Multiply(type::Value(ytype, y)),
+                   peloton::Exception);
+    }
+  }
+  else if (y != 0 && prod2 / y != x) {
     EXPECT_THROW(type::Value(xtype, x).Multiply(type::Value(ytype, y)),
-      peloton::Exception);
+                 peloton::Exception);
+  }
   else {
     v1 = type::Value(xtype, x).Multiply(type::Value(ytype, y));
     CheckEqual(v1, v2);
@@ -240,9 +249,10 @@ void CheckMath1(T1 x, T2 y, type::TypeId xtype, type::TypeId ytype) {
 
   // Test x / y
   // Divide by zero detection
-  if (y == 0)
+  if (y == 0) {
     EXPECT_THROW(type::Value(xtype, x).Divide(type::Value(ytype, y)),
-      peloton::Exception);
+                 peloton::Exception);
+  }
   else {
     v1 = type::Value(xtype, x).Divide(type::Value(ytype, y));
     v2 = type::Value(maxtype, x / y);
@@ -251,9 +261,10 @@ void CheckMath1(T1 x, T2 y, type::TypeId xtype, type::TypeId ytype) {
 
   // Test x % y
   // Divide by zero detection
-  if (y == 0)
+  if (y == 0) {
     EXPECT_THROW(type::Value(xtype, x).Modulo(type::Value(ytype, y)),
-      peloton::Exception);
+                 peloton::Exception);
+  }
   else {
     v1 = type::Value(xtype, x).Modulo(type::Value(ytype, y));
     v2 = type::Value(maxtype, x % y);
@@ -261,9 +272,10 @@ void CheckMath1(T1 x, T2 y, type::TypeId xtype, type::TypeId ytype) {
   }
 
   // Test sqrt(x)
-  if (x < 0)
+  if (x < 0) {
     EXPECT_THROW(type::Value(xtype, x).Sqrt(),
-      peloton::Exception);
+                 peloton::Exception);
+  }
   else {
     v1 = type::Value(xtype, x).Sqrt();
     v2 = type::ValueFactory::GetDecimalValue(sqrt(x));
@@ -650,7 +662,7 @@ TEST_F(NumericValueTests, DivideByZeroTest) {
 
 TEST_F(NumericValueTests, NullValueTest) {
   std::srand(SEED);
-  type::CmpBool bool_result[5];
+  CmpBool bool_result[5];
 
   // Compare null
   bool_result[0] = type::ValueFactory::GetIntegerValue(rand()).CompareEquals(
@@ -664,7 +676,7 @@ TEST_F(NumericValueTests, NullValueTest) {
   bool_result[4] = type::ValueFactory::GetIntegerValue(rand()).CompareEquals(
     type::ValueFactory::GetDecimalValue((double)type::PELOTON_DECIMAL_NULL));
   for (int i = 0; i < 5; i++) {
-    EXPECT_TRUE(bool_result[i] == type::CMP_NULL);
+    EXPECT_TRUE(bool_result[i] == CmpBool::NULL_);
   }
 
   bool_result[0] = type::ValueFactory::GetTinyIntValue((int8_t)type::PELOTON_INT8_NULL).CompareEquals(
@@ -678,7 +690,7 @@ TEST_F(NumericValueTests, NullValueTest) {
   bool_result[4] = type::ValueFactory::GetDecimalValue((double)type::PELOTON_DECIMAL_NULL).CompareEquals(
     type::ValueFactory::GetIntegerValue(rand()));
   for (int i = 0; i < 5; i++) {
-    EXPECT_TRUE(bool_result[i] == type::CMP_NULL);
+    EXPECT_TRUE(bool_result[i] == CmpBool::NULL_);
   }
 
   type::Value result[5];
