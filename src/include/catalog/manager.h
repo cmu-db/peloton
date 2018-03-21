@@ -22,7 +22,8 @@
 #include "common/macros.h"
 #include "common/internal_types.h"
 #include "common/container/lock_free_array.h"
-
+#include "common/container/cuckoo_map.h"
+#define LOCK_FREE_MAP_INIT_SIZE (1024)
 namespace peloton {
 
 namespace storage {
@@ -64,7 +65,6 @@ class Manager {
 
   void ClearTileGroup(void);
 
-
   //===--------------------------------------------------------------------===//
   // INDIRECTION ARRAY ALLOCATION
   //===--------------------------------------------------------------------===//
@@ -94,18 +94,17 @@ class Manager {
   //===--------------------------------------------------------------------===//
   std::atomic<oid_t> tile_group_oid_ = ATOMIC_VAR_INIT(START_OID);
 
-  LockFreeArray<std::shared_ptr<storage::TileGroup>> tile_group_locator_;
-
-  static std::shared_ptr<storage::TileGroup> empty_tile_group_;
+  CuckooMap<oid_t, std::shared_ptr<storage::TileGroup>> tile_group_locator_{
+      LOCK_FREE_MAP_INIT_SIZE};
 
   //===--------------------------------------------------------------------===//
   // Data members for indirection array allocation
   //===--------------------------------------------------------------------===//
   std::atomic<oid_t> indirection_array_oid_ = ATOMIC_VAR_INIT(START_OID);
 
-  LockFreeArray<std::shared_ptr<storage::IndirectionArray>> indirection_array_locator_;
+  CuckooMap<oid_t, std::shared_ptr<storage::IndirectionArray>>
+      indirection_array_locator_{LOCK_FREE_MAP_INIT_SIZE};
 
-  static std::shared_ptr<storage::IndirectionArray> empty_indirection_array_;
 };
 
 }  // namespace catalog

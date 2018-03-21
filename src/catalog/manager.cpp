@@ -17,13 +17,10 @@
 #include "storage/database.h"
 #include "storage/data_table.h"
 #include "concurrency/transaction_manager_factory.h"
+#include "common/container/cuckoo_map.h"
 
 namespace peloton {
 namespace catalog {
-
-std::shared_ptr<storage::TileGroup> Manager::empty_tile_group_;
-
-std::shared_ptr<storage::IndirectionArray> Manager::empty_indirection_array_;
 
 Manager &Manager::GetInstance() {
   static Manager manager;
@@ -36,51 +33,41 @@ Manager &Manager::GetInstance() {
 
 void Manager::AddTileGroup(const oid_t oid,
                            std::shared_ptr<storage::TileGroup> location) {
-
   // add/update the catalog reference to the tile group
-  tile_group_locator_.Update(oid, location);
+  bool status = tile_group_locator_.Insert(oid, location);
+  while (!status) {
+    tile_group_locator_.Erase(oid);
+    status = tile_group_locator_.Insert(oid, location);
+  }
 }
 
 void Manager::DropTileGroup(const oid_t oid) {
-  
   // drop the catalog reference to the tile group
-  tile_group_locator_.Erase(oid, empty_tile_group_);
+  tile_group_locator_.Erase(oid);
 }
 
 std::shared_ptr<storage::TileGroup> Manager::GetTileGroup(const oid_t oid) {
   std::shared_ptr<storage::TileGroup> location;
-  
-  location = tile_group_locator_.Find(oid);
-
+  tile_group_locator_.Find(oid, location);
   return location;
 }
 
 // used for logging test
-void Manager::ClearTileGroup() {
+void Manager::ClearTileGroup() { tile_group_locator_.Clear(); }
 
-  tile_group_locator_.Clear(empty_tile_group_);
-}
-
-
-void Manager::AddIndirectionArray(const oid_t oid,
-                                  std::shared_ptr<storage::IndirectionArray> location) {
-
+void Manager::AddIndirectionArray(
+    const oid_t oid, std::shared_ptr<storage::IndirectionArray> location) {
   // add/update the catalog reference to the indirection array
   indirection_array_locator_.Update(oid, location);
 }
 
 void Manager::DropIndirectionArray(const oid_t oid) {
-  
   // drop the catalog reference to the tile group
-  indirection_array_locator_.Erase(oid, empty_indirection_array_);
+  indirection_array_locator_.Erase(oid);
 }
-
 
 // used for logging test
-void Manager::ClearIndirectionArray() {
-
-  indirection_array_locator_.Clear(empty_indirection_array_);
-}
+void Manager::ClearIndirectionArray() { indirection_array_locator_.Clear(); }
 
 }  // namespace catalog
 }  // namespace peloton

@@ -22,7 +22,7 @@
 
 namespace peloton {
 
-#define LOCK_FREE_ARRAY_GROW_SPEED (100)
+#define LOCK_FREE_ARRAR_INIT_SIZE (2048)
 
 // LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
 #define LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS template <typename ValueType>
@@ -65,8 +65,6 @@ class LockFreeArray {
   bool Contains(const ValueType &value);
 
  private:
-  std::atomic<std::size_t> lock_free_array_offset{0};
-
   // lock free array
   tbb::concurrent_vector<ValueType, tbb::zero_allocator<ValueType>>
       lock_free_array;

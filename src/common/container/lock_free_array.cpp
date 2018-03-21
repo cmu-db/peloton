@@ -30,7 +30,10 @@ class IndirectionArray;
 }
 
 LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
-LOCK_FREE_ARRAY_TYPE::LockFreeArray() { lock_free_array.clear(); }
+LOCK_FREE_ARRAY_TYPE::LockFreeArray() {
+  PL_ASSERT(lock_free_array.size() == 0);
+  lock_free_array.reserve(LOCK_FREE_ARRAR_INIT_SIZE);
+}
 
 LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
 LOCK_FREE_ARRAY_TYPE::~LockFreeArray() { lock_free_array.clear(); }
@@ -38,9 +41,7 @@ LOCK_FREE_ARRAY_TYPE::~LockFreeArray() { lock_free_array.clear(); }
 LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
 bool LOCK_FREE_ARRAY_TYPE::Update(const std::size_t &offset, ValueType value) {
   LOG_TRACE("Update at %lu", lock_free_array_offset.load());
-  if (lock_free_array.size() < offset + 1) {
-    lock_free_array.resize(lock_free_array.size() * LOCK_FREE_ARRAY_GROW_SPEED);
-  }
+  PL_ASSERT(lock_free_array.size() >= offset + 1);
   lock_free_array.at(offset) = value;
   return true;
 }
@@ -105,9 +106,6 @@ void LOCK_FREE_ARRAY_TYPE::Clear(const ValueType &invalid_value) {
        array_itr++) {
     lock_free_array.at(array_itr) = invalid_value;
   }
-
-  // Reset sentinel
-  lock_free_array_offset = 0;
 }
 
 LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
