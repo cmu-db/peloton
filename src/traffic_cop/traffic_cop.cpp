@@ -180,13 +180,17 @@ executor::ExecutionResult TrafficCop::ExecuteHelper(
     return p_status_;
   }
 
-  auto on_complete = [&result, this](executor::ExecutionResult p_status,
+  auto on_complete = [&result, this, &txn](executor::ExecutionResult p_status,
                                      std::vector<ResultValue> &&values) {
     this->p_status_ = p_status;
     // TODO (Tianyi) I would make a decision on keeping one of p_status or
     // error_message in my next PR
     this->error_message_ = std::move(p_status.m_error_message);
     result = std::move(values);
+
+    // COMMIT single statement transaction
+    this->ExecuteStatementPlanGetResult();
+
     task_callback_(task_callback_arg_);
   };
 
@@ -592,6 +596,7 @@ ResultType TrafficCop::ExecuteStatement(
 
         ExecuteHelper(statement->GetPlanTree(), params, result, result_format,
                       thread_id);
+
         if (GetQueuing()) {
           return ResultType::QUEUING;
         } else {
