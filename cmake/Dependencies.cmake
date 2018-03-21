@@ -36,6 +36,12 @@ include(cmake/CapnProtoMacros.cmake)
 # ---[ Google-protobuf
 include(cmake/ProtoBuf.cmake)
 
+# --[ tensorflow
+find_library(TFlowC
+        NAMES tensorflow
+        PATHS "/usr/local/lib")
+list(APPEND Peloton_LINKER_LIBS ${TFlowC})
+
 # ---[ Libevent
 find_package(Libevent REQUIRED)
 include_directories(SYSTEM ${LIBEVENT_INCLUDE_DIRS})

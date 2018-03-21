@@ -110,7 +110,6 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
       make_shared<binder::BindNodeVisitor>(txn, default_database_name);
   bind_node_visitor->BindNameToNode(parse_tree);
 
-  metadata_.catalog_cache = &txn->catalog_cache;
   // Handle ddl statement
   bool is_ddl_stmt;
   auto ddl_plan = HandleDDLStatement(parse_tree, is_ddl_stmt, txn);
@@ -118,6 +117,7 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
     return move(ddl_plan);
   }
 
+  metadata_.txn = txn;
   // Generate initial operator tree from query tree
   shared_ptr<GroupExpression> gexpr = InsertQueryTree(parse_tree, txn);
   GroupID root_id = gexpr->GetGroupID();
@@ -294,7 +294,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
   auto gexpr = group->GetBestExpression(required_props);
 
   LOG_TRACE("Choosing best plan for group %d with op %s", gexpr->GetGroupID(),
-            gexpr->Op().name().c_str());
+            gexpr->Op().GetName().c_str());
 
   vector<GroupID> child_groups = gexpr->GetChildGroupIDs();
   auto required_input_props = gexpr->GetInputProperties(required_props);

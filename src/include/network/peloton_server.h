@@ -34,7 +34,7 @@
 #include "common/dedicated_thread_owner.h"
 #include "connection_dispatcher_task.h"
 #include "network_state.h"
-#include "notifiable_task.h"
+#include "common/notifiable_task.h"
 #include "protocol_handler.h"
 
 #include <openssl/crypto.h>

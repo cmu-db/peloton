@@ -1,4 +1,5 @@
 language: c++
+python: 3.6
 matrix:
     fast_finish: true
 
@@ -141,7 +142,7 @@ install:
 
 before_script:
     # first, run source_validator
-    - python ./script/validators/source_validator.py
+    - python script/validators/source_validator.py
 
 # build peloton (override this value to execute tests)
 script:

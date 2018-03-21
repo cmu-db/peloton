@@ -15,8 +15,8 @@
 #include <gflags/gflags.h>
 #include <google/protobuf/stubs/common.h>
 
-#include "brain/index_tuner.h"
-#include "brain/layout_tuner.h"
+#include "tuning/index_tuner.h"
+#include "tuning/layout_tuner.h"
 #include "catalog/catalog.h"
 #include "common/statement_cache_manager.h"
 #include "common/thread_pool.h"
@@ -36,7 +36,6 @@ void PelotonInit::Initialize() {
   LOGGING_THREAD_COUNT = 1;
   GC_THREAD_COUNT = 1;
   EPOCH_THREAD_COUNT = 1;
-  MAX_CONCURRENCY = 10;
 
   // set max thread number.
   thread_pool.Initialize(0, CONNECTION_THREAD_COUNT + 3);
@@ -44,7 +43,7 @@ void PelotonInit::Initialize() {
   // start worker pool
   threadpool::MonoQueuePool::GetInstance().Startup();
 
-  // start brain thread pool
+  // start indextuner thread pool
   if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
     threadpool::MonoQueuePool::GetBrainInstance().Startup();
   }
@@ -63,13 +62,13 @@ void PelotonInit::Initialize() {
   if (settings::SettingsManager::GetBool(settings::SettingId::index_tuner)) {
     // Set the default visibility flag for all indexes to false
     index::IndexMetadata::SetDefaultVisibleFlag(false);
-    auto &index_tuner = brain::IndexTuner::GetInstance();
+    auto &index_tuner = tuning::IndexTuner::GetInstance();
     index_tuner.Start();
   }
 
   // start layout tuner
   if (settings::SettingsManager::GetBool(settings::SettingId::layout_tuner)) {
-    auto &layout_tuner = brain::LayoutTuner::GetInstance();
+    auto &layout_tuner = tuning::LayoutTuner::GetInstance();
     layout_tuner.Start();
   }
 
@@ -95,13 +94,13 @@ void PelotonInit::Initialize() {
 void PelotonInit::Shutdown() {
   // shut down index tuner
   if (settings::SettingsManager::GetBool(settings::SettingId::index_tuner)) {
-    auto &index_tuner = brain::IndexTuner::GetInstance();
+    auto &index_tuner = tuning::IndexTuner::GetInstance();
     index_tuner.Stop();
   }
 
   // shut down layout tuner
   if (settings::SettingsManager::GetBool(settings::SettingId::layout_tuner)) {
-    auto &layout_tuner = brain::LayoutTuner::GetInstance();
+    auto &layout_tuner = tuning::LayoutTuner::GetInstance();
     layout_tuner.Stop();
   }
 
@@ -114,7 +113,7 @@ void PelotonInit::Shutdown() {
   // stop worker pool
   threadpool::MonoQueuePool::GetInstance().Shutdown();
 
-  // stop brain thread pool
+  // stop indextuner thread pool
   if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
     threadpool::MonoQueuePool::GetBrainInstance().Shutdown();
   }

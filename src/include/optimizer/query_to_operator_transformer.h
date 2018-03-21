@@ -66,6 +66,7 @@ class QueryToOperatorTransformer : public SqlNodeVisitor {
   void Visit(expression::ComparisonExpression *expr) override;
   void Visit(expression::OperatorExpression *expr) override;
 
+ private:
   inline oid_t GetAndIncreaseGetId() { return get_id++; }
 
   /**
@@ -80,12 +81,10 @@ class QueryToOperatorTransformer : public SqlNodeVisitor {
    *
    * @param expr The original predicate
    */
-  void CollectPredicates(expression::AbstractExpression *expr);
+  std::vector<AnnotatedExpression> CollectPredicates(
+      expression::AbstractExpression *expr,
+      std::vector<AnnotatedExpression> predicates = {});
 
-  // TODO(boweic): Since we haven't migrated all the functionalities needed to
-  // generate mark-join and single-join to the optimizer, currently this
-  // function has not been tested, and it may be a bit hard to understand. We
-  // may integrate the unnesting functionality in the next PR
   /**
    * @brief Transform a sub-query in an expression to use
    *
@@ -96,14 +95,28 @@ class QueryToOperatorTransformer : public SqlNodeVisitor {
    * @return If the expression could be transformed into sub-query, return true,
    *  return false otherwise
    */
-  bool GenerateSubquerytree(
-      expression::AbstractExpression *expr,
-      std::vector<expression::AbstractExpression *> &select_list,
-      bool single_join = false);
+  bool GenerateSubquerytree(expression::AbstractExpression *expr,
+                            oid_t child_id, bool single_join = false);
 
+  /**
+   * @brief Decide if a conjunctive predicate is supported. We need to extract
+   * conjunction predicate first then call this function to decide if the
+   * predicate is supported by our system
+   *
+   * @param expr The conjunctive predicate provided
+   *
+   * @return True if supported, false otherwise
+   */
+  bool IsSupportedConjunctivePredicate(expression::AbstractExpression *expr);
+  /**
+   * @brief Check if a sub-select statement is supported.
+   *
+   * @param op The select statement
+   *
+   * @return True if supported, false otherwise
+   */
+  bool IsSupportedSubSelect(const parser::SelectStatement *op);
   static bool RequireAggregation(const parser::SelectStatement *op);
-
- private:
   std::shared_ptr<OperatorExpression> output_expr_;
 
   concurrency::TransactionContext *txn_;
