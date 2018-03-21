@@ -793,7 +793,7 @@ std::shared_ptr<TableCatalogObject> Catalog::GetTableObject(
 
 // check existence of database with database_name using txn.
 bool Catalog::ExistsDatabaseByName(const std::string &database_name,
-											 concurrency::Transaction *txn) {
+											 concurrency::TransactionContext *txn) {
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to check database " +
                            database_name);
@@ -810,7 +810,7 @@ bool Catalog::ExistsDatabaseByName(const std::string &database_name,
 // check existence of table with table_name using txn.
 bool Catalog::ExistsTableByName(const std::string &database_name,
 											 const std::string &table_name,
-											 concurrency::Transaction *txn){
+											 concurrency::TransactionContext *txn){
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to check table " +
                            table_name);
@@ -833,7 +833,7 @@ bool Catalog::ExistsTableByName(const std::string &database_name,
 bool Catalog::ExistsIndexByName(const std::string &database_name,
 											 const std::string &table_name,
 											 const std::string &index_name,
-											 concurrency::Transaction *txn) {
+											 concurrency::TransactionContext *txn) {
   if (txn == nullptr)
     throw CatalogException("Do not have transaction to check index " +
                            index_name);

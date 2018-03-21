@@ -182,18 +182,18 @@ class Catalog {
 
   // check existence of database with database_name using txn.
   bool ExistsDatabaseByName(const std::string &database_name,
-  											 concurrency::Transaction *txn);
+  											 concurrency::TransactionContext *txn);
 
   // check existence of table with table_name using txn.
   bool ExistsTableByName(const std::string &database_name,
   											 const std::string &table_name,
-  											 concurrency::Transaction *txn);
+  											 concurrency::TransactionContext *txn);
 
   // check existence of index with index_name using txn.
   bool ExistsIndexByName(const std::string &database_name,
   											 const std::string &table_name,
   											 const std::string &index_name,
-  											 concurrency::Transaction *txn);
+  											 concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
   // DEPRECATED FUNCTIONS

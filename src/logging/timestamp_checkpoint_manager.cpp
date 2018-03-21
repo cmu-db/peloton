@@ -29,7 +29,7 @@
 #include "storage/tile_group.h"
 #include "storage/tile_group_header.h"
 #include "type/serializeio.h"
-#include "type/types.h"
+#include "type/type.h"
 
 
 namespace peloton {
@@ -395,7 +395,7 @@ bool TimestampCheckpointManager::PerformCheckpointRecovery(const eid_t &epoch_id
 
 // TODO: migrate below deserializing processes into each class file
 //			(DatabaseCatalogObject, TableCatalogObject, Index)
-void TimestampCheckpointManager::RecoverCatalog(FileHandle &file_handle, concurrency::Transaction *txn) {
+void TimestampCheckpointManager::RecoverCatalog(FileHandle &file_handle, concurrency::TransactionContext *txn) {
 	// read catalog file to be recovered
 	size_t catalog_size = LoggingUtil::GetFileSize(file_handle);
 	char catalog_data[catalog_size];
@@ -486,7 +486,7 @@ void TimestampCheckpointManager::RecoverCatalog(FileHandle &file_handle, concurr
 	} // end database loop
 }
 
-void TimestampCheckpointManager::RecoverTable(storage::DataTable *table, FileHandle &file_handle, concurrency::Transaction *txn) {
+void TimestampCheckpointManager::RecoverTable(storage::DataTable *table, FileHandle &file_handle, concurrency::TransactionContext *txn) {
 	size_t table_size = LoggingUtil::GetFileSize(file_handle);
 	char data[table_size];
 

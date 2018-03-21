@@ -90,8 +90,8 @@ class TimestampCheckpointManager : public CheckpointManager {
   		FileHandle &file_handle);
   bool IsVisible(const storage::TileGroupHeader *header, const oid_t &tuple_id, const cid_t &begin_cid);
   bool PerformCheckpointRecovery(const eid_t &epoch_id);
-  void RecoverCatalog(FileHandle &file_handle, concurrency::Transaction *txn);
-  void RecoverTable(storage::DataTable *table, FileHandle &file_handle, concurrency::Transaction *txn);
+  void RecoverCatalog(FileHandle &file_handle, concurrency::TransactionContext *txn);
+  void RecoverTable(storage::DataTable *table, FileHandle &file_handle, concurrency::TransactionContext *txn);
 
   void CreateCheckpointDirectory(const std::string &dir_name) {
   	std::string checkpoint_dir = checkpoint_base_dir_ + "/" + dir_name;
