@@ -740,6 +740,12 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
     TransactionContext *const current_txn) {
   LOG_TRACE("Committing peloton txn : %" PRId64, current_txn->GetTransactionId());
 
+  if(current_txn->IsSingleStatementTxn()){
+    LOG_INFO("Committing single stmt txn peloton txn : %" PRId64, current_txn->GetTransactionId());
+  } else {
+    LOG_INFO("Committing multi stmt txn peloton txn : %" PRId64, current_txn->GetTransactionId());
+  }
+
   //////////////////////////////////////////////////////////
   //// handle READ_ONLY
   //////////////////////////////////////////////////////////

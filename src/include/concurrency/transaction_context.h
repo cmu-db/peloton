@@ -155,6 +155,14 @@ class TransactionContext : public Printable {
     return isolation_level_;
   }
 
+  inline bool IsSingleStatementTxn(){
+    return single_statement_txn_;
+  }
+
+  inline void SetSingleStatementTxn(bool single_statement_txn){
+    single_statement_txn_ = single_statement_txn;
+  }
+
   // cache for table catalog objects
   catalog::CatalogCache catalog_cache;
 
@@ -162,6 +170,9 @@ class TransactionContext : public Printable {
   //===--------------------------------------------------------------------===//
   // Data members
   //===--------------------------------------------------------------------===//
+
+  //single statement txn
+  bool single_statement_txn_;
 
   // transaction id
   txn_id_t txn_id_;

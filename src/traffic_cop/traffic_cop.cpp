@@ -275,6 +275,7 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
   // --multi-statements except BEGIN in a transaction
   if (!tcop_txn_state_.empty()) {
     single_statement_txn_ = false;
+    tcop_txn_state_.top().first->SetSingleStatementTxn(single_statement_txn_);
     // multi-statment txn has been aborted, just skip this query,
     // and do not need to parse or execute this query anymore.
     // Do not return nullptr in case that 'COMMIT' cannot be execute,
@@ -297,6 +298,8 @@ std::shared_ptr<Statement> TrafficCop::PrepareStatement(
       single_statement_txn_ = true;
     }
     auto txn = txn_manager.BeginTransaction(thread_id);
+    txn->SetSingleStatementTxn(single_statement_txn_);
+
     // this shouldn't happen
     if (txn == nullptr) {
       LOG_TRACE("Begin txn failed");
