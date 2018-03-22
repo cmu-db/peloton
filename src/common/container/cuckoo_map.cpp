@@ -18,7 +18,6 @@
 #include "common/item_pointer.h"
 #include "common/logger.h"
 #include "common/macros.h"
-#include "storage/indirection_array.h"
 
 namespace peloton {
 
@@ -122,7 +121,5 @@ template class CuckooMap<StatementCache *, StatementCache *>;
 // Used in InternalTypes
 template class CuckooMap<ItemPointer, RWType, ItemPointerHasher,
                          ItemPointerComparator>;
-// Userd in Manager
-template class CuckooMap<oid_t, std::shared_ptr<storage::IndirectionArray>>;
 
 }  // namespace peloton

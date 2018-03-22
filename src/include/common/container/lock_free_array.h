@@ -22,7 +22,7 @@
 
 namespace peloton {
 
-#define LOCK_FREE_ARRAR_INIT_SIZE (2048)
+#define LOCK_FREE_ARRAR_INIT_SIZE (256)
 
 // LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
 #define LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS template <typename ValueType>

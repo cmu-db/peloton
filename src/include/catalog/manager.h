@@ -18,12 +18,12 @@
 #include <vector>
 #include <unordered_map>
 #include <memory>
+#include <include/common/internal_types.h>
 
 #include "common/macros.h"
 #include "common/internal_types.h"
 #include "common/container/lock_free_array.h"
-#include "common/container/cuckoo_map.h"
-#define LOCK_FREE_MAP_INIT_SIZE (1024)
+#include "tbb/concurrent_unordered_map.h"
 namespace peloton {
 
 namespace storage {
@@ -94,17 +94,17 @@ class Manager {
   //===--------------------------------------------------------------------===//
   std::atomic<oid_t> tile_group_oid_ = ATOMIC_VAR_INIT(START_OID);
 
-  CuckooMap<oid_t, std::shared_ptr<storage::TileGroup>> tile_group_locator_{
-      LOCK_FREE_MAP_INIT_SIZE};
+  tbb::concurrent_unordered_map<oid_t, std::shared_ptr<storage::TileGroup>>
+      tile_group_locator_;
 
   //===--------------------------------------------------------------------===//
   // Data members for indirection array allocation
   //===--------------------------------------------------------------------===//
   std::atomic<oid_t> indirection_array_oid_ = ATOMIC_VAR_INIT(START_OID);
 
-  CuckooMap<oid_t, std::shared_ptr<storage::IndirectionArray>>
-      indirection_array_locator_{LOCK_FREE_MAP_INIT_SIZE};
-
+  tbb::concurrent_unordered_map<oid_t,
+                                std::shared_ptr<storage::IndirectionArray>>
+      indirection_array_locator_;
 };
 
 }  // namespace catalog

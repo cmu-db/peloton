@@ -17,7 +17,6 @@
 #include "storage/database.h"
 #include "storage/data_table.h"
 #include "concurrency/transaction_manager_factory.h"
-#include "common/container/cuckoo_map.h"
 
 namespace peloton {
 namespace catalog {
@@ -34,40 +33,46 @@ Manager &Manager::GetInstance() {
 void Manager::AddTileGroup(const oid_t oid,
                            std::shared_ptr<storage::TileGroup> location) {
   // add/update the catalog reference to the tile group
-  bool status = tile_group_locator_.Insert(oid, location);
-  while (!status) {
-    tile_group_locator_.Erase(oid);
-    status = tile_group_locator_.Insert(oid, location);
+  auto value = tbb::concurrent_unordered_map<
+      oid_t, std::shared_ptr<storage::TileGroup>>::value_type(oid, location);
+  auto ret = tile_group_locator_.insert(value);
+  if (!ret.second) {
+    tile_group_locator_.find(oid)->second = location;
   }
 }
 
 void Manager::DropTileGroup(const oid_t oid) {
   // drop the catalog reference to the tile group
-  tile_group_locator_.Erase(oid);
+  tile_group_locator_.unsafe_erase(oid);
 }
 
 std::shared_ptr<storage::TileGroup> Manager::GetTileGroup(const oid_t oid) {
-  std::shared_ptr<storage::TileGroup> location;
-  tile_group_locator_.Find(oid, location);
+  auto location = tile_group_locator_.find(oid)->second;
   return location;
 }
 
 // used for logging test
-void Manager::ClearTileGroup() { tile_group_locator_.Clear(); }
+void Manager::ClearTileGroup() { tile_group_locator_.clear(); }
 
 void Manager::AddIndirectionArray(
     const oid_t oid, std::shared_ptr<storage::IndirectionArray> location) {
   // add/update the catalog reference to the indirection array
-  indirection_array_locator_.Update(oid, location);
+  auto value = tbb::concurrent_unordered_map<
+      oid_t, std::shared_ptr<storage::IndirectionArray>>::value_type(oid,
+                                                                     location);
+  auto ret = indirection_array_locator_.insert(value);
+  if (!ret.second) {
+    indirection_array_locator_.find(oid)->second = location;
+  }
 }
 
 void Manager::DropIndirectionArray(const oid_t oid) {
   // drop the catalog reference to the tile group
-  indirection_array_locator_.Erase(oid);
+  indirection_array_locator_.unsafe_erase(oid);
 }
 
 // used for logging test
-void Manager::ClearIndirectionArray() { indirection_array_locator_.Clear(); }
+void Manager::ClearIndirectionArray() { indirection_array_locator_.clear(); }
 
 }  // namespace catalog
 }  // namespace peloton

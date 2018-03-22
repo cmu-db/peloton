@@ -232,7 +232,7 @@ elif [[ "$DISTRO" == *"FEDORA"* ]]; then
         libtsan \
         libubsan \
         libatomic \
-        libtbb-dev \
+        tbb-devel \
         python3-pip \
         curl \
         autoconf \
