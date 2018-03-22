@@ -62,13 +62,13 @@ PostgresProtocolHandler::PostgresProtocolHandler(tcop::TrafficCop *traffic_cop)
 
 PostgresProtocolHandler::~PostgresProtocolHandler() {}
 
-void PostgresProtocolHandler::SendInitialResponse() {
+void PostgresProtocolHandler::SendStartupResponse() {
   std::unique_ptr<OutputPacket> response(new OutputPacket());
 
   // send auth-ok ('R')
   response->msg_type = NetworkMessageType::AUTHENTICATION_REQUEST;
   PacketPutInt(response.get(), 0, 4);
-  responses.push_back(std::move(response));
+  responses_.push_back(std::move(response));
 
   // Send the parameterStatus map ('S')
   for (auto it = parameter_status_map_.begin();
@@ -322,7 +322,7 @@ void PostgresProtocolHandler::ExecParseMessage(InputPacket *pkt) {
     skipped_query_type_ = query_type;
     std::unique_ptr<OutputPacket> response(new OutputPacket());
     response->msg_type = NetworkMessageType::PARSE_COMPLETE;
-    responses.push_back(std::move(response));
+    responses_.push_back(std::move(response));
     return;
   }
 
@@ -374,7 +374,7 @@ void PostgresProtocolHandler::ExecParseMessage(InputPacket *pkt) {
   // Send Parse complete response
   std::unique_ptr<OutputPacket> response(new OutputPacket());
   response->msg_type = NetworkMessageType::PARSE_COMPLETE;
-  responses.push_back(std::move(response));
+  responses_.push_back(std::move(response));
 }
 
 void PostgresProtocolHandler::ExecBindMessage(InputPacket *pkt) {
@@ -387,7 +387,7 @@ void PostgresProtocolHandler::ExecBindMessage(InputPacket *pkt) {
     // send bind complete
     std::unique_ptr<OutputPacket> response(new OutputPacket());
     response->msg_type = NetworkMessageType::BIND_COMPLETE;
-    responses.push_back(std::move(response));
+    responses_.push_back(std::move(response));
     return;
   }
 
@@ -967,41 +967,45 @@ bool PostgresProtocolHandler::ReadPacket(Buffer &rbuf, InputPacket &rpkt) {
   return true;
 }
 
-/*
- * process_startup_packet - Processes the startup packet
- *  (after the size field of the header).
- */
-bool PostgresProtocolHandler::ProcessInitialPackets(
-    InputPacket *pkt, Client client, bool ssl_able, bool &ssl_handshake,
-    bool &finish_startup_packet) {
-  std::string token, value;
-  std::unique_ptr<OutputPacket> response(new OutputPacket);
+ProcessResult PostgresProtocolHandler::Process(Buffer &rbuf,
+                                               const size_t thread_id) {
+  if (!ParseInputPacket(rbuf, request_, init_stage_))
+    return ProcessResult::MORE_DATA_REQUIRED;
 
+  ProcessResult process_status;
+  if (init_stage_) {
+    process_status = ProcessInitialPacket(request_);
+  } else {
+    process_status = ProcessNormalPacket(request_);
+  }
+  request_.Reset();
+
+  return process_status;
+}
+
+ProcessResult PostgresProtocolHandler::ProcessInitialPacket(InputPacket *pkt) {
   int32_t proto_version = PacketGetInt(pkt, sizeof(int32_t));
   LOG_INFO("protocol version: %d", proto_version);
 
+  force_flush_ = true;
   // TODO(Yuchen): consider more about return value
   if (proto_version == SSL_MESSAGE_VERNO) {
-    LOG_DEBUG("process SSL MESSAGE");
-    ProcessSSLRequestPacket(ssl_able);
-    return true;
+    LOG_TRACE("process SSL MESSAGE");
+    std::unique_ptr<OutputPacket> response(new OutputPacket());
+    bool ssl_able = (PelotonServer::GetSSLLevel() != SSLLevel::SSL_DISABLE);
+    response->msg_type =
+        ssl_able ? NetworkMessageType::SSL_YES : NetworkMessageType::SSL_NO;
+    responses_.push_back(std::move(response));
+    return ssl_able ? ProcessResult::NEED_SSL_HANDSHAKE
+                    : ProcessResult::COMPLETE;
   } else {
-    LOG_DEBUG("process startup packet");
-    return ProcessStartupPacket(pkt, proto_version, client,
-                                finish_startup_packet);
+    LOG_TRACE("process startup packet");
+    return ProcessStartupPacket(pkt, proto_version);
   }
 }
 
-void PostgresProtocolHandler::ProcessSSLRequestPacket(bool ssl_able) {
-  std::unique_ptr<OutputPacket> response(new OutputPacket());
-  response->msg_type =
-      ssl_able ? NetworkMessageType::SSL_YES : NetworkMessageType::SSL_NO;
-  responses.push_back(std::move(response));
-  SetFlushFlag(true);
-}
-
-void PostgresProtocolHandler::ProcessStartupPacket(InputPacket *pkt,
-                                                   int32_t proto_version) {
+ProcessResult PostgresProtocolHandler::ProcessStartupPacket(
+    InputPacket *pkt, int32_t proto_version) {
   std::string token, value;
 
   // Only protocol version 3 is supported
@@ -1009,12 +1013,11 @@ void PostgresProtocolHandler::ProcessStartupPacket(InputPacket *pkt,
     LOG_ERROR("Protocol error: Only protocol version 3 is supported.");
     SendErrorResponse({{NetworkMessageType::HUMAN_READABLE_ERROR,
                         "Protocol Version Not Support"}});
-    return;
+    return ProcessResult::TERMINATE;
   }
 
   // TODO(Yuchen): check for more malformed cases
   while (pkt->ptr < pkt->len) {
-    // loop end case?
     GetStringToken(pkt, token);
     LOG_TRACE("Option key is %s", token.c_str());
     if (pkt->ptr >= pkt->len) break;
@@ -1029,30 +1032,12 @@ void PostgresProtocolHandler::ProcessStartupPacket(InputPacket *pkt,
   // Send AuthRequestOK to client
   // TODO(Yuchen): Peloton does not do any kind of trust authentication now.
   // For example, no password authentication.
-  SendInitialResponse();
+  SendStartupResponse();
+
+  init_stage_ = false;
+  return ProcessResult::COMPLETE;
 }
 
-ProcessResult PostgresProtocolHandler::Process(Buffer &rbuf,
-                                               const bool ssl_able,
-                                               const size_t thread_id) {
-  if (!ParseInputPacket(rbuf, rpkt_, init_stage_))
-    return ProcessResult::MORE_DATA_REQUIRED;
-
-  ProcessResult process_status;
-  if (init_stage_) {
-    process_status = ProcessInitialPacket();
-  } else {
-    process_status = ProcessNormalPacket();
-  }
-  request.Reset();
-
-  return process_status;
-}
-
-/*
- * process_packet - Main switch block; process incoming packets,
- *  Returns false if the session needs to be closed.
- */
 ProcessResult PostgresProtocolHandler::ProcessNormalPackets(
     InputPacket *pkt, const size_t thread_id) {
   LOG_TRACE("Message type: %c", static_cast<unsigned char>(pkt->msg_type));
@@ -1108,13 +1093,14 @@ ProcessResult PostgresProtocolHandler::ProcessNormalPackets(
   }
   return ProcessResult::COMPLETE;
 }
+
 void PostgresProtocolHandler::MakeHardcodedParameterStatus(
     const std::pair<std::string, std::string> &kv) {
   std::unique_ptr<OutputPacket> response(new OutputPacket());
   response->msg_type = NetworkMessageType::PARAMETER_STATUS;
   PacketPutStringWithTerminator(response.get(), kv.first);
   PacketPutStringWithTerminator(response.get(), kv.second);
-  responses.push_back(std::move(response));
+  responses_.push_back(std::move(response));
 }
 
 void PostgresProtocolHandler::PutTupleDescriptor(
@@ -1140,7 +1126,7 @@ void PostgresProtocolHandler::PutTupleDescriptor(
     // Format code for text
     PacketPutInt(pkt.get(), 0, 2);
   }
-  responses.push_back(std::move(pkt));
+  responses_.push_back(std::move(pkt));
 }
 
 void PostgresProtocolHandler::SendDataRows(std::vector<ResultValue> &results,
@@ -1167,7 +1153,7 @@ void PostgresProtocolHandler::SendDataRows(std::vector<ResultValue> &results,
         PacketPutString(pkt.get(), content);
       }
     }
-    responses.push_back(std::move(pkt));
+    responses_.push_back(std::move(pkt));
   }
   traffic_cop_->setRowsAffected(numrows);
 }
@@ -1201,7 +1187,7 @@ void PostgresProtocolHandler::CompleteCommand(const QueryType &query_type,
       tag += " " + std::to_string(rows);
   }
   PacketPutStringWithTerminator(pkt.get(), tag);
-  responses.push_back(std::move(pkt));
+  responses_.push_back(std::move(pkt));
 }
 
 /*
@@ -1210,7 +1196,7 @@ void PostgresProtocolHandler::CompleteCommand(const QueryType &query_type,
 void PostgresProtocolHandler::SendEmptyQueryResponse() {
   std::unique_ptr<OutputPacket> response(new OutputPacket());
   response->msg_type = NetworkMessageType::EMPTY_QUERY_RESPONSE;
-  responses.push_back(std::move(response));
+  responses_.push_back(std::move(response));
 }
 
 /*
@@ -1231,7 +1217,7 @@ void PostgresProtocolHandler::SendErrorResponse(
   PacketPutByte(pkt.get(), 0);
 
   // don't care if write finished or not, we are closing anyway
-  responses.push_back(std::move(pkt));
+  responses_.push_back(std::move(pkt));
 }
 
 void PostgresProtocolHandler::SendReadyForQuery(
@@ -1241,7 +1227,7 @@ void PostgresProtocolHandler::SendReadyForQuery(
 
   PacketPutByte(pkt.get(), static_cast<unsigned char>(txn_status));
 
-  responses.push_back(std::move(pkt));
+  responses_.push_back(std::move(pkt));
 }
 
 void PostgresProtocolHandler::Reset() {

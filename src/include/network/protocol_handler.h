@@ -35,7 +35,7 @@ class ProtocolHandler {
   /**
    * 
    */
-  virtual ProcessResult Process(Buffer &rbuf, const bool ssl_able, const size_t thread_id);
+  virtual ProcessResult Process(Buffer &rbuf, const size_t thread_id);
 
   virtual void Reset();
 
@@ -49,14 +49,13 @@ class ProtocolHandler {
 
   // TODO declare a response buffer pool so that we can reuse the responses
   // so that we don't have to new packet each time
-  ResponseBuffer responses;
+  ResponseBuffer responses_;
 
-  InputPacket request;  // Used for reading a single request
+  InputPacket request_;  // Used for reading a single request
 
   // The traffic cop used for this connection
   tcop::TrafficCop *traffic_cop_;
 
-  std::unordered_map<std::string, std::string> cmdline_options;
 };
 
 }  // namespace network

@@ -91,6 +91,7 @@ class ConnectionHandle {
    * Flush out all the responses and do real SSL handshake
    */
   Transition ProcessWrite_SSLHandshake();
+
  private:
   /**
    * A state machine is defined to be a set of states, a set of symbols it
@@ -147,8 +148,8 @@ class ConnectionHandle {
   friend class ConnectionHandleFactory;
 
   ConnectionHandle(int sock_fd, ConnectionHandlerTask *handler,
-                   std::shared_ptr<Buffer> rbuf, std::shared_ptr<Buffer> wbuf,
-                   bool ssl_able);
+                   std::shared_ptr<Buffer> rbuf,
+                   std::shared_ptr<Buffer> wbuf);
 
   ProcessResult ProcessInitial();
 
@@ -220,11 +221,8 @@ class ConnectionHandle {
   std::shared_ptr<Buffer> rbuf_;    // Socket's read buffer
   std::shared_ptr<Buffer> wbuf_;    // Socket's write buffer
   unsigned int next_response_ = 0;  // The next response in the response buffer
- 
-  StateMachine state_machine_;
 
-  // TODO(Tianyi) Can we encapsulate these flags?
-  bool ssl_able_;
+  StateMachine state_machine_;
 
   short curr_event_flag_;  // current libevent event flag
 };

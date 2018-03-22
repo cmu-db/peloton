@@ -45,21 +45,8 @@ class PostgresProtocolHandler : public ProtocolHandler {
    * thread_id is the thread of current running thread. This is used
    * to generate txn
    */
-  ProcessResult Process(Buffer &rbuf, const bool ssl_able, const size_t thread_id);
+  ProcessResult Process(Buffer &rbuf, size_t thread_id);
 
-  /**
-   * 
-   */
-  ProcessResult ProcessInitialPackets(
-
-  /** 
-   * Main switch case wrapper to process every general packet apart from the
-   * initial packets. Avoid flushing the response for extended protocols.
-   */
-  ProcessResult ProcessNormalPackets(InputPacket *pkt, const size_t thread_id);
-  /* Manage the startup packet */
-  //  bool ManageStartupPacket();
-  void SendInitialResponse();
   void Reset();
 
   void GetResult();
@@ -96,17 +83,30 @@ class PostgresProtocolHandler : public ProtocolHandler {
   static bool ReadPacketHeader(Buffer &rbuf, InputPacket &rpkt,
                                bool startup_format);
 
-  /* Routine to deal with the first packet from the client */
-  bool ProcessInitialPackets(InputPacket *pkt, bool ssl_able);
-
-  /* Routine to deal with SSL request message */
-  void ProcessSSLRequestPacket(bool ssl_able, bool &ssl_handshake);
-
   //===--------------------------------------------------------------------===//
   // PROTOCOL HANDLING FUNCTIONS
   //===--------------------------------------------------------------------===//
-  /* Manage the startup packet */
-  virtual void SendInitialResponse();
+
+  /**
+   * @brief Routine to deal with the first packet from the client
+   */
+  ProcessResult ProcessInitialPackets(InputPacket *pkt);
+
+  /**
+   * @brief Main Switch function to process general packets
+   */
+  ProcessResult ProcessNormalPackets(InputPacket *pkt, const size_t thread_id);
+  
+  /**
+   * @brief Helper function to process startup packet
+   * @param proto_version protocol version of the session
+   */
+  ProcessResult ProcessStartupPacket(InputPacket *pkt, int32_t proto_version);
+
+  /**
+   * Send hardcoded response
+   */
+  void SendStartupResponse();
 
   // Generic error protocol packet
   void SendErrorResponse(
@@ -201,6 +201,8 @@ class PostgresProtocolHandler : public ProtocolHandler {
   // in stat table is destroyed
   std::unordered_map<std::string, stats::QueryMetric::QueryParamBuf>
       statement_param_types_;
+
+  std::unordered_map<std::string, std::string> cmdline_options_;
 
   //===--------------------------------------------------------------------===//
   // STATIC DATA

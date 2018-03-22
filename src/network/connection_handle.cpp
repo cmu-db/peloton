@@ -146,13 +146,12 @@ void ConnectionHandle::StateMachine::Accept(Transition action,
 
 ConnectionHandle::ConnectionHandle(int sock_fd, ConnectionHandlerTask *handler,
                                    std::shared_ptr<Buffer> rbuf,
-                                   std::shared_ptr<Buffer> wbuf, bool ssl_able)
+                                   std::shared_ptr<Buffer> wbuf)
     : sock_fd_(sock_fd),
       handler_(handler),
       protocol_handler_(nullptr),
       rbuf_(std::move(rbuf)),
-      wbuf_(std::move(wbuf)),
-      ssl_able_(ssl_able) {
+      wbuf_(std::move(wbuf)) {
   SetNonBlocking(sock_fd_);
   SetTCPNoDelay(sock_fd_);
 
