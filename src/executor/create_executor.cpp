@@ -71,6 +71,13 @@ bool CreateExecutor::DExecute() {
       break;
     }
 
+    // if query was for creating sequence
+    case CreateType::SEQUENCE: {
+      LOG_DEBUG("in create executor: CreateType::SEQUENCE");
+      throw NotImplementedException(StringUtil::Format("Sequence not implemented!"));
+      break;
+    }
+
     default: {
       std::string create_type = CreateTypeToString(node.GetCreateType());
       LOG_ERROR("Not supported create type %s", create_type.c_str());

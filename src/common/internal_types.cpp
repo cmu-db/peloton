@@ -329,6 +329,9 @@ std::string CreateTypeToString(CreateType type) {
     case CreateType::TRIGGER: {
       return "TRIGGER";
     }
+    case CreateType::SEQUENCE: {
+      return "SEQUENCE";
+    }
     default: {
       throw ConversionException(
           StringUtil::Format("No string conversion for CreateType value '%d'",
@@ -673,6 +676,9 @@ QueryType StatementTypeToQueryType(StatementType stmt_type,
             break;
           case parser::CreateStatement::CreateType::kView:
             query_type = QueryType::QUERY_CREATE_VIEW;
+            break;
+          case parser::CreateStatement::CreateType::kSequence:
+            query_type = QueryType::QUERY_CREATE_SEQUENCE;
             break;
         }
         break;

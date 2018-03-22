@@ -609,7 +609,8 @@ enum class CreateType {
   TABLE = 2,                  // table create type
   INDEX = 3,                  // index create type
   CONSTRAINT = 4,             // constraint create type
-  TRIGGER = 5                 // trigger create type
+  TRIGGER = 5,                 // trigger create type
+  SEQUENCE = 6
 };
 std::string CreateTypeToString(CreateType type);
 CreateType StringToCreateType(const std::string &str);
@@ -701,7 +702,8 @@ enum class QueryType {
   QUERY_INVALID = 20,
   QUERY_CREATE_TRIGGER = 21,
   QUERY_CREATE_SCHEMA = 22,
-  QUERY_CREATE_VIEW = 23
+  QUERY_CREATE_VIEW = 23,
+  QUERY_CREATE_SEQUENCE = 24
 };
 std::string QueryTypeToString(QueryType query_type);
 QueryType StringToQueryType(std::string str);
