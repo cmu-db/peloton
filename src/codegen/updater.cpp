@@ -23,6 +23,13 @@
 #include "type/abstract_pool.h"
 #include "common/internal_types.h"
 #include "type/value.h"
+#include "threadpool/mono_queue_pool.h"
+#include "logging/log_record.h"
+#include "logging/log_buffer.h"
+#include "logging/wal_logger.h"
+#include "threadpool/logger_queue_pool.h"
+#include "../include/type/value.h"
+#include "../include/codegen/value.h"
 
 namespace peloton {
 namespace codegen {
@@ -112,7 +119,7 @@ peloton::type::AbstractPool *Updater::GetPool() {
   return tile_->GetPool();
 }
 
-void Updater::Update() {
+void Updater::Update(peloton::codegen::Delta *diff_array, uint32_t diff_size) {
   PL_ASSERT(table_ != nullptr && executor_context_ != nullptr);
   LOG_TRACE("Updating tuple <%u, %u> from table '%s' (db ID: %u, table ID: %u)",
             old_location_.block, old_location_.offset,
@@ -143,10 +150,39 @@ void Updater::Update() {
     return;
   }
   txn_manager.PerformUpdate(txn, old_location_, new_location_);
+
+  logging::LogRecord record =
+      logging::LogRecordFactory::CreateTupleRecord(
+          LogRecordType::TUPLE_UPDATE, new_location_, txn->GetEpochId(),
+          txn->GetTransactionId(), txn->GetCommitId());
+  record.SetOldItemPointer(old_location_);
+  record.SetDiffVector(diff_array, diff_size);
+
+  LOG_INFO("The diff array is %p and the size is %u", diff_array, diff_size);
+//  std::vector<peloton::codegen::Delta> *delta_changes = new std::vector<peloton::codegen::Delta>(diff_array,
+//  diff_array + diff_size);
+  peloton::codegen::Delta *p = reinterpret_cast<peloton::codegen::Delta *>(diff_array);
+  for (unsigned int i = 0; i < diff_size; i++) {
+    LOG_INFO("column offset %u, %p", p->first, p->second.GetValue());
+    p++;
+  }
+  txn->GetLogBuffer()->WriteRecord(record);
+
+  if(txn->GetLogBuffer()->HasThresholdExceeded()) {
+
+    LOG_DEBUG("Submitting log buffer %p", txn->GetLogBuffer());
+
+    /* insert to the queue */
+    threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(txn->GetLogBuffer());
+
+    /* allocate a new buffer for the current transaction */
+    txn->ResetLogBuffer();
+  }
+
   executor_context_->num_processed++;
 }
 
-void Updater::UpdatePK() {
+void Updater::UpdatePK(peloton::codegen::Delta *diff_array, uint32_t diff_size) {
   PL_ASSERT(table_ != nullptr && executor_context_ != nullptr);
   LOG_TRACE("Updating tuple <%u, %u> from table '%s' (db ID: %u, table ID: %u)",
             old_location_.block, old_location_.offset,
@@ -166,6 +202,26 @@ void Updater::UpdatePK() {
     return;
   }
   txn_manager.PerformInsert(txn, new_location_, index_entry_ptr);
+
+  logging::LogRecord record =
+      logging::LogRecordFactory::CreateTupleRecord(
+          LogRecordType::TUPLE_UPDATE, new_location_, txn->GetEpochId(),
+          txn->GetTransactionId(), txn->GetCommitId());
+  record.SetOldItemPointer(old_location_);
+  record.SetDiffVector(diff_array, diff_size);
+
+  txn->GetLogBuffer()->WriteRecord(record);
+
+  if(txn->GetLogBuffer()->HasThresholdExceeded()) {
+
+    LOG_DEBUG("Submitting log buffer %p", txn->GetLogBuffer());
+
+    /* insert to the queue */
+    threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(txn->GetLogBuffer());
+
+    /* allocate a new buffer for the current transaction */
+    txn->ResetLogBuffer();
+  }
   executor_context_->num_processed++;
 }
 

@@ -17,7 +17,7 @@ void LoggerFunc(std::atomic_bool *is_running, LoggerQueue *logger_queue) {
 
   while (is_running->load() || !logger_queue->IsEmpty()) {
 
-    logging::LogBuffer *log_buffer;
+    logging::LogBuffer *log_buffer = nullptr;
 
     if (!logger_queue->Dequeue(log_buffer)) {
       // Polling with exponential backoff

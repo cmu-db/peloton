@@ -144,5 +144,7 @@ class Value {
   llvm::Value *null_;
 };
 
+typedef std::pair<uint32_t, Value> Delta;
+
 }  // namespace codegen
 }  // namespace peloton

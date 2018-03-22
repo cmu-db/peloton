@@ -15,6 +15,8 @@
 #include "common/internal_types.h"
 #include "common/item_pointer.h"
 #include "common/macros.h"
+#include "type/value.h"
+#include "codegen/value.h"
 
 namespace peloton {
 namespace logging {
@@ -41,17 +43,30 @@ public:
 
   inline void SetItemPointer(const ItemPointer &pos) { tuple_pos_ = pos; }
 
+  inline void SetOldItemPointer(const ItemPointer &pos) { old_tuple_pos_ = pos; }
+
   inline void SetEpochId(const eid_t epoch_id) { eid_ = epoch_id; }
 
   inline void SetCommitId(const cid_t commit_id) { cid_ = commit_id; }
 
   inline void SetTransactionId(const txn_id_t txn_id) { txn_id_ = txn_id; }
 
+  inline void SetDiffVector(peloton::codegen::Delta *diff_array, uint32_t diff_size) {
+    diff_array_ = diff_array;
+    diff_size_ = diff_size;
+  }
+
   inline const ItemPointer &GetItemPointer() { return tuple_pos_; }
+
+  inline const ItemPointer &GetOldItemPointer() { return old_tuple_pos_; }
 
   inline eid_t GetEpochId() { return eid_; }
 
   inline cid_t GetCommitId() { return cid_; }
+
+  inline peloton::codegen::Delta *GetDiffArray() { return diff_array_; }
+
+  inline uint32_t GetDiffSize() { return diff_size_; }
 
   inline txn_id_t GetTransactionId() { return txn_id_; }
 
@@ -60,11 +75,17 @@ private:
 
   ItemPointer tuple_pos_;
 
+  ItemPointer old_tuple_pos_;
+
   eid_t eid_;
 
   txn_id_t txn_id_;
 
   cid_t cid_;
+
+  peloton::codegen::Delta *diff_array_;
+
+  uint32_t diff_size_;
 };
 
 

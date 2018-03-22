@@ -91,6 +91,7 @@ void UpdateTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
       static_cast<uint32_t>(target_list.size() + direct_map_list.size());
   auto &ais = update_plan_.GetAttributeInfos();
 
+  std::vector<codegen::Delta> diff;
   // Collect all the column values
   std::vector<codegen::Value> values;
   for (uint32_t i = 0, target_id = 0; i < column_num; i++) {
@@ -99,12 +100,20 @@ void UpdateTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
       // Set the value for the update
       const auto &derived_attribute = target_list[target_id].second;
       val = row.DeriveValue(codegen, *derived_attribute.expr);
+      LOG_INFO("Pushing %d and %p", i, val.GetValue());
+      diff.push_back(std::make_pair(i, val));
       target_id++;
     } else {
       val = row.DeriveValue(codegen, ais[i]);
     }
     values.push_back(val);
   }
+
+  llvm::Value *diff_ptr = codegen->CreateIntToPtr(
+      codegen.Const64((int64_t)diff.data()),
+      DeltaProxy::GetType(codegen)->getPointerTo());
+  llvm::Value *diff_size =
+      codegen.Const32((int32_t)diff.size());
 
   // Get the tuple pointer from the updater
   llvm::Value *updater = LoadStatePtr(updater_state_id_);
@@ -129,7 +138,7 @@ void UpdateTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
     table_storage_.StoreValues(codegen, tuple_ptr, values, pool_ptr);
   
     // Finally, update with help from the Updater
-    std::vector<llvm::Value *> update_args = {updater};
+    std::vector<llvm::Value *> update_args = {updater, diff_ptr, diff_size};
     if (update_plan_.GetUpdatePrimaryKey() == false) {
       codegen.Call(UpdaterProxy::Update, update_args);
     } else {

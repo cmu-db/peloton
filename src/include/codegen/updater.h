@@ -15,6 +15,8 @@
 #include "common/item_pointer.h"
 #include "executor/executor_context.h"
 #include "common/internal_types.h"
+#include "../type/value.h"
+#include "codegen/value.h"
 
 namespace peloton {
 
@@ -52,10 +54,10 @@ class Updater {
   peloton::type::AbstractPool *GetPool();
 
   // Update a tuple
-  void Update();
+  void Update(peloton::codegen::Delta *diff_array, uint32_t diff_size);
 
   // Update a tuple with primary key
-  void UpdatePK();
+  void UpdatePK(peloton::codegen::Delta *diff_array, uint32_t diff_size);
 
   // Finalize the instance
   void TearDown();
