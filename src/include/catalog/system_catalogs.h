@@ -52,7 +52,12 @@ class SystemCatalogs {
   ColumnCatalog *pg_attribute;
   TableCatalog *pg_table;
   IndexCatalog *pg_index;
+
   TriggerCatalog *pg_trigger;
+  ProcCatalog *pg_proc;
+  TableMetricsCatalog *pg_table_metrics;
+  IndexMetricsCatalog *pg_index_metrics;
+  QueryMetricsCatalog *pg_query_metrics;
 };
 
 }  // namespace catalog

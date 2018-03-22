@@ -159,12 +159,8 @@ void Catalog::Bootstrap() {
   auto txn = txn_manager.BeginTransaction();
 
   DatabaseMetricsCatalog::GetInstance(txn);
-  TableMetricsCatalog::GetInstance(txn);
-  IndexMetricsCatalog::GetInstance(txn);
-  QueryMetricsCatalog::GetInstance(txn);
   SettingsCatalog::GetInstance(txn);
   LanguageCatalog::GetInstance(txn);
-  ProcCatalog::GetInstance(txn);
 
   if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
     QueryHistoryCatalog::GetInstance(txn);
@@ -1122,9 +1118,8 @@ void Catalog::InitializeFunctions() {
                          txn);
       AddBuiltinFunction(
           "sqrt", {type::TypeId::TINYINT}, type::TypeId::DECIMAL, internal_lang,
-          "Sqrt",
-          function::BuiltInFuncType{OperatorId::Sqrt,
-                                    function::DecimalFunctions::Sqrt},
+          "Sqrt", function::BuiltInFuncType{OperatorId::Sqrt,
+                                            function::DecimalFunctions::Sqrt},
           txn);
       AddBuiltinFunction(
           "sqrt", {type::TypeId::SMALLINT}, type::TypeId::DECIMAL,
@@ -1134,21 +1129,18 @@ void Catalog::InitializeFunctions() {
           txn);
       AddBuiltinFunction(
           "sqrt", {type::TypeId::INTEGER}, type::TypeId::DECIMAL, internal_lang,
-          "Sqrt",
-          function::BuiltInFuncType{OperatorId::Sqrt,
-                                    function::DecimalFunctions::Sqrt},
+          "Sqrt", function::BuiltInFuncType{OperatorId::Sqrt,
+                                            function::DecimalFunctions::Sqrt},
           txn);
       AddBuiltinFunction(
           "sqrt", {type::TypeId::BIGINT}, type::TypeId::DECIMAL, internal_lang,
-          "Sqrt",
-          function::BuiltInFuncType{OperatorId::Sqrt,
-                                    function::DecimalFunctions::Sqrt},
+          "Sqrt", function::BuiltInFuncType{OperatorId::Sqrt,
+                                            function::DecimalFunctions::Sqrt},
           txn);
       AddBuiltinFunction(
           "sqrt", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL, internal_lang,
-          "Sqrt",
-          function::BuiltInFuncType{OperatorId::Sqrt,
-                                    function::DecimalFunctions::Sqrt},
+          "Sqrt", function::BuiltInFuncType{OperatorId::Sqrt,
+                                            function::DecimalFunctions::Sqrt},
           txn);
       AddBuiltinFunction(
           "floor", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL,
@@ -1217,16 +1209,14 @@ void Catalog::InitializeFunctions() {
 
       AddBuiltinFunction(
           "ceil", {type::TypeId::DECIMAL}, type::TypeId::DECIMAL, internal_lang,
-          "Ceil",
-          function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
+          "Ceil", function::BuiltInFuncType{OperatorId::Ceil,
+                                            function::DecimalFunctions::_Ceil},
           txn);
 
       AddBuiltinFunction(
           "ceil", {type::TypeId::TINYINT}, type::TypeId::DECIMAL, internal_lang,
-          "Ceil",
-          function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
+          "Ceil", function::BuiltInFuncType{OperatorId::Ceil,
+                                            function::DecimalFunctions::_Ceil},
           txn);
 
       AddBuiltinFunction(
@@ -1238,16 +1228,14 @@ void Catalog::InitializeFunctions() {
 
       AddBuiltinFunction(
           "ceil", {type::TypeId::INTEGER}, type::TypeId::DECIMAL, internal_lang,
-          "Ceil",
-          function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
+          "Ceil", function::BuiltInFuncType{OperatorId::Ceil,
+                                            function::DecimalFunctions::_Ceil},
           txn);
 
       AddBuiltinFunction(
           "ceil", {type::TypeId::BIGINT}, type::TypeId::DECIMAL, internal_lang,
-          "Ceil",
-          function::BuiltInFuncType{OperatorId::Ceil,
-                                    function::DecimalFunctions::_Ceil},
+          "Ceil", function::BuiltInFuncType{OperatorId::Ceil,
+                                            function::DecimalFunctions::_Ceil},
           txn);
 
       AddBuiltinFunction(

@@ -45,11 +45,9 @@ namespace catalog {
 
 class QueryMetricsCatalog : public AbstractCatalog {
  public:
+  QueryMetricsCatalog(const std::string &database_name,
+                      concurrency::TransactionContext *txn);
   ~QueryMetricsCatalog();
-
-  // Global Singleton
-  static QueryMetricsCatalog *GetInstance(
-      concurrency::TransactionContext *txn = nullptr);
 
   //===--------------------------------------------------------------------===//
   // write Related API
@@ -94,10 +92,8 @@ class QueryMetricsCatalog : public AbstractCatalog {
   };
 
  private:
-  QueryMetricsCatalog(concurrency::TransactionContext *txn);
-
   enum IndexId {
-    SECONDARY_KEY_0 = 0,
+    PRIMARY_KEY = 0,
     // Add new indexes here in creation order
   };
 };

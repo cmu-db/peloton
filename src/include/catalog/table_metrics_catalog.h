@@ -39,11 +39,9 @@ namespace catalog {
 
 class TableMetricsCatalog : public AbstractCatalog {
  public:
+  TableMetricsCatalog(const std::string &database_name,
+                      concurrency::TransactionContext *txn);
   ~TableMetricsCatalog();
-
-  // Global Singleton
-  static TableMetricsCatalog *GetInstance(
-      concurrency::TransactionContext *txn = nullptr);
 
   //===--------------------------------------------------------------------===//
   // Write Related API
@@ -52,7 +50,8 @@ class TableMetricsCatalog : public AbstractCatalog {
                           int64_t updates, int64_t deletes, int64_t inserts,
                           int64_t time_stamp, type::AbstractPool *pool,
                           concurrency::TransactionContext *txn);
-  bool DeleteTableMetrics(oid_t table_oid, concurrency::TransactionContext *txn);
+  bool DeleteTableMetrics(oid_t table_oid,
+                          concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
   // Read-only Related API
@@ -60,8 +59,6 @@ class TableMetricsCatalog : public AbstractCatalog {
   // TODO: add if needed
 
  private:
-  TableMetricsCatalog(concurrency::TransactionContext *txn);
-
   enum ColumnId {
     DATABASE_OID = 0,
     TABLE_OID = 1,

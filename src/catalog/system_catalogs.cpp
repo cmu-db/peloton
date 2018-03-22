@@ -57,11 +57,19 @@ SystemCatalogs::~SystemCatalogs() {
   delete pg_table;
   delete pg_attribute;
   if (pg_trigger) delete pg_trigger;
+  if (pg_proc) delete pg_proc;
+  if (pg_table_metrics) delete pg_table_metrics;
+  if (pg_index_metrics) delete pg_index_metrics;
+  if (pg_query_metrics) delete pg_query_metrics;
 }
 
 void SystemCatalogs::Bootstrap(const std::string &database_name,
                                concurrency::TransactionContext *txn) {
   pg_trigger = new TriggerCatalog(database_name, txn);
+  pg_proc = new ProcCatalog(database_name, txn);
+  pg_table_metrics = new TableMetricsCatalog(database_name, txn);
+  pg_index_metrics = new IndexMetricsCatalog(database_name, txn);
+  pg_query_metrics = new QueryMetricsCatalog(database_name, txn);
 }
 
 }  // namespace catalog

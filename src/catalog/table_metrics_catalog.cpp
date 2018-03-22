@@ -19,23 +19,18 @@
 namespace peloton {
 namespace catalog {
 
-TableMetricsCatalog *TableMetricsCatalog::GetInstance(
-    concurrency::TransactionContext *txn) {
-  static TableMetricsCatalog table_metrics_catalog{txn};
-  return &table_metrics_catalog;
-}
-
-TableMetricsCatalog::TableMetricsCatalog(concurrency::TransactionContext *txn)
-    : AbstractCatalog("CREATE TABLE " CATALOG_DATABASE_NAME
-                      "." TABLE_METRICS_CATALOG_NAME
-                      " ("
-                      "database_oid   INT NOT NULL, "
-                      "table_oid      INT NOT NULL, "
-                      "reads          INT NOT NULL, "
-                      "updates        INT NOT NULL, "
-                      "deletes        INT NOT NULL, "
-                      "inserts        INT NOT NULL, "
-                      "time_stamp     INT NOT NULL);",
+TableMetricsCatalog::TableMetricsCatalog(const std::string &database_name,
+                                         concurrency::TransactionContext *txn)
+    : AbstractCatalog("CREATE TABLE " + database_name +
+                          "." TABLE_METRICS_CATALOG_NAME
+                          " ("
+                          "database_oid   INT NOT NULL, "
+                          "table_oid      INT NOT NULL PRIMARY KEY, "
+                          "reads          INT NOT NULL, "
+                          "updates        INT NOT NULL, "
+                          "deletes        INT NOT NULL, "
+                          "inserts        INT NOT NULL, "
+                          "time_stamp     INT NOT NULL);",
                       txn) {
   // Add secondary index here if necessary
 }
@@ -69,8 +64,8 @@ bool TableMetricsCatalog::InsertTableMetrics(
   return InsertTuple(std::move(tuple), txn);
 }
 
-bool TableMetricsCatalog::DeleteTableMetrics(oid_t table_oid,
-                                             concurrency::TransactionContext *txn) {
+bool TableMetricsCatalog::DeleteTableMetrics(
+    oid_t table_oid, concurrency::TransactionContext *txn) {
   oid_t index_offset = IndexId::PRIMARY_KEY;  // Primary key index
 
   std::vector<type::Value> values;

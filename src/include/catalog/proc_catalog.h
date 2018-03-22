@@ -41,7 +41,8 @@ class LanguageCatalogObject;
 //===----------------------------------------------------------------------===//
 class ProcCatalogObject {
  public:
-  ProcCatalogObject(executor::LogicalTile *tile, concurrency::TransactionContext *txn);
+  ProcCatalogObject(executor::LogicalTile *tile,
+                    concurrency::TransactionContext *txn);
 
   // Accessors
 
@@ -77,10 +78,9 @@ class ProcCatalogObject {
 //===----------------------------------------------------------------------===//
 class ProcCatalog : public AbstractCatalog {
  public:
+  ProcCatalog(const std::string &database_name,
+              concurrency::TransactionContext *txn);
   ~ProcCatalog();
-
-  // Global Singleton
-  static ProcCatalog &GetInstance(concurrency::TransactionContext *txn = nullptr);
 
   //===--------------------------------------------------------------------===//
   // write Related API
@@ -114,8 +114,6 @@ class ProcCatalog : public AbstractCatalog {
   std::vector<oid_t> all_column_ids = {0, 1, 2, 3, 4, 5};
 
  private:
-  ProcCatalog(concurrency::TransactionContext *txn);
-
   oid_t GetNextOid() { return oid_++ | PROC_OID_MASK; }
 
   enum IndexId {
