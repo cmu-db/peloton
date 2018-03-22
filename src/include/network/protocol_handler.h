@@ -29,11 +29,9 @@ class ProtocolHandler {
 
   virtual ~ProtocolHandler();
 
-  /* Main switch case wrapper to process every packet apart from the startup
-   * packet. Avoid flushing the response for extended protocols. */
-
   /**
-   * 
+   * Main switch case wrapper to process every packet apart from the startup
+   * packet. Avoid flushing the response for extended protocols. 
    */
   virtual ProcessResult Process(Buffer &rbuf, const size_t thread_id);
 

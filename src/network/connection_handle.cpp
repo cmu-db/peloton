@@ -105,7 +105,7 @@ DEF_TRANSITION_GRAPH
     ON(NEED_DATA) SET_STATE_TO(READ) AND_INVOKE(FillReadBuffer)
     ON(GET_RESULT) SET_STATE_TO(GET_RESULT) AND_WAIT
     ON(FINISH) SET_STATE_TO(CLOSING) AND_INVOKE(CloseSocket)
-    ON(NEED_SSL_HANDSHAKE) SET_STATE_TO(PROCESS_WRITE_SSL_HANDSHKE) 
+    ON(NEED_SSL_HANDSHAKE) SET_STATE_TO(PROCESS_WRITE_SSL_HANDSHAKE) 
       AND_INVOKE(ProcessWrite_SSLHandshake)
   END_DEF
 
@@ -118,11 +118,6 @@ DEF_TRANSITION_GRAPH
   DEFINE_STATE(GET_RESULT) 
     ON(WAKEUP) SET_STATE_TO(GET_RESULT) AND_INVOKE(GetResult)
     ON(PROCEED) SET_STATE_TO(WRITE) AND_INVOKE(ProcessWrite)
-  END_DEF
-
-  DEFINE_STATE(CLOSING)
-    ON(PROCEED) SET_STATE_TO(CLOSED) AND_WAIT
-    ON(NEED_DATA) SET_STATE_TO(CLOSING) AND_WAIT
   END_DEF
 
 END_DEF
@@ -188,9 +183,9 @@ void ConnectionHandle::UpdateEventFlags(short flags) {
 
 WriteState ConnectionHandle::WritePackets() {
   // iterate through all the packets
-  for (; next_response_ < protocol_handler_->responses.size();
+  for (; next_response_ < protocol_handler_->responses_.size();
        next_response_++) {
-    auto pkt = protocol_handler_->responses[next_response_].get();
+    auto pkt = protocol_handler_->responses_[next_response_].get();
     LOG_TRACE("To send packet with type: %c, len %lu",
               static_cast<char>(pkt->msg_type), pkt->len);
     // write is not ready during write. transit to WRITE
@@ -201,7 +196,7 @@ WriteState ConnectionHandle::WritePackets() {
   }
 
   // Done writing all packets. clear packets
-  protocol_handler_->responses.clear();
+  protocol_handler_->responses_.clear();
   next_response_ = 0;
 
   if (protocol_handler_->GetFlushFlag()) {
@@ -442,6 +437,7 @@ std::string ConnectionHandle::WriteBufferToString() {
   return std::string(wbuf_->buf.begin(), wbuf_->buf.end());
 }
 
+// TODO (Tianyi) Make this to be protocol specific
 // Writes a packet's header (type, size) into the write buffer.
 // Return false when the socket is not ready for write
 WriteState ConnectionHandle::BufferWriteBytesHeader(OutputPacket *pkt) {
@@ -473,14 +469,13 @@ WriteState ConnectionHandle::BufferWriteBytesHeader(OutputPacket *pkt) {
   // make len include its field size as well
   len_nb = htonl(len + sizeof(int32_t));
 
-  if (finish_startup_packet_) {
-    // append the bytes of this integer in network-byte order
-    std::copy(reinterpret_cast<uchar *>(&len_nb),
-              reinterpret_cast<uchar *>(&len_nb) + 4,
-              std::begin(wbuf_->buf) + wbuf_->buf_ptr);
-    // move the write buffer pointer and update size of the socket buffer
-    wbuf_->buf_ptr += sizeof(int32_t);
-  }
+  // TODO (Tianyi) Check why we need finish startup packet before
+  // append the bytes of this integer in network-byte order
+  std::copy(reinterpret_cast<uchar *>(&len_nb),
+            reinterpret_cast<uchar *>(&len_nb) + 4,
+            std::begin(wbuf_->buf) + wbuf_->buf_ptr);
+  // move the write buffer pointer and update size of the socket buffer
+  wbuf_->buf_ptr += sizeof(int32_t);
 
   wbuf_->buf_size = wbuf_->buf_ptr;
 
@@ -680,8 +675,11 @@ Transition ConnectionHandle::Process() {
       return Transition::GET_RESULT;
     case ProcessResult::TERMINATE:
       return Transition::FINISH;
-    case ProcessResult::NEED_SSL_HANDSHAKE：
+    case ProcessResult::NEED_SSL_HANDSHAKE:
       return Transition::NEED_SSL_HANDSHAKE;
+    default:
+      LOG_ERROR("Unknown process result");
+      throw NetworkProcessException("Unknown process result");
   }
 }
 
@@ -690,7 +688,6 @@ Transition ConnectionHandle::ProcessWrite() {
   switch (WritePackets()) {
     case WriteState::COMPLETE:
       UpdateEventFlags(EV_READ | EV_PERSIST);
-      if (!finish_startup_packet_) return Transition::NEED_DATA;
       return Transition::PROCEED;
     case WriteState::NOT_READY:
       return Transition::NONE;

@@ -23,10 +23,6 @@ ProtocolHandler::ProtocolHandler(tcop::TrafficCop *traffic_cop) {
 
 ProtocolHandler::~ProtocolHandler() {}
 
-/* Manage the startup packet */
-//  bool ManageStartupPacket();
-void ProtocolHandler::SendInitialResponse() {}
-
 ProcessResult ProtocolHandler::Process(
     UNUSED_ATTRIBUTE Buffer &rbuf, UNUSED_ATTRIBUTE const size_t thread_id) {
   return ProcessResult::TERMINATE;
@@ -34,8 +30,8 @@ ProcessResult ProtocolHandler::Process(
 
 void ProtocolHandler::Reset() {
   SetFlushFlag(false);
-  responses.clear();
-  request.Reset();
+  responses_.clear();
+  request_.Reset();
 }
 
 void ProtocolHandler::GetResult() {}

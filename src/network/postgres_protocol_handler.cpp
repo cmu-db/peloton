@@ -21,6 +21,7 @@
 #include "expression/expression_util.h"
 #include "network/marshal.h"
 #include "network/postgres_protocol_handler.h"
+#include "network/peloton_server.h"
 #include "parser/postgresparser.h"
 #include "planner/abstract_plan.h"
 #include "planner/delete_plan.h"
@@ -57,7 +58,6 @@ const std::unordered_map<std::string, std::string>
 
 PostgresProtocolHandler::PostgresProtocolHandler(tcop::TrafficCop *traffic_cop)
     : ProtocolHandler(traffic_cop),
-      stage_(CommStage::SSL_SETUP),
       txn_state_(NetworkTransactionStateType::IDLE) {}
 
 PostgresProtocolHandler::~PostgresProtocolHandler() {}
@@ -429,7 +429,7 @@ void PostgresProtocolHandler::ExecBindMessage(InputPacket *pkt) {
     std::unique_ptr<OutputPacket> response(new OutputPacket());
     // Send Bind complete response
     response->msg_type = NetworkMessageType::BIND_COMPLETE;
-    responses.push_back(std::move(response));
+    responses_.push_back(std::move(response));
     // TODO(Tianyi) This is a hack to respond correct describe message
     // as well as execute message
     skipped_stmt_ = true;
@@ -456,7 +456,7 @@ void PostgresProtocolHandler::ExecBindMessage(InputPacket *pkt) {
     std::unique_ptr<OutputPacket> response(new OutputPacket());
     // Send Bind complete response
     response->msg_type = NetworkMessageType::BIND_COMPLETE;
-    responses.push_back(std::move(response));
+    responses_.push_back(std::move(response));
     return;
   }
 
@@ -536,7 +536,7 @@ void PostgresProtocolHandler::ExecBindMessage(InputPacket *pkt) {
   // send bind complete
   std::unique_ptr<OutputPacket> response(new OutputPacket());
   response->msg_type = NetworkMessageType::BIND_COMPLETE;
-  responses.push_back(std::move(response));
+  responses_.push_back(std::move(response));
 }
 
 size_t PostgresProtocolHandler::ReadParamType(
@@ -694,7 +694,7 @@ ProcessResult PostgresProtocolHandler::ExecDescribeMessage(InputPacket *pkt) {
     // send 'no-data' message
     std::unique_ptr<OutputPacket> response(new OutputPacket());
     response->msg_type = NetworkMessageType::NO_DATA_RESPONSE;
-    responses.push_back(std::move(response));
+    responses_.push_back(std::move(response));
     return ProcessResult::COMPLETE;
   }
 
@@ -868,28 +868,29 @@ void PostgresProtocolHandler::ExecCloseMessage(InputPacket *pkt) {
   // Send close complete response
   std::unique_ptr<OutputPacket> response(new OutputPacket());
   response->msg_type = NetworkMessageType::CLOSE_COMPLETE;
-  responses.push_back(std::move(response));
+  responses_.push_back(std::move(response));
 }
 
-bool PostgresProtocolHandler::ParseInputPacket(Buffer &rbuf, InputPacket,
-                                               bool starup_format) {
-  if (request.header_parsed == false) {
+bool PostgresProtocolHandler::ParseInputPacket(Buffer &rbuf, InputPacket &rpkt,
+                                               bool startup_format) {
+  if (rpkt.header_parsed == false) {
     // parse out the header first
-    if (ReadPacketHeader(rbuf, request, startup_format) == false) {
+    if (ReadPacketHeader(rbuf, rpkt, startup_format) == false) {
       // need more data
       return false;
     }
   }
 
-  PL_ASSERT(request.header_parsed == true);
+  PL_ASSERT(rpkt.header_parsed == true);
 
-  if (request.is_initialized == false) {
+  if (rpkt.is_initialized == false) {
     // packet needs to be initialized with rest of the contents
-    if (PostgresProtocolHandler::ReadPacket(rbuf, request) == false) {
+    if (PostgresProtocolHandler::ReadPacket(rbuf, rpkt) == false) {
       // need more data
       return false;
     }
   }
+  return true;
 }
 
 // The function tries to do a preliminary read to fetch the size value and
@@ -967,27 +968,14 @@ bool PostgresProtocolHandler::ReadPacket(Buffer &rbuf, InputPacket &rpkt) {
   return true;
 }
 
-ProcessResult PostgresProtocolHandler::Process(Buffer &rbuf,
-                                               const size_t thread_id) {
-  if (!ParseInputPacket(rbuf, request_, init_stage_))
-    return ProcessResult::MORE_DATA_REQUIRED;
-
-  ProcessResult process_status;
-  if (init_stage_) {
-    process_status = ProcessInitialPacket(request_);
-  } else {
-    process_status = ProcessNormalPacket(request_);
-  }
-  request_.Reset();
-
-  return process_status;
-}
-
+/*
+ * process_startup_packet - Processes the startup packet
+ *  (after the size field of the header).
+ */
 ProcessResult PostgresProtocolHandler::ProcessInitialPacket(InputPacket *pkt) {
   int32_t proto_version = PacketGetInt(pkt, sizeof(int32_t));
   LOG_INFO("protocol version: %d", proto_version);
 
-  force_flush_ = true;
   // TODO(Yuchen): consider more about return value
   if (proto_version == SSL_MESSAGE_VERNO) {
     LOG_TRACE("process SSL MESSAGE");
@@ -996,6 +984,7 @@ ProcessResult PostgresProtocolHandler::ProcessInitialPacket(InputPacket *pkt) {
     response->msg_type =
         ssl_able ? NetworkMessageType::SSL_YES : NetworkMessageType::SSL_NO;
     responses_.push_back(std::move(response));
+    force_flush_ = true;
     return ssl_able ? ProcessResult::NEED_SSL_HANDSHAKE
                     : ProcessResult::COMPLETE;
   } else {
@@ -1023,7 +1012,7 @@ ProcessResult PostgresProtocolHandler::ProcessStartupPacket(
     if (pkt->ptr >= pkt->len) break;
     GetStringToken(pkt, value);
     LOG_TRACE("Option value is %s", token.c_str());
-    client.cmdline_options[token] = value;
+    cmdline_options_[token] = value;
     if (token.compare("database") == 0) {
       traffic_cop_->SetDefaultDatabaseName(value);
     }
@@ -1035,10 +1024,32 @@ ProcessResult PostgresProtocolHandler::ProcessStartupPacket(
   SendStartupResponse();
 
   init_stage_ = false;
+  force_flush_ = true;
   return ProcessResult::COMPLETE;
 }
 
-ProcessResult PostgresProtocolHandler::ProcessNormalPackets(
+ProcessResult PostgresProtocolHandler::Process(Buffer &rbuf,
+                                               const size_t thread_id) {
+  InputPacket rpkt;
+  rpkt.Reset();
+  if (!ParseInputPacket(rbuf, rpkt, init_stage_))
+    return ProcessResult::MORE_DATA_REQUIRED;
+
+  ProcessResult process_status;
+  if (init_stage_) {
+    process_status = ProcessInitialPacket(&rpkt);
+  } else {
+    process_status = ProcessNormalPacket(&rpkt, thread_id);
+  }
+
+  return process_status;
+}
+
+/*
+ * process_packet - Main switch block; process incoming packets,
+ *  Returns false if the session needs to be closed.
+ */
+ProcessResult PostgresProtocolHandler::ProcessNormalPacket(
     InputPacket *pkt, const size_t thread_id) {
   LOG_TRACE("Message type: %c", static_cast<unsigned char>(pkt->msg_type));
   // We don't set force_flush to true for `PBDE` messages because they're
@@ -1093,7 +1104,6 @@ ProcessResult PostgresProtocolHandler::ProcessNormalPackets(
   }
   return ProcessResult::COMPLETE;
 }
-
 void PostgresProtocolHandler::MakeHardcodedParameterStatus(
     const std::pair<std::string, std::string> &kv) {
   std::unique_ptr<OutputPacket> response(new OutputPacket());

@@ -24,7 +24,7 @@ enum class ConnState {
   PROCESS,     // State that runs the network protocol on received data
   CLOSING,     // State for closing the client connection
   GET_RESULT,  // State when triggered by worker thread that completes the task.
-  PROCESS_WRITE_SSL_HANDSHAKE  // State to flush out responses and  doing (Real)
+  PROCESS_WRITE_SSL_HANDSHAKE,  // State to flush out responses and  doing (Real)
                                // SSL handshake
 };
 
@@ -48,7 +48,7 @@ enum class Transition {
   GET_RESULT,
   FINISH,
   RETRY,
-  NEED_SSL_HANDSHAKE
+  NEED_SSL_HANDSHAKE,
 };
 }  // namespace network
 }  // namespace peloton

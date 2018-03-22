@@ -47,16 +47,7 @@ class PostgresProtocolHandler : public ProtocolHandler {
    */
   ProcessResult Process(Buffer &rbuf, size_t thread_id);
 
-  void Reset();
-
-  void GetResult();
-
- private:
-  //===--------------------------------------------------------------------===//
-  // STATIC HELPERS
-  //===--------------------------------------------------------------------===//
-
-  // Deserialize the parameter types from packet
+  // Deserialize the parame types from packet
   static size_t ReadParamType(InputPacket *pkt, int num_params,
                               std::vector<int32_t> &param_types);
 
@@ -69,6 +60,15 @@ class PostgresProtocolHandler : public ProtocolHandler {
       InputPacket *pkt, int num_params, std::vector<int32_t> &param_types,
       std::vector<std::pair<type::TypeId, std::string>> &bind_parameters,
       std::vector<type::Value> &param_values, std::vector<int16_t> &formats);
+
+  void Reset();
+
+  void GetResult();
+
+ private:
+  //===--------------------------------------------------------------------===//
+  // STATIC HELPERS
+  //===--------------------------------------------------------------------===//
 
   // Parse the input packet based on if it is the startup packet
   static bool ParseInputPacket(Buffer &rbuf, InputPacket &rpkt,
@@ -90,12 +90,12 @@ class PostgresProtocolHandler : public ProtocolHandler {
   /**
    * @brief Routine to deal with the first packet from the client
    */
-  ProcessResult ProcessInitialPackets(InputPacket *pkt);
+  ProcessResult ProcessInitialPacket(InputPacket *pkt);
 
   /**
    * @brief Main Switch function to process general packets
    */
-  ProcessResult ProcessNormalPackets(InputPacket *pkt, const size_t thread_id);
+  ProcessResult ProcessNormalPacket(InputPacket *pkt, const size_t thread_id);
   
   /**
    * @brief Helper function to process startup packet

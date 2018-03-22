@@ -179,7 +179,7 @@ class ConnectionHandle {
    * Process SSL handshake to generate valid SSL connection context
    * for further communications
    */
-  Transition ConnectionHandle::SSLHandshake();
+  Transition SSLHandshake();
 
   /**
    * Set the socket to non-blocking mode
@@ -204,7 +204,7 @@ class ConnectionHandle {
    * Determine if there is still responses in the buffer
    */
   inline bool HasResponse() {
-    return (protocol_handler_->responses.size() != 0) || (wbuf_->buf_size != 0);
+    return (protocol_handler_->responses_.size() != 0) || (wbuf_->buf_size != 0);
   }
 
   int sock_fd_;                            // socket file descriptor
