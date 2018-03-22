@@ -62,17 +62,21 @@ class StatsStorage {
                                                   oid_t table_id,
                                                   oid_t column_id);
 
-  std::shared_ptr<TableStats> GetTableStats(oid_t database_id, oid_t table_id);
+  std::shared_ptr<TableStats> GetTableStats(
+      oid_t database_id, oid_t table_id, concurrency::TransactionContext *txn);
 
-  std::shared_ptr<TableStats> GetTableStats(oid_t database_id, oid_t table_id,
-                                            std::vector<oid_t> column_ids);
+  std::shared_ptr<TableStats> GetTableStats(
+      oid_t database_id, oid_t table_id, std::vector<oid_t> column_ids,
+      concurrency::TransactionContext *txn);
 
   /* Functions for triggerring stats collection */
 
-  ResultType AnalyzeStatsForAllTables(concurrency::TransactionContext *txn = nullptr);
+  ResultType AnalyzeStatsForAllTables(
+      concurrency::TransactionContext *txn = nullptr);
 
-  ResultType AnalyzeStatsForTable(storage::DataTable *table,
-                                  concurrency::TransactionContext *txn = nullptr);
+  ResultType AnalyzeStatsForTable(
+      storage::DataTable *table,
+      concurrency::TransactionContext *txn = nullptr);
 
   ResultType AnalayzeStatsForColumns(storage::DataTable *table,
                                      std::vector<std::string> column_names);
