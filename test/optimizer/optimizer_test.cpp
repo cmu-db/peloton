@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// optimizer_test.cpp
+//
+// Identification: test/optimizer/optimizer_test.cpp
+//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #include "common/harness.h"
 
 #include "catalog/catalog.h"

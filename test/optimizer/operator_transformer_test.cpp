@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// operator_transformer_test.cpp
+//
+// Identification: test/optimizer/operator_transformer_test.cpp
+//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #include <algorithm>
 #include "common/harness.h"
 #include "parser/postgresparser.h"

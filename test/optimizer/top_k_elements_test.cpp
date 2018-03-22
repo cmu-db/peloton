@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// top_k_elements_test.cpp
+//
+// Identification: test/optimizer/top_k_elements_test.cpp
+//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #include "common/harness.h"
 #include "optimizer/stats/count_min_sketch.h"
 #include "optimizer/stats/top_k_elements.h"
