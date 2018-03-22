@@ -1338,6 +1338,148 @@ parser::SQLStatement *PostgresParser::CreateViewTransform(ViewStmt *root) {
   return result;
 }
 
+parser::SQLStatement *PostgresParser::CreateSequenceTransform(CreateSeqStmt *root){
+  LOG_DEBUG("In create sequence transform");
+  parser::CreateStatement *result =
+      new parser::CreateStatement(CreateStatement::kSequence);
+  result->sequence_name = std::string(root->sequence->relname);
+  LOG_DEBUG("New Sequence Name:%s\n", result->sequence_name.c_str());
+  result->table.reset(
+        RangeVarTransform(reinterpret_cast<RangeVar *>(root->sequence)));
+  LOG_DEBUG("Before parse sequences");
+  parse_sequence_params(root->options, result);
+  return result;
+}
+
+void PostgresParser::parse_sequence_params(List* options, parser::CreateStatement* result){
+  // DefElem    *as_type = NULL;
+	DefElem    *start_value = NULL;
+	// DefElem    *restart_value = NULL;
+	DefElem    *increment_by = NULL;
+	DefElem    *max_value = NULL;
+	DefElem    *min_value = NULL;
+	DefElem    *cache_value = NULL;
+	DefElem    *is_cycled = NULL;
+	// bool		reset_max_value = false;
+	// bool		reset_min_value = false;
+  if(!options) return;
+
+	ListCell   *option;
+  for (option = options->head; option != NULL; option = lnext(option))
+	{
+		DefElem    *defel = (DefElem *) lfirst(option);
+
+		// if (strcmp(defel->defname, "as") == 0)
+		// {
+		// 	// if (as_type)
+		// 	// 	ereport(ERROR,
+		// 	// 			(errcode(ERRCODE_SYNTAX_ERROR),
+		// 	// 			 errmsg("conflicting or redundant options"),
+		// 	// 			 parser_errposition(pstate, defel->location)));
+		// 	as_type = defel;
+		// }
+		// else if (strcmp(defel->defname, "increment") == 0)
+		if (strcmp(defel->defname, "increment") == 0)
+		{
+			// if (increment_by)
+			// 	ereport(ERROR,
+			// 			(errcode(ERRCODE_SYNTAX_ERROR),
+			// 			 errmsg("conflicting or redundant options"),
+			// 			 parser_errposition(pstate, defel->location)));
+			increment_by = defel;
+      result->seq_increment = get_long_in_defel(increment_by);
+		}
+		else if (strcmp(defel->defname, "start") == 0)
+		{
+			// if (start_value)
+			// 	ereport(ERROR,
+			// 			(errcode(ERRCODE_SYNTAX_ERROR),
+			// 			 errmsg("conflicting or redundant options"),
+			// 			 parser_errposition(pstate, defel->location)));
+			start_value = defel;
+      result->seq_start = get_long_in_defel(start_value);
+		}
+		// else if (strcmp(defel->defname, "restart") == 0)
+		// {
+		// 	// if (restart_value)
+		// 	// 	ereport(ERROR,
+		// 	// 			(errcode(ERRCODE_SYNTAX_ERROR),
+		// 	// 			 errmsg("conflicting or redundant options"),
+		// 	// 			 parser_errposition(pstate, defel->location)));
+		// 	restart_value = defel;
+		// }
+		else if (strcmp(defel->defname, "maxvalue") == 0)
+		{
+			// if (max_value)
+			// 	ereport(ERROR,
+			// 			(errcode(ERRCODE_SYNTAX_ERROR),
+			// 			 errmsg("conflicting or redundant options"),
+			// 			 parser_errposition(pstate, defel->location)));
+			max_value = defel;
+      result->seq_max_value = get_long_in_defel(max_value);
+		}
+		else if (strcmp(defel->defname, "minvalue") == 0)
+		{
+			// if (min_value)
+			// 	ereport(ERROR,
+			// 			(errcode(ERRCODE_SYNTAX_ERROR),
+			// 			 errmsg("conflicting or redundant options"),
+			// 			 parser_errposition(pstate, defel->location)));
+			min_value = defel;
+      result->seq_min_value = get_long_in_defel(min_value);
+		}
+		else if (strcmp(defel->defname, "cache") == 0)
+		{
+			// if (cache_value)
+			// 	ereport(ERROR,
+			// 			(errcode(ERRCODE_SYNTAX_ERROR),
+			// 			 errmsg("conflicting or redundant options"),
+			// 			 parser_errposition(pstate, defel->location)));
+			cache_value = defel;
+      result->seq_cache = get_long_in_defel(cache_value);
+		}
+		else if (strcmp(defel->defname, "cycle") == 0)
+		{
+			// if (is_cycled)
+			// 	ereport(ERROR,
+			// 			(errcode(ERRCODE_SYNTAX_ERROR),
+			// 			 errmsg("conflicting or redundant options"),
+			// 			 parser_errposition(pstate, defel->location)));
+			is_cycled = defel;
+      result->seq_cycle = (bool) get_long_in_defel(is_cycled);
+		}
+    // TODO: support owned_by
+		// else if (strcmp(defel->defname, "owned_by") == 0)
+		// {
+		// 	// if (*owned_by)
+		// 	// 	ereport(ERROR,
+		// 	// 			(errcode(ERRCODE_SYNTAX_ERROR),
+		// 	// 			 errmsg("conflicting or redundant options"),
+		// 	// 			 parser_errposition(pstate, defel->location)));
+		// 	*owned_by = defGetQualifiedName(defel);
+		// }
+		// else if (strcmp(defel->defname, "sequence_name") == 0)
+		// {
+			/*
+			 * The parser allows this, but it is only for identity columns, in
+			 * which case it is filtered out in parse_utilcmd.c.  We only get
+			 * here if someone puts it into a CREATE SEQUENCE.
+			 */
+			// ereport(ERROR,
+			// 		(errcode(ERRCODE_SYNTAX_ERROR),
+			// 		 errmsg("invalid sequence option SEQUENCE NAME"),
+			// 		 parser_errposition(pstate, defel->location)));
+		// }
+		else
+			// elog(ERROR, "option \"%s\" not recognized",
+			// 	 defel->defname);
+      throw ParserException(StringUtil::Format(
+          "option \"%s\" not recognized\n", defel->defname));
+	}
+
+  //TODO: support type in sequence
+}
+
 parser::DropStatement *PostgresParser::DropTransform(DropStmt *root) {
   switch (root->removeType) {
     case ObjectType::OBJECT_TABLE:
@@ -1747,6 +1889,9 @@ parser::SQLStatement *PostgresParser::NodeTransform(Node *stmt) {
     case T_CreateSchemaStmt:
       result =
           CreateSchemaTransform(reinterpret_cast<CreateSchemaStmt *>(stmt));
+      break;
+    case T_CreateSeqStmt:
+      result = CreateSequenceTransform(reinterpret_cast<CreateSeqStmt *> (stmt));
       break;
     case T_ViewStmt:
       result = CreateViewTransform(reinterpret_cast<ViewStmt *>(stmt));

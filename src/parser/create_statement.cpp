@@ -70,6 +70,12 @@ const std::string CreateStatement::GetInfo(int num_indent) const {
          << StringUtil::Format("View name: %s", view_name.c_str());
       break;
     }
+    case CreateStatement::CreateType::kSequence: {
+      os << "Create type: Sequence" << std::endl;
+      os << StringUtil::Indent(num_indent + 1)
+         << StringUtil::Format("Sequence name: %s", sequence_name.c_str());
+      break;
+    }
   }
   os << std::endl;
 
@@ -98,7 +104,7 @@ const std::string CreateStatement::GetInfo(int num_indent) const {
            << col->not_null << " primary : " << col->primary << " unique "
            << col->unique << " varlen " << col->varlen;
       }
-      os << std::endl;  
+      os << std::endl;
     }
   }
   std::string info = os.str();
