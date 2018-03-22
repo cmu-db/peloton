@@ -37,6 +37,11 @@ namespace concurrency {
 class TransactionContext;
 }
 
+namespace test {
+  class OptimizerRuleTests_SimpleAssociativeRuleTest_Test;
+  class OptimizerRuleTests_SimpleAssociativeRuleTest2_Test;
+} 
+
 namespace optimizer {
 
 struct QueryInfo {
@@ -54,6 +59,9 @@ struct QueryInfo {
 class Optimizer : public AbstractOptimizer {
   friend class BindingIterator;
   friend class GroupBindingIterator;
+
+  friend class ::peloton::test::OptimizerRuleTests_SimpleAssociativeRuleTest_Test;
+  friend class ::peloton::test::OptimizerRuleTests_SimpleAssociativeRuleTest2_Test; 
 
  public:
   Optimizer(const Optimizer &) = delete;
