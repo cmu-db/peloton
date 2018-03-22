@@ -31,7 +31,7 @@ class IndirectionArray;
 
 LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
 LOCK_FREE_ARRAY_TYPE::LockFreeArray() {
-  lock_free_array.reserve(LOCK_FREE_ARRAR_INIT_SIZE);
+  lock_free_array.reserve(kLockfreeArrayInitSize);
 }
 
 LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
@@ -99,13 +99,9 @@ LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
 bool LOCK_FREE_ARRAY_TYPE::IsEmpty() const { return lock_free_array.empty(); }
 
 LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
-void LOCK_FREE_ARRAY_TYPE::Clear(const ValueType &invalid_value) {
+void LOCK_FREE_ARRAY_TYPE::Clear() {
   // Set invalid value for all elements
-
-  for (std::size_t array_itr = 0; array_itr < lock_free_array.size();
-       array_itr++) {
-    lock_free_array.at(array_itr) = invalid_value;
-  }
+  lock_free_array.clear();
 }
 
 LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS

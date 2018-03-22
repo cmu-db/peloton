@@ -22,7 +22,7 @@
 
 namespace peloton {
 
-#define LOCK_FREE_ARRAR_INIT_SIZE (256)
+static const size_t kLockfreeArrayInitSize = 256;
 
 // LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS
 #define LOCK_FREE_ARRAY_TEMPLATE_ARGUMENTS template <typename ValueType>
@@ -59,7 +59,7 @@ class LockFreeArray {
   bool IsEmpty() const;
 
   // Clear all elements and reset them to default value
-  void Clear(const ValueType &invalid_value);
+  void Clear();
 
   // Exists ?
   bool Contains(const ValueType &value);
