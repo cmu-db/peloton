@@ -146,6 +146,10 @@ class RuleSet {
     return rewrite_rules_map_[static_cast<uint32_t>(set)];
   }
 
+  std::unordered_map<uint32_t, std::vector<std::unique_ptr<Rule>>> &GetRewriteRulesMap() { return rewrite_rules_map_; }
+
+  std::vector<std::unique_ptr<Rule>> &GetPredicatePushDownRules() { return predicate_push_down_rules_; }
+
  private:
   std::vector<std::unique_ptr<Rule>> transformation_rules_;
   std::vector<std::unique_ptr<Rule>> implementation_rules_;

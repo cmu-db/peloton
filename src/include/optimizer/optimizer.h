@@ -73,6 +73,14 @@ class Optimizer : public AbstractOptimizer {
 
   void Reset() override;
 
+  OptimizerMetadata &GetMetadata() { return metadata_; }
+
+  /* For test purposes only */
+  std::shared_ptr<GroupExpression> TestInsertQueryTree(parser::SQLStatement *tree,
+  concurrency::TransactionContext *txn) {
+    return InsertQueryTree(tree, txn);
+  }
+
  private:
   /* HandleDDLStatement - Check and handle DDL statment (currently only support
    *CREATE), set
