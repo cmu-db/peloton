@@ -1,7 +1,5 @@
 #include "common/harness.h"
 
-#define private public
-
 #include "catalog/catalog.h"
 #include "common/statement.h"
 #include "concurrency/transaction_manager_factory.h"

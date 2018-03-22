@@ -12,9 +12,6 @@
 
 #include "common/harness.h"
 
-#define private public
-#define protected public
-
 #include "optimizer/stats/stats_storage.h"
 #include "optimizer/stats/column_stats.h"
 #include "optimizer/stats/table_stats.h"
@@ -248,10 +245,8 @@ TEST_F(StatsStorageTests, GetTableStatsTest) {
   stats_storage->AnalyzeStatsForAllTables(txn);
   txn_manager.CommitTransaction(txn);
 
-  txn = txn_manager.BeginTransaction();
   std::shared_ptr<TableStats> table_stats = stats_storage->GetTableStats(
-      data_table->GetDatabaseOid(), data_table->GetOid(), txn);
-  txn_manager.CommitTransaction(txn);
+      data_table->GetDatabaseOid(), data_table->GetOid());
   EXPECT_EQ(table_stats->num_rows, tuple_count);
 }
 

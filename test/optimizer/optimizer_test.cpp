@@ -1,7 +1,5 @@
 #include "common/harness.h"
 
-#define private public
-
 #include "catalog/catalog.h"
 #include "common/logger.h"
 #include "common/statement.h"
@@ -40,8 +38,8 @@ class OptimizerTests : public PelotonTest {
   GroupExpression *GetSingleGroupExpression(Memo &memo, GroupExpression *expr,
                                             int child_group_idx) {
     auto group = memo.GetGroupByID(expr->GetChildGroupId(child_group_idx));
-    EXPECT_EQ(1, group->logical_expressions_.size());
-    return group->logical_expressions_[0].get();
+    EXPECT_EQ(1, group->GetLogicalExpressions().size());
+    return group->GetLogicalExpressions()[0].get();
   }
 
   virtual void TearDown() override {
@@ -305,8 +303,8 @@ TEST_F(OptimizerTests, PushFilterThroughJoinTest) {
 
   optimizer::Optimizer optimizer;
   // Only include PushFilterThroughJoin rewrite rule
-  optimizer.metadata_.rule_set.rewrite_rules_map_.clear();
-  optimizer.metadata_.rule_set.AddRewriteRule(
+  optimizer.GetMetadata().rule_set.GetRewriteRulesMap().clear();
+  optimizer.GetMetadata().rule_set.AddRewriteRule(
       RewriteRuleSetName::PREDICATE_PUSH_DOWN, new PushFilterThroughJoin());
   txn = txn_manager.BeginTransaction();
 
@@ -315,17 +313,17 @@ TEST_F(OptimizerTests, PushFilterThroughJoinTest) {
   bind_node_visitor->BindNameToNode(parse_tree);
 
   std::shared_ptr<GroupExpression> gexpr =
-      optimizer.InsertQueryTree(parse_tree, txn);
+      optimizer.TestInsertQueryTree(parse_tree, txn);
   std::vector<GroupID> child_groups = {gexpr->GetGroupID()};
 
   std::shared_ptr<GroupExpression> head_gexpr =
       std::make_shared<GroupExpression>(Operator(), child_groups);
 
   std::shared_ptr<OptimizeContext> root_context =
-      std::make_shared<OptimizeContext>(&(optimizer.metadata_), nullptr);
+      std::make_shared<OptimizeContext>(&(optimizer.GetMetadata()), nullptr);
   auto task_stack =
       std::unique_ptr<OptimizerTaskStack>(new OptimizerTaskStack());
-  optimizer.metadata_.SetTaskPool(task_stack.get());
+  optimizer.GetMetadata().SetTaskPool(task_stack.get());
   task_stack->Push(new TopDownRewrite(gexpr->GetGroupID(), root_context,
                                       RewriteRuleSetName::PREDICATE_PUSH_DOWN));
 
@@ -334,7 +332,7 @@ TEST_F(OptimizerTests, PushFilterThroughJoinTest) {
     task->execute();
   }
 
-  auto &memo = optimizer.metadata_.memo;
+  auto &memo = optimizer.GetMetadata().memo;
 
   // Check join in the root
   auto group_expr = GetSingleGroupExpression(memo, head_gexpr.get(), 0);
@@ -387,12 +385,12 @@ TEST_F(OptimizerTests, PredicatePushDownRewriteTest) {
 
   optimizer::Optimizer optimizer;
   // Only include PushFilterThroughJoin rewrite rule
-  optimizer.metadata_.rule_set.predicate_push_down_rules_.clear();
-  optimizer.metadata_.rule_set.predicate_push_down_rules_.emplace_back(
+  optimizer.GetMetadata().rule_set.GetPredicatePushDownRules().clear();
+  optimizer.GetMetadata().rule_set.GetPredicatePushDownRules().emplace_back(
       new PushFilterThroughJoin());
-  optimizer.metadata_.rule_set.predicate_push_down_rules_.emplace_back(
+  optimizer.GetMetadata().rule_set.GetPredicatePushDownRules().emplace_back(
       new CombineConsecutiveFilter());
-  optimizer.metadata_.rule_set.predicate_push_down_rules_.emplace_back(
+  optimizer.GetMetadata().rule_set.GetPredicatePushDownRules().emplace_back(
       new EmbedFilterIntoGet());
 
   txn = txn_manager.BeginTransaction();
@@ -402,17 +400,17 @@ TEST_F(OptimizerTests, PredicatePushDownRewriteTest) {
   bind_node_visitor->BindNameToNode(parse_tree);
 
   std::shared_ptr<GroupExpression> gexpr =
-      optimizer.InsertQueryTree(parse_tree, txn);
+      optimizer.TestInsertQueryTree(parse_tree, txn);
   std::vector<GroupID> child_groups = {gexpr->GetGroupID()};
 
   std::shared_ptr<GroupExpression> head_gexpr =
       std::make_shared<GroupExpression>(Operator(), child_groups);
 
   std::shared_ptr<OptimizeContext> root_context =
-      std::make_shared<OptimizeContext>(&(optimizer.metadata_), nullptr);
+      std::make_shared<OptimizeContext>(&(optimizer.GetMetadata()), nullptr);
   auto task_stack =
       std::unique_ptr<OptimizerTaskStack>(new OptimizerTaskStack());
-  optimizer.metadata_.SetTaskPool(task_stack.get());
+  optimizer.GetMetadata().SetTaskPool(task_stack.get());
   task_stack->Push(new TopDownRewrite(gexpr->GetGroupID(), root_context,
                                       RewriteRuleSetName::PREDICATE_PUSH_DOWN));
 
@@ -421,7 +419,7 @@ TEST_F(OptimizerTests, PredicatePushDownRewriteTest) {
     task->execute();
   }
 
-  auto &memo = optimizer.metadata_.memo;
+  auto &memo = optimizer.GetMetadata().memo;
 
   // Check join in the root
   auto group_expr = GetSingleGroupExpression(memo, head_gexpr.get(), 0);

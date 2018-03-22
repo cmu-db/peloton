@@ -1,7 +1,5 @@
 #include <algorithm>
 #include "common/harness.h"
-
-#define private public
 #include "parser/postgresparser.h"
 #include "parser/sql_statement.h"
 #include "binder/bind_node_visitor.h"

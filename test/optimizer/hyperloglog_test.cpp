@@ -12,8 +12,6 @@
 
 #include "common/harness.h"
 
-#define private public
-
 #include "optimizer/stats/hyperloglog.h"
 
 #include "common/logger.h"

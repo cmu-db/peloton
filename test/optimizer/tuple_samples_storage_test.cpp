@@ -12,9 +12,6 @@
 
 #include "common/harness.h"
 
-#define private public
-#define protected public
-
 #include "optimizer/stats/tuple_samples_storage.h"
 #include "optimizer/stats/tuple_sampler.h"
 

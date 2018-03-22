@@ -12,8 +12,6 @@
 
 #include "common/harness.h"
 
-#define private public
-
 #include <iostream>
 #include <sstream>
 #include <string>

@@ -28,8 +28,6 @@
 #include "type/value.h"
 #include "type/value_factory.h"
 
-#define private public
-
 namespace peloton {
 namespace test {
 
@@ -80,9 +78,7 @@ TEST_F(SelectivityTests, RangeSelectivityTest) {
   oid_t table_id = table->GetOid();
   std::string column_name = "test.id";  // first column
   auto stats_storage = StatsStorage::GetInstance();
-  txn = txn_manager.BeginTransaction();
-  auto table_stats = stats_storage->GetTableStats(db_id, table_id, txn);
-  txn_manager.CommitTransaction(txn);
+  auto table_stats = stats_storage->GetTableStats(db_id, table_id);
   type::Value value1 = type::ValueFactory::GetIntegerValue(nrow / 4);
   ValueCondition condition{column_name, ExpressionType::COMPARE_LESSTHAN,
                            value1};
@@ -95,9 +91,7 @@ TEST_F(SelectivityTests, RangeSelectivityTest) {
   TestingSQLUtil::ExecuteSQLQuery("ANALYZE test");
 
   // Get updated table stats and check new selectivity
-  txn = txn_manager.BeginTransaction();
-  table_stats = stats_storage->GetTableStats(db_id, table_id, txn);
-  txn_manager.CommitTransaction(txn);
+  table_stats = stats_storage->GetTableStats(db_id, table_id);
   double less_than_sel =
       Selectivity::ComputeSelectivity(table_stats, condition);
   ExpectSelectivityEqual(less_than_sel, 0.25);
@@ -140,11 +134,8 @@ TEST_F(SelectivityTests, LikeSelectivityTest) {
   oid_t table_id = data_table->GetOid();
 
   auto stats_storage = StatsStorage::GetInstance();
-  txn = txn_manager.BeginTransaction();
-  auto table_stats = stats_storage->GetTableStats(db_id, table_id, txn);
-  txn_manager.CommitTransaction(txn);
-  table_stats->SetTupleSampler(
-      std::make_shared<TupleSampler>(data_table.get()));
+  auto table_stats = stats_storage->GetTableStats(db_id, table_id);
+  table_stats->SetTupleSampler(std::make_shared<TupleSampler>(data_table.get()));
 
   type::Value value = type::ValueFactory::GetVarcharValue("%3");
   ValueCondition condition1{"test_table.COL_D", ExpressionType::COMPARE_LIKE,
@@ -188,9 +179,7 @@ TEST_F(SelectivityTests, EqualSelectivityTest) {
   oid_t table_id = table->GetOid();
   std::string column_name1 = "test.b";
   auto stats_storage = StatsStorage::GetInstance();
-  txn = txn_manager.BeginTransaction();
-  auto table_stats = stats_storage->GetTableStats(db_id, table_id, txn);
-  txn_manager.CommitTransaction(txn);
+  auto table_stats = stats_storage->GetTableStats(db_id, table_id);
 
   type::Value value1 = type::ValueFactory::GetDecimalValue(1.0);
 
@@ -202,9 +191,7 @@ TEST_F(SelectivityTests, EqualSelectivityTest) {
 
   // Run analyze
   TestingSQLUtil::ExecuteSQLQuery("ANALYZE test");
-  txn = txn_manager.BeginTransaction();
-  table_stats = stats_storage->GetTableStats(db_id, table_id, txn);
-  txn_manager.CommitTransaction(txn);
+  table_stats = stats_storage->GetTableStats(db_id, table_id);
 
   // Check selectivity
   // equal, in mcv
@@ -235,9 +222,7 @@ TEST_F(SelectivityTests, EqualSelectivityTest) {
 
   // Run analyze
   TestingSQLUtil::ExecuteSQLQuery("ANALYZE test");
-  txn = txn_manager.BeginTransaction();
-  table_stats = stats_storage->GetTableStats(db_id, table_id, txn);
-  txn_manager.CommitTransaction(txn);
+  table_stats = stats_storage->GetTableStats(db_id, table_id);
 
   // Check selectivity
   // equal, not in mcv

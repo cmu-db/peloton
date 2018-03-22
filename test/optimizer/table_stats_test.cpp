@@ -15,9 +15,6 @@
 #include "optimizer/stats/table_stats.h"
 #include "optimizer/stats/column_stats.h"
 
-#define private public
-#define protected public
-
 namespace peloton {
 namespace test {
 

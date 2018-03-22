@@ -1,8 +1,6 @@
 #include <algorithm>
 #include "common/harness.h"
 
-#define private public
-
 #include "optimizer/operators.h"
 #include "expression/comparison_expression.h"
 #include "expression/tuple_value_expression.h"

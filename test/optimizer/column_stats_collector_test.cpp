@@ -20,7 +20,6 @@
 #include "type/value.h"
 #include "type/value_factory.h"
 
-#define private public
 #define TEST_OID 0
 
 namespace peloton {

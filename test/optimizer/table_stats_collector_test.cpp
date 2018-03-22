@@ -27,8 +27,6 @@
 #include "type/type.h"
 #include "type/value.h"
 
-#define private public
-
 namespace peloton {
 namespace test {
 

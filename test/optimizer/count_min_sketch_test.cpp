@@ -12,8 +12,6 @@
 
 #include "common/harness.h"
 
-#define private public
-
 #include "optimizer/stats/count_min_sketch.h"
 #include "common/logger.h"
 #include "common/statement.h"

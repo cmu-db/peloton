@@ -12,8 +12,6 @@
 
 #include "common/harness.h"
 
-#define private public
-
 #include <random>
 
 #include "optimizer/stats/histogram.h"
