@@ -107,7 +107,6 @@ void UpdateTranslator::Consume(ConsumerContext &, RowBatch::Row &row) const {
       // Set the value for the update
       const auto &derived_attribute = target_list[target_id].second;
       val = row.DeriveValue(codegen, *derived_attribute.expr);
-      LOG_INFO("Pushing %d and %p", i, val.GetValue());
       const auto &sql_type = val.GetType().GetSqlType();
 
       // Check if it's NULL

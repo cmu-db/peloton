@@ -6,6 +6,10 @@
 #include "catalog/manager.h"
 #include "common/container_tuple.h"
 #include "storage/tile_group.h"
+#include "../include/type/value.h"
+#include "../include/logging/log_buffer.h"
+#include "../include/common/internal_types.h"
+#include "type/value_peeker.h"
 
 
 namespace peloton{
@@ -61,8 +65,32 @@ void LogBuffer::WriteRecord(LogRecord &record) {
       PL_ASSERT(false);
     }
     case LogRecordType::TUPLE_UPDATE: {
-      LOG_ERROR("Update logging not supported");
-      PL_ASSERT(false);
+      auto &manager = catalog::Manager::GetInstance();
+      auto tuple_pos = record.GetItemPointer();
+      auto old_tuple_pos = record.GetOldItemPointer();
+      auto tg = manager.GetTileGroup(tuple_pos.block).get();
+
+      // Write down the database id and the table id
+      log_buffer_.WriteLong(tg->GetDatabaseId());
+      log_buffer_.WriteLong(tg->GetTableId());
+
+      log_buffer_.WriteLong(old_tuple_pos.block);
+      log_buffer_.WriteLong(old_tuple_pos.offset);
+
+      log_buffer_.WriteLong(tuple_pos.block);
+      log_buffer_.WriteLong(tuple_pos.offset);
+
+      peloton::type::Value *values_array = reinterpret_cast<peloton::type::Value *>(record.GetValuesArray());
+      TargetList *offsets = record.GetOffsets();
+      for (uint32_t i = 0; i < record.GetNumValues(); i++) {
+        //TODO(akanjani): Check if just copying the offset info will perform better
+        LOG_INFO("Offset %u updated value %d", ((*offsets)[i]).first,
+                 peloton::type::ValuePeeker::PeekInteger(values_array[i]));
+        log_buffer_.WriteInt(((*offsets)[i]).first);
+        values_array[i].SerializeTo(log_buffer_);
+      }
+
+      break;
     }
     default: {
       LOG_ERROR("Unsupported log record type");

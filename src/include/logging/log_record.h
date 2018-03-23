@@ -16,7 +16,7 @@
 #include "common/item_pointer.h"
 #include "common/macros.h"
 #include "type/value.h"
-#include "codegen/value.h"
+#include "../common/internal_types.h"
 
 namespace peloton {
 namespace logging {
@@ -51,9 +51,13 @@ public:
 
   inline void SetTransactionId(const txn_id_t txn_id) { txn_id_ = txn_id; }
 
-  inline void SetDiffVector(char *diff_array, uint32_t diff_size) {
-    diff_array_ = diff_array;
-    diff_size_ = diff_size;
+  inline void SetValuesArray(char *diff_array, uint32_t num_values) {
+    values_ = diff_array;
+    num_values_ = num_values;
+  }
+
+  inline void SetOffsetsArray(TargetList *arr) {
+    offsets_ = arr;
   }
 
   inline const ItemPointer &GetItemPointer() { return tuple_pos_; }
@@ -64,9 +68,11 @@ public:
 
   inline cid_t GetCommitId() { return cid_; }
 
-  inline char *GetDiffArray() { return diff_array_; }
+  inline char *GetValuesArray() { return values_; }
 
-  inline uint32_t GetDiffSize() { return diff_size_; }
+  inline uint32_t GetNumValues() { return num_values_; }
+
+  inline TargetList *GetOffsets() { return offsets_; }
 
   inline txn_id_t GetTransactionId() { return txn_id_; }
 
@@ -83,9 +89,11 @@ private:
 
   cid_t cid_;
 
-  char *diff_array_;
+  char *values_;
 
-  uint32_t diff_size_;
+  TargetList *offsets_;
+
+  uint32_t num_values_;
 };
 
 

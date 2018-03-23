@@ -28,8 +28,6 @@
 #include "logging/log_buffer.h"
 #include "logging/wal_logger.h"
 #include "threadpool/logger_queue_pool.h"
-#include "type/serializeio.h"
-#include "type/value_peeker.h"
 #include "../include/type/value.h"
 #include "../include/codegen/value.h"
 #include "../include/codegen/updater.h"
@@ -159,19 +157,8 @@ void Updater::Update(char *diff_array, uint32_t diff_size) {
           LogRecordType::TUPLE_UPDATE, new_location_, txn->GetEpochId(),
           txn->GetTransactionId(), txn->GetCommitId());
   record.SetOldItemPointer(old_location_);
-  record.SetDiffVector(diff_array, diff_size);
-
-  LOG_INFO("The diff array is %p and the size is %u", diff_array, diff_size);
-  std::vector<peloton::codegen::WrappedTuple> diff_vector;
-  diff_vector.emplace_back(
-      reinterpret_cast<peloton::type::Value *>(diff_array), diff_size);
-  uint32_t offset = 0;
-  for (const auto &it : diff_vector) {
-    for (const auto &itr : it.tuple_) {
-      LOG_INFO("offset = %u, value = %d", ((*target_list_)[offset]).first, peloton::type::ValuePeeker::PeekInteger(itr));
-      offset++;
-    }
-  }
+  record.SetValuesArray(diff_array, diff_size);
+  record.SetOffsetsArray(target_list_);
 
   txn->GetLogBuffer()->WriteRecord(record);
 
@@ -215,7 +202,7 @@ void Updater::UpdatePK(char *diff_array, uint32_t diff_size) {
           LogRecordType::TUPLE_UPDATE, new_location_, txn->GetEpochId(),
           txn->GetTransactionId(), txn->GetCommitId());
   record.SetOldItemPointer(old_location_);
-  record.SetDiffVector(diff_array, diff_size);
+  record.SetValuesArray(diff_array, diff_size);
 
   txn->GetLogBuffer()->WriteRecord(record);
 
