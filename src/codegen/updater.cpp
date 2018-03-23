@@ -9,7 +9,7 @@
 // Copyright (c) 2015-17, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
-
+#include "codegen/buffering_consumer.h"
 #include "codegen/updater.h"
 #include "codegen/transaction_runtime.h"
 #include "common/container_tuple.h"
@@ -28,8 +28,11 @@
 #include "logging/log_buffer.h"
 #include "logging/wal_logger.h"
 #include "threadpool/logger_queue_pool.h"
+#include "type/serializeio.h"
+#include "type/value_peeker.h"
 #include "../include/type/value.h"
 #include "../include/codegen/value.h"
+#include "../include/codegen/updater.h"
 
 namespace peloton {
 namespace codegen {
@@ -119,7 +122,7 @@ peloton::type::AbstractPool *Updater::GetPool() {
   return tile_->GetPool();
 }
 
-void Updater::Update(peloton::codegen::Delta *diff_array, uint32_t diff_size) {
+void Updater::Update(char *diff_array, uint32_t diff_size) {
   PL_ASSERT(table_ != nullptr && executor_context_ != nullptr);
   LOG_TRACE("Updating tuple <%u, %u> from table '%s' (db ID: %u, table ID: %u)",
             old_location_.block, old_location_.offset,
@@ -159,13 +162,17 @@ void Updater::Update(peloton::codegen::Delta *diff_array, uint32_t diff_size) {
   record.SetDiffVector(diff_array, diff_size);
 
   LOG_INFO("The diff array is %p and the size is %u", diff_array, diff_size);
-//  std::vector<peloton::codegen::Delta> *delta_changes = new std::vector<peloton::codegen::Delta>(diff_array,
-//  diff_array + diff_size);
-  peloton::codegen::Delta *p = reinterpret_cast<peloton::codegen::Delta *>(diff_array);
-  for (unsigned int i = 0; i < diff_size; i++) {
-    LOG_INFO("column offset %u, %p", p->first, p->second.GetValue());
-    p++;
+  std::vector<peloton::codegen::WrappedTuple> diff_vector;
+  diff_vector.emplace_back(
+      reinterpret_cast<peloton::type::Value *>(diff_array), diff_size);
+  uint32_t offset = 0;
+  for (const auto &it : diff_vector) {
+    for (const auto &itr : it.tuple_) {
+      LOG_INFO("offset = %u, value = %d", ((*target_list_)[offset]).first, peloton::type::ValuePeeker::PeekInteger(itr));
+      offset++;
+    }
   }
+
   txn->GetLogBuffer()->WriteRecord(record);
 
   if(txn->GetLogBuffer()->HasThresholdExceeded()) {
@@ -182,7 +189,7 @@ void Updater::Update(peloton::codegen::Delta *diff_array, uint32_t diff_size) {
   executor_context_->num_processed++;
 }
 
-void Updater::UpdatePK(peloton::codegen::Delta *diff_array, uint32_t diff_size) {
+void Updater::UpdatePK(char *diff_array, uint32_t diff_size) {
   PL_ASSERT(table_ != nullptr && executor_context_ != nullptr);
   LOG_TRACE("Updating tuple <%u, %u> from table '%s' (db ID: %u, table ID: %u)",
             old_location_.block, old_location_.offset,

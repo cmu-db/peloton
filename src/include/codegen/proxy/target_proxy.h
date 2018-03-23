@@ -27,12 +27,5 @@ PROXY(Target) {
 };
 
 TYPE_BUILDER(Target, peloton::Target);
-
-PROXY(Delta) {
-    DECLARE_MEMBER(0, char[sizeof(peloton::codegen::Delta)], opaque);
-    DECLARE_TYPE;
-};
-
-TYPE_BUILDER(Delta, peloton::codegen::Delta);
 }  // namespace codegen
 }  // namespace peloton

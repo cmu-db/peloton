@@ -51,7 +51,7 @@ public:
 
   inline void SetTransactionId(const txn_id_t txn_id) { txn_id_ = txn_id; }
 
-  inline void SetDiffVector(peloton::codegen::Delta *diff_array, uint32_t diff_size) {
+  inline void SetDiffVector(char *diff_array, uint32_t diff_size) {
     diff_array_ = diff_array;
     diff_size_ = diff_size;
   }
@@ -64,7 +64,7 @@ public:
 
   inline cid_t GetCommitId() { return cid_; }
 
-  inline peloton::codegen::Delta *GetDiffArray() { return diff_array_; }
+  inline char *GetDiffArray() { return diff_array_; }
 
   inline uint32_t GetDiffSize() { return diff_size_; }
 
@@ -83,7 +83,7 @@ private:
 
   cid_t cid_;
 
-  peloton::codegen::Delta *diff_array_;
+  char *diff_array_;
 
   uint32_t diff_size_;
 };

@@ -16,7 +16,6 @@ namespace peloton {
 namespace codegen {
 
 DEFINE_TYPE(Target, "peloton::Target", MEMBER(opaque));
-DEFINE_TYPE(Delta, "peloton::codegen::Delta", MEMBER(opaque));
 
 }  // namespace codegen
 }  // namespace peloton
