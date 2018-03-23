@@ -15,6 +15,7 @@
 #include <string>
 #include <cstdio>
 #include <utility>
+#include <functional>
 #include "capnp/ez-rpc.h"
 #include "peloton/capnp/peloton_service.capnp.h"
 #include "common/notifiable_task.h"
@@ -28,39 +29,48 @@ class BrainEnvironment {
 };
 
 class BrainJob {
+  friend class Brain;
  public:
+  explicit BrainJob(BrainEnvironment *env) : env_(env) {}
+  virtual ~BrainJob() = default;
+  inline void Invoke() { OnJobInvocation(env_); }
   // TODO(tianyu): Extend this interface for richer interaction
-  virtual void RunJob(BrainEnvironment *) = 0;
+  virtual void OnJobInvocation(BrainEnvironment *) = 0;
+ private:
+  BrainEnvironment *env_;
 };
 
-class ExampleBrainJob: public BrainJob {
+class SimpleBrainJob : public BrainJob {
  public:
-   void RunJob(BrainEnvironment *) override {
-     // TODO(tianyu): Replace with real address
-     capnp::EzRpcClient client("localhost:15445");
-     PelotonService::Client peloton_service = client.getMain<PelotonService>();
-     auto request = peloton_service.createIndexRequest();
-     request.getRequest().setIndexKeys(42);
-     auto response = request.send().wait(client.getWaitScope());
-   }
+  explicit SimpleBrainJob(BrainEnvironment *env,
+                          std::function<void(BrainEnvironment *)> task)
+      : BrainJob(env), task_(std::move(task)) {}
+  inline void OnJobInvocation(BrainEnvironment *env) override { task_(env); }
+ private:
+  std::function<void(BrainEnvironment *)> task_;
 };
 
 class Brain {
  public:
   // TODO(tianyu): Add necessary parameters to initialize the brain's resources
   Brain() : scheduler_(0) {}
+  ~Brain() {
+    for (auto entry : jobs_)
+      delete entry.second;
+    for (auto entry : job_handles_)
+      event_free(entry.second);
+  }
 
+  template <typename BrainJob, typename... Args>
   inline void RegisterJob(const struct timeval *period,
-                          std::string name,
-                          BrainJob &job) {
-    auto callback = [](int, short, void *pair) {
-      auto *job_env_pair = reinterpret_cast<std::pair<BrainJob *, BrainEnvironment *> *>(pair);
-      job_env_pair->first->RunJob(job_env_pair->second);
+                          std::string name, Args... args) {
+    auto *job = new BrainJob(&env_, args...);
+    jobs_[name] = job;
+    auto callback = [](int, short, void *arg) {
+      reinterpret_cast<BrainJob *>(arg)->Invoke();
     };
-    // TODO(tianyu) Deal with this memory
-    auto *pair = new std::pair<BrainJob *, BrainEnvironment *>(&job, &env_);
     job_handles_[name] =
-        scheduler_.RegisterPeriodicEvent(period, callback, pair);
+        scheduler_.RegisterPeriodicEvent(period, callback, job);
   }
 
   inline void Run() {
@@ -73,6 +83,7 @@ class Brain {
 
  private:
   NotifiableTask scheduler_;
+  std::unordered_map<std::string, BrainJob *> jobs_;
   std::unordered_map<std::string, struct event *> job_handles_;
   BrainEnvironment env_;
 };

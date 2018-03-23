@@ -62,6 +62,7 @@ class NotifiableTask {
    */
   inline int Id() const { return task_id_; }
 
+
   /**
    * @brief Register an event with the event base associated with this
    * notifiable task.
