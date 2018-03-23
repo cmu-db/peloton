@@ -104,7 +104,8 @@ void StatsStorage::InsertOrUpdateColumnStats(
     oid_t database_id, oid_t table_id, oid_t column_id, int num_rows,
     double cardinality, double frac_null, std::string most_common_vals,
     std::string most_common_freqs, std::string histogram_bounds,
-    std::string column_name, bool has_index, concurrency::TransactionContext *txn) {
+    std::string column_name, bool has_index,
+    concurrency::TransactionContext *txn) {
   LOG_TRACE("InsertOrUpdateColumnStats, %d, %lf, %lf, %s, %s, %s", num_rows,
             cardinality, frac_null, most_common_vals.c_str(),
             most_common_freqs.c_str(), histogram_bounds.c_str());
@@ -215,15 +216,12 @@ std::shared_ptr<ColumnStats> StatsStorage::ConvertVectorToColumnStats(
  *
  * The return value is the shared_ptr of TableStats wrapper.
  */
-std::shared_ptr<TableStats> StatsStorage::GetTableStats(oid_t database_id,
-                                                        oid_t table_id) {
+std::shared_ptr<TableStats> StatsStorage::GetTableStats(
+    oid_t database_id, oid_t table_id, concurrency::TransactionContext *txn) {
   auto column_stats_catalog = catalog::ColumnStatsCatalog::GetInstance(nullptr);
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
   std::map<oid_t, std::unique_ptr<std::vector<type::Value>>> column_stats_map;
   column_stats_catalog->GetTableStats(database_id, table_id, txn,
                                       column_stats_map);
-  txn_manager.CommitTransaction(txn);
 
   std::vector<std::shared_ptr<ColumnStats>> column_stats_ptrs;
   for (auto it = column_stats_map.begin(); it != column_stats_map.end(); ++it) {
@@ -242,10 +240,9 @@ std::shared_ptr<TableStats> StatsStorage::GetTableStats(oid_t database_id,
  * The return value is the shared_ptr of TableStats wrapper.
  */
 std::shared_ptr<TableStats> StatsStorage::GetTableStats(
-    oid_t database_id, oid_t table_id, std::vector<oid_t> column_ids) {
+    oid_t database_id, oid_t table_id, std::vector<oid_t> column_ids,
+    concurrency::TransactionContext *txn) {
   auto column_stats_catalog = catalog::ColumnStatsCatalog::GetInstance(nullptr);
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
   std::map<oid_t, std::unique_ptr<std::vector<type::Value>>> column_stats_map;
   column_stats_catalog->GetTableStats(database_id, table_id, txn,
                                       column_stats_map);
@@ -299,8 +296,8 @@ ResultType StatsStorage::AnalyzeStatsForAllTables(
  * AnalyzeStatsForTable - This function analyzes the stats for one table and
  * sotre the stats in column_stats_catalog.
  */
-ResultType StatsStorage::AnalyzeStatsForTable(storage::DataTable *table,
-                                              concurrency::TransactionContext *txn) {
+ResultType StatsStorage::AnalyzeStatsForTable(
+    storage::DataTable *table, concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     LOG_TRACE("Do not have transaction to analyze the table stats: %s",
               table->GetName().c_str());

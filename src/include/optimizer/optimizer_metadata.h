@@ -40,6 +40,7 @@ class OptimizerMetadata {
   catalog::CatalogCache *catalog_cache;
   unsigned int timeout_limit;
   Timer<std::milli> timer;
+  concurrency::TransactionContext* txn;
 
   void SetTaskPool(OptimizerTaskPool *task_pool) {
     this->task_pool = task_pool;

@@ -155,6 +155,11 @@ SETTING_bool(brain,
             false,
             true, true)
 
+SETTING_string(peloton_address,
+               "ip and port of the peloton rpc service, address:port",
+               "127.0.0.1:15445",
+               false, false)
+
 // Size of the brain task queue
 SETTING_int(brain_task_queue_size,
             "Brain Task Queue Size (default: 32)",
