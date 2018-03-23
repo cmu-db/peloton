@@ -1032,25 +1032,21 @@ ProcessResult PostgresProtocolHandler::ProcessStartupPacket(
 
 ProcessResult PostgresProtocolHandler::Process(Buffer &rbuf,
                                                const size_t thread_id) {
-  InputPacket rpkt;
-  rpkt.Reset();
-  if (!ParseInputPacket(rbuf, rpkt, init_stage_))
+  if (!ParseInputPacket(rbuf, request_, init_stage_))
     return ProcessResult::MORE_DATA_REQUIRED;
 
   ProcessResult process_status;
   if (init_stage_) {
-    process_status = ProcessInitialPacket(&rpkt);
+    process_status = ProcessInitialPacket(&request_);
   } else {
-    process_status = ProcessNormalPacket(&rpkt, thread_id);
+    process_status = ProcessNormalPacket(&request_, thread_id);
   }
+
+  request_.Reset();
 
   return process_status;
 }
 
-/*
- * process_packet - Main switch block; process incoming packets,
- *  Returns false if the session needs to be closed.
- */
 ProcessResult PostgresProtocolHandler::ProcessNormalPacket(
     InputPacket *pkt, const size_t thread_id) {
   LOG_TRACE("Message type: %c", static_cast<unsigned char>(pkt->msg_type));

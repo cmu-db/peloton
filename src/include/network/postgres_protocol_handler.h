@@ -42,8 +42,10 @@ class PostgresProtocolHandler : public ProtocolHandler {
   ~PostgresProtocolHandler();
   /**
    * Parse the content in the buffer and process to generate results.
-   * thread_id is the thread of current running thread. This is used
+   * @param rbuf The read buffer of network
+   * @param thread_id The thread of current running thread. This is used
    * to generate txn
+   * @return  @see ProcessResult
    */
   ProcessResult Process(Buffer &rbuf, size_t thread_id);
 
@@ -70,16 +72,32 @@ class PostgresProtocolHandler : public ProtocolHandler {
   // STATIC HELPERS
   //===--------------------------------------------------------------------===//
 
-  // Parse the input packet based on if it is the startup packet
+  /**
+   * @brief Parse the input packet from rbuf
+   * @param rbuf network read buffer
+   * @param rpkt the postgres rpkt we want to parse to
+   * @param startup_format whether we want the rpkt to be of startup packet
+   * format
+   *        (i.e. no type byte)
+   * @return true if the parsing is complete
+   */
   static bool ParseInputPacket(Buffer &rbuf, InputPacket &rpkt,
                                bool startup_format);
 
-  // Packet Reading Function
-  // Extracts the contents of Postgres packet from the read socket buffer
+  /**
+   * @brief Helper function to extract the body of Postgres packet from the
+   * read buffer
+   * @param rbuf network read buffer
+   * @param rpkt the postgres rpkt we want to parse to
+   * @return true if the parsing is complete
+   */
   static bool ReadPacket(Buffer &rbuf, InputPacket &rpkt);
 
-  // Packet Reading Function
-  // Extracts the header of a Postgres packet from the read socket buffer
+  /**
+   * @brief Helper function to extract the header of a Postgres packet from the
+   * read buffer
+   * @see ParseInputPacket from param and return value
+   */
   static bool ReadPacketHeader(Buffer &rbuf, InputPacket &rpkt,
                                bool startup_format);
 
@@ -96,7 +114,7 @@ class PostgresProtocolHandler : public ProtocolHandler {
    * @brief Main Switch function to process general packets
    */
   ProcessResult ProcessNormalPacket(InputPacket *pkt, const size_t thread_id);
-  
+
   /**
    * @brief Helper function to process startup packet
    * @param proto_version protocol version of the session

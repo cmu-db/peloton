@@ -72,10 +72,10 @@ namespace {
     return
 #define SET_STATE_TO(s) \
   {                     \
-    ConnState::s,
-#define AND_INVOKE(m)                         \
-  ([](ConnectionHandle &w) { return w.m(); }) \
-  }                                           \
+  ConnState::s,
+#define AND_INVOKE(m)                          \
+  ([](ConnectionHandle & w) { return w.m(); }) \
+  }                                            \
   ;
 #define AND_WAIT                                        \
   ([](ConnectionHandle &) { return Transition::NONE; }) \
@@ -123,8 +123,8 @@ DEF_TRANSITION_GRAPH
 END_DEF
     // clang-format on
 
-    void ConnectionHandle::StateMachine::Accept(Transition action,
-                                                ConnectionHandle &connection) {
+void ConnectionHandle::StateMachine::Accept(Transition action,
+                                            ConnectionHandle &connection) {
   Transition next = action;
   while (next != Transition::NONE) {
     transition_result result = Delta_(current_state_, next);
@@ -158,12 +158,10 @@ ConnectionHandle::ConnectionHandle(int sock_fd, ConnectionHandlerTask *handler,
 
   // TODO(Tianyu): should put the initialization else where.. check correctness
   // first.
-  traffic_cop_.SetTaskCallback(
-      [](void *arg) {
-        struct event *event = static_cast<struct event *>(arg);
-        event_active(event, EV_WRITE, 0);
-      },
-      workpool_event);
+  traffic_cop_.SetTaskCallback([](void *arg) {
+    struct event *event = static_cast<struct event *>(arg);
+    event_active(event, EV_WRITE, 0);
+  }, workpool_event);
 }
 
 void ConnectionHandle::UpdateEventFlags(short flags) {
@@ -293,9 +291,9 @@ Transition ConnectionHandle::FillReadBuffer() {
             }
           }
           default: {
-            throw NetworkProcessException(
-                "SSL read error: %d, error code: " + std::to_string(err) +
-                " error code:" + std::to_string(ecode));
+            throw NetworkProcessException("SSL read error: %d, error code: " +
+                                          std::to_string(err) + " error code:" +
+                                          std::to_string(ecode));
           }
         }
       } else {

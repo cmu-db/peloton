@@ -148,16 +148,7 @@ class ConnectionHandle {
   friend class ConnectionHandleFactory;
 
   ConnectionHandle(int sock_fd, ConnectionHandlerTask *handler,
-                   std::shared_ptr<Buffer> rbuf,
-                   std::shared_ptr<Buffer> wbuf);
-
-  ProcessResult ProcessInitial();
-
-  /**
-   * Extracts the header of a Postgres start up packet from the read socket
-   * buffer
-   */
-  static bool ReadStartupPacketHeader(Buffer &rbuf, InputPacket &rpkt);
+                   std::shared_ptr<Buffer> rbuf, std::shared_ptr<Buffer> wbuf);
 
   /**
    * Writes a packet's header (type, size) into the write buffer
@@ -176,8 +167,17 @@ class ConnectionHandle {
   WriteState FlushWriteBuffer();
 
   /**
-   * Process SSL handshake to generate valid SSL connection context
-   * for further communications
+   * Flush out responses and process SSL handshake
+   */
+  Transition ProcessWrite_SSLHandshake();
+
+  /**
+   * @brief: process SSL handshake to generate valid SSL
+   * connection context for further communications
+   * @return FINISH when the SSL handshake failed
+   *         PROCEED when the SSL handshake success
+   *         NEED_DATA when the SSL handshake is partially done due to network
+   *         latency
    */
   Transition SSLHandshake();
 
@@ -201,10 +201,13 @@ class ConnectionHandle {
   }
 
   /**
-   * Determine if there is still responses in the buffer
+   * @brief: Determine if there is still responses in the buffer
+   * @return true if there is still responses to flush out in either wbuf or
+   * responses
    */
   inline bool HasResponse() {
-    return (protocol_handler_->responses_.size() != 0) || (wbuf_->buf_size != 0);
+    return (protocol_handler_->responses_.size() != 0) ||
+           (wbuf_->buf_size != 0);
   }
 
   int sock_fd_;                            // socket file descriptor

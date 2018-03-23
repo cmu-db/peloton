@@ -138,8 +138,8 @@ struct OutputPacket {
   size_t ptr;                   // ByteBuf cursor, which is used for get and put
   NetworkMessageType msg_type;  // header
 
-  bool single_type_pkt;         // there would be only a pkt type being written to the
-                                // buffer when this flag is true
+  bool single_type_pkt;  // there would be only a pkt type being written to the
+                         // buffer when this flag is true
   bool skip_header_write;  // whether we should write header to socket wbuf
   size_t write_ptr;        // cursor used to write packet content to socket wbuf
 
@@ -160,8 +160,7 @@ struct OutputPacket {
  */
 
 /* packet_put_byte - used to write a single byte into a packet */
-extern void
-PacketPutByte(OutputPacket *pkt, const uchar c);
+extern void PacketPutByte(OutputPacket *pkt, const uchar c);
 
 /* packet_put_string - used to write a string into a packet */
 extern void PacketPutStringWithTerminator(OutputPacket *pkt,

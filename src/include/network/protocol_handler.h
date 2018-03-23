@@ -29,9 +29,11 @@ class ProtocolHandler {
 
   virtual ~ProtocolHandler();
 
+  // TODO(Tianyi) Move thread_id to traffic_cop
+  // TODO(Tianyi) Make wbuf as an parameter here
   /**
    * Main switch case wrapper to process every packet apart from the startup
-   * packet. Avoid flushing the response for extended protocols. 
+   * packet. Avoid flushing the response for extended protocols.
    */
   virtual ProcessResult Process(Buffer &rbuf, const size_t thread_id);
 
@@ -53,7 +55,6 @@ class ProtocolHandler {
 
   // The traffic cop used for this connection
   tcop::TrafficCop *traffic_cop_;
-
 };
 
 }  // namespace network
