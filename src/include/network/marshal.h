@@ -138,6 +138,8 @@ struct OutputPacket {
   size_t ptr;                   // ByteBuf cursor, which is used for get and put
   NetworkMessageType msg_type;  // header
 
+  bool single_type_pkt;         // there would be only a pkt type being written to the
+                                // buffer when this flag is true
   bool skip_header_write;  // whether we should write header to socket wbuf
   size_t write_ptr;        // cursor used to write packet content to socket wbuf
 
@@ -146,6 +148,7 @@ struct OutputPacket {
     buf.resize(BUFFER_INIT_SIZE);
     buf.shrink_to_fit();
     buf.clear();
+    single_type_pkt = false;
     len = ptr = write_ptr = 0;
     msg_type = NetworkMessageType::NULL_COMMAND;
     skip_header_write = true;

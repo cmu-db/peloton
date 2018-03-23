@@ -58,6 +58,7 @@ const std::unordered_map<std::string, std::string>
 
 PostgresProtocolHandler::PostgresProtocolHandler(tcop::TrafficCop *traffic_cop)
     : ProtocolHandler(traffic_cop),
+      init_stage_(true),
       txn_state_(NetworkTransactionStateType::IDLE) {}
 
 PostgresProtocolHandler::~PostgresProtocolHandler() {}
@@ -976,6 +977,7 @@ ProcessResult PostgresProtocolHandler::ProcessInitialPacket(InputPacket *pkt) {
   int32_t proto_version = PacketGetInt(pkt, sizeof(int32_t));
   LOG_INFO("protocol version: %d", proto_version);
 
+  force_flush_ = true;
   // TODO(Yuchen): consider more about return value
   if (proto_version == SSL_MESSAGE_VERNO) {
     LOG_TRACE("process SSL MESSAGE");
@@ -983,8 +985,8 @@ ProcessResult PostgresProtocolHandler::ProcessInitialPacket(InputPacket *pkt) {
     bool ssl_able = (PelotonServer::GetSSLLevel() != SSLLevel::SSL_DISABLE);
     response->msg_type =
         ssl_able ? NetworkMessageType::SSL_YES : NetworkMessageType::SSL_NO;
+    response->single_type_pkt = true;
     responses_.push_back(std::move(response));
-    force_flush_ = true;
     return ssl_able ? ProcessResult::NEED_SSL_HANDSHAKE
                     : ProcessResult::COMPLETE;
   } else {

@@ -121,10 +121,10 @@ DEF_TRANSITION_GRAPH
   END_DEF
 
 END_DEF
-// clang-format on
+    // clang-format on
 
-void ConnectionHandle::StateMachine::Accept(Transition action,
-                                            ConnectionHandle &connection) {
+    void ConnectionHandle::StateMachine::Accept(Transition action,
+                                                ConnectionHandle &connection) {
   Transition next = action;
   while (next != Transition::NONE) {
     transition_result result = Delta_(current_state_, next);
@@ -466,16 +466,17 @@ WriteState ConnectionHandle::BufferWriteBytesHeader(OutputPacket *pkt) {
     wbuf_->buf[wbuf_->buf_ptr++] = type;
   }
 
-  // make len include its field size as well
-  len_nb = htonl(len + sizeof(int32_t));
+  if (!pkt->single_type_pkt) {
+    // make len include its field size as well
+    len_nb = htonl(len + sizeof(int32_t));
 
-  // TODO (Tianyi) Check why we need finish startup packet before
-  // append the bytes of this integer in network-byte order
-  std::copy(reinterpret_cast<uchar *>(&len_nb),
-            reinterpret_cast<uchar *>(&len_nb) + 4,
-            std::begin(wbuf_->buf) + wbuf_->buf_ptr);
-  // move the write buffer pointer and update size of the socket buffer
-  wbuf_->buf_ptr += sizeof(int32_t);
+    // append the bytes of this integer in network-byte order
+    std::copy(reinterpret_cast<uchar *>(&len_nb),
+              reinterpret_cast<uchar *>(&len_nb) + 4,
+              std::begin(wbuf_->buf) + wbuf_->buf_ptr);
+    // move the write buffer pointer and update size of the socket buffer
+    wbuf_->buf_ptr += sizeof(int32_t);
+  }
 
   wbuf_->buf_size = wbuf_->buf_ptr;
 
@@ -558,7 +559,7 @@ Transition ConnectionHandle::CloseSocket() {
     conn_SSL_context = nullptr;
   }
 
-  while(true) {
+  while (true) {
     int status = close(sock_fd_);
     if (status < 0) {
       // failed close
@@ -601,8 +602,7 @@ Transition ConnectionHandle::SSLHandshake() {
   // clear current thread's error queue before any OpenSSL call
   ERR_clear_error();
   int ssl_accept_ret = SSL_accept(conn_SSL_context);
-  if (ssl_accept_ret > 0)
-    return Transition::PROCEED;
+  if (ssl_accept_ret > 0) return Transition::PROCEED;
 
   int err = SSL_get_error(conn_SSL_context, ssl_accept_ret);
   int ecode = ERR_get_error();
