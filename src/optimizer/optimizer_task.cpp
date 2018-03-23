@@ -249,7 +249,8 @@ void DeriveStats::execute() {
   }
 
   StatsCalculator calculator;
-  calculator.CalculateStats(gexpr_, required_cols_, &context_->metadata->memo);
+  calculator.CalculateStats(gexpr_, required_cols_, &context_->metadata->memo,
+                            context_->metadata->txn);
   gexpr_->SetDerivedStats();
 }
 //===--------------------------------------------------------------------===//
@@ -291,8 +292,8 @@ void OptimizeInputs::execute() {
       // 1. Collect stats needed and cache them in the group
       // 2. Calculate cost based on children's stats
       CostCalculator cost_calculator;
-      cur_total_cost_ +=
-          cost_calculator.CalculateCost(group_expr_, &context_->metadata->memo);
+      cur_total_cost_ += cost_calculator.CalculateCost(
+          group_expr_, &context_->metadata->memo, context_->metadata->txn);
     }
 
     for (; cur_child_idx_ < (int)group_expr_->GetChildrenGroupsSize();
@@ -367,7 +368,8 @@ void OptimizeInputs::execute() {
               std::make_shared<PropertySet>(extended_output_properties);
           CostCalculator cost_calculator;
           cur_total_cost_ += cost_calculator.CalculateCost(
-              memo_enforced_expr, &context_->metadata->memo);
+              memo_enforced_expr, &context_->metadata->memo,
+              context_->metadata->txn);
 
           // Update hash tables for group and group expression
           memo_enforced_expr->SetLocalHashTable(
