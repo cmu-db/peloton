@@ -167,11 +167,6 @@ class ConnectionHandle {
   WriteState FlushWriteBuffer();
 
   /**
-   * Flush out responses and process SSL handshake
-   */
-  Transition ProcessWrite_SSLHandshake();
-
-  /**
    * @brief: process SSL handshake to generate valid SSL
    * connection context for further communications
    * @return FINISH when the SSL handshake failed
