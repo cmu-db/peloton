@@ -162,6 +162,9 @@ void Catalog::Bootstrap() {
   SettingsCatalog::GetInstance(txn);
   LanguageCatalog::GetInstance(txn);
 
+  // TODO: change pg_proc to per database
+  ProcCatalog::GetInstance(txn);
+
   if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
     QueryHistoryCatalog::GetInstance(txn);
   }
