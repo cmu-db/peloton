@@ -32,6 +32,10 @@ namespace test {
 
 class SSLTests : public PelotonTest {};
 
+std::string client_crt = std::string(StringUtil::Format(
+    "%s%s", SOURCE_FOLDER, "/test/network/ssl/client_test.crt"));
+std::string client_key = std::string(StringUtil::Format(
+    "%s%s", SOURCE_FOLDER, "/test/network/ssl/client_test.key"));
 std::string server_crt = std::string(StringUtil::Format(
     "%s%s", SOURCE_FOLDER, "/test/network/ssl/server_test.crt"));
 std::string server_key = std::string(StringUtil::Format(
@@ -47,8 +51,8 @@ void *BasicTest(int port) {
     // forcing the factory to generate psql protocol handler
     pqxx::connection C(StringUtil::Format(
         "host=127.0.0.1 port=%d user=default_database application_name=psql "
-        "sslmode=require sslcert=%s sslkey=%s sslrootcert=%s ",
-        port, server_crt, server_key, root_crt));
+        "sslmode=require sslkey=%s ",
+        port, client_key.c_str()));
 
     pqxx::work txn1(C);
 
