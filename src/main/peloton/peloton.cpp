@@ -49,8 +49,9 @@ void RunPelotonBrain() {
   // TODO(tianyu): register jobs here
   struct timeval one_second;
   one_second.tv_sec = 1;
+  one_second.tv_usec = 0;
 
-  constexpr auto example_task = [](peloton::brain::BrainEnvironment *) {
+  auto example_task = [](peloton::brain::BrainEnvironment *) {
     // TODO(tianyu): Replace with real address
     capnp::EzRpcClient client("localhost:15445");
     PelotonService::Client peloton_service = client.getMain<PelotonService>();
