@@ -39,6 +39,7 @@ namespace catalog {
 class LanguageCatalogObject {
  public:
   LanguageCatalogObject(executor::LogicalTile *tuple);
+  LanguageCatalogObject(codegen::WrappedTuple tuple);
 
   oid_t GetOid() const { return lang_oid_; }
 
@@ -54,7 +55,8 @@ class LanguageCatalog : public AbstractCatalog {
   ~LanguageCatalog();
 
   // Global Singleton
-  static LanguageCatalog &GetInstance(concurrency::TransactionContext *txn = nullptr);
+  static LanguageCatalog &GetInstance(
+      concurrency::TransactionContext *txn = nullptr);
 
   //===--------------------------------------------------------------------===//
   // write Related API

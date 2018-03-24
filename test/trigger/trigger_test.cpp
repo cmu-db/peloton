@@ -151,7 +151,7 @@ class TriggerTests : public PelotonTest {
             DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, table_name, txn);
     txn_manager.CommitTransaction(txn);
     EXPECT_EQ(trigger_number, target_table->GetTriggerNumber());
-    trigger::Trigger *new_trigger = target_table->GetTriggerByIndex(0);
+    trigger::Trigger *new_trigger = target_table->GetTriggerByIndex(trigger_number-1);
     EXPECT_EQ(trigger_name, new_trigger->GetTriggerName());
   }
 };

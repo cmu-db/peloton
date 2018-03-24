@@ -14,6 +14,8 @@
 
 #include "executor/logical_tile.h"
 #include "storage/data_table.h"
+#include "expression/abstract_expression.h"
+#include "expression/expression_util.h"
 #include "type/value_factory.h"
 
 namespace peloton {
@@ -44,31 +46,47 @@ bool DatabaseMetricsCatalog::InsertDatabaseMetrics(
     oid_t database_oid, oid_t txn_committed, oid_t txn_aborted,
     oid_t time_stamp, type::AbstractPool *pool,
     concurrency::TransactionContext *txn) {
-  std::unique_ptr<storage::Tuple> tuple(
-      new storage::Tuple(catalog_table_->GetSchema(), true));
+  (void) pool;
+  std::vector<std::vector<ExpressionPtr>> tuples;
+  tuples.push_back(std::vector<ExpressionPtr>());
+  auto &values = tuples[0];
 
   auto val0 = type::ValueFactory::GetIntegerValue(database_oid);
   auto val1 = type::ValueFactory::GetIntegerValue(txn_committed);
   auto val2 = type::ValueFactory::GetIntegerValue(txn_aborted);
   auto val3 = type::ValueFactory::GetIntegerValue(time_stamp);
 
-  tuple->SetValue(ColumnId::DATABASE_OID, val0, pool);
-  tuple->SetValue(ColumnId::TXN_COMMITTED, val1, pool);
-  tuple->SetValue(ColumnId::TXN_ABORTED, val2, pool);
-  tuple->SetValue(ColumnId::TIME_STAMP, val3, pool);
+  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
+      val0)));
+  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
+      val1)));
+  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
+      val2)));
+  values.push_back(ExpressionPtr(new expression::ConstantValueExpression(
+      val3)));
+
 
   // Insert the tuple into catalog table
-  return InsertTuple(std::move(tuple), txn);
+  return InsertTupleWithCompiledPlan(&tuples, txn);
 }
 
 bool DatabaseMetricsCatalog::DeleteDatabaseMetrics(
     oid_t database_oid, concurrency::TransactionContext *txn) {
-  oid_t index_offset = IndexId::PRIMARY_KEY;  // Primary key index
+  std::vector<oid_t> column_ids(all_column_ids);
 
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
-
-  return DeleteWithIndexScan(index_offset, values, txn);
+  auto *db_oid_expr =
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                                    ColumnId::DATABASE_OID);
+  db_oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+                           catalog_table_->GetOid(),
+                           ColumnId::DATABASE_OID);
+  expression::AbstractExpression *db_oid_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(database_oid).Copy());
+  expression::AbstractExpression *predicate =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, db_oid_expr, db_oid_const_expr);
+  return DeleteWithCompiledSeqScan(column_ids, predicate, txn);
 }
 
 }  // namespace catalog

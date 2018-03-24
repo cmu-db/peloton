@@ -101,6 +101,9 @@ class PelotonCodeGenTest : public PelotonTest {
   ExpressionPtr ConstDecimalExpr(double val);
 
   ExpressionPtr ColRefExpr(type::TypeId type, uint32_t col_id);
+
+  ExpressionPtr ColRefExpr(storage::DataTable &table ,type::TypeId type,
+                                                 uint32_t col_id);
   ExpressionPtr ColRefExpr(type::TypeId type, bool left, uint32_t col_id);
 
   ExpressionPtr CmpExpr(ExpressionType cmp_type, ExpressionPtr &&left,

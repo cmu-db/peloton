@@ -22,7 +22,8 @@ class SettingsCatalog : public AbstractCatalog {
   ~SettingsCatalog();
 
   // Global Singleton
-  static SettingsCatalog &GetInstance(concurrency::TransactionContext *txn = nullptr);
+  static SettingsCatalog &GetInstance(
+      concurrency::TransactionContext *txn = nullptr);
 
   //===--------------------------------------------------------------------===//
   // write Related API
@@ -34,7 +35,8 @@ class SettingsCatalog : public AbstractCatalog {
                      bool is_persistent, type::AbstractPool *pool,
                      concurrency::TransactionContext *txn);
 
-  bool DeleteSetting(const std::string &name, concurrency::TransactionContext *txn);
+  bool DeleteSetting(const std::string &name,
+                     concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
   // Read-only Related API
@@ -57,6 +59,8 @@ class SettingsCatalog : public AbstractCatalog {
     IS_PERSISTENT = 8,
     // Add new columns here in creation order
   };
+
+  std::vector<oid_t> all_column_ids = {0, 1, 2, 3, 4, 5, 6, 7, 8};
 
  private:
   SettingsCatalog(concurrency::TransactionContext *txn);

@@ -199,6 +199,10 @@ ZoneMapManager::GetResultVectorAsZoneMap(
 bool ZoneMapManager::ShouldScanTileGroup(
     storage::PredicateInfo *parsed_predicates, int32_t num_predicates,
     storage::DataTable *table, int64_t tile_group_idx) {
+  // always scan the zone_map catalog to avoid chicken and egg problem
+  if (table->GetName() == ZONE_MAP_CATALOG_NAME) {
+    return true;
+  }
   for (int32_t i = 0; i < num_predicates; i++) {
     // Extract the col_id, operator and predicate_value
     int col_id = parsed_predicates[i].col_id;

@@ -18,6 +18,8 @@
 #include "storage/data_table.h"
 #include "storage/tuple.h"
 #include "type/value_factory.h"
+#include "expression/expression_util.h"
+#include "codegen/buffering_consumer.h"
 
 namespace peloton {
 namespace catalog {
@@ -56,8 +58,9 @@ bool ZoneMapCatalog::InsertColumnStatistics(
     oid_t database_id, oid_t table_id, oid_t tile_group_id, oid_t column_id,
     std::string minimum, std::string maximum, std::string type,
     type::AbstractPool *pool, concurrency::TransactionContext *txn) {
-  std::unique_ptr<storage::Tuple> tuple(
-      new storage::Tuple(catalog_table_->GetSchema(), true));
+ (void) pool;
+ // Create the tuple first
+ std::vector<std::vector<ExpressionPtr>> tuples;
 
   auto val_db_id = type::ValueFactory::GetIntegerValue(database_id);
   auto val_table_id = type::ValueFactory::GetIntegerValue(table_id);
@@ -67,66 +70,172 @@ bool ZoneMapCatalog::InsertColumnStatistics(
   auto val_maximum = type::ValueFactory::GetVarcharValue(maximum);
   auto val_type = type::ValueFactory::GetVarcharValue(type);
 
-  tuple->SetValue(static_cast<int>(ColumnId::DATABASE_ID), val_db_id, nullptr);
-  tuple->SetValue(static_cast<int>(ColumnId::TABLE_ID), val_table_id, nullptr);
-  tuple->SetValue(static_cast<int>(ColumnId::TILE_GROUP_ID), val_tile_group_id,
-                  nullptr);
-  tuple->SetValue(static_cast<int>(ColumnId::COLUMN_ID), val_column_id,
-                  nullptr);
-  tuple->SetValue(static_cast<int>(ColumnId::MINIMUM), val_minimum, pool);
-  tuple->SetValue(static_cast<int>(ColumnId::MAXIMUM), val_maximum, pool);
-  tuple->SetValue(static_cast<int>(ColumnId::TYPE), val_type, pool);
+ auto constant_db_id_expr = new expression::ConstantValueExpression(
+   val_db_id);
+ auto constant_table_id_expr = new expression::ConstantValueExpression(
+   val_table_id);
+ auto constant_tile_group_id_expr = new expression::ConstantValueExpression(
+   val_tile_group_id);
+ auto constant_column_id_expr = new expression::ConstantValueExpression(
+   val_column_id);
+ auto constant_minimum_expr = new expression::ConstantValueExpression(
+   val_minimum);
+ auto constant_maximum_expr = new expression::ConstantValueExpression(
+   val_maximum);
+ auto constant_type_expr = new expression::ConstantValueExpression(
+   val_type);
 
-  bool return_val = InsertTuple(std::move(tuple), txn);
-  return return_val;
+ tuples.push_back(std::vector<ExpressionPtr>());
+ auto &values = tuples[0];
+
+ values.push_back(ExpressionPtr(constant_db_id_expr));
+ values.push_back(ExpressionPtr(constant_table_id_expr));
+ values.push_back(ExpressionPtr(constant_tile_group_id_expr));
+ values.push_back(ExpressionPtr(constant_column_id_expr));
+ values.push_back(ExpressionPtr(constant_minimum_expr));
+ values.push_back(ExpressionPtr(constant_maximum_expr));
+ values.push_back(ExpressionPtr(constant_type_expr));
+
+ return InsertTupleWithCompiledPlan(&tuples, txn);
 }
 
 bool ZoneMapCatalog::DeleteColumnStatistics(
     oid_t database_id, oid_t table_id, oid_t tile_group_id, oid_t column_id,
     concurrency::TransactionContext *txn) {
-  oid_t index_offset = static_cast<int>(IndexId::SECONDARY_KEY_0);
-  std::vector<type::Value> values(
-      {type::ValueFactory::GetIntegerValue(database_id),
-       type::ValueFactory::GetIntegerValue(table_id),
-       type::ValueFactory::GetIntegerValue(tile_group_id),
-       type::ValueFactory::GetIntegerValue(column_id)});
-  return DeleteWithIndexScan(index_offset, values, txn);
+ std::vector<oid_t> column_ids(all_column_ids);
+
+ auto db_oid_expr =
+   new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                        ColumnId::DATABASE_ID);
+ db_oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(), catalog_table_->GetOid(), ColumnId::DATABASE_ID);
+ expression::AbstractExpression *db_oid_const_expr =
+   expression::ExpressionUtil::ConstantValueFactory(
+     type::ValueFactory::GetIntegerValue(database_id).Copy());
+ expression::AbstractExpression *db_oid_equality_expr =
+   expression::ExpressionUtil::ComparisonFactory(
+     ExpressionType::COMPARE_EQUAL, db_oid_expr, db_oid_const_expr);
+
+
+ auto tb_oid_expr =
+   new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                        ColumnId::TABLE_ID);
+ tb_oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(), catalog_table_->GetOid(), ColumnId::TABLE_ID);
+ expression::AbstractExpression *tb_oid_const_expr =
+   expression::ExpressionUtil::ConstantValueFactory(
+     type::ValueFactory::GetIntegerValue(table_id).Copy());
+ expression::AbstractExpression *tb_oid_equality_expr =
+   expression::ExpressionUtil::ComparisonFactory(
+     ExpressionType::COMPARE_EQUAL, tb_oid_expr, tb_oid_const_expr);
+
+ auto tile_gid_expr  =
+   new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                        ColumnId::TILE_GROUP_ID);
+ tile_gid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(), catalog_table_->GetOid(), ColumnId::TILE_GROUP_ID);
+ expression::AbstractExpression *tile_gid_const_expr =
+   expression::ExpressionUtil::ConstantValueFactory(
+     type::ValueFactory::GetIntegerValue(tile_group_id).Copy());
+ expression::AbstractExpression *tile_gid_equality_expr =
+   expression::ExpressionUtil::ComparisonFactory(
+     ExpressionType::COMPARE_EQUAL, tile_gid_expr, tile_gid_const_expr);
+
+ auto col_oid_expr  =
+   new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                        ColumnId::COLUMN_ID);
+ col_oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(), catalog_table_->GetOid(), ColumnId::COLUMN_ID);
+ expression::AbstractExpression *col_oid_const_expr =
+   expression::ExpressionUtil::ConstantValueFactory(
+     type::ValueFactory::GetIntegerValue(column_id).Copy());
+ expression::AbstractExpression *col_id_equality_expr =
+   expression::ExpressionUtil::ComparisonFactory(
+     ExpressionType::COMPARE_EQUAL, col_oid_expr, col_oid_const_expr);
+
+ expression::AbstractExpression *db_and_tb =
+   expression::ExpressionUtil::ConjunctionFactory(
+     ExpressionType::CONJUNCTION_AND, db_oid_equality_expr,
+     tb_oid_equality_expr);
+ expression::AbstractExpression *pred_and_tile =
+   expression::ExpressionUtil::ConjunctionFactory(
+     ExpressionType::CONJUNCTION_AND, db_and_tb, tile_gid_equality_expr);
+ expression::AbstractExpression *predicate =
+   expression::ExpressionUtil::ConjunctionFactory(
+     ExpressionType::CONJUNCTION_AND, pred_and_tile, col_id_equality_expr);
+
+ return DeleteWithCompiledSeqScan(column_ids, predicate, txn);
 }
 
 std::unique_ptr<std::vector<type::Value>> ZoneMapCatalog::GetColumnStatistics(
     oid_t database_id, oid_t table_id, oid_t tile_group_id, oid_t column_id,
     concurrency::TransactionContext *txn) {
-  std::vector<oid_t> column_ids({static_cast<int>(ColumnId::MINIMUM),
-                                 static_cast<int>(ColumnId::MAXIMUM),
-                                 static_cast<int>(ColumnId::TYPE)});
 
-  oid_t index_offset = static_cast<int>(IndexId::SECONDARY_KEY_0);
+  std::vector<oid_t> column_ids(all_column_ids);
 
-  std::vector<type::Value> values(
-      {type::ValueFactory::GetIntegerValue(database_id),
-       type::ValueFactory::GetIntegerValue(table_id),
-       type::ValueFactory::GetIntegerValue(tile_group_id),
-       type::ValueFactory::GetIntegerValue(column_id)});
+ auto db_oid_expr =
+   new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                        ColumnId::DATABASE_ID);
+ db_oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(), catalog_table_->GetOid(), ColumnId::DATABASE_ID);
+  expression::AbstractExpression *db_oid_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(database_id).Copy());
+  expression::AbstractExpression *db_oid_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, db_oid_expr, db_oid_const_expr);
 
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+ auto tb_oid_expr =
+   new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                        ColumnId::TABLE_ID);
+ tb_oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(), catalog_table_->GetOid(), ColumnId::TABLE_ID);
+  expression::AbstractExpression *tb_oid_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(table_id).Copy());
+  expression::AbstractExpression *tb_oid_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, tb_oid_expr, tb_oid_const_expr);
 
-  PELOTON_ASSERT(result_tiles->size() <= 1);  // unique
-  if (result_tiles->size() == 0) {
+ auto tile_gid_expr  =
+   new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                        ColumnId::TILE_GROUP_ID);
+ tile_gid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(), catalog_table_->GetOid(), ColumnId::TILE_GROUP_ID);
+  expression::AbstractExpression *tile_gid_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(tile_group_id).Copy());
+  expression::AbstractExpression *tile_gid_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, tile_gid_expr, tile_gid_const_expr);
+
+ auto col_oid_expr  =
+   new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                        ColumnId::COLUMN_ID);
+ col_oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(), catalog_table_->GetOid(), ColumnId::COLUMN_ID);
+ expression::AbstractExpression *col_oid_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(column_id).Copy());
+  expression::AbstractExpression *col_id_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, col_oid_expr, col_oid_const_expr);
+
+  expression::AbstractExpression *db_and_tb =
+      expression::ExpressionUtil::ConjunctionFactory(
+          ExpressionType::CONJUNCTION_AND, db_oid_equality_expr,
+          tb_oid_equality_expr);
+  expression::AbstractExpression *pred_and_tile =
+      expression::ExpressionUtil::ConjunctionFactory(
+          ExpressionType::CONJUNCTION_AND, db_and_tb, tile_gid_equality_expr);
+  expression::AbstractExpression *predicate =
+      expression::ExpressionUtil::ConjunctionFactory(
+          ExpressionType::CONJUNCTION_AND, pred_and_tile, col_id_equality_expr);
+
+  auto result_tuples = GetResultWithCompiledSeqScan(column_ids, predicate, txn);
+
+  PELOTON_ASSERT(result_tuples.size() <= 1);  // unique
+  if (result_tuples.size() == 0) {
     LOG_DEBUG("Result Tiles = 0");
     return nullptr;
   }
-
-  auto tile = (*result_tiles)[0].get();
-  PELOTON_ASSERT(tile->GetTupleCount() <= 1);
-  if (tile->GetTupleCount() == 0) {
-    return nullptr;
-  }
-
+  auto tuple = result_tuples[0];
   type::Value min, max, actual_type;
-  min = tile->GetValue(0, static_cast<int>(ZoneMapOffset::MINIMUM_OFF));
-  max = tile->GetValue(0, static_cast<int>(ZoneMapOffset::MAXIMUM_OFF));
-  actual_type = tile->GetValue(0, static_cast<int>(ZoneMapOffset::TYPE_OFF));
+  min = tuple.GetValue(ColumnId ::MINIMUM);
+  max = tuple.GetValue(ColumnId::MAXIMUM);
+  actual_type = tuple.GetValue(ColumnId::TYPE);
 
   // min and max are stored as VARCHARs and should be convertd to their
   // original types.

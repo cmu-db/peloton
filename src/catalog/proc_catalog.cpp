@@ -17,6 +17,8 @@
 #include "executor/logical_tile.h"
 #include "storage/data_table.h"
 #include "type/value_factory.h"
+#include "expression/expression_util.h"
+#include "codegen/buffering_consumer.h"
 
 namespace peloton {
 namespace catalog {
@@ -31,6 +33,17 @@ ProcCatalogObject::ProcCatalogObject(executor::LogicalTile *tile,
       arg_types_(StringToTypeArray(tile->GetValue(0, 3).GetAs<const char *>())),
       lang_oid_(tile->GetValue(0, 4).GetAs<oid_t>()),
       src_(tile->GetValue(0, 5).GetAs<const char *>()),
+      txn_(txn) {}
+
+ProcCatalogObject::ProcCatalogObject(codegen::WrappedTuple wrapped_tuple,
+                                     concurrency::TransactionContext *txn)
+    : oid_(wrapped_tuple.GetValue(0).GetAs<oid_t>()),
+      name_(wrapped_tuple.GetValue(1).GetAs<const char *>()),
+      ret_type_(wrapped_tuple.GetValue(2).GetAs<type::TypeId>()),
+      arg_types_(
+          StringToTypeArray(wrapped_tuple.GetValue(3).GetAs<const char *>())),
+      lang_oid_(wrapped_tuple.GetValue(4).GetAs<oid_t>()),
+      src_(wrapped_tuple.GetValue(5).GetAs<const char *>()),
       txn_(txn) {}
 
 std::unique_ptr<LanguageCatalogObject> ProcCatalogObject::GetLanguage() const {
@@ -66,8 +79,9 @@ bool ProcCatalog::InsertProc(const std::string &proname,
                              oid_t prolang, const std::string &prosrc,
                              type::AbstractPool *pool,
                              concurrency::TransactionContext *txn) {
-  std::unique_ptr<storage::Tuple> tuple(
-      new storage::Tuple(catalog_table_->GetSchema(), true));
+  (void) pool;
+  // Create the tuple first
+  std::vector<std::vector<ExpressionPtr>> tuples;
 
   oid_t proc_oid = GetNextOid();
   auto val0 = type::ValueFactory::GetIntegerValue(proc_oid);
@@ -78,32 +92,56 @@ bool ProcCatalog::InsertProc(const std::string &proname,
   auto val4 = type::ValueFactory::GetIntegerValue(prolang);
   auto val5 = type::ValueFactory::GetVarcharValue(prosrc);
 
-  tuple->SetValue(ColumnId::OID, val0, pool);
-  tuple->SetValue(ColumnId::PRONAME, val1, pool);
-  tuple->SetValue(ColumnId::PRORETTYPE, val2, pool);
-  tuple->SetValue(ColumnId::PROARGTYPES, val3, pool);
-  tuple->SetValue(ColumnId::PROLANG, val4, pool);
-  tuple->SetValue(ColumnId::PROSRC, val5, pool);
+  auto constant_expr_0 = new expression::ConstantValueExpression(
+    val0);
+  auto constant_expr_1 = new expression::ConstantValueExpression(
+    val1);
+  auto constant_expr_2 = new expression::ConstantValueExpression(
+    val2);
+  auto constant_expr_3 = new expression::ConstantValueExpression(
+    val3);
+  auto constant_expr_4 = new expression::ConstantValueExpression(
+    val4);
+  auto constant_expr_5 = new expression::ConstantValueExpression(
+    val5);
 
-  // Insert the tuple
-  return InsertTuple(std::move(tuple), txn);
+  tuples.push_back(std::vector<ExpressionPtr>());
+  auto &values = tuples[0];
+  values.push_back(ExpressionPtr(constant_expr_0));
+  values.push_back(ExpressionPtr(constant_expr_1));
+  values.push_back(ExpressionPtr(constant_expr_2));
+  values.push_back(ExpressionPtr(constant_expr_3));
+  values.push_back(ExpressionPtr(constant_expr_4));
+  values.push_back(ExpressionPtr(constant_expr_5));
+
+  return InsertTupleWithCompiledPlan(&tuples, txn);
 }
 
 std::unique_ptr<ProcCatalogObject> ProcCatalog::GetProcByOid(
     oid_t proc_oid, concurrency::TransactionContext *txn) const {
-  std::vector<oid_t> column_ids(all_column_ids);
-  oid_t index_offset = IndexId::PRIMARY_KEY;
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(proc_oid).Copy());
 
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
-  PELOTON_ASSERT(result_tiles->size() <= 1);
+  std::vector<oid_t> column_ids(all_column_ids);
+
+  auto *oid_expr =
+      new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                           ColumnId::OID);
+  oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+                        catalog_table_->GetOid(), ColumnId::OID);
+  expression::AbstractExpression *oid_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(proc_oid).Copy());
+  expression::AbstractExpression *oid_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, oid_expr, oid_const_expr);
+
+  std::vector<codegen::WrappedTuple> result_tuples =
+      GetResultWithCompiledSeqScan(column_ids, oid_equality_expr, txn);
+
+  PELOTON_ASSERT(result_tuples.size() <= 1);
 
   std::unique_ptr<ProcCatalogObject> ret;
-  if (result_tiles->size() == 1) {
-    PELOTON_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-    ret.reset(new ProcCatalogObject((*result_tiles)[0].get(), txn));
+  if (result_tuples.size() == 1) {
+    ret.reset(new ProcCatalogObject(result_tuples[0], txn));
   }
 
   return ret;
@@ -114,21 +152,46 @@ std::unique_ptr<ProcCatalogObject> ProcCatalog::GetProcByName(
     const std::vector<type::TypeId> &proc_arg_types,
     concurrency::TransactionContext *txn) const {
   std::vector<oid_t> column_ids(all_column_ids);
-  oid_t index_offset = IndexId::SECONDARY_KEY_0;
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetVarcharValue(proc_name).Copy());
-  values.push_back(
-      type::ValueFactory::GetVarcharValue(TypeIdArrayToString(proc_arg_types))
-          .Copy());
 
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
-  PELOTON_ASSERT(result_tiles->size() <= 1);
+  auto *proc_name_expr =
+    new expression::TupleValueExpression(type::TypeId::VARCHAR, 0,
+                                                    ColumnId::PRONAME);
+  proc_name_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+                              catalog_table_->GetOid(), ColumnId::PRONAME);
+
+  expression::AbstractExpression *proc_name_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetVarcharValue(proc_name, nullptr).Copy());
+  expression::AbstractExpression *proc_name_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, proc_name_expr, proc_name_const_expr);
+
+  auto *proc_args_expr =
+    new expression::TupleValueExpression(type::TypeId::VARCHAR, 0,
+                                                    ColumnId::PROARGTYPES);
+  proc_args_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+                              catalog_table_->GetOid(), ColumnId::PROARGTYPES);
+  expression::AbstractExpression *proc_args_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetVarcharValue(
+              TypeIdArrayToString(proc_arg_types)).Copy());
+  expression::AbstractExpression *proc_args_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, proc_args_expr, proc_args_const_expr);
+
+  expression::AbstractExpression *predicate =
+      expression::ExpressionUtil::ConjunctionFactory(
+          ExpressionType::CONJUNCTION_AND, proc_name_equality_expr,
+          proc_args_equality_expr);
+
+  std::vector<codegen::WrappedTuple> result_tuples =
+      GetResultWithCompiledSeqScan(column_ids, predicate, txn);
+
+  PELOTON_ASSERT(result_tuples.size() <= 1);
 
   std::unique_ptr<ProcCatalogObject> ret;
-  if (result_tiles->size() == 1) {
-    PELOTON_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-    ret.reset(new ProcCatalogObject((*result_tiles)[0].get(), txn));
+  if (result_tuples.size() == 1) {
+    ret.reset(new ProcCatalogObject(result_tuples[0], txn));
   }
 
   return ret;

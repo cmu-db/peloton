@@ -17,6 +17,8 @@
 #include "catalog/catalog.h"
 #include "catalog/system_catalogs.h"
 #include "concurrency/transaction_context.h"
+#include "codegen/buffering_consumer.h"
+#include "expression/expression_util.h"
 #include "executor/logical_tile.h"
 #include "storage/data_table.h"
 #include "storage/database.h"
@@ -52,6 +54,41 @@ IndexCatalogObject::IndexCatalogObject(executor::LogicalTile *tile, int tupleId)
     key_attrs.push_back(std::stoi(tok));
   }
   LOG_TRACE("the size for indexed key is %lu", key_attrs.size());
+}
+
+IndexCatalogObject::IndexCatalogObject(codegen::WrappedTuple wrapped_tuple)
+    : index_oid(wrapped_tuple.GetValue(IndexCatalog::ColumnId::INDEX_OID)
+                    .GetAs<oid_t>()),
+      index_name(wrapped_tuple.GetValue(IndexCatalog::ColumnId::INDEX_NAME)
+                     .ToString()),
+      table_oid(wrapped_tuple.GetValue(IndexCatalog::ColumnId::TABLE_OID)
+                    .GetAs<oid_t>()),
+      schema_name(wrapped_tuple.GetValue(IndexCatalog::ColumnId::SCHEMA_NAME)
+                      .ToString()),
+      index_type(wrapped_tuple.GetValue(IndexCatalog::ColumnId::INDEX_TYPE)
+                     .GetAs<IndexType>()),
+      index_constraint(
+          wrapped_tuple.GetValue(IndexCatalog::ColumnId::INDEX_CONSTRAINT)
+              .GetAs<IndexConstraintType>()),
+      unique_keys(wrapped_tuple.GetValue(IndexCatalog::ColumnId::UNIQUE_KEYS)
+                      .GetAs<bool>()) {
+  std::string attr_str =
+      wrapped_tuple.GetValue(IndexCatalog::ColumnId::INDEXED_ATTRIBUTES)
+          .ToString();
+  std::stringstream ss(attr_str.c_str());  // Turn the string into a stream.
+  std::string tok;
+
+  while (std::getline(ss, tok, ' ')) {
+    key_attrs.push_back(std::stoi(tok));
+  }
+  LOG_TRACE("the size for indexed key is %lu", key_attrs.size());
+}
+
+IndexCatalog *IndexCatalog::GetInstance(storage::Database *pg_catalog,
+                                        type::AbstractPool *pool,
+                                        concurrency::TransactionContext *txn) {
+  static IndexCatalog index_catalog{pg_catalog, pool, txn};
+  return &index_catalog;
 }
 
 IndexCatalog::IndexCatalog(
@@ -137,9 +174,9 @@ bool IndexCatalog::InsertIndex(oid_t index_oid, const std::string &index_name,
                                bool unique_keys, std::vector<oid_t> indekeys,
                                type::AbstractPool *pool,
                                concurrency::TransactionContext *txn) {
+  (void) pool;
   // Create the tuple first
-  std::unique_ptr<storage::Tuple> tuple(
-      new storage::Tuple(catalog_table_->GetSchema(), true));
+  std::vector<std::vector<ExpressionPtr>> tuples;
 
   auto val0 = type::ValueFactory::GetIntegerValue(index_oid);
   auto val1 = type::ValueFactory::GetVarcharValue(index_name, nullptr);
@@ -154,33 +191,71 @@ bool IndexCatalog::InsertIndex(oid_t index_oid, const std::string &index_name,
   for (oid_t indkey : indekeys) os << std::to_string(indkey) << " ";
   auto val7 = type::ValueFactory::GetVarcharValue(os.str(), nullptr);
 
-  tuple->SetValue(IndexCatalog::ColumnId::INDEX_OID, val0, pool);
-  tuple->SetValue(IndexCatalog::ColumnId::INDEX_NAME, val1, pool);
-  tuple->SetValue(IndexCatalog::ColumnId::TABLE_OID, val2, pool);
-  tuple->SetValue(IndexCatalog::ColumnId::SCHEMA_NAME, val3, pool);
-  tuple->SetValue(IndexCatalog::ColumnId::INDEX_TYPE, val4, pool);
-  tuple->SetValue(IndexCatalog::ColumnId::INDEX_CONSTRAINT, val5, pool);
-  tuple->SetValue(IndexCatalog::ColumnId::UNIQUE_KEYS, val6, pool);
-  tuple->SetValue(IndexCatalog::ColumnId::INDEXED_ATTRIBUTES, val7, pool);
+  auto constant_expr_0 = new expression::ConstantValueExpression(
+    val0);
+  auto constant_expr_1 = new expression::ConstantValueExpression(
+    val1);
+  auto constant_expr_2 = new expression::ConstantValueExpression(
+    val2);
+  auto constant_expr_3 = new expression::ConstantValueExpression(
+    val3);
+  auto constant_expr_4 = new expression::ConstantValueExpression(
+    val4);
+  auto constant_expr_5 = new expression::ConstantValueExpression(
+    val5);
+  auto constant_expr_6 = new expression::ConstantValueExpression(
+    val6);
+  auto constant_expr_7 = new expression::ConstantValueExpression(
+    val7);
+
+  tuples.push_back(std::vector<ExpressionPtr>());
+  auto &values = tuples[0];
+  values.push_back(ExpressionPtr(constant_expr_0));
+  values.push_back(ExpressionPtr(constant_expr_1));
+  values.push_back(ExpressionPtr(constant_expr_2));
+  values.push_back(ExpressionPtr(constant_expr_3));
+  values.push_back(ExpressionPtr(constant_expr_4));
+  values.push_back(ExpressionPtr(constant_expr_5));
+  values.push_back(ExpressionPtr(constant_expr_6));
+  values.push_back(ExpressionPtr(constant_expr_7));
 
   // Insert the tuple
-  return InsertTuple(std::move(tuple), txn);
+  return InsertTupleWithCompiledPlan(&tuples, txn);
 }
 
 bool IndexCatalog::DeleteIndex(oid_t index_oid,
                                concurrency::TransactionContext *txn) {
-  oid_t index_offset = IndexId::PRIMARY_KEY;  // Index of index_oid
+  std::vector<oid_t> column_ids(all_column_ids);
+
+
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(index_oid).Copy());
 
-  auto index_object = txn->catalog_cache.GetCachedIndexObject(index_oid);
-  if (index_object) {
-    auto table_object =
-        txn->catalog_cache.GetCachedTableObject(index_object->GetTableOid());
-    table_object->EvictAllIndexObjects();
-  }
+  auto index_oid_expr =
+    new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                         ColumnId::INDEX_OID);
+  index_oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(),
+                              catalog_table_->GetOid(), ColumnId::TABLE_OID);
 
-  return DeleteWithIndexScan(index_offset, values, txn);
+
+  expression::AbstractExpression *index_oid_const_expr =
+    expression::ExpressionUtil::ConstantValueFactory(
+      type::ValueFactory::GetIntegerValue(index_oid).Copy());
+  expression::AbstractExpression *index_oid_equality_expr =
+    expression::ExpressionUtil::ComparisonFactory(
+      ExpressionType::COMPARE_EQUAL, index_oid_expr, index_oid_const_expr);
+
+  bool result =  DeleteWithCompiledSeqScan(column_ids, index_oid_equality_expr, txn);
+
+  if(result){
+    auto index_object = txn->catalog_cache.GetCachedIndexObject(index_oid);
+    if (index_object) {
+      auto table_object =
+        txn->catalog_cache.GetCachedTableObject(index_object->GetTableOid());
+      table_object->EvictAllIndexObjects();
+    }
+  }
+  return result;
 }
 
 std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
@@ -189,23 +264,30 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
     throw CatalogException("Transaction is invalid!");
   }
   // try get from cache
-  auto index_object = txn->catalog_cache.GetCachedIndexObject(index_oid);
-  if (index_object) {
+   auto index_object = txn->catalog_cache.GetCachedIndexObject(index_oid);
+   if (index_object) {
     return index_object;
   }
 
   // cache miss, get from pg_index
   std::vector<oid_t> column_ids(all_column_ids);
-  oid_t index_offset = IndexId::PRIMARY_KEY;  // Index of index_oid
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(index_oid).Copy());
 
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+  auto *idx_oid_expr =
+    new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                                    ColumnId::INDEX_OID);
+  idx_oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(), catalog_table_->GetOid(), ColumnId::INDEX_OID);
+  expression::AbstractExpression *idx_oid_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(index_oid).Copy());
+  expression::AbstractExpression *idx_oid_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, idx_oid_expr, idx_oid_const_expr);
 
-  if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
-    auto index_object =
-        std::make_shared<IndexCatalogObject>((*result_tiles)[0].get());
+  std::vector<codegen::WrappedTuple> result_tuples =
+      GetResultWithCompiledSeqScan(column_ids, idx_oid_equality_expr, txn);
+
+  if (result_tuples.size() == 1) {
+    auto index_object = std::make_shared<IndexCatalogObject>(result_tuples[0]);
     // fetch all indexes into table object (cannot use the above index object)
     auto pg_table = Catalog::GetInstance()
                         ->GetSystemCatalogs(database_oid)
@@ -213,10 +295,10 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
     auto table_object =
         pg_table->GetTableObject(index_object->GetTableOid(), txn);
     PELOTON_ASSERT(table_object &&
-              table_object->GetTableOid() == index_object->GetTableOid());
+                   table_object->GetTableOid() == index_object->GetTableOid());
     return table_object->GetIndexObject(index_oid);
   } else {
-    LOG_DEBUG("Found %lu index with oid %u", result_tiles->size(), index_oid);
+    LOG_DEBUG("Found %lu index with oid %u", result_tuples.size(), index_oid);
   }
 
   // return empty object if not found
@@ -232,9 +314,9 @@ std::shared_ptr<IndexCatalogObject> IndexCatalog::GetIndexObject(
   // try get from cache
   auto index_object =
       txn->catalog_cache.GetCachedIndexObject(index_name, schema_name);
-  if (index_object) {
-    return index_object;
-  }
+   if (index_object) {
+     return index_object;
+   }
 
   // cache miss, get from pg_index
   std::vector<oid_t> column_ids(all_column_ids);
@@ -282,31 +364,40 @@ IndexCatalog::GetIndexObjects(oid_t table_oid,
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
   }
+
   // try get from cache
   auto pg_table = Catalog::GetInstance()
                       ->GetSystemCatalogs(database_oid)
                       ->GetTableCatalog();
   auto table_object = pg_table->GetTableObject(table_oid, txn);
   PELOTON_ASSERT(table_object && table_object->GetTableOid() == table_oid);
-  auto index_objects = table_object->GetIndexObjects(true);
-  if (index_objects.empty() == false) return index_objects;
+   auto index_objects = table_object->GetIndexObjects(true);
+   if (index_objects.empty() == false) return index_objects;
 
   // cache miss, get from pg_index
+
   std::vector<oid_t> column_ids(all_column_ids);
-  oid_t index_offset = IndexId::SKEY_TABLE_OID;  // Index of table_oid
-  std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
 
-  auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+  auto *oid_expr =
+    new expression::TupleValueExpression(type::TypeId::INTEGER, 0,
+                                                    ColumnId::TABLE_OID);
+      oid_expr->SetBoundOid(catalog_table_->GetDatabaseOid(), catalog_table_->GetOid(), ColumnId::TABLE_OID);
 
-  for (auto &tile : (*result_tiles)) {
-    for (auto tuple_id : *tile) {
-      auto index_object =
-          std::make_shared<IndexCatalogObject>(tile.get(), tuple_id);
-      table_object->InsertIndexObject(index_object);
-    }
+  expression::AbstractExpression *oid_const_expr =
+      expression::ExpressionUtil::ConstantValueFactory(
+          type::ValueFactory::GetIntegerValue(table_oid).Copy());
+  expression::AbstractExpression *oid_equality_expr =
+      expression::ExpressionUtil::ComparisonFactory(
+          ExpressionType::COMPARE_EQUAL, oid_expr, oid_const_expr);
+
+  std::vector<codegen::WrappedTuple> result_tuples =
+      GetResultWithCompiledSeqScan(column_ids, oid_equality_expr, txn);
+
+  for (auto tuple : result_tuples) {
+    auto index_object = std::make_shared<IndexCatalogObject>(tuple);
+    table_object->InsertIndexObject(index_object);
   }
+
 
   return table_object->GetIndexObjects();
 }

@@ -12,6 +12,8 @@
 #include "binder/bind_node_visitor.h"
 #include <common/harness.h>
 #include "catalog/catalog.h"
+#include "catalog/table_catalog.h"
+#include "catalog/index_catalog.h"
 #include "common/statement.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "executor/create_executor.h"
@@ -173,6 +175,7 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
   auto target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
       DEFAULT_DB_NAME, DEFUALT_SCHEMA_NAME, "department_table", txn);
   // Expected 1 , Primary key index + created index
+
   EXPECT_EQ(target_table_->GetIndexCount(), 2);
   txn_manager.CommitTransaction(txn);
 

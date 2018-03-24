@@ -16,6 +16,8 @@
 
 #include "catalog/catalog_defaults.h"
 #include "catalog/schema.h"
+#include "codegen/query_cache.h"
+#include "codegen/query.h"
 
 namespace peloton {
 
@@ -31,6 +33,10 @@ namespace expression {
 class AbstractExpression;
 }
 
+namespace codegen {
+class WrappedTuple;
+}
+
 namespace storage {
 class Database;
 class DataTable;
@@ -38,6 +44,8 @@ class Tuple;
 }  // namespace storage
 
 namespace catalog {
+
+using ExpressionPtr = std::unique_ptr<expression::AbstractExpression>;
 
 class AbstractCatalog {
  public:
@@ -59,8 +67,17 @@ class AbstractCatalog {
   bool InsertTuple(std::unique_ptr<storage::Tuple> tuple,
                    concurrency::TransactionContext *txn);
 
+  bool InsertTupleWithCompiledPlan(const std::vector<std::vector<
+      std::unique_ptr<expression::AbstractExpression>>> *insert_values,
+                                     concurrency::TransactionContext *txn);
+
   bool DeleteWithIndexScan(oid_t index_offset, std::vector<type::Value> values,
                            concurrency::TransactionContext *txn);
+
+  bool DeleteWithCompiledSeqScan(
+      std::vector<oid_t> column_offsets,
+      expression::AbstractExpression *predicate,
+      concurrency::TransactionContext *txn);
 
   std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
   GetResultWithIndexScan(std::vector<oid_t> column_offsets, oid_t index_offset,
@@ -71,6 +88,11 @@ class AbstractCatalog {
   GetResultWithSeqScan(std::vector<oid_t> column_offsets,
                        expression::AbstractExpression *predicate,
                        concurrency::TransactionContext *txn);
+
+  std::vector<codegen::WrappedTuple> GetResultWithCompiledSeqScan(
+      std::vector<oid_t> column_offsets,
+      expression::AbstractExpression *predicate,
+      concurrency::TransactionContext *txn) const;
 
   bool UpdateWithIndexScan(std::vector<oid_t> update_columns,
                            std::vector<type::Value> update_values,

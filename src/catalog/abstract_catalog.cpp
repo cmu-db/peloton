@@ -11,7 +11,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "catalog/abstract_catalog.h"
-
+#include "executor/plan_executor.h"
+#include "codegen/buffering_consumer.h"
+#include "common/internal_types.h"
 #include "common/statement.h"
 
 #include "catalog/catalog.h"
@@ -129,6 +131,58 @@ bool AbstractCatalog::InsertTuple(std::unique_ptr<storage::Tuple> tuple,
   return this_p_status.m_result == peloton::ResultType::SUCCESS;
 }
 
+/*@brief   insert tuple(reord) helper function
+* @param   tuple     tuple to be inserted
+* @param   txn       TransactionContext
+* @return  Whether insertion is Successful
+*/
+bool AbstractCatalog::InsertTupleWithCompiledPlan(const std::vector<std::vector<
+  std::unique_ptr<expression::AbstractExpression>>> *insert_values,
+                                  concurrency::TransactionContext *txn) {
+ if (txn == nullptr)
+  throw CatalogException("Insert tuple requires transaction");
+
+ std::vector<std::string> columns;
+ std::shared_ptr<planner::InsertPlan> insert_plan(
+   new planner::InsertPlan(catalog_table_, &columns, insert_values));
+
+ // Bind the plan
+ planner::BindingContext context;
+ insert_plan->PerformBinding(context);
+
+ // Prepare a consumer to collect the result
+ codegen::BufferingConsumer buffer{{}, context};
+
+
+ bool cached;
+
+ codegen::QueryParameters parameters(*insert_plan, {});
+ std::unique_ptr<executor::ExecutorContext> executor_context(
+   new executor::ExecutorContext(txn, std::move(parameters)));
+
+ // search for query
+ codegen::Query *query = codegen::QueryCache::Instance().Find(insert_plan);;
+ std::unique_ptr<codegen::Query> compiled_query(nullptr);
+ cached = (query != nullptr);
+//  cached = false;
+ // LOG_DEBUG("cache %d", cached);
+ // if not cached, compile the query and save it into cache
+ executor::ExecutionResult ret;
+ if (!cached) {
+  compiled_query = codegen::QueryCompiler().Compile(
+    *insert_plan, executor_context->GetParams().GetQueryParametersMap(),
+    buffer);
+  query = compiled_query.get();
+  codegen::QueryCache::Instance().Add(insert_plan, std::move(compiled_query));
+ }
+
+ query->Execute(std::move(executor_context), buffer,
+                [&ret](executor::ExecutionResult result) { ret = result; });
+
+ return ret.m_result == peloton::ResultType::SUCCESS;
+}
+
+
 /*@brief   Delete a tuple using index scan
  * @param   index_offset  Offset of index for scan
  * @param   values        Values for search
@@ -177,6 +231,63 @@ bool AbstractCatalog::DeleteWithIndexScan(
 
   return status;
 }
+
+
+/*@brief   Delete a tuple using index scan
+* @param   index_offset  Offset of index for scan
+* @param   values        Values for search
+* @param   txn           TransactionContext
+* @return  Whether deletion is Successful
+*/
+bool AbstractCatalog::DeleteWithCompiledSeqScan(
+  std::vector<oid_t> column_offsets,
+  expression::AbstractExpression *predicate,
+  concurrency::TransactionContext *txn) {
+ if (txn == nullptr)
+  throw CatalogException("Delete tuple requires transaction");
+
+ std::shared_ptr<planner::DeletePlan> delete_plan{
+   new planner::DeletePlan(catalog_table_)};
+
+ std::unique_ptr<planner::AbstractPlan> scan{new planner::SeqScanPlan(
+  catalog_table_, predicate, column_offsets)};
+ delete_plan->AddChild(std::move(scan));
+
+ // Do binding
+ planner::BindingContext context;
+ delete_plan->PerformBinding(context);
+
+ codegen::BufferingConsumer buffer{column_offsets, context};
+
+ bool cached;
+
+ codegen::QueryParameters parameters(*delete_plan, {});
+ std::unique_ptr<executor::ExecutorContext> executor_context(
+   new executor::ExecutorContext(txn, std::move(parameters)));
+
+ // search for query
+ codegen::Query *query = codegen::QueryCache::Instance().Find(delete_plan);;
+ std::unique_ptr<codegen::Query> compiled_query(nullptr);
+ cached = (query != nullptr);
+
+ // if not cached, compile the query and save it into cache
+ executor::ExecutionResult ret;
+ if (!cached) {
+  compiled_query = codegen::QueryCompiler().Compile(
+    *delete_plan, executor_context->GetParams().GetQueryParametersMap(),
+    buffer);
+  query = compiled_query.get();
+  codegen::QueryCache::Instance().Add(delete_plan, std::move(compiled_query));
+ }
+
+ query->Execute(std::move(executor_context), buffer,
+                [&ret](executor::ExecutionResult result) { ret = result; });
+
+ return ret.m_result == peloton::ResultType::SUCCESS;
+}
+
+
+
 
 /*@brief   Index scan helper function
  * @param   column_offsets    Column ids for search (projection)
@@ -259,6 +370,56 @@ AbstractCatalog::GetResultWithSeqScan(std::vector<oid_t> column_offsets,
   }
 
   return result_tiles;
+}
+
+/*@brief   Complied Sequential scan helper function
+* NOTE: try to use efficient index scan instead of sequential scan, but you
+* shouldn't build too many indexes on one catalog table
+* @param   column_offsets    Column ids for search (projection)
+* @param   predicate         predicate for this sequential scan query
+* @param   txn               TransactionContext
+*
+* @return  Unique pointer of vector of logical tiles
+*/
+std::vector<codegen::WrappedTuple>
+AbstractCatalog::GetResultWithCompiledSeqScan(
+    std::vector<oid_t> column_offsets,
+    expression::AbstractExpression *predicate,
+    concurrency::TransactionContext *txn) const {
+  if (txn == nullptr) throw CatalogException("Scan table requires transaction");
+
+  // Create sequential scan
+  auto plan_ptr = std::make_shared<planner::SeqScanPlan>(
+      catalog_table_, predicate, column_offsets);
+  planner::BindingContext scan_context;
+  plan_ptr->PerformBinding(scan_context);
+
+  // Create consumer
+  codegen::BufferingConsumer buffer{column_offsets, scan_context};
+  bool cached;
+
+  codegen::QueryParameters parameters(*plan_ptr, {});
+  std::unique_ptr<executor::ExecutorContext> executor_context(
+      new executor::ExecutorContext(txn, std::move(parameters)));
+
+  // search for query
+  codegen::Query *query = codegen::QueryCache::Instance().Find(plan_ptr);
+  std::unique_ptr<codegen::Query> compiled_query(nullptr);
+  cached = (query != nullptr);
+
+  // if not cached, compile the query and save it into cache
+  if (!cached) {
+    compiled_query = codegen::QueryCompiler().Compile(
+        *plan_ptr, executor_context->GetParams().GetQueryParametersMap(),
+        buffer);
+    query = compiled_query.get();
+    codegen::QueryCache::Instance().Add(plan_ptr, std::move(compiled_query));
+  }
+
+  query->Execute(std::move(executor_context), buffer,
+                 [](executor::ExecutionResult result) { return result; });
+
+  return buffer.GetOutputTuples();
 }
 
 /*@brief   Add index on catalog table

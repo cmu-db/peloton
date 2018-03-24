@@ -52,6 +52,7 @@ class TableMetricsCatalog : public AbstractCatalog {
   bool DeleteTableMetrics(oid_t table_oid,
                           concurrency::TransactionContext *txn);
 
+
   //===--------------------------------------------------------------------===//
   // Read-only Related API
   //===--------------------------------------------------------------------===//
@@ -67,6 +68,8 @@ class TableMetricsCatalog : public AbstractCatalog {
     TIME_STAMP = 5,
     // Add new columns here in creation order
   };
+
+  std::vector<oid_t> all_column_ids = {0, 1, 2, 3, 4, 5};
 
   enum IndexId {
     PRIMARY_KEY = 0,
