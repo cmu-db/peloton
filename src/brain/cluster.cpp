@@ -11,6 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "brain/cluster.h"
+#include "common/logger.h"
+#include "common/macros.h"
 
 namespace peloton {
 namespace brain {
@@ -52,13 +54,16 @@ void Cluster::UpdateCentroid(
 }
 
 double Cluster::CosineSimilarity(std::vector<double> &feature) {
-  // Compute the distance between the feature and centroid
   double dot = 0.0, denom_a = 0.0, denom_b = 0.0;
+  double epsilon = 1e-5;
   for (unsigned int i = 0u; i < feature.size(); i++) {
     dot += centroid_[i] * feature[i];
     denom_a += centroid_[i] * centroid_[i];
     denom_b += feature[i] * feature[i];
   }
+
+  if (denom_a < epsilon || denom_b < epsilon) return 0.0;
+
   return dot / (sqrt(denom_a) * sqrt(denom_b));
 }
 
