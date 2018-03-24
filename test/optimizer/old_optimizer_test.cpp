@@ -10,8 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "common/harness.h"
-
 #include "catalog/catalog.h"
 #include "common/statement.h"
 #include "concurrency/transaction_manager_factory.h"
