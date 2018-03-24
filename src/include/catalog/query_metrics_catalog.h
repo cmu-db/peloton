@@ -52,8 +52,7 @@ class QueryMetricsCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//
-  bool InsertQueryMetrics(const std::string &name, oid_t database_oid,
-                          int64_t num_params,
+  bool InsertQueryMetrics(const std::string &name, int64_t num_params,
                           const stats::QueryMetric::QueryParamBuf &type_buf,
                           const stats::QueryMetric::QueryParamBuf &format_buf,
                           const stats::QueryMetric::QueryParamBuf &value_buf,
@@ -61,16 +60,15 @@ class QueryMetricsCatalog : public AbstractCatalog {
                           int64_t inserts, int64_t latency, int64_t cpu_time,
                           int64_t time_stamp, type::AbstractPool *pool,
                           concurrency::TransactionContext *txn);
-  bool DeleteQueryMetrics(const std::string &name, oid_t database_oid,
+  bool DeleteQueryMetrics(const std::string &name,
                           concurrency::TransactionContext *txn);
 
   //===--------------------------------------------------------------------===//
   // Read-only Related API
   //===--------------------------------------------------------------------===//
   stats::QueryMetric::QueryParamBuf GetParamTypes(
-      const std::string &name, oid_t database_oid,
-      concurrency::TransactionContext *txn);
-  int64_t GetNumParams(const std::string &name, oid_t database_oid,
+      const std::string &name, concurrency::TransactionContext *txn);
+  int64_t GetNumParams(const std::string &name,
                        concurrency::TransactionContext *txn);
   // TODO: add more if needed
 

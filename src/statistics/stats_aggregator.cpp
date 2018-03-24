@@ -172,11 +172,13 @@ void StatsAggregator::UpdateQueryMetrics(int64_t time_stamp,
     //     (int64_t)(cpu_system + cpu_user), time_stamp, pool_.get());
     // catalog::InsertTuple(query_metrics_table, std::move(query_tuple), txn);
 
-    catalog::QueryMetricsCatalog::GetInstance()->InsertQueryMetrics(
-        query_metric->GetName(), query_metric->GetDatabaseId(), num_params,
-        type_buf, format_buf, value_buf, reads, updates, deletes, inserts,
-        (int64_t)latency, (int64_t)(cpu_system + cpu_user), time_stamp,
-        pool_.get(), txn);
+    catalog::Catalog::GetInstance()
+        ->GetSystemCatalogs(query_metric->GetDatabaseId())
+        ->GetQueryMetricsCatalog()
+        ->InsertQueryMetrics(
+            query_metric->GetName(), num_params, type_buf, format_buf,
+            value_buf, reads, updates, deletes, inserts, (int64_t)latency,
+            (int64_t)(cpu_system + cpu_user), time_stamp, pool_.get(), txn);
 
     LOG_TRACE("Query Metric Tuple inserted");
   }

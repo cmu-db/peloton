@@ -101,11 +101,17 @@ TEST_F(CatalogTests, CreatingTable) {
   param.len = 1;
   param.buf = (unsigned char *)pool->Allocate(1);
   *param.buf = 'a';
-  catalog::QueryMetricsCatalog::GetInstance()->InsertQueryMetrics(
-      "a query", 1, 1, param, param, param, 1, 1, 1, 1, 1, 1, 1, pool.get(),
-      txn);
-  auto param1 = catalog::QueryMetricsCatalog::GetInstance()->GetParamTypes(
-      "a query", 1, txn);
+  auto database_object =
+      catalog::Catalog::GetInstance()->GetDatabaseObject("emp_db", txn);
+  catalog::Catalog::GetInstance()
+      ->GetSystemCatalogs(database_object->GetDatabaseOid())
+      ->GetQueryMetricsCatalog()
+      ->InsertQueryMetrics("a query", 1, param, param, param, 1, 1, 1, 1, 1, 1,
+                           1, pool.get(), txn);
+  auto param1 = catalog::Catalog::GetInstance()
+                    ->GetSystemCatalogs(database_object->GetDatabaseOid())
+                    ->GetQueryMetricsCatalog()
+                    ->GetParamTypes("a query", txn);
   EXPECT_EQ(1, param1.len);
   EXPECT_EQ('a', *param1.buf);
 

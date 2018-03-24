@@ -45,7 +45,7 @@ QueryMetricsCatalog::QueryMetricsCatalog(const std::string &database_name,
 QueryMetricsCatalog::~QueryMetricsCatalog() {}
 
 bool QueryMetricsCatalog::InsertQueryMetrics(
-    const std::string &name, oid_t database_oid, int64_t num_params,
+    const std::string &name, int64_t num_params,
     const stats::QueryMetric::QueryParamBuf &type_buf,
     const stats::QueryMetric::QueryParamBuf &format_buf,
     const stats::QueryMetric::QueryParamBuf &value_buf, int64_t reads,
@@ -97,8 +97,7 @@ bool QueryMetricsCatalog::InsertQueryMetrics(
 }
 
 bool QueryMetricsCatalog::DeleteQueryMetrics(
-    const std::string &name, oid_t database_oid,
-    concurrency::TransactionContext *txn) {
+    const std::string &name, concurrency::TransactionContext *txn) {
   oid_t index_offset = IndexId::PRIMARY_KEY;  // Primary key index
 
   std::vector<type::Value> values;
@@ -108,8 +107,7 @@ bool QueryMetricsCatalog::DeleteQueryMetrics(
 }
 
 stats::QueryMetric::QueryParamBuf QueryMetricsCatalog::GetParamTypes(
-    const std::string &name, oid_t database_oid,
-    concurrency::TransactionContext *txn) {
+    const std::string &name, concurrency::TransactionContext *txn) {
   std::vector<oid_t> column_ids({ColumnId::PARAM_TYPES});  // param_types
   oid_t index_offset = IndexId::PRIMARY_KEY;               // Primary key index
   std::vector<type::Value> values;
@@ -134,8 +132,7 @@ stats::QueryMetric::QueryParamBuf QueryMetricsCatalog::GetParamTypes(
 }
 
 int64_t QueryMetricsCatalog::GetNumParams(
-    const std::string &name, oid_t database_oid,
-    concurrency::TransactionContext *txn) {
+    const std::string &name, concurrency::TransactionContext *txn) {
   std::vector<oid_t> column_ids({ColumnId::NUM_PARAMS});  // num_params
   oid_t index_offset = IndexId::PRIMARY_KEY;              // Primary key index
   std::vector<type::Value> values;

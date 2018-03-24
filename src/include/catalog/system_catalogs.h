@@ -47,6 +47,9 @@ class SystemCatalogs {
   TableCatalog *GetTableCatalog() { return pg_table; }
   IndexCatalog *GetIndexCatalog() { return pg_index; }
   TriggerCatalog *GetTriggerCatalog() { return pg_trigger; }
+  TableMetricsCatalog *GetTableMetricsCatalog() { return pg_table_metrics; }
+  IndexMetricsCatalog *GetIndexMetricsCatalog() { return pg_index_metrics; }
+  QueryMetricsCatalog *GetQueryMetricsCatalog() { return pg_query_metrics; }
 
  private:
   ColumnCatalog *pg_attribute;
@@ -54,7 +57,7 @@ class SystemCatalogs {
   IndexCatalog *pg_index;
 
   TriggerCatalog *pg_trigger;
-  ProcCatalog *pg_proc;
+  // ProcCatalog *pg_proc;
   TableMetricsCatalog *pg_table_metrics;
   IndexMetricsCatalog *pg_index_metrics;
   QueryMetricsCatalog *pg_query_metrics;
