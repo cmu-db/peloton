@@ -37,7 +37,6 @@ size_t CONNECTION_THREAD_COUNT = 1;
 size_t LOGGING_THREAD_COUNT = 1;
 size_t GC_THREAD_COUNT = 1;
 size_t EPOCH_THREAD_COUNT = 1;
-size_t MAX_CONCURRENCY = 10;
 
 //===--------------------------------------------------------------------===//
 // DatePart <--> String Utilities
@@ -978,6 +977,9 @@ std::string ExpressionTypeToString(ExpressionType type, bool short_str) {
     }
     case ExpressionType::CAST: {
       return ("CAST");
+    }
+    case ExpressionType::OPERATOR_IS_NOT_NULL: {
+      return ("IS_NOT_NULL");
     }
     default: {
       throw ConversionException(StringUtil::Format(

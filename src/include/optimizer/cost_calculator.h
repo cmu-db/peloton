@@ -21,7 +21,8 @@ class Memo;
 // Derive cost for a physical group expressionh
 class CostCalculator : public OperatorVisitor {
  public:
-  double CalculateCost(GroupExpression *gexpr, Memo *memo);
+  double CalculateCost(GroupExpression *gexpr, Memo *memo,
+                       concurrency::TransactionContext *txn);
 
   void Visit(const DummyScan *) override;
   void Visit(const PhysicalSeqScan *) override;
@@ -53,6 +54,7 @@ class CostCalculator : public OperatorVisitor {
 
   GroupExpression *gexpr_;
   Memo *memo_;
+  concurrency::TransactionContext *txn_;
   double output_cost_ = 0;
 };
 
