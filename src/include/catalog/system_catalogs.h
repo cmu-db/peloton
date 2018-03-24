@@ -17,6 +17,9 @@
 #include "catalog/database_catalog.h"
 #include "catalog/table_catalog.h"
 #include "catalog/trigger_catalog.h"
+#include "catalog/table_metrics_catalog.h"
+#include "catalog/index_metrics_catalog.h"
+#include "catalog/query_metrics_catalog.h"
 
 namespace peloton {
 

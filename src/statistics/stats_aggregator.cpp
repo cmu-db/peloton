@@ -14,6 +14,7 @@
 #include <cinttypes>
 
 #include "catalog/catalog.h"
+#include "catalog/system_catalogs.h"
 #include "catalog/database_metrics_catalog.h"
 #include "catalog/index_metrics_catalog.h"
 #include "catalog/query_metrics_catalog.h"
@@ -205,6 +206,12 @@ void StatsAggregator::UpdateMetrics() {
 
     // Update database metrics table
     auto database_oid = database->GetOid();
+    try {
+      catalog::Catalog::GetInstance()->GetDatabaseObject(database_oid, txn);
+    } catch (CatalogException &e) {
+      continue;
+    }
+
     auto database_metric = aggregated_stats_.GetDatabaseMetric(database_oid);
     auto txn_committed = database_metric->GetTxnCommitted().GetCounter();
     auto txn_aborted = database_metric->GetTxnAborted().GetCounter();

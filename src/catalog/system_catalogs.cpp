@@ -24,7 +24,11 @@ namespace catalog {
 SystemCatalogs::SystemCatalogs(storage::Database *database,
                                type::AbstractPool *pool,
                                concurrency::TransactionContext *txn)
-    : pg_trigger(nullptr) {
+    : pg_trigger(nullptr),
+    pg_table_metrics(nullptr),
+    pg_index_metrics(nullptr),
+    pg_query_metrics(nullptr)
+  {
   oid_t database_oid = database->GetOid();
   pg_attribute = new ColumnCatalog(database, pool, txn);
   pg_table = new TableCatalog(database, pool, txn);
@@ -65,6 +69,8 @@ SystemCatalogs::~SystemCatalogs() {
 
 void SystemCatalogs::Bootstrap(const std::string &database_name,
                                concurrency::TransactionContext *txn) {
+  LOG_DEBUG("Bootstrapping database: %s", database_name.c_str());
+
   pg_trigger = new TriggerCatalog(database_name, txn);
   // pg_proc = new ProcCatalog(database_name, txn);
   pg_table_metrics = new TableMetricsCatalog(database_name, txn);

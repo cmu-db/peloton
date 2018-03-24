@@ -26,7 +26,7 @@ IndexMetricsCatalog::IndexMetricsCatalog(const std::string &database_name,
                           " ("
                           "database_oid   INT NOT NULL, "
                           "table_oid      INT NOT NULL, "
-                          "index_oid      INT NOT NULL PRIMARY_KEY, "
+                          "index_oid      INT NOT NULL PRIMARY KEY, "
                           "reads          INT NOT NULL, "
                           "deletes        INT NOT NULL, "
                           "inserts        INT NOT NULL, "
