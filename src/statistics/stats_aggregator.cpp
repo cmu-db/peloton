@@ -10,14 +10,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <cinttypes>
 #include "statistics/stats_aggregator.h"
+#include <cinttypes>
 
 #include "catalog/catalog.h"
 #include "catalog/database_metrics_catalog.h"
-#include "catalog/table_metrics_catalog.h"
 #include "catalog/index_metrics_catalog.h"
 #include "catalog/query_metrics_catalog.h"
+#include "catalog/table_metrics_catalog.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "index/index.h"
 #include "storage/storage_manager.h"
@@ -192,8 +192,9 @@ void StatsAggregator::UpdateMetrics() {
   auto storage_manager = storage::StorageManager::GetInstance();
 
   auto time_since_epoch = std::chrono::system_clock::now().time_since_epoch();
-  auto time_stamp = std::chrono::duration_cast<std::chrono::seconds>(
-                        time_since_epoch).count();
+  auto time_stamp =
+      std::chrono::duration_cast<std::chrono::seconds>(time_since_epoch)
+          .count();
 
   auto database_count = storage_manager->GetDatabaseCount();
   for (oid_t database_offset = 0; database_offset < database_count;
@@ -236,10 +237,13 @@ void StatsAggregator::UpdateTableMetrics(storage::Database *database,
     auto updates = table_access.GetUpdates();
     auto deletes = table_access.GetDeletes();
     auto inserts = table_access.GetInserts();
-
-    catalog::TableMetricsCatalog::GetInstance()->InsertTableMetrics(
-        database_oid, table_oid, reads, updates, deletes, inserts, time_stamp,
-        pool_.get(), txn);
+    // insert record into table metrics catalog
+    auto table_metrics_catalog = catalog::Catalog::GetInstance()
+                                     ->GetSystemCatalogs(database_oid)
+                                     ->GetTableMetricsCatalog();
+    table_metrics_catalog->InsertTableMetrics(database_oid, table_oid, reads,
+                                              updates, deletes, inserts,
+                                              time_stamp, pool_.get(), txn);
     LOG_TRACE("Table Metric Tuple inserted");
 
     UpdateIndexMetrics(database, table, time_stamp, txn);
@@ -265,8 +269,11 @@ void StatsAggregator::UpdateIndexMetrics(storage::Database *database,
     auto reads = index_access.GetReads();
     auto deletes = index_access.GetDeletes();
     auto inserts = index_access.GetInserts();
-
-    catalog::IndexMetricsCatalog::GetInstance()->InsertIndexMetrics(
+    // insert record into index metrics catalog
+    auto index_metrics_catalog = catalog::Catalog::GetInstance()
+                                     ->GetSystemCatalogs(database_oid)
+                                     ->GetIndexMetricsCatalog();
+    index_metrics_catalog->InsertIndexMetrics(
         database_oid, table_oid, index_oid, reads, deletes, inserts, time_stamp,
         pool_.get(), txn);
   }
