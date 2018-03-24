@@ -415,7 +415,7 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
   values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
 
   auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+      GetResultWithSeqScan(column_ids, index_offset, values, txn);
 
   if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
     auto table_object =

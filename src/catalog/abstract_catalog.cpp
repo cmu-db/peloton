@@ -221,7 +221,7 @@ AbstractCatalog::GetResultWithSeqScan(std::vector<oid_t> column_offsets,
 
   planner::SeqScanPlan seq_scan_node(catalog_table_, predicate, column_offsets);
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
-
+  LOG_TRACE("Excecute seq scan");
   // Execute
   seq_scan_executor.Init();
   std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
