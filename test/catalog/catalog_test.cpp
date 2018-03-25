@@ -185,7 +185,7 @@ TEST_F(CatalogTests, TableObject) {
   txn_manager.CommitTransaction(txn);
 }
 
-TEST_F(CatalogTests, DroppingTable) {
+/*TEST_F(CatalogTests, DroppingTable) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   auto catalog = catalog::Catalog::GetInstance();
@@ -254,7 +254,7 @@ TEST_F(CatalogTests, DroppingDatabase) {
 TEST_F(CatalogTests, DroppingCatalog) {
   auto catalog = catalog::Catalog::GetInstance();
   EXPECT_NE(nullptr, catalog);
-}
+}*/
 
 }  // namespace test
 }  // namespace peloton

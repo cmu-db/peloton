@@ -495,11 +495,11 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
 
 
   predicate->GetInfo();
-  LOG_DEBUG("Get table: %s", predicate->GetInfo().c_str());
-  // change this to seq plan
+      LOG_DEBUG("Get table: %s", predicate->GetInfo().c_str());
+//   change this to seq plan
   // ceate predicate refering to seq_scan_test.cpp
   auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+      GetResultWithSeqScan(column_ids, predicate, txn);
 
   if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
     auto table_object =
