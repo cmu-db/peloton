@@ -1803,6 +1803,8 @@ class BwTree : public BwTreeBase {
       }
 
       char *new_chunk = new char[CHUNK_SIZE()];
+      // Adding to statistics
+      AddToMemAllocStatistics(CHUNK_SIZE());
       AllocationMeta *expected = nullptr;
 
       // Prepare the new chunk's metadata field
@@ -6517,6 +6519,8 @@ class BwTree : public BwTreeBase {
     *parent_node_id_p = parent_node_id;
 
     InnerAbortNode *abort_node_p = new InnerAbortNode{parent_node_p};
+    // Adding to statistics counter
+    AddToMemAllocStatistics(sizeof(InnerAbortNode));
 
     bool ret =
         InstallNodeToReplace(parent_node_id, abort_node_p, parent_node_p);
