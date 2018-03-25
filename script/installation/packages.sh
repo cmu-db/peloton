@@ -38,7 +38,6 @@ fi
 unset UNAME
 DISTRO=$(echo $DISTRO | tr "[:lower:]" "[:upper:]")
 TMPDIR=/tmp
-TF_VERSION="1.4.0"
 TF_TYPE="cpu"
 
 
@@ -115,20 +114,24 @@ if [ "$DISTRO" = "UBUNTU" ]; then
     PKG_CMAKE="cmake"
     PKG_LLVM="llvm-3.7"
     PKG_CLANG="clang-3.7"
+    TF_VERSION="1.4.0"
 
     # Fix for cmake name change on Ubuntu 14.x and 16.x plus --force-yes deprecation
     if [ "$MAJOR_VER" == "14" ]; then
         PKG_CMAKE="cmake3"
         FORCE_Y="--force-yes"
+	TF_VERSION="1.4.0"
         TFBinaryURL="https://storage.googleapis.com/tensorflow/linux/${TF_TYPE}/tensorflow-${TF_VERSION}-cp34-cp34m-linux_x86_64.whl"
     fi
     if [ "$MAJOR_VER" == "16" ]; then
+	TF_VERSION="1.5.0"
         TFBinaryURL="https://storage.googleapis.com/tensorflow/linux/${TF_TYPE}/tensorflow-${TF_VERSION}-cp35-cp35m-linux_x86_64.whl"
     fi
     # Fix for llvm on Ubuntu 17.x
     if [ "$MAJOR_VER" == "17" ]; then
         PKG_LLVM="llvm-3.9"
         PKG_CLANG="clang-3.8"
+	TF_VERSION="1.5.0"
         TFBinaryURL="https://storage.googleapis.com/tensorflow/linux/${TF_TYPE}/tensorflow-${TF_VERSION}-cp35-cp35m-linux_x86_64.whl"
     fi
     TFCApiFile="libtensorflow-${TF_TYPE}-linux-x86_64-${TF_VERSION}.tar.gz"
@@ -201,6 +204,7 @@ elif [[ "$DISTRO" == *"FEDORA"* ]]; then
         26) LLVM="llvm";;
         *)  LLVM="llvm4.0";;
     esac
+    TF_VERSION="1.5.0"
     TFCApiFile="libtensorflow-${TF_TYPE}-linux-x86_64-${TF_VERSION}.tar.gz"
     TFBinaryURL="https://storage.googleapis.com/tensorflow/linux/${TF_TYPE}/tensorflow-${TF_VERSION}-cp36-cp36m-linux_x86_64.whl"
     LinkerConfigCmd="sudo ldconfig"
@@ -316,6 +320,7 @@ elif [ "$DISTRO" = "DARWIN" ]; then
       echo "Installing homebrew..."
       ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
     fi
+    TF_VERSION="1.4.0"
     TFBinaryURL="https://storage.googleapis.com/tensorflow/mac/${TF_TYPE}/tensorflow-${TF_VERSION}-py3-none-any.whl"
     TFCApiFile="libtensorflow-${TF_TYPE}-darwin-x86_64-${TF_VERSION}.tar.gz"
     LinkerConfigCmd="sudo update_dyld_shared_cache"
