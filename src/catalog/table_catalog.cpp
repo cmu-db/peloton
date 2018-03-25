@@ -473,16 +473,16 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
   // table_name == table_name and database_oid need to be same
   // only need to get the logical tiles that wrap oid, name, db_oid
   expression::AbstractExpression *table_name_expr = expression::ExpressionUtil::TupleValueFactory(
-                                                      type::TypeID::VARCHAR, 0, 1);
+                                                      type::TypeId::VARCHAR, 0, ColumnId::TABLE_NAME);
   expression::AbstractExpression *table_name_const_expr = expression::ExpressionUtil::ConstantValueFactory(
-                                                      type::ValueFactory::GetVarCharValue(table_name, nullptr).Copy());
+                                                      type::ValueFactory::GetVarcharValue(table_name, nullptr).Copy());
   expression::AbstractExpression *table_name_equality_expr =
         expression::ExpressionUtil::ComparisonFactory(
             ExpressionType::COMPARE_EQUAL, table_name_expr,
             table_name_const_expr);
 
   expression::AbstractExpression *db_oid_expr = expression::ExpressionUtil::TupleValueFactory(
-                                                      type::TypeID::INTEGER, 0, 2);
+                                                      type::TypeId::INTEGER, 0, ColumnId::DATABASE_OID);
   expression::AbstractExpression *db_oid_const_expr = expression::ExpressionUtil::ConstantValueFactory(
                                                       type::ValueFactory::GetIntegerValue(database_oid).Copy());
   expression::AbstractExpression *db_oid_equality_expr =
