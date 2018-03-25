@@ -73,9 +73,18 @@ class Group {
 
   std::shared_ptr<ColumnStats> GetStats(std::string column_name);
 
-  void AddStats(std::string column_name, std::shared_ptr<ColumnStats> stats);  
+  void AddStats(std::string column_name, std::shared_ptr<ColumnStats> stats);
 
-  bool HasColumnStats(std::string column_name);  
+  bool HasColumnStats(std::string column_name);
+
+  /*
+   * HasExpressions - Determines whether or not a lowest cost expression exists
+   * for this group
+   *
+   * properties: the property set used to search the lowest cost expressions
+   * return: true if an expression is found, false otherwise
+   */
+  bool HasExpressions(const std::shared_ptr<PropertySet> &properties) const;
 
   void SetNumRows(size_t num_rows) { num_rows_ = num_rows; }
 
