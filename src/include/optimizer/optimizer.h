@@ -124,6 +124,19 @@ class Optimizer : public AbstractOptimizer {
       GroupID id, std::shared_ptr<PropertySet> required_props,
       std::vector<expression::AbstractExpression *> required_cols);
 
+  /* ExecuteTaskStack - Execute elements of given optimization task stack
+   * and ensure that we do not go beyond the time limit (unless if one plan has
+   *    not been generated yet)
+   *
+   * task_stack: the optimizer's task stack to iterate through
+   * root_group_id: the root group id to check if we have generated a plan or
+   *not
+   * root_context: the OptimizerContext to use that maintains required
+   *properties
+   */
+  void ExecuteTaskStack(OptimizerTaskStack &task_stack, int root_group_id,
+                        std::shared_ptr<OptimizeContext> root_context);
+
   //////////////////////////////////////////////////////////////////////////////
   /// Metadata
   OptimizerMetadata metadata_;
