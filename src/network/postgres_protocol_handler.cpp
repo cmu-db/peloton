@@ -1049,7 +1049,17 @@ ProcessResult PostgresProtocolHandler::ProcessStartupPacket(
     LOG_TRACE("Option value is %s", token.c_str());
     cmdline_options_[token] = value;
     if (token.compare("database") == 0) {
-      traffic_cop_->SetDefaultDatabaseName(value);
+      auto exists = catalog::Catalog::GetInstance()->CheckDatabaseExists(client.dbname);
+      if (exists) {
+          traffic_cop_->SetDefaultDatabaseName(client.dbname);
+      } else {
+          auto error_msg = "Database " + client.dbname + " doesn't exist";
+          auto error_code = "3D000"; // invalid_catalog_name
+          SendErrorResponse({
+                             {NetworkMessageType::SQLSTATE_CODE_ERROR, error_code},
+                             {NetworkMessageType::HUMAN_READABLE_ERROR, error_msg}
+                            });
+      }
     }
   }
 
