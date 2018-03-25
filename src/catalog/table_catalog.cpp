@@ -21,6 +21,10 @@
 #include "storage/data_table.h"
 #include "type/value_factory.h"
 
+#include "common/internal_types.h"
+#include "expression/abstract_expression.h"
+#include "expression/expression_util.h"
+
 namespace peloton {
 namespace catalog {
 
@@ -415,7 +419,7 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
   values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
 
   auto result_tiles =
-      GetResultWithSeqScan(column_ids, index_offset, values, txn);
+      GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
     auto table_object =
@@ -465,6 +469,32 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
       type::ValueFactory::GetVarcharValue(table_name, nullptr).Copy());
   values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
 
+  // need the predicate for the seq scan (conjunction)
+  // table_name == table_name and database_oid need to be same
+  // only need to get the logical tiles that wrap oid, name, db_oid
+  expression::AbstractExpression *table_name_expr = expression::ExpressionUtil::TupleValueFactory(
+                                                      type::TypeID::VARCHAR, 0, 1);
+  expression::AbstractExpression *table_name_const_expr = expression::ExpressionUtil::ConstantValueFactory(
+                                                      type::ValueFactory::GetVarCharValue(table_name, nullptr).Copy());
+  expression::AbstractExpression *table_name_equality_expr =
+        expression::ExpressionUtil::ComparisonFactory(
+            ExpressionType::COMPARE_EQUAL, table_name_expr,
+            table_name_const_expr);
+
+  expression::AbstractExpression *db_oid_expr = expression::ExpressionUtil::TupleValueFactory(
+                                                      type::TypeID::INTEGER, 0, 2);
+  expression::AbstractExpression *db_oid_const_expr = expression::ExpressionUtil::ConstantValueFactory(
+                                                      type::ValueFactory::GetIntegerValue(database_oid).Copy());
+  expression::AbstractExpression *db_oid_equality_expr =
+        expression::ExpressionUtil::ComparisonFactory(
+            ExpressionType::COMPARE_EQUAL, db_oid_expr,
+            db_oid_const_expr);
+
+  expression::AbstractExpression *predicate = expression::ExpressionUtil::ConjunctionFactory(
+        ExpressionType::CONJUNCTION_AND, table_name_equality_expr, db_oid_equality_expr);
+  LOG_TRACE(predicate->GetInfo());
+  // change this to seq plan
+  // ceate predicate refering to seq_scan_test.cpp
   auto result_tiles =
       GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
