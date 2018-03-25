@@ -2874,10 +2874,10 @@ class BwTree : public BwTreeBase {
                          MAP_ANONYMOUS | MAP_PRIVATE,
                          -1, 0);
     if(mapping_table == (void *)-1) {
-      LOG_INFO("Failed to initialize mapping table");
+      LOG_TRACE("Failed to initialize mapping table");
     }
 
-    LOG_INFO("Mapping table done");
+    LOG_TRACE("Mapping table done");
 
     LOG_TRACE("Initializing mapping table.... size = %lu", MAPPING_TABLE_SIZE);
     LOG_TRACE("Fast initialization: Do not set to zero");
