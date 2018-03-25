@@ -7388,11 +7388,18 @@ class BwTree : public BwTreeBase {
   std::atomic<uint64_t> update_op_count;
   std::atomic<uint64_t> update_abort_count;
 
+  // This value records the aggregated number of bytes allodated by BwTree node
+  // allocation function
+  std::atomic<size_t> mem_alloc;
+
   // InteractiveDebugger idb;
 
   EpochManager epoch_manager;
 
  public:
+
+  
+
   /*
    * class EpochManager - Maintains a linked list of deleted nodes
    *                      for threads to access until all threads
