@@ -2089,6 +2089,10 @@ class BwTree : public BwTreeBase {
                    AllocationMeta::CHUNK_SIZE()];
       PL_ASSERT(alloc_base != nullptr);
 
+      // Also add to statistics counter
+      AddToMemAllocStatistics(sizeof(ElasticNode) + size * sizeof(ElementType) +
+                              AllocationMeta::CHUNK_SIZE())
+
       // Initialize the AllocationMeta - tail points to the first byte inside
       // class ElasticNode; limit points to the first byte after class
       // AllocationMeta
