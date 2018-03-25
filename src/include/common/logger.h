@@ -54,7 +54,7 @@ namespace peloton {
 // given.")
 #ifndef NDEBUG
 //#pragma message("LOG_LEVEL_DEBUG is used instead as DEBUG option is on.")
-#define LOG_LEVEL LOG_LEVEL_TRACE
+#define LOG_LEVEL LOG_LEVEL_DEBUG
 #else
 //#pragma message("LOG_LEVEL_WARN is used instead as DEBUG option is off.")
 #define LOG_LEVEL LOG_LEVEL_INFO

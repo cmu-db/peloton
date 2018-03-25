@@ -495,7 +495,7 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
 
 
   predicate->GetInfo();
-  LOG_TRACE(predicate->GetInfo());
+  LOG_DEBUG("Get table: %s", predicate->GetInfo().c_str());
   // change this to seq plan
   // ceate predicate refering to seq_scan_test.cpp
   auto result_tiles =
