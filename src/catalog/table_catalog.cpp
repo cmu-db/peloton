@@ -492,6 +492,9 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
 
   expression::AbstractExpression *predicate = expression::ExpressionUtil::ConjunctionFactory(
         ExpressionType::CONJUNCTION_AND, table_name_equality_expr, db_oid_equality_expr);
+
+
+  predicate->GetInfo();
   LOG_TRACE(predicate->GetInfo());
   // change this to seq plan
   // ceate predicate refering to seq_scan_test.cpp
@@ -500,17 +503,16 @@ std::shared_ptr<TableCatalogObject> TableCatalog::GetTableObject(
 
   if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
     auto table_object =
-        std::make_shared<TableCatalogObject>((*result_tiles)[0].get(), txn);
+            std::make_shared<TableCatalogObject>((*result_tiles)[0].get(), txn);
     // insert into cache
     auto database_object = DatabaseCatalog::GetInstance()->GetDatabaseObject(
-        table_object->GetDatabaseOid(), txn);
+            table_object->GetDatabaseOid(), txn);
     PL_ASSERT(database_object);
     bool success = database_object->InsertTableObject(table_object);
     PL_ASSERT(success == true);
-    (void)success;
+    (void) success;
     return table_object;
   }
-
   // return empty object if not found
   return nullptr;
 }
