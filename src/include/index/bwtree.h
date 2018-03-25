@@ -7412,6 +7412,15 @@ class BwTree : public BwTreeBase {
   }
 
   /*
+   * AddToMemAllocStatistics() - This function adds an amount onto the statistics counter
+   *                             that tracks the total bytes we have allocated
+   */
+  inline void AddToMemAllocStatistics(size_t amount) {
+    mem_alloc.fetch_add(amount);
+    return;
+  }
+
+  /*
    * class EpochManager - Maintains a linked list of deleted nodes
    *                      for threads to access until all threads
    *                      entering epochs before the deletion of
