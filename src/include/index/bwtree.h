@@ -7398,7 +7398,18 @@ class BwTree : public BwTreeBase {
 
  public:
 
-  
+  /*
+   * GetTotalMemAlloc() - This function returns the total number of bytes
+   *                      allocated by the BwTree
+   * 
+   * 1. The returned value is aggregated value since the bwtree is instanciated
+   *    If you want to get accurate memory allocation in a time interval, call
+   *    this function before and after the interval, and use the difference
+   * 2. Releasing memory does not change this counter. This counter increases monotonically
+   */
+  inline size_t GetTotalMemAlloc() {
+    return mem_alloc.load();
+  }
 
   /*
    * class EpochManager - Maintains a linked list of deleted nodes
