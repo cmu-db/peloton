@@ -50,10 +50,10 @@ TEST_F(PlanSelectionTest, SimpleJoinOrderTest) {
   auto txn = txn_manager.BeginTransaction();
 
   TestingSQLUtil::ExecuteSQLQuery(
-      "CREATE TABLE test1(id INT PRIMARY KEY, b DECIMAL, c VARCHAR);");
+      "CREATE TABLE test1(a INT PRIMARY KEY, b DECIMAL, c VARCHAR);");
 
   TestingSQLUtil::ExecuteSQLQuery(
-      "CREATE TABLE test2(id INT PRIMARY KEY, b DECIMAL, c VARCHAR);");
+      "CREATE TABLE test2(a INT PRIMARY KEY, b DECIMAL, c VARCHAR);");
 
   // Populate Tables table
   int small_table_size = 1;
@@ -75,16 +75,17 @@ TEST_F(PlanSelectionTest, SimpleJoinOrderTest) {
 
   // Generate plan
   auto &peloton_parser = parser::PostgresParser::GetInstance();
-  auto stmt = peloton_parser.BuilbdParseTree(
+  auto raw_stmt = peloton_parser.BuildParseTree(
       "SELECT * FROM test1, test2 WHERE test1.a = test2.a");
 
-  Optimizer optimizer;
+  std::unique_ptr<parser::SQLStatementList> &stmt(raw_stmt);
 
-  Optimizer::
+  optimizer::Optimizer optimizer;
 
-
-
-
+  txn = txn_manager.BeginTransaction();
+  auto plan = optimizer.BuildPelotonPlanTree(stmt, DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+  printf("%s\n", plan->GetInfo().c_str());
 
   TestingExecutorUtil::DeleteDatabase(DEFAULT_DB_NAME);
 
