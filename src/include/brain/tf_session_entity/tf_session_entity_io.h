@@ -13,7 +13,6 @@
 #pragma once
 
 #include <tensorflow/c/c_api.h>
-#include <cassert>
 #include <cstdio>
 #include <cstring>
 #include <iostream>

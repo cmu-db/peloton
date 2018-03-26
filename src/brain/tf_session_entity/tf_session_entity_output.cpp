@@ -24,7 +24,7 @@ TFSEOUT_TYPE::TfSessionEntityOutput(const std::string &op) {
 }
 
 TFSEOUT_TEMPLATE_ARGUMENTS
-TFSEOUT_TYPE::TfSessionEntityOutput(std::vector<int64_t> dims,
+TFSEOUT_TYPE::TfSessionEntityOutput(const std::vector<int64_t>& dims,
                                     const std::string &op) {
   this->placeholder_name_ = op;
   this->DetermineDataType();

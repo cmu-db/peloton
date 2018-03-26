@@ -36,19 +36,19 @@ TFSEIN_TEMPLATE_ARGUMENTS
 class TfSessionEntityInput : public TfSessionEntityIOBase<InputType> {
  public:
   // Const Input
-  TfSessionEntityInput(InputType input, const std::string &op);
+  TfSessionEntityInput(const InputType& input, const std::string& op);
   // 1d vector
-  TfSessionEntityInput(std::vector<InputType> input, const std::string &op);
+  TfSessionEntityInput(const std::vector<InputType>& input, const std::string& op);
   // 2d vector
-  TfSessionEntityInput(std::vector<std::vector<InputType>> input,
+  TfSessionEntityInput(const std::vector<std::vector<InputType>> &input,
                        const std::string &op);
   // raw flattened input
-  TfSessionEntityInput(InputType *input, std::vector<int64_t> dims,
+  TfSessionEntityInput(InputType *input, const std::vector<int64_t> &dims,
                        const std::string &op);
 
  private:
   // Flattens 2d inputs
-  InputType *Flatten(std::vector<std::vector<InputType>> elems);
+  InputType *Flatten(const std::vector<std::vector<InputType>> &elems);
 };
 }  // namespace brain
 }  // namespace peloton

@@ -46,7 +46,7 @@ class TfSessionEntityOutput : public TfSessionEntityIOBase<OutputType> {
   // const output
   explicit TfSessionEntityOutput(const std::string &op);
   // n-d output
-  explicit TfSessionEntityOutput(std::vector<int64_t> dims,
+  explicit TfSessionEntityOutput(const std::vector<int64_t>& dims,
                                  const std::string &op);
 };
 }  // namespace brain

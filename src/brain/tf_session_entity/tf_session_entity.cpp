@@ -51,7 +51,7 @@ void TFSE_TYPE::ImportGraph(const std::string &filename) {
   TF_GraphImportGraphDef(graph_, graph_def, opts, status_);
   TF_DeleteImportGraphDefOptions(opts);
   TF_DeleteBuffer(graph_def);
-  assert(IsStatusOk());
+  PL_ASSERT(IsStatusOk());
 }
 
 TFSE_TEMPLATE_ARGUMENTS
@@ -92,8 +92,8 @@ void TFSE_TYPE::Eval(const std::string &opName) {
 // Evaluate op with inputs and outputs
 TFSE_TEMPLATE_ARGUMENTS
 OutputType *TFSE_TYPE::Eval(
-    std::vector<TfSessionEntityInput<InputType>> helper_inputs,
-    std::vector<TfSessionEntityOutput<OutputType>> helper_outputs) {
+    const std::vector<TfSessionEntityInput<InputType>>& helper_inputs,
+    const std::vector<TfSessionEntityOutput<OutputType>>& helper_outputs) {
   std::vector<TF_Tensor *> in_vals, out_vals;
   std::vector<TF_Output> ins, outs;
   for (auto helperIn : helper_inputs) {
@@ -113,13 +113,13 @@ OutputType *TFSE_TYPE::Eval(
                 &(outs.at(0)), &(out_vals.at(0)), outs.size(),  // Outputs
                 nullptr, 0,                                     // Operations
                 nullptr, status_);
-  assert(TF_GetCode(status_) == TF_OK);
+  PL_ASSERT(TF_GetCode(status_) == TF_OK);
   return static_cast<OutputType *>(TF_TensorData(out_vals.at(0)));
 }
 
 // Evaluate op with only inputs(where nothing is output eg. Backprop)
 TFSE_TEMPLATE_ARGUMENTS
-void TFSE_TYPE::Eval(std::vector<TfSessionEntityInput<InputType>> helper_inputs,
+void TFSE_TYPE::Eval(const std::vector<TfSessionEntityInput<InputType>>& helper_inputs,
                      const std::string &op_name) {
   std::vector<TF_Tensor *> in_vals;
   std::vector<TF_Output> ins;
@@ -135,7 +135,7 @@ void TFSE_TYPE::Eval(std::vector<TfSessionEntityInput<InputType>> helper_inputs,
                 nullptr, nullptr, 0,  // Outputs
                 &op, 1,               // Operations
                 nullptr, status_);
-  assert(TF_GetCode(status_) == TF_OK);
+  PL_ASSERT(TF_GetCode(status_) == TF_OK);
 }
 
 /*

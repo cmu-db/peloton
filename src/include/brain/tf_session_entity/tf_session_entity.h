@@ -54,17 +54,17 @@ class TfSessionEntity {
    * 3. Inputs and Outputs eg. Loss calculation, Predictions.
    */
   void Eval(const std::string &opName);
-  void Eval(std::vector<TfSessionEntityInput<InputType>> helper_inputs,
+  void Eval(const std::vector<TfSessionEntityInput<InputType>>& helper_inputs,
             const std::string &op_name);
   OutputType *Eval(
-      std::vector<TfSessionEntityInput<InputType>> helper_inputs,
-      std::vector<TfSessionEntityOutput<OutputType>> helper_outputs);
+      const std::vector<TfSessionEntityInput<InputType>>& helper_inputs,
+      const std::vector<TfSessionEntityOutput<OutputType>>& helper_outputs);
 
   /** Helpers **/
   // Print the name of all operations(`ops`) in this graph
   void PrintOperations();
   /**
-   * Checking if the status is ok - Tensorflow C is horrible in showing theres
+   * Checking if the status is ok - Tensorflow C is horrible in showing there's
    * an error
    * uptil the eval statement - adding status checks can help find in which step
    * the error
