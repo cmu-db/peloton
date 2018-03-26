@@ -96,6 +96,65 @@ void StatsCalculator::Visit(const LogicalQueryDerivedGet *) {
   }
 }
 
+void StatsCalculator::Visit(const LogicalJoin *op) {
+    // Check if there's join condition
+  PL_ASSERT(gexpr_->GetChildrenGroupsSize() == 2);
+  auto left_child_group = memo_->GetGroupByID(gexpr_->GetChildGroupId(0));
+  auto right_child_group = memo_->GetGroupByID(gexpr_->GetChildGroupId(1));
+  auto root_group = memo_->GetGroupByID(gexpr_->GetGroupID());
+  // Calculate output num rows first
+  if (root_group->GetNumRows() == -1) {
+    size_t curr_rows =
+        left_child_group->GetNumRows() * right_child_group->GetNumRows();
+    for (auto &annotated_expr : op->join_predicates) {
+      // See if there are join conditions
+      if (annotated_expr.expr->GetExpressionType() ==
+              ExpressionType::COMPARE_EQUAL &&
+          annotated_expr.expr->GetChild(0)->GetExpressionType() ==
+              ExpressionType::VALUE_TUPLE &&
+          annotated_expr.expr->GetChild(1)->GetExpressionType() ==
+              ExpressionType::VALUE_TUPLE) {
+        auto left_child =
+            reinterpret_cast<const expression::TupleValueExpression *>(
+                annotated_expr.expr->GetChild(0));
+        auto right_child =
+            reinterpret_cast<const expression::TupleValueExpression *>(
+                annotated_expr.expr->GetChild(1));
+        if ((left_child_group->HasColumnStats(left_child->GetColFullName()) &&
+             right_child_group->HasColumnStats(
+                 right_child->GetColFullName())) ||
+            (left_child_group->HasColumnStats(right_child->GetColFullName()) &&
+             right_child_group->HasColumnStats(left_child->GetColFullName()))) {
+          curr_rows /= std::max(std::max(left_child_group->GetNumRows(),
+                                         right_child_group->GetNumRows()),
+                                1);
+        }
+      }
+    }
+    root_group->SetNumRows(curr_rows);
+  }
+  size_t num_rows = root_group->GetNumRows();
+  for (auto &col : required_cols_) {
+    PL_ASSERT(col->GetExpressionType() == ExpressionType::VALUE_TUPLE);
+    auto tv_expr = reinterpret_cast<expression::TupleValueExpression *>(col);
+    std::shared_ptr<ColumnStats> column_stats;
+    // Make a copy from the child stats
+    if (left_child_group->HasColumnStats(tv_expr->GetColFullName())) {
+      column_stats = std::make_shared<ColumnStats>(
+          *left_child_group->GetStats(tv_expr->GetColFullName()));
+    } else {
+      PL_ASSERT(right_child_group->HasColumnStats(tv_expr->GetColFullName()));
+      column_stats = std::make_shared<ColumnStats>(
+          *right_child_group->GetStats(tv_expr->GetColFullName()));
+    }
+    // Reset num_rows
+    column_stats->num_rows = num_rows;
+    root_group->AddStats(tv_expr->GetColFullName(), column_stats);
+  }
+  // TODO(boweic): calculate stats based on predicates other than join
+  // conditions
+}
+
 void StatsCalculator::Visit(const LogicalInnerJoin *op) {
   // Check if there's join condition
   PELOTON_ASSERT(gexpr_->GetChildrenGroupsSize() == 2);

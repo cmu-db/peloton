@@ -134,7 +134,7 @@ void QueryToOperatorTransformer::Visit(parser::JoinDefinition *node) {
     case JoinType::INNER: {
       predicates_ = CollectPredicates(node->condition.get(), predicates_);
       join_expr =
-          std::make_shared<OperatorExpression>(LogicalInnerJoin::make());
+	std::make_shared<OperatorExpression>(LogicalJoin::make(LogicalJoin::JoinType::Inner));
       break;
     }
     case JoinType::OUTER: {

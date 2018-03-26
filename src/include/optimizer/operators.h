@@ -163,6 +163,25 @@ class LogicalSingleJoin : public OperatorNode<LogicalSingleJoin> {
 };
 
 //===--------------------------------------------------------------------===//
+// Join (Inner + Outer Joins)
+//===--------------------------------------------------------------------===//
+class LogicalJoin : public OperatorNode<LogicalJoin> {
+ public:
+  enum class JoinType { Inner, FullOuter, LeftOuter, RightOuter };  
+  
+  static Operator make(JoinType _type);
+
+  static Operator make(JoinType _type, std::vector<AnnotatedExpression> &conditions);
+
+  bool operator==(const BaseOperatorNode &r) override;
+
+  hash_t Hash() const override;
+
+  std::vector<AnnotatedExpression> join_predicates;
+  JoinType type;
+};
+
+//===--------------------------------------------------------------------===//
 // InnerJoin
 //===--------------------------------------------------------------------===//
 class LogicalInnerJoin : public OperatorNode<LogicalInnerJoin> {

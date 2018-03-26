@@ -58,6 +58,7 @@ class OperatorVisitor {
   virtual void Visit(const LogicalMarkJoin *) {}
   virtual void Visit(const LogicalSingleJoin *) {}
   virtual void Visit(const LogicalDependentJoin *) {}
+  virtual void Visit(const LogicalJoin *) {}
   virtual void Visit(const LogicalInnerJoin *) {}
   virtual void Visit(const LogicalLeftJoin *) {}
   virtual void Visit(const LogicalRightJoin *) {}

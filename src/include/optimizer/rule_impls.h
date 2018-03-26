@@ -210,6 +210,21 @@ class LogicalAggregateToPhysical : public Rule {
 };
 
 /**
+ * @brief (Logical Join -> Nested-Loop Join)
+ */
+class JoinToNLJoin : public Rule {
+ public:
+  JoinToNLJoin();
+
+  bool Check(std::shared_ptr<OperatorExpression> plan,
+             OptimizeContext *context) const override;
+
+  void Transform(std::shared_ptr<OperatorExpression> input,
+                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+                 OptimizeContext *context) const override;
+};
+
+/**
  * @brief (Logical Inner Join -> Inner Nested-Loop Join)
  */
 class InnerJoinToInnerNLJoin : public Rule {

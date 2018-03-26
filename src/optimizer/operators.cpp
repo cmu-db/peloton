@@ -231,6 +231,67 @@ bool LogicalSingleJoin::operator==(const BaseOperatorNode &r) {
 }
 
 //===--------------------------------------------------------------------===//
+// Join (Inner + Outer Joins)
+//===--------------------------------------------------------------------===//
+Operator LogicalJoin::make(JoinType _type) {
+  LogicalJoin *join = new LogicalJoin;
+  join->join_predicates = {};
+  join->type = _type;
+  return Operator(join);
+}
+
+Operator LogicalJoin::make(JoinType _type, std::vector<AnnotatedExpression> &conditions) {
+  LogicalJoin *join = new LogicalJoin;
+  join->join_predicates = std::move(conditions);
+  join->type = _type;
+  return Operator(join);
+}
+
+hash_t LogicalJoin::Hash() const {
+  hash_t hash = BaseOperatorNode::Hash();
+  for (auto &pred : join_predicates)
+    hash = HashUtil::CombineHashes(hash, pred.expr->Hash());
+  return hash;
+}
+
+bool LogicalJoin::operator==(const BaseOperatorNode &r) {
+  switch (r.GetType()) {
+  case OpType::InnerJoin:
+    if (type != JoinType::Inner) {
+      return false;
+    }
+    break;
+  case OpType::OuterJoin:
+    if (type != JoinType::FullOuter) {
+      return false;
+    }
+    break;
+  case OpType::LeftJoin:
+    if (type != JoinType::LeftOuter) {
+      return false;
+    }
+    break;
+      case OpType::RightJoin:
+    if (type != JoinType::RightOuter) {
+      return false;
+    }
+    break;
+  default:
+    return false;
+    break;
+  }
+
+  const LogicalJoin &node = *static_cast<const LogicalJoin *>(&r);
+  if (join_predicates.size() != node.join_predicates.size()) return false;
+  for (size_t i = 0; i < join_predicates.size(); i++) {
+    if (!join_predicates[i].expr->ExactlyEquals(
+            *node.join_predicates[i].expr.get()))
+      return false;
+  }
+  return true;
+}
+  
+//===--------------------------------------------------------------------===//
 // InnerJoin
 //===--------------------------------------------------------------------===//
 Operator LogicalInnerJoin::make() {
@@ -295,7 +356,7 @@ Operator LogicalOuterJoin::make(expression::AbstractExpression *condition) {
 }
 
 //===--------------------------------------------------------------------===//
-// OuterJoin
+// SemiJoin
 //===--------------------------------------------------------------------===//
 Operator LogicalSemiJoin::make(expression::AbstractExpression *condition) {
   LogicalSemiJoin *join = new LogicalSemiJoin;
@@ -859,6 +920,8 @@ std::string OperatorNode<LogicalSingleJoin>::name_ = "LogicalSingleJoin";
 template <>
 std::string OperatorNode<LogicalDependentJoin>::name_ = "LogicalDependentJoin";
 template <>
+std::string OperatorNode<LogicalJoin>::name_ = "LogicalJoin";
+template <>
 std::string OperatorNode<LogicalInnerJoin>::name_ = "LogicalInnerJoin";
 template <>
 std::string OperatorNode<LogicalLeftJoin>::name_ = "LogicalLeftJoin";
@@ -949,6 +1012,8 @@ template <>
 OpType OperatorNode<LogicalSingleJoin>::type_ = OpType::LogicalSingleJoin;
 template <>
 OpType OperatorNode<LogicalDependentJoin>::type_ = OpType::LogicalDependentJoin;
+template <>
+OpType OperatorNode<LogicalJoin>::type_ = OpType::LogicalJoin;
 template <>
 OpType OperatorNode<LogicalInnerJoin>::type_ = OpType::InnerJoin;
 template <>

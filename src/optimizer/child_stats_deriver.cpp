@@ -33,6 +33,17 @@ vector<ExprSet> ChildStatsDeriver::DeriveInputStats(GroupExpression *gexpr,
 
 // TODO(boweic): support stats derivation for derivedGet
 void ChildStatsDeriver::Visit(const LogicalQueryDerivedGet *) {}
+void ChildStatsDeriver::Visit(const LogicalJoin *op) {
+  PassDownRequiredCols();
+  for (auto &annotated_expr : op->join_predicates) {
+    auto predicate = annotated_expr.expr.get();
+    ExprSet expr_set;
+    expression::ExpressionUtil::GetTupleValueExprs(expr_set, predicate);
+    for (auto &col : expr_set) {
+      PassDownColumn(col);
+    }
+  }
+}
 void ChildStatsDeriver::Visit(const LogicalInnerJoin *op) {
   PassDownRequiredCols();
   for (auto &annotated_expr : op->join_predicates) {

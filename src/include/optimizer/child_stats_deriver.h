@@ -32,6 +32,7 @@ class ChildStatsDeriver : public OperatorVisitor {
       ExprSet required_cols, Memo *memo);
 
   void Visit(const LogicalQueryDerivedGet *) override;
+  void Visit(const LogicalJoin *) override;
   void Visit(const LogicalInnerJoin *) override;
   void Visit(const LogicalLeftJoin *) override;
   void Visit(const LogicalRightJoin *) override;
