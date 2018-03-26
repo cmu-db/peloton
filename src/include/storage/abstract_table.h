@@ -29,8 +29,6 @@
 
 namespace peloton {
 
-typedef std::map<oid_t, std::pair<oid_t, oid_t>> column_map_type;
-
 namespace concurrency {
 class TransactionContext;
 }

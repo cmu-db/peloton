@@ -67,6 +67,7 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
       table_name(table_name),
       tuples_per_tilegroup_(tuples_per_tilegroup),
       adapt_table_(adapt_table),
+      default_layout_(schema->GetColumnCount()),
       trigger_list_(new trigger::TriggerList()) {
   // Init default partition
   auto col_count = schema->GetColumnCount();
@@ -1237,18 +1238,21 @@ std::vector<catalog::Schema> TransformTileGroupSchema(
 // Set the transformed tile group column-at-a-time
 void SetTransformedTileGroup(storage::TileGroup *orig_tile_group,
                              storage::TileGroup *new_tile_group) {
-  // Check the schema of the two tile groups
-  auto new_column_map = new_tile_group->GetColumnMap();
-  auto orig_column_map = orig_tile_group->GetColumnMap();
-  PELOTON_ASSERT(new_column_map.size() == orig_column_map.size());
 
   auto new_layout = new_tile_group->GetLayout();
   auto orig_layout = orig_tile_group->GetLayout();
 
+  // Check that both tile groups have the same schema
+  // Currently done by checking that the number of columns are equal
+  // TODO Pooja: Handle schena equality for multiple schema versions.
+  auto new_column_count = new_layout.GetColumnCount();
+  auto orig_column_count = orig_layout.GetColumnCount();
+  PL_ASSERT(new_column_count == orig_column_count);
+
   oid_t orig_tile_offset, orig_tile_column_offset;
   oid_t new_tile_offset, new_tile_column_offset;
 
-  auto column_count = new_column_map.size();
+  auto column_count = new_column_count;
   auto tuple_count = orig_tile_group->GetAllocatedTupleCount();
   // Go over each column copying onto the new tile group
   for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
@@ -1290,7 +1294,7 @@ storage::TileGroup *DataTable::TransformTileGroup(
   // Get orig tile group from catalog
   auto &catalog_manager = catalog::Manager::GetInstance();
   auto tile_group = catalog_manager.GetTileGroup(tile_group_id);
-  auto diff = tile_group->GetLayoutDifference(default_partition_);
+  auto diff = tile_group->GetLayout().GetLayoutDifference(default_layout_);
 
   // Check threshold for transformation
   if (diff < theta) {

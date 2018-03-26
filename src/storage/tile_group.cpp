@@ -40,7 +40,6 @@ TileGroup::TileGroup(BackendType backend_type,
       tile_group_header(tile_group_header),
       table(table),
       num_tuple_slots(tuple_count),
-      column_map(column_map),
       tile_group_layout_(column_map){
   tile_count = schemas.size();
   for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
@@ -339,26 +338,6 @@ std::shared_ptr<Tile> TileGroup::GetTileReference(
     const oid_t tile_offset) const {
   PELOTON_ASSERT(tile_offset < tile_count);
   return tiles[tile_offset];
-}
-
-double TileGroup::GetLayoutDifference(
-    const storage::column_map_type &new_column_map) {
-  double theta = 0;
-  size_t capacity = column_map.size();
-  double diff = 0;
-
-  for (oid_t col_itr = 0; col_itr < capacity; col_itr++) {
-    auto &old_col = column_map.at(col_itr);
-    auto &new_col = new_column_map.at(col_itr);
-
-    // The tile don't match
-    if (old_col.first != new_col.first) diff++;
-  }
-
-  // compute diff
-  theta = diff / capacity;
-
-  return theta;
 }
 
 void TileGroup::Sync() {

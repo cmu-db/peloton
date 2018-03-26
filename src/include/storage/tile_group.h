@@ -142,10 +142,6 @@ class TileGroup : public Printable {
 
   peloton::type::AbstractPool *GetTilePool(const oid_t tile_id) const;
 
-  const std::map<oid_t, std::pair<oid_t, oid_t>> &GetColumnMap() const {
-    return column_map;
-  }
-
   oid_t GetTileGroupId() const;
 
   oid_t GetDatabaseId() const { return database_id; }
@@ -161,8 +157,6 @@ class TileGroup : public Printable {
   type::Value GetValue(oid_t tuple_id, oid_t column_id);
 
   void SetValue(type::Value &value, oid_t tuple_id, oid_t column_id);
-
-  double GetLayoutDifference(const storage::column_map_type &new_column_map);
 
   // Sync the contents
   void Sync();
@@ -198,10 +192,6 @@ class TileGroup : public Printable {
   oid_t tile_count;
 
   std::mutex tile_group_mutex;
-
-  // column to tile mapping :
-  // <column offset> to <tile offset, tile column offset>
-  column_map_type column_map;
 
   Layout tile_group_layout_;
 };

@@ -23,6 +23,7 @@
 #include "common/container/lock_free_array.h"
 #include "storage/abstract_table.h"
 #include "storage/indirection_array.h"
+#include "storage/layout.h"
 #include "trigger/trigger.h"
 
 //===--------------------------------------------------------------------===//
@@ -420,6 +421,9 @@ class DataTable : public AbstractTable {
 
   // adapt table
   bool adapt_table_ = true;
+
+  // default layout for the table
+  Layout default_layout_;
 
   // default partition map for table
   column_map_type default_partition_;
