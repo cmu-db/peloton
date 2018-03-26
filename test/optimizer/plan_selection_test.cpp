@@ -30,6 +30,7 @@
 #include "planner/delete_plan.h"
 #include "planner/insert_plan.h"
 #include "planner/update_plan.h"
+#include "planner/abstract_scan_plan.h"
 #include "sql/testing_sql_util.h"
 #include "type/value_factory.h"
 
@@ -56,16 +57,16 @@ TEST_F(PlanSelectionTest, SimpleJoinOrderTest) {
       "CREATE TABLE test2(a INT PRIMARY KEY, b DECIMAL, c VARCHAR);");
 
   // Populate Tables table
-  int small_table_size = 1;
-  int large_table_size = 100;
+  int test1_table_size = 1;
+  int test2_table_size = 100;
 
-  for (int i = 1; i <= small_table_size; i++) {
+  for (int i = 1; i <= test1_table_size; i++) {
     std::stringstream ss;
     ss << "INSERT INTO test1 VALUES (" << i << ", 1.1, 'abcd');";
     TestingSQLUtil::ExecuteSQLQuery(ss.str());
   }
 
-  for (int i = 1; i <= large_table_size; i++) {
+  for (int i = 1; i <= test2_table_size; i++) {
     std::stringstream ss;
     ss << "INSERT INTO test2 VALUES (" << i << ", 1.1, 'abcd');";
     TestingSQLUtil::ExecuteSQLQuery(ss.str());
@@ -86,6 +87,28 @@ TEST_F(PlanSelectionTest, SimpleJoinOrderTest) {
   auto plan = optimizer.BuildPelotonPlanTree(stmt, DEFAULT_DB_NAME, txn);
   txn_manager.CommitTransaction(txn);
   printf("%s\n", plan->GetInfo().c_str());
+
+//  LOG_DEBUG("Child size: %zu", plan->GetChildren().size());
+//  LOG_DEBUG("Child[0]: %s", plan->GetChildren()[0]->GetInfo().c_str());
+//  LOG_DEBUG("Child[1]: %s", plan->GetChildren()[1]->GetInfo().c_str());
+
+  EXPECT_TRUE(plan->GetPlanNodeType() == PlanNodeType::NESTLOOP ||
+              plan->GetPlanNodeType() == PlanNodeType::NESTLOOPINDEX ||
+              plan->GetPlanNodeType() == PlanNodeType::MERGEJOIN ||
+              plan->GetPlanNodeType() == PlanNodeType::HASHJOIN);
+
+  EXPECT_EQ(2, plan->GetChildren().size());
+  EXPECT_EQ(PlanNodeType::SEQSCAN, plan->GetChildren()[0]->GetPlanNodeType());
+  EXPECT_EQ(PlanNodeType::HASH, plan->GetChildren()[1]->GetPlanNodeType());
+
+  EXPECT_EQ(1, plan->GetChildren()[1]->GetChildren().size());
+  EXPECT_EQ(PlanNodeType::SEQSCAN, plan->GetChildren()[1]->GetChildren()[0]->GetPlanNodeType());
+
+  auto left_scan = dynamic_cast<planner::AbstractScan *>(plan->GetChildren()[0].get());
+  auto right_scan = dynamic_cast<planner::AbstractScan *>(plan->GetChildren()[1]->GetChildren()[0].get());
+
+  LOG_DEBUG("Left Table: %s", left_scan->GetTable()->GetName().c_str());
+  LOG_DEBUG("Right Table: %s", right_scan->GetTable()->GetName().c_str());
 
   TestingExecutorUtil::DeleteDatabase(DEFAULT_DB_NAME);
 
