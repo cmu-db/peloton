@@ -1203,7 +1203,6 @@ std::vector<catalog::Schema> TransformTileGroupSchema(
 
   // First, get info from the original tile group's schema
   std::map<oid_t, std::map<oid_t, catalog::Column>> schemas;
-  auto orig_schemas = tile_group->GetTileSchemas();
   for (auto column_map_entry : column_map) {
     new_tile_offset = column_map_entry.second.first;
     new_tile_column_offset = column_map_entry.second.second;
@@ -1212,9 +1211,11 @@ std::vector<catalog::Schema> TransformTileGroupSchema(
     tile_group->LocateTileAndColumn(column_offset, orig_tile_offset,
                                     orig_tile_column_offset);
 
-    // Get the column info from original schema
-    auto orig_schema = orig_schemas[orig_tile_offset];
-    auto column_info = orig_schema.GetColumn(orig_tile_column_offset);
+    // Get the column info from original tile
+    auto tile = tile_group->GetTile(orig_tile_offset);
+    PL_ASSERT(tile != nullptr);
+    auto orig_schema = tile->GetSchema();
+    auto column_info = orig_schema->GetColumn(orig_tile_column_offset);
     schemas[new_tile_offset][new_tile_column_offset] = column_info;
   }
 

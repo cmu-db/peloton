@@ -156,8 +156,6 @@ class TileGroup : public Printable {
 
   void SetTileGroupId(oid_t tile_group_id_) { tile_group_id = tile_group_id_; }
 
-  std::vector<catalog::Schema> &GetTileSchemas() { return tile_schemas; }
-
   size_t GetTileCount() const { return tile_count; }
 
   // Sets the tile id and column id w.r.t that tile corresponding to
@@ -194,9 +192,6 @@ class TileGroup : public Printable {
 
   // Backend type
   BackendType backend_type;
-
-  // mapping to tile schemas
-  std::vector<catalog::Schema> tile_schemas;
 
   // set of tiles
   std::vector<std::shared_ptr<Tile>> tiles;

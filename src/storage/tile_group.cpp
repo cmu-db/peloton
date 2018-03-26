@@ -37,20 +37,19 @@ TileGroup::TileGroup(BackendType backend_type,
       table_id(INVALID_OID),
       tile_group_id(INVALID_OID),
       backend_type(backend_type),
-      tile_schemas(schemas),
       tile_group_header(tile_group_header),
       table(table),
       num_tuple_slots(tuple_count),
       column_map(column_map),
       tile_group_layout_(column_map){
-  tile_count = tile_schemas.size();
+  tile_count = schemas.size();
   for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
     auto &manager = catalog::Manager::GetInstance();
     oid_t tile_id = manager.GetNextTileId();
 
     std::shared_ptr<Tile> tile(storage::TileFactory::GetTile(
         backend_type, database_id, table_id, tile_group_id, tile_id,
-        tile_group_header, tile_schemas[tile_itr], this, tuple_count));
+        tile_group_header, schemas[tile_itr], this, tuple_count));
 
     // Add a reference to the tile in the tile group
     tiles.push_back(tile);
@@ -110,16 +109,15 @@ void TileGroup::CopyTuple(const Tuple *tuple, const oid_t &tuple_slot_id) {
   oid_t column_itr = 0;
 
   for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
-    const catalog::Schema &schema = tile_schemas[tile_itr];
-    tile_column_count = schema.GetColumnCount();
-
     storage::Tile *tile = GetTile(tile_itr);
     PELOTON_ASSERT(tile);
+    const catalog::Schema *schema = tile->GetSchema();
+    tile_column_count = schema->GetColumnCount();
     char *tile_tuple_location = tile->GetTupleLocation(tuple_slot_id);
     PELOTON_ASSERT(tile_tuple_location);
 
     // NOTE:: Only a tuple wrapper
-    storage::Tuple tile_tuple(&schema, tile_tuple_location);
+    storage::Tuple tile_tuple(schema, tile_tuple_location);
 
     for (oid_t tile_column_itr = 0; tile_column_itr < tile_column_count;
          tile_column_itr++) {
@@ -192,16 +190,15 @@ oid_t TileGroup::InsertTupleFromRecovery(cid_t commit_id, oid_t tuple_slot_id,
   oid_t column_itr = 0;
 
   for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
-    const catalog::Schema &schema = tile_schemas[tile_itr];
-    tile_column_count = schema.GetColumnCount();
-
     storage::Tile *tile = GetTile(tile_itr);
     PELOTON_ASSERT(tile);
+    const catalog::Schema *schema = tile->GetSchema();
+    tile_column_count = schema->GetColumnCount();
     char *tile_tuple_location = tile->GetTupleLocation(tuple_slot_id);
     PELOTON_ASSERT(tile_tuple_location);
 
     // NOTE:: Only a tuple wrapper
-    storage::Tuple tile_tuple(&schema, tile_tuple_location);
+    storage::Tuple tile_tuple(schema, tile_tuple_location);
 
     for (oid_t tile_column_itr = 0; tile_column_itr < tile_column_count;
          tile_column_itr++) {
@@ -292,16 +289,16 @@ oid_t TileGroup::InsertTupleFromCheckpoint(oid_t tuple_slot_id,
   oid_t column_itr = 0;
 
   for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
-    const catalog::Schema &schema = tile_schemas[tile_itr];
-    tile_column_count = schema.GetColumnCount();
 
     storage::Tile *tile = GetTile(tile_itr);
     PELOTON_ASSERT(tile);
+    const catalog::Schema *schema = tile->GetSchema();
+    tile_column_count = schema->GetColumnCount();
     char *tile_tuple_location = tile->GetTupleLocation(tuple_slot_id);
     PELOTON_ASSERT(tile_tuple_location);
 
     // NOTE:: Only a tuple wrapper
-    storage::Tuple tile_tuple(&schema, tile_tuple_location);
+    storage::Tuple tile_tuple(schema, tile_tuple_location);
 
     for (oid_t tile_column_itr = 0; tile_column_itr < tile_column_count;
          tile_column_itr++) {
