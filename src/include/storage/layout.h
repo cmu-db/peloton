@@ -33,6 +33,8 @@ class Layout {
 
   oid_t  GetLayoutId() const { return layout_id_; }
 
+  // Sets the tile id and column id w.r.t that tile corresponding to
+  // the specified tile group column id.
   void LocateTileAndColumn(oid_t column_offset, oid_t &tile_offset,
                            oid_t &tile_column_offset) const;
 

@@ -29,6 +29,7 @@
 #include "storage/abstract_table.h"
 #include "storage/data_table.h"
 #include "storage/database.h"
+#include "storage/layout.h"
 #include "storage/storage_manager.h"
 #include "storage/tile.h"
 #include "storage/tile_group.h"
@@ -1200,6 +1201,7 @@ std::vector<catalog::Schema> TransformTileGroupSchema(
   std::vector<catalog::Schema> new_schema;
   oid_t orig_tile_offset, orig_tile_column_offset;
   oid_t new_tile_offset, new_tile_column_offset;
+  auto tile_group_layout = tile_group->GetLayout();
 
   // First, get info from the original tile group's schema
   std::map<oid_t, std::map<oid_t, catalog::Column>> schemas;
@@ -1208,8 +1210,8 @@ std::vector<catalog::Schema> TransformTileGroupSchema(
     new_tile_column_offset = column_map_entry.second.second;
     oid_t column_offset = column_map_entry.first;
 
-    tile_group->LocateTileAndColumn(column_offset, orig_tile_offset,
-                                    orig_tile_column_offset);
+    tile_group_layout.LocateTileAndColumn(column_offset, orig_tile_offset,
+                                          orig_tile_column_offset);
 
     // Get the column info from original tile
     auto tile = tile_group->GetTile(orig_tile_offset);
@@ -1240,6 +1242,9 @@ void SetTransformedTileGroup(storage::TileGroup *orig_tile_group,
   auto orig_column_map = orig_tile_group->GetColumnMap();
   PELOTON_ASSERT(new_column_map.size() == orig_column_map.size());
 
+  auto new_layout = new_tile_group->GetLayout();
+  auto orig_layout = orig_tile_group->GetLayout();
+
   oid_t orig_tile_offset, orig_tile_column_offset;
   oid_t new_tile_offset, new_tile_column_offset;
 
@@ -1248,10 +1253,10 @@ void SetTransformedTileGroup(storage::TileGroup *orig_tile_group,
   // Go over each column copying onto the new tile group
   for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
     // Locate the original base tile and tile column offset
-    orig_tile_group->LocateTileAndColumn(column_itr, orig_tile_offset,
+    orig_layout.LocateTileAndColumn(column_itr, orig_tile_offset,
                                          orig_tile_column_offset);
 
-    new_tile_group->LocateTileAndColumn(column_itr, new_tile_offset,
+    new_layout.LocateTileAndColumn(column_itr, new_tile_offset,
                                         new_tile_column_offset);
 
     auto orig_tile = orig_tile_group->GetTile(orig_tile_offset);

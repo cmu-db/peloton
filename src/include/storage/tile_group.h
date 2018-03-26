@@ -158,17 +158,6 @@ class TileGroup : public Printable {
 
   size_t GetTileCount() const { return tile_count; }
 
-  // Sets the tile id and column id w.r.t that tile corresponding to
-  // the specified tile group column id.
-  inline void LocateTileAndColumn(oid_t column_offset, oid_t &tile_offset,
-                                  oid_t &tile_column_offset) const {
-    PELOTON_ASSERT(column_map.count(column_offset) != 0);
-    // get the entry in the column map
-    auto entry = column_map.at(column_offset);
-    tile_offset = entry.first;
-    tile_column_offset = entry.second;
-  }
-
   type::Value GetValue(oid_t tuple_id, oid_t column_id);
 
   void SetValue(type::Value &value, oid_t tuple_id, oid_t column_id);
