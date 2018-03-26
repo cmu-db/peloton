@@ -102,8 +102,8 @@ TEST_F(TimestampValueTests, ComparisonTest) {
         if (expected_null) {
           EXPECT_EQ(expected_null, result == CmpBool::NULL_);
         } else {
-          EXPECT_EQ(expected, result == CmpBool::TRUE);
-          EXPECT_EQ(!expected, result == CmpBool::FALSE);
+          EXPECT_EQ(expected, result == CmpBool::CmpTrue);
+          EXPECT_EQ(!expected, result == CmpBool::CmpFalse);
         }
       }
     }
@@ -155,7 +155,7 @@ TEST_F(TimestampValueTests, CopyTest) {
   type::Value val0 =
       type::ValueFactory::GetTimestampValue(static_cast<uint64_t>(1000000));
   type::Value val1 = val0.Copy();
-  EXPECT_EQ(CmpBool::TRUE, val0.CompareEquals(val1));
+  EXPECT_EQ(CmpBool::CmpTrue, val0.CompareEquals(val1));
 }
 
 TEST_F(TimestampValueTests, CastTest) {

@@ -23,6 +23,8 @@
 #include <vector>
 #include <unistd.h>
 
+#include "tbb/concurrent_vector.h"
+
 #include "parser/pg_trigger.h"
 #include "type/type_id.h"
 #include "common/logger.h"
@@ -72,9 +74,9 @@ extern int TEST_TUPLES_PER_TILEGROUP;
 // This is used when comparing values with each other
 //===--------------------------------------------------------------------===//
 enum class CmpBool {
-  FALSE = 0,
-  TRUE = 1,
-  NULL_ = 2  // Note the underscore suffix
+  CmpFalse = 0,
+  CmpTrue = 1,
+  NULL_ = 2 // Note the underscore suffix
 };
 
 //===--------------------------------------------------------------------===//
@@ -1229,7 +1231,7 @@ enum class DDLType {
   CREATE,
   DROP,
 };
-typedef std::vector<std::tuple<oid_t, oid_t, oid_t, DDLType>> CreateDropSet;
+typedef tbb::concurrent_vector<std::tuple<oid_t, oid_t, oid_t, DDLType>> CreateDropSet;
 typedef std::vector<std::tuple<oid_t, oid_t, oid_t>> GCObjectSet;
 
 //===--------------------------------------------------------------------===//
