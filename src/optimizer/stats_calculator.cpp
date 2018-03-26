@@ -27,10 +27,12 @@ namespace peloton {
 namespace optimizer {
 
 void StatsCalculator::CalculateStats(GroupExpression *gexpr,
-                                     ExprSet required_cols, Memo *memo) {
+                                     ExprSet required_cols, Memo *memo,
+                                     concurrency::TransactionContext *txn) {
   gexpr_ = gexpr;
   memo_ = memo;
   required_cols_ = required_cols;
+  txn_ = txn;
   gexpr->Op().Accept(this);
 }
 
@@ -41,7 +43,7 @@ void StatsCalculator::Visit(const LogicalGet *op) {
   }
   auto table_stats = std::dynamic_pointer_cast<TableStats>(
       StatsStorage::GetInstance()->GetTableStats(op->table->GetDatabaseOid(),
-                                                 op->table->GetTableOid()));
+                                                 op->table->GetTableOid(), txn_));
   // First, get the required stats of the base table
   std::unordered_map<std::string, std::shared_ptr<ColumnStats>> required_stats;
   for (auto &col : required_cols_) {
