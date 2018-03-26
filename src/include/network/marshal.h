@@ -15,9 +15,9 @@
 #include <string>
 #include <vector>
 
+#include "common/internal_types.h"
 #include "common/logger.h"
 #include "common/macros.h"
-#include "common/internal_types.h"
 
 #define BUFFER_INIT_SIZE 100
 
@@ -138,6 +138,8 @@ struct OutputPacket {
   size_t ptr;                   // ByteBuf cursor, which is used for get and put
   NetworkMessageType msg_type;  // header
 
+  bool single_type_pkt;  // there would be only a pkt type being written to the
+                         // buffer when this flag is true
   bool skip_header_write;  // whether we should write header to socket wbuf
   size_t write_ptr;        // cursor used to write packet content to socket wbuf
 
@@ -146,28 +148,16 @@ struct OutputPacket {
     buf.resize(BUFFER_INIT_SIZE);
     buf.shrink_to_fit();
     buf.clear();
+    single_type_pkt = false;
     len = ptr = write_ptr = 0;
     msg_type = NetworkMessageType::NULL_COMMAND;
     skip_header_write = true;
   }
 };
 
-struct Client {
-  // Authentication details
-  std::string dbname;
-  std::string user;
-  std::unordered_map<std::string, std::string> cmdline_options;
-
-  inline void Reset() {
-    dbname.clear();
-    user.clear();
-    cmdline_options.clear();
-  }
-};
-
 /*
-* Marshallers
-*/
+ * Marshallers
+ */
 
 /* packet_put_byte - used to write a single byte into a packet */
 extern void PacketPutByte(OutputPacket *pkt, const uchar c);
@@ -186,22 +176,22 @@ extern void PacketPutCbytes(OutputPacket *pkt, const uchar *b, int len);
 extern void PacketPutString(OutputPacket *pkt, const std::string &data);
 
 /*
-* Unmarshallers
-*/
+ * Unmarshallers
+ */
 
 /* Copy len bytes from the position indicated by begin to an array */
 extern uchar *PacketCopyBytes(ByteBuf::const_iterator begin, int len);
 /*
-* packet_get_int -  Parse an int out of the head of the
-* 	packet. "base" bytes determine the number of bytes of integer
-* 	we are parsing out.
-*/
+ * packet_get_int -  Parse an int out of the head of the
+ * 	packet. "base" bytes determine the number of bytes of integer
+ * 	we are parsing out.
+ */
 extern int PacketGetInt(InputPacket *pkt, uchar base);
 
 /*
-* packet_get_string - parse out a string of size len.
-* 		if len=0? parse till the end of the string
-*/
+ * packet_get_string - parse out a string of size len.
+ * 		if len=0? parse till the end of the string
+ */
 extern void PacketGetString(InputPacket *pkt, size_t len, std::string &result);
 
 /* packet_get_bytes - Parse out "len" bytes of pkt as raw bytes */
@@ -211,9 +201,9 @@ extern void PacketGetBytes(InputPacket *pkt, size_t len, ByteBuf &result);
 extern void PacketGetByte(InputPacket *rpkt, uchar &result);
 
 /*
-* get_string_token - used to extract a string token
-* 		from an unsigned char vector
-*/
+ * get_string_token - used to extract a string token
+ * 		from an unsigned char vector
+ */
 extern void GetStringToken(InputPacket *pkt, std::string &result);
 
 }  // namespace network
