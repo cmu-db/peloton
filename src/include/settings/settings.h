@@ -107,6 +107,25 @@ SETTING_int(connection_thread_count,
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
+// CHECKPOINTS
+//===----------------------------------------------------------------------===//
+
+SETTING_bool(checkpointing,
+						 "Enable Checkpointing and recovery (default: true)",
+						 true,
+						 false, false)
+
+SETTING_int(checkpoint_interval,
+					  "Checkpoint interval in seconds (default: 30 second)",
+					  30,
+					  false, false)
+
+SETTING_string(checkpoint_dir,
+				 	  "Direcotry for checkpoints (default: ./checkpoints)",
+				 	  "./checkpoints",
+				 	  false, false)
+
+//===----------------------------------------------------------------------===//
 // ERROR REPORTING AND LOGGING
 //===----------------------------------------------------------------------===//
 

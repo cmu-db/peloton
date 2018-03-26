@@ -185,6 +185,12 @@ class TileGroup : public Printable {
   // Sync the contents
   void Sync();
 
+  // Serialize this tile group
+  void SerializeTo(SerializeOutput &out);
+
+  // Deserialize this tile group
+  static std::shared_ptr<TileGroup> DeserializeFrom(SerializeInput &in, const oid_t database_oid, AbstractTable *table);
+
  protected:
   //===--------------------------------------------------------------------===//
   // Data members

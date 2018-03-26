@@ -49,9 +49,10 @@ namespace logging {
 class LogManager;
 }  // namespace logging
 
-namespace concurrency {
-class TransactionContext;
-}  // namespace concurrency
+namespace logging {
+class LogManager;
+class TimestampCheckpointManager;
+}  // namespace logging
 
 namespace storage {
 
@@ -77,6 +78,7 @@ class DataTable : public AbstractTable {
   friend class TileGroupFactory;
   friend class TableFactory;
   friend class logging::LogManager;
+  friend class logging::TimestampCheckpointManager;
 
   DataTable() = delete;
   DataTable(DataTable const &) = delete;

@@ -20,6 +20,7 @@
 #include "catalog/index_catalog.h"
 #include "catalog/schema.h"
 #include "catalog/column.h"
+#include "catalog/manager.h"
 #include "common/timer.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "concurrency/timestamp_ordering_transaction_manager.h"
@@ -27,6 +28,7 @@
 #include "storage/database.h"
 #include "storage/data_table.h"
 #include "storage/tile_group.h"
+#include "storage/tile_group_factory.h"
 #include "storage/tile_group_header.h"
 #include "type/serializeio.h"
 #include "type/type.h"
@@ -45,7 +47,7 @@ void TimestampCheckpointManager::StopCheckpointing() {
 	central_checkpoint_thread_->join();
 }
 
-bool TimestampCheckpointManager::DoRecovery(){
+bool TimestampCheckpointManager::DoCheckpointRecovery(){
 	eid_t epoch_id = GetRecoveryCheckpointEpoch();
 	if (epoch_id == INVALID_EID) {
 		LOG_INFO("No checkpoint for recovery");
@@ -195,36 +197,67 @@ void TimestampCheckpointManager::CheckpointingTable(const storage::DataTable *ta
 			target_table->GetOid(), target_table->GetName().c_str(), target_table->GetDatabaseOid());
 
 	// load all table data
-	oid_t tile_group_count = target_table->GetTileGroupCount();
+	size_t tile_group_count = target_table->GetTileGroupCount();
+	output_buffer.WriteLong(tile_group_count);
+	LOG_DEBUG("Tile group count: %lu", tile_group_count);
 	for (oid_t tile_group_offset = START_OID; tile_group_offset < tile_group_count; tile_group_offset++) {
 		auto tile_group = target_table->GetTileGroup(tile_group_offset);
 		auto tile_group_header = tile_group->GetHeader();
 
-		// load all tuple data in the table
-		oid_t tuple_count = tile_group->GetNextTupleSlot();
-		for (oid_t tuple_id = START_OID; tuple_id < tuple_count; tuple_id++) {
+		// serialize the tile group structure
+		tile_group->SerializeTo(output_buffer);
+
+		// collect and count visible tuples
+		std::vector<oid_t> visible_tuples;
+		oid_t max_tuple_count = tile_group->GetNextTupleSlot();
+		oid_t column_count = target_table->GetSchema()->GetColumnCount();
+		for (oid_t tuple_id = START_OID; tuple_id < max_tuple_count; tuple_id++) {
+			if (IsVisible(tile_group_header, tuple_id, begin_cid)) {
+				visible_tuples.push_back(tuple_id);
+			} else {
+				LOG_TRACE("%s's tuple %d is invisible\n", target_table->GetName().c_str(), tuple_id);
+			}
+		}
+		output_buffer.WriteInt(visible_tuples.size());
+
+		// load visible tuples data in the table
+		for (auto tuple_id : visible_tuples) {
+			// load all field data of each column in the tuple
+			for (oid_t column_id = START_OID; column_id < column_count; column_id++){
+				type::Value value = tile_group->GetValue(tuple_id, column_id);
+				value.SerializeTo(output_buffer);
+				LOG_TRACE("%s(column %d, tuple %d):%s\n",
+						target_table->GetName().c_str(), column_id, tuple_id, value.ToString().c_str());
+			}
+		}
+
+		/* checkpoint for only data without tile group
+		// load visible tuples data in the table
+		oid_t max_tuple_count = tile_group->GetNextTupleSlot();
+		oid_t column_count = column_map.size();
+		for (oid_t tuple_id = START_OID; tuple_id < max_tuple_count; tuple_id++) {
 			if (IsVisible(tile_group_header, tuple_id, begin_cid)) {
 				// load all field data of each column in the tuple
-				oid_t column_count = tile_group->GetColumnMap().size();
 				for (oid_t column_id = START_OID; column_id < column_count; column_id++){
 					type::Value value = tile_group->GetValue(tuple_id, column_id);
 					value.SerializeTo(output_buffer);
 					LOG_TRACE("%s(column %d, tuple %d):%s\n",
 							target_table->GetName().c_str(), column_id, tuple_id, value.ToString().c_str());
 				}
-
-				int ret = fwrite((void *)output_buffer.Data(), output_buffer.Size(), 1, file_handle.file);
-				if (ret != 1) {
-					LOG_ERROR("Write error (tuple %d, table %d)", tuple_id, target_table->GetOid());
-					return;
-				}
-
-				output_buffer.Reset();
 			} else {
 				LOG_TRACE("%s's tuple %d is invisible\n", target_table->GetName().c_str(), tuple_id);
 			}
 		}
+		*/
 
+		// write down tuple data to file
+		int ret = fwrite((void *)output_buffer.Data(), output_buffer.Size(), 1, file_handle.file);
+		if (ret != 1) {
+			LOG_ERROR("Write error");
+			return;
+		}
+
+		output_buffer.Reset();
 	}
 
 	LoggingUtil::FFlushFsync(file_handle);
@@ -356,7 +389,11 @@ bool TimestampCheckpointManager::PerformCheckpointRecovery(const eid_t &epoch_id
 		LOG_ERROR("Create checkpoint file failed!");
 		return false;
 	}
-	RecoverCatalog(catalog_file, txn);
+	if (RecoverCatalog(catalog_file, txn) == false) {
+		txn_manager.AbortTransaction(txn);
+		LOG_ERROR("Catalog recovery failed");
+		return false;
+	}
 	fclose(catalog_file.file);
 
 	// Recover table
@@ -395,7 +432,7 @@ bool TimestampCheckpointManager::PerformCheckpointRecovery(const eid_t &epoch_id
 
 // TODO: migrate below deserializing processes into each class file
 //			(DatabaseCatalogObject, TableCatalogObject, Index)
-void TimestampCheckpointManager::RecoverCatalog(FileHandle &file_handle, concurrency::TransactionContext *txn) {
+bool TimestampCheckpointManager::RecoverCatalog(FileHandle &file_handle, concurrency::TransactionContext *txn) {
 	// read catalog file to be recovered
 	size_t catalog_size = LoggingUtil::GetFileSize(file_handle);
 	char catalog_data[catalog_size];
@@ -404,7 +441,7 @@ void TimestampCheckpointManager::RecoverCatalog(FileHandle &file_handle, concurr
 
 	if (LoggingUtil::ReadNBytesFromFile(file_handle, catalog_data, catalog_size) == false) {
 		LOG_ERROR("checkpoint catalog file read error");
-		return;
+		return false;
 	}
 
 	CopySerializeInput catalog_buffer(catalog_data, catalog_size);
@@ -425,7 +462,7 @@ void TimestampCheckpointManager::RecoverCatalog(FileHandle &file_handle, concurr
 			auto result = catalog->CreateDatabase(db_name, txn);
 			if (result != ResultType::SUCCESS) {
 				LOG_ERROR("Create database error");
-				return;
+				return false;
 			}
 		} else {
 			LOG_DEBUG("Use existing database %d '%s'", db_oid, db_name.c_str());
@@ -484,6 +521,8 @@ void TimestampCheckpointManager::RecoverCatalog(FileHandle &file_handle, concurr
 		} // end table loop
 
 	} // end database loop
+
+	return true;
 }
 
 void TimestampCheckpointManager::RecoverTable(storage::DataTable *table, FileHandle &file_handle, concurrency::TransactionContext *txn) {
@@ -498,21 +537,55 @@ void TimestampCheckpointManager::RecoverTable(storage::DataTable *table, FileHan
 	}
 	CopySerializeInput input_buffer(data, sizeof(data));
 
+	// Drop a default tile group created by table catalog recovery
+	table->DropTileGroups();
+
+	// Create tile group
 	auto schema = table->GetSchema();
-	std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
+	oid_t tile_group_count = input_buffer.ReadLong();
+	for (oid_t tile_group_idx = START_OID; tile_group_idx < tile_group_count; tile_group_idx++) {
+		// recover tile group structure
+		std::shared_ptr<storage::TileGroup> tile_group = storage::TileGroup::DeserializeFrom(input_buffer, table->GetDatabaseOid(), table);
 
-	/*
-	auto tile_group_count = table->GetTileGroupCount();
-	for (size_t tile_group_idx = 0; tile_group_idx < tile_group_count; tile_group_idx++) {
-		auto tile_group = table->GetTileGroup(tile_group_idx);
-		LOG_DEBUG("%s", tile_group->GetInfo().c_str());
+		// add the tile group to table
+		table->AddTileGroup(tile_group);
+
+		// recover tuples located in the tile group
+		oid_t visible_tuple_count = input_buffer.ReadInt();
+		oid_t column_count = schema->GetColumnCount();
+		for (oid_t tuple_idx = 0; tuple_idx < visible_tuple_count; tuple_idx++) {
+	    // recover values on each column
+			std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
+	    ItemPointer *index_entry_ptr = nullptr;
+			for (oid_t column_id = 0; column_id < column_count; column_id++) {
+				auto value = type::Value::DeserializeFrom(input_buffer, schema->GetType(column_id), NULL);
+				tuple->SetValue(column_id, value);
+			}
+
+			// insert the tuple into the tile group
+			oid_t tuple_slot = tile_group->InsertTuple(tuple.get());
+			ItemPointer location(tile_group->GetTileGroupId(), tuple_slot);
+			if (location.block == INVALID_OID) {
+				LOG_ERROR("Tuple insert error for tile group");
+				return;
+			}
+
+			// register the location of the inserted tuple to the table
+			if (table->InsertTuple(tuple.get(), location, txn, &index_entry_ptr, false) == false) {
+				LOG_ERROR("Tuple insert error for table");
+				return;
+			}
+			concurrency::TransactionManagerFactory::GetInstance().PerformInsert(txn, location, index_entry_ptr);
+		}
+
 	}
-	*/
 
+	/* recovery for only data without tile group
 	// recover table tuples
 	oid_t column_count = schema->GetColumnCount();
 	while (input_buffer.RestSize() > 0) {
     // recover values on each column
+		std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
     ItemPointer *index_entry_ptr = nullptr;
 		for (oid_t column_id = 0; column_id < column_count; column_id++) {
 			auto value = type::Value::DeserializeFrom(input_buffer, schema->GetType(column_id), NULL);
@@ -527,7 +600,7 @@ void TimestampCheckpointManager::RecoverTable(storage::DataTable *table, FileHan
 		}
 		concurrency::TransactionManagerFactory::GetInstance().PerformInsert(txn, location, index_entry_ptr);
 	}
-
+	*/
 }
 
 }  // namespace logging

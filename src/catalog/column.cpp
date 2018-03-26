@@ -50,9 +50,6 @@ void Column::SerializeTo(SerializeOutput &out) {
 	out.WriteInt(GetLength());
 	out.WriteInt(column_offset);
 	out.WriteBool(is_inlined);
-	LOG_DEBUG("|- Column '%s %s': length %lu, offset %d, Inline %d",
-			column_name.c_str(), TypeIdToString(column_type).c_str(),
-			GetLength(), column_offset, is_inlined);
 
 	// Column constraints
 	out.WriteLong(constraints.size());
@@ -71,8 +68,6 @@ Column Column::DeserializeFrom(SerializeInput &in) {
 	bool is_inlined = in.ReadBool();
 
 	auto column = catalog::Column(column_type, column_length, column_name, is_inlined, column_offset);
-	LOG_DEBUG("Create Column '%s %s' : %lu bytes, offset %d, inlined %d",
-			column_name.c_str(), TypeIdToString(column_type).c_str(), column_length, column_offset, is_inlined);
 
 	// recover column constraints
 	size_t column_constraint_count = in.ReadLong();

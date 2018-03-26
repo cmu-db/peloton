@@ -15,6 +15,7 @@
 #include "common/harness.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "logging/timestamp_checkpoint_manager.h"
+#include "storage/storage_manager.h"
 #include "sql/testing_sql_util.h"
 
 namespace peloton {
@@ -29,12 +30,10 @@ class TimestampCheckpointingTests : public PelotonTest {};
 std::string DB_NAME = "default_database";
 
 TEST_F(TimestampCheckpointingTests, CheckpointRecoveryTest) {
-	PelotonInit::Initialize();
-
   auto &checkpoint_manager = logging::TimestampCheckpointManager::GetInstance();
 
   // Do checkpoint recovery
-  checkpoint_manager.DoRecovery();
+  checkpoint_manager.DoCheckpointRecovery();
 
   // Schema check
   //LOG_DEBUG("%s", storage::StorageManager::GetInstance()->GetDatabaseWithOffset(1)->GetInfo().c_str());
@@ -62,7 +61,17 @@ TEST_F(TimestampCheckpointingTests, CheckpointRecoveryTest) {
   EXPECT_FALSE(catalog::Catalog::GetInstance()->ExistsTableByName(DEFAULT_DB_NAME, "out_of_checkpoint", txn));
   txn_manager.CommitTransaction(txn);
 
-  PelotonInit::Shutdown();
+  /*
+  auto sm = storage::StorageManager::GetInstance();
+  auto db = sm->GetDatabaseWithOffset(1);
+  for (oid_t t = 0; t < db->GetTableCount(); t++) {
+  	auto table = db->GetTable(t);
+  	for (oid_t tg = 0; tg < table->GetTileGroupCount(); tg++) {
+  		LOG_DEBUG("%s", table->GetTileGroup(tg)->GetInfo().c_str());
+  	}
+  }
+  */
+
 }
 
 

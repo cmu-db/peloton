@@ -39,11 +39,13 @@ class LogicalCheckpointManager : public CheckpointManager {
 
   virtual void Reset() { is_running_ = false; }
 
-  virtual void StartLogging(std::vector<std::unique_ptr<std::thread>> & UNUSED_ATTRIBUTE) {}
+  virtual void StartCheckpointing(std::vector<std::unique_ptr<std::thread>> & UNUSED_ATTRIBUTE) {}
 
-  virtual void StartLogging() {}
+  virtual void StartCheckpointing() {}
 
-  virtual void StopLogging() {}
+  virtual void StopCheckpointing() {}
+
+  virtual bool DoCheckpointRecovery() { return false;}
 
   virtual void RegisterTable(const oid_t &table_id UNUSED_ATTRIBUTE) {}
 

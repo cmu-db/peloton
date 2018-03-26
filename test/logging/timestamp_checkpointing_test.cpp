@@ -13,6 +13,7 @@
 #include "common/init.h"
 #include "common/harness.h"
 #include "logging/timestamp_checkpoint_manager.h"
+#include "settings/settings_manager.h"
 #include "sql/testing_sql_util.h"
 
 namespace peloton {
@@ -27,6 +28,7 @@ class TimestampCheckpointingTests : public PelotonTest {};
 std::string DB_NAME = "default_database";
 
 TEST_F(TimestampCheckpointingTests, CheckpointingTest) {
+	settings::SettingsManager::SetBool(settings::SettingId::checkpointing, false);
 	PelotonInit::Initialize();
 
   auto &checkpoint_manager = logging::TimestampCheckpointManager::GetInstance();
@@ -45,7 +47,7 @@ TEST_F(TimestampCheckpointingTests, CheckpointingTest) {
   // primary key and index test
   TestingSQLUtil::ExecuteSQLQuery("BEGIN;");
   TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE checkpoint_index_test (pid INTEGER UNIQUE PRIMARY KEY, value1 INTEGER, value2 INTEGER, value3 INTEGER);");
-  TestingSQLUtil::ExecuteSQLQuery("CREATE INDEX index_test1 ON checkpoint_index_test USING hash (value1);");
+  TestingSQLUtil::ExecuteSQLQuery("CREATE INDEX index_test1 ON checkpoint_index_test USING art (value1);");
   TestingSQLUtil::ExecuteSQLQuery("CREATE INDEX index_test2 ON checkpoint_index_test USING skiplist (value2, value3);");
   TestingSQLUtil::ExecuteSQLQuery("CREATE UNIQUE INDEX unique_index_test ON checkpoint_index_test (value2);");
   TestingSQLUtil::ExecuteSQLQuery("INSERT INTO checkpoint_index_test VALUES (1, 2, 3, 4);");

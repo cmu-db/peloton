@@ -16,7 +16,7 @@
 namespace peloton {
 namespace logging {
 
-CheckpointingType CheckpointManagerFactory::checkpointing_type_ = CheckpointingType::ON;
+CheckpointingType CheckpointManagerFactory::checkpointing_type_ = CheckpointingType::TIMESTAMP;
 int CheckpointManagerFactory::checkpointing_thread_count_ = 1;
 
 }  // namespace gc

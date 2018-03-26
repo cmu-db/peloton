@@ -23,6 +23,7 @@
 #include "concurrency/transaction_manager_factory.h"
 #include "gc/gc_manager_factory.h"
 #include "index/index.h"
+#include "logging/checkpoint_manager_factory.h"
 #include "settings/settings_manager.h"
 #include "threadpool/mono_queue_pool.h"
 
@@ -36,6 +37,7 @@ void PelotonInit::Initialize() {
   LOGGING_THREAD_COUNT = 1;
   GC_THREAD_COUNT = 1;
   EPOCH_THREAD_COUNT = 1;
+  CHECKPOINTING_THREAD_COUNT = 1;
 
   // set max thread number.
   thread_pool.Initialize(0, CONNECTION_THREAD_COUNT + 3);
@@ -77,21 +79,34 @@ void PelotonInit::Initialize() {
   pg_catalog->Bootstrap();  // Additional catalogs
   settings::SettingsManager::GetInstance().InitializeCatalog();
 
-  // begin a transaction
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
+  // Recover the latest checkpoint and start checkpointing
+  bool recovered_default_db = false;
+  if (settings::SettingsManager::GetBool(settings::SettingId::checkpointing)) {
+  	logging::CheckpointManagerFactory::Configure(CHECKPOINTING_THREAD_COUNT, CheckpointingType::TIMESTAMP);
+    auto &checkpoint_manager = logging::CheckpointManagerFactory::GetInstance();
+  	recovered_default_db = checkpoint_manager.DoCheckpointRecovery();
+  	checkpoint_manager.StartCheckpointing();
+  } else {
+  	logging::CheckpointManagerFactory::Configure(0);
+  }
 
   // initialize the catalog and add the default database, so we don't do this on
-  // the first query
-  pg_catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
-
-  txn_manager.CommitTransaction(txn);
+  // the first query, if the checkpoint recovery was not completed.
+  if (recovered_default_db == false) {
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto txn = txn_manager.BeginTransaction();
+    pg_catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
+    txn_manager.CommitTransaction(txn);
+  }
 
   // Initialize the Statement Cache Manager
   StatementCacheManager::Init();
 }
 
 void PelotonInit::Shutdown() {
+	// shut down checkpoint managere
+	logging::CheckpointManagerFactory::GetInstance().StopCheckpointing();
+
   // shut down index tuner
   if (settings::SettingsManager::GetBool(settings::SettingId::index_tuner)) {
     auto &index_tuner = tuning::IndexTuner::GetInstance();

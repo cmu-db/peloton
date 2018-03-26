@@ -18,6 +18,7 @@
 #include "catalog/table_catalog.h"
 #include "catalog/schema.h"
 #include "logging/logging_util.h"
+#include "settings/settings_manager.h"
 #include "storage/database.h"
 #include "storage/data_table.h"
 #include "storage/tile_group_header.h"
@@ -38,9 +39,9 @@ class TimestampCheckpointManager : public CheckpointManager {
 
   TimestampCheckpointManager(const int thread_count) :
 	  CheckpointManager(),
-	  checkpointer_thread_count_(thread_count),
-	  checkpoint_interval_(DEFAULT_CHECKPOINT_INTERVAL){
-  	SetCheckpointBaseDirectory(DEFAULT_CHECKPOINT_BASE_DIR);
+	  checkpointer_thread_count_(thread_count) {
+  	SetCheckpointInterval(settings::SettingsManager::GetInt(settings::SettingId::checkpoint_interval));
+  	SetCheckpointBaseDirectory(settings::SettingsManager::GetString(settings::SettingId::checkpoint_dir));
   }
 
   virtual ~TimestampCheckpointManager() {}
@@ -55,6 +56,8 @@ class TimestampCheckpointManager : public CheckpointManager {
   virtual void StartCheckpointing();
 
   virtual void StopCheckpointing();
+
+  virtual bool DoCheckpointRecovery();
 
   virtual void RegisterTable(const oid_t &table_id UNUSED_ATTRIBUTE) {}
 
@@ -76,12 +79,8 @@ class TimestampCheckpointManager : public CheckpointManager {
 	  checkpoint_base_dir_ = checkpoint_dir;
   }
 
-  bool DoRecovery();
-
-
  protected:
   void Running();
-  std::vector<std::vector<size_t>>& CreateDatabaseStructures();
   void PerformCheckpointing();
   void CheckpointingTable(const storage::DataTable *target_table, const cid_t &begin_cid, FileHandle &file_handle);
   void CheckpointingCatalog(
@@ -90,7 +89,7 @@ class TimestampCheckpointManager : public CheckpointManager {
   		FileHandle &file_handle);
   bool IsVisible(const storage::TileGroupHeader *header, const oid_t &tuple_id, const cid_t &begin_cid);
   bool PerformCheckpointRecovery(const eid_t &epoch_id);
-  void RecoverCatalog(FileHandle &file_handle, concurrency::TransactionContext *txn);
+  bool RecoverCatalog(FileHandle &file_handle, concurrency::TransactionContext *txn);
   void RecoverTable(storage::DataTable *table, FileHandle &file_handle, concurrency::TransactionContext *txn);
 
   void CreateCheckpointDirectory(const std::string &dir_name) {
@@ -172,6 +171,7 @@ class TimestampCheckpointManager : public CheckpointManager {
   	// Get list of checkpoint directories
   	if (LoggingUtil::GetDirectoryList(checkpoint_base_dir_.c_str(), dir_name_list) == false) {
   		LOG_ERROR("Failed to get directory list %s", checkpoint_base_dir_.c_str());
+  		return INVALID_EID;
   	}
 
   	// Get the newest epoch from checkpoint directories
@@ -181,7 +181,9 @@ class TimestampCheckpointManager : public CheckpointManager {
   		if (strcmp((*dir_name).c_str(), checkpoint_working_dir_name_.c_str()) == 0) {
   			continue;
   		}
-  		epoch_id = std::strtoul((*dir_name).c_str(), NULL, 10);
+  		if ((epoch_id = std::strtoul((*dir_name).c_str(), NULL, 10)) == 0) {
+  			continue;
+  		}
 
   		if (epoch_id == INVALID_EID) {
   			LOG_ERROR("Unexpected epoch value in checkpoints directory: %s", (*dir_name).c_str());
@@ -196,11 +198,9 @@ class TimestampCheckpointManager : public CheckpointManager {
   int checkpointer_thread_count_;
   std::unique_ptr<std::thread> central_checkpoint_thread_;
 
-  const int DEFAULT_CHECKPOINT_INTERVAL = 30;
-  int checkpoint_interval_;
+  int checkpoint_interval_ = 30;
 
-  const std::string DEFAULT_CHECKPOINT_BASE_DIR = "./checkpoints";
-  std::string checkpoint_base_dir_;
+  std::string checkpoint_base_dir_ = "./checkpoints";
   std::string checkpoint_working_dir_name_ = "checkpointing";
   std::string checkpoint_filename_prefix_ = "checkpoint";
   std::string catalog_filename_prefix_ = "checkpoint_catalog";

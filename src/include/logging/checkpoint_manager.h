@@ -55,6 +55,8 @@ class CheckpointManager {
 
   virtual void StopCheckpointing() {}
 
+  virtual bool DoCheckpointRecovery() { return false;}
+
   virtual void RegisterTable(const oid_t &table_id UNUSED_ATTRIBUTE) {}
 
   virtual void DeregisterTable(const oid_t &table_id UNUSED_ATTRIBUTE) {}
