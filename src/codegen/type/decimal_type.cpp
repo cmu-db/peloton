@@ -128,7 +128,7 @@ struct CompareDecimal : public TypeSystem::SimpleComparisonHandleNull {
   Value CompareGtImpl(CodeGen &codegen, const Value &left,
                       const Value &right) const override {
     auto *raw_val = codegen->CreateFCmpUGT(left.GetValue(), right.GetValue());
-    return Value{Decimal::Instance(), raw_val, nullptr, nullptr};
+    return Value{Boolean::Instance(), raw_val, nullptr, nullptr};
   }
 
   Value CompareGteImpl(CodeGen &codegen, const Value &left,
