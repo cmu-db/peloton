@@ -117,7 +117,6 @@ std::string PostgresValueTypeToString(PostgresValueType type);
 PostgresValueType StringToPostgresValueType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const PostgresValueType &type);
 
-
 //===--------------------------------------------------------------------===//
 // Predicate Expression Operation Types
 //===--------------------------------------------------------------------===//
@@ -633,10 +632,12 @@ std::string DropTypeToString(DropType type);
 DropType StringToDropType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const DropType &type);
 
-template<class E> class EnumHash {
+template <class E>
+class EnumHash {
  public:
-  size_t operator()(const E&e) const {
-    return std::hash<typename std::underlying_type<E>::type>()(static_cast<typename std::underlying_type<E>::type>(e));
+  size_t operator()(const E &e) const {
+    return std::hash<typename std::underlying_type<E>::type>()(
+        static_cast<typename std::underlying_type<E>::type>(e));
   }
 };
 
@@ -667,9 +668,9 @@ enum class StatementType {
   ALTER = 12,                 // alter statement type
   TRANSACTION = 13,           // transaction statement type,
   COPY = 14,                  // copy type
-  ANALYZE = 15,                // analyze type
+  ANALYZE = 15,               // analyze type
   VARIABLE_SET = 16,          // variable set statement type
-  CREATE_FUNC = 17,            // create func statement type
+  CREATE_FUNC = 17,           // create func statement type
 };
 std::string StatementTypeToString(StatementType type);
 StatementType StringToStatementType(const std::string &str);
@@ -680,24 +681,24 @@ std::ostream &operator<<(std::ostream &os, const StatementType &type);
 //===--------------------------------------------------------------------===//
 
 enum class QueryType {
-  QUERY_BEGIN = 0,                // begin query
-  QUERY_COMMIT = 1,               // commit query
-  QUERY_ROLLBACK = 2,             // rollback query
-  QUERY_CREATE_TABLE = 3,               // create query
+  QUERY_BEGIN = 0,         // begin query
+  QUERY_COMMIT = 1,        // commit query
+  QUERY_ROLLBACK = 2,      // rollback query
+  QUERY_CREATE_TABLE = 3,  // create query
   QUERY_CREATE_DB = 4,
   QUERY_CREATE_INDEX = 5,
-  QUERY_DROP = 6,                // other queries
-  QUERY_INSERT = 7,               // insert query
-  QUERY_PREPARE = 8,	      // prepare query
-  QUERY_EXECUTE = 9, 	      // execute query
+  QUERY_DROP = 6,     // other queries
+  QUERY_INSERT = 7,   // insert query
+  QUERY_PREPARE = 8,  // prepare query
+  QUERY_EXECUTE = 9,  // execute query
   QUERY_UPDATE = 10,
   QUERY_DELETE = 11,
   QUERY_RENAME = 12,
   QUERY_ALTER = 13,
   QUERY_COPY = 14,
   QUERY_ANALYZE = 15,
-  QUERY_SET = 16,                  // set query
-  QUERY_SHOW = 17,                 // show query
+  QUERY_SET = 16,   // set query
+  QUERY_SHOW = 17,  // show query
   QUERY_SELECT = 18,
   QUERY_OTHER = 19,
   QUERY_INVALID = 20,
@@ -707,8 +708,11 @@ enum class QueryType {
 };
 std::string QueryTypeToString(QueryType query_type);
 QueryType StringToQueryType(std::string str);
-namespace parser{ class SQLStatement;}
-QueryType StatementTypeToQueryType(StatementType stmt_type, const parser::SQLStatement* sql_stmt);
+namespace parser {
+class SQLStatement;
+}
+QueryType StatementTypeToQueryType(StatementType stmt_type,
+                                   const parser::SQLStatement *sql_stmt);
 //===--------------------------------------------------------------------===//
 // Scan Direction Types
 //===--------------------------------------------------------------------===//
@@ -1016,7 +1020,8 @@ const int TRIGGER_TYPE_MAX = TRIGGER_TYPE_ROW | TRIGGER_TYPE_STATEMENT |
 
 // Statistics Collection Type
 // Disable or enable
-// TODO: This should probably be a collection level and not a boolean (enable/disable)
+// TODO: This should probably be a collection level and not a boolean
+// (enable/disable)
 enum class StatsType {
   // Disable statistics collection
   INVALID = INVALID_TYPE_ID,
@@ -1095,10 +1100,7 @@ static const int INVALID_FILE_DESCRIPTOR = -1;
 // Tuple serialization formats
 // ------------------------------------------------------------------
 
-enum class TupleSerializationFormat {
-  NATIVE = 0,
-  DR = 1
-};
+enum class TupleSerializationFormat { NATIVE = 0, DR = 1 };
 
 // ------------------------------------------------------------------
 // Entity types
@@ -1203,7 +1205,7 @@ std::ostream &operator<<(std::ostream &os, const RWType &type);
 
 // ItemPointer -> type
 typedef CuckooMap<ItemPointer, RWType, ItemPointerHasher, ItemPointerComparator>
-   ReadWriteSet;
+    ReadWriteSet;
 
 // this enum is to identify why the version should be GC'd.
 enum class GCVersionType {
@@ -1399,14 +1401,14 @@ enum class ProcessResult {
   COMPLETE,
   TERMINATE,
   PROCESSING,
-  MORE_DATA_REQUIRED
+  MORE_DATA_REQUIRED,
+  NEED_SSL_HANDSHAKE,
 };
 
 enum class NetworkProtocolType {
   POSTGRES_JDBC,
   POSTGRES_PSQL,
 };
-
 
 enum class SSLLevel {
   SSL_DISABLE = 0,
