@@ -40,7 +40,7 @@ void Group::AddExpression(std::shared_ptr<GroupExpression> expr,
 bool Group::SetExpressionCost(GroupExpression *expr, double cost,
                               std::shared_ptr<PropertySet> &properties) {
   LOG_TRACE("Adding expression cost on group %d with op %s, req %s",
-            expr->GetGroupID(), expr->Op().name().c_str(),
+            expr->GetGroupID(), expr->Op().GetName().c_str(),
             properties->ToString().c_str());
   auto it = lowest_cost_expressions_.find(properties);
   if (it == lowest_cost_expressions_.end() || std::get<0>(it->second) > cost) {
@@ -60,6 +60,12 @@ GroupExpression *Group::GetBestExpression(
   LOG_TRACE("Didn't get best expression with properties %s",
             properties->ToString().c_str());
   return nullptr;
+}
+
+bool Group::HasExpressions(
+    const std::shared_ptr<PropertySet> &properties) const {
+  const auto &it = lowest_cost_expressions_.find(properties);
+  return (it != lowest_cost_expressions_.end());
 }
 
 std::shared_ptr<ColumnStats> Group::GetStats(std::string column_name) {

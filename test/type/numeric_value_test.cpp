@@ -56,49 +56,49 @@ int64_t RANDOM64() {
 void CheckEqual(type::Value &v1, type::Value &v2) {
   CmpBool result[6];
   result[0] = v1.CompareEquals(v2);
-  EXPECT_EQ(CmpBool::TRUE, result[0]);
+  EXPECT_EQ(CmpBool::CmpTrue, result[0]);
   result[1] = v1.CompareNotEquals(v2);
-  EXPECT_EQ(CmpBool::FALSE, result[1]);
+  EXPECT_EQ(CmpBool::CmpFalse, result[1]);
   result[2] = v1.CompareLessThan(v2);
-  EXPECT_EQ(CmpBool::FALSE, result[2]);
+  EXPECT_EQ(CmpBool::CmpFalse, result[2]);
   result[3] = v1.CompareLessThanEquals(v2);
-  EXPECT_EQ(CmpBool::TRUE, result[3]);
+  EXPECT_EQ(CmpBool::CmpTrue, result[3]);
   result[4] = v1.CompareGreaterThan(v2);
-  EXPECT_EQ(CmpBool::FALSE, result[4]);
+  EXPECT_EQ(CmpBool::CmpFalse, result[4]);
   result[5] = v1.CompareGreaterThanEquals(v2);
-  EXPECT_EQ(CmpBool::TRUE, result[5]);
+  EXPECT_EQ(CmpBool::CmpTrue, result[5]);
 }
 
 void CheckLessThan(type::Value &v1, type::Value &v2) {
   CmpBool result[6];
   result[0] = v1.CompareEquals(v2);
-  EXPECT_EQ(CmpBool::FALSE, result[0]);
+  EXPECT_EQ(CmpBool::CmpFalse, result[0]);
   result[1] = v1.CompareNotEquals(v2);
-  EXPECT_EQ(CmpBool::TRUE, result[1]);
+  EXPECT_EQ(CmpBool::CmpTrue, result[1]);
   result[2] = v1.CompareLessThan(v2);
-  EXPECT_EQ(CmpBool::TRUE, result[2]);
+  EXPECT_EQ(CmpBool::CmpTrue, result[2]);
   result[3] = v1.CompareLessThanEquals(v2);
-  EXPECT_EQ(CmpBool::TRUE, result[3]);
+  EXPECT_EQ(CmpBool::CmpTrue, result[3]);
   result[4] = v1.CompareGreaterThan(v2);
-  EXPECT_EQ(CmpBool::FALSE, result[4]);
+  EXPECT_EQ(CmpBool::CmpFalse, result[4]);
   result[5] = v1.CompareGreaterThanEquals(v2);
-  EXPECT_EQ(CmpBool::FALSE, result[5]);
+  EXPECT_EQ(CmpBool::CmpFalse, result[5]);
 }
 
 void CheckGreaterThan(type::Value &v1, type::Value &v2) {
   CmpBool result[6];
   result[0] = v1.CompareEquals(v2);
-  EXPECT_EQ(CmpBool::FALSE, result[0]);
+  EXPECT_EQ(CmpBool::CmpFalse, result[0]);
   result[1] = v1.CompareNotEquals(v2);
-  EXPECT_EQ(CmpBool::TRUE, result[1]);
+  EXPECT_EQ(CmpBool::CmpTrue, result[1]);
   result[2] = v1.CompareLessThan(v2);
-  EXPECT_EQ(CmpBool::FALSE, result[2]);
+  EXPECT_EQ(CmpBool::CmpFalse, result[2]);
   result[3] = v1.CompareLessThanEquals(v2);
-  EXPECT_EQ(CmpBool::FALSE, result[3]);
+  EXPECT_EQ(CmpBool::CmpFalse, result[3]);
   result[4] = v1.CompareGreaterThan(v2);
-  EXPECT_EQ(CmpBool::TRUE, result[4]);
+  EXPECT_EQ(CmpBool::CmpTrue, result[4]);
   result[5] = v1.CompareGreaterThanEquals(v2);
-  EXPECT_EQ(CmpBool::TRUE, result[5]);
+  EXPECT_EQ(CmpBool::CmpTrue, result[5]);
 }
 
 // Compare two integers

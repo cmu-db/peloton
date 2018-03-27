@@ -17,6 +17,7 @@
 #include <cstdio>
 
 #include "libcuckoo/cuckoohash_map.hh"
+#include "libcuckoo/default_hasher.hh"
 
 namespace peloton {
 
@@ -29,7 +30,7 @@ namespace peloton {
 #define CUCKOO_MAP_DEFAULT_ARGUMENTS                    \
   template <typename KeyType, typename ValueType,       \
             typename HashType = DefaultHasher<KeyType>, \
-            typename PredType = std::equal_to<KeyType> >
+            typename PredType = std::equal_to<KeyType>>
 
 // CUCKOO_MAP_TYPE
 #define CUCKOO_MAP_TYPE CuckooMap<KeyType, ValueType, HashType, PredType>
@@ -42,6 +43,7 @@ CUCKOO_MAP_DEFAULT_ARGUMENTS
 class CuckooMap {
  public:
   CuckooMap();
+  CuckooMap(size_t initial_size);
   ~CuckooMap();
 
   // Inserts a item
@@ -76,6 +78,9 @@ class CuckooMap {
   // is out of scope
   CUCKOO_MAP_ITERATOR_TYPE
   GetIterator();
+
+  CUCKOO_MAP_ITERATOR_TYPE
+  GetConstIterator() const;
 
  private:
   // cuckoo map

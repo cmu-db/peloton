@@ -54,20 +54,30 @@ class ItemPointerComparator {
     return (p1->block == p2->block) && (p1->offset == p2->offset);
   }
 
+  bool operator()(ItemPointer const &p1, ItemPointer const &p2) const {
+    return (p1.block == p2.block) && (p1.offset == p2.offset);
+  }
+
   ItemPointerComparator(const ItemPointerComparator &) {}
   ItemPointerComparator() {}
 };
 
 struct ItemPointerHasher {
   size_t operator()(const ItemPointer &item) const {
-    return std::hash<oid_t>()(item.block) ^ std::hash<oid_t>()(item.offset);
+    // This constant is found in the CityHash code
+    // [Source libcuckoo/default_hasher.hh]
+    // std::hash returns the same number for unsigned int which causes
+    // too many collisions in the Cuckoohash leading to too many collisions
+    return (std::hash<oid_t>()(item.block)*0x9ddfea08eb382d69ULL) ^
+      std::hash<oid_t>()(item.offset);
   }
 };
 
 class ItemPointerHashFunc {
  public:
   size_t operator()(ItemPointer *const &p) const {
-    return std::hash<oid_t>()(p->block) ^ std::hash<oid_t>()(p->offset);
+    return (std::hash<oid_t>()(p->block)*0x9ddfea08eb382d69ULL) ^
+    std::hash<oid_t>()(p->offset);
   }
 
   ItemPointerHashFunc(const ItemPointerHashFunc &) {}

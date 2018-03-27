@@ -248,8 +248,10 @@ TEST_F(StatsStorageTests, GetTableStatsTest) {
   stats_storage->AnalyzeStatsForAllTables(txn);
   txn_manager.CommitTransaction(txn);
 
+  txn = txn_manager.BeginTransaction();
   std::shared_ptr<TableStats> table_stats = stats_storage->GetTableStats(
-      data_table->GetDatabaseOid(), data_table->GetOid());
+      data_table->GetDatabaseOid(), data_table->GetOid(), txn);
+  txn_manager.CommitTransaction(txn);
   EXPECT_EQ(table_stats->num_rows, tuple_count);
 }
 

@@ -10,6 +10,7 @@
 #include "executor/insert_executor.h"
 #include "executor/plan_executor.h"
 #include "optimizer/optimizer.h"
+#include "parser/mock_sql_statement.h"
 #include "parser/postgresparser.h"
 #include "planner/create_plan.h"
 #include "planner/delete_plan.h"
@@ -22,6 +23,7 @@
 #include "binder/bind_node_visitor.h"
 #include "traffic_cop/traffic_cop.h"
 #include "expression/tuple_value_expression.h"
+#include "optimizer/mock_task.h"
 #include "optimizer/operators.h"
 #include "optimizer/rule_impls.h"
 #include "traffic_cop/traffic_cop.h"
@@ -45,6 +47,7 @@ class OptimizerTests : public PelotonTest {
   }
 
   virtual void TearDown() override {
+    // TODO don't assume that all tests will need a test database
     // Destroy test database
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
@@ -338,27 +341,27 @@ TEST_F(OptimizerTests, PushFilterThroughJoinTest) {
 
   // Check join in the root
   auto group_expr = GetSingleGroupExpression(memo, head_gexpr.get(), 0);
-  EXPECT_EQ(OpType::InnerJoin, group_expr->Op().type());
+  EXPECT_EQ(OpType::InnerJoin, group_expr->Op().GetType());
   auto join_op = group_expr->Op().As<LogicalInnerJoin>();
   EXPECT_EQ(1, join_op->join_predicates.size());
   EXPECT_TRUE(join_op->join_predicates[0].expr->ExactlyEquals(*predicates[0]));
 
   // Check left get
   auto l_group_expr = GetSingleGroupExpression(memo, group_expr, 0);
-  EXPECT_EQ(OpType::Get, l_group_expr->Op().type());
+  EXPECT_EQ(OpType::Get, l_group_expr->Op().GetType());
   auto get_op = l_group_expr->Op().As<LogicalGet>();
   EXPECT_TRUE(get_op->predicates.empty());
 
   // Check right filter
   auto r_group_expr = GetSingleGroupExpression(memo, group_expr, 1);
-  EXPECT_EQ(OpType::LogicalFilter, r_group_expr->Op().type());
+  EXPECT_EQ(OpType::LogicalFilter, r_group_expr->Op().GetType());
   auto filter_op = r_group_expr->Op().As<LogicalFilter>();
   EXPECT_EQ(1, filter_op->predicates.size());
   EXPECT_TRUE(filter_op->predicates[0].expr->ExactlyEquals(*predicates[1]));
 
   // Check get below filter
   group_expr = GetSingleGroupExpression(memo, r_group_expr, 0);
-  EXPECT_EQ(OpType::Get, l_group_expr->Op().type());
+  EXPECT_EQ(OpType::Get, l_group_expr->Op().GetType());
   get_op = group_expr->Op().As<LogicalGet>();
   EXPECT_TRUE(get_op->predicates.empty());
 
@@ -425,25 +428,60 @@ TEST_F(OptimizerTests, PredicatePushDownRewriteTest) {
 
   // Check join in the root
   auto group_expr = GetSingleGroupExpression(memo, head_gexpr.get(), 0);
-  EXPECT_EQ(OpType::InnerJoin, group_expr->Op().type());
+  EXPECT_EQ(OpType::InnerJoin, group_expr->Op().GetType());
   auto join_op = group_expr->Op().As<LogicalInnerJoin>();
   EXPECT_EQ(1, join_op->join_predicates.size());
   EXPECT_TRUE(join_op->join_predicates[0].expr->ExactlyEquals(*predicates[0]));
 
   // Check left get
   auto l_group_expr = GetSingleGroupExpression(memo, group_expr, 0);
-  EXPECT_EQ(OpType::Get, l_group_expr->Op().type());
+  EXPECT_EQ(OpType::Get, l_group_expr->Op().GetType());
   auto get_op = l_group_expr->Op().As<LogicalGet>();
   EXPECT_TRUE(get_op->predicates.empty());
 
   // Check right filter
   auto r_group_expr = GetSingleGroupExpression(memo, group_expr, 1);
-  EXPECT_EQ(OpType::Get, r_group_expr->Op().type());
+  EXPECT_EQ(OpType::Get, r_group_expr->Op().GetType());
   get_op = r_group_expr->Op().As<LogicalGet>();
   EXPECT_EQ(1, get_op->predicates.size());
   EXPECT_TRUE(get_op->predicates[0].expr->ExactlyEquals(*predicates[1]));
 
   txn_manager.CommitTransaction(txn);
+}
+
+TEST_F(OptimizerTests, ExecuteTaskStackTest) {
+  // Currently need database for test teardown
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  txn_manager.CommitTransaction(txn);
+
+  const auto num_tasks = 2;
+  optimizer::Optimizer optimizer;
+  const int root_group_id = 0;
+  const auto root_group =
+      new Group(root_group_id, std::unordered_set<std::string>());
+  optimizer.metadata_.memo.groups_.emplace_back(root_group);
+
+  auto required_prop = std::make_shared<PropertySet>(PropertySet());
+  auto root_context =
+      std::make_shared<OptimizeContext>(&(optimizer.metadata_), required_prop);
+  auto task_stack =
+      std::unique_ptr<OptimizerTaskStack>(new OptimizerTaskStack());
+  auto &timer = optimizer.metadata_.timer;
+
+  // Insert tasks into task stack
+  for (unsigned int i = 0; i < num_tasks; i++) {
+    auto task = new optimizer::test::MockTask();
+    EXPECT_CALL(*task, execute()).Times(1);
+    task_stack->Push(task);
+  }
+  optimizer.metadata_.SetTaskPool(task_stack.get());
+
+  const auto start_time = timer.GetDuration();
+  optimizer.ExecuteTaskStack(*task_stack, root_group_id, root_context);
+  ASSERT_EQ(timer.GetInvocations(), num_tasks);
+  ASSERT_GT(timer.GetDuration(), start_time);
 }
 
 }  // namespace test

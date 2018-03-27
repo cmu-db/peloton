@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 //===----------------------------------------------------------------------===//
 // FILE LOCATIONS
 //===----------------------------------------------------------------------===//
@@ -29,6 +28,20 @@ SETTING_int(max_connections,
            "Maximum number of connections (default: 64)",
            64,
            true, true)
+
+SETTING_int(rpc_port,
+            "Peloton rpc port (default: 15445)",
+             15445,
+             false, false)
+
+// TODO(tianyu): Remove when we change to a different rpc framework
+// This is here only because capnp cannot exit gracefully and thus causes
+// test failure. This is an issue with the capnp implementation and has
+// been such way for a while, so it's unlikely it gets fixed.
+// See: https://groups.google.com/forum/#!topic/capnproto/bgxCdqGD6oE
+SETTING_bool(rpc_enabled,
+             "Enable rpc, this should be turned off when testing",
+             false, false, false)
 
 // Socket family
 SETTING_string(socket_family,
@@ -82,6 +95,11 @@ SETTING_int(monoqueue_worker_pool_size,
             "MonoQueue Worker Pool Size (default: 4)",
             4,
             false, false)
+
+// Number of connection threads used by peloton
+SETTING_int(connection_thread_count,
+            "Number of connection threads (default: std::hardware_concurrency())",
+            std::thread::hardware_concurrency(), false, false)
 
 //===----------------------------------------------------------------------===//
 // WRITE AHEAD LOG
@@ -137,6 +155,11 @@ SETTING_bool(brain,
             false,
             true, true)
 
+SETTING_string(peloton_address,
+               "ip and port of the peloton rpc service, address:port",
+               "127.0.0.1:15445",
+               false, false)
+
 // Size of the brain task queue
 SETTING_int(brain_task_queue_size,
             "Brain Task Queue Size (default: 32)",
@@ -172,9 +195,12 @@ SETTING_bool(hash_join_bloom_filter,
              true,
              true, true)
 
+SETTING_int(task_execution_timeout,
+            "Maximum allowed length of time (in ms) for task "
+                "execution step of optimizer, "
+                "assuming one plan has been found (default 5000)",
+            5000, true, true)
+
 //===----------------------------------------------------------------------===//
 // GENERAL
 //===----------------------------------------------------------------------===//
-
-
-
