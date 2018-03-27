@@ -10,8 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define private public
-
 #include "binder/bind_node_visitor.h"
 #include "catalog/catalog.h"
 #include "common/harness.h"
