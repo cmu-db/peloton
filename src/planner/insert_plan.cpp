@@ -21,6 +21,13 @@
 namespace peloton {
 namespace planner {
 
+/**
+ * @brief Create an insert plan
+ *
+ * @param[in] table          Table to insert into
+ * @param[in] columns        Columns to insert into
+ * @param[in] insert_values  Values
+ */
 InsertPlan::InsertPlan(storage::DataTable *table,
     const std::vector<std::string> *columns,
     const std::vector<std::vector<
@@ -28,103 +35,215 @@ InsertPlan::InsertPlan(storage::DataTable *table,
     : target_table_(table), bulk_insert_count_(insert_values->size()) {
   LOG_TRACE("Creating an Insert Plan with multiple expressions");
   PL_ASSERT(target_table_);
-  parameter_vector_.reset(new std::vector<std::tuple<oid_t, oid_t, oid_t>>());
-  params_value_type_.reset(new std::vector<type::TypeId>);
 
+  bool is_prepared_stmt = false;  
   auto *schema = target_table_->GetSchema();
-  // INSERT INTO table_name VALUES (val1, val2, ...)
+  auto schema_col_count = schema->GetColumnCount();
+  vtos_.resize(insert_values->size());  
+  // initialize mapping from schema cols to insert values vector.
+  // will be updated later based on insert columns and values
+  stov_.resize(schema_col_count);
+  for (uint32_t idx = 0; idx < schema_col_count; idx++) {
+    stov_[idx].in_insert_cols = false;
+    stov_[idx].set_value = false;
+    stov_[idx].val_idx = 0;
+    // remember the column types
+    stov_[idx].type = schema->GetType(idx);
+  }
+  
   if (columns->empty()) {
+    // INSERT INTO table_name VALUES (val1, val2, ...), (val1, val2, ...)
     for (uint32_t tuple_idx = 0; tuple_idx < insert_values->size();
          tuple_idx++) {
       auto &values = (*insert_values)[tuple_idx];
-      PL_ASSERT(values.size() <= schema->GetColumnCount());
-      uint32_t param_idx = 0;
+      PL_ASSERT(values.size() <= schema_col_count);
+      // uint32_t param_idx = 0;
       for (uint32_t column_id = 0; column_id < values.size(); column_id++) {
+	
         auto &exp = values[column_id];
-        const type::TypeId type = schema->GetType(column_id);
-        if (exp == nullptr) {
-          type::Value *v = schema->GetDefaultValue(column_id);
-          if (v == nullptr)
-            values_.push_back(type::ValueFactory::GetNullValueByType(type));
-          else
-            values_.push_back(*v);
-        } else if (exp->GetExpressionType() ==
-                   ExpressionType::VALUE_PARAMETER) {
-          std::tuple<oid_t, oid_t, oid_t> pair =
-              std::make_tuple(tuple_idx, column_id, param_idx++);
-          parameter_vector_->push_back(pair);
-          params_value_type_->push_back(type);
-        } else {
-          PL_ASSERT(exp->GetExpressionType() == ExpressionType::VALUE_CONSTANT);
-          auto *const_exp =
-              dynamic_cast<expression::ConstantValueExpression *>(exp.get());
-          type::Value value = const_exp->GetValue().CastAs(type);
-          values_.push_back(value);
-        }
+	auto exp_ptr = exp.get();
+	auto ret_bool = ProcessValueExpr(exp_ptr, column_id);
+	// there is no column specification, so we have a
+	// direct mapping between schema cols and the value vector
+	stov_[column_id].in_insert_cols = true;
+	stov_[column_id].val_idx = column_id;
+	if (ret_bool == true) {
+	  is_prepared_stmt = true;
+	}
+      }
+    }
+  } else {
+    // INSERT INTO table_name (col1, col2, ...) VALUES (val1, val2, ...);
+    // Columns may be in any order. Values may include constants.
+    PL_ASSERT(columns->size() <= schema_col_count);
+    // construct the mapping between schema cols and insert cols
+    ProcessColumnSpec(columns);
+    for (uint32_t tuple_idx = 0; tuple_idx < insert_values->size();
+         tuple_idx++) {
+      auto &values = (*insert_values)[tuple_idx];
+      PL_ASSERT(values.size() <= schema_col_count);
+      
+      for (uint32_t idx = 0; idx < schema_col_count; idx++) {
+	if (stov_[idx].in_insert_cols) {
+	  // this schema column is present in the insert columns spec.
+	  // get index into values
+	  auto val_idx = stov_[idx].val_idx;
+	  auto &exp = values[val_idx];
+	  auto exp_ptr = exp.get();	  
+	  bool ret_bool = ProcessValueExpr(exp_ptr, idx);
+	  if (ret_bool) {
+	    is_prepared_stmt = true;
+	  }
+	}
+	else {
+	  // schema column not present in insert columns spec. Set
+	  // column to its default value
+	  SetDefaultValue(idx);
+	}
+      }
+
+      if (is_prepared_stmt) {
+	// Adjust indexes into values. When constants are present in the
+	// value tuple spec., the value vector supplied by the prepared
+	// statement when SetParameterValues is called, will be smaller.
+	// It will not include any of the constants.
+	// Adjust the mapping from schema cols -> values vector to exclude
+	// the constant columns. If there are no constants, this is a no-op.
+	uint32_t adjust = 0;
+	for (uint32_t idx=0; idx < columns->size(); idx++) {
+	  uint32_t stov_idx = vtos_[idx];
+	  if (stov_[stov_idx].set_value) {
+	    // constant, not present in PS values
+	    adjust++;
+	  } else {
+	    // adjust the index
+	    stov_[stov_idx].val_idx -= adjust;
+	  }
+	}
       }
     }
   }
-  // INSERT INTO table_name (col1, col2, ...) VALUES (val1, val2, ...);
-  else {
-    PL_ASSERT(columns->size() <= schema->GetColumnCount());
-    for (uint32_t tuple_idx = 0; tuple_idx < insert_values->size();
-         tuple_idx++) {
-      auto &values = (*insert_values)[tuple_idx];
-
-      auto &table_columns = schema->GetColumns();
-      auto table_columns_num = schema->GetColumnCount();
-      uint32_t param_idx = 0;
-      for (size_t column_id = 0; column_id < table_columns_num; column_id++) {
-        auto col = table_columns[column_id];
-        const type::TypeId type = schema->GetType(column_id);
-        auto found = std::find_if(columns->begin(), columns->end(),
-            [&col](const std::string &x) { return col.GetName() == x; });
-        if (found == columns->end()) {
-          type::Value *v = schema->GetDefaultValue(column_id);
-          if (v == nullptr)
-            values_.push_back(type::ValueFactory::GetNullValueByType(type));
-          else
-            values_.push_back(*v);
-          continue;
-        }
-        auto idx = std::distance(columns->begin(), found);
-        auto &exp = values[idx];
-        if (exp->GetExpressionType() == ExpressionType::VALUE_PARAMETER) {
-          std::tuple<oid_t, oid_t, oid_t> pair =
-              std::make_tuple(tuple_idx, column_id, param_idx++);
-          parameter_vector_->push_back(pair);
-          params_value_type_->push_back(type);
-        } else {
-          PL_ASSERT(exp->GetExpressionType() == ExpressionType::VALUE_CONSTANT);
-          auto *const_exp =
-              dynamic_cast<expression::ConstantValueExpression *>(exp.get());
-          type::Value value = const_exp->GetValue().CastAs(type);
-          values_.push_back(value);
-        }
-      }
+  if (is_prepared_stmt) {
+    ClearParameterValues();
+  }
+}
+  
+/**
+ * Process column specification supplied in the insert statement
+ */
+void InsertPlan::ProcessColumnSpec(const std::vector<std::string> *columns) {
+  auto *schema = target_table_->GetSchema();  
+  auto &table_columns = schema->GetColumns();
+  auto usr_col_count = columns->size();  
+  
+  // iterate over supplied columns
+  for (size_t usr_col_id = 0; usr_col_id < usr_col_count; usr_col_id++) {
+    uint32_t idx;    
+    auto col_name = columns->at(usr_col_id);
+    
+    // determine index of column in schema
+    bool found_col = FindSchemaColIndex(col_name, table_columns, idx);
+    // PL_ASSERT(found_col == true);
+    if (not found_col) {
+      throw Exception{
+	StringUtil::Format("column %s not in table %s columns",
+			   col_name,
+			   target_table_->GetName())};
     }
+    // we have values for this column
+    stov_[idx].in_insert_cols = true;
+    // remember how to map schema col -> value for col in tuple
+    stov_[idx].val_idx = usr_col_id;
+    // and the reverse
+    vtos_[usr_col_id] = idx;
   }
 }
 
+bool InsertPlan::ProcessValueExpr(expression::AbstractExpression *expr,
+				  uint32_t schema_idx) {
+  auto type = stov_[schema_idx].type;
+  
+  if (expr == nullptr) {
+    SetDefaultValue(schema_idx);
+  } else if (expr->GetExpressionType() == ExpressionType::VALUE_CONSTANT) {
+
+    auto *const_expr =
+      dynamic_cast<expression::ConstantValueExpression *>(expr);
+    type::Value value = const_expr->GetValue().CastAs(type);
+    
+    stov_[schema_idx].set_value = true;
+    stov_[schema_idx].value = value;
+    values_.push_back(value);
+    
+    return false;
+  } else {
+    PL_ASSERT(expr->GetExpressionType() == ExpressionType::VALUE_PARAMETER);
+    return true;
+  }
+  return false;
+}
+				  
+				  
+				    
+
+void InsertPlan::SetDefaultValue(uint32_t idx) {
+  auto *schema = target_table_->GetSchema();  
+  type::Value *v = schema->GetDefaultValue(idx);
+  type::TypeId type = stov_[idx].type;
+  
+  if (v == nullptr)
+    // null default value
+    values_.push_back(type::ValueFactory::GetNullValueByType(type));
+  else
+    // non-null default value
+    values_.push_back(*v);
+}
+
+bool InsertPlan::FindSchemaColIndex(std::string col_name,
+				    const std::vector<catalog::Column> &tbl_columns,
+				    uint32_t &index) {
+  for (auto tcol = tbl_columns.begin(); tcol != tbl_columns.end(); tcol++) {
+    if (tcol->GetName() == col_name) {
+      index = std::distance(tbl_columns.begin(), tcol);
+      return true;
+    }
+  }
+  return false;
+}
+  
 type::AbstractPool *InsertPlan::GetPlanPool() {
   if (pool_.get() == nullptr)
     pool_.reset(new type::EphemeralPool());
   return pool_.get();
 }
 
+
+/**
+ * @brief Save values for jdbc prepared statement insert.
+ *    Only a single tuple is presented to this function.
+ *
+ * @param[in] values  Values for insertion
+ */
+  
 void InsertPlan::SetParameterValues(std::vector<type::Value> *values) {
   LOG_TRACE("Set Parameter Values in Insert");
-  PL_ASSERT(values->size() == parameter_vector_->size());
-  PL_ASSERT(values->size() == params_value_type_->size());
-  for (unsigned int i = 0; i < values->size(); i++) {
-    auto type = params_value_type_->at(i);
-    auto &param_info = parameter_vector_->at(i);
-    auto tuple_idx = std::get<0>(param_info);
-    auto column_id = std::get<1>(param_info);
-    auto param_idx = std::get<2>(param_info);
-    type::Value value = values->at(param_idx).CastAs(type);
-    auto it = values_.begin();
-    values_.insert(it + (tuple_idx + 1) * column_id, value);
+  auto *schema = target_table_->GetSchema();
+  auto schema_col_count = schema->GetColumnCount();
+
+  PL_ASSERT(values->size() <= schema_col_count);
+  for (uint32_t idx = 0; idx < schema_col_count; idx++) {
+    if (stov_[idx].set_value) {
+      values_.push_back(stov_[idx].value);
+    } else if (stov_[idx].in_insert_cols) {
+      // get index into values
+      auto val_idx = stov_[idx].val_idx;
+      auto type = stov_[idx].type;
+      type::Value value = values->at(val_idx).CastAs(type);      
+      values_.push_back(value);
+    } else {
+      // not in insert cols, set default value
+      SetDefaultValue(idx);
+    }
   }
 }
 

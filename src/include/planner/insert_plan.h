@@ -29,6 +29,26 @@ class InsertStatement;
 }
 
 namespace planner {
+
+// mapping from schema columns to insert columns
+struct schema_cols_to_insert_cols {
+  // this schema column is present in the insert columns
+  bool in_insert_cols;
+  
+  // For a PS, insert saved value (from constant in insert values list), no
+  // param value.
+  bool set_value;
+  
+  // index of this column in insert columns values
+  int  val_idx;
+  
+  // schema column type
+  type::TypeId type;
+  
+  // set_value refers to this saved value
+  type::Value value;
+};
+  
 class InsertPlan : public AbstractPlan {
  public:
   // Construct when SELECT comes in with it
@@ -65,10 +85,19 @@ class InsertPlan : public AbstractPlan {
   // Get a varlen pool - will construct the pool only if needed
   type::AbstractPool *GetPlanPool();
 
-  PlanNodeType GetPlanNodeType() const override { return PlanNodeType::INSERT; }
+  PlanNodeType GetPlanNodeType() const override {
+    return PlanNodeType::INSERT; };
 
+  bool FindSchemaColIndex(std::string col_name,
+			  const std::vector<catalog::Column> &tbl_columns,
+			  uint32_t &index);
+
+  void ProcessColumnSpec(const std::vector<std::string> *columns);
+  void SetDefaultValue(uint32_t idx);
   void SetParameterValues(std::vector<type::Value> *values) override;
 
+  bool ProcessValueExpr(expression::AbstractExpression *expr,
+			uint32_t schema_idx);
   /* 
    * Clear the parameter values of the current insert. The plan may be 
    * cached in the statement / plan cache and may be reused.
@@ -125,6 +154,11 @@ class InsertPlan : public AbstractPlan {
 
   // Values
   std::vector<type::Value> values_;
+
+  // mapping from schema columns to vector of insert columns
+  std::vector<struct schema_cols_to_insert_cols> stov_;
+  // mapping from insert columns to schema columns
+  std::vector<uint32_t> vtos_;  
 
   // Projection Info
   std::unique_ptr<const planner::ProjectInfo> project_info_;
