@@ -32,16 +32,19 @@ namespace test {
 
 class SSLTests : public PelotonTest {};
 
+// The following keys and certificates are generated using
+// https://www.postgresql.org/docs/9.5/static/libpq-ssl.html
+// and then concate root.crt right after server.crt
 std::string client_crt = std::string(StringUtil::Format(
-    "%s%s", SOURCE_FOLDER, "/test/network/ssl/client_test.crt"));
+    "%s%s", SOURCE_FOLDER, "/test/network/ssl/root.crt"));
 std::string client_key = std::string(StringUtil::Format(
-    "%s%s", SOURCE_FOLDER, "/test/network/ssl/client_test.key"));
+    "%s%s", SOURCE_FOLDER, "/test/network/ssl/root.key"));
 std::string server_crt = std::string(StringUtil::Format(
-    "%s%s", SOURCE_FOLDER, "/test/network/ssl/server_test.crt"));
+    "%s%s", SOURCE_FOLDER, "/test/network/ssl/server.crt"));
 std::string server_key = std::string(StringUtil::Format(
-    "%s%s", SOURCE_FOLDER, "/test/network/ssl/server_test.key"));
+    "%s%s", SOURCE_FOLDER, "/test/network/ssl/server.key"));
 std::string root_crt = std::string(StringUtil::Format(
-    "%s%s", SOURCE_FOLDER, "/test/network/ssl/root_test.crt"));
+    "%s%s", SOURCE_FOLDER, "/test/network/ssl/root.crt"));
 
 /**
  * Basic SSL connection test:  Tested with valid certificats and key files
@@ -51,8 +54,8 @@ void *BasicTest(int port) {
     // forcing the factory to generate psql protocol handler
     pqxx::connection C(StringUtil::Format(
         "host=127.0.0.1 port=%d user=default_database application_name=psql "
-        "sslmode=require sslkey=%s ",
-        port, client_key.c_str()));
+        "sslmode=require sslkey=%s sslcert=%s sslrootcert=%s",
+        port, client_key.c_str(), client_crt.c_str(), root_crt.c_str()));
 
     pqxx::work txn1(C);
 
