@@ -15,13 +15,14 @@
 #include <map>
 
 #include "common/internal_types.h"
+#include "common/printable.h"
 
 #define ROW_STORE_OID 0
 
 namespace peloton {
 namespace storage {
 
-class Layout {
+class Layout : public Printable {
  public:
 
   Layout (const oid_t num_columns);
@@ -48,7 +49,10 @@ class Layout {
 
   oid_t GetColumnCount() const { return num_columns_;}
 
-  std::string GetMapInfo() const;
+  std::string GetColumnMapInfo() const;
+
+  // Get a string representation for debugging
+  const std::string GetInfo() const;
 
  private:
 
@@ -62,7 +66,6 @@ class Layout {
   column_map_type column_layout_;
 
 };
-
 
 } //namespace storage
 } //namespace peloton

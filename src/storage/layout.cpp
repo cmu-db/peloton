@@ -14,6 +14,7 @@
 #include <sstream>
 
 #include "storage/layout.h"
+#include "util/stringbox_util.h"
 
 namespace peloton {
 namespace storage {
@@ -105,7 +106,7 @@ oid_t Layout::GetTileColumnId(oid_t column_id) const {
   return tile_column_id;
 }
 
-std::string Layout::GetMapInfo() const {
+std::string Layout::GetColumnMapInfo() const {
   std::stringstream ss;
   std::map<oid_t, std::vector<oid_t>> tile_column_map;
 
@@ -120,7 +121,6 @@ std::string Layout::GetMapInfo() const {
     for (auto column_info : column_layout_) {
       oid_t col_id = column_info.first;
       oid_t tile_id = column_info.second.first;
-
       if(tile_column_map.find(tile_id) == tile_column_map.end()) {
         tile_column_map[tile_id] = {};
       }
@@ -135,10 +135,22 @@ std::string Layout::GetMapInfo() const {
       ss << col_id << " ";
     }
     ss << " :: ";
-
   }
 
   return ss.str();
+}
+
+const std::string Layout::GetInfo() const {
+  std::ostringstream os;
+
+  os << peloton::GETINFO_DOUBLE_STAR << " Layout[#" << layout_id_ << "] "
+     << peloton::GETINFO_DOUBLE_STAR << std::endl;
+  os << "Number of columns[" << num_columns_ << "] " << std::endl;
+
+  os << "ColumnMap[ " << GetColumnMapInfo() << "] " << std::endl;
+
+  return peloton::StringUtil::Prefix(peloton::StringBoxUtil::Box(os.str()),
+                                     GETINFO_SPACER);
 }
 
 
