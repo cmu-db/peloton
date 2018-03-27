@@ -10,10 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "brain/tf_session_entity/tf_session_entity.h"
-#include "brain/tf_util.h"
+// define needed to tell Eigen to use Row-major only
+#include "brain/util/tf_session_entity/tf_session_entity.h"
+#include "include/brain/util/tf_util.h"
 #include "common/harness.h"
 #include "util/file_util.h"
+#include "brain/util/eigen_util.h"
 
 namespace peloton {
 namespace test {
@@ -24,7 +26,7 @@ namespace test {
 
 class TensorflowTests : public PelotonTest {};
 
-TEST_F(TensorflowTests, BasicTest) {
+TEST_F(TensorflowTests, BasicTFTest) {
   // Check that the tensorflow library imports and prints version info correctly
   EXPECT_TRUE(brain::TFUtil::GetTFVersion());
   // Check that the model is indeed generated
@@ -41,6 +43,13 @@ TEST_F(TensorflowTests, TFSessionEntityTest) {
   // Import a graph and check that everything worked correctly
   tf.ImportGraph(lstm_model_file);
   EXPECT_TRUE(tf.IsStatusOk());
+}
+
+TEST_F(TensorflowTests, BasicEigenTest) {
+  Eigen::MatrixXd m = Eigen::MatrixXd::Random(2, 2);
+  EXPECT_EQ(m.rows(), 2);
+  EXPECT_EQ(m.cols(), 2);
+  EXPECT_TRUE(m.IsRowMajor);
 }
 
 }  // namespace test

@@ -1,15 +1,3 @@
-#===----------------------------------------------------------------------===#
-#
-#                         Peloton
-#
-# LSTM_Model.py
-#
-# Identification: src/brain/modelgen/LSTM_Model.py
-#
-# Copyright (c) 2015-2018, Carnegie Mellon University Database Group
-#
-#===----------------------------------------------------------------------===#
-
 import tensorflow as tf
 import functools
 import os
@@ -28,14 +16,6 @@ def lazy_property(function):
     return decorator
 
 class LSTM_Model:
-    """Container module with an encoder, a recurrent module, and a decoder.
-    Encoder-decoder LSTM is useful for Seq2Seq prediction problems
-    i.e. where we have a sequence as input(previous workload info) and want to predict a sequence
-    as output(workload prediction 10 days later for 1 entire day)
-    Learning rate used: https:#www.tensorflow.org/tutorials/seq2seq - Check Gradient computation & optimization
-    Its provided: The value of learning_rate can is usually in the range 0.0001 to 0.001;
-    and can be set to decrease as training progresses
-    """
 
     def __init__(self, ntoken, ninp, nhid, nlayers, lr=0.001,
                  dropout_ratio=0.5, clip_norm = 0.5, **kwargs):
@@ -43,9 +23,8 @@ class LSTM_Model:
         :param ntoken: #features(input to encoder)
         :param ninp: input_size to LSTM(output of encoder)
         :param nhid: hidden layers in LSTM
-        :param nlayers:
-        :param dropout:
-        :param tie_weights:
+        :param nlayers: number of layers
+        :param dropout: dropout rate
         """
         tf.reset_default_graph()
         self.data = tf.placeholder(tf.float32, [None, None, ntoken], name="data_")
@@ -67,40 +46,44 @@ class LSTM_Model:
         self.optimize
 
 
+    @staticmethod
+    def stacked_lstm_cell(num_cells, hid_units, dropout):
+        cells = []
+        for i in range(num_cells):
+            cells.append(tf.nn.rnn_cell.DropoutWrapper(tf.nn.rnn_cell.LSTMCell(hid_units),
+                                                       output_keep_prob=dropout,
+                                                       variational_recurrent=False,
+                                                       dtype=tf.float32))
+        return tf.nn.rnn_cell.MultiRNNCell(cells)
+
     @lazy_property
     def prediction(self):
-        # Recurrent network.
-        # Define weights
-        weights = {
-            'encoder': tf.Variable(tf.random_normal([self._ntoken, self._ninp]), name="enc_wt"),
-            'decoder': tf.Variable(tf.random_normal([self._nhid, self._ntoken]), name="dec_wt")
-        }
-        biases = {
-            'encoder': tf.Variable(tf.random_normal([self._ninp]), name="enc_bias"),
-            'decoder': tf.Variable(tf.random_normal([self._ntoken]), name="dec_bias")
-        }
-        # Reshape inputs to feed to encoder
-        bptt = tf.shape(self.data)[0]
-        bsz = tf.shape(self.data)[1]
-        input = tf.reshape(self.data, [bptt * bsz, self._ntoken])
-        # Apply encoder to get workload-embeddings
-        emb = tf.matmul(input, weights["encoder"]) + biases["encoder"]
-        # Reshape embeddings to feed to Stacked LSTM
-        emb = tf.reshape(emb, [bptt, bsz, self._ninp])
-        stacked_lstm_cell = tf.nn.rnn_cell.\
-            MultiRNNCell([tf.nn.rnn_cell.DropoutWrapper(tf.nn.rnn_cell.LSTMCell(self._nhid),
-                                                        output_keep_prob=self._dropout_ratio)
-                          for _ in range(self._nlayers)])
-        # time_major true => time steps x batch size  x features.
-        # time_major false => batch_size x time_steps x features
-        output, _ = tf.nn.dynamic_rnn(stacked_lstm_cell,
-                                      emb, dtype=tf.float32,
-                                      time_major=False)
-        # Apply decoder to get output
-        decoder_in = tf.reshape(output, [bptt * bsz, self._nhid])
-        decoded = tf.matmul(decoder_in, weights["decoder"]) + biases["decoder"]
-        pred = tf.reshape(decoded, [bptt, bsz, -1], name="pred_")
-        return pred
+        net = self.data
+        kernel_init = tf.random_normal_initializer()
+        with tf.name_scope("input_linear_layer"):
+            net_shape = tf.shape(net)
+            bsz = net_shape[0]
+            bptt = net_shape[1]
+            net = tf.reshape(self.data, [-1, self._ntoken])
+            net = tf.layers.dense(net, self._ninp,
+                                  activation=tf.nn.leaky_relu,
+                                  kernel_initializer=kernel_init)
+            net = tf.reshape(net, [bsz, bptt, self._ninp])
+        with tf.name_scope("stacked_lstm_cell"):
+            stacked_lstm_cell = self.stacked_lstm_cell(self._nlayers,
+                                                       self._nhid,
+                                                       self._dropout_ratio)
+            # If GPU is present, should use highly optimized CudnnLSTMCell
+            net, _ = tf.nn.dynamic_rnn(stacked_lstm_cell,
+                                          net, dtype=tf.float32,
+                                          time_major=False)
+        with tf.name_scope("output_linear_layer"):
+            net = tf.reshape(net, [-1, self._nhid])
+            net = tf.layers.dense(net, self._ntoken,
+                                  activation=tf.nn.leaky_relu,
+                                  kernel_initializer=kernel_init)
+        net = tf.reshape(net, [bsz, bptt, -1], name="pred_")
+        return net
 
     @lazy_property
     def loss(self):

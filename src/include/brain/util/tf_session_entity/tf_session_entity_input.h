@@ -4,7 +4,7 @@
 //
 // tf_session_entity_input.h
 //
-// Identification: src/include/brain/tf_session_entity/tf_session_entity_input.h
+// Identification: src/include/brain/util/tf_session_entity/tf_session_entity_input.h
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "brain/tf_session_entity/tf_session_entity_io.h"
+#include "tf_session_entity_io.h"
 
 #define TFSEIN_TEMPLATE_ARGUMENTS template <typename InputType>
 #define TFSEIN_TYPE TfSessionEntityInput<InputType>

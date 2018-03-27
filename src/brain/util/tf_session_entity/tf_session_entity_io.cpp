@@ -4,13 +4,13 @@
 //
 // tf_session_entity_io.cpp
 //
-// Identification: src/brain/tf_session_entity/tf_session_entity_io.cpp
+// Identification: brain/util/tf_session_entity/tf_session_entity_io.cpp
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "brain/tf_session_entity/tf_session_entity_io.h"
+#include "brain/util/tf_session_entity/tf_session_entity_io.h"
 
 namespace peloton {
 namespace brain {

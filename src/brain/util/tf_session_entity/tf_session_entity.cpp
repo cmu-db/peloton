@@ -4,15 +4,15 @@
 //
 // tf_session_entity.cpp
 //
-// Identification: src/brain/tf_session_entity/tf_session_entity.cpp
+// Identification: src/brain/util/tf_session_entity/tf_session_entity.cpp
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "brain/tf_session_entity/tf_session_entity.h"
-#include "brain/tf_session_entity/tf_session_entity_input.h"
-#include "brain/tf_session_entity/tf_session_entity_output.h"
+#include "brain/util/tf_session_entity/tf_session_entity.h"
+#include "brain/util/tf_session_entity/tf_session_entity_input.h"
+#include "brain/util/tf_session_entity/tf_session_entity_output.h"
 
 namespace peloton {
 namespace brain {
