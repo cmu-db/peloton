@@ -12,8 +12,7 @@
 
 #pragma once
 
-#include "brain/tf_session_entity/tf_session_entity_input.h"
-#include "brain/tf_session_entity/tf_session_entity_output.h"
+#include "tf_session_entity_io.h"
 
 #define TFSE_TEMPLATE_ARGUMENTS \
   template <typename InputType, typename OutputType>
@@ -21,6 +20,12 @@
 
 namespace peloton {
 namespace brain {
+
+// Forward Declarations
+template <class InputType>
+class TfSessionEntityInput;
+template <class OutputType>
+class TfSessionEntityOutput;
 
 /**
  * The `TfSessionEntity` class is the main entity class for

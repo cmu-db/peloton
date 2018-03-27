@@ -11,6 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "brain/tf_session_entity/tf_session_entity.h"
+#include "brain/tf_session_entity/tf_session_entity_input.h"
+#include "brain/tf_session_entity/tf_session_entity_output.h"
 
 namespace peloton {
 namespace brain {
