@@ -16,6 +16,7 @@
 #include "index/index_key.h"
 #include "index/scan_optimizer.h"
 #include "statistics/stats_aggregator.h"
+#include "settings/settings_manager.h"
 #include "storage/tuple.h"
 
 namespace peloton {
@@ -52,8 +53,7 @@ bool HASH_INDEX_TYPE::InsertEntry(UNUSED_ATTRIBUTE const storage::Tuple *key,
  * DeleteEntry() - Removes a key-value pair
  *
  * If the key does not exists yet in the map return false
- * CuckooHash provides API to delete key and its associate value, not key-value
- * pair
+ * CuckooHash does not support delete with key-value pair match
  */
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
 bool HASH_INDEX_TYPE::DeleteEntry(UNUSED_ATTRIBUTE const storage::Tuple *key,
@@ -97,8 +97,40 @@ void HASH_INDEX_TYPE::Scan(
     UNUSED_ATTRIBUTE ScanDirectionType scan_direction,
     UNUSED_ATTRIBUTE std::vector<ValueType> &result,
     UNUSED_ATTRIBUTE const ConjunctionScanPredicate *csp_p) {
-  throw Exception{ExceptionType::NOT_IMPLEMENTED,
-                  "Scan not supported for CuckooHash."};
+  if (scan_direction == ScanDirectionType::INVALID) {
+    throw Exception("Invalid scan direction \n");
+  }
+
+  LOG_TRACE("Scan() Point Query = %d; Full Scan = %d ", csp_p->IsPointQuery(),
+            csp_p->IsFullIndexScan());
+
+  if (csp_p->IsPointQuery() == true) {
+    // This is a hack: CuckooHash does not support scan, should only support PointQuery.
+    LOG_INFO("Scan Index Point Query is only supported for cuckoo hash.");
+    const storage::Tuple *point_query_key_p = csp_p->GetPointQueryKey();
+
+    KeyType point_query_key;
+    point_query_key.SetFromKey(point_query_key_p);
+
+    ValueType val;
+    bool ret = container.Find(point_query_key, val);
+    if (ret) {
+      result.push_back(val);
+    }
+  } else if (csp_p->IsFullIndexScan() == true) {
+    throw Exception{ExceptionType::NOT_IMPLEMENTED,
+                    "Scan(FullIndexScan) not supported for CuckooHash."};
+  } else {
+    throw Exception{ExceptionType::NOT_IMPLEMENTED,
+                    "Scan(RangeIndexScan) not supported for CuckooHash."};
+  }  // if is full scan
+
+  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+      settings::SettingId::stats_mode)) != StatsType::INVALID) {
+    stats::BackendStatsContext::GetInstance()->IncrementIndexReads(
+        result.size(), metadata);
+  }
+
   return;
 }
 
