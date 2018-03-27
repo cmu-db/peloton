@@ -191,12 +191,12 @@ class TupleKeyComparator {
         rhTuple.GetValue(rhs.ColumnForIndexColumn(col_itr));
 
       // If there is a field in LHS < RHS then return true;
-      if (lhValue.CompareLessThan(rhValue) == CmpBool::TRUE) {
+      if (lhValue.CompareLessThan(rhValue) == CmpBool::CmpTrue) {
         return true;
       }
       
       // If there is a field in LHS > RHS then return false
-      if (lhValue.CompareGreaterThan(rhValue) == CmpBool::TRUE) {
+      if (lhValue.CompareGreaterThan(rhValue) == CmpBool::CmpTrue) {
         return false;
       }
     }
@@ -248,11 +248,11 @@ class TupleKeyComparatorRaw {
       type::Value rhValue = \
           rhTuple.GetValue(rhs.ColumnForIndexColumn(col_itr));
 
-      if (lhValue.CompareLessThan(rhValue) == CmpBool::TRUE) {
+      if (lhValue.CompareLessThan(rhValue) == CmpBool::CmpTrue) {
         return VALUE_COMPARE_LESSTHAN;
       }
 
-      if (lhValue.CompareGreaterThan(rhValue) == CmpBool::TRUE) {
+      if (lhValue.CompareGreaterThan(rhValue) == CmpBool::CmpTrue) {
         return VALUE_COMPARE_GREATERTHAN;
       }
     }
@@ -306,7 +306,7 @@ class TupleKeyEqualityChecker {
 
       // If any of these two columns differ then just return false
       // because we know they could not be equal 
-      if (lhValue.CompareNotEquals(rhValue) == CmpBool::TRUE) {
+      if (lhValue.CompareNotEquals(rhValue) == CmpBool::CmpTrue) {
         return false;
       }
     }
