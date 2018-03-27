@@ -10,16 +10,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "common/harness.h"
-#include "gtest/gtest.h"
-#include "common/logger.h"
-#include "network/peloton_server.h"
-#include "network/protocol_handler_factory.h"
-#include "util/string_util.h"
 #include <pqxx/pqxx> /* libpqxx is used to instantiate C++ client */
-#include "network/postgres_protocol_handler.h"
-#include "peloton_config.h"
+#include "common/harness.h"
+#include "common/logger.h"
+#include "gtest/gtest.h"
 #include "network/connection_handle_factory.h"
+#include "network/peloton_server.h"
+#include "network/postgres_protocol_handler.h"
+#include "network/protocol_handler_factory.h"
+#include "peloton_config.h"
+#include "util/string_util.h"
 
 #define NUM_THREADS 1
 
@@ -32,6 +32,17 @@ namespace test {
 
 class SSLTests : public PelotonTest {};
 
+std::string client_crt = std::string(StringUtil::Format(
+    "%s%s", SOURCE_FOLDER, "/test/network/ssl/client_test.crt"));
+std::string client_key = std::string(StringUtil::Format(
+    "%s%s", SOURCE_FOLDER, "/test/network/ssl/client_test.key"));
+std::string server_crt = std::string(StringUtil::Format(
+    "%s%s", SOURCE_FOLDER, "/test/network/ssl/server_test.crt"));
+std::string server_key = std::string(StringUtil::Format(
+    "%s%s", SOURCE_FOLDER, "/test/network/ssl/server_test.key"));
+std::string root_crt = std::string(StringUtil::Format(
+    "%s%s", SOURCE_FOLDER, "/test/network/ssl/root_test.crt"));
+
 /**
  * Basic SSL connection test:  Tested with valid certificats and key files
  */
@@ -39,15 +50,20 @@ void *BasicTest(int port) {
   try {
     // forcing the factory to generate psql protocol handler
     pqxx::connection C(StringUtil::Format(
-        "host=127.0.0.1 port=%d user=default_database application_name=psql sslmode=require", port));
+        "host=127.0.0.1 port=%d user=default_database application_name=psql "
+        "sslmode=require sslkey=%s ",
+        port, client_key.c_str()));
+
     pqxx::work txn1(C);
 
     peloton::network::ConnectionHandle *conn =
-        peloton::network::ConnectionHandleFactory::GetInstance().ConnectionHandleAt(
-            peloton::network::PelotonServer::recent_connfd).get();
+        peloton::network::ConnectionHandleFactory::GetInstance()
+            .ConnectionHandleAt(peloton::network::PelotonServer::recent_connfd)
+            .get();
 
     network::PostgresProtocolHandler *handler =
-        dynamic_cast<network::PostgresProtocolHandler *>(conn->GetProtocolHandler().get());
+        dynamic_cast<network::PostgresProtocolHandler *>(
+            conn->GetProtocolHandler().get());
     EXPECT_NE(handler, nullptr);
 
     // basic test
@@ -63,7 +79,7 @@ void *BasicTest(int port) {
 
     pqxx::result R = txn2.exec("SELECT name FROM employee where id=1;");
     txn2.commit();
-    
+
     EXPECT_EQ(R.size(), 1);
 
     // SSL large write test
@@ -104,16 +120,13 @@ TEST_F(SSLTests, BasicTest) {
   peloton::network::PelotonServer peloton_server;
   int port = 15721;
   try {
-      std::string server_crt = "/test/network/ssl/server_test.crt";
-      std::string server_key = "/test/network/ssl/server_test.key";
-      std::string root_crt = "/test/network/ssl/root_test.crt";
-      peloton::network::PelotonServer::certificate_file_ = SOURCE_FOLDER + server_crt;
-      peloton::network::PelotonServer::private_key_file_ = SOURCE_FOLDER + server_key;
-      peloton::network::PelotonServer::root_cert_file_ = SOURCE_FOLDER + root_crt;
-      peloton::network::PelotonServer::SSLInit();
+    peloton::network::PelotonServer::certificate_file_ = server_crt;
+    peloton::network::PelotonServer::private_key_file_ = server_key;
+    peloton::network::PelotonServer::root_cert_file_ = root_crt;
+    peloton::network::PelotonServer::SSLInit();
 
-      peloton_server.SetPort(port);
-      peloton_server.SetupServer();
+    peloton_server.SetPort(port);
+    peloton_server.SetupServer();
   } catch (peloton::ConnectionException &exception) {
     LOG_INFO("[LaunchServer] exception in thread");
   }
