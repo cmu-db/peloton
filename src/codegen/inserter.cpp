@@ -20,6 +20,10 @@
 #include "storage/data_table.h"
 #include "storage/tile_group.h"
 #include "storage/tile.h"
+#include "threadpool/logger_queue_pool.h"
+#include "logging/log_record.h"
+#include "logging/log_buffer.h"
+#include "type/value.h"
 
 namespace peloton {
 namespace codegen {
@@ -48,7 +52,7 @@ peloton::type::AbstractPool *Inserter::GetPool() {
   return tile_->GetPool();
 }
 
-void Inserter::Insert() {
+void Inserter::Insert(char *values_buf, uint32_t values_size) {
   PL_ASSERT(table_ && executor_context_ && tile_);
   auto *txn = executor_context_->GetTransaction();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
@@ -62,6 +66,25 @@ void Inserter::Insert() {
     return;
   }
   txn_manager.PerformInsert(txn, location_, index_entry_ptr);
+
+  logging::LogRecord record =
+      logging::LogRecordFactory::CreateTupleRecord(
+          LogRecordType::TUPLE_INSERT, location_, txn->GetEpochId(),
+          txn->GetTransactionId(), txn->GetCommitId());
+  record.SetValuesArray(values_buf, values_size);
+
+  txn->GetLogBuffer()->WriteRecord(record);
+
+  if(txn->GetLogBuffer()->HasThresholdExceeded()) {
+
+    LOG_DEBUG("Submitting log buffer %p", txn->GetLogBuffer());
+
+    /* insert to the queue */
+    threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(txn->GetLogBuffer());
+
+    /* allocate a new buffer for the current transaction */
+    txn->ResetLogBuffer();
+  }
   executor_context_->num_processed++;
 }
 

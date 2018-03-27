@@ -495,26 +495,6 @@ void TimestampOrderingTransactionManager::PerformInsert(
   // Write down the head pointer's address in tile group header
   tile_group_header->SetIndirection(tuple_id, index_entry_ptr);
 
-  logging::LogRecord record =
-          logging::LogRecordFactory::CreateTupleRecord(
-                  LogRecordType::TUPLE_INSERT, location, current_txn->GetEpochId(),
-                  current_txn->GetTransactionId(), current_txn->GetCommitId());
-
-  current_txn->GetLogBuffer()->WriteRecord(record);
-
-  if(current_txn->GetLogBuffer()->HasThresholdExceeded()) {
-
-    LOG_DEBUG("Submitting log buffer %p", current_txn->GetLogBuffer());
-
-    /* insert to the queue */
-   threadpool::LoggerQueuePool::GetInstance().SubmitLogBuffer(current_txn->GetLogBuffer());
-
-    /* allocate a new buffer for the current transaction */
-    current_txn->ResetLogBuffer();
-  }
-
-
-
   // Increment table insert op stats
   if (static_cast<StatsType>(settings::SettingsManager::GetInt(settings::SettingId::stats_mode)) !=
       StatsType::INVALID) {

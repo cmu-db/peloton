@@ -44,20 +44,13 @@ void LogBuffer::WriteRecord(LogRecord &record) {
       log_buffer_.WriteLong(tuple_pos.block);
       log_buffer_.WriteLong(tuple_pos.offset);
 
-      // Write the full tuple into the buffer
-      for (auto schema : tg->GetTileSchemas()) {
-        for (auto column : schema.GetColumns()) {
-          columns.push_back(column);
-        }
+      peloton::type::Value *values_array = reinterpret_cast<peloton::type::Value *>(record.GetValuesArray());
+      for (uint32_t i = 0; i < record.GetNumValues(); i++) {
+        //TODO(akanjani): Check if just copying the offset info will perform better
+        values_array[i].SerializeTo(log_buffer_);
+        LOG_INFO("The value at offset %u is %d", i, type::ValuePeeker::PeekInteger(values_array[i]));
       }
 
-      ContainerTuple<storage::TileGroup> container_tuple(tg, tuple_pos.offset);
-      for (oid_t oid = 0; oid < columns.size(); oid++) {
-
-        // TODO: check if GetValue() returns variable length fields appropriately
-        auto val = container_tuple.GetValue(oid);
-        val.SerializeTo(log_buffer_);
-      }
       break;
     }
     case LogRecordType::TUPLE_DELETE: {
@@ -84,10 +77,9 @@ void LogBuffer::WriteRecord(LogRecord &record) {
       TargetList *offsets = record.GetOffsets();
       for (uint32_t i = 0; i < record.GetNumValues(); i++) {
         //TODO(akanjani): Check if just copying the offset info will perform better
-        LOG_INFO("Offset %u updated value %d", ((*offsets)[i]).first,
-                 peloton::type::ValuePeeker::PeekInteger(values_array[i]));
         log_buffer_.WriteInt(((*offsets)[i]).first);
         values_array[i].SerializeTo(log_buffer_);
+        LOG_INFO("The value at offset %u is %d", ((*offsets)[i]).first, type::ValuePeeker::PeekInteger(values_array[i]));
       }
 
       break;

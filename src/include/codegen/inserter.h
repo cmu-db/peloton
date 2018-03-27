@@ -54,7 +54,7 @@ class Inserter {
   peloton::type::AbstractPool *GetPool();
 
   // Insert a tuple
-  void Insert();
+  void Insert(char *values_buf, uint32_t values_size);
 
   // Finalize the instance
   void TearDown();

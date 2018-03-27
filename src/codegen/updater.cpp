@@ -30,7 +30,6 @@
 #include "threadpool/logger_queue_pool.h"
 #include "../include/type/value.h"
 #include "../include/codegen/value.h"
-#include "../include/codegen/updater.h"
 
 namespace peloton {
 namespace codegen {
@@ -199,9 +198,8 @@ void Updater::UpdatePK(char *diff_array, uint32_t diff_size) {
 
   logging::LogRecord record =
       logging::LogRecordFactory::CreateTupleRecord(
-          LogRecordType::TUPLE_UPDATE, new_location_, txn->GetEpochId(),
+          LogRecordType::TUPLE_INSERT, new_location_, txn->GetEpochId(),
           txn->GetTransactionId(), txn->GetCommitId());
-  record.SetOldItemPointer(old_location_);
   record.SetValuesArray(diff_array, diff_size);
 
   txn->GetLogBuffer()->WriteRecord(record);
